@@ -179,10 +179,11 @@
     bench: () => campPath('bench', ['The fire burns. Open Camp to build.', 'Open Camp.', 'Build the Workbench. It makes tools.']),
     tool: () => {
       if (S.tab !== 'forge') return { node: q('.tab[data-tab="forge"]'), text: 'The Workbench is built. Open Craft.' };
-      if (curView('forge') !== 'make') return { node: q('#viewSeg button[data-view="make"]'), text: 'Open Make.' };
+      if (curView('forge') !== 'make') return { node: q('#viewSeg button[data-view="make"]') || q('.tab[data-tab="forge"]'), text: 'Open Make.' };
       const st = q('.cf-st[data-st="bench"]');
       if (st && st.getAttribute('aria-pressed') !== 'true') return { node: st, text: 'Tap the Workbench.' };
-      return { node: q('#sec-craft-recipes .cf-rec[data-kind="pick"] .cf-go'), side: 'up', text: 'Make a Copper Pickaxe.' };
+      // (the recipe list can still be re-rendering right after the station is picked: point at the list, never at nothing)
+      return { node: q('#sec-craft-recipes .cf-rec[data-kind="pick"] .cf-go') || q('#sec-craft-recipes') || st, side: 'up', text: 'Make a Copper Pickaxe.' };
     },
     forge: () => campPath('forge', ['Open Camp to build the Forge.', 'Open Camp.', 'Build the Forge for your weapon.']),
     store: () => campPath('store', ['Your packs are nearly full. Open Camp.', 'Open Camp.', 'Your packs are nearly full. Build a Storehouse.']),
@@ -197,17 +198,17 @@
 
   const BLOCK = '.create, .away-ov, .bsheet-ov, .modal, .dw-ov';
   let lastKey = '';
-  function hide() { if (!layer.hidden) layer.hidden = true; if (!bub.hidden) bub.hidden = true; cur = null; curGo = null; lastKey = ''; lastNode = null; ONBOARD.paused = false; }
+  function hide() { if (!layer.hidden) layer.hidden = true; if (!bub.hidden) bub.hidden = true; cur = null; curGo = null; lastKey = ''; lastNode = null; lastRect = null; ONBOARD.paused = false; }
   // The hint used to re-read the target's pixel position and re-place itself every 250ms, so it
   // jumped whenever the stage moved under it (camera/zoom, screen shake, a pack spawning) even
-  // though nothing about the guide itself had changed. Now `tick` only ever polls for a step change;
-  // the actual placement (`place`) runs only when the step's target or text changes, or a real
-  // layout event fires (resize, a menu opening or closing) via `dirty`. The band itself (60-onboard.css
-  // .ob-bub) is CSS-docked, not JS-positioned, so it never needs to move at all once shown.
-  let dirty = true, lastTab = S.tab;
+  // though nothing about the guide itself had changed. Stage targets keep that cached placement.
+  // Menu targets also follow scrolling and reflow of the same node; only a new target or view
+  // brings it into sight. The band itself (60-onboard.css .ob-bub) stays CSS-docked.
+  const panels = $('panels');
+  let dirty = true, reveal = true, panelScrolled = false, lastTab = S.tab;
   function invalidate() { dirty = true; }
   function tick() {
-    if (S.tab !== lastTab) { lastTab = S.tab; dirty = true; }
+    if (S.tab !== lastTab) { lastTab = S.tab; dirty = true; reveal = true; }
     let step = null;
     try { step = onboardStep(); } catch (e) { console.error('[lanternfall] onboard step', e); }
     if (!step || document.hidden || q(BLOCK)) return hide();
@@ -226,9 +227,13 @@
   soloGuideWants = () => (cur && !layer.hidden ? cur.id : '');
   // The guide's steps and their targets, for tools/check.mjs (the browser check walks the first session).
   onboardSpec = id => { const table = SOLO_UI[id] ? SOLO_UI : STEP_UI; try { return table[id] ? table[id]() : null; } catch (e) { return null; } };
-  let lastNode = null;
+  let lastNode = null, lastRect = null;
   function place(spec) {
-    const key = spec.text, changed = dirty || spec.node !== lastNode || key !== lastKey;
+    const key = spec.text, newTarget = spec.node !== lastNode;
+    const inPanel = !!S.tab && panels.contains(spec.node);
+    let r = inPanel ? spec.node.getBoundingClientRect() : null;
+    const moved = inPanel && (!lastRect || r.left !== lastRect.left || r.top !== lastRect.top || r.width !== lastRect.width || r.height !== lastRect.height);
+    const changed = dirty || newTarget || key !== lastKey || (inPanel && panelScrolled) || moved;
     if (layer.hidden) layer.hidden = false;
     if (bub.hidden) bub.hidden = false;
     if (key !== lastKey) {
@@ -237,17 +242,22 @@
       if (fresh || !spec.live) { bub.classList.remove('pop'); if (!reduced) { void bub.offsetWidth; bub.classList.add('pop'); } }
     }
     if (!changed) return;   // no real layout change and the same target/text: leave it exactly where it is
-    dirty = false; lastNode = spec.node;
+    dirty = false; panelScrolled = false; lastNode = spec.node;
     // UX-L1: a target inside the menu's scrolling content that is out of sight (a short landscape menu: the Make view's
-    // recipes, a camp building further down) is scrolled into view first, so the ring never marks a hidden row
-    const pn = $('panels');
-    if (pn.contains(spec.node) && S.tab) {
-      const pr = pn.getBoundingClientRect(), nr = spec.node.getBoundingClientRect();
-      if (nr.height && (nr.top < pr.top || nr.bottom > pr.bottom - 56)) scrollMenuTo(spec.node);
+    // recipes, a camp building further down) is scrolled into view on a new target/view. Ordinary
+    // scroll or reflow only moves the ring, so following it never pulls the player back.
+    if (inPanel && (newTarget || reveal)) {
+      const pr = panels.getBoundingClientRect();
+      if (r.height && (r.top < pr.top || r.bottom > pr.bottom - 56)) {
+        scrollMenuTo(spec.node);
+        r = spec.node.getBoundingClientRect();
+      }
     }
+    reveal = false;
     // the marker: a ring around the node, or a round mark at a point inside it (never a filled
     // shape, so it never covers the node/foe underneath)
-    const r = spec.node.getBoundingClientRect();
+    if (!r) r = spec.node.getBoundingClientRect();
+    lastRect = inPanel ? r : null;
     let rx, ry, rw, rh;
     if (spec.at) { const d = 58; rx = r.left + r.width * spec.at[0] - d / 2; ry = r.top + r.height * spec.at[1] - d / 2; rw = rh = d; }
     else { rx = r.left - 4; ry = r.top - 4; rw = r.width + 8; rh = r.height + 8; }
@@ -265,11 +275,12 @@
     bub.classList.toggle('up', !!spec.node.closest('.tabs'));   // the tab bar sits below the band
   }
   setInterval(tick, 250);
+  panels.addEventListener('scroll', () => { panelScrolled = true; tick(); }, { passive: true });
   addEventListener('resize', () => { invalidate(); tick(); });
   on('onboardStep', () => setTimeout(tick, 0));
   on('telegraphStart', () => setTimeout(tick, 0));   // SOLO1: the Dodge and Parry steps catch the wind-up at its start
   on('soloHero', () => setTimeout(tick, 0));
-  on('menuView', invalidate);
+  on('menuView', () => { reveal = true; invalidate(); });
 
   // ---------------- Journal: Tips ----------------
   registerSection('log', {

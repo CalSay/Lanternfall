@@ -37,7 +37,7 @@ const ONLY = (process.argv.find(a => a.startsWith('--only=')) || '').slice(7);
 const SHARD = (m => (m ? [+m[1], +m[2]] : null))(/--shard=(\d+)\/(\d+)/.exec(process.argv.join(' ')));
 const JOBS = SHARD ? 1 : +((process.argv.find(a => a.startsWith('--jobs=')) || '').slice(7)) || (ONLY ? 1 : Math.min(4, os.cpus().length));
 // Seconds a section takes (measured, W2-B): the shards are balanced by these; a section not listed counts 2.
-const WEIGHT = { 'landscape 740x360 (browser, UX-L1)': 42, 'landscape 844x390 (browser, UX-L1)': 38, 'landscape 1280x720 (browser, UX-L1)': 38, 'solo copy (browser, W1-C)': 60, 'W1-D (browser)': 100, 'training (W2-A, browser)': 18, 'cb2': 40, 'notices (browser, W1-B)': 34, 'solo guide: gathering never freezes (browser)': 31, 'solo hero (browser)': 21, 'types and statuses (S1)': 14, 'save codes': 13, 'combat': 8, 'gatherers UI (browser)': 7, 'gathering': 6, 'nav': 6, 'retool': 6, 'onboarding hint placement (HINT1)': 5 };
+const WEIGHT = { 'landscape 740x360 (browser, UX-L1)': 42, 'landscape 844x390 (browser, UX-L1)': 38, 'landscape 1280x720 (browser, UX-L1)': 38, 'solo copy (browser, W1-C)': 60, 'W1-D (browser)': 100, 'training (W2-A, browser)': 18, 'cb2': 40, 'notices (browser, W1-B)': 34, 'solo guide: gathering never freezes (browser)': 31, 'solo hero (browser)': 21, 'types and statuses (S1)': 14, 'save codes': 13, 'combat': 8, 'gatherers UI (browser)': 7, 'gathering': 6, 'nav': 6, 'retool': 6, 'onboarding hint placement (HINT1)': 5, 'camp trade and import (C4, browser)': 15 };
 const shardLoad = SHARD ? Array(SHARD[1]).fill(0) : null;
 function section(name) {
   if ((ONLY && !new RegExp(ONLY, 'i').test(name))) return false;
@@ -5235,6 +5235,143 @@ if (section('gatherer engine gaps (C1)')) try {
   assert(!errs.length, 'C1: no gatherer or camp handler errors' + (errs.length ? ': ' + errs[0] : ''));
 } catch (e) { fail('C1 gatherer engine gaps crashed: ' + (e.stack || e)); }
 
+// ---- C2: gatherers in the camp scene, ordinary conversation and profession jobs ----
+if (section('gatherers at camp (C2)')) try {
+  const T0 = new Date(2026, 8, 28, 12).getTime(), HOUR = 3600e3, games = [];
+  const clock = (g, t) => g.eval(`Date.__t = ${t}; Date.now = () => Date.__t`);
+  const mk = opts => {
+    const g = loadCore({ seed: 7201, prelude: `Date.__t = ${T0}; Date.now = () => Date.__t;`, ...opts }); games.push(g);
+    g.eval('S.maxZone=12; S.camp.open=true; S.camp.b.hearth=2; S.camp.b.tavern=1; S.camp.b.store=8; S.gold=1e9; S.skills.mine.lv=20; S.skills.wood.lv=20; S.skills.forage.lv=20; tick(1.2)');
+    return g;
+  };
+  // Opening and refreshing a conversation is a read; ordinary talk never consumes an earned story.
+  {
+    const g = mk(), E = s => g.eval(s);
+    E('handsGet("tam").lv=10');
+    const before = E('JSON.stringify(S.hands)'), info = E('handsTalkInfo("tam")');
+    assert(info && info.id === 'tam' && info.name === 'Tam' && info.lv === 10 && typeof info.line === 'string' && info.line.length > 0, 'C2: talk info identifies the gatherer and gives a real conversation line');
+    E('handsTalkInfo("tam"); handsTalkInfo("tam")');
+    assert(E('JSON.stringify(S.hands)') === before && E('handsTalkInfo("missing")') === null, 'C2: reading talk info is pure and a missing gatherer has no panel data');
+    const due = E('handsStoryDue(handsGet("tam"))'), heard = E('S.hands.heard'), stories = E('handsGet("tam").st');
+    assert(due === 5 && E('handsTalk("tam")') === 1, 'C2: ordinary conversation advances its own counter with an earned story waiting');
+    assert(E('handsStoryDue(handsGet("tam"))') === due && E('S.hands.heard') === heard && E('handsGet("tam").st') === stories, 'C2: ordinary talk does not mark a level story heard');
+    const h = loadCore({ seed: 7202, storage: memoryStorage({ [KEY]: g.storage.get(KEY) }), prelude: `Date.__t=${T0};Date.now=()=>Date.__t` }); games.push(h);
+    assert(h.eval('handsGet("tam").talk') === 1 && h.eval('handsStoryDue(handsGet("tam"))') === 5, 'C2: the talk action persists its counter while preserving the pending story');
+    assert(E('handsTalk("missing")') === 0 && E('S.hands.heard') === heard, 'C2: a stale conversation target cannot change story state');
+  }
+  // Every offered job is executable for that gatherer's actual profession, including loaded random workers.
+  {
+    const g = mk(), E = s => g.eval(s);
+    for (const sk of ['mine', 'wood', 'forage']) {
+      E(`Object.assign(handsGet("tam"), {sk:${JSON.stringify(sk)},job:null,pack:[],key:null,sent:99})`);
+      const jobs = E('handsTalkInfo("tam").jobs');
+      assert(jobs.length > 0 && jobs.every(n => n.own && E(`skillOf(${JSON.stringify(n.kind)})`) === sk), `C2: ${sk} conversation offers only open jobs in its own profession`);
+      const job = jobs.find(n => n.can.ok);
+      assert(job && E(`!!handsSend("tam",${JSON.stringify(job.kind)},${job.t})`) && E('handsGet("tam").job.kind') === job.kind, `C2: the ${sk} conversation's offered job starts the real gatherer shift`);
+    }
+    const busy = E('handsTalkInfo("tam")');
+    assert(busy.jobs.every(n => !n.can.ok), 'C2: a gatherer already away cannot be sent from stale conversation data');
+    E('handsGet("tam").job=null; handsGet("tam").pack=[["wood",1,5]]');
+    assert(E('handsTalkInfo("tam").jobs.every(n=>!n.can.ok)'), 'C2: a pack waiting in camp keeps every send action unavailable');
+    E('handsGet("tam").pack=[]; S.gold=0');
+    assert(E('handsTalkInfo("tam").jobs.every(n=>!n.can.ok)'), 'C2: an unpaid gatherer gets the core fee checks in the conversation');
+  }
+  // Run the real scene painter and conversation DOM in Node; the adapter records canvas calls and button actions.
+  const { coreFiles } = await import('./lib/core.mjs');
+  const stub = `
+    Date.__t=${T0}; Date.now=()=>Date.__t;
+    let reduced=true, stageDeco=null;
+    class ImageData { constructor(data,width,height){this.data=data;this.width=width;this.height=height;} }
+    const __paint=[], __sections={}, __timers=[];
+    const __ctx=()=>({ fillStyle:'',globalAlpha:1,fillRect(...a){__paint.push(['rect',this.fillStyle,...a]);},clearRect(){},drawImage(c,...a){__paint.push(['image',...a]);},save(){},restore(){},setTransform(){},scale(){},translate(){},beginPath(){},arc(){},fill(){},stroke(){},moveTo(){},lineTo(){},fillText(){},
+      createImageData(w,h){return {data:new Uint8ClampedArray(w*h*4),width:w,height:h};},putImageData(){},createLinearGradient(){return {addColorStop(){}};},createRadialGradient(){return {addColorStop(){}};}});
+    class __Node {
+      constructor(tag='div',cls='',text=''){this.tagName=tag.toUpperCase();this.className=cls||'';this.children=[];this.dataset={};this.attrs={};this.events={};this.hidden=false;this.scrollLeft=0;this.style={setProperty(k,v){this[k]=v;}};this._text=text||'';
+        this.classList={add:(c)=>{this.className+=' '+c;},remove:(c)=>{this.className=this.className.split(' ').filter(x=>x!==c).join(' ');},contains:(c)=>this.className.split(' ').includes(c),toggle:(c,on)=>{const yes=on===undefined?!this.classList.contains(c):on;this.classList[yes?'add':'remove'](c);return yes;}};}
+      append(...nodes){for(const n of nodes){if(n.remove)n.remove();this.children.push(n);if(n&&typeof n==='object')n.parentNode=this;}}
+      appendChild(n){this.append(n);return n;} prepend(...nodes){for(const n of nodes.reverse()){if(n.remove)n.remove();this.children.unshift(n);n.parentNode=this;}}
+      insertBefore(n,b){if(n.remove)n.remove();const i=this.children.indexOf(b);if(i<0)this.append(n);else{this.children.splice(i,0,n);n.parentNode=this;}return n;}
+      replaceChildren(...nodes){for(const n of this.children)n.parentNode=null;this.children=[];this.append(...nodes);} remove(){if(this.parentNode)this.parentNode.children=this.parentNode.children.filter(n=>n!==this);this.parentNode=null;}
+      get firstChild(){return this.children[0]||null;} get nextSibling(){return this.parentNode?.children[this.parentNode.children.indexOf(this)+1]||null;} get isConnected(){return document.body.contains(this)||document.head.contains(this);} get clientWidth(){return 740;}
+      set textContent(v){this._text=String(v);this.children=[];} get textContent(){return this._text+this.children.map(n=>n.textContent||'').join('');}
+      setAttribute(k,v){this.attrs[k]=String(v);} getAttribute(k){return this.attrs[k]??null;} removeAttribute(k){delete this.attrs[k];}
+      addEventListener(k,f){(this.events[k]||(this.events[k]=[])).push(f);} removeEventListener(k,f){this.events[k]=(this.events[k]||[]).filter(x=>x!==f);}
+      fire(k,props={}){const e={target:this,currentTarget:this,detail:1,button:0,pointerId:1,clientX:0,clientY:0,preventDefault(){},stopPropagation(){},...props};for(const f of this.events[k]||[])f(e);}
+      click(){this.fire('click');} focus(){document.activeElement=this;} contains(n){return this===n||this.children.some(c=>c.contains&&c.contains(n));}
+      querySelectorAll(s){const out=[],match=n=>s[0]==='.'?n.className.split(' ').includes(s.slice(1)):s[0]==='#'?n.id===s.slice(1):s[0]==='['?Object.hasOwn(n.attrs,s.slice(1,-1))||s==='[data-hand-id]'&&!!n.dataset.handId:n.tagName===s.toUpperCase();const walk=n=>{for(const c of n.children||[]){if(match(c))out.push(c);walk(c);}};walk(this);return out;}
+      querySelector(s){return this.querySelectorAll(s)[0]||null;} getContext(){return this._ctx||(this._ctx=__ctx());} toDataURL(){return 'data:image/png;base64,AA';}
+      getBoundingClientRect(){return {left:0,top:0,width:740,height:192};} setPointerCapture(){} releasePointerCapture(){} scrollTo(o){this.scrollLeft=o.left||0;}
+    }
+    const document={body:new __Node('body'),head:new __Node('head'),activeElement:null,hidden:false,createElement:t=>new __Node(t),getElementById(id){return this.body.querySelector('#'+id)||this.head.querySelector('#'+id);},querySelector(s){return this.body.querySelector(s);}};
+    const el=(t,c,x)=>new __Node(t,c,x), img=()=>new __Node('img'), $=id=>document.getElementById(id)||document.body;
+    const iconURL=()=>'',matIcon=()=>'',registerSection=(tab,s)=>{__sections[s.id]=s;},ui=()=>{if(typeof handsTalkUpdate==='function')handsTalkUpdate();};
+    const disclose=()=>({open:false,chev:el('span')}),setTab=()=>{};
+    const putStyle=(e,k,v)=>{e.style[k]=v;},putText=(e,t)=>{e.textContent=t;},putAttr=(e,k,v)=>e.setAttribute(k,v),putToggle=(e,k,v)=>e.classList.toggle(k,v),putHidden=(e,v)=>{e.hidden=!!v;},putDisabled=(e,v)=>{e.disabled=!!v;};
+    const setTimeout=f=>{__timers.push(f);return __timers.length;},setInterval=setTimeout,clearTimeout=()=>{},clearInterval=()=>{};
+  `;
+  const w = mk({ prelude: stub, files: coreFiles().concat(['60b-baker.js','63d-scenery-camp.js','74-ui-hands.js','75-camp-ui.js']) }), W = s => w.eval(s);
+  {
+    const layout = W('campSceneLayout()');
+    assert(layout.width === 1024 && layout.height === 192 && layout.actors.some(x=>x.id==='tam'), 'C2: the wide 1,024×192 camp scene includes Tam at home');
+    W('handsSend("tam","wood",1,{shifts:2})');
+    assert(W('!campSceneLayout().actors.some(x=>x.id==="tam") && campSceneLayout().away.some(x=>x.id==="tam")'), 'C2: an away gatherer leaves the camp actors and appears in the away list');
+    clock(w,T0+4*HOUR);
+    assert(W('handsStatus("tam").st === "back" && !campSceneLayout().actors.some(x=>x.id==="tam")'), 'C2: an overdue return stays off the scene until its job is settled');
+    W('handsCatchUp(Date.now())');
+    assert(W('handsStatus("tam").st === "rest" && campSceneLayout().actors.some(x=>x.id==="tam")'), 'C2: a gatherer resting between shifts remains visible in camp');
+    W('handsRecall("tam"); handsGet("tam").pack=[["wood",1,5]]');
+    assert(W('campSceneLayout().actors.some(x=>x.id==="tam")'), 'C2: a gatherer with a waiting pack remains visible in camp');
+    W('handsGet("tam").pack=[]; S.camp.b.tent=10; for(let i=1;i<10;i++) S.hands.list.push(Object.assign(JSON.parse(JSON.stringify(handsGet("tam"))),{id:"c2-"+i,n:"Worker "+i,key:null,sk:["mine","wood","forage"][i%3]}))');
+    const crew = W('campSceneLayout().actors');
+    assert(crew.length === 10 && crew.every(a=>a.w>=44&&a.h>=44&&a.x-a.w/2>=0&&a.x+a.w/2<=1024&&a.y<=192) && new Set(crew.map(a=>a.x+":"+a.y)).size===10, 'C2: ten workers have distinct, generously sized hit areas inside the panorama');
+    const before = W('JSON.stringify(S.hands)');
+    W('globalThis.__c2ctx=__ctx(); campPaintScene(__c2ctx,campSceneLayout(),0); __paint.length=0; campPaintScene(__c2ctx,campSceneLayout(),0)');
+    const still = W('JSON.stringify(__paint)'), images = W('__paint.filter(x=>x[0]==="image").length');
+    W('__paint.length=0; campPaintScene(__c2ctx,campSceneLayout(),30)');
+    assert(W('JSON.stringify(__paint)') === still && images >= 10 && W('bakeStats().bakes') > 0, 'C2: reduced motion keeps the procedural worker sprites and camp painting still');
+    assert(W('JSON.stringify(S.hands)') === before, 'C2: drawing and laying out the camp never change jobs, conversations or story counters');
+    W('globalThis.__c2variants=campSceneLayout(); __c2variants.actors=["mine","wood","forage","any"].flatMap((sk,i)=>[0,1,2].map(look=>({id:sk+look,name:sk,x:40+(i*3+look)*80,y:164,w:56,h:96,status:{st:"camp"},sk,look}))); __paint.length=0; campPaintScene(__c2ctx,__c2variants,0)');
+    W('__paint.length=0; campPaintScene(__c2ctx,__c2variants,0)');
+    assert(W('__paint.filter(x=>x[0]==="image").length') === 12 && W('Object.keys(AK.CHARS).filter(k=>k.startsWith("camp_worker_")).length') === 12, 'C2: all twelve job/outfit variants bake and paint through the real B1 character renderer');
+    const baked = W('bakeStats().bakes'); W('campPaintScene(__c2ctx,__c2variants,10)');
+    assert(W('bakeStats().bakes') === baked, 'C2: repeated scene draws reuse worker sprite caches');
+  }
+  {
+    W('S.hands.list=S.hands.list.slice(0,1); Object.assign(handsGet("tam"),{job:null,pack:[],lv:10,sk:"mine",key:null,sent:99}); globalThis.__part=el("div"); globalThis.__camp=el("section"); __part.append(__camp); document.body.append(__part); __sections.camp.mount(__camp); __sections.camp.update()');
+    assert(W('$("camp-scene-scroll").tabIndex===0 && $("camp-scene-world").width===1024 && $("camp-scene-scroll").style.cssText.includes("overflow-x:auto")'), 'C2: the real Camp mount provides a keyboard-focusable native horizontal panorama');
+    W('globalThis.__person=$("camp-scene-hands").children.find(x=>x.dataset.handId==="tam")');
+    assert(W('__person.tagName==="BUTTON" && __person.getAttribute("aria-label").includes("Tam")'), 'C2: the scene exposes the gatherer as a named native button');
+    const talk = W('handsGet("tam").talk||0');
+    W('__person.fire("pointerdown",{clientX:10}); __person.fire("pointermove",{clientX:40}); __person.fire("click")');
+    assert(W('handsGet("tam").talk||0') === talk && W('$("hands-talk").hidden'), 'C2: dragging from a worker does not open a conversation');
+    W('__person.fire("pointerdown"); __person.fire("pointercancel"); __person.fire("click")');
+    assert(W('handsGet("tam").talk||0') === talk, 'C2: a cancelled touch does not accidentally talk');
+    W('__person.fire("click",{detail:0})');
+    assert(W('!$("hands-talk").hidden && handsGet("tam").talk') === talk + 1, 'C2: keyboard activation opens the conversation and counts exactly one talk');
+    W('handsTalkUpdate(); handsTalkUpdate()');
+    assert(W('handsGet("tam").talk') === talk + 1 && W('handsStoryDue(handsGet("tam"))') === 5, 'C2: panel refreshes neither retell a conversation nor consume the pending story');
+    W('$("hands-talk").querySelectorAll("button").find(b=>b.textContent==="Send on a job").click()');
+    const offered = W('handsTalkInfo("tam").jobs');
+    assert(W('$("hands-talk").querySelectorAll(".hd-job").length') === offered.length && offered.every(n=>W(`skillOf(${JSON.stringify(n.kind)})`) === 'mine'), 'C2: the actual talk picker renders the miner’s available profession nodes');
+    W('$("hands-talk").querySelector(".hd-job").focus(); S.gold-=100; handsTalkUpdate()');
+    assert(W('document.activeElement.classList.contains("hd-job")'), 'C2: an affordability refresh preserves keyboard focus in the job picker');
+    const fee = W('handsCanSend("tam",handsTalkInfo("tam").jobs[0].kind,handsTalkInfo("tam").jobs[0].t).fee'), money = W('S.gold');
+    W('$("hands-talk").querySelector(".hd-job").click(); __sections.camp.update()');
+    assert(W('!!handsGet("tam").job && skillOf(handsGet("tam").job.kind)==="mine"') && W('S.gold') === money - fee, 'C2: clicking a talk job starts the real mining shift and charges its actual fee');
+    assert(W('!$("camp-scene-hands").children.some(b=>b.dataset.handId==="tam") && $("hands-talk").querySelectorAll("button").find(b=>b.textContent==="Send on a job").disabled'), 'C2: sending removes the scene button and disables another send in the open panel');
+    W('$("hands-talk").querySelectorAll("button").find(b=>b.textContent==="Close").click()');
+    assert(W('$("hands-talk").hidden && document.activeElement===$("camp-scene-scroll")'), 'C2: closing after departure restores focus to the scene when the worker button is gone');
+    W('globalThis.__dest=null; on("campGoto",d=>{__dest=d;}); $("camp-crew-status").querySelector("button").click()');
+    assert(W('__dest.tab==="world" && __dest.view==="tav" && __dest.sel==="#sec-hands-crew"'), 'C2: the status strip shortcut targets the existing Tavern crew section');
+    W('globalThis.__tav=el("div"); const head=el("h2","world-head"); globalThis.__board=el("section"); __board.id="sec-hands"; globalThis.__crew=el("section"); __crew.id="sec-hands-crew"; __tav.append(head,__board,__crew); document.body.append(__tav); __sections.hands.mount(__board); __sections["hands-crew"].mount(__crew)');
+    assert(W('__tav.children.indexOf(__crew)<__tav.children.indexOf(__board) && __tav.children[0].classList.contains("world-head")'), 'C2: the real Tavern mounts hired gatherers before new applicants under its heading');
+    W('const base=JSON.parse(JSON.stringify(handsGet("tam"))); S.hands.list=[base,...["ready","rest","pack"].map(id=>({...JSON.parse(JSON.stringify(base)),id,n:id,job:null,pack:[]}))]; handsGet("rest").job={...JSON.parse(JSON.stringify(base.job)),start:Date.now()+1800000,end:Date.now()+16200000}; handsGet("pack").pack=[["ore",1,5]]; __sections.camp.update()');
+    assert(W('$("camp-crew-status").textContent.includes("Ready 1 · Out 1 · Resting 1 · Full packs 1")'), 'C2: the status strip counts ready, away, resting and waiting-pack gatherers separately');
+    assert(W('$("camp-scene-hands").children.length===3 && !$("camp-scene-hands").children.some(b=>b.dataset.handId==="tam")'), 'C2: the mounted scene keeps resting and pack workers present while the outgoing miner stays absent');
+  }
+  const errs = games.flatMap(g => g.errors);
+  assert(!errs.length, 'C2: no camp conversation handler errors' + (errs.length ? ': ' + errs[0] : ''));
+} catch (e) { fail('C2 gatherers at camp crashed: ' + (e.stack || e)); }
 // ---- C5: portable browser discovery, Windows child paths and explicit skipped-section totals ----
 if (section('browser tooling portability (C5)')) try {
   const driver = { chromium: { launch() {}, executablePath: () => '/managed/chrome' } };
@@ -5447,6 +5584,455 @@ if (section('save codec validation (C5)')) try {
   assert(!g.errors.length&&!live.errors.length,'C5: positive gameplay states have no handler errors');
 } catch(e){fail('C5 codec validation crashed: '+(e.stack||e));}
 
+// ---- C2: menu guide markers follow scrolling and reflow without moving the player's view ----
+if (section('camp guide tracking (C2, browser)')) try {
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('C2 guide tracking: Playwright or Chromium not here, skipped');
+  else {
+    // Drive the real 250ms callback explicitly: no race against the simulation or an interval.
+    const html0 = fs.readFileSync(distFile, 'utf8').replace('setInterval(tick, 250);', 'window.__c2GuideTick = tick;');
+    const end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [width, height] of [[740, 360], [844, 390]]) {
+        const at = `${width}x${height}`, ctx = await browser.newContext({ viewport: { width, height }, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
+        try {
+          const page = await ctx.newPage(), errs = [];
+          page.on('pageerror', e => errs.push(String(e)));
+          await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+          await page.goto('http://lf.test/');
+          await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go');
+          const X = s => page.evaluate(s => window.__t.x(s), s);
+          await X(`soloPickerOpen = () => true; S.mats.wood[0] = 100; hearthLight();
+            onboardUnlockAll(); onboardStep = () => GUIDE_STEPS.find(s => s.id === 'bench'); setTab('camp'); ui(true); true`);
+          await page.waitForFunction(() => !!document.querySelector('#camp-b-bench .cb-quick'));
+          // Native scroll, with enough space around the existing target to test both directions.
+          await X(`globalThis.__c2Target = onboardSpec('bench').node;
+            globalThis.__c2Above = document.createElement('div'); __c2Above.style.height = '100px'; __c2Target.parentNode.before(__c2Above);
+            const tail = document.createElement('div'); tail.style.height = '700px'; $('sec-camp-buildings').append(tail);
+            $('panels').style.overflowAnchor = 'none'; $('panels').style.scrollBehavior = 'auto';
+            onboardStep = () => null; window.__c2GuideTick(); $('panels').scrollTop = 0;
+            onboardStep = () => GUIDE_STEPS.find(s => s.id === 'bench'); window.__c2GuideTick(); true`);
+          const settle = async (poll = true) => {
+            await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+            if (poll) await page.evaluate(() => window.__c2GuideTick());
+          };
+          const read = () => X(`(() => {
+            const n = onboardSpec('bench').node, r = n.getBoundingClientRect(), p = $('panels'), pr = p.getBoundingClientRect();
+            const ring = document.querySelector('.ob-ring'), rr = ring.getBoundingClientRect();
+            return { same: n === __c2Target, top: r.top, bottom: r.bottom, scroll: p.scrollTop,
+              visible: r.top >= pr.top && r.bottom <= pr.bottom, shown: !ring.parentNode.hidden,
+              error: Math.max(Math.abs(rr.left - (r.left - 4)), Math.abs(rr.top - (r.top - 4)), Math.abs(rr.width - (r.width + 8)), Math.abs(rr.height - (r.height + 8))) };
+          })()`);
+          await settle();
+          const revealed = await read();
+          assert(revealed.same && revealed.visible && revealed.shown && revealed.scroll > 0 && revealed.error <= 2,
+            `C2 ${at}: first showing an offscreen target still scrolls it into view (${JSON.stringify(revealed)})`);
+          // Put the target in the panel's middle, then let the scroll event reach the guide.
+          await X(`const p = $('panels'), r = __c2Target.getBoundingClientRect(), pr = p.getBoundingClientRect(); p.scrollTop += r.top - pr.top - 70; true`);
+          await settle();
+          const initial = await read();
+          assert(initial.same && initial.visible && initial.shown && initial.error <= 2, `C2 ${at}: the real Workbench target starts visible and marked (${JSON.stringify(initial)})`);
+          await X(`$('panels').scrollTop += 18; true`);
+          await settle(false);
+          const scrolled = await read();
+          assert(scrolled.same && scrolled.visible && scrolled.shown && Math.abs(scrolled.top - initial.top + 18) <= 2 && Math.abs(scrolled.scroll - initial.scroll - 18) <= 2 && scrolled.error <= 2,
+            `C2 ${at}: native panel scrolling tracks a visible target within 2px before the next guide poll (${JSON.stringify(scrolled)})`);
+          await X(`__c2Above.style.height = '124px'; true`);
+          await settle();
+          const reflow = await read();
+          assert(reflow.same && reflow.visible && reflow.shown && Math.abs(reflow.top - scrolled.top - 24) <= 2 && reflow.scroll === scrolled.scroll && reflow.error <= 2,
+            `C2 ${at}: content reflow above the same target moves its ring within 2px without scrolling (${JSON.stringify(reflow)})`);
+          await X(`$('panels').scrollTop += 240; true`);
+          const away = await read();
+          await settle();
+          for (let i = 0; i < 3; i++) await page.evaluate(() => window.__c2GuideTick());
+          const stayed = await read();
+          assert(!away.visible && stayed.same && stayed.scroll === away.scroll && Math.abs(stayed.top - away.top) <= 2,
+            `C2 ${at}: scrolling away from a target stays where the player left it across guide polls (${JSON.stringify(stayed)})`);
+          await page.evaluate(() => dispatchEvent(new Event('resize')));
+          const resized = await read();
+          assert(resized.scroll === away.scroll && Math.abs(resized.top - away.top) <= 2,
+            `C2 ${at}: a resize notification does not pull the player back to an offscreen target`);
+          // A stage animation can move the same node without changing the guide: preserve HINT1's cache.
+          await X(`closeMenu(); setActivity('fight'); mob.boss = true; onboardStep = () => GUIDE_STEPS.find(s => s.id === 'boss'); window.__c2GuideTick(); true`);
+          const stageRead = () => X(`(() => { const sp = onboardSpec('boss'), r = sp.node.getBoundingClientRect(), ring = document.querySelector('.ob-ring');
+            return { stage: sp.node === $('stage'), top: r.top, shown: !ring.parentNode.hidden, transform: ring.style.transform }; })()`);
+          const stage0 = await stageRead();
+          await X(`$('stage').style.transform = 'translateY(13px)'; window.__c2GuideTick(); true`);
+          const stage1 = await stageRead();
+          assert(stage0.stage && stage0.shown && stage1.stage && stage1.shown && Math.abs(stage1.top - stage0.top - 13) <= 2 && stage1.transform === stage0.transform,
+            `C2 ${at}: a moving stage keeps the cached guide marker (${JSON.stringify({ stage0, stage1 })})`);
+          assert(!errs.length, `C2 ${at}: no browser errors during guide tracking` + (errs.length ? ': ' + errs[0] : ''));
+        } finally { await ctx.close(); }
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('C2 guide tracking crashed: ' + (e.stack || e)); }
+
+// ---- C4: a gatherer's two-hour trade run reserves raw cargo and settles exactly once ----
+if (section('gatherer trade runs (C4)')) try {
+  const HOUR = 3600e3, T0 = Date.UTC(2026, 8, 28, 12), games = [];
+  const clock = (g, t) => g.eval(`Date.__t=${t}; Date.now=()=>Date.__t`);
+  const mk = () => {
+    const g = loadCore({ seed: 7401, prelude: `Date.__t=${T0}; Date.now=()=>Date.__t` }); games.push(g);
+    g.eval('S.maxZone=95; S.camp.open=true; S.camp.b.hearth=2; S.camp.b.tavern=2; S.camp.b.store=8; S.gold=1e6; for(const sk of ["mine","wood","forage"]) S.skills[sk].lv=100; tick(1.2); for(const a of Object.values(S.mats)) if(Array.isArray(a)) a.fill(10000)');
+    return g;
+  };
+  const reload = (g, t = T0) => {
+    g.eval('save()');
+    const h = loadCore({ seed: 7402, storage: memoryStorage({ [KEY]: g.storage.get(KEY) }), prelude: `Date.__t=${t}; Date.now=()=>Date.__t` }); games.push(h); return h;
+  };
+  const untouched = g => g.eval('JSON.stringify([S.mats,S.gold,S.hands.list,S.hands.hrs,S.hands.got,S.skills,S.tools.m,S.econ])');
+  {
+    const g = mk(), E = s => g.eval(s);
+    E('S.camp.b.tavern=1');
+    assert(!E('handsTradeQuote("tam",[["wood",1,100]]).ok') && !E('handsTradeSend("tam",[["wood",1,100]])'), 'C4: Tavern 1 cannot quote or start a trade');
+    E('S.camp.b.tavern=2; S.camp.b.hearth=1');
+    assert(!E('handsTradeQuote("tam",[["wood",1,100]]).ok'), 'C4: trade also requires the gatherers to be open');
+    E('S.camp.b.hearth=2');
+    const before = untouched(g), q = E('handsTradeQuote("tam",[["wood",1,2000],["wood",2,2000],["wood",3,1000]])');
+    assert(q.ok && q.secs === 7200 && q.cap === 5000 && q.units === 5000 && q.lines.length === 3 && q.gold > 0, 'C4: an open Tavern 2 quotes a two-hour trip with exactly 5,000 units across three lines');
+    assert(untouched(g) === before, 'C4: quoting cargo does not reserve stock, spend gold or change the gatherer');
+    const quoted = E('handsTradeQuote("tam",[["wood",1,5000]]).gold');
+    E('Object.assign(handsGet("tam"),{r:"common",lv:20,tr:["strong","lucky"],cl:"felling"})');
+    assert(E('handsTradeQuote("tam",[["wood",1,5000]]).gold') === quoted, 'C4: rarity, levels and gathering traits do not multiply trade prices');
+    for (const [sk, allowed] of [['wood',['wood']],['mine',['ore','crystal']],['forage',['fibre','herb']],['any',['ore','wood','crystal','fibre','herb']]]) {
+      E(`handsGet("tam").sk=${JSON.stringify(sk)}`);
+      const offered = E('handsTradeCargo("tam")');
+      assert(offered.length > 0 && offered.every(n=>allowed.includes(n.kind) && n.t>=1 && n.t<=3), `C4: ${sk} cargo offers only its own unlocked grade 1–3 raw materials`);
+      assert(allowed.every(kind=>E(`handsTradeQuote("tam",[[${JSON.stringify(kind)},1,100]]).ok`)), `C4: ${sk} can trade every supported family of its profession`);
+    }
+    E('handsGet("tam").sk="wood"; S.skills.wood.lv=1');
+    assert(!E('handsTradeQuote("tam",[["wood",2,1]]).ok') && E('handsTradeCargo("tam").every(n=>n.t===1)'), 'C4: owned stock cannot bypass the hero’s node unlocks');
+  }
+  {
+    const g = mk(), E = s => g.eval(s);
+    const invalid = ['null','[]','{}','[["wood",1,0]]','[["wood",1,-1]]','[["wood",1,0.5]]','[["wood",1,NaN]]','[["wood",1,Infinity]]','[["wood",1,5001]]','[["wood",1,1],["wood",1,2]]','[["wood",1,1],["wood",2,1],["wood",3,1],["ore",1,1]]','[["ore",1,1]]','[["hide",1,1]]','[["ess",1,1]]','[["fake",1,1]]','[["wood",4,1]]','[["wood",0,1]]','[["wood",1.5,1]]','[["wood",1]]','[null]'];
+    for (const cargo of invalid) {
+      const before = untouched(g);
+      assert(!E(`handsTradeQuote("tam",${cargo}).ok`) && !E(`handsTradeSend("tam",${cargo})`) && untouched(g) === before, `C4: malformed or ineligible cargo ${cargo} is rejected without side effects`);
+    }
+    assert(!E('handsTradeQuote("missing",[["wood",1,1]]).ok') && !E('handsTradeSend("missing",[["wood",1,1]])'), 'C4: a stale gatherer id cannot reserve cargo');
+    E('globalThis.__quote=handsTradeQuote("tam",[["wood",1,1000]]); S.mats.wood[0]=999');
+    const before = untouched(g);
+    assert(!E('handsTradeSend("tam",[["wood",1,1000]],__quote)') && untouched(g) === before, 'C4: Send rechecks stock after the quote and never makes a partial reservation');
+    E('S.mats.wood[0]=10000; S.mats.wood[1]=0');
+    const partial = untouched(g);
+    assert(!E('handsTradeSend("tam",[["wood",1,100],["wood",2,100]])') && untouched(g) === partial, 'C4: an unavailable later cargo line leaves every earlier line unreserved');
+    E('S.mats.wood[0]=10000; handsGet("tam").pack=[["wood",1,1]]');
+    assert(!E('handsTradeSend("tam",[["wood",1,100]])'), 'C4: a waiting pack prevents a trade departure');
+    E('handsGet("tam").pack=[]; handsSend("tam","wood",1,{shifts:2})');
+    assert(!E('handsTradeSend("tam",[["wood",1,100]])'), 'C4: a gathering shift prevents a trade departure');
+    clock(g,T0+4*HOUR); E('handsCatchUp(Date.now())');
+    assert(E('handsStatus("tam").st==="rest"') && !E('handsTradeSend("tam",[["wood",1,100]])'), 'C4: the rest between prepaid shifts is still busy for trade');
+  }
+  {
+    const g = mk(), E = s => g.eval(s);
+    E('handsGet("tam").last={kind:"wood",t:2,shifts:2}; globalThis.__cargo=[["wood",1,1500],["wood",2,1000]]; globalThis.__quote=handsTradeQuote("tam",__cargo)');
+    const q = E('__quote'), money = E('S.gold'), inventory = E('S.mats.wood.slice()'), trophies = E('JSON.stringify(S.craft.troph)');
+    const stats = E('JSON.stringify([handsGet("tam").lv,handsGet("tam").xp,handsGet("tam").hrs,handsGet("tam").sent,handsGet("tam").last,S.hands.hrs,S.skills,S.tools.m,S.econ.spent])');
+    assert(E('!!handsTradeSend("tam",__cargo,__quote)') && E('S.gold') === money && E('S.mats.wood[0]') === inventory[0]-1500 && E('S.mats.wood[1]') === inventory[1]-1000, 'C4: Send atomically reserves each cargo line and charges no fee');
+    assert(E('handsGet("tam").job.role==="trade" && handsGet("tam").job.end-handsGet("tam").job.start===7200000') && !E('handsCanSend("tam","wood",1).ok') && E('handsSendAgain("tam")') === 0, 'C4: the trade occupies the normal busy slot for exactly two hours');
+    assert(E('handsTalkInfo("tam").line.includes("Mossy Hollow") && handsStatus("tam").role==="trade"'), 'C4: camp conversation describes the trade destination without treating it as a gathering node');
+    const sent = untouched(g);
+    assert(!E('handsTradeSend("tam",__cargo,__quote)') && untouched(g) === sent, 'C4: a double Send cannot reserve the same cargo twice');
+    const h = reload(g), F = s => h.eval(s);
+    clock(g,T0+2*HOUR-1); E('handsCatchUp(Date.now())');
+    assert(E('S.gold') === money && E('!!handsGet("tam").job'), 'C4: a trade has no payout before its two-hour completion');
+    clock(g,T0+2*HOUR); E('handsCatchUp(Date.now())');
+    clock(h,T0+2*HOUR); F('emit("away",{})');
+    assert(E('S.gold') === money+q.gold && F('S.gold') === money+q.gold && E('!handsGet("tam").job') && F('!handsGet("tam").job'), 'C4: live and saved offline completion pay the frozen gold exactly once');
+    assert(E('S.trade.trips===1 && S.trade.sold===2500') && E('S.trade.gold') === q.gold && E('S.econ.earned.trade') === q.gold, 'C4: the trade and economy ledgers record one trip and its exact gold reward');
+    assert(E('JSON.stringify(S.mats)') === F('JSON.stringify(S.mats)') && E('S.mats.wood[0]') === inventory[0]-1500 && E('S.mats.wood[1]') === inventory[1]-1000 && E('handsGet("tam").pack.length') === 0 && E('JSON.stringify(S.craft.troph)') === trophies, 'C4: completion consumes reserved cargo and grants no materials or trophies');
+    assert(E('JSON.stringify([handsGet("tam").lv,handsGet("tam").xp,handsGet("tam").hrs,handsGet("tam").sent,handsGet("tam").last,S.hands.hrs,S.skills,S.tools.m,S.econ.spent])') === stats, 'C4: a trade leaves XP, work hours, Tam’s free shifts, last gathering job and spending unchanged');
+    E('handsCatchUp(Date.now()); handsRecall("tam"); emit("away",{})'); F('handsCatchUp(Date.now()); handsRecall("tam")');
+    assert(E('S.gold') === money+q.gold && F('S.gold') === money+q.gold, 'C4: repeated catch-up, away and Recall after completion cannot pay or refund twice');
+    const again = reload(g,T0+8*HOUR); again.eval('handsCatchUp(Date.now()); handsRecall("tam")');
+    assert(again.eval('S.gold') === money+q.gold, 'C4: reloading an already settled trip cannot restore its reservation or reward');
+  }
+  {
+    const g = mk(), E = s => g.eval(s), money = E('S.gold'), stock = E('S.mats.wood[0]');
+    E('handsTradeSend("tam",[["wood",1,5000]])'); clock(g,T0+HOUR);
+    assert(E('handsRecall("tam")') && E('S.gold') === money && E('S.mats.wood[0]') === stock && E('!handsGet("tam").job'), 'C4: an early recall returns the full reserved cargo with no reward');
+    assert(!E('handsRecall("tam")') && E('S.mats.wood[0]') === stock, 'C4: repeated early recall cannot duplicate cargo');
+    const h = mk(), F = s => h.eval(s);
+    F('handsTradeSend("tam",[["wood",1,5000]]); S.mats.wood[0]=storeCap("wood",1)'); clock(h,T0+HOUR);
+    const full = F('S.mats.wood[0]');
+    assert(F('handsRecall("tam")') && F('S.mats.wood[0]') === full && F('handsGet("tam").pack.reduce((n,l)=>n+l[2],0)') === 5000, 'C4: recalled cargo waits in the pack when the Storehouse has filled during the trip');
+    const saved = reload(h,T0+HOUR); saved.eval('S.mats.wood[0]-=5000; handsCatchUp(Date.now())');
+    assert(saved.eval('S.mats.wood[0]') === full && saved.eval('handsGet("tam").pack.length===0 && handsGet("tam").got===0 && S.hands.got===0'), 'C4: a saved waiting refund unloads without counting existing cargo as newly gathered material');
+    F('handsRecall("tam"); handsCatchUp(Date.now()); S.mats.wood[0]-=5000; handsCatchUp(Date.now())');
+    assert(F('S.mats.wood[0]') === full && F('handsGet("tam").pack.length') === 0, 'C4: making room unloads the recalled cargo once without overflow or loss');
+  }
+  {
+    const g = mk(), E = s => g.eval(s), h = mk(), F = s => h.eval(s);
+    const before = untouched(g), demand = E('handsTradeDemand()');
+    assert(demand.lines.length === 15 && demand.lines.filter(x=>x.demand>=130&&x.demand<=160).length === 3 && demand.lines.filter(x=>x.demand>=60&&x.demand<=80).length === 2 && demand.lines.filter(x=>x.demand===100).length === 10, 'C4: each weekly market has three wanted lines, two gluts and ten normal raw lines');
+    assert(new Set(demand.lines.map(x=>x.kind+':'+x.t)).size === 15 && demand.lines.every(x=>['ore','wood','crystal','fibre','herb'].includes(x.kind)&&x.t>=1&&x.t<=3), 'C4: demand covers the fifteen supported family/grade pairs without duplicate rows');
+    E('handsTradeDemand(); handsTradeQuote("tam",[["wood",1,5000]]); handsTradeDemand()');
+    assert(untouched(g) === before && E('Math.random()') === F('Math.random()') && E('JSON.stringify(handsTradeDemand())') === F('JSON.stringify(handsTradeDemand())'), 'C4: market quotes are deterministic reads and do not consume the game random stream');
+    const monday = Date.UTC(2026,9,5), at = ms => E(`handsTradeDemand(${ms})`);
+    assert(at(monday-1).week === demand.week && at(monday).week !== demand.week && JSON.stringify(at(monday).lines) !== JSON.stringify(demand.lines), 'C4: market demand changes at UTC Monday, not during the preceding week');
+    E('globalThis.__oldQuote=handsTradeQuote("tam",[["wood",1,5000]])'); clock(g,monday);
+    const stale = untouched(g);
+    assert(!E('handsTradeSend("tam",[["wood",1,5000]],__oldQuote)') && untouched(g) === stale, 'C4: a prior-week review cannot send cargo until the player gets a fresh quote');
+    clock(h,monday-HOUR); F('globalThis.__fixed=handsTradeQuote("tam",[["wood",1,5000]]); handsTradeSend("tam",[["wood",1,5000]],__fixed)');
+    const money = F('S.gold'), quoted = F('__fixed.gold');
+    clock(h,monday+HOUR); F('handsCatchUp(Date.now())');
+    assert(F('S.gold') === money+quoted, 'C4: a trip crossing the weekly reset pays the quote frozen at its departure');
+    const retune = mk(), R = s => retune.eval(s), gold = R('S.gold');
+    const fixed = R('handsTradeQuote("tam",[["wood",1,5000]]).gold');
+    R('handsTradeSend("tam",[["wood",1,5000]]); ECON.famW.gathered*=1.25'); clock(retune,T0+2*HOUR); R('handsCatchUp(Date.now())');
+    assert(R('S.gold') === gold+fixed, 'C4: a reasonable economy retune does not reprice or invalidate an existing frozen quote');
+    const edge = mk(); edge.eval(`globalThis.__reads=0; Date.now=()=>++__reads===1?${monday-1}:${monday+1}; handsTradeSend("tam",[["wood",1,5000]])`);
+    assert(edge.eval('handsTradeValid(handsGet("tam").job)') && edge.eval('handsGet("tam").job.start') === monday-1, 'C4: Send crossing UTC Monday uses one timestamp for the saved price week and departure');
+  }
+  {
+    const g = mk(), E = s => g.eval(s), money = E('S.gold');
+    const q = E('handsTradeQuote("tam",[["wood",1,5000]])');
+    E('handsTradeSend("tam",[["wood",1,5000]])'); clock(g,T0+3*HOUR);
+    E('handsRecall("tam")');
+    assert(E('S.gold') === money+q.gold && E('S.mats.wood[0]') === 5000 && E('!handsGet("tam").job'), 'C4: recalling an already completed trip settles its reward without returning the sold cargo');
+    for (const damage of ['handsGet("tam").job.end=-1','handsGet("tam").job.quote.gold=1e12','handsGet("tam").job.quote.micros[0]=-1','handsGet("tam").job.quote.micros[0]=1e12; handsGet("tam").job.quote.gold=1e9','handsGet("tam").job.cargo[0][2]=-1','handsGet("tam").job.cargo.push(["fake",1,5000])']) {
+      const a = mk(); a.eval('handsTradeSend("tam",[["wood",1,1000]])'); const gold = a.eval('S.gold'); a.eval(damage);
+      const b = reload(a,T0+3*HOUR); b.eval('handsCatchUp(Date.now()); handsRecall("tam"); handsCatchUp(Date.now())');
+      const settled = b.eval('JSON.stringify([S.gold,S.mats,handsGet("tam").pack])'); b.eval('handsCatchUp(Date.now()); handsRecall("tam")');
+      assert(b.eval('S.gold') === gold && b.eval('!handsGet("tam").job') && b.eval('S.mats.wood[0]+handsGet("tam").pack.filter(l=>l[0]==="wood"&&l[1]===1).reduce((n,l)=>n+l[2],0)') <= 10000 && b.eval('JSON.stringify([S.gold,S.mats,handsGet("tam").pack])') === settled, `C4: malformed saved trade fails closed without profit or repeat refund (${damage})`);
+    }
+  }
+  {
+    const g = mk(), E = s => g.eval(s);
+    E('Object.assign(handsGet("tam"),{key:null,tr:["friendly"],cl:"felling"}); S.hands.list.push({...JSON.parse(JSON.stringify(handsGet("tam"))),id:"c4-worker",n:"Worker",tr:[],cl:null}); handsTradeSend("tam",[["wood",1,1000]]); handsSend("c4-worker","wood",1)');
+    assert(E('handsGet("c4-worker").job.bo.length') === 0, 'C4: a trading Friendly/Felling gatherer gives no overlap bonus to a gathering partner');
+    const h = mk(), F = s => h.eval(s);
+    F('Object.assign(handsGet("tam"),{key:null,tr:["friendly"],cl:"felling"}); S.hands.list.push({...JSON.parse(JSON.stringify(handsGet("tam"))),id:"c4-trader",n:"Trader",tr:[],cl:null}); handsSend("tam","wood",1); globalThis.__gatherBefore=JSON.stringify(handsGet("tam").job.bo); handsTradeSend("c4-trader",[["wood",1,1000]])');
+    assert(F('JSON.stringify(handsGet("tam").job.bo)===__gatherBefore && !handsGet("c4-trader").job.bo'), 'C4: sending a trader cannot retroactively create gathering overlap windows');
+  }
+  {
+    const g = mk(), E = s => g.eval(s);
+    E('S.gold=0');
+    assert(E('!!handsTradeSend("tam",[["wood",1,100]])') && E('S.gold') === 0, 'C4: a gatherer can depart with cargo even when the player has no gold');
+    E('S.camp.b.tavern=0; S.camp.b.hearth=1'); clock(g,T0+2*HOUR); E('tick(1.2)');
+    assert(E('!handsGet("tam").job && S.gold>0'), 'C4: an existing trip still returns after a loaded save lowers the opening buildings');
+    const h = mk(), F = s => h.eval(s);
+    F('S.hands.list.push({...JSON.parse(JSON.stringify(handsGet("tam"))),id:"c4-small",n:"Small"}); globalThis.__big=handsTradeQuote("tam",[["wood",1,1000]]).gold; globalThis.__small=handsTradeQuote("c4-small",[["wood",1,100]]).gold; handsTradeSend("tam",[["wood",1,1000]]); handsTradeSend("c4-small",[["wood",1,100]]); S.gold=Number.MAX_SAFE_INTEGER-50');
+    clock(h,T0+2*HOUR); F('handsCatchUp(Date.now())');
+    assert(F('!!handsGet("tam").job && !handsGet("c4-small").job && Number.isSafeInteger(S.gold) && S.trade.trips===1'), 'C4: a numerically unsafe gold credit waits without blocking another payable return');
+    F('S.gold=0; handsCatchUp(Date.now()); handsCatchUp(Date.now())');
+    assert(F('!handsGet("tam").job && S.gold===__big && S.trade.trips===2'), 'C4: spending down the gold balance lets the deferred trip settle exactly once');
+  }
+  {
+    const g = mk(), E = s => g.eval(s);
+    E('S.maxZone=12; S.skills.wood.lv=1; S.mats.wood[0]=5000; globalThis.__diagnostic=handsTradeDiagnostic("tam",[["wood",1,5000]])');
+    const d = E('__diagnostic'), alternative = d.gather.find(x=>x.kind==='wood'&&x.t===1), q = d.quote;
+    E('S.mats.wood[0]=0; handsSend("tam","wood",1)'); clock(g,T0+2*HOUR); E('handsRecall("tam")');
+    const actual = E('S.mats.wood[0]'), unitGold = q.gold/5000;
+    assert(alternative && Number.isFinite(alternative.marketGold) && Math.abs(actual-alternative.units)<=1, 'C4: the comparison uses the same worker’s actual two-hour gathering yield, within seeded rounding');
+    ok(`C4 diagnostic: 5,000 stored grade-1 logs trade for ${(q.gold/2).toFixed(2)} gold/hour; the same worker gathers ${actual} logs in two hours, worth ${(actual*unitGold/2).toFixed(2)} gold/hour at that market price (gathering fee ${alternative.shiftFee}; cargo is pre-existing stock, not produced by the trade)`);
+  }
+  // Exercise the shipped offline picker with real stock/prices; the small DOM adapter only supplies browser primitives.
+  {
+    const { coreFiles } = await import('./lib/core.mjs');
+    const stub = `Date.__t=${T0}; Date.now=()=>Date.__t;
+      class TradeNode {
+        constructor(t='div',c='',s=''){this.tagName=t.toUpperCase();this.className=c||'';this.children=[];this.dataset={};this.attrs={};this.events={};this.style={setProperty(k,v){this[k]=v;}};this._text=s||'';this.hidden=false;this.classList={add:c=>{this.className+=' '+c;}};}
+        append(...ns){for(const n of ns){n.remove?.();this.children.push(n);n.parentNode=this;}} appendChild(n){this.append(n);return n;}
+        prepend(...ns){for(const n of ns.reverse()){n.remove?.();this.children.unshift(n);n.parentNode=this;}}
+        remove(){if(this.parentNode)this.parentNode.children=this.parentNode.children.filter(n=>n!==this);this.parentNode=null;}
+        insertBefore(n,b){n.remove?.();const i=this.children.indexOf(b);if(i<0)this.append(n);else{this.children.splice(i,0,n);n.parentNode=this;}}
+        after(n){this.parentNode.insertBefore(n,this.nextSibling);} get firstChild(){return this.children[0]||null;} get nextSibling(){return this.parentNode?.children[this.parentNode.children.indexOf(this)+1]||null;}
+        get isConnected(){return document.body.contains(this);} contains(n){return this===n||this.children.some(c=>c.contains(n));}
+        set textContent(s){this._text=String(s);for(const n of this.children)n.parentNode=null;this.children=[];} get textContent(){return this._text+this.children.map(n=>n.textContent).join('');}
+        setAttribute(k,v){this.attrs[k]=String(v);} getAttribute(k){return this.attrs[k]??null;}
+        addEventListener(k,f){(this.events[k]||(this.events[k]=[])).push(f);} fire(k){for(const f of this.events[k]||[])f({target:this,preventDefault(){}});} click(){if(!this.disabled)this.fire('click');} focus(){document.activeElement=this;}
+        querySelectorAll(s){const out=[],match=n=>s[0]==='#'?n.id===s.slice(1):s[0]==='.'?n.className.split(' ').includes(s.slice(1)):s==='input[data-kind]'?n.tagName==='INPUT'&&!!n.dataset.kind:s==='input:not(:disabled)'?n.tagName==='INPUT'&&!n.disabled:s==='[data-left]'?!!n.dataset.left:n.tagName===s.toUpperCase();const walk=n=>{for(const c of n.children){if(match(c))out.push(c);walk(c);}};walk(this);return out;}
+        querySelector(s){return this.querySelectorAll(s)[0]||null;} matches(s){return s==='input[data-kind]'&&this.tagName==='INPUT'&&!!this.dataset.kind;}
+      }
+      const document={body:new TradeNode('body'),activeElement:null,querySelector(s){return this.body.querySelector(s);}};
+      const el=(t,c,s)=>new TradeNode(t,c,s),img=()=>el('img'),iconURL=()=>'',matIcon=()=>'',__sections={};
+      const registerSection=(tab,s)=>{__sections[s.id]=s;},ui=()=>{for(const s of Object.values(__sections))if(s.__mounted)s.update();};
+    `;
+    const g = loadCore({ seed: 7403, prelude: stub, files: coreFiles().concat(['74-ui-hands.js','74b-ui-trade.js']) }); games.push(g); const E = s => g.eval(s);
+    E('S.maxZone=12; S.camp.open=true; S.camp.b.hearth=2; S.camp.b.tavern=2; S.camp.b.store=8; S.gold=1e6; S.skills.wood.lv=100; tick(1.2); S.mats.wood.fill(10000); globalThis.__panel=el("div"); globalThis.__crew=el("section"); __crew.id="sec-hands-crew"; globalThis.__trade=el("section"); __trade.id="sec-hands-trade"; __panel.append(__crew,__trade); document.body.append(__panel); __sections["hands-crew"].mount(__crew); __sections["hands-crew"].__mounted=true; __sections["hands-trade"].mount(__trade); __sections["hands-trade"].__mounted=true; ui()');
+    E('__crew.querySelectorAll("button").find(b=>b.textContent==="Trade run").click()');
+    assert(E('!__trade.hidden && __trade.querySelectorAll("input[data-kind]").length===3 && __trade.querySelectorAll("input[data-kind]").every(i=>i.dataset.kind==="wood" && Number(i.dataset.t)<=3)'), 'C4: the actual crew Trade action opens only the woodcutter’s three eligible cargo grades');
+    E('S.camp.b.tavern=1; ui()');
+    assert(E('__trade.textContent.includes("Tavern 2") && !__trade.querySelector("input")'), 'C4: the locked picker explains the Tavern 2 gate without exposing cargo controls');
+    E('S.camp.b.tavern=2; handsTradeOpenPicker("tam"); globalThis.__input=__trade.querySelectorAll("input[data-kind]").find(i=>Number(i.dataset.t)===1); __input.value="5000"; __input.fire("input")');
+    assert(E('__trade.querySelectorAll("button").some(b=>b.textContent==="Review quote") && !handsGet("tam").job && S.mats.wood[0]===10000'), 'C4: entering cargo previews a quote without reserving anything');
+    E('__trade.querySelectorAll("button").find(b=>b.textContent==="Review quote").click()');
+    assert(E('__trade.querySelectorAll("button").some(b=>b.textContent==="Send trade run") && !handsGet("tam").job'), 'C4: reviewing a quote exposes Send while leaving the cargo in storage');
+    E('S.mats.wood[0]=4999; __trade.querySelectorAll("button").find(b=>b.textContent==="Send trade run").click()');
+    assert(E('!handsGet("tam").job && S.mats.wood[0]===4999 && !__trade.querySelectorAll("button").some(b=>b.textContent==="Send trade run")'), 'C4: the real Send handler rejects stock spent after review without taking cargo');
+    E('ui(); __trade.querySelectorAll("button").find(b=>b.textContent==="Review quote").click()'); clock(g,T0+7*24*HOUR); E('ui()');
+    assert(E('!handsGet("tam").job && __trade.querySelectorAll("button").some(b=>b.textContent==="Review quote") && !__trade.querySelectorAll("button").some(b=>b.textContent==="Send trade run")'), 'C4: a weekly market refresh requires a new review in the live picker');
+    E('globalThis.__input=__trade.querySelectorAll("input[data-kind]").find(i=>Number(i.dataset.t)===1); __input.value="1000"; __input.fire("input"); globalThis.__expected=handsTradeQuote("tam",[["wood",1,1000]]); __trade.querySelectorAll("button").find(b=>b.textContent==="Review quote").click(); __trade.querySelectorAll("button").find(b=>b.textContent==="Send trade run").click()');
+    assert(E('handsGet("tam").job.role==="trade" && S.mats.wood[0]===3999 && S.gold===1e6 && __trade.textContent.includes(fmt(__expected.gold)+" gold")'), 'C4: the reviewed UI Send reserves once and shows the actual frozen gold due');
+    assert(E('__crew.querySelectorAll("button").find(b=>b.textContent==="Trade run").disabled && __crew.querySelectorAll("button").find(b=>b.textContent==="Send on a job").disabled'), 'C4: the crew card blocks trade and gathering while the run is active');
+    E('__crew.querySelectorAll("button").find(b=>b.textContent==="Recall").click()');
+    assert(E('!!handsGet("tam").job'), 'C4: the first Recall press only arms the in-page confirmation');
+    E('__crew.querySelectorAll("button").find(b=>b.textContent==="Tap again: recall trade").click()');
+    assert(E('!handsGet("tam").job && S.mats.wood[0]===4999 && S.gold===1e6 && !__trade.querySelectorAll("button").some(b=>b.textContent==="Send trade run")'), 'C4: confirmed UI Recall returns cargo with no reward and repeating requires a new quote review');
+  }
+  assert(!games.some(g=>g.errors.length), 'C4: trade validation, settlement and recall produce no handler errors');
+} catch (e) { fail('C4 gatherer trade runs crashed: ' + (e.stack || e)); }
+
+// ---- C4/C5: active trades and waiting refunds survive strict save codes and subsequent loads ----
+if (section('trade save compatibility (C4, C5)')) try {
+  const T0 = Date.UTC(2026, 8, 28, 12), games = [];
+  const mk = (raw, at = T0) => {
+    const g = loadCore({ seed: 7450, storage: memoryStorage(raw ? { [KEY]: raw } : {}), prelude: `Date.__t=${at}; Date.now=()=>Date.__t` }); games.push(g); return g;
+  };
+  const g = mk(), E = s => g.eval(s);
+  E('soloPick("wren"); S.maxZone=12; S.camp.open=true; S.camp.b.hearth=2; S.camp.b.tavern=2; S.camp.b.store=8; S.gold=10000; tick(1.2); S.mats.wood[0]=5000; handsGet("tam").last={kind:"wood",t:1,shifts:2}; handsTradeSend("tam",[["wood",1,1000]]); save()');
+  const before = E('JSON.stringify(S)'), active = E('decodeSave(encodeSave(S))');
+  assert(active.ok && !deepDiff(JSON.parse(before), active.data) && E('JSON.stringify(S)') === before, 'C4/C5: a real active trade code preserves every field without mutating the live save');
+  const raw = JSON.stringify(active.data), job = active.data.hands.list.find(h => h.id === 'tam').job, gold = active.data.gold;
+  const freshGame = mk(), F = s => freshGame.eval(s), untouched = F('JSON.stringify(S)');
+  const validated = F(`decodeSave(${JSON.stringify(E('encodeSave(S)'))})`);
+  assert(validated.ok && !deepDiff(active.data, validated.data) && F('JSON.stringify(S)') === untouched, 'C4/C5: a fresh game can validate an active trade import without needing the importer’s camp or cargo state');
+  const { saveCodeFor } = await import('./savecode.mjs');
+  const cliCode = saveCodeFor(raw), cli = F(`decodeSave(${JSON.stringify(cliCode)})`);
+  assert(cli.ok && !deepDiff(job, cli.data.hands.list.find(h => h.id === 'tam').job), 'C4/C5: the CLI preserves active cargo, departure time and frozen quote');
+  for (const mutate of [s => s.hands.list[0].job.quote.gold++, s => s.hands.list[0].job.end++, s => s.hands.list[0].job.cargo[0][2] = -1]) {
+    const bad = JSON.parse(raw); mutate(bad);
+    assert(!F(`validateSave(${JSON.stringify(bad)}).ok`) && F('JSON.stringify(S)') === untouched, 'C4/C5: malformed imported trade data is rejected before changing the live game');
+  }
+  const h = mk(raw, T0 + 3600e3), H = s => h.eval(s);
+  assert(H('handsTradeValid(handsGet("tam").job)') && !deepDiff(job, H('handsGet("tam").job')) && H('S.mats.wood[0]') === 4000 && H('S.gold') === gold,
+    'C4/C5: loading the validated candidate preserves the reserved cargo and quote without a second debit or early reward');
+  H('save()');
+  const offline = mk(h.storage.get(KEY), job.end), O = s => offline.eval(s);
+  O('emit("awayBegin",{}); emit("away",{}); emit("awayEnd",{}); save()');
+  assert(O('S.gold') === gold + job.quote.gold && O('!handsGet("tam").job && S.trade.trips===1 && S.trade.sold===1000 && handsGet("tam").last.shifts===2') && O('S.trade.gold') === job.quote.gold,
+    'C4/C5: imported active trade settles once through the real offline event and keeps the previous gathering assignment');
+  const settled = mk(offline.storage.get(KEY), job.end + 3600e3), S = s => settled.eval(s);
+  S('emit("away",{}); handsCatchUp(Date.now()); handsRecall("tam"); handsCatchUp(Date.now())');
+  assert(S('S.gold') === gold + job.quote.gold && S('S.trade.trips===1 && S.trade.log.length===1 && S.mats.wood[0]===4000'), 'C4/C5: reloading the settled save cannot pay again or refund sold cargo');
+  const live = mk(raw, job.end), L = s => live.eval(s);
+  L('globalThis.__tradeNotices=[]; on("toast", e=>__tradeNotices.push(e)); handsCatchUp(Date.now())');
+  assert(L('__tradeNotices.some(e=>{const r=noticeRule(e.msg,e.key); return r && r.id==="hands-trade" && noticeChannel(r,e.msg,e,{guide:false})==="log"})'),
+    'C4: the actual trade completion message matches its quiet notice rule');
+  const refund = mk(raw, T0 + 3600e3), R = s => refund.eval(s);
+  R('S.mats.wood[0]=storeCap("wood",1); handsRecall("tam"); save()');
+  const full = R('S.mats.wood[0]'), stats = R('JSON.stringify([handsGet("tam").got,S.hands.got])'), waiting = R('decodeSave(encodeSave(S))');
+  assert(waiting.ok && waiting.data.hands.list.find(h => h.id === 'tam').pack.some(l => l[3] === 'trade-refund') && !deepDiff(JSON.parse(R('JSON.stringify(S)')), waiting.data),
+    'C4/C5: a recalled trade with a full Storehouse round-trips its waiting refund marker unchanged');
+  const unpacked = mk(JSON.stringify(waiting.data), T0 + 3600e3), U = s => unpacked.eval(s);
+  U('S.mats.wood[0]-=400; handsCatchUp(Date.now()); save()');
+  assert(U('S.mats.wood[0]') === full - 400 && U('handsGet("tam").pack[0][2]===1000 && handsGet("tam").pack[0][3]==="trade-refund"') && U('JSON.stringify([handsGet("tam").got,S.hands.got])') === stats,
+    'C4/C5: a saved refund waits for room for its whole parcel and retains its source marker and original gathering counters');
+  const partialCode = U('decodeSave(encodeSave(S))'), rest = mk(JSON.stringify(partialCode.data), T0 + 3600e3), P = s => rest.eval(s);
+  P('S.mats.wood[0]-=600; handsCatchUp(Date.now()); handsCatchUp(Date.now()); handsRecall("tam"); save()');
+  assert(partialCode.ok && P('S.mats.wood[0]') === full && P('handsGet("tam").pack.length===0 && S.trade.trips===0') && P('S.gold') === gold && P('JSON.stringify([handsGet("tam").got,S.hands.got])') === stats,
+    'C4/C5: another code/import/load cycle unloads the waiting refund exactly once with no gold or gathered-stat gain');
+  assert(!games.some(x => x.errors.length), 'C4/C5: trade save-code and reload paths produce no handler errors');
+} catch (e) { fail('C4/C5 trade save compatibility crashed: ' + (e.stack || e)); }
+
+// ---- C4: real Camp conversation navigation, landscape cargo controls, and C5 import/reload ----
+if (section('camp trade and import (C4, browser)')) try {
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('C4 Camp Trade: Playwright or Chromium not here, skipped');
+  else {
+    const T0 = Date.UTC(2026, 8, 28, 12), fixture = loadCore({ seed: 7460, prelude: `Date.__t=${T0};Date.now=()=>Date.__t` });
+    fixture.eval('soloPick("wren"); S.name="C4 trader"; S.maxZone=12; S.camp.open=true; S.camp.b.hearth=2; S.camp.b.tavern=1; S.camp.b.store=8; S.gold=10000; S.skills.wood.lv=100; tick(1.2); S.mats.wood.fill(10000); onboardUnlockAll(); onboardTips(false); setActivity("gather"); save()');
+    const raw = fixture.storage.get(KEY), html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    // Freeze only the simulation; UI, navigation, import handlers and real reloads still run.
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;soloPickerOpen = () => true; window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    const open = async (width, height, seed) => {
+      const ctx = await browser.newContext({ viewport: { width, height }, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
+      await ctx.addInitScript(({ now, raw, key }) => {
+        Date.__t = Number(sessionStorage.getItem('c4-test-time')) || now; Date.now = () => Date.__t;
+        if (raw && !sessionStorage.getItem('c4-seeded')) { localStorage.setItem(key, raw); sessionStorage.setItem('c4-seeded', '1'); }
+      }, { now: T0, raw: seed, key: KEY });
+      const page = await ctx.newPage(), errs = [];
+      page.on('pageerror', e => errs.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForFunction(() => !!window.__t);
+      return { ctx, page, errs, X: s => page.evaluate(s => window.__t.x(s), s) };
+    };
+    try {
+      for (const [width, height] of [[740, 360], [844, 390]]) {
+        const at = `${width}x${height}`, game = await open(width, height, raw);
+        let exported, departure;
+        try {
+          const { page, X, errs } = game;
+          await X('setTab("camp"); ui(true); true');
+          await page.locator('#camp-scene-hands [data-hand-id="tam"]').click();
+          assert(await page.locator('#hands-talk .hd-trade').isDisabled() && /Tavern (?:level )?2/.test(await page.locator('#hands-talk .hd-trade-lock').innerText()),
+            `C4 ${at}: the Camp conversation shows the Tavern 2 reason on its locked Trade action`);
+          await X('S.camp.b.tavern=2; ui(true); true');
+          assert(await page.locator('#hands-talk .hd-trade').isEnabled(), `C4 ${at}: upgrading the Tavern enables Trade in the already open conversation`);
+          await page.locator('#hands-talk .hd-trade').click();
+          const inputs = page.locator('#sec-hands-trade input[data-kind]');
+          await inputs.first().waitFor({ state: 'visible' });
+          assert(await X('S.tab==="world" && curView("world")==="tav" && $("hands-talk").hidden') && await inputs.count() === 3,
+            `C4 ${at}: the real Camp Trade press closes the conversation and opens this worker’s cargo controls in Tavern`);
+          const input = page.locator('#sec-hands-trade input[data-kind="wood"][data-t="1"]');
+          await input.fill('1000');
+          const review = page.locator('#sec-hands-trade').getByRole('button', { name: 'Review quote', exact: true });
+          await review.scrollIntoViewIfNeeded();
+          const fit = await review.evaluate(b => { const r = b.getBoundingClientRect(), p = document.getElementById('panels'), m = document.getElementById('menu').getBoundingClientRect();
+            const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+            return { ok: r.top >= 0 && r.bottom <= innerHeight && r.left >= m.left && r.right <= m.right && (hit === b || b.contains(hit)) && p.scrollWidth <= p.clientWidth + 1 && document.documentElement.scrollWidth <= innerWidth + 1,
+              top: r.top, bottom: r.bottom, panelOverflow: p.scrollWidth - p.clientWidth }; });
+          assert(fit.ok, `C4 ${at}: cargo review fits the landscape panel, receives a real press and creates no sideways overflow (${JSON.stringify(fit)})`);
+          await review.click();
+          assert(await X('!handsGet("tam").job && S.mats.wood[0]===10000'), `C4 ${at}: reviewing the actual quote leaves cargo in the Storehouse`);
+          const ready = await page.locator('#sec-hands-trade .hd-trade-quote').innerText();
+          assert(ready.includes('Send trade run'), `C4 ${at}: one real Review press exposes Send (${ready.replace(/\n/g, ' ')})`);
+          if (!ready.includes('Send trade run')) throw new Error('Review press did not expose Send');
+          await X('S.mats.wood[1]++; ui(true); true');
+          assert(await page.locator('#sec-hands-trade').getByRole('button', { name: 'Send trade run', exact: true }).evaluate(b => document.activeElement === b),
+            `C4 ${at}: an unrelated stock refresh keeps the reviewed Send action focused`);
+          departure = await X('({quote:handsTradeQuote("tam",[["wood",1,1000]]),gold:S.gold})');
+          await page.locator('#sec-hands-trade').getByRole('button', { name: 'Send trade run', exact: true }).click();
+          const sent = await X('({job:handsGet("tam").job,gold:S.gold,wood:S.mats.wood[0]})');
+          departure.job = sent.job;
+          assert(sent.job?.role === 'trade' && sent.job.quote.gold === departure.quote.gold && sent.gold === departure.gold && sent.wood === 9000,
+            `C4 ${at}: the reviewed Send reserves cargo exactly once with the displayed frozen gold and no fee`);
+          await X('setTab("camp"); ui(true); true');
+          assert(await page.locator('#camp-scene-hands [data-hand-id="tam"]').count() === 0 && /Out 1/.test(await page.locator('#camp-crew-status').innerText()),
+            `C4 ${at}: the departing trader leaves the Camp scene and counts as away`);
+          exported = await X('encodeSave(S)');
+          assert(await X(`decodeSave(${JSON.stringify(exported)}).ok`) && !errs.length, `C4 ${at}: the browser exports an active trade code without page errors`);
+        } finally { await game.ctx.close(); }
+        // A separate fresh game imports through the shipped Check/confirm UI and location.reload().
+        const imported = await open(width, height);
+        try {
+          const { page, X, errs } = imported;
+          await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go');
+          await page.click('#bellBtn'); await page.locator('.nlog-seg button[data-v="journal"]').click();
+          await page.locator('.savecode-import').fill(exported);
+          const panel = page.locator('#sec-savecode');
+          await panel.getByRole('button', { name: 'Check', exact: true }).click();
+          await panel.getByRole('button', { name: 'Replace my save', exact: true }).click();
+          assert(await X('!handsGet("tam")'), `C4/C5 ${at}: checking and arming the trade import leaves the fresh game unchanged`);
+          await Promise.all([page.waitForNavigation({ waitUntil: 'load' }), panel.getByRole('button', { name: 'Yes, replace it', exact: true }).click()]);
+          await page.waitForFunction(() => window.__t && window.__t.x('S.name') === 'C4 trader');
+          const active = await X('({job:handsGet("tam").job,gold:S.gold,wood:S.mats.wood[0]})');
+          assert(!deepDiff(departure.job, active.job) && active.gold === departure.gold && active.wood === 9000,
+            `C4/C5 ${at}: confirmed import and real reload preserve the active job, frozen quote and reserved cargo`);
+          await page.reload(); await page.waitForFunction(() => !!window.__t);
+          assert(await X('handsTradeValid(handsGet("tam").job) && S.mats.wood[0]===9000 && S.trade.trips===0'),
+            `C4/C5 ${at}: a second real reload keeps the trade active without another cargo debit`);
+          await X('Date.__t=handsGet("tam").job.end; sessionStorage.setItem("c4-test-time",String(Date.__t)); handsCatchUp(Date.now()); save(); true');
+          assert(await X('!handsGet("tam").job && S.trade.trips===1') && await X('S.gold') === departure.gold + departure.quote.gold,
+            `C4/C5 ${at}: the imported trade pays its frozen quote once on completion`);
+          await page.reload(); await page.waitForFunction(() => !!window.__t);
+          await X('handsCatchUp(Date.now()); handsRecall("tam"); true');
+          assert(await X('S.trade.trips===1 && S.trade.log.length===1 && S.mats.wood[0]===9000') && await X('S.gold') === departure.gold + departure.quote.gold,
+            `C4/C5 ${at}: reloading after completion cannot repeat the reward or return sold cargo`);
+          assert(!errs.length, `C4/C5 ${at}: real Camp Trade and import/reload flows have no browser errors` + (errs.length ? ': ' + errs[0] : ''));
+        } finally { await imported.ctx.close(); }
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('C4 Camp Trade and import crashed: ' + (e.stack || e)); }
+
 if (section('removed systems (W2-C)')) try {
   const strip = t => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/([^:'"`\\])\/\/[^\n'"`]*$/gm, '$1');
   const files = [];
@@ -5658,6 +6244,7 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
           const fit = async (view, sel) => {
             await X(`setTab(${JSON.stringify(view)}); ui(true); true`); await page.waitForTimeout(350);
             return page.evaluate(sel => { const e = document.querySelector(sel), p = document.getElementById('panels'), m = document.getElementById('menu').getBoundingClientRect(); if (!e || !e.offsetParent) return { ok: false, why: 'missing' };
+              e.scrollIntoView({ block: 'nearest' });
               const r = e.getBoundingClientRect(); return { ok: r.left >= m.left - 1 && r.right <= m.right + 1 && r.top < innerHeight && p.scrollWidth <= p.clientWidth, l: Math.round(r.left), r: Math.round(r.right), t: Math.round(r.top), ml: Math.round(m.left), mr: Math.round(m.right) }; }, sel);
           };
           const tr = await fit('training', '#trainRows'), hb = await fit('tav', '#sec-hands');

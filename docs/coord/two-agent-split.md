@@ -84,7 +84,8 @@ Queue, in order:
 
 ## How Codex reports and gets new work
 
-- **Tasks:** one GitHub issue each, labelled `owner:codex`: C1 #2, C2 #3, C3 #4, C4 #5, C5 #6, C6 #7, C7 #8, C8 #9, C9 hero registry #10, C10 M1 refining #11, C11 deeds merge #12, C12 perf #13, C13 playtest #14.
+- **Tasks:** one GitHub issue each, labelled `owner:codex`: C1 #2, C2 #3, C3 #4, C4 #5, C5 #6, C6 #7, C7 #8, C8 #9, C9 hero registry #10, C10 M1 refining #11, C11 deeds merge #12, C12 perf #13, C13 playtest #14, C14 offline parity #15, C15 Deepwell solo #16 (Codex owns `57d-deepwell.js`, `59c-deepwell-combat.js`, `75-deepwell-ui.js` for it), C16 progress menus #17 (Codex owns the Almanac, Codex, Mastery, Bounties and Stats files for it), C17 accessibility #18, C18 docs and dead code #19.
+- **Order (owner gave Codex extra capacity, 2026-09-30):** C2 → C4 → C8 → C9 → C10 → C11 → C14 → C15 → C16 → C12 → C17 → C13 → C18; C6 and C7 fill gaps while waiting on sign-offs.
 - **Finished a task:** push the `codex/...` branch, then post the handoff (template below) as a comment on
   CalSay/Lanternfall#1. Claude is subscribed to that pull request, so the comment wakes Claude, who merges the
   branch, runs the checks, publishes the preview, closes the issue and replies there.
@@ -111,3 +112,14 @@ Left over / needs Claude: ...
 | Date | Commit | Notes |
 |---|---|---|
 | 2026-09-30 | the commit that added this file (see the wave log, "Two-agent split") | After the overnight clean-up: solo hero, Training, landscape, party code deleted, save key v5 |
+
+## 2026-09-30 update: feature track moved to Codex (owner)
+
+Codex now owns the remaining feature work: C19 abilities and upgrade trees (#20), C20 solo combat spec (#21), C21
+Ascension, subclasses and Hallowed (#22), C22 Elowen's chapel (#23). Each issue lists the files that move with it.
+Each is design first (owner and Claude sign-off), then build.
+
+Claude keeps: integration, merges and publishing; design and balance sign-off; the shell and layout (`70-ui.js`,
+`75-nav-ui.js`, landscape CSS, the action-bar layout and keys); stage drawing and hero art (`62-stage.js`,
+`61-anim.js`, `64h-hero-sprites.js`, `tools/heroart.mjs`); onboarding and the notices policy; the check harness
+structure; landscape check flakes; wiring new art.

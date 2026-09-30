@@ -4,6 +4,7 @@
 //   #sec-hands       Hire gatherers: Tents used, route arrivals in star spots, then random applicants.
 //   #sec-hands-crew  Your gatherers: shifts, queues, recall, packs and send again.
 // Two-tap confirms for irreversible choices arm a button for 4 seconds; no confirm().
+let handsTalkMount, handsTalkOpen, handsTalkUpdate;
 {
   const RC = r => `var(--r-${r})`;
   const dur = secs => { secs = Math.ceil(secs); const h = Math.floor(secs / 3600), m = Math.floor(secs % 3600 / 60); return secs < 60 ? secs + 's' : h ? (m ? `${h}h ${m}m` : `${h}h`) : `${m}m`; };
@@ -17,9 +18,20 @@
 
   let armed = null, armedAt = 0, picking = null, msg = '', msgAt = 0;
   const shiftChoice = Object.create(null);
+  let talkBox = null, talkId = null, talkLine = '', talkPicking = false, talkOrigin = null, talkFallback = null, talkSig = '';
   const isArmed = k => armed === k && Date.now() - armedAt < 4000;
   const arm = k => { armed = k; armedAt = Date.now(); picking = null; ui(true); };
   const say = t => { msg = t; msgAt = Date.now(); };
+  const tradeReason = () => !handsOpen() ? 'Gatherers need Hearth 2 and a built Tavern.'
+    : !handsTradeOpen() ? 'Build Tavern 2 so a trader starts passing through.' : '';
+  function tradeButton(x, busy, onOpen = null) {
+    const b = btn('mini', 'Trade run'), why = tradeReason();
+    b.classList.add('hd-trade'); b.disabled = busy || !!why;
+    b.setAttribute('aria-label', `Send ${x.n} on a trade run${why ? '. ' + why : ''}`);
+    if (why) b.title = why;
+    b.addEventListener('click', () => { if (onOpen) onOpen(); handsTradeOpenPicker(x.id); });
+    return b;
+  }
 
   // A gatherer's portrait: the job icon on a frame in the rarity colour, with their initial.
   function portrait(x) {
@@ -31,6 +43,72 @@
     const box = el('div', 'hd-tr');
     for (const t of handsTraits(x)) { const c = el('span', 'hd-trait' + (t.calling ? ' call' : ''), t.n); c.title = t.txt; box.append(c); }
     return box;
+  }
+
+  // C2: one inline talk card is shared by the Camp scene and its gatherer buttons.
+  // The job rows below are the same picker used by the Tavern crew cards.
+  handsTalkMount = (host, fallback) => {
+    talkFallback = fallback;
+    talkBox = el('section', 'hd-card'); talkBox.id = 'hands-talk'; talkBox.hidden = true;
+    talkBox.setAttribute('role', 'region'); talkBox.setAttribute('aria-label', 'Gatherer conversation');
+    talkBox.addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); closeTalk(); } });
+    host.append(talkBox);
+  };
+  const closeTalk = () => {
+    talkId = null; talkPicking = false; talkSig = '';
+    if (talkBox) { talkBox.hidden = true; talkBox.textContent = ''; }
+    const target = talkOrigin && talkOrigin.isConnected ? talkOrigin : talkFallback;
+    if (target) target.focus();
+  };
+  handsTalkOpen = (id, origin) => {
+    const x = handsGet(id);
+    if (!x || !talkBox) return false;
+    talkOrigin = origin || null; talkId = id; talkPicking = false; talkSig = '';
+    handsTalk(id); talkLine = handsTalkInfo(id).line;
+    renderTalk(true);
+    return true;
+  };
+  handsTalkUpdate = () => { if (talkId) renderTalk(false); };
+  function renderTalk(focus) {
+    if (!talkBox || !talkId) return;
+    const x = handsGet(talkId); if (!x) { closeTalk(); return; }
+    const info = handsTalkInfo(talkId), st = handsStatus(x), busy = !!x.job || !!x.pack.length;
+    if (busy) talkPicking = false;
+    const sig = JSON.stringify([x.id, x.lv, x.job && [x.job.start, x.job.end, x.job.q, x.job.role], x.pack, talkLine, st.st,
+      Math.ceil((st.left || 0) / 60), talkPicking, shiftChoice[x.id], Math.floor(S.gold / 10), tradeReason()]);
+    if (sig === talkSig && !focus) return;
+    talkSig = sig;
+    const focused = talkBox.contains(document.activeElement) ? [...talkBox.querySelectorAll('button')].indexOf(document.activeElement) : -1;
+    talkBox.hidden = false; talkBox.textContent = '';
+    const top = el('div', 'hd-head'), who = el('div', 'hd-id');
+    const title = el('h3', 'hd-name', info.name || x.n); title.id = 'hands-talk-title';
+    talkBox.setAttribute('aria-labelledby', title.id);
+    who.append(title, el('div', 'hd-sub2', `${handsRarName(x)} ${info.jobName || handsSkillName(x)} · Lv ${x.lv}`));
+    top.append(portrait(x), who);
+    const close = btn('mini', 'Close'); close.setAttribute('aria-label', `Close conversation with ${x.n}`);
+    close.addEventListener('click', closeTalk);
+    const line = el('p', 'note hd-line', ['out', 'back'].includes(st.st) ? talkLine : `“${talkLine}”`);
+    const status = el('p', 'hd-stat', statusText(x, st));
+    const act = el('div', 'hd-act'), send = btn('mini go', talkPicking ? 'Close jobs' : 'Send on a job');
+    send.disabled = busy;
+    send.addEventListener('click', () => { talkPicking = !talkPicking; renderTalk(true); });
+    act.append(send, tradeButton(x, busy, closeTalk));
+    if (busy) {
+      const controls = btn('mini', 'Open gatherer controls');
+      controls.addEventListener('click', () => emit('campGoto', { tab: 'world', view: 'tav', sel: '#sec-hands-crew' }));
+      act.append(controls);
+    }
+    act.append(close);
+    talkBox.append(top, traitChips(x), line, status, act);
+    if (tradeReason()) talkBox.append(el('p', 'note hd-trade-lock', tradeReason()));
+    if (talkPicking && !busy) talkBox.append(jobPicker(x, info.jobs, () => {
+      talkPicking = false; talkLine = handsTalkInfo(x.id).line; renderTalk(true);
+    }));
+    if (focus || focused >= 0) {
+      const buttons = [...talkBox.querySelectorAll('button')];
+      const target = focus ? (talkPicking ? talkBox.querySelector('.hd-job') || close : close) : buttons[Math.min(focused, buttons.length - 1)] || close;
+      target.focus();
+    }
   }
 
   let B = null, C = null, boardSig = '', crewSig = '';
@@ -49,8 +127,8 @@
   registerSection('tav', {
     id: 'hands-crew', title: 'Your gatherers',
     mount(sec) {
-      const next = B && B.sec && B.sec.nextSibling;
-      if (next && next !== sec) sec.parentNode.insertBefore(sec, next);
+      // The people already at camp lead the Tavern view; applicants follow them.
+      if (B && B.sec) sec.parentNode.insertBefore(sec, B.sec);
       C = { sec, top: el('div', 'hd-act'), list: el('div', 'hd-list'), note: el('p', 'note hd-note') };
       sec.append(C.top, C.list, C.note);
     },
@@ -142,6 +220,10 @@
   const statusText = (x, st) => {
     const q = x.job && x.job.q || 0;
     const next = q ? ` · ${q} more shift${q === 1 ? '' : 's'} queued` : '';
+    if (x.job && x.job.role === 'trade') {
+      if (st.st === 'out') return `${st.label} · ${dur(st.left)} left`;
+      if (st.st === 'back') return 'Returning from trade';
+    }
     if (st.st === 'out') return `On shift: ${st.label.replace(/^Out at the /, '')}, ${dur(st.left)} left${next}`;
     if (st.st === 'rest') return `Resting at camp: next shift in ${dur(st.left)}${next}`;
     if (st.st === 'back') return 'Walking home';
@@ -162,12 +244,12 @@
       if (s && (s.st === 'out' || s.st === 'rest')) setTxt(row, statusText(x, s));
     }
     const againPlan = handsSendAgainPreview();
-    const sig = JSON.stringify([list.map(x => [x.id, x.lv, x.job && [x.job.start, x.job.end, x.job.q], x.pack, x.last, x.sent, handsUnpaid(x), Math.floor(x.xp), shiftChoice[x.id]]), Math.floor(S.gold / 10), againPlan, armed, isArmed(armed), picking]);
+    const sig = JSON.stringify([list.map(x => [x.id, x.lv, x.job && [x.job.start, x.job.end, x.job.q, x.job.role], x.pack, x.last, x.sent, handsUnpaid(x), Math.floor(x.xp), shiftChoice[x.id]]), Math.floor(S.gold / 10), againPlan, armed, isArmed(armed), picking, tradeReason()]);
     if (sig === crewSig) return;
     crewSig = sig;
     C.top.textContent = '';
     if (againPlan.ready) {
-      const all = btn('mini', againPlan.count === againPlan.ready ? `Send all again: ${gold(againPlan.fee)}` : `Send ${againPlan.count} of ${againPlan.ready}: ${gold(againPlan.fee)}`);
+      const all = btn('mini', againPlan.count === againPlan.ready ? `Send shifts again: ${gold(againPlan.fee)}` : `Send ${againPlan.count} of ${againPlan.ready} shifts again: ${gold(againPlan.fee)}`);
       all.setAttribute('aria-label', `Send ${againPlan.count} of ${againPlan.ready} ready gatherers to their last jobs for ${gold(againPlan.fee)}`);
       all.disabled = !againPlan.count;
       all.addEventListener('click', () => { const n = handsSendAgain(); say(n ? `${n} gatherer${n === 1 ? '' : 's'} sent again.` : 'No gatherer could be sent. Check the shift fees and your gold.'); ui(true); });
@@ -194,9 +276,16 @@
     if (x.lv < HANDS_TUNE.lvMax) card.append(el('p', 'note hd-line', `Level ${x.lv + 1} after ${dur(Math.max(0, handsLevelNeed(x.lv) - x.xp) * 3600)} more work.`));
     const busy = !!x.job || x.pack.length > 0;
     const act = el('div', 'hd-act');
+    const talk = btn('mini', 'Talk');
+    talk.setAttribute('aria-label', `Talk to ${x.n} at camp`);
+    talk.addEventListener('click', () => {
+      emit('campGoto', { tab: 'world', view: 'camp', sel: '#camp-scene-scroll' });
+      handsTalkOpen(x.id);
+    });
     const send = btn('mini go', picking === x.id ? 'Close' : 'Send on a job');
     send.disabled = busy;
     send.addEventListener('click', () => { picking = picking === x.id ? null : x.id; armed = null; ui(true); });
+    const trade = tradeButton(x, busy);
     if (!busy && x.last) {
       const plan = handsSendAgainPreview(x.id);
       const again = btn('mini', `Send again: ${gold(plan.fee)}`);
@@ -206,15 +295,19 @@
       act.append(again);
     }
     if (x.job) {
-      const k = 'recall:' + x.id, recall = btn('mini warn', isArmed(k) ? 'Tap again: recall' : 'Recall');
+      const k = 'recall:' + x.id, tradeRun = x.job.role === 'trade';
+      const recall = btn('mini warn', isArmed(k) ? (tradeRun ? 'Tap again: recall trade' : 'Tap again: recall') : 'Recall');
       recall.addEventListener('click', () => {
         if (!isArmed(k)) { arm(k); return; }
         armed = null;
-        say(handsRecall(x.id) ? `${x.n} is coming home with the haul so far.` : `${x.n} could not be recalled.`);
+        const recalled = handsRecall(x.id);
+        say(recalled ? tradeRun ? `${x.n} came home. Original cargo returned${x.pack.length ? '; what did not fit waits in their pack' : ''}. No gold earned.`
+          : `${x.n} is coming home with the haul so far.` : `${x.n} could not be recalled.`);
         ui(true);
       });
       act.append(recall);
-      card.append(el('p', 'note hd-line', st.st === 'rest'
+      card.append(el('p', 'note hd-line', tradeRun
+        ? 'Recall returns the original cargo. Anything that does not fit waits in their pack. No gold is earned.' : st.st === 'rest'
         ? 'Recall cancels the next shift and refunds it and any later shifts.'
         : 'Recall brings home the haul so far. This shift is paid; later shifts are refunded.'));
     }
@@ -238,15 +331,16 @@
       if (handsLetGo(x.id)) say(named ? `${n} went back to the Tavern with their level.` : `${n} left camp.`);
       ui(true);
     });
-    act.prepend(send); act.append(go);
+    act.prepend(talk, send, trade); act.append(go);
     card.append(act);
+    if (tradeReason()) card.append(el('p', 'note hd-trade-lock', tradeReason()));
     if (picking === x.id && !busy) card.append(jobPicker(x));
     return card;
   }
 
-  function jobPicker(x) {
+  function jobPicker(x, offered = handsNodes(x).filter(n => n.own), onSent = null) {
     const box = el('div', 'hd-jobs');
-    const nodes = handsNodes(x).filter(n => n.own);
+    const nodes = offered.filter(n => n.own);
     if (!nodes.length) { box.append(el('p', 'note', 'No job is open for them yet. Open more nodes with your hero first.')); return box; }
     box.append(el('p', 'note', 'Pick a job. Every shift lasts 4 hours. Fees are paid now; the haul comes home to the Storehouse.'));
     const count = shiftChoice[x.id] || 1, choices = el('div', 'hd-shifts');
@@ -272,6 +366,7 @@
         if (!can.ok) { say(can.why); ui(true); return; }
         const j = handsSend(x.id, n.kind, n.t, { shifts: count });
         picking = null;
+        if (j && onSent) onSent(j);
         say(j ? `${x.n} heads out to the ${handsNodeName(n.kind, n.t)} for ${count} shift${count === 1 ? '' : 's'}.` : can.why);
         ui(true);
       });

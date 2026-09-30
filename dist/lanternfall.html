@@ -7195,6 +7195,20 @@ const DARE_LINES = {
 const omenLine = (id, dare) => (dare && DARE_LINES[id]) || OMEN_LINES[id]
   || (typeof COAST_OMEN_TEXT === 'object' && COAST_OMEN_TEXT[id] && COAST_OMEN_TEXT[id].say) || '';
 
+// ---- src/js/21o-data-trade.js ----
+// 21o-data-trade: C4, the first gatherer trade route. Data only.
+// Approved in issue #5: Tavern 2, no hero/Map Room, no fee or XP, gold returns only.
+// ECON.famW is the price source (economy-2 supersedes gear-2's older weights).
+const TRADE_TUNE = { tavern: 2, secs: 2 * 3600, cap: 5000, maxLines: 3, top: 3, logMax: 12,
+  maxUnitGold: 100, wanted: 3, glut: 2, wantMin: 130, wantMax: 160, glutMin: 60, glutMax: 80 };
+// maxUnitGold is a generous corruption check, not a market price or anti-cheat.
+// Apply it at Send too, so a future price above it cannot reserve cargo.
+const TRADE_TOWN = { id: 'mossy', n: 'Mossy Hollow', returns: ['gold'] };
+// Only live gathering nodes can be cargo. Hide and Essence have no gathering node.
+const TRADE_FAMILIES = { ore: 'gathered', wood: 'gathered', crystal: 'gem', fibre: 'gathered', herb: 'herb' };
+// Future goods returns belong in a separately approved price table. No Trophy,
+// Salvage Rune, new region or unauthored first-trip story is awarded by C4.
+
 // ---- src/js/21w-data-econ.js ----
 // 21w-data-econ: Economy 2.0 data (docs/design/economy-2.md, task ECON-A). Data plus the pure gold
 // curve; no S, no DOM. The helpers that read the save (prices at your zone, the ledger, crit damage)
@@ -7983,7 +7997,10 @@ const NOTICES = [
   // ---- answers to a press: they show at once (a reply is never held) ----
   { id: 'reply', ch: 'pop', reply: 1, site: /toast\(w, 'raid'/,
     re: /^(Chop more Pine Log first|Climb out of the Deepwell first|Give your hero a name first|The Proving cannot start now|That change did not go through|The free change has run out|Save loaded)/,
-    test: m => typeof starLocked === 'function' && (() => { try { return m === starLocked(); } catch (e) { return false; } })() }
+    test: m => typeof starLocked === 'function' && (() => { try { return m === starLocked(); } catch (e) { return false; } })() },
+
+  // ---- C4: completed gatherer trade runs ----
+  { id: 'hands-trade', re: /^.+ returns from .+: \+.+ gold\.$/, ch: 'log' }
 ];
 const NOTICE_BY_KEY = Object.fromEntries(NOTICES.filter(r => r.key).map(r => [r.key, r]));
 // The rule for a message (or its key), or null.
@@ -16244,7 +16261,8 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
 //         handsRecall(id) -> bool; handsQueueMax() -> 2; handsSendAgainPreview(id?) -> { count, ready, fee }; registerHandsRoute(key, probe) -> remove()
 //         handsEmpty(id) -> units thrown away (the UI asks first: "Throw away 120 Oak Log?")
 //         handsStoryHeard(id) -> level of the story told | 0 (N2, when the player hears it)
-//         handsTalk(id) -> talk counter after the tap (N2 rotates lines with it)
+//         handsTalk(id) -> saved ordinary talk counter; never consumes an earned story
+//         handsTalkInfo(id) -> { id, name, rar, jobName, lv, line, status, traits, jobs, suggest } | null
 //         handsCatchUp(now, away) -> [returns]   (tick and away phase; tools)
 //         handsRollApp() -> a new applicant (not placed on the board; pity counts it). Tools only (check.mjs pity).
 //         handsExclude(fn(key) -> mult) -> remove()   a transient speed bonus to leave out of the rate
@@ -16273,7 +16291,7 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
   handsStatus, handsShare, handsShiftSecs, handsRate, handsPreview, handsSuggest, handsNodes, handsCanSend,
   handsHeroRate, handsTraits, handsName, handsRarName, handsSkillName, handsNodeName, handsLevelNeed, handsStoryDue,
   handsCampTrait, handsMealMult, handsMealBonus, campClock, handsStats, handsHire, handsTurnAway, handsLetGo,
-  handsSend, handsSendAgain, handsEmpty, handsStoryHeard, handsTalk, handsCatchUp, handsExclude, handsRollApp,
+  handsSend, handsSendAgain, handsEmpty, handsStoryHeard, handsTalk, handsTalkInfo, handsCatchUp, handsExclude, handsRollApp,
   handsTents, handsFee, handsUnpaid, handsRandomApps, handsLegendSpots, handsRecall, handsQueueMax, registerHandsRoute, handsSendAgainPreview;
 
 {
@@ -16321,10 +16339,11 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
       if (!Array.isArray(x.pack)) x.pack = [];
       if (!(x.lv >= 1)) x.lv = 1;
       if (!(x.xp >= 0)) x.xp = 0;
-      if (x.job && !(x.job.end > 0 && x.job.rate >= 0 && x.job.kind)) x.job = null;
-      if (x.job && !Array.isArray(x.job.bo)) x.job.bo = [];
-      if (x.job && !Array.isArray(x.job.queue)) x.job.queue = [];
-      if (x.job) syncQueue(x.job);
+      if (x.job && x.job.role === 'trade') { if (typeof handsTradeRepair === 'function') handsTradeRepair(x); }
+      else if (x.job && !(x.job.end > 0 && x.job.rate >= 0 && x.job.kind)) x.job = null;
+      if (x.job && x.job.role !== 'trade' && !Array.isArray(x.job.bo)) x.job.bo = [];
+      if (x.job && x.job.role !== 'trade' && !Array.isArray(x.job.queue)) x.job.queue = [];
+      if (x.job && x.job.role !== 'trade') syncQueue(x.job);
       for (const k of ['talk', 'st', 'hrs', 'got', 'back', 'sent']) if (!(x[k] >= 0)) x[k] = 0;
       if (x.last === undefined) x.last = null;
       if (x.cl === undefined) x.cl = null;
@@ -16478,6 +16497,7 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
   handsStatus = hh => {
     const h = typeof hh === 'string' ? handsGet(hh) : hh; if (!h) return null;
     const t = now(), j = h.job;
+    if (j && j.role === 'trade' && typeof handsTradeStatus === 'function') return handsTradeStatus(h, t);
     if (j && j.start > t) return { st: 'rest', label: 'Resting before the next shift', left: (j.start - t) / 1000, pct: 0, kind: j.kind, t: j.t, spot: 'fire' };
     if (j && j.end > t) return { st: 'out', label: `Out at the ${nodeName(j.kind, j.t)}`, left: (j.end - t) / 1000, pct: Math.min(1, Math.max(0, (t - j.start) / Math.max(1, j.end - j.start))), kind: j.kind, t: j.t, spot: null };
     if (j) return { st: 'back', label: 'Walking home', left: 0, pct: 1, kind: j.kind, t: j.t, spot: 'road' };
@@ -16611,16 +16631,17 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
   const out = (x, t) => !!x.job && x.job.start <= t && x.job.end > t;
   function syncQueue(j) { j.q = (j.queue || []).length; j.qFee = (j.queue || []).reduce((a, q) => a + q.fee, 0); }
   function linkJob(x, job) {
+    if (job.role === 'trade') return;
     const at = job.start;
     if (has(x, 'friendly')) {
-      const y = H().list.find(o => o !== x && has(o, 'friendly') && o.job && o.job.linked !== false && out(o, at) && !o.job.bo.some(b => b[3] === 'f' && b[2] > at));
+      const y = H().list.find(o => o !== x && has(o, 'friendly') && o.job && o.job.role !== 'trade' && o.job.linked !== false && out(o, at) && !o.job.bo.some(b => b[3] === 'f' && b[2] > at));
       if (y) { const e = Math.min(job.end, y.job.end); job.bo.push([T.friendly, at, e, 'f', y.id]); y.job.bo.push([T.friendly, at, e, 'f', x.id]); }
     }
     const wood = k => skillOf(k) === 'wood';
     if (x.cl === 'felling') {
-      for (const o of H().list) if (o !== x && o.job && o.job.linked !== false && out(o, at) && wood(o.job.kind)) o.job.bo.push([T.felling, at, Math.min(job.end, o.job.end), 'b', x.id]);
+      for (const o of H().list) if (o !== x && o.job && o.job.role !== 'trade' && o.job.linked !== false && out(o, at) && wood(o.job.kind)) o.job.bo.push([T.felling, at, Math.min(job.end, o.job.end), 'b', x.id]);
     } else if (wood(job.kind)) {
-      const b = H().list.find(o => o !== x && o.cl === 'felling' && o.job && o.job.linked !== false && out(o, at));
+      const b = H().list.find(o => o !== x && o.cl === 'felling' && o.job && o.job.role !== 'trade' && o.job.linked !== false && out(o, at));
       if (b) job.bo.push([T.felling, at, Math.min(job.end, b.job.end), 'b', b.id]);
     }
     job.linked = true;
@@ -16714,18 +16735,24 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
   }
   // Starts and returns in time order keep overlap, XP and pack order identical live and away.
   handsCatchUp = (t = now(), away = false) => {
-    const back = [];
+    const back = [], blockedTrade = new Set();
+    if (!Number.isFinite(t) || t < 0) return back;
+    for (const x of H().list) if (x.job && x.job.role === 'trade' && typeof handsTradeRepair === 'function') handsTradeRepair(x);
     for (;;) {
-      const due = H().list.filter(x => x.job && (x.job.linked === false ? x.job.start : x.job.end) <= t)
-        .sort((a, b) => (a.job.linked === false ? a.job.start : a.job.end) - (b.job.linked === false ? b.job.start : b.job.end))[0];
+      const due = H().list.filter(x => x.job && !blockedTrade.has(x) && (x.job.role !== 'trade' && x.job.linked === false ? x.job.start : x.job.end) <= t)
+        .sort((a, b) => (a.job.role !== 'trade' && a.job.linked === false ? a.job.start : a.job.end) - (b.job.role !== 'trade' && b.job.linked === false ? b.job.start : b.job.end))[0];
       if (!due) break;
-      if (due.job.linked === false) linkJob(due, due.job); else back.push(finishJob(due, away));
+      if (due.job.role === 'trade') {
+        if (typeof handsTradeFinish !== 'function') break;
+        if (!handsTradeFinish(due, away, t)) blockedTrade.add(due);
+      } else if (due.job.linked === false) linkJob(due, due.job); else back.push(finishJob(due, away));
     }
     unload(); return back;
   };
   handsRecall = id => {
     const x = handsGet(id); if (!x || !x.job) return false;
     const at = now(); handsCatchUp(at, false); const j = x.job; if (!j) return false;
+    if (j.role === 'trade') return typeof handsTradeRecall === 'function' && handsTradeRecall(x, at);
     const waiting = j.start > at, queue = (j.queue || []).slice();
     if (waiting) queue.unshift({ fee: j.fee || 0 });
     refund(x, queue, 'you recalled them', false); j.queue = []; syncQueue(j);
@@ -16741,15 +16768,15 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
     const full = h.list.filter(x => x.pack.length).sort((a, b) => a.back - b.back);
     for (const x of full) {
       for (let i = 0; i < x.pack.length;) {
-        const [f, t, n] = x.pack[i];
+        const [f, t, n, source] = x.pack[i];
         let got = 0;
         if (f === 'troph') got = typeof addTrophy === 'function' ? addTrophy(t, n, 'hands') : 0;
         else if (S.mats[f]) got = stashAdd(f, t, n, 'parcel');
         else { x.pack.splice(i, 1); continue; }   // a family this build does not know: drop the line
         if (got > 0 || !(n > 0)) {
           x.pack.splice(i, 1);
-          if (f !== 'troph') { x.got += got; h.got = (h.got || 0) + got; }
-          emit('handsUnload', { id: x.id, fam: f, t, n: got });
+          if (f !== 'troph' && source !== 'trade-refund') { x.got += got; h.got = (h.got || 0) + got; }
+          emit(source === 'trade-refund' ? 'handsTradeCargoBack' : 'handsUnload', { id: x.id, fam: f, t, n: got });
         } else i++;
       }
     }
@@ -16767,7 +16794,39 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
     emit('handsStory', { id, lv }); save();
     return lv;
   };
-  handsTalk = id => { const x = handsGet(id); if (!x) return 0; x.talk = (x.talk | 0) + 1; return x.talk; };
+  // C2: short camp conversations. Authored story chapters remain available for C6.
+  handsTalk = id => {
+    const x = handsGet(id); if (!x) return 0;
+    x.talk = Math.min(Number.MAX_SAFE_INTEGER, Math.max(0, Number.isFinite(x.talk) ? Math.floor(x.talk) : 0) + 1);
+    save(); return x.talk;
+  };
+  handsTalkInfo = id => {
+    const x = handsGet(id); if (!x) return null;
+    const status = handsStatus(x), named = x.key === HANDS_TAM.key ? HANDS_TAM : LEG[x.key];
+    const work = {
+      wood: 'My axe is ready. Point me toward a grove.',
+      mine: 'My pick is ready. Tell me which vein needs working.',
+      forage: 'I know what grows by the path. What does the camp need?',
+      any: 'I know a little of every trade. Show me what needs doing.'
+    }[x.sk] || 'Tell me what the camp needs.';
+    const lines = [work];
+    if (x.last) lines.push(`Last time I worked at the ${nodeName(x.last.kind, x.last.t)}.`);
+    lines.push(campClock().phase === 'night' ? 'The fire is warm. There is room beside me.' : 'Good to see you back at camp.');
+    const n = Math.max(0, (Number.isFinite(x.talk) ? Math.floor(x.talk) : 0) - 1);
+    const line = status.role === 'trade' ? x.n + ': ' + status.label + '.'
+      : status.st === 'pack' ? 'My pack is still full. Make room in the Storehouse before I head out again.'
+      : status.st === 'rest' ? 'A little rest, then I will head back to the node.'
+      : status.st === 'out' ? `${x.n} is working at the ${nodeName(status.kind, status.t)}.`
+      : status.st === 'back' ? `${x.n} is on the way home.` : lines[n % lines.length];
+    const jobs = handsNodes(x).filter(o => o.own).map(o => Object.assign({}, o, {
+      name: nodeName(o.kind, o.t), preview: handsPreview(x, o.kind, o.t), can: handsCanSend(id, o.kind, o.t)
+    }));
+    const suggested = handsSuggest(x);
+    const suggest = suggested && jobs.some(o => o.kind === suggested.kind && o.t === suggested.t) ? suggested
+      : jobs.length ? { kind: jobs[0].kind, t: jobs[0].t, why: 'A node for your profession.' } : null;
+    return { id: x.id, name: x.n, rar: handsRarName(x), jobName: handsSkillName(x), lv: x.lv,
+      line, about: named && named.about || '', status, traits: handsTraits(x), jobs, suggest };
+  };
   handsStats = () => {
     const h = H(), byRar = {};
     for (const x of h.list) byRar[x.r] = (byRar[x.r] || 0) + 1;
@@ -16984,6 +17043,177 @@ let tavernPerks, tavernRumours, tavernHearRumour;
   });
   on('awayBegin', report => {
     if (mining() && report) advance(report.t);
+  });
+}
+
+// ---- src/js/57k-trade.js ----
+// 57k-trade: C4 gatherer trade runs. DOM-free; no hero or online activity.
+// API: handsTradeOpen(), handsTradeDemand(at?) -> { week, lines }, handsTradeCargo(id),
+// handsTradeQuote(id, cargo), handsTradeSend(id, cargo, expectedQuote?),
+// handsTradeDiagnostic(id, cargo). Cargo is [[family, tier, positive integer], ...].
+// Quote: { ok, why, town, townName, secs, cap, maxLines, units, gold, lines, week }.
+// Lines: { kind, t, n, name, demand (integer percent), unitGold, gold }.
+// expectedQuote is the displayed quote; a changed week/price/cargo rejects Send.
+// Waiting cargo refunds use pack lines [family,tier,n,'trade-refund']; unloading
+// them does not count as gathered material. Unknown job versions fail closed.
+// Internal 57f hooks: handsTradeValid(job), handsTradeRepair(hand),
+// handsTradeStatus(hand, at), handsTradeFinish(hand, away), handsTradeRecall(hand, at).
+// Save: S.trade { v:1, trips, sold, gold, log:[{ id,n,at,units,gold,town }] }.
+// A hand's job: { role:'trade', v:1, town, start,end, cargo, quote:{week,micros,demand,gold} }.
+// Quote prices use integer millionths of gold. Jobs never reroll or reprice on return.
+let handsTradeOpen, handsTradeDemand, handsTradeCargo, handsTradeQuote, handsTradeSend, handsTradeDiagnostic,
+  handsTradeValid, handsTradeRepair, handsTradeStatus, handsTradeFinish, handsTradeRecall;
+{
+  const T = TRADE_TUNE, UNIT = 1e6, WEEK = 7 * 864e5, EPOCH = Date.UTC(2026, 0, 5);
+  const DEF = { v: 1, trips: 0, sold: 0, gold: 0, log: [] };
+  registerState('trade', DEF);
+  const icon = { ic: ['boot', '#C9A36B'] }, own = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
+  const stock = (f, t) => S.mats && Array.isArray(S.mats[f]) && Number.isFinite(S.mats[f][t - 1]) ? Math.max(0, Math.floor(S.mats[f][t - 1])) : 0;
+  const live = (f, t) => typeof f === 'string' && own(TRADE_FAMILIES, f) && Number.isInteger(t) && t >= 1 && t <= T.top
+    && own(CRAFT_NODES, f) && MAT[f] && Array.isArray(MAT[f].short) && MAT[f].short[t - 1] && S.mats && Array.isArray(S.mats[f]) && S.mats[f].length >= t;
+  const eligible = (h, f, t) => live(f, t) && (h.sk === 'any' || h.sk === skillOf(f)) && skillTierOpen(skillOf(f), t);
+  const ledger = () => {
+    if (!isPlainObj(S.trade)) S.trade = cloneJSON(DEF);
+    for (const k of ['trips', 'sold', 'gold']) if (!Number.isFinite(S.trade[k]) || S.trade[k] < 0) S.trade[k] = 0;
+    if (!Array.isArray(S.trade.log)) S.trade.log = [];
+    return S.trade;
+  };
+  function cargoOK(cargo) {
+    if (!Array.isArray(cargo) || !cargo.length || cargo.length > T.maxLines) return false;
+    const seen = new Set(); let total = 0;
+    for (const row of cargo) {
+      if (!Array.isArray(row) || row.length !== 3) return false;
+      const [f, t, n] = row; if (typeof f !== 'string') return false;
+      const key = f + ':' + t;
+      if (!live(f, t) || !Number.isSafeInteger(n) || n <= 0 || seen.has(key)) return false;
+      seen.add(key); total += n; if (total > T.cap) return false;
+    }
+    return true;
+  }
+  handsTradeOpen = () => handsOpen() && campLevel('tavern') >= T.tavern;
+  handsTradeDemand = (at = Date.now()) => {
+    const week = Math.floor(((Number.isFinite(at) ? at : Date.now()) - EPOCH) / WEEK);
+    const r = rng((Math.imul(week, 2654435761) ^ 0x4D4F5353) | 0), lines = [];
+    for (const f of Object.keys(TRADE_FAMILIES)) for (let t = 1; t <= T.top; t++)
+      if (live(f, t)) lines.push({ kind: f, t, demand: 100 });
+    const shuffled = lines.slice();
+    for (let i = shuffled.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]; }
+    for (let i = 0; i < Math.min(shuffled.length, T.wanted + T.glut); i++) {
+      const min = i < T.wanted ? T.wantMin : T.glutMin, max = i < T.wanted ? T.wantMax : T.glutMax;
+      shuffled[i].demand = min + Math.floor(r() * (max - min + 1));
+    }
+    return { week, lines };
+  };
+  const creditFits = gold => Number.isFinite(S.gold) && S.gold >= 0 && S.gold + gold <= Number.MAX_SAFE_INTEGER;
+  const price = (f, t, demand) => Math.round(foeGoldBase(econGradeZ(t)) * ECON.famW[TRADE_FAMILIES[f]] * demand * UNIT / 100);
+  handsTradeCargo = id => {
+    const h = handsGet(id); if (!h) return [];
+    return handsTradeDemand().lines.filter(l => eligible(h, l.kind, l.t)).map(l => ({ ...l,
+      name: matName(l.kind, l.t), have: stock(l.kind, l.t), unitGold: price(l.kind, l.t, l.demand) / UNIT }));
+  };
+  handsTradeQuote = (id, cargo, at = Date.now()) => {
+    const h = handsGet(id), market = handsTradeDemand(at);
+    const q = { ok: false, why: '', town: TRADE_TOWN.id, townName: TRADE_TOWN.n, secs: T.secs,
+      cap: T.cap, maxLines: T.maxLines, units: 0, gold: 0, lines: [], week: market.week };
+    const no = why => Object.assign(q, { why });
+    if (!h || !handsOpen()) return no('Gatherers are not available.');
+    if (!handsTradeOpen()) return no('Trade runs open at Tavern level 2.');
+    if (h.job) return no(h.n + ' is already away or resting between shifts.');
+    if (h.pack.length) return no(h.n + "'s pack waits for room in the Storehouse.");
+    if (!cargoOK(cargo)) return no('Choose up to three different cargo lines, totalling 1–5,000 whole units.');
+    let value = 0;
+    for (const [f, t, n] of cargo) {
+      if (!eligible(h, f, t)) return no('Choose unlocked materials from this gatherer\'s profession, grades 1–3.');
+      if (stock(f, t) < n) return no('Not enough ' + matName(f, t) + ' in the Storehouse.');
+      const demand = market.lines.find(l => l.kind === f && l.t === t).demand, micros = price(f, t, demand);
+      if (!Number.isSafeInteger(micros) || micros <= 0 || micros > T.maxUnitGold * UNIT) return no('This trade is not available.');
+      value += n * micros; q.units += n;
+      q.lines.push({ kind: f, t, n, name: matName(f, t), demand, unitGold: micros / UNIT, gold: n * micros / UNIT });
+    }
+    q.gold = Math.floor(value / UNIT);
+    if (!(q.gold > 0)) return no('Add enough cargo to earn at least 1 gold.');
+    if (!creditFits(q.gold)) return no('Spend some gold before sending another trade run.');
+    q.ok = true; return q;
+  };
+  const sameQuote = (a, b) => a && a.ok && a.week === b.week && a.town === b.town && a.secs === b.secs && a.gold === b.gold
+    && Array.isArray(a.lines) && a.lines.length === b.lines.length && a.lines.every((l, i) => l && ['kind', 't', 'n', 'demand', 'unitGold'].every(k => l[k] === b.lines[i][k]));
+  handsTradeSend = (id, cargo, expectedQuote) => {
+    const at = Date.now(), q = handsTradeQuote(id, cargo, at); if (!q.ok || (expectedQuote !== undefined && !sameQuote(expectedQuote, q))) return null;
+    const h = handsGet(id);
+    const job = { role: 'trade', v: 1, town: TRADE_TOWN.id, start: at, end: at + T.secs * 1000,
+      cargo: cargo.map(l => l.slice()), quote: { week: q.week, micros: q.lines.map(l => Math.round(l.unitGold * UNIT)), demand: q.lines.map(l => l.demand), gold: q.gold } };
+    for (const [f, t, n] of job.cargo) S.mats[f][t - 1] -= n;
+    h.job = job; ledger(); save();
+    emit('handsTradeSend', { id, n: h.n, town: job.town, end: job.end, gold: q.gold }); return job;
+  };
+  handsTradeValid = j => {
+    if (!j || j.role !== 'trade' || j.v !== 1 || j.town !== TRADE_TOWN.id || !cargoOK(j.cargo)) return false;
+    if (!Number.isSafeInteger(j.start) || j.start < 0 || !Number.isSafeInteger(j.end) || j.end - j.start !== T.secs * 1000) return false;
+    const q = j.quote;
+    if (!q || !Number.isSafeInteger(q.week) || q.week !== Math.floor((j.start - EPOCH) / WEEK) || !Number.isSafeInteger(q.gold) || !(q.gold > 0)
+      || !Array.isArray(q.micros) || q.micros.length !== j.cargo.length || !Array.isArray(q.demand) || q.demand.length !== j.cargo.length) return false;
+    if (!q.micros.every(n => Number.isSafeInteger(n) && n > 0 && n <= T.maxUnitGold * UNIT) || !q.demand.every(n => Number.isInteger(n) && (n === 100 || (n >= T.glutMin && n <= T.glutMax) || (n >= T.wantMin && n <= T.wantMax)))) return false;
+    const value = j.cargo.reduce((sum, l, i) => sum + l[2] * q.micros[i], 0);
+    return Number.isSafeInteger(value) && Math.floor(value / UNIT) === q.gold;
+  };
+  const giveCargo = (h, cargo) => {
+    for (const [f, t, n] of cargo) if (!stashAdd(f, t, n, 'parcel', true)) h.pack.push([f, t, n, 'trade-refund']);
+  };
+  handsTradeRepair = h => {
+    if (!h || !h.job || h.job.role !== 'trade') return false;
+    if (handsTradeValid(h.job)) return true;
+    const j = h.job, cargo = j.cargo; h.job = null;
+    if (j.v === 1 && j.town === TRADE_TOWN.id && cargoOK(cargo)) giveCargo(h, cargo);   // never mint gold from a malformed quote
+    save(); return false;
+  };
+  handsTradeStatus = (h, at = Date.now()) => {
+    const j = h && h.job;
+    if (!handsTradeValid(j)) return { st: 'back', role: 'trade', label: 'Trade run needs checking', left: 0, pct: 0, kind: null, t: null, spot: 'road' };
+    const left = Math.max(0, (j.end - at) / 1000);
+    return { st: left > 0 ? 'out' : 'back', role: 'trade', label: left > 0 ? 'Trading at ' + TRADE_TOWN.n : !creditFits(j.quote.gold) ? 'Trade gold waits: spend some gold first' : 'Returning from ' + TRADE_TOWN.n,
+      left, pct: Math.max(0, Math.min(1, (at - j.start) / (j.end - j.start))), kind: null, t: null, spot: left > 0 ? null : 'road' };
+  };
+  let awayReturns = [];
+  handsTradeFinish = (h, away = false, at = Date.now()) => {
+    if (!h || !h.job || h.job.role !== 'trade') return false;
+    if (!handsTradeValid(h.job)) { handsTradeRepair(h); return false; }
+    if (!Number.isFinite(at) || h.job.end > at || !creditFits(h.job.quote.gold)) return false;
+    const j = h.job, gold = j.quote.gold, units = j.cargo.reduce((n, l) => n + l[2], 0);
+    h.job = null; h.back = j.end;   // clear the reservation before any event can re-enter
+    S.gold += gold; econEarn('trade', gold);
+    const s = ledger(); s.trips++; s.sold += units; s.gold += gold;
+    const e = { id: h.id, n: h.n, at: j.end, units, gold, town: j.town };
+    s.log.push(e); if (s.log.length > T.logMax) s.log.splice(0, s.log.length - T.logMax);
+    if (away) awayReturns.push(e); else toast(h.n + ' returns from ' + TRADE_TOWN.n + ': +' + fmt(gold) + ' gold.', 'good', icon, 'normal');
+    save(); emit('handsTradeBack', { ...e, away: !!away }); return true;
+  };
+  handsTradeRecall = (h, at = Date.now()) => {
+    if (!h || !h.job || h.job.role !== 'trade') return false;
+    if (!handsTradeValid(h.job)) { handsTradeRepair(h); return false; }
+    if (!Number.isFinite(at) || at < 0) return false;
+    if (h.job.end <= at) { handsTradeFinish(h, false, at); return false; }
+    const cargo = h.job.cargo; h.job = null; h.back = at; giveCargo(h, cargo);
+    save(); emit('handsRecall', { id: h.id, role: 'trade', cargo: cargo.map(l => l.slice()) }); return true;
+  };
+  handsTradeDiagnostic = (id, cargo) => {
+    const q = handsTradeQuote(id, cargo), h = handsGet(id);
+    const gather = !h ? [] : q.lines.map(l => {
+      const units = Math.floor(handsRate(h, l.kind, l.t) * T.secs / 3600);
+      return { kind: l.kind, t: l.t, units, marketGold: Math.floor(units * l.unitGold), shiftFee: handsFee(h, l.kind, l.t) };
+    });
+    return { quote: q, gather, heroFightGold: econH(S.maxZone) * T.secs / 3600,
+      note: 'Each gathering row is a separate two-hour alternative, before finds and overlapping gatherer bonuses. Shift fee is the full four-hour fee. Trade spends existing cargo; gathering creates new materials.' };
+  };
+  registerAwayLine(() => {
+    const rows = awayReturns.map(e => ({ icon, group: 'Trade', txt: e.n + ' returned from ' + TRADE_TOWN.n + ': +' + fmt(e.gold) + ' gold.',
+      go: () => emit('campGoto', { tab: 'world', view: 'tav', sel: '#sec-hands' }) }));
+    awayReturns = []; return rows;
+  });
+  // Existing jobs still return if a hand-edited save lowered the Tavern/Hearth.
+  on('away', () => { if (!handsOpen()) handsCatchUp(Date.now(), true); });
+  let elapsed = 0;
+  onTick(dt => { if (!(dt > 0) || !Number.isFinite(dt)) return; elapsed += dt; if (elapsed < 1) return; elapsed = 0;
+    if (!handsOpen() && handsList().some(h => h.job && h.job.role === 'trade')) handsCatchUp(Date.now(), false);
   });
 }
 
@@ -21264,7 +21494,7 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
     if (a) { emit('soloAttack', { kind: a }); return a; }
     if (!anyFoe()) return '';
     classTap({ target: 'mob', noAnswer: true, x: T.atkX * aps() });   // SOLO2: a press is worth atkX auto swings' time (it scales with attack speed like the auto swing)
-    emit('lunge');
+    // (no extra lunge here: the classTap event already plays the stage swing, and a second one queued a double swing)
     emit('soloAttack', { kind: 'hit' });
     return 'hit';
   };
@@ -26329,6 +26559,182 @@ let campPaintFire = null;
   on('hearthLit', () => { lastSig = ''; place(); emit('shake', 0.15); });
 }
 
+// C2: the warm camp panorama. The UI owns scrolling, the canvas and accessible
+// gatherer buttons. Coordinates are CSS pixels; actor x/y is the foot centre.
+// Painting never moves hit targets, advances jobs, or changes the save.
+const CAMP_SCENE_SIZE = Object.freeze({ width: 1024, height: 192, homeX: 360 });
+let campSceneLayout, campPaintScene;
+{
+  const PLOTS = [
+    ['tavern', 154], ['watch', 250], ['bench', 444], ['forge', 514],
+    ['store', 594], ['loom', 678], ['ench', 750], ['library', 832], ['shrine', 916]
+  ];
+  const SPOTS = { fire: 360, bench: 444, store: 594, kitchen: 98, road: 960 };
+  const hash = value => { let h = 0; for (const c of String(value)) h = (Math.imul(h, 31) + c.charCodeAt(0)) >>> 0; return h; };
+  const level = id => typeof campLevel === 'function' ? campLevel(id) : 0;
+  campSceneLayout = () => {
+    const open = typeof campOpen === 'function' && campOpen();
+    const phase = typeof campClock === 'function' ? campClock().phase : 'day';
+    const view = Object.assign({}, CAMP_SCENE_SIZE, { open, phase, actors: [], away: [],
+      lit: open && level('hearth') > 0, tents: open ? level('tent') : 0,
+      buildings: open ? PLOTS.filter(([id]) => level(id) > 0).map(([id, x]) => ({ id, x, lv: level(id) })) : [] });
+    if (!open || typeof handsList !== 'function' || typeof handsStatus !== 'function') return view;
+    const used = new Set(), slots = Array.from({ length: 18 }, (_, i) => 36 + i * 56);
+    // Roster order is stable across reloads. Claim the nearest free place, keeping
+    // the whole button inside the panorama even when all ten tents are occupied.
+    for (const h of handsList()) {
+      const status = handsStatus(h); if (!status) continue;
+      if (status.st === 'out' || status.st === 'back') { view.away.push({ id: h.id, name: h.n, status }); continue; }
+      const want = SPOTS[status.spot] || SPOTS.fire;
+      const x = slots.filter(p => !used.has(p)).sort((a, b) => Math.abs(a - want) - Math.abs(b - want) || a - b)[0];
+      if (x == null) continue;
+      used.add(x);
+      view.actors.push({ id: h.id, name: h.n, x, y: 164, w: 56, h: 96, status,
+        spot: status.spot, sk: h.sk, look: hash(h.key || h.id) % 3 });
+    }
+    return view;
+  };
+
+  // Small, bounded B1 outfits: the same body/shadow/pixel baker as the heroes,
+  // with work clothes and tools. These are scene looks, never recruitable heroes.
+  const frameCache = new Map();
+  function workerFrame(actor) {
+    if (typeof AK === 'undefined' || typeof charFrames !== 'function') return null;
+    const job = ['wood', 'mine', 'forage'].includes(actor.sk) ? actor.sk : 'any';
+    const v = actor.look % 3, key = 'camp_worker_' + job + '_' + v;
+    if (frameCache.has(key)) return frameCache.get(key);
+    const { m, R, P, E, legs, arm, torsoShape, belt, head, face, hairShort, hairFringe, beard } = AK;
+    const shirt = m(({ wood: ['#976349', '#A87842', '#7F626D'], mine: ['#687A8A', '#7D6D86', '#748477'],
+      forage: ['#69845D', '#8E7D54', '#628576'], any: ['#8C7954', '#777490', '#9C6C65'] })[job][v]);
+    const skin = m(AK.SKINS[v], 'skin'), hair = m(AK.HAIRS[(v + (job === 'mine' ? 2 : 0)) % 4], 'hair');
+    const leather = m('#694C38', 'leather'), boots = m('#443B38', 'leather');
+    const iron = m('#9296A0', 'metal'), timber = m('#947045', 'wood');
+    AK.CHARS[key] = {
+      name: 'Camp gatherer', circle: 'camp', hs: [1, .94, 1.04][v], ws: [1, 1.1, .92][v],
+      aF: -.18, aB: .08, anim: 'slash', wpn: { fam: 'ore', t: 1, r: 0 },
+      build(k) {
+        legs(k, m('#53515A'), boots, { patch: leather });
+        arm(k, 'B', shirt, skin);
+        k.add(3, 'up', shirt, torsoShape(k, { bw: 1.12 }), { bev: 1 });
+        if (job === 'mine') k.add(3.3, 'up', leather, R(-k.sw * .65, k.shY + 3, k.sw * 1.3, -k.shY + k.hiY + 1));
+        belt(k, leather, { buckle: iron });
+        head(k, skin); face(k, { eye: '#282737', brow: '#493B37' });
+        if (v === 1) hairFringe(k, hair); else hairShort(k, hair);
+        if (job === 'mine' && v === 2) beard(k, hair);
+        if (job === 'forage') {
+          k.add(6.1, 'head', m('#A7915F'), E(k.hx, k.top + 1, k.hw + 2, 1.7));
+          k.add(6.2, 'head', m('#8D7B51'), R(k.hx - k.hw * .75, k.top - 2, k.hw * 1.5, 3));
+        }
+        arm(k, 'F', shirt, skin);
+        if (job === 'wood') k.held(7, 'F', -.25, [
+          [timber, R(-.8, -10, 1.6, 16)], [iron, P(0, -10, 5, -11, 6, -6, 0, -7)]
+        ]);
+        else if (job === 'mine') k.held(7, 'F', -.22, [
+          [timber, R(-.8, -10, 1.6, 16)], [iron, P(-6, -8, -2, -11, 3, -11, 6, -8, 1, -9, -2, -9)]
+        ]);
+        else k.held(7, 'F', 0, [[leather, E(1, 4, 3.6, 4.2)], [timber, R(-2.5, 1, 7, 1.3)]]);
+      }
+    };
+    const frames = charFrames({ comp: key }, true), frame = frames && frames.idle0;
+    frameCache.set(key, frame || null); return frame;
+  }
+  const rect = (g, x, y, w, h, color) => { g.fillStyle = color; g.fillRect(Math.round(x), Math.round(y), w, h); };
+  function roof(g, x, y, w, color) {
+    for (let i = 0; i < 5; i++) rect(g, x - w / 2 + i * 4, y - i * 4, w - i * 8, 4, color);
+    rect(g, x - w / 2, y + 4, w, 3, '#342938');
+  }
+  function crate(g, x, y) {
+    rect(g, x, y, 16, 16, '#553E36'); rect(g, x + 2, y + 2, 12, 12, '#94704E');
+    rect(g, x + 2, y + 7, 12, 2, '#493933'); rect(g, x + 7, y + 2, 2, 12, '#493933');
+  }
+  function station(g, b, night) {
+    const x = b.x, y = 120, timber = '#76583E', light = '#B68B5A', dark = '#392F32';
+    rect(g, x - 31, y, 62, 4, 'rgba(16,13,24,.3)');
+    if (b.id === 'tavern' || b.id === 'store' || b.id === 'library') {
+      rect(g, x - 28, y - 43, 56, 43, timber); rect(g, x - 25, y - 39, 50, 3, light);
+      for (let i = 1; i < 4; i++) rect(g, x - 28, y - i * 10, 56, 2, dark);
+      roof(g, x, y - 46, 68, b.id === 'tavern' ? '#8E514B' : b.id === 'library' ? '#626880' : '#666352');
+      rect(g, x - 7, y - 28, 14, 28, dark); rect(g, x + 3, y - 15, 2, 2, light);
+      for (const dx of [-21, 13]) {
+        rect(g, x + dx, y - 31, 9, 13, dark); rect(g, x + dx + 2, y - 29, 5, 9, night ? '#F3C579' : '#B5AB91');
+      }
+      if (b.id === 'store') { crate(g, x + 19, y - 16); crate(g, x + 31, y - 13); }
+      if (b.id === 'tavern') { rect(g, x + 31, y - 38, 3, 34, dark); rect(g, x + 30, y - 37, 14, 12, '#C49A59'); rect(g, x + 34, y - 34, 5, 6, '#5E4236'); }
+    } else if (b.id === 'watch') {
+      rect(g, x - 19, y - 65, 5, 65, dark); rect(g, x + 14, y - 65, 5, 65, dark);
+      for (let i = 0; i < 5; i++) rect(g, x - 14, y - 8 - i * 10, 28, 3, timber);
+      rect(g, x - 25, y - 58, 50, 13, timber); rect(g, x - 25, y - 58, 50, 3, light);
+      roof(g, x, y - 70, 56, '#6B6654');
+    } else if (b.id === 'bench') {
+      for (const dx of [-21, 15]) rect(g, x + dx, y - 23, 5, 23, dark);
+      rect(g, x - 26, y - 29, 55, 7, timber); rect(g, x - 26, y - 29, 55, 2, light);
+      rect(g, x - 10, y - 34, 25, 4, '#A9A6A7');
+      for (let i = 0; i < 3; i++) { rect(g, x - 29 + i * 13, y - 9, 12, 8, '#80583E'); rect(g, x - 28 + i * 13, y - 8, 3, 5, '#C19766'); }
+    } else if (b.id === 'forge') {
+      rect(g, x - 24, y - 36, 21, 36, '#55505A'); rect(g, x - 23, y - 30, 16, 18, '#272335');
+      rect(g, x - 21, y - 20, 12, 7, '#DC7745'); rect(g, x - 17, y - 18, 5, 4, '#EAB96F');
+      rect(g, x - 24, y - 57, 12, 22, '#625763');
+      rect(g, x + 5, y - 19, 16, 19, dark); rect(g, x - 1, y - 28, 30, 8, '#91919A');
+      rect(g, x + 5, y - 28, 19, 2, '#C0B6B6');
+    } else if (b.id === 'loom') {
+      rect(g, x - 22, y - 42, 5, 42, timber); rect(g, x + 17, y - 42, 5, 42, timber);
+      rect(g, x - 22, y - 43, 44, 5, light); rect(g, x - 15, y - 36, 30, 29, '#A99E79');
+      for (let i = 0; i < 7; i++) rect(g, x - 14 + i * 4, y - 36, 1, 29, '#D2C6A3');
+      rect(g, x - 15, y - 13, 30, 6, '#8D6369');
+    } else if (b.id === 'ench') {
+      rect(g, x - 18, y - 21, 4, 21, dark); rect(g, x + 14, y - 21, 4, 21, dark);
+      rect(g, x - 23, y - 27, 46, 7, '#6D5C78'); rect(g, x - 16, y - 31, 17, 4, '#C2B397');
+      rect(g, x + 6, y - 41, 8, 14, '#ACA2D0'); rect(g, x + 8, y - 44, 4, 17, '#CEC3E5');
+    } else if (b.id === 'shrine') {
+      rect(g, x - 21, y - 5, 42, 5, '#827A89'); rect(g, x - 15, y - 10, 30, 5, '#AEA4AC');
+      rect(g, x - 10, y - 36, 20, 26, '#827A89'); rect(g, x - 6, y - 40, 12, 30, '#AEA4AC');
+      rect(g, x - 3, y - 33, 6, 11, '#E4CC89');
+    }
+    g.font = '10px sans-serif'; g.textAlign = 'center'; g.fillStyle = '#E8DDC5';
+    const label = { tavern: 'Tavern', watch: 'Watchtower', bench: 'Woodpile', forge: 'Forge', store: 'Storehouse',
+      loom: 'Loom', ench: 'Enchanter', library: 'Library', shrine: 'Shrine' }[b.id];
+    g.fillText(label, x, y + 15);
+  }
+  campPaintScene = (g, view = campSceneLayout(), time = 0) => {
+    if (!g || !view) return;
+    const t = typeof reduced !== 'undefined' && reduced ? 0 : Math.max(0, Number.isFinite(time) ? time : 0);
+    const night = view.phase === 'night' || view.phase === 'dusk';
+    const sky = { dawn: ['#605D75', '#AC867C'], day: ['#617F8E', '#A6B6A0'], dusk: ['#51435E', '#98716E'], night: ['#211E36', '#3D3B51'] }[view.phase] || ['#617F8E', '#A6B6A0'];
+    g.save(); g.imageSmoothingEnabled = false;
+    rect(g, 0, 0, view.width, 65, sky[0]); rect(g, 0, 65, view.width, 54, sky[1]);
+    if (night) for (let i = 0; i < 21; i++) rect(g, 15 + (i * 173) % view.width, 8 + (i * 13) % 42, 2, 2, '#A59DAC');
+    // Broad pixel silhouettes keep the crew legible at phone size.
+    for (let i = 0; i < 22; i++) {
+      const x = i * 51 - 10, h = 28 + (i * 17) % 30;
+      rect(g, x + 16, 111 - h, 5, h, night ? '#323442' : '#536A63');
+      for (let j = 0; j < 4; j++) rect(g, x + j * 5, 99 - h + j * 10, 40 - j * 8, 18, night ? '#343E49' : '#607B6C');
+    }
+    rect(g, 0, 104, view.width, 88, night ? '#343D39' : '#62714E');
+    rect(g, 0, 137, view.width, 42, night ? '#554D49' : '#96836C');
+    for (let i = 0; i < 55; i++) rect(g, (i * 137) % view.width, 141 + (i * 7) % 32, 5, 2, night ? '#625850' : '#AD987A');
+    for (let i = 0; i < Math.min(10, view.tents || 0); i++) {
+      const x = 35 + i * 41, y = 99;
+      roof(g, x, y - 4, 36, i % 2 ? '#918265' : '#9D9070');
+      rect(g, x - 5, y - 5, 10, 9, '#4C443E'); rect(g, x, y - 13, 2, 17, '#C5B491');
+    }
+    for (const b of view.buildings || []) station(g, b, night);
+    if (view.open && typeof campPaintFire === 'function') {
+      rect(g, view.homeX - 42, 115, 84, 11, '#4B3C36'); rect(g, view.homeX - 38, 114, 76, 3, '#94724D');
+      campPaintFire(g, view.homeX, 142, view.lit, t);
+    }
+    for (const a of view.actors || []) {
+      rect(g, a.x - 15, a.y - 2, 32, 5, 'rgba(20,16,26,.32)');
+      const f = workerFrame(a);
+      if (f) g.drawImage(f.c, Math.round(a.x - f.ox), Math.round(a.y - f.oy));
+      if (a.status.st === 'pack') { rect(g, a.x + 14, a.y - 17, 12, 16, '#A68B5F'); rect(g, a.x + 17, a.y - 20, 6, 4, '#6B513D'); }
+      if (a.status.st === 'rest') { g.font = '10px sans-serif'; g.fillStyle = '#DFD4B6'; g.textAlign = 'center'; g.fillText('Resting', a.x, a.y - 78); }
+    }
+    // Sparse foreground tufts, below the fixed foot line and above the labels.
+    for (let i = 0; i < 27; i++) rect(g, (i * 83) % view.width, 181 + (i % 3) * 3, 7, 2, night ? '#444E40' : '#84905D');
+    g.restore();
+  };
+}
+
 // ---- src/js/63e-scenery-wall.js ----
 // 63e-scenery-wall: the Trophy Wall at camp (docs/design/achievements.md 6, task AC5). Browser-only.
 // The art and the plan load in Node too (tools/check.mjs "wall"): nothing here touches the DOM until
@@ -28765,6 +29171,7 @@ function uiForge() { renderTrophies(); }
 //   #sec-hands       Hire gatherers: Tents used, route arrivals in star spots, then random applicants.
 //   #sec-hands-crew  Your gatherers: shifts, queues, recall, packs and send again.
 // Two-tap confirms for irreversible choices arm a button for 4 seconds; no confirm().
+let handsTalkMount, handsTalkOpen, handsTalkUpdate;
 {
   const RC = r => `var(--r-${r})`;
   const dur = secs => { secs = Math.ceil(secs); const h = Math.floor(secs / 3600), m = Math.floor(secs % 3600 / 60); return secs < 60 ? secs + 's' : h ? (m ? `${h}h ${m}m` : `${h}h`) : `${m}m`; };
@@ -28778,9 +29185,20 @@ function uiForge() { renderTrophies(); }
 
   let armed = null, armedAt = 0, picking = null, msg = '', msgAt = 0;
   const shiftChoice = Object.create(null);
+  let talkBox = null, talkId = null, talkLine = '', talkPicking = false, talkOrigin = null, talkFallback = null, talkSig = '';
   const isArmed = k => armed === k && Date.now() - armedAt < 4000;
   const arm = k => { armed = k; armedAt = Date.now(); picking = null; ui(true); };
   const say = t => { msg = t; msgAt = Date.now(); };
+  const tradeReason = () => !handsOpen() ? 'Gatherers need Hearth 2 and a built Tavern.'
+    : !handsTradeOpen() ? 'Build Tavern 2 so a trader starts passing through.' : '';
+  function tradeButton(x, busy, onOpen = null) {
+    const b = btn('mini', 'Trade run'), why = tradeReason();
+    b.classList.add('hd-trade'); b.disabled = busy || !!why;
+    b.setAttribute('aria-label', `Send ${x.n} on a trade run${why ? '. ' + why : ''}`);
+    if (why) b.title = why;
+    b.addEventListener('click', () => { if (onOpen) onOpen(); handsTradeOpenPicker(x.id); });
+    return b;
+  }
 
   // A gatherer's portrait: the job icon on a frame in the rarity colour, with their initial.
   function portrait(x) {
@@ -28792,6 +29210,72 @@ function uiForge() { renderTrophies(); }
     const box = el('div', 'hd-tr');
     for (const t of handsTraits(x)) { const c = el('span', 'hd-trait' + (t.calling ? ' call' : ''), t.n); c.title = t.txt; box.append(c); }
     return box;
+  }
+
+  // C2: one inline talk card is shared by the Camp scene and its gatherer buttons.
+  // The job rows below are the same picker used by the Tavern crew cards.
+  handsTalkMount = (host, fallback) => {
+    talkFallback = fallback;
+    talkBox = el('section', 'hd-card'); talkBox.id = 'hands-talk'; talkBox.hidden = true;
+    talkBox.setAttribute('role', 'region'); talkBox.setAttribute('aria-label', 'Gatherer conversation');
+    talkBox.addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); closeTalk(); } });
+    host.append(talkBox);
+  };
+  const closeTalk = () => {
+    talkId = null; talkPicking = false; talkSig = '';
+    if (talkBox) { talkBox.hidden = true; talkBox.textContent = ''; }
+    const target = talkOrigin && talkOrigin.isConnected ? talkOrigin : talkFallback;
+    if (target) target.focus();
+  };
+  handsTalkOpen = (id, origin) => {
+    const x = handsGet(id);
+    if (!x || !talkBox) return false;
+    talkOrigin = origin || null; talkId = id; talkPicking = false; talkSig = '';
+    handsTalk(id); talkLine = handsTalkInfo(id).line;
+    renderTalk(true);
+    return true;
+  };
+  handsTalkUpdate = () => { if (talkId) renderTalk(false); };
+  function renderTalk(focus) {
+    if (!talkBox || !talkId) return;
+    const x = handsGet(talkId); if (!x) { closeTalk(); return; }
+    const info = handsTalkInfo(talkId), st = handsStatus(x), busy = !!x.job || !!x.pack.length;
+    if (busy) talkPicking = false;
+    const sig = JSON.stringify([x.id, x.lv, x.job && [x.job.start, x.job.end, x.job.q, x.job.role], x.pack, talkLine, st.st,
+      Math.ceil((st.left || 0) / 60), talkPicking, shiftChoice[x.id], Math.floor(S.gold / 10), tradeReason()]);
+    if (sig === talkSig && !focus) return;
+    talkSig = sig;
+    const focused = talkBox.contains(document.activeElement) ? [...talkBox.querySelectorAll('button')].indexOf(document.activeElement) : -1;
+    talkBox.hidden = false; talkBox.textContent = '';
+    const top = el('div', 'hd-head'), who = el('div', 'hd-id');
+    const title = el('h3', 'hd-name', info.name || x.n); title.id = 'hands-talk-title';
+    talkBox.setAttribute('aria-labelledby', title.id);
+    who.append(title, el('div', 'hd-sub2', `${handsRarName(x)} ${info.jobName || handsSkillName(x)} · Lv ${x.lv}`));
+    top.append(portrait(x), who);
+    const close = btn('mini', 'Close'); close.setAttribute('aria-label', `Close conversation with ${x.n}`);
+    close.addEventListener('click', closeTalk);
+    const line = el('p', 'note hd-line', ['out', 'back'].includes(st.st) ? talkLine : `“${talkLine}”`);
+    const status = el('p', 'hd-stat', statusText(x, st));
+    const act = el('div', 'hd-act'), send = btn('mini go', talkPicking ? 'Close jobs' : 'Send on a job');
+    send.disabled = busy;
+    send.addEventListener('click', () => { talkPicking = !talkPicking; renderTalk(true); });
+    act.append(send, tradeButton(x, busy, closeTalk));
+    if (busy) {
+      const controls = btn('mini', 'Open gatherer controls');
+      controls.addEventListener('click', () => emit('campGoto', { tab: 'world', view: 'tav', sel: '#sec-hands-crew' }));
+      act.append(controls);
+    }
+    act.append(close);
+    talkBox.append(top, traitChips(x), line, status, act);
+    if (tradeReason()) talkBox.append(el('p', 'note hd-trade-lock', tradeReason()));
+    if (talkPicking && !busy) talkBox.append(jobPicker(x, info.jobs, () => {
+      talkPicking = false; talkLine = handsTalkInfo(x.id).line; renderTalk(true);
+    }));
+    if (focus || focused >= 0) {
+      const buttons = [...talkBox.querySelectorAll('button')];
+      const target = focus ? (talkPicking ? talkBox.querySelector('.hd-job') || close : close) : buttons[Math.min(focused, buttons.length - 1)] || close;
+      target.focus();
+    }
   }
 
   let B = null, C = null, boardSig = '', crewSig = '';
@@ -28810,8 +29294,8 @@ function uiForge() { renderTrophies(); }
   registerSection('tav', {
     id: 'hands-crew', title: 'Your gatherers',
     mount(sec) {
-      const next = B && B.sec && B.sec.nextSibling;
-      if (next && next !== sec) sec.parentNode.insertBefore(sec, next);
+      // The people already at camp lead the Tavern view; applicants follow them.
+      if (B && B.sec) sec.parentNode.insertBefore(sec, B.sec);
       C = { sec, top: el('div', 'hd-act'), list: el('div', 'hd-list'), note: el('p', 'note hd-note') };
       sec.append(C.top, C.list, C.note);
     },
@@ -28903,6 +29387,10 @@ function uiForge() { renderTrophies(); }
   const statusText = (x, st) => {
     const q = x.job && x.job.q || 0;
     const next = q ? ` · ${q} more shift${q === 1 ? '' : 's'} queued` : '';
+    if (x.job && x.job.role === 'trade') {
+      if (st.st === 'out') return `${st.label} · ${dur(st.left)} left`;
+      if (st.st === 'back') return 'Returning from trade';
+    }
     if (st.st === 'out') return `On shift: ${st.label.replace(/^Out at the /, '')}, ${dur(st.left)} left${next}`;
     if (st.st === 'rest') return `Resting at camp: next shift in ${dur(st.left)}${next}`;
     if (st.st === 'back') return 'Walking home';
@@ -28923,12 +29411,12 @@ function uiForge() { renderTrophies(); }
       if (s && (s.st === 'out' || s.st === 'rest')) setTxt(row, statusText(x, s));
     }
     const againPlan = handsSendAgainPreview();
-    const sig = JSON.stringify([list.map(x => [x.id, x.lv, x.job && [x.job.start, x.job.end, x.job.q], x.pack, x.last, x.sent, handsUnpaid(x), Math.floor(x.xp), shiftChoice[x.id]]), Math.floor(S.gold / 10), againPlan, armed, isArmed(armed), picking]);
+    const sig = JSON.stringify([list.map(x => [x.id, x.lv, x.job && [x.job.start, x.job.end, x.job.q, x.job.role], x.pack, x.last, x.sent, handsUnpaid(x), Math.floor(x.xp), shiftChoice[x.id]]), Math.floor(S.gold / 10), againPlan, armed, isArmed(armed), picking, tradeReason()]);
     if (sig === crewSig) return;
     crewSig = sig;
     C.top.textContent = '';
     if (againPlan.ready) {
-      const all = btn('mini', againPlan.count === againPlan.ready ? `Send all again: ${gold(againPlan.fee)}` : `Send ${againPlan.count} of ${againPlan.ready}: ${gold(againPlan.fee)}`);
+      const all = btn('mini', againPlan.count === againPlan.ready ? `Send shifts again: ${gold(againPlan.fee)}` : `Send ${againPlan.count} of ${againPlan.ready} shifts again: ${gold(againPlan.fee)}`);
       all.setAttribute('aria-label', `Send ${againPlan.count} of ${againPlan.ready} ready gatherers to their last jobs for ${gold(againPlan.fee)}`);
       all.disabled = !againPlan.count;
       all.addEventListener('click', () => { const n = handsSendAgain(); say(n ? `${n} gatherer${n === 1 ? '' : 's'} sent again.` : 'No gatherer could be sent. Check the shift fees and your gold.'); ui(true); });
@@ -28955,9 +29443,16 @@ function uiForge() { renderTrophies(); }
     if (x.lv < HANDS_TUNE.lvMax) card.append(el('p', 'note hd-line', `Level ${x.lv + 1} after ${dur(Math.max(0, handsLevelNeed(x.lv) - x.xp) * 3600)} more work.`));
     const busy = !!x.job || x.pack.length > 0;
     const act = el('div', 'hd-act');
+    const talk = btn('mini', 'Talk');
+    talk.setAttribute('aria-label', `Talk to ${x.n} at camp`);
+    talk.addEventListener('click', () => {
+      emit('campGoto', { tab: 'world', view: 'camp', sel: '#camp-scene-scroll' });
+      handsTalkOpen(x.id);
+    });
     const send = btn('mini go', picking === x.id ? 'Close' : 'Send on a job');
     send.disabled = busy;
     send.addEventListener('click', () => { picking = picking === x.id ? null : x.id; armed = null; ui(true); });
+    const trade = tradeButton(x, busy);
     if (!busy && x.last) {
       const plan = handsSendAgainPreview(x.id);
       const again = btn('mini', `Send again: ${gold(plan.fee)}`);
@@ -28967,15 +29462,19 @@ function uiForge() { renderTrophies(); }
       act.append(again);
     }
     if (x.job) {
-      const k = 'recall:' + x.id, recall = btn('mini warn', isArmed(k) ? 'Tap again: recall' : 'Recall');
+      const k = 'recall:' + x.id, tradeRun = x.job.role === 'trade';
+      const recall = btn('mini warn', isArmed(k) ? (tradeRun ? 'Tap again: recall trade' : 'Tap again: recall') : 'Recall');
       recall.addEventListener('click', () => {
         if (!isArmed(k)) { arm(k); return; }
         armed = null;
-        say(handsRecall(x.id) ? `${x.n} is coming home with the haul so far.` : `${x.n} could not be recalled.`);
+        const recalled = handsRecall(x.id);
+        say(recalled ? tradeRun ? `${x.n} came home. Original cargo returned${x.pack.length ? '; what did not fit waits in their pack' : ''}. No gold earned.`
+          : `${x.n} is coming home with the haul so far.` : `${x.n} could not be recalled.`);
         ui(true);
       });
       act.append(recall);
-      card.append(el('p', 'note hd-line', st.st === 'rest'
+      card.append(el('p', 'note hd-line', tradeRun
+        ? 'Recall returns the original cargo. Anything that does not fit waits in their pack. No gold is earned.' : st.st === 'rest'
         ? 'Recall cancels the next shift and refunds it and any later shifts.'
         : 'Recall brings home the haul so far. This shift is paid; later shifts are refunded.'));
     }
@@ -28999,15 +29498,16 @@ function uiForge() { renderTrophies(); }
       if (handsLetGo(x.id)) say(named ? `${n} went back to the Tavern with their level.` : `${n} left camp.`);
       ui(true);
     });
-    act.prepend(send); act.append(go);
+    act.prepend(talk, send, trade); act.append(go);
     card.append(act);
+    if (tradeReason()) card.append(el('p', 'note hd-trade-lock', tradeReason()));
     if (picking === x.id && !busy) card.append(jobPicker(x));
     return card;
   }
 
-  function jobPicker(x) {
+  function jobPicker(x, offered = handsNodes(x).filter(n => n.own), onSent = null) {
     const box = el('div', 'hd-jobs');
-    const nodes = handsNodes(x).filter(n => n.own);
+    const nodes = offered.filter(n => n.own);
     if (!nodes.length) { box.append(el('p', 'note', 'No job is open for them yet. Open more nodes with your hero first.')); return box; }
     box.append(el('p', 'note', 'Pick a job. Every shift lasts 4 hours. Fees are paid now; the haul comes home to the Storehouse.'));
     const count = shiftChoice[x.id] || 1, choices = el('div', 'hd-shifts');
@@ -29033,6 +29533,7 @@ function uiForge() { renderTrophies(); }
         if (!can.ok) { say(can.why); ui(true); return; }
         const j = handsSend(x.id, n.kind, n.t, { shifts: count });
         picking = null;
+        if (j && onSent) onSent(j);
         say(j ? `${x.n} heads out to the ${handsNodeName(n.kind, n.t)} for ${count} shift${count === 1 ? '' : 's'}.` : can.why);
         ui(true);
       });
@@ -29206,6 +29707,169 @@ var renderTavernLeads = (box, rows) => {
       leads.textContent = '';
       renderTavernLeads(leads, rows);
     }
+  });
+}
+
+// ---- src/js/74b-ui-trade.js ----
+// Offline trade runs. The Camp conversation and crew card open this picker;
+// the Hands core owns prices, stock and delivery.
+var handsTradeOpenPicker;
+{
+  let sec, body, note, picker, quoteBox, selected = null, catalogSig = '', quoteSig = '', reviewed = null, feedback = '';
+  const button = (label, cls = 'mini') => { const b = el('button', cls, label); b.type = 'button'; b.style.minHeight = '44px'; return b; };
+  const amount = n => fmt(Math.floor(n));
+  const cargo = () => picker ? [...picker.querySelectorAll('input[data-kind]')]
+    .map(i => [i.dataset.kind, Number(i.dataset.t), Math.floor(Number(i.value) || 0)])
+    .filter(row => row[2] > 0) : [];
+  const signature = q => JSON.stringify([q.week, q.units, q.gold, q.lines && q.lines.map(l => [l.kind, l.t, l.n, l.unitGold])]);
+
+  function showQuote() {
+    if (!quoteBox || !selected || !picker) return;
+    const actionFocused = quoteBox.contains(document.activeElement) && document.activeElement.tagName === 'BUTTON';
+    const x = handsGet(selected), rows = cargo();
+    quoteBox.textContent = '';
+    if (!x || x.job || x.pack.length) { reviewed = null; quoteBox.append(el('p', 'note', 'This gatherer is busy.')); return; }
+    const q = handsTradeQuote(selected, rows);
+    quoteSig = JSON.stringify([q.ok, q.why, signature(q)]);
+    if (reviewed && (!q.ok || JSON.stringify(rows) !== reviewed.cargo || signature(q) !== signature(reviewed.quote))) {
+      reviewed = null;
+      feedback = 'Stock or weekly prices changed. Review the quote again.';
+    }
+    if (!q.ok) {
+      reviewed = null;
+      if (feedback) quoteBox.append(el('p', 'note', feedback));
+      quoteBox.append(el('p', 'note', q.why || 'Choose cargo to see a quote.'));
+      if (actionFocused) picker.querySelector('input:not(:disabled)')?.focus();
+      return;
+    }
+    if (feedback) quoteBox.append(el('p', 'note', feedback));
+    const summary = el('p', 'hd-stat', `${amount(q.units)} units to ${q.townName} · 2 hours · ${amount(q.gold)} gold on return. No fee.`);
+    quoteBox.append(summary);
+    const lines = el('div', 'note');
+    for (const line of q.lines) lines.append(el('div', null, `${amount(line.n)} ${line.name} · ${line.demand}% demand · ${Number(line.unitGold).toFixed(2)} gold each`));
+    quoteBox.append(lines, el('p', 'note', 'This week’s prices are locked in when you send. Trade returns gold only.'));
+    const action = reviewed ? button('Send trade run', 'mini go') : button('Review quote', 'mini go');
+    action.addEventListener('click', () => {
+      if (!reviewed) {
+        reviewed = { quote: q, cargo: JSON.stringify(rows) };
+        feedback = 'Quote reviewed. Send this cargo when ready.';
+        showQuote();
+        quoteBox.querySelector('button')?.focus();
+        return;
+      }
+      const job = handsTradeSend(selected, rows, reviewed.quote);
+      reviewed = null;
+      feedback = job ? `${x.n} is trading at ${q.townName}. The cargo returns as gold in 2 hours.`
+        : 'Stock or weekly prices changed. Review the quote again.';
+      if (job) { catalogSig = ''; ui(true); body.focus(); }
+      else showQuote();
+    });
+    quoteBox.append(action);
+    if (actionFocused) action.focus();
+  }
+
+  function drawForm(rows) {
+    picker.textContent = '';
+    const intro = el('p', 'note', 'Choose up to 3 kinds of cargo, 5,000 units total. Only this gatherer’s unlocked materials can go.');
+    picker.append(intro);
+    if (!rows.length) { picker.append(el('p', 'note', 'No trade goods are open for this gatherer yet.')); return; }
+    for (const row of rows) {
+      const label = el('label', 'hd-trade-row');
+      label.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:8px 0;';
+      const name = el('span', null, `${row.name} · ${amount(row.have)} in Storehouse`);
+      const input = el('input'); input.type = 'number'; input.min = '0'; input.max = String(row.have); input.step = '1'; input.inputMode = 'numeric'; input.value = '0';
+      input.disabled = row.have < 1; input.dataset.kind = row.kind; input.dataset.t = row.t;
+      input.setAttribute('aria-label', `${row.name} units to trade, ${amount(row.have)} available`);
+      input.style.cssText = 'width:6.5em;min-height:44px;box-sizing:border-box;';
+      input.addEventListener('input', () => { reviewed = null; feedback = ''; showQuote(); });
+      input.addEventListener('change', () => {
+        const before = JSON.stringify(cargo());
+        input.value = String(Math.min(row.have, Math.max(0, Math.floor(Number(input.value) || 0))));
+        // The input event already updated the quote. On blur, keep its action node in place
+        // so a pointer press on Review can finish as a click after leaving this field.
+        if (JSON.stringify(cargo()) !== before) { reviewed = null; showQuote(); }
+      });
+      label.append(name, input); picker.append(label);
+    }
+  }
+
+  function draw() {
+    if (!sec) return;
+    sec.hidden = !handsOpen() || !selected;
+    if (sec.hidden) return;
+    const x = handsGet(selected);
+    if (!x) { selected = null; sec.hidden = true; return; }
+    const open = handsTradeOpen();
+    if (!open) {
+      body.textContent = '';
+      catalogSig = ''; quoteSig = ''; reviewed = null; picker = null; quoteBox = null;
+      note.textContent = !handsOpen() ? 'Gatherers need Hearth 2 and a built Tavern.'
+        : 'Build Tavern 2 so a trader starts passing through.';
+      return;
+    }
+    note.textContent = `${x.n} · ${handsSkillName(x)}`;
+    if (x.job || x.pack.length) {
+      body.textContent = '';
+      const st = handsStatus(x);
+      body.append(el('p', 'hd-stat', x.job && x.job.role === 'trade'
+        ? st.st === 'out' ? `${st.label} · ${Math.ceil(st.left / 60)} minutes left. ${amount(x.job.quote && x.job.quote.gold || 0)} gold due on return.` : 'Returning from trade.'
+        : x.pack.length ? 'Their pack is waiting. Make room in the Storehouse, or manage the pack in the crew card.' : 'This gatherer is already working.'));
+      body.append(el('p', 'note', 'Recall a trade in the crew card to return the original cargo. Any cargo that cannot fit in the Storehouse waits in the pack. No gold is earned.'));
+      catalogSig = '';
+      return;
+    }
+    const rows = handsTradeCargo(selected);
+    const next = JSON.stringify([selected, rows.map(r => [r.kind, r.t, r.name, r.have])]);
+    if (next !== catalogSig) {
+      const old = cargo();
+      const focused = document.activeElement && document.activeElement.matches('input[data-kind]') && picker && picker.contains(document.activeElement)
+        ? [document.activeElement.dataset.kind, Number(document.activeElement.dataset.t), document.activeElement.selectionStart, document.activeElement.selectionEnd] : null;
+      const actionFocused = quoteBox && quoteBox.contains(document.activeElement) && document.activeElement.tagName === 'BUTTON';
+      catalogSig = next;
+      body.textContent = '';
+      picker = el('div', 'hd-trade-picker'); quoteBox = el('div', 'hd-trade-quote');
+      quoteBox.setAttribute('role', 'status'); quoteBox.setAttribute('aria-live', 'polite');
+      body.append(picker, quoteBox);
+      drawForm(rows);
+      for (const [kind, t, n] of old) {
+        const input = [...picker.querySelectorAll('input[data-kind]')].find(i => i.dataset.kind === kind && Number(i.dataset.t) === t);
+        if (input) input.value = String(Math.min(n, Number(input.max)));
+      }
+      showQuote();
+      if (actionFocused) {
+        (quoteBox.querySelector('button') || picker.querySelector('input:not(:disabled)'))?.focus();
+      } else if (focused) {
+        const input = [...picker.querySelectorAll('input[data-kind]')].find(i => i.dataset.kind === focused[0] && Number(i.dataset.t) === focused[1]);
+        if (input && !input.disabled) {
+          input.focus();
+          try { input.setSelectionRange(focused[2], focused[3]); } catch (e) { /* number inputs do not support selection */ }
+        }
+      }
+    } else {
+      const q = handsTradeQuote(selected, cargo());
+      if (JSON.stringify([q.ok, q.why, signature(q)]) !== quoteSig) showQuote();
+    }
+  }
+
+  handsTradeOpenPicker = id => {
+    if (!handsGet(id)) return;
+    selected = id; reviewed = null; feedback = ''; catalogSig = ''; quoteSig = ''; picker = null;
+    draw();
+    emit('campGoto', { tab: 'world', view: 'tav', sel: '#sec-hands-trade' });
+    if (sec) sec.querySelector('input:not(:disabled)')?.focus();
+  };
+
+  registerSection('tav', {
+    id: 'hands-trade', title: 'Trade run',
+    mount(node) {
+      sec = node;
+      const crew = document.querySelector('#sec-hands-crew');
+      if (crew) crew.after(sec);
+      note = el('p', 'note'); body = el('div'); body.tabIndex = -1;
+      sec.append(note, body);
+      sec.hidden = true;
+    },
+    update() { draw(); }
   });
 }
 
@@ -29845,6 +30509,48 @@ let showAwayReport;
 
   // ---------------- the camp part ----------------
   let lightBtn, head, closed, closedBar, closedTxt, hearthCard, H = {}, buildersBox, bSig = '';
+  let scenePort, sceneCanvas, sceneButtons, sceneCtx, sceneSig = '', sceneCentered = false, crewStrip, crewCounts;
+  function drawCampScene() {
+    if (!scenePort || typeof campSceneLayout !== 'function' || typeof campPaintScene !== 'function') return;
+    const layout = campSceneLayout();
+    campPaintScene(sceneCtx, layout, Date.now() / 1000);
+    if (!sceneCentered && scenePort.clientWidth) {
+      scenePort.scrollLeft = Math.max(0, layout.homeX - scenePort.clientWidth / 2);
+      sceneCentered = true;
+    }
+    const actors = layout.actors || [];
+    const sig = JSON.stringify(actors.map(a => [a.id, a.name, a.x, a.y, a.status && a.status.st]));
+    if (sig !== sceneSig) {
+      const focusedId = sceneButtons.contains(document.activeElement) ? document.activeElement.dataset.handId : null;
+      sceneSig = sig; sceneButtons.textContent = '';
+      for (const actor of actors) {
+        const b = btn('camp-person', ''); b.dataset.handId = actor.id;
+        b.style.cssText = `position:absolute;left:${actor.x - 28}px;top:${actor.y - 84}px;width:56px;height:96px;background:transparent;border:0;cursor:pointer;pointer-events:auto;touch-action:auto`;
+        const label = el('span', null, actor.name.split(' ')[0]);
+        label.style.cssText = 'position:absolute;left:0;right:0;bottom:-12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:600 10px var(--body);line-height:14px;color:var(--bone);background:rgba(11,8,16,.75);pointer-events:none';
+        b.append(label);
+        const status = handsStatus(actor.id);
+        b.setAttribute('aria-label', `Talk to ${actor.name}${status ? ', ' + status.label : ''}`);
+        b.title = `Talk to ${actor.name}`;
+        b.addEventListener('focus', () => { b.style.outline = '2px solid var(--gold)'; b.style.outlineOffset = '-2px'; });
+        b.addEventListener('blur', () => { b.style.outline = ''; });
+        let down = null, dragged = false;
+        b.addEventListener('pointerdown', e => { down = [e.clientX, e.clientY]; dragged = false; });
+        b.addEventListener('pointermove', e => { if (down && Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 8) dragged = true; });
+        b.addEventListener('pointercancel', () => { down = null; dragged = true; });
+        b.addEventListener('click', e => {
+          down = null;
+          if (dragged) { dragged = false; e.preventDefault(); return; }
+          handsTalkOpen(actor.id, b);
+        });
+        sceneButtons.append(b);
+      }
+      if (focusedId) {
+        const next = [...sceneButtons.children].find(b => b.dataset.handId === focusedId);
+        (next || scenePort).focus();
+      }
+    }
+  }
   registerSection('camp', {
     id: 'camp', title: null,
     mount(sec) {
@@ -29857,6 +30563,25 @@ let showAwayReport;
       lightBtn = btn('big cb-go', 'Light the fire · 8 Pine Log'); lightBtn.hidden = true;
       lightBtn.addEventListener('click', () => { if (hearthLight()) ui(true); });
       closed.append(el('h3', null, 'No camp yet'), closedTxt, bar, lightBtn);
+      const size = typeof CAMP_SCENE_SIZE === 'object' ? CAMP_SCENE_SIZE : { width: 1024, height: 192 };
+      scenePort = el('div'); scenePort.id = 'camp-scene-scroll'; scenePort.tabIndex = 0;
+      scenePort.setAttribute('role', 'region'); scenePort.setAttribute('aria-label', 'Camp scene. Scroll sideways to visit your gatherers.');
+      scenePort.style.cssText = 'width:100%;max-width:100%;min-width:0;height:192px;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;touch-action:auto;background:var(--well)';
+      const track = el('div'); track.style.cssText = `position:relative;width:${size.width}px;height:${size.height}px`;
+      sceneCanvas = el('canvas'); sceneCanvas.id = 'camp-scene-world'; sceneCanvas.width = size.width; sceneCanvas.height = size.height;
+      sceneCanvas.style.cssText = `position:absolute;left:0;top:0;width:${size.width}px;height:${size.height}px;image-rendering:pixelated;pointer-events:none`;
+      sceneCtx = sceneCanvas.getContext('2d'); sceneCtx.imageSmoothingEnabled = false;
+      sceneButtons = el('div'); sceneButtons.id = 'camp-scene-hands';
+      sceneButtons.style.cssText = 'position:absolute;inset:0;pointer-events:none';
+      track.append(sceneCanvas, sceneButtons); scenePort.append(track);
+      crewStrip = el('div'); crewStrip.id = 'camp-crew-status';
+      crewStrip.style.cssText = 'display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px;padding:5px 8px;background:var(--well);border:1px solid var(--line)';
+      crewCounts = el('span', 'note'); crewCounts.setAttribute('role', 'status');
+      const crewGo = btn('mini', 'View gatherers'); crewGo.style.minHeight = '44px';
+      crewGo.addEventListener('click', () => emit('campGoto', { tab: 'world', view: 'tav', sel: '#sec-hands-crew' }));
+      crewStrip.append(crewCounts, crewGo);
+      const talkHost = el('div');
+      if (typeof handsTalkMount === 'function') handsTalkMount(talkHost, scenePort);
       hearthCard = el('div', 'card camp-hearth'); hearthCard.id = 'camp-b-hearth';
       const top = el('div', 'ch-top'), ic = el('div', 'ic ch-ic'); ic.append(img(icon('hearth')));
       const who = el('div', 'ch-who');
@@ -29872,11 +30597,13 @@ let showAwayReport;
       H.deco.hidden = true; H.decoSig = '';
       hearthCard.append(top, H.deco, H.next, H.cost, H.costs, H.timer.el, H.act.el);
       buildersBox = el('div', 'camp-builders');
-      sec.append(head, closed, hearthCard, buildersBox);
+      sec.append(head, closed, scenePort, crewStrip, talkHost, hearthCard, buildersBox);
     },
     update() {
       const open = campOpen();
       putHidden(closed, open); putHidden(hearthCard, !open); putHidden(buildersBox, !open);
+      putHidden(scenePort, !open);
+      putHidden(crewStrip, !open || !handsOpen());
       if (!open) {
         // H1: a cold Hearth waits for its fire (8 Pine Log), not for a zone.
         const cold = typeof hearthCold === 'function' && hearthCold(), hc = cold ? hearthCan() : null;
@@ -29892,6 +30619,19 @@ let showAwayReport;
         putStyle(closedBar, 'width', Math.min(100, S.maxZone / CAMP_TUNE.openZone * 100) + '%');
         return;
       }
+      drawCampScene();
+      if (!crewStrip.hidden) {
+        const n = { ready: 0, out: 0, rest: 0, pack: 0 };
+        for (const h of handsList()) {
+          const s = handsStatus(h); if (!s) continue;
+          if (s.st === 'camp') n.ready++;
+          else if (s.st === 'rest') n.rest++;
+          else if (s.st === 'pack') n.pack++;
+          else n.out++;
+        }
+        setTxt(crewCounts, `Ready ${n.ready} · Out ${n.out} · Resting ${n.rest} · Full packs ${n.pack}`);
+      }
+      if (typeof handsTalkUpdate === 'function') handsTalkUpdate();
       const l = campLevel('hearth'), c = campCan('hearth'), pend = campPending('hearth'), nx = campNextUnlock();
       setTxt(H.name, CAMP_HEARTH_NAMES[l - 1]);
       setTxt(H.lv, `Hearth ${l}/10`);
@@ -33648,10 +34388,11 @@ let navUI = null;
     bench: () => campPath('bench', ['The fire burns. Open Camp to build.', 'Open Camp.', 'Build the Workbench. It makes tools.']),
     tool: () => {
       if (S.tab !== 'forge') return { node: q('.tab[data-tab="forge"]'), text: 'The Workbench is built. Open Craft.' };
-      if (curView('forge') !== 'make') return { node: q('#viewSeg button[data-view="make"]'), text: 'Open Make.' };
+      if (curView('forge') !== 'make') return { node: q('#viewSeg button[data-view="make"]') || q('.tab[data-tab="forge"]'), text: 'Open Make.' };
       const st = q('.cf-st[data-st="bench"]');
       if (st && st.getAttribute('aria-pressed') !== 'true') return { node: st, text: 'Tap the Workbench.' };
-      return { node: q('#sec-craft-recipes .cf-rec[data-kind="pick"] .cf-go'), side: 'up', text: 'Make a Copper Pickaxe.' };
+      // (the recipe list can still be re-rendering right after the station is picked: point at the list, never at nothing)
+      return { node: q('#sec-craft-recipes .cf-rec[data-kind="pick"] .cf-go') || q('#sec-craft-recipes') || st, side: 'up', text: 'Make a Copper Pickaxe.' };
     },
     forge: () => campPath('forge', ['Open Camp to build the Forge.', 'Open Camp.', 'Build the Forge for your weapon.']),
     store: () => campPath('store', ['Your packs are nearly full. Open Camp.', 'Open Camp.', 'Your packs are nearly full. Build a Storehouse.']),
@@ -33666,17 +34407,17 @@ let navUI = null;
 
   const BLOCK = '.create, .away-ov, .bsheet-ov, .modal, .dw-ov';
   let lastKey = '';
-  function hide() { if (!layer.hidden) layer.hidden = true; if (!bub.hidden) bub.hidden = true; cur = null; curGo = null; lastKey = ''; lastNode = null; ONBOARD.paused = false; }
+  function hide() { if (!layer.hidden) layer.hidden = true; if (!bub.hidden) bub.hidden = true; cur = null; curGo = null; lastKey = ''; lastNode = null; lastRect = null; ONBOARD.paused = false; }
   // The hint used to re-read the target's pixel position and re-place itself every 250ms, so it
   // jumped whenever the stage moved under it (camera/zoom, screen shake, a pack spawning) even
-  // though nothing about the guide itself had changed. Now `tick` only ever polls for a step change;
-  // the actual placement (`place`) runs only when the step's target or text changes, or a real
-  // layout event fires (resize, a menu opening or closing) via `dirty`. The band itself (60-onboard.css
-  // .ob-bub) is CSS-docked, not JS-positioned, so it never needs to move at all once shown.
-  let dirty = true, lastTab = S.tab;
+  // though nothing about the guide itself had changed. Stage targets keep that cached placement.
+  // Menu targets also follow scrolling and reflow of the same node; only a new target or view
+  // brings it into sight. The band itself (60-onboard.css .ob-bub) stays CSS-docked.
+  const panels = $('panels');
+  let dirty = true, reveal = true, panelScrolled = false, lastTab = S.tab;
   function invalidate() { dirty = true; }
   function tick() {
-    if (S.tab !== lastTab) { lastTab = S.tab; dirty = true; }
+    if (S.tab !== lastTab) { lastTab = S.tab; dirty = true; reveal = true; }
     let step = null;
     try { step = onboardStep(); } catch (e) { console.error('[lanternfall] onboard step', e); }
     if (!step || document.hidden || q(BLOCK)) return hide();
@@ -33695,9 +34436,13 @@ let navUI = null;
   soloGuideWants = () => (cur && !layer.hidden ? cur.id : '');
   // The guide's steps and their targets, for tools/check.mjs (the browser check walks the first session).
   onboardSpec = id => { const table = SOLO_UI[id] ? SOLO_UI : STEP_UI; try { return table[id] ? table[id]() : null; } catch (e) { return null; } };
-  let lastNode = null;
+  let lastNode = null, lastRect = null;
   function place(spec) {
-    const key = spec.text, changed = dirty || spec.node !== lastNode || key !== lastKey;
+    const key = spec.text, newTarget = spec.node !== lastNode;
+    const inPanel = !!S.tab && panels.contains(spec.node);
+    let r = inPanel ? spec.node.getBoundingClientRect() : null;
+    const moved = inPanel && (!lastRect || r.left !== lastRect.left || r.top !== lastRect.top || r.width !== lastRect.width || r.height !== lastRect.height);
+    const changed = dirty || newTarget || key !== lastKey || (inPanel && panelScrolled) || moved;
     if (layer.hidden) layer.hidden = false;
     if (bub.hidden) bub.hidden = false;
     if (key !== lastKey) {
@@ -33706,17 +34451,22 @@ let navUI = null;
       if (fresh || !spec.live) { bub.classList.remove('pop'); if (!reduced) { void bub.offsetWidth; bub.classList.add('pop'); } }
     }
     if (!changed) return;   // no real layout change and the same target/text: leave it exactly where it is
-    dirty = false; lastNode = spec.node;
+    dirty = false; panelScrolled = false; lastNode = spec.node;
     // UX-L1: a target inside the menu's scrolling content that is out of sight (a short landscape menu: the Make view's
-    // recipes, a camp building further down) is scrolled into view first, so the ring never marks a hidden row
-    const pn = $('panels');
-    if (pn.contains(spec.node) && S.tab) {
-      const pr = pn.getBoundingClientRect(), nr = spec.node.getBoundingClientRect();
-      if (nr.height && (nr.top < pr.top || nr.bottom > pr.bottom - 56)) scrollMenuTo(spec.node);
+    // recipes, a camp building further down) is scrolled into view on a new target/view. Ordinary
+    // scroll or reflow only moves the ring, so following it never pulls the player back.
+    if (inPanel && (newTarget || reveal)) {
+      const pr = panels.getBoundingClientRect();
+      if (r.height && (r.top < pr.top || r.bottom > pr.bottom - 56)) {
+        scrollMenuTo(spec.node);
+        r = spec.node.getBoundingClientRect();
+      }
     }
+    reveal = false;
     // the marker: a ring around the node, or a round mark at a point inside it (never a filled
     // shape, so it never covers the node/foe underneath)
-    const r = spec.node.getBoundingClientRect();
+    if (!r) r = spec.node.getBoundingClientRect();
+    lastRect = inPanel ? r : null;
     let rx, ry, rw, rh;
     if (spec.at) { const d = 58; rx = r.left + r.width * spec.at[0] - d / 2; ry = r.top + r.height * spec.at[1] - d / 2; rw = rh = d; }
     else { rx = r.left - 4; ry = r.top - 4; rw = r.width + 8; rh = r.height + 8; }
@@ -33734,11 +34484,12 @@ let navUI = null;
     bub.classList.toggle('up', !!spec.node.closest('.tabs'));   // the tab bar sits below the band
   }
   setInterval(tick, 250);
+  panels.addEventListener('scroll', () => { panelScrolled = true; tick(); }, { passive: true });
   addEventListener('resize', () => { invalidate(); tick(); });
   on('onboardStep', () => setTimeout(tick, 0));
   on('telegraphStart', () => setTimeout(tick, 0));   // SOLO1: the Dodge and Parry steps catch the wind-up at its start
   on('soloHero', () => setTimeout(tick, 0));
-  on('menuView', invalidate);
+  on('menuView', () => { reveal = true; invalidate(); });
 
   // ---------------- Journal: Tips ----------------
   registerSection('log', {
