@@ -6033,6 +6033,135 @@ if (section('camp trade and import (C4, browser)')) try {
   }
 } catch (e) { fail('C4 Camp Trade and import crashed: ' + (e.stack || e)); }
 
+// ---- C8: approved trait identities, daily yield margins and old-record snapshots ----
+if (section('gatherer trait balance (C8)')) try {
+  const HOUR = 3600e3, T0 = new Date(2026, 8, 28, 5).getTime(), games = [];
+  const mk = () => {
+    const g = loadCore({ seed: 8008, prelude: `Date.__t=${T0};Date.now=()=>Date.__t;` }); games.push(g);
+    g.eval('S.maxZone=12;S.camp.open=true;S.camp.b.hearth=2;S.camp.b.tavern=1;S.camp.b.store=8;S.gold=1e9;tick(1.2);Object.assign(handsGet("tam"),{key:null,sent:99,r:"common",lv:20,tr:[],cl:null});');
+    return g;
+  };
+  const near = (a, b) => Math.abs(a - b) < 1e-9;
+  const g = mk(), E = s => g.eval(s);
+  // The applicant gate is tested through real random rolls, including each profession opening it alone.
+  const rolls = () => E('Array.from({length:256},()=>handsRollApp()).map(h=>h.tr).flat()');
+  E('for(const sk of HANDS_SKILLS)S.skills[sk].lv=29');
+  assert(!rolls().includes('mule'), 'C8: Packmule never rolls while every gathering skill is below grade 3');
+  for (const sk of ['mine', 'wood', 'forage']) {
+    E(`for(const sk of HANDS_SKILLS)S.skills[sk].lv=29;S.skills.${sk}.lv=30`);
+    const tr = rolls();
+    assert(tr.includes('mule') && !tr.some(id => ['strong', 'owl', 'wander'].includes(id)), `C8: ${sk} alone opens Packmule applicants; retired duration/penalty traits stay excluded`);
+  }
+  E('for(const sk of HANDS_SKILLS)S.skills[sk].lv=1;handsGet("tam").tr=["mule"]');
+  assert(E('handsTraits(handsGet("tam"))[0].id') === 'mule' && near(E('handsRate(handsGet("tam"),"wood",1)/handsRate({...handsGet("tam"),tr:[]},"wood",1)'), 1), 'C8: an existing Packmule remains readable below the applicant gate; its new low-grade sends use the approved grade condition');
+  assert(E('S.hands.board.apps[0].tr=["mule"];!!handsHire(0)') && E('handsList().some(h=>h.id!=="tam"&&h.tr.includes("mule"))'), 'C8: a previously rolled Packmule applicant can still be hired below the new-roll gate');
+  const matrix = E(`(() => {
+    let n=0,worst=0,whole=0,grades=true,shares=true;
+    const ids=['steady','home','mule','early','stone','green'];
+    for(const r of HANDS_RAR)for(const lv of [1,20])for(const sk of HANDS_SKILLS)
+      for(const kind of GATHER_KINDS)for(const t of [1,2,3,4,5])for(const hour of [4,5,10,11,23]) {
+        const h={r,lv,sk,tr:[]},at=new Date(2026,8,28,hour).getTime(),base=handsRate(h,kind,t,at);
+        const values=ids.map(id=>handsRate({...h,tr:[id]},kind,t,at)/base);
+        worst=Math.max(worst,Math.max(...values)/Math.min(...values));
+        const approved=[1.10,t<=2?1.15:1,t>=3?1.15:1,hour>=5&&hour<11?1.20:1,kind==='crystal'?1.20:1,['fibre','herb'].includes(kind)?1.20:1];
+        grades&&=values.every((v,i)=>Math.abs(v-approved[i])<1e-9);
+        for(let i=0;i<ids.length;i++)for(let j=i+1;j<ids.length;j++)whole=Math.max(whole,handsRate({...h,tr:[ids[i],ids[j]]},kind,t,at)/base);
+        const tm=toolHandsMult(skillOf(kind));shares&&=Math.abs(base/handsHeroRate(kind,t)/tm-handsShare(h)*(sk===skillOf(kind)?1:.5))<1e-9;n++;
+      }
+    return {n,worst,whole,grades,shares};
+  })()`);
+  assert(matrix.n === 3750 && matrix.grades && matrix.shares && matrix.worst <= 1.20 + 1e-9 && matrix.whole <= 1.40 + 1e-9,
+    `C8: ${matrix.n} rarity/level/profession/family/grade/time environments preserve share and approved grade identities (single ${matrix.worst}, whole ${matrix.whole})`);
+
+  // Each day uses real sends, prepaid queues, chronological returns and engine overlap intervals.
+  // Expected units are the expectation of payOf's seeded rounding; integer settlements are checked separately.
+  E(`globalThis.__c8State=JSON.stringify(S);globalThis.__c8Day=(traits,kind,t,sk,starts,shifts)=>{
+    S=JSON.parse(__c8State);Math.random=rng(8008);for(const skill of HANDS_SKILLS)S.skills[skill].lv=NODE_REQ[t-1];
+    const h=handsGet('tam');Object.assign(h,{tr:traits,sk,job:null,pack:[],lv:20});
+    S.hands.list=[h,{...JSON.parse(JSON.stringify(h)),id:'c8-friend',tr:['friendly']}];
+    let expected=0,actual=0,count=0,secs=true,fees=0;const rates=[];
+    const finish=end=>{Date.__t=end;for(const e of handsCatchUp(end,true))if(e.id===h.id)for(const l of e.lines)if(l[0]===kind)actual+=l[2];};
+    const measure=j=>{const len=j.end-j.start;let f=1;for(const[p,a,b]of j.bo)f+=p*Math.max(0,Math.min(b,j.end)-Math.max(a,j.start))/len;expected+=j.rate*len/3600e3*f;count++;secs&&=j.secs===14400;fees+=j.fee;rates.push(j.rate);};
+    for(const hour of starts){Date.__t=new Date(2026,8,28,hour).getTime();handsCatchUp(Date.__t,true);
+      if(!handsSend('c8-friend',kind,t,{shifts})||!handsSend(h.id,kind,t,{shifts}))throw Error('C8 daily send refused');
+      measure(h.job);finish(h.job.end);
+      if(shifts===2){Date.__t=h.job.start;handsCatchUp(Date.__t,true);measure(h.job);finish(h.job.end);}
+    }
+    return {expected,actual,count,secs,fees,rates};
+  }`);
+  const day = (traits, kind, t, sk, starts, shifts) => E(`__c8Day(${JSON.stringify(traits)},${JSON.stringify(kind)},${t},${JSON.stringify(sk)},${JSON.stringify(starts)},${shifts})`);
+  const direct = ['steady', 'home', 'mule', 'early', 'stone', 'green', 'friendly'];
+  const scenarios = [
+    ['wood', 1, 'wood', [5,9,13,17,21,25], 1], ['wood', 3, 'wood', [5,17], 2],
+    ['crystal', 1, 'mine', [5,17], 2], ['crystal', 5, 'mine', [5], 2],
+    ['fibre', 3, 'forage', [11,23], 2], ['herb', 1, 'forage', [5], 2],
+    ['ore', 2, 'wood', [5,17], 2], ['wood', 3, 'mine', [5,17], 1]
+  ];
+  let dailyMax=0,dailyWhole=0,dailyCount=0,valid=true;
+  for (const s of scenarios) {
+    const base = day([], ...s);
+    for (const second of [null, ...direct]) {
+      const yields = [];
+      for (const id of direct.filter(id => id !== second)) {
+        const d = day(second ? [second,id] : [id], ...s); dailyCount++;
+        valid &&= d.expected > 0 && d.secs && d.count === base.count && d.fees === base.fees && Math.abs(d.actual-d.expected) <= d.count + 1e-9;
+        yields.push(d.expected); dailyWhole=Math.max(dailyWhole,d.expected/base.expected);
+      }
+      dailyMax=Math.max(dailyMax,Math.max(...yields)/Math.min(...yields));
+    }
+  }
+  assert(valid && dailyMax <= 1.20 + 1e-9, `C8: ${dailyCount} real 24h gathering schedules bound one swapped direct-yield slot at 20% (max ${dailyMax}); same fees, fixed 4h and seeded rounding`);
+  assert(dailyWhole <= 1.40 + 1e-9 && near(dailyWhole,1.40), `C8: real daily whole two-trait rolls are at most 1.40x no traits, including Friendly multiplication (max ${dailyWhole})`);
+  for (const [starts,shifts,mult] of [[[5,9,13,17,21,25],1,1+0.2/3],[[5,17],2,1.1],[[5],2,1.2],[[11,23],2,1]]) {
+    const b=day([],'wood',1,'wood',starts,shifts),a=day(['early'],'wood',1,'wood',starts,shifts);
+    assert(near(a.expected/b.expected,mult), `C8: Early Riser ${starts.join('/')} sends ×${shifts} shifts yield ${mult}x per day from send snapshots`);
+  }
+
+  // Exact boundary times plus save/reload: queued departures never re-evaluate the morning window.
+  for (const [hour,minute,mult] of [[4,59,1],[5,0,1.2],[10,59,1.2],[11,0,1]]) {
+    const q=mk(),Q=s=>q.eval(s),at=new Date(2026,8,28,hour,minute).getTime();
+    Q(`Date.__t=${at};handsGet('tam').tr=['early'];handsGet('tam').lv=1`);
+    const base=Q('handsRate({...handsGet("tam"),tr:[]},"wood",1)'),j=Q('handsSend("tam","wood",1,{shifts:2})');
+    Q('save()');const loaded=loadCore({storage:memoryStorage({[KEY]:q.storage.get(KEY)}),prelude:`Date.__t=${at};Date.now=()=>Date.__t;`});games.push(loaded);
+    const end=j.end+4.5*HOUR;
+    Q(`handsCatchUp(${j.end},false)`);
+    assert(near(j.rate/base,mult)&&near(Q('handsGet("tam").job.rate'),j.rate)&&Q('handsGet("tam").lv')>1, `C8: ${hour}:${minute.toString().padStart(2,'0')} initial rate survives a queued departure and worker level-up`);
+    Q(`handsCatchUp(${end},false)`);loaded.eval(`handsCatchUp(${end},true)`);
+    assert(Q('JSON.stringify([handsGet("tam"),S.hands.log])')===loaded.eval('JSON.stringify([handsGet("tam"),S.hands.log])'), `C8: ${hour}:${minute.toString().padStart(2,'0')} queued payout matches saved offline catch-up`);
+  }
+  // Friendly requires real overlap; recall truncates the partner's stored interval.
+  for (const [delay,recall,mult] of [[0,false,1.265],[2,false,1.2075],[4,false,1.15],[0,true,1.2075]]) {
+    const q=mk(),Q=s=>q.eval(s);
+    Q('handsGet("tam").tr=["home","friendly"];S.hands.list.push({...JSON.parse(JSON.stringify(handsGet("tam"))),id:"friend",tr:["friendly"]})');
+    const base=Q('handsRate({...handsGet("tam"),tr:[]},"wood",1)'),j=Q('handsSend("tam","wood",1)');
+    Q(`Date.__t=${T0+delay*HOUR};handsSend('friend','wood',1)`);
+    if(recall)Q(`Date.__t=${T0+2*HOUR};handsRecall('friend')`);
+    const expected=Q(`(()=>{const j=handsGet('tam').job;return j.rate*4*(1+j.bo.reduce((sum,[p,a,b])=>sum+p*Math.max(0,Math.min(b,j.end)-Math.max(a,j.start))/(j.end-j.start),0));})()`);
+    assert(near(expected/(base*4),mult), `C8: Friendly delay ${delay}h${recall?' with half-shift recall':''} multiplies actual overlap (${mult}x)`);
+  }
+  // Existing jobs retain pre-C8 rates; IDs including retired traits survive the real save codec.
+  {
+    const q=mk(),Q=s=>q.eval(s);Q('handsGet("tam").tr=["home","mule","strong","owl","wander"];handsSend("tam","wood",1,{shifts:2});handsGet("tam").job.rate=123.456;save()');
+    const raw=q.storage.get(KEY), loaded=loadCore({storage:memoryStorage({[KEY]:raw}),prelude:`Date.__t=${T0};Date.now=()=>Date.__t;`});games.push(loaded);
+    const L=s=>loaded.eval(s);
+    assert(L('handsTraits(handsGet("tam")).map(t=>t.id).join()')==='home,mule,strong,owl,wander' && L('handsGet("tam").job.rate')===123.456, 'C8: old IDs remain readable and saved running rates load unchanged');
+    L(`handsCatchUp(${T0+4*HOUR},true)`);
+    assert(L('handsGet("tam").job.rate')===123.456, 'C8: a pre-balance queued job retains its stored rate after the first return');
+    const check=Q('validateSave(JSON.parse('+JSON.stringify(raw)+'))');
+    assert(check.ok, 'C8: the real v5 save validator still accepts legacy trait IDs and frozen jobs');
+  }
+  // Utilities use their real units, separately from the direct-yield margin.
+  {
+    const q=mk(),Q=s=>q.eval(s);
+    assert(Q('HANDS_TUNE.keen===.02&&HANDS_TUNE.lucky===.02&&HANDS_TUNE.oldHand===.25&&HANDS_TUNE.chatter===.10&&HANDS_TUNE.cook===.25&&HANDS_TUNE.story===.02'), 'C8: approved utility find, XP, meal and away numbers are unchanged');
+    Q('handsGet("tam").tr=["cook","story","chatter"];');
+    assert(Q('handsMealMult()')===1.25&&Q('handsCampTrait("story")')&&Q('handsCampTrait("chatter")'), 'C8: camp utilities remain active while the worker stays home');
+    Q('handsSend("tam","wood",1)');
+    assert(Q('handsMealMult()')===1&&!Q('handsCampTrait("story")')&&!Q('handsCampTrait("chatter")'), 'C8: sending the utility worker removes their at-camp benefits');
+  }
+  assert(games.every(q=>!q.errors.length), 'C8: trait probes produce no core handler errors');
+} catch (e) { fail('C8 trait balance crashed: ' + (e.stack || e)); }
+
 if (section('removed systems (W2-C)')) try {
   const strip = t => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/([^:'"`\\])\/\/[^\n'"`]*$/gm, '$1');
   const files = [];

@@ -202,6 +202,7 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
     for (const id of h.tr || []) {
       const x = TR[id]; if (!x || !x.y) continue;
       if (x.fam && !x.fam.includes(kind)) continue;
+      if (x.tiers && !x.tiers.includes(t)) continue;
       if (x.clock && !inClock(x.clock, at)) continue;
       y += x.y;
     }
@@ -321,7 +322,9 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
       if (next) { arriveNamed(next, at, true); h.pity[2] = 0; }
     }
     // Keep retired duration traits readable in old saves, but do not roll new no-op or penalty-only traits.
-    const pool = HANDS_TRAITS.filter(x => !['strong', 'owl', 'wander'].includes(x.id)).map(x => x.id), tr = [];
+    // C8: new Packmule rolls wait for a usable grade. Existing applicants/workers keep their IDs.
+    const muleOpen = HANDS_SKILLS.some(sk => skillTierOpen(sk, 3));
+    const pool = HANDS_TRAITS.filter(x => !['strong', 'owl', 'wander'].includes(x.id) && (x.id !== 'mule' || muleOpen)).map(x => x.id), tr = [];
     while (tr.length < T.traits[r] && pool.length) tr.push(pool.splice(Math.floor(rnd() * pool.length), 1)[0]);
     let n = ''; const used = usedNames();
     for (let g = 0; g < 20; g++) { n = pick(HANDS_FIRST) + ' ' + pick(HANDS_TRADE); if (!used.has(n)) break; }
