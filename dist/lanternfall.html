@@ -1116,9 +1116,6 @@ span.cf-d { font-weight: 600; }
 .dd-pip.on { background: var(--c); border-color: #0B0810; box-shadow: 0 0 4px var(--c); }
 .dd-stars { margin-left: 3px; font: 600 calc(12px * var(--display-k))/1 var(--display); color: var(--ember); }
 .dd-trow.done .dd-bar > i { background: var(--r-legendary); }
-.dd-trow.classic { cursor: default; }
-.dd-trow.classic:not(.done) { opacity: .75; }
-.dd-trow.classic.done { border-color: #6B5320; }
 
 /* ---- sheets ---- */
 .dd-sheet .bsheet-body { gap: 12px; }
@@ -7608,7 +7605,7 @@ const lanternsLitAt = maxZone => { let n = 0; for (const r of REGIONS) if ((maxZ
 // forever by DEED_CAP (section 4.4).
 //
 //   DEED_TIERS           tier keys and names, index 0..3 = tier 1..4
-//   DEED_PTS             points per tier / star / group / Classic / Feat / secret / chapter
+//   DEED_PTS             points per tier / star / group / milestone / Feat / secret / chapter
 //   DEED_BONUS           +0.5% at Gold and +0.5% more at Everflame (deepOil: 1 s each)
 //   DEED_CAP             the hard cap per bonus key (all regions, forever)
 //   DEED_KEY_TXT         bonus key -> player words ("damage")
@@ -7633,7 +7630,7 @@ const DEED_TIERS = [
   { k: 'gold', n: 'Gold', col: '#F2C14E' },
   { k: 'everflame', n: 'Everflame', col: '#FF9E3D' }
 ];
-const DEED_PTS = { tier: [5, 10, 20, 40], star: 10, grpGold: 25, grpEver: 50, classic: 10, feat: 100, capstone: 250, secret: 15, chStep: 5, chDone: 25 };
+const DEED_PTS = { tier: [5, 10, 20, 40], star: 10, grpGold: 25, grpEver: 50, milestone: 10, feat: 100, capstone: 250, secret: 15, chStep: 5, chDone: 25 };
 const DEED_BONUS = { gold: 0.005, everflame: 0.005, deepOil: 1 };
 const DEED_CAP = {
   dmg: 0.05, tap: 0.01, xp: 0.04, keen: 0.03, essence: 0.01, uniqueChance: 0.01, offline: 0.04,
@@ -7760,7 +7757,30 @@ const DEED_TRACKS = [
   { id: 'lanterns', g: 'road', n: 'Great Lanterns', what: 'Great Lanterns relit', need: [1, 2, 3, 4], star: { add: 1 }, bonus: 'xp', src: 'save', kind: 'level', wait: 'R3', u: ['Great Lantern', 'Great Lanterns'] }
 ];
 
+// C11: milestone feats retain their v5 IDs as conversion and Codex tile keys.
+// Their permanent rewards are separate from capped track rewards; no title or trophy.
 const DEED_FEATS = [
+  { id: 'f_m_zone10', n: 'Into the Dark', needs: 'Reach zone 10', about: 'A permanent milestone', rar: 'common', legacy: 'zone10', stat: 'zones', need: 10, bonus: ['keen', 0.01], ic: 'banner', pts: 10 },
+  { id: 'f_m_zone25', n: 'Deep Delver', needs: 'Reach zone 25', about: 'A permanent milestone', rar: 'common', legacy: 'zone25', stat: 'zones', need: 25, bonus: ['dmg', 0.03], ic: 'banner', pts: 10 },
+  { id: 'f_m_zone50', n: 'Lantern Bearer', needs: 'Reach zone 50', about: 'A permanent milestone', rar: 'common', legacy: 'zone50', stat: 'zones', need: 50, bonus: ['keen', 0.025], ic: 'banner', pts: 10 },
+  { id: 'f_m_lv20', n: 'Seasoned', needs: 'Reach hero level 20', about: 'A permanent milestone', rar: 'common', legacy: 'lv20', stat: 'level', need: 20, bonus: ['xp', 0.03], ic: 'helm', pts: 10 },
+  { id: 'f_m_lv50', n: 'Veteran', needs: 'Reach hero level 50', about: 'A permanent milestone', rar: 'common', legacy: 'lv50', stat: 'level', need: 50, bonus: ['dmg', 0.03], ic: 'helm', pts: 10 },
+  { id: 'f_m_kill1k', n: 'Monster Hunter', needs: 'Defeat 1,000 foes', about: 'A permanent milestone', rar: 'common', legacy: 'kill1k', stat: 'slayer', need: 1000, bonus: ['keen', 0.01], ic: 'sword', pts: 10 },
+  { id: 'f_m_kill25k', n: 'Slayer', needs: 'Defeat 25,000 foes', about: 'A permanent milestone', rar: 'common', legacy: 'kill25k', stat: 'slayer', need: 25000, bonus: ['dmg', 0.03], ic: 'sword', pts: 10 },
+  { id: 'f_m_kill100k', n: 'Legend of the Wilds', needs: 'Defeat 100,000 foes', about: 'A permanent milestone', rar: 'common', legacy: 'kill100k', stat: 'slayer', need: 100000, bonus: ['keen', 0.015], ic: 'sword', pts: 10 },
+  { id: 'f_m_gold1m', n: 'Coin Collector', needs: 'Earn 100K gold', about: 'A permanent milestone', rar: 'common', legacy: 'gold1m', stat: 'gold', need: 100000, bonus: ['keen', 0.01], ic: 'coin', pts: 10 },
+  { id: 'f_m_gold1b', n: 'Dragon Hoard', needs: 'Earn 10M gold', about: 'A permanent milestone', rar: 'common', legacy: 'gold1b', stat: 'gold', need: 10000000, bonus: ['keen', 0.015], ic: 'coin', pts: 10 },
+  { id: 'f_m_mine25', n: 'Stonebreaker', needs: 'Mining level 25', about: 'A permanent milestone', rar: 'common', legacy: 'mine25', stat: 'mine', need: 25, bonus: ['gatherSpeed', 0.03], ic: 'pick', pts: 10 },
+  { id: 'f_m_wood25', n: 'Timberfeller', needs: 'Woodcutting level 25', about: 'A permanent milestone', rar: 'common', legacy: 'wood25', stat: 'wood', need: 25, bonus: ['gatherSpeed', 0.03], ic: 'axe', pts: 10 },
+  { id: 'f_m_smith25', n: 'Master Smith', needs: 'Smithing level 25', about: 'A permanent milestone', rar: 'common', legacy: 'smith25', stat: 'smith', need: 25, bonus: ['skillXp', 0.03], ic: 'anvil', pts: 10 },
+  { id: 'f_m_forge1', n: 'First Spark', needs: 'Forge an item', about: 'A permanent milestone', rar: 'common', legacy: 'forge1', stat: 'made', need: 1, bonus: ['skillXp', 0.02], ic: 'anvil', pts: 10 },
+  { id: 'f_m_forge25', n: 'Busy Anvil', needs: 'Forge 25 items', about: 'A permanent milestone', rar: 'common', legacy: 'forge25', stat: 'made', need: 25, bonus: ['skillXp', 0.03], ic: 'anvil', pts: 10 },
+  { id: 'f_m_epic', n: 'Epic Craft', needs: 'Forge an Epic item', about: 'A permanent milestone', rar: 'common', legacy: 'epic', stat: 'epicCraft', need: 1, bonus: ['crit', 0.03], ic: 'flame', pts: 10 },
+  { id: 'f_m_uniq1', n: 'Trophy Hunter', needs: 'Find a unique', about: 'A permanent milestone', rar: 'common', legacy: 'uniq1', stat: 'curator', need: 1, bonus: ['essence', 0.03], ic: 'charm', pts: 10 },
+  { id: 'f_m_uniq3', n: 'Collector', needs: 'Find 3 uniques', about: 'A permanent milestone', rar: 'common', legacy: 'uniq3', stat: 'curator', need: 3, bonus: ['essence', 0.05], ic: 'charm', pts: 10 },
+  { id: 'f_m_uniq7', n: 'Curator', needs: 'Find 7 uniques', about: 'A permanent milestone', rar: 'common', legacy: 'uniq7', stat: 'curator', need: 7, bonus: ['dmg', 0.05], ic: 'charm', pts: 10 },
+  { id: 'f_m_bty10', n: 'Bounty Hunter', needs: 'Claim 10 bounties', about: 'A permanent milestone', rar: 'common', legacy: 'bty10', stat: 'wanted', need: 10, bonus: ['offline', 0.03], ic: 'coin', pts: 10 },
+  { id: 'f_m_bty50', n: 'Board Regular', needs: 'Claim 50 bounties', about: 'A permanent milestone', rar: 'common', legacy: 'bty50', stat: 'wanted', need: 50, bonus: ['keen', 0.015], ic: 'coin', pts: 10 },
   { id: 'f_lamps', n: 'Every Lamp Lit', needs: 'All 35 Hollow zones at 5 mastery stars and all 28 Hollow bestiary pages', about: '3-6 months', rar: 'epic', title: 'Hollowwarden', look: 'cr_moss' },
   { id: 'f_watch', n: 'The Long Watch', needs: '2,000 hours of light (played and away)', about: 'about 3 months', rar: 'rare', title: 'the Watchful', look: 'l_watch' },
   { id: 'f_trades', n: 'Master of Every Trade', needs: 'All 7 skills at level 200 and all 3 tools at mastery 20', about: '2-4 months', rar: 'epic', title: 'Masterhand', look: 'h_artisan' },
@@ -7776,7 +7796,7 @@ const DEED_FEATS = [
   { id: 'f_town', n: "Warden of Hollow's Rest", needs: 'Every building at its top level, 6 Hands housed, a Legendary Hand, the Kitchen at its top level', about: '2-3 months', rar: 'rare', title: 'the Steward', look: 'cr_cat', wait: 'N1' },
   { id: 'f_stock', n: 'Quartermaster', needs: 'Every gathered and fought material cell full at Storehouse 8, at the same moment', about: 'weeks of planning', rar: 'epic', title: 'Quartermaster', look: 'l_store', wait: 'H3' },
   { id: 'f_oaths', n: 'Oathbound', needs: 'An Oath Seal at 20+ on all 14 zone kinds', about: 'months', rar: 'legendary', title: 'Oathbound', look: 'h_circlet', wait: 'O1' },
-  { id: 'f_all', n: 'Lanternfall', needs: 'Every other Feat in the game', about: 'a year or more', rar: 'legendary', title: 'the Last Lantern', look: 'a_bloom', pts: 250 }
+  { id: 'f_all', n: 'Lanternfall', needs: 'Every other Feat that grants a title', about: 'a year or more', rar: 'legendary', title: 'the Last Lantern', look: 'a_bloom', pts: 250 }
 ];
 
 const DEED_SECRETS = [
@@ -7964,8 +7984,7 @@ const NOTICES = [
     test: m => typeof BOSS_COPY === 'object' && !!BOSS_COPY.first && Object.values(BOSS_COPY.first).includes(m),
     ch: m => typeof BOSS_COPY === 'object' && (m === BOSS_COPY.first.heavy || m === BOSS_COPY.first.packHeavy || m === BOSS_COPY.first.stagger) ? 'log' : 'pop', wait: 8, held: 'log', why: 'a new kind of attack, once (it belongs to the moment)' },
 
-  // ---- achievements: Deeds speak; the old achievements (56-achievements) are silent ----
-  { id: 'ach-old', key: 'ach-old', re: /^(Achievement: |\d+ achievements? earned)/, ch: 'none', why: 'merged into Deeds (their bonuses still count)' },
+  // ---- achievements: Deeds is the single voice ----
   { id: 'deed-tier', key: 'deed-tier', wait: 40, ch: (m, n) => (n && n.tier === 4) ? 'pop' : (n && n.tier >= 3) ? 'bell' : 'log', why: 'Bronze and Silver are trivia; Gold and Everflame stars go to the bell; Everflame pops',
     merge: ms => ms.length > 1 ? `${ms.length} achievement steps: ${ms.map(m => m.replace(/\.$/, '').replace(/ \((Bronze|Silver|Gold|Everflame)\).*$/, ' ($1)')).join(', ')}.` : ms[0] },
   { id: 'deed-group', key: 'deed-group', wait: 40, ch: (m, n) => n && n.lv >= 2 ? 'pop' : 'bell' },
@@ -8001,7 +8020,9 @@ const NOTICES = [
     test: m => typeof starLocked === 'function' && (() => { try { return m === starLocked(); } catch (e) { return false; } })() },
 
   // ---- C4: completed gatherer trade runs ----
-  { id: 'hands-trade', re: /^.+ returns from .+: \+.+ gold\.$/, ch: 'log' }
+  { id: 'hands-trade', re: /^.+ returns from .+: \+.+ gold\.$/, ch: 'log' },
+  // C11: a milestone feat is a small permanent reward, recorded without a celebration card.
+  { id: 'deed-milestone', key: 'deed-milestone', ch: 'log' }
 ];
 const NOTICE_BY_KEY = Object.fromEntries(NOTICES.filter(r => r.key).map(r => [r.key, r]));
 // The rule for a message (or its key), or null.
@@ -12484,6 +12505,17 @@ function validateSave(data) {
       else if (typeof v !== typeof d) fail(p, 'has the wrong type');
     };
     const defaults = fresh(); shape(data, defaults, 'save');
+    // C11: accept and validate the retired optional v5 record before Deeds absorbs it.
+    if (data.achievements !== undefined) {
+      const a = data.achievements; record(a, 'achievements');
+      if (a.got !== undefined) {
+        record(a.got, 'achievements.got');
+        for (const [id, v] of Object.entries(a.got)) if (typeof v !== 'boolean') num(v, 'achievements.got.' + id);
+      }
+      if (a.forged !== undefined) int(a.forged, 'achievements.forged');
+      for (const k of ['init', 'epic']) if (a[k] !== undefined && typeof a[k] !== 'boolean') fail('achievements.' + k, 'has the wrong type');
+    }
+    if (data.deeds && data.deeds.n && data.deeds.n.forged !== undefined) int(data.deeds.n.forged, 'deeds.n.forged');
     for (const k of ['xp', 'embers', 'kills', 'totalKills', 'totalGold', 'gProg']) if (has(data, k)) num(data[k], k);
     if (has(data, 'name')) text(data.name, 'name');
     if (has(data, 'last')) num(data.last, 'last', 0, 864e13);
@@ -12640,7 +12672,7 @@ const statsApi = {};
     rDmg = d;
   });
 
-  const forged = () => (S.achievements && S.achievements.forged) || 0;
+  const forged = () => (S.deeds && S.deeds.n.forged) || 0;
   Object.assign(statsApi, { forged, uniqueKinds: () => Object.keys(S.found || {}).length, uniqueTotal: () => Object.keys(UNIQ).length });
 
   // ---- away report ----
@@ -13554,73 +13586,6 @@ function trainEst(active) {
   on('evoProven', () => { const k = typeof soloHero === 'function' && soloHero(); if (k && S.solo) { if (!S.solo.asc || typeof S.solo.asc !== 'object') S.solo.asc = {}; S.solo.asc[k] = 1; } });
 }
 
-// ---- src/js/56-achievements.js ----
-// 56-achievements: permanent milestones. Each one grants a small bonus through
-// addModifier. Checked once a second against the live state, so old saves unlock what
-// they have already earned on first load (with one summary toast).
-// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
-{
-  registerState('achievements', { got: {}, init: false, forged: 0, epic: false });
-  const A = () => S.achievements;
-  const uniqCount = () => Object.keys(S.found).length;
-  const skillLv = k => S.skills[k].lv;
-  // cur() returns progress toward need. bonus: [modifier key, fraction].
-  const ACH = [
-    { id: 'zone10', name: 'Into the Dark', desc: 'Reach zone 10', need: 10, cur: () => S.maxZone, bonus: ['keen', 0.01], ic: 'banner' },
-    { id: 'zone25', name: 'Deep Delver', desc: 'Reach zone 25', need: 25, cur: () => S.maxZone, bonus: ['dmg', 0.03], ic: 'banner' },
-    { id: 'zone50', name: 'Lantern Bearer', desc: 'Reach zone 50', need: 50, cur: () => S.maxZone, bonus: ['keen', 0.025], ic: 'banner' },
-    { id: 'lv20', name: 'Seasoned', desc: 'Reach hero level 20', need: 20, cur: () => S.L, bonus: ['xp', 0.03], ic: 'helm' },
-    { id: 'lv50', name: 'Veteran', desc: 'Reach hero level 50', need: 50, cur: () => S.L, bonus: ['dmg', 0.03], ic: 'helm' },
-    { id: 'kill1k', name: 'Monster Hunter', desc: 'Defeat 1,000 foes', need: 1000, cur: () => S.totalKills, bonus: ['keen', 0.01], ic: 'sword' },
-    { id: 'kill25k', name: 'Slayer', desc: 'Defeat 25,000 foes', need: 25000, cur: () => S.totalKills, bonus: ['dmg', 0.03], ic: 'sword' },
-    { id: 'kill100k', name: 'Legend of the Wilds', desc: 'Defeat 100,000 foes', need: 100000, cur: () => S.totalKills, bonus: ['keen', 0.015], ic: 'sword' },
-    { id: 'gold1m', name: 'Coin Collector', desc: 'Earn 100K gold', need: 1e5, cur: () => S.totalGold, bonus: ['keen', 0.01], ic: 'coin' },
-    { id: 'gold1b', name: 'Dragon Hoard', desc: 'Earn 10M gold', need: 1e7, cur: () => S.totalGold, bonus: ['keen', 0.015], ic: 'coin' },
-    { id: 'mine25', name: 'Stonebreaker', desc: 'Mining level 25', need: 25, cur: () => skillLv('mine'), bonus: ['gatherSpeed', 0.03], ic: 'pick' },
-    { id: 'wood25', name: 'Timberfeller', desc: 'Woodcutting level 25', need: 25, cur: () => skillLv('wood'), bonus: ['gatherSpeed', 0.03], ic: 'axe' },
-    { id: 'smith25', name: 'Master Smith', desc: 'Smithing level 25', need: 25, cur: () => skillLv('smith'), bonus: ['skillXp', 0.03], ic: 'anvil' },
-    { id: 'forge1', name: 'First Spark', desc: 'Forge an item', need: 1, cur: () => A().forged, bonus: ['skillXp', 0.02], ic: 'anvil' },
-    { id: 'forge25', name: 'Busy Anvil', desc: 'Forge 25 items', need: 25, cur: () => A().forged, bonus: ['skillXp', 0.03], ic: 'anvil' },
-    { id: 'epic', name: 'Epic Craft', desc: 'Forge an Epic item', need: 1, cur: () => A().epic ? 1 : 0, bonus: ['crit', 0.03], ic: 'flame' },
-    { id: 'uniq1', name: 'Trophy Hunter', desc: 'Find a unique', need: 1, cur: uniqCount, bonus: ['essence', 0.03], ic: 'charm' },
-    { id: 'uniq3', name: 'Collector', desc: 'Find 3 uniques', need: 3, cur: uniqCount, bonus: ['essence', 0.05], ic: 'charm' },
-    { id: 'uniq7', name: 'Curator', desc: 'Find 7 uniques', need: 7, cur: uniqCount, bonus: ['dmg', 0.05], ic: 'charm' },
-    { id: 'bty10', name: 'Bounty Hunter', desc: 'Claim 10 bounties', need: 10, cur: () => (S.bounties ? S.bounties.claimed : 0), bonus: ['offline', 0.03], ic: 'coin' },
-    { id: 'bty50', name: 'Board Regular', desc: 'Claim 50 bounties', need: 50, cur: () => (S.bounties ? S.bounties.claimed : 0), bonus: ['keen', 0.015], ic: 'coin' }
-  ];
-  const BONUS_NAME = { keen: 'crit damage', gold: 'gold', dmg: 'damage', xp: 'hero XP', skillXp: 'skill XP', gatherSpeed: 'gather speed', crit: 'crit chance', essence: 'essence chance', offline: 'away gains' };
-  const achBonusText = a => `+${+(a.bonus[1] * 100).toFixed(1)}% ${BONUS_NAME[a.bonus[0]] || a.bonus[0]}`;
-
-  // One modifier per key; cached sum rebuilt when something unlocks.
-  const achSum = {};
-  const achRebuild = () => { for (const k in achSum) achSum[k] = 0; for (const a of ACH) if (A().got[a.id]) achSum[a.bonus[0]] = (achSum[a.bonus[0]] || 0) + a.bonus[1]; };
-  // ECON-A (economy-2 6.2): the gold bonuses became half as much crit damage (keen, the capped pool).
-  for (const k of new Set(ACH.map(a => a.bonus[0]))) { achSum[k] = 0; if (k === 'keen') keenSource('ach', 'Achievements', () => achSum.keen); else addModifier(k, () => 1 + achSum[k]); }
-
-  on('itemAdded', ({ item }) => { if (item.u) return; A().forged++; if (item.r === 'epic') A().epic = true; });
-
-  function achCheck() {
-    const g = A().got, fresh = [];
-    for (const a of ACH) if (!g[a.id] && a.cur() >= a.need) { g[a.id] = Date.now(); fresh.push(a); }
-    if (!fresh.length) return;
-    achRebuild();
-    // W1-B (audit 3.12): Deeds (58-deeds) is the one achievement voice. These still grant their bonuses and
-    // show in the Codex, but their notices go nowhere (23n-data-notices 'ach-old'). Merge them into Deeds later.
-    if (!A().init) emit('toast', { key: 'ach-old', msg: `${fresh.length} achievement${fresh.length > 1 ? 's' : ''} earned from your past deeds.`, kind: 'good' });
-    else for (const a of fresh) { emit('toast', { key: 'ach-old', msg: `Achievement: ${a.name}. ${achBonusText(a)}.`, kind: 'good' }); emit('achievement', { id: a.id }); }
-    A().init = true;
-    save();
-  }
-  achRebuild();
-  let achAcc = 0, achFirst = true;
-  onTick(dt => {
-    achAcc += dt; if (achAcc < 1) return; achAcc = 0;
-    achCheck();
-    if (achFirst) { achFirst = false; A().init = true; }
-  });
-  var ACH_API = { list: ACH, bonusText: achBonusText, check: achCheck };
-}
-
 // ---- src/js/56-roster.js ----
 // 56-roster: the hero registry. The 18 named characters of the old companion roster, kept as data for the playable
 // heroes that arrive later (32 for 1.0: solo-hero.md "Heroes"). Names, titles, rarity, role, circle and unlock route live
@@ -14271,7 +14236,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
 //   codexMilestone { at, rewards }, codexOpen { page } (UI: open the Codex sheet), codexInit { light }.
 // Listens: kill (champions), itemAdded / reforged (affixes, Masterwork), synergyChange, bondLevel, harvest,
 //   trophy, and marks pages dirty on recruit, promote, charLevel, campBuilt, omen,
-//   weeklyClaim, achievement, zoneClear, loot, transmuted, crafted.
+//   weeklyClaim, deedFeat, zoneClear, loot, transmuted, crafted.
 // Hooks: setBlessingGate (57-camp), registerGoal (Next Up), registerAwayLine, addModifier for the
 //   Seal keys, addBonus: deepOil, and three
 //   stored-for-later keys nothing reads yet: bag, buildQueue, deepRerolls.
@@ -14475,10 +14440,10 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
   // ---------------- 13. Achievements x2 ----------------
   page('achievements', {
     n: 'Achievements', bless: 'oath', seal: { key: 'essence', v: 0.02, txt: '+2% essence' }, title: 'the Accomplished', pic: 'rows',
-    show: () => typeof ACH_API === 'object',
-    tiles: x => ACH_API.list.map(a => {
-      const got = S.achievements.got[a.id] ? 1 : 0;
-      return { key: a.id, n: a.name, got, max: 1, pts: got * 4, ptsMax: 4, ic: [a.ic, '#F2C14E'], sub: got ? ACH_API.bonusText(a) : '', hint: got ? '' : a.desc + '.' };
+    show: () => typeof deeds === 'object',
+    tiles: x => deeds.milestones().map(a => {
+      const got = a.got ? 1 : 0;
+      return { key: a.legacy, n: a.n, got, max: 1, pts: got * 4, ptsMax: 4, ic: [a.ic, '#F2C14E'], sub: got ? a.bonusTxt : '', hint: got ? '' : a.needs + '.' };
     })
   });
   // ---------------- 14. Wardrobe (locked until the Deepwell shop exists) ----------------
@@ -14534,7 +14499,7 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
   on('reforged', ({ item }) => { markAff(item); dirty = true; });
   on('harvest', ({ kind, t }) => { if (CRAFT_FAMILIES.includes(kind) && t >= 1 && t <= 5) R().mat[kind] = (R().mat[kind] | 0) | (1 << (t - 1)); dirty = true; });
   on('trophy', ({ i }) => { if (i >= 0 && i < 7) R().mat.troph = (R().mat.troph | 0) | (1 << i); dirty = true; });
-  for (const e of ['campBuilt', 'omen', 'weeklyClaim', 'achievement', 'zoneClear', 'loot', 'transmuted', 'crafted'])
+  for (const e of ['campBuilt', 'omen', 'weeklyClaim', 'deedFeat', 'zoneClear', 'loot', 'transmuted', 'crafted'])
     on(e, dirt);
 
   // ---------------- rewards: Seals (capped), milestones, the Blessing gate ----------------
@@ -17228,9 +17193,8 @@ let handsTradeOpen, handsTradeDemand, handsTradeCargo, handsTradeQuote, handsTra
 // Tracks read numbers the save already keeps wherever one exists; new counters live in S.deeds.n,
 // S.deeds.g and S.deeds.rec and only rise. Tiers are checked once a second, a quarter of the tracks
 // per check (each track every 4 s). Tiers never go down. Only Gold and Everflame tiers pay a bonus,
-// capped per key by DEED_CAP (deedBonus). Feats, secrets, points, groups and chapters give no power.
-// The Classic 22 stay in 56-achievements.js (their ids, needs and bonuses are untouched); they count
-// 10 points each here. Titles join codexTitles() (ids 'a_...', chosen in S.codex.title, local only).
+// capped per key by DEED_CAP (deedBonus). Milestone feats keep their permanent rewards and
+// 10 points each. Their reward sums multiply with track bonuses; other feats give no power. Titles join codexTitles() (ids 'a_...', chosen in S.codex.title, local only).
 // Nothing here reads or writes the online layer except s_crowd, which only reads online.peers.
 //
 // Tracks that wait on unmerged systems are defined but hidden; a runtime probe lights them up when
@@ -17244,7 +17208,8 @@ let handsTradeOpen, handsTradeDemand, handsTradeCargo, handsTradeQuote, handsTra
 //                                           stars, bonus, bonusTxt, since, kind, steps }
 //   deeds.track(id), deeds.tierName(tier) ("Gold", "Everflame ★3"), deeds.tierLabel(id, tier) ("Slayer III")
 //   deeds.groups() -> [{ id, n, ic, lv (0/1/2), gold, ever, look, tracks, atGold, atEver, fresh }]
-//   deeds.feats() -> [{ id, n, needs, about, rar, rarTxt, title, look, got, at, parts: [{ n, have, need }], pct, live, pts }]
+//   deeds.feats() -> [{ id, n, needs, about, rar, rarTxt, title, look, legacy, bonusTxt, got, at, parts: [{ n, have, need }], pct, live, pts }]
+//   deeds.milestones() -> fixed Codex rows; deeds.milestoneBonus(key) -> uncapped milestone reward sum
 //   deeds.secrets() -> [{ id, got, at, n, riddle, title, look, live }]   (n and riddle only when shown)
 //   deeds.points(), deeds.ladder() -> [{ at, title, look, wall, got }], deeds.next() -> next ladder row | null
 //   deeds.wallStage() -> 0..3, deeds.wall() -> pinned ids, deeds.pin(ids) (at most 12)
@@ -17265,9 +17230,9 @@ let deeds, deedBonus, wearGet;
   registerState('deeds', {
     v: 1, init: 0, tier: {}, at: {}, feat: {}, sec: {}, ch: {}, grp: {}, mil: {},
     n: { crit: 0, parry: 0, dodge: 0, intr: 0, abil: 0, dmg: 0, taken: 0, heal: 0, boss: 0, ess: 0, troph: 0, glint: 0,
-      up: 0, ref: 0, trans: 0, meal: 0, dare: 0, weekly: 0, embers: 0 },
+      up: 0, ref: 0, trans: 0, meal: 0, dare: 0, weekly: 0, embers: 0, forged: 0 },
     g: {},
-    rec: { hit: 0, hitZ: 0, hitAt: 0, fine: 0, ks: {} },
+    rec: { hit: 0, hitZ: 0, hitAt: 0, fine: 0, epic: false, ks: {} },
     since: {}, sx: {}, pts: 0, seen: 0, last: 0,
     wear: { cape: null, hat: null, lamp: null, flame: null, aura: null, critter: null, trail: null, frame: null, helm: 0 },
     wall: [], follow: null, nudge: 1
@@ -17281,6 +17246,10 @@ let deeds, deedBonus, wearGet;
   const keys = o => o && typeof o === 'object' ? Object.keys(o).length : 0;
   const TR = {}; for (const t of DEED_TRACKS) TR[t.id] = t;
   const GR = {}; for (const g of DEED_GROUPS) GR[g.id] = g;
+  const MILESTONES = DEED_FEATS.filter(f => f.legacy);
+  const MSUM = {};
+  const MNAME = { keen: 'crit damage', dmg: 'damage', xp: 'hero XP', skillXp: 'skill XP', gatherSpeed: 'gather speed', crit: 'crit chance', essence: 'essence chance', offline: 'away gains' };
+  const milestoneText = f => `+${+(f.bonus[1] * 100).toFixed(1)}% ${MNAME[f.bonus[0]]}`;
   const FE = {}; for (const f of DEED_FEATS) FE[f.id] = f;
   const SE = {}; for (const s of DEED_SECRETS) SE[s.id] = s;
   const LK = {}; for (const l of DEED_LOOKS) LK[l.id] = l;
@@ -17375,7 +17344,7 @@ let deeds, deedBonus, wearGet;
     finds: () => num(S.tools && S.tools.finds), glint: () => N().glint,
     tools: () => { const m = S.tools && S.tools.m; let s = 0; if (m) for (const k in m) s += Array.isArray(m[k]) ? num(m[k][0]) : 0; return s; },
     smith: () => skillLv('smith'), bench: () => skillLv('bench'), loom: () => skillLv('loom'), ench: () => skillLv('ench'),
-    made: () => num(S.achievements && S.achievements.forged), fine: () => DS().rec.fine,
+    made: () => N().forged, epicCraft: () => DS().rec.epic ? 1 : 0, fine: () => DS().rec.fine,
     honed: () => N().up, reforge: () => N().ref, alchemy: () => N().trans,
     hearth: () => campLv('hearth'),
     builder: () => typeof campList === 'function' && S.camp ? campList().reduce((a, id) => a + campLv(id), 0) : 0,
@@ -17425,6 +17394,8 @@ let deeds, deedBonus, wearGet;
   const BSUM = {};
   for (const k in DEED_CAP) BSUM[k] = 0;
   function rebuildBonus() {
+    for (const k in MSUM) MSUM[k] = 0;
+    for (const f of MILESTONES) if (DS().feat[f.id]) MSUM[f.bonus[0]] = (MSUM[f.bonus[0]] || 0) + f.bonus[1];
     for (const k in BSUM) BSUM[k] = 0;
     const tier = DS().tier;
     for (const t of DEED_TRACKS) {
@@ -17433,6 +17404,11 @@ let deeds, deedBonus, wearGet;
       if (k >= 3) BSUM[t.bonus] += t.bonus === 'deepOil' ? DEED_BONUS.deepOil : DEED_BONUS.gold;
       if (k >= 4) BSUM[t.bonus] += t.bonus === 'deepOil' ? DEED_BONUS.deepOil : DEED_BONUS.everflame;
     }
+  }
+  // Keep the milestone factor separate: (1 + milestone sum) * (1 + capped track sum).
+  for (const k of new Set(MILESTONES.map(f => f.bonus[0]))) {
+    if (k === 'keen') keenSource('deed-milestones', 'Deeds milestones', () => MSUM.keen || 0);
+    else addModifier(k, () => 1 + (MSUM[k] || 0));
   }
   deedBonus = key => T.bonusOn === 0 ? 0 : Math.min(DEED_CAP[key] != null ? DEED_CAP[key] : 0, BSUM[key] || 0);
   for (const k of Object.keys(DEED_CAP)) {
@@ -17453,14 +17429,9 @@ let deeds, deedBonus, wearGet;
     for (const id in d.feat) if (FE[id]) p += FE[id].pts || DEED_PTS.feat;
     for (const id in d.sec) if (SE[id]) p += DEED_PTS.secret;
     for (const id in d.ch) if (CH[id]) { const s = Math.min(CH[id].steps, num(d.ch[id])); p += s * DEED_PTS.chStep + (s >= CH[id].steps ? DEED_PTS.chDone : 0); }
-    const got = S.achievements && S.achievements.got;
-    if (got && typeof ACH_API === 'object') for (const a of ACH_API.list) if (got[a.id]) p += DEED_PTS.classic;
     return (ptsCache = p);
   }
   const dirtyPts = () => { ptsCache = -1; };
-  // A Classic achievement adds 10 points (the ladder may move).
-  on('achievement', () => { dirtyPts(); if (!DS().init) return; const own = !pend; if (own) pend = []; afterPoints(false); if (own) flushToasts(); });
-
   // ---------------- looks, titles ----------------
   const srcTxt = src => {
     const [k, id] = src.split(':');
@@ -17498,7 +17469,7 @@ let deeds, deedBonus, wearGet;
       out.push({ id: 'a_g_' + g.id, n: g.gold, src: `${g.n} at Gold`, got: num(d.grp[g.id]) >= 1, at: d.at['g:' + g.id + ':1'] || 0 });
       out.push({ id: 'a_e_' + g.id, n: g.ever, src: `${g.n} at Everflame`, got: num(d.grp[g.id]) >= 2, at: d.at['g:' + g.id + ':2'] || 0 });
     }
-    for (const f of DEED_FEATS) if (waitOk(f.wait) || d.feat[f.id]) out.push({ id: 'a_' + f.id, n: f.title, src: `Feat: ${f.n}`, got: !!d.feat[f.id], at: d.at[f.id] || 0 });
+    for (const f of DEED_FEATS) if (f.title && (waitOk(f.wait) || d.feat[f.id])) out.push({ id: 'a_' + f.id, n: f.title, src: `Feat: ${f.n}`, got: !!d.feat[f.id], at: d.at[f.id] || 0 });
     for (const s of DEED_SECRETS) if (d.sec[s.id]) out.push({ id: 'a_' + s.id, n: s.title, src: `Secret: ${s.n}`, got: true, at: d.at[s.id] || 0 });
     for (const c of DEED_CHAPTERS) if (waitOk(c.wait) || chDone(c.id)) out.push({ id: 'a_' + c.id, n: c.title, src: `Chapter: ${c.n}`, got: chDone(c.id), at: d.at[c.id + ':' + c.steps] || 0 });
     for (const m of DEED_LADDER) if (m.title) out.push({ id: 'a_p' + m.at, n: m.title, src: `${m.at.toLocaleString('en-US')} points`, got: !!d.mil[m.at], at: d.at['m' + m.at] || 0 });
@@ -17596,21 +17567,28 @@ let deeds, deedBonus, wearGet;
       return [P('Storehouse level', num(S.camp && S.camp.b && S.camp.b.store), 8), P('Full cells', full, Math.max(1, all))];
     },
     f_oaths: () => { const b = (S.oath && S.oath.best) || {}; let n = 0; for (const k in b) if (num(b[k]) >= 20) n++; return [P('Oath Seals at 20+', n, 14)]; },
-    f_all: () => { const others = DEED_FEATS.filter(f => f.id !== 'f_all' && waitOk(f.wait)); return [P('Feats', others.filter(f => DS().feat[f.id]).length, others.length)]; }
+    f_all: () => { const others = DEED_FEATS.filter(f => !f.legacy && f.id !== 'f_all' && waitOk(f.wait)); return [P('Feats', others.filter(f => DS().feat[f.id]).length, others.length)]; }
   };
-  const featParts = f => safe(() => FEAT_PARTS[f.id](), []);
+  const featParts = f => f.legacy ? [P(f.needs, safe(() => CUR[f.stat](), 0), f.need)] : safe(() => FEAT_PARTS[f.id](), []);
   const featDone = parts => parts.length > 0 && parts.every(p => p.have >= p.need);
   function grantFeat(f, quiet) {
     const d = DS(); if (d.feat[f.id]) return false;
     d.feat[f.id] = 1; d.at[f.id] = now(); dirtyPts();
-    if (!quiet && T.featToast) { const l = LK[f.look]; toastQ(`Feat: ${f.n}. New title: ${f.title}.${l ? ' New look: ' + l.n + '.' : ''}`, 'high', { ic: ['banner', '#F2C14E'] }, 'deed-feat'); }
+    if (f.bonus) rebuildBonus();
+    if (!quiet && f.legacy) toastQ(`Feat: ${f.n}. ${milestoneText(f)}.`, 'low', { ic: [f.ic, '#F2C14E'] }, 'deed-milestone');
+    else if (!quiet && T.featToast) { const l = LK[f.look]; toastQ(`Feat: ${f.n}. New title: ${f.title}.${l ? ' New look: ' + l.n + '.' : ''}`, 'high', { ic: ['banner', '#F2C14E'] }, 'deed-feat'); }
     emit('deedFeat', { id: f.id, quiet: !!quiet });
     if (typeof codexRefresh === 'function' && d.init) safe(() => codexRefresh(true, !!quiet), 0);
     return true;
   }
+  function checkMilestones(quiet) {
+    let n = 0;
+    for (const f of MILESTONES) if (!DS().feat[f.id] && safe(() => num(CUR[f.stat]()), 0) >= f.need && grantFeat(f, quiet)) n++;
+    return n;
+  }
   function checkFeats(quiet, part) {
     let n = 0;
-    DEED_FEATS.forEach((f, i) => {
+    DEED_FEATS.filter(f => !f.legacy).forEach((f, i) => {
       if (f.id === 'f_all' || DS().feat[f.id] || (part != null && i % T.parts !== part) || !waitOk(f.wait)) return;
       if (featDone(featParts(f)) && grantFeat(f, quiet)) n++;
     });
@@ -17671,7 +17649,7 @@ let deeds, deedBonus, wearGet;
     if (!full) part = (part + 1) % T.parts;
     const n = checkTracks(p, quiet);
     let g = 0; if (n || full || p === 0) g = checkGroups(quiet);
-    const f = checkFeats(quiet, full ? null : p);
+    const f = checkMilestones(quiet) + checkFeats(quiet, full ? null : p);
     if (n || g || f || full) afterPoints(quiet);
     if (!quiet) flushToasts(); else pend = null;
     return { tiers: n, groups: g, feats: f };
@@ -17701,6 +17679,8 @@ let deeds, deedBonus, wearGet;
 
   // ---------------- events ----------------
   let inAway = false;
+  // Preserve the lifetime non-unique item-added counter used by the original milestones.
+  on('itemAdded', ({ item }) => { ensure(); if (!item || item.u) return; N().forged++; if (item.r === 'epic') DS().rec.epic = true; });
   on('harvest', ({ kind, t, n, glint }) => {
     if (!GATHER.includes(kind) || !(t >= 1 && t <= 5)) return;
     const row = gRow(kind); row[t - 1] += num(n);
@@ -17803,11 +17783,23 @@ let deeds, deedBonus, wearGet;
   }
 
   // ---------------- per-S runtime (loadSave() replaces S) ----------------
-  let seenFor = null, lastNum;
+  let seenFor = null, lastNum, firstMilestonePass = true;
   function ensure() {
     if (seenFor === S) return;
     seenFor = S;
     const d = DS();
+    // Same-v5 conversion. Mixed records keep the greater counter and existing earned dates.
+    const old = S.achievements;
+    if (old && typeof old === 'object' && !Array.isArray(old)) {
+      for (const f of MILESTONES) if (old.got && old.got[f.legacy]) {
+        d.feat[f.id] = 1;
+        if (!d.at[f.id]) d.at[f.id] = num(old.got[f.legacy]);
+      }
+      d.n.forged = Math.max(num(d.n.forged), num(old.forged));
+      d.rec.epic = !!(d.rec.epic || old.epic);
+    }
+    delete S.achievements;
+    firstMilestonePass = true;
     if (!d.rec.ks || typeof d.rec.ks !== 'object') d.rec.ks = {};
     for (const k of Object.keys(d.g)) if (!Array.isArray(d.g[k])) delete d.g[k];
     rebuildBonus(); dirtyPts(); cbInit = false; streak = 0; hitsAfter = -1; dareSeen = -1;
@@ -17826,6 +17818,12 @@ let deeds, deedBonus, wearGet;
     ensure(); syncNum();
     readCombat();
     secondPolls();
+    // Milestones retain the one-second cadence, including before track initialization.
+    pend = [];
+    const milestones = checkMilestones(firstMilestonePass);
+    if (milestones && DS().init) afterPoints(firstMilestonePass);
+    flushToasts(); firstMilestonePass = false;
+    if (milestones) save();
     if (!DS().init) { if (clock >= T.initAfter) init(); return; }
     pass(false, false);
   });
@@ -17848,7 +17846,7 @@ let deeds, deedBonus, wearGet;
     if (!got.length && !feats.length && gain <= 0) return null;
     const bits = got.slice(0, 3).concat(got.length > 3 ? [`${got.length - 3} more`] : []);
     const lines = [];
-    for (const f of feats) lines.push({ icon: { ic: ['banner', '#F2C14E'] }, txt: `Feat: ${f.n}`, sub: `New title: ${f.title}.`, group: 'Achievements', go: () => emit('deedsOpen', { view: 'feats', id: f.id }) });
+    for (const f of feats) lines.push({ icon: { ic: ['banner', '#F2C14E'] }, txt: `Feat: ${f.n}`, sub: f.legacy ? milestoneText(f) + '.' : `New title: ${f.title}.`, group: 'Achievements', go: () => emit('deedsOpen', { view: 'feats', id: f.id }) });
     if (bits.length || gain > 0) lines.push({ icon: { ic: ['banner', '#F2C14E'] }, txt: bits.length ? bits.join(', ') : 'Achievement points', sub: `+${gain} points.`, group: 'Achievements', go: () => emit('deedsOpen', { view: 'deeds' }) });
     return lines;
   });
@@ -17915,7 +17913,7 @@ let deeds, deedBonus, wearGet;
     const A = CODEX_PAGES.achievements;
     if (A && typeof A.tiles === 'function') {
       const base = A.tiles;
-      A.tiles = x => base(x).concat(DEED_FEATS.filter(f => DS().feat[f.id]).map(f => ({ key: f.id, n: f.n, got: 1, max: 1, pts: 10, ptsMax: 10,
+      A.tiles = x => base(x).concat(DEED_FEATS.filter(f => !f.legacy && DS().feat[f.id]).map(f => ({ key: f.id, n: f.n, got: 1, max: 1, pts: 10, ptsMax: 10,
         ic: ['banner', '#F2C14E'], grp: 'Feats', sub: `Title: ${f.title}.`, hint: '' })));
     }
     const W = CODEX_PAGES.wardrobe;
@@ -17980,7 +17978,7 @@ let deeds, deedBonus, wearGet;
     feats: () => DEED_FEATS.filter(f => waitOk(f.wait) || DS().feat[f.id]).map(f => {
       const parts = featParts(f), got = !!DS().feat[f.id];
       const pct = parts.length ? parts.reduce((a, p) => a + Math.min(1, p.need ? p.have / p.need : 1), 0) / parts.length : 0;
-      return { id: f.id, n: f.n, needs: f.needs, about: f.about, rar: f.rar, rarTxt: DEED_RARITY[f.rar], title: f.title, look: f.look, got, at: DS().at[f.id] || 0, parts, pct: got ? 1 : pct, live: waitOk(f.wait), pts: f.pts || DEED_PTS.feat };
+      return { id: f.id, n: f.n, needs: f.needs, about: f.about, rar: f.rar, rarTxt: DEED_RARITY[f.rar], title: f.title, look: f.look, legacy: f.legacy, ic: f.ic, bonusTxt: f.bonus ? milestoneText(f) : '', got, at: DS().at[f.id] || 0, parts, pct: got ? 1 : pct, live: waitOk(f.wait), pts: f.pts || DEED_PTS.feat };
     }),
     secrets: () => {
       const d = DS(), found = keys(d.sec), days = S.stats ? (num(S.stats.played) + num(S.stats.away)) / 86400 : 0;
@@ -17990,12 +17988,14 @@ let deeds, deedBonus, wearGet;
         return { id: s.id, got, at: d.at[s.id] || 0, n: got ? s.n : '', riddle: got || hint ? s.riddle : '', how: got ? s.how : '', title: got ? s.title : '', look: got ? s.look || null : null, live: waitOk(s.wait) };
       });
     },
+    milestones: () => MILESTONES.map(f => ({ legacy: f.legacy, n: f.n, needs: f.needs, ic: f.ic, got: !!DS().feat[f.id], bonusTxt: milestoneText(f) })),
+    milestoneBonus: key => MSUM[key] || 0,
     points: () => pointsNow(),
     ladder: () => DEED_LADDER.map(m => Object.assign({ got: !!DS().mil[m.at] }, m)),
     next: () => DEED_LADDER.find(m => !DS().mil[m.at]) || null,
     wallStage: () => DEED_LADDER.reduce((a, m) => m.wall && DS().mil[m.at] ? Math.max(a, m.wall) : a, 0),
     wall: () => DS().wall.slice(),
-    pin: ids => { DS().wall = (Array.isArray(ids) ? ids : []).filter(id => FE[id] || CH[id] || GR[id]).slice(0, 12); save(); return DS().wall.slice(); },
+    pin: ids => { DS().wall = (Array.isArray(ids) ? ids : []).filter(id => (FE[id] && !FE[id].legacy) || CH[id] || GR[id]).slice(0, 12); save(); return DS().wall.slice(); },
     looks: slot => DEED_LOOKS.filter(l => (!slot || l.slot === slot) && (lookLive(l) || owned(l.id))).map(l => ({ id: l.id, slot: l.slot, n: l.n, src: l.src, srcTxt: srcTxt(l.src), got: owned(l.id) })),
     owned, wear, wearGet: s => wearGet(s),
     showHelm: on => { DS().wear.helm = on ? 1 : 0; emit('deedLook', { slot: 'helm', id: DS().wear.helm }); save(); return DS().wear.helm; },
@@ -26871,7 +26871,7 @@ let featTrophyURL, trophyWall;
   function earned() {
     const d = DS(); if (!d) return [];
     const at = d.at || {}, out = [];
-    const feats = (typeof DEED_FEATS === 'object' ? DEED_FEATS : []).filter(f => d.feat && d.feat[f.id]);
+    const feats = (typeof DEED_FEATS === 'object' ? DEED_FEATS : []).filter(f => !f.legacy && d.feat && d.feat[f.id]);
     feats.sort((a, b) => (at[b.id] || 0) - (at[a.id] || 0));
     for (const f of feats) out.push({ kind: 'feat', id: f.id });
     for (const c of (typeof DEED_CHAPTERS === 'object' ? DEED_CHAPTERS : [])) if (d.ch && (+d.ch[c.id] || 0) >= c.steps) out.push({ kind: 'ch', id: c.id });
@@ -32392,7 +32392,7 @@ let deedsUI = null;
     const ic = ICON[SLOT_IC[slot]] ? SLOT_IC[slot] : 'charm';
     return iconURL(ic, lookCol(slot, id));
   };
-  const trophyURL = id => (typeof featTrophyURL === 'function' && safe(() => featTrophyURL(id), '')) || CUP();
+  const trophyURL = id => FE[id] && FE[id].legacy ? iconURL(FE[id].ic, '#F2C14E') : (typeof featTrophyURL === 'function' && safe(() => featTrophyURL(id), '')) || CUP();
   const groupIc = g => iconURL(...(g && g.ic ? g.ic : ['banner', '#F2C14E']));
 
   // ---------------- small shared reads ----------------
@@ -32587,7 +32587,7 @@ let deedsUI = null;
       const T = DEED_PTS;
       src.append(el('h3', 'dd-h', 'Where points come from'));
       for (const [a, b] of [['Tiers', `Bronze ${T.tier[0]}, Silver ${T.tier[1]}, Gold ${T.tier[2]}, Everflame ${T.tier[3]}, each star ${T.star}`], ['Groups', `every track at Gold ${T.grpGold}, at Everflame ${T.grpEver}`],
-        ['Feats', `${T.feat} each (Lanternfall ${T.capstone})`], ['Secrets', `${T.secret} each`], ['Classic', `${T.classic} each`], ['Chapters', `${T.chStep} a step, ${T.chDone} when done`]]) {
+        ['Hard feats', `${T.feat} each (Lanternfall ${T.capstone})`], ['Secrets', `${T.secret} each`], ['Milestone feats', `${T.milestone} each`], ['Chapters', `${T.chStep} a step, ${T.chDone} when done`]]) {
         const r = el('div', 'dd-kv'); r.append(el('b', null, a), el('span', null, b)); src.append(r);
       }
       api.body.append(src);
@@ -32627,9 +32627,9 @@ let deedsUI = null;
     update(force) {
       const t = Date.now(); if (!force && t - tracksAt < 1000) return; tracksAt = t;
       const groups = deeds.groups();
-      if (curGroup !== 'classic' && !groups.some(g => g.id === curGroup)) curGroup = groups.length ? groups[0].id : 'classic';
+      if (!groups.some(g => g.id === curGroup)) curGroup = groups.length ? groups[0].id : null;
       // chips
-      const csig = groups.map(g => g.id + g.atGold + '/' + g.atEver + '/' + g.tracks + g.lv).join() + '|' + curGroup + '|' + classicGot();
+      const csig = groups.map(g => g.id + g.atGold + '/' + g.atEver + '/' + g.tracks + g.lv).join() + '|' + curGroup;
       if (csig !== chipsSig) {
         chipsSig = csig; tv.chips.textContent = '';
         for (const g of groups) {
@@ -32639,13 +32639,7 @@ let deedsUI = null;
           c.addEventListener('click', () => { curGroup = g.id; tracksSig = ''; chipsSig = ''; runTracks(); });
           tv.chips.append(c);
         }
-        const c = btn('dd-chip' + (curGroup === 'classic' ? ' on' : ''));
-        c.setAttribute('role', 'tab'); c.setAttribute('aria-selected', String(curGroup === 'classic'));
-        c.append(img(iconURL('banner', '#F2C14E')), el('b', null, 'Classic'), el('span', null, `${classicGot()}/${ACH_API.list.length}`));
-        c.addEventListener('click', () => { curGroup = 'classic'; tracksSig = ''; chipsSig = ''; runTracks(); });
-        tv.chips.append(c);
       }
-      if (curGroup === 'classic') return classicUpdate(force);
       const g = groups.find(x => x.id === curGroup);
       const rows = deeds.tracks(curGroup);
       const sig = curGroup + '|' + rows.map(r => r.id).join();
@@ -32677,25 +32671,6 @@ let deedsUI = null;
     tv.head.append(a, b);
     if (g.fresh) tv.head.append(el('p', 'note', `${g.fresh} new track${g.fresh > 1 ? 's' : ''} to catch up. Your reward stays yours.`));
   }
-  // ---- the Classic 22 (56-achievements.js, unchanged) ----
-  const classicGot = () => ACH_API.list.filter(a => S.achievements.got[a.id]).length;
-  function classicUpdate(force) {
-    const got = S.achievements.got;
-    const sig = 'classic|' + ACH_API.list.map(a => got[a.id] ? 1 : Math.floor(Math.min(1, safe(() => a.cur(), 0) / a.need) * 50)).join();
-    if (sig === tracksSig && !force) return;
-    tracksSig = sig; tv.list.textContent = ''; tv.rows.clear(); tv.head.textContent = '';
-    tv.head.append(el('p', 'note', `The first achievements. Each gives a small bonus for good and ${DEED_PTS.classic} points.`));
-    for (const a of ACH_API.list) {
-      const on_ = !!got[a.id], c = Math.min(a.need, safe(() => a.cur(), 0));
-      const row = el('div', 'dd-trow classic' + (on_ ? ' done' : ''));
-      const ic = el('span', 'dd-ric'); ic.append(img(iconURL(a.ic, on_ ? '#F2C14E' : '#8A7F96')));
-      const tx = el('span', 'dd-rtx'); const top = el('span', 'dd-ttop'); top.append(el('b', null, a.name), el('span', 'dd-fx', ACH_API.bonusText(a)));
-      const bar = el('span', 'dd-bar'), fill = el('i'); bar.append(fill); fill.style.width = pctW(on_ ? 1 : c / a.need);
-      tx.append(top, el('span', 'dd-rsub', a.desc + (on_ ? (typeof got[a.id] === 'number' && got[a.id] > 1 ? ` · ${dateTxt(got[a.id])}` : ' · done') : ` · ${fmt(c)} / ${fmt(a.need)}`)), bar);
-      row.append(ic, tx); tv.list.append(row);
-    }
-  }
-
   // ---- a track's detail sheet ----
   function trackSheet(id) {
     const t = TR[id]; if (!t) return;
@@ -32754,7 +32729,7 @@ let deedsUI = null;
     id: 'ach-feats', view: 'ach-feats',
     mount(sec) {
       sec.classList.add('dd-sec');
-      fv.intro = el('p', 'note', 'Feats are the hardest deeds. Each one takes weeks or months and gives a title and a new look. None adds power.');
+      fv.intro = el('p', 'note', 'Milestone feats give a small permanent bonus. Harder feats earn titles and looks. Each reward is shown below.');
       fv.grid = el('div', 'dd-fgrid');
       fv.sh = el('h3', 'dd-h', 'Secrets');
       fv.sgrid = el('div', 'dd-sgrid');
@@ -32787,7 +32762,7 @@ let deedsUI = null;
         const rw = el('span', 'dd-frw');
         const lk = LK[f.look];
         if (lk) rw.append(img(lookIcon(lk.slot, lk.id)));
-        rw.append(el('span', null, f.title));
+        rw.append(el('span', null, f.bonusTxt || f.title));
         if (wall.includes(f.id)) rw.append(el('span', 'dd-pin', 'Pinned'));
         c.append(rw);
         c.addEventListener('click', () => featSheet(f.id));
@@ -32834,22 +32809,22 @@ let deedsUI = null;
         api.body.append(parts);
         const lk = LK[f.look];
         const rw = el('div', 'dd-srw');
-        const t1 = el('div', 'dd-kv'); t1.append(el('b', null, 'Title'), el('span', null, f.title)); rw.append(t1);
+        const t1 = el('div', 'dd-kv'); t1.append(el('b', null, f.legacy ? 'Bonus' : 'Title'), el('span', null, f.bonusTxt || f.title)); rw.append(t1);
         if (lk) { const t2 = el('div', 'dd-kv'); t2.append(el('b', null, DEED_SLOT_TXT[lk.slot]), el('span', null, lk.n)); rw.append(t2); }
         const t3 = el('div', 'dd-kv'); t3.append(el('b', null, 'Points'), el('span', null, String(f.pts))); rw.append(t3);
         const t4 = el('div', 'dd-kv'); t4.append(el('b', null, 'About'), el('span', null, f.about)); rw.append(t4);
         api.body.append(rw);
-        if (f.got) api.body.append(el('p', 'note', `Earned on ${dateLong(f.at)}.`));
+        if (f.got) api.body.append(el('p', 'note', f.at > 1 ? `Earned on ${dateLong(f.at)}.` : 'Earned.'));
         const foot = el('div', 'dd-sfoot');
         if (f.got && lk && deeds.owned(lk.id)) {
           const worn = deeds.wearGet(lk.slot) === lk.id;
           foot.append(btn('mini' + (worn ? '' : ' go'), worn ? 'Wearing it' : 'Wear it', () => { if (!worn && deeds.wear(lk.slot, lk.id)) { lookSig = ''; draw(); } }));
         }
         const wall = deeds.wall(), pinned = wall.includes(id);
-        if (f.got) foot.append(btn('mini', pinned ? 'Unpin from the wall' : 'Pin to the wall', () => {
+        if (f.got && !f.legacy) foot.append(btn('mini', pinned ? 'Unpin from the wall' : 'Pin to the wall', () => {
           const w = deeds.wall(); deeds.pin(pinned ? w.filter(x => x !== id) : w.concat(id)); featsSig = ''; draw();
         }));
-        if (f.got) foot.append(el('span', 'note', pinned ? `Pinned: ${wall.length} of 12.` : 'Your Trophy Wall at camp shows it.'));
+        if (f.got && !f.legacy) foot.append(el('span', 'note', pinned ? `Pinned: ${wall.length} of 12.` : 'Your Trophy Wall at camp shows it.'));
         api.body.append(foot);
       };
       draw();
@@ -33005,6 +32980,7 @@ let deedsUI = null;
   const cardQ = [];
   let cardOpen = false;
   function featCard(id, kind) {
+    if (FE[id] && FE[id].legacy) return;
     cardQ.push({ id, kind: kind || 'feat' });
     if (!cardOpen) nextCard();
   }
