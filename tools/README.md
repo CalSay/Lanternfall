@@ -1,0 +1,53 @@
+# Local build and checks
+
+Use a current Node.js LTS release (Node 22 or newer). The same commands work in PowerShell, Command Prompt,
+macOS and Linux shells. Run them from the repository root.
+
+```text
+npm ci
+npx playwright install chromium
+node tools/build.mjs
+node tools/check.mjs
+```
+
+In PowerShell, use `npm.cmd` and `npx.cmd` if the machine's execution policy blocks the corresponding
+`.ps1` launchers. There is no need to change that policy.
+
+Playwright is a pinned development dependency. It is not included in the game's single HTML artifact.
+The build and headless core checks need only Node; the complete check run also needs Playwright and a
+Chromium browser. The final check summary reports how many browser sections were skipped and why.
+A zero exit status with skipped browser sections does not establish that the browser checks passed.
+
+`node tools/check.mjs --only="save codes|C5"` selects matching sections. `--jobs=1` runs serially;
+the default runs independent sections in parallel. `node tools/perf.mjs --quick` runs the existing
+performance budgets without changing their thresholds. Build first so both commands test current code.
+
+## Browser discovery and overrides
+
+The shared browser finder supports the project Playwright installation, its managed Chromium, installed
+Chrome or Edge on Windows, and the existing Linux runner paths. Explicit overrides take priority:
+
+```powershell
+$env:LF_PLAYWRIGHT = 'C:\path\to\node_modules\playwright'
+$env:LF_CHROMIUM = 'C:\Program Files\Google\Chrome\Application\chrome.exe'
+node tools/check.mjs
+```
+
+`LF_PLAYWRIGHT` may point to the Playwright package directory. `LF_CHROMIUM` points to the browser
+executable, not its parent folder. Clear these variables to return to automatic discovery.
+
+The Linux runner's `/opt/node22/lib/node_modules/playwright` and `/opt/pw-browsers/chromium*` locations
+remain supported. A missing or invalid explicit override is reported, so a broken configured path does
+not silently test a different browser.
+
+## Other local tools
+
+```text
+node tools/savecode.mjs tests/fixtures/save-late.json
+node tools/site.mjs
+node tools/serve.mjs
+```
+
+The save-code tool validates the JSON before loading it and prints an import code. The site tool wraps
+the built artifact in a local `site/` folder; it does not upload or publish it. The server exposes the
+built game for local testing. Keep real player saves out of commits and test with disposable fixtures.
