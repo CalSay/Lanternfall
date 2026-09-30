@@ -10,8 +10,8 @@ GPT keeps the same character and colours.
 | Hero | Fight | Death | Gathering | Notes |
 |---|---|---|---|---|
 | Wren | done: v4 redesign, 8 poses (draw, release, wind-up, brace, camp, hurt) | done (kneel, fallen) | **on hold: the sheet shows the old hood; redo in the v4 design** | outline trimmed in code (tools/heroart.mjs) |
-| Tobin | done | done | received 2026-09-30, to wire | |
-| Pip | done | done | received 2026-09-30, to wire | optional: redraw natively at 86 px (art-pipeline 7) |
+| Tobin | done | done | done (7 poses; code draws pickaxe, axe, sickle, spear) | |
+| Pip | done | done | done (7 poses; code draws the tools) | optional: redraw natively at 86 px (art-pipeline 7) |
 
 **Gathering tools.** The game has four gathering places (63c-scenery-gather): ore (mine), wood (woods), fibre and
 herbs (meadow), crystal (glade). Three tools cover them: a **pickaxe** for ore and crystal, an **axe** for wood and a

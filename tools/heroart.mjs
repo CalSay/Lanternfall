@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// HEROART1: pack the hand-drawn hero poses (art/heroes/<hero>/poses/*.png, palette.png, Wren's fx/*.png) into
+// HEROART1: pack the hand-drawn hero poses (art/heroes/<hero>/poses/*.png and gather/*.png, palette.png, Wren's fx/*.png) into
 // src/js/21y-data-heroart.js. Build-time only; the output is committed, so the game build never runs this.
 // Node 18, no dependencies (a small PNG reader on node:zlib).
 //
@@ -29,9 +29,11 @@ export const HEROES = {
     ['wind', 'wind-up'], ['block', 'defensive-brace'], ['kneel', 'kneeling'], ['fallen', 'fallen']],
     fx: [['bat', 'bat'], ['arrow', 'arrow'], ['waves', 'sound_waves']] },
   tobin: { poses: [['ready', '01-ready-guard'], ['wind', '02-wind-up'], ['strike', '03-strike'], ['block', '04-braced-block'],
-    ['camp', '05-relaxed-camp'], ['hurt', '06-hurt'], ['kneel', '07-kneeling'], ['fallen', '08-fallen']] },
+    ['camp', '05-relaxed-camp'], ['hurt', '06-hurt'], ['kneel', '07-kneeling'], ['fallen', '08-fallen']],
+    gather: [['g1', 'g1-rest'], ['g2', 'g2-forward'], ['g3', 'g3-shoulder'], ['g4', 'g4-overhead'], ['g5', 'g5-low'], ['g6', 'g6-crouch'], ['g7', 'g7-level']] },
   pip: { poses: [['ready', '01-ready'], ['wind', '02-wind-up'], ['cast', '03-cast'], ['camp', '04-relaxed-camp'],
-    ['hurt', '05-hurt'], ['kneel', '06-kneeling'], ['fallen', '07-fallen']] }
+    ['hurt', '05-hurt'], ['kneel', '06-kneeling'], ['fallen', '07-fallen']],
+    gather: [['g1', 'g1-rest'], ['g2', 'g2-forward'], ['g3', 'g3-shoulder'], ['g4', 'g4-overhead'], ['g5', 'g5-low'], ['g6', 'g6-crouch'], ['g7', 'g7-level']] }
 };
 
 // ---- outline trim (owner, 2026-09-29: Wren's border read about 4 px thick) ----
@@ -130,8 +132,9 @@ export function pack() {
     const pal = readPalette(id);
     if (pal.length > 63) throw new Error(id + ': more than 63 colours');
     const poses = {}, fx = {};
-    for (const [key, file] of def.poses) {
-      const img = readPNG(path.join(ART, id, 'poses', file + '.png'));
+    // gather: the empty-fist gathering poses (art/heroes/<id>/gather, made by tools/art/gathersheet.py); 64h draws the tools
+    for (const [key, file, dir] of def.poses.map(p => [...p, 'poses']).concat((def.gather || []).map(p => [...p, 'gather']))) {
+      const img = readPNG(path.join(ART, id, dir, file + '.png'));
       if (def.trim) trimOutline(img);
       if (img.w !== W || img.h !== H) throw new Error(`${id}/${file}: ${img.w}x${img.h}, want ${W}x${H}`);
       const e = encode(img, pal, `${id}/${file}`);

@@ -255,7 +255,62 @@ var heroArtId, heroArtDraw, heroArtStates, heroArtStage, heroArtDecode, heroArtP
         .concat([f('fallen', 0.25), f('fallen', 0, { sm: [149, 101, 0] }), f('fallen', 0, { sm: [149, 101, 1] })]).concat(range(5).map(() => f('fallen', 0))) }
     };
   }
-  const ANIMS = { wren: wrenAnims(), tobin: tobinAnims(), pip: pipAnims() };
+  // ================= gathering (owner, 2026-09-30): empty-fist poses, the tool drawn in code =================
+  // The poses (g1..g7) come from GPT's gathering sheets through tools/art/gathersheet.py. GRIP: each pose's fists (art
+  // coords, measured on the converted sheets). A tool is drawn from the grip along an angle (degrees: 0 = right,
+  // 90 = down); `back` draws it behind the hero (swung back over the head or the shoulder).
+  const GRIP = {
+    tobin: { g1: [95, 96], g2: [85, 86], g3: [71, 70], g4: [86, 44], g5: [110, 95], g6: [100, 100], g7: [125, 85] },
+    pip: { g1: [93, 108], g2: [76, 97], g3: [86, 83], g4: [86, 50], g5: [100, 106], g6: [97, 107], g7: [126, 92] }
+  };
+  // the node's skill -> the tool; tool -> [rest, wind-up, strike] as [pose, angle, back]
+  const GATHER_TOOL = { mine: 'pick', wood: 'axe', forage: 'sickle', hunt: 'spear' };
+  const nodeTool = () => GATHER_TOOL[typeof skillOf === 'function' && S.node ? skillOf(S.node.kind) : ''] || 'pick';
+  const gatherIdle = A => (A['gatherIdle_' + nodeTool()] ? 'gatherIdle_' + nodeTool() : 'campIdle');
+  const GATHER_POSE = {
+    pick: [['g1', 35], ['g4', -125, 1], ['g5', 60]],
+    axe: [['g1', 35], ['g3', -150, 1], ['g7', 0]],
+    sickle: [['g1', 45], ['g2', 200], ['g6', 25]],
+    spear: [['g1', -25], ['g3', -8], ['g7', 0]]
+  };
+  const TC = { wood: [150, 98, 56], woodD: [98, 62, 34], iron: [214, 218, 226], ironM: [150, 156, 170], ironD: [96, 100, 116], line: [30, 24, 36] };
+  // A tool as pixels in its own frame (u along the handle from the grip, v across it), turned to `ang` and outlined.
+  // An 80x80 sprite with the grip at (40, 40).
+  const toolSprite = (tool, ang) => cached('tool' + tool + ang, () => {
+    const px = new Map(), r = ang * Math.PI / 180, c = Math.cos(r), sn = Math.sin(r);
+    const P = (u, v, col) => { const x = Math.round(40 + u * c - v * sn), y = Math.round(40 + u * sn + v * c); px.set(x + ',' + y, col); };
+    const shaft = (u0, u1) => { for (let u = u0; u <= u1; u += 0.5) { P(u, 0, TC.wood); P(u, 1, TC.woodD); } };
+    if (tool === 'pick') {
+      shaft(-3, 22);
+      for (let v = -11; v <= 11; v += 0.5) { const u = 23 - (v * v) / 26, tip = Math.abs(v) > 8; P(u, v, tip ? TC.iron : TC.ironM); P(u + 1, v, tip ? TC.ironM : TC.ironD); }
+    } else if (tool === 'axe') {
+      shaft(-3, 22);
+      for (let u = 14; u <= 23; u += 0.5) { const w = 3 + (u - 14) * 0.75; for (let v = -1; v >= -w; v -= 0.5) P(u, v, v <= -w + 1.5 ? TC.iron : u > 21 ? TC.ironD : TC.ironM); }
+      for (let u = 18; u <= 23; u += 0.5) { P(u, 2, TC.ironD); P(u, 3, TC.ironD); }   // the poll behind the handle
+    } else if (tool === 'sickle') {
+      shaft(-2, 7);
+      for (let a = 90; a >= -135; a -= 4) { const ar = a * Math.PI / 180; P(9 + 8 * Math.cos(ar), -8 + 8 * Math.sin(ar), a < -60 ? TC.iron : TC.ironM); P(9 + 7 * Math.cos(ar), -8 + 7 * Math.sin(ar), TC.ironD); }
+    } else {   // spear: a long shaft through the grip, a leaf-shaped head
+      shaft(-14, 26);
+      [1, 2, 2, 2, 1, 1, 0].forEach((w, i) => { for (let v = -w; v <= w + 1; v += 0.5) P(27 + i, v, Math.abs(v - 0.5) < 1 ? TC.iron : TC.ironM); });
+    }
+    return paint(80, 80, put => {
+      const has = (x, y) => px.has(x + ',' + y);
+      for (const k of px.keys()) { const [x, y] = k.split(',').map(Number); for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) if (!has(x + dx, y + dy)) put(x + dx, y + dy, TC.line); }
+      for (const [k, col] of px) { const [x, y] = k.split(',').map(Number); put(x, y, col); }
+    });
+  });
+  function gatherAnims() {
+    const out = {};
+    for (const tool of Object.keys(GATHER_POSE)) {
+      const [rest, wind, strike] = GATHER_POSE[tool];
+      const f = ([p, ang, back], o) => Object.assign({ p, tool, ang, back: !!back }, o);
+      out['gather_' + tool] = { ms: 90, hit: 2, f: [f(wind), f(wind), f(strike), f(strike), f(strike), f(rest)] };
+      out['gatherIdle_' + tool] = { ms: 160, loop: true, f: range(8).map(i => f(rest, { br: BR[i] })) };
+    }
+    return out;
+  }
+  const ANIMS = { wren: wrenAnims(), tobin: Object.assign(tobinAnims(), gatherAnims()), pip: Object.assign(pipAnims(), gatherAnims()) };
   for (const id in ANIMS) { const A = ANIMS[id]; if (!A.block) A.block = { ms: 90, f: A.fightIdle.f.slice(0, 4) }; }
   heroArtStates = id => {
     const A = ANIMS[id]; if (!A) return null;
@@ -276,9 +331,12 @@ var heroArtId, heroArtDraw, heroArtStates, heroArtStage, heroArtDecode, heroArtP
   const put1 = (g, x, y, c) => { g.fillStyle = `rgb(${c[0]},${c[1]},${c[2]})`; g.fillRect(x, y, 1, 1); };
   function drawFrame(g, id, fr, ox, oy, flT, calm, noFly) {
     const S0 = set(id), P = S0.poses[fr.p], br = calm ? 0 : fr.br | 0;
+    const tool = fr.tool && GRIP[id] && GRIP[id][fr.p], drawTool = () => g.drawImage(toolSprite(fr.tool, fr.ang), ox + tool[0] - 40, oy + tool[1] - 40 + br);
+    if (tool && fr.back) drawTool();
     if (fr.buckle) { rows(g, P, ox, oy, 0, CUT, fr.buckle[0]); rows(g, P, ox, oy, fr.buckle[1], 192, 0); }
     else if (br) { rows(g, P, ox, oy, 0, CUT, br, fr.dx); rows(g, P, ox, oy, CUT, 192, 0, fr.dx); }
     else g.drawImage(P.c, ox + P.x0 + (fr.dx || 0), oy + P.y0);
+    if (tool && !fr.back) drawTool();
     if (fr.str) {
       g.drawImage(stringSprite(fr.str, br), ox + 60, oy + 30);
       if (fr.nock && !noFly) nockedArrow(g, S0.fx.arrow, ox, oy, br);
@@ -352,23 +410,24 @@ var heroArtId, heroArtDraw, heroArtStates, heroArtStage, heroArtDecode, heroArtP
     if (id !== ST.id) { ST.id = id; go('fightIdle'); }
     if (a.down) { if (ST.s !== 'death') go('death'); }
     else if (tg === 'node') {
-      // Gathering. A real `gather` pose set (ANIMS[id].gather: wind-up, `hit` frame, follow-through, like `attack`) plays on
-      // each swing when the art has one. Until then the fight strike stands in for it (W1-A stopgap): the stage's swing
-      // (a.st 1 = wind, 2 = strike; the chips fly on the strike) plays the attack frames, then the hero settles into the camp pose.
-      if (ST.s === 'death') go('campIdle');
-      const GA = A.gather ? 'gather' : 'attack';
+      // Gathering. The node's tool picks the set (gather_pick / _axe / _sickle / _spear: wind-up, `hit` frame, follow-through,
+      // like `attack`), played on each swing of the stage (a.st 1 = wind, 2 = strike; the chips fly on the strike); between
+      // swings the hero rests with the tool (gatherIdle_*). A hero without gathering art (Wren, for now) swings its attack
+      // and rests in the camp pose.
+      const tk = nodeTool(), GA = A['gather_' + tk] ? 'gather_' + tk : 'attack', GI = gatherIdle(A);
+      if (ST.s === 'death') go(GI);
       if (a.st === 1 && ST.lastSt !== 1) go(GA);
-      else if (ST.s !== GA && ST.s !== 'campIdle') go('campIdle');
+      else if (ST.s !== GA && ST.s !== GI) go(GI);
     } else {
-      if (ST.s === 'death' || ST.s === 'campIdle') go('fightIdle');
+      if (ST.s === 'death' || ST.s === 'campIdle' || ST.s.startsWith('gather')) go('fightIdle');
       if (a.st === 1 && ST.lastSt !== 1) go(t - ST.ab < 0.35 ? 'ability' : 'attack');
       else if (ST.parry > ST.sawParry) { ST.sawParry = ST.parry; if (ST.s === 'fightIdle' || ST.s === 'hurt') go('block'); }
       else if (a.flash > 0.03 && a.flash > ST.lastFl + 0.01 && ST.s === 'fightIdle') go('hurt');
     }
     ST.lastSt = a.st; ST.lastFl = a.flash;
-    const an = A[ST.s] || A.fightIdle, rest = tg === 'node' ? 'campIdle' : 'fightIdle';   // where a finished swing settles
+    const an = A[ST.s] || A.fightIdle, rest = tg === 'node' ? gatherIdle(A) : 'fightIdle';   // where a finished swing settles
     let frame;
-    if ((ST.s === 'attack' || ST.s === 'ability' || ST.s === 'gather') && an.hit) {
+    if ((ST.s === 'attack' || ST.s === 'ability' || ST.s.startsWith('gather_')) && an.hit) {
       if (ST.hitT < 0 && a.st === 1) frame = Math.min(an.hit - 1, Math.floor((t - ST.t0) / WIND * an.hit));
       else { if (ST.hitT < 0) ST.hitT = t; frame = an.hit + Math.floor((t - ST.hitT) * 1000 / an.ms); }
       if (frame >= an.f.length) { go(rest); frame = null; }

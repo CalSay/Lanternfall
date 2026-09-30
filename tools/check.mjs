@@ -4224,7 +4224,22 @@ if (section('hero art')) try {
   const dataSrc = fs.readFileSync(path.join(ROOT, 'src', 'js', '21y-data-heroart.js'), 'utf8');
   assert(pack().src === dataSrc, 'hero art: src/js/21y-data-heroart.js is up to date with art/heroes (node tools/heroart.mjs)');
   const bytes = Buffer.byteLength(dataSrc) + fs.statSync(path.join(ROOT, 'src', 'js', '64h-hero-sprites.js')).size;
-  assert(bytes < 140 * 1024, `hero art: the data and the module stay modest (${(bytes / 1024).toFixed(1)} KB)`);
+  {
+    // gathering art (2026-09-30): every packed gather pose has a measured grip, and each tool has its three poses
+    const mod = fs.readFileSync(path.join(ROOT, 'src', 'js', '64h-hero-sprites.js'), 'utf8');
+    const packed = JSON.parse(dataSrc.slice(dataSrc.indexOf('const HERO_ART = ') + 17, dataSrc.lastIndexOf(';'))).heroes;
+    const bad = [];
+    for (const id of ['tobin', 'pip']) {
+      const keys = Object.keys(packed[id].poses).filter(k => /^g\d$/.test(k));
+      if (keys.length !== 7) bad.push(`${id}: ${keys.length} gather poses`);
+      const grip = (mod.match(new RegExp(id + ': \\{ (g1: [^}]+)\\}')) || [])[1] || '';
+      for (const k of keys) if (!grip.includes(k + ':')) bad.push(`${id} ${k}: no grip`);
+    }
+    for (const t of ['pick', 'axe', 'sickle', 'spear']) if (!new RegExp(`\\b${t}: \\[\\['g\\d'`).test(mod)) bad.push(`${t}: no poses`);
+    assert(!bad.length, 'hero art: Tobin and Pip have 7 gathering poses, each with a grip; the pickaxe, axe, sickle and spear each have rest, wind-up and strike' + (bad.length ? ': ' + bad.join('; ') : ''));
+  }
+  // 220 KB (was 140): the gathering poses (7 per hero, 2026-09-30) add about 25 KB a hero; Wren's set still to come
+  assert(bytes < 220 * 1024, `hero art: the data and the module stay modest (${(bytes / 1024).toFixed(1)} KB, budget 220)`);
   // a stub canvas: records every drawImage and checks its numbers
   const mkStub = red => `
     const __hd = { n: 0, bad: [], put: 0 };

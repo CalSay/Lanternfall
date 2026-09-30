@@ -19,6 +19,11 @@ Each hero folder has:
   and smoke. The paths inside point at the old session scratch folder. Fix them to `art/heroes/<hero>/poses`
   when you move these into `tools/art`.
 
+Gathering poses (2026-09-30): Tobin and Pip each have 7 empty-fist poses in `gather/`, converted from GPT's 8-pose
+sheets by `python3 tools/art/gathersheet.py <sheet> <hero> <height>` (Tobin 84 px, Pip 80 px: the sheets draw bigger
+heads, so the height is matched by head size). The game draws the pickaxe, axe, sickle and hunting spear into the
+fists (`64h-hero-sprites.js`, GRIP and GATHER_POSE). Wren's set waits for a sheet in her v4 design.
+
 Also here:
 - `viewer/hero-animations.html`: the animation viewer page. It's self-contained: open it in a browser, or
   publish it. Live copy: https://claude.ai/artifact/R2esehCtX9CkoCUe7aGcG6
