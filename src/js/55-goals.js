@@ -105,22 +105,15 @@ var forgeGoalPicks = 0;
   // Hero upgrades: the cheapest next level (x1). W2-A (solo): the cheapest Training level the hero can take (55-training
   // trainNext; nothing while every move sits at its cap), on the Hero tab's Training view.
   const heroNext = () => {
-    if (soloOn()) { const t = typeof trainNext === 'function' && soloHero() ? trainNext() : null; return t ? { u: { id: t.move, name: trainName(t.move), ic: ['sword', '#A9B1BD'] }, cost: t.cost, lv: t.lv, train: 1 } : null; }
-    let best = null;
-    for (const u of HERO_UPS) {
-      const p = plan(u.base, u.r, S[u.id], S.gold, u.cap, '1');
-      if (p.n > 0 && (!best || p.cost < best.cost)) best = { u, cost: p.cost };
-    }
-    return best;
+    const t = typeof trainNext === 'function' && soloHero() ? trainNext() : null; return t ? { u: { id: t.move, name: trainName(t.move), ic: ['sword', '#A9B1BD'] }, cost: t.cost, lv: t.lv, train: 1 } : null;
   };
   registerGoal({
     id: 'hero-up', sys: 'hero', prio: -1,
     pct: () => { const b = heroNext(); return b ? need(S.gold, b.cost) : null; },
-    label: () => { const b = heroNext(); if (!b) return ''; const lv = b.train ? b.lv : S[b.u.id] + 1;
-      if (b.train) return S.gold >= b.cost ? `Train ${b.u.name} to Lv ${lv}: ready` : `Train ${b.u.name} to Lv ${lv}: ${fmt(Math.ceil(b.cost - S.gold))} more gold`;
-      return S.gold >= b.cost ? `${b.u.name} Lv ${lv}: ready to buy` : `${b.u.name} Lv ${lv}: ${fmt(Math.ceil(b.cost - S.gold))} more gold`; },
+    label: () => { const b = heroNext(); if (!b) return ''; const lv = b.lv;
+      return S.gold >= b.cost ? `Train ${b.u.name} to Lv ${lv}: ready` : `Train ${b.u.name} to Lv ${lv}: ${fmt(Math.ceil(b.cost - S.gold))} more gold`; },
     icon: () => { const b = heroNext(); return { ic: b ? b.u.ic : ['sword', '#A9B1BD'] }; },
-    go: () => { const b = soloOn() && heroNext(); return b ? { tab: 'party', view: 'training', sel: `#trainRows .tr-row[data-mv="${b.u.id}"]` } : { tab: 'adv', sel: '#heroRows' }; }
+    go: () => { const b = heroNext(); return b ? { tab: 'party', view: 'training', sel: `#trainRows .tr-row[data-mv="${b.u.id}"]` } : { tab: 'party', view: 'training' }; }
   });
 
   // Next zone boss: foes left at the frontier, or the boss is ready.
@@ -131,53 +124,6 @@ var forgeGoalPicks = 0;
       : bossReady() ? `Boss ready in Zone ${S.maxZone}` : `${10 - S.kills} more foes to the Zone ${S.maxZone} boss`,
     icon: { ic: ['banner', '#E0524F', { 7: '#FFB347' }] },
     go: { tab: 'adv', sel: '#gateBtn', fn: () => { if (S.zone !== S.maxZone) setZone(S.maxZone); } }
-  });
-
-  // Roster: the companion closest to a promotion.
-  const promoNext = () => {
-    if (!rosterLive()) return null;
-    let best = null;
-    for (const k of rosterList()) {
-      const r = charRec(k), cost = promoteCost(k); if (!cost) continue;
-      const cap = levelCap(r.rank), from = r.rank ? levelCap(r.rank - 1) : 1;
-      let p;
-      if (r.lv >= cap) p = canPromote(k) ? 1 : 0.9 + 0.09 * Math.min(1, need(S.gold, cost.gold));
-      else p = 0.9 * Math.max(0, (r.lv - from + Math.min(1, r.xp / cxpNeed(r.lv))) / (cap - from));
-      if (!best || p > best.p) best = { k, r, cap, p };
-    }
-    return best;
-  };
-  registerGoal({
-    id: 'promote', sys: 'roster', prio: 1,
-    pct: () => { const b = promoNext(); return b ? b.p : null; },
-    label: () => { const b = promoNext(); if (!b) return ''; const nm = noun(ROSTER[b.k].name);
-      if (b.r.lv < b.cap) { const left = b.cap - b.r.lv; return `${nm}: ${left} level${left > 1 ? 's' : ''} to Promote`; }
-      return b.p >= 1 ? `${nm}: ready to Promote` : `${nm}: Promote needs more gold or essence`; },
-    icon: () => { const b = promoNext(); return b ? { char: b.k } : null; },
-    go: { tab: 'party', sel: '#sec-party-roster' }
-  });
-
-  // Roster: the next recruit whose route is open.
-  const recruitNext = () => {
-    if (!rosterLive()) return null;
-    let best = null;
-    for (const k of ROSTER_KEYS) {
-      const c = recruitCost(k); if (!c) continue;
-      let p = c.gold > 0 ? need(S.gold, c.gold) : 1;
-      if (c.ess) { let have = 0; for (let i = c.ess[0] - 1; i < 5; i++) have += S.mats.ess[i]; p = Math.min(p, need(have, c.ess[1])); }
-      if (canRecruit(k)) p = 1; else p = Math.min(p, 0.99);
-      if (!best || p > best.p) best = { k, c, p };
-    }
-    return best;
-  };
-  registerGoal({
-    id: 'recruit', sys: 'roster', prio: 1,
-    pct: () => { const b = recruitNext(); return b ? b.p : null; },
-    label: () => { const b = recruitNext(); if (!b) return ''; const nm = noun(ROSTER[b.k].name);
-      if (b.p >= 1) return `${nm} can join: Recruit`;
-      return S.gold < b.c.gold ? `Recruit ${nm}: ${fmt(Math.ceil(b.c.gold - S.gold))} more gold` : `Recruit ${nm}: more essence needed`; },
-    icon: () => { const b = recruitNext(); return b ? { char: b.k } : null; },
-    go: { tab: 'party', sel: '#sec-party-roster' }
   });
 
   // Bounties: the one closest to done (a finished one is ready to claim).

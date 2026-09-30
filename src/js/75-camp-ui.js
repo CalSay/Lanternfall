@@ -1,5 +1,5 @@
 // 75-camp-ui: the Camp part of the Camp tab (tab id 'world'): the Hearth card, the builders,
-// one card per building, the Blessings and the Roster board. The Tavern and the World raid parts
+// one card per building, the Blessings. The Tavern and the World raid parts
 // follow it unchanged. Browser-only; the rules live in 57-camp.js. A clean list UI: the drawn
 // camp scene (camp.md 4) is a later task and mounts above these sections.
 {
@@ -353,59 +353,6 @@
       }
     }
   });
-
-  // ---------------- the Roster board ----------------
-  const hasArt = id => typeof portraitURL === 'function' && typeof RIG === 'object' && RIG.COMPANIONS && !!RIG.COMPANIONS[id];
-  function portrait(id) {
-    if (hasArt(id)) { try { const u = portraitURL(id); if (u) return u; } catch (e) {} }
-    const c = ROSTER[id], i = c.idx, col = i >= 0 ? COMPS[i].col : CHAR_RARITY[c.rarity].col, helm = i >= 0 ? COMPS[i].helm : '#3A2F47';
-    return spriteURL('camp:' + id, SPR.hero, { ...HERO_PAL, 1: col, 2: helm });
-  }
-  const ORDER = { rest: 0, job: 1 };
-  let rosBox, rosNote, rosSig = '';
-  registerSection('camp', {
-    id: 'camp-roster', title: 'Roster board',
-    mount(sec) { rosNote = el('p', 'note'); rosBox = el('div', 'ros-list'); sec.append(rosNote, rosBox); },
-    update() {
-      const sec = rosBox.parentNode, live = campOpen() && rosterLive() && !soloOn();   // W1-C: no roster board in solo
-      putHidden(sec, !live); if (!live) return;
-      const list = benchList().map(id => ({ id, s: campStatus(id), r: charRec(id) }))
-        .sort((a, b) => (ORDER[a.s.status] || 9) - (ORDER[b.s.status] || 9) || b.r.lv - a.r.lv);
-      setTxt(rosNote, (list.length ? 'Companions on the bench live at camp. Each one is in one place at a time.' : 'Everyone on your roster is in the party. Benched companions rest here.'));
-      const sig = JSON.stringify(list.map(x => [x.id, x.r.lv, x.s.status, x.s.label, x.s.sub || '', benchSends(x.id).map(s => s.ok)]));
-      if (sig === rosSig) return; rosSig = sig; rosBox.textContent = '';
-      // Rows are built in time-boxed chunks (a portrait can need baking), so the Camp tab's first open
-      // never stalls the game. A newer rebuild wins.
-      const gen = ++rosGen, queue = list.slice();
-      const chunk = () => {
-        if (gen !== rosGen) return;
-        const t0 = performance.now();
-        while (queue.length && performance.now() - t0 < 20) rosRow(queue.shift());
-        if (queue.length) setTimeout(chunk, 0);
-      };
-      chunk();
-    }
-  });
-  let rosGen = 0;
-  // One compact row: portrait, name, status (a tap opens the character sheet), then the actions.
-  function rosRow(x) {
-    const c = ROSTER[x.id], row = el('div', 'ros-row ' + x.s.status);
-    const hit = el('div', 'ros-hit'); hit.setAttribute('role', 'button'); hit.tabIndex = 0;
-    hit.setAttribute('aria-label', `${c.name}, open character sheet`);
-    const pt = el('div', 'ros-pt r-' + c.rarity); pt.append(img(portrait(x.id)));
-    const body = el('div', 'ros-body');
-    const nm = el('div', 'ros-nm'); nm.append(el('span', null, c.name), el('small', null, `Lv ${x.r.lv} · ${ROLE_STATS[c.role].n}`));
-    const st = el('div', 'ros-st', x.s.label + (x.s.sub ? ' · ' + x.s.sub : ''));
-    body.append(nm, st); hit.append(pt, body);
-    const open = () => { try { partySheet.open(x.id); } catch (e) { setTab('party'); } };
-    hit.addEventListener('click', open);
-    hit.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target === hit) { e.preventDefault(); open(); } });
-    const acts = el('div', 'ros-acts');
-    if (x.s.action) { const b = btn('mini', x.s.action.label); b.addEventListener('click', () => { x.s.action.fn(); ui(true); }); acts.append(b); }
-    for (const s of benchSends(x.id)) { const b = btn('mini go', s.label); b.disabled = !s.ok; if (s.why) b.title = s.why; b.addEventListener('click', () => { s.fn(); ui(true); }); acts.append(b); }
-    row.append(hit, acts);
-    rosBox.append(row);
-  }
 
   // ---------------- tab dot, Go buttons, "finished" glow ----------------
   const dot = () => { if (S.tab !== 'world') $('raidDot').hidden = false; };

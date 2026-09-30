@@ -30,7 +30,7 @@
     forge: b => b.need > 1 ? `Forge ${b.need} items` : 'Forge an item',
     boss: b => b.need > 1 ? `Beat ${b.need} zone bosses` : 'Beat a zone boss',
     crit: b => `Land ${b.need} critical hits`,
-    tap: b => soloOn() ? `Press Attack ${b.need} times` : `Tap the stage ${b.need} times`
+    tap: b => `Press Attack ${b.need} times`
   };
 
   function btyNew(exclude) {
@@ -73,8 +73,7 @@
   on('harvest', ({ kind, n }) => { if (kind === 'ore') btyAdd('mine', n); else if (kind === 'wood') btyAdd('chop', n); });
   on('itemAdded', ({ item }) => { if (!item.u) btyAdd('forge', 1); });
   on('crit', () => btyAdd('crit', 1));
-  on('tap', () => { if (!soloOn()) btyAdd('tap', 1); });
-  on('soloAttack', p => { if (p && p.kind === 'hit') btyAdd('tap', 1); });   // W1-C: in solo the Attack button is the tap
+  on('soloAttack', p => { if (p && p.kind === 'hit') btyAdd('tap', 1); });   // the Attack button is the tap
   let btyAcc = 0;
   onTick(dt => { btyAcc += dt; if (btyAcc >= 1) { btyAcc = 0; bountyRefresh(); } });
 

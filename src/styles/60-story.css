@@ -40,8 +40,6 @@
 .sty-title { margin: 0; font: 700 calc(22px * var(--display-k))/1.05 var(--display); color: var(--bone); }
 .sty-head { margin: 0; font: 600 14px/1.35 var(--body); color: var(--gold); }
 .sty-text { margin: 0; font: 400 15px/1.5 var(--body); color: var(--bone); }
-.sty-say { margin: 0; font: italic 400 14px/1.4 var(--body); color: var(--muted); }
-.sty-say b { font-style: normal; font-weight: 600; color: var(--gold); }
 .sty-actions { display: flex; gap: 8px; align-items: center; }
 .sty-actions .big { flex: 1; }
 .sty-actions .mini { min-height: 44px; padding: 0 14px; }

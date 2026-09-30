@@ -86,11 +86,12 @@ const HANDS_TAM = { key: 'tam', n: 'Tam', r: 'common', sk: 'wood', tr: ['steady'
 // Later, optional Hands (lore.md 7.2): Bram's family comes home once Bram is recruited and the
 // Coast's Great Lantern is lit. Off until LORE8b sets live: 1 (and writes their lines). when() is a
 // cheap probe the core calls once a second; they arrive free, as applicants, once each.
+// Off: they need Bram unlocked as a hero (W3-B) and the Coast's Great Lantern lit.
 const HANDS_LATER = [
   { key: 'ada', n: 'Ada Hollis', r: 'rare', sk: 'forage', tr: ['steady', 'green'], live: 0, about: "Bram's wife. She followed his marks home.",
-    when: () => typeof isRecruited === 'function' && isRecruited('bram') && !!(REGIONS[1] && S.lantern && S.lantern.lit && S.lantern.lit[REGIONS[1].id]) },
+    when: () => false },
   { key: 'pell', n: 'Pell Hollis', r: 'uncommon', sk: 'wood', tr: ['strong'], live: 0, about: "Bram's boy, not small any more.",
-    when: () => typeof isRecruited === 'function' && isRecruited('bram') && !!(REGIONS[1] && S.lantern && S.lantern.lit && S.lantern.lit[REGIONS[1].id]) }
+    when: () => false }
 ];
 const HANDS_FIRST = ['Alys', 'Beck', 'Cora', 'Dunstan', 'Edda', 'Finch', 'Gwen', 'Ivo', 'Jessa',
   'Kit', 'Lotte', 'Mabel', 'Perrin', 'Rosa', 'Sim', 'Tilly',

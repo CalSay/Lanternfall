@@ -27,7 +27,7 @@ export function memoryStorage(initial = {}) {
  * loadCore({ seed, storage, onConsoleError }) -> api
  *   api.eval(src)        evaluate an expression inside the game scope (reads/writes S, mob, ...)
  *   api.set(name, value) assign a top-level game binding (e.g. api.set('S', obj))
- *   api.fn               handy function refs (tick, spawn, buyHero, ...)
+ *   api.fn               handy function refs (tick, spawn, buyRelic, ...)
  *   api.storage          the storage adapter in use
  *   api.errors           console.error calls captured from the game (handler failures etc.)
  * seed: if given, Math.random inside the game is replaced by the game's own rng(seed).
@@ -68,8 +68,8 @@ export function loadCore({ seed, storage = memoryStorage(), files = coreFiles(),
   try { inner = fnFactory({ storage }); } catch (e) { throw mapStack(e); }
   if (seed !== undefined && seed !== null) inner.eval(`Math.random = rng(${Number(seed) | 0})`);
   const fn = inner.eval(`({ tick, spawn, save, loadSave, fresh, gearDirty, setActivity, setZone, setNode, challenge,
-    playerTap, buyHero, hireComp, buyRelic, forgeItem, equipItem, salvageItem, upgradeEquipped, awayGains,
-    on, emit, mod, addModifier, onTick, registerState, plan, totalDps, heroDps, compDps, goldMult, gear,
+    playerTap, buyRelic, forgeItem, equipItem, salvageItem, upgradeEquipped, awayGains,
+    on, emit, mod, addModifier, onTick, registerState, plan, totalDps, heroDps, goldMult, gear,
     itemPower, equipped, craftCost, upgradeCost, hasMats, bossReady, zoneTier, target, nodeTime, xpNeed })`);
   return { eval: inner.eval, set: inner.set, fn, storage, errors, mapStack, source: src };
 }

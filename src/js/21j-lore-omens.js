@@ -32,7 +32,6 @@ const OMEN_LINES = {
   luckyStar: 'One star is winking. Oriel says it means you.',
   keenWinds: 'A sharp wind off the hills. Blades feel lighter.',
   scholarSky: 'Clear skies. Every lesson sticks today.',
-  companyFeast: 'Stew for everyone. Nobody eats alone tonight.',
   bestiaryDay: 'A good day to watch the road and take notes.',
   masteryDay: 'Walk the same road twice. You\'ll know it better.',
   bossHunt: 'The crowned ones are restless today.',
@@ -44,7 +43,6 @@ const OMEN_LINES = {
   transmuter: 'Everything looks a little like something else today.',
   // road
   buildersMoon: 'A builder\'s moon. The hammers ring till late.',
-  busyTavern: 'Travellers on the road. The Tavern is full.',
   bountyDay: 'New notices on the board, and the pay is good.',
   renownDay: 'Word travels fast today. Make it good word.',
   // deep
@@ -57,7 +55,7 @@ const OMEN_LINES = {
   wyrmStirs: 'The sky over the Emberwaste burns brighter tonight.'
 };
 
-if (SOLO_LOAD) OMEN_LINES.huntersFeast = 'A big pot on the fire. Tonight you eat well and hit hard.';   // W1-C: the solo Omen that replaces Company Feast
+OMEN_LINES.huntersFeast = 'A big pot on the fire. Tonight you eat well and hit hard.';   // W1-C: the solo Omen that replaces Company Feast
 
 const DARE_LINES = {
   goldRain: 'Gold in every pack, and every pack fights back.',

@@ -102,24 +102,6 @@ const CRITTER_ART = (() => {
       if (f === 'sleep') k.add(3, eyeM, Q(0, -3, 2, 1), { nl: 1 });
       else { k.add(3, eyeM, Q(0, -4, 1, 1), { nl: 1 }); k.add(3, eyeM, Q(2, -4, 1, 1), { nl: 1 }); }
       return k.parts;
-    } },
-    // A hermit crab with a tiny lantern for a shell.
-    cr_crab: { n: 'Lantern Crab', parts(f) {
-      const k = kit(), shell = m('#D0603A'), dk = m('#7A3220', 'flat'), brass = m('#B8883E', 'metal'), glass = m('#FFD27A', 'glow', { light: '#FFC070' });
-      const sh = f === 'hop0' ? 1 : f === 'hop1' ? -1 : 0, up = f === 'idle1' ? 1 : 0;
-      for (let i = 0; i < 4; i++) k.add(1, dk, Q(-3 + i * 2 + (i % 2 ? sh : -sh), -1, 1, 1), { nl: 1 });
-      // the lantern it lives in, sitting on its back
-      k.add(1.5, brass, R(-2.6, -10.6, 1, 1.6));
-      k.add(1.6, brass, P(-5.4, -8.6, .2, -8.6, -.8, -9.8, -4.4, -9.8));
-      k.add(1.7, glass, R(-4.8, -8.6, 4.4, 4), { lr: 12, pulse: 1 });
-      k.add(1.75, brass, R(-2.9, -8.6, .8, 4), { nl: 1 });
-      k.add(1.8, brass, R(-5.4, -4.8, 5.6, 1.2));
-      k.add(2, shell, E(.8, -2.6, 3.6, 2.2), { bev: 1 });
-      k.add(2.2, dk, Q(3, -6 - up, 1, 2), { nl: 1 });
-      eyes(k, [[3, -7 - up]], f === 'sleep');
-      k.add(3, shell, E(4.6 + up * .3, -3 - up * 1.4, 1.7, 1.4), { sep: 1 });
-      k.add(3.1, shell, P(5.4 + up * .3, -4.2 - up * 1.4, 7.2 + up * .3, -5 - up * 1.4, 6.6 + up * .3, -3.2 - up * 1.4), { sep: 1 });
-      return k.parts;
     } }
   };
   for (const id in DEFS) DEFS[id].frames = FRAMES;

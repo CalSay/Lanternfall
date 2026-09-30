@@ -61,14 +61,10 @@ const PACE = {
                             //   step stays, so the zones after a region boss are no easier
   regionBoss: 1.15,         // extra x on region bosses only (BAL3 1.15: x1.73 over the old 8, the kit's phases and adds eat the rest of
                             //   the 60 s; S6-A 1.33 walled Silas at the level cap, P2 / CX4; was 1)
-  compLv: 75,               // (BAL2 75, BAL1 80, was 90) companion levels past compLv need more XP...
-  compXp: 1.12,             //   ...(BAL1, was 1.2) x1.12 per level past it (level 85: x3, 95: x9.6)...
-  compXpMax: 250,           //   ...(BAL2 250, BAL1 200, was 80) up to x250 from level 124 on: Region 2 is a few levels a day
   essTier: [1, 7, 13, 19, 42], // (BAL1: Starlit from 42, was 36) first zone of each essence tier (M6: every 6 zones, so Starlit
                             //   (tier 5) began at 25). Starlit gear is the mid-Region 2 step (no burst after zone 35)
   heroAwayXp: 0.5,          // hero XP while away, as a share of the away kills' XP (was 0)
   // BAL1 (owner: "damage ramps too fast"): the hero's power steps.
-  bladeX: 1.5, bladeEvery: 25, // Blade attack x bladeX every bladeEvery levels (was x2 every 25) (the dormant party game only)
   // W2-A (solo): Training's Attack level sets the hit: (4 + atkPer x level) x atkX every atkEvery levels. It carries what
   //   Blade (3-4 levels a hero level) and Swiftness (up to 5 attacks a second) gave, at one level a hero level. Past atkBend
   //   each step is atkX2 (Blade's late levels and the Swiftness cap made days 2-10 steeper than the first hour).
@@ -78,8 +74,6 @@ const PACE = {
   // the zone cannot be farmed: auto-progress (and the away gains) use the highest zone that can.
   farmSecs: 20
 };
-// Companion XP need multiplier by level (56-roster.js cxpNeed). 1 up to compLv (about the end of day 1).
-const paceXp = lv => lv > PACE.compLv ? Math.min(PACE.compXpMax, Math.pow(PACE.compXp, lv - PACE.compLv)) : 1;
 // The highest zone <= maxZ whose normal foe dies within PACE.farmSecs at this dps (zone 1 at worst).
 function farmableZone(maxZ, dps) {
   let z = Math.max(1, Math.floor(maxZ));
@@ -98,25 +92,21 @@ const dmgMult = () => (1 + 0.2 * S.relic.banner) * (1 + gear().might / 100) * mo
 // only the Gold Rain Omen. Fortune and the Lucky Coin became crit damage (Precision, the Loaded Die).
 const goldMult = () => (1 + gearGold() / 100) * mod('gold');
 const raidMult = () => (1 + 0.3 * S.relic.heart) * (1 + gear().raid / 100) * (Date.now() < rallyUntil ? 1.25 : 1) * mod('raid');
-// W2-A Training (solo): the Attack level's hit before the hero's level, gear and damage (heroPow). The party game keeps Blade.
+// W2-A Training: the Attack level's hit before the hero's level, gear and damage (heroPow).
 const atkSteps = (a, x, x2) => { const n = Math.floor(a / PACE.atkEvery), b = Math.floor(PACE.atkBend / PACE.atkEvery); return Math.pow(x, Math.min(n, b)) * Math.pow(x2, Math.max(0, n - b)); };
 const atkCurve = a => (4 + PACE.atkPer * a) * atkSteps(a, PACE.atkX, PACE.atkX2);
 const heroPow = () => lvlMult() * dmgMult() * (1 + gear().attack / 100);
-// (the product is written out in the old order so a party save's numbers stay bit-identical: check.mjs pre-K4)
-const heroAtk = () => (soloOn() ? atkCurve(trainLv('atk')) : (4 + 2.5 * S.blade) * Math.pow(PACE.bladeX, Math.floor(S.blade / PACE.bladeEvery))) * lvlMult() * dmgMult() * (1 + gear().attack / 100);
-// Solo: fixed per hero (SOLO_TUNE.train.aps; Swiftness is gone). The party game keeps Swiftness.
-const aps = () => soloOn() ? trainAps() : Math.min(5, 1 + 0.1 * S.swift);
+const heroAtk = () => atkCurve(trainLv('atk')) * lvlMult() * dmgMult() * (1 + gear().attack / 100);
+// Fixed per hero (SOLO_TUNE.train.aps).
+const aps = () => trainAps();
 // critBase: the hero's flat crit chance before multipliers (S2: bonus('critBase') carries the class's own, the Ranger's +7%).
 const critBase = () => 0.08 + bonus('critBase') + gear().crit / 100;
 const critChance = () => Math.min(0.75, critBase() * mod('crit'));
 const critMult = () => (4 + gear().critMult) * mod('critDmg');
 const tapMult = () => gear().tap * mod('tap');
-// Once the save is migrated to the roster (56-roster.js), companions are named characters.
-const compDpsOne = i => rosterLive() ? rosterSlotDps(i) : COMPS[i].dps * Math.pow(2, Math.floor(S.comp[i] / 25)) * dmgMult() * (1 + gear().party / 100) * mod('party');
-const compDps = () => rosterLive() ? fieldCompDps() : COMPS.reduce((a, c, i) => a + compDpsOne(i) * S.comp[i], 0);
 // nonCrit (Almanac Dares) scales non-crit hits; at 1 the original expression is kept so old saves' dps stays bit-identical.
 const heroDps = () => { const nc = mod('nonCrit'), cc = critChance(); return heroAtk() * aps() * (nc === 1 ? 1 + cc * (critMult() - 1) : nc * (1 - cc) + cc * critMult()); };
-const totalDps = () => heroDps() + compDps();
+const totalDps = () => heroDps();
 // Before M6: 40 * 1.42^(z-1) for every zone.
 const mobHp = z => PACE.hp0 * Math.pow(PACE.hpEarly, Math.min(z, PACE.early) - 1) * Math.pow(PACE.hpGrowth, Math.max(0, Math.min(z, PACE.bend) - Math.max(1, PACE.early))) * Math.pow(PACE.hpLate, Math.max(0, z - PACE.bend)) * regionHp(z);
 // ECON-A (economy-2 2.1): gold per foe steps up by region (foeGoldBase, 21w-data-econ); was mobHp(z) x 0.05.

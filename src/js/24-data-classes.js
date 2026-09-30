@@ -92,7 +92,7 @@ const CLASS_ABILITIES = {
     fx: [['dmg', 1.3], ['meter', 'embers', 1]], name: 'Ember',
     desc: '1.3x your attack as fire. Plants an Ember on the foe, up to 5.',
     var: { priest: { id: 'bless', name: 'Blessing', type: 'holy', coef: 1,
-      desc: SOLO_LOAD ? 'You hit softly, but each Attack blesses you: +20% damage for 6s, up to 3 times.' : 'You hit softly, but your heroes deal the damage you give up. Each tap blesses them: +20% damage for 6s, up to 3 times.' } } },
+      desc: 'You hit softly, but each Attack blesses you: +20% damage for 6s, up to 3 times.' } } },
   flare: { id: 'flare', slot: 'ab1', cls: 'mage', cd: 25, target: 'splash', type: 'fire', tags: ['aoe'],
     fx: [['consume', 'embers'], ['dmg', 20, { perStack: 0.3 }], ['apply', 'burn', 1]], name: 'Lantern Flare',
     desc: 'A burst of 20x your attack, +30% for each Ember on the foe. Uses up the Embers and sets the whole pack burning.',
@@ -170,7 +170,7 @@ const EVO_NAMES = {
   trapper: { name: 'Trapper', title: 'the Pathfinder', base: 'ranger', kind: 'utility', role: 'caster', line: 'The road fights for you.' },
   warlock: { name: 'Warlock', title: 'the Shadowbinder', base: 'mage', kind: 'damage', role: 'caster', line: "Take the dark's fire. Throw it back." },
   priest: { name: 'Lightkeeper', title: 'the Given Light', base: 'mage', kind: 'utility', role: 'support', line: 'Give your light away.',
-    pitch: SOLO_LOAD ? 'Keep the light burning.' : 'Keep them standing.', aura: SOLO_LOAD ? 'You heal 40% more and hit 40% harder.' : 'Supports in your party heal 40% more and hit 40% harder. All companions deal 25% more damage.' }
+    pitch: 'Keep the light burning.', aura: 'You heal 40% more and hit 40% harder.' }
 };
 // ---- S3: the six evolutions (classes-2 2.3-2.9, 3.3, 4.3) ----
 // Stats replace the base class's once proven (3.7). tankDr: the share of the tank role's damage cut it takes.
@@ -328,7 +328,7 @@ const EVO_DEFS = {
       { name: 'Given Light', text: 'You hit softly, and your heroes deal the damage you give up. Your hits are holy.' },
       { name: 'Blessing', text: 'Each tap heals the most hurt ally and blesses your heroes: +20% damage for 6s, up to 3 times.' },
       { name: 'Ward', text: 'Healing past full health becomes a shield, up to 30% of health.' }],
-    aura: { name: "Keeper's Light", text: SOLO_LOAD ? 'You heal 40% more and hit 40% harder.' : 'Supports in your party heal 40% more and hit 40% harder. All companions deal 25% more damage.' },
+    aura: { name: "Keeper's Light", text: 'You heal 40% more and hit 40% harder.' },
     idle: 'Blessing sits at about II. Rally Hymn and Sanctuary fire by themselves, and spare healing turns to shields.',
     active: 'Keep Blessing at III, and drop Sanctuary just before the big hit lands.',
     ringKs: 'martyr',
@@ -336,11 +336,11 @@ const EVO_DEFS = {
       ['Lingering Light', 'Blessings last 1s longer.', { t: { blessT: 1 } }, 1.008],
       ['Warm Light', 'Each Blessing gives +1.5% more.', { t: { bless: 0.015 } }, 1.012],
       ['Morning Choir', 'Blessing cap +1.', { t: { blessMax: 1 } }, 1.02],
-      SOLO_LOAD ? ['Gift', 'You deal +2% damage.', { m: { dmg: 1.02 } }, 1.015] : ['Gift', 'Companions deal +2%.', { m: { party: 1.02 } }, 1.015],
+      ['Gift', 'You deal +2% damage.', { m: { dmg: 1.02 } }, 1.015],
       ['Warm Light II', 'Each Blessing gives +1.5% more.', { t: { bless: 0.015 } }, 1.012],
       ['Refrain', 'Rally Hymn lasts 2s longer.', { t: { hymnT: 2 } }, 1.02],
-      SOLO_LOAD ? ['Gift II', 'You deal +2% damage.', { m: { dmg: 1.02 } }, 1.015] : ['Gift II', 'Companions deal +2%.', { m: { party: 1.02 } }, 1.015],
-      SOLO_LOAD ? ["Martyr's Light", 'You deal 12% more damage.', { m: { dmg: 1.12 } }, 1.035] : ["Martyr's Light", 'Your own hits deal half. Your companions deal 12% more.', { ks: 'martyr', hero: 0.5, m: { party: 1.12 } }, 1.035]
+      ['Gift II', 'You deal +2% damage.', { m: { dmg: 1.02 } }, 1.015],
+      ["Martyr's Light", 'You deal 12% more damage.', { m: { dmg: 1.12 } }, 1.035]
     ],
     tactics: { conds: ['allyHas', 'allyHp'], acts: ['cleanse'], preset: 'IF allyHas curse THEN cleanse' }
   }
@@ -349,7 +349,7 @@ for (const k in EVO_DEFS) Object.assign(EVO_DEFS[k], { name: EVO_NAMES[k].name, 
 // W1-F: the subclass cards say what a lone hero gets. Each row replaces the party-era text of one path (the bullets
 // that said "best with a healer / a tank / two damage heroes", "your heroes deal...", "tap", "back line", "Middle and Back").
 // The numbers stay. Sanctuary, Deathcap and the rest keep their names. The `good` (best partners) list is not shown in solo.
-if (SOLO_LOAD) {
+{
   const EVO_SOLO = {
     reaver: { bullets: { 2: 'Best when you can take hits and keep swinging.' }, active: 'Press Attack on heavy hits to keep Fury at 100, parry for free Fury, and Rend into a stagger.' },
     warden: { aura: { name: 'Oath of the Order', text: 'You take 10% less damage.' } },

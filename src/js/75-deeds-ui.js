@@ -49,8 +49,8 @@ let deedsUI = null;
   const SLOT_IC = { cape: 'dd_cape', hat: 'dd_hat', lamp: 'lantern', flame: 'flame', aura: 'dd_aura', critter: 'dd_critter', trail: 'dd_trail', frame: 'dd_frame' };
   const SLOT_COL = { cape: '#5F8BE8', hat: '#C9A56A', lamp: '#F2C14E', flame: '#FF9E3D', aura: '#B89CFF', critter: '#D08A4E', trail: '#9BE3F0', frame: '#C9D1DB' };
   // Placeholder colours for the flames (AC4 owns the real palettes) and the frames.
-  const LOOK_COL = { fl_moon: '#CFE0FF', fl_rose: '#FF8A70', fl_kin: '#FFB38A', fl_storm: '#E8F4FF', fl_coin: '#FFD23F',
-    fr_bronze: '#C07A45', fr_silver: '#C9D1DB', fr_gold: '#F2C14E', fr_ever: '#FF9E3D', a_ember: '#FF9E3D', a_steel: '#C9D1DB', a_star: '#B89CFF', a_bond: '#FF8AB0', a_bloom: '#F2C14E', a_stair: '#7FE0D0' };
+  const LOOK_COL = { fl_moon: '#CFE0FF', fl_rose: '#FF8A70', fl_storm: '#E8F4FF', fl_coin: '#FFD23F',
+    fr_bronze: '#C07A45', fr_silver: '#C9D1DB', fr_gold: '#F2C14E', fr_ever: '#FF9E3D', a_ember: '#FF9E3D', a_steel: '#C9D1DB', a_star: '#B89CFF', a_bloom: '#F2C14E', a_stair: '#7FE0D0' };
   const deepItem = id => (typeof DEEP_SHOP === 'object' && DEEP_SHOP[id]) || null;
   const lookCol = (slot, id) => LOOK_COL[id] || (deepItem(id) && deepItem(id).col) || SLOT_COL[slot] || '#F2C14E';
   const lookIcon = (slot, id) => {

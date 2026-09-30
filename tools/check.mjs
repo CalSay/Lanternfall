@@ -14,34 +14,27 @@ import { ROOT, loadCore as loadCoreRaw, memoryStorage, badNumbers, deepDiff, sub
 // A new game starts at a cold Hearth (55-hearth, H1). Sections written before it play the old warm
 // start (hearthWarm() undoes a pristine cold start; loaded saves are untouched): pass { cold: true }
 // to keep the cold start (the 'cold hearth' section).
-// SOLO1: the shipped game is one hero (24b-data-solo.js). The sections written for the party game check the dormant
-// party build: a prelude sets __SOLO = 0 before any game file (SOLO_TUNE.on 0). The solo sections pass { solo: true }.
-// W2-B: SOLO is the default build for every section. `--party` runs only the PARTY_LEGACY block (the dormant party build).
-const PARTY = process.argv.includes('--party');
+// The shipped game is one hero (24b-data-solo.js); every section runs on it. The party build is deleted (W3-A).
 function loadCore(opts) {
   const o = opts || {};
-  const g = loadCoreRaw({ ...o, prelude: (PARTY && !o.solo ? 'var __SOLO = 0;\n' : '') + (o.prelude || '') });
+  const g = loadCoreRaw(o);
   try { g.eval("typeof almanac === 'object' && almanac.force && almanac.force('none')"); } catch (e) {}
   if (!(opts && opts.cold)) try { g.eval("typeof hearthWarm === 'function' && hearthWarm()"); } catch (e) {}
   return g;
 }
 
-// SOLO1: the browser checks written for the party game (the class picker, the Mirror) run on the dormant party build.
-const partyDist = h => !PARTY ? h : h.replace("(() => {\n'use strict';\n", "(() => {\n'use strict';\nvar __SOLO = 0;\n");
 let failed = 0;
-// W2-B sections: every section starts with `if (section('name')) try {`. Sections after the PARTY_LEGACY marker run only with
-// --party; all others run by default. `--only=<regex>` runs just the sections whose name matches (dev loop).
+// Every section starts with `if (section('name')) try {`. `--only=<regex>` runs just the sections whose name matches (dev loop).
 // `--jobs=N` (default 4 when the machine has the cores): the run splits into N child processes, each taking a share of the
 // sections (the sections are independent; the browser ones mostly wait), and the parent prints their output one after the other.
 const ONLY = (process.argv.find(a => a.startsWith('--only=')) || '').slice(7);
 const SHARD = (m => (m ? [+m[1], +m[2]] : null))(/--shard=(\d+)\/(\d+)/.exec(process.argv.join(' ')));
 const JOBS = SHARD ? 1 : +((process.argv.find(a => a.startsWith('--jobs=')) || '').slice(7)) || (ONLY ? 1 : Math.min(4, os.cpus().length));
 // Seconds a section takes (measured, W2-B): the shards are balanced by these; a section not listed counts 2.
-const WEIGHT = { 'landscape 740x360 (browser, UX-L1)': 42, 'landscape 844x390 (browser, UX-L1)': 38, 'landscape 1280x720 (browser, UX-L1)': 38, 'solo copy (browser, W1-C)': 60, 'W1-D (browser)': 100, 'training (W2-A, browser)': 18, 'cb2': 40, 'notices (browser, W1-B)': 34, 'solo guide: gathering never freezes (browser)': 31, 'solo hero (browser)': 21, 'types and statuses (S1)': 14, 'save codes': 13, 'line-up planner': 12, 'evolutions (S3)': 10, 'combat': 8, 'gatherers UI (browser)': 7, 'gathering': 6, 'nav': 6, 'retool': 6, 'onboarding hint placement (HINT1)': 5 };
+const WEIGHT = { 'landscape 740x360 (browser, UX-L1)': 42, 'landscape 844x390 (browser, UX-L1)': 38, 'landscape 1280x720 (browser, UX-L1)': 38, 'solo copy (browser, W1-C)': 60, 'W1-D (browser)': 100, 'training (W2-A, browser)': 18, 'cb2': 40, 'notices (browser, W1-B)': 34, 'solo guide: gathering never freezes (browser)': 31, 'solo hero (browser)': 21, 'types and statuses (S1)': 14, 'save codes': 13, 'combat': 8, 'gatherers UI (browser)': 7, 'gathering': 6, 'nav': 6, 'retool': 6, 'onboarding hint placement (HINT1)': 5 };
 const shardLoad = SHARD ? Array(SHARD[1]).fill(0) : null;
-let LEGACY = false;
 function section(name) {
-  if (LEGACY !== PARTY || (ONLY && !new RegExp(ONLY, 'i').test(name))) return false;
+  if ((ONLY && !new RegExp(ONLY, 'i').test(name))) return false;
   if (SHARD) {   // every shard sees the same sections in the same order, so all of them make the same choice: the lightest shard takes it
     let k = 0; for (let i = 1; i < shardLoad.length; i++) if (shardLoad[i] < shardLoad[k]) k = i;
     shardLoad[k] += WEIGHT[name] || 2;
@@ -79,12 +72,12 @@ const assert = (cond, msg) => (cond ? ok(msg) : fail(msg));
 const E2 = (g, src) => g.eval(src);
 // ECON-A: the save key moved to v2 (S.v 3). The fixtures in tests/fixtures are loaded under the new key so the
 // load paths they exercise keep their checks; section 'econ' checks that a v1 save is never read.
-const KEY = 'lanternfall.save.v4';   // W2-A: v4 (SOLO1: v3; the solo hero starts fresh)
+const KEY = 'lanternfall.save.v5';   // W3-A
 
 // ---- 1. dist syntax ----
 const distFile = path.join(ROOT, 'dist', 'lanternfall.html');
 if (SHARD && SHARD[0] !== 0) {}   // (shard 0 checks the dist file for everyone)
-else if (ONLY || PARTY) {}   // (the dev loop and the legacy run skip it)
+else if (ONLY) {}   // (the dev loop skips it)
 else if (console.log('dist'), !fs.existsSync(distFile)) fail('dist/lanternfall.html missing (run node tools/build.mjs)');
 else {
   const html = fs.readFileSync(distFile, 'utf8');
@@ -108,9 +101,8 @@ if (section('smoke')) try {
   // W2-B: solo. The player picks Wren, Tobin or Pip; nobody else can be recruited. Gold goes to the hero's upgrades.
   const buyAll = () => E(`{ for (let k = 0; k < 50; k++) { const t = trainNext(); if (!t || S.gold < t.cost) break; train(t.move, '1'); } }`);   // W2-A: gold trains the hero (Training replaced Blade)
 
-  assert(E('soloOn() && soloHero() === null && !S.party.chosen'), 'new game starts solo with no hero picked yet');
-  E('S.gold = 50'); assert(!fn.hireComp(0, '1') && E('S.comp[0]') === 0, 'old hire is retired');
-  assert(E('soloPick("wren") && soloHero() === "wren" && S.party.chosen && S.party.field.length === 0'), 'picked Wren: no companions, nobody to recruit');
+  assert(E('soloHero() === null && !S.party.chosen'), 'new game starts solo with no hero picked yet');
+  assert(E('soloPick("wren") && soloHero() === "wren" && S.party.chosen'), 'picked Wren');
   E('S.maxZone = 1');
   for (let m = 0; m < 30; m++) { run(60); buyAll(); if (E('bossReady()')) fn.challenge(); }
   assert(E('S.maxZone') > 1 || bossFails > 0, `boss attempted (maxZone ${E('S.maxZone')}, fails ${bossFails}, clears ${zoneClears})`);
@@ -157,7 +149,6 @@ if (section('smoke')) try {
   const g4 = loadCore({ seed: 2 });
   assert(g4.eval('S.party.newGame === true && S.party.chosen === false'), 'new game flagged newGame');
   assert(g4.eval('soloPick("wren")') && g4.eval('S.party.cls === "ranger" && S.party.chosen && S.name === "Wren"'), 'hero picked');
-  assert(g4.eval('S.party.field.length === 0 && S.comp.every(n => n === 0)'), 'no companion is granted or fielded');
   for (let i = 0; i < 20; i++) g4.fn.tick(0.1);
   assert(g4.eval('SOLO_STATS.casts >= 1 || soloAbility()') && !g4.eval('soloAbility()'), 'ability cast (idle or by hand) starts its cooldown');
   const tapped = g4.eval('(() => { const m = mob; playerTap({ x: 0.6, y: 0.5 }); return m.markUntil > 0; })()');   // (a pack foe may die to the tap: check the one tapped)
@@ -176,17 +167,13 @@ if (section('migration')) try {
   assert(S.zz_feature && S.zz_feature.n === 0, 'registered feature field added to old save');
   assert(g.fn.equipped('helm') && g.fn.equipped('helm').u === 'echocowl', 'equipped unique still equipped');
   assert(Number.isFinite(g.fn.totalDps()) && g.fn.totalDps() > 0, 'dps finite for migrated save');
-  // Stage C: a support joins only when the party could not hold its max zone without one (this save holds).
-  // F1: B3 still picks the old top 3 (kept in S.party.formOld); the party of three keeps the best 2 of them.
-  assert(g.eval('S.party.newGame === false && S.party.chosen === false && S.party.formOld.field.join() === "tobin,wren,pip" && S.party.field.length === 2 && S.party.field.every(k => S.party.formOld.field.includes(k))'),
-    `existing save: B3 fields its top 3 companions, tank first (${g.eval('S.party.formOld.field.join()')}); the party of three keeps ${g.eval('S.party.field.join()')}`);
   // a pre-activity save (raiding flag) still migrates
   const legacy = { ...old }; delete legacy.activity; legacy.raiding = true;
   const g2 = loadCore({ storage: memoryStorage({ [KEY]: JSON.stringify(legacy) }) });
   assert(g2.eval('S.activity') === 'raid' && g2.eval('S.raiding') === undefined, 'legacy raiding flag migrates');
 } catch (e) { fail('migration crashed: ' + (e.stack || e)); }
 
-// ---- 3b. old-save fixtures on the solo build (W2-B; the party-era roster mapping is in PARTY_LEGACY 'roster') ----
+// ---- 3b. old-save fixtures on the solo build (W2-B) ----
 if (section('old saves')) try {
   for (const f of ['save-v2.json', 'save-mid-v2.json', 'save-v2-late.json', 'save-a-v1.json']) {
     const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
@@ -260,7 +247,7 @@ if (section('items')) try {
   };
   const OLD_KEYS = ['might', 'crit', 'critMult', 'gold', 'ess', 'mineSpd', 'woodSpd', 'oreDbl', 'woodDbl', 'party', 'tap', 'echo', 'offline', 'raid', 'essExtra', 'oreExtra', 'woodExtra', 'gather', 'score'];
   // The formulas as they were before these changes; the item maths itself is what K4 must keep exact.
-  const PRE_K4 = 'ECON.charmGold = 0.8; SYN_TUNE.on = 0; UNIQ_TUNE.pow = 3.2; RETOOL.on = 0; TIER_POW.splice(0, 6, 0, 10, 28, 70, 160, 360); PACE.heroLv = 0.05; PACE.bladeX = 2; gearDirty()';
+  const PRE_K4 = 'ECON.charmGold = 0.8; UNIQ_TUNE.pow = 3.2; RETOOL.on = 0; TIER_POW.splice(0, 6, 0, 10, 28, 70, 160, 360); PACE.heroLv = 0.05; PACE.bladeX = 2; gearDirty()';
   const CLASSES = ['warden', 'lanternmage', 'ranger', 'lightkeeper'];
   const gearDiff = (gs, want) => OLD_KEYS.map(k => [k, gs[k], want[k] !== undefined ? want[k] : k === 'tap' ? 1 : 0]).filter(([, a, b]) => a !== b).map(([k, a, b]) => `${k} ${a} != ${b}`);
   for (const [f, want] of Object.entries(BASE)) {
@@ -277,9 +264,9 @@ if (section('items')) try {
     const gd = gearDiff(g.fn.gear(), want.gear);
     assert(!gd.length, `${f}: gear() exactly equal to pre-K4` + (gd.length ? ': ' + gd.slice(0, 3).join('; ') : ''));
     const hd = g.fn.heroDps(), td = g.fn.totalDps();
-    // totalDps = heroDps + compDps; companions follow the roster formulas (BAL1 changed them), checked by T9 in the roster section.
+    // totalDps = heroDps (the party build is gone, W3-A).
     // (W2-B/W2-A solo: Training replaced Blade, Swiftness and Precision, so heroDps no longer equals the party-era number; gear() below still must)
-    assert(Number.isFinite(hd) && hd > 0 && td === hd + g.fn.compDps(), `${f}: heroDps ${hd} finite (total ${td} = hero + party)`);
+    assert(Number.isFinite(hd) && hd > 0 && td === hd, `${f}: heroDps ${hd} finite (total ${td} = hero)`);
     assert(g.eval('gear().attack === 0 && gear().spell === 0'), `${f}: no new live stats on old gear`);
     // every equipped item fits its position for every class, and gear() does not depend on the class
     const fitBad = [];
@@ -376,7 +363,6 @@ if (section('items')) try {
     assert(E('gear().might === 0 && gear().score === 0'), 'gear that no longer fits the class is ignored');
     E('S.party.cls = "ranger"; gearDirty()');
     assert(E(`bagCount() === 1 && isEquipped(${bow})`), 'equipped items do not count towards the bag');
-    // companion gear (wpn/trk) is party-era: charGear is checked in PARTY_LEGACY 'roster' and 'synergy'
     assert(E(`fits("shield", "wpn", "tank") && fits("shield", "off", "warden") && !fits("shield", "off", "ranger") && !fits("weapon", "weapon", "lightkeeper") && !fits("helm", "helm", "ranger") && fits("weapon", "weapon", "any") && fits("helm", "helm", "any") && fits({ slot: "weapon", t: 1, r: "legendary", plus: 0, u: "sproutblade" }, "weapon", "ranger") && fits({ slot: "helm", t: 1, r: "legendary", plus: 0, u: "echocowl" }, "helm", "warden") && fits("trinket", "trk", "tobin") && !fits("trinket", "weapon", "any")`), 'fits(): class, role, character rules; legacy Sword/Helm only without a class; uniques fit every class');
     assert(E('upgradeCost({ slot: "bow", t: 1, r: "common", plus: 7 }).troph === 1 && !("troph" in upgradeCost({ slot: "bow", t: 1, r: "common", plus: 6 })) && !("troph" in upgradeCost({ slot: "bow", t: 1, r: "common", plus: 10 }))'), 'upgrades to +8, +9 and +10 name a Trophy');
     assert(E('itemName(newItem("bow", 2, "rare")) === "Birch Bow" && itemColor("bow", 2) === MAT.wood.col[1] && craftCost("bow", 2).wood === 9'), 'names, colours and costs for new kinds');
@@ -515,9 +501,9 @@ if (section('almanac')) try {
   E(`Date.now = () => ${at(271, 9)}`); const o1 = E('almanac.today().id'); E(`Date.now = () => ${at(271, 21)}`);
   assert(E('almanac.today().id') === o1, `same Omen all day (${o1})`);
   const counts = {}; let same = 0;
-  for (let d = 0; d < 340; d++) { const id = E(`almanac.scheduled(${d}).id`); counts[id] = (counts[id] || 0) + 1; }
+  for (let d = 0; d < 330; d++) { const id = E(`almanac.scheduled(${d}).id`); counts[id] = (counts[id] || 0) + 1; }
   for (let d = 1; d < 700; d++) if (E(`almanac.scheduled(${d}).cat === almanac.scheduled(${d - 1}).cat`)) same++;
-  assert(Object.keys(counts).length === 34 && Object.values(counts).every(n => n === 10), 'A1: each of 34 Omens scheduled 10 times in 340 days');
+  assert(Object.keys(counts).length === 33 && Object.values(counts).every(n => n === 10), 'A1: each of 33 Omens scheduled 10 times in 330 days');
   assert(same === 0, `A1: no category twice in a row over 700 days, cycle edges included (${same} repeats)`);
   assert(days.every(d => E(`almanac.usable(almanac.omenFor(${d}))`)), 'daily pick never plays an Omen whose system is missing');
   const upside = E(`OMENS.flatMap(o => [...Object.entries(o.mod || {}).filter(([k, v]) => almanac.lowerBetter.has(k) ? !(v > 0 && v <= 1) : !(v >= 1)), ...Object.entries(o.bonus || {}).filter(([, v]) => !(v >= 0))].map(([k]) => o.id + ':' + k))`);
@@ -654,22 +640,8 @@ if (section('crafting')) try {
   assert(!E('upgradeEquipped("weapon")') && E(`itemById(${up}).plus`) === 9, 'upgradeEquipped honours the gate too');
   E(`itemById(${up}).plus = 3`);
   assert(E('upgradeEquipped("weapon")') && E(`itemById(${up}).plus`) === 4, 'below +8 no Trophy is needed');
-  // companion gear and the one-wearer rule
-  assert(E('rosterLive()'), 'roster is live in a new game');
-  const caster = E('ROSTER_KEYS.find(k => ROSTER[k].role === "caster" && !isRecruited(k) && k !== "oriel")'), q = JSON.stringify(caster);
-  E(`unlockChar(${q}, 'test', true)`);
-  E('S.equip.weapon = null; gearDirty()');   // hero Might is party-wide: measure without it
-  const d0 = E(`charDps(${q})`);
-  E(`S.equip.weapon = ${up}; gearDirty()`);
-  assert(E(`equipChar(${q}, ${up}, 'wpn')`) && E('S.equip.weapon') === null && E(`charRec(${q}).wpn`) === up, 'equipChar moves the Staff off the hero');
-  const d1 = E(`charDps(${q})`);
-  assert(d1 > d0 * 1.1, `companion weapon power is live through charGear (${d0.toFixed(1)} -> ${d1.toFixed(1)})`);
-  assert(E('bagCount()') === E('S.items.length') - E('equippedIds().size'), 'items a companion wears leave the bag count');
+  assert(E('bagCount()') === E('S.items.length') - E('equippedIds().size'), 'bagCount counts the items not worn');
   const bow = E('(() => { const it = newItem("bow", 1, "common"); S.items.push(it); return it.id; })()');
-  assert(!E(`equipChar(${q}, ${bow}, 'wpn')`), 'a Bow does not fit a caster');
-  assert(E(`equipItem(${up}, 'weapon')`) && E(`charRec(${q}).wpn`) === null, 'equipping on the hero takes it off the companion');
-  E(`equipChar(${q}, ${up}, 'wpn')`);
-  assert(E(`unequipChar(${q}, 'wpn')`) && E(`charRec(${q}).wpn`) === null && E(`!!itemById(${up})`), 'unequipChar returns the item to the bag');
   // class change (Mirror of Embers): the hero's class gear is retooled, never unequipped or deleted
   E(`equipItem(${up}, 'weapon')`);
   const lan = E('(() => { const it = newItem("lantern", 1, "common"); S.items.push(it); equipItem(it.id, "off"); return it.id; })()');
@@ -677,15 +649,15 @@ if (section('crafting')) try {
   const helm = E('(() => { const it = newItem("helm", 1, "common"); S.items.push(it); return it.id; })()');
   assert(!E(`equipItem(${helm}, 'helm')`), 'a classed hero cannot equip a legacy Helm');
   E(`S.equip.helm = ${helm}; gearDirty()`);   // as an old save wears it
-  const cnt = E('S.items.length'), ids0 = E('S.items.map(i => i.id).join()'), gear0 = E('JSON.stringify(gear())'), hd0 = E('(() => { SYN_TUNE.on = 0; const d = heroDps(); SYN_TUNE.on = 1; return d; })()');   // F2: slot jobs and combos follow the class; gear is what this compares
+  const cnt = E('S.items.length'), ids0 = E('S.items.map(i => i.id).join()'), gear0 = E('JSON.stringify(gear())'), hd0 = E('heroDps()');   // F2: slot jobs and combos follow the class; gear is what this compares
   const toasts = []; g.fn.on('toast', t => toasts.push(t.msg));
   E('S.party.mirrors = 1; useMirror(); chooseClass("warden")');
   const sl = id => E(`itemById(${id}).slot`);
   assert(E(`S.equip.weapon === ${up} && S.equip.off === ${lan} && S.equip.helm === ${helm}`) && sl(up) === 'warblade' && sl(lan) === 'shield' && sl(helm) === 'greathelm' && sl(hood) === 'greathelm' && sl(bow) === 'bow',
     `class change retools: Staff -> Warblade, Lantern -> Shield, old Helm -> Greathelm (worn), bag Hood -> Greathelm, bag Bow (companion kind) kept (${[up, lan, helm, hood, bow].map(sl).join(',')})`);
   assert(E('S.items.length') === cnt && E('S.items.map(i => i.id).join()') === ids0 && E(`itemById(${up}).rt === "staff" && itemById(${helm}).rt === "helm" && itemById(${up}).plus === 4`), 'class change: same ids, count, +N; rt keeps the original kind');
-  const hd1 = E('(() => { SYN_TUNE.on = 0; const d = heroDps(); SYN_TUNE.on = 1; return d; })()');
-  assert(E('JSON.stringify(gear())') === gear0 && hd1 >= hd0, `class change keeps every gear() line (hero dps ${hd0.toFixed(1)} -> ${hd1.toFixed(1)}, synergies aside)`);
+  const hd1 = E('heroDps()');
+  assert(E('JSON.stringify(gear())') === gear0 && hd1 >= hd0, `class change keeps every gear() line (hero dps ${hd0.toFixed(1)} -> ${hd1.toFixed(1)})`);
   assert(toasts.includes('Your old helm was reforged into Warrior gear.') && toasts.includes('Your Lanternmage gear was reforged into Warrior gear.'), 'class change tells the player once: ' + toasts.filter(t => /reforged/.test(t)).join(' | '));
   // Star Chart -> Oriel
   E(`S.skills.ench.lv = ${RQ(3) - 1}`);
@@ -693,7 +665,7 @@ if (section('crafting')) try {
   E(`S.skills.ench.lv = ${RQ(3)}; S.mats.crystal[2] = 40; S.mats.ess[2] = 20; S.craft.troph = [0, 0, 0, 0, 0, 0, 0]`);
   assert(E('canCraft("starChart", 3).why') === '1 more Wraith Veil', 'Star Chart needs a Wraith Veil');
   E('S.craft.troph[6] = 1');
-  assert(E('!!craftItem("starChart", 3)') && E('S.party.unlock.starChart') === true && E('S.craft.starChart') === 1 && E('S.mats.crystal[2]') === 0 && E('S.craft.troph[6]') === 0, "Star Chart pays and grants Oriel's route");
+  assert(E('!!craftItem("starChart", 3)') && E('S.craft.starChart') === 1 && E('S.mats.crystal[2]') === 0 && E('S.craft.troph[6]') === 0, "Star Chart pays and grants Oriel's route");
   assert(!E('canCraft("starChart", 3).ok'), 'no second Star Chart (solo: the Star Chart only opens the party route, so nobody joins; the Craft tab hides it)');
   // Tonics (K6b)
   E('almanac.force("none")'); const dm = E('mod("dmg")');
@@ -760,7 +732,6 @@ if (section('pacing')) try {
   assert(E('mobHp(35) / mobHp(34)') > E('mobHp(36) / mobHp(35)'), 'region 1 step lands on zone 35 and stays');
   const et = E('PACE.essTier'), zt = E(`[1, ${et[1] - 1}, ${et[1]}, ${et[3]}, ${et[4] - 1}, ${et[4]}, 200].map(zoneTier).join()`);
   assert(zt === '1,1,2,4,4,5,5', `essence tiers by zone (Starlit from ${et[4]}): ${zt}`);
-  assert(E('paceXp(1) === 1 && paceXp(PACE.compLv) === 1 && paceXp(200) === PACE.compXpMax'), 'companion XP curve: 1 up to compLv, capped at compXpMax');
   // Hero XP while away: quiet level-ups, no toasts.
   E('chooseClass("warden"); S.maxZone = S.zone = 20; S.activity = "fight"');
   let toasts = 0; g.fn.on('toast', () => toasts++);
@@ -904,9 +875,9 @@ if (section('camp')) try {
   assert(r2.t === 24 * 3600 && r2.cap === 24 * 3600, `away cap never above 24h (Hourglass 5 + Watchtower 5 + another +7h: ${r2.t / 3600}h)`);
   E('S.camp.b.hearth = 0; S.camp.b.watch = 0; S.relic.glass = 0');
   E('almanac.force("none")'); E('Object.assign(S.camp.b, { hearth: 0, forge: 1, bench: 1, loom: 1, ench: 1, library: 0, tavern: 1 })');
-  const base = JSON.parse(E('JSON.stringify({ sx: mod("skillXp:smith"), sv: mod("salvage"), rf: mod("reforge"), ts: bonus("transmuteSave"), rw: mod("rareW"), off: mod("offline"), gx: mod("skillXp:mine"), cx: mod(soloOn() ? "xp" : "compXp"), bp: mod("bountyPay") })'));
+  const base = JSON.parse(E('JSON.stringify({ sx: mod("skillXp:smith"), sv: mod("salvage"), rf: mod("reforge"), ts: bonus("transmuteSave"), rw: mod("rareW"), off: mod("offline"), gx: mod("skillXp:mine"), cx: mod("xp"), bp: mod("bountyPay") })'));
   E('Object.assign(S.camp.b, { hearth: 10, forge: 5, bench: 5, loom: 5, ench: 5, library: 5, tavern: 4 })');
-  const hi = JSON.parse(E('JSON.stringify({ sx: mod("skillXp:smith"), sv: mod("salvage"), rf: mod("reforge"), ts: bonus("transmuteSave"), rw: mod("rareW"), off: mod("offline"), gx: mod("skillXp:mine"), cx: mod(soloOn() ? "xp" : "compXp"), bp: mod("bountyPay") })'));
+  const hi = JSON.parse(E('JSON.stringify({ sx: mod("skillXp:smith"), sv: mod("salvage"), rf: mod("reforge"), ts: bonus("transmuteSave"), rw: mod("rareW"), off: mod("offline"), gx: mod("skillXp:mine"), cx: mod("xp"), bp: mod("bountyPay") })'));
   const near = (a, b) => Math.abs(a - b) < 1e-9;
   assert(near(hi.sx / base.sx, 1.3) && near(hi.sv / base.sv, 1.25) && near(hi.rf / base.rf, 0.8) && hi.ts - base.ts === 1 && near(hi.rw / base.rw, 1.1), 'station Lv 5 perks: XP +30%, salvage, reforge, transmute, rarity');
   assert(near(hi.off / base.off, 1.3) && near(hi.gx / base.gx, 1.25) && near(hi.cx / base.cx, 1.2) && near(hi.bp / base.bp, 1.15), 'Hearth 10 +30% away, Library 5 XP, Tavern 4 bounties');
@@ -1161,7 +1132,7 @@ if (section('codex')) try {
   const recompute = g => g.eval('Math.floor(codexPages().filter(p => !p.locked).reduce((a, p) => a + p.pts, 0) / 2)');
   // new game: defaults, nothing earned, no toast
   const g = loadCore({ seed: 21 }), E = s => g.eval(s);
-  assert(E('S.codex.v === 1 && S.codex.init === false && S.codex.lightMax === 0 && Object.keys(S.codex.rec).join() === "champ,aff,mw,syn,mat,dare"'), 'new game: codex defaults');
+  assert(E('S.codex.v === 1 && S.codex.init === false && S.codex.lightMax === 0 && Object.keys(S.codex.rec).join() === "champ,aff,mw,mat,dare"'), 'new game: codex defaults');
   const toasts = []; g.fn.on('toast', t => toasts.push(t.msg));
   ticks(g, 25);
   assert(E('S.codex.init') && E('codexLight()') <= 1 && !toasts.some(t => /Codex/.test(t)), `new game: first load credits only today's Omen (${E('codexLight()')}) and stays quiet`);
@@ -1192,9 +1163,9 @@ if (section('codex')) try {
   // recorders: affixes and Masterwork on arrival, synergies, harvest, trophies, champions
   E('emit("itemAdded", { item: { id: 9999, slot: "bow", t: 3, r: "rare", plus: 0, a: [["pierce", 0.5], ["hp", 0.2]], mw: 2 } })');
   assert(E('S.codex.rec.aff.pierce === 4 && S.codex.rec.aff.hp === 4 && S.codex.rec.mw[2] === 1'), 'itemAdded records affix tiers (bitmask) and the Masterwork line');
-  E('emit("synergyChange", { active: ["dusk"], gained: ["dusk"], lost: [] }); emit("harvest", { kind: "herb", t: 2, n: 1 }); emit("trophy", { i: 3, n: 1, source: "boss" })');
+  E('emit("harvest", { kind: "herb", t: 2, n: 1 }); emit("trophy", { i: 3, n: 1, source: "boss" })');
   E('emit("kill", { mob: { key: "golem3", champ: true }, zone: 20, gold: 0, ess: 0, tier: 4 })');
-  assert(E('!!S.codex.rec.syn.dusk && S.codex.rec.mat.herb === 2 && !!(S.codex.rec.mat.troph & 8) && !!S.codex.rec.champ.golem'), 'synergies, materials, trophies and champion kills are recorded');
+  assert(E('S.codex.rec.mat.herb === 2 && !!(S.codex.rec.mat.troph & 8) && !!S.codex.rec.champ.golem'), 'materials, trophies and champion kills are recorded');
   // Lantern Light only rises
   E('S.mastery.types.slime = 10000; S.found.sproutblade = 2'); ticks(g, 55);
   const L1 = E('codexLight()');
@@ -1680,7 +1651,7 @@ if (section('omen writing')) try {
   const O = E('OMENS'), OL = E('OMEN_LINES'), DL = E('DARE_LINES');
   const oBad = O.filter(o => !str(OL[o.id], L.omen) || !clean(OL[o.id]));
   const dares = O.filter(o => o.dare), dBad = dares.filter(o => !str(DL[o.id], L.omen) || !clean(DL[o.id]));
-  assert(L.omen > 0 && L.omen < 60 && O.length === 34 && !oBad.length && Object.keys(OL).every(k => O.some(o => o.id === k) || k === 'companyFeast'),   // (solo: Hunter's Feast replaces Company Feast, whose line stays as data)
+  assert(L.omen > 0 && L.omen < 60 && O.length === 33 && !oBad.length && Object.keys(OL).every(k => O.some(o => o.id === k) || k === 'companyFeast'),   // (solo: Hunter's Feast replaces Company Feast, whose line stays as data)
     
     `lore: all ${O.length} Omens have a line, ${L.omen} chars or less` + (oBad.length ? ': ' + oBad[0].n : ''));
   assert(dares.length === 7 && !dBad.length && Object.keys(DL).length === dares.length,
@@ -1818,14 +1789,14 @@ if (section('tools and Well Rested')) try {
   E('soloPick("tobin"); S.maxZone = 6; S.zone = 5; S.auto = false');   // W2-B: solo, gathering rests the hero
   const run = secs => { for (let t = 0; t < secs; t += 0.1) g.fn.tick(0.1); };
   run(20);
-  const field = E('S.party.field.slice()'), lv0 = E('JSON.stringify(S.party.field.map(k => charRec(k).lv))');
+
   // the Well Rested share of mod('dmg'): the same moment with nothing banked
   const restX = () => E('(() => { const a = mod("dmg"), l = S.rested.left; S.rested.left = 0; const b = mod("dmg"); S.rested.left = l; return a / b; })()');
   E('setNode("ore", 1); setActivity("gather")');
   run(120);
   assert(Math.abs(E('S.rested.left') - 60) < 0.5 && E('!wellRested().on') && Math.abs(restX() - 1) < 1e-9, `2 min of gathering banks 1 min (${E('S.rested.left').toFixed(1)} s); no bonus while gathering`);
   run(600);
-  assert(E('S.rested.left') === E('REST_TUNE.cap') && E('JSON.stringify(S.party.field.map(k => charRec(k).lv))') === lv0 && E('S.party.field.join()') === field.join(), `capped at ${E('REST_TUNE.cap')} s; the party stays fielded, its levels unchanged`);
+  assert(E('S.rested.left') === E('REST_TUNE.cap'), `capped at ${E('REST_TUNE.cap')} s`);
   assert(/Gathering rests you: \+10% damage for 3m 0s in your next fight \(full\)/.test(E('restNote()')), 'Gather tab line: ' + E('restNote()').trim());
   // using it: a fight gets +10%, and it runs down only while fighting
   const toasts = []; g.fn.on('toast', t => toasts.push(t.msg));
@@ -1840,7 +1811,6 @@ if (section('tools and Well Rested')) try {
   // solo: the hero always rests (there is no party to leave out)
   E('S.rested.left = 0; setActivity("gather")'); run(60);
   assert(Math.abs(E('S.rested.left') - 30) < 0.5 && /Gathering rests you/.test(E('restNote()')), 'solo: gathering always banks Well Rested for the hero (30 s after a minute)');
-  E('S.party.field = ' + JSON.stringify(field));
 
   // away: gathering banks it; away fights never count it and run it down
   E('setActivity("gather"); S.rested.left = 0; S.mats.ore[0] = 0');   // H3: room in the packs for the away haul
@@ -2054,7 +2024,7 @@ if (section('deeds')) try {
   const titles = E('deeds.titles()');
   assert(uniq(D.tracks.map(t => t.id)) && uniq(D.feats.map(f => f.id)) && uniq(D.secrets.map(s => s.id)) && uniq(D.looks.map(l => l.id)) && uniq(titles.map(t => t.id)) && uniq(D.groups.map(x => x.id)),
     `AD1 ids unique: ${D.tracks.length} tracks, ${D.feats.length} Feats, ${D.secrets.length} secrets, ${D.looks.length} looks, ${D.groups.length} groups`);
-  assert(D.tracks.length === 83 && D.feats.length === 19 && D.secrets.length === 15 && D.looks.filter(l => l.slot !== 'frame').length === 33 && D.looks.filter(l => l.slot === 'frame').length === 4 && D.groups.length === 11, 'AD1 counts: 83 tracks, 19 Feats, 15 secrets, 33 accessories and 4 frames, 11 groups');
+  assert(D.tracks.length === 73 && D.feats.length === 16 && D.secrets.length === 13 && D.looks.filter(l => l.slot !== 'frame').length === 29 && D.looks.filter(l => l.slot === 'frame').length === 4 && D.groups.length === 10, 'AD1 counts: 73 tracks, 16 Feats, 13 secrets, 29 accessories and 4 frames, 10 groups');
   const bad = D.tracks.filter(t => !(t.need.length === 4 && t.need.every((v, i) => i === 0 || v > t.need[i - 1]) && t.need[0] > 0) || !t.g || !D.groups.some(x => x.id === t.g) || (t.bonus && !(t.bonus in D.cap)));
   assert(!bad.length, 'AD1 every track rises tier to tier, sits in a group, and feeds a capped key' + (bad.length ? ': ' + bad.map(t => t.id).join(', ') : ''));
   // every look has exactly one source, and that source names it back
@@ -2072,15 +2042,15 @@ if (section('deeds')) try {
     `AD1 titles are short epithets (<= 14 characters, <= 2 words): ${titles.length} listed now` + (long.length ? '; too long: ' + long.map(t => t.n).join(', ') : ''));
   const allTitles = D.groups.flatMap(x => [x.gold, x.ever]).concat(D.feats.map(f => f.title), D.secrets.map(s => s.title), D.chapters.map(c => c.title), D.ladder.filter(m => m.title).map(m => m.title));
   const tooLong = allTitles.filter(n => !EXC.includes(n) && (n.length > 14 || n.split(' ').length > 2));
-  assert(allTitles.length === 63 && !tooLong.length, `AD1 all 63 designed titles fit the rule (${allTitles.length}; kept by name: ${EXC.join(', ')})` + (tooLong.length ? ': ' + tooLong.join(', ') : ''));
+  assert(allTitles.length === 56 && !tooLong.length, `AD1 all 56 designed titles fit the rule (${allTitles.length}; kept by name: ${EXC.join(', ')})` + (tooLong.length ? ': ' + tooLong.join(', ') : ''));
   const live = E('deeds.tracks().map(t => t.id)'), hidden = D.tracks.filter(t => !live.includes(t.id)).map(t => t.id);
   // F2 (Bonds) is merged, so 'bonds' and 'together' are live; the rest wait for their systems. H3 (the Storehouse) is merged: 'store' is live.
   // N1 (Hands) is merged: 'hands' and 'handhrs' are live.
   // W2-B: solo hides the party tracks too (58-deeds trackLive, WAIT.NS/F1/F2), so 66 are live.
-  assert(live.length === 66 && hidden.sort().join() === ['bonds', 'complv', 'fish', 'front', 'g_fish', 'g_pearl', 'lanterns', 'meals', 'mend', 'oath', 'oathseals', 'promos', 'recruits', 'stories', 'tides', 'together', 'toprank'].join(), `waiting tracks are hidden until their system exists: ${live.length} live, hidden ${hidden.join(' ')}`);
-  E('S.store = { v: 1 }; S.bond = { v: 1, t: { a: 36000 }, lv: { a: 3 } }');
-  assert(E('deeds.track("store").live && !deeds.track("bonds").live && deeds._cur("together") === 10 && deeds._cur("bonds") === 3'), 'a runtime probe lights a waiting track up when its save field appears (S.store); solo keeps the Bond tracks hidden (S.bond)');
-  E('delete S.store; delete S.bond');
+  assert(live.length === 66 && hidden.sort().join() === ['fish', 'g_fish', 'g_pearl', 'lanterns', 'meals', 'oath', 'oathseals'].join(), `waiting tracks are hidden until their system exists: ${live.length} live, hidden ${hidden.join(' ')}`);
+  E('S.store = { v: 1 }');
+  assert(E('deeds.track("store").live'), 'a runtime probe lights a waiting track up when its save field appears (S.store)');
+  E('delete S.store');
   assert(E('(() => { try { return deeds.tracks().length === 65; } catch (e) { return false; } })()'), 'probes of later systems never throw');
 
   // AD7 numbers
@@ -2156,9 +2126,9 @@ if (section('deeds')) try {
   const ACH0 = [['zone10', 10, 'keen', 0.01], ['zone25', 25, 'dmg', 0.03], ['zone50', 50, 'keen', 0.025], ['lv20', 20, 'xp', 0.03], ['lv50', 50, 'dmg', 0.03], ['kill1k', 1000, 'keen', 0.01],
     ['kill25k', 25000, 'dmg', 0.03], ['kill100k', 100000, 'keen', 0.015], ['gold1m', 1e5, 'keen', 0.01], ['gold1b', 1e7, 'keen', 0.015], ['mine25', 25, 'gatherSpeed', 0.03], ['wood25', 25, 'gatherSpeed', 0.03],
     ['smith25', 25, 'skillXp', 0.03], ['forge1', 1, 'skillXp', 0.02], ['forge25', 25, 'skillXp', 0.03], ['epic', 1, 'crit', 0.03], ['uniq1', 1, 'essence', 0.03], ['uniq3', 3, 'essence', 0.05],
-    ['uniq7', 7, 'dmg', 0.05], ['party', 7, 'party', 0.03], ['bty10', 10, 'offline', 0.03], ['bty50', 50, 'keen', 0.015]];
-  assert(JSON.stringify(E('ACH_API.list.map(a => [a.id, a.need, a.bonus[0], a.bonus[1]])')) === JSON.stringify(ACH0) && E('ACH_API.list.map(a => ACH_API.bonusText(a)).join("|")').split('|').length === 22,
-    'AD2 the Classic 22: ids, thresholds and bonuses as ECON-A set them');
+    ['uniq7', 7, 'dmg', 0.05], ['bty10', 10, 'offline', 0.03], ['bty50', 50, 'keen', 0.015]];
+  assert(JSON.stringify(E('ACH_API.list.map(a => [a.id, a.need, a.bonus[0], a.bonus[1]])')) === JSON.stringify(ACH0) && E('ACH_API.list.map(a => ACH_API.bonusText(a)).join("|")').split('|').length === 21,
+    'AD2 the Classic 21: ids, thresholds and bonuses as ECON-A set them');
   const noDeeds = (await import('./lib/core.mjs')).coreFiles().filter(f => !/^(23-data-deeds|58-deeds)\.js$/.test(f));
   const achSums = h2 => h2.eval('(() => { const s = {}; for (const a of ACH_API.list) if (S.achievements.got[a.id]) s[a.bonus[0]] = (s[a.bonus[0]] || 0) + a.bonus[1]; return JSON.stringify(s); })()');
   // ECON-A: the late fixture's 29B gold (old scale) is past every Hoard tier (Everflame ★2) and Dragon's Hoard (500M) now.
@@ -2265,7 +2235,6 @@ if (section('story')) try {
   assert(E('storyElderKey(70)') === null && E('storyElderKey(35)') === 'listener' && E('storyElderKey(8)') === 'slime', 'story: storyElderKey: zone 8 slime, 35 the Fenmother, 70 none (the Fogbound has his own lines)');
   // The Great Lantern card: Hesketh's line when he is recruited; the beat joins the story list, read
   const gl = []; g.fn.on('greatLantern', e => gl.push(e));
-  E('unlockChar("hesketh", "progress", true)');
   E('S.maxZone = 36; S.zone = 36; emit("zoneClear", { zone: 35 })'); ticks(g, 3);
   const say = (gl[0] && gl[0].say) || [];
   assert(gl.length === 1 && say.length === 0, `story (solo): the Great Lantern I card carries no companion lines (${say.length}); Hesketh cannot be recruited`);
@@ -2276,7 +2245,6 @@ if (section('story')) try {
   // the storyBeat API the Coast tasks use: once, then false; unknown ids false; quiet on request
   assert(E('storyBeat("ferryman")') === 'card' && E('storyBeat("ferryman")') === false && E('storyBeat("nope")') === false && E('storyBeat("chart", { quiet: true })') === 'quiet'
     && ev.beat.slice(-2).map(b => `${b.id}:${b.quiet}`).join() === 'ferryman:false,chart:true', 'story: storyBeat(id) plays once ("card", then false), unknown ids are false, { quiet } gives the note');
-  assert(E('storySay({ hesketh: "a", nobody: "b", pip: "c" }).map(x => x.id).join()') === '', 'story (solo): storySay keeps recruited characters only, and nobody is recruited');
   // A beat the save jumped past plays quiet (its note), not as a card
   const q = loadCore({ seed: 72 }), qv = watch(q);
   ticks(q, 2); qv.arr.length = 0; q.eval('S.activity = "gather"; S.maxZone = 20; S.zone = 20'); ticks(q, 3);
@@ -2314,8 +2282,8 @@ if (section('story')) try {
   // UI wiring (browser-only files): the pieces are there
   const rd = f => fs.readFileSync(path.join(ROOT, 'src', f), 'utf8');
   const ui = rd('js/75-story-ui.js'), css = rd('styles/60-story.css'), codexUi = rd('js/75-codex-ui.js'), glUi = rd('js/75-lantern-ui.js');
-  assert(['storyArrival', 'storyElder', 'storyBeat'].every(k => ui.includes(`on('${k}'`)) && codexUi.includes('storyUI.codexRow') && codexUi.includes('t.lore') && glUi.includes('e.say')
-    && /prefers-reduced-motion/.test(css) && /calc\(\d+px \* var\(--display-k\)\)/.test(css), 'story: the UI listens for arrivals, elders and beats; the Codex has the Story row and bestiary lines; the Great Lantern card shows say lines; reduced motion handled');
+  assert(['storyArrival', 'storyElder', 'storyBeat'].every(k => ui.includes(`on('${k}'`)) && codexUi.includes('storyUI.codexRow') && codexUi.includes('t.lore')
+    && /prefers-reduced-motion/.test(css) && /calc\(\d+px \* var\(--display-k\)\)/.test(css), 'story: the UI listens for arrivals, elders and beats; the Codex has the Story row and bestiary lines; reduced motion handled');
   assert(!/You carry the last lantern\./.test(rd('js/76-create.js')), 'story: the class screen says "one of the last lanterns" (lore.md 11.1)');
   assert(!g.errors.length && !q.errors.length && !c.errors.length, 'story: no handler errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
 } catch (e) { fail('story crashed: ' + (e.stack || e)); }
@@ -2541,8 +2509,6 @@ if (section('store')) try {
             for (let p = 0; p < 10; p++) for (const [f, n] of Object.entries(kindUpgradeCost({ slot: k, t, plus: p }).mats)) chk(H, k + ' T' + t + ' +' + (p + 1), f, t, n);
           }
         }
-        // promotions: rank r costs 10 x (r + 1) essence (rank 1 by zone 5; the Storehouse Lv 1 holds 150)
-        for (let r = 0; r < 7; r++) if (H >= 1 || r === 0) chk(H, 'promotion ' + (r + 1), 'ess', 1, ROSTER_TUNE.promoEss * (r + 1));
         if (tMax >= 3) { chk(H, 'Star Chart', 'crystal', 3, 40); chk(H, 'Star Chart', 'ess', 3, 20); }
       }
       return out;
@@ -2626,7 +2592,7 @@ if (section('wall')) try {
   const pinned = W('trophyWall.items(3).map(x => x.id + (x.lv || ""))');
   assert(JSON.stringify(pinned) === '["combat1","f_parry","f_watch","f_gold","ch1"]', `wall: pins hang first (unearned pins skipped), then the automatic order (${pinned.join(', ')})`);
   W('for (const f of DEED_FEATS) { S.deeds.feat[f.id] = 1; S.deeds.at[f.id] = S.deeds.at[f.id] || 1; } for (const g of DEED_GROUPS) S.deeds.grp[g.id] = 2');
-  assert(W('trophyWall.items(3).length === 12 && trophyWall.items(2).length === 8 && trophyWall.items(1).length === 4 && trophyWall.earned().length === 19 + 1 + 11'), 'wall: a full wall holds 12; the rest wait for a pin');
+  assert(W('trophyWall.items(3).length === 12 && trophyWall.items(2).length === 8 && trophyWall.items(1).length === 4 && trophyWall.earned().length === 16 + 1 + 10'), 'wall: a full wall holds 12; the rest wait for a pin');
   const pr = W(`(() => { const out = []; const c = document.createElement('canvas').getContext('2d');
     for (const st of [0, 1, 2, 3]) { const n0 = __n.rects; trophyWall.paint(c, 60, 70, 2, 0, { stage: st, items: trophyWall.items(st), f: 1, lit: true, star: true }); out.push(__n.rects - n0); }
     return out; })()`);
@@ -2968,7 +2934,8 @@ if (section('nav')) try {
     assert(E('navNow().full') === true && / · full$/.test(E('navNow().text')) && E('navFullIn("ore", 4)') === 0, 'a full cell turns the pill red ("· full")');
     E('S.mats.ore[3] = 0');
     assert(E('navFullIn("ore", 4) > 0 && Number.isFinite(navFullIn("ore", 4)) && navRate("ore", 4) > 0'), `time to full: ${Math.round(E('navFullIn("ore", 4)') / 60)} min at ${E('navRate("ore", 4)').toFixed(1)} a minute`);
-    // Best for you: up to 2, open, never the node you work, never a full cell
+    // Best for you: up to 2, open, never the node you work, never a full cell (the solo hero may have retreated: stand at the fixture's zone)
+    E('S.zone = 37');
     const best = JSON.parse(E('JSON.stringify(bestNodes("mine"))'));
     assert(best.length >= 1 && best.length <= 2 && best.every(b => E(`skillTierOpen("mine", ${b.t})`) && !(b.kind === 'ore' && b.t === 4) && b.why) && best[0].t === E('skillTopTier("mine")'),
       `Best for you: ${best.map(b => `${b.kind} T${b.t} (${b.why})`).join('; ')}`);
@@ -3080,7 +3047,7 @@ if (section('types and statuses (S1)')) try {
   // A controlled fight: a Warden at zone z, the pack frozen (no attacks, huge HP), nothing fielded.
   const arena = (z, seed = 71) => {
     const g = loadCore({ seed }), E = s => g.eval(s);
-    E('chooseClass("warden"); S.party.autoField = false; setField([]); S.auto = false');
+    E('chooseClass("warden"); S.auto = false');
     E(`S.maxZone = ${z}; S.activity = "fight"; setZone(${z})`);
     for (let i = 0; i < 5; i++) g.fn.tick(0.1);
     E('combatFoes().forEach(f => { f.atk = 0; f.max = f.hp = 1e12; f.armoured = false; f.ss = null; f.markT = 0; f.mkV = 0; f.markUntil = 0; f.vulnT = 0; f.stunT = 0; f.chillT = 0; f.rxT = 0; f.elite = false; f.champ = false; })');
@@ -3236,7 +3203,7 @@ if (section('types and statuses (S1)')) try {
     E(`cbDamageFoe(__f, ${P * 3.2}, 0, "phys", "phys", 0)`);
     assert(!E('stHas(__f, "chill")') && small > 0, 'a hit of 3 P or more is heavy (Shatter)');
     // Judgement: holy damage on a Marked foe heals every party member 10% of it, at most 5% max HP a second
-    E('S.party.autoField = false; unlockChar("hesketh", "test", true); setField(["hesketh"])'); for (let i = 0; i < 4; i++) g.fn.tick(0.1);
+    for (let i = 0; i < 4; i++) g.fn.tick(0.1);
     E('combatFoes().forEach(f => { f.atk = 0; f.max = f.hp = 1e12; }); globalThis.__f = combatFoes().find(x => !x.dead)');
     E('combatUnits().forEach(u => { if (u.live) u.hp = u.maxHp * 0.5; })');
     const hp0 = E('cbUnitByKey("hero").hp'), mx = E('cbUnitByKey("hero").maxHp'), hin = E('cbUnitByKey("hero").healIn');
@@ -3425,7 +3392,7 @@ if (section('econ (ECON-A)')) try {
   assert(!bad22.length, 'EC1 the table in economy-2 2.2 (within its rounding)' + (bad22.length ? ': ' + bad22.map(([z, v]) => `zone ${z} ${E(`foeGoldBase(${z})`)} vs ${v}`).join(', ') : ''));
   const steps = [35, 70, 105, 140].map(z => E(`foeGoldBase(${z + 1}) / foeGoldBase(${z})`));
   assert(steps.every(x => x > 1.2 && x < 1.35) && E('foeGoldBase(175) / foeGoldBase(1)') < 500, `the curve steps x1.26-1.31 at each region boss (${steps.map(x => x.toFixed(2)).join(', ')}) and grows under x500 in all`);
-  assert(E('Math.abs(mobGold(40) - foeGoldBase(40) * goldMult()) < 1e-9') && E('foesGold(20, 300)') === E('econSig(300 * foeGoldBase(20))'), 'mobGold and foesGold read the curve');
+  assert(E('Math.abs(mobGold(40) - foeGoldBase(40) * goldMult()) < 1e-9') , 'mobGold reads the curve');
   // Prices: the examples in economy-2 3 and 4
   const P = x => E(x);
   const ex = [['Hearth 2', 'econHearthGold(2)', 9000], ['Hearth 3', 'econHearthGold(3)', 15000], ['Hearth 10', 'econHearthGold(10)', 370000],
@@ -3435,9 +3402,9 @@ if (section('econ (ECON-A)')) try {
     ['hire Common, Region 1', 'econHireFee("common", 1)', 1500], ['hire Legendary, Region 1', 'econHireFee("legendary", 1)', 20000], ['hire Common, Region 2', 'econHireFee("common", 40)', 5100], ['hire Legendary, Region 5', 'econHireFee(4, 150)', 2900000],
     ['shift grade 1 Lv 1', 'econShiftFee(1, 1)', 2000], ['shift grade 4 Lv 1', 'econShiftFee(4, 1)', 4100], ['shift grade 15 Lv 1', 'econShiftFee(15, 1)', 110000], ['shift grade 1 Lv 20', 'econShiftFee(1, 20)', 2800],
     ['upgrade grade 1 +0', 'econUpgradeGold(1, 0)', 100], ['upgrade grade 5 +9', 'econUpgradeGold(5, 9)', 4400], ['upgrade grade 15 +9', 'econUpgradeGold(15, 9)', 320000],
-    ['reforge grade 5 first', 'econReforgeGold(5, 0)', 330], ['promotion rank 0 at zone 20', 'foesGold(20, ROSTER_TUNE.promoGold)', 1200]];
+    ['reforge grade 5 first', 'econReforgeGold(5, 0)', 330]];
   const exBad = ex.filter(([, x, v]) => P(x) !== v);
-  assert(!exBad.length, `prices as economy-2 lists them (${ex.length}: Hearth, rows, Shrine, Storehouse, Tents, hires, shifts, upgrades, reforge, promotion)` + (exBad.length ? ': ' + exBad.map(([n, x, v]) => `${n} ${P(x)} != ${v}`).join('; ') : ''));
+  assert(!exBad.length, `prices as economy-2 lists them (${ex.length}: Hearth, rows, Shrine, Storehouse, Tents, hires, shifts, upgrades, reforge)` + (exBad.length ? ': ' + exBad.map(([n, x, v]) => `${n} ${P(x)} != ${v}`).join('; ') : ''));
   assert(E('(() => { const it = { id: 0, slot: "charm", t: 5, r: "rare", plus: 9 }; return kindUpgradeCost(it).gold === econUpgradeGold(5, 9) && craftReforgeCost(5, 0).gold === econReforgeGold(5, 0); })()'), 'item upgrades and reforges charge the econ price');
   // Every price table rises (monotonic) and stays under 1e8 (EC10, static)
   const tables = P(`(() => { const r = (a, b, f) => { const o = []; for (let i = a; i <= b; i++) o.push(f(i)); return o; };
@@ -3445,15 +3412,11 @@ if (section('econ (ECON-A)')) try {
       store: r(2, 8, L => campCost('store', L).gold), tents: r(3, 10, econTentGold), balefire: r(2, 5, econBalefireGold),
       hireR1: r(0, 4, i => econHireFee(i, 1)), hireLeg: r(0, 4, k => econHireFee(4, 1 + 35 * k)), hireCom: r(0, 4, k => econHireFee(0, 1 + 35 * k)),
       fee: r(1, 15, gr => econShiftFee(gr, 1)), feeLv: r(1, 20, lv => econShiftFee(9, lv)), up: r(0, 9, p => econUpgradeGold(3, p)), upG: r(1, 15, gr => econUpgradeGold(gr, 9)),
-      reforge: r(0, 6, n => econReforgeGold(2, n)), reforgeG: r(1, 15, gr => econReforgeGold(gr, 0)), promo: r(0, 6, k => foesGold(50, ROSTER_TUNE.promoGold * (k + 1))),
-      blade: r(0, 300, n => HERO_UPS[0].base * Math.pow(HERO_UPS[0].r, n)), swift: r(0, 39, n => HERO_UPS[1].base * Math.pow(HERO_UPS[1].r, n)), precision: r(0, 14, n => HERO_UPS[2].base * Math.pow(HERO_UPS[2].r, n)) }; })()`);
+      reforge: r(0, 6, n => econReforgeGold(2, n)), reforgeG: r(1, 15, gr => econReforgeGold(gr, 0)) }; })()`);
   const flat = Object.entries(tables).filter(([, a]) => !a.every((v, i) => v > 0 && (i === 0 || v >= a[i - 1])));
   assert(!flat.length, `every price table rises: ${Object.keys(tables).join(', ')}` + (flat.length ? ' | not: ' + flat.map(([k, a]) => k + ' ' + a.join('/')).join('; ') : ''));
-  const bigP = Object.entries(tables).filter(([k]) => k !== 'blade').map(([k, a]) => [k, Math.max(...a)]).filter(([, v]) => v >= 1e8);
-  assert(!bigP.length && tables.blade[260] < 1e8, `EC10 (static) every price under 1e8 (biggest: Tent 10 ${E('fmt(econTentGold(10))')}, Blade Lv 260 ${E(`fmt(${tables.blade[260]})`)})` + (bigP.length ? ': ' + bigP.join('; ') : ''));
-  const up = E('HERO_UPS.map(u => [u.id, u.base, u.r, u.cap || 0].join(":")).join()');
-  assert(up === `blade:${E('ECON.blade.base')}:${E('ECON.blade.r')}:0,swift:${E('ECON.swift.base')}:${E('ECON.swift.r')}:40,precision:${E('ECON.precision.base')}:${E('ECON.precision.r')}:${E('ECON.precision.cap')}`,
-    `the Lanternbearer's upgrades (BAL3): Blade 6 x 1.05^n, Swiftness 10 x 1.15^n (cap 40), Precision 10,000 x 1.6^n (cap 15), equal to ECON (${up})`);
+  const bigP = Object.entries(tables).map(([k, a]) => [k, Math.max(...a)]).filter(([, v]) => v >= 1e8);
+  assert(!bigP.length, `EC10 (static) every price under 1e8 (biggest: Tent 10 ${E('fmt(econTentGold(10))')})` + (bigP.length ? ': ' + bigP.join('; ') : ''));
   assert(E('RELICS.map(r => r.id).join()') === 'banner,edge,heart,glass' && E('RELICS[1].name') === 'Loaded Die' && E('RELICS[1].cap') === 5 && E('UNIQ.hollowcrown.fx.gold') === 10,
     'the Lucky Coin is the Loaded Die (cap 5), the Crown of Hollows gives +10% gold (raid docs untouched)');
   // No gold-gain source outside gear: every save field maxed, gold stays at the gear cap x the Omen
@@ -3471,9 +3434,7 @@ if (section('econ (ECON-A)')) try {
   // (W2-B/W2-A solo: Precision is gone (Training), so the sources rarely reach the cap: the pool is the sources' sum, at most +40%)
   assert(Math.abs(k - Math.min(raw, 0.4)) < 1e-12 && Math.abs(E('keenMult()') - (1 + k)) < 1e-12, `crit damage cap: the sources add to +${Math.round(raw * 100)}% (${src.join(', ')}), the pool gives +${Math.round(k * 100)}% (at most +40%)`);
   E('S.precision = 0; S.relic.edge = 0; S.camp.bless = []; S.mastery.zones = {}; S.mastery.types = {}; S.achievements.got = {}; ACH_API.check()'); for (let i = 0; i < 5; i++) g.fn.tick(0.1);
-  // (Precision is party-era: PARTY_LEGACY 'econ' no longer covers it; Training has no crit-damage level)
-  assert(E('ROSTER_KEYS.filter(id => ROSTER[id].role === "striker").every(id => keenCharMult(id) > 1) && ROSTER_KEYS.filter(id => ROSTER[id].role === "support").every(id => keenCharMult(id) === 1)'), 'companions: strikers\' crits scale with the pool (supports have none)');
-  assert(E('HERO_UPS.every(u => u.desc() && !/Keen/.test(u.desc()))') && E('RELICS[1].desc()') === '+2% crit damage per level.', 'player-facing text says "crit damage" (no "Keen")');
+  assert(E('RELICS[1].desc()') === '+2% crit damage per level.', 'player-facing text says "crit damage" (no "Keen")');
   // The ledger
   E('soloPick("wren"); S.gold = 1e6; S.econ.spent.up = 0'); const g0 = E('S.gold'); E('train(trainNext().move, "1")');
   assert(E('S.econ.spent.up') === g0 - E('S.gold') && E('S.econ.spent.up') > 0, 'the ledger counts a Training level under "up"');
@@ -3485,13 +3446,13 @@ if (section('econ (ECON-A)')) try {
   const V1 = ['lanternfall', 'save', 'v1'].join('.');   // the old key (spelled so the tools scan below finds no v1 key here)
   const st = memoryStorage({ [V1]: v1raw });
   const h = loadCore({ seed: 42, storage: st }), H = s => h.eval(s);
-  assert(H('KEY') === 'lanternfall.save.v4' && H('S.v') === 4 && H('S.maxZone') === 1 && H('S.gold') === 0 && H('S.precision') === 0 && H('S.relic.edge') === 0 && H('S.econ.v') === 1, 'save key v4 (W2-A; SOLO1 v3, ECON-A v2), S.v 4: with a v1 save present the game starts fresh (zone 1, no gold, the new fields at their defaults)');
+  assert(H('KEY') === 'lanternfall.save.v5' && H('S.v') === 5 && H('S.maxZone') === 1 && H('S.gold') === 0 && H('S.relic.edge') === 0 && H('S.econ.v') === 1, 'save key v5 (W3-A), S.v 5: with a v1 save present the game starts fresh (zone 1, no gold, the new fields at their defaults)');
   for (let i = 0; i < 600; i++) h.fn.tick(0.1);
   H('save()');
-  assert(st.get(V1) === v1raw && JSON.parse(st.get('lanternfall.save.v4')).v === 4 && !h.errors.length, 'a minute of play and a save: no errors, the v1 save is untouched, the game saves under v4');
-  const junk = memoryStorage({ [V1]: '{"v":2,"gold":"x"', 'lanternfall.save.v4': 'not json' });
+  assert(st.get(V1) === v1raw && JSON.parse(st.get('lanternfall.save.v5')).v === 5 && !h.errors.length, 'a minute of play and a save: no errors, the v1 save is untouched, the game saves under v4');
+  const junk = memoryStorage({ [V1]: '{"v":2,"gold":"x"', 'lanternfall.save.v5': 'not json' });
   const j = loadCore({ seed: 43, storage: junk });
-  assert(j.eval('S.v') === 4 && Number.isFinite(j.fn.totalDps()) && !j.errors.length, 'a broken v1 and v2 save in storage: a new game, no crash');
+  assert(j.eval('S.v') === 5 && Number.isFinite(j.fn.totalDps()) && !j.errors.length, 'a broken v1 and v2 save in storage: a new game, no crash');
   for (const t of ['check.mjs', 'sim.mjs', 'savecode.mjs', 'perf.mjs']) {
     const src = fs.readFileSync(path.join(ROOT, 'tools', t), 'utf8').replace(/\/\/.*$/gm, '');
     assert(!/lanternfall\.save\.v1/.test(src), `tools/${t} reads the v2 key`);
@@ -3716,7 +3677,7 @@ if (section('solo hero')) try {
   // 1. three starters, selectable; the party is gone
   {
     const g = loadCore({ solo: true, seed: 100 }), E = s => g.eval(s);
-    assert(E('soloOn() && soloHero() === null && !S.party.chosen && JSON.stringify(SOLO_ORDER)') === '["wren","tobin","pip"]', 'a new game has no hero yet; the picker offers Wren, Tobin and Pip');
+    assert(E('soloHero() === null && !S.party.chosen && JSON.stringify(SOLO_ORDER)') === '["wren","tobin","pip"]', 'a new game has no hero yet; the picker offers Wren, Tobin and Pip');
     const want = { wren: ['ranger', 'ranger', 'Wren', 'Echo Shot'], tobin: ['warden', 'warrior', 'Tobin', 'Shield Bash'], pip: ['lanternmage', 'mage', 'Pip', 'Fireball'] };
     for (const k of ['wren', 'tobin', 'pip']) {
       const h = loadCore({ solo: true, seed: 100 }), X = s => h.eval(s);
@@ -3726,11 +3687,10 @@ if (section('solo hero')) try {
       errs.push(...h.errors);
     }
     E('soloPick("wren")'); run(g, 90);
-    assert(E('S.party.field.length === 0 && ROSTER_KEYS.every(k => !isRecruited(k)) && compDps() === 0 && combatUnits().filter(u => u.live).length === 1'), 'no companions: the field is empty, nobody is recruited, only the hero fights');
+    assert(E('combatUnits().filter(u => u.live).length === 1'), 'only the hero fights');
     E('S.maxZone = 12; S.gold = 1e9');
-    assert(E('!canRecruit("wren") && !recruit("tobin") && !unlockChar("pip", "progress")'), 'nobody can be recruited, whatever the route');
     E('onboardUnlockAll()');
-    assert(E('!isUnlocked("roster") && !isUnlocked("synergy")'), 'the Roster and Bonds never open (not even with "Show every tab")');
+    assert(E('typeof recruit === "undefined" && typeof unlockChar === "undefined"'), 'no recruiting code and no Roster tab');
     assert(E('(ONBOARD.gate = true, !topGoals(9).some(x => ["roster"].includes(x.sys)))'), 'Next Up shows no recruit or promotion goal');
     assert(E('!DEED_TRACKS.some(t => t.g === "comp" && deeds.tracks().some(r => r.id === t.id))'), 'no Companions achievements show');
     errs.push(...g.errors);
@@ -4001,7 +3961,7 @@ if (section('solo hero')) try {
   // 11. the stage and the UI (static): tapping the stage no longer attacks in a fight; the button row and the picker
   {
     const st = fs.readFileSync(path.join(ROOT, 'src', 'js', '62-stage.js'), 'utf8'), ui = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-solo-ui.js'), 'utf8');
-    assert(/if \(soloOn\(\) && target\(\) === 'mob'\) return;/.test(st), 'a tap on the fight stage does not attack (62-stage)');
+    assert(/if \(target\(\) === 'mob'\) return;/.test(st), 'a tap on the fight stage does not attack (62-stage)');
     assert(['soloAttack', 'soloParry', 'soloDodge', 'soloAbility', "registerSection('camp'"].every(x => ui.includes(x)), 'the button row calls Attack, Parry, Dodge and the ability; "Choose your hero" is on the Camp view');
     const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '59j-solo.js'), 'utf8').replace(/\/\/.*$/gm, '');
     assert(!/\b(document|window|localStorage|canvas)\b/.test(src), '59j-solo.js is a core file: no DOM, window, canvas or storage');
@@ -4539,7 +4499,7 @@ if (section('notices (W1-B)')) try {
   const allSrc = fs.readdirSync(jsDir).filter(f => f.endsWith('.js') && f !== '23n-data-notices.js').map(f => fs.readFileSync(path.join(jsDir, f), 'utf8')).join('\n');
   for (const r of rules) if (r.key && allSrc.includes(`'${r.key}'`)) used.add(r.id);
   const unused = rules.filter(r => !used.has(r.id)).map(r => r.id);
-  assert(sites.length >= 110 && openTxt.length >= 15 && !bad.length, `every toast source has a channel: ${sites.length} call sites in src/js and ${openTxt.length} unlock lines each match a NOTICES rule (by key, message or call site)` + (bad.length ? ': ' + bad.slice(0, 6).join('; ') : ''));
+  assert(sites.length >= 95 && openTxt.length >= 15 && !bad.length, `every toast source has a channel: ${sites.length} call sites in src/js and ${openTxt.length} unlock lines each match a NOTICES rule (by key, message or call site)` + (bad.length ? ': ' + bad.slice(0, 6).join('; ') : ''));
   assert(!unused.length, 'every NOTICES rule has a source (no dead rules)' + (unused.length ? ': ' + unused.join(', ') : ''));
   const chk = JSON.parse(E(`JSON.stringify((() => { const ids = NOTICES.map(r => r.id), out = { dup: ids.filter((x, i) => ids.indexOf(x) !== i), badCh: [] };
     for (const r of NOTICES) for (const m of ['x', 'Level 10. Your hero hits 4% harder.', 'Level 7. Your hero hits 4% harder.']) for (const n of [{}, { tier: 4 }, { lv: 2 }]) for (const gd of [true, false]) {
@@ -4661,7 +4621,7 @@ if (section('solo copy (W1-C)')) try {
     if (Array.isArray(v)) { v.forEach((x, i) => walk(x, `${p}[${i}]`, seen, depth + 1, key)); return; }
     for (const k of Object.keys(v)) { if (!SKIP.has(k)) walk(v[k], `${p}.${k}`, seen, depth + 1, k); }
   };
-  const tables = ['UNIQ', 'RELICS', 'HERO_UPS', 'HERO_CLASSES', 'CLASS_DEFS', 'CLASS_ABILITIES', 'CLASS_TRIALS', 'EVO_DEFS', 'EVO_NAMES', 'SOLO_ABILITIES', 'SOLO_HEROES',
+  const tables = ['UNIQ', 'RELICS', 'HERO_CLASSES', 'CLASS_DEFS', 'CLASS_ABILITIES', 'CLASS_TRIALS', 'EVO_DEFS', 'EVO_NAMES', 'SOLO_ABILITIES', 'SOLO_HEROES',
     'DEEP_SETS', 'DEEP_BOONS', 'DEEP_RULES', 'DEEP_SHOP', 'STAR_MAPS', 'STAR_BRIDGES', 'CAMP_BLESS', 'CODEX_MILESTONES', 'BESTIARY_PERKS', 'CRAFT_STATS', 'CRAFT_AFFIXES', 'CRAFT_KINDS',
     'CRAFT_STATIONS', 'CRAFT_TROPHIES', 'DEED_LADDER', 'DEED_CHAPTERS'];
   let missing = [];
@@ -4702,8 +4662,8 @@ if (section('solo copy: items, sets, heroes (W1-F)')) try {
     if (Array.isArray(v)) { v.forEach((x, i) => walk(x, `${p}[${i}]`, seen, d + 1, key)); return; }
     for (const k of Object.keys(v)) if (!SK.has(k)) { let x; try { x = v[k]; } catch (e) { continue; } walk(x, `${p}.${k}`, seen, d + 1, k); }
   };
-  const tables = ['UNIQ', 'RELICS', 'HERO_UPS', 'CRAFT_STATS', 'CRAFT_KINDS', 'CRAFT_AFFIXES', 'CRAFT_TROPHIES', 'CRAFT_TONICS', 'CRAFT_STATIONS', 'CRAFT_FAMILY',
-    'EVO_DEFS', 'EVO_NAMES', 'CLASS_DEFS', 'CLASS_ABILITIES', 'HERO_CLASSES', 'SOLO_ABILITIES', 'SOLO_HEROES', 'CLASS_TRIALS', 'CLASS_STAR_NAMES'];
+  const tables = ['UNIQ', 'RELICS', 'CRAFT_STATS', 'CRAFT_KINDS', 'CRAFT_AFFIXES', 'CRAFT_TROPHIES', 'CRAFT_TONICS', 'CRAFT_STATIONS', 'CRAFT_FAMILY',
+    'EVO_DEFS', 'EVO_NAMES', 'CLASS_DEFS', 'CLASS_ABILITIES', 'HERO_CLASSES', 'SOLO_ABILITIES', 'SOLO_HEROES', 'CLASS_TRIALS', ];
   let missing = [];
   for (const n of tables) { let v; try { v = E(n); } catch (e) { missing.push(n); continue; } walk(v, n, new Set(), 0, n); }
   // every item kind, tier and unique, as the item box names them, and every stat line as it is printed
@@ -4717,7 +4677,7 @@ if (section('solo copy: items, sets, heroes (W1-F)')) try {
     walk(E(`JOIN_LINES[${JSON.stringify(h)}] || []`), `JOIN_LINES.${h}`, new Set(), 0, 'text');
     walk(E(`({ n: ROSTER[${JSON.stringify(h)}].name, t: ROSTER[${JSON.stringify(h)}].title, how: ROSTER[${JSON.stringify(h)}].how })`), `ROSTER.${h}`, new Set(), 0, 'how');
   }
-  assert(!missing.filter(n => n !== 'CLASS_STAR_NAMES').length && strings > 1200, `the item, set and hero scan reads ${strings} strings from ${tables.length - missing.length} tables, every kind name and stat line, and the bios and stories of ${E('SOLO_ORDER').length} heroes${missing.length ? ' (missing: ' + missing.join(', ') + ')' : ''}`);
+  assert(!missing.length && strings > 1000, `the item, set and hero scan reads ${strings} strings from ${tables.length - missing.length} tables, every kind name and stat line, and the bios and stories of ${E('SOLO_ORDER').length} heroes${missing.length ? ' (missing: ' + missing.join(', ') + ')' : ''}`);
   assert(!hits.length, 'no party, companion, ally, "your heroes", Bench, Bond or partner-advice text in an item, affix, unique, set, Sigil, relic, class, subclass or hero string' + (hits.length ? `: ${hits.length}, e.g. ${hits.slice(0, 5).join(' | ')}` : ''));
   const gs = loadCore({ solo: true, seed: 9 }), G = s => gs.eval(s);
   G('soloPick("wren")');
@@ -4955,7 +4915,7 @@ if (section('training (W2-A)')) try {
   const g = loadCore({ solo: true, seed: 21 }), E = s => g.eval(s), near = (a, b, t = 1e-9) => Math.abs(a - b) <= t * Math.max(1, Math.abs(b));
   const T = JSON.parse(E('JSON.stringify(SOLO_TUNE.train)')), PR = JSON.parse(E('JSON.stringify(ECON.train)'));
   // save defaults and the key
-  assert(E('KEY') === 'lanternfall.save.v4' && E('S.v') === 4 && E('fresh().v') === 4, 'save key lanternfall.save.v4 (S.v 4): v3 saves are never read');
+  assert(E('KEY') === 'lanternfall.save.v5' && E('S.v') === 5 && E('fresh().v') === 5, 'save key lanternfall.save.v5 (S.v 5): v4 saves are never read');
   const tr0 = JSON.parse(E('JSON.stringify(fresh().solo.tr)'));
   assert(Object.keys(tr0).join() === 'wren,tobin,pip' && tr0.wren.echo === 0 && tr0.tobin.bash === 0 && tr0.pip.fire === 0 && Object.values(tr0).every(r => r.atk === 0 && r.parry === 0 && r.dodge === 0),
     `fresh(): every hero's moves start at Lv 0 (${JSON.stringify(tr0)})`);
@@ -4968,7 +4928,7 @@ if (section('training (W2-A)')) try {
   E('soloPick("wren", { now: 1 }); S.gold = 0; S.L = 1');
   assert(E('trainMoves().join()') === 'atk,echo,parry,dodge' && E('trainMoves("tobin").join()') === 'atk,bash,parry,dodge' && E('trainMoves("pip").join()') === 'atk,fire,parry,dodge',
     'moves: Attack, each unlocked ability, Parry, Dodge (per hero)');
-  assert(!E('buyHero("blade", "1")') && !E('buyHero("swift", "1")') && !E('buyHero("precision", "1")'), 'Blade, Swiftness and Precision cannot be bought in solo (buyHero is the party game\'s)');
+  assert(E('typeof buyHero === "undefined" && typeof hireComp === "undefined"'), 'Blade, Swiftness and Precision are gone (buyHero and hireComp are deleted)');
 
   // costs: base x r^n up to the bend, x r2 past it
   const cost = (k, n) => PR[k].base * Math.pow(PR.r, Math.min(n, PR.bend)) * Math.pow(PR.r2, Math.max(0, Math.min(n, PR.bend2) - PR.bend)) * Math.pow(PR.r3, Math.max(0, n - PR.bend2));
@@ -5111,7 +5071,7 @@ if (section('training (W2-A, browser)')) try {
         assert(scrollW, `${at}: no sideways scroll`);
         // the Fight tab: no Blade / Swiftness / Precision rows
         await X('setTab("adv"); true'); await page.waitForTimeout(500);
-        assert(await X('!document.querySelector("#heroRows .row") && document.getElementById("heroRows").offsetParent === null && !/Blade|Swiftness|Precision/.test(document.getElementById("p-adv").innerText)'), `${at}: the Fight tab has no Blade, Swiftness or Precision rows`);
+        assert(await X('!document.getElementById("heroRows") && !/Blade|Swiftness|Precision/.test(document.getElementById("p-adv").innerText)'), `${at}: the Fight tab has no Blade, Swiftness or Precision rows`);
         await X('closeMenu(); true'); await page.waitForTimeout(400);
         // long press on Dodge: the sheet with its level and a Train button
         const bb = await (await page.$('#soloBar .sb-dodge')).boundingBox();
@@ -5142,9 +5102,9 @@ if (section('removed systems (W2-C)')) try {
   const files = [];
   const walkDir = d => { for (const n of fs.readdirSync(d)) { const p = path.join(d, n); if (fs.statSync(p).isDirectory()) walkDir(p); else files.push(p); } };
   walkDir(path.join(ROOT, 'src'));
-  const GONE_FILES = ['11b-art-legend.js', '21c-data-legend.js', '55-legend.js', '75-legend-ui.js', '21d-data-pinnacle.js', '21e-stories-pinnacle.js', '21i-lore-exped.js', '57b-expeditions.js', '75-exped-ui.js', '60-legend.css', '60-exped.css', '55-welcome.js', '55-skillpace.js'];
-  assert(!files.some(f => GONE_FILES.includes(path.basename(f))), 'removed systems: none of the 13 source files is back');
-  const RE = /\b(LEG_[A-Z_]+|PIN_[A-Z_]+|EXPED_[A-Z_]+|legend(?:UI|Drop|Learn|Inscribe|Mark|Sigil|Sets|Active|Known|Text|Val|Rank|Echoes|Budget|Change|HeroCheck|CanWear|ItemState|CardLines|IconSafe|Icon|Owe|PayOwed)|sigilIcon|SIGIL_[A-Z_]+|expedOut|expedSend|expedCollect|expedOpen|expedSlots|expedRoom|expedGoto|expedBack|expedSent|expedHaulText|campMapRoom|lgFits|itemLegendLines|S\.legend|S\.exped|S\.pin|maproom|expSlots|expHaul|welcomeApply|welcomeNote|welcomeInfo|skillKept|skillPaceInfo|S\.welcome|S\.skillPace)\b/;
+  const GONE_FILES = ['11b-art-legend.js', '21c-data-legend.js', '55-legend.js', '75-legend-ui.js', '21d-data-pinnacle.js', '21e-stories-pinnacle.js', '21i-lore-exped.js', '57b-expeditions.js', '75-exped-ui.js', '60-legend.css', '60-exped.css', '55-welcome.js', '56e-formation.js', '56d-autofield.js', '56b-synergy.js', '56f-bonds.js', '21f-stories-bonds.js', '75-bonds-ui.js', '75-unlocks-ui.js', '60-formation.css', '60-lineup.css', '60-unlocks.css', '55-skillpace.js'];
+  assert(!files.some(f => GONE_FILES.includes(path.basename(f))), 'removed systems: none of the removed source files is back');
+  const RE = /\b(LEG_[A-Z_]+|PIN_[A-Z_]+|EXPED_[A-Z_]+|legend(?:UI|Drop|Learn|Inscribe|Mark|Sigil|Sets|Active|Known|Text|Val|Rank|Echoes|Budget|Change|HeroCheck|CanWear|ItemState|CardLines|IconSafe|Icon|Owe|PayOwed)|sigilIcon|SIGIL_[A-Z_]+|expedOut|expedSend|expedCollect|expedOpen|expedSlots|expedRoom|expedGoto|expedBack|expedSent|expedHaulText|campMapRoom|lgFits|itemLegendLines|S\.legend|S\.exped|S\.pin|maproom|expSlots|expHaul|welcomeApply|welcomeNote|welcomeInfo|skillKept|skillPaceInfo|S\.welcome|S\.skillPace|FORM_TUNE|SYN_TUNE|HERO_UPS|COMPS|soloOn|SOLO_LOAD|__SOLO|hireComp|buyHero|compDps|rosterLive|rosterList|charRec|isRecruited|unlockChar|canRecruit|recruitCost|setField|autoField|synergyMods|BOND_[A-Z_]+|bondXp|ROSTER_TUNE|charGear|equipChar|unequipChar|paceXp|storySay|foesGold|keenCharMult|partyHymnOn|S\.comp|S\.party\.field|S\.party\.cells|S\.blade|S\.swift|S\.precision|formEnsure|cbWallOn|companionTick|Kin blessing)\b/;
   const hits = [];
   for (const f of files) { if (!/\.(js|css|html)$/.test(f)) continue; const t = strip(fs.readFileSync(f, 'utf8')); const m = t.match(RE); if (m) hits.push(path.relative(ROOT, f) + ': ' + m[0]); }
   assert(!hits.length, 'removed systems: no code, data, CSS or markup reads a removed global, save field or building' + (hits.length ? ': ' + hits.slice(0, 5).join(' | ') : ''));
@@ -5383,1888 +5343,6 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
     } finally { await browser.close(); }
   }
 } catch (e) { fail(`landscape ${w}x${h} (browser, UX-L1) crashed: ` + (e.stack || e)); }
-// ==== end UX-L1 ====
-
-// ==== PARTY_LEGACY: checks of the dormant party build (W2-B). They run only with `node tools/check.mjs --party` and are deleted
-// in wave 3 with the party code. Nothing above this line may depend on anything in here. ====
-LEGACY = true;
-
-// ---- balance (BAL1) party parts: companion drills, synergy texts ----
-if (section('balance (party)')) try {
-  // Item 3 (T10): a drill every stepEvery levels between promotions, power x stepX, one event each.
-  {
-    const g = loadCore({ seed: 21 }), E = s => g.eval(s);
-    E('chooseClass("warden")');
-    const T = E('ROSTER_TUNE');
-    assert(E('drillsAt(4) === 0 && drillsAt(5) === 1 && drillsAt(24) === 4 && drillsAt(25) === 4 && drillsAt(30) === 5 && isDrillLv(20) && !isDrillLv(25)'), 'drills at levels 5, 10, 15, 20, 30... (the 25s are promotions)');
-    const drills = []; g.fn.on('drill', p => drills.push(p.lv));
-    E('charRec("wren").lv = 9; charRec("wren").xp = 0');
-    const p9 = E('charPow("wren")'); E('addCharXp("wren", cxpNeed(9) / ((ROSTER.wren.rarity === "common" ? ROSTER_TUNE.commonXp : 1) * (1 + catchUpBonus("wren")) * mod("compXp")) + 1e-6, true)');
-    const p10 = E('charPow("wren")');
-    assert(E('charRec("wren").lv') === 10 && drills.join() === '10' && Math.abs(p10 / p9 - T.growth * T.stepX) < 1e-6, `level 10 is a drill: one event, power x${(p10 / p9).toFixed(3)} (growth ${T.growth} x drill ${T.stepX})`);
-    let tst = 0; g.fn.on('toast', () => tst++);
-    E('charRec("wren").lv = 14; charRec("wren").xp = cxpNeed(14) * 0.999999');
-    E('addCharXp("wren", cxpNeed(14), false)');
-    assert(E('charRec("wren").lv') >= 15 && tst >= 1, 'a drill shows a toast when you are playing');
-  }
-  // Item 1: synergies at full strength, and the texts show what you get.
-  {
-    const g = loadCore({ seed: 27 }), E = s => g.eval(s);
-    assert(E('SYN_TUNE.today') >= 0.5, `SYN_TUNE.today ${E('SYN_TUNE.today')} (>= 0.5)`);
-    E('chooseClass("warden"); for (const k of ["tobin", "pip", "hesketh"]) unlockChar(k, "t", true); S.party.autoField = false; setField(["wren", "tobin", "pip"])');
-    const a = E('activeSynergies().find(x => x.id === "hedgefolk")');
-    const want = Math.round(15 * a.strength * E('SYN_TUNE.today'));
-    assert(a && a.effectText.includes(`attacks ${want}% faster`), `Hedgefolk with a Common shows its real number (${a && a.effectText})`);
-    const mods = E('synergyMods()');
-    assert(Math.abs(mods.party - (1 + E('SYN_TUNE.hedgeSpeed') * a.strength * E('SYN_TUNE.today'))) < 0.2 + 1e-9 && mods.party > 1.1, `and the party gets it (x${mods.party.toFixed(3)} damage, Kindle included)`);
-    E('SYN_TUNE.today = 0.5');
-    const half = E('activeSynergies().find(x => x.id === "hedgefolk").effectText');
-    assert(half.includes(`attacks ${Math.round(15 * a.strength * 0.5)}% faster`) && E('SYNERGIES.find(x => x.id === "dusk") && true'), `a lower SYN_TUNE.today changes the text too (${half})`);
-    E('SYN_TUNE.today = 1');
-    const dusk = E('(() => { const d = SYNERGIES.find(x => x.id === "dusk"); return d.text; })()');
-    assert(/below 50% HP/.test(dusk), 'thresholds such as "below 50% HP" are never scaled');
-  }
-} catch (e) { fail('balance (party) crashed: ' + (e.stack || e)); }
-
-// ---- camp (party part): the Roster board's bench status hook ----
-if (section('camp (party bench)')) try {
-  const g = loadCore({ seed: 5 }), E = s => g.eval(s);
-  // Roster board status hook
-  E('S.maxZone = 30; S.gold = 1e12; ["tobin","wren","pip","hesketh","kestrel"].forEach(k => recruit(k))');
-  const bench = JSON.parse(E('JSON.stringify(benchList())'));
-  assert(bench.length >= 1 && bench.every(id => E(`campStatus("${id}").status`) === 'rest' && E(`campFree("${id}")`)), `bench rests at camp (${bench.join(', ')})`);
-  const who = bench[0];
-  E(`globalThis.__rm = registerBenchStatus(id => id === "${who}" ? { status: 'job', label: 'Job: Oak Grove' } : null)`);
-  assert(E(`campStatus("${who}").status`) === 'job' && !E(`campFree("${who}")`) && E(`campStatus(S.party.field[0]).status`) === 'field', 'registerBenchStatus: one status per character, from the owning system');
-  E('globalThis.__rm()'); assert(E(`campStatus("${who}").status`) === 'rest', 'removing the hook frees the character');
-} catch (e) { fail('camp (party bench) crashed: ' + (e.stack || e)); }
-
-// ---- constellations (party part): Oathsworn, the hero-only trick that leaves companions at x1.1 ----
-if (section('constellations (party)')) try {
-  const g = loadCore({ seed: 41 }), E = s => g.eval(s);
-  E('chooseClass("warden"); S.L = 120; S.maxZone = 20; S.stars.maps = {}');
-  E('starReset(); ["a2s1","a2s2","a2s3","a2s4","a2s5","a2s8"].forEach(id => starLight(id))');
-  const dm = E('mod("dmg")'), dp = E('mod("dmg") * mod("party")');
-  E('starUnlight("a2s8")');
-  assert(Math.abs(dm / E('mod("dmg")') - 0.75) < 1e-9 && Math.abs(dp / E('mod("dmg") * mod("party")') - 1.1) < 1e-9, 'Oathsworn: the hero deals x0.75, companions x1.1 (hero-only trick)');
-} catch (e) { fail('constellations (party) crashed: ' + (e.stack || e)); }
-
-// ---- 5. roster and migration (56-roster.js, B1 + B3) ----
-if (section('roster')) try {
-  const FIX = ['save-v2.json', 'save-mid-v2.json', 'save-v2-late.json', 'save-a-v1.json'];
-  // Stage A's own fields that the roster now owns: their values may change on migration.
-  const OWNED = ['field', 'cells'];
-  for (const f of FIX) {
-    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
-    const old = JSON.parse(raw);
-    const g = loadCore({ storage: memoryStorage({ [KEY]: raw }) });
-    const S = JSON.parse(JSON.stringify(g.eval('S')));
-    const cmp = JSON.parse(raw);
-    if (cmp.party) for (const k of OWNED) { delete cmp.party[k]; }
-    const d = subsetDiff(cmp, S);
-    assert(!d, `${f}: every old field preserved` + (d ? ': ' + d : ''));
-    const nl = g.eval('rosterNoLoss()');
-    assert(S.party.rv === 1 && nl.ratio >= 1 && nl.ratio <= 1.3, `${f}: T9 field damage vs old compDps ${nl.ratio.toFixed(3)} (old ${nl.old.toFixed(0)}, now ${nl.now.toFixed(0)}; want 1.00-1.30)`);
-    // F1: the party of three drops a companion; its no-loss check is the formation section's C9 (hero + field).
-    const oldDps = g.eval('oldCompDps()'), b3Dps = g.eval('formNoLoss() ? formNoLoss().before - heroDps() : compDps()');
-    assert(b3Dps >= oldDps * 0.999, `${f}: B3's field of 3 ${b3Dps.toFixed(0)} >= old formula ${oldDps.toFixed(0)}`);
-    const bad = badNumbers(S);
-    assert(!bad.length && Number.isFinite(g.fn.totalDps()), `${f}: no NaN/Infinity` + (bad.length ? ': ' + bad.slice(0, 3).join(', ') : ''));
-    const shape = g.eval(`Object.entries(S.party.rec).every(([k, r]) => ROSTER[k] && r.lv >= 1 && r.lv <= levelCap(r.rank) && r.rank >= 0 && r.rank <= 7 && r.xp >= 0 && 'wpn' in r && 'trk' in r && 'seen' in r)`);
-    assert(shape, `${f}: roster records valid`);
-    const fld = S.party.field;
-    assert(fld.length >= 1 && fld.length <= 2 && fld.every(k => S.party.rec[k]) && S.party.cells.hero && fld.every(k => S.party.cells[k]), `${f}: field ${fld.join(',')} placed`);
-    const mapped = old.comp.map((n, i) => n > 0 ? i : -1).filter(i => i >= 0)
-      .map(i => (i === 0 && old.party && old.party.newGame && old.party.cls === 'lightkeeper') ? 'bram' : g.eval(`COMP_CHAR_KEYS[${i}]`));
-    assert(mapped.every(k => S.party.rec[k] && S.party.rec[k].src === 'migrated') && (old.maxZone < 3 || S.party.rec.hesketh), `${f}: old companions migrated (${mapped.join(',')}), Hesketh from zone 3`);
-    // round trip: save, reload, nothing lost, migration not run again
-    g.fn.save();
-    const saved = g.storage.get(KEY);
-    const g2 = loadCore({ storage: memoryStorage({ [KEY]: saved }) });
-    const d2 = deepDiff(JSON.parse(saved), JSON.parse(JSON.stringify(g2.eval('S'))));
-    assert(!d2 && Math.abs(g2.fn.compDps() / g.fn.compDps() - 1) < 1e-9, `${f}: save/load round-trip lossless` + (d2 ? ': ' + d2 : ''));
-    // play a minute: S.comp is never written again
-    const comp0 = JSON.stringify(old.comp);
-    E2(g, 'S.gold += 1e6'); g.fn.hireComp(0, '1');
-    for (let i = 0; i < 600; i++) g.fn.tick(0.1);
-    assert(JSON.stringify(g.eval('S.comp')) === comp0, `${f}: S.comp untouched after play`);
-    assert(!g.errors.length, `${f}: no handler errors` + (g.errors.length ? ': ' + g.errors[0] : ''));
-  }
-  // promotions and recruits never reshuffle the rest of a migrated field
-  {
-    const g = loadCore({ storage: memoryStorage({ [KEY]: fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-v2-late.json'), 'utf8') }) });
-    const f0 = g.eval('S.party.field.join()');
-    g.eval('S.gold = 1e15; S.mats.ess = [999, 999, 999, 999, 999]; promoteChar(S.party.field[0])');
-    const fp = g.eval('S.party.field.join()');
-    const plan = g.eval('JSON.stringify(bestLineup({ by: "potential" }).field.slice().sort())');
-    g.eval('unlockChar("thessaly", "test", true)');
-    // F3: a recruit re-plans through the planner (autoPlan): the field stays, or becomes the planner's pick.
-    const a = f0.split(','), b = g.eval('S.party.field.slice()');
-    const stays = b.join() === f0, planned = JSON.stringify(b.slice().sort()) === g.eval('JSON.stringify(bestLineup({ by: "potential" }).field.slice().sort())');
-    assert(fp === f0 && (stays || planned) && !b.includes('elowen'), `late save: promote keeps the field; a recruit leaves it or applies the planner's pick (${f0} -> ${b.join()}; plan before the recruit ${plan})`);
-  }
-  // spec example: save-v2.json -> Tobin rank 1 lv 25+, Wren 14+, Pip 6+, Hesketh 1
-  {
-    const g = loadCore({ storage: memoryStorage({ [KEY]: fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-v2.json'), 'utf8') }) });
-    const r = g.eval('S.party.rec');
-    assert(r.tobin.rank >= 1 && r.tobin.lv >= 25 && r.wren.lv >= 14 && r.pip.lv >= 6 && r.hesketh.lv === 1, `save-v2 mapping (Tobin r${r.tobin.rank} L${r.tobin.lv}, Wren L${r.wren.lv}, Pip L${r.pip.lv}, Hesketh L${r.hesketh.lv})`);
-  }
-  // new games: starter per class, XP from use, caps, promotions, milestones, offline XP
-  const want = { warden: 'wren', lanternmage: 'tobin', ranger: 'tobin', lightkeeper: 'bram' };
-  for (const [cls, st] of Object.entries(want)) {
-    const g = loadCore({ seed: 3 });
-    g.eval(`chooseClass(${JSON.stringify(cls)})`);
-    assert(g.eval(`S.party.field.join() === ${JSON.stringify(st)} && charRec(${JSON.stringify(st)}).lv === 1 && S.comp.every(n => n === 0)`), `${cls}: starter ${st} joins at level 1`);
-  }
-  {
-    const g = loadCore({ seed: 4 });
-    const E = s => g.eval(s);
-    E('chooseClass("warden")');
-    const ms = [], lv = [];
-    g.fn.on('milestone', p => ms.push(p.lv)); g.fn.on('charLevel', p => lv.push(p.id));
-    for (let i = 0; i < 9000; i++) g.fn.tick(0.1);   // BAL1: levels follow time spent fighting, so 15 minutes (was 5)
-    assert(E('charRec("wren").lv') > 1 && ms.includes(5), `fielded Wren levels from kills (L${E('charRec("wren").lv')}, milestones ${ms.join(',')})`);
-    assert(E('storyState("wren").unread') >= 1 && E('markStoriesRead("wren") && storyState("wren").unread === 0'), 'camp stories unlock and can be marked read');
-    E('S.maxZone = Math.max(S.maxZone, ROSTER.tobin.route.zone, ROSTER.hesketh.route.zone)'); g.fn.tick(1.1);
-    assert(E('isRecruited("tobin") && isRecruited("hesketh")'), `Tobin and Hesketh join free at their zones (${E('ROSTER.tobin.route.zone')}, ${E('ROSTER.hesketh.route.zone')})`);
-    E('benchChar("hesketh")');
-    const hk = E('charRec("hesketh").lv'); for (let i = 0; i < 1200; i++) g.fn.tick(0.1);
-    assert(E('charRec("hesketh").lv') === hk && !E('S.party.field.includes("hesketh")'), 'benched characters earn no XP');
-    E('charRec("wren").lv = 25; charRec("wren").xp = 0');
-    E('addCharXp("wren", 1e9)');
-    assert(E('charRec("wren").lv') === 25 && E('charRec("wren").xp') <= E('bankXp(25)') + 1e-9 && E('charRec("wren").xp') > E('cxpNeed(25)'), `level cap holds and XP banks ${E('ROSTER_TUNE.bankLv')} levels (BAL1)`);
-    E('S.gold = 1e12; S.mats.ess = [0, 0, 50, 0, 0]');
-    assert(E('canPromote("wren") && promoteChar("wren")') && E('charRec("wren").rank') === 1 && E('charRec("wren").lv') >= 40, `promotion: rank up, cap +25, banked XP spent at once (L${E('charRec("wren").lv')}), higher-tier essence accepted`);
-    assert(E('S.mats.ess[2]') === 45, 'Common promotion costs half essence (5)');
-    E('charRec("wren").lv = 26');
-    const d0 = E('charPow("wren")'); E('charRec("wren").rank = 2'); const d1 = E('charPow("wren")');
-    assert(Math.abs(d1 / d0 - E('ROSTER_TUNE.rankX')) < 1e-9, `a rank multiplies power by ROSTER_TUNE.rankX (x${E('ROSTER_TUNE.rankX')})`);
-    E('S.activity = "fight"; S.zone = S.maxZone');
-    // F3: the planner may field Hesketh over Tobin (the Warden hero is the tank): the first fielded companion
-    const fk = E('S.party.field.find(k => k !== "wren") || S.party.field[0]'), fnm = E(`ROSTER[${JSON.stringify(fk)}].name.split(' ')[0]`);
-    const before = E(`charRec(${JSON.stringify(fk)}).lv`), res = g.fn.awayGains(3600);
-    assert(E(`charRec(${JSON.stringify(fk)}).lv`) > before && res.lines.some(l => l.txt.includes(fnm)), `offline XP for the field (${fnm} L${before} -> L${E(`charRec(${JSON.stringify(fk)}).lv`)})`);
-    assert(E('supportBuff()') >= 0 && Number.isFinite(g.fn.totalDps()), 'support buff finite');
-    assert(E('!canRecruit("oriel") && recruitCost("oriel") === null && recruitHow("oriel").length > 0'), 'non-progress routes stay locked with a how line');
-    let off = null; E('S.maxZone = 30');
-    off = g.eval('addRecruitRoute("maren", { source: "quest", ready: () => true, cost: () => ({ gold: 10, ess: [2, 3] }), how: () => "test" })');
-    assert(E('canRecruit("maren") && recruit("maren") && charRec("maren").src === "quest"'), 'addRecruitRoute: a new avenue recruits without editing the roster');
-    off();
-    assert(E('Object.keys(ROSTER).length === 18') && E('Object.values(ROSTER).every(c => CHAR_RARITY[c.rarity] && ROLE_STATS[c.role] && c.how && c.title)'), '18 characters with rarity, role, title and how');
-    assert(!g.errors.length, 'no roster handler errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
-  }
-} catch (e) { fail('roster crashed: ' + (e.stack || e)); }
-
-// ---- 7. synergies in three layers: slot jobs, combos and Kin, Bonds (56b-synergy.js; B2, rebuilt by plan-3 F2, formation.md 2) ----
-if (section('synergy')) try {
-  const g = loadCore({ seed: 6 });
-  const E = s => g.eval(s);
-  E('chooseClass("warden"); ROSTER_KEYS.forEach(k => unlockChar(k, "test", true))');
-  const lv = (ids, n) => E(`${JSON.stringify(ids)}.forEach(k => { charRec(k).lv = ${n}; })`);
-  // F1: autoPlace puts everyone in the home rule, so a line-up's slots (Out of place) do not depend on the one before.
-  const field = ids => E(`setField(${JSON.stringify(ids)}); autoPlace()`);
-  const act = () => E('activeSynergies()');
-  const syn = id => act().find(s => s.id === id) || null;
-  E('ROSTER_KEYS.forEach(k => { charRec(k).lv = 1; })');
-  // the list: 8 combos, 4 Kin, 21 Bonds; the 14 old ids first, in their old order (the Codex keeps one tile each)
-  const OLD14 = ['hearth', 'hedgefolk', 'oldoath', 'lampward', 'kindlestar', 'markleap', 'dusk', 'chosen', 'hunting', 'bellsong', 'waxkindle', 'mirelamp', 'oldenemies', 'wayfarers'];
-  const layers = E('(() => { const n = { combo: 0, kin: 0, bond: 0 }; for (const s of SYNERGIES) n[s.layer]++; return n; })()');
-  assert(E('SYNERGIES.length') === 33 && layers.combo === 8 && layers.kin === 4 && layers.bond === 21 && E('SYNERGIES.slice(0, 14).map(s => s.id).join()') === OLD14.join() &&
-    E('SYNERGIES.every(s => s.name && s.needs && s.text && synergyStatus(s.id) && synergyStatus(s.id).text && (s.layer !== "bond" || (s.pair.length === 2 && s.stories.length === 2)))'),
-  `33 entries (${layers.combo} combos, ${layers.kin} Kin, ${layers.bond} Bonds), old ids first, each with a need, a text and a status line`);
-  assert(E('ROSTER_KEYS.every(k => SYNERGIES.some(s => s.layer === "bond" && s.pair.includes(k)))') && E('["warden", "ranger", "lanternmage", "lightkeeper"].every(c => SYNERGIES.filter(s => s.cls === c).length === 2)'),
-    'every companion has a Bond; every class has 2 hero Bonds');
-  // Kin: two companions of one circle (Common Cause: +25% with a Common)
-  field(['tobin', 'wren']);
-  assert(syn('hedgefolk') && syn('hedgefolk').members.length === 2 && syn('hedgefolk').strength === 1.25 && syn('hedgefolk').layer === 'kin', 'Tobin + Wren: Hedgefolk (Kin), 25% stronger with Commons');
-  assert(Math.abs(E('synergyMods().keen') - (1 + 0.03 * 1.25)) < 1e-9, `Hedgefolk crit damage is +3% with 2 (x${E('synergyMods().keen').toFixed(4)}, Common Cause included; ECON-A: was +5% gold)`);
-  field(['oriel', 'kestrel']);
-  assert(syn('dusk') && syn('dusk').strength === 1, 'Oriel + Kestrel: Dusk Company (Rare + Epic: strength 1)');
-  field(['maren', 'aldric']);
-  assert(syn('oathkin') && E('synUnit("hero").dr') < 1, `Maren + Aldric: The Oath (Kin): the party takes less (hero x${E('synUnit("hero").dr').toFixed(3)})`);
-  // Bonds: off until level 1 (Met), then bondX of the level, x Common Cause
-  field(['pip', 'oriel']);
-  assert(!syn('kindlestar') && /^Not yet\. 30m 0s more together to Met\.$/.test(E('synergyStatus("kindlestar").text')), `a Bond at level 0 is off: "${E('synergyStatus("kindlestar").text')}"`);
-  const st = [];
-  for (const n of [1, 2, 3, 4, 5]) { E(`bondSet("kindlestar", ${n})`); st.push(syn('kindlestar') ? syn('kindlestar').strength : 0); }
-  assert(st.map(x => x.toFixed(4)).join() === [0.5, 0.75, 1, 1.15, 1.3].map(x => (x * 1.25).toFixed(4)).join() && syn('kindlestar').lv === 5 && syn('kindlestar').layer === 'bond',
-    `Pip + Oriel: Kindle and Starfall by level: ${st.map(x => x.toFixed(3)).join(', ')} (bondX x Common Cause)`);
-  // old named synergies do not get weaker for old saves: level 3 (the seed of an active pair) = the old strength (1 x Common Cause)
-  const weak = [];
-  for (const id of OLD14.filter(i => E(`SYNERGIES.find(s => s.id === "${i}").layer`) === 'bond')) {
-    const d = E(`SYNERGIES.find(s => s.id === "${id}")`), comps = d.pair.filter(k => k !== 'hero');
-    if (d.cls) E(`S.party.cls = "${d.cls}"`); else E('S.party.cls = "warden"');
-    field(comps.length === 2 ? comps : comps.concat(comps[0] === 'wren' ? 'tobin' : 'wren'));
-    E(`bondSet("${id}", 3)`);
-    const cc = comps.some(k => E(`ROSTER.${k}.rarity`) === 'common') ? 1.25 : 1, s = syn(id);
-    if (!s || Math.abs(s.strength - cc) > 1e-9) weak.push(`${id} ${s ? s.strength : 'off'} vs ${cc}`);
-  }
-  E('S.party.cls = "warden"');
-  assert(!weak.length, 'the 9 old named pairs and Lantern\'s Chosen at level 3 have exactly their old strength (1 x Common Cause)' + (weak.length ? ': ' + weak.join('; ') : ''));
-  field(['aldric', 'elowen']);
-  assert(E('synergyStatus("chosen").text') === 'needs a Lanternmage hero', `Chosen for a Warden: "${E('synergyStatus("chosen").text')}"`);
-  // combos read roles and slots; the hero counts as its class role
-  field(['tobin', 'hesketh']);
-  E('setSlots({ front: "tobin", mid: "hero", back: "hesketh" })');
-  assert(syn('hearth') && syn('hearth').name === 'Lifeline' && syn('hearth').members.join() === 'tobin,hesketh' && Math.abs(E('synUnit("tobin").healIn') - 1.2) < 1e-9 && E('synUnit("tobin").dr') < 1,
-    `Lifeline: Tobin in Front, Hesketh in Back (tank healed x${E('synUnit("tobin").healIn')}, takes x${E('synUnit("tobin").dr').toFixed(2)})`);
-  E('setSlots({ front: "tobin", mid: "hesketh", back: "hero" })');
-  assert(!syn('hearth') && E('synergyStatus("hearth").text') === 'needs a support in Back', `Lifeline off with the support in the Middle: "${E('synergyStatus("hearth").text')}"`);
-  E('setSlots({ front: "hero", mid: "tobin", back: "hesketh" })');
-  assert(syn('hearth') && syn('hearth').members.join() === 'hero,hesketh' && syn('twowalls') && E('synParty().diveTaunt') === 'tobin', 'a Warden in Front: Lifeline with Hesketh, Two Walls with Tobin (Tobin taunts the first diver)');
-  field(['wren', 'pip']);
-  E('setSlots({ front: "hero", mid: "wren", back: "pip" })');
-  assert(['anvil', 'killbox', 'crossfire'].every(syn) && E('synUnit("pip").ctrl') > 1, 'Warden, Wren, Pip at home: Hammer and Anvil, Kill Box, Crossfire (3 combos at most)');
-  // slot jobs: 12 names; a member's job follows its slot; Out of place and jobs are outside the caps
-  const jobs = E('(() => { const o = []; for (const r in SLOT_JOBS) for (const s in SLOT_JOBS[r]) o.push(SLOT_JOBS[r][s].name); return o; })()');
-  assert(jobs.length === 12 && new Set(jobs).size === 12, `12 slot jobs: ${jobs.join(', ')}`);
-  assert(E('slotJob("hero").label') === 'Threat +25%' && E('slotJob("wren").label') === 'Crit +10%' && E('slotJob("pip").label') === 'Splash +10%' && Math.abs(E('synUnit("hero").th') - 1.25 * 1.1) < 1e-9,
-    `jobs: ${['hero', 'wren', 'pip'].map(k => E(`slotJob("${k}").name + " (" + slotJob("${k}").label + ")"`)).join(', ')}; the Warden's threat x${E('synUnit("hero").th').toFixed(3)} with Hammer and Anvil`);
-  field(['hesketh', 'wren']); E('setSlots({ front: "hesketh", mid: "wren", back: "hero" })');
-  assert(Math.abs(E('synUnit("hesketh").hp') - 1.1) < 1e-9 && E('slotJob("hesketh").name') === 'Stand Firm', 'a support in Front: Stand Firm, +10% max HP');
-  // the caps (2.5): combos, Kin and Bonds add at most +40% to one member's damage, and at most 20% damage reduction
-  field(['tobin', 'wren']); E('setSlots({ front: "tobin", mid: "wren", back: "hero" })');
-  // a new cells object: the evaluation is cached per field and cells (a tune change alone does not refresh it)
-  const capOf = () => E('(() => { const bust = () => { S.party.cells = Object.assign({}, S.party.cells); }; bust(); const on = charDps("wren"); const a = SYN_TUNE.anvil; SYN_TUNE.anvil = 0; SYN_TUNE.hedgeSpeed = 0; bust(); const off = charDps("wren"); SYN_TUNE.anvil = a; SYN_TUNE.hedgeSpeed = 0.15; bust(); return on / off; })()');
-  const r0 = capOf(); E('SYN_TUNE.anvil = 3'); const r1 = capOf(); E('SYN_TUNE.anvil = 0.1');
-  assert(r0 > 1 && r0 < 1.4 && Math.abs(r1 - 1.4) < 1e-6, `synCap: Wren's layer bonus x${r0.toFixed(3)} today; with Hammer and Anvil at +300% it stops near x1.4 (x${r1.toFixed(3)})`);
-  E('SYN_TUNE.twoWallsDr = 0.9'); field(['tobin', 'aldric']); E('setSlots({ front: "tobin", mid: "aldric", back: "hero" })');
-  assert(Math.abs(E('synUnit("hero").dr') - 0.8) < 1e-9, `drCap: Two Walls at 90% still leaves x${E('synUnit("hero").dr')} (20% at most)`);
-  E('SYN_TUNE.twoWallsDr = 0.08');
-  // removing a member deactivates and removes the effect
-  E('ROSTER_KEYS.forEach(k => { charRec(k).lv = 30; })');
-  E('bondSet("kindlestar", 3); bondSet("waxkindle", 3)');
-  const ev = []; g.fn.on('synergyChange', p => ev.push(p));
-  field(['pip', 'oriel']);
-  const om = E('synergyMods().char.oriel'), cd = g.fn.compDps();
-  assert(syn('kindlestar') && om > 1, `Pip + Oriel active (Oriel x${om.toFixed(3)})`);
-  field(['pip', 'morwen']);
-  assert(syn('waxkindle') && !syn('kindlestar'), 'Pip + Morwen: Wax and Kindle');
-  field(['tobin', 'oriel']);
-  assert(!syn('kindlestar') && !syn('waxkindle') && E('synergyMods().char.oriel') < om && ev.some(p => p.lost.includes('waxkindle')), 'benching Pip ends his Bonds and emits synergyChange');
-  assert(E('synergyMods().char.tobin') >= 1 && E('synergyMods().char.pip') === undefined, 'benched characters get no multiplier');
-  // synergies only add: compDps with effects >= without
-  field(['pip', 'oriel']);
-  const on = g.fn.compDps(); E('SYN_TUNE.on = 0'); const offD = g.fn.compDps(); E('SYN_TUNE.on = 1');
-  assert(Math.abs(on / cd - 1) < 1e-9 && on > offD, `effects add damage (x${(on / offD).toFixed(3)}); switching off restores the base`);
-  // no NaN: every character at levels 1 / 25 / 100, in varied line-ups, for every class, every Bond at Sworn
-  E('BOND_IDS.forEach(id => bondSet(id, 5))');
-  const bad = [];
-  for (const cls of ['warden', 'lanternmage', 'ranger', 'lightkeeper']) {
-    E(`S.party.cls = ${JSON.stringify(cls)}`);
-    for (const n of [1, 25, 100]) {
-      E(`ROSTER_KEYS.forEach(k => { charRec(k).lv = ${n}; charRec(k).rank = Math.floor((${n} - 1) / 25); })`);
-      const keys = E('ROSTER_KEYS');
-      keys.forEach((k, i) => {
-        field([k, keys[(i + 5) % 18], keys[(i + 11) % 18]]);
-        const v = E(`[charDps(${JSON.stringify(k)}), compDps(), totalDps(), goldMult(), critChance(), mod('compXp'), mod('abilityCd'), synUnit('hero').dr, synUnit(${JSON.stringify(k)}).healIn]`);
-        const sup = E(`ROSTER[${JSON.stringify(k)}].role === 'support'`), allSup = E(`S.party.field.every(x => ROSTER[x].role === 'support')`);
-        if (!v.every((x, j) => Number.isFinite(x) && (x > 0 || (j === 0 && sup) || (j === 1 && allSup)))) bad.push(`${cls} ${k} L${n}: ${v.join(',')}`);
-      });
-    }
-  }
-  assert(!bad.length, 'charDps finite for all 18 at levels 1/25/100, every class, every Bond at Sworn' + (bad.length ? ': ' + bad.slice(0, 3).join('; ') : ''));
-  // kit data for the UI; the L25 milestone is Old Friend
-  const kit = E(`ROSTER_KEYS.map(k => { const t = charTraits(k); return [k, t.length, t.some(x => x.kind === 'speciality'), t.some(x => x.kind === 'bond' && x.name === 'Old Friend' && /Bonds grow 50% faster/.test(x.text)), t.every(x => x.text && x.name && typeof x.active === 'boolean' && typeof x.stageC === 'boolean')]; })`);
-  assert(kit.every(([, n, sp, bd, okT]) => n >= 4 && sp && bd && okT), 'every character has a speciality, Old Friend ("Bonds grow 50% faster") and well-formed traits');
-  assert(E("['kestrel','maren','aldric','thessaly','anselm'].every(k => charTraits(k).some(t => t.kind === 'trait')) && ['elowen','caedmon','corvin'].every(k => charTraits(k).some(t => t.kind === 'aura'))"), 'Rares have a trait, Legendaries an aura');
-  E('S.party.cls = "warden"');
-  field(['pip', 'tobin']);
-  assert(E('synergyStatus("markleap").text') === 'needs Wren and Kestrel' && E('synergyStatus("dusk").text') === 'needs 2 more Dusk Company', `missing text (${E('synergyStatus("markleap").text')} / ${E('synergyStatus("dusk").text')})`);
-  field(['wren', 'kestrel']); E('bondSet("markleap", 3)');
-  assert(E('synergyStatus("markleap").text') === 'Active. Trusted: 125% strength.', `active text (${E('synergyStatus("markleap").text')})`);
-  assert(!g.errors.length, 'no synergy handler errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
-} catch (e) { fail('synergy crashed: ' + (e.stack || e)); }
-
-// ---- 6. unlock avenues (56c-unlocks.js, B7) ----
-if (section('unlocks')) try {
-  // A started game at a given zone; Date.now is pinned so setDay(d) picks the device day.
-  const game = (zone, seed = 7) => {
-    const g = loadCore({ seed });
-    g.eval('chooseClass("warden"); Date.__t = Date.now(); Date.now = () => Date.__t');
-    g.eval(`S.maxZone = ${zone}; S.zone = ${zone}`);
-    const recs = {}; g.fn.on('recruit', ({ id }) => { recs[id] = (recs[id] || 0) + 1; });
-    return { g, E: s => g.eval(s), recs, setDay: d => g.eval(`Date.__t = new Date(2026, 0, 1 + ${d}, 12).getTime()`), tick: n => { for (let i = 0; i < n; i++) g.fn.tick(0.1); } };
-  };
-  const E0 = s => loadCore({ seed: 1 }).eval(s);
-  const bossKill = (E, z) => E(`emit('kill', { mob: { key: 'x0', boss: true }, zone: ${z}, gold: 1, ess: 0, tier: 1 })`);
-  // Renown: +1 per claimed bounty (elite 3); Aldric at his Renown then gold; Vesper free at hers;
-  // Caedmon at his Renown + the zone 35 boss, wyrms count 5. Values read from UNLOCK_TUNE (BAL1 retuned them).
-  {
-    const { E, recs, tick } = game(10);
-    const T = E('UNLOCK_TUNE'), ag = E('recruitCost("aldric") || { gold: -1 }').gold;
-    for (let i = 0; i < T.aldric.renown - 1; i++) E("emit('bountyDone', { k: 'kill' })");
-    E('S.gold = 1e30');
-    assert(E('renown()') === T.aldric.renown - 1 && !E('canRecruit("aldric")'), `Renown ${T.aldric.renown - 1}: Aldric not yet`);
-    E("emit('bountyDone', { k: 'kill', elite: true })");
-    const g0 = E('S.gold'), gold = E('recruitCost("aldric").gold');
-    assert(E('renown()') === T.aldric.renown + 2 && E('canRecruit("aldric") && recruit("aldric")') && E('S.gold') === g0 - gold && gold > 0 && !E('recruit("aldric")') && recs.aldric === 1 && E('recruitHow("aldric")').includes(E(`fmt(${gold})`)), `Renown ${T.aldric.renown} + ${E(`fmt(${gold})`)} gold recruits Aldric once (elite bounty = 3; the how line shows the price)`);
-    E(`addRenown(${T.vesperRenown - E('renown()')}, "test")`); tick(11);
-    assert(E('isRecruited("vesper") && charRec("vesper").src === "renown"') && recs.vesper === 1, `Vesper joins free at Renown ${T.vesperRenown}`);
-    const need = T.caedmon.renown - E('renown()'), wy = Math.ceil(need / T.wyrmRenown);
-    E(`S.maxZone = ${T.caedmon.zone + 1}; S.wyrms = ${wy - 1}`); tick(11);
-    assert(!E('isRecruited("caedmon")') && E('caedmonRenown()') < T.caedmon.renown, `Caedmon waits below Renown ${T.caedmon.renown} (${E('caedmonRenown()')})`);
-    E(`S.wyrms = ${wy}`); tick(11);
-    assert(E('isRecruited("caedmon")') && recs.caedmon === 1, `Caedmon joins at Renown ${T.caedmon.renown} with the zone ${T.caedmon.zone} boss beaten`);
-  }
-  // Old save backfill: Renown from the bounties already claimed, once.
-  {
-    const old = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-v2.json'), 'utf8'));
-    old.bounties = { slots: [], claimed: 12, seq: 12 };
-    const g = loadCore({ storage: memoryStorage({ [KEY]: JSON.stringify(old) }) });
-    assert(g.eval('renown() === 12 && S.party.unlock.rb === true'), 'old save: 12 claimed bounties backfill 12 Renown');
-    g.eval("emit('bountyDone', { k: 'kill' })"); g.fn.save();
-    const g2 = loadCore({ storage: memoryStorage({ [KEY]: g.storage.get(KEY) }) });
-    assert(g2.eval('renown()') === 13, 'backfill runs once (13 after reload, not 25)');
-    const cmp = JSON.parse(JSON.stringify(old)); delete cmp.bounties.slots; delete cmp.bounties.seq; delete cmp.last; if (cmp.party) { delete cmp.party.field; delete cmp.party.cells; }
-    const d = subsetDiff(cmp, JSON.parse(JSON.stringify(g.eval('S'))));
-    assert(!d, 'old save fields kept with the unlock state added' + (d ? ': ' + d : ''));
-  }
-  // Tokens: pity guarantees (worst case 12 / 10), right bosses only.
-  {
-    const { E, recs } = game(40);
-    let n = 0; while (!E('isRecruited("grenna")') && n < 50) { n++; E('unlockTokenRoll("grenna", 0.999999)'); }
-    let m = 0; while (!E('isRecruited("isolde")') && m < 50) { m++; E('unlockTokenRoll("isolde", 0.999999)'); }
-    assert(n === 12 && m === 10 && recs.grenna === 1 && recs.isolde === 1, `T17 worst-case pity: Grenna ${n} (want 12), Isolde ${m} (want 10)`);
-    assert(E('unlockTokenRoll("grenna", 0) === null'), 'no rolls once won');
-  }
-  {
-    const { E } = game(60);
-    const gz = E('UNLOCK_TUNE.tokens.grenna.from'), iz = E('UNLOCK_TUNE.tokens.isolde.from');
-    const quarry = E(`(() => { for (let z = Math.max(${gz}, ${iz}); ; z++) if (zoneType(z) === 5) return z; })()`);
-    bossKill(E, gz - 7); bossKill(E, iz - 1);   // a Quarry Ruins boss below the token zone, and the zone below the Dusk Contract
-    assert(E('(S.party.unlock.tokens.grenna || { miss: 0 }).miss') === 0 && E('(S.party.unlock.tokens.isolde || { miss: 0 }).miss') === 0, 'no token roll below the token zones');
-    E('Math.random = () => 0.999999'); bossKill(E, quarry); bossKill(E, quarry); bossKill(E, quarry + 1);
-    assert(E('S.party.unlock.tokens.grenna.miss') === 2 && E('S.party.unlock.tokens.isolde.miss') === 3, 'Quarry Ruins bosses roll the token (repeat kills count); every boss from the zone rolls the Dusk Contract');
-    assert(Math.abs(E('tokenChance("grenna")') - 0.24) < 1e-9 && E('addTokenProgress("isolde", 100)') === 1, 'pity shown as the next chance; addTokenProgress caps at a sure roll');
-  }
-  // Tavern visitor: rotation by device day, hire once, trader for recruited visitors.
-  {
-    const { E, setDay, recs } = game(20);
-    const rot = E('UNLOCK_TUNE.rotation'), week = [280, 281, 282, 283, 284, 285, 286];
-    const ids = week.map(d => { setDay(d); return E('visitorToday().id'); });
-    assert(ids.join() === week.map(d => rot[d % 7]).join() && E('unlockDay()') === 286, `rotation follows the device day (${ids.join(',')})`);
-    const aday = week.find(d => rot[d % 7] === 'anselm');
-    const av = E('UNLOCK_TUNE.visitors.anselm');
-    E(`S.maxZone = Math.max(S.maxZone, ${av.from}, UNLOCK_TUNE.visitorFrom)`);
-    setDay(aday); E(`S.gold = 1e30; S.mats.ess = [0, 0, 0, 0, 0]; S.mats.ess[${av.ess[0] - 1}] = ${av.ess[1] + 10}`);
-    const ac = E('recruitCost("anselm")');
-    assert(E('visitorToday().kind === "hire" && canRecruit("anselm") && recruit("anselm")') && E('S.gold') === 1e30 - ac.gold && E(`S.mats.ess[${av.ess[0] - 1}]`) === 10 && recs.anselm === 1, `Anselm hired on his day for ${E(`fmt(${ac.gold})`)} gold + ${av.ess[1]} tier-${av.ess[0]} Essence`);
-    const vt = E('visitorToday()');
-    assert(E('S.party.unlock.visitor.hired') === true && vt.kind === 'trade' && !vt.done, 'a hired visitor is replaced by a trader');
-    const t = E('zoneTier(S.maxZone)'), e0 = E(`S.mats.ess[${t - 1}]`);
-    assert(E('buyTrade()') && E(`S.mats.ess[${t - 1}]`) === e0 + 10 && !E('buyTrade()'), 'the trader sells 10 essence of the top tier, once a day');
-    setDay(aday + 1); E('visitorToday()');
-    assert(E('S.party.unlock.visitor.day') === aday + 1 && E('S.party.unlock.visitor.hired') === false && E('S.party.unlock.visitor.bought') === false, 'a new device day resets the visitor');
-    const kday = week.find(d => rot[d % 7] === 'kestrel');
-    const kv = E('UNLOCK_TUNE.visitors.kestrel'), kz = E('ROSTER.kestrel.route.zone');
-    setDay(kday); E(`S.maxZone = ${Math.max(kv.from, E('UNLOCK_TUNE.visitorFrom'))}; S.gold = 1e30`);
-    const kc = E('recruitCost("kestrel").gold');
-    assert(kv.from < kz && kc === E(`foesGold(${kv.from}, ${kv.kills})`) && E('recruit("kestrel")') && E('S.gold') === 1e30 - kc, `Kestrel hires early at the Tavern (${E(`fmt(${kc})`)} gold) before zone ${kz}`);
-    setDay(aday + 7);
-    assert(E('visitorToday().kind') === 'trade' && E('daysUntilVisit("anselm")') === 0, 'a recruited visitor leaves a trader on their day');
-    E('S.maxZone = UNLOCK_TUNE.visitorFrom - 1');
-    assert(E('visitorToday().kind') === 'closed', `no visitors before zone ${E('UNLOCK_TUNE.visitorFrom')}`);
-  }
-  // Quests: hand-in consumes the items; Morwen's condition.
-  {
-    const { E, recs, tick } = game(Math.max(E0('UNLOCK_TUNE.quests.bram.from'), E0('UNLOCK_TUNE.quests.maren.from')));
-    const bw = E('UNLOCK_TUNE.quests.bram.wood');   // [tier, n]
-    E(`S.mats.wood = [0, 0, 0, 0, 0]; S.mats.wood[${bw[0] - 1}] = ${bw[1] - 20}; S.mats.wood[${bw[0]}] = 30`);
-    assert(E('canRecruit("bram") && recruit("bram")') && E(`S.mats.wood[${bw[0] - 1}]`) === 0 && E(`S.mats.wood[${bw[0]}]`) === 10 && recs.bram === 1, `Bram: ${bw[1]} tier-${bw[0]} logs handed in (better logs count, the named tier first)`);
-    const [mt, mn] = E('UNLOCK_TUNE.quests.maren.ess');
-    E(`S.mats.ess = [0, 0, 0, 0, 0]; S.mats.ess[${mt - 1}] = ${mn - 1}`);
-    assert(!E('canRecruit("maren")') && E('leads().some(l => l.id === "maren" && l.action === null && l.pct < 1)'), `Maren waits for ${mn} tier-${mt} Essence`);
-    E(`S.mats.ess[${mt - 1}]++`);
-    const lm = E('leads().find(l => l.id === "maren")');
-    assert(lm && lm.action && lm.action.label === 'Hand in' && E('leads().find(l => l.id === "maren").action.fn()') && E(`S.mats.ess[${mt - 1}]`) === 0 && recs.maren === 1, 'Maren: the Leads "Hand in" consumes the essence');
-    E('S.maxZone = UNLOCK_TUNE.quests.elowen.from'); const eg = E('recruitCost("elowen").gold'), ee = E('UNLOCK_TUNE.quests.elowen.ess');
-    E(`S.gold = ${eg} + 5e7; S.mats.ess = [0, 0, 0, 0, 0]; S.mats.ess[${ee[0] - 1}] = ${ee[1] + 5}`);
-    assert(eg > 0 && E('recruit("elowen")') && E('S.gold') === 5e7 && E(`S.mats.ess[${ee[0] - 1}]`) === 5 && E('recruitHow("elowen")').includes(E(`fmt(${eg})`)), `Elowen: ${E(`fmt(${eg})`)} gold + ${ee[1]} tier-${ee[0]} Essence handed in at zone ${E('UNLOCK_TUNE.quests.elowen.from')}`);
-    const mz = E('UNLOCK_TUNE.quests.morwen.zone');
-    E(`S.maxZone = ${mz + 1}; unlockChar("hesketh", "test", true); S.party.autoField = false; setField(["hesketh", "bram"])`);   // F3: the planner would re-plan on the boss kills
-    bossKill(E, mz); tick(11);
-    assert(!E('isRecruited("morwen")'), 'Morwen: no join with a support fielded');
-    E('setField(["bram"])'); bossKill(E, mz - 7); tick(11);
-    assert(!E('isRecruited("morwen")'), 'Morwen: only her Fungal Deep boss counts');
-    bossKill(E, mz); bossKill(E, mz); tick(11);
-    assert(E('isRecruited("morwen")') && recs.morwen === 1, `Morwen joins once after the zone ${mz} boss with no support`);
-  }
-  // Bestiary, Kingslayer, Star Chart, Leads.
-  {
-    const { E, recs, tick } = game(30);
-    E('S.mastery.types.wraith = 999'); tick(11);
-    assert(!E('isRecruited("thessaly")'), 'Thessaly waits for the full Marsh Wraith page');
-    E('S.mastery.types.wraith = 1000'); tick(11);
-    assert(E('isRecruited("thessaly")') && recs.thessaly === 1, 'Thessaly joins at the Marsh Wraith tier 3 page');
-    E('TYPES.forEach(t => S.mastery.types[t.key] = 100); S.stats.bosses = 120'); tick(11);
-    assert(!E('isRecruited("corvin")'), 'Corvin waits for 150 boss kills');
-    E("emit('kingslayerCredit', { n: 80 })"); tick(11);
-    assert(E('S.party.unlock.ks') === 50 && E('isRecruited("corvin")') && recs.corvin === 1, 'Kingslayer: expedition credit (capped at 50) completes Corvin');
-    assert(!E('canRecruit("oriel")') && /Star Chart/.test(E('recruitHow("oriel")')), 'Oriel waits for a Star Chart');
-    E('grantStarChart()');
-    assert(E('isRecruited("oriel") && charRec("oriel").src === "craft"') && recs.oriel === 1, 'grantStarChart() brings Oriel');
-    const L = E('leads()');
-    assert(Array.isArray(L) && L.length > 0 && L.every(l => l.id && l.name && typeof l.how === 'string' && l.pct >= 0 && l.pct <= 1 && (l.action === null || (l.action.label && typeof l.action.fn === 'function'))), `leads() shape (${L.map(l => l.id).join(',')})`);
-    assert(E('ROSTER_KEYS.every(k => isRecruited(k) || recruitHow(k).length > 0)'), 'every locked character has a how line');
-  }
-  // Fixtures: unlock state merged, migrated Oriel kept, no errors after a minute of play.
-  for (const f of ['save-v2.json', 'save-v2-late.json', 'save-a-v1.json']) {
-    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
-    const g = loadCore({ seed: 5, storage: memoryStorage({ [KEY]: raw }) });
-    const u = g.eval('S.party.unlock');
-    assert(u && typeof u.renown === 'number' && u.visitor && 'bought' in u.visitor && 'starChart' in u, `${f}: unlock state merged`);
-    const hadOriel = (JSON.parse(raw).comp || [])[5] > 0;
-    for (let i = 0; i < 600; i++) g.fn.tick(0.1);
-    assert((!hadOriel || g.eval('isRecruited("oriel")')) && !g.errors.length, `${f}: plays a minute with the unlock avenues` + (g.errors.length ? ': ' + g.errors[0] : ''));
-  }
-} catch (e) { fail('unlocks crashed: ' + (e.stack || e)); }
-
-// ---- the Deepwell on party combat (59c-deepwell-combat.js; plan-2 W6, plan-3 W6b; deepwell.md 8.2) ----
-if (section('deepwell combat')) try {
-  const FIX = ['save-v2.json', 'save-mid-v2.json', 'save-v2-late.json', 'save-a-v1.json'];
-  const rawOf = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
-  const ticks = (g, n, dt = 0.1) => { for (let i = 0; i < n; i++) g.fn.tick(dt); };
-  const errs = [];
-  for (const f of FIX) {
-    const o = loadCore({ seed: 41, storage: memoryStorage({ [KEY]: rawOf(f) }) });
-    const ok0 = o.eval('S.deepCombat.tip === 0 && Object.keys(S.deepCombat).join() === "tip" && S.deep.run === null');
-    o.eval('save(); loadSave()');
-    assert(ok0 && o.eval('S.deepCombat.tip === 0'), `${f}: gets S.deepCombat { tip: 0 } and keeps it on a round trip`);
-    errs.push(...o.errors);
-  }
-  // A Ranger (not a tank) with Tobin (tank) and Wren (striker) on the late save (F1: the hero is the third).
-  const setup = (seed, storage) => {
-    const g = loadCore({ seed, storage: storage || memoryStorage({ [KEY]: rawOf('save-v2-late.json') }) }), E = s => g.eval(s);
-    if (!storage) {
-      E('chooseClass("ranger"); S.camp.b.hearth = Math.max(3, S.camp.b.hearth)');
-      E('for (const id of ["tobin", "hesketh", "wren"]) if (!charRec(id)) unlockChar(id, "test", true)');
-      E('S.party.autoField = false; setField(["tobin", "wren"])');
-    }
-    E('COMBAT_TUNE.regen = 0');
-    ticks(g, 30);
-    return { g, E };
-  };
-  const clearPack = E => E('combatFoes().forEach(f => { for (let i = 0; i < 3 && f.hp > 0 && !f.dead; i++) cbDamageFoe(f, f.hp + 1, -1, "magic"); })');
-  const heroF = E => E('cbUnitByKey("hero").hp / cbUnitByKey("hero").maxHp');
-  const { g, E } = setup(42);
-  const up = () => E('combatUnits().filter(u => u.live).length');
-  assert(E('DW.start(false)') && E('DW.run().floor === 1 && DW.floorKind(1) === "normal"'), 'a run starts on floor 1');
-  assert(E('combatFoes().filter(f => f.deep && !f.dead && f.hp > 0).length') === 3 && E('combatFoes().every(f => f.deep && f.run === DW.run().id)'), 'a normal floor is one pack: its 3 foes fight at once');
-  assert(up() >= 2 && E('S.deepCombat.tip') === 1, `the fielded party fights below (${up()} members); the HP tip shows once`);
-  // HP carries: the hero at 50%, the floor cleared: the pack heal and the floor heal, no more
-  E('combatFoes().forEach(f => f.atk = 0); cbUnitByKey("hero").hp = cbUnitByKey("hero").maxHp * 0.5');
-  clearPack(E); ticks(g, 2);
-  const hf = heroF(E), expHf = 0.5 + E('COMBAT_TUNE.packHealF') + E('DEEP_COMBAT_TUNE.floorHeal');
-  assert(E('DW.run().phase') === 'draft' && Math.abs(hf - expHf) < 0.01, `a cleared floor heals a little: hero 50% -> ${(100 * hf).toFixed(0)}% (${(100 * expHf).toFixed(0)}% expected)`);
-  assert(Math.abs(E('DWC.hpAt().hero') - hf) < 0.001, 'the run keeps the HP each member starts the next floor with');
-  E('DW.pick(DW.offerView().cards[0].id)');
-  const hf2 = heroF(E);
-  assert(E('DW.run().floor') === 2 && E('mob.deep && mob.floor === 2') && Math.abs(hf2 - hf) < 0.01, `HP carries into floor 2 (hero ${(100 * hf2).toFixed(0)}%, not refilled)`);
-  // a reload mid-floor: the floor restarts with the HP (and Oil) it began with
-  E('combatUnits().forEach(u => { if (u.live) u.hp = u.maxHp * 0.2; }); save()');
-  const r2 = setup(43, memoryStorage({ [KEY]: g.storage.get(KEY) }));
-  r2.E('chooseClass("ranger")');
-  assert(r2.E('DW.resume()') && r2.E('mob.deep && mob.floor === 2'), 'resume: floor 2 restarts');
-  const hf3 = heroF(r2.E);
-  assert(Math.abs(hf3 - hf) < 0.02, `resume: the hero starts floor 2 at ${(100 * hf3).toFixed(0)}% (as saved when the floor began)`);
-  errs.push(...r2.g.errors);
-  // Oil: refunds are higher; a parry gives Oil back
-  assert(E('DW.refundFor("boss")') === 35 + E('DEEP_COMBAT_TUNE.refund'), 'Oil refunds are 5s higher with party combat');
-  // the [C] boons
-  const B = s => E('DW.run().boons.' + s);
-  // (S6-A: HP follows the party's power, which reads the hero's live damage buffs; measure both sides one tick apart)
-  B('iron = 0'); E('emit("fieldChange", {})'); g.fn.tick(0.1);
-  const mh0 = E('cbUnitByKey("tobin").maxHp'), mw0 = E('cbUnitByKey("wren").maxHp'); B('iron = 2'); E('emit("fieldChange", {})'); g.fn.tick(0.1);
-  assert(Math.abs(E('cbUnitByKey("tobin").maxHp') / mh0 - 1.4) < 0.01 && Math.abs(E('cbUnitByKey("wren").maxHp') / mw0 - 1) < 1e-9, `Iron Wall II: tanks +40% max HP, others unchanged (x${(E('cbUnitByKey("tobin").maxHp') / mh0).toFixed(3)}, x${(E('cbUnitByKey("wren").maxHp') / mw0).toFixed(3)})`);
-  const hitTank = () => E('(() => { const u = cbUnitByKey("tobin"); u.hp = u.maxHp; u.sh = 0; const a = cbHitUnit(u, u.maxHp * 0.01, "poison", null); u.hp = u.maxHp; return a; })()');
-  const t0 = hitTank(); B('thorn = 1'); B('taunt = 1'); ticks(g, 1);
-  assert(E('DW.setProgress().find(s => s.id === "guard").on') && Math.abs(hitTank() / t0 - 0.75) < 0.01, 'the Guard set (Thorn Plate, Iron Wall, Taunt Drill): tanks take 25% less');
-  const thorn = E('(() => { const f = combatFoes().find(x => !x.dead && x.hp > 0); const u = cbUnitByKey("tobin"); u.hp = u.maxHp; u.sh = 0; const h0 = f.hp; cbHitUnit(u, u.maxHp * 0.01, "poison", f); u.hp = u.maxHp; return h0 - f.hp; })()');
-  assert(thorn > 0, 'Thorn Plate: a tank hurts the foe that hits it');
-  E('mob.forceU = -1; mob.forceT = 0; mob.ranged = true; classTap({ target: "mob" })');
-  assert(E('mob.forceU === cbUnitByKey("tobin").i && mob.forceT > 0.5'), 'Taunt Drill: a Ranger\'s tap makes the front tank taunt');
-  const hi0 = E('cbUnitByKey("hero").healIn'); B('dward = 1'); B('mend = 1'); B('life = 1'); ticks(g, 3);
-  assert(E('DW.setProgress().find(s => s.id === "mend").on') && Math.abs(E('cbUnitByKey("hero").healIn') / hi0 - 1.3) < 0.01, 'the Mend set (Deep Ward, Mending Light, Lifeline): healing +30%');
-  E('cbHitUnit(cbUnitByKey("hero"), 1e300, "poison", null)');
-  assert(!E('cbUnitByKey("hero").down') && E('cbUnitByKey("hero").hp') === 1, 'Lifeline: a member who would fall stays at 1 HP');
-  E('cbHitUnit(cbUnitByKey("wren"), 1e300, "poison", null)');
-  assert(E('cbUnitByKey("wren").down'), 'Lifeline: once a floor for the whole party');
-  // Deep Edge (D8): damage below only
-  const dm0 = E('mod("dmg")'); E('S.deep.lore.edge = 4');
-  assert(Math.abs(E('mod("dmg")') / dm0 - 1.8) < 1e-6 && E('DW.shop("lore").some(r => r.id === "edge" && r.max === 4)'), 'Deep Edge IV: +80% damage below; sold in the Deep Lore shop');
-  // a wipe ends the run: the floors cleared count and pay; the party stands up whole above
-  // (S6-F: more boons in the pool change the picks, so the run may be between floors here: fight the next one)
-  if (E('DW.run().phase') === 'draft') { E('DW.pick(DW.offerView().cards[0].id)'); ticks(g, 1); }
-  const top = E('DW.run().top'), marks = E('DW.marksNow()'), m0 = E('S.deep.marks');
-  E('for (let i = 0; i < 4; i++) combatUnits().forEach(u => { if (u.live && !u.down) { u.lifeline = true; cbHitUnit(u, 1e300, "poison", null); } })');
-  ticks(g, 2);
-  assert(E('S.deep.run === null && S.deep.last.reason === "wipe" && arena === null'), 'a party wipe ends the run (reason "wipe")' + (E('S.deep.run === null') ? '' : ': ' + E('JSON.stringify({ ph: S.deep.run.phase, fl: S.deep.run.floor, units: combatUnits().filter(u => u.live).map(u => u.key + (u.down ? ":down" : ":" + Math.round(u.hp))), foes: combatFoes().length, boons: Object.keys(S.deep.run.boons) })')));
-  assert(E('S.deep.last.floor') === top && E('S.deep.best') >= top && E('S.deep.marks') - m0 === marks, `the run's depth counts: floor ${top}, ${marks} Depth Marks paid`);
-  assert(E('combatUnits().filter(u => u.live).every(u => !u.down && u.hp === u.maxHp)') && E('combatFoes().every(f => !f.deep)') && E('mod("dmg")') < dm0 * 1.0001, 'back above: the party is whole, no well foe is left, boons and Deep Edge are off');
-  assert(E('S.activity') === 'fight' && E('!!mob && !mob.deep'), 'the zone fight resumes');
-  // Elder floors: the Deep Elder winds up its telegraphs; a parry gives Oil back
-  E('S.deep.lore.edge = 0'); E('DW.start(false)'); ticks(g, 1);
-  E('combatFoes().forEach(f => f.atk = 0)'); clearPack(E); ticks(g, 2);
-  E('DW.run().floor = 5; DW.run().oil = 100; DW.pick(DW.offerView().cards[0].id)');
-  let tele = null; g.fn.on('telegraphStart', p => { if (!tele) tele = { kind: p.kind, deep: !!(p.foe && p.foe.deep) }; });
-  // (S1: Wren's Mark is a +20% Mark status now, so this party kills the Elder about when its first wind-up
-  // opens; a sturdier Elder keeps the check about the telegraph, not the kill speed)
-  E('combatFoes().forEach(f => { f.atk = 0; if (f.boss) { f.max *= 10; f.hp = f.max; } })');
-  let guard = 0; while (!E('cbTelegraph() && cbTelegraph().left <= cbTelegraph().win - 0.05') && guard++ < 150) ticks(g, 1);
-  assert(E('mob.deep && mob.boss && DW.run().floor === 5') && tele && tele.deep, `floor 5: a Deep Elder, and it winds up a telegraph (${tele && tele.kind})`);
-  const oilP = E('DW.run().oil'); E('typeof actTap === "function" ? actTap() : resolveParry("tap")');   // S6-B: the tap answers 59g's warnings
-  assert(Math.abs(E('DW.run().oil') - Math.min(E('DW.oilMax()'), oilP + E('DEEP_COMBAT_TUNE.parryOil'))) < 1e-9, 'parrying the Elder gives 2s of Oil back');
-  E('DW.run().oil = 0.05'); ticks(g, 3);
-  assert(E('S.deep.run === null && S.deep.last.reason === "oil" && !cbTelegraph()'), 'Oil still ends a run; no Elder telegraph is left above');
-  errs.push(...g.errors);
-  assert(!errs.length, 'no deepwell combat errors' + (errs.length ? ': ' + errs[0] : ''));
-} catch (e) { fail('deepwell combat crashed: ' + (e.stack || e)); }
-
-// ---- party combat (59-combat.js, 59b-enemies.js; Stage C tasks C1, C2, C3) ----
-if (section('combat')) try {
-  const rawOf = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
-  const secs = (g, s, dt = 0.1) => { for (let i = 0; i < s / dt; i++) g.fn.tick(dt); };
-  // A party of these characters at level lv, fielded, on a fresh game of class cls.
-  const party = (seed, cls, field, lv) => {
-    const g = loadCore({ seed }), E = s => g.eval(s);
-    E('almanac.force("none")');
-    E(`chooseClass(${JSON.stringify(cls)})`);
-    E(`(() => { const f = ${JSON.stringify(field)}; for (const id of f) { unlockChar(id, 'test', true); charRec(id).lv = ${lv}; charRec(id).rank = Math.min(7, Math.floor((${lv} - 1) / 25)); } S.party.autoField = false; setField(f); S.auto = false; S.L = ${lv}; S.blade = ${lv}; })()`);
-    return { g, E };
-  };
-  // the highest zone this party holds (closed form), up to 60
-  const holdZone = E => E('(() => { S.maxZone = 60; let b = 1; for (let z = 1; z <= 60; z++) if (partyHoldEstimate(z, { one: true }).holds) b = z; return b; })()');
-  const errs = [];
-
-  // on for every save; old saves load with it, keep every field and stay finite
-  {
-    const g = loadCore({ seed: 1 });
-    assert(g.eval('partyCombatOn() && S.combat.on === 1 && S.combat.back === 0'), 'party combat is on for a new game (S.combat.on)');
-    for (const f of ['save-v2.json', 'save-mid-v2.json', 'save-v2-late.json', 'save-a-v1.json']) {
-      const old = JSON.parse(rawOf(f));
-      const h = loadCore({ seed: 2, storage: memoryStorage({ [KEY]: JSON.stringify(old) }) });
-      const cmp = JSON.parse(JSON.stringify(old)); if (cmp.party) { delete cmp.party.field; delete cmp.party.cells; }   // the roster migration re-picks the field
-      const d = subsetDiff(cmp, JSON.parse(JSON.stringify(h.eval('S'))));
-      h.eval('S.activity = "fight"; spawn()'); secs(h, 60);
-      const bad = badNumbers(h.eval('S')).concat(badNumbers(h.eval('combatUnits().map(u => [u.hp, u.maxHp, u.sh])')));
-      assert(!d && h.eval('partyCombatOn() && S.combat.on === 1') && !bad.length && !h.errors.length, `${f}: loads with party combat on, keeps every field, a minute of fighting stays finite` + (d ? ': ' + d : bad.length ? ': ' + bad[0] : h.errors.length ? ': ' + h.errors[0] : ''));
-      errs.push(...h.errors);
-    }
-  }
-
-  // threat holds on the tank at par (T13), healers heal, packs of 3
-  {
-    const { g, E } = party(51, 'lanternmage', ['tobin', 'hesketh'], 40);   // F1: two companions; the Lanternmage is the third
-    const par = holdZone(E);
-    E(`S.maxZone = ${par}; setZone(${par})`);
-    const pn = E('combatFoes().length'), psz = E('cbPack().size'), rng = E(`PACK_SIZES[cbPack().size]`);
-    assert(pn === E('cbPack().n') && pn >= rng[0] - 1 && pn <= rng[1] && E('combatFoes().every(f => f.th && f.max > 0)'), `a pack of ${pn} foes (${psz}) with threat tables (zone ${par}, the highest this party holds)`);
-    E('Object.keys(CB_STATS).forEach(k => CB_STATS[k] = 0)');
-    secs(g, 180);
-    const st = E('CB_STATS'), share = st.tankSecs / Math.max(1e-9, st.enemySecs);
-    assert(share >= 0.85, `threat: the tank holds ${(100 * share).toFixed(0)}% of foe attention at par (T13, want >= 85%)`);
-    const hes = E('cbUnitByKey("hesketh")');
-    // BAL2: supports also Smite for ROSTER_TUNE.supDps x power, well below a striker.
-    const wrenDmg = E('cbUnitByKey("hero").dmg');   // F1: the hero (a real third now, 56e heroStand) in Wren's old place
-    assert(st.healed > 0 && hes.healed > 0 && hes.dmg > 0 && hes.dmg < wrenDmg, `Hesketh heals (${E('fmt(cbUnitByKey("hesketh").healed)')} HP in 3 min) and Smites softly (${E('fmt(cbUnitByKey("hesketh").dmg)')} damage, the Lanternmage ${E(`fmt(${wrenDmg})`)})`);
-    assert(st.wipes === 0 && st.packs > 10, `no wipe at the zone it holds (${st.packs} packs, ${st.kos} knock-outs)`);
-    errs.push(...g.errors);
-  }
-
-  // knock-out and stand-up between packs; Elowen's Vigil stands them up at 60%
-  for (const [ids, frac] of [[['hesketh', 'wren'], 0.3], [['elowen', 'wren'], 0.6]]) {
-    const { g, E } = party(52, 'warden', ids, 20);
-    E('S.maxZone = 10; setZone(10)'); secs(g, 1);
-    E('cbHitUnit(cbUnitByKey("wren"), 1e30, "poison", null)');   // S6-A: a plain hit is capped at 10% now; damage over time is not
-    const down = E('cbUnitByKey("wren").down');
-    E('combatFoes().forEach(f => { if (!f.dead) cbDamageFoe(f, 1e30, 1, "magic"); })');
-    const u = E('cbUnitByKey("wren")');
-    assert(down && !u.down && Math.abs(u.hp / u.maxHp - frac) < 0.01, `a knocked-out member stands up at ${frac * 100}% when the pack dies${frac > 0.3 ? ' (Elowen fielded)' : ''}`);
-    errs.push(...g.errors);
-  }
-
-  // wipe: retreat one zone, a full heal after 5s, then push back once it holds
-  {
-    const { g, E } = party(53, 'warden', ['hesketh', 'wren'], 20);
-    const ev = []; g.fn.on('wipe', w => ev.push(Object.assign({}, w))); const ups = []; g.fn.on('unitUp', u => ups.push(u.key));
-    E('S.maxZone = 12; S.zone = 12; setZone(12)'); secs(g, 1);
-    E('for (let k = 0; k < 3; k++) combatUnits().forEach(u => { if (u.live && !u.down) cbHitUnit(u, 1e30, "poison", null); })');
-    assert(ev.length === 1 && ev[0].zone === 12 && ev[0].to === 11 && E('S.zone') === 11 && E('S.combat.back') === 12, 'a wipe retreats one zone (12 -> 11) and remembers where it fell');
-    secs(g, 5.2);
-    assert(E('combatUnits().filter(u => u.live).every(u => !u.down && u.hp === u.maxHp)') && E('combatFoes().some(f => !f.dead)'), 'after 5s the party stands up at full HP and fights on');
-    E('addModifier("dmg", () => 1e4)'); secs(g, 12);
-    assert(E('S.zone') === 12 && E('S.combat.back') === 0, 'once the party can hold it again, it pushes back up to the zone it fell from');
-    // a wipe in a boss fight is a failed attempt, not a retreat
-    const fails = []; g.fn.on('bossFail', x => fails.push(x));
-    E('S.kills = 10; challenge()');
-    E('for (let k = 0; k < 3; k++) combatUnits().forEach(u => { if (u.live && !u.down) cbHitUnit(u, 1e30, "poison", null); })');
-    assert(fails.length === 1 && E('S.zone') === 12 && !E('fightBoss'), 'a wipe against the zone boss fails the attempt (bossFail) without a retreat');
-    errs.push(...g.errors);
-  }
-
-  // bosses: every zone type shows its telegraphs; a tap in the window parries, an early tap dodges
-  {
-    const kinds = {};
-    for (let zt = 0; zt < 7; zt++) {
-      const { g, E } = party(60 + zt, 'warden', ['hesketh', 'wren'], 30);
-      const seen = new Set(); g.fn.on('telegraphStart', t => seen.add(t.kind));
-      const z = 8 + zt;   // zone types 0-6, cycle II
-      E(`S.maxZone = ${z}; S.zone = ${z}; S.kills = 10; addModifier('bossHp', () => 1e3); challenge()`);
-      for (let i = 0; i < 300 && E('fightBoss'); i++) g.fn.tick(0.1);
-      kinds[E(`TYPES[zoneType(${z})].key`)] = [...seen].sort().join('+');
-      errs.push(...g.errors);
-    }
-    // S6-C: the kits (21g BOSS_KITS) in phase 1 (the Elder never reaches half here)
-    const want = { slime: 'heavy+zone', bat: 'dive+heavy', bones: 'heavy+summon', beetle: 'heavy', spore: 'line', golem: 'heavy', wraith: 'heal+heavy' };
-    assert(Object.keys(want).every(k => kinds[k] === want[k]), 'each Elder shows its telegraphs: ' + Object.entries(kinds).map(([k, v]) => `${k} ${v}`).join(', '));
-    // parry: the class tap in the window; the stage hook returns one kept object
-    const { g, E } = party(70, 'warden', ['hesketh', 'wren'], 30);
-    const res = []; g.fn.on('telegraphResolve', r => res.push(Object.assign({}, r)));
-    E("S.maxZone = 8; S.zone = 8; S.kills = 10; addModifier('bossHp', () => 1e3); challenge()");
-    let t1 = null, t2 = null;
-    for (let i = 0; i < 200 && !t1; i++) { g.fn.tick(0.1); t1 = E('bossTelegraph()'); }
-    t2 = E('bossTelegraph() === bossTelegraph()');
-    for (let i = 0; i < 40 && E('bossTelegraph() && bossTelegraph().left > bossTelegraph().win'); i++) g.fn.tick(0.1);
-    const hp0 = E('combatUnits().map(u => u.hp).join()'), tapKinds = []; g.fn.on('classTap', c => tapKinds.push(c.kind));
-    g.fn.playerTap({ x: 0.66, y: 0.5 });
-    assert(t1 && t1.kind === 'heavy' && t2 && res.length === 1 && res[0].result === 'parry' && tapKinds[0] === 'parry' && E('!bossTelegraph()') && E('mob.boss && (mob.reelT > 1.5 || mob.stunT > 1.5) && mob.vulnT > 0'), 'a tap in the last moments of the wind-up parries: no hit, the boss is Reeling and takes +50%');
-    // an early tap dodges (half damage)
-    const hits = []; g.fn.on('unitHit', h => { if (h.kind === 'heavy') hits.push(h.amount); });
-    for (let i = 0; i < 200 && !E('bossTelegraph() && bossTelegraph().kind === "heavy"'); i++) g.fn.tick(0.1);   // S6-C: the next heavy (a kit also has zones)
-    g.fn.playerTap({ x: 0.66, y: 0.5 });
-    const dodged = E('bossTelegraph() && (bossTelegraph().res === "dodge" || bossTelegraph().res === "early")');   // S6-B: 59g calls it early
-    for (let i = 0; i < 40 && E('!!bossTelegraph() && bossTelegraph().kind === "heavy"'); i++) g.fn.tick(0.1);
-    assert(dodged && res[res.length - 1].result === 'dodge' && hits.length === 1, 'an early tap is a Dodge: the heavy hit lands at half');
-    // Aldric's Shield Bash counts as a parry
-    const a = party(71, 'lanternmage', ['aldric', 'hesketh'], 30);
-    const ra = []; a.g.fn.on('telegraphResolve', r => ra.push(Object.assign({}, r)));
-    a.E("S.maxZone = 8; S.zone = 8; S.kills = 10; addModifier('bossHp', () => 1e3); challenge()");
-    for (let i = 0; i < 300 && !ra.some(r => r.by === 'bash'); i++) a.g.fn.tick(0.1);
-    assert(ra.some(r => r.by === 'bash' && r.result === 'parry'), "Aldric's Shield Bash parries a boss wind-up by itself");
-    errs.push(...g.errors, ...a.g.errors);
-  }
-
-  // HUD hooks: kept objects, companion cooldowns simulated
-  {
-    const { g, E } = party(80, 'ranger', ['tobin', 'wren'], 10);
-    E('S.maxZone = 5; setZone(5)'); secs(g, 3);
-    assert(E('unitHp("hero") === unitHp("hero") && unitHp("tobin").max > 0 && unitHp("tobin").hp <= unitHp("tobin").max'), 'unitHp(key) returns a kept { hp, max, shield } per unit');
-    const cd = E('unitCd("wren")');
-    assert(cd && cd.max > 0 && cd.t >= 0 && cd.t <= cd.max && E('unitCd("wren") === unitCd("wren")') && E('unitCd("hero").max > 0'), `unitCd(key): companion abilities are on a real cooldown (Wren ${cd && cd.t.toFixed(1)} / ${cd && cd.max.toFixed(1)}s)`);
-    errs.push(...g.errors);
-  }
-
-  // no NaN for any character: each of the 18 with a tank or a support, a minute at a zone they hold
-  {
-    const bad = [];
-    for (const id of loadCore({ seed: 1 }).eval('ROSTER_KEYS')) {
-      const f = [id]; for (const k of ['tobin', 'hesketh', 'wren', 'maren']) if (f.length < 2 && !f.includes(k)) f.push(k);   // F1: the hero is the third
-      for (const cls of ['warden', 'lightkeeper']) {
-        const { g, E } = party(90, cls, f, 30);
-        E('S.maxZone = 18; setZone(15)'); secs(g, 60);
-        const b = badNumbers(E('combatUnits().filter(u => u.live).map(u => [u.hp, u.maxHp, u.sh, u.dmg, u.healed, u.cd])')).concat(badNumbers(E('S')));
-        if (b.length || g.errors.length) bad.push(`${cls} ${f.join()}: ${b[0] || g.errors[0]}`);
-      }
-    }
-    assert(!bad.length, 'every character, as a Warden or Lightkeeper party: a minute of combat stays finite, no errors' + (bad.length ? ': ' + bad[0] : ''));
-  }
-
-  // offline estimate (C3) within 15% of 30 min of live fighting, XP and mastery frozen
-  {
-    const { g, E } = party(95, 'warden', ['hesketh', 'wren'], 35);
-    const par = holdZone(E) - 1;
-    E(`S.maxZone = ${par}; setZone(${par}); addBonus("masteryMult", () => -1); addModifier("compXp", () => 0); addModifier("xp", () => 0)`);
-    secs(g, 1);
-    const est = E(`(() => { const e = partyHoldEstimate(S.zone, { one: true }); return { g: e.goldPerSec, holds: e.holds }; })()`);
-    let gold = 0; g.fn.on('kill', k => { if (!k.mob.boss) gold += k.gold; });
-    secs(g, 1800);
-    const ratio = est.g * 1800 / Math.max(1, gold);
-    assert(est.holds && ratio >= 0.85 && ratio <= 1.15, `offline estimate vs 30 min live at zone ${par}: ${ratio.toFixed(2)} (T8, want 0.85-1.15)`);
-    // away gains use it and never pay more than live
-    const h = party(95, 'warden', ['hesketh', 'wren'], 35);
-    h.E(`S.maxZone = ${par}; setZone(${par}); S.activity = "fight"`);
-    const g0 = h.E('S.gold'); const r = h.g.fn.awayGains(1800);
-    const away = h.E('S.gold') - g0;
-    assert(away > 0 && away <= gold * 1.05 && r.note.startsWith('Your party held'), `away gains (30 min): ${h.E(`fmt(${away})`)} gold, at most live (${h.E(`fmt(${gold})`)}); "${r.note}"`);
-    errs.push(...g.errors, ...h.g.errors);
-  }
-
-  // Constellations (57e) in combat: every class knob goes through tn(), keystone flags do what STAR_KS says
-  {
-    const src = loadCore({ seed: 1 }).source;
-    const knobs = ['guardT', 'wallT', 'wallPause', 'wall', 'flare', 'flarePerEmber', 'hasteT', 'bless', 'hymn', 'hymnT', 'lkShare', 'lkAura', 'autoEff', 'autoCd'];
-    const miss = knobs.filter(k => !src.includes(`tn('${k}')`));
-    assert(!miss.length, 'every star knob is read through tn() in 55-party.js' + (miss.length ? ': missing ' + miss.join(', ') : ''));
-    // Lantern Flare reads tune:flare
-    const lm = party(101, 'lanternmage', ['tobin', 'hesketh'], 20);
-    lm.E('S.maxZone = 10; setZone(10); Math.random = () => 0.99'); secs(lm.g, 1);
-    const flare = () => lm.E('(() => { const m = mob; m.hp = m.max = 1e12; m.embers = 0; S.party.abilityCd = 0; castAbility(); return 1e12 - m.hp; })()');
-    const f0 = flare(); lm.E('addBonus("tune:flare", () => 20)'); const f1 = flare();
-    assert(f1 / f0 > 1.9 && f1 / f0 < 2.1, `Lantern Flare reads the flare knob (x${(f1 / f0).toFixed(2)} with +20)`);
-    // Wildfire: Embers spread to every other foe at half the count when their foe dies
-    lm.E('setZone(10); addBonus("ks:wildfire", () => 1)'); secs(lm.g, 0.1);
-    const spread = lm.E('(() => { const fs = combatFoes().filter(f => !f.dead); if (fs.length < 3) return null; fs.forEach(f => f.embers = 0); fs[0].embers = 4; cbDamageFoe(fs[0], fs[0].hp, 0, "magic"); return fs.slice(1).map(f => f.embers).join(); })()');
-    assert(spread && spread.split(',').length >= 2 && spread.split(',').every(v => v === '2'), `Wildfire: a foe with 4 Embers dies, every other foe gets 2 (${spread})`);
-    // Pack Leader: the Ranger loses its own crit bonus on marked foes
-    const rg = party(102, 'ranger', ['tobin', 'hesketh'], 20);
-    rg.E('S.maxZone = 10; setZone(10)'); secs(rg.g, 1);
-    rg.E('classTap({ target: "mob" })');
-    const c0 = rg.E('mod("crit")'); rg.E('addBonus("ks:pack", () => 1)'); const c1 = rg.E('mod("crit")');
-    assert(c1 < c0, `Pack Leader: no crit bonus on the marked foe (crit x${c0.toFixed(2)} -> x${c1.toFixed(2)})`);
-    // Unbroken: each guard stack gives 2 armour
-    const wd = party(103, 'warden', ['hesketh', 'wren'], 20);
-    wd.E('S.maxZone = 10; setZone(10)'); secs(wd.g, 1);
-    for (let i = 0; i < 5; i++) wd.E('classTap({ target: "mob" })');
-    const a0 = wd.E('cbUnitByKey("hero").armour'); wd.E('addBonus("ks:unbroken", () => 1)'); secs(wd.g, 0.3);
-    const a1 = wd.E('cbUnitByKey("hero").armour'), n = wd.E('heroGuardN()');
-    assert(n >= 1 && Math.abs(a1 - a0 - 2 * n) < 1e-6, `Unbroken: ${n} guard stacks give ${a1 - a0} armour`);
-    // Sanctuary Hymn: the Hymn heals 5% of max HP a second
-    const lk = party(104, 'lightkeeper', ['tobin', 'wren'], 20);
-    lk.E('S.maxZone = 10; setZone(10); addBonus("ks:sanctuary", () => 1); COMBAT_TUNE.regen = 0; COMBAT_TUNE.atk = 0'); secs(lk.g, 1);
-    lk.E('combatUnits().forEach(u => { if (u.live) u.hp = u.maxHp * 0.5; }); S.party.abilityCd = 0; castAbility()');
-    lk.E('combatUnits().forEach(u => { if (u.live) u.hp = u.maxHp * 0.5; })'); secs(lk.g, 1);
-    const hp = lk.E('cbUnitByKey("wren").hp / cbUnitByKey("wren").maxHp');
-    assert(hp >= 0.54, `Sanctuary Hymn heals about 5% a second while the Hymn is up (Wren 50% -> ${(100 * hp).toFixed(0)}% in 1s)`);
-    errs.push(...lm.g.errors, ...rg.g.errors, ...wd.g.errors, ...lk.g.errors);
-  }
-
-  // Deepwell: the [C] boons join the pool now
-  {
-    const g = loadCore({ seed: 1 });
-    assert(g.eval('deepStageC() && DEEP_BOON_IDS.filter(id => DEEP_BOONS[id].c).length === 14'), 'deepStageC() is true: the 14 party-combat boons are in the Deepwell pool (S6-F: five for active play)');
-  }
-  assert(!errs.length, 'no combat errors' + (errs.length ? ': ' + errs[0] : ''));
-} catch (e) { fail('combat crashed: ' + (e.stack || e)); }
-
-// ---- the line-up planner (56d-autofield.js, plan-2 task AF) ----
-if (section('line-up planner')) try {
-  const rawOf = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
-  const mk = (seed, cls, list, hl) => {
-    const g = loadCore({ seed }), E = s => g.eval(s);
-    E('almanac.force("none")');
-    if (cls) E(`chooseClass(${JSON.stringify(cls)})`);
-    E(`(() => { for (const [id, lv] of ${JSON.stringify(list)}) { unlockChar(id, 'test', true); charRec(id).lv = lv; charRec(id).rank = Math.min(7, Math.floor((lv - 1) / 25)); } S.party.autoField = false; S.auto = false; S.L = ${hl}; S.blade = ${hl}; S.maxZone = 90; })()`);
-    return { g, E, J: s => JSON.parse(E(`JSON.stringify(${s})`)) };
-  };
-  // legal: recruited, not away, unique, at most 2 (F1: the hero is the third), passes the filter; cells
-  // for the hero and each member, one per slot (lane 1); a why line. The hero may stand in any slot.
-  const legal = (E, b, pass) => E(`(() => { const b = ${JSON.stringify(b)}, pass = ${pass || '() => true'};
-    if (!b || !Array.isArray(b.field) || b.field.length > 2 || new Set(b.field).size !== b.field.length) return 'field shape';
-    if (!b.field.every(k => isRecruited(k) && pass(k))) return 'member not allowed';
-    const keys = Object.keys(b.cells).sort().join(), want = ['hero'].concat(b.field).sort().join();
-    if (keys !== want) return 'cells ' + keys + ' vs ' + want;
-    const used = new Set(Object.values(b.cells).map(c => c.col));
-    if (used.size !== keys.split(',').length || Object.values(b.cells).some(c => !(c.col >= 0 && c.col <= 2 && c.lane === 1))) return 'cells share a slot or leave the line';
-    if (!(typeof b.why === 'string' && b.why.length > 3) || !Number.isFinite(b.score)) return 'no why or score';
-    return ''; })()`);
-  // every class, a full roster, 8 zones and both goals; the late fixture as it loads
-  {
-    const all = ['warden', 'lanternmage', 'ranger', 'lightkeeper'];
-    const bad = [], whys = new Set();
-    let n = 0, ms = 0;
-    for (const cls of all) {
-      const { E, J } = mk(40 + all.indexOf(cls), cls, [], 60);
-      E('ROSTER_KEYS.forEach((k, i) => { unlockChar(k, "test", true); charRec(k).lv = 20 + 7 * (i % 9); charRec(k).rank = Math.floor((charRec(k).lv - 1) / 25); })');
-      for (const z of [1, 8, 15, 22, 29, 36, 43, 60]) for (const goal of ['push', 'farm']) {
-        const t = Date.now(); const b = J(`bestLineup({ zone: ${z}, goal: '${goal}' })`); ms = Math.max(ms, Date.now() - t); n++;
-        const why = legal(E, b); if (why) bad.push(`${cls} z${z} ${goal}: ${why}`);
-        whys.add(b.why);
-        if (b.parts.cand > 12) bad.push(`${cls}: ${b.parts.cand} candidates (bounded at 12)`);
-      }
-      const t = Date.now(); for (let i = 0; i < 20; i++) E('bestLineup({ zone: 36 })');
-      const hit = (Date.now() - t) / 20;
-      if (hit > 20) bad.push(`${cls}: a cached plan took ${hit.toFixed(1)} ms`);
-    }
-    assert(!bad.length, `bestLineup: ${n} plans (4 classes x 8 zones x push/farm, 18 recruits) are legal, bounded (at most 12 candidates, slowest ${ms} ms) and explain themselves` + (bad.length ? ': ' + bad.slice(0, 3).join('; ') : ''));
-    console.log('       e.g. ' + [...whys].slice(0, 4).map(w => `"${w}"`).join(', '));
-    const h = loadCore({ seed: 3, storage: memoryStorage({ [KEY]: rawOf('save-v2-late.json') }) });
-    for (let i = 0; i < 10; i++) h.fn.tick(0.1);
-    const b = JSON.parse(h.eval('JSON.stringify(bestLineup())'));
-    const w = legal(s => h.eval(s), b);
-    assert(!w && !h.errors.length && b.parts.current && b.parts.gain >= 0.999, `save-v2-late.json: a legal plan ("${b.why}"), at least as good as the field it loads with (x${b.parts.gain && b.parts.gain.toFixed(2)})` + (w ? ': ' + w : ''));
-  }
-  // an active synergy wins when damage is close (within its tie-break), not against a big gap
-  {
-    const { E, J } = mk(51, 'ranger', [['wren', 120], ['aldric', 120], ['kestrel', 60], ['isolde', 60]], 90);
-    E('bondSet("markleap", 3)');   // F2: Mark and Leap is a Bond, on from level 1 (level 3 = its old strength)
-    E('globalThis.__afm = 1; addCharModifier(id => id === "isolde" ? globalThis.__afm : 1)');
-    const dps = (f, m) => { E(`globalThis.__afm = ${m}`); return J(`lineupScore(${JSON.stringify(f)}, { zone: 5 })`).dps; };
-    const syn = ['wren', 'kestrel'], plain = ['wren', 'isolde'];   // F1: pairs (the Ranger hero is the third)
-    const at = r => { let lo = 0.01, hi = 100; for (let i = 0; i < 60; i++) { const m = Math.sqrt(lo * hi); if (dps(plain, m) < dps(syn, m) * r) lo = m; else hi = m; } return Math.sqrt(lo * hi); };
-    const m1 = at(1.01), m2 = at(1.3);
-    E(`globalThis.__afm = ${m1}`); const b1 = J(`bestLineup({ zone: 5, filter: k => ${JSON.stringify(syn.concat('isolde'))}.includes(k) })`);
-    E(`globalThis.__afm = ${m2}`); const b2 = J(`bestLineup({ zone: 5, filter: k => ${JSON.stringify(syn.concat('isolde'))}.includes(k) })`);
-    assert(b1.field.slice().sort().join() === syn.slice().sort().join() && /Mark and Leap/.test(b1.why) && b2.field.includes('isolde'),
-      `with 1% less damage, Mark and Leap wins ("${b1.why}"); with 30% less it does not (${b2.field.join(', ')})`);
-  }
-  // a tank comes in when the hold estimate says the zone does not hold without one. F3: the hero may stand
-  // in any slot, and a high-level Lanternmage or Ranger hero holds the Front for packs; a Lightkeeper cannot.
-  {
-    const { E, J } = mk(52, 'lightkeeper', [['tobin', 150], ['wren', 150], ['kestrel', 150], ['pip', 150], ['oriel', 150]], 60);
-    // (S6-A: with packs split by size these heroes run out of damage before sustain binds; foes that hit 3x harder
-    // make the zone hold on sustain, which is the planner rule this checks)
-    E('COMBAT_TUNE.atk *= 3');
-    let found = null;
-    for (let z = 10; z <= 80 && !found; z++) {
-      const a = J(`bestLineup({ zone: ${z}, boss: false })`), b = J(`bestLineup({ zone: ${z}, boss: false, filter: k => ROSTER[k].role !== 'tank' })`);
-      if (a.parts.holds && !b.parts.holds) found = { z, a, b };
-    }
-    assert(found && found.a.field.includes('tobin') && /a tank for the/i.test(found.a.why) && found.a.cells.tobin.col === 2,
-      found ? `zone ${found.z}: no field without a tank holds, so Tobin takes the Front ("${found.a.why}")` : 'no zone where a tank is needed (expected one in 10-80)');
-  }
-  // F3 (formation.md 5.3): the boss blend and the boss tank rule. Packs at zone 10 hold without a tank; the
-  // boss weight is 35% (60% at a region boss or after a failed attempt); once the zone boss has knocked a
-  // tankless party out, a tank takes the Front for it.
-  {
-    const { E, J } = mk(52, 'lanternmage', [['tobin', 150], ['wren', 150], ['kestrel', 150], ['pip', 150], ['oriel', 150]], 60);
-    const early = J('bestLineup({ zone: 10, boss: false })'), boss = J('bestLineup({ zone: 10 })');
-    assert(!early.field.includes('tobin') && early.parts.holds && boss.parts.bossW === E('FORM_TUNE.bossW') && !boss.parts.hard && boss.parts.st > 0,
-      `zone 10: packs hold without a tank (${early.field.join(', ')}); the boss push weighs single-target damage at ${boss.parts.bossW} (${boss.field.join(', ')}: "${boss.why}")`);
-    E('emit("bossFail", { zone: 10, dps: 1 })');
-    const fail = J('bestLineup({ zone: 10 })');
-    E('emit("wipe", { zone: 10, to: 10, boss: true, arena: false })');
-    const wiped = J('bestLineup({ zone: 10 })');
-    assert(fail.parts.hard && fail.parts.bossW === E('FORM_TUNE.bossWHard') && J('bestLineup({ zone: 36 })').parts.hard && wiped.field.includes('tobin') && wiped.cells.tobin.col === 2 && /a tank for the boss/i.test(wiped.why),
-      `after a failed attempt the boss weighs ${fail.parts.bossW} (also at the region boss); after the boss knocks the party out, Tobin takes the Front ("${wiped.why}")`);
-    E('emit("zoneClear", { zone: 10 })');
-    assert(!J('bestLineup({ zone: 10 })').parts.hard, 'a zone clear resets the boss state');
-    // pins: every plan keeps them, at most 2; a pinned companion off the field comes in at once
-    E('setPin("pip", true)');
-    const p1 = ['push', 'farm'].flatMap(goal => [10, 25, 40].map(z => J(`bestLineup({ zone: ${z}, goal: '${goal}' })`)));
-    E('setPin("wren", true)'); const p2 = J('bestLineup({ zone: 25 })');
-    E('S.party.autoField = true; S.party.field = ["kestrel", "oriel"]; placeSlots(false)');
-    const r = J('autoPlan("pin")');
-    const kept = E('S.party.field.slice().sort().join()');
-    E('setPin("wren", false); setPin("pip", false)');
-    const free = J('bestLineup({ zone: 25 })');
-    assert(p1.every(b => b.field.includes('pip') && b.parts.pins.includes('pip')) && p2.field.slice().sort().join() === 'pip,wren' && r && r.changed && kept === 'pip,wren' && !free.parts.pins.length,
-      `pins: Pip stays in ${p1.length} plans; with Wren pinned too the plan is Pip and Wren; autoPlan fields both at once (${kept}); unpinned plans are free (${free.field.join(', ')})`);
-  }
-  // FT7 (formation.md 4.6, 5.4): no flapping. Two hours of play with Auto line-up on and auto-push, on a
-  // new game (recruits and promotions as they come) and on the late fixture: at most 2 automatic changes an
-  // hour outside recruits, and never A -> B -> A within 10 minutes.
-  for (const [name, mkG] of [['new Ranger game', () => { const g = loadCore({ seed: 61 }); g.eval('chooseClass("ranger")'); return g; }],
-    ['save-v2-late.json', () => loadCore({ seed: 62, storage: memoryStorage({ [KEY]: rawOf('save-v2-late.json') }) })]]) {
-    const g = mkG(), E = s => g.eval(s);
-    E('S.party.autoField = true; S.auto = true; S.activity = "fight"');
-    const ch = [];
-    let t = 0;
-    g.fn.on('autoPlan', e => ch.push({ t, from: e.from.slice().sort().join(), to: e.to.slice().sort().join(), reason: e.reason }));
-    const z0 = E('S.maxZone');
-    for (let m = 0; m < 120; m++) {
-      E('S.gold += 2e3 * Math.pow(1.35, S.maxZone); ROSTER_KEYS.forEach(k => { if (canRecruit(k)) recruit(k); if (canPromote(k)) promoteChar(k); })');
-      if (E('bossReady()')) g.fn.challenge();
-      for (let i = 0; i < 600; i++) { g.fn.tick(0.1); t += 0.1; }
-    }
-    const auto = ch.filter(c => c.reason !== 'recruit' && c.reason !== 'call');
-    const flips = ch.filter((c, i) => ch.slice(0, i).some(d => d.from === c.to && d.to === c.from && c.t - d.t < 600));
-    const perH = auto.length / 2;
-    assert(perH <= 2 && !flips.length && !g.errors.length,
-      `FT7 no flapping, ${name}: ${ch.length} automatic changes in 2h (${auto.length} outside recruits, ${perH.toFixed(1)}/h), ${flips.length} flips within 10 min (zone ${z0} -> ${E('S.maxZone')}, ${E('rosterList().length')} recruited)` + (g.errors.length ? ': ' + g.errors[0] : ''));
-  }
-  // FT9: bounded work: at most 12 candidates, 396 quick placements and FORM_TUNE.maxEst estimates per search
-  {
-    const { E, J } = mk(54, 'warden', [], 60);
-    E('ROSTER_KEYS.forEach((k, i) => { unlockChar(k, "test", true); charRec(k).lv = 30 + 5 * (i % 7); })');
-    const bs = [10, 30, 50].flatMap(z => ['push', 'farm'].map(goal => J(`bestLineup({ zone: ${z}, goal: '${goal}', filter: k => true })`)));
-    const mx = bs.reduce((a, b) => Math.max(a, b.parts.est), 0), mq = bs.reduce((a, b) => Math.max(a, b.parts.placements), 0);
-    assert(mx <= E('FORM_TUNE.maxEst') && mq <= 396 && bs.every(b => b.parts.cand <= 12), `FT9 bounded: at most ${mx} estimates (cap ${E('FORM_TUNE.maxEst')}) and ${mq} quick placements per search`);
-  }
-  // filters; autoField uses the planner (by potential)
-  {
-    const { g, E, J } = mk(53, 'warden', [['tobin', 60], ['wren', 60], ['pip', 60], ['maren', 60], ['aldric', 60], ['anselm', 60], ['elowen', 60], ['kestrel', 60], ['oriel', 60], ['hesketh', 60]], 60);
-    const oath = J("bestLineup({ zone: 20, filter: { circle: 'oath' } })");
-    const arr = J("bestLineup({ zone: 20, filter: ['wren', 'pip'] })");
-    const fn = J("bestLineup({ zone: 20, filter: k => ROSTER[k].role !== 'striker', key: 'nostrike' })");
-    assert(!legal(E, oath, "k => ROSTER[k].circle === 'oath'") && oath.field.length === 2 && !legal(E, arr, "k => ['wren','pip'].includes(k)") && arr.field.length === 2 && !legal(E, fn, "k => ROSTER[k].role !== 'striker'"),
-      `filters: circle-only (${oath.field.join(', ')}: "${oath.why}"), a list, a function`);
-    const best = J('bestLineup({ zone: 20 })').field;
-    E('S.maxZone = 36');
-    E('S.party.autoField = true; setField(["hesketh"])'); E('autoField()');
-    const pick = J('bestLineup({ by: "potential" })');
-    assert(E('S.party.field.slice().sort().join()') === pick.field.slice().sort().join() && E('JSON.stringify(S.party.cells)') === JSON.stringify(pick.cells) && !g.errors.length,
-      `autoField() applies the planner's pick and cells (${pick.field.join(', ')}: "${pick.why}")`);
-  }
-} catch (e) { fail('line-up planner crashed: ' + (e.stack || e)); }
-
-// ---- formation: a party of three (56e-formation.js, plan-3 task F1; formation.md 1, 3, 4; checks C1-C4, C6-C9) ----
-if (section('formation')) try {
-  const FORM_FIX = ['save-v2.json', 'save-a-v1.json', 'save-mid-v2.json', 'save-v2-late.json', 'save-v3-four.json'];
-  const rawOf = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
-  const ticks = (g, n) => { for (let i = 0; i < n; i++) g.fn.tick(0.1); };
-  const J = (g, s) => JSON.parse(g.eval(`JSON.stringify(${s})`));
-  const REC_KEYS = ['lv', 'rank', 'xp', 'wpn', 'trk', 'seen', 'src'];
-  const recsOf = g => { const rec = J(g, 'S.party.rec || {}'), o = {}; for (const k of Object.keys(rec).sort()) o[k] = Object.fromEntries(REC_KEYS.map(x => [x, rec[k][x]])); return o; };
-  const errs = [];
-  // the new fixture is what it says: a chosen class, a field of 3 with gear on all three, a converted synergy active
-  const four = JSON.parse(rawOf('save-v3-four.json'));
-  assert(four.party && four.party.cls && four.party.rv === 1 && !four.party.formV && four.party.field.length === 3 &&
-    four.party.field.every(k => four.party.rec[k] && four.party.rec[k].wpn != null && four.party.rec[k].trk != null) &&
-    ['aldric', 'elowen'].every(k => four.party.field.includes(k)),
-  `save-v3-four.json: a ${four.party.cls}, a field of 3 (${four.party.field.join(', ')}) with gear on all three, The Old Oath active`);
-  const T9 = [];
-  for (const f of FORM_FIX) {
-    const raw = JSON.parse(rawOf(f));
-    const g = loadCore({ seed: 61, storage: memoryStorage({ [KEY]: JSON.stringify(raw) }) });
-    const news = []; g.fn.on('whatsNew', w => { if (/^Your party is now three/.test(w.msg)) news.push(w.msg); });
-    ticks(g, 20);
-    const E = s => g.eval(s);
-    // C1: loads without errors or bad numbers
-    const bad = badNumbers(J(g, 'S'));
-    assert(!g.errors.length && !bad.length && E('S.party.formV') === 1, `C1 ${f}: loads as a party of three without errors` + (g.errors.length ? ': ' + g.errors[0] : bad.length ? ': ' + bad[0] : ''));
-    // C2: nobody leaves the roster; every record is kept. For a save the roster migration (B3) already
-    // ran on, against the file; otherwise against the same load with the party of three already set.
-    // (both loads untouched by play: rosterLive() runs the migrations, no tick)
-    let ref;
-    if (raw.party && raw.party.rv >= 1) ref = { list: Object.keys(raw.party.rec).filter(k => raw.party.rec[k]).sort(), rec: (() => { const o = {}; for (const k of Object.keys(raw.party.rec).sort()) o[k] = Object.fromEntries(REC_KEYS.map(x => [x, raw.party.rec[k][x]])); return o; })() };
-    else {
-      const r2 = JSON.parse(JSON.stringify(raw)); r2.party = Object.assign({}, r2.party || {}, { formV: 1 });
-      const h = loadCore({ seed: 61, storage: memoryStorage({ [KEY]: JSON.stringify(r2) }) }); h.eval('rosterLive()');
-      ref = { list: J(h, 'rosterList()').slice().sort(), rec: recsOf(h) };
-      errs.push(...h.errors);
-    }
-    const g0 = loadCore({ seed: 61, storage: memoryStorage({ [KEY]: JSON.stringify(raw) }) }); g0.eval('rosterLive()');
-    const list = J(g0, 'rosterList()').slice().sort(), d = deepDiff(ref.rec, recsOf(g0));
-    assert(g0.eval('S.party.formV') === 1, `${f}: the migration runs on the first roster read, before any tick`);
-    errs.push(...g0.errors);
-    assert(list.join() === ref.list.join() && !d, `C2 ${f}: all ${list.length} companions kept with level, rank, XP, gear, stories and source` + (d ? ': ' + d : ''));
-    // C3: at most 2 fielded, both from the old field; one member per slot; formV 1
-    const p = J(g, 'S.party'), old = (p.formOld && p.formOld.field) || [];
-    const keys = ['hero'].concat(p.field), cols = keys.map(k => p.cells[k] && p.cells[k].col);
-    assert(p.field.length <= 2 && p.field.every(k => old.includes(k)) && new Set(cols).size === keys.length && cols.every(c => c === 0 || c === 1 || c === 2) &&
-      keys.every(k => p.cells[k].lane === 1) && Object.keys(p.cells).length === keys.length && p.formV === 1 && Array.isArray(p.pin) && !p.pin.length,
-    `C3 ${f}: fields ${p.field.join(', ') || 'nobody'} of the old ${old.join(', ')}; ${keys.map(k => `${k} ${['Back', 'Middle', 'Front'][p.cells[k].col]}`).join(', ')}`);
-    // C8: one What's new line, naming who waits on the bench
-    const benched = old.filter(k => !p.field.includes(k));
-    assert(news.length === 1 && (!benched.length || /waits on the bench, with every level kept/.test(news[0])), `C8 ${f}: one What's new line: "${news[0]}"`);
-    // C9 / T9: party damage (hero combat damage + field) after vs before
-    const nl = J(g, 'formNoLoss()');
-    if (nl) T9.push({ f, z: raw.maxZone, ...nl });
-    // C4: save, load, save: the party and S.bond (F2) are identical, and no second What's new
-    E('save()');
-    const g2 = loadCore({ seed: 62, storage: memoryStorage({ [KEY]: g.storage.get(KEY) }) });
-    const n2 = []; g2.fn.on('whatsNew', w => { if (/^Your party is now three/.test(w.msg)) n2.push(w.msg); });
-    const bond2 = J(g2, 'S.bond || null');   // F2: as loaded (Bonds grow while the party fights, so before any tick)
-    ticks(g2, 20);
-    const pick = x => ({ field: x.field, cells: x.cells, pin: x.pin, formV: x.formV, formOld: x.formOld });
-    const d4 = deepDiff(pick(p), pick(J(g2, 'S.party'))) || deepDiff(J(g, 'S.bond || null'), bond2);
-    assert(!d4 && !n2.length && !g2.errors.length, `C4 ${f}: save and load keep the party as it is (field, cells, pin), no second migration` + (d4 ? ': ' + d4 : ''));
-    errs.push(...g.errors, ...g2.errors);
-  }
-  // C9: the ratio. The band (0.90-1.30, T9) is BAL3's to tune: saves below FORM_TUNE.trioFrom get no trio
-  // bonus yet and lose their third companion's damage. Hard floor: nobody loses more than a third.
-  for (const r of T9) console.log(`       INFO C9 T9 ${r.f} (zone ${r.z}): party damage ${r.ratio.toFixed(2)} (${r.old.join(',')} -> ${r.field.join(',')}; band 0.90-1.30: ${r.ratio >= 0.9 && r.ratio <= 1.3 ? 'in' : 'MISS, BAL3'})`);
-  // F2: slot jobs, combos and seeded Bonds add on top of the trio (up to +40% per member, 2.5). BAL3: upper bound 1.6 -> 1.8
-  // (the Lanternmage's floor 1.0 -> 1.35 lifts save-v3-four's Lanternmage party to ~1.7; a gain, and old saves are never read since ECON-A).
-  assert(T9.length === FORM_FIX.length && T9.every(r => Number.isFinite(r.ratio) && r.ratio >= 0.7 && r.ratio <= 1.8),
-    `C9 party damage after vs before the migration stays within 0.70-1.80 on every fixture (${T9.map(r => r.ratio.toFixed(2)).join(' / ')})`);
-  // C6: a new game: the starter and the hero in their homes; one recruit fills the third slot
-  {
-    const g = loadCore({ seed: 63 }), E = s => g.eval(s);
-    const news = []; g.fn.on('whatsNew', w => { if (/^Your party is now three/.test(w.msg)) news.push(w.msg); });
-    ticks(g, 5);
-    E('chooseClass("warden")'); ticks(g, 5);
-    const st = E('S.party.field[0]');
-    assert(E('S.party.formV') === 1 && E('S.party.field.length') === 1 && E(`slotOf("hero") === "front" && slotOf("${st}") === homeSlot("${st}")`),
-      `C6 a new Warden game: formV 1, ${st} in the ${E(`slotOf("${st}")`)} and the hero in Front`);
-    E('unlockChar("pip", "test", true)'); ticks(g, 2);
-    const line = J(g, 'formLine()');
-    assert(E('S.party.field.length') === 2 && line.every(x => x.key) && E('slotOf("pip")') === 'back', `C6 after one recruit, 3 members in 3 slots: ${line.map(x => `${x.slot} ${x.key}`).join(', ')}`);
-    assert(!news.length, 'C8 a new game gets no What\'s new line');
-    // the class home: another new game, a Lanternmage (Back) with Tobin (Front)
-    const h = loadCore({ seed: 64 }); ticks(h, 5); h.eval('chooseClass("lanternmage")'); ticks(h, 2);
-    assert(h.eval('slotOf("hero")') === 'back' && h.eval('slotOf(S.party.field[0])') === 'front', `a new Lanternmage stands in Back, the starter (${h.eval('S.party.field[0]')}) in Front`);
-    errs.push(...g.errors, ...h.errors);
-  }
-  // C7: setField keeps 2; swapSlots moves the hero; fieldTo on the hero's slot is refused
-  {
-    const g = loadCore({ seed: 65 }), E = s => g.eval(s);
-    ticks(g, 3); E('chooseClass("ranger"); ["tobin", "wren", "hesketh", "pip", "bram"].forEach(k => unlockChar(k, "test", true)); S.party.autoField = false');
-    E('setField(["tobin", "hesketh", "pip"])');
-    assert(E('S.party.field.join()') === 'tobin,hesketh' && E('Object.keys(S.party.cells).sort().join()') === 'hero,hesketh,tobin', 'C7 setField with 3 ids keeps the first 2');
-    assert(E('slotOf("hero")') === 'mid' && E('slotOf("tobin")') === 'front' && E('slotOf("hesketh")') === 'back', 'placeSlots: everyone at home (Ranger Middle, Tobin Front, Hesketh Back)');
-    let ev = 0; g.fn.on('fieldChange', () => ev++);
-    assert(E('swapSlots("mid", "front")') && E('slotOf("hero")') === 'front' && E('slotOf("tobin")') === 'mid' && ev === 1, 'C7 swapSlots moves the hero (one fieldChange)');
-    assert(E('offSlot("hero") && offSlot("tobin") && !offSlot("hesketh")') && /out of place/.test(E('formWarning()')), `Out of place: both moved members; the warning: "${E('formWarning()')}"`);
-    const heroSlot = E('slotOf("hero")');
-    assert(!E(`fieldTo("wren", "${heroSlot}")`) && E('slotOf("hero")') === heroSlot && !E('S.party.field.includes("wren")'), 'C7 fieldTo on the hero\'s slot is refused; the hero stays');
-    assert(E('fieldTo("wren", "back")') && E('S.party.field.includes("wren") && !S.party.field.includes("hesketh")') && E('slotOf("wren")') === 'back' && E('S.party.autoField') === false, 'fieldTo: Wren takes the Back, Hesketh goes to the bench');
-    assert(E('fieldTo("wren", "mid")') && E('slotOf("wren")') === 'mid' && E('slotOf("tobin")') === 'back', 'fieldTo a fielded companion swaps slots');
-    assert(E('setSlots({ front: "bram", mid: "hero", back: "pip" })') && E('S.party.field.slice().sort().join()') === 'bram,pip' && E('whoIn("front")') === 'bram', 'setSlots sets field and cells together');
-    assert(!E('setSlots({ front: "bram", mid: "tobin", back: "pip" })') && !E('setSlots({ front: "bram", mid: "hero", back: "bram" })'), 'setSlots refuses a party without the hero, or someone twice');
-    assert(E('adjacentKeys("hero").sort().join()') === 'bram,pip' && E('adjacentKeys("pip").join()') === 'hero', 'adjacency: the Middle touches both sides, the Back only the Middle');
-    // old two-lane cells (the grid, a stored snapshot) are repaired to one member per slot
-    E('S.party.cells = { hero: { col: 1, lane: 1 }, bram: { col: 2, lane: 1 }, pip: { col: 2, lane: 0 } }; emit("fieldChange", { field: S.party.field })');
-    const c = J(g, 'S.party.cells');
-    assert(new Set(Object.values(c).map(x => x.col)).size === 3 && Object.values(c).every(x => x.lane === 1) && c.pip.col === 2, `a second member dropped on a used slot swaps into it (${Object.entries(c).map(([k, x]) => k + ' ' + x.col).join(', ')})`);
-    // the class home on a class change: the hero walks there, whoever stood there swaps
-    E('setSlots({ front: "bram", mid: "hero", back: "pip" }); chooseClass("lanternmage")');
-    assert(E('slotOf("hero")') === 'back' && E('slotOf("pip")') === 'mid' && E('slotOf("bram")') === 'front', 'a class change: the hero walks to the new class home (Back), Pip swaps to the Middle');
-    errs.push(...g.errors);
-  }
-  // combat: reach, cover, bulwark, Braced, dives, Out of place, the hero floor and the trio ramp
-  {
-    const g = loadCore({ seed: 66 }), E = s => g.eval(s);
-    ticks(g, 3);
-    E('almanac.force("none"); chooseClass("ranger"); ["tobin", "hesketh", "wren"].forEach(k => { unlockChar(k, "test", true); charRec(k).lv = 30; charRec(k).rank = 1; }); S.party.autoField = false; S.auto = false; S.L = 30; S.blade = 30; S.maxZone = 12; setZone(10)');
-    const place = spec => { E(`setSlots(${JSON.stringify(spec)})`); ticks(g, 1); };   // fieldChange refreshes the units on the next tick
-    const hit = (key, kind) => E(`(() => { const u = cbUnitByKey("${key}"); u.hp = u.maxHp; u.sh = 0; u.down = false; u.drT = 0; const a = cbHitUnit(u, u.maxHp * 0.1, "${kind || 'poison'}", null); u.hp = u.maxHp; return a / u.maxHp; })()`);
-    place({ front: 'tobin', mid: 'hero', back: 'hesketh' });
-    const coverOn = hit('hero'), bulOff = hit('hesketh');
-    place({ front: 'hero', mid: 'tobin', back: 'hesketh' });
-    const bulOn = hit('hesketh');
-    place({ front: 'hesketh', mid: 'hero', back: 'tobin' });
-    const coverOff = hit('hero');
-    assert(Math.abs(coverOn / coverOff - (1 - E('COMBAT_TUNE.cover'))) < 0.01 && Math.abs(bulOn / bulOff - (1 - E('FORM_TUNE.bulwark'))) < 0.01,
-      `cover: a tank in Front covers the Middle (x${(coverOn / coverOff).toFixed(2)}), a tank in the Middle covers the Back (x${(bulOn / bulOff).toFixed(2)})`);
-    place({ front: 'hero', mid: 'tobin', back: 'hesketh' });
-    const aF = E('cbUnitByKey("hero").armour');
-    place({ front: 'tobin', mid: 'hero', back: 'hesketh' });
-    const aM = E('cbUnitByKey("hero").armour');
-    assert(aF - aM === E('FORM_TUNE.bracedAll'), `Braced: anyone in Front gets +${aF - aM} armour`);
-    // reach: melee foes reach the front-most standing member only
-    E('combatFoes().forEach(f => { f.ranged = false; f.diveT = 0; f.forceT = 0; f.tgt = -1; })'); ticks(g, 3);
-    const tg = E('combatFoes().filter(f => !f.dead && f.hp > 0 && !f.ranged && f.tgt >= 0).map(f => combatUnits()[f.tgt].key).join()');
-    assert(tg && tg.split(',').every(k => k === 'tobin'), `melee foes hit the Front member (${tg})`);
-    // Out of place: 10% less damage and healing
-    place({ front: 'tobin', mid: 'hero', back: 'hesketh' });
-    const hHome = E('cbUnitByKey("hesketh").heal / cbUnitByKey("hesketh").hpP'), dHome = E('charDps("hesketh")');   // F2: per HP power (the hero's slot job moves the party's power)
-    place({ front: 'tobin', mid: 'hesketh', back: 'hero' });
-    const hOff = E('cbUnitByKey("hesketh").heal / cbUnitByKey("hesketh").hpP'), dOff = E('charDps("hesketh")');
-    assert(Math.abs(hOff / hHome - 0.9) < 1e-6 && Math.abs(dOff / dHome - 0.9) < 1e-6 && E('offSlotMult("hero")') === 0.9, `Out of place: Hesketh heals x${(hOff / hHome).toFixed(2)} and hits x${(dOff / dHome).toFixed(2)} in the Middle`);
-    // the trio ramp over zones 8-12 (damage only)
-    const trio = z => E(`(() => { const m = S.maxZone; S.maxZone = ${z}; const t = trioMult(); S.maxZone = m; return t; })()`);
-    assert(trio(5) === 1 && trio(8) === 1 && Math.abs(trio(10) - 1.175) < 1e-9 && Math.abs(trio(12) - 1.35) < 1e-9 && Math.abs(trio(40) - 1.35) < 1e-9, 'trioX ramps 1 -> 1.35 over zones 8-12');
-    const hp0 = E('cbUnitByKey("tobin").maxHp'); E('S.maxZone = 5'); ticks(g, 2); const hp1 = E('cbUnitByKey("tobin").maxHp'); E('S.maxZone = 12'); ticks(g, 2);
-    assert(Math.abs(hp0 / hp1 - 1) < 1e-9, 'trioX never touches HP');
-    // the hero's floor: a Ranger with strong companions and a weak blade hits at the floor
-    place({ front: 'tobin', mid: 'hero', back: 'hesketh' });
-    E('["tobin", "hesketh"].forEach(k => { charRec(k).lv = 120; charRec(k).rank = 4; }); S.L = 1; S.blade = 1');
-    const fl = E('heroFloorDps()'), hd = E('heroDps()'), st = E('heroStand()');
-    assert(fl > hd && Math.abs(E('heroCombatDps()') - fl * E('trioMult()')) / fl < 1e-9 && Math.abs(st - fl * E('trioMult()') / hd) / st < 1e-9 && E('heroStand(true)') === st,
-      `the hero's floor: a Ranger at ${E('fmt(heroDps())')} dps fights at ${E('fmt(heroCombatDps())')} (heroStand x${st.toFixed(1)}, taps too)`);
-    E('chooseClass("lightkeeper")');
-    assert(E('heroFloorDps()') === 0 && E('HERO_CLASSES.lightkeeper.aura').includes('25%'), 'the Lightkeeper has no floor; its Blessing aura says 25%');
-    errs.push(...g.errors);
-  }
-  assert(!errs.length, 'no formation errors' + (errs.length ? ': ' + errs[0] : ''));
-} catch (e) { fail('formation crashed: ' + (e.stack || e)); }
-
-// ---- Bonds: time together, levels, growth, seeds, stories (56f-bonds.js, 21f-stories-bonds.js; plan-3 F2, formation.md 2.3, 3.3, check C5) ----
-if (section('bonds')) try {
-  const rawOf = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
-  const ticks = (g, n, dt = 0.1) => { for (let i = 0; i < n; i++) g.fn.tick(dt); };
-  const J = (g, s) => JSON.parse(g.eval(`JSON.stringify(${s})`));
-  const HR = 3600, errs = [];
-  // levels, events and copy
-  {
-    const g = loadCore({ seed: 71 }), E = s => g.eval(s);
-    ticks(g, 3);
-    E('chooseClass("warden"); ["tobin", "bram", "wren", "aldric", "elowen"].forEach(k => unlockChar(k, "test", true)); S.party.autoField = false; S.activity = "fight"');
-    assert(E('S.bond.v') === 1 && E('Object.keys(S.bond.t).length') === 0 && E('BOND_IDS.length') === 21, 'a new game: S.bond v 1, nothing seeded, 21 Bonds');
-    const lvs = []; g.fn.on('bondLevel', e => lvs.push(e));
-    const at = [];
-    for (const h of [0.49, 0.5, 2.99, 3, 11.99, 12, 35.99, 36, 149.99, 150, 400]) { E(`S.bond.t.mossy = ${h * HR}`); at.push(E('bondLevel("mossy")')); }
-    assert(at.join() === '0,1,1,2,2,3,3,4,4,5,5', `levels at 0.5h / 3h / 12h / 36h / 150h: ${at.join(', ')}`);
-    E('S.bond.t.mossy = 0; S.bond.lv = {}');
-    E(`bondAdd("mossy", ${0.5 * HR}, false)`); E(`bondAdd("mossy", ${2.5 * HR}, false)`); E(`bondAdd("mossy", ${150 * HR}, false)`);
-    assert(lvs.map(e => e.lv).join() === '1,2,5' && lvs[1].story === 1 && lvs[2].sworn && lvs[2].prev === 2, `bondLevel fires once per level reached (${lvs.map(e => e.lv).join(', ')}; Friends opens story 1, Sworn flags sworn)`);
-    const tx = [1, 2, 3, 5].map(n => J(g, `bondText("mossy", ${n})`));
-    assert(tx[0].msg === 'Tobin and Bram met. Mossy Hollow is on.' && tx[0].prio === 'low' && tx[2].msg === 'Tobin and Bram grew closer. Mossy Hollow is now Trusted.' && tx[3].msg === 'Tobin and Bram are Sworn.' && tx[3].prio === 'high' && J(g, 'bondText("sword", 1)').msg === 'You and Tobin met. The Borrowed Sword is on.',
-      `toast copy: "${tx[0].msg}" / "${tx[1].msg}" / "${tx[3].msg}"`);
-    assert(E('swornOf("tobin").join()') === 'mossy' && E('bondsOf("tobin").join()') === 'mossy,sword' && E('bondsOf("hero").join()') === 'sword,banner' && E('bondsOf("hero", true).length') === 8,
-      'swornOf, bondsOf (the hero\'s Bonds are its class\'s, or all 8)');
-    const c = J(g, 'bondCounts()');
-    assert(c.total === 21 && c.sworn === 1 && c.met === 1 && c.maxLv === 5 && c.byLv[0] === 20, `bondCounts() for achievements: ${JSON.stringify(c)}`);
-    // growth: live, only while both are in the party; benching pauses, never resets
-    E('S.bond.t = {}; S.bond.lv = {}; setSlots({ front: "hero", mid: "bram", back: "tobin" })');
-    ticks(g, 100);
-    const t1 = { sword: E('bondTime("sword")'), mossy: E('bondTime("mossy")'), hunting: E('bondTime("hunting")') };
-    assert(Math.abs(t1.sword - 10) < 0.05 && Math.abs(t1.mossy - 10) < 0.05 && t1.hunting === 0 && E('partyBonds().join()') === 'mossy,sword', `fighting 10 s: The Borrowed Sword and Mossy Hollow +10 s; Hunting Party (Wren benched) 0 (${JSON.stringify(t1)})`);
-    E('setSlots({ front: "hero", mid: "wren", back: "tobin" })'); ticks(g, 50);
-    assert(Math.abs(E('bondTime("mossy")') - t1.mossy) < 1e-9 && Math.abs(E('bondTime("sword")') - 15) < 0.05, 'benching Bram pauses Mossy Hollow; the time is kept');
-    E('S.activity = "gather"'); const s0 = E('bondTime("sword")');
-    E('setSlots({ front: "hero", mid: "bram", back: "tobin" })'); const m0 = E('bondTime("mossy")'); ticks(g, 100);
-    assert(Math.abs(E('bondTime("mossy")') - m0 - 10 * E('FORM_TUNE.bondCamp')) < 0.05 && Math.abs(E('bondTime("sword")') - s0) < 1e-9, 'at the Hearth while the hero gathers: companion pairs x0.5, hero pairs pause');
-    E('S.activity = "fight"; charRec("tobin").lv = 25'); const m1 = E('bondTime("mossy")'); ticks(g, 100);
-    assert(Math.abs(E('bondTime("mossy")') - m1 - 10 * 1.5) < 0.05 && E('bondOldFriend("mossy")') && E('bondInfo("mossy").rate') === 1.5, 'Old Friend (Tobin L25): Mossy Hollow grows x1.5, once per Bond');
-    // away: the fight branch at bondAway
-    const a0 = E('bondTime("sword")'); E(`awayGains(${2 * HR})`);
-    assert(Math.abs(E('bondTime("sword")') - a0 - 2 * HR * E('FORM_TUNE.bondAway') * 1.5) < 1, `away 2 h fighting: +${((E('bondTime("sword")') - a0) / HR).toFixed(2)} h (x${E('FORM_TUNE.bondAway')}, Old Friend x1.5)`);
-    // stories: titles from SYNERGIES; locked until the level; no text = "Story coming soon" (nothing to read)
-    const stp = J(g, 'bondStories("hunting")');
-    assert(stp.length === 2 && stp[0].title === 'Bats and Birches' && stp[1].title === 'The Winter Larder' && !stp[0].open && stp[0].lv === 2 && stp[1].lv === 4, 'Hunting Party stories: titles, story 1 at Friends, story 2 at Close');
-    E('bondSet("hunting", 4)');
-    assert(!E('bondRead("hunting", 0)') && E('bondUnread("hunting")') === 0 && E('bondSworn("hunting")') === null, 'no text yet: nothing to read, no dot');
-    E('BOND_STORIES.hunting = [{ title: "Bats and Birches", text: "One." }, { title: "The Winter Larder", text: "Two." }]; BOND_SWORN.hunting = "Three."');
-    assert(E('bondUnread("hunting")') === 2 && !E('bondRead("hunting", 1)') && E('bondRead("hunting", 0)') && E('bondRead("hunting", 1)') && !E('bondRead("hunting", 1)') && E('S.bond.seen.hunting') === 2 && E('bondUnread("hunting")') === 0,
-      'with text: two unread (the dot), read in order, once each (S.bond.seen)');
-    assert(E('bondSworn("hunting")') === null && (E('bondSet("hunting", 5)'), E('bondSworn("hunting")')) === 'Three.' && E('swornOf("wren").includes("hunting")'), 'the Sworn line shows at Sworn; swornOf feeds D5');
-    E('delete BOND_STORIES.hunting; delete BOND_SWORN.hunting');
-    errs.push(...g.errors);
-  }
-  // C5: seeds for old saves, from the old field; a new game gets none; one What's new pair of lines
-  {
-    const FIX = ['save-v2.json', 'save-a-v1.json', 'save-mid-v2.json', 'save-v2-late.json', 'save-v3-four.json'];
-    for (const f of FIX) {
-      const raw = JSON.parse(rawOf(f));
-      const g = loadCore({ seed: 72, storage: memoryStorage({ [KEY]: JSON.stringify(raw) }) });
-      const news = []; g.fn.on('whatsNew', w => { if (/Bonds/.test(w.msg)) news.push(w.msg); });
-      const quiet = []; g.fn.on('bondLevel', e => quiet.push(e));
-      ticks(g, 5);
-      const b = J(g, 'S.bond'), old = J(g, 'S.party.formOld && S.party.formOld.field') || [], cls = J(g, 'S.party.cls');
-      const max = Math.max(0, ...Object.values(b.t));
-      assert(b.v === 1 && max <= 36 * HR + 5 && !g.errors.length, `C5 ${f}: seeded once (v 1); no Bond above 36 h (${(max / HR).toFixed(1)} h); ${Object.keys(b.t).length} Bonds seeded`);
-      const conv = J(g, `SYNERGIES.filter(s => s.layer === 'bond' && ${JSON.stringify(['oldoath', 'lampward', 'kindlestar', 'markleap', 'hunting', 'bellsong', 'waxkindle', 'mirelamp', 'oldenemies', 'chosen'])}.includes(s.id)).map(s => ({ id: s.id, pair: s.pair, cls: s.cls || null }))`);
-      const active = conv.filter(d => d.pair.every(k => k === 'hero' ? cls === d.cls : old.includes(k)));
-      for (const d of active) {
-        const s = J(g, `(() => { const r = { t: bondTime("${d.id}"), lv: bondLevel("${d.id}") }; return r; })()`);
-        const strong = d.pair.some(k => k !== 'hero' && (J(g, `ROSTER.${k}.rarity`) === 'legendary' || J(g, `charRec("${k}").lv`) >= 25));
-        assert(s.t >= 12 * HR && s.lv >= 3 && (!strong || s.lv === 4), `C5 ${f}: ${d.id} was active in the old field: ${(s.t / HR).toFixed(0)} h, ${J(g, `BOND_LV_NAME[${s.lv}]`)}${strong ? ' (it had the L25 Bond strength)' : ''}`);
-      }
-      assert(news.length === (J(g, 'rosterList().length') ? (Object.values(b.t).some(t => t >= 0.5 * HR) ? 2 : 1) : 0) && quiet.every(e => e.quiet) && Object.keys(b.lv).every(id => b.lv[id] === J(g, `bondLevel("${id}")`)),
-        `${f}: What's new: ${news.map(m => `"${m}"`).join(' + ') || 'none'}; seeded levels announced quietly`);
-      // not weaker: every converted pair active in the old field that is still together keeps its old strength (1 x Common Cause) or more
-      const now = J(g, 'activeSynergies()').filter(a => active.some(d => d.id === a.id));
-      assert(now.every(a => a.strength >= (a.members.some(k => k !== 'hero' && J(g, `ROSTER.${k}.rarity`) === 'common') ? 1.25 : 1) - 1e-9), `${f}: converted pairs still fielded are at least as strong as before (${now.map(a => `${a.id} ${a.strength}`).join(', ') || 'none still fielded'})`);
-      errs.push(...g.errors);
-    }
-    const n = loadCore({ seed: 73 }); const nn = []; n.fn.on('whatsNew', w => { if (/Bonds/.test(w.msg)) nn.push(w.msg); }); ticks(n, 5); n.eval('S.L = 5; S.maxZone = 9'); ticks(n, 5);
-    assert(n.eval('S.bond.v') === 1 && n.eval('Object.keys(S.bond.t).filter(k => S.bond.t[k] > 1).length') === 0 && !nn.length, 'C5 a new game: nothing seeded, no Bond line');
-  }
-  // formQuick (F3's quick score): pure, finite, reads combos, Bonds and Out of place
-  {
-    const g = loadCore({ seed: 74 }), E = s => g.eval(s);
-    ticks(g, 3);
-    E('chooseClass("warden"); ["tobin", "wren", "hesketh", "pip", "bram", "kestrel", "oriel", "aldric", "elowen", "maren", "anselm", "corvin"].forEach(k => { unlockChar(k, "test", true); charRec(k).lv = 40; }); S.party.autoField = false; S.maxZone = 20; S.L = 30');
-    const s0 = E('JSON.stringify(S)');
-    const home = J(g, 'formQuick({ front: "hero", mid: "wren", back: "hesketh" })'), away = J(g, 'formQuick({ front: "hesketh", mid: "wren", back: "hero" })');
-    assert(E('JSON.stringify(S)') === s0 && home.d > 0 && home.st > 0 && Number.isFinite(home.d) && home.front && home.sup && !away.front && home.syn.some(x => x.id === 'hearth') && home.syn.some(x => x.id === 'anvil'),
-      `formQuick: pure; Warden, Wren, Hesketh at home: d ${home.d.toExponential(2)}, st ${home.st.toExponential(2)}, ${home.syn.map(x => x.id).join(' + ')}`);
-    assert(away.d < home.d, `out of place and without Lifeline or Hammer and Anvil the same trio scores less (x${(away.d / home.d).toFixed(2)})`);
-    const b0 = J(g, 'formQuick({ front: "tobin", mid: "hero", back: "bram" })'); E('bondSet("mossy", 5)'); const b5 = J(g, 'formQuick({ front: "tobin", mid: "hero", back: "bram" })');
-    assert(b5.d > b0.d && b5.syn.some(x => x.id === 'mossy' && x.lv === 5), `a Sworn Mossy Hollow raises the score (x${(b5.d / b0.d).toFixed(3)})`);
-    const cast = J(g, 'formQuick({ front: "hero", mid: "kestrel", back: "oriel" })');
-    assert(cast.d > cast.st, 'a caster adds splash to pack damage, not to single-target damage');
-    // speed: a planner's 66 pairs x 6 orders
-    const ids = ['tobin', 'wren', 'hesketh', 'pip', 'bram', 'kestrel', 'oriel', 'aldric', 'elowen', 'maren', 'anselm', 'corvin'];
-    const ms = E(`(() => { const ids = ${JSON.stringify(ids)}, P = [['front','mid','back'],['front','back','mid'],['mid','front','back'],['mid','back','front'],['back','front','mid'],['back','mid','front']];
-      let best = Infinity;
-      for (let r = 0; r < 5; r++) {
-        const t = Date.now(), q = formQuickPrep();
-        for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) for (const o of P) { const tr = {}; tr[o[0]] = 'hero'; tr[o[1]] = ids[i]; tr[o[2]] = ids[j]; formQuick(tr, q); }
-        best = Math.min(best, Date.now() - t);
-      }
-      return best; })()`);
-    console.log(`       INFO formQuick: 66 pairs x 6 orders (one formQuickPrep) in ${ms.toFixed(1)} ms (Node, best of 5)`);
-    assert(ms < 40, `formQuick with a prep is cheap enough for the planner's quick pass (${ms.toFixed(1)} ms for 396; the same numbers with or without the prep)`);
-    const q1 = J(g, 'formQuick({ front: "hero", mid: "wren", back: "hesketh" }, formQuickPrep())');
-    assert(Math.abs(q1.d / home.d - 1) < 1e-9, 'a prep gives the same score as a fresh read');
-    errs.push(...g.errors);
-  }
-  // combat: Rearguard takes dives meant for an ally; Two Lights stand allies up at 45%
-  {
-    const g = loadCore({ seed: 75 }), E = s => g.eval(s);
-    ticks(g, 3);
-    E('almanac.force("none"); chooseClass("ranger"); ["tobin", "hesketh", "anselm"].forEach(k => { unlockChar(k, "test", true); charRec(k).lv = 30; }); S.party.autoField = false; S.auto = false; S.maxZone = 12; setZone(10)');
-    E('setSlots({ front: "hero", mid: "hesketh", back: "tobin" })'); ticks(g, 2);
-    const hp = E(`(() => { const f = combatFoes().find(x => x.hp > 0); const m = cbUnitByKey("hesketh"), t = cbUnitByKey("tobin"); m.hp = m.maxHp; t.hp = t.maxHp; f.diveT = 2; f.first = 1; onFoeAttack(f, m); f.diveT = 0; return [m.hp / m.maxHp, t.hp / t.maxHp]; })()`);
-    assert(hp[0] === 1 && hp[1] < 1, `Rearguard: a dive on Hesketh hits Tobin in Back instead (${hp.map(x => x.toFixed(3)).join(' / ')})`);
-    E('setSlots({ front: "hero", mid: "anselm", back: "hesketh" })'); ticks(g, 2);
-    assert(E('synParty().revive') === 0.45 && E('activeSynergies().some(a => a.id === "twolights")'), 'Two Lights (Anselm, Hesketh): allies stand up at 45%');
-    errs.push(...g.errors);
-  }
-  // Bond writing (LORE7 fills 21f): every entry names a Bond, keeps the canon titles, has text and one Sworn sentence
-  {
-    const g = loadCore({ seed: 76 });
-    const bad = J(g, `(() => { const out = [];
-      for (const id of Object.keys(BOND_STORIES)) { const d = SYNERGIES.find(s => s.id === id && s.layer === 'bond'), e = BOND_STORIES[id];
-        if (!d) { out.push(id + ': not a Bond'); continue; }
-        if (!Array.isArray(e) || e.length !== 2 || e.some((x, i) => !x || x.title !== d.stories[i] || !(typeof x.text === 'string' && x.text.trim().length > 20))) out.push(id + ': two stories with the canon titles and text'); }
-      for (const id of Object.keys(BOND_SWORN)) { const l = BOND_SWORN[id]; if (!BOND_IDS.includes(id) || !(typeof l === 'string' && l.trim().length > 5 && l.length < 200)) out.push(id + ': Sworn line'); }
-      return out; })()`);
-    assert(!bad.length, `21f-stories-bonds.js: ${J(g, 'Object.keys(BOND_STORIES).length')} of 21 Bonds written, ${J(g, 'Object.keys(BOND_SWORN).length')} Sworn lines; every entry well-formed` + (bad.length ? ': ' + bad.slice(0, 3).join('; ') : ''));
-  }
-  assert(!errs.length, 'no Bond errors' + (errs.length ? ': ' + errs[0] : ''));
-} catch (e) { fail('bonds crashed: ' + (e.stack || e)); }
-
-// ---- the Party UI for the party of three (75-party.js, 75-bonds-ui.js, 60-formation.css; plan-3 F4, formation.md 6) ----
-// The UI runs in the browser only: these check its sources, the dist, and the core calls it makes.
-if (section('party ui (F4)')) try {
-  const src = f => fs.readFileSync(path.join(ROOT, 'src', f), 'utf8');
-  const party = src('js/75-party.js'), sheet = src('js/75-party-sheet.js'), bonds = src('js/75-bonds-ui.js'), css = src('styles/60-formation.css');
-  assert(/n: 'Old Friend'/.test(sheet) && !/n: 'Bond' \}/.test(sheet), 'F4 the L25 milestone reads "Old Friend" (the word Bond now means the pair)');
-  assert(['swapSlots(', 'fieldTo(', 'setPin(', 'formWarning()', 'slotJob(', 'FORM_TEXT.heroStays', 'benchChar('].every(s => party.includes(s)) && !/pf-cell|function tapCell/.test(party),
-    'F4 slot cards change the party only through the 56e API (swapSlots, fieldTo, setPin, benchChar); the interim grid is gone');
-  assert(["id: 'party-form'", "id: 'party-syn'", "id: 'party-bonds'", "id: 'party-bench'"].every(s => party.includes(s)), 'F4 Team view sections: slots, combos, Bonds, bench');
-  assert(/on\('bondLevel'/.test(bonds) && /bondText\(/.test(bonds) && /ev\.quiet/.test(bonds) && bonds.includes('Story coming soon'), 'F4 Bond toasts use bondText and skip quiet levels; unwritten stories say "Story coming soon"');
-  const badFont = css.split('\n').filter(l => /font:[^;]*var\(--display\)/.test(l) && !/var\(--display-k\)/.test(l));
-  assert(!badFont.length, 'F4 display text sizes scale with --display-k (FONT1)' + (badFont.length ? ': ' + badFont[0].trim().slice(0, 80) : ''));
-  const motion = css.replace(/@media \(prefers-reduced-motion: no-preference\) \{[\s\S]*?\n\}/g, '');
-  assert(!/(^|[\s;{])(transition|transform):/.test(motion), 'F4 lift and drag motion only under prefers-reduced-motion: no-preference (the colour flash stays)');
-  const dist = fs.readFileSync(path.join(ROOT, 'dist', 'lanternfall.html'), 'utf8');
-  assert(dist.includes('sec-party-bench') || dist.includes("'party-bench'"), 'F4 is in the dist');
-
-  // The core calls the slot cards make, on a new Warden with two companions.
-  const g = loadCore({ seed: 11 });
-  const E = s => g.eval(s);
-  E('chooseClass("warden", "Ash")'); for (let i = 0; i < 5; i++) g.fn.tick(0.1);
-  E('S.maxZone = 40; ["wren", "hesketh", "bram"].forEach(k => unlockChar(k, "progress", true)); setSlots({ front: "hero", mid: "wren", back: "hesketh" })');
-  assert(E('whoIn("front") === "hero" && whoIn("mid") === "wren" && whoIn("back") === "hesketh"'), 'F4 the three slots read Back / Middle / Front');
-  assert(E('!fieldTo("bram", "front") && whoIn("front") === "hero"'), 'F4 a bench companion cannot take the hero\'s slot (the card shows FORM_TEXT.heroStays)');
-  assert(E('swapSlots("mid", "front") && whoIn("mid") === "hero" && whoIn("front") === "wren"'), 'F4 tap-to-swap moves the hero too');
-  assert(E('fieldTo("bram", "back") && whoIn("back") === "bram" && !S.party.field.includes("hesketh")'), 'F4 bench-to-slot: the one there goes to the bench');
-  assert(E('!!formWarning()') && E('offSlot("hero") && offSlot("wren")'), `F4 Out of place shows one warning ("${E('formWarning()')}")`);
-  assert(E('setPin("wren", true) && isPinned("wren") && setPin("wren", false) && !isPinned("wren")'), 'F4 the lock pins and unpins');
-  assert(E('!!slotJob("bram") && slotJob("bram").label === "Hits divers" && slotJob("hero").label.startsWith("Covers")'), 'F4 slot job lines (Overwatch, Bulwark)');
-  const t1 = E('JSON.stringify(bondText("hunting", 1))'), t2 = E('JSON.stringify(bondText("hunting", 2))'), t5 = E('JSON.stringify(bondText("hunting", 5))');
-  assert(/"prio":"low"/.test(t1) && /"prio":"normal"/.test(t2) && /"prio":"high"/.test(t5) && /Sworn/.test(t5), 'F4 Bond toast copy and priorities: Met low, Friends normal, Sworn high');
-  assert(E('partyBonds().includes("hunting") && bondInfo("hunting").next.name === "Met"'), 'F4 the Bond rows list the pairs in the party (Wren and Bram), with the next level');
-  assert(!g.errors.length, 'F4 no handler errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
-} catch (e) { fail('party ui crashed: ' + (e.stack || e)); }
-
-// ---- F5: formation follow-ups (party level of 2, bench XP, no combat soft-lock, the hero's real HP in the hold estimate) ----
-if (section('formation follow-ups')) try {
-  const rawOf = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
-  const secs = (g, s, dt = 0.1) => { for (let i = 0; i < s / dt; i++) g.fn.tick(dt); };
-  // 1. party level = the top 2 (the field), the bench earns no XP (owner), and the planner scores recruits at their real level (CU1)
-  {
-    const g = loadCore({ seed: 71 }), E = s => g.eval(s);
-    E('chooseClass("lanternmage")');
-    E('["tobin", "wren", "kestrel", "oriel"].forEach(k => unlockChar(k, "test", true)); ["tobin", "wren"].forEach(k => { charRec(k).lv = 200; charRec(k).rank = 7; }); S.party.autoField = false; setField(["tobin", "wren"]); S.auto = false');
-    assert(E('partyLevel()') === 200, `partyLevel() averages the top ${E('ROSTER_TUNE.fieldMax')} companions (the field), not 3: ${E('partyLevel()')} with two at 200 and two recruits at 1`);
-    // CU1 (owner, 2026-09-28: no rapid catch-up, "maxing out all heroes shouldn't be spoonfed"): a recruit
-    // takes days to level, so the planner's 'potential' scores it at its real level. F5 wanted the opposite
-    // (a level-1 Kestrel or Oriel over the level-200 pair), which assumed catch-up in minutes.
-    const pot = JSON.parse(E('JSON.stringify(bestLineup({ by: "potential", zone: 70 }))'));
-    assert(pot && pot.field.slice().sort().join() === 'tobin,wren', `CU1 the planner keeps a level-200 Common pair over level-1 recruits (${pot && pot.field.join(', ')})`);
-    // XP follows time spent fighting (killWorth), so the field fights at a zone it holds, not one it one-shots
-    E('["tobin", "wren"].forEach(k => { charRec(k).lv = 40; charRec(k).rank = 1; }); S.maxZone = 60; S.maxZone = (() => { let b = 1; for (let z = 1; z <= 60; z++) if (partyHoldEstimate(z, { one: true }).holds) b = z; return b; })(); setActivity("fight"); setZone(S.maxZone)');
-    let loud = 0; g.fn.on('charLevel', e => { if (!e.quiet && (e.id === 'kestrel' || e.id === 'oriel')) loud++; });
-    const f0 = E('charRec("tobin").lv');
-    secs(g, 120);
-    const kl = E('charRec("kestrel").lv'), ol = E('charRec("oriel").lv');
-    // Owner (2026-09-28): the bench earns no XP (benchXp 0).
-    assert((E('ROSTER_TUNE.benchXp') > 0 ? kl > 1 && ol > 1 : kl === 1 && ol === 1) && !loud && !g.errors.length && E('S.party.field.join()') === 'tobin,wren',
-      `benched companions earn ${E('ROSTER_TUNE.benchXp') * 100}% of the kill XP, quietly: Kestrel L${kl}, Oriel L${ol} after 2 min on the bench at zone ${E('S.zone')} (Tobin L${f0} -> L${E('charRec("tobin").lv')})` + (g.errors.length ? ': ' + g.errors[0] : ''));
-  }
-  // 2. no soft-lock: a knocked-out companion gets up mid-pack; a pack nobody can finish counts as a wipe
-  {
-    const g = loadCore({ seed: 72 }), E = s => g.eval(s);
-    E('almanac.force("none"); chooseClass("lightkeeper")');
-    E('["wren", "pip"].forEach(k => { unlockChar(k, "test", true); charRec(k).lv = 40; charRec(k).rank = 1; }); S.party.autoField = false; setField(["wren", "pip"]); S.auto = false; S.L = 40; S.blade = 40');
-    E('S.maxZone = 7; setActivity("fight"); setZone(7)');   // below zone 8: nobody joins on their own
-    secs(g, 0.5);
-    // the pack cannot be killed and hits nothing; the healer hero outlasts it with both companions down
-    const lock = 'combatFoes().forEach(f => { f.hp = f.max = 1e30; f.atk = 0; })';
-    E(lock);
-    const ev = []; g.fn.on('unitUp', e => ev.push(e.key)); g.fn.on('wipe', e => ev.push('wipe:' + e.stall + ':' + e.to));
-    E('["wren", "pip"].forEach(k => cbHitUnit(cbUnitByKey(k), 1e40, "poison", null))');
-    const down = E('cbUnitByKey("wren").down && cbUnitByKey("pip").down && !cbUnitByKey("hero").down');
-    secs(g, E('COMBAT_TUNE.getUp') + 1);
-    assert(down && ev.includes('wren') && ev.includes('pip') && E('!cbUnitByKey("wren").down && cbUnitByKey("wren").hp > 0'),
-      `F5 a companion knocked out while the healer hero stands gets up after ${E('COMBAT_TUNE.getUp')} s (unitUp: ${ev.join(', ')})`);
-    E('["wren", "pip"].forEach(k => cbHitUnit(cbUnitByKey(k), 1e40, "poison", null))');
-    const frontTank = () => JSON.parse(E('JSON.stringify(bestLineup({ zone: 8, filter: k => ROSTER[k].role !== "tank" }))')).score;
-    const ft0 = frontTank();
-    E('S.party.autoField = true');   // the stuck rule is the planner's (Auto line-up on); it may change the field
-    secs(g, E('AF_TUNE.stuckT') + 1);
-    const ft1 = frontTank();
-    assert(ft1 < ft0 * 0.6, `F5 the planner's stuck rule still fires when the members got up again: no kill in ${E('AF_TUNE.stuckT')} s with a knock-out weighs a Front tank as after a boss knock-out (a tankless push scores x${(ft1 / ft0).toFixed(2)})`);
-    E(lock);
-    secs(g, E('COMBAT_TUNE.stallT'));
-    const w = ev.find(x => x.startsWith('wipe:'));
-    assert(w === 'wipe:true:6' && E('CB_STATS.stalls') >= 1 && !g.errors.length,
-      `F5 a pack the party cannot finish in ${E('COMBAT_TUNE.stallT')} s counts as a wipe: the party falls back from zone 7 to 6 (${w})` + (g.errors.length ? ': ' + g.errors[0] : ''));
-    secs(g, E('COMBAT_TUNE.wipeT') + 1);
-    for (let i = 0; i < 20 && !E('combatFoes().some(f => f.hp > 0 && f.hp < 1e29)'); i++) g.fn.tick(0.1);   // S6-A: small foes may all be down between packs
-    assert(E('combatUnits().slice(0, 3).every(u => !u.down && u.hp > 0)') && E('combatFoes().some(f => f.hp > 0 && f.hp < 1e29)'), 'F5 after the fall back the party stands and a new pack spawns');
-    // not in a boss fight: the boss timer ends those
-    E('S.party.autoField = false; S.maxZone = 8; setZone(7); challenge()'); secs(g, 0.2);
-    E('combatFoes().forEach(f => { f.atk = 0; }); globalThis.__k = S.party.field[0]; cbHitUnit(cbUnitByKey(__k), 1e40, "poison", null)');
-    secs(g, E('COMBAT_TUNE.getUp') + 1);
-    assert(E('fightBoss') && E('cbUnitByKey(__k).down'), 'F5 no getting up in a boss fight (the boss timer ends it)');
-  }
-  // 3. the hold estimate gives the hero its real HP when the planner measures at potential levels
-  {
-    const g = loadCore({ seed: 73, storage: memoryStorage({ [KEY]: rawOf('save-v2-late.json') }) }), E = s => g.eval(s);
-    E('almanac.force("none")');
-    E('["kestrel", "oriel"].forEach(k => isRecruited(k) || unlockChar(k, "test", true)); S.party.autoField = false; setSlots({ front: "hero", mid: "kestrel", back: "oriel" })');
-    secs(g, 0.1);
-    const cells = E('JSON.stringify(S.party.cells)');
-    const held = (knob, by) => { E(`COMBAT_TUNE.heroRealHp = ${knob}`); const r = JSON.parse(E(`JSON.stringify(lineupScore(["kestrel", "oriel"], { cells: ${cells}, zone: 39, by: "${by}" }))`)); return r.held; };
-    // CU1: 'potential' no longer lifts levels (no catch-up), so it rates the party as 'now' does, and afRealPow stays null
-    const old = held(0, 'potential'), pot = held(1, 'potential'), now = held(1, 'now');
-    // live: the same party with its companions caught up (levels as the planner lifts them) and the hero as it is
-    const hp = E('(() => { const h0 = partyHoldEstimate(33, { one: true }).heroHp, pl = Math.floor(partyLevel()), sv = ["kestrel", "oriel"].map(k => [charRec(k).lv, charRec(k).rank]); const real = {}; ["kestrel", "oriel"].forEach(k => { real[k] = charPow(k); const r = charRec(k); r.rank = Math.min(7, Math.floor((pl - 1) / 25)); r.lv = Math.min(pl, levelCap(r.rank)); }); const up = partyHoldEstimate(33, { one: true }).heroHp; afRealPow = real; const fixed = partyHoldEstimate(33, { one: true }).heroHp; afRealPow = null; ["kestrel", "oriel"].forEach((k, i) => { charRec(k).lv = sv[i][0]; charRec(k).rank = sv[i][1]; }); return [h0, up, fixed]; })()');
-    assert(E('S.party.cls') === null && Math.abs(hp[2] / hp[0] - 1) < 1e-9 && hp[1] > hp[0] * 1.5 && pot === now && old === now && E('afRealPow') === null,
-      `F5 a class-less hero in Front with Kestrel and Oriel (late fixture): potential rates the real levels, zone ${pot} (now ${now}; F5 lifted them and rated 34); the hero's HP stays ${(hp[0] / 1e6).toFixed(1)}M when the companions are lifted (was ${(hp[1] / 1e6).toFixed(1)}M)`);
-    E('COMBAT_TUNE.heroRealHp = 1');
-    assert(!g.errors.length, 'F5 no handler errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
-  }
-} catch (e) { fail('formation follow-ups crashed: ' + (e.stack || e)); }
-
-// ---- CU1: no rapid catch-up XP for heroes (owner, 2026-09-28: "They shouldn't have rapid catch-up XP
-// either. We could have an achievement for maxing out all heroes and that shouldn't be spoonfed.") ----
-if (section('no catch-up (CU1)')) try {
-  const g = loadCore({ seed: 74 }), E = s => g.eval(s);
-  E('chooseClass("lanternmage")');
-  E('["kestrel", "wren"].forEach(k => unlockChar(k, "test", true)); charRec("tobin").lv = 30; charRec("tobin").rank = 1; charRec("kestrel").lv = 25; S.party.autoField = false; setField(["tobin", "kestrel"]); S.auto = false; S.maxZone = 30; S.zone = 30');
-  const T = E('ROSTER_TUNE');
-  assert(!['catchGap', 'catchStep', 'catchMax', 'catchPromo'].some(k => k in T) && E('catchUpBonus("kestrel")') === 0, 'CU1 the catch-up knobs are gone and catchUpBonus() is 0');
-  // the same kill, the same field: a benched level-200 hero lifts the party level; the fielded recruit's XP must not change
-  const xpOf = () => { const x0 = E('charRec("kestrel").xp'); E('emit("kill", { mob: { boss: false, hp: 1, max: 1 }, zone: 30 })'); return E('charRec("kestrel").xp') - x0; };
-  const lo = [E('partyLevel()'), xpOf(), E('JSON.stringify(promoteCost("kestrel"))')];
-  E('charRec("wren").lv = 200; charRec("wren").rank = 7; charRec("kestrel").xp = 0');
-  const hi = [E('partyLevel()'), xpOf(), E('JSON.stringify(promoteCost("kestrel"))')];
-  assert(hi[0] > lo[0] + 50 && lo[1] > 0 && Math.abs(hi[1] / lo[1] - 1) < 1e-9 && hi[2] === lo[2],
-    `CU1 a hero far behind the party earns the XP of its own level and pays the full promotion (party L${lo[0]} -> L${hi[0]}: XP a kill ${lo[1].toFixed(1)} -> ${hi[1].toFixed(1)}, promotion ${lo[2]} -> ${hi[2]})`);
-  // the natural rule stays: per kill, par counts at most gapMax above the hero (at most xpWorthMax x packHp kills' worth)
-  E('charRec("kestrel").lv = 1; charRec("kestrel").rank = 0; charRec("kestrel").xp = 0');
-  const x1 = xpOf(), cap1 = E('cxpNeed(1 + ROSTER_TUNE.gapMax) / ROSTER_TUNE.killsPerLv * ROSTER_TUNE.xpWorthMax * COMBAT_TUNE.packHp'), need1 = E('cxpNeed(1)');
-  assert(x1 > 0 && x1 <= cap1 * (1 + 1e-9) && x1 < need1 * 0.5, `CU1 a level-1 recruit at zone 30 earns the XP of par at its level + ${T.gapMax}: one slow kill is ${(x1 / need1).toFixed(3)} of a level (cap ${(cap1 / need1).toFixed(3)})`);
-  assert(!g.errors.length, 'CU1 no handler errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
-} catch (e) { fail('no catch-up crashed: ' + (e.stack || e)); }
-
-// ---- classes (S2): three base classes, the migration, star maps for 3 classes, the free switch ----
-if (section('classes (S2)')) try {
-  const rawOf = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
-  const secs = (g, s, dt = 0.1) => { for (let i = 0; i < s / dt; i++) g.fn.tick(dt); };
-  const J = (g, s) => JSON.parse(g.eval(`JSON.stringify(${s})`));
-  const errs = [];
-
-  // 1. class data complete (classes-2 1, 3.5, 7.1, appendix)
-  {
-    const g = loadCore({ seed: 1 }), E = s => g.eval(s);
-    assert(E('CLASS_BASES.join()') === 'warrior,ranger,mage', 'three base classes: Warrior, Ranger, Lanternmage');
-    const bad = J(g, `CLASS_BASES.flatMap(b => {
-      const d = CLASS_DEFS[b], out = [], A = CLASS_ABILITIES;
-      for (const k of ['name', 'weight', 'home', 'role', 'dt', 'kit', 'col', 'pitch', 'how', 'tap', 'ab1', 'finisher', 'trial']) if (!d[k]) out.push(b + '.' + k);
-      for (const k of ['hp', 'armour', 'block', 'ward', 'threat', 'crit', 'area']) if (!(d[k] >= 0)) out.push(b + '.' + k);
-      if (!d.aura || !d.aura.name || !d.aura.text) out.push(b + '.aura');
-      if (!Array.isArray(d.passives) || !d.passives.length) out.push(b + '.passives');
-      for (const [id, slot] of [[d.tap, 'tap'], [d.ab1, 'ab1'], [d.finisher, 'fin']]) {
-        const a = A[id];
-        if (!a || a.slot !== slot || a.cls !== b || !a.name || !a.desc || !DMG_TYPES.includes(a.type) || !Array.isArray(a.fx) || !a.fx.length) out.push(b + ':' + id);
-        if (slot === 'ab1' && !(a && a.cd > 0)) out.push(b + ':' + id + '.cd');
-        if (slot === 'tap' && !(a && a.coef > 0)) out.push(b + ':' + id + '.coef');
-      }
-      if (d.evos.length !== 2 || d.evos.some(e => !EVO_NAMES[e] || EVO_NAMES[e].base !== b) || d.evos.map(e => EVO_NAMES[e].kind).sort().join() !== 'damage,utility') out.push(b + '.evos');
-      return out;
-    })`);
-    assert(!bad.length, 'every base class has its stats, home, role, type, aura, passives, tap, ab1 (with a cooldown), Finisher and one damage and one utility evolution' + (bad.length ? ': ' + bad.join(', ') : ''));
-    assert(E('CLASS_DEFS.warrior.home === "front" && CLASS_DEFS.ranger.home === "mid" && CLASS_DEFS.mage.home === "back" && CLASS_DEFS.warrior.weight === "heavy" && CLASS_DEFS.ranger.weight === "medium" && CLASS_DEFS.mage.weight === "light"'), 'weights and homes: heavy Front, medium Middle, light Back');
-    assert(E('CLASS_DEFS.mage.dt === "fire" && CLASS_DEFS.warrior.dt === "phys" && CLASS_DEFS.ranger.dt === "phys" && CLASS_BASES.every(b => LB_DT[b === "mage" ? "mage" : b === "warrior" ? "warrior" : "ranger"] === CLASS_DEFS[b].dt)'), 'base types: Warrior and Ranger physical, Lanternmage fire (same as LB_DT)');
-    const titles = E('["reaver","warden","venomstalker","trapper","warlock","priest"].map(e => EVO_NAMES[e].name + "/" + EVO_NAMES[e].title).join()');
-    assert(titles === 'Reaver/the Red Lamp,Warden/the Unmoved,Venomstalker/the Quiet Thorn,Trapper/the Pathfinder,Warlock/the Shadowbinder,Lightkeeper/the Given Light', `owner-chosen evolution names and titles kept (${titles})`);
-    assert(E('Object.keys(EVO_DEFS).join()') === 'reaver,warden,venomstalker,trapper,warlock,priest', 'S3 fills EVO_DEFS with the six evolutions');
-    assert(E('Object.keys(LEGACY_CLS).join()') === 'warden,ranger,lanternmage,lightkeeper' && E('Object.keys(LEGACY_CLS).every(k => CLS_KIT(LEGACY_CLS[k].base, LEGACY_CLS[k].evo) === k)'), 'LEGACY_CLS maps the four old classes and each maps back to its own kit');
-    assert(E('Object.keys(HERO_CLASSES).join()') === 'warden,lanternmage,ranger,lightkeeper' && E('HERO_CLASSES.warden.name') === 'Warrior' && E('HERO_CLASSES.lightkeeper.name') === 'Lightkeeper',
-      'HERO_CLASSES stays a legacy view (4 kit keys, legacy order): the warden kit is shown as the Warrior');
-    assert(E('COMBAT_TUNE.wall === CLASS_ABILITIES.shieldwall.dr && /60% less/.test(HERO_CLASSES.warden.ability.desc)') && Math.abs(E('HERO_CLASSES.warden.ability.cd') - 30) < 1e-9, 'Shield Wall reads its numbers from CLASS_ABILITIES (60% less taken, 30% more dealt until S6), every 30s');
-    assert(E('COMBAT_TUNE.heroHp.ranger === 6 && COMBAT_TUNE.heroArmour.ranger === 10 && COMBAT_TUNE.heroHp.warden === 12 && COMBAT_TUNE.heroArmour.warden === 30 && COMBAT_TUNE.heroHp.lanternmage === 4'), 'base stats in combat: Warrior 12 / 30, Ranger 6 / 10 (was 5 / 0), Lanternmage 4 / 0');
-    for (const f of ['24-data-classes.js', '55-classes.js']) {
-      const src = fs.readFileSync(path.join(ROOT, 'src', 'js', f), 'utf8').replace(/\/\/.*$/gm, '');
-      assert(!/\b(document|window|localStorage|canvas)\b/.test(src), `${f} is a core file: no DOM, window, canvas or storage`);
-    }
-    errs.push(...g.errors);
-  }
-
-  // 2. meters and caps: Grit (5, 1% less taken each, half from idle taps), Embers (5), the Flare's Burn, the Ranger's crit
-  {
-    const g = loadCore({ seed: 2 }), E = s => g.eval(s);
-    E('chooseBase("warrior"); S.auto = false; S.maxZone = 5; setZone(5); spawn()'); secs(g, 0.2);
-    for (let i = 0; i < 6; i++) E('classTap({ target: "mob", auto: true })');
-    const idle = E('heroGritDr()');
-    for (let i = 0; i < 8; i++) E('classTap({ target: "mob" })');
-    assert(Math.abs(idle - 0.025) < 1e-9, `idle taps add Grit at half strength (2.5% at 5, got ${idle})`);
-    assert(E('heroGuardN()') === 5 && Math.abs(E('heroGritDr()') - 0.05) < 1e-9 && E('partyBuffs().some(b => b.name === "Grit" && b.stacks === 5)'), `Grit caps at 5 and cuts damage taken by 5% (${E('heroGritDr()')})`);
-    secs(g, 0.2);
-    assert(E('combatUnits()[0].blockC') === 0.1 && E('combatUnits().slice(1).every(u => !u.blockC)'), 'the Warrior blocks every tenth hit (counted, no random draw); companions have no class block');
-    const cw = E('critBase()');
-    E('chooseClass("mage"); spawn()'); secs(g, 0.2);
-    for (let i = 0; i < 9; i++) E('mob && !mob.dead && classTap({ target: "mob" })');
-    assert(E('!mob || mob.dead || mob.embers === CLS_TUNE.embers.max'), 'Embers cap at 5 on a foe');
-    E('S.party.abilityCd = 0'); const fl = E('castAbility()');
-    const burning = E('combatFoes().filter(f => !f.dead).every(f => stHas(f, "burn"))');
-    assert(fl && burning, 'Lantern Flare sets every foe in the pack burning');
-    E('chooseClass("ranger")');
-    const cr = E('critBase()');
-    assert(Math.abs(cw - 0.08) < 1e-9 && Math.abs(cr - 0.15) < 1e-9 && E('gear().crit') === 0, `base crit with no gear: Warrior 8%, Ranger 15% (${(cw * 100).toFixed(1)}% / ${(cr * 100).toFixed(1)}%), before slot jobs and Keen Eye`);
-    errs.push(...g.errors);
-  }
-
-  // 3. every fixture migrates once, keeps its class and stars, loads and fights (classes-2 7)
-  {
-    const WANT = { warden: ['warrior', 'warden'], ranger: ['ranger', null], lanternmage: ['mage', null], lightkeeper: ['mage', 'priest'] };
-    const FIX = fs.readdirSync(path.join(ROOT, 'tests', 'fixtures')).filter(f => f.endsWith('.json')).sort();
-    const rows = [];
-    for (const f of FIX) {
-      const raw = JSON.parse(rawOf(f)), old = raw.party && raw.party.cls;
-      const g = loadCore({ seed: 5, storage: memoryStorage({ [KEY]: JSON.stringify(raw) }) }), E = s => g.eval(s);
-      const migs = []; g.fn.on('classMigrated', e => migs.push(e));
-      secs(g, 0.2);
-      const c = J(g, 'S.cls'), w = old ? WANT[old] : [null, null];
-      const okCls = c.base === w[0] && c.evo === w[1] && E('S.party.cls') === (old || null) && (!old || (c.mig === 1 && c.from === old));
-      E('S.activity = "fight"; spawn()'); secs(g, 60);
-      E('save(); loadSave()'); secs(g, 1);
-      const c2 = J(g, 'S.cls');
-      const bad = badNumbers(E('S')).concat(badNumbers(J(g, 'combatUnits().map(u => [u.hp, u.maxHp])')));
-      assert(okCls && c2.base === c.base && c2.evo === c.evo && !bad.length && !g.errors.length,
-        `${f}: ${old || 'no class'} -> ${c.base || 'choose'}${c.evo ? ' + ' + c.evo : ''}; loads, fights a minute, saves and loads again` + (bad.length ? ': ' + bad[0] : g.errors.length ? ': ' + g.errors[0] : ''));
-      rows.push(f);
-      errs.push(...g.errors);
-    }
-    // each old class from the late party fixture (with a star layout on its old map): once, idempotent, stars carried
-    for (const old of Object.keys(WANT)) {
-      const raw = JSON.parse(rawOf('save-v3-four.json'));
-      raw.party.cls = old;
-      const map = { warden: 'warden', ranger: 'ranger', lanternmage: 'lanternmage', lightkeeper: 'lightkeeper' }[old];
-      raw.stars = { v: 1, maps: { [map]: { layouts: [{ name: 'Farm', lit: ['a0s1', 'a0s2', 'a1s1'] }, { name: 'Push', lit: [] }], active: 0 } }, seen: 0 };
-      const g = loadCore({ seed: 6, storage: memoryStorage({ [KEY]: JSON.stringify(raw) }) }), E = s => g.eval(s);
-      const migs = [], toasts = []; g.fn.on('classMigrated', e => migs.push(e)); g.fn.on('toast', t => toasts.push(t.msg));
-      secs(g, 0.2);
-      const c = J(g, 'S.cls'), [b, e] = WANT[old];
-      // S3: a Lightkeeper plays the Lanternmage map and the Lightkeeper ring; its old layout stays untouched, its points free
-      const newMap = { warden: 'warrior', ranger: 'ranger', lanternmage: 'mage', lightkeeper: 'mage' }[old];
-      const carried = old === 'lightkeeper' ? '' : 'a0s1,a0s2,a1s1';
-      const starsOk = E(`starCls() === ${JSON.stringify(newMap)} && starLayout().lit.join() === ${JSON.stringify(carried)} && JSON.stringify(S.stars.maps[${JSON.stringify(map)}].layouts[0].lit) === '["a0s1","a0s2","a1s1"]'`);
-      const proven = e ? c.proven[e] === 1 : Object.keys(c.proven).length === 0;   // this fixture is past zone 35
-      E('save()');
-      const g2 = loadCore({ seed: 6, storage: memoryStorage({ [KEY]: g.storage.get(KEY) }) });
-      const m2 = []; g2.fn.on('classMigrated', x => m2.push(x)); secs(g2, 0.5);
-      const again = J(g2, 'S.cls');
-      g2.eval('S.activity = "fight"; spawn()'); secs(g2, 30);
-      const bad = badNumbers(g2.eval('S'));
-      assert(c.base === b && c.evo === e && c.mig === 1 && c.from === old && E('S.party.cls') === old && proven && starsOk && m2.length === 0 && JSON.stringify(again) === JSON.stringify(c) && !bad.length && !g.errors.length && !g2.errors.length,
-        `old ${old}: ${b}${e ? ' on the ' + e + ' path' : ''}${e ? ' (proven past the Fenmother)' : ''}, stars carried to the ${newMap} map, runs once (reload: no second migration), fights` + (g.errors.length ? ': ' + g.errors[0] : g2.errors.length ? ': ' + g2.errors[0] : bad.length ? ': ' + bad[0] : ''));
-      assert(migs.length === 1 && toasts.filter(t => /^Classes changed\./.test(t)).length === 1 && m2.length === 0, `old ${old}: one plain toast on the first tick, never again ("${toasts.find(t => /^Classes changed/.test(t)) || ''}")`);
-      errs.push(...g.errors, ...g2.errors);
-    }
-    // an old Lightkeeper below the Fenmother: the path is granted but not proven (3.7)
-    {
-      const g = loadCore({ seed: 7, storage: memoryStorage({ [KEY]: rawOf('save-a-v1.json') }) });
-      secs(g, 0.2);
-      const c = J(g, 'S.cls');
-      assert(c.base === 'mage' && c.evo === 'priest' && !c.proven.priest && g.eval('lbHas("cls:lightkeeper") && lbHas("evo:priest") && lbRole() === "support" && lbHome() === "back"'), 'an old Lightkeeper at zone 9: Lanternmage on the Lightkeeper path, granted but not proven; lbHas / lbRole / lbHome');
-      errs.push(...g.errors);
-    }
-  }
-
-  // 4. star maps for 3 classes: 31 stars and 44 points each, the deeds count 3 maps, every kit has a map
-  {
-    const g = loadCore({ seed: 8 }), E = s => g.eval(s);
-    assert(E('["warrior","ranger","mage"].every(c => { const m = starMap(c); return m && m.order.length === 31 && Object.values(m.stars).reduce((a, s) => a + s.cost, 0) === 44 && !STAR_MAPS[c].legacy; })'), 'the Warrior, Ranger and Lanternmage maps: 31 stars and 44 points each');
-    assert(E('Object.keys(STAR_MAPS).filter(c => !STAR_MAPS[c].legacy).join()') === 'warrior,mage,ranger' && E('STAR_MAPS.lightkeeper.legacy === 1'), 'three class maps; the legacy Lightkeeper map is marked legacy (kept for old Lightkeepers until S3)');
-    assert(E('Object.keys(HERO_CLASSES).every(k => STAR_MAPS[CLS_STAR_MAP[k]])') && E('!STAR_MAPS.warden && !STAR_MAPS.lanternmage'), 'every kit has a star map; the old warden / lanternmage keys are save keys only');
-    assert(!/[Gg]uard stack/.test(E('JSON.stringify(STAR_MAPS.warrior)')) && /Grit/.test(E('JSON.stringify(STAR_MAPS.warrior)')), 'Warrior stars say Grit, never "guard stack"');
-    E('chooseBase("warrior"); S.L = 60'); E('starLight("a0s1"); starLight("a0s2")');
-    assert(E('starCls()') === 'warrior' && E('JSON.stringify(Object.keys(S.stars.maps))') === '["warrior"]' && E('S.stars.v') === 2, 'a new Warrior lights stars on maps.warrior (S.stars v 2)');
-    assert(/on each of the 3 class maps/.test(E('DEED_FEATS.find(d => d.id === "f_stars").needs')), 'the Stars in Every Sky Feat counts 3 class maps');
-    errs.push(...g.errors);
-  }
-
-  // 5. the free switch: once per save, within 10 minutes of choosing; a Mirror choice does not use it
-  {
-    const g = loadCore({ seed: 9 }), E = s => g.eval(s);
-    E('S.party.chosen = false; S.party.cls = null; S.cls.base = null');
-    const t0 = 1.9e12, min = 60e3;
-    assert(E(`chooseBase("warrior", { now: ${t0} })`) && E('S.cls.at') === t0 && E(`clsSwitchInfo(${t0 + min}).ok`), 'choosing a class opens the free change window');
-    assert(E(`chooseBase("warrior", { now: ${t0 + min} })`) && E('S.cls.free') === 1, 'choosing the same class again changes nothing and keeps the free change');
-    const comp0 = E('JSON.stringify(S.comp) + ROSTER_KEYS.filter(k => charRec(k)).length');
-    assert(E(`chooseBase("mage", { now: ${t0 + 9 * min} })`) && E('S.cls.base') === 'mage' && E('S.party.cls') === 'lanternmage' && E('S.cls.free') === 0 && !E(`clsSwitchInfo(${t0 + 9 * min}).ok`),
-      'within 10 minutes: a free switch to the Lanternmage (the window closes, S.cls.free 0)');
-    assert(E('JSON.stringify(S.comp) + ROSTER_KEYS.filter(k => charRec(k)).length') === comp0, 'a switch brings no second starter companion');
-    assert(!E(`chooseBase("ranger", { now: ${t0 + 9.5 * min} })`) && E('S.cls.base') === 'mage', 'a second switch is refused');
-    const h = loadCore({ seed: 10 }), H = s => h.eval(s);
-    H('S.party.chosen = false; S.party.cls = null; S.cls.base = null');
-    H(`chooseBase("ranger", { now: ${t0} })`);
-    assert(!H(`clsSwitchInfo(${t0 + 10 * min + 1}).ok`) && !H(`chooseBase("warrior", { now: ${t0 + 11 * min} })`) && H('S.cls.base') === 'ranger' && H('S.cls.free') === 1, 'after 10 minutes the free change is gone (and not used up)');
-    H('S.party.mirrors = 2; S.mats.ess = S.mats.ess.map(() => 1e9); useMirror()');
-    assert(H(`chooseBase("warrior", { now: ${t0 + 60 * min} })`) && H('S.cls.base') === 'warrior' && H('S.cls.free') === 1 && H(`clsSwitchInfo(${t0 + 61 * min}).ok`), 'a Mirror of Embers choice works without the free change, and opens the window again');
-    // a legacy save's granted path stays on the same base; changing base clears it (3.4)
-    const m = loadCore({ seed: 11, storage: memoryStorage({ [KEY]: rawOf('save-a-v1.json') }) }), M = s => m.eval(s);
-    secs(m, 0.1);
-    assert(M('S.cls.at') === 0 && !M('clsSwitchInfo().ok'), 'a migrated save gets no free change window (nothing was chosen)');
-    M('S.party.mirrors = 2; S.mats.ess = S.mats.ess.map(() => 1e9); useMirror()');
-    assert(M('chooseBase("mage")') && M('S.cls.evo') === 'priest' && M('S.party.cls') === 'lightkeeper', 'a Mirror back to the same base keeps the granted Lightkeeper path');
-    M('S.party.mirrors = 2; S.mats.ess = S.mats.ess.map(() => 1e9); useMirror()');
-    assert(M('chooseBase("warrior")') && M('S.cls.evo') === null && M('S.party.cls') === 'warden', 'a Mirror to another base clears the path (you play the Warrior)');
-    // tools that set S.party.cls directly: S.cls follows the kit key
-    M('S.party.cls = "ranger"'); secs(m, 0.1);
-    assert(M('lbClass().base') === 'ranger' && M('lbKit()') === 'ranger' && M('lbHas("cls:ranger") && lbHas("base:ranger") && !lbHas("cls:warden")'), 'a tool that sets S.party.cls: lbClass() follows it');
-    errs.push(...g.errors, ...h.errors, ...m.errors);
-  }
-
-  assert(!errs.length, 'no class errors' + (errs.length ? ': ' + errs[0] : ''));
-
-  // 6. the picker and the class card in Chromium at 360px (when Playwright is here)
-  await (async () => {
-    let pw = null;
-    try {
-      const { createRequire } = await import('node:module'); const req = createRequire(import.meta.url);
-      for (const p of ['playwright', '/opt/node22/lib/node_modules/playwright', '/usr/local/lib/node_modules/playwright', '/usr/lib/node_modules/playwright']) { try { pw = req(p); break; } catch (e) {} }
-    } catch (e) {}
-    const exe = ['/opt/pw-browsers/chromium', '/opt/pw-browsers/chromium/chrome', '/opt/pw-browsers/chromium/chrome-linux/chrome'].find(p => { try { return fs.statSync(p).isFile(); } catch (e) { return false; } });
-    if (!pw || !exe || !fs.existsSync(distFile)) { ok('classes (browser): Playwright or Chromium not here, skipped'); return; }
-    const html0 = partyDist(fs.readFileSync(distFile, 'utf8')), end = html0.lastIndexOf('})();\n</script>');   // the party-era UI (SOLO1: __SOLO = 0)
-    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
-    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
-    try {
-      const ctx = await browser.newContext({ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
-      const page = await ctx.newPage(); const errs2 = [];
-      page.on('pageerror', e => errs2.push(String(e)));
-      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
-      await page.goto('http://lf.test/'); await page.waitForTimeout(700);
-      const X = s => page.evaluate(s => window.__t.x(s), s);
-      const cards = await page.$$eval('#createScreen .ccard', cs => cs.map(c => c.dataset.cls));
-      const wide = await page.evaluate(() => document.scrollingElement.scrollWidth);
-      await page.click('#createScreen .ccard[data-cls="ranger"]');
-      await page.click('#createScreen .create-go');
-      await page.waitForTimeout(300);
-      for (let i = 0; i < 3; i++) { const b = await page.$('#createScreen .create-go'); if (!b) break; await b.click(); await page.waitForTimeout(250); }
-      const got = JSON.parse(await X('JSON.stringify({ base: S.cls.base, kit: S.party.cls, open: clsSwitchInfo().ok })'));
-      assert(cards.join() === 'warrior,ranger,mage' && wide <= 360 && got.base === 'ranger' && got.kit === 'ranger' && got.open,
-        `browser: a new game offers 3 classes at 360px (${cards.join()}, width ${wide}); picking the Ranger sets S.cls and opens the free change`);
-      await X('onboardUnlockAll && onboardUnlockAll(); partySheet.openHero()'); await page.waitForTimeout(300);
-      const card = await page.evaluate(() => { const b = document.querySelector('.csheet'); if (!b) return null; const r = b.getBoundingClientRect(); return { txt: b.textContent, w: Math.round(r.width), sw: b.querySelector('.cl-switch .mini') ? 1 : 0 }; });
-      assert(card && /Evolution/.test(card.txt) && /Venomstalker \(damage\) or Trapper \(utility\)/.test(card.txt) && /A second path opens in a later season/.test(card.txt) && card.sw === 1 && card.w <= 360,
-        `browser: the class card shows the locked evolution row, the locked second path and the free change (${card && card.w}px)`);
-      await page.click('.csheet .cl-switch .mini'); await page.waitForTimeout(300);
-      const sw = await page.$$eval('#createScreen .ccard', cs => cs.length);
-      await page.click('#createScreen .ccard[data-cls="warrior"]');
-      await page.click('#createScreen .create-go');
-      const armed = await page.textContent('#createScreen .create-go');
-      await page.click('#createScreen .create-go'); await page.waitForTimeout(300);
-      const after = JSON.parse(await X('JSON.stringify({ base: S.cls.base, kit: S.party.cls, free: S.cls.free, screen: !!document.getElementById("createScreen") })'));
-      assert(sw === 3 && /^Tap again/.test(armed) && after.base === 'warrior' && after.kit === 'warden' && after.free === 0 && !after.screen,
-        `browser: the free change asks twice in-page ("${armed}"), then switches to the Warrior and closes`);
-      assert(!errs2.length, 'browser: no class page errors' + (errs2.length ? ': ' + errs2[0] : ''));
-    } finally { await browser.close(); }
-  })();
-} catch (e) { fail('classes crashed: ' + (e.stack || e)); }
-
-// ---- evolutions (S3): six kits, the Proving, the second slot, the Mirror respec, rings, granted paths ----
-if (section('evolutions (S3)')) try {
-  const rawOf = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
-  const secs = (g, s, dt = 0.1) => { for (let i = 0; i < s / dt; i++) g.fn.tick(dt); };
-  const J = (g, s) => JSON.parse(g.eval(`JSON.stringify(${s})`));
-  const EVOS = ['reaver', 'warden', 'venomstalker', 'trapper', 'warlock', 'priest'];
-  const errs = [];
-  // The late fixture (zone 38, past the Fenmother) at level 35, as any base class, with a test damage knob.
-  const late = (seed, cls) => {
-    const raw = JSON.parse(rawOf('save-v3-four.json')); raw.L = 35; if (cls) raw.party.cls = cls;
-    const g = loadCore({ seed, storage: memoryStorage({ [KEY]: JSON.stringify(raw) }), extraSource: 'var __K = 1; addModifier("dmg", () => __K);' });
-    secs(g, 0.2);
-    return g;
-  };
-  // Evolve through the real rules: the base class, a passed Proving, then the choice card.
-  const evolve = (g, evo) => g.eval(`(() => { const b = EVO_DEFS[${JSON.stringify(evo)}].base; if (lbClass().base !== b) chooseClass(b);
-    S.cls.trials[CLASS_DEFS[b].trial] = { n: 1, won: 1, best: 100 }; return chooseEvo(${JSON.stringify(evo)}); })()`);
-  // A live fight: taps three times a second and both abilities when ready (active), or nothing (idle).
-  const fight = (g, s, active) => {
-    let t = 0;
-    for (let i = 0; i < s / 0.1; i++) {
-      if (active) {
-        t += 0.1;
-        if (t >= 0.3) { t = 0; g.eval('target() === "mob" && mob && !mob.dead && classTap({ target: "mob" })'); }
-        g.eval('S.party.abilityCd <= 0 && castAbility(); castAb2()');
-      }
-      g.fn.tick(0.1);
-    }
-  };
-  // A Proving at x times the reference damage, idle or active. Returns the trialEnd record.
-  const prove = (g, active, x, kind) => {
-    const base = g.eval('lbClass().base'), tr = g.eval(`CLASS_DEFS[${JSON.stringify(base)}].trial`), ref = g.eval(`trialRefDps(${JSON.stringify(tr)})`);
-    for (let k = 0; k < 3; k++) { const d = g.eval('heroCombatDps()'); g.eval(`__K = __K * ${x} * ${ref} / ${d}`); }
-    let rec = null; const off = g.fn.on('trialEnd', e => { rec = Object.assign({}, e); });
-    const ok = kind === 'proving' ? g.eval('provingStart()') : g.eval(`trialStart(${JSON.stringify(tr)}, { kind: 'test' })`);
-    if (!ok) { off(); return null; }
-    for (let i = 0; i < 1200 && !rec; i++) {
-      if (active) { if (i % 3 === 0) g.eval('target() === "mob" && mob && !mob.dead && classTap({ target: "mob" })'); g.eval('S.party.abilityCd <= 0 && castAbility(); castAb2()'); }
-      g.fn.tick(0.1);
-    }
-    off();
-    return rec;
-  };
-
-  // 1. data: six kits, each with its stats, ab2, Finisher, ring, lamp colour and card copy
-  {
-    const g = loadCore({ seed: 1 }), E = s => g.eval(s);
-    const bad = J(g, `Object.keys(EVO_DEFS).flatMap(e => {
-      const d = EVO_DEFS[e], out = [], A = CLASS_ABILITIES;
-      for (const k of ['name', 'title', 'base', 'kind', 'role', 'dt', 'col', 'tint', 'pitch', 'ab2', 'finisher', 'ringKs', 'idle', 'active']) if (!d[k]) out.push(e + '.' + k);
-      for (const k of ['hp', 'armour', 'block', 'ward', 'threat', 'crit', 'area', 'ctrl', 'tankDr']) if (!(d[k] >= 0)) out.push(e + '.' + k);
-      if (!/^#[0-9A-F]{6}$/i.test(d.col) || !/^#[0-9A-F]{6}$/i.test(d.tint)) out.push(e + '.colour');
-      if (d.bullets.length !== 3 || !d.good.length || !d.beats.length || !d.passives.length || !d.line.name || !d.line.text) out.push(e + '.card');
-      if (!CLASS_DEFS[d.base].evos.includes(e) || EVO_NAMES[e].base !== d.base) out.push(e + '.base');
-      const a = A[d.ab2], f = A[d.finisher];
-      if (!a || a.slot !== 'ab2' || a.cls !== e || !(a.cd > 0) || !a.name || !a.desc || !DMG_TYPES.includes(a.type) || !a.fx.length) out.push(e + ':' + d.ab2);
-      if (!f || f.slot !== 'fin' || f.cls !== e || !f.tags.includes('finisher') || !f.name) out.push(e + ':' + d.finisher);
-      if (d.ring.length !== 8 || d.ring.some(s => !s[0] || !s[1] || !s[2] || !(s[3] >= 1)) || d.ring[7][2].ks !== d.ringKs) out.push(e + '.ring');
-      if (!d.tactics || !d.tactics.preset) out.push(e + '.tactics');
-      for (const id of d.good) if (!ROSTER[id]) out.push(e + '.good:' + id);
-      return out;
-    })`);
-    assert(!bad.length, 'six evolutions: stats, role, type, lamp colour, card copy (3 lines, good with, beats), ab2 with a cooldown, a Finisher, an 8-star ring with its keystone, Tactics' + (bad.length ? ': ' + bad.join(', ') : ''));
-    const names = E(JSON.stringify(EVOS) + '.map(e => CLASS_ABILITIES[EVO_DEFS[e].ab2].name + "/" + CLASS_ABILITIES[EVO_DEFS[e].finisher].name).join()');
-    assert(names === 'Rend/Red Harvest,Stand Fast/Oathstrike,Deathcap/Heartseeker,Snare Field/Deadfall,Witchfire/Unmaking,Sanctuary/Dawnbreak', `ability names follow names.md (Deathcap, Witchfire; owner-named Sanctuary): ${names}`);
-    assert(E(JSON.stringify(EVOS) + '.map(e => EVO_DEFS[e].title).join()') === 'the Red Lamp,the Unmoved,the Quiet Thorn,the Pathfinder,the Shadowbinder,the Given Light', 'the owner-chosen titles (names.md coordinator override)');
-    assert(E('Object.keys(CLASS_TRIALS).join()') === 'warrior,ranger,mage' && E('["hold","hunt","wave"].join() === CLASS_BASES.map(b => CLASS_TRIALS[CLASS_DEFS[b].trial].tpl).join() && CLASS_BASES.every(b => TRIAL_TPL[CLASS_TRIALS[b].tpl])'), 'three Provings: Hold the Bridge (hold), The Running Wraith (hunt), The Cursed Wave (wave)');
-    assert(E('CLASS_ABILITIES.shieldwall.dr === 0.6 && CLASS_ABILITIES.shieldwall.emp === 0.3'), 'Shield Wall stays at S2\'s 60% / 30% (S6 changes it)');
-    for (const f of ['59e-class-combat.js', '59f-trials.js']) {
-      const src = fs.readFileSync(path.join(ROOT, 'src', 'js', f), 'utf8').replace(/\/\/.*$/gm, '');
-      assert(!/\b(document|window|localStorage|canvas)\b/.test(src), `${f} is a core file: no DOM, window, canvas or storage`);
-    }
-    errs.push(...g.errors);
-  }
-
-  // 2. each evolution's kit fires in a live fight (active), and its ab2 casts by itself when idle
-  {
-    const WANT = {
-      reaver: ['fury', 'rend', 'cinder'], warden: ['bulwark', 'sparks', 'standfast'], venomstalker: ['venom', 'bloom'],
-      trapper: ['traps', 'snare'], warlock: ['curses', 'nova', 'dets'], priest: ['sanct', 'sanctShield']
-    };
-    for (const evo of EVOS) {
-      const g = late(11), E = s => g.eval(s);
-      const okEvo = evolve(g, evo);
-      // BAL3: zone 36 (was 30): with the Ranger paths' floors x1.71 the Trapper cleared zone-30 packs before a trap sprang
-      E('S.activity = "fight"; S.zone = 36; fightBoss = false; spawn()');
-      const st0 = J(g, 'CLS_STATS'), dmg0 = E('CB_STATS.heroDmg');
-      fight(g, 45, true);
-      const st1 = J(g, 'CLS_STATS'), dmg1 = E('CB_STATS.heroDmg');
-      const miss = WANT[evo].filter(k => !(st1[k] > st0[k]));
-      const kit = E('S.party.cls'), hs = J(g, 'clsHeroStats()'), u = J(g, '(u => ({ role: u.role, block: u.blockC, hp: u.maxHp }))(combatUnits()[0])');
-      assert(okEvo && E('clsEvo()') === evo && E('clsStrength()') === 1 && kit === E(`CLS_KIT(EVO_DEFS.${evo}.base, "${evo}")`) && hs && hs.role === E(`EVO_DEFS.${evo}.role`) && u.role === hs.role && Math.abs(u.block - hs.block) < 1e-9 && !miss.length && dmg1 > dmg0,
-        `${evo}: chosen after the Proving (kit ${kit}, role ${u.role}); in a fight its parts fire (${WANT[evo].map(k => k + ' ' + Math.round(st1[k] - st0[k])).join(', ')})` + (miss.length ? ': missing ' + miss.join(', ') : ''));
-      const a0 = E('CLS_STATS.auto');
-      E('S.party.autoCast = true; S.cls.auto.ab2 = 1'); fight(g, 40, false);
-      assert(E('CLS_STATS.auto') > a0, `${evo}: idle, ${E('ab2Info().name')} casts by itself`);
-      const bad = badNumbers(E('S')).concat(badNumbers(J(g, 'combatUnits().map(u => [u.hp, u.maxHp, u.sh])')));
-      assert(!bad.length && !g.errors.length, `${evo}: no NaN, no errors` + (bad.length ? ': ' + bad[0] : g.errors.length ? ': ' + g.errors[0] : ''));
-      errs.push(...g.errors);
-    }
-    // the Reaver's Fury replaces Grit; the Trapper's Focus marks 30%; the Warden's Oath cuts the back line's damage
-    const g = late(12), E = s => g.eval(s);
-    evolve(g, 'reaver'); E('S.zone = 30; spawn()'); secs(g, 0.3);
-    for (let i = 0; i < 6; i++) E('mob && !mob.dead && classTap({ target: "mob" })');
-    assert(E('heroGuardN()') === 0 && E('clsMeter().id') === 'fury' && E('clsMeter().v') > 0, `Reaver: heavy taps build Fury (${E('clsMeter().v')}), not Grit`);
-    const h = late(13), H = s => h.eval(s);
-    evolve(h, 'trapper'); H('S.zone = 30; spawn()'); secs(h, 0.3);
-    H('mob && !mob.dead && classTap({ target: "mob" })');
-    assert(Math.abs(H('mob.markV') - 1.3) < 1e-9, `Trapper: Focus marks 30% (markV ${H('mob.markV')})`);
-    const w = late(14), W = s => w.eval(s);
-    evolve(w, 'warden'); secs(w, 0.5);
-    const back = W('(() => { const u = combatUnits().find(x => x.live && x.i > 0 && x.col < 2); return u ? clsDr(u, "hit", null) : null; })()');
-    assert(back != null && Math.abs(back - 0.9) < 1e-9 && W('clsStagX()') === 1.3, `Warden: the Middle and Back take 10% less (x${back}); stagger x1.3 for S6`);
-    errs.push(...g.errors, ...h.errors, ...w.errors);
-  }
-
-  // 3. the Proving: gate, win and loss paths, the farm pauses and resumes, idle-passable (CP8)
-  {
-    const g = loadCore({ seed: 21 }), E = s => g.eval(s);
-    E('chooseBase("ranger"); S.L = 30; S.maxZone = 30');
-    const p0 = J(g, 'provingInfo()');
-    E('S.L = 35'); const p1 = J(g, 'provingInfo()');
-    E('S.maxZone = 36'); const p2 = J(g, 'provingInfo()');
-    assert(!p0.open && /Fenmother/.test(p0.why) && !p1.open && p2.open && p2.trial.name === 'The Running Wraith', `the Proving opens after the Fenmother at level 35 ("${p0.why}" / "${p1.why}" / open)`);
-    errs.push(...g.errors);
-    // win and loss on the late fixture (a Lanternmage)
-    const a = late(22, 'lanternmage'), A2 = s => a.eval(s);
-    A2('S.activity = "gather"'); const zone0 = A2('S.zone'), field0 = A2('S.party.field.join()'), gold0 = A2('S.gold'), kills0 = A2('S.totalKills');
-    const passed = []; a.fn.on('provingPassed', e => passed.push(e));
-    const lost = prove(a, false, 0.3, 'proving');
-    const after = J(a, '({ act: S.activity, zone: S.zone, field: S.party.field.join(), live: !!trialLive(), arena: arena === null, rec: S.cls.trials.mage, choice: evoChoice() })');
-    assert(lost && !lost.won && after.rec.n === 1 && !after.rec.won && !after.choice && !passed.length, `loss path: the Proving fails at 0.3x the reference (${lost && lost.reason}, ${lost && lost.pct}%); tried once, no choice`);
-    assert(after.act === 'gather' && after.zone === zone0 && after.field === field0 && !after.live && after.arena && A2('S.totalKills') === kills0, 'the farm pauses and resumes: activity, zone and field as before, no kills paid, the arena gone');
-    const won = prove(a, true, 1.5, 'proving');
-    assert(won && won.won && A2('S.cls.trials.mage.won') === 1 && A2('S.cls.trials.mage.n') === 2 && A2('evoChoice()') && passed.length === 1 && A2('S.gold') >= gold0,
-      `win path: passed at 1.5x active (${won && won.secs}s); the choice card opens (provingPassed), no second Proving needed`);
-    assert(!A2('provingInfo().open') && A2('chooseEvo("warlock")') && A2('clsEvo()') === 'warlock' && !A2('evoChoice()'), 'after the choice the Proving closes and the path is set');
-    errs.push(...a.errors);
-    // CP8 at the reference: active passes at 1x, idle at 1.25x, idle fails at 0.5x (each Proving, one seed)
-    for (const [cls, name] of [['warden', 'Warrior'], ['ranger', 'Ranger'], ['lanternmage', 'Lanternmage']]) {
-      const r = [];
-      for (const [active, x] of [[true, 1], [false, 1.25], [false, 0.5]]) {
-        const t = late(31, cls);
-        t.eval('clsSet(lbClass().base, null)');   // the plain base class (an old Warden is on the granted Warden path)
-        r.push(prove(t, active, x, 'test'));
-        errs.push(...t.errors);
-      }
-      assert(r[0] && r[0].won && r[1] && r[1].won && r[2] && !r[2].won, `${name}'s Proving at the reference: active 1x ${r[0] && r[0].won ? 'passes' : 'fails'} (${r[0] && r[0].secs}s), idle 1.25x ${r[1] && r[1].won ? 'passes' : 'fails'}, idle 0.5x ${r[2] && !r[2].won ? 'fails' : 'passes'} (${r[2] && r[2].reason})`);
-    }
-    // the runner is reusable: a two-unit fight (the Stand) fields the hero and one named hero only
-    const s = late(41);
-    const hid = s.eval('S.party.field[0]');
-    s.eval(`trialStart("mage", { kind: 'stand', units: [${JSON.stringify(hid)}], def: Object.assign({}, CLASS_TRIALS.mage, { base: 'mage' }) })`); secs(s, 1);
-    assert(s.eval('combatUnits().filter(u => u.live).map(u => u.key).join()') === 'hero,' + hid && s.eval('trialInfo().kind') === 'stand', `the runner takes a second unit (the Stand): ${s.eval('combatUnits().filter(u => u.live).map(u => u.key).join()')}`);
-    s.eval('trialEnd(false, "quit")'); secs(s, 0.5);
-    assert(s.eval('combatUnits().filter(u => u.live).length') === 1 + s.eval('S.party.field.length') && !s.eval('trialLive()'), 'after it the whole field is back');
-    errs.push(...s.errors);
-  }
-
-  // 4. the second slot: none before evolving, a cooldown, the auto-cast switch and its master switch
-  {
-    const g = late(51, 'lanternmage'), E = s => g.eval(s);
-    E('chooseClass("mage"); S.zone = 30; spawn()'); secs(g, 0.3);
-    assert(E('ab2Info()') === null && !E('castAb2()'), 'no second ability before evolving');
-    evolve(g, 'warlock'); secs(g, 0.3);
-    const cd = E('ab2Info().cd'), c1 = E('castAb2()'), c2 = E('castAb2()');
-    assert(c1 && !c2 && Math.abs(cd - E('CLASS_ABILITIES.hexnova.cd * mod("abilityCd")')) < 1e-9 && E('ab2Info().left') > 0, `Witchfire casts once, then waits its ${cd.toFixed(1)}s cooldown`);
-    E('S.cls.auto.ab2 = 0; S.party.autoCast = true'); const a0 = E('CLS_STATS.auto'); fight(g, 40, false);
-    const off = E('CLS_STATS.auto') - a0;
-    E('S.cls.auto.ab2 = 1; S.party.autoCast = false'); fight(g, 40, false);
-    const master = E('CLS_STATS.auto') - a0;
-    E('S.party.autoCast = true'); const lz = E('S.maxZone'); E('S.maxZone = 9'); fight(g, 30, false);
-    const low = E('CLS_STATS.auto') - a0; E(`S.maxZone = ${lz}`);
-    E('ab2Auto(true)'); fight(g, 30, false);
-    assert(off === 0 && master === 0 && low === 0 && E('CLS_STATS.auto') - a0 > 0 && E('S.cls.auto.ab2') === 1, 'auto-cast: off per slot (S.cls.auto.ab2), off with the master switch (S.party.autoCast), off before zone 10, on otherwise');
-    // an old save's auto map merges in; the slots stay the class default (null)
-    assert(E('JSON.stringify(S.cls.slots)') === '{"ab1":null,"ab2":null,"ab3":null}' && E('S.cls.auto.ab3') === 1, 'S.cls.slots keeps the class defaults; ab3 waits for tier 2');
-    errs.push(...g.errors);
-  }
-
-  // 5. the Mirror of Embers: costs in full, escalation, not enough, the free change, a path switch, a class change
-  {
-    const g = late(61, 'ranger'), E = s => g.eval(s);
-    evolve(g, 'venomstalker');
-    const c = J(g, 'respecCost("evo")'), b = J(g, 'respecCost("base")');
-    const perH = E('3600 / (PACE.farmSecs + 0.45) * essChance()');
-    assert(c.mirrors === 1 && b.mirrors === 2 && c.ess.n === Math.ceil(perH * 2) && b.ess.n === Math.ceil(perH * 4) && c.ess.t === E('zoneTier(Math.min(S.maxZone, farmableZone()))'),
-      `costs: a path switch 1 Mirror + ${c.ess.n} Essence (2 hours at the farm zone), a class change 2 Mirrors + ${b.ess.n} (4 hours)`);
-    E('S.cls.at = 0; S.party.mirrors = 0'); E(`S.mats.ess[${c.ess.t - 1}] = 0`);
-    assert(!E('respecEvo("trapper")') && E('clsEvo()') === 'venomstalker' && /Mirror/.test(E('respecCost("evo").why')), `not enough: nothing changes ("${E('respecCost("evo").why')}")`);
-    E('starLight("a0s1"); starLight("a0s2"); starLight("a0s3"); starLight("a0s4"); starLight("a0s5"); S.L = 90');
-    E('starLight("e1s1"); starLight("e1s2")');
-    const ring0 = E('starLayout().lit.filter(id => /^e1s/.test(id)).length');
-    E('S.party.mirrors = 5'); E(`S.mats.ess[${c.ess.t - 1}] = 1e9`);
-    const ess0 = E(`S.mats.ess[${c.ess.t - 1}]`);
-    const sw = E('respecEvo("trapper")');
-    assert(sw && E('clsEvo()') === 'trapper' && E('S.party.mirrors') === 4 && ess0 - E(`S.mats.ess[${c.ess.t - 1}]`) === c.ess.n && E('S.cls.respec') === 1 && E('S.cls.proven.venomstalker && S.cls.proven.trapper') === 1 && ring0 === 2 && E('starLayout().lit.filter(id => /^e1s/.test(id)).length') === 0,
-      'a path switch pays 1 Mirror and the Essence, keeps the Proving, and the ring stars go dark (refunded)');
-    const c2 = J(g, 'respecCost("evo")'), c3 = (E('S.cls.respec = 9'), J(g, 'respecCost("evo")'));
-    assert(Math.abs(c2.esc - 1.5) < 1e-9 && c2.ess.n === Math.ceil(perH * 3) && c3.esc === 3 && c3.mirrors === 1, `each change after the first costs 50% more Essence, up to x3 (x${c2.esc}, then x${c3.esc}); Mirrors stay at 1`);
-    E('S.cls.respec = 1'); E('S.party.mirrors = 1');
-    assert(!E('respecBase("warrior")') && E('lbClass().base') === 'ranger', 'a class change needs 2 Mirrors');
-    E('S.party.mirrors = 2');
-    assert(E('respecBase("warrior")') && E('lbClass().base') === 'warrior' && E('S.party.cls') === 'warden' && E('clsEvo()') === null && E('evoChoice()') && E('S.party.mirrors') === 0,
-      'a class change: 2 Mirrors, the Warrior now, the path cleared, and the new path is chosen at once (the Proving stays passed)');
-    // the free change: within 10 minutes of choosing, once
-    const f = late(62, 'ranger'), F = s => f.eval(s);
-    F('chooseClass("ranger"); S.cls.free = 1; S.cls.trials.ranger = { n: 1, won: 1, best: 100 }');
-    const t0 = 1.9e12;
-    F(`chooseEvo("trapper", { now: ${t0} })`);
-    assert(F(`chooseEvo("venomstalker", { now: ${t0 + 5 * 60e3} })`) && F('clsEvo()') === 'venomstalker' && F('S.cls.free') === 0 && F('S.cls.respec') === 0 && !F(`chooseEvo("trapper", { now: ${t0 + 6 * 60e3} })`) && !F('chooseBase("mage")'),
-      'second thoughts: one free path switch within 10 minutes of choosing, no cost; then only a Mirror (and no free class change once evolved)');
-    // Mirrors from Great Lanterns: +1 from Region 2 on, once each
-    F('S.party.mirrors = 0; S.cls.lm = 0');
-    F('emit("greatLantern", { n: 1, region: "hollow", rewards: [] }); emit("greatLantern", { n: 2, region: "coast", rewards: [] }); emit("greatLantern", { n: 2, region: "coast", rewards: [] })');
-    assert(F('S.party.mirrors') === 1 && F('S.cls.lm') === 2, 'a Great Lantern relit from Region 2 on gives 1 Mirror, once (the Hollow gives none)');
-    errs.push(...g.errors, ...f.errors);
-  }
-
-  // 6. rings, titles and Tactics
-  {
-    const g = late(71, 'ranger'), E = s => g.eval(s);
-    E('chooseClass("warrior")');
-    assert(E('starMap("warrior").order.length') === 31 && E('clsTactics().slots') === 1, 'before evolving: the 31-star map, one Tactics slot');
-    evolve(g, 'warden'); E('S.L = 120');
-    assert(E('starMap("warrior").order.length') === 39 && E('starMap("warrior").stars.e1s8.name') === 'Aegis of the Order' && E('clsTactics().slots') === 2 && E('clsTactics().conds.includes("castBar")'), 'evolved: the Warden ring (8 stars) joins the Warrior map; Tactics slot 2 opens with its conditions');
-    assert(!E('starCheck("e1s1").ok') && /next to/.test(E('starCheck("e1s1").why')), 'the ring opens from star 5 of an arm');
-    for (const id of ['a0s1', 'a0s2', 'a0s3', 'a0s4', 'a0s5', 'a0s8', 'a1s1', 'a1s2', 'a1s3', 'a1s4', 'a1s5', 'a1s8']) E(`starLight("${id}")`);
-    E('starLight("e1s4")');
-    const why3 = E('starCheck("e1s3").why');
-    E('starLight("e1s5"); starLight("e1s3"); starLight("e1s2"); starLight("e1s1")');
-    const lit8 = E('starLight("e1s8")');
-    assert(/2 ring stars/.test(why3) && E('starIsLit("e1s3")') && lit8 && E('starKeysLit()') === 2 && E('starKeystone("aegis")'), `ring rules: a notable needs 2 ring stars ("${why3}"); the ring keystone lights with 2 base keystones lit (it does not count toward the 2)`);
-    const tl = J(g, 'codexTitles().filter(t => /^c_/.test(t.id))');
-    assert(tl.length === 6 && tl.find(t => t.id === 'c_warden').got && !tl.find(t => t.id === 'c_reaver').got && tl.find(t => t.id === 'c_warden').n === 'The Unmoved', 'titles: c_<evo> for each path, earned once proven');
-    E('save(); loadSave()'); secs(g, 0.3);
-    assert(E('starIsLit("e1s8")') && E('starMap("warrior").order.length') === 39 && E('clsEvo()') === 'warden', 'the ring and its stars survive a save and load');
-    errs.push(...g.errors);
-  }
-
-  // 7. granted paths (old Wardens and Lightkeepers): proven past the Fenmother, 60% below it, proven by the Proving
-  {
-    for (const f of fs.readdirSync(path.join(ROOT, 'tests', 'fixtures')).filter(x => x.endsWith('.json')).sort()) {
-      const raw = JSON.parse(rawOf(f)), old = raw.party && raw.party.cls;
-      const g = loadCore({ seed: 81, storage: memoryStorage({ [KEY]: JSON.stringify(raw) }) }), E = s => g.eval(s);
-      secs(g, 0.2); E('S.activity = "fight"; spawn()'); secs(g, 20); E('save(); loadSave()'); secs(g, 0.5);
-      const evo = E('clsEvo()'), str = E('clsStrength()'), want = { warden: 'warden', lightkeeper: 'priest' }[old] || null, past = E('lanternsLitAt(S.maxZone) >= 1');
-      const bad = badNumbers(E('S'));
-      assert(evo === want && str === (want ? (past ? 1 : 0.6) : 0) && (want !== 'priest' || E('starCls()') === 'mage') && !bad.length && !g.errors.length,
-        `${f}: ${old || 'no class'} -> path ${want || 'none'}${want ? ` at ${str * 100}%` : ''}; fights, saves and loads` + (g.errors.length ? ': ' + g.errors[0] : bad.length ? ': ' + bad[0] : ''));
-      errs.push(...g.errors);
-    }
-    for (const old of ['warden', 'lightkeeper']) {
-      const raw = JSON.parse(rawOf('save-v3-four.json')); raw.party.cls = old;
-      const g = loadCore({ seed: 82, storage: memoryStorage({ [KEY]: JSON.stringify(raw) }) }), E = s => g.eval(s);
-      secs(g, 0.3); E('S.zone = 30; spawn()'); secs(g, 0.5);
-      const evo = E('clsEvo()'), a = E('ab2Info() && ab2Info().name');
-      assert(E('clsProven()') && E('clsStrength()') === 1 && E('clsHeroStats() !== null') && a && E('castAb2()') && !E('provingInfo().open') && !E('evoChoice()'),
-        `old ${old} past the Fenmother: the ${E(`EVO_DEFS.${evo}.name`)} at full strength (stats, ${a}); no Proving, no choice card`);
-      errs.push(...g.errors);
-    }
-    // an old Lightkeeper below the Fenmother: 60%, base stats, then the Proving proves it (no choice card)
-    const g = loadCore({ seed: 83, storage: memoryStorage({ [KEY]: rawOf('save-a-v1.json') }), extraSource: 'var __K = 1; addModifier("dmg", () => __K);' }), E = s => g.eval(s);
-    secs(g, 0.3);
-    assert(E('clsStrength()') === 0.6 && E('clsHeroStats()') === null && !E('provingInfo().open') && E('ab2Info().str') === 0.6, 'an old Lightkeeper at zone 9: Sanctuary works at 60%, base stats, the Proving waits for the Fenmother');
-    E('S.L = 35; S.maxZone = 36');
-    const p = J(g, 'provingInfo()');
-    const passed = []; g.fn.on('provingPassed', e => passed.push(e));
-    const r = prove(g, true, 2, 'proving');
-    assert(p.open && p.prove && r && r.won && E('clsProven()') && E('clsStrength()') === 1 && !E('evoChoice()') && !passed.length && E('clsEvo()') === 'priest',
-      `"Prove what you already are": the Proving proves the granted path (${r && r.secs}s), no choice card`);
-    errs.push(...g.errors);
-  }
-
-  assert(!errs.length, 'no evolution errors' + (errs.length ? ': ' + errs[0] : ''));
-
-  // 8. the choice card, the Proving banner and the second ability on screen, in Chromium at 360px
-  await (async () => {
-    let pw = null;
-    try {
-      const { createRequire } = await import('node:module'); const req = createRequire(import.meta.url);
-      for (const p of ['playwright', '/opt/node22/lib/node_modules/playwright', '/usr/local/lib/node_modules/playwright', '/usr/lib/node_modules/playwright']) { try { pw = req(p); break; } catch (e) {} }
-    } catch (e) {}
-    const exe = ['/opt/pw-browsers/chromium', '/opt/pw-browsers/chromium/chrome', '/opt/pw-browsers/chromium/chrome-linux/chrome'].find(p => { try { return fs.statSync(p).isFile(); } catch (e) { return false; } });
-    if (!pw || !exe || !fs.existsSync(distFile)) { ok('evolutions (browser): Playwright or Chromium not here, skipped'); return; }
-    const html0 = partyDist(fs.readFileSync(distFile, 'utf8')), end = html0.lastIndexOf('})();\n</script>');   // the party-era UI (SOLO1: __SOLO = 0)
-    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
-    const raw = JSON.parse(rawOf('save-v3-four.json')); raw.L = 35;
-    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
-    try {
-      const ctx = await browser.newContext({ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
-      await ctx.addInitScript(s => { try { localStorage.setItem('lanternfall.save.v4', s); } catch (e) {} }, JSON.stringify(raw));
-      const page = await ctx.newPage(); const errs2 = [];
-      page.on('pageerror', e => errs2.push(String(e)));
-      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
-      await page.goto('http://lf.test/'); await page.waitForTimeout(900);
-      const X = s => page.evaluate(s => window.__t.x(s), s);
-      await X('onboardUnlockAll && onboardUnlockAll(); document.querySelectorAll(".away-card button, .welcome button").forEach(b => b.click()); partySheet.close(); closeMenu(); S.activity = "fight"; spawn(); true');   // (the away card's Next up Go opens the hero sheet)
-      await X('provingStart()'); await page.waitForTimeout(700);
-      const hud = await page.evaluate(() => { const h = document.querySelector('.tr-hud'); if (!h || h.hidden) return null; const r = h.getBoundingClientRect(); return { txt: h.textContent, w: Math.round(r.right) }; });
-      await X('trialEnd(true, "won")'); await page.waitForTimeout(900);
-      const card = await page.evaluate(() => { const c = document.querySelector('.evo-card'); if (!c) return null; return { tabs: [...c.querySelectorAll('.evo-tab')].map(b => b.textContent), txt: c.textContent, wide: document.scrollingElement.scrollWidth }; });
-      await page.click('.evo-card .evo-tab:nth-child(2)'); await page.waitForTimeout(100);
-      await page.click('.evo-card .create-go'); await page.waitForTimeout(100);
-      await page.click('.evo-card .evo-confirm .big'); await page.waitForTimeout(500);
-      const after = JSON.parse(await X('JSON.stringify({ evo: S.cls.evo, card: !!document.querySelector(".evo-card"), ab2: (b => b && !b.hidden ? b.getAttribute("aria-label") : null)(document.querySelector(".abil2")) })'));
-      assert(hud && /The Running Wraith/.test(hud.txt) && /Give up/.test(hud.txt) && hud.w <= 360, `browser: the Proving banner on the stage at 360px ("${hud && hud.txt.slice(0, 60)}")`);
-      assert(card && card.tabs.join() === 'Venomstalker,Trapper' && /permanent/.test(card.txt) && /Good with/.test(card.txt) && card.wide <= 360, `browser: passing opens the choice card (${card && card.tabs.join(' | ')}), within 360px`);
-      assert(after.evo === 'trapper' && !after.card && /^Snare Field/.test(after.ab2 || ''), `browser: "Become a Trapper" asks in-page, then the Trapper's Snare Field button shows on the stage (${after.ab2 && after.ab2.slice(0, 30)})`);
-      await X('onboardUnlockAll(); partySheet.openHero()');
-      let sheet = '';
-      for (let i = 0; i < 20 && !/Mirror of Embers/.test(sheet); i++) { await page.waitForTimeout(150); sheet = await page.evaluate(() => { const b = document.querySelector('.csheet'); return b ? b.textContent : ''; }); }
-      assert(/Path: Trapper/.test(sheet) && /Snare Field/.test(sheet) && /Mirror of Embers/.test(sheet), 'browser: the class card shows the path, its second ability and the Mirror of Embers' + (/Path: Trapper/.test(sheet) ? '' : ': ' + sheet.slice(0, 160)));
-      assert(!errs2.length, 'browser: no evolution page errors' + (errs2.length ? ': ' + errs2[0] : ''));
-    } finally { await browser.close(); }
-  })();
-} catch (e) { fail('evolutions crashed: ' + (e.stack || e)); }
-
-// ==== end PARTY_LEGACY ====
-LEGACY = false;
 
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);

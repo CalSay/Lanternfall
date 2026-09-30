@@ -87,8 +87,7 @@ var ACT_TUNE, ACT_STATS, actWarn, actWarning, actBusy, actTap, actParry, actDodg
     W.win = k === 'heavy' ? parryWin() : DODGE[k] ? T.dodgeWin + (dboon('feet') ? 0.3 : 0) : 0; W.perf = DODGE[k] ? T.perfWin + (dboon('feet') ? 0.2 : 0) : 0;
     // SOLO1: Parry and Dodge are buttons. A heavy takes either (Parry in the tight window, Dodge in the long one);
     // a slam or a ground zone takes Dodge only. W.win is the parry window on a heavy (the banner marks both).
-    if (soloOn()) { W.win = k === 'heavy' ? soloParryWin() : 0; W.dwin = k === 'heavy' || DODGE[k] ? soloDodgeWin() : 0; W.perf = DODGE[k] ? T.perfWin : 0; }
-    else W.dwin = 0;
+    W.win = k === 'heavy' ? soloParryWin() : 0; W.dwin = k === 'heavy' || DODGE[k] ? soloDodgeWin() : 0; W.perf = DODGE[k] ? T.perfWin : 0;
     if (W.cast && W.foe) W.foe.cast = { kind: k, id: W.id, name: W.name, left: W.dur, dur: W.dur };
     ST.warns++;
     const g = clock - lastEnd; if (g < ST.minGap) ST.minGap = g;
@@ -135,10 +134,9 @@ var ACT_TUNE, ACT_STATS, actWarn, actWarning, actBusy, actTap, actParry, actDodg
     if (f && !alive(f) && !w.spec.dead) { end('interrupt', 'kill'); return; }
     if (w.kind === 'heavy') {
       if (res === 'parry') { parried(f, 'tap', true); return; }
-      if (typeof cbWallOn === 'function' && cbWallOn() && (w.target === 'hero' || bonus('ks:bastion') > 0)) { parried(f, 'wall', false); return; }
     }
     if (DODGE[w.kind] && (res === 'dodge' || res === 'perfect')) { if (w.miss) w.miss(w, res); end(res, 'tap'); return; }
-    if (w.kind === 'heavy' && res === 'dodge' && soloOn()) { end('dodge', 'tap'); return; }   // SOLO1: a dodged heavy misses
+    if (w.kind === 'heavy' && res === 'dodge') { end('dodge', 'tap'); return; }   // a dodged heavy misses
     ST.landed++;
     const mult = (w.kind === 'heavy' && res === 'early' ? T.earlyX : 1) * (dboon('lward') ? 0.7 : 1);   // Lamplight Ward
     if (w.land) { try { w.land(w, mult); } catch (e) { console.error('[lanternfall] warning land failed', e); } }
@@ -150,7 +148,7 @@ var ACT_TUNE, ACT_STATS, actWarn, actWarning, actBusy, actTap, actParry, actDodg
     end('parry', by);
     if (f && alive(f)) {
       // SOLO1 (owner): the parry staggers the foe at once for the counter's length; the counter lands inside it (59j)
-      if (soloOn() && active) { stApply(f, 'stagger', 1, 0, 0, { dur: SOLO_TUNE.counterT }); f.swing = Math.max(f.swing, 0.3); actStag(f, T.stag.parry, 0); if (typeof soloCounter === 'function') soloCounter(f); }
+      if (active) { stApply(f, 'stagger', 1, 0, 0, { dur: SOLO_TUNE.counterT }); f.swing = Math.max(f.swing, 0.3); actStag(f, T.stag.parry, 0); if (typeof soloCounter === 'function') soloCounter(f); }
       else { f.reelT = T.reelT; f.vulnT = Math.max(f.vulnT || 0, ENEMY_TUNE.vulnT); f.swing = Math.max(f.swing, 0.5); actStag(f, T.stag.parry, 0); }
     }
     if (active) { N().parry++; answered(); }
@@ -170,7 +168,7 @@ var ACT_TUNE, ACT_STATS, actWarn, actWarning, actBusy, actTap, actParry, actDodg
   }
   function canInterrupt(by) {
     if (!W.on || !W.cast || W.kind === 'hard') return false;
-    if (W.kind === 'sig') return by === 'ab' || by === 'stun' || by === 'bash';
+    if (W.kind === 'sig') return by === 'ab' || by === 'stun';
     return true;
   }
 
@@ -271,10 +269,8 @@ var ACT_TUNE, ACT_STATS, actWarn, actWarning, actBusy, actTap, actParry, actDodg
     if (p.result === 'parry') { if (bar(p.foe)) actStag(p.foe, T.stag.parry, 0); if (p.by === 'tap') { N().parry++; answered(); } }
     else if (p.result === 'interrupt' && p.by === 'tap') { N().intr++; answered(); }
   });
-  on('unitAbility', p => { if (p && (p.id === 'aldric') && W.on) { if (W.kind === 'heavy' && W.foe && W.foe.boss) parried(W.foe, 'bash', false); else if (canInterrupt('bash')) interrupt('bash', false); } });
   const stunned = f => { if (W.on && W.foe === f && canInterrupt('stun')) interrupt('stun', false); if (f && f.cast && f.cast.kind !== 'hard' && f.cast.kind !== 'sig' && !(W.on && W.foe === f)) f.cast = null; };
   on('stunned', p => stunned(p && p.foe));
-  // Shield Wall blocks the heavy hit on the hero (59b resolveParry('wall') for its own; here at land time).
 
   // ---------------- stagger (3.4) ----------------
   const stagMax = actStagMax = f => (f.boss ? T.stag.boss : T.stag.elite) * Math.min(T.stag.stepMax, 1 + T.stag.step * (f.stgN || 0));
@@ -321,7 +317,7 @@ var ACT_TUNE, ACT_STATS, actWarn, actWarning, actBusy, actTap, actParry, actDodg
     const f = FIN.f; FIN.on = false; FIN.f = null;
     const row = typeof clsFinisher === 'function' ? clsFinisher() : null;
     if (!row || !alive(f) || !U0up()) return 0;
-    const P = heroAtk() * (typeof heroStand === 'function' ? heroStand(!auto) : 1), eff = auto ? (dboon('coup') ? 0.8 : T.fin.autoEff) : 1;
+    const P = heroAtk(), eff = auto ? (dboon('coup') ? 0.8 : T.fin.autoEff) : 1;
     let coef = 0;
     for (const fx of row.fx) if (fx[0] === 'dmg') coef += fx[1];
     // Red Harvest: +perBleed for each Bleed on the foe, and it uses them up

@@ -46,7 +46,6 @@
     const h = el('h2', 'gl-head', e.head); h.id = 'glHead';
     card.append(h);
     if (e.text) card.append(el('p', 'gl-text', e.text));
-    for (const x of e.say || []) { const q = el('p', 'gl-say'); q.append(el('b', null, (x.short || x.name) + ': '), document.createTextNode(`"${x.line}"`)); card.append(q); }
     if (e.rewards && e.rewards.length) {
       const list = el('ul', 'gl-rw');
       for (const x of e.rewards) {
@@ -72,7 +71,7 @@
   }
   on('greatLantern', e => {
     if (!e || e.quiet) return;
-    queue.push({ n: e.n, region: e.region, zone: e.zone, head: e.head, text: e.text, rewards: (e.rewards || []).slice(), say: (e.say || []).slice() });
+    queue.push({ n: e.n, region: e.region, zone: e.zone, head: e.head, text: e.text, rewards: (e.rewards || []).slice() });
     setTimeout(showNext, 0);
     road.sig = '';
   });
@@ -98,7 +97,7 @@
           : x.reached ? `Dark. Beat the zone ${x.z1} boss to light it. You are at zone ${S.maxZone}.`
           : `Dark. Zones ${x.z0} to ${x.z1}. Reach zone ${x.z0} to walk this far.`;
         tx.append(el('div', 'gl-sh-n', name), el('div', 'gl-sh-sub', sub));
-        if (x.here) tx.append(el('div', 'gl-sh-here', soloOn() ? 'You are here' : 'Your party is here'));
+        if (x.here) tx.append(el('div', 'gl-sh-here', 'You are here'));
         row.append(ic, tx);
         list.append(row);
       }

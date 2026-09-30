@@ -95,24 +95,6 @@
 .bless:disabled { cursor: default; opacity: .6; }
 
 /* ---- Roster board ---- */
-.ros-list { display: grid; gap: 6px; }
-.ros-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 4px 6px 4px 0; min-height: 52px; background: var(--panel); border: 2px solid var(--line); box-shadow: 0 2px 0 #0B0810; }
-.ros-hit { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 9px; align-items: center; align-self: stretch; padding-left: 6px; min-width: 0; cursor: pointer; }
-.ros-hit:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
-.ros-pt { width: 40px; height: 40px; display: grid; place-items: center; background: var(--well); border: 2px solid var(--line-hi); overflow: hidden; }
-.ros-pt.r-rare { border-color: var(--r-rare); }
-.ros-pt.r-epic { border-color: var(--r-epic); }
-.ros-pt.r-legendary { border-color: var(--r-legendary); }
-.ros-pt img { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
-.ros-body { min-width: 0; }
-.ros-nm { display: flex; gap: 6px; align-items: baseline; font: 600 calc(14.5px * var(--display-k))/1.15 var(--display); white-space: nowrap; min-width: 0; }
-.ros-nm > span { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
-.ros-nm small { font: 500 11.5px var(--body); color: var(--muted); flex: none; }
-.ros-st { font-size: 12.5px; color: #9FD8C9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ros-row.job .ros-st { color: var(--gold); }
-.ros-row.exped .ros-st { color: var(--r-rare); }
-.ros-acts { display: flex; gap: 6px; }
-.ros-acts .mini { min-height: 44px; min-width: 56px; }
 
 /* ---- Hearth cost: a summary line, the chips behind a tap ---- */
 .ch-cost { display: flex; align-items: center; justify-content: space-between; min-height: 44px; padding: 0 8px; background: var(--well); border: 1px solid var(--line); font: 600 calc(13.5px * var(--display-k)) var(--display); color: var(--xp); }

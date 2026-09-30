@@ -29,7 +29,7 @@
 //   deeds.near(n) -> near tiers [{ id, label, pct }], deeds.follow(id | null), deeds.nudge(on)
 //   deeds.recent(n) -> [{ key, kind, id, tier, at, txt }], deeds.isNew(), deeds.seen()
 //   deeds.chapterStep(chId, step, { quiet }) -> bool (AC6), deeds.chapter(chId) -> { step, done }
-//   deeds.count(key, n) (counters: boss, meal, tides, ...), deeds.source(trackId, fn), deeds.check(full, quiet)
+//   deeds.count(key, n) (counters: boss, meal, ...), deeds.source(trackId, fn), deeds.check(full, quiet)
 //   deeds.caps() -> [{ key, raw, cap, v }], deeds.setNum('letters' | 'sci'), deeds.stats() (stats wall numbers)
 // Events: deedTier { id, tier, quiet }, deedGroup { id, lv, quiet }, deedFeat { id, quiet }, deedSecret { id },
 //   deedPoints { pts, gain }, deedMilestone { at }, deedLook { slot, id }, deedChapter { id, step }, deedsInit { tiers, pts }.
@@ -41,7 +41,7 @@ let deeds, deedBonus, wearGet;
   registerState('deeds', {
     v: 1, init: 0, tier: {}, at: {}, feat: {}, sec: {}, ch: {}, grp: {}, mil: {},
     n: { crit: 0, parry: 0, dodge: 0, intr: 0, abil: 0, dmg: 0, taken: 0, heal: 0, boss: 0, ess: 0, troph: 0, glint: 0,
-      up: 0, ref: 0, trans: 0, meal: 0, dare: 0, weekly: 0, embers: 0, tides: 0 },
+      up: 0, ref: 0, trans: 0, meal: 0, dare: 0, weekly: 0, embers: 0 },
     g: {},
     rec: { hit: 0, hitZ: 0, hitAt: 0, fine: 0, ks: {} },
     since: {}, sx: {}, pts: 0, seen: 0, last: 0,
@@ -69,13 +69,9 @@ let deeds, deedBonus, wearGet;
     N1: () => !!S.hands && typeof S.hands === 'object',
     K12: () => !!S.kitchen && typeof S.kitchen === 'object',
     N1K12: () => WAIT.N1() && WAIT.K12(),
-    NS: () => !soloOn(),                                   // W1-C: needs a party: not in solo
-    F1: () => !soloOn() && typeof offSlot === 'function',
-    F2: () => !soloOn() && !!S.bond && typeof S.bond === 'object',
     R2: () => !!(REGIONS[1] && REGIONS[1].plugged),
     R3: () => REGIONS.length >= 3,
-    O1: () => !!S.oath && typeof S.oath === 'object',
-    R2O1: () => WAIT.R2() && WAIT.O1() && !soloOn()   // (Tidewalker: tide turns with the party fielded)
+    O1: () => !!S.oath && typeof S.oath === 'object'
   };
   const waitOk = w => !w || safe(() => !!WAIT[w](), false);
   // Tiers that open with later content (lock text in the data).
@@ -100,8 +96,6 @@ let deeds, deedBonus, wearGet;
   const gRow = fam => { const g = DS().g; if (!Array.isArray(g[fam])) g[fam] = [0, 0, 0, 0, 0]; return g[fam]; };
   const sumG = fam => sumArr(DS().g[fam]);
   const skillLv = k => S.skills[k] ? num(S.skills[k].lv) : 0;
-  const roster = () => (typeof rosterLive === 'function' && rosterLive() ? rosterList() : []);
-  const recOf = id => charRec(id) || {};
   const campLv = id => typeof campLevel === 'function' && S.camp ? num(campLevel(id)) : 0;
   const lightHours = () => S.stats ? (num(S.stats.played) + num(S.stats.away)) / 3600 : 0;
   const sealFloor = () => typeof DEEP_TUNE === 'object' ? DEEP_TUNE.sealFloor : 15;
@@ -168,14 +162,6 @@ let deeds, deedBonus, wearGet;
     store: () => num(S.camp && S.camp.b && S.camp.b.store),
     stock: () => { let s = 0; for (const k in S.mats) s += sumArr(S.mats[k]); return s; },
     hands: () => handsInfo().hired, handhrs: () => handsInfo().hours, meals: () => N().meal,
-    recruits: () => roster().length,
-    promos: () => roster().reduce((a, id) => a + num(recOf(id).rank), 0),
-    toprank: () => tiersByLadder(roster().reduce((a, id) => Math.max(a, num(recOf(id).rank)), 0)),
-    complv: () => roster().reduce((a, id) => a + num(recOf(id).lv), 0),
-    stories: () => roster().reduce((a, id) => a + num(recOf(id).seen), 0),
-    bonds: () => { let s = 0; const lv = S.bond && S.bond.lv; if (lv) for (const k in lv) s += Math.min(5, num(lv[k])); return s; },
-    together: () => sumVals(S.bond && S.bond.t) / 3600,
-    front: () => N().taken, mend: () => N().heal,
     depth: () => num(S.deep && S.deep.best), floors: () => num(S.deep && S.deep.floors), marks: () => num(S.deep && S.deep.marksTotal),
     boons: () => keys(S.deep && S.deep.seen), trial: trialSeals,
     starmap: () => starClasses().reduce((a, c) => Math.max(a, starBest(c)), 0), keystones: () => keys(DS().rec.ks),
@@ -183,7 +169,7 @@ let deeds, deedBonus, wearGet;
     omens: () => keys(S.almanac && S.almanac.seen), dares: () => N().dare, weekly: () => N().weekly,
     stamps: () => num(S.almanac && S.almanac.stamps), wanted: () => num(S.bounties && S.bounties.claimed),
     wyrms: () => num(S.wyrms), raiddmg: () => num(S.stats && S.stats.raidDmg), embers: () => N().embers,
-    tides: () => N().tides, g_pearl: () => sumG('pearl'), fish: () => skillLv('fish'), g_fish: () => sumG('fish'),
+    g_pearl: () => sumG('pearl'), fish: () => skillLv('fish'), g_fish: () => sumG('fish'),
     oath: () => num(S.oath && S.oath.maxL),
     oathseals: () => { const b = S.oath && S.oath.best; let n = 0; if (b) for (const k in b) if (num(b[k]) >= 10) n++; return n; },
     lanterns: () => lanternsLitAt(S.maxZone)
@@ -207,7 +193,7 @@ let deeds, deedBonus, wearGet;
   const tierOfId = id => num(DS().tier[id]);
   const tierName = k => k <= 0 ? '' : k <= 4 ? DEED_TIERS[k - 1].n : `Everflame ★${k - 4}`;
   const tierLabel = (id, k) => { const t = TR[id]; return !t ? '' : k <= 4 ? `${t.n} ${roman(k)}` : `${t.n} ★${k - 4}`; };
-  const trackLive = t => !(soloOn() && t.g === 'comp') && waitOk(t.wait);   // SOLO1: no companions
+  const trackLive = t => waitOk(t.wait);
   const bonusTxt = (t, k) => {
     if (!t.bonus || (k !== 3 && k !== 4)) return '';
     if (t.bonus === 'deepOil') return `+${DEED_BONUS.deepOil}s ${DEED_KEY_TXT.deepOil}`;
@@ -368,7 +354,6 @@ let deeds, deedBonus, wearGet;
       return [P('Zone stars', st, hollowZones() * 5), P('Bestiary pages', pagesOf(hollowTypeKeys()), hollowTypeKeys().length * BESTIARY_TIERS.length)];
     },
     f_watch: () => [P('Hours of light', Math.floor(lightHours()), 2000)],
-    f_company: () => [P('At Lanternborn', roster().filter(id => num(recOf(id).rank) >= 7).length, ROSTER_KEYS.length)],
     f_trades: () => [P('Skills at 200', ['mine', 'wood', 'forage', 'smith', 'bench', 'loom', 'ench'].filter(k => skillLv(k) >= 200).length, 7),
       P('Tools at 20', ['pick', 'axe', 'sickle'].filter(k => S.tools && S.tools.m && S.tools.m[k] && num(S.tools.m[k][0]) >= 20).length, 3)],
     f_deep: () => [P('Deepest floor', num(S.deep && S.deep.best), 75)],
@@ -380,7 +365,6 @@ let deeds, deedBonus, wearGet;
     f_raid: () => [P('Raid bosses', num(S.wyrms), 100)],
     f_champs: () => [P('Champions', num(S.craft && S.craft.champ), 10000)],
     f_stars: () => [P('Class maps at 36', starClasses().filter(c => starBest(c) >= 36).length, starClasses().length)],
-    f_sworn: () => { const lv = (S.bond && S.bond.lv) || {}; let n = 0; for (const k in lv) if (num(lv[k]) >= 5) n++; return [P('Sworn Bonds', n, 21)]; },
     f_town: () => {
       const list = typeof campList === 'function' ? campList() : [], h = S.hands || {}, hl = Array.isArray(h.list) ? h.list : [];
       return [P('Buildings at the top', list.filter(id => campLv(id) >= campMaxLevel(id)).length, list.length), P('Hands housed', hl.length, 6),
@@ -391,8 +375,6 @@ let deeds, deedBonus, wearGet;
       if (typeof storeCap === 'function') for (const f of CRAFT_FAMILIES) for (let t = 1; t <= 5; t++) { const c = safe(() => storeCap(f, t), 0); if (!(c > 0)) continue; all++; if (num(S.mats[f] && S.mats[f][t - 1]) >= c) full++; }
       return [P('Storehouse level', num(S.camp && S.camp.b && S.camp.b.store), 8), P('Full cells', full, Math.max(1, all))];
     },
-    f_tides: () => { const b = (S.oath && S.oath.best) || {}, ks = REGIONS[1] ? REGIONS[1].types.map(i => TYPES[i] && TYPES[i].key) : [];
-      return [P('Tide turns', N().tides, 5000), P('Coast elders at Oath 10', ks.filter(k => num(b[k]) >= 10).length, 7)]; },
     f_oaths: () => { const b = (S.oath && S.oath.best) || {}; let n = 0; for (const k in b) if (num(b[k]) >= 20) n++; return [P('Oath Seals at 20+', n, 14)]; },
     f_all: () => { const others = DEED_FEATS.filter(f => f.id !== 'f_all' && waitOk(f.wait)); return [P('Feats', others.filter(f => DS().feat[f.id]).length, others.length)]; }
   };
@@ -482,7 +464,7 @@ let deeds, deedBonus, wearGet;
   const delta = (k, v) => { const l = cbLast[k]; cbLast[k] = v; return v >= l ? v - l : v; };   // a reset (checks) counts from 0
   function readCombat() {
     const st = typeof CB_STATS === 'object' && CB_STATS ? CB_STATS : null; if (!st) return;
-    const dmg = num(st.heroDmg) + num(st.compDmg), heal = num(st.healed) + num(st.shielded);
+    const dmg = num(st.heroDmg) + num(st.sideDmg), heal = num(st.healed) + num(st.shielded);
     if (!cbInit) { cbInit = true; for (const [k] of CBK) cbLast[k] = num(st[k]); cbLast.dmg = dmg; cbLast.heal = heal; }
     const n = N();
     for (const [k, key] of CBK) n[key] += delta(k, num(st[k]));
@@ -509,24 +491,11 @@ let deeds, deedBonus, wearGet;
     if (!mob || !mob.boss || inAway || !DS().init) return;
     // zone boss secrets (live play only)
     if (typeof fightBoss !== 'undefined' && num(bossTime) < 1 && num(bossTime) >= 0) grantSecret('s_close');   // S6: under 1 s before the Enrage
-    // (from zone 10: every new game beats its first bosses before it has a weapon or a full party)
     const U = safe(() => combatUnits(), null);
-    if (soloOn()) {
-      // W1-C: the solo versions. Untouched: a boss from zone 10 without one hit taken. Last Lamp Standing: your health fell under 10% during the fight (a boss kill heals you a little, so the lowest point counts).
-      if (S.zone >= T.oddZone && bossHurt === 0) grantSecret('s_bare');
-      const h = U && U[0];
-      if (S.zone >= T.oddZone && h && h.live && !h.down && bossLow < 0.1) grantSecret('s_alone');
-    } else {
-    if (S.zone >= T.oddZone && !safe(() => equipped('weapon'), true)) grantSecret('s_bare');
-    if (U && U[0] && U[0].live && !U[0].down) {
-      let others = 0, up = 0; for (let i = 1; i < U.length; i++) if (U[i].live) { others++; if (!U[i].down) up++; }
-      if (others >= 2 && up === 0 && S.zone >= T.oddZone) grantSecret('s_alone');
-    }
-    }
-    if (waitOk('F1')) {
-      const f = S.party && Array.isArray(S.party.field) ? S.party.field : [];
-      if (f.length >= 3 && f.every(id => safe(() => !!offSlot(id), false))) grantSecret('s_wrong');
-    }
+    // Untouched: a boss from zone 10 without one hit taken. Last Lamp Standing: your health fell under 10% during the fight (a boss kill heals you a little, so the lowest point counts).
+    if (S.zone >= T.oddZone && bossHurt === 0) grantSecret('s_bare');
+    const h = U && U[0];
+    if (S.zone >= T.oddZone && h && h.live && !h.down && bossLow < 0.1) grantSecret('s_alone');
   });
   // Untouched (solo): hits the hero takes while a zone boss is up (the count resets when a boss spawns)
   let bossHurt = 0, bossLow = 1;
@@ -545,7 +514,6 @@ let deeds, deedBonus, wearGet;
   on('weeklyClaim', () => { N().weekly++; });
   on('raidReward', ({ embers }) => { N().embers += num(embers); });
   on('meal', () => { N().meal++; });
-  on('tideTurn', () => { N().tides++; });
   on('storeCap', () => { const sx = DS().sx; sx.rat = num(sx.rat) + 1; if (sx.rat >= T.ratHits) grantSecret('s_rat'); });
   const markKeys = () => {
     const ks = DS().rec.ks;
@@ -572,22 +540,13 @@ let deeds, deedBonus, wearGet;
   let campSince = -1, lastView = '';
   const drumHit = () => { const b = drumSec % 60; drum[b]++; drumSum++; if (drumSum >= T.drumTaps) grantSecret('s_drum'); };
   on('tap', () => {
-    if (!soloOn()) drumHit();   // W1-C: in solo the Drummer counts Attack presses (below)
     if (campSince >= 0) campSince = clock;
   });
   on('soloAttack', p => { if (p && p.kind === 'hit') drumHit(); });
   on('menuView', ({ view }) => { lastView = view || ''; campSince = lastView === 'camp' ? clock : -1; });
 
   // Per-second secrets and polls.
-  let lastName = null, dareSeen = -1;
-  const nameHit = () => {
-    const nm = String(S.name || '').trim().toLowerCase(); if (!nm) return false;
-    for (const id of ROSTER_KEYS) {
-      const full = String(ROSTER[id].name).toLowerCase(), first = full.replace(/^(old|ser|brother|saint) /, '').split(' ')[0];
-      if (nm === full || nm === first) return true;
-    }
-    return false;
-  };
+  let dareSeen = -1;
   function secondPolls() {
     const d = DS(), sx = d.sx;
     // drum window
@@ -602,7 +561,6 @@ let deeds, deedBonus, wearGet;
       sx.dareMask = num(sx.dareMask) | bit;
       if (sx.dareMask === 127) grantSecret('s_dare');
     }
-    if (S.name !== lastName) { lastName = S.name; if (nameHit() && !soloOn()) grantSecret('s_name'); }   // SOLO1: the hero is a companion now, by name
     const hr = new Date(now()).getHours(), live = !inAway;
     if (live && S.activity === 'fight' && typeof target === 'function' && target() === 'mob') {
       if (hr >= T.nightFrom && hr < T.nightTo) { sx.night = num(sx.night) + 1; if (sx.night >= T.nightSecs) grantSecret('s_night'); }
@@ -666,7 +624,7 @@ let deeds, deedBonus, wearGet;
     const d = DS();
     if (!d.rec.ks || typeof d.rec.ks !== 'object') d.rec.ks = {};
     for (const k of Object.keys(d.g)) if (!Array.isArray(d.g[k])) delete d.g[k];
-    rebuildBonus(); dirtyPts(); cbInit = false; streak = 0; hitsAfter = -1; lastName = S.name; dareSeen = -1;
+    rebuildBonus(); dirtyPts(); cbInit = false; streak = 0; hitsAfter = -1; dareSeen = -1;
     lastNum = undefined;
   }
   ensure();
@@ -720,7 +678,7 @@ let deeds, deedBonus, wearGet;
       bonus: t.bonus, bonusTxt: [bonusTxt(t, 3), bonusTxt(t, 4)].filter(Boolean), since: DS().since[sinceKey(t)] || 0, wait: t.wait || null,
       needs: [1, 2, 3, 4].map(i => needAt(t, i)) };
   }
-  const SINCE = { crits: 'crit', parry: 'parry', intr: 'intr', abil: 'abil', damage: 'dmg', front: 'taken', mend: 'heal', bighit: 'hit', essence: 'ess', trophies: 'troph', glint: 'glint',
+  const SINCE = { crits: 'crit', parry: 'parry', intr: 'intr', abil: 'abil', damage: 'dmg', bighit: 'hit', essence: 'ess', trophies: 'troph', glint: 'glint',
     honed: 'up', reforge: 'ref', alchemy: 'trans', embers: 'embers', dares: 'dare', weekly: 'weekly', g_ore: 'g', g_crystal: 'g', g_wood: 'g', g_fibre: 'g', g_herb: 'g',
     s_mine: 'g', s_wood: 'g', s_forage: 'g' };
   const sinceKey = t => SINCE[t.id] || '';

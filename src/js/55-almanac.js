@@ -13,7 +13,7 @@
 //
 // Exposed: almanac (API object, below), OMENS, WEEKLY_GOALS.
 // Modifier keys read by other files: gold, xp, essence, crit, critDmg, dmg, gatherSpeed,
-// offline, raid, compXp, yield:<family>, skillXp:<skill>, uniqueChance (50-sim kill),
+// offline, raid, yield:<family>, skillXp:<skill>, uniqueChance (50-sim kill),
 // foeHp / bossHp (50-sim spawn), nonCrit (50-sim heroSwing, 40-rules heroDps),
 // rareW (40-rules rarityWeights), salvage (51-actions), bountyPay (55-bounties).
 // Bonus keys: bestiaryMult / masteryMult (55-mastery), bountyNoWait (55-bounties),
@@ -25,16 +25,13 @@ let OMENS, WEEKLY_GOALS;
 {
   // ---------------- systems an Omen or goal can wait for ----------------
   // Each check is a runtime typeof/state probe so this file never needs editing when they merge.
-  // craftItem, unlockTokenRoll and deepUnlocked are `let`s in later files: until those files run,
+  // craftItem, addRenown and deepUnlocked are `let`s in later files: until those files run,
   // even `typeof` on them throws (temporal dead zone). Code that runs at file load (a bonus() read)
   // can reach these probes, so a throw means "not loaded yet" and marks the answer as early.
   const AL_NEEDS = {
     K5: () => !!(S.skills && S.skills.forage),              // foraging arrives with K5 gathering
     K6: () => typeof craftItem === 'function',               // K6 crafting core
-    B1: () => rosterLive() && !soloOn(),                     // named companions (W1-C: none in solo)
-    Solo: () => soloOn(),                                    // W1-C: the solo hero's own Omens and goals
-    B7: () => typeof unlockTokenRoll === 'function',         // unlock avenues (Renown)
-    Visitor: () => typeof unlockTokenRoll === 'function' && !soloOn(),   // W1-C: the Tavern visitor (no visitors in solo)
+    B7: () => typeof addRenown === 'function',               // Renown (56c-unlocks)
     Camp: () => !!(S.camp && S.camp.open),                  // 57-camp.js: the camp is open (zone 5)
     Deepwell: () => !!S.deep && (typeof deepUnlocked !== 'function' || deepUnlocked())
   };
@@ -73,8 +70,7 @@ let OMENS, WEEKLY_GOALS;
       dare: { n: 'Knife Edge', fx: "Your hero's hits that do not crit deal 25% less. Crits deal 60% more.", mod: { nonCrit: 0.75, critDmg: 1.6 } } },
     { id: 'scholarSky', n: "Scholar's Sky", cat: 'fight', fx: 'Hero XP +50%', mod: { xp: 1.5 }, ic: ['glass', '#6FCB6A'], go: { fight: 'best' },
       dare: { n: 'Hard Lessons', fx: 'Foes have 25% more HP. Hero XP is x2.5 instead of +50%.', mod: { foeHp: 1.25, xp: 2.5 } } },
-    soloOn() ? { id: 'huntersFeast', n: "Hunter's Feast", cat: 'fight', fx: 'You deal +15% damage', mod: { dmg: 1.15 }, ic: ['mug', '#8C6A43', { 1: '#6B4A2E', 7: '#F2C14E', 5: '#EFE6D6' }], go: { fight: 'best' } }   // W1-C: the solo Company Feast
-    : { id: 'companyFeast', n: 'Company Feast', cat: 'fight', fx: 'Companions earn +50% XP', mod: { compXp: 1.5 }, needs: 'B1', ic: ['mug', '#8C6A43', { 1: '#6B4A2E', 7: '#F2C14E', 5: '#EFE6D6' }], go: { fight: 'best' } },
+    { id: 'huntersFeast', n: "Hunter's Feast", cat: 'fight', fx: 'You deal +15% damage', mod: { dmg: 1.15 }, ic: ['mug', '#8C6A43', { 1: '#6B4A2E', 7: '#F2C14E', 5: '#EFE6D6' }], go: { fight: 'best' } },
     { id: 'bestiaryDay', n: 'Bestiary Day', cat: 'fight', fx: 'Kills count double toward bestiary perks', bonus: { bestiaryMult: 1 }, ic: ['banner', '#B58CFF'], go: { fight: 'best' } },
     { id: 'masteryDay', n: 'Mastery Day', cat: 'fight', fx: 'Kills count double toward zone mastery', bonus: { masteryMult: 1 }, ic: ['banner', '#F2C14E'], go: { fight: 'here' } },
     { id: 'bossHunt', n: 'Boss Hunt', cat: 'fight', fx: '+25% damage to zone bosses', mod: { dmg: 1.25 }, when: bossNow, ic: ['sword', '#E0524F'], go: { fight: 'boss' },
@@ -87,7 +83,6 @@ let OMENS, WEEKLY_GOALS;
     { id: 'transmuter', n: "Transmuter's Day", cat: 'craft', fx: 'Transmutes cost one less', bonus: { transmuteSave: 1 }, needs: 'K6', ic: ['orb', '#B58CFF'], go: { tab: 'forge' } },
 
     { id: 'buildersMoon', n: "Builder's Moon", cat: 'road', fx: 'Builds started today are 25% faster', mod: { buildTime: 0.75 }, needs: 'Camp', ic: ['anvil', '#D08A4E'], go: { tab: 'world' } },
-    { id: 'busyTavern', n: 'Busy Tavern', cat: 'road', fx: 'The Tavern visitor costs 25% less', bonus: { tavernDeal: 1 }, needs: 'Visitor', ic: ['mug', '#8C6A43', { 1: '#6B4A2E', 7: '#F2C14E', 5: '#EFE6D6' }], go: { tab: 'world' } },
     { id: 'bountyDay', n: 'Bounty Day', cat: 'road', fx: 'Bounties refill at once and pay +50%', bonus: { bountyNoWait: 1 }, mod: { bountyPay: 1.5 }, ic: ['banner', '#E0524F'], go: { tab: 'adv' } },
     { id: 'renownDay', n: 'Renown Day', cat: 'road', fx: 'Bounties give double Renown', mod: { renown: 2 }, needs: 'B7', ic: ['banner', '#F2C14E'], go: { tab: 'adv' } },
 
@@ -278,11 +273,9 @@ let OMENS, WEEKLY_GOALS;
     wKill: { tier: 'easy', kind: 'kill', need: 1000, scale: true, txt: n => `Defeat ${num(n)} foes`, ic: ['sword', '#C9C3D6'] },
     wTrans: { tier: 'easy', kind: 'trans', need: 5, needs: 'K6', txt: n => `Transmute ${n} times`, ic: ['orb', '#B58CFF'] },
     wBoss2: { tier: 'steady', kind: 'boss', need: 25, txt: n => `Beat ${n} zone bosses`, ic: ['banner', '#E0524F'] },
-    wParry: { tier: 'easy', kind: 'parry', need: 15, needs: 'Solo', txt: n => `Land ${n} parries`, ic: ['sword', '#DCE4F0'] },
-    wCast: { tier: 'easy', kind: 'cast', need: 25, needs: 'Solo', txt: n => `Cast ${n} abilities by hand`, ic: ['flame', '#FF9E3D', { 5: '#FFB347', 7: '#FFF3C4' }] },
-    wCounter: { tier: 'steady', kind: 'counter', need: 20, needs: 'Solo', txt: n => `Land ${n} counters`, ic: ['sword', '#FF9E3D'] },
-    wLvl: { tier: 'steady', kind: 'lvl', need: 20, needs: 'B1', txt: n => `Gain ${n} companion levels`, ic: ['heart', '#5F8BE8'] },
-    wPromo: { tier: 'steady', kind: 'promo', need: 1, needs: 'B1', ok: () => rosterList().some(k => { const r = charRec(k); return r.rank < 7 && r.lv >= levelCap(r.rank) - 10; }), txt: () => 'Promote a companion', ic: ['banner', '#B58CFF'] },
+    wParry: { tier: 'easy', kind: 'parry', need: 15, txt: n => `Land ${n} parries`, ic: ['sword', '#DCE4F0'] },
+    wCast: { tier: 'easy', kind: 'cast', need: 25, txt: n => `Cast ${n} abilities by hand`, ic: ['flame', '#FF9E3D', { 5: '#FFB347', 7: '#FFF3C4' }] },
+    wCounter: { tier: 'steady', kind: 'counter', need: 20, txt: n => `Land ${n} counters`, ic: ['sword', '#FF9E3D'] },
     wUp: { tier: 'steady', kind: 'up', need: 10, txt: n => `Upgrade gear ${n} times`, ic: ['anvil', '#FF9E3D'] },
     wDeep: { tier: 'steady', kind: 'deep', need: 1, needs: 'Deepwell', txt: () => 'Reach floor 25 in one Deepwell run', ic: ['orb', '#3F8FA8'] },
     wStar: { tier: 'steady', kind: 'star', need: 2, ok: () => masteryApi.totalStars() < S.maxZone * 5, txt: n => `Earn ${n} zone mastery stars`, ic: ['banner', '#F2C14E'] },
@@ -372,6 +365,7 @@ let OMENS, WEEKLY_GOALS;
   // New week: claim finished goals of the old week for the player, then draw a fresh board.
   function ensureWeek() {
     const a = A(), wk = deviceWeek(Date.now());
+    if (a.goals.some(g => !WEEKLY_GOALS[g.k])) { a.goals = []; a.week = -1; }   // a goal from a removed system (W3-A): draw a fresh board
     if (a.week === wk) return false;
     if (a.week !== -1 && a.goals.length) {
       const got = [];
@@ -387,7 +381,7 @@ let OMENS, WEEKLY_GOALS;
   function count(kind, n = 1) {
     if (inAway || !(n > 0)) return;
     for (const g of A().goals) {
-      if (g.done || WEEKLY_GOALS[g.k].kind !== kind) continue;
+      if (g.done || !WEEKLY_GOALS[g.k] || WEEKLY_GOALS[g.k].kind !== kind) continue;
       g.have = Math.min(g.need, g.have + n);
       if (g.have >= g.need) {
         g.done = true;
@@ -401,8 +395,6 @@ let OMENS, WEEKLY_GOALS;
   on('harvest', ({ kind, t, n }) => { if (t >= topTier(kind) - 1) count('gath', n); });
   on('itemAdded', ({ item }) => { if (item && !item.u) { count('craft'); if (item.r === 'rare' || item.r === 'epic' || item.r === 'legendary') count('rare'); } });
   on('bountyDone', () => count('bty'));
-  on('charLevel', ({ id, quiet }) => { if (!quiet && S.party && S.party.field && S.party.field.includes(id)) count('lvl'); });
-  on('promote', () => count('promo'));
   // W1-C: the solo hero's goals
   on('soloParry', p => { if (p && p.res === 'parry') count('parry'); });
   on('soloCounter', () => count('counter'));
@@ -424,8 +416,8 @@ let OMENS, WEEKLY_GOALS;
   // Modifier keys that touch away gains for the current activity.
   function awayKeys() {
     if (S.activity === 'gather') return ['offline', 'gatherSpeed', 'yield:' + S.node.kind, 'skillXp:' + skillOf(S.node.kind)];
-    if (S.activity === 'raid') return ['offline', 'raid', 'crit', 'compXp'];
-    return ['offline', 'gold', 'xp', 'essence', 'crit', 'compXp'];
+    if (S.activity === 'raid') return ['offline', 'raid', 'crit'];
+    return ['offline', 'gold', 'xp', 'essence', 'crit'];
   }
 
   let lastDay = null, acc = 5, registered = false;
@@ -461,9 +453,9 @@ let OMENS, WEEKLY_GOALS;
       try {
         rg({
           id: 'almanac-week-' + i, sys: 'almanac',
-          get label() { const g = A().goals[i]; return g ? WEEKLY_GOALS[g.k].txt(g.need) + ` (${num(g.have)}/${num(g.need)})` : ''; },
-          pct() { const g = A().goals[i]; return !g || g.claimed ? 0 : Math.min(1, g.have / g.need); },
-          done() { const g = A().goals[i]; return !g || g.claimed; },
+          get label() { const g = A().goals[i]; return g && WEEKLY_GOALS[g.k] ? WEEKLY_GOALS[g.k].txt(g.need) + ` (${num(g.have)}/${num(g.need)})` : ''; },
+          pct() { const g = A().goals[i]; return !g || !WEEKLY_GOALS[g.k] || g.claimed ? 0 : Math.min(1, g.have / g.need); },
+          done() { const g = A().goals[i]; return !g || !WEEKLY_GOALS[g.k] || g.claimed; },
           go() { return { tab: 'world', view: 'almanac' }; }
         });
       } catch (e) { console.error('[lanternfall] registerGoal failed', e); }

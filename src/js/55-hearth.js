@@ -77,9 +77,8 @@ let hearthCold, hearthLit, hearthScene, hearthCan, hearthLight, hearthPlotOpen, 
   if (isNew && HEARTH_TUNE.on) {
     coldStart = true;
     Hs().cold = 1;
-    // SOLO1: the solo hero starts on the road (the guide sends it to the Pine Grove after the first boss)
-    if (typeof soloOn === 'function' && soloOn()) { S.node = { kind: 'wood', t: 1 }; S.gProg = 0; }
-    else { S.activity = 'gather'; S.node = { kind: 'wood', t: 1 }; S.gProg = 0; }
+    // The hero starts on the road (the guide sends it to the Pine Grove after the first boss)
+    S.node = { kind: 'wood', t: 1 }; S.gProg = 0;
   }
 
   const lv = id => (S.camp && S.camp.b && S.camp.b[id]) || 0;

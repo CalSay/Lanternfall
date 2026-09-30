@@ -10,8 +10,7 @@
 //          onFoeDeath(f, src, kind) -> true when the foe got back up (Rattlebones), onFoeDown(f),
 //          onFoeStun(f), endDive(f), bossStart(f), nextWindIn()
 //   player resolveParry(source) -> bool   source: 'tap' (the class tap: parry in the last
-//          ENEMY_TUNE.parryWin seconds, earlier a Dodge), 'bash' (Aldric's Shield Bash: a parry),
-//          'wall' (Shield Wall cast: blocks the next heavy hit). true when a telegraph took it.
+//          ENEMY_TUNE.parryWin seconds, earlier a Dodge). true when a telegraph took it.
 //          cbTelegraph() -> the kept telegraph object or null (55-party bossTelegraph reads it)
 //
 // Behaviours (4.7; elites from zone 15 carry them at double strength, bx = 2):
@@ -55,7 +54,7 @@ const ENEMY_TUNE = {
   diveEvery: 10, diveT: 3, diveT2: 5, diveX2: 2, diveFrom: 8,
   cloudEvery: 6, cloud: 0.8, poison: 0.02, poisonT: 4, venom: 3,   // S1: the cloud's poison is Venom (venom stacks, poisonT s)
   slamEvery: 3, healEvery: 5, healChan: 1.5, heal: 0.15, healBoss: 0.02, reassemble: 0.2,   // BAL3 healBoss: a Wraith's heal on a boss (the Fenmother's Echoes, Silas's Toll) is 2% of its HP, not the pack's 15%
-  heavyEvery: 8, heavyWind: 1.5, heavyX: 4, parryWin: 0.8, marenWin: 0.3, marenLead: 0.4, stagger: 2, vulnT: 2, dodgeX: 0.5,
+  heavyEvery: 8, heavyWind: 1.5, heavyX: 4, parryWin: 0.8, marenWin: 0.3, marenLead: 0.4, stagger: 2, vulnT: 2,
   beetleEvery: 6, golemX: 6, cloudBossX: 1.5, batDiveEvery: 12, batDiveX: 2, bonesEvery: 15, bonesAdds: 2, addHp: 0.08,
   splitAt: 0.5, splitHp: 0.12, wraithEvery: 12, wraithHeal: 0.1, firstHeavy: 4, first2: 6   // (Elder Wraith: spec 20% every 10s; every region boss is a Wraith, so it is softer)
 };
@@ -84,7 +83,7 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
     START_EV.kind = kind; START_EV.dur = TELE.dur; START_EV.target = TELE.target; START_EV.foe = f;
     emit('telegraphStart', START_EV);
     // The first wind-up a player sees explains the parry once (S.combat.tip).
-    if (S.combat && !S.combat.tip && kind !== 'heal') { S.combat.tip = 1; toast(soloOn() ? 'The boss winds up a heavy hit. Press Parry as the red ring closes, or Dodge.' : 'The boss winds up a heavy hit. Tap the stage as the red ! ends to parry it.', 'raid', null, 'high'); }
+    if (S.combat && !S.combat.tip && kind !== 'heal') { S.combat.tip = 1; toast('The boss winds up a heavy hit. Press Parry as the red ring closes, or Dodge.', 'raid', null, 'high'); }
   }
   function endTele(result, by) {
     RES_EV.kind = TELE.kind; RES_EV.result = result; RES_EV.by = by || ''; RES_EV.foe = TELE.foe;
@@ -99,18 +98,6 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
     if (!b) for (const u of units()) { if (!u.live || u.down || u.col === 2) continue; const x = u.hp / u.maxHp; if (x < v) { v = x; b = u; } }
     return b;
   }
-  // Two Walls (56b synParty().diveTaunt): once per pack, the Middle tank taunts the first foe that would dive.
-  let twPack = null;
-  on('packSpawn', () => { twPack = null; });
-  function twoWalls(f) {
-    const k = typeof synParty === 'function' ? synParty().diveTaunt : null;
-    if (!k || twPack === 'used') return false;
-    const t = typeof cbUnitByKey === 'function' ? cbUnitByKey(k) : null;
-    if (!t || t.down || typeof cbTaunt !== 'function') return false;
-    twPack = 'used';
-    cbTaunt(t, [f], COMBAT_TUNE.tauntT);
-    return true;
-  }
   endDive = f => { f.diveT = 0; f.diveU = -1; f.diveX = 1; f.bt = 0; };
   function mostHurtFoe() { let b = null, v = 1; for (const o of combatFoes()) if (alive(o) && o.hp / o.max < v) { v = o.hp / o.max; b = o; } return b; }
 
@@ -124,7 +111,6 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
   const q = (k, id, d) => { const b = FOE_BEH[k]; return b && b.quota && b.quota[id] != null ? b.quota[id] : d; };
   function startDive(f) {
     const u = pickDive(); if (!u) return false;
-    if (twoWalls(f)) return true;   // F2 Two Walls: the Middle tank taunts the pack's first diver
     const two = f.z >= E.diveFrom;
     f.diveU = u.i; f.diveT = (two ? E.diveT2 : E.diveT); f.diveX = (two ? E.diveX2 : 1) * f.bx; f.first = 1; f.swing = Math.min(f.swing, 0.3);
     return true;
@@ -170,7 +156,6 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
       else if (quotas()) f.bt = 0;   // S6-A: the pack starts dives
       else if (f.bt >= E.diveEvery && !(f.rootT > 0)) {   // S1: a Rooted foe cannot dive
         const u = pickDive();
-        if (u && twoWalls(f)) { f.bt = 0; return false; }   // F2 Two Walls: the Middle tank taunts the pack's first diver
         if (u) { const two = f.z >= E.diveFrom; f.diveU = u.i; f.diveT = (two ? E.diveT2 : E.diveT); f.diveX = (two ? E.diveX2 : 1) * f.bx; f.first = 1; f.swing = Math.min(f.swing, 0.3); }
         f.bt = 0;
       }
@@ -299,8 +284,7 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
       return;
     }
     if (res === 'parry') { resolve('parry', 'tap'); return; }
-    if (typeof cbWallOn === 'function' && cbWallOn() && wallBlocks()) { resolve('parry', 'wall'); return; }
-    const x = res === 'dodge' ? (soloOn() ? 0 : E.dodgeX) : 1;   // SOLO1: a dodge avoids the hit
+    const x = res === 'dodge' ? 0 : 1;   // a dodge avoids the hit
     if (res === 'dodge') CB_STATS.dodges++;
     CB_STATS.hitByHeavy++;
     if (kind === 'cloud') {
@@ -323,15 +307,10 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
     if (result === 'parry') CB_STATS.parries++;
     else if (result === 'interrupt') CB_STATS.interrupts++;
     endTele(kind === 'heal' ? 'interrupt' : result, by);
-    if (f && alive(f) && kind !== 'heal') { f.stunT = Math.max(f.stunT, soloOn() && by === 'tap' ? SOLO_TUNE.counterT : E.stagger); if (result === 'parry') f.vulnT = E.vulnT; f.swing = Math.max(f.swing, 0.5); }
+    if (f && alive(f) && kind !== 'heal') { f.stunT = Math.max(f.stunT, by === 'tap' ? SOLO_TUNE.counterT : E.stagger); if (result === 'parry') f.vulnT = E.vulnT; f.swing = Math.max(f.swing, 0.5); }
   }
-  // Shield Wall blocks a heavy hit (or the Elder Spore's cloud) aimed at the hero; with Lantern Bastion
-  // (a crown keystone) on anyone.
-  const wallBlocks = () => (TELE.kind === 'heavy' || TELE.kind === 'cloud') && (TELE.kind === 'cloud' || TELE.target === 'hero' || bonus('ks:bastion') > 0);
   resolveParry = source => {
     if (!TELE.on || !TELE.foe || !alive(TELE.foe)) return false;
-    if (source === 'wall') { if (wallBlocks()) { resolve('parry', 'wall'); return true; } return false; }
-    if (source === 'bash') { resolve(TELE.kind === 'heal' ? 'interrupt' : 'parry', 'bash'); return true; }
     // the class tap: inside the window = parry, earlier = dodge (a later tap can still parry)
     if (TELE.kind === 'heal') { resolve('interrupt', 'tap'); return true; }
     if (TELE.left <= TELE.win) { resolve('parry', 'tap'); return true; }
@@ -339,5 +318,4 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
     return true;
   };
 }
-// F1: the combat estimate exists now, so the formation migration (56e) can use the planner.
-if (typeof formEnsure === 'function') formEnsure(true);
+

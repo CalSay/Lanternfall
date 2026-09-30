@@ -10,8 +10,7 @@ function setActivity(a) {
   S.activity = a; fightBoss = false; emit('sceneReset');
   if (a === 'fight') spawn();
   if (a === 'gather') S.gProg = 0;
-  const solo = soloOn();   // SOLO1: one hero, no party
-  const msg = { fight: solo ? `You return to ${zoneName(S.zone)}.` : `Your party returns to ${zoneName(S.zone)}.`, gather: `You head to the ${NODE_NAMES[S.node.kind][S.node.t - 1]}.${solo ? '' : ' Your party rests at the Hearth.'}`, raid: solo ? 'You march to the raid. Zone gold pauses while you fight the world boss.' : 'Your party marches to the raid. Zone gold pauses while you fight the world boss.' }[a];
+  const msg = { fight: `You return to ${zoneName(S.zone)}.`, gather: `You head to the ${NODE_NAMES[S.node.kind][S.node.t - 1]}.`, raid: 'You march to the raid. Zone gold pauses while you fight the world boss.' }[a];
   emit('toast', { key: 'move', msg, kind: a === 'raid' ? 'raid' : 'good', prio: a === 'raid' ? 'normal' : 'low' });   // W1-B: the pill shows it (23n-data-notices)
   emit('activity', { activity: a });
 }
@@ -29,7 +28,6 @@ function setNode(kind, t) {
 
 // ================= combat state =================
 let mob = null, respawn = 0, heroTimer = 0, fightBoss = false, bossTime = 0, failDps = 0;
-let partyAcc = 0, partyTick = 0;
 // Deepwell arena (57d-deepwell.js): while set it supplies the foes. { spawn() -> mob | null,
 // onKill(mob, overkill) }. Its kills pay nothing here (no 'kill' event) and it has no boss timer.
 let arena = null;
@@ -57,7 +55,7 @@ const addFloat = (txt, color, big, x, y, crit) => emit('float', { txt, color, bi
 const burst = (x, y, color, n, spd) => emit('burst', { x, y, color, n, spd });
 
 // at: optional {x, y} stage position for the damage number (taps); label overrides its text.
-// strikeSrc: 'hero' while heroSwing strikes, else 'party' (party combat credits threat and damage by it).
+// strikeSrc: 'hero' while heroSwing strikes, else 'party' (59-combat credits threat and damage by it).
 // strikeCrit: true while heroSwing strikes a crit (the float carries it: the crit number's look, SOLO2).
 let strikeSrc = 'party', strikeCrit = false;
 function strike(amount, color, big, at, label) {
@@ -73,9 +71,7 @@ function strike(amount, color, big, at, label) {
 function heroSwing(base, tap, at) {
   const hawk = typeof hawkCrit === 'function' && hawkCrit();   // Hawk Eye (Constellations): a foe's first hit crits
   const crit = Math.random() < critChance() || hawk;
-  // F1 (56e-formation heroStand): in party combat the hero's hits on foes rise to its damage floor x trio.
-  const stand = target() === 'mob' && typeof heroStand === 'function' ? heroStand(tap) : 1;
-  const dmg = base * (crit ? critMult() : mod('nonCrit')) * (tap ? tapMult() : 1) * (target() === 'world' ? raidMult() : 1) * stand;
+  const dmg = base * (crit ? critMult() : mod('nonCrit')) * (tap ? tapMult() : 1) * (target() === 'world' ? raidMult() : 1);
   strikeSrc = 'hero'; strikeCrit = crit;
   strike(dmg, crit ? '#FF9E3D' : '#FFFFFF', crit, at, at && crit ? 'CRIT ' + fmt(dmg) : null);
   strikeCrit = false;
@@ -174,16 +170,9 @@ function tick(dt) {
     heroTimer -= dt;
     if (heroTimer <= 0) { heroTimer = 0.6; emit('lunge'); }
   } else {
-    // Party combat (59-combat.js): companions, foes, HP, healing and deaths; the hero still swings below.
+    // Combat (59-combat.js): foes, HP and knock-outs; the hero still swings below.
     const pc = tg === 'mob' && partyCombatOn();
     if (pc) combatTick(dt);
-    const pd = pc ? 0 : compDps() * (tg === 'world' ? raidMult() : 1);
-    if (pd > 0) {
-      if (tg === 'world') addRaidDmg(pd * dt);
-      else if (mob && !mob.dead) { mob.hp -= pd * dt; if (mob.hp <= 0) kill(); }
-      partyAcc += pd * dt; partyTick += dt;
-      if (partyTick >= 0.6) { addFloat(fmt(partyAcc), '#B58CFF', false, 0.76 + (Math.random() - 0.5) * 0.1, 0.55); partyAcc = 0; partyTick = 0; }
-    }
     heroTimer -= dt;
     if (heroTimer <= 0) {
       heroTimer += 1 / aps(); if (heroTimer < 0) heroTimer = 0;
@@ -252,19 +241,19 @@ function awayBase(r) {
     r.note = `You kept working the ${NODE_NAMES[kind][tier - 1]}. ${SKILL[skillOf(kind)]} is now level ${S.skills[skillOf(kind)].lv}.`;
     return r;
   }
-  const dps = (compDps() + heroDps() * 0.5) * boost;
+  const dps = heroDps() * 0.5 * boost;
   if (S.activity === 'raid') {
     const dmg = dps * raidMult() * t * 0.5;
     S.raid.dmg += dmg;
     r.lines.push({ icon: { ic: ['flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }] }, txt: `${fmt(dmg)} raid damage` });
-    r.note = soloOn() ? 'You kept hammering the raid boss.' : 'Your party kept hammering the raid boss.';
+    r.note = 'You kept hammering the raid boss.';
     return r;
   }
   // Kills are capped by the respawn gap, same as live play; away play earns 75% of the live rate.
-  // The best zone the party can farm, at most S.zone (BAL1: a zone it cannot clear earns nothing).
+  // The best zone the hero can farm, at most S.zone (BAL1: a zone it cannot clear earns nothing).
   const baseDps = dps / boost, pc = partyCombatOn();
   // Party combat (C3): the closed-form hold estimate (59-combat.js partyHoldEstimate, spec 4.11) picks
-  // the highest zone the party holds (at most S.zone) and its pack rate; away play earns awayRate of it.
+  // the highest zone the hero holds (at most S.zone) and its pack rate; away play earns awayRate of it.
   const est = pc ? partyHoldEstimate(S.zone) : null, z = pc ? est.zone : farmableZone(S.zone, baseDps);
   const kills = pc ? t * est.packsPerSec * COMBAT_TUNE.awayRate * boost : baseDps > 0 ? t / (mobHp(z) / baseDps + 0.45) * 0.75 * boost : 0;
   const gold = kills * mobGold(z) * (pc ? COMBAT_TUNE.packGold : 1), tier = zoneTier(z), ess = stashAdd('ess', tier, Math.floor(kills * essChance()), 'flow', true);
@@ -274,6 +263,6 @@ function awayBase(r) {
   r.lines.push({ icon: { ic: ['coin', '#F2C14E'] }, txt: '+' + fmt(gold) });
   if (ess) r.lines.push({ icon: { mat: ['ess', tier] }, txt: `+${fmt(ess)} ${matName('ess', tier)}` });
   emit('awayKills', { kills, zone: z, lines: r.lines });
-  r.note = soloOn() ? `You held ${zoneName(z)}.` : pc ? `Your party held ${zoneName(z)}.` : `Your party kept fighting in ${zoneName(z)}.`;
+  r.note = `You held ${zoneName(z)}.`;
   return r;
 }

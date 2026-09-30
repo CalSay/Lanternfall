@@ -28,11 +28,10 @@
     { id: 'uniq1', name: 'Trophy Hunter', desc: 'Find a unique', need: 1, cur: uniqCount, bonus: ['essence', 0.03], ic: 'charm' },
     { id: 'uniq3', name: 'Collector', desc: 'Find 3 uniques', need: 3, cur: uniqCount, bonus: ['essence', 0.05], ic: 'charm' },
     { id: 'uniq7', name: 'Curator', desc: 'Find 7 uniques', need: 7, cur: uniqCount, bonus: ['dmg', 0.05], ic: 'charm' },
-    { id: 'party', name: 'Full Party', desc: 'Recruit 7 companions', need: 7, cur: () => Math.max(S.comp.filter(n => n > 0).length, typeof rosterList === 'function' && rosterLive() ? rosterList().length : 0), bonus: ['party', 0.03], ic: 'mug' },
     { id: 'bty10', name: 'Bounty Hunter', desc: 'Claim 10 bounties', need: 10, cur: () => (S.bounties ? S.bounties.claimed : 0), bonus: ['offline', 0.03], ic: 'coin' },
     { id: 'bty50', name: 'Board Regular', desc: 'Claim 50 bounties', need: 50, cur: () => (S.bounties ? S.bounties.claimed : 0), bonus: ['keen', 0.015], ic: 'coin' }
   ];
-  const BONUS_NAME = { keen: 'crit damage', gold: 'gold', dmg: 'damage', xp: 'hero XP', skillXp: 'skill XP', gatherSpeed: 'gather speed', crit: 'crit chance', essence: 'essence chance', party: 'party damage', offline: 'away gains' };
+  const BONUS_NAME = { keen: 'crit damage', gold: 'gold', dmg: 'damage', xp: 'hero XP', skillXp: 'skill XP', gatherSpeed: 'gather speed', crit: 'crit chance', essence: 'essence chance', offline: 'away gains' };
   const achBonusText = a => `+${+(a.bonus[1] * 100).toFixed(1)}% ${BONUS_NAME[a.bonus[0]] || a.bonus[0]}`;
 
   // One modifier per key; cached sum rebuilt when something unlocks.

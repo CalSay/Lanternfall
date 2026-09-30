@@ -26,9 +26,7 @@ let wellRested, restParty, restNote;
   const R = () => S.rested && typeof S.rested === 'object' ? S.rested : (S.rested = { left: 0 });
   let inAway = false, awayGain = 0, lineOn = false;
   restParty = () => {
-    if (typeof soloOn === 'function' && soloOn()) return true;   // W1-C: solo, gathering rests the hero himself or herself
-    if (typeof rosterLive === 'function' && rosterLive()) return ((S.party && S.party.field) || []).some(k => typeof isRecruited === 'function' && isRecruited(k));
-    return Array.isArray(S.comp) && S.comp.some(n => n > 0);
+    return true;   // gathering rests the hero
   };
   const fighting = () => target() === 'mob' && !arena;
   const active = () => !inAway && R().left > 0 && fighting();
@@ -41,7 +39,7 @@ let wellRested, restParty, restNote;
   // The Gather tab's status line: ' Your party rests at the Hearth: +10% damage for 2m 30s in your next fight.'
   restNote = () => {
     if (!restParty()) return '';
-    const who = soloOn() ? 'Gathering rests you' : 'Your party rests at the Hearth';
+    const who = 'Gathering rests you';
     return R().left >= 1 ? ` ${who}: +${pct()}% damage for ${fmtTime(R().left)} in your next fight${R().left >= REST_TUNE.cap ? ' (full)' : ''}.` : ` ${who}.`;
   };
 
@@ -70,6 +68,6 @@ let wellRested, restParty, restNote;
   function awayLine() {
     const g = awayGain; awayGain = 0;
     if (!(g >= 1) || S.activity !== 'gather') return null;
-    return { icon: { ic: ['mug', '#F2C14E'] }, txt: `Well Rested: +${pct()}% damage for ${dur(R().left)}`, sub: soloOn() ? 'You rested while you gathered' : 'Your party rested at the Hearth' };
+    return { icon: { ic: ['mug', '#F2C14E'] }, txt: `Well Rested: +${pct()}% damage for ${dur(R().left)}`, sub: 'You rested while you gathered' };
   }
 }

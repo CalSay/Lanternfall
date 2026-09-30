@@ -27,8 +27,6 @@
 //   canTransmute(fam, fromT, to, toT?) -> { ok, why, take, give, toT }
 //   salvageItem(id) (51-actions) is generic; salvageGive calls craftSalvageBonus(it): affixed items
 //                                                have a 20% chance per line of 1 essence of their tier
-//   equipChar(charId, itemId, pos) -> bool       pos 'wpn' | 'trk'; the item leaves any other wearer
-//   unequipChar(charId, pos) -> bool
 //   trophies() -> total Trophies; S.craft.troph[i] per type (K5 fills them)
 //   craftStarChart() -> bool                     40 Amethyst Shard (tier-3 Crystal), 20 Radiant
 //                                                Essence, 1 Wraith Veil; Enchanting 9; Oriel joins
@@ -52,7 +50,7 @@
 //   tonics: { 'key:t': count } the pouch. jobs, champ: K5/K10. starChart: Star Charts made.
 
 let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, upgradeItem, canUpgrade, reforgeItem,
-  canReforge, transmute, canTransmute, equipChar, unequipChar, trophies, craftStarChart, brewTonic,
+  canReforge, transmute, canTransmute, trophies, craftStarChart, brewTonic,
   drinkTonic, tonicActive, craftSalvageBonus;
 
 {
@@ -246,29 +244,6 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
     if (n && Math.random() < Math.min(1, SALVAGE_ESS * n)) stashAdd('ess', it.t, 1, 'preview');
   };
 
-  // ---- companion gear: one wearer per item ----
-  const rec = id => S.party && S.party.rec && S.party.rec[id];
-  equipChar = (charId, itemId, pos) => {
-    const r = rec(charId), it = itemById(itemId);
-    if (!r || !it || !CRAFT_COMP_POS.includes(pos) || !fits(it, pos, charId)) return false;
-    if (r[pos] === itemId) return true;
-    unwearItem(itemId); // leaves the hero or any other character
-    r[pos] = itemId;
-    gearDirty();
-    toast(`${ROSTER[charId] ? ROSTER[charId].name.split(' ')[0] : 'They'} took the ${itemName(it)}.`, 'good', { item: it }, 'low');
-    emit('charGear', { id: charId, pos, item: it });
-    save();
-    return true;
-  };
-  unequipChar = (charId, pos) => {
-    const r = rec(charId); if (!r || !CRAFT_COMP_POS.includes(pos) || r[pos] == null) return false;
-    r[pos] = null;
-    gearDirty();
-    emit('charGear', { id: charId, pos, item: null });
-    save();
-    return true;
-  };
-
   // ---- class change: retool to the new class's kinds; anything that still does not fit goes back to the bag ----
   on('classChosen', ({ from } = {}) => {
     retoolItems(from || true);
@@ -284,7 +259,7 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
   });
 
   // ---- Star Chart (Oriel) ----
-  const orielDone = () => !!((S.party && S.party.unlock && S.party.unlock.starChart) || (typeof isRecruited === 'function' && isRecruited('oriel')));
+  const orielDone = () => C().starChart > 0;
   function canStar() {
     const t = STAR.t, need = CRAFT_STATION_REQ[t - 1], cost = { mats: STAR.mats, gold: 0, troph: STAR.troph };
     const x = { cost, lv: S.skills.ench.lv, need, miss: [] };
@@ -307,7 +282,6 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
     gainStation('ench', CRAFT_XP.craft(STAR.t));
     toast('You drew a Star Chart. Someone out there is reading the same stars.', 'ember', null, 'high');
     emit('crafted', { item: null, kind: 'starChart', t: STAR.t });
-    if (typeof grantStarChart === 'function') grantStarChart();
     save();
     return true;
   };

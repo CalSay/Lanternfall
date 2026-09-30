@@ -23,10 +23,9 @@
 //        the id is unknown. quiet: true for a save already past the moment (the UI shows its note).
 //   storyBeatDef(id) -> { id, region, at, title, text, note, head, say } | null
 //   storyHas(id) -> bool (the beat has played, card or quiet)
-//   storyList() -> [{ id, region, at, title, text, note, say: [{ id, name, short, line }], got, read, late }]
+//   storyList() -> [{ id, region, at, title, text, note, got, read, late }]
 //        every beat this save has, in story order. late: filed by the old-save catch-up.
 //   storyRead(id) -> marks it read (emits storyRead { id }); storyUnread() -> [ids], storyLate() -> [ids]
-//   storySay(sayMap) -> [{ id, name, short, line }] for the recruited characters in { charKey: line }
 //   storyElderKey(zone) -> LORE_ELDERS key for that zone's boss ('listener' at zone 35) | null
 //   storyBestiary(typeKey, { foe, elder, champ }) -> [lines] the Codex tile shows (57c-codex)
 //   storySync() runs on each tick (cheap when nothing moved) and on zoneClear.
@@ -40,7 +39,7 @@
 //   filed by the catch-up), 'ei:<elderKey>' / 'ef:<elderKey>' (elder intro / fall). read: beatId -> 1.
 //   init: 1 once the first-load catch-up ran.
 
-let storyBeat, storyBeatDef, storyHas, storyList, storyRead, storyUnread, storyLate, storySay, storyElderKey, storyBestiary, storySync;
+let storyBeat, storyBeatDef, storyHas, storyList, storyRead, storyUnread, storyLate, storyElderKey, storyBestiary, storySync;
 {
   registerState('story', { v: 1, seen: {}, read: {}, init: 0 });
   const ST = () => S.story;
@@ -82,16 +81,6 @@ let storyBeat, storyBeatDef, storyHas, storyList, storyRead, storyUnread, storyL
     return t && LORE_ELDERS[t.key] ? t.key : null;
   };
 
-  storySay = say => {
-    const out = [];
-    if (!say) return out;
-    for (const id of Object.keys(say)) {
-      const rec = typeof charRec === 'function' ? charRec(id) : null;
-      if (rec && typeof ROSTER === 'object' && ROSTER[id]) out.push({ id, name: ROSTER[id].name, short: ROSTER[id].name.replace(/^(Old|Ser|Brother|Sister|Saint|Mother) /, '').split(' ')[0], line: say[id] });
-    }
-    return out;
-  };
-
   storyBestiary = (key, got) => {
     const b = typeof LORE_BESTIARY !== 'undefined' && LORE_BESTIARY[key];
     if (!b) return [];
@@ -121,7 +110,7 @@ let storyBeat, storyBeatDef, storyHas, storyList, storyRead, storyUnread, storyL
   };
   storyList = () => all().filter(b => storyHas(b.id)).map(b => ({
     id: b.id, region: b.region, at: b.at || 0, title: b.title, text: b.text, note: b.note, head: b.head || '',
-    say: storySay(b.say), got: Math.abs(seenAt(b.id)), read: !!ST().read[b.id], late: seenAt(b.id) < 0
+    got: Math.abs(seenAt(b.id)), read: !!ST().read[b.id], late: seenAt(b.id) < 0
   }));
   storyUnread = () => all().filter(b => storyHas(b.id) && !ST().read[b.id]).map(b => b.id);
   storyLate = () => all().filter(b => seenAt(b.id) < 0 && !ST().read[b.id]).map(b => b.id);
