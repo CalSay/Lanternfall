@@ -1,32 +1,16 @@
 // 57f-hands: Hands, the townsfolk who gather for the camp (docs/design/hearth-and-hands.md 5, task N1).
 // Data: 21f-data-hands.js. CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
 //
-// Rules (spec 5; section 9 decisions accepted, wave-log D7):
-//   - Hands live AT CAMP (owner, 2026-09-28): they sleep in the Bunkhouse, a camp building (57-camp
-//     CAMP_B.bunk; its plot opens after the Tavern), and apply at the Tavern. Hands open at Hearth 2
-//     with the Tavern and the Bunkhouse built. Tam, Hesketh's nephew, arrives free then. Hands
-//     replace the never-built bench jobs.
-//   - Applicants: one every 8 h of wall clock (6 h from Tavern Lv 3), at most 3 waiting; the first
-//     arrives with Tam. A turned-away or hired applicant frees the spot; when the board was full, the
-//     next one waits a full period from then. Rarity odds with pity (HANDS_TUNE.pity, S.hands.pity).
-//   - Beds (data-driven, HANDS_TUNE.beds by Bunkhouse level): 1-5, +1 at Hearth 8, 6 at most; later
-//     systems add beds with addBonus('handBeds', fn) and raise the cap with addBonus('handBedsMax', fn)
-//     (a late-game rise; K13's refining Hands). No upkeep. Hire price
-//     econHireFee(rarity) (55-econ, ECON-A; was foesGold(S.maxZone, HANDS_TUNE.hireFoes[rarity])).
-//   - A shift: a Hand and an open node. At send the length, the rate (units an hour) and a seed are
-//     fixed and stored in the Hand's job, like an expedition, so reload and offline pay the same.
-//     Rate = the hero's live rate at that node (skill, tool, mastery, gear; NO Tonic, Omen, meal,
-//     Glint, home ground or other yield modifiers) x share x traits x (own skill ? 1 : 0.5)
-//     x toolHandsMult(skill). Share = base by rarity + 0.25% a level above 1 (10% .. 24.75%).
-//   - When the shift ends the Hand walks home: the haul goes into the Hand's pack, which unloads into
-//     the Storehouse line by line as PARCELS (stashAdd 'parcel': each line whole, or it waits), oldest
-//     pack first, checked each second and on the away phase. A Hand with a pack cannot be sent.
-//     Hands never emit 'harvest': no skill XP, no tool mastery, no rare finds from the hero's tool, no
-//     Journal or achievement gathered units. Level XP = shift hours, paid at the end (Lv 1-20).
-//   - Timers are wall-clock timestamps: shifts end and applicants arrive while the game is closed.
+// C1 rules (gatherers-2 and economy-2): Tents cap the crew; two come free when Hands
+// open at Hearth 2 with a Tavern. Random applicants are Common-Epic; supported named
+// routes add permanent Legendary star applicants outside the three random places.
+// A send prepays one or two four-hour shifts. Rate, fees and seeds are fixed at send.
+// Between shifts: unload parcels, rest 30 minutes, then leave; a waiting pack cancels
+// and refunds unstarted shifts. Recall pays time worked, keeps the active fee and
+// refunds unstarted shifts. Old v5 jobs retain their saved duration/rate/seed.
 //
 // API (N2 art and camp life, N3 UI, K12 Kitchen, 58-deeds, tools/sim.mjs):
-//   read  handsOpen() -> bool                     Hands are live (Hearth 2, Tavern, Bunkhouse, HANDS_TUNE.on)
+//   read  handsOpen() -> bool                     Hands are live (Hearth 2, Tavern, HANDS_TUNE.on)
 //         handsBeds() -> n, handsBedsAt(bunkLv, hearthLv) -> n (with the bonuses), handsFree() -> free beds
 //         handsBunkFx(lv), handsTavernFx(lv) -> effect lines (57-camp campEffects; plain functions, hoisted)
 //         handsList() -> [hand]  (live save records: read only; see the Save line for fields)
@@ -34,13 +18,13 @@
 //         handsBoard() -> [{ i, app, cost, free, rate, kind, t, afford, can: { ok, why } }]  applicants
 //         handsNextApp() -> ms until the next applicant (null when the board is full or Hands are closed)
 //         handsHireCost(app) -> gold
-//         handsStatus(h | id) -> { st: 'out' | 'back' | 'pack' | 'camp', label, left (s), pct, kind, t, spot }
+//         handsStatus(h | id) -> { st: 'out' | 'rest' | 'back' | 'pack' | 'camp', label, left (s), pct, kind, t, spot }
 //              spot (at camp): 'store' | 'bench' | 'kitchen' | 'fire' (work spot by day, the fire from dusk)
 //         handsShare(h), handsShiftSecs(h, kind, now), handsRate(h, kind, t, now) -> units an hour now
 //         handsPreview(h, kind, t) -> { rate, secs, haul, own, why }   what a shift there would bring
 //         handsSuggest(h) -> { kind, t, why }   the node the next camp build is short of (own skill first)
 //         handsNodes(h) -> [{ kind, t, rate, own, full }]   every node the Hand can work now
-//         handsCanSend(id, kind, t) -> { ok, why }
+//         handsCanSend(id, kind, t, {shifts}?) -> { ok, why, fee, shifts }
 //         handsHeroRate(kind, t) -> the hero's reference rate (units an hour)
 //         handsTraits(h) -> [{ id, n, txt, camp, calling }]
 //         handsName(h), handsRarName(h), handsSkillName(h), handsNodeName(kind, t)
@@ -50,7 +34,8 @@
 //         campClock(now) -> { phase: 'dawn' | 'day' | 'dusk' | 'night', h }   the device clock (spec 6.3)
 //         handsStats() -> { hired, hours, units, stories, legends, byRar, out, home }
 //   act   handsHire(i) -> hand | null, handsTurnAway(i) -> bool, handsLetGo(id) -> bool
-//         handsSend(id, kind, t) -> job | null, handsSendAgain() -> number sent
+//         handsSend(id, kind, t, { shifts: 1|2 }) -> job | null, handsSendAgain(id?) -> number sent
+//         handsRecall(id) -> bool; handsQueueMax() -> 2; handsSendAgainPreview(id?) -> { count, ready, fee }; registerHandsRoute(key, probe) -> remove()
 //         handsEmpty(id) -> units thrown away (the UI asks first: "Throw away 120 Oak Log?")
 //         handsStoryHeard(id) -> level of the story told | 0 (N2, when the player hears it)
 //         handsTalk(id) -> talk counter after the tap (N2 rotates lines with it)
@@ -70,6 +55,9 @@
 //   list[i] = { id, n, r, sk, tr: [trait ids], cl (calling | null), key (named Hand | null), lv, xp (hours
 //     into the level), job, pack: [[fam, t, n]] ('troph', i, n for a Trophy), last: { kind, t } | null,
 //     talk, st (stories heard), hired (ms), hrs (hours worked), got (units delivered), back (ms home) }
+//   job adds fee, secs, kp/lp/physic (snapshot finds), queue:[{fee,seed}], q/qFee (remaining), linked.
+//   start in the future is a paid rest; linked=false starts the overlap window during catch-up.
+//   routes: { nan: true } preserves route milestones; other primary probes register without new save fields.
 //   job = { kind, t, start, end, rate, seed, bo: [[pct, from, to, tag]] } (bo: Friendly and Felling Song
 //     windows, fixed when a partner is sent), or null.
 //   board.apps[i] = { id, n, r, sk, tr, cl, key, at, free }; board.next: ms of the next arrival (0 = not open yet).
@@ -80,7 +68,7 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
   handsHeroRate, handsTraits, handsName, handsRarName, handsSkillName, handsNodeName, handsLevelNeed, handsStoryDue,
   handsCampTrait, handsMealMult, handsMealBonus, campClock, handsStats, handsHire, handsTurnAway, handsLetGo,
   handsSend, handsSendAgain, handsEmpty, handsStoryHeard, handsTalk, handsCatchUp, handsExclude, handsRollApp,
-  handsTents, handsFee, handsUnpaid, handsRandomApps, handsLegendSpots, handsRecall, handsQueueMax, registerHandsRoute;
+  handsTents, handsFee, handsUnpaid, handsRandomApps, handsLegendSpots, handsRecall, handsQueueMax, registerHandsRoute, handsSendAgainPreview;
 
 {
   const T = HANDS_TUNE;
@@ -162,7 +150,7 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
       lvOf('tent') + Math.floor(bonus('handBeds')))) : 0;
   };
   handsBeds = handsTents;
-  on('campBuilt', e => { if (e.id === 'bunk' && handsOpen()) { ensureTents(); S.camp.b.tent = Math.max(lvOf('tent'), Math.min(ECON.tentMax, handsBedsAt(e.lv, lvOf('hearth')))); } });
+  on('campBuilt', e => { if (e.id === 'bunk' && handsOpen()) { ensureTents(); S.camp.b.tent = Math.max(lvOf('tent'), Math.min(ECON.tentMax, (T.beds[Math.min(T.beds.length - 1, e.lv)] || 0) + (lvOf('hearth') >= T.hallHearth ? T.hallBeds : 0))); } });
   handsFree = () => Math.max(0, handsTents() - H().list.length);
   handsList = () => H().list;
   handsGet = id => H().list.find(x => x.id === id) || null;
@@ -325,7 +313,8 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
     h.pity[2]++;
     // Word on the Road advances a documented fallback, never a missing profession.
     if (h.pity[2] >= T.pity[2]) {
-      const next = HANDS_LEGENDS.find(x => HANDS_ROUTES[x.key]?.fallback && !usedKeys().has(x.key) && !h.met[x.key]);
+      const next = HANDS_LEGENDS.filter(x => HANDS_ROUTES[x.key]?.fallback && !usedKeys().has(x.key) && !h.met[x.key])
+        .sort((a, b) => HANDS_ROUTES[a.key].fallback - HANDS_ROUTES[b.key].fallback)[0];
       if (next) { arriveNamed(next, at, true); h.pity[2] = 0; }
     }
     // Keep retired duration traits readable in old saves, but do not roll new no-op or penalty-only traits.
@@ -411,21 +400,21 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
   handsUnpaid = x => {
     if (!x || x.job || x.pack.length) return false;
     const w = (x.last && open(x.last.kind, x.last.t) ? x.last : handsSuggest(x));
-    return !!w && S.gold < handsFee(x, w.kind, w.t);
+    return !!w && S.gold < queueFees(x, w.kind, w.t, w.shifts || 1).reduce((a, b) => a + b, 0);
   };
   const out = (x, t) => !!x.job && x.job.start <= t && x.job.end > t;
   function syncQueue(j) { j.q = (j.queue || []).length; j.qFee = (j.queue || []).reduce((a, q) => a + q.fee, 0); }
   function linkJob(x, job) {
     const at = job.start;
     if (has(x, 'friendly')) {
-      const y = H().list.find(o => o !== x && has(o, 'friendly') && out(o, at) && !o.job.bo.some(b => b[3] === 'f' && b[2] > at));
+      const y = H().list.find(o => o !== x && has(o, 'friendly') && o.job && o.job.linked !== false && out(o, at) && !o.job.bo.some(b => b[3] === 'f' && b[2] > at));
       if (y) { const e = Math.min(job.end, y.job.end); job.bo.push([T.friendly, at, e, 'f', y.id]); y.job.bo.push([T.friendly, at, e, 'f', x.id]); }
     }
     const wood = k => skillOf(k) === 'wood';
     if (x.cl === 'felling') {
-      for (const o of H().list) if (o !== x && out(o, at) && wood(o.job.kind)) o.job.bo.push([T.felling, at, Math.min(job.end, o.job.end), 'b', x.id]);
+      for (const o of H().list) if (o !== x && o.job && o.job.linked !== false && out(o, at) && wood(o.job.kind)) o.job.bo.push([T.felling, at, Math.min(job.end, o.job.end), 'b', x.id]);
     } else if (wood(job.kind)) {
-      const b = H().list.find(o => o !== x && o.cl === 'felling' && out(o, at));
+      const b = H().list.find(o => o !== x && o.cl === 'felling' && o.job && o.job.linked !== false && out(o, at));
       if (b) job.bo.push([T.felling, at, Math.min(job.end, b.job.end), 'b', b.id]);
     }
     job.linked = true;
@@ -434,21 +423,35 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
     const can = handsCanSend(id, kind, t, opts); if (!can.ok) return null;
     const x = handsGet(id), at = now(), secs = handsShiftSecs(x, kind, at);
     const fees = queueFees(x, kind, t, can.shifts), seeds = fees.map(() => (rnd() * 2147483647) | 0);
-    const job = { kind, t, start: at, end: at + secs * 1000, secs, rate: handsRate(x, kind, t, at), seed: seeds[0], bo: [], fee: fees[0],
+    const job = { kind, t, shifts: can.shifts, start: at, end: at + secs * 1000, secs, rate: handsRate(x, kind, t, at), seed: seeds[0], bo: [], fee: fees[0],
       kp: keenP(x), lp: luckyP(x), physic: x.cl === 'physic', queue: fees.slice(1).map((fee, i) => ({ fee, seed: seeds[i + 1] })) };
     syncQueue(job); linkJob(x, job);
     if (can.fee > 0) { S.gold -= can.fee; econSpend('shift', can.fee); }
     x.sent = (x.sent | 0) + can.shifts;
-    x.job = job; x.last = { kind, t };
+    x.job = job; x.last = { kind, t, shifts: can.shifts };
     emit('handsSend', { id, kind, t, end: job.end, secs, shifts: can.shifts }); save(); return job;
   };
-  handsSendAgain = id => {
-    let n = 0;
+  function againPlan(id) {
+    const ready = [];
     for (const x of H().list) {
       if ((id !== undefined && x.id !== id) || x.job || x.pack.length) continue;
       const w = x.last && open(x.last.kind, x.last.t) ? x.last : handsSuggest(x);
-      if (w && handsSend(x.id, w.kind, w.t)) n++;
+      if (!w) continue;
+      const shifts = Math.max(1, Math.min(handsQueueMax(), w.shifts | 0 || 1));
+      const can = handsCanSend(x.id, w.kind, w.t, { shifts });
+      // Insufficient funds is the only reason to keep an unavailable row in the quote.
+      if (!can.ok && !(can.fee > S.gold)) continue;
+      ready.push({ id: x.id, kind: w.kind, t: w.t, shifts, fee: can.fee });
     }
+    ready.sort((a, b) => a.fee - b.fee);
+    let gold = S.gold;
+    const selected = ready.filter(x => { if (gold < x.fee) return false; gold -= x.fee; return true; });
+    return { ready: ready.length, selected, fee: S.gold - gold };
+  }
+  handsSendAgainPreview = id => { const p = againPlan(id); return { count: p.selected.length, ready: p.ready, fee: p.fee }; };
+  handsSendAgain = id => {
+    let n = 0;
+    for (const x of againPlan(id).selected) if (handsSend(x.id, x.kind, x.t, { shifts: x.shifts })) n++;
     return n;
   };
   // The haul of a finished job, from its stored numbers only (same seed, same haul).
@@ -486,7 +489,7 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
   }
   function finishJob(x, away) {
     const h = H(), j = x.job, { lines, hrs } = payOf(x, j);
-    x.job = null; x.back = j.end; x.last = { kind: j.kind, t: j.t };
+    x.job = null; x.back = j.end; x.last = { kind: j.kind, t: j.t, shifts: j.shifts || 1 };
     x.pack.push(...lines.map(l => l.slice())); x.hrs += hrs; h.hrs = (h.hrs || 0) + hrs;
     gainXp(x, hrs, away, j.end);
     const ev = { id: x.id, n: x.n, kind: j.kind, t: j.t, lines, away: !!away, at: j.end };

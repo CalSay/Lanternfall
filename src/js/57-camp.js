@@ -227,6 +227,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
     const d = B(id); if (!d) return { ok: false, why: 'Unknown building.' };
     if (!campOpen()) return { ok: false, why: S.hearth && S.hearth.cold ? 'Light the fire first.' : `Reach zone ${T.openZone} to make camp.` };
     if (!shown(id)) return { ok: false, why: 'Not open yet.' };
+    if (id === 'tent' && typeof handsTents === 'function') handsTents();
     const to = lv(id) + 1;
     if (to > d.max) return { ok: false, why: 'Fully built.', to, max: true };
     const cost = campCost(id, to), x = { to, cost, dur: buildDur(cost.secs) };
