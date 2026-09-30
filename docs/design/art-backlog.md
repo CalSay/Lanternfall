@@ -9,28 +9,34 @@ GPT keeps the same character and colours.
 
 | Hero | Fight | Death | Gathering | Notes |
 |---|---|---|---|---|
-| Wren | done (draw, release, hurt, camp) | **kneel, fallen** | **axe, pickaxe, sickle** (2 poses each) | outline trimmed in code (tools/heroart.mjs) |
-| Tobin | done | done | **axe, pickaxe, sickle** | |
-| Pip | done | done | **axe, pickaxe, sickle** | optional: redraw natively at 86 px (art-pipeline 7) |
+| Wren | done (draw, release, hurt, camp) | **kneel, fallen** | received 2026-09-30, to wire | outline trimmed in code (tools/heroart.mjs) |
+| Tobin | done | done | received 2026-09-30, to wire | |
+| Pip | done | done | received 2026-09-30, to wire | optional: redraw natively at 86 px (art-pipeline 7) |
 
 **Gathering tools.** The game has four gathering places (63c-scenery-gather): ore (mine), wood (woods), fibre and
 herbs (meadow), crystal (glade). Three tools cover them: a **pickaxe** for ore and crystal, an **axe** for wood and a
-**sickle** for fibre and herbs. Each tool needs two poses: **wind-up** and **strike**. Code adds the chips, sparks,
-wood splinters and cut grass. That is 6 poses per hero, 18 in all.
+**sickle** for fibre and herbs. The heroes are drawn with **empty fists** and code draws the tool in their hands, so
+one set of 8 poses serves all three tools. Code also adds the chips, sparks, wood splinters and cut grass.
 
-### Prompt: gathering poses (one hero per request)
+Received 2026-09-30 for Wren, Tobin and Pip as one 8-pose sheet each (large, soft-edged). A script shrinks each pose
+to the 224x192 canvas and snaps it to the hero's palette; a Tobin trial came out clean. Pose order on the sheets:
+1 rest, 2 arms forward, 3 fist at the shoulder, 4 arms overhead, 5 low swing, 6 low crouch, 7 level punch, 8 rest.
 
-> Same character as the attached sprite and palette: [name]. Draw **6 complete full-body sprites**, each on its own
-> 224x192 transparent canvas, facing right, feet on the anchor (96,132), the same height as the attached sprite,
-> strict pixel art, a clean 1-pixel dark outline, only colours from the attached palette plus up to 4 new ones for
-> the tools. The face stays visible and calm. Leave out chips, sparks and splinters; I add those.
-> 1. Pickaxe, wind-up: both hands on the handle, pickaxe raised behind the head.
-> 2. Pickaxe, strike: pickaxe swung down in front, head at knee height, weight forward.
-> 3. Axe, wind-up: a woodcutter's axe held back over the right shoulder, body turned.
-> 4. Axe, strike: the axe swung level into an imaginary trunk at waist height in front.
-> 5. Sickle, wind-up: crouched a little, sickle drawn back at hip height, the other hand reaching forward.
-> 6. Sickle, strike: the sickle swept forward low through imaginary grass.
-> Export each pose as its own PNG, plus a contact sheet.
+### Prompt: gathering poses (one hero per request, for new heroes)
+
+> Same character as the attached sprite and palette: [name]. Draw **8 complete full-body sprites** as one sheet,
+> facing right, the same height and style as the attached sprite, strict pixel art, a clean 1-pixel dark outline,
+> only colours from the attached palette. **The hands are empty fists**: the character mimes holding a tool with
+> both hands, and I draw the tool myself. The face stays visible and calm. No chips, sparks or effects.
+> 1. Rest: both fists together low in front, ready stance.
+> 2. Arms forward: both fists pushed forward at chest height.
+> 3. Fists back over the right shoulder.
+> 4. Arms overhead: both fists raised above the head.
+> 5. Low swing: fists swung down in front at knee height, weight forward.
+> 6. Low crouch: crouched, fists drawn back at hip height.
+> 7. Level punch: fists thrust level at waist height.
+> 8. Rest again, as pose 1.
+> Transparent background, all 8 on one contact sheet in two rows of four.
 
 ### Prompt: Wren's death poses
 
