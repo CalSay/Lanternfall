@@ -68,7 +68,11 @@ const PACE = {
                             //   (tier 5) began at 25). Starlit gear is the mid-Region 2 step (no burst after zone 35)
   heroAwayXp: 0.5,          // hero XP while away, as a share of the away kills' XP (was 0)
   // BAL1 (owner: "damage ramps too fast"): the hero's power steps.
-  bladeX: 1.5, bladeEvery: 25, // Blade attack x bladeX every bladeEvery levels (was x2 every 25)
+  bladeX: 1.5, bladeEvery: 25, // Blade attack x bladeX every bladeEvery levels (was x2 every 25) (the dormant party game only)
+  // W2-A (solo): Training's Attack level sets the hit: (4 + atkPer x level) x atkX every atkEvery levels. It carries what
+  //   Blade (3-4 levels a hero level) and Swiftness (up to 5 attacks a second) gave, at one level a hero level. Past atkBend
+  //   each step is atkX2 (Blade's late levels and the Swiftness cap made days 2-10 steeper than the first hour).
+  atkPer: 6, atkX: 1.7, atkEvery: 5, atkBend: 25, atkX2: 2,
   heroLv: 0.04,             // hero damage + heroLv per hero level (was +5%)
   // BAL1: idle income never stalls. A normal foe that takes longer than farmSecs to kill means
   // the zone cannot be farmed: auto-progress (and the away gains) use the highest zone that can.
@@ -94,8 +98,14 @@ const dmgMult = () => (1 + 0.2 * S.relic.banner) * (1 + gear().might / 100) * mo
 // only the Gold Rain Omen. Fortune and the Lucky Coin became crit damage (Precision, the Loaded Die).
 const goldMult = () => (1 + gearGold() / 100) * mod('gold');
 const raidMult = () => (1 + 0.3 * S.relic.heart) * (1 + gear().raid / 100) * (Date.now() < rallyUntil ? 1.25 : 1) * mod('raid');
-const heroAtk = () => (4 + 2.5 * S.blade) * Math.pow(PACE.bladeX, Math.floor(S.blade / PACE.bladeEvery)) * lvlMult() * dmgMult() * (1 + gear().attack / 100);
-const aps = () => Math.min(5, 1 + 0.1 * S.swift);
+// W2-A Training (solo): the Attack level's hit before the hero's level, gear and damage (heroPow). The party game keeps Blade.
+const atkSteps = (a, x, x2) => { const n = Math.floor(a / PACE.atkEvery), b = Math.floor(PACE.atkBend / PACE.atkEvery); return Math.pow(x, Math.min(n, b)) * Math.pow(x2, Math.max(0, n - b)); };
+const atkCurve = a => (4 + PACE.atkPer * a) * atkSteps(a, PACE.atkX, PACE.atkX2);
+const heroPow = () => lvlMult() * dmgMult() * (1 + gear().attack / 100);
+// (the product is written out in the old order so a party save's numbers stay bit-identical: check.mjs pre-K4)
+const heroAtk = () => (soloOn() ? atkCurve(trainLv('atk')) : (4 + 2.5 * S.blade) * Math.pow(PACE.bladeX, Math.floor(S.blade / PACE.bladeEvery))) * lvlMult() * dmgMult() * (1 + gear().attack / 100);
+// Solo: fixed per hero (SOLO_TUNE.train.aps; Swiftness is gone). The party game keeps Swiftness.
+const aps = () => soloOn() ? trainAps() : Math.min(5, 1 + 0.1 * S.swift);
 // critBase: the hero's flat crit chance before multipliers (S2: bonus('critBase') carries the class's own, the Ranger's +7%).
 const critBase = () => 0.08 + bonus('critBase') + gear().crit / 100;
 const critChance = () => Math.min(0.75, critBase() * mod('crit'));

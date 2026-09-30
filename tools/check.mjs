@@ -31,7 +31,7 @@ const assert = (cond, msg) => (cond ? ok(msg) : fail(msg));
 const E2 = (g, src) => g.eval(src);
 // ECON-A: the save key moved to v2 (S.v 3). The fixtures in tests/fixtures are loaded under the new key so the
 // load paths they exercise keep their checks; section 'econ' checks that a v1 save is never read.
-const KEY = 'lanternfall.save.v3';   // SOLO1: the save key moved to v3 (the solo hero starts fresh)
+const KEY = 'lanternfall.save.v4';   // W2-A: the save key moved to v4 (Training; SOLO1 made it v3)
 
 // ---- 1. dist syntax ----
 console.log('dist');
@@ -5819,7 +5819,7 @@ try {
     const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
     try {
       const ctx = await browser.newContext({ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
-      await ctx.addInitScript(s => { try { localStorage.setItem('lanternfall.save.v3', s); } catch (e) {} }, JSON.stringify(raw));
+      await ctx.addInitScript(s => { try { localStorage.setItem('lanternfall.save.v4', s); } catch (e) {} }, JSON.stringify(raw));
       const page = await ctx.newPage(); const errs2 = [];
       page.on('pageerror', e => errs2.push(String(e)));
       await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
@@ -5922,13 +5922,13 @@ try {
   const V1 = ['lanternfall', 'save', 'v1'].join('.');   // the old key (spelled so the tools scan below finds no v1 key here)
   const st = memoryStorage({ [V1]: v1raw });
   const h = loadCore({ seed: 42, storage: st }), H = s => h.eval(s);
-  assert(H('KEY') === 'lanternfall.save.v3' && H('S.v') === 3 && H('S.maxZone') === 1 && H('S.gold') === 0 && H('S.precision') === 0 && H('S.relic.edge') === 0 && H('S.econ.v') === 1, 'save key v3 (SOLO1; ECON-A made it v2), S.v 3: with a v1 save present the game starts fresh (zone 1, no gold, the new fields at their defaults)');
+  assert(H('KEY') === 'lanternfall.save.v4' && H('S.v') === 4 && H('S.maxZone') === 1 && H('S.gold') === 0 && H('S.precision') === 0 && H('S.relic.edge') === 0 && H('S.econ.v') === 1, 'save key v4 (W2-A; SOLO1 v3, ECON-A v2), S.v 4: with a v1 save present the game starts fresh (zone 1, no gold, the new fields at their defaults)');
   for (let i = 0; i < 600; i++) h.fn.tick(0.1);
   H('save()');
-  assert(st.get(V1) === v1raw && JSON.parse(st.get('lanternfall.save.v3')).v === 3 && !h.errors.length, 'a minute of play and a save: no errors, the v1 save is untouched, the game saves under v3');
-  const junk = memoryStorage({ [V1]: '{"v":2,"gold":"x"', 'lanternfall.save.v3': 'not json' });
+  assert(st.get(V1) === v1raw && JSON.parse(st.get('lanternfall.save.v4')).v === 4 && !h.errors.length, 'a minute of play and a save: no errors, the v1 save is untouched, the game saves under v4');
+  const junk = memoryStorage({ [V1]: '{"v":2,"gold":"x"', 'lanternfall.save.v4': 'not json' });
   const j = loadCore({ seed: 43, storage: junk });
-  assert(j.eval('S.v') === 3 && Number.isFinite(j.fn.totalDps()) && !j.errors.length, 'a broken v1 and v2 save in storage: a new game, no crash');
+  assert(j.eval('S.v') === 4 && Number.isFinite(j.fn.totalDps()) && !j.errors.length, 'a broken v1 and v2 save in storage: a new game, no crash');
   for (const t of ['check.mjs', 'sim.mjs', 'savecode.mjs', 'perf.mjs']) {
     const src = fs.readFileSync(path.join(ROOT, 'tools', t), 'utf8').replace(/\/\/.*$/gm, '');
     assert(!/lanternfall\.save\.v1/.test(src), `tools/${t} reads the v2 key`);
@@ -7025,7 +7025,7 @@ try {
           } catch (e) {}
           if (S.tab && !st) closeMenu();
           if (!step && S.activity !== 'fight') setActivity('fight');
-          try { let best = null, c = Infinity; for (const u of HERO_UPS) { const p = plan(u.base, u.r, S[u.id], 0, u.cap, '1'); if (p.cost < c) { c = p.cost; best = u.id; } } if (best && S.gold >= c && S.onboard.done.upgrade) buyHero(best, '1'); } catch (e) {}
+          try { const t = trainNext(); if (t && S.gold >= t.cost && S.onboard.done.upgrade) train(t.move, '1'); } catch (e) {}   // W2-A: the solo game trains (Blade and Swiftness are the party's)
           for (let k = 0; k < 20; k++) {
             if (ONBOARD.paused || soloPickerOpen() || document.getElementById('createScreen')) break;
             tick(0.1);
@@ -7375,6 +7375,196 @@ try {
   }
 } catch (e) { fail('solo copy (browser) crashed: ' + (e.stack || e)); }
 // ==== end W1-C ====
+
+// ==== W2-A Training ====
+// Training (src/js/55-training.js, 75-training-ui.js; docs/design/solo-hero.md "Training"): gold levels up each hero's
+// Attack, Parry, Dodge and abilities, capped by the hero's level and the class stage. It replaced Blade, Swiftness and
+// Precision in the solo game (the dormant party game keeps them). Solo build throughout.
+console.log('training (W2-A)');
+try {
+  const g = loadCore({ solo: true, seed: 21 }), E = s => g.eval(s), near = (a, b, t = 1e-9) => Math.abs(a - b) <= t * Math.max(1, Math.abs(b));
+  const T = JSON.parse(E('JSON.stringify(SOLO_TUNE.train)')), PR = JSON.parse(E('JSON.stringify(ECON.train)'));
+  // save defaults and the key
+  assert(E('KEY') === 'lanternfall.save.v4' && E('S.v') === 4 && E('fresh().v') === 4, 'save key lanternfall.save.v4 (S.v 4): v3 saves are never read');
+  const tr0 = JSON.parse(E('JSON.stringify(fresh().solo.tr)'));
+  assert(Object.keys(tr0).join() === 'wren,tobin,pip' && tr0.wren.echo === 0 && tr0.tobin.bash === 0 && tr0.pip.fire === 0 && Object.values(tr0).every(r => r.atk === 0 && r.parry === 0 && r.dodge === 0),
+    `fresh(): every hero's moves start at Lv 0 (${JSON.stringify(tr0)})`);
+  assert(E('JSON.stringify(fresh().solo.asc)') === '{}', 'fresh(): no hero has passed the Proving (asc {})');
+  // an old v4 save without tr / asc (a tool's save) gets them back
+  const st = memoryStorage({ [KEY]: JSON.stringify(Object.assign(JSON.parse(E('JSON.stringify(S)')), { solo: { v: 1, hero: 'tobin', lv: {}, eq: {}, zn: {} } })) });
+  const h0 = loadCore({ solo: true, seed: 3, storage: st });
+  assert(h0.eval('S.solo.tr && S.solo.tr.tobin.atk === 0 && S.solo.tr.tobin.bash === 0 && typeof S.solo.asc === "object"') && !h0.errors.length, 'a save without Training fields loads with them at 0 (defaults merge)');
+
+  E('soloPick("wren", { now: 1 }); S.gold = 0; S.L = 1');
+  assert(E('trainMoves().join()') === 'atk,echo,parry,dodge' && E('trainMoves("tobin").join()') === 'atk,bash,parry,dodge' && E('trainMoves("pip").join()') === 'atk,fire,parry,dodge',
+    'moves: Attack, each unlocked ability, Parry, Dodge (per hero)');
+  assert(!E('buyHero("blade", "1")') && !E('buyHero("swift", "1")') && !E('buyHero("precision", "1")'), 'Blade, Swiftness and Precision cannot be bought in solo (buyHero is the party game\'s)');
+
+  // costs: base x r^n up to the bend, x r2 past it
+  const cost = (k, n) => PR[k].base * Math.pow(PR.r, Math.min(n, PR.bend)) * Math.pow(PR.r2, Math.max(0, Math.min(n, PR.bend2) - PR.bend)) * Math.pow(PR.r3, Math.max(0, n - PR.bend2));
+  const cBad = [];
+  for (const [mv, k] of [['atk', 'atk'], ['echo', 'ab'], ['parry', 'parry'], ['dodge', 'dodge']]) for (const n of [0, 1, 7, 19, 20, 21, 35, 39, 40, 41, 60, 79]) if (!near(E(`trainCost("${mv}", ${n})`), cost(k, n))) cBad.push(`${mv} ${n}`);
+  assert(!cBad.length && E('trainCost("atk", 0)') === 6, `prices: base x${PR.r} a level to Lv ${PR.bend}, x${PR.r2} to Lv ${PR.bend2}, x${PR.r3} past it (Attack Lv 1 costs 6, as Blade's did)` + (cBad.length ? ': ' + cBad.join(', ') : ''));
+  const top = E('Math.max(...["atk", "echo", "parry", "dodge"].map(m => trainCost(m, SOLO_TUNE.train.cap[1] - 1)))');
+  const rising = E('["atk", "echo", "parry", "dodge"].every(m => { for (let n = 1; n < 80; n++) if (!(trainCost(m, n) > trainCost(m, n - 1))) return false; return true; })');
+  assert(rising && top < 1e8, `every price rises and the last level (Lv ${T.cap[1]}) costs ${E(`fmt(${top})`)}, under 1e8 (EC10)`);
+
+  // caps: hero level, then the class stage
+  E('S.gold = 1e12; S.L = 5');
+  assert(E('trainCap().cap') === 5 && E('trainCap().by') === 'level', 'cap: a move never passes the hero\'s level (Lv 5)');
+  const n5 = E('train("atk", "max")');
+  assert(n5 === 5 && E('trainLv("atk")') === 5 && E('trainPlan("atk", "1").n') === 0 && E('train("atk", "1")') === 0, `Max at hero Lv 5 trains Attack to 5 and stops (${n5})`);
+  E('S.L = 60');
+  assert(E('trainCap().cap') === T.cap[0] && E('trainCap().by') === 'stage', `cap: the base class stops at Lv ${T.cap[0]} (hero Lv 60)`);
+  E('train("atk", "max")'); assert(E('trainLv("atk")') === T.cap[0], `Max stops at the stage cap (${E('trainLv("atk")')})`);
+  E('S.solo.asc.wren = 1');
+  assert(E('trainStage()') === 1 && E('trainCap().cap') === 60 && E('trainCap("tobin").stage') === 0, 'after the Proving (S.solo.asc) the cap is the hero\'s level again (60), up to the next stage; other heroes keep theirs');
+  E('S.L = 99'); assert(E('trainCap().cap') === T.cap[1], `after the Proving the stage cap is ${T.cap[1]}`);
+  E('S.solo.asc = {}; S.solo.tr.wren.atk = 0; S.L = 30');
+
+  // buy x1 / x10 / Max and the ledger
+  E('S.gold = 1000; S.econ.spent.up = 0');
+  const p10 = JSON.parse(E('JSON.stringify(trainPlan("atk", "10"))')), sum10 = [...Array(10)].reduce((a, _, i) => a + cost('atk', i), 0);
+  assert(p10.n === 10 && near(p10.cost, sum10), `x10: 10 levels at the sum of their prices (${p10.cost.toFixed(1)})`);
+  const g0 = E('S.gold'), nMax = E('train("atk", "max")'), spent = g0 - E('S.gold'), next = cost('atk', nMax);
+  assert(nMax > 0 && near(spent, [...Array(nMax)].reduce((a, _, i) => a + cost('atk', i), 0)) && E('S.gold') < next && near(E('S.econ.spent.up'), spent),
+    `Max: ${nMax} levels for ${spent.toFixed(0)} of 1,000 gold, the next (${next.toFixed(0)}) out of reach; the ledger counts it under "up"`);
+  E('S.gold = 3'); const pm = JSON.parse(E('JSON.stringify(trainPlan("echo", "max"))'));
+  assert(pm.n === 1 && pm.cost === 8 && E('train("echo", "max")') === 0 && E('S.gold') === 3, 'Max with too little gold shows the next price and trains nothing');
+
+  // what a level raises (and only that)
+  E('S.gold = 1e12; S.solo.tr.wren = { atk: 10, parry: 0, dodge: 0, echo: 10 }; S.L = 30; gearDirty()');
+  const a0 = E('heroAtk()'), ab0 = E('trainAbPow("echo")'), cx0 = E('trainCounterX()'), dc0 = E('soloButtons().dodge.max'), aps0 = E('aps()');
+  E('train("atk", "1")');
+  assert(near(E('heroAtk()') / a0, E('atkCurve(11) / atkCurve(10)')) && near(E('trainAbPow("echo")'), ab0) && E('trainCounterX()') === cx0, `Attack Lv 11: the hit x${(E('heroAtk()') / a0).toFixed(3)} (atkCurve), abilities and the counter unchanged`);
+  E('train("echo", "1")');
+  assert(E('trainAbPow("echo")') > ab0 && near(E('trainAbPow("echo") / heroPow()'), E('trainAbCurve(11)')) && near(E('heroAtk()') / a0, E('atkCurve(11) / atkCurve(10)')), 'Echo Shot Lv 11: its power rises (trainAbCurve), Attack unchanged');
+  E('train("parry", "3")');
+  assert(near(E('trainCounterX()'), 1 + 3 * T.parry) && E('heroAtk()') > 0, `Parry Lv 3: counter x${E('trainCounterX()').toFixed(2)} (+${T.parry * 100}% a level)`);
+  E('train("dodge", "5")');
+  assert(near(E('soloButtons().dodge.max'), Math.max(T.dodgeMin, dc0 * Math.pow(T.dodge, 5))) && E('soloButtons().dodge.max') < dc0, `Dodge Lv 5: cooldown ${dc0} s -> ${E('soloButtons().dodge.max').toFixed(2)} s`);
+  E('S.solo.tr.wren.dodge = 60'); assert(E('trainDodgeCd()') === T.dodgeMin, `Dodge never goes under ${T.dodgeMin} s`);
+  assert(E('SOLO_TUNE.parryWin') === 0.35 && E('SOLO_TUNE.dodgeWin') === 0.8, 'timing windows never grow from gold (parry 0.35 s, dodge 0.8 s)');
+  E('S.swift = 40'); assert(E('aps()') === aps0 && aps0 === T.aps.wren, `attack speed is fixed (${aps0} a second; Swiftness left)`); E('S.swift = 0');
+  // the Attack curve keeps its milestones: x atkX every atkEvery levels, x atkX2 past atkBend
+  assert(near(E('atkCurve(5) / atkCurve(4)'), E('(4 + 6 * 5) / (4 + 6 * 4) * PACE.atkX')) && near(E('atkCurve(30) / atkCurve(29)'), E('(4 + 6 * 30) / (4 + 6 * 29) * PACE.atkX2')),
+    `Attack's damage curve: x${E('PACE.atkX')} every ${E('PACE.atkEvery')} levels, x${E('PACE.atkX2')} past Lv ${E('PACE.atkBend')}`);
+  // ability milestones every 5th level
+  E('S.solo.tr.wren.echo = 4');
+  const cd4 = E('soloAbilityInfo(0).cd'); E('S.solo.tr.wren.echo = 5'); const cd5 = E('soloAbilityInfo(0).cd');
+  assert(near(cd4 - cd5, T.msv.cd * E('mod("abilityCd")')) && E('trainMs("echo", 10).mark') === 1 && E('trainMs("echo", 15).cd') === 2, `Echo Shot: Lv 5 cooldown ${cd4} -> ${cd5} s; Lv 10 the Mark lasts ${T.msv.mark} s longer; Lv 15 another 0.5 s off`);
+  assert(E('trainMs("bash", 5).target') === 1 && E('trainMs("bash", 10).stun') === 1 && E('trainMs("fire", 5).patch') === 1 && E('trainMs("fire", 10).cd') === 1 && E('trainMs("fire", 4).patch') === 0,
+    'milestones take turns: Shield Bash one more foe (Lv 5), a longer Stun (Lv 10); Fireball a longer fire patch (Lv 5), a shorter cooldown (Lv 10)');
+  assert(near(E('trainAbCd("echo", 9, 200)'), 9 * T.cdMin) && E('trainAbCd("echo", 9, 200)') === E('trainAbCd("echo", 9, 400)'), `cooldown milestones stop at ${T.cdMin * 100}% of the base`);
+
+  // levels belong to the hero
+  E('S.solo.tr.wren.atk = 12; S.solo.tr.tobin.atk = 3; S.L = 20');
+  const wAtk = E('heroAtk()');
+  E('soloPick("tobin")'); const tAtk = E('trainLv("atk")');
+  E('soloPick("wren")');
+  assert(tAtk === 3 && E('trainLv("atk")') === 12 && E('trainLv("atk", "tobin")') === 3 && wAtk > 0, 'Training levels belong to each hero (Wren 12, Tobin 3) and survive a switch');
+  // save round trip
+  E('save()'); const h1 = loadCore({ solo: true, seed: 4, storage: g.storage });
+  assert(h1.eval('S.solo.tr.wren.atk') === 12 && h1.eval('S.solo.tr.tobin.atk') === 3 && h1.eval('S.solo.tr.wren.echo') === E('S.solo.tr.wren.echo'), 'Training levels survive save and load');
+
+  // Next Up: the hero-up goal trains (Attack or an equipped ability first)
+  E('S.solo.tr.wren = { atk: 0, parry: 0, dodge: 0, echo: 0 }; S.L = 3; S.gold = 7');
+  const nx = JSON.parse(E('JSON.stringify(trainNext())'));
+  assert(nx && nx.move === 'atk' && nx.cost === 6, `Next Up: the next Training level is Attack Lv 1 for 6 gold, not the cheaper Dodge (${JSON.stringify(nx)})`);
+  const goal = E('(() => { const g = GOALS.find(x => x.id === "hero-up"); const go = typeof g.go === "function" ? g.go() : g.go; return JSON.stringify({ label: typeof g.label === "function" ? g.label() : g.label, go }); })()');
+  const gj = JSON.parse(goal);
+  assert(/^Train Attack to Lv 1: ready$/.test(gj.label) && gj.go.view === 'training' && /data-mv="atk"/.test(gj.go.sel), `Next Up "${gj.label}" opens Hero > Training on the Attack row`);
+  E('S.solo.tr.wren = { atk: 3, parry: 3, dodge: 3, echo: 3 }');
+  assert(E('trainNext()') === null && E('(g => g.pct())(GOALS.find(x => x.id === "hero-up"))') === null, 'every move at its cap: the goal hides');
+  // the guide's 'upgrade' step teaches Train Attack
+  E('S.solo.tr = TRAIN0()');
+  assert(E('cheapestUp()') === 6 && !E('upBought()'), `the guide's upgrade step waits for Attack Lv 1 (${E('cheapestUp()')} gold)`);
+  E('S.gold = 100; train("echo", "1")'); assert(E('upBought()'), 'any Training level ends the step');
+
+  // Precision's crit damage moved into the stars (the pool, capped): +15% a class
+  const sk = JSON.parse(E('JSON.stringify(["warrior", "ranger", "mage"].map(c => { let k = 0, m = 0; for (const [, stars] of STAR_MAPS[c].arms) for (const s of stars) { const fx = s[2] || {}; k += fx.keen || 0; if (fx.m && fx.m.critDmg) m++; } return [c, Math.round(k * 100), m]; }))'));
+  assert(sk.every(([, k, m]) => k === 15 && m === 0), `solo stars: each class's crit damage stars add +15% to the capped pool, none multiply on top (${sk.map(x => x.join(' ')).join(', ')})`);
+  assert(!E('keenSources().some(s => s.id === "precision")'), 'no Precision source in the solo crit damage pool');
+  // an ability hits with its own level: Echo Shot at Lv 0 and Lv 10 on a pack
+  E('S.solo.tr.wren = { atk: 5, parry: 0, dodge: 0, echo: 0 }; S.L = 20; S.maxZone = 3; setZone(3); setActivity("fight"); spawn()');
+  for (let i = 0; i < 20; i++) g.fn.tick(0.1);
+  assert(!g.errors.length, 'training: no errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
+} catch (e) { fail('training (W2-A) crashed: ' + (e.stack || e)); }
+
+// ---- W2-A in Chromium: the Training list, a Train press, the long-press sheet, the old rows gone ----
+console.log('training (W2-A, browser)');
+try {
+  let pw = null;
+  try {
+    const { createRequire } = await import('node:module'); const req = createRequire(import.meta.url);
+    for (const p of ['playwright', '/opt/node22/lib/node_modules/playwright', '/usr/local/lib/node_modules/playwright', '/usr/lib/node_modules/playwright']) { try { pw = req(p); break; } catch (e) {} }
+  } catch (e) {}
+  const exe = ['/opt/pw-browsers/chromium-1194/chrome-linux/chrome', '/opt/pw-browsers/chromium', '/opt/pw-browsers/chromium/chrome', '/opt/pw-browsers/chromium/chrome-linux/chrome'].find(p => { try { return fs.statSync(p).isFile(); } catch (e) { return false; } });
+  if (!pw || !exe || !fs.existsSync(distFile)) ok('training (browser): Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h] of [[360, 740], [740, 360]]) {
+        const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: true, hasTouch: true });
+        const page = await ctx.newPage(); const errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(700);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await page.click('#createScreen .ccard[data-hero="tobin"]'); await page.click('#createScreen .create-go'); await page.waitForTimeout(600);
+        const at = `${w}x${h}`;
+        if (w === 360) {
+          // the guide's upgrade step points at Train on Attack (Hero > Training)
+          await X('for (const id of ["attack", "ability", "dodge", "parry", "boss"]) onboardDone(id); S.maxZone = 2; S.zone = 2; S.L = 3; S.gold = 50; true');
+          await page.waitForTimeout(1500);
+          const step = await X('(s => s ? s.id : "")(onboardStep())');
+          await X('setTab("training"); true'); await page.waitForTimeout(1200);
+          const bub = await X('(b => b && !b.hidden ? b.textContent : "")(document.querySelector(".ob-bub"))');
+          assert(step === 'upgrade' && /Train Attack/.test(bub), `${at}: the guide's upgrade step says "${bub.slice(0, 60)}" on Hero > Training`);
+          await page.click('#trainRows .tr-row[data-mv="atk"] .buy'); await page.waitForTimeout(400);
+          assert(await X('trainLv("atk") === 1 && !!S.onboard.done.upgrade'), `${at}: Train Attack ends the step (Attack Lv 1)`);
+        }
+        await X('for (const s of GUIDE_STEPS) onboardDone(s.id); S.maxZone = 9; S.zone = 9; S.L = 14; S.gold = 5000; ui(true); true');
+        await X('setTab("training"); true'); await page.waitForTimeout(700);
+        const rows = JSON.parse(await X('JSON.stringify([...document.querySelectorAll("#trainRows .tr-row")].map(r => ({ mv: r.dataset.mv, lv: r.querySelector(".own").textContent, ic: !!(r.querySelector(".ic img") && r.querySelector(".ic img").src.startsWith("data:")), desc: r.querySelector(".row-desc").textContent, btn: r.querySelector(".buy").textContent, vis: r.getBoundingClientRect().width > 0 })))'));
+        assert(rows.map(r => r.mv).join() === 'atk,bash,parry,dodge' && rows.every(r => r.ic && r.vis && /^Lv \d+\/14$/.test(r.lv) && /Next level/.test(r.desc) && /^Train/.test(r.btn)),
+          `${at}: Hero > Training lists Tobin's moves with the bar's icons, Lv n/14, the next level and Train (${rows.map(r => r.mv + ' ' + r.lv).join(', ')})`);
+        const lv0 = await X('trainLv("bash")'), g0 = await X('S.gold');
+        await page.click('#trainRows .tr-row[data-mv="bash"] .buy'); await page.waitForTimeout(300);
+        assert(await X('trainLv("bash")') === lv0 + 1 && await X('S.gold') < g0, `${at}: Train raises Shield Bash ${lv0} -> ${lv0 + 1} and spends gold`);
+        await page.click('.tr-amt button[data-amt="max"]'); await page.waitForTimeout(200);
+        await page.click('#trainRows .tr-row[data-mv="atk"] .buy'); await page.waitForTimeout(300);
+        assert(await X('trainLv("atk")') === 14 && await X('trainPlan("atk").n') === 0, `${at}: Max trains Attack to the hero's level (14) and the row says Maxed (${await X('document.querySelector(\'#trainRows .tr-row[data-mv="atk"] .qty\').textContent')})`);
+        await X('S.amt = "1"; true');
+        const scrollW = await X('document.documentElement.scrollWidth <= innerWidth + 1');
+        assert(scrollW, `${at}: no sideways scroll`);
+        // the Fight tab: no Blade / Swiftness / Precision rows
+        await X('setTab("adv"); true'); await page.waitForTimeout(500);
+        assert(await X('!document.querySelector("#heroRows .row") && document.getElementById("heroRows").offsetParent === null && !/Blade|Swiftness|Precision/.test(document.getElementById("p-adv").innerText)'), `${at}: the Fight tab has no Blade, Swiftness or Precision rows`);
+        await X('closeMenu(); true'); await page.waitForTimeout(400);
+        // long press on Dodge: the sheet with its level and a Train button
+        const bb = await (await page.$('#soloBar .sb-dodge')).boundingBox();
+        await page.mouse.move(bb.x + bb.width / 2, bb.y + bb.height / 2); await page.mouse.down(); await page.waitForTimeout(750); await page.mouse.up(); await page.waitForTimeout(300);
+        const card = await X('(c => c ? c.textContent : "")(document.querySelector("#moveSheet .tr-card"))');
+        const d0 = await X('trainLv("dodge")');
+        assert(/Dodge Lv \d+/.test(card) && /Train/.test(card), `${at}: a long press on Dodge shows "${card.slice(0, 50)}"`);
+        await page.click('#moveSheet .tr-go'); await page.waitForTimeout(300);
+        assert(await X('trainLv("dodge")') === d0 + 1 && await X('soloPickerOpen()'), `${at}: its Train button trains Dodge (${d0} -> ${d0 + 1}); the game waits while the sheet is open`);
+        await page.click('#moveSheet .sp-x'); await page.waitForTimeout(200);
+        const ab = await (await page.$('#soloBar .sb-ab0')).boundingBox();
+        await page.mouse.move(ab.x + ab.width / 2, ab.y + ab.height / 2); await page.mouse.down(); await page.waitForTimeout(750); await page.mouse.up(); await page.waitForTimeout(300);
+        const pcard = await X('(c => c ? c.textContent : "")(document.querySelector("#abPicker .tr-card"))');
+        assert(/Shield Bash Lv \d+/.test(pcard) && /Train/.test(pcard), `${at}: a long press on an ability slot shows its Training in the picker ("${pcard.slice(0, 40)}")`);
+        await X('document.querySelector("#abPicker .sp-x").click(); true');
+        assert(!errs.length, `${at}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('training (W2-A, browser) crashed: ' + (e.stack || e)); }
+// ==== end W2-A ====
 
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);

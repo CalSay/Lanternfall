@@ -29,7 +29,9 @@ function splitDesc(box) {
 // Hero upgrade rows: icon, name, level, the stat in one line and the buy button. A tap on the row
 // shows the rest of the description.
 $('heroRows').classList.add('dz-list');
-const heroRows = HERO_UPS.map(u => {
+// W2-A: the solo game trains moves on the Hero tab (75-training-ui.js); these rows are the party game's.
+if (soloOn()) $('heroRows').parentElement.hidden = true;
+const heroRows = soloOn() ? [] : HERO_UPS.map(u => {
   const r = makeRow($('heroRows'), u.name, false, iconURL(...u.ic));
   r.btn.addEventListener('click', () => { if (buyHero(u.id)) ui(true); });
   r.row.classList.add('hu-row');
@@ -112,8 +114,8 @@ function uiFight() {
     putText(G.desc, `Win before it enrages to open the next zone. ${Math.round(UNIQ_TUNE.first * 100)}% chance of the unique ${uq}.`);
     putText(gq, 'Boss'); putText(gp, 'Fight'); putDisabled(gb, !bossReady());
   }
-  HERO_UPS.forEach((u, i) => {
-    const r = heroRows[i], p = plan(u.base, u.r, S[u.id], S.gold, u.cap);
+  heroRows.forEach((r, i) => {
+    const u = HERO_UPS[i], p = plan(u.base, u.r, S[u.id], S.gold, u.cap);
     putText(r.own, 'Lv ' + S[u.id]);
     r.setDesc(u.desc());
     putText(r.qty, p.n ? 'Buy ' + p.n : 'Maxed');

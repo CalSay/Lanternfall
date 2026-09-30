@@ -10,7 +10,7 @@ import { loadCore, memoryStorage } from './lib/core.mjs';
 
 // ECON-A: the save key moved to v2 (S.v 3). The fixtures in tests/fixtures are loaded under the new key so the
 // load paths they exercise keep their checks; section 'econ' checks that a v1 save is never read.
-const KEY = 'lanternfall.save.v3';   // SOLO1: the save key moved to v3
+const KEY = 'lanternfall.save.v4';   // W2-A: the save key moved to v4 (SOLO1: v3)
 
 export function saveCodeFor(json) {
   const g = loadCore({ seed: 1, storage: memoryStorage({ [KEY]: json }) });
