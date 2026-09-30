@@ -6660,16 +6660,27 @@ if (section('C20 turn combat (core)')) try {
   const profile = E('turnCombatProfile()'), before = E('JSON.stringify(S)');
   const passives = E(`(() => {
     const p=turnCombatProfile(), e=turnEffects(); e.blockN=0;
-    const mark=turnScalarHit({...p,heroKey:'wren',critChance:0,nonCrit:1,armoured:false},e,'attack',false,()=>1);
+    const focus={...p,heroKey:'wren',critChance:.2,critMult:4,nonCrit:1,armoured:false,markCritX:1.5};
+    const mark=turnScalarHit({...focus,critChance:0},e,'attack',false,()=>1);
+    const next=turnScalarHit(focus,e,'attack',false,()=>.25);
     const damage=turnScalarFoeHit({...p,foeAtk:100,hitCap:1000,blockP:0,blockC:.1,blockX:.5,heroMaxHp:100,regen:.005},
       {guard:0,grit:0,blockN:.9},()=>1);
-    return {mark,markV:e.markV,damage,regen:turnScalarRegen({heroMaxHp:100,regen:.005},50,1)};
+    return {mark,focusV:e.focusV,critBonus:next>focus.heroAtk*1.25,damage,
+      regen:turnScalarRegen({heroMaxHp:100,regen:.005},50,1)};
   })()`);
-  assert(passives.markV===.25 && passives.damage.blocked && passives.damage.amount===50 && passives.regen===50.5,
-    'C20: Ranger Focus mark, Warrior class block and legacy regeneration use the shared scalar rules');
+  assert(passives.focusV===.25 && passives.critBonus && passives.damage.blocked && passives.damage.amount===50 && passives.regen===50.5,
+    'C20: Ranger Focus mark and marked crit, Warrior class block and legacy regeneration use the shared scalar rules');
   E('globalThis.__rngCalls=0; Math.random=()=>{__rngCalls++;return 0.5}');
   const sample = E('turnCombatSample({profile:turnCombatProfile(),seconds:30,seed:77,mode:"auto"})');
   assert(sample && sample.seconds===30 && sample.kills>=0 && E('JSON.stringify(S)')===before && E('__rngCalls===0'), 'C20: reward-free scratch sampling does not mutate the save or consume live RNG');
+  const blockCore=loadCore({seed:2024}), B=x=>blockCore.eval(x);
+  B('TURN_TUNE.on=1;TURN_TUNE.autoParry=0;TURN_TUNE.autoDodge=0;soloPick("tobin");soloSetAuto(true);S.auto=false;spawn();combatFoes()[0].hp=combatFoes()[0].max=1e9;const u=cbUnitByKey("hero");u.hp=u.maxHp=1e9;globalThis.__blockEvents={hits:0,blocks:0};on("unitHit",x=>{if(x.key==="hero"){__blockEvents.hits++;if(x.blocked)__blockEvents.blocks++}})');
+  const lowDamage=B('turnCombatSample({profile:turnCombatProfile(),seconds:60,seed:1,mode:"auto"})');
+  B('for(let i=0;i<1200;i++)tick(.05)');
+  const liveBlock=B('__blockEvents');
+  assert(B('turnCombatProfile().blockC===0.1') && lowDamage.foeHits>=10 && lowDamage.foeHits===liveBlock.hits &&
+    lowDamage.blocks===liveBlock.blocks && liveBlock.blocks>=1,
+    `C20: multi-hit Tobin class block persists across turns in live/scratch (${liveBlock.hits}/${liveBlock.blocks} vs ${lowDamage.foeHits}/${lowDamage.blocks})`);
   E('setZone(2)');
   assert(E('!turnCombatOn() && combatFoes().length>1 && __turnEvents.filter(x=>x[0]==="end").length===1 && __turnEvents.at(-1)[1]==="abandon"'), 'C20: leaving the supported zone ends the fight once and restores legacy pack combat');
   E('TURN_TUNE.on=0; setZone(1)');
