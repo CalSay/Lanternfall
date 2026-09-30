@@ -1,10 +1,10 @@
 # Campaign NPCs: people along the Lantern Road
 
-**C6 / issue #7 — design draft for owner review, 30 September 2026.**
+**C6 / issue #7 — design decisions recorded, implementation gated on M1, 30 September 2026.**
 Audited against Claude checkpoint `3ddba26361c4a069b983c7ae00f1a9a397909398`.
 This document proposes encounters and their delivery. It does not authorize story data, UI,
 new NPC implementation, professions, rewards, or later regions. Build work waits for owner review
-and the coordinator's M1 schedule. No save-key change is proposed.
+and the coordinator's M1 schedule. Owner answers are recorded in §9; the modal mounting proposal still needs Claude's sign-off. No save-key change is proposed.
 
 ## 1. What the campaign should feel like
 
@@ -71,7 +71,7 @@ gatherer moves to Hollow's Rest. Their home-place entry can say “At Hollow's R
 player there. It must not show them standing in the quarry while their job says they are away.
 An unread conversation waits while they work. There is no need to recall them to save a story.
 
-Named board visitors can be met before hiring, subject to owner decision D2. Meeting someone
+Named board visitors can be met before hiring (owner-approved D2). Meeting someone
 does not consume a Tent, charge gold, or grant their working bonus. Hiring and trade retain their
 existing controls and rules. A full crew must not make the main campaign unreadable.
 
@@ -100,7 +100,7 @@ The route column records current mechanics; it does not move a hiring gate.
 | Sister Fennel / `fennel` | Chapel garden entry, after the chapel is discovered; camp | Registered chapel route when available, or zone 30 | Keeping the garden in pots. She knows the work she did there, not Elowen's private choice. A fallback arrival does not count as completing the chapel quest. |
 | Mother Ashby / `ashby` | Camp table, after her Kitchen route | Kitchen built; no zone fallback in current route data | A place kept for Caedmon. She can acknowledge that someone got her family out; the offer in the fire and the Pyre Knight wait for later regions. |
 | Dorrie Fitch / `dorrie` | Tavern doorway; a reached road-market entry | Registered pedlar rumour when available, or zone 32 | Doors she knocked on while selling thread. Her optional trade conversation concerns bringing cargo home as gold, not opening a new economy. |
-| Tavern keeper / proposed `tavern_keeper` | Hollow's Rest Tavern | **Proposed:** Tavern built, once owner approves the person | Knows who is waiting and what practical help the town needs. Name, appearance and past are owner decisions; no secret identity proposed. |
+| Tavern keeper / proposed `tavern_keeper` | Hollow's Rest Tavern | **Approved role:** Tavern built; name and art not yet selected | Knows who is waiting and what practical help the town needs. A practical host, with no hidden identity. Name and appearance remain to be selected. |
 
 The keeper can introduce existing Word on the Road information without replacing its unlock
 logic or making the keeper the source of every story. If the owner defers this new person,
@@ -276,41 +276,33 @@ identity or retreat through a collectible list or NPC subtitle. Follow lore.md's
 not the mere presence of an endgame name in a data file. The Coast's tide continues after its
 story changes; conversation copy cannot promise that an ongoing game system stops.
 
-## 9. Decisions for the owner and coordinator
+## 9. Recorded decisions and remaining review
 
-**D1 — M1 cast and scope.** Approve the short Hesketh/Tam arc plus optional existing named
-gatherers in §5. Recommended: ship this first after M1 authorization, then expand by place.
-The document does not promise all old character stories in the first campaign release.
+Owner answers relayed by Claude on [PR #1](https://github.com/CalSay/Lanternfall/pull/1#issuecomment-5914765444), 30 September 2026. These approve design direction, not implementation before M1.
 
-**D2 — Conversation before hiring.** Recommended: allow named visitors to talk while waiting at
-the Tavern, and keep read stories available after they leave the active crew. This separates
-knowing a person from buying a working slot without changing either cost or capacity.
+**D1 — M1 cast and scope: approved.** Start with the Hesketh/Tam arc and optional existing named gatherers in §5. Broader character stories remain later content.
 
-**D3 — Tavern keeper.** Approve whether to add a recurring keeper at all, then approve name,
-look and background. Recommended first brief: a practical host who knows who is waiting; no
-hidden identity. Keep the document's role label until that decision. Hallam remains the ferryman.
+**D2 — Conversation before hiring: approved.** Named visitors can talk while waiting at the Tavern. Read history remains accessible after they leave the active crew; no hiring fee, capacity or working bonus changes.
 
-**D4 — Playable hero identity in personal scenes.** Approve player-side variants or deferral for
-scenes involving the chosen hero, and assign the larger adaptation of Elowen's child/lantern
-origin to the solo story work. C6 must not invent a new origin for all 32 heroes or revive an
-anonymous companion beside the selected hero to solve the problem.
+**D3 — Tavern keeper: approved role.** A recurring practical host who knows who is waiting, with no hidden identity. Keep the role label until name and appearance are approved. Hallam remains the ferryman.
 
-**D5 — The person at the Hollow milestone.** Sources differ: lore.md §4.4a has a marsh family
-raising the Storehouse; gatherers-2.md §5.2 names Gil Rushby after the Fenmother. Current gameplay
-already has the Storehouse before that fight, and Gil/Hunter is not live. Recommended for M1:
-pay off the existing people and the cleared road, reserving the new arrival for its approved
-content task. The owner should select the later arrival and its practical role. Do not invent
-a family relationship for Gil or grant a second Storehouse unlock.
+**D4 — Playable hero identity: deferred by the owner.** Do not invent a universal new origin or a duplicate of the selected hero. Defer conflicting optional scenes until the adaptation has been reviewed; mandatory story must still work for every supported hero.
 
-**D6 — Later replacements for Bond gates.** Approve the principles in §7; schedule individual
-character scenes with their complete hero releases. The Hollises keep the Coast-lit and
-Bram-known requirements; “He Stops Carving” needs a campaign prerequisite to replace its old
-Close-Bond gate. Recommended: Bram's fork-mark story read, then the reunion read.
+**D5 — Hollow milestone: delegated to Claude and Codex.** Both recommend paying off existing people and the cleared road first. No Gil/Hunter introduction, invented family link or second Storehouse unlock in M1. A later arrival remains a separate approved content task. This preserves the emotional consequence of the Fenmother without adding another unfinished system.
 
-**D7 — Map/UI delivery.** Coordinator confirms the smallest supported place-entry interface
-and later file ownership. C6's doc stage adds no layout or art work. Existing C2 Camp
-conversations and C3 named rumours should connect to the same history, not become duplicate
-dialogue systems.
+**D6 — Replacing Bond gates: owner agrees; Codex concurs.** Use discoveries and stories actually read, not a hidden relationship grind. For “He Stops Carving”, require Bram known, the Coast relit, Bram's fork-mark story read and the reunion read. These are explicit persistent story facts; a hiring fallback or combat pairing never substitutes for them. The player can revisit unread prerequisites without losing the ending. Quiet catch-up can make an earned conversation available, but must not mark an unseen personal revelation as read. Individual scenes still ship with their reviewed character content.
+
+**D7 — Dialogue delivery: owner requires a modal.** Show a proper conversation popup that dims the game behind it, with an in-page Close button. It must work at 740×360 landscape and 360 px portrait. Camp Talk, Tavern rumours and map entries share conversation state rather than creating separate histories.
+
+### Proposed modal layer — awaiting Claude's shell approval
+
+Propose one reusable `#campaign-dialog` mounted as a sibling immediately after `#app`, before the script marker in `src/shell.html`. This avoids clipping by the scrolling Camp panel or scaled stage. Claude owns the shell insertion and stacking order; C6 must not edit them before sign-off. The story module supplies the dialog contents and uses the agreed open/close interface.
+
+Use a viewport-fixed dim backdrop and an accessible labelled modal (`role="dialog"`, `aria-modal="true"`). Fade the backdrop briefly; reduced-motion preference removes the transition. Dim visually without implying that idle progression pauses. The modal blocks gameplay pointer/keyboard input while open; gameplay hotkeys must respect it, through a Claude-approved shell hook. No second popup may steal focus: another story remains available in history instead.
+
+Keep speaker/name, Close and Continue visible; long text scrolls inside the dialog. At 740×360 use the available width rather than a tall portrait card; at 360 px allow text reflow with no horizontal scrolling and account for safe-area insets. Keyboard focus enters the dialog, stays inside with Tab/Shift+Tab, Escape closes it, and closing restores the invoking control if it still exists (otherwise a stable place heading). The background becomes inert to assistive interaction while the dialog is open, using the existing modal policy if Claude provides one.
+
+Closing a partial scene preserves its readiness; only the explicit completion action marks that scene read. Tests must cover keyboard dismissal, focus recovery after a gatherer departs, repeated openings, a pending away report, and both required viewports. Exact stacking relative to save recovery, away reports and existing sheets is a shell decision: ask Claude to nominate the shared modal host if a sibling mount would conflict.
 
 ## 10. Acceptance for a later implementation handoff
 
