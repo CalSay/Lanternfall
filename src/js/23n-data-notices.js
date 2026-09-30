@@ -22,7 +22,8 @@
 // text of merged lines (default: the newest line, with a count).
 // A message that matches no rule falls back on its priority: high pops, normal goes to the bell,
 // low to the log. tools/check.mjs holds that every toast source in src/js matches a rule.
-const NOTICE_TUNE = { gap: 20, perMin: 3, arrivalWait: 60, elderWait: 12 };
+// quiet: the first quiet.secs of play (a session) allow at most quiet.pops pops; the rest go where the rule holds them.
+const NOTICE_TUNE = { gap: 20, perMin: 3, arrivalWait: 60, elderWait: 12, quiet: { secs: 600, pops: 6 } };
 const NOTICE_CH = ['card', 'pop', 'bell', 'log', 'none'];
 const noteNum = (m, re) => { const x = re.exec(m); return x ? +x[1] : 0; };
 const NOTICES = [

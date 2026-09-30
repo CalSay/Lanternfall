@@ -4069,7 +4069,8 @@ if (section('solo guide: gathering never freezes (browser)')) try {
           // a step that waits for materials: the clock must keep running on its own (no tick calls from here for 0.6 s)
           await page.waitForTimeout(600);
           const t1 = await X('S.onboard.t');
-          if (!(t1 > info.t + 0.3) || info.paused) frozen += `${info.id} (paused ${info.paused}, ${info.t} -> ${t1}) `;
+          // (0.05 s, not 0.3: under parallel shards the frame loop can run slow; a frozen clock advances 0)
+          if (!(t1 > info.t + 0.05) || info.paused) frozen += `${info.id} (paused ${info.paused}, ${info.t} -> ${t1}) `;
           if (!waited.includes(info.id)) waited.push(info.id);
           // a Go button sends the hero to the node that yields the material; pressing it is what the guide asks
           if (await X('(b => !!(b && !b.hidden && /^(Chop|Mine)/.test(b.textContent)))(document.querySelector(".ob-ok"))')) await page.click('.ob-ok');

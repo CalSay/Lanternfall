@@ -17,7 +17,7 @@
 const NOTE_PRIO = { high: 2, normal: 1, low: 0 };
 const NOTE_KIND_PRIO = { loot: 2 };
 const NOTE_MS = [2600, 3200, 4200];
-const notes = { log: [], unread: 0, seq: 0, seenSeq: 0, clock: 0, pops: [], once: {}, stats: [], waiting: [] };
+const notes = { log: [], unread: 0, seq: 0, seenSeq: 0, clock: 0, pops: [], popN: 0, once: {}, stats: [], waiting: [] };
 // A pop whose rule has `wait` waits for the next free slot (first come, before any caption), then shows;
 // past its wait it goes to its held channel.
 let noteWaitT = 0;
@@ -90,7 +90,8 @@ const cardUp = () => !!document.querySelector('.gl-ov, .dd-fc-ov, .away-ov, .joi
 // The pop budget (seconds of play): one per NOTICE_TUNE.gap, NOTICE_TUNE.perMin a minute.
 // A rule may ask for a longer quiet before it (`gap`: the stage captions).
 function popRoom(rule) {
-  const t = notes.clock, P = notes.pops;
+  const t = notes.clock, P = notes.pops, Q = NOTICE_TUNE.quiet;
+  if (Q && t < Q.secs && notes.popN >= Q.pops) return false;   // a quiet start (owner: the early game must not spam)
   while (P.length && t - P[0] >= 60) P.shift();
   return !P.length || (t - P[P.length - 1] >= Math.max(NOTICE_TUNE.gap, (rule && rule.gap) || 0) && P.length < NOTICE_TUNE.perMin);
 }
@@ -138,7 +139,7 @@ function notify(n, when) {
   let url = null; try { url = iconOf(n.icon); } catch (e) {}
   if (NEWS.open && (ch === 'pop' || ch === 'bell')) { NEWS.lines.push({ msg, url, kind: kind || '', p: ch === 'pop' ? 2 : 1 }); return ch; }
   if (ch !== 'pop') { noteLog(rule, msg, kind, url, ch); return ch; }
-  if (!(rule && rule.reply)) notes.pops.push(notes.clock);
+  if (!(rule && rule.reply)) { notes.pops.push(notes.clock); notes.popN++; }
   noteLog(rule, msg, kind, url, 'pop');
   popToast(msg, kind, url, Math.max(1, notePrio(n.prio, kind)), n.go);
   return 'pop';
@@ -151,7 +152,7 @@ function noticeAsk(key, msg, opts) {
   if (ch === 'held' && opts && opts.wait) return 'wait';
   const out = ch === 'held' ? (rule && rule.held) || 'bell' : ch;
   noteStat(rule, ch === 'held' ? 'held:' + out : out, msg);
-  if (out === 'pop' && !(rule && rule.reply)) notes.pops.push(notes.clock);
+  if (out === 'pop' && !(rule && rule.reply)) { notes.pops.push(notes.clock); notes.popN++; }
   if (out !== 'none') noteLog(rule, msg, '', null, out === 'card' ? 'pop' : out);
   return out;
 }
@@ -218,7 +219,7 @@ function newsToast() {
   const msg = `What's new since your last visit. Tap to read.`, d = noticeDecide(msg, 'news');
   noteStat(d.rule, d.ch === 'held' ? 'held:bell' : d.ch, msg);
   if (d.ch !== 'pop') return;   // the bell line is there already
-  notes.pops.push(notes.clock);
+  { notes.pops.push(notes.clock); notes.popN++; }
   const box = $('toasts');
   for (const t of [...box.children]) if (t._news) { t._gone = true; clearTimeout(t._timer); t.remove(); }
   // Room as for a high notice: retire the oldest normal toasts first.
