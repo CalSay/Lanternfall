@@ -9,7 +9,7 @@ GPT keeps the same character and colours.
 
 | Hero | Fight | Death | Gathering | Notes |
 |---|---|---|---|---|
-| Wren | done (draw, release, hurt, camp) | **kneel, fallen** | received 2026-09-30, to wire | outline trimmed in code (tools/heroart.mjs) |
+| Wren | done: v4 redesign, 8 poses (draw, release, wind-up, brace, camp, hurt) | done (kneel, fallen) | **on hold: the sheet shows the old hood; redo in the v4 design** | outline trimmed in code (tools/heroart.mjs) |
 | Tobin | done | done | received 2026-09-30, to wire | |
 | Pip | done | done | received 2026-09-30, to wire | optional: redraw natively at 86 px (art-pipeline 7) |
 

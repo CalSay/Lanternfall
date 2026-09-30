@@ -25,7 +25,8 @@ const W = 224, H = 192, AX = 96, AY = 132;
 // hero -> [pose key, file] (the keys 64h uses)
 export const HEROES = {
   // trim: the outer outline is dropped wherever dark shading already sits inside it (trimOutline below)
-  wren: { trim: true, poses: [['draw', 'full-draw'], ['release', 'just-released'], ['camp', 'relaxed-camp'], ['hurt', 'hurt']],
+  wren: { trim: true, poses: [['draw', 'full-draw'], ['release', 'just-released'], ['camp', 'relaxed-camp'], ['hurt', 'hurt'],
+    ['wind', 'wind-up'], ['block', 'defensive-brace'], ['kneel', 'kneeling'], ['fallen', 'fallen']],
     fx: [['bat', 'bat'], ['arrow', 'arrow'], ['waves', 'sound_waves']] },
   tobin: { poses: [['ready', '01-ready-guard'], ['wind', '02-wind-up'], ['strike', '03-strike'], ['block', '04-braced-block'],
     ['camp', '05-relaxed-camp'], ['hurt', '06-hurt'], ['kneel', '07-kneeling'], ['fallen', '08-fallen']] },

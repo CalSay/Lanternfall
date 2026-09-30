@@ -6,7 +6,7 @@ build reads the poses, palettes and Wren's fx through `node tools/heroart.mjs`, 
 
 | Hero | Class | Poses | Version | Notes |
 |---|---|---|---|---|
-| Wren Hollowmere | Archer (striker) | full draw, just released, relaxed camp, hurt | GPT v4 "complete poses" | 96 px. Death uses a toppled camp pose until kneel and fallen poses exist |
+| Wren Hollowmere | Archer (striker) | full draw, just released, relaxed camp, hurt, wind-up, defensive brace, kneeling, fallen | GPT v4 design refresh (2026-09-30: bat-ear hood, bat-wing cloak) | 96 px. Code draws the string, the nocked arrow, the flying arrow, waves and bat. Source notes in `wren/v4-source/` |
 | Tobin Reed | Melee (tank) | ready guard, wind-up, strike, braced block, relaxed camp, hurt, kneeling, fallen | GPT v3 (after the style pack) | 96 px |
 | Pip Cinderly | Caster | ready, wind-up, cast, relaxed camp, hurt, kneeling, fallen | GPT 86 px trial | 86 px, shorter on purpose because she's young. Shrunk from 96 px, so a native 86 px redraw would clean her edges |
 

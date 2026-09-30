@@ -90,20 +90,13 @@ var heroArtId, heroArtDraw, heroArtStates, heroArtStage, heroArtDecode, heroArtP
     return toCanvas(w, h, buf);
   }
 
-  // Poses, decoded once per hero on first use: { x0, y0, w, h, c }. Wren's 'lie' (death) is her camp pose turned
-  // a quarter to the left, as animate.py does.
+  // Poses, decoded once per hero on first use: { x0, y0, w, h, c }.
   const SETS = {};
   function set(id) {
     let s = SETS[id]; if (s) return s;
     const H = D.heroes[id], pal = palOf(id); s = { poses: {}, fx: {} };
     for (const k of Object.keys(H.poses)) { const d = unrle(H.poses[k]); s.poses[k] = { x0: d.x0, y0: d.y0, w: d.w, h: d.h, c: idxCanvas(d, pal), d }; }
     for (const k of Object.keys(H.fx)) { const d = unrle(H.fx[k]); s.fx[k] = { w: d.w, h: d.h, c: idxCanvas(d, pal) }; }
-    if (id === 'wren') {
-      const d = s.poses.camp.d, w = d.h, h = d.w, idx = new Uint8Array(w * h);
-      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) idx[y * w + x] = d.idx[x * d.w + (d.w - 1 - y)];
-      const r = { x0: 0, y0: 0, w, h, idx };
-      s.poses.lie = { x0: AX - (w >> 1) + 6, y0: 131 - h + 1, w, h, c: idxCanvas(r, pal), d: r };
-    }
     for (const k of Object.keys(s.poses)) delete s.poses[k].d;
     // the art's widest reach left of the anchor (Wren's bat now flits at her top right, inside the poses)
     s.left = AX - Math.min(...Object.values(s.poses).map(p => p.x0));
@@ -183,7 +176,8 @@ var heroArtId, heroArtDraw, heroArtStates, heroArtStage, heroArtDecode, heroArtP
     }
   }));
   // Wren's bow string (bresenham, as animate.py); drawn = to the nock at full draw. A sprite covering x 60..140, y 30..120.
-  const STRING = { draw: [[132, 37], [131, 112]], release: [[129, 38], [130, 113]] }, NOCK = [67, 70];
+  // Tips measured on the v4 art (owner, 2026-09-30): the bow's curls in full draw, release and the wind-up.
+  const STRING = { draw: [[121, 36], [122, 111]], release: [[121, 36], [122, 111]], wind: [[130, 55], [111, 113]] }, NOCK = [76, 74];
   const stringSprite = (kind, br) => cached('st' + kind + br, () => paint(80, 90, put => {
     const line = (p0, p1) => {
       let [x0, y0] = p0; const [x1, y1] = p1, dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0), sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1; let e = dx + dy;
@@ -192,6 +186,15 @@ var heroArtId, heroArtDraw, heroArtStates, heroArtStage, heroArtDecode, heroArtP
     const [t, b] = STRING[kind], T0 = [t[0], t[1] + br], B0 = [b[0], b[1] + br];
     if (kind === 'draw') { const n = [NOCK[0], NOCK[1] + br]; line(T0, n); line(n, B0); } else line(T0, B0);
   }));
+  // v4: the arrow on the string at full draw (the art leaves it out). The fx arrow's fletching at the nock, its head past the
+  // grip, and its shaft stretched between them (one column, stretched sideways: still whole pixels).
+  const NOCKED = { x0: NOCK[0] - 2, x1: 150, y: NOCK[1] - 7 };
+  function nockedArrow(g, A, ox, oy, br) {
+    const y = oy + NOCKED.y + br, L = 18, H = 20, x0 = ox + NOCKED.x0, x1 = ox + NOCKED.x1;
+    g.drawImage(A.c, 0, 0, L, A.h, x0, y, L, A.h);
+    g.drawImage(A.c, L, 0, 1, A.h, x0 + L, y, x1 - H - x0 - L, A.h);
+    g.drawImage(A.c, A.w - H, 0, H, A.h, x1 - H, y, H, A.h);
+  }
 
   // ================= frames =================
   // A frame: { p: pose, br: breath 0/1, dx, buckle: [shift, bottomFrom], str: 'draw'|'release', arrow, waves, bat: [x, y],
@@ -202,22 +205,27 @@ var heroArtId, heroArtDraw, heroArtStates, heroArtStage, heroArtDecode, heroArtP
   const BAT = [[34, 56], [35, 54], [36, 53], [35, 54], [34, 56], [33, 57], [32, 56], [33, 55]].map(batAt);
   const ORB = { ready: [134, 57], wind: [93, 29], cast: [151, 59], camp: [124, 56], hurt: [140, 62], kneel: [130, 56], fallen: [149, 103] };
   const range = n => Array.from({ length: n }, (_, i) => i);
+  // v4 (owner, 2026-09-30): the wind-up opens the shot, the brace is her block, and she kneels then falls when she dies.
+  const AR_Y = 67, AR_X = 140;   // the flying arrow's top left as it leaves the grip (fx arrow, 58x14)
   function wrenAnims() {
-    const fight = (o = {}) => Object.assign({ p: 'draw', str: 'draw', bat: batAt([34, 56]) }, o);
+    const fight = (o = {}) => Object.assign({ p: 'draw', str: 'draw', nock: 1, bat: batAt([34, 56]) }, o);
     const rel = o => Object.assign({ p: 'release', str: 'release' }, o);
     const hurt = (bat, dx = 0) => ({ p: 'hurt', bat: batAt(bat), dx });
-    const attack = [fight(), fight({ br: 1 }), fight({ br: 1 })]
-      .concat([0, 18, 36, 54].map((ax, k) => rel({ arrow: [118 + ax, 63], waves: k < 3 ? [118 + ax + 48, 57] : null, bat: batAt([34, 52]) })))
-      .concat([rel({ bat: batAt([34, 54]) }), fight({ bat: batAt([34, 55]) }), fight()]);
-    const path = [[96, 26], [96, 36], [100, 54], [110, 70], [104, 86], [90, 94], [80, 98], [74, 102], [70, 104], [68, 105], [68, 106], [68, 106]];
+    const attack = [{ p: 'wind', str: 'wind', bat: batAt([34, 56]) }, fight({ br: 1 }), fight({ br: 1 })]
+      .concat([0, 18, 36, 54].map((ax, k) => rel({ arrow: [AR_X + ax, AR_Y], waves: k < 3 ? [AR_X + ax + 48, AR_Y - 6] : null, bat: batAt([34, 52]) })))
+      .concat([rel({ bat: batAt([34, 54]) }), { p: 'wind', str: 'wind', bat: batAt([34, 55]) }, fight()]);
+    const f = (p, o) => Object.assign({ p }, o);
+    const block = [fight(), f('block', { bat: batAt([30, 50]) }), f('block', { bat: batAt([28, 48]), spark: [128, 70, 5] }), f('block', { bat: batAt([28, 48]), spark: [128, 70, 3] }), f('block', { bat: batAt([30, 50]) }), fight()];
+    const path = [[112, 24], [116, 36], [120, 48], [126, 58], [130, 68], [134, 78], [136, 86], [136, 88]];   // the bat drifts down to her
     return {
       campIdle: { ms: 160, loop: true, f: range(8).map(i => ({ p: 'camp', br: BR[i], bat: BAT[i] })) },
       fightIdle: { ms: 160, loop: true, f: range(8).map(i => fight({ br: BR[i], bat: BAT[i] })) },
       attack: { ms: 90, hit: 3, f: attack },
-      ability: { ms: 90, hit: 3, f: attack.map(f => (f.arrow ? Object.assign({}, f, { echo: true, waves: [f.arrow[0] + 48, 57] }) : f)) },   // Echo Shot: three waves on every flight frame
+      ability: { ms: 90, hit: 3, f: attack.map(f => (f.arrow ? Object.assign({}, f, { echo: true, waves: [f.arrow[0] + 48, AR_Y - 6] }) : f)) },   // Echo Shot: three waves on every flight frame
+      block: { ms: 110, f: block },
       hurt: { ms: 90, f: [fight(), hurt([30, 46]), hurt([28, 42], -1), hurt([30, 46], -1), hurt([32, 52]), fight()] },
-      death: { ms: 130, f: [hurt([30, 46]), hurt([28, 42], -1), { p: 'hurt', buckle: [4, 118], bat: batAt([34, 40]) }, { p: 'hurt', buckle: [9, 122], bat: [100, 20] }]
-        .concat(path.map(b => ({ p: 'lie', bat: b }))) }
+      death: { ms: 130, f: [hurt([30, 46]), hurt([28, 42], -1)].concat([0, 1, 1, 0, 0, 1].map((b, i) => f('kneel', { br: b, bat: path[Math.min(i, 3)] })))
+        .concat(range(8).map(i => f('fallen', { bat: path[Math.min(7, 4 + i)] }))) }
     };
   }
   function tobinAnims() {
@@ -273,7 +281,8 @@ var heroArtId, heroArtDraw, heroArtStates, heroArtStage, heroArtDecode, heroArtP
     else g.drawImage(P.c, ox + P.x0 + (fr.dx || 0), oy + P.y0);
     if (fr.str) {
       g.drawImage(stringSprite(fr.str, br), ox + 60, oy + 30);
-      if (fr.str === 'draw') box(g, P, ox, oy, 60, 60, 90, 83, br);   // the drawing forearm and hand over the string
+      if (fr.nock && !noFly) nockedArrow(g, S0.fx.arrow, ox, oy, br);
+      if (fr.str === 'draw') box(g, P, ox, oy, 70, 68, 84, 80, br);   // the drawing hand over the string and the arrow's nock
     }
     if (fr.sw != null) g.drawImage(swooshSprite(fr.sw), ox + 48, oy + 34);
     if (fr.spark) { const [x, y, s] = fr.spark; g.fillStyle = 'rgb(255,236,170)'; g.fillRect(ox + x - s, oy + y, 2 * s + 1, 1); g.fillRect(ox + x, oy + y - s, 1, 2 * s + 1); }
@@ -298,7 +307,7 @@ var heroArtId, heroArtDraw, heroArtStates, heroArtStage, heroArtDecode, heroArtP
       g.drawImage(S0.fx.waves.c, ox + fr.waves[0], oy + fr.waves[1]);
       if (fr.echo) { g.drawImage(S0.fx.waves.c, ox + fr.waves[0] - 12, oy + fr.waves[1] - 14); g.drawImage(S0.fx.waves.c, ox + fr.waves[0] - 12, oy + fr.waves[1] + 14); }
     }
-    if (fr.bat) { const b = calm && !fr.str && fr.p !== 'lie' && fr.p !== 'hurt' ? BAT[0] : fr.bat; g.drawImage(S0.fx.bat.c, ox + b[0], oy + b[1]); }
+    if (fr.bat) { const b = calm && !fr.str && fr.p !== 'kneel' && fr.p !== 'fallen' && fr.p !== 'hurt' ? BAT[0] : fr.bat; g.drawImage(S0.fx.bat.c, ox + b[0], oy + b[1]); }
     return { P, light };
   }
   const INFO = { frame: 0, n: 0, done: false, x0: 0, y0: 0, f: { c: null, ox: 0, oy: 0, lights: [] } };
@@ -384,7 +393,7 @@ var heroArtId, heroArtDraw, heroArtStates, heroArtStage, heroArtDecode, heroArtP
   // ================= the header portrait =================
   // 28 x 28 art px of the camp pose around the face, shown 1:1 in the 28 px portrait box (no scaling).
   // FACE: the face's centre in the camp pose (art coords, picked by eye); the crop sits a little above it.
-  const PORTRAITS = {}, FACE = { wren: [97, 63], tobin: [92, 57], pip: [95, 70] };
+  const PORTRAITS = {}, FACE = { wren: [91, 62], tobin: [92, 57], pip: [95, 70] };
   heroArtPortraitURL = id => {
     if (!D || !D.heroes[id] || !FACE[id]) return '';
     if (PORTRAITS[id] != null) return PORTRAITS[id];
