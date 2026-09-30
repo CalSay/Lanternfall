@@ -21296,7 +21296,7 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
     if (a) { emit('soloAttack', { kind: a }); return a; }
     if (!anyFoe()) return '';
     classTap({ target: 'mob', noAnswer: true, x: T.atkX * aps() });   // SOLO2: a press is worth atkX auto swings' time (it scales with attack speed like the auto swing)
-    emit('lunge');
+    // (no extra lunge here: the classTap event already plays the stage swing, and a second one queued a double swing)
     emit('soloAttack', { kind: 'hit' });
     return 'hit';
   };
