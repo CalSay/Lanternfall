@@ -18,11 +18,11 @@
 
 const HANDS_TUNE = {
   on: 1,                               // 0: Hands off (tools/sim.mjs --hands 0): no Tam, no applicants, no pay
-  odds: [0.52, 0.30, 0.13, 0.04, 0.01],        // applicant rarity odds, HANDS_RAR order
+  odds: [0.52, 0.30, 0.13, 0.05, 0],        // applicant rarity odds, HANDS_RAR order
   pity: [8, 25, 90],                   // a Rare or better at least every 8 applicants, Epic+ every 25, Legendary every 90
   share: [0.10, 0.12, 0.15, 0.18, 0.20],       // base share of the hero's rate at the node
   perLv: 0.0025,                       // +0.25% share per level above 1 (Common Lv 20: 14.75%, Legendary Lv 20: 24.75%)
-  shiftH: [2, 3, 4, 6, 8],             // shift length in hours before levels and traits
+  shiftH: [4, 4, 4, 4, 4],             // shift length in hours before levels and traits
   traits: [1, 1, 2, 2, 2],             // traits by rarity (Legendaries also have a calling)
   hireFoes: [100, 250, 600, 1500, 4000],       // unused since ECON-A: the hire fee is ECON.hireFoes x the region's base (econHireFee)
   arriveH: 8, arriveFastH: 6, fastTavern: 3,  // one applicant every 8 h (6 h from Tavern Lv 3), wall clock
@@ -52,13 +52,13 @@ const HANDS_SKILLS = ['mine', 'wood', 'forage'];
 // yield applies to, clock: [from, to) device hours at send, camp: works while at camp (not stacked).
 const HANDS_TRAITS = [
   { id: 'steady', n: 'Steady', txt: '+10% yield', y: 0.10 },
-  { id: 'strong', n: 'Strong Back', txt: '+1 h shift', sh: 1 },
-  { id: 'mule', n: 'Packmule', txt: '+15% haul, -10% shift', y: 0.15, sx: 0.9 },
-  { id: 'home', n: 'Homebody', txt: '+40% yield, -25% shift', y: 0.40, sx: 0.75 },
-  { id: 'wander', n: 'Wanderer', txt: '+50% shift, -10% yield', y: -0.10, sx: 1.5 },
+  { id: 'strong', n: 'Strong Back', txt: 'Works a four-hour shift' },
+  { id: 'mule', n: 'Packmule', txt: '+15% haul', y: 0.15 },
+  { id: 'home', n: 'Homebody', txt: '+40% yield', y: 0.40 },
+  { id: 'wander', n: 'Wanderer', txt: '-10% yield', y: -0.10 },
   { id: 'keen', n: 'Keen Eye', txt: 'Rare finds: 2% of units come back one tier up' },
   { id: 'early', n: 'Early Riser', txt: '+20% yield on shifts sent 05:00-11:00', y: 0.20, clock: [5, 11] },
-  { id: 'owl', n: 'Night Owl', txt: '+50% shift on shifts sent 18:00-06:00', sx: 1.5, clock: [18, 6] },
+  { id: 'owl', n: 'Night Owl', txt: 'Works a four-hour shift at night too' },
   { id: 'stone', n: 'Stonecutter', txt: '+25% yield on Crystal', y: 0.25, fam: ['crystal'] },
   { id: 'green', n: 'Green Thumb', txt: '+25% yield on Fibre and Herbs', y: 0.25, fam: ['fibre', 'herb'] },
   { id: 'lucky', n: 'Lucky', txt: 'Each shift: 2% chance to bring 1 Trophy' },
@@ -82,7 +82,25 @@ const HANDS_LEGENDS = [
   { key: 'jory', n: 'Jory Quickhands', sk: 'any', cl: 'quick', about: 'He lived by his wits in the dark. He will not say how.' },
   { key: 'ashby', n: 'Mother Ashby', sk: 'forage', cl: 'hearthcook', about: 'She is from Emberlea. She keeps a place at the table for Caedmon.' }
 ];
-const HANDS_TAM = { key: 'tam', n: 'Tam', r: 'common', sk: 'wood', tr: ['steady'], about: "Hesketh's nephew. He heard about the fire from his uncle." };
+// C1 routes for the professions the current game can run. Missing story/hero systems may
+// register a primary probe with registerHandsRoute(key, fn); their documented zone fallback works now.
+const HANDS_ROUTES = {
+  loy: { fallback: 15, hint: 'Build the Loom to level 2, or reach zone 15.' },
+  nan: { fallback: 25, hint: 'Defeat a Quarry Golem elder, or reach zone 25.' },
+  bracken: { fallback: 25, hint: 'Bring Bram to camp, or reach zone 25.' },
+  rook: { fallback: 30, hint: 'Follow the quarry rumour, or reach zone 30.' },
+  ashby: { hint: 'Build the Kitchen.' },
+  fennel: { fallback: 30, hint: "Finish Elowen's chapel quest, or reach zone 30." },
+  dorrie: { fallback: 32, hint: 'Hear the pedlar rumour at the Tavern, or reach zone 32.' },
+  // Keep old v5 Jory records working. New Hunter recruitment waits for that profession.
+  jory: { live: false, hint: 'The Hunter profession will bring Jory to camp.' }
+};
+HANDS_LEGENDS.push(
+  { key: 'loy', n: 'Gammer Loy', sk: 'forage', cl: null, tr: ['steady'], about: 'Spun in the dark by feel.' },
+  { key: 'rook', n: 'Rook', sk: 'mine', cl: null, tr: ['lucky'], about: "Crawled the quarry's cracks for ten years. Came up with his pockets full." },
+  { key: 'dorrie', n: 'Dorrie Fitch', sk: 'forage', cl: null, tr: ['lucky'], about: 'A pedlar who walked the dark roads selling thread.' }
+);
+const HANDS_TAM = { key: 'tam', n: 'Tam', r: 'legendary', sk: 'wood', tr: ['steady'], about: "Hesketh's nephew. He heard about the fire from his uncle." };
 // Later, optional Hands (lore.md 7.2): Bram's family comes home once Bram is recruited and the
 // Coast's Great Lantern is lit. Off until LORE8b sets live: 1 (and writes their lines). when() is a
 // cheap probe the core calls once a second; they arrive free, as applicants, once each.

@@ -87,7 +87,12 @@ const CAMP_B = {
   // H3 (55-store.js): its own cost rows, Hearth gates and effect lines; max 8.
   store: { n: 'Storehouse', max: 8, opens: 1, hreq: STORE_HREQ, cost: storeCampCost, fx: storeEffects },
   // N1 (57f-hands.js): beds for Hands at camp; effect lines from HANDS_TUNE (21f). Its plot opens after the Tavern.
-  bunk: { n: 'Bunkhouse', max: 5, opens: 2, fam: { wood: 30, fibre: 15 }, tro: 2, fx: l => handsBunkFx(l), needs: () => !!HANDS_TUNE.on },
+  // Retain the old row only to finish/refund saved builds. New builds use Tents.
+  bunk: { n: 'Bunkhouse', max: 5, opens: 2, fam: { wood: 30, fibre: 15 }, tro: 2, fx: l => handsBunkFx(l), needs: () => false },
+  tent: { n: 'Tents', max: ECON.tentMax, pre: 0, opens: 2, needs: () => typeof handsOpen === 'function' && handsOpen(),
+    available: to => !!ECON.tents[to] && ECON.tents[to].mats.every(([f, t]) => MAT[f] && MAT[f].short[t - 1] && Array.isArray(S.mats[f]) && S.mats[f].length >= t),
+    cost: to => { const r = ECON.tents[to]; return r ? { gold: r.gold, mats: r.mats.map(m => m.slice()), troph: [], secs: r.secs } : { gold: 0, mats: [], troph: [], secs: 0 }; },
+    fx: l => [l + ' tents for gatherers'] },
   library: { n: 'Library', max: 5, opens: 2, fam: { fibre: 20, crystal: 15, ess: 10 }, tro: 6 },
   shrine: { n: 'Shrine', max: 3, opens: 4, fam: { crystal: 25, ess: 25 }, tro: 4 }
 };
@@ -115,7 +120,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
 {
   registerState('camp', {
     v: 1, open: false,
-    b: { hearth: 0, watch: 0, forge: 1, bench: 1, loom: 1, ench: 1, tavern: 1, library: 0, shrine: 0, store: 0, bunk: 0 },
+    b: { hearth: 0, watch: 0, forge: 1, bench: 1, loom: 1, ench: 1, tavern: 1, library: 0, shrine: 0, store: 0, bunk: 0, tent: 0 },
     builds: [], bless: [], news: [], bty: 0, talk: {}, deco: {}
   });
   // 55-hearth (H1): a new game starts at a cold Hearth, its stations unbuilt (plots).
@@ -138,6 +143,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
   // Hearth level needed for building `id` at level `to` (Hearth itself: none).
   const hearthNeed = (id, to) => {
     if (id === 'hearth') return 0;
+    if (id === 'tent') return (ECON.tents[to] && ECON.tents[to].gate.hearth) || HANDS_TUNE.openHearth;
     if (id === 'shrine') return CAMP_SHRINE_HREQ[to - 1] || 99;
     if (B(id).hreq) return B(id).hreq[to - 1] || 99;
     return Math.max(CAMP_HREQ[to - 1] || 99, B(id).opens || 1);
@@ -183,12 +189,12 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
   const short = c => {
     const out = [];
     if (S.gold < c.gold) out.push(`${fmt(c.gold - S.gold)} more gold`);
-    for (const [f, t, n] of c.mats) { const h = S.mats[f][t - 1] || 0; if (h < n) out.push(`${fmt(n - h)} more ${matName(f, t)}`); }
+    for (const [f, t, n] of c.mats) { const h = (S.mats[f] && S.mats[f][t - 1]) || 0; if (h < n) out.push(`${fmt(n - h)} more ${matName(f, t)}`); }
     for (const [i, n] of c.troph) if (trophyHave(i) < n) out.push(`${n - trophyHave(i)} more ${trophyName(i)}`);
     return out;
   };
-  const pay = (c, sign) => {
-    S.gold -= sign * c.gold; econSpend('camp', sign * c.gold);
+  const pay = (c, sign, id) => {
+    S.gold -= sign * c.gold; econSpend(id === 'tent' ? 'tent' : 'camp', sign * c.gold);
     for (const [f, t, n] of c.mats) if (sign < 0) stashAdd(f, t, n, 'gift'); else S.mats[f][t - 1] -= n;   // refunds always land (H3)
     // Trophies of "any" type: take from the biggest pile first; refunds go to the first type paid.
     for (const [i, n] of c.troph) {
@@ -231,6 +237,12 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
       const h = hearthNeed(id, to);
       if (lv('hearth') < h) return Object.assign({ ok: false, why: `Needs Hearth ${h} (zone ${CAMP_HZ[Math.min(10, h) - 1]})`, need: { hearth: h } }, x);
     }
+    if (id === 'tent') {
+      const gate = ECON.tents[to] && ECON.tents[to].gate;
+      if (gate && gate.zone && S.maxZone < gate.zone) return Object.assign({ ok: false, why: 'Needs zone ' + gate.zone, need: { zone: gate.zone } }, x);
+      // Keep approved costs for future chains; do not charge for unavailable materials.
+      if (!CAMP_B.tent.available(to)) return Object.assign({ ok: false, why: 'Needs refining materials that are not available yet.', need: { materials: true } }, x);
+    }
     const fb = freeBuilder();
     if (!fb) return Object.assign({ ok: false, why: campBuilders() > 1 ? 'Every builder is busy.' : 'Your builder is busy.', full: true }, x);
     const miss = short(cost);
@@ -240,7 +252,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
   campBuild = id => {
     const c = campCan(id); if (!c.ok) return false;
     const cost = JSON.parse(JSON.stringify(c.cost)); delete cost.secs;
-    pay(cost, 1);
+    pay(cost, 1, id);
     const t = now(), rec = { id, to: c.to, b: c.b, dur: c.dur, start: 0, end: 0, cost };
     if (!c.queue) { rec.start = t; rec.end = t + c.dur; }
     builds().push(rec);
@@ -252,7 +264,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
   campCancel = id => {
     const x = campPending(id); if (!x) return false;
     const started = !!x.start, refund = started ? halfOf(x.cost) : x.cost;
-    pay(refund, -1);
+    pay(refund, -1, id);
     builds().splice(builds().indexOf(x), 1);
     // The builder's queued build starts now.
     if (started) { const q = queued(x.b); if (q) { q.start = now(); q.end = q.start + q.dur; } }
