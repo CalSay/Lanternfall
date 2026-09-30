@@ -6681,6 +6681,19 @@ if (section('C20 turn combat (core)')) try {
   assert(B('turnCombatProfile().blockC===0.1') && lowDamage.foeHits>=10 && lowDamage.foeHits===liveBlock.hits &&
     lowDamage.blocks===liveBlock.blocks && liveBlock.blocks>=1,
     `C20: multi-hit Tobin class block persists across turns in live/scratch (${liveBlock.hits}/${liveBlock.blocks} vs ${lowDamage.foeHits}/${lowDamage.blocks})`);
+  const earlySave=fs.readFileSync(path.join(ROOT,'tests','fixtures','save-early.json'),'utf8');
+  const earlyRate=dt=>{
+    const h=loadCore({seed:1,storage:memoryStorage({[KEY]:earlySave})}), H=x=>h.eval(x);
+    H('loadSave();soloPick("wren",{now:true});S.zone=1;S.activity="fight";S.auto=false;TURN_TUNE.on=1;soloSetAuto(true);DEED_TUNE.bonusOn=0;gainXp=()=>{};gearDirty();spawn();globalThis.__earlyMastery=JSON.stringify(S.mastery);on("kill",()=>{S.mastery=JSON.parse(__earlyMastery)})');
+    const scratch=H('turnCombatSample({profile:turnCombatProfile(),seconds:120,seed:1,mode:"auto"})');
+    H(`globalThis.__earlyBefore=S.totalKills;for(let t=0;t<120;){const d=Math.min(${dt},120-t);tick(d);t+=d}`);
+    return {scratch:scratch.kills,live:H('S.totalKills-__earlyBefore'),errors:h.errors};
+  };
+  const early05=earlyRate(.05), earlyFrame=earlyRate(1/60);
+  assert(early05.live>0 && Math.abs(early05.scratch-early05.live)/early05.live<.1 &&
+    earlyFrame.live>0 && Math.abs(earlyFrame.scratch-earlyFrame.live)/earlyFrame.live<.1 &&
+    !early05.errors.length && !earlyFrame.errors.length,
+    `C20: one-hit early Wren scratch cadence stays within 10% of live at .05 and 1/60 s (${early05.scratch}/${early05.live}; ${earlyFrame.scratch}/${earlyFrame.live})`);
   E('setZone(2)');
   assert(E('!turnCombatOn() && combatFoes().length>1 && __turnEvents.filter(x=>x[0]==="end").length===1 && __turnEvents.at(-1)[1]==="abandon"'), 'C20: leaving the supported zone ends the fight once and restores legacy pack combat');
   E('TURN_TUNE.on=0; setZone(1)');
@@ -6689,6 +6702,11 @@ if (section('C20 turn combat (core)')) try {
   V('TURN_TUNE.on=1;soloPick("wren");soloSetAuto(false);globalThis.__ends=[];on("fightEnd",x=>__ends.push(x.reason));spawn()');
   toggled.fn.tick(0.1); V('TURN_TUNE.on=0'); toggled.fn.tick(0.1); toggled.fn.tick(0.1);
   assert(V('__ends.join()==="abandon" && !turnCombatOn()'), 'C20: disabling the switch mid-fight abandons exactly once and returns to legacy ticks');
+  const lethal=loadCore({seed:2025}), L=x=>lethal.eval(x);
+  L('TURN_TUNE.on=1;TURN_TUNE.foeHaste=100;TURN_TUNE.foeAtkX=1000;soloPick("wren");soloSetAuto(false);S.auto=false;spawn();cbUnitByKey("hero").hp=.001;globalThis.__lethalEnds=[];on("fightEnd",x=>__lethalEnds.push(x.reason))');
+  for(let i=0;i<60;i++) lethal.fn.tick(.05);
+  assert(L('__lethalEnds.join()==="defeat" && TURN_RECOVER>0 && cbUnitByKey("hero").down') && !lethal.errors.length,
+    'C20: a lethal foe hit survives wipe/sceneReset reentrancy, ends as defeat once and schedules recovery');
   const mk = seed => { const h=loadCore({seed}), H=x=>h.eval(x); H('TURN_TUNE.on=1;soloPick("wren");soloSetAuto(true);S.auto=false;spawn();globalThis.__awayN=0;globalThis.__sampleCalls=0;globalThis.__sampleOrig=turnCombatSample;turnCombatSample=(...a)=>{__sampleCalls++;return __sampleOrig(...a)};on("awayKills",()=>__awayN++)'); h.fn.tick(0.1); return {h,H}; };
   const a=mk(2021), b=mk(2021);
   const one=a.H('awayGains(3600)'), half1=b.H('awayGains(1800)'), half2=b.H('awayGains(1800)');

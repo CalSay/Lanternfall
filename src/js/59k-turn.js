@@ -272,10 +272,15 @@ function turnCombatTick(dt) {
     emit('fightStart', { heroHaste: p.heroHaste, foeHaste: p.foeHaste, first: TURN_LIVE.first });
   }
   const u = cbUnitByKey('hero'); if (u && !u.down && u.hp > 0) u.hp = turnScalarRegen(TURN_LIVE.profile, u.hp, dt);
-  turnResolve(TURN_LIVE, { kind: 'tick' }, dt, TURN_LIVE_IO);
-  if (TURN_LIVE.ended && !TURN_LIVE_IO.alive().hero) TURN_RECOVER = 5;
+  const m = TURN_LIVE;
+  turnResolve(m, { kind: 'tick' }, dt, TURN_LIVE_IO);
+  // A lethal hit emits sceneReset from the legacy wipe path during turnResolve.
+  // That handler may clear TURN_LIVE; the local fight still determines recovery.
+  if (m.ended && !TURN_LIVE_IO.alive().hero) TURN_RECOVER = 5;
 }
-on('sceneReset', () => { if (TURN_LIVE && !TURN_LIVE.ended) turnEnd(TURN_LIVE, 'abandon', TURN_LIVE_IO); TURN_LIVE = null; TURN_RECOVER = 0; TURN_LAST_PROFILE = null; });
+on('sceneReset', () => { if (TURN_LIVE && !TURN_LIVE.ended)
+  turnEnd(TURN_LIVE, TURN_LIVE_IO.alive().hero ? 'abandon' : 'defeat', TURN_LIVE_IO);
+  TURN_LIVE = null; TURN_RECOVER = 0; TURN_LAST_PROFILE = null; });
 on('soloHero', () => { if (TURN_LIVE && !TURN_LIVE.ended) turnEnd(TURN_LIVE, 'abandon', TURN_LIVE_IO); TURN_LIVE = null; TURN_RECOVER = 0; TURN_LAST_PROFILE = null; });
 onTick(() => { if (TURN_LIVE && !TURN_LIVE.ended && !turnCombatScope()) {
   turnEnd(TURN_LIVE, 'abandon', TURN_LIVE_IO); TURN_LIVE = null; TURN_RECOVER = 0; TURN_LAST_PROFILE = null; } });
@@ -285,14 +290,14 @@ function turnCombatSample({ profile: p, seconds, seed = 1, mode = 'auto' }) {
   if (!p || !(seconds > 0) || !['auto', 'hand'].includes(mode)) return null;
   let x = (seed | 0) || 1, roll = () => ((x = (Math.imul(x, 1664525) + 1013904223) | 0) >>> 0) / 4294967296;
   const out = { seconds, kills: 0, deaths: 0, generatedEss: 0, damageDone: 0, damageTaken: 0,
-    foeHits: 0, blocks: 0 };
-  let heroHp = p.heroHp, foeHp = p.foeHp, blockN = p.blockN || 0, m, downtime = 0;
+    foeHits: 0, blocks: 0, completedFights: 0, totalHeroTurns: 0, totalFightSeconds: 0 };
+  let heroHp = p.heroHp, foeHp = p.foeHp, blockN = p.blockN || 0, m, downtime = 0, fightHeroTurns = 0;
   const io = { heroHaste: p.heroHaste, foeHaste: p.foeHaste, random: roll,
     auto: () => mode === 'auto', odds: () => p.odds, emit: () => {},
     alive: () => ({ hero: heroHp > 0, foe: foeHp > 0 }), cooldown: id => p.cooldowns[id],
     abilityId: () => p.ability,
     choose: s => s.cooldowns[p.ability] <= 0 ? { kind: 'ability', id: p.ability } : { kind: 'attack' },
-    turnStart: (who, state) => { if (who === 'hero') turnScalarHeroStart(state.effects);
+    turnStart: (who, state) => { if (who === 'hero') { fightHeroTurns++; turnScalarHeroStart(state.effects); }
       else { const z = turnScalarFoeStart(state.effects); state.skipFoe = z.skip;
         if (z.burn > 0) { foeHp -= z.burn; out.damageDone += z.burn; } } },
     heroAction: (id, _, auto) => { const d = turnScalarHit(p, m.effects, id, auto, roll);
@@ -302,24 +307,29 @@ function turnCombatSample({ profile: p, seconds, seed = 1, mode = 'auto' }) {
       heroHp -= z.amount; out.damageTaken += z.amount; },
     counter: auto => { const d = turnScalarHit(p, m.effects, 'counter', auto, roll);
       foeHp -= d; out.damageDone += d; }, defense: () => {} };
-  const start = () => { foeHp = p.foeHp; m = turnNew(p.heroHaste >= p.foeHaste ? 'hero' : 'foe', mode === 'auto', io);
+  const start = () => { foeHp = p.foeHp; fightHeroTurns = 0;
+    m = turnNew(p.heroHaste >= p.foeHaste ? 'hero' : 'foe', mode === 'auto', io);
     m.effects = turnEffects(); m.effects.blockN = blockN;
     io.emit('fightStart', { heroHaste: p.heroHaste, foeHaste: p.foeHaste, first: m.first }); };
   start();
-  for (let t = 0; t < seconds; t += 0.05) {
-    if (downtime > 0) { downtime -= 0.05; if (downtime <= 0) start(); continue; }
-    heroHp = turnScalarRegen(p, heroHp, 0.05);
+  const step = 0.05;
+  for (let t = 0; t < seconds; t += step) {
+    const dt = Math.min(step, seconds - t);
+    if (downtime > 0) { downtime -= dt; if (downtime <= 0) start(); continue; }
+    heroHp = turnScalarRegen(p, heroHp, dt);
     if (mode === 'hand' && m.phase === 'hero') turnResolve(m, io.choose(m), 0, io);
     if (mode === 'hand' && m.phase === 'foeWindup' && !m.usedDefense && m.until - m.now <= p.odds.parryWindow * 0.5)
       turnResolve(m, { kind: 'parry' }, 0, io);
-    turnResolve(m, { kind: 'tick' }, 0.05, io);
+    turnResolve(m, { kind: 'tick' }, dt, io);
     if (m.ended) {
       if (foeHp <= 0) {
-        out.kills++; const ess = p.essChance;
+        out.kills++; out.completedFights++; out.totalHeroTurns += fightHeroTurns;
+        out.totalFightSeconds += m.now; const ess = p.essChance;
         out.generatedEss += Math.floor(ess) + (roll() < ess % 1 ? 1 : 0) + (roll() < p.essExtra ? 1 : 0);
         heroHp = Math.min(p.heroMaxHp, heroHp + p.heroMaxHp * p.healOnKill);
       } else { out.deaths++; heroHp = p.heroMaxHp; }
-      downtime = foeHp <= 0 ? p.respawn : 5;
+      // Live tick decrements its 0.45s respawn timer in the kill tick itself.
+      downtime = foeHp <= 0 ? Math.max(0, p.respawn - dt) : 5;
     }
   }
   return out;
