@@ -4992,6 +4992,117 @@ if (section('training (W2-A, browser)')) try {
 } catch (e) { fail('training (W2-A, browser) crashed: ' + (e.stack || e)); }
 // ==== end W2-A ====
 
+// ---- C3: Tavern tier perks and actionable named-gatherer rumours ----
+if (section('tavern perks and rumours (C3)')) try {
+  const T0 = new Date(2026, 8, 28, 12).getTime(), games = [];
+  const run = (g, seconds) => { for (let i = 0; i < seconds; i++) { g.eval('Date.__t += 1000'); g.fn.tick(1); } };
+  const mk = (level = 2) => {
+    const g = loadCore({ seed: 7301, prelude: `Date.__t = ${T0}; Date.now = () => Date.__t` }); games.push(g);
+    g.eval(`S.maxZone = 12; S.camp.open = true; S.camp.b.hearth = 2; S.camp.b.tavern = ${level}; S.camp.b.store = 8; S.skills.mine.lv = 20; S.gold = 1e9`);
+    run(g, 1); return g;
+  };
+  const row = (g, key) => g.eval(`tavernRumours().find(r => r.key === ${JSON.stringify(key)})`);
+  const mine = (g, kind = 'ore', tier = 2) => g.eval(`S.activity = 'gather'; S.node = { kind: '${kind}', t: ${tier} }; S.auto = false`);
+  const reload = g => {
+    g.eval('save()'); const at = g.eval('Date.now()');
+    const h = loadCore({ seed: 7302, storage: memoryStorage({ [KEY]: g.storage.get(KEY) }), prelude: `Date.__t = ${at}; Date.now = () => Date.__t` }); games.push(h); return h;
+  };
+  // Forecasts are real Omen data; opening the Tavern does not apply or reroll an Omen.
+  {
+    const g = mk(0), E = s => g.eval(s);
+    assert(E('campRumours().length') === 0, 'C3: an unbuilt Tavern has no Omen forecast');
+    E('S.camp.b.tavern = 1'); const before = E('JSON.stringify(S.almanac)');
+    assert(E('campRumours().length') === 1 && E('campRumours()[0].txt.includes(almanac.omenFor(deviceDay(Date.now()) + 1).n)'), 'C3: Tavern 1 forecasts tomorrow\'s actual Omen');
+    E('S.camp.b.tavern = 2'); assert(E('campRumours().length') === 1, 'C3: Tavern 2 keeps the one-day forecast');
+    E('S.camp.b.tavern = 3');
+    assert(E('campRumours().length') === 2 && E('campRumours()[1].txt.includes(almanac.omenFor(deviceDay(Date.now()) + 2).n)'), 'C3: Tavern 3 forecasts two actual Omens');
+    for (let i = 0; i < 5; i++) E('campRumours(); tavernPerks(); tavernRumours()');
+    assert(E('JSON.stringify(S.almanac)') === before, 'C3: reading perks, gossip and rumours never changes the Almanac');
+    assert(E('tavernPerks(1).some(t=>/tomorrow/i.test(t)) && tavernPerks(2).some(t=>/rumour/i.test(t)) && tavernPerks(3).some(t=>/6 h|6 hours/.test(t))'), 'C3: tier copy describes tomorrow\'s Omen, named rumours and the six-hour board');
+    assert(E('tavernPerks(5).some(t=>/15%/.test(t)) && tavernPerks(5).some(t=>/5th|fifth/.test(t))'), 'C3: top-tier copy retains the bounty and Renown perks');
+    E('S.camp.open = false'); assert(E('campRumours().length') === 0, 'C3: a closed camp does not reveal forecasts');
+  }
+  // Tier 4/5 economics remain the existing values, and reading screens cannot pay a bounty twice.
+  {
+    const g = mk(3), E = s => g.eval(s), base = E('mod("bountyPay")');
+    E('S.camp.b.tavern = 4'); assert(Math.abs(E('mod("bountyPay")') / base - 1.15) < 1e-12, 'C3: Tavern 4 still raises bounty rewards by exactly 15%');
+    E('S.camp.b.tavern = 5; S.camp.bty = 0'); const renown0 = E('renown()');
+    const claim = () => E('S.bounties.slots[0] = {k:"tap",need:1,have:1,rew:"gold",rr:0}; BOUNTY_API.claim(0)');
+    for (let i = 0; i < 4; i++) claim();
+    assert(E('renown()') === renown0 + 4 && E('S.camp.bty') === 4, 'C3: the first four bounties pay only their normal Renown');
+    const h = reload(g), F = s => h.eval(s);
+    F('S.bounties.slots[0] = {k:"tap",need:1,have:1,rew:"gold",rr:0}; BOUNTY_API.claim(0)');
+    assert(F('renown()') === renown0 + 6 && F('S.camp.bty') === 5, 'C3: after save/reload the fifth bounty pays exactly one additional Renown');
+    const paid = F('JSON.stringify([S.gold,renown(),S.camp.bty])');
+    F('BOUNTY_API.claim(0); campRumours(); tavernRumours(); tavernPerks()');
+    assert(F('JSON.stringify([S.gold,renown(),S.camp.bty])') === paid, 'C3: a repeated claim and Tavern reads cannot duplicate gold or Renown');
+  }
+  const integrated = mk().eval('typeof registerHandsRoute === "function"');
+  if (!integrated) {
+    const g = mk(), E = s => g.eval(s), before = E('JSON.stringify([S.hands,S.gold])');
+    assert(E('tavernRumours().length') === 0 && !E('tavernHearRumour("rook")') && !E('tavernHearRumour("dorrie")'), 'C3: without C1 the optional named-rumour API stays safely unavailable');
+    assert(E('JSON.stringify([S.hands,S.gold])') === before, 'C3: absent C1, rejected rumour actions do not change gatherers or gold');
+  } else {
+    // The L2 action arrives in a permanent star spot even if all random applicant places are full.
+    {
+      const g = mk(1), E = s => g.eval(s);
+      assert(!E('tavernHearRumour("dorrie")') && !E('tavernHearRumour("rook")'), 'C3: named rumours cannot be accepted at Tavern 1');
+      E('S.camp.b.tavern = 2; while (handsRandomApps().length < 3) S.hands.board.apps.push(handsRollApp())');
+      const gold = E('S.gold');
+      assert(row(g, 'dorrie').can.ok && E('tavernHearRumour("dorrie")'), 'C3: Tavern 2 offers an actionable Dorrie rumour');
+      run(g, 1);
+      assert(E('S.hands.board.apps.filter(a=>a.key==="dorrie").length') === 1 && E('handsRandomApps().length') === 3 && E('S.gold') === gold, 'C3: hearing the rumour brings one Dorrie star spot without replacing random applicants or charging gold');
+      const h = reload(g); run(h, 2);
+      assert(!h.eval('tavernHearRumour("dorrie")') && h.eval('S.hands.board.apps.filter(a=>a.key==="dorrie").length') === 1, 'C3: Dorrie\'s accepted rumour survives reload and cannot duplicate her');
+    }
+    // Rook requires hired Nan and explicit acceptance. Only the hero's grade-2 ore work advances it.
+    const readyRook = () => {
+      const g = mk(), E = s => g.eval(s);
+      E('S.hands.routes.nan = true'); run(g, 1);
+      assert(!E('tavernHearRumour("rook")'), 'C3: Nan waiting on the board does not unlock Rook\'s task');
+      E('handsHire(S.hands.board.apps.findIndex(a=>a.key==="nan"))');
+      return g;
+    };
+    {
+      const g = readyRook(), E = s => g.eval(s); mine(g); run(g, 30);
+      assert(row(g, 'rook').progress === 0, 'C3: mining before accepting the rumour gives no Rook progress');
+      assert(E('tavernHearRumour("rook")') && !E('tavernHearRumour("rook")'), 'C3: Rook\'s work can be accepted once with Nan at camp');
+      E('ONBOARD.paused = true'); run(g, 2); E('ONBOARD.paused = false; emit("awayBegin", {t:-1}); emit("awayBegin", {t:Infinity})');
+      assert(row(g, 'rook').progress === 0, 'C3: paused play and invalid offline durations add no mining progress');
+      E('S.activity="fight"'); run(g, 2); mine(g, 'ore', 1); run(g, 2); mine(g, 'ore', 3); run(g, 2); mine(g, 'wood', 2); run(g, 2);
+      E('emit("harvest",{kind:"ore",t:2,n:99999}); handsSend(handsList().find(x=>x.key==="nan").id,"ore",2)'); run(g, 2);
+      assert(row(g, 'rook').progress === 0, 'C3: fighting, other nodes, harvest counts and gatherer work do not advance Rook');
+      mine(g); run(g, 600); const h = reload(g);
+      assert(row(h, 'rook').progress === 600, 'C3: a save round trip preserves ten minutes of accepted mining');
+      run(h, 599);
+      assert(row(h, 'rook').progress === 1199 && !h.eval('S.hands.board.apps.some(a=>a.key==="rook")'), 'C3: 19 minutes 59 seconds is still short of Rook\'s twenty-minute task');
+      run(h, 2);
+      assert(row(h, 'rook').progress === 1200 && h.eval('S.hands.board.apps.filter(a=>a.key==="rook").length') === 1, 'C3: twenty minutes of grade-2 ore work brings Rook once');
+      run(h, 5); h.eval('tavernHearRumour("rook")');
+      assert(h.eval('S.hands.board.apps.filter(a=>a.key==="rook").length') === 1, 'C3: extra mining and repeated acceptance cannot duplicate Rook');
+    }
+    {
+      const g = readyRook(), E = s => g.eval(s); E('tavernHearRumour("rook")'); mine(g);
+      const h = reload(g), F = s => h.eval(s);
+      F('S.activity="fight"; awayGains(600)'); assert(row(h, 'rook').progress === 0, 'C3: offline fighting adds no mining progress');
+      mine(h); F('awayGains(600)');
+      assert(row(h, 'rook').progress === 600, 'C3: offline grade-2 mining credits its eligible elapsed work');
+      F('awayGains(600)'); run(h, 1);
+      assert(row(h, 'rook').progress === 1200 && F('S.hands.board.apps.filter(a=>a.key==="rook").length') === 1, 'C3: saved offline mining can complete the same twenty-minute route');
+    }
+    {
+      const g = mk(), E = s => g.eval(s); E('S.maxZone=32'); run(g, 1);
+      assert(!E('tavernHearRumour("dorrie")') && !E('tavernHearRumour("rook")'), 'C3: existing progress-fallback arrivals make their rumours complete');
+      run(g, 2);
+      assert(E('["dorrie","rook"].every(k=>S.hands.board.apps.filter(a=>a.key===k).length===1)'), 'C3: fallback routes and Tavern rumours never produce duplicate named applicants');
+    }
+  }
+  const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '57g-tavern-perks.js'), 'utf8').split('\n').filter(l => !/^\s*\/\//.test(l)).join('\n');
+  assert(!/\b(online|room|db|user)\.[a-zA-Z]|\bsendRoom|\bdbGet|\bdbSet/.test(src), 'C3: Tavern perks never touch online capabilities');
+  const errs = games.flatMap(g => g.errors);
+  assert(!errs.length, 'C3: no Tavern perk handler errors' + (errs.length ? ': ' + errs[0] : ''));
+} catch (e) { fail('C3 Tavern perks crashed: ' + (e.stack || e)); }
+
 // ---- W2-C: the dead leaf systems are gone (pinnacle bosses, legendary powers and circle sets, expeditions and the Map Room, the welcome and skill-pace old-save rules) ----
 // Static: no removed file, global, save field or CSS class is left anywhere in src/. Browser: every tab and sub-view opens with no page error.
 if (section('removed systems (W2-C)')) try {
