@@ -680,21 +680,31 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
     awayBack = []; awayApps = 0; awayRefunds = [];
     if (!T.on) return;
     if (!handsOpen()) return;
+    const priorApps = new Set(H().board.apps.map(a => a.id));
     if (!H().tam || !H().board.next) openHands(true);
     const t = now();
-    awayApps = arrivals(t, true);
+    arrivals(t, true);
     later(true);
+    awayApps = H().board.apps.filter(a => !priorApps.has(a.id)).length;
     awayBack = handsCatchUp(t, true);
   });
   registerAwayLine(() => {
     const res = [];
-    for (const e of awayRefunds) res.push({ icon, group: 'Hands', txt: e.n + ': ' + e.shifts + ' queued shift(s) refunded because ' + e.reason + ' (' + fmt(e.fee) + ' gold).' });
+    for (const e of awayRefunds) res.push({ icon, group: 'Gatherers', txt: e.n + ': ' + e.shifts + ' queued shift(s) refunded because ' + e.reason + ' (' + fmt(e.fee) + ' gold).' });
     awayRefunds = [];
-    for (const e of awayBack) res.push({ icon: e.lines[0] && e.lines[0][0] !== 'troph' ? { mat: [e.lines[0][0], e.lines[0][1]] } : icon, group: 'Hands', txt: backText(e),
-      sub: waits(e.id) ? `${e.n}'s pack waits: Storehouse full.` : '', go: () => emit('campGoto', { tab: 'world', view: 'tav', sel: '#sec-hands' }) });
-    if (awayApps) res.push({ icon, group: 'Hands', txt: awayApps > 1 ? `${awayApps} applicants are waiting at the Tavern.` : 'An applicant is waiting at the Tavern.', go: () => emit('campGoto', { tab: 'world', view: 'tav', sel: '#sec-hands' }) });
+    // C14: a queued return is one line per worker, with both shifts' actual haul.
+    const workers = new Map();
+    for (const e of awayBack) {
+      if (!workers.has(e.id)) workers.set(e.id, { id: e.id, n: e.n, count: 0, lines: new Map() });
+      const w = workers.get(e.id); w.count++;
+      for (const [f, t, n] of e.lines) { const key = f + ':' + t, line = w.lines.get(key); if (line) line[2] += n; else w.lines.set(key, [f, t, n]); }
+    }
+    for (const w of workers.values()) res.push({ icon, group: 'Gatherers',
+      txt: `${w.n} finished ${w.count} shift${w.count === 1 ? '' : 's'}` + (w.lines.size ? ': +' + [...w.lines.values()].map(lineText).join(', +') + '.' : '.'),
+      sub: waits(w.id) ? `${w.n}'s pack waits: Storehouse full.` : '', go: () => emit('campGoto', { tab: 'world', view: 'tav', sel: '#sec-hands-crew' }) });
+    if (awayApps) res.push({ icon, group: 'Tavern', txt: awayApps > 1 ? `${awayApps} new applicants are waiting at the Tavern.` : 'A new applicant is waiting at the Tavern.', go: () => emit('campGoto', { tab: 'world', view: 'tav', sel: '#sec-hands' }) });
     const t = now(), stillOut = H().list.filter(x => out(x, t));
-    if (res.length && stillOut.length) res.push({ icon, group: 'Hands', txt: `${stillOut.length} still out`, sub: stillOut.map(x => `${x.n}: ${fmtTime((x.job.end - t) / 1000)}`).join(' · ') });
+    if (res.length && stillOut.length) res.push({ icon, group: 'Gatherers', txt: `${stillOut.length} still out`, sub: stillOut.map(x => `${x.n}: ${fmtTime((x.job.end - t) / 1000)}`).join(' · ') });
     awayBack = []; awayApps = 0;
     return res;
   });

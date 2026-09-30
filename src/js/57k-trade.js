@@ -156,8 +156,11 @@ let handsTradeOpen, handsTradeDemand, handsTradeCargo, handsTradeQuote, handsTra
       note: 'Each gathering row is a separate two-hour alternative, before finds and overlapping gatherer bonuses. Shift fee is the full four-hour fee. Trade spends existing cargo; gathering creates new materials.' };
   };
   registerAwayLine(() => {
-    const rows = awayReturns.map(e => ({ icon, group: 'Trade', txt: e.n + ' returned from ' + TRADE_TOWN.n + ': +' + fmt(e.gold) + ' gold.',
-      go: () => emit('campGoto', { tab: 'world', view: 'tav', sel: '#sec-hands' }) }));
+    const count = awayReturns.length, gold = awayReturns.reduce((n, e) => n + e.gold, 0);
+    const rows = count ? [{ icon, group: 'Trade', txt: count === 1
+      ? awayReturns[0].n + ' returned from ' + TRADE_TOWN.n + ': +' + fmt(gold) + ' gold.'
+      : `${count} trade runs returned from ${TRADE_TOWN.n}: +${fmt(gold)} gold.`,
+      go: () => emit('campGoto', { tab: 'world', view: 'tav', sel: '#sec-hands-crew' }) }] : [];
     awayReturns = []; return rows;
   });
   // Existing jobs still return if a hand-edited save lowered the Tavern/Hearth.

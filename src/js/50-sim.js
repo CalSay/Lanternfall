@@ -227,13 +227,22 @@ function awayBase(r) {
   const boost = (1 + gear().offline / 100) * mod('offline');
   if (S.activity === 'gather') {
     const { kind, t: tier } = S.node;
-    // In steps, so skill levels gained while away speed up the rest, as in live play.
-    const steps = Math.max(1, Math.min(96, Math.ceil(t / 300)));
+    // Batch until the next skill or tool-mastery level, rounded up to the same
+    // whole-second boundary as live play. Gathering speed is constant between them.
+    const skill = skillOf(kind), tool = typeof toolOf === 'function' ? toolOf(skill) : null;
     let got = 0;
-    for (let i = 0; i < steps; i++) {
-      const swings = t / steps / nodeTime(kind, tier) * boost;
+    for (let elapsed = 0; elapsed < t;) {
+      const left = t - elapsed, nt = nodeTime(kind, tier), sk = S.skills[skill];
+      const xpRate = nodeXpFor(kind, tier) / nt * boost * mod('skillXp') * mod('skillXp:' + skill);
+      const skillSteps = xpRate > 0 ? Math.max(1, Math.ceil((skillNeed(sk.lv, skill) - sk.xp) / xpRate - 1e-9)) : Infinity;
+      const mastery = tool && typeof toolMastery === 'function' ? toolMastery(tool) : null;
+      const masterySteps = mastery && !mastery.max ? Math.max(1, Math.ceil(mastery.left - 1e-9)) : Infinity;
+      const stepSecs = Math.min(left, skillSteps, masterySteps);
+      const swings = stepSecs / nt * boost;
       got += swings * nodeYieldAvg(kind) * mod('yield:' + kind);
-      gainSkill(skillOf(kind), swings * nodeXpFor(kind, tier), true);
+      gainSkill(skill, swings * nodeXpFor(kind, tier), true);
+      if (tool && typeof toolMasteryAdd === 'function') toolMasteryAdd(tool, stepSecs, true);
+      elapsed += stepSecs;
     }
     got = Math.floor(got);
     got = storeAwayGather(kind, tier, got, r);   // H3: up to the cap; Spillover moves on (55-store)

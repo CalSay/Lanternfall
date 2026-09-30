@@ -15,8 +15,7 @@ let showAwayReport;
     glass: () => iconURL('glass', '#F2E27A'),
     boss: () => iconURL('banner', '#E0524F', { 7: '#FFB347' })
   };
-  const SKILL_IC = { mine: () => iconURL('pick', '#D08A4E'), wood: () => iconURL('axe', '#5FAE4E'), smith: () => iconURL('anvil', '#6E6878') };
-  const FAMILY = { ore: 'Ore', wood: 'Logs', ess: 'Essence' };
+  const SKILL_IC = { mine: () => iconURL('pick', '#D08A4E'), wood: () => iconURL('axe', '#5FAE4E'), forage: () => iconURL('sickle', '#7DCB79'), smith: () => iconURL('anvil', '#6E6878') };
 
   const hm = s => fmtTime(s).replace(/ 0m$/, '');
   let root = null, lastFocus = null, anim = 0;
@@ -86,18 +85,18 @@ let showAwayReport;
       const lim = el('div', 'away-lim'), bar = el('div', 'bar'), fill = el('i');
       fill.style.width = Math.min(100, r.t / r.cap * 100) + '%';
       bar.append(fill);
-      lim.append(bar, el('span', null, r.capped ? "Away limit reached" : `You worked ${hm(r.t)} of ${hm(r.cap)}`));
+      lim.append(bar, el('span', null, r.capped ? 'Hero work limit reached' : `Your hero worked ${hm(r.t)} of ${hm(r.cap)}`));
       top.append(lim);
     }
     if (r.capped) {
       const cap = el('div', 'away-cap');
-      cap.append(img(IC.glass()), el('span', null, `You stop after ${hm(r.cap)} away. Hourglass relics and the Watchtower add more, up to 24 hours.`));
+      cap.append(img(IC.glass()), el('span', null, `Your hero works for up to ${hm(r.cap)} away. Gatherer jobs, trade runs and camp builds finish on their own schedules. Hourglass relics and the Watchtower raise the hero's limit, up to 24 hours.`));
       top.append(cap);
     }
     body.append(top);
 
-    // ---- what the party did ----
-    const actIc = r.activity === 'gather' ? SKILL_IC[S.node.kind === 'wood' ? 'wood' : 'mine']() : r.activity === 'raid' ? IC.flame() : IC.sword();
+    // ---- what the hero did ----
+    const actIc = r.activity === 'gather' ? (SKILL_IC[skillOf(S.node.kind)] || SKILL_IC.mine)() : r.activity === 'raid' ? IC.flame() : IC.sword();
     const note = String(r.note || '').replace(/ \w+ is now level \d+\.$/, '');
     if (note) { const n = el('p', 'away-note'); n.append(img(actIc), el('span', null, note)); body.append(n); }
 
@@ -116,10 +115,10 @@ let showAwayReport;
     // ---- materials by family and tier ----
     if (r.mats && r.mats.length) {
       const b = block('Materials');
-      for (const k of ['ore', 'wood', 'ess']) {
+      for (const k of CRAFT_FAMILIES) {
         const list = r.mats.filter(m => m.k === k); if (!list.length) continue;
         const row = el('div', 'away-mrow');
-        row.append(el('span', 'away-fam', FAMILY[k]));
+        row.append(el('span', 'away-fam', MAT[k].n));
         const chips = el('div', 'away-chips');
         for (const m of list) {
           const c = el('span', 'away-mat');
@@ -166,6 +165,10 @@ let showAwayReport;
     // A line may name its own block (group, e.g. 'Next up') and carry a Go button (go()).
     const groups = new Map();
     for (const l of r.extra || []) { const g = l.group || 'Also'; if (!groups.has(g)) groups.set(g, []); groups.get(g).push(l); }
+    // The base report carries Storehouse and Spillover explanations in lines. Their
+    // material amounts are already above; keep the useful reason without listing gains twice.
+    const gathering = (r.lines || []).filter(l => l && l.sub && !String(l.txt || '').startsWith('+'));
+    if (gathering.length) groups.set('Gathering', [...(groups.get('Gathering') || []), ...gathering]);
     for (const [title, lines] of groups) {
       const b = block(title);
       for (const l of lines) {
@@ -197,6 +200,8 @@ let showAwayReport;
 
   showAwayReport = function (r) {
     if (!r || r.secs < 30 || r.empty || r.empty === undefined && !(r.lines && r.lines.length)) return;
+    // C14: the report is one card through the notice policy, never a second set of pops.
+    notify({ key: 'away-report', msg: `While you were away: ${hm(r.secs)}.`, kind: 'good' });
     if (root) close();
     counters.length = 0;
     lastFocus = document.activeElement;
