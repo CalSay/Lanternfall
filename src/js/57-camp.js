@@ -335,7 +335,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
   });
 
   // Effect lines for a building at a level (the UI shows now -> next). Lv 0 = not built.
-  const TAV = ['', 'The keep tells the day\'s gossip', 'Rumours: tomorrow\'s Omen', 'Rumours: the next 2 Omens', 'Bounties pay +15%', 'Every 5th bounty gives +1 Renown'];
+  // C3: cumulative Tavern perks are defined in 57g-tavern-perks.js.
   const LIB = l => [`Gathering XP +${5 * l}%`].concat(l >= 2 ? [`Hero XP +${5 * (l - 1)}%`] : []);
   const SHR = ['', '1 Blessing', 'Blessings 25% stronger', '2 Blessings'];
   campEffects = (id, l) => {
@@ -350,7 +350,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
     }
     if (id === 'watch') return [`Away limit +${2 * l}h`].concat(l >= 2 ? ['Away report shows the zone you could hold'] : []);
     if (id === 'library') return LIB(l);
-    if (id === 'tavern') return (l <= 3 ? [TAV[l]] : [TAV[3]].concat(TAV.slice(4, l + 1))).concat(typeof handsTavernFx === 'function' ? handsTavernFx(l) : []);   // N1: where Hands apply
+    if (id === 'tavern') return typeof tavernPerks === 'function' ? tavernPerks(l) : [];
     if (id === 'shrine') return [SHR[Math.min(3, l)]].concat(l >= 3 ? ['Blessings 25% stronger'] : []);
     return [];
   };
@@ -389,7 +389,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
   // ---------------- Tavern rumours ----------------
   campRumours = () => {
     const l = lv('tavern'), out = [];
-    if (l < 2 || !campOpen()) return out;
+    if (l < 1 || !campOpen()) return out;
     try {
       if (typeof almanac === 'object' && almanac.omenFor) {
         const d = deviceDay(now());
