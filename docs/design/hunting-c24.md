@@ -1,0 +1,27 @@
+# C24 Hunting: numbers for sign-off
+
+**Status:** proposal only, 30 September 2026. No gameplay or art has been changed. Issue #25 replaces the old “Hide is fight-only” rule; Essence and Trophies remain fight-only. The owner clarified that targets are hostile beasts and the tool is a hunting spear. The owner has since allowed new digital assets despite Claude's earlier art freeze; any eventual beast, spear and action assets should form a consistent pack matching the three playable heroes.
+
+## Proposed rate and gates
+
+Use the existing gathering clock, Hunting skill, Storehouse Hide grades, level gates and Glint. A beast has a progress/HP bar driven by `S.gProg`. Completing it grants **5 Hide and 5 × the ordinary node XP**; the next hostile beast replaces it. Set its work time to **5 × Fibre's node time** (`CRAFT_NODES.hide.time = 4.5`, since Fibre is 0.9). This keeps Hide units/hour and Hunting XP/hour equal to Fibre at the same skill level and modifiers, while one beast lasts long enough for several strikes. A manual hit keeps the gathering engine's current +0.12 progress. Beast falls emit `harvest`, never combat `kill`: no gold, Essence, Trophies, bestiary credit, parry or combat loot. Existing fight Hide drops remain additive.
+
+| Hide grade / proposed hostile beast | Hunting level | Base seconds per beast | Hide / beast | XP / beast | Target hero Hide/hour | Common Lv 1 Hunter, 4 h |
+|---|---:|---:|---:|---:|---:|---:|
+| 1 Rawhide / Enraged Boar | 1 | 11.70 | 5 | 35 | 1,554 | 621 |
+| 2 Leather / Bristleback Wolf | 14 | 15.21 | 5 | 70 | 1,506 | 602 |
+| 3 Wolfhide / Fen Lizard | 30 | 18.72 | 5 | 105 | 1,534 | 613 |
+
+The issue's Soft/Tough/Scaled labels describe its three beast grades; the shipped material names are Rawhide/Leather/Wolfhide and need no rename. Grade 4–5 beasts need the later region design. Their gates should stay the existing levels 64/112, with the same formula only after those targets are named.
+
+**Measurement:** headless core on `b334967`, using `tools/lib/core.mjs`, `nodeTime('fibre', t)`, `nodeYieldAvg`, `nodeXpFor` and `handsRate`/`handsPreview`. Profile: Foraging at each gate level 1/14/30; no equipped gear, no Omen or home ground, default 1% tool-mastery speed, no active taps, no Storehouse cap. Fibre measured 1,554/1,506/1,534 units/hour; a same-skill Common Lv 1 Hand has a 10% share and four-hour hauls of 621/602/613. The proposed 5× time/yield/XP keeps those rates if Hunting starts with the same default tool mastery. An existing off-skill Hand would get half: about 310/301/306 per shift. A fresh, uninterrupted grade-1 Fibre-equivalent skill reaches level 14 in about 60 minutes (1,845 completed units in the core); C10 still needs a real day-one Tent 3 affordability run.
+
+Batwing Caves, the Bonefield and Beetle Barrows repeat as Hide-dropping types. Give Hunting its own home test on bat/bones/beetle zones: +25% hero yield, or +50% with three mastery stars, matching `CRAFT_HOME_BONUS`. Keep those zones' existing Crystal/Herb/Fibre home bonuses. The base grade-1 hero target becomes about 1,942 or 2,331 Hide/hour there; Hands currently do not receive `homeBonus` in `handsRate`, so do not silently add it to their shifts.
+
+An optional **Tracker** trait is +20% Hide only, additive with direct-yield traits and snapshotted at send. Its same-skill Common Lv 1 four-hour targets are about 745/722/736 Hide. Tracker plus Early Riser reaches the C8 whole-roll limit of 1.40×; Tracker with a fully overlapping Friendly partner gives 1.32×. A swapped single trait is at most +20%, within C8's approved daily margin. Existing queued shift rates stay frozen. Add Hunter to the applicant skill pool only with approval, since it changes the distribution of future applicants; existing Hands can hunt off-skill at the current 50% rate.
+
+## Spear and implementation boundaries
+
+For sign-off, propose a Workbench Hunting Spear with **the Sickle's existing recipe and numeric progression**: grade-1 input 4 Ore + 3 Wood, scaled by `craftScale`; speed 0.6 × item power, double yield 0.1 × power (60% cap), rare find 0.012 × power (8% cap), and the usual +25% right-tier tool speed. This is parity, not an approved new price. Do not alias Hunting to Sickle gear. The owner must approve the spear recipe/stats and the 5-Hide bundle before implementation. Visuals can then use a `tool: 'spear'` data hook and a matching vetted asset pack; no ad hoc prop or beast drawing is part of this proposal.
+
+Issue #25 owns `55-gathering.js`, `72-ui-gather.js`, `21-data-craft.js` (balance sign-off), Hands data/engine/UI and a C24 check section. Needed narrow shared extensions: `30-state.js` defaults for `skills.hunt`, `equip.spear`; `55-nav.js` Hunting family/verb/last-node entries; `40-rules.js` spear stat mapping plus the per-node five-unit yield/XP scalar; `50-sim.js` live `harvest()` to award that scalar (its offline gather branch is already generic); and `55-tools.js` spear mastery/defaults. Craft/item UI and Claude-owned hero/stage art need separate scoped integration approval when the asset pack is ready. Old v5 saves should receive only missing defaults, with no key bump. Checks should pin live/offline Hide parity, 4 h and queued Hands payouts, home grounds, caps, old-save loading, and absence of combat rewards. C10 should measure Tent 3/4 with Hunting counted as a Hide source; about 25 Hide/minute before cap may make the current costs trivial, so that rate deserves explicit approval.
