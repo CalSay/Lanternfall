@@ -7058,10 +7058,15 @@ try {
 // ==== W1-C: solo copy and dead effects (audit-1 section 2) ====
 // A solo player never sees the old party's words. The scan reads the string tables of the game core (solo build) and,
 // in Chromium, every tab and sub-view at 360x740, the hero sheet, Achievements, the bell and the Journal.
-const W1C_RE = /\b(part(y|ies)|compan\w*|bonds?|formation|roster|recruit\w*|expeditions?)\b|tap the stage|your taps?\b|taps (deal|on the stage)|tap damage|\btap: /i;
+// W1-F added: allies, teammates, "your heroes", other/damage heroes, fielded, bench, "the others", "beside you", Warband, squad,
+// "Best with" / "Good with" (partner advice), "a healer behind you", "in the Front / Middle / Back." (a slot; \"in the front line\" of foes is fine), "Mid and Back", "Taps" of the old tap-to-attack game.
+const W1C_RE = /\b(part(y|ies)|compan\w*|bonds?|formation|roster|recruit\w*|expeditions?|allies|ally|teammates?|your heroes|other heroes|damage heroes|fielded|benched?|the others|fights? beside|beside you|warband|squad|healer behind you|Mid and Back|Good with|Best with)\b|\bin the (Front|Middle|Back)[.,]|tap the stage|your taps?\b|taps (deal|on the stage)|tap damage|\btap: |\b(a|each|every|your) tap\b/i;
 // Words that are allowed, and why (the reason is what a reader needs: keep it short and true).
 const W1C_ALLOW = [
   [/Dusk Company/, 'a circle of the Lantern Book (a faction name in the lore), not a party'],
+  // W1-F: the other heroes' lore. Bios, stories and join lines of heroes who are not playable yet (Hesketh, Vesper ...) may name
+  // the others: they are about the characters' past together. None of them can be reached in solo (no Hall, no Codex Lore page,
+  // no hero sheet story pages for them); the scan below reads only Wren, Tobin and Pip's bios and stories and allows nothing there.
 ];
 const w1cAllowed = t => W1C_ALLOW.some(([re]) => re.test(t));
 console.log('solo copy (W1-C)');
@@ -7104,6 +7109,52 @@ try {
   assert(E('!CODEX_PAGE_IDS.includes("companions") && !CODEX_PAGE_IDS.includes("lore") && CODEX_MILESTONES.find(m => m.at === 200).rw[0].id === "t_wayfinder"'), 'the Codex has no Companions or Lore page in solo; the 200 Light reward is a title, not an expedition slot');
   for (const x of [g]) assert(!x.errors.length, 'no handler errors in the solo copy scan' + (x.errors.length ? ': ' + x.errors[0] : ''));
 } catch (e) { fail('solo copy (static) crashed: ' + (e.stack || e)); }
+
+// ---- W1-F: every string table an item box, a hero sheet or a picker reads ----
+// Item and affix lines (stat lines, unique text, kind and tier names, trophies, relics, tonics), the Lantern Book (class and pinnacle powers)
+// and circle sets, Sigil and circle names, class and subclass cards, the solo abilities, and the bios, stories, quotes and titles of the
+// three playable heroes. No allow-list entry is used here. Companion-only legendary powers (src 'comp') are skipped: the Book hides them
+// in solo (the Chromium scan below asserts that). The pinnacle UI text (PIN_HINTS, PIN_CHIPS, PIN_LESSON_WIPE, PIN_UI_TEXT) has no
+// engine or screen yet (audit-1), so nothing shows it.
+console.log('solo copy: items, sets, heroes (W1-F)');
+try {
+  const g = loadCore({ solo: true, seed: 8 }), E = s => g.eval(s);
+  const hits = []; let strings = 0;
+  const SK = new Set(['id', 'src', 'ic', 'col', 'sets', 'look', 'key', 'at', 'wire', 'slot', 'st', 'pre', 'skill', 'fits', 'boss', 'target', 'sys', 'go', 'page', 'view', 'tab', 'sel', 'kit', 'base', 'to']);
+  const walk = (v, p, seen, d, key) => {
+    if (d > 9) return;
+    if (typeof v === 'string') { strings++; if (W1C_RE.test(v) && !w1cAllowed(v)) hits.push(`${p}: ${v.slice(0, 90)}`); return; }
+    if (typeof v === 'function') { if (v.length <= 2 && /^(desc|txt|text|fx|label|how|line|note|d|n|f|s|tip)$/.test(key)) for (const a of [1, 3, 5]) { try { const r = v(a, 1); if (typeof r === 'string') walk(r, p + `(${a})`, seen, d + 1, key); } catch (e) {} } return; }
+    if (!v || typeof v !== 'object' || seen.has(v)) return; seen.add(v);
+    if (typeof v.needs === 'function') { let ok = true; try { ok = !!v.needs(); } catch (e) {} if (!ok) return; }
+    if (Array.isArray(v)) { v.forEach((x, i) => walk(x, `${p}[${i}]`, seen, d + 1, key)); return; }
+    for (const k of Object.keys(v)) if (!SK.has(k)) { let x; try { x = v[k]; } catch (e) { continue; } walk(x, `${p}.${k}`, seen, d + 1, k); }
+  };
+  const tables = ['UNIQ', 'RELICS', 'HERO_UPS', 'CRAFT_STATS', 'CRAFT_KINDS', 'CRAFT_AFFIXES', 'CRAFT_TROPHIES', 'CRAFT_TONICS', 'CRAFT_STATIONS', 'CRAFT_FAMILY',
+    'LEG_SETS', 'LEG_CIRCLE_NAME', 'PIN_POWERS', 'EVO_DEFS', 'EVO_NAMES', 'CLASS_DEFS', 'CLASS_ABILITIES', 'HERO_CLASSES', 'SOLO_ABILITIES', 'SOLO_HEROES', 'CLASS_TRIALS', 'CLASS_STAR_NAMES'];
+  let missing = [];
+  for (const n of tables) { let v; try { v = E(n); } catch (e) { missing.push(n); continue; } walk(v, n, new Set(), 0, n); }
+  // the Lantern Book: class powers and pinnacle powers (every rank), not the companion rows
+  for (const id of E('LEG_IDS')) { const p = E(`LEG_POWERS[${JSON.stringify(id)}]`); if (p.src === 'comp') continue; for (let r = 1; r <= 5; r++) walk(E(`legendText(${JSON.stringify(id)}, ${r})`), `LEG_POWERS.${id}@${r}`, new Set(), 0, 'txt'); walk(p.n, `LEG_POWERS.${id}.n`, new Set(), 0, 'n'); }
+  // every item kind, tier and unique, as the item box names them, and every stat line as it is printed
+  for (const k of E('Object.keys(CRAFT_KINDS)')) for (let t = 1; t <= 5; t++) walk(E(`kindName(${JSON.stringify(k)}, ${t})`), `kindName.${k}.${t}`, new Set(), 0, 'n');
+  for (const s of E('Object.keys(CRAFT_STATS)')) walk(E(`craftFmtLine(${JSON.stringify(s)}, 7)`), `craftFmtLine.${s}`, new Set(), 0, 'f');
+  // the three playable heroes: bios, quotes, titles, stories, how-tos
+  for (const h of E('SOLO_ORDER')) {
+    walk(E(`BIOS[${JSON.stringify(h)}]`), `BIOS.${h}`, new Set(), 0, 'bio');
+    walk(E(`(STORIES[${JSON.stringify(h)}] || [])`), `STORIES.${h}`, new Set(), 0, 'text');
+    walk(E(`(QUOTES[${JSON.stringify(h)}] || [])`), `QUOTES.${h}`, new Set(), 0, 'text');
+    walk(E(`JOIN_LINES[${JSON.stringify(h)}] || []`), `JOIN_LINES.${h}`, new Set(), 0, 'text');
+    walk(E(`({ n: ROSTER[${JSON.stringify(h)}].name, t: ROSTER[${JSON.stringify(h)}].title, how: ROSTER[${JSON.stringify(h)}].how })`), `ROSTER.${h}`, new Set(), 0, 'how');
+  }
+  assert(!missing.filter(n => n !== 'CLASS_STAR_NAMES').length && strings > 1200, `the item, set and hero scan reads ${strings} strings from ${tables.length - missing.length} tables, ${E('LEG_IDS').length} legendary powers, every kind name and stat line, and the bios and stories of ${E('SOLO_ORDER').length} heroes${missing.length ? ' (missing: ' + missing.join(', ') + ')' : ''}`);
+  assert(!hits.length, 'no party, companion, ally, "your heroes", Bench, Bond or partner-advice text in an item, affix, unique, set, Sigil, relic, class, subclass or hero string' + (hits.length ? `: ${hits.length}, e.g. ${hits.slice(0, 5).join(' | ')}` : ''));
+  const gs = loadCore({ solo: true, seed: 9 }), G = s => gs.eval(s);
+  G('soloPick("wren")');
+  const mem = JSON.parse(G(`(() => { const it = newItem('bow', 1, 'rare'); it.cm = 1; S.items.push(it); equipItem(it.id); gearDirty(); return JSON.stringify(legendActive().members); })()`));
+  assert(mem.oath === 1 && mem.hedgefolk === 0, `a lone hero's circle members are the marked pieces they wear (one Oath bow: ${JSON.stringify(mem)})`);
+  assert(!gs.errors.length, 'no handler errors in the item and hero scan' + (gs.errors.length ? ': ' + gs.errors[0] : ''));
+} catch (e) { fail('solo copy: items, sets, heroes crashed: ' + (e.stack || e)); }
 
 console.log('solo effects (W1-C)');
 try {
@@ -7158,7 +7209,7 @@ try {
     assert(E('deepUnlocked() && DW.start(false)'), 'a solo Deepwell run starts');
     const m0 = E('mod("dmg")'), cd0 = E('mod("abilityCd")'), tap0 = E('mod("tap")');
     E('DW.run().boons.drill = 3; DW.run().boons.warband = 1');
-    assert(Math.abs(E('mod("dmg")') / m0 - (1 + 0.15 * 3) * 1.6) < 1e-9, `Battle Drill III and Warband add up to x${(E('mod("dmg")') / m0).toFixed(3)} to your own damage (they were the companions')`);
+    assert(Math.abs(E('mod("dmg")') / m0 - (1 + 0.15 * 3) * 1.6) < 1e-9, `Battle Drill III and War Cry add up to x${(E('mod("dmg")') / m0).toFixed(3)} to your own damage (they were the companions')`);
     E('DW.run().boons = {}; DW.run().trial = true; DW.run().rule = "echo"');
     assert(Math.abs(E('mod("abilityCd")') / cd0 - 0.5) < 1e-9 && Math.abs(E('mod("tap")') / tap0 - 0.5) < 1e-9 && Math.abs(E('mod("dmg")') / m0 - 1) < 1e-9, 'Echo Week: abilities come back twice as fast, Attack hits for half, your damage is not cut to 1% (Company Week was unwinnable solo)');
     assert(E('DEEP_RULES.some(r => r.id === "echo") && !DEEP_RULES.some(r => /Company/.test(r.n))'), 'the rule list has Echo Week and no Company Week');
@@ -7230,7 +7281,7 @@ try {
     const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
     const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
     try {
-      const shown = { n: 0, views: 0 }, bad = new Map();
+      const shown = { n: 0, views: 0 }, bad = new Map(), items = { n: 0, min: 1e9, cards: 0, press: 0 };
       for (const hero of ['wren', 'tobin', 'pip']) {
         const ctx = await browser.newContext({ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true });
         const page = await ctx.newPage(); const errs = [];
@@ -7238,14 +7289,15 @@ try {
         await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
         await page.goto('http://lf.test/'); await page.waitForTimeout(500);
         const X = s => page.evaluate(s => window.__t.x(s), s);
-        await page.click(`#createScreen .ccard[data-hero="${hero}"]`); await page.click('#createScreen .create-go'); await page.waitForTimeout(250);
-        // a late game: every tab open, plenty of everything, the first Proving won (so its card shows)
-        await X(`(() => { try { onboardUnlockAll(); } catch (e) {} S.maxZone = 40; S.zone = 12; S.L = 60; S.gold = 1e12; S.embers = 1e6; for (const k in S.mats) { const m = S.mats[k]; if (Array.isArray(m)) for (let i = 0; i < m.length; i++) m[i] = 5000; } ONBOARD.paused = false; S.cls.trials = S.cls.trials || {}; S.cls.trials.warrior = { won: 1, best: 100 }; return 1; })()`);
         const scan = async label => {
           const txt = await page.evaluate(() => { const out = []; for (const e of document.querySelectorAll('body *')) { const t = [...e.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join(' ').trim(); if (t && e.offsetParent !== null) out.push(t); } out.push(...[...document.querySelectorAll('[aria-label],[title],[alt]')].map(e => [e.getAttribute('aria-label'), e.getAttribute('title'), e.getAttribute('alt')].filter(Boolean).join(' '))); return out; });
           shown.n += txt.length; shown.views++;
           for (const t of txt) if (W1C_RE.test(t) && !w1cAllowed(t)) { const k = t.slice(0, 120); if (!bad.has(k)) bad.set(k, `${hero} ${label}`); }
         };
+        await scan('hero picker (new game)');   // W1-F: the three hero cards: art, role, bio, ability
+        await page.click(`#createScreen .ccard[data-hero="${hero}"]`); await page.click('#createScreen .create-go'); await page.waitForTimeout(250);
+        // a late game: every tab open, plenty of everything, the first Proving won (so its card shows)
+        await X(`(() => { try { onboardUnlockAll(); } catch (e) {} S.maxZone = 40; S.zone = 12; S.L = 60; S.gold = 1e12; S.embers = 1e6; for (const k in S.mats) { const m = S.mats[k]; if (Array.isArray(m)) for (let i = 0; i < m.length; i++) m[i] = 5000; } ONBOARD.paused = false; S.cls.trials = S.cls.trials || {}; S.cls.trials.warrior = { won: 1, best: 100 }; return 1; })()`);
         const pressAll = async (sel, label) => {
           const n = Math.min(await page.locator(sel).count(), 50);
           for (let i = 0; i < n; i++) { try { await page.locator(sel).nth(i).click({ timeout: 300, force: true }); await page.waitForTimeout(60); await scan(`${label} #${i}`); await page.keyboard.press('Escape'); } catch (e) {} }
@@ -7267,11 +7319,58 @@ try {
         await X(`document.getElementById('bellBtn').click()`); await page.waitForTimeout(250); await scan('bell');
         const jb = page.locator('button:text-is("Journal")').first(); if (await jb.count()) { await jb.click({ force: true }); await page.waitForTimeout(250); await scan('Journal'); }
         await X(`classEvoUI.openChoice && classEvoUI.openChoice()`); await page.waitForTimeout(250); await scan('evolution choice');
+        // ---- W1-F: item detail sheets, compare, forge and Sigil boxes, the hero sheet, subclass cards, long-press info ----
+        await X('closeMenu()');
+        const kit = await X('heroWho()');
+        const made = JSON.parse(await X(`(() => { const ids = [], kit = heroWho();
+          try { for (let i = 0; i < 4; i++) legendSigil(i, 3, 'check', true); } catch (e) {}
+          const add = it => { S.items.push(it); ids.push(it.id); return it; };
+          const kinds = Object.keys(CRAFT_KINDS), own = k => { const d = CRAFT_KINDS[k]; return !d.cls || d.cls === kit; };
+          const wpn = kinds.find(k => CRAFT_KINDS[k].pos === 'weapon' && CRAFT_KINDS[k].cls === kit);
+          const cur = newItem(wpn, 1, 'common'); add(cur); try { equipItem(cur.id); } catch (e) {}   // something worn, so the box can compare
+          for (const u of Object.keys(UNIQ)) { dropUnique(u, 3); ids.push(S.items[S.items.length - 1].id); }
+          for (const k of kinds) for (const r of ['common', 'uncommon', 'rare', 'epic']) add(newItem(k, r === 'common' ? 1 : 3, r, { mw: 0 }));
+          for (let m = 1; m < 7; m++) add(newItem(wpn, 2, 'rare', { mw: m }));   // every Trophy's Masterwork line
+          const body = kinds.find(k => CRAFT_KINDS[k].pos === 'body' && CRAFT_KINDS[k].cls === kit), powers = LEG_IDS.filter(id => { const p = LEG_POWERS[id]; return p.fits === 'hero' && (p.cls == null || p.cls === kit); });
+          for (const id of powers) { const it = newItem(body, 3, 'epic'); it.lg = id; it.lr = 2; add(it); }
+          for (let c = 0; c < 4; c++) { const it = newItem(wpn, 2, 'rare'); it.cm = c; add(it); }   // marked with each circle
+          return JSON.stringify({ ids, powers }); })()`));
+        let opened = 0;
+        for (const id of made.ids) {
+          await X(`craftUI.openItem(${id})`); await page.waitForTimeout(15); await scan('item sheet ' + id); opened++;
+          if (opened % 9 === 0) { for (const sel of ['.cf-svb', '.cf-rf button', '.cf-cmp button', '.cf-inscribe button']) { const b = page.locator(`.cf-sheet ${sel}`).first(); if (await b.count()) { try { await b.click({ timeout: 300, force: true }); await page.waitForTimeout(30); await scan('item sheet ' + id + ' ' + sel); } catch (e) {} } } }
+          await page.keyboard.press('Escape');
+        }
+        for (const pid of made.powers) { await X(`legendUI.openInscribe(${JSON.stringify(pid)})`); await page.waitForTimeout(30); await scan('Inscribe ' + pid); await page.keyboard.press('Escape'); }
+        items.n += opened; items.min = Math.min(items.min, opened);
+        // the hero sheet, its Kit and story lines, and each subclass card (both tabs, the confirm) and the class change
+        await X(`setTab('party'); setView('party', 'team'); partySheet.openHero()`); await page.waitForTimeout(200);
+        await page.evaluate(() => document.querySelectorAll('.cs-sheet details, .sheet details').forEach(d => { d.open = true; }));
+        await scan('hero sheet (all opened)');
+        for (const sel of ['.cl-go', '.cs-act', '.cs-story summary']) { const n = Math.min(await page.locator(`.sheet ${sel}`).count(), 8); for (let i = 0; i < n; i++) { try { await page.locator(`.sheet ${sel}`).nth(i).click({ timeout: 300, force: true }); await page.waitForTimeout(60); await scan(`hero sheet ${sel} #${i}`); } catch (e) {} } }
+        await page.keyboard.press('Escape');
+        await X(`S.party.chosen = true; S.cls.trials = S.cls.trials || {}; S.cls.trials.check = { won: 1, best: 100 }; classEvoUI.openChoice()`); await page.waitForTimeout(250);
+        const tabs = await page.locator('.evo-tab').count();
+        for (let i = 0; i < tabs; i++) { await page.locator('.evo-tab').nth(i).click({ force: true }); await page.waitForTimeout(80); await scan(`subclass card ${i}`); await page.locator('.create-go').first().click({ force: true }).catch(() => {}); await page.waitForTimeout(60); await scan(`subclass card ${i} confirm`); }
+        await X('classEvoUI.closeAll()');
+        await X('classEvoUI.openRespec && classEvoUI.openRespec()'); await page.waitForTimeout(200); await scan('class change'); await X('classEvoUI.closeAll()');
+        items.cards += tabs;
+        // long-press info on each action-bar slot (Attack, Parry, Dodge: a tip; the three ability slots: the picker)
+        await X('setActivity("fight"); setTab("adv"); closeMenu()'); await page.waitForTimeout(300);
+        for (const a of ['atk', 'parry', 'dodge', 'ab0', 'ab1', 'ab2']) {
+          const b = page.locator(`[data-act="${a}"]`).first();
+          if (!(await b.count()) || !(await b.isVisible())) continue;
+          const bb = await b.boundingBox(); await page.mouse.move(bb.x + bb.width / 2, bb.y + bb.height / 2); await page.mouse.down(); await page.waitForTimeout(700);
+          const shownTip = await page.evaluate(() => { const t = document.getElementById('soloTip'), p = document.getElementById('abPicker'); return (t && !t.hidden ? 1 : 0) + (p ? 2 : 0); });
+          await scan('long-press ' + a); await page.mouse.up(); await page.keyboard.press('Escape'); await X('typeof closePicker === "function" && closePicker()');
+          if (shownTip) items.press++;
+        }
         assert(!errs.length, `${hero}: no page errors while reading every screen` + (errs.length ? ': ' + errs[0] : ''));
         await ctx.close();
       }
       assert(shown.views > 60 && shown.n > 3000, `the scan read ${shown.n} texts in ${shown.views} screens (three heroes, every tab, sub-view and sheet at 360x740)`);
-      assert(!bad.size, 'no party, companion, Bond, formation, roster, recruit or expedition text on any screen' + (bad.size ? ': ' + [...bad].slice(0, 5).map(([t, w]) => `[${w}] ${t}`).join(' | ') : ''));
+      assert(items.min >= 100 && items.cards >= 4 && items.press >= 12, `W1-F: the scan opened ${items.n} item sheets (at least ${items.min} per hero: every unique, every kind at four rarities, every Trophy line, every hero power, each circle mark; the compare box; Inscribe sheets), ${items.cards} subclass cards, the class change, the hero sheet and its story and Kit rows, the hero picker cards and ${items.press} long-presses (Attack, Parry, Dodge, the three ability slots), three heroes`);
+      assert(!bad.size, 'no party, companion, Bond, formation, roster, recruit, expedition, ally, Bench or partner-advice text on any screen' + (bad.size ? ': ' + [...bad].slice(0, 5).map(([t, w]) => `[${w}] ${t}`).join(' | ') : ''));
     } finally { await browser.close(); }
   }
 } catch (e) { fail('solo copy (browser) crashed: ' + (e.stack || e)); }

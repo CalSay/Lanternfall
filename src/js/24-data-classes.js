@@ -92,7 +92,7 @@ const CLASS_ABILITIES = {
     fx: [['dmg', 1.3], ['meter', 'embers', 1]], name: 'Ember',
     desc: '1.3x your attack as fire. Plants an Ember on the foe, up to 5.',
     var: { priest: { id: 'bless', name: 'Blessing', type: 'holy', coef: 1,
-      desc: 'You hit softly, but your heroes deal the damage you give up. Each tap blesses them: +20% damage for 6s, up to 3 times.' } } },
+      desc: SOLO_LOAD ? 'You hit softly, but each Attack blesses you: +20% damage for 6s, up to 3 times.' : 'You hit softly, but your heroes deal the damage you give up. Each tap blesses them: +20% damage for 6s, up to 3 times.' } } },
   flare: { id: 'flare', slot: 'ab1', cls: 'mage', cd: 25, target: 'splash', type: 'fire', tags: ['aoe'],
     fx: [['consume', 'embers'], ['dmg', 20, { perStack: 0.3 }], ['apply', 'burn', 1]], name: 'Lantern Flare',
     desc: 'A burst of 20x your attack, +30% for each Ember on the foe. Uses up the Embers and sets the whole pack burning.',
@@ -170,7 +170,7 @@ const EVO_NAMES = {
   trapper: { name: 'Trapper', title: 'the Pathfinder', base: 'ranger', kind: 'utility', role: 'caster', line: 'The road fights for you.' },
   warlock: { name: 'Warlock', title: 'the Shadowbinder', base: 'mage', kind: 'damage', role: 'caster', line: "Take the dark's fire. Throw it back." },
   priest: { name: 'Lightkeeper', title: 'the Given Light', base: 'mage', kind: 'utility', role: 'support', line: 'Give your light away.',
-    pitch: 'Keep them standing.', aura: SOLO_LOAD ? 'You heal 40% more and hit 40% harder.' : 'Supports in your party heal 40% more and hit 40% harder. All companions deal 25% more damage.' }
+    pitch: SOLO_LOAD ? 'Keep the light burning.' : 'Keep them standing.', aura: SOLO_LOAD ? 'You heal 40% more and hit 40% harder.' : 'Supports in your party heal 40% more and hit 40% harder. All companions deal 25% more damage.' }
 };
 // ---- S3: the six evolutions (classes-2 2.3-2.9, 3.3, 4.3) ----
 // Stats replace the base class's once proven (3.7). tankDr: the share of the tank role's damage cut it takes.
@@ -346,6 +346,26 @@ const EVO_DEFS = {
   }
 };
 for (const k in EVO_DEFS) Object.assign(EVO_DEFS[k], { name: EVO_NAMES[k].name, title: EVO_NAMES[k].title, base: EVO_NAMES[k].base, kind: EVO_NAMES[k].kind, role: EVO_NAMES[k].role });
+// W1-F: the subclass cards say what a lone hero gets. Each row replaces the party-era text of one path (the bullets
+// that said "best with a healer / a tank / two damage heroes", "your heroes deal...", "tap", "back line", "Middle and Back").
+// The numbers stay. Sanctuary, Deathcap and the rest keep their names. The `good` (best partners) list is not shown in solo.
+if (SOLO_LOAD) {
+  const EVO_SOLO = {
+    reaver: { bullets: { 2: 'Best when you can take hits and keep swinging.' }, active: 'Press Attack on heavy hits to keep Fury at 100, parry for free Fury, and Rend into a stagger.' },
+    warden: { aura: { name: 'Oath of the Order', text: 'You take 10% less damage.' } },
+    venomstalker: { bullets: { 2: 'Best in long fights, where Venom stays up.' } },
+    trapper: { bullets: { 2: 'Best in long fights: your traps come back.' }, idle: 'Traps lay themselves on every pack and Snare Field fires every 20s. Divers never reach you.' },
+    warlock: { bullets: { 2: 'Best on packs, where Curses jump from foe to foe.' } },
+    priest: { bullets: { 0: 'Each Attack blesses you.', 2: 'Best in long fights, where Blessing stacks.' },
+      passives: { 0: 'You hit softly, and each Attack builds your Blessing. Your hits are holy.', 1: 'Each Attack heals you and blesses you: +20% damage for 6s, up to 3 times.' } }
+  };
+  for (const k in EVO_SOLO) {
+    const e = EVO_DEFS[k], s = EVO_SOLO[k];
+    for (const i in s.bullets || {}) e.bullets[i] = s.bullets[i];
+    for (const i in s.passives || {}) e.passives[i].text = s.passives[i];
+    for (const f of ['active', 'idle', 'aura']) if (s[f] != null) e[f] = s[f];
+  }
+}
 
 // Tactics unlock order (3.6, for S7): slot 1 when Tactics arrive, slot 2 on evolving (EVO_DEFS[evo].tactics).
 const CLS_TACTICS = {
