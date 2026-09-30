@@ -3981,8 +3981,8 @@ if (section('solo hero (browser)')) try {
       await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
       await page.goto('http://lf.test/'); await page.waitForTimeout(700);
       const X = s => page.evaluate(s => window.__t.x(s), s);
-      const heroes = await page.$$eval('#createScreen .ccard', l => l.map(b => b.dataset.hero + ':' + b.querySelector('b').textContent));
-      assert(heroes.join() === 'wren:Wren Hollowmere,tobin:Tobin Reed,pip:Pip Cinderly', `the picker offers exactly the three starters (${heroes.join(', ')})`);
+      const heroes = await page.$$eval('#createScreen .ccard[data-state="unlocked"]', l => l.map(b => b.dataset.hero + ':' + b.querySelector('b').textContent));
+      assert(heroes.join() === 'wren:Wren Hollowmere,tobin:Tobin Reed,pip:Pip Cinderly', `the picker offers exactly the three playable starters (${heroes.join(', ')})`);
       const k0 = await X('S.totalKills + ":" + (mob ? mob.hp : 0)'); await page.waitForTimeout(600);
       assert(await X('S.totalKills + ":" + (mob ? mob.hp : 0)') === k0, 'the game waits while the hero is being chosen');
       await page.click('#createScreen .ccard[data-hero="pip"]'); await page.click('#createScreen .create-go'); await page.waitForTimeout(600);
@@ -4185,7 +4185,7 @@ if (section('W1-D (browser)')) try {
       // 3. the picker art, the header labels, combat numbers on a gather scene, the Journal
       const { ctx, page, errs, X } = await open(360, 740);
       await page.waitForTimeout(600);
-      const same = await X(`[...document.querySelectorAll('#createScreen .ccard')].map(b => { const cv = b.querySelector('canvas'), c2 = document.createElement('canvas'); c2.width = cv.width; c2.height = cv.height; return heroArtPreview(c2, b.dataset.hero) && c2.toDataURL() === cv.toDataURL(); }).join()`);
+      const same = await X(`[...document.querySelectorAll('#createScreen .ccard[data-state="unlocked"]')].map(b => { const cv = b.querySelector('canvas'), c2 = document.createElement('canvas'); c2.width = cv.width; c2.height = cv.height; return heroArtPreview(c2, b.dataset.hero) && c2.toDataURL() === cv.toDataURL(); }).join()`);
       assert(same === 'true,true,true', `W1-D: the hero picker draws the new hand-drawn art for Wren, Tobin and Pip (${same})`);
       await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go'); await page.waitForTimeout(500);
       await X('S.onboard.tips = false; onboardUnlockAll(); S.maxZone = 12; S.zone = 12; S.L = 20; true'); await page.waitForTimeout(400);
@@ -6316,6 +6316,135 @@ if (section('milestone feats UI (C11, browser)')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('C11 milestone UI crashed: ' + (e.stack || e)); }
+// ---- C9: the complete hero registry, durable routes, kit gates and idempotent claims ----
+if (section('C9 hero registry (core)')) try {
+  const g = loadCore({ seed: 909 }), E = s => g.eval(s);
+  const ids = E('ROSTER_KEYS');
+  assert(ids.length === 32 && new Set(ids).size === 32 && E('HERO_ORDER.length === 32 && HERO_ORDER.slice(0,3).join() === "wren,tobin,pip"'), 'C9: 32 unique heroes, with the three starters first in both pickers');
+  assert(E('ROSTER_KEYS.every(k => heroBio(k) && ROSTER[k].title && CHAR_RARITY[ROSTER[k].rarity] && ROLE_STATS[ROSTER[k].role] && DMG_TYPES.includes(ROSTER[k].dt) && ROSTER[k].sst && heroRouteInfo(k).how)'), 'C9: every registry row has a bio, title, rarity, role, type, signature status and route');
+  assert(E('["tank","striker","caster","support"].every(r => ROSTER_KEYS.filter(k => ROSTER[k].role === r).length === 8) && DMG_TYPES.map(d => ROSTER_KEYS.filter(k => ROSTER[k].dt === d).length).join() === "7,7,6,6,6"'), 'C9: designed roster matches eight heroes per role and the 7/7/6/6/6 damage types');
+  assert(E('HERO_ORDER.filter(heroCanPlay).join() === "wren,tobin,pip" && HERO_ORDER.filter(heroHasKit).join() === "wren,tobin,pip"'), 'C9: only Wren, Tobin and Pip have complete, unlocked solo kits');
+  const before = E('JSON.stringify(S)');
+  E('for (let i=0;i<10;i++) for (const k of HERO_ORDER) { heroRouteInfo(k); heroUnlocked(k); heroCanPlay(k); tokenChance(k); }');
+  assert(E('JSON.stringify(S)') === before, 'C9: picker and token-chance reads do not mutate state or consume resources');
+  assert(E('["missing","toString","__proto__",null].every(k => !heroUnlocked(k) && !heroCanPlay(k) && !heroUnlock(k) && !heroPick(k) && heroRouteInfo(k) === null)'), 'C9: unknown and inherited IDs cannot unlock or pick heroes');
+  E('S.maxZone=10; S.mats.wood=[79,0,0,0,0]');
+  const short = E('JSON.stringify([S.gold,S.mats,S.party.unlock])');
+  assert(!E('heroUnlock("bram")') && E('JSON.stringify([S.gold,S.mats,S.party.unlock])') === short, 'C9: an incomplete quest cannot charge or unlock');
+  E('S.mats.wood[1]=1');
+  assert(E('heroUnlock("bram") && S.mats.wood[0] === 0 && S.mats.wood[1] === 0 && heroRouteInfo("bram").state === "coming-soon" && !heroCanPlay("bram")'), 'C9: quest hand-in spends the named grade first, persists completion and shows Coming soon without a kit');
+  E('S.mats.wood[0]=10');
+  assert(E('heroUnlock("bram") && S.mats.wood[0]===10'), 'C9: repeating a quest claim never spends again');
+  E('S.maxZone=16; S.gold=1e9; addRenown(UNLOCK_TUNE.aldric.renown,"check")');
+  const rn = E('renown()'), gold = E('S.gold'), cost = E('heroRouteInfo("aldric").cost.gold');
+  assert(E('heroUnlock("aldric")') && E('renown()') === rn && E('S.gold') === gold-cost, 'C9: Aldric checks the tuned Renown balance and charges his gold once');
+  E('heroProbe()');
+  const paid = E('JSON.stringify([S.gold,S.party.unlock])');
+  E('heroUnlock("aldric"); heroProbe(); heroProbe()');
+  assert(E('JSON.stringify([S.gold,S.party.unlock])') === paid, 'C9: repeated claims and route probes do not duplicate unlocks or charges');
+  const spending = loadCore({ seed: 910 }), F = s => spending.eval(s);
+  F('UNLOCK_TUNE.aldric.spendRenown=true; S.maxZone=16; S.gold=1e9; addRenown(UNLOCK_TUNE.aldric.renown)');
+  assert(F('heroUnlock("aldric") && renown() === 0 && heroUnlock("aldric") && renown() === 0'), 'C9: a route configured to spend Renown pays once, atomically with the unlock');
+  E('addRenown(UNLOCK_TUNE.vesperRenown); heroProbe(); S.party.unlock.renown=0; heroProbe()');
+  assert(E('heroUnlocked("vesper") && heroRouteInfo("vesper").state === "coming-soon"'), 'C9: a completed free Renown route remains unlocked after the balance changes');
+  const tokens = loadCore({ seed: 911 }), T = s => tokens.eval(s);
+  for (const id of T('Object.keys(UNLOCK_TUNE.tokens)')) {
+    const pity = T(`UNLOCK_TUNE.tokens.${id}.pity`);
+    for (let n=1;n<pity;n++) T(`unlockTokenRoll(${JSON.stringify(id)}, 0.999999)`);
+    assert(T(`tokenChance(${JSON.stringify(id)}) === 1 && unlockTokenRoll(${JSON.stringify(id)},0.999999) === true && tokenChance(${JSON.stringify(id)}) === 0 && unlockTokenRoll(${JSON.stringify(id)},0) === null`), `C9: ${id} token is guaranteed by its tuned pity and cannot be won twice`);
+  }
+  const eligibility = loadCore({seed: 912}), K = s => eligibility.eval(s);
+  K('Math.random=()=>0; emit("kill",{mob:{boss:true,key:"golem"},zone:26,tier:4});');
+  assert(K('!S.party.unlock.tokens.grenna'), 'C9: Grenna token does not roll below its zone gate');
+  K('emit("kill",{mob:{boss:true,key:"coral"},zone:41,tier:4});');
+  assert(K('!S.party.unlock.tokens.grenna'), 'C9: a Coast place cannot masquerade as the Hollow’s Quarry boss');
+  K('emit("kill",{mob:{boss:true,key:"golem"},zone:27,tier:4});');
+  assert(K('heroUnlocked("grenna") && heroRouteInfo("grenna").state === "coming-soon"'), 'C9: an eligible Quarry boss unlocks Grenna’s route, but cannot supply her kit');
+  K('emit("kill",{mob:{boss:true,key:"spore"},zone:UNLOCK_TUNE.quests.morwen.zone,tier:5}); heroProbe(); S.craft.starChart=1; S.mastery.types.wraith=BESTIARY_TIERS[UNLOCK_TUNE.thessaly.tier-1]; S.stats.bosses=UNLOCK_TUNE.corvin.bosses; for (const t of TYPES) S.mastery.types[t.key]=Math.max(S.mastery.types[t.key]||0,BESTIARY_TIERS[UNLOCK_TUNE.corvin.tier-1]); heroProbe();');
+  assert(K('["morwen","oriel","thessaly","corvin"].every(heroUnlocked)'), 'C9: solo boss quest, Star Chart, bestiary and Kingslayer conditions complete their routes');
+  E('S.maxZone=70; S.gold=1e9; S.mats.crystal[4]=30; S.story.seen["b:letters"]=1');
+  assert(E('heroUnlock("loveday") && S.mats.crystal[4]===0 && heroRouteInfo("loveday").state === "coming-soon"'), 'C9: Loveday’s designed letters and gem hand-in route is available without a solo kit');
+  E('S.maxZone=50; S.party.unlock.quests.cass=1');
+  assert(E('!heroUnlock("cass") && !heroRouteInfo("cass").ready && heroRouteInfo("cass").how.includes("still being designed")'), 'C9: unspecified future unlock prices stay unclaimable with honest copy');
+  const persisted = E('JSON.stringify(S.party.unlock)'); g.fn.save();
+  const reloaded = loadCore({ storage: memoryStorage(g.storage.dump()), seed: 913 }), R = s => reloaded.eval(s);
+  assert(R('JSON.stringify(S.party.unlock)') === persisted && R('heroUnlocked("bram") && heroUnlocked("aldric") && heroUnlocked("loveday")'), 'C9: completed paid and free routes survive save/reload unchanged');
+  assert(R('decodeSave(encodeSave(S)).ok && heroUnlockStateValid(S.party.unlock)'), 'C9: the expanded unlock state round-trips through v5 save codes');
+  assert(E('heroUnlockStateValid({renown:10}) && !heroUnlockStateValid({renown:-1}) && !heroUnlockStateValid({heroes:{bram:"yes"}}) && !heroUnlockStateValid({tokens:{grenna:{miss:100,won:false}}}) && !heroUnlockStateValid({milestones:{beatrix:-1}})'), 'C9: the validator hook accepts old v5 Renown-only state and rejects unsafe route records');
+  const legacy = loadCore({seed:914}), V = s => legacy.eval(s);
+  V('S.party.unlock={renown:12}; save()');
+  const old = loadCore({seed:915,storage:memoryStorage(legacy.storage.dump())});
+  assert(old.eval('renown() === 12 && Object.keys(S.party.unlock.heroes).length === 0 && heroCanPlay("wren") && validateSave(S).ok'), 'C9: an existing v5 Renown-only save loads new defaults without a wipe');
+  for (const state of ['{renown:-1}', '{heroes:{bram:"yes"}}', '{tokens:{grenna:{miss:100,won:false}}}', '{milestones:{beatrix:-1}}']) {
+    const unchanged=V('JSON.stringify(S)');
+    const result=V(`(() => {const data=fresh();data.party.unlock=${state};return validateSave(data);})()`);
+    assert(!result.ok && V('JSON.stringify(S)')===unchanged, 'C9: save import rejects unsafe unlock records without mutating the live game');
+  }
+  // Exercise actual capabilities rather than treating a SOLO_HEROES registration as sufficient.
+  E('delete S.party.unlock.heroes.hesketh; SOLO_HEROES.hesketh={...SOLO_HEROES.wren, key:"hesketh"}; SOLO_ORDER.push("hesketh"); S.maxZone=1');
+  assert(E('!heroHasKit("hesketh") && !heroPick("hesketh")'), 'C9: a solo registration without shipped art cannot become playable');
+  E('HERO_ART.heroes.hesketh=HERO_ART.heroes.wren');
+  assert(E('heroHasKit("hesketh") && !heroCanPlay("hesketh") && !heroPick("hesketh") && !soloPick("hesketh")'), 'C9: a complete kit stays locked until its route is complete');
+  E('S.maxZone=UNLOCK_TUNE.progress.hesketh.zone; heroProbe()');
+  assert(E('heroCanPlay("hesketh") && heroRouteInfo("hesketh").state === "unlocked" && soloPick("hesketh") && soloHero()==="hesketh"'), 'C9: supplying a complete kit and completing its route makes a future hero playable');
+  assert([g, spending, tokens, eligibility, reloaded].every(x => !x.errors.length), 'C9: route scenarios emit no handler errors');
+} catch (e) { fail('C9 hero registry crashed: ' + (e.stack || e)); }
+
+// ---- C9: both real pickers show the registry and refuse heroes without a completed solo kit ----
+if (section('C9 hero registry (browser)')) try {
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('C9: Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const viewport of [{width:360,height:740},{width:740,height:360}]) {
+        const ctx = await browser.newContext({viewport, isMobile:true, hasTouch:true});
+        try {
+          const page = await ctx.newPage(), errs = [];
+          page.on('pageerror', e => errs.push(String(e)));
+          await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({status:200,body:html,headers:{'content-type':'text/html; charset=utf-8'}}) : r.abort());
+          await page.goto('http://lf.test/');
+          await page.waitForSelector('#createScreen .ccard[data-state]');
+          const X = s => page.evaluate(s => window.__t.x(s), s), tag = `${viewport.width}x${viewport.height}`;
+          await X('soloPickerOpen=()=>true; S.onboard.tips=false; onboardUnlockAll(); true');
+          const initial = await page.$$eval('#createScreen .ccard', rows => rows.map(b => [b.dataset.hero,b.dataset.state,b.getAttribute('aria-disabled'),b.textContent]));
+          assert(initial.length===32 && initial.filter(r => r[1]==='unlocked').map(r=>r[0]).join()==='wren,tobin,pip' && initial.filter(r=>r[1]==='locked').length===29, `C9 ${tag}: new game shows all 32 heroes and exactly three unlocked starters`);
+          assert(initial.every(r=>r[3].length>70) && initial.find(r=>r[0]==='aldric')[3].includes('Renown on the bounty board'), `C9 ${tag}: locked cards keep their bios and explain the route in plain words`);
+          await page.click('#createScreen .ccard[data-hero="bram"]');
+          assert(await page.$eval('#createScreen .create-go', b=>b.disabled) && !(await X('soloHero()')), `C9 ${tag}: selecting a locked hero cannot begin the game`);
+          await X('S.party.unlock.heroes.bram=1; true');
+          await page.click('#createScreen .ccard[data-hero="bram"]');
+          assert(await page.$eval('#createScreen .ccard[data-hero="bram"]', b=>b.dataset.state==='coming-soon' && b.textContent.includes('Coming soon')) && await page.$eval('#createScreen .create-go',b=>b.disabled), `C9 ${tag}: route-complete Bram shows Coming soon and cannot be picked without a kit`);
+          const fit = await page.$eval('#createScreen', b=>b.scrollWidth<=b.clientWidth+1);
+          assert(fit, `C9 ${tag}: the complete new-game registry fits the viewport width`);
+          await page.click('#createScreen .ccard[data-hero="wren"]');
+          await page.click('#createScreen .create-go');
+          await page.waitForSelector('#createScreen',{state:'detached'});
+          await X('delete S.party.unlock.heroes.bram; S.maxZone=10; S.zone=1; S.L=7; S.xp=3; S.mats.wood=[80,0,0,0,0]; S.gold=42; S.camp.open=true; S.camp.b.hearth=2; setTab("world"); setView("world","camp"); ui(true); true');
+          await page.waitForSelector('#sec-solo-hero .sp-card');
+          assert(await page.locator('#sec-solo-hero .sp-card').count()===32 && await page.$eval('#sec-solo-hero .sp-card[data-hero="bram"]',b=>b.dataset.state==='locked' && !b.disabled && b.textContent.includes('80 grade-1 wood')), `C9 ${tag}: camp shows the same registry and a ready quest hand-in`);
+          await page.click('#sec-solo-hero .sp-card[data-hero="bram"]');
+          assert(await X('S.mats.wood[0]===80 && !S.party.unlock.heroes.bram && soloHero()==="wren"'), `C9 ${tag}: the first unlock press asks for a second tap without charging`);
+          await page.click('#sec-solo-hero .sp-card[data-hero="bram"]');
+          assert(await X('S.mats.wood[0]===0 && heroUnlocked("bram") && soloHero()==="wren"') && await page.$eval('#sec-solo-hero .sp-card[data-hero="bram"]', b=>b.dataset.state==='coming-soon' && b.disabled && b.textContent.includes('Coming soon')), `C9 ${tag}: confirming pays once and shows Coming soon without switching`);
+          await page.click('#sec-solo-hero .sp-card[data-hero="tobin"]');
+          await page.click('#sec-solo-hero .sp-card[data-hero="tobin"]');
+          assert(await X('soloHero()==="tobin" && S.L===1 && S.gold===42 && soloLevels().wren.L===7'), `C9 ${tag}: an unlocked starter still switches freely and keeps each hero’s level`);
+          await page.click('#sec-solo-hero .sp-card[data-hero="wren"]');
+          await page.click('#sec-solo-hero .sp-card[data-hero="wren"]');
+          assert(await X('soloHero()==="wren" && S.L===7 && S.xp===3 && S.gold===42'), `C9 ${tag}: switching back restores the playing hero’s level and XP`);
+          const saved = await X('JSON.stringify(S.party.unlock)');
+          await X('save(); true'); await page.reload(); await page.waitForFunction(()=>!!window.__t);
+          assert(await X('JSON.stringify(S.party.unlock)')===saved && await X('heroRouteInfo("bram").state==="coming-soon"'), `C9 ${tag}: the browser reload keeps route completion without charging again`);
+          assert(!errs.length, `C9 ${tag}: registry and switch flows raise no browser errors` + (errs.length ? ': '+errs[0] : ''));
+        } finally { await ctx.close(); }
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('C9 hero registry browser crashed: '+(e.stack||e)); }
+
 
 if (section('removed systems (W2-C)')) try {
   const strip = t => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/([^:'"`\\])\/\/[^\n'"`]*$/gm, '$1');

@@ -63,7 +63,7 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
   // ---- choosing and switching ----
   soloPick = (key, opts) => {
     const h = SOLO_HEROES[key], o = opts || {};
-    if (!h || typeof chooseClass !== 'function') return false;
+    if (!h || typeof chooseClass !== 'function' || !heroCanPlay(key)) return false;
     const s = Sx(), from = s.hero, chosen = !!(S.party && S.party.chosen);
     if (from === key && chosen) return true;
     // each hero keeps its own level and XP; the lamp (gold, gear, camp, the road) is shared

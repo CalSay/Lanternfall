@@ -136,6 +136,9 @@ function validateSave(data) {
       for (const k of ['init', 'epic']) if (a[k] !== undefined && typeof a[k] !== 'boolean') fail('achievements.' + k, 'has the wrong type');
     }
     if (data.deeds && data.deeds.n && data.deeds.n.forged !== undefined) int(data.deeds.n.forged, 'deeds.n.forged');
+    // C9: optional route maps are validated before storage or feature load; missing v5 maps use defaults.
+    if (data.party && data.party.unlock !== undefined && !heroUnlockStateValid(data.party.unlock)) fail('party.unlock');
+
     for (const k of ['xp', 'embers', 'kills', 'totalKills', 'totalGold', 'gProg']) if (has(data, k)) num(data[k], k);
     if (has(data, 'name')) text(data.name, 'name');
     if (has(data, 'last')) num(data.last, 'last', 0, 864e13);
