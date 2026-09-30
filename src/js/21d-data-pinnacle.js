@@ -290,19 +290,19 @@ const PIN_REWARDS = {
 const PIN_POWERS = {
   nokneel: { id: 'nokneel', n: 'Crown of No One', boss: 'king', fits: 'hero', cls: null, p1: 0.05, p5: 0.10,
     v: { every: [20, 18, 16, 14, 12], dmg: [0.05, 0.0625, 0.075, 0.0875, 0.10], secs: [4, 4, 4, 4, 4] },
-    txt: r => `Your party ignores the first stun, bind, charm or kneel every ${PIN_POWERS.nokneel.v.every[r - 1]}s. Each one ignored gives the party +${Math.round(PIN_POWERS.nokneel.v.dmg[r - 1] * 1000) / 10}% damage for 4s.`,
+    txt: r => `You ignore the first stun, bind, charm or kneel every ${PIN_POWERS.nokneel.v.every[r - 1]}s. Each one ignored gives you +${Math.round(PIN_POWERS.nokneel.v.dmg[r - 1] * 1000) / 10}% damage for 4s.`,
     wire: 'cc' },
   lurebreak: { id: 'lurebreak', n: 'Lurebreaker\'s Hook', boss: 'lure', fits: 'hero', cls: null, p1: 0.05, p5: 0.10,
     v: { heal: [0.03, 0.0375, 0.045, 0.0525, 0.06], cd: [1, 1, 1, 1, 1] },
-    txt: r => `Every interrupt and cleanse by your party heals the party ${Math.round(PIN_POWERS.lurebreak.v.heal[r - 1] * 1000) / 10}% of max HP and takes 1s off your hero ability.`,
+    txt: r => `Every interrupt and cleanse you make heals you for ${Math.round(PIN_POWERS.lurebreak.v.heal[r - 1] * 1000) / 10}% of max HP and takes 1s off your ability cooldowns.`,
     wire: 'telegraph' },
   onehour: { id: 'onehour', n: 'One More Hour', boss: 'fire', fits: 'hero', cls: null, p1: 0.04, p5: 0.08,
     v: { hp: [0.30, 0.375, 0.45, 0.525, 0.60], secs: [5, 6, 7, 9, 10] },
-    txt: r => `Once a boss fight, when your party would fall, every member stands at ${Math.round(PIN_POWERS.onehour.v.hp[r - 1] * 1000) / 10}% HP and the boss timer gains ${PIN_POWERS.onehour.v.secs[r - 1]}s.`,
+    txt: r => `Once a boss fight, when you would fall, you stand at ${Math.round(PIN_POWERS.onehour.v.hp[r - 1] * 1000) / 10}% HP and the boss timer gains ${PIN_POWERS.onehour.v.secs[r - 1]}s.`,
     wire: 'wipe' },
   maudlamp: { id: 'maudlamp', n: 'Maud\'s Lantern', boss: 'below', fits: 'hero', cls: null, p1: 0.06, p5: 0.12,
     v: { early: [0.3, 0.35, 0.4, 0.45, 0.5], dmg: [0.02, 0.025, 0.03, 0.035, 0.04], stacks: [3, 3, 3, 3, 3], secs: [6, 6, 6, 6, 6] },
-    txt: r => `Wind-ups show ${PIN_POWERS.maudlamp.v.early[r - 1]}s earlier and your parry window grows by the same. Each parry gives the party +${Math.round(PIN_POWERS.maudlamp.v.dmg[r - 1] * 1000) / 10}% damage for 6s, up to 3 times.`,
+    txt: r => `Wind-ups show ${PIN_POWERS.maudlamp.v.early[r - 1]}s earlier and your parry window grows by the same. Each parry gives you +${Math.round(PIN_POWERS.maudlamp.v.dmg[r - 1] * 1000) / 10}% damage for 6s, up to 3 times.`,
     wire: 'parry' }
 };
 

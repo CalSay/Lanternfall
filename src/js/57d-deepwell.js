@@ -116,7 +116,7 @@ const DEEP_BOON_IDS = [];
   B('relight', 'Quick Relight', 'e', ['oil'], 1, null, 6, () => 'Floors cleared in under 6s refund double Oil');
   B('crown', 'Crown of the Deep', 'e', [], 1, null, 1, () => 'Each boss floor you clear gives a free Rare boon (pick 1 of 3)');
   B('mass', 'Critical Mass', 'e', ['crit'], 1, null, 0.5, () => 'Crits come 50% more often and deal +50%');
-  B('warband', 'Warband', 'e', ['company'], 1, null, 0.6, () => 'You deal +60%');
+  B('warband', 'War Cry', 'e', ['company'], 1, null, 0.6, () => 'You deal +60%');
   // Stage C (party combat): in the data now, in the pool once deepStageC() is true
   B('thorn', 'Thorn Plate', 'r', ['guard'], 1, null, 0.3, () => 'You reflect 30% of the damage you take', 1);
   B('iron', 'Iron Wall', 'c', ['guard'], 3, null, 0.2, k => `You have +${pc(0.2 * k)} max health`, 1);

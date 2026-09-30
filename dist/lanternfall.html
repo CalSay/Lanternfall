@@ -7442,25 +7442,25 @@ const LEG_POWERS = {
     V => `Shield Wall also taunts every foe. While it is up, you reflect ${legPc(V('reflect'))} of the damage it blocks as fire.`),
   anvil: legRow('anvil', 'Anvil of Patience', 'class', 'hero', 'warden', 0.08, 0.16, 'class', '55-party tap branch',
     { shock: legLine(0.8, 1.6), cap: legSame(5) },
-    V => `Your taps no longer strike. Each hit you take adds a Guard stack (up to ${V('cap')}). A tap at full Guard spends them all: ${legNum(V('shock'))}x your attack per stack to the whole pack.`),
+    V => `Your Attack no longer strikes. Each hit you take adds a Guard stack (up to ${V('cap')}). An Attack at full Guard spends them all: ${legNum(V('shock'))}x your attack per stack to the whole pack.`),
   banner: legRow('banner', 'Oathkeeper\'s Banner', 'class', 'hero', 'warden', 0.05, 0.10, 'mod', 'addModifier(\'party\')',
     { dmg: legLine(0.05, 0.10), armour: legSame(10) },
-    V => `For each Oath companion you field, your party deals +${legPc(V('dmg'))} damage and you gain +${V('armour')} armour.`,
+    V => `For each Oath-marked piece you wear, you deal +${legPc(V('dmg'))} damage and gain +${V('armour')} armour.`,
     { per: 'oath', pPer: true }),
   bulwark: legRow('bulwark', 'Bulwark of Hollows', 'class', 'hero', 'warden', 0.06, 0.11, 'hook', 'threat check in 59-combat',
     { less: legLine(0.20, 0.35), more: legSame(0.15) },
-    V => `While every living foe targets you, your Mid and Back allies take ${legPc(V('less'))} less damage. You take ${legPc(V('more'))} more.`),
+    V => `While every living foe targets you, you take ${legPc(V('less'))} less damage.`),
   cinder: legRow('cinder', 'Cinder Heart', 'class', 'hero', 'warden', 0.05, 0.10, 'event', 'unitHit',
     { burn: legLine(0.04, 0.08), secs: legSame(4) },
     V => `Foes that hit you burn for ${legPc(V('burn'))} of the hit each second for ${V('secs')}s. Burns on foes you taunted deal double.`),
   cadence: legRow('cadence', 'Warlord\'s Cadence', 'class', 'hero', 'warden', 0.07, 0.13, 'class', '55-party heavy hit',
     { cd: legLine(1, 2), every: legSame(4) },
-    V => `Every ${V('every')}th heavy hit takes ${legNum(V('cd'))}s off every companion's ability cooldown.`),
+    V => `Every ${V('every')}th heavy hit you take takes ${legNum(V('cd'))}s off your ability cooldowns.`),
 
   // ---------------- 3.2 Lanternmage ----------------
   kindled: legRow('kindled', 'Kindled Crown', 'class', 'hero', 'lanternmage', 0.06, 0.12, 'hook', 'burn tick hook',
     { chance: legLine(0.10, 0.20) },
-    V => `Each burn tick from a companion has a ${legPc(V('chance'))} chance to plant an Ember on its foe.`),
+    V => `Each burn tick on a foe has a ${legPc(V('chance'))} chance to plant an Ember on it.`),
   starwell: legRow('starwell', 'Starwell Lens', 'class', 'hero', 'lanternmage', 0.07, 0.14, 'class', '55-party Flare',
     { pulse: legLine(0.40, 0.50), pulses: legSame(3), cd: legSame(3) },
     V => `Lantern Flare fires in ${V('pulses')} pulses of ${legPc(V('pulse'))} each. Each pulse that kills takes ${V('cd')}s off Flare's cooldown.`),
@@ -7472,11 +7472,11 @@ const LEG_POWERS = {
     V => `Lantern Flare deals +${legPc(V('flare'))}. If it kills the whole pack, its cooldown resets. If not, the cooldown is ${legPc(V('slow'))} longer.`),
   mirror: legRow('mirror', 'Mirror Flame', 'class', 'hero', 'lanternmage', 0.06, 0.12, 'hook', 'ability hit hook',
     { gap: legLine(3, 1.5) },
-    V => `When a companion's ability hits foes, each one gets an Ember. This happens at most once every ${legNum(V('gap'))}s.`,
+    V => `When your ability hits foes, each one gets an Ember. This happens at most once every ${legNum(V('gap'))}s.`,
     { down: ['gap'] }),
   wayfarer: legRow('wayfarer', 'Wayfarer\'s Lamp', 'class', 'hero', 'lanternmage', 0.05, 0.10, 'tune', 'tune:embersMax, tune:flare',
     { flare: legLine(0.06, 0.12), embers: legSame(1) },
-    V => `For each Wayfarer you field, you hold ${V('embers')} more Ember and Lantern Flare deals +${legPc(V('flare'))}.`,
+    V => `For each Wayfarer-marked piece you wear, you hold ${V('embers')} more Ember and Lantern Flare deals +${legPc(V('flare'))}.`,
     { per: 'wayfarers', pPer: true }),
 
   // ---------------- 3.3 Ranger ----------------
@@ -7485,7 +7485,7 @@ const LEG_POWERS = {
     V => `Volley fires only at your marked foe, with +${legPc(V('arrow'))} per arrow. Each crit adds ${V('markAdd')}s to the mark.`),
   contract: legRow('contract', 'Dusk Contract', 'class', 'hero', 'ranger', 0.05, 0.10, 'mod', 'addModifier(\'crit\')',
     { crit: legLine(0.04, 0.08), heal: legSame(0.01) },
-    V => `For each Dusk Company companion you field, your party gets +${legPc(V('crit'))} crit chance. Crits on marked foes heal the striker ${legPc(V('heal'))} of max HP.`,
+    V => `For each Dusk-marked piece you wear, you get +${legPc(V('crit'))} crit chance. Crits on marked foes heal you for ${legPc(V('heal'))} of max HP.`,
     { per: 'dusk', pPer: true }),
   stormfeather: legRow('stormfeather', 'Stormfeather', 'class', 'hero', 'ranger', 0.06, 0.12, 'hook', 'crit hook',
     { mult: legLine(1, 2), every: legSame(3) },
@@ -7495,7 +7495,7 @@ const LEG_POWERS = {
     V => `You attack half as fast. A hit after ${V('wait')}s without attacking deals x${legNum(V('mult'))} damage and always crits.`),
   wolves: legRow('wolves', 'Pack of Wolves', 'class', 'hero', 'ranger', 0.07, 0.14, 'class', 'mark code',
     { share: legLine(0.60, 1.00), marks: legSame(3) },
-    V => `Each striker you field marks its own target (up to ${V('marks')} marks). Your mark bonus works on all of them at ${legPc(V('share'))}.`),
+    V => `Your Mark spreads to up to ${V('marks')} foes at once. Your mark bonus works on all of them at ${legPc(V('share'))}.`),
   lastlight: legRow('lastlight', 'Last Light Arrow', 'class', 'hero', 'ranger', 0.06, 0.12, 'hook', 'hero hit hook',
     { exec: legLine(0.12, 0.20), bossAt: legSame(0.20), boss: legSame(0.5) },
     V => `Your hits kill normal foes below ${legPc(V('exec'))} HP. Bosses below ${legPc(V('bossAt'))} HP take +${legPc(V('boss'))} damage from you.`),
@@ -7503,23 +7503,23 @@ const LEG_POWERS = {
   // ---------------- 3.4 Lightkeeper ----------------
   unsleeping: legRow('unsleeping', 'Candle of the Unsleeping', 'class', 'hero', 'lightkeeper', 0.07, 0.14, 'class', '55-party Blessing',
     { dmg: legLine(0.25, 0.50), uses: legSame(3) },
-    V => `Blessings no longer fade with time. A companion spends its Blessing over its next ${V('uses')} abilities, and they deal +${legPc(V('dmg'))}.`),
+    V => `Blessings no longer fade with time. You spend your Blessing over your next ${V('uses')} abilities, and they deal +${legPc(V('dmg'))}.`),
   reliquary: legRow('reliquary', 'Saint\'s Reliquary', 'class', 'hero', 'lightkeeper', 0.05, 0.10, 'hook', 'heal hook',
     { heal: legLine(0.08, 0.15) },
-    V => `Your heals on Oath companions also bless them. For each Oath companion you field, your healing is +${legPc(V('heal'))}.`,
+    V => `Your heals also bless you. For each Oath-marked piece you wear, your healing is +${legPc(V('heal'))}.`,
     { per: 'oath', pPer: false }),
   bell: legRow('bell', 'Bell of Tolling', 'class', 'hero', 'lightkeeper', 0.06, 0.12, 'class', '55-party Hymn',
     { secs: legLine(2, 3), every: legSame(10), str: legSame(0.5) },
     V => `After Rally Hymn ends, it echoes every ${V('every')}s: a half-strength Hymn for ${legNum(V('secs'))}s.`),
   ebbflow: legRow('ebbflow', 'Ebb and Flow', 'class', 'hero', 'lightkeeper', 0.05, 0.10, 'event', 'unitHeal',
     { shield: legLine(0.10, 0.20) },
-    V => `Overhealing becomes a shield shared by the whole party, up to ${legPc(V('shield'))} of each member's max HP.`),
+    V => `Overhealing becomes a shield on you, up to ${legPc(V('shield'))} of your max HP.`),
   smite: legRow('smite', 'Smiting Light', 'class', 'hero', 'lightkeeper', 0.06, 0.12, 'hook', 'tap and hit hooks',
     { heal: legLine(0.02, 0.04), secs: legSame(4) },
-    V => `Your taps brand a foe for ${V('secs')}s. Companion hits on it heal your weakest ally for ${legPc(V('heal'))} of the damage.`),
+    V => `Your Attack brands a foe for ${V('secs')}s. Your hits on it heal you for ${legPc(V('heal'))} of the damage.`),
   hedgelight: legRow('hedgelight', 'Hedgelight Lamp', 'class', 'hero', 'lightkeeper', 0.05, 0.10, 'tune', 'tune:blessMax, 56b Common Cause',
     { cause: legLine(0.08, 0.15), bless: legSame(1) },
-    V => `For each Hedgefolk you field, you hold ${V('bless')} more Blessing and Common Cause is +${legPc(V('cause'))} stronger.`,
+    V => `For each Hedgefolk-marked piece you wear, you hold ${V('bless')} more Blessing and Common Cause is +${legPc(V('cause'))} stronger.`,
     { per: 'hedgefolk', pPer: true }),
 
   // ---------------- 3.5 Companion powers ----------------
@@ -7603,20 +7603,20 @@ function legendP(id, r) { const p = LEG_POWERS[id]; return p ? p.p1 + (p.p5 - p.
 const LEG_SETS = {
   hedgefolk: { circle: 'hedgefolk', i: 0, n: 'Hearth and Hedge', tiers: {
     2: { txt: '+5% crit damage. Common Cause is 10% stronger.', p: 0.03, fx: { keen: 0.05, cause: 0.10 } },   // ECON-A (keen: the crit damage pool): was +10% gold
-    4: { txt: 'Hedgefolk companions attack 20% faster.', p: 0.05, fx: { speed: 0.20, circle: 'hedgefolk' } },
-    6: { n: 'Common Courage', txt: 'Common companions you field get x1.35 base power.', p: 0.07, fx: { base: 1.35, rarity: 'common' } } } },
+    4: { txt: 'You attack 20% faster.', p: 0.05, fx: { speed: 0.20, circle: 'hedgefolk' } },
+    6: { n: 'Common Courage', txt: 'Common gear you wear gets x1.35 base power.', p: 0.07, fx: { base: 1.35, rarity: 'common' } } } },
   oath: { circle: 'oath', i: 1, n: 'The Old Oath', tiers: {
-    2: { txt: 'Your party takes 5% less damage.', p: 0.03, fx: { less: 0.05 } },
-    4: { txt: 'A tank\'s taunt heals it for 6% of max HP.', p: 0.03, fx: { tauntHeal: 0.06 } },
-    6: { n: 'Unbroken Oath', txt: 'Once a pack, the first ally to fall stands at 40% HP (Oath members at 80%).', p: 0.06, fx: { hp: 0.40, oathHp: 0.80 } } } },
+    2: { txt: 'You take 5% less damage.', p: 0.03, fx: { less: 0.05 } },
+    4: { txt: 'Your taunt heals you for 6% of max HP.', p: 0.03, fx: { tauntHeal: 0.06 } },
+    6: { n: 'Unbroken Oath', txt: 'Once a pack, the first time you fall you stand up again at 40% HP.', p: 0.06, fx: { hp: 0.40, oathHp: 0.80 } } } },
   dusk: { circle: 'dusk', i: 2, n: 'Night Work', tiers: {
     2: { txt: '+10% crit damage.', p: 0.03, fx: { critDmg: 0.10 } },
-    4: { txt: 'A striker\'s kill gives your party +10% damage for 4s (stacks twice).', p: 0.06, fx: { dmg: 0.10, secs: 4, stacks: 2 } },
-    6: { n: 'Contract Kept', txt: 'Each striker\'s first hit on a new pack always crits. Strikers kill normal foes below 12% HP.', p: 0.07, fx: { firstCrit: 1, exec: 0.12 } } } },
+    4: { txt: 'A kill gives you +10% damage for 4s (stacks twice).', p: 0.06, fx: { dmg: 0.10, secs: 4, stacks: 2 } },
+    6: { n: 'Contract Kept', txt: 'Your first hit on a new pack always crits. You kill normal foes below 12% HP.', p: 0.07, fx: { firstCrit: 1, exec: 0.12 } } } },
   wayfarers: { circle: 'wayfarers', i: 3, n: 'Road Songs', tiers: {
     2: { txt: 'Ability cooldowns are 6% shorter.', p: 0.03, fx: { cd: 0.06 } },
     4: { txt: 'Burns, slows and songs last 30% longer.', p: 0.04, fx: { longer: 0.30 } },
-    6: { n: 'Encore Road', txt: 'Every 12s, a random companion you field finishes its ability cooldown.', p: 0.07, fx: { every: 12 } } } }
+    6: { n: 'Encore Road', txt: 'Every 12s, one of your abilities finishes its cooldown.', p: 0.07, fx: { every: 12 } } } }
 };
 
 // ---------------- 7 the Codex page ----------------
@@ -7916,19 +7916,19 @@ const PIN_REWARDS = {
 const PIN_POWERS = {
   nokneel: { id: 'nokneel', n: 'Crown of No One', boss: 'king', fits: 'hero', cls: null, p1: 0.05, p5: 0.10,
     v: { every: [20, 18, 16, 14, 12], dmg: [0.05, 0.0625, 0.075, 0.0875, 0.10], secs: [4, 4, 4, 4, 4] },
-    txt: r => `Your party ignores the first stun, bind, charm or kneel every ${PIN_POWERS.nokneel.v.every[r - 1]}s. Each one ignored gives the party +${Math.round(PIN_POWERS.nokneel.v.dmg[r - 1] * 1000) / 10}% damage for 4s.`,
+    txt: r => `You ignore the first stun, bind, charm or kneel every ${PIN_POWERS.nokneel.v.every[r - 1]}s. Each one ignored gives you +${Math.round(PIN_POWERS.nokneel.v.dmg[r - 1] * 1000) / 10}% damage for 4s.`,
     wire: 'cc' },
   lurebreak: { id: 'lurebreak', n: 'Lurebreaker\'s Hook', boss: 'lure', fits: 'hero', cls: null, p1: 0.05, p5: 0.10,
     v: { heal: [0.03, 0.0375, 0.045, 0.0525, 0.06], cd: [1, 1, 1, 1, 1] },
-    txt: r => `Every interrupt and cleanse by your party heals the party ${Math.round(PIN_POWERS.lurebreak.v.heal[r - 1] * 1000) / 10}% of max HP and takes 1s off your hero ability.`,
+    txt: r => `Every interrupt and cleanse you make heals you for ${Math.round(PIN_POWERS.lurebreak.v.heal[r - 1] * 1000) / 10}% of max HP and takes 1s off your ability cooldowns.`,
     wire: 'telegraph' },
   onehour: { id: 'onehour', n: 'One More Hour', boss: 'fire', fits: 'hero', cls: null, p1: 0.04, p5: 0.08,
     v: { hp: [0.30, 0.375, 0.45, 0.525, 0.60], secs: [5, 6, 7, 9, 10] },
-    txt: r => `Once a boss fight, when your party would fall, every member stands at ${Math.round(PIN_POWERS.onehour.v.hp[r - 1] * 1000) / 10}% HP and the boss timer gains ${PIN_POWERS.onehour.v.secs[r - 1]}s.`,
+    txt: r => `Once a boss fight, when you would fall, you stand at ${Math.round(PIN_POWERS.onehour.v.hp[r - 1] * 1000) / 10}% HP and the boss timer gains ${PIN_POWERS.onehour.v.secs[r - 1]}s.`,
     wire: 'wipe' },
   maudlamp: { id: 'maudlamp', n: 'Maud\'s Lantern', boss: 'below', fits: 'hero', cls: null, p1: 0.06, p5: 0.12,
     v: { early: [0.3, 0.35, 0.4, 0.45, 0.5], dmg: [0.02, 0.025, 0.03, 0.035, 0.04], stacks: [3, 3, 3, 3, 3], secs: [6, 6, 6, 6, 6] },
-    txt: r => `Wind-ups show ${PIN_POWERS.maudlamp.v.early[r - 1]}s earlier and your parry window grows by the same. Each parry gives the party +${Math.round(PIN_POWERS.maudlamp.v.dmg[r - 1] * 1000) / 10}% damage for 6s, up to 3 times.`,
+    txt: r => `Wind-ups show ${PIN_POWERS.maudlamp.v.early[r - 1]}s earlier and your parry window grows by the same. Each parry gives you +${Math.round(PIN_POWERS.maudlamp.v.dmg[r - 1] * 1000) / 10}% damage for 6s, up to 3 times.`,
     wire: 'parry' }
 };
 
@@ -9896,7 +9896,7 @@ const CLASS_ABILITIES = {
     fx: [['dmg', 1.3], ['meter', 'embers', 1]], name: 'Ember',
     desc: '1.3x your attack as fire. Plants an Ember on the foe, up to 5.',
     var: { priest: { id: 'bless', name: 'Blessing', type: 'holy', coef: 1,
-      desc: 'You hit softly, but your heroes deal the damage you give up. Each tap blesses them: +20% damage for 6s, up to 3 times.' } } },
+      desc: SOLO_LOAD ? 'You hit softly, but each Attack blesses you: +20% damage for 6s, up to 3 times.' : 'You hit softly, but your heroes deal the damage you give up. Each tap blesses them: +20% damage for 6s, up to 3 times.' } } },
   flare: { id: 'flare', slot: 'ab1', cls: 'mage', cd: 25, target: 'splash', type: 'fire', tags: ['aoe'],
     fx: [['consume', 'embers'], ['dmg', 20, { perStack: 0.3 }], ['apply', 'burn', 1]], name: 'Lantern Flare',
     desc: 'A burst of 20x your attack, +30% for each Ember on the foe. Uses up the Embers and sets the whole pack burning.',
@@ -9974,7 +9974,7 @@ const EVO_NAMES = {
   trapper: { name: 'Trapper', title: 'the Pathfinder', base: 'ranger', kind: 'utility', role: 'caster', line: 'The road fights for you.' },
   warlock: { name: 'Warlock', title: 'the Shadowbinder', base: 'mage', kind: 'damage', role: 'caster', line: "Take the dark's fire. Throw it back." },
   priest: { name: 'Lightkeeper', title: 'the Given Light', base: 'mage', kind: 'utility', role: 'support', line: 'Give your light away.',
-    pitch: 'Keep them standing.', aura: SOLO_LOAD ? 'You heal 40% more and hit 40% harder.' : 'Supports in your party heal 40% more and hit 40% harder. All companions deal 25% more damage.' }
+    pitch: SOLO_LOAD ? 'Keep the light burning.' : 'Keep them standing.', aura: SOLO_LOAD ? 'You heal 40% more and hit 40% harder.' : 'Supports in your party heal 40% more and hit 40% harder. All companions deal 25% more damage.' }
 };
 // ---- S3: the six evolutions (classes-2 2.3-2.9, 3.3, 4.3) ----
 // Stats replace the base class's once proven (3.7). tankDr: the share of the tank role's damage cut it takes.
@@ -10150,6 +10150,26 @@ const EVO_DEFS = {
   }
 };
 for (const k in EVO_DEFS) Object.assign(EVO_DEFS[k], { name: EVO_NAMES[k].name, title: EVO_NAMES[k].title, base: EVO_NAMES[k].base, kind: EVO_NAMES[k].kind, role: EVO_NAMES[k].role });
+// W1-F: the subclass cards say what a lone hero gets. Each row replaces the party-era text of one path (the bullets
+// that said "best with a healer / a tank / two damage heroes", "your heroes deal...", "tap", "back line", "Middle and Back").
+// The numbers stay. Sanctuary, Deathcap and the rest keep their names. The `good` (best partners) list is not shown in solo.
+if (SOLO_LOAD) {
+  const EVO_SOLO = {
+    reaver: { bullets: { 2: 'Best when you can take hits and keep swinging.' }, active: 'Press Attack on heavy hits to keep Fury at 100, parry for free Fury, and Rend into a stagger.' },
+    warden: { aura: { name: 'Oath of the Order', text: 'You take 10% less damage.' } },
+    venomstalker: { bullets: { 2: 'Best in long fights, where Venom stays up.' } },
+    trapper: { bullets: { 2: 'Best in long fights: your traps come back.' }, idle: 'Traps lay themselves on every pack and Snare Field fires every 20s. Divers never reach you.' },
+    warlock: { bullets: { 2: 'Best on packs, where Curses jump from foe to foe.' } },
+    priest: { bullets: { 0: 'Each Attack blesses you.', 2: 'Best in long fights, where Blessing stacks.' },
+      passives: { 0: 'You hit softly, and each Attack builds your Blessing. Your hits are holy.', 1: 'Each Attack heals you and blesses you: +20% damage for 6s, up to 3 times.' } }
+  };
+  for (const k in EVO_SOLO) {
+    const e = EVO_DEFS[k], s = EVO_SOLO[k];
+    for (const i in s.bullets || {}) e.bullets[i] = s.bullets[i];
+    for (const i in s.passives || {}) e.passives[i].text = s.passives[i];
+    for (const f of ['active', 'idle', 'aura']) if (s[f] != null) e[f] = s[f];
+  }
+}
 
 // Tactics unlock order (3.6, for S7): slot 1 when Tactics arrive, slot 2 on evolving (EVO_DEFS[evo].tactics).
 const CLS_TACTICS = {
@@ -13610,6 +13630,9 @@ let legendKnown, legendEchoes, legendEchoCap, legendDrop, legendOwe, legendPayOw
         if (!has && it.lg && legendItemRank(it) > 0 && compUses(it.lg, k, pos)) { has = true; comp.push({ id: it.lg, rank: legendItemRank(it), char: k, item: it, pos }); }
       }
     }
+    // W1-F: a lone hero has no companions to field, so a circle's "members" are the pieces you wear marked with it
+    // (Oathkeeper's Banner, Dusk Contract, Wayfarer's Lamp and Hedgelight Lamp count them).
+    if (soloOn()) LEG_CIRCLES.forEach((c, i) => { members[c] = n[i]; });
     const tierOf = c => T.setTiers.filter(t => c >= t).pop() || 0;
     const order = LEG_CIRCLES.map((c, i) => i).filter(i => tierOf(n[i]) > 0).sort((a, b) => n[b] - n[a] || a - b).slice(0, T.setsActive);
     const tier = {}; for (const c of LEG_CIRCLES) tier[c] = 0;
@@ -13663,7 +13686,7 @@ let legendKnown, legendEchoes, legendEchoCap, legendDrop, legendOwe, legendPayOw
       return { on: false, why: `Your hero carries ${T.heroMax} legendary powers.`, rank };
     }
     if (p.only && who !== p.only) return { on: false, why: `Works for ${charName(p.only)} only.`, rank };
-    if (who === 'hero' || !who) return { on: false, why: p.fits === 'trinket' ? 'A companion must wear it.' : `A ${ROLE_STATS[p.fits].n.toLowerCase()} companion must wear it.`, rank };
+    if (who === 'hero' || !who) return { on: false, why: soloOn() ? 'This power does not work for your hero.' : p.fits === 'trinket' ? 'A companion must wear it.' : `A ${ROLE_STATS[p.fits].n.toLowerCase()} companion must wear it.`, rank };
     if (p.fits !== 'trinket' && ROSTER[who] && ROSTER[who].role !== p.fits) return { on: false, why: `Works on a ${ROLE_STATS[p.fits].n.toLowerCase()} only.`, rank };
     if (a.comp.some(x => x.item === it)) return { on: true, why: '', rank };
     if (!fieldKeys().includes(who)) return { on: false, why: `${charName(who)} is not in the party.`, rank };
@@ -13893,7 +13916,7 @@ let legendKnown, legendEchoes, legendEchoCap, legendDrop, legendOwe, legendPayOw
   legendMarkWhy = (kind, t, circle) => {
     const i = circleIdx(circle);
     if (i < 0) return 'Pick a circle.';
-    if (!markable(kind)) return 'A mark goes on a class piece, a companion weapon or a Trinket.';
+    if (!markable(kind)) return soloOn() ? 'A mark goes on a class weapon, off-hand, helm or body piece.' : 'A mark goes on a class piece, a companion weapon or a Trinket.';
     if ((L().sig[i] | 0) < LEG_COST.mark.sigil) return `Needs 1 ${circleName(i)} Sigil`;
     if (pearlHave(t) < LEG_COST.mark.pearls) return pearlWhy(t, LEG_COST.mark.pearls);
     return '';
@@ -21195,7 +21218,7 @@ const DEEP_BOON_IDS = [];
   B('relight', 'Quick Relight', 'e', ['oil'], 1, null, 6, () => 'Floors cleared in under 6s refund double Oil');
   B('crown', 'Crown of the Deep', 'e', [], 1, null, 1, () => 'Each boss floor you clear gives a free Rare boon (pick 1 of 3)');
   B('mass', 'Critical Mass', 'e', ['crit'], 1, null, 0.5, () => 'Crits come 50% more often and deal +50%');
-  B('warband', 'Warband', 'e', ['company'], 1, null, 0.6, () => 'You deal +60%');
+  B('warband', 'War Cry', 'e', ['company'], 1, null, 0.6, () => 'You deal +60%');
   // Stage C (party combat): in the data now, in the pool once deepStageC() is true
   B('thorn', 'Thorn Plate', 'r', ['guard'], 1, null, 0.3, () => 'You reflect 30% of the damage you take', 1);
   B('iron', 'Iron Wall', 'c', ['guard'], 3, null, 0.2, k => `You have +${pc(0.2 * k)} max health`, 1);
@@ -37491,13 +37514,13 @@ var classEvoUI;
         txt.append(el('h2', null, ev.name.toUpperCase()), el('div', 'evo-title', ev.title), el('div', 'pitch', `"${ev.pitch}"`));
         top.append(figure(cur), txt);
         const ul = el('ul', 'evo-bul'); for (const t of ev.bullets) ul.append(el('li', null, t));
-        const good = el('p', 'evo-good'); good.append(el('b', null, 'Good with: '));
+        const good = el('p', 'evo-good'); if (!soloOn()) good.append(el('b', null, 'Good with: '));   // W1-F: no partners in solo
         const list = ev.good.slice().sort((a, b) => owned(b) - owned(a)).slice(0, 5);
-        list.forEach((id, i) => { good.append(el('span', owned(id) ? 'own' : 'not', heroName(id))); if (i < list.length - 1) good.append(document.createTextNode(', ')); });
+        if (!soloOn()) list.forEach((id, i) => { good.append(el('span', owned(id) ? 'own' : 'not', heroName(id))); if (i < list.length - 1) good.append(document.createTextNode(', ')); });
         body.append(top, ul,
           el('p', 'evo-line', `New ability: ${ab.name}. ${ab.desc}`),
-          el('p', 'evo-line', `Role: ${ROLE_NAME[ev.role]}, in the ${HOME_NAME[CLASS_DEFS[ev.base].home]}. ${ev.line.name}: ${ev.line.text}`),
-          good, el('p', 'evo-line', `Beats: ${ev.beats.join(', ')}`),
+          el('p', 'evo-line', `Role: ${ROLE_NAME[ev.role]}${soloOn() ? '' : ', in the ' + HOME_NAME[CLASS_DEFS[ev.base].home]}. ${ev.line.name}: ${ev.line.text}`),
+          ...(soloOn() ? [] : [good]), el('p', 'evo-line', `Beats: ${ev.beats.join(', ')}`),
           el('p', 'note', `Idle: ${ev.idle} Active: ${ev.active}`));
         putText(go, `Become a ${ev.name}`);
         confirm.hidden = true;
@@ -38691,7 +38714,7 @@ let craftUI = null;
       b.addEventListener('click', () => act(() => f(wr.who, wr.pos)) && renderItem());
       body.append(b);
     }
-    if (d && d.comp && (sheet.mode === 'give' || !giveToggle)) body.append(giveList(it));
+    if (d && d.comp && !soloOn() && (sheet.mode === 'give' || !giveToggle)) body.append(giveList(it));   // W1-F: no companions to give to in solo
 
     // ---- upgrade ----
     const upBox = el('div', 'cf-up-box');

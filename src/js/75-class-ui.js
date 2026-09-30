@@ -202,13 +202,13 @@ var classEvoUI;
         txt.append(el('h2', null, ev.name.toUpperCase()), el('div', 'evo-title', ev.title), el('div', 'pitch', `"${ev.pitch}"`));
         top.append(figure(cur), txt);
         const ul = el('ul', 'evo-bul'); for (const t of ev.bullets) ul.append(el('li', null, t));
-        const good = el('p', 'evo-good'); good.append(el('b', null, 'Good with: '));
+        const good = el('p', 'evo-good'); if (!soloOn()) good.append(el('b', null, 'Good with: '));   // W1-F: no partners in solo
         const list = ev.good.slice().sort((a, b) => owned(b) - owned(a)).slice(0, 5);
-        list.forEach((id, i) => { good.append(el('span', owned(id) ? 'own' : 'not', heroName(id))); if (i < list.length - 1) good.append(document.createTextNode(', ')); });
+        if (!soloOn()) list.forEach((id, i) => { good.append(el('span', owned(id) ? 'own' : 'not', heroName(id))); if (i < list.length - 1) good.append(document.createTextNode(', ')); });
         body.append(top, ul,
           el('p', 'evo-line', `New ability: ${ab.name}. ${ab.desc}`),
-          el('p', 'evo-line', `Role: ${ROLE_NAME[ev.role]}, in the ${HOME_NAME[CLASS_DEFS[ev.base].home]}. ${ev.line.name}: ${ev.line.text}`),
-          good, el('p', 'evo-line', `Beats: ${ev.beats.join(', ')}`),
+          el('p', 'evo-line', `Role: ${ROLE_NAME[ev.role]}${soloOn() ? '' : ', in the ' + HOME_NAME[CLASS_DEFS[ev.base].home]}. ${ev.line.name}: ${ev.line.text}`),
+          ...(soloOn() ? [] : [good]), el('p', 'evo-line', `Beats: ${ev.beats.join(', ')}`),
           el('p', 'note', `Idle: ${ev.idle} Active: ${ev.active}`));
         putText(go, `Become a ${ev.name}`);
         confirm.hidden = true;
