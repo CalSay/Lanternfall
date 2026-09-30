@@ -10,6 +10,7 @@
     b_book: ['............', '.2111111112.', '.2155555512.', '.2111111112.', '.2157777512.', '.2111111112.', '.2155555512.', '.2111111112.', '.2157777512.', '.2111111112.', '.2222222222.', '............'],
     b_map: ['............', '.6666666666.', '.6555555556.', '.6515555156.', '.6551551556.', '.6555115556.', '.6555515516.', '.6551555556.', '.6515555756.', '.6555555556.', '.6666666666.', '............'],
     b_bell: ['.....66.....', '....1111....', '...111111...', '...115111...', '...115111...', '..11111111..', '..11111111..', '.1111111111.', '.2222222222.', '.....77.....', '............', '............'],
+    b_tent: ['............', '.....11.....', '....1111....', '...111111...', '..11111111..', '.1111111111.', '111111111111', '122222222221', '126666666621', '126666666621', '122222222221', '111111111111'],
     // Deepwell camp decorations (S.deep.cos), shown on the Hearth card
     dc_crystal: ['............', '.....1......', '....151.....', '....151.....', '.1..151..1..', '151.151.151.', '151.151.151.', '1511151.151.', '1511151.1511', '111111111111', '.2222222222.', '............'],
     dc_moss: ['............', '............', '....3.......', '...111..3...', '..11311111..', '.1111113111.', '.1311111111.', '111111131111', '266666666662', '.2666666662.', '..22222222..', '............'],
@@ -28,6 +29,7 @@
     loom: () => iconURL(...craftIcon('robe', 2)),
     ench: () => iconURL('orb', '#B58CFF', { 7: '#6E6878' }),
     tavern: () => iconURL('mug', '#8C6A43', { 1: '#6B4A2E', 7: '#F2C14E', 5: '#EFE6D6' }),
+    tent: () => iconURL('b_tent', '#C59C68', { 2: '#8C6A43', 6: '#3A3444' }),
     library: () => iconURL('b_book', '#5A7AB8', { 5: '#EFE6D6' }),
     shrine: () => iconURL('b_bell', '#9FD8C9', { 6: '#6B4A2E' }),
     store: () => STORE_ICON()   // 75-store-ui (H3)
@@ -45,7 +47,7 @@
   const famIcon = (f, t) => ['ore', 'wood', 'ess'].includes(f) ? matIcon(f, t) : iconURL(...craftIcon('mat_' + f, t));
   const trophyIcon = i => iconURL(...craftIcon('tro_' + TYPES[i === 'any' ? 5 : i].key, 1));
   const shortName = (f, t) => MAT[f].short[t - 1];
-  const bname = (id, to) => id === 'hearth' ? `Hearth ${to}` : `${CAMP_B[id].n} Lv ${to}`;
+  const bname = (id, to) => id === 'hearth' ? `Hearth ${to}` : id === 'tent' ? `Tent ${to}` : `${CAMP_B[id].n} Lv ${to}`;
   const left = x => Math.max(0, x.end - Date.now()) / 1000;
   // "2h", "1h 30m", "3m", "45s": no zero parts.
   const dur = secs => { secs = Math.ceil(secs); const h = Math.floor(secs / 3600), m = Math.floor(secs % 3600 / 60); return secs < 60 ? secs + 's' : h ? (m ? `${h}h ${m}m` : `${h}h`) : `${m}m`; };
@@ -114,8 +116,9 @@
         if (pend) setTxt(cancel, isArmed('c:' + id) ? `Tap again: refund ${pend.start ? 'half' : 'all'} of the cost` : 'Cancel build');
         if (!pend && !done) {
           const verb = c.queue ? 'Queue' : 'Build', armd = isArmed('b:' + id);
-          if (quick) { setTxt(quick.q, `Lv ${c.to} · ${dur(c.dur / 1000)}`); setTxt(quick.p, armd ? 'Sure?' : verb); putAttr(go, 'aria-label', armd ? `Tap again to ${verb.toLowerCase()} Lv ${c.to}` : `${verb} Lv ${c.to}, ${dur(c.dur / 1000)}`); }
-          else setTxt(go, armd ? `Tap again to ${verb.toLowerCase()} (${dur(c.dur / 1000)})` : `${verb} ${id === 'hearth' ? 'Hearth' : 'Lv'} ${c.to} · ${dur(c.dur / 1000)}`);
+          const target = id === 'tent' ? `Tent ${c.to}` : `${id === 'hearth' ? 'Hearth' : 'Lv'} ${c.to}`;
+          if (quick) { setTxt(quick.q, `${target} · ${dur(c.dur / 1000)}`); setTxt(quick.p, armd ? 'Sure?' : verb); putAttr(go, 'aria-label', armd ? `Tap again to ${verb.toLowerCase()} ${target}` : `${verb} ${target}, ${dur(c.dur / 1000)}`); }
+          else setTxt(go, armd ? `Tap again to ${verb.toLowerCase()} (${dur(c.dur / 1000)})` : `${verb} ${target} · ${dur(c.dur / 1000)}`);
           putDisabled(go, !c.ok); putToggle(go, 'armed', armd);
         }
         const w = pend || done ? '' : c.ok ? (c.queue ? 'Your builder is busy. This starts when the current build ends.' : '') : (c.miss ? '' : c.why);
@@ -265,12 +268,12 @@
     return { w, row, hit, dz, qb, lvl, line, body, table, costs, extra, tm, act, fxSig: '', exSig: '' };
   }
   function effectsTable(k, id, l) {
-    const max = CAMP_B[id].max, sig = id + l + max;
+    const max = CAMP_B[id].max, sig = id + l + max + (id === 'tent' ? String(CAMP_B.tent.available(l + 1)) : '');
     if (k.fxSig === sig) return; k.fxSig = sig; k.table.textContent = '';
     const now = el('div', 'cb-fxrow now'), nxt = el('div', 'cb-fxrow next');
-    now.append(el('b', null, l ? `Lv ${l}` : 'Now'), el('span', null, campEffects(id, l).join(' · ')));
+    now.append(el('b', null, id === 'tent' ? `${l} Tents` : l ? `Lv ${l}` : 'Now'), el('span', null, campEffects(id, l).join(' · ')));
     k.table.append(now);
-    if (l < max) { nxt.append(el('b', null, `Lv ${l + 1}`), el('span', null, campEffects(id, l + 1).join(' · '))); k.table.append(nxt); }
+    if (l < max && (id !== 'tent' || CAMP_B.tent.available(l + 1))) { nxt.append(el('b', null, id === 'tent' ? `Tent ${l + 1}` : `Lv ${l + 1}`), el('span', null, campEffects(id, l + 1).join(' · '))); k.table.append(nxt); }
   }
   // Extra content: Tavern rumours, Shrine Blessings hint, actions other systems add (Open Codex, Expeditions).
   function extras(k, id) {
@@ -306,26 +309,29 @@
       if (sig !== listSig) { listSig = sig; listBox.textContent = ''; for (const id of ids) { if (!cards.has(id)) cards.set(id, card(id)); listBox.append(cards.get(id).w); } }
       for (const id of ids) {
         const k = cards.get(id), l = campLevel(id), max = CAMP_B[id].max, c = campCan(id), pend = campPending(id), isOpen = openCards.has(id);
-        setTxt(k.lvl, l ? `Lv ${l}/${max}` : 'Not built');
+        const supported = id !== 'tent' || l >= max || CAMP_B.tent.available(l + 1);
+        setTxt(k.lvl, id === 'tent' ? `${l}/${max} built` : l ? `Lv ${l}/${max}` : 'Not built');
         // The row's one line: what is happening now, or what stops the next level.
-        const line = pend ? `Building Lv ${pend.to} · ${pend.start ? dur(left(pend)) : 'queued'}`
+        const line = pend ? `Building ${bname(id, pend.to)} · ${pend.start ? dur(left(pend)) : 'queued'}`
           : c.max ? 'Fully built'
-          : c.need ? `Lv ${c.to} needs ${c.need.hearth ? 'Hearth ' + c.need.hearth : 'zone ' + c.need.zone}`
+          : !supported ? 'More tents open in later regions.'
+          : c.need ? `${id === 'tent' ? 'Tent' : 'Lv'} ${c.to} needs ${c.need.hearth ? 'Hearth ' + c.need.hearth : 'zone ' + c.need.zone}`
           : c.ok ? (c.queue ? 'Ready to queue' : 'Ready to build')
-          : c.miss ? `Lv ${c.to}: ${(o => `${o.have} of ${o.all} costs ready`)(costCount(c.cost))}` : c.why;
+          : c.miss ? `${id === 'tent' ? 'Tent' : 'Lv'} ${c.to}: ${(o => `${o.have} of ${o.all} costs ready`)(costCount(c.cost))}` : c.why;
         setTxt(k.line, line);
-        putHidden(k.qb, !!pend || !!c.max || !!c.need);
+        putHidden(k.qb, !!pend || !!c.max || !!c.need || !supported);
         putToggle(k.w, 'locked', !!c.need && !l);
         putToggle(k.w, 'busy', !!pend);
         putToggle(k.w, 'can', c.ok && !pend);
         putToggle(k.w, 'new', S.camp.news.some(x => x.id === id));
         if (k.dz.open !== isOpen) { k.dz.open = isOpen; putToggle(k.w, 'open', isOpen); putAttr(k.hit, 'aria-expanded', String(isOpen)); }   // opened from elsewhere (campGoto)
         putHidden(k.body, !isOpen);
-        if (!isOpen) { if (!pend && !c.max && !c.need) k.act.set(c, pend); continue; }
+        if (!isOpen) { if (!pend && !c.max && !c.need && supported) k.act.set(c, pend); continue; }
         effectsTable(k, id, l);
-        putHidden(k.costs, !!pend || !!c.max || !c.cost);
+        putHidden(k.costs, !!pend || !!c.max || !c.cost || !supported);
         if (!k.costs.hidden) chips(k.costs, c.cost);
-        k.tm.set(pend); k.act.set(c, pend);
+        k.tm.set(pend); if (supported) k.act.set(c, pend);
+        putHidden(k.act.el, !supported);
         extras(k, id);
       }
     }
