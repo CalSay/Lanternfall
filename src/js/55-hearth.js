@@ -133,6 +133,7 @@ let hearthCold, hearthLit, hearthScene, hearthCan, hearthLight, hearthPlotOpen, 
     loom: () => S.maxZone >= HEARTH_TUNE.zones.loom,
     ench: () => S.maxZone >= HEARTH_TUNE.zones.ench,
     tavern: () => S.maxZone >= HEARTH_TUNE.zones.tavern,
+    tent: () => lv('hearth') >= 2 && lv('tavern') >= 1,
     // p13, a decor plot (AC5, achievements.md 6): the Trophy Wall opens at 250 achievement points, warm or cold
     wall: () => { try { return deeds.wallStage() >= 1; } catch (e) { return false; } }
   };

@@ -1,32 +1,16 @@
 // 57f-hands: Hands, the townsfolk who gather for the camp (docs/design/hearth-and-hands.md 5, task N1).
 // Data: 21f-data-hands.js. CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
 //
-// Rules (spec 5; section 9 decisions accepted, wave-log D7):
-//   - Hands live AT CAMP (owner, 2026-09-28): they sleep in the Bunkhouse, a camp building (57-camp
-//     CAMP_B.bunk; its plot opens after the Tavern), and apply at the Tavern. Hands open at Hearth 2
-//     with the Tavern and the Bunkhouse built. Tam, Hesketh's nephew, arrives free then. Hands
-//     replace the never-built bench jobs.
-//   - Applicants: one every 8 h of wall clock (6 h from Tavern Lv 3), at most 3 waiting; the first
-//     arrives with Tam. A turned-away or hired applicant frees the spot; when the board was full, the
-//     next one waits a full period from then. Rarity odds with pity (HANDS_TUNE.pity, S.hands.pity).
-//   - Beds (data-driven, HANDS_TUNE.beds by Bunkhouse level): 1-5, +1 at Hearth 8, 6 at most; later
-//     systems add beds with addBonus('handBeds', fn) and raise the cap with addBonus('handBedsMax', fn)
-//     (a late-game rise; K13's refining Hands). No upkeep. Hire price
-//     econHireFee(rarity) (55-econ, ECON-A; was foesGold(S.maxZone, HANDS_TUNE.hireFoes[rarity])).
-//   - A shift: a Hand and an open node. At send the length, the rate (units an hour) and a seed are
-//     fixed and stored in the Hand's job, like an expedition, so reload and offline pay the same.
-//     Rate = the hero's live rate at that node (skill, tool, mastery, gear; NO Tonic, Omen, meal,
-//     Glint, home ground or other yield modifiers) x share x traits x (own skill ? 1 : 0.5)
-//     x toolHandsMult(skill). Share = base by rarity + 0.25% a level above 1 (10% .. 24.75%).
-//   - When the shift ends the Hand walks home: the haul goes into the Hand's pack, which unloads into
-//     the Storehouse line by line as PARCELS (stashAdd 'parcel': each line whole, or it waits), oldest
-//     pack first, checked each second and on the away phase. A Hand with a pack cannot be sent.
-//     Hands never emit 'harvest': no skill XP, no tool mastery, no rare finds from the hero's tool, no
-//     Journal or achievement gathered units. Level XP = shift hours, paid at the end (Lv 1-20).
-//   - Timers are wall-clock timestamps: shifts end and applicants arrive while the game is closed.
+// C1 rules (gatherers-2 and economy-2): Tents cap the crew; two come free when Hands
+// open at Hearth 2 with a Tavern. Random applicants are Common-Epic; supported named
+// routes add permanent Legendary star applicants outside the three random places.
+// A send prepays one or two four-hour shifts. Rate, fees and seeds are fixed at send.
+// Between shifts: unload parcels, rest 30 minutes, then leave; a waiting pack cancels
+// and refunds unstarted shifts. Recall pays time worked, keeps the active fee and
+// refunds unstarted shifts. Old v5 jobs retain their saved duration/rate/seed.
 //
 // API (N2 art and camp life, N3 UI, K12 Kitchen, 58-deeds, tools/sim.mjs):
-//   read  handsOpen() -> bool                     Hands are live (Hearth 2, Tavern, Bunkhouse, HANDS_TUNE.on)
+//   read  handsOpen() -> bool                     Hands are live (Hearth 2, Tavern, HANDS_TUNE.on)
 //         handsBeds() -> n, handsBedsAt(bunkLv, hearthLv) -> n (with the bonuses), handsFree() -> free beds
 //         handsBunkFx(lv), handsTavernFx(lv) -> effect lines (57-camp campEffects; plain functions, hoisted)
 //         handsList() -> [hand]  (live save records: read only; see the Save line for fields)
@@ -34,13 +18,13 @@
 //         handsBoard() -> [{ i, app, cost, free, rate, kind, t, afford, can: { ok, why } }]  applicants
 //         handsNextApp() -> ms until the next applicant (null when the board is full or Hands are closed)
 //         handsHireCost(app) -> gold
-//         handsStatus(h | id) -> { st: 'out' | 'back' | 'pack' | 'camp', label, left (s), pct, kind, t, spot }
+//         handsStatus(h | id) -> { st: 'out' | 'rest' | 'back' | 'pack' | 'camp', label, left (s), pct, kind, t, spot }
 //              spot (at camp): 'store' | 'bench' | 'kitchen' | 'fire' (work spot by day, the fire from dusk)
 //         handsShare(h), handsShiftSecs(h, kind, now), handsRate(h, kind, t, now) -> units an hour now
 //         handsPreview(h, kind, t) -> { rate, secs, haul, own, why }   what a shift there would bring
 //         handsSuggest(h) -> { kind, t, why }   the node the next camp build is short of (own skill first)
 //         handsNodes(h) -> [{ kind, t, rate, own, full }]   every node the Hand can work now
-//         handsCanSend(id, kind, t) -> { ok, why }
+//         handsCanSend(id, kind, t, {shifts}?) -> { ok, why, fee, shifts }
 //         handsHeroRate(kind, t) -> the hero's reference rate (units an hour)
 //         handsTraits(h) -> [{ id, n, txt, camp, calling }]
 //         handsName(h), handsRarName(h), handsSkillName(h), handsNodeName(kind, t)
@@ -50,7 +34,8 @@
 //         campClock(now) -> { phase: 'dawn' | 'day' | 'dusk' | 'night', h }   the device clock (spec 6.3)
 //         handsStats() -> { hired, hours, units, stories, legends, byRar, out, home }
 //   act   handsHire(i) -> hand | null, handsTurnAway(i) -> bool, handsLetGo(id) -> bool
-//         handsSend(id, kind, t) -> job | null, handsSendAgain() -> number sent
+//         handsSend(id, kind, t, { shifts: 1|2 }) -> job | null, handsSendAgain(id?) -> number sent
+//         handsRecall(id) -> bool; handsQueueMax() -> 2; handsSendAgainPreview(id?) -> { count, ready, fee }; registerHandsRoute(key, probe) -> remove()
 //         handsEmpty(id) -> units thrown away (the UI asks first: "Throw away 120 Oak Log?")
 //         handsStoryHeard(id) -> level of the story told | 0 (N2, when the player hears it)
 //         handsTalk(id) -> talk counter after the tap (N2 rotates lines with it)
@@ -68,8 +53,11 @@
 // Save: registerState('hands', { v, seq, list, board: { apps, next }, pity: [rare, epic, legendary],
 //   tam, log, hired, hrs, got, met, heard, open, rs }). rs: the Hands' own random stream (applicants, seeds).
 //   list[i] = { id, n, r, sk, tr: [trait ids], cl (calling | null), key (named Hand | null), lv, xp (hours
-//     into the level), job, pack: [[fam, t, n]] ('troph', i, n for a Trophy), last: { kind, t } | null,
+//     into the level), job, pack: [[fam, t, n]] ('troph', i, n for a Trophy), last: { kind, t, shifts } | null (old saves default to one shift),
 //     talk, st (stories heard), hired (ms), hrs (hours worked), got (units delivered), back (ms home) }
+//   job adds fee, secs, kp/lp/physic (snapshot finds), queue:[{fee,seed}], q/qFee (remaining), linked.
+//   start in the future is a paid rest; linked=false starts the overlap window during catch-up.
+//   routes: { nan: true } preserves route milestones; other primary probes register without new save fields.
 //   job = { kind, t, start, end, rate, seed, bo: [[pct, from, to, tag]] } (bo: Friendly and Felling Song
 //     windows, fixed when a partner is sent), or null.
 //   board.apps[i] = { id, n, r, sk, tr, cl, key, at, free }; board.next: ms of the next arrival (0 = not open yet).
@@ -80,12 +68,12 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
   handsHeroRate, handsTraits, handsName, handsRarName, handsSkillName, handsNodeName, handsLevelNeed, handsStoryDue,
   handsCampTrait, handsMealMult, handsMealBonus, campClock, handsStats, handsHire, handsTurnAway, handsLetGo,
   handsSend, handsSendAgain, handsEmpty, handsStoryHeard, handsTalk, handsCatchUp, handsExclude, handsRollApp,
-  handsTents, handsFee, handsUnpaid, handsRandomApps, handsLegendSpots;
+  handsTents, handsFee, handsUnpaid, handsRandomApps, handsLegendSpots, handsRecall, handsQueueMax, registerHandsRoute, handsSendAgainPreview;
 
 {
   const T = HANDS_TUNE;
   registerState('hands', { v: 1, seq: 0, list: [], board: { apps: [], next: 0 }, pity: [0, 0, 0], tam: 0, log: [],
-    hired: 0, hrs: 0, got: 0, met: {}, heard: 0, open: 0, rs: 0 });
+    hired: 0, hrs: 0, got: 0, met: {}, heard: 0, open: 0, rs: 0, routes: {} });
   const H = () => S.hands;
   const now = () => Date.now();
   const HOUR = 3600e3;
@@ -119,6 +107,7 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
     if (!Array.isArray(h.pity) || h.pity.length < 3) h.pity = [0, 0, 0];
     if (!Array.isArray(h.log)) h.log = [];
     if (!h.met || typeof h.met !== 'object') h.met = {};
+    if (!h.routes || typeof h.routes !== 'object') h.routes = {};
     h.list = h.list.filter(x => x && typeof x === 'object' && x.id);
     for (const x of h.list) {
       if (!HANDS_RAR.includes(x.r)) x.r = 'common';
@@ -128,6 +117,8 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
       if (!(x.xp >= 0)) x.xp = 0;
       if (x.job && !(x.job.end > 0 && x.job.rate >= 0 && x.job.kind)) x.job = null;
       if (x.job && !Array.isArray(x.job.bo)) x.job.bo = [];
+      if (x.job && !Array.isArray(x.job.queue)) x.job.queue = [];
+      if (x.job) syncQueue(x.job);
       for (const k of ['talk', 'st', 'hrs', 'got', 'back', 'sent']) if (!(x[k] >= 0)) x[k] = 0;
       if (x.last === undefined) x.last = null;
       if (x.cl === undefined) x.cl = null;
@@ -146,12 +137,20 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
   handsOpen = () => !!T.on && !!S.camp && safe(() => campOpen(), false) && lvOf('hearth') >= T.openHearth && lvOf('tavern') >= 1;   // W1-E: Tents (2 free), not the Bunkhouse (economy-2 5)
   handsBedsAt = (bunk, hearth) => !(bunk >= 1) ? 0 : Math.max(0, Math.min(T.bedMax + Math.floor(bonus('handBedsMax')),
     (T.beds[Math.min(T.beds.length - 1, bunk)] || 0) + (hearth >= T.hallHearth ? T.hallBeds : 0) + Math.floor(bonus('handBeds'))));
-  handsBeds = () => handsBedsAt(lvOf('bunk'), lvOf('hearth'));
-  // H1's plot rule (cold saves): the Bunkhouse plot opens once the Tavern stands.
-  if (typeof HEARTH_PLOT === 'object' && HEARTH_PLOT) HEARTH_PLOT.bunk = () => lvOf('tavern') >= 1;
-  // W1-E: the cap is Tents (economy-2 5): 2 free with the Tavern at Hearth 2; a built Bunkhouse still adds room
-  // until the Tent build (CAMP_B.tent) lands.
-  handsTents = () => handsOpen() ? Math.max(ECON.tentFree, handsBeds()) : 0;
+  // Preserve purchased v5 Bunkhouse capacity; new saves and new builds use Tents.
+  const ensureTents = () => {
+    if (!handsOpen()) return;
+    const b = S.camp.b;
+    if (!(b.tent >= ECON.tentFree)) b.tent = Math.min(ECON.tentMax, Math.max(ECON.tentFree,
+      (T.beds[Math.min(T.beds.length - 1, lvOf('bunk'))] || 0) + (lvOf('bunk') && lvOf('hearth') >= T.hallHearth ? T.hallBeds : 0), H().list.length));
+  };
+  handsTents = () => {
+    ensureTents();
+    return handsOpen() ? Math.max(0, Math.min(ECON.tentMax + Math.floor(bonus('handBedsMax')),
+      lvOf('tent') + Math.floor(bonus('handBeds')))) : 0;
+  };
+  handsBeds = handsTents;
+  on('campBuilt', e => { if (e.id === 'bunk' && handsOpen()) { ensureTents(); S.camp.b.tent = Math.max(lvOf('tent'), Math.min(ECON.tentMax, (T.beds[Math.min(T.beds.length - 1, e.lv)] || 0) + (lvOf('hearth') >= T.hallHearth ? T.hallBeds : 0))); } });
   handsFree = () => Math.max(0, handsTents() - H().list.length);
   handsList = () => H().list;
   handsGet = id => H().list.find(x => x.id === id) || null;
@@ -213,16 +212,8 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
     const sk = skillOf(kind), tm = typeof toolHandsMult === 'function' ? toolHandsMult(sk) : 1;
     return handsHeroRate(kind, t) * handsShare(h) * yieldOf(h, kind, t, at) * (own(h, kind) ? 1 : T.offSkill) * tm;
   };
-  handsShiftSecs = (h, kind, at = now()) => {
-    let hrs = T.shiftH[rIdx(h.r)] + T.lvShiftMins / 60 * Math.floor(Math.min(T.lvMax, h.lv || 1) / T.lvShiftEvery), mult = 1;
-    for (const id of h.tr || []) {
-      const x = TR[id]; if (!x) continue;
-      if (x.clock && !inClock(x.clock, at)) continue;
-      if (x.sh) hrs += x.sh;
-      if (x.sx) mult *= x.sx;
-    }
-    return Math.round(hrs * mult * 3600);
-  };
+  handsShiftSecs = () => ECON.shiftH * 3600;
+  handsQueueMax = () => ECON.queueMax;
   const keenP = h => h.cl === 'deep' ? T.deepFind : has(h, 'keen') ? T.keen : 0;
   const luckyP = h => h.cl === 'quick' ? T.quickLucky : has(h, 'lucky') ? T.lucky : 0;
 
@@ -281,6 +272,7 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
   handsStatus = hh => {
     const h = typeof hh === 'string' ? handsGet(hh) : hh; if (!h) return null;
     const t = now(), j = h.job;
+    if (j && j.start > t) return { st: 'rest', label: 'Resting before the next shift', left: (j.start - t) / 1000, pct: 0, kind: j.kind, t: j.t, spot: 'fire' };
     if (j && j.end > t) return { st: 'out', label: `Out at the ${nodeName(j.kind, j.t)}`, left: (j.end - t) / 1000, pct: Math.min(1, Math.max(0, (t - j.start) / Math.max(1, j.end - j.start))), kind: j.kind, t: j.t, spot: null };
     if (j) return { st: 'back', label: 'Walking home', left: 0, pct: 1, kind: j.kind, t: j.t, spot: 'road' };
     if (h.pack.length) return { st: 'pack', label: 'Pack waits by the Storehouse', left: 0, pct: 1, kind: h.last && h.last.kind, t: h.last && h.last.t, spot: 'store' };
@@ -289,7 +281,7 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
     const where = { store: 'By the Storehouse door', bench: 'At the woodpile', kitchen: 'At the Kitchen table', fire: 'At the fire' }[spot];
     return { st: 'camp', label: where, left: 0, pct: 0, kind: null, t: null, spot };
   };
-  const atCamp = h => !h.job;
+  const atCamp = (h, at = now()) => !h.job || h.job.start > at || h.job.end <= at;
   handsCampTrait = id => T.on && H().list.some(h => atCamp(h) && has(h, id));
   handsMealMult = () => T.on && (handsCampTrait('cook') || H().list.some(h => h.cl === 'hearthcook')) ? 1 + T.cook : 1;
   handsMealBonus = () => T.on && H().list.some(h => h.cl === 'hearthcook') ? T.ashbyMeal : 0;
@@ -302,36 +294,36 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
   const randApps = () => H().board.apps.filter(a => !a.key);
   handsRandomApps = () => randApps();
   handsLegendSpots = () => HANDS_LEGENDS.map(x => {
-    const h = handsGet(x.key), a = H().board.apps.find(o => o.key === x.key);
-    return { key: x.key, n: x.n, sk: x.sk, about: x.about, state: h ? 'hired' : a ? 'board' : H().met[x.key] ? 'board' : 'away', app: a || null };
+    const h = H().list.find(o => o.key === x.key), a = H().board.apps.find(o => o.key === x.key), route = HANDS_ROUTES[x.key] || {};
+    return { key: x.key, n: x.n, sk: x.sk, about: x.about, hint: route.hint || '', state: h ? 'hired' : a ? 'board' : route.live === false ? 'later' : 'away', app: a || null };
   });
   const usedNames = () => new Set(H().list.map(x => x.n).concat(H().board.apps.map(x => x.n)));
   const usedKeys = () => new Set(H().list.map(x => x.key).concat(H().board.apps.map(x => x.key)).filter(Boolean));
   function rollRarity() {
     const p = H().pity;
-    let r;
-    if (p[2] >= T.pity[2] - 1) r = 4;
-    else if (p[1] >= T.pity[1] - 1) r = rnd() < T.odds[4] / (T.odds[3] + T.odds[4]) ? 4 : 3;
-    else if (p[0] >= T.pity[0] - 1) { const w = T.odds.slice(2), s = w.reduce((a, b) => a + b, 0); let x = rnd() * s; r = 2; for (let i = 0; i < w.length; i++) { if (x < w[i]) { r = 2 + i; break; } x -= w[i]; } }
-    else { let x = rnd(); r = 0; for (let i = 0; i < T.odds.length; i++) { if (x < T.odds[i]) { r = i; break; } x -= T.odds[i]; r = i; } }
-    return r;
+    if (p[1] >= T.pity[1] - 1) return 3;
+    const low = p[0] >= T.pity[0] - 1 ? 2 : 0;
+    let x = rnd() * T.odds.slice(low, 4).reduce((a, b) => a + b, 0);
+    for (let i = low; i < 4; i++) { x -= T.odds[i]; if (x < 0) return i; }
+    return 3;
   }
-  const notePity = r => { const p = H().pity; for (let i = 0; i < 3; i++) p[i] = r >= i + 2 ? 0 : p[i] + 1; };
   function makeApp(at) {
-    const h = H();
-    let r = rollRarity(), leg = null;
-    if (r === 4) {
-      const used = usedKeys(), free = HANDS_LEGENDS.filter(x => !used.has(x.key));
-      if (free.length) leg = pick(free); else r = 3;
+    const h = H(), r = rollRarity();
+    for (let i = 0; i < 2; i++) h.pity[i] = r >= i + 2 ? 0 : h.pity[i] + 1;
+    h.pity[2]++;
+    // Word on the Road advances a documented fallback, never a missing profession.
+    if (h.pity[2] >= T.pity[2]) {
+      const next = HANDS_LEGENDS.filter(x => HANDS_ROUTES[x.key]?.fallback && !usedKeys().has(x.key) && !h.met[x.key])
+        .sort((a, b) => HANDS_ROUTES[a.key].fallback - HANDS_ROUTES[b.key].fallback)[0];
+      if (next) { arriveNamed(next, at, true); h.pity[2] = 0; }
     }
-    notePity(r);
-    const rar = HANDS_RAR[r], nTr = T.traits[r];
-    const pool = HANDS_TRAITS.map(x => x.id), tr = [];
-    while (tr.length < nTr && pool.length) tr.push(pool.splice(Math.floor(rnd() * pool.length), 1)[0]);
-    let n = leg ? leg.n : '';
-    if (!n) { const used = usedNames(); for (let g = 0; g < 20; g++) { n = `${pick(HANDS_FIRST)} ${pick(HANDS_TRADE)}`; if (!used.has(n)) break; } }
+    // Keep retired duration traits readable in old saves, but do not roll new no-op or penalty-only traits.
+    const pool = HANDS_TRAITS.filter(x => !['strong', 'owl', 'wander'].includes(x.id)).map(x => x.id), tr = [];
+    while (tr.length < T.traits[r] && pool.length) tr.push(pool.splice(Math.floor(rnd() * pool.length), 1)[0]);
+    let n = ''; const used = usedNames();
+    for (let g = 0; g < 20; g++) { n = pick(HANDS_FIRST) + ' ' + pick(HANDS_TRADE); if (!used.has(n)) break; }
     h.seq = (h.seq | 0) + 1;
-    return { id: 'h' + h.seq, n, r: rar, sk: leg ? leg.sk : pick(HANDS_SKILLS), tr, cl: leg ? leg.cl : null, key: leg ? leg.key : null, at, free: 0 };
+    return { id: 'h' + h.seq, n, r: HANDS_RAR[r], sk: pick(HANDS_SKILLS), tr, cl: null, key: null, at, free: 0 };
   }
   handsRollApp = () => makeApp(now());
   const addApp = (app, quiet) => { H().board.apps.push(app); emit('handsArrive', { app, quiet: !!quiet }); };
@@ -349,7 +341,7 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
     return H().board.apps.map((app, i) => {
       const cost = handsHireCost(app), sg = handsSuggest(app) || { kind: 'wood', t: 1 };
       const why = !handsOpen() ? 'Hands are not open yet.' : !free ? `All ${handsTents()} tents are taken. Let a gatherer go to make room.` : S.gold < cost ? `Needs ${fmt(cost)} gold.` : '';
-      return { i, app, cost, free: !!app.free, rate: handsRate(Object.assign({ lv: 1 }, app), sg.kind, sg.t), kind: sg.kind, t: sg.t, afford: S.gold >= cost, can: { ok: !why, why } };
+      return { i, app, cost, star: !!app.key, free: !!app.free, rate: handsRate(Object.assign({ lv: 1 }, app), sg.kind, sg.t), kind: sg.kind, t: sg.t, afford: S.gold >= cost, can: { ok: !why, why } };
     });
   };
   handsNextApp = () => handsOpen() && H().board.next && randApps().length < T.maxWait ? Math.max(0, H().board.next - now()) : null;
@@ -364,7 +356,7 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
     const wasFull = randApps().length >= T.maxWait;
     h.board.apps.splice(i, 1); freed(wasFull);
     const x = newHand(app, now());
-    if (app.ret) { for (const k of ['lv', 'xp', 'hrs', 'got', 'st', 'talk']) if (app.ret[k] >= 0) x[k] = app.ret[k]; x.last = app.ret.last || null; }
+    if (app.ret) { for (const k of ['lv', 'xp', 'hrs', 'got', 'st', 'talk', 'sent']) if (app.ret[k] >= 0) x[k] = app.ret[k]; x.last = app.ret.last || null; }
     h.list.push(x); h.hired = (h.hired | 0) + 1;
     if (x.key && !h.met[x.key]) h.met[x.key] = now();
     emit('handsHire', { id: x.id, r: x.r, free: !!app.free });
@@ -372,7 +364,7 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
     return x;
   };
   handsTurnAway = i => {
-    const h = H(), app = h.board.apps[i]; if (!app) return false;
+    const h = H(), app = h.board.apps[i]; if (!app || app.key) return false;
     const wasFull = randApps().length >= T.maxWait;
     h.board.apps.splice(i, 1); freed(wasFull);
     emit('handsTurnAway', { app }); save();
@@ -383,7 +375,7 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
     h.list.splice(h.list.indexOf(x), 1);
     // A named gatherer goes back to the Tavern's star spot with their level; hiring them again is free.
     if (x.key) h.board.apps.push({ id: x.id, n: x.n, r: x.r, sk: x.sk, tr: x.tr.slice(), cl: x.cl || null, key: x.key, at: now(), free: 1,
-      ret: { lv: x.lv, xp: x.xp, hrs: x.hrs, got: x.got, st: x.st, talk: x.talk, last: x.last } });
+      ret: { lv: x.lv, xp: x.xp, hrs: x.hrs, got: x.got, st: x.st, talk: x.talk, last: x.last, sent: x.sent } });
     emit('handsLetGo', { id, n: x.n }); save();
     return true;
   };
@@ -391,97 +383,152 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
   // ---------------- shifts ----------------
   // W1-E (economy-2 4.2): a shift's fee is paid at send. Grade = the node's tier. Tam's first shifts are free.
   handsFee = (x, kind, t) => !x ? 0 : x.key === 'tam' && (x.sent | 0) < ECON.tamFree ? 0 : econShiftFee(t, x.lv || 1);
-  handsCanSend = (id, kind, t) => {
-    const x = handsGet(id);
-    if (!T.on || !x) return { ok: false, why: 'No such Hand.' };
-    if (x.job) return { ok: false, why: `${x.n} is out.` };
-    if (x.pack.length) return { ok: false, why: `${x.n}'s pack waits for room in the Storehouse.` };
-    if (!CRAFT_NODES[kind] || !(t >= 1 && t <= 5)) return { ok: false, why: 'Pick a node.' };
-    if (!open(kind, t)) return { ok: false, why: 'Your hero has not opened this node yet.' };
-    const fee = handsFee(x, kind, t);
-    if (S.gold < fee) return { ok: false, why: `Needs ${fmt(fee - Math.floor(S.gold))} more gold for the shift.` };
-    return { ok: true, why: '' };
+  const queueFees = (x, kind, t, count) => Array.from({ length: count }, (_, i) => x.key === 'tam' && (x.sent | 0) + i < ECON.tamFree ? 0 : econShiftFee(t, x.lv || 1));
+  handsCanSend = (id, kind, t, opts = {}) => {
+    const x = handsGet(id), shifts = opts.shifts === undefined ? 1 : opts.shifts;
+    const no = why => ({ ok: false, why, fee: 0, shifts });
+    if (!T.on || !x || !handsOpen()) return no('Gatherers are not available.');
+    if (!Number.isInteger(shifts) || shifts < 1 || shifts > handsQueueMax()) return no('Choose one or two shifts.');
+    if (x.job) return no(x.n + ' is already on a job.');
+    if (x.pack.length) return no(x.n + "'s pack waits for room in the Storehouse.");
+    if (!CRAFT_NODES[kind] || !Number.isInteger(t) || !(t >= 1 && t <= 5)) return no('Pick a node.');
+    if (!open(kind, t)) return no('Your hero has not opened this node yet.');
+    const fee = queueFees(x, kind, t, shifts).reduce((a, b) => a + b, 0);
+    return { ok: S.gold >= fee, why: S.gold >= fee ? '' : 'Needs ' + fmt(fee - Math.floor(S.gold)) + ' more gold for the shifts.', fee, shifts };
   };
   // Idle at camp and too poor for the next shift: they wait, they never leave.
   handsUnpaid = x => {
     if (!x || x.job || x.pack.length) return false;
     const w = (x.last && open(x.last.kind, x.last.t) ? x.last : handsSuggest(x));
-    return !!w && S.gold < handsFee(x, w.kind, w.t);
+    return !!w && S.gold < queueFees(x, w.kind, w.t, w.shifts || 1).reduce((a, b) => a + b, 0);
   };
-  const out = (x, t) => !!x.job && x.job.end > t;
-  handsSend = (id, kind, t) => {
-    if (!handsCanSend(id, kind, t).ok) return null;
-    const x = handsGet(id), at = now(), secs = handsShiftSecs(x, kind, at);
-    const job = { kind, t, start: at, end: at + secs * 1000, rate: handsRate(x, kind, t, at), seed: (rnd() * 2147483647) | 0, bo: [] };
-    // Friendly: one partner, both get the bonus for the time they are out together.
+  const out = (x, t) => !!x.job && x.job.start <= t && x.job.end > t;
+  function syncQueue(j) { j.q = (j.queue || []).length; j.qFee = (j.queue || []).reduce((a, q) => a + q.fee, 0); }
+  function linkJob(x, job) {
+    const at = job.start;
     if (has(x, 'friendly')) {
-      const y = H().list.find(o => o !== x && has(o, 'friendly') && out(o, at) && !o.job.bo.some(b => b[3] === 'f'));
-      if (y) { const e = Math.min(job.end, y.job.end); job.bo.push([T.friendly, at, e, 'f']); y.job.bo.push([T.friendly, at, e, 'f']); }
+      const y = H().list.find(o => o !== x && has(o, 'friendly') && o.job && o.job.linked !== false && out(o, at) && !o.job.bo.some(b => b[3] === 'f' && b[2] > at));
+      if (y) { const e = Math.min(job.end, y.job.end); job.bo.push([T.friendly, at, e, 'f', y.id]); y.job.bo.push([T.friendly, at, e, 'f', x.id]); }
     }
-    // Felling Song (Old Bracken): other Hands at a Woodcutting node, while Bracken is out.
     const wood = k => skillOf(k) === 'wood';
-    if (x.cl === 'felling') { for (const o of H().list) if (o !== x && out(o, at) && wood(o.job.kind)) o.job.bo.push([T.felling, at, Math.min(job.end, o.job.end), 'b']); }
-    else if (wood(kind)) { const b = H().list.find(o => o !== x && o.cl === 'felling' && out(o, at)); if (b) job.bo.push([T.felling, at, Math.min(job.end, b.job.end), 'b']); }
-    const fee = handsFee(x, kind, t);
-    if (fee > 0) { S.gold -= fee; econSpend('shift', fee); }
-    job.fee = fee; x.sent = (x.sent | 0) + 1;
-    x.job = job; x.last = { kind, t };
-    emit('handsSend', { id, kind, t, end: job.end, secs });
-    save();
-    return job;
-  };
-  handsSendAgain = () => {
-    let n = 0;
-    for (const x of H().list) {
-      if (x.job || x.pack.length) continue;
-      const w = x.last && open(x.last.kind, x.last.t) ? x.last : handsSuggest(x);
-      if (w && handsSend(x.id, w.kind, w.t)) n++;
+    if (x.cl === 'felling') {
+      for (const o of H().list) if (o !== x && o.job && o.job.linked !== false && out(o, at) && wood(o.job.kind)) o.job.bo.push([T.felling, at, Math.min(job.end, o.job.end), 'b', x.id]);
+    } else if (wood(job.kind)) {
+      const b = H().list.find(o => o !== x && o.cl === 'felling' && o.job && o.job.linked !== false && out(o, at));
+      if (b) job.bo.push([T.felling, at, Math.min(job.end, b.job.end), 'b', b.id]);
     }
+    job.linked = true;
+  }
+  handsSend = (id, kind, t, opts = {}) => {
+    const can = handsCanSend(id, kind, t, opts); if (!can.ok) return null;
+    const x = handsGet(id), at = now(), secs = handsShiftSecs(x, kind, at);
+    const fees = queueFees(x, kind, t, can.shifts), seeds = fees.map(() => (rnd() * 2147483647) | 0);
+    const job = { kind, t, shifts: can.shifts, start: at, end: at + secs * 1000, secs, rate: handsRate(x, kind, t, at), seed: seeds[0], bo: [], fee: fees[0],
+      kp: keenP(x), lp: luckyP(x), physic: x.cl === 'physic', queue: fees.slice(1).map((fee, i) => ({ fee, seed: seeds[i + 1] })) };
+    syncQueue(job); linkJob(x, job);
+    if (can.fee > 0) { S.gold -= can.fee; econSpend('shift', can.fee); }
+    x.sent = (x.sent | 0) + can.shifts;
+    x.job = job; x.last = { kind, t, shifts: can.shifts };
+    emit('handsSend', { id, kind, t, end: job.end, secs, shifts: can.shifts }); save(); return job;
+  };
+  function againPlan(id) {
+    const ready = [];
+    for (const x of H().list) {
+      if ((id !== undefined && x.id !== id) || x.job || x.pack.length) continue;
+      const w = x.last && open(x.last.kind, x.last.t) ? x.last : handsSuggest(x);
+      if (!w) continue;
+      const shifts = Math.max(1, Math.min(handsQueueMax(), w.shifts | 0 || 1));
+      const can = handsCanSend(x.id, w.kind, w.t, { shifts });
+      // Insufficient funds is the only reason to keep an unavailable row in the quote.
+      if (!can.ok && !(can.fee > S.gold)) continue;
+      ready.push({ id: x.id, kind: w.kind, t: w.t, shifts, fee: can.fee });
+    }
+    ready.sort((a, b) => a.fee - b.fee);
+    let gold = S.gold;
+    const selected = ready.filter(x => { if (gold < x.fee) return false; gold -= x.fee; return true; });
+    return { ready: ready.length, selected, fee: selected.reduce((sum, x) => sum + x.fee, 0) };
+  }
+  handsSendAgainPreview = id => { const p = againPlan(id); return { count: p.selected.length, ready: p.ready, fee: p.fee }; };
+  handsSendAgain = id => {
+    let n = 0;
+    for (const x of againPlan(id).selected) if (handsSend(x.id, x.kind, x.t, { shifts: x.shifts })) n++;
     return n;
   };
   // The haul of a finished job, from its stored numbers only (same seed, same haul).
   const payOf = (x, j) => {
-    const len = Math.max(1, j.end - j.start), hrs = len / HOUR, r = rng(j.seed | 0);
+    const len = Math.max(0, j.end - j.start), hrs = len / HOUR, r = rng(j.seed | 0);
     let f = 1;
-    for (const [p, a, b] of j.bo || []) f += p * Math.max(0, Math.min(b, j.end) - Math.max(a, j.start)) / len;
+    for (const [p, a, b] of j.bo || []) f += p * Math.max(0, Math.min(b, j.end) - Math.max(a, j.start)) / Math.max(1, len);
     const u = j.rate * hrs * f;
     let n = Math.floor(u) + (r() < u % 1 ? 1 : 0);
     const lines = [];
-    const kp = keenP(x);
+    const kp = j.kp === undefined ? keenP(x) : j.kp;
     if (kp > 0 && n > 0) {
       const e = n * kp, up = Math.floor(e) + (r() < e % 1 ? 1 : 0);
       if (up > 0) { if (j.t < 5) { n -= up; lines.push([j.kind, j.t + 1, up]); } else lines.push([j.kind, 5, up]); }
     }
     if (n > 0) lines.unshift([j.kind, j.t, n]);
-    if (x.cl === 'physic' && u > 0) { const e = u * T.physic, m = Math.floor(e) + (r() < e % 1 ? 1 : 0); if (m > 0) lines.push(['herb', j.t, m]); }
-    const lp = luckyP(x);
+    if ((j.physic === undefined ? x.cl === 'physic' : j.physic) && u > 0) { const e = u * T.physic, m = Math.floor(e) + (r() < e % 1 ? 1 : 0); if (m > 0) lines.push(['herb', j.t, m]); }
+    const lp = (j.lp === undefined ? luckyP(x) : j.lp) * Math.min(1, len / Math.max(1, (j.secs || len / 1000) * 1000));
     if (lp > 0 && r() < lp) lines.push(['troph', Math.floor(r() * CRAFT_TROPHIES.length), 1]);
     return { lines, hrs };
   };
-  const gainXp = (x, hrs, quiet) => {
+  const gainXp = (x, hrs, quiet, at) => {
     let m = has(x, 'old') ? 1 + T.oldHand : 1;
-    if (H().list.some(o => o !== x && atCamp(o) && has(o, 'chatter'))) m *= 1 + T.chatter;
+    if (H().list.some(o => o !== x && atCamp(o, at) && has(o, 'chatter'))) m *= 1 + T.chatter;
     x.xp += hrs * m;
     while (x.lv < T.lvMax && x.xp >= handsLevelNeed(x.lv)) { x.xp -= handsLevelNeed(x.lv); x.lv++; emit('handsLevel', { id: x.id, lv: x.lv, quiet: !!quiet }); }
     if (x.lv >= T.lvMax) x.xp = 0;
   };
-  // Shifts that ended by t come home (oldest first); then every pack unloads what fits.
-  handsCatchUp = (t = now(), away = false) => {
-    const h = H(), back = [];
-    const done = h.list.filter(x => x.job && x.job.end <= t).sort((a, b) => a.job.end - b.job.end);
-    for (const x of done) {
-      const j = x.job, { lines, hrs } = payOf(x, j);
-      x.job = null; x.back = j.end; x.last = { kind: j.kind, t: j.t };
-      x.pack.push(...lines.map(l => l.slice()));
-      x.hrs += hrs; h.hrs = (h.hrs || 0) + hrs;
-      gainXp(x, hrs, away);
-      const ev = { id: x.id, n: x.n, kind: j.kind, t: j.t, lines, away: !!away, at: j.end };
-      h.log.push({ id: x.id, n: x.n, kind: j.kind, t: j.t, lines, at: j.end }); if (h.log.length > T.logMax) h.log.splice(0, h.log.length - T.logMax);
-      emit('handsBack', ev);
-      back.push(ev);
+  function refund(x, entries, reason, away) {
+    const fee = entries.reduce((a, q) => a + q.fee, 0);
+    if (!entries.length) return;
+    S.gold += fee; econSpend('shift', -fee); x.sent = Math.max(0, (x.sent | 0) - entries.length);
+    const ev = { id: x.id, n: x.n, fee, shifts: entries.length, reason, away: !!away };
+    emit('handsRefund', ev); if (away) awayRefunds.push(ev);
+  }
+  function finishJob(x, away) {
+    const h = H(), j = x.job, { lines, hrs } = payOf(x, j);
+    x.job = null; x.back = j.end; x.last = { kind: j.kind, t: j.t, shifts: j.shifts || 1 };
+    x.pack.push(...lines.map(l => l.slice())); x.hrs += hrs; h.hrs = (h.hrs || 0) + hrs;
+    gainXp(x, hrs, away, j.end);
+    const ev = { id: x.id, n: x.n, kind: j.kind, t: j.t, lines, away: !!away, at: j.end };
+    h.log.push({ id: x.id, n: x.n, kind: j.kind, t: j.t, lines, at: j.end });
+    if (h.log.length > T.logMax) h.log.splice(0, h.log.length - T.logMax);
+    emit('handsBack', ev); unload();
+    const queue = j.queue || [];
+    if (queue.length) {
+      if (x.pack.length) refund(x, queue, 'the Storehouse is full', away);
+      else {
+        const next = queue[0], start = j.end + 30 * 60e3, secs = j.secs || (j.end - j.start) / 1000;
+        x.job = { ...j, start, end: start + secs * 1000, secs, seed: next.seed, fee: next.fee, bo: [], linked: false, queue: queue.slice(1) }; syncQueue(x.job);
+      }
     }
-    unload();
-    return back;
+    return ev;
+  }
+  // Starts and returns in time order keep overlap, XP and pack order identical live and away.
+  handsCatchUp = (t = now(), away = false) => {
+    const back = [];
+    for (;;) {
+      const due = H().list.filter(x => x.job && (x.job.linked === false ? x.job.start : x.job.end) <= t)
+        .sort((a, b) => (a.job.linked === false ? a.job.start : a.job.end) - (b.job.linked === false ? b.job.start : b.job.end))[0];
+      if (!due) break;
+      if (due.job.linked === false) linkJob(due, due.job); else back.push(finishJob(due, away));
+    }
+    unload(); return back;
+  };
+  handsRecall = id => {
+    const x = handsGet(id); if (!x || !x.job) return false;
+    const at = now(); handsCatchUp(at, false); const j = x.job; if (!j) return false;
+    const waiting = j.start > at, queue = (j.queue || []).slice();
+    if (waiting) queue.unshift({ fee: j.fee || 0 });
+    refund(x, queue, 'you recalled them', false); j.queue = []; syncQueue(j);
+    for (const other of H().list) if (other !== x && other.job) for (const b of other.job.bo || []) {
+      if (b[4] === id || (!b[4] && ((b[3] === 'b' && x.cl === 'felling') || (b[3] === 'f' && has(x, 'friendly'))))) b[2] = Math.min(b[2], at);
+    }
+    if (waiting) x.job = null;
+    else { j.secs = j.secs || (j.end - j.start) / 1000; j.end = at; finishJob(x, false); }
+    emit('handsRecall', { id }); save(); return true;
   };
   function unload() {
     const h = H();
@@ -526,6 +573,7 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
   // ---------------- opening: Tam and the first applicant ----------------
   function openHands(quiet) {
     const h = H(), t = now();
+    ensureTents();
     h.open = h.open || t;
     if (!h.tam && handsFree() > 0) {
       h.tam = 1;
@@ -538,16 +586,28 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
     if (!h.board.next) { h.board.next = t + period(); if (randApps().length < T.maxWait) addApp(makeApp(t), quiet); }
     emit('handsOpen', { quiet: !!quiet });
   }
-  // Later Hands (HANDS_LATER: the Hollises, off until LORE8b): a free applicant, once each.
-  function later() {
-    for (const x of HANDS_LATER) {
-      if (!x.live || H().met[x.key] || usedKeys().has(x.key) || !safe(() => x.when(), false)) continue;
-      if (randApps().length >= T.maxWait) return;
-      H().seq = (H().seq | 0) + 1;
-      addApp({ id: 'h' + H().seq, n: x.n, r: x.r, sk: x.sk, tr: x.tr.slice(), cl: null, key: x.key, at: now(), free: 1 }, false);
-      H().met[x.key] = now();
+  const routeProbes = {};
+  registerHandsRoute = (key, probe) => { routeProbes[key] = probe; return () => { if (routeProbes[key] === probe) delete routeProbes[key]; }; };
+  function arriveNamed(x, at, quiet) {
+    if (usedKeys().has(x.key)) return false;
+    H().seq = (H().seq | 0) + 1;
+    addApp({ id: 'h' + H().seq, n: x.n, r: 'legendary', sk: x.sk, tr: (x.tr || ['steady', 'old']).slice(), cl: x.cl || null, key: x.key, at, free: 0 }, quiet);
+    H().met[x.key] = at; return true;
+  }
+  function later(quiet = false) {
+    for (const x of HANDS_LEGENDS) {
+      const r = HANDS_ROUTES[x.key];
+      if (!r || r.live === false || usedKeys().has(x.key)) continue;
+      const primary = H().routes[x.key] || safe(() => routeProbes[x.key] && routeProbes[x.key](), false)
+        || (x.key === 'loy' && lvOf('loom') >= 2) || (x.key === 'ashby' && lvOf('kitchen') >= 1);
+      if (primary || (r.fallback && S.maxZone >= r.fallback) || H().met[x.key]) arriveNamed(x, now(), quiet);
     }
   }
+  on('kill', e => {
+    if (e && e.mob && e.mob.boss && String(e.mob.key || '').replace(/\d+$/, '') === 'golem') {
+      if (!H().routes) H().routes = {}; H().routes.nan = true;
+    }
+  });
 
   // ---------------- each second, and the away phase ----------------
   const backText = e => `${e.n} is back from the ${nodeName(e.kind, e.t)}` + (e.lines.length ? `: +${e.lines.map(lineText).join(', +')}.` : '.');
@@ -564,25 +624,27 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
     const t = now();
     const got = arrivals(t, q);
     if (got && !q) toast(got > 1 ? `${got} applicants are waiting at the Tavern.` : 'An applicant is waiting at the Tavern.', 'good', icon, 'low');
-    later();
+    later(q);
     const back = handsCatchUp(t, false);
     for (const e of back) toast(waits(e.id) ? `${backText(e)} The pack waits by the Storehouse.` : backText(e), 'good', e.lines[0] && e.lines[0][0] !== 'troph' ? { mat: [e.lines[0][0], e.lines[0][1]] } : icon, 'low');
     if (back.length) save();
   });
-  let awayBack = [], awayApps = 0;
+  let awayBack = [], awayApps = 0, awayRefunds = [];
   on('away', r => {
     init();
-    awayBack = []; awayApps = 0;
+    awayBack = []; awayApps = 0; awayRefunds = [];
     if (!T.on) return;
     if (!handsOpen()) return;
     if (!H().tam || !H().board.next) openHands(true);
     const t = now();
     awayApps = arrivals(t, true);
-    later();
+    later(true);
     awayBack = handsCatchUp(t, true);
   });
   registerAwayLine(() => {
     const res = [];
+    for (const e of awayRefunds) res.push({ icon, group: 'Hands', txt: e.n + ': ' + e.shifts + ' queued shift(s) refunded because ' + e.reason + ' (' + fmt(e.fee) + ' gold).' });
+    awayRefunds = [];
     for (const e of awayBack) res.push({ icon: e.lines[0] && e.lines[0][0] !== 'troph' ? { mat: [e.lines[0][0], e.lines[0][1]] } : icon, group: 'Hands', txt: backText(e),
       sub: waits(e.id) ? `${e.n}'s pack waits: Storehouse full.` : '', go: () => emit('campGoto', { tab: 'world', view: 'tav', sel: '#sec-hands' }) });
     if (awayApps) res.push({ icon, group: 'Hands', txt: awayApps > 1 ? `${awayApps} applicants are waiting at the Tavern.` : 'An applicant is waiting at the Tavern.', go: () => emit('campGoto', { tab: 'world', view: 'tav', sel: '#sec-hands' }) });
