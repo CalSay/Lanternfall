@@ -6029,16 +6029,34 @@ const CRAFT_FAMILY = {
   ess: { src: 'fight', skill: null, row: null, from: 'Fighting only. Every foe can drop it, and Marsh Wraiths drop extra.' }
 };
 
+// C24: mechanics are opt-in for checks. Public access also waits for the whole vetted art pack.
+const HUNT_TUNE = { on: false };
+const huntingOn = () => HUNT_TUNE.on === true;
+const huntingArtReady = () => false; // Replace only after owner approval and complete pack integration.
+const huntingVisible = () => huntingOn() && huntingArtReady();
+const HUNT_BEASTS = [
+  { key: 'enraged-boar', name: 'Enraged Boar', plural: 'Enraged Boars' },
+  { key: 'bristleback-wolf', name: 'Bristleback Wolf', plural: 'Bristleback Wolves' },
+  { key: 'fen-lizard', name: 'Fen Lizard', plural: 'Fen Lizards' }
+];
+// Render data only: no existing scene, sprite, weapon pose or effect is a fallback.
+const huntingRenderData = t => HUNT_BEASTS[t - 1] ? { beast: HUNT_BEASTS[t - 1].key, tool: 'spear', scene: null, sprite: null, effects: null } : null;
+const craftNodeEnabled = (kind, t = 1) => kind !== 'hide' || (huntingOn() && Number.isInteger(t) && t >= 1 && t <= HUNT_BEASTS.length);
+const craftNodeVisible = (kind, t = 1) => craftNodeEnabled(kind, t) && (kind !== 'hide' || huntingVisible());
+const craftKindVisible = kind => kind !== 'spear' || huntingVisible();
+
 // ================= gathering nodes =================
-Object.assign(SKILL, { forage: 'Foraging', bench: 'Woodcraft', loom: 'Tailoring', ench: 'Enchanting' });
+Object.assign(SKILL, { forage: 'Foraging', hunt: 'Hunting', bench: 'Woodcraft', loom: 'Tailoring', ench: 'Enchanting' });
 Object.assign(NODE_NAMES, {
+  hide: HUNT_BEASTS.map(x => x.name).concat(null, null), // grades 4–5 reserved, never offered
   crystal: ['Quartz Geode', 'Jasper Pocket', 'Amethyst Grotto', 'Pearl Rift', 'Aquamarine Heart'],
   fibre: ['Hemp Field', 'Linen Patch', 'Wool Meadow', 'Cotton Web', 'Silk Hollow'],
   herb: ['Sage Bed', 'Yarrow Patch', 'Foxglove Bank', 'Sea Lavender Ring', 'Mandrake Pool']
 });
-Object.assign(NODE_SKILL, { crystal: 'mine', fibre: 'forage', herb: 'forage' });
+Object.assign(NODE_SKILL, { crystal: 'mine', fibre: 'forage', herb: 'forage', hide: 'hunt' });
 // time: x base seconds per unit; xp: x nodeXp(t). Unlock levels stay NODE_REQ for every row.
 const CRAFT_NODES = {
+  hide: { skill: 'hunt', row: 'Hunting Grounds', tool: 'spear', time: 4.5, xp: 5, units: 5 },
   ore: { skill: 'mine', row: 'Veins', tool: 'pick', time: 1, xp: 1 },
   crystal: { skill: 'mine', row: 'Geodes', tool: 'pick', time: 1.25, xp: 1.25 },
   wood: { skill: 'wood', row: 'Groves', tool: 'axe', time: 1, xp: 1 },
@@ -6068,10 +6086,10 @@ const CRAFT_XP = {
 // ================= positions =================
 const CRAFT_POS = {
   weapon: { n: 'Weapon' }, off: { n: 'Off-hand' }, helm: { n: 'Head' }, body: { n: 'Body' },
-  charm: { n: 'Charm' }, pick: { n: 'Pickaxe' }, axe: { n: 'Woodaxe' }, sickle: { n: 'Sickle' },
+  charm: { n: 'Charm' }, pick: { n: 'Pickaxe' }, axe: { n: 'Woodaxe' }, sickle: { n: 'Sickle' }, spear: { n: 'Hunting Spear' },
   wpn: { n: 'Weapon', comp: true }, trk: { n: 'Trinket', comp: true }
 };
-const CRAFT_HERO_POS = ['weapon', 'off', 'helm', 'body', 'charm', 'pick', 'axe', 'sickle'];
+const CRAFT_HERO_POS = ['weapon', 'off', 'helm', 'body', 'charm', 'pick', 'axe', 'sickle', 'spear'];
 const CRAFT_COMP_POS = ['wpn', 'trk'];
 
 // ================= stats =================
@@ -6103,6 +6121,9 @@ const CRAFT_STATS = {
   woodDbl: { n: 'Double logs', f: '{v}% double logs', dp: 0, live: true, gear: 'woodDbl' },
   forageSpd: { n: 'Foraging speed', f: '+{v}% foraging speed', live: true },
   forageDbl: { n: 'Double yield', f: '{v}% double fibre and herbs', dp: 0, live: true },
+  huntSpd: { n: 'Hunting speed', f: '+{v}% hunting speed', live: true },
+  huntDbl: { n: 'Double Hide', f: '{v}% double Hide', dp: 0, live: true },
+  huntFind: { n: 'Rare find', f: '{v}% rare find', dp: 1, live: true },
   gather: { n: 'Gathering speed', f: '+{v}% gathering speed', live: true, gear: 'gather' },
   // H2 (hearth-and-hands.md 2.2): each unit gathered may bring 1 of the next tier (55-tools.js).
   oreFind: { n: 'Rare find', f: '{v}% rare find', dp: 1, live: true },
@@ -6145,6 +6166,7 @@ const CRAFT_KINDS = {
   pick: { noun: 'Pickaxe', pos: 'pick', st: 'bench', rec: RECIPE.pick, pre: 'ore', base: [['mineSpd', 0.6], ['oreDbl', 0.1, 60], ['oreFind', 0.012, 8]], tool: true, ic: 'pick' },
   axe: { noun: 'Woodaxe', pos: 'axe', st: 'bench', rec: RECIPE.axe, pre: 'ore', base: [['woodSpd', 0.6], ['woodDbl', 0.1, 60], ['woodFind', 0.012, 8]], tool: true, ic: 'axe' },
   sickle: { noun: 'Sickle', pos: 'sickle', st: 'bench', rec: { ore: 4, wood: 3 }, pre: 'ore', base: [['forageSpd', 0.6], ['forageDbl', 0.1, 60], ['forageFind', 0.012, 8]], tool: true },
+  spear: { noun: 'Hunting Spear', pos: 'spear', st: 'bench', rec: { ore: 4, wood: 3 }, pre: 'ore', base: [['huntSpd', 0.6], ['huntDbl', 0.1, 60], ['huntFind', 0.012, 8]], tool: true },
   weapon: { noun: 'Sword', pos: 'weapon', st: 'forge', rec: RECIPE.weapon, pre: 'ore', base: [['might', 1]], legacy: true, ic: 'sword' },
   helm: { noun: 'Helm', pos: 'helm', st: 'forge', rec: RECIPE.helm, pre: 'ore', base: [['crit', 0.12, 35], ['critMult', 0.005], ['armour', 0.1]], legacy: true, ic: 'helm' }
 };
@@ -6164,6 +6186,7 @@ const CRAFT_FITS = {
   pick: { any: ['pick'] },
   axe: { any: ['axe'] },
   sickle: { any: ['sickle'] },
+  spear: { any: ['spear'] },
   wpn: { tank: ['shield'], striker: ['bow'], caster: ['staff'], support: ['tome'] },
   trk: { any: ['trinket'] }
 };
@@ -6637,6 +6660,7 @@ const HANDS_RAR = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
 const HANDS_RAR_NAME = { common: 'Common', uncommon: 'Uncommon', rare: 'Rare', epic: 'Epic', legendary: 'Legendary' };
 // Fishing joins with the Coast: add 'fish' here and a TOOL_OF_SKILL row (55-tools).
 const HANDS_SKILLS = ['mine', 'wood', 'forage'];
+const handsApplicantSkills = () => huntingOn() ? HANDS_SKILLS.concat('hunt') : HANDS_SKILLS;
 
 // y: yield (additive, +0.10 = +10%), sh: shift hours added, sx: shift multiplier, fam: families the
 // yield applies to, tiers: node grades it applies to, clock: [from, to) device hours at the initial
@@ -6651,6 +6675,7 @@ const HANDS_TRAITS = [
   { id: 'early', n: 'Early Riser', txt: '+20% yield when sent 05:00–11:00, including queued shifts', y: 0.20, clock: [5, 11] },
   { id: 'owl', n: 'Night Owl', txt: 'Works a four-hour shift at night too' },
   { id: 'stone', n: 'Stonecutter', txt: '+20% yield on Crystal', y: 0.20, fam: ['crystal'] },
+  { id: 'tracker', n: 'Tracker', txt: '+20% Hide', y: 0.20, fam: ['hide'] },
   { id: 'green', n: 'Green Thumb', txt: '+20% yield on Fibre and Herbs', y: 0.20, fam: ['fibre', 'herb'] },
   { id: 'lucky', n: 'Lucky', txt: 'Each shift: 2% chance to bring 1 Trophy' },
   { id: 'friendly', n: 'Friendly', txt: '+10% yield while another Friendly Hand is out too' },
@@ -8593,11 +8618,11 @@ const fresh = () => Object.assign({
   auto: true, activity: 'fight', raid: { gen: 0, dmg: 0, maxHp: 0, name: '' }, wyrms: 0,
   totalKills: 0, totalGold: 0, amt: '1', tab: 'adv', last: Date.now(), hintDone: false,
   skills: { mine: { lv: 1, xp: 0 }, wood: { lv: 1, xp: 0 }, smith: { lv: 1, xp: 0 },
-    forage: { lv: 1, xp: 0 }, bench: { lv: 1, xp: 0 }, loom: { lv: 1, xp: 0 }, ench: { lv: 1, xp: 0 } },
+    forage: { lv: 1, xp: 0 }, hunt: { lv: 1, xp: 0 }, bench: { lv: 1, xp: 0 }, loom: { lv: 1, xp: 0 }, ench: { lv: 1, xp: 0 } },
   mats: { ore: [0, 0, 0, 0, 0], wood: [0, 0, 0, 0, 0], ess: [0, 0, 0, 0, 0],
     crystal: [0, 0, 0, 0, 0], fibre: [0, 0, 0, 0, 0], herb: [0, 0, 0, 0, 0], hide: [0, 0, 0, 0, 0] },
   node: { kind: 'ore', t: 1 }, gProg: 0,
-  items: [], equip: { weapon: null, off: null, helm: null, body: null, charm: null, pick: null, axe: null, sickle: null }, nextId: 1,
+  items: [], equip: { weapon: null, off: null, helm: null, body: null, charm: null, pick: null, axe: null, sickle: null, spear: null }, nextId: 1,
   found: {}, fSlot: 'weapon', fTier: 1
 }, cloneJSON(STATE_DEFAULTS));
 const BASE_KEYS = Object.keys(fresh());
@@ -8777,7 +8802,7 @@ const bossHpFor = gen => Math.round(20000 * Math.pow(2.5, gen - 1));
 // Gathering per node kind (K5): the kind's tool (CRAFT_NODES[kind].tool) sets the speed, double
 // yield and extra-unit stats; craftNodeBase has the per-kind time (crystal x1.25, fibre x0.9).
 // Ore and wood give exactly the old numbers.
-const NODE_TOOL_STATS = { pick: ['mineSpd', 'oreDbl', 'oreExtra'], axe: ['woodSpd', 'woodDbl', 'woodExtra'], sickle: ['forageSpd', 'forageDbl', null] };
+const NODE_TOOL_STATS = { pick: ['mineSpd', 'oreDbl', 'oreExtra'], axe: ['woodSpd', 'woodDbl', 'woodExtra'], sickle: ['forageSpd', 'forageDbl', null], spear: ['huntSpd', 'huntDbl', null] };
 const nodeKind = kind => CRAFT_NODES[kind] ? kind : 'wood';
 const nodeTool = kind => NODE_TOOL_STATS[CRAFT_NODES[nodeKind(kind)].tool];
 function nodeTime(kind, t) {
@@ -8787,7 +8812,8 @@ function nodeTime(kind, t) {
   return craftNodeBase(nodeKind(kind), t) / ((1 + SKILL_TUNE.spdPerLv * (lv - 1)) * (1 + spd / 100)) / mod('gatherSpeed') / mod('gatherSpeed:' + skillOf(kind)) / toolRight(skillOf(kind), t);
 }
 // Average units per swing before yield modifiers: double yield plus unique extras (Carapace Pick).
-function nodeYieldAvg(kind) { const g = gear(), [, dbl, ex] = nodeTool(kind); return 1 + Math.min(60, g[dbl]) / 100 + (ex ? g[ex] : 0); }
+const nodeUnits = kind => CRAFT_NODES[nodeKind(kind)].units || 1;
+function nodeYieldAvg(kind) { const g = gear(), [, dbl, ex] = nodeTool(kind); return nodeUnits(kind) * (1 + Math.min(60, g[dbl]) / 100 + (ex ? g[ex] : 0)); }
 const nodeXp = t => Math.round(SKILL_TUNE.nodeXp[0] * Math.pow(t, SKILL_TUNE.nodeXp[1]));
 const nodeXpFor = (kind, t) => nodeXp(t) * CRAFT_NODES[nodeKind(kind)].xp; // crystal x1.25
 
@@ -8894,7 +8920,7 @@ let itemKind, kindPos, fits, heroWho, retoolItems, RETOOL, itemLines, itemStats,
   const pendingLegacy = it => !!it && typeof it === 'object' && !it.u && !!RT_KINDS[it.slot];
   fits = (it, pos, who = 'hero') => {
     const kind = typeof it === 'string' ? it : it && it.slot;
-    if (!CRAFT_KINDS[kind] || !CRAFT_FITS[pos]) return false;
+    if (!CRAFT_KINDS[kind] || !CRAFT_FITS[pos] || !craftKindVisible(kind)) return false;
     const w = resolveWho(pos, who);
     if (RETOOL.on && RT_KINDS[kind] && w !== 'any' && !(it && typeof it === 'object' && it.u)) return false;
     // playtest-1 note 5 (SOLO1): a unique sword (the zone bosses' weapons) is a sword: only a sword hand holds it
@@ -9069,7 +9095,7 @@ function setZone(z) {
 // Pick the gathering node. Returns false if the skill level is too low. Does not
 // switch activity; call setActivity('gather') for that.
 function setNode(kind, t) {
-  if (!skillTierOpen(skillOf(kind), t)) return false;
+  if (!craftNodeVisible(kind, t) || !skillTierOpen(skillOf(kind), t)) return false;
   S.node = { kind, t }; S.gProg = 0; emit('sceneReset');
   return true;
 }
@@ -9245,7 +9271,7 @@ function tick(dt) {
 function harvest() {
   const { kind, t } = S.node, g = gear(), [, dk, ek] = nodeTool(kind);
   const dbl = Math.min(60, g[dk]) / 100, ex = ek ? g[ek] : 0;
-  let n = 1 + (Math.random() < dbl ? 1 : 0) + (Math.random() < ex ? 1 : 0);
+  let n = nodeUnits(kind) * (1 + (Math.random() < dbl ? 1 : 0) + (Math.random() < ex ? 1 : 0));
   // Yield modifiers (Omens, home ground) round by chance, so +25% means +25% on average.
   const y = n * mod('yield:' + kind), fr = y % 1;
   n = stashAdd(kind, t, Math.max(1, Math.floor(y) + (fr > 1e-9 && Math.random() < fr ? 1 : 0)), 'flow');   // H3: up to the Storehouse cap
@@ -10471,7 +10497,7 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
   canCraft = (kind, t, opts = {}) => {
     if (kind === 'starChart') return canStar();
     const d = CRAFT_KINDS[kind];
-    if (!d) return no('Unknown item.');
+    if (!d || !craftKindVisible(kind)) return no('Unknown item.');
     if (d.legacy) return no('Swords and helms are no longer made. Craft your class weapon and head piece.');
     if (!validTier(t)) return no('Unknown tier.');
     const st = stationOf(kind), lv = stationLevel(kind), open = stationTierOpen(kind, t);
@@ -10851,7 +10877,7 @@ function errorReport() {
 // gather branch (50-sim, generic), the 'spawn' event (50-sim) and S.craft (55-crafting).
 //
 // Families: Ore and Crystal (Mining: veins, geodes), Wood (Woodcutting), Fibre and Herbs
-// (Foraging: patches, beds). Hide and Essence come from fighting only. Node tiers unlock at
+// (Foraging: patches, beds). C24 adds opt-in Hide Hunting; Essence stays fight-only. Node tiers unlock at
 // NODE_REQ for every row. Foraging earns x2 XP while it is below max(Mining, Woodcutting).
 //
 // Exposed names:
@@ -10876,6 +10902,13 @@ function errorReport() {
 // Save: none of its own. Trophies go to S.craft.troph and champions to S.craft.champ (K6's state).
 
 const GATHER_KINDS = ['ore', 'crystal', 'wood', 'fibre', 'herb'];
+// Public consumers retain the shipped set until the art pack is approved.
+const gatherKinds = () => huntingOn() ? GATHER_KINDS.concat('hide') : GATHER_KINDS;
+// Save-code imports reload the game. Normalize an unreleased test selection before nav,
+// the first frame or boot-away rewards can observe it; preserve earned skill and gear records.
+if (S.node && S.node.kind === 'hide' && !craftNodeVisible('hide', S.node.t)) {
+  S.activity = 'fight'; S.node = { kind: 'ore', t: 1 }; S.gProg = 0;
+}
 let homeFamily, homeBonus, sigDropChance, awaySigDrops, champChance, champsAway, addTrophy, glint, tapGlint, whereToGet;
 
 {
@@ -10889,8 +10922,8 @@ let homeFamily, homeBonus, sigDropChance, awaySigDrops, champChance, champsAway,
 
   // ---------------- home ground ----------------
   homeFamily = (z = S.zone) => zoneHome(z);
-  homeBonus = (fam, z = S.zone) => zoneHome(z) !== fam ? 0 : stars(z) >= CRAFT_HOME_BONUS.stars ? CRAFT_HOME_BONUS.starred : CRAFT_HOME_BONUS.base;
-  for (const fam of GATHER_KINDS) addModifier('yield:' + fam, () => 1 + homeBonus(fam));
+  homeBonus = (fam, z = S.zone) => !(fam === 'hide' ? huntingOn() && ['bat', 'bones', 'beetle'].includes(TYPES[zoneType(z)].key) : zoneHome(z) === fam) ? 0 : stars(z) >= CRAFT_HOME_BONUS.stars ? CRAFT_HOME_BONUS.starred : CRAFT_HOME_BONUS.base;
+  for (const fam of GATHER_KINDS.concat('hide')) addModifier('yield:' + fam, () => 1 + homeBonus(fam));
 
   // Foraging catch-up: x2 XP while below the best of Mining and Woodcutting.
   addModifier('skillXp:forage', () => S.skills.forage.lv < Math.max(...CRAFT_CATCHUP.forage.map(k => S.skills[k].lv)) ? CRAFT_CATCHUP.mult : 1);
@@ -11031,7 +11064,7 @@ let homeFamily, homeBonus, sigDropChance, awaySigDrops, champChance, champsAway,
   const zoneTypesFor = fam => CRAFT_HOME.map((f, i) => f === fam ? ZONES[i] : null).filter(Boolean);
   whereToGet = (fam, t = 1) => {
     const nk = CRAFT_NODES[fam], name = matName(fam, t);
-    if (nk) {
+    if (nk && craftNodeVisible(fam, t)) {
       const home = zoneTypesFor(fam), node = NODE_NAMES[fam][t - 1];
       const drop = Object.entries(CRAFT_SIG_DROPS).filter(([, d]) => d.fam === fam).map(([k]) => TYPES[typeIndex(k)].name);
       return `${name}: ${SKILL[nk.skill]} level ${skillReq(nk.skill, t)}, ${node}.` + (home.length ? ` +25% while camped in ${home.join(' or ')}.` : '') + (drop.length ? ` ${drop.join(' and ')} drop a few.` : '');
@@ -11215,6 +11248,7 @@ var forgeGoalPicks = 0;
   const skillNext = () => {
     let best = null;
     for (const k of Object.keys(SKILL)) {
+      if (k === 'hunt' && !huntingVisible()) continue;
       const s = S.skills[k]; if (!s) continue;
       const p = Math.min(0.99, s.xp / skillNeed(s.lv, k));
       if (!best || p > best.p) best = { k, s, p };
@@ -11619,10 +11653,10 @@ const NAV_TUNE = {
   recentShow: 3,            // chips in the switcher
   needEvery: 2000           // ms between "what the next build waits on" scans
 };
-const NAV_SKILLS = ['mine', 'wood', 'forage'];
-const NAV_FAMS = { mine: ['ore', 'crystal'], wood: ['wood'], forage: ['fibre', 'herb'] };
-const NAV_VERB = { ore: 'Mine', crystal: 'Mine', wood: 'Chop', fibre: 'Cut', herb: 'Pick' };
-const NAV_NOUN = { ore: 'ore', crystal: 'crystal', wood: 'wood', fibre: 'fibre', herb: 'herbs' };
+const NAV_SKILLS = ['mine', 'wood', 'forage', 'hunt'];
+const NAV_FAMS = { mine: ['ore', 'crystal'], wood: ['wood'], forage: ['fibre', 'herb'], hunt: ['hide'] };
+const NAV_VERB = { ore: 'Mine', crystal: 'Mine', wood: 'Chop', fibre: 'Cut', herb: 'Pick', hide: 'Hunt' };
+const NAV_NOUN = { ore: 'ore', crystal: 'crystal', wood: 'wood', fibre: 'fibre', herb: 'herbs', hide: 'Hide' };
 let navSkillOpen, navSkills, navLast, navNow, navRate, navFullIn, navRecent, bestNodes, navGo;
 {
   registerState('nav', { v: 1, last: { mine: null, wood: null, forage: null }, recent: [] });
@@ -11634,14 +11668,14 @@ let navSkillOpen, navSkills, navLast, navNow, navRate, navFullIn, navRecent, bes
   };
   const famsOf = sk => NAV_FAMS[sk] || [];
   const validNode = nd => !!nd && typeof nd === 'object' && !!CRAFT_NODES[nd.kind] && nd.t >= 1 && nd.t <= 5 && (nd.t | 0) === nd.t;
-  const nodeOpen = nd => validNode(nd) && skillTierOpen(skillOf(nd.kind), nd.t);
+  const nodeOpen = nd => validNode(nd) && craftNodeVisible(nd.kind, nd.t) && skillTierOpen(skillOf(nd.kind), nd.t);
   const same = (a, b) => !!a && !!b && a.kind === b.kind && a.t === b.t;
   const gathering = () => S.activity === 'gather';
   const coldUnlit = () => typeof hearthCold === 'function' && hearthCold() && typeof hearthLit === 'function' && !hearthLit();
   const feat = id => typeof isUnlocked !== 'function' || isUnlocked(id);
 
   navSkillOpen = sk => {
-    if (!NAV_FAMS[sk]) return false;
+    if (!NAV_FAMS[sk] || (sk === 'hunt' && !huntingVisible())) return false;
     if (gathering() && skillOf(S.node.kind) === sk) return true;   // the skill you work always shows
     if (sk === 'forage') return feat('forage');
     if (!feat('gather')) return false;
@@ -11650,12 +11684,12 @@ let navSkillOpen, navSkills, navLast, navNow, navRate, navFullIn, navRecent, bes
   navSkills = () => NAV_SKILLS.filter(navSkillOpen);
 
   navLast = sk => {
-    const fams = famsOf(sk); if (!fams.length) return null;
+    const fams = famsOf(sk); if (!fams.length || (sk === 'hunt' && !huntingVisible())) return null;
     if (gathering() && skillOf(S.node.kind) === sk && validNode(S.node)) return { kind: S.node.kind, t: S.node.t };
     const l = N().last[sk];
     if (nodeOpen(l) && fams.includes(l.kind)) return { kind: l.kind, t: l.t };
     if (skillOf(S.node.kind) === sk && nodeOpen(S.node)) return { kind: S.node.kind, t: S.node.t };
-    return { kind: fams[0], t: skillTopTier(sk) };
+    return { kind: fams[0], t: Math.min(skillTopTier(sk), sk === 'hunt' ? HUNT_BEASTS.length : 5) };
   };
 
   navRate = (kind, t) => 60 / nodeTime(kind, t) * nodeYieldAvg(kind) * mod('yield:' + kind);
@@ -11744,10 +11778,10 @@ let navSkillOpen, navSkills, navLast, navNow, navRate, navFullIn, navRecent, bes
     return needFor;
   };
   bestNodes = sk => {
-    const fams = famsOf(sk); if (!fams.length) return [];
-    const top = skillTopTier(sk), out = [];
+    const fams = famsOf(sk); if (!fams.length || (sk === 'hunt' && !huntingVisible())) return [];
+    const top = Math.min(skillTopTier(sk), sk === 'hunt' ? HUNT_BEASTS.length : 5), out = [];
     const add = (kind, t, why) => {
-      if (out.length >= 2 || !fams.includes(kind) || t > top || t < 1) return;
+      if (out.length >= 2 || !craftNodeVisible(kind, t) || !fams.includes(kind) || t > top || t < 1) return;
       if (gathering() && same(S.node, { kind, t })) return;
       if (typeof stashFull === 'function' && stashFull(kind, t)) return;
       if (out.some(o => same(o, { kind, t }))) return;
@@ -11929,7 +11963,7 @@ function needShort(mats) {
   const out = [];
   for (const [fam, t, n] of mats || []) {
     const have = matHave(fam, t);
-    if (have < n) out.push({ fam, t, kind: typeof NODE_NAMES === 'object' && NODE_NAMES[fam] ? fam : null, have, n, name: matName(fam, t) });
+    if (have < n) out.push({ fam, t, kind: typeof NODE_NAMES === 'object' && NODE_NAMES[fam] && craftNodeVisible(fam, t) ? fam : null, have, n, name: matName(fam, t) });
   }
   return out;
 }
@@ -13298,9 +13332,10 @@ const TOOL_TUNE = {
 const TOOL_KINDS = {
   pick: { skill: 'mine', n: 'Pickaxe', rough: 'Stone Pick', find: 'oreFind', pos: 'pick' },
   axe: { skill: 'wood', n: 'Woodaxe', rough: 'Flint Hatchet', find: 'woodFind', pos: 'axe' },
-  sickle: { skill: 'forage', n: 'Sickle', rough: 'Bone Sickle', find: 'forageFind', pos: 'sickle' }
+  sickle: { skill: 'forage', n: 'Sickle', rough: 'Bone Sickle', find: 'forageFind', pos: 'sickle' },
+  spear: { skill: 'hunt', n: 'Hunting Spear', rough: 'Hunting Spear', find: 'huntFind', pos: 'spear' }
 };
-const TOOL_OF_SKILL = { mine: 'pick', wood: 'axe', forage: 'sickle' };
+const TOOL_OF_SKILL = { mine: 'pick', wood: 'axe', forage: 'sickle', hunt: 'spear' };
 let toolOf, equippedTool, toolLook, toolName, toolFind, toolMastery, toolMasteryAdd, toolPerks,
   toolHandsMult, toolBest;
 // Hoisted so nodeTime (40-rules) can call it whatever the load order (1 until this file has run,
@@ -13313,14 +13348,14 @@ function toolRight(skill, t) {
 }
 
 {
-  registerState('tools', { v: 1, m: { pick: [1, 0], axe: [1, 0], sickle: [1, 0] }, finds: 0 });
+  registerState('tools', { v: 1, m: { pick: [1, 0], axe: [1, 0], sickle: [1, 0], spear: [1, 0] }, finds: 0 });
   const T = () => S.tools;
   const rec = kind => {
     const m = T().m; let r = m[kind];
     if (!Array.isArray(r) || !(r[0] >= 1)) r = m[kind] = [1, 0];
     return r;
   };
-  const famsOf = skill => GATHER_KINDS.filter(f => skillOf(f) === skill);
+  const famsOf = skill => GATHER_KINDS.concat('hide').filter(f => skillOf(f) === skill);
   const need = lv => TOOL_TUNE.masteryMins * lv * 60;
   const lvOf = kind => TOOL_KINDS[kind] ? rec(kind)[0] : 1;
   const roll = x => { const f = x % 1; return Math.floor(x) + (f > 1e-9 && Math.random() < f ? 1 : 0); };
@@ -16568,7 +16603,7 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
   // ---------------- names and text ----------------
   handsName = h => h ? h.n : '';
   handsRarName = h => HANDS_RAR_NAME[h && h.r] || 'Common';
-  const SK_NAME = { mine: 'Miner', wood: 'Woodcutter', forage: 'Forager', fish: 'Fisher', any: 'Jack of all trades' };
+  const SK_NAME = { mine: 'Miner', wood: 'Woodcutter', forage: 'Forager', hunt: 'Hunter', fish: 'Fisher', any: 'Jack of all trades' };
   handsSkillName = h => SK_NAME[h && h.sk] || '';
   handsTraits = h => {
     const out = (h.tr || []).filter(id => TR[id]).map(id => ({ id, n: TR[id].n, txt: TR[id].txt, camp: !!TR[id].camp, calling: false }));
@@ -16618,7 +16653,7 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
     return Math.max(0.1, y);
   };
   handsRate = (h, kind, t, at = now()) => {
-    if (!h || !CRAFT_NODES[kind]) return 0;
+    if (!h || !CRAFT_NODES[kind] || !craftNodeEnabled(kind, t)) return 0;
     const sk = skillOf(kind), tm = typeof toolHandsMult === 'function' ? toolHandsMult(sk) : 1;
     return handsHeroRate(kind, t) * handsShare(h) * yieldOf(h, kind, t, at) * (own(h, kind) ? 1 : T.offSkill) * tm;
   };
@@ -16628,8 +16663,8 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
   const luckyP = h => h.cl === 'quick' ? T.quickLucky : has(h, 'lucky') ? T.lucky : 0;
 
   // ---------------- nodes ----------------
-  const open = (kind, t) => !!CRAFT_NODES[kind] && t >= 1 && t <= 5 && skillTierOpen(skillOf(kind), t);
-  const kinds = () => (typeof GATHER_KINDS !== 'undefined' ? GATHER_KINDS : ['ore', 'wood']);
+  const open = (kind, t) => !!CRAFT_NODES[kind] && craftNodeEnabled(kind, t) && t >= 1 && t <= 5 && skillTierOpen(skillOf(kind), t);
+  const kinds = () => gatherKinds();
   handsNodes = h => {
     const out = [];
     for (const kind of kinds()) for (let t = 5; t >= 1; t--) if (open(kind, t))
@@ -16684,7 +16719,7 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
     const t = now(), j = h.job;
     if (j && j.role === 'trade' && typeof handsTradeStatus === 'function') return handsTradeStatus(h, t);
     if (j && j.start > t) return { st: 'rest', label: 'Resting before the next shift', left: (j.start - t) / 1000, pct: 0, kind: j.kind, t: j.t, spot: 'fire' };
-    if (j && j.end > t) return { st: 'out', label: `Out at the ${nodeName(j.kind, j.t)}`, left: (j.end - t) / 1000, pct: Math.min(1, Math.max(0, (t - j.start) / Math.max(1, j.end - j.start))), kind: j.kind, t: j.t, spot: null };
+    if (j && j.end > t) return { st: 'out', label: j.kind === 'hide' && HUNT_BEASTS[j.t - 1] ? `Hunting: ${HUNT_BEASTS[j.t - 1].plural}` : `Out at the ${nodeName(j.kind, j.t)}`, left: (j.end - t) / 1000, pct: Math.min(1, Math.max(0, (t - j.start) / Math.max(1, j.end - j.start))), kind: j.kind, t: j.t, spot: null };
     if (j) return { st: 'back', label: 'Walking home', left: 0, pct: 1, kind: j.kind, t: j.t, spot: 'road' };
     if (h.pack.length) return { st: 'pack', label: 'Pack waits by the Storehouse', left: 0, pct: 1, kind: h.last && h.last.kind, t: h.last && h.last.t, spot: 'store' };
     const ph = campClock(t).phase, want = SPOT[h.sk];
@@ -16730,13 +16765,13 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
     }
     // Keep retired duration traits readable in old saves, but do not roll new no-op or penalty-only traits.
     // C8: new Packmule rolls wait for a usable grade. Existing applicants/workers keep their IDs.
-    const muleOpen = HANDS_SKILLS.some(sk => skillTierOpen(sk, 3));
-    const pool = HANDS_TRAITS.filter(x => !['strong', 'owl', 'wander'].includes(x.id) && (x.id !== 'mule' || muleOpen)).map(x => x.id), tr = [];
+    const muleOpen = handsApplicantSkills().some(sk => skillTierOpen(sk, 3));
+    const pool = HANDS_TRAITS.filter(x => (x.id !== 'tracker' || huntingOn()) && !['strong', 'owl', 'wander'].includes(x.id) && (x.id !== 'mule' || muleOpen)).map(x => x.id), tr = [];
     while (tr.length < T.traits[r] && pool.length) tr.push(pool.splice(Math.floor(rnd() * pool.length), 1)[0]);
     let n = ''; const used = usedNames();
     for (let g = 0; g < 20; g++) { n = pick(HANDS_FIRST) + ' ' + pick(HANDS_TRADE); if (!used.has(n)) break; }
     h.seq = (h.seq | 0) + 1;
-    return { id: 'h' + h.seq, n, r: HANDS_RAR[r], sk: pick(HANDS_SKILLS), tr, cl: null, key: null, at, free: 0 };
+    return { id: 'h' + h.seq, n, r: HANDS_RAR[r], sk: pick(handsApplicantSkills()), tr, cl: null, key: null, at, free: 0 };
   }
   handsRollApp = () => makeApp(now());
   const addApp = (app, quiet) => { H().board.apps.push(app); emit('handsArrive', { app, quiet: !!quiet }); };
@@ -25911,7 +25946,7 @@ function registerSceneTheme(name, def) { SCENE_EXT[name] = def; }
 let gatherTheme, gatherSpot, gatherHeroX, gatherWalking, gatherDraw, gatherRight;
 {
   const THEME = { ore: 'gmine', crystal: 'gglade', wood: 'gwoods', fibre: 'gmeadow', herb: 'gmeadow' };
-  gatherTheme = kind => THEME[kind] || (skillOf(kind) === 'mine' ? 'gmine' : 'gwoods');
+  gatherTheme = kind => kind === 'hide' ? null : THEME[kind] || (skillOf(kind) === 'mine' ? 'gmine' : 'gwoods');
   const REDUCED = typeof reduced !== 'undefined' ? reduced : false;
 
   // =====================================================================================
@@ -26624,6 +26659,7 @@ let gatherTheme, gatherSpot, gatherHeroX, gatherWalking, gatherDraw, gatherRight
     else warming = false;
   }
   function warm(kind) {
+    if (kind === 'hide') return; // C24 has no scene until the whole art pack is approved.
     if (typeof stageStats !== 'function' || typeof sceneSteps !== 'function' || typeof idleTask !== 'function') return;
     const st = stageStats(); if (!st || !st.SW) return;
     const SCH = st.SH >= 210 ? st.SH : Math.round(st.GY / 0.8), th = gatherTheme(kind), key = th + '|' + st.SW + 'x' + SCH;
@@ -29140,7 +29176,7 @@ function uiFight() {
 // GX_VIEW { skill: view id } and gatherSkillOfView(view).
 
 const GX_VIEW = { mine: 'mine', wood: 'wood', forage: 'forage' };
-const gatherSkillOfView = v => NAV_SKILLS.includes(v) ? v : null;
+const gatherSkillOfView = v => NAV_SKILLS.includes(v) && (v !== 'hunt' || huntingVisible()) ? v : null;
 const GX_ICON = {
   mine: () => iconURL('pick', '#A9B1BD'),
   wood: () => iconURL('axe', '#A9B1BD'),
@@ -29173,7 +29209,7 @@ function whereSheet(k, t) {
     head.append(ic, tx);
     const w = whereToGet(k, t), i = w.indexOf(': ');
     api.body.append(head, el('h3', 'cs-h', 'Where to get it'), el('p', 'gw-where', i < 0 ? w : w.slice(i + 2)));
-    if (GATHER_KINDS.includes(k)) {
+    if (gatherKinds().includes(k) && craftNodeVisible(k, t)) {
       const sk = skillOf(k), req = skillReq(sk, t), open = skillTierOpen(sk, t);
       const here = S.activity === 'gather' && S.node.kind === k && S.node.t === t;
       const b = el('button', 'big horn gw-go', here ? 'You work here' : open ? `${NODE_VERB[k]} at the ${NODE_NAMES[k][t - 1]}` : `Needs ${SKILL[sk]} ${req}`);
@@ -29620,7 +29656,7 @@ let handsTalkMount, handsTalkOpen, handsTalkUpdate;
       setTxt(B.note, 'Gatherers open when your Hearth is Lv 2 and the Tavern is built.');
       return;
     }
-    const board = handsBoard(), tents = handsTents(), used = handsList().length;
+    const board = handsBoard().filter(b => b.app.sk !== 'hunt' || huntingVisible()), tents = handsTents(), used = handsList().length;
     const nxt = handsNextApp(), left = Math.max(1, HANDS_TUNE.pity[0] - S.hands.pity[0]);
     setTxt(B.note, (nxt === null ? 'The three random spots are full.' : `Next applicant in ${dur(nxt / 1000)}.`) +
       ` A Rare or better shows up within ${left === 1 ? 'the next applicant' : left + ' applicants'}.`);
@@ -29814,7 +29850,7 @@ let handsTalkMount, handsTalkOpen, handsTalkUpdate;
 
   function jobPicker(x, offered = handsNodes(x).filter(n => n.own), onSent = null) {
     const box = el('div', 'hd-jobs');
-    const nodes = offered.filter(n => n.own);
+    const nodes = offered.filter(n => n.own && craftNodeVisible(n.kind, n.t));
     if (!nodes.length) { box.append(el('p', 'note', 'No job is open for them yet. Open more nodes with your hero first.')); return box; }
     box.append(el('p', 'note', 'Pick a job. Every shift lasts 4 hours. Fees are paid now; the haul comes home to the Storehouse.'));
     const count = shiftChoice[x.id] || 1, choices = el('div', 'hd-shifts');
@@ -32062,7 +32098,7 @@ let craftUI = null;
   // ================= Recipes =================
   let rec = null;
   function kindsFor(st) {
-    return Object.keys(CRAFT_KINDS).filter(k => { const d = CRAFT_KINDS[k]; return d.st === st && !d.legacy && !(d.comp && !d.pos); });   // no companion-only recipes; Sword/Helm are no longer made
+    return Object.keys(CRAFT_KINDS).filter(k => { const d = CRAFT_KINDS[k]; return craftKindVisible(k) && d.st === st && !d.legacy && !(d.comp && !d.pos); });   // no companion-only recipes; Sword/Helm are no longer made
   }
   const POS_ORDER = [...CRAFT_HERO_POS, ...CRAFT_COMP_POS];
   const kindOrder = k => { const d = CRAFT_KINDS[k]; return POS_ORDER.indexOf(d.pos || d.comp || 'charm'); };
@@ -32295,7 +32331,7 @@ let craftUI = null;
     mount(sec) {
       const g = el('div', 'cf-gear');
       gearEls = {};
-      for (const p of CRAFT_HERO_POS) {
+      for (const p of CRAFT_HERO_POS.filter(craftKindVisible)) {
         const b = el('button', 'cf-gs'); b.type = 'button';
         const tile = icTile(iconURL('charm', '#4E4060'), null, 'ghost');
         const lab = el('small', null, posName(p));
@@ -32315,7 +32351,7 @@ let craftUI = null;
       const EMPTY_IC = { weapon: 'sword', off: 'banner', helm: 'helm', body: 'plate', charm: 'charm', pick: 'pick', axe: 'axe', sickle: 'sickle' };
       const w = heroWho();
       if (w !== 'any') for (const p of ['weapon', 'helm']) { const k = ((CRAFT_FITS[p] || {})[w] || [])[0]; if (k && ICON[CRAFT_KINDS[k].ic]) EMPTY_IC[p] = CRAFT_KINDS[k].ic; }
-      for (const p of CRAFT_HERO_POS) {
+      for (const p of CRAFT_HERO_POS.filter(craftKindVisible)) {
         const e = gearEls[p], it = itemById(S.equip[p]);
         if (it) { setIc(e.tile, itemIc(it), frameOf(it)); e.plus.textContent = it.plus ? '+' + it.plus : ''; e.b.setAttribute('aria-label', `${posName(p)}: ${itemName(it)}`); }
         else {
@@ -32445,7 +32481,7 @@ let craftUI = null;
       const sig = [bulk.on, [...bulk.ids].join(), st8.bfilt, st8.sort, S.items.map(i => [i.id,i.slot,i.t,i.plus,i.r,i.u,i.rf || 0].join(':')).join(), [...w].map(([k, v]) => k + v.who).join(), [...st8.fresh].join()].join('|');
       if (!force && (sig === bag.sig || busy())) return;
       bag.sig = sig;
-      let list = S.items.slice();
+      let list = S.items.filter(it => craftKindVisible(it.slot));
       if (st8.bfilt === 'spare') list = list.filter(i => !w.has(i.id));
       if (st8.bfilt === 'worn') list = list.filter(i => w.has(i.id));
       list.sort(SORTS[st8.sort]);
@@ -32485,7 +32521,7 @@ let craftUI = null;
     return api;
   }
   function openItem(id, back) {
-    const it = itemById(id); if (!it) return;
+    const it = itemById(id); if (!it || !craftKindVisible(it.slot)) return;
     const api = open(itemName(it), back || (sheet && sheet.back));
     sheet = { api, id, back: back || null, mode: null, sel: -1, arm: null, flash: -1 };
     renderItem();
@@ -32658,6 +32694,7 @@ let craftUI = null;
 
   // ================= picker: choose gear for one position =================
   function pick(pos, back) {
+    if (!craftKindVisible(pos)) return;
     const label = `Your ${posName(pos).toLowerCase()}`;
     const backFn = back || null;
     const api = open(label, backFn, true);
@@ -32668,7 +32705,7 @@ let craftUI = null;
       const now = itemById(S.equip[pos]);
       body.append(el('h3', 'cf-ph', label));
       const w = wearers();
-      const list = S.items.filter(i => fits(i, pos, 'hero') && !(now && now.id === i.id)).sort(SORTS.power);
+      const list = S.items.filter(i => craftKindVisible(i.slot) && fits(i, pos, 'hero') && !(now && now.id === i.id)).sort(SORTS.power);
       if (now) {
         const r = el('div', 'cf-pr cur');
         const t = icTile(itemIc(now), frameOf(now)); r.append(t);
@@ -32678,7 +32715,7 @@ let craftUI = null;
         body.append(r);
       }
       if (!list.length) {
-        const kinds = Object.keys(CRAFT_KINDS).filter(k => !CRAFT_KINDS[k].legacy && fits(k, pos, 'hero'));
+        const kinds = Object.keys(CRAFT_KINDS).filter(k => craftKindVisible(k) && !CRAFT_KINDS[k].legacy && fits(k, pos, 'hero'));
         const k = kinds[0];
         body.append(el('p', 'note', k ? `Nothing in your bag fits. Craft a ${CRAFT_KINDS[k].noun} at the ${CRAFT_STATIONS[CRAFT_KINDS[k].st].n}.` : 'Nothing in your bag fits here.'));
         if (k) {
