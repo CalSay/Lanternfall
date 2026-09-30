@@ -53,7 +53,7 @@
 // Save: registerState('hands', { v, seq, list, board: { apps, next }, pity: [rare, epic, legendary],
 //   tam, log, hired, hrs, got, met, heard, open, rs }). rs: the Hands' own random stream (applicants, seeds).
 //   list[i] = { id, n, r, sk, tr: [trait ids], cl (calling | null), key (named Hand | null), lv, xp (hours
-//     into the level), job, pack: [[fam, t, n]] ('troph', i, n for a Trophy), last: { kind, t } | null,
+//     into the level), job, pack: [[fam, t, n]] ('troph', i, n for a Trophy), last: { kind, t, shifts } | null (old saves default to one shift),
 //     talk, st (stories heard), hired (ms), hrs (hours worked), got (units delivered), back (ms home) }
 //   job adds fee, secs, kp/lp/physic (snapshot finds), queue:[{fee,seed}], q/qFee (remaining), linked.
 //   start in the future is a paid rest; linked=false starts the overlap window during catch-up.
@@ -446,7 +446,7 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
     ready.sort((a, b) => a.fee - b.fee);
     let gold = S.gold;
     const selected = ready.filter(x => { if (gold < x.fee) return false; gold -= x.fee; return true; });
-    return { ready: ready.length, selected, fee: S.gold - gold };
+    return { ready: ready.length, selected, fee: selected.reduce((sum, x) => sum + x.fee, 0) };
   }
   handsSendAgainPreview = id => { const p = againPlan(id); return { count: p.selected.length, ready: p.ready, fee: p.fee }; };
   handsSendAgain = id => {

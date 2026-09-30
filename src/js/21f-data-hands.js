@@ -11,28 +11,28 @@
 //   HANDS_SKILLS      the skills a Hand can have ('any' = Jory: full share on every skill)
 //   HANDS_TRAITS      16 traits { id, n, txt, camp? } (camp: works while the Hand is at camp)
 //   HANDS_CALLINGS    the Legendaries' callings { id, n, txt }
-//   HANDS_LEGENDS     the five named Legendary Hands { key, n, sk, cl, tr, about }
+//   HANDS_LEGENDS     the named Legendary Hands with supported routes { key, n, sk, cl, tr, about }
 //   HANDS_TAM         Tam, the free starter { key, n, r, sk, tr, about }
 //   HANDS_LATER       optional Hands who arrive later (the Hollises, LORE8b): data hook, off (live: 0)
 //   HANDS_FIRST       35 first names; HANDS_TRADE: 30 trade names (random Hands: "Cora Thatcher")
 
 const HANDS_TUNE = {
   on: 1,                               // 0: Hands off (tools/sim.mjs --hands 0): no Tam, no applicants, no pay
-  odds: [0.52, 0.30, 0.13, 0.05, 0],        // applicant rarity odds, HANDS_RAR order
-  pity: [8, 25, 90],                   // a Rare or better at least every 8 applicants, Epic+ every 25, Legendary every 90
+  odds: [0.52, 0.30, 0.13, 0.05, 0],        // Common-Epic applicants; named Legendary spots arrive by route
+  pity: [8, 25, 90],                   // Rare every 8, Epic every 25; a named route fallback every 90 (Word on the Road)
   share: [0.10, 0.12, 0.15, 0.18, 0.20],       // base share of the hero's rate at the node
   perLv: 0.0025,                       // +0.25% share per level above 1 (Common Lv 20: 14.75%, Legendary Lv 20: 24.75%)
-  shiftH: [4, 4, 4, 4, 4],             // shift length in hours before levels and traits
+  shiftH: [4, 4, 4, 4, 4],             // legacy tuning array; C1 uses ECON.shiftH for every rarity/level
   traits: [1, 1, 2, 2, 2],             // traits by rarity (Legendaries also have a calling)
   hireFoes: [100, 250, 600, 1500, 4000],       // unused since ECON-A: the hire fee is ECON.hireFoes x the region's base (econHireFee)
   arriveH: 8, arriveFastH: 6, fastTavern: 3,  // one applicant every 8 h (6 h from Tavern Lv 3), wall clock
   maxWait: 3,                          // applicants waiting at most
   beds: [0, 1, 2, 3, 4, 5],            // beds by Bunkhouse level (57-camp CAMP_B.bunk; owner: Hands live at camp)
   hallHearth: 8, hallBeds: 1, bedMax: 6,       // +1 bed at Hearth 8 (the Lantern Hall), 6 at most
-  openHearth: 2,                       // Hands open at this Hearth with the Tavern and the Bunkhouse built
+  openHearth: 2,                       // Hands open at this Hearth with the Tavern; two free Tents
   offSkill: 0.5,                       // off-skill nodes pay half
   lvMax: 20, lvHours: 2,               // hours to the next level = lvHours x level (380 h to Lv 20)
-  lvShiftMins: 15, lvShiftEvery: 5,    // +15 min shift every 5 levels
+  lvShiftMins: 15, lvShiftEvery: 5,    // retired duration fields, retained for old tooling; C1 shifts are flat four hours
   storyAt: [5, 10, 15, 20],            // a story at the fire at these levels (N2 tells them)
   friendly: 0.10, felling: 0.15,       // overlap bonuses: Friendly pairs, Old Bracken's Felling Song
   keen: 0.02, deepFind: 0.04,          // Keen Eye: this share of units comes back one tier up (Deep Seam: 4%)
