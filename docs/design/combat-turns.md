@@ -61,7 +61,15 @@ real-time spec (`docs/design/combat-3.md` on `codex/c20-combat`) once signed off
 ## Open questions
 
 1. Is haste only a skill-tree purchase, or can gear carry it too? (Owner thinking.)
-2. Does an auto parry still counter? (Assumed yes.)
+
+## Decided later (owner, 2026-09-30, on C20's plan)
+
+- An auto parry counters (the sure crit), with no cooldown refund.
+- The timed parry window starts at 0.18 s (was 0.35 s); dodge 0.35 s. Both are tuning knobs.
+- **Haste** is the who-goes-first stat. The old gear stat called Haste (shorter ability cooldowns) is renamed for
+  players; working name **Focus**.
+- C20's prototype plan: `docs/design/combat-turn-prototype.md` on `codex/c20-turn-plan`, approved to build (zone 1,
+  behind a switch).
 
 ## Build plan
 
