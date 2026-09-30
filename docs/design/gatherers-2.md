@@ -778,3 +778,42 @@ New decisions for this revision are in economy-2.md 12.
 - **D6. 22 by Region 5.** The Region 4 and 5 pairs (LORE-R45's Sten and Runa, Old Amos and Sable) are
   extra Gem-seekers with a home-region bonus; the R4 and R5 specs keep or rename them. Recommended:
   **yes**.
+
+---
+
+## 15. C4: gatherer trade runs (approved 2026-09-30)
+
+A trade run sells surplus Storehouse materials for gold. One idle gatherer carries the cargo to the
+Mossy Hollow market and returns after two hours. A shift gathers new materials and costs a fee; a trade
+run spends existing materials and has no extra fee. Both occupy that gatherer while away.
+
+Claude approved this first scope in issue #5, comment 5912281073. It replaces the hero team and Map Room
+parts of gear-2 section 7; the existing economy table, rather than that document's older weights, sets prices.
+
+- **Opens:** gatherers open and Tavern level 2. Locked copy: "Build Tavern 2 so a trader starts passing through."
+  The Great Lantern is not required: trade supplies an early use for surplus materials in the Hollow.
+- **Cargo:** up to 5,000 whole units across at most three different family/grade lines. Use implemented,
+  unlocked gathering materials at grades 1-3, matching the carrier's profession; Jack of all trades may
+  carry any supported gathering family. Gold, trophies and purchased goods cannot be sold as cargo.
+  Deduct the complete reservation once, only after all lines pass validation.
+- **Quote:** each unit is worth `foeGoldBase(econGradeZ(grade)) * ECON.famW[family class] * demand`.
+  Show the whole-run gold return before departure. At normal demand 5,000 ordinary raw units yield
+  1,500 / 1,950 / 2,400 gold at grades 1 / 2 / 3. The deterministic weekly market has three wanted
+  lines (130-160%), two glut lines (60-80%) and normal demand for the rest. Freeze the quote at send;
+  crossing into another week does not reprice a trip already on the road.
+- **Returns:** gold only. No gathering XP, find rolls, rarity multiplier or Tam free-shift use. Cargo and
+  the opportunity to gather for those two hours are the cost. Tests report trade gold per hour beside
+  the sale value of that same worker's two-hour gathering output, including the reserved stock, so
+  Claude can measure and tune the loop during M1 without changing the shared economy here.
+- **One trip per send:** no automatic queue. Preserve the previous gathering assignment separately.
+  "Send shifts again" resumes that assignment; another trade always needs a new cargo selection and quote.
+- **Recall:** before arrival, cancel and return the original cargo with no gold reward. If the Storehouse
+  filled meanwhile, the returned cargo waits in the gatherer's pack. If the trip is already complete,
+  settle it first, exactly once, rather than returning cargo as well as gold.
+- **Live and away:** use the same chronological gatherer completion path and frozen departure record.
+  A trading gatherer is away from camp and does not contribute gathering or at-camp perks.
+
+Future rewards belong behind the trade quote/reward boundary: new towns or trophy conversion must be
+approved and priced before they can return anything besides gold. Trophy conversion is deliberately
+absent from C4 because trophies gate the +8 to +10 upgrades. A first-visit story page can be authored in
+C6; C4 does not consume an unwritten story reward.
