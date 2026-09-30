@@ -51,14 +51,12 @@
     forage: 'New on the Gather tab: Foraging.',
     almanac: "New on the Camp tab: the Almanac. Check today's Omen.",
     roster: 'New on the Party tab: Roster. See who could join you.',
-    exped: 'Expeditions are open on the Camp tab.',
     synergy: 'Where each one stands matters. Put a tank in Front and a healer in Back for Lifeline.',
     uniques: 'New on the Craft tab: Uniques.',
     tavern: 'New on the Camp tab: the Tavern.',
     codex: 'The Codex is open. Find it in the Journal (the bell).',
     raid: 'The World raid is open on the Camp tab.',
-    deep: 'New on the Fight tab: the Deepwell.',
-    powers: 'New on the Craft tab: Powers. Learn and inscribe legendary powers.'
+    deep: 'New on the Fight tab: the Deepwell.'
   };
   const TAB_FEATURE = { party: 'party', gather: 'gat', camp: 'world', craft: 'forge' };
   on('unlock', ({ id, quiet }) => {

@@ -38,7 +38,7 @@
 // Events: bondLevel { id, lv, prev, quiet, story: 0 | 1 | 2, sworn } (a level reached; quiet for
 //         seeds and away), bondStory { id, i } (a story read).
 // Hooks used: onTick (live growth), on('away') + registerAwayLine (away growth and its line),
-//   on('expedBack') (57b: { team, secs }), on('fieldChange') (the party pairs), whatsNew (the Bond line
+//   on('fieldChange') (the party pairs), whatsNew (the Bond line
 //   for old saves and "Your old friends kept their Bonds.").
 // Story text: BOND_STORIES / BOND_SWORN in 21f-stories-bonds.js (LORE7); titles in SYNERGIES.
 
@@ -145,15 +145,6 @@ let BOND_IDS, bondTime, bondStrength, bondOldFriend, bondInfo, bondsOf, partyBon
     for (const u of awayUps) best[u.id] = Math.max(best[u.id] || 0, u.lv);
     awayUps = [];
     return Object.keys(best).map(id => ({ icon: { ic: ['heart', '#F2C14E'] }, txt: bondText(id, best[id]).msg, sub: 'See Party > Team' }));
-  });
-  // 57b: a team back from an expedition, together for secs (companion pairs only).
-  on('expedBack', ev => {
-    if (!ev || !Array.isArray(ev.team) || ev.team.length < 2 || !(ev.secs > 0) || !S.bond) return;
-    bondEnsure();
-    for (const d of DEFS) {
-      if (d.pair.includes('hero') || !d.pair.every(k => ev.team.includes(k) && rec(k))) continue;
-      grow(d.id, ev.secs * FT.bondExped * (bondOldFriend(d.id) ? FT.oldFriend : 1), !!ev.auto);
-    }
   });
 
   // ---------------- seeds for old saves (3.3) ----------------

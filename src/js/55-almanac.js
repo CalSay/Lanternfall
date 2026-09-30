@@ -36,7 +36,6 @@ let OMENS, WEEKLY_GOALS;
     B7: () => typeof unlockTokenRoll === 'function',         // unlock avenues (Renown)
     Visitor: () => typeof unlockTokenRoll === 'function' && !soloOn(),   // W1-C: the Tavern visitor (no visitors in solo)
     Camp: () => !!(S.camp && S.camp.open),                  // 57-camp.js: the camp is open (zone 5)
-    Expeditions: () => !!S.exped && !soloOn(),              // W1-C: no expeditions in solo
     Deepwell: () => !!S.deep && (typeof deepUnlocked !== 'function' || deepUnlocked())
   };
   let alEarly = false;       // a probe threw since the flag was last cleared
@@ -88,7 +87,6 @@ let OMENS, WEEKLY_GOALS;
     { id: 'transmuter', n: "Transmuter's Day", cat: 'craft', fx: 'Transmutes cost one less', bonus: { transmuteSave: 1 }, needs: 'K6', ic: ['orb', '#B58CFF'], go: { tab: 'forge' } },
 
     { id: 'buildersMoon', n: "Builder's Moon", cat: 'road', fx: 'Builds started today are 25% faster', mod: { buildTime: 0.75 }, needs: 'Camp', ic: ['anvil', '#D08A4E'], go: { tab: 'world' } },
-    { id: 'fairWinds', n: 'Fair Winds', cat: 'road', fx: 'Expeditions sent today bring back +30%', mod: { expHaul: 1.3 }, needs: 'Expeditions', ic: ['boot', '#6B4A2E'], go: { tab: 'world' } },
     { id: 'busyTavern', n: 'Busy Tavern', cat: 'road', fx: 'The Tavern visitor costs 25% less', bonus: { tavernDeal: 1 }, needs: 'Visitor', ic: ['mug', '#8C6A43', { 1: '#6B4A2E', 7: '#F2C14E', 5: '#EFE6D6' }], go: { tab: 'world' } },
     { id: 'bountyDay', n: 'Bounty Day', cat: 'road', fx: 'Bounties refill at once and pay +50%', bonus: { bountyNoWait: 1 }, mod: { bountyPay: 1.5 }, ic: ['banner', '#E0524F'], go: { tab: 'adv' } },
     { id: 'renownDay', n: 'Renown Day', cat: 'road', fx: 'Bounties give double Renown', mod: { renown: 2 }, needs: 'B7', ic: ['banner', '#F2C14E'], go: { tab: 'adv' } },
@@ -272,7 +270,6 @@ let OMENS, WEEKLY_GOALS;
     wBty: { tier: 'easy', kind: 'bty', need: 6, txt: n => `Claim ${n} bounties`, ic: ['banner', '#F2C14E'] },
     wGath: { tier: 'easy', kind: 'gath', need: 300, scale: true, txt: n => `Gather ${num(n)} ore or logs at your top tier or one below`, ic: ['pick', '#D08A4E'] },
     wCraft: { tier: 'easy', kind: 'craft', need: 5, txt: n => `Forge ${n} items`, ic: ['anvil', '#8A8FA0'] },
-    wExp: { tier: 'easy', kind: 'exp', need: 3, needs: 'Expeditions', txt: n => `Send ${n} expeditions`, ic: ['boot', '#6B4A2E'] },
     wFloor: { tier: 'easy', kind: 'floor', need: 30, needs: 'Deepwell', txt: n => `Clear ${n} Deepwell floors`, ic: ['orb', '#3F8FA8'] },
     wCrit: { tier: 'easy', kind: 'crit', need: 300, scale: true, txt: n => `Land ${num(n)} critical hits`, ic: ['flame', '#FF9E3D', { 5: '#FFB347', 7: '#FFF3C4' }] },
     wChamp: { tier: 'easy', kind: 'champ', need: 3, needs: 'K5', txt: n => `Defeat ${n} champions`, ic: ['banner', '#F2C14E'] },
@@ -287,7 +284,6 @@ let OMENS, WEEKLY_GOALS;
     wLvl: { tier: 'steady', kind: 'lvl', need: 20, needs: 'B1', txt: n => `Gain ${n} companion levels`, ic: ['heart', '#5F8BE8'] },
     wPromo: { tier: 'steady', kind: 'promo', need: 1, needs: 'B1', ok: () => rosterList().some(k => { const r = charRec(k); return r.rank < 7 && r.lv >= levelCap(r.rank) - 10; }), txt: () => 'Promote a companion', ic: ['banner', '#B58CFF'] },
     wUp: { tier: 'steady', kind: 'up', need: 10, txt: n => `Upgrade gear ${n} times`, ic: ['anvil', '#FF9E3D'] },
-    wGrade: { tier: 'steady', kind: 'grade', need: 3, needs: 'Expeditions', txt: n => `Bring back ${n} Great or Perfect expeditions`, ic: ['boot', '#F2C14E'] },
     wDeep: { tier: 'steady', kind: 'deep', need: 1, needs: 'Deepwell', txt: () => 'Reach floor 25 in one Deepwell run', ic: ['orb', '#3F8FA8'] },
     wStar: { tier: 'steady', kind: 'star', need: 2, ok: () => masteryApi.totalStars() < S.maxZone * 5, txt: n => `Earn ${n} zone mastery stars`, ic: ['banner', '#F2C14E'] },
     wRef: { tier: 'steady', kind: 'ref', need: 3, needs: 'K6', txt: n => `Reforge ${n} item lines`, ic: ['anvil', '#B58CFF'] },
@@ -412,8 +408,6 @@ let OMENS, WEEKLY_GOALS;
   on('soloCounter', () => count('counter'));
   on('ability', p => { if (p && p.cls === 'solo' && !p.auto) count('cast'); });
   // Events named by the later specs; they count as soon as those systems emit them.
-  on('expedSent', () => count('exp'));
-  on('expedBack', p => { if (p && /great|perfect/i.test(String(p.grade))) count('grade'); });
   on('campBuilt', () => count('build'));
   on('deepFloor', () => count('floor'));
   // Gear upgrades and mastery stars have no event: count the growth of their totals.

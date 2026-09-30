@@ -515,9 +515,9 @@ if (section('almanac')) try {
   E(`Date.now = () => ${at(271, 9)}`); const o1 = E('almanac.today().id'); E(`Date.now = () => ${at(271, 21)}`);
   assert(E('almanac.today().id') === o1, `same Omen all day (${o1})`);
   const counts = {}; let same = 0;
-  for (let d = 0; d < 350; d++) { const id = E(`almanac.scheduled(${d}).id`); counts[id] = (counts[id] || 0) + 1; }
+  for (let d = 0; d < 340; d++) { const id = E(`almanac.scheduled(${d}).id`); counts[id] = (counts[id] || 0) + 1; }
   for (let d = 1; d < 700; d++) if (E(`almanac.scheduled(${d}).cat === almanac.scheduled(${d - 1}).cat`)) same++;
-  assert(Object.keys(counts).length === 35 && Object.values(counts).every(n => n === 10), 'A1: each of 35 Omens scheduled 10 times in 350 days');
+  assert(Object.keys(counts).length === 34 && Object.values(counts).every(n => n === 10), 'A1: each of 34 Omens scheduled 10 times in 340 days');
   assert(same === 0, `A1: no category twice in a row over 700 days, cycle edges included (${same} repeats)`);
   assert(days.every(d => E(`almanac.usable(almanac.omenFor(${d}))`)), 'daily pick never plays an Omen whose system is missing');
   const upside = E(`OMENS.flatMap(o => [...Object.entries(o.mod || {}).filter(([k, v]) => almanac.lowerBetter.has(k) ? !(v > 0 && v <= 1) : !(v >= 1)), ...Object.entries(o.bonus || {}).filter(([, v]) => !(v >= 0))].map(([k]) => o.id + ':' + k))`);
@@ -944,7 +944,7 @@ if (section('camp')) try {
     const opened = go.eval('S.camp.open') === (old.maxZone >= 5);
     // the opened camp changes neither damage nor gear (compare with the camp's levels removed)
     const dps1 = go.fn.totalDps(), gear1 = JSON.stringify(go.fn.gear()), keep = go.eval('JSON.stringify(S.camp.b)');
-    go.eval('S.camp.b = { hearth: 0, watch: 0, forge: 0, bench: 0, loom: 0, ench: 0, tavern: 0, library: 0, maproom: 0, shrine: 0 }');
+    go.eval('S.camp.b = { hearth: 0, watch: 0, forge: 0, bench: 0, loom: 0, ench: 0, tavern: 0, library: 0, shrine: 0 }');
     const dps0 = go.fn.totalDps(), same = dps1 === dps0 && JSON.stringify(go.fn.gear()) === gear1;
     go.eval(`S.camp.b = ${keep}`);
     const cs = go.eval('JSON.stringify(S.camp)'); go.eval('save(); loadSave()');
@@ -1167,7 +1167,7 @@ if (section('codex')) try {
   assert(E('S.codex.init') && E('codexLight()') <= 1 && !toasts.some(t => /Codex/.test(t)), `new game: first load credits only today's Omen (${E('codexLight()')}) and stays quiet`);
   assert(E('codexPage("deepwell").locked && codexPage("wardrobe").locked && codexPage("deepwell").lightMax === 0'), 'Deepwell and Wardrobe pages are locked until the Deepwell exists');
   const maxL = E('codexPages().filter(p => !p.locked).reduce((a, p) => a + p.lightMax, 0)');
-  assert(maxL > 600 && maxL < 1105,   // W2-B: solo has no expedition, legendary or pinnacle pages
+  assert(maxL > 600 && maxL < 1105,   // W2-B: solo has no companion pages
      `Region 1 Light available today: ${maxL} (spec 1,105 with every system)`);
   // old saves: defaults, one-time retro credit, exact against a fresh computation, twice
   for (const f of FIX) {
@@ -1213,11 +1213,10 @@ if (section('codex')) try {
   assert(B('codexPage("bestiary").pct') >= 0.5 && B('blessOpen("blade")') && bt.some(t => /Blade Blessing is open/.test(t)), `Bestiary at ${Math.round(B('codexPage("bestiary").pct') * 100)}%: Blade opens, with a toast`);
   B('S.mastery.types = {}; codexRefresh(true)');
   assert(B('blessOpen("blade")') && !B('blessOpen("edge")'), 'an opened Blessing stays open; others stay closed');
-  // milestones: rewards, the expedition slot, titles
-  const s0 = B('bonus("expSlots")');
+  // milestones: rewards, titles
   B('S.codex.lightMax = 205; codexRefresh(true)');
   assert(B('[25, 50, 75, 100, 150, 200].every(k => S.codex.got[k]) && !S.codex.got[250]') && B('codexExact()'), 'milestones up to 200 granted; exact hints on');
-  assert(B('bonus("expSlots")') === s0 && B('bonus("bag")') === 0 && B('S.codex.got[200]'), 'solo: 200 Light grants the Wayfinder title, not an expedition slot; Bag +10 waits for 350');
+  assert(B('bonus("bag")') === 0 && B('S.codex.got[200]'), '200 Light grants the Wayfinder title; Bag +10 waits for 350');
   assert(!B('codexSetTitle("t_keeper")') && B('codexSetTitle("t_lamplighter") && codexTitle() === "Lamplighter"') && B('codexSetTitle(null) && codexTitle() === ""'), 'only earned titles can be picked; None always');
   // Seal bonuses are tiny and capped per stat, forever
   assert(B('Object.keys(CODEX_CAP).every(k => CODEX_CAP[k] <= 0.05)') && B('Object.values(CODEX_PAGES).filter(p => p.seal && p.seal.key).every(p => p.seal.v <= 0.03)'), 'every Seal is 3% or less; every cap is 5%');
@@ -1416,10 +1415,8 @@ if (section('onboarding')) try {
   assert(E('onboardTips(false) === false && onboardStep() === null'), 'Skip tips: no hint shows');
   E('onboardTips(true); onboardUnlockAll()');
   assert(E('S.onboard.all && FEATURES.every(x => x.late || isUnlocked(x.id))'), 'Show every tab: everything opens');
-  assert(E('!isUnlocked("powers")'), 'a late feature (Powers) stays hidden after "Show every tab" until its rule holds');
-  E('S.legend.sig[2] = 1'); for (let i = 0; i < 12; i++) g.fn.tick(0.1);
-  assert(E('isUnlocked("powers")'), 'Powers opens with a first Circle Crest, also on an all-open save');
-  assert(E('GOALS.filter(x => !["roster", "exped", "maproom"].includes(x.sys)).every(x => goalGate(x))'), 'Next Up shows every system again once it is open (solo: not the Roster, Expeditions or Map Room)');
+  assert(E('!isUnlocked("hands")'), 'a late feature (Hands) stays hidden after "Show every tab" until its rule holds');
+  assert(E('GOALS.filter(x => !["roster"].includes(x.sys)).every(x => goalGate(x))'), 'Next Up shows every system again once it is open (solo: not the Roster)');
   assert(E('(onboardReveal("deep"), true)'), 'reveal after all is harmless');
   errs.push(...g.errors);
   assert(!errs.length, 'no onboarding errors' + (errs.length ? ': ' + errs[0] : ''));
@@ -1593,7 +1590,7 @@ if (section('constellations')) try {
 if (section('welcome')) try {
   const rawOf = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
   const ticks = (g, secs) => { for (let i = 0; i < secs * 10; i++) g.fn.tick(0.1); };
-  const DEF = { watch: 0, forge: 1, bench: 1, loom: 1, ench: 1, tavern: 1, library: 0, maproom: 0, shrine: 0 };
+  const DEF = { watch: 0, forge: 1, bench: 1, loom: 1, ench: 1, tavern: 1, library: 0, shrine: 0 };
   const errs = [];
   // The Omen pin holds for every game this run loads.
   assert(loadCore({ seed: 3 }).eval('almanac.active() === null'), 'the Omen is pinned to none for the whole check run');
@@ -1626,7 +1623,7 @@ if (section('welcome')) try {
   assert(n.eval('S.welcome.at === 0 && campLevel("hearth") === 1'), 'new game: no welcome (the camp opens at Hearth 1)');
   // a save that already has a camp keeps it as it is
   const withCamp = JSON.parse(rawOf('save-v2-late.json'));
-  withCamp.camp = { v: 1, open: true, b: { hearth: 2, watch: 1, forge: 1, bench: 1, loom: 1, ench: 1, tavern: 1, library: 0, maproom: 0, shrine: 0 }, builds: [], bless: [], news: [], bty: 0, talk: {}, deco: {} };
+  withCamp.camp = { v: 1, open: true, b: { hearth: 2, watch: 1, forge: 1, bench: 1, loom: 1, ench: 1, tavern: 1, library: 0, shrine: 0 }, builds: [], bless: [], news: [], bty: 0, talk: {}, deco: {} };
   const c = loadCore({ seed: 5, storage: memoryStorage({ [KEY]: JSON.stringify(withCamp) }) }); ticks(c, 2);
   assert(c.eval('S.welcome.at === 0 && campLevel("hearth") === 2 && campLevel("watch") === 1'), 'a save that has a camp: nothing changes (Hearth 2 stays 2)');
   // an old save still below zone 5 is not welcomed now, and not later when it reaches the camp
@@ -1649,7 +1646,7 @@ if (section('coast writing')) try {
   const g = loadCore(), E = x => g.eval(x);
   const str = (s, max) => typeof s === 'string' && s.trim().length > 0 && s.length <= max;
   const sents = s => (s.match(/[.!?]+["']?(?=\s|$)/g) || []).length;
-  const arr = E('COAST_ARRIVAL'), story = E('COAST_STORY'), keep = E('KEEPER_LINES'), lore = E('COAST_LORE');
+  const arr = E('COAST_ARRIVAL'), story = E('COAST_STORY'), keep = E('KEEPER_LINES');
   const bty = E('COAST_BOUNTY_TEXT'), omen = E('COAST_OMEN_TEXT');
   assert(arr.length === 7 && arr.every(s => str(s, 80)) && str(E('COAST_ARRIVAL_BOSS'), 80), 'coast: 7 arrival lines and the boss arrival, each under 80 chars');
   const beatBad = story.filter(b => !str(b.title, 40) || !str(b.text, 420) || sents(b.text) < 2 || sents(b.text) > 5 || !str(b.note, 80)
@@ -1659,10 +1656,6 @@ if (section('coast writing')) try {
   const kKeys = ['intro', 'swing', 'beam', 'undertow', 'bell', 'feed', 'rocks', 'win', 'fall', 'rematch'];
   const kBad = kKeys.filter(k => !Array.isArray(keep[k]) || !keep[k].length || !keep[k].every(s => str(s, 59)));
   assert(!kBad.length, 'coast: Keeper lines for every moment, barks under 60 chars' + (kBad.length ? ': ' + kBad.join(', ') : ''));
-  const pages = [6, 7, 8, 9, 10].flatMap(b => lore[b] || []);
-  const lBad = pages.filter(p => !str(p.title, 32) || !str(p.text, 420) || sents(p.text) < 2 || sents(p.text) > 5 || !['keeper', 'hallam', 'found'].includes(p.by));
-  assert(pages.length === 10 && [6, 7, 8, 9, 10].every(b => lore[b].length === 2) && !lBad.length && new Set(pages.map(p => p.title)).size === 10,
-    'coast: 10 Lore pages (2 per band VI-X), unique titles, 2-5 sentences' + (lBad.length ? ': ' + lBad[0].title : ''));
   const bOk = ['crab', 'pearl', 'beam'].every(k => typeof bty[k] === 'function' && str(bty[k]({ need: 40 }), 40) && str(bty[k]({ need: 1 }), 40) && bty[k]({ need: 40 }).includes('40'));
   assert(bOk, 'coast: 3 bounty texts (one and many) under 40 chars');
   const oOk = ['springTide', 'calmSea', 'pearlMoon'].every(k => omen[k] && str(omen[k].n, 24) && str(omen[k].fx, 60) && str(omen[k].say, 60));
@@ -1712,273 +1705,28 @@ if (section('hollow writing')) try {
   assert(lines.length > 60 && probe && !hits.length, `hollow: none of ${lines.length} lines uses a banned verb of the dark` + (hits.length ? ': ' + hits[0] : ''));
 } catch (e) { fail('hollow writing crashed: ' + (e.stack || e)); }
 
-// ---- expedition and Omen writing (21i-lore-exped.js LORE4, 21j-lore-omens.js LORE5; lore.md 1, 8.5, 9.6) ----
-if (section('expedition and omen writing')) try {
-  for (const f of ['21i-lore-exped.js', '21j-lore-omens.js']) {
+// ---- Omen writing (21j-lore-omens.js LORE5; lore.md 1, 8.5, 9.6) ----
+if (section('omen writing')) try {
+  for (const f of ['21j-lore-omens.js']) {
     const src = fs.readFileSync(path.join(ROOT, 'src', 'js', f), 'utf8');
-    assert(!/\b(document|window|localStorage)\.|\bS\.[a-z]|registerState\(/.test(src.replace(/\/\/.*$/gm, '')), `lore: ${f} is data only (no DOM, no state)`);
+    assert(!/\b(document|window|localStorage)\.|\bS\.[a-z]|registerState\(/.test(src.replace(/\/\/.*$/gm, '')), `lore: ${f} is data only (no DOM, no save)`);
   }
   const g = loadCore(), E = x => g.eval(x);
   const L = E('LORE_LIMITS'), banned = E('LORE_BANNED');
   const str = (s, max) => typeof s === 'string' && s.trim().length > 0 && s.length <= max;
-  const sents = s => (s.match(/[.!?]+["']?(?=\s|$)/g) || []).length;
   const clean = s => !banned.some(re => re.test(s)) && !/\bthe Voice\b/.test(s);
-  // Expedition Lore pages: every EXPED_LORE title has its text, in order
-  const titles = E('EXPED_LORE'), T = E('EXPED_LORE_TEXT');
-  const want = Object.entries(titles).flatMap(([b, ts]) => ts.map((t, i) => [b, i, t]));
-  const pBad = want.filter(([b, i, t]) => { const p = T[b] && T[b][i]; return !p || p.title !== t || !str(p.text, L.page) || sents(p.text) < 2 || sents(p.text) > 4 || !clean(p.text); });
-  const extra = Object.entries(T).some(([b, ps]) => !titles[b] || ps.length !== titles[b].length);
-  assert(L.page > 0 && want.length === 28 && !pBad.length && !extra,
-    `lore: all ${want.length} expedition Lore pages have text (titles match, 2-4 sentences, ${L.page} chars or less, no banned words)` + (pBad.length ? ': ' + pBad[0][2] : ''));
-  // Keepsakes: one line each
-  const K = E('EXPED_KEEPSAKES'), KT = E('EXPED_KEEP_TEXT');
-  const kBad = Object.keys(K).filter(r => !str(KT[r], L.keep) || !clean(KT[r]));
-  assert(L.keep > 0 && Object.keys(K).length === 12 && !kBad.length && Object.keys(KT).length === Object.keys(K).length,
-    `lore: all 12 Keepsakes have a line, ${L.keep} chars or less` + (kBad.length ? ': ' + K[kBad[0]] : ''));
   // Omens and Dares: one line each, keyed by Omen id
   const O = E('OMENS'), OL = E('OMEN_LINES'), DL = E('DARE_LINES');
   const oBad = O.filter(o => !str(OL[o.id], L.omen) || !clean(OL[o.id]));
   const dares = O.filter(o => o.dare), dBad = dares.filter(o => !str(DL[o.id], L.omen) || !clean(DL[o.id]));
-  assert(L.omen > 0 && L.omen < 60 && O.length === 35 && !oBad.length && Object.keys(OL).every(k => O.some(o => o.id === k) || k === 'companyFeast'),   // (solo: Hunter's Feast replaces Company Feast, whose line stays as data)
+  assert(L.omen > 0 && L.omen < 60 && O.length === 34 && !oBad.length && Object.keys(OL).every(k => O.some(o => o.id === k) || k === 'companyFeast'),   // (solo: Hunter's Feast replaces Company Feast, whose line stays as data)
     
     `lore: all ${O.length} Omens have a line, ${L.omen} chars or less` + (oBad.length ? ': ' + oBad[0].n : ''));
   assert(dares.length === 7 && !dBad.length && Object.keys(DL).length === dares.length,
     `lore: all ${dares.length} Dares have a line, ${L.omen} chars or less` + (dBad.length ? ': ' + dBad[0].dare.n : ''));
   assert(E('omenLine("goldRain", false)') === OL.goldRain && E('omenLine("goldRain", true)') === DL.goldRain && E('omenLine("longNight", true)') === OL.longNight
     && E('omenLine("calmSea")') === E('COAST_OMEN_TEXT.calmSea.say') && E('omenLine("nope")') === '', 'lore: omenLine picks the Dare line while it is taken, falls back to the Omen and the coast lines');
-} catch (e) { fail('expedition and omen writing crashed: ' + (e.stack || e)); }
-
-// ---- pinnacle data and writing (21d-data-pinnacle.js, 21e-stories-pinnacle.js; pinnacles.md 3-7, PN11) ----
-if (section('pinnacle data')) try {
-  for (const f of ['21d-data-pinnacle.js', '21e-stories-pinnacle.js']) {
-    const src = fs.readFileSync(path.join(ROOT, 'src', 'js', f), 'utf8');
-    assert(!/\b(document|window|localStorage)\.|\bS\.[a-z]|registerState\(/.test(src.replace(/\/\/.*$/gm, '')), `pinnacle: ${f} is data only (no DOM, no state)`);
-  }
-  const g = loadCore(), E = x => g.eval(x);
-  const ids = E('PIN_IDS'), P = E('PIN'), T = E('PIN_TUNE'), K = E('PIN_KINDS'), C = E('PIN_CAPS'), M = E('PIN_MECH');
-  const V = E('PIN_VOW_RULES'), W = E('PIN_WEEK'), R = E('PIN_REWARDS'), PW = E('PIN_POWERS'), CO = E('PIN_COSMETICS'), CX = E('PIN_CODEX');
-  const roster = E('ROSTER_KEYS'), classes = E('Object.keys(HERO_CLASSES)');
-  const eps = 1e-9, str = (s, max) => typeof s === 'string' && s.trim().length > 0 && s.length <= max;
-  const sents = s => (s.match(/[.!?]+["']?(?=\s|$)/g) || []).length;
-  const is3 = a => Array.isArray(a) && a.length === 3;
-
-  // every boss has every field
-  const bossKeys = ['id', 'n', 'area', 'theme', 'overlay', 'rig', 'anchor', 'order', 'cols', 'takeX', 'phases', 'mech', 'enrage', 'needs', 'counters', 'samples', 'friend', 'reward'];
-  const bBad = ids.filter(b => { const x = P[b];
-    return !x || bossKeys.some(k => x[k] === undefined) || x.id !== b || !str(x.n, 24) || !str(x.area, 24) || x.anchor !== T.anchor[b]
-      || !is3(x.cols) || !x.cols.every(c => ['front', 'mid', 'back'].includes(c)) || !is3(x.takeX) || !is3(x.phases) || !x.phases.every(p => str(p.n, 24))
-      || !str(x.enrage.id, 24) || !str(x.enrage.n, 24) || !Object.keys(x.enrage.every).every(m => x.mech[m])
-      || !classes.every(c => Array.isArray(x.samples[c]) && x.samples[c].length === 3 && x.samples[c].every(k => roster.includes(k)))
-      || !Object.keys(x.friend).every(k => roster.includes(k)); });
-  assert(ids.length === 4 && ids.join() === 'king,lure,fire,below' && !bBad.length, 'pinnacle: 4 bosses, every field, anchors match PIN_TUNE, sample line-ups use real characters' + (bBad.length ? ': ' + bBad[0] : ''));
-  assert(P.lure.tide && P.fire.sky && P.fire.cart && P.below.light && P.below.light.start === 100, 'pinnacle: each boss rule block (the Lurelight tide, the sky and the cart, Maud\'s Light)');
-
-  // every mechanic has every field; 17 in all; one heavy hit per boss
-  const mKeys = ['id', 'n', 'kind', 'ph', 'every', 'first', 'wind', 'target', 'fx', 'cap', 'tap', 'idle', 'role'];
-  const mIds = Object.keys(M);
-  const mBad = mIds.filter(id => { const m = M[id];
-    return mKeys.some(k => m[k] === undefined) || m.id !== id || !K[m.kind] || !C[m.kind] || !str(m.n, 24) || !is3(m.ph) || !is3(m.every)
-      || !m.ph.some(Boolean) || !Array.isArray(m.idle) || !m.idle.length || !m.role.length
-      || (m.kind === 'swap' ? m.every.some(Boolean) || !(m.fx.stacks > m.fx.tapAt && m.fx.tapAt > 0)
-        : m.ph.some((on, i) => (on ? !(m.every[i] > 0) : m.every[i] !== 0)) || !(m.first >= 0)); });
-  const heavy = ids.map(b => Object.values(P[b].mech).filter(m => m.kind === 'parry').length);
-  assert(mIds.length === 17 && ids.reduce((n, b) => n + Object.keys(P[b].mech).length, 0) === 17 && !mBad.length && heavy.every(n => n === 1),
-    'pinnacle: 17 mechanics with every field, unique ids, one heavy hit per boss' + (mBad.length ? ': ' + mBad[0] : ''));
-
-  // telegraph windows: positive, over the floor, parryable, and room for the next one, normal and Assist
-  const restless = 1 + V.restless.often * V.restless.max;
-  const tBad = [];
-  for (const id of mIds) { const m = M[id], b = P[m.boss];
-    const shrinks = [1].concat(b.light ? [b.light.lowWindX] : []);
-    for (const ax of [1, T.assist]) {
-      if (m.kind === 'swap') {       // the tap window is the time between two stacking hits
-        const gapS = m.fx.stackOn === 'bossHit' ? m.fx.stackEvery : Math.min(...M[m.fx.stackOn].every.filter(Boolean), b.enrage.every[m.fx.stackOn] || 1e9) / restless;
-        if (!(gapS >= T.windMin)) tBad.push(`${id} swap window ${gapS}`);
-        continue;
-      }
-      if (!(m.wind >= T.windMin)) tBad.push(`${id} wind ${m.wind} under the floor`);
-      for (const sh of shrinks) {
-        const w = Math.max(T.windMin, m.wind * sh) * ax;
-        const win = T.parryMaren * ax;
-        if (!(w > 0)) tBad.push(`${id} wind not positive`);
-        if (m.kind === 'parry' && !(win < w - eps && T.parry * ax < win + eps)) tBad.push(`${id} parry window ${win} not inside wind-up ${w}`);
-        let cad = Math.min(...m.every.filter(Boolean), b.enrage.every[id] || 1e9) * (m.fx.addAliveX || 1) / restless;
-        if (!(cad >= w + T.gap - eps)) tBad.push(`${id} cadence ${cad.toFixed(2)} < wind-up ${w} + gap (Assist x${ax})`);
-      }
-    }
-  }
-  assert(!tBad.length, `pinnacle: every wind-up >= ${T.windMin}s, parry window inside it, cadence leaves the gap (normal, Assist x${T.assist}, Restless, low Light)` + (tBad.length ? ': ' + tBad[0] : ''));
-
-  // fairness caps (3.4, PN11), from the data
-  const worst6 = f => { const dps = t => (f.stackEvery ? Math.min(f.stacks, 1 + Math.floor(t / f.stackEvery)) : 1) * f.dps;
-    let best = 0; for (let s = 0; s <= f.secs; s += 0.25) { let d = 0; for (let t = s; t < Math.min(f.secs, s + 6); t += 0.01) d += dps(t) * 0.01; best = Math.max(best, d); } return best; };
-  const cBad = mIds.filter(id => { const m = M[id], c = C[m.kind], f = m.fx;
-    switch (m.kind) {
-      case 'parry': return !(m.cap.hit <= c.hit + eps) || (f.hitCap || m.cap.hit) + (f.swallowed ? f.swallowed.secs * f.swallowed.dps : 0) > c.hit + eps;
-      case 'interrupt': return (f.stun || 0) > c.stun || (f.charm || 0) > c.stun || Math.abs(Math.min(0, f.light || 0)) > c.light || (f.heal || 0) > c.heal;
-      case 'cleanse': return !(worst6(f) <= c.dot + eps) || !(f.secs > 0) || !(f.count >= 1 && f.count <= 2);
-      case 'swap': return !(f.crushed.secs <= c.crushed && f.crushed.takeX <= c.takeX + eps);
-      case 'scatter': return (f.hitCap || m.cap.hit) + (f.burn ? f.burn.dps * f.burn.secs : 0) > c.hit + eps;
-      case 'dive': return (m.cap.hit || 0) > (c.hit + eps) || (f.hold || 0) > c.stun || (f.cartHit || 0) > c.hit + eps;
-      default: return true;
-    } });
-  assert(!cBad.length, 'pinnacle: every mechanic inside the fairness caps (hit 35%, stun 3s, dot 25% in 6s, scatter 30%, Crushed 3s x1.5)' + (cBad.length ? ': ' + cBad[0] : ''));
-
-  // Vows, the Week's Oath, rewards, powers, cosmetics
-  assert(Object.values(V).reduce((n, v) => n + v.w * v.max, 0) === 30, 'pinnacle: Vow rules sum to level 30');
-  const lv = W.bag.map(s => W.level(s));
-  const wBad = W.bag.filter(s => Object.keys(s.vows).some(k => !V[k] || s.vows[k] < 1 || s.vows[k] > V[k].max));
-  const combos = new Set(); for (let w = 0; w < 32; w++) combos.add(W.boss(w) + ':' + W.oath(w).id);
-  assert(W.bag.length === 8 && lv.every(l => l >= 10 && l <= 14) && !wBad.length && new Set(W.bag.map(s => s.id)).size === 8 && combos.size === 32 && W.boss(0) === 'king' && W.boss(3) === 'below',
-    `pinnacle: Week's Oath bag of 8 at level 10-14 (${lv.join(', ')}), every boss meets every set in 32 weeks`);
-  assert(R.legend.base === T.lgBase && R.legend.per === T.lgPer && R.legend.pity === T.pity && R.first.rank === T.firstRank && R.every.echo === T.echo && W.seal === 1,
-    'pinnacle: rewards match PIN_TUNE; the Boss of the Week pays one Seal');
-  const pBad = ids.filter(b => { const rw = P[b].reward, pw = PW[rw.power];
-    return !pw || pw.boss !== b || pw.fits !== 'hero' || !str(pw.n, 24) || !Object.values(pw.v).every(a => a.length === 5) || ![1, 2, 3, 4, 5].every(r => str(pw.txt(r), 180))
-      || !['colour', 'trail', 'trophy'].every(k => CO[rw[k]] && CO[rw[k]].boss === b && CO[rw[k]].vow === { colour: 0, trail: R.vow.trail, trophy: R.vow.trophy }[k]); });
-  assert(Object.keys(PW).length === 4 && Object.keys(CO).length === 12 && !pBad.length && Object.values(CO).every(c => str(c.n, 24)),
-    'pinnacle: 4 powers (5 ranks, text), 12 cosmetics, each boss\'s rewards exist' + (pBad.length ? ': ' + pBad[0] : ''));
-  assert(CX.first * 4 + CX.band * 4 * T.vowBands.length + CX.card * 5 === CX.total && CX.total === 90, 'pinnacle: Codex page 15 totals 90 Light');
-
-  // writing (21e): every string there, non-empty, inside UI limits
-  const ST = E('PIN_STORY'), VO = E('PIN_VOICE'), LN = E('PIN_LINES'), SAY = E('PIN_SAY'), HI = E('PIN_HINTS'), CH = E('PIN_CHIPS');
-  const LE = E('PIN_LESSONS'), CT = E('PIN_COUNTER_TEXT'), TI = E('PIN_TITLES'), WN = E('PIN_WEEK_NAMES'), UI = E('PIN_UI_TEXT');
-  const card = (c, lo) => c && str(c.title, 32) && str(c.text, 420) && sents(c.text) >= lo && sents(c.text) <= 5;
-  const sBad = ids.filter(b => !ST[b] || !str(ST[b].quote, 60) || !card(ST[b].intro, 2) || !card(ST[b].kill, 3));
-  assert(!sBad.length && card(VO, 3) && str(VO.note, 80) && /Emberwaste/.test(VO.text), 'pinnacle: intro and kill cards (3-5 sentences), sheet quotes, The Voice points to the Emberwaste' + (sBad.length ? ': ' + sBad[0] : ''));
-  const bark = a => Array.isArray(a) && a.length > 0 && a.every(s => str(s, 59));
-  const lBad = ids.filter(b => !LN[b] || !['intro', 'phase2', 'phase3', 'enrage', 'win', 'fall', 'rematch'].every(k => bark(LN[b][k]))
-    || !Object.keys(P[b].mech).every(id => bark(LN[b].mech[id])));
-  const sayBad = ids.filter(b => !SAY[b] || Object.keys(SAY[b]).some(k => !P[b].friend[k] || !str(SAY[b][k].line, 59)) || Object.keys(P[b].friend).some(k => !SAY[b][k]));
-  assert(!lBad.length && !sayBad.length && SAY.king.corvin && SAY.fire.caedmon, 'pinnacle: barks under 60 chars for every moment and mechanic; Corvin, Caedmon and Morwen lines' + (lBad.concat(sayBad).length ? ': ' + lBad.concat(sayBad)[0] : ''));
-  const hBad = mIds.filter(id => !str(HI[id], 44) || !CH[id] || !str(CH[id].idle, 36) || !str(CH[id].tap, 36) || typeof LE[id] !== 'function' || !str(LE[id](3), 100) || !LE[id](3).includes('3') || !str(LE[id](1), 100));
-  assert(!hBad.length && Object.keys(HI).length === 17 && str(E('PIN_LESSON_TIME'), 100) && str(E('PIN_LESSON_WIPE'), 100), 'pinnacle: 17 first-use hints (44 chars), counter chips (36), fail lessons (100)' + (hBad.length ? ': ' + hBad[0] : ''));
-  const tags = ids.flatMap(b => P[b].counters.strong.concat(P[b].counters.weak));
-  const titleIds = ids.flatMap(b => [P[b].reward.title, P[b].reward.title30]).concat(Object.values(CX.allFour), CX.pageSeal);
-  assert(tags.every(t => str(CT[t], 32)) && titleIds.every(t => TI[t] && str(TI[t].n, 24) && str(TI[t].how, 48)) && W.bag.every(s => str(WN[s.id], 24)),
-    'pinnacle: counter texts, every title (name, how), Week\'s Oath names');
-  assert(str(UI.locked, 64) && UI.lockParts.length === 2 && str(UI.guide, 80) && UI.tips.length === 3 && UI.tips.every(t => str(t.title, 24) && str(t.text, 100))
-    && str(UI.goalReady('The Hollow King'), 48) && str(UI.goalWeek('The First Fire'), 48) && str(UI.newBest('1:04', 12), 40), 'pinnacle: UI texts inside limits');
-} catch (e) { fail('pinnacle data crashed: ' + (e.stack || e)); }
-
-// ---- legendary powers, circle sets and their icons (21c-data-legend.js, 11b-art-legend.js; legendaries.md 3-6) ----
-if (section('legendary data')) try {
-  for (const f of ['21c-data-legend.js', '11b-art-legend.js']) {
-    const src = fs.readFileSync(path.join(ROOT, 'src', 'js', f), 'utf8');
-    assert(!/\b(document|window|localStorage)\.|\bS\.[a-z]|registerState\(/.test(src.replace(/\/\/.*$/gm, '')), `legend: ${f} is data only (no DOM, no state)`);
-  }
-  const g = loadCore(), E = x => g.eval(x);
-  const P = E('LEG_POWERS'), ids = E('LEG_IDS'), CI = E('LEG_CLASS_IDS'), CO = E('LEG_COMP_IDS'), PI = E('LEG_PIN_IDS');
-  const FITS = E('LEG_FITS'), WIRE = E('LEG_WIRE'), SETS = E('LEG_SETS'), CAPS = E('LEG_CAPS'), CIRC = E('LEG_CIRCLES'), CLS = E('LEG_CLASSES');
-  const R = E('ROSTER'), keys = E('ROSTER_KEYS'), ICON = E('ICON'), SPEC = E('LEG_ICON_SPEC'), PW = E('PIN_POWERS');
-  const str = (s, max) => typeof s === 'string' && s.trim().length > 0 && s.length <= max;
-  const num = x => typeof x === 'number' && isFinite(x);
-
-  // one list: 24 class (6 a class), 15 companion, the 4 pinnacle powers by reference
-  const all = CLS.flatMap(c => CI[c]).concat(CO, PI);
-  assert(CLS.join() === E('Object.keys(HERO_CLASSES)').join() && CLS.every(c => CI[c].length === 6) && CO.length === 15 && PI.length === 4
-    && ids.length === 43 && new Set(all).size === 43 && all.every(id => ids.includes(id)) && PI.every(id => P[id] === PW[id]),
-    'legend: 43 powers in one list (24 class, 15 companion, the 4 pinnacle rows are PIN_POWERS itself)');
-
-  // every power has every field
-  const heroPos = FITS.hero;
-  const fBad = ids.filter(id => { const p = P[id], pin = PI.includes(id);
-    return !p || p.id !== id || !str(p.n, 26) || !FITS[p.fits] || !num(p.p1) || !num(p.p5) || p.p1 < 0 || p.p5 < p.p1 || p.p5 > 0.2
-      || !p.v || !Object.keys(p.v).length || Object.values(p.v).some(a => !Array.isArray(a) || a.length !== 5 || !a.every(num))
-      || typeof p.txt !== 'function' || !WIRE[p.wire]
-      || (pin ? p.fits !== 'hero' || p.cls !== null
-        : !['class', 'comp'].includes(p.src) || !str(p.at, 60)
-          || (p.src === 'class' ? p.fits !== 'hero' || !CLS.includes(p.cls) || !CI[p.cls].includes(id) : p.fits === 'hero' || p.cls !== null || !CO.includes(id)))
-      || (p.only && (!R[p.only] || R[p.only].role !== p.fits))
-      || (p.per && (!CIRC.includes(p.per) || typeof p.pPer !== 'boolean'))
-      || (p.down && !p.down.every(k => p.v[k])); });
-  assert(!fBad.length && heroPos.join() === 'weapon,off,helm,body' && FITS.trinket.join() === 'trk' && ['tank', 'striker', 'caster', 'support'].every(r => FITS[r].join() === 'wpn'),
-    'legend: every power has id, name, fits, class, p1 <= p5, 5-rank values, text, wiring; hero powers on weapon/off/helm/body, role powers on wpn, trinkets on trk' + (fBad.length ? ': ' + fBad[0] : ''));
-  assert(new Set(ids.map(id => P[id].n)).size === ids.length, 'legend: power names are unique');
-
-  // values rise with rank (intervals such as `every` and the row's `down` keys fall); each power changes from I to V
-  const eps = 1e-9, vBad = [];
-  for (const id of ids) { const p = P[id]; let moves = false;
-    for (const [k, a] of Object.entries(p.v)) { const dn = (p.down || []).includes(k) || k === 'every';
-      for (let i = 1; i < 5; i++) if (dn ? a[i] > a[i - 1] + eps : a[i] < a[i - 1] - eps) vBad.push(`${id}.${k}`);
-      if (Math.abs(a[4] - a[0]) > eps) moves = true; }
-    if (!moves) vBad.push(id + ' never changes'); }
-  const dbl = ['tidewall', 'kindled', 'mossguard', 'echostring', 'compass'].every(id => { const a = Object.values(P[id].v)[0]; return Math.abs(a[4] - 2 * a[0]) < eps && Math.abs(a[1] - 1.25 * a[0]) < eps; });
-  assert(!vBad.length && dbl, 'legend: values rise with rank (intervals fall), each power grows from I to V, rank V doubles rank I at 25% a rank' + (vBad.length ? ': ' + vBad[0] : ''));
-
-  // texts: every rank, non-empty, inside the card (180 chars), and the number on the card changes with rank
-  const tBad = ids.filter(id => { const t = [1, 2, 3, 4, 5].map(r => P[id].txt(r));
-    return !t.every(s => str(s, 180) && !/undefined|NaN/.test(s)) || t[0] === t[4]; });
-  assert(!tBad.length && E("legendText('tidewall', 1)").includes('20%') && E("legendText('tidewall', 5)").includes('40%') && E("legendVal('patience', 'mult', 5)") === 9,
-    'legend: every power has a text at every rank (under 180 chars), rank I and V read differently' + (tBad.length ? ': ' + tBad[0] : ''));
-
-  // icons: every power, the 4 Sigils, the frame
-  const hex = c => typeof c === 'string' && /^(#[0-9A-Fa-f]{6}|hsl\()/.test(c);
-  const iBad = ids.filter(id => { const s = SPEC[id], ic = E(`legendIcon('${id}')`);
-    return !s || !ICON[s[0]] || ic[0] !== s[0] || !hex(ic[1]) || ![1, 2, 3, 4, 5, 6, 7].every(k => hex(ic[2][k])); });
-  const sig = CIRC.map((c, i) => E(`sigilIcon(${i})`));
-  const sBad = CIRC.filter((c, i) => { const m = ICON['sigil_' + c]; return !m || m.length !== 12 || m.some(r => r.length !== 12) || sig[i][0] !== 'sigil_' + c || E(`sigilIcon('${c}')[0]`) !== sig[i][0]; });
-  const FR = E('LEG_FRAME');
-  assert(!iBad.length && Object.keys(SPEC).length === ids.length && !sBad.length && new Set(sig.map(s => s[1])).size === 4
-    && FR.col === E('LEG_COL') && FR.map.length === 16 && FR.map.every(r => r.length === 16),
-    'legend: every power has an icon (a recoloured ICON map), 4 Sigil icons registered, the 16x16 orange frame' + (iBad.concat(sBad).length ? ': ' + iBad.concat(sBad)[0] : ''));
-
-  // sets: one per real circle (ROSTER), tiers 2/4/6 with text, the 6-piece named, gross 12-18%
-  const rc = new Set(keys.map(k => R[k].circle));
-  const setBad = CIRC.filter((c, i) => { const s = SETS[c];
-    if (!s || s.circle !== c || s.i !== i || !rc.has(c) || !str(s.n, 24) || Object.keys(s.tiers).join() !== '2,4,6') return true;
-    const gross = [2, 4, 6].reduce((n, t) => n + s.tiers[t].p, 0);
-    return ![2, 4, 6].every(t => str(s.tiers[t].txt, 100) && s.tiers[t].p > 0 && s.tiers[t].fx) || !str(s.tiers[6].n, 24)
-      || gross < CAPS.setGross[0] - eps || gross > CAPS.setGross[1] + eps; });
-  assert(!setBad.length && rc.size === 4 && [...rc].every(c => CIRC.includes(c)) && Object.keys(SETS).length === 4,
-    'legend: 4 circle sets on the ROSTER circles, 2/4/6-piece tiers with text, 6-piece sets +12-18% gross' + (setBad.length ? ': ' + setBad[0] : ''));
-
-  // costs and limits (5, 2.3, 4.1, 7)
-  const C = E('LEG_COST'), T = E('LEG_TUNE'), CX = E('LEG_CODEX');
-  assert([1, 2, 3, 4, 5].map(r => C.inscribe.pearls(r)).join() === '4,6,8,10,12' && C.inscribe.ess === 5 && C.inscribe.goldFoes === 200 && C.mark.sigil === 1 && C.mark.pearls === 2
-    && T.heroMax === 2 && T.compMax === 1 && T.markMax === heroPos.length + 2 * 2 && T.echoPerRank === 3
-    && CX.powers === ids.length - PI.length && CX.total === CX.powers * (CX.learn + CX.rank * 4),
-    'legend: Inscribe 2 + 2 x rank Pearls, 5 Essence, 200 foes\' gold; Mark 1 Sigil + 2 Pearls; 2 hero powers, 1 a companion, 10 marks; Codex 234 Light');
-
-  // the power budget (6): the best legal build at rank I / III / V stays under the caps
-  const M = CAPS.model;
-  const pAt = (id, r) => P[id].p1 + (P[id].p5 - P[id].p1) * (r - 1) / 4;
-  const perms = [[0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0]];
-  function legendBest(r) {
-    let top = { v: 0 };
-    for (let a = 0; a < keys.length; a++) for (let b = a + 1; b < keys.length; b++) for (let c = b + 1; c < keys.length; c++) {
-      const line = [keys[a], keys[b], keys[c]], n = {};
-      for (const k of line) n[R[k].circle] = (n[R[k].circle] || 0) + 1;
-      let cv = 1, cp = [];
-      for (const pm of perms) { const used = new Set(); let v = 1; const pick = [];
-        for (const i of pm) { const k = line[i];
-          const o = CO.filter(id => !used.has(id) && (P[id].fits === R[k].role || P[id].fits === 'trinket') && (!P[id].only || P[id].only === k)).sort((x, y) => pAt(y, r) - pAt(x, r))[0];
-          if (o) { used.add(o); pick.push(o); v *= 1 + pAt(o, r) * M.comp; } }
-        if (v > cv) { cv = v; cp = pick; } }
-      const sv = CIRC.map(ci => { const t = SETS[ci].tiers; return [ci, (t[2].p + t[4].p + t[6].p) * M.setNet, (t[2].p + t[4].p) * M.setNet]; });
-      let sb = 1; for (const x of sv) for (const y of sv) if (x !== y) sb = Math.max(sb, (1 + x[1]) * (1 + y[2]));
-      for (const cls of CLS) {
-        const hv = CI[cls].concat(PI).map(id => [id, pAt(id, r) * (P[id].pPer ? (n[P[id].per] || 0) : 1)]).sort((x, y) => y[1] - x[1]);
-        const v = (1 + hv[0][1]) * (1 + hv[1][1]) * cv * sb;
-        if (v > top.v) top = { v, d: `${cls} ${hv[0][0]} + ${hv[1][0]}, ${line.join('/')} with ${cp.join('/')}` };
-      }
-    }
-    return top;
-  }
-  const bb = [1, 3, 5].map(r => [r, legendBest(r)]);
-  const capBad = bb.filter(([r, t]) => t.v - 1 > CAPS.best[r] + eps);
-  assert(!capBad.length, `legend: the best build stays under the caps (${bb.map(([r, t]) => `rank ${r} +${(100 * (t.v - 1)).toFixed(1)}% <= +${Math.round(100 * CAPS.best[r])}%`).join(', ')})`
-    + (capBad.length ? ': ' + capBad[0][1].d : ''));
-  // no single best pair (L4) by the estimates: each class has 3+ hero pairs within 10% of its best at rank III
-  // (per-member powers with 3 of their circle fielded)
-  const pr = CAPS.pairs, pairBad = CLS.filter(cls => {
-    const pool = CI[cls].concat(PI), vals = [];
-    for (let i = 0; i < pool.length; i++) for (let j = i + 1; j < pool.length; j++) {
-      const f = id => 1 + pAt(id, pr.rank) * (P[id].pPer ? 3 : 1); vals.push(f(pool[i]) * f(pool[j])); }
-    const best = Math.max(...vals); return vals.filter(v => (v - 1) >= (best - 1) * (1 - pr.within) - eps).length < pr.min; });
-  assert(!pairBad.length, 'legend: every class has 3+ hero power pairs within 10% of its best pair at rank III (by the estimates)' + (pairBad.length ? ': ' + pairBad[0] : ''));
-} catch (e) { fail('legendary data crashed: ' + (e.stack || e)); }
-
+} catch (e) { fail('omen writing crashed: ' + (e.stack || e)); }
 
 // ---- regions and the Great Lantern (22-data-regions.js, 40-rules.js, 55-lantern.js; plan-2 task R0) ----
 if (section('regions and the Great Lantern')) try {
@@ -2393,7 +2141,7 @@ if (section('deeds')) try {
   const titles = E('deeds.titles()');
   assert(uniq(D.tracks.map(t => t.id)) && uniq(D.feats.map(f => f.id)) && uniq(D.secrets.map(s => s.id)) && uniq(D.looks.map(l => l.id)) && uniq(titles.map(t => t.id)) && uniq(D.groups.map(x => x.id)),
     `AD1 ids unique: ${D.tracks.length} tracks, ${D.feats.length} Feats, ${D.secrets.length} secrets, ${D.looks.length} looks, ${D.groups.length} groups`);
-  assert(D.tracks.length === 92 && D.feats.length === 21 && D.secrets.length === 16 && D.looks.filter(l => l.slot !== 'frame').length === 36 && D.looks.filter(l => l.slot === 'frame').length === 4 && D.groups.length === 12, 'AD1 counts: 92 tracks, 21 Feats, 16 secrets, 36 accessories and 4 frames, 12 groups');
+  assert(D.tracks.length === 83 && D.feats.length === 19 && D.secrets.length === 15 && D.looks.filter(l => l.slot !== 'frame').length === 33 && D.looks.filter(l => l.slot === 'frame').length === 4 && D.groups.length === 11, 'AD1 counts: 83 tracks, 19 Feats, 15 secrets, 33 accessories and 4 frames, 11 groups');
   const bad = D.tracks.filter(t => !(t.need.length === 4 && t.need.every((v, i) => i === 0 || v > t.need[i - 1]) && t.need[0] > 0) || !t.g || !D.groups.some(x => x.id === t.g) || (t.bonus && !(t.bonus in D.cap)));
   assert(!bad.length, 'AD1 every track rises tier to tier, sits in a group, and feeds a capped key' + (bad.length ? ': ' + bad.map(t => t.id).join(', ') : ''));
   // every look has exactly one source, and that source names it back
@@ -2406,21 +2154,21 @@ if (section('deeds')) try {
   // "the Last Lantern" (the capstone Feat) is kept by name (coordinator, 2026-09-28): the one exception.
   const EXC = ['the Last Lantern'];
   const long = titles.filter(t => !EXC.includes(t.n) && (t.n.length > 14 || t.n.trim().split(/\s+/).length > 2));
-  assert(!long.length && titles.filter(t => /^a_(g|e)_/.test(t.id)).length === 20 &&   // W2-B: solo lists 20 group titles (Companions and Expeditions are hidden)
+  assert(!long.length && titles.filter(t => /^a_(g|e)_/.test(t.id)).length === 20 &&   // W2-B: solo lists 20 group titles (Companions is hidden)
      D.feats.every(f => f.title) && D.secrets.every(s => s.title),
     `AD1 titles are short epithets (<= 14 characters, <= 2 words): ${titles.length} listed now` + (long.length ? '; too long: ' + long.map(t => t.n).join(', ') : ''));
   const allTitles = D.groups.flatMap(x => [x.gold, x.ever]).concat(D.feats.map(f => f.title), D.secrets.map(s => s.title), D.chapters.map(c => c.title), D.ladder.filter(m => m.title).map(m => m.title));
   const tooLong = allTitles.filter(n => !EXC.includes(n) && (n.length > 14 || n.split(' ').length > 2));
-  assert(allTitles.length === 68 && !tooLong.length, `AD1 all 68 designed titles fit the rule (${allTitles.length}; kept by name: ${EXC.join(', ')})` + (tooLong.length ? ': ' + tooLong.join(', ') : ''));
+  assert(allTitles.length === 63 && !tooLong.length, `AD1 all 63 designed titles fit the rule (${allTitles.length}; kept by name: ${EXC.join(', ')})` + (tooLong.length ? ': ' + tooLong.join(', ') : ''));
   const live = E('deeds.tracks().map(t => t.id)'), hidden = D.tracks.filter(t => !live.includes(t.id)).map(t => t.id);
   // F2 (Bonds) is merged, so 'bonds' and 'together' are live; the rest wait for their systems. H3 (the Storehouse) is merged: 'store' is live.
   // N1 (Hands) is merged: 'hands' and 'handhrs' are live.
-  // W2-B: solo hides the party and expedition tracks too (58-deeds trackLive, WAIT.NS/F1/F2), so 69 are live.
-  assert(live.length === 69 && hidden.sort().join() === ['bonds', 'complv', 'exped', 'fish', 'front', 'g_fish', 'g_pearl', 'keeps', 'lanterns', 'lorepages', 'meals', 'mend', 'oath', 'oathseals', 'perfect', 'pinkills', 'promos', 'recruits', 'stories', 'tides', 'together', 'toprank', 'vow'].join(), `waiting tracks are hidden until their system exists: ${live.length} live, hidden ${hidden.join(' ')}`);
+  // W2-B: solo hides the party tracks too (58-deeds trackLive, WAIT.NS/F1/F2), so 66 are live.
+  assert(live.length === 66 && hidden.sort().join() === ['bonds', 'complv', 'fish', 'front', 'g_fish', 'g_pearl', 'lanterns', 'meals', 'mend', 'oath', 'oathseals', 'promos', 'recruits', 'stories', 'tides', 'together', 'toprank'].join(), `waiting tracks are hidden until their system exists: ${live.length} live, hidden ${hidden.join(' ')}`);
   E('S.store = { v: 1 }; S.bond = { v: 1, t: { a: 36000 }, lv: { a: 3 } }');
   assert(E('deeds.track("store").live && !deeds.track("bonds").live && deeds._cur("together") === 10 && deeds._cur("bonds") === 3'), 'a runtime probe lights a waiting track up when its save field appears (S.store); solo keeps the Bond tracks hidden (S.bond)');
   E('delete S.store; delete S.bond');
-  assert(E('(() => { try { return deeds.tracks().length === 68; } catch (e) { return false; } })()'), 'probes of later systems never throw');
+  assert(E('(() => { try { return deeds.tracks().length === 65; } catch (e) { return false; } })()'), 'probes of later systems never throw');
 
   // AD7 numbers
   const oldFmt = n => { const SUF = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No', 'Dc']; if (!isFinite(n)) return '∞'; if (n < 1000) return n < 10 && n % 1 ? n.toFixed(1) : String(Math.floor(n)); let i = 0; while (n >= 1000 && i < SUF.length - 1) { n /= 1000; i++; } return (n < 10 ? n.toFixed(2) : n < 100 ? n.toFixed(1) : Math.floor(n)) + SUF[i]; };
@@ -2456,10 +2204,10 @@ if (section('deeds')) try {
   const H = s => h.eval(s);
   for (let i = 0; i < 30; i++) h.fn.tick(0.1);
   assert(H('S.deeds.init > 0 && deeds.points() === 0 && Object.keys(S.deeds.tier).length === 0'), 'a new game runs the same first-load path with nothing to grant');
-  H('emit("harvest", { kind: "ore", t: 2, n: 7 }); emit("harvest", { kind: "herb", t: 1, n: 3, glint: true }); emit("weeklyClaim", { k: "x" }); emit("raidReward", { embers: 4 }); emit("trophy", { i: 0, n: 2 }); emit("upgraded", { item: { r: "rare", t: 1 } }); emit("expedBack", { r: "x", g: 3, auto: true })');
+  H('emit("harvest", { kind: "ore", t: 2, n: 7 }); emit("harvest", { kind: "herb", t: 1, n: 3, glint: true }); emit("weeklyClaim", { k: "x" }); emit("raidReward", { embers: 4 }); emit("trophy", { i: 0, n: 2 }); emit("upgraded", { item: { r: "rare", t: 1 } });');
   H('CB_STATS.parries += 3; CB_STATS.heroDmg += 500; CB_STATS.maxHit = 2e6');
   for (let i = 0; i < 11; i++) h.fn.tick(0.1);
-  assert(H('S.deeds.g.ore[1] === 7 && S.deeds.g.herb[0] === 3 && S.deeds.n.glint === 1 && S.deeds.n.weekly === 1 && S.deeds.n.embers === 4 && S.deeds.n.troph >= 2 && S.deeds.n.up === 1 && S.deeds.rec.fine === 2 && S.deeds.n.perfect === 1'), 'event counters: harvest by family and tier, Glints, weekly goals, Embers, Trophies, upgrades, best craft, Perfect grades');
+  assert(H('S.deeds.g.ore[1] === 7 && S.deeds.g.herb[0] === 3 && S.deeds.n.glint === 1 && S.deeds.n.weekly === 1 && S.deeds.n.embers === 4 && S.deeds.n.troph >= 2 && S.deeds.n.up === 1 && S.deeds.rec.fine === 2'), 'event counters: harvest by family and tier, Glints, weekly goals, Embers, Trophies, upgrades, best craft');
   assert(H('S.deeds.n.parry >= 3 && S.deeds.n.dmg >= 500 && S.deeds.rec.hit === 2e6 && deeds.track("bighit").tier === 1'), `combat counters are read as CB_STATS deltas once a second; the biggest hit is a record (Heavy Hand ${H('deeds.track("bighit").tier')}; ${H('JSON.stringify([S.deeds.n.parry, S.deeds.n.dmg, S.deeds.rec.hit, CB_STATS.maxHit])')})`);
   H('Object.keys(CB_STATS).forEach(k => CB_STATS[k] = 0)'); const p0 = H('S.deeds.n.parry'); h.fn.tick(1.0); h.fn.tick(0.05);
   assert(H('S.deeds.n.parry') === p0, 'a CB_STATS reset never subtracts from a counter');
@@ -2731,7 +2479,7 @@ if (section('looks')) try {
   const rs = B(`(() => { const r = ART.resolve({ cls: 'warden', gear: { weapon: { t: 2, r: 0 }, head: { t: 2, r: 1 } }, acc: { hat: 'h_night' } }), r2 = ART.resolve({ cls: 'warden', gear: { head: { t: 2, r: 1 } } }); return !r.g.head && !!r2.g.head; })()`);
   assert(rs, 'looks: the baker drops the helm under a worn hat (drawing only) and keeps it without one');
   const pv = B(`(() => { const cv = document.createElement('canvas'); cv.width = 96; cv.height = 132; const n0 = __draws.n;
-    const ok = looksPreview(cv, { cape: 'c_tally', hat: 'h_circlet', lamp: 'l_book', flame: 'fl_coin', aura: 'a_star', critter: 'cr_cat', helm: 0 }, 1.5);
+    const ok = looksPreview(cv, { cape: 'c_tally', hat: 'h_circlet', lamp: 'l_gilded', flame: 'fl_coin', aura: 'a_star', critter: 'cr_cat', helm: 0 }, 1.5);
     const icons = DEED_LOOKS.filter(l => !/^data:image/.test(lookIconURL(l.id, l.slot))).map(l => l.id);
     const spec = heroSpec(); return { ok, drew: __draws.n - n0, icons, deep: /^data:image/.test(lookIconURL('l_moon', 'flame')), trail: lookIconURL('t_motes', 'trail') === '' }; })()`);
   assert(pv.ok === true && pv.drew >= 2, `looks: the preview hook draws the dressed hero (${pv.drew} draws)`);
@@ -2856,23 +2604,6 @@ if (section('store')) try {
   E('campBuild("store")'); E('S.camp.builds[0].end = Date.now() - 1'); ticks(g, 2);
   assert(E('S.camp.b.store') === 1 && E('storeCap("ore", 1)') === C1 && E('campCan("store").why') === 'Needs Hearth 2 (zone 10)', `built: Lv 1 holds ${N(C1)}; Lv 2 needs Hearth 2`);
   assert(E('campEffects("store", 3).join(" · ")') === `Holds ${N(C3)} of each material · ${N(C3 / 2)} hide and essence · Spillover: move on when a pile is full`, 'effect lines: ' + E('campEffects("store", 3).join(" · ")'));
-  // expedition hauls wait until every line fits
-  {
-    const h = loadCore({ seed: 35 }), X = s => h.eval(s);
-    const t0 = new Date(2026, 8, 28, 12).getTime(); X(`Date.now = () => ${t0}`);
-    X('S.maxZone = 36; ["tobin","wren","hesketh","pip"].forEach(k => { unlockChar(k, "test", true); charRec(k).lv = 60; }); S.party.autoField = false; setField(["tobin","wren"])');
-    X('S.camp.open = true; S.camp.b.hearth = 8; S.camp.b.maproom = 5; S.camp.b.store = 8');
-    const s = X('expedSend("r3a", ["hesketh", "pip"], 1)');
-    const [f, t] = s.pay.mats[0];
-    X(`S.mats.${f}[${t - 1}] = storeCap("${f}", ${t})`);
-    X(`Date.now = () => ${t0 + 3600e3 + 1000}`);
-    assert(X('expedCollect(0)') === null && X('S.exped.slots.length') === 1 && /Needs room/.test(X('expedRoom(0)')), 'a haul that does not fit waits in its slot (Collect refused)');
-    X('awayGains(10)');
-    assert(X('S.exped.slots.length') === 1, '...also while away');
-    X(`S.mats.${f}[${t - 1}] = 0`);
-    assert(X('expedCollect(0)') && X('S.exped.slots.length') === 0 && X(`S.mats.${f}[${t - 1}]`) > 0, '...and lands when there is room');
-    errs.push(...h.errors);
-  }
   // -- HS8: every material cost reachable at Hearth H fits Storehouse Lv H (static) --
   {
     const bad = E(`(() => {
@@ -2969,7 +2700,7 @@ if (section('wall')) try {
     const urls = DEED_FEATS.filter(f => !/^data:image/.test(featTrophyURL(f.id))).map(f => f.id);
     return { bad, stir: p0 !== p1, urls, none: featTrophyURL('nope') === '', hooks: [0, 1, 2, 3].map(TW.hooks) };
   })()`);
-  assert(!art.bad.length, 'wall: 21 Feat trophies (12 x 12, B1 tones, ink outline, each its own), pennants and 12 group medals at Gold and Everflame' + (art.bad.length ? ': ' + art.bad.slice(0, 6).join('; ') : ''));
+  assert(!art.bad.length, 'wall: 19 Feat trophies (12 x 12, B1 tones, ink outline, each its own), pennants and 11 group medals at Gold and Everflame' + (art.bad.length ? ': ' + art.bad.slice(0, 6).join('; ') : ''));
   assert(art.stir && !art.urls.length && art.none, "wall: pennants stir in 2 frames; featTrophyURL gives every Feat's trophy (AC3's hook), '' for an unknown id" + (art.urls.length ? ': ' + art.urls.join(', ') : ''));
   assert(JSON.stringify(art.hooks) === '[0,4,8,12]', `wall: 4, 8 and 12 hooks at stages 1-3 (${art.hooks.join(', ')})`);
 
@@ -2982,7 +2713,7 @@ if (section('wall')) try {
   const pinned = W('trophyWall.items(3).map(x => x.id + (x.lv || ""))');
   assert(JSON.stringify(pinned) === '["combat1","f_parry","f_watch","f_gold","ch1"]', `wall: pins hang first (unearned pins skipped), then the automatic order (${pinned.join(', ')})`);
   W('for (const f of DEED_FEATS) { S.deeds.feat[f.id] = 1; S.deeds.at[f.id] = S.deeds.at[f.id] || 1; } for (const g of DEED_GROUPS) S.deeds.grp[g.id] = 2');
-  assert(W('trophyWall.items(3).length === 12 && trophyWall.items(2).length === 8 && trophyWall.items(1).length === 4 && trophyWall.earned().length === 21 + 1 + 12'), 'wall: a full wall holds 12; the rest wait for a pin');
+  assert(W('trophyWall.items(3).length === 12 && trophyWall.items(2).length === 8 && trophyWall.items(1).length === 4 && trophyWall.earned().length === 19 + 1 + 11'), 'wall: a full wall holds 12; the rest wait for a pin');
   const pr = W(`(() => { const out = []; const c = document.createElement('canvas').getContext('2d');
     for (const st of [0, 1, 2, 3]) { const n0 = __n.rects; trophyWall.paint(c, 60, 70, 2, 0, { stage: st, items: trophyWall.items(st), f: 1, lit: true, star: true }); out.push(__n.rects - n0); }
     return out; })()`);
@@ -4085,10 +3816,9 @@ if (section('solo hero')) try {
     E('S.maxZone = 12; S.gold = 1e9');
     assert(E('!canRecruit("wren") && !recruit("tobin") && !unlockChar("pip", "progress")'), 'nobody can be recruited, whatever the route');
     E('onboardUnlockAll()');
-    assert(E('!isUnlocked("roster") && !isUnlocked("synergy") && !isUnlocked("exped")'), 'the Roster, Bonds and Expeditions never open (not even with "Show every tab")');
-    assert(E('(ONBOARD.gate = true, !topGoals(9).some(x => ["roster", "exped", "maproom"].includes(x.sys)))'), 'Next Up shows no recruit, promotion, expedition or Map Room goal');
-    assert(E('!DEED_TRACKS.some(t => (t.g === "comp" || t.g === "exped") && deeds.tracks().some(r => r.id === t.id))'), 'no Companions or Expeditions achievements show');
-    assert(E('!campList().includes("maproom")'), 'the Map Room (expeditions) is not offered at camp');
+    assert(E('!isUnlocked("roster") && !isUnlocked("synergy")'), 'the Roster and Bonds never open (not even with "Show every tab")');
+    assert(E('(ONBOARD.gate = true, !topGoals(9).some(x => ["roster"].includes(x.sys)))'), 'Next Up shows no recruit or promotion goal');
+    assert(E('!DEED_TRACKS.some(t => t.g === "comp" && deeds.tracks().some(r => r.id === t.id))'), 'no Companions achievements show');
     errs.push(...g.errors);
   }
   // 2. switching heroes: gold, gear and camp shared; each hero keeps its own level
@@ -4893,7 +4623,7 @@ if (section('notices (W1-B)')) try {
   const allSrc = fs.readdirSync(jsDir).filter(f => f.endsWith('.js') && f !== '23n-data-notices.js').map(f => fs.readFileSync(path.join(jsDir, f), 'utf8')).join('\n');
   for (const r of rules) if (r.key && allSrc.includes(`'${r.key}'`)) used.add(r.id);
   const unused = rules.filter(r => !used.has(r.id)).map(r => r.id);
-  assert(sites.length >= 120 && openTxt.length >= 15 && !bad.length, `every toast source has a channel: ${sites.length} call sites in src/js and ${openTxt.length} unlock lines each match a NOTICES rule (by key, message or call site)` + (bad.length ? ': ' + bad.slice(0, 6).join('; ') : ''));
+  assert(sites.length >= 110 && openTxt.length >= 15 && !bad.length, `every toast source has a channel: ${sites.length} call sites in src/js and ${openTxt.length} unlock lines each match a NOTICES rule (by key, message or call site)` + (bad.length ? ': ' + bad.slice(0, 6).join('; ') : ''));
   assert(!unused.length, 'every NOTICES rule has a source (no dead rules)' + (unused.length ? ': ' + unused.join(', ') : ''));
   const chk = JSON.parse(E(`JSON.stringify((() => { const ids = NOTICES.map(r => r.id), out = { dup: ids.filter((x, i) => ids.indexOf(x) !== i), badCh: [] };
     for (const r of NOTICES) for (const m of ['x', 'Level 10. Your hero hits 4% harder.', 'Level 7. Your hero hits 4% harder.']) for (const n of [{}, { tier: 4 }, { lv: 2 }]) for (const gd of [true, false]) {
@@ -5035,17 +4765,14 @@ if (section('solo copy (W1-C)')) try {
     'the weekly board offers no expedition or companion goals; it offers parries, casts and counters');
   assert(!E('deeds.tracks().some(t => ["party", "compXp", "expHaul"].includes((DEED_TRACKS.find(x => x.id === t.id) || {}).bonus))') && E('DEED_TRACKS.find(x => x.id === "abil").bonus') === 'dmg' && E('DEED_TRACKS.find(x => x.id === "intr").bonus') === 'keen',
     'no Deed that shows in solo pays a party, companion or expedition bonus (Signature Moves pay damage, Not Today pays crit damage)');
-  assert(E('!deeds.feats().some(f => ["f_company", "f_perfect", "f_sworn", "f_tides"].includes(f.id)) && !deeds.secrets().some(s => ["s_name", "s_wrong", "s_late"].includes(s.id))'), 'the companion, expedition and Bond Feats and secrets are hidden in solo');
+  assert(E('!deeds.feats().some(f => ["f_company", "f_sworn", "f_tides"].includes(f.id)) && !deeds.secrets().some(s => ["s_name", "s_wrong"].includes(s.id))'), 'the companion and Bond Feats and secrets are hidden in solo');
   assert(E('!CODEX_PAGE_IDS.includes("companions") && !CODEX_PAGE_IDS.includes("lore") && CODEX_MILESTONES.find(m => m.at === 200).rw[0].id === "t_wayfinder"'), 'the Codex has no Companions or Lore page in solo; the 200 Light reward is a title, not an expedition slot');
   for (const x of [g]) assert(!x.errors.length, 'no handler errors in the solo copy scan' + (x.errors.length ? ': ' + x.errors[0] : ''));
 } catch (e) { fail('solo copy (static) crashed: ' + (e.stack || e)); }
 
 // ---- W1-F: every string table an item box, a hero sheet or a picker reads ----
-// Item and affix lines (stat lines, unique text, kind and tier names, trophies, relics, tonics), the Lantern Book (class and pinnacle powers)
-// and circle sets, Sigil and circle names, class and subclass cards, the solo abilities, and the bios, stories, quotes and titles of the
-// three playable heroes. No allow-list entry is used here. Companion-only legendary powers (src 'comp') are skipped: the Book hides them
-// in solo (the Chromium scan below asserts that). The pinnacle UI text (PIN_HINTS, PIN_CHIPS, PIN_LESSON_WIPE, PIN_UI_TEXT) has no
-// engine or screen yet (audit-1), so nothing shows it.
+// Item and affix lines (stat lines, unique text, kind and tier names, trophies, relics, tonics), class and subclass cards, the solo
+// abilities, and the bios, stories, quotes and titles of the three playable heroes. No allow-list entry is used here.
 if (section('solo copy: items, sets, heroes (W1-F)')) try {
   const g = loadCore({ solo: true, seed: 8 }), E = s => g.eval(s);
   const hits = []; let strings = 0;
@@ -5060,11 +4787,9 @@ if (section('solo copy: items, sets, heroes (W1-F)')) try {
     for (const k of Object.keys(v)) if (!SK.has(k)) { let x; try { x = v[k]; } catch (e) { continue; } walk(x, `${p}.${k}`, seen, d + 1, k); }
   };
   const tables = ['UNIQ', 'RELICS', 'HERO_UPS', 'CRAFT_STATS', 'CRAFT_KINDS', 'CRAFT_AFFIXES', 'CRAFT_TROPHIES', 'CRAFT_TONICS', 'CRAFT_STATIONS', 'CRAFT_FAMILY',
-    'LEG_SETS', 'LEG_CIRCLE_NAME', 'PIN_POWERS', 'EVO_DEFS', 'EVO_NAMES', 'CLASS_DEFS', 'CLASS_ABILITIES', 'HERO_CLASSES', 'SOLO_ABILITIES', 'SOLO_HEROES', 'CLASS_TRIALS', 'CLASS_STAR_NAMES'];
+    'EVO_DEFS', 'EVO_NAMES', 'CLASS_DEFS', 'CLASS_ABILITIES', 'HERO_CLASSES', 'SOLO_ABILITIES', 'SOLO_HEROES', 'CLASS_TRIALS', 'CLASS_STAR_NAMES'];
   let missing = [];
   for (const n of tables) { let v; try { v = E(n); } catch (e) { missing.push(n); continue; } walk(v, n, new Set(), 0, n); }
-  // the Lantern Book: class powers and pinnacle powers (every rank), not the companion rows
-  for (const id of E('LEG_IDS')) { const p = E(`LEG_POWERS[${JSON.stringify(id)}]`); if (p.src === 'comp') continue; for (let r = 1; r <= 5; r++) walk(E(`legendText(${JSON.stringify(id)}, ${r})`), `LEG_POWERS.${id}@${r}`, new Set(), 0, 'txt'); walk(p.n, `LEG_POWERS.${id}.n`, new Set(), 0, 'n'); }
   // every item kind, tier and unique, as the item box names them, and every stat line as it is printed
   for (const k of E('Object.keys(CRAFT_KINDS)')) for (let t = 1; t <= 5; t++) walk(E(`kindName(${JSON.stringify(k)}, ${t})`), `kindName.${k}.${t}`, new Set(), 0, 'n');
   for (const s of E('Object.keys(CRAFT_STATS)')) walk(E(`craftFmtLine(${JSON.stringify(s)}, 7)`), `craftFmtLine.${s}`, new Set(), 0, 'f');
@@ -5076,12 +4801,10 @@ if (section('solo copy: items, sets, heroes (W1-F)')) try {
     walk(E(`JOIN_LINES[${JSON.stringify(h)}] || []`), `JOIN_LINES.${h}`, new Set(), 0, 'text');
     walk(E(`({ n: ROSTER[${JSON.stringify(h)}].name, t: ROSTER[${JSON.stringify(h)}].title, how: ROSTER[${JSON.stringify(h)}].how })`), `ROSTER.${h}`, new Set(), 0, 'how');
   }
-  assert(!missing.filter(n => n !== 'CLASS_STAR_NAMES').length && strings > 1200, `the item, set and hero scan reads ${strings} strings from ${tables.length - missing.length} tables, ${E('LEG_IDS').length} legendary powers, every kind name and stat line, and the bios and stories of ${E('SOLO_ORDER').length} heroes${missing.length ? ' (missing: ' + missing.join(', ') + ')' : ''}`);
+  assert(!missing.filter(n => n !== 'CLASS_STAR_NAMES').length && strings > 1200, `the item, set and hero scan reads ${strings} strings from ${tables.length - missing.length} tables, every kind name and stat line, and the bios and stories of ${E('SOLO_ORDER').length} heroes${missing.length ? ' (missing: ' + missing.join(', ') + ')' : ''}`);
   assert(!hits.length, 'no party, companion, ally, "your heroes", Bench, Bond or partner-advice text in an item, affix, unique, set, Sigil, relic, class, subclass or hero string' + (hits.length ? `: ${hits.length}, e.g. ${hits.slice(0, 5).join(' | ')}` : ''));
   const gs = loadCore({ solo: true, seed: 9 }), G = s => gs.eval(s);
   G('soloPick("wren")');
-  const mem = JSON.parse(G(`(() => { const it = newItem('bow', 1, 'rare'); it.cm = 1; S.items.push(it); equipItem(it.id); gearDirty(); return JSON.stringify(legendActive().members); })()`));
-  assert(mem.oath === 1 && mem.hedgefolk === 0, `a lone hero's circle members are the marked pieces they wear (one Oath bow: ${JSON.stringify(mem)})`);
   assert(!gs.errors.length, 'no handler errors in the item and hero scan' + (gs.errors.length ? ': ' + gs.errors[0] : ''));
 } catch (e) { fail('solo copy: items, sets, heroes crashed: ' + (e.stack || e)); }
 
@@ -5249,11 +4972,10 @@ if (section('solo copy (browser, W1-C)')) try {
         await X(`document.getElementById('bellBtn').click()`); await page.waitForTimeout(250); await scan('bell');
         const jb = page.locator('button:text-is("Journal")').first(); if (await jb.count()) { await jb.click({ force: true }); await page.waitForTimeout(250); await scan('Journal'); }
         await X(`classEvoUI.openChoice && classEvoUI.openChoice()`); await page.waitForTimeout(250); await scan('evolution choice');
-        // ---- W1-F: item detail sheets, compare, forge and Sigil boxes, the hero sheet, subclass cards, long-press info ----
+        // ---- W1-F: item detail sheets, compare, forge boxes, the hero sheet, subclass cards, long-press info ----
         await X('closeMenu()');
         const kit = await X('heroWho()');
         const made = JSON.parse(await X(`(() => { const ids = [], kit = heroWho();
-          try { for (let i = 0; i < 4; i++) legendSigil(i, 3, 'check', true); } catch (e) {}
           const add = it => { S.items.push(it); ids.push(it.id); return it; };
           const kinds = Object.keys(CRAFT_KINDS), own = k => { const d = CRAFT_KINDS[k]; return !d.cls || d.cls === kit; };
           const wpn = kinds.find(k => CRAFT_KINDS[k].pos === 'weapon' && CRAFT_KINDS[k].cls === kit);
@@ -5261,25 +4983,20 @@ if (section('solo copy (browser, W1-C)')) try {
           for (const u of Object.keys(UNIQ)) { dropUnique(u, 3); ids.push(S.items[S.items.length - 1].id); }
           for (const k of kinds) for (const r of ['common', 'uncommon', 'rare', 'epic']) add(newItem(k, r === 'common' ? 1 : 3, r, { mw: 0 }));
           for (let m = 1; m < 7; m++) add(newItem(wpn, 2, 'rare', { mw: m }));   // every Trophy's Masterwork line
-          const body = kinds.find(k => CRAFT_KINDS[k].pos === 'body' && CRAFT_KINDS[k].cls === kit), powers = LEG_IDS.filter(id => { const p = LEG_POWERS[id]; return p.fits === 'hero' && (p.cls == null || p.cls === kit); });
-          for (const id of powers) { const it = newItem(body, 3, 'epic'); it.lg = id; it.lr = 2; add(it); }
-          for (let c = 0; c < 4; c++) { const it = newItem(wpn, 2, 'rare'); it.cm = c; add(it); }   // marked with each circle
-          return JSON.stringify({ ids, powers }); })()`));
+          return JSON.stringify({ ids }); })()`));
         // W2-B: open and read every sheet inside ONE evaluate (openSheet replaces the sheet before it), 378 round trips became 3.
-        // The click variants (Save, Reforge, Compare, Inscribe buttons) stay one trip each on every 9th sheet.
+        // The click variants (Save, Reforge, Compare buttons) stay one trip each on every 9th sheet.
         const sheets = await page.evaluate(ids => ids.map(id => { window.__t.x(`craftUI.openItem(${id})`); const r = document.querySelector('.cf-sheet'); return [id, r ? window.__lfTexts(r) : []]; }), made.ids);
         await page.keyboard.press('Escape');
         let opened = 0, empty = 0;
         for (const [id, txt] of sheets) { judge('item sheet ' + id, txt); opened++; if (txt.length < 4) empty++; }
         for (let i = 8; i < made.ids.length; i += 9) {
           const id = made.ids[i]; await X(`craftUI.openItem(${id})`); await page.waitForTimeout(15);
-          for (const sel of ['.cf-svb', '.cf-rf button', '.cf-cmp button', '.cf-inscribe button']) { const b = page.locator(`.cf-sheet ${sel}`).first(); if (await b.count()) { try { await b.click({ timeout: 300, force: true }); await page.waitForTimeout(30); await scan('item sheet ' + id + ' ' + sel, '.cf-sheet'); } catch (e) {} } }
+          for (const sel of ['.cf-svb', '.cf-rf button', '.cf-cmp button']) { const b = page.locator(`.cf-sheet ${sel}`).first(); if (await b.count()) { try { await b.click({ timeout: 300, force: true }); await page.waitForTimeout(30); await scan('item sheet ' + id + ' ' + sel, '.cf-sheet'); } catch (e) {} } }
           await page.keyboard.press('Escape');
         }
-        const inscribes = await page.evaluate(pids => pids.map(pid => { window.__t.x(`legendUI.openInscribe(${JSON.stringify(pid)})`); const r = document.querySelector('.cf-sheet'); return [pid, r ? window.__lfTexts(r) : []]; }), made.powers);
         await page.keyboard.press('Escape');
-        for (const [pid, txt] of inscribes) { judge('Inscribe ' + pid, txt); if (txt.length < 4) empty++; }
-        assert(empty === 0, `${hero}: every item and Inscribe sheet had text when read (${empty} empty)`);
+        assert(empty === 0, `${hero}: every item sheet had text when read (${empty} empty)`);
         items.n += opened; items.min = Math.min(items.min, opened);
         // the hero sheet, its Kit and story lines, and each subclass card (both tabs, the confirm) and the class change
         await X(`setTab('party'); setView('party', 'team'); partySheet.openHero()`); await page.waitForTimeout(200);
@@ -5307,7 +5024,7 @@ if (section('solo copy (browser, W1-C)')) try {
         await ctx.close();
       }
       assert(shown.views > 60 && shown.n > 3000, `the scan read ${shown.n} texts in ${shown.views} screens (three heroes, every tab, sub-view and sheet at 360x740)`);
-      assert(items.min >= 100 && items.cards >= 4 && items.press >= 12, `W1-F: the scan opened ${items.n} item sheets (at least ${items.min} per hero: every unique, every kind at four rarities, every Trophy line, every hero power, each circle mark; the compare box; Inscribe sheets), ${items.cards} subclass cards, the class change, the hero sheet and its story and Kit rows, the hero picker cards and ${items.press} long-presses (Attack, Parry, Dodge, the three ability slots), three heroes`);
+      assert(items.min >= 100 && items.cards >= 4 && items.press >= 12, `W1-F: the scan opened ${items.n} item sheets (at least ${items.min} per hero: every unique, every kind at four rarities, every Trophy line; the compare box), ${items.cards} subclass cards, the class change, the hero sheet and its story and Kit rows, the hero picker cards and ${items.press} long-presses (Attack, Parry, Dodge, the three ability slots), three heroes`);
       assert(!bad.size, 'no party, companion, Bond, formation, roster, recruit, expedition, ally, Bench or partner-advice text on any screen' + (bad.size ? ': ' + [...bad].slice(0, 5).map(([t, w]) => `[${w}] ${t}`).join(' | ') : ''));
     } finally { await browser.close(); }
   }
@@ -5501,6 +5218,61 @@ if (section('training (W2-A, browser)')) try {
   }
 } catch (e) { fail('training (W2-A, browser) crashed: ' + (e.stack || e)); }
 // ==== end W2-A ====
+
+// ---- W2-C: the dead leaf systems are gone (pinnacle bosses, legendary powers and circle sets, expeditions and the Map Room) ----
+// Static: no removed file, global, save field or CSS class is left anywhere in src/. Browser: every tab and sub-view opens with no page error.
+if (section('removed systems (W2-C)')) try {
+  const strip = t => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/([^:'"`\\])\/\/[^\n'"`]*$/gm, '$1');
+  const files = [];
+  const walkDir = d => { for (const n of fs.readdirSync(d)) { const p = path.join(d, n); if (fs.statSync(p).isDirectory()) walkDir(p); else files.push(p); } };
+  walkDir(path.join(ROOT, 'src'));
+  const GONE_FILES = ['11b-art-legend.js', '21c-data-legend.js', '55-legend.js', '75-legend-ui.js', '21d-data-pinnacle.js', '21e-stories-pinnacle.js', '21i-lore-exped.js', '57b-expeditions.js', '75-exped-ui.js', '60-legend.css', '60-exped.css'];
+  assert(!files.some(f => GONE_FILES.includes(path.basename(f))), 'removed systems: none of the 11 source files is back');
+  const RE = /\b(LEG_[A-Z_]+|PIN_[A-Z_]+|EXPED_[A-Z_]+|legend(?:UI|Drop|Learn|Inscribe|Mark|Sigil|Sets|Active|Known|Text|Val|Rank|Echoes|Budget|Change|HeroCheck|CanWear|ItemState|CardLines|IconSafe|Icon|Owe|PayOwed)|sigilIcon|SIGIL_[A-Z_]+|expedOut|expedSend|expedCollect|expedOpen|expedSlots|expedRoom|expedGoto|expedBack|expedSent|expedHaulText|campMapRoom|lgFits|itemLegendLines|S\.legend|S\.exped|S\.pin|maproom|expSlots|expHaul)\b/;
+  const hits = [];
+  for (const f of files) { if (!/\.(js|css|html)$/.test(f)) continue; const t = strip(fs.readFileSync(f, 'utf8')); const m = t.match(RE); if (m) hits.push(path.relative(ROOT, f) + ': ' + m[0]); }
+  assert(!hits.length, 'removed systems: no code, data, CSS or markup reads a removed global, save field or building' + (hits.length ? ': ' + hits.slice(0, 5).join(' | ') : ''));
+  const g = loadCore({ solo: true, seed: 5 }), E = x => g.eval(x);
+  const alive = ['LEG_POWERS', 'LEG_SETS', 'legendUI', 'legendDrop', 'legendActive', 'PIN', 'PIN_IDS', 'PIN_POWERS', 'EXPED_ROUTES', 'EXPED_LORE', 'expedSend', 'expedOpen', 'campMapRoom', 'lgFits'].filter(n => E(`typeof ${n}`) !== 'undefined');
+  assert(!alive.length, 'removed systems: none of the removed globals exists in the game' + (alive.length ? ': ' + alive.join(', ') : ''));
+  E('soloPick("wren")'); for (let i = 0; i < 20; i++) g.fn.tick(0.1);
+  assert(E('S.legend === undefined && S.exped === undefined && S.pin === undefined && CAMP_B.maproom === undefined && CAMP_BLESS.wayfarer === undefined'), 'removed systems: a new save has no legend, exped or pin field, no Map Room and no Wayfarer Blessing');
+  assert(!g.errors.length, 'removed systems: no handler errors on a new solo game' + (g.errors.length ? ': ' + g.errors[0] : ''));
+  // one pass in Chromium over every tab and sub-view, and the menus that sat beside the removed screens
+  let pw = null;
+  try {
+    const { createRequire } = await import('node:module'); const req = createRequire(import.meta.url);
+    for (const p of ['playwright', '/opt/node22/lib/node_modules/playwright', '/usr/local/lib/node_modules/playwright', '/usr/lib/node_modules/playwright']) { try { pw = req(p); break; } catch (e) {} }
+  } catch (e) {}
+  const exe = ['/opt/pw-browsers/chromium-1194/chrome-linux/chrome', '/opt/pw-browsers/chromium', '/opt/pw-browsers/chromium/chrome', '/opt/pw-browsers/chromium/chrome-linux/chrome'].find(p => { try { return fs.statSync(p).isFile(); } catch (e) { return false; } });
+  if (!pw || !exe || !fs.existsSync(distFile)) ok('removed systems (browser): Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      const ctx = await browser.newContext({ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true });
+      const page = await ctx.newPage(); const errs = [];
+      page.on('pageerror', e => errs.push(String(e)));
+      page.on('console', m => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errs.push('console: ' + m.text()); });   // (the aborted Google Fonts request is not ours)
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForTimeout(700);
+      const X = s => page.evaluate(s => window.__t.x(s), s);
+      await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go'); await page.waitForTimeout(500);
+      await X('S.onboard.tips = false; onboardUnlockAll(); S.maxZone = 40; S.zone = 12; S.L = 40; S.camp.open = true; true'); await page.waitForTimeout(400);
+      let views = 0;
+      for (const tab of ['adv', 'gat', 'forge', 'world', 'party']) {
+        await page.evaluate(t => document.querySelector(`.tab[data-tab="${t}"]`).click(), tab); await page.waitForTimeout(250);
+        for (const v of await page.$$eval('#viewSeg button', l => l.map(b => b.dataset.view))) { await page.evaluate(v2 => document.querySelector(`#viewSeg button[data-view="${v2}"]`).click(), v); await page.waitForTimeout(150); views++; }
+      }
+      await page.evaluate(() => document.getElementById('menuX') && document.getElementById('menuX').click());
+      for (const open of ['deedsUI.open()', "document.getElementById('bellBtn').click()", 'typeof codexUI === "object" && codexUI.open && codexUI.open()']) { try { await X(open); } catch (e) { errs.push('open ' + open + ': ' + e); } await page.waitForTimeout(300); }
+      const leftovers = await page.evaluate(() => [...document.querySelectorAll('[id*="exped"], [id*="legend"], [class*="exped"], [class*="lg-pip"], [id*="maproom"], [id*="pinnacle"]')].map(n => n.id || n.className).slice(0, 5));
+      assert(views >= 15 && !errs.length && !leftovers.length, `removed systems (browser): ${views} tab views opened with no page or console error and no leftover element` + (errs.length ? ': ' + errs[0] : leftovers.length ? ': ' + leftovers.join(', ') : ''));
+      await ctx.close();
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('removed systems crashed: ' + (e.stack || e)); }
 
 // ==== PARTY_LEGACY: checks of the dormant party build (W2-B). They run only with `node tools/check.mjs --party` and are deleted
 // in wave 3 with the party code. Nothing above this line may depend on anything in here. ====
@@ -5937,132 +5709,6 @@ if (section('unlocks')) try {
   }
 } catch (e) { fail('unlocks crashed: ' + (e.stack || e)); }
 
-// ---- expeditions (57b-expeditions.js) ----
-if (section('expeditions')) try {
-  const mk = seed => {
-    const g = loadCore({ seed }), E = s => g.eval(s);
-    g.clock = new Date(2026, 8, 28, 12, 0, 0).getTime();
-    g.setNow = t => { g.clock = t; E(`Date.now = () => ${t}`); };
-    g.setNow(g.clock);
-    E('almanac.force("none")');
-    E('S.maxZone = 36; ["tobin","wren","hesketh","pip","bram","maren","aldric","kestrel","thessaly","anselm","oriel"].forEach((k, i) => { unlockChar(k, "test", true); charRec(k).lv = 20 + 5 * i; })');
-    E('S.party.autoField = false; charRec("tobin").lv = charRec("wren").lv = charRec("kestrel").lv = 90');
-    E('setField(["tobin","wren","kestrel"])');
-    E('S.camp.open = true; S.camp.b.hearth = 8; S.camp.b.maproom = 5; S.camp.b.tavern = 1; S.camp.b.store = 8');
-    return g;
-  };
-  const g = mk(71), E = s => g.eval(s);
-  const H = 3600 * 1000;
-  assert(E('expedOpen() && expedSlots() === 3 && expedLengths().join() === "1,4,8,12" && expedRoutes().length === 18'), 'Map Room 5: 3 slots, 1h to 12h, all 18 Region 1 routes open at zone 36');
-  E('S.camp.b.maproom = 1'); assert(E('expedSlots() === 1 && expedLengths().join() === "1,4"'), 'Map Room 1: 1 slot, 1h and 4h');
-  E('S.camp.b.maproom = 0'); assert(!E('expedOpen()') && !E('expedSend("r1a", ["pip"], 1)'), 'no Map Room: closed, nothing sends');
-  E('S.camp.b.maproom = 5');
-  E('S.maxZone = 10'); assert(E('expedRoutes().every(r => EXPED_ROUTES[r].b === 1)') && !E('expedSend("r3a", ["pip"], 1)'), 'a band opens only after its last boss');
-  E('S.maxZone = 36');
-  // fielded characters are blocked
-  assert(!E('expedSend("r1a", ["wren"], 4)') && /in the party/.test(E('expedCan("r1a", ["wren"], 4).why')), 'a fielded character cannot go');
-  // grade shown before sending = grade stored
-  const team = JSON.parse(E('JSON.stringify(expedBest("r3a"))'));
-  const pv = JSON.parse(E(`JSON.stringify(expedPreview("r3a", ${JSON.stringify(team)}, 8))`));
-  const s1 = JSON.parse(E(`JSON.stringify(expedSend("r3a", ${JSON.stringify(team)}, 8))`) || 'null');
-  assert(s1 && s1.grade === pv.grade.g && E('EXPED_GRADES[S.exped.slots[0].grade].n') === pv.grade.name, `the grade matches the preview (${pv.grade.name}, team ${team.join(', ')})`);
-  assert(team.every(id => E(`campStatus("${id}").status`) === 'exped' && !E(`campFree("${id}")`)), 'the team shows "exped" on the Roster board and is not free');
-  assert(!E(`expedSend("r1a", ["${team[0]}"], 1)`), 'a character out on one route cannot go on another');
-  // preview amounts match the fixed haul (floor or ceil of the expected value)
-  const fam = s1.pay.mats.map(m => m[2]), exp = pv.lines.filter(l => l.k === 'mat').map(l => l.n);
-  assert(fam.length === exp.length && fam.every((n, i) => n === Math.floor(exp[i]) || n === Math.ceil(exp[i])), `haul fixed at send matches the preview (${fam.join(', ')} vs ${exp.map(x => x.toFixed(1)).join(', ')})`);
-  // not back yet: no collect; the timer runs offline (away phase collects)
-  assert(E('expedCollect(0)') === null, 'no Collect before the timer ends');
-  const before = JSON.parse(E('JSON.stringify(S.mats)'));
-  g.setNow(g.clock + 8 * H + 1000);
-  E('globalThis.__eb = []; on("expedBack", p => globalThis.__eb.push(p))');
-  const r = JSON.parse(E('JSON.stringify(awayGains(8 * 3600 + 1))'));
-  const gained = s1.pay.mats.every(([f, t, n]) => E(`S.mats.${f}[${t - 1}]`) - before[f][t - 1] >= n);
-  assert(E('S.exped.slots.length') === 0 && gained && E('globalThis.__eb.length') === 1 && E('S.exped.done.r3a') === 1, 'finished while the game was closed: paid on load, team freed, expedBack fired');
-  assert(r.extra.some(l => /Expedition back: Wraithmarsh Reeds/.test(l.txt)), 'the away card lists the expedition');
-  // the same seed pays the same haul, open or closed
-  const runOnce = (closed) => {
-    const h = mk(72), X = s => h.eval(s);
-    X('S.exped.seq = 40'); X('Math.random = () => 0.5');
-    const s = JSON.parse(X('JSON.stringify(expedSend("r2b", ["hesketh", "pip", "thessaly"], 4))'));
-    h.setNow(h.clock + 4 * H + 5);
-    if (closed) h.fn.awayGains(4 * 3600); else { for (let i = 0; i < 12; i++) h.fn.tick(0.1); X('expedCollect(0)'); }
-    return JSON.stringify([s.seed, X('JSON.stringify(S.exped.log[0].haul)')]);
-  };
-  assert(runOnce(false) === runOnce(true), 'same seed: identical haul with the game open or closed');
-  // open game: a finished run waits for Collect (no failure: Fair still pays)
-  E('S.exped.log = []');
-  E('expedSend("r4a", ["hesketh"], 1)');
-  const fairG = E('S.exped.slots[0].grade');
-  g.setNow(g.clock + 1 * H + 2000); for (let i = 0; i < 12; i++) g.fn.tick(0.1);
-  assert(E('S.exped.slots.length') === 1 && E('topGoals(60, { sticky: false }).some(x => x.id === "exped-ready")'), 'open game: the run waits; Next Up says "ready to collect"');
-  const c = JSON.parse(E('JSON.stringify(expedCollect(0))'));
-  assert(fairG === 0 && c && c.haul.mats.reduce((a, m) => a + m[2], 0) > 0, `a Fair run still brings something home (${c && expedHaulText_(c)})`);
-  function expedHaulText_(x) { return E(`expedHaulText(${JSON.stringify(x.haul)})`); }
-  // Next Up timer
-  E('expedSend("r1a", ["hesketh"], 4)');
-  assert(E('topGoals(60, { sticky: false }).some(x => x.id === "exped-timer" && /back in/.test(x.label))'), 'Next Up: "Expedition back in <time>"');
-  E('S.exped.slots = []');
-  // repeats: at most 3 runs in a row, even over a long absence
-  E('expedSend("r1a", ["hesketh", "pip"], 1); expedRepeat(0, true)');
-  g.setNow(g.clock + 10 * H);
-  const d0 = E('S.exped.done.r1a || 0');
-  g.fn.awayGains(10 * 3600);
-  assert(E('(S.exped.done.r1a || 0)') - d0 === 3 && E('S.exped.slots.length') === 0, `Repeat: 3 runs in a row while away, then the team comes home (${E('(S.exped.done.r1a || 0)') - d0} runs)`);
-  E('S.camp.b.maproom = 4'); E('expedSend("r1a", ["hesketh"], 1)'); assert(!E('expedRepeat(0, true)'), 'Repeat needs Map Room 5');
-  E('S.exped.slots = []; S.camp.b.maproom = 5');
-  // call back: half the haul for the time spent, no bonus rolls
-  E('expedSend("r1a", ["hesketh", "pip", "bram"], 8)');
-  const full = E('S.exped.slots[0].pay.mats.reduce((a, m) => a + m[2], 0)');
-  g.setNow(g.clock + 4 * H);
-  const rc = JSON.parse(E('JSON.stringify(expedRecall(0))'));
-  const got = rc.haul.mats.reduce((a, m) => a + m[2], 0);
-  g.setNow(g.clock + 12 * H);
-  assert(E('S.exped.slots.length') === 0 && got <= Math.ceil(full * 0.25) + 1 && got >= Math.floor(full * 0.25) - 2, `Call back at half time pays a quarter (${got} of ${full})`);
-  // XP is capped at party level - 5
-  E('charRec("hesketh").lv = Math.floor(partyLevel()) - 6; charRec("hesketh").xp = 0; charRec("hesketh").rank = 7');
-  E('S.exped.slots = []; expedSend("r2d", ["hesketh"], 12)');
-  g.setNow(g.clock + 30 * H); g.fn.awayGains(3600);
-  assert(E('charRec("hesketh").lv') <= E('Math.floor(partyLevel()) - 5') && E('charRec("hesketh").lv') >= E('Math.floor(partyLevel()) - 6'), `expedition XP stops at party level - 5 (Hesketh ${E('charRec("hesketh").lv')}, party ${E('partyLevel().toFixed(1)')})`);
-  // shortcuts: token rolls, Kingslayer credit, Renown through the unlock API
-  const h = mk(73), X = s => h.eval(s);
-  X('globalThis.__tok = []; on("token", p => globalThis.__tok.push(p)); globalThis.__ks = 0; on("kingslayerCredit", p => globalThis.__ks += p.n)');
-  const ren0 = X('renown()');
-  assert(!X('expedCan("r5d", ["oriel"], 8).ok') && /Aldric/.test(X('expedCan("r5d", ["oriel"], 8).why')), 'The Hollow Court needs Aldric');
-  X('expedSend("r3b", ["maren", "pip"], 12)');
-  X('expedSend("r5d", ["aldric", "oriel", "thessaly"], 8)');
-  const tokPlanned = X('S.exped.slots[0].pay.tok');
-  X('expedSend("r1c", ["hesketh", "anselm"], 12)');
-  h.setNow(h.clock + 13 * H); h.fn.awayGains(13 * 3600);
-  const toks = JSON.parse(X('JSON.stringify(globalThis.__tok)'));
-  assert(tokPlanned > 0 && toks.length >= 1 && toks.every(t => t.id === 'grenna') && (X('S.party.unlock.tokens.grenna.miss') > 0 || X('isRecruited("grenna")')), `Quarry Night Shift rolls Grenna's token through unlockTokenRoll (${toks.length} rolls${X('isRecruited("grenna")') ? ', won' : ''})`);
-  assert(X('globalThis.__ks') > 0 && X('S.party.unlock.ks') === X('globalThis.__ks') && X('S.exped.court') === X('globalThis.__ks'), `The Hollow Court credits Kingslayer (${X('S.party.unlock.ks')})`);
-  assert(X('renown()') > ren0 && X('Object.values(S.exped.lore).some(q => q > 0)'), `Lore routes add Renown (+${X('renown()') - ren0}) and Lore`);
-  X('S.exped.court = 48; S.party.unlock.ks = 48; S.exped.slots = []; expedSend("r5d", ["aldric", "oriel"], 8)');
-  h.setNow(h.clock + 30 * H); h.fn.awayGains(3600);
-  assert(X('S.exped.court') === 50 && X('S.party.unlock.ks') === 50, 'Kingslayer credit stops at 50');
-  // Almanac hooks: Fair Winds raises the haul at send; the weekly counters hear the events
-  const w = mk(74), W = s => w.eval(s);
-  const base = W('expedPreview("r1a", ["hesketh", "pip"], 4).lines[0].n');
-  W('almanac.force("fairWinds")');
-  const fw = W('expedPreview("r1a", ["hesketh", "pip"], 4).lines[0].n');
-  assert(Math.abs(fw / base - 1.3) < 1e-9, 'Fair Winds: +30% for teams sent that day (mod expHaul)');
-  const bad = badNumbers(E('S')).concat(badNumbers(X('S')));
-  assert(!bad.length, 'no NaN in the expedition state' + (bad.length ? ': ' + bad[0] : ''));
-  const errs = g.errors.concat(h.errors, w.errors);
-  assert(!errs.length, 'no expedition errors' + (errs.length ? ': ' + errs[0] : ''));
-  // old saves get the defaults and round-trip
-  for (const f of ['save-v2.json', 'save-mid-v2.json', 'save-v2-late.json', 'save-a-v1.json']) {
-    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
-    const go = loadCore({ seed: 5, storage: memoryStorage({ [KEY]: raw }) });
-    const def = go.eval('S.exped.v === 1 && S.exped.slots.length === 0 && S.exped.log.length === 0 && S.exped.court === 0 && S.exped.seq === 0');
-    for (let i = 0; i < 12; i++) go.fn.tick(0.1);
-    const cs = go.eval('JSON.stringify(S.exped)'); go.eval('save(); loadSave()');
-    const rt = go.eval('JSON.stringify(S.exped)') === cs;
-    assert(def && rt && !go.errors.length, `${f}: empty expeditions by default, round trip keeps S.exped`);
-  }
-} catch (e) { fail('expeditions crashed: ' + (e.stack || e)); }
-
 // ---- the Deepwell on party combat (59c-deepwell-combat.js; plan-2 W6, plan-3 W6b; deepwell.md 8.2) ----
 if (section('deepwell combat')) try {
   const FIX = ['save-v2.json', 'save-mid-v2.json', 'save-v2-late.json', 'save-a-v1.json'];
@@ -6394,7 +6040,7 @@ if (section('line-up planner')) try {
   // for the hero and each member, one per slot (lane 1); a why line. The hero may stand in any slot.
   const legal = (E, b, pass) => E(`(() => { const b = ${JSON.stringify(b)}, pass = ${pass || '() => true'};
     if (!b || !Array.isArray(b.field) || b.field.length > 2 || new Set(b.field).size !== b.field.length) return 'field shape';
-    if (!b.field.every(k => isRecruited(k) && !(typeof expedOut === 'function' && expedOut(k)) && pass(k))) return 'member not allowed';
+    if (!b.field.every(k => isRecruited(k) && pass(k))) return 'member not allowed';
     const keys = Object.keys(b.cells).sort().join(), want = ['hero'].concat(b.field).sort().join();
     if (keys !== want) return 'cells ' + keys + ' vs ' + want;
     const used = new Set(Object.values(b.cells).map(c => c.col));
@@ -6514,7 +6160,7 @@ if (section('line-up planner')) try {
     const mx = bs.reduce((a, b) => Math.max(a, b.parts.est), 0), mq = bs.reduce((a, b) => Math.max(a, b.parts.placements), 0);
     assert(mx <= E('FORM_TUNE.maxEst') && mq <= 396 && bs.every(b => b.parts.cand <= 12), `FT9 bounded: at most ${mx} estimates (cap ${E('FORM_TUNE.maxEst')}) and ${mq} quick placements per search`);
   }
-  // filters and expeditions; autoField uses the planner (by potential)
+  // filters; autoField uses the planner (by potential)
   {
     const { g, E, J } = mk(53, 'warden', [['tobin', 60], ['wren', 60], ['pip', 60], ['maren', 60], ['aldric', 60], ['anselm', 60], ['elowen', 60], ['kestrel', 60], ['oriel', 60], ['hesketh', 60]], 60);
     const oath = J("bestLineup({ zone: 20, filter: { circle: 'oath' } })");
@@ -6523,12 +6169,7 @@ if (section('line-up planner')) try {
     assert(!legal(E, oath, "k => ROSTER[k].circle === 'oath'") && oath.field.length === 2 && !legal(E, arr, "k => ['wren','pip'].includes(k)") && arr.field.length === 2 && !legal(E, fn, "k => ROSTER[k].role !== 'striker'"),
       `filters: circle-only (${oath.field.join(', ')}: "${oath.why}"), a list, a function`);
     const best = J('bestLineup({ zone: 20 })').field;
-    E('S.camp.open = true; S.camp.b.hearth = 8; S.camp.b.maproom = 5; S.maxZone = 36');
-    const away = best[0];
-    E(`setField(S.party.field.filter(k => k !== '${away}'))`);
-    const sent = E(`!!expedSend('r1a', ['${away}'], 1)`);
-    const after = J('bestLineup({ zone: 20 })');
-    assert(sent && E(`!!expedOut('${away}')`) && !after.field.includes(away) && !legal(E, after), `a character out on an expedition (${away}) is never picked (${after.field.join(', ')})`);
+    E('S.maxZone = 36');
     E('S.party.autoField = true; setField(["hesketh"])'); E('autoField()');
     const pick = J('bestLineup({ by: "potential" })');
     assert(E('S.party.field.slice().sort().join()') === pick.field.slice().sort().join() && E('JSON.stringify(S.party.cells)') === JSON.stringify(pick.cells) && !g.errors.length,
@@ -6740,9 +6381,6 @@ if (section('bonds')) try {
     // away: the fight branch at bondAway
     const a0 = E('bondTime("sword")'); E(`awayGains(${2 * HR})`);
     assert(Math.abs(E('bondTime("sword")') - a0 - 2 * HR * E('FORM_TUNE.bondAway') * 1.5) < 1, `away 2 h fighting: +${((E('bondTime("sword")') - a0) / HR).toFixed(2)} h (x${E('FORM_TUNE.bondAway')}, Old Friend x1.5)`);
-    // expeditions: companion pairs on one team grow for the time out
-    const e0 = E('bondTime("oldoath")'); E(`emit('expedBack', { r: 'r1a', team: ['aldric', 'elowen'], secs: ${4 * HR}, auto: true })`);
-    assert(Math.abs(E('bondTime("oldoath")') - e0 - 4 * HR * 1.5) < 1e-6, 'an expedition team (Aldric, Elowen) grows The Old Oath for its 4 h out (Old Friend: Elowen is Legendary)');
     // stories: titles from SYNERGIES; locked until the level; no text = "Story coming soon" (nothing to read)
     const stp = J(g, 'bondStories("hunting")');
     assert(stp.length === 2 && stp[0].title === 'Bats and Birches' && stp[1].title === 'The Winter Larder' && !stp[0].open && stp[0].lv === 2 && stp[1].lv === 4, 'Hunting Party stories: titles, story 1 at Friends, story 2 at Close');
@@ -7513,117 +7151,6 @@ if (section('evolutions (S3)')) try {
     } finally { await browser.close(); }
   })();
 } catch (e) { fail('evolutions crashed: ' + (e.stack || e)); }
-
-// ---- legendary powers core (55-legend.js, L2; legendaries.md 2-6, 8; the runtime cap, coordinator decision) ----
-if (section('legendary core')) try {
-  const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '55-legend.js'), 'utf8').replace(/\/\/.*$/gm, '');
-  assert(!/\b(document|window|localStorage)\./.test(src), 'legend core: no DOM');
-  const ticks = (g, secs) => { for (let i = 0; i < secs * 10; i++) g.fn.tick(0.1); };
-  // old saves: empty Book, defaults merged, identical dps with and without the legend core
-  const noLegend = (await import('./lib/core.mjs')).coreFiles().filter(f => f !== '55-legend.js');
-  for (const f of ['save-v2.json', 'save-mid-v2.json', 'save-v2-late.json']) {
-    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
-    const a = loadCore({ storage: memoryStorage({ [KEY]: raw }) }), b = loadCore({ storage: memoryStorage({ [KEY]: raw }), files: noLegend });
-    const L = a.eval('S.legend');
-    assert(L && L.v === 1 && !Object.keys(L.book).length && L.sig.length === 4 && Array.isArray(L.owed) && a.fn.totalDps() === b.fn.totalDps() && a.eval('legendBudget().raw') === 0,
-      `legend core: ${f} loads with an empty Book, defaults merged, the same dps (${a.fn.totalDps().toFixed(1)})`);
-  }
-  const mk = () => {
-    const g = loadCore({ seed: 5 }), E = x => g.eval(x);
-    E('S.party.cls = "warden"; S.maxZone = 40; S.zone = 40; S.gold = 1e15; for (const k of Object.keys(S.mats)) S.mats[k] = S.mats[k].map(() => 5000)');
-    E('["tobin","wren","pip","bram","maren","aldric","kestrel","anselm","elowen","caedmon"].forEach(k => unlockChar(k, "test", true)); S.party.autoField = false; setField(["maren","aldric","caedmon"])');
-    ticks(g, 1);
-    return g;
-  };
-  const g = mk(), E = x => g.eval(x);
-  // drops, Learn, Echoes
-  const d1 = JSON.parse(E('JSON.stringify(legendDrop(1, "test", { pool: "class", z: 40 }))'));
-  const it1 = d1 && d1.item;
-  assert(d1 && d1.kind === 'item' && it1 && E('LEG_CLASS_IDS.warden').includes(it1.lg) && it1.lr === 1 && it1.r === 'epic' && E(`lgFits({ slot: "${it1.slot}" }, "${it1.lg}")`) && it1.t === E('zoneTier(40)'),
-    `legend core: a new power drops as a wearable Legendary item (${it1 && it1.lg} on a ${it1 && it1.slot}, Epic, rank I, zone tier)`);
-  const id = it1.lg;
-  assert(E(`legendLearn(${it1.id})`) && E(`legendKnown("${id}")`) === 1 && !E(`itemById(${it1.id})`), 'legend core: Learn breaks the item down and puts its power in the Book');
-  E(`legendDrop(1, "test", { id: "${id}" }); legendDrop(1, "test", { id: "${id}" }); legendDrop(1, "test", { id: "${id}" })`);
-  assert(E(`legendKnown("${id}")`) === 1 && E(`legendEchoes("${id}")`) === 3 && E('legendEchoCap()') === 1, 'legend core: a known power drops as an Echo; with no Oath kept Echoes bank at rank I');
-  E('S.oath = { maxL: 6 }'); ticks(g, 4);
-  assert(E(`legendKnown("${id}")`) === 2 && E(`legendEchoes("${id}")`) === 0 && E('legendEchoCap()') === 3, 'legend core: 3 Echoes rank it up once the cap allows (Oath 6 kept: up to rank III)');
-  E(`legendDrop(1, "test", { id: "${id}" }); legendDrop(4, "test", { id: "${id}" })`);
-  assert(E(`legendKnown("${id}")`) === 4 && E(`legendEchoes("${id}")`) === 1, 'legend core: a higher-rank drop sets the rank and keeps the Echoes');
-  // Inscribe: fits, costs
-  E('globalThis.__mk = (kind, t) => { const it = newItem(kind, t || 3, "rare"); S.items.push(it); return it.id; }');
-  E('["tidewall", "anvil", "cadence", "banner"].forEach(p => { S.legend.book[p] = 3; })');
-  const wb = E('__mk("warblade")'), gh = E('__mk("greathelm")'), pl = E('__mk("plate")'), sh = E('__mk("shield")'), bow = E('__mk("bow")');
-  assert(!E(`legendCanInscribe("echostring", ${pl}).ok`) && !E(`legendCanInscribe("huntmoon", ${pl}).ok`) && E(`legendCanInscribe("tidewall", ${pl}).ok`), 'legend core: a power goes only where it fits (a Warden power on Warden gear)');
-  const ess0 = E('S.mats.ess[2]'), gold0 = E('S.gold'), cost = JSON.parse(E(`JSON.stringify(legendCanInscribe("tidewall", ${wb}).cost)`));
-  assert(E(`legendInscribe("tidewall", ${wb})`) && E(`itemById(${wb}).lg`) === 'tidewall' && E('S.mats.ess[2]') === ess0 - 5 && gold0 - E('S.gold') === cost.gold && cost.pearls === 8,
-    'legend core: Inscribe pays Essence and gold (Pearls 2 + 2 x rank once Pearls exist) and writes the power on the crafted item');
-  E(`legendInscribe("anvil", ${gh}); legendInscribe("cadence", ${pl}); legendInscribe("banner", ${sh})`);
-  // limits: 2 hero powers
-  E(`equipItem(${wb}, "weapon"); equipItem(${gh}, "helm")`);
-  assert(E('bonus("lg:tidewall")') === 3 && E('bonus("lg:anvil")') === 3 && E('legendActive().hero.length') === 2, 'legend core: worn powers are active at the Book rank (bonus lg:<id>)');
-  const hc = JSON.parse(E(`JSON.stringify(legendHeroCheck(${pl}, "body"))`));
-  assert(!hc.ok && hc.off != null && /carries 2 legendary powers/.test(hc.why), `legend core: a third power asks first ("${hc.why}")`);
-  E(`equipItem(${pl}, "body")`);
-  assert(E('S.equip.body') === null && E('legendActive().hero.length') === 2 && E('bonus("lg:cadence")') === 0, 'legend core: a third powered item goes back to the bag; the hero keeps 2 powers');
-  E('S.legend.book.tidewall = 5; gearDirty()');
-  assert(E('bonus("lg:tidewall")') === 5, 'legend core: an inscribed item follows the Book rank');
-  // a save edited to 3 keeps the first 2 by position
-  const sv = JSON.parse(E('JSON.stringify(S)')); sv.equip.body = pl;
-  const g2 = loadCore({ storage: memoryStorage({ [KEY]: JSON.stringify(sv) }) }); ticks(g2, 1);
-  assert(g2.eval('S.equip.body') === null && g2.eval('S.equip.weapon') === wb && g2.eval('S.equip.helm') === gh && g2.eval('S.legend.book.tidewall') === 5,
-    'legend core: a save with 3 powers keeps the first 2 by position; the Book survives save and load');
-  // companions: 1 power each, role and wearer rules
-  E(`S.legend.book.echostring = 2; S.legend.book.knucklebone = 2; legendInscribe("echostring", ${bow})`);
-  const tk = E('__mk("trinket")'); E(`legendInscribe("knucklebone", ${tk})`);
-  E('setField(["kestrel","maren","aldric"])');
-  assert(E(`equipChar("kestrel", ${bow}, "wpn")`) && !E(`equipChar("kestrel", ${tk}, "trk")`) && E('bonus("lg:echostring")') === 2 && E('legendWearers("echostring").join()') === 'kestrel',
-    'legend core: a companion carries 1 power (equipChar refuses a second)');
-  assert(E(`legendItemState(itemById(${bow}), "maren").why`).includes('striker'), 'legend core: a companion power on the wrong role is off and says why');
-  // Sigils (expeditions, Bond), Marks, set counting
-  E('emit("expedBack", { g: 3, circles: { hedgefolk: 2, oath: 1 } }); emit("expedBack", { g: 0, circles: { dusk: 2 } }); emit("expedBack", { g: 1, recall: true, circles: { dusk: 2 } })');
-  assert(E('S.legend.sig.join()') === '2,0,0,0', 'legend core: an expedition team of 2+ of one circle brings Sigils (2 on Perfect, none on Fair or a recall)');
-  E('emit("milestone", { id: "pip", lv: 25 }); emit("milestone", { id: "pip", lv: 25 })');
-  assert(E('S.legend.sig[0]') === 4 && E('S.legend.bondCredit.pip') === 1, 'legend core: a first level 25 (Bond) gives 2 Sigils, once');
-  E('S.legend.sig = [20, 20, 20, 20]; for (const k of Object.keys(S.skills)) S.skills[k].lv = 99');
-  const gold1 = E('keenRaw()');
-  assert(E('(() => { const c = canCraft("warblade", 2, { cm: 1 }); const it = craftItem("warblade", 2, { cm: 1 }); return c.ok && !!it && it.cm === 1 && S.legend.sig[1] === 19; })()'), 'legend core: Mark at craft takes a Sigil and marks the item');
-  assert(!E(`legendCanMark(${wb}, 9).ok`) && E(`legendMark(${wb}, "hedgefolk") && legendMark(${gh}, 0) && itemById(${wb}).cm === 0`), 'legend core: Mark on the item sheet (1 Sigil of the circle)');
-  assert(E('legendSets().n[0]') === 2 && E('legendSetTier("hedgefolk")') === 2 && Math.abs(E('keenRaw()') - gold1 - 0.05) < 1e-9, 'legend core: 2 marked pieces worn switch on the 2-piece set (+5% crit damage; ECON-A: was +10% gold)');
-  const bs = E('__mk("bow")'), bs2 = E('__mk("staff")');
-  E(`legendMark(${bs}, 0); legendMark(${bs2}, 0); legendMark(${sh}, 0)`);
-  E(`setField(["wren","tobin","pip"]); equipChar("wren", ${bs}, "wpn"); equipChar("pip", ${bs2}, "wpn"); equipChar("tobin", ${sh}, "wpn")`);
-  assert(E('legendSets().n[0]') === 4 && E('legendSetTier(0)') === 4, 'legend core: marks worn by fielded companions count (F1: 2 fielded, Pip benched: 4 pieces, the 4-piece tier)');
-  E('setField(["maren","aldric","caedmon"])');
-  assert(E('legendSets().n[0]') === 2, 'legend core: benched companions\' marks do not count');
-  // the runtime cap: Tidewall + Banner with 2 fielded Oath companions wearing a 4-piece Oath set (F1: Caedmon waits on the bench)
-  E('for (const k of ["maren", "aldric", "caedmon"]) { const a = __mk("shield"), b = __mk("trinket"); legendMark(a, "oath"); legendMark(b, "oath"); equipChar(k, a, "wpn"); equipChar(k, b, "trk"); }');
-  E(`itemById(${gh}).lg = "banner"; for (const k of LEG_IDS) S.legend.book[k] = 5; gearDirty()`);
-  const b5 = JSON.parse(E('JSON.stringify(legendBudget())'));
-  // Banner's share of mod('party') (other systems, such as synergies, also feed 'party')
-  const bannerPart = () => { const on = E('mod("party")'); E(`itemById(${gh}).lg = "anvil"; gearDirty()`); const off = E('mod("party")'); E(`itemById(${gh}).lg = "banner"; gearDirty()`); return on / off; };
-  assert(E('legendSetTier("oath")') === 4 && E('legendSetTier("hedgefolk")') === 2 && Math.abs(b5.cap - 0.70) < 1e-9 && !b5.hit && b5.scale === 1 && Math.abs(bannerPart() - (1 + E('legendVal("banner", "dmg", 5)') * 2)) < 1e-9,
-    `legend core: two sets at once (Oath 4 + Hedgefolk 2); a rank V build under its +70% cap runs unscaled (raw +${(100 * b5.raw).toFixed(1)}%)`);
-  // F1: with 2 fielded companions the hero's two pieces join the Oath set and Aldric carries the Knucklebone
-  // (an Oath-marked trinket), Maren's shield holds Mossguard and the blade carries the Anvil (a bigger power than
-  // Tidewall), so rank I still runs over its cap
-  E(`S.legend.book.anvil = 1; S.legend.book.banner = 1; S.legend.book.knucklebone = 1; S.legend.book.mossguard = 1; itemById(${wb}).lg = "anvil"; itemById(${wb}).cm = 1; itemById(${gh}).cm = 1; itemById(${tk}).cm = 1; equipChar("aldric", ${tk}, "trk"); itemById(charRec("maren").wpn).lg = "mossguard"; gearDirty()`);
-  const bu = JSON.parse(E('JSON.stringify(legendBudget())'));
-  const party = bannerPart(), exp = 1 + E('legendVal("banner", "dmg", 1)') * 2 * bu.scale;
-  assert(bu.raw > bu.cap && bu.capped === bu.cap && Math.abs(bu.cap - 0.30) < 1e-9 && bu.rank === 1 && bu.scale < 1 && bu.hit && Math.abs(party - exp) < 1e-9,
-    `legend core: at rank I the budget clamps to +30% (raw +${(100 * bu.raw).toFixed(1)}%, scale ${bu.scale.toFixed(3)}); Banner's party damage is scaled by it`);
-  const lb = [1, 2, 3, 4, 5].map(r => JSON.parse(E(`JSON.stringify(legendBest("warden", ${r}))`)));
-  assert(lb.every(x => x.capped <= x.cap + 1e-12 && x.raw >= x.capped) && [0.30, 0.375, 0.45, 0.575, 0.70].every((c, i) => Math.abs(lb[i].cap - c) < 1e-9),
-    `legend core: legendBest clamps to the cap at every rank (raw ${lb.map(x => '+' + (100 * x.raw).toFixed(0) + '%').join(' / ')})`);
-  // owed rolls: nothing can drop yet -> recorded; paid once a source exists
-  const g3 = loadCore({ seed: 9 }), X = x => g3.eval(x); ticks(g3, 1);
-  X('S.party.cls = null; S.party.rec = {}; S.party.field = []');
-  const r0 = X('legendDrop(2, "oath")');
-  X('S.oath = { owed: [3, { rank: 1, source: "oath" }] }'); ticks(g3, 4);
-  assert(r0 === null && X('S.legend.owed.length') === 1 && X('S.oath.owed.length') === 2 && !Object.keys(X('S.legend.book')).length && !X('S.items.some(i => i.lg)'), 'legend core: a roll with nothing to drop is recorded (S.legend.owed); Oath rolls wait too');
-  X('S.party.cls = "ranger"'); ticks(g3, 4);
-  assert(X('S.legend.owed.length') === 0 && X('S.oath.owed.length') === 0 && X('S.legend.n.drops') === 3,
-    'legend core: owed rolls are paid once a source exists (a class chosen), the Oath core\'s too');
-} catch (e) { fail('legendary core crashed: ' + (e.stack || e)); }
 
 // ==== end PARTY_LEGACY ====
 LEGACY = false;

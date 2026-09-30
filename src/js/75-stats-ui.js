@@ -64,8 +64,7 @@
       ['Gold earned', () => S.totalGold],
       ['Essence gained', () => n('ess'), { since: () => since('ess') }],
       ['Trophies earned', () => n('troph'), { since: () => since('troph') }],
-      ['Uniques found', () => ST().uniques, { sub: () => `${statsApi.uniqueKinds()} of ${statsApi.uniqueTotal()} kinds` }],
-      ['Legendary drops', () => (S.legend && S.legend.n ? +S.legend.n.drops || 0 : null)]
+      ['Uniques found', () => ST().uniques, { sub: () => `${statsApi.uniqueKinds()} of ${statsApi.uniqueTotal()} kinds` }]
     ]],
     ['Materials', [
       ['Rare finds', () => (S.tools ? +S.tools.finds || 0 : null)],
@@ -90,12 +89,6 @@
       ['Companion levels', () => T('complv')],
       ['Hours fielded together', () => T('together'), { sub: topPair }]
     ]],
-    ['Expeditions', [
-      ['Returned', () => T('exped')],
-      ['Perfect', () => n('perfect'), { since: () => since('perfect') }],
-      ['Lore pages', () => T('lorepages')],
-      ['Keepsakes', () => T('keeps')]
-    ]],
     ['Deepwell', [
       ['Deepest floor', () => (S.deep ? +S.deep.best || 0 : null)],
       ['Floors cleared', () => (S.deep ? +S.deep.floors || 0 : null)],
@@ -118,8 +111,8 @@
       ['Embers earned', () => n('embers'), { since: () => since('embers') }]
     ]]
   ];
-  // W1-C: no companions and no expeditions in solo (the tiles would be empty)
-  const G = soloOn() ? G0.filter(g => g[0] !== 'Companions' && g[0] !== 'Expeditions') : G0;
+  // W1-C: no companions in solo (the tiles would be empty)
+  const G = soloOn() ? G0.filter(g => g[0] !== 'Companions') : G0;
   const FAMS = ['ore', 'crystal', 'wood', 'fibre', 'herb', 'pearl', 'fish'];
 
   const big = {}, tiles = [], ac = {}, mats = {};

@@ -1,6 +1,6 @@
 // 21b-stories-coast: the writing for Region 2, the Sunken Coast (docs/design/region-2.md).
 // Core, data only (no DOM); loads in Node too. Systems read it (55-coast, 75-coast-ui,
-// 57b-expeditions, 55-almanac, 55-bounties); nothing here runs on its own.
+// 55-almanac, 55-bounties); nothing here runs on its own.
 // Exposed names:
 //   COAST_ARRIVAL[place]  -> one-line arrival notice for coast zone place 0-6 (zonePlace(z)), in cycle order:
 //                            Grey Shingle, Gullcliffs, The Wrecks, Kelp Shallows, Glimmer Lagoon,
@@ -14,9 +14,6 @@
 //                            intro, swing (Lamp Swing), beam (Green Beam), undertow, bell (the Drowned
 //                            Bell), feed (High tide heal), rocks (Low tide), win (the party fails),
 //                            fall (first kill), rematch (after the Coast is relit)
-//   COAST_LORE[band]      -> 2 Lore pages per expedition band 6-10, "Letters from the Coast":
-//                            [{ title, text, by }] with by = 'keeper' | 'hallam' | 'found'.
-//                            EXPED_LORE[band] can take COAST_LORE[band].map(p => p.title).
 //   COAST_BOUNTY_TEXT[k]  -> b => text, like BTY_TEXT in 55-bounties: crab, pearl, beam
 //   COAST_OMEN_TEXT[id]   -> { n, fx, say } for the Omens springTide, calmSea, pearlMoon
 //                            (n and fx as in OMENS; say is an optional flavour line)
@@ -70,39 +67,6 @@ const KEEPER_LINES = {
   win: ['The fog stays. That was never about the light.', 'Go home. Keep your little lamps.'],
   fall: ['It never wanted my light. It wanted the fog.', 'Take the lens. The song stays with me.', 'Tell Hallam the fog was never mine to keep.'],
   rematch: ['Gold again. I had forgotten gold.', 'Come to keep me company?', 'Still listening, down there. Always.']
-};
-
-const COAST_LORE = {
-  6: [
-    { title: 'Hallam\'s Tide Book', by: 'hallam',
-      text: 'Hallam kept a tide book for thirty years. The early pages show two tides a day, as tides should be. After the night the lights went out, the entries crowd together, twice an hour, every hour. The last page says only: "It is not the moon pulling it now."' },
-    { title: 'Silas\'s First Letter', by: 'keeper',
-      text: '"Hallam, the tower is taller than it looks from your ferry, and the stairs count two hundred and six. I polished the lens until I could see my face in it. Tonight every ship on the coast will see my light. Silas."' }
-  ],
-  7: [
-    { title: 'The Night the Lamps Died', by: 'keeper',
-      text: '"Hallam, every lamp on the coast went out at once tonight, mine with them. I lit it again and again, and it would not catch. Far inland one small light burned on a hill, and it did not go out. I watched it until dawn. Silas."' },
-    { title: 'The Marigold\'s Log', by: 'found',
-      text: 'The last page of a ship\'s log, dried stiff with salt. "Lost the shore lamps at dusk. A green light to the north. Steering for Saltreach." There is no more.' }
-  ],
-  8: [
-    { title: 'A Voice in the Water', by: 'keeper',
-      text: '"Hallam, something sings under the rocks at night. It knows my name, and it knows my lamp is dark. It says it can light it for good. I have not answered. Silas."' },
-    { title: 'Saltreach Rooftops', by: 'hallam',
-      text: 'A note from Hallam, pinned inside a cottage door: "Saltreach had forty houses and a lamp at every door. The water came up the street in one night, slow and sure. We rowed the children out. I went back for my ferry, and the ferry was gone."' }
-  ],
-  9: [
-    { title: 'The Promise', by: 'keeper',
-      text: '"Hallam, the voice made me a promise tonight. If I give the light to the sea, it will never go out again, not for any dark. Ships will always see it. I think I will say yes. Silas."' },
-    { title: 'The Lampwardens\' Oath', by: 'found',
-      text: 'Carved over the chapel door, under the coral: "Hold the road. Keep the light. Give it to no one." Every lampwarden of the Oath swore it, from the barrows to the sea. Someone has scratched a line through the last words.' }
-  ],
-  10: [
-    { title: 'He Carried the Lens Down', by: 'hallam',
-      text: 'Hallam\'s last note: "I saw Silas come down the tower steps with the lens in his arms. He walked into the sea and did not stop. The light went down with him, and then it came up green. Ships have steered for it ever since."' },
-    { title: 'The Last Letter', by: 'keeper',
-      text: '"Hallam, the light is safe. It burns below me now, bright and green, and it will never go out. Something holds it very still down there, and I think it is smiling. Do not come looking. Silas."' }
-  ]
 };
 
 const COAST_BOUNTY_TEXT = {

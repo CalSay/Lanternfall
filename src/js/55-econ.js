@@ -55,7 +55,7 @@ let goldPerFoe, econRegionReached, econHearthGold, econRowGold, econShrineGold, 
   // game time and on the events that move a source. critMult() and charMod() read it per hit.
   let cache = null, age = 0;
   onTick(dt => { age += dt; if (age >= 0.25) { age = 0; cache = null; } });
-  for (const ev of ['gear', 'blessChange', 'deedTier', 'starLit', 'starUnlit', 'starReset', 'starLayout', 'legendChange', 'synergyChange', 'fieldChange', 'zoneClear', 'codexPage'])
+  for (const ev of ['gear', 'blessChange', 'deedTier', 'starLit', 'starUnlit', 'starReset', 'starLayout', 'synergyChange', 'fieldChange', 'zoneClear', 'codexPage'])
     on(ev, () => { cache = null; });
   keenRaw = () => { let s = 0; for (const x of SRC) s += safe(x.fn); return s; };
   keen = () => { if (cache === null || cache.S !== S) cache = { S, v: Math.min(ECON.critCap, keenRaw()) }; return cache.v; };

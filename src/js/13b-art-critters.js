@@ -50,35 +50,6 @@ const CRITTER_ART = (() => {
       eyes(k, [[3, -5]], f === 'sleep');
       return k.parts;
     } },
-    // A small red fox that trots.
-    cr_fox: { n: 'Road Fox', parts(f) {
-      const k = kit(), red = m('#C8602E'), cream = m('#F0E8DC'), dk = m('#3A2A24', 'leather');
-      if (f === 'sleep') {   // curled up, tail over the nose
-        k.add(1, red, E(-.5, -2.4, 4.6, 2.4), { bev: 1 });
-        k.add(2, red, E(3, -2.6, 2.2, 1.8), { sep: 1 });
-        k.add(2.1, red, P(1.6, -4, 2.2, -6, 3.2, -4.2), { sep: 1 });
-        k.add(3, red, C(-4, -1, 1.4, 3.5, -1, 1.2), { sep: 1 });
-        k.add(3.1, cream, E(4.6, -1.1, 1.3, 1), { sep: 1 });
-        eyes(k, [[3, -3]], true);
-        return k.parts;
-      }
-      const hop = f === 'hop0' || f === 'hop1', dy = f === 'hop1' ? -1.5 : 0, wag = f === 'idle1' ? -1 : 0;
-      const legX = f === 'hop0' ? [-4.2, -1.4, 1.4, 4.2] : f === 'hop1' ? [-2.8, -2, 2, 2.8] : [-3, -2, 2, 3];
-      k.add(1, red, P(-3, -5.2 + dy, -7.2, -7.2 + dy + wag, -9, -5.8 + dy + wag, -8, -3.8 + dy, -4, -3.6 + dy), { bev: .8 });
-      k.add(1.1, cream, E(-8.2, -6.2 + dy + wag, 1.4, 1.2), { sep: 1 });
-      legX.forEach((x, i) => k.add(i % 3 ? 2.2 : 1.8, dk, C(x * .8, -2.8 + dy, .7, x, hop && f === 'hop1' ? -1 + dy : 0, .6)));
-      const body = k.add(2, red, E(-.4, -4.3 + dy, 4, 2.2), { bev: 1 });
-      k.add(2.05, cream, E(.4, -2.8 + dy, 2.8, 1), { clip: body });
-      const hy = -6.4 + dy + (hop ? .3 : 0);
-      k.add(3, red, P(2.6, hy - 1.2, 3.2, hy - 3.8, 4.2, hy - 1.6), { sep: 1 });
-      k.add(3.05, red, P(3.8, hy - 1.4, 5, hy - 3.9, 5.4, hy - 1.2), { sep: 1 });
-      k.add(3.1, red, E(3.9, hy, 2.3, 1.9), { sep: 1 });
-      k.add(3.2, cream, P(5, hy - .2, 7.6, hy + .6, 5.4, hy + 1.6, 4.2, hy + 1.2), { sep: 1 });
-      k.add(3.3, eyeM, Q(7, Math.round(hy), 1, 1), { nl: 1 });
-      k.add(3.3, m('#1A1420', 'flat'), Q(3, Math.round(hy - 4), 1, 1), { nl: 1 });
-      eyes(k, [[4, Math.round(hy - 1)]], false);
-      return k.parts;
-    } },
     // A ginger cat.
     cr_cat: { n: 'Hearth Cat', parts(f) {
       const k = kit(), gin = m('#D8883A'), str = m('#A85A26', 'flat'), cream = m('#F2E2C4');

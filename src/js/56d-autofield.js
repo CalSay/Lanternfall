@@ -112,7 +112,6 @@ var afRealPow = null;
   const COLS = ['back', 'mid', 'front'];
   const FOE_WORD = { slime: 'slimes', bat: 'divers', bones: 'archers', beetle: 'bruisers', spore: 'spore clouds', golem: 'golems', wraith: 'wraiths' };
   const STUNS = { aldric: 1, grenna: 1, thessaly: 1, oriel: 1, kestrel: 1 };
-  const onExped = id => { try { return typeof expedOut === 'function' && !!expedOut(id); } catch (e) { return false; } };
   const heroCls = () => (P() && P().cls && HERO_CLASSES[P().cls]) ? P().cls : null;
   const CLS_ROLE = { warden: 'tank', ranger: 'striker', lanternmage: 'caster', lightkeeper: 'support' };
   const roleOf = k => k === 'hero' ? (typeof memberRole === 'function' ? memberRole('hero') : CLS_ROLE[heroCls() || 'warden']) : R(k).role;
@@ -256,10 +255,10 @@ var afRealPow = null;
   const value = k => charPow(k) * (R(k).role === 'support' ? ROSTER_TUNE.supEq : ROLE_STATS[R(k).role].dps * (1 + (ROLE_STATS[R(k).role].crit || 0) * ((ROLE_STATS[R(k).role].critX || 1) - 1)));
   const pinsOf = (o, pass) => {
     const l = Array.isArray(o.pin) ? o.pin : (P() && Array.isArray(P().pin) ? P().pin : []);
-    return l.filter((k, i) => R(k) && isRecruited(k) && !onExped(k) && pass(k) && l.indexOf(k) === i).slice(0, Math.min(fmax(), F('maxPins')));
+    return l.filter((k, i) => R(k) && isRecruited(k) && pass(k) && l.indexOf(k) === i).slice(0, Math.min(fmax(), F('maxPins')));
   };
   function candidates(pass, pins) {
-    const all = rosterList().filter(k => !onExped(k) && pass(k));
+    const all = rosterList().filter(k => pass(k));
     const out = pins.slice();
     for (const role of ['tank', 'striker', 'caster', 'support']) for (const k of all.filter(k => R(k).role === role).sort((a, b) => value(b) - value(a)).slice(0, T.perRole)) if (!out.includes(k)) out.push(k);
     return out;
@@ -363,7 +362,7 @@ var afRealPow = null;
   function sigOf(o, ctx, by, pins) {
     const step = Math.max(1, T.lvStep);
     let s = [heroCls(), ctx.z, ctx.goal, by, ctx.boss, ctx.w, ctx.tankPen, pins.join('+'), o.key || (typeof o.filter === 'function' ? '' : JSON.stringify(o.filter || null)), S.L, Math.floor((S.blade || 0) / 10)].join('|') + '|';
-    for (const k of rosterList()) { const r = charRec(k); s += k + Math.floor(r.lv / step) + '.' + r.rank + '.' + r.wpn + '.' + r.trk + (onExped(k) ? 'x' : '') + ','; }
+    for (const k of rosterList()) { const r = charRec(k); s += k + Math.floor(r.lv / step) + '.' + r.rank + '.' + r.wpn + '.' + r.trk + ','; }
     return s;
   }
   function ctxOf(o) {
@@ -469,7 +468,7 @@ var afRealPow = null;
   // clock: game seconds since load (ticks), for the dwell. In memory: after a load the first due
   // plan may change the party at once.
   const AP = { clock: 0, lastAt: -1e9, last: null, pending: null, checked: false, job: null, changes: 0, flipHold: 0, bad: [] };
-  const hasBench = f => rosterList().some(k => !f.includes(k) && !onExped(k));
+  const hasBench = f => rosterList().some(k => !f.includes(k));
   // After a fall-back: does the party you have now hold the zone it fell back to? (one estimate)
   const holdsHere = () => { try { return typeof partyHoldEstimate !== 'function' || partyHoldEstimate(S.zone, { one: true }).holds; } catch (e) { return true; } };
   // Apply a finished plan if the rules allow (the field must be the one the plan started from).
@@ -536,8 +535,6 @@ var afRealPow = null;
   on('zoneClear', () => { failZone = 0; wipeZone = 0; due('zone'); });
   on('bossFail', ({ zone }) => { failZone = zone; due('boss'); });
   on('wipe', w => { if (!w || w.arena) return; if (w.boss) wipeZone = w.zone; else due('wipe'); });
-  on('expedSent', () => due('exped'));
-  on('expedBack', () => due('exped'));
   on('classChosen', () => due('class'));
   on('formPin', () => due('pin'));
   // Stuck: the party fights on with members down and kills nothing (the hero outlasts the pack but

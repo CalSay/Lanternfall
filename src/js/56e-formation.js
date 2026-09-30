@@ -130,7 +130,6 @@ let formNoLoss, homeSlot, slotOf, whoIn, offSlot, adjacentKeys, formLine, formWa
   const R = id => ROSTER[id];
   const max = () => (ROSTER_TUNE && ROSTER_TUNE.fieldMax) || 2;
   const combatOn = () => typeof partyCombatOn === 'function' && partyCombatOn();
-  const onExped = id => { try { return typeof expedOut === 'function' && !!expedOut(id); } catch (e) { return false; } };
   const clsOf = () => { const p = P(); return p && p.cls && HERO_CLASSES[p.cls] ? p.cls : null; };
   const CLS_ROLE = { warden: 'tank', ranger: 'striker', lanternmage: 'caster', lightkeeper: 'support' };
   // S3: a proven evolution's role (59e clsHeroStats: a Reaver is a striker in Front, a Trapper a caster in the Middle)
@@ -223,7 +222,7 @@ let formNoLoss, homeSlot, slotOf, whoIn, offSlot, adjacentKeys, formLine, formWa
     for (const s of FORM_SLOTS) {
       const k = spec[s] || null; if (!k) continue;
       if (seen.includes(k)) return false;
-      if (k !== 'hero' && (!R(k) || !isRecruited(k) || onExped(k))) return false;
+      if (k !== 'hero' && (!R(k) || !isRecruited(k))) return false;
       seen.push(k); keys[k] = SLOT_COL[s];
     }
     if (!seen.includes('hero') || seen.length - 1 > max()) return false;
@@ -242,7 +241,7 @@ let formNoLoss, homeSlot, slotOf, whoIn, offSlot, adjacentKeys, formLine, formWa
     return commit(fieldIds(), cells);
   };
   fieldTo = (id, slot) => {
-    if (!rosterLive() || !(slot in SLOT_COL) || !R(id) || !isRecruited(id) || onExped(id)) return false;
+    if (!rosterLive() || !(slot in SLOT_COL) || !R(id) || !isRecruited(id)) return false;
     const cur = slotOf(id);
     if (cur) return cur === slot ? false : swapSlots(cur, slot);
     const occ = whoIn(slot);

@@ -44,7 +44,6 @@ const OMEN_LINES = {
   transmuter: 'Everything looks a little like something else today.',
   // road
   buildersMoon: 'A builder\'s moon. The hammers ring till late.',
-  fairWinds: 'The wind is at everyone\'s back today.',
   busyTavern: 'Travellers on the road. The Tavern is full.',
   bountyDay: 'New notices on the board, and the pay is good.',
   renownDay: 'Word travels fast today. Make it good word.',

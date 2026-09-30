@@ -398,13 +398,11 @@
       const it = open ? equipped(pos) : null;
       const d = el('div', 'pc-slot' + (open ? '' : ' soon'));
       const tile = it ? slotTile(it) : slotTile(null, SLOT[pos] ? SLOT[pos].icon : pos === 'body' ? 'plate' : pos === 'off' ? 'banner' : 'helm');
-      if (it && it.lg && !it.lr) tile.classList.add('lg-pip');   // a legendary power (75-legend-ui)
       d.append(tile, el('small', null, nouns[s.id] || s.n));
       d.title = it ? itemName(it) : open ? 'Empty' : 'Coming with crafting';
       gearBox.append(d);
     }
     card.append(gearBox);
-    const pw = el('div', 'pc-powers'); pw.hidden = true; card.append(pw); refs.pw = pw;   // "Powers 1/2" (75-legend-ui)
     const open = () => partySheet.openHero();
     card.addEventListener('click', open);
     card.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target === card) { e.preventDefault(); open(); } });
@@ -418,8 +416,6 @@
     const r = heroRefs;
     setT(r.sub, (c ? c.name : 'Wanderer') + ' · Lv ' + S.L);
     const ct = heroTitle(); setT(r.ctl, ct); putHidden(r.ctl, !ct);
-    const hl = typeof legendUI === 'object' && legendUI ? safe(() => legendUI.heroLine(), null) : null;
-    putHidden(r.pw, !hl); if (hl) { setT(r.pw, hl.txt); putToggle(r.pw, 'none', !hl.n); }
     if (r.cdBar) {
       const sa = soloOn() && typeof abilityInfo === 'function' ? abilityInfo() : null;
       const cdMax = (sa ? sa.cd : c.ability.cd) || 30, left = Math.max(0, +P().abilityCd || 0);
@@ -459,7 +455,6 @@
       const gear = el('div', 'pc-g2');
       for (const [w, noun, ic] of [['wpn', weaponNoun(k), 'sword'], ['trk', 'Trinket', 'charm']]) {
         const it = gearOf(k, w); const t = slotTile(it, ic); t.title = it ? itemName(it) : `${noun}: coming soon`; gear.append(t);
-        if (it && it.lg && typeof legendItemState === 'function') { t.classList.add('lg-pip'); if (!safe(() => legendItemState(it, k).on, false)) t.classList.add('lg-offpip'); }   // a legendary power
       }
       top.append(pt, who, gear);
       const xr = el('div', 'pc-xrow');
@@ -479,7 +474,7 @@
   }
   function updateComps(box) {
     const keys = field();
-    const sig = keys.join(',') + '|' + typeof portraitURL + '|' + keys.map(k => { const r = charRec(k); return r.wpn + ':' + r.trk; }).join() + (fnActive() ? 1 : 0) + '|' + keys.map(k => ['wpn', 'trk'].map(w => { const it = gearOf(k, w); return it && it.lg ? it.lg : ''; }).join()).join();
+    const sig = keys.join(',') + '|' + typeof portraitURL + '|' + keys.map(k => { const r = charRec(k); return r.wpn + ':' + r.trk; }).join() + (fnActive() ? 1 : 0);
     if (sig !== compSig) { compSig = sig; buildComps(box, keys); }
     for (const r of compRefs) {
       const x = xpInfo(r.k); if (!x) continue;
@@ -706,10 +701,9 @@
   const guard = (name, fn) => (...a) => { try { fn(...a); } catch (e) { console.error('[lanternfall] party ' + name, e); } };
   if (!SOLO) registerSection('party', { id: 'party-form', title: 'Your party', mount: buildForm, update: guard('formation', () => { updateForm(); updateWhy(); }) });
   if (!SOLO) registerSection('party', {
-    id: 'party-syn', title: 'Combos', feature: 'synergy', mount(sec) { sec.hidden = true; sec.append(el('div', 'syn-row'), el('div', 'syn-sets')); },
+    id: 'party-syn', title: 'Combos', feature: 'synergy', mount(sec) { sec.hidden = true; sec.append(el('div', 'syn-row')); },
     update: guard('combos', () => {
       const sec = document.getElementById('sec-party-syn'); updateSyn(sec);
-      if (!sec.hidden && typeof legendUI === 'object' && legendUI) legendUI.setsRow(sec.querySelector('.syn-sets'));   // circle Sets chips
     })
   });
   if (!SOLO) registerSection('party', {

@@ -8,8 +8,7 @@
 //
 // Exposed names (the Craft tab, K7, calls these; every action saves and returns falsy when refused):
 //   craftItem(kind, t, opts?) -> item | null     opts: { role } (Trinkets), { mw: trophyIndex }
-//                                                (Masterwork, costs 1 of that Trophy), { cm: circle }
-//                                                (a circle mark: 1 Sigil + 2 Pearls, 55-legend).
+//                                                (Masterwork, costs 1 of that Trophy).
 //                                                kind 'starChart' crafts the Star Chart and returns
 //                                                { kind: 'starChart', t: 3 } (not an item).
 //                                                Emits 'itemAdded' (via addItem) and 'crafted' {item, kind, t}.
@@ -119,7 +118,6 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
       if (!CRAFT_TROPHIES[opts.mw] || !craftTrophyLine(opts.mw, kind, 1)) return no('That Trophy does nothing on this item.', x);
       if ((C().troph[opts.mw] || 0) < 1) return no(`Needs 1 ${trophyName(opts.mw)}`, x);
     }
-    if (opts.cm != null) { const mw = legendMarkWhy(kind, t, opts.cm); if (mw) return no(mw, x); }   // Mark at craft (55-legend)
     if (bagFull()) return no(`Your bag is full (${CRAFT_BAG_MAX} items). Salvage something first.`, x);
     x.miss = missing(cost.mats, t);
     if (x.miss.length) return no(missWhy(x.miss, t), x);
@@ -133,7 +131,6 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
     if (opts.mw != null) C().troph[opts.mw]--;
     const r = rollRarity(stationLevel(kind));
     const it = newItem(kind, t, r, { role: opts.role, mw: opts.mw });
-    if (opts.cm != null) legendMarkPay(it, opts.cm);
     addItem(it);
     gainStation(stationOf(kind).skill, CRAFT_XP.craft(t));
     toast(`Made a ${RAR[r].n} ${itemName(it)}.`, r === 'epic' || r === 'rare' ? 'ember' : 'good', { item: it }, r === 'legendary' ? 'high' : r === 'epic' || r === 'rare' ? 'normal' : 'low');
@@ -255,7 +252,6 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
     const r = rec(charId), it = itemById(itemId);
     if (!r || !it || !CRAFT_COMP_POS.includes(pos) || !fits(it, pos, charId)) return false;
     if (r[pos] === itemId) return true;
-    if (!legendCanWear(charId, it, pos).ok) return false;   // a companion carries 1 legendary power (55-legend)
     unwearItem(itemId); // leaves the hero or any other character
     r[pos] = itemId;
     gearDirty();

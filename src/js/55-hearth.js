@@ -190,25 +190,4 @@ let hearthCold, hearthLit, hearthScene, hearthCan, hearthLight, hearthPlotOpen, 
     Hs().said = 1;
     emit('whatsNew', { msg: 'Your stations were already built. Tools now have mastery.', icon: { ic: ['anvil', '#D08A4E'] } });
   });
-
-  // ---- Next Up: the Map Room (queued hint, plan-3 wave 2) ----
-  const mapAvail = () => typeof CAMP_B === 'object' && CAMP_B.maproom && (!CAMP_B.maproom.needs || CAMP_B.maproom.needs());
-  const benched = () => typeof benchList === 'function' ? benchList().length : 0;
-  registerGoal({
-    id: 'maproom', sys: 'maproom', icon: { ic: ['anvil', '#D08A4E'] },
-    label: 'Build the Map Room to send companions on expeditions',
-    pct: () => {
-      if (!mapAvail() || lv('maproom') >= 1 || !(typeof campOpen === 'function' && campOpen()) || !benched()) return 0;
-      if (lv('hearth') < 2) return 0;
-      if (typeof campPending === 'function' && campPending('maproom')) return 0;
-      const c = campCan('maproom');
-      if (c.ok) return 1;
-      if (!c.cost) return 0;
-      let p = 1;
-      if (c.cost.gold > 0) p = Math.min(p, S.gold / c.cost.gold);
-      for (const [f, t, n] of c.cost.mats) p = Math.min(p, (S.mats[f][t - 1] || 0) / n);
-      return Math.max(0.01, Math.min(0.95, p));
-    },
-    go: { tab: 'world', sel: '#camp-b-maproom' }
-  });
 }

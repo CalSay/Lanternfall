@@ -62,9 +62,7 @@ let craftUI = null;
     else if (typeof portraitURL === 'function') { const u = safe(() => portraitURL(k), ''); if (u) return u; }
     return spriteURL('hero-portrait', SPR.hero, HERO_PAL);
   };
-  const frameOf = it => (it.u || it.lr ? 'legendary' : it.r);   // it.lr: a Legendary item (55-legend)
-  const LG = () => (typeof legendUI === 'object' && legendUI ? legendUI : null);
-  const lgPip = (tile, it) => { if (it && it.lg && !it.lr) tile.classList.add('lg-pip'); return tile; };
+  const frameOf = it => (it.u ? 'legendary' : it.r);
   const posName = pos => (CRAFT_POS[pos] ? CRAFT_POS[pos].n : pos);
   const itemIc = it => safe(() => itemIcon(it.slot, it.t, it.u), iconURL('charm', '#A9B1BD'));
   const kindLabel = k => { const d = CRAFT_KINDS[k]; return d ? d.noun : k; };
@@ -449,7 +447,7 @@ let craftUI = null;
       gearEls.sig = '';
     },
     update(force) {
-      const sig = JSON.stringify(S.equip) + S.items.length + heroWho() + S.items.reduce((a, i) => a + i.plus + (i.lg || ''), 0);
+      const sig = JSON.stringify(S.equip) + S.items.length + heroWho() + S.items.reduce((a, i) => a + i.plus, 0);
       if (!force && sig === gearEls.sig) return;
       gearEls.sig = sig;
       const EMPTY_IC = { weapon: 'sword', off: 'banner', helm: 'helm', body: 'plate', charm: 'charm', pick: 'pick', axe: 'axe', sickle: 'sickle' };
@@ -457,7 +455,7 @@ let craftUI = null;
       if (w !== 'any') for (const p of ['weapon', 'helm']) { const k = ((CRAFT_FITS[p] || {})[w] || [])[0]; if (k && ICON[CRAFT_KINDS[k].ic]) EMPTY_IC[p] = CRAFT_KINDS[k].ic; }
       for (const p of CRAFT_HERO_POS) {
         const e = gearEls[p], it = itemById(S.equip[p]);
-        if (it) { setIc(e.tile, itemIc(it), frameOf(it), it.lg && !it.lr ? 'lg-pip' : null); e.plus.textContent = it.plus ? '+' + it.plus : ''; e.b.setAttribute('aria-label', `${posName(p)}: ${itemName(it)}`); }
+        if (it) { setIc(e.tile, itemIc(it), frameOf(it)); e.plus.textContent = it.plus ? '+' + it.plus : ''; e.b.setAttribute('aria-label', `${posName(p)}: ${itemName(it)}`); }
         else {
           const ic = EMPTY_IC[p]; setIc(e.tile, ICON[ic] ? iconURL(ic, '#6E6080') : iconURL('charm', '#6E6080'), null, 'ghost soon');
           e.plus.textContent = ''; e.b.setAttribute('aria-label', `${posName(p)}: empty. Choose gear.`);
@@ -500,7 +498,7 @@ let craftUI = null;
       for (const b of bag.filt.children) putAttr(b, 'aria-pressed', String(b.dataset.f === st8.bfilt));
       for (const b of bag.sort.children) putAttr(b, 'aria-pressed', String(b.dataset.s === st8.sort));
       const w = wearers();
-      const sig = [st8.bfilt, st8.sort, S.items.map(i => i.id + ':' + i.plus + ':' + i.r + ':' + (i.rf || 0) + (i.lg || '')).join(), [...w].map(([k, v]) => k + v.who).join(), [...st8.fresh].join()].join('|');
+      const sig = [st8.bfilt, st8.sort, S.items.map(i => i.id + ':' + i.plus + ':' + i.r + ':' + (i.rf || 0)).join(), [...w].map(([k, v]) => k + v.who).join(), [...st8.fresh].join()].join('|');
       if (!force && (sig === bag.sig || busy())) return;
       bag.sig = sig;
       let list = S.items.slice();
@@ -509,12 +507,12 @@ let craftUI = null;
       list.sort(SORTS[st8.sort]);
       bag.grid.textContent = '';
       for (const it of list) {
-        const b = el('button', 'ic cf-tile f-' + frameOf(it) + (it.lg && !it.lr ? ' lg-pip' : '') + (st8.fresh.has(it.id) ? ' fresh' : '')); b.type = 'button';
+        const b = el('button', 'ic cf-tile f-' + frameOf(it) + (st8.fresh.has(it.id) ? ' fresh' : '')); b.type = 'button';
         b.append(img(itemIc(it)));
         if (it.plus) b.append(el('span', 'cf-plus', '+' + it.plus));
         const wr = w.get(it.id);
         if (wr) { const bd = img(portraitOf(wr.who), 'cf-badge' + (wr.who === 'hero' ? ' hero' : '')); b.append(bd); }
-        b.setAttribute('aria-label', `${itemName(it)}, ${it.lr ? 'Legendary' : RAR[it.r].n}${it.lg && LEG_POWERS[it.lg] ? ', ' + LEG_POWERS[it.lg].n : ''}${wr ? ', worn by ' + (wr.who === 'hero' ? 'you' : firstName(wr.who)) : ''}`);
+        b.setAttribute('aria-label', `${itemName(it)}, ${RAR[it.r].n}${wr ? ', worn by ' + (wr.who === 'hero' ? 'you' : firstName(wr.who)) : ''}`);
         b.addEventListener('click', () => { st8.fresh.delete(it.id); openItem(it.id); });
         bag.grid.append(b);
       }
@@ -560,10 +558,10 @@ let craftUI = null;
     const wr = wornBy(it.id);
     // ---- head ----
     const head = el('div', 'cf-ih');
-    const tile = lgPip(icTile(itemIc(it), frameOf(it)), it); tile.classList.add('s56');
+    const tile = icTile(itemIc(it), frameOf(it)); tile.classList.add('s56');
     const who = el('div', 'cf-ihw');
-    who.append(el('h3', 'cf-in rar-' + (it.lr ? 'legendary' : it.r), itemName(it)));
-    const meta = [it.lr ? 'Legendary' : RAR[it.r].n, `Tier ${it.t}`, d ? (it.u ? posName(d.pos) : d.noun + (d.legacy ? ' (old style)' : '')) : ''].filter(Boolean).join(' · ');
+    who.append(el('h3', 'cf-in rar-' + it.r, itemName(it)));
+    const meta = [RAR[it.r].n, `Tier ${it.t}`, d ? (it.u ? posName(d.pos) : d.noun + (d.legacy ? ' (old style)' : '')) : ''].filter(Boolean).join(' · ');
     who.append(el('div', 'cf-im', meta));
     const fit = [];
     if (d && d.pos) fit.push(heroFitsIt(it) ? `${posName(d.pos)} for you` : `${posName(d.pos)} for ${d.cls && HERO_CLASSES[d.cls] ? 'a ' + HERO_CLASSES[d.cls].name : 'a hero with no class'}`);
@@ -588,16 +586,11 @@ let craftUI = null;
       if (!liveNow) r.append(el('small', 'cf-wait', '(not active yet)'));
       lines.append(r);
     }
-    const lgl = LG() && safe(() => LG().lines(it), null);   // the power and circle mark lines (55-legend)
-    if (lgl) lines.prepend(lgl);
     if (!lines.children.length) lines.append(el('p', 'note', 'No stats.'));
-    const lgb = LG() ? safe(() => LG().itemBoxes(it, sheet, renderItem), []) : [];   // Learn (top), Inscribe, Mark
-    body.append(...lgb.filter(b => b.dataset.top));
     body.append(secBox('What it does', lines));
     const tlb = typeof toolsUI === 'object' && toolsUI ? safe(() => toolsUI.itemBox(it), null) : null;   // tool mastery (75-tools-ui, H2)
     if (tlb) body.append(tlb);
     if (anyWait) body.append(el('p', 'note', 'Dimmed lines are stored on the item and switch on in a later update.'));
-    body.append(...lgb.filter(b => !b.dataset.top));
 
     // ---- compare ----
     if (d && d.pos && heroFitsIt(it) && !(wr && wr.who === 'hero')) {
@@ -634,13 +627,7 @@ let craftUI = null;
       b.addEventListener('click', () => { sheet.mode = sheet.mode === 'give' ? null : 'give'; renderItem(); });
       wear.push(b);
     }
-    if (sheet.ask && sheet.ask.id === it.id) {   // a third legendary power: ask which comes off (55-legend)
-      const q = el('div', 'cf-ask'); q.append(el('p', 'note warn', sheet.ask.why));
-      const r = el('div', 'cf-wear');
-      const no = el('button', 'big cf-act cf-keep', 'Cancel'); no.type = 'button'; no.addEventListener('click', () => { sheet.ask = null; renderItem(); });
-      const yes = el('button', 'big forge cf-act', 'Take it off'); yes.type = 'button'; yes.addEventListener('click', () => { const a = sheet.ask; sheet.ask = null; equipHero(a.id, a.pos, true); });
-      r.append(no, yes); q.append(r); foot.append(q);
-    } else if (wear.length) { const r = el('div', 'cf-wear'); r.append(...wear); foot.append(r); }
+    if (wear.length) { const r = el('div', 'cf-wear'); r.append(...wear); foot.append(r); }
     if (wr && wr.who !== 'hero') {
       const b = el('button', 'mini', `Take it off ${firstName(wr.who)}`); b.type = 'button';
       const f = K6.unequipChar(); b.disabled = !f;
@@ -741,26 +728,15 @@ let craftUI = null;
       if (!(cur && cur.id === it.id)) sm.append(el('span', 'cf-d ' + (dp > 0 ? 'up' : 'dn'), `${dp >= 0 ? '+' : '-'}${fmt(Math.abs(dp))} power`));
       tx.append(sm);
       const on = wr && wr.who === c;
-      const cw = typeof legendCanWear === 'function' && !on ? safe(() => legendCanWear(c, it, pos), null) : null;   // 1 power per companion
-      if (cw && !cw.ok) tx.append(el('small', 'cf-why', cw.why));
       const b = el('button', 'mini ' + (on ? '' : 'go'), on ? 'Wearing' : 'Give'); b.type = 'button';
-      b.disabled = on || !f || !!(cw && !cw.ok);
+      b.disabled = on || !f;
       b.addEventListener('click', () => { if (act(() => f(c, it.id, pos))) { sheet.mode = null; } renderItem(); });
       row.append(pt, tx, b); box.append(row);
     }
     if (!f) box.append(el('p', 'note', 'Companion gear opens with the next crafting update.'));
     return secBox('Give to', box);
   }
-  // The hero carries 2 legendary powers: a third asks first ("Take off X?"); yes takes X off, then equips.
-  function heroAsk(id, pos, yes) {
-    const hc = typeof legendHeroCheck === 'function' ? safe(() => legendHeroCheck(id, pos), null) : null;
-    if (!hc || hc.ok || hc.off == null) return null;
-    if (yes) { safe(() => unwearItem(hc.off)); return null; }
-    return { id, pos, off: hc.off, why: hc.why };
-  }
-  function equipHero(id, pos, yes) {
-    const ask = heroAsk(id, pos, yes);
-    if (ask) { sheet.ask = ask; renderItem(); return; }
+  function equipHero(id, pos) {
     const wr = wornBy(id), un = K6.unequipChar();
     if (wr && wr.who !== 'hero') { if (!un) return; safe(() => un(wr.who, wr.pos)); }
     act(() => equipItem(id, pos));
@@ -805,12 +781,11 @@ let craftUI = null;
       }
       for (const it of list) {
         const r = el('div', 'cf-pr');
-        const t = lgPip(icTile(itemIc(it), frameOf(it)), it);
+        const t = icTile(itemIc(it), frameOf(it));
         const tx = el('div', 'cf-gt');
         const dp = itemPower(it) - (now ? itemPower(now) : 0);
         const wr = w.get(it.id);
-        tx.append(el('b', 'rar-' + (it.lr ? 'legendary' : it.r), itemName(it)));
-        if (it.lg && LEG_POWERS[it.lg]) tx.append(el('small', 'rar-legendary', `${LEG_POWERS[it.lg].n} ${roman(safe(() => legendItemRank(it), 1) || 1)}`));
+        tx.append(el('b', 'rar-' + it.r, itemName(it)));
         const sm = el('small', null, (wr ? `${wr.who === 'hero' ? 'You wear it' : firstName(wr.who) + ' wears it'} · ` : ''));
         sm.append(el('span', 'cf-d ' + (dp > 0 ? 'up' : 'dn'), `${dp >= 0 ? '+' : '-'}${fmt(Math.abs(dp))} power`));
         tx.append(sm);
@@ -842,7 +817,7 @@ let craftUI = null;
   onTick(() => {
     if (!sheet || sheet.api.closed || busy() || Date.now() - sheetAt < 1000) return;
     sheetAt = Date.now();
-    const s = JSON.stringify(S.mats) + S.gold.toFixed(0) + S.items.length + JSON.stringify(S.equip) + troph().join() + (S.skills.ench && S.skills.ench.lv) + (S.legend ? JSON.stringify(S.legend.book) + S.legend.sig.join() : '');
+    const s = JSON.stringify(S.mats) + S.gold.toFixed(0) + S.items.length + JSON.stringify(S.equip) + troph().join() + (S.skills.ench && S.skills.ench.lv);
     if (s === sheetSig) return;
     sheetSig = s;
     if (sheet.picker) { if (sheet.render) safe(() => sheet.render()); } else safe(() => renderItem());
