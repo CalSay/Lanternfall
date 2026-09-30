@@ -3765,7 +3765,7 @@ if (section('solo hero')) try {
   // W1-D (playtest-2 P0): a combat step never pauses a game that cannot give it what it waits for
   {
     const g = T(), E = s => g.eval(s);
-    E('soloPick("wren"); soloTouch()'); run(g, 0.5);
+    E('soloPick("wren"); soloSetAuto(false)'); run(g, 0.5);
     E('combatFoes().forEach(f => { if (f && !f.dead) f.hp = f.max = 1e9; })');
     E('soloAttack()');
     assert(E('onboardStep().id') === 'ability' && E('onboardPaused(onboardStep())') === true, 'W1-D: the ability step pauses while a foe is alive');
@@ -3777,7 +3777,7 @@ if (section('solo hero')) try {
   {
     // the Dodge step: an earlier press (with no heavy hit yet) left the button on cooldown; the paused game must not wait on it
     const g = T(), E = s => g.eval(s);
-    E('soloPick("wren"); soloTouch()'); run(g, 0.5);
+    E('soloPick("wren"); soloSetAuto(false)'); run(g, 0.5);
     E('combatFoes().forEach(f => { if (f && !f.dead) f.hp = f.max = 1e9; })');
     E('soloAttack()'); E('soloAbility()');
     E('soloDodge()');
@@ -3800,32 +3800,35 @@ if (section('solo hero')) try {
     assert(E('S.zone') <= 5, 'W1-D: a remembered zone never goes past the furthest zone cleared');
     errs.push(...g.errors);
   }
-  // 12. SOLO2: active vs idle. Any combat press makes the player active for activeFor s; while active nothing fights
-  //     for you (no auto swing, auto-tap or auto-cast); idle, auto-play runs. The page hidden (soloGoIdle) = idle at once.
+  // 12. Auto toggle (owner 2026-09-30, was SOLO2's 5 s timer). Auto is a saved toggle; combat presses never flip it;
+  //     with Auto off nothing fights for you. The page hidden (soloGoIdle) fights on Auto until soloWake.
   {
     const g = T(), E = s => g.eval(s);
     const flips = []; g.fn.on('soloActive', p => flips.push(p.on));
     E('soloPick("pip")'); run(g, 1);
-    assert(!E('soloActive()') && E('SOLO_TUNE.activeFor') === 5, 'a new fight starts idle (activeFor 5 s)');
+    assert(!E('soloActive()') && E('soloAuto()') === true && E('S.solo.auto') === true, 'a new game starts with Auto on');
     const inputs = [['Attack', 'soloAttack()'], ['Parry', 'soloParry()'], ['Dodge', 'soloDodge()'], ['Ability 1', 'soloAbility({ slot: 0 })'], ['Ability 2', 'soloAbility({ slot: 1 })'], ['Ability 3', 'soloAbility({ slot: 2 })']];
     const bad = [];
-    for (const [nm, call] of inputs) { E('soloGoIdle()'); E(call); if (!E('soloActive()')) bad.push(nm); }
-    assert(!bad.length, 'each of the six combat inputs makes the player active (Attack, Parry, Dodge, the three ability slots, ready or not)' + (bad.length ? ': not ' + bad.join(', ') : ''));
-    E('soloGoIdle()'); flips.length = 0;
-    E('soloAbility({ slot: 0, auto: true })');
-    assert(!E('soloActive()') && !flips.length, 'an auto-cast does not make the player active');
-    E('soloAttack()'); run(g, E('SOLO_TUNE.activeFor') - 0.3);
-    assert(E('soloActive()'), 'still active just before activeFor runs out');
-    run(g, 0.5);
-    assert(!E('soloActive()') && flips.join() === 'true,false', `active expires after activeFor with no press; the soloActive event fires on each flip (${flips.join()})`);
-    E('soloDodge()'); E('soloGoIdle()');
-    assert(!E('soloActive()') && flips.join() === 'true,false,true,false', 'soloGoIdle (the page hidden) makes the player idle at once');
+    for (const [nm, call] of inputs) { E(call); if (E('soloActive()') || !E('soloAuto()')) bad.push(nm); }
+    E('soloSetAuto(false)');
+    for (const [nm, call] of inputs) { E(call); if (!E('soloActive()') || E('soloAuto()')) bad.push(nm + ' (Auto off)'); }
+    assert(!bad.length && flips.join() === 'true', 'the six combat inputs never flip the Auto toggle, on or off (only soloSetAuto does)' + (bad.length ? ': ' + bad.join(', ') : '') + ` (${flips.join()})`);
+    run(g, 30);
+    assert(E('soloActive()') && flips.join() === 'true', 'Auto off stays off with no press for 30 s (no timer)');
+    E('soloGoIdle()');
+    assert(!E('soloActive()') && E('soloAuto()') === false && flips.join() === 'true,false', 'soloGoIdle (the page hidden) fights on Auto at once, without changing the toggle');
+    E('soloWake()');
+    assert(E('soloActive()') && flips.join() === 'true,false,true', 'soloWake (back on screen) returns to fighting by hand');
+    E('soloSetAuto(true)');
+    assert(!E('soloActive()') && E('S.solo.auto') === true && flips.join() === 'true,false,true,false', 'soloSetAuto(true) turns Auto back on and saves it in S.solo.auto');
+    flips.length = 0; E('soloAbility({ slot: 0, auto: true })');
+    assert(!flips.length, 'an auto-cast does not flip anything');
     errs.push(...g.errors);
   }
   {
     // while active: no auto swing damage, no idle auto-tap, no auto-cast; every hit comes from the buttons
     const g = T(), E = s => g.eval(s);
-    E('soloPick("wren"); soloTouch()'); run(g, 1.2);
+    E('soloPick("wren"); soloSetAuto(false)'); run(g, 1.2);
     let taps = 0; g.fn.on('classTap', p => { if (p && p.auto) taps++; });
     let swings = 0; g.fn.on('lunge', () => swings++);
     E('combatFoes().forEach(f => { if (f && !f.dead) { f.hp = f.max = 1e12; } }); globalThis.__hp = () => combatFoes().reduce((a, f) => a + (f && !f.dead ? f.hp : 0), 0)');
@@ -3834,8 +3837,8 @@ if (section('solo hero')) try {
     assert(E('soloActive()') && E('__hp()') === hp0 && swings === 0 && taps === 0 && E('SOLO_STATS.auto') === c0, `while active (8 s, a press every 3 s): no auto swing, no auto-tap, no auto-cast, no damage (${hp0 - E('__hp()')} dealt, ${swings} swings, ${taps} auto-taps, ${E('SOLO_STATS.auto') - c0} auto-casts)`);
     const h1 = E('__hp()'); E('soloAttack()');
     assert(E('__hp()') < h1, 'the Attack button hits');
-    run(g, 12);
-    assert(!E('soloActive()') && E('__hp()') < h1 && swings > 0 && taps > 0 && E('SOLO_STATS.auto') > c0, `idle again: auto-play resumes (${swings} swings, ${taps} auto-taps, ${E('SOLO_STATS.auto') - c0} auto-casts)`);
+    E('soloSetAuto(true)'); run(g, 12);
+    assert(!E('soloActive()') && E('__hp()') < h1 && swings > 0 && taps > 0 && E('SOLO_STATS.auto') > c0, `Auto turned back on: auto-play resumes (${swings} swings, ${taps} auto-taps, ${E('SOLO_STATS.auto') - c0} auto-casts)`);
     // Attack and a hand cast hit harder than the idle ones (SOLO2 tuning)
     assert(E('SOLO_TUNE.atkX > 1 && SOLO_TUNE.abHandX > 1'), `by hand hits harder: Attack x${E('SOLO_TUNE.atkX')} x attack speed, a hand cast x${E('SOLO_TUNE.abHandX')}`);
     errs.push(...g.errors);
@@ -4059,39 +4062,51 @@ if (section('solo hero (browser)')) try {
       await X('S.tab && closeMenu(); document.activeElement && document.activeElement.blur && document.activeElement.blur(); soloGoIdle(); true'); await page.waitForTimeout(350);
       const badge = () => page.$eval('#autoBadge', b => { const r = b.getBoundingClientRect(), s = document.getElementById('stage').getBoundingClientRect(); return { on: b.classList.contains('on'), vis: !b.hidden && r.width > 0, left: r.left - s.left, bottom: s.bottom - r.bottom, w: r.width, h: r.height, sw: s.width, sh: s.height }; });
       const bi = await badge();
-      assert(bi.on && bi.vis && !(await X('soloActive()')) && bi.left < bi.sw * 0.3 && bi.bottom < bi.sh * 0.25 && bi.h <= 24, `idle: the Auto badge is lit, small, at the stage's bottom left under the fighters (${JSON.stringify(bi)})`);
+      assert(bi.on && bi.vis && !(await X('soloActive()')) && bi.left < bi.sw * 0.3 && bi.bottom < bi.sh * 0.25 && bi.h <= 28, `idle: the Auto button is lit, small, at the stage's bottom left under the fighters (${JSON.stringify(bi)})`);
+      // every combat key and tap still acts (counted through soloTouch, which each press calls); none flips Auto
+      await X('globalThis.__presses = 0; if (!globalThis.__stW) { globalThis.__stW = soloTouch; soloTouch = () => { __presses++; __stW(); }; } true');
       const keyAct = [];
       for (const [key, nm] of [['d', 'Attack (D)'], ['a', 'Parry (A)'], ['s', 'Dodge (S)'], ['Space', 'Dodge (Space)'], ['w', 'Ability 2 (W)']]) {
-        await X('soloGoIdle(); true');
+        await X('__presses = 0; true');
         await page.keyboard.press(key);
-        if (!(await X('soloActive()'))) keyAct.push(nm);
+        if (!(await X('__presses > 0 && soloAuto()'))) keyAct.push(nm);
       }
-      await X('soloGoIdle(); soloEquip(0, "fire"); true'); await page.keyboard.press('q'); const q = await X('soloActive()');
-      await X('soloGoIdle(); soloEquip(2, "fire"); true'); await page.keyboard.press('e'); const e3 = await X('soloActive()');
-      assert(!keyAct.length && q && e3, 'each combat key makes the player active: D, A, S, Space, Q, W, E' + (keyAct.length ? ` (not: ${keyAct.join(', ')})` : ''));
-      await page.waitForTimeout(350);
-      assert(!(await badge()).on, 'active: the Auto badge dims');
+      await X('__presses = 0; soloEquip(0, "fire"); true'); await page.keyboard.press('q'); const q = await X('__presses > 0');
+      await X('__presses = 0; soloEquip(2, "fire"); true'); await page.keyboard.press('e'); const e3 = await X('__presses > 0');
+      assert(!keyAct.length && q && e3 && (await badge()).on, 'each combat key acts (D, A, S, Space, Q, W, E) and Auto stays on' + (keyAct.length ? ` (not: ${keyAct.join(', ')})` : ''));
       // Space dodges (no longer attacks)
-      await X('soloGoIdle(); true'); await page.waitForTimeout(1300);
+      await page.waitForTimeout(1300);
       const sp = await X('(() => { const a = SOLO_STATS.attacks, d = SOLO_STATS.dodges + SOLO_STATS.early; return JSON.stringify({ a, d }); })()');
       await page.keyboard.press('Space');
       const sp2 = JSON.parse(await X('JSON.stringify({ a: SOLO_STATS.attacks, d: SOLO_STATS.dodges + SOLO_STATS.early })')), sp1 = JSON.parse(sp);
       assert(sp2.d === sp1.d + 1 && sp2.a === sp1.a, `Space dodges, not attacks (dodges ${sp1.d} -> ${sp2.d}, attacks ${sp1.a} -> ${sp2.a})`);
-      // taps on the bar: Attack and an ability slot count; opening the picker (a tap on an empty slot, a long press) does not
+      // taps on the bar: Attack and an ability slot act; opening the picker (a tap on an empty slot, a long press) does not
       const tapSlot = async (sel, hold) => { const b = await page.$(sel); const r = await b.boundingBox(); await page.mouse.move(r.x + r.width / 2, r.y + r.height / 2); await page.mouse.down(); if (hold) await page.waitForTimeout(hold); await page.mouse.up(); await page.waitForTimeout(150); };
-      await X('soloGoIdle(); true'); await tapSlot('#soloBar .sb-atk'); const tAtk = await X('soloActive()');
-      await X('soloGoIdle(); true'); await tapSlot('#soloBar .sb-ab2'); const tAb = await X('soloActive()');
-      await X('soloGoIdle(); soloEquip(1, null); true'); await page.waitForTimeout(300);
-      await tapSlot('#soloBar .sb-ab1'); const tEmpty = await X('soloActive() || !soloPickerOpen()');
+      await X('__presses = 0; true'); await tapSlot('#soloBar .sb-atk'); const tAtk = await X('__presses > 0');
+      await X('__presses = 0; true'); await tapSlot('#soloBar .sb-ab2'); const tAb = await X('__presses > 0');
+      await X('soloEquip(1, null); true'); await page.waitForTimeout(300);
+      await X('__presses = 0; true'); await tapSlot('#soloBar .sb-ab1'); const tEmpty = await X('__presses > 0 || !soloPickerOpen()');
       await page.keyboard.press('Escape'); await page.waitForTimeout(150);
-      await X('soloGoIdle(); true'); await tapSlot('#soloBar .sb-ab2', 800); const tLong = await X('soloActive() || !soloPickerOpen()');
+      await X('__presses = 0; true'); await tapSlot('#soloBar .sb-ab2', 800); const tLong = await X('__presses > 0 || !soloPickerOpen()');
       await page.keyboard.press('Escape'); await page.waitForTimeout(150);
-      assert(tAtk && tAb && !tEmpty && !tLong && !(await X('soloPickerOpen()')), `a tap on Attack or on an ability makes you active; opening the picker (an empty slot, a long press) does not (${[tAtk, tAb, tEmpty, tLong].join()})`);
-      // the page hidden or backgrounded: idle at once, the badge lights
-      await X('soloAttack(); true');
+      assert(tAtk && tAb && !tEmpty && !tLong && !(await X('soloPickerOpen()')), `a tap on Attack or on an ability acts; opening the picker (an empty slot, a long press) does not (${[tAtk, tAb, tEmpty, tLong].join()})`);
+      // the page hidden or backgrounded while fighting by hand: Auto fights at once, the button lights
+      await X('soloSetAuto(false); soloAttack(); true');
       await page.evaluate(() => { Object.defineProperty(document, 'hidden', { configurable: true, get: () => true }); document.dispatchEvent(new Event('visibilitychange')); delete document.hidden; });
       await page.waitForTimeout(350);
-      assert(!(await X('soloActive()')) && (await badge()).on, 'the page hidden: idle at once, and the Auto badge lights');
+      assert(!(await X('soloActive()')) && (await badge()).on, 'the page hidden: Auto fights at once, and the Auto button lights');
+      await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange'))); await page.waitForTimeout(200);
+      const back = await X('soloActive()');
+      // the Auto button is a toggle: a tap and F both flip it, and it stays as set
+      await X('soloSetAuto(false); true'); await page.waitForTimeout(150);
+      await page.click('#autoBadge'); await page.waitForTimeout(200);
+      const tapOn = await X('soloAuto() && !soloActive()'), lit = (await badge()).on;
+      await page.keyboard.press('f'); await page.waitForTimeout(200);
+      const fOff = await X('!soloAuto() && soloActive()'), dim = !(await badge()).on;
+      await page.waitForTimeout(5600);
+      const stays = await X('!soloAuto() && soloActive()');
+      await page.keyboard.press('f'); await page.waitForTimeout(150);
+      assert(back && tapOn && lit && fOff && dim && stays && await X('soloAuto()'), `Auto toggle: back on screen returns to hand play; a tap on the button turns Auto on and lights it; F turns it off and dims it; off stays off past the old 5 s (${[back, tapOn, lit, fOff, dim, stays].join()})`);
       // a counter (always a crit) raises a crit number on the stage: the pop, the sparks, the crit colour
       const cf0 = await X('stageStats().critFloats');
       // W2-B de-flake (root cause): the parry was a plain press, and 'locked' while the cooldown of an earlier parry press was still
@@ -6490,9 +6505,9 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
               const hitSlot = [...document.querySelectorAll('#soloBar .sbtn')].every(b => { const q = b.getBoundingClientRect(), hit = document.elementFromPoint(q.left + q.width / 2, q.top + q.height / 2); return !!hit && b.contains(hit); });
               return { l: r.left, r: r.right, t: r.top, b: r.bottom, w: r.width, strip: r.left - s.left, sR: s.right, H: innerHeight, over: p.scrollWidth - p.clientWidth, hitSlot, vis: getComputedStyle(document.getElementById('menu')).visibility };
             });
-            await X('soloGoIdle(); true');
+            await X('globalThis.__presses = 0; if (!globalThis.__stW) { globalThis.__stW = soloTouch; soloTouch = () => { __presses++; __stW(); }; } true');
             const a = await page.$('#soloBar .sb-atk'), ab = await a.boundingBox(); await page.mouse.move(ab.x + ab.width / 2, ab.y + ab.height / 2); await page.mouse.down(); await page.mouse.up();
-            const pressed = await X('soloActive()');
+            const pressed = await X('__presses > 0');
             const tabNow = await X('S.tab');
             if (!(tabNow === t && m.vis === 'visible' && m.w >= 300 && m.t >= 40 && m.b <= m.H + 1 && m.r <= m.sR + 1 && m.strip >= 100 && m.over <= 0 && m.hitSlot && pressed)) menuBad.push(`${t}: ${JSON.stringify({ tabNow, pressed, ...m })}`);
             const how = closers[i];

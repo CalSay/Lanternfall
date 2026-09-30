@@ -10,8 +10,7 @@
 // Runtime and state: 59j-solo.js. UI: 75-solo-ui.js, 76-create.js.
 
 const SOLO_TUNE = {
-  // ---- active vs idle (SOLO2): a combat press makes you active for activeFor s; while active nothing fights for you ----
-  activeFor: 5,
+  // ---- Auto is a saved toggle (59j soloSetAuto); a combat press turns it off. While it is off nothing fights for you ----
   atkX: 5,              // an Attack press: the class tap x atkX (W2-A: 3.5 x attack speed before Swiftness left; while active there is no auto swing)
   abHandX: 2.5,         // an ability cast by hand hits this much harder than the idle auto-cast
   // ---- the buttons ----

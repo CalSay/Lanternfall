@@ -75,7 +75,8 @@ const FEATURE_OF = Object.fromEntries(FEATURES.map(f => [f.id, f]));
 // the step shows (the UI sets ONBOARD.paused; steps never overlap); `ok`: a step whose action is a Got it button;
 // `needs`: the materials a step waits for (no pause, live progress). Build steps complete when the build starts.
 const campBusy = id => campLv(id) >= 1 || (typeof campPending === 'function' && !!campPending(id));
-const heavyShowing = () => { try { const w = typeof actWarning === 'function' && actWarning(); return !!(w && w.kind === 'heavy' && !w.res && w.left > 0.15); } catch (e) { return false; } };
+// only while its foe lives: a warning left by a foe that died (auto-play, a burn) cannot be parried, so it must not hold the game paused
+const heavyShowing = () => { try { const w = typeof actWarning === 'function' && actWarning(); return !!(w && w.kind === 'heavy' && !w.res && w.left > 0.15 && (w.foe && !w.foe.dead && w.foe.hp > 0 && !w.foe.gone || !!(w.spec && w.spec.dead))); } catch (e) { return false; } };
 const fightingNow = () => S.activity === 'fight' && !!(S.party && S.party.chosen);
 // PAUSE RULES (W1-A; owner: "the game pauses while a tutorial step is open"). A step pauses the game only while it waits
 // for the player to READ or PRESS something right now. A step whose goal needs game time (chop logs, wait for a build,

@@ -2128,10 +2128,11 @@ span.cf-d { font-weight: 600; }
 @media (prefers-reduced-motion: reduce) { .sbtn.nope, .sbtn.good, .sbtn.ready-now { animation: none; } .sbtn:active, .sbtn.hit { transform: none; } }
 @media (max-height: 640px) { .sb-ic { width: 36px; height: 36px; margin-top: -10px; } .sb-lb { font-size: calc(11px * var(--display-k, 1)); } }
 @media (max-height: 520px) { .sb-ic { width: 24px; height: 24px; } .sb-lb { display: none; } .sb-ic { margin-top: 0; } .sb-n { margin-top: 0; } }
-/* the Auto badge (SOLO2): bottom left of the stage, over the DPS line; lit while auto-play fights, dim while you are active */
+/* the Auto button: bottom left of the stage, over the DPS line; a toggle, lit while Auto fights, dim while you fight */
 .auto-badge { position: absolute; left: 8px; bottom: 26px; z-index: 2; display: flex; align-items: center; gap: 4px; padding: 2px 6px 2px 4px;
-  background: #16111C; border: 2px solid #0B0810; box-shadow: inset 0 0 0 1px #3A3046; pointer-events: none;
-  font: 600 calc(12px * var(--display-k, 1))/1 var(--display); letter-spacing: .04em; text-transform: uppercase; color: #6B6275; opacity: .6; }
+  background: #16111C; border: 2px solid #0B0810; box-shadow: inset 0 0 0 1px #3A3046; pointer-events: auto; cursor: pointer; min-height: 22px; margin: 0;
+  font: 600 calc(12px * var(--display-k, 1))/1 var(--display); letter-spacing: .04em; text-transform: uppercase; color: #8A8195; opacity: .85; }
+.auto-badge:focus-visible { outline: 2px solid var(--gold, #F2C14E); outline-offset: 1px; }
 .auto-badge[hidden] { display: none; }
 .auto-badge .ab-dot { width: 6px; height: 6px; background: #4E4060; box-shadow: 0 0 0 1px #0B0810; }
 .auto-badge.on { color: #1A1420; background: var(--gold, #F2C14E); box-shadow: inset 0 0 0 1px #FFF3C4, 0 0 6px rgba(242, 193, 78, .55); opacity: 1; }
@@ -8469,8 +8470,7 @@ const CLS_TUNE = {
 // Runtime and state: 59j-solo.js. UI: 75-solo-ui.js, 76-create.js.
 
 const SOLO_TUNE = {
-  // ---- active vs idle (SOLO2): a combat press makes you active for activeFor s; while active nothing fights for you ----
-  activeFor: 5,
+  // ---- Auto is a saved toggle (59j soloSetAuto); a combat press turns it off. While it is off nothing fights for you ----
   atkX: 5,              // an Attack press: the class tap x atkX (W2-A: 3.5 x attack speed before Swiftness left; while active there is no auto swing)
   abHandX: 2.5,         // an ability cast by hand hits this much harder than the idle auto-cast
   // ---- the buttons ----
@@ -11830,7 +11830,8 @@ const FEATURE_OF = Object.fromEntries(FEATURES.map(f => [f.id, f]));
 // the step shows (the UI sets ONBOARD.paused; steps never overlap); `ok`: a step whose action is a Got it button;
 // `needs`: the materials a step waits for (no pause, live progress). Build steps complete when the build starts.
 const campBusy = id => campLv(id) >= 1 || (typeof campPending === 'function' && !!campPending(id));
-const heavyShowing = () => { try { const w = typeof actWarning === 'function' && actWarning(); return !!(w && w.kind === 'heavy' && !w.res && w.left > 0.15); } catch (e) { return false; } };
+// only while its foe lives: a warning left by a foe that died (auto-play, a burn) cannot be parried, so it must not hold the game paused
+const heavyShowing = () => { try { const w = typeof actWarning === 'function' && actWarning(); return !!(w && w.kind === 'heavy' && !w.res && w.left > 0.15 && (w.foe && !w.foe.dead && w.foe.hp > 0 && !w.foe.gone || !!(w.spec && w.spec.dead))); } catch (e) { return false; } };
 const fightingNow = () => S.activity === 'fight' && !!(S.party && S.party.chosen);
 // PAUSE RULES (W1-A; owner: "the game pauses while a tutorial step is open"). A step pauses the game only while it waits
 // for the player to READ or PRESS something right now. A step whose goal needs game time (chop logs, wait for a build,
@@ -21391,21 +21392,23 @@ var eliteRoll, eliteRollDeep, eliteTraits, eliteHit, eliteDealt, eliteTick, elit
 //            soloEquip(slot, id | null) -> bool (place, swapping if equipped elsewhere, or clear); idle casts what is equipped
 //   read     soloAbilityInfo() (55-party abilityInfo in solo), soloButtons() -> a reused snapshot for the UI,
 //            soloTakenX() (59-combat: the hero's damage taken), soloCounter(f) (59g: a parry's counter)
-//   active   soloActive() -> bool: the player pressed a combat input (Attack, Parry, Dodge, an ability slot) in the last
-//            SOLO_TUNE.activeFor s (SOLO2). While active nothing fights for you: no auto swing (50-sim), no idle auto-tap
-//            (55-party), no auto-cast, no auto Finisher (59g). soloTouch() marks it (each button does); soloGoIdle()
-//            ends it at once (75-solo-ui: the page hidden or backgrounded). Opening the picker or a long press does not count.
+//   active   soloActive() -> bool: Auto is off (the player fights by hand) and the page is visible. While active nothing
+//            fights for you: no auto swing (50-sim), no idle auto-tap (55-party), no auto-cast, no auto Finisher (59g).
+//            Auto is a saved toggle (S.solo.auto, default on): soloAuto() reads it, soloSetAuto(v) sets it (the Auto
+//            button, F). Combat presses never change it (soloTouch only wakes a hidden page). soloGoIdle() fights on
+//            Auto while the page is hidden, soloWake() ends that; neither changes the toggle. Opening the picker or a
+//            long press does not count as a press.
 //   stats    SOLO_STATS { attacks, parries, misses, dodges, early, counters, casts, auto, heavies, trash, hand }
 // Events: soloActive { on } (active <-> idle), soloHero { key, from }, soloAttack { kind }, soloParry { res }, soloDodge { res }, soloCounter { foe, dmg },
 //   ability { cls: 'solo', id, name, auto } (the 55-party event every reader already listens to).
-// Save: registerState('solo', { v, hero, lv: { key: { L, xp } }, eq: { key: [id | null] x 3 }, zn: { key: zone } }).
+// Save: registerState('solo', { v, hero, lv: { key: { L, xp } }, eq: { key: [id | null] x 3 }, zn: { key: zone }, auto }).
 //   zn: the zone each hero was fighting in when you switched away (W1-D): switching back returns you there.
 // Idle and away: the hero swings on its own (50-sim), taps at half strength after 4 s (55-party) and casts its
 // ability when it has waited SOLO_TUNE.autoDelay; parries, dodges and counters are active-only. Active (SOLO2): every
 // hit comes from the buttons, and they hit harder (atkX, abHandX).
 
 var soloPickerOpen = () => false;   // 75-solo-ui: the ability picker is open (90-boot waits)
-var soloActive = () => false, soloTouch = () => {}, soloGoIdle = () => {};
+var soloActive = () => false, soloTouch = () => {}, soloGoIdle = () => {}, soloWake = () => {}, soloSetAuto = () => true, soloAuto = () => true;
 var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbility, soloAbilityInfo, soloButtons, soloAbilities, soloEquipped, soloEquip,
   soloTakenX, soloCounter, SOLO_STATS;
 
@@ -21420,8 +21423,8 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
   const ST = SOLO_STATS = { attacks: 0, parries: 0, misses: 0, dodges: 0, early: 0, counters: 0, casts: 0, auto: 0, heavies: 0, trash: 0, hand: 0 };
   const EQ0 = () => { const o = {}; for (const k of SOLO_ORDER) o[k] = SOLO_HEROES[k].eq.slice(); return o; };
   // tr: Training levels per hero (W2-A, 55-training.js); asc: heroes that passed the Proving (their training cap rises)
-  registerState('solo', { v: 1, hero: null, lv: {}, eq: EQ0(), zn: {}, tr: TRAIN0(), asc: {} });
-  const Sx = () => S.solo || (S.solo = { v: 1, hero: null, lv: {}, eq: EQ0(), zn: {}, tr: TRAIN0(), asc: {} });
+  registerState('solo', { v: 1, hero: null, lv: {}, eq: EQ0(), zn: {}, tr: TRAIN0(), asc: {}, auto: true });
+  const Sx = () => S.solo || (S.solo = { v: 1, hero: null, lv: {}, eq: EQ0(), zn: {}, tr: TRAIN0(), asc: {}, auto: true });
   const alive = f => f && !f.dead && f.hp > 0 && !f.gone;
   const foes = () => (typeof combatFoes === 'function' ? combatFoes() : []);
   const heroU = () => (typeof cbUnitByKey === 'function' ? cbUnitByKey('hero') : null);
@@ -21476,13 +21479,20 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
     }
   });
 
-  // ---- active vs idle (SOLO2): a combat press makes the player active for activeFor s ----
-  let activeT = 0;
+  // ---- Auto (owner 2026-09-30): a toggle, saved in S.solo.auto (default on). Auto on: the hero fights alone.
+  //      Only the toggle changes it (soloSetAuto: the Auto button or F); combat presses act either way and never flip it.
+  //      The page hidden fights on Auto for as long as it is hidden, without changing the toggle.
+  let hiddenIdle = false;
   const ACT_EV = { on: false };
+  const autoOn = () => Sx().auto !== false;
   const flip = v => { ACT_EV.on = v; emit('soloActive', ACT_EV); };
-  soloActive = () => activeT > 0;
-  soloTouch = () => { if (!soloHero()) return; const was = activeT > 0; activeT = T.activeFor; if (!was) flip(true); };
-  soloGoIdle = () => { if (activeT > 0) { activeT = 0; flip(false); } };
+  soloActive = () => !autoOn() && !hiddenIdle;
+  const change = fn => { const was = soloActive(); fn(); const now = soloActive(); if (was !== now) flip(now); };
+  soloTouch = () => { if (!soloHero()) return; change(() => { hiddenIdle = false; }); };   // a press acts; only the toggle changes Auto
+  soloGoIdle = () => change(() => { hiddenIdle = true; });
+  soloWake = () => change(() => { hiddenIdle = false; });
+  soloSetAuto = v => { change(() => { Sx().auto = !!v; hiddenIdle = false; }); save(); return autoOn(); };
+  soloAuto = autoOn;
 
   // ---- the buttons ----
   let atkT = 0, dodgeT = 0, parryT = 0, openT = 0, clock = 0;
@@ -21671,7 +21681,6 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
   onTick(dt => {
     clock += dt;
     adopt();
-    if (activeT > 0) { activeT -= dt; if (activeT <= 0) { activeT = 0; flip(false); } }
     if (atkT > 0) atkT -= dt; if (dodgeT > 0) dodgeT -= dt; if (parryT > 0) parryT -= dt; if (openT > 0) openT -= dt;
     counterTick(dt);
     if (patchT > 0) {
@@ -21683,7 +21692,7 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
     if (!fighting()) { readyFor.fill(0); return; }
     trashTick(dt);
     // idle: each equipped ability goes off once it has waited autoDelay (the player gets the first chance); never while active
-    const eq = soloEquipped(), can = anyFoe() && heroUp() && !(activeT > 0);
+    const eq = soloEquipped(), can = anyFoe() && heroUp() && !soloActive();
     for (let i = 0; i < 3; i++) {
       const a = eq[i] ? SOLO_ABILITIES[eq[i]] : null;
       if (a && can && !(cds[a.id] > 0)) { readyFor[i] += dt; if (readyFor[i] >= T.autoDelay) soloAbility({ slot: i, auto: true }); }
@@ -35114,7 +35123,8 @@ let openSheet, partySheet;
 //     the picker (an empty slot opens it on a tap): that hero's unlocked abilities (icon, name, one line, cooldown),
 //     pick one to place it (swapping if it sits in another slot) or clear the slot.
 //   - the Auto badge (SOLO2): a small chip at the stage's bottom left, over the DPS line, lit while auto-play fights
-//     (idle) and dimmed while you are active (any combat press, 59j soloActive). The page hidden = idle at once.
+//     (idle) and dimmed while you are active. It is a toggle (tap or F); combat presses never flip it. The page hidden
+//     fights on Auto while hidden.
 //   - "Choose your hero" at camp: the three starters, each with its own level; a free switch.
 // Core: 59j-solo.js (soloAttack, soloParry, soloDodge, soloAbility, soloEquip, soloButtons, soloPick, soloLevels).
 // Reduced motion: no flashes or pulses (60-solo.css).
@@ -35281,6 +35291,7 @@ var soloIconURL = () => '';
     if (bar.hidden || pick || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
     const t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable || (t.tagName === 'BUTTON' && (e.key === ' ' || e.key === 'Enter')))) return;
     if (S.tab && !isWide()) return;   // a menu covers the fight (UX-L1: in landscape the bar stays live beside the menu)
+    if (e.key.toLowerCase() === 'f') { e.preventDefault(); flipAuto(); return; }   // F: the Auto toggle
     const id = KEYS[e.key.toLowerCase()]; if (!id) return;
     e.preventDefault();
     act[id]();
@@ -35297,23 +35308,28 @@ var soloIconURL = () => '';
   };
   const setN = (b, s) => { if (b._nv !== s) { b._nv = s; b._n.textContent = s; } };
   const secs = x => (x > 0 ? (x < 1 ? x.toFixed(1).replace(/^0/, '') : String(Math.ceil(x))) : '');
-  // ---- the Auto badge (SOLO2): lit while auto-play fights for you, dim while you are active ----
-  const badge = el('div', 'auto-badge'); badge.id = 'autoBadge'; badge.hidden = true; badge.setAttribute('role', 'status');
+  // ---- the Auto button (owner 2026-09-30): a toggle, lit while Auto fights for you. Only a tap or F changes it ----
+  const badge = el('button', 'auto-badge'); badge.id = 'autoBadge'; badge.type = 'button'; badge.hidden = true;
   badge.append(el('i', 'ab-dot'), el('span', null, 'Auto'));
   const hud = $('stageBox') && $('stageBox').querySelector('.hud');
   if (hud) hud.append(badge);
+  const flipAuto = () => { soloSetAuto(!soloAuto()); setBadge(); };
+  ['pointerdown', 'pointerup', 'touchstart'].forEach(ev => badge.addEventListener(ev, e => e.stopPropagation(), { passive: true }));
+  badge.addEventListener('click', e => { e.stopPropagation(); flipAuto(); });
   const setBadge = () => {
     const on_ = !soloActive();
     if (badge._on === on_) return;
     badge._on = on_; badge.classList.toggle('on', on_);
-    badge.setAttribute('aria-label', on_ ? 'Auto: your hero fights alone' : 'Auto off: you are fighting');
-    badge.title = on_ ? 'Your hero fights alone. Press any combat button to take over.' : 'You are fighting. Auto comes back after 5 seconds without a press.';
+    badge.setAttribute('aria-pressed', String(soloAuto()));
+    badge.setAttribute('aria-label', soloAuto() ? 'Auto is on: your hero fights alone. Turn it off' : 'Auto is off: you are fighting. Turn it on');
+    badge.title = soloAuto() ? 'Auto is on: your hero fights alone. Tap to turn it off and fight by hand. (F)' : 'Auto is off: you are fighting. Tap to turn Auto on. (F)';
   };
   on('soloActive', setBadge);
-  // the page hidden or the app in the background: idle at once (auto-play takes over)
-  const goIdle = () => { try { if (document.hidden) soloGoIdle(); } catch (e) {} };
-  document.addEventListener('visibilitychange', goIdle);
+  // the page hidden or the app in the background: Auto fights while it is hidden; back on screen, your setting returns
+  const vis = () => { try { if (document.hidden) soloGoIdle(); else soloWake(); } catch (e) {} };
+  document.addEventListener('visibilitychange', vis);
   addEventListener('pagehide', () => { try { soloGoIdle(); } catch (e) {} });
+  addEventListener('pageshow', () => { try { if (!document.hidden) soloWake(); } catch (e) {} });
 
   let t = 0;
   function update() {

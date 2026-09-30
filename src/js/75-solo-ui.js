@@ -8,7 +8,8 @@
 //     the picker (an empty slot opens it on a tap): that hero's unlocked abilities (icon, name, one line, cooldown),
 //     pick one to place it (swapping if it sits in another slot) or clear the slot.
 //   - the Auto badge (SOLO2): a small chip at the stage's bottom left, over the DPS line, lit while auto-play fights
-//     (idle) and dimmed while you are active (any combat press, 59j soloActive). The page hidden = idle at once.
+//     (idle) and dimmed while you are active. It is a toggle (tap or F); combat presses never flip it. The page hidden
+//     fights on Auto while hidden.
 //   - "Choose your hero" at camp: the three starters, each with its own level; a free switch.
 // Core: 59j-solo.js (soloAttack, soloParry, soloDodge, soloAbility, soloEquip, soloButtons, soloPick, soloLevels).
 // Reduced motion: no flashes or pulses (60-solo.css).
@@ -175,6 +176,7 @@ var soloIconURL = () => '';
     if (bar.hidden || pick || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
     const t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable || (t.tagName === 'BUTTON' && (e.key === ' ' || e.key === 'Enter')))) return;
     if (S.tab && !isWide()) return;   // a menu covers the fight (UX-L1: in landscape the bar stays live beside the menu)
+    if (e.key.toLowerCase() === 'f') { e.preventDefault(); flipAuto(); return; }   // F: the Auto toggle
     const id = KEYS[e.key.toLowerCase()]; if (!id) return;
     e.preventDefault();
     act[id]();
@@ -191,23 +193,28 @@ var soloIconURL = () => '';
   };
   const setN = (b, s) => { if (b._nv !== s) { b._nv = s; b._n.textContent = s; } };
   const secs = x => (x > 0 ? (x < 1 ? x.toFixed(1).replace(/^0/, '') : String(Math.ceil(x))) : '');
-  // ---- the Auto badge (SOLO2): lit while auto-play fights for you, dim while you are active ----
-  const badge = el('div', 'auto-badge'); badge.id = 'autoBadge'; badge.hidden = true; badge.setAttribute('role', 'status');
+  // ---- the Auto button (owner 2026-09-30): a toggle, lit while Auto fights for you. Only a tap or F changes it ----
+  const badge = el('button', 'auto-badge'); badge.id = 'autoBadge'; badge.type = 'button'; badge.hidden = true;
   badge.append(el('i', 'ab-dot'), el('span', null, 'Auto'));
   const hud = $('stageBox') && $('stageBox').querySelector('.hud');
   if (hud) hud.append(badge);
+  const flipAuto = () => { soloSetAuto(!soloAuto()); setBadge(); };
+  ['pointerdown', 'pointerup', 'touchstart'].forEach(ev => badge.addEventListener(ev, e => e.stopPropagation(), { passive: true }));
+  badge.addEventListener('click', e => { e.stopPropagation(); flipAuto(); });
   const setBadge = () => {
     const on_ = !soloActive();
     if (badge._on === on_) return;
     badge._on = on_; badge.classList.toggle('on', on_);
-    badge.setAttribute('aria-label', on_ ? 'Auto: your hero fights alone' : 'Auto off: you are fighting');
-    badge.title = on_ ? 'Your hero fights alone. Press any combat button to take over.' : 'You are fighting. Auto comes back after 5 seconds without a press.';
+    badge.setAttribute('aria-pressed', String(soloAuto()));
+    badge.setAttribute('aria-label', soloAuto() ? 'Auto is on: your hero fights alone. Turn it off' : 'Auto is off: you are fighting. Turn it on');
+    badge.title = soloAuto() ? 'Auto is on: your hero fights alone. Tap to turn it off and fight by hand. (F)' : 'Auto is off: you are fighting. Tap to turn Auto on. (F)';
   };
   on('soloActive', setBadge);
-  // the page hidden or the app in the background: idle at once (auto-play takes over)
-  const goIdle = () => { try { if (document.hidden) soloGoIdle(); } catch (e) {} };
-  document.addEventListener('visibilitychange', goIdle);
+  // the page hidden or the app in the background: Auto fights while it is hidden; back on screen, your setting returns
+  const vis = () => { try { if (document.hidden) soloGoIdle(); else soloWake(); } catch (e) {} };
+  document.addEventListener('visibilitychange', vis);
   addEventListener('pagehide', () => { try { soloGoIdle(); } catch (e) {} });
+  addEventListener('pageshow', () => { try { if (!document.hidden) soloWake(); } catch (e) {} });
 
   let t = 0;
   function update() {
