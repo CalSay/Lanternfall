@@ -86,6 +86,23 @@ const E2 = (g, src) => g.eval(src);
 // load paths they exercise keep their checks; section 'econ' checks that a v1 save is never read.
 const KEY = 'lanternfall.save.v5';   // W3-A
 
+// C11: fixture comparisons prove the retired record's conversion before checking every other field.
+function c11SaveSubsetDiff(saved, loaded) {
+  if (Object.hasOwn(loaded, 'achievements')) return 'C11: retired achievements record remains';
+  const { achievements: old, ...kept } = saved;
+  if (old) {
+    const d = loaded.deeds || {}, known = ['zone10', 'zone25', 'zone50', 'lv20', 'lv50', 'kill1k', 'kill25k', 'kill100k', 'gold1m', 'gold1b', 'mine25', 'wood25', 'smith25', 'forge1', 'forge25', 'epic', 'uniq1', 'uniq3', 'uniq7', 'bty10', 'bty50'];
+    for (const id of known) if (old.got && old.got[id]) {
+      const key = 'f_m_' + id, at = saved.deeds && saved.deeds.at && saved.deeds.at[key] || (typeof old.got[id] === 'number' ? old.got[id] : 0);
+      if (!d.feat || d.feat[key] !== 1) return 'C11: earned milestone missing: ' + id;
+      if (!d.at || d.at[key] !== at) return 'C11: earned milestone date changed: ' + id;
+    }
+    if (!d.n || !(d.n.forged >= (old.forged || 0))) return 'C11: lifetime crafting count lost';
+    if (old.epic && (!d.rec || d.rec.epic !== true)) return 'C11: epic crafting flag lost';
+  }
+  return subsetDiff(kept, loaded);
+}
+
 // ---- 1. dist syntax ----
 const distFile = path.join(ROOT, 'dist', 'lanternfall.html');
 if (SHARD && SHARD[0] !== 0) {}   // (shard 0 checks the dist file for everyone)
@@ -178,7 +195,7 @@ if (section('saves')) try {
     assert(old.v === 5, `${f}: is a v5 save`);
     const g = loadCore({ storage: memoryStorage({ [KEY]: raw }), extraSource: "registerState('zz_feature', { n: 0 });\n" });
     const S = JSON.parse(JSON.stringify(g.eval('S')));
-    const d = subsetDiff(old, S);
+    const d = c11SaveSubsetDiff(old, S);
     assert(!d, `${f}: every saved field is kept` + (d ? ': ' + d : ''));
     assert(S.zz_feature && S.zz_feature.n === 0, `${f}: a newly registered feature field is added with its default`);
     assert(Number.isFinite(g.fn.totalDps()) && g.fn.totalDps() > 0, `${f}: dps is finite`);
@@ -1708,7 +1725,7 @@ if (section('tools and Well Rested')) try {
   for (const f of ['save-early.json', 'save-late.json']) {
     const raw = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8')); delete raw.rested;
     const h = loadCore({ storage: memoryStorage({ [KEY]: JSON.stringify(raw) }) });
-    const d = subsetDiff(raw, JSON.parse(JSON.stringify(h.eval('S'))));
+    const d = c11SaveSubsetDiff(raw, JSON.parse(JSON.stringify(h.eval('S'))));
     assert(!raw.rested && h.eval('S.rested.left === 0 && mod("dmg") > 0') && !d && !h.errors.length, `${f}: a save without S.rested gets { left: 0 }, nothing lost` + (d ? ': ' + d : ''));
   }
   {
@@ -2797,7 +2814,7 @@ if (section('nav')) try {
     const sk = E('skillOf(S.node.kind)');
     const cur = JSON.parse(E('JSON.stringify(S)')); delete cur.party; const o2 = Object.assign({}, old); delete o2.party;   // the party's own migrations (F1) are checked in their sections
     if (o2.stars) o2.stars = Object.assign({}, o2.stars, { v: cur.stars.v });   // S2: the star maps' v 1 -> 2 (checked in 'classes')
-    const d = subsetDiff(o2, cur);
+    const d = c11SaveSubsetDiff(o2, cur);
     assert(nav && nav.v === 1 && Array.isArray(nav.recent) && nav.last && ['mine', 'wood', 'forage'].every(k => k in nav.last)
       && !deepDiff(old.nav, nav) && !d && !g.errors.length,
       `${f}: S.nav loads as saved (last ${JSON.stringify(nav.last)}), no field lost` + (d ? ': ' + d : '') + (g.errors.length ? ': ' + g.errors[0] : ''));
@@ -3159,7 +3176,7 @@ if (section('types and statuses (S1)')) try {
       const h = loadCore({ seed: 75, storage: memoryStorage({ [KEY]: raw }) }), H = s => h.eval(s);
       const cmp = JSON.parse(raw); if (cmp.party) { delete cmp.party.field; delete cmp.party.cells; }
       if (cmp.stars) delete cmp.stars.v;   // S2: the star maps' v 1 -> 2 (checked in 'classes')
-      const d = subsetDiff(cmp, JSON.parse(JSON.stringify(H('S'))));
+      const d = c11SaveSubsetDiff(cmp, JSON.parse(JSON.stringify(H('S'))));
       H('S.activity = "fight"; spawn()');
       for (let i = 0; i < 600; i++) h.fn.tick(0.1);
       H('save(); loadSave()');
@@ -6073,6 +6090,13 @@ if (section('milestone feats (C11)')) try {
   mixed.achievements = { forged: 25, epic: false, init: true, got: { forge1: 123, zone10: true, ignored: 456 } };
   const m = loadCore({ storage: memoryStorage({ [KEY]: JSON.stringify(mixed) }) });
   assert(m.eval('S.deeds.n.forged===30 && S.deeds.rec.epic && S.deeds.at.f_m_forge1===777 && S.deeds.feat.f_m_zone10===1 && Object.keys(S.deeds.feat).length===2 && !S.achievements'), 'C11 mixed v5 record: max counter, OR epic, original earned date and known flags survive once');
+  const converted = JSON.parse(m.eval('JSON.stringify(S)'));
+  const comparisonSave = { ...converted, achievements: mixed.achievements };
+  const convertedDiff = c11SaveSubsetDiff(comparisonSave, converted);
+  assert(!convertedDiff, 'C11 fixture comparison accepts preserved mixed progress after conversion' + (convertedDiff ? ': ' + convertedDiff : ''));
+  const damaged = change => { const s = JSON.parse(JSON.stringify(converted)); change(s); return !!c11SaveSubsetDiff(comparisonSave, s); };
+  assert(damaged(s => { delete s.deeds.feat.f_m_zone10; }) && damaged(s => { s.deeds.at.f_m_zone10 = 99; }) && damaged(s => { s.deeds.n.forged = 0; }) && damaged(s => { s.deeds.rec.epic = false; }), 'C11 fixture comparison rejects lost flags, dates, crafting counts and epic progress');
+  assert(damaged(s => { s.achievements = {}; }) && damaged(s => { s.gold++; }), 'C11 fixture comparison rejects retained legacy state and unrelated saved-field changes');
   const all = JSON.parse(base);
   all.achievements = { got: Object.fromEntries(rows.map((f, i) => [f.legacy, 100 + i])), forged: 99, epic: true, init: true };
   all.deeds.feat.f_all = 1; all.deeds.at.f_all = 999; all.deeds.wall = ['f_all']; all.codex.title = 'a_f_all';
