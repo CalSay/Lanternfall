@@ -8119,7 +8119,9 @@ const NOTICES = [
   // ---- C4: completed gatherer trade runs ----
   { id: 'hands-trade', re: /^.+ returns from .+: \+.+ gold\.$/, ch: 'log' },
   // C11: a milestone feat is a small permanent reward, recorded without a celebration card.
-  { id: 'deed-milestone', key: 'deed-milestone', ch: 'log' }
+  { id: 'deed-milestone', key: 'deed-milestone', ch: 'log' },
+  // ---- C14: the merged away report owns its source summaries ----
+  { id: 'away-report', key: 'away-report', ch: 'card' }
 ];
 const NOTICE_BY_KEY = Object.fromEntries(NOTICES.filter(r => r.key).map(r => [r.key, r]));
 // The rule for a message (or its key), or null.
@@ -9353,13 +9355,22 @@ function awayBase(r) {
   const boost = (1 + gear().offline / 100) * mod('offline');
   if (S.activity === 'gather') {
     const { kind, t: tier } = S.node;
-    // In steps, so skill levels gained while away speed up the rest, as in live play.
-    const steps = Math.max(1, Math.min(96, Math.ceil(t / 300)));
+    // Batch until the next skill or tool-mastery level, rounded up to the same
+    // whole-second boundary as live play. Gathering speed is constant between them.
+    const skill = skillOf(kind), tool = typeof toolOf === 'function' ? toolOf(skill) : null;
     let got = 0;
-    for (let i = 0; i < steps; i++) {
-      const swings = t / steps / nodeTime(kind, tier) * boost;
+    for (let elapsed = 0; elapsed < t;) {
+      const left = t - elapsed, nt = nodeTime(kind, tier), sk = S.skills[skill];
+      const xpRate = nodeXpFor(kind, tier) / nt * boost * mod('skillXp') * mod('skillXp:' + skill);
+      const skillSteps = xpRate > 0 ? Math.max(1, Math.ceil((skillNeed(sk.lv, skill) - sk.xp) / xpRate - 1e-9)) : Infinity;
+      const mastery = tool && typeof toolMastery === 'function' ? toolMastery(tool) : null;
+      const masterySteps = mastery && !mastery.max ? Math.max(1, Math.ceil(mastery.left - 1e-9)) : Infinity;
+      const stepSecs = Math.min(left, skillSteps, masterySteps);
+      const swings = stepSecs / nt * boost;
       got += swings * nodeYieldAvg(kind) * mod('yield:' + kind);
-      gainSkill(skillOf(kind), swings * nodeXpFor(kind, tier), true);
+      gainSkill(skill, swings * nodeXpFor(kind, tier), true);
+      if (tool && typeof toolMasteryAdd === 'function') toolMasteryAdd(tool, stepSecs, true);
+      elapsed += stepSecs;
     }
     got = Math.floor(got);
     got = storeAwayGather(kind, tier, got, r);   // H3: up to the cap; Spillover moves on (55-store)
@@ -12884,7 +12895,8 @@ const statsApi = {};
     r.items = S.items.filter(i => i.id >= b.nextId);
     r.skills = Object.keys(S.skills).filter(k => S.skills[k].lv > (b.skills[k] || 1)).map(k => ({ k, from: b.skills[k] || 1, to: S.skills[k].lv }));
     ST().away += r.t;
-    for (const m of r.mats) if (CRAFT_NODES[m.k]) ST().gathered += m.n; // gathered families only
+    // C14: harvest events already count hero gathering. The material diff also includes
+    // worker deliveries and returned trade cargo, so it is not a second harvest total.
     r.extra = [];
     for (const fn of AWAY_LINES.slice()) {
       try { const out = fn(r); if (out) r.extra.push(...[].concat(out).filter(Boolean)); }
@@ -13401,7 +13413,7 @@ let storyBeat, storyBeatDef, storyHas, storyList, storyRead, storyUnread, storyL
 //   toolHandsMult(skill) -> 1.1 at mastery 20, else 1 (for N1's Hands)
 //   toolBest(skill) -> { kind, t, cur, ok, why }  the best tool tier worth making now (sim policy)
 //
-// Events: listens 'harvest' (rare finds), 'awayBegin' / 'away' (away mastery, the away line).
+// Events: listens 'harvest' (rare finds), 'awayBegin' (the away mastery line).
 // Emits 'rareFind' { kind, t, n, away } and 'toolMastery' { kind, lv, quiet }.
 // Rare finds credit through stashAdd (55-store, H3) in `credit` below: a flow, like gathering.
 // Save: registerState('tools', { v: 1, m: { pick: [1, 0], axe: [1, 0], sickle: [1, 0] }, finds: 0 }).
@@ -13550,10 +13562,6 @@ function toolRight(skill, t) {
   on('awayBegin', () => {
     before = Object.fromEntries(Object.keys(TOOL_KINDS).map(k => [k, lvOf(k)]));
     if (!lineOn && typeof registerAwayLine === 'function') { lineOn = true; registerAwayLine(awayLine); }
-  });
-  on('away', r => {
-    if (S.activity !== 'gather' || !(r.t > 0)) return;
-    toolMasteryAdd(toolOf(skillOf(S.node.kind)), r.t, true);
   });
   function awayLine() {
     if (!before) return null;
@@ -14536,7 +14544,11 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
   on('away', () => { awayDone = campCatchUp(now()); });
   registerAwayLine(r => {
     const out = [];
-    for (const x of awayDone) out.push({ icon: icFor, txt: `${nm(x.id, x.lv)} is finished.`, sub: campEffects(x.id, x.lv)[0], go: () => emit('campGoto', { tab: 'world', sel: '#camp-b-' + x.id }) });
+    if (awayDone.length) {
+      const first = awayDone[0], names = awayDone.map(x => nm(x.id, x.lv));
+      out.push({ icon: icFor, group: 'Camp', txt: names.length === 1 ? `${names[0]} is finished.` : `Finished: ${names.join(', ')}.`,
+        go: () => emit('campGoto', { tab: 'world', sel: '#camp-b-' + first.id }) });
+    }
     awayDone = [];
     if (lv('watch') >= 2 && campOpen() && S.activity === 'fight') {
       const z = campHoldZone();
@@ -17213,21 +17225,31 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
     awayBack = []; awayApps = 0; awayRefunds = [];
     if (!T.on) return;
     if (!handsOpen()) return;
+    const priorApps = new Set(H().board.apps.map(a => a.id));
     if (!H().tam || !H().board.next) openHands(true);
     const t = now();
-    awayApps = arrivals(t, true);
+    arrivals(t, true);
     later(true);
+    awayApps = H().board.apps.filter(a => !priorApps.has(a.id)).length;
     awayBack = handsCatchUp(t, true);
   });
   registerAwayLine(() => {
     const res = [];
-    for (const e of awayRefunds) res.push({ icon, group: 'Hands', txt: e.n + ': ' + e.shifts + ' queued shift(s) refunded because ' + e.reason + ' (' + fmt(e.fee) + ' gold).' });
+    for (const e of awayRefunds) res.push({ icon, group: 'Gatherers', txt: e.n + ': ' + e.shifts + ' queued shift(s) refunded because ' + e.reason + ' (' + fmt(e.fee) + ' gold).' });
     awayRefunds = [];
-    for (const e of awayBack) res.push({ icon: e.lines[0] && e.lines[0][0] !== 'troph' ? { mat: [e.lines[0][0], e.lines[0][1]] } : icon, group: 'Hands', txt: backText(e),
-      sub: waits(e.id) ? `${e.n}'s pack waits: Storehouse full.` : '', go: () => emit('campGoto', { tab: 'world', view: 'tav', sel: '#sec-hands' }) });
-    if (awayApps) res.push({ icon, group: 'Hands', txt: awayApps > 1 ? `${awayApps} applicants are waiting at the Tavern.` : 'An applicant is waiting at the Tavern.', go: () => emit('campGoto', { tab: 'world', view: 'tav', sel: '#sec-hands' }) });
+    // C14: a queued return is one line per worker, with both shifts' actual haul.
+    const workers = new Map();
+    for (const e of awayBack) {
+      if (!workers.has(e.id)) workers.set(e.id, { id: e.id, n: e.n, count: 0, lines: new Map() });
+      const w = workers.get(e.id); w.count++;
+      for (const [f, t, n] of e.lines) { const key = f + ':' + t, line = w.lines.get(key); if (line) line[2] += n; else w.lines.set(key, [f, t, n]); }
+    }
+    for (const w of workers.values()) res.push({ icon, group: 'Gatherers',
+      txt: `${w.n} finished ${w.count} shift${w.count === 1 ? '' : 's'}` + (w.lines.size ? ': +' + [...w.lines.values()].map(lineText).join(', +') + '.' : '.'),
+      sub: waits(w.id) ? `${w.n}'s pack waits: Storehouse full.` : '', go: () => emit('campGoto', { tab: 'world', view: 'tav', sel: '#sec-hands-crew' }) });
+    if (awayApps) res.push({ icon, group: 'Tavern', txt: awayApps > 1 ? `${awayApps} new applicants are waiting at the Tavern.` : 'A new applicant is waiting at the Tavern.', go: () => emit('campGoto', { tab: 'world', view: 'tav', sel: '#sec-hands' }) });
     const t = now(), stillOut = H().list.filter(x => out(x, t));
-    if (res.length && stillOut.length) res.push({ icon, group: 'Hands', txt: `${stillOut.length} still out`, sub: stillOut.map(x => `${x.n}: ${fmtTime((x.job.end - t) / 1000)}`).join(' · ') });
+    if (res.length && stillOut.length) res.push({ icon, group: 'Gatherers', txt: `${stillOut.length} still out`, sub: stillOut.map(x => `${x.n}: ${fmtTime((x.job.end - t) / 1000)}`).join(' · ') });
     awayBack = []; awayApps = 0;
     return res;
   });
@@ -17518,8 +17540,11 @@ let handsTradeOpen, handsTradeDemand, handsTradeCargo, handsTradeQuote, handsTra
       note: 'Each gathering row is a separate two-hour alternative, before finds and overlapping gatherer bonuses. Shift fee is the full four-hour fee. Trade spends existing cargo; gathering creates new materials.' };
   };
   registerAwayLine(() => {
-    const rows = awayReturns.map(e => ({ icon, group: 'Trade', txt: e.n + ' returned from ' + TRADE_TOWN.n + ': +' + fmt(e.gold) + ' gold.',
-      go: () => emit('campGoto', { tab: 'world', view: 'tav', sel: '#sec-hands' }) }));
+    const count = awayReturns.length, gold = awayReturns.reduce((n, e) => n + e.gold, 0);
+    const rows = count ? [{ icon, group: 'Trade', txt: count === 1
+      ? awayReturns[0].n + ' returned from ' + TRADE_TOWN.n + ': +' + fmt(gold) + ' gold.'
+      : `${count} trade runs returned from ${TRADE_TOWN.n}: +${fmt(gold)} gold.`,
+      go: () => emit('campGoto', { tab: 'world', view: 'tav', sel: '#sec-hands-crew' }) }] : [];
     awayReturns = []; return rows;
   });
   // Existing jobs still return if a hand-edited save lowered the Tavern/Hearth.
@@ -30955,8 +30980,7 @@ let showAwayReport;
     glass: () => iconURL('glass', '#F2E27A'),
     boss: () => iconURL('banner', '#E0524F', { 7: '#FFB347' })
   };
-  const SKILL_IC = { mine: () => iconURL('pick', '#D08A4E'), wood: () => iconURL('axe', '#5FAE4E'), smith: () => iconURL('anvil', '#6E6878') };
-  const FAMILY = { ore: 'Ore', wood: 'Logs', ess: 'Essence' };
+  const SKILL_IC = { mine: () => iconURL('pick', '#D08A4E'), wood: () => iconURL('axe', '#5FAE4E'), forage: () => iconURL('sickle', '#7DCB79'), smith: () => iconURL('anvil', '#6E6878') };
 
   const hm = s => fmtTime(s).replace(/ 0m$/, '');
   let root = null, lastFocus = null, anim = 0;
@@ -31026,18 +31050,18 @@ let showAwayReport;
       const lim = el('div', 'away-lim'), bar = el('div', 'bar'), fill = el('i');
       fill.style.width = Math.min(100, r.t / r.cap * 100) + '%';
       bar.append(fill);
-      lim.append(bar, el('span', null, r.capped ? "Away limit reached" : `You worked ${hm(r.t)} of ${hm(r.cap)}`));
+      lim.append(bar, el('span', null, r.capped ? 'Hero work limit reached' : `Your hero worked ${hm(r.t)} of ${hm(r.cap)}`));
       top.append(lim);
     }
     if (r.capped) {
       const cap = el('div', 'away-cap');
-      cap.append(img(IC.glass()), el('span', null, `You stop after ${hm(r.cap)} away. Hourglass relics and the Watchtower add more, up to 24 hours.`));
+      cap.append(img(IC.glass()), el('span', null, `Your hero works for up to ${hm(r.cap)} away. Gatherer jobs, trade runs and camp builds finish on their own schedules. Hourglass relics and the Watchtower raise the hero's limit, up to 24 hours.`));
       top.append(cap);
     }
     body.append(top);
 
-    // ---- what the party did ----
-    const actIc = r.activity === 'gather' ? SKILL_IC[S.node.kind === 'wood' ? 'wood' : 'mine']() : r.activity === 'raid' ? IC.flame() : IC.sword();
+    // ---- what the hero did ----
+    const actIc = r.activity === 'gather' ? (SKILL_IC[skillOf(S.node.kind)] || SKILL_IC.mine)() : r.activity === 'raid' ? IC.flame() : IC.sword();
     const note = String(r.note || '').replace(/ \w+ is now level \d+\.$/, '');
     if (note) { const n = el('p', 'away-note'); n.append(img(actIc), el('span', null, note)); body.append(n); }
 
@@ -31056,10 +31080,10 @@ let showAwayReport;
     // ---- materials by family and tier ----
     if (r.mats && r.mats.length) {
       const b = block('Materials');
-      for (const k of ['ore', 'wood', 'ess']) {
+      for (const k of CRAFT_FAMILIES) {
         const list = r.mats.filter(m => m.k === k); if (!list.length) continue;
         const row = el('div', 'away-mrow');
-        row.append(el('span', 'away-fam', FAMILY[k]));
+        row.append(el('span', 'away-fam', MAT[k].n));
         const chips = el('div', 'away-chips');
         for (const m of list) {
           const c = el('span', 'away-mat');
@@ -31106,6 +31130,10 @@ let showAwayReport;
     // A line may name its own block (group, e.g. 'Next up') and carry a Go button (go()).
     const groups = new Map();
     for (const l of r.extra || []) { const g = l.group || 'Also'; if (!groups.has(g)) groups.set(g, []); groups.get(g).push(l); }
+    // The base report carries Storehouse and Spillover explanations in lines. Their
+    // material amounts are already above; keep the useful reason without listing gains twice.
+    const gathering = (r.lines || []).filter(l => l && l.sub && !String(l.txt || '').startsWith('+'));
+    if (gathering.length) groups.set('Gathering', [...(groups.get('Gathering') || []), ...gathering]);
     for (const [title, lines] of groups) {
       const b = block(title);
       for (const l of lines) {
@@ -31137,6 +31165,8 @@ let showAwayReport;
 
   showAwayReport = function (r) {
     if (!r || r.secs < 30 || r.empty || r.empty === undefined && !(r.lines && r.lines.length)) return;
+    // C14: the report is one card through the notice policy, never a second set of pops.
+    notify({ key: 'away-report', msg: `While you were away: ${hm(r.secs)}.`, kind: 'good' });
     if (root) close();
     counters.length = 0;
     lastFocus = document.activeElement;
