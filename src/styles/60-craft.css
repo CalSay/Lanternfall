@@ -68,6 +68,16 @@
 .cf-plus { position: absolute; right: 1px; bottom: 0; font: 600 calc(11px * var(--display-k))/1 var(--display); color: var(--gold); text-shadow: 0 1px 0 #0B0810, 1px 0 0 #0B0810, -1px 0 0 #0B0810; }
 
 /* bag */
+/* C23: bag batch controls wrap inside the menu in portrait and short landscape. */
+.cf-baghead { flex-wrap: wrap; gap: 6px; }
+.cf-baghead .mini, .cf-bulk-actions .mini { min-height: 44px; white-space: normal; }
+.cf-baghead .sec-title { margin-right: auto; }
+.cf-bulk { padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel-2); }
+.cf-bulk p { margin: 0 0 8px; }
+.cf-bulk-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.cf-bulk .costs { flex-wrap: wrap; }
+.ic.cf-tile[aria-pressed="true"] { outline: 3px solid var(--gold); outline-offset: -3px; }
+.cf-selected { position: absolute; right: 3px; top: 1px; color: var(--gold); font-weight: bold; background: var(--panel-2); }
 .cf-count { font-variant-numeric: tabular-nums; }
 .cf-count.full { color: #FF8A80; }
 .cf-bagctl { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
