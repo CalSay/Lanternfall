@@ -6708,7 +6708,7 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
         try {
           const { ctx, page, errs, X } = await open(w, h);
           const trail = [], bad = [], seen = new Set();
-          let stuck = '', lastKey = '', same = 0, idle = 0, iters = 0;
+          let stuck = '', lastKey = '', same = 0, idle = 0, iters = 0; const passes = [];
           for (let i = 0; i < 220 && !trail.includes('nextup'); i++) {
             iters = i + 1;
             const st = await X('(s => s ? s.id : "")(onboardStep())');
@@ -6723,6 +6723,7 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
             }
             if (!trail.includes(st)) trail.push(st);
             const key = st + '|' + await X('S.tab + "|" + (S.tab ? curView(S.tab) : "")');
+            passes.push(key);
             if (key === lastKey) { if (++same > 30) { stuck = key + ' ' + await X('JSON.stringify({ w: (w => w && { k: w.kind, left: w.left, res: w.res })(actWarning()), paused: ONBOARD.paused, act: S.activity, foes: combatFoes().filter(f => f && !f.dead && f.hp > 0).length, par: S.onboard.parries, hp: S.party && S.party.hp, want: soloGuideWants(), r: soloParry(true) })'); break; } } else { same = 0; lastKey = key; }
             await page.waitForTimeout(seen.has(key) ? 260 : 520);   // the hint places itself (every 250 ms) and the ring glides there (0.18 s)
             let c = await X(TARGET(st));
@@ -6749,7 +6750,7 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
             if (st === 'nextup') await X('document.querySelectorAll(".bsheet-ov .bsheet-x").forEach(x => x.click()); true');
           }
           const want = ['attack', 'ability', 'dodge', 'parry', 'upgrade', 'gather', 'chop', 'light', 'bench', 'tool', 'forge', 'store', 'nextup'];   // (tab:party: done by the Training step's visit)
-          const why = want.every(x => trail.includes(x)) ? '' : '; ' + await X('JSON.stringify({ step: (s => s && s.id)(onboardStep()), done: Object.keys(S.onboard.done).join(","), zone: S.maxZone, gold: Math.round(S.gold), builds: (S.camp && S.camp.builds || []).map(b => b.id + ">" + b.to).join(","), tab: S.tab, view: S.tab ? curView(S.tab) : "", recipes: [...document.querySelectorAll("#sec-craft-recipes .cf-rec")].map(r => r.dataset.kind + (r.querySelector(".cf-go") ? (r.querySelector(".cf-go").disabled ? "-off" : "-go") : "")).join(","), tiers: [...document.querySelectorAll("#sec-craft-recipes [aria-pressed=true]")].map(b => b.textContent.trim()).join("/"), mats: JSON.stringify(S.mats && { ore: S.mats.ore, wood: S.mats.wood }) })') + ' target ' + JSON.stringify(await X(TARGET('tool'))) 
+          const why = want.every(x => trail.includes(x)) ? '' : '; ' + await X('JSON.stringify({ step: (s => s && s.id)(onboardStep()), done: Object.keys(S.onboard.done).join(","), zone: S.maxZone, gold: Math.round(S.gold), builds: (S.camp && S.camp.builds || []).map(b => b.id + ">" + b.to).join(","), tab: S.tab, view: S.tab ? curView(S.tab) : "", recipes: [...document.querySelectorAll("#sec-craft-recipes .cf-rec")].map(r => r.dataset.kind + (r.querySelector(".cf-go") ? (r.querySelector(".cf-go").disabled ? "-off" : "-go") : "")).join(","), tiers: [...document.querySelectorAll("#sec-craft-recipes [aria-pressed=true]")].map(b => b.textContent.trim()).join("/"), mats: JSON.stringify(S.mats && { ore: S.mats.ore, wood: S.mats.wood }) })') + ' target ' + JSON.stringify(await X(TARGET('tool'))) + ' last passes ' + passes.slice(-8).join(' ; ') 
           assert(!stuck && want.every(x => trail.includes(x)), `${at}: the guide walks the first session by pressing what it points at (${trail.join(' > ')}${stuck ? '; stuck on ' + stuck : ''}${why}; ${iters} of 220 passes, ${idle} idle)`);
           assert(!bad.length && seen.size >= 20, `${at}: every guide step's target is on screen and on top (a click at its centre reaches it), the ring marks it and the hint is on screen (${seen.size} states${bad.length ? '; ' + bad.slice(0, 3).join(' / ') : ''})`);
           assert(!errs.length, `${at}: no page errors in the guide walk` + (errs.length ? ': ' + errs[0] : ''));

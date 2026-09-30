@@ -26613,15 +26613,24 @@ let gatherTheme, gatherSpot, gatherHeroX, gatherWalking, gatherDraw, gatherRight
   // node's scene a few seconds after boot, every gathering scene when the Gather menu opens, a newly
   // picked kind's while fighting. The scene only: its device-size plates build after the switch, so
   // the two plate slots keep the zone on screen and the next zone's.
-  const warmed = new Set();
+  const warmed = new Set(), warmQueue = [];
+  let warming = false;
+  // C12: sceneSteps keeps only three unfinished scenes. Four gathering themes running
+  // round-robin evict one another forever, so finish one before starting the next.
+  // Still yield after every build step; other idle work keeps its turn.
+  function warmStep() {
+    if (warmQueue[0]()) warmQueue.shift();
+    if (warmQueue.length) idleTask(warmStep);
+    else warming = false;
+  }
   function warm(kind) {
     if (typeof stageStats !== 'function' || typeof sceneSteps !== 'function' || typeof idleTask !== 'function') return;
     const st = stageStats(); if (!st || !st.SW) return;
     const SCH = st.SH >= 210 ? st.SH : Math.round(st.GY / 0.8), th = gatherTheme(kind), key = th + '|' + st.SW + 'x' + SCH;
     if (warmed.has(key)) return;
     warmed.add(key);
-    const stepF = sceneSteps(th, st.SW, SCH, 0), run = () => { if (!stepF()) idleTask(run); };
-    idleTask(run);
+    warmQueue.push(sceneSteps(th, st.SW, SCH, 0));
+    if (!warming) { warming = true; idleTask(warmStep); }
   }
   on('menuView', p => { if (p && p.tab === 'gat') { warm(S.node.kind); for (const k of GATHER_KINDS) warm(k); } });
   on('sceneReset', () => { if (S.activity !== 'gather') warm(S.node.kind); });
