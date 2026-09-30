@@ -21,7 +21,7 @@ let handsTradeOpen, handsTradeDemand, handsTradeCargo, handsTradeQuote, handsTra
   const icon = { ic: ['boot', '#C9A36B'] }, own = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
   const stock = (f, t) => S.mats && Array.isArray(S.mats[f]) && Number.isFinite(S.mats[f][t - 1]) ? Math.max(0, Math.floor(S.mats[f][t - 1])) : 0;
   const live = (f, t) => typeof f === 'string' && own(TRADE_FAMILIES, f) && Number.isInteger(t) && t >= 1 && t <= T.top
-    && own(CRAFT_NODES, f) && MAT[f] && MAT[f].short[t - 1] && S.mats && Array.isArray(S.mats[f]) && S.mats[f].length >= t;
+    && own(CRAFT_NODES, f) && MAT[f] && Array.isArray(MAT[f].short) && MAT[f].short[t - 1] && S.mats && Array.isArray(S.mats[f]) && S.mats[f].length >= t;
   const eligible = (h, f, t) => live(f, t) && (h.sk === 'any' || h.sk === skillOf(f)) && skillTierOpen(skillOf(f), t);
   const ledger = () => {
     if (!isPlainObj(S.trade)) S.trade = cloneJSON(DEF);
@@ -62,8 +62,8 @@ let handsTradeOpen, handsTradeDemand, handsTradeCargo, handsTradeQuote, handsTra
     return handsTradeDemand().lines.filter(l => eligible(h, l.kind, l.t)).map(l => ({ ...l,
       name: matName(l.kind, l.t), have: stock(l.kind, l.t), unitGold: price(l.kind, l.t, l.demand) / UNIT }));
   };
-  handsTradeQuote = (id, cargo) => {
-    const h = handsGet(id), market = handsTradeDemand();
+  handsTradeQuote = (id, cargo, at = Date.now()) => {
+    const h = handsGet(id), market = handsTradeDemand(at);
     const q = { ok: false, why: '', town: TRADE_TOWN.id, townName: TRADE_TOWN.n, secs: T.secs,
       cap: T.cap, maxLines: T.maxLines, units: 0, gold: 0, lines: [], week: market.week };
     const no = why => Object.assign(q, { why });
@@ -89,8 +89,8 @@ let handsTradeOpen, handsTradeDemand, handsTradeCargo, handsTradeQuote, handsTra
   const sameQuote = (a, b) => a && a.ok && a.week === b.week && a.town === b.town && a.secs === b.secs && a.gold === b.gold
     && Array.isArray(a.lines) && a.lines.length === b.lines.length && a.lines.every((l, i) => l && ['kind', 't', 'n', 'demand', 'unitGold'].every(k => l[k] === b.lines[i][k]));
   handsTradeSend = (id, cargo, expectedQuote) => {
-    const q = handsTradeQuote(id, cargo); if (!q.ok || (expectedQuote !== undefined && !sameQuote(expectedQuote, q))) return null;
-    const h = handsGet(id), at = Date.now();
+    const at = Date.now(), q = handsTradeQuote(id, cargo, at); if (!q.ok || (expectedQuote !== undefined && !sameQuote(expectedQuote, q))) return null;
+    const h = handsGet(id);
     const job = { role: 'trade', v: 1, town: TRADE_TOWN.id, start: at, end: at + T.secs * 1000,
       cargo: cargo.map(l => l.slice()), quote: { week: q.week, micros: q.lines.map(l => Math.round(l.unitGold * UNIT)), demand: q.lines.map(l => l.demand), gold: q.gold } };
     for (const [f, t, n] of job.cargo) S.mats[f][t - 1] -= n;
@@ -103,7 +103,7 @@ let handsTradeOpen, handsTradeDemand, handsTradeCargo, handsTradeQuote, handsTra
     const q = j.quote;
     if (!q || !Number.isSafeInteger(q.week) || q.week !== Math.floor((j.start - EPOCH) / WEEK) || !Number.isSafeInteger(q.gold) || !(q.gold > 0)
       || !Array.isArray(q.micros) || q.micros.length !== j.cargo.length || !Array.isArray(q.demand) || q.demand.length !== j.cargo.length) return false;
-    if (!q.micros.every(n => Number.isSafeInteger(n) && n > 0 && n <= T.maxUnitGold * UNIT) || !q.demand.every(n => Number.isInteger(n) && n >= T.glutMin && n <= T.wantMax)) return false;
+    if (!q.micros.every(n => Number.isSafeInteger(n) && n > 0 && n <= T.maxUnitGold * UNIT) || !q.demand.every(n => Number.isInteger(n) && (n === 100 || (n >= T.glutMin && n <= T.glutMax) || (n >= T.wantMin && n <= T.wantMax)))) return false;
     const value = j.cargo.reduce((sum, l, i) => sum + l[2] * q.micros[i], 0);
     return Number.isSafeInteger(value) && Math.floor(value / UNIT) === q.gold;
   };
