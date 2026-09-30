@@ -213,6 +213,7 @@ function harvest() {
 // 'awayEnd' r (55-stats.js diffs the state into r and collects registerAwayLine lines).
 // r.lines/r.note are the base summary; line icons are specs (see toast()).
 function awayGains(secs) {
+  secs = Math.max(0, +secs || 0);   // a save stamped in the future (clock set back) gives nothing, never negative gains
   const r = { t: Math.min(secs, (4 + 2 * S.relic.glass + bonus('awayHours')) * 3600), secs, lines: [] };
   failDps = 0;   // BAL3: back from away, auto-challenge may retry a boss it failed (a reload did this; a kept tab walled idle play at the cap)
   emit('awayBegin', r);

@@ -7,7 +7,7 @@ let bootAway = null;
 function bootAwayNow() { if (bootAway == null) return; const secs = bootAway; bootAway = null; showAwayReport(awayGains(secs)); }
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) { bootAwayNow(); save(); flush(); }
-  else { const secs = (Date.now() - S.last) / 1000; if (secs > 30) showAwayReport(awayGains(secs)); S.last = Date.now(); lastFrame = performance.now(); }
+  else { const secs = Math.max(0, (Date.now() - S.last) / 1000); if (secs > 30) showAwayReport(awayGains(secs)); S.last = Date.now(); lastFrame = performance.now(); }
 });
 addEventListener('pagehide', () => { bootAwayNow(); save(); });
 
@@ -17,7 +17,8 @@ updatePortrait();
 // The away gains and their card are worked out in a task of their own right after the first frame
 // (about 50-120 ms at x4 CPU: other systems' catch-up, the card's Next Up line), so the stage shows
 // first. The absence is measured now; the gains are the same.
-bootAway = (Date.now() - S.last) / 1000;
+// never below 0: a save stamped in the future (a device clock set back, a test save) must not pay negative away gains
+bootAway = Math.max(0, (Date.now() - S.last) / 1000);
 S.last = Date.now();
 if (S.hintDone) $('hint').style.opacity = 0;
 spawn();

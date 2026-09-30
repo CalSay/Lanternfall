@@ -35,7 +35,11 @@ Single-player depth. Do not change the online layer (world raid, tavern, leaderb
   matches the others and suits the game. No partial packs, no stopgaps.
 - Effects and props (arrows, bow strings, tools, sparks, chips) come from the artist in the pack, drawn to match the
   art. Agents do not draw art assets in code and do not tell the owner that code will add them.
-- Until then, agents do not wire, convert, retune or redraw art. Art tooling and art data files stay as they are.
+- Until then, agents do not wire, convert, retune or redraw existing art. Art tooling and art data files stay as they are.
+- Exception (owner, 2026-09-30): **Codex may create new art for a new item or scene it builds** (for example the
+  Hunting scene and its beasts), since those cannot reuse existing assets. Match the style of the three heroes (Wren,
+  Tobin, Pip): strict pixel art, a clean 1-pixel dark outline, flat shading clusters, the same scale. The owner still
+  vets the whole set before it ships.
 
 ## Shared online data (do not change shape without coordinator sign-off)
 

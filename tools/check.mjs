@@ -6464,6 +6464,19 @@ if (section('C9 hero registry (browser)')) try {
 } catch (e) { fail('C9 hero registry browser crashed: '+(e.stack||e)); }
 
 
+// ---- away time never negative (2026-09-30): a save stamped in the future must not pay negative gains ----
+if (section('future-dated save')) try {
+  const late = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-late.json'), 'utf8'));
+  late.last = Date.now() + 16 * 864e5;   // sixteen days ahead, like a save made on a device whose clock ran fast
+  const g = loadCore({ seed: 5, storage: memoryStorage({ [KEY]: JSON.stringify(late) }) });
+  const before = JSON.parse(g.eval('JSON.stringify({ gold: S.gold, xp: S.xp, L: S.L })'));
+  const r = JSON.parse(g.eval('JSON.stringify(awayGains((Date.now() - S.last) / 1000))'));
+  const after = JSON.parse(g.eval('JSON.stringify({ gold: S.gold, xp: S.xp, L: S.L })'));
+  assert(after.gold >= before.gold && after.xp >= before.xp && after.L >= before.L && r.t === 0, `a save stamped 16 days ahead: away gains are nothing, never negative (gold ${Math.round(before.gold)} -> ${Math.round(after.gold)}, t ${r.t})`);
+  assert(/Math\.max\(0, \(Date\.now\(\) - S\.last\) \/ 1000\)/.test(fs.readFileSync(path.join(ROOT, 'src', 'js', '90-boot.js'), 'utf8')), 'boot measures time away as at least 0 (90-boot)');
+  assert(!g.errors.length, 'a future-dated save loads without core errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
+} catch (e) { fail('future-dated save crashed: ' + (e.stack || e)); }
+
 if (section('removed systems (W2-C)')) try {
   const strip = t => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/([^:'"`\\])\/\/[^\n'"`]*$/gm, '$1');
   const files = [];
