@@ -9,7 +9,7 @@
 // forever by DEED_CAP (section 4.4).
 //
 //   DEED_TIERS           tier keys and names, index 0..3 = tier 1..4
-//   DEED_PTS             points per tier / star / group / Classic / Feat / secret / chapter
+//   DEED_PTS             points per tier / star / group / milestone / Feat / secret / chapter
 //   DEED_BONUS           +0.5% at Gold and +0.5% more at Everflame (deepOil: 1 s each)
 //   DEED_CAP             the hard cap per bonus key (all regions, forever)
 //   DEED_KEY_TXT         bonus key -> player words ("damage")
@@ -34,7 +34,7 @@ const DEED_TIERS = [
   { k: 'gold', n: 'Gold', col: '#F2C14E' },
   { k: 'everflame', n: 'Everflame', col: '#FF9E3D' }
 ];
-const DEED_PTS = { tier: [5, 10, 20, 40], star: 10, grpGold: 25, grpEver: 50, classic: 10, feat: 100, capstone: 250, secret: 15, chStep: 5, chDone: 25 };
+const DEED_PTS = { tier: [5, 10, 20, 40], star: 10, grpGold: 25, grpEver: 50, milestone: 10, feat: 100, capstone: 250, secret: 15, chStep: 5, chDone: 25 };
 const DEED_BONUS = { gold: 0.005, everflame: 0.005, deepOil: 1 };
 const DEED_CAP = {
   dmg: 0.05, tap: 0.01, xp: 0.04, keen: 0.03, essence: 0.01, uniqueChance: 0.01, offline: 0.04,
@@ -161,7 +161,30 @@ const DEED_TRACKS = [
   { id: 'lanterns', g: 'road', n: 'Great Lanterns', what: 'Great Lanterns relit', need: [1, 2, 3, 4], star: { add: 1 }, bonus: 'xp', src: 'save', kind: 'level', wait: 'R3', u: ['Great Lantern', 'Great Lanterns'] }
 ];
 
+// C11: milestone feats retain their v5 IDs as conversion and Codex tile keys.
+// Their permanent rewards are separate from capped track rewards; no title or trophy.
 const DEED_FEATS = [
+  { id: 'f_m_zone10', n: 'Into the Dark', needs: 'Reach zone 10', about: 'A permanent milestone', rar: 'common', legacy: 'zone10', stat: 'zones', need: 10, bonus: ['keen', 0.01], ic: 'banner', pts: 10 },
+  { id: 'f_m_zone25', n: 'Deep Delver', needs: 'Reach zone 25', about: 'A permanent milestone', rar: 'common', legacy: 'zone25', stat: 'zones', need: 25, bonus: ['dmg', 0.03], ic: 'banner', pts: 10 },
+  { id: 'f_m_zone50', n: 'Lantern Bearer', needs: 'Reach zone 50', about: 'A permanent milestone', rar: 'common', legacy: 'zone50', stat: 'zones', need: 50, bonus: ['keen', 0.025], ic: 'banner', pts: 10 },
+  { id: 'f_m_lv20', n: 'Seasoned', needs: 'Reach hero level 20', about: 'A permanent milestone', rar: 'common', legacy: 'lv20', stat: 'level', need: 20, bonus: ['xp', 0.03], ic: 'helm', pts: 10 },
+  { id: 'f_m_lv50', n: 'Veteran', needs: 'Reach hero level 50', about: 'A permanent milestone', rar: 'common', legacy: 'lv50', stat: 'level', need: 50, bonus: ['dmg', 0.03], ic: 'helm', pts: 10 },
+  { id: 'f_m_kill1k', n: 'Monster Hunter', needs: 'Defeat 1,000 foes', about: 'A permanent milestone', rar: 'common', legacy: 'kill1k', stat: 'slayer', need: 1000, bonus: ['keen', 0.01], ic: 'sword', pts: 10 },
+  { id: 'f_m_kill25k', n: 'Slayer', needs: 'Defeat 25,000 foes', about: 'A permanent milestone', rar: 'common', legacy: 'kill25k', stat: 'slayer', need: 25000, bonus: ['dmg', 0.03], ic: 'sword', pts: 10 },
+  { id: 'f_m_kill100k', n: 'Legend of the Wilds', needs: 'Defeat 100,000 foes', about: 'A permanent milestone', rar: 'common', legacy: 'kill100k', stat: 'slayer', need: 100000, bonus: ['keen', 0.015], ic: 'sword', pts: 10 },
+  { id: 'f_m_gold1m', n: 'Coin Collector', needs: 'Earn 100K gold', about: 'A permanent milestone', rar: 'common', legacy: 'gold1m', stat: 'gold', need: 100000, bonus: ['keen', 0.01], ic: 'coin', pts: 10 },
+  { id: 'f_m_gold1b', n: 'Dragon Hoard', needs: 'Earn 10M gold', about: 'A permanent milestone', rar: 'common', legacy: 'gold1b', stat: 'gold', need: 10000000, bonus: ['keen', 0.015], ic: 'coin', pts: 10 },
+  { id: 'f_m_mine25', n: 'Stonebreaker', needs: 'Mining level 25', about: 'A permanent milestone', rar: 'common', legacy: 'mine25', stat: 'mine', need: 25, bonus: ['gatherSpeed', 0.03], ic: 'pick', pts: 10 },
+  { id: 'f_m_wood25', n: 'Timberfeller', needs: 'Woodcutting level 25', about: 'A permanent milestone', rar: 'common', legacy: 'wood25', stat: 'wood', need: 25, bonus: ['gatherSpeed', 0.03], ic: 'axe', pts: 10 },
+  { id: 'f_m_smith25', n: 'Master Smith', needs: 'Smithing level 25', about: 'A permanent milestone', rar: 'common', legacy: 'smith25', stat: 'smith', need: 25, bonus: ['skillXp', 0.03], ic: 'anvil', pts: 10 },
+  { id: 'f_m_forge1', n: 'First Spark', needs: 'Forge an item', about: 'A permanent milestone', rar: 'common', legacy: 'forge1', stat: 'made', need: 1, bonus: ['skillXp', 0.02], ic: 'anvil', pts: 10 },
+  { id: 'f_m_forge25', n: 'Busy Anvil', needs: 'Forge 25 items', about: 'A permanent milestone', rar: 'common', legacy: 'forge25', stat: 'made', need: 25, bonus: ['skillXp', 0.03], ic: 'anvil', pts: 10 },
+  { id: 'f_m_epic', n: 'Epic Craft', needs: 'Forge an Epic item', about: 'A permanent milestone', rar: 'common', legacy: 'epic', stat: 'epicCraft', need: 1, bonus: ['crit', 0.03], ic: 'flame', pts: 10 },
+  { id: 'f_m_uniq1', n: 'Trophy Hunter', needs: 'Find a unique', about: 'A permanent milestone', rar: 'common', legacy: 'uniq1', stat: 'curator', need: 1, bonus: ['essence', 0.03], ic: 'charm', pts: 10 },
+  { id: 'f_m_uniq3', n: 'Collector', needs: 'Find 3 uniques', about: 'A permanent milestone', rar: 'common', legacy: 'uniq3', stat: 'curator', need: 3, bonus: ['essence', 0.05], ic: 'charm', pts: 10 },
+  { id: 'f_m_uniq7', n: 'Curator', needs: 'Find 7 uniques', about: 'A permanent milestone', rar: 'common', legacy: 'uniq7', stat: 'curator', need: 7, bonus: ['dmg', 0.05], ic: 'charm', pts: 10 },
+  { id: 'f_m_bty10', n: 'Bounty Hunter', needs: 'Claim 10 bounties', about: 'A permanent milestone', rar: 'common', legacy: 'bty10', stat: 'wanted', need: 10, bonus: ['offline', 0.03], ic: 'coin', pts: 10 },
+  { id: 'f_m_bty50', n: 'Board Regular', needs: 'Claim 50 bounties', about: 'A permanent milestone', rar: 'common', legacy: 'bty50', stat: 'wanted', need: 50, bonus: ['keen', 0.015], ic: 'coin', pts: 10 },
   { id: 'f_lamps', n: 'Every Lamp Lit', needs: 'All 35 Hollow zones at 5 mastery stars and all 28 Hollow bestiary pages', about: '3-6 months', rar: 'epic', title: 'Hollowwarden', look: 'cr_moss' },
   { id: 'f_watch', n: 'The Long Watch', needs: '2,000 hours of light (played and away)', about: 'about 3 months', rar: 'rare', title: 'the Watchful', look: 'l_watch' },
   { id: 'f_trades', n: 'Master of Every Trade', needs: 'All 7 skills at level 200 and all 3 tools at mastery 20', about: '2-4 months', rar: 'epic', title: 'Masterhand', look: 'h_artisan' },
@@ -177,7 +200,7 @@ const DEED_FEATS = [
   { id: 'f_town', n: "Warden of Hollow's Rest", needs: 'Every building at its top level, 6 Hands housed, a Legendary Hand, the Kitchen at its top level', about: '2-3 months', rar: 'rare', title: 'the Steward', look: 'cr_cat', wait: 'N1' },
   { id: 'f_stock', n: 'Quartermaster', needs: 'Every gathered and fought material cell full at Storehouse 8, at the same moment', about: 'weeks of planning', rar: 'epic', title: 'Quartermaster', look: 'l_store', wait: 'H3' },
   { id: 'f_oaths', n: 'Oathbound', needs: 'An Oath Seal at 20+ on all 14 zone kinds', about: 'months', rar: 'legendary', title: 'Oathbound', look: 'h_circlet', wait: 'O1' },
-  { id: 'f_all', n: 'Lanternfall', needs: 'Every other Feat in the game', about: 'a year or more', rar: 'legendary', title: 'the Last Lantern', look: 'a_bloom', pts: 250 }
+  { id: 'f_all', n: 'Lanternfall', needs: 'Every other Feat that grants a title', about: 'a year or more', rar: 'legendary', title: 'the Last Lantern', look: 'a_bloom', pts: 250 }
 ];
 
 const DEED_SECRETS = [

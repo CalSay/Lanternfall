@@ -80,9 +80,6 @@
 .dd-pip.on { background: var(--c); border-color: #0B0810; box-shadow: 0 0 4px var(--c); }
 .dd-stars { margin-left: 3px; font: 600 calc(12px * var(--display-k))/1 var(--display); color: var(--ember); }
 .dd-trow.done .dd-bar > i { background: var(--r-legendary); }
-.dd-trow.classic { cursor: default; }
-.dd-trow.classic:not(.done) { opacity: .75; }
-.dd-trow.classic.done { border-color: #6B5320; }
 
 /* ---- sheets ---- */
 .dd-sheet .bsheet-body { gap: 12px; }

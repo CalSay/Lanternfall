@@ -56,7 +56,7 @@ const statsApi = {};
     rDmg = d;
   });
 
-  const forged = () => (S.achievements && S.achievements.forged) || 0;
+  const forged = () => (S.deeds && S.deeds.n.forged) || 0;
   Object.assign(statsApi, { forged, uniqueKinds: () => Object.keys(S.found || {}).length, uniqueTotal: () => Object.keys(UNIQ).length });
 
   // ---- away report ----

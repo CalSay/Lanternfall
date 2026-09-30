@@ -99,8 +99,7 @@ const NOTICES = [
     test: m => typeof BOSS_COPY === 'object' && !!BOSS_COPY.first && Object.values(BOSS_COPY.first).includes(m),
     ch: m => typeof BOSS_COPY === 'object' && (m === BOSS_COPY.first.heavy || m === BOSS_COPY.first.packHeavy || m === BOSS_COPY.first.stagger) ? 'log' : 'pop', wait: 8, held: 'log', why: 'a new kind of attack, once (it belongs to the moment)' },
 
-  // ---- achievements: Deeds speak; the old achievements (56-achievements) are silent ----
-  { id: 'ach-old', key: 'ach-old', re: /^(Achievement: |\d+ achievements? earned)/, ch: 'none', why: 'merged into Deeds (their bonuses still count)' },
+  // ---- achievements: Deeds is the single voice ----
   { id: 'deed-tier', key: 'deed-tier', wait: 40, ch: (m, n) => (n && n.tier === 4) ? 'pop' : (n && n.tier >= 3) ? 'bell' : 'log', why: 'Bronze and Silver are trivia; Gold and Everflame stars go to the bell; Everflame pops',
     merge: ms => ms.length > 1 ? `${ms.length} achievement steps: ${ms.map(m => m.replace(/\.$/, '').replace(/ \((Bronze|Silver|Gold|Everflame)\).*$/, ' ($1)')).join(', ')}.` : ms[0] },
   { id: 'deed-group', key: 'deed-group', wait: 40, ch: (m, n) => n && n.lv >= 2 ? 'pop' : 'bell' },
@@ -136,7 +135,9 @@ const NOTICES = [
     test: m => typeof starLocked === 'function' && (() => { try { return m === starLocked(); } catch (e) { return false; } })() },
 
   // ---- C4: completed gatherer trade runs ----
-  { id: 'hands-trade', re: /^.+ returns from .+: \+.+ gold\.$/, ch: 'log' }
+  { id: 'hands-trade', re: /^.+ returns from .+: \+.+ gold\.$/, ch: 'log' },
+  // C11: a milestone feat is a small permanent reward, recorded without a celebration card.
+  { id: 'deed-milestone', key: 'deed-milestone', ch: 'log' }
 ];
 const NOTICE_BY_KEY = Object.fromEntries(NOTICES.filter(r => r.key).map(r => [r.key, r]));
 // The rule for a message (or its key), or null.
