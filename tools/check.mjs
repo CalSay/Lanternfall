@@ -37,7 +37,7 @@ const ONLY = (process.argv.find(a => a.startsWith('--only=')) || '').slice(7);
 const SHARD = (m => (m ? [+m[1], +m[2]] : null))(/--shard=(\d+)\/(\d+)/.exec(process.argv.join(' ')));
 const JOBS = SHARD ? 1 : +((process.argv.find(a => a.startsWith('--jobs=')) || '').slice(7)) || (ONLY ? 1 : Math.min(4, os.cpus().length));
 // Seconds a section takes (measured, W2-B): the shards are balanced by these; a section not listed counts 2.
-const WEIGHT = { 'landscape 740x360 (browser, UX-L1)': 42, 'landscape 844x390 (browser, UX-L1)': 38, 'landscape 1280x720 (browser, UX-L1)': 38, 'solo copy (browser, W1-C)': 60, 'W1-D (browser)': 100, 'training (W2-A, browser)': 18, 'cb2': 40, 'notices (browser, W1-B)': 34, 'solo guide: gathering never freezes (browser)': 31, 'solo hero (browser)': 21, 'types and statuses (S1)': 14, 'save codes': 13, 'combat': 8, 'gatherers UI (browser)': 7, 'gathering': 6, 'nav': 6, 'retool': 6, 'onboarding hint placement (HINT1)': 5 };
+const WEIGHT = { 'landscape 740x360 (browser, UX-L1)': 42, 'landscape 844x390 (browser, UX-L1)': 38, 'landscape 1280x720 (browser, UX-L1)': 38, 'solo copy (browser, W1-C)': 60, 'W1-D (browser)': 100, 'training (W2-A, browser)': 18, 'cb2': 40, 'notices (browser, W1-B)': 34, 'solo guide: gathering never freezes (browser)': 31, 'solo hero (browser)': 21, 'types and statuses (S1)': 14, 'save codes': 13, 'combat': 8, 'gatherers UI (browser)': 7, 'gathering': 6, 'nav': 6, 'retool': 6, 'onboarding hint placement (HINT1)': 5, 'camp trade and import (C4, browser)': 15 };
 const shardLoad = SHARD ? Array(SHARD[1]).fill(0) : null;
 function section(name) {
   if ((ONLY && !new RegExp(ONLY, 'i').test(name))) return false;
@@ -5670,6 +5670,368 @@ if (section('camp guide tracking (C2, browser)')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('C2 guide tracking crashed: ' + (e.stack || e)); }
+
+// ---- C4: a gatherer's two-hour trade run reserves raw cargo and settles exactly once ----
+if (section('gatherer trade runs (C4)')) try {
+  const HOUR = 3600e3, T0 = Date.UTC(2026, 8, 28, 12), games = [];
+  const clock = (g, t) => g.eval(`Date.__t=${t}; Date.now=()=>Date.__t`);
+  const mk = () => {
+    const g = loadCore({ seed: 7401, prelude: `Date.__t=${T0}; Date.now=()=>Date.__t` }); games.push(g);
+    g.eval('S.maxZone=95; S.camp.open=true; S.camp.b.hearth=2; S.camp.b.tavern=2; S.camp.b.store=8; S.gold=1e6; for(const sk of ["mine","wood","forage"]) S.skills[sk].lv=100; tick(1.2); for(const a of Object.values(S.mats)) if(Array.isArray(a)) a.fill(10000)');
+    return g;
+  };
+  const reload = (g, t = T0) => {
+    g.eval('save()');
+    const h = loadCore({ seed: 7402, storage: memoryStorage({ [KEY]: g.storage.get(KEY) }), prelude: `Date.__t=${t}; Date.now=()=>Date.__t` }); games.push(h); return h;
+  };
+  const untouched = g => g.eval('JSON.stringify([S.mats,S.gold,S.hands.list,S.hands.hrs,S.hands.got,S.skills,S.tools.m,S.econ])');
+  {
+    const g = mk(), E = s => g.eval(s);
+    E('S.camp.b.tavern=1');
+    assert(!E('handsTradeQuote("tam",[["wood",1,100]]).ok') && !E('handsTradeSend("tam",[["wood",1,100]])'), 'C4: Tavern 1 cannot quote or start a trade');
+    E('S.camp.b.tavern=2; S.camp.b.hearth=1');
+    assert(!E('handsTradeQuote("tam",[["wood",1,100]]).ok'), 'C4: trade also requires the gatherers to be open');
+    E('S.camp.b.hearth=2');
+    const before = untouched(g), q = E('handsTradeQuote("tam",[["wood",1,2000],["wood",2,2000],["wood",3,1000]])');
+    assert(q.ok && q.secs === 7200 && q.cap === 5000 && q.units === 5000 && q.lines.length === 3 && q.gold > 0, 'C4: an open Tavern 2 quotes a two-hour trip with exactly 5,000 units across three lines');
+    assert(untouched(g) === before, 'C4: quoting cargo does not reserve stock, spend gold or change the gatherer');
+    const quoted = E('handsTradeQuote("tam",[["wood",1,5000]]).gold');
+    E('Object.assign(handsGet("tam"),{r:"common",lv:20,tr:["strong","lucky"],cl:"felling"})');
+    assert(E('handsTradeQuote("tam",[["wood",1,5000]]).gold') === quoted, 'C4: rarity, levels and gathering traits do not multiply trade prices');
+    for (const [sk, allowed] of [['wood',['wood']],['mine',['ore','crystal']],['forage',['fibre','herb']],['any',['ore','wood','crystal','fibre','herb']]]) {
+      E(`handsGet("tam").sk=${JSON.stringify(sk)}`);
+      const offered = E('handsTradeCargo("tam")');
+      assert(offered.length > 0 && offered.every(n=>allowed.includes(n.kind) && n.t>=1 && n.t<=3), `C4: ${sk} cargo offers only its own unlocked grade 1–3 raw materials`);
+      assert(allowed.every(kind=>E(`handsTradeQuote("tam",[[${JSON.stringify(kind)},1,100]]).ok`)), `C4: ${sk} can trade every supported family of its profession`);
+    }
+    E('handsGet("tam").sk="wood"; S.skills.wood.lv=1');
+    assert(!E('handsTradeQuote("tam",[["wood",2,1]]).ok') && E('handsTradeCargo("tam").every(n=>n.t===1)'), 'C4: owned stock cannot bypass the hero’s node unlocks');
+  }
+  {
+    const g = mk(), E = s => g.eval(s);
+    const invalid = ['null','[]','{}','[["wood",1,0]]','[["wood",1,-1]]','[["wood",1,0.5]]','[["wood",1,NaN]]','[["wood",1,Infinity]]','[["wood",1,5001]]','[["wood",1,1],["wood",1,2]]','[["wood",1,1],["wood",2,1],["wood",3,1],["ore",1,1]]','[["ore",1,1]]','[["hide",1,1]]','[["ess",1,1]]','[["fake",1,1]]','[["wood",4,1]]','[["wood",0,1]]','[["wood",1.5,1]]','[["wood",1]]','[null]'];
+    for (const cargo of invalid) {
+      const before = untouched(g);
+      assert(!E(`handsTradeQuote("tam",${cargo}).ok`) && !E(`handsTradeSend("tam",${cargo})`) && untouched(g) === before, `C4: malformed or ineligible cargo ${cargo} is rejected without side effects`);
+    }
+    assert(!E('handsTradeQuote("missing",[["wood",1,1]]).ok') && !E('handsTradeSend("missing",[["wood",1,1]])'), 'C4: a stale gatherer id cannot reserve cargo');
+    E('globalThis.__quote=handsTradeQuote("tam",[["wood",1,1000]]); S.mats.wood[0]=999');
+    const before = untouched(g);
+    assert(!E('handsTradeSend("tam",[["wood",1,1000]],__quote)') && untouched(g) === before, 'C4: Send rechecks stock after the quote and never makes a partial reservation');
+    E('S.mats.wood[0]=10000; S.mats.wood[1]=0');
+    const partial = untouched(g);
+    assert(!E('handsTradeSend("tam",[["wood",1,100],["wood",2,100]])') && untouched(g) === partial, 'C4: an unavailable later cargo line leaves every earlier line unreserved');
+    E('S.mats.wood[0]=10000; handsGet("tam").pack=[["wood",1,1]]');
+    assert(!E('handsTradeSend("tam",[["wood",1,100]])'), 'C4: a waiting pack prevents a trade departure');
+    E('handsGet("tam").pack=[]; handsSend("tam","wood",1,{shifts:2})');
+    assert(!E('handsTradeSend("tam",[["wood",1,100]])'), 'C4: a gathering shift prevents a trade departure');
+    clock(g,T0+4*HOUR); E('handsCatchUp(Date.now())');
+    assert(E('handsStatus("tam").st==="rest"') && !E('handsTradeSend("tam",[["wood",1,100]])'), 'C4: the rest between prepaid shifts is still busy for trade');
+  }
+  {
+    const g = mk(), E = s => g.eval(s);
+    E('handsGet("tam").last={kind:"wood",t:2,shifts:2}; globalThis.__cargo=[["wood",1,1500],["wood",2,1000]]; globalThis.__quote=handsTradeQuote("tam",__cargo)');
+    const q = E('__quote'), money = E('S.gold'), inventory = E('S.mats.wood.slice()'), trophies = E('JSON.stringify(S.craft.troph)');
+    const stats = E('JSON.stringify([handsGet("tam").lv,handsGet("tam").xp,handsGet("tam").hrs,handsGet("tam").sent,handsGet("tam").last,S.hands.hrs,S.skills,S.tools.m,S.econ.spent])');
+    assert(E('!!handsTradeSend("tam",__cargo,__quote)') && E('S.gold') === money && E('S.mats.wood[0]') === inventory[0]-1500 && E('S.mats.wood[1]') === inventory[1]-1000, 'C4: Send atomically reserves each cargo line and charges no fee');
+    assert(E('handsGet("tam").job.role==="trade" && handsGet("tam").job.end-handsGet("tam").job.start===7200000') && !E('handsCanSend("tam","wood",1).ok') && E('handsSendAgain("tam")') === 0, 'C4: the trade occupies the normal busy slot for exactly two hours');
+    assert(E('handsTalkInfo("tam").line.includes("Mossy Hollow") && handsStatus("tam").role==="trade"'), 'C4: camp conversation describes the trade destination without treating it as a gathering node');
+    const sent = untouched(g);
+    assert(!E('handsTradeSend("tam",__cargo,__quote)') && untouched(g) === sent, 'C4: a double Send cannot reserve the same cargo twice');
+    const h = reload(g), F = s => h.eval(s);
+    clock(g,T0+2*HOUR-1); E('handsCatchUp(Date.now())');
+    assert(E('S.gold') === money && E('!!handsGet("tam").job'), 'C4: a trade has no payout before its two-hour completion');
+    clock(g,T0+2*HOUR); E('handsCatchUp(Date.now())');
+    clock(h,T0+2*HOUR); F('emit("away",{})');
+    assert(E('S.gold') === money+q.gold && F('S.gold') === money+q.gold && E('!handsGet("tam").job') && F('!handsGet("tam").job'), 'C4: live and saved offline completion pay the frozen gold exactly once');
+    assert(E('S.trade.trips===1 && S.trade.sold===2500') && E('S.trade.gold') === q.gold && E('S.econ.earned.trade') === q.gold, 'C4: the trade and economy ledgers record one trip and its exact gold reward');
+    assert(E('JSON.stringify(S.mats)') === F('JSON.stringify(S.mats)') && E('S.mats.wood[0]') === inventory[0]-1500 && E('S.mats.wood[1]') === inventory[1]-1000 && E('handsGet("tam").pack.length') === 0 && E('JSON.stringify(S.craft.troph)') === trophies, 'C4: completion consumes reserved cargo and grants no materials or trophies');
+    assert(E('JSON.stringify([handsGet("tam").lv,handsGet("tam").xp,handsGet("tam").hrs,handsGet("tam").sent,handsGet("tam").last,S.hands.hrs,S.skills,S.tools.m,S.econ.spent])') === stats, 'C4: a trade leaves XP, work hours, Tam’s free shifts, last gathering job and spending unchanged');
+    E('handsCatchUp(Date.now()); handsRecall("tam"); emit("away",{})'); F('handsCatchUp(Date.now()); handsRecall("tam")');
+    assert(E('S.gold') === money+q.gold && F('S.gold') === money+q.gold, 'C4: repeated catch-up, away and Recall after completion cannot pay or refund twice');
+    const again = reload(g,T0+8*HOUR); again.eval('handsCatchUp(Date.now()); handsRecall("tam")');
+    assert(again.eval('S.gold') === money+q.gold, 'C4: reloading an already settled trip cannot restore its reservation or reward');
+  }
+  {
+    const g = mk(), E = s => g.eval(s), money = E('S.gold'), stock = E('S.mats.wood[0]');
+    E('handsTradeSend("tam",[["wood",1,5000]])'); clock(g,T0+HOUR);
+    assert(E('handsRecall("tam")') && E('S.gold') === money && E('S.mats.wood[0]') === stock && E('!handsGet("tam").job'), 'C4: an early recall returns the full reserved cargo with no reward');
+    assert(!E('handsRecall("tam")') && E('S.mats.wood[0]') === stock, 'C4: repeated early recall cannot duplicate cargo');
+    const h = mk(), F = s => h.eval(s);
+    F('handsTradeSend("tam",[["wood",1,5000]]); S.mats.wood[0]=storeCap("wood",1)'); clock(h,T0+HOUR);
+    const full = F('S.mats.wood[0]');
+    assert(F('handsRecall("tam")') && F('S.mats.wood[0]') === full && F('handsGet("tam").pack.reduce((n,l)=>n+l[2],0)') === 5000, 'C4: recalled cargo waits in the pack when the Storehouse has filled during the trip');
+    const saved = reload(h,T0+HOUR); saved.eval('S.mats.wood[0]-=5000; handsCatchUp(Date.now())');
+    assert(saved.eval('S.mats.wood[0]') === full && saved.eval('handsGet("tam").pack.length===0 && handsGet("tam").got===0 && S.hands.got===0'), 'C4: a saved waiting refund unloads without counting existing cargo as newly gathered material');
+    F('handsRecall("tam"); handsCatchUp(Date.now()); S.mats.wood[0]-=5000; handsCatchUp(Date.now())');
+    assert(F('S.mats.wood[0]') === full && F('handsGet("tam").pack.length') === 0, 'C4: making room unloads the recalled cargo once without overflow or loss');
+  }
+  {
+    const g = mk(), E = s => g.eval(s), h = mk(), F = s => h.eval(s);
+    const before = untouched(g), demand = E('handsTradeDemand()');
+    assert(demand.lines.length === 15 && demand.lines.filter(x=>x.demand>=130&&x.demand<=160).length === 3 && demand.lines.filter(x=>x.demand>=60&&x.demand<=80).length === 2 && demand.lines.filter(x=>x.demand===100).length === 10, 'C4: each weekly market has three wanted lines, two gluts and ten normal raw lines');
+    assert(new Set(demand.lines.map(x=>x.kind+':'+x.t)).size === 15 && demand.lines.every(x=>['ore','wood','crystal','fibre','herb'].includes(x.kind)&&x.t>=1&&x.t<=3), 'C4: demand covers the fifteen supported family/grade pairs without duplicate rows');
+    E('handsTradeDemand(); handsTradeQuote("tam",[["wood",1,5000]]); handsTradeDemand()');
+    assert(untouched(g) === before && E('Math.random()') === F('Math.random()') && E('JSON.stringify(handsTradeDemand())') === F('JSON.stringify(handsTradeDemand())'), 'C4: market quotes are deterministic reads and do not consume the game random stream');
+    const monday = Date.UTC(2026,9,5), at = ms => E(`handsTradeDemand(${ms})`);
+    assert(at(monday-1).week === demand.week && at(monday).week !== demand.week && JSON.stringify(at(monday).lines) !== JSON.stringify(demand.lines), 'C4: market demand changes at UTC Monday, not during the preceding week');
+    E('globalThis.__oldQuote=handsTradeQuote("tam",[["wood",1,5000]])'); clock(g,monday);
+    const stale = untouched(g);
+    assert(!E('handsTradeSend("tam",[["wood",1,5000]],__oldQuote)') && untouched(g) === stale, 'C4: a prior-week review cannot send cargo until the player gets a fresh quote');
+    clock(h,monday-HOUR); F('globalThis.__fixed=handsTradeQuote("tam",[["wood",1,5000]]); handsTradeSend("tam",[["wood",1,5000]],__fixed)');
+    const money = F('S.gold'), quoted = F('__fixed.gold');
+    clock(h,monday+HOUR); F('handsCatchUp(Date.now())');
+    assert(F('S.gold') === money+quoted, 'C4: a trip crossing the weekly reset pays the quote frozen at its departure');
+    const retune = mk(), R = s => retune.eval(s), gold = R('S.gold');
+    const fixed = R('handsTradeQuote("tam",[["wood",1,5000]]).gold');
+    R('handsTradeSend("tam",[["wood",1,5000]]); ECON.famW.gathered*=1.25'); clock(retune,T0+2*HOUR); R('handsCatchUp(Date.now())');
+    assert(R('S.gold') === gold+fixed, 'C4: a reasonable economy retune does not reprice or invalidate an existing frozen quote');
+    const edge = mk(); edge.eval(`globalThis.__reads=0; Date.now=()=>++__reads===1?${monday-1}:${monday+1}; handsTradeSend("tam",[["wood",1,5000]])`);
+    assert(edge.eval('handsTradeValid(handsGet("tam").job)') && edge.eval('handsGet("tam").job.start') === monday-1, 'C4: Send crossing UTC Monday uses one timestamp for the saved price week and departure');
+  }
+  {
+    const g = mk(), E = s => g.eval(s), money = E('S.gold');
+    const q = E('handsTradeQuote("tam",[["wood",1,5000]])');
+    E('handsTradeSend("tam",[["wood",1,5000]])'); clock(g,T0+3*HOUR);
+    E('handsRecall("tam")');
+    assert(E('S.gold') === money+q.gold && E('S.mats.wood[0]') === 5000 && E('!handsGet("tam").job'), 'C4: recalling an already completed trip settles its reward without returning the sold cargo');
+    for (const damage of ['handsGet("tam").job.end=-1','handsGet("tam").job.quote.gold=1e12','handsGet("tam").job.quote.micros[0]=-1','handsGet("tam").job.quote.micros[0]=1e12; handsGet("tam").job.quote.gold=1e9','handsGet("tam").job.cargo[0][2]=-1','handsGet("tam").job.cargo.push(["fake",1,5000])']) {
+      const a = mk(); a.eval('handsTradeSend("tam",[["wood",1,1000]])'); const gold = a.eval('S.gold'); a.eval(damage);
+      const b = reload(a,T0+3*HOUR); b.eval('handsCatchUp(Date.now()); handsRecall("tam"); handsCatchUp(Date.now())');
+      const settled = b.eval('JSON.stringify([S.gold,S.mats,handsGet("tam").pack])'); b.eval('handsCatchUp(Date.now()); handsRecall("tam")');
+      assert(b.eval('S.gold') === gold && b.eval('!handsGet("tam").job') && b.eval('S.mats.wood[0]+handsGet("tam").pack.filter(l=>l[0]==="wood"&&l[1]===1).reduce((n,l)=>n+l[2],0)') <= 10000 && b.eval('JSON.stringify([S.gold,S.mats,handsGet("tam").pack])') === settled, `C4: malformed saved trade fails closed without profit or repeat refund (${damage})`);
+    }
+  }
+  {
+    const g = mk(), E = s => g.eval(s);
+    E('Object.assign(handsGet("tam"),{key:null,tr:["friendly"],cl:"felling"}); S.hands.list.push({...JSON.parse(JSON.stringify(handsGet("tam"))),id:"c4-worker",n:"Worker",tr:[],cl:null}); handsTradeSend("tam",[["wood",1,1000]]); handsSend("c4-worker","wood",1)');
+    assert(E('handsGet("c4-worker").job.bo.length') === 0, 'C4: a trading Friendly/Felling gatherer gives no overlap bonus to a gathering partner');
+    const h = mk(), F = s => h.eval(s);
+    F('Object.assign(handsGet("tam"),{key:null,tr:["friendly"],cl:"felling"}); S.hands.list.push({...JSON.parse(JSON.stringify(handsGet("tam"))),id:"c4-trader",n:"Trader",tr:[],cl:null}); handsSend("tam","wood",1); globalThis.__gatherBefore=JSON.stringify(handsGet("tam").job.bo); handsTradeSend("c4-trader",[["wood",1,1000]])');
+    assert(F('JSON.stringify(handsGet("tam").job.bo)===__gatherBefore && !handsGet("c4-trader").job.bo'), 'C4: sending a trader cannot retroactively create gathering overlap windows');
+  }
+  {
+    const g = mk(), E = s => g.eval(s);
+    E('S.gold=0');
+    assert(E('!!handsTradeSend("tam",[["wood",1,100]])') && E('S.gold') === 0, 'C4: a gatherer can depart with cargo even when the player has no gold');
+    E('S.camp.b.tavern=0; S.camp.b.hearth=1'); clock(g,T0+2*HOUR); E('tick(1.2)');
+    assert(E('!handsGet("tam").job && S.gold>0'), 'C4: an existing trip still returns after a loaded save lowers the opening buildings');
+    const h = mk(), F = s => h.eval(s);
+    F('S.hands.list.push({...JSON.parse(JSON.stringify(handsGet("tam"))),id:"c4-small",n:"Small"}); globalThis.__big=handsTradeQuote("tam",[["wood",1,1000]]).gold; globalThis.__small=handsTradeQuote("c4-small",[["wood",1,100]]).gold; handsTradeSend("tam",[["wood",1,1000]]); handsTradeSend("c4-small",[["wood",1,100]]); S.gold=Number.MAX_SAFE_INTEGER-50');
+    clock(h,T0+2*HOUR); F('handsCatchUp(Date.now())');
+    assert(F('!!handsGet("tam").job && !handsGet("c4-small").job && Number.isSafeInteger(S.gold) && S.trade.trips===1'), 'C4: a numerically unsafe gold credit waits without blocking another payable return');
+    F('S.gold=0; handsCatchUp(Date.now()); handsCatchUp(Date.now())');
+    assert(F('!handsGet("tam").job && S.gold===__big && S.trade.trips===2'), 'C4: spending down the gold balance lets the deferred trip settle exactly once');
+  }
+  {
+    const g = mk(), E = s => g.eval(s);
+    E('S.maxZone=12; S.skills.wood.lv=1; S.mats.wood[0]=5000; globalThis.__diagnostic=handsTradeDiagnostic("tam",[["wood",1,5000]])');
+    const d = E('__diagnostic'), alternative = d.gather.find(x=>x.kind==='wood'&&x.t===1), q = d.quote;
+    E('S.mats.wood[0]=0; handsSend("tam","wood",1)'); clock(g,T0+2*HOUR); E('handsRecall("tam")');
+    const actual = E('S.mats.wood[0]'), unitGold = q.gold/5000;
+    assert(alternative && Number.isFinite(alternative.marketGold) && Math.abs(actual-alternative.units)<=1, 'C4: the comparison uses the same worker’s actual two-hour gathering yield, within seeded rounding');
+    ok(`C4 diagnostic: 5,000 stored grade-1 logs trade for ${(q.gold/2).toFixed(2)} gold/hour; the same worker gathers ${actual} logs in two hours, worth ${(actual*unitGold/2).toFixed(2)} gold/hour at that market price (gathering fee ${alternative.shiftFee}; cargo is pre-existing stock, not produced by the trade)`);
+  }
+  // Exercise the shipped offline picker with real stock/prices; the small DOM adapter only supplies browser primitives.
+  {
+    const { coreFiles } = await import('./lib/core.mjs');
+    const stub = `Date.__t=${T0}; Date.now=()=>Date.__t;
+      class TradeNode {
+        constructor(t='div',c='',s=''){this.tagName=t.toUpperCase();this.className=c||'';this.children=[];this.dataset={};this.attrs={};this.events={};this.style={setProperty(k,v){this[k]=v;}};this._text=s||'';this.hidden=false;this.classList={add:c=>{this.className+=' '+c;}};}
+        append(...ns){for(const n of ns){n.remove?.();this.children.push(n);n.parentNode=this;}} appendChild(n){this.append(n);return n;}
+        prepend(...ns){for(const n of ns.reverse()){n.remove?.();this.children.unshift(n);n.parentNode=this;}}
+        remove(){if(this.parentNode)this.parentNode.children=this.parentNode.children.filter(n=>n!==this);this.parentNode=null;}
+        insertBefore(n,b){n.remove?.();const i=this.children.indexOf(b);if(i<0)this.append(n);else{this.children.splice(i,0,n);n.parentNode=this;}}
+        after(n){this.parentNode.insertBefore(n,this.nextSibling);} get firstChild(){return this.children[0]||null;} get nextSibling(){return this.parentNode?.children[this.parentNode.children.indexOf(this)+1]||null;}
+        get isConnected(){return document.body.contains(this);} contains(n){return this===n||this.children.some(c=>c.contains(n));}
+        set textContent(s){this._text=String(s);for(const n of this.children)n.parentNode=null;this.children=[];} get textContent(){return this._text+this.children.map(n=>n.textContent).join('');}
+        setAttribute(k,v){this.attrs[k]=String(v);} getAttribute(k){return this.attrs[k]??null;}
+        addEventListener(k,f){(this.events[k]||(this.events[k]=[])).push(f);} fire(k){for(const f of this.events[k]||[])f({target:this,preventDefault(){}});} click(){if(!this.disabled)this.fire('click');} focus(){document.activeElement=this;}
+        querySelectorAll(s){const out=[],match=n=>s[0]==='#'?n.id===s.slice(1):s[0]==='.'?n.className.split(' ').includes(s.slice(1)):s==='input[data-kind]'?n.tagName==='INPUT'&&!!n.dataset.kind:s==='input:not(:disabled)'?n.tagName==='INPUT'&&!n.disabled:s==='[data-left]'?!!n.dataset.left:n.tagName===s.toUpperCase();const walk=n=>{for(const c of n.children){if(match(c))out.push(c);walk(c);}};walk(this);return out;}
+        querySelector(s){return this.querySelectorAll(s)[0]||null;} matches(s){return s==='input[data-kind]'&&this.tagName==='INPUT'&&!!this.dataset.kind;}
+      }
+      const document={body:new TradeNode('body'),activeElement:null,querySelector(s){return this.body.querySelector(s);}};
+      const el=(t,c,s)=>new TradeNode(t,c,s),img=()=>el('img'),iconURL=()=>'',matIcon=()=>'',__sections={};
+      const registerSection=(tab,s)=>{__sections[s.id]=s;},ui=()=>{for(const s of Object.values(__sections))if(s.__mounted)s.update();};
+    `;
+    const g = loadCore({ seed: 7403, prelude: stub, files: coreFiles().concat(['74-ui-hands.js','74b-ui-trade.js']) }); games.push(g); const E = s => g.eval(s);
+    E('S.maxZone=12; S.camp.open=true; S.camp.b.hearth=2; S.camp.b.tavern=2; S.camp.b.store=8; S.gold=1e6; S.skills.wood.lv=100; tick(1.2); S.mats.wood.fill(10000); globalThis.__panel=el("div"); globalThis.__crew=el("section"); __crew.id="sec-hands-crew"; globalThis.__trade=el("section"); __trade.id="sec-hands-trade"; __panel.append(__crew,__trade); document.body.append(__panel); __sections["hands-crew"].mount(__crew); __sections["hands-crew"].__mounted=true; __sections["hands-trade"].mount(__trade); __sections["hands-trade"].__mounted=true; ui()');
+    E('__crew.querySelectorAll("button").find(b=>b.textContent==="Trade run").click()');
+    assert(E('!__trade.hidden && __trade.querySelectorAll("input[data-kind]").length===3 && __trade.querySelectorAll("input[data-kind]").every(i=>i.dataset.kind==="wood" && Number(i.dataset.t)<=3)'), 'C4: the actual crew Trade action opens only the woodcutter’s three eligible cargo grades');
+    E('S.camp.b.tavern=1; ui()');
+    assert(E('__trade.textContent.includes("Tavern 2") && !__trade.querySelector("input")'), 'C4: the locked picker explains the Tavern 2 gate without exposing cargo controls');
+    E('S.camp.b.tavern=2; handsTradeOpenPicker("tam"); globalThis.__input=__trade.querySelectorAll("input[data-kind]").find(i=>Number(i.dataset.t)===1); __input.value="5000"; __input.fire("input")');
+    assert(E('__trade.querySelectorAll("button").some(b=>b.textContent==="Review quote") && !handsGet("tam").job && S.mats.wood[0]===10000'), 'C4: entering cargo previews a quote without reserving anything');
+    E('__trade.querySelectorAll("button").find(b=>b.textContent==="Review quote").click()');
+    assert(E('__trade.querySelectorAll("button").some(b=>b.textContent==="Send trade run") && !handsGet("tam").job'), 'C4: reviewing a quote exposes Send while leaving the cargo in storage');
+    E('S.mats.wood[0]=4999; __trade.querySelectorAll("button").find(b=>b.textContent==="Send trade run").click()');
+    assert(E('!handsGet("tam").job && S.mats.wood[0]===4999 && !__trade.querySelectorAll("button").some(b=>b.textContent==="Send trade run")'), 'C4: the real Send handler rejects stock spent after review without taking cargo');
+    E('ui(); __trade.querySelectorAll("button").find(b=>b.textContent==="Review quote").click()'); clock(g,T0+7*24*HOUR); E('ui()');
+    assert(E('!handsGet("tam").job && __trade.querySelectorAll("button").some(b=>b.textContent==="Review quote") && !__trade.querySelectorAll("button").some(b=>b.textContent==="Send trade run")'), 'C4: a weekly market refresh requires a new review in the live picker');
+    E('globalThis.__input=__trade.querySelectorAll("input[data-kind]").find(i=>Number(i.dataset.t)===1); __input.value="1000"; __input.fire("input"); globalThis.__expected=handsTradeQuote("tam",[["wood",1,1000]]); __trade.querySelectorAll("button").find(b=>b.textContent==="Review quote").click(); __trade.querySelectorAll("button").find(b=>b.textContent==="Send trade run").click()');
+    assert(E('handsGet("tam").job.role==="trade" && S.mats.wood[0]===3999 && S.gold===1e6 && __trade.textContent.includes(fmt(__expected.gold)+" gold")'), 'C4: the reviewed UI Send reserves once and shows the actual frozen gold due');
+    assert(E('__crew.querySelectorAll("button").find(b=>b.textContent==="Trade run").disabled && __crew.querySelectorAll("button").find(b=>b.textContent==="Send on a job").disabled'), 'C4: the crew card blocks trade and gathering while the run is active');
+    E('__crew.querySelectorAll("button").find(b=>b.textContent==="Recall").click()');
+    assert(E('!!handsGet("tam").job'), 'C4: the first Recall press only arms the in-page confirmation');
+    E('__crew.querySelectorAll("button").find(b=>b.textContent==="Tap again: recall trade").click()');
+    assert(E('!handsGet("tam").job && S.mats.wood[0]===4999 && S.gold===1e6 && !__trade.querySelectorAll("button").some(b=>b.textContent==="Send trade run")'), 'C4: confirmed UI Recall returns cargo with no reward and repeating requires a new quote review');
+  }
+  assert(!games.some(g=>g.errors.length), 'C4: trade validation, settlement and recall produce no handler errors');
+} catch (e) { fail('C4 gatherer trade runs crashed: ' + (e.stack || e)); }
+
+// ---- C4/C5: active trades and waiting refunds survive strict save codes and subsequent loads ----
+if (section('trade save compatibility (C4, C5)')) try {
+  const T0 = Date.UTC(2026, 8, 28, 12), games = [];
+  const mk = (raw, at = T0) => {
+    const g = loadCore({ seed: 7450, storage: memoryStorage(raw ? { [KEY]: raw } : {}), prelude: `Date.__t=${at}; Date.now=()=>Date.__t` }); games.push(g); return g;
+  };
+  const g = mk(), E = s => g.eval(s);
+  E('soloPick("wren"); S.maxZone=12; S.camp.open=true; S.camp.b.hearth=2; S.camp.b.tavern=2; S.camp.b.store=8; S.gold=10000; tick(1.2); S.mats.wood[0]=5000; handsGet("tam").last={kind:"wood",t:1,shifts:2}; handsTradeSend("tam",[["wood",1,1000]]); save()');
+  const before = E('JSON.stringify(S)'), active = E('decodeSave(encodeSave(S))');
+  assert(active.ok && !deepDiff(JSON.parse(before), active.data) && E('JSON.stringify(S)') === before, 'C4/C5: a real active trade code preserves every field without mutating the live save');
+  const raw = JSON.stringify(active.data), job = active.data.hands.list.find(h => h.id === 'tam').job, gold = active.data.gold;
+  const freshGame = mk(), F = s => freshGame.eval(s), untouched = F('JSON.stringify(S)');
+  const validated = F(`decodeSave(${JSON.stringify(E('encodeSave(S)'))})`);
+  assert(validated.ok && !deepDiff(active.data, validated.data) && F('JSON.stringify(S)') === untouched, 'C4/C5: a fresh game can validate an active trade import without needing the importer’s camp or cargo state');
+  const { saveCodeFor } = await import('./savecode.mjs');
+  const cliCode = saveCodeFor(raw), cli = F(`decodeSave(${JSON.stringify(cliCode)})`);
+  assert(cli.ok && !deepDiff(job, cli.data.hands.list.find(h => h.id === 'tam').job), 'C4/C5: the CLI preserves active cargo, departure time and frozen quote');
+  for (const mutate of [s => s.hands.list[0].job.quote.gold++, s => s.hands.list[0].job.end++, s => s.hands.list[0].job.cargo[0][2] = -1]) {
+    const bad = JSON.parse(raw); mutate(bad);
+    assert(!F(`validateSave(${JSON.stringify(bad)}).ok`) && F('JSON.stringify(S)') === untouched, 'C4/C5: malformed imported trade data is rejected before changing the live game');
+  }
+  const h = mk(raw, T0 + 3600e3), H = s => h.eval(s);
+  assert(H('handsTradeValid(handsGet("tam").job)') && !deepDiff(job, H('handsGet("tam").job')) && H('S.mats.wood[0]') === 4000 && H('S.gold') === gold,
+    'C4/C5: loading the validated candidate preserves the reserved cargo and quote without a second debit or early reward');
+  H('save()');
+  const offline = mk(h.storage.get(KEY), job.end), O = s => offline.eval(s);
+  O('emit("awayBegin",{}); emit("away",{}); emit("awayEnd",{}); save()');
+  assert(O('S.gold') === gold + job.quote.gold && O('!handsGet("tam").job && S.trade.trips===1 && S.trade.sold===1000 && handsGet("tam").last.shifts===2') && O('S.trade.gold') === job.quote.gold,
+    'C4/C5: imported active trade settles once through the real offline event and keeps the previous gathering assignment');
+  const settled = mk(offline.storage.get(KEY), job.end + 3600e3), S = s => settled.eval(s);
+  S('emit("away",{}); handsCatchUp(Date.now()); handsRecall("tam"); handsCatchUp(Date.now())');
+  assert(S('S.gold') === gold + job.quote.gold && S('S.trade.trips===1 && S.trade.log.length===1 && S.mats.wood[0]===4000'), 'C4/C5: reloading the settled save cannot pay again or refund sold cargo');
+  const live = mk(raw, job.end), L = s => live.eval(s);
+  L('globalThis.__tradeNotices=[]; on("toast", e=>__tradeNotices.push(e)); handsCatchUp(Date.now())');
+  assert(L('__tradeNotices.some(e=>{const r=noticeRule(e.msg,e.key); return r && r.id==="hands-trade" && noticeChannel(r,e.msg,e,{guide:false})==="log"})'),
+    'C4: the actual trade completion message matches its quiet notice rule');
+  const refund = mk(raw, T0 + 3600e3), R = s => refund.eval(s);
+  R('S.mats.wood[0]=storeCap("wood",1); handsRecall("tam"); save()');
+  const full = R('S.mats.wood[0]'), stats = R('JSON.stringify([handsGet("tam").got,S.hands.got])'), waiting = R('decodeSave(encodeSave(S))');
+  assert(waiting.ok && waiting.data.hands.list.find(h => h.id === 'tam').pack.some(l => l[3] === 'trade-refund') && !deepDiff(JSON.parse(R('JSON.stringify(S)')), waiting.data),
+    'C4/C5: a recalled trade with a full Storehouse round-trips its waiting refund marker unchanged');
+  const unpacked = mk(JSON.stringify(waiting.data), T0 + 3600e3), U = s => unpacked.eval(s);
+  U('S.mats.wood[0]-=400; handsCatchUp(Date.now()); save()');
+  assert(U('S.mats.wood[0]') === full - 400 && U('handsGet("tam").pack[0][2]===1000 && handsGet("tam").pack[0][3]==="trade-refund"') && U('JSON.stringify([handsGet("tam").got,S.hands.got])') === stats,
+    'C4/C5: a saved refund waits for room for its whole parcel and retains its source marker and original gathering counters');
+  const partialCode = U('decodeSave(encodeSave(S))'), rest = mk(JSON.stringify(partialCode.data), T0 + 3600e3), P = s => rest.eval(s);
+  P('S.mats.wood[0]-=600; handsCatchUp(Date.now()); handsCatchUp(Date.now()); handsRecall("tam"); save()');
+  assert(partialCode.ok && P('S.mats.wood[0]') === full && P('handsGet("tam").pack.length===0 && S.trade.trips===0') && P('S.gold') === gold && P('JSON.stringify([handsGet("tam").got,S.hands.got])') === stats,
+    'C4/C5: another code/import/load cycle unloads the waiting refund exactly once with no gold or gathered-stat gain');
+  assert(!games.some(x => x.errors.length), 'C4/C5: trade save-code and reload paths produce no handler errors');
+} catch (e) { fail('C4/C5 trade save compatibility crashed: ' + (e.stack || e)); }
+
+// ---- C4: real Camp conversation navigation, landscape cargo controls, and C5 import/reload ----
+if (section('camp trade and import (C4, browser)')) try {
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('C4 Camp Trade: Playwright or Chromium not here, skipped');
+  else {
+    const T0 = Date.UTC(2026, 8, 28, 12), fixture = loadCore({ seed: 7460, prelude: `Date.__t=${T0};Date.now=()=>Date.__t` });
+    fixture.eval('soloPick("wren"); S.name="C4 trader"; S.maxZone=12; S.camp.open=true; S.camp.b.hearth=2; S.camp.b.tavern=1; S.camp.b.store=8; S.gold=10000; S.skills.wood.lv=100; tick(1.2); S.mats.wood.fill(10000); onboardUnlockAll(); onboardTips(false); setActivity("gather"); save()');
+    const raw = fixture.storage.get(KEY), html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    // Freeze only the simulation; UI, navigation, import handlers and real reloads still run.
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;soloPickerOpen = () => true; window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    const open = async (width, height, seed) => {
+      const ctx = await browser.newContext({ viewport: { width, height }, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
+      await ctx.addInitScript(({ now, raw, key }) => {
+        Date.__t = Number(sessionStorage.getItem('c4-test-time')) || now; Date.now = () => Date.__t;
+        if (raw && !sessionStorage.getItem('c4-seeded')) { localStorage.setItem(key, raw); sessionStorage.setItem('c4-seeded', '1'); }
+      }, { now: T0, raw: seed, key: KEY });
+      const page = await ctx.newPage(), errs = [];
+      page.on('pageerror', e => errs.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForFunction(() => !!window.__t);
+      return { ctx, page, errs, X: s => page.evaluate(s => window.__t.x(s), s) };
+    };
+    try {
+      for (const [width, height] of [[740, 360], [844, 390]]) {
+        const at = `${width}x${height}`, game = await open(width, height, raw);
+        let exported, departure;
+        try {
+          const { page, X, errs } = game;
+          await X('setTab("camp"); ui(true); true');
+          await page.locator('#camp-scene-hands [data-hand-id="tam"]').click();
+          assert(await page.locator('#hands-talk .hd-trade').isDisabled() && /Tavern (?:level )?2/.test(await page.locator('#hands-talk .hd-trade-lock').innerText()),
+            `C4 ${at}: the Camp conversation shows the Tavern 2 reason on its locked Trade action`);
+          await X('S.camp.b.tavern=2; ui(true); true');
+          assert(await page.locator('#hands-talk .hd-trade').isEnabled(), `C4 ${at}: upgrading the Tavern enables Trade in the already open conversation`);
+          await page.locator('#hands-talk .hd-trade').click();
+          const inputs = page.locator('#sec-hands-trade input[data-kind]');
+          await inputs.first().waitFor({ state: 'visible' });
+          assert(await X('S.tab==="world" && curView("world")==="tav" && $("hands-talk").hidden') && await inputs.count() === 3,
+            `C4 ${at}: the real Camp Trade press closes the conversation and opens this worker’s cargo controls in Tavern`);
+          const input = page.locator('#sec-hands-trade input[data-kind="wood"][data-t="1"]');
+          await input.fill('1000');
+          const review = page.locator('#sec-hands-trade').getByRole('button', { name: 'Review quote', exact: true });
+          await review.scrollIntoViewIfNeeded();
+          const fit = await review.evaluate(b => { const r = b.getBoundingClientRect(), p = document.getElementById('panels'), m = document.getElementById('menu').getBoundingClientRect();
+            const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+            return { ok: r.top >= 0 && r.bottom <= innerHeight && r.left >= m.left && r.right <= m.right && (hit === b || b.contains(hit)) && p.scrollWidth <= p.clientWidth + 1 && document.documentElement.scrollWidth <= innerWidth + 1,
+              top: r.top, bottom: r.bottom, panelOverflow: p.scrollWidth - p.clientWidth }; });
+          assert(fit.ok, `C4 ${at}: cargo review fits the landscape panel, receives a real press and creates no sideways overflow (${JSON.stringify(fit)})`);
+          await review.click();
+          assert(await X('!handsGet("tam").job && S.mats.wood[0]===10000'), `C4 ${at}: reviewing the actual quote leaves cargo in the Storehouse`);
+          const ready = await page.locator('#sec-hands-trade .hd-trade-quote').innerText();
+          assert(ready.includes('Send trade run'), `C4 ${at}: one real Review press exposes Send (${ready.replace(/\n/g, ' ')})`);
+          if (!ready.includes('Send trade run')) throw new Error('Review press did not expose Send');
+          await X('S.mats.wood[1]++; ui(true); true');
+          assert(await page.locator('#sec-hands-trade').getByRole('button', { name: 'Send trade run', exact: true }).evaluate(b => document.activeElement === b),
+            `C4 ${at}: an unrelated stock refresh keeps the reviewed Send action focused`);
+          departure = await X('({quote:handsTradeQuote("tam",[["wood",1,1000]]),gold:S.gold})');
+          await page.locator('#sec-hands-trade').getByRole('button', { name: 'Send trade run', exact: true }).click();
+          const sent = await X('({job:handsGet("tam").job,gold:S.gold,wood:S.mats.wood[0]})');
+          departure.job = sent.job;
+          assert(sent.job?.role === 'trade' && sent.job.quote.gold === departure.quote.gold && sent.gold === departure.gold && sent.wood === 9000,
+            `C4 ${at}: the reviewed Send reserves cargo exactly once with the displayed frozen gold and no fee`);
+          await X('setTab("camp"); ui(true); true');
+          assert(await page.locator('#camp-scene-hands [data-hand-id="tam"]').count() === 0 && /Out 1/.test(await page.locator('#camp-crew-status').innerText()),
+            `C4 ${at}: the departing trader leaves the Camp scene and counts as away`);
+          exported = await X('encodeSave(S)');
+          assert(await X(`decodeSave(${JSON.stringify(exported)}).ok`) && !errs.length, `C4 ${at}: the browser exports an active trade code without page errors`);
+        } finally { await game.ctx.close(); }
+        // A separate fresh game imports through the shipped Check/confirm UI and location.reload().
+        const imported = await open(width, height);
+        try {
+          const { page, X, errs } = imported;
+          await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go');
+          await page.click('#bellBtn'); await page.locator('.nlog-seg button[data-v="journal"]').click();
+          await page.locator('.savecode-import').fill(exported);
+          const panel = page.locator('#sec-savecode');
+          await panel.getByRole('button', { name: 'Check', exact: true }).click();
+          await panel.getByRole('button', { name: 'Replace my save', exact: true }).click();
+          assert(await X('!handsGet("tam")'), `C4/C5 ${at}: checking and arming the trade import leaves the fresh game unchanged`);
+          await Promise.all([page.waitForNavigation({ waitUntil: 'load' }), panel.getByRole('button', { name: 'Yes, replace it', exact: true }).click()]);
+          await page.waitForFunction(() => window.__t && window.__t.x('S.name') === 'C4 trader');
+          const active = await X('({job:handsGet("tam").job,gold:S.gold,wood:S.mats.wood[0]})');
+          assert(!deepDiff(departure.job, active.job) && active.gold === departure.gold && active.wood === 9000,
+            `C4/C5 ${at}: confirmed import and real reload preserve the active job, frozen quote and reserved cargo`);
+          await page.reload(); await page.waitForFunction(() => !!window.__t);
+          assert(await X('handsTradeValid(handsGet("tam").job) && S.mats.wood[0]===9000 && S.trade.trips===0'),
+            `C4/C5 ${at}: a second real reload keeps the trade active without another cargo debit`);
+          await X('Date.__t=handsGet("tam").job.end; sessionStorage.setItem("c4-test-time",String(Date.__t)); handsCatchUp(Date.now()); save(); true');
+          assert(await X('!handsGet("tam").job && S.trade.trips===1') && await X('S.gold') === departure.gold + departure.quote.gold,
+            `C4/C5 ${at}: the imported trade pays its frozen quote once on completion`);
+          await page.reload(); await page.waitForFunction(() => !!window.__t);
+          await X('handsCatchUp(Date.now()); handsRecall("tam"); true');
+          assert(await X('S.trade.trips===1 && S.trade.log.length===1 && S.mats.wood[0]===9000') && await X('S.gold') === departure.gold + departure.quote.gold,
+            `C4/C5 ${at}: reloading after completion cannot repeat the reward or return sold cargo`);
+          assert(!errs.length, `C4/C5 ${at}: real Camp Trade and import/reload flows have no browser errors` + (errs.length ? ': ' + errs[0] : ''));
+        } finally { await imported.ctx.close(); }
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('C4 Camp Trade and import crashed: ' + (e.stack || e)); }
 
 if (section('removed systems (W2-C)')) try {
   const strip = t => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/([^:'"`\\])\/\/[^\n'"`]*$/gm, '$1');

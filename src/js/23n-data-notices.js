@@ -133,7 +133,10 @@ const NOTICES = [
   // ---- answers to a press: they show at once (a reply is never held) ----
   { id: 'reply', ch: 'pop', reply: 1, site: /toast\(w, 'raid'/,
     re: /^(Chop more Pine Log first|Climb out of the Deepwell first|Give your hero a name first|The Proving cannot start now|That change did not go through|The free change has run out|Save loaded)/,
-    test: m => typeof starLocked === 'function' && (() => { try { return m === starLocked(); } catch (e) { return false; } })() }
+    test: m => typeof starLocked === 'function' && (() => { try { return m === starLocked(); } catch (e) { return false; } })() },
+
+  // ---- C4: completed gatherer trade runs ----
+  { id: 'hands-trade', re: /^.+ returns from .+: \+.+ gold\.$/, ch: 'log' }
 ];
 const NOTICE_BY_KEY = Object.fromEntries(NOTICES.filter(r => r.key).map(r => [r.key, r]));
 // The rule for a message (or its key), or null.

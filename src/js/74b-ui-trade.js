@@ -70,8 +70,11 @@ var handsTradeOpenPicker;
       input.style.cssText = 'width:6.5em;min-height:44px;box-sizing:border-box;';
       input.addEventListener('input', () => { reviewed = null; feedback = ''; showQuote(); });
       input.addEventListener('change', () => {
+        const before = JSON.stringify(cargo());
         input.value = String(Math.min(row.have, Math.max(0, Math.floor(Number(input.value) || 0))));
-        reviewed = null; showQuote();
+        // The input event already updated the quote. On blur, keep its action node in place
+        // so a pointer press on Review can finish as a click after leaving this field.
+        if (JSON.stringify(cargo()) !== before) { reviewed = null; showQuote(); }
       });
       label.append(name, input); picker.append(label);
     }
