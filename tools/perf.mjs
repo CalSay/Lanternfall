@@ -11,16 +11,15 @@
 //            --html file (benchmark another build, e.g. an older commit's dist, for before/after)
 //            --trace dir (write a Chrome trace of each steady-fight window, open in DevTools Performance)
 //
-// Needs the global playwright package and the Chromium at /opt/pw-browsers/chromium (never runs
-// playwright install). Builds nothing: run `node tools/build.mjs` first.
+// Uses shared browser discovery (LF_PLAYWRIGHT / LF_CHROMIUM overrides, local packages, Linux
+// fallbacks and installed Windows browsers). Builds/installs nothing: run `node tools/build.mjs` first.
 // The page is an instrumented copy of dist: a small hook is appended inside the game's IIFE that
 // wraps frame/tick/animate/draw/ui with timers and exposes a few test helpers. dist is not changed.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import http from 'node:http';
-import { createRequire } from 'node:module';
-import { execSync } from 'node:child_process';
+import { findBrowser } from './lib/browser.mjs';
 import { ROOT } from './lib/core.mjs';
 
 const args = process.argv.slice(2);
@@ -42,23 +41,7 @@ const W = QUICK
   : { warm: 3000, fight: 20000, tab: 4000, toast: 4000, boss: 3000, heap: 60000, taps: 7, gather: 6000 };
 
 // ---------------- playwright ----------------
-function loadPlaywright() {
-  const req = createRequire(import.meta.url);
-  try { return req('playwright'); } catch (e) {}
-  const roots = [];
-  try { roots.push(execSync('npm root -g', { encoding: 'utf8' }).trim()); } catch (e) {}
-  roots.push('/opt/node22/lib/node_modules', '/usr/local/lib/node_modules', '/usr/lib/node_modules');
-  for (const r of roots) { try { return req(path.join(r, 'playwright')); } catch (e) {} }
-  throw new Error('playwright not found (expected a global install)');
-}
-const { chromium } = loadPlaywright();
-const EXE = '/opt/pw-browsers/chromium';
-function exePath() {
-  // /opt/pw-browsers/chromium may be the binary itself or a folder holding it.
-  const cands = [EXE, path.join(EXE, 'chrome'), path.join(EXE, 'chrome-linux', 'chrome')];
-  try { for (const d of fs.readdirSync('/opt/pw-browsers')) if (/^chromium-\d+$/.test(d)) cands.push(path.join('/opt/pw-browsers', d, 'chrome-linux', 'chrome')); } catch (e) {}
-  return cands.find(p => { try { return fs.statSync(p).isFile(); } catch (e) { return false; } });
-}
+const browserTools = findBrowser();
 
 // ---------------- instrumented page ----------------
 const HOOK = `
@@ -399,11 +382,11 @@ function report(all) {
 }
 
 // ---------------- main ----------------
-const exe = exePath();
-if (!exe) { console.error('Chromium not found under /opt/pw-browsers'); process.exit(2); }
+const { pw, exe, reason } = browserTools;
+if (!pw || !exe) { console.error(reason); process.exit(2); }
 const srv = await serve(instrumented());
 const base = `http://127.0.0.1:${srv.address().port}/`;
-const browser = await chromium.launch({ executablePath: exe, args: ['--enable-precise-memory-info', '--no-sandbox'] });
+const browser = await pw.chromium.launch({ executablePath: exe, args: ['--enable-precise-memory-info', '--no-sandbox'] });
 const scenarios = [];
 for (const dev of QUICK ? ['phone'] : ['phone', 'desktop']) for (const save of ['new', 'late']) {
   if (ONLY && dev !== ONLY) continue; if (ONLY_SAVE && save !== ONLY_SAVE) continue;

@@ -6,6 +6,8 @@ import path from 'node:path';
 import vm from 'node:vm';
 import os from 'node:os';
 import { spawn } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import { findBrowser } from './lib/browser.mjs';
 import { ROOT, loadCore as loadCoreRaw, memoryStorage, badNumbers, deepDiff, subsetDiff } from './lib/core.mjs';
 
 // Every game this run loads has no Omen (almanac.force('none')), so a new real-world day never
@@ -24,6 +26,10 @@ function loadCore(opts) {
 }
 
 let failed = 0;
+const browserTools = findBrowser();
+let browserSkipped = 0;
+const browserSkipReasons = new Set();
+const browserSummary = (n, reasons) => `browser sections skipped: ${n} (${[...reasons].join('; ') || 'none'})`;
 // Every section starts with `if (section('name')) try {`. `--only=<regex>` runs just the sections whose name matches (dev loop).
 // `--jobs=N` (default 4 when the machine has the cores): the run splits into N child processes, each taking a share of the
 // sections (the sections are independent; the browser ones mostly wait), and the parent prints their output one after the other.
@@ -48,16 +54,21 @@ function section(name) {
 if (JOBS > 1 && !SHARD) {
   const argv = process.argv.slice(2).filter(a => !a.startsWith('--jobs='));
   const outs = await Promise.all(Array.from({ length: JOBS }, (_, i) => new Promise(res => {
-    const c = spawn(process.execPath, [new URL(import.meta.url).pathname, ...argv, `--shard=${i}/${JOBS}`], { stdio: ['ignore', 'pipe', 'pipe'] });
+    const c = spawn(process.execPath, [fileURLToPath(import.meta.url), ...argv, `--shard=${i}/${JOBS}`], { stdio: ['ignore', 'pipe', 'pipe'] });
     let out = ''; c.stdout.on('data', d => (out += d)); c.stderr.on('data', d => (out += d));
     c.on('close', code => res({ out, code }));
   })));
   let bad = 0;
   for (const o of outs) {
-    const lines = o.out.split('\n').filter(l => !/^(all checks passed|\d+ check\(s\) failed)$/.test(l.trim()));
+    const lines = o.out.split('\n').filter(l => {
+      const skip = /^browser sections skipped: (\d+) \((.*)\)$/.exec(l.trim());
+      if (skip) { browserSkipped += +skip[1]; if (+skip[1]) browserSkipReasons.add(skip[2]); return false; }
+      return !/^(all checks passed|\d+ check\(s\) failed)$/.test(l.trim());
+    });
     console.log(lines.join('\n').replace(/\n+$/, '')); bad += (o.out.match(/^ {2}FAIL /gm) || []).length + (o.code && !/ FAIL /.test(o.out) ? 1 : 0);
   }
   console.log(bad ? `\n${bad} check(s) failed` : '\nall checks passed');
+  console.log(browserSummary(browserSkipped, browserSkipReasons));
   process.exit(bad ? 1 : 0);
 }
 // `--times`: print how long each section took (a section starts at its unindented console.log heading).
@@ -67,6 +78,7 @@ if (process.argv.includes('--times')) {
   process.on('exit', () => { if (cur) rows.push([Date.now() - t0, cur]); log0('\nsection times (s):'); rows.sort((x, y) => y[0] - x[0]).slice(0, 15).forEach(r => log0('  ' + (r[0] / 1000).toFixed(1).padStart(6) + '  ' + r[1])); });
 }
 const ok = msg => console.log('  ok   ' + msg);
+const skipBrowser = msg => { browserSkipped++; browserSkipReasons.add(browserTools.reason || 'dist/lanternfall.html missing; run node tools/build.mjs'); ok(msg); };
 const fail = msg => { failed++; console.log('  FAIL ' + msg); };
 const assert = (cond, msg) => (cond ? ok(msg) : fail(msg));
 const E2 = (g, src) => g.eval(src);
@@ -1336,13 +1348,8 @@ if (section('onboarding hint placement (HINT1)')) try {
   assert(/--toast-h/.test(css) && /--toast-h/.test(fs.readFileSync(path.join(ROOT, 'src', 'js', '70-ui.js'), 'utf8')), 'the hint band and placeToasts share --toast-h so they cannot collide');
   ok('source: tick only recomputes on a real change, the bubble is CSS-docked, toasts and hints share one band variable');
   // in Chromium: the band does not move while the game runs (ticks, an ability firing) under it
-  let pw = null;
-  try {
-    const { createRequire } = await import('node:module'); const req = createRequire(import.meta.url);
-    for (const p of ['playwright', '/opt/node22/lib/node_modules/playwright', '/usr/local/lib/node_modules/playwright', '/usr/lib/node_modules/playwright']) { try { pw = req(p); break; } catch (e) {} }
-  } catch (e) {}
-  const exe = ['/opt/pw-browsers/chromium', '/opt/pw-browsers/chromium/chrome', '/opt/pw-browsers/chromium/chrome-linux/chrome'].find(p => { try { return fs.statSync(p).isFile(); } catch (e) { return false; } });
-  if (!pw || !exe || !fs.existsSync(distFile)) { ok('onboarding hint (browser): Playwright or Chromium not here, skipped'); }
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) { skipBrowser('onboarding hint (browser): Playwright or Chromium not here, skipped'); }
   else {
     const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
     const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
@@ -2732,13 +2739,8 @@ if (section('gatherers: tents, fees, unpaid, let go (W1-E)')) try {
 
 // ---- W1-E in Chromium at 360 x 740: the board and your gatherers ----
 if (section('gatherers UI (browser)')) try {
-  let pw = null;
-  try {
-    const { createRequire } = await import('node:module'); const req = createRequire(import.meta.url);
-    for (const p of ['playwright', '/opt/node22/lib/node_modules/playwright', '/usr/local/lib/node_modules/playwright', '/usr/lib/node_modules/playwright']) { try { pw = req(p); break; } catch (e) {} }
-  } catch (e) {}
-  const exe = ['/opt/pw-browsers/chromium-1194/chrome-linux/chrome', '/opt/pw-browsers/chromium', '/opt/pw-browsers/chromium/chrome', '/opt/pw-browsers/chromium/chrome-linux/chrome'].find(p => { try { return fs.statSync(p).isFile(); } catch (e) { return false; } });
-  if (!pw || !exe || !fs.existsSync(distFile)) ok('gatherers UI (browser): Playwright or Chromium not here, skipped');
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('gatherers UI (browser): Playwright or Chromium not here, skipped');
   else {
     const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
     const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
@@ -2882,13 +2884,8 @@ if (section('nav')) try {
   }
   // 6. in Chromium (when Playwright and /opt/pw-browsers are here): switching from inside a menu
   await (async () => {
-    let pw = null;
-    try {
-      const { createRequire } = await import('node:module'); const req = createRequire(import.meta.url);
-      for (const p of ['playwright', '/opt/node22/lib/node_modules/playwright', '/usr/local/lib/node_modules/playwright', '/usr/lib/node_modules/playwright']) { try { pw = req(p); break; } catch (e) {} }
-    } catch (e) {}
-    const exe = ['/opt/pw-browsers/chromium', '/opt/pw-browsers/chromium/chrome', '/opt/pw-browsers/chromium/chrome-linux/chrome'].find(p => { try { return fs.statSync(p).isFile(); } catch (e) { return false; } });
-    if (!pw || !exe || !fs.existsSync(distFile)) { ok('nav (browser): Playwright or Chromium not here, skipped'); return; }
+    const { pw, exe } = browserTools;
+    if (!pw || !exe || !fs.existsSync(distFile)) { skipBrowser('nav (browser): Playwright or Chromium not here, skipped'); return; }
     const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
     const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
     const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
@@ -3891,13 +3888,8 @@ if (section('solo guide pause rules')) try {
 
 // ---- W1-A in Chromium: a fresh game follows the guide with no taps on the gather node and reaches a built Workbench ----
 if (section('solo guide: gathering never freezes (browser)')) try {
-  let pw = null;
-  try {
-    const { createRequire } = await import('node:module'); const req = createRequire(import.meta.url);
-    for (const p of ['playwright', '/opt/node22/lib/node_modules/playwright', '/usr/local/lib/node_modules/playwright', '/usr/lib/node_modules/playwright']) { try { pw = req(p); break; } catch (e) {} }
-  } catch (e) {}
-  const exe = ['/opt/pw-browsers/chromium-1194/chrome-linux/chrome', '/opt/pw-browsers/chromium', '/opt/pw-browsers/chromium/chrome', '/opt/pw-browsers/chromium/chrome-linux/chrome'].find(p => { try { return fs.statSync(p).isFile(); } catch (e) { return false; } });
-  if (!pw || !exe || !fs.existsSync(distFile)) ok('solo guide (browser): Playwright or Chromium not here, skipped');
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('solo guide (browser): Playwright or Chromium not here, skipped');
   else {
     // the SOLO build (not the dormant party build): the page as shipped
     const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
@@ -3955,13 +3947,8 @@ if (section('solo guide: gathering never freezes (browser)')) try {
 
 // ---- SOLO1 in Chromium at 360 x 740: the picker, the buttons, no party UI, and every guide target of the first session ----
 if (section('solo hero (browser)')) try {
-  let pw = null;
-  try {
-    const { createRequire } = await import('node:module'); const req = createRequire(import.meta.url);
-    for (const p of ['playwright', '/opt/node22/lib/node_modules/playwright', '/usr/local/lib/node_modules/playwright', '/usr/lib/node_modules/playwright']) { try { pw = req(p); break; } catch (e) {} }
-  } catch (e) {}
-  const exe = ['/opt/pw-browsers/chromium-1194/chrome-linux/chrome', '/opt/pw-browsers/chromium', '/opt/pw-browsers/chromium/chrome', '/opt/pw-browsers/chromium/chrome-linux/chrome'].find(p => { try { return fs.statSync(p).isFile(); } catch (e) { return false; } });
-  if (!pw || !exe || !fs.existsSync(distFile)) ok('solo (browser): Playwright or Chromium not here, skipped');
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('solo (browser): Playwright or Chromium not here, skipped');
   else {
     const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
     const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
@@ -4108,13 +4095,8 @@ if (section('solo hero (browser)')) try {
 } catch (e) { fail('solo (browser) crashed: ' + (e.stack || e)); }
 // ---- W1-D: guide locks, landscape bar, Journal errors, combat numbers on gather scenes, picker art, header labels (Chromium) ----
 if (section('W1-D (browser)')) try {
-  let pw = null;
-  try {
-    const { createRequire } = await import('node:module'); const req = createRequire(import.meta.url);
-    for (const p of ['playwright', '/opt/node22/lib/node_modules/playwright', '/usr/local/lib/node_modules/playwright', '/usr/lib/node_modules/playwright']) { try { pw = req(p); break; } catch (e) {} }
-  } catch (e) {}
-  const exe = ['/opt/pw-browsers/chromium-1194/chrome-linux/chrome', '/opt/pw-browsers/chromium', '/opt/pw-browsers/chromium/chrome', '/opt/pw-browsers/chromium/chrome-linux/chrome'].find(p => { try { return fs.statSync(p).isFile(); } catch (e) { return false; } });
-  if (!pw || !exe || !fs.existsSync(distFile)) ok('W1-D (browser): Playwright or Chromium not here, skipped');
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('W1-D (browser): Playwright or Chromium not here, skipped');
   else {
     const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
     const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
@@ -4416,13 +4398,8 @@ if (section('notices (W1-B)')) try {
   assert(n.eval('S.codex.init && S.totalKills > 0') && !nt.some(m => /past deeds/.test(m)), `a new game's Codex says nothing about past deeds (${n.eval('S.totalKills')} kills in 40 s; ${nt.filter(m => /Codex/.test(m)).join(' | ') || 'no Codex lines'})`);
 } catch (e) { fail('notices (static) crashed: ' + (e.stack || e)); }
 if (section('notices (browser, W1-B)')) try {
-  let pw = null;
-  try {
-    const { createRequire } = await import('node:module'); const req = createRequire(import.meta.url);
-    for (const p of ['playwright', '/opt/node22/lib/node_modules/playwright', '/usr/local/lib/node_modules/playwright', '/usr/lib/node_modules/playwright']) { try { pw = req(p); break; } catch (e) {} }
-  } catch (e) {}
-  const exe = ['/opt/pw-browsers/chromium', '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', '/opt/pw-browsers/chromium/chrome', '/opt/pw-browsers/chromium/chrome-linux/chrome'].find(p => { try { return fs.statSync(p).isFile(); } catch (e) { return false; } });
-  if (!pw || !exe || !fs.existsSync(distFile)) ok('notices (browser): Playwright or Chromium not here, skipped');
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('notices (browser): Playwright or Chromium not here, skipped');
   else {
     const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
     const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
@@ -4692,13 +4669,8 @@ if (section('solo effects (W1-C)')) try {
 } catch (e) { fail('solo effects crashed: ' + (e.stack || e)); }
 
 if (section('solo copy (browser, W1-C)')) try {
-  let pw = null;
-  try {
-    const { createRequire } = await import('node:module'); const req = createRequire(import.meta.url);
-    for (const p of ['playwright', '/opt/node22/lib/node_modules/playwright', '/usr/local/lib/node_modules/playwright', '/usr/lib/node_modules/playwright']) { try { pw = req(p); break; } catch (e) {} }
-  } catch (e) {}
-  const exe = ['/opt/pw-browsers/chromium', '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', '/opt/pw-browsers/chromium/chrome', '/opt/pw-browsers/chromium/chrome-linux/chrome'].find(p => { try { return fs.statSync(p).isFile(); } catch (e) { return false; } });
-  if (!pw || !exe || !fs.existsSync(distFile)) ok('solo copy (browser): Playwright or Chromium not here, skipped');
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('solo copy (browser): Playwright or Chromium not here, skipped');
   else {
     const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
     const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
@@ -4920,13 +4892,8 @@ if (section('training (W2-A)')) try {
 
 // ---- W2-A in Chromium: the Training list, a Train press, the long-press sheet, the old rows gone ----
 if (section('training (W2-A, browser)')) try {
-  let pw = null;
-  try {
-    const { createRequire } = await import('node:module'); const req = createRequire(import.meta.url);
-    for (const p of ['playwright', '/opt/node22/lib/node_modules/playwright', '/usr/local/lib/node_modules/playwright', '/usr/lib/node_modules/playwright']) { try { pw = req(p); break; } catch (e) {} }
-  } catch (e) {}
-  const exe = ['/opt/pw-browsers/chromium-1194/chrome-linux/chrome', '/opt/pw-browsers/chromium', '/opt/pw-browsers/chromium/chrome', '/opt/pw-browsers/chromium/chrome-linux/chrome'].find(p => { try { return fs.statSync(p).isFile(); } catch (e) { return false; } });
-  if (!pw || !exe || !fs.existsSync(distFile)) ok('training (browser): Playwright or Chromium not here, skipped');
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('training (browser): Playwright or Chromium not here, skipped');
   else {
     const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
     const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
@@ -5299,13 +5266,8 @@ if (section('removed systems (W2-C)')) try {
   assert(E('S.legend === undefined && S.exped === undefined && S.pin === undefined && CAMP_B.maproom === undefined && CAMP_BLESS.wayfarer === undefined'), 'removed systems: a new save has no legend, exped or pin field, no Map Room and no Wayfarer Blessing');
   assert(!g.errors.length, 'removed systems: no handler errors on a new solo game' + (g.errors.length ? ': ' + g.errors[0] : ''));
   // one pass in Chromium over every tab and sub-view, and the menus that sat beside the removed screens
-  let pw = null;
-  try {
-    const { createRequire } = await import('node:module'); const req = createRequire(import.meta.url);
-    for (const p of ['playwright', '/opt/node22/lib/node_modules/playwright', '/usr/local/lib/node_modules/playwright', '/usr/lib/node_modules/playwright']) { try { pw = req(p); break; } catch (e) {} }
-  } catch (e) {}
-  const exe = ['/opt/pw-browsers/chromium-1194/chrome-linux/chrome', '/opt/pw-browsers/chromium', '/opt/pw-browsers/chromium/chrome', '/opt/pw-browsers/chromium/chrome-linux/chrome'].find(p => { try { return fs.statSync(p).isFile(); } catch (e) { return false; } });
-  if (!pw || !exe || !fs.existsSync(distFile)) ok('removed systems (browser): Playwright or Chromium not here, skipped');
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('removed systems (browser): Playwright or Chromium not here, skipped');
   else {
     const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
     const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
@@ -5342,13 +5304,8 @@ if (section('removed systems (W2-C)')) try {
 // closes and the bar stays usable meanwhile, notices dock in the side column, the picker, the Attack sheet (Training), the
 // Training view and the gatherer board fit, and nothing scrolls sideways.
 for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landscape ${w}x${h} (browser, UX-L1)`)) try {
-  let pw = null;
-  try {
-    const { createRequire } = await import('node:module'); const req = createRequire(import.meta.url);
-    for (const p of ['playwright', '/opt/node22/lib/node_modules/playwright', '/usr/local/lib/node_modules/playwright', '/usr/lib/node_modules/playwright']) { try { pw = req(p); break; } catch (e) {} }
-  } catch (e) {}
-  const exe = ['/opt/pw-browsers/chromium-1194/chrome-linux/chrome', '/opt/pw-browsers/chromium', '/opt/pw-browsers/chromium/chrome', '/opt/pw-browsers/chromium/chrome-linux/chrome'].find(p => { try { return fs.statSync(p).isFile(); } catch (e) { return false; } });
-  if (!pw || !exe || !fs.existsSync(distFile)) ok('landscape (browser): Playwright or Chromium not here, skipped');
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('landscape (browser): Playwright or Chromium not here, skipped');
   else {
     const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
     const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
@@ -5529,4 +5486,5 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
 } catch (e) { fail(`landscape ${w}x${h} (browser, UX-L1) crashed: ` + (e.stack || e)); }
 
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
+console.log(browserSummary(browserSkipped, browserSkipReasons));
 process.exit(failed ? 1 : 0);
