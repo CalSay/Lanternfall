@@ -6658,10 +6658,12 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
         try {
           const { ctx, page, errs, X } = await open(w, h);
           const trail = [], bad = [], seen = new Set();
-          let stuck = '', lastKey = '', same = 0;
+          let stuck = '', lastKey = '', same = 0, idle = 0, iters = 0;
           for (let i = 0; i < 220 && !trail.includes('nextup'); i++) {
+            iters = i + 1;
             const st = await X('(s => s ? s.id : "")(onboardStep())');
             if (!st) {
+              idle++;
               // nothing to press: time passes; builds finish (their timers run on the wall clock); the first boss falls; the road opens
               await X(`for (let k = 0; k < 20; k++) tick(0.1); campCatchUp(Date.now() + 36e5);
                 if (S.onboard.done.parry && !S.onboard.done.boss && S.maxZone < 2) { S.maxZone = 2; S.zone = 2; }
@@ -6697,7 +6699,8 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
             if (st === 'nextup') await X('document.querySelectorAll(".bsheet-ov .bsheet-x").forEach(x => x.click()); true');
           }
           const want = ['attack', 'ability', 'dodge', 'parry', 'upgrade', 'gather', 'chop', 'light', 'bench', 'tool', 'forge', 'store', 'nextup'];   // (tab:party: done by the Training step's visit)
-          assert(!stuck && want.every(x => trail.includes(x)), `${at}: the guide walks the first session by pressing what it points at (${trail.join(' > ')}${stuck ? '; stuck on ' + stuck : ''})`);
+          const why = want.every(x => trail.includes(x)) ? '' : '; ' + await X('JSON.stringify({ step: (s => s && s.id)(onboardStep()), done: Object.keys(S.onboard.done).join(","), zone: S.maxZone, gold: Math.round(S.gold), builds: (S.camp && S.camp.builds || []).map(b => b.id + ">" + b.to).join(","), tab: S.tab, view: S.tab ? curView(S.tab) : "", recipes: [...document.querySelectorAll("#sec-craft-recipes .cf-rec")].map(r => r.dataset.kind + (r.querySelector(".cf-go") ? (r.querySelector(".cf-go").disabled ? "-off" : "-go") : "")).join(","), tiers: [...document.querySelectorAll("#sec-craft-recipes [aria-pressed=true]")].map(b => b.textContent.trim()).join("/"), mats: JSON.stringify(S.mats && { ore: S.mats.ore, wood: S.mats.wood }) })') + ' target ' + JSON.stringify(await X(TARGET('tool'))) 
+          assert(!stuck && want.every(x => trail.includes(x)), `${at}: the guide walks the first session by pressing what it points at (${trail.join(' > ')}${stuck ? '; stuck on ' + stuck : ''}${why}; ${iters} of 220 passes, ${idle} idle)`);
           assert(!bad.length && seen.size >= 20, `${at}: every guide step's target is on screen and on top (a click at its centre reaches it), the ring marks it and the hint is on screen (${seen.size} states${bad.length ? '; ' + bad.slice(0, 3).join(' / ') : ''})`);
           assert(!errs.length, `${at}: no page errors in the guide walk` + (errs.length ? ': ' + errs[0] : ''));
           await ctx.close();
