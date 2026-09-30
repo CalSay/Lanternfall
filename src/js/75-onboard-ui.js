@@ -109,7 +109,10 @@
   if (chip) chip.addEventListener('click', () => onboardDone('nextup'));
 
   const q = s => document.querySelector(s);
-  const onGame = () => isWide() || !S.tab;   // the stage is on screen
+  // UX-L1: in landscape a menu covers most of the stage, but the top row (Fight / Gather), Next Up and the action bar
+  // stay on screen. onGame: the whole stage shows; onCtrl: those controls show.
+  const onGame = () => !S.tab;
+  const onCtrl = () => !S.tab || isWide();
   const vis = n => !!(n && n.getClientRects().length && n.offsetParent !== null);
   const first = nm => String(nm || '').split(' ')[0];
   // Menu path: open the tab, then the view, then point at the thing.
@@ -140,7 +143,7 @@
       spec.node = onGame() ? $('stage') : q(`.tab[data-tab="${S.tab}"]`); spec.at = onGame() ? [0.74, 0.62] : null; spec.side = 'up';
     } else {
       const go = q('#modeSeg button[data-act="gather"]');
-      spec.node = onGame() ? (S.activity !== 'gather' && go && !go.hidden ? go : $('stage')) : q(`.tab[data-tab="${S.tab}"]`);
+      spec.node = S.activity !== 'gather' && go && !go.hidden && onCtrl() ? go : onGame() ? $('stage') : q(`.tab[data-tab="${S.tab}"]`);
       if (spec.node === $('stage')) { spec.at = [0.74, 0.62]; spec.side = 'up'; }
       if (x.kind) spec.go = { label: `${verb} at the ${NODE_NAMES[x.kind][x.t - 1]}`, fn: () => { if (setNode(x.kind, x.t)) setActivity('gather'); } };
     }
@@ -150,29 +153,31 @@
   const sbtn = id => q(`#soloBar .sb-${id}`);
   const abName = () => { try { const a = abilityInfo(); return a ? a.name : 'Your ability'; } catch (e) { return 'Your ability'; } };
   const SOLO_UI = {
-    attack: () => onGame() && target() === 'mob' ? { node: sbtn('atk'), side: 'up', text: 'Foes ahead. Press Attack to strike the one in front.' } : null,
-    ability: () => onGame() && target() === 'mob' ? { node: sbtn('ab0'), side: 'up', text: `${abName()} is ready. Press it. (Hold an ability slot to change what it holds.)` } : null,
-    dodge: () => onGame() && target() === 'mob' ? { node: sbtn('dodge'), side: 'up', text: 'A foe winds up a heavy hit (the red ring). Press Dodge to step out of the way.' } : null,
-    parry: () => onGame() && target() === 'mob' ? { node: sbtn('parry'), side: 'up', text: 'Another heavy hit. Press Parry just before it lands: no damage, the foe staggers and you counter.' } : null,
-    boss: () => onGame() && target() === 'mob' && mob && mob.boss ? { node: $('stage'), at: [0.72, 0.62], side: 'up', text: 'The zone boss! Beat it before the timer runs out. Its red rings are your cue: Dodge, or Parry at the last moment.' } : null,
+    attack: () => onCtrl() && target() === 'mob' ? { node: sbtn('atk'), side: 'up', text: 'Foes ahead. Press Attack to strike the one in front.' } : null,
+    ability: () => onCtrl() && target() === 'mob' ? { node: sbtn('ab0'), side: 'up', text: `${abName()} is ready. Press it. (Hold an ability slot to change what it holds.)` } : null,
+    dodge: () => onCtrl() && target() === 'mob' ? { node: sbtn('dodge'), side: 'up', text: 'A foe winds up a heavy hit (the red ring). Press Dodge to step out of the way.' } : null,
+    parry: () => onCtrl() && target() === 'mob' ? { node: sbtn('parry'), side: 'up', text: 'Another heavy hit. Press Parry just before it lands: no damage, the foe staggers and you counter.' } : null,
+    boss: () => target() !== 'mob' || !mob || !mob.boss ? null : onGame() ? { node: $('stage'), at: [0.72, 0.62], side: 'up', text: 'The zone boss! Beat it before the timer runs out. Its red rings are your cue: Dodge, or Parry at the last moment.' }
+      : isWide() ? { node: q(`.tab[data-tab="${S.tab}"]`), text: 'The zone boss is here! Close this menu to watch the fight.' } : null,   // UX-L1: a landscape menu
     gather: () => {
-      if (!onGame()) return null;
+      if (!onCtrl()) return null;
       const b = q('#modeSeg button[data-act="gather"]');
       return b && !b.hidden ? { node: b, text: 'The road is cold. Tap Gather and chop Pine Log for a camp fire.' } : null;
     },
     'tab:party': () => S.tab === 'party' ? null : { node: q('.tab[data-tab="party"]'), text: 'New tab: Hero. See your gear, level and star map.' }
   };
   const STEP_UI = {
-    chop: () => onGame() && atGrove() ? stockSpec('chop', 'the camp fire', 'Tap the tree to chop faster.') : null,
+    // UX-L1: in landscape a menu leaves the rail and top row in view, so the hint stays and points at the lit tab (close the menu)
+    chop: () => (onGame() || isWide()) && atGrove() ? stockSpec('chop', 'the camp fire', 'Tap the tree to chop faster.') : null,
     'stock:bench': () => stockSpec('stock:bench', 'the Workbench'),
     'stock:tool': () => stockSpec('stock:tool', 'a Copper Pickaxe'),
     'stock:forge': () => stockSpec('stock:forge', 'the Forge'),
     'stock:store': () => stockSpec('stock:store', 'the Storehouse'),
     light: () => {
-      if (!onGame()) return null;
+      if (!onGame()) return isWide() ? { node: q(`.tab[data-tab="${S.tab}"]`), text: 'Close this menu, then tap the fire to light it.' } : null;
       const f = $('hearthFire');
       if (atGrove() && f && !f.hidden) return { node: f, round: true, side: 'up', text: 'Tap the fire to light it.' };
-      if (S.activity !== 'gather') return { node: q('#modeSeg button[data-act="gather"]'), text: hearthCan().ok ? 'Tap Gather, then light the fire.' : 'Tap Gather to chop Pine Log for the fire.' };
+      if (S.activity !== 'gather' && onCtrl()) return { node: q('#modeSeg button[data-act="gather"]'), text: hearthCan().ok ? 'Tap Gather, then light the fire.' : 'Tap Gather to chop Pine Log for the fire.' };
       return null;
     },
     bench: () => campPath('bench', ['The fire burns. Open Camp to build.', 'Open Camp.', 'Build the Workbench. It makes tools.']),
@@ -201,7 +206,7 @@
     'tab:gat': () => S.tab === 'gat' ? null : { node: q('.tab[data-tab="gat"]'), text: 'New tab: Gather. Tap it to see what you can mine.' },
     'tab:world': () => S.tab === 'world' ? null : { node: q('.tab[data-tab="world"]'), text: 'You made camp. Tap Camp to build.' },
     'tab:forge': () => S.tab === 'forge' ? null : { node: q('.tab[data-tab="forge"]'), text: 'New tab: Craft. Tap it to make gear.' },
-    nextup: () => onGame() ? { node: chip, text: 'Next Up shows your best next goal. Tap it.' } : null,
+    nextup: () => onCtrl() ? { node: chip, text: 'Next Up shows your best next goal. Tap it.' } : null,
     recruit: () => {
       const rec = O().rec;
       if (rec) return S.tab === 'party' ? null : { node: q('.tab[data-tab="party"]'), text: `${first(ROSTER[rec] && ROSTER[rec].name)} joined you. Open Party to see your team.` };
@@ -253,6 +258,13 @@
     }
     if (!changed) return;   // no real layout change and the same target/text: leave it exactly where it is
     dirty = false; lastNode = spec.node;
+    // UX-L1: a target inside the menu's scrolling content that is out of sight (a short landscape menu: the Make view's
+    // recipes, a camp building further down) is scrolled into view first, so the ring never marks a hidden row
+    const pn = $('panels');
+    if (pn.contains(spec.node) && S.tab) {
+      const pr = pn.getBoundingClientRect(), nr = spec.node.getBoundingClientRect();
+      if (nr.height && (nr.top < pr.top || nr.bottom > pr.bottom - 56)) scrollMenuTo(spec.node);
+    }
     // the marker: a ring around the node, or a round mark at a point inside it (never a filled
     // shape, so it never covers the node/foe underneath)
     const r = spec.node.getBoundingClientRect();
@@ -266,7 +278,7 @@
     // the game view, inside #app over a menu - so it reads as one system with the toast stack and
     // the two never overlap (60-onboard.css .ob-bub, --toast-h). Only the parent and the arrow's
     // up/down direction ever change; the CSS position within that parent is fixed.
-    const over = !!S.tab && !isWide();
+    const over = !!S.tab;   // UX-L1: in landscape it docks at the bottom of the menu panel (80-landscape.css)
     const home = over ? $('app') : $('stageBox');
     if (bub.parentNode !== home) home.append(bub);
     bub.classList.toggle('over-menu', over);

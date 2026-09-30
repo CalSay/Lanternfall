@@ -37,7 +37,7 @@ const ONLY = (process.argv.find(a => a.startsWith('--only=')) || '').slice(7);
 const SHARD = (m => (m ? [+m[1], +m[2]] : null))(/--shard=(\d+)\/(\d+)/.exec(process.argv.join(' ')));
 const JOBS = SHARD ? 1 : +((process.argv.find(a => a.startsWith('--jobs=')) || '').slice(7)) || (ONLY ? 1 : Math.min(4, os.cpus().length));
 // Seconds a section takes (measured, W2-B): the shards are balanced by these; a section not listed counts 2.
-const WEIGHT = { 'solo copy (browser, W1-C)': 60, 'W1-D (browser)': 100, 'training (W2-A, browser)': 18, 'cb2': 40, 'notices (browser, W1-B)': 34, 'solo guide: gathering never freezes (browser)': 31, 'solo hero (browser)': 21, 'types and statuses (S1)': 14, 'save codes': 13, 'line-up planner': 12, 'evolutions (S3)': 10, 'combat': 8, 'gatherers UI (browser)': 7, 'gathering': 6, 'nav': 6, 'retool': 6, 'onboarding hint placement (HINT1)': 5 };
+const WEIGHT = { 'landscape 740x360 (browser, UX-L1)': 42, 'landscape 844x390 (browser, UX-L1)': 38, 'landscape 1280x720 (browser, UX-L1)': 38, 'solo copy (browser, W1-C)': 60, 'W1-D (browser)': 100, 'training (W2-A, browser)': 18, 'cb2': 40, 'notices (browser, W1-B)': 34, 'solo guide: gathering never freezes (browser)': 31, 'solo hero (browser)': 21, 'types and statuses (S1)': 14, 'save codes': 13, 'line-up planner': 12, 'evolutions (S3)': 10, 'combat': 8, 'gatherers UI (browser)': 7, 'gathering': 6, 'nav': 6, 'retool': 6, 'onboarding hint placement (HINT1)': 5 };
 const shardLoad = SHARD ? Array(SHARD[1]).fill(0) : null;
 let LEGACY = false;
 function section(name) {
@@ -4659,7 +4659,8 @@ if (section('W1-D (browser)')) try {
       const m = await page.evaluate(() => { const r = e => { const b = e.getBoundingClientRect(); return [b.left, b.top, b.right, b.bottom]; };
         return { slots: [...document.querySelectorAll('#soloBar .sbtn')].map(r), stage: r(document.getElementById('stageBox')), ring: r(document.querySelector('.ob-ring')), vh: innerHeight, atk: r(document.querySelector('#soloBar .sb-atk')) }; });
       assert(m.slots.length === 6 && m.slots.every(b => b[1] >= 0 && b[3] <= m.vh && b[0] >= 0 && b[2] <= 740 && b[2] - b[0] >= 44), `W1-D: at 740x360 all six action slots are on screen, 44 px or bigger (${m.slots.map(b => Math.round(b[1]) + '-' + Math.round(b[3])).join(' ')})`);
-      assert(m.stage[3] <= m.slots[0][1] + 1 && m.stage[3] - m.stage[1] >= 150, `W1-D: ...and the stage still has room above them (${Math.round(m.stage[3] - m.stage[1])} px tall)`);
+      // UX-L1: the bar moved beside the stage (the side column, bottom right); the stage keeps the full height left of it
+      assert(m.stage[2] <= Math.min(...m.slots.map(s => s[0])) + 1 && m.stage[3] - m.stage[1] >= 280, `W1-D: ...and the stage keeps its room beside them (${Math.round(m.stage[2] - m.stage[0])}x${Math.round(m.stage[3] - m.stage[1])} px)`);
       assert(m.ring[1] >= 0 && m.ring[3] <= m.vh + 6 && (m.ring[0] + m.ring[2]) / 2 >= m.atk[0] - 30 && (m.ring[0] + m.ring[2]) / 2 <= m.atk[2] + 30, 'W1-D: the guide ring marks the Attack slot, inside the screen');
       await ctx.close();
     } catch (e) { fail('W1-D landscape crashed: ' + (e.stack || e)); }
@@ -5501,6 +5502,201 @@ if (section('training (W2-A, browser)')) try {
   }
 } catch (e) { fail('training (W2-A, browser) crashed: ' + (e.stack || e)); }
 // ==== end W2-A ====
+
+// ==== UX-L1: the landscape layout (80-landscape.css, docs/design/layout.md "Landscape") at 740x360, 844x390 and 1280x720.
+// Portrait (360x740) keeps its own checks above. Per size: a fresh game walks the whole first session (the combat steps, the
+// first boss, Training, the cold Hearth, the Workbench, the tool, the Forge, the Storehouse, Next Up) and every step's target is
+// on screen and on top (a real click at its centre reaches it); then a mid-game state: the rail, the top row, the stage and the
+// bar are on screen and unclipped, Attack is the bottom-right slot, the stage zoom is a whole number, each tab's menu opens and
+// closes and the bar stays usable meanwhile, notices dock in the side column, the picker, the Attack sheet (Training), the
+// Training view and the gatherer board fit, and nothing scrolls sideways.
+for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landscape ${w}x${h} (browser, UX-L1)`)) try {
+  let pw = null;
+  try {
+    const { createRequire } = await import('node:module'); const req = createRequire(import.meta.url);
+    for (const p of ['playwright', '/opt/node22/lib/node_modules/playwright', '/usr/local/lib/node_modules/playwright', '/usr/lib/node_modules/playwright']) { try { pw = req(p); break; } catch (e) {} }
+  } catch (e) {}
+  const exe = ['/opt/pw-browsers/chromium-1194/chrome-linux/chrome', '/opt/pw-browsers/chromium', '/opt/pw-browsers/chromium/chrome', '/opt/pw-browsers/chromium/chrome-linux/chrome'].find(p => { try { return fs.statSync(p).isFile(); } catch (e) { return false; } });
+  if (!pw || !exe || !fs.existsSync(distFile)) ok('landscape (browser): Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    const open = async (w, h) => {
+      const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: w < 1000, hasTouch: w < 1000 });
+      const page = await ctx.newPage(); const errs = [];
+      page.on('pageerror', e => errs.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForTimeout(600);
+      await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go'); await page.waitForTimeout(500);
+      // the check drives every tick itself (the frame loop skips tick() while soloPickerOpen() says true): no races with the live clock
+      const X = s => page.evaluate(s => window.__t.x(s), s);
+      await X('globalThis.__spo = soloPickerOpen; soloPickerOpen = () => true; true');
+      return { ctx, page, errs, X };
+    };
+    // where a guide step points, and whether that point is on screen, on top, and marked by the ring
+    const TARGET = id => `(() => { const sp = onboardSpec(${JSON.stringify(id)}); if (!sp || !sp.node) return { ok: false, why: 'no target' };
+      const n = sp.node, r = n.getBoundingClientRect(), px = r.left + r.width * (sp.at ? sp.at[0] : 0.5), py = r.top + r.height * (sp.at ? sp.at[1] : 0.5);
+      const inView = r.width > 0 && r.height > 0 && px >= 0 && px <= innerWidth && py >= 0 && py <= innerHeight;
+      const hit = document.elementFromPoint(px, py), top = !!hit && (hit === n || n.contains(hit) || (!!sp.at && !!hit.closest('#stageBox')));
+      const ring = document.querySelector('.ob-ring').getBoundingClientRect(), bub = document.querySelector('.ob-bub'), br = bub.getBoundingClientRect();
+      const marked = Math.abs(ring.left + ring.width / 2 - px) <= 30 && Math.abs(ring.top + ring.height / 2 - py) <= 30;
+      const bubOk = !bub.hidden && br.left >= -1 && br.right <= innerWidth + 1 && br.top >= -1 && br.bottom <= innerHeight + 1;
+      return { ok: inView && top && marked && bubOk, px: Math.round(px), py: Math.round(py), inView, top, marked, bubOk, hit: hit ? (hit.id || hit.className || hit.tagName) : '', sel: n.id || n.className, tab: S.tab }; })()`;
+    try {
+      {
+        const at = `${w}x${h}`;
+        // ---- 1. the first session's guide, pressing only what it points at ----
+        try {
+          const { ctx, page, errs, X } = await open(w, h);
+          const trail = [], bad = [], seen = new Set();
+          let stuck = '', lastKey = '', same = 0;
+          for (let i = 0; i < 220 && !trail.includes('nextup'); i++) {
+            const st = await X('(s => s ? s.id : "")(onboardStep())');
+            if (!st) {
+              // nothing to press: time passes; builds finish (their timers run on the wall clock); the first boss falls; the road opens
+              await X(`for (let k = 0; k < 20; k++) tick(0.1); campCatchUp(Date.now() + 36e5);
+                if (S.onboard.done.parry && !S.onboard.done.boss && S.maxZone < 2) { S.maxZone = 2; S.zone = 2; }
+                if (S.maxZone >= 2 && !S.onboard.done.upgrade && S.gold < 50) S.gold = 50;
+                if (S.onboard.done.store && S.maxZone < 3) { S.maxZone = 3; S.zone = 3; } true`);
+              await page.waitForTimeout(120); continue;
+            }
+            if (!trail.includes(st)) trail.push(st);
+            const key = st + '|' + await X('S.tab + "|" + (S.tab ? curView(S.tab) : "")');
+            if (key === lastKey) { if (++same > 30) { stuck = key + ' ' + await X('JSON.stringify({ w: (w => w && { k: w.kind, left: w.left, res: w.res })(actWarning()), paused: ONBOARD.paused, act: S.activity, foes: combatFoes().filter(f => f && !f.dead && f.hp > 0).length, par: S.onboard.parries, hp: S.party && S.party.hp, want: soloGuideWants(), r: soloParry(true) })'); break; } } else { same = 0; lastKey = key; }
+            await page.waitForTimeout(seen.has(key) ? 260 : 520);   // the hint places itself (every 250 ms) and the ring glides there (0.18 s)
+            let c = await X(TARGET(st));
+            // a moment later once: rows a view builds in its next update (5 a second), a tab that unlocks on the next pass, a panel still sliding in
+            if (!c.ok) { await page.waitForTimeout(450); c = await X(TARGET(st)); }
+            // the hint is not up yet (its target, a tab, opens on the guide's next unlock pass): the guide waits, and so does the walk
+            if (!c.ok && !c.inView && !c.bubOk && c.why !== 'no target') { await X('for (let k = 0; k < 10; k++) tick(0.1); true'); continue; }
+            if (!seen.has(key)) { seen.add(key); if (!c.ok) bad.push(`${key}: ${JSON.stringify(c)}`); }
+            // do the step through its own target
+            const live = await X(`!!(onboardSpec(${JSON.stringify(st)}) || {}).live`);
+            if (live) {
+              // a step that waits for materials: they come in (the gathering itself is checked at 360 px)
+              await X(`for (const m of onboardNeed(${JSON.stringify(st)})) S.mats[m.fam][m.t - 1] = Math.max(S.mats[m.fam][m.t - 1] || 0, m.n); true`);
+            } else if (!c.ok) await X(`(sp => { if (sp && sp.node) sp.node.click(); return true; })(onboardSpec(${JSON.stringify(st)}))`);
+            else if (['attack', 'ability', 'dodge', 'parry'].includes(st)) { await page.mouse.move(c.px, c.py); await page.mouse.down(); await page.mouse.up(); }
+            else if (st === 'boss') await page.click('.ob-ok');
+            else await page.mouse.click(c.px, c.py);
+            await page.waitForTimeout(160);
+            if (!(await X('ONBOARD.paused'))) await X('for (let k = 0; k < 10; k++) tick(0.1); true');
+            // the Dodge and Parry steps wait for a heavy hit: start one on a pack foe
+            // (a wind-up whose foe fell in the meantime is let go first: it can never be answered)
+            await X('(w => { if (w && w.foe && (w.foe.dead || !(w.foe.hp > 0))) { w.left = 0.01; tick(0.1); } })(actWarning()); true');
+            await X('(S.onboard.done.ability && !S.onboard.done.parry && !actWarning() && combatFoes().some(f => f && !f.dead && f.hp > 0)) && actWarn({ kind: "heavy", id: "l" + Math.random(), foe: combatFoes().find(f => f && !f.dead && f.hp > 0), unit: 0, dur: 2, land: () => {} }); true');
+            if (st === 'nextup') await X('document.querySelectorAll(".bsheet-ov .bsheet-x").forEach(x => x.click()); true');
+          }
+          const want = ['attack', 'ability', 'dodge', 'parry', 'upgrade', 'gather', 'chop', 'light', 'bench', 'tool', 'forge', 'store', 'nextup'];   // (tab:party: done by the Training step's visit)
+          assert(!stuck && want.every(x => trail.includes(x)), `${at}: the guide walks the first session by pressing what it points at (${trail.join(' > ')}${stuck ? '; stuck on ' + stuck : ''})`);
+          assert(!bad.length && seen.size >= 20, `${at}: every guide step's target is on screen and on top (a click at its centre reaches it), the ring marks it and the hint is on screen (${seen.size} states${bad.length ? '; ' + bad.slice(0, 3).join(' / ') : ''})`);
+          assert(!errs.length, `${at}: no page errors in the guide walk` + (errs.length ? ': ' + errs[0] : ''));
+          await ctx.close();
+        } catch (e) { fail(`${at} guide walk crashed: ` + (e.stack || e)); }
+
+        // ---- 2. the layout on a mid-game state ----
+        try {
+          const { ctx, page, errs, X } = await open(w, h);
+          await X('S.onboard.tips = false; onboardUnlockAll(); S.maxZone = 12; S.zone = 12; S.L = 20; S.gold = 1e9; S.camp.open = true; S.camp.b.hearth = 2; S.camp.b.tavern = 1; S.camp.b.store = 1; for (let k = 0; k < 12; k++) tick(0.1); ui(true); true');
+          await page.waitForTimeout(500);
+          const L = await page.evaluate(() => {
+            const R = e => { const b = e.getBoundingClientRect(); return { l: Math.round(b.left), t: Math.round(b.top), r: Math.round(b.right), b: Math.round(b.bottom), w: Math.round(b.width), h: Math.round(b.height) }; };
+            const q = s => document.querySelector(s), W = innerWidth, H = innerHeight;
+            const onTop = e => { const b = e.getBoundingClientRect(), hit = document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2); return !!hit && (hit === e || e.contains(hit)); };
+            const tabs = [...document.querySelectorAll('.tabs .tab')].filter(t => !t.hidden);
+            const topRow = ['.purse', '#modeSeg', '#switchBtn', '#zStep', '#bellBtn'].map(s => q(s)).filter(e => e && !e.hidden && getComputedStyle(e).visibility !== 'hidden');
+            const slots = [...document.querySelectorAll('#soloBar .sbtn')].map(b => ({ act: b.dataset.act, ...R(b), top: onTop(b) }));
+            const clipped = [...document.querySelectorAll('.tabs .tab, #modeSeg button, #switchBtn, .znum, .coin, .nu-chip .nu-eye')].filter(e => e.offsetParent && e.scrollWidth > e.clientWidth + 1).map(e => e.textContent.trim());
+            return { W, H, rail: R(q('.tabs')), tabs: tabs.map(R), tabsTop: tabs.every(onTop), top: topRow.map(e => ({ id: e.id || e.className, ...R(e), top: onTop(e) })), stage: R(q('#stageBox')), slots, clipped,
+              nu: R(q('#nuSlot')), scrollX: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) - W, appX: q('#app').scrollWidth - q('#app').clientWidth };
+          });
+          const st = await X('stageStats()');
+          const railOk = L.rail.l >= 0 && L.rail.t === 0 && L.rail.b >= L.H - 1 && L.rail.w >= 44 && L.rail.w <= 80 && L.tabs.length === 5 && L.tabs.every(t => t.l >= L.rail.l && t.r <= L.rail.r + 1 && t.b <= L.H && t.h >= 44) && L.tabsTop;
+          assert(railOk, `${at}: the rail runs down the left edge with the five tabs, each 44 px or taller, on screen (rail ${JSON.stringify(L.rail)}, tabs ${L.tabs.map(t => t.t + '-' + t.b).join(' ')})`);
+          const topH = L.stage.t, topOk = L.top.length === 5 && L.top.every(x => x.t >= 0 && x.b <= topH + 1 && x.l >= L.rail.r - 1 && x.r <= L.W && x.top) && topH >= 40 && topH <= 52;
+          assert(topOk, `${at}: one top row (${topH} px) holds gold, Fight / Gather, Switch, the zone arrows and the bell, all on screen (${L.top.map(x => x.id + ' ' + x.l + '-' + x.r + '/' + x.t + '-' + x.b).join(', ')})`);
+          const side = Math.min(...L.slots.map(s => s.l));
+          const stageOk = L.stage.l >= L.rail.r - 1 && L.stage.r <= side && L.stage.b <= L.H && L.stage.w >= 360 && L.stage.h >= 280 && Number.isInteger(st.ZM) && st.ZM === (w >= 1200 ? 2 : 1) && st.SW >= 360 && st.SH >= 280;
+          assert(stageOk, `${at}: the stage fills the middle (${L.stage.w}x${L.stage.h}) at a whole-pixel zoom (x${st.ZM}: ${st.SW}x${st.SH} logical px, the heroes drawn at their ~96 art px)`);
+          const atk = L.slots.find(s => s.act === 'atk'), maxR = Math.max(...L.slots.map(s => s.r)), maxB = Math.max(...L.slots.map(s => s.b));
+          const rows = [L.slots.slice(0, 3).map(s => s.act).join(), L.slots.slice(3).map(s => s.act).join()].join('|');
+          assert(L.slots.length === 6 && rows === 'ab0,ab1,ab2|parry,dodge,atk' && L.slots.every(s => s.l >= 0 && s.t >= 0 && s.r <= L.W && s.b <= L.H && s.w >= 44 && Math.abs(s.w - s.h) <= 1 && s.top) && atk.r === maxR && atk.b === maxB && L.W - atk.r <= 12 && L.H - atk.b <= 16,
+            `${at}: the bar is two rows (${rows}) of square slots of 44 px or more in the bottom-right corner, all on top; Attack is the bottom-right slot (${L.slots.map(s => s.act + ' ' + s.w + '@' + s.l + ',' + s.t).join(' ')})`);
+          assert(L.nu.l >= L.stage.r - 1 && L.nu.t >= topH - 1 && L.nu.b <= Math.min(...L.slots.map(s => s.t)), `${at}: Next Up sits at the top of the side column, above the bar (${JSON.stringify(L.nu)})`);
+          assert(!L.clipped.length && L.scrollX <= 0 && L.appX <= 0, `${at}: no label cut off and no sideways scroll (${L.clipped.join(', ') || 'none'}; page ${L.scrollX}, app ${L.appX})`);
+          // notices dock in the side column above the bar, menu or not
+          await X('notes.pops.length = 0; notes.clock += 60; toast("Test notice for the side column.", "good", null, "high"); true'); await page.waitForTimeout(250);
+          const ts = await page.evaluate(() => { const t = document.querySelector('#toasts .toast'); if (!t) return null; const r = t.getBoundingClientRect(), a = document.querySelector('#soloBar .sb-ab0').getBoundingClientRect(), s = document.getElementById('stageBox').getBoundingClientRect(); return { l: r.left, r: r.right, b: r.bottom, barT: a.top, stageR: s.right, W: innerWidth }; });
+          assert(ts && ts.l >= ts.stageR - 1 && ts.r <= ts.W && ts.b <= ts.barT, `${at}: a notice pops in the side column, above the bar and clear of the stage (${JSON.stringify(ts)})`);
+          // each tab's menu: opens from the rail as a panel beside the bar, which stays usable; closes with its X, the lit tab or Escape
+          const menuBad = [];
+          const closers = ['x', 'tab', 'esc', 'x', 'tab'];
+          for (const [i, t] of ['adv', 'party', 'gat', 'forge', 'world'].entries()) {
+            await page.click(`.tabs .tab[data-tab="${t}"]`); await page.waitForTimeout(320);
+            const m = await page.evaluate(() => {
+              const r = document.getElementById('menu').getBoundingClientRect(), s = document.getElementById('stageBox').getBoundingClientRect(), p = document.getElementById('panels');
+              const hitSlot = [...document.querySelectorAll('#soloBar .sbtn')].every(b => { const q = b.getBoundingClientRect(), hit = document.elementFromPoint(q.left + q.width / 2, q.top + q.height / 2); return !!hit && b.contains(hit); });
+              return { l: r.left, r: r.right, t: r.top, b: r.bottom, w: r.width, strip: r.left - s.left, sR: s.right, H: innerHeight, over: p.scrollWidth - p.clientWidth, hitSlot, vis: getComputedStyle(document.getElementById('menu')).visibility };
+            });
+            await X('soloGoIdle(); true');
+            const a = await page.$('#soloBar .sb-atk'), ab = await a.boundingBox(); await page.mouse.move(ab.x + ab.width / 2, ab.y + ab.height / 2); await page.mouse.down(); await page.mouse.up();
+            const pressed = await X('soloActive()');
+            const tabNow = await X('S.tab');
+            if (!(tabNow === t && m.vis === 'visible' && m.w >= 300 && m.t >= 40 && m.b <= m.H + 1 && m.r <= m.sR + 1 && m.strip >= 100 && m.over <= 0 && m.hitSlot && pressed)) menuBad.push(`${t}: ${JSON.stringify({ tabNow, pressed, ...m })}`);
+            const how = closers[i];
+            if (how === 'x') await page.click('#menuX'); else if (how === 'tab') await page.click(`.tabs .tab[data-tab="${t}"]`); else await page.keyboard.press('Escape');
+            await page.waitForTimeout(260);
+            const closed = await page.evaluate(() => [window.__t.x('S.tab'), getComputedStyle(document.getElementById('menu')).visibility].join());
+            if (closed !== ',hidden') menuBad.push(`${t}: did not close by ${how} (${closed})`);
+          }
+          assert(!menuBad.length, `${at}: each tab's menu opens as a panel (300 px or wider, the stage's left strip still showing, no sideways scroll), the bar stays on top and Attack still acts, and it closes with its X, the lit tab or Escape` + (menuBad.length ? ': ' + menuBad.slice(0, 2).join(' / ') : ''));
+          // a notice while a menu is open stays in the side column
+          await page.click('.tabs .tab[data-tab="forge"]'); await page.waitForTimeout(300);
+          await X('notes.pops.length = 0; notes.clock += 60; toast("Another notice, over a menu.", "good", null, "high"); true'); await page.waitForTimeout(250);
+          const tm = await page.evaluate(() => { const l = [...document.querySelectorAll('#toasts .toast')].pop(), m = document.getElementById('menu').getBoundingClientRect(); if (!l) return null; const r = l.getBoundingClientRect(); return { l: r.left, mr: m.right }; });
+          assert(tm && tm.l >= tm.mr - 1, `${at}: over an open menu, notices stay in the side column (${JSON.stringify(tm)})`);
+          // the Training view and the gatherer board fit the panel
+          const fit = async (view, sel) => {
+            await X(`setTab(${JSON.stringify(view)}); ui(true); true`); await page.waitForTimeout(350);
+            return page.evaluate(sel => { const e = document.querySelector(sel), p = document.getElementById('panels'), m = document.getElementById('menu').getBoundingClientRect(); if (!e || !e.offsetParent) return { ok: false, why: 'missing' };
+              const r = e.getBoundingClientRect(); return { ok: r.left >= m.left - 1 && r.right <= m.right + 1 && r.top < innerHeight && p.scrollWidth <= p.clientWidth, l: Math.round(r.left), r: Math.round(r.right), t: Math.round(r.top), ml: Math.round(m.left), mr: Math.round(m.right) }; }, sel);
+          };
+          const tr = await fit('training', '#trainRows'), hb = await fit('tav', '#sec-hands');
+          assert(tr.ok && hb.ok, `${at}: Hero > Training and the Tavern's gatherer board show inside the panel with no sideways scroll (${JSON.stringify({ tr, hb })})`);
+          await page.click('#menuX'); await page.waitForTimeout(260);
+          // the picker (a long press on an ability slot) and the Attack sheet (its Training) fit the screen, the Train button in reach
+          const sheet = async (slot, id) => {
+            const b = await page.$(`#soloBar .sb-${slot}`), r = await b.boundingBox();
+            await page.mouse.move(r.x + r.width / 2, r.y + r.height / 2); await page.mouse.down(); await page.waitForTimeout(700); await page.mouse.up(); await page.waitForTimeout(200);
+            const out = await page.evaluate(id => { const o = document.getElementById(id); if (!o) return { ok: false, why: 'not open' }; const s = o.querySelector('.sp-sheet').getBoundingClientRect(), g = o.querySelector('.tr-go'), gr = g && g.getBoundingClientRect();
+              return { ok: s.top >= 0 && s.bottom <= innerHeight + 1 && s.left >= 0 && s.right <= innerWidth && !!gr && gr.bottom <= innerHeight && gr.top >= 0, top: Math.round(s.top), bottom: Math.round(s.bottom), go: gr ? Math.round(gr.bottom) : null }; }, id);
+            await page.keyboard.press('Escape'); await page.waitForTimeout(150);
+            return out;
+          };
+          const pk = await sheet('ab0', 'abPicker'), ms = await sheet('atk', 'moveSheet');
+          assert(pk.ok && ms.ok && !(await X('!!document.querySelector("#abPicker, #moveSheet")')), `${at}: the ability picker and the Attack sheet (with Training) fit the screen with their Train button in view, and close with Escape (${JSON.stringify({ pk, ms })})`);
+          assert(!errs.length, `${at}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+          await ctx.close();
+        } catch (e) { fail(`${at} layout checks crashed: ` + (e.stack || e)); }
+      }
+      // turning a phone: portrait <-> landscape keeps the open menu and moves the notices to the new dock
+      if (w === 740) try {
+        const { ctx, page, errs, X } = await open(360, 740);
+        await X('S.onboard.tips = false; onboardUnlockAll(); true');
+        await page.click('.tabs .tab[data-tab="forge"]'); await page.waitForTimeout(300);
+        await page.setViewportSize({ width: 740, height: 360 }); await page.waitForTimeout(400);
+        const a = await X('[S.tab, document.getElementById("toasts").parentNode.id, document.getElementById("toasts").className].join()');
+        await page.setViewportSize({ width: 360, height: 740 }); await page.waitForTimeout(400);
+        const b = await X('[S.tab, document.getElementById("toasts").parentNode.id, document.getElementById("toasts").className].join()');
+        assert(a === 'forge,app,toasts side-dock' && b === 'forge,app,toasts over-menu', `turning the phone keeps the open menu and docks notices for the layout (${a} / ${b})`);
+        assert(!errs.length, 'no page errors while turning' + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      } catch (e) { fail('turning crashed: ' + (e.stack || e)); }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail(`landscape ${w}x${h} (browser, UX-L1) crashed: ` + (e.stack || e)); }
+// ==== end UX-L1 ====
 
 // ==== PARTY_LEGACY: checks of the dormant party build (W2-B). They run only with `node tools/check.mjs --party` and are deleted
 // in wave 3 with the party code. Nothing above this line may depend on anything in here. ====
