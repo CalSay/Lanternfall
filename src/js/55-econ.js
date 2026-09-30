@@ -15,13 +15,12 @@
 //   Crit damage (6.2), the pool that replaced every gold-gain source outside gear:
 //     keenSource(id, name, fn) -> remove()   register a source (fn() -> fraction, e.g. 0.03)
 //     keenSources() -> [{ id, name, v }]     keenRaw() (uncapped sum), keen() (capped at ECON.critCap), keenMult() = 1 + keen()
-//     keenCharMult(id)       a companion's average damage x from the pool (59-combat registers it)
 //   The ledger (S.econ, 8.3 and 9): econSpend(cat, n), econEarn(cat, n), econLedger()
 //   gearGold()              gear gold %, capped at ECON.gearGoldCap (goldMult reads it)
 // Player-facing name of the pool: "crit damage" (never "Keen"; names.md).
 
 let goldPerFoe, econRegionReached, econHearthGold, econRowGold, econShrineGold, econStoreGold, econTentGold, econBalefireGold,
-  econHireFee, econShiftFee, econUpgradeGold, econReforgeGold, keenSource, keenSources, keenRaw, keen, keenMult, keenCharMult,
+  econHireFee, econShiftFee, econUpgradeGold, econReforgeGold, keenSource, keenSources, keenRaw, keen, keenMult,
   econSpend, econEarn, econLedger, gearGold;
 
 {
@@ -52,26 +51,17 @@ let goldPerFoe, econRegionReached, econHearthGold, econRowGold, econShrineGold, 
   const safe = f => { try { const v = +f(); return v > 0 ? v : 0; } catch (e) { return 0; } };
   keenSources = () => SRC.map(s => ({ id: s.id, name: s.name, v: safe(s.fn) }));
   // A cached sum: sources change slowly (levels, stars, Blessings), so it refreshes every 0.25 s of
-  // game time and on the events that move a source. critMult() and charMod() read it per hit.
+  // game time and on the events that move a source. critMult() reads it per hit.
   let cache = null, age = 0;
   onTick(dt => { age += dt; if (age >= 0.25) { age = 0; cache = null; } });
-  for (const ev of ['gear', 'blessChange', 'deedTier', 'starLit', 'starUnlit', 'starReset', 'starLayout', 'synergyChange', 'fieldChange', 'zoneClear', 'codexPage'])
+  for (const ev of ['gear', 'blessChange', 'deedTier', 'starLit', 'starUnlit', 'starReset', 'starLayout', 'zoneClear', 'codexPage'])
     on(ev, () => { cache = null; });
   keenRaw = () => { let s = 0; for (const x of SRC) s += safe(x.fn); return s; };
   keen = () => { if (cache === null || cache.S !== S) cache = { S, v: Math.min(ECON.critCap, keenRaw()) }; return cache.v; };
   keenMult = () => 1 + keen();
-  // A companion's crits are averaged into its damage (ROLE_STATS crit, critX): scale that average.
-  keenCharMult = id => {
-    const k = keen(); if (!(k > 0) || typeof ROSTER === 'undefined' || !ROSTER[id]) return 1;
-    const st = ROLE_STATS[ROSTER[id].role] || {}, c = st.crit || 0, x = st.critX || 1;
-    return c > 0 && x > 1 ? (1 + c * (x * (1 + k) - 1)) / (1 + c * (x - 1)) : 1;
-  };
   // The Lanternbearer: through mod('critDmg') (critMult in 40-rules).
   addModifier('critDmg', keenMult);
-  // Precision (the Lanternbearer's upgrade that replaced Fortune) and the Loaded Die (the relic that
-  // replaced the Lucky Coin).
-  // W2-A: Precision is the party game's; in solo its +15% moved to each class's crit damage stars (57e, into this pool).
-  if (!soloOn()) keenSource('precision', 'Precision', () => ECON.precision.v * Math.min(ECON.precision.cap, S.precision || 0));
+  // The Loaded Die (the relic that replaced the Lucky Coin). Precision's +15% moved to each class's crit damage stars (57e, into this pool).
   keenSource('die', 'Loaded Die', () => ECON.crit.die * Math.min(ECON.crit.dieCap, (S.relic && S.relic.edge) || 0));
 
   // ---------------- gold on gear ----------------

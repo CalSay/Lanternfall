@@ -141,7 +141,7 @@ let resize, animate, draw, stageStats, warmScene;
   function pickZoom(w, h, dpr) {
     // Solo (owner, 2026-09-29): the stage shows at least SOLO_MIN_W logical px across, so the hand-drawn hero (about
     // 96 px tall, up to 110 wide) leaves the foes room: one zoom step out on portrait phones.
-    const k = Math.max(0, Math.min(1, (h / w - 1) / 0.3)), minW = Math.max((ZOOM_W - (ZOOM_W - ZOOM_WT) * k) * zoomX, typeof soloOn === 'function' && soloOn() ? SOLO_MIN_W : 0);
+    const k = Math.max(0, Math.min(1, (h / w - 1) / 0.3)), minW = Math.max((ZOOM_W - (ZOOM_W - ZOOM_WT) * k) * zoomX, SOLO_MIN_W);
     let z = 1;
     for (const c of ZOOMS) {
       if (Number.isInteger(dpr) && !Number.isInteger(c * dpr)) continue;
@@ -253,7 +253,7 @@ let resize, animate, draw, stageStats, warmScene;
     role: '', aim: null, arc: 0, dy: 0, castTo: null, go: 0, goT: 0, mv: 0, kb: 0, down: false, upT: 0, eye: 0, fcd: 0,
     bD: 0, bBig: false, bBlk: false, bT: -1, bDot: 0, bH: 0, bS: 0, bC: -1, _x: 0, _y: 0, _f: null });
   const hero = mkActor('hero');
-  let comps = [], order = [], ghosts = [], front = hero, lastField = null, lastCells = null, heroKey = '', checkT = 0, layoutDirty = true;
+  let comps = [], order = [], ghosts = [], front = hero, heroKey = '', checkT = 0, layoutDirty = true;
 
   // Gathering (G1): the hero holds the right tool (11c-art-tools.js toolFor), baked per class, look,
   // tool and tier; the party rests at the Hearth, so only the hero stands in a gather scene (layout).
@@ -275,21 +275,10 @@ let resize, animate, draw, stageStats, warmScene;
     toolsWarm = k;
     for (const sp of specs) idleTask(() => { const set = charFrames(sp, true); if (set) idleTask(() => void set.strike); });   // strike: where the hero stands
   }
-  function refreshParty() {
-    const p = S.party || {};
-    lastField = p.field; lastCells = p.cells;
-    comps = (p.field || []).map(key => {
-      const a = comps.find(c => c.key === key) || mkActor(key);
-      if (!a.fr) a.fr = charFrames(companionSpec(key));
-      const k = kindOf(key); a.kind = k[0]; a.pcol = k[1] || '#fff';
-      a.role = (typeof ROSTER !== 'undefined' && ROSTER[key] && ROSTER[key].role) || 'striker';
-      return a;
-    });
-    layoutDirty = true;
-  }
+  function refreshParty() { comps = []; layoutDirty = true; }   // no companions (W3-A): the hero stands alone
   function layout() {
     layoutDirty = false;
-    const cells = (S.party && S.party.cells) || {}, used = {};
+    const cells = {}, used = {};
     order = target() === 'node' ? [hero] : [hero].concat(comps);
     for (const a of order) { const c = cells[a.key] || { col: a === hero ? 2 : 1, lane: 1 }; a.col = c.col; a.lane = c.lane; used[c.col + ':' + c.lane] = 1; }
     // raid: other raiders stand in the free cells, faded
@@ -325,7 +314,7 @@ let resize, animate, draw, stageStats, warmScene;
     if (k < 1) for (const a of order) a.hx = Math.round(x1 - (x1 - a.hx) * k);
     // Solo: a ranged hero (arrow or bolt) stands well back on the left, leaving the middle of the road for
     // the shot; the hand-drawn art keeps the whole sprite in view (64h heroArtStage). Melee stays at the front.
-    if (typeof soloOn === 'function' && soloOn() && hero.kind && target() === 'mob') hero.hx = Math.min(hero.hx, Math.round(SW * 0.2));
+    if (hero.kind && target() === 'mob') hero.hx = Math.min(hero.hx, Math.round(SW * 0.2));
     order.sort((a, b) => a.lane - b.lane || a.col - b.col);
     front = hero;
     for (const a of order) if (a.alpha === 1 && (a.col > front.col || (a.col === front.col && a.lane > front.lane))) front = a;
@@ -991,7 +980,6 @@ let resize, animate, draw, stageStats, warmScene;
   // ================= per-frame update =================
   animate = function (dt) {
     if (!SW) return;
-    if (S.party && (S.party.field !== lastField || S.party.cells !== lastCells)) refreshParty();
     checkT -= dt;
     if (checkT <= 0 || !hero.fr) { checkT = 1; refreshHero(false); refreshGhosts(); readHud(); if (hudOn() !== hudBtnOn) drawHudBtn(); checkTgtBtn(); readLooks(); warmWell(); warmTools(); }
     // a live Deepwell run: no zone line, no boss timer (inline styles, written only on a change;
@@ -1882,7 +1870,7 @@ let resize, animate, draw, stageStats, warmScene;
   let abilityTimer = 0, abCls = '', abLeft = -1, abReady = null, abAuto = null;
   function updateAbilityButton() {
     const info = typeof abilityInfo === 'function' ? abilityInfo() : null;
-    const show = !!info && target() !== 'node' && !soloOn();   // SOLO1: the button row (75-solo-ui) has the ability
+    const show = false;   // the button row (75-solo-ui) has the ability; this stage button is dead (UX-L1 can drop it)
     if (abBtn.hidden === show) abBtn.hidden = !show;
     if (!show) return;
     const cls = S.party.cls;
@@ -1906,7 +1894,7 @@ let resize, animate, draw, stageStats, warmScene;
     emit('tap', { node: target() === 'node' });
     if (!S.hintDone) { S.hintDone = true; $('hint').style.opacity = 0; }
     if (target() === 'node') { attack(hero); tapNode(); return; }
-    if (soloOn() && target() === 'mob') return;   // SOLO1: tapping the stage no longer attacks (the Attack button does)
+    if (target() === 'mob') return;   // tapping the stage no longer attacks (the Attack button does)
     const r = stageRect || (stageRect = stageEl.getBoundingClientRect());
     playerTap({ x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height - 0.06 });
   });

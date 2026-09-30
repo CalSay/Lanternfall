@@ -1,24 +1,17 @@
-// 55-party: hero classes (Stage A). Class choice, class taps, the hero ability with
-// auto-cast, idle auto-play, the starter companion, the fielded party (from the old
-// S.comp slots) and the Mirror of Embers.
+// 55-party: hero classes (Stage A). Class choice, class taps, idle auto-play and the Mirror of Embers. The hero's ability
+// is the solo layer's (59j-solo soloAbility). The companions, the fielded party and the Lightkeeper's party share went with
+// the party (W3-A). The tab and the sheet that show the hero are 75-party.js and 75-party-sheet.js.
 // CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
-// Contract: docs/design/stage-a-plan.md ("State (A1)", "Class data and actions (A1)").
 //
 // Classes 2.0 S2: the kits run by legacy kit key (S.party.cls: 'warden' = the Warrior's kit, 'lanternmage',
 // 'ranger', 'lightkeeper' = a Lanternmage on the Lightkeeper's path); the class itself is S.cls (55-classes.js)
 // and the numbers come from 24-data-classes.js. Grit (was guard stacks) also cuts damage taken
-// (heroGritDr, read by 59-combat); Lantern Flare Burns the pack; the Ranger's base crit is 15% (critBase).
+// (heroGritDr, read by 59-combat); the Ranger's base crit is 15% (critBase).
 //
-// Exposed names: HERO_CLASSES, COMP_CHAR_KEYS, CHAR_ROLE, chooseClass, castAbility,
-// classTap, useMirror, toggleAutoCast, abilityInfo, partyBuffs, partyRefreshField, heroGritDr,
-// and the stage HUD hooks unitHp, unitCd, bossTelegraph (Stage C combat replaces them).
-// Everything else is private (inside the block below, or prefixed pty).
+// Exposed names: HERO_CLASSES, chooseClass, castAbility, classTap, useMirror, toggleAutoCast, abilityInfo,
+// partyBuffs, heroGritDr, heroGuardN, partyClock, hawkCrit, and the stage HUD hooks unitHp, unitCd, bossTelegraph.
+// Everything else is private (inside the block below).
 //
-// Stage A interim rules (monsters don't attack yet): every class effect is a damage
-// buff applied through addModifier, or direct damage through heroSwing()/strike().
-// Hero-only damage scaling (Lightkeeper x0.2) is applied as 'dmg' x k and 'party' x 1/k,
-// so companions are unaffected.
-
 // The legacy view of the classes (classes-2 8.3): the four kit keys every reader written before S2 uses
 // (S.party.cls, item kinds, powers, boons, Bonds), built from 24-data-classes.js. 'warden' is the
 // Warrior's kit, 'lanternmage' the Lanternmage's, 'lightkeeper' a Lanternmage on the Lightkeeper's path.
@@ -35,19 +28,10 @@ const HERO_CLASSES = (() => {
   return out;
 })();
 
-// Old S.comp index -> companion character key (stage-a-plan.md).
-const COMP_CHAR_KEYS = ['tobin', 'wren', 'pip', 'aldric', 'kestrel', 'oriel', 'elowen'];
-// Role and auto-placement column (0 back, 1 mid, 2 front) per character.
-const CHAR_ROLE = {
-  tobin: { role: 'tank', col: 2 }, wren: { role: 'striker', col: 1 }, pip: { role: 'caster', col: 0 },
-  aldric: { role: 'tank', col: 2 }, kestrel: { role: 'striker', col: 1 }, oriel: { role: 'caster', col: 0 },
-  elowen: { role: 'support', col: 0 }, bram: { role: 'striker', col: 2 }, hesketh: { role: 'support', col: 0 }
-};
-
-let chooseClass, castAbility, classTap, useMirror, toggleAutoCast, abilityInfo, partyBuffs, partyRefreshField;
-// Stage C / Constellations helpers: heroGuardN() live guard stacks, partyHymnOn() Rally Hymn up,
-// partyClock() this file's clock (mob.markUntil is on it), hawkCrit() the Hawk Eye first-hit crit.
-let heroGuardN, heroGritDr, partyHymnOn, partyClock, hawkCrit;
+let chooseClass, castAbility, classTap, useMirror, toggleAutoCast, abilityInfo, partyBuffs;
+// Stage C / Constellations helpers: heroGuardN() live guard stacks, partyClock() this file's clock (mob.markUntil is
+// on it), hawkCrit() the Hawk Eye first-hit crit.
+let heroGuardN, heroGritDr, partyClock, hawkCrit;
 // Stage HUD hooks (read by 62-stage.js about 10 times a second; Stage C combat fills them in).
 //   unitHp(key)     -> { hp, max, shield } | null   key: 'hero' or a character key. Party HP is not
 //                      simulated yet, so every unit is full. null = draw no bar.
@@ -60,41 +44,34 @@ let unitHp, unitCd, bossTelegraph;
 
 {
   registerState('party', {
-    v: 1, cls: null, chosen: false, newGame: false, field: [], cells: {},
+    v: 1, cls: null, chosen: false, newGame: false,
     abilityCd: 0, autoCast: true, mirrors: 0
   });
 
-  // Starter per class: character key and the old S.comp slot it uses for the maths.
-  const STARTER = { warden: ['wren', 1], lanternmage: ['tobin', 0], ranger: ['tobin', 0], lightkeeper: ['bram', 0] };
   // Tuning knobs (Stage A interim). S2: the class numbers come from 24-data-classes.js (CLASS_ABILITIES,
   // CLS_TUNE); the knob names stay (stars and Deepwell boons tune them through bonus('tune:<knob>')).
   const A = CLASS_ABILITIES, G = CLS_TUNE.grit;
   const T = {
-    heroMul: { warden: 1, lanternmage: 1, ranger: 1, lightkeeper: 0.2 },
+    heroMul: { warden: 1, lanternmage: 1, ranger: 1, lightkeeper: 1 },
     tapMul: { warden: A.heavy.coef, lanternmage: A.ember.coef, ranger: A.focus.coef, lightkeeper: A.ember.var.priest.coef },
     guard: G.v, guardMax: G.max, guardT: G.t,   // Grit (was "guard stacks"): +3% damage and 1% less taken each
-    embersMax: CLS_TUNE.embers.max, flare: A.flare.fx[1][1], flarePerEmber: A.flare.fx[1][2].perStack,
+    embersMax: CLS_TUNE.embers.max,
     markT: 8, mark: 1.25, markCrit: 1.5,
-    volleyHits: 10, volleyAtk: 1.5, volleyT: 2, haste: 1.5, hasteT: 8,
-    bless: 0.2, blessMax: 3, blessT: 6, lkAura: 1.25, lkShare: 1,   // (F1, formation.md 4.4) lkAura was 1.1: a support is half the field now
-    wall: 1 + A.shieldwall.emp, wallT: A.shieldwall.t, wallPause: 3, hymn: 1.4, hymnT: 8,
-    autoIdle: 4, autoEvery: 2, autoEff: 0.5, autoCd: 0, autoCastZone: 10, mirrorZone: 36, mirrorChance: 0.02
+    volleyHits: 10, volleyT: 2,          // Rain of Arrows paces its volley by these
+    bless: 0.2, blessMax: 3, blessT: 6,
+    autoIdle: 4, autoEvery: 2, autoEff: 0.5, mirrorZone: 36, mirrorChance: 0.02
   };
 
   // ---- runtime (not saved) ----
-  let clock = 0, lastTap = -1e9, nextAuto = 0, readyFor = 0;
+  let clock = 0, lastTap = -1e9, nextAuto = 0;
   let guard = [], bless = [];            // stacks: [{ until, v }]
-  let wallUntil = 0, pauseUntil = 0, hymnUntil = 0, hasteUntil = 0;
-  let volleyLeft = 0, volleyNext = 0, volleyEff = 1, worldEmbers = 0;
-  let initFor = null, fieldSig = '';
+  let worldEmbers = 0, initFor = null;
   // Deepwell boons (57d-deepwell.js) tune the knobs below through bonus('tune:<knob>') and
-  // mod('abilityCd'); both are 0 / 1 outside a Deepwell run. spare: extra ability charges held.
+  // mod('abilityCd'); both are 0 / 1 outside a Deepwell run.
   const tn = k => T[k] + bonus('tune:' + k);
   // Constellation keystones and notables (57e-constellations.js STAR_KS): bonus('ks:<id>') > 0.
   const ks = id => bonus('ks:' + id) > 0;
-  let heavyN = 0, tapN = 0, rainLeft = 0, rainNext = 0, agesT = 0;
-  const abCd = c => HERO_CLASSES[c].ability.cd * mod('abilityCd');
-  let spare = 0, spareT = 0;
+  let heavyN = 0, tapN = 0, rainLeft = 0, rainNext = 0;
 
   const P = () => S.party;
   const cls = () => P().cls && HERO_CLASSES[P().cls] ? P().cls : null;
@@ -104,45 +81,14 @@ let unitHp, unitCd, bossTelegraph;
     l.push({ until: clock + dur, v, e: e == null ? 1 : e });   // e: the stack's strength (auto-taps 0.5)
     while (l.length > max) l.shift();
   };
-  const hasProgress = () => S.totalKills > 0 || S.L > 1 || S.maxZone > 1 || S.comp.some(n => n > 0);
-
-  // ---- field and formation ----
-  function charKey(slot) {
-    return slot === 0 && P().newGame && P().cls === 'lightkeeper' ? 'bram' : COMP_CHAR_KEYS[slot];
-  }
-  // Before the roster (Stage A saves, while 56-roster loads): one member per slot, lane 1 (F1).
-  function placeCells() {
-    const cells = {}, used = {};
-    const put = (key, col) => {
-      for (const c of [col, 1, col === 2 ? 0 : 2]) if (!used[c]) { cells[key] = { col: c, lane: 1 }; used[c] = 1; return; }
-    };
-    const c = cls();
-    put('hero', c ? { front: 2, mid: 1, back: 0 }[HERO_CLASSES[c].row] : 2);
-    for (const k of P().field) put(k, (CHAR_ROLE[k] || { col: 1 }).col);
-    P().cells = cells;
-  }
-  // The 3 strongest owned old companion slots, strongest first.
-  partyRefreshField = function (force) {
-    // 56-roster owns field and cells once the save is on the roster (rv >= 1), even while it loads.
-    if (rosterLive() || P().rv >= 1) { if (rstReady) rosterSyncField(force); return; }
-    const st = P().newGame && P().cls ? STARTER[P().cls][1] : -1;
-    // New games: the starter always stands first (field[0]); then the strongest owned slots.
-    const owned = S.comp.map((n, i) => n > 0 ? i : -1).filter(i => i >= 0 && COMPS[i])
-      .sort((a, b) => (b === st) - (a === st) || COMPS[b].dps - COMPS[a].dps).slice(0, 3);
-    const sig = owned.join(',') + '|' + P().cls + '|' + P().newGame;
-    if (!force && sig === fieldSig) return;
-    fieldSig = sig;
-    P().field = owned.map(charKey);
-    placeCells();
-  };
+  const hasProgress = () => S.totalKills > 0 || S.L > 1 || S.maxZone > 1;
 
   // Runs once per loaded save (S is replaced by loadSave()).
   function ensureInit() {
     if (initFor === S) return;
-    initFor = S; fieldSig = '';
+    initFor = S;
     const p = P();
-    if (!p.chosen && !p.cls && !p.newGame && !p.field.length && !hasProgress()) p.newGame = true;
-    partyRefreshField(true);
+    if (!p.chosen && !p.cls && !p.newGame && !hasProgress()) p.newGame = true;
   }
 
   // ---- class choice ----
@@ -153,23 +99,13 @@ let unitHp, unitCd, bossTelegraph;
     ensureInit();
     const r = clsResolve(key);
     if (!r || !HERO_CLASSES[r.kit]) return false;
-    const p = P(), first = !p.cls && !p.chosen, from = p.cls, o = opts || {};
+    const p = P(), from = p.cls, o = opts || {};
     if (typeof heroName === 'string') { const n = heroName.trim().slice(0, 16); if (n) S.name = n; }
     // A base id keeps a granted path on the same base; a legacy key names its path.
     const evo = LEGACY_CLS[key] ? r.evo : undefined;
     key = clsSet(r.base, evo, { now: o.now, stamp: !p.chosen || o.free });
-    p.chosen = true; p.abilityCd = 0; readyFor = 0;
-    guard = []; bless = []; volleyLeft = 0;
-    if (!soloOn()) toast(`You walk the path of the ${HERO_CLASSES[key].name}.`, 'good');
-    if (first && p.newGame && !soloOn()) {   // SOLO1: no starter companion
-      const [ck, slot] = STARTER[key];
-      if (rosterLive()) unlockChar(ROSTER_STARTER[key] || ck, 'starter');
-      else {
-        S.comp[slot] += 1;
-        toast(`${ck[0].toUpperCase() + ck.slice(1)} joins your party.`, 'good', null, 'high');
-      }
-    }
-    partyRefreshField(true);
+    p.chosen = true; p.abilityCd = 0;
+    guard = []; bless = [];
     const lc = lbClass();
     emit('classChosen', { cls: key, from, base: lc.base, evo: lc.evo, free: !!o.free });
     return true;
@@ -197,52 +133,20 @@ let unitHp, unitCd, bossTelegraph;
   const canHit = () => { const tg = target(); return tg === 'world' || (tg === 'mob' && mob && !mob.dead); };
   castAbility = function (opts) {
     ensureInit();
-    if (soloOn() && typeof soloAbility === 'function') return soloAbility(opts);   // SOLO1: the hero's own ability
-    const c = cls(), p = P();
-    if (!c || (p.abilityCd > 0 && spare <= 0) || !canHit()) return false;
-    const auto = !!(opts && opts.auto);
-    const ab = HERO_CLASSES[c].ability;
-    // Lantern Bastion: the Wall stops the boss timer for its whole length.
-    if (c === 'warden') { wallUntil = clock + tn('wallT'); pauseUntil = clock + (ks('bastion') ? tn('wallT') : tn('wallPause')); emit('shake', 0.2); }
-    else if (c === 'lanternmage') {
-      const world = target() === 'world';
-      const n = world ? worldEmbers : (mob.embers || 0);
-      if (!(bonus('tune:keepEmbers') > 0)) { if (world) worldEmbers = 0; else mob.embers = 0; }
-      if (!world && typeof stTagNext === 'function') stTagNext('ab');   // S1: an ability (the reaction window's x1.25)
-      heroSwing(heroAtk() * tn('flare') * (1 + tn('flarePerEmber') * n), false);
-      // S2 (classes-2 1.4): the Flare sets every foe in the pack burning (Burn spreads when one dies).
-      if (!world && typeof stApply === 'function' && typeof combatFoes === 'function' && combatOn()) {
-        const pw = heroAtk();
-        for (const f of combatFoes()) if (f && !f.dead) stApply(f, 'burn', 1, pw, 0);
-      }
-      // Everburn: Flare plants 2 new Embers after it goes off.
-      if (ks('everburn')) { const em = tn('embersMax'), k = STAR_KS.everburn.plant; if (world) worldEmbers = Math.min(em, worldEmbers + k); else if (mob) mob.embers = Math.min(em, (mob.embers || 0) + k); }
-      emit('shake', 0.3);
-    }
-    else if (c === 'ranger') { volleyLeft = tn('volleyHits'); volleyNext = clock; volleyEff = 1; hasteUntil = clock + T.volleyT + tn('hasteT'); }
-    else if (c === 'lightkeeper') { hymnUntil = clock + (bonus('tune:hymnFloor') > 0 ? 1e9 : tn('hymnT')); }
-    if (p.abilityCd > 0) spare--; else p.abilityCd = abCd(c);
-    readyFor = 0;
-    emit('ability', { cls: c, name: ab.name, auto });
-    return true;
+    return typeof soloAbility === 'function' ? soloAbility(opts) : false;   // the hero's own ability (59j-solo)
   };
 
-  abilityInfo = function () {
-    if (soloOn() && typeof soloAbilityInfo === 'function') return soloAbilityInfo();
-    const c = cls(); if (!c) return null;
-    const ab = HERO_CLASSES[c].ability, p = P();
-    return { name: ab.name, desc: ab.desc, cd: abCd(c), left: p.abilityCd, ready: p.abilityCd <= 0 || spare > 0, spare,
-      autoUnlocked: S.maxZone >= T.autoCastZone, autoCast: p.autoCast };
-  };
+  abilityInfo = function () { return typeof soloAbilityInfo === 'function' ? soloAbilityInfo() : null; };
 
-  // Stage C: party combat (59-combat.js, 59b-enemies.js) fills these. Kept objects, no allocation.
+  // Stage C: combat (59-combat.js, 59b-enemies.js) fills these. Kept objects, no allocation.
   const FULL_HP = { hp: 1, max: 1, shield: 0 }, HERO_CD = { t: 0, max: 1 };
   const combatOn = () => typeof partyCombatOn === 'function' && partyCombatOn();
   unitHp = key => (combatOn() && typeof cbUnitHp === 'function' && cbUnitHp(key)) || FULL_HP;
   unitCd = key => {
-    if (key !== 'hero') return combatOn() && typeof cbUnitCd === 'function' ? cbUnitCd(key) : null;
-    const c = cls(); if (!c) return null;
-    HERO_CD.t = spare > 0 ? 0 : P().abilityCd; HERO_CD.max = abCd(c);
+    if (key !== 'hero') return null;
+    const sa = typeof abilityInfo === 'function' ? abilityInfo() : null;
+    if (!sa) return null;
+    HERO_CD.t = Math.max(0, +P().abilityCd || 0); HERO_CD.max = sa.cd;
     return HERO_CD;
   };
   bossTelegraph = () => combatOn() && typeof cbTelegraph === 'function' ? cbTelegraph() : null;
@@ -254,7 +158,6 @@ let unitHp, unitCd, bossTelegraph;
     const g = live(guard), b = live(bless);
     if (g.length) add('guard', 'Grit', Math.max(...g.map(x => x.until)), g.length);
     if (b.length) add('bless', 'Blessing', Math.max(...b.map(x => x.until)), b.length);
-    add('wall', 'Shield Wall', wallUntil); add('hymn', 'Rally Hymn', hymnUntil); add('haste', 'Volley haste', hasteUntil);
     if (mob && !mob.dead && mob.markUntil) add('mark', 'Focus', mob.markUntil);
     return out;
   };
@@ -305,9 +208,7 @@ let unitHp, unitCd, bossTelegraph;
     }
     else if (c === 'lightkeeper') { kind = 'bless'; pushStack(bless, tn('bless') * eff, tn('blessT'), tn('blessMax')); }
     if (c === 'warden' && tg === 'mob' && typeof stTagNext === 'function') stTagNext('heavy');   // S1: the Heavy hit is heavy (Shatter)
-    const r = heroSwing(heroAtk() * T.tapMul[c] * eff * tapX * (o.x || 1), true, at);   // o.x: SOLO2's Attack button
-    // Lightkeeper: the party strikes with the tap damage the hero gave up.
-    if (c === 'lightkeeper') strike(r.dmg * (1 / T.heroMul[c] - 1) * tn('lkShare'), '#B58CFF', false);
+    heroSwing(heroAtk() * T.tapMul[c] * eff * tapX * (o.x || 1), true, at);   // o.x: SOLO2's Attack button
     // Rain of Arrows: every 10th tap fires a free volley.
     tapN++;
     if (ks('rain') && tapN % STAR_KS.rain.every === 0) { rainLeft += STAR_KS.rain.arrows; if (rainNext < clock) rainNext = clock; }
@@ -319,25 +220,7 @@ let unitHp, unitCd, bossTelegraph;
   addModifier('dmg', () => {
     const c = cls(); if (!c) return 1;
     let m = T.heroMul[c] * (1 + stackSum(guard));
-    if (wallUntil > clock) m *= tn('wall');
-    if (hymnUntil > clock) m *= tn('hymn');
     if (marked()) m *= mob.markV || T.mark;
-    return m;
-  });
-  // Lightkeeper: the hero's lost damage (x0.2) moves to the companions, then the
-  // Blessing aura (+10%) and taps buff the whole party. lkBusy stops recursion.
-  let lkBusy = false;
-  addModifier('party', () => {
-    const c = cls(); if (!c) return 1;
-    let m = (1 / T.heroMul[c]) * (1 + stackSum(bless));
-    if (hasteUntil > clock) m *= T.haste;
-    if (c !== 'lightkeeper' || lkBusy) return m;
-    m *= tn('lkAura');
-    lkBusy = true;
-    try {
-      const cd = compDps(), lost = heroDps() * (1 / T.heroMul[c] - 1) * tn('lkShare');
-      if (cd > 0) m *= 1 + lost / cd;
-    } finally { lkBusy = false; }
     return m;
   });
   // Pack Leader: the Ranger loses its own crit bonus on marked foes. Deadeye: crits on the mark deal double.
@@ -348,42 +231,23 @@ let unitHp, unitCd, bossTelegraph;
   heroGritDr = () => { if (cls() !== 'warden') return 0; let e = 0; for (const g of guard) if (g.until > clock) e += g.e; return CLS_TUNE.grit.dr * e; };
   // The Ranger's crit (S2, classes-2 1.1): 15% base (8% + 7%), before Keen Eye on a marked foe.
   addBonus('critBase', () => cls() === 'ranger' ? CLS_TUNE.rangerCrit : 0);
-  partyHymnOn = () => hymnUntil > clock;
+  // The Ranger's kit crits more: +10% crit chance on top of its base (was the striker mid-slot job in the old party build).
+  addModifier('crit', () => { if (cls() !== 'ranger') return 1; const b = critBase(); return b > 0 ? (b + 0.10) / b : 1; });
   partyClock = () => clock;
   // Hawk Eye: the hero's first hit on each foe always crits (50-sim heroSwing asks once per swing).
   hawkCrit = () => { if (!ks('hawk') || cls() !== 'ranger' || target() !== 'mob' || !mob || mob.dead || mob.hawk) return false; mob.hawk = 1; return true; };
 
-  // ---- tick: cooldowns, auto-cast, auto-play, volley, boss-timer pause ----
+  // ---- tick: the ability cooldown for the HUD, Rain of Arrows, idle auto-play ----
   onTick(dt => {
     ensureInit();
     clock += dt;
     const p = P(), c = cls();
-    partyRefreshField(false);
     if (!c) return;
-    if (p.abilityCd > 0) { p.abilityCd = Math.max(0, p.abilityCd - dt); readyFor = 0; }
-    else readyFor += dt;
-    // Extra charges (a Deepwell boon): while the ability waits ready, the next charge fills.
-    const extra = bonus('tune:charges');
-    if (spare > extra) spare = extra;
-    if (extra > 0 && p.abilityCd <= 0 && spare < extra) { spareT += dt; if (spareT >= abCd(c)) { spare++; spareT = 0; } } else spareT = 0;
-    // Auto-cast at half rate: it waits (1 + autoCd) extra cooldowns after the ability is ready (autoCd 0; stars lower it).
-    // S6-B (59g actHold): auto-cast waits up to 1.5 s when the focus foe's Stagger is at 90% or more
-    if (!soloOn() && p.autoCast && S.maxZone >= T.autoCastZone && p.abilityCd <= 0 && readyFor >= abCd(c) * (1 + tn('autoCd')) && !(typeof actHold === 'function' && actHold())) castAbility({ auto: true });
-    if (volleyLeft > 0 && clock >= volleyNext) {
-      if (canHit()) { if (target() === 'mob' && typeof stTagNext === 'function') stTagNext('ab'); heroSwing(heroAtk() * (ks('quickdraw') ? STAR_KS.quickdraw.atk : T.volleyAtk) * volleyEff, false); }   // Quickdraw: fewer, harder arrows
-      volleyLeft--; volleyNext = clock + T.volleyT / T.volleyHits;
-    }
+    if (p.abilityCd > 0) p.abilityCd = Math.max(0, p.abilityCd - dt);
     if (rainLeft > 0 && clock >= rainNext) {
       if (canHit()) heroSwing(heroAtk() * STAR_KS.rain.atk, false);
       rainLeft--; rainNext = clock + T.volleyT / T.volleyHits;
     }
-    // Lamp of Ages: while the Hymn is up Blessings do not fade, and it adds one every 2s.
-    if (c === 'lightkeeper' && ks('ages') && hymnUntil > clock) {
-      for (const b of bless) if (b.until < clock + 0.5) b.until = clock + 0.5;
-      agesT += dt;
-      if (agesT >= STAR_KS.ages.blessEvery) { agesT = 0; pushStack(bless, tn('bless'), tn('blessT'), tn('blessMax')); }
-    } else agesT = 0;
-    if (pauseUntil > clock && fightBoss && mob && mob.boss && !mob.dead) bossTime += dt;
     // Idle auto-play: a half-strength class tap every 2s after 4s without a tap.
     // SOLO2: never while the solo player is active (every hit comes from the buttons)
     if (target() === 'mob' && clock - lastTap >= T.autoIdle && clock >= nextAuto && mob && !mob.dead && !(typeof soloActive === 'function' && soloActive())) {
@@ -399,10 +263,5 @@ let unitHp, unitCd, bossTelegraph;
     toast('The boss dropped a Mirror of Embers. Use it to change your class.', 'good', null, 'high');
     emit('mirrorDrop', { mirrors: P().mirrors });
   });
-  on('deepFloor', () => { if (hymnUntil > clock + tn('hymnT')) hymnUntil = clock; });
-  on('zoneClear', ({ zone }) => {
-    if (zone + 1 === T.autoCastZone && cls() && !soloOn()) toast(`Your hero now casts ${HERO_CLASSES[cls()].ability.name} alone, at half speed. Tap it yourself to cast it twice as often.`, 'good');
-  });
-
   ensureInit();
 }

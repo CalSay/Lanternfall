@@ -15,9 +15,6 @@ var classEvoUI;
 {
   const A = CLASS_ABILITIES;
   const ROLE_NAME = { tank: 'Tank', striker: 'Damage', caster: 'Caster', support: 'Support' };
-  const HOME_NAME = { front: 'Front', mid: 'Middle', back: 'Back' };
-  const heroName = id => (typeof ROSTER === 'object' && ROSTER[id] ? ROSTER[id].name.split(' ')[0] : id);
-  const owned = id => typeof isRecruited === 'function' && isRecruited(id);
   const safe = (f, d) => { try { return f(); } catch (e) { console.error('[lanternfall] class ui', e); return d; } };
   const btn = (cls, txt, fn) => { const b = el('button', cls, txt); b.type = 'button'; b.addEventListener('click', e => { e.stopPropagation(); fn(e); }); return b; };
   const row = (title, sub, text, cls) => {
@@ -202,13 +199,10 @@ var classEvoUI;
         txt.append(el('h2', null, ev.name.toUpperCase()), el('div', 'evo-title', ev.title), el('div', 'pitch', `"${ev.pitch}"`));
         top.append(figure(cur), txt);
         const ul = el('ul', 'evo-bul'); for (const t of ev.bullets) ul.append(el('li', null, t));
-        const good = el('p', 'evo-good'); if (!soloOn()) good.append(el('b', null, 'Good with: '));   // W1-F: no partners in solo
-        const list = ev.good.slice().sort((a, b) => owned(b) - owned(a)).slice(0, 5);
-        if (!soloOn()) list.forEach((id, i) => { good.append(el('span', owned(id) ? 'own' : 'not', heroName(id))); if (i < list.length - 1) good.append(document.createTextNode(', ')); });
         body.append(top, ul,
           el('p', 'evo-line', `New ability: ${ab.name}. ${ab.desc}`),
-          el('p', 'evo-line', `Role: ${ROLE_NAME[ev.role]}${soloOn() ? '' : ', in the ' + HOME_NAME[CLASS_DEFS[ev.base].home]}. ${ev.line.name}: ${ev.line.text}`),
-          ...(soloOn() ? [] : [good]), el('p', 'evo-line', `Beats: ${ev.beats.join(', ')}`),
+          el('p', 'evo-line', `Role: ${ROLE_NAME[ev.role]}. ${ev.line.name}: ${ev.line.text}`),
+          el('p', 'evo-line', `Beats: ${ev.beats.join(', ')}`),
           el('p', 'note', `Idle: ${ev.idle} Active: ${ev.active}`));
         putText(go, `Become a ${ev.name}`);
         confirm.hidden = true;

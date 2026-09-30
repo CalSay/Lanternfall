@@ -1,6 +1,7 @@
-// 59-combat: party combat (Stage C, task C1 + C3). Packs of foes with HP and threat tables, a
-// party with HP, armour, formation reach, healing, shields, crowd control, knock-outs, wipes
-// with a retreat, and the closed-form hold estimate for away gains and auto-push.
+// 59-combat: combat (Stage C, task C1 + C3). Packs of foes with HP and threat tables, the hero with HP, armour,
+// healing, shields, crowd control, knock-outs, wipes with a retreat, and the closed-form hold estimate for away
+// gains and auto-push. W3-A: the companions, formation, synergies and Bonds are gone; the engine still runs its
+// unit list (one unit, the hero). W4-A slims it to one hero against a pack.
 // CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
 // Spec: docs/design/party-and-classes.md 4.1-4.11 and the owner decisions (packs of 3; a wipe
 // retreats one zone and pushes back up once the party can hold it; roles define combat).
@@ -8,26 +9,21 @@
 //
 // Exposed names (everything else is private, inside the block below):
 //   data    COMBAT_TUNE (knobs; sim --combat k=v), CB_STATS (counters for the sim and checks)
-//   state   partyCombatOn(), combatUnits() -> the 4 party unit records (read only),
+//   state   partyCombatOn(), combatUnits() -> the unit records (the hero; read only),
 //           combatFoes() -> the live foe list (read only; `mob` is the one the stage shows)
 //   loop    combatTick(dt), cbSpawn(boss) (50-sim spawn), cbStrike(amount, src, at, label, color, big)
 //           (50-sim strike), cbHeroUp(), cbPush() (auto-push check), cbArena(mob) (a Deepwell pack),
 //           cbRestore(clear) (the party whole, the arena pack set aside: 59c-deepwell-combat.js)
-//   hooks   cbUnitHp(key), cbUnitCd(key) (55-party unitHp / unitCd read them)
+//   hooks   cbUnitHp(key) (55-party unitHp reads it)
 //   helpers cbHitUnit(u, amount, kind, foe), cbHealUnit(u, amount, from), cbShield(u, amount, cap),
 //           cbDamageFoe(f, amount, src, kind), cbUnitByKey(key), cbTaunt(u, foes, secs),
 //           cbStun(f, secs), cbDebug()
 //   offline partyHoldEstimate(zMax, opts) -> { zone, holds, dps, packSecs, packsPerSec, goldPerSec,
 //           tgt, inc, sus, margin, heroHp }; partyHolds(z) -> bool
 //
-// Model (short): each unit keeps HP, shield and a damage-reduction stack. Companions swing at
-// their role speed; a swing deals charDps x (1 - abF) / speed (their average damage today, so
-// pacing keeps its curve) and the signature ability, cast on its own cooldown, deals the rest as
-// a burst (charDps x abF x cooldown) plus its real effect (taunt, heal, stun, slow, shield...).
-// Supports heal (heal x power per second) and Smite the focus foe for their charDps (BAL2:
-// ROSTER_TUNE.supDps x power, magic). Tanks take tankDr less damage. The hero keeps its own swings
-// (50-sim heroSwing), routed here by cbStrike. Foes pick the highest-threat member they can
-// reach and switch only past +20%. Physical hits on armoured foes deal armourX.
+// Model (short): each unit keeps HP, shield and a damage-reduction stack. The hero keeps its own swings
+// (50-sim heroSwing), routed here by cbStrike. Foes pick the highest-threat unit they can reach.
+// Physical hits on armoured foes deal armourX.
 //
 // Events (payload objects are REUSED: copy what you keep; the stage can listen to them):
 //   packSpawn { foes }                        a new pack (or boss and its adds) is on the field
@@ -53,8 +49,8 @@
 function partyCombatOn() { return !(COMBAT_TUNE && !COMBAT_TUNE.on) && !(S && S.combat && !S.combat.on); }
 // var: other files (56-roster at load, 55-party) may ask before this file has run.
 var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrike, cbHeroUp, cbPush,
-  cbUnitHp, cbUnitCd, cbHitUnit, cbHealUnit, cbShield, cbDamageFoe, cbUnitByKey, cbTaunt, cbStun, cbDebug,
-  partyHoldEstimate, partyHolds, cbClock, cbWallOn, cbArena, cbBossUp, cbBossReady, cbRestore,
+  cbUnitHp, cbHitUnit, cbHealUnit, cbShield, cbDamageFoe, cbUnitByKey, cbTaunt, cbStun, cbDebug,
+  partyHoldEstimate, partyHolds, cbClock, cbArena, cbBossUp, cbBossReady, cbRestore,
   cbPack, cbFoeAtk, cbEnrage, bossTimer;
 
 {
@@ -85,53 +81,27 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     // S6 pick 0.7: the estimate ignores parries, Shield Wall and the 15 s Enrage window, and at 1.1 it walled Silas)
     bossT: 45, regionBossT: 60, enrageSpd: 0.5, enrageDmg: 0.1, enrageFail: 15, bossLive: 0.7,
     aoeOther: 0.5, lmSplash: 0.15,       // caster hits on the other foes; the Lanternmage's splash
-    hp: { tank: 12, striker: 5, caster: 4, support: 6 },
-    heroPow: 1.4, hpClamp: [0.15, 6],   // the hero's power = its damage / heroPow (a striker's 1.4 x power); see hpPow
+    heroPow: 1.4,    // the hero's power = its damage / heroPow (a striker's 1.4 x power)
     // S2: the base classes' HP scale and armour are CLASS_DEFS (24-data-classes; Ranger 6 / 10, was 5 / 0)
     heroHp: { warden: CLASS_DEFS.warrior.hp, lanternmage: CLASS_DEFS.mage.hp, ranger: CLASS_DEFS.ranger.hp, lightkeeper: 6 },
-    armour: { tank: 20, striker: 0, caster: 0, support: 10 },
     heroArmour: { warden: CLASS_DEFS.warrior.armour, lanternmage: CLASS_DEFS.mage.armour, ranger: CLASS_DEFS.ranger.armour, lightkeeper: 10 },
-    aldricArmour: 20, braced: 10, redMax: 0.6, tankDr: 0.4,   // (BAL2) tankDr: tanks take 40% less (no-tank line-ups hold 2-4 zones lower)
-    wardenTankHp: 0.4, wardenTankArmour: 20, wardenDr: 0.1, wardenThreat: 6,
-    lkHeal: 1.2, lkAura: 0.4, lkCd: 0.25, heal: 0.8,   // heal: a support heals 0.8 x power a second (spec 1.2; T6 wants a support worth 2-4 zones of hold)
-    // (BAL2) packHealF 0.1 -> 0.15 (no-support line-ups 4-5 -> 3-4 zones lower); estSafety 1.25 -> 1 and support
-    // ability heals counted (the estimate walled pushes the live party held); estEff 1 -> 1.08 (T8; away only)
-    cover: 0.15, backRanged: 0.2,
-    regen: 0.005, packHealF: 0.15, revive: 0.3, reviveVigil: 0.6, respawn: 0.45, wipeT: 5,
-    // (F5) no soft-lock: a member down getUp s while the pack stands gets up at `revive` HP (not in a boss
-    // fight or the Deepwell); a pack the party has not finished in stallT s counts as a wipe (it falls back)
+    braced: 10, redMax: 0.6, tankDr: 0.4,   // (BAL2) tankDr: a tank role takes 40% less
+    wardenDr: 0.1, wardenThreat: 6,
+    lkHeal: 1.2,
+    // (BAL2) packHealF 0.1 -> 0.15; estSafety 1.25 -> 1; estEff 1 -> 1.08 (T8; away only)
+    regen: 0.005, packHealF: 0.15, revive: 0.3, respawn: 0.45, wipeT: 5,
+    // (F5) no soft-lock: a unit down getUp s while the pack stands gets up at `revive` HP (not in a boss
+    // fight or the Deepwell); a pack not finished in stallT s counts as a wipe (the hero falls back a zone)
     getUp: 15, stallT: 90,
-    heroRealHp: 1,                       // (F5) 1: a planner measurement at potential levels gives the hero its HP at the real ones (readPartyP)
     threat: { tank: 4, striker: 1, caster: 1.2, support: 0.5 }, healThreat: 0.5, opening: 10, switchX: 1.2,
     tauntT: 3, tauntX: 1.2, shieldT: 6,
-    abF: 1 / 6,                          // share of a companion's damage its ability deals (SYN_TUNE.abShare 0.2 of 1.2)
-    abCd: { tobin: 12, wren: 10, hesketh: 8, pip: 10, bram: 11, maren: 16, aldric: 15, kestrel: 14, thessaly: 12, anselm: 15,
-      grenna: 14, isolde: 9, oriel: 18, morwen: 16, vesper: 20, elowen: 20, caedmon: 16, corvin: 10 },
-    cdMin: 0.5,                          // cooldown reductions stop at -50%
-    fieldSupport: 2,                     // autoField (56-roster): 2 a support when the party cannot hold its max zone without one, 1 always, 0 never
     bossGate: 1, bossWait: 600,          // auto-challenge when the boss would die within the timer x bossGate (or after bossWait s)
     refresh: 0.25, pushEvery: 5, pushRetry: 60, holdSecs: 120, estSafety: 1, estEff: 1.08, awayRate: 0.75, autoCast: 1.05,
-    // kit numbers (3.2, 3.5)
-    guardDr: 0.4, guardT: 4, trustStep: 0.01, trustMax: 0.2, mend: 0.25, warmCap: 0.2, longRoute: 0.2,
-    beacon: 0.2, beaconLamp: 0.3, beaconSh: 0.1, burnBack: 0.1, keeper: 0.15, sturdy: 0.1,
-    intercept: 3, interceptAt: 0.25, oathHeal: 0.1, bashStun: 1.5, leapKnock: 1, leapUntarg: 1,
-    mireSlow: 0.4, mireT: 3, sinkSlow: 0.5, sinkT: 5, sinkStun: 2, deepWater: 0.1, thessTrait: 0.3,
-    tollP: 10, tollP10: 8, tollSh: 0.1, tollAt: 0.3, arms: 0.12,
-    rock: 0.02, rockT: 5, rockMax: 0.2, bedrock: 0.25, shatterStun: 1.5,
-    execTh: 0.3, execTh20: 0.4, duskExec: 0.1,
-    starStun: 1, starSlow: 0.3, starSlowT: 4, burnT: 3, vigilBurn: 1.5, vigilT: 6, vigilSlow: 0.2,
-    verseP: 6, verseWard: 0.1, verseMend: 0.05,
-    sanct: 0.2, sanctHot: 0.03, sanctT: 5, lowFlame: 4, oathCd: 5, lastLight: 0.1,
-    unburnt: 0.08, vowT: 5, pyre: 0.3, pyreT: 4, pyreSh: 0.15,
-    hearthDr: 0.1, hearthHeal: 0.2, hedgeSh: 0.1, chosenHeal: 0.03,
-    wall: CLASS_ABILITIES.shieldwall.dr, wallT: 6, hymnHeal: 0.4, hymnCd: 0.5, lkTap: 0.08, wardenTaunt: 3,   // S2: Shield Wall from CLASS_ABILITIES
-    blockX: 0.5, poison: 0.02, poisonT: 4,
-    // S1 (59a-status): Morwen's Vigil Burn is a strong Burn (P = vigilBurnP x her hit power) so her Burns keep
-    // today's total; statuses and types themselves are core-2's numbers (21x-data-types.js)
-    vigilBurnP: 4.3
+    lkTap: 0.08, wardenTaunt: 3,         // the Lightkeeper's tap heal, the Warden's tap taunt
+    blockX: 0.5, poison: 0.02, poisonT: 4
   };
   COMBAT_TUNE = T;
-  const ST = CB_STATS = { enemySecs: 0, tankSecs: 0, wipes: 0, packs: 0, kos: 0, revives: 0, healed: 0, shielded: 0, heroDmg: 0, compDmg: 0,
+  const ST = CB_STATS = { enemySecs: 0, tankSecs: 0, wipes: 0, packs: 0, kos: 0, revives: 0, healed: 0, shielded: 0, heroDmg: 0, sideDmg: 0,
     getUps: 0, stalls: 0,   // F5: members who got up mid-pack, packs given up (the soft-lock guard)
     tele: 0, parries: 0, dodges: 0, blocked: 0, hitByHeavy: 0, interrupts: 0, abilities: 0, bossTries: 0, bossWins: 0, pushes: 0, taken: 0,
     crits: 0, maxHit: 0, maxOver: 0, heroHits: 0,
@@ -140,18 +110,10 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
 
   registerState('combat', { on: 1, back: 0, tip: 0 });
 
-  // BAL2: the Lightkeeper's aura (supports heal 40% more) also makes their Smite 40% stronger, so a
-  // party of healers still kills (the attrition line-up of spec 4.13, T12).
-  if (typeof addCharModifier === 'function') addCharModifier(id => partyCombatOn() && S.party && S.party.cls === 'lightkeeper' && ROSTER[id] && ROSTER[id].role === 'support' ? 1 + T.lkAura : 1);
-  // ECON-A (economy-2 6.2): the crit damage pool scales every companion's crit multiplier (55-econ keenCharMult).
-  if (typeof addCharModifier === 'function') addCharModifier(keenCharMult);
   // Haste gear (K11): the hero's ability comes back sooner too (capped at -30% in gear()).
   addModifier('abilityCd', () => partyCombatOn() ? 1 - gear().haste / 100 : 1);
 
-  const ROLE_ROW = { tank: 2, striker: 1, caster: 0, support: 0 };
   const CLASS_ROLE = { warden: 'tank', lanternmage: 'caster', ranger: 'striker', lightkeeper: 'support' };
-  const OATH = { maren: 1, aldric: 1, elowen: 1, anselm: 1, caedmon: 1 };
-  const HEDGE = k => !!ROSTER[k] && ROSTER[k].circle === 'hedgefolk';
   const red = a => Math.min(T.redMax, Math.max(0, a) / (Math.max(0, a) + 100));
 
   // ---------------- units (pre-allocated) ----------------
@@ -171,17 +133,12 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   let foes = [];                   // foe objects (mob-shaped), rebuilt per pack
   const FOE_MAX = 12;   // S6-A: a swarm of 10 and a boss with its adds
   let clock = 0, refreshT = 0, pushT = 0, wipeT = 0, wipeBoss = false, fieldSig = '', packDown = false, packT = 0;
-  let packGold = 0, lead = null, partyAcc = 0, partyTickT = 0, focusIdx = -1, showT = 0, inArena = false;
+  let packGold = 0, lead = null, focusIdx = -1, showT = 0, inArena = false;
   cbClock = () => clock;
   combatUnits = () => U;
   combatFoes = () => foes;
   cbUnitByKey = key => { for (let i = 0; i < nU; i++) if (U[i].key === key) return U[i]; return null; };
 
-  // S3: a solo fight (59f-trials trialField: the Proving, the Stand) fields only the heroes it names.
-  const fieldIds = () => (typeof trialField === 'function' && trialField()) || (soloOn() ? [] : null) || (S.party && S.party.field || []).filter(k => ROSTER[k] && typeof charRec === 'function' && charRec(k)).slice(0, (typeof ROSTER_TUNE === 'object' && ROSTER_TUNE && ROSTER_TUNE.fieldMax) || 2);   // F5: the field is 2 (the hero is the third)
-  const has = id => { for (let i = 0; i < nU; i++) if (U[i].id === id) return U[i]; return null; };
-  const upHas = id => { const u = has(id); return u && !u.down ? u : null; };
-  const synOn = id => { try { return typeof synergyStatus === 'function' && synergyStatus(id).active; } catch (e) { return false; } };
   const deep = () => typeof deepActive === 'function' && deepActive() && typeof DW === 'object' && DW.run() ? DW.run() : null;
   const boon = id => { const r = deep(); return r && r.boons ? (r.boons[id] || 0) : 0; };
   let setsCache = null, setsT = -1;
@@ -192,143 +149,66 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     for (const x of setsCache) if (x.id === s) return !!x.on;
     return false;
   };
-  const lvOf = id => { const r = charRec(id); return r ? r.lv : 0; };
   // Constellation keystones (57e-constellations.js STAR_KS): bonus('ks:<id>') > 0.
   const ks = id => bonus('ks:' + id) > 0;
   let emberBurn = 0, challUntil = -1;
 
   // ---------------- per-unit stats ----------------
-  // Fills u from the current field; keeps hp as a fraction of max when max changes.
-  // F2 (56b): a flag is the entry's strength (0 = off; Bonds 0.5-1.3 x Common Cause), so Bond levers scale.
-  // Per-member numbers from slot jobs, combos, Kin and Bonds come from synUnit(key) in statUnit.
-  const synFlags = { oldoath: 0, lampward: 0, chosen: 0, mirelamp: 0, oldenemies: 0, markleap: 0, hunting: 0, dusk: 0, bellsong: 0, wayfarers: 0,
-    quarry: 0, lasttwo: 0, sword: 0, twobows: 0, unlit: 0, candles: 0 };
-  const SX0 = { dr: 1, hp: 1, heal: 1, healIn: 1, th: 1, cd: 0, ctrl: 1, area: 0 };
-  const sxOf = key => (typeof synUnit === 'function' && synUnit(key)) || SX0;
-  function readSyn() {
-    const act = typeof activeSynergies === 'function' ? activeSynergies() : [];
-    for (const k in synFlags) synFlags[k] = 0;
-    for (const a of act) if (a.id in synFlags) synFlags[a.id] = a.strength || 0;
-  }
+  // Fills u from the current class and gear; keeps hp as a fraction of max when max changes.
   function statUnit(u, key, keepHp) {
-    const p = S.party, cells = (p && p.cells) || {}, cell = cells[key] || { col: key === 'hero' ? 2 : 1, lane: 0 };
-    u.key = key; u.live = true; u.col = cell.col; u.lane = cell.lane;
+    const p = S.party;
+    u.key = key; u.live = true; u.col = 2; u.lane = 1;   // the hero stands in Front
     u.dt = typeof unitType === 'function' ? unitType(key) : 'phys';   // S1: the unit's base type (59a)
-    let maxHp, role;
-    if (key === 'hero') {
-      const cls = p && p.cls && HERO_CLASSES[p.cls] ? p.cls : 'warden';
-      // S3 (59e clsHeroStats): a proven evolution's own stats and role replace the base kit's (null = the kit's)
-      const ev = typeof clsHeroStats === 'function' ? clsHeroStats() : null;
-      role = ev ? ev.role : CLASS_ROLE[cls]; u.cls = cls; u.id = null; u.lv = S.L;
-      const g = gear(), hp0 = heroAtk() * aps() / (cls === 'lightkeeper' ? 0.2 : 1);
-      u.pow = hp0 / T.heroPow;
-      u.hpP = hpPow(u.pow, heroP);   // F5: at the companions' real levels (see readPartyP)
-      maxHp = (ev ? ev.hp * ev.hpX : T.heroHp[cls]) * u.hpP * (1 + g.hp / 100);
-      if (soloOn()) maxHp *= SOLO_TUNE.hpX * ((typeof soloHero === 'function' && SOLO_TUNE.heroHp[soloHero()]) || 1);   // SOLO1: the hero takes every hit now
-      u.armour = (ev ? ev.armour : T.heroArmour[cls]) + g.armour + 0.1 * (equipped('helm') ? itemPower(equipped('helm')) : 0);
-      // Unbroken: each guard stack also gives 2 armour. Slow Burn / Everburn: Embers burn their foe.
-      if (cls === 'warden' && ks('unbroken') && typeof heroGuardN === 'function') u.armour += 2 * heroGuardN();
-      emberBurn = cls === 'lanternmage' ? heroAtk() * (ks('everburn') ? STAR_KS.everburn.perEmber : ks('slowBurn') ? STAR_KS.slowBurn.perEmber : 0) : 0;
-      u.thX = (ev ? ev.threat : cls === 'warden' ? T.wardenThreat : T.threat[role]) * (1 + g.threat / 100);
-      u.melee = cls === 'warden'; u.ranged = !u.melee;
-      u.dps = 0; u.spd = aps();
-      u.heal = cls === 'lightkeeper' ? T.lkHeal * u.hpP * (1 + g.heal / 100) * offSlotMult('hero') * (ev ? ev.healX : 1) : 0;   // F1: Out of place heals less
-      // S2: the base class's own block and ward (the Warrior blocks 10%); the legacy Lightkeeper kit keeps its own
-      const cd = ev || (cls === 'lightkeeper' ? null : CLASS_DEFS[HERO_CLASSES[cls].base]);
-      u.blockP = Math.min(0.4, g.block / 100); u.ward = Math.min(0.4, g.ward / 100 + (cd ? cd.ward : 0)); u.pierce = Math.min(1, g.pierce / 100);
-      u.blockC = cd ? cd.block : 0;   // the class's block: every 1 / blockC-th hit, counted (no random draw)
-      u.area = Math.min(0.5, g.area / 100 + (ev ? ev.area : 0)); u.ctrl = (1 + Math.min(1, g.control / 100)) * (ev ? ev.ctrl : 1);
-      u.cdMax = 0;
-    } else {
-      const R = ROSTER[key], g = charGear(key), lv = lvOf(key);
-      role = R.role; u.cls = null; u.id = key; u.lv = lv;
-      u.pow = charPow(key);
-      u.hpP = hpPow(u.pow);
-      maxHp = T.hp[role] * u.hpP * (1 + g.hp / 100);
-      u.armour = T.armour[role] + g.armour;
-      if (key === 'aldric') u.armour += T.aldricArmour + (lv >= 10 ? 20 : 0);
-      u.thX = T.threat[role] * (1 + g.threat / 100) * (key === 'aldric' ? 1.1 : 1);
-      u.melee = role === 'tank' || (role === 'striker' && !R.ranged); u.ranged = !u.melee;
-      u.dps = charDps(key);   // BAL2: supports strike too (Smite, ROSTER_TUNE.supDps)
-      u.spd = ROLE_STATS[role].spd;
-      let hx = 1 + g.heal / 100;
-      const innate = R.rarity === 'epic' || R.rarity === 'legendary';
-      if (role === 'support') {
-        if (innate && lv >= 10) hx *= 1.15;
-        if (lv >= 50) hx *= 1 + 0.25 * Math.floor((lv - 25) / 25);
-        if (p && p.cls === 'lightkeeper') hx *= 1 + T.lkAura;
-      }
-      u.heal = role === 'support' ? T.heal * u.hpP * hx * offSlotMult(key) : 0;   // F1: Out of place heals less (damage: charMod)
-      u.blockP = Math.min(0.4, g.block / 100); u.blockC = 0; u.ward = Math.min(0.4, g.ward / 100); u.pierce = Math.min(1, g.pierce / 100);
-      u.area = Math.min(0.5, g.area / 100); u.ctrl = 1 + Math.min(1, g.control / 100);
-      if (key === 'maren') { maxHp *= 1 + T.sturdy; if (lv >= 10) { let n = 0; for (const k of fieldIds()) if (k !== 'maren' && OATH[k]) n++; if (p && p.cls === null) n += 0; maxHp *= 1 + T.keeper * n; } }
-      // cooldown: Encore (Vesper), Wayfarers, the Lightkeeper's Blessing, Haste gear, Low Flame and The Old Oath
-      let base = T.abCd[key] || 12;
-      if (key === 'elowen') base -= T.lowFlame + T.oathCd * synFlags.oldoath + SYN_TUNE.candlesCd * synFlags.candles;
-      let cut = g.haste / 100 + (upHas('vesper') && key !== 'vesper' || key === 'vesper' ? 0.1 : 0);
-      cut += SYN_TUNE.wayCd * synFlags.wayfarers + sxOf(key).cd;   // F2: Wayfarers (Kin), Warded Casting
-      if (p && p.cls === 'lightkeeper') cut += T.lkCd;
-      u.cdMax = Math.max(1, base * (1 - Math.min(T.cdMin, cut)));
-    }
+    const cls = p && p.cls && HERO_CLASSES[p.cls] ? p.cls : 'warden';
+    // S3 (59e clsHeroStats): a proven evolution's own stats and role replace the base kit's (null = the kit's)
+    const ev = typeof clsHeroStats === 'function' ? clsHeroStats() : null;
+    const role = ev ? ev.role : CLASS_ROLE[cls];
+    u.cls = cls; u.id = null; u.lv = S.L;
+    const g = gear();
+    u.pow = heroAtk() * aps() / T.heroPow;
+    u.hpP = u.pow;
+    let maxHp = (ev ? ev.hp * ev.hpX : T.heroHp[cls]) * u.hpP * (1 + g.hp / 100);
+    maxHp *= SOLO_TUNE.hpX * ((typeof soloHero === 'function' && SOLO_TUNE.heroHp[soloHero()]) || 1);   // the hero takes every hit
+    u.armour = (ev ? ev.armour : T.heroArmour[cls]) + g.armour + 0.1 * (equipped('helm') ? itemPower(equipped('helm')) : 0);
+    // Unbroken: each guard stack also gives 2 armour. Slow Burn / Everburn: Embers burn their foe.
+    if (cls === 'warden' && ks('unbroken') && typeof heroGuardN === 'function') u.armour += 2 * heroGuardN();
+    emberBurn = cls === 'lanternmage' ? heroAtk() * (ks('everburn') ? STAR_KS.everburn.perEmber : ks('slowBurn') ? STAR_KS.slowBurn.perEmber : 0) : 0;
+    u.thX = (ev ? ev.threat : cls === 'warden' ? T.wardenThreat : T.threat[role]) * (1 + g.threat / 100);
+    u.melee = cls === 'warden'; u.ranged = !u.melee;
+    u.dps = 0; u.spd = aps();
+    u.heal = cls === 'lightkeeper' ? T.lkHeal * u.hpP * (1 + g.heal / 100) * (ev ? ev.healX : 1) : 0;
+    // S2: the base class's own block and ward (the Warrior blocks 10%); the legacy Lightkeeper kit keeps its own
+    const cd = ev || (cls === 'lightkeeper' ? null : CLASS_DEFS[HERO_CLASSES[cls].base]);
+    u.blockP = Math.min(0.4, g.block / 100); u.ward = Math.min(0.4, g.ward / 100 + (cd ? cd.ward : 0)); u.pierce = Math.min(1, g.pierce / 100);
+    u.blockC = cd ? cd.block : 0;   // the class's block: every 1 / blockC-th hit, counted (no random draw)
+    u.area = Math.min(0.5, g.area / 100 + (ev ? ev.area : 0)); u.ctrl = (1 + Math.min(1, g.control / 100)) * (ev ? ev.ctrl : 1);
+    u.cdMax = 0;
     u.role = role;
-    // F2 (56b synUnit): slot jobs, combos, Kin and Bonds on this member (damage is in charDps / heroDps)
-    const sx = sxOf(key);
-    maxHp *= sx.hp; u.thX *= sx.th; u.heal *= sx.heal; u.ctrl *= sx.ctrl; u.area += sx.area; u.synDr = sx.dr;
-    // class auras and party-wide shapes
-    // The Warden's aura (Oathsworn doubles it: +80% HP, +40 armour).
-    if (p && p.cls === 'warden' && role === 'tank' && key !== 'hero') { const k = ks('oathsworn') ? 2 : 1; maxHp *= 1 + T.wardenTankHp * k; u.armour += T.wardenTankArmour * k; }
-    if (u.col === 2) u.armour += role === 'tank' ? T.braced : FORM_TUNE.bracedAll;   // F1: Braced is for anyone in Front
-    if (upHas('elowen') || has('elowen')) maxHp *= 1 + T.lastLight;
-    if ((role === 'tank' || soloOn()) && boon('iron')) maxHp *= 1 + 0.2 * boon('iron');
-    u.healIn = (has('elowen') ? 1 + T.lastLight : 1) * sx.healIn * (setOnC('mend') ? 1.3 : 1);   // F2: Lifeline, Two Lights
+    u.armour += T.braced;   // Braced: the hero always stands in Front
+    if (boon('iron')) maxHp *= 1 + 0.2 * boon('iron');
+    u.healIn = setOnC('mend') ? 1.3 : 1;   // Lifeline (a Deepwell set)
+    u.synDr = 1;
     if (!(maxHp > 0) || !Number.isFinite(maxHp)) maxHp = 1;
     if (keepHp && u.maxHp > 0) { const f = u.hp / u.maxHp; u.maxHp = maxHp; u.hp = u.down ? 0 : Math.max(0, Math.min(maxHp, f * maxHp)); }
     else { u.maxHp = maxHp; u.hp = maxHp; }
     return u;
   }
-  // HP and healing scale with the party's power, not only the member's own (4.1 uses each member's
-  // power; here a member's HP power is the geometric mean of its own and the party's average, own
-  // clamped to 0.15-6x the average). So HP keeps pace with the damage that sets the zone curve (party
-  // synergies and the hero's share move it), and a new recruit is weaker but never paper.
-  // F5: the hero's HP reads heroP, the party average at the companions' real levels. The planner's
-  // 'potential' (56d withLevels) lifts companion levels for a measurement and lists their real power in
-  // afRealPow; the hero does not catch up with them, so a hero in Front was rated for HP it did not have
-  // (the late fixture: a hero in Front with Kestrel and Oriel rated to hold zone 39, wiped to 33).
-  let partyP = 1, heroP = 1;
-  const hpPow = (own, p) => { p = p || partyP; return p * Math.sqrt(Math.max(T.hpClamp[0], Math.min(T.hpClamp[1], own / p))); };
-  function readPartyP(ids) {
-    let sum = 0, n = 0, real = 0;
-    const cls = S.party && S.party.cls, rp = T.heroRealHp && typeof afRealPow === 'object' && afRealPow ? afRealPow : null;
-    sum += heroAtk() * aps() / (cls === 'lightkeeper' ? 0.2 : 1) / T.heroPow; n++; real = sum;
-    for (const k of ids) { const c = charPow(k); sum += c; real += rp && Number.isFinite(rp[k]) ? rp[k] : c; n++; }
-    partyP = sum > 0 && Number.isFinite(sum) ? sum / n : 1;
-    heroP = real > 0 && Number.isFinite(real) ? real / n : partyP;
-  }
-  // Rebuild the unit list when the field, cells or class change; else refresh the stats in place.
+  // Rebuild the unit list when the class changes; else refresh the stats in place.
   function refreshUnits(force) {
     const p = S.party; if (!p) return;
-    const ids = fieldIds();
-    readPartyP(ids);
-    let sig = (p.cls || '') + '|' + ids.join(',') + '|';
-    const cells = p.cells || {};
-    for (const k of ids) sig += (cells[k] ? cells[k].col + '' + cells[k].lane : '-');
-    readSyn();
+    const sig = p.cls || '';
     if (sig !== fieldSig || force) {
-      const old = {};
-      for (let i = 0; i < nU; i++) old[U[i].key] = { f: U[i].maxHp > 0 ? U[i].hp / U[i].maxHp : 1, down: U[i].down, cd: U[i].cd, sh: U[i].sh };
+      const o = nU ? { f: U[0].maxHp > 0 ? U[0].hp / U[0].maxHp : 1, down: U[0].down, cd: U[0].cd, sh: U[0].sh } : null;
       fieldSig = sig;
-      nU = 0;
-      for (const key of ['hero'].concat(ids)) {
-        const u = U[nU++];
-        resetUnit(u);
-        statUnit(u, key, false);
-        const o = old[key];
-        if (o) { u.hp = u.maxHp * o.f; u.down = o.down; u.cd = o.cd; u.sh = o.sh; if (u.down) u.hp = 0; }
-        else u.cd = u.cdMax * 0.5;
-      }
-      for (let i = nU; i < 4; i++) U[i].live = false;
+      nU = 1;
+      const u = U[0];
+      resetUnit(u);
+      statUnit(u, 'hero', false);
+      if (o) { u.hp = u.maxHp * o.f; u.down = o.down; u.cd = o.cd; u.sh = o.sh; if (u.down) u.hp = 0; }
+      else u.cd = u.cdMax * 0.5;
+      for (let i = 1; i < 4; i++) U[i].live = false;
       for (const f of foes) if (f.th) f.th.fill(0);
-    } else for (let i = 0; i < nU; i++) statUnit(U[i], U[i].key, true);
+    } else statUnit(U[0], 'hero', true);
   }
   function resetUnit(u) {
     u.down = false; u.sh = 0; u.shT = 0; u.drT = 0; u.drV = 0; u.untarg = 0; u.strikeT = 0; u.trust = 0; u.stubborn = false; u.vow = false;
@@ -526,7 +406,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if ((f.boss || f.elite) && typeof actHeavy === 'function' && (src === 0 ? (tags & ST_HEAVY) : typeof ST_LAST === 'object' && ST_LAST.heavy) && kind !== 'dot' && kind !== 'burn') actHeavy(f, src);
     if (f.tr && typeof eliteHit === 'function') { a = eliteHit(f, a, src, kind, ty, tags); if (!(a > 0)) return 0; }   // S6-D: traits (59i)
     // Deepwell Duelist: each striker's first hit on a foe always crits (x3 over the average x1.3).
-    if (src >= 0 && U[src] && (U[src].role === 'striker' || soloOn()) && !(f.duel & (1 << src)) && boon('duel')) { f.duel = (f.duel || 0) | (1 << src); a *= 2.3; }
+    if (src >= 0 && U[src] && !(f.duel & (1 << src)) && boon('duel')) { f.duel = (f.duel || 0) | (1 << src); a *= 2.3; }
     f.hp -= a; f.hit = 0.08;
     if (typeof stFoeDealt === 'function') stFoeDealt(f, a, src, ty);   // S1: Curse stores, Judgement heals
     if (a > ST.maxHit) ST.maxHit = a; if (f.max > 0 && a > ST.maxOver * f.max) ST.maxOver = a / f.max;   // AC2 records
@@ -534,8 +414,8 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       const u = U[src];
       f.th[src] += a * u.thX;
       u.dmg += a;
-      if (u.key === 'hero') ST.heroDmg += a; else ST.compDmg += a;
-    } else ST.compDmg += a;
+      ST.heroDmg += a;
+    } else ST.sideDmg += a;   // damage with no unit behind it (Deepwell boons)
     if (f.hp <= 0) {
       const over = -f.hp;
       foeDies(f, src, kind);
@@ -618,66 +498,13 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     burst(0.66, 0.6, big ? '#FFD27A' : '#FFFFFF', big ? 8 : 3, 0.5);
   };
 
-  // ---------------- party actions ----------------
-  function companionTick(u, dt) {
-    // S1: a Stunned member does nothing; a Chilled one swings and charges 30% slower (59a)
-    if (u.us && stUnitStunned(u)) return;
-    const slowU = u.us ? stUnitSlow(u) : 0;
-    // basic attack
-    if (u.dps > 0) {
-      u.swing -= dt * (1 - slowU);
-      if (u.swing <= 0) {
-        u.swing += 1 / u.spd;
-        // supports have no damage ability: their Smite is all of their damage (magic, ignores armour)
-        const hit = u.dps * (u.role === 'support' ? 1 : 1 - T.abF) / u.spd;
-        if (u.role === 'support') { const f = focusFoe(); if (f) cbDamageFoe(f, hit, u.i, 'magic'); }
-        else if (u.role === 'caster') {
-          const f = focusFoe(); if (f) {
-            cbDamageFoe(f, hit, u.i, 'magic');
-            const o = (T.aoeOther + u.area) * hit * aoeK;   // S6-A: spread over a big pack
-            carry = false;
-            for (const x of foes) if (x !== f && alive(x)) cbDamageFoe(x, o, u.i, 'magic');
-            carry = true;
-            if (u.id === 'thessaly') stApply(f, 'chill', 1, 0, u.i, { dur: T.mireT * (1 + T.thessTrait) * u.ctrl });   // S1: her mire is a Chill
-          }
-        } else {
-          let f = u.id === 'corvin' ? lowestFoe() : focusFoe();
-          if (u.melee && u.id !== 'corvin') { f = meleeTarget(f); u.strikeT = 0.5; }
-          // S1: Wren's Mark is the Mark status now (+20% taken from every source, 59a), not a striker bonus.
-          if (f) cbDamageFoe(f, hit, u.i, u.id === 'isolde' && f.hp / f.max < T.execTh ? 'true' : 'phys');
-          // Bram's Cleave: a second front-row foe takes 50% (Hunting Party: the whole front row, on the marked foe).
-          if (f && u.id === 'bram' && SYN_TUNE.real) { const all = synFlags.hunting && f.markT > 0; for (const o of foes) if (o !== f && alive(o) && o.row === f.row) { cbDamageFoe(o, hit * SYN_TUNE.cleave, u.i, 'phys'); if (!all) break; } }
-        }
-        partyAcc += hit;
-      }
-    }
-    if (u.strikeT > 0) u.strikeT -= dt;
-    // healing (supports, and the Lightkeeper hero)
-    if (u.heal > 0) {
-      u.healT -= dt;
-      if (u.healT <= 0) {
-        u.healT += 1;
-        let amt = u.heal * (u.id === 'hesketh' && u.lv >= 10 && u.fight >= 10 ? 1 + T.longRoute : 1);
-        const t = lowestAlly();
-        if (t && t.hp < t.maxHp) cbHealUnit(t, amt, u);
-      }
-    }
-    // signature ability
-    if (u.id && u.cdMax > 0) {
-      u.cd -= dt * u.cdRate * (1 - slowU);
-      if (u.cd <= 0 && anyFoe() && abilityReady(u)) { u.cd = u.cdMax; castAbility_(u); }
-    }
-    specialTick(u, dt);
-  }
-  function lowestFoe() { let b = null, v = Infinity; for (const f of foes) if (alive(f) && f.hp / f.max < v) { v = f.hp / f.max; b = f; } return b; }
+  // ---------------- hero actions ----------------
   function lowestAlly(skip) { let b = null, v = 2; for (let i = 0; i < nU; i++) { const u = U[i]; if (u.down || u === skip) continue; const x = u.hp / u.maxHp; if (x < v) { v = x; b = u; } } return b; }
-  function tankUnit() { let b = null; for (let i = 0; i < nU; i++) { const u = U[i]; if (!u.down && u.role === 'tank' && (!b || u.col > b.col)) b = u; } return b; }
 
   // Heals: overheal becomes a shield only with Warm Light (Hesketh), Ward gear or the Deep Ward boon.
   const HEAL_EV = { key: '', amount: 0, shield: 0 };
   cbHealUnit = (t, amount, from) => {
     if (!t || t.down || !(amount > 0)) return 0;
-    if (t.ashenT > 0) return 0;   // Caedmon's Cinder Vow: no healing while Ashen
     if (t.us && stUnitNoHeal(t)) return 0;   // S1: a Cursed member takes no healing
     const a = amount * t.healIn;
     const room = t.maxHp - t.hp, got = Math.min(room, a);
@@ -686,7 +513,6 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     const over = a - got;
     if (over > 0 && from) {
       let cap = from.ward;
-      if (from.id === 'hesketh') cap = Math.max(cap, (t.id === 'maren' && synFlags.lampward > 0) ? 10 : T.warmCap);
       if (boon('dward')) cap = Math.max(cap, 0.2);
       if (cap > 0) sh = cbShield(t, over, cap);
     }
@@ -711,8 +537,6 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     for (const f of foes) if (alive(f)) f.th[from.i] += amt / n;
   }
   function healAll(frac, from) { for (let i = 0; i < nU; i++) if (!U[i].down) cbHealUnit(U[i], U[i].maxHp * frac, from); }
-  function shieldAll(frac) { for (let i = 0; i < nU; i++) if (!U[i].down) cbShield(U[i], U[i].maxHp * frac, frac); }
-  function cleanse(u) { stCleanse(u, 1); }   // S1: removes the worst harmful status, all its stacks (59a)
 
   // Taunt: threat 120% of the top and a forced target for secs, on foes that can reach u.
   cbTaunt = (u, list, secs) => {
@@ -731,153 +555,9 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (!alive(f)) return;
     stApply(f, 'stun', 1, 0, src == null ? -1 : src, { dur: secs });
   };
-  function cbSlow(f, v, secs) { if (!alive(f)) return; f.slowV = Math.max(f.slowV, v); f.slowT = Math.max(f.slowT, secs); }
-  function knock(f, secs) { if (!alive(f)) return; f.knockT = Math.max(f.knockT, secs); if (f.diveT > 0 && typeof endDive === 'function') endDive(f); }
-  // S1: a Burn status (59a): 0.12 P a tick for 4 s, the stronger stays; P = the applier's hit power.
-  function burn(f, P, u) { if (!alive(f)) return; stApply(f, 'burn', 1, P, u ? u.i : -1); }
-  const hitPow = u => u.dps / Math.max(0.1, u.spd);
-  const isDiver = f => f.type === 'bat';
-
-  // When should a companion hold its ability? (Aldric keeps Shield Bash for a boss wind-up.)
-  function abilityReady(u) {
-    const id = u.id;
-    if (id === 'hesketh') { const l = lowestAlly(); return !!l && l.hp / l.maxHp < 0.75; }
-    if (id === 'elowen' || id === 'anselm') { let hurt = 0; for (let i = 0; i < nU; i++) if (!U[i].down && U[i].hp / U[i].maxHp < 0.7) hurt++; return hurt >= 1; }
-    if (id === 'aldric') {
-      if (typeof bossTelegraph === 'function') { const t = bossTelegraph(); if (t) return t.kind === 'heavy' || t.kind === 'cloud' || t.kind === 'heal' || t.kind === 'sig' || t.kind === 'summon'; }   // S6-B: a parry or an interrupt, not a dodge
-      if (lead && lead.boss && alive(lead) && typeof nextWindIn === 'function' && nextWindIn() < u.cdMax * 0.6) return false;
-      return true;
-    }
-    // Grenna's Earthshatter stuns: she spends it on a healer's channel (a Marsh Wraith, the Elder Wraith's
-    // green wind-up) before she thinks of taunting.
-    if (id === 'grenna') {
-      if (typeof bossTelegraph === 'function') { const t = bossTelegraph(); if (t && (t.kind === 'heal' || t.kind === 'sig' || t.kind === 'summon')) return true; }   // S6-B: casts
-      for (const f of foes) if (alive(f) && f.chanT > 0) return true;
-    }
-    if (id === 'isolde') { const th = execTh(u); for (const f of foes) if (alive(f) && f.hp / f.max < th) return true; return u.cd < -2; }
-    // Tanks taunt when a foe is on a non-tank ally (never off another tank, e.g. a Warden hero), or to save themselves.
-    if (u.role === 'tank') { for (const f of foes) if (alive(f) && f.tgt >= 0 && U[f.tgt] && U[f.tgt].role !== 'tank') return true; return u.hp / u.maxHp < 0.5; }
-    return true;
-  }
-  const execTh = u => (u.lv >= 20 ? T.execTh20 : T.execTh) + T.duskExec * synFlags.dusk;
-  const reach = u => { const l = []; for (const f of foes) if (alive(f) && (f.ranged || canReach(f, u))) l.push(f); return l; };
-  const CAST_EV = { key: '', id: '', name: '' };
-  function castAbility_(u) {
-    ST.abilities++;
-    const id = u.id, burstD = u.dps * T.abF * u.cdMax, f0 = focusFoe();
-    // S1: signature hits are abilities (ST_AB: the reaction window's x1.25); Shield Bash, Earthshatter and
-    // Felling Blow are heavy (Shatter). The type is the hero's own (u.dt).
-    const tg = ST_AB | (id === 'aldric' || id === 'grenna' || id === 'bram' ? ST_HEAVY : 0);
-    const hitOne = (f, m, kind) => { if (f) { cbDamageFoe(f, burstD * (m || 1), u.i, kind || 'phys', '', tg); partyAcc += burstD * (m || 1); } };
-    // S6-A: the extra from area stays today's pack of 3 (+50% per other foe, at most aoeN of them; x aoeSwarm on a swarm)
-    const hitAll = (m, kind) => { let n = 0; for (const f of foes) if (alive(f)) n++; const ex = Math.min(n - 1, T.aoeN) * 0.5 * (packSize === 'swarm' ? T.aoeSwarm : 1); carry = false; for (const f of foes) if (alive(f)) cbDamageFoe(f, burstD * (m || 1) / Math.max(1, n) * (1 + ex), u.i, kind || 'magic', '', tg); carry = true; partyAcc += burstD * (m || 1); };
-    switch (id) {
-      case 'tobin': {
-        cbTaunt(u, reach(u), T.tauntT); u.drV = Math.max(u.drV, T.guardDr); u.drT = T.guardT;
-        if (u.lv >= 20) { const a = adjacent(u); if (a) { a.drV = Math.max(a.drV, T.guardDr); a.drT = T.guardT; } }
-        if (synFlags.sword && U[0] && !U[0].down && U[0] !== u) { U[0].drV = Math.max(U[0].drV, T.guardDr * Math.min(1, synFlags.sword)); U[0].drT = T.guardT; }   // The Borrowed Sword
-        break;
-      }
-      case 'wren': { const f = f0; if (f) stApply(f, 'mark', 1, 0, u.i, { dur: (5 + 3 * synFlags.hunting) * u.ctrl }); hitOne(f, 1); if (u.lv >= 20) { const o = foes.find(x => x !== f && alive(x)); hitOne(o, 0.5); } break; }
-      case 'hesketh': { const mx = 1 + SYN_TUNE.unlitMend * synFlags.unlit, a = lowestAlly(); if (a) cbHealUnit(a, a.maxHp * T.mend * mx * healMul(u), u); if (u.lv >= 20) { const b = lowestAlly(a); if (b) cbHealUnit(b, b.maxHp * T.mend * mx * healMul(u), u); } break; }
-      case 'pip': { hitAll(1, 'magic'); for (const f of foes) burn(f, hitPow(u) * (f === f0 ? 1 : aoeK), u); break; }
-      case 'bram': { const f = meleeTarget(f0); hitOne(f, 1); if (f) stApply(f, 'bleed', 2, hitPow(u), u.i); if (u.lv >= 10 && f) knock(f, 1 * u.ctrl); if (u.lv >= 20) for (const o of foes) if (o !== f && alive(o) && f && o.row === f.row) hitOne(o, 0.5); break; }
-      case 'maren': {
-        cbTaunt(u, foes, 4); cbHealUnit(u, u.maxHp * T.beacon * (1 + (T.beaconLamp / T.beacon - 1) * synFlags.lampward), u);
-        if (u.lv >= 20) shieldAll(T.beaconSh);
-        break;
-      }
-      case 'aldric': {
-        const f = (lead && lead.boss && alive(lead)) ? lead : meleeTarget(f0) || f0;
-        if (typeof resolveParry === 'function' && f && f.boss) resolveParry('bash');   // before the stun: a bash is a parry, not an interrupt
-        if (u.lv >= 20) hitAll(1, 'phys'); else hitOne(f, 1);
-        if (f) cbStun(f, T.bashStun * u.ctrl, u.i);
-        break;
-      }
-      case 'kestrel': {
-        let f = null; for (const x of foes) if (alive(x) && isDiver(x) && (x.diveT > 0 || x.row < 2)) { f = x; break; }
-        if (synFlags.markleap) for (const x of foes) if (alive(x) && x.markT > 0) { f = x; break; }
-        f = f || f0;
-        hitOne(f, 1 + 0.5 * synFlags.markleap); if (u.lv >= 20) hitOne(f, 1);
-        if (f) stApply(f, 'chill', 1, 0, u.i);   // S1: her Leap Chills the foe she lands on (4 s)
-        for (const x of foes) knock(x, T.leapKnock * u.ctrl);
-        u.untarg = T.leapUntarg;
-        break;
-      }
-      case 'thessaly': {
-        for (const f of foes) { stApply(f, 'chill', 1, 0, u.i, { dur: T.sinkT * (1 + T.thessTrait) * u.ctrl }); if (f.diveT > 0 && typeof endDive === 'function') endDive(f); if (u.lv >= 20 && isDiver(f)) cbStun(f, T.sinkStun * u.ctrl, u.i); }
-        hitAll(1, 'magic');
-        break;
-      }
-      case 'anselm': { healAll(T.arms * healMul(u), u); if (u.lv >= 20) for (let i = 0; i < nU; i++) cleanse(U[i]); break; }
-      case 'grenna': {
-        cbTaunt(u, foes, T.tauntT); const r = frontRow();
-        for (const f of foes) if (alive(f) && (f.row === r || (u.lv >= 20 && f.row === r - 1))) { cbStun(f, T.shatterStun * u.ctrl, u.i); }
-        hitAll(1, 'phys');
-        break;
-      }
-      case 'isolde': {
-        const th = execTh(u); let f = null; for (const x of foes) if (alive(x) && x.hp / x.max < th) { f = x; break; }
-        const tg = f || f0; const hpBefore = tg ? tg.hp : 0;
-        hitOne(tg, f ? 2 : 0.6, 'true');
-        if (tg && alive(tg)) stApply(tg, 'venom', 3, hitPow(u), u.i);   // S1: Execute applies 3 Venom
-        if (f && tg && tg.hp <= 0 && hpBefore > 0) u.cd = 0.5;   // Unfinished Business
-        break;
-      }
-      case 'oriel': { hitAll(1, 'magic'); for (const f of foes) cbStun(f, T.starStun * u.ctrl, u.i); break; }   // S1: her status is the stun (the slow is dropped, classes-2 5.1)
-      case 'morwen': { for (const f of foes) { burn(f, hitPow(u) * T.vigilBurnP * (f === f0 ? 1 : aoeK), u); if (u.lv >= 20) cbSlow(f, T.vigilSlow, T.vigilT * u.ctrl); } hitAll(0.5, 'magic'); break; }
-      case 'vesper': {
-        for (let i = 0; i < nU; i++) { const x = U[i]; if (x.down) continue; cbShield(x, x.maxHp * T.verseWard * 2, T.verseWard * 2); cbHealUnit(x, x.maxHp * T.verseMend * 2 * healMul(u), u); }
-        if (u.lv >= 20) { let b = null; for (let i = 0; i < nU; i++) if (U[i].id && U[i] !== u && (!b || U[i].cd > b.cd)) b = U[i]; if (b) b.cd = 0; }
-        break;
-      }
-      case 'elowen': { healAll(T.sanct * healMul(u), u); for (let i = 0; i < nU; i++) { U[i].hotT = T.sanctT; U[i].hotV = T.sanctHot * healMul(u); if (u.lv >= 20 || synFlags.oldoath && false) cleanse(U[i]); } break; }
-      case 'caedmon': {
-        cbTaunt(u, foes, 4); u.reflT = T.pyreT;
-        if (u.lv >= 20) { const a = adjacent(u); if (a) cbShield(a, a.maxHp * T.pyreSh, T.pyreSh); }
-        break;
-      }
-      case 'corvin': {
-        const f = lowestFoe(); const before = f ? f.hp : 0; hitOne(f, 1.2, 'phys');
-        if (f && alive(f)) stApply(f, 'venom', 3, hitPow(u), u.i);   // S1: Hollow Cut applies 3 Venom
-        if (f && f.hp <= 0 && before > 0) u.cd = u.cdMax / 2;
-        if (u.lv >= 20) { const g = lowestFoe(); hitOne(g, 0.6, 'phys'); }
-        break;
-      }
-      default: hitOne(f0, 1);
-    }
-    CAST_EV.key = u.key; CAST_EV.id = id; CAST_EV.name = id;
-    emit('unitAbility', CAST_EV);
-  }
-  const healMul = u => u.heal > 0 && u.hpP > 0 ? u.heal / (T.heal * u.hpP) : 1;
-  // Adjacent (F1, formation.md 1.1): the next slot. The Middle touches both: the more hurt one.
-  function adjacent(u) {
-    let b = null;
-    for (let i = 0; i < nU; i++) { const x = U[i]; if (x === u || x.down || Math.abs(x.col - u.col) !== 1) continue; if (!b || x.hp / x.maxHp < b.hp / b.maxHp) b = x; }
-    return b;
-  }
-  // Per-unit timers and specialities that tick.
-  function specialTick(u, dt) {
-    u.fight += dt;
-    if (u.id === 'anselm') {
-      u.tollT += dt;
-      const per = u.lv >= 10 ? T.tollP10 : T.tollP;
-      if (u.tollT >= per) { u.tollT = 0; for (let i = 0; i < nU; i++) { const x = U[i]; if (!x.down && x.hp / x.maxHp < T.tollAt) cbShield(x, x.maxHp * T.tollSh, T.tollSh); } }
-    }
-    if (u.id === 'vesper') {
-      u.verseT += dt;
-      if (u.verseT >= (T.verseP - SYN_TUNE.quarryVerse * synFlags.quarry) / 3) {   // The Quarry Song: every 5s, not 6
-        u.verseT = 0; u.verse = (u.verse + 1) % 3;
-        const m = 1 + SYN_TUNE.bellsong * synFlags.bellsong;
-        if (u.verse === 1) { shieldAll(T.verseWard * m); const gr = synFlags.quarry && upHas('grenna'); if (gr) cbShield(gr, gr.maxHp * T.verseWard * m * SYN_TUNE.quarryWard * synFlags.quarry, T.verseWard * m * (1 + SYN_TUNE.quarryWard * synFlags.quarry)); }
-        else if (u.verse === 2) healAll(T.verseMend * m * healMul(u), u);
-      }
-    }
-  }
 
   // ---------------- foes act ----------------
-  // Can foe f attack unit u (melee reach, 4.2)? Melee reaches the party's front-most occupied column
-  // (melee strikers count as Front while they strike); Corvin cannot be hit by melee while he strikes.
+  // Can foe f attack unit u (melee reach, 4.2)? Melee reaches the front-most occupied column.
   function partyFront() {
     let c = -1;
     for (let i = 0; i < nU; i++) { const u = U[i]; if (u.down || u.untarg > 0) continue; const col = u.strikeT > 0 ? 2 : u.col; if (col > c) c = col; }
@@ -887,7 +567,6 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   function canReach(f, u) {
     if (u.down || u.untarg > 0) return false;
     if (f.ranged || f.diveT > 0) return true;
-    if (u.id === 'corvin') { for (let i = 0; i < nU; i++) if (U[i] !== u && !U[i].down) return false; }
     const col = u.strikeT > 0 ? 2 : u.col;
     return col >= frontC;
   }
@@ -950,11 +629,6 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   // kind: hit | ranged | heavy | cloud | slam | dive | poison | burn. Returns the HP lost.
   cbHitUnit = (u, amount, kind, f) => {
     if (!u || u.down || !(amount > 0)) return 0;
-    // Aldric's Intercept: he takes the hits meant for an ally below 25% (3 hits, once per ally per pack).
-    if (f && (kind === 'hit' || kind === 'ranged' || kind === 'dive' || kind === 'heavy')) {
-      const al = upHas('aldric');
-      if (al && al !== u && al.icFor === u.i && al.icLeft > 0) { al.icLeft--; u = al; }
-    }
     let a = amount;
     const area = kind === 'cloud' || kind === 'slam', dot = kind === 'poison' || kind === 'burn' || kind === 'bleed';
     // S1 (core-2 1.4): a foe's hit carries its type: physical meets full armour, a typed hit half the
@@ -968,22 +642,12 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (S.party && S.party.cls === 'warden') dr *= 1 - T.wardenDr;
     if (u.i === 0 && typeof heroGritDr === 'function') dr *= 1 - heroGritDr();   // S2: Grit, 1% less each
     if (u.i === 0 && (kind === 'dive' || kind === 'slam') && S.party && S.party.cls === 'ranger') dr *= 1 - CLS_TUNE.lightFeet;   // S2: Light Feet
-    if (has('caedmon')) dr *= 1 - T.unburnt;
-    if (wallUntil > clock) dr *= 1 - T.wall;
     if (u.i === 0 && challUntil > clock) dr *= 1 - 0.2;   // Challenger: 20% less while taunting
     if (u.i === 0 && typeof soloTakenX === 'function') dr *= soloTakenX(f);   // SOLO1: the solo hero's cut (bosses and adds softer), x1.5 while open after a missed parry
     if (u.drT > 0) dr *= 1 - u.drV;
-    if (u.id === 'tobin') dr *= 1 - Math.min(T.trustMax, u.trust);
-    if (u.id === 'grenna') { dr *= 1 - u.rock; if (kind === 'heavy' || kind === 'slam') dr *= 1 - T.bedrock; }
-    dr *= u.synDr || 1;   // F2: combos, Kin and Bonds (Lifeline, Two Walls, The Oath, ...; capped in 56b)
     if (u.role === 'tank') dr *= 1 - T.tankDr;   // BAL2: tanks shrug off hits (a no-tank line-up holds 2-4 zones lower, T6)
     if (typeof clsDr === 'function') dr *= clsDr(u, kind, f);   // S3 (59e): the Reaver's half cut, Stand Fast, Oath of the Order
-    if ((u.role === 'tank' || soloOn()) && setOnC('guard')) dr *= 1 - 0.25;   // W1-C: solo, the hero is the one in front
-    if (f && (f.slowT > 0 || f.chillT > 0) && upHas('thessaly') && upHas('thessaly').lv >= 10) dr *= 1 - T.deepWater;
-    if ((kind === 'ranged' || area) && u.col === 0) dr *= 1 - T.backRanged;
-    // Cover (F1, formation.md 1.1): a tank in Front covers the Middle (cover), a tank in the Middle the Back (bulwark).
-    if (u.col < 2 && coverOf(u, U, nU)) dr *= 1 - (u.col === 1 ? T.cover : FORM_TUNE.bulwark);
-    if (kind === 'burn' && has('caedmon')) dr = 0;
+    if (setOnC('guard')) dr *= 1 - 0.25;   // Deepwell set: the hero is the one in front
     a *= dr;
     let blocked = false;
     if (u.blockP > 0 && !dot && Math.random() < u.blockP) { a *= T.blockX; blocked = true; ST.blocked++; }
@@ -1000,33 +664,18 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     // reflects and burns back
     if (f && alive(f)) {
       let back = 0;
-      if (u.id === 'maren' || u.id === 'caedmon') back += (a + sh) * T.burnBack * (u.id === 'maren' && (f.slowT > 0 || f.chillT > 0) ? 1 + synFlags.mirelamp : 1);
-      if (u.reflT > 0) back += (a + sh) * T.pyre;
-      if ((u.role === 'tank' || soloOn()) && boon('thorn')) back += (a + sh) * 0.3;
-      // S1: Maren's Lanternlight burns back holy; Caedmon's fire, and his Pyre Guard sets a Burn on the attacker
-      if (back > 0) { carry = false; cbDamageFoe(f, back, u.i, 'burn', u.id === 'maren' ? 'holy' : u.dt); carry = true; }
-      if (u.reflT > 0 && u.id === 'caedmon' && alive(f)) burn(f, hitPow(u), u);
+      if (boon('thorn')) back += (a + sh) * 0.3;   // Deepwell Thorns
+      if (back > 0) { carry = false; cbDamageFoe(f, back, u.i, 'burn', u.dt); carry = true; }
     }
-    if (u.id === 'grenna') { u.rock = Math.min(T.rockMax, u.rock + T.rock); u.rockT = T.rockT; }
     if (u.hp <= 0) {
-      if (u.ashenT > 0) u.hp = 1;
-      else if (u.id === 'tobin' && u.lv >= 10 && !u.stubborn) { u.stubborn = true; u.hp = 1; }
-      else if (u.id === 'caedmon' && !u.vow) { u.vow = true; u.hp = 1; u.ashenT = T.vowT; cbTaunt(u, foes, T.vowT); if (synFlags.lasttwo && upHas('elowen')) healAll(SYN_TUNE.lastTwoHeal * synFlags.lasttwo, upHas('elowen')); }   // The Last Two
-      else if (boon('life') && !u.lifeline && (typeof dcLifeline !== 'function' || dcLifeline(u))) { u.lifeline = true; u.hp = 1; }
+      if (boon('life') && !u.lifeline && (typeof dcLifeline !== 'function' || dcLifeline(u))) { u.lifeline = true; u.hp = 1; }
       else knockOut(u);
-    } else if (u.hp < u.maxHp * T.interceptAt) {
-      const al = upHas('aldric');
-      if (al && al !== u && !(al.icUsed & (1 << u.i)) && (u.col >= 1 || synFlags.oldenemies && u.id === 'corvin' || isAdj(al, u))) {
-        al.icUsed |= 1 << u.i; al.icFor = u.i; al.icLeft = T.intercept;
-        if (synFlags.oldoath) cbHealUnit(u, u.maxHp * T.oathHeal * synFlags.oldoath, al);
-      }
     }
     if (f && f.tr && typeof eliteDealt === 'function') eliteDealt(f, a + sh, u);   // S6-D: Leeching, Cursed (59i)
     HIT_EV.key = u.key; HIT_EV.amount = a; HIT_EV.kind = kind; HIT_EV.foe = f; HIT_EV.blocked = blocked; HIT_EV.shield = sh;
     emit('unitHit', HIT_EV);
     return a;
   };
-  const isAdj = (a, b) => Math.abs(a.col - b.col) === 1;   // F1: adjacent = the next slot
   // S6-A (1.4): telegraphed hits 35%, an Explosive blast 20%, a boss's swing 15%, a pack swing 10% (a swarm foe 4%).
   const TELE_KIND = { heavy: 1, slam: 1, zone: 1, line: 1, sig: 1 };
   function capOf(kind, f) {
@@ -1041,12 +690,10 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   const RES = { holy: 'resHoly', poison: 'resPoison', fire: 'resFire', frost: 'resFrost' };
   function resOf(u, ty) {
     const k = RES[ty]; if (!k) return 0;
-    let g = null; try { g = u.key === 'hero' ? gear() : charGear(u.key); } catch (e) { g = null; }
+    let g = null; try { g = gear(); } catch (e) { g = null; }
     const v = g && g[k] > 0 ? g[k] / 100 : 0;
     return Math.min(ST_TUNE.resCap, v);
   }
-  // The standing tank one slot in front of u (it covers u), or null.
-  function coverOf(u, list, n) { for (let i = 0; i < n; i++) { const x = list[i]; if (x !== u && !x.down && x.role === 'tank' && x.col === u.col + 1) return x; } return null; }
   function knockOut(u) {
     u.hp = 0; u.down = true; u.downT = 0; u.sh = 0; packDown = true; ST.kos++;
     for (const f of foes) { f.th[u.i] = 0; if (f.tgt === u.i) f.tgt = -1; }
@@ -1062,13 +709,11 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
 
   // ---------------- pack end, wipe, push back ----------------
   function packCleared(last) {
-    const vigil = upHas('elowen');
     for (let i = 0; i < nU; i++) {
       const u = U[i];
-      if (u.down) standUp(u, vigil ? T.reviveVigil : Math.max(T.revive, typeof synParty === 'function' ? synParty().revive : 0));   // F2: Two Lights
-      else u.hp = Math.min(u.maxHp, u.hp + u.maxHp * T.packHealF * (vigil ? 2 : 1));
-      if (u.id === 'tobin') u.trust = packDown ? 0 : Math.min(T.trustMax, u.trust + T.trustStep);
-      u.stubborn = false; u.vow = false; u.icUsed = 0; u.icLeft = 0; u.icFor = -1; u.fight = 0;
+      if (u.down) standUp(u, T.revive);
+      else u.hp = Math.min(u.maxHp, u.hp + u.maxHp * T.packHealF);
+      u.fight = 0;
     }
     packDown = false;
     if (inArena) { mob = last; last.hp = -(last.over || 0); kill(); return; }
@@ -1090,7 +735,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (inArena) { WIPE_EV.to = z; emit('wipe', WIPE_EV); return; }   // 59c-deepwell-combat ends the run
     if (fightBoss) {
       fightBoss = false; failDps = totalDps();
-      toast(soloOn() ? 'The zone boss beat you. Grow stronger and try again.' : 'Your party fell to the zone boss. Grow stronger and try again.', 'raid');
+      toast('The zone boss beat you. Grow stronger and try again.', 'raid');
       emit('bossFail', { zone: z, dps: failDps });
       WIPE_EV.to = z;
     } else {
@@ -1098,7 +743,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       if (to < z) { S.combat.back = Math.max(S.combat.back || 0, z); S.zone = to; }
       backWipes = backZone === z ? backWipes + 1 : 1; backZone = z; backAt = clock;
       WIPE_EV.to = to;
-      toast(soloOn() ? (stall ? "You couldn't finish the pack and fell back a zone." : 'You fell back a zone to recover.') : stall ? "Your party couldn't finish the pack and fell back to regroup." : 'Your party fell back to regroup.', 'raid', null, 'normal');
+      toast(stall ? "You couldn't finish the pack and fell back a zone." : 'You fell back a zone to recover.', 'raid', null, 'normal');
     }
     for (const f of foes) { f.gone = true; f.dead = f.dead || 0.001; }
     if (mob && !mob.dead) mob.dead = 0.001;
@@ -1159,12 +804,9 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       if (u.shT > 0) { u.shT -= dt; if (u.shT <= 0) u.sh = 0; }
       if (u.drT > 0) u.drT -= dt;
       if (u.untarg > 0) u.untarg -= dt;
-      if (u.reflT > 0) u.reflT -= dt;
-      if (u.ashenT > 0) u.ashenT -= dt;
-      if (u.rockT > 0) { u.rockT -= dt; if (u.rockT <= 0) u.rock = 0; }
       if (u.hotT > 0) { u.hotT -= dt; cbHealUnit(u, u.maxHp * u.hotV * dt, null); }
       if (u.poisonT > 0) { u.poisonT -= dt; cbHitUnit(u, u.poisonDps * dt, 'poison', null); if (u.down) continue; }
-      if (i === 0) heroTick(u, dt); else companionTick(u, dt);
+      heroTick(u, dt);
       if (!anyFoe()) break;
     }
     if (!anyFoe()) return;
@@ -1175,31 +817,16 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     stTick(dt);   // S1: status timers and the one-a-second damage-over-time beat (59a)
     if (!anyFoe()) return;
     if (!(mob && alive(mob))) showFoe();
-    partyTickT += dt;
-    if (partyTickT >= 0.6) { if (partyAcc > 0) addFloat(fmt(partyAcc), '#B58CFF', false, 0.76 + (Math.random() - 0.5) * 0.1, 0.55); partyAcc = 0; partyTickT = 0; }
   };
   function heroTick(u, dt) {
     u.fight += dt;
-    // Sanctuary Hymn: while Rally Hymn is up it heals the party 5% of max HP a second.
-    if (u.cls === 'lightkeeper' && ks('sanctuary') && typeof partyHymnOn === 'function' && partyHymnOn()) for (let i = 0; i < nU; i++) if (!U[i].down) cbHealUnit(U[i], U[i].maxHp * 0.05 * dt, u);
     if (u.heal > 0) {
       u.healT -= dt;
-      if (u.healT <= 0) { u.healT += 1; const t = lowestAlly(); if (t && t.hp < t.maxHp) { cbHealUnit(t, u.heal, u); if (synFlags.unlit) { const k = SYN_TUNE.unlitShield * synFlags.unlit; cbShield(t, t.maxHp * k, k); } } }   // The Unlit Road
+      if (u.healT <= 0) { u.healT += 1; const t = lowestAlly(); if (t && t.hp < t.maxHp) cbHealUnit(t, u.heal, u); }
     }
   }
 
   // ---------------- hero class hooks (55-party events) ----------------
-  let wallUntil = -1;
-  cbWallOn = () => wallUntil > clock;
-  on('ability', ({ cls }) => {
-    if (!partyCombatOn() || !nU) return;
-    if (cls === 'warden') { wallUntil = clock + T.wallT + bonus('tune:wallT'); if (typeof resolveParry === 'function') resolveParry('wall'); }   // tune:wallT: The Banner (56b)
-    else if (cls === 'lightkeeper') {
-      healAll(T.hymnHeal, U[0]); for (let i = 1; i < nU; i++) if (U[i].cdMax) U[i].cd -= U[i].cdMax * T.hymnCd;
-      if (synFlags.candles) for (let i = 0; i < nU; i++) if (!U[i].down) { U[i].hotT = SYN_TUNE.candlesT; U[i].hotV = SYN_TUNE.candlesHot * synFlags.candles; }   // Two Candles
-    }
-    else if (cls === 'lanternmage' && synFlags.chosen) { let n = 0; for (const f of foes) if (alive(f)) n++; healAll(T.chosenHeal * synFlags.chosen * n, U[0]); }
-  });
   on('classTap', ({ cls, kind, auto }) => {
     if (!partyCombatOn() || !nU || kind === 'parry' || kind === 'answer') return;   // S6-B: an answer tap is not a class tap
     if (cls === 'warden' && mob && alive(mob)) {
@@ -1207,10 +834,9 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       if (ks('challenger')) { cbTaunt(U[0], foes, 2); challUntil = clock + 2; }   // Challenger: taps taunt every foe for 2s
     }
     else if (cls === 'lightkeeper') { const t = lowestAlly(); if (t && t.hp / t.maxHp < (auto ? 0.6 : 1)) cbHealUnit(t, t.maxHp * T.lkTap * (auto ? 0.5 : 1), U[0]); }
-    else if (cls === 'ranger' && mob && alive(mob)) { mob.focusT = 8; if (synFlags.twobows) stApply(mob, 'mark', 1, 0, 0, { dur: 8 * Math.min(1, synFlags.twobows) }); }   // Two Bows (S1: a Mark status)
+    else if (cls === 'ranger' && mob && alive(mob)) mob.focusT = 8;
   });
   on('deepFloor', () => { const m = boon('mend'); if (m && nU) healAll(0.1 * m, null); for (let i = 0; i < nU; i++) U[i].lifeline = false; });
-  on('fieldChange', () => { refreshT = 0; });
   on('classChosen', () => { refreshT = 0; fieldSig = ''; });
   on('sceneReset', () => { showT = 0; });
 
@@ -1220,12 +846,6 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     const u = cbUnitByKey(key); if (!u) return null;
     const o = HP_OUT[key] || (HP_OUT[key] = { hp: 0, max: 1, shield: 0, down: false });
     o.hp = Math.max(0, u.hp); o.max = u.maxHp; o.shield = u.sh; o.down = u.down;
-    return o;
-  };
-  cbUnitCd = key => {
-    const u = cbUnitByKey(key); if (!u || !u.id || !(u.cdMax > 0)) return null;
-    const o = CD_OUT[key] || (CD_OUT[key] = { t: 0, max: 1 });
-    o.t = Math.max(0, u.cd); o.max = u.cdMax;
     return o;
   };
   cbDebug = () => {
@@ -1239,15 +859,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   // For z = zMax down to zMax - 10 (or just z with opts.one): damage rate, who gets hit, incoming
   // damage and sustain; the highest z that holds (and can be farmed) wins. Also drives auto-push.
   const EST_OUT = { zone: 1, holds: false, dps: 0, packSecs: 0, packsPerSec: 0, goldPerSec: 0, tgt: '', inc: 0, sus: 0, margin: 0, heroHp: 0 };
-  function estUnits() {
-    readSyn();
-    const ids = fieldIds();
-    readPartyP(ids);
-    let n = 0;
-    for (const key of ['hero'].concat(ids)) { const u = EST[n++]; statUnit(u, key, false); u.down = false; }
-    for (let i = n; i < 4; i++) EST[i].live = false;
-    return n;
-  }
+  function estHero() { const u = EST[0]; statUnit(u, 'hero', false); u.down = false; for (let i = 1; i < 4; i++) EST[i].live = false; return u; }
   // Behaviour table per zone type (4.11), from FOE_BEH: dmg (attack x speed vs a plain foe, plus the
   // Golem's slam), ranged (hits any row by threat), arm (armoured: physical damage x armourX), aoe
   // (party-wide damage per foe per second, as a share of its attack: spore clouds), heal (enemy
@@ -1258,80 +870,45 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     { dmg: 1, ranged: 1, arm: 0, aoe: 0.8 / 6, heal: 0, dive: 0, pois: 1 }, { dmg: 2.5 * 0.5 * 1.33, ranged: 0, arm: 1, aoe: 0, heal: 0, dive: 0 },
     { dmg: 1, ranged: 1, arm: 0, aoe: 0, heal: 0.15, dive: 0 }
   ];
-  const AB_HEAL = { hesketh: u => T.mend * (u.lv >= 20 ? 1.5 : 1) * (1 + SYN_TUNE.unlitMend * synFlags.unlit), anselm: () => T.arms, elowen: () => T.sanct + T.sanctHot * T.sanctT,
-    vesper: () => 2 * (T.verseMend + T.verseWard) };
-  const thrRate = (u, i) => (i === 0 ? heroCombatDps() : u.dps) * u.thX * (u.role === 'tank' ? 3 : 1) + u.heal * T.healThreat;
-  const EST_T = [null, null];
   partyHoldEstimate = (zMax, opts) => {
     if (!(zMax >= 1)) zMax = Math.max(1, S.maxZone || 1);   // no zone: from the best zone down (the Watchtower hint)
-    const o = opts || {}, n = estUnits();
-    const hero = EST[0];
-    const heroD = heroCombatDps() * T.autoCast * (hero.cls === 'lanternmage' ? 1 + (T.lmSplash + hero.area) * 0.9 : 1);
-    let heal = 0, top = null, topT = -1, front = null, frontT = -1, fc = -1;
-    // S1: each member's damage against the zone's pack, by its type (weak x1.5, resisted x0.6, 59a typeZone);
-    // armour only cuts physical hits. unitD(u, i, z, physX) is one member's damage a second there.
-    const tz = (u, z) => typeof typeZone === 'function' ? typeZone(u.dt, z, T.mixP) : 1;
-    const unitD = (u, i, z, physX) => i === 0 ? heroD * (hero.cls === 'lanternmage' || hero.dt !== 'phys' ? 1 : physX) * tz(u, z)
-      : u.role === 'caster' ? u.dps * (1 + (T.aoeOther + u.area) * 0.9) * tz(u, z) : u.role === 'support' ? u.dps * tz(u, z) : u.dps * (u.dt === 'phys' ? physX : 1) * tz(u, z);
-    let dc = 3;   // F1: divers go for the Back, else the Middle (59b pickDive)
-    for (let i = 0; i < n; i++) { heal += EST[i].heal; if (EST[i].col > fc) fc = EST[i].col; if (EST[i].col < dc) dc = EST[i].col; }
-    if (dc > 1) dc = -1;
-    // BAL2: support abilities heal a share of the target's max HP per cast (Mend, Call to Arms, Sanctuary,
-    // Verse), and the Lightkeeper's auto-cast Rally Hymn heals everyone: a share of max HP a second.
-    let abHeal = 0;
-    for (let i = 1; i < n; i++) { const u = EST[i], f = AB_HEAL[u.id]; if (f && u.cdMax > 0) abHeal += f(u) * healMul(u) / u.cdMax; }
-    if (hero.cls === 'lightkeeper' && S.maxZone >= 10) abHeal += T.hymnHeal / (HERO_CLASSES.lightkeeper.ability.cd * mod('abilityCd') * 2);
-    // who gets hit: melee foes the highest-threat member of the front-most column, ranged foes the highest threat overall
-    for (let i = 0; i < n; i++) {
-      const u = EST[i], tr = thrRate(u, i);
-      if (tr > topT) { topT = tr; top = u; }
-      if (u.col === fc && tr > frontT) { frontT = tr; front = u; }
-    }
-    let dr0 = 1;
-    if (S.party && S.party.cls === 'warden') dr0 *= 1 - T.wardenDr;
-    if (soloOn()) dr0 *= 1 - SOLO_TUNE.drX;   // SOLO1
-    for (let i = 1; i < n; i++) if (EST[i].id === 'caedmon') dr0 *= 1 - T.unburnt;
-    const drOf = u => dr0 * (u.synDr || 1) * (u.role === 'tank' ? 1 - T.tankDr : 1) *   // F2: synergy damage reduction
-      (u.col < 2 && coverOf(u, EST, n) ? 1 - (u.col === 1 ? T.cover : FORM_TUNE.bulwark) : 1);   // F1 cover and bulwark
-    EST_T[0] = front; EST_T[1] = top === front ? null : top;
+    const o = opts || {}, hero = estHero();
+    const heroD = heroDps() * T.autoCast * (hero.cls === 'lanternmage' ? 1 + (T.lmSplash + hero.area) * 0.9 : 1);
+    // S1: the hero's damage against the zone's pack, by its type (weak x1.5, resisted x0.6, 59a typeZone);
+    // armour only cuts physical hits.
+    const tz = z => typeof typeZone === 'function' ? typeZone(hero.dt, z, T.mixP) : 1;
+    const unitD = (z, physX) => heroD * (hero.cls === 'lanternmage' || hero.dt !== 'phys' ? 1 : physX) * tz(z);
+    const heal = hero.heal;
+    const dr0 = 1 * (hero.cls === 'warden' ? 1 - T.wardenDr : 1) * (1 - SOLO_TUNE.drX);
+    const drOf = dr0 * (hero.role === 'tank' ? 1 - T.tankDr : 1);
     let best = null;
     const lo = o.one ? zMax : Math.max(1, zMax - 10);
     for (let z = zMax; z >= lo; z--) {
       const b = BEH_EST[zoneType(z)], mix = BEH_EST[zoneNextType(z)], w = k => T.mixP * b[k] + (1 - T.mixP) * mix[k];
       const physX = 1 - w('arm') * (1 - T.armourX), fheal = w('heal');
-      let D = 0;
-      for (let i = 0; i < n; i++) D += unitD(EST[i], i, z, physX);
+      let D = unitD(z, physX);
       D *= T.estEff;
       const zb = FOE_BEH[TYPES[zoneType(z)].key] || FOE_BEH.slime, zsw = T.sizes && zb.size === 'swarm', zn = T.sizes ? zb.n || T.packSize : T.packSize;   // S6-A
       const packHp = mobHp(z) * T.packHp * mod('foeHp') * (1 + fheal) * (zsw ? T.swarmHp : 1);
       let packSecs = D > 0 ? packHp / D + T.respawn : Infinity;
       const atk = zoneAtk(z), alive = 1.5, rng = w('ranged'), dmgX = w('dmg');
-      // melee share on `front`, ranged share on `top` (the back row takes 20% less from ranged), spread on everyone
+      // melee and ranged shares land on the hero; spore clouds spread
       const spread = w('aoe') * atk * alive * T.spd;
       // spore poison: a share of max HP per second while any Spore Cap's cloud is on (it does not stack)
       const pois = w('pois') ? ENEMY_TUNE.poison * Math.min(1, alive * w('pois') * ENEMY_TUNE.poisonT / ENEMY_TUNE.cloudEvery) : 0;
       let holds = true, worst = 99, incMax = 0;
-      for (let k = 0; k < 2; k++) {
-        const u = EST_T[k]; if (!u) continue;
-        let inc = spread + pois * u.maxHp + w('dive') * atk * (u.col === dc ? 1 : 0), share = 0;
-        if (u === front) { inc += alive * atk * T.spd * dmgX * (1 - rng) * (1 - red(u.armour)) * drOf(u); share += 1 - rng; }
-        if (u === top) { inc += alive * atk * T.spd * dmgX * rng * (1 - red(u.armour)) * drOf(u) * (u.col === 0 ? 1 - T.backRanged : 1); share += rng; }
-        // healing follows the damage: a support heals whoever is hit, in proportion
-        const sus = (heal * Math.min(1, share) + abHeal * u.maxHp) * u.healIn + u.maxHp * (T.regen + T.packHealF / packSecs);
+      {
+        const u = hero;
+        let inc = spread + pois * u.maxHp;
+        inc += alive * atk * T.spd * dmgX * (1 - rng) * (1 - red(u.armour)) * drOf;
+        inc += alive * atk * T.spd * dmgX * rng * (1 - red(u.armour)) * drOf;
+        const share = 1;   // (1 - rng) + rng
+        // healing follows the damage
+        const sus = heal * Math.min(1, share) * u.healIn + u.maxHp * (T.regen + T.packHealF / packSecs);
         const net = inc * T.estSafety - sus;   // estSafety: headroom for bad packs (elites, three spore clouds at once)
         if (!(net <= 0 || u.maxHp / net >= T.holdSecs)) holds = false;
         worst = Math.min(worst, inc > 0 ? sus / inc : 99); incMax = Math.max(incMax, inc);
       }
-      // The rest of the party only meets the spread (spore clouds): a member it knocks out is down for
-      // the rest of each pack (they stand up between packs), so its damage is lost for that share.
-      let lost = 0;
-      if (spread > 0) for (let i = 0; i < n; i++) {
-        const u = EST[i]; if (u === front || u === top) continue;
-        const net = spread * (u.col === 0 ? 1 - T.backRanged : 1) + u.maxHp * (pois - T.regen);
-        const ttd = net > 0 ? u.maxHp / net : Infinity;
-        if (ttd < packSecs) lost += unitD(u, i, z, physX) * (1 - ttd / packSecs);
-      }
-      if (lost > 0) { const D2 = Math.max(D * 0.1, D - lost * T.estEff); packSecs = packHp / D2 + T.respawn; }
       // opts.sustain: sustain only (T6 compares line-ups by what they survive, not by how fast they kill)
       if (!o.sustain) holds = holds && packSecs - T.respawn <= PACE.farmSecs * T.packHp;
       if (holds || o.one) {
@@ -1342,7 +919,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
         if (typeof champChance === 'function') g *= 1 + champChance(z) * 2 / zn;
         best = EST_OUT;
         best.zone = z; best.holds = holds; best.dps = D; best.packSecs = packSecs; best.packsPerSec = Number.isFinite(packSecs) && packSecs > 0 ? 1 / packSecs : 0;
-        best.goldPerSec = best.packsPerSec * g; best.tgt = (front || hero).key; best.inc = incMax; best.sus = heal;
+        best.goldPerSec = best.packsPerSec * g; best.tgt = hero.key; best.inc = incMax; best.sus = heal;
         best.margin = worst; best.heroHp = hero.maxHp;   // F5: the hero's max HP as measured (checks)
         break;
       }
@@ -1360,18 +937,16 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     const z = S.zone, zt = zoneType(z), b = FOE_BEH[TYPES[zt].key] || FOE_BEH.slime;
     if (readyZone !== z) { readyZone = z; readyFor = clock; }
     if (clock - readyFor >= T.bossWait) return true;
-    const n = estUnits(), hero = EST[0], phys = b.armoured ? T.armourX : 1, key = TYPES[zt].key;
+    const hero = estHero(), phys = b.armoured ? T.armourX : 1, key = TYPES[zt].key;
     // S1: the Elder takes its family's weakness and resists (59a); armour cuts physical hits only
     const tx = u => typeof typeXKey === 'function' ? typeXKey(key, u.dt) : 1;
-    let D = heroCombatDps() * T.autoCast * (hero.cls === 'lanternmage' || hero.dt !== 'phys' ? 1 : phys) * tx(hero);   // F1: the hero's floor and trio
-    for (let i = 1; i < n; i++) D += EST[i].dps * (EST[i].role === 'caster' || EST[i].role === 'support' || EST[i].dt !== 'phys' ? 1 : phys) * tx(EST[i]);
+    const D = heroDps() * T.autoCast * (hero.cls === 'lanternmage' || hero.dt !== 'phys' ? 1 : phys) * tx(hero);
     const hp = mobHp(z) * bossHpMult(z) * mod('bossHp') * mod('foeHp');
     if (!(D * bossTimer(z) * T.bossGate >= hp)) return false;   // BAL2: estEff tunes the away estimate only
-    // S6-A (1.5): the survival test. The boss's swings and heavy hits on the front member (armour, tank and synergy
-    // reductions, capped) against the party's HP and healing: it must outlast the kill by bossLive.
-    let hpSum = 0, heal = 0, front = EST[0];
-    for (let i = 0; i < n; i++) { hpSum += EST[i].maxHp; heal += EST[i].heal; if (EST[i].col > front.col || (EST[i].col === front.col && EST[i].role === 'tank')) front = EST[i]; }
-    const atk = zoneAtk(z) * T.bossAtk, dr = (1 - red(front.armour)) * (front.synDr || 1) * (front.role === 'tank' ? 1 - T.tankDr : 1) * (S.party && S.party.cls === 'warden' ? 1 - T.wardenDr : 1) * (soloOn() ? (1 - SOLO_TUNE.drX) * SOLO_TUNE.bossHitX : 1);
+    // S6-A (1.5): the survival test. The boss's swings and heavy hits on the hero (armour, tank cut, capped)
+    // against its HP and healing: it must outlast the kill by bossLive.
+    const hpSum = hero.maxHp, heal = hero.heal, front = hero;
+    const atk = zoneAtk(z) * T.bossAtk, dr = (1 - red(front.armour)) * (front.role === 'tank' ? 1 - T.tankDr : 1) * (S.party && S.party.cls === 'warden' ? 1 - T.wardenDr : 1) * ((1 - SOLO_TUNE.drX) * SOLO_TUNE.bossHitX);
     const swing = Math.min(atk * dr, front.maxHp * T.caps.boss) * T.bossSpd, heavy = Math.min(atk * ENEMY_TUNE.heavyX * dr, front.maxHp * T.caps.tele) / ENEMY_TUNE.heavyEvery;
     const net = swing + heavy - heal - hpSum * T.regen;
     return !(net > 0) || hpSum / net >= T.bossLive * hp / Math.max(1e-9, D);

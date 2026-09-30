@@ -3,16 +3,13 @@
 //
 // The party is gone: one hero fights at a time. The three starters are roster characters played as the
 // hero; each maps onto a base class kit (stats, gear weights, star maps), so balance keeps its tables.
-//   SOLO_TUNE        knobs (sim --eval "SOLO_TUNE.x = ..."); on: 0 turns the whole layer off (the dormant party
-//                    game; check.mjs runs its legacy party sections that way through a prelude `var __SOLO = 0`)
+//   SOLO_TUNE        knobs (sim --eval "SOLO_TUNE.x = ...")
 //   SOLO_ABILITIES   the abilities: { id, name, cd, line, desc }
 //   SOLO_HEROES      the starters: { key, base, kit, weapon, role, range, abs (unlocked ids), eq (starting slots), ab (the signature) }
 //   SOLO_ORDER       picker order
-//   soloOn() -> bool the solo layer is on
 // Runtime and state: 59j-solo.js. UI: 75-solo-ui.js, 76-create.js.
 
 const SOLO_TUNE = {
-  on: typeof __SOLO === 'undefined' ? 1 : +__SOLO,
   // ---- active vs idle (SOLO2): a combat press makes you active for activeFor s; while active nothing fights for you ----
   activeFor: 5,
   atkX: 5,              // an Attack press: the class tap x atkX (W2-A: 3.5 x attack speed before Swiftness left; while active there is no auto swing)
@@ -81,4 +78,3 @@ const SOLO_ORDER = ['wren', 'tobin', 'pip'];
 const TRAIN0 = () => { const o = {}; for (const k of SOLO_ORDER) { o[k] = { atk: 0, parry: 0, dodge: 0 }; for (const id of SOLO_HEROES[k].abs) o[k][id] = 0; } return o; };
 // The hero key for a base class (a tool that picks a class picks its starter).
 const SOLO_BY_BASE = { ranger: 'wren', warrior: 'tobin', mage: 'pip', warden: 'tobin', lanternmage: 'pip', lightkeeper: 'pip' };
-function soloOn() { return !!SOLO_TUNE.on; }

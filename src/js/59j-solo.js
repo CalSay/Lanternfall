@@ -47,11 +47,11 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
   const alive = f => f && !f.dead && f.hp > 0 && !f.gone;
   const foes = () => (typeof combatFoes === 'function' ? combatFoes() : []);
   const heroU = () => (typeof cbUnitByKey === 'function' ? cbUnitByKey('hero') : null);
-  const fighting = () => soloOn() && !!soloHero() && target() === 'mob' && typeof partyCombatOn === 'function' && partyCombatOn();
+  const fighting = () => !!soloHero() && target() === 'mob' && typeof partyCombatOn === 'function' && partyCombatOn();
   const heroUp = () => typeof cbHeroUp !== 'function' || cbHeroUp();
   const anyFoe = () => { for (const f of foes()) if (alive(f)) return true; return false; };
 
-  soloHero = () => (soloOn() && S && S.solo && SOLO_HEROES[S.solo.hero] ? S.solo.hero : null);
+  soloHero = () => (S && S.solo && SOLO_HEROES[S.solo.hero] ? S.solo.hero : null);
   soloLevels = () => {
     const out = {}, s = Sx();
     for (const k of SOLO_ORDER) out[k] = k === s.hero ? { L: S.L, xp: S.xp } : (s.lv[k] ? { L: s.lv[k].L, xp: s.lv[k].xp } : { L: 1, xp: 0 });
@@ -61,7 +61,7 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
   // ---- choosing and switching ----
   soloPick = (key, opts) => {
     const h = SOLO_HEROES[key], o = opts || {};
-    if (!soloOn() || !h || typeof chooseClass !== 'function') return false;
+    if (!h || typeof chooseClass !== 'function') return false;
     const s = Sx(), from = s.hero, chosen = !!(S.party && S.party.chosen);
     if (from === key && chosen) return true;
     // each hero keeps its own level and XP; the lamp (gold, gear, camp, the road) is shared
@@ -91,7 +91,6 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
   };
   // A tool or an old path that picks a class (chooseBase, chooseClass) plays that class's starter.
   on('classChosen', ({ base } = {}) => {
-    if (!soloOn()) return;
     const s = Sx(), want = SOLO_BY_BASE[base];
     if (want && s.hero !== want && !(s.hero && SOLO_HEROES[s.hero] && SOLO_HEROES[s.hero].base === base)) {
       if (s.hero && SOLO_HEROES[s.hero]) s.lv[s.hero] = { L: S.L, xp: S.xp };
@@ -99,24 +98,17 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
     }
   });
 
-  // ---- the party is gone: keep the field empty ----
-  function clearField() {
-    const p = S.party; if (!p) return;
-    if (Array.isArray(p.field) && p.field.length) { p.field = []; p.cells = { hero: { col: 2, lane: 1 } }; emit('fieldChange', { field: p.field }); }
-  }
-
   // ---- active vs idle (SOLO2): a combat press makes the player active for activeFor s ----
   let activeT = 0;
   const ACT_EV = { on: false };
   const flip = v => { ACT_EV.on = v; emit('soloActive', ACT_EV); };
-  soloActive = () => soloOn() && activeT > 0;
-  soloTouch = () => { if (!soloOn() || !soloHero()) return; const was = activeT > 0; activeT = T.activeFor; if (!was) flip(true); };
+  soloActive = () => activeT > 0;
+  soloTouch = () => { if (!soloHero()) return; const was = activeT > 0; activeT = T.activeFor; if (!was) flip(true); };
   soloGoIdle = () => { if (activeT > 0) { activeT = 0; flip(false); } };
 
   // ---- the buttons ----
   let atkT = 0, dodgeT = 0, parryT = 0, openT = 0, clock = 0;
   const readyFor = [0, 0, 0], cds = {};   // idle wait per ability slot; cooldown left per ability id (runtime)
-  const heroAtkNow = auto => heroAtk() * (typeof heroStand === 'function' ? heroStand(!auto) : 1);
   soloAttack = () => {
     soloTouch();
     if (!fighting() || !heroUp()) return '';
@@ -156,7 +148,7 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
     return res;
   };
   // 59-combat cbHitUnit: the hero's damage taken (the solo cut, and more while open after a missed parry).
-  soloTakenX = f => (soloOn() ? (1 - T.drX) * (f && (f.boss || f.adds) ? T.bossHitX : 1) * (openT > 0 ? T.openX : 1) : 1);
+  soloTakenX = f => (1 - T.drX) * (f && (f.boss || f.adds) ? T.bossHitX : 1) * (openT > 0 ? T.openX : 1);
 
   // ---- the counter (59g calls it on a parry): it lands inside the stagger ----
   const counters = [];
@@ -168,7 +160,7 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
         c.done = true;
         if (alive(c.f)) {
           // owner (SOLO2): the counter always crits: the crit multiplier, the crit event, the gear's echo, the crit number
-          const P = heroAtkNow(false) * trainCounterX(), cm = critMult();   // W2-A: Parry training: counter damage
+          const P = heroAtk() * trainCounterX(), cm = critMult();   // W2-A: Parry training: counter damage
           let cx = 1 + (gear().counter || 0) / 100;   // W1-C: the Lantern Eater's Fang: counters deal double
           try { const dr = typeof deepActive === 'function' && deepActive() && DW.run(); if (dr && dr.boons && dr.boons.taunt) cx *= 1 + DEEP_BOONS.taunt.v * dr.boons.taunt; } catch (e) {}   // the Deepwell's Parry Drill
           const dmg = cbDamageFoe(c.f, P * T.counterX * aps() * cm * cx, 0, 'phys', unitType('hero'), ST_HEAVY | ST_CRIT);
@@ -230,7 +222,7 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
     const a = abAt(slot);
     if (!a || !p || !fighting() || !heroUp() || cdOf(a) > 0 || !anyFoe()) return false;
     // W2-A: an ability hits with its own Training level (trainAbPow), not the Attack's
-    const P = trainAbPow(a.id) * (typeof heroStand === 'function' ? heroStand(!auto) : 1) * (auto ? 1 : T.abHandX) * (1 + (gear().abil || 0) / 100), ty = unitType('hero');   // W1-C: the Rattlebone Charm's +% ability damage   // by hand it hits harder (SOLO2)
+    const P = trainAbPow(a.id) * (auto ? 1 : T.abHandX) * (1 + (gear().abil || 0) / 100), ty = unitType('hero');   // W1-C: the Rattlebone Charm's +% ability damage   // by hand it hits harder (SOLO2)
     const tags = ST_AB, TT = T.train, ms = trainMs(a.id);
     if (a.id === 'echo') {
       // a piercing arrow down the lane: every foe, front to back, and a Mark on each
@@ -299,10 +291,8 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
     if (k) { s.hero = k; if (typeof gearDirty === 'function') gearDirty(); }
   }
   onTick(dt => {
-    if (!soloOn()) return;
     clock += dt;
     adopt();
-    clearField();
     if (activeT > 0) { activeT -= dt; if (activeT <= 0) { activeT = 0; flip(false); } }
     if (atkT > 0) atkT -= dt; if (dodgeT > 0) dodgeT -= dt; if (parryT > 0) parryT -= dt; if (openT > 0) openT -= dt;
     counterTick(dt);

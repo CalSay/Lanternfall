@@ -62,8 +62,6 @@ const ECON = {
   gradeZ: [1, 7, 13, 36, 42, 56, 71, 82, 94, 106, 117, 129, 141, 152, 164],   // gear-2 1.4 GRADE_Z
   upFoes: 20,                    // upgrade: 20 x foeGold(gradeZ) x (plus + 1)
   reforgeFoes: 15, reforgeGrow: 1.5,   // reforge: 15 x foeGold(gradeZ) x 1.5^n
-  // ---- people (3.3) ----
-  promoFoes: 120,                // promotion: foesGold(S.maxZone, 120 x (rank + 1)) (BAL3: was 300, ~1 h a rank walled continuous play; ROSTER_TUNE.promoGold reads it)
   // ---- trade (3.5, TR1 reads it): a unit's price = foeGold(grade's first zone) x famW ----
   famW: { gathered: 0.06, gem: 0.075, herb: 0.075, hide: 0.09, ess: 0.18, secondary: 0.03, refined: 0.15 },
   // ---- gold-gain (6): gear keeps it, capped; everything else is crit damage ----
@@ -86,7 +84,7 @@ const ECON = {
   // ---- gold numbers that are not prices (3.6) ----
   hoard: [1e5, 1e6, 1e7, 1e8], hoardFeat: 5e8,
   // ---- the ledger (8.3, 9) ----
-  spendCats: ['shift', 'hire', 'tent', 'camp', 'up', 'craft', 'recruit', 'other'],
+  spendCats: ['shift', 'hire', 'tent', 'camp', 'up', 'craft', 'other'],
   earnCats: ['fight', 'away', 'bounty', 'trade', 'other']
 };
 

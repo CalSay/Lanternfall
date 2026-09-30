@@ -239,12 +239,10 @@ function gxNow(R) {
     putHidden(R.nsp, !lv3);
     if (lv3) { putText(R.nsp, S.store.spill ? 'Spillover on' : 'Spillover off'); putToggle(R.nsp, 'on', !!S.store.spill); putAttr(R.nsp, 'aria-pressed', String(!!S.store.spill)); }
   }
-  // The heroes rest at the Hearth while the Lanternbearer gathers (G1, 55-rested).
-  // A new game has no heroes yet: no line.
-  const heroes = soloOn() || !!(S.party && Array.isArray(S.party.field) && S.party.field.length);   // W1-C: solo, the note is about you
-  const rest = heroes && typeof restNote === 'function' ? restNote().trim() : '';
-  putHidden(R.nrest, !heroes);
-  if (heroes) putText(R.nrest, rest ? rest.replace('Your party rests at the Hearth', 'Your heroes rest at the Hearth') : soloOn() ? 'Gathering rests you. Rest turns into extra damage in your next fight.' : 'Your heroes rest at the Hearth while you gather.');
+  // Gathering rests the hero (G1, 55-rested).
+  const rest = typeof restNote === 'function' ? restNote().trim() : '';
+  putHidden(R.nrest, false);
+  putText(R.nrest, rest || 'Gathering rests you. Rest turns into extra damage in your next fight.');
   if (typeof toolsUI === 'object' && toolsUI) toolsUI.chipUpdate(R.tool, sk);
   const e = equippedTool(sk), on_ = TOOL_TUNE.on, right = e.tier >= t;
   putHidden(R.right, !on_);

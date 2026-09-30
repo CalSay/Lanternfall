@@ -269,7 +269,7 @@ var typeX, typeXKey, typeRel, typeZone, lbType, heroType, unitType,
   }
   // Status power and type power from gear lines (core-2 1.1; the lines arrive with S4/S5: 0 until then).
   const PW = { phys: 'pwPhys', holy: 'pwHoly', poison: 'pwPoison', fire: 'pwFire', frost: 'pwFrost' };
-  function gearOf(src) { const u = unitAt(src); if (!u) return null; try { return u.key === 'hero' ? gear() : charGear(u.key); } catch (e) { return null; } }
+  function gearOf(src) { const u = unitAt(src); if (!u) return null; try { return gear(); } catch (e) { return null; } }
   function stPow(src) { const g = gearOf(src); return g && g.stPow > 0 ? g.stPow / 100 : 0; }
   function dotX(src, dt) { const g = gearOf(src); if (!g) return 1; return 1 + (g.stPow > 0 ? g.stPow / 100 : 0) + (g[PW[dt]] > 0 ? g[PW[dt]] / 100 : 0); }
 

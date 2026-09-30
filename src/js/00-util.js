@@ -1,9 +1,6 @@
 // 00-util: pure helpers, the event bus and the extension registries.
 // CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
 
-// The solo layer is on for this build (24b-data-solo.js owns the knob; data files that load before it read this).
-const SOLO_LOAD = !!(typeof __SOLO === 'undefined' ? 1 : +__SOLO);
-
 // ================= numbers =================
 const SUF = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No', 'Dc'];
 // Number format (achievements.md 5.1): 'letters' (default) or 'sci', set from S.settings.num by

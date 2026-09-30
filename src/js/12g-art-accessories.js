@@ -16,7 +16,7 @@
 //         (hip or held); a class with no lantern (Lightkeeper) gets one at the hip.
 //   Flame: the glass colour (pieces tagged 'glass' or 'flame') and, in 62-stage, the hero's light.
 //
-// Exposed: LOOK_ART { CAPES, HATS, LAMPS, FLAMES, AURAS, FRAMES, CIRCLE_COL, lampItems(id, s, glass),
+// Exposed: LOOK_ART { CAPES, HATS, LAMPS, FLAMES, AURAS, FRAMES, lampItems(id, s, glass),
 //   auraPx(id, f, o), flameCol(id), ids() }, lookAcc(wear?), lookFlameCol(id), AK.applyAcc(k, acc).
 // Every piece carries o.look = 1 (64-looks renders the pieces alone for tile icons).
 
@@ -27,8 +27,6 @@ const LOOK_ART = (() => {
   const put = (k, z, bone, mat, s, o) => k.add(z, bone, mat, s, TAG(o));
   const GOLD = m('#E4B44A', 'metal'), BRASS = m('#C4924A', 'metal'), IRON = m('#5A5464', 'metal');
   const glowM = hex => m(hex, 'glow', { light: hex });
-  // The four circles (the Company Cape, Bond Light when a partner has no colour of its own).
-  const CIRCLE_COL = { hedgefolk: '#5E9A48', oath: '#E2C25A', dusk: '#7A52B8', wayfarers: '#3E82C4' };
 
   // ================= capes =================
   // The cape's outline from the shoulders to the calf, flaring back (the hero faces right, so the
@@ -71,14 +69,6 @@ const LOOK_ART = (() => {
         for (let i = 0; i < 3; i++) put(k, .32, 'up', gold, Q(x0 + i * 2, y, 1, 2), { clip: cp, nl: 1 });
       }
       put(k, .32, 'up', gold, R(-30, hemY(k) - .9 + (k.pose.bob ? .3 : 0), 60, .9), { clip: cp, nl: 1 });
-      clasp(k, GOLD);
-    } },
-    c_company: { col: '#3E82C4', draw(k) {   // quartered in the four circle colours
-      const cp = capeBase(k, m(CIRCLE_COL.hedgefolk), { collar: m('#8A6440', 'leather') });
-      const xs = -k.hipW * 1.75, ys = k.waY + 1;
-      put(k, .31, 'up', m(CIRCLE_COL.oath), R(xs, -40, 30, 40 + ys), { clip: cp });
-      put(k, .31, 'up', m(CIRCLE_COL.dusk), R(-30, ys, 30 + xs, 30), { clip: cp });
-      put(k, .31, 'up', m(CIRCLE_COL.wayfarers), R(xs, ys, 30, 30), { clip: cp });
       clasp(k, GOLD);
     } },
     c_wyrm: { col: '#A8502E', draw(k) {   // overlapping red-bronze scales, darker at the hem
@@ -224,7 +214,7 @@ const LOOK_ART = (() => {
   const lampItems = (id, s, glass) => LAMPS[id] ? LAMPS[id].items(s, glass || glowM(LAMPS[id].glass || '#FFD27A')) : [];
 
   // ================= flames =================
-  const FLAMES = { fl_moon: '#CFE0FF', fl_rose: '#FF8A70', fl_kin: '#FFB38A', fl_storm: '#E8F4FF', fl_coin: '#FFD23F' };
+  const FLAMES = { fl_moon: '#CFE0FF', fl_rose: '#FF8A70', fl_storm: '#E8F4FF', fl_coin: '#FFD23F' };
   // A Flame look or a Deepwell lantern colour (DEEP_SHOP first: its 'l_moon' shares an id with a Lantern look).
   function flameCol(id) {
     if (!id) return null;
@@ -259,13 +249,12 @@ const LOOK_ART = (() => {
 
   // ================= auras (drawn on the stage by 64-looks, not baked on the hero) =================
   // auraPx(id, f, o) -> [[x, y, '#hex'], ...] art px of frame f in a W x H box (default 32 x 12, the
-  // ring centre at (W/2, cy)). o: { W, H, rx, ry, cy, cols (Bond Light), open (Lantern Bloom 0-3), flash }.
+  // ring centre at (W/2, cy)). o: { W, H, rx, ry, cy, open (Lantern Bloom 0-3), flash }.
   // Frames loop: AURAS[id].n frames at AURAS[id].fps.
   const AURAS = {
     a_ember: { n: 6, fps: 6, col: '#FF9E3D', glow: '255,150,60' },
     a_steel: { n: 1, fps: 1, col: '#C9D1DB', glow: '200,215,235' },
     a_star: { n: 12, fps: 3, col: '#B89CFF', glow: '185,156,255' },
-    a_bond: { n: 12, fps: 3, col: '#FF8AB0', glow: '255,160,190' },
     a_bloom: { n: 1, fps: 1, col: '#F2C14E', glow: '242,193,78' },
     a_stair: { n: 8, fps: 5, col: '#7FE0D0', glow: '120,230,210' }
   };
@@ -300,15 +289,6 @@ const LOOK_ART = (() => {
         for (let i = 0; i < 5; i++) {
           const a = (i / 5 + f / 12 / 5) * Math.PI * 2, x = cx + Math.cos(a) * rx, y = cy + Math.sin(a) * ry, c = i % 2 ? '#FFF2B8' : '#D8C8FF';
           pt(x, y, c); if (Math.sin(a) > 0) { pt(x - 1, y, '#9A84E0'); pt(x + 1, y, '#9A84E0'); pt(x, y - 1, '#9A84E0'); }
-        }
-        break;
-      }
-      case 'a_bond': {   // small motes in the colours of the hero's Bond partners
-        const cols = o.cols && o.cols.length ? o.cols : ['#FF8AB0', '#FFD27A'];
-        ring('#7A4A66', '#4A2E44', 3);
-        for (let i = 0; i < 6; i++) {
-          const a = (i / 6 + f / 12 / 6) * Math.PI * 2, x = cx + Math.cos(a) * (rx - 1), y = cy + Math.sin(a) * ry - 2 - (i % 2) * 2 - Math.sin(f / 12 * Math.PI * 2 + i) * 1;
-          const c = cols[i % cols.length]; pt(x, y, c); pt(x + 1, y, c);
         }
         break;
       }
@@ -360,5 +340,5 @@ const LOOK_ART = (() => {
   };
   lookFlameCol = flameCol;
   const ids = () => [].concat(Object.keys(CAPES), Object.keys(HATS), Object.keys(LAMPS), Object.keys(FLAMES), Object.keys(AURAS), Object.keys(FRAMES));
-  return { CAPES, HATS, LAMPS, FLAMES, AURAS, FRAMES, CIRCLE_COL, lampItems, auraPx, flameCol, applyAcc, ids, glowM };
+  return { CAPES, HATS, LAMPS, FLAMES, AURAS, FRAMES, lampItems, auraPx, flameCol, applyAcc, ids, glowM };
 })();

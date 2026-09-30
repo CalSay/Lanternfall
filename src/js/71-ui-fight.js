@@ -1,4 +1,4 @@
-// 71-ui-fight: the Fight tab (boss gate, hero upgrades, party) and the zone/mode controls.
+// 71-ui-fight: the Fight tab (the boss gate) and the zone/mode controls.
 
 // ================= progressive disclosure =================
 // Cards show essentials; details open on a tap (docs/design/layout.md rule 5). `trigger` becomes the
@@ -17,49 +17,8 @@ function disclose(row, trigger, onToggle, extra) {
   trigger.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target === trigger) { e.preventDefault(); toggle(); } });
   return api;
 }
-// A short line and the rest, split at the first sentence: "Attack 7.51M." | "+2.5 per level, ...".
-function splitDesc(box) {
-  box.textContent = '';
-  const a = el('span', 'dz-sum'), b = el('span', 'dz-more');
-  box.append(a, b);
-  return t => { const i = t.indexOf('. '); putText(a, i < 0 ? t : t.slice(0, i + 1)); putText(b, i < 0 ? '' : ' ' + t.slice(i + 2)); };
-}
 
 // ================= Fight panel =================
-// Hero upgrade rows: icon, name, level, the stat in one line and the buy button. A tap on the row
-// shows the rest of the description.
-$('heroRows').classList.add('dz-list');
-// W2-A: the solo game trains moves on the Hero tab (75-training-ui.js); these rows are the party game's.
-if (soloOn()) $('heroRows').parentElement.hidden = true;
-const heroRows = soloOn() ? [] : HERO_UPS.map(u => {
-  const r = makeRow($('heroRows'), u.name, false, iconURL(...u.ic));
-  r.btn.addEventListener('click', () => { if (buyHero(u.id)) ui(true); });
-  r.row.classList.add('hu-row');
-  r.setDesc = splitDesc(r.desc);
-  const d = disclose(r.row, r.desc.parentElement, null, [r.ic]);
-  r.own.after(d.chev);
-  r.desc.parentElement.setAttribute('aria-label', `${u.name}: show details`);
-  r.hint = el('div', 'hu-hint'); r.hint.hidden = true; r.desc.after(r.hint);
-  return r;
-});
-// Late game the next level can cost far more than you hold (plan-2 finding 12). Past HU_FAR times
-// your gold (and 100x ten foes' worth) the row says where gold does more now: the gold sink Next Up rates closest (promotions,
-// recruits, the Camp), read from its goals about once a second.
-const HU_FAR = 100;
-const HU_SINKS = [['promote', 'Best spent on promotions now.'], ['recruit', 'Best spent on recruits now.'], ['camp-build', 'Best spent on the Camp now.']];
-let huSinkAt = 0, huSinkTxt = '';
-// Early on a broke hero is not "far": the bar is also 100x ten foes' worth at the frontier.
-const huFloor = () => typeof foesGold === 'function' ? foesGold(S.maxZone, 10) : 1;
-function huSink() {
-  const t = Date.now(); if (t - huSinkAt < 1000 && t >= huSinkAt) return huSinkTxt;
-  huSinkAt = t; let best = null;
-  for (const [id, txt] of HU_SINKS) {
-    const g = typeof GOALS !== 'undefined' && GOALS.find(x => x.id === id); if (!g) continue;
-    let p = 0; try { p = goalGate(g) ? +g.pct() : 0; } catch (e) { p = 0; }
-    if (p > 0 && (!best || p > best.p)) best = { p, txt };
-  }
-  return (huSinkTxt = best ? best.txt : 'Out of reach for now. New zones pay more gold.');
-}
 // Boss gate: the title and the button; the odds and rules open on a tap.
 {
   const g = $('gateTitle').parentElement, row = g.parentElement;
@@ -72,15 +31,6 @@ function huSink() {
   if (tn) tn.textContent = ' Fight frontier bosses when ready';
   lb.classList.add('gate-auto');
 }
-const compRows = COMPS.map((c, i) => {
-  const pal = { ...HERO_PAL, 1: c.col, 2: c.helm };
-  const r = makeRow($('compRows'), c.name, false, spriteURL('comp' + i, SPR.hero, pal), 'portrait-ic');
-  r.url = spriteURL('comp' + i, SPR.hero, pal);
-  r.btn.addEventListener('click', () => { if (hireComp(i)) ui(true); });
-  return r;
-});
-
-document.querySelectorAll('#amtSeg button').forEach(b => b.addEventListener('click', () => { S.amt = b.dataset.amt; ui(true); }));
 $('autoBoss').checked = S.auto;
 $('autoBoss').addEventListener('change', e => { S.auto = e.target.checked; });
 $('gateBtn').addEventListener('click', () => { if (S.activity !== 'fight') setActivity('fight'); if (challenge()) ui(true); });
@@ -90,16 +40,13 @@ document.querySelectorAll('#modeSeg button').forEach(b => b.addEventListener('cl
 
 // Static nodes, looked up once. Every write goes through the put* guards (70-ui.js): 5 calls a
 // second, and an unchanged value must not make the browser lay the page out again.
-const amtBtns = [...document.querySelectorAll('#amtSeg button')];
-const gateEl = { title: $('gateTitle').querySelector('.gt-t'), desc: $('gateDesc'), btn: $('gateBtn'), q: $('gateBtn').querySelector('.qty'), p: $('gateBtn').querySelector('.price'), comp: $('compRows').parentElement };
+const gateEl = { title: $('gateTitle').querySelector('.gt-t'), desc: $('gateDesc'), btn: $('gateBtn'), q: $('gateBtn').querySelector('.qty'), p: $('gateBtn').querySelector('.price') };
 function uiFight() {
-  for (const b of amtBtns) putAttr(b, 'aria-pressed', String(b.dataset.amt === S.amt));
   const G = gateEl, gb = G.btn, gq = G.q, gp = G.p;
   const uq = UNIQ[zoneUnique(S.zone)].name;
   if (S.activity !== 'fight') {
-    // UX-A copy: the heroes rest at the Hearth while the Lanternbearer gathers.
     putText(G.title, S.activity === 'raid' ? 'You are at the raid' : 'You are gathering');
-    putText(G.desc, S.activity === 'raid' ? 'Fight here to clear zones and earn gold and essence.' : (soloOn() ? '' : 'Your heroes rest at the Hearth. ') + 'Fight here to clear zones and earn gold and essence.');
+    putText(G.desc, 'Fight here to clear zones and earn gold and essence.');
     putText(gq, 'Back to'); putText(gp, 'Fight'); putDisabled(gb, false);
   } else if (fightBoss) {
     putText(G.title, 'Boss fight underway');
@@ -114,34 +61,4 @@ function uiFight() {
     putText(G.desc, `Win before it enrages to open the next zone. ${Math.round(UNIQ_TUNE.first * 100)}% chance of the unique ${uq}.`);
     putText(gq, 'Boss'); putText(gp, 'Fight'); putDisabled(gb, !bossReady());
   }
-  heroRows.forEach((r, i) => {
-    const u = HERO_UPS[i], p = plan(u.base, u.r, S[u.id], S.gold, u.cap);
-    putText(r.own, 'Lv ' + S[u.id]);
-    r.setDesc(u.desc());
-    putText(r.qty, p.n ? 'Buy ' + p.n : 'Maxed');
-    setPrice(r.btn, p.cost);
-    putDisabled(r.btn, !(p.n > 0 && S.gold >= p.cost));
-    const one = p.n > 0 ? plan(u.base, u.r, S[u.id], S.gold, u.cap, '1').cost : 0, far = one > HU_FAR * Math.max(S.gold, huFloor());
-    putHidden(r.hint, !far); if (far) putText(r.hint, huSink());
-    putToggle(r.row, 'far', far);
-  });
-  // Once the save is on the roster (56-roster.js), companions live in the Party tab.
-  putHidden(G.comp, rosterLive());
-  if (rosterLive()) return;
-  let teaser = false;
-  COMPS.forEach((c, i) => {
-    const r = compRows[i];
-    const known = S.comp[i] > 0 || S.totalGold >= c.base * 0.3;
-    putHidden(r.row, !known && teaser);
-    if (!known) teaser = true;
-    putToggle(r.row, 'locked', !known);
-    putToggle(r.ic, 'ghost', !known);
-    putText(r.nm, known ? c.name : 'Unknown ally');
-    putText(r.own, S.comp[i] ? 'x' + S.comp[i] : '');
-    putText(r.desc, known ? `${fmt(compDpsOne(i))} DPS each. ${c.blurb}` : `Earn ${fmt(c.base * 0.3)} gold in total to meet them.`);
-    const p = plan(c.base, 1.15, S.comp[i], S.gold);
-    putText(r.qty, 'Hire ' + p.n);
-    setPrice(r.btn, p.cost);
-    putDisabled(r.btn, !known || S.gold < p.cost);
-  });
 }

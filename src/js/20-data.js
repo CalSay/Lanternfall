@@ -95,25 +95,7 @@ const RAID_UNIQ = ['wyrmscale', 'hollowcrown', 'colossuspick', 'hydraglass', 'ea
 const BAG_MAX = 40;
 function itemColor(slot, t, u) { return kindColor(slot, t, u); } // 41-items.js
 
-const COMPS = [
-  { name: 'Squire', dps: 2, base: 15, blurb: 'Carries your spare sword and swings it too.', col: '#8C6A43', helm: '#6B4A2E' },
-  { name: 'Archer', dps: 12, base: 120, blurb: 'Never misses twice.', col: '#3E8A4E', helm: '#5A7A3A' },
-  { name: 'Hedge Mage', dps: 70, base: 1100, blurb: 'Self-taught. Mostly fire.', col: '#8A4FC9', helm: '#5A3A8A' },
-  { name: 'Knight', dps: 420, base: 12000, blurb: 'Sworn to your banner.', col: '#C9463E', helm: '#C9CCD8' },
-  { name: 'Dragoon', dps: 2600, base: 140000, blurb: 'Lands from very high up.', col: '#2F7D5A', helm: '#3F8FA8' },
-  { name: 'Starcaller', dps: 16000, base: 1.8e6, blurb: 'Pulls light down from the sky.', col: '#2A2F7A', helm: '#C9B8FF' },
-  { name: 'Lantern Saint', dps: 100000, base: 2.5e7, blurb: 'The reason this land is called Lanternfall.', col: '#EFE6D6', helm: '#F2C14E' }
-];
-
 // desc() thunks read live numbers from 40-rules; only the UI calls them.
-// W2-A: the dormant party game only. The solo game trains moves with gold instead (55-training.js, SOLO_TUNE.train).
-const HERO_UPS = [
-  // ECON-A (economy-2 4.4): prices equal ECON.blade / swift / precision (21w loads later; check.mjs compares; BAL3 retuned all three) (Blade was 10 x 1.18^n, Swiftness 50 x 1.6^n); Fortune became
-  // Precision (+1% crit damage a level, cap 15). S.fortune stays in the save at 0, unused.
-  { id: 'blade', name: 'Blade', base: 6, r: 1.05, ic: ['sword', '#A9B1BD'], desc: () => `Attack ${fmt(heroAtk())}. +2.5 per level, x${PACE.bladeX} every ${PACE.bladeEvery}.` },
-  { id: 'swift', name: 'Swiftness', base: 10, r: 1.15, cap: 40, ic: ['boot', '#8C6A43', { 6: '#8C6A43', 7: '#F2C14E' }], desc: () => `${aps().toFixed(1)} attacks per second. +0.1 per level.` },
-  { id: 'precision', name: 'Precision', base: 10000, r: 1.6, cap: 15, ic: ['sword', '#F2C14E'], desc: () => `+${Math.round(100 * ECON.precision.v * S.precision)}% crit damage. +1% per level. Crit damage in all: +${Math.round(100 * keen())}% (most +${Math.round(100 * ECON.critCap)}%).` }
-];
 const RELICS = [
   { id: 'banner', name: 'Warbanner', base: 5, r: 1.6, ic: ['banner', '#E0524F'], desc: () => `+20% damage everywhere per level.` },
   // ECON-A: the Lucky Coin (+25% gold a level) became the Loaded Die (S.relic.edge; S.relic.coin stays at 0, unused).

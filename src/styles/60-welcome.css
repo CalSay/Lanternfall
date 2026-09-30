@@ -12,4 +12,3 @@
 /* Upgrades: the next level costs over 100x your gold. Say where gold does more now. */
 .hu-hint { margin-top: 2px; font: 600 calc(12.5px * var(--display-k))/1.25 var(--display); color: var(--gold); }
 .hu-hint[hidden] { display: none; }
-.hu-row.far .buy .price { opacity: .6; }

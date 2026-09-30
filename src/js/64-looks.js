@@ -60,22 +60,10 @@ let lookIconURL, looksPreview, lookCritterDraw;
 
   // ================= what is worn (read on a deedLook, and every 2 s) =================
   const cur = { aura: null, critter: null, cols: null, at: -9 };
-  function bondCols() {
-    const out = [];
-    safe(() => {
-      if (typeof bondsOf !== 'function' || typeof bondLevel !== 'function' || typeof ROSTER !== 'object') return;
-      for (const id of bondsOf('hero')) {
-        if (bondLevel(id) < 1 || typeof bondInfo !== 'function') continue;
-        const b = bondInfo(id); if (!b || !b.pair) continue;
-        for (const k of b.pair) { const r = ROSTER[k]; const c = r && LA.CIRCLE_COL[r.circle]; if (c && !out.includes(c)) out.push(c); }
-      }
-    }, null);
-    return out.length ? out.slice(0, 4) : null;
-  }
   function readWear(T) {
     cur.at = T;
     const au = wg('aura'), cr = wg('critter');
-    const cols = au === 'a_bond' ? bondCols() : null;
+    const cols = null;
     if (au !== cur.aura || String(cols) !== String(cur.cols)) { cur.aura = LA.AURAS[au] ? au : null; cur.cols = cols; if (cur.aura) auraQueue(cur.aura, cols); }
     if (cr !== cur.critter) { cur.critter = CRITTER_ART[cr] ? cr : null; if (cur.critter && !critCache.has(cur.critter)) { const id = cur.critter; idleTask(() => critBake(id), true); } }
   }
@@ -153,7 +141,6 @@ let lookIconURL, looksPreview, lookCritterDraw;
         ANIM.lightAt(g, A.glow, hx, v.hy - 18, 30, .13 * boost * dim);
       }
       if (cur.critter === 'cr_wisp') ANIM.lightAt(g, '255,200,72', st.fx, st.fy - 4, 14, .45);
-      else if (cur.critter === 'cr_crab') ANIM.lightAt(g, '255,192,112', st.fx - 3, st.fy - 6, 10, .4);
     }
   }
   if (typeof stageDeco !== 'undefined') {
@@ -240,7 +227,7 @@ let lookIconURL, looksPreview, lookCritterDraw;
     if (LA.LAMPS[id]) return fitIcon(artOf(LA.lampItems(id, 3.6).map(([mm, s, o], i) => ({ z: 1 + i * .01, ord: i, m: mm, s, o }))), 5);
     if (LA.AURAS[id]) {
       const c = mk(ICON, ICON), g = c.getContext('2d');
-      const o = { W: 24, H: 14, rx: 10, ry: 3.6, cy: 9, open: id === 'a_bloom' ? 3 : 0, cols: id === 'a_bond' ? ['#FF8AB0', '#7FE0D0', '#F2C14E'] : null };
+      const o = { W: 24, H: 14, rx: 10, ry: 3.6, cy: 9, open: id === 'a_bloom' ? 3 : 0, cols: null };
       g.drawImage(pxCanvas(LA.auraPx(id, 2, o), 24, 14, 2), 0, 10);
       return c;
     }
@@ -271,7 +258,7 @@ let lookIconURL, looksPreview, lookCritterDraw;
     const au = wear && LA.AURAS[wear.aura] ? wear.aura : null;
     const feet = Math.round(cv.height - (au ? 5 : 3) * PX * z);
     if (au) {
-      const cols = au === 'a_bond' ? bondCols() : null, c = auraBake(au, 0, { cols });
+      const cols = null, c = auraBake(au, 0, { cols });
       g.globalAlpha = .9; g.drawImage(c, Math.round(cv.width / 2 - c.width * z / 2), Math.round(feet - 15 * z), c.width * z, c.height * z); g.globalAlpha = 1;
     }
     const x = Math.round(cv.width / 2 - f.ox * z), y = Math.round(feet - f.oy * z);

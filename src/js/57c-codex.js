@@ -38,14 +38,14 @@
 //   stored-for-later keys nothing reads yet: bag, buildQueue, deepRerolls.
 //
 // Save: registerState('codex', { v, rec, got, title, lightMax, init, half, seal, seen, mSeen }).
-//   rec: champ {typeKey: 1}, aff {affixId: tier bitmask}, mw {trophyIdx: 1}, syn {synergyId: 1},
+//   rec: champ {typeKey: 1}, aff {affixId: tier bitmask}, mw {trophyIdx: 1},
 //        mat {family: tier bitmask, troph: type bitmask}, dare {omenId: 1}
 //   got: milestone Light -> timestamp. half / seal: pageId -> timestamp (permanent once earned).
 //   seen: pageId -> string, one base-36 char per tile = units the player has looked at (for the
 //   one-time glow). mSeen: highest milestone the player has looked at (the "New" dot).
 
 const CODEX_TUNE = { every: 5, sweep: 60, goalFrom: 0.6 };
-const CODEX_CAP = { dmg: 0.05, critDmg: 0.05, uniqueChance: 0.05, skillXp: 0.05, compXp: 0.05, offline: 0.05,
+const CODEX_CAP = { dmg: 0.05, critDmg: 0.05, uniqueChance: 0.05, skillXp: 0.05, offline: 0.05,
   gatherSpeed: 0.05, buildTime: 0.05, essence: 0.05 };
 
 // Milestones. kind: title | qol | cosmetic. live: false = the unlock is stored and switches on
@@ -83,7 +83,7 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
 {
   registerState('codex', {
     v: 1,
-    rec: { champ: {}, aff: {}, mw: {}, syn: {}, mat: {}, dare: {} },
+    rec: { champ: {}, aff: {}, mw: {}, mat: {}, dare: {} },
     got: {}, title: null, lightMax: 0, init: false,
     half: {}, seal: {}, seen: {}, mSeen: 0
   });
@@ -92,7 +92,6 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
   const has = v => typeof v !== 'undefined';
   const safe = (fn, d) => { try { return fn(); } catch (e) { console.error('[lanternfall] codex', e); return d; } };
   const bits = m => { let n = 0; m = m | 0; while (m) { n += m & 1; m >>>= 1; } return n; };
-  const first = id => ROSTER[id] ? ROSTER[id].name.replace(/^(Old|Ser|Brother|Saint) /, '').split(' ')[0] : id;
   const REGION_ZONES = REGIONS[0].z1;   // the Hollow; coast rows are R2-7's
   const mobKey = m => m && m.key ? String(m.key).replace(/\d+$/, '') : null;
   const tIdx = k => TYPES.findIndex(t => t.key === k);
@@ -100,7 +99,7 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
   const exact = () => (typeof campLevel === 'function' && campLevel('library') >= 3) || !!CX().got[100];
   codexExact = exact;
 
-  const page = (id, d) => { CODEX_PAGES[id] = Object.assign({ id }, d); if (!(d.noSolo && soloOn())) CODEX_PAGE_IDS.push(id); };
+  const page = (id, d) => { CODEX_PAGES[id] = Object.assign({ id }, d); CODEX_PAGE_IDS.push(id); };
 
   // ---------------- 1. Bestiary: 7 types x (4 tiers x2, Elder x3, champion x2) ----------------
   page('bestiary', {
@@ -166,45 +165,6 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
       return out;
     }
   });
-  // ---------------- 5. Companions: 18 recruited x5; ranks Veteran/Captain/Champion x1; 12 combos and Kin x2, 21 Bonds x1 per level ----------------
-  const live = () => typeof rosterLive === 'function' && rosterLive();
-  page('companions', {
-    n: 'Companions', bless: 'kin', seal: { key: 'compXp', v: 0.03, txt: '+3% companion XP' }, title: 'Kindheart', pic: 'char',
-    noSolo: true,   // W1-C: no companions in solo: the page is left out (page())
-    tiles: x => {
-      const on = live(), out = [];
-      for (const id of ROSTER_KEYS) {
-        const r = on ? charRec(id) : null, rec = r ? 1 : 0, rk = r ? Math.min(3, r.rank | 0) : 0;
-        out.push({ key: id, n: ROSTER[id].name, got: rec + rk, max: 4, pts: rec * 10 + rk * 2, ptsMax: 16, char: id, grp: 'Companions',
-          sub: r ? `${ROSTER_RANKS[r.rank | 0]} · Lv ${r.lv}` : '',
-          hint: !r ? (x.exact ? ROSTER[id].how : 'Someone may join you.') : rk < 3 ? `Promote ${first(id)} to ${ROSTER_RANKS[rk + 1]}.` : '' });
-      }
-      // F2 (formation.md 2): combos and Kin once seen; Bonds by level (1 Met ... 5 Sworn), at least 1 once seen.
-      const GRP = { combo: 'Combos', kin: 'Kin', bond: 'Bonds' };
-      for (const s of SYNERGIES) {
-        const seen = R().syn[s.id] ? 1 : 0, bond = s.layer === 'bond';
-        const lv = bond && on && typeof bondLevel === 'function' ? safe(() => bondLevel(s.id), 0) : 0;
-        const got = bond ? Math.max(seen, lv) : seen, max = bond ? 5 : 1;
-        out.push({ key: 's_' + s.id, n: s.name, got, max, pts: got * (bond ? 2 : 4), ptsMax: bond ? 10 : 4, grp: GRP[s.layer] || 'Synergies', syn: s.id,
-          sub: got ? (bond && lv ? `${BOND_LV_NAME[lv]} · ` : '') + s.parts.map(p => p.text).join(' ') : '',
-          hint: got >= max ? '' : bond && got ? 'Keep them side by side.' : x.exact ? `Field: ${s.needs}.` : 'Try new friends side by side.' });
-      }
-      return out;
-    }
-  });
-  // ---------------- 6. Stories: 54 camp stories read, 18 joining moments ----------------
-  page('stories', {
-    n: 'Stories', bless: 'road', seal: { key: 'offline', v: 0.03, txt: '+3% away gains' }, title: 'Storykeeper', pic: 'rows',
-    tiles: x => ROSTER_KEYS.map(id => {
-      const r = live() ? charRec(id) : null, rec = r ? 1 : 0, seen = r ? Math.min(3, r.seen | 0) : 0;
-      const st = r ? storyState(id) : { unlocked: 0 };
-      const nextLv = ROSTER_TUNE.storyLv[st.unlocked];
-      return { key: id, n: ROSTER[id].name, got: rec + seen, max: 4, pts: (rec + seen) * 2, ptsMax: 8, char: id,
-        sub: r ? `Joined · ${seen} of 3 stories read` : '',
-        titles: (STORIES[id] || []).slice(0, seen).map(s => s.title),
-        hint: !r ? 'Recruit them to hear how they joined.' : seen < st.unlocked ? `${first(id)} has a story to read. Open their sheet.` : seen < 3 ? (x.exact && nextLv ? `${first(id)} reaches Lv ${nextLv}.` : `${first(id)} has more to tell.`) : '' };
-    })
-  });
   // ---------------- 7. Materials: 7 families x 5 tiers; 7 Trophy types (0.5 each) ----------------
   page('materials', {
     n: 'Materials', bless: 'wild', seal: { key: 'gatherSpeed', v: 0.02, txt: 'Gathering 2% faster' }, title: 'Forager', pic: 'mat',
@@ -256,7 +216,7 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
   // ---------------- 12. Omens: Omens seen; Dares taken ----------------
   const omenOk = o => o.needs !== 'Deepwell' || (typeof deepUnlocked === 'function' ? deepUnlocked() : !!S.deep);
   page('omens', {
-    n: 'Omens', seal: { key: null, txt: '' }, title: 'Omenreader', pic: 'rows',
+    n: 'Omens', bless: 'road', seal: { key: 'offline', v: 0.03, txt: '+3% away gains' }, title: 'Omenreader', pic: 'rows',
     show: () => !!S.almanac && Array.isArray(OMENS),
     tiles: x => {
       const out = [];
@@ -324,7 +284,6 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
     for (let i = 0; i < 7; i++) if ((tr[i] || 0) >= 1) m |= 1 << i;
     R().mat.troph = m;
   };
-  const markSyn = () => { if (typeof activeSynergies === 'function') for (const s of safe(activeSynergies, [])) R().syn[s.id] = 1; };
   const markDare = () => {
     if (typeof almanac !== 'object' || !almanac.dareOn || !safe(almanac.dareOn, false)) return;
     const o = safe(almanac.active, null); if (o && o.dare) R().dare[o.id] = 1;
@@ -334,10 +293,9 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
   on('kill', ({ mob }) => { dirty = true; if (mob && mob.champ) { const k = mobKey(mob); if (k && tIdx(k) >= 0) R().champ[k] = 1; } });
   on('itemAdded', ({ item }) => { markAff(item); dirty = true; });
   on('reforged', ({ item }) => { markAff(item); dirty = true; });
-  on('synergyChange', ({ gained }) => { for (const id of gained || []) R().syn[id] = 1; dirty = true; });
   on('harvest', ({ kind, t }) => { if (CRAFT_FAMILIES.includes(kind) && t >= 1 && t <= 5) R().mat[kind] = (R().mat[kind] | 0) | (1 << (t - 1)); dirty = true; });
   on('trophy', ({ i }) => { if (i >= 0 && i < 7) R().mat.troph = (R().mat.troph | 0) | (1 << i); dirty = true; });
-  for (const e of ['recruit', 'promote', 'charLevel', 'campBuilt', 'omen', 'weeklyClaim', 'achievement', 'zoneClear', 'loot', 'transmuted', 'crafted', 'bondLevel'])
+  for (const e of ['campBuilt', 'omen', 'weeklyClaim', 'achievement', 'zoneClear', 'loot', 'transmuted', 'crafted'])
     on(e, dirt);
 
   // ---------------- rewards: Seals (capped), milestones, the Blessing gate ----------------
@@ -355,7 +313,6 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
   keenSource('codex', 'Codex seal', () => codexBonus('critDmg'));   // ECON-A: was +3% gold
   addModifier('uniqueChance', () => 1 + codexBonus('uniqueChance'));
   for (const k of ['smith', 'bench', 'loom', 'ench']) addModifier('skillXp:' + k, () => 1 + codexBonus('skillXp'));
-  addModifier('compXp', () => 1 + codexBonus('compXp'));
   addModifier('offline', () => 1 + codexBonus('offline'));
   addModifier('gatherSpeed', () => 1 + codexBonus('gatherSpeed'));
   addModifier('buildTime', () => 1 - codexBonus('buildTime'));
@@ -414,7 +371,7 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
     if (CX().init) return;
     if (typeof ACH_API === 'object' && S.achievements && !S.achievements.init) safe(() => ACH_API.check(), null);
     for (const it of S.items || []) markAff(it);
-    markMats(); markSyn(); markDare();
+    markMats(); markDare();
     // Champions: a save that has beaten champions and holds that type's Trophy gets credit.
     if (S.craft && (S.craft.champ | 0) > 0) (S.craft.troph || []).forEach((n, i) => { if (n > 0 && TYPES[i]) R().champ[TYPES[i].key] = 1; });
     const c = compute();

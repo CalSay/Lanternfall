@@ -55,7 +55,6 @@ let featTrophyURL, trophyWall;
   const TROPHY = {
     f_lamps: ['............', '....mMMm....', '...kmMmmk...', '....tsst....', '...tSSsst...', '...sLLlls...', '...sLllls...', '...kllllt...', '...tsssst...', '....ktt.....', '............', '............'],
     f_watch: ['............', '..WWWWWWWW..', '..vwwwwwwv..', '...wcGGcw...', '...w.cc.w...', '...w.GG.w...', '...w.cc.w...', '...wcGGcw...', '...wGGGGw...', '..WWWWWWWW..', '..vwwwwwwv..', '............'],
-    f_company: ['............', '..Y.........', '..wbbbbbbbb.', '..wbBBBBBBn.', '..wbGbGbGbn.', '..wbBBBBBBn.', '..wbbbbbbbn.', '..wbbbbbbbn.', '..wbbb..bbn.', '..wbn....n..', '..v.........', '............'],
     f_trades: ['............', '.....Y......', '....YGg.....', '.....g......', '.SSSSSSSSs..', '..sSSSSSst..', '....ssst....', '.....st.....', '....sssst...', '...tttttt...', '............', '............'],
     f_deep: ['............', '..wWWWWWWw..', '.vwwwwwwwwv.', '..w......w..', '..w..tt..w..', '..w..ss..w..', '.hAAAAAAAAh.', '.hhHhhHhhhh.', '.jhhjhhjhhj.', '.jjjjjjjjjj.', '............', '............'],
     f_trials: ['............', '...hHHHHh...', '..hHhhhhHh..', '..hhhaahhj..', '..hhaAAahj..', '..hhaAzahj..', '..hhhaahhj..', '..hhhhhhhj..', '..hdhdhdhj..', '..jjjjjjjj..', '............', '............'],
@@ -66,10 +65,8 @@ let featTrophyURL, trophyWall;
     f_raid: ['............', '.....R......', '....RRr.....', '....RRrq....', '...RRrrrq...', '...RrrRrq...', '..RRrrRrrq..', '..RrrrRrrq..', '..rrrrRrrq..', '...rrrrqq...', '....qqq.....', '............'],
     f_champs: ['............', '............', '.wWWWWWWWWv.', '.wCwCwCwCwv.', '.wCwCwCwCwv.', '.wCCCCCwCwv.', '.wCwCwCwCwv.', '.wwwwwwwwwv.', '.vvvvvvvvvv.', '............', '............', '............'],
     f_stars: ['............', '.....P......', '.....P......', '....PLp.....', '.PPPPLLppo..', '..oPPLPpo...', '...oPPPo....', '...PPoPP....', '..Po...oP...', '..o.....o...', '............', '............'],
-    f_sworn: ['............', '............', '...KI..KI...', '..KKIIKIIi..', '..KIIIIIIi..', '..IIIIIIii..', '...IIIIii...', '....IIii....', '.....ii.....', '............', '............', '............'],
     f_town: ['............', '.....Rq.....', '....RRrq....', '...RRrrrq...', '..RRrrrrrq..', '...Wwwwwv...', '...WlLwdv...', '...Wllwdv...', '...vvvvvv...', '............', '............', '............'],
     f_stock: ['............', '....wWWw....', '...wWWWwv...', '..tsssssst..', '..wWWWwwwv..', '..wWWwwwwv..', '..wWWwwwwv..', '..tsssssst..', '...wWwwwv...', '....vvvv....', '............', '............'],
-    f_tides: ['............', '............', '....AAAA....', '...AaAaAa...', '..AaAaAaAz..', '..AaAaAaAz..', '..zAaAaAzz..', '...zAaAaz...', '....zAaz....', '...zzzzzz...', '............', '............'],
     f_oaths: ['............', '..eCCCCCCe..', '..ecccccce..', '...CdddCC...', '...CCCCCC...', '...CdddCC...', '...CCCrRr...', '...CCrRRq...', '..eCCCrqqe..', '..ecccccce..', '............', '............'],
     f_all: ['............', '.....GG.....', '....g..g....', '....YGGg....', '...YGGGGg...', '...GLLLlg...', '...GLLLlg...', '...GlLllg...', '...YGGGGg...', '....gggg....', '............', '............']
   };

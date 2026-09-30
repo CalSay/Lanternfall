@@ -30,7 +30,7 @@ var clsHeroStats, clsDr, clsHeroHitX, clsHeroHit, clsNoGrit, clsMarkAdd, clsStag
   clsMeter, clsFinisher, evoLamp, CLS_STATS;
 
 {
-  const TU = CLS_TUNE, A = CLASS_ABILITIES, LK_MUL = 0.2;   // LK_MUL: the legacy Lightkeeper's own-hit share (55-party T.heroMul)
+  const TU = CLS_TUNE, A = CLASS_ABILITIES;
   const tn = k => bonus('tune:' + k);
   const ks = id => bonus('ks:' + id) > 0;
   const on_ = () => typeof partyCombatOn === 'function' && partyCombatOn() && target() === 'mob';
@@ -49,9 +49,8 @@ var clsHeroStats, clsDr, clsHeroHitX, clsHeroHit, clsNoGrit, clsMarkAdd, clsStag
     str = evo && typeof clsStrength === 'function' ? clsStrength() : 0;
     proven = str >= 1;
   }
-  // The hero's hit power for abilities: attack x its combat stand (floor and trio, as a swing gets), before the
-  // Lightkeeper's own-hit cut (abilities are not reduced, 2.8).
-  const P = () => heroAtk() * (typeof heroStand === 'function' ? heroStand(false) : 1) / (evo === 'priest' ? LK_MUL : 1);
+  // The hero's hit power for abilities: its attack.
+  const P = () => heroAtk();
 
   // ---- runtime (never saved) ----
   let clock = 0;

@@ -39,9 +39,8 @@
   }
 
   // What opened, in one plain sentence. Tabs pop (high); views and smaller things are normal.
-  const SOLO_G = typeof soloOn === 'function' && soloOn();
   const OPEN_TXT = {
-    party: SOLO_G ? 'New tab: Hero. Your gear, level and star map.' : 'New tab: Party. See who fights beside you.',
+    party: 'New tab: Hero. Your gear, level and star map.',
     gather: 'New tab: Gather. Mine ore and chop wood.',
     camp: typeof hearthCold === 'function' && hearthCold() ? 'New tab: Camp. Build your first station there.' : 'You made camp. A new tab: Camp.',
     craft: 'New tab: Craft. Make gear from your materials.',
@@ -73,7 +72,6 @@
       o.seen[view] = 1;
       const b = document.querySelector(`#viewSeg button[data-view="${view}"]`); if (b) b.classList.remove('is-new');
     }
-    if (tab === 'party' && o.rec) o.seen.partyAfterRec = 1;
     applyFeatures();
   });
   // Other systems that open a hidden place on their own.
@@ -183,32 +181,16 @@
     },
     forge: () => campPath('forge', ['Open Camp to build the Forge.', 'Open Camp.', 'Build the Forge for your weapon.']),
     store: () => campPath('store', ['Your packs are nearly full. Open Camp.', 'Open Camp.', 'Your packs are nearly full. Build a Storehouse.']),
-    tap: () => onGame() && target() === 'mob' ? { node: $('stage'), at: [0.78, 0.7], text: cold() ? 'The road is dark. Tap a foe to strike.' : 'Tap the foe to strike.' } : null,
-    ability: () => {
-      const n = q('#stage .abil'), a = typeof abilityInfo === 'function' ? abilityInfo() : null;
-      return onGame() && a ? { node: n, round: true, text: `${a.name} is ready. Tap it.` } : null;
-    },
-    boss: () => onGame() && mob && mob.boss ? { node: $('stage'), at: [0.78, 0.7], side: 'up', text: 'A boss! Beat it before the timer runs out.' } : null,
-    upgrade: () => soloOn()
-      // W2-A: Training. Hero tab, Training view, Train on Attack.
-      ? Object.assign(path('party', 'training', '#trainRows .tr-row[data-mv="atk"] .buy',
-        ['You have gold. Open Hero to train.', 'Open Training.', 'Train Attack. Each level hits harder.']), { side: S.tab === 'party' ? 'up' : '' })
-      : Object.assign(path('adv', 'upgrades', () => q('#heroRows .buy:not(:disabled)') || q('#heroRows .buy'),
-      ['You have gold. Open Fight to spend it.', 'Open Upgrades.', 'Buy an upgrade to hit harder.']), { side: S.tab === 'adv' ? 'up' : '' }),
-    'tab:party': () => S.tab === 'party' ? null : { node: q('.tab[data-tab="party"]'), text: 'New tab: Party. Tap it to meet your team.' },
+    // Training: Hero tab, Training view, Train on Attack.
+    upgrade: () => Object.assign(path('party', 'training', '#trainRows .tr-row[data-mv="atk"] .buy',
+        ['You have gold. Open Hero to train.', 'Open Training.', 'Train Attack. Each level hits harder.']), { side: S.tab === 'party' ? 'up' : '' }),
     'tab:gat': () => S.tab === 'gat' ? null : { node: q('.tab[data-tab="gat"]'), text: 'New tab: Gather. Tap it to see what you can mine.' },
     'tab:world': () => S.tab === 'world' ? null : { node: q('.tab[data-tab="world"]'), text: 'You made camp. Tap Camp to build.' },
     'tab:forge': () => S.tab === 'forge' ? null : { node: q('.tab[data-tab="forge"]'), text: 'New tab: Craft. Tap it to make gear.' },
-    nextup: () => onGame() ? { node: chip, text: 'Next Up shows your best next goal. Tap it.' } : null,
-    recruit: () => {
-      const rec = O().rec;
-      if (rec) return S.tab === 'party' ? null : { node: q('.tab[data-tab="party"]'), text: `${first(ROSTER[rec] && ROSTER[rec].name)} joined you. Open Party to see your team.` };
-      return path('party', 'roster', () => q('#sec-party-roster .rtile.locked.ready') || q('#sec-party-roster .rtile.ready') || q('#sec-party-roster'),
-        ['Someone can join you. Open Party.', 'Open Roster.', 'Tap them, then Recruit.']);
-    }
+    nextup: () => onGame() ? { node: chip, text: 'Next Up shows your best next goal. Tap it.' } : null
   };
 
-  const BLOCK = '.create, .join-ov, .away-ov, .bsheet-ov, .modal, .dw-ov';
+  const BLOCK = '.create, .away-ov, .bsheet-ov, .modal, .dw-ov';
   let lastKey = '';
   function hide() { if (!layer.hidden) layer.hidden = true; if (!bub.hidden) bub.hidden = true; cur = null; curGo = null; lastKey = ''; lastNode = null; ONBOARD.paused = false; }
   // The hint used to re-read the target's pixel position and re-place itself every 250ms, so it
@@ -225,7 +207,7 @@
     try { step = onboardStep(); } catch (e) { console.error('[lanternfall] onboard step', e); }
     if (!step || document.hidden || q(BLOCK)) return hide();
     let spec = null;
-    const table = SOLO_G && SOLO_UI[step.id] ? SOLO_UI : STEP_UI;
+    const table = SOLO_UI[step.id] ? SOLO_UI : STEP_UI;
     try { spec = table[step.id] ? table[step.id]() : null; } catch (e) { spec = null; }
     if (!spec || !vis(spec.node)) return hide();
     cur = step; curGo = spec.go || null;
@@ -238,7 +220,7 @@
   }
   soloGuideWants = () => (cur && !layer.hidden ? cur.id : '');
   // The guide's steps and their targets, for tools/check.mjs (the browser check walks the first session).
-  onboardSpec = id => { const table = SOLO_G && SOLO_UI[id] ? SOLO_UI : STEP_UI; try { return table[id] ? table[id]() : null; } catch (e) { return null; } };
+  onboardSpec = id => { const table = SOLO_UI[id] ? SOLO_UI : STEP_UI; try { return table[id] ? table[id]() : null; } catch (e) { return null; } };
   let lastNode = null;
   function place(spec) {
     const key = spec.text, changed = dirty || spec.node !== lastNode || key !== lastKey;

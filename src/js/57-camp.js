@@ -13,7 +13,7 @@
 //
 // Exposed names:
 //   data     CAMP_B (buildings), CAMP_HZ, CAMP_HREQ, CAMP_HEARTH (Hearth cost rows), CAMP_BLESS,
-//            CAMP_SPOTS (favourite resting spots), CAMP_LIVE (families/trophies with a source;
+//            CAMP_LIVE (families/trophies with a source;
 //            K5 sets crystal/fibre/herb/hide/troph to true), CAMP_TUNE
 //   read     campLevel(id), campOpen(), campBuilders(), campMaxLevel(id), campCost(id, to),
 //            campCan(id) -> { ok, why, to, cost, dur, queue, need }, campPending(id),
@@ -23,18 +23,14 @@
 //            campSeen() (clears the "finished" glow), blessSet(ids) -> bool, blessToggle(id) -> bool
 //   blessing blessSlots(), blessPower(), blessOpen(id), blessCanSwap() -> { ok, why },
 //            setBlessingGate(fn(id) -> bool)   the Codex decides which Blessings are open
-//   roster   benchList(), campStatus(id) -> { status, label, sub, action }, campFree(id),
-//            registerBenchStatus(fn(id) -> { status, label, sub?, action? } | null) -> remove()
-//            registerBenchSend({ id, label, can(id) -> { ok, why }, fn(id) }) -> remove()
-//            benchSends(id) -> [{ id, label, ok, why, fn }]
 //   hooks    registerCampAction(buildingId, { label, show(), fn() }) -> remove()  (Open Codex, Expeditions)
 //            campActions(buildingId) -> [{ label, fn }]
 //
 // Events: campGoto { tab, sel } (an away-card Go button; the UI opens the tab), campOpen { quiet }, campStart { id, to, queued }, campBuilt { id, lv }, campCancel { id, to, refund },
 //         blessChange { bless }.
-// Modifier keys written: offline (Hearth), skillXp:<skill> (stations, Library), compXp (Library),
+// Modifier keys written: offline (Hearth), skillXp:<skill> (stations, Library), xp (Library),
 //   rareW (Forge 5), salvage (Workbench 5), gatherSpeed (Loom 5), reforge (Enchanter's Table 5),
-//   bountyPay (Tavern 4) and the Blessings' keys (dmg, gold, skillXp:*, compXp, offline,
+//   bountyPay (Tavern 4) and the Blessings' keys (dmg, gold, skillXp:*, offline,
 //   gatherSpeed, buildTime, essence). Bonus keys: awayHours (Watchtower, capped so the
 //   whole away cap stays <= 24h), transmuteSave (Enchanter's Table 5), deepOil.
 // Reads: mod('buildTime') (when a build is started or queued), mod('hearth') (Hearth Day Omen
@@ -104,8 +100,7 @@ const CAMP_BLESS = {
   edge: { n: 'Edge', page: 'Zones', v: 0.06, fx: v => `+${pc(v)} crit damage` },
   hunt: { n: 'Hunt', page: 'Uniques', v: 0.15, fx: v => `+${pc(v)} damage to zone bosses` },
   anvil: { n: 'Anvil', page: 'Armoury', v: 0.15, fx: v => `+${pc(v)} crafting XP` },
-  kin: { n: 'Kin', page: 'Companions', v: 0.15, fx: v => `+${pc(v)} companion XP`, needs: () => !soloOn() },   // W1-C: no companions in solo (the Codex page is hidden too)
-  road: { n: 'Road', page: 'Stories', v: 0.12, fx: v => `+${pc(v)} away gains` },
+  road: { n: 'Road', page: 'Omens', v: 0.12, fx: v => `+${pc(v)} away gains` },
   wild: { n: 'Wild', page: 'Materials', v: 0.12, fx: v => `Gathering ${pc(v)} faster` },
   hearth: { n: 'Hearth', page: 'Camp', v: 0.10, fx: v => `Builds ${pc(v)} faster` },
   deep: { n: 'Deep', page: 'Deepwell', v: 15, fx: v => `Deepwell runs start with +${Math.round(v)}s Oil`, needs: () => !!S.deep },
@@ -113,17 +108,9 @@ const CAMP_BLESS = {
   // Sky (Omens: Dares pay +25%) joins when the Almanac reads a Dare-reward modifier.
 };
 function pc(v) { return Math.round(v * 100) + '%'; }
-// Where a resting character likes to sit: building id per character (first built wins, else the Hearth).
-const CAMP_SPOTS = {
-  hesketh: 'hearth', caedmon: 'hearth', tobin: 'hearth', aldric: 'forge', grenna: 'forge', bram: 'bench',
-  pip: 'library', oriel: 'library', morwen: 'ench', elowen: 'shrine', maren: 'shrine', anselm: 'shrine',
-  vesper: 'tavern', isolde: 'tavern', kestrel: 'tavern', wren: 'watch', thessaly: 'hearth', corvin: 'hearth'
-};
-
 let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPending, campBuilds, campEffects,
   campNextUnlock, campList, campRumours, campHoldZone, campBuild, campCancel, campCatchUp, campSeen,
-  blessSlots, blessPower, blessOpen, blessCanSwap, blessSet, blessToggle, setBlessingGate, benchList, campStatus,
-  campFree, registerBenchStatus, registerBenchSend, benchSends, registerCampAction, campActions;
+  blessSlots, blessPower, blessOpen, blessCanSwap, blessSet, blessToggle, setBlessingGate, registerCampAction, campActions;
 
 {
   registerState('camp', {
@@ -337,9 +324,9 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
     try { others = bonus('awayHours'); } finally { inAway = false; }
     return Math.max(0, Math.min(2 * lv('watch'), T.awayMax - (4 + 2 * S.relic.glass) - others));
   });
-  // Library: gathering XP +5% per level; companion XP +5% per level after the first.
+  // Library: gathering XP +5% per level; hero XP +5% per level after the first.
   for (const k of ['mine', 'wood', 'forage']) addModifier('skillXp:' + k, () => 1 + 0.05 * lv('library'));
-  addModifier(soloOn() ? 'xp' : 'compXp', () => 1 + 0.05 * Math.max(0, lv('library') - 1));   // W1-C: solo, the Library's second perk is hero XP
+  addModifier('xp', () => 1 + 0.05 * Math.max(0, lv('library') - 1));   // the Library's second perk is hero XP
   // Tavern: bounties pay +15% at Lv 4; every 5th bounty gives +1 Renown at Lv 5.
   addModifier('bountyPay', () => lv('tavern') >= 4 ? 1.15 : 1);
   on('bountyDone', () => {
@@ -349,9 +336,8 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
   });
 
   // Effect lines for a building at a level (the UI shows now -> next). Lv 0 = not built.
-  const TAV = soloOn() ? ['', 'The keep tells the day\'s gossip', 'Rumours: tomorrow\'s Omen', 'Rumours: the next 2 Omens', 'Bounties pay +15%', 'Every 5th bounty gives +1 Renown']
-    : ['', 'The daily visitor', 'Rumours: the next 3 visitors and tomorrow\'s Omen', 'Rumours also name your closest recruits and 2 Omens', 'Bounties pay +15%', 'Every 5th bounty gives +1 Renown'];
-  const LIB = l => [`Gathering XP +${5 * l}%`].concat(l >= 2 ? [`${soloOn() ? 'Hero' : 'Companion'} XP +${5 * (l - 1)}%`] : []);
+  const TAV = ['', 'The keep tells the day\'s gossip', 'Rumours: tomorrow\'s Omen', 'Rumours: the next 2 Omens', 'Bounties pay +15%', 'Every 5th bounty gives +1 Renown'];
+  const LIB = l => [`Gathering XP +${5 * l}%`].concat(l >= 2 ? [`Hero XP +${5 * (l - 1)}%`] : []);
   const SHR = ['', '1 Blessing', 'Blessings 25% stronger', '2 Blessings'];
   campEffects = (id, l) => {
     const d = B(id);
@@ -363,7 +349,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
       if (l >= 5) out.push(STN_FIVE[id].txt);
       return out;
     }
-    if (id === 'watch') return [`Away limit +${2 * l}h`].concat(l >= 2 ? [soloOn() ? 'Away report shows the zone you could hold' : 'Away report shows the zone your party could hold'] : []);
+    if (id === 'watch') return [`Away limit +${2 * l}h`].concat(l >= 2 ? ['Away report shows the zone you could hold'] : []);
     if (id === 'library') return LIB(l);
     if (id === 'tavern') return (l <= 3 ? [TAV[l]] : [TAV[3]].concat(TAV.slice(4, l + 1))).concat(typeof handsTavernFx === 'function' ? handsTavernFx(l) : []);   // N1: where Hands apply
     if (id === 'shrine') return [SHR[Math.min(3, l)]].concat(l >= 3 ? ['Blessings 25% stronger'] : []);
@@ -388,8 +374,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
   };
 
   // ---------------- Watchtower hold hint ----------------
-  // Before party combat: the highest cleared zone where the party kills a foe in 3 seconds or less.
-  // With party combat (Stage C), partyHoldEstimate() decides: a zone number, or { zone }.
+  // partyHoldEstimate() (59-combat) decides: a zone number, or { zone }. Without it, the highest cleared zone where a foe dies in 3 seconds.
   campHoldZone = () => {
     if (typeof partyHoldEstimate === 'function') {
       try {
@@ -403,24 +388,10 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
   };
 
   // ---------------- Tavern rumours ----------------
-  const firstName = id => ROSTER[id].name.replace(/^(Ser|Old|Brother|Saint) /, '').split(' ')[0];
   campRumours = () => {
     const l = lv('tavern'), out = [];
     if (l < 2 || !campOpen()) return out;
     try {
-      if (!soloOn() && typeof visitorToday === 'function' && typeof daysUntilVisit === 'function' && rosterLive()) {
-        const seen = new Set();
-        for (const id of Object.keys(UNLOCK_TUNE.visitors)) {
-          const n = daysUntilVisit(id); if (n < 1 || n > 3 || seen.has(n)) continue;
-          seen.add(n);
-          const v = UNLOCK_TUNE.visitors[id], hire = !isRecruited(id) && S.maxZone >= Math.max(UNLOCK_TUNE.visitorFrom, v.from);
-          out.push({ n, char: id, txt: `${n === 1 ? 'Tomorrow' : `In ${n} days`}: ${hire ? `${ROSTER[id].name} comes to hire on` : `a trader comes (${firstName(id)} is ${isRecruited(id) ? 'already with you' : 'not ready yet'})`}.` });
-        }
-        out.sort((a, b) => a.n - b.n);
-      }
-      if (!soloOn() && l >= 3 && typeof leads === 'function') {
-        for (const x of leads().slice(0, 3)) out.push({ char: x.id, txt: `${x.name}: ${x.how}`, go: x.tab || 'party' });
-      }
       if (typeof almanac === 'object' && almanac.omenFor) {
         const d = deviceDay(now());
         for (let i = 1; i <= (l >= 3 ? 2 : 1); i++) { const o = almanac.omenFor(d + i); if (o) out.push({ ic: o.ic, txt: `${i === 1 ? 'Tomorrow' : 'The day after'}: ${o.n}. ${o.fx}.` }); }
@@ -461,36 +432,18 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
   addModifier('dmg', () => 1 + bv('blade') + (bossNow() ? bv('hunt') : 0));
   keenSource('edge', 'Blessing: Edge', () => bv('edge'));
   for (const k of ['smith', 'bench', 'loom', 'ench']) addModifier('skillXp:' + k, () => 1 + bv('anvil'));
-  addModifier('compXp', () => 1 + bv('kin'));
   addModifier('offline', () => 1 + bv('road'));
   addModifier('gatherSpeed', () => 1 + bv('wild'));
   addModifier('buildTime', () => 1 - bv('hearth'));
   addModifier('essence', () => 1 + bv('oath'));
   addBonus('deepOil', () => bv('deep'));
 
-  // ---------------- the Roster board ----------------
-  const statusHooks = [], sendHooks = [], actionHooks = [];
+  // ---------------- camp actions ----------------
+  const actionHooks = [];
   const rm = (list, x) => () => { const i = list.indexOf(x); if (i >= 0) list.splice(i, 1); };
-  registerBenchStatus = fn => { statusHooks.push(fn); return rm(statusHooks, fn); };
-  registerBenchSend = s => { sendHooks.push(s); return rm(sendHooks, s); };
   registerCampAction = (id, a) => { const x = Object.assign({ id }, a); actionHooks.push(x); return rm(actionHooks, x); };
   campActions = id => actionHooks.filter(a => a.id === id && (!a.show || safe(a.show, false))).map(a => ({ label: typeof a.label === 'function' ? a.label() : a.label, fn: a.fn }));
   function safe(fn, dflt) { try { return fn(); } catch (e) { console.error('[lanternfall] camp hook', e); return dflt; } }
-  const fielded = id => !!(S.party && S.party.field && S.party.field.includes(id));
-  benchList = () => (rosterLive() ? rosterList() : []).filter(id => !fielded(id));
-  const spotOf = id => {
-    const want = CAMP_SPOTS[id] || 'hearth';
-    return want !== 'hearth' && lv(want) > 0 ? want : 'hearth';
-  };
-  const spotName = b => b === 'hearth' ? (lv('hearth') >= 8 ? 'the Lantern Hall' : lv('hearth') >= 3 ? 'the Hearth' : 'the campfire') : 'the ' + B(b).n;
-  // One place per character: in the party, else whatever a system reports (Job, Expedition), else resting.
-  campStatus = id => {
-    if (fielded(id)) return { status: 'field', label: 'In the party' };
-    for (const fn of statusHooks) { const s = safe(() => fn(id), null); if (s && s.status) return s; }
-    return { status: 'rest', label: `Resting at ${spotName(spotOf(id))}`, spot: spotOf(id) };
-  };
-  campFree = id => isRecruited(id) && campStatus(id).status === 'rest';
-  benchSends = id => sendHooks.map(s => { const c = safe(() => s.can(id), { ok: false, why: '' }) || { ok: false, why: '' }; return { id: s.id, label: s.label, ok: !!c.ok && campFree(id), why: campFree(id) ? c.why || '' : 'Busy', fn: () => s.fn(id) }; });
 
   // ---------------- Next Up ----------------
   // The cheapest build a free builder could start, with how close its cost is (0..1).

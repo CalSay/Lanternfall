@@ -26,12 +26,10 @@ function salvageGive(it) {
   if (it.u) stashAdd('ess', it.t, 10, 'preview');
   craftSalvageBonus(it); // 55-crafting: affixed items may give an essence
 }
-// One wearer per item: take it off the hero and every companion. Returns how many it left.
+// One wearer per item: take it off the hero. Returns how many it left.
 function unwearItem(id) {
   let n = 0;
   for (const k of Object.keys(S.equip)) if (S.equip[k] === id) { S.equip[k] = null; n++; }
-  const rec = S.party && S.party.rec;
-  if (rec) for (const r of Object.values(rec)) for (const p of CRAFT_COMP_POS) if (r && r[p] === id) { r[p] = null; n++; }
   return n;
 }
 // pos: hero position (defaults to the kind's own); the item must fit it for the hero's class.
@@ -74,23 +72,6 @@ function upgradeEquipped(slot) {
 }
 
 // ================= shops =================
-// amt: '1' | '10' | 'max' (defaults to the player's x1/x10/Max choice).
-// W2-A: the party game's Blade, Swiftness and Precision. The solo game trains moves instead (55-training train()).
-function buyHero(id, amt) {
-  if (soloOn()) return false;
-  const u = HERO_UPS.find(h => h.id === id);
-  const p = plan(u.base, u.r, S[u.id], S.gold, u.cap, amt);
-  if (p.n > 0 && S.gold >= p.cost) { S.gold -= p.cost; S[u.id] += p.n; econSpend('up', p.cost); return true; }
-  return false;
-}
-// Retired once the roster is live (56-roster.js): companions are recruited by name.
-function hireComp(i, amt) {
-  if (rosterLive()) return false;
-  const c = COMPS[i];
-  const p = plan(c.base, 1.15, S.comp[i], S.gold, undefined, amt);
-  if (p.n > 0 && S.gold >= p.cost) { S.gold -= p.cost; S.comp[i] += p.n; return true; }
-  return false;
-}
 function buyRelic(id) {
   const u = RELICS.find(r => r.id === id);
   const lv = S.relic[u.id];

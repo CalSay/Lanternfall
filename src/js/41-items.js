@@ -1,12 +1,12 @@
 // 41-items: the items core (task K4). Item kinds, where they fit, their stat lines, the
-// hero's 8 gear positions, companion gear, affix rolls, Reforge maths and the bag rule.
+// hero's 8 gear positions, affix rolls, Reforge maths and the bag rule.
 // CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
 // Spec: docs/design/gathering-and-crafting.md 4 and 7, with its "Owner decisions" (random
 // affixes, Reforge, trophies gate +8..+10). Tables live in 21-data-craft.js (K1).
 //
 // Exposed names (everything else is private, inside the block below):
 //   kinds    itemKind(itOrKind) -> CRAFT_KINDS row (legacy slots are kinds: 'weapon' = Sword)
-//            kindPos(kind) -> hero position or companion position the kind goes in
+//            kindPos(kind) -> the position the kind goes in
 //   fit      fits(item, pos, who = 'hero')   who: 'hero' (S.party.cls), a class key, a role key,
 //            a roster character id or 'any'. Weapon and head uniques fit every class. A legacy
 //            Sword/Helm (non-unique) fits only a hero with no class (a kind string counts as
@@ -17,7 +17,6 @@
 //   stats    itemLines(item) -> [[stat, value], ...] in the order gear() adds them
 //            itemStats(item) -> { stat: total } (base lines + affixes + Masterwork + unique fx)
 //            gearCalc() the uncached gear() over CRAFT_HERO_POS (40-rules caches it)
-//            charGear(id) -> the same stat object for a companion's wpn/trk items
 //            spellMult() 1 + spell power / 100 (for the ability code; not wired yet)
 //   names    kindName(slot, t, u), kindColor(slot, t, u), kindCost(kind, t), kindUpgradeCost(item)
 //            (40-rules' itemName/craftCost/upgradeCost and 20-data's itemColor delegate here)
@@ -26,7 +25,7 @@
 //   reforge  reforgeCost(item) -> {mats, gold} (craftReforgeCost of the item's tier and rf)
 //            reforgeLine(item, idx, rnd = Math.random) -> { a, rf, line, cost } or null (pure;
 //            the caller pays and applies). Never duplicates an affix stat, never touches mw.
-//   bag      equippedIds() -> Set of item ids worn by the hero or any companion
+//   bag      equippedIds() -> Set of item ids worn by the hero
 //            isEquipped(id), bagCount() (unequipped items), bagFull() (>= CRAFT_BAG_MAX)
 //
 // Item fields (S.items entries). Old items have only the first five and keep their stats:
@@ -57,7 +56,7 @@
 // critChance() caps at 75%).
 // 'attack' feeds heroAtk() (40-rules). 'spell' is exposed through spellMult().
 
-let itemKind, kindPos, fits, heroWho, retoolItems, RETOOL, itemLines, itemStats, gearCalc, charGear, spellMult,
+let itemKind, kindPos, fits, heroWho, retoolItems, RETOOL, itemLines, itemStats, gearCalc, spellMult,
   kindName, kindColor, kindCost, kindUpgradeCost, newItem, rollAffixes, reforgeCost, reforgeLine,
   equippedIds, isEquipped, bagCount, bagFull;
 
@@ -76,11 +75,7 @@ let itemKind, kindPos, fits, heroWho, retoolItems, RETOOL, itemLines, itemStats,
   itemKind = x => CRAFT_KINDS[typeof x === 'string' ? x : x && x.slot] || null;
   kindPos = kind => { const d = CRAFT_KINDS[kind]; return d ? d.pos || d.comp || null : null; };
   heroWho = () => (S.party && S.party.cls && HERO_CLASSES[S.party.cls]) ? S.party.cls : 'any';
-  const resolveWho = (pos, who) => {
-    if (who == null || who === 'hero') return heroWho();
-    if (CRAFT_POS[pos] && CRAFT_POS[pos].comp && ROSTER[who]) return ROSTER[who].role;
-    return who;
-  };
+  const resolveWho = (pos, who) => (who == null || who === 'hero' ? heroWho() : who);
   RETOOL = { on: 1 };
   const RT_KINDS = { weapon: 1, helm: 1 }; // legacy kinds that retool into class kinds
   const pendingLegacy = it => !!it && typeof it === 'object' && !it.u && !!RT_KINDS[it.slot];
@@ -101,10 +96,8 @@ let itemKind, kindPos, fits, heroWho, retoolItems, RETOOL, itemLines, itemStats,
     const out = { legacy: { weapon: 0, helm: 0 }, swap: 0, from: [] };
     const cls = heroWho(); if (!RETOOL.on || cls === 'any' || !Array.isArray(S.items)) return out;
     const hero = new Set(CRAFT_HERO_POS.map(p => S.equip[p]).filter(v => v != null));
-    const comp = new Set(), rec = S.party && S.party.rec;
-    if (rec) for (const r of Object.values(rec)) for (const p of CRAFT_COMP_POS) if (r && r[p] != null) comp.add(r[p]);
     for (const it of S.items) {
-      if (!it || it.u || comp.has(it.id)) continue;
+      if (!it || it.u) continue;
       const d = CRAFT_KINDS[it.slot]; if (!d || !d.pos) continue;
       let why = null;
       if (RT_KINDS[it.slot]) why = 'legacy';
@@ -171,15 +164,6 @@ let itemKind, kindPos, fits, heroWho, retoolItems, RETOOL, itemLines, itemStats,
     }
     return capNonLive(s);
   };
-  charGear = id => {
-    const s = blank(), r = S.party && S.party.rec && S.party.rec[id];
-    if (r) for (const pos of CRAFT_COMP_POS) {
-      const it = r[pos] != null ? itemById(r[pos]) : null; if (!it || !fits(it, pos, id)) continue;
-      s.score += itemPower(it);
-      addLines(s, itemLines(it));
-    }
-    return capNonLive(s);
-  };
   spellMult = () => 1 + gear().spell / 100;
 
   // ---- names, colours, costs ----
@@ -241,8 +225,6 @@ let itemKind, kindPos, fits, heroWho, retoolItems, RETOOL, itemLines, itemStats,
   equippedIds = () => {
     const ids = new Set();
     for (const v of Object.values(S.equip)) if (v != null) ids.add(v);
-    const rec = S.party && S.party.rec;
-    if (rec) for (const r of Object.values(rec)) for (const pos of CRAFT_COMP_POS) if (r && r[pos] != null) ids.add(r[pos]);
     return ids;
   };
   isEquipped = id => equippedIds().has(id);

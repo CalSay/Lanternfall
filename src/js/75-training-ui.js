@@ -6,7 +6,6 @@
 // Core: 55-training.js (train, trainInfo, trainPlan, trainMoves). Icons: soloIconURL (75-solo-ui).
 var trainCard = null;
 {
-  const SOLO = soloOn();
   const icon = mv => (typeof soloIconURL === 'function' ? soloIconURL(mv) : iconURL('sword', '#A9B1BD'));
   const heroName = () => { const k = soloHero(); return k && typeof ROSTER === 'object' && ROSTER[k] ? ROSTER[k].name.split(' ')[0] : 'Your hero'; };
   const capWhy = i => i.by === 'stage'
@@ -74,7 +73,7 @@ var trainCard = null;
       putAttr(r.btn, 'aria-label', i.max ? `${i.name}: at Lv ${i.lv}, the most for now` : `Train ${i.name} ${i.plan.n > 1 ? i.plan.n + ' levels' : ''} for ${fmt(i.plan.cost)} gold`);
     }
   }
-  if (SOLO) {
+  {
     registerView('party', { id: 'training', label: 'Training', order: 20, feature: 'party' });
     registerSection('party', { id: 'training', title: 'Training', view: 'training', feature: 'party', mount: build, update: () => { try { refresh(); } catch (e) { console.error('[lanternfall] training', e); } } });
   }

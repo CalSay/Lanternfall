@@ -126,9 +126,9 @@ const DEEP_BOON_IDS = [];
   B('life', 'Lifeline', 'e', ['mend'], 1, null, 1, () => 'Once a floor, if you would go down you stay at 1 health', 1);
   B('wild', 'Wildfire', 'e', ['flame'], 1, null, 1, () => 'Burns and Embers jump to a new foe when their foe dies', 1);
   B('duel', 'Duelist', 'r', ['crit'], 1, null, 1, () => 'Your first hit on each foe always crits', 1);
-  B('parry', 'Quick Parry', 'r', [], 1, null, 0.4, () => soloOn() ? 'The parry window is 0.15s longer' : 'The parry window is 0.4s longer', 1);
+  B('parry', 'Quick Parry', 'r', [], 1, null, 0.4, () => 'The parry window is 0.15s longer', 1);
   // S6-F (combat-2 6.1): boons for active play (59g reads them), and one for idle drafts
-  B('feet', 'Steady Feet', 'r', ['dance'], 1, null, 0.3, () => soloOn() ? 'The dodge window is 0.2s longer' : 'The dodge window is 0.3s longer; a perfect dodge 0.2s longer', 1);
+  B('feet', 'Steady Feet', 'r', ['dance'], 1, null, 0.3, () => 'The dodge window is 0.2s longer', 1);
   B('breaker', 'Breaker', 'r', ['dance'], 1, null, 0.3, () => 'You fill the stagger bar 30% faster', 1);
   B('coup', 'Coup de Grace', 'e', ['dance'], 1, null, 0.5, () => 'Finishers deal 50% more; the one that fires by itself hits at 80%', 1);
   B('silence', 'Silence', 'r', [], 1, null, 0.3, () => 'An ability that stops a cast gives back 30% of its cooldown', 1);
@@ -214,7 +214,6 @@ let DEEP_ARENA = null;
   const hash = (...xs) => { let h = 0x811C9DC5; for (const x of xs) { h ^= (x | 0); h = Math.imul(h, 0x01000193); h ^= h >>> 13; } return h >>> 0; };
   const rank = id => { const r = R(); return r && r.boons[id] ? r.boons[id] : 0; };
   const cls = () => S.party && S.party.cls ? S.party.cls : null;
-  const hasCompanions = () => { const f = S.party && S.party.field; return Array.isArray(f) ? f.length > 0 : S.comp.some(n => n > 0); };
   const hearthLv = () => typeof campLevel === 'function' && S.camp ? campLevel('hearth') : null;
   deepStageC = () => typeof partyCombatOn === 'function' && !!partyCombatOn();
 
@@ -279,7 +278,7 @@ let DEEP_ARENA = null;
     const step = ruleOf(r) === 'steep' ? T.stepSteep : T.step;
     return (r.par || mobHp(r.anchor)) * Math.pow(T.growth, T.start + step * (f - 1)) * mul;
   }
-  const parHp = () => Math.max(mobHp(1), (heroDps() + compDps()) * T.parKill);
+  const parHp = () => Math.max(mobHp(1), heroDps() * T.parKill);
   function floorFoes(r, f) {
     const kind = floorKind(f, r), rr = rng(hash(r.seed, f, 0xF0E));
     const mk = (m, extra) => Object.assign({ ti: Math.floor(rr() * TYPES.length), mul: T.hpMul[m] * (0.9 + rr() * 0.2) }, extra);
@@ -296,7 +295,6 @@ let DEEP_ARENA = null;
     if ((r.boons[id] || 0) >= b.max) return false;
     if (r.banned.includes(id)) return false;
     if (b.cls === 'any' ? !cls() : b.cls && b.cls !== cls()) return false;
-    if (b.sets.includes('company') && !soloOn() && !hasCompanions()) return false;
     if (opts && opts.rar && !opts.rar.includes(b.r)) return false;
     if (ruleOf(r) === 'one' && !r.boons[id] && b.sets.some(s => setCount(s, r) >= 1)) return false;
     return true;
@@ -631,11 +629,9 @@ let DEEP_ARENA = null;
     const rule = ruleOf(r);
     if (rule === 'glass') m *= 2;
     if (rule === 'drum') m *= 0.5;
-    if (soloOn()) m *= vigour(r);   // W1-C: the Company boons and the Vigour set are the hero's damage in solo
+    m *= vigour(r);   // the Company boons (Battle Drill, Field Rations, Warband) and the Vigour set are the hero's damage
     return m;
   });
-  // The Company boons (Battle Drill, Field Rations, Warband) and the Vigour set: companions' damage in the party game,
-  // the hero's own in solo (W1-C).
   function vigour(r) {
     let m = (1 + DEEP_BOONS.drill.v * rank('drill')) * (r.boons.warband ? 1.6 : 1);
     const fk = r.phase === 'fight' ? floorKind(r.floor) : null;
@@ -643,13 +639,6 @@ let DEEP_ARENA = null;
     if (setOn('company')) m *= 1 + Math.min(0.6, 0.02 * r.cleared);
     return m;
   }
-  addModifier('party', () => {
-    if (!on_()) return 1;
-    const r = R();
-    let m = vigour(r);
-    if (ruleOf(r) === 'drum') m *= 2;       // dmg x0.5 on everyone; companions net x1
-    return m;
-  });
   addModifier('crit', () => {
     if (!on_()) return 1;
     return (1 + DEEP_BOONS.luck.v * rank('luck')) * (R().boons.mass ? 1.5 : 1) * (ruleOf(R()) === 'crit' ? 2 : 1);

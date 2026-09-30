@@ -9,17 +9,16 @@
 //   Your gear  the hero's 8 positions (tap = item sheet, or a picker when empty)
 //   Bag        every item, equipped ones badged with the wearer's portrait; sort and filter
 // The item sheet (bottom sheet from 75-party-sheet's openSheet) shows lines, compare, and
-// Equip, Give to, Take off, Upgrade, Reforge a line and Salvage (in-page confirms only).
+// Equip, Upgrade, Reforge a line and Salvage (in-page confirms only).
 //
-// Exposed: craftUI { openItem(id), pick(who, pos) }   who: 'hero' or a roster id; pos: a
-//   hero position or 'wpn' / 'trk'. 75-party-sheet opens pick() from a companion's gear slot.
+// Exposed: craftUI { openItem(id), pick(who, pos) }   who: 'hero'; pos: a hero position.
 //
 // K6 (55-crafting.js) actions are probed with typeof at call time, so this file works before
 // K6 merges: craftItem(kind, t, {role, mw}), canCraft(kind, t) -> {ok, why}, upgradeItem(id),
 // reforgeItem(id, idx), transmute(fam, fromT, fam, toT), salvageItem(id),
-// equipChar(charId, itemId, pos), unequipChar(charId, pos), S.craft.troph[7].
+// S.craft.troph[7].
 // Without K6: crafting falls back to forgeItem, upgrades to upgradeEquipped (hero gear only),
-// and Reforge, Transmute and companion gear show as not ready yet.
+// and Reforge and Transmute show as not ready yet.
 
 let craftUI = null;
 {
@@ -30,8 +29,6 @@ let craftUI = null;
     upgrade: () => (typeof upgradeItem === 'function' ? upgradeItem : null),
     reforge: () => (typeof reforgeItem === 'function' ? reforgeItem : null),
     transmute: () => (typeof transmute === 'function' ? transmute : null),
-    equipChar: () => (typeof equipChar === 'function' ? equipChar : null),
-    unequipChar: () => (typeof unequipChar === 'function' ? unequipChar : null),
     starChart: () => (typeof craftStarChart === 'function' ? craftStarChart : null)
   };
   const safe = (fn, dflt) => { try { const v = fn(); return v == null ? dflt : v; } catch (e) { console.error('[lanternfall] craft', e); return dflt; } };
@@ -54,34 +51,23 @@ let craftUI = null;
   const trophTotal = () => troph().reduce((a, b) => a + (b || 0), 0);
   const skillOfSt = st => CRAFT_STATIONS[st].skill;
   const lvOf = sk => (S.skills[sk] || { lv: 1 }).lv;
-  const roster = () => soloOn() ? [] : (typeof rosterLive === 'function' && rosterLive() && typeof rosterList === 'function' ? safe(() => rosterList(), []) : []);
-  const fielded = k => !!(S.party && Array.isArray(S.party.field) && S.party.field.includes(k));
-  const firstName = k => (k === 'hero' ? 'You' : ROSTER[k] ? ROSTER[k].name.replace(/^(Ser|Old|Brother|Saint) /, '').split(' ')[0] : k);
-  const portraitOf = k => {
-    if (k === 'hero') { const p = $('portrait'); if (p && p.src) return p.src; }
-    else if (typeof portraitURL === 'function') { const u = safe(() => portraitURL(k), ''); if (u) return u; }
-    return spriteURL('hero-portrait', SPR.hero, HERO_PAL);
-  };
+  const portraitOf = () => { const p = $('portrait'); return p && p.src ? p.src : spriteURL('hero-portrait', SPR.hero, HERO_PAL); };
   const frameOf = it => (it.u ? 'legendary' : it.r);
   const posName = pos => (CRAFT_POS[pos] ? CRAFT_POS[pos].n : pos);
   const itemIc = it => safe(() => itemIcon(it.slot, it.t, it.u), iconURL('charm', '#A9B1BD'));
   const kindLabel = k => { const d = CRAFT_KINDS[k]; return d ? d.noun : k; };
   const tierName = (k, t) => safe(() => kindName(k, t), kindLabel(k));
 
-  // Who wears what: id -> { who: 'hero' | rosterId, pos }.
+  // Who wears what: id -> { who: 'hero', pos }.
   function wearers() {
     const m = new Map();
     for (const p of CRAFT_HERO_POS) if (S.equip[p] != null) m.set(S.equip[p], { who: 'hero', pos: p });
-    const rec = S.party && S.party.rec;
-    if (rec) for (const [k, r] of Object.entries(rec)) for (const p of CRAFT_COMP_POS) if (r && r[p] != null) m.set(r[p], { who: k, pos: p });
     return m;
   }
   const wornBy = id => wearers().get(id) || null;
   const heroFits = k => { const d = CRAFT_KINDS[k]; return !!(d && d.pos && fits(k, d.pos, 'hero')); };
   // An item (not a kind): weapon and head uniques fit every class.
   const heroFitsIt = it => { const d = itemKind(it); return !!(d && d.pos && fits(it, d.pos, 'hero')); };
-  const partyFits = k => { const d = CRAFT_KINDS[k]; return d && d.comp ? roster().filter(c => fits(k, d.comp, c)) : []; };
-  const compItem = (k, pos) => { const r = typeof charRec === 'function' ? charRec(k) : null; return r && r[pos] != null ? itemById(r[pos]) : null; };
 
   // Stat line text, and whether it works before party combat.
   const lineTxt = l => l.map(([s, v]) => (CRAFT_STATS[s] ? craftFmtLine(s, v) : `${s} ${fmt(v)}`)).join(', ');
@@ -145,7 +131,7 @@ let craftUI = null;
     if (r.ok && mw != null && !(troph()[mw] > 0)) r = { ok: false, why: `No ${CRAFT_TROPHIES[mw].n} left` };
     return r;
   }
-  const roleFor = k => st8.role[k] || (roster().filter(fielded).map(c => ROSTER[c].role)[0]) || 'striker';
+  const roleFor = k => st8.role[k] || 'striker';
   function doCraft(k, t) {
     if (!canDo(k, t).ok) return;
     const d = CRAFT_KINDS[k], opts = {};
@@ -193,14 +179,13 @@ let craftUI = null;
   // ================= Recipes =================
   let rec = null;
   function kindsFor(st) {
-    return Object.keys(CRAFT_KINDS).filter(k => { const d = CRAFT_KINDS[k]; return d.st === st && !d.legacy && !(soloOn() && d.comp && !d.pos); });   // W1-C: no companion-only recipes in solo // Sword/Helm are no longer made
+    return Object.keys(CRAFT_KINDS).filter(k => { const d = CRAFT_KINDS[k]; return d.st === st && !d.legacy && !(d.comp && !d.pos); });   // no companion-only recipes; Sword/Helm are no longer made
   }
   const POS_ORDER = [...CRAFT_HERO_POS, ...CRAFT_COMP_POS];
   const kindOrder = k => { const d = CRAFT_KINDS[k]; return POS_ORDER.indexOf(d.pos || d.comp || 'charm'); };
   function listFor(st, filt) {
     const all = kindsFor(st).sort((a, b) => kindOrder(a) - kindOrder(b));
     if (filt === 'all') return all;
-    if (filt === 'party') return all.filter(k => partyFits(k).length);
     return all.filter(k => { const d = CRAFT_KINDS[k]; return heroFits(k) || (!d.pos && !d.comp); });
   }
   // Would a fresh Common of this tier beat what someone wears?
@@ -208,17 +193,11 @@ let craftUI = null;
     const d = CRAFT_KINDS[k], p = TIER_POW[t];
     const out = [];
     if (heroFits(k)) { const cur = itemById(S.equip[d.pos]); if (!cur || itemPower(cur) < p) out.push('hero'); }
-    if (d.comp) for (const c of partyFits(k)) if (fielded(c)) { const cur = compItem(c, d.comp); if (!cur || itemPower(cur) < p) out.push(c); }
     return out;
   }
   function subFor(k) {
     const d = CRAFT_KINDS[k], bits = [];
     if (d.pos) bits.push(posName(d.pos) + (heroFits(k) ? '' : d.cls ? ` · ${HERO_CLASSES[d.cls] ? HERO_CLASSES[d.cls].name : d.cls}` : ''));
-    if (d.comp && !soloOn()) {
-      const who = partyFits(k);
-      const roleTxt = d.role === 'any' ? 'any companion' : ROLE_NAME[d.role] + 's';
-      bits.push(`${d.pos ? 'also ' : ''}${d.comp === 'trk' ? 'Trinket' : 'weapon'} for ${who.length ? who.slice(0, 3).map(firstName).join(', ') + (who.length > 3 ? ` +${who.length - 3}` : '') : roleTxt}`);
-    }
     if (!d.pos && !d.comp) bits.push('Special');
     return bits.join(' · ');
   }
@@ -231,7 +210,7 @@ let craftUI = null;
     const nm = el('div', 'cf-rec-n', tierName(k, t));
     const sub = el('div', 'cf-rec-s', subFor(k));
     const up = beats(k, t);
-    if (up.length) sub.append(el('span', 'cf-up', up.includes('hero') ? 'Beats yours' : `Beats ${firstName(up[0])}'s`));
+    if (up.length) sub.append(el('span', 'cf-up', 'Beats yours'));
     body.append(nm, sub);
     const btn = el('button', 'cf-go', 'Craft'); btn.type = 'button'; btn.disabled = !can.ok;
     if (st8.focus === k) btn.id = 'forgeBtn';
@@ -262,7 +241,7 @@ let craftUI = null;
     id: 'craft-recipes', title: 'Recipes',
     mount(sec) {
       const filt = el('div', 'seg cf-seg cf-filt'); filt.setAttribute('aria-label', 'Show recipes');
-      for (const [f, n] of [['you', 'For you'], ['party', 'For your party'], ['all', 'All']].filter(x => !(soloOn() && x[0] === 'party'))) {
+      for (const [f, n] of [['you', 'For you'], ['all', 'All']]) {
         const b = el('button', null, n); b.type = 'button'; b.dataset.f = f;
         b.addEventListener('click', () => { st8.filt = f; ui(true); });
         filt.append(b);
@@ -323,7 +302,7 @@ let craftUI = null;
         rec.sig = sig; rec.rows = {};
         rec.list.textContent = '';
         if (!ks.length && st8.filt !== 'all') {
-          rec.list.append(el('p', 'note', st8.filt === 'party' ? `Nothing at the ${CRAFT_STATIONS[st].n} fits your companions yet.` : `Nothing at the ${CRAFT_STATIONS[st].n} fits your class. See All, or try another station.`));
+          rec.list.append(el('p', 'note', `Nothing at the ${CRAFT_STATIONS[st].n} fits your class. See All, or try another station.`));
           ks = [];
         }
         for (const k of ks) { const row = recipeRow(k, t); rec.rows[k] = { row, sig: rowSig(k, t) }; rec.list.append(row); }
@@ -390,7 +369,7 @@ let craftUI = null;
       putHidden(ench.sec, st8.st !== 'ench');
       if (ench.sec.hidden) return;
       const { fam, t } = st8.tm, have = S.mats[fam], f = K6.transmute(), lv = lvOf('ench');
-      const sig = [fam, t, have.join(), JSON.stringify((S.craft && S.craft.tmd) || {}), lv, !!f, typeof craftStarChart, S.party && S.party.unlock && S.party.unlock.starChart].join('|');
+      const sig = [fam, t, have.join(), JSON.stringify((S.craft && S.craft.tmd) || {}), lv, !!f, typeof craftStarChart, S.craft && S.craft.starChart].join('|');
       if (!force && (sig === ench.sig || busy())) return;
       ench.sig = sig;
       ench.fams.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.f === fam)));
@@ -412,8 +391,8 @@ let craftUI = null;
       ench.dnB.disabled = !f || t <= 1 || have[t - 1] < D.take || !(dn && dn.ok);
       ench.why.textContent = !f ? 'Transmute opens with the next crafting update.' : upShut ? `Trading up to ${nm(t + 1)} needs Enchanting Lv ${upReq}.` : dn && !dn.ok ? dn.why : '';
       // Star Chart (Oriel's recruit route): a recipe when K6 defines it as a kind or an action.
-      const sc = K6.starChart(), made = !!(S.party && S.party.unlock && S.party.unlock.starChart);
-      ench.star.hidden = soloOn() || !(sc && !CRAFT_KINDS.starchart);   // W2-B: solo has no Oriel to draw, so no Star Chart recipe
+      const sc = K6.starChart(), made = !!(S.craft && S.craft.starChart);
+      ench.star.hidden = true;   // no Oriel to draw yet (she is a hero to unlock later), so no Star Chart recipe
       if (!ench.star.hidden) {
         ench.star.textContent = '';
         ench.star.append(el('h3', null, 'Star Chart'), el('p', 'note', made ? 'You made the Star Chart. Oriel Vess has seen it.' : "Chart the sky to draw Oriel Vess, the Starcaller, to your camp."));
@@ -512,7 +491,7 @@ let craftUI = null;
         if (it.plus) b.append(el('span', 'cf-plus', '+' + it.plus));
         const wr = w.get(it.id);
         if (wr) { const bd = img(portraitOf(wr.who), 'cf-badge' + (wr.who === 'hero' ? ' hero' : '')); b.append(bd); }
-        b.setAttribute('aria-label', `${itemName(it)}, ${RAR[it.r].n}${wr ? ', worn by ' + (wr.who === 'hero' ? 'you' : firstName(wr.who)) : ''}`);
+        b.setAttribute('aria-label', `${itemName(it)}, ${RAR[it.r].n}${wr ? ', worn by you' : ''}`);
         b.addEventListener('click', () => { st8.fresh.delete(it.id); openItem(it.id); });
         bag.grid.append(b);
       }
@@ -565,9 +544,8 @@ let craftUI = null;
     who.append(el('div', 'cf-im', meta));
     const fit = [];
     if (d && d.pos) fit.push(heroFitsIt(it) ? `${posName(d.pos)} for you` : `${posName(d.pos)} for ${d.cls && HERO_CLASSES[d.cls] ? 'a ' + HERO_CLASSES[d.cls].name : 'a hero with no class'}`);
-    if (d && d.comp && !soloOn()) fit.push(d.comp === 'trk' ? 'Trinket for any companion' : `${d.pos ? 'Also for' : 'Weapon for'} ${ROLE_NAME[d.role].toLowerCase()} companions`);
     who.append(el('div', 'cf-im', fit.join(' · ') + ` · Power ${fmt(itemPower(it))}`));
-    if (wr) { const wb = el('div', 'cf-worn'); wb.append(img(portraitOf(wr.who)), el('span', null, wr.who === 'hero' ? `You wear it (${posName(wr.pos)})` : `${firstName(wr.who)} wears it`)); who.append(wb); }
+    if (wr) { const wb = el('div', 'cf-worn'); wb.append(img(portraitOf()), el('span', null, `You wear it (${posName(wr.pos)})`)); who.append(wb); }
     head.append(tile, who); body.append(head);
 
     // ---- lines ----
@@ -621,20 +599,7 @@ let craftUI = null;
       b.addEventListener('click', () => equipHero(it.id, d.pos));
       wear.push(b);
     }
-    const giveToggle = !soloOn() && d && d.comp && heroFitsIt(it);
-    if (giveToggle) {
-      const b = el('button', 'big cf-act cf-give', sheet.mode === 'give' ? 'Hide companions' : 'Give to...'); b.type = 'button';
-      b.addEventListener('click', () => { sheet.mode = sheet.mode === 'give' ? null : 'give'; renderItem(); });
-      wear.push(b);
-    }
     if (wear.length) { const r = el('div', 'cf-wear'); r.append(...wear); foot.append(r); }
-    if (wr && wr.who !== 'hero') {
-      const b = el('button', 'mini', `Take it off ${firstName(wr.who)}`); b.type = 'button';
-      const f = K6.unequipChar(); b.disabled = !f;
-      b.addEventListener('click', () => act(() => f(wr.who, wr.pos)) && renderItem());
-      body.append(b);
-    }
-    if (d && d.comp && !soloOn() && (sheet.mode === 'give' || !giveToggle)) body.append(giveList(it));   // W1-F: no companions to give to in solo
 
     // ---- upgrade ----
     const upBox = el('div', 'cf-up-box');
@@ -661,7 +626,7 @@ let craftUI = null;
 
     // ---- salvage ----
     const sv = el('div', 'cf-sv');
-    if (wr) sv.append(el('p', 'note', wr.who === 'hero' ? 'You wear this. Equip something else before you salvage it.' : `${firstName(wr.who)} wears this. Take it off first.`));
+    if (wr) sv.append(el('p', 'note', 'You wear this. Equip something else before you salvage it.'));
     else if (sheet.arm === 'salvage') {
       const chips = el('div', 'costs'); costChips(chips, salvagePreview(it), it.t);
       chips.querySelectorAll('.cost').forEach(c => { c.classList.remove('short'); const s = c.querySelector('span'); s.textContent = s.textContent.replace(/^[^/]*\//, '+'); });
@@ -712,69 +677,40 @@ let craftUI = null;
     else if (!skillTierOpen('ench', it.t)) box.append(el('p', 'note warn', `Needs Enchanting Lv ${req} for a tier ${it.t} item.`));
     return box;
   }
-  function giveList(it) {
-    const d = itemKind(it), pos = d.comp, box = el('div', 'cf-give-l');
-    const f = K6.equipChar();
-    const who = roster().filter(c => fits(it, pos, c)).sort((a, b) => (fielded(b) - fielded(a)) || a.localeCompare(b));
-    if (!who.length) box.append(el('p', 'note', `None of your companions can use this. It fits ${d.role === 'any' ? 'any companion' : ROLE_NAME[d.role] + 's'}.`));
-    const wr = wornBy(it.id);
-    for (const c of who) {
-      const cur = compItem(c, pos), row = el('div', 'cf-gr');
-      const pt = el('div', 'cf-gp'); pt.append(img(portraitOf(c)));
-      const tx = el('div', 'cf-gt');
-      tx.append(el('b', null, firstName(c) + (fielded(c) ? '' : ' (bench)')));
-      const dp = itemPower(it) - (cur ? itemPower(cur) : 0);
-      const sm = el('small', null, cur ? `wears ${itemName(cur)} ` : `${posName(pos)} empty `);
-      if (!(cur && cur.id === it.id)) sm.append(el('span', 'cf-d ' + (dp > 0 ? 'up' : 'dn'), `${dp >= 0 ? '+' : '-'}${fmt(Math.abs(dp))} power`));
-      tx.append(sm);
-      const on = wr && wr.who === c;
-      const b = el('button', 'mini ' + (on ? '' : 'go'), on ? 'Wearing' : 'Give'); b.type = 'button';
-      b.disabled = on || !f;
-      b.addEventListener('click', () => { if (act(() => f(c, it.id, pos))) { sheet.mode = null; } renderItem(); });
-      row.append(pt, tx, b); box.append(row);
-    }
-    if (!f) box.append(el('p', 'note', 'Companion gear opens with the next crafting update.'));
-    return secBox('Give to', box);
-  }
   function equipHero(id, pos) {
-    const wr = wornBy(id), un = K6.unequipChar();
-    if (wr && wr.who !== 'hero') { if (!un) return; safe(() => un(wr.who, wr.pos)); }
     act(() => equipItem(id, pos));
     renderItem();
   }
 
   // ================= picker: choose gear for one position =================
-  function pick(who, pos, back) {
-    const isHero = who === 'hero';
-    const label = `${isHero ? 'Your' : firstName(who) + "'s"} ${posName(pos).toLowerCase()}`;
-    // From a companion's gear slot: closing goes back to their character sheet.
-    const backFn = back || (!isHero ? () => { if (typeof partySheet === 'object' && partySheet) partySheet.open(who); } : null);
+  function pick(pos, back) {
+    const label = `Your ${posName(pos).toLowerCase()}`;
+    const backFn = back || null;
     const api = open(label, backFn, true);
-    sheet = { api, id: null, back: backFn, picker: { who, pos } };
+    sheet = { api, id: null, back: backFn, picker: { pos } };
     let pAsk = null;   // the item whose "Take off X?" question shows
     const render = () => {
       if (!sheet || sheet.api !== api || api.closed) return;
       const body = api.body; body.textContent = '';
-      const now = isHero ? itemById(S.equip[pos]) : compItem(who, pos);
+      const now = itemById(S.equip[pos]);
       body.append(el('h3', 'cf-ph', label));
       const w = wearers();
-      const list = S.items.filter(i => fits(i, pos, isHero ? 'hero' : who) && !(now && now.id === i.id)).sort(SORTS.power);
+      const list = S.items.filter(i => fits(i, pos, 'hero') && !(now && now.id === i.id)).sort(SORTS.power);
       if (now) {
         const r = el('div', 'cf-pr cur');
         const t = icTile(itemIc(now), frameOf(now)); r.append(t);
         const tx = el('div', 'cf-gt'); tx.append(el('b', 'rar-' + now.r, itemName(now)), el('small', null, 'Worn now. Tap for details.'));
         r.append(tx);
         tx.addEventListener('click', () => openItem(now.id, backFn)); t.addEventListener('click', () => openItem(now.id, backFn));
-        if (!isHero) { const f = K6.unequipChar(); const b = el('button', 'mini', 'Take off'); b.type = 'button'; b.disabled = !f; b.addEventListener('click', () => { act(() => f(who, pos)); render(); }); r.append(b); }
         body.append(r);
       }
       if (!list.length) {
-        const kinds = Object.keys(CRAFT_KINDS).filter(k => !CRAFT_KINDS[k].legacy && fits(k, pos, isHero ? 'hero' : who));
+        const kinds = Object.keys(CRAFT_KINDS).filter(k => !CRAFT_KINDS[k].legacy && fits(k, pos, 'hero'));
         const k = kinds[0];
         body.append(el('p', 'note', k ? `Nothing in your bag fits. Craft a ${CRAFT_KINDS[k].noun} at the ${CRAFT_STATIONS[CRAFT_KINDS[k].st].n}.` : 'Nothing in your bag fits here.'));
         if (k) {
           const b = el('button', 'big forge', `Go to the ${STATION_SHORT[CRAFT_KINDS[k].st]}`); b.type = 'button';
-          b.addEventListener('click', () => { st8.st = CRAFT_KINDS[k].st; st8.filt = isHero ? 'you' : 'party'; st8.focus = k; sheet.back = null; switching = true; api.close(true); switching = false; setTab('make'); const t = $('forgeBtn'); if (t) t.scrollIntoView({ block: 'center', behavior: reduced ? 'auto' : 'smooth' }); });
+          b.addEventListener('click', () => { st8.st = CRAFT_KINDS[k].st; st8.filt = 'you'; st8.focus = k; sheet.back = null; switching = true; api.close(true); switching = false; setTab('make'); const t = $('forgeBtn'); if (t) t.scrollIntoView({ block: 'center', behavior: reduced ? 'auto' : 'smooth' }); });
           body.append(b);
         }
         return;
@@ -786,27 +722,21 @@ let craftUI = null;
         const dp = itemPower(it) - (now ? itemPower(now) : 0);
         const wr = w.get(it.id);
         tx.append(el('b', 'rar-' + it.r, itemName(it)));
-        const sm = el('small', null, (wr ? `${wr.who === 'hero' ? 'You wear it' : firstName(wr.who) + ' wears it'} · ` : ''));
+        const sm = el('small', null, (wr ? 'You wear it · ' : ''));
         sm.append(el('span', 'cf-d ' + (dp > 0 ? 'up' : 'dn'), `${dp >= 0 ? '+' : '-'}${fmt(Math.abs(dp))} power`));
         tx.append(sm);
         t.addEventListener('click', () => openItem(it.id, backFn)); tx.addEventListener('click', () => openItem(it.id, backFn));
-        const f = isHero ? null : K6.equipChar();
-        const b = el('button', 'mini go', isHero ? 'Equip' : 'Give'); b.type = 'button';
-        b.disabled = !isHero && !f;
+        const b = el('button', 'mini go', 'Equip'); b.type = 'button';
         b.addEventListener('click', () => {
-          if (isHero) {
-            const q = heroAsk(it.id, pos, pAsk === it.id);
-            if (q) { pAsk = it.id; render(); return; }
-            pAsk = null;
-            const wr2 = wornBy(it.id), un = K6.unequipChar(); if (wr2 && wr2.who !== 'hero') { if (!un) return; safe(() => un(wr2.who, wr2.pos)); } act(() => equipItem(it.id, pos));
-          }
-          else act(() => f(who, it.id, pos));
+          const q = heroAsk(it.id, pos, pAsk === it.id);
+          if (q) { pAsk = it.id; render(); return; }
+          pAsk = null;
+          act(() => equipItem(it.id, pos));
           render();
         });
         r.append(t, tx, b); body.append(r);
-        if (isHero && pAsk === it.id) { const q = heroAsk(it.id, pos); if (q) { b.textContent = 'Take it off'; b.classList.remove('go'); b.classList.add('cf-armb'); r.append(el('p', 'note warn cf-askp', q.why)); } }
+        if (pAsk === it.id) { const q = heroAsk(it.id, pos); if (q) { b.textContent = 'Take it off'; b.classList.remove('go'); b.classList.add('cf-armb'); r.append(el('p', 'note warn cf-askp', q.why)); } }
       }
-      if (!isHero && !K6.equipChar()) body.append(el('p', 'note', 'Companion gear opens with the next crafting update.'));
     };
     sheet.render = render;
     render();
@@ -823,5 +753,5 @@ let craftUI = null;
     if (sheet.picker) { if (sheet.render) safe(() => sheet.render()); } else safe(() => renderItem());
   });
 
-  craftUI = { openItem: id => openItem(id), pick: (who, pos) => pick(who, pos) };
+  craftUI = { openItem: id => openItem(id), pick: (who, pos) => pick(pos) };
 }

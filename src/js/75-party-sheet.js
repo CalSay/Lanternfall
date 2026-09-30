@@ -1,29 +1,16 @@
-// 75-party-sheet: the character sheet (a bottom sheet) and the helpers the Party tab shares
-// with it. Browser-only. Loads before 75-party.js ('-' sorts before '.').
-// Spec: docs/design/party-and-classes.md 7.3 (sheet), 3.4 (milestones, promotions), 3.5 (synergies).
+// 75-party-sheet: the generic bottom sheet (openSheet) and the hero sheet, and the helpers the Hero tab shares with it.
+// Browser-only. Loads before 75-party.js ('-' sorts before '.').
+// The companion sheets (levels, promotions, stories, Bonds, the recruit card) went with the party (W3-A).
 //
 // Exposed names:
-//   PTY          helpers shared with 75-party.js (portraits, rarity, gear, traits, synergies, leads, costs)
+//   PTY          helpers shared with 75-party.js (portrait, gear tiles, hero class, the Codex title)
 //   openSheet(build, opts) -> { close, body }   a generic bottom sheet (90% height; X, swipe down, Escape)
-//   partySheet   { open(id), openHero(), refresh(), close(), isOpen() }
-//
-// Reads 56b-synergy.js (activeSynergies, synergyStatus, charTraits, SYNERGIES) and 56c-unlocks.js
-// (leads) only when they exist, so the sheet works without them.
+//   partySheet   { openHero(), refresh(), close(), isOpen() }
 
 const PTY = {};
 let openSheet, partySheet;
 {
-  // The synergy and unlock files may not exist yet: probe their names with typeof.
-  const fnActive = () => (typeof activeSynergies === 'function' ? activeSynergies : null);
-  const fnStatus = () => (typeof synergyStatus === 'function' ? synergyStatus : null);
-  const fnTraits = () => (typeof charTraits === 'function' ? charTraits : null);
-  const fnLeads = () => (typeof leads === 'function' ? leads : null);
-
   const ROLE_NAME = { tank: 'Tank', striker: 'Striker', caster: 'Caster', support: 'Support' };
-  const CIRCLE_NAME = { hedgefolk: 'Hedgefolk', oath: 'the Oath', dusk: 'Dusk Company', wayfarers: 'Wayfarers' };
-  const COL_NAME = ['Back', 'Mid', 'Front'];
-  const WEAPON_NOUN = { tank: 'Shield', striker: 'Weapon', caster: 'Staff', support: 'Tome' };
-  const WEAPON_BY_CHAR = { wren: 'Bow', kestrel: 'Spear', isolde: 'Blades', corvin: 'Blades', bram: 'Axe' };
   const HERO_GEAR_NOUN = {
     warden: { weapon: 'Warblade', off: 'Shield', head: 'Greathelm', body: 'Plate' },
     lanternmage: { weapon: 'Staff', off: 'Lantern', head: 'Hood', body: 'Robe' },
@@ -34,35 +21,15 @@ let openSheet, partySheet;
     { id: 'weapon', old: 'weapon', n: 'Weapon' }, { id: 'off', n: 'Off-hand' },
     { id: 'head', old: 'helm', n: 'Head' }, { id: 'body', n: 'Body' }, { id: 'charm', old: 'charm', n: 'Charm' }
   ];
-  const MILESTONES = [
-    { lv: 5, n: 'Story' }, { lv: 10, n: 'Passive' }, { lv: 15, n: 'Story' }, { lv: 20, n: 'Ability' }, { lv: 25, n: 'Old Friend' }
-  ];
 
   const safe = (fn, dflt) => { try { const v = fn(); return v == null ? dflt : v; } catch (e) { console.error('[lanternfall] party', e); return dflt; } };
-  const live = () => typeof rosterLive === 'function' && rosterLive();
-  const C = k => (typeof ROSTER === 'object' && ROSTER[k]) || null;
   const heroClass = () => (S.party && S.party.cls && typeof HERO_CLASSES === 'object' && HERO_CLASSES[S.party.cls]) || null;
-  const heroCol = () => { const c = heroClass(); return c ? ({ front: 2, mid: 1, back: 0 })[c.row] : 2; };
 
   function portrait(k) {
     if (typeof portraitURL === 'function') { const u = safe(() => portraitURL(k), ''); if (u) return u; }
     return spriteURL('hero-portrait', SPR.hero, HERO_PAL);
   }
-  const rarity = k => (C(k) && C(k).rarity) || 'common';
-  const frameCol = k => (RARITY_FRAME[rarity(k)] || RARITY_FRAME.common).col;
-  const rarityName = k => (RARITY_FRAME[rarity(k)] || RARITY_FRAME.common).name;
-  const first = k => k === 'hero' ? S.name : C(k).name.replace(/^(Ser|Old|Brother|Saint) /, '').split(' ')[0];
   const pip = role => el('span', 'pip r-' + role, ROLE_NAME[role] || role);
-  const essName = t => `${MAT.ess.short[t - 1]} Essence`;
-  const costText = c => {
-    if (!c) return '';
-    const p = [];
-    if (c.gold) p.push(fmt(c.gold) + ' gold');
-    if (c.ess) p.push(`${fmt(c.ess[1])} ${essName(c.ess[0])} or better`);
-    return p.length ? p.join(' + ') : 'free';
-  };
-  const weaponNoun = k => WEAPON_BY_CHAR[k] || WEAPON_NOUN[C(k).role] || 'Weapon';
-  const gearOf = (k, which) => { const r = charRec(k); const id = r && r[which]; return id != null ? itemById(id) : null; };
   function itemIc(it) {
     try { return itemIcon(it.slot, it.t, it.u); } catch (e) { return iconURL('charm', '#A9B1BD'); }
   }
@@ -72,71 +39,6 @@ let openSheet, partySheet;
     if (size) t.classList.add('s' + size);
     return t;
   }
-  const traits = k => { const f = fnTraits(); return f ? safe(() => f(k), null) : null; };
-  // Synergies that include this character: the active ones, plus near misses when the table is exposed.
-  function synergiesFor(k) {
-    const act = fnActive(); if (!act) return null;
-    const out = [], seen = {};
-    for (const s of safe(() => act(), [])) {
-      if (!s || seen[s.id]) continue;
-      if (k && !(s.members || []).includes(k)) continue;
-      seen[s.id] = 1; out.push({ id: s.id, name: s.name, active: true, text: s.effectText || '', stageC: !!s.stageC, members: s.members || [] });
-    }
-    const st = fnStatus();
-    if (st && typeof SYNERGIES === 'object' && SYNERGIES) {
-      const defs = Array.isArray(SYNERGIES) ? SYNERGIES : Object.keys(SYNERGIES).map(id => Object.assign({ id }, SYNERGIES[id]));
-      for (const def of defs) {
-        const id = def.id;
-        if (!id || seen[id]) continue;
-        const s = safe(() => st(id), null); if (!s || s.active) continue;
-        const need = s.missing || [];
-        const names = s.members || def.members || [];
-        if (k && Array.isArray(names) && names.length && !names.includes(k)) continue;
-        if (!k && need.length !== 1) continue;           // tab row: only one member short
-        if (k && Array.isArray(names) && !names.length) continue;
-        seen[id] = 1;
-        out.push({ id, name: def.name || id, active: false, text: s.text || def.effectText || def.text || '', missing: need });
-      }
-    }
-    return out;
-  }
-  const missingText = m => {
-    if (!m || !m.length) return '';
-    const n = m.map(x => (C(x) ? first(x) : String(x)));
-    return 'needs ' + n.join(', ');
-  };
-  // Leads: 56c-unlocks' list, plus built-in cards for routes this file can read (progress routes).
-  function leadList() {
-    const out = [], ids = {};
-    const f = fnLeads();
-    if (f) for (const l of safe(() => f(), [])) { if (!l) continue; ids[l.id] = 1; out.push(l); }
-    if (!live()) return out;
-    let far = 0;
-    const order = ROSTER_KEYS.slice().sort((a, b) => (C(a).route.zone || 999) - (C(b).route.zone || 999));
-    for (const k of order) {
-      if (ids[k] || isRecruited(k)) continue;
-      const cost = recruitCost(k), rt = C(k).route;
-      if (cost) {
-        const pct = cost.gold ? Math.min(1, S.gold / cost.gold) : 1;
-        out.push({ id: k, name: C(k).name, how: `Ready to join for ${costText(cost)}.`, pct, action: { label: 'Recruit', fn: () => recruit(k) }, builtIn: true, ready: canRecruit(k) });
-      } else if (rt.type === 'progress' && rt.zone > S.maxZone && far++ < 2) {
-        out.push({ id: k, name: C(k).name, how: recruitHow(k), pct: Math.min(1, S.maxZone / rt.zone), action: null, builtIn: true, sub: `Zone ${S.maxZone} of ${rt.zone}` });
-      }
-    }
-    return out;
-  }
-  const leadFor = k => leadList().find(l => l.id === k) || null;
-  const pctOf = l => { if (!l || l.pct == null || !isFinite(l.pct)) return null; const p = +l.pct; return Math.max(0, Math.min(1, p > 1 ? p / 100 : p)); };
-  const xpInfo = k => {
-    const r = charRec(k); if (!r) return null;
-    const cap = levelCap(r.rank), need = cxpNeed(r.lv), atCap = r.lv >= cap;
-    return { r, cap, atCap, pct: atCap ? 1 : Math.max(0, Math.min(1, r.xp / need)), catchUp: safe(() => catchUpBonus(k), 0), maxRank: r.rank >= ROSTER_TUNE.maxRank };
-  };
-  const inField = k => !!(S.party && Array.isArray(S.party.field) && S.party.field.includes(k));
-  // Something waiting for the player: an unread story or a promotion they can pay for now.
-  const needsYou = k => isRecruited(k) && (safe(() => storyState(k).unread, 0) > 0 || safe(() => canPromote(k), false));
-
-  const outOf = () => null;   // expeditions are gone; W3-A drops the 'Out' lines with the party sheet
   // The player's Codex title (57c codexTitle), cached by the chosen title's id.
   let ctKey, ctVal = '';
   const heroTitle = () => {
@@ -145,12 +47,8 @@ let openSheet, partySheet;
     return ctVal;
   };
 
-  Object.assign(PTY, {
-    outOf, heroTitle,
-    ROLE_NAME, CIRCLE_NAME, COL_NAME, HERO_GEAR_NOUN, HERO_SLOTS, safe, live, C, heroClass, heroCol, portrait, rarity, frameCol,
-    rarityName, first, pip, essName, costText, weaponNoun, gearOf, itemIc, itemFrame, slotTile, traits, synergiesFor, missingText,
-    leadList, leadFor, pctOf, xpInfo, inField, needsYou, fnActive
-  });
+  Object.assign(PTY, { heroTitle, HERO_GEAR_NOUN, HERO_SLOTS, safe, heroClass, portrait, pip, slotTile });
+
 
   // ================= generic bottom sheet =================
   let cur = null;
@@ -219,267 +117,27 @@ let openSheet, partySheet;
     return api;
   };
 
-  // ================= character sheet =================
-  let who = null, sheet = null, sig = '', openStory = -1, swapOpen = false, mirrorArm = false, refs = {};
+  // ================= hero sheet =================
+  let sheet = null, sig = '', mirrorArm = false, refs = {};
 
   const section = (title, ...kids) => { const s = el('div', 'cs-sec'); if (title) s.append(el('h3', 'cs-h', title)); s.append(...kids); return s; };
-  function statBox(label, value, sub) {
-    const d = el('div', 'cs-stat'); d.append(el('small', null, label), el('b', null, value));
-    if (sub) d.append(el('em', null, sub));
-    return d;
-  }
-  function head(k, locked) {
+  function head() {
     const top = el('div', 'cs-top');
-    const fr = el('div', 'cs-pt' + (locked ? ' locked' : '') + (k !== 'hero' && rarity(k) === 'legendary' ? ' leg' : ''));
-    if (k !== 'hero') fr.style.setProperty('--rc', frameCol(k));
-    fr.append(img(portrait(k)));
+    const fr = el('div', 'cs-pt');
+    fr.append(img(portrait('hero')));
     const t = el('div', 'cs-who');
-    const h = el('h2', 'cs-name', k === 'hero' ? S.name : C(k).name); h.id = 'csName';
+    const h = el('h2', 'cs-name', S.name); h.id = 'csName';
     t.append(h);
-    if (k === 'hero') {
-      const c = heroClass(), ct = heroTitle();
-      if (ct) t.append(el('small', 'cs-ctitle', ct));
-      t.append(el('small', 'cs-title', c ? `the ${c.name}` : 'the Wanderer'));
-      const tags = el('div', 'cs-tags');
-      if (c) tags.append(pip(c.role));
-      t.append(tags);
-    } else {
-      const c = C(k);
-      t.append(el('small', 'cs-title', c.title));
-      const tags = el('div', 'cs-tags');
-      const rt = el('span', 'cs-tag rar', rarityName(k)); rt.style.color = frameCol(k);
-      tags.append(rt, pip(c.role), el('span', 'cs-tag', CIRCLE_NAME[c.circle] || c.circle));
-      t.append(tags);
-    }
+    const c = heroClass(), ct = heroTitle();
+    if (ct) t.append(el('small', 'cs-ctitle', ct));
+    t.append(el('small', 'cs-title', c ? `the ${c.name}` : 'the Wanderer'));
+    const tags = el('div', 'cs-tags');
+    if (c) tags.append(pip(c.role));
+    t.append(tags);
     top.append(fr, t);
     return top;
   }
-  function xpBlock(k) {
-    const x = xpInfo(k);
-    const box = el('div', 'cs-xp');
-    const line = el('div', 'cs-xpline');
-    const lv = el('b', null, `Lv ${x.r.lv}`); lv.append(el('small', null, ` / ${x.cap}`));
-    const rk = el('span', 'cs-rank', 'Rank: ' + ROSTER_RANKS[x.r.rank]);
-    line.append(lv, rk);
-    const bar = el('div', 'xbar' + (x.atCap ? ' cap' : '')); const fill = el('i'); bar.append(fill);
-    const note = el('small', 'cs-xpnote');
-    box.append(line, bar, note);
-    refs.xp = { fill, bar, note, k };
-    updateXp();
-    return box;
-  }
-  function updateXp() {
-    const r = refs.xp; if (!r) return;
-    const x = xpInfo(r.k); if (!x) return;
-    putStyle(r.fill, 'width', (x.pct * 100).toFixed(1) + '%');
-    putToggle(r.bar, 'cap', x.atCap);
-    const bits = [];
-    if (x.atCap) bits.push(x.maxRank ? 'Highest rank reached.' : 'At the level cap. Promote to keep growing.');
-    else bits.push(`${Math.floor(x.pct * 100)}% to Lv ${x.r.lv + 1}`);
-    if (!inField(r.k)) bits.push('Earns XP only while fighting.');
-    else if (x.catchUp > 0) bits.push(`+${Math.round(x.catchUp * 100)}% XP to catch up.`);
-    putText(r.note, bits.join(' '));
-  }
 
-  function kitSection(k) {
-    const list = traits(k);
-    if (!list || !list.length) return null;
-    const ul = el('ul', 'cs-kit');
-    for (const t of list) {
-      const li = el('li', t.active === false ? 'off' : '');
-      const nm = el('b', null, t.name);
-      const kind = el('small', 'cs-kind', String(t.kind || '').replace(/^\w/, m => m.toUpperCase()));
-      const top = el('div'); top.append(nm, kind);
-      if (t.stageC) top.append(el('small', 'cs-soon', 'with party combat'));
-      li.append(top, el('p', null, t.text || ''));
-      ul.append(li);
-    }
-    return section('Kit', ul);
-  }
-  function synSection(k) {
-    const all = synergiesFor(k);
-    if (!all) return null;
-    // F4: Bonds have their own section (75-bonds-ui); an inactive entry shows its effect, not its need twice.
-    const defOf = id => (Array.isArray(SYNERGIES) && SYNERGIES.find(d => d.id === id)) || {};
-    const list = all.filter(s => defOf(s.id).layer !== 'bond');
-    const box = el('div', 'cs-syns');
-    if (!list.length) box.append(el('p', 'note', 'No combos or Kin with this party yet.'));
-    for (const s of list) {
-      const d = el('div', 'cs-syn' + (s.active ? ' on' : ''));
-      const top = el('div'); top.append(el('b', null, s.name), el('small', null, s.active ? 'Active' : missingText(s.missing) || 'Inactive'));
-      d.append(top);
-      const tx = s.active ? s.text : defOf(s.id).text || '';
-      if (tx) d.append(el('p', null, tx));
-      box.append(d);
-    }
-    return section('Combos and Kin', box);
-  }
-  function milestoneTrack(k) {
-    const r = charRec(k);
-    const ol = el('ol', 'cs-miles');
-    const nextLv = MILESTONES.find(m => r.lv < m.lv);
-    for (const m of MILESTONES) {
-      const done = r.lv >= m.lv, next = nextLv === m;
-      const li = el('li', done ? 'done' : next ? 'next' : '');
-      li.append(el('b', null, 'L' + m.lv), el('small', null, m.n));
-      li.setAttribute('aria-label', `Level ${m.lv}, ${m.n}: ${done ? 'unlocked' : next ? 'next' : 'locked'}`);
-      ol.append(li);
-    }
-    const kids = [ol];
-    if (r.lv >= 25) {
-      const nx = (Math.floor(r.lv / 25) + 1) * 25;
-      kids.push(el('p', 'note', `Every 25 levels the signature ability grows 25% stronger. Next at Lv ${nx}.`));
-    }
-    return section('Milestones', ...kids);
-  }
-  function storiesSection(k) {
-    const list = (typeof STORIES === 'object' && STORIES[k]) || [];
-    if (!list.length) return null;
-    const st = storyState(k), lvs = ROSTER_TUNE.storyLv;
-    const box = el('div', 'cs-stories');
-    list.forEach((s, i) => {
-      if (i >= st.unlocked) {
-        const d = el('div', 'cs-story locked');
-        d.append(el('b', null, s.title), el('small', null, `Unlocks at Lv ${lvs[i]}`));
-        box.append(d); return;
-      }
-      const det = el('details', 'cs-story');
-      if (openStory === i) det.open = true;
-      const sum = el('summary');
-      sum.append(el('b', null, s.title));
-      if (i >= st.seen) sum.append(el('span', 'udot', 'New'));
-      det.append(sum, el('p', null, s.text));
-      det.addEventListener('toggle', () => {
-        if (det.open) {
-          openStory = i;
-          if (storyState(k).unread > 0) { markStoriesRead(k); save(); emit('storiesRead', { id: k }); box.querySelectorAll('.udot').forEach(n => n.remove()); }
-        } else if (openStory === i) openStory = -1;
-      });
-      box.append(det);
-    });
-    return section('Camp stories', box);
-  }
-  function gearSection(k) {
-    const g = el('div', 'cs-gear');
-    for (const [which, noun, ic] of [['wpn', weaponNoun(k), 'sword'], ['trk', 'Trinket', 'charm']]) {
-      const it = gearOf(k, which);
-      const s = el('div', 'cs-slot' + (it ? '' : ' empty'));
-      s.append(slotTile(it, ic, 56));
-      const tx = el('div');
-      tx.append(el('b', null, it ? itemName(it) : noun), el('small', null, it ? noun : 'Empty. Party gear is coming soon.'));
-      s.append(tx); g.append(s);
-      if (typeof craftUI === 'object' && craftUI) { s.classList.add('tap'); s.setAttribute('role', 'button'); s.tabIndex = 0; s.addEventListener('click', () => craftUI.pick(k, which)); if (!it) tx.lastChild.textContent = 'Empty. Tap to choose.'; } // K7 item picker
-    }
-    return section('Gear', g);
-  }
-  function statsSection(k) {
-    const c = C(k), cell = S.party.cells && S.party.cells[k];
-    const g = el('div', 'cs-stats');
-    const dps = safe(() => charDps(k), 0);
-    const b = statBox(c.role === 'support' ? 'Adds DMG/s' : 'DMG/s', fmt(dps), c.role === 'support' ? 'as a party buff' : inField(k) ? '' : 'when fielded');
-    refs.dps = b.querySelector('b');
-    g.append(b,
-      statBox('HP', '-', 'with party combat'),
-      statBox('Armour', '-', 'with party combat'),
-      statBox('Slot', inField(k) && cell ? SLOT_NAME[FORM_SLOTS[cell.col]] : 'Bench', inField(k) && cell ? (offSlot(k) ? 'out of place' : 'home') : `home: ${SLOT_NAME[homeSlot(k)]}`));
-    return section('Stats', g);
-  }
-
-  function actions(k) {
-    const foot = sheet.foot; foot.textContent = '';
-    const x = xpInfo(k); const row = el('div', 'cs-acts');
-    if (!x.maxRank) {
-      const pc = promoteCost(k);
-      const b = el('button', 'buy cs-promote'); b.type = 'button';
-      b.append(el('span', 'qty', x.atCap ? 'Promote' : `Promote at Lv ${x.cap}`), el('span', 'price'));
-      const pr = b.querySelector('.price');
-      pr.append(el('span', 'ico gold'), el('span', null, fmt(pc.gold)));
-      b.disabled = !canPromote(k);
-      b.addEventListener('click', () => { if (promoteChar(k)) { save(); ui(true); partySheet.refresh(true); } });
-      row.append(b);
-      if (x.atCap) foot.append(el('small', 'cs-cost', `Also ${fmt(pc.ess[1])} ${essName(pc.ess[0])} or better. Damage ${rankXTxt()}, level cap +25.`));
-    }
-    if (inField(k)) {
-      const b = el('button', 'mini cs-act', 'Bench'); b.type = 'button';
-      b.addEventListener('click', () => { if (benchChar(k)) { save(); ui(true); partySheet.refresh(true); } });
-      row.append(b);
-    } else if (outOf(k)) {
-      // setField/fieldChar refuse someone on an expedition: say why instead of a dead button.
-      const b = el('button', 'mini go cs-act', 'Field'); b.type = 'button'; b.disabled = true;
-      b.title = 'Out on an expedition';
-      row.append(b);
-      foot.append(el('small', 'cs-cost', 'On an expedition. Field them when they are back.'));
-    } else {
-      const fm = ROSTER_TUNE.fieldMax || 3, f = (S.party.field || []).slice(0, fm);   // F1: 2 companions (F4 redoes this sheet)
-      const b = el('button', 'mini go cs-act', f.length < fm ? 'Field' : swapOpen ? 'Cancel' : 'Field'); b.type = 'button';
-      b.addEventListener('click', () => {
-        if (f.length < fm) { if (fieldChar(k)) { save(); ui(true); partySheet.refresh(true); } return; }
-        swapOpen = !swapOpen; partySheet.refresh(true);
-      });
-      row.append(b);
-    }
-    foot.append(row);
-    if (swapOpen && !inField(k)) {
-      const sw = el('div', 'cs-swap');
-      sw.append(el('small', null, 'Swap in for:'));
-      for (const o of (S.party.field || []).slice(0, 3)) {
-        const b = el('button', 'mini cs-swapbtn'); b.type = 'button';
-        b.append(img(portrait(o)), el('span', null, first(o)));
-        b.addEventListener('click', () => { swapOpen = false; if (fieldChar(k, o)) { save(); ui(true); partySheet.refresh(true); } });
-        sw.append(b);
-      }
-      foot.prepend(sw);
-    }
-  }
-
-  const outLine = o => o.back ? `Back from ${o.route}. Collect them in Camp > Expeditions.` : `Out: ${o.route}, ${o.left} left. They can join the party when they are back.`;
-  function buildChar(k) {
-    const body = sheet.body; body.textContent = ''; refs = {};
-    sheet.sheet.setAttribute('aria-labelledby', 'csName');
-    const locked = !isRecruited(k);
-    body.append(head(k, locked));
-    if (locked) { buildLocked(k); return; }
-    const o = outOf(k);
-    if (o) { const ln = el('p', 'cs-out'); refs.out = { ln, k }; ln.textContent = outLine(o); body.append(ln); }
-    body.append(xpBlock(k));
-    if (BIOS[k]) body.append(el('p', 'cs-bio', BIOS[k]));
-    body.append(statsSection(k), gearSection(k));
-    const kit = kitSection(k); if (kit) body.append(kit);
-    const syn = synSection(k); if (syn) body.append(syn);
-    const bd = bondsUI && safe(() => bondsUI.charSection(k), null); if (bd) body.append(bd);   // F4: this character's Bonds
-    body.append(milestoneTrack(k));
-    const st = storiesSection(k); if (st) body.append(st);
-    actions(k);
-  }
-  function buildLocked(k) {
-    const body = sheet.body, c = C(k);
-    const l = leadFor(k), p = pctOf(l), cost = recruitCost(k);
-    const how = el('div', 'cs-how');
-    how.append(el('h3', 'cs-h', 'How they join'), el('p', null, recruitHow(k)));
-    if (l && l.how && l.how !== recruitHow(k)) how.append(el('p', 'note', l.how));
-    if (p != null) {
-      const bar = el('div', 'xbar xlead'); const i = el('i'); i.style.width = (p * 100).toFixed(1) + '%'; bar.append(i);
-      how.append(bar, el('small', 'cs-xpnote', l.sub || `${Math.floor(p * 100)}% of the way`));
-    }
-    body.append(how);
-    body.append(el('p', 'cs-bio hidden', `${ROLE_STATS[c.role].n} · ${rarityName(k)}. Their story stays hidden until they join.`));
-    const foot = sheet.foot; foot.textContent = '';
-    const row = el('div', 'cs-acts');
-    if (cost) {
-      const b = el('button', 'buy cs-promote'); b.type = 'button';
-      b.append(el('span', 'qty', 'Recruit'), el('span', 'price'));
-      b.querySelector('.price').append(el('span', 'ico gold'), el('span', null, cost.gold ? fmt(cost.gold) : 'Free'));
-      b.disabled = !canRecruit(k);
-      b.addEventListener('click', () => { if (recruit(k)) { save(); ui(true); partySheet.refresh(true); } });
-      row.append(b);
-      if (cost.ess) foot.append(el('small', 'cs-cost', `Also ${fmt(cost.ess[1])} ${essName(cost.ess[0])} or better.`));
-    } else if (l && l.action) {
-      const b = el('button', 'mini go cs-act', l.action.label); b.type = 'button';
-      b.addEventListener('click', () => { safe(() => l.action.fn()); save(); ui(true); partySheet.refresh(true); });
-      row.append(b);
-    }
-    if (row.children.length) foot.append(row);
-  }
 
   // W1-C: what a solo hero presses. Attack is the class's own hit (CLASS_DEFS how); Parry and Dodge read the solo knobs.
   function soloKitRows(c) {
@@ -495,7 +153,7 @@ let openSheet, partySheet;
     const body = sheet.body; body.textContent = ''; refs = {};
     sheet.sheet.setAttribute('aria-labelledby', 'csName');
     const c = heroClass();
-    body.append(head('hero'));
+    body.append(head());
     const hb = el('div', 'cs-xp'); const bar = el('div', 'xbar'); const fill = el('i'); bar.append(fill);
     fill.style.width = Math.min(100, S.xp / xpNeed() * 100) + '%';
     const hl = el('div', 'cs-xpline'); const lvb = el('b', null, 'Lv ' + S.L); const hn = el('small', 'cs-xpnote');
@@ -506,18 +164,7 @@ let openSheet, partySheet;
     if (c) {
       body.append(el('p', 'cs-bio pitch', '"' + c.pitch + '"'));
       const cu = typeof classUI === 'object' && classUI ? safe(() => classUI.rows(), []) : [];   // S2: passives, the evolution rows (76-create)
-      if (soloOn()) body.append(section('Kit', ...safe(() => soloKitRows(c), []), ...cu));   // W1-C: Attack, Parry, Dodge and the ability
-      else {
-      const tap = el('div', 'cs-kit1'); tap.append(el('b', null, 'Tap: ' + c.tapName), el('p', null, c.how));
-      const ab = el('div', 'cs-kit1'); ab.append(el('b', null, `${c.ability.name} · every ${c.ability.cd}s`), el('p', null, c.ability.desc));
-      const auto = el('label', 'pc-auto');
-      const box = el('input'); box.type = 'checkbox'; box.checked = !!S.party.autoCast;
-      box.addEventListener('change', () => { S.party.autoCast = box.checked; save(); });
-      auto.append(box, document.createTextNode(' Cast it for me when idle (from zone 10, half as often)'));
-      ab.append(auto);
-      const au = el('div', 'cs-kit1'); au.append(el('b', null, 'Class aura'), el('p', null, c.aura));
-      body.append(section('Class', tap, ab, au, ...cu));
-      }
+      body.append(section('Kit', ...safe(() => soloKitRows(c), []), ...cu));   // W1-C: Attack, Parry, Dodge and the ability
     }
     const nouns = (S.party && HERO_GEAR_NOUN[S.party.cls]) || {};
     const g = el('div', 'cs-hgear');
@@ -543,51 +190,37 @@ let openSheet, partySheet;
       });
       mir.append(b);
     }
-    const bd = !soloOn() && bondsUI && safe(() => bondsUI.charSection('hero'), null); if (bd) body.append(bd);   // F4: the hero's Bonds
     const sw = typeof classUI === 'object' && classUI ? safe(() => classUI.switchRow(), null) : null;   // S2: the free change
     const mr = typeof classUI === 'object' && classUI && classUI.mirrorRow ? safe(() => classUI.mirrorRow(), null) : null;   // S3: the respec sheet
     body.append(sw ? section('Class change', sw, mr || mir) : section('Class change', mr || mir));
     sheet.foot.textContent = '';
   }
 
-  const sigOf = k => (bondsUI ? bondsUI.sig() + '|' : '') + sigOf0(k);   // F4: a Bond level or story read redraws
-  const sigOf0 = k => {
-    if (k === 'hero') return 'hero|' + S.party.cls + '|' + (typeof classUI === 'object' && classUI ? classUI.sig() : '') + '|' + JSON.stringify(S.equip) + '|' + S.party.mirrors + '|' + S.L + '|' + heroTitle();
-    const r = charRec(k);
-    if (!r) return 'L|' + k + '|' + JSON.stringify(recruitCost(k)) + '|' + canRecruit(k) + '|' + JSON.stringify(pctOf(leadFor(k)));
-    return [k, r.lv, r.rank, r.wpn, r.trk, r.seen, inField(k), JSON.stringify(S.party.cells && S.party.cells[k]), canPromote(k), xpInfo(k).atCap,
-      JSON.stringify(safe(() => (synergiesFor(k) || []).map(s => s.id + s.active), [])), (S.party.field || []).join(), (o => o ? o.id + o.back : '')(outOf(k))].join('|');
-  };
+  const sigOf = () => 'hero|' + S.party.cls + '|' + (typeof classUI === 'object' && classUI ? classUI.sig() : '') + '|' + JSON.stringify(S.equip) + '|' + S.party.mirrors + '|' + S.L + '|' + heroTitle();
   function render(force) {
-    if (!sheet || !who) return;
-    const s = sigOf(who);
+    if (!sheet) return;
+    const s = sigOf();
     if (!force && s === sig) {
-      updateXp();
-      if (refs.dps && who !== 'hero') putText(refs.dps, fmt(safe(() => charDps(who), 0)));
-      if (refs.out) { const o = outOf(refs.out.k); if (o) putText(refs.out.ln, outLine(o)); }
       if (refs.heroXp) { putStyle(refs.heroXp, 'width', Math.min(100, S.xp / xpNeed() * 100) + '%'); putText(refs.heroXpTxt, `${Math.floor(Math.min(1, S.xp / xpNeed()) * 100)}% to Lv ${S.L + 1}`); }
       return;
     }
     sig = s;
     const top = sheet.body.scrollTop;
-    sheet.sheet.classList.toggle('small', who !== 'hero' && !isRecruited(who));
-    if (who === 'hero') buildHero(); else buildChar(who);
+    buildHero();
     sheet.body.scrollTop = top;
   }
-  function openFor(k) {
-    if (sheet) sheet.close(true);   // S3: close the open one first (its onClose would clear the new who)
-    who = k; sig = ''; openStory = -1; swapOpen = false; mirrorArm = false;
-    const label = k === 'hero' ? S.name : C(k) ? C(k).name : k;
-    sheet = openSheet(() => {}, { label, small: k !== 'hero' && !isRecruited(k), onClose: () => { who = null; sheet = null; refs = {}; } });
+  function openFor() {
+    if (sheet) sheet.close(true);   // S3: close the open one first (its onClose would clear the new one)
+    sig = ''; mirrorArm = false;
+    sheet = openSheet(() => {}, { label: S.name, onClose: () => { sheet = null; refs = {}; } });
     sheet.sheet.classList.add('csheet');
     render(true);
   }
   partySheet = {
-    open(k) { if (C(k) && live()) openFor(k); },
-    openHero() { openFor('hero'); },
+    openHero() { openFor(); },
     refresh(force) { try { render(force); } catch (e) { console.error('[lanternfall] party sheet', e); } },
     close() { if (sheet) sheet.close(); },
     isOpen: () => !!sheet
   };
-  for (const ev of ['promote', 'fieldChange', 'recruit', 'milestone', 'gear', 'mirrorDrop']) on(ev, () => { if (sheet) partySheet.refresh(); });
+  for (const ev of ['gear', 'mirrorDrop']) on(ev, () => { if (sheet) partySheet.refresh(); });
 }

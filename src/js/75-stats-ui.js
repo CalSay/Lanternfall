@@ -56,7 +56,7 @@
       ['Dodges', () => n('dodge'), { since: () => since('dodge') }],
       ['Interrupts', () => n('intr'), { since: () => since('intr') }],
       ['Abilities used', () => n('abil'), { since: () => since('abil') }],
-      [soloOn() ? 'Attack presses' : 'Taps', () => ST().taps, { since: late }],
+      ['Attack presses', () => ST().taps, { since: late }],
       ['Damage taken', () => n('taken'), { since: () => since('taken') }],
       ['Healing and shields', () => n('heal'), { since: () => since('heal') }]
     ]],
@@ -83,12 +83,6 @@
       ['Hours worked by Hands', () => T('handhrs')],
       ['Meals cooked', () => T('meals')]
     ]],
-    ['Companions', [
-      ['Recruited', () => T('recruits')],
-      ['Ranks earned', () => T('promos')],
-      ['Companion levels', () => T('complv')],
-      ['Hours fielded together', () => T('together'), { sub: topPair }]
-    ]],
     ['Deepwell', [
       ['Deepest floor', () => (S.deep ? +S.deep.best || 0 : null)],
       ['Floors cleared', () => (S.deep ? +S.deep.floors || 0 : null)],
@@ -111,8 +105,7 @@
       ['Embers earned', () => n('embers'), { since: () => since('embers') }]
     ]]
   ];
-  // W1-C: no companions in solo (the tiles would be empty)
-  const G = soloOn() ? G0.filter(g => g[0] !== 'Companions') : G0;
+  const G = G0;
   const FAMS = ['ore', 'crystal', 'wood', 'fibre', 'herb', 'pearl', 'fish'];
 
   const big = {}, tiles = [], ac = {}, mats = {};

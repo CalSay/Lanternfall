@@ -54,7 +54,7 @@
     if (typeof S === 'object' && S) {
       const region = typeof regionOf === 'function' ? regionOf(S.maxZone) : null;
       const regionName = region && region.name ? region.name : 'unknown';
-      const heroCount = S.party && Array.isArray(S.party.field) ? S.party.field.length + 1 : 1; // hero + field
+      const heroCount = 1;
       lines.push('Progress: Level ' + (S.L || 1) + ', Zone ' + (S.maxZone || 1) + ', ' + regionName);
       lines.push('Heroes: ' + heroCount);
       const act = S.activity || 'idle';

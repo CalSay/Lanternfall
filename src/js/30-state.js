@@ -6,7 +6,7 @@
 // ================= save =================
 // ECON-A (economy-2 9): the save key moved to v2 (S.v 3) with the gold economy. An old v1 save is never
 // read (a new game starts) and never touched: its key stays in storage as it was.
-const KEY = 'lanternfall.save.v4';   // W2-A: Training replaced Blade and Swiftness, so v3 saves are never read (SOLO1 made it v3)
+const KEY = 'lanternfall.save.v5';   // W3-A: the party (S.party.field, S.comp, the roster records) is gone, so v4 saves are never read (W2-A made it v4, SOLO1 v3)
 // Feature save fields added with registerState(key, defaults). Kept in registration order.
 const STATE_DEFAULTS = {};
 const cloneJSON = v => v === undefined ? v : JSON.parse(JSON.stringify(v));
@@ -19,8 +19,8 @@ function fillDefaults(target, defs) {
   return target;
 }
 const fresh = () => Object.assign({
-  v: 4, name: 'Wanderer', L: 1, xp: 0, gold: 0, embers: 0, zone: 1, maxZone: 1, kills: 0,
-  blade: 0, swift: 0, fortune: 0, precision: 0, comp: [0, 0, 0, 0, 0, 0, 0], relic: { banner: 0, coin: 0, heart: 0, glass: 0, edge: 0 },
+  v: 5, name: 'Wanderer', L: 1, xp: 0, gold: 0, embers: 0, zone: 1, maxZone: 1, kills: 0,
+  relic: { banner: 0, coin: 0, heart: 0, glass: 0, edge: 0 },
   auto: true, activity: 'fight', raid: { gen: 0, dmg: 0, maxHp: 0, name: '' }, wyrms: 0,
   totalKills: 0, totalGold: 0, amt: '1', tab: 'adv', last: Date.now(), hintDone: false,
   skills: { mine: { lv: 1, xp: 0 }, wood: { lv: 1, xp: 0 }, smith: { lv: 1, xp: 0 },
@@ -44,7 +44,6 @@ function loadSave() {
       S.skills = Object.assign(fresh().skills, o.skills || {});
       S.mats = Object.assign(fresh().mats, o.mats || {});
       S.equip = Object.assign(fresh().equip, o.equip || {});
-      while (S.comp.length < 7) S.comp.push(0);
       if (!o.activity) S.activity = o.raiding ? 'raid' : 'fight';
       delete S.raiding;
       for (const [k, d] of Object.entries(STATE_DEFAULTS)) if (isPlainObj(d) && isPlainObj(S[k])) fillDefaults(S[k], d);

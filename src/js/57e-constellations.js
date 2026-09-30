@@ -20,9 +20,8 @@
 //   starKeystone(id), starEffects(), starPowerEst(cls, lit), starBest(cls, points), starText(star).
 //
 // Wiring (all effects go through the shared registries; nothing here edits 55-party.js):
-//   m     addModifier keys: dmg, party, tap, crit, critDmg, abilityCd, xp, compXp, offline.
+//   m     addModifier keys: dmg, tap, crit, critDmg, abilityCd, xp, offline.
 //   keen  crit damage into the capped pool (55-econ; ECON-A: Banner Over Camp and Vigil were +6% gold).
-//   hero  hero-only damage (the A1 trick: dmg x k, party x 1/k, so companions are unchanged).
 //   t     bonus('tune:<knob>') for 55-party.js's class knobs (T table). Knobs 55-party routes
 //         through tn() today: STAR_TUNE_ROUTED. The rest wait for the combat owner (see report).
 //   ks    a flag for new combat behaviour: bonus('ks:<id>') > 0, or starKeystone(id). Combat code
@@ -65,8 +64,8 @@ const STAR_KS = {
 // W2-A: Precision (the gold upgrade, +15% crit damage) left the solo game. Its value moved here: each class's crit damage
 // stars add to the crit damage pool (55-econ, capped at +40%) instead of multiplying on top, and sum to +15% a class
 // with the pool stars already there (Warrior: Hard Hits 12 + Banner Over Camp 3; Ranger: Barbs 8 + Barbs II 7; Mage:
-// Focused Lens 10 + Clean Cut 5). The party game keeps its old stars.
-const starCd = (name, party, solo, p) => soloOn() ? [name, `+${Math.round(solo * 100)}% crit damage.`, { keen: solo }, p] : [name, `Crit damage +${Math.round((party - 1) * 100)}%.`, { m: { critDmg: party } }, p];
+// Focused Lens 10 + Clean Cut 5).
+const starCd = (name, cd, p) => [name, `+${Math.round(cd * 100)}% crit damage.`, { keen: cd }, p];
 // ---- the maps ----
 // Each arm: [name, stars 1..8]; star: [name, text, fx, p, cText?]. Slots 3 and 6 are notables (2
 // points), slot 8 the keystone (3 points), the rest minors (1 point).
@@ -91,7 +90,7 @@ const STAR_MAPS = {
         ['Heavy Arm', 'Attack +5%.', { m: { tap: 1.05 } }, 1.006],
         ['Edge', '+1.5% damage.', { m: { dmg: 1.015 } }, 1.015],
         ['Crushing Blow', 'Every 5th heavy hit deals triple damage.', { ks: 'crush' }, 1.02],
-        starCd('Hard Hits', 1.04, 0.12, 1.009),
+        starCd('Hard Hits', 0.12, 1.009),
         ['Heavy Arm II', 'Attack +5%.', { m: { tap: 1.05 } }, 1.006],
         ['Bash', 'Heavy hits on a boss add 0.2s to its timer, up to 6s a fight.', { live: 'bash' }, 1.01, 'Heavy hits stagger for 0.3s.'],
         ['Edge II', '+1.5% damage.', { m: { dmg: 1.015 } }, 1.015],
@@ -105,8 +104,7 @@ const STAR_MAPS = {
         ['Comrades III', 'You deal +2% damage.', { m: { dmg: 1.02 } }, 1.015],
         ['Banner Over Camp', '+3% crit damage and +6% away gains.', { keen: 0.03, m: { offline: 1.06 } }, 1],
         ['Comrades IV', 'You deal +2% damage.', { m: { dmg: 1.02 } }, 1.015],
-        soloOn() ? ['Oathsworn', 'You deal 10% more damage.', { m: { dmg: 1.1 } }, 1.035]
-          : ['Oathsworn', 'You deal 25% less. Your companions deal 10% more.', { ks: 'oathsworn', hero: 0.75, m: { party: 1.1 } }, 1.035, 'Tanks get +80% health and +40 armour (was +40% and +20).']
+        ['Oathsworn', 'You deal 10% more damage.', { m: { dmg: 1.1 } }, 1.035]
       ]]
     ],
     crown: ['Lantern Bastion', "Every heavy hit takes 1s off Shield Wall's cooldown, and Shield Wall stops the boss timer for its whole length.", { ks: 'bastion' }, 1.05, "Shield Wall also blocks the boss's next heavy hit on anyone."]
@@ -137,9 +135,9 @@ const STAR_MAPS = {
       ['Glass', [
         ['Spark II', '+1.5% damage.', { m: { dmg: 1.015 } }, 1.015],
         ['Clear Eye', 'Crits come 3% more often.', { m: { crit: 1.03 } }, 1.006],
-        starCd('Focused Lens', 1.1, 0.10, 1.022),
+        starCd('Focused Lens', 0.10, 1.022),
         ['Spark III', '+1.5% damage.', { m: { dmg: 1.015 } }, 1.015],
-        starCd('Clean Cut', 1.04, 0.05, 1.009),
+        starCd('Clean Cut', 0.05, 1.009),
         ['Overkill', 'Damage past a kill carries to the next foe.', { ks: 'overflow' }, 1.02],
         ['Spark IV', '+1.5% damage.', { m: { dmg: 1.015 } }, 1.015],
         ['Glass Lantern', 'Ember cap +5 and each Ember adds 10% more to Flare, but your Attack deals half.', { ks: 'glass', t: { embersMax: 5, flarePerEmber: 0.1 }, m: { tap: 0.5 } }, 1.03]
@@ -172,10 +170,10 @@ const STAR_MAPS = {
       ]],
       ['Deadeye', [
         ['Steady Aim', 'Crits come 3% more often.', { m: { crit: 1.03 } }, 1.006],
-        starCd('Barbs', 1.04, 0.08, 1.009),
+        starCd('Barbs', 0.08, 1.009),
         ['Hawk Eye', 'Your first hit on each foe always crits.', { ks: 'hawk' }, 1.02],
         ['Fast Hands', 'Attack +5%.', { m: { tap: 1.05 } }, 1.006],
-        starCd('Barbs II', 1.04, 0.07, 1.009),
+        starCd('Barbs II', 0.07, 1.009),
         ['Finisher', 'Foes under 20% health take +20% from you.', { live: 'finisher' }, 1.015],
         ['Steady Aim II', 'Crits come 3% more often.', { m: { crit: 1.03 } }, 1.006],
         ['Deadeye', 'You mark one foe at a time, and the mark lasts until it dies. Your crits on it deal double.', { ks: 'deadeye' }, 1.035]
@@ -479,7 +477,7 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
   }
 
   // ---- effects ----
-  const MOD_KEYS = ['dmg', 'party', 'tap', 'crit', 'critDmg', 'abilityCd', 'xp', 'compXp', 'offline'];   // ECON-A: gold left (keen: the crit damage pool)
+  const MOD_KEYS = ['dmg', 'tap', 'crit', 'critDmg', 'abilityCd', 'xp', 'offline'];   // ECON-A: gold left (keen: the crit damage pool)
   const TUNE_KEYS = new Set(), KS_IDS = new Set(Object.keys(STAR_KS));
   for (const c in STAR_MAPS) for (const s of Object.values(starMap(c).stars)) { for (const k in (s.fx.t || {})) TUNE_KEYS.add(k); if (s.fx.ks) KS_IDS.add(s.fx.ks); }
   for (const e in EVO_DEFS) for (const [, , fx] of EVO_DEFS[e].ring) { for (const k in (fx.t || {})) TUNE_KEYS.add(k); if (fx.ks) KS_IDS.add(fx.ks); }   // S3 rings
@@ -499,7 +497,7 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
       if (!starIsLit(id, cls) && starLight(id, cls)) n++;
     return n;
   };
-  const NONE = { m: {}, t: {}, ks: {}, live: {}, hero: 1, keen: 0 };
+  const NONE = { m: {}, t: {}, ks: {}, live: {}, keen: 0 };
   // Cached per class and layout version: the modifiers below run on every hit and dps read.
   let eff = NONE, effCls, effVer = -1;
   starEffects = () => {
@@ -508,7 +506,7 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
     if (cls === effCls && ver === effVer) return eff;
     effCls = cls; effVer = ver;
     if (!cls) return (eff = NONE);
-    const map = starMap(cls), e = { m: {}, t: {}, ks: {}, live: {}, hero: 1, keen: 0 };
+    const map = starMap(cls), e = { m: {}, t: {}, ks: {}, live: {}, keen: 0 };
     for (const id of starLayout(cls).lit) {
       const s = map.stars[id]; if (!s) continue;
       const fx = s.fx;
@@ -516,7 +514,6 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
       for (const k in (fx.t || {})) e.t[k] = (e.t[k] || 0) + fx.t[k];
       if (fx.ks) e.ks[fx.ks] = 1;
       if (fx.live) e.live[fx.live] = 1;
-      if (fx.hero) e.hero *= fx.hero;
       if (fx.keen) e.keen += fx.keen;
     }
     if (e.live.challenger) e.live.bash = 0;   // Challenger replaces Bash
@@ -532,14 +529,13 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
   let clock = 0, glowUntil = -1, bossRef = null, bossAdded = 0;
   const heroOnly = () => {
     const e = starEffects();
-    let k = e.hero;
+    let k = 1;
     if (e.live.afterglow && glowUntil > clock) k *= 1.15;
     if (e.live.finisher && typeof mob !== 'undefined' && mob && !mob.dead && mob.max > 0 && mob.hp < 0.2 * mob.max && target() === 'mob') k *= 1.2;
     return k;
   };
   const onBoss = () => typeof mob !== 'undefined' && mob && mob.boss && !mob.dead && target() === 'mob';
   addModifier('dmg', () => { const e = starEffects(); let m = heroOnly(); if (e.live.stalker && onBoss()) m *= 1.06; return m; });
-  addModifier('party', () => { const k = heroOnly(); return k === 1 ? 1 : k > 0 ? 1 / k : 1; });
   addModifier('uniqueChance', () => starEffects().live.stalker && typeof mob !== 'undefined' && mob && mob.boss && mob.markUntil ? 1.1 : 1);
   onTick(dt => { if (initFor !== S) ensure(); clock += dt; });
   on('ability', ({ cls }) => { if (cls === 'lanternmage' && starEffects().live.afterglow) glowUntil = clock + 4; });

@@ -117,15 +117,10 @@ const NOTICES = [
   { id: 'codex-small', key: 'codex-small', re: /^Codex: the .* page is half full\.$/, ch: 'log' },
   { id: 'codex-past', key: 'codex-past', re: /^Your Codex holds \d+ Lantern Light from your past deeds/, ch: 'bell', why: 'only a save with progress at load (audit 3.4)' },
 
-  // ---- class, party and roster (the party parts are dormant in solo) ----
+  // ---- class ----
   { id: 'class', re: /^(You passed the Proving|You are an? .* now\.|The Fenmother has fallen\. Your Proving|The Proving: not this time)/, ch: 'pop', wait: 40, why: 'a card after Ascension lands (W5-A)' },
   { id: 'class-migrate', re: /^Classes changed\./, ch: 'bell' },
-  { id: 'joins', re: /(joins your party\.$|will join you\.$| is promoted\. )/, ch: 'pop', wait: 40 },
   { id: 'mirror', re: /^The boss dropped a Mirror of Embers/, ch: 'pop' },
-  { id: 'party-small', re: /^(Your hero now casts .* alone|.* reached level \S+)/, ch: 'log' },
-  { id: 'bond', site: /toast\(t\.msg, 'good', \{ ic: \['heart'/, ch: 'log', why: 'Bonds leave the game (W3-A)' },
-
-
   // ---- the Deepwell ----
   { id: 'deep-tip', re: /^(Oil is your run|After each floor, pick 1 of 3 boons|You can climb out between floors|Your party's health carries|Your health carries|Your Oil is running low)/,
     site: /toast\(txt, 'good'/, ch: 'pop', wait: 20, why: 'you are in the Deepwell and it is new' },

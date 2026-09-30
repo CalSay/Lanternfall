@@ -18,7 +18,7 @@
 var soloIconURL = () => '';
 {
   const game = $('game');
-  if (soloOn()) document.body.classList.add('solo-on');   // 60-solo.css: the old floating ability circles stay hidden
+  document.body.classList.add('solo-on');   // 60-solo.css: the old floating ability circles stay hidden
   const bar = el('div', 'sbar'); bar.id = 'soloBar'; bar.setAttribute('role', 'toolbar'); bar.setAttribute('aria-label', 'Combat');
   bar.hidden = true;
   const rowAb = el('div', 'sb-row sb-row-ab'), rowAct = el('div', 'sb-row sb-row-act');
@@ -44,7 +44,7 @@ var soloIconURL = () => '';
   // Owner (SOLO1 layout): what is not combat sits above the stage (Next Up, then Fight / Gather, Switch and the zone
   // arrows); the stage and the bar touch; the bar is the lowest thing above the tab bar. Next Up opens a sheet, so
   // nothing grows under the stage.
-  if (soloOn() && game) {
+  if (game) {
     const box = $('stageBox'), ctrl = game.querySelector(':scope > .ctrl'), nu = $('nuSlot');
     if (box && nu) game.insertBefore(nu, box);
     if (box && ctrl) game.insertBefore(ctrl, box);
@@ -211,7 +211,7 @@ var soloIconURL = () => '';
 
   let t = 0;
   function update() {
-    const show = soloOn() && !!soloHero() && target() === 'mob' && !!(S.party && S.party.chosen);
+    const show = !!soloHero() && target() === 'mob' && !!(S.party && S.party.chosen);
     if (bar.hidden === show) { bar.hidden = !show; if (!show) closePicker(); }
     if (badge.hidden === show) badge.hidden = !show;
     if (!show) return;
@@ -253,7 +253,7 @@ var soloIconURL = () => '';
   on('soloDodge', ({ res }) => { if (res === 'dodge' || res === 'perfect') emit('float', { txt: res === 'perfect' ? 'Perfect dodge' : 'Dodged', color: '#8FB8FF', big: true, x: 0.27, y: 0.4 }); else if (res === 'early') emit('float', { txt: 'Too early', color: '#A9B1BD', big: false, x: 0.27, y: 0.42 }); });
 
   // ---- "Choose your hero" at camp ----
-  if (soloOn()) registerSection('camp', {
+  registerSection('camp', {
     id: 'solo-hero', title: 'Choose your hero',
     mount(sec) {
       sec.classList.add('solo-pick');

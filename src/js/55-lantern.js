@@ -28,9 +28,7 @@ let lanternSync, lanternRoad;
       n: i + 1, region: r.id, zone: r.z1, name: r.lantern,
       head: (beat && beat.head) || `${r.lantern} burns again.`,
       text: (beat && beat.text) || '', note: (beat && beat.note) || '',
-      quiet: !!quiet, rewards: [],
-      // say: [{ id, name, line }] from recruited characters (the beat's own, plus Hesketh's for the Hollow: LORE3)
-      say: typeof storySay === 'function' ? storySay(Object.assign({}, beat && beat.say, !i && typeof HOLLOW_LANTERN_SAY === 'object' ? HOLLOW_LANTERN_SAY : null)) : []
+      quiet: !!quiet, rewards: []
     };
     emit('greatLantern', e);
     if (quiet) {

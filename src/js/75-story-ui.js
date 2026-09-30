@@ -134,7 +134,6 @@ var storyUI;   // var: 75-codex-ui (earlier in the build) reads it at run time
       card.append(h);
       if (b.head) card.append(el('p', 'sty-head', b.head));
       card.append(el('p', 'sty-text', b.text));
-      for (const x of b.say) { const q = el('p', 'sty-say'); q.append(el('b', null, x.short + ': '), document.createTextNode(`"${x.line}"`)); card.append(q); }
       api.body.append(card);
       const row = el('div', 'sty-actions');
       const next = chain && chain.filter(x => x !== id && storyUnread().includes(x))[0];

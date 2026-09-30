@@ -372,7 +372,7 @@ const TAB_IDS = ['adv', 'party', 'gat', 'forge', 'world'];
 // and its sub-views; their ids still open it (setTab('raid')).
 const TAB_ALIAS = { raid: 'world', tav: 'world', camp: 'world' };
 if (TAB_ALIAS[S.tab]) S.tab = TAB_ALIAS[S.tab];
-const TAB_TITLE = { adv: 'Fight', party: soloOn() ? 'Hero' : 'Party', gat: 'Gather', forge: 'Craft', world: 'Camp' };   // SOLO1: the Party tab is the hero's
+const TAB_TITLE = { adv: 'Fight', party: 'Hero', gat: 'Gather', forge: 'Craft', world: 'Camp' };   // SOLO1: the Party tab is the hero's
 const TAB_HIDDEN = new Set(), TAB_ICON = {};   // registerTab({ hidden: true }): menus with no tab button, and their header icons
 const VIEWS = {};    // tabId -> [{ id, label, order, dot }], sorted by order
 const VIEW_OF = {};  // view id -> tabId, so setTab(viewId) opens the right tab and view
@@ -407,12 +407,11 @@ function registerView(tabId, { id, label, order = 50, dot, feature, show } = {})
 function safeDot(f) { try { return !!f(); } catch (e) { return false; } }
 // Progressive unlocks (55-onboard.js): a view or section with a feature id shows once it is unlocked.
 const featOk = f => !f || typeof isUnlocked !== 'function' || isUnlocked(f);
-registerView('adv', { id: 'upgrades', label: soloOn() ? 'Boss' : 'Upgrades', order: 10 });   // W2-A: solo trains on the Hero tab, so this view is the boss gate
+registerView('adv', { id: 'upgrades', label: 'Boss', order: 10 });   // the hero trains on the Hero tab, so this view is the boss gate
 registerView('adv', { id: 'bounties', label: 'Bounties', order: 20, feature: 'bounties',
   dot: () => ((S.bounties && S.bounties.slots) || []).some(b => b && b.k && b.have >= b.need) });
 registerView('adv', { id: 'bestiary', label: 'Bestiary', order: 30, feature: 'bestiary' });
-registerView('party', { id: 'team', label: 'Team', order: 10, feature: 'party' });
-if (!soloOn()) registerView('party', { id: 'roster', label: 'Roster', order: 20, feature: 'roster' });   // W1-C: no roster in solo
+registerView('party', { id: 'team', label: 'Hero', order: 10, feature: 'party' });
 registerView('gat', { id: 'mine', label: 'Mining', order: 10, feature: 'gather' });
 registerView('gat', { id: 'wood', label: 'Wood', order: 20, feature: 'gather' });
 registerView('gat', { id: 'forage', label: 'Forage', order: 30, feature: 'forage' });
@@ -421,8 +420,7 @@ registerView('forge', { id: 'make', label: 'Make', order: 10, feature: 'craft' }
 registerView('forge', { id: 'gear', label: 'Gear', order: 20, feature: 'craft' });
 registerView('forge', { id: 'uniques', label: 'Uniques', order: 30, feature: 'uniques' });
 registerView('world', { id: 'camp', label: 'Camp', order: 10, feature: 'camp', dot: () => !!(S.camp && S.camp.news && S.camp.news.length) });
-registerView('world', { id: 'tav', label: 'Tavern', order: 20, feature: 'tavern',
-  dot: () => { if (typeof visitorToday !== 'function') return false; const v = visitorToday(); return v.kind === 'hire' && !v.done; } });
+registerView('world', { id: 'tav', label: 'Tavern', order: 20, feature: 'tavern' });
 registerView('world', { id: 'almanac', label: 'Almanac', order: 30, feature: 'almanac', dot: () => typeof almanac === 'object' && almanac.readyCount() > 0 });
 registerView('world', { id: 'raid', label: 'Raid', order: 40, feature: 'raid' });
 
@@ -706,7 +704,7 @@ function ui(force) {
   putHidden(H.statNums, tg === 'node');
   putText(H.sDps, fmt(totalDps() * (tg === 'world' ? raidMult() : 1)));
   putText(H.sTap, fmt(heroAtk() * tapMult() * (tg === 'world' ? raidMult() : 1)));
-  putText(H.hint, tg === 'node' ? 'Tap to work faster' : soloOn() && tg === 'mob' ? '' : 'Tap to strike');   // SOLO1: the buttons strike
+  putText(H.hint, tg === 'node' ? 'Tap to work faster' : tg === 'mob' ? '' : 'Tap to strike');   // the buttons strike
   for (const f of uiHooks) f(force);   // UX-A
 
   // Built-in panels update only while their view shows (setTab and setView call ui(true) on a switch).
