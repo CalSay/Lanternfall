@@ -18,7 +18,7 @@ Single-player depth. Do not change the online layer (world raid, tavern, leaderb
 - No `<!doctype>`, `<html>`, `<head>` or `<body>` tags in the published file; it starts with
   `<title>` then `<link>`/`<style>` then markup then `<script>`.
 - `alert`/`confirm`/`prompt` do nothing in the viewer. Build confirmations in-page.
-- `localStorage` holds the single-player save under key `lanternfall.save.v3`. Always
+- `localStorage` holds the single-player save under key `lanternfall.save.v4`. Always
   wrap storage access in try/catch.
 - Saves until 1.0 (owner decision 2026-09-28): the only players are the owner and testers, and the
   owner accepts a wipe. Prefer clean new state over complex migrations. If a change would break old

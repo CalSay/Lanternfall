@@ -41,8 +41,9 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
   });
   const ST = SOLO_STATS = { attacks: 0, parries: 0, misses: 0, dodges: 0, early: 0, counters: 0, casts: 0, auto: 0, heavies: 0, trash: 0, hand: 0 };
   const EQ0 = () => { const o = {}; for (const k of SOLO_ORDER) o[k] = SOLO_HEROES[k].eq.slice(); return o; };
-  registerState('solo', { v: 1, hero: null, lv: {}, eq: EQ0(), zn: {} });
-  const Sx = () => S.solo || (S.solo = { v: 1, hero: null, lv: {}, eq: EQ0(), zn: {} });
+  // tr: Training levels per hero (W2-A, 55-training.js); asc: heroes that passed the Proving (their training cap rises)
+  registerState('solo', { v: 1, hero: null, lv: {}, eq: EQ0(), zn: {}, tr: TRAIN0(), asc: {} });
+  const Sx = () => S.solo || (S.solo = { v: 1, hero: null, lv: {}, eq: EQ0(), zn: {}, tr: TRAIN0(), asc: {} });
   const alive = f => f && !f.dead && f.hp > 0 && !f.gone;
   const foes = () => (typeof combatFoes === 'function' ? combatFoes() : []);
   const heroU = () => (typeof cbUnitByKey === 'function' ? cbUnitByKey('hero') : null);
@@ -146,7 +147,7 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
     soloTouch();
     if (!fighting()) return '';
     if (dodgeT > 0 && !forgive) return 'cd';
-    dodgeT = T.dodgeCd;
+    dodgeT = trainDodgeCd();   // W2-A: Dodge training shortens it
     const r = typeof actDodge === 'function' ? actDodge(!!forgive) : '';
     if (r === 'dodge' || r === 'perfect') ST.dodges++;
     else ST.early++;
@@ -167,7 +168,7 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
         c.done = true;
         if (alive(c.f)) {
           // owner (SOLO2): the counter always crits: the crit multiplier, the crit event, the gear's echo, the crit number
-          const P = heroAtkNow(false), cm = critMult();
+          const P = heroAtkNow(false) * trainCounterX(), cm = critMult();   // W2-A: Parry training: counter damage
           let cx = 1 + (gear().counter || 0) / 100;   // W1-C: the Lantern Eater's Fang: counters deal double
           try { const dr = typeof deepActive === 'function' && deepActive() && DW.run(); if (dr && dr.boons && dr.boons.taunt) cx *= 1 + DEEP_BOONS.taunt.v * dr.boons.taunt; } catch (e) {}   // the Deepwell's Parry Drill
           const dmg = cbDamageFoe(c.f, P * T.counterX * aps() * cm * cx, 0, 'phys', unitType('hero'), ST_HEAVY | ST_CRIT);
@@ -211,7 +212,7 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
     return true;
   };
   const abAt = slot => { const id = soloEquipped()[slot]; return id ? SOLO_ABILITIES[id] : null; };
-  const abCd = a => (a ? a.cd * mod('abilityCd') : 0);
+  const abCd = a => (a ? trainAbCd(a.id, a.cd) * mod('abilityCd') : 0);   // W2-A: a cooldown milestone takes 0.5 s off
   const cdOf = a => (a ? Math.max(0, cds[a.id] || 0) : 0);
   let patchT = 0, patchTick = 0, patchP = 0;
   function frontFoe() {
@@ -228,19 +229,21 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
     if (slot == null) { const eq = soloEquipped(); slot = eq.findIndex(id => id && !(cds[id] > 0)); if (slot < 0) slot = 0; }
     const a = abAt(slot);
     if (!a || !p || !fighting() || !heroUp() || cdOf(a) > 0 || !anyFoe()) return false;
-    const P = heroAtkNow(auto) * (auto ? 1 : T.abHandX) * (1 + (gear().abil || 0) / 100), ty = unitType('hero');   // W1-C: the Rattlebone Charm's +% ability damage   // by hand it hits harder (SOLO2)
-    const tags = ST_AB;
+    // W2-A: an ability hits with its own Training level (trainAbPow), not the Attack's
+    const P = trainAbPow(a.id) * (typeof heroStand === 'function' ? heroStand(!auto) : 1) * (auto ? 1 : T.abHandX) * (1 + (gear().abil || 0) / 100), ty = unitType('hero');   // W1-C: the Rattlebone Charm's +% ability damage   // by hand it hits harder (SOLO2)
+    const tags = ST_AB, TT = T.train, ms = trainMs(a.id);
     if (a.id === 'echo') {
       // a piercing arrow down the lane: every foe, front to back, and a Mark on each
       const list = foes().filter(alive).sort((x, y) => y.row - x.row);
       list.forEach((f, i) => {
         if (!alive(f)) return;
-        stApply(f, 'mark', 1, 0, 0, { dur: T.echo.mark });
+        stApply(f, 'mark', 1, 0, 0, { dur: T.echo.mark + ms.mark * TT.msv.mark });
         cbDamageFoe(f, P * (i === 0 ? T.echo.x : T.echo.xOther), 0, 'phys', ty, tags);
       });
     } else if (a.id === 'bash') {
-      const f = frontFoe();
-      if (f) { cbDamageFoe(f, P * T.bash.x, 0, 'phys', ty, tags | ST_HEAVY); if (alive(f)) cbStun(f, T.bash.stun, 0); }
+      // W2-A milestones: one more foe hit (the next ones back, at xOther) and a longer Stun
+      const list = foes().filter(alive).sort((x, y) => y.row - x.row || x.hp - y.hp).slice(0, 1 + ms.target), stun = T.bash.stun + ms.stun * TT.msv.stun;
+      list.forEach((f, i) => { cbDamageFoe(f, P * (i ? T.bash.xOther : T.bash.x), 0, 'phys', ty, tags | ST_HEAVY); if (alive(f)) cbStun(f, stun, 0); });
       const u = heroU(); if (u) { u.drV = Math.max(u.drV || 0, T.bash.dr); u.drT = Math.max(u.drT || 0, T.bash.drT); }
       emit('shake', 0.25);
     } else if (a.id === 'fire') {
@@ -250,7 +253,7 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
         for (const o2 of foes()) if (o2 !== f && alive(o2)) cbDamageFoe(o2, P * T.fire.xOther, 0, 'magic', 'fire', tags);
         for (const o2 of foes()) if (alive(o2)) stApply(o2, 'burn', 1, P * T.fire.burnP, 0);
       }
-      patchT = T.fire.patchT; patchTick = 1; patchP = P * T.fire.burnP;
+      patchT = T.fire.patchT + ms.patch * TT.msv.patch; patchTick = 1; patchP = P * T.fire.burnP;
       emit('shake', 0.3);
     }
     cds[a.id] = abCd(a); readyFor[slot] = 0;
@@ -327,7 +330,7 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
     const b = BTN;
     b.atk.left = Math.max(0, atkT); b.atk.max = T.atkCd;
     b.parry.left = Math.max(0, parryT, openT); b.parry.max = openT > 0 ? T.openT : T.parryCd; b.parry.open = Math.max(0, openT);
-    b.dodge.left = Math.max(0, dodgeT); b.dodge.max = T.dodgeCd;
+    b.dodge.left = Math.max(0, dodgeT); b.dodge.max = trainDodgeCd();
     for (let i = 0; i < 3; i++) {
       const a = soloAbilityInfo(i), o = b.abs[i];
       o.left = a ? a.left : 0; o.max = a ? a.cd : 0; o.ready = !!(a && a.ready); o.name = a ? a.name : ''; o.id = a ? a.id : '';

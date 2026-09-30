@@ -75,7 +75,9 @@ function upgradeEquipped(slot) {
 
 // ================= shops =================
 // amt: '1' | '10' | 'max' (defaults to the player's x1/x10/Max choice).
+// W2-A: the party game's Blade, Swiftness and Precision. The solo game trains moves instead (55-training train()).
 function buyHero(id, amt) {
+  if (soloOn()) return false;
   const u = HERO_UPS.find(h => h.id === id);
   const p = plan(u.base, u.r, S[u.id], S.gold, u.cap, amt);
   if (p.n > 0 && S.gold >= p.cost) { S.gold -= p.cost; S[u.id] += p.n; econSpend('up', p.cost); return true; }

@@ -62,6 +62,11 @@ const STAR_KS = {
   ages: { blessEvery: 2 }                     // while the Hymn is up Blessings do not fade; +1 Blessing every 2s
 };
 
+// W2-A: Precision (the gold upgrade, +15% crit damage) left the solo game. Its value moved here: each class's crit damage
+// stars add to the crit damage pool (55-econ, capped at +40%) instead of multiplying on top, and sum to +15% a class
+// with the pool stars already there (Warrior: Hard Hits 12 + Banner Over Camp 3; Ranger: Barbs 8 + Barbs II 7; Mage:
+// Focused Lens 10 + Clean Cut 5). The party game keeps its old stars.
+const starCd = (name, party, solo, p) => soloOn() ? [name, `+${Math.round(solo * 100)}% crit damage.`, { keen: solo }, p] : [name, `Crit damage +${Math.round((party - 1) * 100)}%.`, { m: { critDmg: party } }, p];
 // ---- the maps ----
 // Each arm: [name, stars 1..8]; star: [name, text, fx, p, cText?]. Slots 3 and 6 are notables (2
 // points), slot 8 the keystone (3 points), the rest minors (1 point).
@@ -86,7 +91,7 @@ const STAR_MAPS = {
         ['Heavy Arm', 'Attack +5%.', { m: { tap: 1.05 } }, 1.006],
         ['Edge', '+1.5% damage.', { m: { dmg: 1.015 } }, 1.015],
         ['Crushing Blow', 'Every 5th heavy hit deals triple damage.', { ks: 'crush' }, 1.02],
-        ['Hard Hits', 'Crit damage +4%.', { m: { critDmg: 1.04 } }, 1.009],
+        starCd('Hard Hits', 1.04, 0.12, 1.009),
         ['Heavy Arm II', 'Attack +5%.', { m: { tap: 1.05 } }, 1.006],
         ['Bash', 'Heavy hits on a boss add 0.2s to its timer, up to 6s a fight.', { live: 'bash' }, 1.01, 'Heavy hits stagger for 0.3s.'],
         ['Edge II', '+1.5% damage.', { m: { dmg: 1.015 } }, 1.015],
@@ -132,9 +137,9 @@ const STAR_MAPS = {
       ['Glass', [
         ['Spark II', '+1.5% damage.', { m: { dmg: 1.015 } }, 1.015],
         ['Clear Eye', 'Crits come 3% more often.', { m: { crit: 1.03 } }, 1.006],
-        ['Focused Lens', 'Crit damage +10%.', { m: { critDmg: 1.1 } }, 1.022],
+        starCd('Focused Lens', 1.1, 0.10, 1.022),
         ['Spark III', '+1.5% damage.', { m: { dmg: 1.015 } }, 1.015],
-        ['Clean Cut', 'Crit damage +4%.', { m: { critDmg: 1.04 } }, 1.009],
+        starCd('Clean Cut', 1.04, 0.05, 1.009),
         ['Overkill', 'Damage past a kill carries to the next foe.', { ks: 'overflow' }, 1.02],
         ['Spark IV', '+1.5% damage.', { m: { dmg: 1.015 } }, 1.015],
         ['Glass Lantern', 'Ember cap +5 and each Ember adds 10% more to Flare, but your Attack deals half.', { ks: 'glass', t: { embersMax: 5, flarePerEmber: 0.1 }, m: { tap: 0.5 } }, 1.03]
@@ -167,10 +172,10 @@ const STAR_MAPS = {
       ]],
       ['Deadeye', [
         ['Steady Aim', 'Crits come 3% more often.', { m: { crit: 1.03 } }, 1.006],
-        ['Barbs', 'Crit damage +4%.', { m: { critDmg: 1.04 } }, 1.009],
+        starCd('Barbs', 1.04, 0.08, 1.009),
         ['Hawk Eye', 'Your first hit on each foe always crits.', { ks: 'hawk' }, 1.02],
         ['Fast Hands', 'Attack +5%.', { m: { tap: 1.05 } }, 1.006],
-        ['Barbs II', 'Crit damage +4%.', { m: { critDmg: 1.04 } }, 1.009],
+        starCd('Barbs II', 1.04, 0.07, 1.009),
         ['Finisher', 'Foes under 20% health take +20% from you.', { live: 'finisher' }, 1.015],
         ['Steady Aim II', 'Crits come 3% more often.', { m: { crit: 1.03 } }, 1.006],
         ['Deadeye', 'You mark one foe at a time, and the mark lasts until it dies. Your crits on it deal double.', { ks: 'deadeye' }, 1.035]

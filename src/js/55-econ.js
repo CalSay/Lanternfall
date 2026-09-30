@@ -70,7 +70,8 @@ let goldPerFoe, econRegionReached, econHearthGold, econRowGold, econShrineGold, 
   addModifier('critDmg', keenMult);
   // Precision (the Lanternbearer's upgrade that replaced Fortune) and the Loaded Die (the relic that
   // replaced the Lucky Coin).
-  keenSource('precision', 'Precision', () => ECON.precision.v * Math.min(ECON.precision.cap, S.precision || 0));
+  // W2-A: Precision is the party game's; in solo its +15% moved to each class's crit damage stars (57e, into this pool).
+  if (!soloOn()) keenSource('precision', 'Precision', () => ECON.precision.v * Math.min(ECON.precision.cap, S.precision || 0));
   keenSource('die', 'Loaded Die', () => ECON.crit.die * Math.min(ECON.crit.dieCap, (S.relic && S.relic.edge) || 0));
 
   // ---------------- gold on gear ----------------

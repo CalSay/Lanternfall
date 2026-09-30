@@ -4,7 +4,7 @@
 //       top row     Ability 1, Ability 2, Ability 3   (keys Q, W, E)  the player picks what goes in each slot
 //       bottom row  Parry, Dodge, Attack              (keys A, S, D; Space = Dodge, SOLO2)  Attack bottom right
 //     Cooldowns sweep dark clockwise with the seconds in the middle and flash when ready; Parry and Dodge glow while a
-//     telegraphed hit is coming. A long press on Attack, Parry or Dodge says what it does; on an ability slot it opens
+//     telegraphed hit is coming. A long press on Attack, Parry or Dodge opens a sheet: what it does and its Training; on an ability slot it opens
 //     the picker (an empty slot opens it on a tap): that hero's unlocked abilities (icon, name, one line, cooldown),
 //     pick one to place it (swapping if it sits in another slot) or clear the slot.
 //   - the Auto badge (SOLO2): a small chip at the stage's bottom left, over the DPS line, lit while auto-play fights
@@ -12,6 +12,10 @@
 //   - "Choose your hero" at camp: the three starters, each with its own level; a free switch.
 // Core: 59j-solo.js (soloAttack, soloParry, soloDodge, soloAbility, soloEquip, soloButtons, soloPick, soloLevels).
 // Reduced motion: no flashes or pulses (60-solo.css).
+// W2-A Training: a long press on Attack, Parry or Dodge opens a small sheet (what it does, its Training level and a Train
+// button); on an ability slot the picker shows the slot's ability level and a Train button too. soloIconURL(move) gives
+// the bar's icon for a move (the Training list uses it: 'atk' is the hero's weapon).
+var soloIconURL = () => '';
 {
   const game = $('game');
   if (soloOn()) document.body.classList.add('solo-on');   // 60-solo.css: the old floating ability circles stay hidden
@@ -66,6 +70,13 @@
     rows.forEach((r, y) => { for (let x = 0; x < r.length; x++) { const c = PAL[r[x]]; if (c) { g.fillStyle = c; g.fillRect(x, y, 1, 1); } } });
   }
   drawIc(bParry._ic, ICON.parry); drawIc(bDodge._ic, ICON.dodge);
+  const icURLs = {};
+  soloIconURL = mv => {
+    const id = mv === 'atk' ? WEAPON_IC[soloHero()] || 'sword' : mv;
+    if (icURLs[id]) return icURLs[id];
+    const cv = document.createElement('canvas'); cv.width = 12; cv.height = 12; drawIc(cv, ICON[id] || ICON.fire);
+    try { return (icURLs[id] = cv.toDataURL()); } catch (e) { return ''; }
+  };
   const abIds = ['?', '?', '?'];
   let heroK = '';
 
@@ -85,26 +96,33 @@
     ab0: () => castSlot(0), ab1: () => castSlot(1), ab2: () => castSlot(2)
   };
 
-  // ---- long press on Attack, Parry, Dodge: what it does ----
-  const tip = el('div', 'sb-tip'); tip.hidden = true; tip.setAttribute('role', 'tooltip'); tip.id = 'soloTip';
-  document.body.append(tip);
+  // ---- long press on Attack, Parry, Dodge: what it does, and its Training (W2-A) ----
+  // A small sheet like the picker (the game waits while it is open; soloPickerOpen covers both).
+  const MOVE = { atk: 'atk', parry: 'parry', dodge: 'dodge' };
   function showTip(b) {
-    const i = INFO[b.dataset.act]; if (!i) return;
-    tip.textContent = '';
-    tip.append(el('b', null, i.name), el('span', null, i.desc), el('small', null, `Key: ${i.key}`));
-    tip.hidden = false;
-    const r = b.getBoundingClientRect(), w = Math.min(280, innerWidth - 16);
-    tip.style.width = w + 'px';
-    tip.style.left = Math.max(8, Math.min(innerWidth - w - 8, r.left + r.width / 2 - w / 2)) + 'px';
-    tip.style.bottom = (innerHeight - bar.getBoundingClientRect().top + 8) + 'px';
-    clearTimeout(tip._t); tip._t = setTimeout(() => { tip.hidden = true; }, 4000);
+    const id = b.dataset.act, i = INFO[id]; if (!i) return;
+    closePicker();
+    const ov = el('div', 'sp-ov'); ov.id = 'moveSheet'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-label', i.name);
+    const sh = el('div', 'sp-sheet');
+    const head = el('div', 'sp-head'); head.append(el('b', null, i.name), el('small', null, `Key: ${i.key}`));
+    const x = el('button', 'sp-x', '×'); x.type = 'button'; x.setAttribute('aria-label', 'Close'); x.addEventListener('click', closePicker);
+    head.append(x);
+    sh.append(head, el('p', 'sp-desc', i.desc));
+    if (typeof trainCard === 'function' && MOVE[id]) { const c = trainCard(MOVE[id]); c.onLeave = closePicker; sh.append(c); ov._card = c; }
+    ov.append(sh);
+    ov.addEventListener('pointerdown', e => { if (e.target === ov) closePicker(); });
+    ov.addEventListener('keydown', e => { if (e.key === 'Escape') closePicker(); });
+    document.body.append(ov); pick = ov;
+    (sh.querySelector('.tr-go') || x).focus();
   }
 
   // ---- the ability picker (a small sheet over the fight; the game waits while it is open) ----
   let pick = null;
   function closePicker() { if (!pick) return; pick.remove(); pick = null; update(); }
+  // the open sheet's Training block stays live (gold comes in; the game is paused, so a timer)
+  setInterval(() => { try { if (pick && pick._card) pick._card._up(); } catch (e) {} }, 400);
   function openPicker(slot) {
-    closePicker(); tip.hidden = true;
+    closePicker();
     const k = soloHero(); if (!k) return;
     const ov = el('div', 'sp-ov'); ov.id = 'abPicker'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-label', `Ability slot ${slot + 1}`);
     const sh = el('div', 'sp-sheet');
@@ -113,11 +131,13 @@
     head.append(x);
     sh.append(head);
     const eq = soloEquipped();
+    // W2-A: the slot's ability, its Training level and a Train button
+    if (eq[slot] && typeof trainCard === 'function') { const c = trainCard(eq[slot]); c.onLeave = closePicker; sh.append(c); ov._card = c; }
     for (const id of soloAbilities(k)) {
       const a = SOLO_ABILITIES[id], where = eq.indexOf(id);
       const r = el('button', 'sp-ab' + (where === slot ? ' on' : '')); r.type = 'button'; r.dataset.ab = id;
       const cv = el('canvas', 'sp-ic px'); cv.width = 12; cv.height = 12; drawIc(cv, ICON[id] || ICON.fire);
-      const t = el('div', 'sp-t'); t.append(el('b', null, a.name), el('span', null, a.line), el('small', null, `Cooldown ${a.cd} s` + (where >= 0 ? ` · in slot ${where + 1}` : '')));
+      const t = el('div', 'sp-t'); t.append(el('b', null, a.name), el('span', null, a.line), el('small', null, `Lv ${typeof trainLv === 'function' ? trainLv(id) : 0} · cooldown ${+(typeof trainAbCd === 'function' ? trainAbCd(id, a.cd) : a.cd).toFixed(1)} s` + (where >= 0 ? ` · in slot ${where + 1}` : '')));
       r.append(cv, t);
       r.addEventListener('click', () => { soloEquip(slot, id); try { save(); } catch (e) {} closePicker(); });
       sh.append(r);
@@ -192,7 +212,7 @@
   let t = 0;
   function update() {
     const show = soloOn() && !!soloHero() && target() === 'mob' && !!(S.party && S.party.chosen);
-    if (bar.hidden === show) { bar.hidden = !show; if (!show) { tip.hidden = true; closePicker(); } }
+    if (bar.hidden === show) { bar.hidden = !show; if (!show) closePicker(); }
     if (badge.hidden === show) badge.hidden = !show;
     if (!show) return;
     setBadge();
