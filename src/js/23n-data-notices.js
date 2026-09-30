@@ -64,6 +64,8 @@ const NOTICES = [
   { id: 'stash-wait', re: /^(Storehouse full\. Needs room|The team is back\. )/, site: /toast\((stashNeed\(|`The team is back\. \$\{stashNeed)/, ch: 'bell' },
   { id: 'store-full', re: /^Storehouse full: /, ch: 'log', merge: ms => `Storehouse full: ${ms.map(m => m.slice(16, -1)).join(', ')}.` },
   { id: 'store-move', re: / is full\. Your hero moves on to the /, ch: 'bell' },
+  // turn UI (Claude, 2026-09-30): the Journal's test switch; the player just pressed it and sees it change
+  { id: 'turn-test', re: /^Turn-based fights are (on in zone 1|off)\.$/, ch: 'none', why: 'the player just flipped the test switch and sees it' },
   // things the player just did, and sees happen
   { id: 'did', ch: 'none', why: 'the player just did it and sees the result',
     re: /^(Equipped |Salvaged |.* upgraded\.$|Reforged: |Transmuted |.* took the |Brewed a |.*: .* for 20 minutes\.$|You took the Dare|You dropped the Dare|Weekly goal claimed|The trader sells you|.* set out: |.* rises to rank |.*: bought\.$|Every star is dark again|.* is lit\.$|.* now carries |.* carries the .* mark\.$|You walk on as a |Your hero is now known as |You walk the path of the |The Mirror of Embers shows you)/ },

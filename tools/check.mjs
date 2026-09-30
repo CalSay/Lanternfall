@@ -6706,6 +6706,50 @@ if (section('hunting hidden (C24 browser)')) try {
 
 
 // ---- C20: default-off, zone-one turn combat and shared away resolver ----
+// ---- turn UI (Claude, 2026-09-30): the versus card, turn strip, timing bar and the Journal test switch on C20's events ----
+if (section('turn UI (browser)')) try {
+  const { pw, exe } = browserTools, distFile = path.join(ROOT, 'dist', 'lanternfall.html');
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('turn UI: Playwright, Chromium or dist not available');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe });
+    try {
+      const run = async (w, h, test) => {
+        const ctx = await browser.newContext({ viewport: { width: w, height: h } }), page = await ctx.newPage(), errors = [];
+        page.on('pageerror', e => errors.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        if (test) await ctx.addInitScript(() => { try { localStorage.setItem('lanternfall.test.turns', '1'); } catch (e) {} });
+        await page.goto('http://lf.test/'); await page.waitForTimeout(600);
+        await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go');
+        const X = s => page.evaluate(s => window.__t.x(s), s), seen = { card: '', strip: false, bar: false, cdTurns: false };
+        await X('S.onboard && (S.onboard.tips = false, S.onboard.all = true); true');   // the guide's combat lessons are for legacy fights (the prototype is for a played save)
+        for (let i = 0; i < 80 && !(seen.card && seen.strip && seen.bar); i++) {
+          await page.waitForTimeout(100);
+          const st = JSON.parse(await X(`JSON.stringify({ card: document.querySelector('.tv-card').hidden ? '' : document.querySelector('.tv-card').textContent,
+            strip: !document.querySelector('.tv-strip').hidden && document.querySelectorAll('.tv-strip .tv-slot img').length === 4,
+            bar: !document.querySelector('.tv-time').hidden, q: (document.querySelector('#soloBar .sb-ab0 .sb-n') || {}).textContent || '', cd: turnCombatSnapshot().cooldowns.echo })`));
+          if (st.card && !seen.card) seen.card = st.card;
+          if (st.strip) seen.strip = true;
+          if (st.bar) seen.bar = true;
+          if (st.cd > 0 && st.q === String(st.cd)) seen.cdTurns = true;
+        }
+        const out = { seen, saveHasFlag: await X('JSON.stringify(S).includes("test.turns")'), errors };
+        await ctx.close(); return out;
+      };
+      const on = await run(844, 390, true);
+      assert(/Wren/.test(on.seen.card) && /VS/.test(on.seen.card) && /Haste \d+/.test(on.seen.card) && /(You go first|goes first)/.test(on.seen.card), `turn UI 844x390: the versus card names both sides, their Haste and who goes first (${JSON.stringify(on.seen.card)})`);
+      assert(on.seen.strip && on.seen.bar, `turn UI 844x390: the turn strip shows four portraits and the timing bar shows on the foe's wind-up (${JSON.stringify(on.seen)})`);
+      assert(on.seen.cdTurns, 'turn UI 844x390: the Echo slot shows its cooldown in turns during a turn fight');
+      assert(!on.saveHasFlag && !on.errors.length, 'turn UI: the test switch lives outside the save, and no page errors' + (on.errors.length ? ': ' + on.errors[0] : ''));
+      const port = await run(360, 740, true);
+      assert(/VS/.test(port.seen.card) && port.seen.strip && !port.errors.length, 'turn UI 360x740: the versus card and turn strip work in portrait');
+      const off = await run(844, 390, false);
+      assert(!off.seen.card && !off.seen.strip && !off.errors.length, 'turn UI: with the switch off no versus card or turn strip appears (legacy fights)');
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('turn UI crashed: ' + (e.stack || e)); }
+
 if (section('C20 turn combat (core)')) try {
   const g = loadCore({ seed: 2020 }), E = src => g.eval(src);
   assert(E('TURN_TUNE.on === 0 && !turnCombatOn() && SOLO_TUNE.turnParryWindow === 0.18 && SOLO_TUNE.turnDodgeWindow === 0.35'), 'C20: prototype defaults off; owner-approved manual windows are exposed as knobs');

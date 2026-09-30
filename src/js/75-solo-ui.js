@@ -247,6 +247,15 @@ var soloIconURL = () => '';
     // a telegraphed hit is coming: Parry and Dodge glow (the stage ring shows when)
     bParry.classList.toggle('live', s.tele === 'heavy');
     bDodge.classList.toggle('live', s.tele === 'heavy' || s.tele === 'zone' || s.tele === 'slam');
+    // C20 turn fights (75-turn-ui): cooldowns count in turns; hero actions only on the hero's turn, defence on the foe's wind-up
+    const tb = typeof turnBarInfo === 'function' ? turnBarInfo() : null;
+    if (tb) {
+      for (let i = 0; i < 3; i++) { const o = s.abs[i], b = bAbs[i]; if (!o.id) continue; const cd = tb.cds[o.id] || 0; setCd(b, cd, tb.max(o.id)); setN(b, cd ? String(cd) : ''); b.classList.toggle('ready', !cd && tb.heroTurn); }
+      setCd(bAtk, tb.cds.attack || 0, tb.max('attack'));
+      for (const b of [bAtk, ...bAbs]) b.classList.toggle('off', !tb.heroTurn);
+      for (const b of [bParry, bDodge]) { b.classList.toggle('off', !tb.windup); b.classList.toggle('live', tb.windup); }
+      setN(bDodge, ''); setN(bParry, '');
+    }
   }
   bAtk.setAttribute('aria-label', 'Attack (D). ' + INFO.atk.desc);
   bParry.setAttribute('aria-label', 'Parry (A). ' + INFO.parry.desc);

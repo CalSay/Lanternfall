@@ -1,0 +1,41 @@
+/* 75-turn-ui: the turn-based prototype's versus card, turn strip and timing bar (C20). The strip sits under the
+   foe's name and HP bar at the top of the stage. */
+.tv-card { position: absolute; inset: 0; z-index: 6; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  background: rgba(10, 7, 14, .78); pointer-events: none; }
+.tv-card[hidden] { display: none; }
+.tv-row { display: flex; align-items: center; gap: 14px; }
+.tv-side { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 104px; }
+.tv-face { width: 72px; height: 72px; display: grid; place-items: center; background: #16111C; border: 2px solid #0B0810; box-shadow: inset 0 0 0 1px #3A3046; }
+.tv-side.foe .tv-face { box-shadow: inset 0 0 0 1px #6A2A30; }
+.tv-img { max-width: 64px; max-height: 64px; image-rendering: pixelated; }
+.tv-name { font: 600 calc(12px * var(--display-k, 1))/1.1 var(--display); color: var(--bone, #EDE3D1); text-align: center; letter-spacing: .03em; }
+.tv-haste { font: calc(11px * var(--display-k, 1))/1 var(--display); color: #B8AEC4; }
+.tv-vs { font: 700 calc(26px * var(--display-k, 1))/1 var(--display); color: var(--gold, #F2C14E); text-shadow: 2px 2px 0 #0B0810; }
+.tv-banner { font: 700 calc(15px * var(--display-k, 1))/1.1 var(--display); color: #1A1420; background: var(--gold, #F2C14E); padding: 3px 10px;
+  box-shadow: inset 0 0 0 1px #FFF3C4; letter-spacing: .04em; }
+.tv-card.foe-first .tv-banner { color: #FBE9E7; background: #A8323A; box-shadow: inset 0 0 0 1px #E08A8F; }
+.tv-card.play:not(.calm) .tv-side.hero { animation: tv-in-l var(--tv-dur, 1.2s) steps(6) both; }
+.tv-card.play:not(.calm) .tv-side.foe { animation: tv-in-r var(--tv-dur, 1.2s) steps(6) both; }
+.tv-card.play { animation: tv-fade var(--tv-dur, 1.2s) linear both; }
+@keyframes tv-in-l { 0% { transform: translateX(-40px); opacity: 0; } 25%, 100% { transform: none; opacity: 1; } }
+@keyframes tv-in-r { 0% { transform: translateX(40px); opacity: 0; } 25%, 100% { transform: none; opacity: 1; } }
+@keyframes tv-fade { 0% { opacity: 0; } 12%, 82% { opacity: 1; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .tv-card.play .tv-side { animation: none !important; } }
+.tv-top { position: absolute; left: 50%; top: 52px; transform: translateX(-50%); z-index: 5; display: flex; flex-direction: column; align-items: center; gap: 2px; pointer-events: none; }
+.tv-top[hidden] { display: none; }
+.tv-strip { display: flex; gap: 3px; }
+.tv-strip[hidden] { display: none; }
+.tv-slot { width: 22px; height: 22px; display: grid; place-items: center; background: #16111C; border: 2px solid #0B0810; opacity: .7; }
+.tv-slot.foe { box-shadow: inset 0 0 0 1px #6A2A30; }
+.tv-slot.hero { box-shadow: inset 0 0 0 1px #3A3046; }
+.tv-slot.now { width: 28px; height: 28px; opacity: 1; box-shadow: inset 0 0 0 1px var(--gold, #F2C14E), 0 0 6px rgba(242, 193, 78, .5); }
+.tv-mini { max-width: 20px; max-height: 20px; image-rendering: pixelated; }
+.tv-slot.now .tv-mini { max-width: 24px; max-height: 24px; }
+.tv-n { font: calc(10px * var(--display-k, 1))/1 var(--display); color: #B8AEC4; text-shadow: 1px 1px 0 #0B0810; }
+.tv-time { position: relative; width: 120px; height: 6px; background: #16111C; border: 1px solid #0B0810; }
+.tv-time[hidden] { display: none; }
+.tv-time i { position: absolute; top: 0; bottom: 0; display: block; }
+.tv-fill { left: 0; background: #E0D6C2; opacity: .8; }
+.tv-dodge { background: rgba(120, 170, 255, .55); }
+.tv-parry { background: var(--gold, #F2C14E); }
+.tv-switch[aria-pressed="true"] { background: var(--gold, #F2C14E); color: #1A1420; }
