@@ -47,6 +47,7 @@ const HANDS_RAR = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
 const HANDS_RAR_NAME = { common: 'Common', uncommon: 'Uncommon', rare: 'Rare', epic: 'Epic', legendary: 'Legendary' };
 // Fishing joins with the Coast: add 'fish' here and a TOOL_OF_SKILL row (55-tools).
 const HANDS_SKILLS = ['mine', 'wood', 'forage'];
+const handsApplicantSkills = () => huntingOn() ? HANDS_SKILLS.concat('hunt') : HANDS_SKILLS;
 
 // y: yield (additive, +0.10 = +10%), sh: shift hours added, sx: shift multiplier, fam: families the
 // yield applies to, tiers: node grades it applies to, clock: [from, to) device hours at the initial
@@ -61,6 +62,7 @@ const HANDS_TRAITS = [
   { id: 'early', n: 'Early Riser', txt: '+20% yield when sent 05:00–11:00, including queued shifts', y: 0.20, clock: [5, 11] },
   { id: 'owl', n: 'Night Owl', txt: 'Works a four-hour shift at night too' },
   { id: 'stone', n: 'Stonecutter', txt: '+20% yield on Crystal', y: 0.20, fam: ['crystal'] },
+  { id: 'tracker', n: 'Tracker', txt: '+20% Hide', y: 0.20, fam: ['hide'] },
   { id: 'green', n: 'Green Thumb', txt: '+20% yield on Fibre and Herbs', y: 0.20, fam: ['fibre', 'herb'] },
   { id: 'lucky', n: 'Lucky', txt: 'Each shift: 2% chance to bring 1 Trophy' },
   { id: 'friendly', n: 'Friendly', txt: '+10% yield while another Friendly Hand is out too' },

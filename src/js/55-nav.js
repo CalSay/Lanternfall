@@ -34,10 +34,10 @@ const NAV_TUNE = {
   recentShow: 3,            // chips in the switcher
   needEvery: 2000           // ms between "what the next build waits on" scans
 };
-const NAV_SKILLS = ['mine', 'wood', 'forage'];
-const NAV_FAMS = { mine: ['ore', 'crystal'], wood: ['wood'], forage: ['fibre', 'herb'] };
-const NAV_VERB = { ore: 'Mine', crystal: 'Mine', wood: 'Chop', fibre: 'Cut', herb: 'Pick' };
-const NAV_NOUN = { ore: 'ore', crystal: 'crystal', wood: 'wood', fibre: 'fibre', herb: 'herbs' };
+const NAV_SKILLS = ['mine', 'wood', 'forage', 'hunt'];
+const NAV_FAMS = { mine: ['ore', 'crystal'], wood: ['wood'], forage: ['fibre', 'herb'], hunt: ['hide'] };
+const NAV_VERB = { ore: 'Mine', crystal: 'Mine', wood: 'Chop', fibre: 'Cut', herb: 'Pick', hide: 'Hunt' };
+const NAV_NOUN = { ore: 'ore', crystal: 'crystal', wood: 'wood', fibre: 'fibre', herb: 'herbs', hide: 'Hide' };
 let navSkillOpen, navSkills, navLast, navNow, navRate, navFullIn, navRecent, bestNodes, navGo;
 {
   registerState('nav', { v: 1, last: { mine: null, wood: null, forage: null }, recent: [] });
@@ -49,14 +49,14 @@ let navSkillOpen, navSkills, navLast, navNow, navRate, navFullIn, navRecent, bes
   };
   const famsOf = sk => NAV_FAMS[sk] || [];
   const validNode = nd => !!nd && typeof nd === 'object' && !!CRAFT_NODES[nd.kind] && nd.t >= 1 && nd.t <= 5 && (nd.t | 0) === nd.t;
-  const nodeOpen = nd => validNode(nd) && skillTierOpen(skillOf(nd.kind), nd.t);
+  const nodeOpen = nd => validNode(nd) && craftNodeVisible(nd.kind, nd.t) && skillTierOpen(skillOf(nd.kind), nd.t);
   const same = (a, b) => !!a && !!b && a.kind === b.kind && a.t === b.t;
   const gathering = () => S.activity === 'gather';
   const coldUnlit = () => typeof hearthCold === 'function' && hearthCold() && typeof hearthLit === 'function' && !hearthLit();
   const feat = id => typeof isUnlocked !== 'function' || isUnlocked(id);
 
   navSkillOpen = sk => {
-    if (!NAV_FAMS[sk]) return false;
+    if (!NAV_FAMS[sk] || (sk === 'hunt' && !huntingVisible())) return false;
     if (gathering() && skillOf(S.node.kind) === sk) return true;   // the skill you work always shows
     if (sk === 'forage') return feat('forage');
     if (!feat('gather')) return false;
@@ -65,12 +65,12 @@ let navSkillOpen, navSkills, navLast, navNow, navRate, navFullIn, navRecent, bes
   navSkills = () => NAV_SKILLS.filter(navSkillOpen);
 
   navLast = sk => {
-    const fams = famsOf(sk); if (!fams.length) return null;
+    const fams = famsOf(sk); if (!fams.length || (sk === 'hunt' && !huntingVisible())) return null;
     if (gathering() && skillOf(S.node.kind) === sk && validNode(S.node)) return { kind: S.node.kind, t: S.node.t };
     const l = N().last[sk];
     if (nodeOpen(l) && fams.includes(l.kind)) return { kind: l.kind, t: l.t };
     if (skillOf(S.node.kind) === sk && nodeOpen(S.node)) return { kind: S.node.kind, t: S.node.t };
-    return { kind: fams[0], t: skillTopTier(sk) };
+    return { kind: fams[0], t: Math.min(skillTopTier(sk), sk === 'hunt' ? HUNT_BEASTS.length : 5) };
   };
 
   navRate = (kind, t) => 60 / nodeTime(kind, t) * nodeYieldAvg(kind) * mod('yield:' + kind);
@@ -159,10 +159,10 @@ let navSkillOpen, navSkills, navLast, navNow, navRate, navFullIn, navRecent, bes
     return needFor;
   };
   bestNodes = sk => {
-    const fams = famsOf(sk); if (!fams.length) return [];
-    const top = skillTopTier(sk), out = [];
+    const fams = famsOf(sk); if (!fams.length || (sk === 'hunt' && !huntingVisible())) return [];
+    const top = Math.min(skillTopTier(sk), sk === 'hunt' ? HUNT_BEASTS.length : 5), out = [];
     const add = (kind, t, why) => {
-      if (out.length >= 2 || !fams.includes(kind) || t > top || t < 1) return;
+      if (out.length >= 2 || !craftNodeVisible(kind, t) || !fams.includes(kind) || t > top || t < 1) return;
       if (gathering() && same(S.node, { kind, t })) return;
       if (typeof stashFull === 'function' && stashFull(kind, t)) return;
       if (out.some(o => same(o, { kind, t }))) return;

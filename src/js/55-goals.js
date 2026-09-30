@@ -170,6 +170,7 @@ var forgeGoalPicks = 0;
   const skillNext = () => {
     let best = null;
     for (const k of Object.keys(SKILL)) {
+      if (k === 'hunt' && !huntingVisible()) continue;
       const s = S.skills[k]; if (!s) continue;
       const p = Math.min(0.99, s.xp / skillNeed(s.lv, k));
       if (!best || p > best.p) best = { k, s, p };

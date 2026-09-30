@@ -7,7 +7,7 @@
 // gather branch (50-sim, generic), the 'spawn' event (50-sim) and S.craft (55-crafting).
 //
 // Families: Ore and Crystal (Mining: veins, geodes), Wood (Woodcutting), Fibre and Herbs
-// (Foraging: patches, beds). Hide and Essence come from fighting only. Node tiers unlock at
+// (Foraging: patches, beds). C24 adds opt-in Hide Hunting; Essence stays fight-only. Node tiers unlock at
 // NODE_REQ for every row. Foraging earns x2 XP while it is below max(Mining, Woodcutting).
 //
 // Exposed names:
@@ -32,6 +32,13 @@
 // Save: none of its own. Trophies go to S.craft.troph and champions to S.craft.champ (K6's state).
 
 const GATHER_KINDS = ['ore', 'crystal', 'wood', 'fibre', 'herb'];
+// Public consumers retain the shipped set until the art pack is approved.
+const gatherKinds = () => huntingOn() ? GATHER_KINDS.concat('hide') : GATHER_KINDS;
+// Save-code imports reload the game. Normalize an unreleased test selection before nav,
+// the first frame or boot-away rewards can observe it; preserve earned skill and gear records.
+if (S.node && S.node.kind === 'hide' && !craftNodeVisible('hide', S.node.t)) {
+  S.activity = 'fight'; S.node = { kind: 'ore', t: 1 }; S.gProg = 0;
+}
 let homeFamily, homeBonus, sigDropChance, awaySigDrops, champChance, champsAway, addTrophy, glint, tapGlint, whereToGet;
 
 {
@@ -45,8 +52,8 @@ let homeFamily, homeBonus, sigDropChance, awaySigDrops, champChance, champsAway,
 
   // ---------------- home ground ----------------
   homeFamily = (z = S.zone) => zoneHome(z);
-  homeBonus = (fam, z = S.zone) => zoneHome(z) !== fam ? 0 : stars(z) >= CRAFT_HOME_BONUS.stars ? CRAFT_HOME_BONUS.starred : CRAFT_HOME_BONUS.base;
-  for (const fam of GATHER_KINDS) addModifier('yield:' + fam, () => 1 + homeBonus(fam));
+  homeBonus = (fam, z = S.zone) => !(fam === 'hide' ? huntingOn() && ['bat', 'bones', 'beetle'].includes(TYPES[zoneType(z)].key) : zoneHome(z) === fam) ? 0 : stars(z) >= CRAFT_HOME_BONUS.stars ? CRAFT_HOME_BONUS.starred : CRAFT_HOME_BONUS.base;
+  for (const fam of GATHER_KINDS.concat('hide')) addModifier('yield:' + fam, () => 1 + homeBonus(fam));
 
   // Foraging catch-up: x2 XP while below the best of Mining and Woodcutting.
   addModifier('skillXp:forage', () => S.skills.forage.lv < Math.max(...CRAFT_CATCHUP.forage.map(k => S.skills[k].lv)) ? CRAFT_CATCHUP.mult : 1);
@@ -187,7 +194,7 @@ let homeFamily, homeBonus, sigDropChance, awaySigDrops, champChance, champsAway,
   const zoneTypesFor = fam => CRAFT_HOME.map((f, i) => f === fam ? ZONES[i] : null).filter(Boolean);
   whereToGet = (fam, t = 1) => {
     const nk = CRAFT_NODES[fam], name = matName(fam, t);
-    if (nk) {
+    if (nk && craftNodeVisible(fam, t)) {
       const home = zoneTypesFor(fam), node = NODE_NAMES[fam][t - 1];
       const drop = Object.entries(CRAFT_SIG_DROPS).filter(([, d]) => d.fam === fam).map(([k]) => TYPES[typeIndex(k)].name);
       return `${name}: ${SKILL[nk.skill]} level ${skillReq(nk.skill, t)}, ${node}.` + (home.length ? ` +25% while camped in ${home.join(' or ')}.` : '') + (drop.length ? ` ${drop.join(' and ')} drop a few.` : '');

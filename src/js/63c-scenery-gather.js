@@ -29,7 +29,7 @@
 let gatherTheme, gatherSpot, gatherHeroX, gatherWalking, gatherDraw, gatherRight;
 {
   const THEME = { ore: 'gmine', crystal: 'gglade', wood: 'gwoods', fibre: 'gmeadow', herb: 'gmeadow' };
-  gatherTheme = kind => THEME[kind] || (skillOf(kind) === 'mine' ? 'gmine' : 'gwoods');
+  gatherTheme = kind => kind === 'hide' ? null : THEME[kind] || (skillOf(kind) === 'mine' ? 'gmine' : 'gwoods');
   const REDUCED = typeof reduced !== 'undefined' ? reduced : false;
 
   // =====================================================================================
@@ -742,6 +742,7 @@ let gatherTheme, gatherSpot, gatherHeroX, gatherWalking, gatherDraw, gatherRight
     else warming = false;
   }
   function warm(kind) {
+    if (kind === 'hide') return; // C24 has no scene until the whole art pack is approved.
     if (typeof stageStats !== 'function' || typeof sceneSteps !== 'function' || typeof idleTask !== 'function') return;
     const st = stageStats(); if (!st || !st.SW) return;
     const SCH = st.SH >= 210 ? st.SH : Math.round(st.GY / 0.8), th = gatherTheme(kind), key = th + '|' + st.SW + 'x' + SCH;
