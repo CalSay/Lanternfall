@@ -264,8 +264,10 @@ function awayBase(r) {
     const q = S.turn || (S.turn = { awayKillsCarry: 0, awayEssCarry: 0, awayProfile: null, awaySample: null, awaySig: '' });
     // Level and XP can change as a claim is credited. Keep the sampled profile across split
     // claims and save/reload, but invalidate it when the player changes gear, training or zone.
-    const sig = JSON.stringify([S.solo.hero, S.zone, S.equip, S.solo.tr && S.solo.tr[S.solo.hero],
-      TURN_TUNE.foeHpX, TURN_TUNE.foeAtkX, TURN_TUNE.essenceX]);
+    // Version/tuning changes between builds must invalidate a persisted scratch sample.
+    // XP and mastery are intentionally excluded to keep split claims on one anchored profile.
+    const sig = JSON.stringify([1, S.solo.hero, S.zone, S.equip,
+      S.solo.tr && S.solo.tr[S.solo.hero], TURN_TUNE, SOLO_TUNE, COMBAT_TUNE]);
     let p = q.awaySig === sig && q.awayProfile && q.awayProfile.foeHp > 0 ? q.awayProfile : null;
     if (!p) { p = turnCombatProfile(); if (!p) { spawn(); p = turnCombatProfile(); }
       if (p) { q.awayProfile = p; q.awaySample = null; q.awaySig = sig; } }

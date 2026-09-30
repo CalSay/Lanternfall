@@ -6730,6 +6730,8 @@ if (section('C20 turn combat (core)')) try {
   assert(one.turnCombat && half1.turnCombat && half2.turnCombat && one.turnCombat.sampledSeconds===3600 && a.H('__awayN')===1 && b.H('__awayN')===2, 'C20: away Auto reports generated and stored Essence and emits one reward event per claim');
   assert(one.turnCombat.kills===half1.turnCombat.kills+half2.turnCombat.kills && one.turnCombat.generatedEss===half1.turnCombat.generatedEss+half2.turnCombat.generatedEss, 'C20: fractional carry makes a one-hour claim equal two half-hour claims');
   assert(a.H('__sampleCalls===1') && b.H('__sampleCalls===1'), 'C20: split away claims reuse the fixed one-hour combat sample');
+  const tuned=mk(2026); tuned.H('awayGains(60)'); tuned.H('TURN_TUNE.heroX.wren+=.01;awayGains(60)');
+  assert(tuned.H('__sampleCalls===2'), 'C20: changing a turn balance knob invalidates the persisted away sample');
   const whole=mk(2022), split=mk(2022), twoHours=whole.H('awayGains(7200)'), firstHour=split.H('awayGains(3600)');
   split.H('save()');
   const re=loadCore({seed:2022,storage:memoryStorage(split.h.storage.dump())}), R=x=>re.eval(x);
