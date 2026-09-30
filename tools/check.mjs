@@ -5283,6 +5283,110 @@ if (section('browser tooling portability (C5)')) try {
   }
 } catch (e) { fail('C5 browser tooling portability crashed: ' + (e.stack || e)); }
 
+// ---- C5: import recovery runs the real save UI and boot lifecycle against a fallible storage adapter ----
+if (section('save import recovery UI (C5)')) try {
+  const { coreFiles } = await import('./lib/core.mjs');
+  const T0 = Date.UTC(2026, 8, 28, 12), games = [];
+  const stub = `Date.__t=${T0};Date.now=()=>Date.__t;
+    class SaveNode {
+      constructor(t='div',c='',s=''){this.tagName=t.toUpperCase();this.className=c||'';this.children=[];this.events={};this.attrs={};this.style={};this._text=s||'';this.value='';this.disabled=false;}
+      append(...ns){for(const n of ns){n.remove?.();this.children.push(n);n.parentNode=this;}} appendChild(n){this.append(n);return n;}
+      remove(){if(this.parentNode)this.parentNode.children=this.parentNode.children.filter(n=>n!==this);this.parentNode=null;}
+      after(n){n.remove?.();const p=this.parentNode,i=p.children.indexOf(this);p.children.splice(i+1,0,n);n.parentNode=p;}
+      contains(n){return this===n||this.children.some(c=>c.contains(n));}
+      set textContent(s){this._text=String(s);for(const n of this.children)n.parentNode=null;this.children=[];} get textContent(){return this._text+this.children.map(n=>n.textContent).join('');}
+      setAttribute(k,v){this.attrs[k]=String(v);} getAttribute(k){return this.attrs[k]??null;}
+      addEventListener(k,f){(this.events[k]||(this.events[k]=[])).push(f);} fire(k){for(const f of this.events[k]||[])f({target:this});} click(){if(!this.disabled)this.fire('click');} focus(){document.activeElement=this;} select(){this.selected=true;}
+      querySelectorAll(s){const a=[],match=n=>s[0]==='.'?n.className.split(' ').includes(s.slice(1)):s[0]==='#'?n.id===s.slice(1):n.tagName===s.toUpperCase();const walk=n=>{for(const c of n.children){if(match(c))a.push(c);walk(c);}};walk(this);return a;}
+      querySelector(s){return this.querySelectorAll(s)[0]||null;}
+    }
+    const __sections={},__events={},__timers=[];
+    const document={body:new SaveNode('body'),activeElement:null,hidden:false,createElement:t=>new SaveNode(t),execCommand:()=>false,addEventListener:(k,f)=>{__events[k]=f;}};
+    const window={};window.self=window;window.top=window;
+    const navigator={},location={reload(){__reloads++;if(__reloadMode==='throw')throw new Error('reload blocked');}};
+    let __reloads=0,__reloadMode='noop';
+    const el=(t,c,s)=>new SaveNode(t,c,s),$=id=>document.body.querySelector('#'+id),registerSection=(t,s)=>{__sections[s.id]=s;};
+    const performance={now:()=>0},resize=()=>{},updatePortrait=()=>{},initMenus=()=>{},connect=()=>{},flush=()=>{},maintainBoss=()=>{},pushPresence=()=>{},showAwayReport=()=>{};
+    const addEventListener=(k,f)=>{__events[k]=f;},requestAnimationFrame=()=>{},queueMicrotask=f=>f(),setTimeout=(f,ms)=>{__timers.push({f,ms,type:'timeout'});return __timers.length;},setInterval=(f,ms)=>{__timers.push({f,ms,type:'interval'});return __timers.length;};
+  `;
+  const mk = (writeInitial = true) => {
+    const store = memoryStorage(), control = { mode: 'normal', writes: [] };
+    const adapter = {
+      get(k) { if(control.mode==='bad-read' && k===KEY)return 'mismatched readback';return store.get(k); },
+      set(k,v) { control.writes.push([k,v]);if(control.mode==='throw')throw new Error('storage blocked');if(control.mode!=='swallow')store.set(k,v); }
+    };
+    const g = loadCore({ seed: 7505, storage: adapter, prelude: stub, files: coreFiles().concat(['75-savecode-ui.js','90-boot.js']) }); games.push(g);
+    g.eval('globalThis.__panel=el("section");__panel.id="log";document.body.append(__panel);__sections.savecode.mount(__panel);S.name="Current game";S.gold=123;');
+    if(writeInitial)g.fn.save();
+    g.eval('globalThis.__candidate=JSON.parse(JSON.stringify(S));__candidate.name="Imported game";__candidate.gold=456;globalThis.__code=encodeSave(__candidate);globalThis.__candidateRaw=JSON.stringify(decodeSave(__code).data)');
+    return { g, control, store, E: s => g.eval(s) };
+  };
+  const click = (E,label) => E(`__panel.querySelectorAll("button").find(b=>b.textContent===${JSON.stringify(label)}).click()`);
+  const prepare = E => {
+    E('const area=__panel.querySelector(".savecode-import");area.value=__code;area.fire("input")');
+    click(E,'Check');click(E,'Replace my save');
+  };
+  const lifecycle = E => E('S.gold+=999;save();__timers.find(t=>t.type==="interval"&&t.ms===5000).f();__events.pagehide();document.hidden=true;__events.visibilitychange();document.hidden=false');
+  {
+    const { E, control, store } = mk();
+    click(E,'Copy save code');click(E,'Copy save code');
+    assert(E('__panel.querySelectorAll(".savecode-fallback").length===1 && __panel.querySelector(".savecode-fallback").selected && decodeSave(__panel.querySelector(".savecode-fallback").value).ok'), 'C5 UI: repeated clipboard failure leaves one selected, valid manual-copy field');
+    const original = store.get(KEY);prepare(E);
+    assert(store.get(KEY)===original && E('S.name==="Current game" && __reloads===0'), 'C5 UI: checking and arming import neither writes the save nor changes the live game');
+    const backup = E('JSON.stringify(S)'), candidate = E('__candidateRaw');
+    click(E,'Yes, replace it');
+    assert(store.get(KEY)===candidate && E('__reloads===1 && S.name==="Current game" && S.gold===123'), 'C5 UI: confirmed import verifies exact candidate bytes before requesting reload');
+    assert(E('__panel.querySelector(".savecode-import").disabled && __panel.querySelectorAll("button").some(b=>b.textContent==="Retry reload")'), 'C5 UI: a no-op reload keeps a visible recovery state and prevents a second import');
+    lifecycle(E);
+    assert(store.get(KEY)===candidate, 'C5 UI: real autosave, pagehide and visibility handlers cannot overwrite the verified import');
+    click(E,'Copy backup of my game');click(E,'Copy backup of my game');
+    assert(E('__panel.querySelectorAll(".savecode-fallback").length===1 && decodeSave(__panel.querySelector(".savecode-fallback").value).data.gold===123 && decodeSave(__panel.querySelector(".savecode-fallback").value).data.name==="Current game"'), 'C5 UI: pending recovery can export the captured original game in one reusable manual-copy field');
+    E('storage.set("unrelated.test.key","still works")');
+    assert(store.get('unrelated.test.key')==='still works', 'C5 UI: the pending-import guard only blocks the game save key');
+    click(E,'Retry reload');
+    assert(E('__reloads')===2 && store.get(KEY)===candidate, 'C5 UI: Retry reload rechecks the candidate and does not write it again');
+    click(E,'Cancel and restore my game');
+    assert(store.get(KEY)===backup && E('!__panel.querySelector(".savecode-import").disabled'), 'C5 UI: Cancel restores the exact captured current-game snapshot and releases the guard');
+    E('S.gold=222;__events.pagehide()');
+    assert(JSON.parse(store.get(KEY)).gold===222, 'C5 UI: the real pagehide save resumes after a verified restore');
+  }
+  {
+    const { E, store } = mk();E('__reloadMode="throw"');prepare(E);click(E,'Yes, replace it');
+    const candidate = E('__candidateRaw');lifecycle(E);
+    assert(store.get(KEY)===candidate && E('__panel.textContent.includes("Reload was blocked") && __panel.querySelectorAll("button").some(b=>b.textContent==="Retry reload")'), 'C5 UI: a thrown reload keeps the verified import protected and offers recovery');
+    E('__reloadMode="noop"');click(E,'Retry reload');
+    assert(E('__reloads')===2 && store.get(KEY)===candidate, 'C5 UI: retrying after a blocked reload keeps the same imported bytes');
+    store.set(KEY,'changed by another tab');click(E,'Retry reload');lifecycle(E);
+    assert(E('__reloads')===2 && store.get(KEY)==='changed by another tab' && E('__panel.querySelector(".savecode-import").disabled'), 'C5 UI: a changed stored candidate stops further reloads while keeping the guard');
+  }
+  {
+    const { E, control, store } = mk();prepare(E);const backup = E('JSON.stringify(S)');control.mode='swallow';click(E,'Yes, replace it');
+    assert(E('__reloads')===0 && store.get(KEY)===backup && E('!__panel.querySelector(".savecode-import").disabled'), 'C5 UI: a swallowed import write is detected by readback and never reloads');
+    const h = mk();prepare(h.E);h.control.mode='bad-read';click(h.E,'Yes, replace it');
+    assert(h.E('__reloads')===0 && h.E('__panel.querySelector(".savecode-import").disabled'), 'C5 UI: failed write verification plus failed restore retains the recovery guard');
+    const stored = h.store.get(KEY);lifecycle(h.E);
+    assert(h.store.get(KEY)===stored, 'C5 UI: lifecycle saves remain blocked while restore cannot be verified');
+    h.control.mode='normal';click(h.E,'Restore my game');
+    assert(h.E('!__panel.querySelector(".savecode-import").disabled') && JSON.parse(h.store.get(KEY)).name==='Current game', 'C5 UI: restoring after storage recovers releases the guard only after exact readback');
+  }
+  {
+    const { E, control, store } = mk();prepare(E);const backup = E('JSON.stringify(S)');click(E,'Yes, replace it');const candidate = store.get(KEY);
+    control.mode='swallow';click(E,'Cancel and restore my game');lifecycle(E);
+    assert(store.get(KEY)===candidate && E('__panel.querySelector(".savecode-import").disabled && __panel.textContent.includes("Could not verify the restore")'), 'C5 UI: a failed cancellation leaves the import protected instead of falsely resuming autosave');
+    control.mode='normal';click(E,'Cancel and restore my game');
+    assert(store.get(KEY)===backup && E('!__panel.querySelector(".savecode-import").disabled'), 'C5 UI: retrying cancellation restores the original snapshot once storage accepts writes');
+  }
+  {
+    const { E, control, store } = mk(false);prepare(E);const backup = E('JSON.stringify(S)');control.mode='throw';click(E,'Yes, replace it');
+    assert(E('__reloads')===0 && E('__panel.querySelector(".savecode-import").disabled'), 'C5 UI: throwing storage on a first import enters recovery without attempting reload');
+    click(E,'Copy backup of my game');
+    assert(E('decodeSave(__panel.querySelector(".savecode-fallback").value).data.name==="Current game"'), 'C5 UI: a current-game backup remains exportable even while storage throws');
+    control.mode='normal';click(E,'Restore my game');
+    assert(store.get(KEY)===backup && E('!__panel.querySelector(".savecode-import").disabled'), 'C5 UI: a game without an earlier persisted save recovers its captured live snapshot');
+  }
+  assert(!games.some(g=>g.errors.length), 'C5 UI: save recovery and real lifecycle callbacks produce no handler errors');
+} catch (e) { fail('C5 save import recovery UI crashed: ' + (e.stack || e)); }
+
 // ---- W2-C: the dead leaf systems are gone (pinnacle bosses, legendary powers and circle sets, expeditions and the Map Room, the welcome and skill-pace old-save rules) ----
 // Static: no removed file, global, save field or CSS class is left anywhere in src/. Browser: every tab and sub-view opens with no page error.
 // ---- C5: strict save codec; untrusted data is validated before any load-time migration ----
