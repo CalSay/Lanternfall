@@ -131,8 +131,6 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
     b: { hearth: 0, watch: 0, forge: 1, bench: 1, loom: 1, ench: 1, tavern: 1, library: 0, shrine: 0, store: 0, bunk: 0 },
     builds: [], bless: [], news: [], bty: 0, talk: {}, deco: {}
   });
-  // 55-welcome (plan-2 D3): a save that predates the Camp gets the Hearth its max zone allows, once.
-  if (typeof welcomeApply === 'function') welcomeApply();
   // 55-hearth (H1): a new game starts at a cold Hearth, its stations unbuilt (plots).
   if (typeof hearthApply === 'function') hearthApply();
   if (typeof storeMigrate === 'function') storeMigrate();   // 55-store (H3): old saves get the Storehouse that holds their piles
@@ -305,8 +303,6 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
     if (C().open) return;
     C().open = true; C().b.hearth = Math.max(1, lv('hearth'));
     emit('campOpen', { quiet: !!quiet });
-    const w = typeof welcomeNote === 'function' ? welcomeNote() : null;
-    if (w) { emit('whatsNew', { msg: w.msg, icon: { ic: ['flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }] }, first: true }); return; }
     toast(quiet ? 'Old Hesketh has made camp. See the Camp tab.' : 'Old Hesketh sets down his lamp and lights a fire. "Every road needs a place to come back to." See the Camp tab.', 'good', { ic: ['flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }] }, 'high');
   }
   let firstCheck = true, acc = 1;

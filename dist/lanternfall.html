@@ -6192,9 +6192,7 @@ const SKILL_TUNE = {
   craftNeed: [7, 0.5, 1.04],          // the same for Smithing, Woodcraft, Tailoring, Enchanting
   craftSkills: ['smith', 'bench', 'loom', 'ench'],
   nodeXp: [7, 1],                     // XP a swing at a tier-t node: a x t^b (nodeXp)
-  spdPerLv: 0.02,                     // gathering speed per level above 1 (nodeTime)
-  // The gates before GP1. A save loaded under GP1 keeps every tier these opened for it (55-skillpace).
-  oldNodeReq: [1, 8, 18, 30, 45], oldStationReq: [1, 4, 9, 16, 25]
+  spdPerLv: 0.02                      // gathering speed per level above 1 (nodeTime)
 };
 const NODE_REQ = SKILL_TUNE.nodeReq;
 const SMITH_REQ = SKILL_TUNE.stationReq;
@@ -9084,16 +9082,14 @@ const xpNeed = () => Math.floor(15 * Math.pow(1.3, S.L - 1));
 // curve for a station skill; without k it is the gathering curve.
 const skillCurve = k => SKILL_TUNE.craftSkills.includes(k) ? SKILL_TUNE.craftNeed : SKILL_TUNE.gatherNeed;
 const skillNeed = (lv, k) => { const c = skillCurve(k); return Math.floor(c[0] * Math.pow(lv, c[1]) * Math.pow(c[2] || 1, lv - 1)); };
-// A tier is open when the level reaches its gate, or when the save had it open before GP1
-// (skillKept, 55-skillpace: the old gates' high-water mark). Gathering skills use NODE_REQ,
+// A tier is open when the level reaches its gate. Gathering skills use NODE_REQ,
 // crafting skills CRAFT_STATION_REQ (= SMITH_REQ).
-let skillKept = k => 0;
 const skillReqs = k => SKILL_TUNE.craftSkills.includes(k) ? SMITH_REQ : NODE_REQ;
 const skillReq = (k, t) => skillReqs(k)[t - 1];
 function skillTopTier(k) {
   const sk = S.skills[k], lv = sk ? sk.lv : 1, req = skillReqs(k);
   let t = 1; for (let i = 1; i < req.length; i++) if (lv >= req[i]) t = i + 1;
-  return Math.max(t, Math.min(req.length, skillKept(k) || 0));
+  return t;
 }
 const skillTierOpen = (k, t) => t <= skillTopTier(k);
 // The level that opens the next tier, or 0 when every tier is open.
@@ -11821,7 +11817,6 @@ let hearthCold, hearthLit, hearthScene, hearthCan, hearthLight, hearthPlotOpen, 
   // Decide before 57-camp registers S.camp: a new game has no camp field and no progress.
   const noProgress = () => !(S.totalKills > 0 || S.L > 1 || S.maxZone > 1);
   const isNew = S.camp === undefined && S.hearth === undefined && noProgress();
-  const hadField = S.hearth !== undefined;
   registerState('hearth', { v: 1, cold: 0, lit: 0, said: 0 });
   const Hs = () => S.hearth || (S.hearth = { v: 1, cold: 0, lit: 0, said: 0 });
   let coldStart = false;
@@ -11831,7 +11826,7 @@ let hearthCold, hearthLit, hearthScene, hearthCan, hearthLight, hearthPlotOpen, 
     // SOLO1: the solo hero starts on the road (the guide sends it to the Pine Grove after the first boss)
     if (typeof soloOn === 'function' && soloOn()) { S.node = { kind: 'wood', t: 1 }; S.gProg = 0; }
     else { S.activity = 'gather'; S.node = { kind: 'wood', t: 1 }; S.gProg = 0; }
-  } else if (!hadField) Hs().said = noProgress() && S.camp === undefined ? 1 : 0;   // an old save: one What's new line
+  }
 
   const lv = id => (S.camp && S.camp.b && S.camp.b[id]) || 0;
   hearthCold = () => !!Hs().cold;   // a save that started cold (stays set)
@@ -11930,15 +11925,6 @@ let hearthCold, hearthLit, hearthScene, hearthCan, hearthLight, hearthPlotOpen, 
   on('crafted', e => {
     const d = e && typeof CRAFT_KINDS === 'object' && CRAFT_KINDS[e.kind];
     if (d && d.tool && hearthCold() && typeof onboardDone === 'function') onboardDone('tool');
-  });
-
-  // ---- one What's new line for an old save (spec 8.2 step 6; H3 adds the Storehouse line) ----
-  let first = true;
-  onTick(() => {
-    if (!first) return; first = false;
-    if (hearthCold() || Hs().said) return;
-    Hs().said = 1;
-    emit('whatsNew', { msg: 'Your stations were already built. Tools now have mastery.', icon: { ic: ['anvil', '#D08A4E'] } });
   });
 }
 
@@ -13209,66 +13195,6 @@ function summarizeSave(data) {
   };
 }
 
-// ---- src/js/55-skillpace.js ----
-// 55-skillpace: the save rule for the slower skill pace (task GP1).
-// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
-//
-// GP1 moved the tier gates (SKILL_TUNE in 20-data.js: NODE_REQ, SMITH_REQ) and slowed levels.
-// Players keep their skill levels and XP, and every tier they could already gather or craft at stays
-// open: a save that predates GP1 stores, per skill, the highest tier the OLD gates gave its level
-// (the high-water mark). skillTopTier (40-rules) gates on max(the new rule, that mark).
-//
-//   skillKept(k) -> tier kept from before GP1 (0 when none)   (assigned here; declared in 40-rules)
-//   skillPaceInfo() -> { v, hw, at, kept }   kept: [[skill, tier kept, tier the new gates give]]
-//
-// Save: registerState('skillPace', { v: 0, hw: {}, at: 0, said: 0 }).
-//   v: 1 once this save has been looked at (a new game is marked at once, with nothing kept).
-//   hw: { skill: tier } from the old gates. at: ms the mark was set. said: the What's new line shown.
-// Runs once per loaded save (S is replaced by loadSave()): at load, and on the first tick after.
-let skillPaceInfo;
-{
-  registerState('skillPace', { v: 0, hw: {}, at: 0, said: 0 });
-  const SKILLS = ['mine', 'wood', 'forage', 'smith', 'bench', 'loom', 'ench'];
-  const P = () => {
-    if (!S.skillPace || typeof S.skillPace !== 'object') S.skillPace = { v: 0, hw: {}, at: 0, said: 0 };
-    if (!S.skillPace.hw || typeof S.skillPace.hw !== 'object') S.skillPace.hw = {};
-    return S.skillPace;
-  };
-  const oldTop = k => {
-    const req = SKILL_TUNE.craftSkills.includes(k) ? SKILL_TUNE.oldStationReq : SKILL_TUNE.oldNodeReq;
-    const lv = (S.skills[k] && S.skills[k].lv) || 1;
-    return req.filter(r => lv >= r).length;
-  };
-  const newTop = k => { const req = skillReqs(k), lv = (S.skills[k] && S.skills[k].lv) || 1; return req.filter(r => lv >= r).length; };
-  const hasProgress = () => S.totalKills > 0 || S.L > 1 || S.maxZone > 1 || (Array.isArray(S.items) && S.items.length > 0)
-    || SKILLS.some(k => S.skills[k] && (S.skills[k].lv > 1 || S.skills[k].xp > 0));
-  let seenFor = null;
-  const ensure = () => {
-    if (seenFor === S) return;
-    seenFor = S;
-    const p = P();
-    if (p.v >= 1) return;
-    p.v = 1;
-    if (!hasProgress()) return;   // a new game: nothing to keep
-    for (const k of SKILLS) { const t = oldTop(k); if (t > 1) p.hw[k] = Math.max(p.hw[k] | 0, t); }
-    p.at = Date.now();
-  };
-  skillKept = k => { ensure(); const h = P().hw[k]; return h > 0 ? h : 0; };
-  skillPaceInfo = () => {
-    ensure(); const p = P();
-    return { v: p.v, hw: Object.assign({}, p.hw), at: p.at, kept: SKILLS.filter(k => (p.hw[k] | 0) > newTop(k)).map(k => [k, p.hw[k], newTop(k)]) };
-  };
-  ensure();
-  // One What's new line for a save that keeps a tier its level would not open now.
-  onTick(() => {
-    ensure();
-    const p = P();
-    if (p.said || !p.at) return;
-    p.said = 1;
-    if (skillPaceInfo().kept.length) emit('whatsNew', { msg: 'Skills now level more slowly, and new tiers open later. Every node and recipe tier you had open stays open.', icon: { ic: ['pick', '#F2C14E'] } });
-  });
-}
-
 // ---- src/js/55-stats.js ----
 // 55-stats: lifetime counters for the Journal and the "While you were away" report data.
 // CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
@@ -14286,54 +14212,6 @@ function trainEst(active) {
 {
   // the Proving passed while this hero plays: its cap rises for good (W5-A moves this onto Ascension)
   on('evoProven', () => { const k = typeof soloHero === 'function' && soloHero(); if (k && S.solo) { if (!S.solo.asc || typeof S.solo.asc !== 'object') S.solo.asc = {}; S.solo.asc[k] = 1; } });
-}
-
-// ---- src/js/55-welcome.js ----
-// 55-welcome: a one-time "Welcome back" for live saves that predate the Camp (plan-2 D3; the
-// coordinator said yes to question 2). CORE FILE: must not touch the DOM, window, document,
-// canvas or localStorage.
-//
-// A save with progress and no S.camp when it loads gets its Hearth built up to the level its max
-// zone allows (CAMP_HZ in 57-camp.js), once, for free. Only the Hearth: the other buildings stay
-// as the Camp's defaults leave them, nothing is taken away and no cost is charged. New games and
-// saves that already have a camp get nothing. The Hearth 1 a save gets anyway (zone 5) is not a
-// welcome: only saves whose max zone allows Hearth 2 or more are welcomed.
-//
-//   welcomeApply()   57-camp.js calls it right after registerState('camp'); returns the Hearth
-//                    level it built, or 0.
-//   welcomeNote()    -> { msg, hearth, zone } once, when the camp first opens (57-camp's
-//                    opening notice), then null. The UI shows it at the top of What's new.
-//   welcomeInfo()    -> { hearth, from, zone, at } or null (checks, the Journal).
-// State S.welcome: { v, at (ms, 0 = never welcomed), hearth, from, zone, said }.
-let welcomeApply, welcomeNote, welcomeInfo;
-{
-  // Decide before 57-camp registers S.camp: an old save has progress and no camp field yet.
-  const predates = S.camp === undefined && (S.totalKills > 0 || S.L > 1 || S.maxZone > 1);
-  registerState('welcome', { v: 1, at: 0, hearth: 0, from: 0, zone: 0, said: 0 });
-  const W = () => S.welcome;
-
-  welcomeApply = () => {
-    if (!predates || W().at || !S.camp || !S.camp.b || typeof CAMP_HZ === 'undefined') return 0;
-    const allow = CAMP_HZ.filter(z => S.maxZone >= z).length;
-    const from = S.camp.b.hearth || 0;
-    if (allow < 2 || allow <= from) return 0;
-    S.camp.b.hearth = allow;
-    Object.assign(W(), { at: Date.now(), hearth: allow, from, zone: S.maxZone, said: 0 });
-    return allow;
-  };
-
-  welcomeInfo = () => W().at ? { hearth: W().hearth, from: W().from, zone: W().zone, at: W().at } : null;
-
-  welcomeNote = () => {
-    if (!W().at || W().said) return null;
-    W().said = 1;
-    const h = W().hearth;
-    const extra = h >= 5 ? ' You have two builders now.' : '';
-    return {
-      hearth: h, zone: W().zone,
-      msg: `Welcome back! Old Hesketh made camp and built the Hearth up to level ${h}, as far as zone ${W().zone} allows, at no cost.${extra} The other buildings are yours to build on the Camp tab.`
-    };
-  };
 }
 
 // ---- src/js/56-achievements.js ----
@@ -17629,8 +17507,6 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
     b: { hearth: 0, watch: 0, forge: 1, bench: 1, loom: 1, ench: 1, tavern: 1, library: 0, shrine: 0, store: 0, bunk: 0 },
     builds: [], bless: [], news: [], bty: 0, talk: {}, deco: {}
   });
-  // 55-welcome (plan-2 D3): a save that predates the Camp gets the Hearth its max zone allows, once.
-  if (typeof welcomeApply === 'function') welcomeApply();
   // 55-hearth (H1): a new game starts at a cold Hearth, its stations unbuilt (plots).
   if (typeof hearthApply === 'function') hearthApply();
   if (typeof storeMigrate === 'function') storeMigrate();   // 55-store (H3): old saves get the Storehouse that holds their piles
@@ -17803,8 +17679,6 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
     if (C().open) return;
     C().open = true; C().b.hearth = Math.max(1, lv('hearth'));
     emit('campOpen', { quiet: !!quiet });
-    const w = typeof welcomeNote === 'function' ? welcomeNote() : null;
-    if (w) { emit('whatsNew', { msg: w.msg, icon: { ic: ['flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }] }, first: true }); return; }
     toast(quiet ? 'Old Hesketh has made camp. See the Camp tab.' : 'Old Hesketh sets down his lamp and lights a fire. "Every road needs a place to come back to." See the Camp tab.', 'good', { ic: ['flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }] }, 'high');
   }
   let firstCheck = true, acc = 1;
@@ -32125,8 +31999,8 @@ function followGo(go) {
 // deeds, retooled gear, the camp and its welcome) fold into ONE bell notice with a short list,
 // instead of a stack of toasts. The window closes after the first 2.5 s of play (the catch-ups run
 // on the first ticks; the Codex at 2 s). One notice alone takes its own channel. emit('whatsNew',
-// { msg, icon, first }) adds a line at any time (first: at the top of the list), e.g. the camp welcome
-// (55-welcome.js). The one toast that says so is a pop like any other (W1-B: key 'news').
+// { msg, icon, first }) adds a line at any time (first: at the top of the list), e.g. a new Storehouse
+// (55-store.js). The one toast that says so is a pop like any other (W1-B: key 'news').
 const NEWS = { open: true, t: 0, lines: [], entry: null };
 // SOLO1 (playtest): a new game has nothing to catch up on: its first toasts show as toasts, not as "What's new".
 if (!(S.totalKills > 0 || S.L > 1 || S.maxZone > 1)) NEWS.open = false;

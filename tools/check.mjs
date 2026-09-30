@@ -1586,60 +1586,21 @@ if (section('constellations')) try {
   assert(!errs.length, 'no constellation errors' + (errs.length ? ': ' + errs[0] : ''));
 } catch (e) { fail('constellations crashed: ' + (e.stack || e)); }
 
-// ---- Q1 quality fixes and the D3 live-save welcome (55-welcome.js) ----
-if (section('welcome')) try {
+// ---- the Watchtower hold hint and the Omen pin ----
+if (section('hold hint')) try {
   const rawOf = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
   const ticks = (g, secs) => { for (let i = 0; i < secs * 10; i++) g.fn.tick(0.1); };
-  const DEF = { watch: 0, forge: 1, bench: 1, loom: 1, ench: 1, tavern: 1, library: 0, shrine: 0 };
   const errs = [];
   // The Omen pin holds for every game this run loads.
   assert(loadCore({ seed: 3 }).eval('almanac.active() === null'), 'the Omen is pinned to none for the whole check run');
-  for (const f of ['save-v2.json', 'save-a-v1.json', 'save-mid-v2.json', 'save-v2-late.json']) {
-    const old = JSON.parse(rawOf(f));
-    const g = loadCore({ seed: 8, storage: memoryStorage({ [KEY]: JSON.stringify(old) }) });
-    const E = s => g.eval(s);
-    const allow = E('CAMP_HZ.filter(z => S.maxZone >= z).length'), welcomed = allow >= 2;
-    const news = [], toasts = [];
-    g.fn.on('whatsNew', w => { if (!/^(The Great Lantern|Your stations were already built|Skills now level more slowly|Your party is now three|Pairs who fight side by side|Your old friends kept)|Storehouse|Bunkhouse/.test(w.msg)) news.push(w.msg); }); g.fn.on('toast', t => toasts.push(t.msg));   // the Great Lantern line: R0's own section; the stations line: H1's ('cold hearth'); the skill pace line: GP1's; the party of three: F1's ('formation'); Bonds: F2's ('bonds')   // + Storehouse lines: H3's ('store')
-    // at load, before any tick: the Hearth only, no cost
-    const same = E('S.gold') === old.gold && JSON.stringify(E('S.mats')) === JSON.stringify(Object.assign(E('fresh().mats'), old.mats));
-    assert(same && E('S.camp.builds.length') === 0 && E(`campLevel("hearth")`) === (welcomed ? allow : 0), `${f} (zone ${old.maxZone}): ${welcomed ? `Hearth built to ${allow}` : 'no welcome (Hearth 1 comes with the camp)'}, nothing charged`);
-    ticks(g, 2);
-    const b = E('S.camp.b');
-    assert(E('S.camp.open') && b.hearth === Math.max(1, allow) && Object.entries(DEF).every(([k, v]) => b[k] === v), `${f}: camp open at Hearth ${b.hearth}; every other building as a new camp has it`);
-    if (welcomed) {
-      assert(E('S.welcome.at') > 0 && E('S.welcome.hearth') === allow && E('S.welcome.zone') === old.maxZone && E('S.welcome.said') === 1, `${f}: welcome recorded and said once`);
-      assert(news.length === 1 && /Welcome back/.test(news[0]) && news[0].includes(`level ${allow}`) && !toasts.some(m => /made camp/.test(m)), `${f}: one What's new line, no second camp notice: "${news[0]}"`);
-    } else assert(E('S.welcome.at') === 0 && !news.length && toasts.some(m => /made camp/.test(m)), `${f}: no welcome; the usual camp notice`);
-    // one time only: reload the saved game
-    g.fn.save();
-    const g2 = loadCore({ seed: 9, storage: memoryStorage({ [KEY]: g.storage.get(KEY) }) });
-    const n2 = []; g2.fn.on('whatsNew', w => n2.push(w)); ticks(g2, 2);
-    assert(g2.eval('campLevel("hearth")') === Math.max(1, allow) && g2.eval('S.welcome.at') === E('S.welcome.at') && !n2.length && g2.eval('welcomeNote()') === null, `${f}: reload gives no second welcome`);
-    errs.push(...g.errors, ...g2.errors);
-  }
-  // a new game gets nothing, even past zone 38
-  const n = loadCore({ seed: 4 }); n.eval('S.maxZone = 38; S.zone = 38'); ticks(n, 2);
-  assert(n.eval('S.welcome.at === 0 && campLevel("hearth") === 1'), 'new game: no welcome (the camp opens at Hearth 1)');
-  // a save that already has a camp keeps it as it is
-  const withCamp = JSON.parse(rawOf('save-v2-late.json'));
-  withCamp.camp = { v: 1, open: true, b: { hearth: 2, watch: 1, forge: 1, bench: 1, loom: 1, ench: 1, tavern: 1, library: 0, shrine: 0 }, builds: [], bless: [], news: [], bty: 0, talk: {}, deco: {} };
-  const c = loadCore({ seed: 5, storage: memoryStorage({ [KEY]: JSON.stringify(withCamp) }) }); ticks(c, 2);
-  assert(c.eval('S.welcome.at === 0 && campLevel("hearth") === 2 && campLevel("watch") === 1'), 'a save that has a camp: nothing changes (Hearth 2 stays 2)');
-  // an old save still below zone 5 is not welcomed now, and not later when it reaches the camp
-  const low = JSON.parse(rawOf('save-v2.json')); low.maxZone = 3; low.zone = 3;
-  const l = loadCore({ seed: 6, storage: memoryStorage({ [KEY]: JSON.stringify(low) }) }); ticks(l, 1);
-  l.eval('S.maxZone = 20; S.zone = 20'); ticks(l, 2);
-  assert(l.eval('S.welcome.at === 0 && campLevel("hearth") === 1'), 'old save below zone 5: no welcome, the camp opens at Hearth 1');
-  errs.push(...n.errors, ...c.errors, ...l.errors);
   // Watchtower hold hint: partyHoldEstimate() (party combat, 59-combat.js); the stubs below replace it (assignments: it is a var)
   const hz = extra => { const h = loadCore({ seed: 7, storage: memoryStorage({ [KEY]: rawOf('save-v2-late.json') }), extraSource: extra }); return h.eval('campHoldZone()'); };
   const base = hz(''), rule = hz('partyHoldEstimate = undefined;');
   assert(base >= 1 && base <= 38 && rule >= 1 && rule <= 38, `hold hint with party combat: zone ${base}; without it (3-second kills): ${rule}`);
   assert(hz('partyHoldEstimate = () => ({ zone: 12 });') === 12 && hz('partyHoldEstimate = () => 30.6;') === 30, 'hold hint reads partyHoldEstimate() ({ zone } or a number)');
   assert(hz('partyHoldEstimate = () => 99;') === 38 && hz('partyHoldEstimate = () => { throw new Error("x"); };') === rule, 'hold hint: capped at your best zone; falls back if the estimate fails');
-  assert(!errs.length, 'no welcome errors' + (errs.length ? ': ' + errs[0] : ''));
-} catch (e) { fail('welcome crashed: ' + (e.stack || e)); }
+  assert(!errs.length, 'no hold hint errors' + (errs.length ? ': ' + errs[0] : ''));
+} catch (e) { fail('hold hint crashed: ' + (e.stack || e)); }
 
 // ---- coast writing (21b-stories-coast.js): every entry there, non-empty, inside UI limits ----
 if (section('coast writing')) try {
@@ -1972,13 +1933,13 @@ if (section('cold hearth')) try {
     assert(same, `${f}: every recipe, Transmute and camp row exactly as without the Hearth rules`);
     const mats0 = JSON.stringify(H('S.mats')), items0 = H('S.items.length');
     for (let i = 0; i < 20; i++) h.fn.tick(0.1);
-    assert(news.filter(m => /^Your stations were already built/.test(m)).length === 1 && H('S.hearth.said') === 1, `${f}: one What's new line: "${news.find(m => /stations/.test(m))}"`);
+    assert(!news.some(m => /^Your stations were already built/.test(m)), `${f}: an old save gets no What's new line about stations`);
     const m0 = JSON.parse(mats0), m1 = H('S.mats');
     assert(Object.keys(m0).every(k => m0[k].every((n, i) => m1[k][i] >= n)) && H('S.items.length') >= items0 && H('!GUIDE_STEPS.some(x => ["chop", "light", "bench", "tool", "forge", "store"].includes(x.id) && x.when())'), `${f}: nothing taken, no cold-Hearth tips`);
     h.fn.save();
     const h2 = loadCore({ seed: 27, storage: memoryStorage({ [KEY]: h.storage.get(KEY) }) }); const n2 = []; h2.fn.on('whatsNew', x => n2.push(x.msg));
     for (let i = 0; i < 20; i++) h2.fn.tick(0.1);
-    assert(!n2.some(m => /stations/.test(m)), `${f}: the line shows once`);
+    assert(!n2.some(m => /stations/.test(m)), `${f}: still no station line after a reload`);
     errs.push(...h.errors, ...h2.errors);
   }
 
@@ -2054,7 +2015,7 @@ if (section('cold hearth')) try {
   assert(!errs.length, 'no cold hearth errors' + (errs.length ? ': ' + errs[0] : ''));
 } catch (e) { fail('cold hearth crashed: ' + (e.stack || e)); }
 // ---- skill pace (GP1): slower levels, wider tier gates; no save loses a tier, recipe or item ----
-if (section('skill pace (GP1)')) try {
+if (section('skill gates (GP1)')) try {
   const g = loadCore({ seed: 7 });
   const E = s => g.eval(s);
   assert(E('NODE_REQ === SKILL_TUNE.nodeReq && SMITH_REQ === SKILL_TUNE.stationReq && CRAFT_STATION_REQ === SMITH_REQ'), 'the gates are the SKILL_TUNE table (NODE_REQ, SMITH_REQ, CRAFT_STATION_REQ)');
@@ -2064,8 +2025,7 @@ if (section('skill pace (GP1)')) try {
     `the gaps between tiers widen: gathering ${E('NODE_REQ').join('/')} (gaps ${ng.join('/')}), crafting ${E('SMITH_REQ').join('/')} (gaps ${sg.join('/')})`);
   assert(E('(() => { const f = (c, l) => Math.floor(c[0] * Math.pow(l, c[1]) * Math.pow(c[2] || 1, l - 1)); return [1, 10, 60].every(l => skillNeed(l) === f(SKILL_TUNE.gatherNeed, l) && skillNeed(l, "smith") === f(SKILL_TUNE.craftNeed, l) && skillNeed(l, "mine") === skillNeed(l)); })()'), 'skillNeed reads SKILL_TUNE (gathering and crafting curves)');
   assert(E('nodeXp(3) === Math.round(SKILL_TUNE.nodeXp[0] * Math.pow(3, SKILL_TUNE.nodeXp[1]))'), 'nodeXp reads SKILL_TUNE');
-  // A new game keeps nothing: the new gates alone decide.
-  assert(E('S.skillPace.v === 1 && Object.keys(S.skillPace.hw).length === 0'), 'a new game is marked at once and keeps no old tier');
+  // The gates alone decide.
   E('S.skills.mine.lv = NODE_REQ[1] - 1');
   assert(!E('skillTierOpen("mine", 2)') && !E('setNode("ore", 2)'), `new game: Mining ${E('NODE_REQ[1] - 1')} cannot work the Iron Vein`);
   E('S.skills.mine.lv = NODE_REQ[1]');
@@ -2080,54 +2040,7 @@ if (section('skill pace (GP1)')) try {
   E('gainSkill("mine", skillNeed(S.skills.mine.lv, "mine"))');
   assert(toasts[toasts.length - 1].includes(`Next tier at level ${E('NODE_REQ[3]')}.`), 'other level-ups name the next gate: ' + toasts[toasts.length - 1]);
   assert(!g.errors.length, 'no errors (new game)' + (g.errors.length ? ': ' + g.errors[0] : ''));
-
-  // Every fixture: levels and XP unchanged, every tier the OLD gates opened stays open, items kept.
-  const OLD_NODE = [1, 8, 18, 30, 45], OLD_STN = [1, 4, 9, 16, 25];
-  const oldTop = (req, lv) => req.filter(r => lv >= r).length;
-  for (const f of fs.readdirSync(path.join(ROOT, 'tests', 'fixtures')).filter(x => x.endsWith('.json'))) {
-    const rawText = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8'), raw = JSON.parse(rawText);
-    const h = loadCore({ seed: 3, storage: memoryStorage({ [KEY]: rawText }) });
-    const H = s => h.eval(s);
-    const lvOf = k => (raw.skills && raw.skills[k] && raw.skills[k].lv) || 1;
-    const same = Object.entries(raw.skills || {}).every(([k, v]) => H(`S.skills.${k}.lv`) === v.lv && H(`S.skills.${k}.xp`) === v.xp);
-    const lost = [];
-    // gathering: every node kind and tier
-    for (const kind of H('GATHER_KINDS')) {
-      const sk = H(`skillOf(${JSON.stringify(kind)})`);
-      for (let t = 1; t <= 5; t++) if (oldTop(OLD_NODE, lvOf(sk)) >= t && !H(`skillTierOpen(${JSON.stringify(sk)}, ${t}) && setNode(${JSON.stringify(kind)}, ${t})`)) lost.push(`${kind}${t}`);
-    }
-    // crafting: every kind at every tier its station (or Smithing, for kinds that use it) opened
-    for (const kind of H('Object.keys(CRAFT_KINDS).filter(k => !CRAFT_KINDS[k].legacy)')) {
-      const lv = H(`stationLevel(${JSON.stringify(kind)})`);   // levels are unchanged, so this is the level the old gate read
-      for (let t = 1; t <= 5; t++) if (oldTop(OLD_STN, lv) >= t && (!H(`stationTierOpen(${JSON.stringify(kind)}, ${t})`) || /^Needs /.test(H(`canCraft(${JSON.stringify(kind)}, ${t}).why`)))) lost.push(`${kind}${t}`);
-    }
-    // Enchanting: transmute up, reforge and tonics at every tier it opened
-    for (let t = 1; t <= 5; t++) if (oldTop(OLD_STN, lvOf('ench')) >= t && !H(`skillTierOpen('ench', ${t})`)) lost.push('ench' + t);
-    const ids = x => JSON.stringify((x.items || []).map(it => [it.id, it.slot, it.t, it.r, it.plus || 0]).sort());
-    const itemsKept = ids(raw) === ids(JSON.parse(H('JSON.stringify(S)'))) && JSON.stringify(raw.equip || {}) === JSON.stringify(Object.fromEntries(Object.entries(H('S.equip')).filter(([k]) => raw.equip && k in raw.equip)));
-    const kept = H('skillPaceInfo().kept').map(([k, a, b]) => `${k} ${b}->${a}`).join(', ');
-    assert(same && !lost.length && itemsKept && !h.errors.length, `${f}: skill levels and XP unchanged, no tier, recipe or item lost` + (kept ? ` (kept above the new gates: ${kept})` : ' (the new gates already open every old tier)') + (lost.length ? ' LOST ' + lost.join(' ') : '') + (h.errors.length ? ' ' + h.errors[0] : ''));
-    // round trip and a later load (the sim's --from-save path) keep the mark
-    h.eval('save(); loadSave()');
-    const stillOpen = Object.keys(raw.skills || {}).every(k => H(`skillTopTier(${JSON.stringify(k)})`) >= oldTop(H('SKILL_TUNE.craftSkills').includes(k) ? OLD_STN : OLD_NODE, lvOf(k)));
-    const h2 = loadCore({ seed: 3 }); h2.storage.set(KEY, rawText); h2.eval('loadSave()');
-    const late = Object.keys(raw.skills || {}).every(k => h2.eval(`skillTopTier(${JSON.stringify(k)})`) >= oldTop(h2.eval('SKILL_TUNE.craftSkills').includes(k) ? OLD_STN : OLD_NODE, lvOf(k)));
-    assert(stillOpen && late && H('S.skillPace.v') === 1, `${f}: the kept tiers survive a save and load, and a save loaded later in a session`);
-  }
-  // A synthetic old save right at the old gates: Mining 8 and Smithing 4 keep tier 2 under the new gates.
-  {
-    const raw = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-v2.json'), 'utf8'));
-    raw.skills = Object.assign({}, raw.skills, { mine: { lv: 8, xp: 0 }, smith: { lv: 4, xp: 0 } }); delete raw.skillPace;
-    const h = loadCore({ seed: 3, storage: memoryStorage({ [KEY]: JSON.stringify(raw) }) });
-    const tell = []; h.fn.on('whatsNew', w => { if (!/^(Your stations were already built|Your party is now three|Pairs who fight side by side|Your old friends kept)/.test(w.msg)) tell.push(w.msg); });   // H1's, F1's and F2's lines have their own sections
-    for (let i = 0; i < 3; i++) h.fn.tick(0.1);
-    assert(h.eval('skillTierOpen("mine", 2) && setNode("ore", 2) && stationTierOpen("warblade", 2) && S.skillPace.hw.mine === 2 && S.skillPace.hw.smith === 2'), 'an old save at Mining 8 / Smithing 4 keeps the Iron Vein and tier-2 Forge recipes');
-    assert(tell.length === 1 && /stays open/.test(tell[0]), 'one What\'s new line tells the player: ' + tell[0]);
-    h.eval('S.skills.mine.xp = 0'); const t0 = []; h.fn.on('toast', t => t0.push(t.msg));
-    h.eval('gainSkill("mine", skillNeed(8, "mine"))');
-    assert(h.eval('S.skills.mine.lv') === 9 && !t0.some(m => /is open to you/.test(m)), 'a kept tier is not announced again at the next level-up');
-  }
-} catch (e) { fail('skill pace crashed: ' + (e.stack || e)); }
+} catch (e) { fail('skill gates crashed: ' + (e.stack || e)); }
 
 // ---- deeds: achievements core (23-data-deeds.js, 58-deeds.js; achievements.md 11, AD1-AD8) ----
 if (section('deeds')) try {
@@ -3030,6 +2943,7 @@ if (section('nav')) try {
     const store = memoryStorage({ [KEY]: rawOf('save-v3-four.json') });
     const g = loadCore({ seed: 6, storage: store }), E = s => g.eval(s);
     E('S.onboard.all = 1');
+    E('for (const k of ["mine", "wood"]) S.skills[k].lv = Math.max(S.skills[k].lv, NODE_REQ[3])');   // (the fixture predates the slower gates; old saves no longer keep their tiers)
     const ev = []; g.fn.on('navGo', e => ev.push(e));
     E('setActivity("fight")'); secs(g, 0.2);
     const skills = E('navSkills().join()');
@@ -3118,7 +3032,7 @@ if (section('nav')) try {
       const ctx = await browser.newContext({ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true });
       await ctx.addInitScript(([key, raw]) => {
         if (sessionStorage.getItem('nav-seeded')) return; sessionStorage.setItem('nav-seeded', '1');
-        const o = JSON.parse(raw); o.last = Date.now(); o.activity = 'gather'; o.node = { kind: 'ore', t: 4 }; localStorage.setItem(key, JSON.stringify(o));
+        const o = JSON.parse(raw); o.last = Date.now(); o.activity = 'gather'; o.node = { kind: 'ore', t: 4 }; o.skills.mine.lv = Math.max(o.skills.mine.lv, 64); o.skills.wood.lv = Math.max(o.skills.wood.lv, 64); localStorage.setItem(key, JSON.stringify(o));
       }, [KEY, rawOf('save-v3-four.json')]);
       const page = await ctx.newPage(); const errs = [];
       page.on('pageerror', e => errs.push(String(e)));
@@ -5219,16 +5133,16 @@ if (section('training (W2-A, browser)')) try {
 } catch (e) { fail('training (W2-A, browser) crashed: ' + (e.stack || e)); }
 // ==== end W2-A ====
 
-// ---- W2-C: the dead leaf systems are gone (pinnacle bosses, legendary powers and circle sets, expeditions and the Map Room) ----
+// ---- W2-C: the dead leaf systems are gone (pinnacle bosses, legendary powers and circle sets, expeditions and the Map Room, the welcome and skill-pace old-save rules) ----
 // Static: no removed file, global, save field or CSS class is left anywhere in src/. Browser: every tab and sub-view opens with no page error.
 if (section('removed systems (W2-C)')) try {
   const strip = t => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/([^:'"`\\])\/\/[^\n'"`]*$/gm, '$1');
   const files = [];
   const walkDir = d => { for (const n of fs.readdirSync(d)) { const p = path.join(d, n); if (fs.statSync(p).isDirectory()) walkDir(p); else files.push(p); } };
   walkDir(path.join(ROOT, 'src'));
-  const GONE_FILES = ['11b-art-legend.js', '21c-data-legend.js', '55-legend.js', '75-legend-ui.js', '21d-data-pinnacle.js', '21e-stories-pinnacle.js', '21i-lore-exped.js', '57b-expeditions.js', '75-exped-ui.js', '60-legend.css', '60-exped.css'];
-  assert(!files.some(f => GONE_FILES.includes(path.basename(f))), 'removed systems: none of the 11 source files is back');
-  const RE = /\b(LEG_[A-Z_]+|PIN_[A-Z_]+|EXPED_[A-Z_]+|legend(?:UI|Drop|Learn|Inscribe|Mark|Sigil|Sets|Active|Known|Text|Val|Rank|Echoes|Budget|Change|HeroCheck|CanWear|ItemState|CardLines|IconSafe|Icon|Owe|PayOwed)|sigilIcon|SIGIL_[A-Z_]+|expedOut|expedSend|expedCollect|expedOpen|expedSlots|expedRoom|expedGoto|expedBack|expedSent|expedHaulText|campMapRoom|lgFits|itemLegendLines|S\.legend|S\.exped|S\.pin|maproom|expSlots|expHaul)\b/;
+  const GONE_FILES = ['11b-art-legend.js', '21c-data-legend.js', '55-legend.js', '75-legend-ui.js', '21d-data-pinnacle.js', '21e-stories-pinnacle.js', '21i-lore-exped.js', '57b-expeditions.js', '75-exped-ui.js', '60-legend.css', '60-exped.css', '55-welcome.js', '55-skillpace.js'];
+  assert(!files.some(f => GONE_FILES.includes(path.basename(f))), 'removed systems: none of the 13 source files is back');
+  const RE = /\b(LEG_[A-Z_]+|PIN_[A-Z_]+|EXPED_[A-Z_]+|legend(?:UI|Drop|Learn|Inscribe|Mark|Sigil|Sets|Active|Known|Text|Val|Rank|Echoes|Budget|Change|HeroCheck|CanWear|ItemState|CardLines|IconSafe|Icon|Owe|PayOwed)|sigilIcon|SIGIL_[A-Z_]+|expedOut|expedSend|expedCollect|expedOpen|expedSlots|expedRoom|expedGoto|expedBack|expedSent|expedHaulText|campMapRoom|lgFits|itemLegendLines|S\.legend|S\.exped|S\.pin|maproom|expSlots|expHaul|welcomeApply|welcomeNote|welcomeInfo|skillKept|skillPaceInfo|S\.welcome|S\.skillPace)\b/;
   const hits = [];
   for (const f of files) { if (!/\.(js|css|html)$/.test(f)) continue; const t = strip(fs.readFileSync(f, 'utf8')); const m = t.match(RE); if (m) hits.push(path.relative(ROOT, f) + ': ' + m[0]); }
   assert(!hits.length, 'removed systems: no code, data, CSS or markup reads a removed global, save field or building' + (hits.length ? ': ' + hits.slice(0, 5).join(' | ') : ''));
