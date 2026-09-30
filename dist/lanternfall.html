@@ -967,6 +967,16 @@ body.cb-left .stage.tall .abil.abil2 { left: 110px; }
 .cf-plus { position: absolute; right: 1px; bottom: 0; font: 600 calc(11px * var(--display-k))/1 var(--display); color: var(--gold); text-shadow: 0 1px 0 #0B0810, 1px 0 0 #0B0810, -1px 0 0 #0B0810; }
 
 /* bag */
+/* C23: bag batch controls wrap inside the menu in portrait and short landscape. */
+.cf-baghead { flex-wrap: wrap; gap: 6px; }
+.cf-baghead .mini, .cf-bulk-actions .mini { min-height: 44px; white-space: normal; }
+.cf-baghead .sec-title { margin-right: auto; }
+.cf-bulk { padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel-2); }
+.cf-bulk p { margin: 0 0 8px; }
+.cf-bulk-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.cf-bulk .costs { flex-wrap: wrap; }
+.ic.cf-tile[aria-pressed="true"] { outline: 3px solid var(--gold); outline-offset: -3px; }
+.cf-selected { position: absolute; right: 3px; top: 1px; color: var(--gold); font-weight: bold; background: var(--panel-2); }
 .cf-count { font-variant-numeric: tabular-nums; }
 .cf-count.full { color: #FF8A80; }
 .cf-bagctl { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
@@ -9355,6 +9365,21 @@ function salvageItem(id) {
   S.items = S.items.filter(i => i.id !== id);
   toast(`Salvaged ${itemName(it)} for materials.`, 'good', null, 'low'); save();
   return true;
+}
+// C23: batch salvage rechecks protection at commit time. Duplicate input IDs pay only once;
+// ambiguous duplicate IDs in a damaged bag are skipped instead of deleting an unseen copy.
+function salvageItems(ids) {
+  if (!Array.isArray(ids)) return 0;
+  const requested = new Set(ids.filter(Number.isSafeInteger)), worn = equippedIds(), counts = new Map();
+  for (const it of S.items) counts.set(it.id, (counts.get(it.id) || 0) + 1);
+  const batch = [];
+  for (const it of S.items) if (requested.has(it.id) && counts.get(it.id) === 1 && !it.u && !worn.has(it.id)) batch.push(it);
+  if (!batch.length) return 0;
+  for (const it of batch) salvageGive(it);
+  const removed = new Set(batch.map(it => it.id));
+  S.items = S.items.filter(it => !removed.has(it.id));
+  toast(`Salvaged ${batch.length} items for materials.`, 'good', null, 'low'); save();
+  return batch.length;
 }
 // Forge a new item of slot/tier. Returns the item, or null if not allowed.
 // Kinds added by the crafting overhaul go through craftItem (55-crafting.js); the five
@@ -32294,6 +32319,78 @@ let craftUI = null;
 
   // ================= Bag =================
   let bag = null;
+  const bulk = { on: false, ids: new Set(), armed: '', note: '' };
+  const spareRank = (a, b) => a.t - b.t || a.plus - b.plus || RAR[a.r].m - RAR[b.r].m;
+  function salvageable() {
+    const worn = equippedIds(), counts = new Map();
+    for (const it of S.items) counts.set(it.id, (counts.get(it.id) || 0) + 1);
+    return S.items.filter(it => !it.u && !worn.has(it.id) && counts.get(it.id) === 1);
+  }
+  function spareIds() {
+    const best = new Map();
+    for (const it of S.items) {
+      const old = best.get(it.slot);
+      if (!old || spareRank(it, old) > 0 || (spareRank(it, old) === 0 && it.id < old.id)) best.set(it.slot, it);
+    }
+    return salvageable().filter(it => {
+      const worn = itemById(S.equip[kindPos(it.slot)]);
+      return worn ? spareRank(it, worn) <= 0 : best.get(it.slot).id !== it.id;
+    }).map(it => it.id);
+  }
+  function bulkQuote() {
+    const list = salvageable().filter(it => bulk.ids.has(it.id)), mats = {}, possible = {};
+    for (const it of list) {
+      const row = mats[it.t] || (mats[it.t] = {});
+      for (const [f, n] of Object.entries(salvagePreview(it))) row[f] = (row[f] || 0) + n;
+      if (Array.isArray(it.a) && it.a.length) possible[it.t] = (possible[it.t] || 0) + 1;
+    }
+    const room = Object.entries(mats).flatMap(([t, row]) => Object.keys(row).map(f => [f, +t, stashRoom(f, +t)]));
+    for (const t of Object.keys(possible)) if (!room.some(([f, tier]) => f === 'ess' && tier === +t)) room.push(['ess', +t, stashRoom('ess', +t)]);
+    const full = room.some(([f, t, n]) => ((mats[t] || {})[f] || 0) + (f === 'ess' ? possible[t] || 0 : 0) > n);
+    // Ordinary gathering must not reset a review while all returns still fit. Only a
+    // change in what this batch can actually collect changes its capacity signature.
+    const collectible = room.map(([f, t, n]) => [f, t, Math.min(n, ((mats[t] || {})[f] || 0) + (f === 'ess' ? possible[t] || 0 : 0))]);
+    return { list, mats, possible, full, sig: JSON.stringify([list, mats, collectible, S.equip]) };
+  }
+  function bulkChanged() { bulk.armed = ''; bulk.note = ''; ui(true); }
+  function renderBulk() {
+    const q = bulkQuote(), valid = new Set(q.list.map(it => it.id));
+    bulk.ids = valid;
+    if (bulk.armed && bulk.armed !== q.sig) { bulk.armed = ''; bulk.note = 'Your bag or Storehouse changed. Review the selection again.'; }
+    const sig = JSON.stringify([bulk.on, [...valid], bulk.armed, bulk.note, q.sig]);
+    if (sig === bag.bulkSig) return;
+    bag.bulkSig = sig;
+    bag.select.textContent = bulk.on ? 'Done selecting' : 'Select';
+    bag.select.setAttribute('aria-pressed', String(bulk.on));
+    bag.review.hidden = !bulk.on; bag.review.disabled = !valid.size;
+    bag.review.textContent = `Review ${valid.size} selected`;
+    bag.bulk.textContent = ''; bag.bulk.hidden = !bulk.on;
+    if (!bulk.on) return;
+    if (bulk.note) bag.bulk.append(el('p', 'note', bulk.note));
+    if (!bulk.armed) { bag.bulk.append(el('p', 'note', `${valid.size} selected. Tap items to change the selection. Worn items and uniques are protected.`)); return; }
+    bag.bulk.append(el('p', null, `Salvage ${valid.size} items? They are gone for good. You get back about:`));
+    for (const [t, row] of Object.entries(q.mats)) {
+      const chips = el('div', 'costs');
+      for (const [f, n] of Object.entries(row)) {
+        const chip = el('span', 'cost'); chip.dataset.fam = f; chip.dataset.t = t; chip.dataset.amount = n;
+        chip.append(img(matIcon(f, +t)), el('span', null, `${n.toLocaleString()} ${matName(f, +t)}`)); chips.append(chip);
+      }
+      bag.bulk.append(chips);
+    }
+    if (Object.keys(q.possible).length) bag.bulk.append(el('p', 'note', 'Affixed items may also return extra essence.'));
+    if (q.full) bag.bulk.append(el('p', 'note warn', 'Your Storehouse is full for some of this. The rest is lost.'));
+    const controls = el('div', 'cf-bulk-actions');
+    const yes = el('button', 'mini cf-arm', `Salvage ${valid.size} items`); yes.type = 'button'; yes.classList.add('cf-bulk-confirm');
+    yes.addEventListener('click', () => {
+      const now = bulkQuote();
+      if (now.sig !== bulk.armed) { bulk.armed = ''; bulk.note = 'Your bag or Storehouse changed. Review the selection again.'; ui(true); return; }
+      // The core saves and toasts once; do not wrap this batch in act(), which also saves.
+      salvageItems(now.list.map(it => it.id));
+      bulk.ids.clear(); bulk.on = false; bulk.armed = ''; bulk.note = ''; ui(true); bag.select.focus();
+    });
+    const no = el('button', 'mini', 'Keep selecting'); no.type = 'button'; no.addEventListener('click', bulkChanged);
+    controls.append(yes, no); bag.bulk.append(controls);
+  }
   const SORTS = { power: (a, b) => itemPower(b) - itemPower(a) || b.id - a.id, new: (a, b) => b.id - a.id, kind: (a, b) => (kindOrder(a.slot) - kindOrder(b.slot)) || itemPower(b) - itemPower(a) };
   registerSection('forge', {
     id: 'craft-bag', title: 'Bag', view: 'gear',
@@ -32302,6 +32399,15 @@ let craftUI = null;
       const hw = el('div', 'sec-head'); sec.insertBefore(hw, head);
       const count = el('span', 'note cf-count'); count.id = 'bagCount';
       hw.append(head, count);
+      hw.classList.add('cf-baghead');
+      const select = el('button', 'mini cf-bulk-select', 'Select'); select.type = 'button';
+      select.addEventListener('click', () => { bulk.on = !bulk.on; bulk.ids.clear(); bulkChanged(); });
+      const spares = el('button', 'mini cf-bulk-spares', 'Salvage spares'); spares.type = 'button';
+      spares.addEventListener('click', () => { bulk.on = true; st8.bfilt = 'all'; bulk.ids = new Set(spareIds()); bulkChanged(); });
+      const review = el('button', 'mini cf-bulk-review', 'Review selection'); review.type = 'button'; review.hidden = true;
+      review.addEventListener('click', () => { const q = bulkQuote(); if (!q.list.length) return; bulk.armed = q.sig; bulk.note = ''; ui(true); });
+      hw.append(select, spares, review);
+      const bulkBox = el('div', 'cf-bulk'); bulkBox.hidden = true; bulkBox.setAttribute('aria-live', 'polite');
       const ctl = el('div', 'cf-bagctl');
       const filt = el('div', 'seg cf-seg'); filt.setAttribute('aria-label', 'Show');
       for (const [f, n] of [['all', 'All'], ['spare', 'Spare'], ['worn', 'Worn']]) {
@@ -32316,17 +32422,18 @@ let craftUI = null;
       ctl.append(filt, sort);
       const grid = el('div', 'cf-bag');
       const note = el('p', 'note');
-      sec.append(ctl, grid, note);
-      bag = { count, filt, sort, grid, note, sig: '' };
+      sec.append(ctl, bulkBox, grid, note);
+      bag = { count, filt, sort, grid, note, select, review, bulk: bulkBox, sig: '' };
     },
     update(force) {
+      renderBulk();
       const n = bagCount();
       putText(bag.count, `${n} / ${CRAFT_BAG_MAX} spare`);
       putToggle(bag.count, 'full', n >= CRAFT_BAG_MAX);
       for (const b of bag.filt.children) putAttr(b, 'aria-pressed', String(b.dataset.f === st8.bfilt));
       for (const b of bag.sort.children) putAttr(b, 'aria-pressed', String(b.dataset.s === st8.sort));
-      const w = wearers();
-      const sig = [st8.bfilt, st8.sort, S.items.map(i => i.id + ':' + i.plus + ':' + i.r + ':' + (i.rf || 0)).join(), [...w].map(([k, v]) => k + v.who).join(), [...st8.fresh].join()].join('|');
+      const w = wearers(), eligible = new Set(salvageable().map(it => it.id));
+      const sig = [bulk.on, [...bulk.ids].join(), st8.bfilt, st8.sort, S.items.map(i => [i.id,i.slot,i.t,i.plus,i.r,i.u,i.rf || 0].join(':')).join(), [...w].map(([k, v]) => k + v.who).join(), [...st8.fresh].join()].join('|');
       if (!force && (sig === bag.sig || busy())) return;
       bag.sig = sig;
       let list = S.items.slice();
@@ -32340,8 +32447,17 @@ let craftUI = null;
         if (it.plus) b.append(el('span', 'cf-plus', '+' + it.plus));
         const wr = w.get(it.id);
         if (wr) { const bd = img(portraitOf(wr.who), 'cf-badge' + (wr.who === 'hero' ? ' hero' : '')); b.append(bd); }
-        b.setAttribute('aria-label', `${itemName(it)}, ${RAR[it.r].n}${wr ? ', worn by you' : ''}`);
-        b.addEventListener('click', () => { st8.fresh.delete(it.id); openItem(it.id); });
+        b.dataset.itemId = it.id;
+        b.setAttribute('aria-label', `${itemName(it)}, ${RAR[it.r].n}${wr ? ', worn by you' : ''}${it.u ? ', unique' : ''}`);
+        if (bulk.on) {
+          b.disabled = !eligible.has(it.id);
+          b.setAttribute('aria-pressed', String(bulk.ids.has(it.id)));
+          if (bulk.ids.has(it.id)) b.append(el('span', 'cf-selected', '✓'));
+        }
+        b.addEventListener('click', () => {
+          if (bulk.on) { if (!salvageable().some(i => i.id === it.id)) return; if (bulk.ids.has(it.id)) bulk.ids.delete(it.id); else bulk.ids.add(it.id); bulkChanged(); bag.grid.querySelector('[data-item-id="' + it.id + '"]')?.focus(); }
+          else { st8.fresh.delete(it.id); openItem(it.id); }
+        });
         bag.grid.append(b);
       }
       bag.note.textContent = !S.items.length ? 'Crafted gear and boss loot land here.' : !list.length ? 'Nothing here with this filter.' : n >= CRAFT_BAG_MAX ? 'Your bag is full. New loot gets salvaged. Salvage spare items to make room.' : 'Worn items have a portrait badge and do not count toward the bag.';
