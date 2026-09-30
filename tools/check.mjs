@@ -5584,6 +5584,93 @@ if (section('save codec validation (C5)')) try {
   assert(!g.errors.length&&!live.errors.length,'C5: positive gameplay states have no handler errors');
 } catch(e){fail('C5 codec validation crashed: '+(e.stack||e));}
 
+// ---- C2: menu guide markers follow scrolling and reflow without moving the player's view ----
+if (section('camp guide tracking (C2, browser)')) try {
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('C2 guide tracking: Playwright or Chromium not here, skipped');
+  else {
+    // Drive the real 250ms callback explicitly: no race against the simulation or an interval.
+    const html0 = fs.readFileSync(distFile, 'utf8').replace('setInterval(tick, 250);', 'window.__c2GuideTick = tick;');
+    const end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [width, height] of [[740, 360], [844, 390]]) {
+        const at = `${width}x${height}`, ctx = await browser.newContext({ viewport: { width, height }, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
+        try {
+          const page = await ctx.newPage(), errs = [];
+          page.on('pageerror', e => errs.push(String(e)));
+          await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+          await page.goto('http://lf.test/');
+          await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go');
+          const X = s => page.evaluate(s => window.__t.x(s), s);
+          await X(`soloPickerOpen = () => true; S.mats.wood[0] = 100; hearthLight();
+            onboardUnlockAll(); onboardStep = () => GUIDE_STEPS.find(s => s.id === 'bench'); setTab('camp'); ui(true); true`);
+          await page.waitForFunction(() => !!document.querySelector('#camp-b-bench .cb-quick'));
+          // Native scroll, with enough space around the existing target to test both directions.
+          await X(`globalThis.__c2Target = onboardSpec('bench').node;
+            globalThis.__c2Above = document.createElement('div'); __c2Above.style.height = '100px'; __c2Target.parentNode.before(__c2Above);
+            const tail = document.createElement('div'); tail.style.height = '700px'; $('sec-camp-buildings').append(tail);
+            $('panels').style.overflowAnchor = 'none'; $('panels').style.scrollBehavior = 'auto';
+            onboardStep = () => null; window.__c2GuideTick(); $('panels').scrollTop = 0;
+            onboardStep = () => GUIDE_STEPS.find(s => s.id === 'bench'); window.__c2GuideTick(); true`);
+          const settle = async (poll = true) => {
+            await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+            if (poll) await page.evaluate(() => window.__c2GuideTick());
+          };
+          const read = () => X(`(() => {
+            const n = onboardSpec('bench').node, r = n.getBoundingClientRect(), p = $('panels'), pr = p.getBoundingClientRect();
+            const ring = document.querySelector('.ob-ring'), rr = ring.getBoundingClientRect();
+            return { same: n === __c2Target, top: r.top, bottom: r.bottom, scroll: p.scrollTop,
+              visible: r.top >= pr.top && r.bottom <= pr.bottom, shown: !ring.parentNode.hidden,
+              error: Math.max(Math.abs(rr.left - (r.left - 4)), Math.abs(rr.top - (r.top - 4)), Math.abs(rr.width - (r.width + 8)), Math.abs(rr.height - (r.height + 8))) };
+          })()`);
+          await settle();
+          const revealed = await read();
+          assert(revealed.same && revealed.visible && revealed.shown && revealed.scroll > 0 && revealed.error <= 2,
+            `C2 ${at}: first showing an offscreen target still scrolls it into view (${JSON.stringify(revealed)})`);
+          // Put the target in the panel's middle, then let the scroll event reach the guide.
+          await X(`const p = $('panels'), r = __c2Target.getBoundingClientRect(), pr = p.getBoundingClientRect(); p.scrollTop += r.top - pr.top - 70; true`);
+          await settle();
+          const initial = await read();
+          assert(initial.same && initial.visible && initial.shown && initial.error <= 2, `C2 ${at}: the real Workbench target starts visible and marked (${JSON.stringify(initial)})`);
+          await X(`$('panels').scrollTop += 18; true`);
+          await settle(false);
+          const scrolled = await read();
+          assert(scrolled.same && scrolled.visible && scrolled.shown && Math.abs(scrolled.top - initial.top + 18) <= 2 && Math.abs(scrolled.scroll - initial.scroll - 18) <= 2 && scrolled.error <= 2,
+            `C2 ${at}: native panel scrolling tracks a visible target within 2px before the next guide poll (${JSON.stringify(scrolled)})`);
+          await X(`__c2Above.style.height = '124px'; true`);
+          await settle();
+          const reflow = await read();
+          assert(reflow.same && reflow.visible && reflow.shown && Math.abs(reflow.top - scrolled.top - 24) <= 2 && reflow.scroll === scrolled.scroll && reflow.error <= 2,
+            `C2 ${at}: content reflow above the same target moves its ring within 2px without scrolling (${JSON.stringify(reflow)})`);
+          await X(`$('panels').scrollTop += 240; true`);
+          const away = await read();
+          await settle();
+          for (let i = 0; i < 3; i++) await page.evaluate(() => window.__c2GuideTick());
+          const stayed = await read();
+          assert(!away.visible && stayed.same && stayed.scroll === away.scroll && Math.abs(stayed.top - away.top) <= 2,
+            `C2 ${at}: scrolling away from a target stays where the player left it across guide polls (${JSON.stringify(stayed)})`);
+          await page.evaluate(() => dispatchEvent(new Event('resize')));
+          const resized = await read();
+          assert(resized.scroll === away.scroll && Math.abs(resized.top - away.top) <= 2,
+            `C2 ${at}: a resize notification does not pull the player back to an offscreen target`);
+          // A stage animation can move the same node without changing the guide: preserve HINT1's cache.
+          await X(`closeMenu(); setActivity('fight'); mob.boss = true; onboardStep = () => GUIDE_STEPS.find(s => s.id === 'boss'); window.__c2GuideTick(); true`);
+          const stageRead = () => X(`(() => { const sp = onboardSpec('boss'), r = sp.node.getBoundingClientRect(), ring = document.querySelector('.ob-ring');
+            return { stage: sp.node === $('stage'), top: r.top, shown: !ring.parentNode.hidden, transform: ring.style.transform }; })()`);
+          const stage0 = await stageRead();
+          await X(`$('stage').style.transform = 'translateY(13px)'; window.__c2GuideTick(); true`);
+          const stage1 = await stageRead();
+          assert(stage0.stage && stage0.shown && stage1.stage && stage1.shown && Math.abs(stage1.top - stage0.top - 13) <= 2 && stage1.transform === stage0.transform,
+            `C2 ${at}: a moving stage keeps the cached guide marker (${JSON.stringify({ stage0, stage1 })})`);
+          assert(!errs.length, `C2 ${at}: no browser errors during guide tracking` + (errs.length ? ': ' + errs[0] : ''));
+        } finally { await ctx.close(); }
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('C2 guide tracking crashed: ' + (e.stack || e)); }
+
 if (section('removed systems (W2-C)')) try {
   const strip = t => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/([^:'"`\\])\/\/[^\n'"`]*$/gm, '$1');
   const files = [];
@@ -5795,6 +5882,7 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
           const fit = async (view, sel) => {
             await X(`setTab(${JSON.stringify(view)}); ui(true); true`); await page.waitForTimeout(350);
             return page.evaluate(sel => { const e = document.querySelector(sel), p = document.getElementById('panels'), m = document.getElementById('menu').getBoundingClientRect(); if (!e || !e.offsetParent) return { ok: false, why: 'missing' };
+              e.scrollIntoView({ block: 'nearest' });
               const r = e.getBoundingClientRect(); return { ok: r.left >= m.left - 1 && r.right <= m.right + 1 && r.top < innerHeight && p.scrollWidth <= p.clientWidth, l: Math.round(r.left), r: Math.round(r.right), t: Math.round(r.top), ml: Math.round(m.left), mr: Math.round(m.right) }; }, sel);
           };
           const tr = await fit('training', '#trainRows'), hb = await fit('tav', '#sec-hands');
