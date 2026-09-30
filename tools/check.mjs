@@ -6557,6 +6557,56 @@ if (section('future-dated save')) try {
   assert(!g.errors.length, 'a future-dated save loads without core errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
 } catch (e) { fail('future-dated save crashed: ' + (e.stack || e)); }
 
+// ---- C12: real scene builders finish after a landscape resize and Gather menu open ----
+if (section('gather scene warmup (C12, browser)')) try {
+  const { pw, exe } = browserTools, distFile = path.join(ROOT, 'dist', 'lanternfall.html');
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('C12 gathering warmup: Playwright, Chromium or dist not available');
+  else {
+    let html = fs.readFileSync(distFile, 'utf8');
+    const hook = `;{
+      window.__c12={steps:{},x:s=>eval(s)};
+      const original=sceneSteps;
+      sceneSteps=function(...args){const step=original.apply(this,args),key=args.join('|');return function(...a){
+        const result=step.apply(this,a),r=window.__c12.steps[key]||(window.__c12.steps[key]={calls:0,done:0});r.calls++;r.done+=!!result;return result;
+      };};
+    }`;
+    const end = html.lastIndexOf('})();\n</script>');
+    if (end < 0) throw Error('C12 could not find the game IIFE');
+    html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' + html.slice(0,end) + hook + html.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      const ctx = await browser.newContext({ viewport:{width:740,height:360},deviceScaleFactor:2,isMobile:true,hasTouch:true });
+      const seed = JSON.parse(fs.readFileSync(path.join(ROOT,'tests','fixtures','save-late.json'),'utf8'));
+      await ctx.addInitScript(([key,data])=>{data.last=Date.now();localStorage.setItem(key,JSON.stringify(data));},[KEY,seed]);
+      const page = await ctx.newPage(), errors = [];
+      page.on('pageerror',e=>errors.push(String(e)));
+      await page.route('**/*',r=>r.request().url()==='http://lf.test/'?r.fulfill({status:200,body:html,headers:{'content-type':'text/html; charset=utf-8'}}):r.abort());
+      await page.goto('http://lf.test/');
+      await page.waitForFunction(()=>window.__c12&&window.__c12.x('stageStats().SW>0'));
+      for(let i=0;i<4;i++){const go=await page.$('#createScreen .create-go');if(!go)break;await go.click();}
+      const X=s=>page.evaluate(s=>window.__c12.x(s),s);
+      await X('onboardUnlockAll();setActivity("fight");setTab("adv");S.auto=false;true');
+      await page.waitForTimeout(3500); // Let the original-size boot warm-up run before changing size.
+      for(const [width,height] of [[844,390],[920,420]]) {
+        await X('setTab("adv");true');await page.setViewportSize({width,height});await page.waitForTimeout(350);
+        const keys=await X('(()=>{const s=stageStats(),h=s.SH>=210?s.SH:Math.round(s.GY/.8);return [...new Set(GATHER_KINDS.map(gatherTheme))].map(t=>[t,s.SW,h,0].join("|"));})()');
+        await X('setTab("gat");true');
+        let completed=true;
+        try { await page.waitForFunction(keys=>keys.every(k=>window.__c12.steps[k]?.done>0),keys,{timeout:20000}); }
+        catch { completed=false; }
+        const rows=await page.evaluate(keys=>keys.map(k=>[k,window.__c12.steps[k]||null]),keys);
+        assert(completed&&rows.length===4&&rows.every(([,r])=>r&&r.calls<=32&&r.done===1),
+          `C12 ${width}x${height}: all four real gathering scenes finish without endless restarts (${JSON.stringify(rows)})`);
+        const before=JSON.stringify(rows);
+        await X('setTab("adv");setTab("gat");true');await page.waitForTimeout(300);
+        assert(before===JSON.stringify(await page.evaluate(keys=>keys.map(k=>[k,window.__c12.steps[k]||null]),keys)),
+          `C12 ${width}x${height}: reopening Gather reuses the completed warm-up`);
+      }
+      assert(!errors.length,'C12: real scene warm-up has no page errors'+(errors.length?': '+errors[0]:''));
+    } finally { await browser.close(); }
+  }
+} catch(e) { fail('C12 gathering warmup crashed: '+(e.stack||e)); }
+
 if (section('removed systems (W2-C)')) try {
   const strip = t => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/([^:'"`\\])\/\/[^\n'"`]*$/gm, '$1');
   const files = [];
