@@ -25,6 +25,8 @@
 //             0.1-0.25 s (now and then a longer 0.5-1.5 s lapse), casts each ability 0.2-0.5 s after it is ready, and
 //             answers heavy wind-ups like a decent player: about half the heavies parried (60% try, one in six of those
 //             too early: open), most of the rest dodged (a dodge lands 80% of the time), slams and ground zones dodged 80%.
+//   --turns 1: opt in to the zone-1 C20 prototype (default off); --active uses turn inputs.
+//   --report turns --hours 1 --seeds 3 --json rates.json: stationary early-profile combat comparison.
 //   --report early (SOLO1): the three starters, idle and active, 1 h of mixed play each: first boss, zone 5,
 //             zone 10, zones at 30 and 60 min, wipes, answers; PASS/FAIL against the early targets.
 //   --roster auto|off: roster policy (default auto): recruit when affordable, promote when
@@ -110,6 +112,7 @@ const profile = args.profile ? PROFILES[args.profile] : null;
 if (args.profile && !profile) { console.error('--profile must be idle, normal or active'); process.exit(1); }
 if (profile) for (const k of ['checkins', 'session', 'first']) if (args[k] === undefined) args[k] = String(profile[k]);
 
+if (args.report === 'turns') { await runTurnReport(); process.exit(0); }
 if (args.report === 'early') { await runEarlyReport(); process.exit(0); }
 if (args.targets) { await runEarlyReport(true); await runTargets(); process.exit(0); }
 if (args.report === 'skills') { await runSkillsReport(); process.exit(0); }
@@ -118,6 +121,8 @@ if (args.report === 'hands') { await runHandsReport(); process.exit(0); }
 if (args.report === 'econ') { await runEconReport(); process.exit(0); }
 const g = loadCore({ seed });
 const { fn } = g, E = s => g.eval(s);
+// C20: opt in explicitly; the shipped game remains off by default.
+if (args.turns && args.turns !== '0') E('TURN_TUNE.on = 1');
 Object.assign(fn, g.eval('({ craftItem, canCraft })'));   // 55-crafting.js (K6)
 // Sim clock: the game's Date.now (bounty timers, the Tavern's device day) follows sim time.
 const day0 = args.day !== undefined ? +args.day : 277;
@@ -605,6 +610,8 @@ function craftCheck(sec) {
   if (craftStats.g2 == null && full(2)) craftStats.g2 = sec;
 }
 
+// C20: --active controls the saved Auto toggle introduced at the checkpoint.
+E('soloSetAuto(' + !active + ')');
 const gs = () => HERO_POS.reduce((a, s) => { const it = fn.equipped(s); return a + (it ? fn.itemPower(it) : 0); }, 0);
 const fmt = n => n < 1e3 ? n.toFixed(0) : n < 1e6 ? (n / 1e3).toFixed(1) + 'K' : n < 1e9 ? (n / 1e6).toFixed(2) + 'M' : n.toExponential(2);
 const row = (a) => a.map((x, i) => String(x).padStart([6, 4, 5, 8, 8, 5, 15][i] || 6)).join(' ');
@@ -665,8 +672,32 @@ fn.on('telegraphStart', e => {
     if (early && rnd() < 0.5) soloPlan.push({ act: 'soloDodge()', at: 0.05 + rnd() * 0.3 });
   } else soloPlan = [{ act: 'soloDodge()', at: dodgeAt(dw) }];
 });
+// C20: one planned input per actor turn; a missed defence never retries.
+let turnInput = null;
+fn.on('fightStart', () => { turnInput = null; });
+function turnPlayer() {
+  if (!E('typeof turnCombatOn === "function" && turnCombatOn()')) return false;
+  const s = E('turnCombatSnapshot()');
+  if (!s || !['hero', 'foeWindup'].includes(s.phase)) { turnInput = null; return true; }
+  const key = s.phase + ':' + s.n;
+  if (!turnInput || turnInput.key !== key) {
+    turnInput = { key, done: false, at: s.now + 0.15 + rnd() * 0.15, kind: 'attack' };
+    if (s.phase === 'foeWindup') {
+      turnInput.kind = rnd() < 0.6 ? 'parry' : 'dodge';
+      const opens = turnInput.kind === 'parry' ? s.parryOpensAt : s.dodgeOpensAt;
+      turnInput.at = rnd() < 0.8 ? opens + (s.closesAt - opens) * 0.5 : Math.max(s.now, opens - 0.1);
+    }
+  }
+  if (!turnInput.done && s.now >= turnInput.at) {
+    turnInput.done = true;
+    if (s.phase === 'hero') E('if (!soloAbility()) soloAttack()');
+    else E(turnInput.kind === 'parry' ? 'soloParry()' : 'soloDodge()');
+  }
+  return true;
+}
 function soloPlayer() {
   simClock += dt;
+  if (turnPlayer()) return;
   if (E('target() !== "mob"')) { atkAt = -1; abAt.fill(-1); return; }
   if (soloPlan) {
     const w = E('(w => w ? w.left : -1)(actWarning())');
@@ -965,7 +996,7 @@ function runDays() {
 async function runEarlyReport(inTargets) {
   const { execFile } = await import('node:child_process');
   const run = a => new Promise((res, rej) => execFile(process.execPath, [process.argv[1], ...a], { maxBuffer: 1 << 26 }, (e, out) => e ? rej(e) : res(out)));
-  const pass = ['pace', 'eval', 'camp', 'combat', 'enemy', 'store', 'hands', 'omen'].flatMap(k => args[k] ? ['--' + k, String(args[k])] : []);
+  const pass = ['pace', 'eval', 'camp', 'combat', 'enemy', 'store', 'hands', 'omen', 'turns'].flatMap(k => args[k] ? ['--' + k, String(args[k])] : []);
   const heroes = [['wren', 'ranger'], ['tobin', 'warden'], ['pip', 'lanternmage']];
   const hrs = String(args.hours || 1), seed0 = +(args.seed || 1), nSeeds = +(args.seeds || 3), seeds = Array.from({ length: nSeeds }, (_, i) => seed0 + i);
   // every hero x idle / active x seeds; a row is the mean over the seeds (one seed swings a zone by minutes)
@@ -1383,4 +1414,66 @@ async function runEconReport() {
   for (const [r, name, detail] of res) console.log(`${r}  ${name}\n      ${detail}`);
   console.log(`${res.filter(r => r[0] === 'PASS').length}/${res.filter(r => r[0] !== 'INFO').length} econ targets pass (${c}, ${nDays} days)`);
   for (const p of profs) console.log(`  ${p.padEnd(6)} day ${nDays}: zone ${D[p][D[p].length - 1].zone}, bosses ${Object.entries(J[p].bossAt).map(([z, t]) => `${z} d${(t / 24).toFixed(1)}`).join(' ') || '-'}, gold a day ${D[p].filter(d => [1, 3, 8, 15, 30, 45].includes(d.day)).map(d => `d${d.day} ${f0(d.earn)}`).join(' ')}`);
+}
+
+// C20: fixed starting profiles, real live core versus the real away entry point.
+// Usage: --report turns --hours 1 --seeds 3 [--json path]. No purchases/boss progression.
+// XP/mastery progression and Deed bonuses are frozen for a stationary rate comparison.
+async function runTurnReport() {
+  const fs = await import('node:fs');
+  const path = await import('node:path');
+  const { ROOT } = await import('./lib/core.mjs');
+  const seconds = Number(args.hours || 1) * 3600, count = Number(args.seeds || 3);
+  if (!(seconds > 0) || !Number.isFinite(seconds) || !Number.isInteger(count) || count < 1) throw new Error('Positive hours and integer seeds required');
+  const startSeed = Number(args.seed || 1), rows = [];
+  const early = fs.readFileSync(path.join(ROOT, 'tests/fixtures/save-early.json'), 'utf8');
+  const profiles = [['fresh-wren', 'wren'], ['fresh-tobin', 'tobin'], ['fresh-pip', 'pip'], ['early-wren', 'wren', early]];
+  for (const [name, hero, save] of profiles) for (let i = 0; i < count; i++) {
+    const sd = startSeed + i;
+    for (const mode of ['legacy-auto', 'turn-auto', 'turn-hand', 'turn-away']) {
+      const core = loadCore({ seed: sd, prelude: 'Date.now = () => 1791187200000;' }), e = s => core.eval(s);
+      if (save) { core.storage.set(SAVE_KEY, save); e('loadSave()'); }
+      e(`soloPick(${JSON.stringify(hero)}, {now:true}); S.zone=1; S.activity='fight'; S.auto=false; fightBoss=false; arena=null; almanac.force('none');
+        TURN_TUNE.on=${mode === 'legacy-auto' ? 0 : 1}; soloSetAuto(${mode === 'turn-hand' ? 'false' : 'true'});
+        DEED_TUNE.bonusOn=0; gainXp=()=>{}; gearDirty(); spawn();
+        globalThis.__turnBench={kills:0,ess:0,deaths:0,mastery:JSON.stringify(S.mastery),defence:null,action:null,clock:0};
+        on('kill', x=>{ __turnBench.kills++; __turnBench.ess+=Number(x.ess)||0; S.mastery=JSON.parse(__turnBench.mastery); });
+        on('wipe',()=>{__turnBench.deaths++;});
+        on('fightStart',()=>{__turnBench.defence=null;__turnBench.action=null;});`);
+      const before = e('({kills:S.totalKills,ess:S.mats.ess[0],gold:S.gold,cap:(4+2*S.relic.glass+bonus("awayHours"))*3600,boost:(1+gear().offline/100)*mod("offline")})');
+      let sampled = null, awayResult = null;
+      if (mode === 'turn-away') {
+        // Sampler is reward-free; the actual awayGains below validates aggregate accounting.
+        sampled = e(`turnCombatSample({profile:turnCombatProfile(),seconds:${Math.min(seconds,before.cap)},seed:${sd},mode:'auto'})`);
+        awayResult = e(`awayGains(${seconds})`);
+      } else {
+        // Run inside the VM to avoid per-frame tool/VM boundary overhead. Hand policy is
+        // deterministic perfect timing with 0.2s reaction, explicitly an upper-bound case.
+        e(`for(let elapsed=0;elapsed<${seconds};){
+          const step=Math.min(0.05,${seconds}-elapsed);
+          if (${mode === 'turn-hand'} && turnCombatOn()) {
+            const q=turnCombatSnapshot(), b=__turnBench;
+            if(q.phase==='hero') {
+              if(!b.action || b.action.n!==q.n) b.action={n:q.n,at:q.now+0.2,done:false};
+              if(!b.action.done && q.now>=b.action.at){b.action.done=true;if(!soloAbility())soloAttack();}
+            }
+            if(q.phase==='foeWindup' && b.defence!==q.n && q.now>=(q.parryOpensAt+q.closesAt)/2){b.defence=q.n;soloParry();}
+          }
+          tick(step); elapsed+=step; __turnBench.clock=elapsed;
+        }`);
+      }
+      const after = e('({kills:S.totalKills,ess:S.mats.ess[0],gold:S.gold,events:__turnBench})');
+      if (core.errors.length) throw new Error(`${name}/${mode}: ${core.errors.join('; ')}`);
+      const actualSeconds = awayResult ? awayResult.t : seconds;
+      rows.push({profile:name,mode,seed:sd,seconds:actualSeconds,kills:after.kills-before.kills,
+        generatedEss:mode === 'turn-away' ? (awayResult.turnCombat?.generatedEss ?? null) : after.events.ess,storedEss:after.ess-before.ess,
+        deaths:mode === 'turn-away' ? (awayResult.turnCombat?.deaths ?? null) : after.events.deaths,gold:after.gold-before.gold,offlineBoost:before.boost,sampled});
+    }
+  }
+  console.log('C20 stationary zone-1 rate report; no purchases, XP/mastery frozen, Deed bonuses off. Hand = perfect parry, 0.2s reaction.');
+  console.log('profile / mode / seed / kills/h / generated Essence/h / stored Essence/h / deaths');
+  for (const r of rows) { const rate=n=>n===null?'n/a':(n*3600/r.seconds).toFixed(2); console.log(`${r.profile} / ${r.mode} / ${r.seed} / ${rate(r.kills)} / ${rate(r.generatedEss)} / ${rate(r.storedEss)} / ${r.deaths??'n/a'}`); }
+  const report={seconds,seeds:count,rows,notes:['Existing early save is explicitly moved from zone8 to prototype zone1.', 'Storehouse caps retained; generated and stored Essence differ.', 'Away totals come from awayGains; reward-free sampled results are retained separately.', 'Offline bonuses retained; compare using offlineBoost.']};
+  if(args.json && args.json!=='1') fs.writeFileSync(String(args.json),JSON.stringify(report,null,2)+'\n');
+  return report;
 }

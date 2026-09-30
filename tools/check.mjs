@@ -6607,6 +6607,84 @@ if (section('gather scene warmup (C12, browser)')) try {
   }
 } catch(e) { fail('C12 gathering warmup crashed: '+(e.stack||e)); }
 
+// ---- C20: default-off, zone-one turn combat and shared away resolver ----
+if (section('C20 turn combat (core)')) try {
+  const g = loadCore({ seed: 2020 }), E = src => g.eval(src);
+  assert(E('TURN_TUNE.on === 0 && !turnCombatOn() && SOLO_TUNE.turnParryWindow === 0.18 && SOLO_TUNE.turnDodgeWindow === 0.35'), 'C20: prototype defaults off; owner-approved manual windows are exposed as knobs');
+  E('TURN_TUNE.on=1; soloPick("wren"); soloSetAuto(false); S.auto=false; globalThis.__turnEvents=[]; on("fightStart", x=>__turnEvents.push(["start",x.first,turnCombatSnapshot().phase])); on("turn",x=>__turnEvents.push(["turn",x.who,x.n])); on("fightEnd",x=>__turnEvents.push(["end",x.reason])); spawn()');
+  g.fn.tick(0.1);
+  assert(E('combatFoes().filter(f=>f.hp>0&&!f.dead).length===1 && __turnEvents.length===1 && __turnEvents[0].join() === "start,hero,intro" && turnCombatSnapshot().foe.key===combatFoes()[0].key'), 'C20: one foe and a complete intro snapshot exist when fightStart fires');
+  E('combatFoes()[0].hp=combatFoes()[0].max=1e9');
+  for (let i = 0; i < 12; i++) g.fn.tick(0.1);
+  assert(E('turnCombatSnapshot().phase==="hero" && __turnEvents.some(x=>x[0]==="turn"&&x[1]==="hero"&&x[2]===1)'), 'C20: higher hero initiative opens the first hero turn and hand input waits');
+  assert(E('soloAbility({slot:0}) && turnCombatSnapshot().cooldowns.echo===5 && !soloAbility({slot:0})'), 'C20: one ability commits the hero turn and its cooldown is counted in turns');
+  for (let i = 0; i < 3; i++) g.fn.tick(0.1);
+  assert(E('turnCombatSnapshot().phase==="foeWindup" && turnCombatSnapshot().closesAt>turnCombatSnapshot().parryOpensAt'), 'C20: the foe turn publishes fight-local defense bounds');
+  for (let i = 0; i < 7; i++) g.fn.tick(0.1);
+  assert(E('soloParry()==="parry" && soloDodge()==="miss"'), 'C20: a timed parry succeeds and a second defense attempt cannot replace it');
+  for (let i = 0; i < 5; i++) g.fn.tick(0.1);
+  assert(E('turnCombatSnapshot().phase==="hero" && turnCombatSnapshot().cooldowns.echo===3'), 'C20: timed parry refunds one, then the next hero turn decrements one');
+  const cadence = E(`(() => {
+    const run = dt => { let hero=1e9, foe=1e9; const io={heroHaste:10,foeHaste:9,emit:()=>{},auto:()=>true,
+      random:()=>1,odds:()=>({parry:0,dodge:0,parryWindow:.18,dodgeWindow:.35}),
+      alive:()=>({hero:hero>0,foe:foe>0}),turnStart:()=>{},cooldown:()=>1,
+      abilityId:()=>null,choose:()=>({kind:'attack'}),heroAction:()=>{foe--;return true},foeHit:()=>{hero--},counter:()=>{},defense:()=>{}};
+      const m=turnNew('hero',true,io); for(let t=0;t<60;t+=dt)turnResolve(m,{kind:'tick'},dt,io); return m.n; };
+    return [.01,.05,.1].map(run);
+  })()`);
+  assert(Math.max(...cadence)-Math.min(...cadence) <= Math.max(...cadence)*0.1,
+    `C20: turn cadence remains within 10% across 0.01/0.05/0.1 s ticks (${cadence.join('/')})`);
+  const autoDefense = E(`(() => {
+    let hero=100, foe=1e9, counters=0, windows=0;
+    const io={heroHaste:10,foeHaste:9,emit:(name)=>{if(name==='parryWindow')windows++},
+      auto:()=>true,random:()=>0,odds:()=>({parry:.1,dodge:.25,parryWindow:.18,dodgeWindow:.35}),
+      alive:()=>({hero:hero>0,foe:foe>0}),turnStart:()=>{},cooldown:id=>id==='echo'?5:1,
+      abilityId:()=> 'echo',choose:m=>m.cooldowns.echo===0?{kind:'ability',id:'echo'}:{kind:'attack'},
+      heroAction:()=>true,foeHit:()=>{hero--},counter:()=>{counters++},defense:()=>{}};
+    const m=turnNew('hero',true,io);turnResolve(m,{kind:'tick'},.6,io);
+    turnResolve(m,{kind:'tick'},.28,io);turnResolve(m,{kind:'tick'},.85,io);
+    return {cd:m.cooldowns.echo,counters,windows};
+  })()`);
+  assert(autoDefense.cd===5 && autoDefense.counters===1 && autoDefense.windows===1,
+    'C20: Auto parry counters once without refunding the used ability');
+  const dotOrder = E(`(() => {
+    let foe=1, windows=0, ends=0;const io={heroHaste:0,foeHaste:1,emit:name=>{if(name==='parryWindow')windows++;if(name==='fightEnd')ends++},
+      auto:()=>false,random:()=>1,odds:()=>({parry:0,dodge:0,parryWindow:.18,dodgeWindow:.35}),
+      alive:()=>({hero:true,foe:foe>0}),turnStart:who=>{if(who==='foe')foe=0},cooldown:()=>1,
+      abilityId:()=>null,choose:()=>null,heroAction:()=>true,foeHit:()=>{},counter:()=>{},defense:()=>{}};
+    const m=turnNew('foe',false,io);turnResolve(m,{kind:'tick'},1.2,io);
+    return {windows,ends,phase:m.phase};
+  })()`);
+  assert(dotOrder.windows===0 && dotOrder.ends===1 && dotOrder.phase==='off',
+    'C20: a foe killed at turn start ends once before a defense window is offered');
+  const profile = E('turnCombatProfile()'), before = E('JSON.stringify(S)');
+  E('globalThis.__rngCalls=0; Math.random=()=>{__rngCalls++;return 0.5}');
+  const sample = E('turnCombatSample({profile:turnCombatProfile(),seconds:30,seed:77,mode:"auto"})');
+  assert(sample && sample.seconds===30 && sample.kills>=0 && E('JSON.stringify(S)')===before && E('__rngCalls===0'), 'C20: reward-free scratch sampling does not mutate the save or consume live RNG');
+  E('setZone(2)');
+  assert(E('!turnCombatOn() && combatFoes().length>1 && __turnEvents.filter(x=>x[0]==="end").length===1 && __turnEvents.at(-1)[1]==="abandon"'), 'C20: leaving the supported zone ends the fight once and restores legacy pack combat');
+  E('TURN_TUNE.on=0; setZone(1)');
+  assert(E('!turnCombatOn() && combatFoes().length>1'), 'C20: switching the prototype off retains legacy zone-one combat');
+  const toggled=loadCore({seed:2023}), V=x=>toggled.eval(x);
+  V('TURN_TUNE.on=1;soloPick("wren");soloSetAuto(false);globalThis.__ends=[];on("fightEnd",x=>__ends.push(x.reason));spawn()');
+  toggled.fn.tick(0.1); V('TURN_TUNE.on=0'); toggled.fn.tick(0.1); toggled.fn.tick(0.1);
+  assert(V('__ends.join()==="abandon" && !turnCombatOn()'), 'C20: disabling the switch mid-fight abandons exactly once and returns to legacy ticks');
+  const mk = seed => { const h=loadCore({seed}), H=x=>h.eval(x); H('TURN_TUNE.on=1;soloPick("wren");soloSetAuto(true);S.auto=false;spawn();globalThis.__awayN=0;on("awayKills",()=>__awayN++)'); h.fn.tick(0.1); return {h,H}; };
+  const a=mk(2021), b=mk(2021);
+  const one=a.H('awayGains(3600)'), half1=b.H('awayGains(1800)'), half2=b.H('awayGains(1800)');
+  assert(one.turnCombat && half1.turnCombat && half2.turnCombat && one.turnCombat.sampledSeconds===3600 && a.H('__awayN')===1 && b.H('__awayN')===2, 'C20: away Auto reports generated and stored Essence and emits one reward event per claim');
+  assert(one.turnCombat.kills===half1.turnCombat.kills+half2.turnCombat.kills && one.turnCombat.generatedEss===half1.turnCombat.generatedEss+half2.turnCombat.generatedEss, 'C20: fractional carry makes a one-hour claim equal two half-hour claims');
+  const whole=mk(2022), split=mk(2022), twoHours=whole.H('awayGains(7200)'), firstHour=split.H('awayGains(3600)');
+  split.H('save()');
+  const re=loadCore({seed:2022,storage:memoryStorage(split.h.storage.dump())}), R=x=>re.eval(x);
+  R('TURN_TUNE.on=1;loadSave();gearDirty();spawn()');
+  const secondHour=R('awayGains(3600)');
+  assert(twoHours.turnCombat.kills===firstHour.turnCombat.kills+secondHour.turnCombat.kills &&
+    twoHours.turnCombat.generatedEss===firstHour.turnCombat.generatedEss+secondHour.turnCombat.generatedEss &&
+    Math.abs(whole.H('S.gold')-R('S.gold'))<1e-8, 'C20: a progressing two-hour claim equals two one-hour claims with save/reload between');
+  assert(one.turnCombat.storedEss<=one.turnCombat.generatedEss && a.H('S.totalKills')===one.turnCombat.kills, 'C20: aggregate away rewards are applied once and respect Essence storage caps');
+  assert(!g.errors.length && !a.h.errors.length && !b.h.errors.length, 'C20: turn fights, sampling and away claims raise no core handler errors');
+} catch (e) { fail('C20 turn combat crashed: ' + (e.stack || e)); }
 if (section('removed systems (W2-C)')) try {
   const strip = t => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/([^:'"`\\])\/\/[^\n'"`]*$/gm, '$1');
   const files = [];

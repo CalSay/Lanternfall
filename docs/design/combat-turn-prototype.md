@@ -1,9 +1,9 @@
 # C20: turn-based combat prototype
 
-Status: proposed, awaiting Claude's sign-off. Based on `badf298` and the latest
+Status: implementation approved by Claude on issue #21. Proposal based on `badf298` and the latest
 [C20 direction](https://github.com/CalSay/Lanternfall/issues/21#issuecomment-5916888721).
-[Owner decisions](combat-turns.md) remain authoritative. No engine changes in this proposal.
-All numbers and implementation choices below are provisional unless already owner-decided.
+[Owner decisions](combat-turns.md) remain authoritative. The prototype is in development behind its default-off switch.
+Approved decisions: [engine scope](https://github.com/CalSay/Lanternfall/issues/21#issuecomment-5918334844), [owner clarifications](https://github.com/CalSay/Lanternfall/issues/21#issuecomment-5918395871), and [live routing](https://github.com/CalSay/Lanternfall/issues/21#issuecomment-5918537087).
 
 ## Scope and compatibility
 
@@ -40,7 +40,7 @@ counters and intro cards never decrement cooldowns. Proposed bases:
 
 Preserve training and existing gear cooldown benefits by proposing:
 `ceil(baseTurns * trainAbCd(id, baseSeconds) / baseSeconds * mod('abilityCd'))`,
-minimum 1. This conversion requires sign-off. Gear `haste` currently means
+minimum 1. Claude approved this conversion. Gear `haste` currently means
 -% ability cooldown; never repurpose it as initiative. Use a separate initiative
 accessor with prototype values until the stat tree and gear decision are approved.
 
@@ -70,8 +70,7 @@ enemy wind-up retains its selected mode. Preserve
 hidden-page handling; combat presses never flip Auto. Tests use `soloSetAuto(false)`
 for manual play. Auto uses the first ready equipped ability in bar order, otherwise
 Attack. Per enemy attack, roll parry at 10%, then dodge at 25% only on failure:
-32.5% combined avoidance. Caps are 30%/50%. Auto parry counters without refund
-(pending confirmation). Enchantments improve both Auto odds and manual windows;
+32.5% combined avoidance. Caps are 30%/50%. Auto parry counters without refund (owner confirmed); `autoParryCounters` defaults on. Enchantments improve both Auto odds and manual windows;
 prototype exposes modifiers without changing crafting data yet.
 
 ## Engine/UI contract
@@ -87,11 +86,10 @@ Claude maintains the Auto toggle and owns the versus card, turn strip and action
   fight-local simulation seconds, never epoch milliseconds; core validates input.
 - `fightEnd` exactly once on victory, defeat or abandonment; cancel pending actions.
 
-Expose a snapshot with the same clock, phase, Auto state, foe identity, dodge bounds,
+Expose a snapshot with the same clock as `now`, phase, Auto state, foe identity, dodge bounds,
 next actor and cooldowns labelled as turns. Simulation clock pauses with gameplay;
 manual thinking never advances effects. UI enables hero actions only on the hero
-turn and defense only for the scheduled enemy attack. Intro durations and contract
-need approval before integration.
+turn and defense only for the scheduled enemy attack. The intro durations and contract are approved; abandonment must also emit `fightEnd`.
 
 ## Offline, evidence and expansion
 
@@ -111,10 +109,12 @@ kills/hour. Verify split-session accounting and exactly-once rewards. Expand bey
 zone 1 only after engine checks, Claude's UI, owner playtest and rate sign-off;
 C19/C25/full offline parity follow their queue gates.
 
-## Permission needed before implementation
+## Approved boundaries
 
-Request narrow exceptions for live `50-sim.js` routing (away branch already assigned),
-`55-party.js` legacy auto-tap/effect suppression and `tools/sim.mjs` turn policy/reports.
-Use existing shared state/check extension points. No shell/stage edits, crafting-stat
-rename or profile system in C20. Claude must approve these boundaries, provisional
-values, cooldown/training semantics and event timing before build work starts.
+Claude approved narrow live and away routing in `50-sim.js`, legacy auto-tap/effect
+suppression in `55-party.js`, and turn policy/reports in `tools/sim.mjs`. The switch-off
+and unsupported-scope paths must retain their existing behavior, pinned by checks.
+Use existing shared state/check extension points. No shell/stage edits or profile
+system in C20. Haste means initiative; keep the existing internal gear key unchanged.
+Its proposed player-facing rename to Focus belongs with C19's initiative stat tree.
+The owner must play the prototype before it expands beyond zone 1.

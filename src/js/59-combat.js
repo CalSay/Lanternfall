@@ -49,7 +49,7 @@
 function partyCombatOn() { return !(COMBAT_TUNE && !COMBAT_TUNE.on) && !(S && S.combat && !S.combat.on); }
 // var: other files (56-roster at load, 55-party) may ask before this file has run.
 var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrike, cbHeroUp, cbPush,
-  cbUnitHp, cbHitUnit, cbHealUnit, cbShield, cbDamageFoe, cbUnitByKey, cbTaunt, cbStun, cbDebug,
+  cbUnitHp, cbHitUnit, cbHealUnit, cbShield, cbDamageFoe, cbTurnDamageFoe, cbTurnHitHero, cbUnitByKey, cbTaunt, cbStun, cbDebug,
   partyHoldEstimate, partyHolds, cbClock, cbArena, cbBossUp, cbBossReady, cbRestore,
   cbPack, cbFoeAtk, cbEnrage, bossTimer;
 
@@ -245,7 +245,12 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     const z = S.zone, cyc = zoneCycle(z), zt = zoneType(z);
     foes = []; packDown = false; packT = 0; focusIdx = -1; lead = null; packGold = 0; inArena = false;
     refreshUnits(false);
-    if (boss) {
+    if (!boss && typeof turnCombatScope === 'function' && turnCombatScope()) {
+      // C20: one stronger foe; the existing pack-clear path still pays one kill and its rewards.
+      const hp = mobHp(z) * TURN_TUNE.foeHpX * mod('foeHp');
+      const f = mkFoe(zt, hp, mobGold(z) * T.packGold, Math.ceil(1.5 * z), z, false, TYPES[zt].name, cyc, T.packAtkN);
+      foes.push(f); lead = f; packN = 1; packSize = 'brute'; aoeK = 1;
+    } else if (boss) {
       const hp = mobHp(z) * bossHpMult(z) * mod('bossHp') * mod('foeHp');
       const f = mkFoe(zt, hp, mobGold(z) * 6, Math.ceil(1.5 * z) * 5, z, true, 'Elder ' + TYPES[zt].name, cyc);
       foes.push(f); lead = f; packN = 1; packSize = 'boss'; aoeK = 1;
@@ -424,6 +429,23 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       // S6-A: the carry chains through small foes (a pack of 9 wastes no more of a big hit than a pack of 3 did)
       if (carry && kind !== 'dot' && over > 0 && !f.hp && anyFoe() && carryN < FOE_MAX) { const n = focusFoe(); if (n && n !== f) { carryN++; cbDamageFoe(n, over / Math.max(0.1, typeof typeX === 'function' ? typeX(f, ty) : 1), src, kind, ty); carryN--; } }
     }
+    return a;
+  };
+  // C20 scalar adapter: the turn resolver calculates one hit once for both live and scratch play.
+  // This applies that hit to the live foe while retaining the established death/reward path.
+  cbTurnDamageFoe = (f, amount, kind) => {
+    if (!alive(f) || !(amount > 0)) return 0;
+    const a = Math.max(0, amount);
+    f.hp -= a; f.hit = 0.08; ST.heroDmg += a; if (kind !== 'burn') ST.heroHits++;
+    emit('float', { txt: fmt(a), color: kind === 'counter' ? '#FF9E3D' : '#FFFFFF', big: kind !== 'attack' });
+    if (f.hp <= 0) foeDies(f, 0, kind || 'turn');
+    return a;
+  };
+  cbTurnHitHero = amount => {
+    const u = U[0]; if (!u || u.down || !(amount > 0)) return 0;
+    const a = Math.max(0, amount); u.hp -= a; u.taken += a; ST.taken += a;
+    emit('unitHit', { key: u.key, amount: a, kind: 'hit', foe: mob, blocked: false, shield: 0 });
+    if (u.hp <= 0) knockOut(u);
     return a;
   };
   let carry = true, carryN = 0;

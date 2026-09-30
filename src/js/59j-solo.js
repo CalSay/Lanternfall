@@ -120,6 +120,7 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
   const readyFor = [0, 0, 0], cds = {};   // idle wait per ability slot; cooldown left per ability id (runtime)
   soloAttack = () => {
     soloTouch();
+    if (typeof turnCombatOn === 'function' && turnCombatOn()) return turnCombatAction('attack') ? 'hit' : 'cd';
     if (!fighting() || !heroUp()) return '';
     if (atkT > 0) return 'cd';
     atkT = T.atkCd;
@@ -135,6 +136,7 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
   };
   soloParry = forgive => {
     soloTouch();
+    if (typeof turnCombatOn === 'function' && turnCombatOn()) return turnCombatAction('parry') ? 'parry' : 'miss';
     if (!fighting()) return '';
     if ((parryT > 0 || openT > 0) && !forgive) return 'locked';   // the guide's press (forgive) ignores a cooldown an earlier press left: the game is paused, so it would never end
     const r = typeof actParry === 'function' ? actParry(!!forgive) : '';
@@ -146,6 +148,7 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
   };
   soloDodge = forgive => {
     soloTouch();
+    if (typeof turnCombatOn === 'function' && turnCombatOn()) return turnCombatAction('dodge') ? 'dodge' : 'miss';
     if (!fighting()) return '';
     if (dodgeT > 0 && !forgive) return 'cd';
     dodgeT = trainDodgeCd();   // W2-A: Dodge training shortens it
@@ -226,6 +229,7 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
   soloAbility = opts => {
     const o = opts || {}, p = S.party, auto = !!o.auto;
     if (!auto) soloTouch();
+    if (typeof turnCombatOn === 'function' && turnCombatOn()) return turnCombatAction('ability', o.slot);
     let slot = o.slot;
     if (slot == null) { const eq = soloEquipped(); slot = eq.findIndex(id => id && !(cds[id] > 0)); if (slot < 0) slot = 0; }
     const a = abAt(slot);
@@ -270,8 +274,9 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
   soloAbilityInfo = slot => {
     const eq = soloEquipped(), i = slot == null ? Math.max(0, eq.findIndex(Boolean)) : slot, a = abAt(i);
     if (!a || !S.party) return null;
-    const left = cdOf(a);
-    return { id: a.id, name: a.name, desc: a.desc, line: a.line, cd: abCd(a), left, ready: !(left > 0), spare: 0, slot: i,
+    const turn = typeof turnCombatOn === 'function' && turnCombatOn(), q = turn ? turnCombatSnapshot() : null;
+    const left = turn ? (q.cooldowns[a.id] || 0) : cdOf(a), cd = turn ? turnCdFor(a.id) : abCd(a);
+    return { id: a.id, name: a.name, desc: a.desc, line: a.line, cd, left, ready: !(left > 0) && (!turn || q.phase === 'hero'), spare: 0, slot: i,
       autoUnlocked: true, autoCast: true, patch: patchT };
   };
 
@@ -302,6 +307,11 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
   onTick(dt => {
     clock += dt;
     adopt();
+    if (typeof turnCombatOn === 'function' && turnCombatOn()) {
+      const q = turnCombatSnapshot(), eq = soloEquipped();
+      if (S.party) S.party.abilityCd = q.cooldowns[eq.find(Boolean)] || 0;
+      return; // C20: cooldowns, status and counters tick at turn boundaries, never per frame.
+    }
     if (atkT > 0) atkT -= dt; if (dodgeT > 0) dodgeT -= dt; if (parryT > 0) parryT -= dt; if (openT > 0) openT -= dt;
     counterTick(dt);
     if (patchT > 0) {
@@ -326,6 +336,20 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
   const BTN = { atk: { left: 0, max: 0 }, parry: { left: 0, max: 0, open: 0 }, dodge: { left: 0, max: 0 }, ab: AB(), abs: [AB(), AB(), AB()], tele: '', inParry: false, inDodge: false, fight: false };
   soloButtons = () => {
     const b = BTN;
+    if (typeof turnCombatOn === 'function' && turnCombatOn()) {
+      const q = turnCombatSnapshot(), eq = soloEquipped();
+      b.atk.left = q.cooldowns.attack; b.atk.max = turnCdFor('attack');
+      b.parry.left = 0; b.parry.max = SOLO_TUNE.turnParryWindow; b.parry.open = 0;
+      b.dodge.left = 0; b.dodge.max = SOLO_TUNE.turnDodgeWindow;
+      for (let i = 0; i < 3; i++) { const a = soloAbilityInfo(i), o = b.abs[i];
+        o.left = a ? a.left : 0; o.max = a ? a.cd : 0; o.ready = !!(a && a.ready);
+        o.name = a ? a.name : ''; o.id = a ? a.id : ''; }
+      Object.assign(b.ab, b.abs[Math.max(0, eq.findIndex(Boolean))]);
+      b.fight = q.phase === 'hero' || q.phase === 'foeWindup'; b.tele = q.phase === 'foeWindup' ? 'heavy' : '';
+      b.inParry = q.phase === 'foeWindup' && q.now >= q.parryOpensAt && q.now <= q.closesAt;
+      b.inDodge = q.phase === 'foeWindup' && q.now >= q.dodgeOpensAt && q.now <= q.closesAt;
+      return b;
+    }
     b.atk.left = Math.max(0, atkT); b.atk.max = T.atkCd;
     b.parry.left = Math.max(0, parryT, openT); b.parry.max = openT > 0 ? T.openT : T.parryCd; b.parry.open = Math.max(0, openT);
     b.dodge.left = Math.max(0, dodgeT); b.dodge.max = trainDodgeCd();

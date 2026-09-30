@@ -163,6 +163,15 @@ function challenge() {
 // ================= tick =================
 function tick(dt) {
   const tg = target();
+  // C20: supported prototype fights have one combat driver. Unsupported scopes keep the legacy path below.
+  if (tg === 'mob' && typeof turnCombatScope === 'function' && turnCombatScope()) {
+    if (!mob || (typeof combatFoes === 'function' && combatFoes().filter(f => f && !f.dead && f.hp > 0).length > 1)) spawn();
+    turnCombatTick(dt);
+    if (mob && mob.dead) mob.dead += dt;
+    if (respawn > 0) { respawn -= dt; if (respawn <= 0) spawn(); }
+    for (const fn of TICK_HOOKS.slice()) { try { fn(dt); } catch (e) { console.error('[lanternfall] tick hook failed', e); } }
+    return;
+  }
   if (tg === 'node') {
     const { kind, t } = S.node;
     S.gProg += dt / nodeTime(kind, t);
@@ -248,6 +257,38 @@ function awayBase(r) {
     S.raid.dmg += dmg;
     r.lines.push({ icon: { ic: ['flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }] }, txt: `${fmt(dmg)} raid damage` });
     r.note = 'You kept hammering the raid boss.';
+    return r;
+  }
+  // C20: sample one fixed Auto profile in scratch state, then apply one aggregate reward path.
+  if (typeof turnCombatScope === 'function' && turnCombatScope()) {
+    const q = S.turn || (S.turn = { awayKillsCarry: 0, awayEssCarry: 0, awayProfile: null, awaySig: '' });
+    // Level and XP can change as a claim is credited. Keep the sampled profile across split
+    // claims and save/reload, but invalidate it when the player changes gear, training or zone.
+    const sig = JSON.stringify([S.solo.hero, S.zone, S.equip, S.solo.tr && S.solo.tr[S.solo.hero],
+      TURN_TUNE.foeHpX, TURN_TUNE.foeAtkX, TURN_TUNE.essenceX]);
+    let p = q.awaySig === sig && q.awayProfile && q.awayProfile.foeHp > 0 ? q.awayProfile : null;
+    if (!p) { p = turnCombatProfile(); if (!p) { spawn(); p = turnCombatProfile(); }
+      if (p) { q.awayProfile = p; q.awaySig = sig; } }
+    if (!p || !(t > 0)) {
+      r.turnCombat = { generatedEss: 0, storedEss: 0, kills: 0, deaths: 0, sampledSeconds: 0, boost, zone: S.zone };
+      return r;
+    }
+    const sampledSeconds = 3600, sample = turnCombatSample({ profile: p, seconds: sampledSeconds, seed: 1, mode: 'auto' });
+    const carry = v => Number.isFinite(v) && v >= 0 && v < 1 ? v : 0;
+    const ratio = t * boost / sampledSeconds;
+    const k0 = sample.kills * ratio + carry(q.awayKillsCarry), kills = Math.floor(k0);
+    const e0 = sample.generatedEss * ratio + carry(q.awayEssCarry), generatedEss = Math.floor(e0);
+    q.awayKillsCarry = k0 - kills; q.awayEssCarry = e0 - generatedEss;
+    const gold = kills * p.goldPerKill, tier = zoneTier(p.zone);
+    const storedEss = generatedEss > 0 ? stashAdd('ess', tier, generatedEss, 'flow', true) : 0;
+    S.gold += gold; S.totalGold += gold; S.totalKills += kills; econEarn('away', gold);
+    if (kills > 0) gainXp(kills * p.xpPerKill * PACE.heroAwayXp, true);
+    r.lines.push({ icon: { ic: ['coin', '#F2C14E'] }, txt: '+' + fmt(gold) });
+    if (storedEss) r.lines.push({ icon: { mat: ['ess', tier] }, txt: `+${fmt(storedEss)} ${matName('ess', tier)}` });
+    r.turnCombat = { generatedEss, storedEss, kills, deaths: sample.deaths * ratio, sampledSeconds,
+      boost, zone: p.zone };
+    emit('awayKills', { kills, zone: p.zone, generatedEss, lines: r.lines });
+    r.note = `You held ${zoneName(p.zone)}.`;
     return r;
   }
   // Kills are capped by the respawn gap, same as live play; away play earns 75% of the live rate.
