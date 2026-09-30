@@ -26,8 +26,6 @@
 //   reforge  reforgeCost(item) -> {mats, gold} (craftReforgeCost of the item's tier and rf)
 //            reforgeLine(item, idx, rnd = Math.random) -> { a, rf, line, cost } or null (pure;
 //            the caller pays and applies). Never duplicates an affix stat, never touches mw.
-//   legend   lgFits(item, powerId) -> can that legendary power be inscribed on this item (by kind; L2)
-//            itemLegendLines(item, who?) -> card lines for its power and circle mark (55-legend legendCardLines)
 //   bag      equippedIds() -> Set of item ids worn by the hero or any companion
 //            isEquipped(id), bagCount() (unequipped items), bagFull() (>= CRAFT_BAG_MAX)
 //
@@ -61,7 +59,7 @@
 
 let itemKind, kindPos, fits, heroWho, retoolItems, RETOOL, itemLines, itemStats, gearCalc, charGear, spellMult,
   kindName, kindColor, kindCost, kindUpgradeCost, newItem, rollAffixes, reforgeCost, reforgeLine,
-  equippedIds, isEquipped, bagCount, bagFull, lgFits, itemLegendLines;
+  equippedIds, isEquipped, bagCount, bagFull;
 
 {
   const LEGACY = RECIPE; // weapon, helm, charm, pick, axe: the pre-K4 kinds (and every unique)
@@ -238,16 +236,6 @@ let itemKind, kindPos, fits, heroWho, retoolItems, RETOOL, itemLines, itemStats,
     const a = it.a.map((l, i) => i === idx ? line : l.slice());
     return { a, rf: (it.rf || 0) + 1, line, cost: reforgeCost(it) };
   };
-
-  // ---- legendary powers (legendaries.md 2.3): where a power goes; the card lines come from 55-legend ----
-  lgFits = (it, id) => {
-    const p = typeof LEG_POWERS === 'object' && LEG_POWERS[id], d = it && CRAFT_KINDS[it.slot];
-    if (!p || !d || it.u) return false;
-    if (p.fits === 'hero') return !!d.cls && LEG_FITS.hero.includes(d.pos) && (p.cls == null || p.cls === d.cls);
-    if (p.fits === 'trinket') return d.comp === 'trk';
-    return d.comp === 'wpn' && d.role === p.fits;
-  };
-  itemLegendLines = (it, who) => typeof legendCardLines === 'function' ? legendCardLines(it, who) : [];
 
   // ---- bag ----
   equippedIds = () => {

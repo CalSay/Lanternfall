@@ -10,7 +10,7 @@
 // Nothing here reads or writes the online layer except s_crowd, which only reads online.peers.
 //
 // Tracks that wait on unmerged systems are defined but hidden; a runtime probe lights them up when
-// their save field appears (H3 S.store, N1 S.hands, K12 S.kitchen, F2 S.bond, O1 S.oath, PB1 S.pin,
+// their save field appears (H3 S.store, N1 S.hands, K12 S.kitchen, F2 S.bond, O1 S.oath,
 // R2 REGIONS[1].plugged, F1 offSlot). A later system can also hand its exact number over with
 // deeds.source(trackId, fn) and its events with deeds.count(key, n).
 //
@@ -34,16 +34,16 @@
 // Events: deedTier { id, tier, quiet }, deedGroup { id, lv, quiet }, deedFeat { id, quiet }, deedSecret { id },
 //   deedPoints { pts, gain }, deedMilestone { at }, deedLook { slot, id }, deedChapter { id, step }, deedsInit { tiers, pts }.
 //   Listened (UI): deedsOpen { view, id } is emitted by the Next Up goal's Go.
-// Save: registerState('deeds', spec 8.1) plus rec.c6 (circles worn at 6 pieces) and last (time of the last tier).
+// Save: registerState('deeds', spec 8.1) plus last (time of the last tier).
 
 let deeds, deedBonus, wearGet;
 {
   registerState('deeds', {
     v: 1, init: 0, tier: {}, at: {}, feat: {}, sec: {}, ch: {}, grp: {}, mil: {},
     n: { crit: 0, parry: 0, dodge: 0, intr: 0, abil: 0, dmg: 0, taken: 0, heal: 0, boss: 0, ess: 0, troph: 0, glint: 0,
-      up: 0, ref: 0, trans: 0, meal: 0, perfect: 0, dare: 0, weekly: 0, embers: 0, tides: 0 },
+      up: 0, ref: 0, trans: 0, meal: 0, dare: 0, weekly: 0, embers: 0, tides: 0 },
     g: {},
-    rec: { hit: 0, hitZ: 0, hitAt: 0, fine: 0, set: 0, ks: {}, c6: {} },
+    rec: { hit: 0, hitZ: 0, hitAt: 0, fine: 0, ks: {} },
     since: {}, sx: {}, pts: 0, seen: 0, last: 0,
     wear: { cape: null, hat: null, lamp: null, flame: null, aura: null, critter: null, trail: null, frame: null, helm: 0 },
     wall: [], follow: null, nudge: 1
@@ -69,13 +69,12 @@ let deeds, deedBonus, wearGet;
     N1: () => !!S.hands && typeof S.hands === 'object',
     K12: () => !!S.kitchen && typeof S.kitchen === 'object',
     N1K12: () => WAIT.N1() && WAIT.K12(),
-    NS: () => !soloOn(),                                   // W1-C: needs a party or expeditions: not in solo
+    NS: () => !soloOn(),                                   // W1-C: needs a party: not in solo
     F1: () => !soloOn() && typeof offSlot === 'function',
     F2: () => !soloOn() && !!S.bond && typeof S.bond === 'object',
     R2: () => !!(REGIONS[1] && REGIONS[1].plugged),
     R3: () => REGIONS.length >= 3,
     O1: () => !!S.oath && typeof S.oath === 'object',
-    PB1: () => !!S.pin && typeof S.pin === 'object',
     R2O1: () => WAIT.R2() && WAIT.O1() && !soloOn()   // (Tidewalker: tide turns with the party fielded)
   };
   const waitOk = w => !w || safe(() => !!WAIT[w](), false);
@@ -133,13 +132,12 @@ let deeds, deedBonus, wearGet;
     return best;
   };
   const starClasses = () => Object.keys(STAR_MAPS).filter(c => !STAR_MAPS[c].legacy);
-  const bookIds = () => (typeof LEG_CLASS_IDS === 'object' ? Object.values(LEG_CLASS_IDS).flat().concat(LEG_COMP_IDS) : []);
   const tiersByLadder = r => r >= 7 ? 4 : r >= 5 ? 3 : r >= 3 ? 2 : r >= 1 ? 1 : 0;
   const skillUnits = (skill, t) => { let s = 0; for (const f of GATHER) if (DS().g[f] && safe(() => skillOf(f), '') === skill) s += num(DS().g[f][t - 1]); return s; };
   const seamLadder = skill => { let k = 0; if (skillUnits(skill, 2) >= 1e3) k = 1; else return 0; if (skillUnits(skill, 3) >= 1e3) k = 2; else return k; if (skillUnits(skill, 4) >= 1e3) k = 3; else return k; if (skillUnits(skill, 5) >= 1e4) k = 4; return k; };
   const relicSpent = () => { let s = 0; for (const u of RELICS) { const lv = num(S.relic[u.id]); for (let i = 0; i < lv; i++) s += u.base * Math.pow(u.r, i); } return s; };
   const fineOf = it => {
-    if (!it || it.u || it.lg) return 0;
+    if (!it || it.u) return 0;
     const r = it.r === 'epic' || it.r === 'legendary' ? 3 : it.r === 'rare' ? 2 : it.r === 'uncommon' ? 1 : 0;
     return r >= 3 && num(it.t) >= 5 && num(it.plus) >= 10 ? 4 : r;
   };
@@ -178,14 +176,9 @@ let deeds, deedBonus, wearGet;
     bonds: () => { let s = 0; const lv = S.bond && S.bond.lv; if (lv) for (const k in lv) s += Math.min(5, num(lv[k])); return s; },
     together: () => sumVals(S.bond && S.bond.t) / 3600,
     front: () => N().taken, mend: () => N().heal,
-    exped: () => sumVals(S.exped && S.exped.done), perfect: () => N().perfect,
-    lorepages: () => { const l = S.exped && S.exped.lore; let n = 0; if (l) for (const k in l) if (num(l[k]) >= 4) n++; return n; },
-    keeps: () => keys(S.exped && S.exped.keep),
     depth: () => num(S.deep && S.deep.best), floors: () => num(S.deep && S.deep.floors), marks: () => num(S.deep && S.deep.marksTotal),
     boons: () => keys(S.deep && S.deep.seen), trial: trialSeals,
     starmap: () => starClasses().reduce((a, c) => Math.max(a, starBest(c)), 0), keystones: () => keys(DS().rec.ks),
-    book: () => { const b = S.legend && S.legend.book; let n = 0; if (b) for (const k in b) if (num(b[k]) > 0) n++; return n; },
-    ranks: () => sumVals(S.legend && S.legend.book), sets: () => DS().rec.set,
     lanternlight: () => typeof codexLight === 'function' ? num(codexLight()) : 0, pageseals: () => keys(S.codex && S.codex.seal),
     omens: () => keys(S.almanac && S.almanac.seen), dares: () => N().dare, weekly: () => N().weekly,
     stamps: () => num(S.almanac && S.almanac.stamps), wanted: () => num(S.bounties && S.bounties.claimed),
@@ -193,8 +186,6 @@ let deeds, deedBonus, wearGet;
     tides: () => N().tides, g_pearl: () => sumG('pearl'), fish: () => skillLv('fish'), g_fish: () => sumG('fish'),
     oath: () => num(S.oath && S.oath.maxL),
     oathseals: () => { const b = S.oath && S.oath.best; let n = 0; if (b) for (const k in b) if (num(b[k]) >= 10) n++; return n; },
-    pinkills: () => sumVals(S.pin && S.pin.kills),
-    vow: () => { const t = S.pin && S.pin.top; let m = 0; if (t) for (const k in t) m = Math.max(m, num(t[k])); return m; },
     lanterns: () => lanternsLitAt(S.maxZone)
   };
   const cur = t => safe(() => num(SRC[t.id] ? SRC[t.id]() : CUR[t.id]()), 0);
@@ -216,7 +207,7 @@ let deeds, deedBonus, wearGet;
   const tierOfId = id => num(DS().tier[id]);
   const tierName = k => k <= 0 ? '' : k <= 4 ? DEED_TIERS[k - 1].n : `Everflame ★${k - 4}`;
   const tierLabel = (id, k) => { const t = TR[id]; return !t ? '' : k <= 4 ? `${t.n} ${roman(k)}` : `${t.n} ★${k - 4}`; };
-  const trackLive = t => !(soloOn() && (t.g === 'comp' || t.g === 'exped')) && waitOk(t.wait);   // SOLO1: no companions or expeditions
+  const trackLive = t => !(soloOn() && t.g === 'comp') && waitOk(t.wait);   // SOLO1: no companions
   const bonusTxt = (t, k) => {
     if (!t.bonus || (k !== 3 && k !== 4)) return '';
     if (t.bonus === 'deepOil') return `+${DEED_BONUS.deepOil}s ${DEED_KEY_TXT.deepOil}`;
@@ -388,9 +379,6 @@ let deeds, deedBonus, wearGet;
     f_gold: () => [P('Gold earned', S.totalGold, FE.f_gold.need)],
     f_raid: () => [P('Raid bosses', num(S.wyrms), 100)],
     f_champs: () => [P('Champions', num(S.craft && S.craft.champ), 10000)],
-    f_perfect: () => [P('Perfect expeditions', N().perfect, 1000), P('Keepsakes', keys(S.exped && S.exped.keep), typeof EXPED_KEEPSAKES === 'object' ? keys(EXPED_KEEPSAKES) : 12)],
-    f_book: () => { const b = (S.legend && S.legend.book) || {}, ids = bookIds();
-      return [P('Powers learned', ids.filter(id => num(b[id]) > 0).length, ids.length), P('At rank V', ids.filter(id => num(b[id]) >= 5).length, 10)]; },
     f_stars: () => [P('Class maps at 36', starClasses().filter(c => starBest(c) >= 36).length, starClasses().length)],
     f_sworn: () => { const lv = (S.bond && S.bond.lv) || {}; let n = 0; for (const k in lv) if (num(lv[k]) >= 5) n++; return [P('Sworn Bonds', n, 21)]; },
     f_town: () => {
@@ -568,20 +556,6 @@ let deeds, deedBonus, wearGet;
     }
   };
   on('starLit', ({ cls, id }) => { const m = safe(() => starMap(cls), null), s = m && m.stars[id]; if (s && (s.kind === 'key' || s.kind === 'crown')) DS().rec.ks[cls + ':' + id] = 1; });
-  const markSets = () => {
-    const sets = safe(() => legendSets(), null); if (!sets || !sets.tier) return;
-    const r = DS().rec; let best = 0;
-    for (const c in sets.tier) { const v = num(sets.tier[c]); best = Math.max(best, v >= 6 ? 3 : v >= 4 ? 2 : v >= 2 ? 1 : 0); if (v >= 6) r.c6[c] = 1; }
-    if (typeof LEG_CIRCLES === 'object' && LEG_CIRCLES.every(c => r.c6[c])) best = 4;
-    if (best > r.set) r.set = best;
-  };
-  on('legendChange', markSets);
-  on('expedBack', p => {
-    if (p && p.g === 3) N().perfect++;
-    if (!p || p.auto || p.recall || !DS().init) return;
-    const s = safe(() => S.exped.slots.find(x => x && x.r === p.r && x.end <= now()), null);
-    if (s && now() - s.end >= T.lateMs) grantSecret('s_late');
-  });
   let oilSeen = Infinity;
   on('deepEnd', ({ summary }) => { if (summary && summary.reason === 'leave' && oilSeen < 1) grantSecret('s_oil'); oilSeen = Infinity; });
   // Hot Streak: a hero crit right after the last one (59-combat counts hero strikes in CB_STATS.heroHits).
@@ -652,14 +626,13 @@ let deeds, deedBonus, wearGet;
     n.ess = Math.max(n.ess, sumArr(S.mats.ess));
     n.troph = Math.max(n.troph, sumArr(S.craft && S.craft.troph));
     n.embers = Math.max(n.embers, num(S.embers) + safe(relicSpent, 0));
-    n.perfect = Math.max(n.perfect, ((S.exped && S.exped.log) || []).filter(x => x && x.grade === 'Perfect').length);
     n.dare = Math.max(n.dare, keys(S.codex && S.codex.rec && S.codex.rec.dare));
     n.weekly = Math.max(n.weekly, num(S.almanac && S.almanac.stamps) * 3);
-    safe(markKeys, 0); safe(markSets, 0);
+    safe(markKeys, 0);
     for (const it of S.items || []) { const f = fineOf(it); if (f > d.rec.fine) d.rec.fine = f; }
     if (hasProgress()) {
       const tm = now();
-      for (const k of ['crit', 'parry', 'dodge', 'intr', 'abil', 'dmg', 'taken', 'heal', 'hit', 'g', 'ess', 'troph', 'glint', 'up', 'ref', 'trans', 'embers', 'perfect', 'dare', 'weekly', 'boss'])
+      for (const k of ['crit', 'parry', 'dodge', 'intr', 'abil', 'dmg', 'taken', 'heal', 'hit', 'g', 'ess', 'troph', 'glint', 'up', 'ref', 'trans', 'embers', 'dare', 'weekly', 'boss'])
         if (!d.since[k]) d.since[k] = tm;
     }
     const dr = S.almanac && S.almanac.dare; if (dr && dr.on) { d.sx.dareDay = dr.day; dareSeen = dr.day; }
@@ -691,7 +664,6 @@ let deeds, deedBonus, wearGet;
     if (seenFor === S) return;
     seenFor = S;
     const d = DS();
-    if (!d.rec.c6 || typeof d.rec.c6 !== 'object') d.rec.c6 = {};
     if (!d.rec.ks || typeof d.rec.ks !== 'object') d.rec.ks = {};
     for (const k of Object.keys(d.g)) if (!Array.isArray(d.g[k])) delete d.g[k];
     rebuildBonus(); dirtyPts(); cbInit = false; streak = 0; hitsAfter = -1; lastName = S.name; dareSeen = -1;
@@ -749,7 +721,7 @@ let deeds, deedBonus, wearGet;
       needs: [1, 2, 3, 4].map(i => needAt(t, i)) };
   }
   const SINCE = { crits: 'crit', parry: 'parry', intr: 'intr', abil: 'abil', damage: 'dmg', front: 'taken', mend: 'heal', bighit: 'hit', essence: 'ess', trophies: 'troph', glint: 'glint',
-    honed: 'up', reforge: 'ref', alchemy: 'trans', embers: 'embers', perfect: 'perfect', dares: 'dare', weekly: 'weekly', g_ore: 'g', g_crystal: 'g', g_wood: 'g', g_fibre: 'g', g_herb: 'g',
+    honed: 'up', reforge: 'ref', alchemy: 'trans', embers: 'embers', dares: 'dare', weekly: 'weekly', g_ore: 'g', g_crystal: 'g', g_wood: 'g', g_fibre: 'g', g_herb: 'g',
     s_mine: 'g', s_wood: 'g', s_forage: 'g' };
   const sinceKey = t => SINCE[t.id] || '';
   const fmtLeft = (t, n) => (t.kind === 'level' || t.kind === 'ladder' || n < 1e5 ? Math.ceil(n).toLocaleString('en-US') : fmt(n));
@@ -827,7 +799,7 @@ let deeds, deedBonus, wearGet;
     if (slot === 'trail') return (w.trail && owned(w.trail) ? w.trail : null) || (S.deep && S.deep.eq && S.deep.eq.trail) || null;
     if (slot === 'frame') {
       if (w.frame === 'none') return null;
-      if (w.frame && (owned(w.frame) || w.frame === 'pin')) return w.frame;
+      if (w.frame && owned(w.frame)) return w.frame;
       const own = DEED_LOOKS.filter(l => l.slot === 'frame' && owned(l.id));
       return own.length ? own[own.length - 1].id : null;
     }
@@ -844,8 +816,7 @@ let deeds, deedBonus, wearGet;
       w[slot] = id;
     } else if ((slot === 'flame' || slot === 'trail') && deepCos(slot === 'flame' ? 'lantern' : 'trail', id)) {
       w[slot] = null; S.deep.eq[slot === 'flame' ? 'lantern' : 'trail'] = id;   // the Deepwell's own meaning, unchanged
-    } else if (slot === 'frame' && id === 'pin') w.frame = 'pin';   // the pinnacle frame (PB1), when it exists
-    else return false;
+    } else return false;
     emit('deedLook', { slot, id: id == null ? null : id });
     save();
     return true;

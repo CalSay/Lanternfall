@@ -118,14 +118,6 @@ const LOOK_ART = (() => {
       put(k, 4.565, 'head', m('#8ED060', 'flat'), Q(Math.round(hx - hw * .55) - 1, Math.round(top - 2), 1, 2), { nl: 1 });
       put(k, 4.565, 'head', m('#F4F0D0', 'flat'), Q(Math.round(hx - hw * .55) - 1, Math.round(top - 3), 1, 1), { nl: 1 });
     } },
-    h_wayfarer: { col: '#6A4A30', draw(k) {   // wide brim, a feather
-      const { hx, hw, top } = k, felt = m('#6A4A30', 'leather'), band = m('#2E2430', 'leather');
-      put(k, 4.54, 'head', m('#D84A3A'), P(hx - hw * .45, top + .6, hx - hw * .9, top - 2.2, hx - hw * 1.55, top - 4.4, hx - hw * 1.25, top - 1.8, hx - hw * .75, top + 1.2), { sep: 1 });
-      put(k, 4.541, 'head', m('#F2E8D4', 'flat'), Q(Math.round(hx - hw * 1.5), Math.round(top - 4.2), 1, 2), { nl: 1 });
-      const cr = put(k, 4.55, 'head', felt, P(hx - hw * .82, top + 2.2, hx - hw * .78, top - 1.2, hx - hw * .2, top - 2.4, hx + hw * .15, top - 1.6, hx + hw * .62, top - 2.2, hx + hw * .86, top + 2), { bev: .9 });
-      put(k, 4.551, 'head', band, R(hx - hw, top + .4, hw * 2, 1.3), { clip: cr });
-      put(k, 4.56, 'head', felt, P(hx - hw * 1.75, top + 2.8, hx + hw * 1.3, top + 1.2, hx + hw * 1.95, top + 1.6, hx + hw * 1.6, top + 3, hx - hw * 1.5, top + 4), { sep: 1, bev: .6 });
-    } },
     h_artisan: { col: '#8A5A36', draw(k) {   // leather cap with a brass lens flipped up
       const { hx, hw, top } = k, lea = m('#8A5A36', 'leather');
       put(k, 4.55, 'head', lea, P(arcPts(hx - .2, top + 3, hw * 1.04, 4.4, Math.PI, Math.PI * 2, 12)), { bev: .9 });
@@ -218,13 +210,6 @@ const LOOK_ART = (() => {
         Lp(IRON, R(-s * .55, s * 1.52, s * 1.1, 1.1))
       ];
     } },
-    l_book: { col: '#7A2E34', items: (s, g) => [   // a small bound book, light through the pages
-      Lp(m('#3A2A24', 'flat'), R(-.3, -.6, .6, s * .45)),
-      Lp(m('#7A2E34', 'leather'), rrect(-s * .62, s * .22, s * 1.24, s * 1.4, .5), { bev: .6 }),
-      Lg(paper(g), R(-s * .2, s * .34, s * .7, s * 1.16), { lr: 18 }),
-      Lp(GOLD, R(-s * .62, s * .22, 1, s * 1.4)),
-      Lp(m('#C8A058', 'flat'), R(-s * .2, s * .9, s * .7, .6), { nl: 1 })
-    ] },
     l_store: { col: '#C8A050', items: (s, g) => {   // a square brass lamp with a handle, a shopkeeper's
       const br = m('#C8A050', 'metal');
       return [

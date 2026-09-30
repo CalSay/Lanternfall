@@ -18,8 +18,7 @@
 //   read     campLevel(id), campOpen(), campBuilders(), campMaxLevel(id), campCost(id, to),
 //            campCan(id) -> { ok, why, to, cost, dur, queue, need }, campPending(id),
 //            campBuilds() -> [{ id, to, b, start, end, dur, cost, queued }], campEffects(id, lv),
-//            campNextUnlock(), campList() -> ids shown in the Camp tab, campRumours() -> lines,
-//            campMapRoom() -> { slots, route, repeat }, campHoldZone()
+//            campNextUnlock(), campList() -> ids shown in the Camp tab, campRumours() -> lines, campHoldZone(),
 //   act      campBuild(id) -> bool, campCancel(id) -> bool, campCatchUp(now) -> [{ id, lv }],
 //            campSeen() (clears the "finished" glow), blessSet(ids) -> bool, blessToggle(id) -> bool
 //   blessing blessSlots(), blessPower(), blessOpen(id), blessCanSwap() -> { ok, why },
@@ -36,8 +35,8 @@
 // Modifier keys written: offline (Hearth), skillXp:<skill> (stations, Library), compXp (Library),
 //   rareW (Forge 5), salvage (Workbench 5), gatherSpeed (Loom 5), reforge (Enchanter's Table 5),
 //   bountyPay (Tavern 4) and the Blessings' keys (dmg, gold, skillXp:*, compXp, offline,
-//   gatherSpeed, buildTime, expHaul, essence). Bonus keys: awayHours (Watchtower, capped so the
-//   whole away cap stays <= 24h), expSlots (Map Room), transmuteSave (Enchanter's Table 5), deepOil.
+//   gatherSpeed, buildTime, essence). Bonus keys: awayHours (Watchtower, capped so the
+//   whole away cap stays <= 24h), transmuteSave (Enchanter's Table 5), deepOil.
 // Reads: mod('buildTime') (when a build is started or queued), mod('hearth') (Hearth Day Omen
 //   doubles the Hearth's away bonus), bonus('builders'), bonus('shrineSlots').
 //
@@ -94,7 +93,6 @@ const CAMP_B = {
   // N1 (57f-hands.js): beds for Hands at camp; effect lines from HANDS_TUNE (21f). Its plot opens after the Tavern.
   bunk: { n: 'Bunkhouse', max: 5, opens: 2, fam: { wood: 30, fibre: 15 }, tro: 2, fx: l => handsBunkFx(l), needs: () => !!HANDS_TUNE.on },
   library: { n: 'Library', max: 5, opens: 2, fam: { fibre: 20, crystal: 15, ess: 10 }, tro: 6 },
-  maproom: { n: 'Map Room', max: 5, opens: 2, fam: { hide: 25, fibre: 20 }, tro: 2, needs: () => !!S.exped && !soloOn() },   // SOLO1: expeditions send companions: gone
   shrine: { n: 'Shrine', max: 3, opens: 4, fam: { crystal: 25, ess: 25 }, tro: 4 }
 };
 const CAMP_IDS = Object.keys(CAMP_B);
@@ -110,7 +108,6 @@ const CAMP_BLESS = {
   road: { n: 'Road', page: 'Stories', v: 0.12, fx: v => `+${pc(v)} away gains` },
   wild: { n: 'Wild', page: 'Materials', v: 0.12, fx: v => `Gathering ${pc(v)} faster` },
   hearth: { n: 'Hearth', page: 'Camp', v: 0.10, fx: v => `Builds ${pc(v)} faster` },
-  wayfarer: { n: 'Wayfarer', page: 'Lore', v: 0.15, fx: v => `Expeditions bring back +${pc(v)}`, needs: () => !!S.exped && !soloOn() },
   deep: { n: 'Deep', page: 'Deepwell', v: 15, fx: v => `Deepwell runs start with +${Math.round(v)}s Oil`, needs: () => !!S.deep },
   oath: { n: 'Oath', page: 'Achievements', v: 0.10, fx: v => `+${pc(v)} essence drops` }
   // Sky (Omens: Dares pay +25%) joins when the Almanac reads a Dare-reward modifier.
@@ -120,22 +117,20 @@ function pc(v) { return Math.round(v * 100) + '%'; }
 const CAMP_SPOTS = {
   hesketh: 'hearth', caedmon: 'hearth', tobin: 'hearth', aldric: 'forge', grenna: 'forge', bram: 'bench',
   pip: 'library', oriel: 'library', morwen: 'ench', elowen: 'shrine', maren: 'shrine', anselm: 'shrine',
-  vesper: 'tavern', isolde: 'tavern', kestrel: 'tavern', wren: 'watch', thessaly: 'hearth', corvin: 'maproom'
+  vesper: 'tavern', isolde: 'tavern', kestrel: 'tavern', wren: 'watch', thessaly: 'hearth', corvin: 'hearth'
 };
 
 let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPending, campBuilds, campEffects,
-  campNextUnlock, campList, campRumours, campMapRoom, campHoldZone, campBuild, campCancel, campCatchUp, campSeen,
+  campNextUnlock, campList, campRumours, campHoldZone, campBuild, campCancel, campCatchUp, campSeen,
   blessSlots, blessPower, blessOpen, blessCanSwap, blessSet, blessToggle, setBlessingGate, benchList, campStatus,
   campFree, registerBenchStatus, registerBenchSend, benchSends, registerCampAction, campActions;
 
 {
   registerState('camp', {
     v: 1, open: false,
-    b: { hearth: 0, watch: 0, forge: 1, bench: 1, loom: 1, ench: 1, tavern: 1, library: 0, maproom: 0, shrine: 0, store: 0, bunk: 0 },
+    b: { hearth: 0, watch: 0, forge: 1, bench: 1, loom: 1, ench: 1, tavern: 1, library: 0, shrine: 0, store: 0, bunk: 0 },
     builds: [], bless: [], news: [], bty: 0, talk: {}, deco: {}
   });
-  // 55-welcome (plan-2 D3): a save that predates the Camp gets the Hearth its max zone allows, once.
-  if (typeof welcomeApply === 'function') welcomeApply();
   // 55-hearth (H1): a new game starts at a cold Hearth, its stations unbuilt (plots).
   if (typeof hearthApply === 'function') hearthApply();
   if (typeof storeMigrate === 'function') storeMigrate();   // 55-store (H3): old saves get the Storehouse that holds their piles
@@ -308,8 +303,6 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
     if (C().open) return;
     C().open = true; C().b.hearth = Math.max(1, lv('hearth'));
     emit('campOpen', { quiet: !!quiet });
-    const w = typeof welcomeNote === 'function' ? welcomeNote() : null;
-    if (w) { emit('whatsNew', { msg: w.msg, icon: { ic: ['flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }] }, first: true }); return; }
     toast(quiet ? 'Old Hesketh has made camp. See the Camp tab.' : 'Old Hesketh sets down his lamp and lights a fire. "Every road needs a place to come back to." See the Camp tab.', 'good', { ic: ['flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }] }, 'high');
   }
   let firstCheck = true, acc = 1;
@@ -347,10 +340,6 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
   // Library: gathering XP +5% per level; companion XP +5% per level after the first.
   for (const k of ['mine', 'wood', 'forage']) addModifier('skillXp:' + k, () => 1 + 0.05 * lv('library'));
   addModifier(soloOn() ? 'xp' : 'compXp', () => 1 + 0.05 * Math.max(0, lv('library') - 1));   // W1-C: solo, the Library's second perk is hero XP
-  // Map Room: expedition slots (read by the Expeditions system).
-  const MAP = { slots: [0, 1, 2, 2, 3, 3], route: [0, 4, 4, 8, 8, 12] };
-  addBonus('expSlots', () => MAP.slots[lv('maproom')] || 0);
-  campMapRoom = () => { const l = lv('maproom'); return { slots: MAP.slots[l] || 0, route: MAP.route[l] || 0, repeat: l >= 5 }; };
   // Tavern: bounties pay +15% at Lv 4; every 5th bounty gives +1 Renown at Lv 5.
   addModifier('bountyPay', () => lv('tavern') >= 4 ? 1.15 : 1);
   on('bountyDone', () => {
@@ -376,7 +365,6 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
     }
     if (id === 'watch') return [`Away limit +${2 * l}h`].concat(l >= 2 ? [soloOn() ? 'Away report shows the zone you could hold' : 'Away report shows the zone your party could hold'] : []);
     if (id === 'library') return LIB(l);
-    if (id === 'maproom') { const m = MAP; return [`${m.slots[l]} expedition slot${m.slots[l] > 1 ? 's' : ''}`, `Routes up to ${m.route[l]}h`].concat(l >= 5 ? ['Repeats while you are away'] : []); }
     if (id === 'tavern') return (l <= 3 ? [TAV[l]] : [TAV[3]].concat(TAV.slice(4, l + 1))).concat(typeof handsTavernFx === 'function' ? handsTavernFx(l) : []);   // N1: where Hands apply
     if (id === 'shrine') return [SHR[Math.min(3, l)]].concat(l >= 3 ? ['Blessings 25% stronger'] : []);
     return [];
@@ -477,7 +465,6 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
   addModifier('offline', () => 1 + bv('road'));
   addModifier('gatherSpeed', () => 1 + bv('wild'));
   addModifier('buildTime', () => 1 - bv('hearth'));
-  addModifier('expHaul', () => 1 + bv('wayfarer'));
   addModifier('essence', () => 1 + bv('oath'));
   addBonus('deepOil', () => bv('deep'));
 

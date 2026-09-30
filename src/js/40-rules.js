@@ -130,16 +130,14 @@ const xpNeed = () => Math.floor(15 * Math.pow(1.3, S.L - 1));
 // curve for a station skill; without k it is the gathering curve.
 const skillCurve = k => SKILL_TUNE.craftSkills.includes(k) ? SKILL_TUNE.craftNeed : SKILL_TUNE.gatherNeed;
 const skillNeed = (lv, k) => { const c = skillCurve(k); return Math.floor(c[0] * Math.pow(lv, c[1]) * Math.pow(c[2] || 1, lv - 1)); };
-// A tier is open when the level reaches its gate, or when the save had it open before GP1
-// (skillKept, 55-skillpace: the old gates' high-water mark). Gathering skills use NODE_REQ,
+// A tier is open when the level reaches its gate. Gathering skills use NODE_REQ,
 // crafting skills CRAFT_STATION_REQ (= SMITH_REQ).
-let skillKept = k => 0;
 const skillReqs = k => SKILL_TUNE.craftSkills.includes(k) ? SMITH_REQ : NODE_REQ;
 const skillReq = (k, t) => skillReqs(k)[t - 1];
 function skillTopTier(k) {
   const sk = S.skills[k], lv = sk ? sk.lv : 1, req = skillReqs(k);
   let t = 1; for (let i = 1; i < req.length; i++) if (lv >= req[i]) t = i + 1;
-  return Math.max(t, Math.min(req.length, skillKept(k) || 0));
+  return t;
 }
 const skillTierOpen = (k, t) => t <= skillTopTier(k);
 // The level that opens the next tier, or 0 when every tier is open.

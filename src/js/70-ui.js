@@ -194,8 +194,8 @@ function followGo(go) {
 // deeds, retooled gear, the camp and its welcome) fold into ONE bell notice with a short list,
 // instead of a stack of toasts. The window closes after the first 2.5 s of play (the catch-ups run
 // on the first ticks; the Codex at 2 s). One notice alone takes its own channel. emit('whatsNew',
-// { msg, icon, first }) adds a line at any time (first: at the top of the list), e.g. the camp welcome
-// (55-welcome.js). The one toast that says so is a pop like any other (W1-B: key 'news').
+// { msg, icon, first }) adds a line at any time (first: at the top of the list), e.g. a new Storehouse
+// (55-store.js). The one toast that says so is a pop like any other (W1-B: key 'news').
 const NEWS = { open: true, t: 0, lines: [], entry: null };
 // SOLO1 (playtest): a new game has nothing to catch up on: its first toasts show as toasts, not as "What's new".
 if (!(S.totalKills > 0 || S.L > 1 || S.maxZone > 1)) NEWS.open = false;

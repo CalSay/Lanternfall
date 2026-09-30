@@ -29,7 +29,6 @@
     ench: () => iconURL('orb', '#B58CFF', { 7: '#6E6878' }),
     tavern: () => iconURL('mug', '#8C6A43', { 1: '#6B4A2E', 7: '#F2C14E', 5: '#EFE6D6' }),
     library: () => iconURL('b_book', '#5A7AB8', { 5: '#EFE6D6' }),
-    maproom: () => iconURL('b_map', '#E0524F', { 5: '#EFE6D6', 6: '#8C6A43' }),
     shrine: () => iconURL('b_bell', '#9FD8C9', { 6: '#6B4A2E' }),
     store: () => STORE_ICON()   // 75-store-ui (H3)
   };
@@ -362,7 +361,7 @@
     const c = ROSTER[id], i = c.idx, col = i >= 0 ? COMPS[i].col : CHAR_RARITY[c.rarity].col, helm = i >= 0 ? COMPS[i].helm : '#3A2F47';
     return spriteURL('camp:' + id, SPR.hero, { ...HERO_PAL, 1: col, 2: helm });
   }
-  const ORDER = { rest: 0, job: 1, exped: 2 };
+  const ORDER = { rest: 0, job: 1 };
   let rosBox, rosNote, rosSig = '';
   registerSection('camp', {
     id: 'camp-roster', title: 'Roster board',
@@ -372,9 +371,7 @@
       putHidden(sec, !live); if (!live) return;
       const list = benchList().map(id => ({ id, s: campStatus(id), r: charRec(id) }))
         .sort((a, b) => (ORDER[a.s.status] || 9) - (ORDER[b.s.status] || 9) || b.r.lv - a.r.lv);
-      // The queued Map Room hint (plan-3 wave 2): until it is built, say what it is for.
-      const map = CAMP_B.maproom && (!CAMP_B.maproom.needs || CAMP_B.maproom.needs()) && campLevel('maproom') < 1 ? ' Build the Map Room (Hearth 2) to send companions on expeditions.' : '';
-      setTxt(rosNote, (list.length ? 'Companions on the bench live at camp. Each one is in one place at a time.' : 'Everyone on your roster is in the party. Benched companions rest here.') + map);
+      setTxt(rosNote, (list.length ? 'Companions on the bench live at camp. Each one is in one place at a time.' : 'Everyone on your roster is in the party. Benched companions rest here.'));
       const sig = JSON.stringify(list.map(x => [x.id, x.r.lv, x.s.status, x.s.label, x.s.sub || '', benchSends(x.id).map(s => s.ok)]));
       if (sig === rosSig) return; rosSig = sig; rosBox.textContent = '';
       // Rows are built in time-boxed chunks (a portrait can need baking), so the Camp tab's first open

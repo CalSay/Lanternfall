@@ -278,18 +278,16 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
     P().cells = cells;   // a new object: the stage watches identity
   }
   autoPlace = () => { placeCells(false); emit('fieldChange', { field: P().field }); return P().cells; };
-  // A character out on an expedition (57b) cannot be fielded. try/catch: expedOut may not exist yet at load.
-  const onExped = id => { try { return typeof expedOut === 'function' && !!expedOut(id); } catch (e) { return false; } };
   setField = ids => {
     const f = [];
-    for (const id of ids || []) if (isRecruited(id) && !onExped(id) && !f.includes(id) && f.length < T.fieldMax) f.push(id);
+    for (const id of ids || []) if (isRecruited(id) && !f.includes(id) && f.length < T.fieldMax) f.push(id);
     P().field = f;       // a new array: the stage watches identity
     placeCells(true);
     emit('fieldChange', { field: f });
     return f;
   };
   fieldChar = (id, replaceId) => {
-    if (!isRecruited(id) || onExped(id)) return false;
+    if (!isRecruited(id)) return false;
     const f = fieldKeys().filter(k => k !== id);
     const i = replaceId ? f.indexOf(replaceId) : -1;
     if (i >= 0) f[i] = id; else if (f.length < T.fieldMax) f.push(id); else return false;
@@ -317,7 +315,7 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
   function bestThree(by, n) {
     n = n || T.fieldMax;
     const score = k => by === 'now' ? rawValue(k, charRec(k)) : potential(k);
-    const all = rosterList().filter(k => !onExped(k)).sort((a, b) => score(b) - score(a));
+    const all = rosterList().sort((a, b) => score(b) - score(a));
     const tank = all.find(k => R(k).role === 'tank');
     const fill = (f, list) => { for (const k of list) if (f.length < n && !f.includes(k)) f.push(k); return f; };
     const mode = supMode();
@@ -567,7 +565,7 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
     if (!rosterLive()) return [];
     const w = killWorth(z, dps != null ? dps : totalDps()), f = fieldKeys();
     // F5: the bench (not away on an expedition) earns benchXp of the same XP, quietly (no level toasts).
-    if (T.benchXp > 0) for (const k of rosterList()) if (!f.includes(k) && !onExped(k)) giveXp(k, n * w * T.benchXp * gainFor(k, z) * xpMult(k), true);
+    if (T.benchXp > 0) for (const k of rosterList()) if (!f.includes(k)) giveXp(k, n * w * T.benchXp * gainFor(k, z) * xpMult(k), true);
     return f.map(k => [k, giveXp(k, n * w * gainFor(k, z) * xpMult(k), quiet)]);
   };
   on('kill', ({ mob: m, zone }) => giveField(m && m.boss ? T.bossXp : 1, zone));

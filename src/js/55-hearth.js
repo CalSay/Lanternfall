@@ -71,7 +71,6 @@ let hearthCold, hearthLit, hearthScene, hearthCan, hearthLight, hearthPlotOpen, 
   // Decide before 57-camp registers S.camp: a new game has no camp field and no progress.
   const noProgress = () => !(S.totalKills > 0 || S.L > 1 || S.maxZone > 1);
   const isNew = S.camp === undefined && S.hearth === undefined && noProgress();
-  const hadField = S.hearth !== undefined;
   registerState('hearth', { v: 1, cold: 0, lit: 0, said: 0 });
   const Hs = () => S.hearth || (S.hearth = { v: 1, cold: 0, lit: 0, said: 0 });
   let coldStart = false;
@@ -81,7 +80,7 @@ let hearthCold, hearthLit, hearthScene, hearthCan, hearthLight, hearthPlotOpen, 
     // SOLO1: the solo hero starts on the road (the guide sends it to the Pine Grove after the first boss)
     if (typeof soloOn === 'function' && soloOn()) { S.node = { kind: 'wood', t: 1 }; S.gProg = 0; }
     else { S.activity = 'gather'; S.node = { kind: 'wood', t: 1 }; S.gProg = 0; }
-  } else if (!hadField) Hs().said = noProgress() && S.camp === undefined ? 1 : 0;   // an old save: one What's new line
+  }
 
   const lv = id => (S.camp && S.camp.b && S.camp.b[id]) || 0;
   hearthCold = () => !!Hs().cold;   // a save that started cold (stays set)
@@ -180,35 +179,5 @@ let hearthCold, hearthLit, hearthScene, hearthCan, hearthLight, hearthPlotOpen, 
   on('crafted', e => {
     const d = e && typeof CRAFT_KINDS === 'object' && CRAFT_KINDS[e.kind];
     if (d && d.tool && hearthCold() && typeof onboardDone === 'function') onboardDone('tool');
-  });
-
-  // ---- one What's new line for an old save (spec 8.2 step 6; H3 adds the Storehouse line) ----
-  let first = true;
-  onTick(() => {
-    if (!first) return; first = false;
-    if (hearthCold() || Hs().said) return;
-    Hs().said = 1;
-    emit('whatsNew', { msg: 'Your stations were already built. Tools now have mastery.', icon: { ic: ['anvil', '#D08A4E'] } });
-  });
-
-  // ---- Next Up: the Map Room (queued hint, plan-3 wave 2) ----
-  const mapAvail = () => typeof CAMP_B === 'object' && CAMP_B.maproom && (!CAMP_B.maproom.needs || CAMP_B.maproom.needs());
-  const benched = () => typeof benchList === 'function' ? benchList().length : 0;
-  registerGoal({
-    id: 'maproom', sys: 'maproom', icon: { ic: ['anvil', '#D08A4E'] },
-    label: 'Build the Map Room to send companions on expeditions',
-    pct: () => {
-      if (!mapAvail() || lv('maproom') >= 1 || !(typeof campOpen === 'function' && campOpen()) || !benched()) return 0;
-      if (lv('hearth') < 2) return 0;
-      if (typeof campPending === 'function' && campPending('maproom')) return 0;
-      const c = campCan('maproom');
-      if (c.ok) return 1;
-      if (!c.cost) return 0;
-      let p = 1;
-      if (c.cost.gold > 0) p = Math.min(p, S.gold / c.cost.gold);
-      for (const [f, t, n] of c.cost.mats) p = Math.min(p, (S.mats[f][t - 1] || 0) / n);
-      return Math.max(0.01, Math.min(0.95, p));
-    },
-    go: { tab: 'world', sel: '#camp-b-maproom' }
   });
 }

@@ -136,14 +136,7 @@ let openSheet, partySheet;
   // Something waiting for the player: an unread story or a promotion they can pay for now.
   const needsYou = k => isRecruited(k) && (safe(() => storyState(k).unread, 0) > 0 || safe(() => canPromote(k), false));
 
-  // Out on an expedition (57b expedOut): { route, back, left: '3h 12m', txt: 'Out: Route, 3h 12m' } or null.
-  const outOf = k => {
-    const sl = typeof expedOut === 'function' ? safe(() => expedOut(k), null) : null; if (!sl) return null;
-    const rt = (typeof EXPED_ROUTES === 'object' && EXPED_ROUTES[sl.r]) || null, route = rt ? rt.n : 'an expedition';
-    const m = Math.ceil((sl.end - Date.now()) / 60000), back = m <= 0;
-    const left = back ? '' : m < 60 ? `${m}m` : `${Math.floor(m / 60)}h` + (m % 60 ? ` ${m % 60}m` : '');
-    return { id: sl.r, route, back, left, txt: `Out: ${route}, ${back ? 'back' : left}` };
-  };
+  const outOf = () => null;   // expeditions are gone; W3-A drops the 'Out' lines with the party sheet
   // The player's Codex title (57c codexTitle), cached by the chosen title's id.
   let ctKey, ctVal = '';
   const heroTitle = () => {
@@ -374,11 +367,6 @@ let openSheet, partySheet;
       s.append(slotTile(it, ic, 56));
       const tx = el('div');
       tx.append(el('b', null, it ? itemName(it) : noun), el('small', null, it ? noun : 'Empty. Party gear is coming soon.'));
-      if (it && it.lg && typeof legendItemState === 'function' && LEG_POWERS[it.lg]) {   // a companion's legendary power
-        const st = safe(() => legendItemState(it, k), { on: false, why: '', rank: 1 });
-        tx.append(el('small', 'cs-power' + (st.on ? '' : ' off'), `${LEG_POWERS[it.lg].n} ${roman(st.rank || 1)}: ` + (st.on ? legendText(it.lg, st.rank || 1) : `off. ${st.why}`)));
-        s.firstChild.classList.add('lg-pip'); if (!st.on) s.firstChild.classList.add('lg-offpip');
-      }
       s.append(tx); g.append(s);
       if (typeof craftUI === 'object' && craftUI) { s.classList.add('tap'); s.setAttribute('role', 'button'); s.tabIndex = 0; s.addEventListener('click', () => craftUI.pick(k, which)); if (!it) tx.lastChild.textContent = 'Empty. Tap to choose.'; } // K7 item picker
     }
@@ -538,13 +526,11 @@ let openSheet, partySheet;
       const it = open ? equipped(pos) : null;
       const d = el('div', 'cs-hslot' + (open ? '' : ' soon'));
       d.append(it ? slotTile(it, null, 56) : slotTile(null, SLOT[pos] ? SLOT[pos].icon : pos === 'body' ? 'plate' : pos === 'off' ? 'banner' : 'helm', 56));
-      if (it && it.lg && !it.lr) d.firstChild.classList.add('lg-pip');
       d.append(el('small', null, nouns[s.id] || s.n));
       d.title = it ? itemName(it) : open ? 'Empty. Craft one in the Craft tab.' : 'Coming with crafting.';
       g.append(d);
     }
-    const lgl = typeof legendUI === 'object' && legendUI ? safe(() => legendUI.heroLine(), null) : null;   // "Powers 1/2" (75-legend-ui)
-    body.append(section('Gear', g, lgl ? el('p', 'pc-powers' + (lgl.n ? '' : ' none'), lgl.txt) : '', el('p', 'note', 'Craft gear in the Craft tab.')));
+    body.append(section('Gear', g, '', el('p', 'note', 'Craft gear in the Craft tab.')));
     const n = (S.party && S.party.mirrors) || 0;
     const mir = el('div', 'cs-mirror');
     const mt = el('div'); mt.append(el('b', null, `Mirror of Embers: ${n}`), el('small', null, n ? 'Use one to choose a new class. Your level and gear stay.' : 'Bosses from zone 36 sometimes drop one. It lets you change class.'));
@@ -566,10 +552,10 @@ let openSheet, partySheet;
 
   const sigOf = k => (bondsUI ? bondsUI.sig() + '|' : '') + sigOf0(k);   // F4: a Bond level or story read redraws
   const sigOf0 = k => {
-    if (k === 'hero') return 'hero|' + S.party.cls + '|' + (typeof classUI === 'object' && classUI ? classUI.sig() : '') + '|' + JSON.stringify(S.equip) + '|' + S.party.mirrors + '|' + S.L + '|' + heroTitle() + '|' + (S.legend ? JSON.stringify(S.legend.book) : '');
+    if (k === 'hero') return 'hero|' + S.party.cls + '|' + (typeof classUI === 'object' && classUI ? classUI.sig() : '') + '|' + JSON.stringify(S.equip) + '|' + S.party.mirrors + '|' + S.L + '|' + heroTitle();
     const r = charRec(k);
     if (!r) return 'L|' + k + '|' + JSON.stringify(recruitCost(k)) + '|' + canRecruit(k) + '|' + JSON.stringify(pctOf(leadFor(k)));
-    return [k, r.lv, r.rank, r.wpn, r.trk, r.seen, (S.legend ? JSON.stringify(S.legend.book) : '') + ['wpn', 'trk'].map(w => { const it = gearOf(k, w); return it && it.lg ? it.lg : ''; }).join(), inField(k), JSON.stringify(S.party.cells && S.party.cells[k]), canPromote(k), xpInfo(k).atCap,
+    return [k, r.lv, r.rank, r.wpn, r.trk, r.seen, inField(k), JSON.stringify(S.party.cells && S.party.cells[k]), canPromote(k), xpInfo(k).atCap,
       JSON.stringify(safe(() => (synergiesFor(k) || []).map(s => s.id + s.active), [])), (S.party.field || []).join(), (o => o ? o.id + o.back : '')(outOf(k))].join('|');
   };
   function render(force) {
@@ -603,5 +589,5 @@ let openSheet, partySheet;
     close() { if (sheet) sheet.close(); },
     isOpen: () => !!sheet
   };
-  for (const ev of ['promote', 'fieldChange', 'recruit', 'milestone', 'gear', 'mirrorDrop', 'expedSent', 'expedBack']) on(ev, () => { if (sheet) partySheet.refresh(); });
+  for (const ev of ['promote', 'fieldChange', 'recruit', 'milestone', 'gear', 'mirrorDrop']) on(ev, () => { if (sheet) partySheet.refresh(); });
 }

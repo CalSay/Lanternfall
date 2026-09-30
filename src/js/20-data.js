@@ -50,9 +50,7 @@ const SKILL_TUNE = {
   craftNeed: [7, 0.5, 1.04],          // the same for Smithing, Woodcraft, Tailoring, Enchanting
   craftSkills: ['smith', 'bench', 'loom', 'ench'],
   nodeXp: [7, 1],                     // XP a swing at a tier-t node: a x t^b (nodeXp)
-  spdPerLv: 0.02,                     // gathering speed per level above 1 (nodeTime)
-  // The gates before GP1. A save loaded under GP1 keeps every tier these opened for it (55-skillpace).
-  oldNodeReq: [1, 8, 18, 30, 45], oldStationReq: [1, 4, 9, 16, 25]
+  spdPerLv: 0.02                      // gathering speed per level above 1 (nodeTime)
 };
 const NODE_REQ = SKILL_TUNE.nodeReq;
 const SMITH_REQ = SKILL_TUNE.stationReq;

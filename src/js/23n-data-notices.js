@@ -123,13 +123,7 @@ const NOTICES = [
   { id: 'mirror', re: /^The boss dropped a Mirror of Embers/, ch: 'pop' },
   { id: 'party-small', re: /^(Your hero now casts .* alone|.* reached level \S+)/, ch: 'log' },
   { id: 'bond', site: /toast\(t\.msg, 'good', \{ ic: \['heart'/, ch: 'log', why: 'Bonds leave the game (W3-A)' },
-  { id: 'exped', re: /: the team (is|came) back/, test: m => typeof EXPED_GRADES === 'object' && EXPED_GRADES.some(g => m.includes(` (${g.n}): `)), site: /toast\(`\$\{R\(x\.r\)\.n\} \(/, ch: 'log' },
 
-  // ---- legendary powers (dormant; W2-C removes them) ----
-  { id: 'legend', re: /(^Legendary! | is now rank | is in your Lantern Book )/, ch: 'pop', wait: 40 },
-  { id: 'legend-echo', re: /^Echo of /, ch: 'log' },
-  { id: 'legend-sigil', re: / Sigil.*\.$/, ch: 'log' },
-  { id: 'legend-off', re: /^Your hero carries \d+ legendary powers/, site: /toast\(msg, 'raid', null, 'high'\)/, ch: 'bell' },
 
   // ---- the Deepwell ----
   { id: 'deep-tip', re: /^(Oil is your run|After each floor, pick 1 of 3 boons|You can climb out between floors|Your party's health carries|Your health carries|Your Oil is running low)/,

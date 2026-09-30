@@ -633,7 +633,7 @@ let deedsUI = null;
   });
   function runLooks() { const s = SECTIONS.find(x => x.id === 'ach-looks'); if (s && s.update) s.update(true); }
   // The title picker: the chosen one on top, then every earned title grouped by source, newest first.
-  const TITLE_SRC = [['Achievements', t => /^a_/.test(t.id)], ['Deepwell', t => /^dt_/.test(t.id)], ['Pinnacles', t => /pinnacle|vow/i.test(t.src || '')], ['Oaths', t => /oath/i.test(t.src || '')], ['Codex', () => true]];
+  const TITLE_SRC = [['Achievements', t => /^a_/.test(t.id)], ['Deepwell', t => /^dt_/.test(t.id)], ['Oaths', t => /oath/i.test(t.src || '')], ['Codex', () => true]];
   function renderTitles(tl) {
     const curId = S.codex ? S.codex.title : null, ttl = heroTitleTxt();
     lv.tcur.textContent = '';

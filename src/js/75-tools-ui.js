@@ -29,7 +29,7 @@ let toolsUI = null;
 
   // ---------------- the chip ----------------
   const toolIcon = skill => { const it = equippedTool(skill).item; return it ? itemIcon(it.slot, it.t, it.u) : ROUGH_IC[toolOf(skill)](); };
-  const rarCls = it => it ? ' rar-' + (it.u || it.lr ? 'legendary' : it.r) : ' rough';
+  const rarCls = it => it ? ' rar-' + (it.u ? 'legendary' : it.r) : ' rough';
   function chip(skill) {
     const b = el('button', 'gx-tool'); b.type = 'button'; b._skill = skill;
     b._img = img(toolIcon(skill)); b._tx = el('span', 'gx-tool-tx');

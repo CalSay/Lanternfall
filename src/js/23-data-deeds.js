@@ -13,16 +13,16 @@
 //   DEED_BONUS           +0.5% at Gold and +0.5% more at Everflame (deepOil: 1 s each)
 //   DEED_CAP             the hard cap per bonus key (all regions, forever)
 //   DEED_KEY_TXT         bonus key -> player words ("damage")
-//   DEED_GROUPS          12 groups: { id, n, ic, gold (title), ever (title), look (id at Everflame) }
+//   DEED_GROUPS          11 groups: { id, n, ic, gold (title), ever (title), look (id at Everflame) }
 //   DEED_TRACKS          92 tracks: { id, g, n, what, need[4], star, bonus, src, wait, kind, u, more, steps, lock }
 //                          star: { x } (each star is x more) | { add } | null. kind: 'count' (default),
 //                          'level' (a value that only rises), 'ladder' (1..4 steps), 'record' (a best).
 //                          u: [one, many] nudge noun. more: noun for "X IV: 38Qa more gold".
 //                          wait: the task that must merge before the track shows (58 probes it).
 //                          lock: { tier: text } tiers that open with later content.
-//   DEED_FEATS           21 Feats: { id, n, needs, about, rar, title, look, wait, pts }
-//   DEED_SECRETS         16 secrets: { id, n, riddle, how, title, look, wait }
-//   DEED_LOOKS           36 accessories + 4 frames: { id, slot, n, src }  src: 'feat:id' | 'grp:id' |
+//   DEED_FEATS           19 Feats: { id, n, needs, about, rar, title, look, wait, pts }
+//   DEED_SECRETS         15 secrets: { id, n, riddle, how, title, look, wait }
+//   DEED_LOOKS           33 accessories + 4 frames: { id, slot, n, src }  src: 'feat:id' | 'grp:id' |
 //                          'sec:id' | 'ch:id' | 'pts:N'. No look carries a modifier (AD1).
 //   DEED_SLOTS           the Looks slots in order (trail is the Deepwell's; frame the portrait's)
 //   DEED_LADDER          points milestones: { at, title, look, wall }
@@ -38,7 +38,7 @@ const DEED_PTS = { tier: [5, 10, 20, 40], star: 10, grpGold: 25, grpEver: 50, cl
 const DEED_BONUS = { gold: 0.005, everflame: 0.005, deepOil: 1 };
 const DEED_CAP = {
   dmg: 0.05, party: 0.04, tap: 0.01, xp: 0.04, keen: 0.03, essence: 0.01, uniqueChance: 0.01, offline: 0.04,
-  bountyPay: 0.03, buildTime: 0.03, compXp: 0.04, expHaul: 0.04, raid: 0.03, skillXp: 0.04,
+  bountyPay: 0.03, buildTime: 0.03, compXp: 0.04, raid: 0.03, skillXp: 0.04,
   'skillXp:smith': 0.01, 'skillXp:bench': 0.01, 'skillXp:loom': 0.01, 'skillXp:ench': 0.01,
   gatherSpeed: 0.03, 'gatherSpeed:mine': 0.02, 'gatherSpeed:wood': 0.02, 'gatherSpeed:forage': 0.02, 'gatherSpeed:fish': 0.02,
   'yield:ore': 0.01, 'yield:crystal': 0.01, 'yield:wood': 0.01, 'yield:fibre': 0.01, 'yield:herb': 0.01, 'yield:pearl': 0.01, 'yield:fish': 0.01,
@@ -47,7 +47,7 @@ const DEED_CAP = {
 const DEED_KEY_TXT = {
   dmg: 'damage', party: 'party damage', tap: SOLO_LOAD ? 'Attack damage' : 'tap damage', xp: 'hero XP', keen: 'crit damage', essence: 'essence chance',
   uniqueChance: 'unique drops', offline: 'away gains', bountyPay: 'bounty rewards', buildTime: 'faster builds',
-  compXp: 'companion XP', expHaul: 'expedition haul', raid: 'raid damage', skillXp: 'skill XP',
+  compXp: 'companion XP', raid: 'raid damage', skillXp: 'skill XP',
   'skillXp:smith': 'Smithing XP', 'skillXp:bench': 'Woodcraft XP', 'skillXp:loom': 'Tailoring XP', 'skillXp:ench': 'Enchanting XP',
   gatherSpeed: 'gathering speed', 'gatherSpeed:mine': 'Mining speed', 'gatherSpeed:wood': 'Woodcutting speed',
   'gatherSpeed:forage': 'Foraging speed', 'gatherSpeed:fish': 'Fishing speed',
@@ -63,9 +63,8 @@ const DEED_GROUPS = [
   { id: 'craft', n: 'Crafting', ic: ['anvil', '#A9B1BD'], gold: 'Journeyman', ever: 'Forgemaster', look: 'l_tinker' },
   { id: 'camp', n: 'Camp', ic: ['flame', '#FF9E3D'], gold: 'Housewright', ever: 'Hearthwarden', look: 'fl_rose' },
   { id: 'comp', n: 'Companions', ic: ['mug', '#C98B4E'], gold: 'Goodfellow', ever: 'the Beloved', look: 'fl_kin' },
-  { id: 'exped', n: 'Expeditions', ic: ['boot', '#7FB2FF'], gold: 'Wayfarer', ever: 'Pathfinder', look: 'h_wayfarer' },
   { id: 'deep', n: 'The Deepwell', ic: ['orb', '#7FB2FF'], gold: 'Stairwalker', ever: 'Deepborn', look: 'a_stair' },
-  { id: 'stars', n: 'Stars and Legends', ic: ['constel', '#B89CFF'], gold: 'Stargazer', ever: 'the Sage', look: null },
+  { id: 'stars', n: 'Stars', ic: ['constel', '#B89CFF'], gold: 'Stargazer', ever: 'the Sage', look: null },
   { id: 'codex', n: 'Codex and Almanac', ic: ['banner', '#F2C14E'], gold: 'Bookworm', ever: 'Daykeeper', look: 'l_moon' },
   { id: 'raid', n: 'The Raid', ic: ['heart', '#E0524F'], gold: 'Raider', ever: 'Wyrmbane', look: null }
 ];
@@ -144,24 +143,15 @@ const DEED_TRACKS = [
   { id: 'together', g: 'comp', n: 'Side by Side', what: 'Hours fielded together, all pairs', need: [10, 100, 1e3, 5e3], star: X10, bonus: 'party', src: 'save', wait: 'F2', u: ['hour', 'hours'] },
   { id: 'front', g: 'comp', n: 'Hold the Line', what: 'Damage the party took', need: [1e6, 1e9, 1e12, 1e15], star: X1K, bonus: 'party', src: 'new', more: 'damage taken' },
   { id: 'mend', g: 'comp', n: 'Mender', what: 'Healing and shields given', need: [1e6, 1e9, 1e12, 1e15], star: X1K, bonus: 'party', src: 'new', more: 'healing' },
-  // ---- 2.8 Expeditions ----
-  { id: 'exped', g: 'exped', n: 'Out and Back', what: 'Expeditions returned', need: [10, 100, 500, 2e3], star: X10, bonus: 'expHaul', src: 'save', u: ['expedition', 'expeditions'] },
-  { id: 'perfect', g: 'exped', n: 'Perfect Planning', what: 'Perfect grades', need: [5, 50, 250, 1e3], star: X10, bonus: 'expHaul', src: 'new', u: ['Perfect expedition', 'Perfect expeditions'] },
-  { id: 'lorepages', g: 'exped', n: 'Pages from the Road', what: 'Lore pages found', need: [5, 12, 20, 28], star: null, bonus: 'expHaul', src: 'save', kind: 'level', u: ['Lore page', 'Lore pages'] },
-  { id: 'keeps', g: 'exped', n: 'Keepsakes', what: 'Keepsakes found', need: [3, 6, 9, 12], star: null, bonus: 'expHaul', src: 'save', kind: 'level', u: ['keepsake', 'keepsakes'] },
   // ---- 2.9 The Deepwell ----
   { id: 'depth', g: 'deep', n: 'Downward', what: 'Deepest floor', need: [10, 25, 40, 60], star: { add: 20 }, bonus: 'deepOil', src: 'save', kind: 'level', u: ['floor', 'floors'] },
   { id: 'floors', g: 'deep', n: 'Stairwalker', what: 'Floors cleared, lifetime', need: [50, 250, 1e3, 4e3], star: X10, bonus: 'deepOil', src: 'save', u: ['floor', 'floors'] },
   { id: 'marks', g: 'deep', n: 'Well Paid', what: 'Depth Marks earned', need: [500, 2500, 1e4, 2.5e4], star: X10, bonus: 'deepOil', src: 'save', u: ['Depth Mark', 'Depth Marks'] },
   { id: 'boons', g: 'deep', n: 'Pick of the Well', what: 'Different boons picked', need: [10, 25, 40, 46], star: null, bonus: 'deepOil', src: 'save', kind: 'level', u: ['boon', 'boons'] },
   { id: 'trial', g: 'deep', n: 'Trialgoer', what: 'Trial Seals (weeks at floor 15+)', need: [1, 5, 15, 30], star: null, bonus: 'deepOil', src: 'save', kind: 'level', u: ['Trial Seal', 'Trial Seals'] },
-  // ---- 2.10 Stars and legends (no bonus: these systems have their own caps) ----
+  // ---- 2.10 Stars (no bonus: these systems have their own caps) ----
   { id: 'starmap', g: 'stars', n: 'Stargazer', what: 'Star points spent on your best class map', need: [6, 15, 26, 36], star: null, bonus: null, src: 'derived', kind: 'level', u: ['star point', 'star points'] },
   { id: 'keystones', g: 'stars', n: 'Keystones', what: 'Different keystones ever lit', need: [1, 3, 6, 10], star: null, bonus: null, src: 'new', kind: 'level', u: ['keystone', 'keystones'] },
-  { id: 'book', g: 'stars', n: 'The Lantern Book', what: 'Legendary powers learned', need: [1, 10, 25, 39], star: { add: 4 }, bonus: null, src: 'save', kind: 'level', u: ['power', 'powers'] },
-  { id: 'ranks', g: 'stars', n: 'Rank Up', what: 'Power ranks, all powers', need: [5, 25, 75, 150], star: null, bonus: null, src: 'derived', kind: 'level', u: ['power rank', 'power ranks'] },
-  { id: 'sets', g: 'stars', n: 'Circle Sets', what: 'Best circle set worn', need: [1, 2, 3, 4], star: null, bonus: null, src: 'new', kind: 'ladder',
-    steps: ['2 pieces of a set', '4 pieces of a set', '6 pieces of a set', '6 pieces of every circle'] },
   // ---- 2.11 The Codex, the Almanac and bounties ----
   { id: 'lanternlight', g: 'codex', n: 'Lantern Light', what: 'Lantern Light', need: [100, 300, 600, 1e3], star: { add: 500 }, bonus: 'offline', src: 'derived', kind: 'level', u: ['Light', 'Light'] },
   { id: 'pageseals', g: 'codex', n: 'Page Seals', what: 'Codex pages completed', need: [1, 4, 8, 14], star: null, bonus: 'offline', src: 'save', kind: 'level', u: ['Codex page', 'Codex pages'] },
@@ -181,8 +171,6 @@ const DEED_TRACKS = [
   { id: 'g_fish', g: 'gather', n: 'Catch of the Day', what: 'Fish caught', need: [1e3, 1e4, 1e5, 1e6], star: X10, bonus: 'yield:fish', src: 'new', wait: 'R2', u: ['fish', 'fish'] },
   { id: 'oath', g: 'combat', n: 'Oathkeeper', what: 'Highest Oath kept', need: [5, 10, 20, 30], star: null, bonus: 'dmg', src: 'save', kind: 'level', wait: 'O1', u: ['Oath level', 'Oath levels'] },
   { id: 'oathseals', g: 'combat', n: 'Oath Seals', what: 'Zone kinds with an Oath Seal at 10+', need: [3, 7, 10, 14], star: null, bonus: 'dmg', src: 'save', kind: 'level', wait: 'O1', u: ['Oath Seal', 'Oath Seals'] },
-  { id: 'pinkills', g: 'combat', n: 'Pinnacle Hunter', what: 'Pinnacle kills', need: [1, 10, 100, 500], star: X10, bonus: 'dmg', src: 'save', wait: 'PB1', u: ['pinnacle kill', 'pinnacle kills'] },
-  { id: 'vow', g: 'combat', n: 'Vowed', what: 'Highest Vow level killed', need: [5, 10, 20, 30], star: null, bonus: 'dmg', src: 'save', kind: 'level', wait: 'PB1', u: ['Vow level', 'Vow levels'] },
   { id: 'lanterns', g: 'road', n: 'Great Lanterns', what: 'Great Lanterns relit', need: [1, 2, 3, 4], star: { add: 1 }, bonus: 'xp', src: 'save', kind: 'level', wait: 'R3', u: ['Great Lantern', 'Great Lanterns'] }
 ];
 
@@ -199,8 +187,6 @@ const DEED_FEATS = [
   { id: 'f_gold', n: "Dragon's Hoard", needs: '500M gold earned', about: '3-5 months', rar: 'epic', title: 'Goldwyrm', look: 'fl_coin', need: 5e8 },   // ECON-A (economy-2 3.6): was 1e24
   { id: 'f_raid', n: 'Wyrmfall', needs: '100 raid bosses felled', about: 'months (shared)', rar: 'epic', title: 'Wyrmslayer', look: 'c_wyrm' },
   { id: 'f_champs', n: 'Bane of Champions', needs: '10,000 champions defeated', about: 'about 10 months', rar: 'legendary', title: 'Championbane', look: 'a_ember' },
-  { id: 'f_perfect', n: 'Flawless Planner', needs: '1,000 Perfect expeditions and all 12 keepsakes', about: '4-8 months', rar: 'epic', title: 'Pathmaster', look: 'cr_fox', wait: 'NS' },
-  { id: 'f_book', n: 'Every Legend Known', needs: 'Every power in the Lantern Book, 10 of them at rank V', about: 'months', rar: 'legendary', title: 'Lorebearer', look: 'l_book' },
   { id: 'f_stars', n: 'Stars in Every Sky', needs: '36 star points spent on each of the 3 class maps', about: 'months (3 classes)', rar: 'legendary', title: 'Starwright', look: 'a_star' },
   { id: 'f_sworn', n: 'All Sworn', needs: 'All 21 Bonds at Sworn', about: 'months', rar: 'epic', title: 'Heartsworn', look: 'a_bond', wait: 'F2' },
   { id: 'f_town', n: "Warden of Hollow's Rest", needs: 'Every building at its top level, 6 Hands housed, a Legendary Hand, the Kitchen at its top level', about: '2-3 months', rar: 'rare', title: 'the Steward', look: 'cr_cat', wait: 'N1' },
@@ -223,7 +209,6 @@ const DEED_SECRETS = [
   { id: 's_drum', n: 'Drummer', riddle: SOLO_LOAD ? 'Press like rain on a roof.' : 'Tap like rain on a roof.', how: SOLO_LOAD ? '60 Attack presses in one minute' : '300 taps in one minute', title: 'Drummer' },
   { id: 's_streak', n: 'Hot Streak', riddle: 'Ten in a row. Every one a crit.', how: '10 hero crits in a row', title: 'the Lucky' },
   { id: 's_oil', n: 'Last Drop', riddle: 'Out of the Well with nothing to spare.', how: 'Leave a Deepwell run with under 1s of Oil', title: 'Lastdrop' },
-  { id: 's_late', n: 'Fashionably Late', riddle: "They waited a week. They didn't mind.", how: 'Collect an expedition 7 days after it came back', title: 'the Tardy', wait: 'NS' },
   { id: 's_rat', n: 'Pack Rat', riddle: 'Full. Full again. Full again.', how: 'Hit a Storehouse cap 100 times', title: 'Packrat', wait: 'H3' },
   { id: 's_crowd', n: 'Shoulder to Shoulder', riddle: 'Four lamps under one wyrm.', how: 'Raid while 3 or more others in the room are raiding', title: 'Shieldmate' },
   { id: 's_dare', n: 'Daredevil', riddle: 'Seven days, seven Dares.', how: 'Take the Dare on every day of one week', title: 'Daredevil' }
@@ -239,7 +224,6 @@ const DEED_LOOKS = [
   { id: 'c_wyrm', slot: 'cape', n: 'Wyrmscale Mantle', src: 'feat:f_raid' },
   { id: 'c_starlit', slot: 'cape', n: 'Starlit Cape', src: 'pts:5000' },
   { id: 'h_straw', slot: 'hat', n: "Forager's Straw Hat", src: 'grp:gather' },
-  { id: 'h_wayfarer', slot: 'hat', n: "Wayfarer's Hat", src: 'grp:exped' },
   { id: 'h_artisan', slot: 'hat', n: "Artisan's Cap", src: 'feat:f_trades' },
   { id: 'h_warden', slot: 'hat', n: "Well-Warden's Hood", src: 'feat:f_trials' },
   { id: 'h_night', slot: 'hat', n: 'Nightcap', src: 'sec:s_night' },
@@ -249,7 +233,6 @@ const DEED_LOOKS = [
   { id: 'l_moon', slot: 'lamp', n: 'Moon Paper Lantern', src: 'grp:codex' },
   { id: 'l_watch', slot: 'lamp', n: 'Watch Lamp', src: 'feat:f_watch' },
   { id: 'l_well', slot: 'lamp', n: 'Well Lamp', src: 'feat:f_deep' },
-  { id: 'l_book', slot: 'lamp', n: 'Book Lantern', src: 'feat:f_book' },
   { id: 'l_store', slot: 'lamp', n: 'Brass Storelamp', src: 'feat:f_stock' },
   { id: 'fl_moon', slot: 'flame', n: 'Moonflame', src: 'grp:road' },
   { id: 'fl_rose', slot: 'flame', n: 'Hearth Rose', src: 'grp:camp' },
@@ -264,7 +247,6 @@ const DEED_LOOKS = [
   { id: 'a_stair', slot: 'aura', n: 'Stair Glow', src: 'grp:deep' },
   { id: 'cr_moss', slot: 'critter', n: 'Mossling', src: 'feat:f_lamps' },
   { id: 'cr_moth', slot: 'critter', n: 'Lampmoth', src: 'feat:f_stamps' },
-  { id: 'cr_fox', slot: 'critter', n: 'Road Fox', src: 'feat:f_perfect' },
   { id: 'cr_cat', slot: 'critter', n: 'Hearth Cat', src: 'feat:f_town' },
   { id: 'cr_wisp', slot: 'critter', n: 'Gold Wisp', src: 'sec:s_wisp' },
   { id: 'cr_crab', slot: 'critter', n: 'Lantern Crab', src: 'feat:f_tides' },
@@ -301,4 +283,4 @@ const DEED_RARITY = { common: 'Common', uncommon: 'Uncommon', rare: 'Rare', epic
 // bonusOn: 0 switches every deeds bonus off (tools/sim.mjs AP4 compares with and without).
 const DEED_TUNE = { every: 1, parts: 4, initAfter: 2.2, bonusOn: 1, quiet: 180, near: 0.9, nearMax: 0.97, featToast: 1, secretAfterDays: 30, secretAfterFound: 3,
   nightFrom: 2, nightTo: 4, nightSecs: 600, wispFrom: 21, wispTo: 5, wispSecs: 600, fireSecs: 300, drumTaps: SOLO_LOAD ? 60 : 300, streak: 10,
-  overX: 1000, lateMs: 7 * 864e5, ratHits: 100, crowd: 3, oddZone: 10 };
+  overX: 1000, ratHits: 100, crowd: 3, oddZone: 10 };

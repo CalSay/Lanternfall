@@ -587,7 +587,7 @@ function nextBlock() {
 }
 // Camp (57-camp.js): like a player, start any build that is affordable, in this order
 // (Watchtower first: it lengthens the away cap). --camp 0 turns it off.
-const CAMP_ORDER0 = ['watch', 'hearth', 'tavern', 'bunk', 'forge', 'bench', 'loom', 'ench', 'store', 'library', 'shrine', 'maproom'];   // bunk: N1's Bunkhouse (beds for Hands)
+const CAMP_ORDER0 = ['watch', 'hearth', 'tavern', 'bunk', 'forge', 'bench', 'loom', 'ench', 'store', 'library', 'shrine'];   // bunk: N1's Bunkhouse (beds for Hands)
 // H3: with caps on, the Storehouse right after the Watchtower (a full pile stops income); --store 0: never.
 CAMP_ORDER0.splice(CAMP_ORDER0.indexOf('store'), 1);
 if (args.store !== '0') CAMP_ORDER0.splice(1, 0, 'store');
@@ -1108,7 +1108,7 @@ function runDays() {
 async function runEarlyReport(inTargets) {
   const { execFile } = await import('node:child_process');
   const run = a => new Promise((res, rej) => execFile(process.execPath, [process.argv[1], ...a], { maxBuffer: 1 << 26 }, (e, out) => e ? rej(e) : res(out)));
-  const pass = ['pace', 'eval', 'camp', 'combat', 'enemy', 'store', 'hands'].flatMap(k => args[k] ? ['--' + k, String(args[k])] : []);
+  const pass = ['pace', 'eval', 'camp', 'combat', 'enemy', 'store', 'hands', 'omen'].flatMap(k => args[k] ? ['--' + k, String(args[k])] : []);
   const heroes = [['wren', 'ranger'], ['tobin', 'warden'], ['pip', 'lanternmage']];
   const hrs = String(args.hours || 1), seed0 = +(args.seed || 1), nSeeds = +(args.seeds || 3), seeds = Array.from({ length: nSeeds }, (_, i) => seed0 + i);
   // every hero x idle / active x seeds; a row is the mean over the seeds (one seed swings a zone by minutes)
@@ -1324,11 +1324,11 @@ async function runDeedsReport() {
   res.push([ok(ap6.every(x => x.max <= 1 && inR(x.share, [0.2, 0.6]))), 'AP6 the nudge takes at most 1 of 3 rows, shown at 20-60% of Next Up samples (start, middle and end of each check-in)',
     classes.map((c, i) => `${c} ${Math.round(ap6[i].share * 100)}% (max ${ap6[i].max} row)`).join(', ')]);
   // AP7 every live track the player uses reaches Bronze within 7 days
-  const SKIP = ['exped', 'deep', 'raid'];
+  const SKIP = ['deep', 'raid'];
   const used = (j, id) => !SKIP.includes(j.deeds.groups[id]) && (j.deeds.v7[id] || 0) > 0;
   const ap7 = on.map(j => j.deeds.live.filter(id => used(j, id) && !(j.deeds.tierDay[id] <= 7)));
   const unused = on.map(j => j.deeds.live.filter(id => !SKIP.includes(j.deeds.groups[id]) && !used(j, id)));
-  res.push([ok(ap7.every(l => !l.length)), 'AP7 every live track reaches Bronze within 7 days (tracks the sim uses; no Deepwell, expeditions or raid)',
+  res.push([ok(ap7.every(l => !l.length)), 'AP7 every live track reaches Bronze within 7 days (tracks the sim uses; no Deepwell or raid)',
     classes.map((c, i) => `${c} ${ap7[i].length ? 'late: ' + ap7[i].map(id => `${id}@${on[i].deeds.tierDay[id] === undefined ? '-' : on[i].deeds.tierDay[id]}`).join(' ') : 'all'}`).join('; ') + ` | unused by day 7 (${classes[0]}): ${unused[0].join(' ') || '-'}`]);
   // AP8 Everflame tiers: none before day 7; the median live Everflame tier between day 30 and 120
   const ap8 = on.map(j => {

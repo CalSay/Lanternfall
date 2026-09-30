@@ -54,9 +54,8 @@ const FEATURES = [
   { id: 'craft', tab: 'forge', view: 'make', name: 'Craft', why: 'materials for a first recipe, any gear, or zone 6; a cold Hearth: the Workbench is built', when: () => coldH() ? campLv('bench') >= 1 : S.maxZone >= 6 || S.items.length > 0 || craftReady() },
   { id: 'bestiary', tab: 'adv', view: 'bestiary', name: 'Bestiary', why: 'zone 6 or 60 kills', when: () => S.maxZone >= 6 || S.totalKills >= 60 },
   { id: 'almanac', tab: 'world', view: 'almanac', name: 'Almanac', why: '7 minutes played or zone 7', when: () => O().t >= 420 || S.maxZone >= 7 },   // BAL3: was 8 / 8 (the cheaper Blade front-loads the first 5 minutes)
-  // SOLO1: no roster, expeditions (companions away) or Bonds: late and never, so "Show every tab" leaves them out too
+  // SOLO1: no roster or Bonds: late and never, so "Show every tab" leaves them out too
   { id: 'roster', tab: 'party', view: 'roster', name: 'Roster', why: '10 minutes played or zone 7 (solo: never)', late: SOLO_G, when: () => !SOLO_G && (O().t >= 600 || S.maxZone >= 7 || recruitable()) },
-  { id: 'exped', tab: 'world', view: 'camp', name: 'Expeditions', why: 'the Map Room opens a slot (solo: never)', late: SOLO_G, when: () => !SOLO_G && typeof expedOpen === 'function' && expedOpen() },
   { id: 'synergy', tab: 'party', view: 'team', name: 'Combos and Bonds', why: 'a full party of three (solo: never)', late: SOLO_G, when: () => !SOLO_G && !!(S.party && S.party.field && S.party.field.length >= 2) },
   { id: 'uniques', tab: 'forge', view: 'uniques', name: 'Uniques', why: 'first unique loot, 12 minutes played, or zone 10', when: () => O().t >= 720 || S.maxZone >= 10 || Object.keys(S.found || {}).length > 0 },
   { id: 'tavern', tab: 'world', view: 'tav', name: 'Tavern', why: '14 minutes played, or zone 8; a cold Hearth: the Tavern is built', when: () => coldH() ? campLv('tavern') >= 1 : O().t >= 840 || S.maxZone >= 8 },
@@ -66,9 +65,6 @@ const FEATURES = [
   { id: 'deep', tab: 'adv', view: 'deep', name: 'Deepwell', why: 'zone 18 (it opens at zone 20 and Hearth 3)', when: () => S.maxZone >= 18 || !!(S.deep && S.deep.runs) },
   // late: a system that arrives after the guide. It stays gated on old saves (S.onboard.all) and after
   // "Show every tab" until its own rule holds, so nobody sees an empty view.
-  // Powers: the first legendary power, or a first Circle Crest (Crests are spent in the same view).
-  { id: 'powers', tab: 'forge', view: 'powers', name: 'Powers', why: 'first legendary power or Circle Crest', late: true,
-    when: () => !!(S.legend && ((S.legend.n && S.legend.n.drops > 0) || Object.keys(S.legend.book || {}).length || (S.legend.sig || []).some(n => n > 0))) },
   // Hands (N1, 57f-hands.js): Hearth 2 and the Tavern built. The probe is safe before 57f has loaded.
   { id: 'hands', tab: 'world', view: 'tav', name: 'Hands', why: 'Hearth 2 and the Tavern built', late: true,
     when: () => { try { return handsOpen(); } catch (e) { return false; } } }
@@ -244,8 +240,8 @@ function craftReady() {
   };
 
   // ---- Next Up: hide goals whose system is still hidden (only while ONBOARD.gate is on) ----
-  const GOAL_FEATURE = { roster: 'roster', bounty: 'bounties', bestiary: 'bestiary', skill: 'gather', forge: 'craft', camp: 'camp', exped: 'exped', codex: 'codex', deep: 'deep' };
-  const SOLO_NO_GOAL = { roster: 1, exped: 1, maproom: 1, bond: 1, bonds: 1, lineup: 1 };   // SOLO1: goals that point at the party
+  const GOAL_FEATURE = { roster: 'roster', bounty: 'bounties', bestiary: 'bestiary', skill: 'gather', forge: 'craft', camp: 'camp', codex: 'codex', deep: 'deep' };
+  const SOLO_NO_GOAL = { roster: 1, bond: 1, bonds: 1, lineup: 1 };   // SOLO1: goals that point at the party
   onboardGoalOk = g => !(SOLO_G && SOLO_NO_GOAL[g.sys]) && isUnlocked(GOAL_FEATURE[g.sys] || null);
 
   // ---- counters and the clock ----

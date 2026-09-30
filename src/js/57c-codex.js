@@ -2,7 +2,7 @@
 // CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
 //
 // Rules: most entries are READ from state other systems already save (mastery, S.found, the
-// roster, stories, camp levels, expedition Lore and Keepsakes, the Almanac, achievements). The
+// roster, stories, camp levels, the Almanac, achievements). The
 // Codex records only what nothing else keeps: champion kills by type, affix tiers and Masterwork
 // lines seen, synergies switched on, materials held by tier, Dares taken. Old saves get full
 // credit on first load (recorded parts are seeded from the bag, the pack and the field).
@@ -31,10 +31,10 @@
 // Events emitted: codexLight { light, gain }, codexPage { id, kind: 'half' | 'seal' },
 //   codexMilestone { at, rewards }, codexOpen { page } (UI: open the Codex sheet), codexInit { light }.
 // Listens: kill (champions), itemAdded / reforged (affixes, Masterwork), synergyChange, bondLevel, harvest,
-//   trophy, and marks pages dirty on recruit, promote, charLevel, campBuilt, expedBack, omen,
+//   trophy, and marks pages dirty on recruit, promote, charLevel, campBuilt, omen,
 //   weeklyClaim, achievement, zoneClear, loot, transmuted, crafted.
 // Hooks: setBlessingGate (57-camp), registerGoal (Next Up), registerAwayLine, addModifier for the
-//   Seal keys, addBonus: expSlots (+1 at 200 Light, works with the Map Room), deepOil, and three
+//   Seal keys, addBonus: deepOil, and three
 //   stored-for-later keys nothing reads yet: bag, buildQueue, deepRerolls.
 //
 // Save: registerState('codex', { v, rec, got, title, lightMax, init, half, seal, seen, mSeen }).
@@ -46,7 +46,7 @@
 
 const CODEX_TUNE = { every: 5, sweep: 60, goalFrom: 0.6 };
 const CODEX_CAP = { dmg: 0.05, critDmg: 0.05, uniqueChance: 0.05, skillXp: 0.05, compXp: 0.05, offline: 0.05,
-  gatherSpeed: 0.05, buildTime: 0.05, expHaul: 0.05, essence: 0.05 };
+  gatherSpeed: 0.05, buildTime: 0.05, essence: 0.05 };
 
 // Milestones. kind: title | qol | cosmetic. live: false = the unlock is stored and switches on
 // when its system arrives (the UI says so plainly).
@@ -56,7 +56,7 @@ const CODEX_MILESTONES = [
   { at: 75, rw: [{ id: 'd_string', kind: 'cosmetic', n: 'Camp decoration: Lantern String', later: 'Saved: it hangs in camp once the camp scene shows decorations.' }] },
   { at: 100, rw: [{ id: 'hints', kind: 'qol', n: 'Exact Codex hints', txt: 'Every blank entry says exactly where to find it, at any Library level.', live: true }] },
   { at: 150, rw: [{ id: 'c_amber', kind: 'cosmetic', n: 'Lantern colour: Hearth Amber', later: 'Saved: hero lantern colours arrive with hero cosmetics.' }] },
-  { at: 200, rw: [soloOn() ? { id: 't_wayfinder', kind: 'title', n: 'Title: the Wayfinder', live: true } : { id: 'expslot', kind: 'qol', n: '+1 expedition slot', txt: 'The Map Room sends one more team.', live: true }] },   // W1-C: no expeditions in solo: a title
+  { at: 200, rw: [{ id: 't_wayfinder', kind: 'title', n: 'Title: the Wayfinder', live: true }] },   // W1-C: no expeditions in solo: a title
   { at: 250, rw: [{ id: 'salvage2', kind: 'qol', n: 'Auto-salvage, full', txt: 'Rules per kind by rarity and tier, with a switch to keep Masterwork gear.', later: 'Saved for later, like the basic filter.' }] },
   { at: 300, rw: [{ id: 't_relighter', kind: 'title', n: 'Title: Relighter', live: true }, { id: 'd_moth', kind: 'cosmetic', n: 'Camp decoration: Moth Lanterns', later: 'Saved: shows once the camp scene shows decorations.' }] },
   { at: 350, rw: [{ id: 'bag10', kind: 'qol', n: 'Bag +10', txt: 'Ten more spare items fit in your bag.', later: 'Saved: the bag grows when it learns to read this bonus.' }] },
@@ -135,7 +135,7 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
       return out;
     }
   });
-  // ---------------- 3. Uniques: 13 hero uniques (the 6 companion uniques became legendary powers: page 16) ----------------
+  // ---------------- 3. Uniques: 13 hero uniques ----------------
   page('uniques', {
     n: 'Uniques', bless: 'hunt', seal: { key: 'uniqueChance', v: 0.03, txt: 'Uniques drop 3% more often' }, title: 'the Curator', pic: 'item',
     tiles: x => Object.keys(UNIQ).map(k => {
@@ -238,32 +238,6 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
       });
     }
   });
-  // ---------------- 9. Lore: expedition Lore pages x2, Keepsakes x1 ----------------
-  page('lore', {
-    n: 'Lore', bless: 'wayfarer', seal: { key: 'expHaul', v: 0.03, txt: 'Expeditions bring back 3% more' }, title: 'Loremaster', pic: 'rows',
-    noSolo: true,   // W1-C: expedition Lore has no way in solo
-    show: () => !!S.exped && typeof EXPED_LORE === 'object',
-    tiles: x => {
-      const out = [];
-      for (const band of Object.keys(EXPED_LORE)) {
-        EXPED_LORE[band].forEach((t, i) => {
-          const q = (S.exped.lore && S.exped.lore[`${band}-${i}`]) || 0, got = q >= 4 ? 1 : 0;
-          const bn = band === 'court' ? 'The Hollow Court' : EXPED_BANDS[band].n;
-          const lt = got && typeof EXPED_LORE_TEXT === 'object' && EXPED_LORE_TEXT[band] && EXPED_LORE_TEXT[band][i];
-          out.push({ key: `l_${band}_${i}`, n: t, got, max: 1, pts: got * 4, ptsMax: 4, grp: 'Lore pages', q, lore: lt ? [lt.text] : [],
-            sub: got ? bn : q ? `${q} of 4 quarters found` : '',
-            hint: got ? '' : x.exact ? (band === 'court' ? 'Run The Hollow Court with Aldric.' : `Lore routes in ${bn}. Long runs find more.`) : 'Somewhere on the road.' });
-        });
-      }
-      for (const r of Object.keys(EXPED_KEEPSAKES)) {
-        const got = S.exped.keep && S.exped.keep[r] ? 1 : 0;
-        out.push({ key: 'k_' + r, n: EXPED_KEEPSAKES[r], got, max: 1, pts: got * 2, ptsMax: 2, grp: 'Keepsakes',
-          lore: got && typeof EXPED_KEEP_TEXT === 'object' && EXPED_KEEP_TEXT[r] ? [EXPED_KEEP_TEXT[r]] : [],
-          hint: got ? '' : x.exact ? `A bonus find on ${EXPED_ROUTES[r].n}. Great grades roll more.` : 'Found on an expedition.' });
-      }
-      return out;
-    }
-  });
   // ---------------- 10. Deepwell (locked until the Deepwell exists) ----------------
   page('deepwell', {
     n: 'Deepwell', bless: 'deep', seal: { key: null, bonus: 'deepOil', v: 5, txt: '+5s starting Oil (Deepwell only)' }, title: 'Wellsage', pic: 'rows',
@@ -312,25 +286,6 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
   page('wardrobe', {
     n: 'Wardrobe', seal: { key: null, txt: '' }, title: 'the Dapper', pic: 'rows',
     show: () => !!(S.deep && S.deep.cos), lockTxt: 'Opens with the Deepwell shop.', tiles: () => []
-  });
-
-  // ---------------- 16. Legendaries: the 39 powers in the Lantern Book (legendaries.md 7) ----------------
-  // 2 Light for a learned power, +1 per rank above I (234 in all). Title only, no power bonus. Opens with
-  // the first legendary drop or Circle Crest (the Powers view's rule). Pinnacle powers score on their page.
-  const legOpen = () => !!(S.legend && ((S.legend.n && S.legend.n.drops > 0) || Object.keys(S.legend.book || {}).length));
-  page('legendaries', {
-    n: 'Legendaries', seal: { key: null, txt: '' }, title: LEG_CODEX.title, pic: 'rows',
-    show: legOpen, lockTxt: 'Opens with your first legendary power.',
-    tiles: x => {
-      const out = [], C = LEG_CODEX;
-      const grp = id => { const p = LEG_POWERS[id]; return p.cls && HERO_CLASSES[p.cls] ? HERO_CLASSES[p.cls].name : 'Companions'; };
-      for (const id of LEG_CLASSES.flatMap(c => LEG_CLASS_IDS[c]).concat(LEG_COMP_IDS)) {
-        const p = LEG_POWERS[id], r = S.legend.book[id] | 0, pts = r ? (C.learn + C.rank * (r - 1)) * 2 : 0;
-        out.push({ key: id, n: p.n, got: r ? 1 : 0, max: 1, pts, ptsMax: (C.learn + C.rank * 4) * 2, ic: legendIcon(id), grp: grp(id),
-          sub: r ? `Rank ${roman(r)}. ${legendText(id, r)}` : '', hint: r ? '' : x.exact ? `${C.hint}. ${p.only ? 'Drops once ' + first(p.only) + ' is recruited.' : ''}`.trim() : 'A legendary power.' });
-      }
-      return out;
-    }
   });
 
   // ---------------- compute and cache ----------------
@@ -382,7 +337,7 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
   on('synergyChange', ({ gained }) => { for (const id of gained || []) R().syn[id] = 1; dirty = true; });
   on('harvest', ({ kind, t }) => { if (CRAFT_FAMILIES.includes(kind) && t >= 1 && t <= 5) R().mat[kind] = (R().mat[kind] | 0) | (1 << (t - 1)); dirty = true; });
   on('trophy', ({ i }) => { if (i >= 0 && i < 7) R().mat.troph = (R().mat.troph | 0) | (1 << i); dirty = true; });
-  for (const e of ['recruit', 'promote', 'charLevel', 'campBuilt', 'expedBack', 'omen', 'weeklyClaim', 'achievement', 'zoneClear', 'loot', 'transmuted', 'crafted', 'legendDrop', 'legendLearn', 'legendRank', 'bondLevel'])
+  for (const e of ['recruit', 'promote', 'charLevel', 'campBuilt', 'omen', 'weeklyClaim', 'achievement', 'zoneClear', 'loot', 'transmuted', 'crafted', 'bondLevel'])
     on(e, dirt);
 
   // ---------------- rewards: Seals (capped), milestones, the Blessing gate ----------------
@@ -404,12 +359,10 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
   addModifier('offline', () => 1 + codexBonus('offline'));
   addModifier('gatherSpeed', () => 1 + codexBonus('gatherSpeed'));
   addModifier('buildTime', () => 1 - codexBonus('buildTime'));
-  addModifier('expHaul', () => 1 + codexBonus('expHaul'));
   addModifier('essence', () => 1 + codexBonus('essence'));
   addBonus('deepOil', () => codexBonus('deepOil'));
 
   codexHas = rid => CODEX_MILESTONES.some(m => CX().got[m.at] && m.rw.some(r => r.id === rid));
-  addBonus('expSlots', () => codexHas('expslot') ? 1 : 0);
   addBonus('bag', () => codexHas('bag10') ? 10 : 0);            // stored for later: nothing reads 'bag' yet
   addBonus('buildQueue', () => codexHas('queue1') ? 1 : 0);     // stored for later: the camp queue is 1 per builder
   addBonus('deepRerolls', () => codexHas('deepreroll') ? 1 : 0); // Deepwell only
