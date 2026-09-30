@@ -84,7 +84,8 @@ Queue, in order:
 
 ## How Codex reports and gets new work
 
-- **Tasks:** one GitHub issue each, labelled `owner:codex`: C1 #2, C2 #3, C3 #4, C4 #5, C5 #6, C6 #7, C7 #8, C8 #9, C9 hero registry #10, C10 M1 refining #11, C11 deeds merge #12, C12 perf #13, C13 playtest #14.
+- **Tasks:** one GitHub issue each, labelled `owner:codex`: C1 #2, C2 #3, C3 #4, C4 #5, C5 #6, C6 #7, C7 #8, C8 #9, C9 hero registry #10, C10 M1 refining #11, C11 deeds merge #12, C12 perf #13, C13 playtest #14, C14 offline parity #15, C15 Deepwell solo #16 (Codex owns `57d-deepwell.js`, `59c-deepwell-combat.js`, `75-deepwell-ui.js` for it), C16 progress menus #17 (Codex owns the Almanac, Codex, Mastery, Bounties and Stats files for it), C17 accessibility #18, C18 docs and dead code #19.
+- **Order (owner gave Codex extra capacity, 2026-09-30):** C2 → C4 → C8 → C9 → C10 → C11 → C14 → C15 → C16 → C12 → C17 → C13 → C18; C6 and C7 fill gaps while waiting on sign-offs.
 - **Finished a task:** push the `codex/...` branch, then post the handoff (template below) as a comment on
   CalSay/Lanternfall#1. Claude is subscribed to that pull request, so the comment wakes Claude, who merges the
   branch, runs the checks, publishes the preview, closes the issue and replies there.
