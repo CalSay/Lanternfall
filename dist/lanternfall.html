@@ -8075,8 +8075,8 @@ const NOTICES = [
   { id: 'unlock-tab', re: /^(New tab: |Next Up shows your best next goal|You made camp\. A new tab)/, ch: (m, n, ctx) => ctx && ctx.guide ? 'log' : 'pop', wait: 30,
     site: /toast\(OPEN_TXT\[id\]/, why: 'the guide points at the tab' },
   { id: 'unlock-stars', re: /^New on the (Party|Hero) tab: Stars\./, ch: 'pop', wait: 60, why: 'level 10: star points to spend' },
-  { id: 'unlock', re: /^(New on the |.* (is|are) open on the Camp tab\.$|The Codex is open\.|Where each one stands matters)/, ch: 'bell',
-    why: 'the tab shows a New mark', merge: ms => `New: ${ms.map(m => (/^New on the [^:]+: (the )?([^.]+)/.exec(m) || [0, 0, m.replace(/\..*$/, '')])[2]).join(', ')}.` },
+  { id: 'unlock', re: /^(New on the |.* (is|are) open on the Camp tab\.$|The Codex is open\.|Where each one stands matters)/, ch: 'log',
+    why: 'the tab shows a New mark (and the guide names a new tab), so the bell lists it without counting it', merge: ms => `New: ${ms.map(m => (/^New on the [^:]+: (the )?([^.]+)/.exec(m) || [0, 0, m.replace(/\..*$/, '')])[2]).join(', ')}.` },
   // W2-A Training: the player just pressed Train and the row shows it; a stage cap is worth a bell line
   { id: 'training', key: 'training', re: /^Training: .* Lv \d+\. /, ch: 'log', why: 'an ability milestone; the Training row shows it' },
   { id: 'training-cap', key: 'training-cap', re: /^Training: .* is at Lv \d+, the most /, ch: 'bell', why: 'a move reached its class-stage cap (the Proving lifts it)' },

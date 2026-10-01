@@ -4508,7 +4508,7 @@ if (section('notices (browser, W1-B)')) try {
       assert(!close, 'never two pops within 20 s' + (close ? `: ${JSON.stringify(close)}` : ''));
       assert(!inGuide.length, 'nothing pops while a guide step shows' + (inGuide.length ? ': ' + inGuide.map(s => s.id).join(', ') : ''));
       assert(r.nb.toasts <= pops.length + r.st.filter(s => s.ch === 'pop' && s.id === 'reply').length, `every toast on screen went through the policy (${r.nb.toasts} drawn, ${pops.length} pops)`);
-      assert(r.nb.bell <= 5, `the bell stays calm: at most 5 unread at any time (max ${r.nb.bell})`);
+      assert(r.nb.bell <= 5, `the bell stays calm: at most 5 unread at any time (max ${r.nb.bell}; bell notices: ${r.st.filter(s => s.ch === 'bell').map(s => `${Math.round(s.t)}s ${s.id}`).join(', ')})`);
       assert(!unknown.length, 'every notice raised in play matched a rule' + (unknown.length ? ': ' + unknown.map(s => s.msg).slice(0, 3).join(' | ') : ''));
       assert(!errs.length, 'no page errors' + (errs.length ? ': ' + errs[0] : ''));
     } finally { await browser.close(); }
