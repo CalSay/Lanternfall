@@ -297,6 +297,7 @@ img[src*="#nic:"] { image-rendering: auto; }   /* a gear icon set by code that d
 .delta.up { color: var(--xp); } .delta.down { color: var(--muted); }
 
 .trophies { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+.trophies .trophy.found { order: -1; }
 .trophy { background: var(--panel); border: 2px dashed var(--line); padding: 8px; display: grid; grid-template-columns: auto 1fr; gap: 2px 8px; align-items: center; }
 .trophy .ic { grid-row: span 3; width: 36px; height: 36px; }
 .trophy .ic img { width: 24px; height: 24px; }
@@ -412,9 +413,12 @@ img[src*="#nic:"] { image-rendering: auto; }   /* a gear icon set by code that d
 .om-cfx { font-size: 14px; color: var(--bone); margin-top: 2px; }
 .om-say { margin-top: 3px; }
 .om-say:empty { display: none; }
-.om-auto { display: flex; gap: 10px; align-items: center; padding: 8px 10px; background: rgba(242,193,78,.08); border: 1px solid rgba(242,193,78,.4); }
+.om-auto { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 8px 10px; background: rgba(242,193,78,.08); border: 1px solid rgba(242,193,78,.4); }
 .om-auto[hidden] { display: none; }
 .om-auto .note { color: #F2E6B0; }
+.om-auto > .note:first-child { flex: 1; min-width: 160px; }
+.om-autodet { flex-basis: 100%; }
+.om-autodet[hidden] { display: none; }
 .om-goal { min-height: 56px; }
 .om-goal .row-name { font-size: 15px; }
 .om-goal .row-desc { font-size: 12.5px; overflow-wrap: anywhere; }
@@ -944,10 +948,9 @@ body.cb-left .stage.tall .abil.abil2 { left: 110px; }
 .cf-tiers button.locked small { color: #FFB27A; }
 .cf-mw { display: grid; gap: 6px; }
 .cf-mw:empty { display: none; }
-.cf-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.cf-chip { min-height: 44px; display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px 4px 6px; background: var(--well); border: 2px solid var(--line); font: 600 calc(12.5px * var(--display-k)) var(--display); color: var(--muted); cursor: pointer; }
-.cf-chip img { width: 18px; height: 18px; image-rendering: pixelated; }
-.cf-chip[aria-pressed="true"] { color: var(--bone); border-color: var(--gold); background: rgba(242,193,78,.1); }
+.cf-mwline { display: flex; align-items: center; gap: 8px; }
+.cf-mwline img { width: 24px; height: 24px; image-rendering: pixelated; }
+.cf-mwsel { min-height: 44px; min-width: 0; flex: 1; max-width: 280px; background: var(--well); color: var(--bone); border: 2px solid var(--line); font: 600 calc(13px * var(--display-k)) var(--display); }
 .cf-list { display: grid; gap: 8px; }
 .cf-rec { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 6px 10px; align-items: center; padding: 9px 10px; background: var(--panel); border: 2px solid var(--line); box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 2px 0 #0B0810; }
 .cf-rec.ok { border-color: #3F5A3A; }
@@ -1065,6 +1068,7 @@ span.cf-d { font-weight: 600; }
 .cf-gt b { font: 600 calc(14.5px * var(--display-k))/1.15 var(--display); overflow-wrap: anywhere; }
 .cf-gt small { font-size: 12.5px; color: var(--muted); }
 .cf-ph { margin: 0; font: 600 calc(20px * var(--display-k)) var(--display); }
+.cf-bagnone { grid-column: 1 / -1; margin: 4px 0; }
 /* 60-deeds: the Achievements menu, its sheets, the Feat card (75-deeds-ui.js) and the Journal's stats wall
    (75-stats-ui.js). Display text is Handjet: every display size is calc(Npx * var(--display-k)). */
 
@@ -2339,7 +2343,7 @@ body.solo-on .stage .abil, body.solo-on .stage .abil2 { display: none !important
 .sh-up { flex: none; min-height: 44px; }
 
 /* filter chips: one row, sideways scroll */
-.sh-chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.sh-chips { display: flex; flex-wrap: wrap; gap: 6px; padding-bottom: 2px; }   /* wraps so Fought and Trophies show (menu audit #10) */
 .sh-chips::-webkit-scrollbar { display: none; }
 .sh-fchip { flex: none; min-height: 36px; padding: 0 10px; background: var(--panel); border: 1px solid var(--line-hi); font: 600 12.5px var(--body); color: var(--bone); cursor: pointer; }
 .sh-fchip.on { border-color: var(--gold); color: var(--gold); background: rgba(242,193,78,.08); }
@@ -2357,6 +2361,9 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
 .mat .sh-bar { display: block; width: 100%; height: 3px; background: #0B0810; margin: 2px 0 0; }
 .mat .sh-bar[hidden] { display: none; }
 .mat .sh-bar b { display: block; height: 100%; width: 0; background: var(--gold); }
+/* Pack: names wrap to two lines instead of cutting off ("Mangro...", menu audit #10) */
+.sh-cell { align-content: start; }
+.sh-cell .mn { white-space: normal; line-height: 1.15; font-size: 10px; letter-spacing: -.2px; overflow-wrap: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .mat.sh-warn .sh-bar b { background: #F2A93B; }
 .mat.sh-full { border-color: #8A3A3A; }
 .mat.sh-full .sh-bar b { background: var(--hp); }
@@ -2742,6 +2749,14 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
 }
 @media (min-aspect-ratio: 1/1) and (min-width: 600px) and (prefers-reduced-motion: reduce) {
   .menu, .app:not(.menu-open) .menu { transition: none; }
+}
+/* the item sheet in landscape (menu audit: the header took the 220 px body, so about 2 stat lines showed): wider, the
+   item on the left, what it does and the compare on the right */
+@media (orientation: landscape) and (max-height: 500px) {
+  .bsheet.cf-isheet { width: min(760px, 100%); }
+  .cf-isheet .bsheet-body { grid-template-columns: minmax(180px, 34%) minmax(0, 1fr); column-gap: 16px; align-items: start; }
+  .cf-isheet .bsheet-body > * { grid-column: 2; }
+  .cf-isheet .bsheet-body > .cf-ih { grid-column: 1; grid-row: 1 / span 20; position: sticky; top: 0; display: grid; justify-items: start; gap: 8px; }
 }
 @media (max-width: 380px) { .tab { font-size: 11.5px; } .ic { width: 36px; height: 36px; } .ic img { width: 24px; height: 24px; } .modeseg button { padding: 0 9px; min-width: 50px; } .znum { min-width: 50px; } .skill .sn { letter-spacing: .03em; } }
 @media (prefers-reduced-motion: reduce) {
@@ -9820,7 +9835,9 @@ let OMENS, WEEKLY_GOALS;
     bagFixed.set(cycle, ids);
     return ids;
   }
-  const usable = o => !!o && needsMet(o) && (!o.ok || !!o.ok());
+  // Crafting Omens wait until the Forge is built (a fresh Cold Hearth save gets the day's fallback; menu audit #12).
+  const craftOpen = () => { try { return typeof hearthStationWhy !== 'function' || !hearthStationWhy('forge'); } catch (e) { alEarly = true; return false; } };
+  const usable = o => !!o && needsMet(o) && (!o.ok || !!o.ok()) && (o.cat !== 'craft' || craftOpen());
   // The scheduled Omen for a day (ignores what this save can use).
   const scheduled = day => OMEN_BY[bag(Math.floor(day / AL_N))[pmod(day, AL_N)]];
   // The Omen this save plays on a day: the scheduled one, or the day's fallback.
@@ -13787,7 +13804,7 @@ function toolRight(skill, t) {
 //   - Attack: the hit (atkCurve: x1.7 every 5th level). Ability: its power ((4 + 3 x level) x1.55 every 5th level) and
 //     a milestone every 5th level (SOLO_TUNE.train.ms: a shorter cooldown, a longer effect, one more foe). Parry: +10%
 //     counter damage a level. Dodge: a shorter cooldown. Timing windows never grow from gold.
-//   - Price of level n+1 = ECON.train[kind].base x r a level to bend (20), r2 to bend2 (40), r3 past it; x mod('trainCost').
+//   - Price of level n+1 = ECON.train[kind].base x r a level to bend (20), r2 to bend2 (40), r3 past it; x mod('trainCost'), rounded up to whole gold.
 //
 // API (function declarations: 40-rules and 59j call them at run time):
 //   trainMoves(k?) -> ['atk', ...ability ids, 'parry', 'dodge']   k: a hero key (default: the one playing)
@@ -13836,7 +13853,8 @@ function trainCap(k) {
 // The price of level n + 1 (n = the level now); mod('trainCost') is a hook for discounts (none yet).
 function trainCost(mv, n) {
   const E = ECON.train, b = E[trainKind(mv)].base;
-  return b * Math.pow(E.r, Math.min(n, E.bend)) * Math.pow(E.r2, Math.max(0, Math.min(n, E.bend2) - E.bend)) * Math.pow(E.r3, Math.max(0, n - E.bend2)) * mod('trainCost');
+  // whole gold only (menu audit #17: early prices showed as 9.6)
+  return Math.ceil(b * Math.pow(E.r, Math.min(n, E.bend)) * Math.pow(E.r2, Math.max(0, Math.min(n, E.bend2) - E.bend)) * Math.pow(E.r3, Math.max(0, n - E.bend2)) * mod('trainCost'));
 }
 // plan() for Training: amt '1' | '10' | 'max' (default: the player's x1 / x10 / Max). 'max' is what the gold buys (at
 // least 1, so the button shows the next price). Never past the cap. { n: 0, cost: Infinity } at the cap.
@@ -30315,7 +30333,11 @@ function renderTrophies() {
     putText(e.ts1, f ? `${SLOT[u.slot].n} · best ${MAT.ore.short[f - 1]} tier` : u.src);
     putText(e.ts2, f ? u.txt : 'Not found yet');
   }
-  putText($('trophyCount'), `${n} / ${Object.keys(UNIQ).length} uniques`);
+  // what is left, by where it drops (menu audit #15); found uniques sort first (.trophy.found, 40-components.css)
+  const left = {};
+  for (const [key, u] of Object.entries(UNIQ)) if (!S.found[key]) { const w = u.src.split(' · ')[0]; left[w] = (left[w] || 0) + 1; }
+  const rest = Object.entries(left).map(([w, k]) => `${w === 'Zone boss' ? 'Zone bosses' : w}: ${k} left`).join(' · ');
+  putText($('trophyCount'), `${n} / ${Object.keys(UNIQ).length} uniques` + (rest ? ` · ${rest}` : ''));
 }
 
 function uiForge() { renderTrophies(); }
@@ -31159,11 +31181,14 @@ var handsTradeOpenPicker;
         sec.classList.toggle('open', open);
         if (open) ban.det.update(true);
       });
-      ban.bar = bar;
+      ban.bar = bar; ban.sec = sec;
       sec.append(bar, ban.more);
     },
     update(force) {
       const o = almanac.today(), on = almanac.dareOn(), r = almanac.readyCount();
+      // Only fighting Omens (or a Dare you took) top the Fight tab; the rest live in Camp > Almanac (menu audit #12).
+      ban.sec.hidden = !(o.cat === 'fight' || on);
+      if (ban.sec.hidden) return;
       const u = omenIc(o); if (ban.img.getAttribute('src') !== u) ban.img.src = u;
       ban.eye.textContent = "Today's Omen";
       ban.nm.textContent = o.n;
@@ -31212,9 +31237,13 @@ var handsTradeOpenPicker;
       wk.append(wh);
       al.auto = el('div', 'om-auto'); al.auto.hidden = true;
       al.autoTx = el('p', 'note');
+      // the full list folds behind Details (menu audit #12: it was one long sentence)
+      al.autoDet = el('p', 'note om-autodet'); al.autoDet.hidden = true;
+      const det = el('button', 'mini', 'Details'); det.type = 'button';
+      det.addEventListener('click', () => { al.autoDet.hidden = !al.autoDet.hidden; det.textContent = al.autoDet.hidden ? 'Details' : 'Hide'; });
       const ok = el('button', 'mini', 'OK');
       ok.addEventListener('click', () => { almanac.clearAuto(); ui(true); });
-      al.auto.append(al.autoTx, ok);
+      al.auto.append(al.autoTx, det, ok, al.autoDet);
       wk.append(al.auto);
       al.list = el('div', 'sec dz-list om-list');
       wk.append(al.list);
@@ -31251,7 +31280,11 @@ var handsTradeOpenPicker;
       const dl = almanac.daysLeft();
       setTxt(al.wmeta, `Ends ${dl <= 1 ? 'tonight' : `in ${dl} days`} · Swaps ${A.swaps}`);
       al.auto.hidden = !A.auto;
-      if (A.auto) setTxt(al.autoTx, `Last week's finished goals were claimed for you: ${A.auto.txt}.`);
+      if (A.auto) {
+        const n = A.auto.n || 1;
+        setTxt(al.autoTx, `Last week: ${n} goal${n === 1 ? '' : 's'} done. The rewards are in your pack.`);
+        setTxt(al.autoDet, A.auto.txt + '.');
+      }
       A.goals.forEach((g, i) => {
         const r = rows[i]; if (!r) return;
         r.row.hidden = false;
@@ -32844,7 +32877,7 @@ let craftUI = null;
 
   // ---------------- lookups ----------------
   const STATION_KEYS = Object.keys(CRAFT_STATIONS);
-  const STATION_SHORT = { forge: 'Forge', bench: 'Workbench', loom: 'Loom', ench: 'Enchanter' };
+  const STATION_SHORT = { forge: 'Forge', bench: 'Bench', loom: 'Loom', ench: 'Enchant' };
   const STATION_TIER_FAM = { forge: 'ore', bench: 'wood', loom: 'fibre', ench: 'crystal' };
   const STATION_IC = { forge: () => iconURL('anvil', '#9A97B3'), bench: () => iconURL(...craftIcon('bow', 2)), loom: () => iconURL(...craftIcon('robe', 3)), ench: () => iconURL(...craftIcon('lantern', 3)) };
   const TRO_IC = ['tro_slime', 'tro_bat', 'tro_bones', 'tro_beetle', 'tro_spore', 'tro_golem', 'tro_wraith'];
@@ -32896,7 +32929,7 @@ let craftUI = null;
   }
 
   // ---------------- UI state (memory only) ----------------
-  const st8 = { st: null, tier: {}, filt: 'you', mw: null, role: {}, sort: 'power', bfilt: 'all', pick: '', focus: null, fresh: new Set(), tm: { fam: 'ore', t: 1 } };
+  const st8 = { st: null, tier: {}, filt: 'you', mw: null, role: {}, sort: 'power', bfilt: 'spare', pick: '', focus: null, fresh: new Set(), tm: { fam: 'ore', t: 1 } };
   const openTier = st => {
     return skillTopTier(skillOfSt(st));
   };
@@ -33082,17 +33115,16 @@ let craftUI = null;
         rec.mwSig = mwSig;
         rec.mwRow.textContent = '';
         if (tr.some(n => n > 0)) {
-          rec.mwRow.append(el('span', 'cf-lbl', 'Masterwork'));
-          const seg = el('div', 'cf-chips');
-          const add = (i, label, icon) => {
-            const b = el('button', 'cf-chip'); b.type = 'button'; b.setAttribute('aria-pressed', String(st8.mw === i));
-            if (icon) b.append(img(icon)); b.append(el('span', null, label));
-            b.addEventListener('click', () => { st8.mw = i; ui(true); });
-            seg.append(b);
-          };
-          add(null, 'None');
-          tr.forEach((n, i) => { if (n > 0) add(i, `${CRAFT_TROPHIES[i].n} ${n}`, troIcon(i)); });
-          rec.mwRow.append(seg);
+          // one row: "Masterwork [None v]" (menu audit #9; was a chip per trophy, up to 4 rows)
+          const line = el('label', 'cf-mwline'), sel = el('select', 'cf-mwsel');
+          line.append(el('span', 'cf-lbl', 'Masterwork'));
+          const opt = (v, label) => { const o = el('option', null, label); o.value = v; o.selected = String(st8.mw ?? '') === v; sel.append(o); };
+          opt('', 'None');
+          tr.forEach((n, i) => { if (n > 0) opt(String(i), `${CRAFT_TROPHIES[i].n} (${n})`); });
+          sel.addEventListener('change', () => { st8.mw = sel.value === '' ? null : +sel.value; ui(true); });
+          if (st8.mw != null) line.append(img(troIcon(st8.mw)));
+          line.append(sel);
+          rec.mwRow.append(line);
           if (st8.mw != null) {
             const m = CRAFT_TROPHIES[st8.mw].mw;
             rec.mwRow.append(el('p', 'note', `Adds 1 gold bonus line: ${CRAFT_STATS[m.gear].n}${m.tool ? ` (${CRAFT_STATS[m.tool].n} on tools)` : ' (not on tools)'}. Uses the trophy.`));
@@ -33373,6 +33405,10 @@ let craftUI = null;
       if (st8.bfilt === 'worn') list = list.filter(i => w.has(i.id));
       list.sort(SORTS[st8.sort]);
       bag.grid.textContent = '';
+      if (!list.length && S.items.length && st8.bfilt !== 'all') {
+        const e = el('p', 'note cf-bagnone', st8.bfilt === 'spare' ? 'No spare gear. Everything you own is worn. Tap All to see it.' : 'Nothing worn yet.');
+        bag.grid.append(e);
+      }
       for (const it of list) {
         const b = el('button', 'ic cf-tile f-' + frameOf(it) + (st8.fresh.has(it.id) ? ' fresh' : '')); b.type = 'button';
         b.append(img(itemIc(it)));
@@ -33410,6 +33446,7 @@ let craftUI = null;
   function openItem(id, back) {
     const it = itemById(id); if (!it || !craftKindVisible(it.slot)) return;
     const api = open(itemName(it), back || (sheet && sheet.back));
+    api.sheet.classList.add('cf-isheet');   // landscape: two columns (80-landscape.css)
     sheet = { api, id, back: back || null, mode: null, sel: -1, arm: null, flash: -1 };
     renderItem();
   }
@@ -35269,7 +35306,7 @@ let deedsUI = null;
   });
 
   // ---- Bestiary ----
-  const bRows = [];
+  const bRows = []; let bNote = null;
   // C25 enemy profiles: one line per thing learned, then what the next kill tier teaches
   const dtName = d => (typeof DT_INFO === 'object' && DT_INFO[d] ? DT_INFO[d].n : d);
   const profLines = p => {
@@ -35277,13 +35314,15 @@ let deedsUI = null;
     if (p.stats && p.seen) out.push(`Last met in zone ${p.seen.z}: ${fmt(p.seen.hp)} HP, hits for ${fmt(p.seen.atk)}, haste ${typeof TURN_TUNE === 'object' ? TURN_TUNE.foeHaste : '?'}.`);
     if (p.weak) out.push((p.weakTo ? `Weak to ${dtName(p.weakTo)}.` : 'No weakness.') + (p.resists.length ? ` Resists ${p.resists.map(dtName).join(' and ')}.` : ''));
     if (p.tell && p.tellTxt) out.push(`Watch for: ${p.tellTxt}`);
-    if (p.bonus) out.push('You know it well: +5% damage to it.');
-    else if (p.next) out.push(`${fmt(Math.ceil(p.next - p.n))} more to learn ${p.next === 5 ? 'its weakness' : p.next === 15 ? 'what to watch for' : '+5% damage to it'}.`);
+    if (p.next)   // the +5% for a foe you know well is said once, in the section note (menu audit #14)
+      out.push(`${fmt(Math.ceil(p.next - p.n))} more to learn ${p.next === 5 ? 'its weakness' : p.next === 15 ? 'what to watch for' : '+5% damage to it'}.`);
     return out.join('\n');
   };
   registerSection('adv', {
     id: 'bestiary', title: 'Bestiary', view: 'bestiary',
     mount(sec) {
+      bNote = el('p', 'note bp-note', `Slay ${PROFILE_TIERS[PROFILE_TIERS.length - 1]} of a foe to know it well: +5% damage to it. The foe of the zone you are in comes first.`);
+      sec.append(bNote);
       TYPES.forEach(t => {
         const url = spriteURL('best:' + t.key, SPR[t.key], t.pal);
         const r = makeRow(sec, t.name, false, url, 'portrait-ic');
@@ -35294,6 +35333,12 @@ let deedsUI = null;
       });
     },
     update() {
+      // the foe of the zone you are in comes first (menu audit #14)
+      const zt = TYPES[zoneType(S.zone)], first = zt && bRows.find(r => r.t === zt);
+      if (first && bNote.nextElementSibling !== first.row) {
+        const order = [first, ...bRows.filter(r => r !== first)];
+        bNote.after(...order.map(r => r.row));
+      }
       for (const r of bRows) {
         const k = r.t.key, n = MA.typeKills(k), tier = MA.tierFor(n), perk = BESTIARY_PERKS[k];
         const seen = n > 0;
@@ -37500,7 +37545,7 @@ function storeSalvageNote(preview, t) {
     V.up = btn('mini sh-up', 'Upgrade ›');
     V.up.addEventListener('click', () => setTab('world', '#camp-b-store'));
     card.append(tx, V.up);
-    // filter chips (one row, sideways scroll, no view swipe)
+    // filter chips (wrap to a second row when narrow; no view swipe)
     const chips = el('div', 'sh-chips'); chips.dataset.noswipe = '';
     for (const [id, label] of FILTERS) {
       const b = btn('sh-fchip', label); b.setAttribute('aria-pressed', String(id === filter));
@@ -37985,8 +38030,9 @@ var trainCard = null;
       const i = trainInfo(r.mv);
       putText(r.own, `Lv ${i.lv}/${i.cap}`);
       putText(r.desc, nextTxt(i));
-      putText(r.ms, i.max ? capWhy(i) : i.ms || '');
-      putHidden(r.ms, !(i.max || i.ms));
+      // every move shares one cap, said once in the head line (menu audit #17: it repeated on each maxed row)
+      putText(r.ms, i.max ? '' : i.ms || '');
+      putHidden(r.ms, i.max || !i.ms);
       putText(r.qty, qtyTxt(i, S.amt));
       setPrice(r.btn, i.max ? Infinity : i.plan.cost);
       putDisabled(r.btn, i.max || S.gold < i.plan.cost);
