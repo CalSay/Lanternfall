@@ -86,3 +86,27 @@ about 92x the starting hero's attack in HP: about 8-15 party turns **[est]**. No
 Fextralife (Gustave, Eveque, Lampmaster, Paintress, Simon, Speed, Vitality), Game8 (combat, statuses, Break), Maxroll
 (combat guide), Gamepressure (enemies, damage cap), Gameranx (boss guides), Nexus Mods (datamined parry/dodge windows),
 ResetEra (patch 1.3.0), PC Gamer (endgame damage), GameFAQs and Steam discussions ([unverified] items).
+
+## Enemy types per area (research, 1 October 2026)
+
+Search-result summaries of Fextralife and Game8 area pages (the pages themselves were blocked): counts are about ±1.
+
+| Area | Regular types | Elites / optional | Bosses |
+|---|---|---|---|
+| Spring Meadows | 4: Lancelier, Portier, Volester, Abbest | Chromatic Lancelier, Mime | Évêque |
+| Flying Waters | 4: Bruler, Cruler, Démineur, Luster | Chromatic Troubadour, Bourgeon, Mime | Goblu |
+| Ancient Sanctuary | 3: Robust, Catapult and Ranger Sakapatate | Pétank, Mime | Ultimate Sakapatate |
+| Stone Wave Cliffs | 4-5: Hexga, Reaper Cultist, Greatsword Cultist, Rocher | Chromatic Gault, Pétank | Lampmaster |
+| Forgotten Battlefield | 3: Chalier, Ramasseur, Troubadour | Chromatic Luster, Pétank | Dualliste |
+| Old Lumière | 2-3: Steel and Ceramic Chevalière | Chromatic Danseuse | Renoir (2nd) |
+| Visages | 4: Boucheclier, Contorsionniste, Moissonneuse, Chapelier | 3 mask mini-bosses | Visages, Mask Keeper |
+| Sirène | 3: Ballet, Chorale, Benisseur | Chromatic Greatsword Cultist | Tisseur, Glissando, Sirène |
+| Side areas (Yellow Harvest, Frozen Hearts, Falling Leaves) | 3-4 each | Mime, Pétank | — |
+
+- **About 3.6 regular types per combat area** (range 2-7, most 3-4), about **50 regular types** in the game.
+- **Most types belong to one area** (about 75-80%); each area has its own family of 3-4. A few recur (Gault, Troubadour,
+  Danseuse, the Chevalières); the late game replays earlier areas as stronger "Tainted" copies.
+- **Per area: about 4 regulars, 1 boss and 1-2 optional elites.**
+- **Bosses repeat only as stronger versions with a story reason:** Renoir is fought 4 times (each faster or stronger;
+  the story explains the copies), and the Monolith's Tainted zones bring back Évêque and the Ultimate Sakapatate as
+  stronger optional fights.
