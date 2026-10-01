@@ -1,6 +1,6 @@
 # C26 menu and navigation icons — whole-pack review
 
-Status: OWNER REVIEW PENDING.32 designs,256 native PNG candidates. Nothing wired into the game. Branch codex/c26-menu-icons, base2b379cf.
+Status: OWNER APPROVED on1October2026 ("Yeah I love them all.").32 designs,256 native PNG candidates. Nothing wired into the game. Branch codex/c26-menu-icons, base2b379cf.
 
 ## Contents
 
@@ -28,4 +28,4 @@ Exporter checks all256PNG dimensions, alpha, palette count and padding. Build pa
 
 ## Integration boundary
 
-Wait for whole-pack owner approval. Then ask Claude for exact hooks in70-ui.js TAB_IC/TAB_ICON and bell,75-nav-ui.js ICON_OF,75-goals-ui.js fallback Next Up only, and any submenu icon additions. New embedded data fragment and own checks are possible; shell/layout/state code stays Claude-owned. Do not replace goal-specific material/enemy icons wholesale with Next Up. Native images and data are prepared; no live runtime hook exists yet.
+Whole-pack owner approval received. Ask Claude for exact hooks in70-ui.js TAB_IC/TAB_ICON and bell,75-nav-ui.js ICON_OF,75-goals-ui.js fallback Next Up only, and any submenu icon additions. New embedded data fragment and own checks are possible; shell/layout/state code stays Claude-owned. Do not replace goal-specific material/enemy icons wholesale with Next Up. Native images and data are prepared; no live runtime hook exists yet.
