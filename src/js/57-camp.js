@@ -513,7 +513,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
     awayDone = [];
     if (lv('watch') >= 2 && campOpen() && S.activity === 'fight') {
       const z = campHoldZone();
-      if (z > S.zone) out.push({ icon: { ic: ['banner', '#F2C14E'] }, txt: `The Watchtower says you could hold zone ${z}. You are in zone ${S.zone}.`, go: () => { if (S.zone !== z) setZone(z); emit('campGoto', { tab: 'adv' }); } });
+      if (z > S.zone) out.push({ icon: { ic: ['banner', '#F2C14E'] }, txt: `The Watchtower says you could hold zone ${z}. You are in zone ${S.zone}.`, go: () => { if (S.zone !== z) setZone(z); if (typeof goFight === 'function') goFight(); else emit('campGoto', { tab: 'adv' }); } });
     }
     return out;
   });

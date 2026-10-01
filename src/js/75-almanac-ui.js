@@ -19,8 +19,9 @@
     hintRow.append(hintTx, goBtn);
     goBtn.addEventListener('click', e => {
       e.stopPropagation();
-      const tab = almanac.go(almanac.today());
-      if (tab) setTab(tab); else ui(true);
+      const h = almanac.hint(almanac.today()), tab = almanac.go(almanac.today());
+      if (h.go && h.go.zone && typeof goFight === 'function') goFight();   // a fight: straight to it (active combat)
+      else if (tab) setTab(tab); else ui(true);
     });
 
     const dare = el('button', 'om-dare');

@@ -593,8 +593,18 @@ function initMenus() {
 }
 // Turning the phone keeps the open menu (or none); the toasts and the hint move to the new layout's dock.
 wideMQ.addEventListener('change', () => { renderMenu(S.tab); ui(true); });
-// Tapping the open tab again closes its menu.
-function tabClick(t) { if (S.tab === t) closeMenu(); else setTab(t); }
+// Combat is active only (owner, 2026-10-01): every Fight button goes straight to the live fight, not the Fight menu.
+function goFight() {
+  if (S.activity !== 'fight' && typeof setActivity === 'function') setActivity('fight');
+  for (const x of document.querySelectorAll('.bsheet-ov .bsheet-x')) x.click();   // any open sheet
+  if (S.tab) closeMenu(); else ui(true);
+}
+// Tapping the open tab again closes its menu. The Fight tab fights: it opens the Fight menu (Bounties, Bestiary,
+// Deepwell...) only when you are already in the live fight with no menu open.
+function tabClick(t) {
+  if (t === 'adv' && (S.tab || S.activity !== 'fight')) { goFight(); return; }
+  if (S.tab === t) closeMenu(); else setTab(t);
+}
 document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => tabClick(b.dataset.tab)));
 $('menuX').addEventListener('click', closeMenu);
 document.addEventListener('keydown', e => {
