@@ -51,9 +51,12 @@
 .om-cfx { font-size: 14px; color: var(--bone); margin-top: 2px; }
 .om-say { margin-top: 3px; }
 .om-say:empty { display: none; }
-.om-auto { display: flex; gap: 10px; align-items: center; padding: 8px 10px; background: rgba(242,193,78,.08); border: 1px solid rgba(242,193,78,.4); }
+.om-auto { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 8px 10px; background: rgba(242,193,78,.08); border: 1px solid rgba(242,193,78,.4); }
 .om-auto[hidden] { display: none; }
 .om-auto .note { color: #F2E6B0; }
+.om-auto > .note:first-child { flex: 1; min-width: 160px; }
+.om-autodet { flex-basis: 100%; }
+.om-autodet[hidden] { display: none; }
 .om-goal { min-height: 56px; }
 .om-goal .row-name { font-size: 15px; }
 .om-goal .row-desc { font-size: 12.5px; overflow-wrap: anywhere; }

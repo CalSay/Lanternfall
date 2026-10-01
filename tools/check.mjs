@@ -480,6 +480,14 @@ if (section('almanac')) try {
   assert(Object.keys(counts).length === 33 && Object.values(counts).every(n => n === 10), 'A1: each of 33 Omens scheduled 10 times in 330 days');
   assert(same === 0, `A1: no category twice in a row over 700 days, cycle edges included (${same} repeats)`);
   assert(days.every(d => E(`almanac.usable(almanac.omenFor(${d}))`)), 'daily pick never plays an Omen whose system is missing');
+  {  // menu audit #12: a fresh save at a cold Hearth never gets a crafting Omen before the Forge is built
+    const gC = loadCore({ seed: 5, cold: true }), EC = x => gC.eval(x);
+    const coldCraft = days.filter(d => EC(`hearthCold() && almanac.omenFor(${d}).cat === 'craft'`)).length;
+    const sched = days.filter(d => EC(`almanac.scheduled(${d}).cat === 'craft'`)).length;
+    assert(EC('!!hearthStationWhy("forge")') && sched > 0 && coldCraft === 0, `no crafting Omen before the Forge (${sched} scheduled days fall back, ${coldCraft} leak)`);
+    EC('hearthWarm()');
+    assert(days.filter(d => EC(`almanac.omenFor(${d}).cat === 'craft'`)).length === sched, 'with the Forge built, every scheduled crafting Omen plays');
+  }
   const upside = E(`OMENS.flatMap(o => [...Object.entries(o.mod || {}).filter(([k, v]) => almanac.lowerBetter.has(k) ? !(v > 0 && v <= 1) : !(v >= 1)), ...Object.entries(o.bonus || {}).filter(([, v]) => !(v >= 0))].map(([k]) => o.id + ':' + k))`);
   assert(!upside.length, 'every Omen is pure upside; only Dares carry a twist' + (upside.length ? ': ' + upside.join(', ') : ''));
   const twist = ['foeHp', 'bossHp', 'nonCrit', 'bossTime', 'champHp', 'oilDrain'];

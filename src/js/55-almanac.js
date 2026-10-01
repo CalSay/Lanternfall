@@ -143,7 +143,9 @@ let OMENS, WEEKLY_GOALS;
     bagFixed.set(cycle, ids);
     return ids;
   }
-  const usable = o => !!o && needsMet(o) && (!o.ok || !!o.ok());
+  // Crafting Omens wait until the Forge is built (a fresh Cold Hearth save gets the day's fallback; menu audit #12).
+  const craftOpen = () => { try { return typeof hearthStationWhy !== 'function' || !hearthStationWhy('forge'); } catch (e) { alEarly = true; return false; } };
+  const usable = o => !!o && needsMet(o) && (!o.ok || !!o.ok()) && (o.cat !== 'craft' || craftOpen());
   // The scheduled Omen for a day (ignores what this save can use).
   const scheduled = day => OMEN_BY[bag(Math.floor(day / AL_N))[pmod(day, AL_N)]];
   // The Omen this save plays on a day: the scheduled one, or the day's fallback.

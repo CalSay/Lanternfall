@@ -102,11 +102,14 @@
         sec.classList.toggle('open', open);
         if (open) ban.det.update(true);
       });
-      ban.bar = bar;
+      ban.bar = bar; ban.sec = sec;
       sec.append(bar, ban.more);
     },
     update(force) {
       const o = almanac.today(), on = almanac.dareOn(), r = almanac.readyCount();
+      // Only fighting Omens (or a Dare you took) top the Fight tab; the rest live in Camp > Almanac (menu audit #12).
+      ban.sec.hidden = !(o.cat === 'fight' || on);
+      if (ban.sec.hidden) return;
       const u = omenIc(o); if (ban.img.getAttribute('src') !== u) ban.img.src = u;
       ban.eye.textContent = "Today's Omen";
       ban.nm.textContent = o.n;
@@ -155,9 +158,13 @@
       wk.append(wh);
       al.auto = el('div', 'om-auto'); al.auto.hidden = true;
       al.autoTx = el('p', 'note');
+      // the full list folds behind Details (menu audit #12: it was one long sentence)
+      al.autoDet = el('p', 'note om-autodet'); al.autoDet.hidden = true;
+      const det = el('button', 'mini', 'Details'); det.type = 'button';
+      det.addEventListener('click', () => { al.autoDet.hidden = !al.autoDet.hidden; det.textContent = al.autoDet.hidden ? 'Details' : 'Hide'; });
       const ok = el('button', 'mini', 'OK');
       ok.addEventListener('click', () => { almanac.clearAuto(); ui(true); });
-      al.auto.append(al.autoTx, ok);
+      al.auto.append(al.autoTx, det, ok, al.autoDet);
       wk.append(al.auto);
       al.list = el('div', 'sec dz-list om-list');
       wk.append(al.list);
@@ -194,7 +201,11 @@
       const dl = almanac.daysLeft();
       setTxt(al.wmeta, `Ends ${dl <= 1 ? 'tonight' : `in ${dl} days`} · Swaps ${A.swaps}`);
       al.auto.hidden = !A.auto;
-      if (A.auto) setTxt(al.autoTx, `Last week's finished goals were claimed for you: ${A.auto.txt}.`);
+      if (A.auto) {
+        const n = A.auto.n || 1;
+        setTxt(al.autoTx, `Last week: ${n} goal${n === 1 ? '' : 's'} done. The rewards are in your pack.`);
+        setTxt(al.autoDet, A.auto.txt + '.');
+      }
       A.goals.forEach((g, i) => {
         const r = rows[i]; if (!r) return;
         r.row.hidden = false;
