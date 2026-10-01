@@ -1,6 +1,6 @@
 # C22: Sunken Coast enemy pool and one-on-one encounters
 
-> **Superseded selection draft (1 October 2026):** see [the fantasy review](enemies-c22-fantasy-review.md). The owner now requires darkness-born combat enemies, one enemy per fight with no queues, and Hunting kept separate. Elders retain Trophies. Final roster count is pending the owner and Claude. Do not implement this earlier roster or its gauntlet/Hunting combat proposals as written.
+> **Superseded selection draft (1 October 2026):** see [the final roster contract](enemies-c22-final-contract.md). The owner now requires darkness-born combat enemies, one enemy per fight with no queues, and Hunting kept separate. Elders retain Trophies. The finalized count is215 unique designs; this older draft is retained only as history. Do not implement this earlier roster or its gauntlet/Hunting combat proposals as written.
 
 Status: design proposal for owner and Claude review, 1 October 2026. No runtime or art is changed here. Read with [C22 brief](enemies-c22.md), [Coast plan](region-2.md), [hero abilities](hero-abilities.md) §2a, [Coast lore](lore.md) §4.3 and the approved [resource ladder](../../art/resources/regional-audit/complete-ladder.json). The owner's newer **active-only combat** decision overrides the old Coast plan's Auto, idle, formation, timer and party-survival advice. These are relative tuning targets, not measured balance.
 

@@ -14,11 +14,13 @@ Five regions, each seven areas played once, each five consecutive zones. A zone 
 | Unique designs | 6 | 43 | 215 |
 | Shadowborn Captain enhancements (excluded from unique designs) | 5 | 35 | 175 |
 
-Thus 210 unique non-region-boss designs, plus the five existing region bosses. Each zone has six fights; each area has 31 including its Champion; each region has 218 including its Elder; the game has 1,090 prescribed progression fights. These are design counts, not a claim runtime progression is already converted. Captains reuse their zone monster's silhouette and pose set, with a readable recolour and extra move; ordinary repeated fights do not introduce another species. Bosses do not repeat. Any justified later return is a new, stronger encounter requiring explicit approval.
+Thus 210 unique non-region-boss designs, plus the five existing region bosses. Each zone has six fights; each area has 31 including its Champion; each region has 218 including its Elder; the game has 1,090 prescribed progression fights. These are design counts, not a claim runtime progression is already converted. Captains share their zone monster's character design and art pack, with a readable recolour and extra move; ordinary repeated fights do not introduce another species. Bosses do not repeat. Any justified later return is a new, stronger encounter requiring explicit approval.
 
 Pale Reach's existing Frostgate Bastion and Gloamvale's existing Heart of the Gloamvale are used as their seventh full areas, each with a separate Champion before Whitehush/the Voice. This mapping was confirmed by Claude in PR1 comment5940265643 and recorded in world-structure.md at b41592c. Region bosses are Fenmother, Silas, Ser Durand, Whitehush and the Voice. Durand is not the Pyre Champion. The Voice is one continuous phased battle and one victory ledger.
 
 ## Roster documents
+
+[Compact list of all215 unique enemies](enemies-c22-roster.md), grouped by area, with links to their move cards.
 
 - [Hollow](enemies-c22-hollow-final.md)
 - [Sunken Coast](enemies-c22-coast-final.md)
@@ -32,7 +34,7 @@ Ordinary combat foes and Champions are agents born from the darkness, not corrup
 
 Retain gold, Essence and existing relic eligibility. Preserve existing Trophy eligibility through the old area-boss to Champion role mapping; do not create Trophy IDs or drop rates here. Some bosses may yield uniques, but the acquisition policy without rematches remains unresolved. Do not promise rerolls, repeat farms, guaranteed unique drops or new loot sources. No gathered material, Sigil or disguised resource cache is an enemy reward.
 
-Captains are visibly empowered individuals of the same monster: palette change plus readable outline/mark treatment from the approved pack, a title, tougher stats and one extra move composed from existing poses. Colour alone cannot carry the tell. Champions require their own imposing anatomy and proper names, not merely a scaled normal with an Elder prefix. Their stage footprint may be larger but contacts must remain reachable and silhouettes must not cover controls. Elders have the largest narrative presence, through authored phases and effects rather than unlimited sprite size. Art budgets are estimates, never approved generated art.
+Captains are visibly empowered individuals of the same monster: palette change plus readable outline/mark treatment from the approved pack, a title, tougher stats and one extra move. That move may need new poses authored into the shared monster/Captain pack. Colour alone cannot carry the tell. Champions require their own imposing anatomy and proper names, not merely a scaled normal with an Elder prefix. Their stage footprint may be larger but contacts must remain reachable and silhouettes must not cover controls. Elders have the largest narrative presence, through authored phases and effects rather than unlimited sprite size. Art budgets are estimates, never caps or approved generated art. The owner explicitly wants the complete roster and move concepts first so all required poses can be planned together. Do not weaken a monster or attack to fit existing art.
 
 ## Shared numerical and reaction rules
 
@@ -63,3 +65,11 @@ Before runtime/art: confirm stable IDs and Trophy mapping; resolve unique acquis
 ## Regression validation
 
 Build passed (3663.2 KB). Full sharded checks passed: 2134 assertions, zero failures, zero browser skips, on the integrated 2a61322 gameplay baseline. This validates unchanged gameplay, not the proposed enemy balance. Roster structure and move arithmetic are reviewed separately.
+
+## Pose planning follows the encounter design
+
+Owner clarification: design the full monster and its attacks without limiting them to available poses. No existing enemy sprite set is a constraint on the new roster. Any seven-, ten- or twelve-key figures in the regional drafts are early estimates, not maximums. Additional attack wind-ups, distinct limb contacts, recovery, charge holds, phase transitions and Captain-specific poses are allowed wherever the encounter needs them.
+
+After roster/move review, make one pose manifest per unique monster or boss, including its Captain in the same character pack. Record idle; each move's anticipation, readable held tell, each visually distinct contact/release, recoil/recovery; hurt; control reactions where needed; defeat; and boss transitions. Separate body poses from weapon/projectile/effect assets, record attachment and contact points, and include reduced-motion equivalents. Reuse frames only where the authored action still reads clearly. Shared silhouette does not mean every attack must recycle the same contact frame. Do not invent a new creature to account for a Captain-only attack pose.
+
+This full-list task establishes anatomy and action context for that manifest. It does not claim the provisional key counts are a complete approved animation inventory or that any art has been generated.
