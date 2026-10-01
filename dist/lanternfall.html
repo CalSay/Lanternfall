@@ -5933,6 +5933,8 @@ const SKILL_TUNE = {
   nodeReq: [1, 14, 30, 64, 112],      // gathering level that opens node tier 1-5 (NODE_REQ)
   stationReq: [1, 10, 22, 36, 54],    // crafting level that opens item tier 1-5 at a station (SMITH_REQ, CRAFT_STATION_REQ)
   gatherNeed: [10, 2.2, 1],           // XP from gathering level lv to lv + 1: a x lv^b x c^(lv - 1) (skillNeed)
+  gatherEarly: { below: 14, x: 0.5 }, // C10a (owner: "level 14 of each resource gathering takes a while"): levels 1-13 need
+                                      // half the XP, so each skill reaches 14 (tier 2) in about half the time; 14+ unchanged
   craftNeed: [7, 0.5, 1.04],          // the same for Smithing, Woodcraft, Tailoring, Enchanting
   craftSkills: ['smith', 'bench', 'loom', 'ench'],
   nodeXp: [7, 1],                     // XP a swing at a tier-t node: a x t^b (nodeXp)
@@ -7328,6 +7330,9 @@ const ECON = {
   base: [5, 17, 60, 210, 735],   // gold a foe at each region's first zone (x3.4, then x3.5 a region)
   inc: 0.05,                     // +5% of the region's base a zone (x2.7 by the region boss)
   zones: 35,                     // zones a region (PACE.region)
+  // C10a (owner: "gold gain is way too low"): foes and bounties pay x2 up to zone 20, easing to x1 at zone 35 (the Region 1
+  // boss), so early gold doubles while prices (hours of the base curve) stay put and the step into Region 2 still rises.
+  early: { x: 2, full: 20, end: 35 },
   hourFoes: 312,                 // foe-equivalents an hour of normal play (24 h average): H(z) = 312 x foe gold
   // ---- Training (W2-A, solo-hero.md "Training"): the price of a move's level n+1 = base x r a level to Lv bend, x r2 a
   // level to bend2, x r3 a level past it (55-training trainCost). A move gains about one level a hero level, so the price
@@ -7342,7 +7347,7 @@ const ECON = {
   precision: { base: 10000, r: 1.6, cap: 15, v: 0.01 },   // replaces Fortune: +1% crit damage a level (BAL3: 10,000 x 1.6^n, was 200 x 1.45^n, maxed
                                                             //   before the Region 1 boss: EC7 +26% vs 6-14%; now a Region 1-3 sink, EC5)
   // ---- camp (3.1): hours of income at the gate zone (index = level) ----
-  hearthH: [0, 0, 4, 6, 9, 12, 16, 20, 24, 30, 36],
+  hearthH: [0, 0, 0.05, 6, 9, 12, 16, 20, 24, 30, 36],   // C10a: Hearth 2 a token price (was 4 h), so Tam comes in about 30 min
   // Building rows: Lv 1 is materials only; rows 6-10 (not built yet, WC1 2.3) take world-camp-2 2.9's
   // relative minutes at row 5's rate (R2 90 min = 8 H), gates in rowGate.
   rowH: [0, 0, 1.5, 3, 5, 8, 10.7, 10.7, 13.3, 13.3, 16],
@@ -8847,7 +8852,9 @@ const totalDps = () => heroDps();
 // Before M6: 40 * 1.42^(z-1) for every zone.
 const mobHp = z => PACE.hp0 * Math.pow(PACE.hpEarly, Math.min(z, PACE.early) - 1) * Math.pow(PACE.hpGrowth, Math.max(0, Math.min(z, PACE.bend) - Math.max(1, PACE.early))) * Math.pow(PACE.hpLate, Math.max(0, z - PACE.bend)) * regionHp(z);
 // ECON-A (economy-2 2.1): gold per foe steps up by region (foeGoldBase, 21w-data-econ); was mobHp(z) x 0.05.
-const mobGold = z => foeGoldBase(z) * goldMult();
+// C10a: the early-gold boost (ECON.early): x2 to zone 20, then down to x1 at zone 35
+const earlyGold = z => { const e = ECON.early; return !e || z >= e.end ? 1 : z <= e.full ? e.x : e.x - (e.x - 1) * (z - e.full) / (e.end - e.full); };
+const mobGold = z => foeGoldBase(z) * earlyGold(z) * goldMult();
 // Essence (and unique) tier of a zone. Before M6: min(5, 1 + floor((z - 1) / 6)), so Starlit
 // (tier 5) began at zone 25 and a tier-5 weapon arrived before the Region 1 boss.
 const zoneTier = z => Math.max(1, PACE.essTier.filter(s => z >= s).length);
@@ -8856,7 +8863,10 @@ const xpNeed = () => Math.floor(15 * Math.pow(1.3, S.L - 1));
 // Skill XP and tier gates (GP1, knobs in SKILL_TUNE, 20-data). skillNeed(lv, k): k picks the crafting
 // curve for a station skill; without k it is the gathering curve.
 const skillCurve = k => SKILL_TUNE.craftSkills.includes(k) ? SKILL_TUNE.craftNeed : SKILL_TUNE.gatherNeed;
-const skillNeed = (lv, k) => { const c = skillCurve(k); return Math.floor(c[0] * Math.pow(lv, c[1]) * Math.pow(c[2] || 1, lv - 1)); };
+const skillNeed = (lv, k) => {
+  const c = skillCurve(k), e = SKILL_TUNE.gatherEarly, early = e && c === SKILL_TUNE.gatherNeed && lv < e.below ? e.x : 1;
+  return Math.floor(c[0] * Math.pow(lv, c[1]) * Math.pow(c[2] || 1, lv - 1) * early);
+};
 // A tier is open when the level reaches its gate. Gathering skills use NODE_REQ,
 // crafting skills CRAFT_STATION_REQ (= SMITH_REQ).
 const skillReqs = k => SKILL_TUNE.craftSkills.includes(k) ? SMITH_REQ : NODE_REQ;
@@ -14132,7 +14142,7 @@ const CAMP_SHRINE_HREQ = [4, 6, 8];
 // ECON.hearthH hours of income at the gate zone (55-econ econHearthGold).
 const CAMP_HEARTH = [
   null, null,
-  { k: 1500, mats: [['wood', 1, 120], ['ore', 1, 100], ['ess', 1, 30]], troph: 0, secs: 2 * 3600 },
+  { k: 1500, mats: [['wood', 1, 20], ['ore', 1, 20], ['ess', 1, 5]], troph: 0, secs: 120 },   // C10a: was 120 / 100 / 30 and 2 h
   { k: 2500, mats: [['wood', 2, 100], ['ore', 2, 80], ['ess', 2, 20]], troph: 0, secs: 5 * 3600 },
   { k: 4000, mats: [['wood', 3, 80], ['ore', 3, 60], ['ess', 3, 20]], troph: 0, secs: 8 * 3600 },
   { k: 6000, mats: [['wood', 3, 120], ['ore', 3, 90], ['crystal', 3, 30]], troph: 2, secs: 12 * 3600 },
@@ -34758,7 +34768,7 @@ let deedsUI = null;
       cLbl.textContent = 'Defeat a few foes to see your next goals.'; cSt.textContent = ''; cMore.textContent = '';
       cBar.style.width = '0%'; chip.setAttribute('aria-label', 'Next up: nothing yet'); return;
     }
-    const url = goalIcon(g.icon); if (url !== cUrl) { cIm.src = url; cUrl = url; }
+    const url = goalIcon(g.icon); if (url !== cUrl) { nicPut(cIm, url); cUrl = url; }
     const readyN = goals.filter(x => x.ready).length;
     cLbl.textContent = g.label;
     cSt.textContent = pctTxt(g);
@@ -34804,7 +34814,7 @@ let deedsUI = null;
           x.r.hidden = !g; x.goal = g || null;
           if (!g) return;
           const url = goalIcon(g.icon);
-          if (url !== x.url) { x.im.src = url; x.url = url; }
+          if (url !== x.url) { nicPut(x.im, url); x.url = url; }
           x.r.classList.toggle('ready', g.ready);
           x.lbl.textContent = g.label;
           x.fill.style.width = (g.pct * 100).toFixed(1) + '%';

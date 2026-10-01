@@ -1934,7 +1934,8 @@ if (section('skill gates (GP1)')) try {
   const ng = gaps(E('NODE_REQ')), sg = gaps(E('SMITH_REQ'));
   assert(ng.every((d, i) => i === 0 || d > ng[i - 1]) && sg.every((d, i) => i === 0 || d > sg[i - 1]) && ng[0] > 4 && sg[0] > 4,
     `the gaps between tiers widen: gathering ${E('NODE_REQ').join('/')} (gaps ${ng.join('/')}), crafting ${E('SMITH_REQ').join('/')} (gaps ${sg.join('/')})`);
-  assert(E('(() => { const f = (c, l) => Math.floor(c[0] * Math.pow(l, c[1]) * Math.pow(c[2] || 1, l - 1)); return [1, 10, 60].every(l => skillNeed(l) === f(SKILL_TUNE.gatherNeed, l) && skillNeed(l, "smith") === f(SKILL_TUNE.craftNeed, l) && skillNeed(l, "mine") === skillNeed(l)); })()'), 'skillNeed reads SKILL_TUNE (gathering and crafting curves)');
+  assert(E('(() => { const f = (c, l) => Math.floor(c[0] * Math.pow(l, c[1]) * Math.pow(c[2] || 1, l - 1)); const e = SKILL_TUNE.gatherEarly, c = SKILL_TUNE.gatherNeed, g = l => Math.floor(c[0] * Math.pow(l, c[1]) * Math.pow(c[2] || 1, l - 1) * (l < e.below ? e.x : 1)); return [1, 10, 13, 14, 60].every(l => skillNeed(l) === g(l) && skillNeed(l, "smith") === f(SKILL_TUNE.craftNeed, l) && skillNeed(l, "mine") === skillNeed(l)); })()'), 'skillNeed reads SKILL_TUNE (gathering and crafting curves; C10a: levels below 14 need half)');
+  assert(E('skillNeed(14) === Math.floor(10 * Math.pow(14, 2.2)) && skillNeed(13) === Math.floor(10 * Math.pow(13, 2.2) * 0.5)'), 'C10a: gathering levels 1-13 need half the XP, 14 and up unchanged');
   assert(E('nodeXp(3) === Math.round(SKILL_TUNE.nodeXp[0] * Math.pow(3, SKILL_TUNE.nodeXp[1]))'), 'nodeXp reads SKILL_TUNE');
   // The gates alone decide.
   E('S.skills.mine.lv = NODE_REQ[1] - 1');
@@ -3310,10 +3311,10 @@ if (section('econ (ECON-A)')) try {
   assert(E('Math.abs(mobGold(40) - foeGoldBase(40) * goldMult()) < 1e-9') , 'mobGold reads the curve');
   // Prices: the examples in economy-2 3 and 4
   const P = x => E(x);
-  const ex = [['Hearth 2', 'econHearthGold(2)', 9000], ['Hearth 3', 'econHearthGold(3)', 15000], ['Hearth 10', 'econHearthGold(10)', 370000],
+  const ex = [['Hearth 2', 'econHearthGold(2)', 110],   // C10a: a token price (was 9,000) ['Hearth 3', 'econHearthGold(3)', 15000], ['Hearth 10', 'econHearthGold(10)', 370000],
     ['building Lv 2', 'campCost("watch", 2).gold', 3400], ['building Lv 3', 'campCost("watch", 3).gold', 8700], ['building Lv 4', 'campCost("watch", 4).gold', 18000], ['building Lv 5', 'campCost("watch", 5).gold', 47000],
     ['Shrine Lv 1', 'campCost("shrine", 1).gold', 14000], ['Storehouse Lv 2', 'campCost("store", 2).gold', 2300], ['Storehouse Lv 8', 'campCost("store", 8).gold', 70000],
-    ['Hearth 2 in the camp', 'campCost("hearth", 2).gold', 9000], ['Tent 3', 'econTentGold(3)', 23000], ['Tent 10', 'econTentGold(10)', 2300000],
+    ['Hearth 2 in the camp', 'campCost("hearth", 2).gold', 110], ['Tent 3', 'econTentGold(3)', 23000], ['Tent 10', 'econTentGold(10)', 2300000],
     ['hire Common, Region 1', 'econHireFee("common", 1)', 1500], ['hire Legendary, Region 1', 'econHireFee("legendary", 1)', 20000], ['hire Common, Region 2', 'econHireFee("common", 40)', 5100], ['hire Legendary, Region 5', 'econHireFee(4, 150)', 2900000],
     ['shift grade 1 Lv 1', 'econShiftFee(1, 1)', 2000], ['shift grade 4 Lv 1', 'econShiftFee(4, 1)', 4100], ['shift grade 15 Lv 1', 'econShiftFee(15, 1)', 110000], ['shift grade 1 Lv 20', 'econShiftFee(1, 20)', 2800],
     ['upgrade grade 1 +0', 'econUpgradeGold(1, 0)', 100], ['upgrade grade 5 +9', 'econUpgradeGold(5, 9)', 4400], ['upgrade grade 15 +9', 'econUpgradeGold(15, 9)', 320000],
@@ -6838,6 +6839,22 @@ if (section('hunting hidden (C24 browser)')) try {
 
 // ---- C20: default-off, zone-one turn combat and shared away resolver ----
 // ---- turn UI (Claude, 2026-09-30): the versus card, turn strip, timing bar and the Journal test switch on C20's events ----
+if (section('C10a pacing (owner targets)')) try {
+  const g = loadCore({ seed: 101 }), E = s => g.eval(s);
+  // Hearth 2: zone 10, a token price, Pine/Copper/Essence a player has by then, a short build (Tam's first shift ~30 min)
+  const h2 = E('JSON.stringify({ z: CAMP_HZ[1], gold: econHearthGold(2), mats: CAMP_HEARTH[2].mats, secs: CAMP_HEARTH[2].secs })');
+  const h = JSON.parse(h2);
+  assert(h.z === 10 && h.gold <= 250 && h.secs <= 300 && h.mats.every(([f, t, n]) => t === 1 && n <= 20), 'C10a: Hearth 2 is zone 10, a token price, at most 20 of each grade 1 material and a short build: ' + h2);
+  // early gold: foes pay x2 to zone 20, easing to x1 at zone 35; the step into Region 2 still rises
+  const eg = JSON.parse(E('JSON.stringify([1, 20, 28, 35, 36].map(z => mobGold(z) / (foeGoldBase(z) * goldMult())))'));
+  assert(eg[0] === 2 && eg[1] === 2 && eg[2] > 1 && eg[2] < 2 && eg[3] === 1 && eg[4] === 1, 'C10a: kill and bounty gold x2 to zone 20, x1 from zone 35: ' + eg.map(x => +x.toFixed(2)).join(' / '));
+  assert(E('mobGold(36) > mobGold(34)'), 'C10a: gold still rises into Region 2');
+  // gathering: one skill from level 1 to 14 at grade 1 in about 13 min of gathering (was 26)
+  const mins = E('(() => { let s = 0; for (let lv = 1; lv < 14; lv++) s += skillNeed(lv) / nodeXp(1) * (1 / (1 + SKILL_TUNE.spdPerLv * (lv - 1))); return s / 60; })()');
+  assert(mins > 10 && mins < 16, `C10a: one gathering skill reaches level 14 in about 13 min of gathering (${mins.toFixed(1)} min)`);
+  assert(!g.errors.length, 'C10a: no core errors');
+} catch (e) { fail('C10a pacing crashed: ' + (e.stack || e)); }
+
 if (section('action and menu icons (C26)')) try {
   const g = loadCore({ seed: 27 });
   const d = JSON.parse(g.eval(`JSON.stringify({ act: typeof ACTION_ICONS === 'object' ? Object.entries(ACTION_ICONS).map(([k, v]) => [k, Object.keys(v)]) : null,

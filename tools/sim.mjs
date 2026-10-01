@@ -652,8 +652,8 @@ function coldStep() {
   const armed = !cls || !weaponKind() || !!fn.equipped('weapon');
   if (built && armed) { coldDone = true; if (coldTrip) { coldTrip = null; fn.setActivity('fight'); } return; }
   if (E('S.maxZone < 2')) return;
-  const need = built ? null : E(`(() => { for (const id of HEARTH_CHAIN) { if (!CAMP_B[id] || campLevel(id) >= 1 || !hearthPlotOpen(id)) continue; const c = campCan(id); if (!c.cost || c.busy) continue; const m = c.cost.mats.filter(([f, tt, n]) => CRAFT_NODES[f] && S.mats[f][tt - 1] < n && S.skills[skillOf(f)].lv >= NODE_REQ[tt - 1])[0]; if (m) return m; } return null; })()`);
-  const want = need || (armed ? null : E(`(c => c.unbuilt ? null : (c.miss || []).filter(([f]) => CRAFT_NODES[f] && S.skills[skillOf(f)].lv >= NODE_REQ[0]).map(([f]) => [f, 1])[0] || null)(canCraft(${JSON.stringify(weaponKind())}, 1))`));
+  const need = built ? null : E(`(() => { for (const id of HEARTH_CHAIN) { if (!CAMP_B[id] || campLevel(id) >= 1 || !hearthPlotOpen(id)) continue; const c = campCan(id); if (!c.cost || c.busy) continue; const m = c.cost.mats.filter(([f, tt, n]) => CRAFT_NODES[f] && (typeof craftNodeEnabled !== "function" || craftNodeEnabled(f, tt)) && S.mats[f][tt - 1] < n && S.skills[skillOf(f)].lv >= NODE_REQ[tt - 1])[0]; if (m) return m; } return null; })()`);
+  const want = need || (armed ? null : E(`(c => c.unbuilt ? null : (c.miss || []).filter(([f]) => CRAFT_NODES[f] && (typeof craftNodeEnabled !== "function" || craftNodeEnabled(f, 1)) && S.skills[skillOf(f)].lv >= NODE_REQ[0]).map(([f]) => [f, 1])[0] || null)(canCraft(${JSON.stringify(weaponKind())}, 1))`));
   if (want) { if (!coldTrip || coldTrip[0] !== want[0] || coldTrip[1] !== want[1] || E('S.activity !== "gather"')) { coldTrip = want; fn.setNode(want[0], want[1]); fn.setActivity('gather'); } }
   else if (coldTrip) { coldTrip = null; fn.setActivity('fight'); }
 }
@@ -717,8 +717,31 @@ function soloPlayer() {
     if (simClock >= abAt[i]) { E(`soloAbility({ slot: ${i} })`); abAt[i] = -1; }
   }
 }
+// C10a: like a player whose next Hearth is short only of gathered materials (the camp says "16 more Pine Log"), the
+// hero goes and gathers them as soon as the gate zone is reached, builds it, and goes back to what it was doing.
+let hTrip = null;
+function hearthTrip(sec) {
+  if (sec % 5 || args.camp === '0' || !coldDone) return;
+  const want = E(`(() => { if (typeof campCan !== 'function' || !campOpen()) return null; const c = campCan('hearth');
+    if (c.ok || c.busy || c.max || !c.cost || /zone/i.test(c.why || '')) return null;
+    const m = c.cost.mats.filter(([f, tt, n]) => S.mats[f] && S.mats[f][tt - 1] < n);
+    const g = m.filter(([f, tt]) => CRAFT_NODES[f] && (typeof craftNodeEnabled !== 'function' || craftNodeEnabled(f, tt)) && S.skills[skillOf(f)].lv >= NODE_REQ[tt - 1]);
+    return g.length && g.length === m.length ? [g[0][0], g[0][1]] : null; })()`);
+  if (want) {
+    if (!hTrip) hTrip = { back: E('S.activity') };
+    if (E('S.activity !== "gather"') || E('S.node.kind') !== want[0] || E('S.node.t') !== want[1]) { fn.setNode(want[0], want[1]); fn.setActivity('gather'); }
+  } else if (hTrip) {
+    campStep(E);
+    if (hTrip.back !== 'gather') fn.setActivity(hTrip.back);
+    hTrip = null;
+  }
+}
 function playSecond(sec) {
   coldStep();
+  // The cold Hearth's guide sends every hero to gather for the stations; whatever the policy, a player then builds
+  // them (the fight policy used to gather for them forever and never build: Wren stalled at zone 5).
+  if (policy !== 'mixed' && !coldDone && sec % 60 === 0) campStep(E);
+  hearthTrip(sec);
   if (policy === 'mixed' && sec % 60 === 0) {
     // With --class the first gather trip comes at 5 min (fight 5, gather 5, then fight 10 / gather 5),
     // like a player who goes for the first class set; the share stays one third.

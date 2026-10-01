@@ -110,7 +110,9 @@ const totalDps = () => heroDps();
 // Before M6: 40 * 1.42^(z-1) for every zone.
 const mobHp = z => PACE.hp0 * Math.pow(PACE.hpEarly, Math.min(z, PACE.early) - 1) * Math.pow(PACE.hpGrowth, Math.max(0, Math.min(z, PACE.bend) - Math.max(1, PACE.early))) * Math.pow(PACE.hpLate, Math.max(0, z - PACE.bend)) * regionHp(z);
 // ECON-A (economy-2 2.1): gold per foe steps up by region (foeGoldBase, 21w-data-econ); was mobHp(z) x 0.05.
-const mobGold = z => foeGoldBase(z) * goldMult();
+// C10a: the early-gold boost (ECON.early): x2 to zone 20, then down to x1 at zone 35
+const earlyGold = z => { const e = ECON.early; return !e || z >= e.end ? 1 : z <= e.full ? e.x : e.x - (e.x - 1) * (z - e.full) / (e.end - e.full); };
+const mobGold = z => foeGoldBase(z) * earlyGold(z) * goldMult();
 // Essence (and unique) tier of a zone. Before M6: min(5, 1 + floor((z - 1) / 6)), so Starlit
 // (tier 5) began at zone 25 and a tier-5 weapon arrived before the Region 1 boss.
 const zoneTier = z => Math.max(1, PACE.essTier.filter(s => z >= s).length);
@@ -119,7 +121,10 @@ const xpNeed = () => Math.floor(15 * Math.pow(1.3, S.L - 1));
 // Skill XP and tier gates (GP1, knobs in SKILL_TUNE, 20-data). skillNeed(lv, k): k picks the crafting
 // curve for a station skill; without k it is the gathering curve.
 const skillCurve = k => SKILL_TUNE.craftSkills.includes(k) ? SKILL_TUNE.craftNeed : SKILL_TUNE.gatherNeed;
-const skillNeed = (lv, k) => { const c = skillCurve(k); return Math.floor(c[0] * Math.pow(lv, c[1]) * Math.pow(c[2] || 1, lv - 1)); };
+const skillNeed = (lv, k) => {
+  const c = skillCurve(k), e = SKILL_TUNE.gatherEarly, early = e && c === SKILL_TUNE.gatherNeed && lv < e.below ? e.x : 1;
+  return Math.floor(c[0] * Math.pow(lv, c[1]) * Math.pow(c[2] || 1, lv - 1) * early);
+};
 // A tier is open when the level reaches its gate. Gathering skills use NODE_REQ,
 // crafting skills CRAFT_STATION_REQ (= SMITH_REQ).
 const skillReqs = k => SKILL_TUNE.craftSkills.includes(k) ? SMITH_REQ : NODE_REQ;

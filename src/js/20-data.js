@@ -48,6 +48,8 @@ const SKILL_TUNE = {
   nodeReq: [1, 14, 30, 64, 112],      // gathering level that opens node tier 1-5 (NODE_REQ)
   stationReq: [1, 10, 22, 36, 54],    // crafting level that opens item tier 1-5 at a station (SMITH_REQ, CRAFT_STATION_REQ)
   gatherNeed: [10, 2.2, 1],           // XP from gathering level lv to lv + 1: a x lv^b x c^(lv - 1) (skillNeed)
+  gatherEarly: { below: 14, x: 0.5 }, // C10a (owner: "level 14 of each resource gathering takes a while"): levels 1-13 need
+                                      // half the XP, so each skill reaches 14 (tier 2) in about half the time; 14+ unchanged
   craftNeed: [7, 0.5, 1.04],          // the same for Smithing, Woodcraft, Tailoring, Enchanting
   craftSkills: ['smith', 'bench', 'loom', 'ench'],
   nodeXp: [7, 1],                     // XP a swing at a tier-t node: a x t^b (nodeXp)

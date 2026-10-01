@@ -633,3 +633,32 @@ P1 slips about 2 days and P2/P4 fail for the Lanternmage and Ranger. Options:
    gapMax x 2 behind), kept well short of the old catch-up.
 
 Save compatibility: no stored field is added, renamed or changed; only formulas and knobs.
+
+## 13. C10a: the owner's early-pacing targets (2026-10-01)
+
+Owner: "Gold gain is way too low atm. Getting to hearth 2 is too long. Getting to level 14 of each resource gathering
+also takes a while." Targets set on issue #11, all three heroes:
+
+| | Before | Target | After |
+|---|---|---|---|
+| Hearth 2 built and Tam's first shift | about a day (9,000 gold, 120/100/30 materials, 2 h build) | about 30 min | **30-32 min** (sim, mixed policy, seed 1; 33-35 min on seeds 1-3 with a 5 min build) |
+| Gold an hour, zones 1-20 (kills and bounties) | Wren 10.6K, Tobin 5.8K, Pip 8.7K in the first hour | about double | **Wren 18.9K, Tobin 12.0K, Pip 13.2K** (x1.5-2.1; exactly x2 a minute of fighting) |
+| One gathering skill, level 1 to 14 (grade 1) | 26 min of gathering | about half | **13 min**; levels 14 and up unchanged |
+
+Knobs:
+
+- `CAMP_HEARTH[2]` 20 Pine, 20 Copper, 5 Dim Essence, 2 min build; `ECON.hearthH[2]` 0.05 hours (110 gold). Gate stays zone 10.
+- `ECON.early` `{ x: 2, full: 20, end: 35 }`: `mobGold` (kills, offline kills, bounty pay) x2 to zone 20, easing to x1 at the
+  Region 1 boss. Prices stay on the base curve, so early prices halve in effect; gold still rises into Region 2.
+- `SKILL_TUNE.gatherEarly` `{ below: 14, x: 0.5 }`: gathering levels 1-13 need half the XP.
+
+Sim fixes found on the way (`tools/sim.mjs`):
+
+- The fight policy never built camp stations but the cold Hearth trip still sent the hero to gather for them, so Wren
+  stalled at zone 5 for the rest of the run. Now it builds them, as the guide's player does.
+- Trips skipped Hide, which counted as gatherable once Hunting added Hide nodes, though Hunting is still off
+  (`craftNodeEnabled`).
+- `hearthTrip`: like a player, the hero gathers what the next Hearth is short of as soon as its zone is reached.
+
+Measure: `node tools/sim.mjs --hours 1 --policy mixed --class ranger|warden|lanternmage --seed 1`.
+`tools/check.mjs` section "C10a pacing" holds the targets.

@@ -15,6 +15,9 @@ const ECON = {
   base: [5, 17, 60, 210, 735],   // gold a foe at each region's first zone (x3.4, then x3.5 a region)
   inc: 0.05,                     // +5% of the region's base a zone (x2.7 by the region boss)
   zones: 35,                     // zones a region (PACE.region)
+  // C10a (owner: "gold gain is way too low"): foes and bounties pay x2 up to zone 20, easing to x1 at zone 35 (the Region 1
+  // boss), so early gold doubles while prices (hours of the base curve) stay put and the step into Region 2 still rises.
+  early: { x: 2, full: 20, end: 35 },
   hourFoes: 312,                 // foe-equivalents an hour of normal play (24 h average): H(z) = 312 x foe gold
   // ---- Training (W2-A, solo-hero.md "Training"): the price of a move's level n+1 = base x r a level to Lv bend, x r2 a
   // level to bend2, x r3 a level past it (55-training trainCost). A move gains about one level a hero level, so the price
@@ -29,7 +32,7 @@ const ECON = {
   precision: { base: 10000, r: 1.6, cap: 15, v: 0.01 },   // replaces Fortune: +1% crit damage a level (BAL3: 10,000 x 1.6^n, was 200 x 1.45^n, maxed
                                                             //   before the Region 1 boss: EC7 +26% vs 6-14%; now a Region 1-3 sink, EC5)
   // ---- camp (3.1): hours of income at the gate zone (index = level) ----
-  hearthH: [0, 0, 4, 6, 9, 12, 16, 20, 24, 30, 36],
+  hearthH: [0, 0, 0.05, 6, 9, 12, 16, 20, 24, 30, 36],   // C10a: Hearth 2 a token price (was 4 h), so Tam comes in about 30 min
   // Building rows: Lv 1 is materials only; rows 6-10 (not built yet, WC1 2.3) take world-camp-2 2.9's
   // relative minutes at row 5's rate (R2 90 min = 8 H), gates in rowGate.
   rowH: [0, 0, 1.5, 3, 5, 8, 10.7, 10.7, 13.3, 13.3, 16],

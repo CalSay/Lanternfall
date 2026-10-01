@@ -59,7 +59,7 @@ const CAMP_SHRINE_HREQ = [4, 6, 8];
 // ECON.hearthH hours of income at the gate zone (55-econ econHearthGold).
 const CAMP_HEARTH = [
   null, null,
-  { k: 1500, mats: [['wood', 1, 120], ['ore', 1, 100], ['ess', 1, 30]], troph: 0, secs: 2 * 3600 },
+  { k: 1500, mats: [['wood', 1, 20], ['ore', 1, 20], ['ess', 1, 5]], troph: 0, secs: 120 },   // C10a: was 120 / 100 / 30 and 2 h
   { k: 2500, mats: [['wood', 2, 100], ['ore', 2, 80], ['ess', 2, 20]], troph: 0, secs: 5 * 3600 },
   { k: 4000, mats: [['wood', 3, 80], ['ore', 3, 60], ['ess', 3, 20]], troph: 0, secs: 8 * 3600 },
   { k: 6000, mats: [['wood', 3, 120], ['ore', 3, 90], ['crystal', 3, 30]], troph: 2, secs: 12 * 3600 },
