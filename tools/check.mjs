@@ -7079,6 +7079,64 @@ if (section('turn UI (browser)')) try {
   }
 } catch (e) { fail('turn UI crashed: ' + (e.stack || e)); }
 
+if (section('C22 Thorn Imp (zone 1)')) try {
+  // The owner-approved Thorn Imp (art/enemies/thorn-imp/v1): the art is embedded byte for byte, zone 1's regular foe is the
+  // Imp, and in turn fights it alternates Briar Jab (1 hit) and Crosscut (2 hits, slow then fast), each hit its own parry.
+  { const { spawnSync } = await import('node:child_process'), r = spawnSync(process.execPath, [path.join(ROOT, 'tools', 'art', 'embed-foes.mjs'), '--check'], { encoding: 'utf8' });
+    assert(r.status === 0, 'C22: src/js/21za-data-foeart.js is up to date with the approved packs (node tools/art/embed-foes.mjs)' + (r.status ? ': ' + (r.stderr || r.stdout) : '')); }
+  { const dir = path.join(ROOT, 'art', 'enemies', 'thorn-imp', 'v1'), man = JSON.parse(fs.readFileSync(path.join(dir, 'manifest.json'), 'utf8'));
+    const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '21za-data-foeart.js'), 'utf8'), A = JSON.parse(src.slice(src.indexOf('const FOE_ART = ') + 16, src.lastIndexOf('}') + 1)).imp;
+    const same = man.frames.every(f => A.frames[f.id] && A.frames[f.id][2] === fs.readFileSync(path.join(dir, f.file)).toString('base64') &&
+      A.frames[f.id][0] === f.ground_anchor[0] && A.frames[f.id][1] === f.ground_anchor[1]);
+    assert(man.frames.length === 14 && Object.keys(A.frames).length === 14 && same, 'C22: all 14 Thorn Imp poses are embedded with their approved bytes and ground anchors'); }
+  const imp = hero => { const h = loadCore({ seed: 7 }), H = x => h.eval(x);
+    H(`soloPick(${JSON.stringify(hero)},{now:true});S.zone=1;S.activity='fight';TURN_TUNE.on=1;soloSetAuto(false);S.auto=false;gearDirty();spawn()`); return { h, H }; };
+  { const { H } = imp('wren');
+    assert(H('(()=>{const f=combatFoes()[0];return combatFoes().length===1&&f.name==="Thorn Imp"&&f.skin==="imp"&&/^imp\\d+$/.test(f.key)&&f.type==="slime"})()'),
+      'C22: zone 1\'s regular foe is one Thorn Imp (it keeps the Moss Slime\'s type slot for mastery, trophies and weaknesses)');
+    H('TURN_TUNE.on=0;globalThis.__imps=0;for(let i=0;i<30;i++){spawn();for(const f of combatFoes()){if(f.type==="slime"&&f.name!=="Thorn Imp")__imps=-99;if(f.skin==="imp")__imps++}}');
+    assert(H('__imps') > 0, 'C22: the legacy fight in zone 1 shows the Thorn Imp too (in place of every Moss Slime)');
+    H('S.zone=2;spawn()');
+    assert(H('combatFoes().every(f=>!f.skin&&f.name!=="Thorn Imp")'), 'C22: other zones keep their foes');
+    H('S.zone=1;fightBoss=true;spawn()');
+    assert(H('combatFoes()[0].boss&&!combatFoes()[0].skin'), 'C22: the zone 1 boss is unchanged until the Captain\'s recolour is approved'); }
+  { const { h, H } = imp('tobin');
+    H('S.mastery.types={};const f=combatFoes()[0];f.hp=1;soloAttack()');
+    for (let i = 0; i < 60 && !H('(S.mastery.types.slime||0)>0'); i++) { H('if(turnCombatSnapshot().phase==="hero")soloAttack()'); h.fn.tick(0.05); }
+    assert(H('(S.mastery.types.slime||0)>0 && !S.mastery.types.imp'), 'C22: beating the Thorn Imp counts for zone 1\'s foe slot in mastery and the profile'); }
+  for (const hero of ['wren', 'tobin', 'pip']) {
+    const { H } = imp(hero);
+    const r = H(`(()=>{const p=turnCombatProfile(),e=turnEffects();let hp=p.foeHp,n=0;while(hp>0&&n<20){hp-=turnScalarHit(p,e,'attack',false,()=>1);n++;turnScalarFoeStart(e)}
+      const jab=turnScalarFoeHit(p,turnEffects(),()=>1,p.moves[0].hits[0]).amount,big=turnScalarFoeHit({...p,moveDamage:p.heroMaxHp*5},turnEffects(),()=>1,p.moves[0].hits[0]).amount,ref=ZONE_FOES[1].refHp;return {n,jab,ref,uncapped:big>p.hitCap}})()`);
+    assert(r.n === 3 && r.jab > r.ref * 0.2 * 0.5 && r.jab <= r.ref * 0.2 + 1e-9 && r.uncapped,
+      `C22: ${hero} beats the Thorn Imp in 3 uncritical attacks, and its Briar Jab is 20% of the zone's reference HP less armour, not capped (${r.n} hits, jab ${r.jab.toFixed(1)} of ${r.ref})`);
+  }
+  // the engine with a stub: per-hit parries, refunds and the one counter
+  const run = parries => { const { H } = imp('wren'); return H(`(() => {
+    let counters=0, hits=0, contacts=[]; const P=${JSON.stringify(parries)};
+    const io={heroHaste:0,foeHaste:1,emit:(n,x)=>{if(n==='foeContact')contacts.push(x.res)},auto:()=>false,random:()=>1,
+      odds:()=>({parry:0,dodge:0,parryWindow:.18,dodgeWindow:.35}),alive:()=>({hero:true,foe:true}),turnStart:()=>{},cooldown:()=>1,
+      abilityId:()=>null,choose:()=>null,heroAction:()=>true,foeHit:h=>{hits++},counter:()=>{counters++},defense:()=>{},
+      moves:()=>ZONE_FOES[1].moves};
+    const m=turnNew('foe',false,io); m.moveN=1; m.cooldowns.echo=5;   // the second move: Crosscut
+    turnResolve(m,{kind:'tick'},TURN_TUNE.introHand,io);
+    const winds=[]; for(let i=0;i<2;i++){ const w=m.move.hits[m.hitI].wind; winds.push(w);
+      turnResolve(m,{kind:'tick'},w-.05,io); if(P[i])turnResolve(m,{kind:P[i]},0,io); turnResolve(m,{kind:'tick'},.06,io); }
+    return {move:m.move.id,winds,counters,hits,contacts,echo:m.cooldowns.echo,phase:m.phase};
+  })()`); };
+  const all = run(['parry', 'parry']), one = run(['parry', '']), dodge = run(['dodge', 'parry']);
+  assert(all.move === 'cross' && all.winds[0] > all.winds[1] && all.contacts.join() === 'parry,parry' && all.counters === 1 && all.hits === 0 && all.echo === 3 && all.phase === 'recovery',
+    `C22: Crosscut is two hits, slow then fast; parrying both refunds a turn each and earns one counter (${JSON.stringify(all)})`);
+  assert(one.contacts.join() === 'parry,hit' && one.counters === 0 && one.hits === 1 && one.echo === 4,
+    `C22: a missed second hit lands and there is no counter (${JSON.stringify(one)})`);
+  assert(dodge.contacts.join() === 'dodge,parry' && dodge.counters === 0 && dodge.hits === 0 && dodge.echo === 4,
+    `C22: each hit is its own choice; a dodge avoids the hit but the counter needs every hit parried (${JSON.stringify(dodge)})`);
+  { const { h, H } = imp('pip');
+    H('globalThis.__mv=[];on("foeMove",x=>__mv.push(x.id+x.hits));combatFoes()[0].hp=combatFoes()[0].max=1e9;const u=cbUnitByKey("hero");u.hp=u.maxHp=1e9');
+    for (let i = 0; i < 400; i++) { H('if(turnCombatSnapshot().phase==="hero")soloAttack()'); h.fn.tick(0.05); }
+    assert(H('__mv.slice(0,4).join()') === 'jab1,cross2,jab1,cross2' && !h.errors.length, `C22: the live Imp alternates Briar Jab and Crosscut (${H('__mv.join()')})`); }
+} catch (e) { fail('C22 Thorn Imp crashed: ' + (e.stack || e)); }
+
 if (section('C20 turn combat (core)')) try {
   const g = loadCore({ seed: 2020 }), E = src => g.eval(src);
   assert(E('TURN_TUNE.on === 0 && !turnCombatOn() && SOLO_TUNE.turnParryWindow === 0.18 && SOLO_TUNE.turnDodgeWindow === 0.35'), 'C20: prototype defaults off; owner-approved manual windows are exposed as knobs');

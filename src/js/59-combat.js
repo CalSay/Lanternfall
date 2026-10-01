@@ -257,6 +257,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       const hp = mobHp(z) * TURN_TUNE.foeHpX * mod('foeHp');
       const f = mkFoe(zt, hp, mobGold(z) * T.packGold, Math.ceil(1.5 * z), z, false, TYPES[zt].name, cyc, T.packAtkN);
       f.turn = 1;   // a turn-prototype foe (50-sim respawns a legacy one when the prototype takes over)
+      if (typeof zoneFoeSkin === 'function') zoneFoeSkin(f, z);   // C22: the zone's own monster (59l)
       foes.push(f); lead = f; packN = 1; packSize = 'brute'; aoeK = 1;
     } else if (boss) {
       const hp = mobHp(z) * bossHpMult(z) * mod('bossHp') * mod('foeHp');
@@ -284,6 +285,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
         const ti = PLAN[i], w = PLAN[i + 1];
         const hp = tot / n * w * (0.9 + Math.random() * 0.2) * (T.single ? T.singleHp : 1);
         const f = mkFoe(ti, hp, gold / n * w, 0, z, false, TYPES[ti].name, cyc, T.packAtkN / n * w * (T.single ? T.singleAtk : 1));
+        if (ti === zt && typeof zoneFoeSkin === 'function') zoneFoeSkin(f, z);   // C22 (59l)
         foes.push(f);
       }
       packN = foes.length; packSize = T.single ? 'brute' : size;   // one foe: no swarm caps or splits

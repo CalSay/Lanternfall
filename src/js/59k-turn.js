@@ -47,6 +47,7 @@ function turnMakeProfile(f, u) {
   const classDr = cls === 'warden' ? (1 - COMBAT_TUNE.wardenDr) * (1 - COMBAT_TUNE.tankDr) : 1;
   const foeDamage = cbFoeAtk(f) * TURN_TUNE.foeAtkX * (1 - SOLO_TUNE.drX) * classDr * (1 - armRed);
   const heroHaste = (TURN_TUNE.heroHaste[key] || 0) + (g.initiative || 0), foeHaste = TURN_TUNE.foeHaste;
+  const Z = typeof zoneFoeOf === 'function' ? zoneFoeOf(f) : null;
   return { heroKey: key, zone: S.zone, heroHp: u.hp, heroMaxHp: u.maxHp,
     heroAtk: heroAtk() * heroX * tap * SOLO_TUNE.atkX * aps() * tapMult(),
     counterDamage: heroAtk() * heroX * SOLO_TUNE.counterX * aps() * critMult() * trainCounterX() *
@@ -60,7 +61,9 @@ function turnMakeProfile(f, u) {
     markCritX: key === 'wren' && !bonus('ks:pack') ? 1.5 : 1,
     essChance: essChance(), essExtra: g.essExtra || 0, goldPerKill: f.gold,
     xpPerKill: f.xp, healOnKill: COMBAT_TUNE.packHealF, respawn: 0.45,
-    ability: ab.id, cooldowns: Object.fromEntries(TURN_CD_KEYS.map(id => [id, turnCdFor(id)])), odds: turnOdds() };
+    ability: ab.id, cooldowns: Object.fromEntries(TURN_CD_KEYS.map(id => [id, turnCdFor(id)])), odds: turnOdds(),
+    // C22: a zone monster's own moves (59l); its hits are shares of the zone's fixed reference HP, less armour, uncapped
+    moves: Z ? Z.moves : null, moveDamage: Z ? Z.refHp * TURN_TUNE.foeAtkX * (1 - armRed) : 0 };
 }
 // Mark is a vulnerability amount (0.20, not a 1.20 multiplier). All effects count actor turns.
 function turnScalarHit(p, e, id, auto, roll) {
@@ -97,13 +100,14 @@ function turnScalarFoeStart(e) {
   if (e.focus > 0 && --e.focus === 0) e.focusV = 0;
   return { skip, burn };
 }
-function turnScalarFoeHit(p, e, roll) {
-  let amount = p.foeAtk * (e.guard > 0 ? 1 - SOLO_TUNE.bash.dr : 1) * (1 - 0.01 * e.grit);
+// hit: a move's hit ({ x }, 59l): x * p.moveDamage and no per-hit cap; none: the legacy foe swing.
+function turnScalarFoeHit(p, e, roll, hit) {
+  let amount = (hit && hit.x > 0 ? hit.x * p.moveDamage : p.foeAtk) * (e.guard > 0 ? 1 - SOLO_TUNE.bash.dr : 1) * (1 - 0.01 * e.grit);
   let blocked = false;
   if (p.blockP > 0 && roll() < p.blockP) blocked = true;
   if (!blocked && p.blockC > 0 && (e.blockN += p.blockC) >= 1) { e.blockN -= 1; blocked = true; }
   if (blocked) amount *= p.blockX;
-  return { amount: Math.min(amount, p.hitCap), blocked };
+  return { amount: hit && hit.x > 0 ? amount : Math.min(amount, p.hitCap), blocked };
 }
 function turnScalarRegen(p, hp, dt) { return Math.min(p.heroMaxHp, hp + p.heroMaxHp * p.regen * dt); }
 function turnScalarHeroStart(e) { if (e.guard > 0) e.guard--; }
@@ -111,9 +115,21 @@ function turnScalarHeroStart(e) { if (e.guard > 0) e.guard--; }
 function turnNew(first, auto, io) {
   const m = { now: 0, phase: 'intro', until: auto ? TURN_TUNE.introAuto : TURN_TUNE.introHand,
     next: first, first, n: 0, auto, lockedAuto: auto, defense: '', usedDefense: false, skipFoe: false,
+    move: null, moveN: 0, hitI: 0, parried: 0,
     cooldowns: io.initialCooldowns ? { ...io.initialCooldowns() } :
       { attack: 0, echo: 0, bash: 0, fire: 0 }, ended: false };
   return m;
+}
+// A legacy foe's action: one swing after the standard wind-up.
+const TURN_SWING = { id: 'swing', name: '', hits: [{ wind: 0, x: 0 }] };
+// Open hit m.hitI of the move: its wind-up, its own defence attempt and its parry window.
+function turnHitStart(m, io) {
+  const h = m.move.hits[m.hitI];
+  m.phase = 'foeWindup'; m.until = m.now + (h.wind > 0 ? h.wind : TURN_TUNE.foeWindup);
+  m.defense = ''; m.usedDefense = false;
+  if (m.lockedAuto) { const o = io.odds(); if (io.random() < o.parry) m.defense = 'autoParry';
+    else if (io.random() < o.dodge) m.defense = 'autoDodge'; }
+  io.emit('parryWindow', { opensAt: m.until - io.odds().parryWindow, closesAt: m.until, hit: m.hitI, hits: m.move.hits.length });
 }
 function turnEnd(m, reason, io) {
   if (!m || m.ended) return;
@@ -131,12 +147,14 @@ function turnBegin(m, who, io) {
     m.lockedAuto = io.auto(); m.usedDefense = false; m.defense = '';
     io.turnStart('foe', m);
     if (!io.alive().foe) { turnEnd(m, 'victory', io); return; } // Burn killed the foe before its attack.
-    m.phase = m.skipFoe ? 'recovery' : 'foeWindup'; m.until = m.now + (m.skipFoe ? TURN_TUNE.foeRecovery : TURN_TUNE.foeWindup);
     if (!m.skipFoe) {
-      if (m.lockedAuto) { const o = io.odds(); if (io.random() < o.parry) m.defense = 'autoParry';
-        else if (io.random() < o.dodge) m.defense = 'autoDodge'; }
-      io.emit('parryWindow', { opensAt: m.until - io.odds().parryWindow, closesAt: m.until });
-    } else m.next = 'hero';
+      // C22: one foe action is one move of one or more hits (a zone monster alternates its moves; else one swing)
+      const moves = io.moves ? io.moves() : null;
+      m.move = moves && moves.length ? moves[m.moveN++ % moves.length] : TURN_SWING;
+      m.hitI = 0; m.parried = 0;
+      io.emit('foeMove', { id: m.move.id, name: m.move.name, hits: m.move.hits.length });
+      turnHitStart(m, io);
+    } else { m.phase = 'recovery'; m.until = m.now + TURN_TUNE.foeRecovery; m.next = 'hero'; }
   }
   if (!m.ended) io.emit('turn', { who, n: m.n });
 }
@@ -151,16 +169,24 @@ function turnResolve(m, cmd, dt, io) {
     if (m.phase === 'recovery' && m.now >= m.until) turnBegin(m, m.next, io);
     if (m.phase === 'hero' && io.auto()) { const choice = io.choose(m); if (choice) turnResolve(m, choice, 0, io); }
     if (m.phase === 'foeWindup' && m.now >= m.until) {
-      const defense = m.defense;
+      // C22: every hit is its own parry or dodge; each timed parry takes 1 turn off every cooldown; the counter
+      // comes once, after the move, and only if every hit of it was parried.
+      const defense = m.defense, hit = m.move.hits[m.hitI];
+      let res = 'hit';
       if (defense === 'parry' || defense === 'autoParry') {
         if (defense === 'parry') for (const k of TURN_CD_KEYS) m.cooldowns[k] = Math.max(0, m.cooldowns[k] - 1);
         if (defense === 'autoParry') io.defense('parry', true, true);
-        if (defense === 'parry' || TURN_TUNE.autoParryCounters) io.counter(defense === 'autoParry');
-      } else if (defense === 'autoDodge') io.defense('dodge', true, true);
-      else if (defense !== 'dodge') io.foeHit();
+        if (defense === 'parry' || TURN_TUNE.autoParryCounters) m.parried++;
+        res = 'parry';
+      } else if (defense === 'autoDodge') { io.defense('dodge', true, true); res = 'dodge'; }
+      else if (defense === 'dodge') res = 'dodge';
+      else io.foeHit(hit.x > 0 ? hit : null);
+      io.emit('foeContact', { id: m.move.id, hit: m.hitI, hits: m.move.hits.length, res });
+      if (++m.hitI >= m.move.hits.length && m.parried === m.move.hits.length) io.counter(defense === 'autoParry');
       const after = io.alive();
       if (!after.hero || !after.foe) { turnEnd(m, after.hero ? 'victory' : 'defeat', io); return true; }
-      m.phase = 'recovery'; m.next = 'hero'; m.until = m.now + TURN_TUNE.foeRecovery;
+      if (m.hitI < m.move.hits.length) turnHitStart(m, io);
+      else { m.phase = 'recovery'; m.next = 'hero'; m.until = m.now + TURN_TUNE.foeRecovery; }
     }
     return true;
   }
@@ -190,7 +216,7 @@ let TURN_LIVE = null, TURN_RECOVER = 0, TURN_LAST_PROFILE = null;
 // with every action ready. They never carry from one foe to the next.
 const turnFreshCds = () => ({ attack: 0, echo: 0, bash: 0, fire: 0 });
 const TURN_NONE = { now: 0, phase: 'off', auto: false, foe: null, next: null, n: 0,
-  cooldowns: { attack: 0, echo: 0, bash: 0, fire: 0 }, dodgeOpensAt: 0, parryOpensAt: 0,
+  cooldowns: { attack: 0, echo: 0, bash: 0, fire: 0 }, dodgeOpensAt: 0, parryOpensAt: 0, move: null,
   closesAt: 0, heroHaste: 0, foeHaste: 0 };
 function turnCombatSnapshot() {
   const m = TURN_LIVE;
@@ -201,6 +227,7 @@ function turnCombatSnapshot() {
     foe: f ? { key: f.key, name: f.name, hp: f.hp, maxHp: f.max } : null, next: m.next, n: m.n,
     cooldowns: { ...m.cooldowns }, dodgeOpensAt: close ? close - o.dodgeWindow : 0,
     parryOpensAt: close ? close - o.parryWindow : 0, closesAt: close,
+    move: close && m.move ? { id: m.move.id, name: m.move.name, hit: m.hitI, hits: m.move.hits.length } : null,
     heroHaste: m.profile.heroHaste, foeHaste: m.profile.foeHaste };
 }
 function turnCombatProfile() {
@@ -245,7 +272,8 @@ const TURN_LIVE_IO = {
       emit('ability', { cls: 'solo', id, name: a.name, auto, slot }); }
     return true;
   },
-  foeHit: () => { const m = TURN_LIVE, z = turnScalarFoeHit(m.profile, m.effects, Math.random), u = cbUnitByKey('hero');
+  moves: () => TURN_LIVE.profile.moves,
+  foeHit: hit => { const m = TURN_LIVE, z = turnScalarFoeHit(m.profile, m.effects, Math.random, hit), u = cbUnitByKey('hero');
     if (u) u.blockN = m.effects.blockN;
     cbTurnHitHero(z.amount, z.blocked); },
   counter: auto => { const m = TURN_LIVE, d = turnScalarHit(m.profile, m.effects, 'counter', auto, Math.random);
@@ -273,6 +301,7 @@ function turnCombatTick(dt) {
   if (TURN_RECOVER > 0) { TURN_RECOVER -= dt; if (TURN_RECOVER <= 0) { cbRestore(true); spawn(); } return; }
   const f = combatFoes().find(x => x && !x.dead && x.hp > 0 && !x.gone);
   if (!f) { if (TURN_LIVE && !TURN_LIVE.ended) turnEnd(TURN_LIVE, 'victory', TURN_LIVE_IO); return; }
+  if (!(f.born >= 1)) f.born = (f.born || 0) + dt;   // the legacy tick that grows a new foe in does not run here
   if (!TURN_LIVE || TURN_LIVE.ended || TURN_LIVE.foe !== f) {
     if (TURN_LIVE && !TURN_LIVE.ended) turnEnd(TURN_LIVE, 'abandon', TURN_LIVE_IO);
     const p = turnMakeProfile(f, cbUnitByKey('hero')); if (!p) return;
@@ -317,7 +346,8 @@ function turnCombatSample({ profile: p, seconds, seed = 1, mode = 'auto' }) {
         if (z.burn > 0) { foeHp -= z.burn; out.damageDone += z.burn; } } },
     heroAction: (id, _, auto) => { const d = turnScalarHit(p, m.effects, id, auto, roll);
       if (!(d > 0)) return false; foeHp -= d; out.damageDone += d; out.directHits++; fightDirectHits++; return true; },
-    foeHit: () => { const z = turnScalarFoeHit(p, m.effects, roll); blockN = m.effects.blockN;
+    moves: () => p.moves,
+    foeHit: hit => { const z = turnScalarFoeHit(p, m.effects, roll, hit); blockN = m.effects.blockN;
       out.foeHits++; if (z.blocked) out.blocks++;
       heroHp -= z.amount; out.damageTaken += z.amount; },
     counter: auto => { const d = turnScalarHit(p, m.effects, 'counter', auto, roll);

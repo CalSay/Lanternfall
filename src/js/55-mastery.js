@@ -65,7 +65,7 @@ const masteryApi = {};
     if (za > zb) {
       emit('toast', { key: 'mastery', msg: `${zoneName(zone)}: mastery star ${za} of 5. +10% damage and +1% crit damage here.`, kind: 'good', icon: { ic: ['banner', '#F2C14E'] } });   // W1-B: bell list only
     }
-    const key = mob && mob.key ? String(mob.key).replace(/\d+$/, '') : null;
+    const key = mob && mob.skin && mob.type ? mob.type : mob && mob.key ? String(mob.key).replace(/\d+$/, '') : null;   // a zone monster (59l) counts for its type slot
     if (!key) return;
     // C25: every kind counts (the profile), and the last one beaten is remembered; Elders count for their kind
     const pb = (m.types[key] || 0) >= PROFILE_TIERS[0] ? PROFILE_TIERS.filter(x => (m.types[key] || 0) >= x).length : 0;

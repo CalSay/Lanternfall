@@ -92,7 +92,7 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
   const safe = (fn, d) => { try { return fn(); } catch (e) { console.error('[lanternfall] codex', e); return d; } };
   const bits = m => { let n = 0; m = m | 0; while (m) { n += m & 1; m >>>= 1; } return n; };
   const REGION_ZONES = REGIONS[0].z1;   // the Hollow; coast rows are R2-7's
-  const mobKey = m => m && m.key ? String(m.key).replace(/\d+$/, '') : null;
+  const mobKey = m => m && m.skin && m.type ? m.type : m && m.key ? String(m.key).replace(/\d+$/, '') : null;   // a zone monster (59l) counts for its type slot
   const tIdx = k => TYPES.findIndex(t => t.key === k);
   const zonesOf = i => { const z = []; for (let n = i + 1; n <= REGION_ZONES && z.length < 3; n += 7) z.push(n); return z; };
   const exact = () => (typeof campLevel === 'function' && campLevel('library') >= 3) || !!CX().got[100];

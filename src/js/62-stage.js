@@ -441,7 +441,7 @@ let resize, animate, draw, stageStats, warmScene;
   }
   function bindSlot(s, m) {
     s.m = m; s.st = 0; s.t = 0; s.dx = 0; s.jx = 0; s.jy = 0; s.dv = 0; s.dvOn = false; s.dvA = null; s.kb = 0; s.kn = 0; s.fl = 0;
-    s.hm = null; s.hpF = null; s.trail = 1; s.dF = null;
+    s.hm = null; s.hpF = null; s.trail = 1; s.dF = null; s.pzQ = null; s.pzT = 0; s.rp = ''; s.mv = ''; s.hurtT = 0;
     if (!m) { s.fr = null; s.key = ''; return; }
     const type = m.key.replace(/\d+$/, '');
     let key, fr;
@@ -746,7 +746,10 @@ let resize, animate, draw, stageStats, warmScene;
   function foeStrike(s, a, kind) {
     if (!s || !s.fr || !a) return;
     const tx = ax(a) + 4, ty = a.hy - 30;
-    if (s.st !== 2) { s.st = 2; s.t = 0; }
+    const Q = artSeq(s);
+    if (Q) { if (!turnFight()) artPlay(s, kind === 'heavy' ? [[Q.cross.hit[0], 0.12], [Q.cross.wind[1], 0.08], [Q.cross.hit[1], 0.16], [Q.cross.rec[0], 0.3]] :
+      [[Q.jab.hit[0], 0.2], [Q.jab.rec[0], 0.3]], kind === 'heavy' ? Q.cross.hit[0] : Q.jab.hit[0]); s.dx = artReach(s); }   // no wind-up event: it lands at once
+    else if (s.st !== 2) { s.st = 2; s.t = 0; }
     // the white hit flash: every big hit, else at most every 0.6 s (a tank under three foes would strobe)
     const big = kind === 'heavy' || kind === 'slam' || kind === 'dive';
     if (big || !(a.fcd > 0)) { a.flash = Math.max(a.flash, 0.08); a.fcd = 0.6; }
@@ -761,10 +764,44 @@ let resize, animate, draw, stageStats, warmScene;
     }
     if (kind === 'heavy' || kind === 'slam' || kind === 'dive') a.kb = 0.35;
   }
+  // Approved pack foes (64j, the Thorn Imp): their pose chains. In a turn fight the engine's moves drive them (59k:
+  // foeMove, parryWindow per hit, foeContact); in a legacy fight a swing plays the Jab (a heavy one the Crosscut).
+  // s.pzQ: the queue of [pose, seconds] (0 s: hold until replaced), s.pzT: seconds into its head; s.rp: the contact pose
+  // the foe steps in for, so that pose's blade tip lands on the hero (its reach: ox - x0); s.hurtT: the hurt pose.
+  const artSeq = s => s && s.fr && s.fr.poses && FOE_SEQ[s.fr.art] || null;
+  const turnFight = () => typeof turnCombatOn === 'function' && turnCombatOn();
+  function artPlay(s, q, rp) { s.pzQ = q; s.pzT = 0; if (rp) s.rp = rp; }
+  // the step-in (a negative dx) that puts the tip of contact pose s.rp at the front of the hero's body
+  function artReach(s) {
+    if (!s.m || s.m.dead || !hero.fr) return 0;
+    const P = s.fr.poses[s.rp] || s.fr.idle0;
+    return Math.min(0, ax(hero) + 14 + P.ox - (P.x0 || 0) - s.x);
+  }
+  function artStep(s, dt) {
+    if (s.hurtT > 0) s.hurtT -= dt;
+    const q = s.pzQ;
+    if (q && q.length && q[0][1] > 0 && (s.pzT += dt) >= q[0][1]) { q.shift(); s.pzT = 0; }
+    const want = q && q.length ? artReach(s) : 0;
+    s.dx = reduced || Math.abs(want - s.dx) < 1 ? want : s.dx + Math.sign(want - s.dx) * Math.min(Math.abs(want - s.dx), 520 * dt);
+  }
+  const turnSeq = () => { const s = foe; return artSeq(s) && turnFight() && s.m === mob ? s : null; };
+  on('foeMove', p => { const s = turnSeq(); if (s) s.mv = p.id; });
+  on('parryWindow', p => {
+    const s = turnSeq(), Q = s && FOE_SEQ[s.fr.art], M = Q && Q[s.mv]; if (!M || p.hit == null) return;
+    const wind = [M.wind[Math.min(p.hit, M.wind.length - 1)], 0], q = s.pzQ;
+    s.rp = M.hit[Math.min(p.hit, M.hit.length - 1)];
+    if (q && q.length && q[0][1] > 0) { q.length = 1; q.push(wind); } else artPlay(s, [wind]);   // the last contact shows first
+  });
+  on('foeContact', p => {
+    const s = turnSeq(), Q = s && FOE_SEQ[s.fr.art], M = Q && Q[s.mv]; if (!M) return;
+    const hit = M.hit[Math.min(p.hit, M.hit.length - 1)];
+    artPlay(s, p.hit + 1 >= p.hits ? [[hit, 0.22], [M.rec[0], 0.3]] : [[hit, 0.18]], hit);
+  });
   // The wyrm (and a foe without party combat) attacks on its own timer; a pack's foes attack when the core says so.
   function stepFoe(s, dt, timed) {
     const tg = target();
     if (s.fl > 0) s.fl -= dt;
+    if (tg === 'mob' && artSeq(s)) { artStep(s, dt); return; }
     if (tg === 'node' || !foeAlive() || (tg === 'mob' && (!s.m || s.m.dead || s.m.born < 0.6))) { s.st = 0; s.dx = 0; return; }
     if (!s.st) {
       if (timed) { s.next -= dt; if (s.next <= 0) { s.st = 1; s.t = 0; } }
@@ -783,7 +820,7 @@ let resize, animate, draw, stageStats, warmScene;
     const m = s.m, live = slotLive(s);
     // the white hit flash: on a hit, at most every 0.3 s (a pack takes hits from the whole party)
     if (s.hfc > 0) s.hfc -= dt;
-    if (live && m.hit > 0 && !(s.hfc > 0)) { s.fl = Math.max(s.fl, 0.07); s.hfc = 0.3; }
+    if (live && m.hit > 0 && !(s.hfc > 0)) { s.fl = Math.max(s.fl, 0.07); s.hfc = 0.3; s.hurtT = 0.28; }
     const tA = live && m.diveT > 0 && m.diveU >= 0 ? actorOf(unitKey(m.diveU)) : null;
     if (tA && !tA.down) { if (!s.dvOn) { s.dvOn = true; diveStart(tA); } s.dvA = tA; }
     else s.dvOn = false;
@@ -1183,7 +1220,16 @@ let resize, animate, draw, stageStats, warmScene;
   // channel) runs, its strike, else the idle bob (each foe on its own beat).
   function foeFrame(s, tele) {
     const f = s.fr; if (!f) return null;
-    const tg = target(), m = s.m;
+    const tg = target(), m = s.m, Q = tg === 'mob' && artSeq(s);
+    if (Q) {   // a pack foe (64j): defeated, staggered, its move's pose, hurt, a legacy telegraph's wind-up, idle
+      const P = f.poses, q = s.pzQ && s.pzQ[0];
+      if (m && m.dead) return P[Q.dead] || f.idle0;
+      if (m && m.stunT > 0) return P[Q.stagger] || f.idle0;
+      if (q && P[q[0]]) return P[q[0]];
+      if (s.hurtT > 0) return f.hit;
+      if (m && tele && tele.foe === m) return P[tele.kind === 'heavy' ? Q.cross.wind[0] : Q.jab.wind[0]] || f.wind;
+      return f.idle0;
+    }
     if (s.fl > 0) return tg === 'mob' && s.fl > 0.02 ? f.idle0 : f.hit;   // a pack foe's hit flash is an overlay on idle0 (drawFoe)
     if (tg === 'world' && wyrmHit > 0) return f.hit;
     if (tg === 'node') {
@@ -1202,7 +1248,7 @@ let resize, animate, draw, stageStats, warmScene;
     let x = s.x + s.dx - cam, y = s.gy, alpha = 1, sy = 1;
     if (m) {
       if (s.fl > 0.02) x += 2;
-      if (m.dead) { alpha = Math.max(0, 1 - m.dead / 0.4); y += Math.round(m.dead * 30); }
+      if (m.dead) { alpha = Math.max(0, 1 - m.dead / 0.4); if (!artSeq(s)) y += Math.round(m.dead * 30); }   // a pack foe falls in its defeated pose
       else if (m.born < 0.15) { sy = 0.4 + 0.6 * (m.born / 0.15); alpha = Math.min(1, m.born / 0.1 + 0.3); }
       if (s.hover && !reduced) y += Math.round(Math.sin(T * 3 + (s.hx & 7)) * 2);
     } else if (tg === 'node' && typeof gatherFall === 'function' && gatherFall() >= 0) {
@@ -1218,7 +1264,7 @@ let resize, animate, draw, stageStats, warmScene;
     else ctx.drawImage(c, dx, Math.round(y - f.oy));
     // hit: a half-strength white flash over the frame (a pack takes hits from the whole party; a full
     // white silhouette each time would hide the foe)
-    if (m && !m.dead && s.fl > 0.02 && sy === 1) { ctx.globalAlpha = 0.55 * alpha; ctx.drawImage(s.fr.hit.c, dx, Math.round(y - f.oy)); }
+    if (m && !m.dead && s.fl > 0.02 && sy === 1 && !artSeq(s)) { ctx.globalAlpha = 0.55 * alpha; ctx.drawImage(s.fr.hit.c, dx, Math.round(y - f.oy)); }
     // stunned: three sparks circle over its head (still under reduced motion)
     if (m && !m.dead && m.stunT > 0) {
       const hy = Math.round(y - f.oy + headTop(s.fr.idle0)) - 4, cx = Math.round(x), r = Math.max(6, Math.round(s.w * 0.18));
