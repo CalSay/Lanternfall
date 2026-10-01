@@ -33,6 +33,10 @@ It replaces the "about 10 abilities" sketch in `solo-hero.md` (Abilities) with t
   on top, as today.
 - **Equip 3.** The action bar keeps 3 ability slots (Q/W/E) plus Attack, and the Parry and Dodge reactions (used on the foe's attack, not as the hero's action). With 14 abilities the loadout is
   the build. (Question 2 asks whether to go to 4.)
+- **Passives (owner idea, 2026-10-01).** A passive takes an ability slot but has no button: it is always on, for
+  example "Attack fires two arrows". It costs a slot, so equipping one means one fewer active ability. In this draft each
+  shared pool has 1 passive and each signature set has 1 (2 of each hero's 14). Passives need no pose of their own.
+  A Hallowed passive gets stronger numbers only.
 - **Auto** casts the first ready ability in bar order. Abilities that need a condition (Riposte after a parry, Ignite on a
   burning foe) are skipped by Auto until the condition holds.
 - **Bosses:** a stun, freeze or skipped turn becomes **Stagger** on a boss (as today: bosses fill the stagger bar
@@ -97,7 +101,7 @@ Every future archer, melee or caster hero shares these six. The pose column is t
 | A3 | **Pinning Shot** | debuff | 1.0 | 4 | Pinned, and -3 Speed for 2 turns. | sets up a counter | kneel-shot |
 | A4 | **Hunter's Mark** | debuff | 0.6 | 4 | Mark for 4 turns. | feeds every Mark payoff | point |
 | A5 | **Volley** | damage | 3 x 0.7 | 4 | Three arrows; each can crit and each counts as a hit. | many hits for on-hit effects | sky-draw |
-| A6 | **Quick Draw** | damage + resource | 0.9 | 2 | A fast shot. | +1 Aim | draw-release |
+| A6 | **Twin Shot** | passive | 2 x 0.6 | — | Attack fires two arrows; each rolls its own crit and on-hit effects. | doubles every on-hit payoff | none (Attack) |
 
 ### Melee pool (Tobin)
 
@@ -106,7 +110,7 @@ Every future archer, melee or caster hero shares these six. The pose column is t
 | M1 | **Heavy Strike** | damage | 2.0 | 3 | A big two-handed blow. | x1.5 on a Stunned foe | overhead |
 | M2 | **Cleave** | damage + debuff | 1.4 | 3 | A wide swing; hits all foes. 1 Bleed. | | wide-swing |
 | M3 | **Sunder** | debuff | 1.0 | 4 | Sunder 3 turns. | feeds Sunder payoffs | overhead |
-| M4 | **Battle Cry** | buff | — | 5 | +25% damage for 3 turns. | | shout |
+| M4 | **Momentum** | passive | — | — | Each Attack in a row deals +10% more, up to +50%. Using an ability resets it. | rewards Attack chains between abilities | none |
 | M5 | **Brace** | buff | — | 4 | Guard 2 turns; the next parry window is 50% wider. | sets up a parry | block |
 | M6 | **Lunge** | damage + buff | 1.2 | 3 | Dash in. +3 Speed for 2 turns. | | lunge |
 
@@ -118,7 +122,7 @@ Every future archer, melee or caster hero shares these six. The pose column is t
 | C2 | **Frost Shard** | damage + debuff | 1.1 frost | 3 | 1 Chill (3 Chill = Frozen). | Frozen foes take x1.5 from fire ("Thaw") | small-cast |
 | C3 | **Arcane Ward** | buff | — | 5 | Ward 20% max HP. | | lantern-raise |
 | C4 | **Hex** | debuff | — | 5 | Curse 3 turns: it stores 20% of the damage it takes and bursts for that when it ends. | rewards a big turn | point |
-| C5 | **Channel** | buff | — | 5 | Skip the hit. Next spell x1.8 and -1 turn on every cooldown. | | channel |
+| C5 | **Afterglow** | passive | — | — | After an ability, the next Attack deals +50% and takes that ability's damage type. | weaves Attacks between spells | none |
 | C6 | **Nova** | damage | 1.6 | 4 | A ring of force; hits all foes. | | burst |
 
 ## 6. Signature abilities (8 each)
@@ -137,7 +141,7 @@ Her loop: **Mark the foe, build Aim, then cash it in.** Bleed is her second payo
 | W4 | **Sonic Arrow** | 3 | damage + debuff | 1.0 | 5 | Stuns a Marked or Pinned foe (spends it). | Pinning Shot or Mark, then this | draw-release + sound waves |
 | W5 | **Shadow Step** | 3 | buff | — | 4 | Her next dodge cannot fail (any timing works) and gives Keen. She still has to choose to dodge. | dodge into Deadeye | backstep |
 | W6 | **Moonlit Volley** | 4 | damage | 5 x 0.5 | 6 | Arrows fall from above. On a Marked foe each hit adds 1 Bleed. | Mark, then this, then Final Echo | sky-draw |
-| W7 | **Night Hunter** | 4 | buff | — | 6 | For 3 turns every Attack Marks and gives +1 Aim. | turns Attack into setup | hood-stance |
+| W7 | **Night Hunter** | 4 | passive | — | — | Every Attack on a Marked foe gives +1 Aim. | with Twin Shot: 2 Aim an Attack | none |
 | W8 | **Final Echo** (F) | 5 | finisher | 1.5 + 0.5 per Bleed + 0.5 per Aim | 7, opens turn 3 | Spends all Bleed and Aim. If it kills, every cooldown drops 2. | the end of her loop | long-draw + sound waves |
 
 ### 6.2 Tobin, the Warden: parry, Grit, stun
@@ -152,7 +156,7 @@ His loop: **Brace and parry, build Grit, then stun and smash.** He is the counte
 | T4 | **Taunting Roar** | 3 | debuff | — | 5 | Weaken 2 turns and Pinned. | an easy parry for Riposte | shout |
 | T5 | **Hammerfall** | 3 | damage | 1.0 + 0.3 per Grit | 5 | Spends all Grit. x1.5 on a Stunned foe. | the main Grit payoff | overhead |
 | T6 | **Shield Throw** | 4 | damage + debuff | 1.4 | 4 | Stuns a Sundered foe. | Sunder, then this | throw |
-| T7 | **Bulwark** | 4 | buff | — | 6 | For 3 turns: Guard, and every parry gives +1 Grit and counters x1.5. | the parry engine | block |
+| T7 | **Bulwark** | 4 | passive | — | — | Every parry gives +1 Grit, and its counter deals x1.3. | the parry engine, always on | none |
 | T8 | **Last Stand** (F) | 5 | finisher | counters | 8, opens turn 3 | For 2 turns he cannot drop below 1 HP and his parry window is twice as wide; each parry counters x2. Then he heals 20% max HP. | the comeback | shield-raise |
 
 ### 6.3 Pip, the Lanternmage: Burn and Embers
@@ -167,7 +171,7 @@ Her loop: **Gather Embers, set the foe alight, then feed or detonate the fire.**
 | P4 | **Searing Eye** | 3 | buff | — | 6 | For 2 turns her hits on a burning foe always crit. | the owner's example: burn, then sure crits | channel |
 | P5 | **Wildfire** | 3 | debuff | — | 5 | Burn grows: +0.2 each turn instead of fading, 3 turns. | stack with Kindle, cash with Ignite | big-cast |
 | P6 | **Lantern Flare** | 4 | debuff | 0.5 holy | 5 | Blind 2 turns. A burning foe is also Marked. | | lantern-raise |
-| P7 | **Ember Shield** | 4 | buff | — | 5 | Ward 5% max HP per Ember (kept, not spent). A foe that hits it catches fire. | Burn without casting | lantern-raise |
+| P7 | **Ember Heart** | 4 | passive | — | — | Each Burn tick on the foe gives +1 Ember (once a turn). | Burn feeds Fireball and Lanternburst | none |
 | P8 | **Lanternburst** (F) | 5 | finisher | 2.0 + 1.0 per Ember, x2 on a burning foe | 7, opens turn 3 | Spends all Embers and the Burn. | the end of her loop | burst |
 
 ### 6.4 Unlocking
@@ -192,18 +196,17 @@ fits. Shared families are drawn once per hero. Props and effects (sound waves, b
 
 | Pose family | Used by | Wren | Tobin | Pip |
 |---|---|---|---|---|
-| draw-release | A1 A2 A6 W1 W4 | exists (draw, release) | | |
+| draw-release | A1 A2 W1 W4 | exists (draw, release) | | |
 | long-draw | W3 W8 | **new**: a held full draw | | |
 | sky-draw | A5 W6 | **new**: aim up | | |
 | kneel-shot | A3 | **new** (kneel exists for hurt) | | |
 | point | A4 C4 | **new** | | **new** |
 | whistle | W2 | **new** (+ the bat fx exists) | | |
 | backstep | W5 | **new** (also the dodge) | | |
-| hood-stance | W7 | **new** | | |
 | overhead | M1 M3 T5 | | wind + strike exist | |
 | wide-swing | M2 | | **new** | |
-| shout | M4 T4 | | **new** | |
-| block | M5 T7 | | exists | |
+| shout | T4 | | **new** | |
+| block | M5 | | exists | |
 | lunge | M6 T2 | | **new** | |
 | shield-bash | T1 | | **new** (today it plays the block) | |
 | plant | T3 | | **new**: braced, feet set | |
@@ -211,12 +214,12 @@ fits. Shared families are drawn once per hero. Props and effects (sound waves, b
 | shield-raise | T8 | | **new** | |
 | small-cast | C1 C2 P2 | | | wind + cast exist |
 | big-cast | P1 P5 | | | exists (Fireball) |
-| lantern-raise | C3 P6 P7 | | | **new** |
-| channel | C5 P4 | | | **new** |
+| lantern-raise | C3 P6 | | | **new** |
+| channel | P4 | | | **new** |
 | snap | P3 | | | **new** |
 | burst | C6 P8 | | | **new** |
 
-**New poses per hero:** Wren 7, Tobin 7, Pip 5 (about 3 frames each), plus the effects: arrows, sound waves, bats, a
+**New poses per hero:** Wren 6, Tobin 7, Pip 5 (about 3 frames each), plus the effects: arrows, sound waves, bats, a
 thrown shield, fire, frost, the lantern's light, wards. This is the art bill Codex can plan against in one go.
 
 ## 8. What the engine needs (all in reach)
