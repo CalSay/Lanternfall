@@ -1,0 +1,146 @@
+[
+  {
+    "pose": "g1-rest",
+    "tool": "pick",
+    "angle": "down",
+    "file": "g1-rest-pick.png",
+    "grip": [
+      95,
+      96
+    ],
+    "layer": "front",
+    "status": "fit-review-pending"
+  },
+  {
+    "pose": "g1-rest",
+    "tool": "axe",
+    "angle": "down",
+    "file": "g1-rest-axe.png",
+    "grip": [
+      95,
+      96
+    ],
+    "layer": "front",
+    "status": "fit-review-pending"
+  },
+  {
+    "pose": "g1-rest",
+    "tool": "sickle",
+    "angle": "down",
+    "file": "g1-rest-sickle.png",
+    "grip": [
+      95,
+      96
+    ],
+    "layer": "front",
+    "status": "fit-review-pending"
+  },
+  {
+    "pose": "g1-rest",
+    "tool": "spear",
+    "angle": "down",
+    "file": "g1-rest-spear.png",
+    "grip": [
+      95,
+      96
+    ],
+    "layer": "front",
+    "status": "fit-review-pending"
+  },
+  {
+    "pose": "g2-forward",
+    "tool": "sickle",
+    "angle": "left-up",
+    "file": "g2-forward-sickle.png",
+    "grip": [
+      85,
+      86
+    ],
+    "layer": "front",
+    "status": "fit-review-pending"
+  },
+  {
+    "pose": "g3-shoulder",
+    "tool": "axe",
+    "angle": "back",
+    "file": "g3-shoulder-axe.png",
+    "grip": [
+      71,
+      70
+    ],
+    "layer": "behind",
+    "status": "fit-review-pending"
+  },
+  {
+    "pose": "g3-shoulder",
+    "tool": "spear",
+    "angle": "left-level",
+    "file": "g3-shoulder-spear.png",
+    "grip": [
+      71,
+      70
+    ],
+    "layer": "behind",
+    "status": "fit-review-pending"
+  },
+  {
+    "pose": "g4-overhead",
+    "tool": "pick",
+    "angle": "back",
+    "file": "g4-overhead-pick.png",
+    "grip": [
+      86,
+      44
+    ],
+    "layer": "behind",
+    "status": "fit-review-pending"
+  },
+  {
+    "pose": "g5-low",
+    "tool": "pick",
+    "angle": "down",
+    "file": "g5-low-pick.png",
+    "grip": [
+      110,
+      95
+    ],
+    "layer": "front",
+    "status": "fit-review-pending"
+  },
+  {
+    "pose": "g6-crouch",
+    "tool": "sickle",
+    "angle": "down",
+    "file": "g6-crouch-sickle.png",
+    "grip": [
+      100,
+      100
+    ],
+    "layer": "front",
+    "status": "fit-review-pending"
+  },
+  {
+    "pose": "g7-level",
+    "tool": "axe",
+    "angle": "level",
+    "file": "g7-level-axe.png",
+    "grip": [
+      125,
+      85
+    ],
+    "layer": "front",
+    "status": "fit-review-pending"
+  },
+  {
+    "pose": "g7-level",
+    "tool": "spear",
+    "angle": "level",
+    "file": "g7-level-spear.png",
+    "grip": [
+      125,
+      85
+    ],
+    "layer": "front",
+    "status": "fit-review-pending"
+  }
+]

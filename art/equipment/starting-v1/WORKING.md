@@ -46,3 +46,7 @@ Measured file milestones (UTC): source contact inventory10:40; first Tobin base 
 
 Repository checks: node tools/build.mjs passed. Full node tools/check.mjs --jobs=2 with LF_PLAYWRIGHT pointing to the existing installed dependency passed, browser sections skipped0. Artifact validator c27-check.py passed its current16tool/37source/Tobin-proof checks. These do not certify missing art or aesthetic correctness.
 
+
+Latest checkpoint: all seven Tobin gathering base recuts independently passed for fitting after explicit cape and g5 face/fringe protection. Twenty-one authored tool views exported; twelve Tobin held-tool proofs are under independent review. This is not final approval. Suspected issues include spear visibility across the face/shoulder and material ramp semantics. Preview now uses tool-specific angles and available body/front-hand layers.
+
+Held-tool audit corrected face/visibility failures: rest spear down-right, shoulder spear authored left-facing view, low pick rear grip, level axe/spear rear grip. Final rear grips and thicker left spear remain pending independent recheck. 22 tools,37 original poses and all10 base proof invariants pass validation. No semantic palette-mask approval yet.

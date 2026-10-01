@@ -20,7 +20,23 @@ for i,(name,size,origin,hat,torso,face,scarf,hands,grip) in enumerate(jobs):
  for p in [hat,torso]:d.polygon(p,fill=255)
  identity=Image.new('L',(224,192));di=ImageDraw.Draw(identity)
  for p in [face,scarf,hands]:d.polygon(p,fill=0);di.polygon(p,fill=255)
- # Boots below the ankle line always remain original; non-removable signature cape is outside torso selection.
+ # Explicit signature-cape protection, including its seam where torso masks overlap.
+ redcolours={(133,45,59),(90,33,51),(176,68,73)}
+ redpixels={(xx,yy) for yy in range(192) for xx in range(224) if original.getpixel((xx,yy))[:3] in redcolours and original.getpixel((xx,yy))[3]}
+ cape={p for p in redpixels if 40<=p[0]<=84 and 81<=p[1]<=110};todo=list(cape)
+ while todo:
+  xx,yy=todo.pop()
+  for dx in [-1,0,1]:
+   for dy in [-1,0,1]:
+    q=(xx+dx,yy+dy)
+    if q in redpixels and q not in cape:cape.add(q);todo.append(q)
+ for xx,yy in list(cape):
+  for dx,dy in [(-1,0),(1,0),(0,-1),(0,1)]:
+   q=(xx+dx,yy+dy);px=original.getpixel(q)
+   if px[3] and max(px[:3])<70:cape.add(q)
+ for point in cape:mask.putpixel(point,0);identity.putpixel(point,255)
+ if name=='g5-low':d.rectangle((96,69,119,86),fill=0);di.rectangle((96,69,119,86),fill=255)
+ # Boots below the ankle line always remain original.
  d.rectangle((0,122,223,191),fill=0);di.rectangle((0,122,223,191),fill=255)
  body=Image.composite(native,original,mask);fmask=Image.new('L',(224,192));ImageDraw.Draw(fmask).rectangle((grip[0]-3,grip[1]-3,grip[0]+3,grip[1]+3),fill=255);front=Image.new('RGBA',(224,192));front.paste(original,(0,0),fmask)
  for y in range(192):
@@ -31,4 +47,7 @@ for i,(name,size,origin,hat,torso,face,scarf,hands,grip) in enumerate(jobs):
  meta={'status':'draft-needs-visual-review','source':'art/heroes/tobin/gather/'+name+'.png','sourceGeneration':str(R/'sources/tobin-gather'/f'{name}.png'),'nativeSize':size,'nativeOrigin':origin,'protectedPixelChanges':changes,'editPolygons':[hat,torso],'protectedPolygons':[face,scarf,hands],'frontHandSelection':[grip[0]-3,grip[1]-3,grip[0]+3,grip[1]+3]};(out/'validation.json').write_text(json.dumps(meta,indent=2));report.append(meta)
  for k,im in enumerate([original,combined]):im=im.resize((448,384),Image.Resampling.NEAREST);preview.paste(im,(k*448,i*384),im);dd.text((k*448+10,i*384+10),name+(' original' if k==0 else ' masked base draft'),fill='white')
 preview.save(O/'gather-comparison.png');(O/'gather-manifest.json').write_text(json.dumps(report,indent=2));print('7Tobin gathering base candidates; original-pixel checks pass; visual review pending')
+
+
+
 

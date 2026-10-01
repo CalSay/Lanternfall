@@ -15,11 +15,25 @@ for kind,pts in anchors.items():
   canvas=Image.new('RGBA',(80,80));ox=40-round((gx-x)*k);oy=40-round((gy-y)*k);canvas.paste(cell,(ox,oy));file=O/f'{kind}-{angles[i]}.png';canvas.save(file,optimize=True)
   bb=canvas.getbbox();assert bb and min(bb[:2])>0 and max(bb[2:])<80,(kind,angles[i],bb)
   items.append({'kind':kind,'angle':angles[i],'file':file.name,'canvas':[80,80],'grip':[40,40],'source':f'../sources/{src.name}','sourceGrip':[gx,gy],'scale':k,'sourceSha256':digest(src),'sha256':digest(file),'bbox':list(bb),'status':'needs-native-fit-review'})
+# The approved source already supplies the up-right view. Reuse that authored angle; never rotate pixels.
+for kind,grip,k in [('pick',(85,173),.22),('axe',(90,163),.23),('sickle',(84,182),.20),('spear',(117,158),.24)]:
+ src=R/'references'/f'{kind}-g1.png';im=Image.open(src).convert('RGBA');im=im.resize((round(im.width*k),round(im.height*k)),Image.Resampling.LANCZOS);alpha=im.getchannel('A').point(lambda v:255 if v>=128 else 0);im=im.convert('RGB').quantize(palette=pal,dither=Image.Dither.NONE).convert('RGBA');im.putalpha(alpha);canvas=Image.new('RGBA',(80,80));canvas.paste(im,(40-round(grip[0]*k),40-round(grip[1]*k)));file=O/f'{kind}-diagonal.png';canvas.save(file,optimize=True);bb=canvas.getbbox();assert bb and min(bb[:2])>0 and max(bb[2:])<80,(kind,bb);assert canvas.getpixel((40,40))[3],kind
+ items.append({'kind':kind,'angle':'diagonal','file':file.name,'canvas':[80,80],'grip':[40,40],'source':f'../references/{src.name}','sourceKind':'approved-up-right-view-reused-no-rotation','sourceGrip':grip,'scale':k,'sourceSha256':digest(src),'sha256':digest(file),'bbox':list(bb),'status':'needs-native-fit-review'})
+src=R/'sources/sickle-left-up.png';im=Image.open(src).convert('RGBA');k=.043;grip=(1060,750)
+im=im.resize((round(im.width*k),round(im.height*k)),Image.Resampling.LANCZOS);a=im.getchannel('A').point(lambda v:255 if v>=128 else 0);im=im.convert('RGB').quantize(palette=pal,dither=Image.Dither.NONE).convert('RGBA');im.putalpha(a);canvas=Image.new('RGBA',(80,80));canvas.paste(im,(40-round(grip[0]*k),40-round(grip[1]*k)));file=O/'sickle-left-up.png';canvas.save(file,optimize=True);bb=canvas.getbbox();assert bb and min(bb[:2])>0 and max(bb[2:])<80,bb;assert canvas.getpixel((40,40))[3]
+items.append({'kind':'sickle','angle':'left-up','file':file.name,'canvas':[80,80],'grip':[40,40],'source':'../sources/sickle-left-up.png','sourceGrip':grip,'scale':k,'sourceSha256':digest(src),'sha256':digest(file),'bbox':list(bb),'status':'needs-native-fit-review'})
+src=R/'sources/spear-left-level.png';im=Image.open(src).convert('RGBA');k=.043;grip=(1040,380)
+im=im.resize((round(im.width*k),round(im.height*k)),Image.Resampling.LANCZOS);a=im.getchannel('A').point(lambda v:255 if v>=128 else 0);im=im.convert('RGB').quantize(palette=pal,dither=Image.Dither.NONE).convert('RGBA');im.putalpha(a);canvas=Image.new('RGBA',(80,80));canvas.paste(im,(40-round(grip[0]*k),40-round(grip[1]*k)));file=O/'spear-left-level.png';canvas.save(file,optimize=True);bb=canvas.getbbox();assert bb and min(bb[:2])>0 and max(bb[2:])<80,bb;assert canvas.getpixel((40,40))[3]
+items.append({'kind':'spear','angle':'left-level','file':file.name,'canvas':[80,80],'grip':[40,40],'source':'../sources/spear-left-level.png','sourceGrip':grip,'scale':k,'sourceSha256':digest(src),'sha256':digest(file),'bbox':list(bb),'status':'needs-native-fit-review'})
 (O/'manifest.json').write_text(json.dumps({'status':'draft-not-approved','ramps':ramps,'items':items,'rotationUsed':False},indent=2))
-out=Image.new('RGB',(960,960),(38,40,48));d=ImageDraw.Draw(out)
+out=Image.new('RGB',(960,1440),(38,40,48));d=ImageDraw.Draw(out)
 for i,item in enumerate(items):
  im=Image.open(O/item['file']);x=i%4*240;y=i//4*240;im=im.resize((240,240),Image.Resampling.NEAREST);out.paste(im,(x,y),im);d.text((x+6,y+6),item['kind']+' '+item['angle'],fill='white')
 out.save(O/'contact.png');print('Exported',len(items),'authored80x80views,16reservedcolours,binaryalpha,noedgeclipping')
+
+
+
+
 
 
 

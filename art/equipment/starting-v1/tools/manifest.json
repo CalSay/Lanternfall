@@ -476,6 +476,178 @@
         47
       ],
       "status": "needs-native-fit-review"
+    },
+    {
+      "kind": "pick",
+      "angle": "diagonal",
+      "file": "pick-diagonal.png",
+      "canvas": [
+        80,
+        80
+      ],
+      "grip": [
+        40,
+        40
+      ],
+      "source": "../references/pick-g1.png",
+      "sourceKind": "approved-up-right-view-reused-no-rotation",
+      "sourceGrip": [
+        85,
+        173
+      ],
+      "scale": 0.22,
+      "sourceSha256": "1826110ef3d093bf8d092880708bbe42e7b85e1618815800b725577d993a4b58",
+      "sha256": "803796d164f01519634319da1907e9919ef87ce4c09845249305723d4d767582",
+      "bbox": [
+        29,
+        8,
+        74,
+        56
+      ],
+      "status": "needs-native-fit-review"
+    },
+    {
+      "kind": "axe",
+      "angle": "diagonal",
+      "file": "axe-diagonal.png",
+      "canvas": [
+        80,
+        80
+      ],
+      "grip": [
+        40,
+        40
+      ],
+      "source": "../references/axe-g1.png",
+      "sourceKind": "approved-up-right-view-reused-no-rotation",
+      "sourceGrip": [
+        90,
+        163
+      ],
+      "scale": 0.23,
+      "sourceSha256": "e8dc887351c85f66f1f83e0b796eb4bf8cae51972b11512415f5ff0cb6643ae0",
+      "sha256": "7aead1c05c8fcb9589358722184c504472176c5192ba9af0c15b617d1b98b0de",
+      "bbox": [
+        26,
+        7,
+        69,
+        61
+      ],
+      "status": "needs-native-fit-review"
+    },
+    {
+      "kind": "sickle",
+      "angle": "diagonal",
+      "file": "sickle-diagonal.png",
+      "canvas": [
+        80,
+        80
+      ],
+      "grip": [
+        40,
+        40
+      ],
+      "source": "../references/sickle-g1.png",
+      "sourceKind": "approved-up-right-view-reused-no-rotation",
+      "sourceGrip": [
+        84,
+        182
+      ],
+      "scale": 0.2,
+      "sourceSha256": "9352b2ee0e57caedea8d166a15ff1e7997bc9438ef828642bba5ff8db6dac6bc",
+      "sha256": "384a5c3e46b86ff3d22e85adfb8d5e307e37b4d82db8d9d2e1fe6882ff469012",
+      "bbox": [
+        31,
+        10,
+        67,
+        53
+      ],
+      "status": "needs-native-fit-review"
+    },
+    {
+      "kind": "spear",
+      "angle": "diagonal",
+      "file": "spear-diagonal.png",
+      "canvas": [
+        80,
+        80
+      ],
+      "grip": [
+        40,
+        40
+      ],
+      "source": "../references/spear-g1.png",
+      "sourceKind": "approved-up-right-view-reused-no-rotation",
+      "sourceGrip": [
+        117,
+        158
+      ],
+      "scale": 0.24,
+      "sourceSha256": "223aa744a8cf292fb060364b61f36dfeba5548ac7e915b4ea81e71f00edaefc8",
+      "sha256": "f50043836e5cc40572037d3e528bf49cf29b66091f41dc116ce284e524f4fb9b",
+      "bbox": [
+        20,
+        4,
+        63,
+        62
+      ],
+      "status": "needs-native-fit-review"
+    },
+    {
+      "kind": "sickle",
+      "angle": "left-up",
+      "file": "sickle-left-up.png",
+      "canvas": [
+        80,
+        80
+      ],
+      "grip": [
+        40,
+        40
+      ],
+      "source": "../sources/sickle-left-up.png",
+      "sourceGrip": [
+        1060,
+        750
+      ],
+      "scale": 0.043,
+      "sourceSha256": "994d4854ca0dd24275e0cf271b7a9a2c65904cffee9481d5f19bd3276d68bcc0",
+      "sha256": "671d10ba9c6c03c15dde56bbe0356b2e8fb002cf6e3e5624d8dd7a73b2b6d03b",
+      "bbox": [
+        5,
+        13,
+        50,
+        47
+      ],
+      "status": "needs-native-fit-review"
+    },
+    {
+      "kind": "spear",
+      "angle": "left-level",
+      "file": "spear-left-level.png",
+      "canvas": [
+        80,
+        80
+      ],
+      "grip": [
+        40,
+        40
+      ],
+      "source": "../sources/spear-left-level.png",
+      "sourceGrip": [
+        1040,
+        380
+      ],
+      "scale": 0.043,
+      "sourceSha256": "a5a3a5fb0ede5b16f97c55b6472d25dbebf4285a88ff57e4312156027e44ff3b",
+      "sha256": "5c09d9a86cf9130d15f6fa1f100a40cdd44dadaafab9cb2c12d49cd12e3cd548",
+      "bbox": [
+        4,
+        34,
+        76,
+        47
+      ],
+      "status": "needs-native-fit-review"
     }
   ],
   "rotationUsed": false

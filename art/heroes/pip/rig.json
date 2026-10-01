@@ -46,8 +46,8 @@
       "weaponLayer": "front",
       "hiddenSlots": [],
       "layers": {
-        "body": null,
-        "frontHand": null,
+        "body": "../../equipment/starting-v1/fit-proof/pip-ready/body.png",
+        "frontHand": "../../equipment/starting-v1/fit-proof/pip-ready/front-hand.png",
         "weapon": null,
         "offHand": null,
         "head": null,
@@ -351,8 +351,9 @@
           "legacyDegrees": 45
         },
         "spear": {
-          "angle": "diagonal",
-          "legacyDegrees": -25
+          "angle": "down",
+          "legacyDegrees": -25,
+          "artDirection": "Face-clear down-right carry"
         }
       }
     },
@@ -401,7 +402,7 @@
       "gripProvenance": "src/js/64h-hero-sprites.js GRIP, approved gathering source coords",
       "toolUse": {
         "sickle": {
-          "angle": "left-down",
+          "angle": "left-up",
           "legacyDegrees": 200
         }
       }
@@ -455,8 +456,9 @@
           "legacyDegrees": -150
         },
         "spear": {
-          "angle": "level",
-          "legacyDegrees": -8
+          "angle": "left-level",
+          "legacyDegrees": -8,
+          "artDirection": "Head visible left of shoulder"
         }
       }
     },
@@ -556,7 +558,11 @@
       "toolUse": {
         "pick": {
           "angle": "down",
-          "legacyDegrees": 60
+          "legacyDegrees": 60,
+          "assetGrip": [
+            25,
+            25
+          ]
         }
       }
     },
@@ -656,11 +662,19 @@
       "toolUse": {
         "axe": {
           "angle": "level",
-          "legacyDegrees": 0
+          "legacyDegrees": 0,
+          "assetGrip": [
+            15,
+            40
+          ]
         },
         "spear": {
           "angle": "level",
-          "legacyDegrees": 0
+          "legacyDegrees": 0,
+          "assetGrip": [
+            15,
+            40
+          ]
         }
       }
     }

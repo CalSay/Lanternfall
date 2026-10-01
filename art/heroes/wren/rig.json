@@ -134,8 +134,8 @@
       "weaponLayer": "front",
       "hiddenSlots": [],
       "layers": {
-        "body": null,
-        "frontHand": null,
+        "body": "../../equipment/starting-v1/fit-proof/wren-draw/body.png",
+        "frontHand": "../../equipment/starting-v1/fit-proof/wren-draw/front-hand.png",
         "weapon": null,
         "offHand": null,
         "head": null,

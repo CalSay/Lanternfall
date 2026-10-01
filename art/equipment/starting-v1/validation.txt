@@ -1,4 +1,4 @@
-16 native tool files: dimensions, binary alpha, ramp membership, nonempty grip, hashes PASS
+22 native tool files: dimensions, binary alpha, ramp membership, nonempty grip, hashes PASS
 37 original pose hashes, dimensions and in-canvas draft anchors PASS
-Tobin ready: body+front-hand exact reconstruction, 0 changes outside edit mask PASS
+10 base recuts: exact layer reconstruction, zero outside-mask/identity-mask changes, binary alpha, <=40 colours PASS
 Visual fitting, complete pack coverage and integration approval: PENDING

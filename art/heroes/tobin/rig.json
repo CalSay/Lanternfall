@@ -369,8 +369,8 @@
         "offHand"
       ],
       "layers": {
-        "body": null,
-        "frontHand": null,
+        "body": "../../equipment/starting-v1/bases/tobin/g1-rest/body.png",
+        "frontHand": "../../equipment/starting-v1/bases/tobin/g1-rest/front-hand.png",
         "weapon": null,
         "offHand": null,
         "head": null,
@@ -391,8 +391,9 @@
           "legacyDegrees": 45
         },
         "spear": {
-          "angle": "diagonal",
-          "legacyDegrees": -25
+          "angle": "down",
+          "legacyDegrees": -25,
+          "artDirection": "Face-clear down-right carry"
         }
       }
     },
@@ -431,8 +432,8 @@
         "offHand"
       ],
       "layers": {
-        "body": null,
-        "frontHand": null,
+        "body": "../../equipment/starting-v1/bases/tobin/g2-forward/body.png",
+        "frontHand": "../../equipment/starting-v1/bases/tobin/g2-forward/front-hand.png",
         "weapon": null,
         "offHand": null,
         "head": null,
@@ -441,7 +442,7 @@
       "gripProvenance": "src/js/64h-hero-sprites.js GRIP, approved gathering source coords",
       "toolUse": {
         "sickle": {
-          "angle": "left-down",
+          "angle": "left-up",
           "legacyDegrees": 200
         }
       }
@@ -481,8 +482,8 @@
         "offHand"
       ],
       "layers": {
-        "body": null,
-        "frontHand": null,
+        "body": "../../equipment/starting-v1/bases/tobin/g3-shoulder/body.png",
+        "frontHand": "../../equipment/starting-v1/bases/tobin/g3-shoulder/front-hand.png",
         "weapon": null,
         "offHand": null,
         "head": null,
@@ -495,8 +496,9 @@
           "legacyDegrees": -150
         },
         "spear": {
-          "angle": "level",
-          "legacyDegrees": -8
+          "angle": "left-level",
+          "legacyDegrees": -8,
+          "artDirection": "Head visible left of shoulder"
         }
       }
     },
@@ -535,8 +537,8 @@
         "offHand"
       ],
       "layers": {
-        "body": null,
-        "frontHand": null,
+        "body": "../../equipment/starting-v1/bases/tobin/g4-overhead/body.png",
+        "frontHand": "../../equipment/starting-v1/bases/tobin/g4-overhead/front-hand.png",
         "weapon": null,
         "offHand": null,
         "head": null,
@@ -585,8 +587,8 @@
         "offHand"
       ],
       "layers": {
-        "body": null,
-        "frontHand": null,
+        "body": "../../equipment/starting-v1/bases/tobin/g5-low/body.png",
+        "frontHand": "../../equipment/starting-v1/bases/tobin/g5-low/front-hand.png",
         "weapon": null,
         "offHand": null,
         "head": null,
@@ -596,7 +598,11 @@
       "toolUse": {
         "pick": {
           "angle": "down",
-          "legacyDegrees": 60
+          "legacyDegrees": 60,
+          "assetGrip": [
+            25,
+            25
+          ]
         }
       }
     },
@@ -635,8 +641,8 @@
         "offHand"
       ],
       "layers": {
-        "body": null,
-        "frontHand": null,
+        "body": "../../equipment/starting-v1/bases/tobin/g6-crouch/body.png",
+        "frontHand": "../../equipment/starting-v1/bases/tobin/g6-crouch/front-hand.png",
         "weapon": null,
         "offHand": null,
         "head": null,
@@ -685,8 +691,8 @@
         "offHand"
       ],
       "layers": {
-        "body": null,
-        "frontHand": null,
+        "body": "../../equipment/starting-v1/bases/tobin/g7-level/body.png",
+        "frontHand": "../../equipment/starting-v1/bases/tobin/g7-level/front-hand.png",
         "weapon": null,
         "offHand": null,
         "head": null,
@@ -696,11 +702,19 @@
       "toolUse": {
         "axe": {
           "angle": "level",
-          "legacyDegrees": 0
+          "legacyDegrees": 0,
+          "assetGrip": [
+            15,
+            40
+          ]
         },
         "spear": {
           "angle": "level",
-          "legacyDegrees": 0
+          "legacyDegrees": 0,
+          "assetGrip": [
+            15,
+            40
+          ]
         }
       }
     }
