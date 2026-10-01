@@ -1,0 +1,30 @@
+[
+  {
+    "hero": "tobin",
+    "master": "01-ready-guard",
+    "style": "tobin-side-source.png",
+    "args": {
+      "transparent_background": true,
+      "referenced_image_paths": [
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/heroes/tobin/poses/01-ready-guard.png",
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/equipment/starting-v1/style-normalisation/tobin-side-source.png",
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/equipment/starting-v1/references/axe-g1.png"
+      ],
+      "prompt": "Lanternfall tobin, ONE lateral axe CONTACT pose. Image1 original combat is absolute identity/style master, image2 passed gathering style/stance reference, image3 Copper axe material design. Keep EXACT character proportions, compact face/features, outfit, orange hair for Pip/red cape for Tobin, original chunky dark pixel clusters. Right-facing hero on transparentbackground. TWO HANDS clearly wrap same rigid wooden axe handle at chestheight; body weight transfers onto forward bent leg, rear leg braced, hips/shoulders turn into horizontal SIDE chop. Critical new art: axe cuttingedge must be VERTICAL at far RIGHT, facing RIGHT into a tree trunk, never downward-facing. Redraw axehead in correct contact orientation/perspective with broad copper cheek left of a clearly visible thin curved vertical bladeedge at its rightmost boundary. No socket/knob farther right than cuttingedge. This is a tree SIDE cut48nativepixels above feet baseline, not overhead or chopping floor. Axe handle slightly diagonal up-right acceptable so blade edge centre at chestheight. Native224x192, hero body around96px height, feet anchor96,132, intended blade edge centre near(178,84). Do not add tree, background, arc, glow, text, extra arm, extra axe. One complete connected hero+axe, ampletransparentmargin. Proof with baked-in tool for anatomy/contact approval; no code rotation."
+    }
+  },
+  {
+    "hero": "pip",
+    "master": "01-ready",
+    "style": "pip-side-source.png",
+    "args": {
+      "transparent_background": true,
+      "referenced_image_paths": [
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/heroes/pip/poses/01-ready.png",
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/equipment/starting-v1/style-normalisation/pip-side-source.png",
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/equipment/starting-v1/references/axe-g1.png"
+      ],
+      "prompt": "Lanternfall pip, ONE lateral axe CONTACT pose. Image1 original combat is absolute identity/style master, image2 passed gathering style/stance reference, image3 Copper axe material design. Keep EXACT character proportions, compact face/features, outfit, orange hair for Pip/red cape for Tobin, original chunky dark pixel clusters. Right-facing hero on transparentbackground. TWO HANDS clearly wrap same rigid wooden axe handle at chestheight; body weight transfers onto forward bent leg, rear leg braced, hips/shoulders turn into horizontal SIDE chop. Critical new art: axe cuttingedge must be VERTICAL at far RIGHT, facing RIGHT into a tree trunk, never downward-facing. Redraw axehead in correct contact orientation/perspective with broad copper cheek left of a clearly visible thin curved vertical bladeedge at its rightmost boundary. No socket/knob farther right than cuttingedge. This is a tree SIDE cut48nativepixels above feet baseline, not overhead or chopping floor. Axe handle slightly diagonal up-right acceptable so blade edge centre at chestheight. Native224x192, hero body around96px height, feet anchor96,132, intended blade edge centre near(178,84). Do not add tree, background, arc, glow, text, extra arm, extra axe. One complete connected hero+axe, ampletransparentmargin. Proof with baked-in tool for anatomy/contact approval; no code rotation."
+    }
+  }
+]

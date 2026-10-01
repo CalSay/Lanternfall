@@ -1,0 +1,52 @@
+[
+  {
+    "hero": "tobin",
+    "status": "contact-review-pending",
+    "canvas": [
+      224,
+      192
+    ],
+    "groundAnchor": [
+      96,
+      132
+    ],
+    "contact": [
+      195,
+      84
+    ],
+    "contactAboveGround": 48,
+    "nativeHeight": 94,
+    "equipmentBakedIn": true,
+    "sourceBBox": [
+      212,
+      339,
+      1265,
+      1020
+    ]
+  },
+  {
+    "hero": "pip",
+    "status": "contact-review-pending",
+    "canvas": [
+      224,
+      192
+    ],
+    "groundAnchor": [
+      96,
+      132
+    ],
+    "contact": [
+      187,
+      84
+    ],
+    "contactAboveGround": 48,
+    "nativeHeight": 84,
+    "equipmentBakedIn": true,
+    "sourceBBox": [
+      310,
+      313,
+      1206,
+      869
+    ]
+  }
+]

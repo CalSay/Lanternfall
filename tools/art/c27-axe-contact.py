@@ -1,0 +1,7 @@
+from PIL import Image,ImageDraw
+from pathlib import Path
+import json
+R=Path('art/equipment/starting-v1/motion-proofs/axe-side');report=[];sheet=Image.new('RGB',(896,384),(38,40,48));d=ImageDraw.Draw(sheet)
+for i,(hero,h) in enumerate([('tobin',94),('pip',84)]):
+ src=Image.open(R/f'{hero}-contact-source.png').convert('RGBA');bb=src.getchannel('A').point(lambda v:255 if v>=128 else 0).getbbox();im=src.crop(bb);im=im.resize((round(im.width*h/im.height),h),Image.Resampling.NEAREST);alpha=im.getchannel('A').point(lambda v:255 if v>=128 else 0);cols=list(dict.fromkeys(Image.open(f'art/heroes/{hero}/palette.png').convert('RGB').get_flattened_data()));pal=Image.new('P',(1,1));pal.putpalette([v for c in cols+[cols[0]]*(256-len(cols)) for v in c]);im=im.convert('RGB').quantize(palette=pal,dither=Image.Dither.NONE).convert('RGBA');im.putalpha(alpha);out=Image.new('RGBA',(224,192));out.paste(im,(54,132-h));out.save(R/f'{hero}-contact-native.png');edge=max(x for x in range(150,224) if out.getpixel((x,84))[3]);report.append({'hero':hero,'status':'contact-review-pending','canvas':[224,192],'groundAnchor':[96,132],'contact':[edge,84],'contactAboveGround':48,'nativeHeight':h,'equipmentBakedIn':True,'sourceBBox':bb});large=out.resize((448,384),Image.Resampling.NEAREST);sheet.paste(large,(i*448,0),large);d.text((i*448+8,10),hero+' authored lateral contact proof',fill='white')
+sheet.save(R/'contact-2x.png');(R/'manifest.json').write_text(json.dumps(report,indent=2));print(report)

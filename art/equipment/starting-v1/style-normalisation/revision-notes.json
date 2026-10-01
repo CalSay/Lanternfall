@@ -1,0 +1,20 @@
+{
+  "pip-v2": {
+    "source": "pip-side-v2-rejected.png",
+    "prompt": "Correct face/head to original combat narrow angular face and compact features; both arms reach chest level with two hands6nativepixels apart on imaginary rigid handle. Retain costume and stance.",
+    "verdict": "Rejected locally: still ambiguous single forward fist; not promoted."
+  },
+  "pip-v3": {
+    "source": "pip-side-source.png",
+    "generation": "exec-59f92157-e0a0-4f47-87e1-9d29c62ce706.png",
+    "references": [
+      "art/heroes/pip/poses/01-ready.png",
+      "references/axe-g1.png"
+    ],
+    "prompt": "Original combat Pip absolute character/style master; replace staff with approved Copper woodaxe, two-handed lateral tree-chop followthrough right-facing. Same compact angular face/smaller eyes/narrow cheek, modest orange hair, original body/hat/navy-gold robes/boots/outline/shadows. Both visible hands grip SAME rigid shaft horizontally at chest height, rear near torso/front8nativepixels farther right. Body lunges right, weight on forward bent knee, rear leg braced. Axe head right, intended trunkcontact48px above ground. 224x192native, ground96,132, transparent, one hero. No tree/glow/text. Baked-in style/grip proof only.",
+    "independentReview": "Representative style/identity and two-hand grip pass. Motion/contact not passed: cuttingedge must face trunk, current blade hangs downward. Not interchangeable production layers."
+  },
+  "tobin-v1": {
+    "independentReview": "Representative style direction provisionally passes. Requires actual tool grip/contact proof."
+  }
+}

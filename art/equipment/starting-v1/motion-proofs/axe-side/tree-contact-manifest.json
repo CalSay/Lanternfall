@@ -1,0 +1,56 @@
+{
+  "status": "review-pending",
+  "nodeSource": "codex/c26-resource-nodes:art/nodes/game-v2/wood-g1-intact.png",
+  "nodeSourceSha256": "6e13a334a45600a66979d65db9d7c8ceba39668b5d66925dd204d10b770c580f",
+  "nodeApproval": "new naturalistic draft; not owner approved",
+  "cases": [
+    {
+      "hero": "tobin",
+      "heroOrigin": [
+        171,
+        168
+      ],
+      "heroGround": [
+        267,
+        300
+      ],
+      "treeOrigin": [
+        260,
+        16
+      ],
+      "treeGround": [
+        372,
+        300
+      ],
+      "worldContact": [
+        360,
+        252
+      ],
+      "nativeScalesUnchanged": true
+    },
+    {
+      "hero": "pip",
+      "heroOrigin": [
+        177,
+        168
+      ],
+      "heroGround": [
+        273,
+        300
+      ],
+      "treeOrigin": [
+        260,
+        16
+      ],
+      "treeGround": [
+        372,
+        300
+      ],
+      "worldContact": [
+        360,
+        252
+      ],
+      "nativeScalesUnchanged": true
+    }
+  ]
+}

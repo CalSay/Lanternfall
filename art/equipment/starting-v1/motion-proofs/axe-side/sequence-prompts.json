@@ -1,0 +1,50 @@
+[
+  {
+    "hero": "tobin",
+    "phase": "windup",
+    "args": {
+      "transparent_background": true,
+      "referenced_image_paths": [
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/equipment/starting-v1/motion-proofs/axe-side/tobin-contact-source.png",
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/heroes/tobin/poses/01-ready-guard.png"
+      ],
+      "prompt": "Lanternfall tobin, ONE windup frame belonging to exact lateral axe chopping sequence from image1. Image1 is corrected CONTACT frame and axe geometry master; image2 original combat style/identity master. Preserve same character, same clothes, compact angular facialfeatures, original pixel clusters/shadow masses, identical Copper axe and rigid straight wooden shaft. SIDE CHOP WIND-UP: hips and shoulders coil toward rear, weight on rear bent leg. Both hands hold axe beside rear/left hip-to-chest region; rear elbow drawn back; axe head projects to LEFT behind body at shoulder/chest height. This is a lateral backswing with shoulders rotating, never overhead raised arms. Face looks RIGHT toward tree, eyes clear. Front leg braced. Two hands on one rigid handle. Same native224x192 canvas, groundanchor96,132, feet on samebaseline and same overall body scale; don't zoom/recenter or change equipment design. Full sprite transparent, no tree, text, motionarc, glow, extraarms. Pixelart not smooth illustration. Static authored frame with baked-in axe for motion review; no code-rotated parts."
+    }
+  },
+  {
+    "hero": "tobin",
+    "phase": "recovery",
+    "args": {
+      "transparent_background": true,
+      "referenced_image_paths": [
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/equipment/starting-v1/motion-proofs/axe-side/tobin-contact-source.png",
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/heroes/tobin/poses/01-ready-guard.png"
+      ],
+      "prompt": "Lanternfall tobin, ONE recovery frame belonging to exact lateral axe chopping sequence from image1. Image1 is corrected CONTACT frame and axe geometry master; image2 original combat style/identity master. Preserve same character, same clothes, compact angular facialfeatures, original pixel clusters/shadow masses, identical Copper axe and rigid straight wooden shaft. SIDE CHOP RECOVERY: after side impact, bend both elbows and draw axe back toward chest/waist while torso untwists and weight begins returning to rear leg. Head remains on RIGHT with vertical cutting edge facing RIGHT. Compared with contact image1, tool head visibly20nativepixels closer to body; both hands remain on same rigid shaft. Clear two-handed grip, face unobscured. No downward groundstroke. Same native224x192 canvas, groundanchor96,132, feet on samebaseline and same overall body scale; don't zoom/recenter or change equipment design. Full sprite transparent, no tree, text, motionarc, glow, extraarms. Pixelart not smooth illustration. Static authored frame with baked-in axe for motion review; no code-rotated parts."
+    }
+  },
+  {
+    "hero": "pip",
+    "phase": "windup",
+    "args": {
+      "transparent_background": true,
+      "referenced_image_paths": [
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/equipment/starting-v1/motion-proofs/axe-side/pip-contact-source.png",
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/heroes/pip/poses/01-ready.png"
+      ],
+      "prompt": "Lanternfall pip, ONE windup frame belonging to exact lateral axe chopping sequence from image1. Image1 is corrected CONTACT frame and axe geometry master; image2 original combat style/identity master. Preserve same character, same clothes, compact angular facialfeatures, original pixel clusters/shadow masses, identical Copper axe and rigid straight wooden shaft. SIDE CHOP WIND-UP: hips and shoulders coil toward rear, weight on rear bent leg. Both hands hold axe beside rear/left hip-to-chest region; rear elbow drawn back; axe head projects to LEFT behind body at shoulder/chest height. This is a lateral backswing with shoulders rotating, never overhead raised arms. Face looks RIGHT toward tree, eyes clear. Front leg braced. Two hands on one rigid handle. Same native224x192 canvas, groundanchor96,132, feet on samebaseline and same overall body scale; don't zoom/recenter or change equipment design. Full sprite transparent, no tree, text, motionarc, glow, extraarms. Pixelart not smooth illustration. Static authored frame with baked-in axe for motion review; no code-rotated parts."
+    }
+  },
+  {
+    "hero": "pip",
+    "phase": "recovery",
+    "args": {
+      "transparent_background": true,
+      "referenced_image_paths": [
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/equipment/starting-v1/motion-proofs/axe-side/pip-contact-source.png",
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/heroes/pip/poses/01-ready.png"
+      ],
+      "prompt": "Lanternfall pip, ONE recovery frame belonging to exact lateral axe chopping sequence from image1. Image1 is corrected CONTACT frame and axe geometry master; image2 original combat style/identity master. Preserve same character, same clothes, compact angular facialfeatures, original pixel clusters/shadow masses, identical Copper axe and rigid straight wooden shaft. SIDE CHOP RECOVERY: after side impact, bend both elbows and draw axe back toward chest/waist while torso untwists and weight begins returning to rear leg. Head remains on RIGHT with vertical cutting edge facing RIGHT. Compared with contact image1, tool head visibly20nativepixels closer to body; both hands remain on same rigid shaft. Clear two-handed grip, face unobscured. No downward groundstroke. Same native224x192 canvas, groundanchor96,132, feet on samebaseline and same overall body scale; don't zoom/recenter or change equipment design. Full sprite transparent, no tree, text, motionarc, glow, extraarms. Pixelart not smooth illustration. Static authored frame with baked-in axe for motion review; no code-rotated parts."
+    }
+  }
+]

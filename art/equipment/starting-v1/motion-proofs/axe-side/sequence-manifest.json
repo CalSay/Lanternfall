@@ -1,0 +1,172 @@
+[
+  {
+    "hero": "tobin",
+    "nativeBodyHeight": 94,
+    "canvas": [
+      224,
+      192
+    ],
+    "equipmentBakedIn": true,
+    "frames": [
+      {
+        "phase": "windup",
+        "file": "tobin-windup-native.png",
+        "sourceBBox": [
+          85,
+          379,
+          984,
+          1048
+        ],
+        "origin": [
+          14,
+          38
+        ],
+        "footAnchorInCrop": [
+          82,
+          94
+        ],
+        "groundAnchor": [
+          96,
+          132
+        ],
+        "status": "motion-review-pending"
+      },
+      {
+        "phase": "contact",
+        "file": "tobin-contact-native.png",
+        "sourceBBox": [
+          212,
+          339,
+          1265,
+          1020
+        ],
+        "origin": [
+          48,
+          38
+        ],
+        "footAnchorInCrop": [
+          48,
+          94
+        ],
+        "groundAnchor": [
+          96,
+          132
+        ],
+        "status": "motion-review-pending",
+        "contact": [
+          189,
+          84
+        ],
+        "contactAboveGround": 48
+      },
+      {
+        "phase": "recovery",
+        "file": "tobin-recovery-native.png",
+        "sourceBBox": [
+          247,
+          342,
+          981,
+          1021
+        ],
+        "origin": [
+          49,
+          38
+        ],
+        "footAnchorInCrop": [
+          47,
+          94
+        ],
+        "groundAnchor": [
+          96,
+          132
+        ],
+        "status": "motion-review-pending"
+      }
+    ]
+  },
+  {
+    "hero": "pip",
+    "nativeBodyHeight": 84,
+    "canvas": [
+      224,
+      192
+    ],
+    "equipmentBakedIn": true,
+    "frames": [
+      {
+        "phase": "windup",
+        "file": "pip-windup-native.png",
+        "sourceBBox": [
+          179,
+          316,
+          940,
+          870
+        ],
+        "origin": [
+          16,
+          48
+        ],
+        "footAnchorInCrop": [
+          80,
+          84
+        ],
+        "groundAnchor": [
+          96,
+          132
+        ],
+        "status": "motion-review-pending"
+      },
+      {
+        "phase": "contact",
+        "file": "pip-contact-native.png",
+        "sourceBBox": [
+          310,
+          313,
+          1206,
+          869
+        ],
+        "origin": [
+          50,
+          48
+        ],
+        "footAnchorInCrop": [
+          46,
+          84
+        ],
+        "groundAnchor": [
+          96,
+          132
+        ],
+        "status": "motion-review-pending",
+        "contact": [
+          183,
+          84
+        ],
+        "contactAboveGround": 48
+      },
+      {
+        "phase": "recovery",
+        "file": "pip-recovery-native.png",
+        "sourceBBox": [
+          315,
+          312,
+          1017,
+          870
+        ],
+        "origin": [
+          51,
+          48
+        ],
+        "footAnchorInCrop": [
+          45,
+          84
+        ],
+        "groundAnchor": [
+          96,
+          132
+        ],
+        "status": "motion-review-pending"
+      }
+    ]
+  }
+]

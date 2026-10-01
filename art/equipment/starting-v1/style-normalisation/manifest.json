@@ -15,28 +15,32 @@
       54,
       38
     ],
-    "status": "style-review-pending",
+    "status": "representative-style-direction-reviewed",
     "originalPixelsPreserved": false,
-    "notes": "New owner-authorised style redraw, not an exact-pixel recut. Original combat/gather assets unchanged."
+    "notes": "New owner-authorised style redraw, not an exact-pixel recut. Original combat/gather assets unchanged.",
+    "productionReady": false,
+    "equipmentBakedIn": false
   },
   {
     "hero": "pip",
     "sourceBBox": [
-      355,
       345,
-      879,
-      871
+      315,
+      1171,
+      837
     ],
     "size": [
-      84,
+      133,
       84
     ],
     "origin": [
       54,
       48
     ],
-    "status": "style-review-pending",
+    "status": "representative-style-direction-reviewed",
     "originalPixelsPreserved": false,
-    "notes": "New owner-authorised style redraw, not an exact-pixel recut. Original combat/gather assets unchanged."
+    "notes": "New owner-authorised style redraw, not an exact-pixel recut. Original combat/gather assets unchanged.",
+    "productionReady": false,
+    "equipmentBakedIn": true
   }
 ]
