@@ -6868,6 +6868,12 @@ if (section('auto-challenge (boss switch)')) try {
     let at = -1;
     for (let t = 0; t < 400 && at < 0; t += 0.1) { g.fn.tick(0.1); if (E('fightBoss')) at = t; }
     assert(at > 0 && at < 300, `auto-challenge starts the zone boss on its own (${turns ? 'turn' : 'party'} fights; at ${at.toFixed(0)} s)`);
+    if (!turns) {
+      const lab = () => E('(() => { const x = GOALS.find(q => q.id === "zone-boss"); return x.label() + "|" + (+x.pct()).toFixed(2); })()');
+      E('fightBoss = false; failDps = totalDps() * 2; S.zone = S.maxZone; S.kills = 10');
+      const held = lab(); E('failDps = 0'); const ready = lab();
+      assert(/held\. Get stronger first\|0\.[0-9]/.test(held) && /^Boss ready in Zone \d+\|1\.00$/.test(ready), `Next Up says when a ready boss held you off, with the way back as its bar (${held} / ${ready})`);
+    }
     const off = loadCore({ seed: 3 }), O = s => off.eval(s);
     O(`soloPick("tobin"); S.auto = false; TURN_TUNE.on = ${turns}; S.onboard && (S.onboard.tips = false, S.onboard.all = true)`);
     let any = false; for (let t = 0; t < 400 && !any; t += 0.1) { off.fn.tick(0.1); any = O('fightBoss'); }
