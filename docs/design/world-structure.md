@@ -12,9 +12,8 @@ Replaces the 7-areas-x-5-passes cycle (Mossy Hollow I-V). Each area is played **
 
 - **Each zone has its own monster.** Its regular fights are that monster; its **Shadowborn Captain** is an enhanced
   version of the same monster (a named, stronger form: new colour, an extra move).
-- **Fights per zone:** 6 regular fights, then the Shadowborn Captain (7 a zone). So an area is 35 fights + its Area
-  Boss = 36, and a region is 7 x 36 + the Region Boss = **253 fights**. (Owner to confirm whether the Captain is the
-  6th fight instead: then 31 an area and 218 a region.)
+- **Fights per zone (owner):** 5 regular fights, then the Shadowborn Captain: **6 a zone**. So an area is 30 fights + its
+  Area Boss = **31**, and a region is 7 x 31 + the Region Boss = **218 fights** (1,090 across the five regions).
 - **One enemy per fight. Combat is active only. Bosses are fought once** (a return must be a new, stronger encounter
   with a reason).
 
@@ -32,4 +31,3 @@ Shadowborn Captains reuse their monster's art (recolour plus an extra move), so 
 ## Still open
 
 - How uniques drop now that boss rematches are gone (first kill, elites, Deepwell, ...).
-- Exact fight count per zone (above).
