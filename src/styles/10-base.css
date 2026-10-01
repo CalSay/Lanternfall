@@ -81,3 +81,5 @@ button * { pointer-events: none; }
 @keyframes bellPing { 30% { transform: rotate(-14deg); } 60% { transform: rotate(10deg); } }
 @keyframes bellPing2 { 30% { transform: rotate(-14deg); } 60% { transform: rotate(10deg); } }
 @media (prefers-reduced-motion: reduce) { .bell.ping img, .bell.ping2 img { animation: none; } }
+/* C26 resource icons are painted 48x48 art: scale them smoothly (nearest-neighbour at 16 px muddies them) */
+img[src$="#res"] { image-rendering: auto; }

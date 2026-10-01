@@ -64,10 +64,11 @@
 // MAT1 (2026-09-28): display-name ladder from docs/design/materials.md; ids/indices unchanged.
 // Hide names are already complete nouns (Rawhide, Wolfhide...), so unit is '' (matName, 20-data.js).
 Object.assign(MAT, {
-  crystal: { n: 'Gems', short: ['Quartz', 'Jasper', 'Amethyst', 'Pearl', 'Aquamarine'], col: ['#E8E8F0', '#F2A93B', '#B8C8FF', '#9FE8FF', '#FF6A5A'], unit: 'Shard' },
-  fibre: { n: 'Fibre', short: ['Hemp', 'Linen', 'Wool', 'Cotton', 'Silk'], col: ['#D8C9A0', '#8FA868', '#E6E0C0', '#C9D8F0', '#8A7FB8'], unit: 'Fibre' },
-  herb: { n: 'Herbs', short: ['Sage', 'Yarrow', 'Foxglove', 'Sea Lavender', 'Mandrake'], col: ['#7FB86A', '#A8B89A', '#B84A4A', '#CFE8E0', '#FFD27A'], unit: 'Sprig' },
-  hide: { n: 'Hide', short: ['Rawhide', 'Leather', 'Wolfhide', 'Sharkskin', 'Bearhide'], col: ['#B08A6A', '#8C6A43', '#5E7A6A', '#5A4A6A', '#C9463E'], unit: '' }
+  // C26 (owner-approved 2026-10-01): complete nouns where the approved name is one (Tide Pearl, Hemp Fibre, Duskfang Pelt)
+  crystal: { n: 'Gems', short: ['Quartz', 'Jasper', 'Amethyst', 'Tide Pearl', 'Storm Aquamarine'], col: ['#E8E8F0', '#F2A93B', '#B8C8FF', '#9FE8FF', '#FF6A5A'], unit: '' },
+  fibre: { n: 'Fibre', short: ['Hemp Fibre', 'Flax Fibre', 'Briarthread', 'Kelp Fibre', 'Stormgrass Fibre'], col: ['#D8C9A0', '#8FA868', '#E6E0C0', '#C9D8F0', '#8A7FB8'], unit: '' },
+  herb: { n: 'Herbs', short: ['Sage', 'Yarrow', 'Foxglove', 'Sea Lavender', 'Brinewort'], col: ['#7FB86A', '#A8B89A', '#B84A4A', '#CFE8E0', '#FFD27A'], unit: 'Sprig' },
+  hide: { n: 'Hide', short: ['Bristlehide', 'Duskfang Pelt', 'Fenscale', 'Riptide Skin', 'Tide Kelpie Hide'], col: ['#B08A6A', '#8C6A43', '#5E7A6A', '#5A4A6A', '#C9463E'], unit: '' }
 });
 const CRAFT_FAMILIES = ['ore', 'wood', 'crystal', 'fibre', 'herb', 'hide', 'ess'];
 // src: 'gather' (nodes, plus a small fight trickle for crystal/fibre/herb) or 'fight' (never gathered).
@@ -101,9 +102,9 @@ const craftKindVisible = kind => kind !== 'spear' || huntingVisible();
 Object.assign(SKILL, { forage: 'Foraging', hunt: 'Hunting', bench: 'Woodcraft', loom: 'Tailoring', ench: 'Enchanting' });
 Object.assign(NODE_NAMES, {
   hide: HUNT_BEASTS.map(x => x.name).concat(null, null), // grades 4–5 reserved, never offered
-  crystal: ['Quartz Geode', 'Jasper Pocket', 'Amethyst Grotto', 'Pearl Rift', 'Aquamarine Heart'],
-  fibre: ['Hemp Field', 'Linen Patch', 'Wool Meadow', 'Cotton Web', 'Silk Hollow'],
-  herb: ['Sage Bed', 'Yarrow Patch', 'Foxglove Bank', 'Sea Lavender Ring', 'Mandrake Pool']
+  crystal: ['Quartz Geode', 'Jasper Pocket', 'Amethyst Grotto', 'Shellstone Pocket', 'Stormcliff Seam'],
+  fibre: ['Hemp Field', 'Flax Patch', 'Briar Thicket', 'Kelp Shallows', 'Stormgrass Ledge'],
+  herb: ['Sage Bed', 'Yarrow Patch', 'Foxglove Bank', 'Sea Lavender Ring', 'Brinewort Wall']
 });
 Object.assign(NODE_SKILL, { crystal: 'mine', fibre: 'forage', herb: 'forage', hide: 'hunt' });
 // time: x base seconds per unit; xp: x nodeXp(t). Unlock levels stay NODE_REQ for every row.

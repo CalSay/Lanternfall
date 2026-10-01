@@ -546,7 +546,7 @@ if (section('crafting')) try {
   const mats = () => E('JSON.stringify(S.mats)');
   // gates and player-facing reasons
   const why0 = E('canCraft("robe", 1).why');
-  assert(why0 === '7 more Hemp Fibre, 1 more Quartz Shard, 1 more Sage Sprig, 2 more Dim Essence', `canCraft names what is missing (${why0})`);
+  assert(why0 === '7 more Hemp Fibre, 1 more Quartz, 1 more Sage Sprig, 2 more Dim Essence', `canCraft names what is missing (${why0})`);
   const RQ = t => E(`CRAFT_STATION_REQ[${t - 1}]`);   // GP1: the gates are SKILL_TUNE.stationReq
   assert(E('canCraft("robe", 2).why') === `Needs Tailoring ${RQ(2)}` && E('craftItem("robe", 2)') === null, `station tier gate: Needs Tailoring ${RQ(2)}`);
   assert(E('canCraft("charm", 3).why') === `Needs Enchanting ${RQ(3)}`, "Charm gates on the Enchanter's Table...");
@@ -5143,7 +5143,7 @@ if (section('gatherer engine gaps (C1)')) try {
     assert(!E('campCan("tent").ok') && !E('campBuild("tent")'), 'C1: Tent 3 cannot start before Hearth 4');
     E('S.camp.b.hearth = 4');
     const cost = JSON.parse(E('JSON.stringify(campCost("tent", 3))')), gold = E('S.gold'), wood = E('S.mats.wood[1]');
-    assert(cost.gold === 23000 && JSON.stringify(cost.mats) === JSON.stringify([['wood', 2, 120], ['fibre', 2, 80], ['hide', 2, 40]]), 'C1: Tent 3 costs 23,000 gold, 120 Birch, 80 Linen and 40 Leather');
+    assert(cost.gold === 23000 && JSON.stringify(cost.mats) === JSON.stringify([['wood', 2, 120], ['fibre', 2, 80], ['hide', 2, 40]]), 'C1: Tent 3 costs 23,000 gold, 120 Birch, 80 Flax Fibre and 40 Duskfang Pelt');
     assert(E('campBuild("tent")') && E('S.gold') === gold - 23000 && E('S.mats.wood[1]') === wood - 120 && E('handsTents()') === 2, 'C1: starting Tent 3 pays once and keeps capacity at two until completion');
     assert(E('campBuilds().find(b => b.id === "tent").end - campBuilds().find(b => b.id === "tent").start') === HOUR, 'C1: Tent 3 takes one hour');
     assert(E('campCancel("tent")') && E('S.gold') === gold - 11500 && E('S.mats.wood[1]') === wood - 60, 'C1: cancelling a started Tent refunds half its gold and materials');
@@ -6545,6 +6545,21 @@ if (section('bulk salvage (C23 browser)')) try {
 } catch(e){fail('C23 bulk salvage browser crashed: '+(e.stack||e));}
 
 // ---- away time never negative (2026-09-30): a save stamped in the future must not pay negative gains ----
+// ---- C26 resource icons (Claude, 2026-10-01): every family and grade 1-5 has its approved icon and name ----
+if (section('resource icons (C26)')) try {
+  const g = loadCore({ seed: 26 });
+  const bad = JSON.parse(g.eval(`JSON.stringify(CRAFT_FAMILIES.flatMap(f => [1, 2, 3, 4, 5].flatMap(t => {
+    const u = RES_ICONS.icons[f] && RES_ICONS.icons[f][t - 1], nm = RES_ICONS.names[f][t - 1], shown = matName(f, t);
+    const out = [];
+    if (!(typeof u === 'string' && u.startsWith('data:image/png;base64,'))) out.push(f + t + ': no icon');
+    if (!(shown === nm || shown.startsWith(nm + ' '))) out.push(f + t + ': ' + shown + ' is not ' + nm);
+    return out;
+  })))`));
+  assert(!bad.length, 'C26: all 35 materials (7 families x grades 1-5) show the approved icon and name' + (bad.length ? ': ' + bad.slice(0, 5).join('; ') : ''));
+  assert(/const matIcon = \(k, t\) => typeof RES_ICONS === 'object' && RES_ICONS\.icons\[k\]/.test(fs.readFileSync(path.join(ROOT, 'src', 'js', '60-gfx.js'), 'utf8')), 'C26: matIcon (60-gfx) shows the approved icon first');
+  assert(!g.errors.length, 'C26: no core errors');
+} catch (e) { fail('resource icons crashed: ' + (e.stack || e)); }
+
 if (section('future-dated save')) try {
   const late = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-late.json'), 'utf8'));
   late.last = Date.now() + 16 * 864e5;   // sixteen days ahead, like a save made on a device whose clock ran fast

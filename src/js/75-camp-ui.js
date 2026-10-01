@@ -44,7 +44,7 @@
     d_arch: () => iconURL('dc_arch', '#9AA0B4', { 2: '#5A6070', 6: '#5A5A66' }), d_brazier: () => iconURL('dc_brazier', '#4A5064', { 3: '#7FB2FF', 5: '#EAF6FF', 2: '#2A2E3A' }),
     d_bridge: () => iconURL('dc_bridge', '#B89A6A'), d_bell: () => iconURL('b_bell', '#4F8A7A', { 5: '#9FD8C9', 6: '#2E4A44', 7: '#8C7A4A' })
   };
-  const famIcon = (f, t) => ['ore', 'wood', 'ess'].includes(f) ? matIcon(f, t) : iconURL(...craftIcon('mat_' + f, t));
+  const famIcon = (f, t) => matIcon(f, t);   // C26: every family has an approved icon (matIcon)
   const trophyIcon = i => iconURL(...craftIcon('tro_' + TYPES[i === 'any' ? 5 : i].key, 1));
   const shortName = (f, t) => MAT[f].short[t - 1];
   const bname = (id, to) => id === 'hearth' ? `Hearth ${to}` : id === 'tent' ? `Tent ${to}` : `${CAMP_B[id].n} Lv ${to}`;

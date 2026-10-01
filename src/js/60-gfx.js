@@ -31,7 +31,8 @@ const icPal = (main, extra) => ({ 1: main, 2: darken(main, 0.35), 5: '#FFFFFF', 
 const iconURL = (name, main, extra) => spriteURL('ic:' + name + main + JSON.stringify(extra || {}), ICON[name], icPal(main, extra));
 const img = (url, cls) => { const i = el('img', cls || 'px'); i.src = url; i.alt = ''; return i; };
 // Crafting families (crystal, fibre, herb, hide) use K2's mat_* icons (11-art-craft.js).
-const matIcon = (k, t) => ICON['mat_' + k] && typeof craftIcon === 'function' ? iconURL(...craftIcon('mat_' + k, t)) : k === 'ore' ? iconURL('ore', MAT.ore.col[t - 1], { 2: '#3A3542', 1: MAT.ore.col[t - 1] }) : k === 'wood' ? iconURL('log', MAT.wood.col[t - 1], { 6: '#4A3220', 7: '#8C6A43', 1: MAT.wood.col[t - 1] }) : iconURL('orb', MAT.ess.col[t - 1], { 7: '#6E6878' });
+// C26: the approved resource icons first (48x48, 21r-data-resicons.js). '#res' marks them for smooth scaling in CSS.
+const matIcon = (k, t) => typeof RES_ICONS === 'object' && RES_ICONS.icons[k] && RES_ICONS.icons[k][t - 1] ? RES_ICONS.icons[k][t - 1] + '#res' : ICON['mat_' + k] && typeof craftIcon === 'function' ? iconURL(...craftIcon('mat_' + k, t)) : k === 'ore' ? iconURL('ore', MAT.ore.col[t - 1], { 2: '#3A3542', 1: MAT.ore.col[t - 1] }) : k === 'wood' ? iconURL('log', MAT.wood.col[t - 1], { 6: '#4A3220', 7: '#8C6A43', 1: MAT.wood.col[t - 1] }) : iconURL('orb', MAT.ess.col[t - 1], { 7: '#6E6878' });
 // Legacy kinds and uniques use SLOT icons; crafted kinds (CRAFT_KINDS) use K2's craftIcon.
 function itemIcon(slot, t, u) {
   if (!SLOT[slot] && typeof craftIcon === 'function') {
