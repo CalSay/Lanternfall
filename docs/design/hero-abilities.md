@@ -19,14 +19,19 @@ It replaces the "about 10 abilities" sketch in `solo-hero.md` (Abilities) with t
 
 ## 2. Rules every ability follows
 
-- **One action a turn.** An ability replaces the hero's Attack that turn. Parry and dodge happen on the foe's turn, as now.
+- **One action a turn.** An ability replaces the hero's Attack that turn.
+- **Defence is a choice on every enemy attack (owner, 2026-10-01).** When a foe attacks, the player picks **one**: parry
+  or dodge. Dodge is easier (a wider window) but only avoids the hit; parry is harder but blocks, counters with a sure
+  crit and takes 1 turn off every cooldown. No ability decides that choice for the player, and no enemy attack is
+  parry-only or dodge-only. Abilities may only make one option easier or more rewarding (a wider window, a bigger
+  counter), and the player still chooses on each attack.
 - **Cooldowns are in the hero's turns.** Attack has 1. Small abilities 2-3, medium 4-5, finishers 6-8. **Fresh every fight**
   (owner, 2026-10-01). Finishers also **open after N turns**: the button lights only from turn N, so no fight opens on a
   finisher.
 - **A timed parry takes 1 turn off every cooldown** (as now). This stays the main reward for active play.
 - **Power** is shown as a multiple of the hero's Attack hit (Attack = 1.0). The engine's hand bonus and Auto penalty apply
   on top, as today.
-- **Equip 3.** The action bar keeps 3 ability slots (Q/W/E) plus Attack, Parry and Dodge. With 14 abilities the loadout is
+- **Equip 3.** The action bar keeps 3 ability slots (Q/W/E) plus Attack, and the Parry and Dodge reactions (used on the foe's attack, not as the hero's action). With 14 abilities the loadout is
   the build. (Question 2 asks whether to go to 4.)
 - **Auto** casts the first ready ability in bar order. Abilities that need a condition (Riposte after a parry, Ignite on a
   burning foe) are skipped by Auto until the condition holds.
@@ -50,7 +55,7 @@ one stays.
 | **Mark** | foe | takes +20% damage | 3 | no | yes |
 | **Sunder** | foe | armour halved | 3 | no | yes |
 | **Weaken** | foe | deals 25% less | 2 | no | yes |
-| **Pinned [new]** | foe | its next attack winds up slower: the parry window is 50% wider | until it attacks | no | yes |
+| **Pinned [new]** | foe | its next attack winds up slower: the parry and dodge windows are 50% wider | until it attacks | no | yes |
 | **Blind [new]** | foe | its attacks miss 30% of the time | 2 | no | 15% |
 | **Guard** | hero | takes 40% less | 2 | no | — |
 | **Ward [new]** | hero | a shield of X% max HP that soaks hits first | 3 | no (stronger stays) | — |
@@ -130,7 +135,7 @@ Her loop: **Mark the foe, build Aim, then cash it in.** Bleed is her second payo
 | W2 | **Bat Swarm** | 2 | debuff | 0.3 a turn | 5 | Her bats harry the foe for 3 turns: 0.3 damage each foe turn and Blind. | Blind lowers its hit chance; pairs with dodging | whistle |
 | W3 | **Deadeye** | 2 | damage | 3.0 | 5 | A sure crit on a Marked foe. Spends the Mark. | the main Mark payoff | long-draw |
 | W4 | **Sonic Arrow** | 3 | damage + debuff | 1.0 | 5 | Stuns a Marked or Pinned foe (spends it). | Pinning Shot or Mark, then this | draw-release + sound waves |
-| W5 | **Shadow Step** | 3 | buff | — | 4 | She dodges the next attack for sure, then Keen. | dodge into Deadeye | backstep |
+| W5 | **Shadow Step** | 3 | buff | — | 4 | Her next dodge cannot fail (any timing works) and gives Keen. She still has to choose to dodge. | dodge into Deadeye | backstep |
 | W6 | **Moonlit Volley** | 4 | damage | 5 x 0.5 | 6 | Arrows fall from above. On a Marked foe each hit adds 1 Bleed. | Mark, then this, then Final Echo | sky-draw |
 | W7 | **Night Hunter** | 4 | buff | — | 6 | For 3 turns every Attack Marks and gives +1 Aim. | turns Attack into setup | hood-stance |
 | W8 | **Final Echo** (F) | 5 | finisher | 1.5 + 0.5 per Bleed + 0.5 per Aim | 7, opens turn 3 | Spends all Bleed and Aim. If it kills, every cooldown drops 2. | the end of her loop | long-draw + sound waves |
@@ -148,7 +153,7 @@ His loop: **Brace and parry, build Grit, then stun and smash.** He is the counte
 | T5 | **Hammerfall** | 3 | damage | 1.0 + 0.3 per Grit | 5 | Spends all Grit. x1.5 on a Stunned foe. | the main Grit payoff | overhead |
 | T6 | **Shield Throw** | 4 | damage + debuff | 1.4 | 4 | Stuns a Sundered foe. | Sunder, then this | throw |
 | T7 | **Bulwark** | 4 | buff | — | 6 | For 3 turns: Guard, and every parry gives +1 Grit and counters x1.5. | the parry engine | block |
-| T8 | **Last Stand** (F) | 5 | finisher | counters | 8, opens turn 3 | For 2 turns he cannot drop below 1 HP and counters every hit he takes. Then he heals 20% max HP. | the comeback | shield-raise |
+| T8 | **Last Stand** (F) | 5 | finisher | counters | 8, opens turn 3 | For 2 turns he cannot drop below 1 HP and his parry window is twice as wide; each parry counters x2. Then he heals 20% max HP. | the comeback | shield-raise |
 
 ### 6.3 Pip, the Lanternmage: Burn and Embers
 
@@ -223,8 +228,8 @@ Today's turn engine (`59k-turn.js`) knows four cooldown keys and a handful of ef
 2. **Turn statuses** from section 3: the real-time `59a-status` rules counted in turns.
 3. **Conditions and spends:** "on a Marked / burning / Stunned foe", "spends Burn / Mark / Grit / Embers / Aim".
 4. **Multi-hit** (Volley, Moonlit Volley), where each hit rolls its own crit.
-5. **[new] Ward** (a shield in HP), **Blind** (miss chance), **Pinned** (a wider parry window; the `parryWindow` hook
-   exists), **Riposte's lit-after-parry rule**, **Last Stand's 1 HP floor**.
+5. **[new] Ward** (a shield in HP), **Blind** (miss chance), **Pinned** (wider parry and dodge windows; the `parryWindow`
+   and `dodgeWindow` hooks exist), **Riposte's lit-after-parry rule**, **Last Stand's 1 HP floor**.
 6. **The action bar picker** grows from 1 ability per hero to a list of 14 with tiers and locks.
 7. **Auto rules:** skip conditional abilities until they apply.
 
