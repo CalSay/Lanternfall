@@ -1,0 +1,26 @@
+[
+  {
+    "hero": "tobin",
+    "args": {
+      "transparent_background": true,
+      "referenced_image_paths": [
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/heroes/tobin/poses/01-ready-guard.png",
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/equipment/starting-v1/motion-proofs/axe-side/tobin-contact-source.png",
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/equipment/starting-v1/references/sickle-g1.png"
+      ],
+      "prompt": "Lanternfall tobin, one LOW LATERAL SICKLE CONTACT pose for harvesting plant stems. Image1 original combat absolute identity/style master, image2 approved rendering/body style reference only (do NOT copy axe), image3 exact Copper sickle material/design. Same compact angular facial features, same head size/body proportions, clothes, original chunky pixel clusters/shadows, no chibi inflation. Right-facing character in a deep stable crouch with bent knees, hips lowered and torso leaning slightly forward. One working hand firmly grips short sickle handle low beside front knee; other hand stabilises on upper thigh, NOT an extra cutting hand. Blade reaches RIGHT just12–20nativepixels above feet baseline, cutting through plant-base height in a LOW SIDEWAYS PULL/SWEEP. Crescent blade inner cuttingedge faces the stems/right-side contact path, horizontal/lateral wrist and forearm motion, NOT a downward stab or overhead chop. Preserve rigid asymmetric crescent copperblade and short wrapped brownwood handle, not U-shapedblade or sword. Low glove/shaft contact unambiguous; blade clear of boots/knees. Native224x192, original96px standing scale but crouched silhouette naturally shorter, feetground96,132. Full single sprite transparent, no plants/background/effects/text. Baked-in sickle contact proof for motion review. No axe."
+    }
+  },
+  {
+    "hero": "pip",
+    "args": {
+      "transparent_background": true,
+      "referenced_image_paths": [
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/heroes/pip/poses/01-ready.png",
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/equipment/starting-v1/motion-proofs/axe-side/pip-contact-source.png",
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/equipment/starting-v1/references/sickle-g1.png"
+      ],
+      "prompt": "Lanternfall pip, one LOW LATERAL SICKLE CONTACT pose for harvesting plant stems. Image1 original combat absolute identity/style master, image2 approved rendering/body style reference only (do NOT copy axe), image3 exact Copper sickle material/design. Same compact angular facial features, same head size/body proportions, clothes, original chunky pixel clusters/shadows, no chibi inflation. Right-facing character in a deep stable crouch with bent knees, hips lowered and torso leaning slightly forward. One working hand firmly grips short sickle handle low beside front knee; other hand stabilises on upper thigh, NOT an extra cutting hand. Blade reaches RIGHT just12–20nativepixels above feet baseline, cutting through plant-base height in a LOW SIDEWAYS PULL/SWEEP. Crescent blade inner cuttingedge faces the stems/right-side contact path, horizontal/lateral wrist and forearm motion, NOT a downward stab or overhead chop. Preserve rigid asymmetric crescent copperblade and short wrapped brownwood handle, not U-shapedblade or sword. Low glove/shaft contact unambiguous; blade clear of boots/knees. Native224x192, original96px standing scale but crouched silhouette naturally shorter, feetground96,132. Full single sprite transparent, no plants/background/effects/text. Baked-in sickle contact proof for motion review. No axe."
+    }
+  }
+]

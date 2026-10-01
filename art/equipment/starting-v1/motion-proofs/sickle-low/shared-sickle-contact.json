@@ -1,0 +1,23 @@
+{
+  "source": "tobin-contact-native.png",
+  "sourceRectXYWH": [
+    132,
+    102,
+    45,
+    31
+  ],
+  "canvas": [
+    96,
+    80
+  ],
+  "palmAnchor": [
+    40,
+    40
+  ],
+  "shaftJoin": [
+    45,
+    40
+  ],
+  "status": "shared-contact-tool-fit-review-pending",
+  "drawingMethod": "Exact authored source crop; no rotation/redrawing"
+}

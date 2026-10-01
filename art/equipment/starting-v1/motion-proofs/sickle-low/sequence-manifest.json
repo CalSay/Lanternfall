@@ -1,0 +1,170 @@
+[
+  {
+    "hero": "tobin",
+    "nativeBodyHeight": 76,
+    "canvas": [
+      224,
+      192
+    ],
+    "equipmentBakedIn": true,
+    "frames": [
+      {
+        "phase": "reach",
+        "file": "tobin-reach-native.png",
+        "sourceBBox": [
+          269,
+          450,
+          1255,
+          1017
+        ],
+        "origin": [
+          50,
+          56
+        ],
+        "footAnchorInCrop": [
+          46,
+          76
+        ],
+        "groundAnchor": [
+          96,
+          132
+        ],
+        "status": "motion-review-pending"
+      },
+      {
+        "phase": "contact",
+        "file": "tobin-contact-native.png",
+        "sourceBBox": [
+          269,
+          452,
+          1201,
+          1017
+        ],
+        "origin": [
+          50,
+          56
+        ],
+        "footAnchorInCrop": [
+          46,
+          76
+        ],
+        "groundAnchor": [
+          96,
+          132
+        ],
+        "status": "motion-review-pending",
+        "contactHeightTarget": [
+          12,
+          20
+        ]
+      },
+      {
+        "phase": "pullback",
+        "file": "tobin-pullback-native.png",
+        "sourceBBox": [
+          268,
+          451,
+          1142,
+          1014
+        ],
+        "origin": [
+          58,
+          56
+        ],
+        "footAnchorInCrop": [
+          38,
+          76
+        ],
+        "groundAnchor": [
+          96,
+          132
+        ],
+        "status": "motion-review-pending"
+      }
+    ]
+  },
+  {
+    "hero": "pip",
+    "nativeBodyHeight": 68,
+    "canvas": [
+      224,
+      192
+    ],
+    "equipmentBakedIn": true,
+    "frames": [
+      {
+        "phase": "reach",
+        "file": "pip-reach-native.png",
+        "sourceBBox": [
+          353,
+          360,
+          1186,
+          913
+        ],
+        "origin": [
+          59,
+          64
+        ],
+        "footAnchorInCrop": [
+          37,
+          68
+        ],
+        "groundAnchor": [
+          96,
+          132
+        ],
+        "status": "motion-review-pending"
+      },
+      {
+        "phase": "contact",
+        "file": "pip-contact-native.png",
+        "sourceBBox": [
+          354,
+          362,
+          1087,
+          910
+        ],
+        "origin": [
+          64,
+          64
+        ],
+        "footAnchorInCrop": [
+          32,
+          68
+        ],
+        "groundAnchor": [
+          96,
+          132
+        ],
+        "status": "motion-review-pending",
+        "contactHeightTarget": [
+          12,
+          20
+        ]
+      },
+      {
+        "phase": "pullback",
+        "file": "pip-pullback-native.png",
+        "sourceBBox": [
+          354,
+          360,
+          1024,
+          908
+        ],
+        "origin": [
+          74,
+          64
+        ],
+        "footAnchorInCrop": [
+          22,
+          68
+        ],
+        "groundAnchor": [
+          96,
+          132
+        ],
+        "status": "motion-review-pending"
+      }
+    ]
+  }
+]

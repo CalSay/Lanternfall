@@ -1,0 +1,60 @@
+[
+  {
+    "hero": "tobin",
+    "status": "pose-review-pending",
+    "canvas": [
+      224,
+      192
+    ],
+    "groundAnchor": [
+      96,
+      132
+    ],
+    "crouchedHeight": 76,
+    "footSampleExcludesTool": true,
+    "sourceBBox": [
+      269,
+      452,
+      1201,
+      1017
+    ],
+    "origin": [
+      50,
+      56
+    ],
+    "equipmentBakedIn": true,
+    "contactHeightTarget": [
+      12,
+      20
+    ]
+  },
+  {
+    "hero": "pip",
+    "status": "pose-review-pending",
+    "canvas": [
+      224,
+      192
+    ],
+    "groundAnchor": [
+      96,
+      132
+    ],
+    "crouchedHeight": 68,
+    "footSampleExcludesTool": true,
+    "sourceBBox": [
+      354,
+      362,
+      1087,
+      910
+    ],
+    "origin": [
+      64,
+      64
+    ],
+    "equipmentBakedIn": true,
+    "contactHeightTarget": [
+      12,
+      20
+    ]
+  }
+]

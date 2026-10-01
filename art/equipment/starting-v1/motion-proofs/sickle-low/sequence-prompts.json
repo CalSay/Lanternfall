@@ -1,0 +1,46 @@
+[
+  {
+    "hero": "tobin",
+    "phase": "reach",
+    "args": {
+      "transparent_background": true,
+      "referenced_image_paths": [
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/equipment/starting-v1/motion-proofs/sickle-low/tobin-contact-source.png"
+      ],
+      "prompt": "Precise SMALL pose edit of this exact tobin contact image. Preserve exact face, hair, clothes, feet, body location, ORIGINAL TWO ARM IDENTITIES and same sickle. The WORKING ARM is the CAMERA-NEAR ARM that starts at the shoulder on LEFT SIDE OF IMAGE (under visible silver shoulder pauldron) and crosses DOWN-RIGHT in front of torso to grip sickle. Keep that SAME arm as workingarm; DO NOT switch weapon to far arm. The FREE HAND on RIGHT SIDE OF IMAGE stays planted on upper thigh at exactlysame position. For reach: extend ONLY working near forearm modestly so hand and entire sickle move about10nativepixels toRIGHT, arm still crossing in front of body; shoulder/elbow may extend anatomically but samearm holds tool. Crucially keep handle and crescent in exactlysame orientation as reference: blade extendsRIGHT, crescentopensLEFT, same lowheight. No mirroredtool, no rotation, no hand swap, no extra arm. This is a subtle low horizontal reach/pull frame, not a sweeping dramatic newpose. Same canvas/framing/scale, transparentbackground, crisp originalpixelstyle. No plants, effects, text. Preserve everything outside modest workingarm adjustment."
+    }
+  },
+  {
+    "hero": "tobin",
+    "phase": "pullback",
+    "args": {
+      "transparent_background": true,
+      "referenced_image_paths": [
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/equipment/starting-v1/motion-proofs/sickle-low/tobin-contact-source.png"
+      ],
+      "prompt": "Precise SMALL pose edit of this exact tobin contact image. Preserve exact face, hair, clothes, feet, body location, ORIGINAL TWO ARM IDENTITIES and same sickle. The WORKING ARM is the CAMERA-NEAR ARM that starts at the shoulder on LEFT SIDE OF IMAGE (under visible silver shoulder pauldron) and crosses DOWN-RIGHT in front of torso to grip sickle. Keep that SAME arm as workingarm; DO NOT switch weapon to far arm. The FREE HAND on RIGHT SIDE OF IMAGE stays planted on upper thigh at exactlysame position. For pullback: bend ONLY working near elbow modestly so hand and entire sickle move about10nativepixels toLEFT, closer to frontknee but still RIGHT OF torso; sickle stays RIGHT ofhand and clear offrontboot, never moves behindbody. Crucially keep handle and crescent in exactlysame orientation as reference: blade extendsRIGHT, crescentopensLEFT, same lowheight. No mirroredtool, no rotation, no hand swap, no extra arm. This is a subtle low horizontal reach/pull frame, not a sweeping dramatic newpose. Same canvas/framing/scale, transparentbackground, crisp originalpixelstyle. No plants, effects, text. Preserve everything outside modest workingarm adjustment."
+    }
+  },
+  {
+    "hero": "pip",
+    "phase": "reach",
+    "args": {
+      "transparent_background": true,
+      "referenced_image_paths": [
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/equipment/starting-v1/motion-proofs/sickle-low/pip-contact-source.png"
+      ],
+      "prompt": "Precise SMALL pose edit of this exact pip contact image. Preserve exact face, hair, clothes, feet, body location, ORIGINAL TWO ARM IDENTITIES and same sickle. The WORKING ARM is the CAMERA-NEAR ARM that starts at the shoulder on LEFT SIDE OF IMAGE (under near gold-trim shoulder) and crosses DOWN-RIGHT in front of torso to grip sickle. Keep that SAME arm as workingarm; DO NOT switch weapon to far arm. The FREE HAND on RIGHT SIDE OF IMAGE stays planted on upper thigh at exactlysame position. For reach: extend ONLY working near forearm modestly so hand and entire sickle move about10nativepixels toRIGHT, arm still crossing in front of body; shoulder/elbow may extend anatomically but samearm holds tool. Crucially keep handle and crescent in exactlysame orientation as reference: blade extendsRIGHT, crescentopensLEFT, same lowheight. No mirroredtool, no rotation, no hand swap, no extra arm. This is a subtle low horizontal reach/pull frame, not a sweeping dramatic newpose. Same canvas/framing/scale, transparentbackground, crisp originalpixelstyle. No plants, effects, text. Preserve everything outside modest workingarm adjustment."
+    }
+  },
+  {
+    "hero": "pip",
+    "phase": "pullback",
+    "args": {
+      "transparent_background": true,
+      "referenced_image_paths": [
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/equipment/starting-v1/motion-proofs/sickle-low/pip-contact-source.png"
+      ],
+      "prompt": "Precise SMALL pose edit of this exact pip contact image. Preserve exact face, hair, clothes, feet, body location, ORIGINAL TWO ARM IDENTITIES and same sickle. The WORKING ARM is the CAMERA-NEAR ARM that starts at the shoulder on LEFT SIDE OF IMAGE (under near gold-trim shoulder) and crosses DOWN-RIGHT in front of torso to grip sickle. Keep that SAME arm as workingarm; DO NOT switch weapon to far arm. The FREE HAND on RIGHT SIDE OF IMAGE stays planted on upper thigh at exactlysame position. For pullback: bend ONLY working near elbow modestly so hand and entire sickle move about10nativepixels toLEFT, closer to frontknee but still RIGHT OF torso; sickle stays RIGHT ofhand and clear offrontboot, never moves behindbody. Crucially keep handle and crescent in exactlysame orientation as reference: blade extendsRIGHT, crescentopensLEFT, same lowheight. No mirroredtool, no rotation, no hand swap, no extra arm. This is a subtle low horizontal reach/pull frame, not a sweeping dramatic newpose. Same canvas/framing/scale, transparentbackground, crisp originalpixelstyle. No plants, effects, text. Preserve everything outside modest workingarm adjustment."
+    }
+  }
+]

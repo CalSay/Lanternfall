@@ -1,0 +1,68 @@
+[
+  {
+    "hero": "tobin",
+    "phase": "reach",
+    "palm": [
+      135,
+      118
+    ],
+    "file": "tobin-reach-shared.png",
+    "status": "fit-review-pending",
+    "method": "Same exact exposed tool crop; retained original hand and grip stub; partial separation, not final production layer"
+  },
+  {
+    "hero": "tobin",
+    "phase": "contact",
+    "palm": [
+      127,
+      118
+    ],
+    "file": "tobin-contact-shared.png",
+    "status": "fit-review-pending",
+    "method": "Same exact exposed tool crop; retained original hand and grip stub; partial separation, not final production layer"
+  },
+  {
+    "hero": "tobin",
+    "phase": "pullback",
+    "palm": [
+      131,
+      119
+    ],
+    "file": "tobin-pullback-shared.png",
+    "status": "fit-review-pending",
+    "method": "Same exact exposed tool crop; retained original hand and grip stub; partial separation, not final production layer"
+  },
+  {
+    "hero": "pip",
+    "phase": "reach",
+    "palm": [
+      117,
+      119
+    ],
+    "file": "pip-reach-shared.png",
+    "status": "fit-review-pending",
+    "method": "Same exact exposed tool crop; retained original hand and grip stub; partial separation, not final production layer"
+  },
+  {
+    "hero": "pip",
+    "phase": "contact",
+    "palm": [
+      116,
+      119
+    ],
+    "file": "pip-contact-shared.png",
+    "status": "fit-review-pending",
+    "method": "Same exact exposed tool crop; retained original hand and grip stub; partial separation, not final production layer"
+  },
+  {
+    "hero": "pip",
+    "phase": "pullback",
+    "palm": [
+      117,
+      119
+    ],
+    "file": "pip-pullback-shared.png",
+    "status": "fit-review-pending",
+    "method": "Same exact exposed tool crop; retained original hand and grip stub; partial separation, not final production layer"
+  }
+]

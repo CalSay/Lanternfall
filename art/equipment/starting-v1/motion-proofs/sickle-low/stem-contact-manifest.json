@@ -1,0 +1,115 @@
+{
+  "status": "review-pending",
+  "motion": "Three authored key poses, low lateral pull; not full smooth animation",
+  "equipment": "Partial exposed tool crop and retained hand grip, not final interchangeable layer",
+  "cases": [
+    {
+      "hero": "tobin",
+      "node": "fibre",
+      "heroOrigin": [
+        156,
+        68
+      ],
+      "heroInnerCuttingEdge": [
+        164,
+        115
+      ],
+      "nodeOrigin": [
+        266,
+        76
+      ],
+      "nodeContact": [
+        54,
+        107
+      ],
+      "worldContact": [
+        320,
+        183
+      ],
+      "groundY": 200,
+      "nativeScalesUnchanged": true,
+      "nodeSha256": "db46289657add75271968d214ad948f02d2a8583542ed59c3362cd727197d743"
+    },
+    {
+      "hero": "pip",
+      "node": "fibre",
+      "heroOrigin": [
+        168,
+        68
+      ],
+      "heroInnerCuttingEdge": [
+        152,
+        115
+      ],
+      "nodeOrigin": [
+        266,
+        76
+      ],
+      "nodeContact": [
+        54,
+        107
+      ],
+      "worldContact": [
+        320,
+        183
+      ],
+      "groundY": 200,
+      "nativeScalesUnchanged": true,
+      "nodeSha256": "db46289657add75271968d214ad948f02d2a8583542ed59c3362cd727197d743"
+    },
+    {
+      "hero": "tobin",
+      "node": "herb",
+      "heroOrigin": [
+        156,
+        68
+      ],
+      "heroInnerCuttingEdge": [
+        164,
+        120
+      ],
+      "nodeOrigin": [
+        266,
+        76
+      ],
+      "nodeContact": [
+        54,
+        112
+      ],
+      "worldContact": [
+        320,
+        188
+      ],
+      "groundY": 200,
+      "nativeScalesUnchanged": true,
+      "nodeSha256": "1b2545a2b8900b8e048e1b7535e8b826a0dc15865e76476f4f789fc74b5cff82"
+    },
+    {
+      "hero": "pip",
+      "node": "herb",
+      "heroOrigin": [
+        167,
+        68
+      ],
+      "heroInnerCuttingEdge": [
+        153,
+        120
+      ],
+      "nodeOrigin": [
+        266,
+        76
+      ],
+      "nodeContact": [
+        54,
+        112
+      ],
+      "worldContact": [
+        320,
+        188
+      ],
+      "groundY": 200,
+      "nativeScalesUnchanged": true,
+      "nodeSha256": "1b2545a2b8900b8e048e1b7535e8b826a0dc15865e76476f4f789fc74b5cff82"
+    }
+  ]
+}
