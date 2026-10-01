@@ -3,6 +3,29 @@
 Status: **brief for Codex** (owner, 2026-10-01). Design only: no art, no runtime. Step 2 of `balance-roadmap.md`.
 Read with `hero-abilities.md` §2a (the binding combat rules) and `e33-reference.md` (the reference game).
 
+## 0. Owner decisions after the first delivery (binding, 2026-10-01)
+
+1. **Rewards.** Enemies drop gold, Essence and relics. Some bosses also drop uniques, and elders keep their Trophies.
+   Enemies never drop crafting materials: hide comes only from Hunting, as ore only from Mining. (Live since `c50f0a1`.)
+2. **One enemy per fight.** No gauntlets or queues.
+3. **What enemies are.** Enemies we fight are **agents of the darkness: they came from it**. They are not corrupted
+   creatures. **Hunting beasts are separate** and never fought as enemies: they are ordinary animals the darkness drove
+   into a rage (the Enraged Boar, the Bristleback Wolf, the Fen Lizard). This replaces the old `lore.md` 4.1 rule ("a
+   creature the dark sat on too long") for enemies.
+4. **Fewer, better enemies, fought again and again.** Cut the roster to the most compelling enemies; drop the boring
+   ones (a plain slime is the owner's example). Repeat fights are fine: the same enemy can come up many times.
+5. **Lean into fantasy** (owner to Codex, 2026-10-01): the reviewed list should be more fantastical, not ordinary animals
+   and plants with a dark twist.
+6. **Bosses never repeat.** Every boss is fought once, unless it is reasonable that it comes back stronger (and then it
+   is a new, stronger encounter). So Ser Durand is not both the last area's elder and the region boss: the last area
+   gets its own boss.
+7. **The Voice is one big fight in phases**, not five appearances.
+8. **Hunting beasts for hide grades 4-5:** the owner and Codex have the list; it needs art.
+9. **World structure** (`world-structure.md`): 5 regions x 7 areas x 5 zones, each area played once. **Each zone has
+   its own monster**, ending in a **Shadowborn Captain** (an enhanced version of that monster). Each area ends in an
+   **Area Boss** (Champion of the Darkness), each region in a **Region Boss** (Elder of Darkness). **43 unique enemies
+   per region, 215 in all.** This replaces the per-area pools of 4 in §4.2.
+
 ## 1. What the owner asked for
 
 1. **Review the enemies in the game now** and decide whether each is cool enough for one-on-one combat. A foe that

@@ -199,6 +199,8 @@ let homeFamily, homeBonus, sigDropChance, awaySigDrops, champChance, champsAway,
       const drop = Object.entries(CRAFT_SIG_DROPS).filter(([, d]) => d.fam === fam).map(([k]) => TYPES[typeIndex(k)].name);
       return `${name}: ${SKILL[nk.skill]} level ${skillReq(nk.skill, t)}, ${node}.` + (home.length ? ` +25% while camped in ${home.join(' or ')}.` : '') + (drop.length ? ` ${drop.join(' and ')} drop a few.` : '');
     }
+    // hide past the beasts there are (grades 4-5): no node yet, so the Enchanter's Table is the way (owner: Hunting only)
+    if (fam === 'hide') return t > 1 ? `${name}: Hunting only. No beast carries it yet: transmute 4 ${matName('hide', t - 1)} into 1 at the Enchanter's Table.` : `${name}: Hunting only.`;
     const drop = Object.entries(CRAFT_SIG_DROPS).filter(([, d]) => d.fam === fam).sort((a, b) => b[1].p - a[1].p).map(([k]) => TYPES[typeIndex(k)].name + 's');
     const zt = Math.ceil(t) > 1 ? ` Fight in zone ${PACE.essTier[t - 1]} or higher for this tier.` : '';
     return fam === 'ess' ? `${name}: every foe can drop it. Marsh Wraiths drop extra.${zt}` : `${name}: fighting only. ${drop.join(', ')} drop it.${zt}`;
