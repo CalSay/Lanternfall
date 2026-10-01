@@ -164,7 +164,7 @@ const CRAFT_STATS = {
   control: { n: 'Control', f: 'Stuns and slows last {v}% longer', dp: 1, cap: 100 },
   heal: { n: 'Healing', f: '+{v}% healing' },
   ward: { n: 'Ward', f: 'Overhealing shields up to {v}% HP', dp: 1, cap: 40 },
-  haste: { n: 'Haste', f: '-{v}% ability cooldown', dp: 1, cap: 30 },
+  haste: { n: 'Focus', f: '-{v}% ability cooldown', dp: 1, cap: 30 },   // owner 2026-09-30: shown as Focus (Haste now means who goes first in turn fights); the key stays 'haste' for saves
   aspd: { n: 'Attack speed', f: '+{v}% attack speed', dp: 1, cap: 40 },
   gold: { n: 'Gold', f: '+{v}% gold', live: true, gear: 'gold' },
   ess: { n: 'Essence', f: '+{v}% essence drops', live: true, gear: 'ess' },

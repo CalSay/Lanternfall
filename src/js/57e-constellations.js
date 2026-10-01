@@ -222,7 +222,7 @@ const STAR_MAPS = {
 const STAR_BRIDGES = [
   ['Ring of Might', '+1% damage.', { m: { dmg: 1.01 } }, 1.01],
   ['Ring of Friends', 'You deal +1.5% damage.', { m: { dmg: 1.015 } }, 1.011],
-  ['Ring of Haste', 'Ability cooldown -3%.', { m: { abilityCd: 0.97 } }, 1.005],
+  ['Ring of Focus', 'Ability cooldown -3%.', { m: { abilityCd: 0.97 } }, 1.005],
   ['Ring of Fire', '+1% damage.', { m: { dmg: 1.01 } }, 1.01],
   ['Ring of Learning', 'Hero XP +4%.', { m: { xp: 1.04 } }, 1]
 ];
