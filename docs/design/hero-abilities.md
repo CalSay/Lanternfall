@@ -44,6 +44,42 @@ It replaces the "about 10 abilities" sketch in `solo-hero.md` (Abilities) with t
 - **Packs (real-time mode, until the turn engine ships everywhere):** cooldown turns x 2 s; status turns x 2 s; "all foes"
   hits the pack. One foe at a time in turn mode, so "all foes" is the one foe there.
 
+## 2b. Timed abilities (owner, 2026-10-01: "timing checks like in Expedition 33")
+
+Some abilities have a **timing check**. You press the ability, the hero winds up, and a ring closes on the button (and over
+the foe). Press again as the ring closes:
+
+| Result | Window | Effect |
+|---|---|---|
+| **Perfect** | about 0.12 s at the close | the ability's bonus (listed below) |
+| **Good** | about 0.3 s around it | the ability as written |
+| **Miss** | outside, or no second press | x0.7 power and no bonus |
+
+- **Multi-hit abilities check each hit** (Volley: 3 presses; Moonlit Volley: 5). Each hit gets its own result.
+- **Auto and idle play always count as Good:** no bonus, no penalty. Perfect is the reward for playing by hand, like a
+  parry.
+- **The parry and dodge choice is untouched.** A timing check only ever happens on the hero's own turn.
+- **Reduced motion:** the ring becomes a bar that fills, with the same windows.
+- **Engine:** the same timer as the parry and dodge windows; the hero holds the wind-up pose until the press. **Art:**
+  each timed ability needs a clear wind-up hold and a release frame that lines up with the ring.
+
+Timed abilities in this draft (4 per hero):
+
+| Hero | Ability | Perfect bonus |
+|---|---|---|
+| Wren | A1 Power Shot | a sure crit |
+| Wren | A5 Volley (per arrow) | that arrow gives +1 Aim |
+| Wren | W3 Deadeye | the Mark stays |
+| Wren | W6 Moonlit Volley (per arrow) | +1 Bleed even on an unmarked foe |
+| Tobin | M1 Heavy Strike | +50% power |
+| Tobin | T1 Shield Bash | Guard lasts 3 turns |
+| Tobin | T5 Hammerfall | keeps half the Grit it spends |
+| Tobin | T6 Shield Throw | catch it on the way back: its cooldown drops 2 |
+| Pip | C2 Frost Shard | 2 Chill instead of 1 |
+| Pip | P1 Fireball | Burn lasts 4 turns |
+| Pip | P3 Ignite | x2 instead of x1.5 |
+| Pip | P8 Lanternburst | keeps 2 Embers |
+
 ## 3. Statuses (turn versions)
 
 Foe turns count down foe statuses; hero turns count down hero buffs. A status re-applied refreshes its turns; the stronger
