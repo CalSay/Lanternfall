@@ -1598,20 +1598,41 @@ let resize, animate, draw, stageStats, warmScene;
     }
     return H;
   }
+  // C26 status icons (owner-approved, 21v STATUS_ICONS): drawn at a native size (16/24/36/48 device px, the one nearest
+  // 6 HUD px), never scaled. Until an image has decoded, or for ids without one, the 5x5 badge stays.
+  const STI = { freeze: 'frozen', frozen: 'frozen', burning: 'burn' };   // runtime id -> STATUS_ICONS id
+  const stiImg = new Map();
+  function stiOf(id) {
+    const k = typeof STATUS_ICONS === 'object' ? (STATUS_ICONS[STI[id] || id] ? STI[id] || id : null) : null; if (!k) return null;
+    const sizes = [16, 24, 36, 48], want = 6 * U; let n = sizes[0];
+    for (const s of sizes) if (Math.abs(s - want) < Math.abs(n - want)) n = s;
+    const key = k + n; let im = stiImg.get(key);
+    if (!im) { im = new Image(); im.src = STATUS_ICONS[k][n]; stiImg.set(key, im); }
+    return im.complete && im.naturalWidth ? im : null;
+  }
+  const iconBox = id => { const im = stiOf(id); return im ? im.naturalWidth : 5 * U; };
+  function drawIcon(id, X, Y) {
+    const im = stiOf(id);
+    if (im) { const sm = ctx.imageSmoothingEnabled; ctx.imageSmoothingEnabled = false; ctx.drawImage(im, X, Y); ctx.imageSmoothingEnabled = sm; }
+    else ctx.drawImage(icon(id), X, Y, 5 * U, 5 * U);
+  }
+  const chipW = (id, n) => iconBox(id) + (n > 0 ? 6 : 2) * U;
+  const chipH = (id, f) => iconBox(id) + (f >= 0 ? 3 : 2) * U;
   // Status chip: [icon][count] on a dark plate; frac (time left, 0-1) as a line along the bottom.
   function chip(X, Y, id, n, frac) {
-    const w = (n > 0 ? 11 : 7) * U, h = (frac >= 0 ? 8 : 7) * U, e = Math.max(1, U >> 1);
+    const B = iconBox(id), w = chipW(id, n), h = chipH(id, frac), e = Math.max(1, U >> 1);
     ctx.fillStyle = HK; ctx.fillRect(X, Y, w, h);
     ctx.fillStyle = HBG; ctx.fillRect(X + e, Y + e, w - 2 * e, h - 2 * e);
-    ctx.drawImage(icon(id), X + U, Y + U, 5 * U, 5 * U);
-    if (n > 0) ctx.drawImage(glyphs(BONE), Math.min(9, n) * 4, 0, 3, 5, X + 7 * U, Y + U, 3 * U, 5 * U);
-    if (frac >= 0) { ctx.fillStyle = ICOL[id] || (ST_ICONS[id] && ST_ICONS[id].col) || '#DCE8FF'; ctx.fillRect(X + U, Y + 6 * U, Math.max(e, Math.round((w - 2 * U) * frac)), U); }
+    drawIcon(id, X + U, Y + U);
+    if (n > 0) ctx.drawImage(glyphs(BONE), Math.min(9, n) * 4, 0, 3, 5, X + B + 2 * U, Y + U + ((B - 5 * U) >> 1), 3 * U, 5 * U);
+    if (frac >= 0) { ctx.fillStyle = ICOL[id] || (ST_ICONS[id] && ST_ICONS[id].col) || '#DCE8FF'; ctx.fillRect(X + U, Y + B + U, Math.max(e, Math.round((w - 2 * U) * frac)), U); }
     return w;
   }
-  // A 5x5 icon on a dark plate (7x7 HUD px), top-left at X, Y.
+  // An icon on a dark plate (icon + 2 HUD px), top-left at X, Y.
   function badge(X, Y, id) {
-    ctx.fillStyle = HK; ctx.fillRect(X, Y, 7 * U, 7 * U);
-    ctx.drawImage(icon(id), X + U, Y + U, 5 * U, 5 * U);
+    const B = iconBox(id);
+    ctx.fillStyle = HK; ctx.fillRect(X, Y, B + 2 * U, B + 2 * U);
+    drawIcon(id, X + U, Y + U);
   }
   // Chips queue up (pooled records), then chipRow draws them centred on X (or starting at X when
   // left is set) with their bottom at Y, and returns the row height (0 when empty).
@@ -1623,7 +1644,7 @@ let resize, animate, draw, stageStats, warmScene;
   function chipRow(X, Y, left) {
     if (!chipList.length) return 0;
     let tw = -U, h = 0;
-    for (const c of chipList) { tw += (c.n > 0 ? 11 : 7) * U + U; h = Math.max(h, (c.f >= 0 ? 8 : 7) * U); }
+    for (const c of chipList) { tw += chipW(c.id, c.n) + U; h = Math.max(h, chipH(c.id, c.f)); }
     let x = Math.max(2 * U, Math.min(cv.width - tw - 2 * U, left ? X : Math.round(X - tw / 2)));
     for (const c of chipList) x += chip(x, Y - h, c.id, c.n, c.f) + U;
     chipList.length = 0;

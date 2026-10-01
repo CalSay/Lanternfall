@@ -5,7 +5,7 @@
 //   statusIcon(id)  -> a 5x5 canvas: the status badge in its own colours (the stage's chips add the plate)
 // Shapes differ in outline, so they read without colour (A11Y checks them in the colour-blind filters).
 
-const TYPE_ICONS = {}, STATUS_ICONS = {};
+const TYPE_ICONS = {}, STATUS_BADGES = {};   // STATUS_ICONS is the C26 art (21v)
 function typeIcon(dt) {
   const info = typeof DT_INFO === 'object' && DT_INFO[dt];
   if (!info) return null;
@@ -22,9 +22,9 @@ function typeIcon(dt) {
 function statusIcon(id) {
   const m = (typeof ST_ICONS === 'object' && ST_ICONS[id]) || (typeof TRAIT_ICONS === 'object' && TRAIT_ICONS[id]);   // S6-E: elite trait badges (59i)
   if (!m) return null;
-  let c = STATUS_ICONS[id];
+  let c = STATUS_BADGES[id];
   if (c) return c;
-  c = STATUS_ICONS[id] = document.createElement('canvas'); c.width = 5; c.height = 5;
+  c = STATUS_BADGES[id] = document.createElement('canvas'); c.width = 5; c.height = 5;
   const g = c.getContext('2d');
   m.rows.forEach((r, y) => { for (let x = 0; x < 5; x++) { const col = m.pal[r[x]]; if (col) { g.fillStyle = col; g.fillRect(x, y, 1, 1); } } });
   return c;
