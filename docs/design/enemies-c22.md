@@ -3,6 +3,18 @@
 Status: **brief for Codex** (owner, 2026-10-01). Design only: no art, no runtime. Step 2 of `balance-roadmap.md`.
 Read with `hero-abilities.md` §2a (the binding combat rules) and `e33-reference.md` (the reference game).
 
+## 0. Owner decisions after the first delivery (binding, 2026-10-01)
+
+1. **Rewards.** Enemies drop gold, Essence and relics. Some bosses also drop uniques, and elders keep their Trophies.
+   Enemies never drop crafting materials: hide comes only from Hunting, as ore only from Mining. (Live since `c50f0a1`.)
+2. **One enemy per fight.** No gauntlets or queues.
+3. **What enemies are.** Enemies we fight are **agents of the darkness: they came from it**. They are not corrupted
+   creatures. **Hunting beasts are separate** and never fought as enemies: they are ordinary animals the darkness drove
+   into a rage (the Enraged Boar, the Bristleback Wolf, the Fen Lizard). This replaces the old `lore.md` 4.1 rule ("a
+   creature the dark sat on too long") for enemies.
+4. **Fewer, better enemies, fought again and again.** Cut the roster to the most compelling enemies; drop the boring
+   ones (a plain slime is the owner's example). Repeat fights are fine: the same enemy can come up many times.
+
 ## 1. What the owner asked for
 
 1. **Review the enemies in the game now** and decide whether each is cool enough for one-on-one combat. A foe that
