@@ -482,6 +482,7 @@ const ART = (() => {
     return o;
   }
   function enemyFrames(key, variant) {
+    if (key === 'node:hide') return typeof huntBeastFrames === 'function' ? huntBeastFrames(variant && variant.tier) : null;   // interim Hunting beasts (64i)
     const src = enemySrc(); if (!src || !src[key]) return null;
     const ck = 'e' + key + '|' + hashOf(variant == null ? null : variant), hit = cacheGet(ck); if (hit) return hit;
     const t0 = now();

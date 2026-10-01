@@ -82,12 +82,13 @@ const CRAFT_FAMILY = {
   ess: { src: 'fight', skill: null, row: null, from: 'Fighting only. Every foe can drop it, and Marsh Wraiths drop extra.' }
 };
 
-// C24: Hunting. Owner (2026-10-01): switch it on now, before its art pack is done. Until Codex's vetted pack lands,
-// hunting borrows the approved woods art (borrowArt): the forest scene, its trees and the woodcutting pose
-// (gatherArtKind). When the pack is integrated, set borrowArt false and draw the real scene.
-const HUNT_TUNE = { on: true, borrowArt: true };
+// C24: Hunting. Owner (2026-10-01): switch it on now, before its art pack is done, and wire Codex's drafts in (interim):
+// the beasts, the hunting grounds and the spear thrusts, machine-scaled to the game grid (tools/art/hunt-interim.py,
+// embed-hunt.mjs; 64i-hunt-art.js, 64h). borrowArt (off) is the older stopgap: the woods art in hunting's place
+// (gatherArtKind). When the vetted pack lands it replaces the interim data; with both off, Hunting hides again.
+const HUNT_TUNE = { on: true, interim: true, borrowArt: false };
 const huntingOn = () => HUNT_TUNE.on === true;
-const huntingArtReady = () => HUNT_TUNE.borrowArt === true;
+const huntingArtReady = () => HUNT_TUNE.interim === true || HUNT_TUNE.borrowArt === true;
 // the kind whose art a gathering node shows (hunting shows the woods while borrowArt is on)
 const gatherArtKind = kind => kind === 'hide' && HUNT_TUNE.borrowArt ? 'wood' : kind;
 const huntingVisible = () => huntingOn() && huntingArtReady();

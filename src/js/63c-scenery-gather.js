@@ -29,7 +29,8 @@
 let gatherTheme, gatherSpot, gatherHeroX, gatherWalking, gatherDraw, gatherRight;
 {
   const THEME = { ore: 'gmine', crystal: 'gglade', wood: 'gwoods', fibre: 'gmeadow', herb: 'gmeadow' };
-  gatherTheme = k => { const kind = gatherArtKind(k); return kind === 'hide' ? null : THEME[kind] || (skillOf(kind) === 'mine' ? 'gmine' : 'gwoods'); };
+  // hunting: the woods scene sits under the hunting-grounds bitmap (64i huntBgDraw) while the interim art is on
+  gatherTheme = k => { const kind = gatherArtKind(k); return kind === 'hide' ? (HUNT_TUNE.interim ? 'gwoods' : null) : THEME[kind] || (skillOf(kind) === 'mine' ? 'gmine' : 'gwoods'); };
   const REDUCED = typeof reduced !== 'undefined' ? reduced : false;
 
   // =====================================================================================
@@ -318,7 +319,7 @@ let gatherTheme, gatherSpot, gatherHeroX, gatherWalking, gatherDraw, gatherRight
   // =====================================================================================
   // Live nodes
   // =====================================================================================
-  const FAM = { ore: 'rock', crystal: 'rock', wood: 'tree', fibre: 'plant', herb: 'plant' };
+  const FAM = { ore: 'rock', crystal: 'rock', wood: 'tree', fibre: 'plant', herb: 'plant', hide: 'beast' };
   const LIFE = 6;        // s of work a node lasts (it takes as many gathers as fit, 1-8)
   const REGROW = 8;      // s at least for a spent node to grow back (presentation only)
   const WALK = 80;       // the hero's walking speed, logical px per second
@@ -327,9 +328,10 @@ let gatherTheme, gatherSpot, gatherHeroX, gatherWalking, gatherDraw, gatherRight
   // NODE_HIT of the way into the node's box (62-stage heroHome, G1; the same fractions), and the hero
   // must stay on the stage (its feet HERO_MIN px in). So the nodes the hero works fill the stage from
   // there to the right edge; smaller ones further off (not worked) make 3-5 in all.
-  const NODE_HIT = { ore: 0.12, crystal: 0.12, wood: 0.4, fibre: 0.2, herb: 0.2 };
+  const NODE_HIT = { ore: 0.12, crystal: 0.12, wood: 0.4, fibre: 0.2, herb: 0.2, hide: 0.15 };
   const HERO_MIN = 26, REACH = 66;
   function heroReach() {
+    if (G.kind === 'hide' && typeof huntReach === 'function' && huntReach()) return huntReach();   // the spear thrust (64i)
     try {
       const f = charFrames(TOOL_ART.gatherSpec(heroSpec(), toolFor(skillOf(gatherArtKind(G.kind)))));
       if (!f || !ART.ready(f, 'strike')) return 0;
@@ -361,14 +363,15 @@ let gatherTheme, gatherSpot, gatherHeroX, gatherWalking, gatherDraw, gatherRight
     // at the cold Hearth (63d) the station plots take the stage's right edge: keep it clear
     // (and the hero stands clear of the fire and Hesketh, at the left)
     const xa = Math.round((cold ? Math.max(HERO_MIN, SW * 0.3) : HERO_MIN) + (G.reach || REACH) - w * (NODE_HIT[gatherArtKind(kind)] ?? 0.15) + ox), xb = Math.min(Math.round(SW * 0.9), cold ? SW - rx - 30 : Math.round(SW - rx * 0.75));
-    const gap = Math.max(24, Math.round(w * 0.42)), nMax = SW < 270 ? 3 : SW < 400 ? 4 : 5;
+    // beasts stand apart, two to work and one off in the trees (not a herd shoulder to shoulder)
+    const beast = G.fam === 'beast', gap = beast ? Math.round(w * 1.1) : Math.max(24, Math.round(w * 0.42)), nMax = beast ? 2 : SW < 270 ? 3 : SW < 400 ? 4 : 5;
     const nw = xb - xa < 10 ? 1 : Math.max(2, Math.min(nMax, Math.floor((xb - xa) / gap) + 1));   // two at least: the hero walks
     // Worked nodes: the front and back lanes in turn (the last in front). Then smaller ones further off
     // (the art at 1x, hazed: young trees, a low outcrop, a small patch), so 3-5 always show: first in the
     // open ground left of the worked row (behind the hero), then in the row's gaps. Never over the fire.
     const list = [];
     for (let i = 0; i < nw; i++) list.push({ x: nw > 1 ? Math.round(xa + (xb - xa) * i / (nw - 1)) : Math.max(xa, xb), lane: (nw - 1 - i) % 2 ? 0 : 1 });
-    const nDeep = Math.max(1, (SW < 270 ? 4 : 5) - nw), spots = [], half = Math.round(w * 0.25), x0 = cold ? Math.round(SW * 0.36) + half : Math.round(half * 0.5);
+    const nDeep = beast ? 1 : Math.max(1, (SW < 270 ? 4 : 5) - nw), spots = [], half = Math.round(w * 0.25), x0 = cold ? Math.round(SW * 0.36) + half : Math.round(half * 0.5);
     for (let x = x0; x <= xa - Math.round(gap * 1.1); x += Math.max(30, Math.round(w * 0.5))) spots.push(x);
     for (let i = 1; i < nw; i += 2) if (list[i].x - list[i - 1].x >= w * 0.5) spots.push(Math.round((list[i - 1].x + list[i].x) / 2));
     if (!spots.length) spots.push(Math.min(SW - half - 4, xb + Math.round(gap * 0.8)));
@@ -433,7 +436,7 @@ let gatherTheme, gatherSpot, gatherHeroX, gatherWalking, gatherDraw, gatherRight
   function chipFx(nd) {
     if (typeof ANIM === 'undefined') return;
     const f = G.fr && G.fr.idle0; if (!f) return;
-    ANIM.burstPx(nd.x - 6, nd.y - f.oy * 0.45, G.fam === 'tree' ? '#E8C890' : G.fam === 'plant' ? '#9FD878' : nodeColor(), 5, 55);
+    ANIM.burstPx(nd.x - 6, nd.y - f.oy * 0.45, G.fam === 'tree' ? '#E8C890' : G.fam === 'plant' ? '#9FD878' : G.fam === 'beast' ? '#C89A68' : nodeColor(), 5, 55);
   }
   function spentFx(nd) {
     if (typeof ANIM === 'undefined') return;
@@ -636,7 +639,7 @@ let gatherTheme, gatherSpot, gatherHeroX, gatherWalking, gatherDraw, gatherRight
     }
     // chips fly as the worked node's cracks grow
     const st = Math.floor(lifeProg() * 5);
-    if (st > G.stage && typeof ANIM !== 'undefined') { const nd = G.nodes[G.cur], f = G.fr && G.fr.idle0; if (nd && f) ANIM.burstPx(nd.x - 6, nd.y - f.oy * 0.45, G.fam === 'tree' ? '#E8C890' : G.fam === 'plant' ? '#9FD878' : nodeColor(), 3, 40); }
+    if (st > G.stage && typeof ANIM !== 'undefined') { const nd = G.nodes[G.cur], f = G.fr && G.fr.idle0; if (nd && f) ANIM.burstPx(nd.x - 6, nd.y - f.oy * 0.45, G.fam === 'tree' ? '#E8C890' : G.fam === 'plant' ? '#9FD878' : G.fam === 'beast' ? '#C89A68' : nodeColor(), 3, 40); }
     G.stage = st;
   }
   // the worked node's wear over its life: its gathers done plus the one under way
@@ -652,6 +655,12 @@ let gatherTheme, gatherSpot, gatherHeroX, gatherWalking, gatherDraw, gatherRight
     const x = nd.x - cam, y = nd.y;
     const put = (m, a) => { if (a !== undefined) ctx.globalAlpha = a; ctx.drawImage(m.c, Math.round(x - m.ox), Math.round(y - m.oy)); ctx.globalAlpha = 1; };
     if (nd.st === 'full') { put(img(nd, frameOf(nd))); return; }
+    if (G.fam === 'beast') {   // a spent beast lies down, then fades out as a fresh one fades in (64i)
+      const g = REDUCED ? (nd.g > 0.5 ? 1 : 0) : nd.g;
+      if (fr.fallen && g < 0.6) put(img(nd, fr.fallen), Math.min(1, (0.6 - g) / 0.2));
+      if (g > 0.5) put(img(nd, fr.idle0), Math.min(1, (g - 0.5) / 0.4));
+      return;
+    }
     const sp = spentOf(fr), f = fr.idle0, g = nd.g;
     if (G.fam === 'rock') {
       if (sp) put(img(nd, sp));
@@ -694,7 +703,7 @@ let gatherTheme, gatherSpot, gatherHeroX, gatherWalking, gatherDraw, gatherRight
     }
     const f = s && s.dF;
     const lp = lifeProg();
-    if (f && f.art && lp > 0.05) {
+    if (f && f.art && lp > 0.05 && G.fam !== 'beast') {   // beasts take no cracks
       const cr = cracksOf(f), n = Math.round(cr.length * Math.floor(lp * 5) / 4);
       for (let i = 0; i < Math.min(n, cr.length); i++) { const p = cr[i]; ctx.fillStyle = CRACK[p[2]]; ctx.fillRect(s.dX + p[0] * 2, s.dY + p[1] * 2, 2, 2); }
     }

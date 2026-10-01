@@ -24,9 +24,10 @@
 //        down read as attack, hurt and death; gathering shows the camp idle), sets a._x, a._y, a._f like a baked frame
 //        (Pip's flame is a light, so the key light follows her staff). False = draw the old sprite.
 //   heroArtDecode(id, pose) -> { x0, y0, w, h, idx }   (checks) the palette indices of one pose
+//   heroArtUnrle([x0, y0, w, h, rle]) -> { w, h, idx }   the decoder, for other HERO_ART-format data (HUNT_ART)
 //   heroArtPreview(cv, id) -> bool   the camp pose, feet at the bottom centre of the canvas (the hero picker and the camp switch; W1-D)
 //   heroArtPortraitURL(id) -> data URL of a 28x28 crop of the camp pose's head (the header portrait; 1 art px = 1 CSS px)
-var heroArtId, heroArtDraw, heroArtStates, heroArtStage, heroArtDecode, heroArtPortraitURL, heroArtPreview;
+var heroArtId, heroArtDraw, heroArtStates, heroArtStage, heroArtDecode, heroArtPortraitURL, heroArtPreview, heroArtUnrle;
 {
   const D = typeof HERO_ART !== 'undefined' ? HERO_ART : null;
   const AX = 96, AY = 132, CUT = 118;
@@ -63,6 +64,7 @@ var heroArtId, heroArtDraw, heroArtStates, heroArtStage, heroArtDecode, heroArtP
     }
     return { x0, y0, w, h, idx, full: p === w * h };
   }
+  heroArtUnrle = unrle;   // [x0, y0, w, h, rle] -> { w, h, idx } (64i-hunt-art reads HUNT_ART with it)
   heroArtDecode = (id, pose) => {
     const H = D && D.heroes[id]; if (!H) return null;
     const rec = H.poses[pose] || H.fx[pose]; return rec ? unrle(rec) : null;
@@ -311,6 +313,14 @@ var heroArtId, heroArtDraw, heroArtStates, heroArtStage, heroArtDecode, heroArtP
     return out;
   }
   const ANIMS = { wren: wrenAnims(), tobin: Object.assign(tobinAnims(), gatherAnims()), pip: Object.assign(pipAnims(), gatherAnims()) };
+  // Interim Hunting (owner, 2026-10-01): Codex's spear-thrust drafts (poses h1 ready, h2 thrust, h3 recovery; the spear is
+  // drawn in, so no tool sprite) replace the code-drawn spear set, and give Wren a hunting set too. tools/heroart.mjs HUNT.
+  for (const id in ANIMS) {
+    const P = HERO_ART.heroes[id] && HERO_ART.heroes[id].poses; if (!P || !P.h1 || !P.h2 || !P.h3) continue;
+    const f = (p, o) => Object.assign({ p }, o);
+    ANIMS[id].gather_spear = { ms: 90, hit: 2, f: [f('h1'), f('h1'), f('h2'), f('h2'), f('h3'), f('h1')] };
+    ANIMS[id].gatherIdle_spear = { ms: 160, loop: true, f: range(8).map(i => f('h1', { br: BR[i] })) };
+  }
   for (const id in ANIMS) { const A = ANIMS[id]; if (!A.block) A.block = { ms: 90, f: A.fightIdle.f.slice(0, 4) }; }
   heroArtStates = id => {
     const A = ANIMS[id]; if (!A) return null;

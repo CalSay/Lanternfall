@@ -4244,6 +4244,8 @@ if (section('hero art')) try {
   const { coreFiles } = await import('./lib/core.mjs');
   const dataSrc = fs.readFileSync(path.join(ROOT, 'src', 'js', '21y-data-heroart.js'), 'utf8');
   assert(pack().src === dataSrc, 'hero art: src/js/21y-data-heroart.js is up to date with art/heroes (node tools/heroart.mjs)');
+  { const { spawnSync } = await import('node:child_process'), r = spawnSync(process.execPath, [path.join(ROOT, 'tools', 'art', 'embed-hunt.mjs'), '--check'], { encoding: 'utf8' });
+    assert(r.status === 0, 'interim Hunting art: src/js/21z-data-huntart.js is up to date with art/hunting/interim-v1 (node tools/art/embed-hunt.mjs)' + (r.status ? ': ' + (r.stderr || r.stdout) : '')); }
   const bytes = Buffer.byteLength(dataSrc) + fs.statSync(path.join(ROOT, 'src', 'js', '64h-hero-sprites.js')).size;
   {
     // gathering art (2026-09-30): every packed gather pose has a measured grip, and each tool has its three poses
@@ -6768,10 +6770,12 @@ if (section('gather scene warmup (C12, browser)')) try {
 // gate is still tested with borrowArt off: that is the state between dropping the borrowed art and integrating the pack. ----
 if (section('hunting (C24 core)')) try {
   const games = [], T0 = new Date(2026, 8, 30, 12).getTime(), HOUR = 3600e3;
-  const mk = (on = true) => { const g = loadCore({seed:2401, prelude:`Date.__t = ${T0}; Date.now = () => Date.__t`}); games.push(g); g.eval(`HUNT_TUNE.on=${on}; HUNT_TUNE.borrowArt=false; soloPick('wren'); S.camp.open=true; S.camp.b.hearth=2; S.camp.b.tavern=1; S.camp.b.tent=4; S.camp.b.store=8; S.gold=10000`); return g; };
+  const mk = (on = true) => { const g = loadCore({seed:2401, prelude:`Date.__t = ${T0}; Date.now = () => Date.__t`}); games.push(g); g.eval(`HUNT_TUNE.on=${on}; HUNT_TUNE.borrowArt=false; HUNT_TUNE.interim=false; soloPick('wren'); S.camp.open=true; S.camp.b.hearth=2; S.camp.b.tavern=1; S.camp.b.tent=4; S.camp.b.store=8; S.gold=10000`); return g; };
   { const d=loadCore({seed:2400}); games.push(d);
-    assert(d.eval('huntingOn() && huntingVisible() && HUNT_TUNE.borrowArt && gatherKinds().includes("hide") && navSkillOpen("hunt") === isUnlocked("forage") && gatherArtKind("hide") === "wood" && gatherArtKind("fibre") === "fibre"'),
-      'C24 (owner 2026-10-01): Hunting is on by default, opens with Foraging and shows the woods art'); }
+    assert(d.eval('huntingOn() && huntingVisible() && HUNT_TUNE.interim && !HUNT_TUNE.borrowArt && gatherKinds().includes("hide") && navSkillOpen("hunt") === isUnlocked("forage") && gatherArtKind("hide") === "hide"'),
+      'C24 (owner 2026-10-01): Hunting is on by default, opens with Foraging and shows its interim art');
+    assert(d.eval('Object.keys(HUNT_ART.beasts).join() === HUNT_BEASTS.map(b => b.key).join() && Object.values(HUNT_ART.beasts).every(b => ["idle","alert","windup","strike","hurt","fallen"].every(p => b.poses[p])) && HUNT_ART.bg.rec[0] > 0'),
+      'C24 interim art: every beast has its six poses, and the hunting grounds are packed'); }
   const g=mk(false), E=s=>g.eval(s), near=(a,b)=>Math.abs(a-b)<1e-8;
   assert(!E('huntingOn()') && !E('gatherKinds().includes("hide")') && !E('handsApplicantSkills().includes("hunt")') && E('handsRate({r:"common",lv:1,sk:"hunt",tr:[]},"hide",1)')===0, 'C24: with the flag off, mechanics, nodes and Hunter applicant pool are off');
   assert(!E('setNode("hide",1)') && !E('canCraft("spear",1).ok') && !E('fits({slot:"spear",t:1,r:"common",plus:0},"spear")'), 'C24: disabled direct node, craft and imported equipment entrypoints are blocked');
@@ -6844,10 +6848,10 @@ if (section('hunting hidden (C24 browser)')) try {
       await page.goto('http://lf.test/');await page.waitForFunction(()=>!!window.__t);const X=s=>page.evaluate(s=>window.__t.x(s),s);
       assert(await X('S.activity==="gather"&&S.node.kind==="hide"&&S.skills.hunt.lv===30&&fits(itemById(240099),"spear")'), 'C24 on: an imported Hunting selection loads as it was');
       await X(`setTab('gat');setView('gat','hunt');ui(true);true`); await page.waitForTimeout(200);
-      assert(await page.locator('#viewSeg [data-view="hunt"]').count()===1 && await X('gatherTheme("hide")==="gwoods"'), 'C24 on: Gather has a Hunting view and the stage borrows the woods scene');
+      assert(await page.locator('#viewSeg [data-view="hunt"]').count()===1 && await X('gatherTheme("hide")==="gwoods" && enemyFrames("node:hide",{tier:1}).fallen.c.width > 0 && huntReach() > 60'), 'C24 on: Gather has a Hunting view; the beast frames, the spear reach and the grounds underlay are there');
       await X('setActivity("fight");S.node={kind:"ore",t:1};true');
       for(const enabled of[false,true]) {
-        await X(`HUNT_TUNE.on=${enabled};HUNT_TUNE.borrowArt=false;setTab('fight');setTab('gat');buildViewSeg('gat');ui(true);true`);
+        await X(`HUNT_TUNE.on=${enabled};HUNT_TUNE.borrowArt=false;HUNT_TUNE.interim=false;setTab('fight');setTab('gat');buildViewSeg('gat');ui(true);true`);
         assert(await page.locator('#viewSeg [data-view="hunt"]').count()===0 && !await X('navGo({act:"gather",node:{kind:"hide",t:1}})'),`C24 flag ${enabled}: Gathering and navigation keep Hunting hidden`);
         await X('if(!S.items.some(i=>i.id===240099))S.items.push({id:240099,slot:"spear",t:1,r:"common",plus:0});setTab("forge");setView("forge","gear");ui(true);true');
         assert(await page.locator('#sec-craft-bag [data-item-id="240099"]').count()===0,`C24 flag ${enabled}: imported spear stays out of the Bag`);

@@ -22,18 +22,21 @@ const ART = path.join(ROOT, 'art', 'heroes');
 const OUT = path.join(ROOT, 'src', 'js', '21y-data-heroart.js');
 const W = 224, H = 192, AX = 96, AY = 132;
 
+// Interim Hunting poses (owner, 2026-10-01: wire Codex's drafts in now): Codex's native spear-thrust references from
+// codex/c27-starting-equipment (motion-proofs/hunting-source-comparison), spear drawn in. art/heroes/<id>/hunt.
+const HUNT = [['h1', 'hunt-ready'], ['h2', 'hunt-thrust'], ['h3', 'hunt-recovery']];
 // hero -> [pose key, file] (the keys 64h uses)
 export const HEROES = {
   // trim: the outer outline is dropped wherever dark shading already sits inside it (trimOutline below)
   wren: { trim: true, poses: [['draw', 'full-draw'], ['release', 'just-released'], ['camp', 'relaxed-camp'], ['hurt', 'hurt'],
     ['wind', 'wind-up'], ['block', 'defensive-brace'], ['kneel', 'kneeling'], ['fallen', 'fallen']],
-    fx: [['bat', 'bat'], ['arrow', 'arrow'], ['waves', 'sound_waves']] },
+    fx: [['bat', 'bat'], ['arrow', 'arrow'], ['waves', 'sound_waves']], hunt: HUNT },
   tobin: { poses: [['ready', '01-ready-guard'], ['wind', '02-wind-up'], ['strike', '03-strike'], ['block', '04-braced-block'],
     ['camp', '05-relaxed-camp'], ['hurt', '06-hurt'], ['kneel', '07-kneeling'], ['fallen', '08-fallen']],
-    gather: [['g1', 'g1-rest'], ['g2', 'g2-forward'], ['g3', 'g3-shoulder'], ['g4', 'g4-overhead'], ['g5', 'g5-low'], ['g6', 'g6-crouch'], ['g7', 'g7-level']] },
+    gather: [['g1', 'g1-rest'], ['g2', 'g2-forward'], ['g3', 'g3-shoulder'], ['g4', 'g4-overhead'], ['g5', 'g5-low'], ['g6', 'g6-crouch'], ['g7', 'g7-level']], hunt: HUNT },
   pip: { poses: [['ready', '01-ready'], ['wind', '02-wind-up'], ['cast', '03-cast'], ['camp', '04-relaxed-camp'],
     ['hurt', '05-hurt'], ['kneel', '06-kneeling'], ['fallen', '07-fallen']],
-    gather: [['g1', 'g1-rest'], ['g2', 'g2-forward'], ['g3', 'g3-shoulder'], ['g4', 'g4-overhead'], ['g5', 'g5-low'], ['g6', 'g6-crouch'], ['g7', 'g7-level']] }
+    gather: [['g1', 'g1-rest'], ['g2', 'g2-forward'], ['g3', 'g3-shoulder'], ['g4', 'g4-overhead'], ['g5', 'g5-low'], ['g6', 'g6-crouch'], ['g7', 'g7-level']], hunt: HUNT }
 };
 
 // ---- outline trim (owner, 2026-09-29: Wren's border read about 4 px thick) ----
@@ -100,7 +103,7 @@ function readPalette(hero) {
   for (let i = 0; i < w * h; i++) if (rgba[i * 4 + 3] > 0) { const c = hex(rgba, i * 4); if (!out.includes(c)) out.push(c); }
   return out;
 }
-function encode(img, pal, name, whole) {
+export function encode(img, pal, name, whole) {
   const { w, h, rgba } = img;
   let x0 = w, y0 = h, x1 = -1, y1 = -1;
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
@@ -133,7 +136,7 @@ export function pack() {
     if (pal.length > 63) throw new Error(id + ': more than 63 colours');
     const poses = {}, fx = {};
     // gather: the empty-fist gathering poses (art/heroes/<id>/gather, made by tools/art/gathersheet.py); 64h draws the tools
-    for (const [key, file, dir] of def.poses.map(p => [...p, 'poses']).concat((def.gather || []).map(p => [...p, 'gather']))) {
+    for (const [key, file, dir] of def.poses.map(p => [...p, 'poses']).concat((def.gather || []).map(p => [...p, 'gather'])).concat((def.hunt || []).map(p => [...p, 'hunt']))) {
       const img = readPNG(path.join(ART, id, dir, file + '.png'));
       if (def.trim) trimOutline(img);
       if (img.w !== W || img.h !== H) throw new Error(`${id}/${file}: ${img.w}x${img.h}, want ${W}x${H}`);

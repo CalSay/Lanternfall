@@ -40,10 +40,12 @@ Single-player depth. Do not change the online layer (world raid, tavern, leaderb
   Hunting scene and its beasts), since those cannot reuse existing assets. Match the style of the three heroes (Wren,
   Tobin, Pip): strict pixel art, a clean 1-pixel dark outline, flat shading clusters, the same scale. The owner still
   vets the whole set before it ships.
-- Exception (owner, 2026-10-01): **Hunting is switched on before its art pack is done.** Until Codex's vetted pack
-  lands, hunting borrows the approved woods art (forest scene, trees, woodcutting pose) via `HUNT_TUNE.borrowArt` and
-  `gatherArtKind` (21-data-craft.js), and uses the approved C26 spear and hunting icons. Integrating the pack sets
-  `borrowArt` to false and draws the real scene.
+- Exception (owner, 2026-10-01): **Hunting is switched on before its art pack is done, with Codex's drafts wired in.**
+  The interim art is machine-converted from Codex's review drafts, nothing redrawn: the beasts and hunting grounds
+  (`tools/art/hunt-interim.py` -> `art/hunting/interim-v1` -> `tools/art/embed-hunt.mjs` -> `21z-data-huntart.js`, drawn by
+  `64i-hunt-art.js`) and Codex's native spear-thrust poses (`art/heroes/<id>/hunt`, packed by `tools/heroart.mjs`).
+  `HUNT_TUNE.interim` turns it on; `borrowArt` (the woods art) is the older stopgap, now off. Codex's vetted pack
+  replaces the interim files.
 
 ## Shared online data (do not change shape without coordinator sign-off)
 

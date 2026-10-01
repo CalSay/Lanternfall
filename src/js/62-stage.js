@@ -620,8 +620,11 @@ let resize, animate, draw, stageStats, warmScene;
   // reaches NODE_HIT of the way into the node's box (a tree: its trunk). Until that frame is baked, the
   // idle frame's front edge stops short of the node, as before. G2: the worked node moves between
   // several (63c-scenery-gather), and gatherHeroX walks the hero there.
-  const NODE_HIT = { ore: 0.12, crystal: 0.12, wood: 0.4, fibre: 0.2, herb: 0.2 };
+  const NODE_HIT = { ore: 0.12, crystal: 0.12, wood: 0.4, fibre: 0.2, herb: 0.2, hide: 0.15 };
   const nodeHome = () => {
+    // hunting: the spear thrust's tip lands NODE_HIT into the beast (64i huntReach; the hand-drawn hero, not the baked frame)
+    const hr = S.node.kind === 'hide' && typeof huntReach === 'function' ? huntReach() : 0;
+    if (hr) return Math.max(16, Math.round(foe.left + foe.w * NODE_HIT.hide) - hr);
     const f = hero.fr; if (!f) return foe.left - 18;
     if (!ART.ready(f, 'strike')) return foe.left - 4 - (f.idle0.c.width - f.idle0.ox);
     return Math.max(16, Math.round(foe.left + foe.w * (NODE_HIT[S.node.kind] ?? 0.15)) - (rightEdge(f.strike) - f.strike.ox));
@@ -1240,6 +1243,7 @@ let resize, animate, draw, stageStats, warmScene;
     ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
     // The backdrop (#0B0810) shows only where the sky does not reach: drawScene fills it.
     drawScene(ctx, scene, camF, 'back', K, sx * K, sy * K, '#0B0810');
+    const huntBg = gath && S.node.kind === 'hide' && typeof huntBgDraw === 'function' && HUNT_TUNE.interim && huntBgDraw(ctx, SW, GY);   // interim Hunting grounds (64i)
     const dv = DECO_V; if (stageDeco) { dv.cam = cam; dv.SW = SW; dv.SH = SH; dv.GY = GY; dv.T = T; dv.tg = tg; dv.nodeR = gath && foe.fr ? (typeof gatherRight === 'function' ? gatherRight(foe.left + foe.w) : foe.left + foe.w) : SW * 0.8; dv.hx = hero.fr ? ax(hero) : null; dv.hy = hero.hy; dv.hl = hero.lane; dv.hd = hero.down; dv.hf = hero._f; dv.hX = hero._x; dv.hY = hero._y; ctx.imageSmoothingEnabled = false; stageDeco(ctx, 'back', dv); }
 
     // smooth under-layer: shadows, boss, champion and elite auras
@@ -1281,7 +1285,7 @@ let resize, animate, draw, stageStats, warmScene;
       for (let i = 0; i < guardN; i++) { const x = hero._x + hero._f.ox - guardN * 3 + i * 6; ctx.fillStyle = '#0B0810'; ctx.fillRect(x - 1, top - 1, 5, 5); ctx.fillStyle = i % 2 ? '#8FB8FF' : '#C8DCFF'; ctx.fillRect(x, top, 3, 3); }
     }
     A.drawProj(ctx);
-    drawScene(ctx, scene, camF, 'fg', K, sx * K, sy * K);
+    if (!huntBg) drawScene(ctx, scene, camF, 'fg', K, sx * K, sy * K);   // the hunting grounds bring their own foreground
 
     // smooth pass: slashes, character and effect lights
     ctx.imageSmoothingEnabled = true;
