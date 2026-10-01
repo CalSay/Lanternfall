@@ -14,6 +14,8 @@ Read with `hero-abilities.md` §2a (the binding combat rules) and `e33-reference
    creature the dark sat on too long") for enemies.
 4. **Fewer, better enemies, fought again and again.** Cut the roster to the most compelling enemies; drop the boring
    ones (a plain slime is the owner's example). Repeat fights are fine: the same enemy can come up many times.
+5. **Lean into fantasy** (owner to Codex, 2026-10-01): the reviewed list should be more fantastical, not ordinary animals
+   and plants with a dark twist.
 
 ## 1. What the owner asked for
 
