@@ -221,6 +221,8 @@ img[src*="#nic:"] { image-rendering: auto; }   /* a gear icon set by code that d
 .row-name .own { font: 500 12px var(--body); color: var(--muted); letter-spacing: .04em; }
 .row-desc { font-size: 13px; color: var(--muted); margin-top: 2px; }
 .row-fx { font-size: 13px; color: var(--r-legendary); margin-top: 2px; }
+.bp-prof { font-size: 12.5px; line-height: 1.35; color: var(--muted); margin-top: 3px; white-space: pre-line; }   /* C25 profile lines */
+.bp-prof:empty { display: none; }
 
 .ic { width: 40px; height: 40px; flex: none; display: grid; place-items: center; background: var(--well); border: 2px solid var(--line-hi); box-shadow: inset 0 0 0 2px #0B0810; position: relative; overflow: hidden; }
 .ic img { width: 28px; height: 28px; }
@@ -11732,11 +11734,28 @@ const BESTIARY_PERKS = {
   wraith: { mod: 'xp', label: 'XP' }
 };
 
+// C25 enemy profiles (owner, combat-turns.md): fight a kind of foe and you learn it. They read the Bestiary's kill
+// count (live kills only, every foe kind) and the last one you beat (S.mastery.seen[key] = { z, hp, atk }):
+//   1 kill   what it is like: its zone, HP, hit and haste    5  its weakness and resistance
+//   15       its tell (what to watch for)                    50 +5% damage against it, for good (stFoeHit)
+const PROFILE_TIERS = [1, 5, 15, 50];
+const PROFILE_BONUS = 0.05;
+// What to watch for, from each foe's real behaviour (59b-enemies)
+const FOE_TELL = {
+  slime: 'Plain blows. Its heavy hit comes after a red "!".',
+  bat: 'Dives the most hurt hero for a few seconds, every 10 s.',
+  bones: 'Shoots from range through armour. Gets back up once at 20% HP, unless magic or a burn finishes it.',
+  beetle: 'Slow, but each hit lands at nearly double strength.',
+  spore: 'Every 6 s a spore cloud hits everyone and poisons.',
+  golem: 'Armoured. Hits very hard and slowly; every third hit slams the front.',
+  wraith: 'Every 5 s it channels a heal. A stun stops it.'
+};
+
 // Helpers for the UI (75-mastery-ui.js) and tools; filled in below.
 const masteryApi = {};
 
 {
-  registerState('mastery', { zones: {}, types: {} });
+  registerState('mastery', { zones: {}, types: {}, seen: {} });
 
   const starsFor = n => { let s = 0; while (s < MASTERY_STARS.length && n >= MASTERY_STARS[s]) s++; return s; };
   const tierFor = n => { let t = 0; while (t < BESTIARY_TIERS.length && n >= BESTIARY_TIERS[t]) t++; return t; };
@@ -11745,7 +11764,15 @@ const masteryApi = {};
   const totalStars = () => { let s = 0; for (const z in S.mastery.zones) s += starsFor(S.mastery.zones[z]); return s; };
   const perkBonus = k => { const t = tierFor(typeKills(k)); return t ? (BESTIARY_PERKS[k].val || BESTIARY_PERK_VAL)[t - 1] : 0; };
 
-  Object.assign(masteryApi, { starsFor, tierFor, zoneKills, typeKills, totalStars, perkBonus });
+  // C25: the profile of a foe kind (key as TYPES[].key, 'slime')
+  const profile = k => {
+    const n = typeKills(k), row = typeof FOE_TYPE === 'object' ? FOE_TYPE[k] : null;
+    return { n, stats: n >= PROFILE_TIERS[0], weak: n >= PROFILE_TIERS[1], tell: n >= PROFILE_TIERS[2], bonus: n >= PROFILE_TIERS[3],
+      next: PROFILE_TIERS.find(x => x > n) || 0, seen: S.mastery.seen[k] || null,
+      weakTo: row && row.weak || null, resists: row && row.res || [], tellTxt: FOE_TELL[k] || '' };
+  };
+  const profileX = k => (typeKills(k) >= PROFILE_TIERS[3] ? 1 + PROFILE_BONUS : 1);
+  Object.assign(masteryApi, { starsFor, tierFor, zoneKills, typeKills, totalStars, perkBonus, profile, profileX });
 
   on('kill', ({ mob, zone, tier }) => {
     const m = S.mastery;
@@ -11756,9 +11783,18 @@ const masteryApi = {};
       emit('toast', { key: 'mastery', msg: `${zoneName(zone)}: mastery star ${za} of 5. +10% damage and +1% crit damage here.`, kind: 'good', icon: { ic: ['banner', '#F2C14E'] } });   // W1-B: bell list only
     }
     const key = mob && mob.key ? String(mob.key).replace(/\d+$/, '') : null;
-    if (!key || !BESTIARY_PERKS[key]) return;
+    if (!key) return;
+    // C25: every kind counts (the profile), and the last one beaten is remembered; Elders count for their kind
+    const pb = (m.types[key] || 0) >= PROFILE_TIERS[0] ? PROFILE_TIERS.filter(x => (m.types[key] || 0) >= x).length : 0;
     const tb = tierFor(m.types[key] || 0);
     m.types[key] = (m.types[key] || 0) + 1 + bonus('bestiaryMult');
+    if (!mob.boss) m.seen[key] = { z: zone, hp: Math.round(mob.max || 0), atk: Math.round((typeof cbFoeAtk === 'function' ? cbFoeAtk(mob) : mob.atk || 0) * 10) / 10 };
+    const pa = PROFILE_TIERS.filter(x => m.types[key] >= x).length;
+    if (pa > pb && pa >= 2) {
+      const t = TYPES.find(x => x.key === key), nm = t ? t.name : key;
+      emit('toast', { key: 'bestiary', msg: pa === 2 ? `Bestiary: you know the ${nm}'s weakness now.` : pa === 3 ? `Bestiary: you know what the ${nm} does now.` : `Bestiary: you know the ${nm} well. +5% damage to it.`, kind: 'good' });
+    }
+    if (!BESTIARY_PERKS[key]) return;
     const ta = tierFor(m.types[key]);
     if (ta > tb) {
       const t = TYPES.find(x => x.key === key);
@@ -19655,6 +19691,8 @@ var typeX, typeXKey, typeRel, typeZone, lbType, heroType, unitType,
     const x = dt ? typeX(f, dt) : 1;
     ST_LAST.dt = dt || ''; ST_LAST.x = x; ST_LAST.rel = x > 1 ? 1 : x < 1 ? -1 : 0; ST_LAST.shatter = false;
     a *= x;
+    // C25: a foe kind you know well (50 kills, 55-mastery) takes +5%
+    if (typeof masteryApi === 'object' && masteryApi.profileX) a *= masteryApi.profileX(f.type || String(f.key || '').replace(/\d+$/, ''));
     const vu = stVuln(f);
     if (vu > 0) a *= 1 + vu;
     const tg = tags | 0;
@@ -35042,6 +35080,17 @@ let deedsUI = null;
 
   // ---- Bestiary ----
   const bRows = [];
+  // C25 enemy profiles: one line per thing learned, then what the next kill tier teaches
+  const dtName = d => (typeof DT_INFO === 'object' && DT_INFO[d] ? DT_INFO[d].n : d);
+  const profLines = p => {
+    const out = [];
+    if (p.stats && p.seen) out.push(`Last met in zone ${p.seen.z}: ${fmt(p.seen.hp)} HP, hits for ${fmt(p.seen.atk)}, haste ${typeof TURN_TUNE === 'object' ? TURN_TUNE.foeHaste : '?'}.`);
+    if (p.weak) out.push((p.weakTo ? `Weak to ${dtName(p.weakTo)}.` : 'No weakness.') + (p.resists.length ? ` Resists ${p.resists.map(dtName).join(' and ')}.` : ''));
+    if (p.tell && p.tellTxt) out.push(`Watch for: ${p.tellTxt}`);
+    if (p.bonus) out.push('You know it well: +5% damage to it.');
+    else if (p.next) out.push(`${fmt(Math.ceil(p.next - p.n))} more to learn ${p.next === 5 ? 'its weakness' : p.next === 15 ? 'what to watch for' : '+5% damage to it'}.`);
+    return out.join('\n');
+  };
   registerSection('adv', {
     id: 'bestiary', title: 'Bestiary', view: 'bestiary',
     mount(sec) {
@@ -35050,6 +35099,7 @@ let deedsUI = null;
         const r = makeRow(sec, t.name, false, url, 'portrait-ic');
         r.btn.remove(); r.row.classList.add('ms-row');
         r.fx = el('div', 'row-fx'); r.desc.after(r.fx);
+        r.prof = el('div', 'bp-prof'); r.fx.after(r.prof);   // C25: what you have learned about it
         r.t = t; bRows.push(r);
       });
     },
@@ -35060,12 +35110,11 @@ let deedsUI = null;
         r.ic.classList.toggle('ghost', !seen);
         r.nm.textContent = seen ? r.t.name : '???';
         r.own.textContent = seen ? fmt(n) + ' slain' : '';
-        r.fx.textContent = tier ? `+${pct(MA.perkBonus(k))} ${perk.label}` : '';
-        r.desc.textContent = tier >= BESTIARY_TIERS.length
+        r.fx.textContent = tier && perk ? `+${pct(MA.perkBonus(k))} ${perk.label}` : '';
+        r.desc.textContent = !seen ? 'Not yet met.' : !perk ? '' : tier >= BESTIARY_TIERS.length
           ? 'All milestones reached.'
-          : seen
-            ? `Next: ${fmt(BESTIARY_TIERS[tier])} slain for +${pct((perk.val || BESTIARY_PERK_VAL)[tier])} ${perk.label}.`
-            : 'Not yet met.';
+          : `Next: ${fmt(BESTIARY_TIERS[tier])} slain for +${pct((perk.val || BESTIARY_PERK_VAL)[tier])} ${perk.label}.`;
+        putText(r.prof, seen ? profLines(MA.profile(k)) : '');
       }
     }
   });
@@ -37804,7 +37853,10 @@ var turnBarInfo = () => null;
     if (!box || !p) return;
     const f = foeNow(), fname = (f && f.name) || 'The foe', heroFirst = p.first === 'hero';
     L.f.replaceChildren(img('tv-img', heroFace(), heroName())); putText(L.n, heroName()); putText(L.h, `Haste ${p.heroHaste}`);
-    R.f.replaceChildren(img('tv-img', foeFace(f), fname)); putText(R.n, fname); putText(R.h, `Haste ${p.foeHaste}`);
+    R.f.replaceChildren(img('tv-img', foeFace(f), fname)); putText(R.n, fname);
+    // C25: a foe kind you have not beaten yet keeps its haste hidden
+    const known = !(f && typeof masteryApi === 'object' && masteryApi.typeKills) || masteryApi.typeKills(f.type) >= 1;
+    putText(R.h, known ? `Haste ${p.foeHaste}` : 'Haste ?');
     putText(banner, heroFirst ? 'You go first' : `${fname} goes first`);
     card.classList.toggle('foe-first', !heroFirst);
     card.classList.toggle('calm', reduced());

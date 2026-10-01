@@ -31,6 +31,17 @@
 
   // ---- Bestiary ----
   const bRows = [];
+  // C25 enemy profiles: one line per thing learned, then what the next kill tier teaches
+  const dtName = d => (typeof DT_INFO === 'object' && DT_INFO[d] ? DT_INFO[d].n : d);
+  const profLines = p => {
+    const out = [];
+    if (p.stats && p.seen) out.push(`Last met in zone ${p.seen.z}: ${fmt(p.seen.hp)} HP, hits for ${fmt(p.seen.atk)}, haste ${typeof TURN_TUNE === 'object' ? TURN_TUNE.foeHaste : '?'}.`);
+    if (p.weak) out.push((p.weakTo ? `Weak to ${dtName(p.weakTo)}.` : 'No weakness.') + (p.resists.length ? ` Resists ${p.resists.map(dtName).join(' and ')}.` : ''));
+    if (p.tell && p.tellTxt) out.push(`Watch for: ${p.tellTxt}`);
+    if (p.bonus) out.push('You know it well: +5% damage to it.');
+    else if (p.next) out.push(`${fmt(Math.ceil(p.next - p.n))} more to learn ${p.next === 5 ? 'its weakness' : p.next === 15 ? 'what to watch for' : '+5% damage to it'}.`);
+    return out.join('\n');
+  };
   registerSection('adv', {
     id: 'bestiary', title: 'Bestiary', view: 'bestiary',
     mount(sec) {
@@ -39,6 +50,7 @@
         const r = makeRow(sec, t.name, false, url, 'portrait-ic');
         r.btn.remove(); r.row.classList.add('ms-row');
         r.fx = el('div', 'row-fx'); r.desc.after(r.fx);
+        r.prof = el('div', 'bp-prof'); r.fx.after(r.prof);   // C25: what you have learned about it
         r.t = t; bRows.push(r);
       });
     },
@@ -49,12 +61,11 @@
         r.ic.classList.toggle('ghost', !seen);
         r.nm.textContent = seen ? r.t.name : '???';
         r.own.textContent = seen ? fmt(n) + ' slain' : '';
-        r.fx.textContent = tier ? `+${pct(MA.perkBonus(k))} ${perk.label}` : '';
-        r.desc.textContent = tier >= BESTIARY_TIERS.length
+        r.fx.textContent = tier && perk ? `+${pct(MA.perkBonus(k))} ${perk.label}` : '';
+        r.desc.textContent = !seen ? 'Not yet met.' : !perk ? '' : tier >= BESTIARY_TIERS.length
           ? 'All milestones reached.'
-          : seen
-            ? `Next: ${fmt(BESTIARY_TIERS[tier])} slain for +${pct((perk.val || BESTIARY_PERK_VAL)[tier])} ${perk.label}.`
-            : 'Not yet met.';
+          : `Next: ${fmt(BESTIARY_TIERS[tier])} slain for +${pct((perk.val || BESTIARY_PERK_VAL)[tier])} ${perk.label}.`;
+        putText(r.prof, seen ? profLines(MA.profile(k)) : '');
       }
     }
   });

@@ -59,7 +59,10 @@ var turnBarInfo = () => null;
     if (!box || !p) return;
     const f = foeNow(), fname = (f && f.name) || 'The foe', heroFirst = p.first === 'hero';
     L.f.replaceChildren(img('tv-img', heroFace(), heroName())); putText(L.n, heroName()); putText(L.h, `Haste ${p.heroHaste}`);
-    R.f.replaceChildren(img('tv-img', foeFace(f), fname)); putText(R.n, fname); putText(R.h, `Haste ${p.foeHaste}`);
+    R.f.replaceChildren(img('tv-img', foeFace(f), fname)); putText(R.n, fname);
+    // C25: a foe kind you have not beaten yet keeps its haste hidden
+    const known = !(f && typeof masteryApi === 'object' && masteryApi.typeKills) || masteryApi.typeKills(f.type) >= 1;
+    putText(R.h, known ? `Haste ${p.foeHaste}` : 'Haste ?');
     putText(banner, heroFirst ? 'You go first' : `${fname} goes first`);
     card.classList.toggle('foe-first', !heroFirst);
     card.classList.toggle('calm', reduced());

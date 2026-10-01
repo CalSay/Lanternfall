@@ -3526,7 +3526,7 @@ if (section('cb2')) try {
   // stagger and the Finisher: a full bar Staggers the boss (x1.5, does nothing), the Finisher fires by itself at 50%
   {
     const g = late(96), E = s => g.eval(s);
-    E('chooseClass("warrior"); S.auto = false; S.zone = 30; S.kills = 10; fightBoss = false; challenge(); mob.hp = mob.max = 1e40; mob.atk = 0');
+    E('chooseClass("warrior"); S.auto = false; S.zone = 30; S.kills = 10; fightBoss = false; challenge(); mob.hp = mob.max = 1e40; mob.atk = 0; S.mastery.types = {}');   // C25: no profile bonus in the multiplier under test
     for (let i = 0; i < 5; i++) g.fn.tick(0.1);
     E('actStag(mob, 200, 0)'); g.fn.tick(0.1);
     E('mob.markT = 0; mob.mkV = 0; mob.vulnT = 0; mob.markUntil = 0');
@@ -3541,7 +3541,7 @@ if (section('cb2')) try {
   // elite traits at work
   {
     const g = late(97), E = s => g.eval(s);
-    E('S.auto = false; S.zone = 40; fightBoss = false; spawn(); globalThis.__e = combatFoes().find(f => !f.dead); __e.elite = true; __e.tr = null');
+    E('S.auto = false; S.zone = 40; fightBoss = false; spawn(); globalThis.__e = combatFoes().find(f => !f.dead); __e.elite = true; __e.tr = null; S.mastery.types = {}');   // C25: no profile bonus either
     const clr = '__e.markT = 0; __e.mkV = 0; __e.vulnT = 0; __e.markUntil = 0; __e.ss = null; __e.chillT = 0; __e.rxT = 0; __e.armoured = false';
     E('__e.tr = ["shielded"]; __e.eshMax = __e.max * 0.3; __e.esh = __e.eshMax; __e.eshT = 0; __e.hp = __e.max; ' + clr);
     const px = E('typeXKey(__e.type, "phys")');
@@ -6839,6 +6839,26 @@ if (section('hunting hidden (C24 browser)')) try {
 
 // ---- C20: default-off, zone-one turn combat and shared away resolver ----
 // ---- turn UI (Claude, 2026-09-30): the versus card, turn strip, timing bar and the Journal test switch on C20's events ----
+if (section('C25 enemy profiles')) try {
+  const g = loadCore({ seed: 5 }), E = s => g.eval(s);
+  E('soloPick("pip"); S.auto = false; S.onboard && (S.onboard.tips = false, S.onboard.all = true)');
+  const p0 = JSON.parse(E('JSON.stringify(masteryApi.profile("slime"))'));
+  assert(p0.n === 0 && !p0.stats && !p0.weak && !p0.tell && !p0.bonus && p0.next === 1, 'C25: an unmet foe kind reveals nothing');
+  for (let t = 0; t < 60; t += 0.1) g.fn.tick(0.1);
+  const p1 = JSON.parse(E('JSON.stringify(masteryApi.profile("slime"))'));
+  assert(p1.n >= 1 && p1.stats && p1.seen && p1.seen.z === 1 && p1.seen.hp > 0 && p1.seen.atk > 0, 'C25: one kill reveals its zone, HP and hit (from the foe you beat): ' + JSON.stringify(p1.seen));
+  const tiers = JSON.parse(E('JSON.stringify([1, 4, 5, 14, 15, 49, 50].map(n => { S.mastery.types.bat = n; const p = masteryApi.profile("bat"); return [p.stats, p.weak, p.tell, p.bonus, masteryApi.profileX("bat")]; }))'));
+  assert(JSON.stringify(tiers) === JSON.stringify([[true,false,false,false,1],[true,false,false,false,1],[true,true,false,false,1],[true,true,false,false,1],[true,true,true,false,1],[true,true,true,false,1],[true,true,true,true,1.05]]),
+    'C25: 1 kill stats, 5 weakness, 15 tell, 50 +5% damage (owner tiers): ' + JSON.stringify(tiers));
+  assert(E('Object.keys(FOE_TELL).length === 7 && TYPES.every(t => FOE_TELL[t.key])'), 'C25: every Hollow foe has a tell line');
+  // the +5% lands on hits (stFoeHit) and does not turn a neutral type into a weakness
+  const hit = n => E(`(() => { S.mastery.types.slime = ${n}; const f = { type: 'slime', key: 'slime0', hp: 1e9, max: 1e9, ss: null }; return stFoeHit(f, 100, 'hero', 'tap', 'holy', 0); })()`);
+  const a = hit(49), b = hit(50);
+  assert(a > 0 && Math.abs(b / a - 1.05) < 1e-6, `C25: at 50 kills hits on that kind deal +5% (${a} -> ${b})`);
+  assert(E('typeRel("slime", "holy") === 0 && typeRel("slime", "fire") === 1'), 'C25: the bonus leaves weak / resist labels alone');
+  assert(!g.errors.length, 'C25: no core errors');
+} catch (e) { fail('C25 crashed: ' + (e.stack || e)); }
+
 if (section('auto-challenge (boss switch)')) try {
   // owner 2026-10-01: "The toggle to automatically fight the zone boss doesn't work". It only ran on the old single-foe
   // respawn (never in turn fights) and waited 10 min for a cautious estimate. Now: every fight mode, at most bossWait s.

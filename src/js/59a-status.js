@@ -200,6 +200,8 @@ var typeX, typeXKey, typeRel, typeZone, lbType, heroType, unitType,
     const x = dt ? typeX(f, dt) : 1;
     ST_LAST.dt = dt || ''; ST_LAST.x = x; ST_LAST.rel = x > 1 ? 1 : x < 1 ? -1 : 0; ST_LAST.shatter = false;
     a *= x;
+    // C25: a foe kind you know well (50 kills, 55-mastery) takes +5%
+    if (typeof masteryApi === 'object' && masteryApi.profileX) a *= masteryApi.profileX(f.type || String(f.key || '').replace(/\d+$/, ''));
     const vu = stVuln(f);
     if (vu > 0) a *= 1 + vu;
     const tg = tags | 0;
