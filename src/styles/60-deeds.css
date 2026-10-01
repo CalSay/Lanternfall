@@ -276,3 +276,4 @@
 .sw-num > span { font: 600 12px var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
 .sw-seg { margin: 0; }
 .sw-seg button { min-height: 44px; }
+.dd-fdone { margin: 10px var(--gut, 12px) 0; }

@@ -90,7 +90,7 @@ let deedsUI = null;
     const v = VIEW_ID[view] || (Object.values(VIEW_ID).includes(view) ? view : 'ach-deeds');
     let sel = null;
     if (v === 'ach-tracks' && id) { const t = TR[id]; if (t) { curGroup = t.g; tracksSig = ''; sel = '#ach-tr-' + id; } }
-    if (v === 'ach-feats' && id && FE[id]) sel = '#ach-ft-' + id;
+    if (v === 'ach-feats' && id && FE[id]) { sel = '#ach-ft-' + id; if (!fv.showDone && deeds.feats().some(f => f.id === id && f.got)) { fv.showDone = true; featsSig = ''; } }
     setTab(v, sel || undefined);
     if (sel) {
       const n = document.querySelector(sel);
@@ -397,19 +397,25 @@ let deedsUI = null;
       sec.classList.add('dd-sec');
       fv.intro = el('p', 'note', 'Milestone feats give a small permanent bonus. Harder feats earn titles and looks. Each reward is shown below.');
       fv.grid = el('div', 'dd-fgrid');
+      // menu audit: about 12 finished feats led a 14-screen view; they fold behind one button now
+      fv.doneBtn = el('button', 'mini dd-fdone'); fv.doneBtn.type = 'button';
+      fv.doneBtn.addEventListener('click', () => { fv.showDone = !fv.showDone; featsSig = ''; ui(true); });
+      fv.doneGrid = el('div', 'dd-fgrid');
       fv.sh = el('h3', 'dd-h', 'Secrets');
       fv.sgrid = el('div', 'dd-sgrid');
       fv.snote = el('p', 'note');
-      sec.append(fv.intro, fv.grid, fv.sh, fv.snote, fv.sgrid);
+      sec.append(fv.intro, fv.grid, fv.doneBtn, fv.doneGrid, fv.sh, fv.snote, fv.sgrid);
     },
     update(force) {
       const t = Date.now(); if (!force && t - featsAt < 2000) return; featsAt = t;
       const feats = deeds.feats(), secs = deeds.secrets(), wall = deeds.wall();
       const sig = feats.map(f => f.id + (f.got ? 'g' : '') + Math.floor(f.pct * 200) + f.parts.map(p => p.have).join(':')).join() + '|' + secs.map(s => s.id + (s.got ? 1 : 0) + (s.riddle ? 1 : 0)).join() + '|' + wall.join() + '|' + S.deeds.wear.critter + S.deeds.wear.cape;
       if (sig === featsSig && !force) return; featsSig = sig;
-      fv.grid.textContent = '';
-      const order = feats.filter(f => f.got).sort((a, b) => b.at - a.at).concat(feats.filter(f => !f.got).sort((a, b) => b.pct - a.pct));
-      for (const f of order) {
+      fv.grid.textContent = ''; fv.doneGrid.textContent = '';
+      const doing = feats.filter(f => !f.got).sort((a, b) => b.pct - a.pct), done = feats.filter(f => f.got).sort((a, b) => b.at - a.at);
+      putText(fv.doneBtn, done.length ? (fv.showDone ? `Hide finished feats (${done.length})` : `Show ${done.length} finished feat${done.length === 1 ? '' : 's'}`) : '');
+      putHidden(fv.doneBtn, !done.length); putHidden(fv.doneGrid, !fv.showDone);
+      for (const f of doing.concat(done)) {
         const c = btn('dd-fcard' + (f.got ? ' got' : '') + (f.id === 'f_all' ? ' cap' : '')); c.id = 'ach-ft-' + f.id;
         c.style.setProperty('--rc', RAR_COL[f.rar] || 'var(--gold)');
         const top = el('span', 'dd-ftop');
@@ -432,7 +438,7 @@ let deedsUI = null;
         if (wall.includes(f.id)) rw.append(el('span', 'dd-pin', 'Pinned'));
         c.append(rw);
         c.addEventListener('click', () => featSheet(f.id));
-        fv.grid.append(c);
+        (f.got ? fv.doneGrid : fv.grid).append(c);
       }
       // secrets
       fv.sgrid.textContent = '';

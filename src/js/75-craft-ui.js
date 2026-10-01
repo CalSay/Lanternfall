@@ -101,7 +101,10 @@ let craftUI = null;
     if (st8.st) return;
     const cls = S.party && S.party.cls;
     st8.st = { warden: 'forge', lanternmage: 'bench', ranger: 'bench', lightkeeper: 'loom' }[cls] || 'forge';
-    for (const s of STATION_KEYS) st8.tier[s] = openTier(s);
+    // menu audit: open on the highest tier where something for your hero can be made now (Tier 5 with every recipe
+    // short of materials was the first thing a late player saw); else the highest open tier, as before
+    const makeable = (s, t) => { try { return Object.keys(CRAFT_KINDS).some(k => CRAFT_KINDS[k].st === s && !CRAFT_KINDS[k].legacy && (typeof heroFits !== 'function' || heroFits(k)) && canCraft(k, t).ok); } catch (e) { return false; } };
+    for (const s of STATION_KEYS) { const top = openTier(s); let t = top; while (t > 1 && !makeable(s, t)) t--; st8.tier[s] = makeable(s, t) ? t : top; }
     st8.pick = S.fSlot + ':' + S.fTier + ':0';
   }
   // "Next up" goals set S.fSlot / S.fTier and open this tab: jump to that recipe.

@@ -96,7 +96,8 @@
   .menu-title { font-size: calc(17px * var(--display-k)); }
   .vseg { flex: 1; min-width: 0; margin: 4px 0 4px 8px; }
   .vseg button { min-height: 36px; padding: 0 1px; font-size: calc(12px * var(--display-k)); }   /* 1 px: Bounties, Bestiary, Deepwell fit */
-  .menu-x span { transform: translateX(-3px) rotate(-45deg); }   /* the panel slides away to the right */
+  /* menu audit: an X closes (the old right chevron read as "more tabs") */
+  .menu-x span { width: 14px; height: 14px; border: 0; transform: none; background: linear-gradient(45deg, transparent 43%, currentColor 43%, currentColor 57%, transparent 57%), linear-gradient(-45deg, transparent 43%, currentColor 43%, currentColor 57%, transparent 57%); }
   /* with a switcher the lit tab names the menu; with none (one view) the title shows */
   .menu-head:has(.vseg:not([hidden])) .menu-title { display: none; }
   .menu-head:has(.vseg[hidden]) .menu-bar { flex: 1; padding-left: var(--gut); }

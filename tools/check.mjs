@@ -6325,6 +6325,7 @@ if (section('milestone feats UI (C11, browser)')) try {
       await X('soloPickerOpen=()=>true;document.querySelectorAll(".bsheet-ov .bsheet-x").forEach(x=>x.click());tick(1.1);deedsUI.open("feats");ui(true)');
       assert(await page.locator('#ach-ft-f_m_forge1').count() === 1 && (await page.locator('#ach-ft-f_m_forge1').innerText()).includes('+2% skill XP'), 'C11 UI: converted First Spark appears once in the unified feat grid with its exact bonus');
       assert(await page.locator('.dd-fc-ov').count() === 0 && await X('!Object.hasOwn(S,"achievements")'), 'C11 UI: legacy v5 load removes old state without opening feat cards');
+      await page.locator('.dd-fdone').click();   // menu audit: finished feats fold behind one button
       await page.locator('#ach-ft-f_m_forge1').click();
       const detail = await page.locator('.dd-sheet').innerText();
       assert(detail.includes('Bonus') && detail.includes('+2% skill XP') && !detail.includes('undefined') && !detail.includes('Pin to the wall') && !detail.includes('Title'), 'C11 UI: milestone detail shows its reward and has no invented title or trophy controls');
