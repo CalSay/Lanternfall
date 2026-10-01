@@ -41,7 +41,7 @@ let craftUI = null;
 
   // ---------------- lookups ----------------
   const STATION_KEYS = Object.keys(CRAFT_STATIONS);
-  const STATION_SHORT = { forge: 'Forge', bench: 'Workbench', loom: 'Loom', ench: 'Enchanter' };
+  const STATION_SHORT = { forge: 'Forge', bench: 'Bench', loom: 'Loom', ench: 'Enchant' };
   const STATION_TIER_FAM = { forge: 'ore', bench: 'wood', loom: 'fibre', ench: 'crystal' };
   const STATION_IC = { forge: () => iconURL('anvil', '#9A97B3'), bench: () => iconURL(...craftIcon('bow', 2)), loom: () => iconURL(...craftIcon('robe', 3)), ench: () => iconURL(...craftIcon('lantern', 3)) };
   const TRO_IC = ['tro_slime', 'tro_bat', 'tro_bones', 'tro_beetle', 'tro_spore', 'tro_golem', 'tro_wraith'];
@@ -279,17 +279,16 @@ let craftUI = null;
         rec.mwSig = mwSig;
         rec.mwRow.textContent = '';
         if (tr.some(n => n > 0)) {
-          rec.mwRow.append(el('span', 'cf-lbl', 'Masterwork'));
-          const seg = el('div', 'cf-chips');
-          const add = (i, label, icon) => {
-            const b = el('button', 'cf-chip'); b.type = 'button'; b.setAttribute('aria-pressed', String(st8.mw === i));
-            if (icon) b.append(img(icon)); b.append(el('span', null, label));
-            b.addEventListener('click', () => { st8.mw = i; ui(true); });
-            seg.append(b);
-          };
-          add(null, 'None');
-          tr.forEach((n, i) => { if (n > 0) add(i, `${CRAFT_TROPHIES[i].n} ${n}`, troIcon(i)); });
-          rec.mwRow.append(seg);
+          // one row: "Masterwork [None v]" (menu audit #9; was a chip per trophy, up to 4 rows)
+          const line = el('label', 'cf-mwline'), sel = el('select', 'cf-mwsel');
+          line.append(el('span', 'cf-lbl', 'Masterwork'));
+          const opt = (v, label) => { const o = el('option', null, label); o.value = v; o.selected = String(st8.mw ?? '') === v; sel.append(o); };
+          opt('', 'None');
+          tr.forEach((n, i) => { if (n > 0) opt(String(i), `${CRAFT_TROPHIES[i].n} (${n})`); });
+          sel.addEventListener('change', () => { st8.mw = sel.value === '' ? null : +sel.value; ui(true); });
+          if (st8.mw != null) line.append(img(troIcon(st8.mw)));
+          line.append(sel);
+          rec.mwRow.append(line);
           if (st8.mw != null) {
             const m = CRAFT_TROPHIES[st8.mw].mw;
             rec.mwRow.append(el('p', 'note', `Adds 1 gold bonus line: ${CRAFT_STATS[m.gear].n}${m.tool ? ` (${CRAFT_STATS[m.tool].n} on tools)` : ' (not on tools)'}. Uses the trophy.`));

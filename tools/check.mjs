@@ -6835,7 +6835,7 @@ if (section('hunting hidden (C24 browser)')) try {
         assert(await page.locator('.cf-sheet').count()===0,`C24 flag ${enabled}: imported item and picker entrypoints cannot open hidden spear sheets`);
         assert(await page.getByRole('button',{name:/Hunting Spear/}).count()===0,`C24 flag ${enabled}: equipment has no empty or selectable spear slot`);
         await X('setView("forge","make");ui(true);true');
-        await page.locator('#sec-craft-stations button').filter({hasText:'Workbench'}).click();
+        await page.locator('#sec-craft-stations button').filter({hasText:'Bench'}).click();
         assert(await page.getByText(/Hunting Spear/,{exact:false}).count()===0,`C24 flag ${enabled}: crafting offers no hidden spear recipe`);
         await X('whereSheet("hide",1);true');
         assert(await page.getByRole('button',{name:/Hunt at/}).count()===0 && !await X('huntingVisible()'),`C24 flag ${enabled}: Hide help offers fighting without a hidden Hunting action`);
