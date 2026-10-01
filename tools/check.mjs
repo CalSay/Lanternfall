@@ -2790,6 +2790,9 @@ if (section('gatherers UI (browser)')) try {
       await page.click('#sec-hands .hd-card .hd-act .mini.go'); await page.waitForTimeout(200);
       assert(await X('handsList().length') === list0 + 1 && await X('S.gold') === gold0 - cost && /Tents 2\/2/.test(await page.textContent('#sec-hands .hd-top')), 'the second tap hires: gold spent, Tents 2/2');
       await X('S.hands.board.apps.push(handsRollApp()); ui(true); true'); await page.waitForTimeout(300);
+      // menu audit: tents full folds the board into one line with Build a Tent and Show applicants
+      assert(/Tents full \(2\/2\)/.test(await page.textContent('#sec-hands .hd-full')) && await n('#sec-hands .hd-card') === 0, 'with no free tent the board folds to one line: Tents full, Build a Tent');
+      await page.click('#sec-hands .hd-full .hd-more'); await page.waitForTimeout(200);
       assert(await page.evaluate(() => { const b = document.querySelector('#sec-hands .hd-card .hd-act .mini.go'); return !!b && b.disabled; }) && /tents are taken/.test(await page.textContent('#sec-hands .hd-why')), 'with no free tent the Hire button is off and says why');
       // send the hired gatherer
       const crew = '#sec-hands-crew .hd-card:nth-of-type(2)';
@@ -2799,9 +2802,10 @@ if (section('gatherers UI (browser)')) try {
       assert(jobs >= 1 && await X('handsList()[1].job !== null') && await X('S.gold') < gb && /On shift/.test(await page.textContent(crew + ' .hd-stat')), 'Send on a job: pick a job, the fee is charged, the card says On shift');
       await X('const x = handsList()[1]; x.job.end = Date.now() - 1000; handsCatchUp(Date.now(), false); S.gold = 0; ui(true); true'); await page.waitForTimeout(300);
       assert(/Unpaid/.test(await page.textContent(crew + ' .hd-stat')) && await X('handsList().length') === 2, 'no gold: the gatherer shows Unpaid and stays');
-      await page.click(crew + ' .hd-act .mini.warn'); await page.waitForTimeout(150);
+      await page.click(crew + ' .hd-more'); await page.waitForTimeout(150);   // menu audit: Let go sits under More
+      await page.click(crew + ' .hd-extra .mini.warn'); await page.waitForTimeout(150);
       assert(await X('handsList().length') === 2, 'Let go asks first');
-      await page.click(crew + ' .hd-act .mini.warn'); await page.waitForTimeout(200);
+      await page.click(crew + ' .hd-extra .mini.warn'); await page.waitForTimeout(200);
       assert(await X('handsList().length') === 1, 'the second tap lets them go');
       assert(!errs.length, 'no gatherer UI errors' + (errs.length ? ': ' + errs[0] : ''));
     } finally { await browser.close(); }
@@ -4976,9 +4980,11 @@ if (section('training (W2-A, browser)')) try {
         const rows = JSON.parse(await X('JSON.stringify([...document.querySelectorAll("#trainRows .tr-row")].map(r => ({ mv: r.dataset.mv, lv: r.querySelector(".own").textContent, ic: !!(r.querySelector(".ic img") && r.querySelector(".ic img").src.startsWith("data:")), desc: r.querySelector(".row-desc").textContent, btn: r.querySelector(".buy").textContent, vis: r.getBoundingClientRect().width > 0 })))'));
         assert(rows.map(r => r.mv).join() === 'atk,bash,parry,dodge' && rows.every(r => r.ic && r.vis && /^Lv \d+\/14$/.test(r.lv) && /Next level/.test(r.desc) && /^Train/.test(r.btn)),
           `${at}: Hero > Training lists Tobin's moves with the bar's icons, Lv n/14, the next level and Train (${rows.map(r => r.mv + ' ' + r.lv).join(', ')})`);
-        const lv0 = await X('trainLv("bash")'), g0 = await X('S.gold');
+        // spent gold is read from the ledger: since C10a doubled early gold, the fight can earn more than a cheap level
+        // costs while the click lands, so the balance alone is not proof
+        const lv0 = await X('trainLv("bash")'), g0 = await X('S.econ.spent.up');
         await page.click('#trainRows .tr-row[data-mv="bash"] .buy'); await page.waitForTimeout(300);
-        assert(await X('trainLv("bash")') === lv0 + 1 && await X('S.gold') < g0, `${at}: Train raises Shield Bash ${lv0} -> ${lv0 + 1} and spends gold`);
+        assert(await X('trainLv("bash")') === lv0 + 1 && await X('S.econ.spent.up') > g0, `${at}: Train raises Shield Bash ${lv0} -> ${lv0 + 1} and spends gold`);
         await page.click('.tr-amt button[data-amt="max"]'); await page.waitForTimeout(200);
         await page.click('#trainRows .tr-row[data-mv="atk"] .buy'); await page.waitForTimeout(300);
         assert(await X('trainLv("atk")') === 14 && await X('trainPlan("atk").n') === 0, `${at}: Max trains Attack to the hero's level (14) and the row says Maxed (${await X('document.querySelector(\'#trainRows .tr-row[data-mv="atk"] .qty\').textContent')})`);

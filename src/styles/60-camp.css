@@ -108,3 +108,8 @@
 .note.bless-pick { color: var(--gold); font-weight: 600; }
 .camp-scene-box { display: grid; gap: 6px; margin: 12px var(--gut, 12px) 0; }
 .camp-scene-box .sec-title { margin: 0; }
+/* Tavern (menu audit): the folded hire board and the gatherer card's More row */
+.hd-full { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px; background: var(--well); border: 1px solid var(--line); }
+.hd-full .note { flex: 1 1 200px; margin: 0; }
+.hd-more { margin-top: 6px; }
+.hd-extra[hidden] { display: none; }

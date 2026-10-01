@@ -17,7 +17,8 @@ let handsTalkMount, handsTalkOpen, handsTalkUpdate;
   const legendAbout = a => { const l = HANDS_LEGENDS.find(x => x.key === a.key); return l ? l.about : ''; };
 
   let armed = null, armedAt = 0, picking = null, msg = '', msgAt = 0;
-  const shiftChoice = Object.create(null);
+  const shiftChoice = Object.create(null), moreOpen = Object.create(null);
+  let showApps = false;   // menu audit: the hire board folds away when it is long or the tents are full
   let talkBox = null, talkId = null, talkLine = '', talkPicking = false, talkOrigin = null, talkFallback = null, talkSig = '';
   const isArmed = k => armed === k && Date.now() - armedAt < 4000;
   const arm = k => { armed = k; armedAt = Date.now(); picking = null; ui(true); };
@@ -151,7 +152,7 @@ let handsTalkMount, handsTalkOpen, handsTalkUpdate;
     setTxt(B.note, (nxt === null ? 'The three random spots are full.' : `Next applicant in ${dur(nxt / 1000)}.`) +
       ` A Rare or better shows up within ${left === 1 ? 'the next applicant' : left + ' applicants'}.`);
     const spots = handsLegendSpots(), named = board.filter(b => b.app.key), random = board.filter(b => !b.app.key);
-    const sig = JSON.stringify([tents, used, Math.floor(S.gold / 10), armed, isArmed(armed),
+    const sig = JSON.stringify([tents, used, Math.floor(S.gold / 10), armed, isArmed(armed), showApps,
       board.map(b => [b.app.id, b.cost, b.can.why]), spots.map(l => [l.state, l.hint])]);
     if (sig === boardSig) return;
     boardSig = sig;
@@ -160,13 +161,27 @@ let handsTalkMount, handsTalkOpen, handsTalkUpdate;
     tentTxt.addEventListener('click', () => emit('campGoto', { tab: 'world', view: 'camp', sel: '#camp-b-tent' }));
     const gl = el('span', 'hd-gold'); gl.append(img(iconURL('coin', '#F2C14E')), el('span', null, fmt(S.gold)));
     B.top.append(tentTxt, gl);
-    B.stars.textContent = '';
-    if (named.length) B.stars.append(el('h3', 'hd-sub', 'Here at the Tavern'));
-    for (const b of named) B.stars.append(appCard(b));
-    B.list.textContent = '';
-    B.list.append(el('h3', 'hd-sub', 'Job board'));
-    if (!random.length) B.list.append(el('p', 'note', 'No random applicants are waiting. They walk in every few hours, even while you are away.'));
-    for (const b of random) B.list.append(appCard(b));
+    B.stars.textContent = ''; B.list.textContent = '';
+    // Menu audit 2026-10-01: nine full hire cards ran 9 screens while one tent was free. Tents full: one line and a
+    // Show button. Otherwise the best 3 (named first, then the job board), and Show all for the rest.
+    const full = used >= tents, all = named.concat(random), SHOW = 3;
+    const toggle = (txt) => { const b = btn('mini hd-more', txt); b.addEventListener('click', () => { showApps = !showApps; ui(true); }); return b; };
+    if (full && !showApps) {
+      const line = el('div', 'hd-full');
+      const go = btn('mini go', 'Build a Tent'); go.addEventListener('click', () => emit('campGoto', { tab: 'world', view: 'camp', sel: '#camp-b-tent' }));
+      line.append(el('p', 'note', `Tents full (${used}/${tents}). Build a Tent to hire more.` + (all.length ? ` ${all.length} waiting.` : '')), go);
+      if (all.length) line.append(toggle(`Show applicants (${all.length})`));
+      B.stars.append(line);
+    } else {
+      const shown = showApps ? all : all.slice(0, SHOW);
+      const sn = shown.filter(b => b.app.key), sr = shown.filter(b => !b.app.key);
+      if (sn.length) B.stars.append(el('h3', 'hd-sub', 'Here at the Tavern'));
+      for (const b of sn) B.stars.append(appCard(b));
+      B.list.append(el('h3', 'hd-sub', 'Job board'));
+      if (!random.length) B.list.append(el('p', 'note', 'No random applicants are waiting. They walk in every few hours, even while you are away.'));
+      for (const b of sr) B.list.append(appCard(b));
+      if (all.length > SHOW) B.list.append(toggle(showApps ? 'Show fewer' : `Show all ${all.length} applicants`));
+    }
     B.legends.textContent = '';
     B.legends.append(el('h3', 'hd-sub', 'Word on the Road'));
     const row = el('div', 'hd-leg-row');
@@ -244,7 +259,7 @@ let handsTalkMount, handsTalkOpen, handsTalkUpdate;
       if (s && (s.st === 'out' || s.st === 'rest')) setTxt(row, statusText(x, s));
     }
     const againPlan = handsSendAgainPreview();
-    const sig = JSON.stringify([list.map(x => [x.id, x.lv, x.job && [x.job.start, x.job.end, x.job.q, x.job.role], x.pack, x.last, x.sent, handsUnpaid(x), Math.floor(x.xp), shiftChoice[x.id]]), Math.floor(S.gold / 10), againPlan, armed, isArmed(armed), picking, tradeReason()]);
+    const sig = JSON.stringify([list.map(x => [x.id, x.lv, x.job && [x.job.start, x.job.end, x.job.q, x.job.role], x.pack, x.last, x.sent, handsUnpaid(x), Math.floor(x.xp), shiftChoice[x.id], !!moreOpen[x.id]]), Math.floor(S.gold / 10), againPlan, armed, isArmed(armed), picking, tradeReason()]);
     if (sig === crewSig) return;
     crewSig = sig;
     C.top.textContent = '';
@@ -331,8 +346,18 @@ let handsTalkMount, handsTalkOpen, handsTalkUpdate;
       if (handsLetGo(x.id)) say(named ? `${n} went back to the Tavern with their level.` : `${n} left camp.`);
       ui(true);
     });
-    act.prepend(talk, send, trade); act.append(go);
-    card.append(act);
+    // Menu audit: one main button (Send again when they have a last job, else Send on a job); the rest behind More
+    const more = btn('mini hd-more', moreOpen[x.id] ? 'Less' : 'More');
+    more.setAttribute('aria-expanded', String(!!moreOpen[x.id]));
+    more.addEventListener('click', () => { moreOpen[x.id] = !moreOpen[x.id]; ui(true); });
+    const again0 = act.querySelector('button:not(.warn)');   // Send again, when shown
+    const extra = el('div', 'hd-act hd-extra'); extra.hidden = !moreOpen[x.id];
+    if (again0) { extra.append(send); } else act.prepend(send);
+    extra.prepend(talk); extra.append(trade);
+    for (const w of [...act.querySelectorAll('.warn')]) if (!/Recall|recall/.test(w.textContent)) extra.append(w);
+    extra.append(go);
+    act.append(more);
+    card.append(act, extra);
     if (tradeReason()) card.append(el('p', 'note hd-trade-lock', tradeReason()));
     if (picking === x.id && !busy) card.append(jobPicker(x));
     return card;
