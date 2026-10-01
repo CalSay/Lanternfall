@@ -21,7 +21,7 @@ zone, HP as hero actions to kill, Speed relative to the hero.
 |---|---|---|---|
 | 1. The Hollow | 1-35 | Mossy Hollow, Batwing Caves, The Bonefield, Beetle Barrows, Fungal Deep, Quarry Ruins, Wraithmarsh; region boss the Fenmother (zone 35) | in game: 7 foes, 7 elders |
 | 2. The Sunken Coast | 36-70 | Grey Shingle, Gullcliffs, The Wrecks, Kelp Shallows, Glimmer Lagoon, Drowned Saltreach, The Coral Nave; boss Silas the Fogbound | designed (`region-2.md` §4), not built: plays the Hollow's foes |
-| 3. The Emberwaste | 71-105 | `lore.md` (suggested zone types) | sketched |
+| 3. The Emberwaste | 71-105 | `lore.md` §8 (suggested zone types; region boss the Pyre Knight) | sketched |
 | 4. The Pale Reach | 106-140 | `regions-4-5.md` §1.5 | designed |
 | 5. The Gloamvale | 141-175 | `regions-4-5.md` §2.5 | designed |
 
@@ -70,21 +70,32 @@ elders, and the 3 Hunting beasts:
 - **Keep / rework / retire** for one-on-one, with one line why.
 - What makes it cool alone (or what is missing).
 
-### 4.2 The pool per area
+### 4.2 The pool per area: every area, all five regions (owner, 2026-10-01)
 
-For **every area of the Hollow and the Coast**, in full:
+The owner wants **a full list for every single area in the five regions**, all in full detail (no outlines):
 
-- **4 normal foes** (the area's current foe, reworked, plus 3 new). They fit the area's place and lore, differ from
+| Region | Areas |
+|---|---|
+| 1. The Hollow | Mossy Hollow, Batwing Caves, The Bonefield, Beetle Barrows, Fungal Deep, Quarry Ruins, Wraithmarsh |
+| 2. The Sunken Coast | Grey Shingle, Gullcliffs, The Wrecks, Kelp Shallows, Glimmer Lagoon, Drowned Saltreach, The Coral Nave |
+| 3. The Emberwaste | Cinder Road, Emberlea Ruins, the Ashfall, the Glass Flats, the Kilns, Wyrmscale Ridge, the Pyre (`lore.md`) |
+| 4. The Pale Reach | Frostgate Pass, The Eyries, The Starscar, The Blue Caves, The Silent Village, The Rimewood (+ Frostgate Bastion, the boss zone) |
+| 5. The Gloamvale | The Last Descent, The Stillwood, The Blind Mere, The Long Dusk Fields, Coldhearth, The Closed Orchard (+ the Heart of the Gloamvale, the boss zone) |
+
+For **every** area:
+
+- **4 normal foes** (the area's designed foe, reworked, plus 3 new). They fit the area's place and lore, differ from
   each other in how they fight (one fast and light, one slow and heavy, one tricky, one that sets up a status), and
   share the area's damage-type lean so the area still teaches something. Each foe also gets a rarer **variant**
   (a tougher cousin) that can roll as an elite base.
 - **The elder** (zone boss), 3-4 moves.
 - The area's **gauntlet mix**: which foes appear together, and in what order.
 
-For **the Emberwaste, the Pale Reach and the Gloamvale**: names, one-line concepts and move lists for the same counts,
-without full detail. Region bosses for all five: full detail for the Fenmother and Silas; outlines for the rest.
+And **every region boss** in full: the Fenmother, Silas the Fogbound, the Pyre Knight (Ser Durand), the Pale Reach's
+boss and the Voice (`regions-4-5.md` §1.6, §2.6; `lore.md` §8).
 
-That is 28 + 28 normal foes in full detail (Hollow and Coast), 84 in outline, plus elders and bosses.
+That is 33 areas: 132 normal foes (+ 132 variants), 33 elders and 5 region bosses. Deliver region by region, the Hollow
+first (it is the one players are in), so the owner can review as you go.
 
 ### 4.3 Each foe's card
 
