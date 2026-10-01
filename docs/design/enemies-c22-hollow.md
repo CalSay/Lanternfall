@@ -1,5 +1,7 @@
 # C22: the Hollow
 
+> **Superseded selection draft (1 October 2026):** see [the fantasy review](enemies-c22-fantasy-review.md). The owner now requires darkness-born combat enemies, one enemy per fight with no queues, and Hunting kept separate. Elders retain Trophies. Final roster count is pending the owner and Claude. Do not implement this earlier roster or its gauntlet/Hunting combat proposals as written.
+
 Design proposal for owner review, 1 October 2026. Read [the shared encounter contract](enemies-c22-contract.md) for clocks, damage units, charge interruption, variant inheritance, active-only combat and art conventions. This region contains 28 normal foes, 28 tougher variants, seven elders and the Fenmother. No runtime or art changes.
 
 ## Audit of the current roster

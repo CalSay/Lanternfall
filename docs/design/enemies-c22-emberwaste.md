@@ -1,5 +1,7 @@
 # C22 — Emberwaste enemy roster
 
+> **Superseded selection draft (1 October 2026):** see [the fantasy review](enemies-c22-fantasy-review.md). The owner now requires darkness-born combat enemies, one enemy per fight with no queues, and Hunting kept separate. Elders retain Trophies. Final roster count is pending the owner and Claude. Do not implement this earlier roster or its gauntlet/Hunting combat proposals as written.
+
 **Status:** complete regional design proposal for review. Design only: no art or runtime changes. Zone damage and HP values are fixed calibration targets for step 3, not formulas that rise with the player's max HP. Enemy rewards are Gold and Essence; preserve existing relic eligibility and allow occasional boss uniques only on authorized routes. Enemies do not drop materials.
 
 This file follows [the C22 enemy contract](enemies-c22-contract.md), [turn-based combat rules](combat-turns.md), [the Emberwaste story brief](lore.md#83-chapter-3-the-emberwaste-zones-71-105-spec-d4-story-input), and the approved resource ladder in `art/resources/regional-audit/complete-ladder.json`. The seven creatures in the lore remain the area's identity. A “pack” is expressed through one foe's readable multi-hit move or through sequential gauntlet members; the stage always has one enemy.

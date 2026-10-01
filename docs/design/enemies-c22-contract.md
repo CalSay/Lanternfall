@@ -1,5 +1,7 @@
 # C 22 enemy design contract and review index
 
+> **Superseded selection draft (1 October 2026):** see [the fantasy review](enemies-c22-fantasy-review.md). The owner now requires darkness-born combat enemies, one enemy per fight with no queues, and Hunting kept separate. Elders retain Trophies. Final roster count is pending the owner and Claude. Do not implement this earlier roster or its gauntlet/Hunting combat proposals as written.
+
 Design proposal, 1 October 2026. Based on coordinator checkpoint `c4542cf` and C 19 follow-up `c26ed05` / `524ada6`. The owner’s latest direction is **active-only combat**: no Auto, idle fight resolution or offline combat rewards. This replaces the earlier farming requirement. No runtime or artwork is included.
 
 ## Reading order and scope

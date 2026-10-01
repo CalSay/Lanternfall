@@ -1,5 +1,7 @@
 # C22: the Pale Reach
 
+> **Superseded selection draft (1 October 2026):** see [the fantasy review](enemies-c22-fantasy-review.md). The owner now requires darkness-born combat enemies, one enemy per fight with no queues, and Hunting kept separate. Elders retain Trophies. Final roster count is pending the owner and Claude. Do not implement this earlier roster or its gauntlet/Hunting combat proposals as written.
+
 Design proposal, 1 October 2026. Uses [the shared encounter contract](enemies-c22-contract.md): active-only combat, fixed zone calibration, per-hit defence, boss charge grace, no positional hazards and no new material currencies. Six areas contain 24 normal foes,24 variants and six elders; Frostgate Bastion holds the Whitehush, not a seventh normal area.
 
 ## Legacy audit and regional identity
