@@ -1,6 +1,6 @@
 # C22 — The Gloamvale: enemies and the Voice
 
-> **Superseded selection draft (1 October 2026):** see [the fantasy review](enemies-c22-fantasy-review.md). The owner now requires darkness-born combat enemies, one enemy per fight with no queues, and Hunting kept separate. Elders retain Trophies. Final roster count is pending the owner and Claude. Do not implement this earlier roster or its gauntlet/Hunting combat proposals as written.
+> **Superseded selection draft (1 October 2026):** see [the final roster contract](enemies-c22-final-contract.md). The owner now requires darkness-born combat enemies, one enemy per fight with no queues, and Hunting kept separate. Elders retain Trophies. The finalized count is215 unique designs; this older draft is retained only as history. Do not implement this earlier roster or its gauntlet/Hunting combat proposals as written.
 
 Status: **complete regional design proposal, awaiting owner and Claude review**. Design only; no runtime or art. Based on `c4542cf`, the active-only C19 handoff `c26ed05`, `enemies-c22.md`, `regions-4-5.md` §2, `lore.md` §§4.1 and 8.6–8.8, and the approved resource ladder in `art/resources/regional-audit/complete-ladder.json`. Relative numbers below are proposed test targets, not measured balance.
 
