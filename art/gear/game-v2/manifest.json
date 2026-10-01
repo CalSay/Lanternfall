@@ -1,6 +1,6 @@
 {
-  "status": "owner-review",
-  "approval": "Retained60 G1-5 icons owner-approved; all new/revised270 icons pending owner review, including aligned bows.",
+  "status": "owner-approved",
+  "approval": "Owner approved the complete 330-icon pack, including richer tools/armour and aligned bows, on 2026-10-01: Yeah these are all great.",
   "sizes": [
     16,
     18,
@@ -27,7 +27,7 @@
         251
       ],
       "sourceSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "pick-g1-16.png",
@@ -86,7 +86,7 @@
         257
       ],
       "sourceSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "pick-g2-16.png",
@@ -145,7 +145,7 @@
         263
       ],
       "sourceSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "pick-g3-16.png",
@@ -204,7 +204,7 @@
         251
       ],
       "sourceSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "pick-g4-16.png",
@@ -263,7 +263,7 @@
         256
       ],
       "sourceSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "pick-g5-16.png",
@@ -322,7 +322,7 @@
         250
       ],
       "sourceSha256": "0c17a9d49df19a46f7ea2f220f344855cd7f719c30e93ca31a2dfd2066f89434",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "pick-g6-16.png",
@@ -381,7 +381,7 @@
         249
       ],
       "sourceSha256": "0c17a9d49df19a46f7ea2f220f344855cd7f719c30e93ca31a2dfd2066f89434",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "pick-g7-16.png",
@@ -440,7 +440,7 @@
         251
       ],
       "sourceSha256": "0c17a9d49df19a46f7ea2f220f344855cd7f719c30e93ca31a2dfd2066f89434",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "pick-g8-16.png",
@@ -499,7 +499,7 @@
         245
       ],
       "sourceSha256": "0c17a9d49df19a46f7ea2f220f344855cd7f719c30e93ca31a2dfd2066f89434",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "pick-g9-16.png",
@@ -558,7 +558,7 @@
         259
       ],
       "sourceSha256": "0c17a9d49df19a46f7ea2f220f344855cd7f719c30e93ca31a2dfd2066f89434",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "pick-g10-16.png",
@@ -617,7 +617,7 @@
         256
       ],
       "sourceSha256": "aa1ab9d82715a3c68887ed0ac58016d9f66e6d5d703c922463723a2220f2a54f",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "pick-g11-16.png",
@@ -676,7 +676,7 @@
         247
       ],
       "sourceSha256": "aa1ab9d82715a3c68887ed0ac58016d9f66e6d5d703c922463723a2220f2a54f",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "pick-g12-16.png",
@@ -735,7 +735,7 @@
         240
       ],
       "sourceSha256": "aa1ab9d82715a3c68887ed0ac58016d9f66e6d5d703c922463723a2220f2a54f",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "pick-g13-16.png",
@@ -794,7 +794,7 @@
         242
       ],
       "sourceSha256": "aa1ab9d82715a3c68887ed0ac58016d9f66e6d5d703c922463723a2220f2a54f",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "pick-g14-16.png",
@@ -853,7 +853,7 @@
         269
       ],
       "sourceSha256": "aa1ab9d82715a3c68887ed0ac58016d9f66e6d5d703c922463723a2220f2a54f",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "pick-g15-16.png",
@@ -912,7 +912,7 @@
         251
       ],
       "sourceSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "axe-g1-16.png",
@@ -971,7 +971,7 @@
         257
       ],
       "sourceSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "axe-g2-16.png",
@@ -1030,7 +1030,7 @@
         263
       ],
       "sourceSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "axe-g3-16.png",
@@ -1089,7 +1089,7 @@
         251
       ],
       "sourceSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "axe-g4-16.png",
@@ -1148,7 +1148,7 @@
         256
       ],
       "sourceSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "axe-g5-16.png",
@@ -1207,7 +1207,7 @@
         250
       ],
       "sourceSha256": "0c17a9d49df19a46f7ea2f220f344855cd7f719c30e93ca31a2dfd2066f89434",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "axe-g6-16.png",
@@ -1266,7 +1266,7 @@
         249
       ],
       "sourceSha256": "0c17a9d49df19a46f7ea2f220f344855cd7f719c30e93ca31a2dfd2066f89434",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "axe-g7-16.png",
@@ -1325,7 +1325,7 @@
         251
       ],
       "sourceSha256": "0c17a9d49df19a46f7ea2f220f344855cd7f719c30e93ca31a2dfd2066f89434",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "axe-g8-16.png",
@@ -1384,7 +1384,7 @@
         245
       ],
       "sourceSha256": "0c17a9d49df19a46f7ea2f220f344855cd7f719c30e93ca31a2dfd2066f89434",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "axe-g9-16.png",
@@ -1443,7 +1443,7 @@
         259
       ],
       "sourceSha256": "0c17a9d49df19a46f7ea2f220f344855cd7f719c30e93ca31a2dfd2066f89434",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "axe-g10-16.png",
@@ -1502,7 +1502,7 @@
         256
       ],
       "sourceSha256": "aa1ab9d82715a3c68887ed0ac58016d9f66e6d5d703c922463723a2220f2a54f",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "axe-g11-16.png",
@@ -1561,7 +1561,7 @@
         247
       ],
       "sourceSha256": "aa1ab9d82715a3c68887ed0ac58016d9f66e6d5d703c922463723a2220f2a54f",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "axe-g12-16.png",
@@ -1620,7 +1620,7 @@
         240
       ],
       "sourceSha256": "aa1ab9d82715a3c68887ed0ac58016d9f66e6d5d703c922463723a2220f2a54f",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "axe-g13-16.png",
@@ -1679,7 +1679,7 @@
         242
       ],
       "sourceSha256": "aa1ab9d82715a3c68887ed0ac58016d9f66e6d5d703c922463723a2220f2a54f",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "axe-g14-16.png",
@@ -1738,7 +1738,7 @@
         269
       ],
       "sourceSha256": "aa1ab9d82715a3c68887ed0ac58016d9f66e6d5d703c922463723a2220f2a54f",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "axe-g15-16.png",
@@ -1797,7 +1797,7 @@
         251
       ],
       "sourceSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "sickle-g1-16.png",
@@ -1856,7 +1856,7 @@
         257
       ],
       "sourceSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "sickle-g2-16.png",
@@ -1915,7 +1915,7 @@
         263
       ],
       "sourceSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "sickle-g3-16.png",
@@ -1974,7 +1974,7 @@
         251
       ],
       "sourceSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "sickle-g4-16.png",
@@ -2033,7 +2033,7 @@
         256
       ],
       "sourceSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "sickle-g5-16.png",
@@ -2092,7 +2092,7 @@
         250
       ],
       "sourceSha256": "0c17a9d49df19a46f7ea2f220f344855cd7f719c30e93ca31a2dfd2066f89434",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "sickle-g6-16.png",
@@ -2151,7 +2151,7 @@
         249
       ],
       "sourceSha256": "0c17a9d49df19a46f7ea2f220f344855cd7f719c30e93ca31a2dfd2066f89434",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "sickle-g7-16.png",
@@ -2210,7 +2210,7 @@
         251
       ],
       "sourceSha256": "0c17a9d49df19a46f7ea2f220f344855cd7f719c30e93ca31a2dfd2066f89434",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "sickle-g8-16.png",
@@ -2269,7 +2269,7 @@
         245
       ],
       "sourceSha256": "0c17a9d49df19a46f7ea2f220f344855cd7f719c30e93ca31a2dfd2066f89434",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "sickle-g9-16.png",
@@ -2328,7 +2328,7 @@
         259
       ],
       "sourceSha256": "0c17a9d49df19a46f7ea2f220f344855cd7f719c30e93ca31a2dfd2066f89434",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "sickle-g10-16.png",
@@ -2387,7 +2387,7 @@
         256
       ],
       "sourceSha256": "aa1ab9d82715a3c68887ed0ac58016d9f66e6d5d703c922463723a2220f2a54f",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "sickle-g11-16.png",
@@ -2446,7 +2446,7 @@
         247
       ],
       "sourceSha256": "aa1ab9d82715a3c68887ed0ac58016d9f66e6d5d703c922463723a2220f2a54f",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "sickle-g12-16.png",
@@ -2505,7 +2505,7 @@
         240
       ],
       "sourceSha256": "aa1ab9d82715a3c68887ed0ac58016d9f66e6d5d703c922463723a2220f2a54f",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "sickle-g13-16.png",
@@ -2564,7 +2564,7 @@
         242
       ],
       "sourceSha256": "aa1ab9d82715a3c68887ed0ac58016d9f66e6d5d703c922463723a2220f2a54f",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "sickle-g14-16.png",
@@ -2623,7 +2623,7 @@
         269
       ],
       "sourceSha256": "aa1ab9d82715a3c68887ed0ac58016d9f66e6d5d703c922463723a2220f2a54f",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "sickle-g15-16.png",
@@ -2682,7 +2682,7 @@
         251
       ],
       "sourceSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "spear-g1-16.png",
@@ -2741,7 +2741,7 @@
         257
       ],
       "sourceSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "spear-g2-16.png",
@@ -2800,7 +2800,7 @@
         263
       ],
       "sourceSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "spear-g3-16.png",
@@ -2859,7 +2859,7 @@
         251
       ],
       "sourceSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "spear-g4-16.png",
@@ -2918,7 +2918,7 @@
         256
       ],
       "sourceSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "spear-g5-16.png",
@@ -2977,7 +2977,7 @@
         250
       ],
       "sourceSha256": "0c17a9d49df19a46f7ea2f220f344855cd7f719c30e93ca31a2dfd2066f89434",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "spear-g6-16.png",
@@ -3036,7 +3036,7 @@
         249
       ],
       "sourceSha256": "0c17a9d49df19a46f7ea2f220f344855cd7f719c30e93ca31a2dfd2066f89434",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "spear-g7-16.png",
@@ -3095,7 +3095,7 @@
         251
       ],
       "sourceSha256": "0c17a9d49df19a46f7ea2f220f344855cd7f719c30e93ca31a2dfd2066f89434",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "spear-g8-16.png",
@@ -3154,7 +3154,7 @@
         245
       ],
       "sourceSha256": "0c17a9d49df19a46f7ea2f220f344855cd7f719c30e93ca31a2dfd2066f89434",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "spear-g9-16.png",
@@ -3213,7 +3213,7 @@
         259
       ],
       "sourceSha256": "0c17a9d49df19a46f7ea2f220f344855cd7f719c30e93ca31a2dfd2066f89434",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "spear-g10-16.png",
@@ -3272,7 +3272,7 @@
         256
       ],
       "sourceSha256": "aa1ab9d82715a3c68887ed0ac58016d9f66e6d5d703c922463723a2220f2a54f",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "spear-g11-16.png",
@@ -3331,7 +3331,7 @@
         247
       ],
       "sourceSha256": "aa1ab9d82715a3c68887ed0ac58016d9f66e6d5d703c922463723a2220f2a54f",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "spear-g12-16.png",
@@ -3390,7 +3390,7 @@
         240
       ],
       "sourceSha256": "aa1ab9d82715a3c68887ed0ac58016d9f66e6d5d703c922463723a2220f2a54f",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "spear-g13-16.png",
@@ -3449,7 +3449,7 @@
         242
       ],
       "sourceSha256": "aa1ab9d82715a3c68887ed0ac58016d9f66e6d5d703c922463723a2220f2a54f",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "spear-g14-16.png",
@@ -3508,7 +3508,7 @@
         269
       ],
       "sourceSha256": "aa1ab9d82715a3c68887ed0ac58016d9f66e6d5d703c922463723a2220f2a54f",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "spear-g15-16.png",
@@ -3567,7 +3567,7 @@
         257
       ],
       "sourceSha256": "6e794506d033ff9fd119dcfe033e153c59e714c6c96915cd7225e6469ce6222d",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "warblade-g1-16.png",
@@ -3626,7 +3626,7 @@
         254
       ],
       "sourceSha256": "6e794506d033ff9fd119dcfe033e153c59e714c6c96915cd7225e6469ce6222d",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "warblade-g2-16.png",
@@ -3685,7 +3685,7 @@
         274
       ],
       "sourceSha256": "6e794506d033ff9fd119dcfe033e153c59e714c6c96915cd7225e6469ce6222d",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "warblade-g3-16.png",
@@ -3744,7 +3744,7 @@
         280
       ],
       "sourceSha256": "6e794506d033ff9fd119dcfe033e153c59e714c6c96915cd7225e6469ce6222d",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "warblade-g4-16.png",
@@ -3803,7 +3803,7 @@
         337
       ],
       "sourceSha256": "6e794506d033ff9fd119dcfe033e153c59e714c6c96915cd7225e6469ce6222d",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "warblade-g5-16.png",
@@ -3862,7 +3862,7 @@
         260
       ],
       "sourceSha256": "e808afd3b312d5ccd7b05cfe3967c5e87ef3920c2bf981fe127ae3df3eddf7ac",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "warblade-g6-16.png",
@@ -3921,7 +3921,7 @@
         256
       ],
       "sourceSha256": "e808afd3b312d5ccd7b05cfe3967c5e87ef3920c2bf981fe127ae3df3eddf7ac",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "warblade-g7-16.png",
@@ -3980,7 +3980,7 @@
         269
       ],
       "sourceSha256": "e808afd3b312d5ccd7b05cfe3967c5e87ef3920c2bf981fe127ae3df3eddf7ac",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "warblade-g8-16.png",
@@ -4039,7 +4039,7 @@
         280
       ],
       "sourceSha256": "e808afd3b312d5ccd7b05cfe3967c5e87ef3920c2bf981fe127ae3df3eddf7ac",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "warblade-g9-16.png",
@@ -4098,7 +4098,7 @@
         337
       ],
       "sourceSha256": "e808afd3b312d5ccd7b05cfe3967c5e87ef3920c2bf981fe127ae3df3eddf7ac",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "warblade-g10-16.png",
@@ -4157,7 +4157,7 @@
         263
       ],
       "sourceSha256": "787bde9b61b7626956518da77a8a23ef2d8f6f5016d5ffb0d0f6fd59ea77901d",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "warblade-g11-16.png",
@@ -4216,7 +4216,7 @@
         256
       ],
       "sourceSha256": "787bde9b61b7626956518da77a8a23ef2d8f6f5016d5ffb0d0f6fd59ea77901d",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "warblade-g12-16.png",
@@ -4275,7 +4275,7 @@
         266
       ],
       "sourceSha256": "787bde9b61b7626956518da77a8a23ef2d8f6f5016d5ffb0d0f6fd59ea77901d",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "warblade-g13-16.png",
@@ -4334,7 +4334,7 @@
         280
       ],
       "sourceSha256": "787bde9b61b7626956518da77a8a23ef2d8f6f5016d5ffb0d0f6fd59ea77901d",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "warblade-g14-16.png",
@@ -4393,7 +4393,7 @@
         337
       ],
       "sourceSha256": "787bde9b61b7626956518da77a8a23ef2d8f6f5016d5ffb0d0f6fd59ea77901d",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "warblade-g15-16.png",
@@ -4452,7 +4452,7 @@
         257
       ],
       "sourceSha256": "6e794506d033ff9fd119dcfe033e153c59e714c6c96915cd7225e6469ce6222d",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "shield-g1-16.png",
@@ -4511,7 +4511,7 @@
         254
       ],
       "sourceSha256": "6e794506d033ff9fd119dcfe033e153c59e714c6c96915cd7225e6469ce6222d",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "shield-g2-16.png",
@@ -4570,7 +4570,7 @@
         274
       ],
       "sourceSha256": "6e794506d033ff9fd119dcfe033e153c59e714c6c96915cd7225e6469ce6222d",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "shield-g3-16.png",
@@ -4629,7 +4629,7 @@
         280
       ],
       "sourceSha256": "6e794506d033ff9fd119dcfe033e153c59e714c6c96915cd7225e6469ce6222d",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "shield-g4-16.png",
@@ -4688,7 +4688,7 @@
         337
       ],
       "sourceSha256": "6e794506d033ff9fd119dcfe033e153c59e714c6c96915cd7225e6469ce6222d",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "shield-g5-16.png",
@@ -4747,7 +4747,7 @@
         260
       ],
       "sourceSha256": "e808afd3b312d5ccd7b05cfe3967c5e87ef3920c2bf981fe127ae3df3eddf7ac",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "shield-g6-16.png",
@@ -4806,7 +4806,7 @@
         256
       ],
       "sourceSha256": "e808afd3b312d5ccd7b05cfe3967c5e87ef3920c2bf981fe127ae3df3eddf7ac",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "shield-g7-16.png",
@@ -4865,7 +4865,7 @@
         269
       ],
       "sourceSha256": "e808afd3b312d5ccd7b05cfe3967c5e87ef3920c2bf981fe127ae3df3eddf7ac",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "shield-g8-16.png",
@@ -4924,7 +4924,7 @@
         280
       ],
       "sourceSha256": "e808afd3b312d5ccd7b05cfe3967c5e87ef3920c2bf981fe127ae3df3eddf7ac",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "shield-g9-16.png",
@@ -4983,7 +4983,7 @@
         337
       ],
       "sourceSha256": "e808afd3b312d5ccd7b05cfe3967c5e87ef3920c2bf981fe127ae3df3eddf7ac",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "shield-g10-16.png",
@@ -5042,7 +5042,7 @@
         263
       ],
       "sourceSha256": "787bde9b61b7626956518da77a8a23ef2d8f6f5016d5ffb0d0f6fd59ea77901d",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "shield-g11-16.png",
@@ -5101,7 +5101,7 @@
         256
       ],
       "sourceSha256": "787bde9b61b7626956518da77a8a23ef2d8f6f5016d5ffb0d0f6fd59ea77901d",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "shield-g12-16.png",
@@ -5160,7 +5160,7 @@
         266
       ],
       "sourceSha256": "787bde9b61b7626956518da77a8a23ef2d8f6f5016d5ffb0d0f6fd59ea77901d",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "shield-g13-16.png",
@@ -5219,7 +5219,7 @@
         280
       ],
       "sourceSha256": "787bde9b61b7626956518da77a8a23ef2d8f6f5016d5ffb0d0f6fd59ea77901d",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "shield-g14-16.png",
@@ -5278,7 +5278,7 @@
         337
       ],
       "sourceSha256": "787bde9b61b7626956518da77a8a23ef2d8f6f5016d5ffb0d0f6fd59ea77901d",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "shield-g15-16.png",
@@ -5337,7 +5337,7 @@
         257
       ],
       "sourceSha256": "6e794506d033ff9fd119dcfe033e153c59e714c6c96915cd7225e6469ce6222d",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "greathelm-g1-16.png",
@@ -5396,7 +5396,7 @@
         254
       ],
       "sourceSha256": "6e794506d033ff9fd119dcfe033e153c59e714c6c96915cd7225e6469ce6222d",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "greathelm-g2-16.png",
@@ -5455,7 +5455,7 @@
         274
       ],
       "sourceSha256": "6e794506d033ff9fd119dcfe033e153c59e714c6c96915cd7225e6469ce6222d",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "greathelm-g3-16.png",
@@ -5514,7 +5514,7 @@
         280
       ],
       "sourceSha256": "6e794506d033ff9fd119dcfe033e153c59e714c6c96915cd7225e6469ce6222d",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "greathelm-g4-16.png",
@@ -5573,7 +5573,7 @@
         337
       ],
       "sourceSha256": "6e794506d033ff9fd119dcfe033e153c59e714c6c96915cd7225e6469ce6222d",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "greathelm-g5-16.png",
@@ -5632,7 +5632,7 @@
         260
       ],
       "sourceSha256": "e808afd3b312d5ccd7b05cfe3967c5e87ef3920c2bf981fe127ae3df3eddf7ac",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "greathelm-g6-16.png",
@@ -5691,7 +5691,7 @@
         256
       ],
       "sourceSha256": "e808afd3b312d5ccd7b05cfe3967c5e87ef3920c2bf981fe127ae3df3eddf7ac",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "greathelm-g7-16.png",
@@ -5750,7 +5750,7 @@
         269
       ],
       "sourceSha256": "e808afd3b312d5ccd7b05cfe3967c5e87ef3920c2bf981fe127ae3df3eddf7ac",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "greathelm-g8-16.png",
@@ -5809,7 +5809,7 @@
         280
       ],
       "sourceSha256": "e808afd3b312d5ccd7b05cfe3967c5e87ef3920c2bf981fe127ae3df3eddf7ac",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "greathelm-g9-16.png",
@@ -5868,7 +5868,7 @@
         337
       ],
       "sourceSha256": "e808afd3b312d5ccd7b05cfe3967c5e87ef3920c2bf981fe127ae3df3eddf7ac",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "greathelm-g10-16.png",
@@ -5927,7 +5927,7 @@
         263
       ],
       "sourceSha256": "787bde9b61b7626956518da77a8a23ef2d8f6f5016d5ffb0d0f6fd59ea77901d",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "greathelm-g11-16.png",
@@ -5986,7 +5986,7 @@
         256
       ],
       "sourceSha256": "787bde9b61b7626956518da77a8a23ef2d8f6f5016d5ffb0d0f6fd59ea77901d",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "greathelm-g12-16.png",
@@ -6045,7 +6045,7 @@
         266
       ],
       "sourceSha256": "787bde9b61b7626956518da77a8a23ef2d8f6f5016d5ffb0d0f6fd59ea77901d",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "greathelm-g13-16.png",
@@ -6104,7 +6104,7 @@
         280
       ],
       "sourceSha256": "787bde9b61b7626956518da77a8a23ef2d8f6f5016d5ffb0d0f6fd59ea77901d",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "greathelm-g14-16.png",
@@ -6163,7 +6163,7 @@
         337
       ],
       "sourceSha256": "787bde9b61b7626956518da77a8a23ef2d8f6f5016d5ffb0d0f6fd59ea77901d",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "greathelm-g15-16.png",
@@ -6222,7 +6222,7 @@
         257
       ],
       "sourceSha256": "6e794506d033ff9fd119dcfe033e153c59e714c6c96915cd7225e6469ce6222d",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "plate-g1-16.png",
@@ -6281,7 +6281,7 @@
         254
       ],
       "sourceSha256": "6e794506d033ff9fd119dcfe033e153c59e714c6c96915cd7225e6469ce6222d",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "plate-g2-16.png",
@@ -6340,7 +6340,7 @@
         274
       ],
       "sourceSha256": "6e794506d033ff9fd119dcfe033e153c59e714c6c96915cd7225e6469ce6222d",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "plate-g3-16.png",
@@ -6399,7 +6399,7 @@
         280
       ],
       "sourceSha256": "6e794506d033ff9fd119dcfe033e153c59e714c6c96915cd7225e6469ce6222d",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "plate-g4-16.png",
@@ -6458,7 +6458,7 @@
         337
       ],
       "sourceSha256": "6e794506d033ff9fd119dcfe033e153c59e714c6c96915cd7225e6469ce6222d",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "plate-g5-16.png",
@@ -6517,7 +6517,7 @@
         260
       ],
       "sourceSha256": "e808afd3b312d5ccd7b05cfe3967c5e87ef3920c2bf981fe127ae3df3eddf7ac",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "plate-g6-16.png",
@@ -6576,7 +6576,7 @@
         256
       ],
       "sourceSha256": "e808afd3b312d5ccd7b05cfe3967c5e87ef3920c2bf981fe127ae3df3eddf7ac",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "plate-g7-16.png",
@@ -6635,7 +6635,7 @@
         269
       ],
       "sourceSha256": "e808afd3b312d5ccd7b05cfe3967c5e87ef3920c2bf981fe127ae3df3eddf7ac",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "plate-g8-16.png",
@@ -6694,7 +6694,7 @@
         280
       ],
       "sourceSha256": "e808afd3b312d5ccd7b05cfe3967c5e87ef3920c2bf981fe127ae3df3eddf7ac",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "plate-g9-16.png",
@@ -6753,7 +6753,7 @@
         337
       ],
       "sourceSha256": "e808afd3b312d5ccd7b05cfe3967c5e87ef3920c2bf981fe127ae3df3eddf7ac",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "plate-g10-16.png",
@@ -6812,7 +6812,7 @@
         263
       ],
       "sourceSha256": "787bde9b61b7626956518da77a8a23ef2d8f6f5016d5ffb0d0f6fd59ea77901d",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "plate-g11-16.png",
@@ -6871,7 +6871,7 @@
         256
       ],
       "sourceSha256": "787bde9b61b7626956518da77a8a23ef2d8f6f5016d5ffb0d0f6fd59ea77901d",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "plate-g12-16.png",
@@ -6930,7 +6930,7 @@
         266
       ],
       "sourceSha256": "787bde9b61b7626956518da77a8a23ef2d8f6f5016d5ffb0d0f6fd59ea77901d",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "plate-g13-16.png",
@@ -6989,7 +6989,7 @@
         280
       ],
       "sourceSha256": "787bde9b61b7626956518da77a8a23ef2d8f6f5016d5ffb0d0f6fd59ea77901d",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "plate-g14-16.png",
@@ -7048,7 +7048,7 @@
         337
       ],
       "sourceSha256": "787bde9b61b7626956518da77a8a23ef2d8f6f5016d5ffb0d0f6fd59ea77901d",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "plate-g15-16.png",
@@ -7107,7 +7107,7 @@
         251
       ],
       "sourceSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "censer-g1-16.png",
@@ -7166,7 +7166,7 @@
         257
       ],
       "sourceSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "censer-g2-16.png",
@@ -7225,7 +7225,7 @@
         263
       ],
       "sourceSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "censer-g3-16.png",
@@ -7284,7 +7284,7 @@
         251
       ],
       "sourceSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "censer-g4-16.png",
@@ -7343,7 +7343,7 @@
         256
       ],
       "sourceSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "censer-g5-16.png",
@@ -7402,7 +7402,7 @@
         250
       ],
       "sourceSha256": "0c17a9d49df19a46f7ea2f220f344855cd7f719c30e93ca31a2dfd2066f89434",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "censer-g6-16.png",
@@ -7461,7 +7461,7 @@
         249
       ],
       "sourceSha256": "0c17a9d49df19a46f7ea2f220f344855cd7f719c30e93ca31a2dfd2066f89434",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "censer-g7-16.png",
@@ -7520,7 +7520,7 @@
         251
       ],
       "sourceSha256": "0c17a9d49df19a46f7ea2f220f344855cd7f719c30e93ca31a2dfd2066f89434",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "censer-g8-16.png",
@@ -7579,7 +7579,7 @@
         245
       ],
       "sourceSha256": "0c17a9d49df19a46f7ea2f220f344855cd7f719c30e93ca31a2dfd2066f89434",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "censer-g9-16.png",
@@ -7638,7 +7638,7 @@
         259
       ],
       "sourceSha256": "0c17a9d49df19a46f7ea2f220f344855cd7f719c30e93ca31a2dfd2066f89434",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "censer-g10-16.png",
@@ -7697,7 +7697,7 @@
         256
       ],
       "sourceSha256": "aa1ab9d82715a3c68887ed0ac58016d9f66e6d5d703c922463723a2220f2a54f",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "censer-g11-16.png",
@@ -7756,7 +7756,7 @@
         247
       ],
       "sourceSha256": "aa1ab9d82715a3c68887ed0ac58016d9f66e6d5d703c922463723a2220f2a54f",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "censer-g12-16.png",
@@ -7815,7 +7815,7 @@
         240
       ],
       "sourceSha256": "aa1ab9d82715a3c68887ed0ac58016d9f66e6d5d703c922463723a2220f2a54f",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "censer-g13-16.png",
@@ -7874,7 +7874,7 @@
         242
       ],
       "sourceSha256": "aa1ab9d82715a3c68887ed0ac58016d9f66e6d5d703c922463723a2220f2a54f",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "censer-g14-16.png",
@@ -7933,7 +7933,7 @@
         269
       ],
       "sourceSha256": "aa1ab9d82715a3c68887ed0ac58016d9f66e6d5d703c922463723a2220f2a54f",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "censer-g15-16.png",
@@ -8287,7 +8287,7 @@
         226
       ],
       "sourceSha256": "a8b50b5bdb0f5b470a9b6e4aa5b3efec0f902ae789931bba6e8a1310068c72fc",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "staff-g6-16.png",
@@ -8346,7 +8346,7 @@
         635
       ],
       "sourceSha256": "4afe9340a01e597657b9dc67727e95612fc95262801c55712ecce79d89bf8364",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "staff-g7-16.png",
@@ -8405,7 +8405,7 @@
         229
       ],
       "sourceSha256": "a8b50b5bdb0f5b470a9b6e4aa5b3efec0f902ae789931bba6e8a1310068c72fc",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "staff-g8-16.png",
@@ -8464,7 +8464,7 @@
         220
       ],
       "sourceSha256": "a8b50b5bdb0f5b470a9b6e4aa5b3efec0f902ae789931bba6e8a1310068c72fc",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "staff-g9-16.png",
@@ -8523,7 +8523,7 @@
         246
       ],
       "sourceSha256": "a8b50b5bdb0f5b470a9b6e4aa5b3efec0f902ae789931bba6e8a1310068c72fc",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "staff-g10-16.png",
@@ -8582,7 +8582,7 @@
         207
       ],
       "sourceSha256": "ded234f6c6191d1f312255ecc68bc942ed1d27637d978bf4431b3fae50e7e981",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "staff-g11-16.png",
@@ -8641,7 +8641,7 @@
         214
       ],
       "sourceSha256": "ded234f6c6191d1f312255ecc68bc942ed1d27637d978bf4431b3fae50e7e981",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "staff-g12-16.png",
@@ -8700,7 +8700,7 @@
         208
       ],
       "sourceSha256": "ded234f6c6191d1f312255ecc68bc942ed1d27637d978bf4431b3fae50e7e981",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "staff-g13-16.png",
@@ -8759,7 +8759,7 @@
         643
       ],
       "sourceSha256": "4afe9340a01e597657b9dc67727e95612fc95262801c55712ecce79d89bf8364",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "staff-g14-16.png",
@@ -8818,7 +8818,7 @@
         240
       ],
       "sourceSha256": "ded234f6c6191d1f312255ecc68bc942ed1d27637d978bf4431b3fae50e7e981",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "staff-g15-16.png",
@@ -8877,7 +8877,7 @@
         324
       ],
       "sourceSha256": "2ac2063ad75508af681a34191911f149bb844e6e6650ccfb3d3fb9802b69ce9c",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "bow-g1-16.png",
@@ -8936,7 +8936,7 @@
         324
       ],
       "sourceSha256": "2ac2063ad75508af681a34191911f149bb844e6e6650ccfb3d3fb9802b69ce9c",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "bow-g2-16.png",
@@ -8995,7 +8995,7 @@
         324
       ],
       "sourceSha256": "2ac2063ad75508af681a34191911f149bb844e6e6650ccfb3d3fb9802b69ce9c",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "bow-g3-16.png",
@@ -9054,7 +9054,7 @@
         324
       ],
       "sourceSha256": "2ac2063ad75508af681a34191911f149bb844e6e6650ccfb3d3fb9802b69ce9c",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "bow-g4-16.png",
@@ -9113,7 +9113,7 @@
         324
       ],
       "sourceSha256": "2ac2063ad75508af681a34191911f149bb844e6e6650ccfb3d3fb9802b69ce9c",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "bow-g5-16.png",
@@ -9172,7 +9172,7 @@
         324
       ],
       "sourceSha256": "2ac2063ad75508af681a34191911f149bb844e6e6650ccfb3d3fb9802b69ce9c",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "bow-g6-16.png",
@@ -9231,7 +9231,7 @@
         323
       ],
       "sourceSha256": "2ac2063ad75508af681a34191911f149bb844e6e6650ccfb3d3fb9802b69ce9c",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "bow-g7-16.png",
@@ -9290,7 +9290,7 @@
         323
       ],
       "sourceSha256": "2ac2063ad75508af681a34191911f149bb844e6e6650ccfb3d3fb9802b69ce9c",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "bow-g8-16.png",
@@ -9349,7 +9349,7 @@
         323
       ],
       "sourceSha256": "2ac2063ad75508af681a34191911f149bb844e6e6650ccfb3d3fb9802b69ce9c",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "bow-g9-16.png",
@@ -9408,7 +9408,7 @@
         324
       ],
       "sourceSha256": "2ac2063ad75508af681a34191911f149bb844e6e6650ccfb3d3fb9802b69ce9c",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "bow-g10-16.png",
@@ -9467,7 +9467,7 @@
         324
       ],
       "sourceSha256": "2ac2063ad75508af681a34191911f149bb844e6e6650ccfb3d3fb9802b69ce9c",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "bow-g11-16.png",
@@ -9526,7 +9526,7 @@
         324
       ],
       "sourceSha256": "2ac2063ad75508af681a34191911f149bb844e6e6650ccfb3d3fb9802b69ce9c",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "bow-g12-16.png",
@@ -9585,7 +9585,7 @@
         324
       ],
       "sourceSha256": "2ac2063ad75508af681a34191911f149bb844e6e6650ccfb3d3fb9802b69ce9c",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "bow-g13-16.png",
@@ -9644,7 +9644,7 @@
         324
       ],
       "sourceSha256": "2ac2063ad75508af681a34191911f149bb844e6e6650ccfb3d3fb9802b69ce9c",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "bow-g14-16.png",
@@ -9703,7 +9703,7 @@
         324
       ],
       "sourceSha256": "2ac2063ad75508af681a34191911f149bb844e6e6650ccfb3d3fb9802b69ce9c",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "bow-g15-16.png",
@@ -10057,7 +10057,7 @@
         226
       ],
       "sourceSha256": "a8b50b5bdb0f5b470a9b6e4aa5b3efec0f902ae789931bba6e8a1310068c72fc",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "quiver-g6-16.png",
@@ -10116,7 +10116,7 @@
         224
       ],
       "sourceSha256": "a8b50b5bdb0f5b470a9b6e4aa5b3efec0f902ae789931bba6e8a1310068c72fc",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "quiver-g7-16.png",
@@ -10175,7 +10175,7 @@
         229
       ],
       "sourceSha256": "a8b50b5bdb0f5b470a9b6e4aa5b3efec0f902ae789931bba6e8a1310068c72fc",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "quiver-g8-16.png",
@@ -10234,7 +10234,7 @@
         220
       ],
       "sourceSha256": "a8b50b5bdb0f5b470a9b6e4aa5b3efec0f902ae789931bba6e8a1310068c72fc",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "quiver-g9-16.png",
@@ -10293,7 +10293,7 @@
         246
       ],
       "sourceSha256": "a8b50b5bdb0f5b470a9b6e4aa5b3efec0f902ae789931bba6e8a1310068c72fc",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "quiver-g10-16.png",
@@ -10352,7 +10352,7 @@
         207
       ],
       "sourceSha256": "ded234f6c6191d1f312255ecc68bc942ed1d27637d978bf4431b3fae50e7e981",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "quiver-g11-16.png",
@@ -10411,7 +10411,7 @@
         214
       ],
       "sourceSha256": "ded234f6c6191d1f312255ecc68bc942ed1d27637d978bf4431b3fae50e7e981",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "quiver-g12-16.png",
@@ -10470,7 +10470,7 @@
         208
       ],
       "sourceSha256": "ded234f6c6191d1f312255ecc68bc942ed1d27637d978bf4431b3fae50e7e981",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "quiver-g13-16.png",
@@ -10529,7 +10529,7 @@
         211
       ],
       "sourceSha256": "ded234f6c6191d1f312255ecc68bc942ed1d27637d978bf4431b3fae50e7e981",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "quiver-g14-16.png",
@@ -10588,7 +10588,7 @@
         240
       ],
       "sourceSha256": "ded234f6c6191d1f312255ecc68bc942ed1d27637d978bf4431b3fae50e7e981",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "quiver-g15-16.png",
@@ -10942,7 +10942,7 @@
         280
       ],
       "sourceSha256": "4e8291462bdf86147ac21a1a7ac03c645897c9f3f726b883e0279fde262b6aa0",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "lantern-g6-16.png",
@@ -11001,7 +11001,7 @@
         265
       ],
       "sourceSha256": "4e8291462bdf86147ac21a1a7ac03c645897c9f3f726b883e0279fde262b6aa0",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "lantern-g7-16.png",
@@ -11060,7 +11060,7 @@
         260
       ],
       "sourceSha256": "4e8291462bdf86147ac21a1a7ac03c645897c9f3f726b883e0279fde262b6aa0",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "lantern-g8-16.png",
@@ -11119,7 +11119,7 @@
         262
       ],
       "sourceSha256": "4e8291462bdf86147ac21a1a7ac03c645897c9f3f726b883e0279fde262b6aa0",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "lantern-g9-16.png",
@@ -11178,7 +11178,7 @@
         335
       ],
       "sourceSha256": "4e8291462bdf86147ac21a1a7ac03c645897c9f3f726b883e0279fde262b6aa0",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "lantern-g10-16.png",
@@ -11237,7 +11237,7 @@
         278
       ],
       "sourceSha256": "351955df0160e3c8724f0634833539311ff38a8fe32bee5bee1574326f5c6498",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "lantern-g11-16.png",
@@ -11296,7 +11296,7 @@
         265
       ],
       "sourceSha256": "351955df0160e3c8724f0634833539311ff38a8fe32bee5bee1574326f5c6498",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "lantern-g12-16.png",
@@ -11355,7 +11355,7 @@
         261
       ],
       "sourceSha256": "351955df0160e3c8724f0634833539311ff38a8fe32bee5bee1574326f5c6498",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "lantern-g13-16.png",
@@ -11414,7 +11414,7 @@
         263
       ],
       "sourceSha256": "351955df0160e3c8724f0634833539311ff38a8fe32bee5bee1574326f5c6498",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "lantern-g14-16.png",
@@ -11473,7 +11473,7 @@
         335
       ],
       "sourceSha256": "351955df0160e3c8724f0634833539311ff38a8fe32bee5bee1574326f5c6498",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "lantern-g15-16.png",
@@ -11827,7 +11827,7 @@
         280
       ],
       "sourceSha256": "4e8291462bdf86147ac21a1a7ac03c645897c9f3f726b883e0279fde262b6aa0",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "circlet-g6-16.png",
@@ -11886,7 +11886,7 @@
         265
       ],
       "sourceSha256": "4e8291462bdf86147ac21a1a7ac03c645897c9f3f726b883e0279fde262b6aa0",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "circlet-g7-16.png",
@@ -11945,7 +11945,7 @@
         260
       ],
       "sourceSha256": "4e8291462bdf86147ac21a1a7ac03c645897c9f3f726b883e0279fde262b6aa0",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "circlet-g8-16.png",
@@ -12004,7 +12004,7 @@
         262
       ],
       "sourceSha256": "4e8291462bdf86147ac21a1a7ac03c645897c9f3f726b883e0279fde262b6aa0",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "circlet-g9-16.png",
@@ -12063,7 +12063,7 @@
         335
       ],
       "sourceSha256": "4e8291462bdf86147ac21a1a7ac03c645897c9f3f726b883e0279fde262b6aa0",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "circlet-g10-16.png",
@@ -12122,7 +12122,7 @@
         278
       ],
       "sourceSha256": "351955df0160e3c8724f0634833539311ff38a8fe32bee5bee1574326f5c6498",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "circlet-g11-16.png",
@@ -12181,7 +12181,7 @@
         265
       ],
       "sourceSha256": "351955df0160e3c8724f0634833539311ff38a8fe32bee5bee1574326f5c6498",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "circlet-g12-16.png",
@@ -12240,7 +12240,7 @@
         261
       ],
       "sourceSha256": "351955df0160e3c8724f0634833539311ff38a8fe32bee5bee1574326f5c6498",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "circlet-g13-16.png",
@@ -12299,7 +12299,7 @@
         263
       ],
       "sourceSha256": "351955df0160e3c8724f0634833539311ff38a8fe32bee5bee1574326f5c6498",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "circlet-g14-16.png",
@@ -12358,7 +12358,7 @@
         335
       ],
       "sourceSha256": "351955df0160e3c8724f0634833539311ff38a8fe32bee5bee1574326f5c6498",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "circlet-g15-16.png",
@@ -12712,7 +12712,7 @@
         280
       ],
       "sourceSha256": "5451f3fecd4c5b83853cd64556fa78eb4d96e6a866de73faaf40f606d83f0460",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "robe-g6-16.png",
@@ -12771,7 +12771,7 @@
         277
       ],
       "sourceSha256": "5451f3fecd4c5b83853cd64556fa78eb4d96e6a866de73faaf40f606d83f0460",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "robe-g7-16.png",
@@ -12830,7 +12830,7 @@
         263
       ],
       "sourceSha256": "5451f3fecd4c5b83853cd64556fa78eb4d96e6a866de73faaf40f606d83f0460",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "robe-g8-16.png",
@@ -12889,7 +12889,7 @@
         271
       ],
       "sourceSha256": "5451f3fecd4c5b83853cd64556fa78eb4d96e6a866de73faaf40f606d83f0460",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "robe-g9-16.png",
@@ -12948,7 +12948,7 @@
         311
       ],
       "sourceSha256": "5451f3fecd4c5b83853cd64556fa78eb4d96e6a866de73faaf40f606d83f0460",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "robe-g10-16.png",
@@ -13007,7 +13007,7 @@
         280
       ],
       "sourceSha256": "c4166ea6bc924464347363c290de253384a6bc7b0727b21acd246d8298035b98",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "robe-g11-16.png",
@@ -13066,7 +13066,7 @@
         276
       ],
       "sourceSha256": "c4166ea6bc924464347363c290de253384a6bc7b0727b21acd246d8298035b98",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "robe-g12-16.png",
@@ -13125,7 +13125,7 @@
         265
       ],
       "sourceSha256": "c4166ea6bc924464347363c290de253384a6bc7b0727b21acd246d8298035b98",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "robe-g13-16.png",
@@ -13184,7 +13184,7 @@
         271
       ],
       "sourceSha256": "c4166ea6bc924464347363c290de253384a6bc7b0727b21acd246d8298035b98",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "robe-g14-16.png",
@@ -13243,7 +13243,7 @@
         310
       ],
       "sourceSha256": "c4166ea6bc924464347363c290de253384a6bc7b0727b21acd246d8298035b98",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "robe-g15-16.png",
@@ -13597,7 +13597,7 @@
         280
       ],
       "sourceSha256": "5451f3fecd4c5b83853cd64556fa78eb4d96e6a866de73faaf40f606d83f0460",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "tome-g6-16.png",
@@ -13656,7 +13656,7 @@
         277
       ],
       "sourceSha256": "5451f3fecd4c5b83853cd64556fa78eb4d96e6a866de73faaf40f606d83f0460",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "tome-g7-16.png",
@@ -13715,7 +13715,7 @@
         263
       ],
       "sourceSha256": "5451f3fecd4c5b83853cd64556fa78eb4d96e6a866de73faaf40f606d83f0460",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "tome-g8-16.png",
@@ -13774,7 +13774,7 @@
         271
       ],
       "sourceSha256": "5451f3fecd4c5b83853cd64556fa78eb4d96e6a866de73faaf40f606d83f0460",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "tome-g9-16.png",
@@ -13833,7 +13833,7 @@
         311
       ],
       "sourceSha256": "5451f3fecd4c5b83853cd64556fa78eb4d96e6a866de73faaf40f606d83f0460",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "tome-g10-16.png",
@@ -13892,7 +13892,7 @@
         280
       ],
       "sourceSha256": "c4166ea6bc924464347363c290de253384a6bc7b0727b21acd246d8298035b98",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "tome-g11-16.png",
@@ -13951,7 +13951,7 @@
         276
       ],
       "sourceSha256": "c4166ea6bc924464347363c290de253384a6bc7b0727b21acd246d8298035b98",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "tome-g12-16.png",
@@ -14010,7 +14010,7 @@
         265
       ],
       "sourceSha256": "c4166ea6bc924464347363c290de253384a6bc7b0727b21acd246d8298035b98",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "tome-g13-16.png",
@@ -14069,7 +14069,7 @@
         271
       ],
       "sourceSha256": "c4166ea6bc924464347363c290de253384a6bc7b0727b21acd246d8298035b98",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "tome-g14-16.png",
@@ -14128,7 +14128,7 @@
         310
       ],
       "sourceSha256": "c4166ea6bc924464347363c290de253384a6bc7b0727b21acd246d8298035b98",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "tome-g15-16.png",
@@ -14482,7 +14482,7 @@
         226
       ],
       "sourceSha256": "a8b50b5bdb0f5b470a9b6e4aa5b3efec0f902ae789931bba6e8a1310068c72fc",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "hood-g6-16.png",
@@ -14541,7 +14541,7 @@
         224
       ],
       "sourceSha256": "a8b50b5bdb0f5b470a9b6e4aa5b3efec0f902ae789931bba6e8a1310068c72fc",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "hood-g7-16.png",
@@ -14600,7 +14600,7 @@
         229
       ],
       "sourceSha256": "a8b50b5bdb0f5b470a9b6e4aa5b3efec0f902ae789931bba6e8a1310068c72fc",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "hood-g8-16.png",
@@ -14659,7 +14659,7 @@
         220
       ],
       "sourceSha256": "a8b50b5bdb0f5b470a9b6e4aa5b3efec0f902ae789931bba6e8a1310068c72fc",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "hood-g9-16.png",
@@ -14718,7 +14718,7 @@
         246
       ],
       "sourceSha256": "a8b50b5bdb0f5b470a9b6e4aa5b3efec0f902ae789931bba6e8a1310068c72fc",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "hood-g10-16.png",
@@ -14777,7 +14777,7 @@
         207
       ],
       "sourceSha256": "ded234f6c6191d1f312255ecc68bc942ed1d27637d978bf4431b3fae50e7e981",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "hood-g11-16.png",
@@ -14836,7 +14836,7 @@
         214
       ],
       "sourceSha256": "ded234f6c6191d1f312255ecc68bc942ed1d27637d978bf4431b3fae50e7e981",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "hood-g12-16.png",
@@ -14895,7 +14895,7 @@
         208
       ],
       "sourceSha256": "ded234f6c6191d1f312255ecc68bc942ed1d27637d978bf4431b3fae50e7e981",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "hood-g13-16.png",
@@ -14954,7 +14954,7 @@
         211
       ],
       "sourceSha256": "ded234f6c6191d1f312255ecc68bc942ed1d27637d978bf4431b3fae50e7e981",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "hood-g14-16.png",
@@ -15013,7 +15013,7 @@
         240
       ],
       "sourceSha256": "ded234f6c6191d1f312255ecc68bc942ed1d27637d978bf4431b3fae50e7e981",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "hood-g15-16.png",
@@ -15367,7 +15367,7 @@
         226
       ],
       "sourceSha256": "a8b50b5bdb0f5b470a9b6e4aa5b3efec0f902ae789931bba6e8a1310068c72fc",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "leathers-g6-16.png",
@@ -15426,7 +15426,7 @@
         224
       ],
       "sourceSha256": "a8b50b5bdb0f5b470a9b6e4aa5b3efec0f902ae789931bba6e8a1310068c72fc",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "leathers-g7-16.png",
@@ -15485,7 +15485,7 @@
         229
       ],
       "sourceSha256": "a8b50b5bdb0f5b470a9b6e4aa5b3efec0f902ae789931bba6e8a1310068c72fc",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "leathers-g8-16.png",
@@ -15544,7 +15544,7 @@
         220
       ],
       "sourceSha256": "a8b50b5bdb0f5b470a9b6e4aa5b3efec0f902ae789931bba6e8a1310068c72fc",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "leathers-g9-16.png",
@@ -15603,7 +15603,7 @@
         246
       ],
       "sourceSha256": "a8b50b5bdb0f5b470a9b6e4aa5b3efec0f902ae789931bba6e8a1310068c72fc",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "leathers-g10-16.png",
@@ -15662,7 +15662,7 @@
         207
       ],
       "sourceSha256": "ded234f6c6191d1f312255ecc68bc942ed1d27637d978bf4431b3fae50e7e981",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "leathers-g11-16.png",
@@ -15721,7 +15721,7 @@
         214
       ],
       "sourceSha256": "ded234f6c6191d1f312255ecc68bc942ed1d27637d978bf4431b3fae50e7e981",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "leathers-g12-16.png",
@@ -15780,7 +15780,7 @@
         208
       ],
       "sourceSha256": "ded234f6c6191d1f312255ecc68bc942ed1d27637d978bf4431b3fae50e7e981",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "leathers-g13-16.png",
@@ -15839,7 +15839,7 @@
         211
       ],
       "sourceSha256": "ded234f6c6191d1f312255ecc68bc942ed1d27637d978bf4431b3fae50e7e981",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "leathers-g14-16.png",
@@ -15898,7 +15898,7 @@
         240
       ],
       "sourceSha256": "ded234f6c6191d1f312255ecc68bc942ed1d27637d978bf4431b3fae50e7e981",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "leathers-g15-16.png",
@@ -16252,7 +16252,7 @@
         280
       ],
       "sourceSha256": "5451f3fecd4c5b83853cd64556fa78eb4d96e6a866de73faaf40f606d83f0460",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "mitre-g6-16.png",
@@ -16311,7 +16311,7 @@
         277
       ],
       "sourceSha256": "5451f3fecd4c5b83853cd64556fa78eb4d96e6a866de73faaf40f606d83f0460",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "mitre-g7-16.png",
@@ -16370,7 +16370,7 @@
         263
       ],
       "sourceSha256": "5451f3fecd4c5b83853cd64556fa78eb4d96e6a866de73faaf40f606d83f0460",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "mitre-g8-16.png",
@@ -16429,7 +16429,7 @@
         271
       ],
       "sourceSha256": "5451f3fecd4c5b83853cd64556fa78eb4d96e6a866de73faaf40f606d83f0460",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "mitre-g9-16.png",
@@ -16488,7 +16488,7 @@
         311
       ],
       "sourceSha256": "5451f3fecd4c5b83853cd64556fa78eb4d96e6a866de73faaf40f606d83f0460",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "mitre-g10-16.png",
@@ -16547,7 +16547,7 @@
         280
       ],
       "sourceSha256": "c4166ea6bc924464347363c290de253384a6bc7b0727b21acd246d8298035b98",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "mitre-g11-16.png",
@@ -16606,7 +16606,7 @@
         276
       ],
       "sourceSha256": "c4166ea6bc924464347363c290de253384a6bc7b0727b21acd246d8298035b98",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "mitre-g12-16.png",
@@ -16665,7 +16665,7 @@
         265
       ],
       "sourceSha256": "c4166ea6bc924464347363c290de253384a6bc7b0727b21acd246d8298035b98",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "mitre-g13-16.png",
@@ -16724,7 +16724,7 @@
         271
       ],
       "sourceSha256": "c4166ea6bc924464347363c290de253384a6bc7b0727b21acd246d8298035b98",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "mitre-g14-16.png",
@@ -16783,7 +16783,7 @@
         310
       ],
       "sourceSha256": "c4166ea6bc924464347363c290de253384a6bc7b0727b21acd246d8298035b98",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "mitre-g15-16.png",
@@ -17137,7 +17137,7 @@
         280
       ],
       "sourceSha256": "5451f3fecd4c5b83853cd64556fa78eb4d96e6a866de73faaf40f606d83f0460",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "vestments-g6-16.png",
@@ -17196,7 +17196,7 @@
         277
       ],
       "sourceSha256": "5451f3fecd4c5b83853cd64556fa78eb4d96e6a866de73faaf40f606d83f0460",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "vestments-g7-16.png",
@@ -17255,7 +17255,7 @@
         263
       ],
       "sourceSha256": "5451f3fecd4c5b83853cd64556fa78eb4d96e6a866de73faaf40f606d83f0460",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "vestments-g8-16.png",
@@ -17314,7 +17314,7 @@
         271
       ],
       "sourceSha256": "5451f3fecd4c5b83853cd64556fa78eb4d96e6a866de73faaf40f606d83f0460",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "vestments-g9-16.png",
@@ -17373,7 +17373,7 @@
         311
       ],
       "sourceSha256": "5451f3fecd4c5b83853cd64556fa78eb4d96e6a866de73faaf40f606d83f0460",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "vestments-g10-16.png",
@@ -17432,7 +17432,7 @@
         280
       ],
       "sourceSha256": "c4166ea6bc924464347363c290de253384a6bc7b0727b21acd246d8298035b98",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "vestments-g11-16.png",
@@ -17491,7 +17491,7 @@
         276
       ],
       "sourceSha256": "c4166ea6bc924464347363c290de253384a6bc7b0727b21acd246d8298035b98",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "vestments-g12-16.png",
@@ -17550,7 +17550,7 @@
         265
       ],
       "sourceSha256": "c4166ea6bc924464347363c290de253384a6bc7b0727b21acd246d8298035b98",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "vestments-g13-16.png",
@@ -17609,7 +17609,7 @@
         271
       ],
       "sourceSha256": "c4166ea6bc924464347363c290de253384a6bc7b0727b21acd246d8298035b98",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "vestments-g14-16.png",
@@ -17668,7 +17668,7 @@
         310
       ],
       "sourceSha256": "c4166ea6bc924464347363c290de253384a6bc7b0727b21acd246d8298035b98",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "vestments-g15-16.png",
@@ -18022,7 +18022,7 @@
         280
       ],
       "sourceSha256": "4e8291462bdf86147ac21a1a7ac03c645897c9f3f726b883e0279fde262b6aa0",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "trinket-g6-16.png",
@@ -18081,7 +18081,7 @@
         265
       ],
       "sourceSha256": "4e8291462bdf86147ac21a1a7ac03c645897c9f3f726b883e0279fde262b6aa0",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "trinket-g7-16.png",
@@ -18140,7 +18140,7 @@
         260
       ],
       "sourceSha256": "4e8291462bdf86147ac21a1a7ac03c645897c9f3f726b883e0279fde262b6aa0",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "trinket-g8-16.png",
@@ -18199,7 +18199,7 @@
         262
       ],
       "sourceSha256": "4e8291462bdf86147ac21a1a7ac03c645897c9f3f726b883e0279fde262b6aa0",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "trinket-g9-16.png",
@@ -18258,7 +18258,7 @@
         335
       ],
       "sourceSha256": "4e8291462bdf86147ac21a1a7ac03c645897c9f3f726b883e0279fde262b6aa0",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "trinket-g10-16.png",
@@ -18317,7 +18317,7 @@
         278
       ],
       "sourceSha256": "351955df0160e3c8724f0634833539311ff38a8fe32bee5bee1574326f5c6498",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "trinket-g11-16.png",
@@ -18376,7 +18376,7 @@
         265
       ],
       "sourceSha256": "351955df0160e3c8724f0634833539311ff38a8fe32bee5bee1574326f5c6498",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "trinket-g12-16.png",
@@ -18435,7 +18435,7 @@
         261
       ],
       "sourceSha256": "351955df0160e3c8724f0634833539311ff38a8fe32bee5bee1574326f5c6498",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "trinket-g13-16.png",
@@ -18494,7 +18494,7 @@
         263
       ],
       "sourceSha256": "351955df0160e3c8724f0634833539311ff38a8fe32bee5bee1574326f5c6498",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "trinket-g14-16.png",
@@ -18553,7 +18553,7 @@
         335
       ],
       "sourceSha256": "351955df0160e3c8724f0634833539311ff38a8fe32bee5bee1574326f5c6498",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "trinket-g15-16.png",
@@ -18907,7 +18907,7 @@
         280
       ],
       "sourceSha256": "4e8291462bdf86147ac21a1a7ac03c645897c9f3f726b883e0279fde262b6aa0",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "charm-g6-16.png",
@@ -18966,7 +18966,7 @@
         265
       ],
       "sourceSha256": "4e8291462bdf86147ac21a1a7ac03c645897c9f3f726b883e0279fde262b6aa0",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "charm-g7-16.png",
@@ -19025,7 +19025,7 @@
         260
       ],
       "sourceSha256": "4e8291462bdf86147ac21a1a7ac03c645897c9f3f726b883e0279fde262b6aa0",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "charm-g8-16.png",
@@ -19084,7 +19084,7 @@
         262
       ],
       "sourceSha256": "4e8291462bdf86147ac21a1a7ac03c645897c9f3f726b883e0279fde262b6aa0",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "charm-g9-16.png",
@@ -19143,7 +19143,7 @@
         335
       ],
       "sourceSha256": "4e8291462bdf86147ac21a1a7ac03c645897c9f3f726b883e0279fde262b6aa0",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "charm-g10-16.png",
@@ -19202,7 +19202,7 @@
         278
       ],
       "sourceSha256": "351955df0160e3c8724f0634833539311ff38a8fe32bee5bee1574326f5c6498",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "charm-g11-16.png",
@@ -19261,7 +19261,7 @@
         265
       ],
       "sourceSha256": "351955df0160e3c8724f0634833539311ff38a8fe32bee5bee1574326f5c6498",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "charm-g12-16.png",
@@ -19320,7 +19320,7 @@
         261
       ],
       "sourceSha256": "351955df0160e3c8724f0634833539311ff38a8fe32bee5bee1574326f5c6498",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "charm-g13-16.png",
@@ -19379,7 +19379,7 @@
         263
       ],
       "sourceSha256": "351955df0160e3c8724f0634833539311ff38a8fe32bee5bee1574326f5c6498",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "charm-g14-16.png",
@@ -19438,7 +19438,7 @@
         335
       ],
       "sourceSha256": "351955df0160e3c8724f0634833539311ff38a8fe32bee5bee1574326f5c6498",
-      "approval": "owner-review",
+      "approval": "owner-approved",
       "files": {
         "16": {
           "path": "charm-g15-16.png",

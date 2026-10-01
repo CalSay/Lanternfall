@@ -1,14 +1,14 @@
 # Full equipment ladder and richer metal redraw — C26
 
-Status: owner review pending for new/revised art. Based on codex/c26-gear-icons at775220d, including owner's approval of initial grades1–5. Owner subsequently requested grades6–15 for all22 lines, then redrawing ALL tool and metal-armour grades to match richer newer artwork. Thus the prior metal approval is superseded by these review candidates.
+Status: OWNER APPROVED in full on 2026-10-01: "Yeah these are all great." Approval includes all 330 designs, richer tools/armour and aligned bows. Historical development notes follow. Based on codex/c26-gear-icons at775220d, including owner's approval of initial grades1–5. Owner subsequently requested grades6–15 for all22 lines, then redrawing ALL tool and metal-armour grades to match richer newer artwork. Thus the prior metal approval is superseded by these review candidates.
 
 ## Coverage
 
-330 icons =22kinds x15resource grades. 220 additional upper-tier designs; all135 metal/tool/censer designs use the richer finish, including45replacements for grades1–5. The60unchanged low-tier nonmetal icons retain approval. New/revised270 icons await whole-pack review.
+330 icons =22kinds x15resource grades. 220 additional upper-tier designs; all135 metal/tool/censer designs use the richer finish, including45replacements for grades1–5. The60unchanged low-tier nonmetal icons retain approval. All330 icons are now owner-approved.
 
 Native transparent PNGs:16,18,20,24,32,48px (1980 total), <=24visible colours, hardalpha, consistent padding. game-v2/gear-icons.js is self-contained data; embed only the sizes needed at integration. game-v1 is retained unchanged for provenance/comparison.
 
-Sources: review-extended. tools/armour{1,6,11}detail.png supersede the simpler tool/armour drafts. natural6/11, cloth6/11, jewels6/11 cover other upper-tier families. woodfix supplies correctedG7/G14 bows; woodstaff-fix supplies their diagonal staffs. Resource material references come from approved-v1 manifest and source frames. Exact built-in image-generation prompts are in review-extended/prompts.json. Rejected haze-bearing wood drafts were not selected or bundled.
+Sources: review-extended. tools/armour{1,6,11}detail.png supersede the simpler tool/armour drafts. natural6/11, cloth6/11, jewels6/11 cover other upper-tier families. bow-angle-v2 supplies all15 final diagonal bows; woodstaff-fix supplies the corrected G7/G14 diagonal staffs. Resource material references come from approved-v1 manifest and source frames. Exact built-in image-generation prompts are in review-extended/prompts.json. Rejected haze-bearing wood drafts were not selected or bundled.
 
 ## Reproduction
 
@@ -43,3 +43,7 @@ No runtime code, recipes, balance, save key, unlock availability or published ga
 
 Owner flagged upright weapons among angled ones. All15 bows now share a lower-left to upper-right orientation, using bow-angle-v2.png. The five previously approved low-tier bows are therefore revised review candidates. Material designs retained; independent review passes all15 at32/48px with no clipping or stray pixels. The other315 icons are unchanged.
 
+
+## Full-resolution references and hero equipment
+
+Original full-resolution sheets are retained and committed in review-v1 and review-extended. The game-v2 manifest maps every item to its sourceRoot, atlas and crop rectangle. For current designs follow that manifest, not superseded draft sheets. These sources are the material, silhouette and detail references for future held/worn equipment; native inventory PNGs are not pose overlays. Sources and exact prompts stay preserved alongside production exports. Owner explicitly requested sharing these references with Claude for hero equipment on 2026-10-01.

@@ -36,7 +36,7 @@ def main():
     kinds={v['kind']:(v['noun'],v['family']) for v in old['icons'].values()}
     resource=json.loads((ROOT/'art/resources/approved-v1/manifest.js').read_text().split('=',1)[1].rstrip(';\n '))
     res={(r['family'],r['grade']):r for r in resource['icons']}
-    pack={'status':'owner-review','approval':'Retained60 G1-5 icons owner-approved; all new/revised270 icons pending owner review, including aligned bows.','sizes':SIZES,'icons':{}}
+    pack={'status':'owner-approved','approval':'All330 icons owner-approved on2026-10-01, including richer metal and aligned bows.','sizes':SIZES,'icons':{}}
     for ident,item in old['icons'].items():
         if item['kind'] in FAMILIES['tools']+FAMILIES['armour']: continue
         for f in item['files'].values():shutil.copyfile(OLD/f['path'],OUT/f['path'])
@@ -72,7 +72,7 @@ def main():
                     rect=[bxs[bc],bys[br],bxs[bc+1]-bxs[bc],bys[br+1]-bys[br]]
                 crop=isolate(crop,key in ('spear','warblade'),key=='staff' and grade==10)
                 ref=res[(family,grade)]
-                item={'id':ident,'kind':key,'noun':noun,'family':family,'grade':grade,'name':ref['name']+' '+noun,'material':ref['name'],'sourceRoot':'../review-extended','atlas':source,'rect':rect,'sourceSha256':hashlib.sha256((SRC/source).read_bytes()).hexdigest(),'approval':'owner-review','files':{},'data':{}}
+                item={'id':ident,'kind':key,'noun':noun,'family':family,'grade':grade,'name':ref['name']+' '+noun,'material':ref['name'],'sourceRoot':'../review-extended','atlas':source,'rect':rect,'sourceSha256':hashlib.sha256((SRC/source).read_bytes()).hexdigest(),'approval':'owner-approved','files':{},'data':{}}
                 for size in SIZES:
                     im=bake(crop,size)
                     if key=='staff' and grade==10: im=isolate(im,True)
@@ -89,8 +89,8 @@ def main():
     # Preserve stable type/grade order in preview.
     pack['icons']=dict(sorted(pack['icons'].items(),key=lambda kv:(list(kinds).index(kv[1]['kind']),kv[1]['grade'])))
     (OUT/'manifest.json').write_text(json.dumps(pack,indent=2))
-    (SRC/'manifest.json').write_text(json.dumps({'status':'owner-review','icons':[{k:v for k,v in i.items() if k not in ('files','data')} for i in pack['icons'].values() if i['approval']=='owner-review']},indent=2))
-    (OUT/'gear-icons.js').write_text('// Full15-grade art. New/revised icons await owner approval.\nconst GEAR_ICONS='+json.dumps({k:v['data'] for k,v in pack['icons'].items()},separators=(',',':'))+';\n')
+    (SRC/'manifest.json').write_text(json.dumps({'status':'owner-approved','icons':[{k:v for k,v in i.items() if k not in ('files','data')} for i in pack['icons'].values() if i['sourceRoot']=='../review-extended']},indent=2))
+    (OUT/'gear-icons.js').write_text('// Full15-grade art. All330 icons owner-approved2026-10-01.\nconst GEAR_ICONS='+json.dumps({k:v['data'] for k,v in pack['icons'].items()},separators=(',',':'))+';\n')
     (OUT/'resources').mkdir(exist_ok=True)
     for (family,grade),r in res.items():
         f=r['frame'];im=Image.open(ROOT/'art/resources/approved-v1'/resource['sheets'][r['sheet']]).convert('RGBA')
