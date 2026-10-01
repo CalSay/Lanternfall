@@ -31,9 +31,9 @@ const FOE_SEQ = {
     if (cache[key]) return cache[key];
     const P = FOE_ART[key], poses = {};
     for (const [id, [ax, ay, b64, x0]] of Object.entries(P.frames)) {
-      const c = document.createElement('canvas'); c.width = P.w; c.height = P.h;
+      const c = document.createElement('canvas'); c.width = P.w; c.height = P.h; c._pend = true;   // 62-stage measures it again once loaded
       const img = new Image();
-      img.onload = () => { const g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.clearRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0); };
+      img.onload = () => { const g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.clearRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0); c._pend = false; };
       img.src = 'data:image/png;base64,' + b64;
       poses[id] = { c, ox: ax, oy: ay, x0, lights: [], art: c };
     }
@@ -41,4 +41,6 @@ const FOE_SEQ = {
     return (cache[key] = { idle0: idle, idle1: idle, wind: poses['jab-wind-up'] || idle, strike: poses['jab-contact'] || idle,
       hit: poses.hurt || idle, poses, art: key });
   };
+  // decode every pack at boot, so a save that opens in a fight finds its foe's frames ready
+  if (typeof document !== 'undefined') for (const k in (typeof FOE_ART === 'object' ? FOE_ART : {})) foeArtFrames(k);
 }

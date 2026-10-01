@@ -497,16 +497,19 @@ let deeds, deedBonus, wearGet;
     const row = gRow(kind); row[t - 1] += num(n);
     if (glint) N().glint++;
   });
-  on('kill', ({ mob, ess }) => {
+  // First Try (was Just in Time, before the boss timer went, 2026-10-01): a new zone opened without losing to its boss
+  const bossFailed = new Set();
+  on('bossFail', ({ zone }) => bossFailed.add(zone));
+  on('zoneClear', ({ zone }) => { if (!inAway && DS().init && num(zone) >= T.oddZone && !bossFailed.has(zone)) grantSecret('s_close'); });   // from zone 10, like the other boss secrets
+  on('kill', ({ mob, ess, zone }) => {
     N().ess += num(ess);
     if (!mob || !mob.boss || inAway || !DS().init) return;
     // zone boss secrets (live play only)
-    if (typeof fightBoss !== 'undefined' && num(bossTime) < 1 && num(bossTime) >= 0) grantSecret('s_close');   // S6: under 1 s before the Enrage
     const U = safe(() => combatUnits(), null);
     // Untouched: a boss from zone 10 without one hit taken. Last Lamp Standing: your health fell under 10% during the fight (a boss kill heals you a little, so the lowest point counts).
-    if (S.zone >= T.oddZone && bossHurt === 0) grantSecret('s_bare');
+    if (num(zone) >= T.oddZone && bossHurt === 0) grantSecret('s_bare');   // the kill's zone (a boss win has already moved you on)
     const h = U && U[0];
-    if (S.zone >= T.oddZone && h && h.live && !h.down && bossLow < 0.1) grantSecret('s_alone');
+    if (num(zone) >= T.oddZone && h && h.live && !h.down && bossLow < 0.1) grantSecret('s_alone');
   });
   // Untouched (solo): hits the hero takes while a zone boss is up (the count resets when a boss spawns)
   let bossHurt = 0, bossLow = 1;

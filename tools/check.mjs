@@ -3519,30 +3519,23 @@ if (section('cb2')) try {
     }
     assert(res.every(([, gap]) => gap >= 1 - 1e-6) && res.reduce((a, r) => a + r[2], 0) > 200, 'no overlap: in 50 fights per kit, answer warnings one at a time and >= 1.0 s apart (' + res.map(([z, gap, w]) => `${z}: ${w} warnings, gap ${gap.toFixed(2)}`).join('; ') + ')');
   }
-  // 8. Enrage: bossTime 0 enrages, the fail comes 15 s later, Short Fuse still takes 10 s off
+  // 8. No boss timer and no Enrage (owner, 2026-10-01): a boss fight lasts until one side falls
   {
     const g = late(94), E = s => g.eval(s);
     const fails = []; g.fn.on('bossFail', x => fails.push(x));
-    E('S.auto = false; S.zone = 33; S.kills = 10; addModifier("bossHp", () => 1e4); fightBoss = false; challenge(); mob.atk = 0');
-    assert(E('bossTime') === 45 && E('bossTimer(35)') === 60, `the Enrage timer: 45 s for a zone elder, 60 s for a region boss (${E('bossTime')}, ${E('bossTimer(35)')})`);
-    E('bossTime = 0.05'); g.fn.tick(0.1);
-    const enr = E('mob.enr >= 0') && E('fightBoss');
-    for (let i = 0; i < 140; i++) g.fn.tick(0.1);
-    const still = E('fightBoss');
-    for (let i = 0; i < 15; i++) g.fn.tick(0.1);
-    assert(enr && still && fails.length === 1 && E('S.zone') === 33, 'at 0 the boss enrages; the attempt fails 15 s later (bossFail), and you stay in the zone');
-    E('addBonus("bossTime", () => -10)');
-    assert(E('bossTimer(33)') === 35 && E('bossTimer(35)') === 50, 'Short Fuse (bossTime -10) still takes 10 s off the Enrage timer');
+    E('S.auto = false; S.zone = 33; S.kills = ZONE_FIGHTS; addModifier("bossHp", () => 1e4); fightBoss = false; challenge(); mob.atk = 0');
+    const atk0 = E('cbFoeAtk(mob)');
+    for (let i = 0; i < 1200; i++) g.fn.tick(0.1);
+    assert(E('fightBoss && mob.boss && !mob.dead') && !fails.length && E('cbFoeAtk(mob)') === atk0 && E('typeof bossTime') === 'undefined' && E('typeof cbEnrage') === 'undefined',
+      'no boss timer and no Enrage: two minutes into a boss fight it is still on, unchanged, and nothing failed');
+    assert(E('OMENS.every(o => !o.dare || !(o.dare.bonus || {}).bossTime)'), 'no Dare touches a boss timer');
     errs.push(...g.errors);
   }
   // 9. the active reward: 3 of your own answers on a boss: +50% XP on the kill; idle: none
   {
     const run = active => {
       const g = late(95), E = s => g.eval(s);
-      // S6's Enrage timer (45 s + 15 s fail) would otherwise end this fight partway through the idle
-      // loop below (it never answers, so it always runs the full 90 s) and replace mob with a fresh
-      // farming pack, reading a stale mob.xp of 0 (0/0 = NaN). Hold it off like the hp/atk hack does.
-      E('chooseClass("warrior"); S.auto = false; S.zone = 29; S.kills = 10; fightBoss = false; challenge(); mob.atk = 0; mob.hp = mob.max = 1e40; bossTime = 1e6');
+      E('chooseClass("warrior"); S.auto = false; S.zone = 29; S.kills = 10; fightBoss = false; challenge(); mob.atk = 0; mob.hp = mob.max = 1e40');
       let answers = 0;
       for (let i = 0; i < 900 && answers < 3; i++) {
         g.fn.tick(0.1);
@@ -3710,7 +3703,7 @@ if (section('solo hero')) try {
     E('soloPick("tobin"); S.kills = 10; challenge()'); run(g, 0.5);
     assert(E('fightBoss && mob.boss && !!mob.kit'), 'the zone 1 boss runs its kit');
     const waitHeavy = () => { for (let i = 0; i < 300 && !E('(w => !!(w && w.kind === "heavy" && w.foe && w.foe.boss && w.left > 0.9))(actWarning())'); i++) run(g, 0.1); return E('(w => !!(w && w.kind === "heavy"))(actWarning())'); };
-    E('mob.hp = mob.max = 1e12; bossTime = 1e6');
+    E('mob.hp = mob.max = 1e12');
     assert(waitHeavy(), 'the boss winds up a heavy hit');
     for (let i = 0; i < 40 && E('actWarning().left') > E('SOLO_TUNE.dodgeWin') - 0.1; i++) run(g, 0.05);
     assert(E('soloDodge()') === 'dodge', 'Dodge answers the boss heavy');
@@ -6942,7 +6935,7 @@ if (section('auto-challenge (boss switch)')) try {
       const lab = () => E('(() => { const x = GOALS.find(q => q.id === "zone-boss"); return x.label() + "|" + (+x.pct()).toFixed(2); })()');
       E('fightBoss = false; failDps = totalDps() * 2; S.zone = S.maxZone; S.kills = 10');
       const held = lab(); E('failDps = 0'); const ready = lab();
-      assert(/held\. Get stronger first\|0\.[0-9]/.test(held) && /^Boss ready in Zone \d+\|1\.00$/.test(ready), `Next Up says when a ready boss held you off, with the way back as its bar (${held} / ${ready})`);
+      assert(/boss beat you\. Train, then try again\|0\.[0-9]/.test(held) && /^Boss ready in Zone \d+\|1\.00$/.test(ready), `Next Up says when a ready boss held you off, with the way back as its bar (${held} / ${ready})`);
     }
     // owner (2026-10-01): a zone is ZONE_FIGHTS fights and then its boss, switch or not
     const off = loadCore({ seed: 3 }), O = s => off.eval(s);
@@ -7104,6 +7097,10 @@ if (section('zones stay where you put them')) try {
     for (let t = 0; t < 120; t += 0.1) g.fn.tick(0.1);
     assert(E('__w') >= 1 && E('S.zone') === 25 && !msgs.some(m => /fell back/.test(m)) && msgs.some(m => /Catch your breath and go again/.test(m)),
       `a beaten hero gets up in the zone it chose (${E('__w')} defeats, zone ${E('S.zone')})`); }
+  { const g = loadCore({ seed: 5 }), E = s => g.eval(s);
+    E('soloPick("wren"); S.onboard && (S.onboard.tips = false, S.onboard.all = true); S.kills = ZONE_FIGHTS; addModifier("bossHp", () => 1e6); globalThis.__k = []; on("bossFail", () => __k.push("F")); on("kill", x => __k.push(x.mob.boss ? "B" : "k"))');
+    for (let t = 0; t < 600 && E('__k.filter(x => x === "F").length') < 2; t += 0.1) g.fn.tick(0.1);
+    assert(/^F,k,F/.test(E('__k.join()')) && E('S.zone') === 1, `after a lost boss you win one regular fight, then the boss is back (${E('__k.join()')})`); }
 } catch (e) { fail('zones stay crashed: ' + (e.stack || e)); }
 
 if (section('C22 Thorn Imp (zone 1)')) try {

@@ -27,7 +27,7 @@ function setNode(kind, t) {
 }
 
 // ================= combat state =================
-let mob = null, respawn = 0, heroTimer = 0, fightBoss = false, bossTime = 0, failDps = 0;
+let mob = null, respawn = 0, heroTimer = 0, fightBoss = false, failDps = 0;
 let autoChk = 0, autoWait = 0, autoZone = 0;   // auto-challenge: seconds to the next check; seconds boss-ready at autoZone
 // Deepwell arena (57d-deepwell.js): while set it supplies the foes. { spawn() -> mob | null,
 // onKill(mob, overkill) }. Its kills pay nothing here (no 'kill' event) and it has no boss timer.
@@ -37,7 +37,7 @@ function spawn() {
   if (arena) { const m = arena.spawn(); if (m) { mob = m; if (partyCombatOn()) cbArena(m); } return; }
   if (!fightBoss && S.activity === 'fight' && bossReady()) fightBoss = true;   // the zone's fights are won: its boss comes next (again after a loss)
   // Party combat (59-combat.js): a pack of foes; mob is the one the stage shows.
-  if (partyCombatOn()) { cbSpawn(fightBoss); if (fightBoss) bossTime = bossTimer(S.zone); return; }   // S6-A: 45 s / 60 s, then Enrage
+  if (partyCombatOn()) { cbSpawn(fightBoss); return; }   // owner (2026-10-01): no boss timer and no Enrage: a boss fight ends when one side falls
   const z = S.zone, cyc = zoneCycle(z);
   const boss = fightBoss;
   const ti = boss || Math.random() < 0.72 ? zoneType(z) : zoneNextType(z);
@@ -48,7 +48,6 @@ function spawn() {
     name: (boss ? 'Elder ' : '') + t.name, gold: mobGold(z) * (boss ? 6 : 1), xp: Math.ceil(1.5 * z) * (boss ? 5 : 1),
     hit: 0, dead: 0, born: 0
   };
-  if (boss) bossTime = bossTimer(z);
   emit('spawn', { mob, zone: z }); // listeners may change the new foe (55-gathering: champions)
 }
 
@@ -204,12 +203,6 @@ function tick(dt) {
       heroTimer += 1 / aps(); if (heroTimer < 0) heroTimer = 0;
       // SOLO2: no auto swing on the fight while the solo player is active (every hit comes from the buttons)
       if (tg === 'world' || (mob && !mob.dead && (!pc || cbHeroUp()) && !(tg === 'mob' && typeof soloActive === 'function' && soloActive()))) { emit('lunge'); heroSwing(heroAtk(), false); }
-    }
-    if (tg === 'mob' && (pc ? fightBoss && cbBossUp() : mob && mob.boss && !mob.dead) && !arena) {
-      bossTime -= dt;
-      // S6-A (combat-2 1.5): at 0 the boss enrages; the fight fails COMBAT_TUNE.enrageFail s later (party combat)
-      if (bossTime <= 0 && pc) cbEnrage();
-      if (bossTime <= (pc ? -COMBAT_TUNE.enrageFail : 0)) { fightBoss = false; failDps = totalDps(); toast('The zone boss held its ground. Grow stronger and try again.', 'raid'); emit('bossFail', { zone: S.zone, dps: failDps }); spawn(); }
     }
     if (mob && mob.dead && !pc) mob.dead += dt;
     if (mob && !pc) mob.born += dt;

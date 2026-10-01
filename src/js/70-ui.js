@@ -746,8 +746,7 @@ function ui(force) {
       putText(H.mHp, `${fmt(Math.max(0, mob.hp))} / ${fmt(mob.max)}`);
       setHp(mob.hp / mob.max * 100);
       putStyle(H.mBar, 'background', mob.boss ? 'linear-gradient(90deg, #E0524F, #FF9E3D)' : 'var(--hp)');
-      putHidden(H.tWrap, !mob.boss);
-      if (mob.boss) putStyle(H.tBar, 'width', Math.max(0, bossTime / bossTimer(S.zone) * 100) + '%');   // S6-A: the Enrage timer
+      putHidden(H.tWrap, true);   // owner (2026-10-01): no boss timer
     }
   }
   putHidden(H.zStep, tg !== 'mob');

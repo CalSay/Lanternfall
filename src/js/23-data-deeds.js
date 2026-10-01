@@ -209,7 +209,7 @@ const DEED_SECRETS = [
   { id: 's_fire', n: 'Sit a While', riddle: 'Some evenings you just sit.', how: 'The camp open for 5 minutes with no taps', title: 'Firesitter' },
   { id: 's_bare', n: 'Untouched', riddle: 'Not a scratch.', how: 'Beat a zone boss from zone 10 without taking a hit', title: 'Unscathed' },
   { id: 's_alone', n: 'Last Lamp Standing', riddle: 'Nearly out. One flicker left.', how: 'Beat a zone boss from zone 10 after your health fell under 10%', title: 'Lone Lamp' },
-  { id: 's_close', n: 'Just in Time', riddle: 'The sand was nearly out.', how: 'Beat a boss with under 1 second on its timer', title: 'Clutch' },
+  { id: 's_close', n: 'First Try', riddle: 'It never saw you coming twice.', how: 'From zone 10, beat a zone boss on your first try', title: 'Clutch' },
   { id: 's_over', n: 'Overkill', riddle: 'It was already beaten. You made sure.', how: "One hit for 1,000x the foe's max health", title: 'Overkill' },
   { id: 's_drum', n: 'Drummer', riddle: 'Press like rain on a roof.', how: '60 Attack presses in one minute', title: 'Drummer' },
   { id: 's_streak', n: 'Hot Streak', riddle: 'Ten in a row. Every one a crit.', how: '10 hero crits in a row', title: 'the Lucky' },

@@ -63,10 +63,8 @@
       const c = st.cast;
       putHidden(sCast, !c.kind || !c.foe || !c.foe.boss);
       if (c.kind) { putText(sCastN, c.name || ''); putStyle(sCastF, 'transform', `scaleX(${c.dur ? Math.max(0, Math.min(1, c.left / c.dur)).toFixed(3) : 0})`); putClass(sCast, 'cb-cast ' + (c.kind === 'hard' ? 'hard' : 'soft')); }
-      putText(sEnr, st.enrage ? 'Enraged' : `Enrage in ${mmss(bossTime)}`);
-      putClass(sEnr, st.enrage ? 'cb-enr on' : 'cb-enr');
       putText(sPips, pips(st.ans)); sPips.title = 'Your own parries, dodges and interrupts: 3 earn +50% XP.';
-      putHidden(sPips, false); putHidden(sEnr, false); putText(sPack, '');
+      putHidden(sPips, false); putHidden(sEnr, true); putText(sPack, '');   // no Enrage timer (owner, 2026-10-01)
     } else if (packShow) {
       putHidden(sStag, true); putHidden(sCast, true); putHidden(sEnr, true); putHidden(sPips, true);
       putText(sPack, `${st.packN} of ${cbPack().n}`);

@@ -27,10 +27,11 @@ var turnBarInfo = () => null;
     if (!f) return '';
     const type = String(f.key || '').replace(/\d+$/, ''), k = type + '|' + (typeof zoneHue === 'function' ? zoneHue(S.zone) : 0);
     if (foeFaces.has(k)) return foeFaces.get(k);
-    let url = '';
+    let url = '', pend = false;
     try {
       const set = enemyFrames(type, { elder: false, hue: typeof zoneHue === 'function' ? zoneHue(S.zone) : 0 });
       const fr = set && set.idle0, src = fr && (fr.art || fr);
+      pend = !!(src && src._pend);   // a pack frame still decoding (64j): try again next fight
       if (src && src.width) {
         const g0 = src.getContext('2d'), d = g0.getImageData(0, 0, src.width, src.height).data;
         let x0 = src.width, y0 = src.height, x1 = -1, y1 = -1;
@@ -42,7 +43,7 @@ var turnBarInfo = () => null;
         }
       }
     } catch (e) { url = ''; }
-    foeFaces.set(k, url);
+    if (!pend) foeFaces.set(k, url);
     return url;
   };
   const foeNow = () => { try { return combatFoes().find(x => x && !x.dead && x.hp > 0) || null; } catch (e) { return null; } };

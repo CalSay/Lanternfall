@@ -231,7 +231,7 @@
     }
     if (t.zone && t.zone <= S.maxZone) {
       const g = btn('mini go cx-dgo', `Go to zone ${t.zone}`);
-      g.addEventListener('click', () => { safe(() => { setActivity('fight'); setZone(t.zone); }, null); if (api) api.close(); ui(true); });
+      g.addEventListener('click', () => { safe(() => { setActivity('fight'); if (S.zone !== t.zone) setZone(t.zone); }, null); if (api) api.close(); ui(true); });
       d.append(g);
     }
     a.foot.append(d);

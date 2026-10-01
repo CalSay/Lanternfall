@@ -155,7 +155,7 @@
     ability: () => onCtrl() && target() === 'mob' ? { node: sbtn('ab0'), side: 'up', text: `${abName()} is ready. Press it. (Hold an ability slot to change what it holds.)` } : null,
     dodge: () => onCtrl() && target() === 'mob' ? { node: sbtn('dodge'), side: 'up', text: 'A foe winds up a heavy hit (the red ring). Press Dodge to step out of the way.' } : null,
     parry: () => onCtrl() && target() === 'mob' ? { node: sbtn('parry'), side: 'up', text: 'Another heavy hit. Press Parry just before it lands: no damage, the foe staggers and you counter.' } : null,
-    boss: () => target() !== 'mob' || !mob || !mob.boss ? null : onGame() ? { node: $('stage'), at: [0.72, 0.62], side: 'up', text: 'The zone boss! Beat it before the timer runs out. Its red rings are your cue: Dodge, or Parry at the last moment.' }
+    boss: () => target() !== 'mob' || !mob || !mob.boss ? null : onGame() ? { node: $('stage'), at: [0.72, 0.62], side: 'up', text: 'The zone boss! Its red rings are your cue: Dodge, or Parry at the last moment.' }
       : isWide() ? { node: q(`.tab[data-tab="${S.tab}"]`), text: 'The zone boss is here! Close this menu to watch the fight.' } : null,   // UX-L1: a landscape menu
     gather: () => {
       if (!onCtrl()) return null;

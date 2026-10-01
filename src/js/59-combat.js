@@ -51,7 +51,7 @@ function partyCombatOn() { return !(COMBAT_TUNE && !COMBAT_TUNE.on) && !(S && S.
 var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrike, cbHeroUp, cbPush,
   cbUnitHp, cbHitUnit, cbHealUnit, cbShield, cbDamageFoe, cbTurnDamageFoe, cbTurnHitHero, cbUnitByKey, cbTaunt, cbStun, cbDebug,
   partyHoldEstimate, partyHolds, cbClock, cbArena, cbBossUp, cbBossReady, cbRestore,
-  cbPack, cbFoeAtk, cbEnrage, bossTimer;
+  cbPack, cbFoeAtk, bossTimer;
 
 {
   const T = {
@@ -79,11 +79,11 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     swing0: 0.6, swingR: 1.4, bornAct: 0.3, arriveGap: 0.15, elite2From: 3, elite2P: 0.1,
     // S6-A hit caps (combat-2 1.4): a share of the target's max HP after reductions, before shields
     caps: { tele: 0.35, boss: 0.15, pack: 0.1, swarm: 0.04, blast: 0.2 },
-    // S6-A the Enrage timer (combat-2 1.5, owner D1): zone elders 45 s, region bosses 60 s; at 0 the boss attacks
-    // enrageSpd faster and deals enrageDmg more each second; the fight fails enrageFail s later. bossLive: the
+    // bossT / regionBossT: no longer a timer (owner, 2026-10-01: no boss timer, no Enrage); the boss-ready estimate
+    // (cbBossReady) still asks whether you would kill it within this many seconds. bossLive: the
     // survival test for auto-challenge: the closed-form time to fall must reach bossLive x the kill time (spec 1.1;
     // S6 pick 0.7: the estimate ignores parries, Shield Wall and the 15 s Enrage window, and at 1.1 it walled Silas)
-    bossT: 45, regionBossT: 60, enrageSpd: 0.5, enrageDmg: 0.1, enrageFail: 15, bossLive: 0.7,
+    bossT: 45, regionBossT: 60, bossLive: 0.7,
     aoeOther: 0.5, lmSplash: 0.15,       // caster hits on the other foes; the Lanternmage's splash
     heroPow: 1.4,    // the hero's power = its damage / heroPow (a striker's 1.4 x power)
     // S2: the base classes' HP scale and armour are CLASS_DEFS (24-data-classes; Ranger 6 / 10, was 5 / 0)
@@ -115,7 +115,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     getUps: 0, stalls: 0,   // F5: members who got up mid-pack, packs given up (the soft-lock guard)
     tele: 0, parries: 0, dodges: 0, blocked: 0, hitByHeavy: 0, interrupts: 0, abilities: 0, bossTries: 0, bossWins: 0, pushes: 0, taken: 0,
     crits: 0, maxHit: 0, maxOver: 0, heroHits: 0,
-    partyOver: 0, capped: 0, enrages: 0 };   // S6-A: the biggest hit on a member as a share of its max HP (after caps), hits capped, Enrages   // AC2 (58-deeds reads these once a second and resets maxHit/maxOver)
+    partyOver: 0, capped: 0 };   // S6-A: the biggest hit on a member as a share of its max HP (after caps), hits capped   // AC2 (58-deeds reads these once a second and resets maxHit/maxOver)
   on('crit', () => { ST.crits++; });
 
   registerState('combat', { on: 1, back: 0, tip: 0 });
@@ -238,7 +238,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       key: t.key + cyc, type: t.key, rows: SPR[t.key], pal: shiftPal(t.pal, zoneHue(z)), boss: !!boss, hp, max: hp,
       name, gold, xp, hit: 0, dead: 0, born: 0,
       ti, row: b.row, ranged: !!b.ranged, armoured: !!b.armoured, atk: zoneAtk(z) * (boss ? T.bossAtk : b.atk * (atkX || 1)), spd: boss ? T.bossSpd : T.spd * b.spd,
-      swing: T.swing0 + Math.random() * T.swingR, th: new Float64Array(4), tgt: -1, forceT: 0, forceU: -1, sz: boss ? 'boss' : b.size || 'brute', enr: -1, tr: null, share: boss ? 1 : atkX || 1,
+      swing: T.swing0 + Math.random() * T.swingR, th: new Float64Array(4), tgt: -1, forceT: 0, forceU: -1, sz: boss ? 'boss' : b.size || 'brute', tr: null, share: boss ? 1 : atkX || 1,
       stunT: 0, slowT: 0, slowV: 0, knockT: 0, burnT: 0, burnDps: 0, markT: 0, focusT: 0, vulnT: 0, bx: 1, elite: false,
       bt: 0, b2: 0, diveT: 0, diveU: -1, diveX: 1, chanT: 0, hits: 0, again: false, first: 0, split: false, z, adds: false, gone: false,
       dt: b.dt || 'phys', chillT: 0, rootT: 0, rxT: 0, mkV: 0, stag: 0, ss: null, blight: false   // S1: hit type, statuses (59a)
@@ -626,7 +626,6 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (f.dead) { f.dead += dt; return; }
     f.born += dt; if (f.hit > 0) f.hit -= dt;
     if (f.born < T.bornAct) return;   // S6-A (2.4): a foe acts once it has fully arrived
-    if (f.enr >= 0) f.enr += dt;      // S6-A: seconds since the Enrage
     // (S1: Burn and every other damage over time tick in 59a stTick, once a second)
     if (emberBurn > 0 && f.embers > 0) { carry = false; cbDamageFoe(f, f.embers * emberBurn * dt, 0, 'burn'); carry = true; if (!alive(f)) return; }
     if (f.markT > 0) f.markT -= dt;
@@ -640,7 +639,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (typeof onEnemyTick === 'function' && onEnemyTick(f, dt)) return;   // 59b: behaviours, channels, boss mechanics
     if (typeof actBusy === 'function' && actBusy(f)) return;             // S6-B: winding up or casting (59g)
     if (f.knockT > 0) { f.knockT -= dt; return; }
-    f.swing -= dt * (1 - Math.max(f.slowT > 0 ? f.slowV : 0, f.chillT > 0 ? stSlow(f) : 0)) * (f.enr >= 0 ? 1 + T.enrageSpd : 1) * (f.spdX || 1);   // S1: Chill; S6: Enrage, traits (spdX)
+    f.swing -= dt * (1 - Math.max(f.slowT > 0 ? f.slowV : 0, f.chillT > 0 ? stSlow(f) : 0)) * (f.spdX || 1);   // S1: Chill; S6: Enrage, traits (spdX)
     const t = pickTarget(f);
     f.tgt = t;
     if (t >= 0) {
@@ -652,12 +651,11 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (typeof onFoeAttack === 'function' && onFoeAttack(f, U[t])) return;   // 59b: slams, dives
     cbHitUnit(U[t], cbFoeAtk(f) * (f.diveT > 0 ? f.diveX || 1 : 1), f.ranged ? 'ranged' : 'hit', f);
   }
-  // S6-A: a foe's attack now (the Enrage adds enrageDmg a second; 59i traits set atkX). 59g/59h hit with it.
-  cbFoeAtk = f => f.atk * (f.enr >= 0 ? 1 + T.enrageDmg * f.enr : 1) * (f.atkX || 1);
+  // S6-A: a foe's attack now (59i traits set atkX). 59g/59h hit with it.
+  cbFoeAtk = f => f.atk * (f.atkX || 1);
   // S6-A (1.5): 50-sim calls it when the boss timer runs out.
-  cbEnrage = () => { if (lead && lead.boss && alive(lead) && lead.enr < 0) { lead.enr = 0; ST.enrages++; emit('enrage', { foe: lead }); return true; } return false; };
-  // The boss timer for zone z: 45 s zone elders, 60 s region bosses (plus the Almanac's and stars' bossTime).
-  bossTimer = z => Math.max(5, (typeof isRegionBoss === 'function' && isRegionBoss(z) ? T.regionBossT : T.bossT) + bonus('bossTime'));
+  // The boss-ready estimate's window for zone z (no longer a fight timer): 45 s zone elders, 60 s region bosses.
+  bossTimer = z => typeof isRegionBoss === 'function' && isRegionBoss(z) ? T.regionBossT : T.bossT;
 
   // ---------------- damage to the party ----------------
   const HIT_EV = { key: '', amount: 0, kind: '', foe: null, blocked: false, shield: 0 };
@@ -771,7 +769,9 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (inArena) { WIPE_EV.to = z; emit('wipe', WIPE_EV); return; }   // 59c-deepwell-combat ends the run
     if (fightBoss) {
       fightBoss = false; failDps = totalDps();
-      toast('The zone boss beat you. Grow stronger and try again.', 'raid');
+      // one paying fight before each retry, so a hero who can't win yet still earns (the boss is back after it)
+      if (typeof ZONE_FIGHTS === 'number') S.kills = Math.min(S.kills, ZONE_FIGHTS - 1);
+      toast('The zone boss beat you. Win one more fight and it comes back.', 'raid');
       emit('bossFail', { zone: z, dps: failDps });
       WIPE_EV.to = z;
     } else {

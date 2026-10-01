@@ -75,7 +75,7 @@ const CLASS_ABILITIES = {
     fx: [['buff', 'shieldwall', 6], ['buff', 'wallEmpower', 6], ['taunt', 3], ['stagger', 10]], dr: 0.6, emp: 0.3, t: 6, name: 'Shield Wall',
     // S2 keeps today's 60% / 30%: classes-2 1.2 lowers it to 50% / 20% because Core 2.0 foes hit 2-3x harder,
     // which lands with S6; at 50 / 20 on today's foes the sim lost T4 and T7 (BAL3 applies it with S6).
-    desc: 'For 6s you take 60% less damage and deal 30% more. It blocks a boss heavy hit on you, and the boss timer stops for 3s.' },
+    desc: 'For 6s you take 60% less damage and deal 30% more. It blocks a boss heavy hit on you.' },
   hammerfall: { id: 'hammerfall', slot: 'fin', cls: 'warrior', type: 'phys', tags: ['heavy', 'finisher'],
     fx: [['dmg', 7], ['delay', 1], ['meter', 'grit', 5]], name: 'Hammerfall',
     desc: '7x your attack. Every foe attacks 1s later. Fills your Grit.' },

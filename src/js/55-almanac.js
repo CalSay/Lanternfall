@@ -17,7 +17,7 @@
 // foeHp / bossHp (50-sim spawn), nonCrit (50-sim heroSwing, 40-rules heroDps),
 // rareW (40-rules rarityWeights), salvage (51-actions), bountyPay (55-bounties).
 // Bonus keys: bestiaryMult / masteryMult (55-mastery), bountyNoWait (55-bounties),
-// bossTime (seconds added to the boss timer, 50-sim spawn).
+// (bossTime is gone with the boss timer, owner 2026-10-01.)
 
 const almanac = {};
 let OMENS, WEEKLY_GOALS;
@@ -74,7 +74,7 @@ let OMENS, WEEKLY_GOALS;
     { id: 'bestiaryDay', n: 'Bestiary Day', cat: 'fight', fx: 'Kills count double toward bestiary perks', bonus: { bestiaryMult: 1 }, ic: ['banner', '#B58CFF'], go: { fight: 'best' } },
     { id: 'masteryDay', n: 'Mastery Day', cat: 'fight', fx: 'Kills count double toward zone mastery', bonus: { masteryMult: 1 }, ic: ['banner', '#F2C14E'], go: { fight: 'here' } },
     { id: 'bossHunt', n: 'Boss Hunt', cat: 'fight', fx: '+25% damage to zone bosses', mod: { dmg: 1.25 }, when: bossNow, ic: ['sword', '#E0524F'], go: { fight: 'boss' },
-      dare: { n: 'Short Fuse', fx: 'The boss timer is 10s shorter. Bosses drop uniques twice as often.', bonus: { bossTime: -10 }, mod: { uniqueChance: 2 } } },
+      dare: { n: 'Iron Hide', fx: 'Bosses have 25% more health. Bosses drop uniques twice as often.', mod: { bossHp: 1.25, uniqueChance: 2 } } },
 
     { id: 'hotForge', n: 'Hot Forge', cat: 'craft', fx: 'Crafting skills earn +50% XP', mod: { 'skillXp:smith': 1.5, 'skillXp:bench': 1.5, 'skillXp:loom': 1.5, 'skillXp:ench': 1.5 }, ic: ['anvil', '#FF9E3D'], go: { tab: 'forge' } },
     { id: 'steadyHands', n: 'Steady Hands', cat: 'craft', fx: 'Rare and Epic forge odds +50%', mod: { rareW: 1.5 }, ic: ['anvil', '#5FA8FF'], go: { tab: 'forge' } },

@@ -51,7 +51,7 @@ function uiFight() {
     putText(gq, 'Back to'); putText(gp, 'Fight'); putDisabled(gb, false);
   } else if (fightBoss) {
     putText(G.title, 'Boss fight underway');
-    putText(G.desc, bossTime > 0 ? `It enrages in ${Math.ceil(bossTime)} seconds. Hit it hard.` : 'It is enraged. Finish it now.');
+    putText(G.desc, `Beat it to move on to Zone ${S.zone + 1}. Take your time: there is no timer.`);
     putText(gq, 'Boss'); putText(gp, 'Fighting'); putDisabled(gb, true);
   } else {
     putText(G.title, bossReady() ? 'The zone boss is next' : `Fight ${S.kills + 1} of ${ZONE_FIGHTS}, then the zone boss`);

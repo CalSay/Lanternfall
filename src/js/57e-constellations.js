@@ -40,7 +40,7 @@ const STAR_KS = {
   unbroken: { holdSecs: 3 },                  // Grit (was guard stacks) never falls off while a heavy hit lands at least every 3s
   crush: { every: 5, mult: 3 },               // every 5th heavy hit deals x3
   challenger: { taunt: true },                // [C] taps taunt for 2s, -20% damage taken while taunting
-  bastion: { cdPerHeavy: 1, wallPauseFull: true }, // each heavy hit takes 1s off Shield Wall; the Wall stops the boss timer for its whole length
+  bastion: { cdPerHeavy: 1 }, // each heavy hit takes 1s off Shield Wall
   oathsworn: {},                              // [C] tanks +80% HP, +40 armour
   twinSpark: { chance: 0.25 },                // a tap has a 25% chance to plant 2 Embers
   slowBurn: { perEmber: 0.05 },               // each Ember burns for 0.05x hero attack per second
@@ -82,7 +82,7 @@ const STAR_MAPS = {
         ['Deep Grit', 'Grit cap +2.', { t: { guardMax: 2 } }, 1.02],
         ['Brace', 'Shield Wall lasts 1s longer.', { t: { wallT: 1 } }, 1.008],
         ['Ready Shield', 'Shield Wall cooldown -4%.', { m: { abilityCd: 0.96 } }, 1.006],
-        ['Hold the Line', 'Shield Wall stops the boss timer 2s longer.', { t: { wallPause: 2 } }, 1.01, 'You take 10% less damage while you hold 5 or more Grit.'],
+        ['Hold the Line', 'Shield Wall lasts 1s longer.', { t: { wallT: 1 } }, 1.01, 'You take 10% less damage while you hold 5 or more Grit.'],
         ['Lasting Grit II', 'Grit lasts 2s longer.', { t: { guardT: 2 } }, 1.004],
         ['Unbroken', 'Your Grit never falls off while you land a heavy hit at least every 3s. Grit cap +5, but each Grit gives 1% less damage.', { ks: 'unbroken', t: { guardMax: 5, guard: -0.01 } }, 1.03, 'Each Grit also gives 2 armour.']
       ]],
@@ -92,9 +92,9 @@ const STAR_MAPS = {
         ['Crushing Blow', 'Every 5th heavy hit deals triple damage.', { ks: 'crush' }, 1.02],
         starCd('Hard Hits', 0.12, 1.009),
         ['Heavy Arm II', 'Attack +5%.', { m: { tap: 1.05 } }, 1.006],
-        ['Bash', 'Heavy hits on a boss add 0.2s to its timer, up to 6s a fight.', { live: 'bash' }, 1.01, 'Heavy hits stagger for 0.3s.'],
+        ['Bash', 'You deal 6% more damage to bosses.', { live: 'bash' }, 1.01, 'Heavy hits stagger for 0.3s.'],
         ['Edge II', '+1.5% damage.', { m: { dmg: 1.015 } }, 1.015],
-        ['Challenger', 'Your Attack deals +20%, and each heavy hit on a boss adds 0.3s to its timer, up to 10s a fight (instead of Bash).', { ks: 'challenger', live: 'challenger', m: { tap: 1.2 } }, 1.03, 'Your Attack draws every foe for 2s, and you take 20% less damage while it does.']
+        ['Challenger', 'Your Attack deals +20%, and you deal 10% more damage to bosses (instead of Bash).', { ks: 'challenger', live: 'challenger', m: { tap: 1.2 } }, 1.03, 'Your Attack draws every foe for 2s, and you take 20% less damage while it does.']
       ]],
       ['Oath', [
         ['Comrades', 'You deal +2% damage.', { m: { dmg: 1.02 } }, 1.015],
@@ -107,7 +107,7 @@ const STAR_MAPS = {
         ['Oathsworn', 'You deal 10% more damage.', { m: { dmg: 1.1 } }, 1.035]
       ]]
     ],
-    crown: ['Lantern Bastion', "Every heavy hit takes 1s off Shield Wall's cooldown, and Shield Wall stops the boss timer for its whole length.", { ks: 'bastion' }, 1.05, "Shield Wall also blocks the boss's next heavy hit on anyone."]
+    crown: ['Lantern Bastion', "Every heavy hit takes 1s off Shield Wall's cooldown.", { ks: 'bastion' }, 1.05, "Shield Wall also blocks the boss's next heavy hit on anyone."]
   },
   mage: {
     name: 'Lanternmage', hearth: 'First Spark', color: '#8A4FC9',
@@ -520,7 +520,7 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
   for (const id of KS_IDS) addBonus('ks:' + id, () => starEffects().ks[id] ? 1 : 0);
 
   // ---- live effects (no combat change needed) ----
-  let clock = 0, glowUntil = -1, bossRef = null, bossAdded = 0;
+  let clock = 0, glowUntil = -1;
   const heroOnly = () => {
     const e = starEffects();
     let k = 1;
@@ -529,18 +529,12 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
     return k;
   };
   const onBoss = () => typeof mob !== 'undefined' && mob && mob.boss && !mob.dead && target() === 'mob';
-  addModifier('dmg', () => { const e = starEffects(); let m = heroOnly(); if (e.live.stalker && onBoss()) m *= 1.06; return m; });
+  addModifier('dmg', () => { const e = starEffects(); let m = heroOnly(); if (e.live.stalker && onBoss()) m *= 1.06;
+    if (onBoss()) m *= e.live.challenger ? 1.1 : e.live.bash ? 1.06 : 1;   // Bash / Challenger (were boss-timer stars)
+    return m; });
   addModifier('uniqueChance', () => starEffects().live.stalker && typeof mob !== 'undefined' && mob && mob.boss && mob.markUntil ? 1.1 : 1);
   onTick(dt => { if (initFor !== S) ensure(); clock += dt; });
   on('ability', ({ cls }) => { if (cls === 'lanternmage' && starEffects().live.afterglow) glowUntil = clock + 4; });
-  on('classTap', ({ cls, kind }) => {
-    if (cls !== 'warden' || kind !== 'heavy') return;
-    const e = starEffects(), per = e.live.challenger ? 0.3 : e.live.bash ? 0.2 : 0, cap = e.live.challenger ? 10 : 6;
-    if (!per || typeof fightBoss === 'undefined' || !fightBoss || !onBoss()) return;
-    if (bossRef !== mob) { bossRef = mob; bossAdded = 0; }
-    const add = Math.min(per, cap - bossAdded); if (add <= 0) return;
-    bossAdded += add; bossTime += add;
-  });
 
   // ---- news: new points ----
   on('levelup', ({ L, quiet }) => {

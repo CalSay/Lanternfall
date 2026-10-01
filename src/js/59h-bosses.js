@@ -171,7 +171,7 @@ var kitOf, kitStart, kitTick, KIT_STATS, KIT_FX;
         atk: f.atk / COMBAT_TUNE.bossAtk * b.atk * (b.size === 'swarm' ? 0.4 : 1), spd: COMBAT_TUNE.spd * b.spd, swing: 1 + Math.random(), th: new Float64Array(4), tgt: -1, forceT: 0, forceU: -1,
         stunT: 0, slowT: 0, slowV: 0, knockT: 0, burnT: 0, burnDps: 0, markT: 0, focusT: 0, vulnT: 0, bx: 1, elite: false,
         bt: 0, b2: 0, diveT: 0, diveU: -1, diveX: 1, chanT: 0, hits: 0, again: true, first: 0, z: f.z, adds: true, gone: false, split: false,
-        dt: b.dt || 'phys', chillT: 0, rootT: 0, rxT: 0, mkV: 0, stag: 0, ss: null, blight: false, sz: b.size || 'normal', enr: -1, tr: null, share: 1,
+        dt: b.dt || 'phys', chillT: 0, rootT: 0, rxT: 0, mkV: 0, stag: 0, ss: null, blight: false, sz: b.size || 'normal', tr: null, share: 1,
         deep: f.deep, floor: f.floor
       };
       for (let j = 0; j < 4; j++) a.th[j] = f.th[j] * 0.5;

@@ -18,7 +18,7 @@
 //   stagger actStag(f, pts, src) (fills the bar; the stat and the Warden's +30% apply), actHeavy(f, src) (a heavy hit:
 //           +5, at most 4 a second per unit); 59a and 59e keep adding to f.stag and the bar reads the difference
 //   loop    actTick(dt) (59-combat combatTick, once a frame)
-//   ui      cbState() -> one reused snapshot { tele, cast, stag, fin, phase, packN, ans, enrage, rxWin, elites }
+//   ui      cbState() -> one reused snapshot { tele, cast, stag, fin, phase, packN, ans, rxWin, elites }
 // Runtime fields on foes (never saved): sb (the bar), sbIdle, stgT (Staggered seconds left), stgN (Staggers this
 // fight), reelT (Reeling), cast { kind, id, name, left, dur } (a cast bar), keenT on units.
 // Events: parry { foe, by, active }, dodge { foe, perfect, active }, interrupt { foe, kind, by, active },
@@ -439,7 +439,7 @@ var ACT_TUNE, ACT_STATS, actWarn, actWarning, actBusy, actTap, actParry, actDodg
 
   // ---------------- the snapshot (7.2) ----------------
   const SNAP = { tele: { kind: '', left: 0, dur: 0, win: 0, perf: 0, foe: null, res: '', wait: 0, name: '' }, cast: { kind: '', left: 0, dur: 0, foe: null, name: '' },
-    stag: { v: 0, max: 0, on: false, left: 0 }, fin: { on: false, left: 0 }, phase: 0, packN: 0, ans: 0, enrage: false, rxWin: false, elites: [] };
+    stag: { v: 0, max: 0, on: false, left: 0 }, fin: { on: false, left: 0 }, phase: 0, packN: 0, ans: 0, rxWin: false, elites: [] };
   cbState = () => {
     const s = SNAP, t = s.tele, c = s.cast;
     t.kind = W.on ? W.kind : ''; t.left = W.left; t.dur = W.dur; t.win = W.win; t.dwin = W.dwin || 0; t.perf = W.perf; t.foe = W.on ? W.foe : null; t.res = W.res; t.wait = W.wait; t.name = W.name;
@@ -455,7 +455,7 @@ var ACT_TUNE, ACT_STATS, actWarn, actWarning, actBusy, actTap, actParry, actDodg
     s.phase = boss ? boss.ph || 1 : 0;
     s.packN = 0; s.elites.length = 0;
     for (const f of list) if (alive(f)) { s.packN++; if (f.elite && f.tr) for (const k of f.tr) s.elites.push(k); }
-    s.ans = bossFoe ? bossAns : 0; s.enrage = !!(boss && boss.enr >= 0);
+    s.ans = bossFoe ? bossAns : 0;
     s.rxWin = !!(focus && (focus.rxT > 0 || focus.stgT > 0));
     return s;
   };

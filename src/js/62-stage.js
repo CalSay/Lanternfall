@@ -351,7 +351,7 @@ let resize, animate, draw, stageStats, warmScene;
         for (; x < c.width; x++) { let hit = false; for (let y = 0; y < c.height; y++) if (d[(y * c.width + x) * 4 + 3] > 40) { hit = true; break; } if (hit) break; }
         e = x < c.width ? x : 0;
       } catch (er) { e = 0; }
-      leftEdges.set(f.c, e);
+      if (!f.c._pend) leftEdges.set(f.c, e);   // _pend: a pack frame still decoding (64j): measure again later
     }
     return e;
   }
@@ -367,7 +367,7 @@ let resize, animate, draw, stageStats, warmScene;
         for (; x >= 0; x--) { let hit = false; for (let y = 0; y < c.height; y++) if (d[(y * c.width + x) * 4 + 3] > 40) { hit = true; break; } if (hit) break; }
         e = x >= 0 ? x + 1 : c.width;
       } catch (er) { e = f.c.width; }
-      rightEdges.set(f.c, e);
+      if (!f.c._pend) rightEdges.set(f.c, e);
     }
     return e;
   }
@@ -1105,7 +1105,7 @@ let resize, animate, draw, stageStats, warmScene;
     if (!d) {
       d = document.createElement('canvas'); d.width = c.width; d.height = c.height;
       const g = d.getContext('2d'); g.drawImage(c, 0, 0); g.globalCompositeOperation = 'source-atop'; g.fillStyle = 'rgba(14,9,24,0.26)'; g.fillRect(0, 0, d.width, d.height);
-      dimmed.set(c, d);
+      if (!c._pend) dimmed.set(c, d);
     }
     return d;
   }
@@ -1585,7 +1585,7 @@ let resize, animate, draw, stageStats, warmScene;
         for (; y < c.height; y++) { let hit = false; for (let x = 0; x < w; x++) if (d[(y * w + x) * 4 + 3] > 40) { hit = true; break; } if (hit) break; }
         t = y < c.height ? y : 0;
       } catch (e) { t = 0; }
-      headTops.set(f.c, t);
+      if (!f.c._pend) headTops.set(f.c, t);
     }
     return t;
   }

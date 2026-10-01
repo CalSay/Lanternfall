@@ -7088,10 +7088,9 @@ const BOSS_COPY = {
     activeKill: 'Played it well: +50% XP.'
   },
   roar: 'It stops listening.',
-  enrage: 'The boss is enraged. Finish it fast.',
   fenmother: { intro: 'The fog thickens. Something old is listening.', fall: 'The marsh lets out its breath.' },
   deepTip: 'Parry, dodge and interrupt to earn Oil. Beat a Deep Elder with your own answers and your next draft shows four cards.',
-  banner: { heavy: 'PARRY', zone: 'DODGE', slam: 'DODGE', sig: 'INTERRUPT', heal: 'INTERRUPT', summon: 'INTERRUPT', line: 'BRACE', hard: '', dive: '', enrage: 'ENRAGE', fin: 'FINISHER' },
+  banner: { heavy: 'PARRY', zone: 'DODGE', slam: 'DODGE', sig: 'INTERRUPT', heal: 'INTERRUPT', summon: 'INTERRUPT', line: 'BRACE', hard: '', dive: '', fin: 'FINISHER' },
   aria: { heavy: 'Parry now', zone: 'Dodge', slam: 'Dodge', sig: 'Interrupt', heal: 'Interrupt', summon: 'Interrupt', fin: 'Finisher ready' }
 };
 
@@ -8044,7 +8043,7 @@ const DEED_SECRETS = [
   { id: 's_fire', n: 'Sit a While', riddle: 'Some evenings you just sit.', how: 'The camp open for 5 minutes with no taps', title: 'Firesitter' },
   { id: 's_bare', n: 'Untouched', riddle: 'Not a scratch.', how: 'Beat a zone boss from zone 10 without taking a hit', title: 'Unscathed' },
   { id: 's_alone', n: 'Last Lamp Standing', riddle: 'Nearly out. One flicker left.', how: 'Beat a zone boss from zone 10 after your health fell under 10%', title: 'Lone Lamp' },
-  { id: 's_close', n: 'Just in Time', riddle: 'The sand was nearly out.', how: 'Beat a boss with under 1 second on its timer', title: 'Clutch' },
+  { id: 's_close', n: 'First Try', riddle: 'It never saw you coming twice.', how: 'From zone 10, beat a zone boss on your first try', title: 'Clutch' },
   { id: 's_over', n: 'Overkill', riddle: 'It was already beaten. You made sure.', how: "One hit for 1,000x the foe's max health", title: 'Overkill' },
   { id: 's_drum', n: 'Drummer', riddle: 'Press like rain on a roof.', how: '60 Attack presses in one minute', title: 'Drummer' },
   { id: 's_streak', n: 'Hot Streak', riddle: 'Ten in a row. Every one a crit.', how: '10 hero crits in a row', title: 'the Lucky' },
@@ -8365,7 +8364,7 @@ const CLASS_ABILITIES = {
     fx: [['buff', 'shieldwall', 6], ['buff', 'wallEmpower', 6], ['taunt', 3], ['stagger', 10]], dr: 0.6, emp: 0.3, t: 6, name: 'Shield Wall',
     // S2 keeps today's 60% / 30%: classes-2 1.2 lowers it to 50% / 20% because Core 2.0 foes hit 2-3x harder,
     // which lands with S6; at 50 / 20 on today's foes the sim lost T4 and T7 (BAL3 applies it with S6).
-    desc: 'For 6s you take 60% less damage and deal 30% more. It blocks a boss heavy hit on you, and the boss timer stops for 3s.' },
+    desc: 'For 6s you take 60% less damage and deal 30% more. It blocks a boss heavy hit on you.' },
   hammerfall: { id: 'hammerfall', slot: 'fin', cls: 'warrior', type: 'phys', tags: ['heavy', 'finisher'],
     fx: [['dmg', 7], ['delay', 1], ['meter', 'grit', 5]], name: 'Hammerfall',
     desc: '7x your attack. Every foe attacks 1s later. Fills your Grit.' },
@@ -9302,7 +9301,7 @@ function setNode(kind, t) {
 }
 
 // ================= combat state =================
-let mob = null, respawn = 0, heroTimer = 0, fightBoss = false, bossTime = 0, failDps = 0;
+let mob = null, respawn = 0, heroTimer = 0, fightBoss = false, failDps = 0;
 let autoChk = 0, autoWait = 0, autoZone = 0;   // auto-challenge: seconds to the next check; seconds boss-ready at autoZone
 // Deepwell arena (57d-deepwell.js): while set it supplies the foes. { spawn() -> mob | null,
 // onKill(mob, overkill) }. Its kills pay nothing here (no 'kill' event) and it has no boss timer.
@@ -9312,7 +9311,7 @@ function spawn() {
   if (arena) { const m = arena.spawn(); if (m) { mob = m; if (partyCombatOn()) cbArena(m); } return; }
   if (!fightBoss && S.activity === 'fight' && bossReady()) fightBoss = true;   // the zone's fights are won: its boss comes next (again after a loss)
   // Party combat (59-combat.js): a pack of foes; mob is the one the stage shows.
-  if (partyCombatOn()) { cbSpawn(fightBoss); if (fightBoss) bossTime = bossTimer(S.zone); return; }   // S6-A: 45 s / 60 s, then Enrage
+  if (partyCombatOn()) { cbSpawn(fightBoss); return; }   // owner (2026-10-01): no boss timer and no Enrage: a boss fight ends when one side falls
   const z = S.zone, cyc = zoneCycle(z);
   const boss = fightBoss;
   const ti = boss || Math.random() < 0.72 ? zoneType(z) : zoneNextType(z);
@@ -9323,7 +9322,6 @@ function spawn() {
     name: (boss ? 'Elder ' : '') + t.name, gold: mobGold(z) * (boss ? 6 : 1), xp: Math.ceil(1.5 * z) * (boss ? 5 : 1),
     hit: 0, dead: 0, born: 0
   };
-  if (boss) bossTime = bossTimer(z);
   emit('spawn', { mob, zone: z }); // listeners may change the new foe (55-gathering: champions)
 }
 
@@ -9479,12 +9477,6 @@ function tick(dt) {
       heroTimer += 1 / aps(); if (heroTimer < 0) heroTimer = 0;
       // SOLO2: no auto swing on the fight while the solo player is active (every hit comes from the buttons)
       if (tg === 'world' || (mob && !mob.dead && (!pc || cbHeroUp()) && !(tg === 'mob' && typeof soloActive === 'function' && soloActive()))) { emit('lunge'); heroSwing(heroAtk(), false); }
-    }
-    if (tg === 'mob' && (pc ? fightBoss && cbBossUp() : mob && mob.boss && !mob.dead) && !arena) {
-      bossTime -= dt;
-      // S6-A (combat-2 1.5): at 0 the boss enrages; the fight fails COMBAT_TUNE.enrageFail s later (party combat)
-      if (bossTime <= 0 && pc) cbEnrage();
-      if (bossTime <= (pc ? -COMBAT_TUNE.enrageFail : 0)) { fightBoss = false; failDps = totalDps(); toast('The zone boss held its ground. Grow stronger and try again.', 'raid'); emit('bossFail', { zone: S.zone, dps: failDps }); spawn(); }
     }
     if (mob && mob.dead && !pc) mob.dead += dt;
     if (mob && !pc) mob.born += dt;
@@ -9775,7 +9767,7 @@ function syncGen() {
 // foeHp / bossHp (50-sim spawn), nonCrit (50-sim heroSwing, 40-rules heroDps),
 // rareW (40-rules rarityWeights), salvage (51-actions), bountyPay (55-bounties).
 // Bonus keys: bestiaryMult / masteryMult (55-mastery), bountyNoWait (55-bounties),
-// bossTime (seconds added to the boss timer, 50-sim spawn).
+// (bossTime is gone with the boss timer, owner 2026-10-01.)
 
 const almanac = {};
 let OMENS, WEEKLY_GOALS;
@@ -9832,7 +9824,7 @@ let OMENS, WEEKLY_GOALS;
     { id: 'bestiaryDay', n: 'Bestiary Day', cat: 'fight', fx: 'Kills count double toward bestiary perks', bonus: { bestiaryMult: 1 }, ic: ['banner', '#B58CFF'], go: { fight: 'best' } },
     { id: 'masteryDay', n: 'Mastery Day', cat: 'fight', fx: 'Kills count double toward zone mastery', bonus: { masteryMult: 1 }, ic: ['banner', '#F2C14E'], go: { fight: 'here' } },
     { id: 'bossHunt', n: 'Boss Hunt', cat: 'fight', fx: '+25% damage to zone bosses', mod: { dmg: 1.25 }, when: bossNow, ic: ['sword', '#E0524F'], go: { fight: 'boss' },
-      dare: { n: 'Short Fuse', fx: 'The boss timer is 10s shorter. Bosses drop uniques twice as often.', bonus: { bossTime: -10 }, mod: { uniqueChance: 2 } } },
+      dare: { n: 'Iron Hide', fx: 'Bosses have 25% more health. Bosses drop uniques twice as often.', mod: { bossHp: 1.25, uniqueChance: 2 } } },
 
     { id: 'hotForge', n: 'Hot Forge', cat: 'craft', fx: 'Crafting skills earn +50% XP', mod: { 'skillXp:smith': 1.5, 'skillXp:bench': 1.5, 'skillXp:loom': 1.5, 'skillXp:ench': 1.5 }, ic: ['anvil', '#FF9E3D'], go: { tab: 'forge' } },
     { id: 'steadyHands', n: 'Steady Hands', cat: 'craft', fx: 'Rare and Epic forge odds +50%', mod: { rareW: 1.5 }, ic: ['anvil', '#5FA8FF'], go: { tab: 'forge' } },
@@ -11533,7 +11525,7 @@ var forgeGoalPicks = 0;
     pct: () => S.zone !== S.maxZone ? 0.5 : !bossReady() ? Math.min(1, S.kills / ZONE_FIGHTS) : bossHeld() ? Math.min(0.99, totalDps() / (failDps * 1.15)) : 1,
     label: () => S.zone !== S.maxZone ? `Go back to Zone ${S.maxZone} and push on`
       : !bossReady() ? `${ZONE_FIGHTS - S.kills} more fights to the Zone ${S.maxZone} boss`
-      : bossHeld() ? `Zone ${S.maxZone} boss held. Get stronger first` : `Boss ready in Zone ${S.maxZone}`,
+      : bossHeld() ? `The Zone ${S.maxZone} boss beat you. Train, then try again` : `Boss ready in Zone ${S.maxZone}`,
     icon: { ic: ['banner', '#E0524F', { 7: '#FFB347' }] },
     go: { tab: 'adv', sel: '#gateBtn', fn: () => { if (S.zone !== S.maxZone) setZone(S.maxZone); } }
   });
@@ -16233,7 +16225,7 @@ const STAR_KS = {
   unbroken: { holdSecs: 3 },                  // Grit (was guard stacks) never falls off while a heavy hit lands at least every 3s
   crush: { every: 5, mult: 3 },               // every 5th heavy hit deals x3
   challenger: { taunt: true },                // [C] taps taunt for 2s, -20% damage taken while taunting
-  bastion: { cdPerHeavy: 1, wallPauseFull: true }, // each heavy hit takes 1s off Shield Wall; the Wall stops the boss timer for its whole length
+  bastion: { cdPerHeavy: 1 }, // each heavy hit takes 1s off Shield Wall
   oathsworn: {},                              // [C] tanks +80% HP, +40 armour
   twinSpark: { chance: 0.25 },                // a tap has a 25% chance to plant 2 Embers
   slowBurn: { perEmber: 0.05 },               // each Ember burns for 0.05x hero attack per second
@@ -16275,7 +16267,7 @@ const STAR_MAPS = {
         ['Deep Grit', 'Grit cap +2.', { t: { guardMax: 2 } }, 1.02],
         ['Brace', 'Shield Wall lasts 1s longer.', { t: { wallT: 1 } }, 1.008],
         ['Ready Shield', 'Shield Wall cooldown -4%.', { m: { abilityCd: 0.96 } }, 1.006],
-        ['Hold the Line', 'Shield Wall stops the boss timer 2s longer.', { t: { wallPause: 2 } }, 1.01, 'You take 10% less damage while you hold 5 or more Grit.'],
+        ['Hold the Line', 'Shield Wall lasts 1s longer.', { t: { wallT: 1 } }, 1.01, 'You take 10% less damage while you hold 5 or more Grit.'],
         ['Lasting Grit II', 'Grit lasts 2s longer.', { t: { guardT: 2 } }, 1.004],
         ['Unbroken', 'Your Grit never falls off while you land a heavy hit at least every 3s. Grit cap +5, but each Grit gives 1% less damage.', { ks: 'unbroken', t: { guardMax: 5, guard: -0.01 } }, 1.03, 'Each Grit also gives 2 armour.']
       ]],
@@ -16285,9 +16277,9 @@ const STAR_MAPS = {
         ['Crushing Blow', 'Every 5th heavy hit deals triple damage.', { ks: 'crush' }, 1.02],
         starCd('Hard Hits', 0.12, 1.009),
         ['Heavy Arm II', 'Attack +5%.', { m: { tap: 1.05 } }, 1.006],
-        ['Bash', 'Heavy hits on a boss add 0.2s to its timer, up to 6s a fight.', { live: 'bash' }, 1.01, 'Heavy hits stagger for 0.3s.'],
+        ['Bash', 'You deal 6% more damage to bosses.', { live: 'bash' }, 1.01, 'Heavy hits stagger for 0.3s.'],
         ['Edge II', '+1.5% damage.', { m: { dmg: 1.015 } }, 1.015],
-        ['Challenger', 'Your Attack deals +20%, and each heavy hit on a boss adds 0.3s to its timer, up to 10s a fight (instead of Bash).', { ks: 'challenger', live: 'challenger', m: { tap: 1.2 } }, 1.03, 'Your Attack draws every foe for 2s, and you take 20% less damage while it does.']
+        ['Challenger', 'Your Attack deals +20%, and you deal 10% more damage to bosses (instead of Bash).', { ks: 'challenger', live: 'challenger', m: { tap: 1.2 } }, 1.03, 'Your Attack draws every foe for 2s, and you take 20% less damage while it does.']
       ]],
       ['Oath', [
         ['Comrades', 'You deal +2% damage.', { m: { dmg: 1.02 } }, 1.015],
@@ -16300,7 +16292,7 @@ const STAR_MAPS = {
         ['Oathsworn', 'You deal 10% more damage.', { m: { dmg: 1.1 } }, 1.035]
       ]]
     ],
-    crown: ['Lantern Bastion', "Every heavy hit takes 1s off Shield Wall's cooldown, and Shield Wall stops the boss timer for its whole length.", { ks: 'bastion' }, 1.05, "Shield Wall also blocks the boss's next heavy hit on anyone."]
+    crown: ['Lantern Bastion', "Every heavy hit takes 1s off Shield Wall's cooldown.", { ks: 'bastion' }, 1.05, "Shield Wall also blocks the boss's next heavy hit on anyone."]
   },
   mage: {
     name: 'Lanternmage', hearth: 'First Spark', color: '#8A4FC9',
@@ -16713,7 +16705,7 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
   for (const id of KS_IDS) addBonus('ks:' + id, () => starEffects().ks[id] ? 1 : 0);
 
   // ---- live effects (no combat change needed) ----
-  let clock = 0, glowUntil = -1, bossRef = null, bossAdded = 0;
+  let clock = 0, glowUntil = -1;
   const heroOnly = () => {
     const e = starEffects();
     let k = 1;
@@ -16722,18 +16714,12 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
     return k;
   };
   const onBoss = () => typeof mob !== 'undefined' && mob && mob.boss && !mob.dead && target() === 'mob';
-  addModifier('dmg', () => { const e = starEffects(); let m = heroOnly(); if (e.live.stalker && onBoss()) m *= 1.06; return m; });
+  addModifier('dmg', () => { const e = starEffects(); let m = heroOnly(); if (e.live.stalker && onBoss()) m *= 1.06;
+    if (onBoss()) m *= e.live.challenger ? 1.1 : e.live.bash ? 1.06 : 1;   // Bash / Challenger (were boss-timer stars)
+    return m; });
   addModifier('uniqueChance', () => starEffects().live.stalker && typeof mob !== 'undefined' && mob && mob.boss && mob.markUntil ? 1.1 : 1);
   onTick(dt => { if (initFor !== S) ensure(); clock += dt; });
   on('ability', ({ cls }) => { if (cls === 'lanternmage' && starEffects().live.afterglow) glowUntil = clock + 4; });
-  on('classTap', ({ cls, kind }) => {
-    if (cls !== 'warden' || kind !== 'heavy') return;
-    const e = starEffects(), per = e.live.challenger ? 0.3 : e.live.bash ? 0.2 : 0, cap = e.live.challenger ? 10 : 6;
-    if (!per || typeof fightBoss === 'undefined' || !fightBoss || !onBoss()) return;
-    if (bossRef !== mob) { bossRef = mob; bossAdded = 0; }
-    const add = Math.min(per, cap - bossAdded); if (add <= 0) return;
-    bossAdded += add; bossTime += add;
-  });
 
   // ---- news: new points ----
   on('levelup', ({ L, quiet }) => {
@@ -18334,16 +18320,19 @@ let deeds, deedBonus, wearGet;
     const row = gRow(kind); row[t - 1] += num(n);
     if (glint) N().glint++;
   });
-  on('kill', ({ mob, ess }) => {
+  // First Try (was Just in Time, before the boss timer went, 2026-10-01): a new zone opened without losing to its boss
+  const bossFailed = new Set();
+  on('bossFail', ({ zone }) => bossFailed.add(zone));
+  on('zoneClear', ({ zone }) => { if (!inAway && DS().init && num(zone) >= T.oddZone && !bossFailed.has(zone)) grantSecret('s_close'); });   // from zone 10, like the other boss secrets
+  on('kill', ({ mob, ess, zone }) => {
     N().ess += num(ess);
     if (!mob || !mob.boss || inAway || !DS().init) return;
     // zone boss secrets (live play only)
-    if (typeof fightBoss !== 'undefined' && num(bossTime) < 1 && num(bossTime) >= 0) grantSecret('s_close');   // S6: under 1 s before the Enrage
     const U = safe(() => combatUnits(), null);
     // Untouched: a boss from zone 10 without one hit taken. Last Lamp Standing: your health fell under 10% during the fight (a boss kill heals you a little, so the lowest point counts).
-    if (S.zone >= T.oddZone && bossHurt === 0) grantSecret('s_bare');
+    if (num(zone) >= T.oddZone && bossHurt === 0) grantSecret('s_bare');   // the kill's zone (a boss win has already moved you on)
     const h = U && U[0];
-    if (S.zone >= T.oddZone && h && h.live && !h.down && bossLow < 0.1) grantSecret('s_alone');
+    if (num(zone) >= T.oddZone && h && h.live && !h.down && bossLow < 0.1) grantSecret('s_alone');
   });
   // Untouched (solo): hits the hero takes while a zone boss is up (the count resets when a boss spawns)
   let bossHurt = 0, bossLow = 1;
@@ -18746,7 +18735,7 @@ function partyCombatOn() { return !(COMBAT_TUNE && !COMBAT_TUNE.on) && !(S && S.
 var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrike, cbHeroUp, cbPush,
   cbUnitHp, cbHitUnit, cbHealUnit, cbShield, cbDamageFoe, cbTurnDamageFoe, cbTurnHitHero, cbUnitByKey, cbTaunt, cbStun, cbDebug,
   partyHoldEstimate, partyHolds, cbClock, cbArena, cbBossUp, cbBossReady, cbRestore,
-  cbPack, cbFoeAtk, cbEnrage, bossTimer;
+  cbPack, cbFoeAtk, bossTimer;
 
 {
   const T = {
@@ -18774,11 +18763,11 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     swing0: 0.6, swingR: 1.4, bornAct: 0.3, arriveGap: 0.15, elite2From: 3, elite2P: 0.1,
     // S6-A hit caps (combat-2 1.4): a share of the target's max HP after reductions, before shields
     caps: { tele: 0.35, boss: 0.15, pack: 0.1, swarm: 0.04, blast: 0.2 },
-    // S6-A the Enrage timer (combat-2 1.5, owner D1): zone elders 45 s, region bosses 60 s; at 0 the boss attacks
-    // enrageSpd faster and deals enrageDmg more each second; the fight fails enrageFail s later. bossLive: the
+    // bossT / regionBossT: no longer a timer (owner, 2026-10-01: no boss timer, no Enrage); the boss-ready estimate
+    // (cbBossReady) still asks whether you would kill it within this many seconds. bossLive: the
     // survival test for auto-challenge: the closed-form time to fall must reach bossLive x the kill time (spec 1.1;
     // S6 pick 0.7: the estimate ignores parries, Shield Wall and the 15 s Enrage window, and at 1.1 it walled Silas)
-    bossT: 45, regionBossT: 60, enrageSpd: 0.5, enrageDmg: 0.1, enrageFail: 15, bossLive: 0.7,
+    bossT: 45, regionBossT: 60, bossLive: 0.7,
     aoeOther: 0.5, lmSplash: 0.15,       // caster hits on the other foes; the Lanternmage's splash
     heroPow: 1.4,    // the hero's power = its damage / heroPow (a striker's 1.4 x power)
     // S2: the base classes' HP scale and armour are CLASS_DEFS (24-data-classes; Ranger 6 / 10, was 5 / 0)
@@ -18810,7 +18799,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     getUps: 0, stalls: 0,   // F5: members who got up mid-pack, packs given up (the soft-lock guard)
     tele: 0, parries: 0, dodges: 0, blocked: 0, hitByHeavy: 0, interrupts: 0, abilities: 0, bossTries: 0, bossWins: 0, pushes: 0, taken: 0,
     crits: 0, maxHit: 0, maxOver: 0, heroHits: 0,
-    partyOver: 0, capped: 0, enrages: 0 };   // S6-A: the biggest hit on a member as a share of its max HP (after caps), hits capped, Enrages   // AC2 (58-deeds reads these once a second and resets maxHit/maxOver)
+    partyOver: 0, capped: 0 };   // S6-A: the biggest hit on a member as a share of its max HP (after caps), hits capped   // AC2 (58-deeds reads these once a second and resets maxHit/maxOver)
   on('crit', () => { ST.crits++; });
 
   registerState('combat', { on: 1, back: 0, tip: 0 });
@@ -18933,7 +18922,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       key: t.key + cyc, type: t.key, rows: SPR[t.key], pal: shiftPal(t.pal, zoneHue(z)), boss: !!boss, hp, max: hp,
       name, gold, xp, hit: 0, dead: 0, born: 0,
       ti, row: b.row, ranged: !!b.ranged, armoured: !!b.armoured, atk: zoneAtk(z) * (boss ? T.bossAtk : b.atk * (atkX || 1)), spd: boss ? T.bossSpd : T.spd * b.spd,
-      swing: T.swing0 + Math.random() * T.swingR, th: new Float64Array(4), tgt: -1, forceT: 0, forceU: -1, sz: boss ? 'boss' : b.size || 'brute', enr: -1, tr: null, share: boss ? 1 : atkX || 1,
+      swing: T.swing0 + Math.random() * T.swingR, th: new Float64Array(4), tgt: -1, forceT: 0, forceU: -1, sz: boss ? 'boss' : b.size || 'brute', tr: null, share: boss ? 1 : atkX || 1,
       stunT: 0, slowT: 0, slowV: 0, knockT: 0, burnT: 0, burnDps: 0, markT: 0, focusT: 0, vulnT: 0, bx: 1, elite: false,
       bt: 0, b2: 0, diveT: 0, diveU: -1, diveX: 1, chanT: 0, hits: 0, again: false, first: 0, split: false, z, adds: false, gone: false,
       dt: b.dt || 'phys', chillT: 0, rootT: 0, rxT: 0, mkV: 0, stag: 0, ss: null, blight: false   // S1: hit type, statuses (59a)
@@ -19321,7 +19310,6 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (f.dead) { f.dead += dt; return; }
     f.born += dt; if (f.hit > 0) f.hit -= dt;
     if (f.born < T.bornAct) return;   // S6-A (2.4): a foe acts once it has fully arrived
-    if (f.enr >= 0) f.enr += dt;      // S6-A: seconds since the Enrage
     // (S1: Burn and every other damage over time tick in 59a stTick, once a second)
     if (emberBurn > 0 && f.embers > 0) { carry = false; cbDamageFoe(f, f.embers * emberBurn * dt, 0, 'burn'); carry = true; if (!alive(f)) return; }
     if (f.markT > 0) f.markT -= dt;
@@ -19335,7 +19323,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (typeof onEnemyTick === 'function' && onEnemyTick(f, dt)) return;   // 59b: behaviours, channels, boss mechanics
     if (typeof actBusy === 'function' && actBusy(f)) return;             // S6-B: winding up or casting (59g)
     if (f.knockT > 0) { f.knockT -= dt; return; }
-    f.swing -= dt * (1 - Math.max(f.slowT > 0 ? f.slowV : 0, f.chillT > 0 ? stSlow(f) : 0)) * (f.enr >= 0 ? 1 + T.enrageSpd : 1) * (f.spdX || 1);   // S1: Chill; S6: Enrage, traits (spdX)
+    f.swing -= dt * (1 - Math.max(f.slowT > 0 ? f.slowV : 0, f.chillT > 0 ? stSlow(f) : 0)) * (f.spdX || 1);   // S1: Chill; S6: Enrage, traits (spdX)
     const t = pickTarget(f);
     f.tgt = t;
     if (t >= 0) {
@@ -19347,12 +19335,11 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (typeof onFoeAttack === 'function' && onFoeAttack(f, U[t])) return;   // 59b: slams, dives
     cbHitUnit(U[t], cbFoeAtk(f) * (f.diveT > 0 ? f.diveX || 1 : 1), f.ranged ? 'ranged' : 'hit', f);
   }
-  // S6-A: a foe's attack now (the Enrage adds enrageDmg a second; 59i traits set atkX). 59g/59h hit with it.
-  cbFoeAtk = f => f.atk * (f.enr >= 0 ? 1 + T.enrageDmg * f.enr : 1) * (f.atkX || 1);
+  // S6-A: a foe's attack now (59i traits set atkX). 59g/59h hit with it.
+  cbFoeAtk = f => f.atk * (f.atkX || 1);
   // S6-A (1.5): 50-sim calls it when the boss timer runs out.
-  cbEnrage = () => { if (lead && lead.boss && alive(lead) && lead.enr < 0) { lead.enr = 0; ST.enrages++; emit('enrage', { foe: lead }); return true; } return false; };
-  // The boss timer for zone z: 45 s zone elders, 60 s region bosses (plus the Almanac's and stars' bossTime).
-  bossTimer = z => Math.max(5, (typeof isRegionBoss === 'function' && isRegionBoss(z) ? T.regionBossT : T.bossT) + bonus('bossTime'));
+  // The boss-ready estimate's window for zone z (no longer a fight timer): 45 s zone elders, 60 s region bosses.
+  bossTimer = z => typeof isRegionBoss === 'function' && isRegionBoss(z) ? T.regionBossT : T.bossT;
 
   // ---------------- damage to the party ----------------
   const HIT_EV = { key: '', amount: 0, kind: '', foe: null, blocked: false, shield: 0 };
@@ -19466,7 +19453,9 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (inArena) { WIPE_EV.to = z; emit('wipe', WIPE_EV); return; }   // 59c-deepwell-combat ends the run
     if (fightBoss) {
       fightBoss = false; failDps = totalDps();
-      toast('The zone boss beat you. Grow stronger and try again.', 'raid');
+      // one paying fight before each retry, so a hero who can't win yet still earns (the boss is back after it)
+      if (typeof ZONE_FIGHTS === 'number') S.kills = Math.min(S.kills, ZONE_FIGHTS - 1);
+      toast('The zone boss beat you. Win one more fight and it comes back.', 'raid');
       emit('bossFail', { zone: z, dps: failDps });
       WIPE_EV.to = z;
     } else {
@@ -21279,7 +21268,7 @@ var TRIAL_TUNE, TRIAL_ARENA, TRIAL_TPL, trialStart, trialEnd, trialLive, trialIn
 //   stagger actStag(f, pts, src) (fills the bar; the stat and the Warden's +30% apply), actHeavy(f, src) (a heavy hit:
 //           +5, at most 4 a second per unit); 59a and 59e keep adding to f.stag and the bar reads the difference
 //   loop    actTick(dt) (59-combat combatTick, once a frame)
-//   ui      cbState() -> one reused snapshot { tele, cast, stag, fin, phase, packN, ans, enrage, rxWin, elites }
+//   ui      cbState() -> one reused snapshot { tele, cast, stag, fin, phase, packN, ans, rxWin, elites }
 // Runtime fields on foes (never saved): sb (the bar), sbIdle, stgT (Staggered seconds left), stgN (Staggers this
 // fight), reelT (Reeling), cast { kind, id, name, left, dur } (a cast bar), keenT on units.
 // Events: parry { foe, by, active }, dodge { foe, perfect, active }, interrupt { foe, kind, by, active },
@@ -21700,7 +21689,7 @@ var ACT_TUNE, ACT_STATS, actWarn, actWarning, actBusy, actTap, actParry, actDodg
 
   // ---------------- the snapshot (7.2) ----------------
   const SNAP = { tele: { kind: '', left: 0, dur: 0, win: 0, perf: 0, foe: null, res: '', wait: 0, name: '' }, cast: { kind: '', left: 0, dur: 0, foe: null, name: '' },
-    stag: { v: 0, max: 0, on: false, left: 0 }, fin: { on: false, left: 0 }, phase: 0, packN: 0, ans: 0, enrage: false, rxWin: false, elites: [] };
+    stag: { v: 0, max: 0, on: false, left: 0 }, fin: { on: false, left: 0 }, phase: 0, packN: 0, ans: 0, rxWin: false, elites: [] };
   cbState = () => {
     const s = SNAP, t = s.tele, c = s.cast;
     t.kind = W.on ? W.kind : ''; t.left = W.left; t.dur = W.dur; t.win = W.win; t.dwin = W.dwin || 0; t.perf = W.perf; t.foe = W.on ? W.foe : null; t.res = W.res; t.wait = W.wait; t.name = W.name;
@@ -21716,7 +21705,7 @@ var ACT_TUNE, ACT_STATS, actWarn, actWarning, actBusy, actTap, actParry, actDodg
     s.phase = boss ? boss.ph || 1 : 0;
     s.packN = 0; s.elites.length = 0;
     for (const f of list) if (alive(f)) { s.packN++; if (f.elite && f.tr) for (const k of f.tr) s.elites.push(k); }
-    s.ans = bossFoe ? bossAns : 0; s.enrage = !!(boss && boss.enr >= 0);
+    s.ans = bossFoe ? bossAns : 0;
     s.rxWin = !!(focus && (focus.rxT > 0 || focus.stgT > 0));
     return s;
   };
@@ -21899,7 +21888,7 @@ var kitOf, kitStart, kitTick, KIT_STATS, KIT_FX;
         atk: f.atk / COMBAT_TUNE.bossAtk * b.atk * (b.size === 'swarm' ? 0.4 : 1), spd: COMBAT_TUNE.spd * b.spd, swing: 1 + Math.random(), th: new Float64Array(4), tgt: -1, forceT: 0, forceU: -1,
         stunT: 0, slowT: 0, slowV: 0, knockT: 0, burnT: 0, burnDps: 0, markT: 0, focusT: 0, vulnT: 0, bx: 1, elite: false,
         bt: 0, b2: 0, diveT: 0, diveU: -1, diveX: 1, chanT: 0, hits: 0, again: true, first: 0, z: f.z, adds: true, gone: false, split: false,
-        dt: b.dt || 'phys', chillT: 0, rootT: 0, rxT: 0, mkV: 0, stag: 0, ss: null, blight: false, sz: b.size || 'normal', enr: -1, tr: null, share: 1,
+        dt: b.dt || 'phys', chillT: 0, rootT: 0, rxT: 0, mkV: 0, stag: 0, ss: null, blight: false, sz: b.size || 'normal', tr: null, share: 1,
         deep: f.deep, floor: f.floor
       };
       for (let j = 0; j < 4; j++) a.th[j] = f.th[j] * 0.5;
@@ -24160,7 +24149,7 @@ let resize, animate, draw, stageStats, warmScene;
         for (; x < c.width; x++) { let hit = false; for (let y = 0; y < c.height; y++) if (d[(y * c.width + x) * 4 + 3] > 40) { hit = true; break; } if (hit) break; }
         e = x < c.width ? x : 0;
       } catch (er) { e = 0; }
-      leftEdges.set(f.c, e);
+      if (!f.c._pend) leftEdges.set(f.c, e);   // _pend: a pack frame still decoding (64j): measure again later
     }
     return e;
   }
@@ -24176,7 +24165,7 @@ let resize, animate, draw, stageStats, warmScene;
         for (; x >= 0; x--) { let hit = false; for (let y = 0; y < c.height; y++) if (d[(y * c.width + x) * 4 + 3] > 40) { hit = true; break; } if (hit) break; }
         e = x >= 0 ? x + 1 : c.width;
       } catch (er) { e = f.c.width; }
-      rightEdges.set(f.c, e);
+      if (!f.c._pend) rightEdges.set(f.c, e);
     }
     return e;
   }
@@ -24914,7 +24903,7 @@ let resize, animate, draw, stageStats, warmScene;
     if (!d) {
       d = document.createElement('canvas'); d.width = c.width; d.height = c.height;
       const g = d.getContext('2d'); g.drawImage(c, 0, 0); g.globalCompositeOperation = 'source-atop'; g.fillStyle = 'rgba(14,9,24,0.26)'; g.fillRect(0, 0, d.width, d.height);
-      dimmed.set(c, d);
+      if (!c._pend) dimmed.set(c, d);
     }
     return d;
   }
@@ -25394,7 +25383,7 @@ let resize, animate, draw, stageStats, warmScene;
         for (; y < c.height; y++) { let hit = false; for (let x = 0; x < w; x++) if (d[(y * w + x) * 4 + 3] > 40) { hit = true; break; } if (hit) break; }
         t = y < c.height ? y : 0;
       } catch (e) { t = 0; }
-      headTops.set(f.c, t);
+      if (!f.c._pend) headTops.set(f.c, t);
     }
     return t;
   }
@@ -29397,9 +29386,9 @@ const FOE_SEQ = {
     if (cache[key]) return cache[key];
     const P = FOE_ART[key], poses = {};
     for (const [id, [ax, ay, b64, x0]] of Object.entries(P.frames)) {
-      const c = document.createElement('canvas'); c.width = P.w; c.height = P.h;
+      const c = document.createElement('canvas'); c.width = P.w; c.height = P.h; c._pend = true;   // 62-stage measures it again once loaded
       const img = new Image();
-      img.onload = () => { const g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.clearRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0); };
+      img.onload = () => { const g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.clearRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0); c._pend = false; };
       img.src = 'data:image/png;base64,' + b64;
       poses[id] = { c, ox: ax, oy: ay, x0, lights: [], art: c };
     }
@@ -29407,6 +29396,8 @@ const FOE_SEQ = {
     return (cache[key] = { idle0: idle, idle1: idle, wind: poses['jab-wind-up'] || idle, strike: poses['jab-contact'] || idle,
       hit: poses.hurt || idle, poses, art: key });
   };
+  // decode every pack at boot, so a save that opens in a fight finds its foe's frames ready
+  if (typeof document !== 'undefined') for (const k in (typeof FOE_ART === 'object' ? FOE_ART : {})) foeArtFrames(k);
 }
 
 // ---- src/js/70-ui.js ----
@@ -30158,8 +30149,7 @@ function ui(force) {
       putText(H.mHp, `${fmt(Math.max(0, mob.hp))} / ${fmt(mob.max)}`);
       setHp(mob.hp / mob.max * 100);
       putStyle(H.mBar, 'background', mob.boss ? 'linear-gradient(90deg, #E0524F, #FF9E3D)' : 'var(--hp)');
-      putHidden(H.tWrap, !mob.boss);
-      if (mob.boss) putStyle(H.tBar, 'width', Math.max(0, bossTime / bossTimer(S.zone) * 100) + '%');   // S6-A: the Enrage timer
+      putHidden(H.tWrap, true);   // owner (2026-10-01): no boss timer
     }
   }
   putHidden(H.zStep, tg !== 'mob');
@@ -30380,7 +30370,7 @@ function uiFight() {
     putText(gq, 'Back to'); putText(gp, 'Fight'); putDisabled(gb, false);
   } else if (fightBoss) {
     putText(G.title, 'Boss fight underway');
-    putText(G.desc, bossTime > 0 ? `It enrages in ${Math.ceil(bossTime)} seconds. Hit it hard.` : 'It is enraged. Finish it now.');
+    putText(G.desc, `Beat it to move on to Zone ${S.zone + 1}. Take your time: there is no timer.`);
     putText(gq, 'Boss'); putText(gp, 'Fighting'); putDisabled(gb, true);
   } else {
     putText(G.title, bossReady() ? 'The zone boss is next' : `Fight ${S.kills + 1} of ${ZONE_FIGHTS}, then the zone boss`);
@@ -31962,7 +31952,7 @@ let showAwayReport;
     if (g) { setTab(g[0]); try { setView(g[0], g[1]); } catch (e) {} return; }
     // fights: back to the fight, at the bounty's zone when it names one you have reached
     if (S.activity !== 'fight') setActivity('fight');
-    if (b.z && b.z <= S.maxZone && (b.k === 'hunt' || (b.k === 'kill' && S.zone < b.z))) setZone(b.k === 'kill' ? Math.max(S.zone, b.z) : b.z);
+    if (b.z && b.z <= S.maxZone && (b.k === 'hunt' || (b.k === 'kill' && S.zone < b.z))) { const z = b.k === 'kill' ? Math.max(S.zone, b.z) : b.z; if (z !== S.zone) setZone(z); }   // already there: keep your fight count
     if (typeof closeMenu === 'function') closeMenu();
     ui(true);
   };
@@ -33025,7 +33015,7 @@ var classEvoUI;
     }
     if (t.zone && t.zone <= S.maxZone) {
       const g = btn('mini go cx-dgo', `Go to zone ${t.zone}`);
-      g.addEventListener('click', () => { safe(() => { setActivity('fight'); setZone(t.zone); }, null); if (api) api.close(); ui(true); });
+      g.addEventListener('click', () => { safe(() => { setActivity('fight'); if (S.zone !== t.zone) setZone(t.zone); }, null); if (api) api.close(); ui(true); });
       d.append(g);
     }
     a.foot.append(d);
@@ -33197,10 +33187,8 @@ var classEvoUI;
       const c = st.cast;
       putHidden(sCast, !c.kind || !c.foe || !c.foe.boss);
       if (c.kind) { putText(sCastN, c.name || ''); putStyle(sCastF, 'transform', `scaleX(${c.dur ? Math.max(0, Math.min(1, c.left / c.dur)).toFixed(3) : 0})`); putClass(sCast, 'cb-cast ' + (c.kind === 'hard' ? 'hard' : 'soft')); }
-      putText(sEnr, st.enrage ? 'Enraged' : `Enrage in ${mmss(bossTime)}`);
-      putClass(sEnr, st.enrage ? 'cb-enr on' : 'cb-enr');
       putText(sPips, pips(st.ans)); sPips.title = 'Your own parries, dodges and interrupts: 3 earn +50% XP.';
-      putHidden(sPips, false); putHidden(sEnr, false); putText(sPack, '');
+      putHidden(sPips, false); putHidden(sEnr, true); putText(sPack, '');   // no Enrage timer (owner, 2026-10-01)
     } else if (packShow) {
       putHidden(sStag, true); putHidden(sCast, true); putHidden(sEnr, true); putHidden(sPips, true);
       putText(sPack, `${st.packN} of ${cbPack().n}`);
@@ -36142,7 +36130,7 @@ let navUI = null;
     ability: () => onCtrl() && target() === 'mob' ? { node: sbtn('ab0'), side: 'up', text: `${abName()} is ready. Press it. (Hold an ability slot to change what it holds.)` } : null,
     dodge: () => onCtrl() && target() === 'mob' ? { node: sbtn('dodge'), side: 'up', text: 'A foe winds up a heavy hit (the red ring). Press Dodge to step out of the way.' } : null,
     parry: () => onCtrl() && target() === 'mob' ? { node: sbtn('parry'), side: 'up', text: 'Another heavy hit. Press Parry just before it lands: no damage, the foe staggers and you counter.' } : null,
-    boss: () => target() !== 'mob' || !mob || !mob.boss ? null : onGame() ? { node: $('stage'), at: [0.72, 0.62], side: 'up', text: 'The zone boss! Beat it before the timer runs out. Its red rings are your cue: Dodge, or Parry at the last moment.' }
+    boss: () => target() !== 'mob' || !mob || !mob.boss ? null : onGame() ? { node: $('stage'), at: [0.72, 0.62], side: 'up', text: 'The zone boss! Its red rings are your cue: Dodge, or Parry at the last moment.' }
       : isWide() ? { node: q(`.tab[data-tab="${S.tab}"]`), text: 'The zone boss is here! Close this menu to watch the fight.' } : null,   // UX-L1: a landscape menu
     gather: () => {
       if (!onCtrl()) return null;
@@ -38517,10 +38505,11 @@ var turnBarInfo = () => null;
     if (!f) return '';
     const type = String(f.key || '').replace(/\d+$/, ''), k = type + '|' + (typeof zoneHue === 'function' ? zoneHue(S.zone) : 0);
     if (foeFaces.has(k)) return foeFaces.get(k);
-    let url = '';
+    let url = '', pend = false;
     try {
       const set = enemyFrames(type, { elder: false, hue: typeof zoneHue === 'function' ? zoneHue(S.zone) : 0 });
       const fr = set && set.idle0, src = fr && (fr.art || fr);
+      pend = !!(src && src._pend);   // a pack frame still decoding (64j): try again next fight
       if (src && src.width) {
         const g0 = src.getContext('2d'), d = g0.getImageData(0, 0, src.width, src.height).data;
         let x0 = src.width, y0 = src.height, x1 = -1, y1 = -1;
@@ -38532,7 +38521,7 @@ var turnBarInfo = () => null;
         }
       }
     } catch (e) { url = ''; }
-    foeFaces.set(k, url);
+    if (!pend) foeFaces.set(k, url);
     return url;
   };
   const foeNow = () => { try { return combatFoes().find(x => x && !x.dead && x.hp > 0) || null; } catch (e) { return null; } };

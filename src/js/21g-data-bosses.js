@@ -214,9 +214,8 @@ const BOSS_COPY = {
     activeKill: 'Played it well: +50% XP.'
   },
   roar: 'It stops listening.',
-  enrage: 'The boss is enraged. Finish it fast.',
   fenmother: { intro: 'The fog thickens. Something old is listening.', fall: 'The marsh lets out its breath.' },
   deepTip: 'Parry, dodge and interrupt to earn Oil. Beat a Deep Elder with your own answers and your next draft shows four cards.',
-  banner: { heavy: 'PARRY', zone: 'DODGE', slam: 'DODGE', sig: 'INTERRUPT', heal: 'INTERRUPT', summon: 'INTERRUPT', line: 'BRACE', hard: '', dive: '', enrage: 'ENRAGE', fin: 'FINISHER' },
+  banner: { heavy: 'PARRY', zone: 'DODGE', slam: 'DODGE', sig: 'INTERRUPT', heal: 'INTERRUPT', summon: 'INTERRUPT', line: 'BRACE', hard: '', dive: '', fin: 'FINISHER' },
   aria: { heavy: 'Parry now', zone: 'Dodge', slam: 'Dodge', sig: 'Interrupt', heal: 'Interrupt', summon: 'Interrupt', fin: 'Finisher ready' }
 };

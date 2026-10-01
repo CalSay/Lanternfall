@@ -21,7 +21,7 @@
     if (g) { setTab(g[0]); try { setView(g[0], g[1]); } catch (e) {} return; }
     // fights: back to the fight, at the bounty's zone when it names one you have reached
     if (S.activity !== 'fight') setActivity('fight');
-    if (b.z && b.z <= S.maxZone && (b.k === 'hunt' || (b.k === 'kill' && S.zone < b.z))) setZone(b.k === 'kill' ? Math.max(S.zone, b.z) : b.z);
+    if (b.z && b.z <= S.maxZone && (b.k === 'hunt' || (b.k === 'kill' && S.zone < b.z))) { const z = b.k === 'kill' ? Math.max(S.zone, b.z) : b.z; if (z !== S.zone) setZone(z); }   // already there: keep your fight count
     if (typeof closeMenu === 'function') closeMenu();
     ui(true);
   };
