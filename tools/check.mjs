@@ -751,9 +751,10 @@ if (section('balance')) try {
     for (let i = 0; i < 40; i++) g.fn.tick(0.1);
     const best = E(`(() => { let z = farmableZone(${stuck}, totalDps() / mod('foeHp')); while (z > 1 && !partyHolds(z)) z--; return z; })()`);
     const fell = msgs.filter(m => /fell back to Zone/.test(m));
-    // (the hold estimate reads the party's buffs of the moment, so the zone may sit one below the one computed after)
+    // (the hold estimate reads the party's buffs of the moment; the first check after a load runs before the solo damage
+    // bonuses settle, so with x2.5 crits (owner, 2026-10-01) the zone may sit up to two below the one computed after)
     const at = E('S.zone');
-    assert(secs > E('PACE.farmSecs') && at <= best && at >= best - 1 && best < stuck && fell.length >= 1 && fell.every(m => /^You fell back to Zone \d+ to keep earning\.$/.test(m)) && fell[fell.length - 1] === `You fell back to Zone ${at} to keep earning.`, `old save stuck at zone ${stuck} (a foe takes ${secs.toFixed(0)}s) falls back to zone ${at} (holds up to ${best}); solo says "You fell back" (${fell.length} steps: a late fixture with a level-1 hero)`);
+    assert(secs > E('PACE.farmSecs') && at <= best && at >= best - 2 && best < stuck && fell.length >= 1 && fell.every(m => /^You fell back to Zone \d+ to keep earning\.$/.test(m)) && fell[fell.length - 1] === `You fell back to Zone ${at} to keep earning.`, `old save stuck at zone ${stuck} (a foe takes ${secs.toFixed(0)}s) falls back to zone ${at} (holds up to ${best}); solo says "You fell back" (${fell.length} steps: a late fixture with a level-1 hero)`);
     for (let i = 0; i < 100; i++) g.fn.tick(0.1);
     assert(msgs.filter(m => /fell back/.test(m)).length === fell.length && E('S.maxZone') >= stuck && E('S.pace.fell') === stuck, 'no second toast; the max zone and the save are untouched (fell back from is remembered)');
     const g2 = loadCore({ seed: 23, storage: memoryStorage({ [KEY]: JSON.stringify(old) }) }), E3 = s => g2.eval(s);
@@ -770,6 +771,13 @@ if (section('balance')) try {
     const g3 = loadCore({ seed: 24 }); let n = 0; g3.fn.on('toast', t => { if (/fell back/.test(t.msg || t)) n++; });
     g3.eval('soloPick("tobin")'); for (let i = 0; i < 1200; i++) g3.fn.tick(0.1);
     assert(n === 0 && !g3.errors.length && !g.errors.length && !g2.errors.length, 'a new game never falls back; no errors');
+    { // owner (2026-10-01, "pinging me around zones"): after a wipe the hero does not walk straight back into that zone
+      const e = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-early.json'), 'utf8')); e.activity = 'fight'; e.auto = true;
+      const p = loadCore({ seed: 5, storage: memoryStorage({ [KEY]: JSON.stringify(e) }) });
+      let last = p.eval('S.zone'), downs = 0;
+      for (let i = 0; i < 30 * 600; i++) { p.fn.tick(0.1); if (i % 10 === 0) { const z = p.eval('S.zone'); if (z < last) downs++; last = z; } }
+      assert(downs <= 2, `no zone ping-pong: an early save auto-fighting for 30 min falls back ${downs} time(s) (was every 1-2 min)`);
+    }
   }
   // Item 5: the Next Up craft goal names the class kind and opens its recipe.
   {

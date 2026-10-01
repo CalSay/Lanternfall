@@ -102,7 +102,9 @@ const aps = () => trainAps();
 // critBase: the hero's flat crit chance before multipliers (S2: bonus('critBase') carries the class's own, the Ranger's +7%).
 const critBase = () => 0.08 + bonus('critBase') + gear().crit / 100;
 const critChance = () => Math.min(0.75, critBase() * mod('crit'));
-const critMult = () => (4 + gear().critMult) * mod('critDmg');
+// base crit x2.5 (owner, 2026-10-01; was x4)
+const CRIT_BASE = 2.5;
+const critMult = () => (CRIT_BASE + gear().critMult) * mod('critDmg');
 const tapMult = () => gear().tap * mod('tap');
 // nonCrit (Almanac Dares) scales non-crit hits; at 1 the original expression is kept so old saves' dps stays bit-identical.
 const heroDps = () => { const nc = mod('nonCrit'), cc = critChance(); return heroAtk() * aps() * (nc === 1 ? 1 + cc * (critMult() - 1) : nc * (1 - cc) + cc * critMult()); };

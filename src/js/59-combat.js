@@ -767,7 +767,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     } else {
       const to = Math.max(1, z - 1);
       if (to < z) { S.combat.back = Math.max(S.combat.back || 0, z); S.zone = to; }
-      backWipes = backZone === z ? backWipes + 1 : 1; backZone = z; backAt = clock;
+      backWipes = backZone === z ? backWipes + 1 : 1; backZone = z; backAt = clock; backDps = totalDps();
       WIPE_EV.to = to;
       toast(stall ? "You couldn't finish the pack and fell back a zone." : 'You fell back a zone to recover.', 'raid', null, 'normal');
     }
@@ -788,7 +788,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (clear) { for (const f of foes) { if (typeof onFoeDown === 'function') onFoeDown(f); f.gone = true; f.hp = 0; f.dead = f.dead || 0.001; } foes = []; lead = null; inArena = false; }
     for (let i = 0; i < nU; i++) { const u = U[i], was = u.down; u.down = false; u.hp = u.maxHp; u.sh = 0; u.poisonT = 0; u.lifeline = false; stUnitClear(u); if (was) { UP_EV.key = u.key; UP_EV.hp = u.hp; emit('unitUp', UP_EV); } }
   };
-  let backZone = 0, backAt = 0, backWipes = 0;
+  let backZone = 0, backAt = 0, backWipes = 0, backDps = 0;
   // After a wipe the party climbs back one zone at a time, up to where it fell, once it can hold the next zone.
   cbPush = () => {
     const back = S.combat && S.combat.back || 0;
@@ -796,7 +796,14 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (S.zone >= Math.min(back, S.maxZone)) { S.combat.back = 0; return 0; }
     // BAL2: the estimate is careful, so the party also tries again after pushRetry s (doubling with each
     // wipe at that zone, up to 8x): a zone it can hold live is never walled by a pessimistic estimate.
-    if (!partyHolds(S.zone + 1) && !(S.zone + 1 === backZone && clock - backAt >= T.pushRetry * Math.min(8, Math.pow(2, backWipes - 1)))) return 0;
+    // Owner (2026-10-01: "pinging me around zones"): the zone you just wiped in waits. The estimate said you could hold
+    // it before the wipe too, so it alone never sends you back in: wait out pushRetry (doubling with each wipe there, up to
+    // 8x), or come back clearly stronger (+20% damage since the wipe) and held by the estimate.
+    const nx = S.zone + 1;
+    if (nx === backZone) {
+      const waited = clock - backAt >= T.pushRetry * Math.min(8, Math.pow(2, backWipes - 1));
+      if (!waited && !(totalDps() >= backDps * 1.2 && partyHolds(nx))) return 0;
+    } else if (!partyHolds(nx)) return 0;
     ST.pushes++;
     setZone(S.zone + 1);
     if (S.zone >= Math.min(back, S.maxZone)) S.combat.back = 0;
