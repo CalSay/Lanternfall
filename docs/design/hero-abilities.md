@@ -230,11 +230,19 @@ Today's turn engine (`59k-turn.js`) knows four cooldown keys and a handful of ef
 
 None of this needs new UI beyond the picker and status icons. Real-time mode reads the same table (turns x 2 s).
 
-## 9. Questions for the owner
+## 9. Owner answers (2026-10-01)
 
-1. **6/8:** is this 6 shared + 8 signature = 14 per hero? (This draft assumes so.)
-2. **Equip 3 or 4?** Three keeps the 2 x 3 bar; with 14 abilities, four slots (2 x 4) gives builds more room.
-3. **Wren's "focus" becomes Aim**, since gear Focus is now the cooldown stat. OK?
-4. **Subclasses:** the Proving opens subclasses "each with new abilities" (`solo-hero.md`). Does tier 5 here count as that,
-   or do subclasses add more abilities on top of the 14? (Each extra ability is more art.)
-5. **Speed on gear:** turn order needs a Speed line on gear (there is none today). Add it?
+1. **6 shared + 8 signature = 14 per hero.** Confirmed.
+2. **Equip 3 for now.** A 4th slot comes with a **bag button**: spend a turn to drink a potion (heal) or eat food (a buff).
+   Nothing for that exists yet (no potions or food in the game); it is a later task.
+3. **Wren's resource is Aim.** Confirmed.
+4. **Subclasses change the signature abilities: "it's like a new class."** Ascending at the Proving into a subclass
+   (Wren: Venomstalker or Trapper; Tobin: Reaver or Warden; Pip: Warlock or Lightkeeper) brings that subclass's own
+   signature set. The 6 shared abilities stay. So each hero has a base set of 8 (sections 6.1-6.3) plus one set per
+   subclass, still to design. Art note: a subclass set can reuse the hero's pose families (section 7) where it fits,
+   so a new class need not mean all-new poses.
+5. **Speed sets how often you act, not just who goes first** (Expedition 33 style). The turn engine moves from strict
+   alternation to a **timeline**: each side's turns come round at a rate set by its Speed, so a faster side sometimes
+   acts twice before the other acts once. Speed buffs and slows (Lunge, Pinning Shot, Chill) matter all fight. Speed
+   (code: haste/initiative) gets a gear line. Cooldowns still count the hero's own turns. This is a turn-engine change
+   (section 8) and needs its own balance pass.
