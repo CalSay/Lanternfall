@@ -26,7 +26,9 @@ Replaces the 7-areas-x-5-passes cycle (Mossy Hollow I-V). Each area is played **
 | Region Bosses | | 1 | 5 |
 | **Total** | 6 | **43** | **215** |
 
-Shadowborn Captains reuse their monster's art (recolour plus an extra move), so they add no new designs.
+Shadowborn Captains share their monster's design and art pack (a recolour plus an extra move), so they add no new
+species. The extra move can have its own new poses in that same pack. Poses follow the moves: the roster is not limited
+to existing frames.
 
 ## The seventh area in the Pale Reach and the Gloamvale
 
@@ -37,6 +39,11 @@ zones and its own Area Boss, before the separate Region Boss:
 - Gloamvale: **the Heart of the Gloamvale** is area 7; the Voice is the Region Boss after it.
 
 No new places are invented.
+
+## The roster
+
+Codex's final roster (`enemies-c22-roster.md`, cards in `enemies-c22-*-final.md`) fills this structure: all 215
+enemies plus 175 named Captains. It is a review proposal; the pose manifest is the next design stage.
 
 ## Still open
 
