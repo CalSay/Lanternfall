@@ -101,6 +101,36 @@
           "body": "Pull tool clear from wall before reload; no ground slam."
         }
       ]
+    },
+    "spear": {
+      "resources": [
+        "hunting"
+      ],
+      "direction": "horizontal forward thrust, never chopping or swinging",
+      "sourceBranch": "origin/codex/c24-hunting",
+      "sourceCommit": "dd56169",
+      "sourceSheet": "references/hunting-motion/hero-spear-thrusts-v2.png",
+      "coverage": {
+        "heroes": [
+          "wren",
+          "tobin",
+          "pip"
+        ],
+        "phases": [
+          "retracted-ready",
+          "forward-thrust",
+          "horizontal-recovery"
+        ],
+        "frames": 9
+      },
+      "approvalStatus": "provenance-conflict-not-final-approved",
+      "productionNeeds": [
+        "Match unchanged original combat style",
+        "Separate body, front hand and spear",
+        "224x192 canvas and consistent ground registration",
+        "Grip and tip anchors",
+        "Use existing directional thrust mechanics rather than woodcut gesture"
+      ]
     }
   },
   "excludedMappings": [
