@@ -93,7 +93,7 @@ let craftUI = null;
   }
 
   // ---------------- UI state (memory only) ----------------
-  const st8 = { st: null, tier: {}, filt: 'you', mw: null, role: {}, sort: 'power', bfilt: 'all', pick: '', focus: null, fresh: new Set(), tm: { fam: 'ore', t: 1 } };
+  const st8 = { st: null, tier: {}, filt: 'you', mw: null, role: {}, sort: 'power', bfilt: 'spare', pick: '', focus: null, fresh: new Set(), tm: { fam: 'ore', t: 1 } };
   const openTier = st => {
     return skillTopTier(skillOfSt(st));
   };
@@ -569,6 +569,10 @@ let craftUI = null;
       if (st8.bfilt === 'worn') list = list.filter(i => w.has(i.id));
       list.sort(SORTS[st8.sort]);
       bag.grid.textContent = '';
+      if (!list.length && S.items.length && st8.bfilt !== 'all') {
+        const e = el('p', 'note cf-bagnone', st8.bfilt === 'spare' ? 'No spare gear. Everything you own is worn. Tap All to see it.' : 'Nothing worn yet.');
+        bag.grid.append(e);
+      }
       for (const it of list) {
         const b = el('button', 'ic cf-tile f-' + frameOf(it) + (st8.fresh.has(it.id) ? ' fresh' : '')); b.type = 'button';
         b.append(img(itemIc(it)));

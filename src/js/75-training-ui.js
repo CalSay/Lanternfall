@@ -64,8 +64,9 @@ var trainCard = null;
       const i = trainInfo(r.mv);
       putText(r.own, `Lv ${i.lv}/${i.cap}`);
       putText(r.desc, nextTxt(i));
-      putText(r.ms, i.max ? capWhy(i) : i.ms || '');
-      putHidden(r.ms, !(i.max || i.ms));
+      // every move shares one cap, said once in the head line (menu audit #17: it repeated on each maxed row)
+      putText(r.ms, i.max ? '' : i.ms || '');
+      putHidden(r.ms, i.max || !i.ms);
       putText(r.qty, qtyTxt(i, S.amt));
       setPrice(r.btn, i.max ? Infinity : i.plan.cost);
       putDisabled(r.btn, i.max || S.gold < i.plan.cost);

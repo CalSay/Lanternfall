@@ -4864,7 +4864,7 @@ if (section('training (W2-A)')) try {
   assert(E('typeof buyHero === "undefined" && typeof hireComp === "undefined"'), 'Blade, Swiftness and Precision are gone (buyHero and hireComp are deleted)');
 
   // costs: base x r^n up to the bend, x r2 past it
-  const cost = (k, n) => PR[k].base * Math.pow(PR.r, Math.min(n, PR.bend)) * Math.pow(PR.r2, Math.max(0, Math.min(n, PR.bend2) - PR.bend)) * Math.pow(PR.r3, Math.max(0, n - PR.bend2));
+  const cost = (k, n) => Math.ceil(PR[k].base * Math.pow(PR.r, Math.min(n, PR.bend)) * Math.pow(PR.r2, Math.max(0, Math.min(n, PR.bend2) - PR.bend)) * Math.pow(PR.r3, Math.max(0, n - PR.bend2)));   // whole gold (menu audit #17)
   const cBad = [];
   for (const [mv, k] of [['atk', 'atk'], ['echo', 'ab'], ['parry', 'parry'], ['dodge', 'dodge']]) for (const n of [0, 1, 7, 19, 20, 21, 35, 39, 40, 41, 60, 79]) if (!near(E(`trainCost("${mv}", ${n})`), cost(k, n))) cBad.push(`${mv} ${n}`);
   assert(!cBad.length && E('trainCost("atk", 0)') === 6, `prices: base x${PR.r} a level to Lv ${PR.bend}, x${PR.r2} to Lv ${PR.bend2}, x${PR.r3} past it (Attack Lv 1 costs 6, as Blade's did)` + (cBad.length ? ': ' + cBad.join(', ') : ''));

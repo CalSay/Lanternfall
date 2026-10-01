@@ -10,7 +10,7 @@
 //   - Attack: the hit (atkCurve: x1.7 every 5th level). Ability: its power ((4 + 3 x level) x1.55 every 5th level) and
 //     a milestone every 5th level (SOLO_TUNE.train.ms: a shorter cooldown, a longer effect, one more foe). Parry: +10%
 //     counter damage a level. Dodge: a shorter cooldown. Timing windows never grow from gold.
-//   - Price of level n+1 = ECON.train[kind].base x r a level to bend (20), r2 to bend2 (40), r3 past it; x mod('trainCost').
+//   - Price of level n+1 = ECON.train[kind].base x r a level to bend (20), r2 to bend2 (40), r3 past it; x mod('trainCost'), rounded up to whole gold.
 //
 // API (function declarations: 40-rules and 59j call them at run time):
 //   trainMoves(k?) -> ['atk', ...ability ids, 'parry', 'dodge']   k: a hero key (default: the one playing)
@@ -59,7 +59,8 @@ function trainCap(k) {
 // The price of level n + 1 (n = the level now); mod('trainCost') is a hook for discounts (none yet).
 function trainCost(mv, n) {
   const E = ECON.train, b = E[trainKind(mv)].base;
-  return b * Math.pow(E.r, Math.min(n, E.bend)) * Math.pow(E.r2, Math.max(0, Math.min(n, E.bend2) - E.bend)) * Math.pow(E.r3, Math.max(0, n - E.bend2)) * mod('trainCost');
+  // whole gold only (menu audit #17: early prices showed as 9.6)
+  return Math.ceil(b * Math.pow(E.r, Math.min(n, E.bend)) * Math.pow(E.r2, Math.max(0, Math.min(n, E.bend2) - E.bend)) * Math.pow(E.r3, Math.max(0, n - E.bend2)) * mod('trainCost'));
 }
 // plan() for Training: amt '1' | '10' | 'max' (default: the player's x1 / x10 / Max). 'max' is what the gold buys (at
 // least 1, so the button shows the next price). Never past the cap. { n: 0, cost: Infinity } at the cap.

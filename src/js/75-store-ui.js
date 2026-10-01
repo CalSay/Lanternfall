@@ -64,7 +64,7 @@ function storeSalvageNote(preview, t) {
     V.up = btn('mini sh-up', 'Upgrade ›');
     V.up.addEventListener('click', () => setTab('world', '#camp-b-store'));
     card.append(tx, V.up);
-    // filter chips (one row, sideways scroll, no view swipe)
+    // filter chips (wrap to a second row when narrow; no view swipe)
     const chips = el('div', 'sh-chips'); chips.dataset.noswipe = '';
     for (const [id, label] of FILTERS) {
       const b = btn('sh-fchip', label); b.setAttribute('aria-pressed', String(id === filter));
