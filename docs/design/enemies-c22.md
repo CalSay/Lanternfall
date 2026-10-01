@@ -21,6 +21,10 @@ Read with `hero-abilities.md` §2a (the binding combat rules) and `e33-reference
    gets its own boss.
 7. **The Voice is one big fight in phases**, not five appearances.
 8. **Hunting beasts for hide grades 4-5:** the owner and Codex have the list; it needs art.
+9. **World structure** (`world-structure.md`): 5 regions x 7 areas x 5 zones, each area played once. **Each zone has
+   its own monster**, ending in a **Shadowborn Captain** (an enhanced version of that monster). Each area ends in an
+   **Area Boss** (Champion of the Darkness), each region in a **Region Boss** (Elder of Darkness). **43 unique enemies
+   per region, 215 in all.** This replaces the per-area pools of 4 in §4.2.
 
 ## 1. What the owner asked for
 
