@@ -37,9 +37,8 @@ turn. Stun consumes the affected actor's turn, preserving alternation.
 Set a used action's cooldown to C. At each subsequent hero-turn start, subtract
 one from every hero cooldown, floored at zero, before action selection. C=1 is
 ready next hero turn; C=3 skips two opportunities. Waiting, animation frames,
-counters and intro cards never decrement cooldowns. [Claude confirmed](https://github.com/CalSay/Lanternfall/issues/21#issuecomment-5919569790)
-that remaining cooldowns carry across successive normal foes for the same hero and
-zone, resetting on hero change, scope exit or defeat. Runtime bases:
+counters and intro cards never decrement cooldowns. **Cooldowns reset every fight** (owner, 2026-10-01, replacing the earlier carry rule): each
+foe starts with every action ready, in live play and in the sampled offline rate. Runtime bases:
 
 | Action | Turns |
 |---|---:|

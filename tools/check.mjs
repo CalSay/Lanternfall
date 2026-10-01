@@ -6959,15 +6959,15 @@ if (section('C20 turn combat (core)')) try {
   for (let i = 0; i < 5; i++) g.fn.tick(0.1);
   assert(E('turnCombatSnapshot().phase==="hero" && turnCombatSnapshot().cooldowns.echo===3'), 'C20: timed parry refunds one, then the next hero turn decrements one');
   const carryCore=loadCore({seed:2030}), C=x=>carryCore.eval(x);
-  C('TURN_TUNE.on=1;soloPick("wren");soloSetAuto(false);S.auto=false;spawn();combatFoes()[0].hp=1');
+  C('TURN_TUNE.on=1;soloPick("wren");soloSetAuto(false);S.auto=false;spawn();combatFoes()[0].hp=combatFoes()[0].max=1e6');
   for(let i=0;i<25;i++) carryCore.fn.tick(.05);
-  assert(C('turnCombatSnapshot().phase==="hero" && soloAbility({slot:0}) && TURN_CARRY_CDS.echo===5'),
-    'C20: a winning ability retains its turn cooldown for the next normal foe');
-  for(let i=0;i<40;i++) carryCore.fn.tick(.05);
-  assert(C('turnCombatSnapshot().phase==="hero" && turnCombatSnapshot().cooldowns.echo===4 && !soloAbility({slot:0})'),
-    'C20: the next fight decrements a carried cooldown on its first hero turn');
-  C('setZone(2)');
-  assert(C('TURN_CARRY_CDS.echo===0'), 'C20: leaving prototype scope clears carried cooldowns');
+  assert(C('turnCombatSnapshot().phase==="hero" && soloAbility({slot:0}) && turnCombatSnapshot().cooldowns.echo===5'),
+    'C20: a used ability goes on its turn cooldown');
+  C('combatFoes().forEach(f=>{f.hp=1;f.max=1})');
+  for(let i=0;i<120 && !C('turnCombatSnapshot().phase==="hero" && turnCombatSnapshot().n<=2 && combatFoes().some(f=>f.max>1)');i++) { C('soloAttack()'); carryCore.fn.tick(.05); }
+  assert(C('turnCombatSnapshot().phase==="hero" && turnCombatSnapshot().cooldowns.echo===0 && soloAbility({slot:0})'),
+    'C20: cooldowns reset every fight (owner): the next foe starts with the ability ready');
+  assert(!/TURN_CARRY_CDS|carryCds/.test(fs.readFileSync(path.join(ROOT, 'src', 'js', '59k-turn.js'), 'utf8')), 'C20: no cooldown carry-over is left in the turn engine (live or sampled)');
   const cadence = E(`(() => {
     const run = dt => { let hero=1e9, foe=1e9; const io={heroHaste:10,foeHaste:9,emit:()=>{},auto:()=>true,
       random:()=>1,odds:()=>({parry:0,dodge:0,parryWindow:.18,dodgeWindow:.35}),

@@ -22344,7 +22344,9 @@ function turnResolve(m, cmd, dt, io) {
 }
 
 let TURN_LIVE = null, TURN_RECOVER = 0, TURN_LAST_PROFILE = null;
-let TURN_CARRY_CDS = { attack: 0, echo: 0, bash: 0, fire: 0 };
+// Cooldowns reset every fight (owner, 2026-10-01: "It should feel like a new fight each time"): each foe starts
+// with every action ready. They never carry from one foe to the next.
+const turnFreshCds = () => ({ attack: 0, echo: 0, bash: 0, fire: 0 });
 const TURN_NONE = { now: 0, phase: 'off', auto: false, foe: null, next: null, n: 0,
   cooldowns: { attack: 0, echo: 0, bash: 0, fire: 0 }, dodgeOpensAt: 0, parryOpensAt: 0,
   closesAt: 0, heroHaste: 0, foeHaste: 0 };
@@ -22366,9 +22368,8 @@ function turnCombatProfile() {
 }
 const TURN_LIVE_IO = {
   heroHaste: 0, foeHaste: 0,
-  initialCooldowns: () => TURN_CARRY_CDS,
-  endFight: (m, reason) => { TURN_CARRY_CDS = reason === 'victory' ? { ...m.cooldowns } :
-    { attack: 0, echo: 0, bash: 0, fire: 0 }; },
+  initialCooldowns: turnFreshCds,
+  endFight: () => {},
   random: () => Math.random(), auto: () => !soloActive(), odds: () => TURN_LIVE.profile.odds,
   emit: (name, payload) => emit(name, payload),
   alive: () => { const u = cbUnitByKey('hero'); return { hero: !!u && !u.down && u.hp > 0,
@@ -22425,8 +22426,7 @@ function turnCombatTick(dt) {
   if (dt > 0 && S.turn) { S.turn.awayProfile = null; S.turn.awaySample = null; S.turn.awaySig = ''; } // Live play starts a new sampling session.
   if (!turnCombatScope()) {
     if (TURN_LIVE && !TURN_LIVE.ended) turnEnd(TURN_LIVE, 'abandon', TURN_LIVE_IO);
-    TURN_LIVE = null; TURN_RECOVER = 0;
-    TURN_CARRY_CDS = { attack: 0, echo: 0, bash: 0, fire: 0 }; return;
+    TURN_LIVE = null; TURN_RECOVER = 0; return;
   }
   if (TURN_RECOVER > 0) { TURN_RECOVER -= dt; if (TURN_RECOVER <= 0) { cbRestore(true); spawn(); } return; }
   const f = combatFoes().find(x => x && !x.dead && x.hp > 0 && !x.gone);
@@ -22448,14 +22448,11 @@ function turnCombatTick(dt) {
 }
 on('sceneReset', () => { if (TURN_LIVE && !TURN_LIVE.ended)
   turnEnd(TURN_LIVE, TURN_LIVE_IO.alive().hero ? 'abandon' : 'defeat', TURN_LIVE_IO);
-  TURN_LIVE = null; TURN_RECOVER = 0; TURN_LAST_PROFILE = null;
-  TURN_CARRY_CDS = { attack: 0, echo: 0, bash: 0, fire: 0 }; });
+  TURN_LIVE = null; TURN_RECOVER = 0; TURN_LAST_PROFILE = null; });
 on('soloHero', () => { if (TURN_LIVE && !TURN_LIVE.ended) turnEnd(TURN_LIVE, 'abandon', TURN_LIVE_IO);
-  TURN_LIVE = null; TURN_RECOVER = 0; TURN_LAST_PROFILE = null;
-  TURN_CARRY_CDS = { attack: 0, echo: 0, bash: 0, fire: 0 }; });
+  TURN_LIVE = null; TURN_RECOVER = 0; TURN_LAST_PROFILE = null; });
 onTick(() => { if (TURN_LIVE && !TURN_LIVE.ended && !turnCombatScope()) {
-  turnEnd(TURN_LIVE, 'abandon', TURN_LIVE_IO); TURN_LIVE = null; TURN_RECOVER = 0; TURN_LAST_PROFILE = null;
-  TURN_CARRY_CDS = { attack: 0, echo: 0, bash: 0, fire: 0 }; } });
+  turnEnd(TURN_LIVE, 'abandon', TURN_LIVE_IO); TURN_LIVE = null; TURN_RECOVER = 0; TURN_LAST_PROFILE = null; } });
 
 // Reward-free scratch run using precisely the same scheduler and scalar rules as live play.
 function turnCombatSample({ profile: p, seconds, seed = 1, mode = 'auto' }) {
@@ -22465,12 +22462,10 @@ function turnCombatSample({ profile: p, seconds, seed = 1, mode = 'auto' }) {
     foeHits: 0, blocks: 0, directHits: 0, totalDirectHits: 0,
     completedFights: 0, totalHeroTurns: 0, totalFightSeconds: 0 };
   let heroHp = p.heroHp, foeHp = p.foeHp, blockN = p.blockN || 0, m, downtime = 0,
-    carryCds = { attack: 0, echo: 0, bash: 0, fire: 0 },
     fightHeroTurns = 0, fightDirectHits = 0;
   const io = { heroHaste: p.heroHaste, foeHaste: p.foeHaste, random: roll,
-    initialCooldowns: () => carryCds,
-    endFight: (state, reason) => { carryCds = reason === 'victory' ? { ...state.cooldowns } :
-      { attack: 0, echo: 0, bash: 0, fire: 0 }; },
+    initialCooldowns: turnFreshCds,
+    endFight: () => {},
     auto: () => mode === 'auto', odds: () => p.odds, emit: () => {},
     alive: () => ({ hero: heroHp > 0, foe: foeHp > 0 }), cooldown: id => p.cooldowns[id],
     abilityId: () => p.ability,
