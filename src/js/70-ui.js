@@ -249,6 +249,17 @@ on('whatsNew', w => {
 // registerSection('log', ...) in 75-stats-ui.js). The last view is remembered.
 const logPanel = el('section', 'panel'); logPanel.id = 'p-log'; logPanel.hidden = true; $('app').append(logPanel);
 let logView = '';
+const SETTINGS_SECS = ['set-num', 'onboard-tips', 'cb2set', 'savecode', 'feedback', 'turn-test'];
+function markSettings() {
+  mountTab('log');   // every Journal section (they mount lazily; the Numbers row lives in the stats section)
+  let num = $('sec-set-num');
+  const nf = logPanel.querySelector('.sw-num');
+  if (!num && nf) { num = el('section', 'sec set-sec'); num.id = 'sec-set-num'; num.append(el('h2', 'sec-title', 'Numbers'), nf); logPanel.append(num); }
+  const secs = SETTINGS_SECS.map(id => $('sec-' + id)).filter(Boolean);
+  for (const x of secs) x.classList.add('set-sec');
+  // settings sections in one block at the end of the panel, Numbers first
+  for (const x of secs) logPanel.append(x);
+}
 function openNoticeLog() {
   if (typeof openSheet !== 'function') return;
   const seenBefore = notes.seenSeq || 0;
@@ -258,13 +269,21 @@ function openNoticeLog() {
   openSheet(api => {
     const top = el('div', 'nlog-top');
     const box = el('div', 'nlog-box');
-    const views = [['notes', 'Notices'], ['journal', 'Journal']];
+    const views = [['notes', 'Notices'], ['journal', 'Journal'], ['settings', 'Settings']];
     const seg = el('div', 'vseg nlog-seg'); seg.setAttribute('role', 'tablist');
     const show = v => {
       logView = v; uiPrefs.views.log = v; saveUiPrefs();
       for (const b of seg.children) b.setAttribute('aria-selected', String(b.dataset.v === v));
       box.textContent = '';
-      if (v === 'journal') { logPanel.hidden = false; box.append(logPanel); ui(true); return; }
+      // Menu audit 2026-10-01: settings sat 13 screens down the Journal (the save code among them). The same panel
+      // shows either its stats (Journal) or its settings sections (Settings); the Numbers row moves to Settings.
+      if (v === 'journal' || v === 'settings') {
+        markSettings();
+        logPanel.classList.toggle('only-settings', v === 'settings'); logPanel.classList.toggle('no-settings', v === 'journal');
+        logPanel.hidden = false; box.append(logPanel); ui(true);
+        for (const sec of SECTIONS) if (tabOfSec(sec) === 'log' && sec.update) { try { sec.update(true); } catch (e) {} }   // fill the settings now
+        return;
+      }
       logPanel.hidden = true;
       if (!notes.log.length) { box.append(el('p', 'note nlog-empty', 'Nothing yet. Level ups, loot and other news land here.')); return; }
       const list = el('div', 'nlog');

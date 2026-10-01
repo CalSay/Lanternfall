@@ -102,3 +102,6 @@
 .big:disabled { background: var(--panel-2); color: var(--muted); box-shadow: none; cursor: default; }
 .note { font-size: 13px; color: var(--muted); margin: 0; max-width: 60ch; }
 .note.warn { color: #FFB27A; }
+/* the bell sheet's Settings view (menu audit): one panel, two views */
+#p-log.no-settings .set-sec, #p-log.only-settings > :not(.set-sec) { display: none; }
+#sec-set-num .sw-num { margin: 0 var(--gut, 12px); }

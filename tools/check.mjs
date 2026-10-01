@@ -6063,7 +6063,7 @@ if (section('camp trade and import (C4, browser)')) try {
         try {
           const { page, X, errs } = imported;
           await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go');
-          await page.click('#bellBtn'); await page.locator('.nlog-seg button[data-v="journal"]').click();
+          await page.click('#bellBtn'); await page.locator('.nlog-seg button[data-v="settings"]').click();
           await page.locator('.savecode-import').fill(exported);
           const panel = page.locator('#sec-savecode');
           await panel.getByRole('button', { name: 'Check', exact: true }).click();
