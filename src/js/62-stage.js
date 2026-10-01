@@ -169,10 +169,20 @@ let resize, animate, draw, stageStats, warmScene;
   const FOE_X = [[0.78], [0.66, 0.86], [0.62, 0.76, 0.9]];
   let laneY = 14;
   // Bottom of the foe header (name and HP bar) inside the stage, in logical px, so text and sprites avoid it.
+  // Versus header (owner, 2026-10-01; 70-ui): VS = { on, l, r, b } in CSS px of the stage: the hero plate's left edge, the
+  // foe plate's right edge, and the bottom of the bars. The status chip rows hang from b (hero left, foe right).
+  const VS = { on: false, l: 0, r: 0, b: 0 };
   function readHud() {
     // the header overlay (.hud) is a sibling of the stage inside the stage box
-    const e = (stageEl.closest('.stagebox') || document).querySelector('.mob');
-    hudB = e && e.offsetParent && !e.hidden ? (e.offsetTop + e.offsetHeight) / ZM : 0;
+    const box = stageEl.closest('.stagebox') || document, e = box.querySelector('.mob'), hud = box.querySelector('.hud'), hp = box.querySelector('.hero-plate');
+    VS.on = !!(hud && hud.classList.contains('vs') && hp && !hp.hidden && e);
+    if (VS.on) {
+      VS.l = hp.offsetLeft; VS.r = e.offsetLeft + e.offsetWidth; VS.b = Math.max(hp.offsetTop + hp.offsetHeight, e.offsetTop + e.offsetHeight);
+      // the place line sits under the bars, centred; the chips fill the rows beside it
+      (box.style ? box : hud).style.setProperty('--vs-b', (VS.b + 2) + 'px');   // the stage box: .hud and .cb-strip read it
+      const z = box.querySelector('.hud-zone');
+      hudB = Math.max(VS.b + 26, z && !z.hidden ? z.offsetTop + z.offsetHeight : 0) / ZM;
+    } else hudB = e && e.offsetParent && !e.hidden ? (e.offsetTop + e.offsetHeight) / ZM : 0;
   }
   resize = function () {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -1557,7 +1567,7 @@ let resize, animate, draw, stageStats, warmScene;
   }
   function stepHud(dt) {
     hudPoll -= dt;
-    if (hudPoll <= 0) { hudPoll = 0.1; pollHud(); }
+    if (hudPoll <= 0) { hudPoll = 0.1; pollHud(); const h = stageEl.closest('.stagebox'), v = !!(h && h.querySelector('.hud.vs')); if (v !== VS.on) readHud(); }
     for (const a of order) {
       if (a.hpT >= 0) easeBar(a, a.hpT, dt);
       a.shF = (a.shF || 0) + ((a.shT || 0) - (a.shF || 0)) * (reduced ? 1 : Math.min(1, dt * 10));
@@ -1641,11 +1651,11 @@ let resize, animate, draw, stageStats, warmScene;
     const c = chipPool[chipList.length] || (chipPool[chipList.length] = { id: '', n: 0, f: -1 });
     c.id = id; c.n = n; c.f = f; chipList.push(c);
   }
-  function chipRow(X, Y, left) {
+  function chipRow(X, Y, left) {   // left: true = the row starts at X; 'right' = it ends at X; else centred on X
     if (!chipList.length) return 0;
     let tw = -U, h = 0;
     for (const c of chipList) { tw += chipW(c.id, c.n) + U; h = Math.max(h, chipH(c.id, c.f)); }
-    let x = Math.max(2 * U, Math.min(cv.width - tw - 2 * U, left ? X : Math.round(X - tw / 2)));
+    let x = Math.max(2 * U, Math.min(cv.width - tw - 2 * U, left === 'right' ? X - tw : left ? X : Math.round(X - tw / 2)));
     for (const c of chipList) x += chip(x, Y - h, c.id, c.n, c.f) + U;
     chipList.length = 0;
     return h;
@@ -1698,8 +1708,20 @@ let resize, animate, draw, stageStats, warmScene;
     // party: an HP bar (and ability gauge) over each head; the hero's chips to the right of its bar
     // (toward the foe: above it they would cover the face of an ally in the upper lane). Knocked-out
     // members and a party falling back show none.
+    const vs = VS.on && fight, vsY = Math.round((VS.b + 4) * DPR);
+    if (vs && heroChips) {   // versus header: the hero's chips hang under the left bar, from its outer edge
+      if (guardN > 0) pushChip('guard', guardN, -1);
+      if (blessN > 0) pushChip('bless', blessN, -1);
+      if (wallT > 0) pushChip('wall', 0, Math.min(1, wallT / 6));
+      if (hymnT > 0) pushChip('hymn', 0, Math.min(1, hymnT / 8));
+      if (hasteLeft > 0) pushChip('haste', 0, Math.min(1, hasteLeft / 10));
+      if (restF > 0) pushChip('rest', 0, restF);
+      let tw = -U, h = 0; for (const c of chipList) { tw += chipW(c.id, c.n) + U; h = Math.max(h, chipH(c.id, c.f)); }
+      chipRow(Math.round(VS.l * DPR), vsY + h, true);
+    }
     for (const a of order) {
       if (a.alpha < 1 || !a.fr || !(a.hpT >= 0) || a.down || rtA < 0.5) continue;
+      if (vs && a === hero) { if (tele && tele.kind === 'dive' && tele.target === a.key) bangAt(X(ax(a) - cam), Y(a.hy - a.fr.idle0.oy), 'dive'); continue; }   // its bar is the header's
       const art = a === hero && a._f && a._f.c, f = art ? a._f : a.fr.idle0, cx = art ? X(a._x + a._f.ox) : X(ax(a) - cam);   // hand-drawn hero art: over its own frame's head (as drawn)
       const bh = 4 * U + (a.cdF >= 0 ? gaugeH() : 0);
       const y = Math.max(minY + (a === hero && heroChips ? 4 * U : 0), Y(a.hy - f.oy + headTop(f)) - gap - bh);
@@ -1737,7 +1759,8 @@ let resize, animate, draw, stageStats, warmScene;
       if (tele && tele.foe === m && tele.kind !== 'dive') { const bs = y - 26 * U >= minY ? 2 * U : U; y -= bangAt(cx, Math.max(minY + 13 * bs, y), tele.kind, bs); }
       return y;
     }
-    if (!m.boss && s.hpF != null) {
+    const vsTop = VS.on && s === foe;   // versus header: the focus foe's HP is the header's right bar
+    if (!m.boss && s.hpF != null && !vsTop) {
       const fw = packN > 1 ? Math.max(10 * U, Math.min(16 * U, Math.round(s.w * 0.45 * K / U) * U)) : Math.max(14 * U, Math.min(24 * U, Math.round(s.w * 0.5 * K / U) * U));
       y = Math.max(minY, y - 4 * U);
       const x0 = cx - (fw >> 1) - U;
@@ -1752,8 +1775,13 @@ let resize, animate, draw, stageStats, warmScene;
     if (s === foe && typeof stBadges === 'function') for (const b of stBadges(m)) if (chipList.length < 6) pushChip(b.id, b.n, b.f);
     // S6-E: an elite's traits, up to 2 badges (59i TRAIT_ICONS 'tr_<id>', drawn by 61b statusIcon)
     if (m.tr) for (let i = 0; i < m.tr.length && i < 2; i++) pushChip('tr_' + m.tr[i], 0, -1);
-    const h = chipRow(cx, y - U);
-    if (h) y -= h + U;
+    if (vsTop) {   // under the right bar, ending at its outer edge
+      let ch = 0; for (const c of chipList) ch = Math.max(ch, chipH(c.id, c.f));
+      chipRow(Math.round(VS.r * DPR), Math.round((VS.b + 4) * DPR) + ch, 'right');
+    } else {
+      const h = chipRow(cx, y - U);
+      if (h) y -= h + U;
+    }
     if (m.chanT > 0 && !m.boss) { y -= 8 * U; if (reduced || (T * 4 % 1) < 0.7) badge(cx - (7 * U >> 1), Math.max(minY, y), 'heal'); }
     if (tele && tele.foe === m && tele.kind !== 'dive') { const bs = y - 26 * U >= minY ? 2 * U : U; y -= bangAt(cx, Math.max(minY + 13 * bs, y), tele.kind, bs); }
     return y;

@@ -139,3 +139,25 @@
   .cf-isheet .bsheet-body > * { grid-column: 2; }
   .cf-isheet .bsheet-body > .cf-ih { grid-column: 1; grid-row: 1 / span 20; position: sticky; top: 0; display: grid; justify-items: start; gap: 8px; }
 }
+
+/* Versus header (owner, 2026-10-01): when fighting, a fighting-game top bar. The hero's plate fills the left half and
+   the foe's the right half, each with "current / max"; the bars drain toward the middle. The place sits centred under
+   them; each side's status chips sit under its bar at the outer edge (62-stage draws them). */
+.hud.vs .hero-plate, .hud.vs .mob { position: absolute; top: 6px; width: calc(50% - 12px); display: grid; gap: 2px; padding: 4px 6px 5px; margin: 0;
+  background: rgba(14,11,18,.72); border: 1px solid var(--line-hi); box-shadow: 0 2px 0 #0B0810; }
+.hud.vs .hero-plate { left: 8px; }
+.hud.vs .mob { right: 8px; left: auto; }
+.hud.vs .mob .mob-line { flex-direction: row-reverse; }
+.hud.vs .mob .mob-name { text-align: right; }
+.hud.vs .mob .hpbar > i { transform-origin: 100% 50%; }
+.hud.vs .hero-plate .hpbar > i.fill { background: var(--hero-hp, #7ED36A); }
+.hud.vs .mob-name { flex: 1 1 auto; min-width: 0; }
+.hud.vs .hero-plate, .hud.vs .mob { grid-template-columns: minmax(0, 1fr); }
+.hud.vs .mob-line { min-width: 0; }
+.hud.vs .hud-zone { position: absolute; left: 50%; transform: translateX(-50%); top: var(--vs-b, 46px); max-width: 34%; padding: 2px 6px 0;
+  flex-direction: column; align-items: center; gap: 0; text-align: center; }
+.hud.vs .hud-zone .zname { font-size: calc(12px * var(--display-k)); max-width: 100%; }
+.hud.vs .hud-zone .zsub { font-size: 9.5px; }
+.hud.vs .hpbar { height: 11px; }
+/* the combat strip (stagger, cast, pack count) moves under the foe's status chips */
+.stagebox.vs-on .cb-strip { left: auto; right: 8px; width: calc(50% - 12px); top: calc(var(--vs-b, 46px) + 24px); justify-content: flex-end; }

@@ -662,7 +662,7 @@ let uiTimer = 0, slowTick = 0, lastPct = 100, trailRaf = 0;
 const uiHooks = [];
 // Static HUD nodes, looked up once.
 const hudEl = {};
-for (const id of ['hName', 'hLvl', 'xpFill', 'gold', 'embers', 'zName', 'zSub', 'mName', 'mHp', 'mBar', 'mTrail', 'tWrap', 'tBar', 'zStep', 'zNum', 'zPrev', 'zNext', 'statNums', 'sDps', 'sTap', 'hint']) hudEl[id] = $(id);
+for (const id of ['hName', 'hLvl', 'xpFill', 'gold', 'embers', 'zName', 'zSub', 'mName', 'mHp', 'mBar', 'mTrail', 'tWrap', 'tBar', 'zStep', 'zNum', 'zPrev', 'zNext', 'statNums', 'sDps', 'sTap', 'hint', 'hPlate', 'hpName', 'hpNum', 'hpFill', 'hpTrail']) hudEl[id] = $(id);
 const modeBtns = [...document.querySelectorAll('#modeSeg button')];
 // The foe's HP bar and its white damage trail scale on the compositor (transform: no relayout per
 // hit). A new foe refills both at once: the trail's transition is off for two frames (instead of
@@ -677,8 +677,29 @@ function setHp(pct) {
   putStyle(tr, 'transform', sc);
   putStyle(hudEl.mBar, 'transform', sc); lastPct = pct;
 }
+// The versus header's hero bar (owner, 2026-10-01): the same compositor scaling and trail as the foe's.
+let heroPct = 100, heroTrailRaf = 0;
+function setHeroHp(pct) {
+  pct = Math.max(0, Math.min(100, pct));
+  const tr = hudEl.hpTrail, sc = `scaleX(${pct / 100})`;
+  if (pct > heroPct + 0.5) {
+    putStyle(tr, 'transition', 'none'); cancelAnimationFrame(heroTrailRaf);
+    heroTrailRaf = requestAnimationFrame(() => { heroTrailRaf = requestAnimationFrame(() => { heroTrailRaf = 0; putStyle(tr, 'transition', ''); }); });
+  }
+  putStyle(tr, 'transform', sc); putStyle(hudEl.hpFill, 'transform', sc); heroPct = pct;
+}
+const hudBox = document.querySelector('.hud');
 function ui(force) {
   const tg = target(), H = hudEl;
+  // Versus header: fighting (not gathering or the raid) shows the hero's bar at the top left, the foe's at the top right
+  const vs = tg === 'mob';
+  if (hudBox) { putToggle(hudBox, 'vs', vs); const sb = hudBox.closest('.stagebox'); if (sb) putToggle(sb, 'vs-on', vs); }
+  putHidden(H.hPlate, !vs);
+  if (vs) {
+    const h = typeof unitHp === 'function' ? unitHp('hero') : null, k = typeof soloHero === 'function' ? soloHero() : null;
+    putText(H.hpName, k && typeof ROSTER === 'object' && ROSTER[k] ? ROSTER[k].name.split(' ')[0] : S.name);
+    if (h && h.max > 0) { putText(H.hpNum, `${fmt(Math.max(0, Math.ceil(h.hp)))} / ${fmt(Math.ceil(h.max))}`); setHeroHp(h.hp / h.max * 100); }
+  }
   putText(H.hName, S.name);
   putText(H.hLvl, S.L);
   putStyle(H.xpFill, 'width', Math.min(100, S.xp / xpNeed() * 100) + '%');
