@@ -143,7 +143,7 @@
   }
 
   // ---------------- the camp part ----------------
-  let lightBtn, head, closed, closedBar, closedTxt, hearthCard, H = {}, buildersBox, bSig = '';
+  let lightBtn, head, closed, closedBar, closedTxt, hearthCard, H = {}, buildersBox, bSig = '', sceneBox;
   let scenePort, sceneCanvas, sceneButtons, sceneCtx, sceneSig = '', sceneCentered = false, crewStrip, crewCounts;
   function drawCampScene() {
     if (!scenePort || typeof campSceneLayout !== 'function' || typeof campPaintScene !== 'function') return;
@@ -232,7 +232,10 @@
       H.deco.hidden = true; H.decoSig = '';
       hearthCard.append(top, H.deco, H.next, H.cost, H.costs, H.timer.el, H.act.el);
       buildersBox = el('div', 'camp-builders');
-      sec.append(head, closed, scenePort, crewStrip, talkHost, hearthCard, buildersBox);
+      // Menu audit 2026-10-01 (owner: "the camp screen is cluttered"): what you act on first (Hearth, builders, the crew
+      // line), then Blessings and Buildings; the scene and the Trophy Wall, which have no buttons, go last (camp-bless mount)
+      sceneBox = el('div', 'camp-scene-box'); sceneBox.append(el('h2', 'sec-title', 'Your camp'), scenePort, talkHost);
+      sec.append(head, closed, hearthCard, buildersBox, crewStrip, sceneBox);
     },
     update() {
       const open = campOpen();
@@ -385,7 +388,13 @@
       const sec = listBox.parentNode; putHidden(sec, !campOpen()); if (!campOpen()) return;
       let ids = campList().filter(x => x !== 'hearth');
       // H1: on a cold Hearth the stations still to build lead the list, in build order.
-      if (typeof hearthCold === 'function' && hearthCold()) { const k = id => { const i = HEARTH_CHAIN.indexOf(id); return i >= 0 && campLevel(id) < 1 ? i : 99; }; ids = ids.slice().sort((a, b) => k(a) - k(b)); }
+      // Menu audit: building now, ready, closest to ready, waiting on a gate, fully built. H1: on a cold Hearth the stations
+      // still to build lead, in build order, ahead of that.
+      const cold = typeof hearthCold === 'function' && hearthCold();
+      const chainK = id => { const i = HEARTH_CHAIN.indexOf(id); return cold && i >= 0 && campLevel(id) < 1 ? i : 99; };
+      const rank = id => { const c = campCan(id); return campPending(id) ? 0 : c.ok ? 1 : c.max ? 5 : c.need ? 4 : c.miss ? 2 + (1 - (o => o.all ? o.have / o.all : 0)(costCount(c.cost))) : 3; };
+      const rk = new Map(ids.map(id => [id, [chainK(id), rank(id)]]));
+      ids = ids.slice().sort((a, b) => rk.get(a)[0] - rk.get(b)[0] || rk.get(a)[1] - rk.get(b)[1]);
       const sig = ids.join();
       if (sig !== listSig) { listSig = sig; listBox.textContent = ''; for (const id of ids) { if (!cards.has(id)) cards.set(id, card(id)); listBox.append(cards.get(id).w); } }
       for (const id of ids) {
@@ -422,12 +431,22 @@
   let blessBox, blessNote, blessSig = '';
   registerSection('camp', {
     id: 'camp-bless', title: 'Blessings',
-    mount(sec) { blessNote = el('p', 'note'); blessBox = el('div', 'bless-grid'); sec.append(blessNote, blessBox); },
+    mount(sec) {
+      blessNote = el('p', 'note'); blessBox = el('div', 'bless-grid'); sec.append(blessNote, blessBox);
+      // the Camp view's order (menu audit): ... builders, Blessings, Buildings, then the scene and the Trophy Wall
+      const part = sec.parentNode, bld = $('sec-camp-buildings'), wall = $('sec-camp-wall');
+      if (part && bld && bld.parentNode === part) part.insertBefore(sec, bld);
+      if (part && sceneBox) part.append(sceneBox);
+      if (part && wall && wall.parentNode === part) part.append(wall);
+    },
     update() {
       const sec = blessBox.parentNode, n = blessSlots();
       putHidden(sec, !campOpen() || n < 1); if (sec.hidden) return;
       const ids = Object.keys(CAMP_BLESS).filter(blessOpen), on = S.camp.bless, sw = blessCanSwap();
-      setTxt(blessNote, `The Shrine holds ${n === 1 ? '1 Blessing' : n + ' Blessings'}. Tap one to choose it. Swapping is free${sw.ok ? '.' : ', but ' + sw.why.toLowerCase()}`);
+      const empty = on.length < n;   // free power left on the table (the audit's Lv 40 save had none picked)
+      setTxt(blessNote, empty ? `Pick ${n - on.length === 1 ? 'a Blessing' : (n - on.length) + ' Blessings'}: it is free. Tap one to choose it.`
+        : `The Shrine holds ${n === 1 ? '1 Blessing' : n + ' Blessings'}. Swapping is free${sw.ok ? '.' : ', but ' + sw.why.toLowerCase()}`);
+      putToggle(blessNote, 'bless-pick', empty);
       const sig = JSON.stringify([ids, on, blessPower(), sw.ok]);
       if (sig === blessSig) return; blessSig = sig; blessBox.textContent = '';
       for (const id of ids) {

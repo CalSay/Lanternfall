@@ -3881,7 +3881,7 @@ if (section('solo hero')) try {
   {
     const st = fs.readFileSync(path.join(ROOT, 'src', 'js', '62-stage.js'), 'utf8'), ui = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-solo-ui.js'), 'utf8');
     assert(/if \(target\(\) === 'mob'\) return;/.test(st), 'a tap on the fight stage does not attack (62-stage)');
-    assert(['soloAttack', 'soloParry', 'soloDodge', 'soloAbility', "registerSection('camp'"].every(x => ui.includes(x)), 'the button row calls Attack, Parry, Dodge and the ability; "Choose your hero" is on the Camp view');
+    assert(['soloAttack', 'soloParry', 'soloDodge', 'soloAbility', "registerSection('party'"].every(x => ui.includes(x)), 'the button row calls Attack, Parry, Dodge and the ability; switching hero is on the Hero tab (menu audit: not atop Camp)');
     const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '59j-solo.js'), 'utf8').replace(/\/\/.*$/gm, '');
     assert(!/\b(document|window|localStorage|canvas)\b/.test(src), '59j-solo.js is a core file: no DOM, window, canvas or storage');
   }
@@ -6441,7 +6441,7 @@ if (section('C9 hero registry (browser)')) try {
           await page.click('#createScreen .ccard[data-hero="wren"]');
           await page.click('#createScreen .create-go');
           await page.waitForSelector('#createScreen',{state:'detached'});
-          await X('delete S.party.unlock.heroes.bram; S.maxZone=10; S.zone=1; S.L=7; S.xp=3; S.mats.wood=[80,0,0,0,0]; S.gold=42; S.camp.open=true; S.camp.b.hearth=2; setTab("world"); setView("world","camp"); ui(true); true');
+          await X('delete S.party.unlock.heroes.bram; S.maxZone=10; S.zone=1; S.L=7; S.xp=3; S.mats.wood=[80,0,0,0,0]; S.gold=42; S.camp.open=true; S.camp.b.hearth=2; setTab("party"); setView("party","team"); ui(true); true');
           // owner 2026-10-01: the Camp view shows chips for the heroes you can play or unlock; All heroes opens the full roster
           await page.waitForSelector('#sec-solo-hero .sp-all');
           const chipHeroes = await page.$$eval('#sec-solo-hero .sp-chip', cs => cs.map(c => c.dataset.hero));

@@ -281,11 +281,11 @@ var soloIconURL = () => '';
   // Owner 2026-10-01: "you have to scroll past all of them every time". The Camp view shows only the heroes you can
   // play (or unlock right now) as small chips; "All heroes" opens a sheet with the whole roster, routes and stories.
   // Both use the same tap-twice confirm (a switch or an unlock is never one stray tap).
-  registerSection('camp', {
-    id: 'solo-hero', title: 'Your hero',
+  // Menu audit 2026-10-01: it lives on the Hero tab (under your hero), not at the top of Camp.
+  registerSection('party', {
+    id: 'solo-hero', title: 'Switch hero', view: 'team',
     mount(sec) {
       sec.classList.add('solo-pick');
-      if (sec.parentNode) sec.parentNode.prepend(sec);   // first on the Camp view
       const note = el('p', 'note', 'Switch any time, for free. Each hero keeps their own level.');
       const chips = el('div', 'sp-chips'), all = el('button', 'mini sp-all'); all.type = 'button';
       sec.append(note, chips, all);
