@@ -1,5 +1,7 @@
 # C22: elites, champions, Deepwell and Hunting
 
+> **Superseded selection draft (1 October 2026):** see [the fantasy review](enemies-c22-fantasy-review.md). The owner now requires darkness-born combat enemies, one enemy per fight with no queues, and Hunting kept separate. Elders retain Trophies. Final roster count is pending the owner and Claude. Do not implement this earlier roster or its gauntlet/Hunting combat proposals as written.
+
 Design proposal, 1 October 2026. Read the shared encounter contract and regional rosters. Combat is active only. This file changes no runtime, drop rates, online raid data or gathering timers.
 
 ## Audit and replacement of the seven elite traits
