@@ -84,7 +84,7 @@ nothing at runtime.
 
 | Slot | How it's drawn | Drawings per look |
 |---|---|---|
-| Weapon (bow, warblade, staff) | A separate sprite placed at the hand's grip point. 4 hand-drawn angles (down, 45°, upright, level), never rotated in code. Each pose names its angle and layer. | 4 |
+| Weapon (bow, warblade, staff) | A separate sprite placed at the hand's grip point. 4 hand-drawn angles (down, 45°, upright, level) at least, never rotated in code. Each pose names its angle and layer. Where a pose needs another direction (a tool's backswing), the artist draws that angle too and the rig names it (C27 finding, 2026-10-01). | 4+ |
 | Tools (pick, axe, sickle, spear) | Same as weapons, with grip points in the gathering poses. **Shared by all three heroes**, since every hero holds the same tool the same way. | 4 per tool, once for the whole game |
 | Off-hand: quiver | Sits on the back. One sprite, moved with a back point in each pose. | 1-2 |
 | Off-hand: shield, lantern | Held in hand: 3 angles (guard, lowered, braced). | 3 |
