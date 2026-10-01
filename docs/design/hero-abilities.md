@@ -24,6 +24,10 @@ These came in after checkpoint `57ed6ad` and override anything below that disagr
 1. **Defence is one choice per enemy attack.** On every enemy attack the player picks one: parry (harder; blocks,
    counters, refunds) or dodge (easier; only avoids). No ability makes the choice, no enemy attack is parry-only or
    dodge-only; abilities may only make an option easier or more rewarding.
+   **Multi-hit attacks (owner, 2026-10-01):** an enemy attack can be several hits, and an enemy can attack more than
+   once in a turn cycle. Each hit is its own parry-or-dodge choice. **Every successful parry takes 1 turn off every
+   ability cooldown** (per hit, not per attack). **The counter only comes if every hit of that attack was parried.**
+   This replaces "reduces remaining cooldowns 1 once per foe action" in §2.
 2. **Speed sets turn frequency (Expedition 33 style), not only who opens.** Proposed timeline, for Codex/Claude to refine:
    each actor has a gauge that fills at its Speed; it acts at 100, then the gauge resets; ties go to the hero. Equal Speed
    alternates as today; +33% Speed gives about 4 actions for every 3. Speed changes are capped at 50%-200% of base;
