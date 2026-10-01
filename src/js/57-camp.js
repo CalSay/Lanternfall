@@ -484,6 +484,14 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
     pct: () => { const x = bb(); return x ? Math.min(1, x.ok ? 1 : 0.95 * x.p) : 0; },
     go: () => { const x = bb(); return goB(x ? x.id : 'hearth'); }
   });
+  // menu audit: an empty Blessing slot is free power (a Lv 40 save had none picked)
+  registerGoal({
+    id: 'camp-bless', sys: 'bless', prio: 3,
+    label: () => 'Pick a free Blessing at the Shrine',
+    pct: () => campOpen() && typeof blessSlots === 'function' && blessSlots() > (S.camp.bless || []).length ? 1 : 0,
+    go: { tab: 'world', view: 'camp', sel: '#sec-camp-bless' },
+    icon: { ic: ['flame', '#F2C14E', { 5: '#FFF3C4', 7: '#FFFFFF' }] }
+  });
   const soonest = () => builds().filter(x => x.start).sort((a, b) => a.end - b.end)[0] || null;
   registerGoal({
     id: 'camp-timer', sys: 'camp', icon: icFor,

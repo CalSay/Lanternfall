@@ -14,7 +14,7 @@
 //          such as 'bounties' or 'almanac') picks the sub-view when there is no sel.
 //   icon   optional toast-style icon spec or fn() -> spec ({ ic: [name, colour] }, { mat: [k, t] },
 //          { item }, a URL); the UI also takes { mob: typeKey } and { char: rosterId }
-//   prio   optional number (default 0); breaks ties and orders ready goals (higher first)
+//   prio   optional number or fn() -> number (default 0); breaks ties and orders ready goals (higher first)
 //   cap    optional 1: the diversity pass never takes a second goal from this sys (deeds, story)
 //   reserve optional 1: when the goal has something to show it keeps one row of its own (n >= 3), taking
 //          the place of the lowest other pick, so Ready goals cannot crowd it out (the deeds nudge, AP6)
@@ -52,7 +52,7 @@ var forgeGoalPicks = 0;
     try { label = String(val(g.label) || ''); icon = val(g.icon) || null; } catch (e) { return null; }
     if (!label) return null;
     const ready = p >= 1;
-    return { id: g.id, sys: g.sys, label, pct: Math.min(1, p), ready, go: g.go || null, icon, prio: +g.prio || 0, cap: +g.cap || 0, reserve: +g.reserve || 0 };
+    return { id: g.id, sys: g.sys, label, pct: Math.min(1, p), ready, go: g.go || null, icon, prio: +(typeof g.prio === 'function' ? g.prio() : g.prio) || 0, cap: +g.cap || 0, reserve: +g.reserve || 0 };
   }
 
   topGoals = function (n = 3, opts) {
@@ -108,7 +108,8 @@ var forgeGoalPicks = 0;
     const t = typeof trainNext === 'function' && soloHero() ? trainNext() : null; return t ? { u: { id: t.move, name: trainName(t.move), ic: ['sword', '#A9B1BD'] }, cost: t.cost, lv: t.lv, train: 1 } : null;
   };
   registerGoal({
-    id: 'hero-up', sys: 'hero', prio: -1,
+    // menu audit: a level that costs under 1% of your gold is free power, and ranks high (else it waits its turn)
+    id: 'hero-up', sys: 'hero', prio: () => { const b = heroNext(); return b && b.cost <= S.gold * 0.01 ? 3 : -1; },
     pct: () => { const b = heroNext(); return b ? need(S.gold, b.cost) : null; },
     label: () => { const b = heroNext(); if (!b) return ''; const lv = b.lv;
       return S.gold >= b.cost ? `Train ${b.u.name} to Lv ${lv}: ready` : `Train ${b.u.name} to Lv ${lv}: ${fmt(Math.ceil(b.cost - S.gold))} more gold`; },

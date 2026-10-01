@@ -11322,7 +11322,7 @@ let homeFamily, homeBonus, sigDropChance, awaySigDrops, champChance, champsAway,
 //          such as 'bounties' or 'almanac') picks the sub-view when there is no sel.
 //   icon   optional toast-style icon spec or fn() -> spec ({ ic: [name, colour] }, { mat: [k, t] },
 //          { item }, a URL); the UI also takes { mob: typeKey } and { char: rosterId }
-//   prio   optional number (default 0); breaks ties and orders ready goals (higher first)
+//   prio   optional number or fn() -> number (default 0); breaks ties and orders ready goals (higher first)
 //   cap    optional 1: the diversity pass never takes a second goal from this sys (deeds, story)
 //   reserve optional 1: when the goal has something to show it keeps one row of its own (n >= 3), taking
 //          the place of the lowest other pick, so Ready goals cannot crowd it out (the deeds nudge, AP6)
@@ -11360,7 +11360,7 @@ var forgeGoalPicks = 0;
     try { label = String(val(g.label) || ''); icon = val(g.icon) || null; } catch (e) { return null; }
     if (!label) return null;
     const ready = p >= 1;
-    return { id: g.id, sys: g.sys, label, pct: Math.min(1, p), ready, go: g.go || null, icon, prio: +g.prio || 0, cap: +g.cap || 0, reserve: +g.reserve || 0 };
+    return { id: g.id, sys: g.sys, label, pct: Math.min(1, p), ready, go: g.go || null, icon, prio: +(typeof g.prio === 'function' ? g.prio() : g.prio) || 0, cap: +g.cap || 0, reserve: +g.reserve || 0 };
   }
 
   topGoals = function (n = 3, opts) {
@@ -11416,7 +11416,8 @@ var forgeGoalPicks = 0;
     const t = typeof trainNext === 'function' && soloHero() ? trainNext() : null; return t ? { u: { id: t.move, name: trainName(t.move), ic: ['sword', '#A9B1BD'] }, cost: t.cost, lv: t.lv, train: 1 } : null;
   };
   registerGoal({
-    id: 'hero-up', sys: 'hero', prio: -1,
+    // menu audit: a level that costs under 1% of your gold is free power, and ranks high (else it waits its turn)
+    id: 'hero-up', sys: 'hero', prio: () => { const b = heroNext(); return b && b.cost <= S.gold * 0.01 ? 3 : -1; },
     pct: () => { const b = heroNext(); return b ? need(S.gold, b.cost) : null; },
     label: () => { const b = heroNext(); if (!b) return ''; const lv = b.lv;
       return S.gold >= b.cost ? `Train ${b.u.name} to Lv ${lv}: ready` : `Train ${b.u.name} to Lv ${lv}: ${fmt(Math.ceil(b.cost - S.gold))} more gold`; },
@@ -14700,6 +14701,14 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
     pct: () => { const x = bb(); return x ? Math.min(1, x.ok ? 1 : 0.95 * x.p) : 0; },
     go: () => { const x = bb(); return goB(x ? x.id : 'hearth'); }
   });
+  // menu audit: an empty Blessing slot is free power (a Lv 40 save had none picked)
+  registerGoal({
+    id: 'camp-bless', sys: 'bless', prio: 3,
+    label: () => 'Pick a free Blessing at the Shrine',
+    pct: () => campOpen() && typeof blessSlots === 'function' && blessSlots() > (S.camp.bless || []).length ? 1 : 0,
+    go: { tab: 'world', view: 'camp', sel: '#sec-camp-bless' },
+    icon: { ic: ['flame', '#F2C14E', { 5: '#FFF3C4', 7: '#FFFFFF' }] }
+  });
   const soonest = () => builds().filter(x => x.start).sort((a, b) => a.end - b.end)[0] || null;
   registerGoal({
     id: 'camp-timer', sys: 'camp', icon: icFor,
@@ -16643,7 +16652,7 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
     return best;
   }
   registerGoal({
-    id: 'stars', sys: 'stars', prio: -1,
+    id: 'stars', sys: 'stars', prio: 3,   // menu audit: unspent points are free power (a Lv 40 save sat on 13)
     label: () => { const n = starFree(); return `You have ${n} star point${n === 1 ? '' : 's'}`; },
     pct: () => (typeof isUnlocked !== 'function' || isUnlocked('stars')) && starCls() && starFree() > 0 && cheapestOpen() ? 1 : 0,
     go: { tab: 'party', view: 'stars' },

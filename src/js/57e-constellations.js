@@ -560,7 +560,7 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
     return best;
   }
   registerGoal({
-    id: 'stars', sys: 'stars', prio: -1,
+    id: 'stars', sys: 'stars', prio: 3,   // menu audit: unspent points are free power (a Lv 40 save sat on 13)
     label: () => { const n = starFree(); return `You have ${n} star point${n === 1 ? '' : 's'}`; },
     pct: () => (typeof isUnlocked !== 'function' || isUnlocked('stars')) && starCls() && starFree() > 0 && cheapestOpen() ? 1 : 0,
     go: { tab: 'party', view: 'stars' },
