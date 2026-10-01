@@ -36,7 +36,7 @@ def main():
     kinds={v['kind']:(v['noun'],v['family']) for v in old['icons'].values()}
     resource=json.loads((ROOT/'art/resources/approved-v1/manifest.js').read_text().split('=',1)[1].rstrip(';\n '))
     res={(r['family'],r['grade']):r for r in resource['icons']}
-    pack={'status':'owner-review','approval':'Retained65 G1-5 nonmetal icons owner-approved; all new/revised265 icons pending owner review.','sizes':SIZES,'icons':{}}
+    pack={'status':'owner-review','approval':'Retained60 G1-5 icons owner-approved; all new/revised270 icons pending owner review, including aligned bows.','sizes':SIZES,'icons':{}}
     for ident,item in old['icons'].items():
         if item['kind'] in FAMILIES['tools']+FAMILIES['armour']: continue
         for f in item['files'].values():shutil.copyfile(OLD/f['path'],OUT/f['path'])
@@ -47,6 +47,8 @@ def main():
         for start in ([1,6,11] if group in ('tools','armour') else [6,11]):
             suffix='detail' if group in ('tools','armour') else ''
             specs.append((f'{group}{start}{suffix}.png',cols,start))
+    specs.extend(('bow-angle-v2.png',['bow'],start) for start in (1,6,11))
+    bowsheet=Image.open(SRC/'bow-angle-v2.png').convert('RGBA');bxs=seams(bowsheet,3,0);bys=seams(bowsheet,5,1)
     wood=Image.open(SRC/'woodfix.png').convert('RGBA');wxs=seams(wood,2,0);wys=seams(wood,2,1)
     staffsheet=Image.open(SRC/'woodstaff-fix.png').convert('RGBA');staffys=seams(staffsheet,2,1)
     for filename,cols,start in specs:
@@ -64,6 +66,10 @@ def main():
                     r=0 if grade==7 else 1;right=round(staffsheet.width*.66)
                     crop=staffsheet.crop((0,staffys[r],right,staffys[r+1]));source='woodstaff-fix.png'
                     rect=[0,staffys[r],right,staffys[r+1]-staffys[r]]
+                if key=='bow':
+                    br=(grade-1)//3;bc=(grade-1)%3
+                    crop=bowsheet.crop((bxs[bc],bys[br],bxs[bc+1],bys[br+1]));source='bow-angle-v2.png'
+                    rect=[bxs[bc],bys[br],bxs[bc+1]-bxs[bc],bys[br+1]-bys[br]]
                 crop=isolate(crop,key in ('spear','warblade'),key=='staff' and grade==10)
                 ref=res[(family,grade)]
                 item={'id':ident,'kind':key,'noun':noun,'family':family,'grade':grade,'name':ref['name']+' '+noun,'material':ref['name'],'sourceRoot':'../review-extended','atlas':source,'rect':rect,'sourceSha256':hashlib.sha256((SRC/source).read_bytes()).hexdigest(),'approval':'owner-review','files':{},'data':{}}

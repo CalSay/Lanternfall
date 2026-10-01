@@ -4,7 +4,7 @@ Status: owner review pending for new/revised art. Based on codex/c26-gear-icons 
 
 ## Coverage
 
-330 icons =22kinds x15resource grades. 220 additional upper-tier designs; all135 metal/tool/censer designs use the richer finish, including45replacements for grades1–5. The65unchanged low-tier nonmetal icons retain approval. New/revised265 icons await whole-pack review.
+330 icons =22kinds x15resource grades. 220 additional upper-tier designs; all135 metal/tool/censer designs use the richer finish, including45replacements for grades1–5. The60unchanged low-tier nonmetal icons retain approval. New/revised270 icons await whole-pack review.
 
 Native transparent PNGs:16,18,20,24,32,48px (1980 total), <=24visible colours, hardalpha, consistent padding. game-v2/gear-icons.js is self-contained data; embed only the sizes needed at integration. game-v1 is retained unchanged for provenance/comparison.
 
@@ -37,4 +37,9 @@ Minor nonblocking reservations retained for owner judgement: regional changes so
 ## Claude handoff
 
 No runtime code, recipes, balance, save key, unlock availability or published game changed. Grade6–15 art is prepared ahead of runtime support; do not enable tiers solely because the images exist. After owner approval, use game-v2 as canonical full ladder and select only required embedded sizes. Existing proposed itemIcon lookup hooks remain with Claude. These are inventory icons, not hero equipment pose swaps. New richer metal designs supersede the previous metal icons only after owner review. No publication performed.
+
+
+## Bow orientation correction
+
+Owner flagged upright weapons among angled ones. All15 bows now share a lower-left to upper-right orientation, using bow-angle-v2.png. The five previously approved low-tier bows are therefore revised review candidates. Material designs retained; independent review passes all15 at32/48px with no clipping or stray pixels. The other315 icons are unchanged.
 

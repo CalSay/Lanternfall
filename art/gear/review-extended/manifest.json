@@ -2757,6 +2757,101 @@
       "approval": "owner-review"
     },
     {
+      "id": "bow-g1",
+      "kind": "bow",
+      "noun": "Bow",
+      "family": "wood",
+      "grade": 1,
+      "name": "Pine Bow",
+      "material": "Pine",
+      "sourceRoot": "../review-extended",
+      "atlas": "bow-angle-v2.png",
+      "rect": [
+        0,
+        0,
+        324,
+        324
+      ],
+      "sourceSha256": "2ac2063ad75508af681a34191911f149bb844e6e6650ccfb3d3fb9802b69ce9c",
+      "approval": "owner-review"
+    },
+    {
+      "id": "bow-g2",
+      "kind": "bow",
+      "noun": "Bow",
+      "family": "wood",
+      "grade": 2,
+      "name": "Birch Bow",
+      "material": "Birch",
+      "sourceRoot": "../review-extended",
+      "atlas": "bow-angle-v2.png",
+      "rect": [
+        324,
+        0,
+        324,
+        324
+      ],
+      "sourceSha256": "2ac2063ad75508af681a34191911f149bb844e6e6650ccfb3d3fb9802b69ce9c",
+      "approval": "owner-review"
+    },
+    {
+      "id": "bow-g3",
+      "kind": "bow",
+      "noun": "Bow",
+      "family": "wood",
+      "grade": 3,
+      "name": "Oak Bow",
+      "material": "Oak",
+      "sourceRoot": "../review-extended",
+      "atlas": "bow-angle-v2.png",
+      "rect": [
+        648,
+        0,
+        324,
+        324
+      ],
+      "sourceSha256": "2ac2063ad75508af681a34191911f149bb844e6e6650ccfb3d3fb9802b69ce9c",
+      "approval": "owner-review"
+    },
+    {
+      "id": "bow-g4",
+      "kind": "bow",
+      "noun": "Bow",
+      "family": "wood",
+      "grade": 4,
+      "name": "Mangrove Bow",
+      "material": "Mangrove",
+      "sourceRoot": "../review-extended",
+      "atlas": "bow-angle-v2.png",
+      "rect": [
+        0,
+        324,
+        324,
+        324
+      ],
+      "sourceSha256": "2ac2063ad75508af681a34191911f149bb844e6e6650ccfb3d3fb9802b69ce9c",
+      "approval": "owner-review"
+    },
+    {
+      "id": "bow-g5",
+      "kind": "bow",
+      "noun": "Bow",
+      "family": "wood",
+      "grade": 5,
+      "name": "Tideash Bow",
+      "material": "Tideash",
+      "sourceRoot": "../review-extended",
+      "atlas": "bow-angle-v2.png",
+      "rect": [
+        324,
+        324,
+        324,
+        324
+      ],
+      "sourceSha256": "2ac2063ad75508af681a34191911f149bb844e6e6650ccfb3d3fb9802b69ce9c",
+      "approval": "owner-review"
+    },
+    {
       "id": "bow-g6",
       "kind": "bow",
       "noun": "Bow",
@@ -2765,14 +2860,14 @@
       "name": "Coralwood Bow",
       "material": "Coralwood",
       "sourceRoot": "../review-extended",
-      "atlas": "natural6.png",
+      "atlas": "bow-angle-v2.png",
       "rect": [
-        275,
-        0,
-        275,
-        226
+        648,
+        324,
+        324,
+        324
       ],
-      "sourceSha256": "a8b50b5bdb0f5b470a9b6e4aa5b3efec0f902ae789931bba6e8a1310068c72fc",
+      "sourceSha256": "2ac2063ad75508af681a34191911f149bb844e6e6650ccfb3d3fb9802b69ce9c",
       "approval": "owner-review"
     },
     {
@@ -2784,14 +2879,14 @@
       "name": "Ironwood Bow",
       "material": "Ironwood",
       "sourceRoot": "../review-extended",
-      "atlas": "woodfix.png",
+      "atlas": "bow-angle-v2.png",
       "rect": [
-        615,
         0,
-        615,
-        628
+        648,
+        324,
+        323
       ],
-      "sourceSha256": "a438b8fa5cfe078a2e6d670cf685e31b885e5385d72dfe06b7f9ab5a04db93ef",
+      "sourceSha256": "2ac2063ad75508af681a34191911f149bb844e6e6650ccfb3d3fb9802b69ce9c",
       "approval": "owner-review"
     },
     {
@@ -2803,14 +2898,14 @@
       "name": "Cinderbark Bow",
       "material": "Cinderbark",
       "sourceRoot": "../review-extended",
-      "atlas": "natural6.png",
+      "atlas": "bow-angle-v2.png",
       "rect": [
-        275,
-        450,
-        275,
-        229
+        324,
+        648,
+        324,
+        323
       ],
-      "sourceSha256": "a8b50b5bdb0f5b470a9b6e4aa5b3efec0f902ae789931bba6e8a1310068c72fc",
+      "sourceSha256": "2ac2063ad75508af681a34191911f149bb844e6e6650ccfb3d3fb9802b69ce9c",
       "approval": "owner-review"
     },
     {
@@ -2822,14 +2917,14 @@
       "name": "Pyrewood Bow",
       "material": "Pyrewood",
       "sourceRoot": "../review-extended",
-      "atlas": "natural6.png",
+      "atlas": "bow-angle-v2.png",
       "rect": [
-        275,
-        679,
-        275,
-        220
+        648,
+        648,
+        324,
+        323
       ],
-      "sourceSha256": "a8b50b5bdb0f5b470a9b6e4aa5b3efec0f902ae789931bba6e8a1310068c72fc",
+      "sourceSha256": "2ac2063ad75508af681a34191911f149bb844e6e6650ccfb3d3fb9802b69ce9c",
       "approval": "owner-review"
     },
     {
@@ -2841,14 +2936,14 @@
       "name": "Silverbark Bow",
       "material": "Silverbark",
       "sourceRoot": "../review-extended",
-      "atlas": "natural6.png",
+      "atlas": "bow-angle-v2.png",
       "rect": [
-        275,
-        899,
-        275,
-        246
+        0,
+        971,
+        324,
+        324
       ],
-      "sourceSha256": "a8b50b5bdb0f5b470a9b6e4aa5b3efec0f902ae789931bba6e8a1310068c72fc",
+      "sourceSha256": "2ac2063ad75508af681a34191911f149bb844e6e6650ccfb3d3fb9802b69ce9c",
       "approval": "owner-review"
     },
     {
@@ -2860,14 +2955,14 @@
       "name": "Rimewood Bow",
       "material": "Rimewood",
       "sourceRoot": "../review-extended",
-      "atlas": "natural11.png",
+      "atlas": "bow-angle-v2.png",
       "rect": [
-        292,
-        0,
-        290,
-        207
+        324,
+        971,
+        324,
+        324
       ],
-      "sourceSha256": "ded234f6c6191d1f312255ecc68bc942ed1d27637d978bf4431b3fae50e7e981",
+      "sourceSha256": "2ac2063ad75508af681a34191911f149bb844e6e6650ccfb3d3fb9802b69ce9c",
       "approval": "owner-review"
     },
     {
@@ -2879,14 +2974,14 @@
       "name": "Starcedar Bow",
       "material": "Starcedar",
       "sourceRoot": "../review-extended",
-      "atlas": "natural11.png",
+      "atlas": "bow-angle-v2.png",
       "rect": [
-        292,
-        207,
-        290,
-        214
+        648,
+        971,
+        324,
+        324
       ],
-      "sourceSha256": "ded234f6c6191d1f312255ecc68bc942ed1d27637d978bf4431b3fae50e7e981",
+      "sourceSha256": "2ac2063ad75508af681a34191911f149bb844e6e6650ccfb3d3fb9802b69ce9c",
       "approval": "owner-review"
     },
     {
@@ -2898,14 +2993,14 @@
       "name": "Nightwood Bow",
       "material": "Nightwood",
       "sourceRoot": "../review-extended",
-      "atlas": "natural11.png",
+      "atlas": "bow-angle-v2.png",
       "rect": [
-        292,
-        421,
-        290,
-        208
+        0,
+        1295,
+        324,
+        324
       ],
-      "sourceSha256": "ded234f6c6191d1f312255ecc68bc942ed1d27637d978bf4431b3fae50e7e981",
+      "sourceSha256": "2ac2063ad75508af681a34191911f149bb844e6e6650ccfb3d3fb9802b69ce9c",
       "approval": "owner-review"
     },
     {
@@ -2917,14 +3012,14 @@
       "name": "Wraithwood Bow",
       "material": "Wraithwood",
       "sourceRoot": "../review-extended",
-      "atlas": "woodfix.png",
+      "atlas": "bow-angle-v2.png",
       "rect": [
-        615,
-        628,
-        615,
-        650
+        324,
+        1295,
+        324,
+        324
       ],
-      "sourceSha256": "a438b8fa5cfe078a2e6d670cf685e31b885e5385d72dfe06b7f9ab5a04db93ef",
+      "sourceSha256": "2ac2063ad75508af681a34191911f149bb844e6e6650ccfb3d3fb9802b69ce9c",
       "approval": "owner-review"
     },
     {
@@ -2936,14 +3031,14 @@
       "name": "Gloamheart Bow",
       "material": "Gloamheart",
       "sourceRoot": "../review-extended",
-      "atlas": "natural11.png",
+      "atlas": "bow-angle-v2.png",
       "rect": [
-        292,
-        840,
-        290,
-        240
+        648,
+        1295,
+        324,
+        324
       ],
-      "sourceSha256": "ded234f6c6191d1f312255ecc68bc942ed1d27637d978bf4431b3fae50e7e981",
+      "sourceSha256": "2ac2063ad75508af681a34191911f149bb844e6e6650ccfb3d3fb9802b69ce9c",
       "approval": "owner-review"
     },
     {
