@@ -6839,6 +6839,22 @@ if (section('hunting hidden (C24 browser)')) try {
 
 // ---- C20: default-off, zone-one turn combat and shared away resolver ----
 // ---- turn UI (Claude, 2026-09-30): the versus card, turn strip, timing bar and the Journal test switch on C20's events ----
+if (section('auto-challenge (boss switch)')) try {
+  // owner 2026-10-01: "The toggle to automatically fight the zone boss doesn't work". It only ran on the old single-foe
+  // respawn (never in turn fights) and waited 10 min for a cautious estimate. Now: every fight mode, at most bossWait s.
+  for (const turns of [0, 1]) {
+    const g = loadCore({ seed: 3 }), E = s => g.eval(s);
+    E(`soloPick("tobin"); S.auto = true; TURN_TUNE.on = ${turns}; S.onboard && (S.onboard.tips = false, S.onboard.all = true)`);
+    let at = -1;
+    for (let t = 0; t < 400 && at < 0; t += 0.1) { g.fn.tick(0.1); if (E('fightBoss')) at = t; }
+    assert(at > 0 && at < 300, `auto-challenge starts the zone boss on its own (${turns ? 'turn' : 'party'} fights; at ${at.toFixed(0)} s)`);
+    const off = loadCore({ seed: 3 }), O = s => off.eval(s);
+    O(`soloPick("tobin"); S.auto = false; TURN_TUNE.on = ${turns}; S.onboard && (S.onboard.tips = false, S.onboard.all = true)`);
+    let any = false; for (let t = 0; t < 400 && !any; t += 0.1) { off.fn.tick(0.1); any = O('fightBoss'); }
+    assert(!any, `with the switch off the boss never starts on its own (${turns ? 'turn' : 'party'} fights)`);
+  }
+} catch (e) { fail('auto-challenge crashed: ' + (e.stack || e)); }
+
 if (section('C10a pacing (owner targets)')) try {
   const g = loadCore({ seed: 101 }), E = s => g.eval(s);
   // Hearth 2: zone 10, a token price, Pine/Copper/Essence a player has by then, a short build (Tam's first shift ~30 min)

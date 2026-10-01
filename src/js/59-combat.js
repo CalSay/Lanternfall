@@ -95,7 +95,8 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     getUp: 15, stallT: 90,
     threat: { tank: 4, striker: 1, caster: 1.2, support: 0.5 }, healThreat: 0.5, opening: 10, switchX: 1.2,
     tauntT: 3, tauntX: 1.2, shieldT: 6,
-    bossGate: 1, bossWait: 600,          // auto-challenge when the boss would die within the timer x bossGate (or after bossWait s)
+    bossGate: 1, bossWait: 120,          // auto-challenge when the boss would die within the timer x bossGate (or after bossWait s;
+                                         // owner 2026-10-01 "the toggle doesn't work": was 600, and the estimate is cautious, so it sat 10 min)
     refresh: 0.25, pushEvery: 5, pushRetry: 60, holdSecs: 120, estSafety: 1, estEff: 1.08, awayRate: 0.75, autoCast: 1.05,
     lkTap: 0.08, wardenTaunt: 3,         // the Lightkeeper's tap heal, the Warden's tap taunt
     blockX: 0.5, poison: 0.02, poisonT: 4
