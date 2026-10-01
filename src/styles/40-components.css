@@ -29,6 +29,7 @@
 .delta.up { color: var(--xp); } .delta.down { color: var(--muted); }
 
 .trophies { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+.trophies .trophy.found { order: -1; }
 .trophy { background: var(--panel); border: 2px dashed var(--line); padding: 8px; display: grid; grid-template-columns: auto 1fr; gap: 2px 8px; align-items: center; }
 .trophy .ic { grid-row: span 3; width: 36px; height: 36px; }
 .trophy .ic img { width: 24px; height: 24px; }

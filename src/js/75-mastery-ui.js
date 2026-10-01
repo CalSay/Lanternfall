@@ -30,7 +30,7 @@
   });
 
   // ---- Bestiary ----
-  const bRows = [];
+  const bRows = []; let bNote = null;
   // C25 enemy profiles: one line per thing learned, then what the next kill tier teaches
   const dtName = d => (typeof DT_INFO === 'object' && DT_INFO[d] ? DT_INFO[d].n : d);
   const profLines = p => {
@@ -38,13 +38,15 @@
     if (p.stats && p.seen) out.push(`Last met in zone ${p.seen.z}: ${fmt(p.seen.hp)} HP, hits for ${fmt(p.seen.atk)}, haste ${typeof TURN_TUNE === 'object' ? TURN_TUNE.foeHaste : '?'}.`);
     if (p.weak) out.push((p.weakTo ? `Weak to ${dtName(p.weakTo)}.` : 'No weakness.') + (p.resists.length ? ` Resists ${p.resists.map(dtName).join(' and ')}.` : ''));
     if (p.tell && p.tellTxt) out.push(`Watch for: ${p.tellTxt}`);
-    if (p.bonus) out.push('You know it well: +5% damage to it.');
-    else if (p.next) out.push(`${fmt(Math.ceil(p.next - p.n))} more to learn ${p.next === 5 ? 'its weakness' : p.next === 15 ? 'what to watch for' : '+5% damage to it'}.`);
+    if (p.next)   // the +5% for a foe you know well is said once, in the section note (menu audit #14)
+      out.push(`${fmt(Math.ceil(p.next - p.n))} more to learn ${p.next === 5 ? 'its weakness' : p.next === 15 ? 'what to watch for' : '+5% damage to it'}.`);
     return out.join('\n');
   };
   registerSection('adv', {
     id: 'bestiary', title: 'Bestiary', view: 'bestiary',
     mount(sec) {
+      bNote = el('p', 'note bp-note', `Slay ${PROFILE_TIERS[PROFILE_TIERS.length - 1]} of a foe to know it well: +5% damage to it. The foe of the zone you are in comes first.`);
+      sec.append(bNote);
       TYPES.forEach(t => {
         const url = spriteURL('best:' + t.key, SPR[t.key], t.pal);
         const r = makeRow(sec, t.name, false, url, 'portrait-ic');
@@ -55,6 +57,12 @@
       });
     },
     update() {
+      // the foe of the zone you are in comes first (menu audit #14)
+      const zt = TYPES[zoneType(S.zone)], first = zt && bRows.find(r => r.t === zt);
+      if (first && bNote.nextElementSibling !== first.row) {
+        const order = [first, ...bRows.filter(r => r !== first)];
+        bNote.after(...order.map(r => r.row));
+      }
       for (const r of bRows) {
         const k = r.t.key, n = MA.typeKills(k), tier = MA.tierFor(n), perk = BESTIARY_PERKS[k];
         const seen = n > 0;

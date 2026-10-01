@@ -26,7 +26,11 @@ function renderTrophies() {
     putText(e.ts1, f ? `${SLOT[u.slot].n} · best ${MAT.ore.short[f - 1]} tier` : u.src);
     putText(e.ts2, f ? u.txt : 'Not found yet');
   }
-  putText($('trophyCount'), `${n} / ${Object.keys(UNIQ).length} uniques`);
+  // what is left, by where it drops (menu audit #15); found uniques sort first (.trophy.found, 40-components.css)
+  const left = {};
+  for (const [key, u] of Object.entries(UNIQ)) if (!S.found[key]) { const w = u.src.split(' · ')[0]; left[w] = (left[w] || 0) + 1; }
+  const rest = Object.entries(left).map(([w, k]) => `${w === 'Zone boss' ? 'Zone bosses' : w}: ${k} left`).join(' · ');
+  putText($('trophyCount'), `${n} / ${Object.keys(UNIQ).length} uniques` + (rest ? ` · ${rest}` : ''));
 }
 
 function uiForge() { renderTrophies(); }
