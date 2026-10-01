@@ -1,0 +1,16 @@
+[
+  {
+    "prompt": "Use case: precise-object-edit. Edit this approved Wren full-draw pose into her equipment-free plain-clothes base for a paper-doll game. Remove bow, quiver, bat-shaped hood, ornate leathers and bat-wing cloak. Replace only removed clothing with a plain charcoal short tunic, simple dark trousers, and exposed purple hair matching her existing fringe. Keep her purple scarf and diagonal brown chest strap. Preserve her EXACT original face, purple fringe, both hand positions, raised drawn-bow stance, bare skin, gloves and boots. Do not relax the arms: rightward bow hand fully extended at the exact original pixel position, drawing hand beside her jaw. SAME224x192canvas, original96pxhero scale, original feet at(96,132), do not enlarge, recenter or shift pose. Strict chunky nativepixel art, original40colourpalette, crisp dark1pixeloutline, broadflatclusters. Actualtransparentbackground. No equipment, effects, labels, arrows or bowstrings. One full connected character ONLY.",
+    "referenced_image_paths": [
+      "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/heroes/wren/poses/full-draw.png"
+    ],
+    "transparent_background": true
+  },
+  {
+    "prompt": "Use case: precise-object-edit. Edit this approved Pip ready pose into her equipment-free plain-clothes base for a paper-doll game. Remove only witch hat, decorative robe, staff, ember and removable jewellery. Reveal flowing orange hair above the existing fringe and replace robe with a simple chocolate-brown short tunic and plain dark trousers. Keep her exact existing long orange hair masses, face, fringe, expression, bare skin, gloves and boots. Preserve BOTH hand positions exactly, including raised empty staff-gripping fingers on her right. SAME224x192canvas, original96pxhero scale, original feet at(96,132), do not enlarge/recenter/shift pose. Do not alter approved face or limbs. Strict chunky nativepixelart, original40colourpalette, crispdark1pixeloutline, broadflatclusters. Actualtransparentbackground. No staff, flame, lantern, hat, effects, labels or extra props. One complete connected character ONLY.",
+    "referenced_image_paths": [
+      "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/heroes/pip/poses/01-ready.png"
+    ],
+    "transparent_background": true
+  }
+]

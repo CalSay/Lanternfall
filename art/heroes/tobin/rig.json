@@ -1,0 +1,708 @@
+{
+  "version": 1,
+  "hero": "tobin",
+  "status": "draft-not-integration-ready",
+  "canvas": [
+    224,
+    192
+  ],
+  "groundAnchor": [
+    96,
+    132
+  ],
+  "poseCount": 15,
+  "missingPoses": [],
+  "anglePolicy": "Authored named views only. No code rotation. Extra backswing/diagonal views required for exact pose fit.",
+  "poses": {
+    "01-ready-guard": {
+      "source": "poses/01-ready-guard.png",
+      "sourceSha256": "05ac1c79f7d7e95b659269602233a170bc620b3e107a69c76717f4b97d5a51e9",
+      "status": "anchors-draft-fit-pending",
+      "main": {
+        "point": [
+          119,
+          79
+        ],
+        "angle": "diagonal"
+      },
+      "offHand": {
+        "point": [
+          109,
+          89
+        ],
+        "angle": "lowered"
+      },
+      "head": {
+        "point": [
+          94,
+          53
+        ],
+        "angle": "upright"
+      },
+      "back": [
+        77,
+        83
+      ],
+      "weaponLayer": "front",
+      "hiddenSlots": [],
+      "layers": {
+        "body": "../../equipment/starting-v1/fit-proof/tobin-ready/body.png",
+        "frontHand": "../../equipment/starting-v1/fit-proof/tobin-ready/front-hand.png",
+        "weapon": null,
+        "offHand": null,
+        "head": null,
+        "armour": null
+      }
+    },
+    "02-wind-up": {
+      "source": "poses/02-wind-up.png",
+      "sourceSha256": "cbddfb46df7727ad16698f6a1a1b24316472f7f73e252c01d94f96e386617cb1",
+      "status": "anchors-draft-fit-pending",
+      "main": {
+        "point": [
+          72,
+          54
+        ],
+        "angle": "back"
+      },
+      "offHand": {
+        "point": [
+          109,
+          88
+        ],
+        "angle": "lowered"
+      },
+      "head": {
+        "point": [
+          99,
+          53
+        ],
+        "angle": "upright"
+      },
+      "back": [
+        86,
+        83
+      ],
+      "weaponLayer": "behind",
+      "hiddenSlots": [],
+      "layers": {
+        "body": null,
+        "frontHand": null,
+        "weapon": null,
+        "offHand": null,
+        "head": null,
+        "armour": null
+      }
+    },
+    "03-strike": {
+      "source": "poses/03-strike.png",
+      "sourceSha256": "2f489bf66315b47db752fb7baadb072805a9242f95adff01f6205ed0c12634dc",
+      "status": "anchors-draft-fit-pending",
+      "main": {
+        "point": [
+          109,
+          100
+        ],
+        "angle": "down"
+      },
+      "offHand": {
+        "point": [
+          119,
+          87
+        ],
+        "angle": "lowered"
+      },
+      "head": {
+        "point": [
+          102,
+          56
+        ],
+        "angle": "upright"
+      },
+      "back": [
+        87,
+        84
+      ],
+      "weaponLayer": "front",
+      "hiddenSlots": [],
+      "layers": {
+        "body": null,
+        "frontHand": null,
+        "weapon": null,
+        "offHand": null,
+        "head": null,
+        "armour": null
+      }
+    },
+    "04-braced-block": {
+      "source": "poses/04-braced-block.png",
+      "sourceSha256": "48ff729de5cd10f7810562aceebd886412c1be37bde6ea43dad44ce4cd65f4c2",
+      "status": "anchors-draft-fit-pending",
+      "main": {
+        "point": [
+          87,
+          73
+        ],
+        "angle": "level"
+      },
+      "offHand": {
+        "point": [
+          119,
+          91
+        ],
+        "angle": "braced"
+      },
+      "head": {
+        "point": [
+          96,
+          53
+        ],
+        "angle": "upright"
+      },
+      "back": [
+        80,
+        83
+      ],
+      "weaponLayer": "front",
+      "hiddenSlots": [],
+      "layers": {
+        "body": null,
+        "frontHand": null,
+        "weapon": null,
+        "offHand": null,
+        "head": null,
+        "armour": null
+      }
+    },
+    "05-relaxed-camp": {
+      "source": "poses/05-relaxed-camp.png",
+      "sourceSha256": "38813c0654d1f2779ab59e3867b669e994b7e5e807dae307a54e1ac740942e0f",
+      "status": "anchors-draft-fit-pending",
+      "main": {
+        "point": [
+          73,
+          101
+        ],
+        "angle": "down"
+      },
+      "offHand": {
+        "point": [
+          111,
+          98
+        ],
+        "angle": "lowered"
+      },
+      "head": {
+        "point": [
+          94,
+          55
+        ],
+        "angle": "upright"
+      },
+      "back": [
+        75,
+        88
+      ],
+      "weaponLayer": "front",
+      "hiddenSlots": [],
+      "layers": {
+        "body": null,
+        "frontHand": null,
+        "weapon": null,
+        "offHand": null,
+        "head": null,
+        "armour": null
+      }
+    },
+    "06-hurt": {
+      "source": "poses/06-hurt.png",
+      "sourceSha256": "ef371a0f140e4a1161ba5bab489c8fed6a5ecd1be0b4cd442e3e0bb9b2374806",
+      "status": "anchors-draft-fit-pending",
+      "main": {
+        "point": [
+          115,
+          98
+        ],
+        "angle": "down"
+      },
+      "offHand": {
+        "point": [
+          108,
+          86
+        ],
+        "angle": "lowered"
+      },
+      "head": {
+        "point": [
+          86,
+          57
+        ],
+        "angle": "bowed"
+      },
+      "back": [
+        73,
+        88
+      ],
+      "weaponLayer": "front",
+      "hiddenSlots": [],
+      "layers": {
+        "body": null,
+        "frontHand": null,
+        "weapon": null,
+        "offHand": null,
+        "head": null,
+        "armour": null
+      }
+    },
+    "07-kneeling": {
+      "source": "poses/07-kneeling.png",
+      "sourceSha256": "2359b6cee6e1f2182a8a986986f30b2d23b6c2a4db072dbeffd1200300f41498",
+      "status": "anchors-draft-fit-pending",
+      "main": {
+        "point": [
+          120,
+          97
+        ],
+        "angle": "upright"
+      },
+      "offHand": {
+        "point": [
+          81,
+          113
+        ],
+        "angle": "lowered"
+      },
+      "head": {
+        "point": [
+          105,
+          75
+        ],
+        "angle": "bowed"
+      },
+      "back": [
+        89,
+        102
+      ],
+      "weaponLayer": "front",
+      "hiddenSlots": [],
+      "layers": {
+        "body": null,
+        "frontHand": null,
+        "weapon": null,
+        "offHand": null,
+        "head": null,
+        "armour": null
+      }
+    },
+    "08-fallen": {
+      "source": "poses/08-fallen.png",
+      "sourceSha256": "d625c04a6dd2569ddc515ced1d3f0a15056eb04c03b1471e4d48e7958f4bd14a",
+      "status": "anchors-draft-fit-pending",
+      "main": {
+        "point": [
+          163,
+          121
+        ],
+        "angle": "level"
+      },
+      "offHand": {
+        "point": [
+          176,
+          102
+        ],
+        "angle": "lowered"
+      },
+      "head": {
+        "point": [
+          200,
+          101
+        ],
+        "angle": "lying"
+      },
+      "back": [
+        164,
+        104
+      ],
+      "weaponLayer": "front",
+      "hiddenSlots": [],
+      "layers": {
+        "body": null,
+        "frontHand": null,
+        "weapon": null,
+        "offHand": null,
+        "head": null,
+        "armour": null
+      }
+    },
+    "g1-rest": {
+      "source": "gather/g1-rest.png",
+      "sourceSha256": "a467b12a643edd6b32fb49b5262395c822a79c721095b8285e81a12b1e5fae20",
+      "status": "grip-from-runtime-other-anchors-draft",
+      "main": {
+        "point": [
+          95,
+          96
+        ],
+        "angle": "down"
+      },
+      "offHand": {
+        "point": [
+          95,
+          96
+        ],
+        "angle": "braced"
+      },
+      "head": {
+        "point": [
+          99,
+          64
+        ],
+        "angle": "upright"
+      },
+      "back": [
+        83,
+        87
+      ],
+      "weaponLayer": "front",
+      "hiddenSlots": [
+        "weapon",
+        "offHand"
+      ],
+      "layers": {
+        "body": null,
+        "frontHand": null,
+        "weapon": null,
+        "offHand": null,
+        "head": null,
+        "armour": null
+      },
+      "gripProvenance": "src/js/64h-hero-sprites.js GRIP, approved gathering source coords",
+      "toolUse": {
+        "pick": {
+          "angle": "down",
+          "legacyDegrees": 35
+        },
+        "axe": {
+          "angle": "down",
+          "legacyDegrees": 35
+        },
+        "sickle": {
+          "angle": "down",
+          "legacyDegrees": 45
+        },
+        "spear": {
+          "angle": "diagonal",
+          "legacyDegrees": -25
+        }
+      }
+    },
+    "g2-forward": {
+      "source": "gather/g2-forward.png",
+      "sourceSha256": "9d7cc6430c00009b2d6780c5d7e49429b94695ac9c3756d4de0ff893c8462abf",
+      "status": "grip-from-runtime-other-anchors-draft",
+      "main": {
+        "point": [
+          85,
+          86
+        ],
+        "angle": "back"
+      },
+      "offHand": {
+        "point": [
+          85,
+          86
+        ],
+        "angle": "braced"
+      },
+      "head": {
+        "point": [
+          98,
+          65
+        ],
+        "angle": "upright"
+      },
+      "back": [
+        82,
+        88
+      ],
+      "weaponLayer": "front",
+      "hiddenSlots": [
+        "weapon",
+        "offHand"
+      ],
+      "layers": {
+        "body": null,
+        "frontHand": null,
+        "weapon": null,
+        "offHand": null,
+        "head": null,
+        "armour": null
+      },
+      "gripProvenance": "src/js/64h-hero-sprites.js GRIP, approved gathering source coords",
+      "toolUse": {
+        "sickle": {
+          "angle": "left-down",
+          "legacyDegrees": 200
+        }
+      }
+    },
+    "g3-shoulder": {
+      "source": "gather/g3-shoulder.png",
+      "sourceSha256": "7ff06d29877a60fd6837d316faa2f7a1030270690cfedc77ec70ba45cc385e78",
+      "status": "grip-from-runtime-other-anchors-draft",
+      "main": {
+        "point": [
+          71,
+          70
+        ],
+        "angle": "back"
+      },
+      "offHand": {
+        "point": [
+          71,
+          70
+        ],
+        "angle": "braced"
+      },
+      "head": {
+        "point": [
+          99,
+          64
+        ],
+        "angle": "upright"
+      },
+      "back": [
+        83,
+        87
+      ],
+      "weaponLayer": "behind",
+      "hiddenSlots": [
+        "weapon",
+        "offHand"
+      ],
+      "layers": {
+        "body": null,
+        "frontHand": null,
+        "weapon": null,
+        "offHand": null,
+        "head": null,
+        "armour": null
+      },
+      "gripProvenance": "src/js/64h-hero-sprites.js GRIP, approved gathering source coords",
+      "toolUse": {
+        "axe": {
+          "angle": "back",
+          "legacyDegrees": -150
+        },
+        "spear": {
+          "angle": "level",
+          "legacyDegrees": -8
+        }
+      }
+    },
+    "g4-overhead": {
+      "source": "gather/g4-overhead.png",
+      "sourceSha256": "7ae60290bef96a768fd29fbbc8bb2916815d11645cd8a6feaf4e5b1eba4bf386",
+      "status": "grip-from-runtime-other-anchors-draft",
+      "main": {
+        "point": [
+          86,
+          44
+        ],
+        "angle": "back"
+      },
+      "offHand": {
+        "point": [
+          86,
+          44
+        ],
+        "angle": "braced"
+      },
+      "head": {
+        "point": [
+          104,
+          59
+        ],
+        "angle": "upright"
+      },
+      "back": [
+        88,
+        82
+      ],
+      "weaponLayer": "behind",
+      "hiddenSlots": [
+        "weapon",
+        "offHand"
+      ],
+      "layers": {
+        "body": null,
+        "frontHand": null,
+        "weapon": null,
+        "offHand": null,
+        "head": null,
+        "armour": null
+      },
+      "gripProvenance": "src/js/64h-hero-sprites.js GRIP, approved gathering source coords",
+      "toolUse": {
+        "pick": {
+          "angle": "back",
+          "legacyDegrees": -125
+        }
+      }
+    },
+    "g5-low": {
+      "source": "gather/g5-low.png",
+      "sourceSha256": "01a762ce484593214f92120e7350c9099c6c0fcdbb1abec09479e9c11b64e48f",
+      "status": "grip-from-runtime-other-anchors-draft",
+      "main": {
+        "point": [
+          110,
+          95
+        ],
+        "angle": "down"
+      },
+      "offHand": {
+        "point": [
+          110,
+          95
+        ],
+        "angle": "braced"
+      },
+      "head": {
+        "point": [
+          103,
+          73
+        ],
+        "angle": "bowed"
+      },
+      "back": [
+        87,
+        96
+      ],
+      "weaponLayer": "front",
+      "hiddenSlots": [
+        "weapon",
+        "offHand"
+      ],
+      "layers": {
+        "body": null,
+        "frontHand": null,
+        "weapon": null,
+        "offHand": null,
+        "head": null,
+        "armour": null
+      },
+      "gripProvenance": "src/js/64h-hero-sprites.js GRIP, approved gathering source coords",
+      "toolUse": {
+        "pick": {
+          "angle": "down",
+          "legacyDegrees": 60
+        }
+      }
+    },
+    "g6-crouch": {
+      "source": "gather/g6-crouch.png",
+      "sourceSha256": "f40153a0f2f3edc3346096626b18e7bc4d44aa2fc78f59fc7f07ab3ea16746e2",
+      "status": "grip-from-runtime-other-anchors-draft",
+      "main": {
+        "point": [
+          100,
+          100
+        ],
+        "angle": "diagonal"
+      },
+      "offHand": {
+        "point": [
+          100,
+          100
+        ],
+        "angle": "braced"
+      },
+      "head": {
+        "point": [
+          103,
+          76
+        ],
+        "angle": "bowed"
+      },
+      "back": [
+        87,
+        99
+      ],
+      "weaponLayer": "front",
+      "hiddenSlots": [
+        "weapon",
+        "offHand"
+      ],
+      "layers": {
+        "body": null,
+        "frontHand": null,
+        "weapon": null,
+        "offHand": null,
+        "head": null,
+        "armour": null
+      },
+      "gripProvenance": "src/js/64h-hero-sprites.js GRIP, approved gathering source coords",
+      "toolUse": {
+        "sickle": {
+          "angle": "down",
+          "legacyDegrees": 25
+        }
+      }
+    },
+    "g7-level": {
+      "source": "gather/g7-level.png",
+      "sourceSha256": "0b3bdf9577d60a3010a1a451595302f74782e7c1f2cfc830ed16bd1cf9ee18c5",
+      "status": "grip-from-runtime-other-anchors-draft",
+      "main": {
+        "point": [
+          125,
+          85
+        ],
+        "angle": "level"
+      },
+      "offHand": {
+        "point": [
+          125,
+          85
+        ],
+        "angle": "braced"
+      },
+      "head": {
+        "point": [
+          104,
+          73
+        ],
+        "angle": "upright"
+      },
+      "back": [
+        88,
+        96
+      ],
+      "weaponLayer": "front",
+      "hiddenSlots": [
+        "weapon",
+        "offHand"
+      ],
+      "layers": {
+        "body": null,
+        "frontHand": null,
+        "weapon": null,
+        "offHand": null,
+        "head": null,
+        "armour": null
+      },
+      "gripProvenance": "src/js/64h-hero-sprites.js GRIP, approved gathering source coords",
+      "toolUse": {
+        "axe": {
+          "angle": "level",
+          "legacyDegrees": 0
+        },
+        "spear": {
+          "angle": "level",
+          "legacyDegrees": 0
+        }
+      }
+    }
+  }
+}

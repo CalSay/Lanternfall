@@ -1,0 +1,306 @@
+{
+  "axe-g1": {
+    "itemName": "Copper Woodaxe",
+    "material": "Copper",
+    "family": "ore",
+    "grade": 1,
+    "iconApproval": "owner-approved",
+    "sourceAtlas": "tools1detail.png",
+    "sourceRoot": "../review-extended",
+    "sourceRectXYWH": [
+      256,
+      0,
+      241,
+      251
+    ],
+    "sourceAtlasSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
+    "cropSha256": "e8dc887351c85f66f1f83e0b796eb4bf8cae51972b11512415f5ff0cb6643ae0",
+    "sourceBranch": "codex/c26-gear-grades-6-15",
+    "sourceCommit": "2396e8a"
+  },
+  "bow-g1": {
+    "itemName": "Pine Bow",
+    "material": "Pine",
+    "family": "wood",
+    "grade": 1,
+    "iconApproval": "owner-approved",
+    "sourceAtlas": "bow-angle-v2.png",
+    "sourceRoot": "../review-extended",
+    "sourceRectXYWH": [
+      0,
+      0,
+      324,
+      324
+    ],
+    "sourceAtlasSha256": "2ac2063ad75508af681a34191911f149bb844e6e6650ccfb3d3fb9802b69ce9c",
+    "cropSha256": "fc7c560682fa97b6d679a53e9eae20bcf88eae1c50ce269471658fe1be85a395",
+    "sourceBranch": "codex/c26-gear-grades-6-15",
+    "sourceCommit": "2396e8a"
+  },
+  "circlet-g1": {
+    "itemName": "Quartz Circlet",
+    "material": "Quartz",
+    "family": "crystal",
+    "grade": 1,
+    "iconApproval": "owner-approved",
+    "sourceAtlas": "caster.png",
+    "sourceRoot": "../review-v1",
+    "sourceRectXYWH": [
+      327,
+      94,
+      201,
+      110
+    ],
+    "sourceAtlasSha256": "a42764c7f83c7b40d58f7726abbf93caeb4943c69956f689dd649c4d37e98caa",
+    "cropSha256": "13b0c8c95a0ab2a0a32ddb4826b6cde3046f67f60f623285c141aca200c97105",
+    "sourceBranch": "codex/c26-gear-grades-6-15",
+    "sourceCommit": "2396e8a"
+  },
+  "greathelm-g1": {
+    "itemName": "Copper Greathelm",
+    "material": "Copper",
+    "family": "ore",
+    "grade": 1,
+    "iconApproval": "owner-approved",
+    "sourceAtlas": "armour1detail.png",
+    "sourceRoot": "../review-extended",
+    "sourceRectXYWH": [
+      561,
+      0,
+      236,
+      257
+    ],
+    "sourceAtlasSha256": "6e794506d033ff9fd119dcfe033e153c59e714c6c96915cd7225e6469ce6222d",
+    "cropSha256": "ef51f082201374260e91ce9b24ff1dea2b9e2678b9ebdce3c45dbf83cc50292a",
+    "sourceBranch": "codex/c26-gear-grades-6-15",
+    "sourceCommit": "2396e8a"
+  },
+  "hood-g1": {
+    "itemName": "Bristlehide Hood",
+    "material": "Bristlehide",
+    "family": "hide",
+    "grade": 1,
+    "iconApproval": "owner-approved",
+    "sourceAtlas": "clothing.png",
+    "sourceRoot": "../review-v1",
+    "sourceRectXYWH": [
+      215,
+      31,
+      148,
+      181
+    ],
+    "sourceAtlasSha256": "7564158f2d8e9b28ec64f5939a1b947a84687a4891f53f22ff83aa9007070ba6",
+    "cropSha256": "5b4593fcd25a5750d8d0fc76f492e6c5aa207c18cc1a3df8b826575c27997921",
+    "sourceBranch": "codex/c26-gear-grades-6-15",
+    "sourceCommit": "2396e8a"
+  },
+  "lantern-g1": {
+    "itemName": "Quartz Lantern",
+    "material": "Quartz",
+    "family": "crystal",
+    "grade": 1,
+    "iconApproval": "owner-approved",
+    "sourceAtlas": "caster.png",
+    "sourceRoot": "../review-v1",
+    "sourceRectXYWH": [
+      84,
+      20,
+      124,
+      228
+    ],
+    "sourceAtlasSha256": "a42764c7f83c7b40d58f7726abbf93caeb4943c69956f689dd649c4d37e98caa",
+    "cropSha256": "047800538dd4372ec215929949374a8e5ed935d0cb1871723acffb3b05765a83",
+    "sourceBranch": "codex/c26-gear-grades-6-15",
+    "sourceCommit": "2396e8a"
+  },
+  "leathers-g1": {
+    "itemName": "Bristlehide Leathers",
+    "material": "Bristlehide",
+    "family": "hide",
+    "grade": 1,
+    "iconApproval": "owner-approved",
+    "sourceAtlas": "clothing.png",
+    "sourceRoot": "../review-v1",
+    "sourceRectXYWH": [
+      469,
+      32,
+      181,
+      182
+    ],
+    "sourceAtlasSha256": "7564158f2d8e9b28ec64f5939a1b947a84687a4891f53f22ff83aa9007070ba6",
+    "cropSha256": "3dcb31f4ce3db77a9db83e437446e0cb005eeb5243b05919adebe6a36d1db2e9",
+    "sourceBranch": "codex/c26-gear-grades-6-15",
+    "sourceCommit": "2396e8a"
+  },
+  "pick-g1": {
+    "itemName": "Copper Pickaxe",
+    "material": "Copper",
+    "family": "ore",
+    "grade": 1,
+    "iconApproval": "owner-approved",
+    "sourceAtlas": "tools1detail.png",
+    "sourceRoot": "../review-extended",
+    "sourceRectXYWH": [
+      0,
+      0,
+      256,
+      251
+    ],
+    "sourceAtlasSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
+    "cropSha256": "1826110ef3d093bf8d092880708bbe42e7b85e1618815800b725577d993a4b58",
+    "sourceBranch": "codex/c26-gear-grades-6-15",
+    "sourceCommit": "2396e8a"
+  },
+  "plate-g1": {
+    "itemName": "Copper Plate",
+    "material": "Copper",
+    "family": "ore",
+    "grade": 1,
+    "iconApproval": "owner-approved",
+    "sourceAtlas": "armour1detail.png",
+    "sourceRoot": "../review-extended",
+    "sourceRectXYWH": [
+      797,
+      0,
+      325,
+      257
+    ],
+    "sourceAtlasSha256": "6e794506d033ff9fd119dcfe033e153c59e714c6c96915cd7225e6469ce6222d",
+    "cropSha256": "724209a1550cb0218ece1c12b262bdf805db118c49d065b74ecced7b40c0777c",
+    "sourceBranch": "codex/c26-gear-grades-6-15",
+    "sourceCommit": "2396e8a"
+  },
+  "quiver-g1": {
+    "itemName": "Bristlehide Quiver",
+    "material": "Bristlehide",
+    "family": "hide",
+    "grade": 1,
+    "iconApproval": "owner-approved",
+    "sourceAtlas": "weapons.png",
+    "sourceRoot": "../review-v1",
+    "sourceRectXYWH": [
+      1063,
+      28,
+      127,
+      190
+    ],
+    "sourceAtlasSha256": "d070c2923b98ea6d4519ee4131b9e6bfe781101f5875debd7afe20d3cd4cb073",
+    "cropSha256": "bb61ed56ab1ee32febf99b74d5b13cf4b2a7e8a0efb8cdae88c13c4304c1fa8d",
+    "sourceBranch": "codex/c26-gear-grades-6-15",
+    "sourceCommit": "2396e8a"
+  },
+  "robe-g1": {
+    "itemName": "Hemp Fibre Robe",
+    "material": "Hemp Fibre",
+    "family": "fibre",
+    "grade": 1,
+    "iconApproval": "owner-approved",
+    "sourceAtlas": "caster.png",
+    "sourceRoot": "../review-v1",
+    "sourceRectXYWH": [
+      611,
+      25,
+      170,
+      232
+    ],
+    "sourceAtlasSha256": "a42764c7f83c7b40d58f7726abbf93caeb4943c69956f689dd649c4d37e98caa",
+    "cropSha256": "5fdf48a8117c018e2b37926d10a9c37368affc4d2a6738b00f31efb22dcc9567",
+    "sourceBranch": "codex/c26-gear-grades-6-15",
+    "sourceCommit": "2396e8a"
+  },
+  "shield-g1": {
+    "itemName": "Copper Shield",
+    "material": "Copper",
+    "family": "ore",
+    "grade": 1,
+    "iconApproval": "owner-approved",
+    "sourceAtlas": "armour1detail.png",
+    "sourceRoot": "../review-extended",
+    "sourceRectXYWH": [
+      282,
+      0,
+      279,
+      257
+    ],
+    "sourceAtlasSha256": "6e794506d033ff9fd119dcfe033e153c59e714c6c96915cd7225e6469ce6222d",
+    "cropSha256": "8e765c51c356ded6e3fba1d5a0dec98d43153a9affc34ae1cd8ac1898821e969",
+    "sourceBranch": "codex/c26-gear-grades-6-15",
+    "sourceCommit": "2396e8a"
+  },
+  "sickle-g1": {
+    "itemName": "Copper Sickle",
+    "material": "Copper",
+    "family": "ore",
+    "grade": 1,
+    "iconApproval": "owner-approved",
+    "sourceAtlas": "tools1detail.png",
+    "sourceRoot": "../review-extended",
+    "sourceRectXYWH": [
+      497,
+      0,
+      244,
+      251
+    ],
+    "sourceAtlasSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
+    "cropSha256": "9352b2ee0e57caedea8d166a15ff1e7997bc9438ef828642bba5ff8db6dac6bc",
+    "sourceBranch": "codex/c26-gear-grades-6-15",
+    "sourceCommit": "2396e8a"
+  },
+  "spear-g1": {
+    "itemName": "Copper Hunting Spear",
+    "material": "Copper",
+    "family": "ore",
+    "grade": 1,
+    "iconApproval": "owner-approved",
+    "sourceAtlas": "tools1detail.png",
+    "sourceRoot": "../review-extended",
+    "sourceRectXYWH": [
+      741,
+      0,
+      243,
+      251
+    ],
+    "sourceAtlasSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
+    "cropSha256": "223aa744a8cf292fb060364b61f36dfeba5548ac7e915b4ea81e71f00edaefc8",
+    "sourceBranch": "codex/c26-gear-grades-6-15",
+    "sourceCommit": "2396e8a"
+  },
+  "staff-g1": {
+    "itemName": "Pine Staff",
+    "material": "Pine",
+    "family": "wood",
+    "grade": 1,
+    "iconApproval": "owner-approved",
+    "sourceAtlas": "weapons.png",
+    "sourceRoot": "../review-v1",
+    "sourceRectXYWH": [
+      481,
+      16,
+      127,
+      203
+    ],
+    "sourceAtlasSha256": "d070c2923b98ea6d4519ee4131b9e6bfe781101f5875debd7afe20d3cd4cb073",
+    "cropSha256": "0dd2e855310d0b0320f20d08c42bdb912c7cb0dd5f3836813582a1060557bf05",
+    "sourceBranch": "codex/c26-gear-grades-6-15",
+    "sourceCommit": "2396e8a"
+  },
+  "warblade-g1": {
+    "itemName": "Copper Warblade",
+    "material": "Copper",
+    "family": "ore",
+    "grade": 1,
+    "iconApproval": "owner-approved",
+    "sourceAtlas": "armour1detail.png",
+    "sourceRoot": "../review-extended",
+    "sourceRectXYWH": [
+      0,
+      0,
+      282,
+      257
+    ],
+    "sourceAtlasSha256": "6e794506d033ff9fd119dcfe033e153c59e714c6c96915cd7225e6469ce6222d",
+    "cropSha256": "c95ca7965c9427a0653c77204fda7052a42b120d5cd125b14da721dee1ca4056",
+    "sourceBranch": "codex/c26-gear-grades-6-15",
+    "sourceCommit": "2396e8a"
+  }
+}

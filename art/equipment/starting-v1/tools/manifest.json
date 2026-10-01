@@ -1,0 +1,482 @@
+{
+  "status": "draft-not-approved",
+  "ramps": {
+    "outline": [
+      "1c161e"
+    ],
+    "primary": [
+      "542e26",
+      "a94e32",
+      "c25836",
+      "e57041",
+      "faa76c"
+    ],
+    "secondary": [
+      "44211f",
+      "703a2a",
+      "b26a40",
+      "e19a58"
+    ],
+    "trim": [
+      "64584a",
+      "b1a68b",
+      "ecd7a8"
+    ],
+    "glow": [
+      "654231",
+      "d2a568",
+      "fff0cc"
+    ]
+  },
+  "items": [
+    {
+      "kind": "pick",
+      "angle": "down",
+      "file": "pick-down.png",
+      "canvas": [
+        80,
+        80
+      ],
+      "grip": [
+        40,
+        40
+      ],
+      "source": "../sources/pick-angles.png",
+      "sourceGrip": [
+        290,
+        280
+      ],
+      "scale": 0.12,
+      "sourceSha256": "2e2efdb6b4b0310256ab995307d87b15dfc5e05d26a18bc7acfbff3559bb76c8",
+      "sha256": "39ea44d8dffd3fa3cdb141c72f8cead03f80176c24a68c4d89374d0dc4faed3e",
+      "bbox": [
+        24,
+        21,
+        70,
+        70
+      ],
+      "status": "needs-native-fit-review"
+    },
+    {
+      "kind": "pick",
+      "angle": "back",
+      "file": "pick-back.png",
+      "canvas": [
+        80,
+        80
+      ],
+      "grip": [
+        40,
+        40
+      ],
+      "source": "../sources/pick-angles.png",
+      "sourceGrip": [
+        985,
+        375
+      ],
+      "scale": 0.12,
+      "sourceSha256": "2e2efdb6b4b0310256ab995307d87b15dfc5e05d26a18bc7acfbff3559bb76c8",
+      "sha256": "ee017e11ee270d6fc65c05939dc93dac3b8d22bba3a1f9377d8f4d6816274124",
+      "bbox": [
+        10,
+        10,
+        58,
+        61
+      ],
+      "status": "needs-native-fit-review"
+    },
+    {
+      "kind": "pick",
+      "angle": "upright",
+      "file": "pick-upright.png",
+      "canvas": [
+        80,
+        80
+      ],
+      "grip": [
+        40,
+        40
+      ],
+      "source": "../sources/pick-angles.png",
+      "sourceGrip": [
+        315,
+        990
+      ],
+      "scale": 0.12,
+      "sourceSha256": "2e2efdb6b4b0310256ab995307d87b15dfc5e05d26a18bc7acfbff3559bb76c8",
+      "sha256": "6aa9aab00bf2fda4cc5078402ab509d6275065be1381b3118196ec168386e4c0",
+      "bbox": [
+        17,
+        5,
+        63,
+        58
+      ],
+      "status": "needs-native-fit-review"
+    },
+    {
+      "kind": "pick",
+      "angle": "level",
+      "file": "pick-level.png",
+      "canvas": [
+        80,
+        80
+      ],
+      "grip": [
+        40,
+        40
+      ],
+      "source": "../sources/pick-angles.png",
+      "sourceGrip": [
+        850,
+        925
+      ],
+      "scale": 0.12,
+      "sourceSha256": "2e2efdb6b4b0310256ab995307d87b15dfc5e05d26a18bc7acfbff3559bb76c8",
+      "sha256": "c7d13476575f7e08ce1657aea00f8017a066497a00564bd9bca917ccee641df4",
+      "bbox": [
+        23,
+        18,
+        78,
+        60
+      ],
+      "status": "needs-native-fit-review"
+    },
+    {
+      "kind": "axe",
+      "angle": "down",
+      "file": "axe-down.png",
+      "canvas": [
+        80,
+        80
+      ],
+      "grip": [
+        40,
+        40
+      ],
+      "source": "../sources/axe-angles.png",
+      "sourceGrip": [
+        280,
+        255
+      ],
+      "scale": 0.12,
+      "sourceSha256": "d723cd8ea1bb729bc896d6cd59f91a399b1ff099aa88ecb0e935657781ec0f77",
+      "sha256": "a4e2ef16bdba9dede5a63f5a16757cfa266cd6a3734b5a415b41eeb9ae6bacfc",
+      "bbox": [
+        22,
+        21,
+        72,
+        78
+      ],
+      "status": "needs-native-fit-review"
+    },
+    {
+      "kind": "axe",
+      "angle": "back",
+      "file": "axe-back.png",
+      "canvas": [
+        80,
+        80
+      ],
+      "grip": [
+        40,
+        40
+      ],
+      "source": "../sources/axe-angles.png",
+      "sourceGrip": [
+        960,
+        350
+      ],
+      "scale": 0.12,
+      "sourceSha256": "d723cd8ea1bb729bc896d6cd59f91a399b1ff099aa88ecb0e935657781ec0f77",
+      "sha256": "9e31e324a8684a63e618e0eef705eac4db627250e5ab3491386160a05455ba10",
+      "bbox": [
+        4,
+        5,
+        63,
+        63
+      ],
+      "status": "needs-native-fit-review"
+    },
+    {
+      "kind": "axe",
+      "angle": "upright",
+      "file": "axe-upright.png",
+      "canvas": [
+        80,
+        80
+      ],
+      "grip": [
+        40,
+        40
+      ],
+      "source": "../sources/axe-angles.png",
+      "sourceGrip": [
+        335,
+        1000
+      ],
+      "scale": 0.12,
+      "sourceSha256": "d723cd8ea1bb729bc896d6cd59f91a399b1ff099aa88ecb0e935657781ec0f77",
+      "sha256": "9d1d4c69dc57fb3b7fc206542ffd71745b7cbf8ac6179bce8706e5abc79c0457",
+      "bbox": [
+        22,
+        2,
+        48,
+        62
+      ],
+      "status": "needs-native-fit-review"
+    },
+    {
+      "kind": "axe",
+      "angle": "level",
+      "file": "axe-level.png",
+      "canvas": [
+        80,
+        80
+      ],
+      "grip": [
+        40,
+        40
+      ],
+      "source": "../sources/axe-angles.png",
+      "sourceGrip": [
+        900,
+        915
+      ],
+      "scale": 0.12,
+      "sourceSha256": "d723cd8ea1bb729bc896d6cd59f91a399b1ff099aa88ecb0e935657781ec0f77",
+      "sha256": "a05cd1e46f960c9fa032ffedfb4e452ffaf165bf5bafa1c52c0e90134c547640",
+      "bbox": [
+        12,
+        24,
+        77,
+        56
+      ],
+      "status": "needs-native-fit-review"
+    },
+    {
+      "kind": "sickle",
+      "angle": "down",
+      "file": "sickle-down.png",
+      "canvas": [
+        80,
+        80
+      ],
+      "grip": [
+        40,
+        40
+      ],
+      "source": "../sources/sickle-angles.png",
+      "sourceGrip": [
+        215,
+        235
+      ],
+      "scale": 0.1,
+      "sourceSha256": "8d824a03087f553afc50b67d36f6a0890f40730cda9957a900190c250d1d95e6",
+      "sha256": "f3241f7ac79296b46f8bcf6464fb8f6cf4ce1faa55b9b117d2e6f10322ee3f3a",
+      "bbox": [
+        32,
+        32,
+        76,
+        68
+      ],
+      "status": "needs-native-fit-review"
+    },
+    {
+      "kind": "sickle",
+      "angle": "back",
+      "file": "sickle-back.png",
+      "canvas": [
+        80,
+        80
+      ],
+      "grip": [
+        40,
+        40
+      ],
+      "source": "../sources/sickle-angles.png",
+      "sourceGrip": [
+        1030,
+        475
+      ],
+      "scale": 0.1,
+      "sourceSha256": "8d824a03087f553afc50b67d36f6a0890f40730cda9957a900190c250d1d95e6",
+      "sha256": "b3b591dfbd08b4655baecf629fbb06d5e259732702bbb7906a0301b763e67b9a",
+      "bbox": [
+        11,
+        4,
+        49,
+        47
+      ],
+      "status": "needs-native-fit-review"
+    },
+    {
+      "kind": "sickle",
+      "angle": "upright",
+      "file": "sickle-upright.png",
+      "canvas": [
+        80,
+        80
+      ],
+      "grip": [
+        40,
+        40
+      ],
+      "source": "../sources/sickle-angles.png",
+      "sourceGrip": [
+        400,
+        1060
+      ],
+      "scale": 0.1,
+      "sourceSha256": "8d824a03087f553afc50b67d36f6a0890f40730cda9957a900190c250d1d95e6",
+      "sha256": "2aac0341041b7e022a874f4dd2515a63113d739502674c6a410cf15a72ca1925",
+      "bbox": [
+        16,
+        4,
+        47,
+        50
+      ],
+      "status": "needs-native-fit-review"
+    },
+    {
+      "kind": "sickle",
+      "angle": "level",
+      "file": "sickle-level.png",
+      "canvas": [
+        80,
+        80
+      ],
+      "grip": [
+        40,
+        40
+      ],
+      "source": "../sources/sickle-angles.png",
+      "sourceGrip": [
+        840,
+        950
+      ],
+      "scale": 0.1,
+      "sourceSha256": "8d824a03087f553afc50b67d36f6a0890f40730cda9957a900190c250d1d95e6",
+      "sha256": "cabfa94de8789e5dd9ee98189160939e03ba7fc094efb31e9c66561d1a693902",
+      "bbox": [
+        25,
+        19,
+        74,
+        51
+      ],
+      "status": "needs-native-fit-review"
+    },
+    {
+      "kind": "spear",
+      "angle": "down",
+      "file": "spear-down.png",
+      "canvas": [
+        80,
+        80
+      ],
+      "grip": [
+        40,
+        40
+      ],
+      "source": "../sources/spear-angles.png",
+      "sourceGrip": [
+        285,
+        295
+      ],
+      "scale": 0.12,
+      "sourceSha256": "a3d7df752f4bded1e9e835d1a58cce732faaa72f52e38773bef72de0fdd7618e",
+      "sha256": "5384985f19060d7277164f83f4ee594a13451c252e6a5f440b329b7e41d25252",
+      "bbox": [
+        21,
+        20,
+        71,
+        70
+      ],
+      "status": "needs-native-fit-review"
+    },
+    {
+      "kind": "spear",
+      "angle": "back",
+      "file": "spear-back.png",
+      "canvas": [
+        80,
+        80
+      ],
+      "grip": [
+        40,
+        40
+      ],
+      "source": "../sources/spear-angles.png",
+      "sourceGrip": [
+        980,
+        380
+      ],
+      "scale": 0.12,
+      "sourceSha256": "a3d7df752f4bded1e9e835d1a58cce732faaa72f52e38773bef72de0fdd7618e",
+      "sha256": "95cf0725e0a288ab9ecdfad955aedc65cffd2e597dd5399fa6f9021b066ec8f8",
+      "bbox": [
+        9,
+        4,
+        59,
+        58
+      ],
+      "status": "needs-native-fit-review"
+    },
+    {
+      "kind": "spear",
+      "angle": "upright",
+      "file": "spear-upright.png",
+      "canvas": [
+        80,
+        80
+      ],
+      "grip": [
+        40,
+        40
+      ],
+      "source": "../sources/spear-angles.png",
+      "sourceGrip": [
+        310,
+        970
+      ],
+      "scale": 0.12,
+      "sourceSha256": "a3d7df752f4bded1e9e835d1a58cce732faaa72f52e38773bef72de0fdd7618e",
+      "sha256": "988a4a25628c25f382c41c61e5824c685a2d4894fcb175a889f2fd6a1923fc7a",
+      "bbox": [
+        33,
+        3,
+        48,
+        67
+      ],
+      "status": "needs-native-fit-review"
+    },
+    {
+      "kind": "spear",
+      "angle": "level",
+      "file": "spear-level.png",
+      "canvas": [
+        80,
+        80
+      ],
+      "grip": [
+        40,
+        40
+      ],
+      "source": "../sources/spear-angles.png",
+      "sourceGrip": [
+        910,
+        915
+      ],
+      "scale": 0.12,
+      "sourceSha256": "a3d7df752f4bded1e9e835d1a58cce732faaa72f52e38773bef72de0fdd7618e",
+      "sha256": "dc9cbf96ba1284463b450beafef912dc9cb204529a646436e5ac89bf297a0c32",
+      "bbox": [
+        9,
+        31,
+        76,
+        47
+      ],
+      "status": "needs-native-fit-review"
+    }
+  ],
+  "rotationUsed": false
+}

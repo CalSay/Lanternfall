@@ -1,0 +1,346 @@
+{
+  "version": 1,
+  "hero": "wren",
+  "status": "draft-not-integration-ready",
+  "canvas": [
+    224,
+    192
+  ],
+  "groundAnchor": [
+    96,
+    132
+  ],
+  "poseCount": 8,
+  "missingPoses": [
+    "g1-rest",
+    "g2-forward",
+    "g3-shoulder",
+    "g4-overhead",
+    "g5-low",
+    "g6-crouch",
+    "g7-level"
+  ],
+  "anglePolicy": "Authored named views only. No code rotation. Extra backswing/diagonal views required for exact pose fit.",
+  "poses": {
+    "defensive-brace": {
+      "source": "poses/defensive-brace.png",
+      "sourceSha256": "dcbcaa6447c1bab3d6c2439ff12d94ea5283bc2dde12c20a7b33dbfdf0959931",
+      "status": "anchors-draft-fit-pending",
+      "main": {
+        "point": [
+          119,
+          76
+        ],
+        "angle": "upright"
+      },
+      "offHand": {
+        "point": [
+          90,
+          85
+        ],
+        "angle": "braced"
+      },
+      "head": {
+        "point": [
+          95,
+          60
+        ],
+        "angle": "upright"
+      },
+      "back": [
+        76,
+        84
+      ],
+      "weaponLayer": "front",
+      "hiddenSlots": [],
+      "layers": {
+        "body": null,
+        "frontHand": null,
+        "weapon": null,
+        "offHand": null,
+        "head": null,
+        "armour": null
+      }
+    },
+    "fallen": {
+      "source": "poses/fallen.png",
+      "sourceSha256": "069cef27ccefcb132921c33f439deea2fee4323153d94d1a65ed4047b5071cd6",
+      "status": "anchors-draft-fit-pending",
+      "main": {
+        "point": [
+          124,
+          127
+        ],
+        "angle": "level"
+      },
+      "offHand": {
+        "point": [
+          150,
+          116
+        ],
+        "angle": "lowered"
+      },
+      "head": {
+        "point": [
+          153,
+          112
+        ],
+        "angle": "lying"
+      },
+      "back": [
+        129,
+        114
+      ],
+      "weaponLayer": "front",
+      "hiddenSlots": [],
+      "layers": {
+        "body": null,
+        "frontHand": null,
+        "weapon": null,
+        "offHand": null,
+        "head": null,
+        "armour": null
+      }
+    },
+    "full-draw": {
+      "source": "poses/full-draw.png",
+      "sourceSha256": "da084835dd259519afe7531c947f5eadb66ae9928f87d9fd6863f07fdb8bd78e",
+      "status": "anchors-draft-fit-pending",
+      "main": {
+        "point": [
+          139,
+          78
+        ],
+        "angle": "upright"
+      },
+      "offHand": {
+        "point": [
+          77,
+          75
+        ],
+        "angle": "lowered"
+      },
+      "head": {
+        "point": [
+          96,
+          63
+        ],
+        "angle": "upright"
+      },
+      "back": [
+        75,
+        90
+      ],
+      "weaponLayer": "front",
+      "hiddenSlots": [],
+      "layers": {
+        "body": null,
+        "frontHand": null,
+        "weapon": null,
+        "offHand": null,
+        "head": null,
+        "armour": null
+      }
+    },
+    "hurt": {
+      "source": "poses/hurt.png",
+      "sourceSha256": "680a2cf618c34cdbada4cf70cb89013c486a77cd364340436b5a64511ae82188",
+      "status": "anchors-draft-fit-pending",
+      "main": {
+        "point": [
+          124,
+          93
+        ],
+        "angle": "diagonal"
+      },
+      "offHand": {
+        "point": [
+          97,
+          76
+        ],
+        "angle": "lowered"
+      },
+      "head": {
+        "point": [
+          97,
+          64
+        ],
+        "angle": "bowed"
+      },
+      "back": [
+        77,
+        90
+      ],
+      "weaponLayer": "front",
+      "hiddenSlots": [],
+      "layers": {
+        "body": null,
+        "frontHand": null,
+        "weapon": null,
+        "offHand": null,
+        "head": null,
+        "armour": null
+      }
+    },
+    "just-released": {
+      "source": "poses/just-released.png",
+      "sourceSha256": "affde67e3958c9df1482e98a901c7a897c7f8c1bb1d7b17a65bba2580c4233a2",
+      "status": "anchors-draft-fit-pending",
+      "main": {
+        "point": [
+          144,
+          77
+        ],
+        "angle": "upright"
+      },
+      "offHand": {
+        "point": [
+          82,
+          73
+        ],
+        "angle": "lowered"
+      },
+      "head": {
+        "point": [
+          95,
+          61
+        ],
+        "angle": "upright"
+      },
+      "back": [
+        74,
+        87
+      ],
+      "weaponLayer": "front",
+      "hiddenSlots": [],
+      "layers": {
+        "body": null,
+        "frontHand": null,
+        "weapon": null,
+        "offHand": null,
+        "head": null,
+        "armour": null
+      }
+    },
+    "kneeling": {
+      "source": "poses/kneeling.png",
+      "sourceSha256": "e75180398db1ab5119e6f16ca217ecea2cafafb6b16aa5d0d21374f6b2c8847c",
+      "status": "anchors-draft-fit-pending",
+      "main": {
+        "point": [
+          121,
+          119
+        ],
+        "angle": "upright"
+      },
+      "offHand": {
+        "point": [
+          84,
+          108
+        ],
+        "angle": "lowered"
+      },
+      "head": {
+        "point": [
+          96,
+          94
+        ],
+        "angle": "bowed"
+      },
+      "back": [
+        77,
+        110
+      ],
+      "weaponLayer": "front",
+      "hiddenSlots": [],
+      "layers": {
+        "body": null,
+        "frontHand": null,
+        "weapon": null,
+        "offHand": null,
+        "head": null,
+        "armour": null
+      }
+    },
+    "relaxed-camp": {
+      "source": "poses/relaxed-camp.png",
+      "sourceSha256": "c8aa0f75e50f11dc49d757da6a5b18667d952bd11fcc8fa4deb136b5233275ec",
+      "status": "anchors-draft-fit-pending",
+      "main": {
+        "point": [
+          78,
+          86
+        ],
+        "angle": "back"
+      },
+      "offHand": {
+        "point": [
+          105,
+          92
+        ],
+        "angle": "lowered"
+      },
+      "head": {
+        "point": [
+          96,
+          65
+        ],
+        "angle": "upright"
+      },
+      "back": [
+        75,
+        92
+      ],
+      "weaponLayer": "behind",
+      "hiddenSlots": [],
+      "layers": {
+        "body": null,
+        "frontHand": null,
+        "weapon": null,
+        "offHand": null,
+        "head": null,
+        "armour": null
+      }
+    },
+    "wind-up": {
+      "source": "poses/wind-up.png",
+      "sourceSha256": "0e41f7cd786def2625dad0e994b41c7854a2442a7573a7b3347125e246dd420f",
+      "status": "anchors-draft-fit-pending",
+      "main": {
+        "point": [
+          125,
+          93
+        ],
+        "angle": "diagonal"
+      },
+      "offHand": {
+        "point": [
+          90,
+          80
+        ],
+        "angle": "lowered"
+      },
+      "head": {
+        "point": [
+          98,
+          68
+        ],
+        "angle": "upright"
+      },
+      "back": [
+        76,
+        95
+      ],
+      "weaponLayer": "behind",
+      "hiddenSlots": [],
+      "layers": {
+        "body": null,
+        "frontHand": null,
+        "weapon": null,
+        "offHand": null,
+        "head": null,
+        "armour": null
+      }
+    }
+  }
+}

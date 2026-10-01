@@ -1,0 +1,79 @@
+[
+  {
+    "name": "g1-rest",
+    "args": {
+      "prompt": "Use case: precise-object-edit. Image1 is the EXACT approved Tobin g1-rest gathering pose. Image2 shows his plain-clothes base design (appearance only, do not copy its pose). Edit image1 ONLY to remove cream cap, metal shoulder/body armour, apron and belt ornaments, replacing them with the simple forest-green short-sleeve shirt and plain brown trousers in image2. Keep original red scarf, red cape, EXACT brown fringe and face, entire arms and hands in the exact pose, gloves and boots. No tools/weapons. For g1-rest, preserve the existing gesture and both fists in their exact canvas positions. STRICT same224x192native canvas, original96pixelhero scale, feet on(96,132), nozoom/recenter. Do not change limb anatomy, face, expression, boots or cape. Newcaplesshair shouldmatch image2. Strict crispchunky pixelart, broadflatclusters, original40colourpalette, dark1pixeloutline, transparentbackground. OnefullconnectedTobin in ORIGINAL image1pose, no text or extra objects.",
+      "referenced_image_paths": [
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/heroes/tobin/gather/g1-rest.png",
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/equipment/starting-v1/fit-proof/tobin-ready/base-combined.png"
+      ],
+      "transparent_background": true
+    }
+  },
+  {
+    "name": "g2-forward",
+    "args": {
+      "prompt": "Use case: precise-object-edit. Image1 is the EXACT approved Tobin g2-forward gathering pose. Image2 shows his plain-clothes base design (appearance only, do not copy its pose). Edit image1 ONLY to remove cream cap, metal shoulder/body armour, apron and belt ornaments, replacing them with the simple forest-green short-sleeve shirt and plain brown trousers in image2. Keep original red scarf, red cape, EXACT brown fringe and face, entire arms and hands in the exact pose, gloves and boots. No tools/weapons. For g2-forward, preserve the existing gesture and both fists in their exact canvas positions. STRICT same224x192native canvas, original96pixelhero scale, feet on(96,132), nozoom/recenter. Do not change limb anatomy, face, expression, boots or cape. Newcaplesshair shouldmatch image2. Strict crispchunky pixelart, broadflatclusters, original40colourpalette, dark1pixeloutline, transparentbackground. OnefullconnectedTobin in ORIGINAL image1pose, no text or extra objects.",
+      "referenced_image_paths": [
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/heroes/tobin/gather/g2-forward.png",
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/equipment/starting-v1/fit-proof/tobin-ready/base-combined.png"
+      ],
+      "transparent_background": true
+    }
+  },
+  {
+    "name": "g3-shoulder",
+    "args": {
+      "prompt": "Use case: precise-object-edit. Image1 is the EXACT approved Tobin g3-shoulder gathering pose. Image2 shows his plain-clothes base design (appearance only, do not copy its pose). Edit image1 ONLY to remove cream cap, metal shoulder/body armour, apron and belt ornaments, replacing them with the simple forest-green short-sleeve shirt and plain brown trousers in image2. Keep original red scarf, red cape, EXACT brown fringe and face, entire arms and hands in the exact pose, gloves and boots. No tools/weapons. For g3-shoulder, preserve the existing gesture and both fists in their exact canvas positions. STRICT same224x192native canvas, original96pixelhero scale, feet on(96,132), nozoom/recenter. Do not change limb anatomy, face, expression, boots or cape. Newcaplesshair shouldmatch image2. Strict crispchunky pixelart, broadflatclusters, original40colourpalette, dark1pixeloutline, transparentbackground. OnefullconnectedTobin in ORIGINAL image1pose, no text or extra objects.",
+      "referenced_image_paths": [
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/heroes/tobin/gather/g3-shoulder.png",
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/equipment/starting-v1/fit-proof/tobin-ready/base-combined.png"
+      ],
+      "transparent_background": true
+    }
+  },
+  {
+    "name": "g4-overhead",
+    "args": {
+      "prompt": "Use case: precise-object-edit. Image1 is the EXACT approved Tobin g4-overhead gathering pose. Image2 shows his plain-clothes base design (appearance only, do not copy its pose). Edit image1 ONLY to remove cream cap, metal shoulder/body armour, apron and belt ornaments, replacing them with the simple forest-green short-sleeve shirt and plain brown trousers in image2. Keep original red scarf, red cape, EXACT brown fringe and face, entire arms and hands in the exact pose, gloves and boots. No tools/weapons. For g4-overhead, preserve the existing gesture and both fists in their exact canvas positions. STRICT same224x192native canvas, original96pixelhero scale, feet on(96,132), nozoom/recenter. Do not change limb anatomy, face, expression, boots or cape. Newcaplesshair shouldmatch image2. Strict crispchunky pixelart, broadflatclusters, original40colourpalette, dark1pixeloutline, transparentbackground. OnefullconnectedTobin in ORIGINAL image1pose, no text or extra objects.",
+      "referenced_image_paths": [
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/heroes/tobin/gather/g4-overhead.png",
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/equipment/starting-v1/fit-proof/tobin-ready/base-combined.png"
+      ],
+      "transparent_background": true
+    }
+  },
+  {
+    "name": "g5-low",
+    "args": {
+      "prompt": "Use case: precise-object-edit. Image1 is the EXACT approved Tobin g5-low gathering pose. Image2 shows his plain-clothes base design (appearance only, do not copy its pose). Edit image1 ONLY to remove cream cap, metal shoulder/body armour, apron and belt ornaments, replacing them with the simple forest-green short-sleeve shirt and plain brown trousers in image2. Keep original red scarf, red cape, EXACT brown fringe and face, entire arms and hands in the exact pose, gloves and boots. No tools/weapons. For g5-low, preserve the existing gesture and both fists in their exact canvas positions. STRICT same224x192native canvas, original96pixelhero scale, feet on(96,132), nozoom/recenter. Do not change limb anatomy, face, expression, boots or cape. Newcaplesshair shouldmatch image2. Strict crispchunky pixelart, broadflatclusters, original40colourpalette, dark1pixeloutline, transparentbackground. OnefullconnectedTobin in ORIGINAL image1pose, no text or extra objects.",
+      "referenced_image_paths": [
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/heroes/tobin/gather/g5-low.png",
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/equipment/starting-v1/fit-proof/tobin-ready/base-combined.png"
+      ],
+      "transparent_background": true
+    }
+  },
+  {
+    "name": "g6-crouch",
+    "args": {
+      "prompt": "Use case: precise-object-edit. Image1 is the EXACT approved Tobin g6-crouch gathering pose. Image2 shows his plain-clothes base design (appearance only, do not copy its pose). Edit image1 ONLY to remove cream cap, metal shoulder/body armour, apron and belt ornaments, replacing them with the simple forest-green short-sleeve shirt and plain brown trousers in image2. Keep original red scarf, red cape, EXACT brown fringe and face, entire arms and hands in the exact pose, gloves and boots. No tools/weapons. For g6-crouch, preserve the existing gesture and both fists in their exact canvas positions. STRICT same224x192native canvas, original96pixelhero scale, feet on(96,132), nozoom/recenter. Do not change limb anatomy, face, expression, boots or cape. Newcaplesshair shouldmatch image2. Strict crispchunky pixelart, broadflatclusters, original40colourpalette, dark1pixeloutline, transparentbackground. OnefullconnectedTobin in ORIGINAL image1pose, no text or extra objects.",
+      "referenced_image_paths": [
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/heroes/tobin/gather/g6-crouch.png",
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/equipment/starting-v1/fit-proof/tobin-ready/base-combined.png"
+      ],
+      "transparent_background": true
+    }
+  },
+  {
+    "name": "g7-level",
+    "args": {
+      "prompt": "Use case: precise-object-edit. Image1 is the EXACT approved Tobin g7-level gathering pose. Image2 shows his plain-clothes base design (appearance only, do not copy its pose). Edit image1 ONLY to remove cream cap, metal shoulder/body armour, apron and belt ornaments, replacing them with the simple forest-green short-sleeve shirt and plain brown trousers in image2. Keep original red scarf, red cape, EXACT brown fringe and face, entire arms and hands in the exact pose, gloves and boots. No tools/weapons. For g7-level, preserve the existing gesture and both fists in their exact canvas positions. STRICT same224x192native canvas, original96pixelhero scale, feet on(96,132), nozoom/recenter. Do not change limb anatomy, face, expression, boots or cape. Newcaplesshair shouldmatch image2. Strict crispchunky pixelart, broadflatclusters, original40colourpalette, dark1pixeloutline, transparentbackground. OnefullconnectedTobin in ORIGINAL image1pose, no text or extra objects.",
+      "referenced_image_paths": [
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/heroes/tobin/gather/g7-level.png",
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/equipment/starting-v1/fit-proof/tobin-ready/base-combined.png"
+      ],
+      "transparent_background": true
+    }
+  }
+]
