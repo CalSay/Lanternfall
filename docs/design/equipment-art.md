@@ -1,6 +1,6 @@
 # Equipment art on the heroes (the paper-doll spec)
 
-Status: proposal for owner sign-off (2026-10-01). Built from the owner's discussion with Codex on how to show gear
+Status: direction agreed with the owner (2026-10-01; §5). The open points are in §6. Built from the owner's discussion with Codex on how to show gear
 on the heroes without drawing every combination. Nothing here changes the art freeze: Codex draws, the owner vets
 whole packs, and code only places and recolours what the artist drew. Inventory icons are a separate system (C26
 gear icons) and are not affected.
@@ -165,36 +165,66 @@ The body slot is the expensive one, so the owner's choice in §6 Q1 sets most of
 Order of work: rig → base → weapon → head → off-hand → body. Body comes last because it costs the most, and the
 earlier steps prove the anchors.
 
-## 5. Prototype first
+## 5. Decided: outfits, and heroes start dressed (owner, 2026-10-01)
 
-Before any full pack is made, do one hero end to end. **Tobin** is the best test because all four of his slots are
-visible:
+### Outfits
 
-- rig Tobin;
-- re-cut his base;
-- one weapon look (4 angles), one helm look (3 angles) and one plate look (all 15 poses);
-- show it in the combiner, then in the preview game behind the test switch.
+- **Equipped gear shows on the hero.** Each slot shows the hero's equipped item: its look, and its grade's palette.
+  This is option (b) in §6.
+- **The current designs become outfits.** Each hero's approved art (Wren's bat hood and leathers, Tobin's baker's
+  cap and apron with the borrowed sword, Pip's witch hat and robe) becomes that hero's first **outfit**.
+- **An outfit is only a look.** The player can pick an outfit to show instead of their equipped items. The stats
+  still come from the equipped items.
+- **The first outfit needs no new art.** Proposal: with an outfit on, the game draws the approved full pose as it
+  is today, with no gear layers. Effects stay as they are (the bow string, arrows, Pip's flame).
+- **Tools always show.** When gathering, the hero shows the equipped tool, even with an outfit on. Tools are not
+  part of an outfit.
+- **Where the player picks it.** Outfits go in a Looks list per hero: one row, "Show: Equipped gear / <outfit
+  name>". Later outfits (event rewards, unique sets) join that list.
 
-Record how long each step took and where the fit broke. From that, the owner gets a real estimate for the full
-plan, and decides Q1-Q3 below with the prototype in front of them.
+### Starting gear
 
-## 6. Owner decisions
+New heroes start **dressed and armed**: the grade 1 item in each class slot (weapon, off-hand, head, body). Today
+they start with nothing.
 
-1. **How much should body and head gear change on the hero?**
-   - **(a) Signature look:** body and head keep each hero's story look (Tobin's baker's cap and apron, as in
-     `hero-accessories.md`), and grades show only through palette and trim. Weapons, off-hands and tools change
-     shape.
-     - About 150 drawings for the whole game: the base re-cuts, weapons, off-hands and the shared tools.
-   - **(b) Three looks per slot,** as in §3.
-     - About 320 drawings.
-   - **(c) A look per grade.**
-     - Several thousand drawings. Not recommended.
+Open for the owner:
 
-   Recommendation: (a) now, with (b) as a later upgrade. (a) needs no body overlays at all and still makes every
-   weapon upgrade visible. It also matches the gear register the owner already approved.
+- **Tools at the start?** The Cold Hearth tutorial teaches crafting the first pickaxe. Proposal: heroes start with
+  the 4 class items and **no tools**, so that tutorial step still makes sense. The pickaxe you craft is then the
+  first tool you see in your hero's hands.
+- **Save key.** This changes `fresh()`, so it needs a save-key bump (Claude only).
+
+### The first art pack: starting gear (replaces the Tobin-only prototype)
+
+The first pack is grade 1 for all three heroes, made with the full process in §4. It proves the system on every
+hero at once.
+
+1. **Rig all three heroes:** every combat and gathering pose (Wren's gathering set once it exists).
+2. **Base re-cut:** each hero with nothing removable on, split into body and front-hand layers. They wear plain
+   clothes underneath; the artist chooses them, in the heroes' style.
+3. **Starting items, one look each, drawn in grade 1 colours on the reserved ramps:**
+
+| Hero | Weapon (4 angles) | Off-hand | Head (3 angles) | Body (every pose) |
+|---|---|---|---|---|
+| Wren | Plain bow, no string | Quiver | Plain hood | Simple leathers |
+| Tobin | Plain warblade | Plain shield (3 angles) | Plain greathelm | Plain plate |
+| Pip | Plain staff (ember holder, no flame) | Lantern (3 angles) | Plain circlet | Plain robe |
+
+4. **The 4 tools:** one shared look, 4 angles each.
+5. **Combiner preview:** every hero, every pose, starting gear on and off, and the outfit on.
+
+All of these are "look A" for their slot (§2 Rule 4). Later grades in band A reuse them with their own palettes, so
+this pack also covers grades 1-5 on the hero once the palettes are set.
+
+Record the time each step took and where the fit broke. That gives the owner a real estimate for looks B and C.
+
+## 6. Still open
+
+1. ~~How much should gear change on the hero?~~ Decided: equipped gear shows (option b), and outfits sit on top.
 2. **Bands:** are grades 1-5 / 6-10 / 11-15 the right split for looks? Or should the split follow regions instead?
 3. **Uniques:** should boss loot get its own on-hero look, or only an icon and a glow?
 4. **Gathering:** does the weapon hide while a tool is out (proposed), or hang on the back (more drawings)?
+5. **Starting tools:** none (proposed, keeps the tutorial), or a starter set?
 
 ## 7. Who does what
 
