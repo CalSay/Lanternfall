@@ -1,0 +1,219 @@
+{
+  "version": 2,
+  "status": "owner-approved-neutral-v2",
+  "atlas": "action-atlas-neutral-v2.png",
+  "atlasSize": [
+    1254,
+    1254
+  ],
+  "icons": [
+    {
+      "id": "attack-wren",
+      "name": "Wren · Attack",
+      "meaning": "Bow and arrow",
+      "family": "wren",
+      "rect": [
+        48,
+        64,
+        253,
+        268
+      ],
+      "atlas": "action-atlas.png"
+    },
+    {
+      "id": "echo",
+      "name": "Echo Shot",
+      "meaning": "Arrow and echo waves",
+      "family": "wren",
+      "rect": [
+        365,
+        109,
+        240,
+        209
+      ],
+      "atlas": "action-atlas.png"
+    },
+    {
+      "id": "attack-tobin",
+      "name": "Tobin · Attack",
+      "meaning": "Steel sword",
+      "family": "tobin",
+      "rect": [
+        658,
+        76,
+        246,
+        258
+      ],
+      "atlas": "action-atlas.png"
+    },
+    {
+      "id": "bash",
+      "name": "Shield Bash",
+      "meaning": "Kite shield and impact",
+      "family": "tobin",
+      "rect": [
+        986,
+        83,
+        237,
+        248
+      ],
+      "atlas": "action-atlas.png"
+    },
+    {
+      "id": "attack-pip",
+      "name": "Pip · Attack",
+      "meaning": "Crooked ember staff",
+      "family": "pip",
+      "rect": [
+        49,
+        360,
+        256,
+        291
+      ],
+      "atlas": "action-atlas.png"
+    },
+    {
+      "id": "fire",
+      "name": "Fireball",
+      "meaning": "Fire projectile",
+      "family": "pip",
+      "rect": [
+        358,
+        373,
+        247,
+        260
+      ],
+      "atlas": "action-atlas.png"
+    },
+    {
+      "id": "parry",
+      "name": "Parry",
+      "meaning": "Crossed blades and contact",
+      "family": "shared",
+      "rect": [
+        658,
+        381,
+        257,
+        251
+      ],
+      "atlas": "action-atlas-neutral-v2.png"
+    },
+    {
+      "id": "dodge",
+      "name": "Dodge",
+      "meaning": "Boot and afterimages",
+      "family": "shared",
+      "rect": [
+        961,
+        421,
+        248,
+        202
+      ],
+      "atlas": "action-atlas-neutral-v2.png"
+    },
+    {
+      "id": "empty",
+      "name": "Empty slot",
+      "meaning": "Quiet add-slot mark",
+      "family": "state",
+      "rect": [
+        60,
+        690,
+        233,
+        236
+      ],
+      "atlas": "action-atlas-neutral-v2.png"
+    },
+    {
+      "id": "auto-off",
+      "name": "Auto off",
+      "meaning": "Muted pursuing arrows",
+      "family": "state",
+      "rect": [
+        376,
+        689,
+        204,
+        233
+      ],
+      "atlas": "action-atlas-neutral-v2.png"
+    },
+    {
+      "id": "auto-on",
+      "name": "Auto on",
+      "meaning": "Gold pursuing arrows",
+      "family": "state",
+      "rect": [
+        679,
+        686,
+        214,
+        236
+      ],
+      "atlas": "action-atlas-neutral-v2.png"
+    },
+    {
+      "id": "locked",
+      "name": "Locked",
+      "meaning": "Closed padlock",
+      "family": "state",
+      "rect": [
+        1001,
+        688,
+        185,
+        234
+      ],
+      "atlas": "action-atlas-neutral-v2.png"
+    },
+    {
+      "id": "cooldown",
+      "name": "Cooldown",
+      "meaning": "Hourglass badge; timer remains text",
+      "family": "state",
+      "rect": [
+        96,
+        980,
+        159,
+        209
+      ],
+      "atlas": "action-atlas-neutral-v2.png"
+    },
+    {
+      "id": "ready",
+      "name": "Ready",
+      "meaning": "Gold corner frame",
+      "family": "state",
+      "rect": [
+        376,
+        967,
+        213,
+        213
+      ],
+      "atlas": "action-atlas-neutral-v2.png"
+    },
+    {
+      "id": "selected",
+      "name": "Selected",
+      "meaning": "Ivory and steel corner frame",
+      "family": "state",
+      "rect": [
+        672,
+        985,
+        219,
+        196
+      ],
+      "atlas": "action-atlas-neutral-v2.png"
+    },
+    {
+      "id": "unavailable",
+      "name": "Unavailable",
+      "meaning": "Slashed-circle badge",
+      "family": "state",
+      "rect": [
+        993,
+        994,
+        193,
+        189
+      ],
+      "atlas": "action-atlas-neutral-v2.png"
+    }
+  ]
+}

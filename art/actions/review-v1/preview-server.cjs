@@ -1,0 +1,3 @@
+const http=require('node:http'),fs=require('node:fs'),path=require('node:path');
+const base=__dirname;
+http.createServer((req,res)=>{const name=decodeURIComponent(req.url.split('?')[0]);const files={'/':'index.html','/index.html':'index.html','/action-atlas.png':'action-atlas.png','/action-atlas-neutral-v2.png':'action-atlas-neutral-v2.png','/manifest.json':'manifest.json','/prompt.txt':'prompt.txt'};const file=files[name];if(!file){res.writeHead(404).end();return}res.setHeader('Content-Type',file.endsWith('.html')?'text/html; charset=utf-8':file.endsWith('.png')?'image/png':'text/plain; charset=utf-8');fs.createReadStream(path.join(base,file)).pipe(res)}).listen(0,'127.0.0.1',function(){console.log('http://127.0.0.1:'+this.address().port)});
