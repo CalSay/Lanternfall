@@ -29,7 +29,7 @@
 let gatherTheme, gatherSpot, gatherHeroX, gatherWalking, gatherDraw, gatherRight;
 {
   const THEME = { ore: 'gmine', crystal: 'gglade', wood: 'gwoods', fibre: 'gmeadow', herb: 'gmeadow' };
-  gatherTheme = kind => kind === 'hide' ? null : THEME[kind] || (skillOf(kind) === 'mine' ? 'gmine' : 'gwoods');
+  gatherTheme = k => { const kind = gatherArtKind(k); return kind === 'hide' ? null : THEME[kind] || (skillOf(kind) === 'mine' ? 'gmine' : 'gwoods'); };
   const REDUCED = typeof reduced !== 'undefined' ? reduced : false;
 
   // =====================================================================================
@@ -331,7 +331,7 @@ let gatherTheme, gatherSpot, gatherHeroX, gatherWalking, gatherDraw, gatherRight
   const HERO_MIN = 26, REACH = 66;
   function heroReach() {
     try {
-      const f = charFrames(TOOL_ART.gatherSpec(heroSpec(), toolFor(skillOf(G.kind))));
+      const f = charFrames(TOOL_ART.gatherSpec(heroSpec(), toolFor(skillOf(gatherArtKind(G.kind)))));
       if (!f || !ART.ready(f, 'strike')) return 0;
       const q = f.strike, c = q.c, d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
       for (let x = c.width - 1; x >= 0; x--) for (let y = 0; y < c.height; y++) if (d[(y * c.width + x) * 4 + 3] > 40) return x + 1 - q.ox;
@@ -340,7 +340,7 @@ let gatherTheme, gatherSpot, gatherHeroX, gatherWalking, gatherDraw, gatherRight
   }
   const G = { reach: 0, reachT: -9, key: '', kind: '', t: 1, fam: 'rock', fr: null, nodes: [], cur: 0, pile: 0, lastT: -1, SW: 0, GY: 0, lift: 0, walk: null, snap: true, stage: 0, cutX: 0 };
   const ease = q => q < 0 ? 0 : q > 1 ? 1 : q * q * (3 - 2 * q);
-  const frames = () => enemyFrames('node:' + G.kind, { tier: G.t });
+  const frames = () => enemyFrames('node:' + gatherArtKind(G.kind), { tier: G.t });
 
   let seenT = -1, seenSW = 0, seenGY = 0;
   function ensure(SW, GY) {
@@ -354,13 +354,13 @@ let gatherTheme, gatherSpot, gatherHeroX, gatherWalking, gatherDraw, gatherRight
     if (key === G.key) return;
     const again = G.kind === kind && G.t === t;
     if (!again) { G.reach = 0; G.reachT = -9; }
-    G.key = key; G.kind = kind; G.t = t; G.fam = FAM[kind] || 'tree'; G.fr = frames(); G.SW = SW; G.GY = GY; G.cold = cold;
+    G.key = key; G.kind = kind; G.t = t; G.fam = FAM[gatherArtKind(kind)] || 'tree'; G.fr = frames(); G.SW = SW; G.GY = GY; G.cold = cold;
     // the back lane stands a little behind the path's front edge (not in the air over the scenery)
     G.lift = Math.max(8, Math.min(12, Math.round(GY * 0.04)));
     const f = G.fr && G.fr.idle0, w = f ? f.c.width : 60, ox = f ? f.ox : 30, rx = w - ox;
     // at the cold Hearth (63d) the station plots take the stage's right edge: keep it clear
     // (and the hero stands clear of the fire and Hesketh, at the left)
-    const xa = Math.round((cold ? Math.max(HERO_MIN, SW * 0.3) : HERO_MIN) + (G.reach || REACH) - w * (NODE_HIT[kind] ?? 0.15) + ox), xb = Math.min(Math.round(SW * 0.9), cold ? SW - rx - 30 : Math.round(SW - rx * 0.75));
+    const xa = Math.round((cold ? Math.max(HERO_MIN, SW * 0.3) : HERO_MIN) + (G.reach || REACH) - w * (NODE_HIT[gatherArtKind(kind)] ?? 0.15) + ox), xb = Math.min(Math.round(SW * 0.9), cold ? SW - rx - 30 : Math.round(SW - rx * 0.75));
     const gap = Math.max(24, Math.round(w * 0.42)), nMax = SW < 270 ? 3 : SW < 400 ? 4 : 5;
     const nw = xb - xa < 10 ? 1 : Math.max(2, Math.min(nMax, Math.floor((xb - xa) / gap) + 1));   // two at least: the hero walks
     // Worked nodes: the front and back lanes in turn (the last in front). Then smaller ones further off
@@ -742,7 +742,7 @@ let gatherTheme, gatherSpot, gatherHeroX, gatherWalking, gatherDraw, gatherRight
     else warming = false;
   }
   function warm(kind) {
-    if (kind === 'hide') return; // C24 has no scene until the whole art pack is approved.
+    if (!gatherTheme(kind)) return; // C24: no hunting scene of its own yet (it borrows the woods while HUNT_TUNE.borrowArt)
     if (typeof stageStats !== 'function' || typeof sceneSteps !== 'function' || typeof idleTask !== 'function') return;
     const st = stageStats(); if (!st || !st.SW) return;
     const SCH = st.SH >= 210 ? st.SH : Math.round(st.GY / 0.8), th = gatherTheme(kind), key = th + '|' + st.SW + 'x' + SCH;

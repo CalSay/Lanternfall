@@ -58,7 +58,7 @@ let navSkillOpen, navSkills, navLast, navNow, navRate, navFullIn, navRecent, bes
   navSkillOpen = sk => {
     if (!NAV_FAMS[sk] || (sk === 'hunt' && !huntingVisible())) return false;
     if (gathering() && skillOf(S.node.kind) === sk) return true;   // the skill you work always shows
-    if (sk === 'forage') return feat('forage');
+    if (sk === 'forage' || sk === 'hunt') return feat('forage');   // Hunting opens with Foraging (K5)
     if (!feat('gather')) return false;
     return sk !== 'mine' || !coldUnlit();
   };

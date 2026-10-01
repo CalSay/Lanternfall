@@ -163,7 +163,7 @@ function validateSave(data) {
     if (data.hands) {
       const hand = h => {
         text(h.id, 'hand.id', 128); if (!h.id) fail('hand.id'); text(h.n, 'hand.name');
-        if (!HANDS_RAR.includes(h.r) || !['mine', 'wood', 'forage', 'fish', 'any'].includes(h.sk)) fail('hand.profession or rarity');
+        if (!HANDS_RAR.includes(h.r) || !['mine', 'wood', 'forage', 'hunt', 'fish', 'any'].includes(h.sk)) fail('hand.profession or rarity');
         if (h.tr !== undefined) { array(h.tr, 'hand.traits'); if (h.tr.some(k => !HANDS_TRAITS.some(t => t.id === k))) fail('hand.traits'); }
         if (h.lv !== undefined) int(h.lv, 'hand.level', 1, HANDS_TUNE.lvMax);
         if (h.xp !== undefined) num(h.xp, 'hand.xp');

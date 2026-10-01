@@ -21,12 +21,13 @@
 // Also exposed: whereSheet(fam, t) (the "where to get it" sheet), gxNum(n) (short numbers),
 // GX_VIEW { skill: view id } and gatherSkillOfView(view).
 
-const GX_VIEW = { mine: 'mine', wood: 'wood', forage: 'forage' };
+const GX_VIEW = { mine: 'mine', wood: 'wood', forage: 'forage', hunt: 'hunt' };
 const gatherSkillOfView = v => NAV_SKILLS.includes(v) && (v !== 'hunt' || huntingVisible()) ? v : null;
 const GX_ICON = {
   mine: () => iconURL('pick', '#A9B1BD'),
   wood: () => iconURL('axe', '#A9B1BD'),
-  forage: () => iconURL(...craftIcon('sickle', 1))
+  forage: () => iconURL(...craftIcon('sickle', 1)),
+  hunt: () => nicTag('gear', 'spear-g1')   // C26 approved gear icon (no old pixel spear exists)
 };
 // "70", "5.34K", "40K"
 const gxNum = n => n < 1000 ? String(Math.floor(Math.max(0, n))) : fmt(n).replace(/\.(\d*?)0+(?=\D*$)/, (m, d) => d ? '.' + d : '');
@@ -39,11 +40,13 @@ function registerGatherRowNote(fn) { GX_ROW_NOTES.push(fn); return () => { const
 // Views: Mining shows only once it can be used (a cold Hearth: after the fire), so a new game
 // opens Gather on Wood. The Pack view is the Storehouse (id 'pack' kept for saved UI prefs).
 registerView('gat', { id: 'mine', label: 'Mining', order: 10, feature: 'gather', show: () => navSkillOpen('mine') });
+// C24 Hunting (owner, 2026-10-01: on now, borrowing the woods art): after Forage, while hunting is visible
+registerView('gat', { id: 'hunt', label: 'Hunting', order: 35, feature: 'forage', show: () => navSkillOpen('hunt') });
 on('hearthLit', () => { if (S.tab === 'gat') { buildViewSeg('gat'); applyView('gat'); ui(true); } });
 
 // ---- the "where to get it" sheet (Storehouse cells, costs) ----
 const NODE_VERB = NAV_VERB;
-const NODE_VIEW_OF = { ore: 'mine', crystal: 'mine', wood: 'wood', fibre: 'forage', herb: 'forage' };
+const NODE_VIEW_OF = { ore: 'mine', crystal: 'mine', wood: 'wood', fibre: 'forage', herb: 'forage', hide: 'hunt' };
 function whereSheet(k, t) {
   if (typeof openSheet !== 'function') return;
   openSheet(api => {
@@ -297,7 +300,7 @@ function gxLabels() {
     const tn = b.firstChild; if (!tn || tn.nodeType !== 3) continue;
     // Short names (the pixel font is wide: "Foraging 70" and "Storehouse" overflowed at 360-740 px); if the label
     // still does not fit, the level goes (it is in the view's heading and the XP bar) and the Storehouse says Store
-    const name = sk ? ({ mine: 'Mine', wood: 'Wood', forage: 'Forage' }[sk] || SKILL[sk]) : v === 'pack' ? 'Storehouse' : null;
+    const name = sk ? ({ mine: 'Mine', wood: 'Wood', forage: 'Forage', hunt: 'Hunt' }[sk] || SKILL[sk]) : v === 'pack' ? 'Storehouse' : null;
     const want = sk ? `${name} ${S.skills[sk].lv}` : name;
     const w = b.clientWidth;
     if (want && (b._want !== want || b._w !== w)) {

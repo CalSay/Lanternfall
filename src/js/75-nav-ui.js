@@ -28,7 +28,7 @@ let navUI = null;
     deep: () => iconURL('flame', '#7FB2FF', { 5: '#CFE3FF', 7: '#FFFFFF' })
   };
   // C26: the approved menu icons (NAV_ICONS) where the pack has one; ICON_OF stays the fallback
-  const NAV_OF = { fight: 'fight', mine: 'mining', wood: 'woodcutting', forage: 'foraging', raid: 'raid', deep: 'deepwell', gather: 'gather' };
+  const NAV_OF = { fight: 'fight', mine: 'mining', wood: 'woodcutting', forage: 'foraging', hunt: 'hunting', raid: 'raid', deep: 'deepwell', gather: 'gather' };
   const setNav = (im, k, px) => { if (!nicSet(im, 'nav', NAV_OF[k], px)) im.src = (ICON_OF[k] || ICON_OF.fight)(); };
   const btn = (cls, txt) => { const b = el('button', cls, txt); b.type = 'button'; return b; };
 

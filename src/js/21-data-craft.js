@@ -82,10 +82,14 @@ const CRAFT_FAMILY = {
   ess: { src: 'fight', skill: null, row: null, from: 'Fighting only. Every foe can drop it, and Marsh Wraiths drop extra.' }
 };
 
-// C24: mechanics are opt-in for checks. Public access also waits for the whole vetted art pack.
-const HUNT_TUNE = { on: false };
+// C24: Hunting. Owner (2026-10-01): switch it on now, before its art pack is done. Until Codex's vetted pack lands,
+// hunting borrows the approved woods art (borrowArt): the forest scene, its trees and the woodcutting pose
+// (gatherArtKind). When the pack is integrated, set borrowArt false and draw the real scene.
+const HUNT_TUNE = { on: true, borrowArt: true };
 const huntingOn = () => HUNT_TUNE.on === true;
-const huntingArtReady = () => false; // Replace only after owner approval and complete pack integration.
+const huntingArtReady = () => HUNT_TUNE.borrowArt === true;
+// the kind whose art a gathering node shows (hunting shows the woods while borrowArt is on)
+const gatherArtKind = kind => kind === 'hide' && HUNT_TUNE.borrowArt ? 'wood' : kind;
 const huntingVisible = () => huntingOn() && huntingArtReady();
 const HUNT_BEASTS = [
   { key: 'enraged-boar', name: 'Enraged Boar', plural: 'Enraged Boars' },

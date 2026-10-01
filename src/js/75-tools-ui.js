@@ -15,7 +15,8 @@ let toolsUI = null;
   const ROUGH_IC = {
     pick: () => iconURL('pick', '#8E8A84', { 6: '#6B4A2E' }),
     axe: () => iconURL('axe', '#8E8A84', { 6: '#6B4A2E' }),
-    sickle: () => { const c = craftIcon('sickle', 1); return iconURL(c[0], '#DCD3C2', Object.assign({}, c[2], { 1: '#DCD3C2', 2: '#A89F8E', 3: '#F2ECDF' })); }
+    sickle: () => { const c = craftIcon('sickle', 1); return iconURL(c[0], '#DCD3C2', Object.assign({}, c[2], { 1: '#DCD3C2', 2: '#A89F8E', 3: '#F2ECDF' })); },
+    spear: () => nicTag('gear', 'spear-g1')   // C24 Hunting: the approved C26 spear icon (no rough spear art)
   };
   const minsTxt = s => { const m = Math.ceil(s / 60); return m >= 60 ? `${Math.floor(m / 60)} h ${m % 60 ? (m % 60) + ' min' : ''}`.trim() : `${m} min`; };
   const craftOpen = () => typeof isUnlocked !== 'function' || isUnlocked('craft');

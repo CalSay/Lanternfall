@@ -6138,10 +6138,14 @@ const CRAFT_FAMILY = {
   ess: { src: 'fight', skill: null, row: null, from: 'Fighting only. Every foe can drop it, and Marsh Wraiths drop extra.' }
 };
 
-// C24: mechanics are opt-in for checks. Public access also waits for the whole vetted art pack.
-const HUNT_TUNE = { on: false };
+// C24: Hunting. Owner (2026-10-01): switch it on now, before its art pack is done. Until Codex's vetted pack lands,
+// hunting borrows the approved woods art (borrowArt): the forest scene, its trees and the woodcutting pose
+// (gatherArtKind). When the pack is integrated, set borrowArt false and draw the real scene.
+const HUNT_TUNE = { on: true, borrowArt: true };
 const huntingOn = () => HUNT_TUNE.on === true;
-const huntingArtReady = () => false; // Replace only after owner approval and complete pack integration.
+const huntingArtReady = () => HUNT_TUNE.borrowArt === true;
+// the kind whose art a gathering node shows (hunting shows the woods while borrowArt is on)
+const gatherArtKind = kind => kind === 'hide' && HUNT_TUNE.borrowArt ? 'wood' : kind;
 const huntingVisible = () => huntingOn() && huntingArtReady();
 const HUNT_BEASTS = [
   { key: 'enraged-boar', name: 'Enraged Boar', plural: 'Enraged Boars' },
@@ -11978,7 +11982,7 @@ let navSkillOpen, navSkills, navLast, navNow, navRate, navFullIn, navRecent, bes
   navSkillOpen = sk => {
     if (!NAV_FAMS[sk] || (sk === 'hunt' && !huntingVisible())) return false;
     if (gathering() && skillOf(S.node.kind) === sk) return true;   // the skill you work always shows
-    if (sk === 'forage') return feat('forage');
+    if (sk === 'forage' || sk === 'hunt') return feat('forage');   // Hunting opens with Foraging (K5)
     if (!feat('gather')) return false;
     return sk !== 'mine' || !coldUnlit();
   };
@@ -12926,7 +12930,7 @@ function validateSave(data) {
     if (data.hands) {
       const hand = h => {
         text(h.id, 'hand.id', 128); if (!h.id) fail('hand.id'); text(h.n, 'hand.name');
-        if (!HANDS_RAR.includes(h.r) || !['mine', 'wood', 'forage', 'fish', 'any'].includes(h.sk)) fail('hand.profession or rarity');
+        if (!HANDS_RAR.includes(h.r) || !['mine', 'wood', 'forage', 'hunt', 'fish', 'any'].includes(h.sk)) fail('hand.profession or rarity');
         if (h.tr !== undefined) { array(h.tr, 'hand.traits'); if (h.tr.some(k => !HANDS_TRAITS.some(t => t.id === k))) fail('hand.traits'); }
         if (h.lv !== undefined) int(h.lv, 'hand.level', 1, HANDS_TUNE.lvMax);
         if (h.xp !== undefined) num(h.xp, 'hand.xp');
@@ -23924,7 +23928,7 @@ let resize, animate, draw, stageStats, warmScene;
 
   // Gathering (G1): the hero holds the right tool (11c-art-tools.js toolFor), baked per class, look,
   // tool and tier; the party rests at the Hearth, so only the hero stands in a gather scene (layout).
-  const gatherTool = () => target() === 'node' && typeof toolFor === 'function' ? toolFor(skillOf(S.node.kind)) : null;
+  const gatherTool = () => target() === 'node' && typeof toolFor === 'function' ? toolFor(skillOf(gatherArtKind(S.node.kind))) : null;   // hunting borrows the woodaxe pose (HUNT_TUNE.borrowArt)
   function refreshHero(force) {
     const tool = gatherTool(), spec = tool ? TOOL_ART.gatherSpec(heroSpec(), tool) : heroSpec(), k = JSON.stringify(spec);
     if (!force && k === heroKey && hero.fr) return;
@@ -24063,7 +24067,7 @@ let resize, animate, draw, stageStats, warmScene;
       if (key !== foe.key) fr = enemyFrames('wyrm', { gen, hue: Math.floor((gen - 1) / 6) * 60 % 360, S: s });
     } else {
       key = 'n' + S.node.kind + S.node.t;
-      if (key !== foe.key) fr = enemyFrames('node:' + S.node.kind, { tier: S.node.t });
+      if (key !== foe.key) fr = enemyFrames('node:' + gatherArtKind(S.node.kind), { tier: S.node.t });
     }
     if (key === foe.key) return;
     layoutDirty = true;
@@ -26755,7 +26759,7 @@ function registerSceneTheme(name, def) { SCENE_EXT[name] = def; }
 let gatherTheme, gatherSpot, gatherHeroX, gatherWalking, gatherDraw, gatherRight;
 {
   const THEME = { ore: 'gmine', crystal: 'gglade', wood: 'gwoods', fibre: 'gmeadow', herb: 'gmeadow' };
-  gatherTheme = kind => kind === 'hide' ? null : THEME[kind] || (skillOf(kind) === 'mine' ? 'gmine' : 'gwoods');
+  gatherTheme = k => { const kind = gatherArtKind(k); return kind === 'hide' ? null : THEME[kind] || (skillOf(kind) === 'mine' ? 'gmine' : 'gwoods'); };
   const REDUCED = typeof reduced !== 'undefined' ? reduced : false;
 
   // =====================================================================================
@@ -27057,7 +27061,7 @@ let gatherTheme, gatherSpot, gatherHeroX, gatherWalking, gatherDraw, gatherRight
   const HERO_MIN = 26, REACH = 66;
   function heroReach() {
     try {
-      const f = charFrames(TOOL_ART.gatherSpec(heroSpec(), toolFor(skillOf(G.kind))));
+      const f = charFrames(TOOL_ART.gatherSpec(heroSpec(), toolFor(skillOf(gatherArtKind(G.kind)))));
       if (!f || !ART.ready(f, 'strike')) return 0;
       const q = f.strike, c = q.c, d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
       for (let x = c.width - 1; x >= 0; x--) for (let y = 0; y < c.height; y++) if (d[(y * c.width + x) * 4 + 3] > 40) return x + 1 - q.ox;
@@ -27066,7 +27070,7 @@ let gatherTheme, gatherSpot, gatherHeroX, gatherWalking, gatherDraw, gatherRight
   }
   const G = { reach: 0, reachT: -9, key: '', kind: '', t: 1, fam: 'rock', fr: null, nodes: [], cur: 0, pile: 0, lastT: -1, SW: 0, GY: 0, lift: 0, walk: null, snap: true, stage: 0, cutX: 0 };
   const ease = q => q < 0 ? 0 : q > 1 ? 1 : q * q * (3 - 2 * q);
-  const frames = () => enemyFrames('node:' + G.kind, { tier: G.t });
+  const frames = () => enemyFrames('node:' + gatherArtKind(G.kind), { tier: G.t });
 
   let seenT = -1, seenSW = 0, seenGY = 0;
   function ensure(SW, GY) {
@@ -27080,13 +27084,13 @@ let gatherTheme, gatherSpot, gatherHeroX, gatherWalking, gatherDraw, gatherRight
     if (key === G.key) return;
     const again = G.kind === kind && G.t === t;
     if (!again) { G.reach = 0; G.reachT = -9; }
-    G.key = key; G.kind = kind; G.t = t; G.fam = FAM[kind] || 'tree'; G.fr = frames(); G.SW = SW; G.GY = GY; G.cold = cold;
+    G.key = key; G.kind = kind; G.t = t; G.fam = FAM[gatherArtKind(kind)] || 'tree'; G.fr = frames(); G.SW = SW; G.GY = GY; G.cold = cold;
     // the back lane stands a little behind the path's front edge (not in the air over the scenery)
     G.lift = Math.max(8, Math.min(12, Math.round(GY * 0.04)));
     const f = G.fr && G.fr.idle0, w = f ? f.c.width : 60, ox = f ? f.ox : 30, rx = w - ox;
     // at the cold Hearth (63d) the station plots take the stage's right edge: keep it clear
     // (and the hero stands clear of the fire and Hesketh, at the left)
-    const xa = Math.round((cold ? Math.max(HERO_MIN, SW * 0.3) : HERO_MIN) + (G.reach || REACH) - w * (NODE_HIT[kind] ?? 0.15) + ox), xb = Math.min(Math.round(SW * 0.9), cold ? SW - rx - 30 : Math.round(SW - rx * 0.75));
+    const xa = Math.round((cold ? Math.max(HERO_MIN, SW * 0.3) : HERO_MIN) + (G.reach || REACH) - w * (NODE_HIT[gatherArtKind(kind)] ?? 0.15) + ox), xb = Math.min(Math.round(SW * 0.9), cold ? SW - rx - 30 : Math.round(SW - rx * 0.75));
     const gap = Math.max(24, Math.round(w * 0.42)), nMax = SW < 270 ? 3 : SW < 400 ? 4 : 5;
     const nw = xb - xa < 10 ? 1 : Math.max(2, Math.min(nMax, Math.floor((xb - xa) / gap) + 1));   // two at least: the hero walks
     // Worked nodes: the front and back lanes in turn (the last in front). Then smaller ones further off
@@ -27468,7 +27472,7 @@ let gatherTheme, gatherSpot, gatherHeroX, gatherWalking, gatherDraw, gatherRight
     else warming = false;
   }
   function warm(kind) {
-    if (kind === 'hide') return; // C24 has no scene until the whole art pack is approved.
+    if (!gatherTheme(kind)) return; // C24: no hunting scene of its own yet (it borrows the woods while HUNT_TUNE.borrowArt)
     if (typeof stageStats !== 'function' || typeof sceneSteps !== 'function' || typeof idleTask !== 'function') return;
     const st = stageStats(); if (!st || !st.SW) return;
     const SCH = st.SH >= 210 ? st.SH : Math.round(st.GY / 0.8), th = gatherTheme(kind), key = th + '|' + st.SW + 'x' + SCH;
@@ -30007,12 +30011,13 @@ function uiFight() {
 // Also exposed: whereSheet(fam, t) (the "where to get it" sheet), gxNum(n) (short numbers),
 // GX_VIEW { skill: view id } and gatherSkillOfView(view).
 
-const GX_VIEW = { mine: 'mine', wood: 'wood', forage: 'forage' };
+const GX_VIEW = { mine: 'mine', wood: 'wood', forage: 'forage', hunt: 'hunt' };
 const gatherSkillOfView = v => NAV_SKILLS.includes(v) && (v !== 'hunt' || huntingVisible()) ? v : null;
 const GX_ICON = {
   mine: () => iconURL('pick', '#A9B1BD'),
   wood: () => iconURL('axe', '#A9B1BD'),
-  forage: () => iconURL(...craftIcon('sickle', 1))
+  forage: () => iconURL(...craftIcon('sickle', 1)),
+  hunt: () => nicTag('gear', 'spear-g1')   // C26 approved gear icon (no old pixel spear exists)
 };
 // "70", "5.34K", "40K"
 const gxNum = n => n < 1000 ? String(Math.floor(Math.max(0, n))) : fmt(n).replace(/\.(\d*?)0+(?=\D*$)/, (m, d) => d ? '.' + d : '');
@@ -30025,11 +30030,13 @@ function registerGatherRowNote(fn) { GX_ROW_NOTES.push(fn); return () => { const
 // Views: Mining shows only once it can be used (a cold Hearth: after the fire), so a new game
 // opens Gather on Wood. The Pack view is the Storehouse (id 'pack' kept for saved UI prefs).
 registerView('gat', { id: 'mine', label: 'Mining', order: 10, feature: 'gather', show: () => navSkillOpen('mine') });
+// C24 Hunting (owner, 2026-10-01: on now, borrowing the woods art): after Forage, while hunting is visible
+registerView('gat', { id: 'hunt', label: 'Hunting', order: 35, feature: 'forage', show: () => navSkillOpen('hunt') });
 on('hearthLit', () => { if (S.tab === 'gat') { buildViewSeg('gat'); applyView('gat'); ui(true); } });
 
 // ---- the "where to get it" sheet (Storehouse cells, costs) ----
 const NODE_VERB = NAV_VERB;
-const NODE_VIEW_OF = { ore: 'mine', crystal: 'mine', wood: 'wood', fibre: 'forage', herb: 'forage' };
+const NODE_VIEW_OF = { ore: 'mine', crystal: 'mine', wood: 'wood', fibre: 'forage', herb: 'forage', hide: 'hunt' };
 function whereSheet(k, t) {
   if (typeof openSheet !== 'function') return;
   openSheet(api => {
@@ -30283,7 +30290,7 @@ function gxLabels() {
     const tn = b.firstChild; if (!tn || tn.nodeType !== 3) continue;
     // Short names (the pixel font is wide: "Foraging 70" and "Storehouse" overflowed at 360-740 px); if the label
     // still does not fit, the level goes (it is in the view's heading and the XP bar) and the Storehouse says Store
-    const name = sk ? ({ mine: 'Mine', wood: 'Wood', forage: 'Forage' }[sk] || SKILL[sk]) : v === 'pack' ? 'Storehouse' : null;
+    const name = sk ? ({ mine: 'Mine', wood: 'Wood', forage: 'Forage', hunt: 'Hunt' }[sk] || SKILL[sk]) : v === 'pack' ? 'Storehouse' : null;
     const want = sk ? `${name} ${S.skills[sk].lv}` : name;
     const w = b.clientWidth;
     if (want && (b._want !== want || b._w !== w)) {
@@ -35387,7 +35394,7 @@ let navUI = null;
     deep: () => iconURL('flame', '#7FB2FF', { 5: '#CFE3FF', 7: '#FFFFFF' })
   };
   // C26: the approved menu icons (NAV_ICONS) where the pack has one; ICON_OF stays the fallback
-  const NAV_OF = { fight: 'fight', mine: 'mining', wood: 'woodcutting', forage: 'foraging', raid: 'raid', deep: 'deepwell', gather: 'gather' };
+  const NAV_OF = { fight: 'fight', mine: 'mining', wood: 'woodcutting', forage: 'foraging', hunt: 'hunting', raid: 'raid', deep: 'deepwell', gather: 'gather' };
   const setNav = (im, k, px) => { if (!nicSet(im, 'nav', NAV_OF[k], px)) im.src = (ICON_OF[k] || ICON_OF.fight)(); };
   const btn = (cls, txt) => { const b = el('button', cls, txt); b.type = 'button'; return b; };
 
@@ -37878,7 +37885,8 @@ let toolsUI = null;
   const ROUGH_IC = {
     pick: () => iconURL('pick', '#8E8A84', { 6: '#6B4A2E' }),
     axe: () => iconURL('axe', '#8E8A84', { 6: '#6B4A2E' }),
-    sickle: () => { const c = craftIcon('sickle', 1); return iconURL(c[0], '#DCD3C2', Object.assign({}, c[2], { 1: '#DCD3C2', 2: '#A89F8E', 3: '#F2ECDF' })); }
+    sickle: () => { const c = craftIcon('sickle', 1); return iconURL(c[0], '#DCD3C2', Object.assign({}, c[2], { 1: '#DCD3C2', 2: '#A89F8E', 3: '#F2ECDF' })); },
+    spear: () => nicTag('gear', 'spear-g1')   // C24 Hunting: the approved C26 spear icon (no rough spear art)
   };
   const minsTxt = s => { const m = Math.ceil(s / 60); return m >= 60 ? `${Math.floor(m / 60)} h ${m % 60 ? (m % 60) + ' min' : ''}`.trim() : `${m} min`; };
   const craftOpen = () => typeof isUnlocked !== 'function' || isUnlocked('craft');

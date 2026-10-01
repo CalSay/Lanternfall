@@ -267,7 +267,7 @@ let resize, animate, draw, stageStats, warmScene;
 
   // Gathering (G1): the hero holds the right tool (11c-art-tools.js toolFor), baked per class, look,
   // tool and tier; the party rests at the Hearth, so only the hero stands in a gather scene (layout).
-  const gatherTool = () => target() === 'node' && typeof toolFor === 'function' ? toolFor(skillOf(S.node.kind)) : null;
+  const gatherTool = () => target() === 'node' && typeof toolFor === 'function' ? toolFor(skillOf(gatherArtKind(S.node.kind))) : null;   // hunting borrows the woodaxe pose (HUNT_TUNE.borrowArt)
   function refreshHero(force) {
     const tool = gatherTool(), spec = tool ? TOOL_ART.gatherSpec(heroSpec(), tool) : heroSpec(), k = JSON.stringify(spec);
     if (!force && k === heroKey && hero.fr) return;
@@ -406,7 +406,7 @@ let resize, animate, draw, stageStats, warmScene;
       if (key !== foe.key) fr = enemyFrames('wyrm', { gen, hue: Math.floor((gen - 1) / 6) * 60 % 360, S: s });
     } else {
       key = 'n' + S.node.kind + S.node.t;
-      if (key !== foe.key) fr = enemyFrames('node:' + S.node.kind, { tier: S.node.t });
+      if (key !== foe.key) fr = enemyFrames('node:' + gatherArtKind(S.node.kind), { tier: S.node.t });
     }
     if (key === foe.key) return;
     layoutDirty = true;
