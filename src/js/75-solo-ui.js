@@ -201,7 +201,9 @@ var soloIconURL = () => '';
   const secs = x => (x > 0 ? (x < 1 ? x.toFixed(1).replace(/^0/, '') : String(Math.ceil(x))) : '');
   // ---- the Auto button (owner 2026-09-30): a toggle, lit while Auto fights for you. Only a tap or F changes it ----
   const badge = el('button', 'auto-badge'); badge.id = 'autoBadge'; badge.type = 'button'; badge.hidden = true;
-  badge.append(el('i', 'ab-dot'), el('span', null, 'Auto'));
+  // C26: the approved Auto on / off icons (16 px); the dot is the fallback
+  const abIc = nicHas('act', 'auto-on') ? el('img', 'ab-ic') : el('i', 'ab-dot'); abIc.alt = '';
+  badge.append(abIc, el('span', null, 'Auto'));
   const hud = $('stageBox') && $('stageBox').querySelector('.hud');
   if (hud) hud.append(badge);
   const flipAuto = () => { soloSetAuto(!soloAuto()); setBadge(); };
@@ -211,6 +213,7 @@ var soloIconURL = () => '';
     const on_ = !soloActive();
     if (badge._on === on_) return;
     badge._on = on_; badge.classList.toggle('on', on_);
+    if (abIc.tagName === 'IMG') nicSet(abIc, 'act', on_ ? 'auto-on' : 'auto-off', 16);
     badge.setAttribute('aria-pressed', String(soloAuto()));
     badge.setAttribute('aria-label', soloAuto() ? 'Auto is on: your hero fights alone. Turn it off' : 'Auto is off: you are fighting. Turn it on');
     badge.title = soloAuto() ? 'Auto is on: your hero fights alone. Tap to turn it off and fight by hand. (F)' : 'Auto is off: you are fighting. Tap to turn Auto on. (F)';

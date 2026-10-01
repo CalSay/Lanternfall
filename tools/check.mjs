@@ -6859,7 +6859,7 @@ if (section('action and menu icons (C26)')) try {
   const g = loadCore({ seed: 27 });
   const d = JSON.parse(g.eval(`JSON.stringify({ act: typeof ACTION_ICONS === 'object' ? Object.entries(ACTION_ICONS).map(([k, v]) => [k, Object.keys(v)]) : null,
     nav: typeof NAV_ICONS === 'object' ? Object.entries(NAV_ICONS).map(([k, v]) => [k, Object.keys(v)]) : null })`));
-  assert(d.act && d.act.length === 16 && d.act.every(([, ks]) => ks.join() === '24,36,48'), `C26: 16 action icons at 24, 36 and 48 px (${d.act ? d.act.length : 'none'})`);
+  assert(d.act && d.act.length === 16 && d.act.every(([, ks]) => ks.join() === '16,24,36,48'), `C26: 16 action icons at 16, 24, 36 and 48 px (${d.act ? d.act.length : 'none'})`);
   assert(d.nav && d.nav.length === 32 && d.nav.every(([, ks]) => ks.join() === '12,16,18,20,22'), `C26: 32 menu icons at 12-22 px (${d.nav ? d.nav.length : 'none'})`);
   const need = ['attack-wren', 'attack-tobin', 'attack-pip', 'echo', 'bash', 'fire', 'parry', 'dodge', 'empty', 'fight', 'hero', 'gather', 'craft', 'camp', 'deeds', 'notices', 'mining', 'woodcutting', 'foraging', 'raid', 'deepwell'];
   const have = new Set([...(d.act || []), ...(d.nav || [])].map(([k]) => k));
@@ -6898,6 +6898,7 @@ if (section('action and menu icons (C26, browser)')) try {
           };
           document.querySelectorAll('.tab').forEach(b => chk(b.querySelector('img'), 'tab ' + b.dataset.tab, 'nav', NAV_OF_TAB[b.dataset.tab]));
           chk(document.getElementById('bellIc'), 'bell', 'nav', 'notices');
+          const ab = document.querySelector('#autoBadge .ab-ic'); if (ab && !document.getElementById('autoBadge').hidden) chk(ab, 'Auto badge', 'act', document.getElementById('autoBadge').classList.contains('on') ? 'auto-on' : 'auto-off');
           const bar = document.getElementById('soloBar');
           if (bar) {
             chk(bar.querySelector('[data-act="atk"] .sb-ic'), 'Attack', 'act', 'attack-pip');

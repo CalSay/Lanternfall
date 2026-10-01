@@ -9,10 +9,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
-// The sizes the CSS shows (60-solo.css .sb-ic 48/36/24 and .sp-ic 36; 30-panels/80-landscape .tab img 20/22,
+// The sizes the CSS shows (60-solo.css .sb-ic 48/36/24, .sp-ic 36, .ab-ic 16 (the Auto badge); 30-panels/80-landscape .tab img 20/22,
 // .menu-ic 22, .bell img 22, 60-nav .ap-ic 18/12, .mode-ic 16).
 const PACKS = [
-  { src: 'art/actions/game-v1/action-icons.js', name: 'ACTION_ICONS', out: 'src/js/21s-data-actionicons.js', sizes: [24, 36, 48] },
+  { src: 'art/actions/game-v1/action-icons.js', name: 'ACTION_ICONS', out: 'src/js/21s-data-actionicons.js', sizes: [16, 24, 36, 48] },
   { src: 'art/navigation/game-v1/navigation-icons.js', name: 'NAV_ICONS', out: 'src/js/21t-data-navicons.js', sizes: [12, 16, 18, 20, 22] },
   // Gear (C26, all 330 owner-approved): item tiles show them at 22-48 px (.ic img 28, craft 32, hero sheet 24/48,
   // gathering 26/40; 48 is 24 at x2, 60n-nicons). Only grades 1-5 exist in the game today; add 6-15 here when those tiers do.
