@@ -6157,10 +6157,10 @@ const CRAFT_FAMILIES = ['ore', 'wood', 'crystal', 'fibre', 'herb', 'hide', 'ess'
 const CRAFT_FAMILY = {
   ore: { src: 'gather', skill: 'mine', row: 'Veins', from: 'Mining veins.' },
   wood: { src: 'gather', skill: 'wood', row: 'Groves', from: 'Woodcutting groves.' },
-  crystal: { src: 'gather', skill: 'mine', row: 'Geodes', from: 'Mining geodes. Quarry Golems drop a few.' },
-  fibre: { src: 'gather', skill: 'forage', row: 'Fibre patches', from: 'Foraging fibre patches. Spore Caps drop a few.' },
-  herb: { src: 'gather', skill: 'forage', row: 'Herb beds', from: 'Foraging herb beds. Moss Slimes drop a few.' },
-  hide: { src: 'fight', skill: null, row: null, from: 'Fighting only. Barrow Beetles drop the most, then Cave Bats and Rattlebones.' },
+  crystal: { src: 'gather', skill: 'mine', row: 'Geodes', from: 'Mining geodes.' },
+  fibre: { src: 'gather', skill: 'forage', row: 'Fibre patches', from: 'Foraging fibre patches.' },
+  herb: { src: 'gather', skill: 'forage', row: 'Herb beds', from: 'Foraging herb beds.' },
+  hide: { src: 'gather', skill: 'hunt', row: 'Hunting Grounds', from: 'Hunting only.' },   // owner: never from fights
   ess: { src: 'fight', skill: null, row: null, from: 'Fighting only. Every foe can drop it, and Marsh Wraiths drop extra.' }
 };
 
@@ -6422,13 +6422,9 @@ const craftUpgradeTrophies = plus => plus + 1 >= CRAFT_TROPHY_GATE.from && plus 
 // One unit of the zone tier per kill at chance p, x (1 + star x mastery stars in that zone).
 // Offline: kills x sum(share x chance) x offline.
 // K5 (sim G2/G6): Hide +0.05 on each hide type (spec 0.2 / 0.15 / 0.3); Rangers waited on Hide.
+// Owner (2026-10-01): enemies drop gold, Essence and relics (bosses also uniques and their Trophies), never crafting
+// materials: hide comes only from Hunting, as ore only from Mining. Only the Marsh Wraith's extra Essence roll stays.
 const CRAFT_SIG_DROPS = {
-  slime: { fam: 'herb', p: 0.2 },
-  bat: { fam: 'hide', p: 0.25, as: 'wing leather' },
-  bones: { fam: 'hide', p: 0.2, as: 'sinew' },
-  beetle: { fam: 'hide', p: 0.35, as: 'scaled hide' },
-  spore: { fam: 'fibre', p: 0.2, as: 'mycelium' },
-  golem: { fam: 'crystal', p: 0.15 },
   wraith: { fam: 'ess', p: 0.2 } // a second essence roll
 };
 const CRAFT_SIG_RULE = { star: 0.1, offline: 0.75 };
@@ -11385,6 +11381,8 @@ let homeFamily, homeBonus, sigDropChance, awaySigDrops, champChance, champsAway,
       const drop = Object.entries(CRAFT_SIG_DROPS).filter(([, d]) => d.fam === fam).map(([k]) => TYPES[typeIndex(k)].name);
       return `${name}: ${SKILL[nk.skill]} level ${skillReq(nk.skill, t)}, ${node}.` + (home.length ? ` +25% while camped in ${home.join(' or ')}.` : '') + (drop.length ? ` ${drop.join(' and ')} drop a few.` : '');
     }
+    // hide past the beasts there are (grades 4-5): no node yet, so the Enchanter's Table is the way (owner: Hunting only)
+    if (fam === 'hide') return t > 1 ? `${name}: Hunting only. No beast carries it yet: transmute 4 ${matName('hide', t - 1)} into 1 at the Enchanter's Table.` : `${name}: Hunting only.`;
     const drop = Object.entries(CRAFT_SIG_DROPS).filter(([, d]) => d.fam === fam).sort((a, b) => b[1].p - a[1].p).map(([k]) => TYPES[typeIndex(k)].name + 's');
     const zt = Math.ceil(t) > 1 ? ` Fight in zone ${PACE.essTier[t - 1]} or higher for this tier.` : '';
     return fam === 'ess' ? `${name}: every foe can drop it. Marsh Wraiths drop extra.${zt}` : `${name}: fighting only. ${drop.join(', ')} drop it.${zt}`;
