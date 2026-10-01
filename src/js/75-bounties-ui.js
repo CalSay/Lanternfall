@@ -12,6 +12,19 @@
     deep: () => iconURL('flame', '#9A8FB8', { 5: '#CFC3DC', 7: '#FFFFFF' })
   };
   const btyRows = [];
+  // Go: where each kind's work happens
+  const GO = { mine: ['gat', 'mine'], gems: ['gat', 'mine'], chop: ['gat', 'wood'], forage: ['gat', 'forage'],
+    make: ['forge', 'make'], forge: ['forge', 'make'], upgrade: ['forge', 'gear'], reforge: ['forge', 'gear'],
+    hands: ['world', 'tav'], deep: ['adv', 'deep'] };
+  const goTo = b => {
+    const g = GO[b.k];
+    if (g) { setTab(g[0]); try { setView(g[0], g[1]); } catch (e) {} return; }
+    // fights: back to the fight, at the bounty's zone when it names one you have reached
+    if (S.activity !== 'fight') setActivity('fight');
+    if (b.z && b.z <= S.maxZone && (b.k === 'hunt' || (b.k === 'kill' && S.zone < b.z))) setZone(b.k === 'kill' ? Math.max(S.zone, b.z) : b.z);
+    if (typeof closeMenu === 'function') closeMenu();
+    ui(true);
+  };
   registerSection('adv', {
     id: 'bounties', title: 'Bounties', view: 'bounties',
     mount(sec) {
@@ -22,7 +35,8 @@
         r.row.classList.add('bty');
         const bar = el('div', 'bar bty-bar'); bar.append(el('i')); r.desc.after(bar); r.bar = bar.firstChild;
         const rr = el('button', 'bty-rr', 'Swap'); r.desc.parentNode.append(rr); r.rr = rr;
-        r.btn.addEventListener('click', () => { if (BOUNTY_API.claim(i)) ui(true); });
+        // done: Claim; not done: Go, to where the work is (menu audit: the old "BOUNTY 16%" box looked like a button)
+        r.btn.addEventListener('click', () => { const b = S.bounties.slots[i]; if (!b || !b.k) return; if (b.have >= b.need) { if (BOUNTY_API.claim(i)) ui(true); } else goTo(b); });
         rr.addEventListener('click', () => { if (BOUNTY_API.reroll(i)) ui(true); });
         btyRows.push(r);
       }
@@ -50,8 +64,9 @@
         const rrLeft = (b.rr || 0) - now;
         r.rr.hidden = done; r.rr.disabled = rrLeft > 0;
         r.rr.textContent = rrLeft > 0 ? `Swap in ${fmtTime(rrLeft / 1000)}` : 'Swap (free)';
-        r.btn.disabled = !done || !!room; r.qty.textContent = done ? 'Done' : 'Bounty';
-        r.btn.querySelector('.price').textContent = done ? 'Claim' : Math.floor(b.have / b.need * 100) + '%';
+        r.btn.disabled = done && !!room; r.qty.textContent = done ? 'Done' : '';
+        r.btn.querySelector('.price').textContent = done ? 'Claim' : 'Go';
+        putToggle(r.btn, 'bty-go', !done);
       });
     }
   });

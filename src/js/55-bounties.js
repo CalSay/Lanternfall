@@ -40,8 +40,8 @@
     ability: { w: 2, avail: () => typeof soloHero === 'function' && !!soloHero(), make: () => ({ need: btyRound(20 * btyScale()), rew: 'gold' }) },
     hands: { w: 2, avail: () => open_('hands') && typeof handsList === 'function' && handsList().length > 0, make: () => ({ need: 2, rew: 'gold' }) },
     deep: { w: 1, avail: () => open_('deep') && typeof deepUnlocked === 'function' && deepUnlocked(), make: () => ({ need: 3, rew: 'ess' }) },
-    crit: { w: 1, make: () => ({ need: btyRound(15 * btyScale()), rew: 'gold' }) },
-    tap: { w: 0.5, make: () => ({ need: 100, rew: 'gold' }) }
+    crit: { w: 0.5, make: () => ({ need: btyRound(15 * btyScale()), rew: 'gold' }) }
+    // 'tap' (Press Attack N times) is retired (menu audit: no choice in it); old saves keep their slot until claimed
   };
   const plural = (n, w) => n === 1 ? w : /s$/.test(w) ? w : w + 's';
   const foeName = k => { const t = TYPES.find(x => x.key === k); return t ? t.name : 'foes'; };
@@ -73,7 +73,9 @@
     let r = Math.random() * pool.reduce((a, k) => a + BTY_KINDS[k].w, 0), k = pool[pool.length - 1] || 'kill';
     for (const x of pool) { r -= BTY_KINDS[x].w; if (r < 0) { k = x; break; } }
     S.bounties.recent = (S.bounties.recent || []).concat(k).slice(-BTY_RECENT);
-    const b = Object.assign({ k, have: 0, t: 1, z: 1, rewT: 1, wait: 0, rr: 0, id: ++S.bounties.seq }, BTY_KINDS[k].make());
+    const b = Object.assign({ k, have: 0, t: 1, z: 1, rewT: 1, wait: 0, rr: 0, id: ++S.bounties.seq, x: 1 }, BTY_KINDS[k].make());
+    // amounts vary (menu audit: two "Chop logs" bounties were always identical); the reward follows the amount
+    if (b.need >= 10) { const was = b.need; b.need = btyRound(was * (0.7 + Math.random() * 0.6)); b.x = b.need / was; }
     // now and then a Contract: twice the work for 2.5x the reward and the Elite Renown (56c-unlocks); never the fillers
     if (k !== 'tap' && k !== 'crit' && b.need > 1 && Math.random() < 0.15) { b.elite = true; b.need = b.need >= 5 ? btyRound(b.need * 2) : b.need * 2; }
     if (b.rew === 'ess') { b.rewT = zoneTier(S.maxZone); b.rewN = 6 + 2 * Math.min(b.need, 10); }
@@ -88,7 +90,7 @@
     return Math.max(50, Math.round(perSec * 240));
   }
   function bountyReward(b) {
-    const pay = mod('bountyPay') * (b.elite ? 2.5 : 1), g = Math.round(btyGold() * pay), n = Math.round(b.rewN * mod('bountyPay'));
+    const pay = mod('bountyPay') * (b.elite ? 2.5 : 1) * (b.x || 1), g = Math.round(btyGold() * pay), n = Math.round(b.rewN * mod('bountyPay'));
     if (b.rew === 'gold') return { kind: 'gold', n: g, txt: fmt(g) + ' gold' };
     const kind = b.rew;
     return { kind, t: b.rewT, n, txt: `${n} ${kind === 'ess' ? MAT.ess.short[b.rewT - 1] + ' Essence' : matName(kind, b.rewT)}` };

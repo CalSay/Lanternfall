@@ -557,6 +557,8 @@ img[src*="#nic:"] { image-rendering: auto; }   /* a gear icon set by code that d
 .ach .bar > i { background: var(--gold); }
 .ach.got .bar { display: none; }
 .ach:not(.got) .ic img { filter: grayscale(1); opacity: .5; }
+/* Go (not done) reads as a plain button; Claim (done) keeps the gold one */
+.row.bty .buy.bty-go { background: var(--panel-2); color: var(--bone); }
 /* 60-camp: the Camp part of the Camp tab (75-camp-ui.js). */
 
 #sec-camp { gap: 10px; }
@@ -10206,8 +10208,8 @@ let OMENS, WEEKLY_GOALS;
     ability: { w: 2, avail: () => typeof soloHero === 'function' && !!soloHero(), make: () => ({ need: btyRound(20 * btyScale()), rew: 'gold' }) },
     hands: { w: 2, avail: () => open_('hands') && typeof handsList === 'function' && handsList().length > 0, make: () => ({ need: 2, rew: 'gold' }) },
     deep: { w: 1, avail: () => open_('deep') && typeof deepUnlocked === 'function' && deepUnlocked(), make: () => ({ need: 3, rew: 'ess' }) },
-    crit: { w: 1, make: () => ({ need: btyRound(15 * btyScale()), rew: 'gold' }) },
-    tap: { w: 0.5, make: () => ({ need: 100, rew: 'gold' }) }
+    crit: { w: 0.5, make: () => ({ need: btyRound(15 * btyScale()), rew: 'gold' }) }
+    // 'tap' (Press Attack N times) is retired (menu audit: no choice in it); old saves keep their slot until claimed
   };
   const plural = (n, w) => n === 1 ? w : /s$/.test(w) ? w : w + 's';
   const foeName = k => { const t = TYPES.find(x => x.key === k); return t ? t.name : 'foes'; };
@@ -10239,7 +10241,9 @@ let OMENS, WEEKLY_GOALS;
     let r = Math.random() * pool.reduce((a, k) => a + BTY_KINDS[k].w, 0), k = pool[pool.length - 1] || 'kill';
     for (const x of pool) { r -= BTY_KINDS[x].w; if (r < 0) { k = x; break; } }
     S.bounties.recent = (S.bounties.recent || []).concat(k).slice(-BTY_RECENT);
-    const b = Object.assign({ k, have: 0, t: 1, z: 1, rewT: 1, wait: 0, rr: 0, id: ++S.bounties.seq }, BTY_KINDS[k].make());
+    const b = Object.assign({ k, have: 0, t: 1, z: 1, rewT: 1, wait: 0, rr: 0, id: ++S.bounties.seq, x: 1 }, BTY_KINDS[k].make());
+    // amounts vary (menu audit: two "Chop logs" bounties were always identical); the reward follows the amount
+    if (b.need >= 10) { const was = b.need; b.need = btyRound(was * (0.7 + Math.random() * 0.6)); b.x = b.need / was; }
     // now and then a Contract: twice the work for 2.5x the reward and the Elite Renown (56c-unlocks); never the fillers
     if (k !== 'tap' && k !== 'crit' && b.need > 1 && Math.random() < 0.15) { b.elite = true; b.need = b.need >= 5 ? btyRound(b.need * 2) : b.need * 2; }
     if (b.rew === 'ess') { b.rewT = zoneTier(S.maxZone); b.rewN = 6 + 2 * Math.min(b.need, 10); }
@@ -10254,7 +10258,7 @@ let OMENS, WEEKLY_GOALS;
     return Math.max(50, Math.round(perSec * 240));
   }
   function bountyReward(b) {
-    const pay = mod('bountyPay') * (b.elite ? 2.5 : 1), g = Math.round(btyGold() * pay), n = Math.round(b.rewN * mod('bountyPay'));
+    const pay = mod('bountyPay') * (b.elite ? 2.5 : 1) * (b.x || 1), g = Math.round(btyGold() * pay), n = Math.round(b.rewN * mod('bountyPay'));
     if (b.rew === 'gold') return { kind: 'gold', n: g, txt: fmt(g) + ' gold' };
     const kind = b.rew;
     return { kind, t: b.rewT, n, txt: `${n} ${kind === 'ess' ? MAT.ess.short[b.rewT - 1] + ' Essence' : matName(kind, b.rewT)}` };
@@ -31510,6 +31514,19 @@ let showAwayReport;
     deep: () => iconURL('flame', '#9A8FB8', { 5: '#CFC3DC', 7: '#FFFFFF' })
   };
   const btyRows = [];
+  // Go: where each kind's work happens
+  const GO = { mine: ['gat', 'mine'], gems: ['gat', 'mine'], chop: ['gat', 'wood'], forage: ['gat', 'forage'],
+    make: ['forge', 'make'], forge: ['forge', 'make'], upgrade: ['forge', 'gear'], reforge: ['forge', 'gear'],
+    hands: ['world', 'tav'], deep: ['adv', 'deep'] };
+  const goTo = b => {
+    const g = GO[b.k];
+    if (g) { setTab(g[0]); try { setView(g[0], g[1]); } catch (e) {} return; }
+    // fights: back to the fight, at the bounty's zone when it names one you have reached
+    if (S.activity !== 'fight') setActivity('fight');
+    if (b.z && b.z <= S.maxZone && (b.k === 'hunt' || (b.k === 'kill' && S.zone < b.z))) setZone(b.k === 'kill' ? Math.max(S.zone, b.z) : b.z);
+    if (typeof closeMenu === 'function') closeMenu();
+    ui(true);
+  };
   registerSection('adv', {
     id: 'bounties', title: 'Bounties', view: 'bounties',
     mount(sec) {
@@ -31520,7 +31537,8 @@ let showAwayReport;
         r.row.classList.add('bty');
         const bar = el('div', 'bar bty-bar'); bar.append(el('i')); r.desc.after(bar); r.bar = bar.firstChild;
         const rr = el('button', 'bty-rr', 'Swap'); r.desc.parentNode.append(rr); r.rr = rr;
-        r.btn.addEventListener('click', () => { if (BOUNTY_API.claim(i)) ui(true); });
+        // done: Claim; not done: Go, to where the work is (menu audit: the old "BOUNTY 16%" box looked like a button)
+        r.btn.addEventListener('click', () => { const b = S.bounties.slots[i]; if (!b || !b.k) return; if (b.have >= b.need) { if (BOUNTY_API.claim(i)) ui(true); } else goTo(b); });
         rr.addEventListener('click', () => { if (BOUNTY_API.reroll(i)) ui(true); });
         btyRows.push(r);
       }
@@ -31548,8 +31566,9 @@ let showAwayReport;
         const rrLeft = (b.rr || 0) - now;
         r.rr.hidden = done; r.rr.disabled = rrLeft > 0;
         r.rr.textContent = rrLeft > 0 ? `Swap in ${fmtTime(rrLeft / 1000)}` : 'Swap (free)';
-        r.btn.disabled = !done || !!room; r.qty.textContent = done ? 'Done' : 'Bounty';
-        r.btn.querySelector('.price').textContent = done ? 'Claim' : Math.floor(b.have / b.need * 100) + '%';
+        r.btn.disabled = done && !!room; r.qty.textContent = done ? 'Done' : '';
+        r.btn.querySelector('.price').textContent = done ? 'Claim' : 'Go';
+        putToggle(r.btn, 'bty-go', !done);
       });
     }
   });

@@ -18,3 +18,5 @@
 .ach .bar > i { background: var(--gold); }
 .ach.got .bar { display: none; }
 .ach:not(.got) .ic img { filter: grayscale(1); opacity: .5; }
+/* Go (not done) reads as a plain button; Claim (done) keeps the gold one */
+.row.bty .buy.bty-go { background: var(--panel-2); color: var(--bone); }
