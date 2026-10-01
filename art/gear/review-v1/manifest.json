@@ -1,0 +1,1878 @@
+{
+  "status": "owner-review",
+  "icons": [
+    {
+      "id": "pick-g1",
+      "kind": "pick",
+      "noun": "Pickaxe",
+      "family": "ore",
+      "grade": 1,
+      "name": "Copper Pickaxe",
+      "material": "Copper",
+      "atlas": "tools.png",
+      "rect": [
+        69,
+        73,
+        147,
+        155
+      ],
+      "sourceSha256": "bea6b1f44f1b0ea1056899fd6e5ea08e910296f24d88019232d9b76303b370e2"
+    },
+    {
+      "id": "axe-g1",
+      "kind": "axe",
+      "noun": "Woodaxe",
+      "family": "ore",
+      "grade": 1,
+      "name": "Copper Woodaxe",
+      "material": "Copper",
+      "atlas": "tools.png",
+      "rect": [
+        346,
+        70,
+        145,
+        158
+      ],
+      "sourceSha256": "bea6b1f44f1b0ea1056899fd6e5ea08e910296f24d88019232d9b76303b370e2"
+    },
+    {
+      "id": "sickle-g1",
+      "kind": "sickle",
+      "noun": "Sickle",
+      "family": "ore",
+      "grade": 1,
+      "name": "Copper Sickle",
+      "material": "Copper",
+      "atlas": "tools.png",
+      "rect": [
+        648,
+        73,
+        128,
+        158
+      ],
+      "sourceSha256": "bea6b1f44f1b0ea1056899fd6e5ea08e910296f24d88019232d9b76303b370e2"
+    },
+    {
+      "id": "spear-g1",
+      "kind": "spear",
+      "noun": "Hunting Spear",
+      "family": "ore",
+      "grade": 1,
+      "name": "Copper Hunting Spear",
+      "material": "Copper",
+      "atlas": "tools.png",
+      "rect": [
+        902,
+        70,
+        142,
+        161
+      ],
+      "sourceSha256": "bea6b1f44f1b0ea1056899fd6e5ea08e910296f24d88019232d9b76303b370e2"
+    },
+    {
+      "id": "pick-g2",
+      "kind": "pick",
+      "noun": "Pickaxe",
+      "family": "ore",
+      "grade": 2,
+      "name": "Iron Pickaxe",
+      "material": "Iron",
+      "atlas": "tools.png",
+      "rect": [
+        52,
+        305,
+        188,
+        192
+      ],
+      "sourceSha256": "bea6b1f44f1b0ea1056899fd6e5ea08e910296f24d88019232d9b76303b370e2"
+    },
+    {
+      "id": "axe-g2",
+      "kind": "axe",
+      "noun": "Woodaxe",
+      "family": "ore",
+      "grade": 2,
+      "name": "Iron Woodaxe",
+      "material": "Iron",
+      "atlas": "tools.png",
+      "rect": [
+        334,
+        301,
+        175,
+        200
+      ],
+      "sourceSha256": "bea6b1f44f1b0ea1056899fd6e5ea08e910296f24d88019232d9b76303b370e2"
+    },
+    {
+      "id": "sickle-g2",
+      "kind": "sickle",
+      "noun": "Sickle",
+      "family": "ore",
+      "grade": 2,
+      "name": "Iron Sickle",
+      "material": "Iron",
+      "atlas": "tools.png",
+      "rect": [
+        634,
+        304,
+        156,
+        201
+      ],
+      "sourceSha256": "bea6b1f44f1b0ea1056899fd6e5ea08e910296f24d88019232d9b76303b370e2"
+    },
+    {
+      "id": "spear-g2",
+      "kind": "spear",
+      "noun": "Hunting Spear",
+      "family": "ore",
+      "grade": 2,
+      "name": "Iron Hunting Spear",
+      "material": "Iron",
+      "atlas": "tools.png",
+      "rect": [
+        888,
+        301,
+        177,
+        204
+      ],
+      "sourceSha256": "bea6b1f44f1b0ea1056899fd6e5ea08e910296f24d88019232d9b76303b370e2"
+    },
+    {
+      "id": "pick-g3",
+      "kind": "pick",
+      "noun": "Pickaxe",
+      "family": "ore",
+      "grade": 3,
+      "name": "Silver Pickaxe",
+      "material": "Silver",
+      "atlas": "tools.png",
+      "rect": [
+        32,
+        546,
+        228,
+        228
+      ],
+      "sourceSha256": "bea6b1f44f1b0ea1056899fd6e5ea08e910296f24d88019232d9b76303b370e2"
+    },
+    {
+      "id": "axe-g3",
+      "kind": "axe",
+      "noun": "Woodaxe",
+      "family": "ore",
+      "grade": 3,
+      "name": "Silver Woodaxe",
+      "material": "Silver",
+      "atlas": "tools.png",
+      "rect": [
+        315,
+        539,
+        224,
+        237
+      ],
+      "sourceSha256": "bea6b1f44f1b0ea1056899fd6e5ea08e910296f24d88019232d9b76303b370e2"
+    },
+    {
+      "id": "sickle-g3",
+      "kind": "sickle",
+      "noun": "Sickle",
+      "family": "ore",
+      "grade": 3,
+      "name": "Silver Sickle",
+      "material": "Silver",
+      "atlas": "tools.png",
+      "rect": [
+        613,
+        539,
+        204,
+        251
+      ],
+      "sourceSha256": "bea6b1f44f1b0ea1056899fd6e5ea08e910296f24d88019232d9b76303b370e2"
+    },
+    {
+      "id": "spear-g3",
+      "kind": "spear",
+      "noun": "Hunting Spear",
+      "family": "ore",
+      "grade": 3,
+      "name": "Silver Hunting Spear",
+      "material": "Silver",
+      "atlas": "tools.png",
+      "rect": [
+        878,
+        532,
+        208,
+        249
+      ],
+      "sourceSha256": "bea6b1f44f1b0ea1056899fd6e5ea08e910296f24d88019232d9b76303b370e2"
+    },
+    {
+      "id": "pick-g4",
+      "kind": "pick",
+      "noun": "Pickaxe",
+      "family": "ore",
+      "grade": 4,
+      "name": "Cobalt Pickaxe",
+      "material": "Cobalt",
+      "atlas": "tools.png",
+      "rect": [
+        32,
+        810,
+        232,
+        237
+      ],
+      "sourceSha256": "bea6b1f44f1b0ea1056899fd6e5ea08e910296f24d88019232d9b76303b370e2"
+    },
+    {
+      "id": "axe-g4",
+      "kind": "axe",
+      "noun": "Woodaxe",
+      "family": "ore",
+      "grade": 4,
+      "name": "Cobalt Woodaxe",
+      "material": "Cobalt",
+      "atlas": "tools.png",
+      "rect": [
+        310,
+        802,
+        247,
+        255
+      ],
+      "sourceSha256": "bea6b1f44f1b0ea1056899fd6e5ea08e910296f24d88019232d9b76303b370e2"
+    },
+    {
+      "id": "sickle-g4",
+      "kind": "sickle",
+      "noun": "Sickle",
+      "family": "ore",
+      "grade": 4,
+      "name": "Cobalt Sickle",
+      "material": "Cobalt",
+      "atlas": "tools.png",
+      "rect": [
+        616,
+        808,
+        203,
+        259
+      ],
+      "sourceSha256": "bea6b1f44f1b0ea1056899fd6e5ea08e910296f24d88019232d9b76303b370e2"
+    },
+    {
+      "id": "spear-g4",
+      "kind": "spear",
+      "noun": "Hunting Spear",
+      "family": "ore",
+      "grade": 4,
+      "name": "Cobalt Hunting Spear",
+      "material": "Cobalt",
+      "atlas": "tools.png",
+      "rect": [
+        875,
+        798,
+        217,
+        269
+      ],
+      "isolation": "largest connected opaque component; excludes detached atlas fragments",
+      "sourceSha256": "bea6b1f44f1b0ea1056899fd6e5ea08e910296f24d88019232d9b76303b370e2"
+    },
+    {
+      "id": "pick-g5",
+      "kind": "pick",
+      "noun": "Pickaxe",
+      "family": "ore",
+      "grade": 5,
+      "name": "Mithril Pickaxe",
+      "material": "Mithril",
+      "atlas": "tools.png",
+      "rect": [
+        26,
+        1080,
+        255,
+        260
+      ],
+      "sourceSha256": "bea6b1f44f1b0ea1056899fd6e5ea08e910296f24d88019232d9b76303b370e2"
+    },
+    {
+      "id": "axe-g5",
+      "kind": "axe",
+      "noun": "Woodaxe",
+      "family": "ore",
+      "grade": 5,
+      "name": "Mithril Woodaxe",
+      "material": "Mithril",
+      "atlas": "tools.png",
+      "rect": [
+        310,
+        1068,
+        263,
+        283
+      ],
+      "sourceSha256": "bea6b1f44f1b0ea1056899fd6e5ea08e910296f24d88019232d9b76303b370e2"
+    },
+    {
+      "id": "sickle-g5",
+      "kind": "sickle",
+      "noun": "Sickle",
+      "family": "ore",
+      "grade": 5,
+      "name": "Mithril Sickle",
+      "material": "Mithril",
+      "atlas": "tools.png",
+      "rect": [
+        610,
+        1077,
+        218,
+        292
+      ],
+      "sourceSha256": "bea6b1f44f1b0ea1056899fd6e5ea08e910296f24d88019232d9b76303b370e2"
+    },
+    {
+      "id": "spear-g5",
+      "kind": "spear",
+      "noun": "Hunting Spear",
+      "family": "ore",
+      "grade": 5,
+      "name": "Mithril Hunting Spear",
+      "material": "Mithril",
+      "atlas": "tools.png",
+      "rect": [
+        869,
+        1067,
+        223,
+        297
+      ],
+      "isolation": "largest connected opaque component; excludes detached atlas fragments",
+      "sourceSha256": "bea6b1f44f1b0ea1056899fd6e5ea08e910296f24d88019232d9b76303b370e2"
+    },
+    {
+      "id": "warblade-g1",
+      "kind": "warblade",
+      "noun": "Warblade",
+      "family": "ore",
+      "grade": 1,
+      "name": "Copper Warblade",
+      "material": "Copper",
+      "atlas": "armour.png",
+      "rect": [
+        90,
+        41,
+        136,
+        228
+      ],
+      "sourceSha256": "65ed57d5bb9af15ff324f6d43a416a4d98b0ef94ce019ad189a9cfe71dbe7773"
+    },
+    {
+      "id": "shield-g1",
+      "kind": "shield",
+      "noun": "Shield",
+      "family": "ore",
+      "grade": 1,
+      "name": "Copper Shield",
+      "material": "Copper",
+      "atlas": "armour.png",
+      "rect": [
+        347,
+        44,
+        163,
+        219
+      ],
+      "sourceSha256": "65ed57d5bb9af15ff324f6d43a416a4d98b0ef94ce019ad189a9cfe71dbe7773"
+    },
+    {
+      "id": "greathelm-g1",
+      "kind": "greathelm",
+      "noun": "Greathelm",
+      "family": "ore",
+      "grade": 1,
+      "name": "Copper Greathelm",
+      "material": "Copper",
+      "atlas": "armour.png",
+      "rect": [
+        630,
+        70,
+        144,
+        178
+      ],
+      "sourceSha256": "65ed57d5bb9af15ff324f6d43a416a4d98b0ef94ce019ad189a9cfe71dbe7773"
+    },
+    {
+      "id": "plate-g1",
+      "kind": "plate",
+      "noun": "Plate",
+      "family": "ore",
+      "grade": 1,
+      "name": "Copper Plate",
+      "material": "Copper",
+      "atlas": "armour.png",
+      "rect": [
+        897,
+        74,
+        159,
+        183
+      ],
+      "sourceSha256": "65ed57d5bb9af15ff324f6d43a416a4d98b0ef94ce019ad189a9cfe71dbe7773"
+    },
+    {
+      "id": "warblade-g2",
+      "kind": "warblade",
+      "noun": "Warblade",
+      "family": "ore",
+      "grade": 2,
+      "name": "Iron Warblade",
+      "material": "Iron",
+      "atlas": "armour.png",
+      "rect": [
+        81,
+        289,
+        145,
+        252
+      ],
+      "sourceSha256": "65ed57d5bb9af15ff324f6d43a416a4d98b0ef94ce019ad189a9cfe71dbe7773"
+    },
+    {
+      "id": "shield-g2",
+      "kind": "shield",
+      "noun": "Shield",
+      "family": "ore",
+      "grade": 2,
+      "name": "Iron Shield",
+      "material": "Iron",
+      "atlas": "armour.png",
+      "rect": [
+        346,
+        295,
+        168,
+        240
+      ],
+      "sourceSha256": "65ed57d5bb9af15ff324f6d43a416a4d98b0ef94ce019ad189a9cfe71dbe7773"
+    },
+    {
+      "id": "greathelm-g2",
+      "kind": "greathelm",
+      "noun": "Greathelm",
+      "family": "ore",
+      "grade": 2,
+      "name": "Iron Greathelm",
+      "material": "Iron",
+      "atlas": "armour.png",
+      "rect": [
+        627,
+        322,
+        149,
+        192
+      ],
+      "sourceSha256": "65ed57d5bb9af15ff324f6d43a416a4d98b0ef94ce019ad189a9cfe71dbe7773"
+    },
+    {
+      "id": "plate-g2",
+      "kind": "plate",
+      "noun": "Plate",
+      "family": "ore",
+      "grade": 2,
+      "name": "Iron Plate",
+      "material": "Iron",
+      "atlas": "armour.png",
+      "rect": [
+        890,
+        316,
+        177,
+        221
+      ],
+      "sourceSha256": "65ed57d5bb9af15ff324f6d43a416a4d98b0ef94ce019ad189a9cfe71dbe7773"
+    },
+    {
+      "id": "warblade-g3",
+      "kind": "warblade",
+      "noun": "Warblade",
+      "family": "ore",
+      "grade": 3,
+      "name": "Silver Warblade",
+      "material": "Silver",
+      "atlas": "armour.png",
+      "rect": [
+        64,
+        553,
+        166,
+        273
+      ],
+      "sourceSha256": "65ed57d5bb9af15ff324f6d43a416a4d98b0ef94ce019ad189a9cfe71dbe7773"
+    },
+    {
+      "id": "shield-g3",
+      "kind": "shield",
+      "noun": "Shield",
+      "family": "ore",
+      "grade": 3,
+      "name": "Silver Shield",
+      "material": "Silver",
+      "atlas": "armour.png",
+      "rect": [
+        339,
+        559,
+        180,
+        254
+      ],
+      "sourceSha256": "65ed57d5bb9af15ff324f6d43a416a4d98b0ef94ce019ad189a9cfe71dbe7773"
+    },
+    {
+      "id": "greathelm-g3",
+      "kind": "greathelm",
+      "noun": "Greathelm",
+      "family": "ore",
+      "grade": 3,
+      "name": "Silver Greathelm",
+      "material": "Silver",
+      "atlas": "armour.png",
+      "rect": [
+        626,
+        578,
+        147,
+        213
+      ],
+      "sourceSha256": "65ed57d5bb9af15ff324f6d43a416a4d98b0ef94ce019ad189a9cfe71dbe7773"
+    },
+    {
+      "id": "plate-g3",
+      "kind": "plate",
+      "noun": "Plate",
+      "family": "ore",
+      "grade": 3,
+      "name": "Silver Plate",
+      "material": "Silver",
+      "atlas": "armour.png",
+      "rect": [
+        866,
+        577,
+        224,
+        236
+      ],
+      "sourceSha256": "65ed57d5bb9af15ff324f6d43a416a4d98b0ef94ce019ad189a9cfe71dbe7773"
+    },
+    {
+      "id": "warblade-g4",
+      "kind": "warblade",
+      "noun": "Warblade",
+      "family": "ore",
+      "grade": 4,
+      "name": "Cobalt Warblade",
+      "material": "Cobalt",
+      "atlas": "armour.png",
+      "rect": [
+        64,
+        826,
+        174,
+        270
+      ],
+      "isolation": "largest connected opaque component; excludes detached atlas fragments",
+      "sourceSha256": "65ed57d5bb9af15ff324f6d43a416a4d98b0ef94ce019ad189a9cfe71dbe7773"
+    },
+    {
+      "id": "shield-g4",
+      "kind": "shield",
+      "noun": "Shield",
+      "family": "ore",
+      "grade": 4,
+      "name": "Cobalt Shield",
+      "material": "Cobalt",
+      "atlas": "armour.png",
+      "rect": [
+        334,
+        827,
+        190,
+        269
+      ],
+      "sourceSha256": "65ed57d5bb9af15ff324f6d43a416a4d98b0ef94ce019ad189a9cfe71dbe7773"
+    },
+    {
+      "id": "greathelm-g4",
+      "kind": "greathelm",
+      "noun": "Greathelm",
+      "family": "ore",
+      "grade": 4,
+      "name": "Cobalt Greathelm",
+      "material": "Cobalt",
+      "atlas": "armour.png",
+      "rect": [
+        613,
+        850,
+        176,
+        216
+      ],
+      "sourceSha256": "65ed57d5bb9af15ff324f6d43a416a4d98b0ef94ce019ad189a9cfe71dbe7773"
+    },
+    {
+      "id": "plate-g4",
+      "kind": "plate",
+      "noun": "Plate",
+      "family": "ore",
+      "grade": 4,
+      "name": "Cobalt Plate",
+      "material": "Cobalt",
+      "atlas": "armour.png",
+      "rect": [
+        844,
+        847,
+        261,
+        235
+      ],
+      "sourceSha256": "65ed57d5bb9af15ff324f6d43a416a4d98b0ef94ce019ad189a9cfe71dbe7773"
+    },
+    {
+      "id": "warblade-g5",
+      "kind": "warblade",
+      "noun": "Warblade",
+      "family": "ore",
+      "grade": 5,
+      "name": "Mithril Warblade",
+      "material": "Mithril",
+      "atlas": "armour.png",
+      "rect": [
+        63,
+        1096,
+        175,
+        274
+      ],
+      "sourceSha256": "65ed57d5bb9af15ff324f6d43a416a4d98b0ef94ce019ad189a9cfe71dbe7773"
+    },
+    {
+      "id": "shield-g5",
+      "kind": "shield",
+      "noun": "Shield",
+      "family": "ore",
+      "grade": 5,
+      "name": "Mithril Shield",
+      "material": "Mithril",
+      "atlas": "armour.png",
+      "rect": [
+        335,
+        1096,
+        189,
+        267
+      ],
+      "sourceSha256": "65ed57d5bb9af15ff324f6d43a416a4d98b0ef94ce019ad189a9cfe71dbe7773"
+    },
+    {
+      "id": "greathelm-g5",
+      "kind": "greathelm",
+      "noun": "Greathelm",
+      "family": "ore",
+      "grade": 5,
+      "name": "Mithril Greathelm",
+      "material": "Mithril",
+      "atlas": "armour.png",
+      "rect": [
+        609,
+        1098,
+        186,
+        245
+      ],
+      "sourceSha256": "65ed57d5bb9af15ff324f6d43a416a4d98b0ef94ce019ad189a9cfe71dbe7773"
+    },
+    {
+      "id": "plate-g5",
+      "kind": "plate",
+      "noun": "Plate",
+      "family": "ore",
+      "grade": 5,
+      "name": "Mithril Plate",
+      "material": "Mithril",
+      "atlas": "armour.png",
+      "rect": [
+        840,
+        1102,
+        271,
+        264
+      ],
+      "sourceSha256": "65ed57d5bb9af15ff324f6d43a416a4d98b0ef94ce019ad189a9cfe71dbe7773"
+    },
+    {
+      "id": "censer-g1",
+      "kind": "censer",
+      "noun": "Censer",
+      "family": "ore",
+      "grade": 1,
+      "name": "Copper Censer",
+      "material": "Copper",
+      "atlas": "weapons.png",
+      "rect": [
+        199,
+        21,
+        107,
+        197
+      ],
+      "sourceSha256": "d070c2923b98ea6d4519ee4131b9e6bfe781101f5875debd7afe20d3cd4cb073"
+    },
+    {
+      "id": "staff-g1",
+      "kind": "staff",
+      "noun": "Staff",
+      "family": "wood",
+      "grade": 1,
+      "name": "Pine Staff",
+      "material": "Pine",
+      "atlas": "weapons.png",
+      "rect": [
+        481,
+        16,
+        127,
+        203
+      ],
+      "sourceSha256": "d070c2923b98ea6d4519ee4131b9e6bfe781101f5875debd7afe20d3cd4cb073"
+    },
+    {
+      "id": "bow-g1",
+      "kind": "bow",
+      "noun": "Bow",
+      "family": "wood",
+      "grade": 1,
+      "name": "Pine Bow",
+      "material": "Pine",
+      "atlas": "weapons.png",
+      "rect": [
+        785,
+        17,
+        108,
+        199
+      ],
+      "sourceSha256": "d070c2923b98ea6d4519ee4131b9e6bfe781101f5875debd7afe20d3cd4cb073"
+    },
+    {
+      "id": "quiver-g1",
+      "kind": "quiver",
+      "noun": "Quiver",
+      "family": "hide",
+      "grade": 1,
+      "name": "Bristlehide Quiver",
+      "material": "Bristlehide",
+      "atlas": "weapons.png",
+      "rect": [
+        1063,
+        28,
+        127,
+        190
+      ],
+      "sourceSha256": "d070c2923b98ea6d4519ee4131b9e6bfe781101f5875debd7afe20d3cd4cb073"
+    },
+    {
+      "id": "censer-g2",
+      "kind": "censer",
+      "noun": "Censer",
+      "family": "ore",
+      "grade": 2,
+      "name": "Iron Censer",
+      "material": "Iron",
+      "atlas": "weapons.png",
+      "rect": [
+        194,
+        241,
+        121,
+        212
+      ],
+      "sourceSha256": "d070c2923b98ea6d4519ee4131b9e6bfe781101f5875debd7afe20d3cd4cb073"
+    },
+    {
+      "id": "staff-g2",
+      "kind": "staff",
+      "noun": "Staff",
+      "family": "wood",
+      "grade": 2,
+      "name": "Birch Staff",
+      "material": "Birch",
+      "atlas": "weapons.png",
+      "rect": [
+        483,
+        229,
+        135,
+        224
+      ],
+      "sourceSha256": "d070c2923b98ea6d4519ee4131b9e6bfe781101f5875debd7afe20d3cd4cb073"
+    },
+    {
+      "id": "bow-g2",
+      "kind": "bow",
+      "noun": "Bow",
+      "family": "wood",
+      "grade": 2,
+      "name": "Birch Bow",
+      "material": "Birch",
+      "atlas": "weapons.png",
+      "rect": [
+        782,
+        232,
+        110,
+        221
+      ],
+      "sourceSha256": "d070c2923b98ea6d4519ee4131b9e6bfe781101f5875debd7afe20d3cd4cb073"
+    },
+    {
+      "id": "quiver-g2",
+      "kind": "quiver",
+      "noun": "Quiver",
+      "family": "hide",
+      "grade": 2,
+      "name": "Duskfang Pelt Quiver",
+      "material": "Duskfang Pelt",
+      "atlas": "weapons.png",
+      "rect": [
+        1055,
+        243,
+        142,
+        206
+      ],
+      "sourceSha256": "d070c2923b98ea6d4519ee4131b9e6bfe781101f5875debd7afe20d3cd4cb073"
+    },
+    {
+      "id": "censer-g3",
+      "kind": "censer",
+      "noun": "Censer",
+      "family": "ore",
+      "grade": 3,
+      "name": "Silver Censer",
+      "material": "Silver",
+      "atlas": "weapons.png",
+      "rect": [
+        195,
+        471,
+        121,
+        213
+      ],
+      "sourceSha256": "d070c2923b98ea6d4519ee4131b9e6bfe781101f5875debd7afe20d3cd4cb073"
+    },
+    {
+      "id": "staff-g3",
+      "kind": "staff",
+      "noun": "Staff",
+      "family": "wood",
+      "grade": 3,
+      "name": "Oak Staff",
+      "material": "Oak",
+      "atlas": "weapons.png",
+      "rect": [
+        478,
+        458,
+        141,
+        229
+      ],
+      "sourceSha256": "d070c2923b98ea6d4519ee4131b9e6bfe781101f5875debd7afe20d3cd4cb073"
+    },
+    {
+      "id": "bow-g3",
+      "kind": "bow",
+      "noun": "Bow",
+      "family": "wood",
+      "grade": 3,
+      "name": "Oak Bow",
+      "material": "Oak",
+      "atlas": "weapons.png",
+      "rect": [
+        775,
+        464,
+        116,
+        220
+      ],
+      "sourceSha256": "d070c2923b98ea6d4519ee4131b9e6bfe781101f5875debd7afe20d3cd4cb073"
+    },
+    {
+      "id": "quiver-g3",
+      "kind": "quiver",
+      "noun": "Quiver",
+      "family": "hide",
+      "grade": 3,
+      "name": "Fenscale Quiver",
+      "material": "Fenscale",
+      "atlas": "weapons.png",
+      "rect": [
+        1063,
+        467,
+        141,
+        212
+      ],
+      "sourceSha256": "d070c2923b98ea6d4519ee4131b9e6bfe781101f5875debd7afe20d3cd4cb073"
+    },
+    {
+      "id": "censer-g4",
+      "kind": "censer",
+      "noun": "Censer",
+      "family": "ore",
+      "grade": 4,
+      "name": "Cobalt Censer",
+      "material": "Cobalt",
+      "atlas": "weapons.png",
+      "rect": [
+        189,
+        697,
+        135,
+        220
+      ],
+      "sourceSha256": "d070c2923b98ea6d4519ee4131b9e6bfe781101f5875debd7afe20d3cd4cb073"
+    },
+    {
+      "id": "staff-g4",
+      "kind": "staff",
+      "noun": "Staff",
+      "family": "wood",
+      "grade": 4,
+      "name": "Mangrove Staff",
+      "material": "Mangrove",
+      "atlas": "weapons.png",
+      "rect": [
+        481,
+        694,
+        140,
+        226
+      ],
+      "sourceSha256": "d070c2923b98ea6d4519ee4131b9e6bfe781101f5875debd7afe20d3cd4cb073"
+    },
+    {
+      "id": "bow-g4",
+      "kind": "bow",
+      "noun": "Bow",
+      "family": "wood",
+      "grade": 4,
+      "name": "Mangrove Bow",
+      "material": "Mangrove",
+      "atlas": "weapons.png",
+      "rect": [
+        776,
+        688,
+        114,
+        232
+      ],
+      "sourceSha256": "d070c2923b98ea6d4519ee4131b9e6bfe781101f5875debd7afe20d3cd4cb073"
+    },
+    {
+      "id": "quiver-g4",
+      "kind": "quiver",
+      "noun": "Quiver",
+      "family": "hide",
+      "grade": 4,
+      "name": "Riptide Skin Quiver",
+      "material": "Riptide Skin",
+      "atlas": "weapons.png",
+      "rect": [
+        1055,
+        694,
+        147,
+        217
+      ],
+      "sourceSha256": "d070c2923b98ea6d4519ee4131b9e6bfe781101f5875debd7afe20d3cd4cb073"
+    },
+    {
+      "id": "censer-g5",
+      "kind": "censer",
+      "noun": "Censer",
+      "family": "ore",
+      "grade": 5,
+      "name": "Mithril Censer",
+      "material": "Mithril",
+      "atlas": "weapons.png",
+      "rect": [
+        189,
+        922,
+        147,
+        222
+      ],
+      "sourceSha256": "d070c2923b98ea6d4519ee4131b9e6bfe781101f5875debd7afe20d3cd4cb073"
+    },
+    {
+      "id": "staff-g5",
+      "kind": "staff",
+      "noun": "Staff",
+      "family": "wood",
+      "grade": 5,
+      "name": "Tideash Staff",
+      "material": "Tideash",
+      "atlas": "weapons.png",
+      "rect": [
+        488,
+        920,
+        136,
+        224
+      ],
+      "sourceSha256": "d070c2923b98ea6d4519ee4131b9e6bfe781101f5875debd7afe20d3cd4cb073"
+    },
+    {
+      "id": "bow-g5",
+      "kind": "bow",
+      "noun": "Bow",
+      "family": "wood",
+      "grade": 5,
+      "name": "Tideash Bow",
+      "material": "Tideash",
+      "atlas": "weapons.png",
+      "rect": [
+        764,
+        920,
+        130,
+        217
+      ],
+      "sourceSha256": "d070c2923b98ea6d4519ee4131b9e6bfe781101f5875debd7afe20d3cd4cb073"
+    },
+    {
+      "id": "quiver-g5",
+      "kind": "quiver",
+      "noun": "Quiver",
+      "family": "hide",
+      "grade": 5,
+      "name": "Tide Kelpie Hide Quiver",
+      "material": "Tide Kelpie Hide",
+      "atlas": "weapons.png",
+      "rect": [
+        1050,
+        922,
+        160,
+        215
+      ],
+      "sourceSha256": "d070c2923b98ea6d4519ee4131b9e6bfe781101f5875debd7afe20d3cd4cb073"
+    },
+    {
+      "id": "lantern-g1",
+      "kind": "lantern",
+      "noun": "Lantern",
+      "family": "crystal",
+      "grade": 1,
+      "name": "Quartz Lantern",
+      "material": "Quartz",
+      "atlas": "caster.png",
+      "rect": [
+        84,
+        20,
+        124,
+        228
+      ],
+      "sourceSha256": "a42764c7f83c7b40d58f7726abbf93caeb4943c69956f689dd649c4d37e98caa"
+    },
+    {
+      "id": "circlet-g1",
+      "kind": "circlet",
+      "noun": "Circlet",
+      "family": "crystal",
+      "grade": 1,
+      "name": "Quartz Circlet",
+      "material": "Quartz",
+      "atlas": "caster.png",
+      "rect": [
+        327,
+        94,
+        201,
+        110
+      ],
+      "sourceSha256": "a42764c7f83c7b40d58f7726abbf93caeb4943c69956f689dd649c4d37e98caa"
+    },
+    {
+      "id": "robe-g1",
+      "kind": "robe",
+      "noun": "Robe",
+      "family": "fibre",
+      "grade": 1,
+      "name": "Hemp Fibre Robe",
+      "material": "Hemp Fibre",
+      "atlas": "caster.png",
+      "rect": [
+        611,
+        25,
+        170,
+        232
+      ],
+      "sourceSha256": "a42764c7f83c7b40d58f7726abbf93caeb4943c69956f689dd649c4d37e98caa"
+    },
+    {
+      "id": "tome-g1",
+      "kind": "tome",
+      "noun": "Tome",
+      "family": "fibre",
+      "grade": 1,
+      "name": "Hemp Fibre Tome",
+      "material": "Hemp Fibre",
+      "atlas": "caster.png",
+      "rect": [
+        883,
+        54,
+        195,
+        197
+      ],
+      "sourceSha256": "a42764c7f83c7b40d58f7726abbf93caeb4943c69956f689dd649c4d37e98caa"
+    },
+    {
+      "id": "lantern-g2",
+      "kind": "lantern",
+      "noun": "Lantern",
+      "family": "crystal",
+      "grade": 2,
+      "name": "Jasper Lantern",
+      "material": "Jasper",
+      "atlas": "caster.png",
+      "rect": [
+        79,
+        287,
+        138,
+        239
+      ],
+      "sourceSha256": "a42764c7f83c7b40d58f7726abbf93caeb4943c69956f689dd649c4d37e98caa"
+    },
+    {
+      "id": "circlet-g2",
+      "kind": "circlet",
+      "noun": "Circlet",
+      "family": "crystal",
+      "grade": 2,
+      "name": "Jasper Circlet",
+      "material": "Jasper",
+      "atlas": "caster.png",
+      "rect": [
+        319,
+        364,
+        217,
+        117
+      ],
+      "sourceSha256": "a42764c7f83c7b40d58f7726abbf93caeb4943c69956f689dd649c4d37e98caa"
+    },
+    {
+      "id": "robe-g2",
+      "kind": "robe",
+      "noun": "Robe",
+      "family": "fibre",
+      "grade": 2,
+      "name": "Flax Fibre Robe",
+      "material": "Flax Fibre",
+      "atlas": "caster.png",
+      "rect": [
+        603,
+        288,
+        186,
+        244
+      ],
+      "sourceSha256": "a42764c7f83c7b40d58f7726abbf93caeb4943c69956f689dd649c4d37e98caa"
+    },
+    {
+      "id": "tome-g2",
+      "kind": "tome",
+      "noun": "Tome",
+      "family": "fibre",
+      "grade": 2,
+      "name": "Flax Fibre Tome",
+      "material": "Flax Fibre",
+      "atlas": "caster.png",
+      "rect": [
+        883,
+        318,
+        210,
+        219
+      ],
+      "sourceSha256": "a42764c7f83c7b40d58f7726abbf93caeb4943c69956f689dd649c4d37e98caa"
+    },
+    {
+      "id": "lantern-g3",
+      "kind": "lantern",
+      "noun": "Lantern",
+      "family": "crystal",
+      "grade": 3,
+      "name": "Amethyst Lantern",
+      "material": "Amethyst",
+      "atlas": "caster.png",
+      "rect": [
+        75,
+        557,
+        147,
+        250
+      ],
+      "sourceSha256": "a42764c7f83c7b40d58f7726abbf93caeb4943c69956f689dd649c4d37e98caa"
+    },
+    {
+      "id": "circlet-g3",
+      "kind": "circlet",
+      "noun": "Circlet",
+      "family": "crystal",
+      "grade": 3,
+      "name": "Amethyst Circlet",
+      "material": "Amethyst",
+      "atlas": "caster.png",
+      "rect": [
+        313,
+        614,
+        228,
+        147
+      ],
+      "sourceSha256": "a42764c7f83c7b40d58f7726abbf93caeb4943c69956f689dd649c4d37e98caa"
+    },
+    {
+      "id": "robe-g3",
+      "kind": "robe",
+      "noun": "Robe",
+      "family": "fibre",
+      "grade": 3,
+      "name": "Briarthread Robe",
+      "material": "Briarthread",
+      "atlas": "caster.png",
+      "rect": [
+        584,
+        565,
+        231,
+        247
+      ],
+      "sourceSha256": "a42764c7f83c7b40d58f7726abbf93caeb4943c69956f689dd649c4d37e98caa"
+    },
+    {
+      "id": "tome-g3",
+      "kind": "tome",
+      "noun": "Tome",
+      "family": "fibre",
+      "grade": 3,
+      "name": "Briarthread Tome",
+      "material": "Briarthread",
+      "atlas": "caster.png",
+      "rect": [
+        883,
+        590,
+        212,
+        222
+      ],
+      "sourceSha256": "a42764c7f83c7b40d58f7726abbf93caeb4943c69956f689dd649c4d37e98caa"
+    },
+    {
+      "id": "lantern-g4",
+      "kind": "lantern",
+      "noun": "Lantern",
+      "family": "crystal",
+      "grade": 4,
+      "name": "Tide Pearl Lantern",
+      "material": "Tide Pearl",
+      "atlas": "caster.png",
+      "rect": [
+        58,
+        833,
+        177,
+        236
+      ],
+      "sourceSha256": "a42764c7f83c7b40d58f7726abbf93caeb4943c69956f689dd649c4d37e98caa"
+    },
+    {
+      "id": "circlet-g4",
+      "kind": "circlet",
+      "noun": "Circlet",
+      "family": "crystal",
+      "grade": 4,
+      "name": "Tide Pearl Circlet",
+      "material": "Tide Pearl",
+      "atlas": "caster.png",
+      "rect": [
+        309,
+        901,
+        236,
+        122
+      ],
+      "sourceSha256": "a42764c7f83c7b40d58f7726abbf93caeb4943c69956f689dd649c4d37e98caa"
+    },
+    {
+      "id": "robe-g4",
+      "kind": "robe",
+      "noun": "Robe",
+      "family": "fibre",
+      "grade": 4,
+      "name": "Kelp Fibre Robe",
+      "material": "Kelp Fibre",
+      "atlas": "kelp.png",
+      "rect": [
+        0,
+        0,
+        582,
+        724
+      ],
+      "sourceSha256": "3df0553a237c2a214b9772f205551582f0cb46395514e7acf98b0285832fcb46"
+    },
+    {
+      "id": "tome-g4",
+      "kind": "tome",
+      "noun": "Tome",
+      "family": "fibre",
+      "grade": 4,
+      "name": "Kelp Fibre Tome",
+      "material": "Kelp Fibre",
+      "atlas": "kelp.png",
+      "rect": [
+        582,
+        0,
+        504,
+        724
+      ],
+      "sourceSha256": "3df0553a237c2a214b9772f205551582f0cb46395514e7acf98b0285832fcb46"
+    },
+    {
+      "id": "lantern-g5",
+      "kind": "lantern",
+      "noun": "Lantern",
+      "family": "crystal",
+      "grade": 5,
+      "name": "Storm Aquamarine Lantern",
+      "material": "Storm Aquamarine",
+      "atlas": "caster.png",
+      "rect": [
+        73,
+        1084,
+        150,
+        294
+      ],
+      "sourceSha256": "a42764c7f83c7b40d58f7726abbf93caeb4943c69956f689dd649c4d37e98caa"
+    },
+    {
+      "id": "circlet-g5",
+      "kind": "circlet",
+      "noun": "Circlet",
+      "family": "crystal",
+      "grade": 5,
+      "name": "Storm Aquamarine Circlet",
+      "material": "Storm Aquamarine",
+      "atlas": "caster.png",
+      "rect": [
+        306,
+        1138,
+        242,
+        184
+      ],
+      "sourceSha256": "a42764c7f83c7b40d58f7726abbf93caeb4943c69956f689dd649c4d37e98caa"
+    },
+    {
+      "id": "robe-g5",
+      "kind": "robe",
+      "noun": "Robe",
+      "family": "fibre",
+      "grade": 5,
+      "name": "Stormgrass Fibre Robe",
+      "material": "Stormgrass Fibre",
+      "atlas": "caster.png",
+      "rect": [
+        570,
+        1092,
+        271,
+        286
+      ],
+      "sourceSha256": "a42764c7f83c7b40d58f7726abbf93caeb4943c69956f689dd649c4d37e98caa"
+    },
+    {
+      "id": "tome-g5",
+      "kind": "tome",
+      "noun": "Tome",
+      "family": "fibre",
+      "grade": 5,
+      "name": "Stormgrass Fibre Tome",
+      "material": "Stormgrass Fibre",
+      "atlas": "caster.png",
+      "rect": [
+        883,
+        1113,
+        213,
+        255
+      ],
+      "sourceSha256": "a42764c7f83c7b40d58f7726abbf93caeb4943c69956f689dd649c4d37e98caa"
+    },
+    {
+      "id": "hood-g1",
+      "kind": "hood",
+      "noun": "Hood",
+      "family": "hide",
+      "grade": 1,
+      "name": "Bristlehide Hood",
+      "material": "Bristlehide",
+      "atlas": "clothing.png",
+      "rect": [
+        215,
+        31,
+        148,
+        181
+      ],
+      "sourceSha256": "7564158f2d8e9b28ec64f5939a1b947a84687a4891f53f22ff83aa9007070ba6"
+    },
+    {
+      "id": "leathers-g1",
+      "kind": "leathers",
+      "noun": "Leathers",
+      "family": "hide",
+      "grade": 1,
+      "name": "Bristlehide Leathers",
+      "material": "Bristlehide",
+      "atlas": "clothing.png",
+      "rect": [
+        469,
+        32,
+        181,
+        182
+      ],
+      "sourceSha256": "7564158f2d8e9b28ec64f5939a1b947a84687a4891f53f22ff83aa9007070ba6"
+    },
+    {
+      "id": "hood-g2",
+      "kind": "hood",
+      "noun": "Hood",
+      "family": "hide",
+      "grade": 2,
+      "name": "Duskfang Pelt Hood",
+      "material": "Duskfang Pelt",
+      "atlas": "clothing.png",
+      "rect": [
+        201,
+        240,
+        176,
+        187
+      ],
+      "sourceSha256": "7564158f2d8e9b28ec64f5939a1b947a84687a4891f53f22ff83aa9007070ba6"
+    },
+    {
+      "id": "leathers-g2",
+      "kind": "leathers",
+      "noun": "Leathers",
+      "family": "hide",
+      "grade": 2,
+      "name": "Duskfang Pelt Leathers",
+      "material": "Duskfang Pelt",
+      "atlas": "clothing.png",
+      "rect": [
+        467,
+        238,
+        185,
+        194
+      ],
+      "sourceSha256": "7564158f2d8e9b28ec64f5939a1b947a84687a4891f53f22ff83aa9007070ba6"
+    },
+    {
+      "id": "hood-g3",
+      "kind": "hood",
+      "noun": "Hood",
+      "family": "hide",
+      "grade": 3,
+      "name": "Fenscale Hood",
+      "material": "Fenscale",
+      "atlas": "clothing.png",
+      "rect": [
+        218,
+        458,
+        145,
+        195
+      ],
+      "sourceSha256": "7564158f2d8e9b28ec64f5939a1b947a84687a4891f53f22ff83aa9007070ba6"
+    },
+    {
+      "id": "leathers-g3",
+      "kind": "leathers",
+      "noun": "Leathers",
+      "family": "hide",
+      "grade": 3,
+      "name": "Fenscale Leathers",
+      "material": "Fenscale",
+      "atlas": "clothing.png",
+      "rect": [
+        459,
+        460,
+        192,
+        184
+      ],
+      "sourceSha256": "7564158f2d8e9b28ec64f5939a1b947a84687a4891f53f22ff83aa9007070ba6"
+    },
+    {
+      "id": "hood-g4",
+      "kind": "hood",
+      "noun": "Hood",
+      "family": "hide",
+      "grade": 4,
+      "name": "Riptide Skin Hood",
+      "material": "Riptide Skin",
+      "atlas": "clothing.png",
+      "rect": [
+        196,
+        662,
+        180,
+        200
+      ],
+      "sourceSha256": "7564158f2d8e9b28ec64f5939a1b947a84687a4891f53f22ff83aa9007070ba6"
+    },
+    {
+      "id": "leathers-g4",
+      "kind": "leathers",
+      "noun": "Leathers",
+      "family": "hide",
+      "grade": 4,
+      "name": "Riptide Skin Leathers",
+      "material": "Riptide Skin",
+      "atlas": "clothing.png",
+      "rect": [
+        453,
+        666,
+        211,
+        206
+      ],
+      "sourceSha256": "7564158f2d8e9b28ec64f5939a1b947a84687a4891f53f22ff83aa9007070ba6"
+    },
+    {
+      "id": "hood-g5",
+      "kind": "hood",
+      "noun": "Hood",
+      "family": "hide",
+      "grade": 5,
+      "name": "Tide Kelpie Hide Hood",
+      "material": "Tide Kelpie Hide",
+      "atlas": "clothing.png",
+      "rect": [
+        199,
+        883,
+        189,
+        218
+      ],
+      "sourceSha256": "7564158f2d8e9b28ec64f5939a1b947a84687a4891f53f22ff83aa9007070ba6"
+    },
+    {
+      "id": "leathers-g5",
+      "kind": "leathers",
+      "noun": "Leathers",
+      "family": "hide",
+      "grade": 5,
+      "name": "Tide Kelpie Hide Leathers",
+      "material": "Tide Kelpie Hide",
+      "atlas": "clothing.png",
+      "rect": [
+        443,
+        888,
+        233,
+        213
+      ],
+      "sourceSha256": "7564158f2d8e9b28ec64f5939a1b947a84687a4891f53f22ff83aa9007070ba6"
+    },
+    {
+      "id": "mitre-g1",
+      "kind": "mitre",
+      "noun": "Mitre",
+      "family": "fibre",
+      "grade": 1,
+      "name": "Hemp Fibre Mitre",
+      "material": "Hemp Fibre",
+      "atlas": "clergy.png",
+      "rect": [
+        375,
+        49,
+        149,
+        187
+      ],
+      "sourceSha256": "256a6a67a744579b9305e812640fbe06b54813664ea009395864d9bdbd602730"
+    },
+    {
+      "id": "vestments-g1",
+      "kind": "vestments",
+      "noun": "Vestments",
+      "family": "fibre",
+      "grade": 1,
+      "name": "Hemp Fibre Vestments",
+      "material": "Hemp Fibre",
+      "atlas": "clergy.png",
+      "rect": [
+        721,
+        25,
+        180,
+        212
+      ],
+      "sourceSha256": "256a6a67a744579b9305e812640fbe06b54813664ea009395864d9bdbd602730"
+    },
+    {
+      "id": "mitre-g2",
+      "kind": "mitre",
+      "noun": "Mitre",
+      "family": "fibre",
+      "grade": 2,
+      "name": "Flax Fibre Mitre",
+      "material": "Flax Fibre",
+      "atlas": "clergy.png",
+      "rect": [
+        369,
+        274,
+        162,
+        209
+      ],
+      "sourceSha256": "256a6a67a744579b9305e812640fbe06b54813664ea009395864d9bdbd602730"
+    },
+    {
+      "id": "vestments-g2",
+      "kind": "vestments",
+      "noun": "Vestments",
+      "family": "fibre",
+      "grade": 2,
+      "name": "Flax Fibre Vestments",
+      "material": "Flax Fibre",
+      "atlas": "clergy.png",
+      "rect": [
+        713,
+        267,
+        196,
+        225
+      ],
+      "sourceSha256": "256a6a67a744579b9305e812640fbe06b54813664ea009395864d9bdbd602730"
+    },
+    {
+      "id": "mitre-g3",
+      "kind": "mitre",
+      "noun": "Mitre",
+      "family": "fibre",
+      "grade": 3,
+      "name": "Briarthread Mitre",
+      "material": "Briarthread",
+      "atlas": "clergy.png",
+      "rect": [
+        366,
+        509,
+        165,
+        226
+      ],
+      "sourceSha256": "256a6a67a744579b9305e812640fbe06b54813664ea009395864d9bdbd602730"
+    },
+    {
+      "id": "vestments-g3",
+      "kind": "vestments",
+      "noun": "Vestments",
+      "family": "fibre",
+      "grade": 3,
+      "name": "Briarthread Vestments",
+      "material": "Briarthread",
+      "atlas": "clergy.png",
+      "rect": [
+        698,
+        503,
+        226,
+        240
+      ],
+      "sourceSha256": "256a6a67a744579b9305e812640fbe06b54813664ea009395864d9bdbd602730"
+    },
+    {
+      "id": "mitre-g4",
+      "kind": "mitre",
+      "noun": "Mitre",
+      "family": "fibre",
+      "grade": 4,
+      "name": "Kelp Fibre Mitre",
+      "material": "Kelp Fibre",
+      "atlas": "kelp.png",
+      "rect": [
+        1086,
+        0,
+        511,
+        724
+      ],
+      "sourceSha256": "3df0553a237c2a214b9772f205551582f0cb46395514e7acf98b0285832fcb46"
+    },
+    {
+      "id": "vestments-g4",
+      "kind": "vestments",
+      "noun": "Vestments",
+      "family": "fibre",
+      "grade": 4,
+      "name": "Kelp Fibre Vestments",
+      "material": "Kelp Fibre",
+      "atlas": "kelp.png",
+      "rect": [
+        1597,
+        0,
+        575,
+        724
+      ],
+      "sourceSha256": "3df0553a237c2a214b9772f205551582f0cb46395514e7acf98b0285832fcb46"
+    },
+    {
+      "id": "mitre-g5",
+      "kind": "mitre",
+      "noun": "Mitre",
+      "family": "fibre",
+      "grade": 5,
+      "name": "Stormgrass Fibre Mitre",
+      "material": "Stormgrass Fibre",
+      "atlas": "clergy.png",
+      "rect": [
+        352,
+        988,
+        194,
+        238
+      ],
+      "sourceSha256": "256a6a67a744579b9305e812640fbe06b54813664ea009395864d9bdbd602730"
+    },
+    {
+      "id": "vestments-g5",
+      "kind": "vestments",
+      "noun": "Vestments",
+      "family": "fibre",
+      "grade": 5,
+      "name": "Stormgrass Fibre Vestments",
+      "material": "Stormgrass Fibre",
+      "atlas": "clergy.png",
+      "rect": [
+        685,
+        986,
+        248,
+        262
+      ],
+      "sourceSha256": "256a6a67a744579b9305e812640fbe06b54813664ea009395864d9bdbd602730"
+    },
+    {
+      "id": "trinket-g1",
+      "kind": "trinket",
+      "noun": "Trinket",
+      "family": "crystal",
+      "grade": 1,
+      "name": "Quartz Trinket",
+      "material": "Quartz",
+      "atlas": "jewels.png",
+      "rect": [
+        385,
+        90,
+        118,
+        147
+      ],
+      "sourceSha256": "3ee9db73203a666f91d056312def3812988dcfd4e4c6526bb394e9d158a458b6"
+    },
+    {
+      "id": "charm-g1",
+      "kind": "charm",
+      "noun": "Charm",
+      "family": "ess",
+      "grade": 1,
+      "name": "Dim Charm",
+      "material": "Dim",
+      "atlas": "jewels.png",
+      "rect": [
+        751,
+        61,
+        114,
+        186
+      ],
+      "sourceSha256": "3ee9db73203a666f91d056312def3812988dcfd4e4c6526bb394e9d158a458b6"
+    },
+    {
+      "id": "trinket-g2",
+      "kind": "trinket",
+      "noun": "Trinket",
+      "family": "crystal",
+      "grade": 2,
+      "name": "Jasper Trinket",
+      "material": "Jasper",
+      "atlas": "jewels.png",
+      "rect": [
+        355,
+        296,
+        177,
+        180
+      ],
+      "sourceSha256": "3ee9db73203a666f91d056312def3812988dcfd4e4c6526bb394e9d158a458b6"
+    },
+    {
+      "id": "charm-g2",
+      "kind": "charm",
+      "noun": "Charm",
+      "family": "ess",
+      "grade": 2,
+      "name": "Glowing Charm",
+      "material": "Glowing",
+      "atlas": "jewels.png",
+      "rect": [
+        724,
+        266,
+        165,
+        219
+      ],
+      "sourceSha256": "3ee9db73203a666f91d056312def3812988dcfd4e4c6526bb394e9d158a458b6"
+    },
+    {
+      "id": "trinket-g3",
+      "kind": "trinket",
+      "noun": "Trinket",
+      "family": "crystal",
+      "grade": 3,
+      "name": "Amethyst Trinket",
+      "material": "Amethyst",
+      "atlas": "jewels.png",
+      "rect": [
+        338,
+        509,
+        211,
+        214
+      ],
+      "sourceSha256": "3ee9db73203a666f91d056312def3812988dcfd4e4c6526bb394e9d158a458b6"
+    },
+    {
+      "id": "charm-g3",
+      "kind": "charm",
+      "noun": "Charm",
+      "family": "ess",
+      "grade": 3,
+      "name": "Radiant Charm",
+      "material": "Radiant",
+      "atlas": "jewels.png",
+      "rect": [
+        697,
+        496,
+        217,
+        227
+      ],
+      "sourceSha256": "3ee9db73203a666f91d056312def3812988dcfd4e4c6526bb394e9d158a458b6"
+    },
+    {
+      "id": "trinket-g4",
+      "kind": "trinket",
+      "noun": "Trinket",
+      "family": "crystal",
+      "grade": 4,
+      "name": "Tide Pearl Trinket",
+      "material": "Tide Pearl",
+      "atlas": "jewels.png",
+      "rect": [
+        302,
+        725,
+        282,
+        228
+      ],
+      "sourceSha256": "3ee9db73203a666f91d056312def3812988dcfd4e4c6526bb394e9d158a458b6"
+    },
+    {
+      "id": "charm-g4",
+      "kind": "charm",
+      "noun": "Charm",
+      "family": "ess",
+      "grade": 4,
+      "name": "Tidelit Charm",
+      "material": "Tidelit",
+      "atlas": "jewels.png",
+      "rect": [
+        695,
+        723,
+        224,
+        236
+      ],
+      "sourceSha256": "3ee9db73203a666f91d056312def3812988dcfd4e4c6526bb394e9d158a458b6"
+    },
+    {
+      "id": "trinket-g5",
+      "kind": "trinket",
+      "noun": "Trinket",
+      "family": "crystal",
+      "grade": 5,
+      "name": "Storm Aquamarine Trinket",
+      "material": "Storm Aquamarine",
+      "atlas": "jewels.png",
+      "rect": [
+        315,
+        967,
+        259,
+        254
+      ],
+      "sourceSha256": "3ee9db73203a666f91d056312def3812988dcfd4e4c6526bb394e9d158a458b6"
+    },
+    {
+      "id": "charm-g5",
+      "kind": "charm",
+      "noun": "Charm",
+      "family": "ess",
+      "grade": 5,
+      "name": "Stormlit Charm",
+      "material": "Stormlit",
+      "atlas": "jewels.png",
+      "rect": [
+        683,
+        959,
+        248,
+        280
+      ],
+      "sourceSha256": "3ee9db73203a666f91d056312def3812988dcfd4e4c6526bb394e9d158a458b6"
+    }
+  ]
+}
