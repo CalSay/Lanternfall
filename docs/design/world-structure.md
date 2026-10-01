@@ -28,6 +28,16 @@ Replaces the 7-areas-x-5-passes cycle (Mossy Hollow I-V). Each area is played **
 
 Shadowborn Captains reuse their monster's art (recolour plus an extra move), so they add no new designs.
 
+## The seventh area in the Pale Reach and the Gloamvale
+
+Both regions were designed with six areas plus a boss zone. The boss zone becomes the **full seventh area**, with five
+zones and its own Area Boss, before the separate Region Boss:
+
+- Pale Reach: **Frostgate Bastion** is area 7.
+- Gloamvale: **the Heart of the Gloamvale** is area 7; the Voice is the Region Boss after it.
+
+No new places are invented.
+
 ## Still open
 
 - How uniques drop now that boss rematches are gone (first kill, elites, Deepwell, ...).
