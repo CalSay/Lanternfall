@@ -1,0 +1,456 @@
+{
+  "version": 1,
+  "art_status": "Owner approved horn-corrected design; native export for integration",
+  "facing": "left",
+  "standing_height_px": 64,
+  "hero_reference_height_px": 96,
+  "frame_size": [
+    128,
+    96
+  ],
+  "atlas": "thorn-imp-atlas.png",
+  "atlas_size": [
+    896,
+    192
+  ],
+  "columns": 7,
+  "rows": 2,
+  "ground_boundary_y": 88,
+  "alpha": "binary",
+  "filter": "nearest",
+  "anchor_note": "Ground anchors estimated from lowest six occupied rows; tune stage root motion against hero contact during integration. Coordinates local to each frame.",
+  "contact_step_indexing": "zero-based sequence step; pose IDs are one-based",
+  "frames": [
+    {
+      "index": 1,
+      "id": "idle",
+      "file": "01-idle.png",
+      "rect": [
+        0,
+        0,
+        128,
+        96
+      ],
+      "bounds": [
+        34,
+        24,
+        93,
+        88
+      ],
+      "occupied_height": 64,
+      "ground_anchor": [
+        63,
+        88
+      ],
+      "description": "Ready stance; relaxed blades, mask toward the hero."
+    },
+    {
+      "index": 2,
+      "id": "jab-wind-up",
+      "file": "02-jab-wind-up.png",
+      "rect": [
+        128,
+        0,
+        128,
+        96
+      ],
+      "bounds": [
+        37,
+        24,
+        91,
+        88
+      ],
+      "occupied_height": 64,
+      "ground_anchor": [
+        64,
+        88
+      ],
+      "description": "Draw one blade beside the mask; Briar Jab anticipation."
+    },
+    {
+      "index": 3,
+      "id": "jab-contact",
+      "file": "03-jab-contact.png",
+      "rect": [
+        256,
+        0,
+        128,
+        96
+      ],
+      "bounds": [
+        20,
+        29,
+        107,
+        88
+      ],
+      "occupied_height": 59,
+      "ground_anchor": [
+        78,
+        88
+      ],
+      "description": "Extended forward thrust; Briar Jab contact."
+    },
+    {
+      "index": 4,
+      "id": "jab-recovery",
+      "file": "04-jab-recovery.png",
+      "rect": [
+        384,
+        0,
+        128,
+        96
+      ],
+      "bounds": [
+        35,
+        24,
+        92,
+        88
+      ],
+      "occupied_height": 64,
+      "ground_anchor": [
+        63,
+        88
+      ],
+      "description": "Withdraw the thrust and settle toward idle."
+    },
+    {
+      "index": 5,
+      "id": "crosscut-wind-up",
+      "file": "05-crosscut-wind-up.png",
+      "rect": [
+        512,
+        0,
+        128,
+        96
+      ],
+      "bounds": [
+        38,
+        25,
+        90,
+        88
+      ],
+      "occupied_height": 63,
+      "ground_anchor": [
+        64,
+        88
+      ],
+      "description": "Cross both forearm blades; Crosscut anticipation."
+    },
+    {
+      "index": 6,
+      "id": "first-slash",
+      "file": "06-first-slash.png",
+      "rect": [
+        640,
+        0,
+        128,
+        96
+      ],
+      "bounds": [
+        30,
+        21,
+        98,
+        88
+      ],
+      "occupied_height": 67,
+      "ground_anchor": [
+        64,
+        88
+      ],
+      "description": "First cutting key; resolve Crosscut hit 1 or Royal Rip hit 1."
+    },
+    {
+      "index": 7,
+      "id": "reverse-wind-up",
+      "file": "07-reverse-wind-up.png",
+      "rect": [
+        768,
+        0,
+        128,
+        96
+      ],
+      "bounds": [
+        27,
+        37,
+        101,
+        88
+      ],
+      "occupied_height": 51,
+      "ground_anchor": [
+        60,
+        88
+      ],
+      "description": "Reverse the arms; cue the next cut with a separate anticipation."
+    },
+    {
+      "index": 8,
+      "id": "second-slash",
+      "file": "08-second-slash.png",
+      "rect": [
+        0,
+        96,
+        128,
+        96
+      ],
+      "bounds": [
+        33,
+        19,
+        95,
+        88
+      ],
+      "occupied_height": 69,
+      "ground_anchor": [
+        68,
+        88
+      ],
+      "description": "Second cutting key; resolve Crosscut hit 2 or Royal Rip hit 2."
+    },
+    {
+      "index": 9,
+      "id": "crosscut-recovery",
+      "file": "09-crosscut-recovery.png",
+      "rect": [
+        128,
+        96,
+        128,
+        96
+      ],
+      "bounds": [
+        29,
+        27,
+        98,
+        88
+      ],
+      "occupied_height": 61,
+      "ground_anchor": [
+        63,
+        88
+      ],
+      "description": "Lower and reset the blades after Crosscut."
+    },
+    {
+      "index": 10,
+      "id": "hurt",
+      "file": "10-hurt.png",
+      "rect": [
+        256,
+        96,
+        128,
+        96
+      ],
+      "bounds": [
+        32,
+        26,
+        96,
+        88
+      ],
+      "occupied_height": 62,
+      "ground_anchor": [
+        63,
+        88
+      ],
+      "description": "Recoil from a landed hero attack; no outgoing damage."
+    },
+    {
+      "index": 11,
+      "id": "staggered",
+      "file": "11-staggered.png",
+      "rect": [
+        384,
+        96,
+        128,
+        96
+      ],
+      "bounds": [
+        30,
+        39,
+        98,
+        88
+      ],
+      "occupied_height": 49,
+      "ground_anchor": [
+        64,
+        88
+      ],
+      "description": "Low, broken stance while mechanically staggered."
+    },
+    {
+      "index": 12,
+      "id": "defeated",
+      "file": "12-defeated.png",
+      "rect": [
+        512,
+        96,
+        128,
+        96
+      ],
+      "bounds": [
+        29,
+        57,
+        99,
+        88
+      ],
+      "occupied_height": 31,
+      "ground_anchor": [
+        64,
+        88
+      ],
+      "description": "Collapsed terminal pose; hooked horn remains attached."
+    },
+    {
+      "index": 13,
+      "id": "royal-rip-wind-up",
+      "file": "13-royal-rip-wind-up.png",
+      "rect": [
+        640,
+        96,
+        128,
+        96
+      ],
+      "bounds": [
+        32,
+        20,
+        95,
+        88
+      ],
+      "occupied_height": 68,
+      "ground_anchor": [
+        66,
+        88
+      ],
+      "description": "Captain-only raised-blade anticipation for Royal Rip."
+    },
+    {
+      "index": 14,
+      "id": "royal-rip-finish",
+      "file": "14-royal-rip-finish.png",
+      "rect": [
+        768,
+        96,
+        128,
+        96
+      ],
+      "bounds": [
+        16,
+        35,
+        112,
+        88
+      ],
+      "occupied_height": 53,
+      "ground_anchor": [
+        81,
+        88
+      ],
+      "description": "Captain-only extended finishing thrust; Royal Rip hit 3."
+    }
+  ],
+  "sequences": {
+    "idle": {
+      "poses": [
+        1
+      ],
+      "loop": true
+    },
+    "briar-jab": {
+      "poses": [
+        1,
+        2,
+        3,
+        4,
+        1
+      ],
+      "contacts": [
+        {
+          "step": 2,
+          "pose": 3,
+          "hit": 1
+        }
+      ],
+      "rhythm": [
+        "single"
+      ]
+    },
+    "crosscut": {
+      "poses": [
+        1,
+        5,
+        6,
+        7,
+        8,
+        9,
+        1
+      ],
+      "contacts": [
+        {
+          "step": 2,
+          "pose": 6,
+          "hit": 1
+        },
+        {
+          "step": 4,
+          "pose": 8,
+          "hit": 2
+        }
+      ],
+      "rhythm": [
+        "slow",
+        "fast"
+      ]
+    },
+    "royal-rip": {
+      "poses": [
+        1,
+        13,
+        6,
+        7,
+        8,
+        2,
+        14,
+        4,
+        1
+      ],
+      "contacts": [
+        {
+          "step": 2,
+          "pose": 6,
+          "hit": 1
+        },
+        {
+          "step": 4,
+          "pose": 8,
+          "hit": 2
+        },
+        {
+          "step": 6,
+          "pose": 14,
+          "hit": 3
+        }
+      ],
+      "rhythm": [
+        "slow",
+        "slow",
+        "fast"
+      ],
+      "captain_only": true
+    },
+    "hurt": {
+      "poses": [
+        10,
+        1
+      ]
+    },
+    "staggered": {
+      "poses": [
+        11
+      ],
+      "hold": "Until combat engine ends stagger"
+    },
+    "defeated": {
+      "poses": [
+        12
+      ],
+      "terminal": true
+    }
+  },
+  "captain_palette_status": "Exclusive poses included; separate ivory-mask/crimson-edge Captain recolour not included."
+}

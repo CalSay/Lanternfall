@@ -1,0 +1,21 @@
+{
+  "01-idle.png": "2d0d308c7cc5f88bcf79baa4129a1d4a523065416cacb66f651886b5a8c3299b",
+  "02-jab-wind-up.png": "93e3eaec6ecfcbcb3e789142b8c4be42f4d43b8bc277dbf967b486a638ce87c1",
+  "03-jab-contact.png": "e1d6af9f338deb05d79f0dc56bf54b402f4900cef3a417db1d4f7f81aae10dc5",
+  "04-jab-recovery.png": "c154f4924843df2bb5ba28579e9c2240fa6ebc44e93c15cf4c85f56968d16d5f",
+  "05-crosscut-wind-up.png": "82dac32d0eca34a75594f70897f5f211e5cdbf856fb1c9e232870a22216f24eb",
+  "06-first-slash.png": "d7790d9b1b93209d387bb8aa4324ba860862b63ab908ee186f7d89fe8a6c817b",
+  "07-reverse-wind-up.png": "1ec88f27424e3f58b80853c9007603b0e943b1ca3a9f560615844c1b7a0ba509",
+  "08-second-slash.png": "bc470f8897851901ed2c17ca4abfdde1f654fb6912dc81b418020b2e19d79c63",
+  "09-crosscut-recovery.png": "732cb1c199b9cc8d43bb9b37d90f42d86b6e8a2343534da7593e9d6d8db12ecf",
+  "10-hurt.png": "f7dd488f90abb2fd1205669cdfa4bde8c0a7b51e0ee3cb49d23953f5f6879c93",
+  "11-staggered.png": "f2f5ba2d68fcf9b54da76d03fa7cfec8c2783bf6ae8618d9bb06bc3225fc9c2a",
+  "12-defeated.png": "8ba32f3097aff877a78bcc4df987bae8cbd5be2daa291772fc07785be8c94391",
+  "13-royal-rip-wind-up.png": "8d7549030738d5a568dfb300d06f9cd321a2f7e8c9075117e53de87d22a09017",
+  "14-royal-rip-finish.png": "f09564040ad7fdc4f3e4b5231c00493572d55d1ee41511ba75d3b53b5d132e9f",
+  "generation-notes.txt": "618313e9295b05d78dec4f98f9f2cea6723d81b98866247c90752a7a68b88c5c",
+  "manifest.json": "080c31dc8c012938c5ab0f1a95aa9eed7a2f05f334735436efd2571816053cb3",
+  "pose-guide-3x.png": "facac607d11388eef38b198e477894359864209add77cf0a790ea4781050c6f4",
+  "README.md": "d272af04f8ddb29f7925028ae5eabe0861c6afc1b2e3d92d071df0ab5496796c",
+  "thorn-imp-atlas.png": "f223c8dcb6d304c47eb0a9b12d60895d5aef6752026e339a13cca703acff7e56"
+}

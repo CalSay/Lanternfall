@@ -1,6 +1,6 @@
 # Hollow: final zone roster proposal
 
-Structure approved; names and balance proposed. Read [the final contract](enemies-c22-final-contract.md). This region has **35 zone monsters, 35 same-design Shadowborn Captain enhancements, seven Champions of Darkness and the Fenmother as Elder of Darkness: 43 unique designs**. Each area appears once, with five consecutive zones. Each zone has five regular fights then its Captain. Area and region bosses are separate one-time encounters. No runtime or art is changed.
+Structure approved; names and balance proposed. Read [the final contract](enemies-c22-final-contract.md). This region has **35 zone monsters, 35 same-design Shadowborn Captain enhancements, seven Champions of Darkness and the Fenmother as Elder of Darkness: 43 unique designs**. Each area appears once, with five consecutive zones. Each zone has five regular fights then its Captain. Area and region bosses are separate one-time encounters. Runtime is unchanged; the owner-approved Thorn Imp art package is linked below.
 
 ## Shared card rules
 
@@ -24,6 +24,8 @@ Rewards: gold, Essence, existing eligible relics. Champions retain existing area
 
 **Silhouette / purpose:** A split-mask fiend with a hooked horn and oversized thorn blades growing from both forearms. Its distinctive body is also the source of its contact cues; darkness-born, never restored to wildlife.
 **Stats:** HP 3 actions; Speed 0.90; armour 0%; weak fire, resists poison.
+
+**Approved art / dimensions:** [Thorn Imp v1 package](../../art/enemies/thorn-imp/v1/README.md), owner approved for implementation. Standing idle is **64px including horn** against **96px playable heroes**. Fourteen left-facing keys in 128x96 cells, 896x192 atlas; weapon extensions may reach 69px. The package includes every pose meaning, attack chains, contact events and ground anchors. Captain-only keys are included; its separate recolour/marking remains outstanding. Claude to integrate the normal Thorn Imp in Zone 1.
 
 - **Move 1 —** Briar Jab: 1 x20% physical; one blade draws beside its mask, then thrusts.
 - **Move 2 —** Crosscut: 2 x10% physical =20%; crossed arms open slow-fast.
