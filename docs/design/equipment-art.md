@@ -20,6 +20,17 @@ The charm (and the old trinket) is never drawn on the hero; it is an icon only. 
 | Tobin | Warblade | Shield | Greathelm | Plate | 8 + 7 |
 | Pip | Staff | Lantern | Circlet | Robe | 7 + 7 |
 
+**One kind per slot (owner, 2026-10-01).** Each hero only ever equips their own kind in each slot: Wren never
+wears Plate, and Tobin never holds a Staff. What changes between items is the grade (and, for uniques, the item).
+That gives three consequences:
+
+- **Little to draw for each hero.** Each hero has 4 kinds × 15 grades = 60 gear items, drawn only for that hero.
+  The three heroes share nothing on the body, so no overlay has to fit another hero's shape.
+- **Tools are the only shared art.** Every hero uses the same pickaxe, woodaxe, sickle and spear.
+- **Some lines need no on-hero art yet.** Codex's 22 icon lines include the Lightkeeper's Censer, Tome, Mitre and
+  Vestments, plus the old Sword and Helm. No current hero wears any of them, so they need no on-hero art until a
+  hero does. Today that leaves 12 class lines plus 4 tools.
+
 If every grade of every item were drawn into every pose:
 
 - per hero: 8 items × 15 grades × 15 poses ≈ **1,800 drawings**;
