@@ -1,0 +1,5040 @@
+{
+  "status": "owner-review",
+  "icons": [
+    {
+      "id": "pick-g1",
+      "kind": "pick",
+      "noun": "Pickaxe",
+      "family": "ore",
+      "grade": 1,
+      "name": "Copper Pickaxe",
+      "material": "Copper",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools1detail.png",
+      "rect": [
+        0,
+        0,
+        256,
+        251
+      ],
+      "sourceSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
+      "approval": "owner-review"
+    },
+    {
+      "id": "pick-g2",
+      "kind": "pick",
+      "noun": "Pickaxe",
+      "family": "ore",
+      "grade": 2,
+      "name": "Iron Pickaxe",
+      "material": "Iron",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools1detail.png",
+      "rect": [
+        0,
+        251,
+        256,
+        257
+      ],
+      "sourceSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
+      "approval": "owner-review"
+    },
+    {
+      "id": "pick-g3",
+      "kind": "pick",
+      "noun": "Pickaxe",
+      "family": "ore",
+      "grade": 3,
+      "name": "Silver Pickaxe",
+      "material": "Silver",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools1detail.png",
+      "rect": [
+        0,
+        508,
+        256,
+        263
+      ],
+      "sourceSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
+      "approval": "owner-review"
+    },
+    {
+      "id": "pick-g4",
+      "kind": "pick",
+      "noun": "Pickaxe",
+      "family": "ore",
+      "grade": 4,
+      "name": "Cobalt Pickaxe",
+      "material": "Cobalt",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools1detail.png",
+      "rect": [
+        0,
+        771,
+        256,
+        251
+      ],
+      "sourceSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
+      "approval": "owner-review"
+    },
+    {
+      "id": "pick-g5",
+      "kind": "pick",
+      "noun": "Pickaxe",
+      "family": "ore",
+      "grade": 5,
+      "name": "Mithril Pickaxe",
+      "material": "Mithril",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools1detail.png",
+      "rect": [
+        0,
+        1022,
+        256,
+        256
+      ],
+      "sourceSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
+      "approval": "owner-review"
+    },
+    {
+      "id": "pick-g6",
+      "kind": "pick",
+      "noun": "Pickaxe",
+      "family": "ore",
+      "grade": 6,
+      "name": "Orichalcum Pickaxe",
+      "material": "Orichalcum",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools6detail.png",
+      "rect": [
+        0,
+        0,
+        256,
+        250
+      ],
+      "sourceSha256": "0c17a9d49df19a46f7ea2f220f344855cd7f719c30e93ca31a2dfd2066f89434",
+      "approval": "owner-review"
+    },
+    {
+      "id": "pick-g7",
+      "kind": "pick",
+      "noun": "Pickaxe",
+      "family": "ore",
+      "grade": 7,
+      "name": "Emberite Pickaxe",
+      "material": "Emberite",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools6detail.png",
+      "rect": [
+        0,
+        250,
+        256,
+        249
+      ],
+      "sourceSha256": "0c17a9d49df19a46f7ea2f220f344855cd7f719c30e93ca31a2dfd2066f89434",
+      "approval": "owner-review"
+    },
+    {
+      "id": "pick-g8",
+      "kind": "pick",
+      "noun": "Pickaxe",
+      "family": "ore",
+      "grade": 8,
+      "name": "Adamantite Pickaxe",
+      "material": "Adamantite",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools6detail.png",
+      "rect": [
+        0,
+        499,
+        256,
+        251
+      ],
+      "sourceSha256": "0c17a9d49df19a46f7ea2f220f344855cd7f719c30e93ca31a2dfd2066f89434",
+      "approval": "owner-review"
+    },
+    {
+      "id": "pick-g9",
+      "kind": "pick",
+      "noun": "Pickaxe",
+      "family": "ore",
+      "grade": 9,
+      "name": "Dragonsteel Pickaxe",
+      "material": "Dragonsteel",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools6detail.png",
+      "rect": [
+        0,
+        750,
+        256,
+        245
+      ],
+      "sourceSha256": "0c17a9d49df19a46f7ea2f220f344855cd7f719c30e93ca31a2dfd2066f89434",
+      "approval": "owner-review"
+    },
+    {
+      "id": "pick-g10",
+      "kind": "pick",
+      "noun": "Pickaxe",
+      "family": "ore",
+      "grade": 10,
+      "name": "Moonsilver Pickaxe",
+      "material": "Moonsilver",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools6detail.png",
+      "rect": [
+        0,
+        995,
+        256,
+        259
+      ],
+      "sourceSha256": "0c17a9d49df19a46f7ea2f220f344855cd7f719c30e93ca31a2dfd2066f89434",
+      "approval": "owner-review"
+    },
+    {
+      "id": "pick-g11",
+      "kind": "pick",
+      "noun": "Pickaxe",
+      "family": "ore",
+      "grade": 11,
+      "name": "Starmetal Pickaxe",
+      "material": "Starmetal",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools11detail.png",
+      "rect": [
+        0,
+        0,
+        251,
+        256
+      ],
+      "sourceSha256": "aa1ab9d82715a3c68887ed0ac58016d9f66e6d5d703c922463723a2220f2a54f",
+      "approval": "owner-review"
+    },
+    {
+      "id": "pick-g12",
+      "kind": "pick",
+      "noun": "Pickaxe",
+      "family": "ore",
+      "grade": 12,
+      "name": "Arcanite Pickaxe",
+      "material": "Arcanite",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools11detail.png",
+      "rect": [
+        0,
+        256,
+        251,
+        247
+      ],
+      "sourceSha256": "aa1ab9d82715a3c68887ed0ac58016d9f66e6d5d703c922463723a2220f2a54f",
+      "approval": "owner-review"
+    },
+    {
+      "id": "pick-g13",
+      "kind": "pick",
+      "noun": "Pickaxe",
+      "family": "ore",
+      "grade": 13,
+      "name": "Darksteel Pickaxe",
+      "material": "Darksteel",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools11detail.png",
+      "rect": [
+        0,
+        503,
+        251,
+        240
+      ],
+      "sourceSha256": "aa1ab9d82715a3c68887ed0ac58016d9f66e6d5d703c922463723a2220f2a54f",
+      "approval": "owner-review"
+    },
+    {
+      "id": "pick-g14",
+      "kind": "pick",
+      "noun": "Pickaxe",
+      "family": "ore",
+      "grade": 14,
+      "name": "Aetherium Pickaxe",
+      "material": "Aetherium",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools11detail.png",
+      "rect": [
+        0,
+        743,
+        251,
+        242
+      ],
+      "sourceSha256": "aa1ab9d82715a3c68887ed0ac58016d9f66e6d5d703c922463723a2220f2a54f",
+      "approval": "owner-review"
+    },
+    {
+      "id": "pick-g15",
+      "kind": "pick",
+      "noun": "Pickaxe",
+      "family": "ore",
+      "grade": 15,
+      "name": "Voidsteel Pickaxe",
+      "material": "Voidsteel",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools11detail.png",
+      "rect": [
+        0,
+        985,
+        251,
+        269
+      ],
+      "sourceSha256": "aa1ab9d82715a3c68887ed0ac58016d9f66e6d5d703c922463723a2220f2a54f",
+      "approval": "owner-review"
+    },
+    {
+      "id": "axe-g1",
+      "kind": "axe",
+      "noun": "Woodaxe",
+      "family": "ore",
+      "grade": 1,
+      "name": "Copper Woodaxe",
+      "material": "Copper",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools1detail.png",
+      "rect": [
+        256,
+        0,
+        241,
+        251
+      ],
+      "sourceSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
+      "approval": "owner-review"
+    },
+    {
+      "id": "axe-g2",
+      "kind": "axe",
+      "noun": "Woodaxe",
+      "family": "ore",
+      "grade": 2,
+      "name": "Iron Woodaxe",
+      "material": "Iron",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools1detail.png",
+      "rect": [
+        256,
+        251,
+        241,
+        257
+      ],
+      "sourceSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
+      "approval": "owner-review"
+    },
+    {
+      "id": "axe-g3",
+      "kind": "axe",
+      "noun": "Woodaxe",
+      "family": "ore",
+      "grade": 3,
+      "name": "Silver Woodaxe",
+      "material": "Silver",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools1detail.png",
+      "rect": [
+        256,
+        508,
+        241,
+        263
+      ],
+      "sourceSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
+      "approval": "owner-review"
+    },
+    {
+      "id": "axe-g4",
+      "kind": "axe",
+      "noun": "Woodaxe",
+      "family": "ore",
+      "grade": 4,
+      "name": "Cobalt Woodaxe",
+      "material": "Cobalt",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools1detail.png",
+      "rect": [
+        256,
+        771,
+        241,
+        251
+      ],
+      "sourceSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
+      "approval": "owner-review"
+    },
+    {
+      "id": "axe-g5",
+      "kind": "axe",
+      "noun": "Woodaxe",
+      "family": "ore",
+      "grade": 5,
+      "name": "Mithril Woodaxe",
+      "material": "Mithril",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools1detail.png",
+      "rect": [
+        256,
+        1022,
+        241,
+        256
+      ],
+      "sourceSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
+      "approval": "owner-review"
+    },
+    {
+      "id": "axe-g6",
+      "kind": "axe",
+      "noun": "Woodaxe",
+      "family": "ore",
+      "grade": 6,
+      "name": "Orichalcum Woodaxe",
+      "material": "Orichalcum",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools6detail.png",
+      "rect": [
+        256,
+        0,
+        249,
+        250
+      ],
+      "sourceSha256": "0c17a9d49df19a46f7ea2f220f344855cd7f719c30e93ca31a2dfd2066f89434",
+      "approval": "owner-review"
+    },
+    {
+      "id": "axe-g7",
+      "kind": "axe",
+      "noun": "Woodaxe",
+      "family": "ore",
+      "grade": 7,
+      "name": "Emberite Woodaxe",
+      "material": "Emberite",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools6detail.png",
+      "rect": [
+        256,
+        250,
+        249,
+        249
+      ],
+      "sourceSha256": "0c17a9d49df19a46f7ea2f220f344855cd7f719c30e93ca31a2dfd2066f89434",
+      "approval": "owner-review"
+    },
+    {
+      "id": "axe-g8",
+      "kind": "axe",
+      "noun": "Woodaxe",
+      "family": "ore",
+      "grade": 8,
+      "name": "Adamantite Woodaxe",
+      "material": "Adamantite",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools6detail.png",
+      "rect": [
+        256,
+        499,
+        249,
+        251
+      ],
+      "sourceSha256": "0c17a9d49df19a46f7ea2f220f344855cd7f719c30e93ca31a2dfd2066f89434",
+      "approval": "owner-review"
+    },
+    {
+      "id": "axe-g9",
+      "kind": "axe",
+      "noun": "Woodaxe",
+      "family": "ore",
+      "grade": 9,
+      "name": "Dragonsteel Woodaxe",
+      "material": "Dragonsteel",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools6detail.png",
+      "rect": [
+        256,
+        750,
+        249,
+        245
+      ],
+      "sourceSha256": "0c17a9d49df19a46f7ea2f220f344855cd7f719c30e93ca31a2dfd2066f89434",
+      "approval": "owner-review"
+    },
+    {
+      "id": "axe-g10",
+      "kind": "axe",
+      "noun": "Woodaxe",
+      "family": "ore",
+      "grade": 10,
+      "name": "Moonsilver Woodaxe",
+      "material": "Moonsilver",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools6detail.png",
+      "rect": [
+        256,
+        995,
+        249,
+        259
+      ],
+      "sourceSha256": "0c17a9d49df19a46f7ea2f220f344855cd7f719c30e93ca31a2dfd2066f89434",
+      "approval": "owner-review"
+    },
+    {
+      "id": "axe-g11",
+      "kind": "axe",
+      "noun": "Woodaxe",
+      "family": "ore",
+      "grade": 11,
+      "name": "Starmetal Woodaxe",
+      "material": "Starmetal",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools11detail.png",
+      "rect": [
+        251,
+        0,
+        254,
+        256
+      ],
+      "sourceSha256": "aa1ab9d82715a3c68887ed0ac58016d9f66e6d5d703c922463723a2220f2a54f",
+      "approval": "owner-review"
+    },
+    {
+      "id": "axe-g12",
+      "kind": "axe",
+      "noun": "Woodaxe",
+      "family": "ore",
+      "grade": 12,
+      "name": "Arcanite Woodaxe",
+      "material": "Arcanite",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools11detail.png",
+      "rect": [
+        251,
+        256,
+        254,
+        247
+      ],
+      "sourceSha256": "aa1ab9d82715a3c68887ed0ac58016d9f66e6d5d703c922463723a2220f2a54f",
+      "approval": "owner-review"
+    },
+    {
+      "id": "axe-g13",
+      "kind": "axe",
+      "noun": "Woodaxe",
+      "family": "ore",
+      "grade": 13,
+      "name": "Darksteel Woodaxe",
+      "material": "Darksteel",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools11detail.png",
+      "rect": [
+        251,
+        503,
+        254,
+        240
+      ],
+      "sourceSha256": "aa1ab9d82715a3c68887ed0ac58016d9f66e6d5d703c922463723a2220f2a54f",
+      "approval": "owner-review"
+    },
+    {
+      "id": "axe-g14",
+      "kind": "axe",
+      "noun": "Woodaxe",
+      "family": "ore",
+      "grade": 14,
+      "name": "Aetherium Woodaxe",
+      "material": "Aetherium",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools11detail.png",
+      "rect": [
+        251,
+        743,
+        254,
+        242
+      ],
+      "sourceSha256": "aa1ab9d82715a3c68887ed0ac58016d9f66e6d5d703c922463723a2220f2a54f",
+      "approval": "owner-review"
+    },
+    {
+      "id": "axe-g15",
+      "kind": "axe",
+      "noun": "Woodaxe",
+      "family": "ore",
+      "grade": 15,
+      "name": "Voidsteel Woodaxe",
+      "material": "Voidsteel",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools11detail.png",
+      "rect": [
+        251,
+        985,
+        254,
+        269
+      ],
+      "sourceSha256": "aa1ab9d82715a3c68887ed0ac58016d9f66e6d5d703c922463723a2220f2a54f",
+      "approval": "owner-review"
+    },
+    {
+      "id": "sickle-g1",
+      "kind": "sickle",
+      "noun": "Sickle",
+      "family": "ore",
+      "grade": 1,
+      "name": "Copper Sickle",
+      "material": "Copper",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools1detail.png",
+      "rect": [
+        497,
+        0,
+        244,
+        251
+      ],
+      "sourceSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
+      "approval": "owner-review"
+    },
+    {
+      "id": "sickle-g2",
+      "kind": "sickle",
+      "noun": "Sickle",
+      "family": "ore",
+      "grade": 2,
+      "name": "Iron Sickle",
+      "material": "Iron",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools1detail.png",
+      "rect": [
+        497,
+        251,
+        244,
+        257
+      ],
+      "sourceSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
+      "approval": "owner-review"
+    },
+    {
+      "id": "sickle-g3",
+      "kind": "sickle",
+      "noun": "Sickle",
+      "family": "ore",
+      "grade": 3,
+      "name": "Silver Sickle",
+      "material": "Silver",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools1detail.png",
+      "rect": [
+        497,
+        508,
+        244,
+        263
+      ],
+      "sourceSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
+      "approval": "owner-review"
+    },
+    {
+      "id": "sickle-g4",
+      "kind": "sickle",
+      "noun": "Sickle",
+      "family": "ore",
+      "grade": 4,
+      "name": "Cobalt Sickle",
+      "material": "Cobalt",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools1detail.png",
+      "rect": [
+        497,
+        771,
+        244,
+        251
+      ],
+      "sourceSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
+      "approval": "owner-review"
+    },
+    {
+      "id": "sickle-g5",
+      "kind": "sickle",
+      "noun": "Sickle",
+      "family": "ore",
+      "grade": 5,
+      "name": "Mithril Sickle",
+      "material": "Mithril",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools1detail.png",
+      "rect": [
+        497,
+        1022,
+        244,
+        256
+      ],
+      "sourceSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
+      "approval": "owner-review"
+    },
+    {
+      "id": "sickle-g6",
+      "kind": "sickle",
+      "noun": "Sickle",
+      "family": "ore",
+      "grade": 6,
+      "name": "Orichalcum Sickle",
+      "material": "Orichalcum",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools6detail.png",
+      "rect": [
+        505,
+        0,
+        247,
+        250
+      ],
+      "sourceSha256": "0c17a9d49df19a46f7ea2f220f344855cd7f719c30e93ca31a2dfd2066f89434",
+      "approval": "owner-review"
+    },
+    {
+      "id": "sickle-g7",
+      "kind": "sickle",
+      "noun": "Sickle",
+      "family": "ore",
+      "grade": 7,
+      "name": "Emberite Sickle",
+      "material": "Emberite",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools6detail.png",
+      "rect": [
+        505,
+        250,
+        247,
+        249
+      ],
+      "sourceSha256": "0c17a9d49df19a46f7ea2f220f344855cd7f719c30e93ca31a2dfd2066f89434",
+      "approval": "owner-review"
+    },
+    {
+      "id": "sickle-g8",
+      "kind": "sickle",
+      "noun": "Sickle",
+      "family": "ore",
+      "grade": 8,
+      "name": "Adamantite Sickle",
+      "material": "Adamantite",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools6detail.png",
+      "rect": [
+        505,
+        499,
+        247,
+        251
+      ],
+      "sourceSha256": "0c17a9d49df19a46f7ea2f220f344855cd7f719c30e93ca31a2dfd2066f89434",
+      "approval": "owner-review"
+    },
+    {
+      "id": "sickle-g9",
+      "kind": "sickle",
+      "noun": "Sickle",
+      "family": "ore",
+      "grade": 9,
+      "name": "Dragonsteel Sickle",
+      "material": "Dragonsteel",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools6detail.png",
+      "rect": [
+        505,
+        750,
+        247,
+        245
+      ],
+      "sourceSha256": "0c17a9d49df19a46f7ea2f220f344855cd7f719c30e93ca31a2dfd2066f89434",
+      "approval": "owner-review"
+    },
+    {
+      "id": "sickle-g10",
+      "kind": "sickle",
+      "noun": "Sickle",
+      "family": "ore",
+      "grade": 10,
+      "name": "Moonsilver Sickle",
+      "material": "Moonsilver",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools6detail.png",
+      "rect": [
+        505,
+        995,
+        247,
+        259
+      ],
+      "sourceSha256": "0c17a9d49df19a46f7ea2f220f344855cd7f719c30e93ca31a2dfd2066f89434",
+      "approval": "owner-review"
+    },
+    {
+      "id": "sickle-g11",
+      "kind": "sickle",
+      "noun": "Sickle",
+      "family": "ore",
+      "grade": 11,
+      "name": "Starmetal Sickle",
+      "material": "Starmetal",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools11detail.png",
+      "rect": [
+        505,
+        0,
+        247,
+        256
+      ],
+      "sourceSha256": "aa1ab9d82715a3c68887ed0ac58016d9f66e6d5d703c922463723a2220f2a54f",
+      "approval": "owner-review"
+    },
+    {
+      "id": "sickle-g12",
+      "kind": "sickle",
+      "noun": "Sickle",
+      "family": "ore",
+      "grade": 12,
+      "name": "Arcanite Sickle",
+      "material": "Arcanite",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools11detail.png",
+      "rect": [
+        505,
+        256,
+        247,
+        247
+      ],
+      "sourceSha256": "aa1ab9d82715a3c68887ed0ac58016d9f66e6d5d703c922463723a2220f2a54f",
+      "approval": "owner-review"
+    },
+    {
+      "id": "sickle-g13",
+      "kind": "sickle",
+      "noun": "Sickle",
+      "family": "ore",
+      "grade": 13,
+      "name": "Darksteel Sickle",
+      "material": "Darksteel",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools11detail.png",
+      "rect": [
+        505,
+        503,
+        247,
+        240
+      ],
+      "sourceSha256": "aa1ab9d82715a3c68887ed0ac58016d9f66e6d5d703c922463723a2220f2a54f",
+      "approval": "owner-review"
+    },
+    {
+      "id": "sickle-g14",
+      "kind": "sickle",
+      "noun": "Sickle",
+      "family": "ore",
+      "grade": 14,
+      "name": "Aetherium Sickle",
+      "material": "Aetherium",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools11detail.png",
+      "rect": [
+        505,
+        743,
+        247,
+        242
+      ],
+      "sourceSha256": "aa1ab9d82715a3c68887ed0ac58016d9f66e6d5d703c922463723a2220f2a54f",
+      "approval": "owner-review"
+    },
+    {
+      "id": "sickle-g15",
+      "kind": "sickle",
+      "noun": "Sickle",
+      "family": "ore",
+      "grade": 15,
+      "name": "Voidsteel Sickle",
+      "material": "Voidsteel",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools11detail.png",
+      "rect": [
+        505,
+        985,
+        247,
+        269
+      ],
+      "sourceSha256": "aa1ab9d82715a3c68887ed0ac58016d9f66e6d5d703c922463723a2220f2a54f",
+      "approval": "owner-review"
+    },
+    {
+      "id": "spear-g1",
+      "kind": "spear",
+      "noun": "Hunting Spear",
+      "family": "ore",
+      "grade": 1,
+      "name": "Copper Hunting Spear",
+      "material": "Copper",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools1detail.png",
+      "rect": [
+        741,
+        0,
+        243,
+        251
+      ],
+      "sourceSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
+      "approval": "owner-review"
+    },
+    {
+      "id": "spear-g2",
+      "kind": "spear",
+      "noun": "Hunting Spear",
+      "family": "ore",
+      "grade": 2,
+      "name": "Iron Hunting Spear",
+      "material": "Iron",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools1detail.png",
+      "rect": [
+        741,
+        251,
+        243,
+        257
+      ],
+      "sourceSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
+      "approval": "owner-review"
+    },
+    {
+      "id": "spear-g3",
+      "kind": "spear",
+      "noun": "Hunting Spear",
+      "family": "ore",
+      "grade": 3,
+      "name": "Silver Hunting Spear",
+      "material": "Silver",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools1detail.png",
+      "rect": [
+        741,
+        508,
+        243,
+        263
+      ],
+      "sourceSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
+      "approval": "owner-review"
+    },
+    {
+      "id": "spear-g4",
+      "kind": "spear",
+      "noun": "Hunting Spear",
+      "family": "ore",
+      "grade": 4,
+      "name": "Cobalt Hunting Spear",
+      "material": "Cobalt",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools1detail.png",
+      "rect": [
+        741,
+        771,
+        243,
+        251
+      ],
+      "sourceSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
+      "approval": "owner-review"
+    },
+    {
+      "id": "spear-g5",
+      "kind": "spear",
+      "noun": "Hunting Spear",
+      "family": "ore",
+      "grade": 5,
+      "name": "Mithril Hunting Spear",
+      "material": "Mithril",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools1detail.png",
+      "rect": [
+        741,
+        1022,
+        243,
+        256
+      ],
+      "sourceSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
+      "approval": "owner-review"
+    },
+    {
+      "id": "spear-g6",
+      "kind": "spear",
+      "noun": "Hunting Spear",
+      "family": "ore",
+      "grade": 6,
+      "name": "Orichalcum Hunting Spear",
+      "material": "Orichalcum",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools6detail.png",
+      "rect": [
+        752,
+        0,
+        251,
+        250
+      ],
+      "sourceSha256": "0c17a9d49df19a46f7ea2f220f344855cd7f719c30e93ca31a2dfd2066f89434",
+      "approval": "owner-review"
+    },
+    {
+      "id": "spear-g7",
+      "kind": "spear",
+      "noun": "Hunting Spear",
+      "family": "ore",
+      "grade": 7,
+      "name": "Emberite Hunting Spear",
+      "material": "Emberite",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools6detail.png",
+      "rect": [
+        752,
+        250,
+        251,
+        249
+      ],
+      "sourceSha256": "0c17a9d49df19a46f7ea2f220f344855cd7f719c30e93ca31a2dfd2066f89434",
+      "approval": "owner-review"
+    },
+    {
+      "id": "spear-g8",
+      "kind": "spear",
+      "noun": "Hunting Spear",
+      "family": "ore",
+      "grade": 8,
+      "name": "Adamantite Hunting Spear",
+      "material": "Adamantite",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools6detail.png",
+      "rect": [
+        752,
+        499,
+        251,
+        251
+      ],
+      "sourceSha256": "0c17a9d49df19a46f7ea2f220f344855cd7f719c30e93ca31a2dfd2066f89434",
+      "approval": "owner-review"
+    },
+    {
+      "id": "spear-g9",
+      "kind": "spear",
+      "noun": "Hunting Spear",
+      "family": "ore",
+      "grade": 9,
+      "name": "Dragonsteel Hunting Spear",
+      "material": "Dragonsteel",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools6detail.png",
+      "rect": [
+        752,
+        750,
+        251,
+        245
+      ],
+      "sourceSha256": "0c17a9d49df19a46f7ea2f220f344855cd7f719c30e93ca31a2dfd2066f89434",
+      "approval": "owner-review"
+    },
+    {
+      "id": "spear-g10",
+      "kind": "spear",
+      "noun": "Hunting Spear",
+      "family": "ore",
+      "grade": 10,
+      "name": "Moonsilver Hunting Spear",
+      "material": "Moonsilver",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools6detail.png",
+      "rect": [
+        752,
+        995,
+        251,
+        259
+      ],
+      "sourceSha256": "0c17a9d49df19a46f7ea2f220f344855cd7f719c30e93ca31a2dfd2066f89434",
+      "approval": "owner-review"
+    },
+    {
+      "id": "spear-g11",
+      "kind": "spear",
+      "noun": "Hunting Spear",
+      "family": "ore",
+      "grade": 11,
+      "name": "Starmetal Hunting Spear",
+      "material": "Starmetal",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools11detail.png",
+      "rect": [
+        752,
+        0,
+        251,
+        256
+      ],
+      "sourceSha256": "aa1ab9d82715a3c68887ed0ac58016d9f66e6d5d703c922463723a2220f2a54f",
+      "approval": "owner-review"
+    },
+    {
+      "id": "spear-g12",
+      "kind": "spear",
+      "noun": "Hunting Spear",
+      "family": "ore",
+      "grade": 12,
+      "name": "Arcanite Hunting Spear",
+      "material": "Arcanite",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools11detail.png",
+      "rect": [
+        752,
+        256,
+        251,
+        247
+      ],
+      "sourceSha256": "aa1ab9d82715a3c68887ed0ac58016d9f66e6d5d703c922463723a2220f2a54f",
+      "approval": "owner-review"
+    },
+    {
+      "id": "spear-g13",
+      "kind": "spear",
+      "noun": "Hunting Spear",
+      "family": "ore",
+      "grade": 13,
+      "name": "Darksteel Hunting Spear",
+      "material": "Darksteel",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools11detail.png",
+      "rect": [
+        752,
+        503,
+        251,
+        240
+      ],
+      "sourceSha256": "aa1ab9d82715a3c68887ed0ac58016d9f66e6d5d703c922463723a2220f2a54f",
+      "approval": "owner-review"
+    },
+    {
+      "id": "spear-g14",
+      "kind": "spear",
+      "noun": "Hunting Spear",
+      "family": "ore",
+      "grade": 14,
+      "name": "Aetherium Hunting Spear",
+      "material": "Aetherium",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools11detail.png",
+      "rect": [
+        752,
+        743,
+        251,
+        242
+      ],
+      "sourceSha256": "aa1ab9d82715a3c68887ed0ac58016d9f66e6d5d703c922463723a2220f2a54f",
+      "approval": "owner-review"
+    },
+    {
+      "id": "spear-g15",
+      "kind": "spear",
+      "noun": "Hunting Spear",
+      "family": "ore",
+      "grade": 15,
+      "name": "Voidsteel Hunting Spear",
+      "material": "Voidsteel",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools11detail.png",
+      "rect": [
+        752,
+        985,
+        251,
+        269
+      ],
+      "sourceSha256": "aa1ab9d82715a3c68887ed0ac58016d9f66e6d5d703c922463723a2220f2a54f",
+      "approval": "owner-review"
+    },
+    {
+      "id": "warblade-g1",
+      "kind": "warblade",
+      "noun": "Warblade",
+      "family": "ore",
+      "grade": 1,
+      "name": "Copper Warblade",
+      "material": "Copper",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour1detail.png",
+      "rect": [
+        0,
+        0,
+        282,
+        257
+      ],
+      "sourceSha256": "6e794506d033ff9fd119dcfe033e153c59e714c6c96915cd7225e6469ce6222d",
+      "approval": "owner-review"
+    },
+    {
+      "id": "warblade-g2",
+      "kind": "warblade",
+      "noun": "Warblade",
+      "family": "ore",
+      "grade": 2,
+      "name": "Iron Warblade",
+      "material": "Iron",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour1detail.png",
+      "rect": [
+        0,
+        257,
+        282,
+        254
+      ],
+      "sourceSha256": "6e794506d033ff9fd119dcfe033e153c59e714c6c96915cd7225e6469ce6222d",
+      "approval": "owner-review"
+    },
+    {
+      "id": "warblade-g3",
+      "kind": "warblade",
+      "noun": "Warblade",
+      "family": "ore",
+      "grade": 3,
+      "name": "Silver Warblade",
+      "material": "Silver",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour1detail.png",
+      "rect": [
+        0,
+        511,
+        282,
+        274
+      ],
+      "sourceSha256": "6e794506d033ff9fd119dcfe033e153c59e714c6c96915cd7225e6469ce6222d",
+      "approval": "owner-review"
+    },
+    {
+      "id": "warblade-g4",
+      "kind": "warblade",
+      "noun": "Warblade",
+      "family": "ore",
+      "grade": 4,
+      "name": "Cobalt Warblade",
+      "material": "Cobalt",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour1detail.png",
+      "rect": [
+        0,
+        785,
+        282,
+        280
+      ],
+      "sourceSha256": "6e794506d033ff9fd119dcfe033e153c59e714c6c96915cd7225e6469ce6222d",
+      "approval": "owner-review"
+    },
+    {
+      "id": "warblade-g5",
+      "kind": "warblade",
+      "noun": "Warblade",
+      "family": "ore",
+      "grade": 5,
+      "name": "Mithril Warblade",
+      "material": "Mithril",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour1detail.png",
+      "rect": [
+        0,
+        1065,
+        282,
+        337
+      ],
+      "sourceSha256": "6e794506d033ff9fd119dcfe033e153c59e714c6c96915cd7225e6469ce6222d",
+      "approval": "owner-review"
+    },
+    {
+      "id": "warblade-g6",
+      "kind": "warblade",
+      "noun": "Warblade",
+      "family": "ore",
+      "grade": 6,
+      "name": "Orichalcum Warblade",
+      "material": "Orichalcum",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour6detail.png",
+      "rect": [
+        0,
+        0,
+        288,
+        260
+      ],
+      "sourceSha256": "e808afd3b312d5ccd7b05cfe3967c5e87ef3920c2bf981fe127ae3df3eddf7ac",
+      "approval": "owner-review"
+    },
+    {
+      "id": "warblade-g7",
+      "kind": "warblade",
+      "noun": "Warblade",
+      "family": "ore",
+      "grade": 7,
+      "name": "Emberite Warblade",
+      "material": "Emberite",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour6detail.png",
+      "rect": [
+        0,
+        260,
+        288,
+        256
+      ],
+      "sourceSha256": "e808afd3b312d5ccd7b05cfe3967c5e87ef3920c2bf981fe127ae3df3eddf7ac",
+      "approval": "owner-review"
+    },
+    {
+      "id": "warblade-g8",
+      "kind": "warblade",
+      "noun": "Warblade",
+      "family": "ore",
+      "grade": 8,
+      "name": "Adamantite Warblade",
+      "material": "Adamantite",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour6detail.png",
+      "rect": [
+        0,
+        516,
+        288,
+        269
+      ],
+      "sourceSha256": "e808afd3b312d5ccd7b05cfe3967c5e87ef3920c2bf981fe127ae3df3eddf7ac",
+      "approval": "owner-review"
+    },
+    {
+      "id": "warblade-g9",
+      "kind": "warblade",
+      "noun": "Warblade",
+      "family": "ore",
+      "grade": 9,
+      "name": "Dragonsteel Warblade",
+      "material": "Dragonsteel",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour6detail.png",
+      "rect": [
+        0,
+        785,
+        288,
+        280
+      ],
+      "sourceSha256": "e808afd3b312d5ccd7b05cfe3967c5e87ef3920c2bf981fe127ae3df3eddf7ac",
+      "approval": "owner-review"
+    },
+    {
+      "id": "warblade-g10",
+      "kind": "warblade",
+      "noun": "Warblade",
+      "family": "ore",
+      "grade": 10,
+      "name": "Moonsilver Warblade",
+      "material": "Moonsilver",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour6detail.png",
+      "rect": [
+        0,
+        1065,
+        288,
+        337
+      ],
+      "sourceSha256": "e808afd3b312d5ccd7b05cfe3967c5e87ef3920c2bf981fe127ae3df3eddf7ac",
+      "approval": "owner-review"
+    },
+    {
+      "id": "warblade-g11",
+      "kind": "warblade",
+      "noun": "Warblade",
+      "family": "ore",
+      "grade": 11,
+      "name": "Starmetal Warblade",
+      "material": "Starmetal",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour11detail.png",
+      "rect": [
+        0,
+        0,
+        292,
+        263
+      ],
+      "sourceSha256": "787bde9b61b7626956518da77a8a23ef2d8f6f5016d5ffb0d0f6fd59ea77901d",
+      "approval": "owner-review"
+    },
+    {
+      "id": "warblade-g12",
+      "kind": "warblade",
+      "noun": "Warblade",
+      "family": "ore",
+      "grade": 12,
+      "name": "Arcanite Warblade",
+      "material": "Arcanite",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour11detail.png",
+      "rect": [
+        0,
+        263,
+        292,
+        256
+      ],
+      "sourceSha256": "787bde9b61b7626956518da77a8a23ef2d8f6f5016d5ffb0d0f6fd59ea77901d",
+      "approval": "owner-review"
+    },
+    {
+      "id": "warblade-g13",
+      "kind": "warblade",
+      "noun": "Warblade",
+      "family": "ore",
+      "grade": 13,
+      "name": "Darksteel Warblade",
+      "material": "Darksteel",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour11detail.png",
+      "rect": [
+        0,
+        519,
+        292,
+        266
+      ],
+      "sourceSha256": "787bde9b61b7626956518da77a8a23ef2d8f6f5016d5ffb0d0f6fd59ea77901d",
+      "approval": "owner-review"
+    },
+    {
+      "id": "warblade-g14",
+      "kind": "warblade",
+      "noun": "Warblade",
+      "family": "ore",
+      "grade": 14,
+      "name": "Aetherium Warblade",
+      "material": "Aetherium",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour11detail.png",
+      "rect": [
+        0,
+        785,
+        292,
+        280
+      ],
+      "sourceSha256": "787bde9b61b7626956518da77a8a23ef2d8f6f5016d5ffb0d0f6fd59ea77901d",
+      "approval": "owner-review"
+    },
+    {
+      "id": "warblade-g15",
+      "kind": "warblade",
+      "noun": "Warblade",
+      "family": "ore",
+      "grade": 15,
+      "name": "Voidsteel Warblade",
+      "material": "Voidsteel",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour11detail.png",
+      "rect": [
+        0,
+        1065,
+        292,
+        337
+      ],
+      "sourceSha256": "787bde9b61b7626956518da77a8a23ef2d8f6f5016d5ffb0d0f6fd59ea77901d",
+      "approval": "owner-review"
+    },
+    {
+      "id": "shield-g1",
+      "kind": "shield",
+      "noun": "Shield",
+      "family": "ore",
+      "grade": 1,
+      "name": "Copper Shield",
+      "material": "Copper",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour1detail.png",
+      "rect": [
+        282,
+        0,
+        279,
+        257
+      ],
+      "sourceSha256": "6e794506d033ff9fd119dcfe033e153c59e714c6c96915cd7225e6469ce6222d",
+      "approval": "owner-review"
+    },
+    {
+      "id": "shield-g2",
+      "kind": "shield",
+      "noun": "Shield",
+      "family": "ore",
+      "grade": 2,
+      "name": "Iron Shield",
+      "material": "Iron",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour1detail.png",
+      "rect": [
+        282,
+        257,
+        279,
+        254
+      ],
+      "sourceSha256": "6e794506d033ff9fd119dcfe033e153c59e714c6c96915cd7225e6469ce6222d",
+      "approval": "owner-review"
+    },
+    {
+      "id": "shield-g3",
+      "kind": "shield",
+      "noun": "Shield",
+      "family": "ore",
+      "grade": 3,
+      "name": "Silver Shield",
+      "material": "Silver",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour1detail.png",
+      "rect": [
+        282,
+        511,
+        279,
+        274
+      ],
+      "sourceSha256": "6e794506d033ff9fd119dcfe033e153c59e714c6c96915cd7225e6469ce6222d",
+      "approval": "owner-review"
+    },
+    {
+      "id": "shield-g4",
+      "kind": "shield",
+      "noun": "Shield",
+      "family": "ore",
+      "grade": 4,
+      "name": "Cobalt Shield",
+      "material": "Cobalt",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour1detail.png",
+      "rect": [
+        282,
+        785,
+        279,
+        280
+      ],
+      "sourceSha256": "6e794506d033ff9fd119dcfe033e153c59e714c6c96915cd7225e6469ce6222d",
+      "approval": "owner-review"
+    },
+    {
+      "id": "shield-g5",
+      "kind": "shield",
+      "noun": "Shield",
+      "family": "ore",
+      "grade": 5,
+      "name": "Mithril Shield",
+      "material": "Mithril",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour1detail.png",
+      "rect": [
+        282,
+        1065,
+        279,
+        337
+      ],
+      "sourceSha256": "6e794506d033ff9fd119dcfe033e153c59e714c6c96915cd7225e6469ce6222d",
+      "approval": "owner-review"
+    },
+    {
+      "id": "shield-g6",
+      "kind": "shield",
+      "noun": "Shield",
+      "family": "ore",
+      "grade": 6,
+      "name": "Orichalcum Shield",
+      "material": "Orichalcum",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour6detail.png",
+      "rect": [
+        288,
+        0,
+        273,
+        260
+      ],
+      "sourceSha256": "e808afd3b312d5ccd7b05cfe3967c5e87ef3920c2bf981fe127ae3df3eddf7ac",
+      "approval": "owner-review"
+    },
+    {
+      "id": "shield-g7",
+      "kind": "shield",
+      "noun": "Shield",
+      "family": "ore",
+      "grade": 7,
+      "name": "Emberite Shield",
+      "material": "Emberite",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour6detail.png",
+      "rect": [
+        288,
+        260,
+        273,
+        256
+      ],
+      "sourceSha256": "e808afd3b312d5ccd7b05cfe3967c5e87ef3920c2bf981fe127ae3df3eddf7ac",
+      "approval": "owner-review"
+    },
+    {
+      "id": "shield-g8",
+      "kind": "shield",
+      "noun": "Shield",
+      "family": "ore",
+      "grade": 8,
+      "name": "Adamantite Shield",
+      "material": "Adamantite",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour6detail.png",
+      "rect": [
+        288,
+        516,
+        273,
+        269
+      ],
+      "sourceSha256": "e808afd3b312d5ccd7b05cfe3967c5e87ef3920c2bf981fe127ae3df3eddf7ac",
+      "approval": "owner-review"
+    },
+    {
+      "id": "shield-g9",
+      "kind": "shield",
+      "noun": "Shield",
+      "family": "ore",
+      "grade": 9,
+      "name": "Dragonsteel Shield",
+      "material": "Dragonsteel",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour6detail.png",
+      "rect": [
+        288,
+        785,
+        273,
+        280
+      ],
+      "sourceSha256": "e808afd3b312d5ccd7b05cfe3967c5e87ef3920c2bf981fe127ae3df3eddf7ac",
+      "approval": "owner-review"
+    },
+    {
+      "id": "shield-g10",
+      "kind": "shield",
+      "noun": "Shield",
+      "family": "ore",
+      "grade": 10,
+      "name": "Moonsilver Shield",
+      "material": "Moonsilver",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour6detail.png",
+      "rect": [
+        288,
+        1065,
+        273,
+        337
+      ],
+      "sourceSha256": "e808afd3b312d5ccd7b05cfe3967c5e87ef3920c2bf981fe127ae3df3eddf7ac",
+      "approval": "owner-review"
+    },
+    {
+      "id": "shield-g11",
+      "kind": "shield",
+      "noun": "Shield",
+      "family": "ore",
+      "grade": 11,
+      "name": "Starmetal Shield",
+      "material": "Starmetal",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour11detail.png",
+      "rect": [
+        292,
+        0,
+        269,
+        263
+      ],
+      "sourceSha256": "787bde9b61b7626956518da77a8a23ef2d8f6f5016d5ffb0d0f6fd59ea77901d",
+      "approval": "owner-review"
+    },
+    {
+      "id": "shield-g12",
+      "kind": "shield",
+      "noun": "Shield",
+      "family": "ore",
+      "grade": 12,
+      "name": "Arcanite Shield",
+      "material": "Arcanite",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour11detail.png",
+      "rect": [
+        292,
+        263,
+        269,
+        256
+      ],
+      "sourceSha256": "787bde9b61b7626956518da77a8a23ef2d8f6f5016d5ffb0d0f6fd59ea77901d",
+      "approval": "owner-review"
+    },
+    {
+      "id": "shield-g13",
+      "kind": "shield",
+      "noun": "Shield",
+      "family": "ore",
+      "grade": 13,
+      "name": "Darksteel Shield",
+      "material": "Darksteel",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour11detail.png",
+      "rect": [
+        292,
+        519,
+        269,
+        266
+      ],
+      "sourceSha256": "787bde9b61b7626956518da77a8a23ef2d8f6f5016d5ffb0d0f6fd59ea77901d",
+      "approval": "owner-review"
+    },
+    {
+      "id": "shield-g14",
+      "kind": "shield",
+      "noun": "Shield",
+      "family": "ore",
+      "grade": 14,
+      "name": "Aetherium Shield",
+      "material": "Aetherium",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour11detail.png",
+      "rect": [
+        292,
+        785,
+        269,
+        280
+      ],
+      "sourceSha256": "787bde9b61b7626956518da77a8a23ef2d8f6f5016d5ffb0d0f6fd59ea77901d",
+      "approval": "owner-review"
+    },
+    {
+      "id": "shield-g15",
+      "kind": "shield",
+      "noun": "Shield",
+      "family": "ore",
+      "grade": 15,
+      "name": "Voidsteel Shield",
+      "material": "Voidsteel",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour11detail.png",
+      "rect": [
+        292,
+        1065,
+        269,
+        337
+      ],
+      "sourceSha256": "787bde9b61b7626956518da77a8a23ef2d8f6f5016d5ffb0d0f6fd59ea77901d",
+      "approval": "owner-review"
+    },
+    {
+      "id": "greathelm-g1",
+      "kind": "greathelm",
+      "noun": "Greathelm",
+      "family": "ore",
+      "grade": 1,
+      "name": "Copper Greathelm",
+      "material": "Copper",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour1detail.png",
+      "rect": [
+        561,
+        0,
+        236,
+        257
+      ],
+      "sourceSha256": "6e794506d033ff9fd119dcfe033e153c59e714c6c96915cd7225e6469ce6222d",
+      "approval": "owner-review"
+    },
+    {
+      "id": "greathelm-g2",
+      "kind": "greathelm",
+      "noun": "Greathelm",
+      "family": "ore",
+      "grade": 2,
+      "name": "Iron Greathelm",
+      "material": "Iron",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour1detail.png",
+      "rect": [
+        561,
+        257,
+        236,
+        254
+      ],
+      "sourceSha256": "6e794506d033ff9fd119dcfe033e153c59e714c6c96915cd7225e6469ce6222d",
+      "approval": "owner-review"
+    },
+    {
+      "id": "greathelm-g3",
+      "kind": "greathelm",
+      "noun": "Greathelm",
+      "family": "ore",
+      "grade": 3,
+      "name": "Silver Greathelm",
+      "material": "Silver",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour1detail.png",
+      "rect": [
+        561,
+        511,
+        236,
+        274
+      ],
+      "sourceSha256": "6e794506d033ff9fd119dcfe033e153c59e714c6c96915cd7225e6469ce6222d",
+      "approval": "owner-review"
+    },
+    {
+      "id": "greathelm-g4",
+      "kind": "greathelm",
+      "noun": "Greathelm",
+      "family": "ore",
+      "grade": 4,
+      "name": "Cobalt Greathelm",
+      "material": "Cobalt",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour1detail.png",
+      "rect": [
+        561,
+        785,
+        236,
+        280
+      ],
+      "sourceSha256": "6e794506d033ff9fd119dcfe033e153c59e714c6c96915cd7225e6469ce6222d",
+      "approval": "owner-review"
+    },
+    {
+      "id": "greathelm-g5",
+      "kind": "greathelm",
+      "noun": "Greathelm",
+      "family": "ore",
+      "grade": 5,
+      "name": "Mithril Greathelm",
+      "material": "Mithril",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour1detail.png",
+      "rect": [
+        561,
+        1065,
+        236,
+        337
+      ],
+      "sourceSha256": "6e794506d033ff9fd119dcfe033e153c59e714c6c96915cd7225e6469ce6222d",
+      "approval": "owner-review"
+    },
+    {
+      "id": "greathelm-g6",
+      "kind": "greathelm",
+      "noun": "Greathelm",
+      "family": "ore",
+      "grade": 6,
+      "name": "Orichalcum Greathelm",
+      "material": "Orichalcum",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour6detail.png",
+      "rect": [
+        561,
+        0,
+        229,
+        260
+      ],
+      "sourceSha256": "e808afd3b312d5ccd7b05cfe3967c5e87ef3920c2bf981fe127ae3df3eddf7ac",
+      "approval": "owner-review"
+    },
+    {
+      "id": "greathelm-g7",
+      "kind": "greathelm",
+      "noun": "Greathelm",
+      "family": "ore",
+      "grade": 7,
+      "name": "Emberite Greathelm",
+      "material": "Emberite",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour6detail.png",
+      "rect": [
+        561,
+        260,
+        229,
+        256
+      ],
+      "sourceSha256": "e808afd3b312d5ccd7b05cfe3967c5e87ef3920c2bf981fe127ae3df3eddf7ac",
+      "approval": "owner-review"
+    },
+    {
+      "id": "greathelm-g8",
+      "kind": "greathelm",
+      "noun": "Greathelm",
+      "family": "ore",
+      "grade": 8,
+      "name": "Adamantite Greathelm",
+      "material": "Adamantite",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour6detail.png",
+      "rect": [
+        561,
+        516,
+        229,
+        269
+      ],
+      "sourceSha256": "e808afd3b312d5ccd7b05cfe3967c5e87ef3920c2bf981fe127ae3df3eddf7ac",
+      "approval": "owner-review"
+    },
+    {
+      "id": "greathelm-g9",
+      "kind": "greathelm",
+      "noun": "Greathelm",
+      "family": "ore",
+      "grade": 9,
+      "name": "Dragonsteel Greathelm",
+      "material": "Dragonsteel",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour6detail.png",
+      "rect": [
+        561,
+        785,
+        229,
+        280
+      ],
+      "sourceSha256": "e808afd3b312d5ccd7b05cfe3967c5e87ef3920c2bf981fe127ae3df3eddf7ac",
+      "approval": "owner-review"
+    },
+    {
+      "id": "greathelm-g10",
+      "kind": "greathelm",
+      "noun": "Greathelm",
+      "family": "ore",
+      "grade": 10,
+      "name": "Moonsilver Greathelm",
+      "material": "Moonsilver",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour6detail.png",
+      "rect": [
+        561,
+        1065,
+        229,
+        337
+      ],
+      "sourceSha256": "e808afd3b312d5ccd7b05cfe3967c5e87ef3920c2bf981fe127ae3df3eddf7ac",
+      "approval": "owner-review"
+    },
+    {
+      "id": "greathelm-g11",
+      "kind": "greathelm",
+      "noun": "Greathelm",
+      "family": "ore",
+      "grade": 11,
+      "name": "Starmetal Greathelm",
+      "material": "Starmetal",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour11detail.png",
+      "rect": [
+        561,
+        0,
+        224,
+        263
+      ],
+      "sourceSha256": "787bde9b61b7626956518da77a8a23ef2d8f6f5016d5ffb0d0f6fd59ea77901d",
+      "approval": "owner-review"
+    },
+    {
+      "id": "greathelm-g12",
+      "kind": "greathelm",
+      "noun": "Greathelm",
+      "family": "ore",
+      "grade": 12,
+      "name": "Arcanite Greathelm",
+      "material": "Arcanite",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour11detail.png",
+      "rect": [
+        561,
+        263,
+        224,
+        256
+      ],
+      "sourceSha256": "787bde9b61b7626956518da77a8a23ef2d8f6f5016d5ffb0d0f6fd59ea77901d",
+      "approval": "owner-review"
+    },
+    {
+      "id": "greathelm-g13",
+      "kind": "greathelm",
+      "noun": "Greathelm",
+      "family": "ore",
+      "grade": 13,
+      "name": "Darksteel Greathelm",
+      "material": "Darksteel",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour11detail.png",
+      "rect": [
+        561,
+        519,
+        224,
+        266
+      ],
+      "sourceSha256": "787bde9b61b7626956518da77a8a23ef2d8f6f5016d5ffb0d0f6fd59ea77901d",
+      "approval": "owner-review"
+    },
+    {
+      "id": "greathelm-g14",
+      "kind": "greathelm",
+      "noun": "Greathelm",
+      "family": "ore",
+      "grade": 14,
+      "name": "Aetherium Greathelm",
+      "material": "Aetherium",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour11detail.png",
+      "rect": [
+        561,
+        785,
+        224,
+        280
+      ],
+      "sourceSha256": "787bde9b61b7626956518da77a8a23ef2d8f6f5016d5ffb0d0f6fd59ea77901d",
+      "approval": "owner-review"
+    },
+    {
+      "id": "greathelm-g15",
+      "kind": "greathelm",
+      "noun": "Greathelm",
+      "family": "ore",
+      "grade": 15,
+      "name": "Voidsteel Greathelm",
+      "material": "Voidsteel",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour11detail.png",
+      "rect": [
+        561,
+        1065,
+        224,
+        337
+      ],
+      "sourceSha256": "787bde9b61b7626956518da77a8a23ef2d8f6f5016d5ffb0d0f6fd59ea77901d",
+      "approval": "owner-review"
+    },
+    {
+      "id": "plate-g1",
+      "kind": "plate",
+      "noun": "Plate",
+      "family": "ore",
+      "grade": 1,
+      "name": "Copper Plate",
+      "material": "Copper",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour1detail.png",
+      "rect": [
+        797,
+        0,
+        325,
+        257
+      ],
+      "sourceSha256": "6e794506d033ff9fd119dcfe033e153c59e714c6c96915cd7225e6469ce6222d",
+      "approval": "owner-review"
+    },
+    {
+      "id": "plate-g2",
+      "kind": "plate",
+      "noun": "Plate",
+      "family": "ore",
+      "grade": 2,
+      "name": "Iron Plate",
+      "material": "Iron",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour1detail.png",
+      "rect": [
+        797,
+        257,
+        325,
+        254
+      ],
+      "sourceSha256": "6e794506d033ff9fd119dcfe033e153c59e714c6c96915cd7225e6469ce6222d",
+      "approval": "owner-review"
+    },
+    {
+      "id": "plate-g3",
+      "kind": "plate",
+      "noun": "Plate",
+      "family": "ore",
+      "grade": 3,
+      "name": "Silver Plate",
+      "material": "Silver",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour1detail.png",
+      "rect": [
+        797,
+        511,
+        325,
+        274
+      ],
+      "sourceSha256": "6e794506d033ff9fd119dcfe033e153c59e714c6c96915cd7225e6469ce6222d",
+      "approval": "owner-review"
+    },
+    {
+      "id": "plate-g4",
+      "kind": "plate",
+      "noun": "Plate",
+      "family": "ore",
+      "grade": 4,
+      "name": "Cobalt Plate",
+      "material": "Cobalt",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour1detail.png",
+      "rect": [
+        797,
+        785,
+        325,
+        280
+      ],
+      "sourceSha256": "6e794506d033ff9fd119dcfe033e153c59e714c6c96915cd7225e6469ce6222d",
+      "approval": "owner-review"
+    },
+    {
+      "id": "plate-g5",
+      "kind": "plate",
+      "noun": "Plate",
+      "family": "ore",
+      "grade": 5,
+      "name": "Mithril Plate",
+      "material": "Mithril",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour1detail.png",
+      "rect": [
+        797,
+        1065,
+        325,
+        337
+      ],
+      "sourceSha256": "6e794506d033ff9fd119dcfe033e153c59e714c6c96915cd7225e6469ce6222d",
+      "approval": "owner-review"
+    },
+    {
+      "id": "plate-g6",
+      "kind": "plate",
+      "noun": "Plate",
+      "family": "ore",
+      "grade": 6,
+      "name": "Orichalcum Plate",
+      "material": "Orichalcum",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour6detail.png",
+      "rect": [
+        790,
+        0,
+        332,
+        260
+      ],
+      "sourceSha256": "e808afd3b312d5ccd7b05cfe3967c5e87ef3920c2bf981fe127ae3df3eddf7ac",
+      "approval": "owner-review"
+    },
+    {
+      "id": "plate-g7",
+      "kind": "plate",
+      "noun": "Plate",
+      "family": "ore",
+      "grade": 7,
+      "name": "Emberite Plate",
+      "material": "Emberite",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour6detail.png",
+      "rect": [
+        790,
+        260,
+        332,
+        256
+      ],
+      "sourceSha256": "e808afd3b312d5ccd7b05cfe3967c5e87ef3920c2bf981fe127ae3df3eddf7ac",
+      "approval": "owner-review"
+    },
+    {
+      "id": "plate-g8",
+      "kind": "plate",
+      "noun": "Plate",
+      "family": "ore",
+      "grade": 8,
+      "name": "Adamantite Plate",
+      "material": "Adamantite",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour6detail.png",
+      "rect": [
+        790,
+        516,
+        332,
+        269
+      ],
+      "sourceSha256": "e808afd3b312d5ccd7b05cfe3967c5e87ef3920c2bf981fe127ae3df3eddf7ac",
+      "approval": "owner-review"
+    },
+    {
+      "id": "plate-g9",
+      "kind": "plate",
+      "noun": "Plate",
+      "family": "ore",
+      "grade": 9,
+      "name": "Dragonsteel Plate",
+      "material": "Dragonsteel",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour6detail.png",
+      "rect": [
+        790,
+        785,
+        332,
+        280
+      ],
+      "sourceSha256": "e808afd3b312d5ccd7b05cfe3967c5e87ef3920c2bf981fe127ae3df3eddf7ac",
+      "approval": "owner-review"
+    },
+    {
+      "id": "plate-g10",
+      "kind": "plate",
+      "noun": "Plate",
+      "family": "ore",
+      "grade": 10,
+      "name": "Moonsilver Plate",
+      "material": "Moonsilver",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour6detail.png",
+      "rect": [
+        790,
+        1065,
+        332,
+        337
+      ],
+      "sourceSha256": "e808afd3b312d5ccd7b05cfe3967c5e87ef3920c2bf981fe127ae3df3eddf7ac",
+      "approval": "owner-review"
+    },
+    {
+      "id": "plate-g11",
+      "kind": "plate",
+      "noun": "Plate",
+      "family": "ore",
+      "grade": 11,
+      "name": "Starmetal Plate",
+      "material": "Starmetal",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour11detail.png",
+      "rect": [
+        785,
+        0,
+        337,
+        263
+      ],
+      "sourceSha256": "787bde9b61b7626956518da77a8a23ef2d8f6f5016d5ffb0d0f6fd59ea77901d",
+      "approval": "owner-review"
+    },
+    {
+      "id": "plate-g12",
+      "kind": "plate",
+      "noun": "Plate",
+      "family": "ore",
+      "grade": 12,
+      "name": "Arcanite Plate",
+      "material": "Arcanite",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour11detail.png",
+      "rect": [
+        785,
+        263,
+        337,
+        256
+      ],
+      "sourceSha256": "787bde9b61b7626956518da77a8a23ef2d8f6f5016d5ffb0d0f6fd59ea77901d",
+      "approval": "owner-review"
+    },
+    {
+      "id": "plate-g13",
+      "kind": "plate",
+      "noun": "Plate",
+      "family": "ore",
+      "grade": 13,
+      "name": "Darksteel Plate",
+      "material": "Darksteel",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour11detail.png",
+      "rect": [
+        785,
+        519,
+        337,
+        266
+      ],
+      "sourceSha256": "787bde9b61b7626956518da77a8a23ef2d8f6f5016d5ffb0d0f6fd59ea77901d",
+      "approval": "owner-review"
+    },
+    {
+      "id": "plate-g14",
+      "kind": "plate",
+      "noun": "Plate",
+      "family": "ore",
+      "grade": 14,
+      "name": "Aetherium Plate",
+      "material": "Aetherium",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour11detail.png",
+      "rect": [
+        785,
+        785,
+        337,
+        280
+      ],
+      "sourceSha256": "787bde9b61b7626956518da77a8a23ef2d8f6f5016d5ffb0d0f6fd59ea77901d",
+      "approval": "owner-review"
+    },
+    {
+      "id": "plate-g15",
+      "kind": "plate",
+      "noun": "Plate",
+      "family": "ore",
+      "grade": 15,
+      "name": "Voidsteel Plate",
+      "material": "Voidsteel",
+      "sourceRoot": "../review-extended",
+      "atlas": "armour11detail.png",
+      "rect": [
+        785,
+        1065,
+        337,
+        337
+      ],
+      "sourceSha256": "787bde9b61b7626956518da77a8a23ef2d8f6f5016d5ffb0d0f6fd59ea77901d",
+      "approval": "owner-review"
+    },
+    {
+      "id": "censer-g1",
+      "kind": "censer",
+      "noun": "Censer",
+      "family": "ore",
+      "grade": 1,
+      "name": "Copper Censer",
+      "material": "Copper",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools1detail.png",
+      "rect": [
+        984,
+        0,
+        246,
+        251
+      ],
+      "sourceSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
+      "approval": "owner-review"
+    },
+    {
+      "id": "censer-g2",
+      "kind": "censer",
+      "noun": "Censer",
+      "family": "ore",
+      "grade": 2,
+      "name": "Iron Censer",
+      "material": "Iron",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools1detail.png",
+      "rect": [
+        984,
+        251,
+        246,
+        257
+      ],
+      "sourceSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
+      "approval": "owner-review"
+    },
+    {
+      "id": "censer-g3",
+      "kind": "censer",
+      "noun": "Censer",
+      "family": "ore",
+      "grade": 3,
+      "name": "Silver Censer",
+      "material": "Silver",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools1detail.png",
+      "rect": [
+        984,
+        508,
+        246,
+        263
+      ],
+      "sourceSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
+      "approval": "owner-review"
+    },
+    {
+      "id": "censer-g4",
+      "kind": "censer",
+      "noun": "Censer",
+      "family": "ore",
+      "grade": 4,
+      "name": "Cobalt Censer",
+      "material": "Cobalt",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools1detail.png",
+      "rect": [
+        984,
+        771,
+        246,
+        251
+      ],
+      "sourceSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
+      "approval": "owner-review"
+    },
+    {
+      "id": "censer-g5",
+      "kind": "censer",
+      "noun": "Censer",
+      "family": "ore",
+      "grade": 5,
+      "name": "Mithril Censer",
+      "material": "Mithril",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools1detail.png",
+      "rect": [
+        984,
+        1022,
+        246,
+        256
+      ],
+      "sourceSha256": "7b38af0931fba2164c2e80a3758e4ddaaaedea1facc6c7c93830327c0173b07a",
+      "approval": "owner-review"
+    },
+    {
+      "id": "censer-g6",
+      "kind": "censer",
+      "noun": "Censer",
+      "family": "ore",
+      "grade": 6,
+      "name": "Orichalcum Censer",
+      "material": "Orichalcum",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools6detail.png",
+      "rect": [
+        1003,
+        0,
+        251,
+        250
+      ],
+      "sourceSha256": "0c17a9d49df19a46f7ea2f220f344855cd7f719c30e93ca31a2dfd2066f89434",
+      "approval": "owner-review"
+    },
+    {
+      "id": "censer-g7",
+      "kind": "censer",
+      "noun": "Censer",
+      "family": "ore",
+      "grade": 7,
+      "name": "Emberite Censer",
+      "material": "Emberite",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools6detail.png",
+      "rect": [
+        1003,
+        250,
+        251,
+        249
+      ],
+      "sourceSha256": "0c17a9d49df19a46f7ea2f220f344855cd7f719c30e93ca31a2dfd2066f89434",
+      "approval": "owner-review"
+    },
+    {
+      "id": "censer-g8",
+      "kind": "censer",
+      "noun": "Censer",
+      "family": "ore",
+      "grade": 8,
+      "name": "Adamantite Censer",
+      "material": "Adamantite",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools6detail.png",
+      "rect": [
+        1003,
+        499,
+        251,
+        251
+      ],
+      "sourceSha256": "0c17a9d49df19a46f7ea2f220f344855cd7f719c30e93ca31a2dfd2066f89434",
+      "approval": "owner-review"
+    },
+    {
+      "id": "censer-g9",
+      "kind": "censer",
+      "noun": "Censer",
+      "family": "ore",
+      "grade": 9,
+      "name": "Dragonsteel Censer",
+      "material": "Dragonsteel",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools6detail.png",
+      "rect": [
+        1003,
+        750,
+        251,
+        245
+      ],
+      "sourceSha256": "0c17a9d49df19a46f7ea2f220f344855cd7f719c30e93ca31a2dfd2066f89434",
+      "approval": "owner-review"
+    },
+    {
+      "id": "censer-g10",
+      "kind": "censer",
+      "noun": "Censer",
+      "family": "ore",
+      "grade": 10,
+      "name": "Moonsilver Censer",
+      "material": "Moonsilver",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools6detail.png",
+      "rect": [
+        1003,
+        995,
+        251,
+        259
+      ],
+      "sourceSha256": "0c17a9d49df19a46f7ea2f220f344855cd7f719c30e93ca31a2dfd2066f89434",
+      "approval": "owner-review"
+    },
+    {
+      "id": "censer-g11",
+      "kind": "censer",
+      "noun": "Censer",
+      "family": "ore",
+      "grade": 11,
+      "name": "Starmetal Censer",
+      "material": "Starmetal",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools11detail.png",
+      "rect": [
+        1003,
+        0,
+        251,
+        256
+      ],
+      "sourceSha256": "aa1ab9d82715a3c68887ed0ac58016d9f66e6d5d703c922463723a2220f2a54f",
+      "approval": "owner-review"
+    },
+    {
+      "id": "censer-g12",
+      "kind": "censer",
+      "noun": "Censer",
+      "family": "ore",
+      "grade": 12,
+      "name": "Arcanite Censer",
+      "material": "Arcanite",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools11detail.png",
+      "rect": [
+        1003,
+        256,
+        251,
+        247
+      ],
+      "sourceSha256": "aa1ab9d82715a3c68887ed0ac58016d9f66e6d5d703c922463723a2220f2a54f",
+      "approval": "owner-review"
+    },
+    {
+      "id": "censer-g13",
+      "kind": "censer",
+      "noun": "Censer",
+      "family": "ore",
+      "grade": 13,
+      "name": "Darksteel Censer",
+      "material": "Darksteel",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools11detail.png",
+      "rect": [
+        1003,
+        503,
+        251,
+        240
+      ],
+      "sourceSha256": "aa1ab9d82715a3c68887ed0ac58016d9f66e6d5d703c922463723a2220f2a54f",
+      "approval": "owner-review"
+    },
+    {
+      "id": "censer-g14",
+      "kind": "censer",
+      "noun": "Censer",
+      "family": "ore",
+      "grade": 14,
+      "name": "Aetherium Censer",
+      "material": "Aetherium",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools11detail.png",
+      "rect": [
+        1003,
+        743,
+        251,
+        242
+      ],
+      "sourceSha256": "aa1ab9d82715a3c68887ed0ac58016d9f66e6d5d703c922463723a2220f2a54f",
+      "approval": "owner-review"
+    },
+    {
+      "id": "censer-g15",
+      "kind": "censer",
+      "noun": "Censer",
+      "family": "ore",
+      "grade": 15,
+      "name": "Voidsteel Censer",
+      "material": "Voidsteel",
+      "sourceRoot": "../review-extended",
+      "atlas": "tools11detail.png",
+      "rect": [
+        1003,
+        985,
+        251,
+        269
+      ],
+      "sourceSha256": "aa1ab9d82715a3c68887ed0ac58016d9f66e6d5d703c922463723a2220f2a54f",
+      "approval": "owner-review"
+    },
+    {
+      "id": "staff-g6",
+      "kind": "staff",
+      "noun": "Staff",
+      "family": "wood",
+      "grade": 6,
+      "name": "Coralwood Staff",
+      "material": "Coralwood",
+      "sourceRoot": "../review-extended",
+      "atlas": "natural6.png",
+      "rect": [
+        0,
+        0,
+        275,
+        226
+      ],
+      "sourceSha256": "a8b50b5bdb0f5b470a9b6e4aa5b3efec0f902ae789931bba6e8a1310068c72fc",
+      "approval": "owner-review"
+    },
+    {
+      "id": "staff-g7",
+      "kind": "staff",
+      "noun": "Staff",
+      "family": "wood",
+      "grade": 7,
+      "name": "Ironwood Staff",
+      "material": "Ironwood",
+      "sourceRoot": "../review-extended",
+      "atlas": "woodstaff-fix.png",
+      "rect": [
+        0,
+        0,
+        812,
+        635
+      ],
+      "sourceSha256": "4afe9340a01e597657b9dc67727e95612fc95262801c55712ecce79d89bf8364",
+      "approval": "owner-review"
+    },
+    {
+      "id": "staff-g8",
+      "kind": "staff",
+      "noun": "Staff",
+      "family": "wood",
+      "grade": 8,
+      "name": "Cinderbark Staff",
+      "material": "Cinderbark",
+      "sourceRoot": "../review-extended",
+      "atlas": "natural6.png",
+      "rect": [
+        0,
+        450,
+        275,
+        229
+      ],
+      "sourceSha256": "a8b50b5bdb0f5b470a9b6e4aa5b3efec0f902ae789931bba6e8a1310068c72fc",
+      "approval": "owner-review"
+    },
+    {
+      "id": "staff-g9",
+      "kind": "staff",
+      "noun": "Staff",
+      "family": "wood",
+      "grade": 9,
+      "name": "Pyrewood Staff",
+      "material": "Pyrewood",
+      "sourceRoot": "../review-extended",
+      "atlas": "natural6.png",
+      "rect": [
+        0,
+        679,
+        275,
+        220
+      ],
+      "sourceSha256": "a8b50b5bdb0f5b470a9b6e4aa5b3efec0f902ae789931bba6e8a1310068c72fc",
+      "approval": "owner-review"
+    },
+    {
+      "id": "staff-g10",
+      "kind": "staff",
+      "noun": "Staff",
+      "family": "wood",
+      "grade": 10,
+      "name": "Silverbark Staff",
+      "material": "Silverbark",
+      "sourceRoot": "../review-extended",
+      "atlas": "natural6.png",
+      "rect": [
+        0,
+        899,
+        275,
+        246
+      ],
+      "sourceSha256": "a8b50b5bdb0f5b470a9b6e4aa5b3efec0f902ae789931bba6e8a1310068c72fc",
+      "approval": "owner-review"
+    },
+    {
+      "id": "staff-g11",
+      "kind": "staff",
+      "noun": "Staff",
+      "family": "wood",
+      "grade": 11,
+      "name": "Rimewood Staff",
+      "material": "Rimewood",
+      "sourceRoot": "../review-extended",
+      "atlas": "natural11.png",
+      "rect": [
+        0,
+        0,
+        292,
+        207
+      ],
+      "sourceSha256": "ded234f6c6191d1f312255ecc68bc942ed1d27637d978bf4431b3fae50e7e981",
+      "approval": "owner-review"
+    },
+    {
+      "id": "staff-g12",
+      "kind": "staff",
+      "noun": "Staff",
+      "family": "wood",
+      "grade": 12,
+      "name": "Starcedar Staff",
+      "material": "Starcedar",
+      "sourceRoot": "../review-extended",
+      "atlas": "natural11.png",
+      "rect": [
+        0,
+        207,
+        292,
+        214
+      ],
+      "sourceSha256": "ded234f6c6191d1f312255ecc68bc942ed1d27637d978bf4431b3fae50e7e981",
+      "approval": "owner-review"
+    },
+    {
+      "id": "staff-g13",
+      "kind": "staff",
+      "noun": "Staff",
+      "family": "wood",
+      "grade": 13,
+      "name": "Nightwood Staff",
+      "material": "Nightwood",
+      "sourceRoot": "../review-extended",
+      "atlas": "natural11.png",
+      "rect": [
+        0,
+        421,
+        292,
+        208
+      ],
+      "sourceSha256": "ded234f6c6191d1f312255ecc68bc942ed1d27637d978bf4431b3fae50e7e981",
+      "approval": "owner-review"
+    },
+    {
+      "id": "staff-g14",
+      "kind": "staff",
+      "noun": "Staff",
+      "family": "wood",
+      "grade": 14,
+      "name": "Wraithwood Staff",
+      "material": "Wraithwood",
+      "sourceRoot": "../review-extended",
+      "atlas": "woodstaff-fix.png",
+      "rect": [
+        0,
+        635,
+        812,
+        643
+      ],
+      "sourceSha256": "4afe9340a01e597657b9dc67727e95612fc95262801c55712ecce79d89bf8364",
+      "approval": "owner-review"
+    },
+    {
+      "id": "staff-g15",
+      "kind": "staff",
+      "noun": "Staff",
+      "family": "wood",
+      "grade": 15,
+      "name": "Gloamheart Staff",
+      "material": "Gloamheart",
+      "sourceRoot": "../review-extended",
+      "atlas": "natural11.png",
+      "rect": [
+        0,
+        840,
+        292,
+        240
+      ],
+      "sourceSha256": "ded234f6c6191d1f312255ecc68bc942ed1d27637d978bf4431b3fae50e7e981",
+      "approval": "owner-review"
+    },
+    {
+      "id": "bow-g6",
+      "kind": "bow",
+      "noun": "Bow",
+      "family": "wood",
+      "grade": 6,
+      "name": "Coralwood Bow",
+      "material": "Coralwood",
+      "sourceRoot": "../review-extended",
+      "atlas": "natural6.png",
+      "rect": [
+        275,
+        0,
+        275,
+        226
+      ],
+      "sourceSha256": "a8b50b5bdb0f5b470a9b6e4aa5b3efec0f902ae789931bba6e8a1310068c72fc",
+      "approval": "owner-review"
+    },
+    {
+      "id": "bow-g7",
+      "kind": "bow",
+      "noun": "Bow",
+      "family": "wood",
+      "grade": 7,
+      "name": "Ironwood Bow",
+      "material": "Ironwood",
+      "sourceRoot": "../review-extended",
+      "atlas": "woodfix.png",
+      "rect": [
+        615,
+        0,
+        615,
+        628
+      ],
+      "sourceSha256": "a438b8fa5cfe078a2e6d670cf685e31b885e5385d72dfe06b7f9ab5a04db93ef",
+      "approval": "owner-review"
+    },
+    {
+      "id": "bow-g8",
+      "kind": "bow",
+      "noun": "Bow",
+      "family": "wood",
+      "grade": 8,
+      "name": "Cinderbark Bow",
+      "material": "Cinderbark",
+      "sourceRoot": "../review-extended",
+      "atlas": "natural6.png",
+      "rect": [
+        275,
+        450,
+        275,
+        229
+      ],
+      "sourceSha256": "a8b50b5bdb0f5b470a9b6e4aa5b3efec0f902ae789931bba6e8a1310068c72fc",
+      "approval": "owner-review"
+    },
+    {
+      "id": "bow-g9",
+      "kind": "bow",
+      "noun": "Bow",
+      "family": "wood",
+      "grade": 9,
+      "name": "Pyrewood Bow",
+      "material": "Pyrewood",
+      "sourceRoot": "../review-extended",
+      "atlas": "natural6.png",
+      "rect": [
+        275,
+        679,
+        275,
+        220
+      ],
+      "sourceSha256": "a8b50b5bdb0f5b470a9b6e4aa5b3efec0f902ae789931bba6e8a1310068c72fc",
+      "approval": "owner-review"
+    },
+    {
+      "id": "bow-g10",
+      "kind": "bow",
+      "noun": "Bow",
+      "family": "wood",
+      "grade": 10,
+      "name": "Silverbark Bow",
+      "material": "Silverbark",
+      "sourceRoot": "../review-extended",
+      "atlas": "natural6.png",
+      "rect": [
+        275,
+        899,
+        275,
+        246
+      ],
+      "sourceSha256": "a8b50b5bdb0f5b470a9b6e4aa5b3efec0f902ae789931bba6e8a1310068c72fc",
+      "approval": "owner-review"
+    },
+    {
+      "id": "bow-g11",
+      "kind": "bow",
+      "noun": "Bow",
+      "family": "wood",
+      "grade": 11,
+      "name": "Rimewood Bow",
+      "material": "Rimewood",
+      "sourceRoot": "../review-extended",
+      "atlas": "natural11.png",
+      "rect": [
+        292,
+        0,
+        290,
+        207
+      ],
+      "sourceSha256": "ded234f6c6191d1f312255ecc68bc942ed1d27637d978bf4431b3fae50e7e981",
+      "approval": "owner-review"
+    },
+    {
+      "id": "bow-g12",
+      "kind": "bow",
+      "noun": "Bow",
+      "family": "wood",
+      "grade": 12,
+      "name": "Starcedar Bow",
+      "material": "Starcedar",
+      "sourceRoot": "../review-extended",
+      "atlas": "natural11.png",
+      "rect": [
+        292,
+        207,
+        290,
+        214
+      ],
+      "sourceSha256": "ded234f6c6191d1f312255ecc68bc942ed1d27637d978bf4431b3fae50e7e981",
+      "approval": "owner-review"
+    },
+    {
+      "id": "bow-g13",
+      "kind": "bow",
+      "noun": "Bow",
+      "family": "wood",
+      "grade": 13,
+      "name": "Nightwood Bow",
+      "material": "Nightwood",
+      "sourceRoot": "../review-extended",
+      "atlas": "natural11.png",
+      "rect": [
+        292,
+        421,
+        290,
+        208
+      ],
+      "sourceSha256": "ded234f6c6191d1f312255ecc68bc942ed1d27637d978bf4431b3fae50e7e981",
+      "approval": "owner-review"
+    },
+    {
+      "id": "bow-g14",
+      "kind": "bow",
+      "noun": "Bow",
+      "family": "wood",
+      "grade": 14,
+      "name": "Wraithwood Bow",
+      "material": "Wraithwood",
+      "sourceRoot": "../review-extended",
+      "atlas": "woodfix.png",
+      "rect": [
+        615,
+        628,
+        615,
+        650
+      ],
+      "sourceSha256": "a438b8fa5cfe078a2e6d670cf685e31b885e5385d72dfe06b7f9ab5a04db93ef",
+      "approval": "owner-review"
+    },
+    {
+      "id": "bow-g15",
+      "kind": "bow",
+      "noun": "Bow",
+      "family": "wood",
+      "grade": 15,
+      "name": "Gloamheart Bow",
+      "material": "Gloamheart",
+      "sourceRoot": "../review-extended",
+      "atlas": "natural11.png",
+      "rect": [
+        292,
+        840,
+        290,
+        240
+      ],
+      "sourceSha256": "ded234f6c6191d1f312255ecc68bc942ed1d27637d978bf4431b3fae50e7e981",
+      "approval": "owner-review"
+    },
+    {
+      "id": "quiver-g6",
+      "kind": "quiver",
+      "noun": "Quiver",
+      "family": "hide",
+      "grade": 6,
+      "name": "Brine Basilisk Hide Quiver",
+      "material": "Brine Basilisk Hide",
+      "sourceRoot": "../review-extended",
+      "atlas": "natural6.png",
+      "rect": [
+        550,
+        0,
+        274,
+        226
+      ],
+      "sourceSha256": "a8b50b5bdb0f5b470a9b6e4aa5b3efec0f902ae789931bba6e8a1310068c72fc",
+      "approval": "owner-review"
+    },
+    {
+      "id": "quiver-g7",
+      "kind": "quiver",
+      "noun": "Quiver",
+      "family": "hide",
+      "grade": 7,
+      "name": "Ashwing Hide Quiver",
+      "material": "Ashwing Hide",
+      "sourceRoot": "../review-extended",
+      "atlas": "natural6.png",
+      "rect": [
+        550,
+        226,
+        274,
+        224
+      ],
+      "sourceSha256": "a8b50b5bdb0f5b470a9b6e4aa5b3efec0f902ae789931bba6e8a1310068c72fc",
+      "approval": "owner-review"
+    },
+    {
+      "id": "quiver-g8",
+      "kind": "quiver",
+      "noun": "Quiver",
+      "family": "hide",
+      "grade": 8,
+      "name": "Glassdrake Hide Quiver",
+      "material": "Glassdrake Hide",
+      "sourceRoot": "../review-extended",
+      "atlas": "natural6.png",
+      "rect": [
+        550,
+        450,
+        274,
+        229
+      ],
+      "sourceSha256": "a8b50b5bdb0f5b470a9b6e4aa5b3efec0f902ae789931bba6e8a1310068c72fc",
+      "approval": "owner-review"
+    },
+    {
+      "id": "quiver-g9",
+      "kind": "quiver",
+      "noun": "Quiver",
+      "family": "hide",
+      "grade": 9,
+      "name": "Pyrewyrm Hide Quiver",
+      "material": "Pyrewyrm Hide",
+      "sourceRoot": "../review-extended",
+      "atlas": "natural6.png",
+      "rect": [
+        550,
+        679,
+        274,
+        220
+      ],
+      "sourceSha256": "a8b50b5bdb0f5b470a9b6e4aa5b3efec0f902ae789931bba6e8a1310068c72fc",
+      "approval": "owner-review"
+    },
+    {
+      "id": "quiver-g10",
+      "kind": "quiver",
+      "noun": "Quiver",
+      "family": "hide",
+      "grade": 10,
+      "name": "Rime Mammoth Hide Quiver",
+      "material": "Rime Mammoth Hide",
+      "sourceRoot": "../review-extended",
+      "atlas": "natural6.png",
+      "rect": [
+        550,
+        899,
+        274,
+        246
+      ],
+      "sourceSha256": "a8b50b5bdb0f5b470a9b6e4aa5b3efec0f902ae789931bba6e8a1310068c72fc",
+      "approval": "owner-review"
+    },
+    {
+      "id": "quiver-g11",
+      "kind": "quiver",
+      "noun": "Quiver",
+      "family": "hide",
+      "grade": 11,
+      "name": "Skyrend Griffon Hide Quiver",
+      "material": "Skyrend Griffon Hide",
+      "sourceRoot": "../review-extended",
+      "atlas": "natural11.png",
+      "rect": [
+        582,
+        0,
+        292,
+        207
+      ],
+      "sourceSha256": "ded234f6c6191d1f312255ecc68bc942ed1d27637d978bf4431b3fae50e7e981",
+      "approval": "owner-review"
+    },
+    {
+      "id": "quiver-g12",
+      "kind": "quiver",
+      "noun": "Quiver",
+      "family": "hide",
+      "grade": 12,
+      "name": "Starscar Behemoth Hide Quiver",
+      "material": "Starscar Behemoth Hide",
+      "sourceRoot": "../review-extended",
+      "atlas": "natural11.png",
+      "rect": [
+        582,
+        207,
+        292,
+        214
+      ],
+      "sourceSha256": "ded234f6c6191d1f312255ecc68bc942ed1d27637d978bf4431b3fae50e7e981",
+      "approval": "owner-review"
+    },
+    {
+      "id": "quiver-g13",
+      "kind": "quiver",
+      "noun": "Quiver",
+      "family": "hide",
+      "grade": 13,
+      "name": "Stillchimera Hide Quiver",
+      "material": "Stillchimera Hide",
+      "sourceRoot": "../review-extended",
+      "atlas": "natural11.png",
+      "rect": [
+        582,
+        421,
+        292,
+        208
+      ],
+      "sourceSha256": "ded234f6c6191d1f312255ecc68bc942ed1d27637d978bf4431b3fae50e7e981",
+      "approval": "owner-review"
+    },
+    {
+      "id": "quiver-g14",
+      "kind": "quiver",
+      "noun": "Quiver",
+      "family": "hide",
+      "grade": 14,
+      "name": "Mere Manticore Hide Quiver",
+      "material": "Mere Manticore Hide",
+      "sourceRoot": "../review-extended",
+      "atlas": "natural11.png",
+      "rect": [
+        582,
+        629,
+        292,
+        211
+      ],
+      "sourceSha256": "ded234f6c6191d1f312255ecc68bc942ed1d27637d978bf4431b3fae50e7e981",
+      "approval": "owner-review"
+    },
+    {
+      "id": "quiver-g15",
+      "kind": "quiver",
+      "noun": "Quiver",
+      "family": "hide",
+      "grade": 15,
+      "name": "Skyless Drakehide Quiver",
+      "material": "Skyless Drakehide",
+      "sourceRoot": "../review-extended",
+      "atlas": "natural11.png",
+      "rect": [
+        582,
+        840,
+        292,
+        240
+      ],
+      "sourceSha256": "ded234f6c6191d1f312255ecc68bc942ed1d27637d978bf4431b3fae50e7e981",
+      "approval": "owner-review"
+    },
+    {
+      "id": "lantern-g6",
+      "kind": "lantern",
+      "noun": "Lantern",
+      "family": "crystal",
+      "grade": 6,
+      "name": "Abyssal Topaz Lantern",
+      "material": "Abyssal Topaz",
+      "sourceRoot": "../review-extended",
+      "atlas": "jewels6.png",
+      "rect": [
+        0,
+        0,
+        280,
+        280
+      ],
+      "sourceSha256": "4e8291462bdf86147ac21a1a7ac03c645897c9f3f726b883e0279fde262b6aa0",
+      "approval": "owner-review"
+    },
+    {
+      "id": "lantern-g7",
+      "kind": "lantern",
+      "noun": "Lantern",
+      "family": "crystal",
+      "grade": 7,
+      "name": "Fire Opal Lantern",
+      "material": "Fire Opal",
+      "sourceRoot": "../review-extended",
+      "atlas": "jewels6.png",
+      "rect": [
+        0,
+        280,
+        280,
+        265
+      ],
+      "sourceSha256": "4e8291462bdf86147ac21a1a7ac03c645897c9f3f726b883e0279fde262b6aa0",
+      "approval": "owner-review"
+    },
+    {
+      "id": "lantern-g8",
+      "kind": "lantern",
+      "noun": "Lantern",
+      "family": "crystal",
+      "grade": 8,
+      "name": "Ember Ruby Lantern",
+      "material": "Ember Ruby",
+      "sourceRoot": "../review-extended",
+      "atlas": "jewels6.png",
+      "rect": [
+        0,
+        545,
+        280,
+        260
+      ],
+      "sourceSha256": "4e8291462bdf86147ac21a1a7ac03c645897c9f3f726b883e0279fde262b6aa0",
+      "approval": "owner-review"
+    },
+    {
+      "id": "lantern-g9",
+      "kind": "lantern",
+      "noun": "Lantern",
+      "family": "crystal",
+      "grade": 9,
+      "name": "Sunheart Lantern",
+      "material": "Sunheart",
+      "sourceRoot": "../review-extended",
+      "atlas": "jewels6.png",
+      "rect": [
+        0,
+        805,
+        280,
+        262
+      ],
+      "sourceSha256": "4e8291462bdf86147ac21a1a7ac03c645897c9f3f726b883e0279fde262b6aa0",
+      "approval": "owner-review"
+    },
+    {
+      "id": "lantern-g10",
+      "kind": "lantern",
+      "noun": "Lantern",
+      "family": "crystal",
+      "grade": 10,
+      "name": "Moonstone Lantern",
+      "material": "Moonstone",
+      "sourceRoot": "../review-extended",
+      "atlas": "jewels6.png",
+      "rect": [
+        0,
+        1067,
+        280,
+        335
+      ],
+      "sourceSha256": "4e8291462bdf86147ac21a1a7ac03c645897c9f3f726b883e0279fde262b6aa0",
+      "approval": "owner-review"
+    },
+    {
+      "id": "lantern-g11",
+      "kind": "lantern",
+      "noun": "Lantern",
+      "family": "crystal",
+      "grade": 11,
+      "name": "Rime Sapphire Lantern",
+      "material": "Rime Sapphire",
+      "sourceRoot": "../review-extended",
+      "atlas": "jewels11.png",
+      "rect": [
+        0,
+        0,
+        280,
+        278
+      ],
+      "sourceSha256": "351955df0160e3c8724f0634833539311ff38a8fe32bee5bee1574326f5c6498",
+      "approval": "owner-review"
+    },
+    {
+      "id": "lantern-g12",
+      "kind": "lantern",
+      "noun": "Lantern",
+      "family": "crystal",
+      "grade": 12,
+      "name": "Star Diamond Lantern",
+      "material": "Star Diamond",
+      "sourceRoot": "../review-extended",
+      "atlas": "jewels11.png",
+      "rect": [
+        0,
+        278,
+        280,
+        265
+      ],
+      "sourceSha256": "351955df0160e3c8724f0634833539311ff38a8fe32bee5bee1574326f5c6498",
+      "approval": "owner-review"
+    },
+    {
+      "id": "lantern-g13",
+      "kind": "lantern",
+      "noun": "Lantern",
+      "family": "crystal",
+      "grade": 13,
+      "name": "Mourning Onyx Lantern",
+      "material": "Mourning Onyx",
+      "sourceRoot": "../review-extended",
+      "atlas": "jewels11.png",
+      "rect": [
+        0,
+        543,
+        280,
+        261
+      ],
+      "sourceSha256": "351955df0160e3c8724f0634833539311ff38a8fe32bee5bee1574326f5c6498",
+      "approval": "owner-review"
+    },
+    {
+      "id": "lantern-g14",
+      "kind": "lantern",
+      "noun": "Lantern",
+      "family": "crystal",
+      "grade": 14,
+      "name": "Griefstone Lantern",
+      "material": "Griefstone",
+      "sourceRoot": "../review-extended",
+      "atlas": "jewels11.png",
+      "rect": [
+        0,
+        804,
+        280,
+        263
+      ],
+      "sourceSha256": "351955df0160e3c8724f0634833539311ff38a8fe32bee5bee1574326f5c6498",
+      "approval": "owner-review"
+    },
+    {
+      "id": "lantern-g15",
+      "kind": "lantern",
+      "noun": "Lantern",
+      "family": "crystal",
+      "grade": 15,
+      "name": "Black Diamond Lantern",
+      "material": "Black Diamond",
+      "sourceRoot": "../review-extended",
+      "atlas": "jewels11.png",
+      "rect": [
+        0,
+        1067,
+        280,
+        335
+      ],
+      "sourceSha256": "351955df0160e3c8724f0634833539311ff38a8fe32bee5bee1574326f5c6498",
+      "approval": "owner-review"
+    },
+    {
+      "id": "circlet-g6",
+      "kind": "circlet",
+      "noun": "Circlet",
+      "family": "crystal",
+      "grade": 6,
+      "name": "Abyssal Topaz Circlet",
+      "material": "Abyssal Topaz",
+      "sourceRoot": "../review-extended",
+      "atlas": "jewels6.png",
+      "rect": [
+        280,
+        0,
+        281,
+        280
+      ],
+      "sourceSha256": "4e8291462bdf86147ac21a1a7ac03c645897c9f3f726b883e0279fde262b6aa0",
+      "approval": "owner-review"
+    },
+    {
+      "id": "circlet-g7",
+      "kind": "circlet",
+      "noun": "Circlet",
+      "family": "crystal",
+      "grade": 7,
+      "name": "Fire Opal Circlet",
+      "material": "Fire Opal",
+      "sourceRoot": "../review-extended",
+      "atlas": "jewels6.png",
+      "rect": [
+        280,
+        280,
+        281,
+        265
+      ],
+      "sourceSha256": "4e8291462bdf86147ac21a1a7ac03c645897c9f3f726b883e0279fde262b6aa0",
+      "approval": "owner-review"
+    },
+    {
+      "id": "circlet-g8",
+      "kind": "circlet",
+      "noun": "Circlet",
+      "family": "crystal",
+      "grade": 8,
+      "name": "Ember Ruby Circlet",
+      "material": "Ember Ruby",
+      "sourceRoot": "../review-extended",
+      "atlas": "jewels6.png",
+      "rect": [
+        280,
+        545,
+        281,
+        260
+      ],
+      "sourceSha256": "4e8291462bdf86147ac21a1a7ac03c645897c9f3f726b883e0279fde262b6aa0",
+      "approval": "owner-review"
+    },
+    {
+      "id": "circlet-g9",
+      "kind": "circlet",
+      "noun": "Circlet",
+      "family": "crystal",
+      "grade": 9,
+      "name": "Sunheart Circlet",
+      "material": "Sunheart",
+      "sourceRoot": "../review-extended",
+      "atlas": "jewels6.png",
+      "rect": [
+        280,
+        805,
+        281,
+        262
+      ],
+      "sourceSha256": "4e8291462bdf86147ac21a1a7ac03c645897c9f3f726b883e0279fde262b6aa0",
+      "approval": "owner-review"
+    },
+    {
+      "id": "circlet-g10",
+      "kind": "circlet",
+      "noun": "Circlet",
+      "family": "crystal",
+      "grade": 10,
+      "name": "Moonstone Circlet",
+      "material": "Moonstone",
+      "sourceRoot": "../review-extended",
+      "atlas": "jewels6.png",
+      "rect": [
+        280,
+        1067,
+        281,
+        335
+      ],
+      "sourceSha256": "4e8291462bdf86147ac21a1a7ac03c645897c9f3f726b883e0279fde262b6aa0",
+      "approval": "owner-review"
+    },
+    {
+      "id": "circlet-g11",
+      "kind": "circlet",
+      "noun": "Circlet",
+      "family": "crystal",
+      "grade": 11,
+      "name": "Rime Sapphire Circlet",
+      "material": "Rime Sapphire",
+      "sourceRoot": "../review-extended",
+      "atlas": "jewels11.png",
+      "rect": [
+        280,
+        0,
+        290,
+        278
+      ],
+      "sourceSha256": "351955df0160e3c8724f0634833539311ff38a8fe32bee5bee1574326f5c6498",
+      "approval": "owner-review"
+    },
+    {
+      "id": "circlet-g12",
+      "kind": "circlet",
+      "noun": "Circlet",
+      "family": "crystal",
+      "grade": 12,
+      "name": "Star Diamond Circlet",
+      "material": "Star Diamond",
+      "sourceRoot": "../review-extended",
+      "atlas": "jewels11.png",
+      "rect": [
+        280,
+        278,
+        290,
+        265
+      ],
+      "sourceSha256": "351955df0160e3c8724f0634833539311ff38a8fe32bee5bee1574326f5c6498",
+      "approval": "owner-review"
+    },
+    {
+      "id": "circlet-g13",
+      "kind": "circlet",
+      "noun": "Circlet",
+      "family": "crystal",
+      "grade": 13,
+      "name": "Mourning Onyx Circlet",
+      "material": "Mourning Onyx",
+      "sourceRoot": "../review-extended",
+      "atlas": "jewels11.png",
+      "rect": [
+        280,
+        543,
+        290,
+        261
+      ],
+      "sourceSha256": "351955df0160e3c8724f0634833539311ff38a8fe32bee5bee1574326f5c6498",
+      "approval": "owner-review"
+    },
+    {
+      "id": "circlet-g14",
+      "kind": "circlet",
+      "noun": "Circlet",
+      "family": "crystal",
+      "grade": 14,
+      "name": "Griefstone Circlet",
+      "material": "Griefstone",
+      "sourceRoot": "../review-extended",
+      "atlas": "jewels11.png",
+      "rect": [
+        280,
+        804,
+        290,
+        263
+      ],
+      "sourceSha256": "351955df0160e3c8724f0634833539311ff38a8fe32bee5bee1574326f5c6498",
+      "approval": "owner-review"
+    },
+    {
+      "id": "circlet-g15",
+      "kind": "circlet",
+      "noun": "Circlet",
+      "family": "crystal",
+      "grade": 15,
+      "name": "Black Diamond Circlet",
+      "material": "Black Diamond",
+      "sourceRoot": "../review-extended",
+      "atlas": "jewels11.png",
+      "rect": [
+        280,
+        1067,
+        290,
+        335
+      ],
+      "sourceSha256": "351955df0160e3c8724f0634833539311ff38a8fe32bee5bee1574326f5c6498",
+      "approval": "owner-review"
+    },
+    {
+      "id": "robe-g6",
+      "kind": "robe",
+      "noun": "Robe",
+      "family": "fibre",
+      "grade": 6,
+      "name": "Sea Silk Robe",
+      "material": "Sea Silk",
+      "sourceRoot": "../review-extended",
+      "atlas": "cloth6.png",
+      "rect": [
+        0,
+        0,
+        280,
+        280
+      ],
+      "sourceSha256": "5451f3fecd4c5b83853cd64556fa78eb4d96e6a866de73faaf40f606d83f0460",
+      "approval": "owner-review"
+    },
+    {
+      "id": "robe-g7",
+      "kind": "robe",
+      "noun": "Robe",
+      "family": "fibre",
+      "grade": 7,
+      "name": "Ashmoth Silk Robe",
+      "material": "Ashmoth Silk",
+      "sourceRoot": "../review-extended",
+      "atlas": "cloth6.png",
+      "rect": [
+        0,
+        280,
+        280,
+        277
+      ],
+      "sourceSha256": "5451f3fecd4c5b83853cd64556fa78eb4d96e6a866de73faaf40f606d83f0460",
+      "approval": "owner-review"
+    },
+    {
+      "id": "robe-g8",
+      "kind": "robe",
+      "noun": "Robe",
+      "family": "fibre",
+      "grade": 8,
+      "name": "Glassfilament Robe",
+      "material": "Glassfilament",
+      "sourceRoot": "../review-extended",
+      "atlas": "cloth6.png",
+      "rect": [
+        0,
+        557,
+        280,
+        263
+      ],
+      "sourceSha256": "5451f3fecd4c5b83853cd64556fa78eb4d96e6a866de73faaf40f606d83f0460",
+      "approval": "owner-review"
+    },
+    {
+      "id": "robe-g9",
+      "kind": "robe",
+      "noun": "Robe",
+      "family": "fibre",
+      "grade": 9,
+      "name": "Wyrmthread Robe",
+      "material": "Wyrmthread",
+      "sourceRoot": "../review-extended",
+      "atlas": "cloth6.png",
+      "rect": [
+        0,
+        820,
+        280,
+        271
+      ],
+      "sourceSha256": "5451f3fecd4c5b83853cd64556fa78eb4d96e6a866de73faaf40f606d83f0460",
+      "approval": "owner-review"
+    },
+    {
+      "id": "robe-g10",
+      "kind": "robe",
+      "noun": "Robe",
+      "family": "fibre",
+      "grade": 10,
+      "name": "Rimeflax Fibre Robe",
+      "material": "Rimeflax Fibre",
+      "sourceRoot": "../review-extended",
+      "atlas": "cloth6.png",
+      "rect": [
+        0,
+        1091,
+        280,
+        311
+      ],
+      "sourceSha256": "5451f3fecd4c5b83853cd64556fa78eb4d96e6a866de73faaf40f606d83f0460",
+      "approval": "owner-review"
+    },
+    {
+      "id": "robe-g11",
+      "kind": "robe",
+      "noun": "Robe",
+      "family": "fibre",
+      "grade": 11,
+      "name": "Moonmoth Silk Robe",
+      "material": "Moonmoth Silk",
+      "sourceRoot": "../review-extended",
+      "atlas": "cloth11.png",
+      "rect": [
+        0,
+        0,
+        280,
+        280
+      ],
+      "sourceSha256": "c4166ea6bc924464347363c290de253384a6bc7b0727b21acd246d8298035b98",
+      "approval": "owner-review"
+    },
+    {
+      "id": "robe-g12",
+      "kind": "robe",
+      "noun": "Robe",
+      "family": "fibre",
+      "grade": 12,
+      "name": "Starroot Filament Robe",
+      "material": "Starroot Filament",
+      "sourceRoot": "../review-extended",
+      "atlas": "cloth11.png",
+      "rect": [
+        0,
+        280,
+        280,
+        276
+      ],
+      "sourceSha256": "c4166ea6bc924464347363c290de253384a6bc7b0727b21acd246d8298035b98",
+      "approval": "owner-review"
+    },
+    {
+      "id": "robe-g13",
+      "kind": "robe",
+      "noun": "Robe",
+      "family": "fibre",
+      "grade": 13,
+      "name": "Stillvine Fibre Robe",
+      "material": "Stillvine Fibre",
+      "sourceRoot": "../review-extended",
+      "atlas": "cloth11.png",
+      "rect": [
+        0,
+        556,
+        280,
+        265
+      ],
+      "sourceSha256": "c4166ea6bc924464347363c290de253384a6bc7b0727b21acd246d8298035b98",
+      "approval": "owner-review"
+    },
+    {
+      "id": "robe-g14",
+      "kind": "robe",
+      "noun": "Robe",
+      "family": "fibre",
+      "grade": 14,
+      "name": "Blackmere Filament Robe",
+      "material": "Blackmere Filament",
+      "sourceRoot": "../review-extended",
+      "atlas": "cloth11.png",
+      "rect": [
+        0,
+        821,
+        280,
+        271
+      ],
+      "sourceSha256": "c4166ea6bc924464347363c290de253384a6bc7b0727b21acd246d8298035b98",
+      "approval": "owner-review"
+    },
+    {
+      "id": "robe-g15",
+      "kind": "robe",
+      "noun": "Robe",
+      "family": "fibre",
+      "grade": 15,
+      "name": "Skyless Thread Robe",
+      "material": "Skyless Thread",
+      "sourceRoot": "../review-extended",
+      "atlas": "cloth11.png",
+      "rect": [
+        0,
+        1092,
+        280,
+        310
+      ],
+      "sourceSha256": "c4166ea6bc924464347363c290de253384a6bc7b0727b21acd246d8298035b98",
+      "approval": "owner-review"
+    },
+    {
+      "id": "tome-g6",
+      "kind": "tome",
+      "noun": "Tome",
+      "family": "fibre",
+      "grade": 6,
+      "name": "Sea Silk Tome",
+      "material": "Sea Silk",
+      "sourceRoot": "../review-extended",
+      "atlas": "cloth6.png",
+      "rect": [
+        280,
+        0,
+        281,
+        280
+      ],
+      "sourceSha256": "5451f3fecd4c5b83853cd64556fa78eb4d96e6a866de73faaf40f606d83f0460",
+      "approval": "owner-review"
+    },
+    {
+      "id": "tome-g7",
+      "kind": "tome",
+      "noun": "Tome",
+      "family": "fibre",
+      "grade": 7,
+      "name": "Ashmoth Silk Tome",
+      "material": "Ashmoth Silk",
+      "sourceRoot": "../review-extended",
+      "atlas": "cloth6.png",
+      "rect": [
+        280,
+        280,
+        281,
+        277
+      ],
+      "sourceSha256": "5451f3fecd4c5b83853cd64556fa78eb4d96e6a866de73faaf40f606d83f0460",
+      "approval": "owner-review"
+    },
+    {
+      "id": "tome-g8",
+      "kind": "tome",
+      "noun": "Tome",
+      "family": "fibre",
+      "grade": 8,
+      "name": "Glassfilament Tome",
+      "material": "Glassfilament",
+      "sourceRoot": "../review-extended",
+      "atlas": "cloth6.png",
+      "rect": [
+        280,
+        557,
+        281,
+        263
+      ],
+      "sourceSha256": "5451f3fecd4c5b83853cd64556fa78eb4d96e6a866de73faaf40f606d83f0460",
+      "approval": "owner-review"
+    },
+    {
+      "id": "tome-g9",
+      "kind": "tome",
+      "noun": "Tome",
+      "family": "fibre",
+      "grade": 9,
+      "name": "Wyrmthread Tome",
+      "material": "Wyrmthread",
+      "sourceRoot": "../review-extended",
+      "atlas": "cloth6.png",
+      "rect": [
+        280,
+        820,
+        281,
+        271
+      ],
+      "sourceSha256": "5451f3fecd4c5b83853cd64556fa78eb4d96e6a866de73faaf40f606d83f0460",
+      "approval": "owner-review"
+    },
+    {
+      "id": "tome-g10",
+      "kind": "tome",
+      "noun": "Tome",
+      "family": "fibre",
+      "grade": 10,
+      "name": "Rimeflax Fibre Tome",
+      "material": "Rimeflax Fibre",
+      "sourceRoot": "../review-extended",
+      "atlas": "cloth6.png",
+      "rect": [
+        280,
+        1091,
+        281,
+        311
+      ],
+      "sourceSha256": "5451f3fecd4c5b83853cd64556fa78eb4d96e6a866de73faaf40f606d83f0460",
+      "approval": "owner-review"
+    },
+    {
+      "id": "tome-g11",
+      "kind": "tome",
+      "noun": "Tome",
+      "family": "fibre",
+      "grade": 11,
+      "name": "Moonmoth Silk Tome",
+      "material": "Moonmoth Silk",
+      "sourceRoot": "../review-extended",
+      "atlas": "cloth11.png",
+      "rect": [
+        280,
+        0,
+        281,
+        280
+      ],
+      "sourceSha256": "c4166ea6bc924464347363c290de253384a6bc7b0727b21acd246d8298035b98",
+      "approval": "owner-review"
+    },
+    {
+      "id": "tome-g12",
+      "kind": "tome",
+      "noun": "Tome",
+      "family": "fibre",
+      "grade": 12,
+      "name": "Starroot Filament Tome",
+      "material": "Starroot Filament",
+      "sourceRoot": "../review-extended",
+      "atlas": "cloth11.png",
+      "rect": [
+        280,
+        280,
+        281,
+        276
+      ],
+      "sourceSha256": "c4166ea6bc924464347363c290de253384a6bc7b0727b21acd246d8298035b98",
+      "approval": "owner-review"
+    },
+    {
+      "id": "tome-g13",
+      "kind": "tome",
+      "noun": "Tome",
+      "family": "fibre",
+      "grade": 13,
+      "name": "Stillvine Fibre Tome",
+      "material": "Stillvine Fibre",
+      "sourceRoot": "../review-extended",
+      "atlas": "cloth11.png",
+      "rect": [
+        280,
+        556,
+        281,
+        265
+      ],
+      "sourceSha256": "c4166ea6bc924464347363c290de253384a6bc7b0727b21acd246d8298035b98",
+      "approval": "owner-review"
+    },
+    {
+      "id": "tome-g14",
+      "kind": "tome",
+      "noun": "Tome",
+      "family": "fibre",
+      "grade": 14,
+      "name": "Blackmere Filament Tome",
+      "material": "Blackmere Filament",
+      "sourceRoot": "../review-extended",
+      "atlas": "cloth11.png",
+      "rect": [
+        280,
+        821,
+        281,
+        271
+      ],
+      "sourceSha256": "c4166ea6bc924464347363c290de253384a6bc7b0727b21acd246d8298035b98",
+      "approval": "owner-review"
+    },
+    {
+      "id": "tome-g15",
+      "kind": "tome",
+      "noun": "Tome",
+      "family": "fibre",
+      "grade": 15,
+      "name": "Skyless Thread Tome",
+      "material": "Skyless Thread",
+      "sourceRoot": "../review-extended",
+      "atlas": "cloth11.png",
+      "rect": [
+        280,
+        1092,
+        281,
+        310
+      ],
+      "sourceSha256": "c4166ea6bc924464347363c290de253384a6bc7b0727b21acd246d8298035b98",
+      "approval": "owner-review"
+    },
+    {
+      "id": "hood-g6",
+      "kind": "hood",
+      "noun": "Hood",
+      "family": "hide",
+      "grade": 6,
+      "name": "Brine Basilisk Hide Hood",
+      "material": "Brine Basilisk Hide",
+      "sourceRoot": "../review-extended",
+      "atlas": "natural6.png",
+      "rect": [
+        824,
+        0,
+        275,
+        226
+      ],
+      "sourceSha256": "a8b50b5bdb0f5b470a9b6e4aa5b3efec0f902ae789931bba6e8a1310068c72fc",
+      "approval": "owner-review"
+    },
+    {
+      "id": "hood-g7",
+      "kind": "hood",
+      "noun": "Hood",
+      "family": "hide",
+      "grade": 7,
+      "name": "Ashwing Hide Hood",
+      "material": "Ashwing Hide",
+      "sourceRoot": "../review-extended",
+      "atlas": "natural6.png",
+      "rect": [
+        824,
+        226,
+        275,
+        224
+      ],
+      "sourceSha256": "a8b50b5bdb0f5b470a9b6e4aa5b3efec0f902ae789931bba6e8a1310068c72fc",
+      "approval": "owner-review"
+    },
+    {
+      "id": "hood-g8",
+      "kind": "hood",
+      "noun": "Hood",
+      "family": "hide",
+      "grade": 8,
+      "name": "Glassdrake Hide Hood",
+      "material": "Glassdrake Hide",
+      "sourceRoot": "../review-extended",
+      "atlas": "natural6.png",
+      "rect": [
+        824,
+        450,
+        275,
+        229
+      ],
+      "sourceSha256": "a8b50b5bdb0f5b470a9b6e4aa5b3efec0f902ae789931bba6e8a1310068c72fc",
+      "approval": "owner-review"
+    },
+    {
+      "id": "hood-g9",
+      "kind": "hood",
+      "noun": "Hood",
+      "family": "hide",
+      "grade": 9,
+      "name": "Pyrewyrm Hide Hood",
+      "material": "Pyrewyrm Hide",
+      "sourceRoot": "../review-extended",
+      "atlas": "natural6.png",
+      "rect": [
+        824,
+        679,
+        275,
+        220
+      ],
+      "sourceSha256": "a8b50b5bdb0f5b470a9b6e4aa5b3efec0f902ae789931bba6e8a1310068c72fc",
+      "approval": "owner-review"
+    },
+    {
+      "id": "hood-g10",
+      "kind": "hood",
+      "noun": "Hood",
+      "family": "hide",
+      "grade": 10,
+      "name": "Rime Mammoth Hide Hood",
+      "material": "Rime Mammoth Hide",
+      "sourceRoot": "../review-extended",
+      "atlas": "natural6.png",
+      "rect": [
+        824,
+        899,
+        275,
+        246
+      ],
+      "sourceSha256": "a8b50b5bdb0f5b470a9b6e4aa5b3efec0f902ae789931bba6e8a1310068c72fc",
+      "approval": "owner-review"
+    },
+    {
+      "id": "hood-g11",
+      "kind": "hood",
+      "noun": "Hood",
+      "family": "hide",
+      "grade": 11,
+      "name": "Skyrend Griffon Hide Hood",
+      "material": "Skyrend Griffon Hide",
+      "sourceRoot": "../review-extended",
+      "atlas": "natural11.png",
+      "rect": [
+        874,
+        0,
+        291,
+        207
+      ],
+      "sourceSha256": "ded234f6c6191d1f312255ecc68bc942ed1d27637d978bf4431b3fae50e7e981",
+      "approval": "owner-review"
+    },
+    {
+      "id": "hood-g12",
+      "kind": "hood",
+      "noun": "Hood",
+      "family": "hide",
+      "grade": 12,
+      "name": "Starscar Behemoth Hide Hood",
+      "material": "Starscar Behemoth Hide",
+      "sourceRoot": "../review-extended",
+      "atlas": "natural11.png",
+      "rect": [
+        874,
+        207,
+        291,
+        214
+      ],
+      "sourceSha256": "ded234f6c6191d1f312255ecc68bc942ed1d27637d978bf4431b3fae50e7e981",
+      "approval": "owner-review"
+    },
+    {
+      "id": "hood-g13",
+      "kind": "hood",
+      "noun": "Hood",
+      "family": "hide",
+      "grade": 13,
+      "name": "Stillchimera Hide Hood",
+      "material": "Stillchimera Hide",
+      "sourceRoot": "../review-extended",
+      "atlas": "natural11.png",
+      "rect": [
+        874,
+        421,
+        291,
+        208
+      ],
+      "sourceSha256": "ded234f6c6191d1f312255ecc68bc942ed1d27637d978bf4431b3fae50e7e981",
+      "approval": "owner-review"
+    },
+    {
+      "id": "hood-g14",
+      "kind": "hood",
+      "noun": "Hood",
+      "family": "hide",
+      "grade": 14,
+      "name": "Mere Manticore Hide Hood",
+      "material": "Mere Manticore Hide",
+      "sourceRoot": "../review-extended",
+      "atlas": "natural11.png",
+      "rect": [
+        874,
+        629,
+        291,
+        211
+      ],
+      "sourceSha256": "ded234f6c6191d1f312255ecc68bc942ed1d27637d978bf4431b3fae50e7e981",
+      "approval": "owner-review"
+    },
+    {
+      "id": "hood-g15",
+      "kind": "hood",
+      "noun": "Hood",
+      "family": "hide",
+      "grade": 15,
+      "name": "Skyless Drakehide Hood",
+      "material": "Skyless Drakehide",
+      "sourceRoot": "../review-extended",
+      "atlas": "natural11.png",
+      "rect": [
+        874,
+        840,
+        291,
+        240
+      ],
+      "sourceSha256": "ded234f6c6191d1f312255ecc68bc942ed1d27637d978bf4431b3fae50e7e981",
+      "approval": "owner-review"
+    },
+    {
+      "id": "leathers-g6",
+      "kind": "leathers",
+      "noun": "Leathers",
+      "family": "hide",
+      "grade": 6,
+      "name": "Brine Basilisk Hide Leathers",
+      "material": "Brine Basilisk Hide",
+      "sourceRoot": "../review-extended",
+      "atlas": "natural6.png",
+      "rect": [
+        1099,
+        0,
+        275,
+        226
+      ],
+      "sourceSha256": "a8b50b5bdb0f5b470a9b6e4aa5b3efec0f902ae789931bba6e8a1310068c72fc",
+      "approval": "owner-review"
+    },
+    {
+      "id": "leathers-g7",
+      "kind": "leathers",
+      "noun": "Leathers",
+      "family": "hide",
+      "grade": 7,
+      "name": "Ashwing Hide Leathers",
+      "material": "Ashwing Hide",
+      "sourceRoot": "../review-extended",
+      "atlas": "natural6.png",
+      "rect": [
+        1099,
+        226,
+        275,
+        224
+      ],
+      "sourceSha256": "a8b50b5bdb0f5b470a9b6e4aa5b3efec0f902ae789931bba6e8a1310068c72fc",
+      "approval": "owner-review"
+    },
+    {
+      "id": "leathers-g8",
+      "kind": "leathers",
+      "noun": "Leathers",
+      "family": "hide",
+      "grade": 8,
+      "name": "Glassdrake Hide Leathers",
+      "material": "Glassdrake Hide",
+      "sourceRoot": "../review-extended",
+      "atlas": "natural6.png",
+      "rect": [
+        1099,
+        450,
+        275,
+        229
+      ],
+      "sourceSha256": "a8b50b5bdb0f5b470a9b6e4aa5b3efec0f902ae789931bba6e8a1310068c72fc",
+      "approval": "owner-review"
+    },
+    {
+      "id": "leathers-g9",
+      "kind": "leathers",
+      "noun": "Leathers",
+      "family": "hide",
+      "grade": 9,
+      "name": "Pyrewyrm Hide Leathers",
+      "material": "Pyrewyrm Hide",
+      "sourceRoot": "../review-extended",
+      "atlas": "natural6.png",
+      "rect": [
+        1099,
+        679,
+        275,
+        220
+      ],
+      "sourceSha256": "a8b50b5bdb0f5b470a9b6e4aa5b3efec0f902ae789931bba6e8a1310068c72fc",
+      "approval": "owner-review"
+    },
+    {
+      "id": "leathers-g10",
+      "kind": "leathers",
+      "noun": "Leathers",
+      "family": "hide",
+      "grade": 10,
+      "name": "Rime Mammoth Hide Leathers",
+      "material": "Rime Mammoth Hide",
+      "sourceRoot": "../review-extended",
+      "atlas": "natural6.png",
+      "rect": [
+        1099,
+        899,
+        275,
+        246
+      ],
+      "sourceSha256": "a8b50b5bdb0f5b470a9b6e4aa5b3efec0f902ae789931bba6e8a1310068c72fc",
+      "approval": "owner-review"
+    },
+    {
+      "id": "leathers-g11",
+      "kind": "leathers",
+      "noun": "Leathers",
+      "family": "hide",
+      "grade": 11,
+      "name": "Skyrend Griffon Hide Leathers",
+      "material": "Skyrend Griffon Hide",
+      "sourceRoot": "../review-extended",
+      "atlas": "natural11.png",
+      "rect": [
+        1165,
+        0,
+        291,
+        207
+      ],
+      "sourceSha256": "ded234f6c6191d1f312255ecc68bc942ed1d27637d978bf4431b3fae50e7e981",
+      "approval": "owner-review"
+    },
+    {
+      "id": "leathers-g12",
+      "kind": "leathers",
+      "noun": "Leathers",
+      "family": "hide",
+      "grade": 12,
+      "name": "Starscar Behemoth Hide Leathers",
+      "material": "Starscar Behemoth Hide",
+      "sourceRoot": "../review-extended",
+      "atlas": "natural11.png",
+      "rect": [
+        1165,
+        207,
+        291,
+        214
+      ],
+      "sourceSha256": "ded234f6c6191d1f312255ecc68bc942ed1d27637d978bf4431b3fae50e7e981",
+      "approval": "owner-review"
+    },
+    {
+      "id": "leathers-g13",
+      "kind": "leathers",
+      "noun": "Leathers",
+      "family": "hide",
+      "grade": 13,
+      "name": "Stillchimera Hide Leathers",
+      "material": "Stillchimera Hide",
+      "sourceRoot": "../review-extended",
+      "atlas": "natural11.png",
+      "rect": [
+        1165,
+        421,
+        291,
+        208
+      ],
+      "sourceSha256": "ded234f6c6191d1f312255ecc68bc942ed1d27637d978bf4431b3fae50e7e981",
+      "approval": "owner-review"
+    },
+    {
+      "id": "leathers-g14",
+      "kind": "leathers",
+      "noun": "Leathers",
+      "family": "hide",
+      "grade": 14,
+      "name": "Mere Manticore Hide Leathers",
+      "material": "Mere Manticore Hide",
+      "sourceRoot": "../review-extended",
+      "atlas": "natural11.png",
+      "rect": [
+        1165,
+        629,
+        291,
+        211
+      ],
+      "sourceSha256": "ded234f6c6191d1f312255ecc68bc942ed1d27637d978bf4431b3fae50e7e981",
+      "approval": "owner-review"
+    },
+    {
+      "id": "leathers-g15",
+      "kind": "leathers",
+      "noun": "Leathers",
+      "family": "hide",
+      "grade": 15,
+      "name": "Skyless Drakehide Leathers",
+      "material": "Skyless Drakehide",
+      "sourceRoot": "../review-extended",
+      "atlas": "natural11.png",
+      "rect": [
+        1165,
+        840,
+        291,
+        240
+      ],
+      "sourceSha256": "ded234f6c6191d1f312255ecc68bc942ed1d27637d978bf4431b3fae50e7e981",
+      "approval": "owner-review"
+    },
+    {
+      "id": "mitre-g6",
+      "kind": "mitre",
+      "noun": "Mitre",
+      "family": "fibre",
+      "grade": 6,
+      "name": "Sea Silk Mitre",
+      "material": "Sea Silk",
+      "sourceRoot": "../review-extended",
+      "atlas": "cloth6.png",
+      "rect": [
+        561,
+        0,
+        258,
+        280
+      ],
+      "sourceSha256": "5451f3fecd4c5b83853cd64556fa78eb4d96e6a866de73faaf40f606d83f0460",
+      "approval": "owner-review"
+    },
+    {
+      "id": "mitre-g7",
+      "kind": "mitre",
+      "noun": "Mitre",
+      "family": "fibre",
+      "grade": 7,
+      "name": "Ashmoth Silk Mitre",
+      "material": "Ashmoth Silk",
+      "sourceRoot": "../review-extended",
+      "atlas": "cloth6.png",
+      "rect": [
+        561,
+        280,
+        258,
+        277
+      ],
+      "sourceSha256": "5451f3fecd4c5b83853cd64556fa78eb4d96e6a866de73faaf40f606d83f0460",
+      "approval": "owner-review"
+    },
+    {
+      "id": "mitre-g8",
+      "kind": "mitre",
+      "noun": "Mitre",
+      "family": "fibre",
+      "grade": 8,
+      "name": "Glassfilament Mitre",
+      "material": "Glassfilament",
+      "sourceRoot": "../review-extended",
+      "atlas": "cloth6.png",
+      "rect": [
+        561,
+        557,
+        258,
+        263
+      ],
+      "sourceSha256": "5451f3fecd4c5b83853cd64556fa78eb4d96e6a866de73faaf40f606d83f0460",
+      "approval": "owner-review"
+    },
+    {
+      "id": "mitre-g9",
+      "kind": "mitre",
+      "noun": "Mitre",
+      "family": "fibre",
+      "grade": 9,
+      "name": "Wyrmthread Mitre",
+      "material": "Wyrmthread",
+      "sourceRoot": "../review-extended",
+      "atlas": "cloth6.png",
+      "rect": [
+        561,
+        820,
+        258,
+        271
+      ],
+      "sourceSha256": "5451f3fecd4c5b83853cd64556fa78eb4d96e6a866de73faaf40f606d83f0460",
+      "approval": "owner-review"
+    },
+    {
+      "id": "mitre-g10",
+      "kind": "mitre",
+      "noun": "Mitre",
+      "family": "fibre",
+      "grade": 10,
+      "name": "Rimeflax Fibre Mitre",
+      "material": "Rimeflax Fibre",
+      "sourceRoot": "../review-extended",
+      "atlas": "cloth6.png",
+      "rect": [
+        561,
+        1091,
+        258,
+        311
+      ],
+      "sourceSha256": "5451f3fecd4c5b83853cd64556fa78eb4d96e6a866de73faaf40f606d83f0460",
+      "approval": "owner-review"
+    },
+    {
+      "id": "mitre-g11",
+      "kind": "mitre",
+      "noun": "Mitre",
+      "family": "fibre",
+      "grade": 11,
+      "name": "Moonmoth Silk Mitre",
+      "material": "Moonmoth Silk",
+      "sourceRoot": "../review-extended",
+      "atlas": "cloth11.png",
+      "rect": [
+        561,
+        0,
+        246,
+        280
+      ],
+      "sourceSha256": "c4166ea6bc924464347363c290de253384a6bc7b0727b21acd246d8298035b98",
+      "approval": "owner-review"
+    },
+    {
+      "id": "mitre-g12",
+      "kind": "mitre",
+      "noun": "Mitre",
+      "family": "fibre",
+      "grade": 12,
+      "name": "Starroot Filament Mitre",
+      "material": "Starroot Filament",
+      "sourceRoot": "../review-extended",
+      "atlas": "cloth11.png",
+      "rect": [
+        561,
+        280,
+        246,
+        276
+      ],
+      "sourceSha256": "c4166ea6bc924464347363c290de253384a6bc7b0727b21acd246d8298035b98",
+      "approval": "owner-review"
+    },
+    {
+      "id": "mitre-g13",
+      "kind": "mitre",
+      "noun": "Mitre",
+      "family": "fibre",
+      "grade": 13,
+      "name": "Stillvine Fibre Mitre",
+      "material": "Stillvine Fibre",
+      "sourceRoot": "../review-extended",
+      "atlas": "cloth11.png",
+      "rect": [
+        561,
+        556,
+        246,
+        265
+      ],
+      "sourceSha256": "c4166ea6bc924464347363c290de253384a6bc7b0727b21acd246d8298035b98",
+      "approval": "owner-review"
+    },
+    {
+      "id": "mitre-g14",
+      "kind": "mitre",
+      "noun": "Mitre",
+      "family": "fibre",
+      "grade": 14,
+      "name": "Blackmere Filament Mitre",
+      "material": "Blackmere Filament",
+      "sourceRoot": "../review-extended",
+      "atlas": "cloth11.png",
+      "rect": [
+        561,
+        821,
+        246,
+        271
+      ],
+      "sourceSha256": "c4166ea6bc924464347363c290de253384a6bc7b0727b21acd246d8298035b98",
+      "approval": "owner-review"
+    },
+    {
+      "id": "mitre-g15",
+      "kind": "mitre",
+      "noun": "Mitre",
+      "family": "fibre",
+      "grade": 15,
+      "name": "Skyless Thread Mitre",
+      "material": "Skyless Thread",
+      "sourceRoot": "../review-extended",
+      "atlas": "cloth11.png",
+      "rect": [
+        561,
+        1092,
+        246,
+        310
+      ],
+      "sourceSha256": "c4166ea6bc924464347363c290de253384a6bc7b0727b21acd246d8298035b98",
+      "approval": "owner-review"
+    },
+    {
+      "id": "vestments-g6",
+      "kind": "vestments",
+      "noun": "Vestments",
+      "family": "fibre",
+      "grade": 6,
+      "name": "Sea Silk Vestments",
+      "material": "Sea Silk",
+      "sourceRoot": "../review-extended",
+      "atlas": "cloth6.png",
+      "rect": [
+        819,
+        0,
+        303,
+        280
+      ],
+      "sourceSha256": "5451f3fecd4c5b83853cd64556fa78eb4d96e6a866de73faaf40f606d83f0460",
+      "approval": "owner-review"
+    },
+    {
+      "id": "vestments-g7",
+      "kind": "vestments",
+      "noun": "Vestments",
+      "family": "fibre",
+      "grade": 7,
+      "name": "Ashmoth Silk Vestments",
+      "material": "Ashmoth Silk",
+      "sourceRoot": "../review-extended",
+      "atlas": "cloth6.png",
+      "rect": [
+        819,
+        280,
+        303,
+        277
+      ],
+      "sourceSha256": "5451f3fecd4c5b83853cd64556fa78eb4d96e6a866de73faaf40f606d83f0460",
+      "approval": "owner-review"
+    },
+    {
+      "id": "vestments-g8",
+      "kind": "vestments",
+      "noun": "Vestments",
+      "family": "fibre",
+      "grade": 8,
+      "name": "Glassfilament Vestments",
+      "material": "Glassfilament",
+      "sourceRoot": "../review-extended",
+      "atlas": "cloth6.png",
+      "rect": [
+        819,
+        557,
+        303,
+        263
+      ],
+      "sourceSha256": "5451f3fecd4c5b83853cd64556fa78eb4d96e6a866de73faaf40f606d83f0460",
+      "approval": "owner-review"
+    },
+    {
+      "id": "vestments-g9",
+      "kind": "vestments",
+      "noun": "Vestments",
+      "family": "fibre",
+      "grade": 9,
+      "name": "Wyrmthread Vestments",
+      "material": "Wyrmthread",
+      "sourceRoot": "../review-extended",
+      "atlas": "cloth6.png",
+      "rect": [
+        819,
+        820,
+        303,
+        271
+      ],
+      "sourceSha256": "5451f3fecd4c5b83853cd64556fa78eb4d96e6a866de73faaf40f606d83f0460",
+      "approval": "owner-review"
+    },
+    {
+      "id": "vestments-g10",
+      "kind": "vestments",
+      "noun": "Vestments",
+      "family": "fibre",
+      "grade": 10,
+      "name": "Rimeflax Fibre Vestments",
+      "material": "Rimeflax Fibre",
+      "sourceRoot": "../review-extended",
+      "atlas": "cloth6.png",
+      "rect": [
+        819,
+        1091,
+        303,
+        311
+      ],
+      "sourceSha256": "5451f3fecd4c5b83853cd64556fa78eb4d96e6a866de73faaf40f606d83f0460",
+      "approval": "owner-review"
+    },
+    {
+      "id": "vestments-g11",
+      "kind": "vestments",
+      "noun": "Vestments",
+      "family": "fibre",
+      "grade": 11,
+      "name": "Moonmoth Silk Vestments",
+      "material": "Moonmoth Silk",
+      "sourceRoot": "../review-extended",
+      "atlas": "cloth11.png",
+      "rect": [
+        807,
+        0,
+        315,
+        280
+      ],
+      "sourceSha256": "c4166ea6bc924464347363c290de253384a6bc7b0727b21acd246d8298035b98",
+      "approval": "owner-review"
+    },
+    {
+      "id": "vestments-g12",
+      "kind": "vestments",
+      "noun": "Vestments",
+      "family": "fibre",
+      "grade": 12,
+      "name": "Starroot Filament Vestments",
+      "material": "Starroot Filament",
+      "sourceRoot": "../review-extended",
+      "atlas": "cloth11.png",
+      "rect": [
+        807,
+        280,
+        315,
+        276
+      ],
+      "sourceSha256": "c4166ea6bc924464347363c290de253384a6bc7b0727b21acd246d8298035b98",
+      "approval": "owner-review"
+    },
+    {
+      "id": "vestments-g13",
+      "kind": "vestments",
+      "noun": "Vestments",
+      "family": "fibre",
+      "grade": 13,
+      "name": "Stillvine Fibre Vestments",
+      "material": "Stillvine Fibre",
+      "sourceRoot": "../review-extended",
+      "atlas": "cloth11.png",
+      "rect": [
+        807,
+        556,
+        315,
+        265
+      ],
+      "sourceSha256": "c4166ea6bc924464347363c290de253384a6bc7b0727b21acd246d8298035b98",
+      "approval": "owner-review"
+    },
+    {
+      "id": "vestments-g14",
+      "kind": "vestments",
+      "noun": "Vestments",
+      "family": "fibre",
+      "grade": 14,
+      "name": "Blackmere Filament Vestments",
+      "material": "Blackmere Filament",
+      "sourceRoot": "../review-extended",
+      "atlas": "cloth11.png",
+      "rect": [
+        807,
+        821,
+        315,
+        271
+      ],
+      "sourceSha256": "c4166ea6bc924464347363c290de253384a6bc7b0727b21acd246d8298035b98",
+      "approval": "owner-review"
+    },
+    {
+      "id": "vestments-g15",
+      "kind": "vestments",
+      "noun": "Vestments",
+      "family": "fibre",
+      "grade": 15,
+      "name": "Skyless Thread Vestments",
+      "material": "Skyless Thread",
+      "sourceRoot": "../review-extended",
+      "atlas": "cloth11.png",
+      "rect": [
+        807,
+        1092,
+        315,
+        310
+      ],
+      "sourceSha256": "c4166ea6bc924464347363c290de253384a6bc7b0727b21acd246d8298035b98",
+      "approval": "owner-review"
+    },
+    {
+      "id": "trinket-g6",
+      "kind": "trinket",
+      "noun": "Trinket",
+      "family": "crystal",
+      "grade": 6,
+      "name": "Abyssal Topaz Trinket",
+      "material": "Abyssal Topaz",
+      "sourceRoot": "../review-extended",
+      "atlas": "jewels6.png",
+      "rect": [
+        561,
+        0,
+        280,
+        280
+      ],
+      "sourceSha256": "4e8291462bdf86147ac21a1a7ac03c645897c9f3f726b883e0279fde262b6aa0",
+      "approval": "owner-review"
+    },
+    {
+      "id": "trinket-g7",
+      "kind": "trinket",
+      "noun": "Trinket",
+      "family": "crystal",
+      "grade": 7,
+      "name": "Fire Opal Trinket",
+      "material": "Fire Opal",
+      "sourceRoot": "../review-extended",
+      "atlas": "jewels6.png",
+      "rect": [
+        561,
+        280,
+        280,
+        265
+      ],
+      "sourceSha256": "4e8291462bdf86147ac21a1a7ac03c645897c9f3f726b883e0279fde262b6aa0",
+      "approval": "owner-review"
+    },
+    {
+      "id": "trinket-g8",
+      "kind": "trinket",
+      "noun": "Trinket",
+      "family": "crystal",
+      "grade": 8,
+      "name": "Ember Ruby Trinket",
+      "material": "Ember Ruby",
+      "sourceRoot": "../review-extended",
+      "atlas": "jewels6.png",
+      "rect": [
+        561,
+        545,
+        280,
+        260
+      ],
+      "sourceSha256": "4e8291462bdf86147ac21a1a7ac03c645897c9f3f726b883e0279fde262b6aa0",
+      "approval": "owner-review"
+    },
+    {
+      "id": "trinket-g9",
+      "kind": "trinket",
+      "noun": "Trinket",
+      "family": "crystal",
+      "grade": 9,
+      "name": "Sunheart Trinket",
+      "material": "Sunheart",
+      "sourceRoot": "../review-extended",
+      "atlas": "jewels6.png",
+      "rect": [
+        561,
+        805,
+        280,
+        262
+      ],
+      "sourceSha256": "4e8291462bdf86147ac21a1a7ac03c645897c9f3f726b883e0279fde262b6aa0",
+      "approval": "owner-review"
+    },
+    {
+      "id": "trinket-g10",
+      "kind": "trinket",
+      "noun": "Trinket",
+      "family": "crystal",
+      "grade": 10,
+      "name": "Moonstone Trinket",
+      "material": "Moonstone",
+      "sourceRoot": "../review-extended",
+      "atlas": "jewels6.png",
+      "rect": [
+        561,
+        1067,
+        280,
+        335
+      ],
+      "sourceSha256": "4e8291462bdf86147ac21a1a7ac03c645897c9f3f726b883e0279fde262b6aa0",
+      "approval": "owner-review"
+    },
+    {
+      "id": "trinket-g11",
+      "kind": "trinket",
+      "noun": "Trinket",
+      "family": "crystal",
+      "grade": 11,
+      "name": "Rime Sapphire Trinket",
+      "material": "Rime Sapphire",
+      "sourceRoot": "../review-extended",
+      "atlas": "jewels11.png",
+      "rect": [
+        570,
+        0,
+        271,
+        278
+      ],
+      "sourceSha256": "351955df0160e3c8724f0634833539311ff38a8fe32bee5bee1574326f5c6498",
+      "approval": "owner-review"
+    },
+    {
+      "id": "trinket-g12",
+      "kind": "trinket",
+      "noun": "Trinket",
+      "family": "crystal",
+      "grade": 12,
+      "name": "Star Diamond Trinket",
+      "material": "Star Diamond",
+      "sourceRoot": "../review-extended",
+      "atlas": "jewels11.png",
+      "rect": [
+        570,
+        278,
+        271,
+        265
+      ],
+      "sourceSha256": "351955df0160e3c8724f0634833539311ff38a8fe32bee5bee1574326f5c6498",
+      "approval": "owner-review"
+    },
+    {
+      "id": "trinket-g13",
+      "kind": "trinket",
+      "noun": "Trinket",
+      "family": "crystal",
+      "grade": 13,
+      "name": "Mourning Onyx Trinket",
+      "material": "Mourning Onyx",
+      "sourceRoot": "../review-extended",
+      "atlas": "jewels11.png",
+      "rect": [
+        570,
+        543,
+        271,
+        261
+      ],
+      "sourceSha256": "351955df0160e3c8724f0634833539311ff38a8fe32bee5bee1574326f5c6498",
+      "approval": "owner-review"
+    },
+    {
+      "id": "trinket-g14",
+      "kind": "trinket",
+      "noun": "Trinket",
+      "family": "crystal",
+      "grade": 14,
+      "name": "Griefstone Trinket",
+      "material": "Griefstone",
+      "sourceRoot": "../review-extended",
+      "atlas": "jewels11.png",
+      "rect": [
+        570,
+        804,
+        271,
+        263
+      ],
+      "sourceSha256": "351955df0160e3c8724f0634833539311ff38a8fe32bee5bee1574326f5c6498",
+      "approval": "owner-review"
+    },
+    {
+      "id": "trinket-g15",
+      "kind": "trinket",
+      "noun": "Trinket",
+      "family": "crystal",
+      "grade": 15,
+      "name": "Black Diamond Trinket",
+      "material": "Black Diamond",
+      "sourceRoot": "../review-extended",
+      "atlas": "jewels11.png",
+      "rect": [
+        570,
+        1067,
+        271,
+        335
+      ],
+      "sourceSha256": "351955df0160e3c8724f0634833539311ff38a8fe32bee5bee1574326f5c6498",
+      "approval": "owner-review"
+    },
+    {
+      "id": "charm-g6",
+      "kind": "charm",
+      "noun": "Charm",
+      "family": "ess",
+      "grade": 6,
+      "name": "Beaconlit Charm",
+      "material": "Beaconlit",
+      "sourceRoot": "../review-extended",
+      "atlas": "jewels6.png",
+      "rect": [
+        841,
+        0,
+        281,
+        280
+      ],
+      "sourceSha256": "4e8291462bdf86147ac21a1a7ac03c645897c9f3f726b883e0279fde262b6aa0",
+      "approval": "owner-review"
+    },
+    {
+      "id": "charm-g7",
+      "kind": "charm",
+      "noun": "Charm",
+      "family": "ess",
+      "grade": 7,
+      "name": "Searing Charm",
+      "material": "Searing",
+      "sourceRoot": "../review-extended",
+      "atlas": "jewels6.png",
+      "rect": [
+        841,
+        280,
+        281,
+        265
+      ],
+      "sourceSha256": "4e8291462bdf86147ac21a1a7ac03c645897c9f3f726b883e0279fde262b6aa0",
+      "approval": "owner-review"
+    },
+    {
+      "id": "charm-g8",
+      "kind": "charm",
+      "noun": "Charm",
+      "family": "ess",
+      "grade": 8,
+      "name": "Blazing Charm",
+      "material": "Blazing",
+      "sourceRoot": "../review-extended",
+      "atlas": "jewels6.png",
+      "rect": [
+        841,
+        545,
+        281,
+        260
+      ],
+      "sourceSha256": "4e8291462bdf86147ac21a1a7ac03c645897c9f3f726b883e0279fde262b6aa0",
+      "approval": "owner-review"
+    },
+    {
+      "id": "charm-g9",
+      "kind": "charm",
+      "noun": "Charm",
+      "family": "ess",
+      "grade": 9,
+      "name": "Pyrebright Charm",
+      "material": "Pyrebright",
+      "sourceRoot": "../review-extended",
+      "atlas": "jewels6.png",
+      "rect": [
+        841,
+        805,
+        281,
+        262
+      ],
+      "sourceSha256": "4e8291462bdf86147ac21a1a7ac03c645897c9f3f726b883e0279fde262b6aa0",
+      "approval": "owner-review"
+    },
+    {
+      "id": "charm-g10",
+      "kind": "charm",
+      "noun": "Charm",
+      "family": "ess",
+      "grade": 10,
+      "name": "Starlit Charm",
+      "material": "Starlit",
+      "sourceRoot": "../review-extended",
+      "atlas": "jewels6.png",
+      "rect": [
+        841,
+        1067,
+        281,
+        335
+      ],
+      "sourceSha256": "4e8291462bdf86147ac21a1a7ac03c645897c9f3f726b883e0279fde262b6aa0",
+      "approval": "owner-review"
+    },
+    {
+      "id": "charm-g11",
+      "kind": "charm",
+      "noun": "Charm",
+      "family": "ess",
+      "grade": 11,
+      "name": "Auroral Charm",
+      "material": "Auroral",
+      "sourceRoot": "../review-extended",
+      "atlas": "jewels11.png",
+      "rect": [
+        841,
+        0,
+        281,
+        278
+      ],
+      "sourceSha256": "351955df0160e3c8724f0634833539311ff38a8fe32bee5bee1574326f5c6498",
+      "approval": "owner-review"
+    },
+    {
+      "id": "charm-g12",
+      "kind": "charm",
+      "noun": "Charm",
+      "family": "ess",
+      "grade": 12,
+      "name": "Celestial Charm",
+      "material": "Celestial",
+      "sourceRoot": "../review-extended",
+      "atlas": "jewels11.png",
+      "rect": [
+        841,
+        278,
+        281,
+        265
+      ],
+      "sourceSha256": "351955df0160e3c8724f0634833539311ff38a8fe32bee5bee1574326f5c6498",
+      "approval": "owner-review"
+    },
+    {
+      "id": "charm-g13",
+      "kind": "charm",
+      "noun": "Charm",
+      "family": "ess",
+      "grade": 13,
+      "name": "Undimmed Charm",
+      "material": "Undimmed",
+      "sourceRoot": "../review-extended",
+      "atlas": "jewels11.png",
+      "rect": [
+        841,
+        543,
+        281,
+        261
+      ],
+      "sourceSha256": "351955df0160e3c8724f0634833539311ff38a8fe32bee5bee1574326f5c6498",
+      "approval": "owner-review"
+    },
+    {
+      "id": "charm-g14",
+      "kind": "charm",
+      "noun": "Charm",
+      "family": "ess",
+      "grade": 14,
+      "name": "Unbroken Charm",
+      "material": "Unbroken",
+      "sourceRoot": "../review-extended",
+      "atlas": "jewels11.png",
+      "rect": [
+        841,
+        804,
+        281,
+        263
+      ],
+      "sourceSha256": "351955df0160e3c8724f0634833539311ff38a8fe32bee5bee1574326f5c6498",
+      "approval": "owner-review"
+    },
+    {
+      "id": "charm-g15",
+      "kind": "charm",
+      "noun": "Charm",
+      "family": "ess",
+      "grade": 15,
+      "name": "Everlasting Charm",
+      "material": "Everlasting",
+      "sourceRoot": "../review-extended",
+      "atlas": "jewels11.png",
+      "rect": [
+        841,
+        1067,
+        281,
+        335
+      ],
+      "sourceSha256": "351955df0160e3c8724f0634833539311ff38a8fe32bee5bee1574326f5c6498",
+      "approval": "owner-review"
+    }
+  ]
+}
