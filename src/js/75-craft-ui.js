@@ -607,6 +607,7 @@ let craftUI = null;
   function openItem(id, back) {
     const it = itemById(id); if (!it || !craftKindVisible(it.slot)) return;
     const api = open(itemName(it), back || (sheet && sheet.back));
+    api.sheet.classList.add('cf-isheet');   // landscape: two columns (80-landscape.css)
     sheet = { api, id, back: back || null, mode: null, sel: -1, arm: null, flash: -1 };
     renderItem();
   }

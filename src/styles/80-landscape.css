@@ -131,3 +131,11 @@
 @media (min-aspect-ratio: 1/1) and (min-width: 600px) and (prefers-reduced-motion: reduce) {
   .menu, .app:not(.menu-open) .menu { transition: none; }
 }
+/* the item sheet in landscape (menu audit: the header took the 220 px body, so about 2 stat lines showed): wider, the
+   item on the left, what it does and the compare on the right */
+@media (orientation: landscape) and (max-height: 500px) {
+  .bsheet.cf-isheet { width: min(760px, 100%); }
+  .cf-isheet .bsheet-body { grid-template-columns: minmax(180px, 34%) minmax(0, 1fr); column-gap: 16px; align-items: start; }
+  .cf-isheet .bsheet-body > * { grid-column: 2; }
+  .cf-isheet .bsheet-body > .cf-ih { grid-column: 1; grid-row: 1 / span 20; position: sticky; top: 0; display: grid; justify-items: start; gap: 8px; }
+}
