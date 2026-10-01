@@ -20,6 +20,7 @@ let paceCheck;
   // Returns the zone moved to, or 0 when nothing changed.
   let loadedFor = null;
   paceCheck = () => {
+    if (typeof COMBAT_TUNE === 'object' && !COMBAT_TUNE.autoZones) { P().fell = 0; return 0; }   // the player picks the zone (59-combat)
     if (!S.auto || S.activity !== 'fight' || fightBoss || arena) return 0;
     const dps = totalDps();
     // On the first check after a load, a zone the hero cannot hold (59-combat.js partyHolds) falls back like a slow one. During play a wipe retreats

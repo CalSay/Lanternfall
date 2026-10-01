@@ -30,6 +30,7 @@ function disclose(row, trigger, onToggle, extra) {
   const lb = $('autoBoss').parentElement, tn = [...lb.childNodes].find(n => n.nodeType === 3 && n.textContent.trim());
   if (tn) tn.textContent = ' Fight frontier bosses when ready';
   lb.classList.add('gate-auto');
+  lb.style.display = 'none';   // owner (2026-10-01): the boss always comes after the zone's fights, so the switch has nothing to do
 }
 $('autoBoss').checked = S.auto;
 $('autoBoss').addEventListener('change', e => { S.auto = e.target.checked; });
@@ -52,13 +53,9 @@ function uiFight() {
     putText(G.title, 'Boss fight underway');
     putText(G.desc, bossTime > 0 ? `It enrages in ${Math.ceil(bossTime)} seconds. Hit it hard.` : 'It is enraged. Finish it now.');
     putText(gq, 'Boss'); putText(gp, 'Fighting'); putDisabled(gb, true);
-  } else if (S.zone < S.maxZone) {
-    putText(G.title, 'Rematch the zone boss');
-    putText(G.desc, `${Math.round(UNIQ_TUNE.again * 100)}% chance to drop ${uq}. You can rematch as often as you like.`);
-    putText(gq, 'Boss'); putText(gp, 'Rematch'); putDisabled(gb, false);
   } else {
-    putText(G.title, bossReady() ? 'The zone boss is ready' : `Clear ${10 - S.kills} more foes to face the zone boss`);
-    putText(G.desc, `Win before it enrages to open the next zone. ${Math.round(UNIQ_TUNE.first * 100)}% chance of the unique ${uq}.`);
+    putText(G.title, bossReady() ? 'The zone boss is next' : `Fight ${S.kills + 1} of ${ZONE_FIGHTS}, then the zone boss`);
+    putText(G.desc, `Beat the boss to move on to Zone ${S.zone + 1}. ${Math.round((S.zone < S.maxZone ? UNIQ_TUNE.again : UNIQ_TUNE.first) * 100)}% chance of the unique ${uq}.`);
     putText(gq, 'Boss'); putText(gp, 'Fight'); putDisabled(gb, !bossReady());
   }
 }

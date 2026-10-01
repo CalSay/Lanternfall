@@ -745,6 +745,7 @@ if (section('balance')) try {
     const old = JSON.parse(raw), stuck = 60;   // far past what this save can farm under the new curve
     old.zone = stuck; old.maxZone = Math.max(old.maxZone, stuck); old.activity = 'fight'; old.auto = true;
     const g = loadCore({ seed: 23, storage: memoryStorage({ [KEY]: JSON.stringify(old) }) }), E = s => g.eval(s);
+    E('COMBAT_TUNE.autoZones = 1; on("kill", () => { S.kills = 0 })');   // the idle-era zone moves (off in play since 2026-10-01; kept behind the knob); no zone wins
     // Stage C: the fall-back zone is also one the party can hold (partyHolds, 59-combat.js).
     const secs = E(`mobHp(${stuck}) * mod('foeHp') / totalDps()`);
     const msgs = []; g.fn.on('toast', t => msgs.push(t.msg || t));
@@ -758,7 +759,7 @@ if (section('balance')) try {
     for (let i = 0; i < 100; i++) g.fn.tick(0.1);
     assert(msgs.filter(m => /fell back/.test(m)).length === fell.length && E('S.maxZone') >= stuck && E('S.pace.fell') === stuck, 'no second toast; the max zone and the save are untouched (fell back from is remembered)');
     const g2 = loadCore({ seed: 23, storage: memoryStorage({ [KEY]: JSON.stringify(old) }) }), E3 = s => g2.eval(s);
-    E3('S.auto = false');   // away gains alone: no live fall-back first
+    E3('S.auto = false; COMBAT_TUNE.autoZones = 1');   // away gains alone: no live fall-back first
     const gold0 = E3('S.gold'), r = g2.fn.awayGains(4 * 3600);
     const held = E3(`partyHoldEstimate(${stuck}).zone`);
     assert(E3('S.gold') > gold0 && r.note.includes(E3(`zoneName(${held})`)) && held <= best + 2, `away gains farm zone ${held} (the best zone <= S.zone the party holds): +${E3(`fmt(${E3('S.gold') - gold0})`)} gold`);
@@ -3378,7 +3379,7 @@ if (section('econ (ECON-A)')) try {
   // The ledger
   E('soloPick("wren"); S.gold = 1e6; S.econ.spent.up = 0'); const g0 = E('S.gold'); E('train(trainNext().move, "1")');
   assert(E('S.econ.spent.up') === g0 - E('S.gold') && E('S.econ.spent.up') > 0, 'the ledger counts a Training level under "up"');
-  E('S.zone = 5; S.econ.earned.fight = 0'); for (let i = 0; i < 300; i++) g.fn.tick(0.1);
+  E('setZone(1); S.econ.earned.fight = 0'); for (let i = 0; i < 300; i++) g.fn.tick(0.1);
   assert(E('S.econ.earned.fight') > 0, `the ledger counts fighting gold (${E('fmt(S.econ.earned.fight)')} in 30 s)`);
   assert(!g.errors.length, 'econ: no errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
   // Save key: v2, S.v 3. A v1 save present is never read (a new game starts) and its key stays as it was.
@@ -3486,7 +3487,8 @@ if (section('cb2')) try {
     let sum = 0;
     for (const seed of [7, 8, 9]) {
       const g = loadCore({ seed, storage: memoryStorage({ [KEY]: rawOf('save-late.json') }) }), E = s => g.eval(s);
-      E("almanac.force('none')"); E('soloPick("pip")'); E('for (let i = 0; i < 20; i++) tick(0.1); S.auto = false; S.zone = 36; fightBoss = false; spawn();');
+      E("almanac.force('none')"); E('soloPick("pip")'); E('COMBAT_TUNE.autoZones = 1; on("kill", () => { S.kills = 0 })');   // measured with the idle-era wipe fall-back, no zone wins
+      E('for (let i = 0; i < 20; i++) tick(0.1); S.auto = false; S.zone = 36; fightBoss = false; spawn();');
       const g0 = E('S.gold'); for (let i = 0; i < 6000; i++) g.fn.tick(0.1);
       sum += (E('S.gold') - g0) / 10;
     }
@@ -3528,7 +3530,7 @@ if (section('cb2')) try {
     for (let i = 0; i < 140; i++) g.fn.tick(0.1);
     const still = E('fightBoss');
     for (let i = 0; i < 15; i++) g.fn.tick(0.1);
-    assert(enr && still && !E('fightBoss') && fails.length === 1, 'at 0 the boss enrages; the attempt fails 15 s later (bossFail)');
+    assert(enr && still && fails.length === 1 && E('S.zone') === 33, 'at 0 the boss enrages; the attempt fails 15 s later (bossFail), and you stay in the zone');
     E('addBonus("bossTime", () => -10)');
     assert(E('bossTimer(33)') === 35 && E('bossTimer(35)') === 50, 'Short Fuse (bossTime -10) still takes 10 s off the Enrage timer');
     errs.push(...g.errors);
@@ -4733,7 +4735,7 @@ if (section('solo effects (W1-C)')) try {
   // 6. the solo secrets
   {
     const boss = (hit, hpFrac, taps) => {
-      const g = mk(207, 'soloPick("tobin"); S.maxZone = 10; S.zone = 10; S.kills = 10'), E = s => g.eval(s);
+      const g = mk(207, 'soloPick("tobin"); S.maxZone = 10; S.zone = 10; S.kills = 0'), E = s => g.eval(s);
       run(g, 4);   // the Deeds start counting a moment after the game starts
       E('S.auto = false; S.zone = 10; S.maxZone = 10; S.kills = 10; challenge()'); run(g, 0.3);   // (a weak hero would fall back a zone to keep earning)
       if (hpFrac != null) E(`(u => { u.hp = u.maxHp * ${hpFrac}; })(combatUnits()[0])`);
@@ -6942,10 +6944,11 @@ if (section('auto-challenge (boss switch)')) try {
       const held = lab(); E('failDps = 0'); const ready = lab();
       assert(/held\. Get stronger first\|0\.[0-9]/.test(held) && /^Boss ready in Zone \d+\|1\.00$/.test(ready), `Next Up says when a ready boss held you off, with the way back as its bar (${held} / ${ready})`);
     }
+    // owner (2026-10-01): a zone is ZONE_FIGHTS fights and then its boss, switch or not
     const off = loadCore({ seed: 3 }), O = s => off.eval(s);
-    O(`soloPick("tobin"); S.auto = false; TURN_TUNE.on = ${turns}; S.onboard && (S.onboard.tips = false, S.onboard.all = true)`);
-    let any = false; for (let t = 0; t < 400 && !any; t += 0.1) { off.fn.tick(0.1); any = O('fightBoss'); }
-    assert(!any, `with the switch off the boss never starts on its own (${turns ? 'turn' : 'party'} fights)`);
+    O(`soloPick("tobin"); S.auto = false; TURN_TUNE.on = ${turns}; S.onboard && (S.onboard.tips = false, S.onboard.all = true); globalThis.__wins = -1; on('kill', x => { if (!x.mob.boss && __wins < 0 && fightBoss) __wins = -2 }); onTick(() => { if (fightBoss && __wins === -1) __wins = S.kills })`);
+    for (let t = 0; t < 400 && O('__wins') === -1; t += 0.1) off.fn.tick(0.1);
+    assert(O('__wins') === O('ZONE_FIGHTS'), `with the switch off the boss still comes after ${O('ZONE_FIGHTS')} won fights (${turns ? 'turn' : 'party'} fights; ${O('__wins')})`);
   }
 } catch (e) { fail('auto-challenge crashed: ' + (e.stack || e)); }
 
@@ -7078,6 +7081,30 @@ if (section('turn UI (browser)')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('turn UI crashed: ' + (e.stack || e)); }
+
+if (section('zones stay where you put them')) try {
+  // Owner (2026-10-01): "I should be able to select zone 1 and play through it". The game never moves you between zones
+  // on its own: no fall-back on a wipe, no climb back after one, no pace (farming) moves.
+  const mid = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-mid.json'), 'utf8');
+  { const g = loadCore({ seed: 3, storage: memoryStorage({ [KEY]: mid }) }), E = s => g.eval(s);
+    E('loadSave(); S.activity = "fight"; S.combat.back = S.maxZone; S.pace.fell = S.maxZone; setZone(3); globalThis.__zs = []; globalThis.__bad = 0; let __b = 0;' +
+      'on("kill", x => { if (x.mob.boss) __b = 1 }); onTick(() => { const z = S.zone, l = __zs[__zs.length - 1]; if (z !== l) { if (l != null && (z !== l + 1 || !__b)) __bad++; __zs.push(z); __b = 0 } })');
+    for (let t = 0; t < 120; t += 0.1) g.fn.tick(0.1);
+    assert(E('__bad') === 0 && E('__zs.length') >= 2 && E('S.combat.back') === 0 && E('S.pace.fell') === 0 && !g.errors.length,
+      `a picked zone holds until you win it, then you move on one zone (zones: ${E('__zs.join()')})`);
+    E('setZone(2)');
+    assert(E('S.zone === 2 && S.kills === 0 && !fightBoss'), 'entering an earlier zone starts at fight 1'); }
+  { const g = loadCore({ seed: 4 }), E = s => g.eval(s);
+    E('soloPick("tobin"); S.onboard && (S.onboard.tips = false, S.onboard.all = true); globalThis.__seq = []; on("kill", x => __seq.push(x.mob.boss ? "B" : S.kills + "/" + x.zone))');
+    for (let t = 0; t < 400 && E('S.zone') === 1; t += 0.1) g.fn.tick(0.1);
+    assert(E('__seq.join()') === '1/1,2/1,3/1,4/1,5/1,B' && E('S.zone') === 2, `a zone is ${E('ZONE_FIGHTS')} fights, then its boss, then the next zone (${E('__seq.join()')})`); }
+  { const g = loadCore({ seed: 3, storage: memoryStorage({ [KEY]: fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-early.json'), 'utf8') }) }), E = s => g.eval(s);
+    const msgs = []; g.fn.on('toast', t => msgs.push(t.msg || t));
+    E('loadSave(); S.activity = "fight"; S.maxZone = 30; setZone(25); globalThis.__w = 0; on("wipe", () => __w++)');
+    for (let t = 0; t < 120; t += 0.1) g.fn.tick(0.1);
+    assert(E('__w') >= 1 && E('S.zone') === 25 && !msgs.some(m => /fell back/.test(m)) && msgs.some(m => /Catch your breath and go again/.test(m)),
+      `a beaten hero gets up in the zone it chose (${E('__w')} defeats, zone ${E('S.zone')})`); }
+} catch (e) { fail('zones stay crashed: ' + (e.stack || e)); }
 
 if (section('C22 Thorn Imp (zone 1)')) try {
   // The owner-approved Thorn Imp (art/enemies/thorn-imp/v1): the art is embedded byte for byte, zone 1's regular foe is the
@@ -7230,7 +7257,7 @@ if (section('C20 turn combat (core)')) try {
   const earlySave=fs.readFileSync(path.join(ROOT,'tests','fixtures','save-early.json'),'utf8');
   const earlyRate=dt=>{
     const h=loadCore({seed:1,storage:memoryStorage({[KEY]:earlySave})}), H=x=>h.eval(x);
-    H('loadSave();soloPick("wren",{now:true});S.zone=1;S.activity="fight";S.auto=false;TURN_TUNE.on=1;soloSetAuto(true);DEED_TUNE.bonusOn=0;gainXp=()=>{};gearDirty();spawn();globalThis.__earlyMastery=JSON.stringify(S.mastery);on("kill",()=>{S.mastery=JSON.parse(__earlyMastery)})');
+    H('loadSave();soloPick("wren",{now:true});S.zone=1;S.kills=0;S.activity="fight";S.auto=false;TURN_TUNE.on=1;soloSetAuto(true);DEED_TUNE.bonusOn=0;gainXp=()=>{};gearDirty();spawn();globalThis.__earlyMastery=JSON.stringify(S.mastery);on("kill",()=>{S.mastery=JSON.parse(__earlyMastery);S.kills=0})');
     const scratch=H('turnCombatSample({profile:turnCombatProfile(),seconds:120,seed:1,mode:"auto"})');
     H(`globalThis.__earlyBefore=S.totalKills;for(let t=0;t<120;){const d=Math.min(${dt},120-t);tick(d);t+=d}`);
     return {scratch:scratch.kills,live:H('S.totalKills-__earlyBefore'),errors:h.errors};
@@ -7383,7 +7410,7 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
               idle++;
               // nothing to press: time passes; builds finish (their timers run on the wall clock); the first boss falls; the road opens
               await X(`for (let k = 0; k < 20; k++) tick(0.1); campCatchUp(Date.now() + 36e5);
-                if (S.onboard.done.parry && !S.onboard.done.boss && S.maxZone < 2) { S.maxZone = 2; S.zone = 2; }
+                if (S.onboard.done.parry && S.maxZone < 2) { S.maxZone = 2; S.zone = 2; }   /* the zone boss now comes on its own after 5 fights: its tip can be done first */
                 if (S.maxZone >= 2 && !S.onboard.done.upgrade && S.gold < 50) S.gold = 50;
                 if (S.onboard.done.store && S.maxZone < 3) { S.maxZone = 3; S.zone = 3; } true`);
               await page.waitForTimeout(120); continue;

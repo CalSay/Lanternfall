@@ -16,7 +16,7 @@ function setActivity(a) {
 }
 // Move to another cleared zone (the UI's arrows). Caller refreshes the UI.
 function setZone(z) {
-  S.zone = z; fightBoss = false; emit('sceneReset'); spawn();
+  S.zone = z; S.kills = 0; fightBoss = false; emit('sceneReset'); spawn();   // a zone starts at fight 1 of ZONE_FIGHTS
 }
 // Pick the gathering node. Returns false if the skill level is too low. Does not
 // switch activity; call setActivity('gather') for that.
@@ -35,6 +35,7 @@ let arena = null;
 
 function spawn() {
   if (arena) { const m = arena.spawn(); if (m) { mob = m; if (partyCombatOn()) cbArena(m); } return; }
+  if (!fightBoss && S.activity === 'fight' && bossReady()) fightBoss = true;   // the zone's fights are won: its boss comes next (again after a loss)
   // Party combat (59-combat.js): a pack of foes; mob is the one the stage shows.
   if (partyCombatOn()) { cbSpawn(fightBoss); if (fightBoss) bossTime = bossTimer(S.zone); return; }   // S6-A: 45 s / 60 s, then Enrage
   const z = S.zone, cyc = zoneCycle(z);
@@ -109,14 +110,18 @@ function killPack(m, g) {
   if (Math.random() < gear().essExtra) ess++;
   if (ess) { const got = stashAdd('ess', tier, ess, 'flow', true); addFloat(got ? `+${got} ${MAT.ess.short[tier - 1]} Essence` : 'Full', MAT.ess.col[tier - 1], false, 0.68, 0.2); }   // H3: capped by the Storehouse
   if (m.boss) {
-    const first = S.zone === S.maxZone;
+    const first = z === S.maxZone;
     fightBoss = false; failDps = 0;
     emit('shake', 0.3);
     const uq = zoneUnique(z), owned = (S.found[uq] || 0) >= tier ? UNIQ_TUNE.owned : 1;
     if (Math.random() < (first ? UNIQ_TUNE.first : UNIQ_TUNE.again) * owned * mod('uniqueChance')) dropUnique(uq, tier);
-    if (first) { S.maxZone++; S.zone++; S.kills = 0; emit('sceneReset'); toast(`${zoneName(z)} is cleared. ${zoneName(z + 1)} lies ahead.`, 'good', null, 'high'); emit('zoneClear', { zone: z }); }
-  } else if (S.zone === S.maxZone) {
-    S.kills = Math.min(10, S.kills + 1);
+    // a won zone moves you on, the first time and on every replay (owner, 2026-10-01)
+    if (first) S.maxZone++;
+    S.zone = z + 1; S.kills = 0; emit('sceneReset');
+    toast(first ? `${zoneName(z)} is cleared. ${zoneName(z + 1)} lies ahead.` : `Zone ${z} won. On to Zone ${z + 1}.`, 'good', null, first ? 'high' : 'normal');
+    if (first) emit('zoneClear', { zone: z });
+  } else {
+    S.kills = Math.min(ZONE_FIGHTS, S.kills + 1);
   }
   emit('kill', { mob: m, zone: z, gold: g, ess, tier });
   respawn = 0.45;
@@ -156,7 +161,7 @@ function gainSkill(k, n, quiet) {
 // Start (or rematch) the zone boss. Returns true if a boss fight began.
 function challenge() {
   if (fightBoss || target() !== 'mob') return false;
-  if (!(S.zone < S.maxZone || bossReady())) return false;
+  if (!bossReady()) return false;
   fightBoss = true; spawn(); respawn = 0;
   return true;
 }

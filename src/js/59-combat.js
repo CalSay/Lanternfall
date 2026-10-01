@@ -103,6 +103,9 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
                                          // bossGate measured 2026-10-01: the estimate leaves out the overtime and ability spikes; heroes won
                                          // from about 0.45 of it in zones 1-3 and 0.87 at zone 28 (0.58 lost), so 1.15 is safe everywhere;
                                          // owner 2026-10-01 "the toggle doesn't work": was 600, and the estimate is cautious, so it sat 10 min)
+    // autoZones (owner, 2026-10-01: "I should be able to select zone 1 and play through it"): 0 = the game never moves
+    // you between zones on its own (no fall-back on a wipe, no climb back, no 55-pace farming moves); 1 = the idle-era moves
+    autoZones: 0,
     refresh: 0.25, pushEvery: 5, pushRetry: 60, holdSecs: 120, estSafety: 1, estEff: 1.08, awayRate: 0.75, autoCast: 1.05,
     lkTap: 0.08, wardenTaunt: 3,         // the Lightkeeper's tap heal, the Warden's tap taunt
     blockX: 0.5, poison: 0.02, poisonT: 4
@@ -772,11 +775,12 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       emit('bossFail', { zone: z, dps: failDps });
       WIPE_EV.to = z;
     } else {
-      const to = Math.max(1, z - 1);
+      const to = T.autoZones ? Math.max(1, z - 1) : z;   // autoZones off: you get up in the zone you chose
       if (to < z) { S.combat.back = Math.max(S.combat.back || 0, z); S.zone = to; }
       backWipes = backZone === z ? backWipes + 1 : 1; backZone = z; backAt = clock; backDps = totalDps();
       WIPE_EV.to = to;
-      toast(stall ? "You couldn't finish the pack and fell back a zone." : 'You fell back a zone to recover.', 'raid', null, 'normal');
+      toast(to < z ? (stall ? "You couldn't finish the pack and fell back a zone." : 'You fell back a zone to recover.') :
+        stall ? "You couldn't finish the fight. Catch your breath and go again." : 'You were beaten. Catch your breath and go again.', 'raid', null, 'normal');
     }
     for (const f of foes) { f.gone = true; f.dead = f.dead || 0.001; }
     if (mob && !mob.dead) mob.dead = 0.001;
@@ -798,6 +802,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   let backZone = 0, backAt = 0, backWipes = 0, backDps = 0;
   // After a wipe the party climbs back one zone at a time, up to where it fell, once it can hold the next zone.
   cbPush = () => {
+    if (!T.autoZones) { if (S.combat) S.combat.back = 0; return 0; }
     const back = S.combat && S.combat.back || 0;
     if (!back || fightBoss || arena || target() !== 'mob') return 0;
     if (S.zone >= Math.min(back, S.maxZone)) { S.combat.back = 0; return 0; }

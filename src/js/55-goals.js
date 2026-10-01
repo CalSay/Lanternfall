@@ -123,9 +123,9 @@ var forgeGoalPicks = 0;
     id: 'zone-boss', sys: 'boss', prio: 2,
     // after a lost try, "ready" waits until you are 15% stronger than then (what auto-challenge waits for too):
     // the bar shows how close you are
-    pct: () => S.zone !== S.maxZone ? 0.5 : !bossReady() ? Math.min(1, S.kills / 10) : bossHeld() ? Math.min(0.99, totalDps() / (failDps * 1.15)) : 1,
+    pct: () => S.zone !== S.maxZone ? 0.5 : !bossReady() ? Math.min(1, S.kills / ZONE_FIGHTS) : bossHeld() ? Math.min(0.99, totalDps() / (failDps * 1.15)) : 1,
     label: () => S.zone !== S.maxZone ? `Go back to Zone ${S.maxZone} and push on`
-      : !bossReady() ? `${10 - S.kills} more foes to the Zone ${S.maxZone} boss`
+      : !bossReady() ? `${ZONE_FIGHTS - S.kills} more fights to the Zone ${S.maxZone} boss`
       : bossHeld() ? `Zone ${S.maxZone} boss held. Get stronger first` : `Boss ready in Zone ${S.maxZone}`,
     icon: { ic: ['banner', '#E0524F', { 7: '#FFB347' }] },
     go: { tab: 'adv', sel: '#gateBtn', fn: () => { if (S.zone !== S.maxZone) setZone(S.maxZone); } }

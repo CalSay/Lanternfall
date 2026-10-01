@@ -174,5 +174,8 @@ const zonePlace = z => { const r = regionOf(z); return (((z - r.z0) % 7) + 7) % 
 const zoneCycle = z => Math.max(0, Math.floor((z - regionOf(z).z0) / 7));                 // cycle within the region
 const zoneType = z => regionOf(z).types[zonePlace(z)];                                    // GLOBAL index into TYPES
 const zoneName = z => { const r = regionOf(z), c = zoneCycle(z); return z === r.z1 && r.boss.place ? r.boss.place : r.names[zonePlace(z)] + (c ? ' ' + roman(c + 1) : ''); };
-const bossReady = () => S.zone === S.maxZone && S.kills >= 10;
+// Owner (2026-10-01): every zone is ZONE_FIGHTS fights, then its boss (the Shadowborn Captain to come); beating the boss
+// moves you on to the next zone. S.kills counts this visit's wins; entering a zone (setZone) starts again at fight 1.
+const ZONE_FIGHTS = 5;
+const bossReady = () => S.kills >= ZONE_FIGHTS;
 const nodeColor = () => (MAT[S.node.kind] || MAT.wood).col[S.node.t - 1];

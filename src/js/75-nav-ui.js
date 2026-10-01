@@ -120,7 +120,7 @@ let navUI = null;
       const fighting = S.activity === 'fight' && !deep;
       row(list, {
         icon: ICON_OF.fight(), title: `Fight · Zone ${S.zone}`, off: deep,
-        meta: `${zoneName(S.zone)} · ` + (fighting ? 'Now' : S.zone === S.maxZone ? `${S.kills} / 10 foes to the boss` : 'cleared'),
+        meta: `${zoneName(S.zone)} · ` + (fighting ? 'Now' : bossReady() ? 'zone boss next' : `fight ${S.kills + 1} of ${ZONE_FIGHTS}`),
         here: fighting, label: 'Fight', cls: 'fight', go: () => pickGo({ act: 'fight' })
       });
       for (const sk of navSkills()) {

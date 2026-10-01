@@ -740,7 +740,7 @@ function ui(force) {
     putHidden(H.tWrap, true);
   } else {
     putText(H.zName, zoneName(S.zone));
-    putText(H.zSub, S.zone === S.maxZone ? `${S.kills}/10 foes` : 'Cleared');
+    putText(H.zSub, fightBoss || bossReady() ? 'Zone boss' : `Fight ${S.kills + 1}/${ZONE_FIGHTS}`);
     if (mob) {
       putText(H.mName, mob.name);
       putText(H.mHp, `${fmt(Math.max(0, mob.hp))} / ${fmt(mob.max)}`);

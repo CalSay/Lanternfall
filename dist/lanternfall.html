@@ -8166,12 +8166,14 @@ const NOTICES = [
     ch: m => /raid/.test(m) ? 'log' : 'none', why: 'the activity pill shows it' },
   { id: 'zone-clear', re: /is cleared\. .* lies ahead\.$/, ch: 'log', why: 'the next place gets its title caption',
     merge: ms => `${ms.length} zones cleared. ${ms[ms.length - 1]}` },
+  { id: 'zone-won', re: /^Zone .+ won\. On to Zone .+\.$/, ch: 'log', why: 'a replayed zone won: the zone title shows where you are',
+    merge: ms => ms[ms.length - 1] },
   { id: 'level', key: 'level', re: /^Level \d+\. Your hero hits/, ch: m => noteNum(m, /^Level (\d+)/) % 25 === 0 ? 'bell' : 'log',
     why: 'the LEVEL UP float says it; every 25th level is a bell line (level 10 pops as the Stars unlock)',
     merge: ms => `${ms.length} levels gained. Level ${noteNum(ms[ms.length - 1], /^Level (\d+)/)}.` },
   { id: 'skill', key: 'skill', re: /^\S+ level \d+\./, ch: m => /You can now|open to you/.test(m) ? 'bell' : 'none', why: 'only a new tier is news' },
   { id: 'boss-fail', re: /^(The zone boss held its ground|The zone boss beat you|Your party fell to the zone boss)/, ch: 'pop', wait: 10, why: 'tells you to grow stronger' },
-  { id: 'fell-back', re: /(fell back a zone|fell back to regroup|couldn't finish the pack)/, ch: 'bell' },
+  { id: 'fell-back', re: /(fell back a zone|fell back to regroup|couldn't finish the pack|Catch your breath and go again)/, ch: 'bell' },
   { id: 'pace', key: 'pace', re: /back to Zone \d+ to keep earning\.$/, ch: 'bell', once: 'session', why: 'audit 3.14: one line a session' },
   { id: 'start', re: /picks up the lamp\. The road is dark\.$/, ch: 'log', why: 'the guide speaks first' },
   { id: 'hero-swap', re: /takes up the lamp\.$/, ch: 'log' },
@@ -9029,7 +9031,10 @@ const zonePlace = z => { const r = regionOf(z); return (((z - r.z0) % 7) + 7) % 
 const zoneCycle = z => Math.max(0, Math.floor((z - regionOf(z).z0) / 7));                 // cycle within the region
 const zoneType = z => regionOf(z).types[zonePlace(z)];                                    // GLOBAL index into TYPES
 const zoneName = z => { const r = regionOf(z), c = zoneCycle(z); return z === r.z1 && r.boss.place ? r.boss.place : r.names[zonePlace(z)] + (c ? ' ' + roman(c + 1) : ''); };
-const bossReady = () => S.zone === S.maxZone && S.kills >= 10;
+// Owner (2026-10-01): every zone is ZONE_FIGHTS fights, then its boss (the Shadowborn Captain to come); beating the boss
+// moves you on to the next zone. S.kills counts this visit's wins; entering a zone (setZone) starts again at fight 1.
+const ZONE_FIGHTS = 5;
+const bossReady = () => S.kills >= ZONE_FIGHTS;
 const nodeColor = () => (MAT[S.node.kind] || MAT.wood).col[S.node.t - 1];
 
 // ---- src/js/41-items.js ----
@@ -9286,7 +9291,7 @@ function setActivity(a) {
 }
 // Move to another cleared zone (the UI's arrows). Caller refreshes the UI.
 function setZone(z) {
-  S.zone = z; fightBoss = false; emit('sceneReset'); spawn();
+  S.zone = z; S.kills = 0; fightBoss = false; emit('sceneReset'); spawn();   // a zone starts at fight 1 of ZONE_FIGHTS
 }
 // Pick the gathering node. Returns false if the skill level is too low. Does not
 // switch activity; call setActivity('gather') for that.
@@ -9305,6 +9310,7 @@ let arena = null;
 
 function spawn() {
   if (arena) { const m = arena.spawn(); if (m) { mob = m; if (partyCombatOn()) cbArena(m); } return; }
+  if (!fightBoss && S.activity === 'fight' && bossReady()) fightBoss = true;   // the zone's fights are won: its boss comes next (again after a loss)
   // Party combat (59-combat.js): a pack of foes; mob is the one the stage shows.
   if (partyCombatOn()) { cbSpawn(fightBoss); if (fightBoss) bossTime = bossTimer(S.zone); return; }   // S6-A: 45 s / 60 s, then Enrage
   const z = S.zone, cyc = zoneCycle(z);
@@ -9379,14 +9385,18 @@ function killPack(m, g) {
   if (Math.random() < gear().essExtra) ess++;
   if (ess) { const got = stashAdd('ess', tier, ess, 'flow', true); addFloat(got ? `+${got} ${MAT.ess.short[tier - 1]} Essence` : 'Full', MAT.ess.col[tier - 1], false, 0.68, 0.2); }   // H3: capped by the Storehouse
   if (m.boss) {
-    const first = S.zone === S.maxZone;
+    const first = z === S.maxZone;
     fightBoss = false; failDps = 0;
     emit('shake', 0.3);
     const uq = zoneUnique(z), owned = (S.found[uq] || 0) >= tier ? UNIQ_TUNE.owned : 1;
     if (Math.random() < (first ? UNIQ_TUNE.first : UNIQ_TUNE.again) * owned * mod('uniqueChance')) dropUnique(uq, tier);
-    if (first) { S.maxZone++; S.zone++; S.kills = 0; emit('sceneReset'); toast(`${zoneName(z)} is cleared. ${zoneName(z + 1)} lies ahead.`, 'good', null, 'high'); emit('zoneClear', { zone: z }); }
-  } else if (S.zone === S.maxZone) {
-    S.kills = Math.min(10, S.kills + 1);
+    // a won zone moves you on, the first time and on every replay (owner, 2026-10-01)
+    if (first) S.maxZone++;
+    S.zone = z + 1; S.kills = 0; emit('sceneReset');
+    toast(first ? `${zoneName(z)} is cleared. ${zoneName(z + 1)} lies ahead.` : `Zone ${z} won. On to Zone ${z + 1}.`, 'good', null, first ? 'high' : 'normal');
+    if (first) emit('zoneClear', { zone: z });
+  } else {
+    S.kills = Math.min(ZONE_FIGHTS, S.kills + 1);
   }
   emit('kill', { mob: m, zone: z, gold: g, ess, tier });
   respawn = 0.45;
@@ -9426,7 +9436,7 @@ function gainSkill(k, n, quiet) {
 // Start (or rematch) the zone boss. Returns true if a boss fight began.
 function challenge() {
   if (fightBoss || target() !== 'mob') return false;
-  if (!(S.zone < S.maxZone || bossReady())) return false;
+  if (!bossReady()) return false;
   fightBoss = true; spawn(); respawn = 0;
   return true;
 }
@@ -11520,9 +11530,9 @@ var forgeGoalPicks = 0;
     id: 'zone-boss', sys: 'boss', prio: 2,
     // after a lost try, "ready" waits until you are 15% stronger than then (what auto-challenge waits for too):
     // the bar shows how close you are
-    pct: () => S.zone !== S.maxZone ? 0.5 : !bossReady() ? Math.min(1, S.kills / 10) : bossHeld() ? Math.min(0.99, totalDps() / (failDps * 1.15)) : 1,
+    pct: () => S.zone !== S.maxZone ? 0.5 : !bossReady() ? Math.min(1, S.kills / ZONE_FIGHTS) : bossHeld() ? Math.min(0.99, totalDps() / (failDps * 1.15)) : 1,
     label: () => S.zone !== S.maxZone ? `Go back to Zone ${S.maxZone} and push on`
-      : !bossReady() ? `${10 - S.kills} more foes to the Zone ${S.maxZone} boss`
+      : !bossReady() ? `${ZONE_FIGHTS - S.kills} more fights to the Zone ${S.maxZone} boss`
       : bossHeld() ? `Zone ${S.maxZone} boss held. Get stronger first` : `Boss ready in Zone ${S.maxZone}`,
     icon: { ic: ['banner', '#E0524F', { 7: '#FFB347' }] },
     go: { tab: 'adv', sel: '#gateBtn', fn: () => { if (S.zone !== S.maxZone) setZone(S.maxZone); } }
@@ -12446,6 +12456,7 @@ let paceCheck;
   // Returns the zone moved to, or 0 when nothing changed.
   let loadedFor = null;
   paceCheck = () => {
+    if (typeof COMBAT_TUNE === 'object' && !COMBAT_TUNE.autoZones) { P().fell = 0; return 0; }   // the player picks the zone (59-combat)
     if (!S.auto || S.activity !== 'fight' || fightBoss || arena) return 0;
     const dps = totalDps();
     // On the first check after a load, a zone the hero cannot hold (59-combat.js partyHolds) falls back like a slow one. During play a wipe retreats
@@ -18787,6 +18798,9 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
                                          // bossGate measured 2026-10-01: the estimate leaves out the overtime and ability spikes; heroes won
                                          // from about 0.45 of it in zones 1-3 and 0.87 at zone 28 (0.58 lost), so 1.15 is safe everywhere;
                                          // owner 2026-10-01 "the toggle doesn't work": was 600, and the estimate is cautious, so it sat 10 min)
+    // autoZones (owner, 2026-10-01: "I should be able to select zone 1 and play through it"): 0 = the game never moves
+    // you between zones on its own (no fall-back on a wipe, no climb back, no 55-pace farming moves); 1 = the idle-era moves
+    autoZones: 0,
     refresh: 0.25, pushEvery: 5, pushRetry: 60, holdSecs: 120, estSafety: 1, estEff: 1.08, awayRate: 0.75, autoCast: 1.05,
     lkTap: 0.08, wardenTaunt: 3,         // the Lightkeeper's tap heal, the Warden's tap taunt
     blockX: 0.5, poison: 0.02, poisonT: 4
@@ -19456,11 +19470,12 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       emit('bossFail', { zone: z, dps: failDps });
       WIPE_EV.to = z;
     } else {
-      const to = Math.max(1, z - 1);
+      const to = T.autoZones ? Math.max(1, z - 1) : z;   // autoZones off: you get up in the zone you chose
       if (to < z) { S.combat.back = Math.max(S.combat.back || 0, z); S.zone = to; }
       backWipes = backZone === z ? backWipes + 1 : 1; backZone = z; backAt = clock; backDps = totalDps();
       WIPE_EV.to = to;
-      toast(stall ? "You couldn't finish the pack and fell back a zone." : 'You fell back a zone to recover.', 'raid', null, 'normal');
+      toast(to < z ? (stall ? "You couldn't finish the pack and fell back a zone." : 'You fell back a zone to recover.') :
+        stall ? "You couldn't finish the fight. Catch your breath and go again." : 'You were beaten. Catch your breath and go again.', 'raid', null, 'normal');
     }
     for (const f of foes) { f.gone = true; f.dead = f.dead || 0.001; }
     if (mob && !mob.dead) mob.dead = 0.001;
@@ -19482,6 +19497,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   let backZone = 0, backAt = 0, backWipes = 0, backDps = 0;
   // After a wipe the party climbs back one zone at a time, up to where it fell, once it can hold the next zone.
   cbPush = () => {
+    if (!T.autoZones) { if (S.combat) S.combat.back = 0; return 0; }
     const back = S.combat && S.combat.back || 0;
     if (!back || fightBoss || arena || target() !== 'mob') return 0;
     if (S.zone >= Math.min(back, S.maxZone)) { S.combat.back = 0; return 0; }
@@ -30136,7 +30152,7 @@ function ui(force) {
     putHidden(H.tWrap, true);
   } else {
     putText(H.zName, zoneName(S.zone));
-    putText(H.zSub, S.zone === S.maxZone ? `${S.kills}/10 foes` : 'Cleared');
+    putText(H.zSub, fightBoss || bossReady() ? 'Zone boss' : `Fight ${S.kills + 1}/${ZONE_FIGHTS}`);
     if (mob) {
       putText(H.mName, mob.name);
       putText(H.mHp, `${fmt(Math.max(0, mob.hp))} / ${fmt(mob.max)}`);
@@ -30343,6 +30359,7 @@ function disclose(row, trigger, onToggle, extra) {
   const lb = $('autoBoss').parentElement, tn = [...lb.childNodes].find(n => n.nodeType === 3 && n.textContent.trim());
   if (tn) tn.textContent = ' Fight frontier bosses when ready';
   lb.classList.add('gate-auto');
+  lb.style.display = 'none';   // owner (2026-10-01): the boss always comes after the zone's fights, so the switch has nothing to do
 }
 $('autoBoss').checked = S.auto;
 $('autoBoss').addEventListener('change', e => { S.auto = e.target.checked; });
@@ -30365,13 +30382,9 @@ function uiFight() {
     putText(G.title, 'Boss fight underway');
     putText(G.desc, bossTime > 0 ? `It enrages in ${Math.ceil(bossTime)} seconds. Hit it hard.` : 'It is enraged. Finish it now.');
     putText(gq, 'Boss'); putText(gp, 'Fighting'); putDisabled(gb, true);
-  } else if (S.zone < S.maxZone) {
-    putText(G.title, 'Rematch the zone boss');
-    putText(G.desc, `${Math.round(UNIQ_TUNE.again * 100)}% chance to drop ${uq}. You can rematch as often as you like.`);
-    putText(gq, 'Boss'); putText(gp, 'Rematch'); putDisabled(gb, false);
   } else {
-    putText(G.title, bossReady() ? 'The zone boss is ready' : `Clear ${10 - S.kills} more foes to face the zone boss`);
-    putText(G.desc, `Win before it enrages to open the next zone. ${Math.round(UNIQ_TUNE.first * 100)}% chance of the unique ${uq}.`);
+    putText(G.title, bossReady() ? 'The zone boss is next' : `Fight ${S.kills + 1} of ${ZONE_FIGHTS}, then the zone boss`);
+    putText(G.desc, `Beat the boss to move on to Zone ${S.zone + 1}. ${Math.round((S.zone < S.maxZone ? UNIQ_TUNE.again : UNIQ_TUNE.first) * 100)}% chance of the unique ${uq}.`);
     putText(gq, 'Boss'); putText(gp, 'Fight'); putDisabled(gb, !bossReady());
   }
 }
@@ -35876,7 +35889,7 @@ let navUI = null;
       const fighting = S.activity === 'fight' && !deep;
       row(list, {
         icon: ICON_OF.fight(), title: `Fight · Zone ${S.zone}`, off: deep,
-        meta: `${zoneName(S.zone)} · ` + (fighting ? 'Now' : S.zone === S.maxZone ? `${S.kills} / 10 foes to the boss` : 'cleared'),
+        meta: `${zoneName(S.zone)} · ` + (fighting ? 'Now' : bossReady() ? 'zone boss next' : `fight ${S.kills + 1} of ${ZONE_FIGHTS}`),
         here: fighting, label: 'Fight', cls: 'fight', go: () => pickGo({ act: 'fight' })
       });
       for (const sk of navSkills()) {
