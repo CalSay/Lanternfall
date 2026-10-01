@@ -1,0 +1,1 @@
+PASS: 25 materials, 75 node states, 25 authored impact bursts; 200 transparent PNG exports; 40-colour maximum, binary alpha, padding, source hashes, embedded PNG equality.
