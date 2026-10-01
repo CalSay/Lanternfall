@@ -34733,7 +34733,7 @@ let deedsUI = null;
   });
 
   // The weekly Trial
-  let tri = null, triSig = '';
+  let tri = null, triSig = '', triOpen = false;   // menu audit: the start card already names the Trial; details fold
   registerSection('adv', {
     id: 'deep-trial', title: 'Weekly Trial', view: 'deep',
     mount(sec) { const c = el('div', 'card dw-trial'); sec.append(c); tri = c; },
@@ -34743,12 +34743,16 @@ let deedsUI = null;
       setCls(tri.parentNode, 'dw-hide', !open);
       if (!open) return;
       const t = DW.trialInfo(), days = 7 - ((deviceDay() + 3) % 7 + 7) % 7;
-      const sig = JSON.stringify([t, days]);
+      const sig = JSON.stringify([t, days, triOpen]);
       if (sig === triSig && !force) return; triSig = sig;
       tri.textContent = '';
       const h = el('div', 'dw-thead');
       h.append(el('h3', null, t.rule.n), el('span', 'dw-tdays', `${days} day${days > 1 ? 's' : ''} left`));
-      tri.append(h, el('p', 'dw-tfx', t.rule.fx + '.'));
+      const more = btn('mini dw-tmore', triOpen ? 'Hide details' : 'Details', () => { triOpen = !triOpen; triSig = ''; ui(true); });
+      more.setAttribute('aria-expanded', String(triOpen));
+      tri.append(h, el('p', 'note', `Best this week: ${t.best ? 'floor ' + t.best : 'not tried'} · ${t.seals} Trial Seal${t.seals === 1 ? '' : 's'}`), more);
+      if (!triOpen) return;
+      tri.append(el('p', 'dw-tfx', t.rule.fx + '.'));
       tri.append(el('p', 'note', 'Everyone meets the same foes and the same boon offers this week. Deep Lore is off. Try as often as you like.'));
       const miles = el('div', 'dw-miles');
       for (const m of t.miles) { const c = el('span', 'dw-mile' + (m.got ? ' got' : ''), `Floor ${m.f}: +${m.m}`); miles.append(c); }
