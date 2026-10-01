@@ -302,8 +302,15 @@ function gxLabels() {
   for (const b of $('viewSeg').children) {
     const v = b.dataset.view, sk = gatherSkillOfView(v);
     const tn = b.firstChild; if (!tn || tn.nodeType !== 3) continue;
-    const want = sk ? `${sk === 'wood' ? 'Wood' : SKILL[sk]} ${S.skills[sk].lv}` : v === 'pack' ? 'Storehouse' : null;
-    if (want && tn.nodeValue !== want) tn.nodeValue = want;
+    // Short names (the pixel font is wide: "Foraging 70" and "Storehouse" overflowed at 360-740 px); if the label
+    // still does not fit, the level goes (it is in the view's heading and the XP bar) and the Storehouse says Store
+    const name = sk ? ({ mine: 'Mine', wood: 'Wood', forage: 'Forage' }[sk] || SKILL[sk]) : v === 'pack' ? 'Storehouse' : null;
+    const want = sk ? `${name} ${S.skills[sk].lv}` : name;
+    const w = b.clientWidth;
+    if (want && (b._want !== want || b._w !== w)) {
+      b._want = want; b._w = w; tn.nodeValue = want;
+      if (w && b.scrollWidth > w) tn.nodeValue = sk ? name : 'Store';
+    }
     if (!sk) continue;
     if (!b._xp) { const x = el('i', 'vxp'), f = el('b'); x.append(f); b.append(x); b.classList.add('has-xp'); b._xp = f; }
     const s = S.skills[sk];

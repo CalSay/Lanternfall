@@ -129,6 +129,10 @@
 .dd-fcard:not(.got) .dd-tro img { filter: grayscale(1) brightness(.7); }
 .dd-fnm { display: grid; gap: 1px; min-width: 0; }
 .dd-fnm b { font: 600 calc(14px * var(--display-k))/1.05 var(--display); overflow-wrap: anywhere; }
+/* a narrow feat card (2 columns at 360-740 px): long one-word names ("Quartermaster", "Stonebreaker") step down a size
+   instead of breaking mid-word */
+.dd-fnm { container-type: inline-size; }
+@container (max-width: 128px) { .dd-fnm b { font-size: calc(11px * var(--display-k)); } }
 .dd-rar { font: 600 11px var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--rc); }
 .dd-fparts { display: grid; gap: 2px; }
 .dd-fpl { font-size: 11.5px; color: var(--muted); line-height: 1.2; overflow-wrap: anywhere; }
@@ -174,6 +178,9 @@
 .dd-tic img { width: 30px; height: 30px; image-rendering: pixelated; }
 .dd-none { font: 600 calc(22px * var(--display-k))/1 var(--display); color: var(--muted); }
 .dd-tn { font: 600 calc(12.5px * var(--display-k))/1.05 var(--display); overflow-wrap: anywhere; }
+/* the same for a narrow Looks tile ("Wyrmscale" broke as Wyrmscal/e) */
+.dd-tile { container-type: inline-size; }
+@container (max-width: 92px) { .dd-tn { font-size: calc(10.5px * var(--display-k)); } }
 .dd-tsrc { font-size: 10.5px; line-height: 1.15; color: var(--muted); overflow-wrap: anywhere; }
 .dd-th { margin-top: 6px; }
 .dd-tcur { display: grid; gap: 2px; padding: 8px 10px; background: linear-gradient(90deg, rgba(242,193,78,.12), var(--well) 70%); border: 2px solid #5A4A2A; }

@@ -58,6 +58,8 @@
   .stagebox, .game.solo-game > .stagebox { grid-column: 2 / 4; grid-row: 2 / -1; margin: 0; min-height: 0; border: 0; outline: 0; }
   /* combat info in the sky: the place on the left, the foe's plate (name, HP, boss timer) on the right */
   .hud-zone { max-width: calc(100% - min(46%, 320px) - 16px); padding-top: 6px; }
+  /* the open menu leaves a 120 px strip of stage: DPS only there (Hit ran under the menu) */
+  .app.menu-open .stat-nums > span + span { display: none; }
   .mob .mob-name { flex: 1 1 auto; min-width: 0; }
   .cb-strip { left: auto; right: 8px; width: min(46%, 320px); top: 60px; }
   .mob { position: absolute; top: 6px; right: 8px; width: min(46%, 320px); padding: 4px 6px 5px; background: rgba(14,11,18,.72); border: 1px solid var(--line-hi); box-shadow: 0 2px 0 #0B0810; }
@@ -93,7 +95,7 @@
   .menu-ic { display: none; }
   .menu-title { font-size: calc(17px * var(--display-k)); }
   .vseg { flex: 1; min-width: 0; margin: 4px 0 4px 8px; }
-  .vseg button { min-height: 36px; padding: 0 2px; font-size: calc(12px * var(--display-k)); }
+  .vseg button { min-height: 36px; padding: 0 1px; font-size: calc(12px * var(--display-k)); }   /* 1 px: Bounties, Bestiary, Deepwell fit */
   .menu-x span { transform: translateX(-3px) rotate(-45deg); }   /* the panel slides away to the right */
   /* with a switcher the lit tab names the menu; with none (one view) the title shows */
   .menu-head:has(.vseg:not([hidden])) .menu-title { display: none; }

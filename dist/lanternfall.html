@@ -1178,6 +1178,10 @@ span.cf-d { font-weight: 600; }
 .dd-fcard:not(.got) .dd-tro img { filter: grayscale(1) brightness(.7); }
 .dd-fnm { display: grid; gap: 1px; min-width: 0; }
 .dd-fnm b { font: 600 calc(14px * var(--display-k))/1.05 var(--display); overflow-wrap: anywhere; }
+/* a narrow feat card (2 columns at 360-740 px): long one-word names ("Quartermaster", "Stonebreaker") step down a size
+   instead of breaking mid-word */
+.dd-fnm { container-type: inline-size; }
+@container (max-width: 128px) { .dd-fnm b { font-size: calc(11px * var(--display-k)); } }
 .dd-rar { font: 600 11px var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--rc); }
 .dd-fparts { display: grid; gap: 2px; }
 .dd-fpl { font-size: 11.5px; color: var(--muted); line-height: 1.2; overflow-wrap: anywhere; }
@@ -1223,6 +1227,9 @@ span.cf-d { font-weight: 600; }
 .dd-tic img { width: 30px; height: 30px; image-rendering: pixelated; }
 .dd-none { font: 600 calc(22px * var(--display-k))/1 var(--display); color: var(--muted); }
 .dd-tn { font: 600 calc(12.5px * var(--display-k))/1.05 var(--display); overflow-wrap: anywhere; }
+/* the same for a narrow Looks tile ("Wyrmscale" broke as Wyrmscal/e) */
+.dd-tile { container-type: inline-size; }
+@container (max-width: 92px) { .dd-tn { font-size: calc(10.5px * var(--display-k)); } }
 .dd-tsrc { font-size: 10.5px; line-height: 1.15; color: var(--muted); overflow-wrap: anywhere; }
 .dd-th { margin-top: 6px; }
 .dd-tcur { display: grid; gap: 2px; padding: 8px 10px; background: linear-gradient(90deg, rgba(242,193,78,.12), var(--well) 70%); border: 2px solid #5A4A2A; }
@@ -2631,6 +2638,8 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
   .stagebox, .game.solo-game > .stagebox { grid-column: 2 / 4; grid-row: 2 / -1; margin: 0; min-height: 0; border: 0; outline: 0; }
   /* combat info in the sky: the place on the left, the foe's plate (name, HP, boss timer) on the right */
   .hud-zone { max-width: calc(100% - min(46%, 320px) - 16px); padding-top: 6px; }
+  /* the open menu leaves a 120 px strip of stage: DPS only there (Hit ran under the menu) */
+  .app.menu-open .stat-nums > span + span { display: none; }
   .mob .mob-name { flex: 1 1 auto; min-width: 0; }
   .cb-strip { left: auto; right: 8px; width: min(46%, 320px); top: 60px; }
   .mob { position: absolute; top: 6px; right: 8px; width: min(46%, 320px); padding: 4px 6px 5px; background: rgba(14,11,18,.72); border: 1px solid var(--line-hi); box-shadow: 0 2px 0 #0B0810; }
@@ -2666,7 +2675,7 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
   .menu-ic { display: none; }
   .menu-title { font-size: calc(17px * var(--display-k)); }
   .vseg { flex: 1; min-width: 0; margin: 4px 0 4px 8px; }
-  .vseg button { min-height: 36px; padding: 0 2px; font-size: calc(12px * var(--display-k)); }
+  .vseg button { min-height: 36px; padding: 0 1px; font-size: calc(12px * var(--display-k)); }   /* 1 px: Bounties, Bestiary, Deepwell fit */
   .menu-x span { transform: translateX(-3px) rotate(-45deg); }   /* the panel slides away to the right */
   /* with a switcher the lit tab names the menu; with none (one view) the title shows */
   .menu-head:has(.vseg:not([hidden])) .menu-title { display: none; }
@@ -30104,8 +30113,15 @@ function gxLabels() {
   for (const b of $('viewSeg').children) {
     const v = b.dataset.view, sk = gatherSkillOfView(v);
     const tn = b.firstChild; if (!tn || tn.nodeType !== 3) continue;
-    const want = sk ? `${sk === 'wood' ? 'Wood' : SKILL[sk]} ${S.skills[sk].lv}` : v === 'pack' ? 'Storehouse' : null;
-    if (want && tn.nodeValue !== want) tn.nodeValue = want;
+    // Short names (the pixel font is wide: "Foraging 70" and "Storehouse" overflowed at 360-740 px); if the label
+    // still does not fit, the level goes (it is in the view's heading and the XP bar) and the Storehouse says Store
+    const name = sk ? ({ mine: 'Mine', wood: 'Wood', forage: 'Forage' }[sk] || SKILL[sk]) : v === 'pack' ? 'Storehouse' : null;
+    const want = sk ? `${name} ${S.skills[sk].lv}` : name;
+    const w = b.clientWidth;
+    if (want && (b._want !== want || b._w !== w)) {
+      b._want = want; b._w = w; tn.nodeValue = want;
+      if (w && b.scrollWidth > w) tn.nodeValue = sk ? name : 'Store';
+    }
     if (!sk) continue;
     if (!b._xp) { const x = el('i', 'vxp'), f = el('b'); x.append(f); b.append(x); b.classList.add('has-xp'); b._xp = f; }
     const s = S.skills[sk];
