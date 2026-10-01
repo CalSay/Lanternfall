@@ -30075,6 +30075,7 @@ function gxRowUpdate(r, opts) {
   let chip = '', cc = '';
   if (full) { chip = 'Full'; cc = 'warn'; }
   else if (hk) { chip = `Home +${Math.round(hk * 100)}%`; cc = 'hi'; }
+  else if (opts && opts.best) { chip = 'Best'; cc = 'hi'; }
   putHidden(r.chip, !chip); putText(r.chip, chip); putClass(r.chip, 'gx-chip' + (cc ? ' ' + cc : ''));
   let note = '';
   for (const f of GX_ROW_NOTES) { try { const n = f(kind, t); if (n) { note = String(n); break; } } catch (e) {} }
@@ -30229,30 +30230,22 @@ function gxUpdate(sk) {
   const s = S.skills[sk], next = skillNextReq(sk);
   putText(R.slT, `${SKILL[sk]} Lv ${s.lv}`);
   putText(R.slN, next ? `Next tier: Lv ${next}` : 'Every tier open');
-  // Best for you
+  // Best for you (menu audit: it listed the same rows the families list again below): the best rows are tagged
+  // Best in their own family list, with the reason, and never fold
   const best = bestNodes(sk);
-  putHidden(R.bestSec, !best.length);
-  best.forEach((b, i) => {
-    let r = R.best[i];
-    if (!r || r.kind !== b.kind || r.t !== b.t) {
-      const nr = gxRow(el('div'), b.kind, b.t);
-      if (r) r.row.replaceWith(nr.row); else R.bestList.append(nr.row);
-      R.best[i] = r = nr;
-    }
-    gxRowUpdate(r, { best: true, why: b.why });
-  });
-  while (R.best.length > best.length) R.best.pop().row.remove();
+  putHidden(R.bestSec, true);
   // families: the top two open tiers, the next locked one; lower tiers fold (the node you work never does)
   const top = skillTopTier(sk);
   for (const fam of NAV_FAMS[sk]) {
     const F = R.fams[fam], low = [];
     F.rows.forEach(r => {
       const t = r.t, here = S.activity === 'gather' && S.node.kind === fam && S.node.t === t;
-      const folded = t < top - 1 && !here;
+      const bm = best.find(b => b.kind === fam && b.t === t);
+      const folded = t < top - 1 && !here && !bm;
       if (folded) low.push(r);
       const show = t <= top + 1 && (!folded || F.open);
       putHidden(r.row, !show);
-      if (show) gxRowUpdate(r);
+      if (show) gxRowUpdate(r, bm ? { best: true, why: bm.why } : undefined);
     });
     putHidden(F.fold, !low.length);
     if (low.length) {
