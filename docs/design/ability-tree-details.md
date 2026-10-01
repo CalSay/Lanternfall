@@ -65,8 +65,8 @@ The three paths below are interface groupings. They are not subclasses, and a pl
 | M4 Momentum (passive) | **Relentless Rhythm:** the first Attack in a new chain starts at +20% instead of +10%; the +50% ceiling is unchanged. | **Measured Cadence:** after the fifth consecutive Attack, the next Attack also gets +1 Grit; once per chain. Any active ability resets the chain; defence and counters neither build nor reset it. |
 | M5 Brace | **Hold Firm:** one direct hit that reaches Ward or HP grants 1 Grit. | **Read the Blow:** a successful parry during Brace makes the next Attack ignore armour. |
 | M6 Lunge | **Press the Crack:** if the target is Sundered, gain 2 Grit. | **Return to Guard:** gain Guard for 1 foe opportunity instead of Lunge's Speed buff. |
-| T1 Shield Bash | **Shield Edge:** apply Sunder for 2 turns after the hit. | **Stand Fast:** gain 2 Grit when the target cannot skip because of boss or control rules. |
-| T2 Riposte | **Open the Seam:** apply Sunder for 2 turns after the hit. | **Earned Ground:** gain 2 Grit. |
+| T1 Shield Bash | **Shield Edge:** apply Sunder for 2 foe opportunities after the hit. | **Stand Fast:** gain 2 Grit when the target cannot skip because of boss or control rules. |
+| T2 Riposte | **Open the Seam:** apply Sunder for 2 foe opportunities after the hit. | **Earned Ground:** gain 2 Grit. |
 | T3 Iron Will | **Steeled Nerves:** cleanse 1 hero damage-over-time effect. | **Set Your Feet:** gain Guard for 1 foe opportunity when Ward expires or breaks, once per cast. |
 | T4 Taunting Roar | **Rattled:** also apply Sunder for 1 foe opportunity. | **Answer Me:** a successful parry during this Pinned enemy attack gives 2 extra Grit once for the whole attack, regardless of its hit count. |
 | T5 Hammerfall | **Mighty Fall:** apply 2 Bleed stacks after the hit. | **Unbowed:** retain 2 Grit; retained Grit does not count toward this cast's damage. |
@@ -100,16 +100,16 @@ Each row also costs 2 star points. Choose one option for each hero action.
 | Hero | Action | Choice A | Choice B |
 |---|---|---|---|
 | Wren | Attack | The first Attack gains 2 Aim instead of 1. | Attacking a Marked foe adds 1 Bleed stack. |
-| Wren | Parry | The first counter each fight applies Mark for 2 turns. | Each counter grants 1 Aim. |
+| Wren | Parry | The first completed full-move counter each fight applies Mark for 2 foe opportunities. | Each completed full-move counter grants 1 Aim. |
 | Wren | Dodge | The next Attack after a successful Dodge gains 1 Aim. | The next Attack after a successful Dodge applies Pinned. |
 | Tobin | Attack | Attacking a Sundered foe grants 2 Grit instead of 1. | The first Attack grants Ward equal to 5% of maximum HP. |
-| Tobin | Parry | The first counter each fight applies Sunder for 2 turns. | The first counter grants Guard for 1 foe opportunity. |
+| Tobin | Parry | The first completed full-move counter each fight applies Sunder for 2 foe opportunities. | The first completed full-move counter grants Guard for 1 foe opportunity. |
 | Tobin | Dodge | The next Attack after a successful Dodge grants 2 Grit. | The next Attack after a successful Dodge grants Guard for 1 foe opportunity. |
 | Pip | Attack | Attacking a Burning foe grants 2 Embers instead of 1. | The first Attack applies 1 Chill. |
-| Pip | Parry | The first counter each fight grants 1 Ember. | The first counter applies Weaken for 1 foe opportunity. |
+| Pip | Parry | The first completed full-move counter each fight grants 1 Ember. | The first completed full-move counter applies Weaken for 1 foe opportunity. |
 | Pip | Dodge | The next Attack after a successful Dodge extends Burn by 1, within its cap. | The next Attack after a successful Dodge grants Ward equal to 5% of maximum HP. |
 
-Attack forks resolve once per Attack action unless a row explicitly says otherwise. Parry forks that refer to a counter trigger once only after the full enemy attack is parried. Independently, every successful parried hit, including each hit of a multi-hit attack, reduces every active cooldown by one; the completed counter adds no second refund. Dodge forks resolve on the next matching Attack after a successful Dodge; the token lasts through that hero action. Shadow Step's guaranteed next chosen Dodge is a successful Dodge, but it is not a separate automatic defense roll or an extra action.
+Attack forks resolve once per Attack action unless a row explicitly says otherwise. Parry forks that refer to a counter trigger once only after the full enemy attack is parried. Independently, every successful parried hit, including each hit of a multi-hit attack, reduces every active cooldown by one; the completed counter adds no second refund. Dodge forks resolve on the next matching Attack after a successful Dodge; the token lasts through that hero action. Shadow Step guarantees the next chosen Dodge within its duration; that is still one chosen reaction and not an extra action.
 
 ## 11. Tier gates and relic unlock routes
 
