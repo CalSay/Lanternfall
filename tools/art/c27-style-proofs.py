@@ -1,0 +1,9 @@
+from PIL import Image,ImageDraw
+from pathlib import Path
+import json
+R=Path('art/equipment/starting-v1/style-normalisation');sheet=Image.new('RGB',(1344,768),(38,40,48));d=ImageDraw.Draw(sheet);report=[]
+for row,(hero,pose,height) in enumerate([('tobin','01-ready-guard',94),('pip','01-ready',84)]):
+ src=Image.open(R/f'{hero}-side-source.png').convert('RGBA');bb=src.getchannel('A').point(lambda v:255 if v>=128 else 0).getbbox();crop=src.crop(bb);size=(round(crop.width*height/crop.height),height);crop=crop.resize(size,Image.Resampling.NEAREST);cols=list(dict.fromkeys(Image.open(f'art/heroes/{hero}/palette.png').convert('RGB').get_flattened_data()));pal=Image.new('P',(1,1));pal.putpalette([v for c in cols+[cols[0]]*(256-len(cols)) for v in c]);alpha=crop.getchannel('A').point(lambda v:255 if v>=128 else 0);crop=crop.convert('RGB').quantize(palette=pal,dither=Image.Dither.NONE).convert('RGBA');crop.putalpha(alpha);out=Image.new('RGBA',(224,192));origin=(54,132-height);out.paste(crop,origin);out.save(R/f'{hero}-side-native.png');report.append({'hero':hero,'sourceBBox':bb,'size':size,'origin':origin,'status':'style-review-pending','originalPixelsPreserved':False,'notes':'New owner-authorised style redraw, not an exact-pixel recut. Original combat/gather assets unchanged.'})
+ for col,(im,label) in enumerate([(Image.open(f'art/heroes/{hero}/poses/{pose}.png').convert('RGBA'),'Original combat STYLE MASTER'),(Image.open(f'art/heroes/{hero}/gather/g7-level.png').convert('RGBA'),'Existing gathering source'),(out,'Authored gathering style proof')]):
+  im=im.resize((448,384),Image.Resampling.NEAREST);sheet.paste(im,(col*448,row*384),im);d.text((col*448+8,row*384+10),hero+' - '+label,fill='white')
+sheet.save(R/'comparison-2x.png');(R/'manifest.json').write_text(json.dumps(report,indent=2))

@@ -1,0 +1,79 @@
+[
+  {
+    "name": "g1-rest",
+    "args": {
+      "transparent_background": true,
+      "referenced_image_paths": [
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/heroes/pip/gather/g1-rest.png",
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/equipment/starting-v1/fit-proof/pip-ready/base-combined.png"
+      ],
+      "prompt": "Precise object edit: image1 is EXACT approved Pip g1-rest gathering pose. Image2 supplies plain-clothes base design only; never copy pose2. Remove hat, removable outer robe/ornate golden trim/apron and belt ornaments from image1, replacing only costume with simple plain dark brown tunic and trousers like image2. Preserve all existing orange hair including trailing hair, face/fringe/expression, exact arms/gloves/hands in their original positions, legs and boots. No tool or weapon. Keep same connected anatomy and exact pose g1-rest, native224x192canvas, feet anchor(96,132), original96pixelhero scale, no zoom/recenter. Reveal crown of orange hair consistent with image2 where hat removed. Broad chunky pixel clusters, flat shadow shapes, original40colourpalette, dark pixel outline, transparent background. Only one full hero; no text, props, extra bodies. Identity pixels outside clothing/hat removal must stay exactly same."
+    }
+  },
+  {
+    "name": "g2-forward",
+    "args": {
+      "transparent_background": true,
+      "referenced_image_paths": [
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/heroes/pip/gather/g2-forward.png",
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/equipment/starting-v1/fit-proof/pip-ready/base-combined.png"
+      ],
+      "prompt": "Precise object edit: image1 is EXACT approved Pip g2-forward gathering pose. Image2 supplies plain-clothes base design only; never copy pose2. Remove hat, removable outer robe/ornate golden trim/apron and belt ornaments from image1, replacing only costume with simple plain dark brown tunic and trousers like image2. Preserve all existing orange hair including trailing hair, face/fringe/expression, exact arms/gloves/hands in their original positions, legs and boots. No tool or weapon. Keep same connected anatomy and exact pose g2-forward, native224x192canvas, feet anchor(96,132), original96pixelhero scale, no zoom/recenter. Reveal crown of orange hair consistent with image2 where hat removed. Broad chunky pixel clusters, flat shadow shapes, original40colourpalette, dark pixel outline, transparent background. Only one full hero; no text, props, extra bodies. Identity pixels outside clothing/hat removal must stay exactly same."
+    }
+  },
+  {
+    "name": "g3-shoulder",
+    "args": {
+      "transparent_background": true,
+      "referenced_image_paths": [
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/heroes/pip/gather/g3-shoulder.png",
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/equipment/starting-v1/fit-proof/pip-ready/base-combined.png"
+      ],
+      "prompt": "Precise object edit: image1 is EXACT approved Pip g3-shoulder gathering pose. Image2 supplies plain-clothes base design only; never copy pose2. Remove hat, removable outer robe/ornate golden trim/apron and belt ornaments from image1, replacing only costume with simple plain dark brown tunic and trousers like image2. Preserve all existing orange hair including trailing hair, face/fringe/expression, exact arms/gloves/hands in their original positions, legs and boots. No tool or weapon. Keep same connected anatomy and exact pose g3-shoulder, native224x192canvas, feet anchor(96,132), original96pixelhero scale, no zoom/recenter. Reveal crown of orange hair consistent with image2 where hat removed. Broad chunky pixel clusters, flat shadow shapes, original40colourpalette, dark pixel outline, transparent background. Only one full hero; no text, props, extra bodies. Identity pixels outside clothing/hat removal must stay exactly same."
+    }
+  },
+  {
+    "name": "g4-overhead",
+    "args": {
+      "transparent_background": true,
+      "referenced_image_paths": [
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/heroes/pip/gather/g4-overhead.png",
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/equipment/starting-v1/fit-proof/pip-ready/base-combined.png"
+      ],
+      "prompt": "Precise object edit: image1 is EXACT approved Pip g4-overhead gathering pose. Image2 supplies plain-clothes base design only; never copy pose2. Remove hat, removable outer robe/ornate golden trim/apron and belt ornaments from image1, replacing only costume with simple plain dark brown tunic and trousers like image2. Preserve all existing orange hair including trailing hair, face/fringe/expression, exact arms/gloves/hands in their original positions, legs and boots. No tool or weapon. Keep same connected anatomy and exact pose g4-overhead, native224x192canvas, feet anchor(96,132), original96pixelhero scale, no zoom/recenter. Reveal crown of orange hair consistent with image2 where hat removed. Broad chunky pixel clusters, flat shadow shapes, original40colourpalette, dark pixel outline, transparent background. Only one full hero; no text, props, extra bodies. Identity pixels outside clothing/hat removal must stay exactly same."
+    }
+  },
+  {
+    "name": "g5-low",
+    "args": {
+      "transparent_background": true,
+      "referenced_image_paths": [
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/heroes/pip/gather/g5-low.png",
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/equipment/starting-v1/fit-proof/pip-ready/base-combined.png"
+      ],
+      "prompt": "Precise object edit: image1 is EXACT approved Pip g5-low gathering pose. Image2 supplies plain-clothes base design only; never copy pose2. Remove hat, removable outer robe/ornate golden trim/apron and belt ornaments from image1, replacing only costume with simple plain dark brown tunic and trousers like image2. Preserve all existing orange hair including trailing hair, face/fringe/expression, exact arms/gloves/hands in their original positions, legs and boots. No tool or weapon. Keep same connected anatomy and exact pose g5-low, native224x192canvas, feet anchor(96,132), original96pixelhero scale, no zoom/recenter. Reveal crown of orange hair consistent with image2 where hat removed. Broad chunky pixel clusters, flat shadow shapes, original40colourpalette, dark pixel outline, transparent background. Only one full hero; no text, props, extra bodies. Identity pixels outside clothing/hat removal must stay exactly same."
+    }
+  },
+  {
+    "name": "g6-crouch",
+    "args": {
+      "transparent_background": true,
+      "referenced_image_paths": [
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/heroes/pip/gather/g6-crouch.png",
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/equipment/starting-v1/fit-proof/pip-ready/base-combined.png"
+      ],
+      "prompt": "Precise object edit: image1 is EXACT approved Pip g6-crouch gathering pose. Image2 supplies plain-clothes base design only; never copy pose2. Remove hat, removable outer robe/ornate golden trim/apron and belt ornaments from image1, replacing only costume with simple plain dark brown tunic and trousers like image2. Preserve all existing orange hair including trailing hair, face/fringe/expression, exact arms/gloves/hands in their original positions, legs and boots. No tool or weapon. Keep same connected anatomy and exact pose g6-crouch, native224x192canvas, feet anchor(96,132), original96pixelhero scale, no zoom/recenter. Reveal crown of orange hair consistent with image2 where hat removed. Broad chunky pixel clusters, flat shadow shapes, original40colourpalette, dark pixel outline, transparent background. Only one full hero; no text, props, extra bodies. Identity pixels outside clothing/hat removal must stay exactly same."
+    }
+  },
+  {
+    "name": "g7-level",
+    "args": {
+      "transparent_background": true,
+      "referenced_image_paths": [
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/heroes/pip/gather/g7-level.png",
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/equipment/starting-v1/fit-proof/pip-ready/base-combined.png"
+      ],
+      "prompt": "Precise object edit: image1 is EXACT approved Pip g7-level gathering pose. Image2 supplies plain-clothes base design only; never copy pose2. Remove hat, removable outer robe/ornate golden trim/apron and belt ornaments from image1, replacing only costume with simple plain dark brown tunic and trousers like image2. Preserve all existing orange hair including trailing hair, face/fringe/expression, exact arms/gloves/hands in their original positions, legs and boots. No tool or weapon. Keep same connected anatomy and exact pose g7-level, native224x192canvas, feet anchor(96,132), original96pixelhero scale, no zoom/recenter. Reveal crown of orange hair consistent with image2 where hat removed. Broad chunky pixel clusters, flat shadow shapes, original40colourpalette, dark pixel outline, transparent background. Only one full hero; no text, props, extra bodies. Identity pixels outside clothing/hat removal must stay exactly same."
+    }
+  }
+]

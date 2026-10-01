@@ -1,0 +1,112 @@
+{
+  "status": "authored-motion-proposal-not-runtime",
+  "canvas": [
+    224,
+    192
+  ],
+  "groundAnchor": [
+    96,
+    132
+  ],
+  "heroScalePx": 96,
+  "rules": [
+    "Original combat poses are rendering and anatomy masters.",
+    "No code rotation, no global blur, no hero or node scaling to fake reach.",
+    "Pose angle alone cannot change body motion.",
+    "Impact/contact markers in preview are guides, not authored effects."
+  ],
+  "actions": {
+    "axe": {
+      "resources": [
+        "wood"
+      ],
+      "contactAboveGround": 48,
+      "direction": "lateral into tree trunk",
+      "phases": [
+        {
+          "name": "wind-up",
+          "pose": "new-axe-side-windup",
+          "status": "requires-authored-pose",
+          "body": "Torso turns away, weight on rear leg, both hands near rear shoulder."
+        },
+        {
+          "name": "contact",
+          "pose": "new-axe-side-contact",
+          "status": "requires-authored-pose",
+          "body": "Torso rotates toward trunk, weight transfers forward, axe edge at trunk side48px above ground."
+        },
+        {
+          "name": "follow-through",
+          "pose": "style-normalisation side proof",
+          "status": "style-review-pending",
+          "body": "Side lunge with connected two-hand grip; existing g7 is gesture reference only."
+        }
+      ]
+    },
+    "sickle": {
+      "resources": [
+        "fibres",
+        "herbs"
+      ],
+      "contactAboveGround": [
+        12,
+        20
+      ],
+      "direction": "low lateral sweep across plant stems",
+      "phases": [
+        {
+          "name": "wind-up",
+          "pose": "new-sickle-low-side-windup",
+          "status": "requires-authored-pose",
+          "body": "Crouch with hips loaded to rear, hand low at side."
+        },
+        {
+          "name": "contact",
+          "pose": "new-sickle-low-side-contact",
+          "status": "requires-authored-pose",
+          "body": "Low lateral pull with crescent edge crossing stem base, not overhead/downstroke."
+        },
+        {
+          "name": "follow-through",
+          "pose": "new-sickle-low-side-follow",
+          "status": "requires-authored-pose",
+          "body": "Weight transfers sideways while hand stays below waist; g6 only posture reference."
+        }
+      ]
+    },
+    "pick": {
+      "resources": [
+        "ore",
+        "gems"
+      ],
+      "contactAboveGround": 64,
+      "direction": "forward into vertical cave-wall deposit",
+      "phases": [
+        {
+          "name": "wind-up",
+          "pose": "new-pick-wall-windup",
+          "status": "requires-authored-pose",
+          "body": "Coiled torso and raised rear grip, eyes toward reachable wall face."
+        },
+        {
+          "name": "contact",
+          "pose": "new-pick-wall-contact",
+          "status": "requires-authored-pose",
+          "body": "Two hands drive pick point forward into wall64px above ground."
+        },
+        {
+          "name": "recovery",
+          "pose": "new-pick-wall-recovery",
+          "status": "requires-authored-pose",
+          "body": "Pull tool clear from wall before reload; no ground slam."
+        }
+      ]
+    }
+  },
+  "excludedMappings": [
+    "Universal rest-overhead-low sequence",
+    "Axe overhead ground strike",
+    "Sickle overhead chopping",
+    "Changing tool angle while leaving incompatible body motion unchanged"
+  ]
+}

@@ -1,0 +1,28 @@
+[
+  {
+    "hero": "tobin",
+    "master": "01-ready-guard",
+    "identity": "brown tousled hair, youthful narrow face, red scarf and flowing red cape, original cream cap and modest metal armour/apron, brown boots",
+    "args": {
+      "transparent_background": true,
+      "referenced_image_paths": [
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/heroes/tobin/poses/01-ready-guard.png",
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/heroes/tobin/gather/g7-level.png"
+      ],
+      "prompt": "Style-normalisation edit for Lanternfall tobin. Image1 ORIGINAL COMBAT HERO is the absolute rendering/style/anatomy master. Image2 shows ONLY the lateral gathering pose to redraw. Redraw image2 in the exact look of image1: same character identity, head/body proportions, eye scale, outline weight, broad flat shaded pixel clusters, interior shadow masses and restrained detail density. The existing gathering image2 is too polished/crisp/detailed and looks like a different model. Fix by authoring to image1, not by blurring or filters. Preserve brown tousled hair, youthful narrow face, red scarf and flowing red cape, original cream cap and modest metal armour/apron, brown boots. Use image1's outfit faithfully, posed like image2: right-facing three-quarter side-lunge with BOTH hands held together out in front at about chest level for a lateral axe chop; empty gripping hands, no tool. No new face or heroic proportions, no smooth vector edge or thin texture. Pixel art, native224x192 canvas and96px character scale, feet anchor96,132, same original master's pixel size. Transparent background. Exactly one full connected hero, no text, effects, ground. Strong dark simple flat shapes as image1. Retain full cape/hair silhouette. Author this ONE representative side-chop follow-through pose; original combat art remains unchanged."
+    }
+  },
+  {
+    "hero": "pip",
+    "master": "01-ready",
+    "identity": "orange flowing hair, original small youthful face and facial expression, floppy red wizard hat, navy/brown robe with restrained gold trim, brown boots",
+    "args": {
+      "transparent_background": true,
+      "referenced_image_paths": [
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/heroes/pip/poses/01-ready.png",
+        "C:/Users/Admin/Documents/GitHub/Lanternfall-c27/art/heroes/pip/gather/g7-level.png"
+      ],
+      "prompt": "Style-normalisation edit for Lanternfall pip. Image1 ORIGINAL COMBAT HERO is the absolute rendering/style/anatomy master. Image2 shows ONLY the lateral gathering pose to redraw. Redraw image2 in the exact look of image1: same character identity, head/body proportions, eye scale, outline weight, broad flat shaded pixel clusters, interior shadow masses and restrained detail density. The existing gathering image2 is too polished/crisp/detailed and looks like a different model. Fix by authoring to image1, not by blurring or filters. Preserve orange flowing hair, original small youthful face and facial expression, floppy red wizard hat, navy/brown robe with restrained gold trim, brown boots. Use image1's outfit faithfully, posed like image2: right-facing three-quarter side-lunge with BOTH hands held together out in front at about chest level for a lateral axe chop; empty gripping hands, no tool. No new face or heroic proportions, no smooth vector edge or thin texture. Pixel art, native224x192 canvas and96px character scale, feet anchor96,132, same original master's pixel size. Transparent background. Exactly one full connected hero, no text, effects, ground. Strong dark simple flat shapes as image1. Retain full cape/hair silhouette. Author this ONE representative side-chop follow-through pose; original combat art remains unchanged."
+    }
+  }
+]

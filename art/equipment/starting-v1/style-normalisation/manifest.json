@@ -1,0 +1,42 @@
+[
+  {
+    "hero": "tobin",
+    "sourceBBox": [
+      368,
+      301,
+      961,
+      944
+    ],
+    "size": [
+      87,
+      94
+    ],
+    "origin": [
+      54,
+      38
+    ],
+    "status": "style-review-pending",
+    "originalPixelsPreserved": false,
+    "notes": "New owner-authorised style redraw, not an exact-pixel recut. Original combat/gather assets unchanged."
+  },
+  {
+    "hero": "pip",
+    "sourceBBox": [
+      355,
+      345,
+      879,
+      871
+    ],
+    "size": [
+      84,
+      84
+    ],
+    "origin": [
+      54,
+      48
+    ],
+    "status": "style-review-pending",
+    "originalPixelsPreserved": false,
+    "notes": "New owner-authorised style redraw, not an exact-pixel recut. Original combat/gather assets unchanged."
+  }
+]
