@@ -1,0 +1,12 @@
+Lanternfall status icon draft, pending owner review.
+Row 1: Burn | Bleed | Chill
+Row 2: Frozen | Stun | Exposed
+Row 3: Mark | Sunder | Weaken
+Row 4: Pinned | Blind | Guard
+Row 5: Ward | Keen | Curse
+
+These are 15 shared status designs from the C19 ability proposal. Aim, Grit and Embers are separate hero resources and are not included in this status sheet. The atlas is a high-resolution design draft, not native-size production sprites. No gameplay integration or final palette conversion is included. Match the approved neutral action UI; colour identifies the status rather than a hero.
+
+Owner review 2026-10-01: other 14 icons approved. Burn revised to flame only in burn-v2.png using built-in image generation; no rocks or coal.
+
+Owner approved revised Burn and whole pack, 2026-10-01. Native exports are in ../game-v1.

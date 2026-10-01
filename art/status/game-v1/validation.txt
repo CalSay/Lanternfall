@@ -1,0 +1,4 @@
+PASS:15 assets x6 sizes =90 PNGs; exact dimensions; transparent padding; binary alpha; <=24 visible colours; source/PNG SHA256 recorded.
+PNG total: 142793 bytes.
+Embedded JS: 193552 bytes.
+Build: PASS (2621.0 KB). Full tools/check.mjs: 2079 passing assertions, all checks passed, 0 browser sections skipped. Native gallery: 15 cards / 45 samples, mobile overflow and script-error checks passed. Independent embedded-data verification: 90 PNGs matched dimensions, hashes and file bytes. git diff --cached --check: PASS.
