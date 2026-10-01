@@ -2988,7 +2988,7 @@ if (section('types and statuses (S1)')) try {
   // A controlled fight: a Warden at zone z, the pack frozen (no attacks, huge HP), nothing fielded.
   const arena = (z, seed = 71) => {
     const g = loadCore({ seed }), E = s => g.eval(s);
-    E('chooseClass("warden"); S.auto = false');
+    E('chooseClass("warden"); S.auto = false; COMBAT_TUNE.single = 0');   // pack mechanics (the game now fights one foe: owner 2026-10-01)
     E(`S.maxZone = ${z}; S.activity = "fight"; setZone(${z})`);
     for (let i = 0; i < 5; i++) g.fn.tick(0.1);
     E('combatFoes().forEach(f => { f.atk = 0; f.max = f.hp = 1e12; f.armoured = false; f.ss = null; f.markT = 0; f.mkV = 0; f.markUntil = 0; f.vulnT = 0; f.stunT = 0; f.chillT = 0; f.rxT = 0; f.elite = false; f.champ = false; })');
@@ -3449,7 +3449,7 @@ if (section('cb2')) try {
   // 4. pack totals: the members' HP sum to the pack's (x1.25 for swarms), gold to the pack's gold; kill once a pack
   {
     const g = loadCore({ seed: 91 }), E = s => g.eval(s);
-    E('chooseClass("warrior"); S.auto = false; S.maxZone = 40');
+    E('chooseClass("warrior"); S.auto = false; S.maxZone = 40; COMBAT_TUNE.single = 0');   // pack mechanics (packs are off in play)
     const rows = [];
     for (const z of [29, 30, 31, 32]) {
       rows.push(JSON.parse(E(`(() => { const r = Math.random; Math.random = () => 0.5; S.zone = ${z}; fightBoss = false; spawn(); Math.random = r;
@@ -3457,6 +3457,11 @@ if (section('cb2')) try {
         return JSON.stringify({ z: ${z}, n: L.length, size: cbPack().size, hp: hp / (mobHp(${z}) * COMBAT_TUNE.packHp * (sw ? COMBAT_TUNE.swarmHp : 1)), gold: gold / (mobGold(${z}) * COMBAT_TUNE.packGold * (sw ? COMBAT_TUNE.swarmPay : 1)) }); })()`)));
     }
     assert(rows.every(r => Math.abs(r.hp - 1) < 1e-6 && Math.abs(r.gold - 1) < 1e-6), 'pack totals: members\' HP and gold sum to the pack\'s (swarms x1.25): ' + rows.map(r => `z${r.z} ${r.size} ${r.n}`).join(', '));
+    { const o = loadCore({ seed: 92 }), O = s => o.eval(s);   // owner (2026-10-01): one enemy at a time, with the pack's whole HP and gold
+      O('chooseClass("warrior"); S.auto = false; S.maxZone = 40');
+      const one = JSON.parse(O(`(() => { const r0 = Math.random; Math.random = () => 0.5; const out = []; for (const z of [29, 30, 31, 32]) { S.zone = z; fightBoss = false; spawn(); const L = combatFoes(), sw = FOE_BEH[TYPES[zoneType(z)].key] && FOE_BEH[TYPES[zoneType(z)].key].size === 'swarm';
+        out.push([L.length, L[0].max / (mobHp(z) * COMBAT_TUNE.packHp * (sw ? COMBAT_TUNE.swarmHp : 1))]); } Math.random = r0; return JSON.stringify(out); })()`));
+      assert(one.every(([n, r]) => n === 1 && r > 0.85 && r < 1.15), 'one enemy at a time: every zone fight is a single foe carrying the pack\'s HP (' + JSON.stringify(one) + ')'); }
     let kills = 0; g.fn.on('kill', () => kills++);
     E('S.zone = 30; fightBoss = false; spawn(); combatFoes().forEach(f => { if (!f.dead) cbDamageFoe(f, 1e40, -1, "magic"); })');
     assert(kills === 1 && E('combatFoes().length') >= 8, `a swarm of ${E('combatFoes().length')} dies as one kill (${kills})`);
@@ -3482,14 +3487,17 @@ if (section('cb2')) try {
     let sum = 0;
     for (const seed of [7, 8, 9]) {
       const g = loadCore({ seed, storage: memoryStorage({ [KEY]: rawOf('save-late.json') }) }), E = s => g.eval(s);
-      E("almanac.force('none')"); E('soloPick("wren")'); E('for (let i = 0; i < 20; i++) tick(0.1); S.auto = false; S.zone = 36; fightBoss = false; spawn();');
+      E("almanac.force('none')"); E('soloPick("pip")'); E('for (let i = 0; i < 20; i++) tick(0.1); S.auto = false; S.zone = 36; fightBoss = false; spawn();');
       const g0 = E('S.gold'); for (let i = 0; i < 6000; i++) g.fn.tick(0.1);
       sum += (E('S.gold') - g0) / 10;
     }
     // W3-C: re-measured with the v5 late fixture (Pip's game, Wren picked, seeds 7-9): avg 12.50. (The old fixture read 45.5 after W2-A's
     // Training and 515.2 with a fielded party.) A change to hero damage or gold
     // moves this number: re-measure it (same snippet).
-    const HEAD = 12.5, r = sum / 3 / HEAD;
+    // One enemy at a time (owner, 2026-10-01): a pack is one foe with the pack's HP, so a weak hero parked past its zone
+    // (the old level-1 Wren here) can no longer chip members off for gold. Measured with the fixture's own hero, Pip
+    // (seeds 7-9, single foe): avg 38.8 (packs read 102.8: Fireball no longer splashes). Re-measure on a damage or gold change.
+    const HEAD = 38.8, r = sum / 3 / HEAD;
     assert(r >= 0.97, `idle is whole: idle gold a minute at zone 36, 10 minutes, late fixture: ${(100 * r).toFixed(1)}% of HEAD's (want >= 97%)`);
   }
   // 7. no overlap: answer warnings one at a time, at least 1 s apart (50 fights per kit)
@@ -3720,7 +3728,7 @@ if (section('solo hero')) try {
   }
   // 5. each ability does what it says (the status system: Mark, Stun, Burn)
   {
-    const setup = k => { const g = T(), E = s => g.eval(s); E(`soloPick("${k}")`); run(g, 1.0); E('combatFoes().forEach(f => { if (f && !f.dead) { f.hp = f.max = 1e9; } }); S.party.abilityCd = 0'); return [g, E]; };
+    const setup = k => { const g = T(), E = s => g.eval(s); E(`COMBAT_TUNE.single = 0; soloPick("${k}")`); run(g, 1.0); E('combatFoes().forEach(f => { if (f && !f.dead) { f.hp = f.max = 1e9; } }); S.party.abilityCd = 0'); return [g, E]; };
     let [g, E] = setup('wren');
     const n = E('combatFoes().filter(f => f && !f.dead && f.hp > 0).length');
     assert(n >= 2 && E('soloAbility()') && E('combatFoes().filter(f => f && !f.dead && f.hp > 0).every(f => f.hp < f.max && stHas(f, "mark"))'), `Echo Shot hits every foe in the lane (${n}) and Marks them`);
@@ -7176,9 +7184,9 @@ if (section('C20 turn combat (core)')) try {
     !early05.errors.length && !earlyFrame.errors.length,
     `C20: one-hit early Wren scratch cadence stays within 10% of live at .05 and 1/60 s (${early05.scratch}/${early05.live}; ${earlyFrame.scratch}/${earlyFrame.live})`);
   E('setZone(2)');
-  assert(E('!turnCombatOn() && combatFoes().length>1 && __turnEvents.filter(x=>x[0]==="end").length===1 && __turnEvents.at(-1)[1]==="abandon"'), 'C20: leaving the supported zone ends the fight once and restores legacy pack combat');
+  assert(E('!turnCombatOn() && combatFoes().length>=1 && __turnEvents.filter(x=>x[0]==="end").length===1 && __turnEvents.at(-1)[1]==="abandon"'), 'C20: leaving the supported zone ends the fight once and restores legacy pack combat');
   E('TURN_TUNE.on=0; setZone(1)');
-  assert(E('!turnCombatOn() && combatFoes().length>1'), 'C20: switching the prototype off retains legacy zone-one combat');
+  assert(E('!turnCombatOn() && combatFoes().length>=1'), 'C20: switching the prototype off retains legacy zone-one combat');
   const toggled=loadCore({seed:2023}), V=x=>toggled.eval(x);
   V('TURN_TUNE.on=1;soloPick("wren");soloSetAuto(false);globalThis.__ends=[];on("fightEnd",x=>__ends.push(x.reason));spawn()');
   toggled.fn.tick(0.1); V('TURN_TUNE.on=0'); toggled.fn.tick(0.1); toggled.fn.tick(0.1);

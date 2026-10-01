@@ -9445,7 +9445,8 @@ function tick(dt) {
   }
   // C20: supported prototype fights have one combat driver. Unsupported scopes keep the legacy path below.
   if (tg === 'mob' && typeof turnCombatScope === 'function' && turnCombatScope()) {
-    if (!mob || (typeof combatFoes === 'function' && combatFoes().filter(f => f && !f.dead && f.hp > 0).length > 1)) spawn();
+    // a legacy foe on the stage (a pack, or since packs became one foe: one not made for the prototype) is replaced
+    { const live = typeof combatFoes === 'function' ? combatFoes().filter(f => f && !f.dead && f.hp > 0) : []; if (!mob || live.length > 1 || (live.length === 1 && !live[0].turn)) spawn(); }
     turnCombatTick(dt);
     if (mob && mob.dead) mob.dead += dt;
     if (respawn > 0) { respawn -= dt; if (respawn <= 0) spawn(); }
@@ -18738,6 +18739,10 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     on: 1,
     // packs (4.1): 3 foes; the pack totals packHp / packGold of one old foe (spec: 0.4 each = 1.2)
     packSize: 3, packHp: 1.2, packGold: 1.2, mixP: 0.72,
+    // owner (2026-10-01): one enemy at a time. A pack becomes a single foe with the pack's total HP, gold and attack
+    // (pacing unchanged); its type is still the zone's 72% of the time. 0 restores packs. singleAtk: a pack's members
+    // fell one by one, so on average about 60% of its attack was still standing; the single foe hits at that share.
+    single: 1, singleAtk: 0.6, singleHp: 1,
     eliteFrom: 15, eliteP: 0.2, eliteHp: 2, eliteGold: 2,
     // foe attack per hit = atk x mobHp(z) (spec: 1.2 x 1.55^(z-1) = 0.12 x mobHp; tuned to this game's
     // party power); zones below easeZone hit softer (x (z / easeZone)^easePow) so a class and its starter hold.
@@ -18932,6 +18937,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       // C20: one stronger foe; the existing pack-clear path still pays one kill and its rewards.
       const hp = mobHp(z) * TURN_TUNE.foeHpX * mod('foeHp');
       const f = mkFoe(zt, hp, mobGold(z) * T.packGold, Math.ceil(1.5 * z), z, false, TYPES[zt].name, cyc, T.packAtkN);
+      f.turn = 1;   // a turn-prototype foe (50-sim respawns a legacy one when the prototype takes over)
       foes.push(f); lead = f; packN = 1; packSize = 'brute'; aoeK = 1;
     } else if (boss) {
       const hp = mobHp(z) * bossHpMult(z) * mod('bossHp') * mod('foeHp');
@@ -18940,7 +18946,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       bossStart(f);
     } else {
       const nt = zoneNextType(z), ba = FOE_BEH[TYPES[zt].key] || FOE_BEH.slime, bb = FOE_BEH[TYPES[nt].key] || ba;
-      const size = T.sizes ? ba.size || 'brute' : 'brute', n = T.sizes ? Math.max(1, Math.min(FOE_MAX, ba.n || T.packSize)) : T.packSize;
+      const size = T.sizes ? ba.size || 'brute' : 'brute', n = T.single ? 1 : T.sizes ? Math.max(1, Math.min(FOE_MAX, ba.n || T.packSize)) : T.packSize;
       const swarm = size === 'swarm', sizeB = T.sizes ? bb.size || size : size;
       const mixOk = nt !== zt && Math.abs((SZ_I[size] || 0) - (SZ_I[sizeB] || 0)) < 2, mixMax = T.sizes ? Math.max(1, Math.floor(n / 3)) : n;
       // the plan: one type index per member and its shares (a brute in a normal pack is 2)
@@ -18957,11 +18963,11 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       const tot = mobHp(z) * T.packHp * mod('foeHp') * (swarm ? T.swarmHp : 1), gold = mobGold(z) * T.packGold * (swarm ? T.swarmPay : 1);
       for (let i = 0; i < PLAN.length; i += 2) {
         const ti = PLAN[i], w = PLAN[i + 1];
-        const hp = tot / n * w * (0.9 + Math.random() * 0.2);
-        const f = mkFoe(ti, hp, gold / n * w, 0, z, false, TYPES[ti].name, cyc, T.packAtkN / n * w);
+        const hp = tot / n * w * (0.9 + Math.random() * 0.2) * (T.single ? T.singleHp : 1);
+        const f = mkFoe(ti, hp, gold / n * w, 0, z, false, TYPES[ti].name, cyc, T.packAtkN / n * w * (T.single ? T.singleAtk : 1));
         foes.push(f);
       }
-      packN = foes.length; packSize = size;
+      packN = foes.length; packSize = T.single ? 'brute' : size;   // one foe: no swarm caps or splits
       // area damage: a splash is worth aoeN other foes in all (today's pack of 3), x aoeSwarm on a swarm (CX8)
       aoeK = packN > 1 ? Math.min(1, T.aoeN / (packN - 1)) * (swarm ? T.aoeSwarm : 1) : 1;
       // the lead (champion roll, the `kill` event, its drops) is the first foe: zone type 72% of the time, as before packs
@@ -18969,7 +18975,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       lead.xp = Math.ceil(Math.ceil(1.5 * z * T.packHp) * (swarm ? T.swarmPay : 1));
       if (z >= T.eliteFrom && Math.random() < T.eliteP) makeElite(1);
       // Region 4 on (combat-2 2.1): a second elite in normal and swarm packs
-      if (z >= T.eliteFrom && size !== 'brute' && typeof regionIdx === 'function' && regionIdx(z) >= T.elite2From && Math.random() < T.elite2P) makeElite(2);
+      if (z >= T.eliteFrom && size !== 'brute' && !T.single && typeof regionIdx === 'function' && regionIdx(z) >= T.elite2From && Math.random() < T.elite2P) makeElite(2);
       // arrival (2.4): three groups 0.15 s apart, the front column first
       for (const f of foes) f.born = -T.arriveGap * (2 - Math.max(0, Math.min(2, f.row)));
     }

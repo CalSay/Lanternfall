@@ -176,7 +176,8 @@ function tick(dt) {
   }
   // C20: supported prototype fights have one combat driver. Unsupported scopes keep the legacy path below.
   if (tg === 'mob' && typeof turnCombatScope === 'function' && turnCombatScope()) {
-    if (!mob || (typeof combatFoes === 'function' && combatFoes().filter(f => f && !f.dead && f.hp > 0).length > 1)) spawn();
+    // a legacy foe on the stage (a pack, or since packs became one foe: one not made for the prototype) is replaced
+    { const live = typeof combatFoes === 'function' ? combatFoes().filter(f => f && !f.dead && f.hp > 0) : []; if (!mob || live.length > 1 || (live.length === 1 && !live[0].turn)) spawn(); }
     turnCombatTick(dt);
     if (mob && mob.dead) mob.dead += dt;
     if (respawn > 0) { respawn -= dt; if (respawn <= 0) spawn(); }
