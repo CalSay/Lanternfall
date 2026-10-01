@@ -278,14 +278,48 @@ var soloIconURL = () => '';
   on('soloDodge', ({ res }) => { if (res === 'dodge' || res === 'perfect') emit('float', { txt: res === 'perfect' ? 'Perfect dodge' : 'Dodged', color: '#8FB8FF', big: true, x: 0.27, y: 0.4 }); else if (res === 'early') emit('float', { txt: 'Too early', color: '#A9B1BD', big: false, x: 0.27, y: 0.42 }); });
 
   // ---- "Choose your hero" at camp ----
+  // Owner 2026-10-01: "you have to scroll past all of them every time". The Camp view shows only the heroes you can
+  // play (or unlock right now) as small chips; "All heroes" opens a sheet with the whole roster, routes and stories.
+  // Both use the same tap-twice confirm (a switch or an unlock is never one stray tap).
   registerSection('camp', {
-    id: 'solo-hero', title: 'Choose your hero',
+    id: 'solo-hero', title: 'Your hero',
     mount(sec) {
       sec.classList.add('solo-pick');
       if (sec.parentNode) sec.parentNode.prepend(sec);   // first on the Camp view
-      const note = el('p', 'note', 'Switch any time, for free. Gold, gear and camp are shared. Each hero keeps their own level.');
+      const note = el('p', 'note', 'Switch any time, for free. Each hero keeps their own level.');
+      const chips = el('div', 'sp-chips'), all = el('button', 'mini sp-all'); all.type = 'button';
+      sec.append(note, chips, all);
+      let armedK = '', armedA = '';
+      const press = k => {
+        const info = heroRouteInfo(k), action = info.playable ? 'switch' : info.ready && !info.unlocked ? 'unlock' : '';
+        if (!action || (action === 'switch' && soloHero() === k)) return;
+        if (armedK !== k || armedA !== action) { armedK = k; armedA = action; sec._up(); return; }
+        armedK = armedA = '';
+        const ok = action === 'unlock' ? heroUnlock(k) : heroPick(k);
+        if (ok) { try { save(); } catch (e) {} ui(true); if (typeof updatePortrait === 'function') updatePortrait(); }
+        sec._up();
+      };
+      const lvText = (k, info, lv, on_) => armedK === k ? (armedA === 'unlock' ? 'Tap again to unlock' : 'Tap again')
+        : info.state === 'coming-soon' ? 'Coming soon' : info.playable ? `Lv ${(lv[k] || { L: 1 }).L}` + (on_ ? ' · Playing' : '') : info.ready ? 'Locked · Unlock' : 'Locked';
+      const fig = (k, cv) => { try { if (heroHasKit(k) && typeof heroArtPreview === 'function') heroArtPreview(cv, k); } catch (e) {} };
+
+      // the sheet: every hero, as the new-game picker shows them
+      const ov = el('div', 'sp-ov hs-ov'); ov.id = 'heroSheet'; ov.hidden = true;
+      ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-label', 'All heroes');
+      const sh = el('div', 'sp-sheet hs-sheet'), head = el('div', 'sp-head');
+      const x = el('button', 'sp-x', '×'); x.type = 'button'; x.setAttribute('aria-label', 'Close');
+      head.append(el('b', null, 'All heroes'), el('small', null, 'Gold, gear and camp are shared. Each hero keeps their own level.'), x);
       const row = el('div', 'sp-row');
-      sec.append(note, row);
+      sh.append(head, row); ov.append(sh); document.body.append(ov);
+      const close = () => { ov.hidden = true; all.focus(); };
+      x.addEventListener('click', close);
+      ov.addEventListener('click', e => { if (e.target === ov) close(); });
+      ov.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+      all.addEventListener('click', () => {
+        ov.hidden = false; sec._up();
+        if (!row._drawn) { row._drawn = true; requestAnimationFrame(() => { for (const b of sec._cards) fig(b.dataset.hero, b._cv); }); }
+        x.focus();
+      });
       // C9: all 32 heroes share the same route states as the new-game picker.
       sec._cards = HERO_ORDER.map(k => {
         const h = SOLO_HEROES[k], R = ROSTER[k];
@@ -295,33 +329,45 @@ var soloIconURL = () => '';
         const lv = el('span', 'sp-lv'), route = el('small'), bio = el('small', null, heroBio(k));
         b.append(cv, nm, sub, lv, route, bio);
         b._lv = lv; b._cv = cv; b._route = route;
-        b.addEventListener('click', () => {
-          const info = heroRouteInfo(k), action = info.playable ? 'switch' : info.ready && !info.unlocked ? 'unlock' : '';
-          if (!action || (action === 'switch' && soloHero() === k)) return;
-          if (b.dataset.armed !== '1' || b._action !== action) {
-            for (const c of sec._cards) c.dataset.armed = '';
-            b.dataset.armed = '1'; b._action = action;
-            sec._up(); putText(b._lv, action === 'unlock' ? 'Tap again to unlock' : 'Tap again'); return;
-          }
-          b.dataset.armed = '';
-          const ok = action === 'unlock' ? heroUnlock(k) : heroPick(k);
-          if (ok) { try { save(); } catch (e) {} ui(true); if (typeof updatePortrait === 'function') updatePortrait(); }
-          sec._up();
-        });
+        b.addEventListener('click', () => press(k));
         row.append(b);
         return b;
       });
-      requestAnimationFrame(() => { for (const b of sec._cards) { try { if (heroHasKit(b.dataset.hero) && typeof heroArtPreview === 'function') heroArtPreview(b._cv, b.dataset.hero); } catch (e) {} } });
+      // the chips: who you can play, or unlock now (rebuilt when that set changes)
+      let chipSig = '';
+      const chipList = () => HERO_ORDER.filter(k => { const i = heroRouteInfo(k); return i.playable || (i.ready && !i.unlocked); });
       sec._up = () => {
-        const lv = soloLevels(), cur = soloHero();
+        const lv = soloLevels(), cur = soloHero(), list = chipList(), sig = list.join();
+        if (sig !== chipSig) {
+          chipSig = sig;
+          chips.replaceChildren(...list.map(k => {
+            const c = el('button', 'sp-chip'); c.type = 'button'; c.dataset.hero = k;
+            // the head portrait (28 x 28, 1 art px = 1 CSS px), as the header shows it
+            let u = ''; try { u = heroHasKit(k) && typeof heroArtPortraitURL === 'function' ? heroArtPortraitURL(k) : typeof portraitURL === 'function' ? portraitURL(k) : ''; } catch (e) {}
+            const im = img(u, 'sp-cfig px');
+            const t = el('span', 'sp-ct'); c._lv = el('small');
+            t.append(el('b', null, ROSTER[k].name.split(' ')[0]), c._lv);
+            c.append(im, t); c.addEventListener('click', () => press(k));
+            return c;
+          }));
+        }
+        for (const c of chips.children) {
+          const k = c.dataset.hero, info = heroRouteInfo(k), on_ = k === cur;
+          c.classList.toggle('on', on_); c.setAttribute('aria-pressed', on_ ? 'true' : 'false');
+          putAttr(c, 'data-armed', armedK === k ? '1' : '');
+          putText(c._lv, lvText(k, info, lv, on_));
+        }
+        putText(all, `All heroes (${HERO_ORDER.length})`);
+        if (ov.hidden) return;
         for (const b of sec._cards) {
           const k = b.dataset.hero, on_ = k === cur, info = heroRouteInfo(k);
           b.dataset.state = info.state;
           b.disabled = !info.playable && !(info.ready && !info.unlocked);
           b.setAttribute('aria-pressed', on_ ? 'true' : 'false');
           b.classList.toggle('on', on_);
+          b.dataset.armed = armedK === k ? '1' : '';
           putText(b._route, info.unlocked ? (info.playable ? 'Unlocked' : 'Route complete. The solo kit comes later.') : info.how);
-          if (b.dataset.armed !== '1') putText(b._lv, info.state === 'coming-soon' ? 'Coming soon' : info.playable ? `Lv ${(lv[k] || { L: 1 }).L}` + (on_ ? ' · Playing' : '') : info.ready ? 'Locked · Unlock' : 'Locked');
+          putText(b._lv, lvText(k, info, lv, on_));
         }
       };
       sec._up();

@@ -91,7 +91,20 @@ body.solo-on .stage .abil, body.solo-on .stage .abil2 { display: none !important
 .ob-ok[hidden] { display: none; }
 
 /* ---- "Choose your hero" (the Camp view) ---- */
-.solo-pick .sp-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
+.hs-ov .sp-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 8px; margin-top: 4px; }
+/* the Camp view's hero chips (owner: no scrolling past every hero) and the All heroes sheet */
+.sp-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.sp-chip { display: flex; align-items: center; gap: 8px; min-height: 52px; padding: 4px 10px 4px 4px; background: var(--panel-2); border: 2px solid var(--line-hi); color: var(--bone); cursor: pointer; text-align: left; }
+.sp-chip.on { box-shadow: inset 0 0 0 2px var(--gold); }
+.sp-chip[data-armed="1"] { box-shadow: inset 0 0 0 2px var(--ember); }
+.sp-cfig { width: 28px; height: 28px; image-rendering: pixelated; background: var(--well); box-shadow: 0 0 0 1px #0B0810; }
+.sp-ct { display: grid; }
+.sp-ct b { font: 600 calc(15px * var(--display-k, 1)) var(--display); }
+.sp-ct small { color: var(--muted); font-size: 12px; }
+.sp-all { margin-top: 8px; }
+.hs-ov { align-items: center; }
+.hs-ov[hidden] { display: none; }
+.hs-sheet { width: min(760px, 100%); max-height: calc(100dvh - 24px); overflow-y: auto; border-bottom: 2px solid var(--line-hi); }
 .sp-card { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 4px; min-height: 44px; background: var(--panel-2);
   border: 2px solid #0B0810; color: var(--bone); cursor: pointer; font: inherit; }
 .sp-card.on { box-shadow: inset 0 0 0 2px var(--gold); }

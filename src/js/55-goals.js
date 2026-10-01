@@ -140,7 +140,7 @@ var forgeGoalPicks = 0;
     }
     return best;
   };
-  const BTY_IC = { kill: ['sword', '#C9C3D6'], mine: ['pick', '#9C8F7A'], chop: ['axe', '#8C6A43'], forge: ['anvil', '#8A8FA0'], boss: ['banner', '#E0524F'], crit: ['flame', '#FF9E3D'], tap: ['boot', '#6B4A2E'] };
+  const BTY_IC = { kill: ['sword', '#C9C3D6'], mine: ['pick', '#9C8F7A'], chop: ['axe', '#8C6A43'], forge: ['anvil', '#8A8FA0'], boss: ['banner', '#E0524F'], crit: ['flame', '#FF9E3D'], tap: ['boot', '#6B4A2E'], hunt: ['sword', '#E0524F'], gems: ['orb', '#9FE8FF'], forage: ['orb', '#8FA868'], make: ['anvil', '#C9A56A'], upgrade: ['anvil', '#F2C14E'], reforge: ['anvil', '#B58CFF'], ability: ['flame', '#7FB2FF'], hands: ['mug', '#8C6A43'], deep: ['flame', '#9A8FB8'] };
   registerGoal({
     id: 'bounty', sys: 'bounty', prio: 1,
     pct: () => { const x = btyNext(); return x ? x.p : null; },

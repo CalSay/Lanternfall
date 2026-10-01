@@ -6442,17 +6442,22 @@ if (section('C9 hero registry (browser)')) try {
           await page.click('#createScreen .create-go');
           await page.waitForSelector('#createScreen',{state:'detached'});
           await X('delete S.party.unlock.heroes.bram; S.maxZone=10; S.zone=1; S.L=7; S.xp=3; S.mats.wood=[80,0,0,0,0]; S.gold=42; S.camp.open=true; S.camp.b.hearth=2; setTab("world"); setView("world","camp"); ui(true); true');
-          await page.waitForSelector('#sec-solo-hero .sp-card');
-          assert(await page.locator('#sec-solo-hero .sp-card').count()===32 && await page.$eval('#sec-solo-hero .sp-card[data-hero="bram"]',b=>b.dataset.state==='locked' && !b.disabled && b.textContent.includes('80 grade-1 wood')), `C9 ${tag}: camp shows the same registry and a ready quest hand-in`);
-          await page.click('#sec-solo-hero .sp-card[data-hero="bram"]');
+          // owner 2026-10-01: the Camp view shows chips for the heroes you can play or unlock; All heroes opens the full roster
+          await page.waitForSelector('#sec-solo-hero .sp-all');
+          const chipHeroes = await page.$$eval('#sec-solo-hero .sp-chip', cs => cs.map(c => c.dataset.hero));
+          assert(chipHeroes.slice(0, 3).join() === 'wren,tobin,pip' && chipHeroes.includes('bram') && chipHeroes.length < 10, `C9 ${tag}: camp chips show the playable heroes and the ready unlock, not the whole roster (${chipHeroes.join()})`);
+          await page.click('#sec-solo-hero .sp-all');
+          await page.waitForSelector('#heroSheet:not([hidden]) .sp-card');
+          assert(await page.locator('#heroSheet .sp-card').count()===32 && await page.$eval('#heroSheet .sp-card[data-hero="bram"]',b=>b.dataset.state==='locked' && !b.disabled && b.textContent.includes('80 grade-1 wood')), `C9 ${tag}: camp shows the same registry and a ready quest hand-in`);
+          await page.click('#heroSheet .sp-card[data-hero="bram"]');
           assert(await X('S.mats.wood[0]===80 && !S.party.unlock.heroes.bram && soloHero()==="wren"'), `C9 ${tag}: the first unlock press asks for a second tap without charging`);
-          await page.click('#sec-solo-hero .sp-card[data-hero="bram"]');
-          assert(await X('S.mats.wood[0]===0 && heroUnlocked("bram") && soloHero()==="wren"') && await page.$eval('#sec-solo-hero .sp-card[data-hero="bram"]', b=>b.dataset.state==='coming-soon' && b.disabled && b.textContent.includes('Coming soon')), `C9 ${tag}: confirming pays once and shows Coming soon without switching`);
-          await page.click('#sec-solo-hero .sp-card[data-hero="tobin"]');
-          await page.click('#sec-solo-hero .sp-card[data-hero="tobin"]');
+          await page.click('#heroSheet .sp-card[data-hero="bram"]');
+          assert(await X('S.mats.wood[0]===0 && heroUnlocked("bram") && soloHero()==="wren"') && await page.$eval('#heroSheet .sp-card[data-hero="bram"]', b=>b.dataset.state==='coming-soon' && b.disabled && b.textContent.includes('Coming soon')), `C9 ${tag}: confirming pays once and shows Coming soon without switching`);
+          await page.click('#heroSheet .sp-card[data-hero="tobin"]');
+          await page.click('#heroSheet .sp-card[data-hero="tobin"]');
           assert(await X('soloHero()==="tobin" && S.L===1 && S.gold===42 && soloLevels().wren.L===7'), `C9 ${tag}: an unlocked starter still switches freely and keeps each hero’s level`);
-          await page.click('#sec-solo-hero .sp-card[data-hero="wren"]');
-          await page.click('#sec-solo-hero .sp-card[data-hero="wren"]');
+          await page.click('#heroSheet .sp-card[data-hero="wren"]');
+          await page.click('#heroSheet .sp-card[data-hero="wren"]');
           assert(await X('soloHero()==="wren" && S.L===7 && S.xp===3 && S.gold===42'), `C9 ${tag}: switching back restores the playing hero’s level and XP`);
           const saved = await X('JSON.stringify(S.party.unlock)');
           await X('save(); true'); await page.reload(); await page.waitForFunction(()=>!!window.__t);
@@ -6839,6 +6844,23 @@ if (section('hunting hidden (C24 browser)')) try {
 
 // ---- C20: default-off, zone-one turn combat and shared away resolver ----
 // ---- turn UI (Claude, 2026-09-30): the versus card, turn strip, timing bar and the Journal test switch on C20's events ----
+if (section('bounty variety')) try {
+  // owner 2026-10-01: "you get the same basic ones coming through all the time"
+  const g = loadCore({ seed: 13 }), E = s => g.eval(s);
+  E('soloPick("wren"); S.onboard && (S.onboard.tips = false, S.onboard.all = true)');
+  for (let t = 0; t < 1800; t += 0.1) g.fn.tick(0.1);
+  const draws = JSON.parse(E(`JSON.stringify((() => { const out = []; for (let i = 0; i < 40; i++) { S.bounties.slots = S.bounties.slots.map(() => ({ k: null, wait: 0, rr: 0 })); BOUNTY_API.refresh(); out.push(...S.bounties.slots.map(b => [b.k, !!b.elite])); } return out; })())`));
+  const kinds = new Set(draws.map(d => d[0]));
+  assert(kinds.size >= 10, `bounties come from at least 10 kinds by 30 minutes in (${kinds.size}: ${[...kinds].join(', ')})`);
+  let rep = 0; for (let i = 0; i < draws.length; i++) for (let j = Math.max(0, i - 5); j < i; j++) if (draws[j][0] === draws[i][0]) rep++;
+  assert(rep <= draws.length * 0.05, `a kind rarely comes back within its last 6 draws (${rep} of ${draws.length})`);
+  assert(draws.some(d => d[1]) && draws.filter(d => d[1]).length < draws.length * 0.3, `Contracts turn up now and then (${draws.filter(d => d[1]).length} of ${draws.length})`);
+  const hunt = E(`(() => { S.bounties.slots[0] = { k: 'hunt', foe: 'bat', z: 2, need: 5, have: 0, rew: 'gold', rr: 0, id: 1 }; emit('kill', { mob: { type: 'slime', key: 'slime0' }, zone: 1 }); emit('kill', { mob: { type: 'bat', key: 'bat1' }, zone: 2 }); return S.bounties.slots[0].have; })()`);
+  assert(hunt === 1, 'a hunt bounty counts only its own kind of foe');
+  assert(E("BOUNTY_API.text({ k: 'hunt', foe: 'bat', z: 9, need: 20, elite: true })") === 'Contract: Defeat 20 Cave Bats (zone 9)', 'hunt and Contract wording');
+  assert(!g.errors.length, 'bounty variety: no core errors');
+} catch (e) { fail('bounty variety crashed: ' + (e.stack || e)); }
+
 if (section('C25 enemy profiles')) try {
   const g = loadCore({ seed: 5 }), E = s => g.eval(s);
   E('soloPick("pip"); S.auto = false; S.onboard && (S.onboard.tips = false, S.onboard.all = true)');

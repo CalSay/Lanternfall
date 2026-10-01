@@ -1,6 +1,8 @@
 /* 60-bounties: bounty board rows and the achievements grid */
 .row.bty .bty-bar { margin-top: 5px; height: 5px; }
 .row.bty .bty-bar > i { background: var(--gold); }
+.row.bty.bty-elite { box-shadow: inset 3px 0 0 var(--r-legendary); }   /* a Contract: bigger, pays 2.5x */
+.row.bty.bty-elite .row-name .nm { color: var(--r-legendary); }
 .bty-rr { margin-top: 4px; padding: 2px 6px; font: 600 11px var(--body); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); background: var(--well); border: 1px solid var(--line-hi); cursor: pointer; }
 .bty-rr:disabled { opacity: .55; cursor: default; }
 .bty-rr[hidden] { display: none; }

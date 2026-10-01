@@ -3,7 +3,13 @@
   const BTY_IC = {
     kill: () => iconURL('sword', '#C9C3D6'), mine: () => iconURL('pick', '#9C8F7A'), chop: () => iconURL('axe', '#8C6A43'),
     forge: () => iconURL('anvil', '#8A8FA0'), boss: () => iconURL('banner', '#E0524F'), crit: () => iconURL('flame', '#FF9E3D', { 5: '#FFB347', 7: '#FFF3C4' }),
-    tap: () => iconURL('boot', '#6B4A2E')
+    tap: () => iconURL('boot', '#6B4A2E'),
+    // the wider pool (owner 2026-10-01): the foe itself, the resource, the station's tools
+    hunt: b => { const t = TYPES.find(x => x.key === b.foe); return t ? spriteURL('best:' + t.key, SPR[t.key], t.pal) : iconURL('sword', '#C9C3D6'); },
+    gems: () => matIcon('crystal', 1), forage: b => matIcon(b.fam || 'herb', 1),
+    make: () => iconURL('anvil', '#C9A56A'), upgrade: () => iconURL('anvil', '#F2C14E'), reforge: () => iconURL('anvil', '#B58CFF'),
+    ability: () => iconURL('flame', '#7FB2FF', { 5: '#CFE3FF', 7: '#FFFFFF' }), hands: () => iconURL('mug', '#8C6A43', { 1: '#6B4A2E', 7: '#F2C14E', 5: '#EFE6D6' }),
+    deep: () => iconURL('flame', '#9A8FB8', { 5: '#CFC3DC', 7: '#FFFFFF' })
   };
   const btyRows = [];
   registerSection('adv', {
@@ -39,7 +45,8 @@
         const room = done && rew.kind !== 'gold' ? stashNeed([[rew.kind, rew.t, rew.n]]) : '';   // H3: a reward waits until it fits
         r.desc.textContent = room || 'Reward: ' + rew.txt;
         r.bar.style.width = Math.min(100, b.have / b.need * 100) + '%';
-        const url = BTY_IC[b.k](); setIc(r.ic, url);
+        const url = (BTY_IC[b.k] || BTY_IC.kill)(b); setIc(r.ic, url, b.elite ? 'legendary' : null);
+        r.row.classList.toggle('bty-elite', !!b.elite);
         const rrLeft = (b.rr || 0) - now;
         r.rr.hidden = done; r.rr.disabled = rrLeft > 0;
         r.rr.textContent = rrLeft > 0 ? `Swap in ${fmtTime(rrLeft / 1000)}` : 'Swap (free)';

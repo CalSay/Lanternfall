@@ -537,6 +537,8 @@ img[src*="#nic:"] { image-rendering: auto; }   /* a gear icon set by code that d
 /* 60-bounties: bounty board rows and the achievements grid */
 .row.bty .bty-bar { margin-top: 5px; height: 5px; }
 .row.bty .bty-bar > i { background: var(--gold); }
+.row.bty.bty-elite { box-shadow: inset 3px 0 0 var(--r-legendary); }   /* a Contract: bigger, pays 2.5x */
+.row.bty.bty-elite .row-name .nm { color: var(--r-legendary); }
 .bty-rr { margin-top: 4px; padding: 2px 6px; font: 600 11px var(--body); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); background: var(--well); border: 1px solid var(--line-hi); cursor: pointer; }
 .bty-rr:disabled { opacity: .55; cursor: default; }
 .bty-rr[hidden] { display: none; }
@@ -2191,7 +2193,20 @@ body.solo-on .stage .abil, body.solo-on .stage .abil2 { display: none !important
 .ob-ok[hidden] { display: none; }
 
 /* ---- "Choose your hero" (the Camp view) ---- */
-.solo-pick .sp-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
+.hs-ov .sp-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 8px; margin-top: 4px; }
+/* the Camp view's hero chips (owner: no scrolling past every hero) and the All heroes sheet */
+.sp-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.sp-chip { display: flex; align-items: center; gap: 8px; min-height: 52px; padding: 4px 10px 4px 4px; background: var(--panel-2); border: 2px solid var(--line-hi); color: var(--bone); cursor: pointer; text-align: left; }
+.sp-chip.on { box-shadow: inset 0 0 0 2px var(--gold); }
+.sp-chip[data-armed="1"] { box-shadow: inset 0 0 0 2px var(--ember); }
+.sp-cfig { width: 28px; height: 28px; image-rendering: pixelated; background: var(--well); box-shadow: 0 0 0 1px #0B0810; }
+.sp-ct { display: grid; }
+.sp-ct b { font: 600 calc(15px * var(--display-k, 1)) var(--display); }
+.sp-ct small { color: var(--muted); font-size: 12px; }
+.sp-all { margin-top: 8px; }
+.hs-ov { align-items: center; }
+.hs-ov[hidden] { display: none; }
+.hs-sheet { width: min(760px, 100%); max-height: calc(100dvh - 24px); overflow-y: auto; border-bottom: 2px solid var(--line-hi); }
 .sp-card { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 4px; min-height: 44px; background: var(--panel-2);
   border: 2px solid #0B0810; color: var(--bone); cursor: pointer; font: inherit; }
 .sp-card.on { box-shadow: inset 0 0 0 2px var(--gold); }
@@ -10138,7 +10153,7 @@ let OMENS, WEEKLY_GOALS;
 
 // ---- src/js/55-bounties.js ----
 // 55-bounties: the bounty board. Three short goals built from the player's real state.
-// Claiming pays gold (about 4 minutes of income), materials or essence. A claimed slot
+// Claiming pays gold (about 4 minutes of income), materials or essence; a Contract (elite) pays 2.5x and more Renown. A claimed slot
 // refills after a 5 minute wait; each slot has one free reroll per hour. All timers use
 // wall-clock time, so they keep running while the player is away.
 // CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
@@ -10146,39 +10161,78 @@ let OMENS, WEEKLY_GOALS;
   const BTY_SLOTS = 3, BTY_WAIT = 5 * 60 * 1000, BTY_REROLL = 60 * 60 * 1000;
   // slot: { k, need, have, t, z, rew: 'gold'|'ore'|'wood'|'ess', rewT, rewN, wait, rr }
   // k === null means the slot is empty and refills at `wait` (ms timestamp).
-  registerState('bounties', { slots: [], claimed: 0, seq: 0 });
+  registerState('bounties', { slots: [], claimed: 0, seq: 0, recent: [] });
 
   const btyTopTier = kind => skillTopTier(kind === 'ore' ? 'mine' : 'wood');
   const btyScale = () => 1 + Math.floor(S.maxZone / 10) * 0.25;
   const btyRound = n => Math.max(1, Math.round(n / 5) * 5);
 
-  // Kinds a player can always make progress on right now.
+  // The kinds. avail(): the player can work on it now (its feature is open); w: how often it comes up (owner 2026-10-01:
+  // "you get the same basic ones coming through all the time": more kinds, the last BTY_RECENT kinds wait their turn,
+  // and the filler ones (crits, Attack presses) come up less).
+  const BTY_RECENT = 6;
+  const open_ = id => isUnlocked(id);   // (avail() runs inside btyCan's try: helpers from later files may not exist yet at load)
+  const topOf = fam => (typeof skillTopTier === 'function' ? skillTopTier(skillOf(fam)) : 1) || 1;
+  const pick = a => a[Math.floor(Math.random() * a.length)];
+  const STATIONS = { forge: 'Forge', bench: 'Workbench', loom: 'Loom', ench: "Enchanter's Table" };
+  const builtStations = () => Object.keys(STATIONS).filter(st => typeof campLevel === 'function' && campLevel(st) >= 1);
   const BTY_KINDS = {
-    kill: () => { const z = Math.max(1, S.maxZone - 3); return { need: btyRound(40 * btyScale()), z, rew: 'gold' }; },
-    mine: () => { const t = btyTopTier('ore'); return { need: btyRound(30 * btyScale()), t, rew: 'wood', rewT: btyTopTier('wood') }; },
-    chop: () => { const t = btyTopTier('wood'); return { need: btyRound(30 * btyScale()), t, rew: 'ore', rewT: btyTopTier('ore') }; },
-    forge: () => ({ need: 1 + (S.skills.smith.lv >= 15 ? 1 : 0), rew: 'ess' }),
-    boss: () => ({ need: 1 + (S.maxZone >= 20 ? 1 : 0), rew: 'ess' }),
-    crit: () => ({ need: btyRound(15 * btyScale()), rew: 'gold' }),
-    tap: () => ({ need: 100, rew: 'gold' })
+    kill: { w: 3, make: () => { const z = Math.max(1, S.maxZone - 3); return { need: btyRound(40 * btyScale()), z, rew: 'gold' }; } },
+    // a kind of foe from the zones you have reached (shown with a zone where it lives)
+    hunt: { w: 3, avail: () => S.maxZone >= 3, make: () => {
+      const lo = Math.max(1, S.maxZone - 6), z = lo + Math.floor(Math.random() * (S.maxZone - lo + 1));
+      return { need: btyRound(20 * btyScale()), z, foe: TYPES[zoneType(z)].key, rew: pick(['gold', 'ess']) }; } },
+    mine: { w: 2, avail: () => open_('gather'), make: () => { const t = btyTopTier('ore'); return { need: btyRound(30 * btyScale()), t, rew: 'wood', rewT: btyTopTier('wood') }; } },
+    chop: { w: 2, avail: () => open_('gather'), make: () => { const t = btyTopTier('wood'); return { need: btyRound(30 * btyScale()), t, rew: 'ore', rewT: btyTopTier('ore') }; } },
+    gems: { w: 2, avail: () => open_('gather') && S.skills.mine && S.skills.mine.lv >= 1 && typeof CRAFT_NODES === 'object' && !!CRAFT_NODES.crystal, make: () => ({ need: btyRound(20 * btyScale()), rew: pick(['ore', 'gold']), rewT: btyTopTier('ore') }) },
+    forage: { w: 2, avail: () => open_('forage'), make: () => { const fam = pick(['fibre', 'herb']); return { need: btyRound(25 * btyScale()), fam, rew: fam === 'fibre' ? 'herb' : 'fibre', rewT: topOf(fam === 'fibre' ? 'herb' : 'fibre') }; } },
+    make: { w: 2, avail: () => open_('craft') && builtStations().length > 0, make: () => ({ need: 1 + (Math.random() < 0.4 ? 1 : 0), st: pick(builtStations()), rew: 'ess' }) },
+    forge: { w: 1, make: () => ({ need: 1 + (S.skills.smith.lv >= 15 ? 1 : 0), rew: 'ess' }) },
+    upgrade: { w: 1, avail: () => open_('upgrade') && S.items.length > 0, make: () => ({ need: 1, rew: 'ess' }) },
+    reforge: { w: 1, avail: () => open_('craft') && S.items.some(i => i && !i.u) && typeof campLevel === 'function' && campLevel('forge') >= 1, make: () => ({ need: 1, rew: 'gold' }) },
+    boss: { w: 2, make: () => ({ need: 1 + (S.maxZone >= 20 ? 1 : 0), rew: 'ess' }) },
+    ability: { w: 2, avail: () => typeof soloHero === 'function' && !!soloHero(), make: () => ({ need: btyRound(20 * btyScale()), rew: 'gold' }) },
+    hands: { w: 2, avail: () => open_('hands') && typeof handsList === 'function' && handsList().length > 0, make: () => ({ need: 2, rew: 'gold' }) },
+    deep: { w: 1, avail: () => open_('deep') && typeof deepUnlocked === 'function' && deepUnlocked(), make: () => ({ need: 3, rew: 'ess' }) },
+    crit: { w: 1, make: () => ({ need: btyRound(15 * btyScale()), rew: 'gold' }) },
+    tap: { w: 0.5, make: () => ({ need: 100, rew: 'gold' }) }
   };
+  const plural = (n, w) => n === 1 ? w : /s$/.test(w) ? w : w + 's';
+  const foeName = k => { const t = TYPES.find(x => x.key === k); return t ? t.name : 'foes'; };
   const BTY_TEXT = {
     kill: b => `Defeat ${b.need} foes in zone ${b.z} or beyond`,
+    hunt: b => `Defeat ${b.need} ${plural(b.need, foeName(b.foe))} (zone ${b.z})`,
     mine: b => `Mine ${b.need} ore`,
     chop: b => `Chop ${b.need} logs`,
+    gems: b => `Mine ${b.need} gems`,
+    forage: b => `Gather ${b.need} ${b.fam === 'fibre' ? 'fibre' : 'herbs'}`,
+    make: b => b.need > 1 ? `Make ${b.need} items at the ${STATIONS[b.st] || 'stations'}` : `Make an item at the ${STATIONS[b.st] || 'stations'}`,
     forge: b => b.need > 1 ? `Forge ${b.need} items` : 'Forge an item',
+    upgrade: () => 'Upgrade an item',
+    reforge: () => 'Reforge an item',
     boss: b => b.need > 1 ? `Beat ${b.need} zone bosses` : 'Beat a zone boss',
+    ability: b => `Use your ability ${b.need} times`,
+    hands: b => `Send your gatherers on ${b.need} jobs`,
+    deep: b => `Go down ${b.need} Deepwell floors`,
     crit: b => `Land ${b.need} critical hits`,
     tap: b => `Press Attack ${b.need} times`
   };
 
   function btyNew(exclude) {
     const taken = new Set(S.bounties.slots.map(s => s && s.k).concat(exclude || []));
-    const pool = Object.keys(BTY_KINDS).filter(k => !taken.has(k));
-    const k = pool[Math.floor(Math.random() * pool.length)] || 'kill';
-    const b = Object.assign({ k, have: 0, t: 1, z: 1, rewT: 1, wait: 0, rr: 0, id: ++S.bounties.seq }, BTY_KINDS[k]());
-    if (b.rew === 'ess') { b.rewT = zoneTier(S.maxZone); b.rewN = 6 + 2 * b.need; }
-    if (b.rew === 'ore' || b.rew === 'wood') b.rewN = btyRound(b.need * 0.8);
+    const recent = new Set(S.bounties.recent || []);
+    const btyCan = k => { try { return !BTY_KINDS[k].avail || !!BTY_KINDS[k].avail(); } catch (e) { return false; } };
+    const can = Object.keys(BTY_KINDS).filter(k => !taken.has(k) && btyCan(k));
+    const fresh = can.filter(k => !recent.has(k)), pool = fresh.length ? fresh : can;
+    let r = Math.random() * pool.reduce((a, k) => a + BTY_KINDS[k].w, 0), k = pool[pool.length - 1] || 'kill';
+    for (const x of pool) { r -= BTY_KINDS[x].w; if (r < 0) { k = x; break; } }
+    S.bounties.recent = (S.bounties.recent || []).concat(k).slice(-BTY_RECENT);
+    const b = Object.assign({ k, have: 0, t: 1, z: 1, rewT: 1, wait: 0, rr: 0, id: ++S.bounties.seq }, BTY_KINDS[k].make());
+    // now and then a Contract: twice the work for 2.5x the reward and the Elite Renown (56c-unlocks); never the fillers
+    if (k !== 'tap' && k !== 'crit' && b.need > 1 && Math.random() < 0.15) { b.elite = true; b.need = b.need >= 5 ? btyRound(b.need * 2) : b.need * 2; }
+    if (b.rew === 'ess') { b.rewT = zoneTier(S.maxZone); b.rewN = 6 + 2 * Math.min(b.need, 10); }
+    if (b.rew !== 'gold' && b.rew !== 'ess') b.rewN = btyRound(Math.min(b.need, 80) * 0.8);
+    if (b.elite && b.rewN) b.rewN = Math.round(b.rewN * 1.25);   // x2 work already doubled rewN for counted kinds; 2.5x in all
     return b;
   }
   // Gold is priced at claim time: about 4 minutes of kills at the player's farm zone.
@@ -10188,12 +10242,12 @@ let OMENS, WEEKLY_GOALS;
     return Math.max(50, Math.round(perSec * 240));
   }
   function bountyReward(b) {
-    const pay = mod('bountyPay'), g = Math.round(btyGold() * pay), n = Math.round(b.rewN * pay);
+    const pay = mod('bountyPay') * (b.elite ? 2.5 : 1), g = Math.round(btyGold() * pay), n = Math.round(b.rewN * mod('bountyPay'));
     if (b.rew === 'gold') return { kind: 'gold', n: g, txt: fmt(g) + ' gold' };
     const kind = b.rew;
     return { kind, t: b.rewT, n, txt: `${n} ${kind === 'ess' ? MAT.ess.short[b.rewT - 1] + ' Essence' : matName(kind, b.rewT)}` };
   }
-  const bountyText = b => BTY_TEXT[b.k](b);
+  const bountyText = b => (b.elite ? 'Contract: ' : '') + (BTY_TEXT[b.k] ? BTY_TEXT[b.k](b) : 'A bounty');
 
   // Fill empty slots whose wait is over (also covers first load and old saves).
   // atLoad: skip the Omen's "refill at once" bonus. At file load bonus() can't see later files
@@ -10206,11 +10260,23 @@ let OMENS, WEEKLY_GOALS;
   function btyAdd(k, n, test) {
     for (const b of S.bounties.slots) if (b && b.k === k && b.have < b.need && (!test || test(b))) b.have = Math.min(b.need, b.have + n);
   }
-  on('kill', ({ mob, zone }) => { btyAdd('kill', 1, b => zone >= b.z); if (mob && mob.boss) btyAdd('boss', 1); });
+  on('kill', ({ mob, zone }) => {
+    btyAdd('kill', 1, b => zone >= b.z); if (mob && mob.boss) btyAdd('boss', 1);
+    const key = mob && (mob.type || String(mob.key || '').replace(/\d+$/, '')); if (key) btyAdd('hunt', 1, b => b.foe === key);
+  });
   // Any tier counts (owner bug report: mining a lower node than your best never moved the bounty),
   // and so does gathering while away (awayBase emits harvest with away: true).
-  on('harvest', ({ kind, n }) => { if (kind === 'ore') btyAdd('mine', n); else if (kind === 'wood') btyAdd('chop', n); });
+  on('harvest', ({ kind, n }) => {
+    if (kind === 'ore') btyAdd('mine', n); else if (kind === 'wood') btyAdd('chop', n);
+    else if (kind === 'crystal') btyAdd('gems', n); else if (kind === 'fibre' || kind === 'herb') btyAdd('forage', n, b => b.fam === kind);
+  });
   on('itemAdded', ({ item }) => { if (!item.u) btyAdd('forge', 1); });
+  on('crafted', ({ kind }) => { const d = typeof CRAFT_KINDS === 'object' && CRAFT_KINDS[kind]; if (d) btyAdd('make', 1, b => b.st === d.st); });
+  on('upgraded', () => btyAdd('upgrade', 1));
+  on('reforged', () => btyAdd('reforge', 1));
+  on('ability', p => { if (p && p.cls === 'solo') btyAdd('ability', 1); });
+  on('handsSend', () => btyAdd('hands', 1));
+  on('deepFloor', p => { if (p && p.kind !== 'landing') btyAdd('deep', 1); });
   on('crit', () => btyAdd('crit', 1));
   on('soloAttack', p => { if (p && p.kind === 'hit') btyAdd('tap', 1); });   // the Attack button is the tap
   let btyAcc = 0;
@@ -10227,7 +10293,7 @@ let OMENS, WEEKLY_GOALS;
     S.bounties.slots[i] = { k: null, wait: Date.now() + BTY_WAIT, rr: b.rr || 0 };
     const icon = r.kind === 'gold' ? { ic: ['coin', '#F2C14E'] } : { mat: [r.kind, r.t] };
     toast(`Bounty complete! +${r.txt}.`, 'loot', icon, 'normal');
-    emit('bountyDone', { k: b.k, reward: r });
+    emit('bountyDone', { k: b.k, reward: r, elite: !!b.elite });
     save();
     return r;
   }
@@ -11378,7 +11444,7 @@ var forgeGoalPicks = 0;
     }
     return best;
   };
-  const BTY_IC = { kill: ['sword', '#C9C3D6'], mine: ['pick', '#9C8F7A'], chop: ['axe', '#8C6A43'], forge: ['anvil', '#8A8FA0'], boss: ['banner', '#E0524F'], crit: ['flame', '#FF9E3D'], tap: ['boot', '#6B4A2E'] };
+  const BTY_IC = { kill: ['sword', '#C9C3D6'], mine: ['pick', '#9C8F7A'], chop: ['axe', '#8C6A43'], forge: ['anvil', '#8A8FA0'], boss: ['banner', '#E0524F'], crit: ['flame', '#FF9E3D'], tap: ['boot', '#6B4A2E'], hunt: ['sword', '#E0524F'], gems: ['orb', '#9FE8FF'], forage: ['orb', '#8FA868'], make: ['anvil', '#C9A56A'], upgrade: ['anvil', '#F2C14E'], reforge: ['anvil', '#B58CFF'], ability: ['flame', '#7FB2FF'], hands: ['mug', '#8C6A43'], deep: ['flame', '#9A8FB8'] };
   registerGoal({
     id: 'bounty', sys: 'bounty', prio: 1,
     pct: () => { const x = btyNext(); return x ? x.p : null; },
@@ -31370,7 +31436,13 @@ let showAwayReport;
   const BTY_IC = {
     kill: () => iconURL('sword', '#C9C3D6'), mine: () => iconURL('pick', '#9C8F7A'), chop: () => iconURL('axe', '#8C6A43'),
     forge: () => iconURL('anvil', '#8A8FA0'), boss: () => iconURL('banner', '#E0524F'), crit: () => iconURL('flame', '#FF9E3D', { 5: '#FFB347', 7: '#FFF3C4' }),
-    tap: () => iconURL('boot', '#6B4A2E')
+    tap: () => iconURL('boot', '#6B4A2E'),
+    // the wider pool (owner 2026-10-01): the foe itself, the resource, the station's tools
+    hunt: b => { const t = TYPES.find(x => x.key === b.foe); return t ? spriteURL('best:' + t.key, SPR[t.key], t.pal) : iconURL('sword', '#C9C3D6'); },
+    gems: () => matIcon('crystal', 1), forage: b => matIcon(b.fam || 'herb', 1),
+    make: () => iconURL('anvil', '#C9A56A'), upgrade: () => iconURL('anvil', '#F2C14E'), reforge: () => iconURL('anvil', '#B58CFF'),
+    ability: () => iconURL('flame', '#7FB2FF', { 5: '#CFE3FF', 7: '#FFFFFF' }), hands: () => iconURL('mug', '#8C6A43', { 1: '#6B4A2E', 7: '#F2C14E', 5: '#EFE6D6' }),
+    deep: () => iconURL('flame', '#9A8FB8', { 5: '#CFC3DC', 7: '#FFFFFF' })
   };
   const btyRows = [];
   registerSection('adv', {
@@ -31406,7 +31478,8 @@ let showAwayReport;
         const room = done && rew.kind !== 'gold' ? stashNeed([[rew.kind, rew.t, rew.n]]) : '';   // H3: a reward waits until it fits
         r.desc.textContent = room || 'Reward: ' + rew.txt;
         r.bar.style.width = Math.min(100, b.have / b.need * 100) + '%';
-        const url = BTY_IC[b.k](); setIc(r.ic, url);
+        const url = (BTY_IC[b.k] || BTY_IC.kill)(b); setIc(r.ic, url, b.elite ? 'legendary' : null);
+        r.row.classList.toggle('bty-elite', !!b.elite);
         const rrLeft = (b.rr || 0) - now;
         r.rr.hidden = done; r.rr.disabled = rrLeft > 0;
         r.rr.textContent = rrLeft > 0 ? `Swap in ${fmtTime(rrLeft / 1000)}` : 'Swap (free)';
@@ -36545,14 +36618,48 @@ var soloIconURL = () => '';
   on('soloDodge', ({ res }) => { if (res === 'dodge' || res === 'perfect') emit('float', { txt: res === 'perfect' ? 'Perfect dodge' : 'Dodged', color: '#8FB8FF', big: true, x: 0.27, y: 0.4 }); else if (res === 'early') emit('float', { txt: 'Too early', color: '#A9B1BD', big: false, x: 0.27, y: 0.42 }); });
 
   // ---- "Choose your hero" at camp ----
+  // Owner 2026-10-01: "you have to scroll past all of them every time". The Camp view shows only the heroes you can
+  // play (or unlock right now) as small chips; "All heroes" opens a sheet with the whole roster, routes and stories.
+  // Both use the same tap-twice confirm (a switch or an unlock is never one stray tap).
   registerSection('camp', {
-    id: 'solo-hero', title: 'Choose your hero',
+    id: 'solo-hero', title: 'Your hero',
     mount(sec) {
       sec.classList.add('solo-pick');
       if (sec.parentNode) sec.parentNode.prepend(sec);   // first on the Camp view
-      const note = el('p', 'note', 'Switch any time, for free. Gold, gear and camp are shared. Each hero keeps their own level.');
+      const note = el('p', 'note', 'Switch any time, for free. Each hero keeps their own level.');
+      const chips = el('div', 'sp-chips'), all = el('button', 'mini sp-all'); all.type = 'button';
+      sec.append(note, chips, all);
+      let armedK = '', armedA = '';
+      const press = k => {
+        const info = heroRouteInfo(k), action = info.playable ? 'switch' : info.ready && !info.unlocked ? 'unlock' : '';
+        if (!action || (action === 'switch' && soloHero() === k)) return;
+        if (armedK !== k || armedA !== action) { armedK = k; armedA = action; sec._up(); return; }
+        armedK = armedA = '';
+        const ok = action === 'unlock' ? heroUnlock(k) : heroPick(k);
+        if (ok) { try { save(); } catch (e) {} ui(true); if (typeof updatePortrait === 'function') updatePortrait(); }
+        sec._up();
+      };
+      const lvText = (k, info, lv, on_) => armedK === k ? (armedA === 'unlock' ? 'Tap again to unlock' : 'Tap again')
+        : info.state === 'coming-soon' ? 'Coming soon' : info.playable ? `Lv ${(lv[k] || { L: 1 }).L}` + (on_ ? ' · Playing' : '') : info.ready ? 'Locked · Unlock' : 'Locked';
+      const fig = (k, cv) => { try { if (heroHasKit(k) && typeof heroArtPreview === 'function') heroArtPreview(cv, k); } catch (e) {} };
+
+      // the sheet: every hero, as the new-game picker shows them
+      const ov = el('div', 'sp-ov hs-ov'); ov.id = 'heroSheet'; ov.hidden = true;
+      ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-label', 'All heroes');
+      const sh = el('div', 'sp-sheet hs-sheet'), head = el('div', 'sp-head');
+      const x = el('button', 'sp-x', '×'); x.type = 'button'; x.setAttribute('aria-label', 'Close');
+      head.append(el('b', null, 'All heroes'), el('small', null, 'Gold, gear and camp are shared. Each hero keeps their own level.'), x);
       const row = el('div', 'sp-row');
-      sec.append(note, row);
+      sh.append(head, row); ov.append(sh); document.body.append(ov);
+      const close = () => { ov.hidden = true; all.focus(); };
+      x.addEventListener('click', close);
+      ov.addEventListener('click', e => { if (e.target === ov) close(); });
+      ov.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+      all.addEventListener('click', () => {
+        ov.hidden = false; sec._up();
+        if (!row._drawn) { row._drawn = true; requestAnimationFrame(() => { for (const b of sec._cards) fig(b.dataset.hero, b._cv); }); }
+        x.focus();
+      });
       // C9: all 32 heroes share the same route states as the new-game picker.
       sec._cards = HERO_ORDER.map(k => {
         const h = SOLO_HEROES[k], R = ROSTER[k];
@@ -36562,33 +36669,45 @@ var soloIconURL = () => '';
         const lv = el('span', 'sp-lv'), route = el('small'), bio = el('small', null, heroBio(k));
         b.append(cv, nm, sub, lv, route, bio);
         b._lv = lv; b._cv = cv; b._route = route;
-        b.addEventListener('click', () => {
-          const info = heroRouteInfo(k), action = info.playable ? 'switch' : info.ready && !info.unlocked ? 'unlock' : '';
-          if (!action || (action === 'switch' && soloHero() === k)) return;
-          if (b.dataset.armed !== '1' || b._action !== action) {
-            for (const c of sec._cards) c.dataset.armed = '';
-            b.dataset.armed = '1'; b._action = action;
-            sec._up(); putText(b._lv, action === 'unlock' ? 'Tap again to unlock' : 'Tap again'); return;
-          }
-          b.dataset.armed = '';
-          const ok = action === 'unlock' ? heroUnlock(k) : heroPick(k);
-          if (ok) { try { save(); } catch (e) {} ui(true); if (typeof updatePortrait === 'function') updatePortrait(); }
-          sec._up();
-        });
+        b.addEventListener('click', () => press(k));
         row.append(b);
         return b;
       });
-      requestAnimationFrame(() => { for (const b of sec._cards) { try { if (heroHasKit(b.dataset.hero) && typeof heroArtPreview === 'function') heroArtPreview(b._cv, b.dataset.hero); } catch (e) {} } });
+      // the chips: who you can play, or unlock now (rebuilt when that set changes)
+      let chipSig = '';
+      const chipList = () => HERO_ORDER.filter(k => { const i = heroRouteInfo(k); return i.playable || (i.ready && !i.unlocked); });
       sec._up = () => {
-        const lv = soloLevels(), cur = soloHero();
+        const lv = soloLevels(), cur = soloHero(), list = chipList(), sig = list.join();
+        if (sig !== chipSig) {
+          chipSig = sig;
+          chips.replaceChildren(...list.map(k => {
+            const c = el('button', 'sp-chip'); c.type = 'button'; c.dataset.hero = k;
+            // the head portrait (28 x 28, 1 art px = 1 CSS px), as the header shows it
+            let u = ''; try { u = heroHasKit(k) && typeof heroArtPortraitURL === 'function' ? heroArtPortraitURL(k) : typeof portraitURL === 'function' ? portraitURL(k) : ''; } catch (e) {}
+            const im = img(u, 'sp-cfig px');
+            const t = el('span', 'sp-ct'); c._lv = el('small');
+            t.append(el('b', null, ROSTER[k].name.split(' ')[0]), c._lv);
+            c.append(im, t); c.addEventListener('click', () => press(k));
+            return c;
+          }));
+        }
+        for (const c of chips.children) {
+          const k = c.dataset.hero, info = heroRouteInfo(k), on_ = k === cur;
+          c.classList.toggle('on', on_); c.setAttribute('aria-pressed', on_ ? 'true' : 'false');
+          putAttr(c, 'data-armed', armedK === k ? '1' : '');
+          putText(c._lv, lvText(k, info, lv, on_));
+        }
+        putText(all, `All heroes (${HERO_ORDER.length})`);
+        if (ov.hidden) return;
         for (const b of sec._cards) {
           const k = b.dataset.hero, on_ = k === cur, info = heroRouteInfo(k);
           b.dataset.state = info.state;
           b.disabled = !info.playable && !(info.ready && !info.unlocked);
           b.setAttribute('aria-pressed', on_ ? 'true' : 'false');
           b.classList.toggle('on', on_);
+          b.dataset.armed = armedK === k ? '1' : '';
           putText(b._route, info.unlocked ? (info.playable ? 'Unlocked' : 'Route complete. The solo kit comes later.') : info.how);
-          if (b.dataset.armed !== '1') putText(b._lv, info.state === 'coming-soon' ? 'Coming soon' : info.playable ? `Lv ${(lv[k] || { L: 1 }).L}` + (on_ ? ' · Playing' : '') : info.ready ? 'Locked · Unlock' : 'Locked');
+          putText(b._lv, lvText(k, info, lv, on_));
         }
       };
       sec._up();
