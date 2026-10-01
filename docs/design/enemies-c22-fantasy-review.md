@@ -1,5 +1,7 @@
 # C22 fantasy direction: concept review, not final roster
 
+> **Structure now finalized:** [Final roster contract](enemies-c22-final-contract.md) records175 zone monsters,35 Champions and5 Elders (215 unique), plus175 Captain enhancements. This earlier exploration is retained as design history, not the current count or role contract.
+
 Owner direction, 1 October 2026. **The owner is discussing the target count with Claude. Final roster selection, enemy count, variants and art production remain open.** These documents explore and rank concepts; their number of rows is not an approved production count or quota per area.
 
 ## What changed
