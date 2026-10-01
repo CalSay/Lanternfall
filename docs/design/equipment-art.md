@@ -184,8 +184,13 @@ earlier steps prove the anchors.
 
 ### Starting gear
 
-New heroes start **dressed and armed**: the grade 1 item in each class slot (weapon, off-hand, head, body). Today
-they start with nothing.
+New heroes start **dressed and armed** in a plain starter set, one item in each class slot (weapon, off-hand, head,
+body). Today they start with nothing.
+
+**Below grade 1** (owner, 2026-10-01: "It's just a stepping stone so that they aren't naked"). The starter set is a
+"grade 0" tier: weaker than anything you can craft, never craftable or salvageable for value. Any crafted grade 1
+item replaces it. Codex designs its look (and its icons) as part of C27. Claude adds the runtime once the pack is
+approved: grade 0 items, the starting equipment, their small stats, and a save-key bump.
 
 Open for the owner:
 
@@ -213,8 +218,7 @@ hero at once.
 4. **The 4 tools:** one shared look, 4 angles each.
 5. **Combiner preview:** every hero, every pose, starting gear on and off, and the outfit on.
 
-All of these are "look A" for their slot (§2 Rule 4). Later grades in band A reuse them with their own palettes, so
-this pack also covers grades 1-5 on the hero once the palettes are set.
+The starter set is its own look, below band A. Band A (grades 1-5) is the next look per slot.
 
 Record the time each step took and where the fit broke. That gives the owner a real estimate for looks B and C.
 
@@ -225,6 +229,7 @@ Record the time each step took and where the fit broke. That gives the owner a r
 3. **Uniques:** should boss loot get its own on-hero look, or only an icon and a glow?
 4. **Gathering:** does the weapon hide while a tool is out (proposed), or hang on the back (more drawings)?
 5. **Starting tools:** none (proposed, keeps the tutorial), or a starter set?
+6. ~~Starting gear grade~~ Decided: a grade 0 starter set, below grade 1 (§5).
 
 ## 7. Who does what
 
