@@ -1176,7 +1176,11 @@ let resize, animate, draw, stageStats, warmScene;
     const tg = target(), m = s.m;
     if (s.fl > 0) return tg === 'mob' && s.fl > 0.02 ? f.idle0 : f.hit;   // a pack foe's hit flash is an overlay on idle0 (drawFoe)
     if (tg === 'world' && wyrmHit > 0) return f.hit;
-    if (tg === 'node') return nodeShake > 0 ? f.strike : f.idle0;
+    if (tg === 'node') {
+      const ft = typeof gatherFall === 'function' ? gatherFall() : -1;   // hunting: the spent beast lies down
+      if (ft >= 0 && ft < BEAST_FALL && f.fallen) return f.fallen;
+      return nodeShake > 0 && ft < 0 ? f.strike : f.idle0;
+    }
     if (m && tg === 'mob' && !m.dead && ((tele && tele.foe === m) || m.chanT > 0)) return f.wind;
     if (s.st === 1) return f.wind;
     if (s.st === 2) return f.strike;
@@ -1191,6 +1195,9 @@ let resize, animate, draw, stageStats, warmScene;
       if (m.dead) { alpha = Math.max(0, 1 - m.dead / 0.4); y += Math.round(m.dead * 30); }
       else if (m.born < 0.15) { sy = 0.4 + 0.6 * (m.born / 0.15); alpha = Math.min(1, m.born / 0.1 + 0.3); }
       if (s.hover && !reduced) y += Math.round(Math.sin(T * 3 + (s.hx & 7)) * 2);
+    } else if (tg === 'node' && typeof gatherFall === 'function' && gatherFall() >= 0) {
+      const ft = gatherFall();   // the fallen beast fades out over its last 0.4 s, then the fresh one fades in
+      alpha = ft < BEAST_FALL ? Math.min(1, (BEAST_FALL - ft) / 0.4) : (ft - BEAST_FALL) / BEAST_FADE;
     } else if (tg === 'node' && nodeShake > 0 && !reduced) x += Math.round((Math.random() - 0.5) * 3);
     else if (tg === 'world' && !reduced) y += Math.round(Math.sin(T * 1.6) * 2);
     if (alpha <= 0) return;

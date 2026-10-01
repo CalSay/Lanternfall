@@ -24854,7 +24854,11 @@ let resize, animate, draw, stageStats, warmScene;
     const tg = target(), m = s.m;
     if (s.fl > 0) return tg === 'mob' && s.fl > 0.02 ? f.idle0 : f.hit;   // a pack foe's hit flash is an overlay on idle0 (drawFoe)
     if (tg === 'world' && wyrmHit > 0) return f.hit;
-    if (tg === 'node') return nodeShake > 0 ? f.strike : f.idle0;
+    if (tg === 'node') {
+      const ft = typeof gatherFall === 'function' ? gatherFall() : -1;   // hunting: the spent beast lies down
+      if (ft >= 0 && ft < BEAST_FALL && f.fallen) return f.fallen;
+      return nodeShake > 0 && ft < 0 ? f.strike : f.idle0;
+    }
     if (m && tg === 'mob' && !m.dead && ((tele && tele.foe === m) || m.chanT > 0)) return f.wind;
     if (s.st === 1) return f.wind;
     if (s.st === 2) return f.strike;
@@ -24869,6 +24873,9 @@ let resize, animate, draw, stageStats, warmScene;
       if (m.dead) { alpha = Math.max(0, 1 - m.dead / 0.4); y += Math.round(m.dead * 30); }
       else if (m.born < 0.15) { sy = 0.4 + 0.6 * (m.born / 0.15); alpha = Math.min(1, m.born / 0.1 + 0.3); }
       if (s.hover && !reduced) y += Math.round(Math.sin(T * 3 + (s.hx & 7)) * 2);
+    } else if (tg === 'node' && typeof gatherFall === 'function' && gatherFall() >= 0) {
+      const ft = gatherFall();   // the fallen beast fades out over its last 0.4 s, then the fresh one fades in
+      alpha = ft < BEAST_FALL ? Math.min(1, (BEAST_FALL - ft) / 0.4) : (ft - BEAST_FALL) / BEAST_FADE;
     } else if (tg === 'node' && nodeShake > 0 && !reduced) x += Math.round((Math.random() - 0.5) * 3);
     else if (tg === 'world' && !reduced) y += Math.round(Math.sin(T * 1.6) * 2);
     if (alpha <= 0) return;
@@ -26771,13 +26778,15 @@ function registerSceneTheme(name, def) { SCENE_EXT[name] = def; }
 //
 // Globals (62-stage calls them at small hooks):
 //   gatherTheme(kind) -> scene theme       gatherSpot(SW, GY) -> { x, y } the worked node's feet
+//   gatherFall() -> s since the hunted beast fell, or -1 (62-stage draws it fallen, then fades a fresh one in)
 //   gatherHeroX(x) -> x                    the hero's x while it walks to its node (x: where it stands)
 //   gatherWalking() -> bool                the hero is walking between nodes
 //   gatherRight(x) -> x                    the worked row's right edge (the cold Hearth's plots stand past it)
 //   gatherDraw(ctx, scene, cam, part, s)   part 'back': piles, shadows and the other nodes (before the
 //                                          worked node); 'front': nodes in front of it, its cracks, the
 //                                          Glint and node lights. s: the stage's foe record (dX, dY, dF)
-let gatherTheme, gatherSpot, gatherHeroX, gatherWalking, gatherDraw, gatherRight;
+let gatherTheme, gatherSpot, gatherHeroX, gatherWalking, gatherDraw, gatherRight, gatherFall;
+const BEAST_FALL = 1.6, BEAST_FADE = 0.4;   // s a spent beast lies there; s the fresh one takes to fade in
 {
   const THEME = { ore: 'gmine', crystal: 'gglade', wood: 'gwoods', fibre: 'gmeadow', herb: 'gmeadow' };
   // hunting: the woods scene sits under the hunting-grounds bitmap (64i huntBgDraw) while the interim art is on
@@ -27091,7 +27100,7 @@ let gatherTheme, gatherSpot, gatherHeroX, gatherWalking, gatherDraw, gatherRight
     } catch (e) {}
     return 0;
   }
-  const G = { reach: 0, reachT: -9, key: '', kind: '', t: 1, fam: 'rock', fr: null, nodes: [], cur: 0, pile: 0, lastT: -1, SW: 0, GY: 0, lift: 0, walk: null, snap: true, stage: 0, cutX: 0 };
+  const G = { fallT: -99, reach: 0, reachT: -9, key: '', kind: '', t: 1, fam: 'rock', fr: null, nodes: [], cur: 0, pile: 0, lastT: -1, SW: 0, GY: 0, lift: 0, walk: null, snap: true, stage: 0, cutX: 0 };
   const ease = q => q < 0 ? 0 : q > 1 ? 1 : q * q * (3 - 2 * q);
   const frames = () => enemyFrames('node:' + gatherArtKind(G.kind), { tier: G.t });
 
@@ -27114,15 +27123,15 @@ let gatherTheme, gatherSpot, gatherHeroX, gatherWalking, gatherDraw, gatherRight
     // at the cold Hearth (63d) the station plots take the stage's right edge: keep it clear
     // (and the hero stands clear of the fire and Hesketh, at the left)
     const xa = Math.round((cold ? Math.max(HERO_MIN, SW * 0.3) : HERO_MIN) + (G.reach || REACH) - w * (NODE_HIT[gatherArtKind(kind)] ?? 0.15) + ox), xb = Math.min(Math.round(SW * 0.9), cold ? SW - rx - 30 : Math.round(SW - rx * 0.75));
-    // beasts stand apart, two to work and one off in the trees (not a herd shoulder to shoulder)
-    const beast = G.fam === 'beast', gap = beast ? Math.round(w * 1.1) : Math.max(24, Math.round(w * 0.42)), nMax = beast ? 2 : SW < 270 ? 3 : SW < 400 ? 4 : 5;
-    const nw = xb - xa < 10 ? 1 : Math.max(2, Math.min(nMax, Math.floor((xb - xa) / gap) + 1));   // two at least: the hero walks
+    // hunting: one beast at a time (owner, 2026-10-01); it falls and a fresh one takes its place (gatherFall)
+    const beast = G.fam === 'beast', gap = Math.max(24, Math.round(w * 0.42)), nMax = SW < 270 ? 3 : SW < 400 ? 4 : 5;
+    const nw = beast || xb - xa < 10 ? 1 : Math.max(2, Math.min(nMax, Math.floor((xb - xa) / gap) + 1));   // two at least: the hero walks
     // Worked nodes: the front and back lanes in turn (the last in front). Then smaller ones further off
     // (the art at 1x, hazed: young trees, a low outcrop, a small patch), so 3-5 always show: first in the
     // open ground left of the worked row (behind the hero), then in the row's gaps. Never over the fire.
     const list = [];
-    for (let i = 0; i < nw; i++) list.push({ x: nw > 1 ? Math.round(xa + (xb - xa) * i / (nw - 1)) : Math.max(xa, xb), lane: (nw - 1 - i) % 2 ? 0 : 1 });
-    const nDeep = beast ? 1 : Math.max(1, (SW < 270 ? 4 : 5) - nw), spots = [], half = Math.round(w * 0.25), x0 = cold ? Math.round(SW * 0.36) + half : Math.round(half * 0.5);
+    for (let i = 0; i < nw; i++) list.push({ x: nw > 1 ? Math.round(xa + (xb - xa) * i / (nw - 1)) : beast ? Math.max(xa, Math.round((xa + xb) / 2)) : Math.max(xa, xb), lane: (nw - 1 - i) % 2 ? 0 : 1 });   // the beast: mid-stage
+    const nDeep = beast ? 0 : Math.max(1, (SW < 270 ? 4 : 5) - nw), spots = [], half = Math.round(w * 0.25), x0 = cold ? Math.round(SW * 0.36) + half : Math.round(half * 0.5);
     for (let x = x0; x <= xa - Math.round(gap * 1.1); x += Math.max(30, Math.round(w * 0.5))) spots.push(x);
     for (let i = 1; i < nw; i += 2) if (list[i].x - list[i - 1].x >= w * 0.5) spots.push(Math.round((list[i - 1].x + list[i].x) / 2));
     if (!spots.length) spots.push(Math.min(SW - half - 4, xb + Math.round(gap * 0.8)));
@@ -27141,9 +27150,11 @@ let gatherTheme, gatherSpot, gatherHeroX, gatherWalking, gatherDraw, gatherRight
     }
     G.stage = 0;
   }
-  on('sceneReset', () => { seenT = -1; G.key = ''; G.kind = ''; G.walk = null; G.snap = true; });
+  on('sceneReset', () => { G.fallT = -99; seenT = -1; G.key = ''; G.kind = ''; G.walk = null; G.snap = true; });
 
   gatherRight = x => { let r = x; const f = G.fr && G.fr.idle0; if (f) for (const nd of G.nodes) if (!nd.deep) r = Math.max(r, nd.x + f.c.width - f.ox); return r; };
+  // seconds since the hunted beast fell (-1: none falling); 62-stage shows it lying down, then a fresh one fades in
+  gatherFall = () => G.fam === 'beast' && T - G.fallT < BEAST_FALL + BEAST_FADE ? T - G.fallT : -1;
   gatherSpot = (SW, GY) => { ensure(SW, GY); const nd = G.nodes[G.cur]; return nd || { x: Math.round(SW * 0.68), y: GY }; };
 
   // The hero walks from node to node (snaps under reduced motion or when the scene changes).
@@ -27171,6 +27182,7 @@ let gatherTheme, gatherSpot, gatherHeroX, gatherWalking, gatherDraw, gatherRight
     const nd = N[G.cur], cap = capOf();
     G.pile = Math.min(PILE_MAX[pileKind()] || 6, G.pile + 1);
     if (++nd.hits < cap) { chipFx(nd); return; }
+    if (G.fam === 'beast') { nd.hits = 0; G.fallT = T; spentFx(nd); return; }   // the beast falls where it stands (gatherFall)
     nd.st = 'gone'; nd.g = 0; nd.hits = 0;
     // grows back in about half the time the other nodes take to work through
     nd.rg = Math.max(REGROW, Math.min(30, (n - 1) * cap * unitT() * 0.5));
