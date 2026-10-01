@@ -1,0 +1,10 @@
+motion-proofs\sickle-low\pip-contact-shared.png: 224x192, binary alpha, nonempty PASS
+motion-proofs\sickle-low\pip-pullback-shared.png: 224x192, binary alpha, nonempty PASS
+motion-proofs\sickle-low\pip-reach-shared.png: 224x192, binary alpha, nonempty PASS
+motion-proofs\sickle-low\tobin-contact-shared.png: 224x192, binary alpha, nonempty PASS
+motion-proofs\sickle-low\tobin-pullback-shared.png: 224x192, binary alpha, nonempty PASS
+motion-proofs\sickle-low\tobin-reach-shared.png: 224x192, binary alpha, nonempty PASS
+motion-proofs\pick-wall\pip-contact-shared.png: 224x192, binary alpha, nonempty PASS
+motion-proofs\pick-wall\tobin-contact-shared.png: 224x192, binary alpha, nonempty PASS
+Both shared pick tips opaque at64px above ground PASS
+Visual/motion approval and complete production pack: PENDING

@@ -1,0 +1,83 @@
+[
+  {
+    "hero": "wren",
+    "phase": "ready",
+    "height": 96,
+    "source": "art/equipment/starting-v1/references/hunting-motion/wren-ready-reference.png",
+    "sourceCommit": "dd56169",
+    "status": "provenance-conflict-motion-reference-only",
+    "notes": "Native comparison only. Silver spear is old source, not current Copper equipment; no production/owner approval claim."
+  },
+  {
+    "hero": "wren",
+    "phase": "thrust",
+    "height": 96,
+    "source": "art/equipment/starting-v1/references/hunting-motion/wren-thrust-reference.png",
+    "sourceCommit": "dd56169",
+    "status": "provenance-conflict-motion-reference-only",
+    "notes": "Native comparison only. Silver spear is old source, not current Copper equipment; no production/owner approval claim."
+  },
+  {
+    "hero": "wren",
+    "phase": "recovery",
+    "height": 96,
+    "source": "art/equipment/starting-v1/references/hunting-motion/wren-recovery-reference.png",
+    "sourceCommit": "dd56169",
+    "status": "provenance-conflict-motion-reference-only",
+    "notes": "Native comparison only. Silver spear is old source, not current Copper equipment; no production/owner approval claim."
+  },
+  {
+    "hero": "tobin",
+    "phase": "ready",
+    "height": 94,
+    "source": "art/equipment/starting-v1/references/hunting-motion/tobin-ready-reference.png",
+    "sourceCommit": "dd56169",
+    "status": "provenance-conflict-motion-reference-only",
+    "notes": "Native comparison only. Silver spear is old source, not current Copper equipment; no production/owner approval claim."
+  },
+  {
+    "hero": "tobin",
+    "phase": "thrust",
+    "height": 94,
+    "source": "art/equipment/starting-v1/references/hunting-motion/tobin-thrust-reference.png",
+    "sourceCommit": "dd56169",
+    "status": "provenance-conflict-motion-reference-only",
+    "notes": "Native comparison only. Silver spear is old source, not current Copper equipment; no production/owner approval claim."
+  },
+  {
+    "hero": "tobin",
+    "phase": "recovery",
+    "height": 94,
+    "source": "art/equipment/starting-v1/references/hunting-motion/tobin-recovery-reference.png",
+    "sourceCommit": "dd56169",
+    "status": "provenance-conflict-motion-reference-only",
+    "notes": "Native comparison only. Silver spear is old source, not current Copper equipment; no production/owner approval claim."
+  },
+  {
+    "hero": "pip",
+    "phase": "ready",
+    "height": 84,
+    "source": "art/equipment/starting-v1/references/hunting-motion/pip-ready-reference.png",
+    "sourceCommit": "dd56169",
+    "status": "provenance-conflict-motion-reference-only",
+    "notes": "Native comparison only. Silver spear is old source, not current Copper equipment; no production/owner approval claim."
+  },
+  {
+    "hero": "pip",
+    "phase": "thrust",
+    "height": 84,
+    "source": "art/equipment/starting-v1/references/hunting-motion/pip-thrust-reference.png",
+    "sourceCommit": "dd56169",
+    "status": "provenance-conflict-motion-reference-only",
+    "notes": "Native comparison only. Silver spear is old source, not current Copper equipment; no production/owner approval claim."
+  },
+  {
+    "hero": "pip",
+    "phase": "recovery",
+    "height": 84,
+    "source": "art/equipment/starting-v1/references/hunting-motion/pip-recovery-reference.png",
+    "sourceCommit": "dd56169",
+    "status": "provenance-conflict-motion-reference-only",
+    "notes": "Native comparison only. Silver spear is old source, not current Copper equipment; no production/owner approval claim."
+  }
+]
