@@ -69,9 +69,9 @@ about 92x the starting hero's attack in HP: about 8-15 party turns **[est]**. No
    about 100x over the whole game, not millions.
 2. **Defence is the main skill.** A normal enemy's turn is 1-3 hits, a boss's up to 5-9. Each avoided hit matters, and
    a full parry pays the counter (already our rule).
-3. **Hits hurt, but idle must survive.** In Expedition 33 a missed defence can take 30-50% of HP. We are an idle game:
-   Auto only parries 10% and dodges 25%. Proposed: a normal enemy's whole turn takes 10-20% of HP if not defended; a
-   boss combo 40-70%. By-hand play gets the counters and refunds; Auto must still farm its zone.
+3. **Hits hurt.** Combat is active only (owner, 2026-10-01): no Auto or idle fighting. So we can follow Expedition 33
+   closely: a missed defence against a normal foe takes about 20-35% of HP, a boss's full combo undefended can be
+   lethal. Defence is the skill the game tests.
 4. **Our parry refund is our AP.** Expedition 33 gives +1 AP per parried hit; we take 1 turn off every cooldown per
    parried hit (owner rule). Same rhythm: defending well powers the next turn.
 5. **Modest multipliers.** Basic attack 1.0; abilities about 1.4-2.0; a setup payoff about x1.5; only finishers above

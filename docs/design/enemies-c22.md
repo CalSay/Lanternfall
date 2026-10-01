@@ -57,8 +57,8 @@ what they were. Keep that tone.
   during the charge stops it. Bosses take Stun as Stagger (`hero-abilities.md`).
 - **Enemy statuses** may hit the hero: Burn, Bleed, Venom, Chill, Weaken, Blind, and new ones if a foe needs them. Each
   one must be answerable by play (parry it, dodge it, cleanse it, or kill the foe first).
-- **Auto/idle must survive.** Auto parries 10% and dodges 25%. Every normal foe must be farmable on Auto at its zone;
-  only bosses demand hand play. Say for each foe how Auto fares.
+- **Combat is active only (owner, 2026-10-01).** There is no Auto or idle fighting: the player is there for every
+  fight. Design every foe to be played by hand; drop any "how Auto fares" field.
 
 ## 4. Deliverables
 
@@ -108,7 +108,6 @@ first (it is the one players are in), so the owner can review as you go.
 | Armour, weak to, resists | damage types from `21x-data-types.js` (phys, holy, poison, fire, frost) |
 | Moves | name, hits, timing pattern (e.g. "slow-slow-fast"), damage per hit as % hero HP, status, telegraph |
 | What it tests | the one thing the hero must do well against it |
-| Auto | how Auto/idle fares (must farm, for normal foes) |
 | Hero matchups | which of Wren, Tobin, Pip it favours or punishes, and which abilities answer it |
 | Drops | its signature drop (keep the existing material families: `21-data-craft.js`, `region-2.md`) |
 | Art note | the poses it needs: idle, each move's wind-up and hit, hurt, defeated (art comes later; this sizes the job) |

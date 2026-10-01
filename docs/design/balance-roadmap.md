@@ -17,7 +17,7 @@ A full review of every enemy we fight, rebuilt for turn combat:
 - **Defence per hit:** each hit is its own parry-or-dodge choice. Every successful parry takes 1 turn off every ability
   cooldown. The counter only comes if every hit of that attack was parried.
 - Each enemy gets: moves (name, hits, timing pattern, damage per hit as % of hero HP at that zone, status it applies),
-  Speed, HP, armour and weaknesses, its C25 profile tell, and how Auto plays against it.
+  Speed, HP, armour and weaknesses, and its C25 profile tell. Combat is active only (owner): no Auto or idle fighting.
 - Bosses also get phases, a stagger rule and one move that teaches the fight.
 - Covers the zone foes (7 types x regions), elites (7 traits), zone bosses, region bosses, Deepwell and Hunting beasts.
   The world raid stays out (online layer).
@@ -26,7 +26,6 @@ A full review of every enemy we fight, rebuilt for turn combat:
 
 - **Scale health and damage down** to small, readable numbers, using Expedition 33's power curve as the guide (research:
   `e33-reference.md`, when written).
-- A deep pass per hero and per enemy: time to kill and hits to die at each stage, parry and dodge value, Auto vs by-hand,
-  away/idle earnings, and the early pacing targets in `pacing.md`.
+- A deep pass per hero and per enemy: time to kill and hits to die at each stage, parry and dodge value, and the early pacing targets in `pacing.md`.
 - Tools: `tools/sim.mjs` and new turn-combat sims; checks pin the targets.
 - Needs the abilities and enemies from steps 1 and 2 first.

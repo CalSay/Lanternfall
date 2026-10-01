@@ -50,6 +50,8 @@ These came in after checkpoint `57ed6ad` and override anything below that disagr
    they fit.
 6. **Equip 3 for now.** A 4th slot comes with a bag button (a turn to drink a potion or eat food), later.
 7. **Aim** is Wren's resource. **Base crit ×2.5** (live since `17b1b7e`).
+8. **Combat is active only.** No Auto or idle fighting; every fight is played by hand. Rules below that mention Auto
+   (Auto's chooser, Auto parry, "Auto counts as Good", Auto damage factors) are void and drop out of the engine work.
 
 ## 2. Rules every ability follows
 
