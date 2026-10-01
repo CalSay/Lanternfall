@@ -1,0 +1,40 @@
+[
+  {
+    "hero": "tobin",
+    "file": "tobin-contact-shared.png",
+    "sharedCropOrigin": [
+      126,
+      57
+    ],
+    "tip": [
+      176,
+      68
+    ],
+    "groundAnchor": [
+      96,
+      132
+    ],
+    "height": 64,
+    "status": "review-pending",
+    "limitation": "Shared authored head and upper haft; lower grip and haft still baked into hero. Partial proof, not complete shared equipment layer."
+  },
+  {
+    "hero": "pip",
+    "file": "pip-contact-shared.png",
+    "sharedCropOrigin": [
+      113,
+      57
+    ],
+    "tip": [
+      163,
+      68
+    ],
+    "groundAnchor": [
+      96,
+      132
+    ],
+    "height": 64,
+    "status": "review-pending",
+    "limitation": "Shared authored head and upper haft; lower grip and haft still baked into hero. Partial proof, not complete shared equipment layer."
+  }
+]

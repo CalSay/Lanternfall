@@ -1,0 +1,78 @@
+[
+  {
+    "hero": "tobin",
+    "nativeBodyHeight": 94,
+    "canvas": [
+      224,
+      192
+    ],
+    "equipmentBakedIn": true,
+    "frames": [
+      {
+        "phase": "contact",
+        "file": "tobin-contact-native.png",
+        "sourceBBox": [
+          208,
+          331,
+          1122,
+          1020
+        ],
+        "origin": [
+          54,
+          38
+        ],
+        "footAnchorInCrop": [
+          42,
+          94
+        ],
+        "groundAnchor": [
+          96,
+          132
+        ],
+        "status": "motion-review-pending",
+        "contactHeightTarget": [
+          64,
+          64
+        ]
+      }
+    ]
+  },
+  {
+    "hero": "pip",
+    "nativeBodyHeight": 84,
+    "canvas": [
+      224,
+      192
+    ],
+    "equipmentBakedIn": true,
+    "frames": [
+      {
+        "phase": "contact",
+        "file": "pip-contact-native.png",
+        "sourceBBox": [
+          174,
+          245,
+          1185,
+          1033
+        ],
+        "origin": [
+          53,
+          48
+        ],
+        "footAnchorInCrop": [
+          43,
+          84
+        ],
+        "groundAnchor": [
+          96,
+          132
+        ],
+        "status": "motion-review-pending",
+        "contactHeightTarget": [
+          64,
+          64
+        ]
+      }
+    ]
+  }
+]

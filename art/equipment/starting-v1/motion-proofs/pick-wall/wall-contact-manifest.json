@@ -1,0 +1,54 @@
+[
+  {
+    "hero": "tobin",
+    "heroOrigin": [
+      164,
+      108
+    ],
+    "nodeOrigin": [
+      151,
+      52
+    ],
+    "worldContact": [
+      340,
+      176
+    ],
+    "groundY": 240,
+    "tip": [
+      176,
+      68
+    ],
+    "nodeContact": [
+      189,
+      124
+    ],
+    "nodeSha256": "41d7858f41ac48f46a23ab5eb341cf8160480e54cee2df9e212ea7f73023d060",
+    "status": "review-pending"
+  },
+  {
+    "hero": "pip",
+    "heroOrigin": [
+      177,
+      108
+    ],
+    "nodeOrigin": [
+      151,
+      52
+    ],
+    "worldContact": [
+      340,
+      176
+    ],
+    "groundY": 240,
+    "tip": [
+      163,
+      68
+    ],
+    "nodeContact": [
+      189,
+      124
+    ],
+    "nodeSha256": "41d7858f41ac48f46a23ab5eb341cf8160480e54cee2df9e212ea7f73023d060",
+    "status": "review-pending"
+  }
+]

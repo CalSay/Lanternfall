@@ -24,24 +24,32 @@
       "direction": "lateral into tree trunk",
       "phases": [
         {
-          "name": "wind-up",
-          "pose": "new-axe-side-windup",
-          "status": "requires-authored-pose",
+          "name": "windup",
+          "pose": "motion-proofs/axe-side/{hero}-windup-native.png",
+          "status": "bounded-static-motion-review-passed",
           "body": "Torso turns away, weight on rear leg, both hands near rear shoulder."
         },
         {
           "name": "contact",
-          "pose": "new-axe-side-contact",
-          "status": "requires-authored-pose",
+          "pose": "motion-proofs/axe-side/{hero}-contact-native.png",
+          "status": "bounded-static-motion-review-passed",
           "body": "Torso rotates toward trunk, weight transfers forward, axe edge at trunk side48px above ground."
         },
         {
-          "name": "follow-through",
-          "pose": "style-normalisation side proof",
-          "status": "style-review-pending",
+          "name": "recovery",
+          "pose": "motion-proofs/axe-side/{hero}-recovery-native.png",
+          "status": "bounded-static-motion-review-passed",
           "body": "Side lunge with connected two-hand grip; existing g7 is gesture reference only."
         }
-      ]
+      ],
+      "draftDirectory": "motion-proofs/axe-side",
+      "heroesDrafted": [
+        "tobin",
+        "pip"
+      ],
+      "productionReady": false,
+      "limitation": "Authored key-pose proofs; complete interchangeable layers, semantic palette masks, smooth in-betweens and production registration remain outstanding.",
+      "nodeContext": "Old small-tree draft only; replace with current mature-trunk context and recheck contact before final acceptance."
     },
     "sickle": {
       "resources": [
@@ -55,24 +63,31 @@
       "direction": "low lateral sweep across plant stems",
       "phases": [
         {
-          "name": "wind-up",
-          "pose": "new-sickle-low-side-windup",
-          "status": "requires-authored-pose",
+          "name": "reach",
+          "pose": "motion-proofs/sickle-low/{hero}-reach-shared.png",
+          "status": "six-frame-review-pending",
           "body": "Crouch with hips loaded to rear, hand low at side."
         },
         {
           "name": "contact",
-          "pose": "new-sickle-low-side-contact",
-          "status": "requires-authored-pose",
+          "pose": "motion-proofs/sickle-low/{hero}-contact-shared.png",
+          "status": "six-frame-review-pending",
           "body": "Low lateral pull with crescent edge crossing stem base, not overhead/downstroke."
         },
         {
-          "name": "follow-through",
-          "pose": "new-sickle-low-side-follow",
-          "status": "requires-authored-pose",
+          "name": "pullback",
+          "pose": "motion-proofs/sickle-low/{hero}-pullback-shared.png",
+          "status": "six-frame-review-pending",
           "body": "Weight transfers sideways while hand stays below waist; g6 only posture reference."
         }
-      ]
+      ],
+      "draftDirectory": "motion-proofs/sickle-low",
+      "heroesDrafted": [
+        "tobin",
+        "pip"
+      ],
+      "productionReady": false,
+      "limitation": "Authored key-pose proofs; complete interchangeable layers, semantic palette masks, smooth in-betweens and production registration remain outstanding."
     },
     "pick": {
       "resources": [
@@ -83,24 +98,31 @@
       "direction": "forward into vertical cave-wall deposit",
       "phases": [
         {
-          "name": "wind-up",
-          "pose": "new-pick-wall-windup",
+          "name": "windup",
+          "pose": "motion-proofs/pick-wall/{hero}-windup-shared.png",
           "status": "requires-authored-pose",
           "body": "Coiled torso and raised rear grip, eyes toward reachable wall face."
         },
         {
           "name": "contact",
-          "pose": "new-pick-wall-contact",
-          "status": "requires-authored-pose",
+          "pose": "motion-proofs/pick-wall/{hero}-contact-shared.png",
+          "status": "contact-review-pending",
           "body": "Two hands drive pick point forward into wall64px above ground."
         },
         {
           "name": "recovery",
-          "pose": "new-pick-wall-recovery",
+          "pose": "motion-proofs/pick-wall/{hero}-recovery-shared.png",
           "status": "requires-authored-pose",
           "body": "Pull tool clear from wall before reload; no ground slam."
         }
-      ]
+      ],
+      "draftDirectory": "motion-proofs/pick-wall",
+      "heroesDrafted": [
+        "tobin",
+        "pip"
+      ],
+      "productionReady": false,
+      "limitation": "Authored key-pose proofs; complete interchangeable layers, semantic palette masks, smooth in-betweens and production registration remain outstanding."
     },
     "spear": {
       "resources": [
