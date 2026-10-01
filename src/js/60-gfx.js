@@ -29,12 +29,15 @@ function spriteURL(key, rows, pal) {
 }
 const icPal = (main, extra) => ({ 1: main, 2: darken(main, 0.35), 5: '#FFFFFF', 6: '#6B4A2E', 7: '#F2C14E', ...(extra || {}) });
 const iconURL = (name, main, extra) => spriteURL('ic:' + name + main + JSON.stringify(extra || {}), ICON[name], icPal(main, extra));
-const img = (url, cls) => { const i = el('img', cls || 'px'); i.src = url; i.alt = ''; return i; };
+const img = (url, cls) => { const i = el('img', cls || 'px'); if (typeof nicPut === 'function') nicPut(i, url); else i.src = url; i.alt = ''; return i; };
 // Crafting families (crystal, fibre, herb, hide) use K2's mat_* icons (11-art-craft.js).
 // C26: the approved resource icons first (48x48, 21r-data-resicons.js). '#res' marks them for smooth scaling in CSS.
 const matIcon = (k, t) => typeof RES_ICONS === 'object' && RES_ICONS.icons[k] && RES_ICONS.icons[k][t - 1] ? RES_ICONS.icons[k][t - 1] + '#res' : ICON['mat_' + k] && typeof craftIcon === 'function' ? iconURL(...craftIcon('mat_' + k, t)) : k === 'ore' ? iconURL('ore', MAT.ore.col[t - 1], { 2: '#3A3542', 1: MAT.ore.col[t - 1] }) : k === 'wood' ? iconURL('log', MAT.wood.col[t - 1], { 6: '#4A3220', 7: '#8C6A43', 1: MAT.wood.col[t - 1] }) : iconURL('orb', MAT.ess.col[t - 1], { 7: '#6E6878' });
-// Legacy kinds and uniques use SLOT icons; crafted kinds (CRAFT_KINDS) use K2's craftIcon.
+// C26: the approved gear icons first (GEAR_ICONS, grades 1-5 of every crafted kind; the old Sword and Helm show as the
+// Warblade and Greathelm). Uniques keep their own art. Then: legacy kinds use SLOT icons, crafted kinds K2's craftIcon.
+const GEAR_IC_ALIAS = { weapon: 'warblade', helm: 'greathelm' };
 function itemIcon(slot, t, u) {
+  if (!u && typeof nicTag === 'function') { const g = nicTag('gear', (GEAR_IC_ALIAS[slot] || slot) + '-g' + t); if (g) return g; }
   if (!SLOT[slot] && typeof craftIcon === 'function') {
     const d = CRAFT_KINDS[slot], ic = d && d.ic;
     if (ic && ICON[ic]) return iconURL(...craftIcon(ic, t));

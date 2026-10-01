@@ -83,3 +83,4 @@ button * { pointer-events: none; }
 @media (prefers-reduced-motion: reduce) { .bell.ping img, .bell.ping2 img { animation: none; } }
 /* C26 resource icons are painted 48x48 art: scale them smoothly (nearest-neighbour at 16 px muddies them) */
 img[src$="#res"] { image-rendering: auto; }
+img[src*="#nic:"] { image-rendering: auto; }   /* a gear icon set by code that does not use nicPut: the big image, smoothly scaled */

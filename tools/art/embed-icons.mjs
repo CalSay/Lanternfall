@@ -1,6 +1,7 @@
 // Embed the owner-approved C26 icon packs in the game, keeping only the native sizes the UI shows.
 // Reads Codex's exports (art/actions/game-v1/action-icons.js, art/navigation/game-v1/navigation-icons.js) as they
-// are, and writes src/js/21s-data-actionicons.js (ACTION_ICONS) and src/js/21t-data-navicons.js (NAV_ICONS).
+// are, and writes src/js/21s-data-actionicons.js (ACTION_ICONS), src/js/21t-data-navicons.js (NAV_ICONS) and
+// src/js/21u-data-gearicons.js (GEAR_ICONS, from art/gear/game-v2/gear-icons.js).
 // Nothing is redrawn or rescaled: each image is the exported PNG, byte for byte.
 // Usage: node tools/art/embed-icons.mjs
 import fs from 'node:fs';
@@ -12,7 +13,10 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '.
 // .menu-ic 22, .bell img 22, 60-nav .ap-ic 18/12, .mode-ic 16).
 const PACKS = [
   { src: 'art/actions/game-v1/action-icons.js', name: 'ACTION_ICONS', out: 'src/js/21s-data-actionicons.js', sizes: [24, 36, 48] },
-  { src: 'art/navigation/game-v1/navigation-icons.js', name: 'NAV_ICONS', out: 'src/js/21t-data-navicons.js', sizes: [12, 16, 18, 20, 22] }
+  { src: 'art/navigation/game-v1/navigation-icons.js', name: 'NAV_ICONS', out: 'src/js/21t-data-navicons.js', sizes: [12, 16, 18, 20, 22] },
+  // Gear (C26, all 330 owner-approved): item tiles show them at 22-48 px (.ic img 28, craft 32, hero sheet 24/48,
+  // gathering 26/40; 48 is 24 at x2, 60n-nicons). Only grades 1-5 exist in the game today; add 6-15 here when those tiers do.
+  { src: 'art/gear/game-v2/gear-icons.js', name: 'GEAR_ICONS', out: 'src/js/21u-data-gearicons.js', sizes: [24, 32], keep: id => +id.split('-g')[1] <= 5 }
 ];
 
 for (const p of PACKS) {
@@ -20,6 +24,7 @@ for (const p of PACKS) {
   const data = new Function(text + `\nreturn ${p.name};`)();
   const out = {};
   for (const [id, bySize] of Object.entries(data)) {
+    if (p.keep && !p.keep(id)) continue;
     out[id] = {};
     for (const s of p.sizes) {
       const u = bySize[s];

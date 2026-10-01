@@ -6847,6 +6847,11 @@ if (section('action and menu icons (C26)')) try {
   const need = ['attack-wren', 'attack-tobin', 'attack-pip', 'echo', 'bash', 'fire', 'parry', 'dodge', 'empty', 'fight', 'hero', 'gather', 'craft', 'camp', 'deeds', 'notices', 'mining', 'woodcutting', 'foraging', 'raid', 'deepwell'];
   const have = new Set([...(d.act || []), ...(d.nav || [])].map(([k]) => k));
   assert(need.every(k => have.has(k)), 'C26: every icon the UI asks for exists: ' + need.filter(k => !have.has(k)).join(', '));
+  const gear = JSON.parse(g.eval(`JSON.stringify(typeof GEAR_ICONS === 'object' ? { ids: Object.keys(GEAR_ICONS), sizes: [...new Set(Object.values(GEAR_ICONS).map(v => Object.keys(v).join()))],
+    want: Object.keys(CRAFT_KINDS).filter(k => !CRAFT_KINDS[k].legacy).flatMap(k => [1, 2, 3, 4, 5].map(t => k + '-g' + t)) } : null)`));
+  const missing = gear ? gear.want.filter(id => !gear.ids.includes(id)) : ['GEAR_ICONS'];
+  assert(gear && !missing.length && gear.ids.length === gear.want.length && gear.sizes.join('|') === '24,32',
+    `C26: every crafted kind has its approved gear icon at grades 1-5, at 24 and 32 px (${gear ? gear.ids.length : 0} icons${missing.length ? '; missing ' + missing.slice(0, 4).join(', ') : ''})`);
   assert(!g.errors.length, 'C26 icons: no core errors');
 } catch (e) { fail('action and menu icons crashed: ' + (e.stack || e)); }
 
@@ -6884,6 +6889,17 @@ if (section('action and menu icons (C26, browser)')) try {
           }
           return out;
         })())`));
+        // gear tiles (C26): a 28 px tile shows the 24 px icon unscaled; a 48 px one shows it at x2; the old Sword is the
+        // Warblade; a unique keeps its own art. Built, then read once the layout (ResizeObserver) has settled.
+        await page.evaluate(s => window.__t.x(s), `(() => { const t28 = icTile(itemIcon('bow', 3)), t48 = icTile(itemIcon('weapon', 2)); t48.classList.add('s56');
+          const tu = icTile(itemIcon('weapon', 3, 'sproutblade')), holder = el('div', 'pc-gear'); holder.id = 'c26gear'; holder.append(t28, t48, tu); document.body.append(holder); return 1; })()`);
+        await page.waitForTimeout(150);
+        const gr = JSON.parse(await page.evaluate(s => window.__t.x(s), `JSON.stringify((() => { const [i28, i48, iu] = [...document.querySelectorAll('#c26gear img')];
+          return { w28: i28.offsetWidth, n28: i28.naturalWidth, id28: i28._nic && i28._nic.id, fit: i28.style.objectFit,
+            w48: i48.offsetWidth, n48: i48.naturalWidth, id48: i48._nic && i48._nic.id, tf48: i48.style.transform, uniq: !iu._nic }; })())`));
+        assert(gr.id28 === 'bow-g3' && gr.fit === 'none' && gr.id48 === 'warblade-g2' && gr.uniq,
+          `C26 at ${w}x${h}: item tiles show the approved gear icons (old Sword -> Warblade), uniques keep theirs (${JSON.stringify(gr)})`);
+        assert(gr.n28 === 24 && (gr.w48 !== 48 || (gr.n48 === 24 && gr.tf48 === 'scale(2)')), `C26 at ${w}x${h}: a 28 px gear tile shows the 24 px icon unscaled, a 48 px one at x2 (${gr.n28}; ${gr.w48} px: ${gr.n48} ${gr.tf48 || 'no scale'})`);
         assert(r.seen >= 4 && !r.bad.length, `C26 at ${w}x${h}: tabs, bell and action bar show the approved icons at native size (${r.seen} seen${r.bad.length ? '; ' + r.bad.join('; ') : ''})`);
         assert(!errors.length, `C26 at ${w}x${h}: no page errors` + (errors.length ? ': ' + errors[0] : ''));
         await ctx.close();

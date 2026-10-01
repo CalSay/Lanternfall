@@ -314,7 +314,7 @@ function icTile(url, frame, extraCls) {
   d.append(img(url)); return d;
 }
 function setIc(tile, url, frame, extraCls) {
-  const im = tile.querySelector('img'); if (im.getAttribute('src') !== url) im.src = url;
+  nicPut(tile.querySelector('img'), url);
   putClass(tile, 'ic' + (frame ? ' f-' + frame : '') + (extraCls ? ' ' + extraCls : ''));
 }
 function makeRow(parent, name, ember, iconUrl, icCls) {

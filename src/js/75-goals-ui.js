@@ -53,7 +53,7 @@
       cLbl.textContent = 'Defeat a few foes to see your next goals.'; cSt.textContent = ''; cMore.textContent = '';
       cBar.style.width = '0%'; chip.setAttribute('aria-label', 'Next up: nothing yet'); return;
     }
-    const url = goalIcon(g.icon); if (url !== cUrl) { cIm.src = url; cUrl = url; }
+    const url = goalIcon(g.icon); if (url !== cUrl) { nicPut(cIm, url); cUrl = url; }
     const readyN = goals.filter(x => x.ready).length;
     cLbl.textContent = g.label;
     cSt.textContent = pctTxt(g);
@@ -99,7 +99,7 @@
           x.r.hidden = !g; x.goal = g || null;
           if (!g) return;
           const url = goalIcon(g.icon);
-          if (url !== x.url) { x.im.src = url; x.url = url; }
+          if (url !== x.url) { nicPut(x.im, url); x.url = url; }
           x.r.classList.toggle('ready', g.ready);
           x.lbl.textContent = g.label;
           x.fill.style.width = (g.pct * 100).toFixed(1) + '%';
