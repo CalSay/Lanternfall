@@ -1421,6 +1421,11 @@ if (section('onboarding hint placement (HINT1)')) try {
         return { before, after: parseFloat(after) };
       });
       assert(boxes.before !== boxes.after && boxes.after >= tabsH, `browser: the over-menu band sits above the tab bar (bottom ${boxes.after}px, tabs ${tabsH}px; was ${boxes.before})`);
+      // menu audit #19: "New" lasts 2 hours of play after an unlock, so an old save's long-past unlocks never show it
+      const nb = await X(`(() => { const o = S.onboard, v = { id: 'zz-test', feature: 'party' }, was = o.got.party;
+        o.got.party = Math.round(o.t); const a = onboardIsNew(v); o.got.party = Math.round(o.t) - 7300; const b = onboardIsNew(v);
+        if (was === undefined) delete o.got.party; else o.got.party = was; return [a, b].join(); })()`);
+      assert(nb === 'true,false', `browser: "New" shows after a fresh unlock and not 2 hours of play later (${nb})`);
       assert(!errs.length, 'browser: no page errors' + (errs.length ? ': ' + errs[0] : ''));
     } finally { await browser.close(); }
   }

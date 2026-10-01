@@ -35589,7 +35589,9 @@ let navUI = null;
   const tabBtns = [...document.querySelectorAll('.tabs .tab')];
   const tabShown = t => t === 'adv' || shownViews(t).length > 0;
   // A view (or a tab) is "new" from its unlock until the player first opens it.
-  onboardIsNew = v => !!(v && v.feature && O().got[v.feature] !== undefined && !O().seen[v.id]);
+  // "New" lasts 2 hours of play after the unlock, so a long-past unlock (an old save) never shows it (menu audit #19)
+  const NEW_FOR = 7200;
+  onboardIsNew = v => !!(v && v.feature && O().got[v.feature] != null && !O().seen[v.id] && O().t - O().got[v.feature] < NEW_FOR);
   const tabIsNew = t => t !== 'adv' && viewsOf(t).some(v => onboardIsNew(v)) && !O().seen[t];
 
   function applyFeatures() {
