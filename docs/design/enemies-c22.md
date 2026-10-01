@@ -16,6 +16,11 @@ Read with `hero-abilities.md` §2a (the binding combat rules) and `e33-reference
    ones (a plain slime is the owner's example). Repeat fights are fine: the same enemy can come up many times.
 5. **Lean into fantasy** (owner to Codex, 2026-10-01): the reviewed list should be more fantastical, not ordinary animals
    and plants with a dark twist.
+6. **Bosses never repeat.** Every boss is fought once, unless it is reasonable that it comes back stronger (and then it
+   is a new, stronger encounter). So Ser Durand is not both the last area's elder and the region boss: the last area
+   gets its own boss.
+7. **The Voice is one big fight in phases**, not five appearances.
+8. **Hunting beasts for hide grades 4-5:** the owner and Codex have the list; it needs art.
 
 ## 1. What the owner asked for
 
