@@ -296,6 +296,7 @@ function openNoticeLog() {
   }, { small: true, label: 'Notices and journal', onClose() { logView = ''; logPanel.hidden = true; $('app').append(logPanel); } });
 }
 $('bellIc').src = spriteURL('ui:bell', ['.....77.....', '....1111....', '...122221...', '..12222221..', '..12222221..', '..12222221..', '..12222221..', '.1222222221.', '122222222221', '111111111111', '.....11.....', '............'], { 1: '#B8862A', 2: '#F2C14E', 7: '#FFF3C4' });
+nicSet($('bellIc'), 'nav', 'notices', 22);   // C26 (the pixel bell above is the fallback)
 $('bellBtn').addEventListener('click', openNoticeLog);
 
 // ================= UI helpers =================
@@ -357,7 +358,9 @@ const TAB_PX = {
 const TAB_IC = { sword: iconURL('sword', '#A9B1BD'), pick: iconURL('pick', '#D08A4E'), anvil: iconURL('anvil', '#6E6878'), flame: iconURL('flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }), mug: iconURL('mug', '#8C6A43', { 1: '#6B4A2E', 7: '#F2C14E', 5: '#EFE6D6' }),
   party: spriteURL('tab:party', TAB_PX.party, { 1: '#5F8BE8', 2: '#FF9E3D', 5: '#EFE6D6' }), world: spriteURL('tab:world', TAB_PX.world, { 1: '#3E9C8A', 2: '#2A5A6E', 7: '#F2C14E' }),
   camp: spriteURL('tab:camp', TAB_PX.camp, { 1: '#C9A56A', 2: '#8C6A43', 3: '#2A1E14', 6: '#6B4A2E', 7: '#FF9E3D' }) };
-document.querySelectorAll('.tab').forEach(b => b.prepend(img(TAB_IC[b.dataset.ic])));
+// C26: the approved menu icons (NAV_ICONS, 60n-nicons) at the size each place shows; TAB_IC stays the fallback.
+const NAV_OF_TAB = { adv: 'fight', party: 'hero', gat: 'gather', forge: 'craft', world: 'camp', deeds: 'deeds' };
+document.querySelectorAll('.tab').forEach(b => { const i = img(TAB_IC[b.dataset.ic]); nicSet(i, 'nav', NAV_OF_TAB[b.dataset.tab], 20); b.prepend(i); });
 $('goldIc').src = iconURL('coin', '#F2C14E');
 
 // ================= menus: tabs, sub-views, open and close =================
@@ -508,7 +511,8 @@ function renderMenu(t) {
   if (open) {
     $('menuTitle').textContent = TAB_TITLE[t] || t;
     const ti = document.querySelector(`.tab[data-tab="${t}"] img`), mi = $('menuIc'), src = ti ? ti.getAttribute('src') : TAB_ICON[t];
-    mi.hidden = !src; if (src && mi.getAttribute('src') !== src) mi.src = src;
+    mi.hidden = !src && !nicHas('nav', NAV_OF_TAB[t]);
+    if (!nicSet(mi, 'nav', NAV_OF_TAB[t], 22) && src && mi.getAttribute('src') !== src) mi.src = src;
   }
   placeToasts();
 }

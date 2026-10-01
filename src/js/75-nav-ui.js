@@ -27,6 +27,9 @@ let navUI = null;
     raid: () => iconURL('banner', '#E0524F'),
     deep: () => iconURL('flame', '#7FB2FF', { 5: '#CFE3FF', 7: '#FFFFFF' })
   };
+  // C26: the approved menu icons (NAV_ICONS) where the pack has one; ICON_OF stays the fallback
+  const NAV_OF = { fight: 'fight', mine: 'mining', wood: 'woodcutting', forage: 'foraging', raid: 'raid', deep: 'deepwell', gather: 'gather' };
+  const setNav = (im, k, px) => { if (!nicSet(im, 'nav', NAV_OF[k], px)) im.src = (ICON_OF[k] || ICON_OF.fight)(); };
   const btn = (cls, txt) => { const b = el('button', cls, txt); b.type = 'button'; return b; };
 
   // ---------------- the pill ----------------
@@ -47,7 +50,7 @@ let navUI = null;
     if (sig === pSig) return;
     pSig = sig;
     putText(pTx, narrow ? n.short : n.text);
-    if (n.icon !== pIcon) { pIcon = n.icon; pIc.src = (ICON_OF[n.icon] || ICON_OF.fight)(); }
+    if (n.icon !== pIcon) { pIcon = n.icon; setNav(pIc, ICON_OF[n.icon] || NAV_OF[n.icon] ? n.icon : 'fight', 18); }
     putClass(pill, 'act-pill ' + n.act + (n.full ? ' full' : ''));
     putAttr(pill, 'aria-label', `${n.text}. Switch activity`);
   }
@@ -70,7 +73,7 @@ let navUI = null;
     const sk = cold ? 'gather' : skillOf(S.node.kind);
     if (sk !== gSk) {
       gSk = sk;
-      gIc.src = (ICON_OF[sk] || ICON_OF[skillOf(S.node.kind)] || ICON_OF.mine)();
+      setNav(gIc, ICON_OF[sk] || NAV_OF[sk] ? sk : ICON_OF[skillOf(S.node.kind)] ? skillOf(S.node.kind) : 'mine', 16);
       gTx.textContent = sk === 'wood' ? 'Wood' : SKILL[sk] || 'Gather';
       gBtn.setAttribute('aria-label', `Gather: ${SKILL[sk] || ''}`.trim());
     }

@@ -36,7 +36,7 @@
 
 /* ---- control row: the Gather button names its skill, and Switch ---- */
 .modeseg button[data-act="gather"] { display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
-.modeseg .mode-ic { width: 14px; height: 14px; image-rendering: pixelated; }
+.modeseg .mode-ic { width: 16px; height: 16px; image-rendering: pixelated; }
 .ctrl-switch { flex: none; margin-right: auto; display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 10px; background: var(--panel-2); border: 2px solid #0B0810; box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 2px 0 #0B0810; font: 600 calc(13px * var(--display-k)) var(--display); color: var(--bone); cursor: pointer; }
 .ctrl-switch .nvs-chev { width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid var(--muted); }
 @media (max-width: 380px) { .ctrl { gap: 6px; } .ctrl-switch { padding: 0 8px; } .modeseg .mode-ic { display: none; } }

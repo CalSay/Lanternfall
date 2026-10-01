@@ -6838,6 +6838,60 @@ if (section('hunting hidden (C24 browser)')) try {
 
 // ---- C20: default-off, zone-one turn combat and shared away resolver ----
 // ---- turn UI (Claude, 2026-09-30): the versus card, turn strip, timing bar and the Journal test switch on C20's events ----
+if (section('action and menu icons (C26)')) try {
+  const g = loadCore({ seed: 27 });
+  const d = JSON.parse(g.eval(`JSON.stringify({ act: typeof ACTION_ICONS === 'object' ? Object.entries(ACTION_ICONS).map(([k, v]) => [k, Object.keys(v)]) : null,
+    nav: typeof NAV_ICONS === 'object' ? Object.entries(NAV_ICONS).map(([k, v]) => [k, Object.keys(v)]) : null })`));
+  assert(d.act && d.act.length === 16 && d.act.every(([, ks]) => ks.join() === '24,36,48'), `C26: 16 action icons at 24, 36 and 48 px (${d.act ? d.act.length : 'none'})`);
+  assert(d.nav && d.nav.length === 32 && d.nav.every(([, ks]) => ks.join() === '12,16,18,20,22'), `C26: 32 menu icons at 12-22 px (${d.nav ? d.nav.length : 'none'})`);
+  const need = ['attack-wren', 'attack-tobin', 'attack-pip', 'echo', 'bash', 'fire', 'parry', 'dodge', 'empty', 'fight', 'hero', 'gather', 'craft', 'camp', 'deeds', 'notices', 'mining', 'woodcutting', 'foraging', 'raid', 'deepwell'];
+  const have = new Set([...(d.act || []), ...(d.nav || [])].map(([k]) => k));
+  assert(need.every(k => have.has(k)), 'C26: every icon the UI asks for exists: ' + need.filter(k => !have.has(k)).join(', '));
+  assert(!g.errors.length, 'C26 icons: no core errors');
+} catch (e) { fail('action and menu icons crashed: ' + (e.stack || e)); }
+
+if (section('action and menu icons (C26, browser)')) try {
+  const { pw, exe } = browserTools, distFile = path.join(ROOT, 'dist', 'lanternfall.html');
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('C26 icons: Playwright, Chromium or dist not available');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe });
+    try {
+      for (const [w, h] of [[390, 844], [740, 360], [1280, 800]]) {
+        const ctx = await browser.newContext({ viewport: { width: w, height: h } }), page = await ctx.newPage(), errors = [];
+        page.on('pageerror', e => errors.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(600);
+        await page.click('#createScreen .ccard[data-hero="pip"]'); await page.click('#createScreen .create-go');
+        await page.waitForTimeout(900);
+        const r = JSON.parse(await page.evaluate(s => window.__t.x(s), `JSON.stringify((() => {
+          const box = e => Math.round(e.getBoundingClientRect().width), out = { bad: [], seen: 0 };
+          const chk = (e, name, pack, id) => {
+            if (!e || !box(e)) return;
+            out.seen++;
+            const nat = e.tagName === 'CANVAS' ? e.width : e.naturalWidth;
+            if (!e._nic || e._nic.id !== id) out.bad.push(name + ': not the ' + id + ' icon');
+            else if (nat !== box(e)) out.bad.push(name + ': ' + nat + ' px image drawn at ' + box(e) + ' px');
+          };
+          document.querySelectorAll('.tab').forEach(b => chk(b.querySelector('img'), 'tab ' + b.dataset.tab, 'nav', NAV_OF_TAB[b.dataset.tab]));
+          chk(document.getElementById('bellIc'), 'bell', 'nav', 'notices');
+          const bar = document.getElementById('soloBar');
+          if (bar) {
+            chk(bar.querySelector('[data-act="atk"] .sb-ic'), 'Attack', 'act', 'attack-pip');
+            chk(bar.querySelector('[data-act="parry"] .sb-ic'), 'Parry', 'act', 'parry');
+            chk(bar.querySelector('[data-act="dodge"] .sb-ic'), 'Dodge', 'act', 'dodge');
+          }
+          return out;
+        })())`));
+        assert(r.seen >= 4 && !r.bad.length, `C26 at ${w}x${h}: tabs, bell and action bar show the approved icons at native size (${r.seen} seen${r.bad.length ? '; ' + r.bad.join('; ') : ''})`);
+        assert(!errors.length, `C26 at ${w}x${h}: no page errors` + (errors.length ? ': ' + errors[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('action and menu icons (browser) crashed: ' + (e.stack || e)); }
+
 if (section('turn UI (browser)')) try {
   const { pw, exe } = browserTools, distFile = path.join(ROOT, 'dist', 'lanternfall.html');
   if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('turn UI: Playwright, Chromium or dist not available');

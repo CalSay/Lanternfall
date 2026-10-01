@@ -67,12 +67,18 @@ var soloIconURL = () => '';
   };
   const WEAPON_IC = { wren: 'bow', tobin: 'sword', pip: 'staff' };
   function drawIc(cv, rows) {
+    if (cv.width !== 12) { cv.width = 12; cv.height = 12; }
     const g = cv.getContext('2d'); g.clearRect(0, 0, 12, 12);
     rows.forEach((r, y) => { for (let x = 0; x < r.length; x++) { const c = PAL[r[x]]; if (c) { g.fillStyle = c; g.fillRect(x, y, 1, 1); } } });
   }
-  drawIc(bParry._ic, ICON.parry); drawIc(bDodge._ic, ICON.dodge);
+  // C26: the approved action icons (ACTION_ICONS, 60n-nicons) at the size the bar shows; the pixel maps above stay
+  // as the fallback for a move the pack has no icon for. Attack is the hero's own ('attack-wren', ...).
+  const packId = mv => mv === 'atk' ? 'attack-' + (soloHero() || 'tobin') : mv;
+  const setIc = (cv, mv, px) => { if (!nicSet(cv, 'act', packId(mv), px)) drawIc(cv, ICON[mv === 'atk' ? WEAPON_IC[soloHero()] || 'sword' : mv] || ICON.fire); };
+  setIc(bParry._ic, 'parry', 48); setIc(bDodge._ic, 'dodge', 48);
   const icURLs = {};
   soloIconURL = mv => {
+    const u = nicURL('act', packId(mv), 48); if (u) return u;
     const id = mv === 'atk' ? WEAPON_IC[soloHero()] || 'sword' : mv;
     if (icURLs[id]) return icURLs[id];
     const cv = document.createElement('canvas'); cv.width = 12; cv.height = 12; drawIc(cv, ICON[id] || ICON.fire);
@@ -137,7 +143,7 @@ var soloIconURL = () => '';
     for (const id of soloAbilities(k)) {
       const a = SOLO_ABILITIES[id], where = eq.indexOf(id);
       const r = el('button', 'sp-ab' + (where === slot ? ' on' : '')); r.type = 'button'; r.dataset.ab = id;
-      const cv = el('canvas', 'sp-ic px'); cv.width = 12; cv.height = 12; drawIc(cv, ICON[id] || ICON.fire);
+      const cv = el('canvas', 'sp-ic px'); cv.width = 12; cv.height = 12; setIc(cv, id, 36);
       const t = el('div', 'sp-t'); t.append(el('b', null, a.name), el('span', null, a.line), el('small', null, `Lv ${typeof trainLv === 'function' ? trainLv(id) : 0} · cooldown ${+(typeof trainAbCd === 'function' ? trainAbCd(id, a.cd) : a.cd).toFixed(1)} s` + (where >= 0 ? ` · in slot ${where + 1}` : '')));
       r.append(cv, t);
       r.addEventListener('click', () => { soloEquip(slot, id); try { save(); } catch (e) {} closePicker(); });
@@ -224,11 +230,11 @@ var soloIconURL = () => '';
     if (!show) return;
     setBadge();
     const s = soloButtons(), k = soloHero();
-    if (k !== heroK) { heroK = k; drawIc(bAtk._ic, ICON[WEAPON_IC[k]] || ICON.sword); }
+    if (k !== heroK) { heroK = k; setIc(bAtk._ic, 'atk', 48); }
     for (let i = 0; i < 3; i++) {
       const o = s.abs[i], b = bAbs[i];
       if (o.id !== abIds[i]) {
-        abIds[i] = o.id; drawIc(b._ic, o.id ? ICON[o.id] || ICON.fire : ICON.empty); putText(b._lb, o.id ? (SOLO_ABILITIES[o.id].short || o.name) : 'Empty');
+        abIds[i] = o.id; setIc(b._ic, o.id || 'empty', 48); putText(b._lb, o.id ? (SOLO_ABILITIES[o.id].short || o.name) : 'Empty');
         b.classList.toggle('empty', !o.id);
         const a = o.id ? SOLO_ABILITIES[o.id] : null;
         b.setAttribute('aria-label', a ? `${a.name} (${KEY_LB['ab' + i]}). ${a.desc} Hold to change the slot.` : `Empty ability slot ${i + 1} (${KEY_LB['ab' + i]}). Tap to choose an ability.`);
