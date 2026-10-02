@@ -53,7 +53,7 @@ var typeX, typeXKey, typeRel, typeZone, lbType, heroType, unitType,
     return t;
   }
   typeXKey = (key, dt) => (dt && txOf(key)[dt]) || 1;
-  typeX = (f, dt) => (f && dt ? typeXKey(f.type, dt) : 1);
+  typeX = (f, dt) => (f && dt ? typeXKey(f.txRow || f.type, dt) : 1);   // txRow: a zone monster's own weakness row (59l)
   typeRel = (key, dt) => { const x = typeXKey(key, dt); return x > 1 ? 1 : x < 1 ? -1 : 0; };
   // The pack a zone sends: its type mixP of the time, the next type in the cycle for the rest.
   typeZone = (dt, z, mixP) => {

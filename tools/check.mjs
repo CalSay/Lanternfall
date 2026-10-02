@@ -3114,7 +3114,7 @@ if (section('types and statuses (S1)')) try {
     F('stApply(f, "burn", 1, 100, -1)');
     assert(rx.includes('blight') && F('f.blight') === true, 'Blight: Venom and Burn on one foe set it off');
     h0 = F('f.hp'); E('stTick(1.0)'); const both = h0 - F('f.hp');
-    const burnTick = 0.12 * 100 * E(`typeXKey(__f.type, "fire")`);
+    const burnTick = 0.12 * 100 * E(`typeX(__f, "fire")`);
     assert(near(both, 2 * vOnly + burnTick, 1e-6), `a Blighted beat: the Burn tick plus the Venom twice (${both.toFixed(1)} = 2 x ${vOnly.toFixed(1)} + ${burnTick.toFixed(1)})`);
     assert(F('f.rxT') > 1.5, 'a reaction opens the 3 s window on its foe (a beat later, 2 s are left)');
     const plain = E('cbDamageFoe(__f, 100, -1, "magic", "phys", 0)'), ab = E('cbDamageFoe(__f, 100, -1, "magic", "phys", ST_AB)');
@@ -3130,7 +3130,7 @@ if (section('types and statuses (S1)')) try {
     F('f.ss = null; f.chillT = 0; f.rxT = 0; stApply(f, "chill", 1, 0, -1)');
     const light = E('cbDamageFoe(__f, 100, -1, "magic", "fire", 0)');
     const heavy = E('cbDamageFoe(__f, 100, -1, "magic", "fire", ST_HEAVY)');
-    assert(near(light, 100 * E('typeXKey(__f.type, "fire")')) && near(heavy, 2 * light) && !F('stHas(f, "chill")') && rx.includes('shatter'), `Shatter: a heavy hit on a Chilled foe deals x2 and ends the Chill (${light} -> ${heavy})`);
+    assert(near(light, 100 * E('typeX(__f, "fire")')) && near(heavy, 2 * light) && !F('stHas(f, "chill")') && rx.includes('shatter'), `Shatter: a heavy hit on a Chilled foe deals x2 and ends the Chill (${light} -> ${heavy})`);
     const again = E('cbDamageFoe(__f, 100, -1, "magic", "fire", ST_HEAVY)');
     assert(near(again, light * 1.25) || near(again, light), 'once per Chill: the next heavy hit is plain (the window may still add x1.25 to abilities only)');
     F('f.boss = true; f.stag = 0; stApply(f, "chill", 1, 0, -1)'); E('cbDamageFoe(__f, 100, -1, "magic", "fire", ST_HEAVY)');
@@ -4742,7 +4742,7 @@ if (section('solo effects (W1-C)')) try {
     assert(!hurt.bare && !hurt.alone, 'Untouched does not fire once you took a hit; Last Lamp Standing does not fire at full health');
     assert(low.alone && !low.bare, 'Last Lamp Standing (solo): a zone 10 boss beaten after your health fell under 10%');
     const g = mk(208, 'soloPick("wren")'), E = s => g.eval(s);
-    run(g, 4); for (let i = 0; i < 130; i++) { E('soloAttack()'); run(g, 0.5); }
+    run(g, 4); for (let i = 0; i < 130; i++) { E('soloAttack(); for (const f of combatFoes()) f.hp = f.max = 1e9'); run(g, 0.5); }   // a foe that never falls: no death pauses (a zone monster's death animation)
     assert(E('deeds.secrets().find(s => s.id === "s_drum").got') && E('DEED_TUNE.drumTaps') === 60, 'Drummer (solo): 60 Attack presses in a minute');
     errs.push(...g.errors);
   }
@@ -7120,6 +7120,28 @@ if (section('C22 Thorn Imp (zone 1)')) try {
     const w = JSON.parse(E('JSON.stringify(ZONE_FOES[1].moves.map(m => m.hits.map(h => h.wind)))'));
     assert(JSON.stringify(w) === '[[1.61],[1.61,1]]' && E('zoneFoeDeathS({ skin: "imp" })') === 2.31,
       `C22: the Imp's parry windows close on the art's contact frames (hop 0.73 s + 0.88 s to the first contact; 1.0 s between the Crosscut's two) and the next foe waits for its 2.31 s death (${JSON.stringify(w)})`); }
+  { // Gloomjaw (art/enemies/gloomjaw/approved-v1, owner-approved 2026-10-02): zone 2's monster
+    const dir = path.join(ROOT, 'art', 'enemies', 'gloomjaw', 'approved-v1'), man = JSON.parse(fs.readFileSync(path.join(dir, 'manifest.json'), 'utf8'));
+    const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '21za-data-foeart.js'), 'utf8'), G = JSON.parse(src.slice(src.indexOf('const FOE_ART = ') + 16, src.lastIndexOf('}') + 1)).gloomjaw;
+    const body = Object.values(G.acts).reduce((n, a) => n + a.f.length, 0), fxN = Object.values(G.fx).reduce((n, a) => n + a.f.length, 0);
+    const bytes = Object.entries(G.atlases).every(([p, b64]) => b64 === fs.readFileSync(path.join(dir, p)).toString('base64'));
+    const timing = Object.entries(man.actions).every(([id, a]) => { const X = a.layer === 'fx' ? G.fx[id] : G.acts[id];
+      return X && a.frames.every((f, i) => Math.abs(X.f[i][0] - f.duration_ms) < 0.01); });
+    assert(body === 67 && fxN === 22 && bytes && timing && JSON.stringify(G.acts['snap-shut'].con) === '[12]' && JSON.stringify(G.acts['void-bolt'].rel) === '[12]' &&
+      JSON.stringify(G.mouth) === '[-16,-49]' && G.acts.death.f[10][3] === -1,
+      `C22: the approved Gloomjaw pack (${body} body frames, ${fxN} effect frames) is embedded byte for byte with its timings, Snap Shut's contact, the bolt's release, the throat anchor and the empty last death frame`);
+    const g = loadCore({ seed: 11 }), E = x => g.eval(x);
+    E('soloPick("tobin"); S.maxZone = 3; S.activity = "fight"; setZone(2); for (let i = 0; i < 40 && !(combatFoes()[0] && combatFoes()[0].skin === "gloomjaw"); i++) spawn()');
+    const r = JSON.parse(E(`JSON.stringify((f => ({ name: f.name, type: f.type, fire: typeX(f, 'fire'), poison: typeX(f, 'poison'), period: 1 / f.spd,
+      dps: f.atk * f.spd, winds: ZONE_FOES[2].moves.map(m => m.hits.map(h => +h.wind.toFixed(2))), cyc: zoneFoeCycle(ZONE_FOES[2]) }))(combatFoes()[0]))`));
+    E('TURN_TUNE.on = 0; globalThis.__bat = combatFoes().filter(f => f.type === "bat" && !f.skin).length; globalThis.__dive = 0; for (let i = 0; i < 300; i++) { tick(0.1); for (const f of combatFoes()) if (f.skin && f.diveT > 0) __dive++ }');
+    const plain = loadCore({ seed: 11 }), P = x => plain.eval(x);
+    P('soloPick("tobin"); S.maxZone = 3; S.activity = "fight"; setZone(2); for (let i = 0; i < 40 && !(combatFoes()[0] && combatFoes()[0].type === "bat"); i++) spawn(); zoneFoeSkin = f => f; spawn()');
+    const batDps = P('(f => f.atk * f.spd)(combatFoes()[0])');
+    assert(r.name === 'Gloomjaw' && r.type === 'bat' && r.fire === 1.5 && r.poison < 1 && JSON.stringify(r.winds) === '[[1.61],[1.4]]' && Math.abs(r.period - r.cyc) < 1e-9 &&
+      Math.abs(r.dps / batDps - 1) < 0.15 && E('__dive') === 0 && !g.errors.length,
+      `C22: zone 2's foe is Gloomjaw (the bat's slot; the plant row: fire x1.5, poison resisted); its windows come from the art (bite 0.6 s hop + 1.01 s; bolt 1.05 s + 0.35 s flight); in legacy fights it swings every ${r.cyc.toFixed(2)} s (its two moves in full) at its slot's damage a second, and never dives (${JSON.stringify(r)})`);
+  }
   const imp = hero => { const h = loadCore({ seed: 7 }), H = x => h.eval(x);
     H(`soloPick(${JSON.stringify(hero)},{now:true});S.zone=1;S.activity='fight';TURN_TUNE.on=1;soloSetAuto(false);S.auto=false;gearDirty();spawn()`); return { h, H }; };
   { const { H } = imp('wren');
@@ -7127,8 +7149,8 @@ if (section('C22 Thorn Imp (zone 1)')) try {
       'C22: zone 1\'s regular foe is one Thorn Imp (it keeps the Moss Slime\'s type slot for mastery, trophies and weaknesses)');
     H('TURN_TUNE.on=0;globalThis.__imps=0;for(let i=0;i<30;i++){spawn();for(const f of combatFoes()){if(f.type==="slime"&&f.name!=="Thorn Imp")__imps=-99;if(f.skin==="imp")__imps++}}');
     assert(H('__imps') > 0, 'C22: the legacy fight in zone 1 shows the Thorn Imp too (in place of every Moss Slime)');
-    H('S.zone=2;spawn()');
-    assert(H('combatFoes().every(f=>!f.skin&&f.name!=="Thorn Imp")'), 'C22: other zones keep their foes');
+    H('S.zone=3;spawn()');
+    assert(H('combatFoes().every(f=>!f.skin&&f.name!=="Thorn Imp")'), 'C22: zones without a zone monster yet keep their foes (zone 3)');
     H('S.zone=1;fightBoss=true;spawn()');
     assert(H('combatFoes()[0].boss&&!combatFoes()[0].skin'), 'C22: the zone 1 boss is unchanged until the Captain\'s recolour is approved'); }
   { const { h, H } = imp('tobin');

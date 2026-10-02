@@ -11,6 +11,9 @@
 //        body = { c, ox, oy, x0, lights, art } (ox, oy: the body origin, the grounded rear foot; x0: its leftmost opaque
 //        column, so ox - x0 is how far its blade reaches toward the hero); atk / hit = { c, ox, oy } or null (an effect
 //        cell, drawn so both layers share the body's world root).
+//        fx[effect] = { loop, fr: [{ ms, c, ox, oy }] }: a separate effect (Gloomjaw: the throat charge and release, the
+//        void bolt, its impact, the bite), drawn by 62-stage at the throat (mouth, from the root), in flight, or on the
+//        hero; mouth: [dx, dy] from the world root, or null.
 //   foeArtHas(key) -> bool
 var foeArtFrames, foeArtHas;
 {
@@ -34,14 +37,17 @@ var foeArtFrames, foeArtHas;
           atk: a && { c: a, ox: P.fxOrigin[0], oy: P.fxOrigin[1] }, hit: h && { c: h, ox: P.fxOrigin[0], oy: P.fxOrigin[1] } };
       }) });
     }
-    for (const [path, list] of Object.entries(wait)) {
+    const fx = {};
+    for (const [id, X] of Object.entries(P.fx || {}))
+      fx[id] = { loop: X.loop, fr: X.f.map(([ms, x, y]) => ({ ms, c: cut(X.atlas, x, y, fw, fh), ox: P.fxOrigin[0], oy: P.fxOrigin[1] })) };
+    for (const [path, list] of Object.entries(wait)) {   // every body and effect cut above
       const img = new Image();
       img.onload = () => { for (const [c, x, y] of list) { const g = c.getContext('2d'); g.imageSmoothingEnabled = false;
         g.clearRect(0, 0, c.width, c.height); g.drawImage(img, x, y, c.width, c.height, 0, 0, c.width, c.height); c._pend = false; } };
       img.src = 'data:image/png;base64,' + P.atlases[path];
     }
     const at = (id, i) => acts[id] && acts[id].fr[Math.min(i, acts[id].fr.length - 1)].body;
-    return (cache[key] = { v2: true, key, acts, idle0: at('idle', 0), idle1: at('idle', 2), wind: at('jab', 4), strike: at('jab', 8),
+    return (cache[key] = { v2: true, key, acts, fx, mouth: P.mouth, idle0: at('idle', 0), idle1: at('idle', 2), wind: at('idle', 0), strike: at('idle', 0),
       hit: at('hurt', 1), art: key });
   };
   // decode every pack at boot, so a save that opens in a fight finds its foe's frames ready

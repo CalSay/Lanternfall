@@ -121,7 +121,7 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
     PK.t += dt; PK.dive += dt; PK.cloud += dt;
     let diving = 0, diver = null, spores = 0, spore = null, chan = false, healer = null;
     for (const f of list) {
-      if (!alive(f) || f.boss || f.born < COMBAT_TUNE.bornAct || f.stunT > 0) continue;
+      if (!alive(f) || f.boss || f.skin || f.born < COMBAT_TUNE.bornAct || f.stunT > 0) continue;   // a zone monster (59l): its own moves only
       if (f.type === 'bat') { if (f.diveT > 0) diving++; else if (!diver && !(f.rootT > 0) && !(f.stgT > 0)) diver = f; }
       else if (f.type === 'spore') { spores++; if (!spore || f.elite) spore = f; }
       else if (f.type === 'wraith') { if (f.chanT > 0) chan = true; else if (!healer || f.elite) healer = f; }
@@ -149,6 +149,7 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
 
   onEnemyTick = (f, dt) => {
     if (f.boss) return bossTick(f, dt);
+    if (f.skin) return false;   // a zone monster (59l) plays its own moves, not its slot type's (no bat dives)
     f.bt += dt;
     const t = f.type;
     if (t === 'bat') {

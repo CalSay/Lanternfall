@@ -441,7 +441,7 @@ let resize, animate, draw, stageStats, warmScene;
   }
   function bindSlot(s, m) {
     s.m = m; s.st = 0; s.t = 0; s.dx = 0; s.jx = 0; s.jy = 0; s.dv = 0; s.dvOn = false; s.dvA = null; s.kb = 0; s.kn = 0; s.fl = 0;
-    s.hm = null; s.hpF = null; s.trail = 1; s.dF = null; s.aq = null; s.at = 0; s.ar = 1; s.ax = 0; s.ae = 0; s.amv = ''; s.al = null; s.hurtT = 0; s.sgT = 0; s.aCur = null;
+    s.hm = null; s.hpF = null; s.trail = 1; s.dF = null; s.aq = null; s.at = 0; s.ar = 1; s.ax = 0; s.ae = 0; s.amv = ''; s.amr = null; s.al = null; s.hurtT = 0; s.sgT = 0; s.aCur = null; s.pj = null; s.pjDone = false; s.ifx = null; s.lmI = 0;
     if (!m) { s.fr = null; s.key = ''; return; }
     const type = m.key.replace(/\d+$/, '');
     let key, fr;
@@ -746,7 +746,7 @@ let resize, animate, draw, stageStats, warmScene;
   function foeStrike(s, a, kind) {
     if (!s || !s.fr || !a) return;
     const tx = ax(a) + 4, ty = a.hy - 30;
-    if (artOf(s)) { if (!turnFight()) artStrike(s, kind === 'heavy' ? 'crosscut' : 'jab'); }   // turn fights: the engine's events play it
+    if (artOf(s)) { if (!turnFight()) artStrike(s, kind); }   // turn fights: the engine's events play it
     else if (s.st !== 2) { s.st = 2; s.t = 0; }
     // the white hit flash: every big hit, else at most every 0.6 s (a tank under three foes would strobe)
     const big = kind === 'heavy' || kind === 'slam' || kind === 'dive';
@@ -782,29 +782,54 @@ let resize, animate, draw, stageStats, warmScene;
     return hero.fr ? Math.min(0, ax(hero) + 14 + f.ox - f.x0 - s.x) : 0;
   }
   // back: hop home after it (turn fights); a legacy fight's foe stays in reach between its swings
+  // the zone monster's move that plays act (59l ZONE_FOES): ranged, flight
+  const artMv = (s, act) => { const Z = s.m && typeof zoneFoeOf === 'function' && zoneFoeOf(s.m); return (Z && Z.moves.find(m => m.anim === act)) || null; };
   function artMove(s, act, from, back = true) {
     const F = artOf(s), A = F && F.acts[act], hop = F && F.acts.hop; if (!A || !hop) return;
-    s.amv = act; s.ae = artEngage(s, act); s.al = {}; s.ar = 1; s.at = 0;
+    const mv = artMv(s, act), ranged = !!(mv && mv.ranged);
+    s.amv = act; s.amr = ranged ? mv : null; s.al = {}; s.ar = 1; s.at = 0; s.pj = null;
+    if (!ranged) s.ae = artEngage(s, act);
     s.aq = [];
-    if (!(s.ax >= 1)) s.aq.push({ act: 'hop', a: 1, b: hop.fr.length, hop: [s.ax || 0, 1] });
+    if (!ranged && !(s.ax >= 1)) s.aq.push({ act: 'hop', a: 1, b: hop.fr.length, hop: [s.ax || 0, 1] });
     s.aq.push({ act, a: from || A.start, b: A.end });
-    if (back) s.aq.push({ act: 'hop', a: 1, b: hop.fr.length, hop: [1, 0] });
+    if (back && !ranged) s.aq.push({ act: 'hop', a: 1, b: hop.fr.length, hop: [1, 0] });
+  }
+  // where the hero is hit: projectiles fly to it, impacts land on it (world px)
+  const artTarget = () => ({ x: ax(hero) + 4, y: hero.hy - 34 });
+  // a landed contact: the pack's own impact on the hero (Gloomjaw: the bite, or the void bolt's impact)
+  function artImpact(s, landed) {
+    const F = artOf(s), id = s.amr ? 'impact' : 'bite-fx';
+    if (s.amr) s.pj = null;
+    if (landed && F.fx[id]) { const t = artTarget(); s.ifx = { id, t: 0, x: t.x, y: t.y }; }
   }
   // Legacy fights: the core's swing timer (m.swing, 59-combat) is the authority. The foe hops into reach once, then
   // each swing plays the whole approved Jab from its first frame, started so its contact frame lands as the swing does.
+  // Legacy fights: the core's swing timer (m.swing, 59-combat) is the authority. A melee foe hops into reach once; each
+  // swing plays the next one-hit move from its first frame (they alternate), started so its contact (a projectile: its
+  // landing) comes as the swing does. 59l slows a skinned foe's swings so each move plays in full.
+  const artLegacyMoves = s => { const Z = s.m && typeof zoneFoeOf === 'function' && zoneFoeOf(s.m); return Z ? Z.moves.filter(m => m.hits.length === 1 && artOf(s).acts[m.anim]) : []; };
   function artLegacy(s) {
-    const F = artOf(s), m = s.m, J = F.acts.jab, hop = F.acts.hop;
-    if (!m || m.dead || s.aq || !(m.born >= 0.3) || !(m.swing >= 0)) return;
-    if (!(s.ax >= 1)) { s.ae = artEngage(s, 'jab'); s.aq = [{ act: 'hop', a: 1, b: hop.fr.length, hop: [s.ax || 0, 1] }]; s.at = 0; s.ar = 1; return; }
-    const toC = actMs(J, J.start, J.con[0] - 1);   // ms from the first frame to the contact frame
-    if (m.swing * 1000 > toC || m.stunT > 0) return;
-    artMove(s, 'jab', J.start, false); s.at = toC - m.swing * 1000;   // already part-way in when the swing is close
+    const F = artOf(s), m = s.m, hop = F.acts.hop, L = artLegacyMoves(s);
+    if (!L.length || !m || m.dead || s.aq || !(m.born >= 0.3) || !(m.swing >= 0) || m.stunT > 0) return;
+    const mv = L[(s.lmI || 0) % L.length], A = F.acts[mv.anim];
+    if (!mv.ranged && !(s.ax >= 1)) { s.ae = artEngage(s, mv.anim); s.aq = [{ act: 'hop', a: 1, b: hop.fr.length, hop: [s.ax || 0, 1] }]; s.at = 0; s.ar = 1; return; }
+    const toC = mv.ranged ? actMs(A, A.start, A.rel[0] - 1) + (mv.flight || 0) * 1000 : actMs(A, A.start, A.con[0] - 1);   // first frame to the hit
+    if (m.swing * 1000 > toC) return;
+    s.lmI = (s.lmI || 0) + 1;
+    artMove(s, mv.anim, A.start, false); s.at = Math.max(0, toC - m.swing * 1000);   // part-way in if the swing is closer
   }
-  function artStrike(s, act) {   // legacy: the hit has landed. The playing swing marks it; else show it from the release, in reach
-    const F = artOf(s), A = F.acts[act]; if (!A) return;
-    const c = s.aq && s.aq[0];
-    if (c && c.act === act && !c.hop) { for (let i = 0; i < A.con.length; i++) s.al[i] = true; if (clipFrame(A, c.a, c.b, s.at) < A.con[0]) s.at = actMs(A, c.a, A.con[0] - 1); return; }
-    s.ax = 1; artMove(s, act, A.rel[0] || A.start, false); for (let i = 0; i < A.con.length; i++) s.al[i] = true;
+  function artStrike(s, kind) {   // legacy: the hit has landed. The playing move marks it; else show one from the release, in reach
+    const F = artOf(s), c = s.aq && s.aq[0], A = c && !c.hop && F.acts[c.act];
+    if (A) {
+      for (let i = 0; i < Math.max(1, A.con.length); i++) s.al[i] = true;
+      if (s.amr) artImpact(s, true);
+      else { if (A.con.length && clipFrame(A, c.a, c.b, s.at) < A.con[0]) s.at = actMs(A, c.a, A.con[0] - 1); if (F.fx['bite-fx']) artImpact(s, true); }
+      return;
+    }
+    const L = artLegacyMoves(s), mv = L.find(m => !m.ranged) || L[0]; if (!mv) return;
+    const B = F.acts[mv.anim]; s.ax = mv.ranged ? s.ax : 1; artMove(s, mv.anim, B.rel[0] || B.start, false);
+    for (let i = 0; i < Math.max(1, B.con.length); i++) s.al[i] = true;
+    if (F.fx['bite-fx'] || s.amr) artImpact(s, true);
   }
   function artStep(s, dt) {
     const F = artOf(s), m = s.m;
@@ -825,7 +850,17 @@ let resize, animate, draw, stageStats, warmScene;
       if (!q.length) s.aq = null;
     }
     s.dx = Math.round((s.ax || 0) * (s.ae || 0));
+    // a ranged move: the bolt leaves the throat at the release frame and flies to the hero, landing as the hit resolves
+    const h = s.aq && s.aq[0];
+    if (s.amr && h && h.act === s.amv && !s.pjDone) {
+      const A = F.acts[s.amv];
+      if (clipFrame(A, h.a, h.b, s.at) >= A.rel[0]) { const r = artRoot(s); s.pj = { t: 0, dur: (s.amr.flight || 0.3) * 1000 / (s.ar || 1), x0: r.x + F.mouth[0], y0: r.y + F.mouth[1] }; s.pjDone = true; }
+    }
+    if (!h || h.act !== s.amv) s.pjDone = false;
+    if (s.pj) { s.pj.t += dt * 1000; if (s.pj.t > s.pj.dur + 400) s.pj = null; }   // a lost contact event never leaves it hanging
+    if (s.ifx) { const X = F.fx[s.ifx.id]; s.ifx.t += dt * 1000; if (!X || s.ifx.t >= actMs(X, 1, X.fr.length)) s.ifx = null; }
   }
+  const artRoot = s => ({ x: s.x + (s.dx || 0), y: s.gy });
   // the frames the foe shows now: { body, atk, hit } (hit: the landed-hit spark of the latest contact, if it landed)
   function artCur(s, tele) {
     const F = artOf(s), m = s.m, A = F.acts, c = s.aq && s.aq[0];
@@ -833,21 +868,26 @@ let resize, animate, draw, stageStats, warmScene;
     if (c) {
       const X = A[c.act], i = clipFrame(X, c.a, c.b, s.at), fr = X.fr[i - 1];
       let k = -1; for (let j = 0; j < X.con.length; j++) if (X.con[j] <= i) k = j;
-      return { body: fr.body, atk: c.hop ? null : fr.atk, hit: !c.hop && k >= 0 && s.al && s.al[k] ? fr.hit : null };
+      let mouth = null;   // a ranged move's throat effect: the charge (frames 1-4) up to the release, then the release (5-6)
+      if (s.amr && !c.hop && F.fx['void-fx'] && X.rel.length) {
+        const V = F.fx['void-fx'].fr, toR = actMs(X, c.a, X.rel[0] - 1), t = s.at;
+        mouth = t < toR ? V[Math.min(3, Math.floor(t / toR * 4))] : t < toR + 100 ? V[t < toR + 50 ? 4 : 5] : null;
+      }
+      return { body: fr.body, atk: c.hop ? null : fr.atk, hit: !c.hop && k >= 0 && s.al && s.al[k] ? fr.hit : null, mouth };
     }
     if (m && m.stunT > 0) { const G = A.stagger; return { body: G.fr[clipFrame(G, 1, G.fr.length, s.sgT * 1000) - 1].body }; }
     if (s.hurtT > 0) { const H = A.hurt, tot = actMs(H, 1, H.fr.length); return { body: H.fr[clipFrame(H, 1, H.fr.length, tot - s.hurtT * 1000) - 1].body }; }
-    if (m && tele && tele.foe === m) { const J = A[tele.kind === 'heavy' ? 'crosscut' : 'jab']; return { body: J.fr[J.start + 2].body }; }   // a legacy telegraph: its wind-up
+    if (m && tele && tele.foe === m) { const mv = artLegacyMoves(s)[0], J = mv && A[mv.anim]; if (J) return { body: J.fr[J.start + 2].body }; }   // a legacy telegraph: a wind-up
     const I = A.idle; return { body: I.fr[clipFrame(I, 1, I.fr.length, reduced ? 0 : (T * 1000 + (s.hx & 7) * 90) % actMs(I, 1, I.fr.length)) - 1].body };
   }
   const turnSlot = () => { const s = foe; return artOf(s) && turnFight() && s.m === mob && !s.m.dead ? s : null; };
   on('foeMove', p => { const s = turnSlot(); if (s && artOf(s).acts[p.anim]) artMove(s, p.anim); });
   on('parryWindow', p => {   // fit the clips to the engine: the contact frame of hit p.hit lands at p.closesAt
-    const s = turnSlot(), F = s && artOf(s), A = F && F.acts[s.amv]; if (!A || !s.aq || p.hit == null || !A.con[p.hit]) return;
+    const s = turnSlot(), F = s && artOf(s), A = F && F.acts[s.amv]; if (!A || !s.aq || p.hit == null || (!A.con[p.hit] && !s.amr)) return;
     let rem = 0;
     for (let j = 0; j < s.aq.length; j++) {
       const c = s.aq[j], done = j ? 0 : s.at;
-      if (c.act === s.amv) { rem += actMs(A, c.a, A.con[p.hit] - 1) - done; break; }
+      if (c.act === s.amv) { rem += (s.amr ? actMs(A, c.a, A.rel[0] - 1) + (s.amr.flight || 0) * 1000 : actMs(A, c.a, A.con[p.hit] - 1)) - done; break; }
       rem += clipMs(F, c) - done;
     }
     const left = (p.closesAt - (typeof turnCombatSnapshot === 'function' ? turnCombatSnapshot().now : p.closesAt)) * 1000;
@@ -856,6 +896,7 @@ let resize, animate, draw, stageStats, warmScene;
   on('foeContact', p => {
     const s = turnSlot(), F = s && artOf(s), A = F && F.acts[s.amv]; if (!A || !s.aq) return;
     s.al[p.hit] = p.res === 'hit'; s.ar = 1;
+    if (s.amr || F.fx['bite-fx']) artImpact(s, p.res === 'hit');
     while (s.aq.length && s.aq[0].act !== s.amv) { const c = s.aq.shift(); if (c.hop) s.ax = c.hop[1]; s.at = 0; }   // late: in reach now
     const c = s.aq[0], con = A.con[p.hit];
     if (c && con && clipFrame(A, c.a, c.b, s.at) < con) s.at = actMs(A, c.a, con - 1);   // the blade is on the hero now
@@ -1320,7 +1361,17 @@ let resize, animate, draw, stageStats, warmScene;
     // hit: a half-strength white flash over the frame (a pack takes hits from the whole party; a full
     // white silhouette each time would hide the foe)
     const fx = artOf(s) && s.aCur;   // a pack's effects: the attack trail, then the landed-hit spark, on the body's world root
-    if (fx && sy === 1) for (const L of [fx.atk, fx.hit]) if (L) ctx.drawImage(L.c, Math.round(x - L.ox), Math.round(y - L.oy));
+    if (fx && sy === 1) {
+      for (const L of [fx.atk, fx.hit]) if (L) ctx.drawImage(L.c, Math.round(x - L.ox), Math.round(y - L.oy));
+      const F = s.fr, M = F.mouth;
+      if (fx.mouth && M) ctx.drawImage(fx.mouth.c, Math.round(x + M[0] - fx.mouth.ox), Math.round(y + M[1] - fx.mouth.oy));
+      if (s.pj && F.fx.projectile) {   // the bolt, its black core on the line from the throat to the hero
+        const P = s.pj, t = artTarget(), u = Math.min(1, P.t / Math.max(1, P.dur)), X = F.fx.projectile, n = actMs(X, 1, X.fr.length);
+        const f = X.fr[clipFrame(X, 1, X.fr.length, P.t % n) - 1];
+        ctx.drawImage(f.c, Math.round(P.x0 + (t.x - P.x0) * u - cam - f.ox), Math.round(P.y0 + (t.y - P.y0) * u - f.oy));
+      }
+      if (s.ifx) { const X = F.fx[s.ifx.id], f = X && X.fr[clipFrame(X, 1, X.fr.length, s.ifx.t) - 1]; if (f) ctx.drawImage(f.c, Math.round(s.ifx.x - cam - f.ox), Math.round(s.ifx.y - f.oy)); }
+    }
     if (m && !m.dead && s.fl > 0.02 && sy === 1 && !artOf(s)) { ctx.globalAlpha = 0.55 * alpha; ctx.drawImage(s.fr.hit.c, dx, Math.round(y - f.oy)); }
     // stunned: three sparks circle over its head (still under reduced motion)
     if (m && !m.dead && m.stunT > 0) {
