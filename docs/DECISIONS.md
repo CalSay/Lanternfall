@@ -113,6 +113,11 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   game. 1% damage feels unrewarding. Maybe let them add to the abilities and combos. Think of this section like pictos
   from E33." Built as the Stars: rule-changing effects that are found, set (3), learned in 4 won fights and then lit by
   any hero for star points (2); the old star map and its keystones are gone. (2026-10-02)
+- **More stars, better menus, and the star map back:** "Yeah that's fine. Might need more of them though. We also need
+  much better menus for abilities and stars. I kinda miss the star map too :/ idk how you'd incorporate it though."
+  Built as 18 more stars (43), found in later places (zones 37 to 70, elites from zone 36, Deepwell floors, a second
+  pass of each Proving), and the Stars view as a star map: six constellations, one per place stars are found, with the
+  loadout always in view; a complete constellation gives a star point and quicker learning. (2026-10-02)
 - **Tobin survives best and kills a little slower,** but never boringly: a balance pass yes, balanced around that
   (the safest hero, about 15-30% more turns a fight than Wren and Pip, his turns full of Grit, counters and Shield Bash).
   (2026-10-02)
