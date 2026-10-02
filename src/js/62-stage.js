@@ -781,23 +781,37 @@ let resize, animate, draw, stageStats, warmScene;
     const F = artOf(s), A = F.acts[act], f = A && A.con.length ? A.fr[A.con[0] - 1].body : F.idle0;
     return hero.fr ? Math.min(0, ax(hero) + 14 + f.ox - f.x0 - s.x) : 0;
   }
-  function artMove(s, act, from) {
+  // back: hop home after it (turn fights); a legacy fight's foe stays in reach between its swings
+  function artMove(s, act, from, back = true) {
     const F = artOf(s), A = F && F.acts[act], hop = F && F.acts.hop; if (!A || !hop) return;
     s.amv = act; s.ae = artEngage(s, act); s.al = {}; s.ar = 1; s.at = 0;
     s.aq = [];
     if (!(s.ax >= 1)) s.aq.push({ act: 'hop', a: 1, b: hop.fr.length, hop: [s.ax || 0, 1] });
     s.aq.push({ act, a: from || A.start, b: A.end });
-    s.aq.push({ act: 'hop', a: 1, b: hop.fr.length, hop: [1, 0] });
+    if (back) s.aq.push({ act: 'hop', a: 1, b: hop.fr.length, hop: [1, 0] });
   }
-  function artStrike(s, act) {   // legacy: the hit has landed; show it from the release, in reach
-    const A = artOf(s).acts[act]; if (!A) return;
-    s.ax = 1; artMove(s, act, A.rel[0] || A.start); for (let i = 0; i < A.con.length; i++) s.al[i] = true;
+  // Legacy fights: the core's swing timer (m.swing, 59-combat) is the authority. The foe hops into reach once, then
+  // each swing plays the whole approved Jab from its first frame, started so its contact frame lands as the swing does.
+  function artLegacy(s) {
+    const F = artOf(s), m = s.m, J = F.acts.jab, hop = F.acts.hop;
+    if (!m || m.dead || s.aq || !(m.born >= 0.3) || !(m.swing >= 0)) return;
+    if (!(s.ax >= 1)) { s.ae = artEngage(s, 'jab'); s.aq = [{ act: 'hop', a: 1, b: hop.fr.length, hop: [s.ax || 0, 1] }]; s.at = 0; s.ar = 1; return; }
+    const toC = actMs(J, J.start, J.con[0] - 1);   // ms from the first frame to the contact frame
+    if (m.swing * 1000 > toC || m.stunT > 0) return;
+    artMove(s, 'jab', J.start, false); s.at = toC - m.swing * 1000;   // already part-way in when the swing is close
+  }
+  function artStrike(s, act) {   // legacy: the hit has landed. The playing swing marks it; else show it from the release, in reach
+    const F = artOf(s), A = F.acts[act]; if (!A) return;
+    const c = s.aq && s.aq[0];
+    if (c && c.act === act && !c.hop) { for (let i = 0; i < A.con.length; i++) s.al[i] = true; if (clipFrame(A, c.a, c.b, s.at) < A.con[0]) s.at = actMs(A, c.a, A.con[0] - 1); return; }
+    s.ax = 1; artMove(s, act, A.rel[0] || A.start, false); for (let i = 0; i < A.con.length; i++) s.al[i] = true;
   }
   function artStep(s, dt) {
     const F = artOf(s), m = s.m;
     if (s.hurtT > 0) s.hurtT -= dt;
     s.sgT = m && m.stunT > 0 && !m.dead ? (s.sgT || 0) + dt : 0;
     if (m && m.dead) s.aq = null;   // death takes over where it stands
+    else if (!turnFight()) artLegacy(s);
     const q = s.aq;
     if (q && q.length) {
       s.at += dt * 1000 * (s.ar || 1);
