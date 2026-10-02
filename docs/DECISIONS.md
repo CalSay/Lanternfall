@@ -109,6 +109,9 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 - **Talents** (Codex's star forks): two picks per ability and for Attack, Parry and Dodge. (2026-10-02)
 - **The Deepwell and the Provings fight in turns** like the zones. (2026-10-02)
 - **An Assist setting** that widens the timing windows: yes, low priority. A late-zone balance pass: yes. (2026-10-02)
+- **Tobin survives best and kills a little slower,** but never boringly: a balance pass yes, balanced around that
+  (the safest hero, about 15-30% more turns a fight than Wren and Pip, his turns full of Grit, counters and Shield Bash).
+  (2026-10-02)
 - **Leftovers:** a local raid fight is accepted; Deep Elders give at most one buff item a run; Hollow bosses give no
   buff items. (2026-09-28)
 
