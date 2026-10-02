@@ -123,6 +123,10 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   (2026-10-02)
 - **Explain each hero's resource** (Aim, Grit, Cinders) in the game. Pip's resource is called **Cinders**, not Embers,
   so it does not clash with the raid's Embers. (2026-10-02)
+- **The Fenmother may be hard:** about 25-30% casual wins for a hero who keeps up is fine for a region boss. (2026-10-02)
+- **Gear stats must work in turn fights;** Pip's slow late kills come from dead caster lines. (2026-10-02)
+- **Stars:** 3 set and 2 lit is fine; learning in 4 wins is fine; there should be more stars. The Abilities and Stars
+  menus need to be much better, and the owner misses the old star map. (2026-10-02)
 - **Leftovers:** a local raid fight is accepted; Deep Elders give at most one buff item a run; Hollow bosses give no
   buff items. (2026-09-28)
 
