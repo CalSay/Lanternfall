@@ -17,9 +17,13 @@ import { ROOT, loadCore as loadCoreRaw, memoryStorage, badNumbers, deepDiff, sub
 // start (hearthWarm() undoes a pristine cold start; loaded saves are untouched): pass { cold: true }
 // to keep the cold start (the 'cold hearth' section).
 // The shipped game is one hero (24b-data-solo.js); every section runs on it. The party build is deleted (W3-A).
+// C29: zone fights are turn fights and active only (59k): a core left to tick earns nothing from fights. Sections written for
+// the real-time fight run with TURN_TUNE.on = 0 (it still runs the Deepwell and Trials); pass { turns: true } for the game's
+// default turn fights (the C29 sections).
 function loadCore(opts) {
   const o = opts || {};
   const g = loadCoreRaw(o);
+  if (!o.turns) try { g.eval("TURN_TUNE.on = 0"); } catch (e) {}
   try { g.eval("typeof almanac === 'object' && almanac.force && almanac.force('none')"); } catch (e) {}
   if (!(opts && opts.cold)) try { g.eval("typeof hearthWarm === 'function' && hearthWarm()"); } catch (e) {}
   return g;
@@ -27,6 +31,18 @@ function loadCore(opts) {
 
 let failed = 0;
 const browserTools = findBrowser();
+// C29: the shipped page fights in turns. Browser sections written for the real-time fight get it back through a test key the
+// page reads at boot (75-turn-ui); a section that wants the shipped turn fight asks with newContext({ turns: true, ... }).
+if (browserTools.pw) {
+  const launch = browserTools.pw.chromium.launch.bind(browserTools.pw.chromium);
+  browserTools.pw = Object.assign(Object.create(browserTools.pw), { chromium: Object.assign(Object.create(browserTools.pw.chromium), { launch: async (...a) => {
+    const b = await launch(...a), newContext = b.newContext.bind(b);
+    b.newContext = async (opts = {}) => { const { turns, ...o } = opts, ctx = await newContext(o);
+      if (!turns) await ctx.addInitScript(() => { try { localStorage.setItem('lanternfall.test.realtime', '1'); } catch (e) {} });
+      return ctx; };
+    b.newPage = async (opts = {}) => (await b.newContext(opts)).newPage();
+    return b; } }) });
+}
 let browserSkipped = 0;
 const browserSkipReasons = new Set();
 const browserSummary = (n, reasons) => `browser sections skipped: ${n} (${[...reasons].join('; ') || 'none'})`;
@@ -2059,7 +2075,7 @@ if (section('deeds')) try {
   assert(H('S.deeds.n.parry') === p0, 'a CB_STATS reset never subtracts from a counter');
   const tl = []; h.fn.on('toast', t => tl.push(t.msg));
   H('S.name = "Wren"'); for (let i = 0; i < 11; i++) h.fn.tick(0.1);
-  for (let i = 0; i < 60; i++) h.fn.emit('soloAttack', { kind: 'hit' });   // W2-B: solo, the Drummer counts Attack presses (60 in a minute); Namesake needs a companion
+  for (let i = 0; i < 60; i++) h.fn.emit('soloPress', { kind: 'atk' });   // W2-B / C29: the Drummer counts Attack presses, landed or not (60 in a minute); Namesake needs a companion
   assert(H('!S.deeds.sec.s_name && S.deeds.sec.s_drum === 1 && deeds.points() >= 15') && tl.some(m => /^Secret found: Drummer/.test(m)), 'secrets: Drummer (60 Attack presses in a minute), 15 points, one toast; Namesake (a companion\'s name) never fires in solo');
   const sc = H('deeds.secrets()');
   assert(sc.filter(s => !s.got).every(s => !s.n && !s.title) && sc.find(s => s.id === 's_drum').n === 'Drummer', 'unfound secrets keep their names hidden');
@@ -6925,7 +6941,7 @@ if (section('C25 enemy profiles')) try {
 if (section('auto-challenge (boss switch)')) try {
   // owner 2026-10-01: "The toggle to automatically fight the zone boss doesn't work". It only ran on the old single-foe
   // respawn (never in turn fights) and waited 10 min for a cautious estimate. Now: every fight mode, at most bossWait s.
-  for (const turns of [0, 1]) {
+  for (const turns of [0]) {   // turn fights are active only (C29): their zone flow is in the C29 section
     const g = loadCore({ seed: 3 }), E = s => g.eval(s);
     E(`soloPick("tobin"); S.auto = true; TURN_TUNE.on = ${turns}; S.onboard && (S.onboard.tips = false, S.onboard.all = true)`);
     let at = -1;
@@ -7033,6 +7049,8 @@ if (section('action and menu icons (C26, browser)')) try {
 } catch (e) { fail('action and menu icons (browser) crashed: ' + (e.stack || e)); }
 
 if (section('turn UI (browser)')) try {
+  // C29: the shipped page fights in turns: the versus card, the turn strip of the next six turns, the timing bar, cooldowns
+  // in turns, no Auto badge; Hero tab > Abilities lists the hero's 14 abilities and learns one with a Scroll (two taps).
   const { pw, exe } = browserTools, distFile = path.join(ROOT, 'dist', 'lanternfall.html');
   if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('turn UI: Playwright, Chromium or dist not available');
   else {
@@ -7040,37 +7058,71 @@ if (section('turn UI (browser)')) try {
     const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
     const browser = await pw.chromium.launch({ executablePath: exe });
     try {
-      const run = async (w, h, test) => {
-        const ctx = await browser.newContext({ viewport: { width: w, height: h } }), page = await ctx.newPage(), errors = [];
+      const run = async (w, h, abilities) => {
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h } }), page = await ctx.newPage(), errors = [];
         page.on('pageerror', e => errors.push(String(e)));
         await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
-        if (test) await ctx.addInitScript(() => { try { localStorage.setItem('lanternfall.test.turns', '1'); } catch (e) {} });
         await page.goto('http://lf.test/'); await page.waitForTimeout(600);
         await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go');
-        const X = s => page.evaluate(s => window.__t.x(s), s), seen = { card: '', strip: false, bar: false, cdTurns: false };
-        await X('S.onboard && (S.onboard.tips = false, S.onboard.all = true); true');   // the guide's combat lessons are for legacy fights (the prototype is for a played save)
-        for (let i = 0; i < 80 && !(seen.card && seen.strip && seen.bar); i++) {
+        const X = s => page.evaluate(s => window.__t.x(s), s), seen = { card: '', strip: 0, bar: false, cdTurns: false, autoBadge: false, mine: false };
+        await X('S.onboard && (S.onboard.tips = false, S.onboard.all = true); true');
+        for (let i = 0; i < 120 && !(seen.card && seen.strip && seen.bar && seen.cdTurns); i++) {
           await page.waitForTimeout(100);
           const st = JSON.parse(await X(`JSON.stringify({ card: document.querySelector('.tv-card').hidden ? '' : document.querySelector('.tv-card').textContent,
-            strip: !document.querySelector('.tv-strip').hidden && document.querySelectorAll('.tv-strip .tv-slot img').length === 4,
-            bar: !document.querySelector('.tv-time').hidden, q: (document.querySelector('#soloBar .sb-ab0 .sb-n') || {}).textContent || '', cd: turnCombatSnapshot().cooldowns.echo })`));
+            strip: document.querySelector('.tv-strip').hidden ? 0 : [...document.querySelectorAll('.tv-strip .tv-slot')].filter(x => !x.hidden && x.querySelector('img')).length,
+            bar: !document.querySelector('.tv-time').hidden, q: (document.querySelector('#soloBar .sb-ab0 .sb-n') || {}).textContent || '', cd: turnCombatSnapshot().cooldowns.echo,
+            ph: turnCombatSnapshot().phase, badge: !document.getElementById('autoBadge').hidden, mine: document.querySelector('.tv-n').textContent })`));
           if (st.card && !seen.card) seen.card = st.card;
-          if (st.strip) seen.strip = true;
+          seen.strip = Math.max(seen.strip, st.strip);
           if (st.bar) seen.bar = true;
+          if (st.badge) seen.autoBadge = true;
+          if (st.mine === 'Your turn') seen.mine = true;
           if (st.cd > 0 && st.q === String(st.cd)) seen.cdTurns = true;
+          if (st.ph === 'hero' && !seen.mine) { await page.waitForTimeout(250); if (await X(`document.querySelector('.tv-n').textContent`) === 'Your turn') seen.mine = true; }
+          if (st.ph === 'hero') await X(st.cd ? 'soloAttack()' : 'soloAbility({ slot: 0 })');
         }
-        const out = { seen, saveHasFlag: await X('JSON.stringify(S).includes("test.turns")'), errors };
+        const out = { seen, errors };
+        if (abilities) {
+          await X(`S.L = Math.max(S.L, 10); S.abil.scrolls = { moss: 1, hollow: 1 }; setTab('abilities'); 1`); await page.waitForTimeout(400);
+          out.cards = await X(`document.querySelectorAll('#sec-abilities .ab-card').length`);
+          out.groups = await X(`[...document.querySelectorAll('#sec-abilities .ab-pname')].map(x => x.textContent).join()`);
+          const learn = '#sec-abilities .ab-card[data-ab="powershot"] .ab-learn';
+          await page.click(learn); await page.waitForTimeout(150);
+          out.armed = await X(`(document.querySelector('${learn}') || {}).textContent || ''`);
+          await page.click(learn); await page.waitForTimeout(250);
+          out.learned = await X(`abilityOwned('wren', 'powershot') && soloEquipped().includes('powershot') && scrollCount('moss') === 0 && !!document.querySelector('#sec-abilities .ab-card[data-ab="powershot"].owned')`);
+        }
         await ctx.close(); return out;
       };
       const on = await run(844, 390, true);
-      assert(/Wren/.test(on.seen.card) && /VS/.test(on.seen.card) && /Haste \d+/.test(on.seen.card) && /(You go first|goes first)/.test(on.seen.card), `turn UI 844x390: the versus card names both sides, their Haste and who goes first (${JSON.stringify(on.seen.card)})`);
-      assert(on.seen.strip && on.seen.bar, `turn UI 844x390: the turn strip shows four portraits and the timing bar shows on the foe's wind-up (${JSON.stringify(on.seen)})`);
-      assert(on.seen.cdTurns, 'turn UI 844x390: the Echo slot shows its cooldown in turns during a turn fight');
-      assert(!on.saveHasFlag && !on.errors.length, 'turn UI: the test switch lives outside the save, and no page errors' + (on.errors.length ? ': ' + on.errors[0] : ''));
-      const port = await run(360, 740, true);
-      assert(/VS/.test(port.seen.card) && port.seen.strip && !port.errors.length, 'turn UI 360x740: the versus card and turn strip work in portrait');
-      const off = await run(844, 390, false);
-      assert(!off.seen.card && !off.seen.strip && !off.errors.length, 'turn UI: with the switch off no versus card or turn strip appears (legacy fights)');
+      assert(/Wren/.test(on.seen.card) && /VS/.test(on.seen.card) && /Speed \d+/.test(on.seen.card) && /(You go first|goes first)/.test(on.seen.card), `turn UI 844x390: the versus card names both sides, their Speed and who goes first (${JSON.stringify(on.seen.card)})`);
+      assert(on.seen.strip >= 5 && on.seen.bar && on.seen.mine, `turn UI 844x390: the turn strip shows the next turns, the timing bar shows on the foe's wind-up, and "Your turn" says when the fight waits on you (${JSON.stringify(on.seen)})`);
+      assert(on.seen.cdTurns && !on.seen.autoBadge, 'turn UI 844x390: the Echo slot shows its cooldown in turns, and there is no Auto badge (active only)');
+      assert(on.cards === 14 && on.groups === 'True Aim,Blood Trail,Night Wings', `turn UI: Hero tab > Abilities lists Wren's 14 abilities in their three groups (${on.cards}: ${on.groups})`);
+      assert(/Tap again/.test(on.armed) && on.learned, `turn UI: Learn takes two taps, spends the Scroll, and puts the ability in a free slot (${JSON.stringify(on.armed)}, ${on.learned})`);
+      assert(!on.errors.length, 'turn UI: no page errors' + (on.errors.length ? ': ' + on.errors[0] : ''));
+      const port = await run(360, 740, false);
+      assert(/VS/.test(port.seen.card) && port.seen.strip >= 5 && !port.errors.length, `turn UI 360x740: the versus card and turn strip work in portrait (${JSON.stringify(port.seen)})`);
+      // a new player follows the guide through the first fights: Attack, the ability, Dodge and Parry, each pressed when
+      // the guide asks (it pauses on your turn, or inside the defence window, so the paused press lands)
+      { const ctx = await browser.newContext({ turns: true, viewport: { width: 740, height: 360 } }), page = await ctx.newPage(), errors = [];
+        page.on('pageerror', e => errors.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(600);
+        await page.click('#createScreen .ccard[data-hero="tobin"]'); await page.click('#createScreen .create-go');
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        let st = {};
+        for (let i = 0; i < 1500; i++) {
+          st = JSON.parse(await X(`(q => JSON.stringify({ want: soloGuideWants(), ph: q.phase, now: q.now, d: q.dodgeOpensAt, p: q.parryOpensAt, c: q.closesAt,
+            done: Object.keys((S.onboard || {}).done || {}).filter(k => /^(attack|ability|dodge|parry)$/.test(k)).sort().join() }))(turnCombatSnapshot())`));
+          if (st.done === 'ability,attack,dodge,parry') break;
+          if (st.ph === 'hero') await page.keyboard.press(st.want === 'ability' ? 'q' : 'd');
+          else if (st.ph === 'foeWindup' && st.want === 'dodge' && st.now >= st.d) await page.keyboard.press('s');
+          else if (st.ph === 'foeWindup' && st.want === 'parry' && st.now >= st.p) await page.keyboard.press('a');
+          await page.waitForTimeout(40);
+        }
+        assert(st.done === 'ability,attack,dodge,parry' && !errors.length, `turn UI: the guide walks a new player through Attack, the ability, Dodge and Parry in turn fights (${JSON.stringify(st)})` + (errors.length ? ': ' + errors[0] : ''));
+        await ctx.close(); }
     } finally { await browser.close(); }
   }
 } catch (e) { fail('turn UI crashed: ' + (e.stack || e)); }
@@ -7172,173 +7224,128 @@ if (section('C22 Thorn Imp (zone 1)')) try {
     assert(H('(S.mastery.types.slime||0)>0 && !S.mastery.types.imp'), 'C22: beating the Thorn Imp counts for zone 1\'s foe slot in mastery and the profile'); }
   for (const hero of ['wren', 'tobin', 'pip']) {
     const { H } = imp(hero);
-    const r = H(`(()=>{const p=turnCombatProfile(),e=turnEffects();let hp=p.foeHp,n=0;while(hp>0&&n<20){hp-=turnScalarHit(p,e,'attack',false,()=>1);n++;turnScalarFoeStart(e)}
-      const jab=turnScalarFoeHit(p,turnEffects(),()=>1,p.moves[0].hits[0]).amount,big=turnScalarFoeHit({...p,moveDamage:p.heroMaxHp*5},turnEffects(),()=>1,p.moves[0].hits[0]).amount,ref=ZONE_FOES[1].refHp;return {n,jab,ref,uncapped:big>p.hitCap}})()`);
-    assert(r.n === 3 && r.jab > r.ref * 0.2 * 0.5 && r.jab <= r.ref * 0.2 + 1e-9 && r.uncapped,
-      `C22: ${hero} beats the Thorn Imp in 3 uncritical attacks, and its Briar Jab is 20% of the zone's reference HP less armour, not capped (${r.n} hits, jab ${r.jab.toFixed(1)} of ${r.ref})`);
+    const r = H(`(()=>{const p=turnCombatProfile();return {hp:p.foeMaxHp/turnRefAtk(1),jab:ZONE_FOES[1].moves[0].hits[0].x,ref:p.refHp/mobHp(1)}})()`);
+    assert(r.hp > 3.7 && r.hp < 4.3 && r.jab === 0.2 && r.ref === 1.2,
+      `C22: against ${hero} the Thorn Imp has 4 reference Attacks of HP, and its Briar Jab is 20% of the zone's reference HP (${JSON.stringify(r)})`);
   }
-  // the engine with a stub: per-hit parries, refunds and the one counter
-  const run = parries => { const { H } = imp('wren'); return H(`(() => {
-    let counters=0, hits=0, contacts=[]; const P=${JSON.stringify(parries)};
-    const io={heroHaste:0,foeHaste:1,emit:(n,x)=>{if(n==='foeContact')contacts.push(x.res)},auto:()=>false,random:()=>1,
-      odds:()=>({parry:0,dodge:0,parryWindow:.18,dodgeWindow:.35}),alive:()=>({hero:true,foe:true}),turnStart:()=>{},cooldown:()=>1,
-      abilityId:()=>null,choose:()=>null,heroAction:()=>true,foeHit:h=>{hits++},counter:()=>{counters++},defense:()=>{},
-      moves:()=>ZONE_FOES[1].moves};
-    const m=turnNew('foe',false,io); m.moveN=1; m.cooldowns.echo=5;   // the second move: Crosscut
-    turnResolve(m,{kind:'tick'},TURN_TUNE.introHand,io);
-    const winds=[]; for(let i=0;i<2;i++){ const w=m.move.hits[m.hitI].wind; winds.push(w);
-      turnResolve(m,{kind:'tick'},w-.05,io); if(P[i])turnResolve(m,{kind:P[i]},0,io); turnResolve(m,{kind:'tick'},.06,io); }
-    return {move:m.move.id,winds,counters,hits,contacts,echo:m.cooldowns.echo,phase:m.phase};
-  })()`); };
-  const all = run(['parry', 'parry']), one = run(['parry', '']), dodge = run(['dodge', 'parry']);
-  assert(all.move === 'cross' && all.winds[0] > all.winds[1] && all.contacts.join() === 'parry,parry' && all.counters === 1 && all.hits === 0 && all.echo === 3 && all.phase === 'recovery',
-    `C22: Crosscut is two hits, each its own window; parrying both refunds a turn each and earns one counter (${JSON.stringify(all)})`);
-  assert(one.contacts.join() === 'parry,hit' && one.counters === 0 && one.hits === 1 && one.echo === 4,
-    `C22: a missed second hit lands and there is no counter (${JSON.stringify(one)})`);
-  assert(dodge.contacts.join() === 'dodge,parry' && dodge.counters === 0 && dodge.hits === 0 && dodge.echo === 4,
-    `C22: each hit is its own choice; a dodge avoids the hit but the counter needs every hit parried (${JSON.stringify(dodge)})`);
   { const { h, H } = imp('pip');
     H('globalThis.__mv=[];on("foeMove",x=>__mv.push(x.id+x.hits));combatFoes()[0].hp=combatFoes()[0].max=1e9;const u=cbUnitByKey("hero");u.hp=u.maxHp=1e9');
     for (let i = 0; i < 400; i++) { H('if(turnCombatSnapshot().phase==="hero")soloAttack()'); h.fn.tick(0.05); }
     assert(H('__mv.slice(0,4).join()') === 'jab1,cross2,jab1,cross2' && !h.errors.length, `C22: the live Imp alternates Briar Jab and Crosscut (${H('__mv.join()')})`); }
 } catch (e) { fail('C22 Thorn Imp crashed: ' + (e.stack || e)); }
 
-if (section('C20 turn combat (core)')) try {
-  const g = loadCore({ seed: 2020 }), E = src => g.eval(src);
-  assert(E('TURN_TUNE.on === 0 && !turnCombatOn() && SOLO_TUNE.turnParryWindow === 0.18 && SOLO_TUNE.turnDodgeWindow === 0.35'), 'C20: prototype defaults off; owner-approved manual windows are exposed as knobs');
-  const starterHits=['wren','tobin','pip'].map(hero=>{
-    const h=loadCore({seed:1}), H=x=>h.eval(x);
-    H(`soloPick(${JSON.stringify(hero)},{now:true});S.zone=1;S.activity='fight';TURN_TUNE.on=1;gearDirty();spawn()`);
-    return H(`(()=>{const p=turnCombatProfile(),out={hero:p.heroKey,legacyHeroX:SOLO_TUNE.heroX[p.heroKey]};for(const auto of [false,true]){const e=turnEffects();let hp=p.foeHp,n=0;while(hp>0&&n<20){hp-=turnScalarHit(p,e,'attack',auto,()=>1);n++;turnScalarFoeStart(e)}out[auto?'auto':'manual']=n}return out})()`);
-  });
-  assert(starterHits.every(x=>x.auto===3&&x.manual===3) && starterHits[0].legacyHeroX===.76,
-    `C20: first foe takes three noncritical basic hits by hand and Auto for each starter; legacy damage stays unchanged (${starterHits.map(x=>x.hero+':'+x.manual+'/'+x.auto).join(', ')})`);
-  E('TURN_TUNE.on=1; soloPick("wren"); soloSetAuto(false); S.auto=false; globalThis.__turnEvents=[]; on("fightStart", x=>__turnEvents.push(["start",x.first,turnCombatSnapshot().phase])); on("turn",x=>__turnEvents.push(["turn",x.who,x.n])); on("fightEnd",x=>__turnEvents.push(["end",x.reason])); spawn()');
-  g.fn.tick(0.1);
-  assert(E('combatFoes().filter(f=>f.hp>0&&!f.dead).length===1 && __turnEvents.length===1 && __turnEvents[0].join() === "start,hero,intro" && turnCombatSnapshot().foe.key===combatFoes()[0].key'), 'C20: one foe and a complete intro snapshot exist when fightStart fires');
-  E('combatFoes()[0].hp=combatFoes()[0].max=1e9');
-  for (let i = 0; i < 12; i++) g.fn.tick(0.1);
-  assert(E('turnCombatSnapshot().phase==="hero" && __turnEvents.some(x=>x[0]==="turn"&&x[1]==="hero"&&x[2]===1)'), 'C20: higher hero initiative opens the first hero turn and hand input waits');
-  assert(E('soloAbility({slot:0}) && turnCombatSnapshot().cooldowns.echo===5 && !soloAbility({slot:0})'), 'C20: one ability commits the hero turn and its cooldown is counted in turns');
-  for (let i = 0; i < 3; i++) g.fn.tick(0.1);
-  assert(E('turnCombatSnapshot().phase==="foeWindup" && turnCombatSnapshot().closesAt>turnCombatSnapshot().parryOpensAt'), 'C20: the foe turn publishes fight-local defense bounds');
-  for (let i = 0; i < 40 && E('(q => q.closesAt - q.now > 0.12)(turnCombatSnapshot())'); i++) g.fn.tick(0.05);   // into the parry window (the wind-up follows the foe's art)
-  assert(E('soloParry()==="parry" && soloDodge()==="miss"'), 'C20: a timed parry succeeds and a second defense attempt cannot replace it');
-  for (let i = 0; i < 5; i++) g.fn.tick(0.1);
-  assert(E('turnCombatSnapshot().phase==="hero" && turnCombatSnapshot().cooldowns.echo===3'), 'C20: timed parry refunds one, then the next hero turn decrements one');
-  const carryCore=loadCore({seed:2030}), C=x=>carryCore.eval(x);
-  C('TURN_TUNE.on=1;soloPick("wren");soloSetAuto(false);S.auto=false;spawn();combatFoes()[0].hp=combatFoes()[0].max=1e6');
-  for(let i=0;i<25;i++) carryCore.fn.tick(.05);
-  assert(C('turnCombatSnapshot().phase==="hero" && soloAbility({slot:0}) && turnCombatSnapshot().cooldowns.echo===5'),
-    'C20: a used ability goes on its turn cooldown');
-  C('combatFoes().forEach(f=>{f.hp=1;f.max=1})');
-  for(let i=0;i<120 && !C('turnCombatSnapshot().phase==="hero" && turnCombatSnapshot().n<=2 && combatFoes().some(f=>f.max>1)');i++) { C('soloAttack()'); carryCore.fn.tick(.05); }
-  assert(C('turnCombatSnapshot().phase==="hero" && turnCombatSnapshot().cooldowns.echo===0 && soloAbility({slot:0})'),
-    'C20: cooldowns reset every fight (owner): the next foe starts with the ability ready');
-  assert(!/TURN_CARRY_CDS|carryCds/.test(fs.readFileSync(path.join(ROOT, 'src', 'js', '59k-turn.js'), 'utf8')), 'C20: no cooldown carry-over is left in the turn engine (live or sampled)');
-  const cadence = E(`(() => {
-    const run = dt => { let hero=1e9, foe=1e9; const io={heroHaste:10,foeHaste:9,emit:()=>{},auto:()=>true,
-      random:()=>1,odds:()=>({parry:0,dodge:0,parryWindow:.18,dodgeWindow:.35}),
-      alive:()=>({hero:hero>0,foe:foe>0}),turnStart:()=>{},cooldown:()=>1,
-      abilityId:()=>null,choose:()=>({kind:'attack'}),heroAction:()=>{foe--;return true},foeHit:()=>{hero--},counter:()=>{},defense:()=>{}};
-      const m=turnNew('hero',true,io); for(let t=0;t<60;t+=dt)turnResolve(m,{kind:'tick'},dt,io); return m.n; };
-    return [.01,.05,.1].map(run);
-  })()`);
-  assert(Math.max(...cadence)-Math.min(...cadence) <= Math.max(...cadence)*0.1,
-    `C20: turn cadence remains within 10% across 0.01/0.05/0.1 s ticks (${cadence.join('/')})`);
-  const autoDefense = E(`(() => {
-    let hero=100, foe=1e9, counters=0, windows=0;
-    const io={heroHaste:10,foeHaste:9,emit:(name)=>{if(name==='parryWindow')windows++},
-      auto:()=>true,random:()=>0,odds:()=>({parry:.1,dodge:.25,parryWindow:.18,dodgeWindow:.35}),
-      alive:()=>({hero:hero>0,foe:foe>0}),turnStart:()=>{},cooldown:id=>id==='echo'?5:1,
-      abilityId:()=> 'echo',choose:m=>m.cooldowns.echo===0?{kind:'ability',id:'echo'}:{kind:'attack'},
-      heroAction:()=>true,foeHit:()=>{hero--},counter:()=>{counters++},defense:()=>{}};
-    const m=turnNew('hero',true,io);turnResolve(m,{kind:'tick'},.6,io);
-    turnResolve(m,{kind:'tick'},.28,io);turnResolve(m,{kind:'tick'},.85,io);
-    return {cd:m.cooldowns.echo,counters,windows};
-  })()`);
-  assert(autoDefense.cd===5 && autoDefense.counters===1 && autoDefense.windows===1,
-    'C20: Auto parry counters once without refunding the used ability');
-  const dotOrder = E(`(() => {
-    let foe=1, windows=0, ends=0;const io={heroHaste:0,foeHaste:1,emit:name=>{if(name==='parryWindow')windows++;if(name==='fightEnd')ends++},
-      auto:()=>false,random:()=>1,odds:()=>({parry:0,dodge:0,parryWindow:.18,dodgeWindow:.35}),
-      alive:()=>({hero:true,foe:foe>0}),turnStart:who=>{if(who==='foe')foe=0},cooldown:()=>1,
-      abilityId:()=>null,choose:()=>null,heroAction:()=>true,foeHit:()=>{},counter:()=>{},defense:()=>{}};
-    const m=turnNew('foe',false,io);turnResolve(m,{kind:'tick'},1.2,io);
-    return {windows,ends,phase:m.phase};
-  })()`);
-  assert(dotOrder.windows===0 && dotOrder.ends===1 && dotOrder.phase==='off',
-    'C20: a foe killed at turn start ends once before a defense window is offered');
-  const profile = E('turnCombatProfile()'), before = E('JSON.stringify(S)');
-  const passives = E(`(() => {
-    const p=turnCombatProfile(), e=turnEffects(); e.blockN=0;
-    const focus={...p,heroKey:'wren',critChance:.2,critMult:4,nonCrit:1,armoured:false,markCritX:1.5};
-    const mark=turnScalarHit({...focus,critChance:0},e,'attack',false,()=>1);
-    const next=turnScalarHit(focus,e,'attack',false,()=>.25);
-    const damage=turnScalarFoeHit({...p,foeAtk:100,hitCap:1000,blockP:0,blockC:.1,blockX:.5,heroMaxHp:100,regen:.005},
-      {guard:0,grit:0,blockN:.9},()=>1);
-    return {mark,focusV:e.focusV,critBonus:next>focus.heroAtk*1.25,damage,
-      regen:turnScalarRegen({heroMaxHp:100,regen:.005},50,1)};
-  })()`);
-  assert(passives.focusV===.25 && passives.critBonus && passives.damage.blocked && passives.damage.amount===50 && passives.regen===50.5,
-    'C20: Ranger Focus mark and marked crit, Warrior class block and legacy regeneration use the shared scalar rules');
-  E('globalThis.__rngCalls=0; Math.random=()=>{__rngCalls++;return 0.5}');
-  const sample = E('turnCombatSample({profile:turnCombatProfile(),seconds:30,seed:77,mode:"auto"})');
-  assert(sample && sample.seconds===30 && sample.kills>=0 && E('JSON.stringify(S)')===before && E('__rngCalls===0'), 'C20: reward-free scratch sampling does not mutate the save or consume live RNG');
-  const blockCore=loadCore({seed:2024}), B=x=>blockCore.eval(x);
-  B('TURN_TUNE.on=1;TURN_TUNE.autoParry=0;TURN_TUNE.autoDodge=0;soloPick("tobin");soloSetAuto(true);S.auto=false;spawn();combatFoes()[0].hp=combatFoes()[0].max=1e9;const u=cbUnitByKey("hero");u.hp=u.maxHp=1e9;globalThis.__blockEvents={hits:0,blocks:0};on("unitHit",x=>{if(x.key==="hero"){__blockEvents.hits++;if(x.blocked)__blockEvents.blocks++}})');
-  const lowDamage=B('turnCombatSample({profile:turnCombatProfile(),seconds:60,seed:1,mode:"auto"})');
-  B('for(let i=0;i<1200;i++)tick(.05)');
-  const liveBlock=B('__blockEvents');
-  assert(B('turnCombatProfile().blockC===0.1') && lowDamage.foeHits>=10 && lowDamage.foeHits===liveBlock.hits &&
-    lowDamage.blocks===liveBlock.blocks && liveBlock.blocks>=1,
-    `C20: multi-hit Tobin class block persists across turns in live/scratch (${liveBlock.hits}/${liveBlock.blocks} vs ${lowDamage.foeHits}/${lowDamage.blocks})`);
-  const earlySave=fs.readFileSync(path.join(ROOT,'tests','fixtures','save-early.json'),'utf8');
-  const earlyRate=dt=>{
-    const h=loadCore({seed:1,storage:memoryStorage({[KEY]:earlySave})}), H=x=>h.eval(x);
-    H('loadSave();soloPick("wren",{now:true});S.zone=1;S.kills=0;S.activity="fight";S.auto=false;TURN_TUNE.on=1;soloSetAuto(true);DEED_TUNE.bonusOn=0;gainXp=()=>{};gearDirty();spawn();globalThis.__earlyMastery=JSON.stringify(S.mastery);on("kill",()=>{S.mastery=JSON.parse(__earlyMastery);S.kills=0})');
-    const scratch=H('turnCombatSample({profile:turnCombatProfile(),seconds:120,seed:1,mode:"auto"})');
-    H(`globalThis.__earlyBefore=S.totalKills;for(let t=0;t<120;){const d=Math.min(${dt},120-t);tick(d);t+=d}`);
-    return {scratch:scratch.kills,live:H('S.totalKills-__earlyBefore'),errors:h.errors};
-  };
-  const early05=earlyRate(.05), earlyFrame=earlyRate(1/60);
-  assert(early05.live>0 && Math.abs(early05.scratch-early05.live)/early05.live<.1 &&
-    earlyFrame.live>0 && Math.abs(earlyFrame.scratch-earlyFrame.live)/earlyFrame.live<.1 &&
-    !early05.errors.length && !earlyFrame.errors.length,
-    `C20: one-hit early Wren scratch cadence stays within 10% of live at .05 and 1/60 s (${early05.scratch}/${early05.live}; ${earlyFrame.scratch}/${earlyFrame.live})`);
-  E('setZone(2)');
-  assert(E('!turnCombatOn() && combatFoes().length>=1 && __turnEvents.filter(x=>x[0]==="end").length===1 && __turnEvents.at(-1)[1]==="abandon"'), 'C20: leaving the supported zone ends the fight once and restores legacy pack combat');
-  E('TURN_TUNE.on=0; setZone(1)');
-  assert(E('!turnCombatOn() && combatFoes().length>=1'), 'C20: switching the prototype off retains legacy zone-one combat');
-  const toggled=loadCore({seed:2023}), V=x=>toggled.eval(x);
-  V('TURN_TUNE.on=1;soloPick("wren");soloSetAuto(false);globalThis.__ends=[];on("fightEnd",x=>__ends.push(x.reason));spawn()');
-  toggled.fn.tick(0.1); V('TURN_TUNE.on=0'); toggled.fn.tick(0.1); toggled.fn.tick(0.1);
-  assert(V('__ends.join()==="abandon" && !turnCombatOn()'), 'C20: disabling the switch mid-fight abandons exactly once and returns to legacy ticks');
-  const lethal=loadCore({seed:2025}), L=x=>lethal.eval(x);
-  L('TURN_TUNE.on=1;TURN_TUNE.foeHaste=100;TURN_TUNE.foeAtkX=1000;soloPick("wren");soloSetAuto(false);S.auto=false;spawn();cbUnitByKey("hero").hp=.001;globalThis.__lethalEnds=[];on("fightEnd",x=>__lethalEnds.push(x.reason))');
-  for(let i=0;i<60;i++) lethal.fn.tick(.05);
-  assert(L('__lethalEnds.join()==="defeat" && TURN_RECOVER>0 && cbUnitByKey("hero").down') && !lethal.errors.length,
-    'C20: a lethal foe hit survives wipe/sceneReset reentrancy, ends as defeat once and schedules recovery');
-  const mk = seed => { const h=loadCore({seed}), H=x=>h.eval(x); H('TURN_TUNE.on=1;soloPick("wren");soloSetAuto(true);S.auto=false;spawn();globalThis.__awayN=0;globalThis.__sampleCalls=0;globalThis.__sampleOrig=turnCombatSample;turnCombatSample=(...a)=>{__sampleCalls++;return __sampleOrig(...a)};on("awayKills",()=>__awayN++)'); h.fn.tick(0.1); return {h,H}; };
-  const a=mk(2021), b=mk(2021);
-  const one=a.H('awayGains(3600)'), half1=b.H('awayGains(1800)'), half2=b.H('awayGains(1800)');
-  assert(one.turnCombat && half1.turnCombat && half2.turnCombat && one.turnCombat.sampledSeconds===3600 && a.H('__awayN')===1 && b.H('__awayN')===2, 'C20: away Auto reports generated and stored Essence and emits one reward event per claim');
-  assert(one.turnCombat.kills===half1.turnCombat.kills+half2.turnCombat.kills && one.turnCombat.generatedEss===half1.turnCombat.generatedEss+half2.turnCombat.generatedEss, 'C20: fractional carry makes a one-hour claim equal two half-hour claims');
-  assert(a.H('__sampleCalls===1') && b.H('__sampleCalls===1'), 'C20: split away claims reuse the fixed one-hour combat sample');
-  const tuned=mk(2026); tuned.H('awayGains(60)'); tuned.H('TURN_TUNE.heroX.wren+=.01;awayGains(60)');
-  assert(tuned.H('__sampleCalls===2'), 'C20: changing a turn balance knob invalidates the persisted away sample');
-  const whole=mk(2022), split=mk(2022), twoHours=whole.H('awayGains(7200)'), firstHour=split.H('awayGains(3600)');
-  split.H('save()');
-  const re=loadCore({seed:2022,storage:memoryStorage(split.h.storage.dump())}), R=x=>re.eval(x);
-  R('TURN_TUNE.on=1;loadSave();gearDirty();spawn()');
-  const secondHour=R('awayGains(3600)');
-  assert(R('S.turn.awaySample && S.turn.awaySample.seconds===3600'), 'C20: the fixed away sample persists across save/reload');
-  assert(twoHours.turnCombat.kills===firstHour.turnCombat.kills+secondHour.turnCombat.kills &&
-    twoHours.turnCombat.generatedEss===firstHour.turnCombat.generatedEss+secondHour.turnCombat.generatedEss &&
-    Math.abs(whole.H('S.gold')-R('S.gold'))<1e-8, 'C20: a progressing two-hour claim equals two one-hour claims with save/reload between');
-  assert(one.turnCombat.storedEss<=one.turnCombat.generatedEss && a.H('S.totalKills')===one.turnCombat.kills, 'C20: aggregate away rewards are applied once and respect Essence storage caps');
-  assert(!g.errors.length && !a.h.errors.length && !b.h.errors.length, 'C20: turn fights, sampling and away claims raise no core handler errors');
-} catch (e) { fail('C20 turn combat crashed: ' + (e.stack || e)); }
+if (section('C29 turn fights (core)')) try {
+  // Turn fights are the zone fight (owner, 2026-10-02: "actually implement the turn based combat"): active only, Speed
+  // gauges, 3 ability slots from 14 per hero, statuses, boss charges, Scrolls that unlock abilities.
+  // A player bot: on its turn the first usable slot, else Attack; each enemy hit parried (or dodged) inside its window.
+  const BOT = `globalThis.__bot = (mode) => { const q = turnCombatSnapshot();
+    if (q.phase === 'hero') { const eq = soloEquipped(); let ok = false; for (let i = 0; i < 3 && !ok; i++) if (eq[i]) ok = turnCombatAction('ability', i); if (!ok) turnCombatAction('attack'); }
+    if (q.phase === 'foeWindup' && mode && q.closesAt - q.now <= 0.06 && q.closesAt - q.now >= 0) turnCombatAction(mode); }`;
+  const fresh = (hero, seed) => { const g = loadCore({ seed: seed || 29, turns: true }), E = s => g.eval(s);
+    E(`soloPick(${JSON.stringify(hero)}, {now:true}); S.onboard && (S.onboard.tips = false, S.onboard.all = true); S.activity = 'fight'; ${BOT}`); return { g, E }; };
+  { const { g, E } = fresh('wren');
+    assert(E('TURN_TUNE.on === 1 && turnCombatOn()') && E('SOLO_TUNE.turnParryWindow === 0.18 && SOLO_TUNE.turnDodgeWindow === 0.35'),
+      'C29: turn fights are the zone fight by default; the parry window is 0.18 s and the dodge 0.35 s (owner)');
+    // active only: nothing happens on your turn until you act, and the foe never acts more than twice in a row
+    E('globalThis.__t = []; on("turn", x => __t.push(x.who))');
+    for (let t = 0; t < 60; t += 0.05) g.fn.tick(0.05);
+    assert(E('turnCombatSnapshot().phase === "hero" && cbUnitByKey("hero").hp > 0 && __t.length <= 3 && !__t.join().includes("foe,foe,foe")'),
+      `C29: the fight waits on your turn (active only): a minute with no input and the foe has acted at most twice (${E('__t.join()')})`);
+    // a hidden page pauses the fight
+    E('soloGoIdle(); globalThis.__n0 = turnCombatSnapshot().now; combatFoes()[0]; ');
+    for (let t = 0; t < 5; t += 0.1) g.fn.tick(0.1);
+    assert(E('turnCombatSnapshot().now === __n0'), 'C29: a hidden page pauses the turn fight clock');
+    E('soloWake()');
+    // away time earns nothing from fights
+    const gold = E('S.gold'), kills = E('S.totalKills'); E('awayGains(3600)');
+    assert(E('S.gold') === gold && E('S.totalKills') === kills, 'C29: an hour away earns no fights (active only); gathering is unchanged');
+    // a zone plays out: five fights, the boss, the next zone, and the first clear drops a Moss Scroll
+    E('globalThis.__seq = []; on("kill", x => __seq.push(x.mob.boss ? "B" : "k"))');
+    for (let t = 0; t < 600 && E('S.zone') === 1; t += 0.05) { E('__bot("parry")'); g.fn.tick(0.05); }
+    assert(E('__seq.join()') === 'k,k,k,k,k,B' && E('S.zone') === 2 && E('scrollCount("moss")') === 1 && !g.errors.length,
+      `C29: zone 1 is five turn fights then its boss; the first win drops a Moss Scroll (${E('__seq.join()')}, Scrolls ${E('JSON.stringify(S.abil.scrolls)')})`); }
+  // the Speed gauges: equal Speed alternates; a hero twice as fast acts twice, never three times, in a row
+  { const { E } = fresh('wren');
+    E('S.zone = 1; spawn()'); E('tick(0.05)');
+    const order = sp => E(`(() => { const m = TURN_LIVE; m.p = { ...m.p, heroSpd: ${sp[0]}, foeSpd: ${sp[1]} }; m.gH = m.gF = 0; m.last = ''; m.run = 0; m.phase = 'off'; m.charge = null;
+      const s = { gH: 0, gF: 0, last: '', run: 0, hold: false }, out = []; for (let i = 0; i < 6; i++) out.push(turnAdvance(m, s)[0]); return out.join(''); })()`);
+    const eq = order([10, 10]), fast = order([20, 10]), slow = order([10, 30]);
+    assert(eq === 'hfhfhf' && fast === 'hhfhhf' && slow === 'ffhffh', `C29: Speed sets turn frequency, ties go to the hero, two turns in a row at most (equal ${eq}, hero x2 ${fast}, foe x3 ${slow})`); }
+  // parries refund every cooldown per hit, a full parry counters, a dodge only avoids
+  { const run = defs => { const { g, E } = fresh('wren', 7);
+      E('S.zone = 1; spawn(); combatFoes()[0].hp = combatFoes()[0].max = 1e12; globalThis.__c = 0; globalThis.__r = []; on("soloCounter", () => __c++); on("foeContact", x => __r.push(x.res))');
+      for (let i = 0; i < 400 && E('turnCombatSnapshot().phase') !== 'hero'; i++) g.fn.tick(0.05);
+      E('turnCombatAction("ability", 0)');   // Echo Shot: 5 turns
+      for (let i = 0; i < 400 && !(E('turnCombatSnapshot().phase') === 'foeWindup' && E('turnCombatSnapshot().move.hits') === 2); i++) {
+        if (E('turnCombatSnapshot().phase') === 'hero') E('turnCombatAction("attack")'); g.fn.tick(0.05); }
+      const cd0 = E('turnCombatSnapshot().cooldowns.echo');
+      for (const d of defs) { for (let i = 0; i < 100 && E('turnCombatSnapshot().closesAt - turnCombatSnapshot().now') > 0.05; i++) g.fn.tick(0.02); if (d) E(`turnCombatAction("${d}")`); g.fn.tick(0.06); }
+      return { cd0, cd: E('turnCombatSnapshot().cooldowns.echo'), counters: E('__c'), res: E('__r.slice(-2).join()') }; };
+    const both = run(['parry', 'parry']), mixed = run(['dodge', 'parry']);
+    assert(both.res === 'parry,parry' && both.cd === Math.max(0, both.cd0 - 2) && both.counters === 1,
+      `C29: each parried hit takes a turn off every cooldown, and parrying the whole move earns one counter (${JSON.stringify(both)})`);
+    assert(mixed.res === 'dodge,parry' && mixed.cd === Math.max(0, mixed.cd0 - 1) && mixed.counters === 0,
+      `C29: a dodge avoids its hit with no refund, and the counter needs every hit parried (${JSON.stringify(mixed)})`); }
+  // a boss gathers its charge, and a big hit breaks it
+  { const { g, E } = fresh('tobin', 8);
+    E('S.zone = 1; S.kills = ZONE_FIGHTS; spawn(); globalThis.__ev = []; for (const k of ["foeCharge", "chargeBroken", "turnPhase"]) on(k, x => __ev.push(k)); const u = cbUnitByKey("hero"); u.hp = u.maxHp = 1e12');
+    assert(E('combatFoes()[0].boss && combatFoes()[0].tk.script.length === 4 && combatFoes()[0].tk.script[2].charge'), 'C29: a zone boss has four moves, the third a charged move');
+    for (let t = 0; t < 120 && !E('__ev.includes("foeCharge")'); t += 0.05) { E('if (turnCombatSnapshot().phase === "hero") turnCombatAction("attack")'); g.fn.tick(0.05); }
+    E('TURN_LIVE.p.A = TURN_LIVE.p.foeMaxHp * 0.07');
+    for (let t = 0; t < 20 && !E('__ev.includes("chargeBroken")'); t += 0.05) { E('if (turnCombatSnapshot().phase === "hero") turnCombatAction("attack")'); g.fn.tick(0.05); }
+    assert(E('__ev.join()').startsWith('foeCharge') && E('__ev.includes("chargeBroken")') && !g.errors.length, `C29: a charged move takes a turn to gather and a hit of 6% of the boss's HP breaks it (${E('__ev.join()')})`); }
+  // every ability of every hero resolves in a fight: no errors, no bad numbers, damage where it should
+  for (const hero of ['wren', 'tobin', 'pip']) {
+    const { g, E } = fresh(hero, 31);
+    E(`S.L = 40; S.abil.unl[${JSON.stringify(hero)}] = HERO_ABILITIES[${JSON.stringify(hero)}].filter(id => ABILITIES[id].tier); S.zone = 5; S.maxZone = 5; spawn()`);
+    const ids = E(`HERO_ABILITIES[${JSON.stringify(hero)}]`);
+    const bad = [];
+    for (let i = 0; i < ids.length; i += 3) {
+      const eq = ids.slice(i, i + 3);
+      const r = E(`(() => { const p = turnCombatProfile(); p.eq = ${JSON.stringify(eq)}; p.cds = {}; for (const id of p.eq) p.cds[id] = turnCdFor(id); p.cds.attack = 1;
+        const x = turnCombatSample({ profile: p, seconds: 120, seed: 5, skill: { parry: 0.6, dodge: 0.9 } }); return x; })()`);
+      if (!(r.kills > 0) || !Number.isFinite(r.damageDone) || badNumbers(r).length) bad.push(eq.join('+') + ':' + JSON.stringify(r).slice(0, 80));
+    }
+    assert(!bad.length && !g.errors.length, `C29: all 14 of ${hero}'s abilities resolve in fights, three slots at a time (${bad.join('; ') || 'ok'})`);
+  }
+  // Scrolls: the tier's level and Scroll gate learning; a higher Scroll pays for a lower tier; the starter is free
+  { const { E } = fresh('pip', 9);
+    assert(E('abilityOwned("pip", "fire") && !abilityOwned("pip", "spark") && soloAbilities("pip").join() === "fire"'), 'C29: each hero starts with their signature only');
+    assert(E('abLearnInfo("pip", "spark").why') === 'Needs a Moss Scroll' && E('abLearnInfo("pip", "kindle").why') === 'Level 8', 'C29: an ability needs its Scroll, and its tier\'s hero level');
+    E('S.abil.scrolls = { hollow: 1 }');
+    assert(E('abilityLearn("pip", "spark") && scrollCount("hollow") === 0 && abilityOwned("pip", "spark") && soloAbilities("pip").includes("spark")'), 'C29: a higher Scroll can pay for a lower tier, and the ability is learned');
+    assert(E('!abilityLearn("pip", "spark") && !abilityLearn("pip", "echo")'), 'C29: an ability is learned once, and only by its own hero');
+    assert(E('scrollFor(1) === "moss" && scrollFor(5) === "hollow" && scrollFor(13) === "barrow" && scrollFor(21) === "roadlight" && scrollFor(35) === "mother"'), 'C29: zone bosses drop Scrolls by zone band; the Fenmother drops the Mother Scroll'); }
+  // replays: 1 in 5, never more than 5 dry
+  { const { E } = fresh('wren', 10);
+    E('S.maxZone = 10; globalThis.__d = 0; on("scrollDrop", () => __d++); for (let i = 0; i < 50; i++) emit("kill", { mob: { boss: true, type: "slime", key: "slime0", name: "Elder Moss Slime", z: 3, pal: {} }, zone: 3, gold: 0, ess: 0, tier: 1 })');
+    const d = E('__d'); assert(d >= 10 && d <= 25, `C29: replayed bosses drop a Scroll about 1 in 5 wins, never 5 dry in a row (${d} in 50)`); }
+  // the foe numbers follow the zone's reference hero
+  { const { E } = fresh('wren', 11);
+    const r = E('(() => { setZone(1); spawn(); const f = combatFoes()[0], p = turnCombatProfile(); return { name: f.name, hpA: f.max / turnRefAtk(1), jab: ZONE_FOES[1].moves[0].hits[0].x, ref: turnRefHp(1) / mobHp(1), spd: p.foeSpd, hero: p.heroSpd }; })()');
+    assert(r.name === 'Thorn Imp' && r.hpA > 3.7 && r.hpA < 4.3 && r.jab === 0.2 && r.ref === 1.2 && r.spd === 9 && r.hero === 10,
+      `C29: zone 1's Thorn Imp has 4 reference Attacks of HP, its Briar Jab is 20% of the reference HP, Speed 9 against Wren's 10 (${JSON.stringify(r)})`); }
+  // timed abilities: a ring per hit; Perfect adds the bonus, Good is as written, a Miss (or no press) hits for 70%
+  { const ring = (grades, id, hero) => { const { g, E } = fresh(hero || 'tobin', 12);
+      E(`S.L = 40; S.abil.unl.${hero || 'tobin'} = HERO_ABILITIES.${hero || 'tobin'}.filter(x => ABILITIES[x].tier); soloEquip(0, ${JSON.stringify(id)}); S.zone = 1; spawn(); combatFoes()[0].hp = combatFoes()[0].max = 1e12;
+        globalThis.__g = []; on('timingGrade', x => __g.push(x.grade)); globalThis.__dmg = 0; on('float', x => { if (/^[0-9.]+[KMB]?!?$/.test(String(x.txt))) __dmg++ })`);
+      for (let i = 0; i < 200 && E('turnCombatSnapshot().phase') !== 'hero'; i++) g.fn.tick(0.05);
+      const hp0 = E('combatFoes()[0].hp');
+      E('turnCombatAction("ability", 0)');
+      for (const gr of grades) {
+        const off = gr === 'perfect' ? 0 : gr === 'good' ? 0.1 : -1;
+        for (let i = 0; i < 100 && E('turnCombatSnapshot().phase') === 'timing' && E('turnCombatSnapshot().timing.closesAt - turnCombatSnapshot().now') > Math.max(0, off) + 1e-9; i++) g.fn.tick(0.01);
+        if (off >= 0) E('turnCombatAction("ability", 0)'); else for (let i = 0; i < 40 && E('__g.length') < grades.indexOf(gr) + 1; i++) g.fn.tick(0.02);
+      }
+      for (let i = 0; i < 10 && E('turnCombatSnapshot().phase') === 'timing'; i++) g.fn.tick(0.1);
+      return { grades: E('__g.join()'), dmg: hp0 - E('combatFoes()[0].hp'), guard: E('TURN_LIVE.h.guard'), phase: E('turnCombatSnapshot().phase'), err: g.errors.length }; };
+    const p = ring(['perfect'], 'bash'), gd = ring(['good'], 'bash'), ms = ring(['miss'], 'bash');
+    assert(p.grades === 'perfect' && gd.grades === 'good' && ms.grades === 'miss' && p.guard === 3 && gd.guard === 2 && !p.err,
+      `C29: Shield Bash is timed: a Perfect press Guards for 3 enemy turns, a Good one for 2 (${JSON.stringify([p, gd, ms].map(x => x.grades + ':' + x.guard))})`);
+    assert(ms.dmg > 0 && Math.abs(ms.dmg / gd.dmg - 0.7) < 0.12 && ms.phase !== 'timing', `C29: a missed ring (no press) still resolves the ability, at 70% damage (${(ms.dmg / gd.dmg).toFixed(2)})`);
+    const v = ring(['perfect', 'good', 'miss'], 'volley', 'wren');
+    assert(v.grades === 'perfect,good,miss' && !v.err, `C29: Volley has one ring per arrow (${v.grades})`); }
+} catch (e) { fail('C29 turn fights crashed: ' + (e.stack || e)); }
 
 if (section('removed systems (W2-C)')) try {
   const strip = t => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/([^:'"`\\])\/\/[^\n'"`]*$/gm, '$1');

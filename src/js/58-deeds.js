@@ -548,7 +548,7 @@ let deeds, deedBonus, wearGet;
   on('tap', () => {
     if (campSince >= 0) campSince = clock;
   });
-  on('soloAttack', p => { if (p && p.kind === 'hit') drumHit(); });
+  on('soloPress', () => drumHit());   // C29: every Attack press counts (a turn fight lands one a turn; the rain is the pressing)
   on('menuView', ({ view }) => { lastView = view || ''; campSince = lastView === 'camp' ? clock : -1; });
 
   // Per-second secrets and polls.

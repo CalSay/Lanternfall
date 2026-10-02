@@ -97,11 +97,18 @@ const fireMats = () => (typeof HEARTH_TUNE === 'object' ? HEARTH_TUNE.light : []
 // extra condition for the pause. Attack and the ability need a live foe; Dodge and Parry need a wind-up still on its
 // way, and the guide's press ignores a cooldown left by an earlier press (59j: `forgive`), so a paused game never waits on one.
 const liveFoe = () => { try { return combatFoes().some(f => f && !f.dead && f.hp > 0 && !f.gone); } catch (e) { return false; } };
+// Turn fights (59k): Attack and the ability wait for your turn; Dodge and Parry pause inside their window, so the
+// paused press lands. In a legacy fight the old conditions stand.
+const turnSnap = () => { try { return typeof turnCombatOn === 'function' && turnCombatOn() ? turnCombatSnapshot() : null; } catch (e) { return null; } };
+const heroTurnNow = () => { const q = turnSnap(); return !q || q.phase === 'hero'; };
+// (a hit you already dodged or parried is not a new lesson: the next step waits for the next hit)
+const hitComing = () => { const q = turnSnap(); return q ? q.canDefend && q.closesAt > q.now : heavyShowing(); };
+const inWindow = k => { const q = turnSnap(); if (!q) return heavyShowing(); const open = k === 'parry' ? q.parryOpensAt : q.dodgeOpensAt; return q.canDefend && q.now >= open && q.closesAt - q.now > 0.02; };
 const GUIDE_STEPS = [
-  { id: 'attack', pause: 1, pauseWhen: liveFoe, when: () => fightingNow(), done: () => (O().atk || 0) >= 1 || S.totalKills >= 12 },
-  { id: 'ability', pause: 1, pauseWhen: liveFoe, when: () => stepDone('attack') && fightingNow() && abilityOk(), done: () => O().casts >= 1 },
-  { id: 'dodge', pause: 1, pauseWhen: () => liveFoe() && heavyShowing(), when: () => stepDone('ability') && fightingNow() && heavyShowing(), done: () => (O().dodges || 0) >= 1 },
-  { id: 'parry', pause: 1, pauseWhen: () => liveFoe() && heavyShowing(), when: () => stepDone('dodge') && fightingNow() && heavyShowing(), done: () => (O().parries || 0) >= 1 },
+  { id: 'attack', pause: 1, pauseWhen: () => liveFoe() && heroTurnNow(), when: () => fightingNow(), done: () => (O().atk || 0) >= 1 || S.totalKills >= 12 },
+  { id: 'ability', pause: 1, pauseWhen: () => liveFoe() && heroTurnNow(), when: () => stepDone('attack') && fightingNow() && abilityOk(), done: () => O().casts >= 1 },
+  { id: 'dodge', pause: 1, pauseWhen: () => liveFoe() && inWindow('dodge'), when: () => stepDone('ability') && fightingNow() && hitComing(), done: () => (O().dodges || 0) >= 1 },
+  { id: 'parry', pause: 1, pauseWhen: () => liveFoe() && inWindow('parry'), when: () => stepDone('dodge') && fightingNow() && hitComing(), done: () => (O().parries || 0) >= 1 },
   { id: 'boss', pause: 1, ok: 1, when: () => S.maxZone === 1 && S.zone === 1 && typeof fightBoss !== 'undefined' && !!fightBoss, done: () => S.maxZone >= 2 },
   // W2-A: Train Attack on the Hero tab (it opens with the step: the tab is unlocked by then, hero level 3 or zone 2)
   { id: 'upgrade', pause: 1, when: () => stepDone('ability') && isUnlocked('party') && S.gold >= cheapestUp(), done: () => upBought() },

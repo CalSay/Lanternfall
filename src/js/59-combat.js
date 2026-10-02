@@ -255,13 +255,14 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     const z = S.zone, cyc = zoneCycle(z), zt = zoneType(z);
     foes = []; packDown = false; packT = 0; focusIdx = -1; lead = null; packGold = 0; inArena = false;
     refreshUnits(false);
-    if (!boss && typeof turnCombatScope === 'function' && turnCombatScope()) {
-      // C20: one stronger foe; the existing pack-clear path still pays one kill and its rewards.
-      const hp = mobHp(z) * TURN_TUNE.foeHpX * mod('foeHp');
-      const f = mkFoe(zt, hp, mobGold(z) * T.packGold, Math.ceil(1.5 * z), z, false, TYPES[zt].name, cyc, T.packAtkN);
-      f.turn = 1;   // a turn-prototype foe (50-sim respawns a legacy one when the prototype takes over)
-      if (typeof zoneFoeSkin === 'function') zoneFoeSkin(f, z);   // C22: the zone's own monster (59l)
-      foes.push(f); lead = f; packN = 1; packSize = 'brute'; aoeK = 1;
+    if (typeof turnCombatScope === 'function' && turnCombatScope()) {
+      // A turn fight (59k): one foe, its HP, moves, gold and XP set by turnFoeSetup; the pack-clear path pays its kill.
+      // A zone with its own monster (59l) sends only it; else the zone's type, now and then the next type of the cycle.
+      const ti = boss || (typeof ZONE_FOES === 'object' && ZONE_FOES[z]) || Math.random() < T.mixP ? zt : zoneNextType(z);
+      const f = mkFoe(ti, 1, 0, 0, z, boss, (boss ? 'Elder ' : '') + TYPES[ti].name, cyc, 1);
+      if (!boss && ti === zt && typeof zoneFoeSkin === 'function') zoneFoeSkin(f, z);   // C22: the zone's own monster (59l)
+      turnFoeSetup(f, z);
+      foes.push(f); lead = f; packN = 1; packSize = boss ? 'boss' : 'brute'; aoeK = 1;
     } else if (boss) {
       const hp = mobHp(z) * bossHpMult(z) * mod('bossHp') * mod('foeHp');
       const f = mkFoe(zt, hp, mobGold(z) * 6, Math.ceil(1.5 * z) * 5, z, true, 'Elder ' + TYPES[zt].name, cyc);
@@ -448,19 +449,24 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   };
   // C20 scalar adapter: the turn resolver calculates one hit once for both live and scratch play.
   // This applies that hit to the live foe while retaining the established death/reward path.
-  cbTurnDamageFoe = (f, amount, kind) => {
+  const DOT_KIND = { burn: 1, bleed: 1, swarm: 1, curse: 1 };
+  cbTurnDamageFoe = (f, amount, kind, crit, dt) => {
     if (!alive(f) || !(amount > 0)) return 0;
     const a = Math.max(0, amount);
-    f.hp -= a; f.hit = 0.08; ST.heroDmg += a; if (kind !== 'burn') ST.heroHits++;
-    emit('float', { txt: fmt(a), color: kind === 'counter' ? '#FF9E3D' : '#FFFFFF', big: kind !== 'attack' });
+    f.hp -= a; if (!DOT_KIND[kind]) f.hit = 0.08; ST.heroDmg += a; if (!DOT_KIND[kind]) ST.heroHits++;
+    FLOAT_EV.txt = (kind === 'counter' ? 'COUNTER ' : '') + fmt(a) + (crit ? '!' : ''); FLOAT_EV.color = kind === 'counter' || crit ? '#FF9E3D' : kind === 'burn' ? '#FFB347' : kind === 'bleed' ? '#E0524F' : '#FFFFFF';
+    FLOAT_EV.big = !!crit || kind === 'counter' || !(kind === 'attack' || DOT_KIND[kind]); FLOAT_EV.x = undefined; FLOAT_EV.y = undefined;
+    FLOAT_EV.dt = dt && dt !== 'phys' ? dt : ''; FLOAT_EV.rel = dt && typeof typeRel === 'function' ? typeRel(f.txRow || f.type, dt) : 0; FLOAT_EV.crit = !!crit;
+    emit('float', FLOAT_EV);
+    if (crit) emit('crit', { tap: true });
     if (f.hp <= 0) foeDies(f, 0, kind || 'turn');
     return a;
   };
-  cbTurnHitHero = (amount, blocked) => {
+  cbTurnHitHero = (amount, blocked, kind) => {
     const u = U[0]; if (!u || u.down || !(amount > 0)) return 0;
     const a = Math.max(0, amount); u.hp -= a; u.taken += a; ST.taken += a;
     if (blocked) ST.blocked++;
-    emit('unitHit', { key: u.key, amount: a, kind: 'hit', foe: mob, blocked: !!blocked, shield: 0 });
+    emit('unitHit', { key: u.key, amount: a, kind: kind === 'dot' ? 'poison' : 'hit', foe: mob, blocked: !!blocked, shield: 0 });
     if (u.hp <= 0) knockOut(u);
     return a;
   };

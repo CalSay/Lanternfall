@@ -409,7 +409,9 @@ var heroArtId, heroArtDraw, heroArtStates, heroArtStage, heroArtDecode, heroArtP
   const WIND = 0.14;
   const ST = { id: '', s: 'fightIdle', t0: 0, hitT: -1, lastSt: 0, lastFl: 0, ab: -9, parry: -9, sawParry: -9 };
   if (typeof on === 'function') {
-    on('ability', () => { ST.ab = typeof T === 'number' ? T : 0; });
+    // the ability pose belongs to the signature it was drawn for; a turn fight's other abilities (24c) play the attack until
+    // their own poses are drawn (ability-art-brief.md)
+    on('ability', p => { if (p && p.cls === 'solo' && p.id && !/^(echo|bash|fire)$/.test(p.id)) return; ST.ab = typeof T === 'number' ? T : 0; });
     on('soloParry', p => { if (p && p.res === 'parry') ST.parry = typeof T === 'number' ? T : 0; });
   }
   const now = () => (typeof T === 'number' ? T : 0);

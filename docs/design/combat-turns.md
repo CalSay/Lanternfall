@@ -1,6 +1,7 @@
 # Turn-based combat (owner direction, 2026-09-30)
 
-Status: direction agreed with the owner, not yet built. Replaces the real-time solo combat and supersedes C20's
+Status: built (C29, 2 October 2026): every zone fight is a turn fight. What the game does now: `combat-turn-build.md`.
+Earlier status: direction agreed with the owner, not yet built. Replaces the real-time solo combat and supersedes C20's
 real-time spec (`docs/design/combat-3.md` on `codex/c20-combat`) once signed off. Prototype first, behind a switch.
 
 ## Decided by the owner

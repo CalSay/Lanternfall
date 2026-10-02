@@ -121,3 +121,12 @@ body.solo-on .stage .abil, body.solo-on .stage .abil2 { display: none !important
 /* party-only UI left in the shell (the Fight tab's Party rows) */
 .solo-off { display: none !important; }
 /* Landscape (UX-L1): the bar sits in the side column, bottom right; see 80-landscape.css. */
+/* turn fights (75-solo-ui, 59k): an ability with no approved icon yet shows its short name as a lettered tile; a
+   passive slot is always on (no cooldown, no press); a slot that needs something first (a Burn, Grit) dims */
+.sbtn.mono::before { content: attr(data-mono); position: absolute; z-index: 1; inset: 0 0 18px; display: flex; align-items: center; justify-content: center;
+  font: 700 calc(22px * var(--display-k, 1))/1 var(--display); color: #FFE7A8; text-shadow: 2px 2px 0 #0B0810; letter-spacing: .02em; }
+.sb-abslot.passive { background: #1C2430; box-shadow: inset 0 0 0 4px #26303E, inset 0 0 0 5px #4E6A8A, 0 3px 0 #0B0810; }
+.sb-abslot.passive .sb-lb { color: #8FB8FF; }
+.sb-abslot.blocked .sb-ic, .sb-abslot.blocked::before { opacity: .45; }
+.sp-ab .sp-mono { width: 36px; height: 36px; margin-left: 6px; display: grid; place-items: center; background: #33283E; color: #FFE7A8;
+  font: 700 calc(16px * var(--display-k, 1))/1 var(--display); box-shadow: inset 0 0 0 1px #6B5320; }

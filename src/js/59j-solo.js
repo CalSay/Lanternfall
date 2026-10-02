@@ -29,6 +29,7 @@
 // hit comes from the buttons, and they hit harder (atkX, abHandX).
 
 var soloPickerOpen = () => false;   // 75-solo-ui: the ability picker is open (90-boot waits)
+var turnPaused = () => false;   // 59k: the page is hidden, so a turn fight waits
 var soloActive = () => false, soloTouch = () => {}, soloGoIdle = () => {}, soloWake = () => {}, soloSetAuto = () => true, soloAuto = () => true;
 var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbility, soloAbilityInfo, soloButtons, soloAbilities, soloEquipped, soloEquip,
   soloTakenX, soloCounter, SOLO_STATS;
@@ -108,6 +109,7 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
   const autoOn = () => Sx().auto !== false;
   const flip = v => { ACT_EV.on = v; emit('soloActive', ACT_EV); };
   soloActive = () => !autoOn() && !hiddenIdle;
+  turnPaused = () => hiddenIdle;   // 59k: a turn fight waits while the page is hidden
   const change = fn => { const was = soloActive(); fn(); const now = soloActive(); if (was !== now) flip(now); };
   soloTouch = () => { if (!soloHero()) return; change(() => { hiddenIdle = false; }); };   // a press acts; only the toggle changes Auto
   soloGoIdle = () => change(() => { hiddenIdle = true; });
@@ -117,9 +119,11 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
 
   // ---- the buttons ----
   let atkT = 0, dodgeT = 0, parryT = 0, openT = 0, clock = 0;
+  const PRESS_EV = { kind: 'atk' };
   const readyFor = [0, 0, 0], cds = {};   // idle wait per ability slot; cooldown left per ability id (runtime)
   soloAttack = () => {
     soloTouch();
+    emit('soloPress', PRESS_EV);   // every press, landed or not (58-deeds Drummer: a turn fight takes one Attack a turn)
     if (typeof turnCombatOn === 'function' && turnCombatOn()) return turnCombatAction('attack') ? 'hit' : 'cd';
     if (!fighting() || !heroUp()) return '';
     if (atkT > 0) return 'cd';
@@ -192,7 +196,10 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
   // ---- the abilities: three slots per hero (owner: the player picks what goes where) ----
   // S.solo.eq[hero] = [id | null] x 3. soloAbilities(k) the hero's unlocked ids (one each for now), soloEquipped() the
   // playing hero's slots, soloEquip(slot, id | null) places (swapping if equipped elsewhere) or clears; saved.
-  soloAbilities = k => { k = k || soloHero(); return k && SOLO_HEROES[k] ? SOLO_HEROES[k].abs.filter(id => SOLO_ABILITIES[id]) : []; };
+  // the starter's signature, then what the hero has learned with Seals (56e), in the Abilities screen's order
+  soloAbilities = k => { k = k || soloHero(); if (!k || !SOLO_HEROES[k]) return [];
+    const own = typeof abilityOwned === 'function' ? abilityOwned : (h, id) => SOLO_HEROES[h].abs.includes(id);
+    return (typeof HERO_ABILITIES === 'object' && HERO_ABILITIES[k] ? HERO_ABILITIES[k] : SOLO_HEROES[k].abs).filter(id => SOLO_ABILITIES[id] && own(k, id)); };
   soloEquipped = () => {
     const k = soloHero(); if (!k) return [null, null, null];
     const s = Sx(), own = soloAbilities(k);
@@ -260,6 +267,11 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
       }
       patchT = T.fire.patchT + ms.patch * TT.msv.patch; patchTick = 1; patchP = P * T.fire.burnP;
       emit('shake', 0.3);
+    } else {
+      // an ability learned for turn fights (24c), cast in a real-time fight (the Deepwell): a plain hit of its power
+      const f = focus(), b = typeof ABILITIES === 'object' && ABILITIES[a.id];
+      if (b && b.kind === 'passive') return false;
+      if (f) cbDamageFoe(f, P * T.echo.x * Math.max(0.5, a.x || 1) / 1.8, 0, b && b.dt !== 'phys' ? 'magic' : 'phys', b ? b.dt : ty, tags);
     }
     cds[a.id] = abCd(a); readyFor[slot] = 0;
     mirrorCd();

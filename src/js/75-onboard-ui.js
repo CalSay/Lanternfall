@@ -149,13 +149,14 @@
   };
   // SOLO1: the button row under the stage (75-solo-ui)
   const sbtn = id => q(`#soloBar .sb-${id}`);
+  const turnTxt = () => typeof turnCombatOn === 'function' && turnCombatOn();
   const abName = () => { try { const a = abilityInfo(); return a ? a.name : 'Your ability'; } catch (e) { return 'Your ability'; } };
   const SOLO_UI = {
     attack: () => onCtrl() && target() === 'mob' ? { node: sbtn('atk'), side: 'up', text: 'Foes ahead. Press Attack to strike the one in front.' } : null,
     ability: () => onCtrl() && target() === 'mob' ? { node: sbtn('ab0'), side: 'up', text: `${abName()} is ready. Press it. (Hold an ability slot to change what it holds.)` } : null,
-    dodge: () => onCtrl() && target() === 'mob' ? { node: sbtn('dodge'), side: 'up', text: 'A foe winds up a heavy hit (the red ring). Press Dodge to step out of the way.' } : null,
-    parry: () => onCtrl() && target() === 'mob' ? { node: sbtn('parry'), side: 'up', text: 'Another heavy hit. Press Parry just before it lands: no damage, the foe staggers and you counter.' } : null,
-    boss: () => target() !== 'mob' || !mob || !mob.boss ? null : onGame() ? { node: $('stage'), at: [0.72, 0.62], side: 'up', text: 'The zone boss! Its red rings are your cue: Dodge, or Parry at the last moment.' }
+    dodge: () => onCtrl() && target() === 'mob' ? { node: sbtn('dodge'), side: 'up', text: turnTxt() ? 'The foe is about to hit you. Press Dodge now to step out of the way. Every hit can be dodged or parried.' : 'A foe winds up a heavy hit (the red ring). Press Dodge to step out of the way.' } : null,
+    parry: () => onCtrl() && target() === 'mob' ? { node: sbtn('parry'), side: 'up', text: turnTxt() ? 'Parry is harder: press it just before the hit lands. It blocks the hit and takes a turn off your cooldowns. Parry every hit of an attack to counter.' : 'Another heavy hit. Press Parry just before it lands: no damage, the foe staggers and you counter.' } : null,
+    boss: () => target() !== 'mob' || !mob || !mob.boss ? null : onGame() ? { node: $('stage'), at: [0.72, 0.62], side: 'up', text: turnTxt() ? 'The zone boss! It strikes in strings of blows: Dodge or Parry each one. When it gathers a big move, Stun it or hit it hard to break it.' : 'The zone boss! Its red rings are your cue: Dodge, or Parry at the last moment.' }
       : isWide() ? { node: q(`.tab[data-tab="${S.tab}"]`), text: 'The zone boss is here! Close this menu to watch the fight.' } : null,   // UX-L1: a landscape menu
     gather: () => {
       if (!onCtrl()) return null;

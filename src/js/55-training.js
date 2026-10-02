@@ -39,10 +39,12 @@ function trainRec(k) {
 function trainKind(mv) { return TRAIN_BASIC.includes(mv) ? mv : 'ab'; }
 function trainMoves(k) {
   k = trainHero(k);
-  const abs = typeof soloAbilities === 'function' ? soloAbilities(k) : (SOLO_HEROES[k] ? SOLO_HEROES[k].abs : []);
+  // turn fights: the signature's Training is the hero's ability power, for every ability they learn (59k)
+  const abs = SOLO_HEROES[k] ? SOLO_HEROES[k].abs : [];
   return ['atk', ...abs, 'parry', 'dodge'];
 }
-function trainName(mv) { return mv === 'atk' ? 'Attack' : mv === 'parry' ? 'Parry' : mv === 'dodge' ? 'Dodge' : (SOLO_ABILITIES[mv] ? SOLO_ABILITIES[mv].name : mv); }
+const trainTurns = () => typeof TURN_TUNE === 'object' && !!TURN_TUNE.on;
+function trainName(mv) { return mv === 'atk' ? 'Attack' : mv === 'parry' ? 'Parry' : mv === 'dodge' ? 'Dodge' : trainTurns() ? 'Ability power' : (SOLO_ABILITIES[mv] ? SOLO_ABILITIES[mv].name : mv); }
 function trainLv(mv, k) { if (!S || !S.solo) return 0; const v = trainRec(k)[mv]; return v > 0 ? Math.floor(v) : 0; }
 function trainStage(k) {
   k = trainHero(k);
@@ -133,6 +135,10 @@ function trainInfo(mv, k) {
   if (kind === 'atk') {
     now = `Hits for ${f(atkCurve(lv) * pow)}`; next = `${f(atkCurve(lv + 1) * pow)}`;
     const m = (Math.floor(lv / PACE.atkEvery) + 1) * PACE.atkEvery; ms = `Lv ${m}: hits x${m > PACE.atkBend ? PACE.atkX2 : PACE.atkX} harder`;
+  } else if (kind === 'ab' && trainTurns()) {
+    // turn fights: ability power is the hero's Attack power, and each level of this adds to it for every ability (59k)
+    const pc = l => Math.round(100 * TURN_TUNE.abTrain * l);
+    now = `Every ability +${pc(lv)}% power`; next = `+${pc(lv + 1)}%`;
   } else if (kind === 'ab') {
     const a = SOLO_ABILITIES[mv], x = mv === 'echo' ? SOLO_TUNE.echo.x : mv === 'bash' ? SOLO_TUNE.bash.x : mv === 'fire' ? SOLO_TUNE.fire.x : 1;
     now = `Hits for ${f(trainAbCurve(lv) * pow * x)}`; next = `${f(trainAbCurve(lv + 1) * pow * x)}`;
@@ -140,6 +146,10 @@ function trainInfo(mv, k) {
     if (a) now += `, every ${+trainAbCd(mv, a.cd, lv).toFixed(1)} s`;
   } else if (kind === 'parry') {
     now = `Counter x${trainCounterX(lv).toFixed(1)}`; next = `x${trainCounterX(lv + 1).toFixed(1)}`;
+  } else if (trainTurns()) {
+    // turn fights: Dodge training widens the dodge window (59k turnMakeProfile)
+    const w = l => Math.round(1000 * Math.min(TURN_TUNE.windowCaps.dodge, SOLO_TUNE.turnDodgeWindow + TURN_TUNE.dodgeTrain * l));
+    now = `Dodge window ${w(lv)} ms`; next = w(lv + 1) > w(lv) ? `${w(lv + 1)} ms` : '';
   } else {
     const a = trainDodgeCd(lv), b = trainDodgeCd(lv + 1);
     now = `Cooldown ${a.toFixed(2)} s`; next = b < a ? `${b.toFixed(2)} s` : '';
@@ -153,7 +163,7 @@ function trainNext(k) {
   k = trainHero(k);
   const eq = k === (typeof soloHero === 'function' && soloHero()) && typeof soloEquipped === 'function' ? soloEquipped() : [];
   const pick = list => { let best = null; for (const mv of list) { const p = trainPlan(mv, '1', k); if (p.n > 0 && (!best || p.cost < best.cost)) best = { move: mv, cost: p.cost, lv: trainLv(mv, k) + 1 }; } return best; };
-  return pick(trainMoves(k).filter(mv => mv === 'atk' || eq.includes(mv))) || pick(['parry', 'dodge']);
+  return pick(trainMoves(k).filter(mv => mv === 'atk' || eq.includes(mv) || (trainKind(mv) === 'ab' && trainTurns()))) || pick(['parry', 'dodge']);
 }
 // A rough dps for the sim's buyer (tools/sim.mjs): the auto swing, the equipped abilities at their cooldown, and for an
 // active player the counters (about one parry every 20 s) and presses.

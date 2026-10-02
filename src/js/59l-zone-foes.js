@@ -4,10 +4,11 @@
 // that type's index for the systems keyed by type (mastery, trophies, bounties, the Codex) and its damage-type row
 // (the Imp: the Moss Slime's plant row, weak to fire 1.5x and resisting poison 0.6x, as the roster asks), and brings
 // its own name, art and, in turn fights (59k), its own moves.
-//   ZONE_FOES[z] -> { key, name, refHp, moves }   key: the art key (FOE_ART). refHp: the fixed reference hero HP the
-//        zone's hits are authored against (not the player's HP). moves: the foe's moves in order (it alternates them);
+//   ZONE_FOES[z] -> { key, name, speed, armour, moves }   key: the art key (FOE_ART). speed: relative to the reference
+//        hero (1 = Speed 10); armour: its physical damage reduction. moves: the foe's moves in order (it alternates them);
 //        each { id, name, hits: [{ wind, x }] }: wind, the seconds of anticipation before that contact (the parry and
-//        dodge windows close on it); x, its damage as a share of refHp. Every hit is its own parry or dodge.
+//        dodge windows close on it); x, its damage as a share of the zone's reference hero HP (59k turnRefHp, not the
+//        player's HP). Every hit is its own parry or dodge.
 //        A move's anim names its action in the approved pack (FOE_ART, 21za); its winds then come from the pack's own
 //        timing (zoneFoeWinds), so each parry window closes on the frame where the blade lands: the first hit adds the
 //        hop in (the foe hops to you, then attacks); a later hit counts from the contact before it.
@@ -20,7 +21,7 @@
 //   zoneFoeOf(f) -> the ZONE_FOES entry of a skinned foe, or null
 //   zoneFoeDeathS(f) -> seconds its death animation runs (50-sim waits that long before the next foe), or 0
 const ZONE_FOES = {
-  1: { key: 'imp', name: 'Thorn Imp', refHp: 80,
+  1: { key: 'imp', name: 'Thorn Imp', speed: 0.9, armour: 0,
     moves: [
       { id: 'jab', name: 'Briar Jab', anim: 'jab', hits: [{ wind: 1.61, x: 0.2 }] },
       // its two cuts land 0.88 s after the hop and 1.0 s apart (the owner-approved animation, 2026-10-02)
@@ -28,7 +29,7 @@ const ZONE_FOES = {
     ] },
   // Gloomjaw (owner-approved pack, 2026-10-02). Spit the Light is a dark void bolt (owner); the roster's numbers stand.
   // It takes the Moss Slime's plant row (weak to fire, resists poison) over zone 2's Cave Bat slot.
-  2: { key: 'gloomjaw', name: 'Gloomjaw', refHp: 80, row: 'slime',
+  2: { key: 'gloomjaw', name: 'Gloomjaw', speed: 0.8, armour: 0.05, row: 'slime',
     moves: [
       { id: 'snap', name: 'Snap Shut', anim: 'snap-shut', hits: [{ wind: 1.61, x: 0.22 }] },
       { id: 'bolt', name: 'Spit the Light', anim: 'void-bolt', ranged: true, flight: 0.35, hits: [{ wind: 1.4, x: 0.2 }] }

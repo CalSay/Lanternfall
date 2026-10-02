@@ -367,6 +367,7 @@ var typeX, typeXKey, typeRel, typeZone, lbType, heroType, unitType,
   const BADGES = [], BPOOL = [];
   for (let i = 0; i < 4; i++) BPOOL.push({ id: '', n: 0, f: -1 });
   stBadges = f => {
+    if (f && f.turn && typeof turnBadgesFor === 'function') return turnBadgesFor(f);   // a turn fight's statuses (59k)
     BADGES.length = 0;
     if (!f || f.dead) return BADGES;
     for (const id of ST_BADGE_ORDER) {

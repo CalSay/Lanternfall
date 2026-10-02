@@ -51,6 +51,10 @@ const NOTICES = [
   { id: 'boss-fail', re: /^(The zone boss held its ground|The zone boss beat you|Your party fell to the zone boss)/, ch: 'pop', wait: 10, why: 'tells you to grow stronger' },
   { id: 'fell-back', re: /(fell back a zone|fell back to regroup|couldn't finish the pack)/, ch: 'bell' },
   { id: 'beaten', re: /Catch your breath and go again/, ch: 'log', why: 'you stay in the zone and the fight starts again on screen' },
+  { id: 'away-fights', re: /^Fights wait for you while you are away\./, ch: 'bell', once: 'session', why: 'turn fights are active only (C29): say once why a fight earned nothing away' },
+  { id: 'scroll', re: /^(Moss|Hollow|Barrow|Roadlight|Mother) Scroll! Spend it/, site: /SCROLLS\[id\]\.name\}! Spend it/, ch: 'pop', wait: 20, why: 'the first Scroll teaches what Scrolls are for (C29)' },
+  { id: 'scroll-more', re: /^(Moss|Hollow|Barrow|Roadlight|Mother) Scroll found\.$/, site: /SCROLLS\[id\]\.name\} found/, ch: 'log', why: 'the stage float shows it, and Next Up offers what it teaches' },
+  { id: 'learned', re: /^\w+ learned [A-Z][\w' ]+\.$/, site: /learned \$\{a\.name\}/, ch: 'log', why: 'you just pressed Learn and see the card change' },
   { id: 'pace', key: 'pace', re: /back to Zone \d+ to keep earning\.$/, ch: 'bell', once: 'session', why: 'audit 3.14: one line a session' },
   { id: 'start', re: /picks up the lamp\. The road is dark\.$/, ch: 'log', why: 'the guide speaks first' },
   { id: 'hero-swap', re: /takes up the lamp\.$/, ch: 'log' },
@@ -68,7 +72,6 @@ const NOTICES = [
   { id: 'store-full', re: /^Storehouse full: /, ch: 'log', merge: ms => `Storehouse full: ${ms.map(m => m.slice(16, -1)).join(', ')}.` },
   { id: 'store-move', re: / is full\. Your hero moves on to the /, ch: 'bell' },
   // turn UI (Claude, 2026-09-30): the Journal's test switch; the player just pressed it and sees it change
-  { id: 'turn-test', re: /^Turn-based fights are (on in zone 1|off)\.$/, ch: 'none', why: 'the player just flipped the test switch and sees it' },
   // things the player just did, and sees happen
   { id: 'did', ch: 'none', why: 'the player just did it and sees the result',
     re: /^(Equipped |Salvaged |.* upgraded\.$|Reforged: |Transmuted |.* took the |Brewed a |.*: .* for 20 minutes\.$|You took the Dare|You dropped the Dare|Weekly goal claimed|The trader sells you|.* set out: |.* rises to rank |.*: bought\.$|Every star is dark again|.* is lit\.$|.* now carries |.* carries the .* mark\.$|You walk on as a |Your hero is now known as |You walk the path of the |The Mirror of Embers shows you)/ },

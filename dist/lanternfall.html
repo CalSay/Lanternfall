@@ -360,6 +360,43 @@ img[src*="#nic:"] { image-rendering: auto; }   /* a gear icon set by code that d
 .modal .card { width: min(380px, 100%); text-align: center; }
 /* bell sheet: Notices | Journal switcher */
 .nlog-seg { margin: 0 0 12px; }
+/* 75-abilities-ui: Hero tab > Abilities. Scrolls, the three slots, and every ability of the hero in its groups. */
+.ab-root { display: grid; gap: 10px; }
+.ab-note, .ab-src { margin: 0; }
+.ab-scrolls { display: flex; flex-wrap: wrap; gap: 6px; }
+.ab-scroll { display: flex; align-items: center; gap: 5px; min-height: 32px; padding: 3px 8px 3px 5px; background: var(--panel-2); border: 2px solid #0B0810; color: var(--muted); }
+.ab-scroll.has { color: var(--bone); box-shadow: inset 0 0 0 1px var(--scroll); }
+.ab-scroll b { font: 600 calc(14px * var(--display-k, 1))/1 var(--display); }
+.ab-scroll small { font-size: 13px; }
+.ab-gem { display: block; width: 10px; height: 10px; background: var(--scroll); transform: rotate(45deg); box-shadow: 0 0 0 1px #0B0810; opacity: .5; }
+.ab-scroll.has .ab-gem { opacity: 1; }
+.ab-slots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.ab-slot { position: relative; display: grid; justify-items: center; gap: 3px; padding: 6px 4px 8px; background: #231A30; border: 2px solid #0B0810;
+  box-shadow: inset 0 0 0 1px #6B5320; text-align: center; }
+.ab-slot.empty { opacity: .7; box-shadow: inset 0 0 0 1px #4E4060; }
+.ab-slot small { color: var(--muted); font-size: 12px; }
+.ab-slot b { font: 600 calc(14px * var(--display-k, 1))/1.1 var(--display); color: var(--gold); }
+.ab-clear { position: absolute; top: 0; right: 0; width: 36px; height: 36px; background: none; border: 0; color: var(--muted); font: 600 20px/1 var(--display); cursor: pointer; }
+.ab-path { display: grid; gap: 6px; }
+.ab-pname { margin: 4px 0 0; font: 600 calc(16px * var(--display-k, 1))/1 var(--display); color: var(--gold); letter-spacing: .03em; }
+.ab-card { display: grid; gap: 6px; padding: 8px 10px; background: #1B1424; border: 2px solid #0B0810; box-shadow: inset 0 0 0 1px #3A3046; }
+.ab-card.owned { box-shadow: inset 0 0 0 1px #6B5320; }
+.ab-card.ready { box-shadow: inset 0 0 0 2px var(--gold); }
+.ab-card.locked { opacity: .78; }
+.ab-card.passive .ab-t small { color: #8FB8FF; }
+.ab-top { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 8px; align-items: center; }
+.ab-ic { width: 36px; height: 36px; image-rendering: pixelated; }
+.ab-mono { display: grid; place-items: center; background: #33283E; color: #FFE7A8; font: 700 calc(16px * var(--display-k, 1))/1 var(--display); box-shadow: inset 0 0 0 1px #6B5320; }
+.ab-t { display: grid; gap: 2px; }
+.ab-t b { font: 600 calc(17px * var(--display-k, 1))/1.1 var(--display); color: var(--bone); }
+.ab-t small { color: var(--muted); font-size: 12px; }
+.ab-desc { margin: 0; font-size: 14px; color: var(--bone); }
+.ab-foot { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.ab-put { flex: 1 1 0; min-height: 40px; background: var(--panel-2); color: var(--bone); border: 2px solid #0B0810; font: 600 calc(14px * var(--display-k, 1)) var(--display); cursor: pointer; }
+.ab-put.on { background: var(--gold); color: #1A1420; }
+.ab-learn { flex: 1 1 auto; min-height: 44px; }
+.ab-need { color: var(--muted); font-size: 13px; }
+.ab-timed { margin: 0; font-size: 13px; color: var(--gold); }
 /* 60-almanac: the Omen banner (Fight tab) and the Almanac part of the World tab (75-almanac-ui.js). */
 
 /* ---- banner ---- */
@@ -2243,6 +2280,15 @@ body.solo-on .stage .abil, body.solo-on .stage .abil2 { display: none !important
 /* party-only UI left in the shell (the Fight tab's Party rows) */
 .solo-off { display: none !important; }
 /* Landscape (UX-L1): the bar sits in the side column, bottom right; see 80-landscape.css. */
+/* turn fights (75-solo-ui, 59k): an ability with no approved icon yet shows its short name as a lettered tile; a
+   passive slot is always on (no cooldown, no press); a slot that needs something first (a Burn, Grit) dims */
+.sbtn.mono::before { content: attr(data-mono); position: absolute; z-index: 1; inset: 0 0 18px; display: flex; align-items: center; justify-content: center;
+  font: 700 calc(22px * var(--display-k, 1))/1 var(--display); color: #FFE7A8; text-shadow: 2px 2px 0 #0B0810; letter-spacing: .02em; }
+.sb-abslot.passive { background: #1C2430; box-shadow: inset 0 0 0 4px #26303E, inset 0 0 0 5px #4E6A8A, 0 3px 0 #0B0810; }
+.sb-abslot.passive .sb-lb { color: #8FB8FF; }
+.sb-abslot.blocked .sb-ic, .sb-abslot.blocked::before { opacity: .45; }
+.sp-ab .sp-mono { width: 36px; height: 36px; margin-left: 6px; display: grid; place-items: center; background: #33283E; color: #FFE7A8;
+  font: 700 calc(16px * var(--display-k, 1))/1 var(--display); box-shadow: inset 0 0 0 1px #6B5320; }
 /* 60-stars: the Stars view on the Party tab (75-stars-ui.js, docs/design/constellations.md) */
 .st-sec { gap: 10px; }
 .st-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
@@ -2490,7 +2536,7 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
 .tr-c-row .buy { flex: 1 1 auto; min-height: 44px; }
 .tr-c-more { flex: 0 0 auto; min-height: 44px; padding: 0 12px; background: var(--panel-2); color: var(--bone); border: 2px solid #0B0810; font: 600 15px var(--display); cursor: pointer; }
 @media (prefers-reduced-motion: reduce) { .tr-go.tr-ok { animation: none; } }
-/* 75-turn-ui: the turn-based prototype's versus card, turn strip and timing bar (C20). The strip sits under the
+/* 75-turn-ui: the turn fight's versus card, turn strip, timing bar, hero row and warnings. The strip sits under the
    foe's name and HP bar at the top of the stage. */
 .tv-card { position: absolute; inset: 0; z-index: 6; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
   background: rgba(10, 7, 14, .78); pointer-events: none; }
@@ -2513,7 +2559,7 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
 @keyframes tv-in-r { 0% { transform: translateX(40px); opacity: 0; } 25%, 100% { transform: none; opacity: 1; } }
 @keyframes tv-fade { 0% { opacity: 0; } 12%, 82% { opacity: 1; } 100% { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .tv-card.play .tv-side { animation: none !important; } }
-.tv-top { position: absolute; left: 50%; top: 52px; transform: translateX(-50%); z-index: 5; display: flex; flex-direction: column; align-items: center; gap: 2px; pointer-events: none; }
+.tv-top { position: absolute; left: 50%; top: 80px; transform: translateX(-50%); z-index: 5; display: flex; flex-direction: column; align-items: center; gap: 2px; pointer-events: none; }
 .tv-top[hidden] { display: none; }
 .tv-strip { display: flex; gap: 3px; }
 .tv-strip[hidden] { display: none; }
@@ -2530,7 +2576,38 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
 .tv-fill { left: 0; background: #E0D6C2; opacity: .8; }
 .tv-dodge { background: rgba(120, 170, 255, .55); }
 .tv-parry { background: var(--gold, #F2C14E); }
-.tv-switch[aria-pressed="true"] { background: var(--gold, #F2C14E); color: #1A1420; }
+.tv-card.boss .tv-vs { color: #FF9B8A; }
+.tv-slot[hidden] { display: none; }
+.tv-n.mine { color: var(--gold, #F2C14E); font-weight: 700; }
+.tv-hero { display: flex; align-items: center; gap: 4px; min-height: 18px; }
+.tv-hero[hidden] { display: none; }
+.tv-res { font: calc(10px * var(--display-k, 1))/1 var(--display); color: #E0D6C2; text-shadow: 1px 1px 0 #0B0810; }
+.tv-pips { display: flex; gap: 2px; }
+.tv-pip { display: block; width: 7px; height: 7px; background: #16111C; border: 1px solid #0B0810; box-shadow: inset 0 0 0 1px #4E4060; }
+.tv-pip.sm { width: 5px; }
+.tv-pip.on { background: var(--gold, #F2C14E); box-shadow: inset 0 0 0 1px #FFF3C4; }
+.tv-chips { display: flex; gap: 2px; align-items: center; }
+.tv-chip { display: flex; align-items: center; gap: 1px; padding: 1px; background: rgba(22, 17, 28, .85); border: 1px solid #0B0810; }
+.tv-chip-ic { width: 16px; height: 16px; image-rendering: pixelated; }
+.tv-chip small, .tv-chip b { font: calc(10px * var(--display-k, 1))/1 var(--display); color: var(--bone, #EDE3D1); }
+.tv-tag { font: calc(10px * var(--display-k, 1))/1 var(--display); color: #1A1420; background: #8FB8FF; padding: 2px 4px; }
+.tv-warn { margin-top: 2px; max-width: min(320px, 90vw); text-align: center; font: 700 calc(13px * var(--display-k, 1))/1.2 var(--display);
+  color: #FBE9E7; background: rgba(120, 30, 38, .92); padding: 3px 8px; box-shadow: inset 0 0 0 1px #E08A8F, 2px 2px 0 #0B0810; }
+.tv-warn[hidden] { display: none; }
+.tv-warn.good { color: #1A1420; background: var(--gold, #F2C14E); box-shadow: inset 0 0 0 1px #FFF3C4, 2px 2px 0 #0B0810; }
+.tv-warn.charge:not(.calm) { animation: tv-pulse 1s steps(2) infinite; }
+@keyframes tv-pulse { 50% { box-shadow: inset 0 0 0 2px #FFD27A, 2px 2px 0 #0B0810; } }
+@media (prefers-reduced-motion: reduce) { .tv-warn.charge { animation: none !important; } }
+/* a timed ability's ring (59k TURN_TIMED): it closes on the foe; the inner circle is the moment */
+.tv-ring { position: absolute; left: 66%; top: 58%; width: 0; height: 0; z-index: 6; pointer-events: none; }
+.tv-ring[hidden] { display: none; }
+.tv-ring i { position: absolute; left: 0; top: 0; width: 44px; height: 44px; border-radius: 50%; transform: translate(-50%, -50%); }
+.tv-ring-i { border: 3px solid rgba(242, 193, 78, .9); box-shadow: 0 0 0 2px #0B0810; }
+.tv-ring-o { border: 3px solid #FFF3C4; box-shadow: 0 0 0 2px #0B0810; }
+.tv-ring.hot .tv-ring-i { border-color: #FFF3C4; box-shadow: 0 0 0 2px #0B0810, 0 0 10px rgba(255, 243, 196, .8); }
+.tv-ring.done { opacity: .35; }
+.tv-ring-t { position: absolute; left: 0; top: 34px; transform: translateX(-50%); white-space: nowrap; font: 700 calc(13px * var(--display-k, 1))/1 var(--display);
+  color: var(--gold, #F2C14E); text-shadow: 1px 1px 0 #0B0810; }
 /* 60-wall: the Trophy Wall card on the Camp view (63e-scenery-wall.js, AC5). */
 .tw-scene { display: flex; justify-content: center; width: 100%; min-height: 144px; margin: 0; padding: 0; overflow: hidden; background: #0E0B1E; border: 2px solid var(--line); box-shadow: 0 2px 0 #0B0810; cursor: pointer; }
 .tw-scene:hover, .tw-scene:focus-visible { border-color: var(--gold); }
@@ -8186,6 +8263,10 @@ const NOTICES = [
   { id: 'boss-fail', re: /^(The zone boss held its ground|The zone boss beat you|Your party fell to the zone boss)/, ch: 'pop', wait: 10, why: 'tells you to grow stronger' },
   { id: 'fell-back', re: /(fell back a zone|fell back to regroup|couldn't finish the pack)/, ch: 'bell' },
   { id: 'beaten', re: /Catch your breath and go again/, ch: 'log', why: 'you stay in the zone and the fight starts again on screen' },
+  { id: 'away-fights', re: /^Fights wait for you while you are away\./, ch: 'bell', once: 'session', why: 'turn fights are active only (C29): say once why a fight earned nothing away' },
+  { id: 'scroll', re: /^(Moss|Hollow|Barrow|Roadlight|Mother) Scroll! Spend it/, site: /SCROLLS\[id\]\.name\}! Spend it/, ch: 'pop', wait: 20, why: 'the first Scroll teaches what Scrolls are for (C29)' },
+  { id: 'scroll-more', re: /^(Moss|Hollow|Barrow|Roadlight|Mother) Scroll found\.$/, site: /SCROLLS\[id\]\.name\} found/, ch: 'log', why: 'the stage float shows it, and Next Up offers what it teaches' },
+  { id: 'learned', re: /^\w+ learned [A-Z][\w' ]+\.$/, site: /learned \$\{a\.name\}/, ch: 'log', why: 'you just pressed Learn and see the card change' },
   { id: 'pace', key: 'pace', re: /back to Zone \d+ to keep earning\.$/, ch: 'bell', once: 'session', why: 'audit 3.14: one line a session' },
   { id: 'start', re: /picks up the lamp\. The road is dark\.$/, ch: 'log', why: 'the guide speaks first' },
   { id: 'hero-swap', re: /takes up the lamp\.$/, ch: 'log' },
@@ -8203,7 +8284,6 @@ const NOTICES = [
   { id: 'store-full', re: /^Storehouse full: /, ch: 'log', merge: ms => `Storehouse full: ${ms.map(m => m.slice(16, -1)).join(', ')}.` },
   { id: 'store-move', re: / is full\. Your hero moves on to the /, ch: 'bell' },
   // turn UI (Claude, 2026-09-30): the Journal's test switch; the player just pressed it and sees it change
-  { id: 'turn-test', re: /^Turn-based fights are (on in zone 1|off)\.$/, ch: 'none', why: 'the player just flipped the test switch and sees it' },
   // things the player just did, and sees happen
   { id: 'did', ch: 'none', why: 'the player just did it and sees the result',
     re: /^(Equipped |Salvaged |.* upgraded\.$|Reforged: |Transmuted |.* took the |Brewed a |.*: .* for 20 minutes\.$|You took the Dare|You dropped the Dare|Weekly goal claimed|The trader sells you|.* set out: |.* rises to rank |.*: bought\.$|Every star is dark again|.* is lit\.$|.* now carries |.* carries the .* mark\.$|You walk on as a |Your hero is now known as |You walk the path of the |The Mirror of Embers shows you)/ },
@@ -8793,6 +8873,196 @@ const SOLO_ORDER = ['wren', 'tobin', 'pip'];
 const TRAIN0 = () => { const o = {}; for (const k of SOLO_ORDER) { o[k] = { atk: 0, parry: 0, dodge: 0 }; for (const id of SOLO_HEROES[k].abs) o[k][id] = 0; } return o; };
 // The hero key for a base class (a tool that picks a class picks its starter).
 const SOLO_BY_BASE = { ranger: 'wren', warrior: 'tobin', mage: 'pip', warden: 'tobin', lanternmage: 'pip', lightkeeper: 'pip' };
+
+// ---- src/js/24c-data-abilities.js ----
+// 24c-data-abilities: every hero's abilities in turn fights, and the Scrolls that unlock them (C19 design,
+// docs/design/hero-abilities.md and ability-tree-details.md; the build: docs/design/combat-turn-build.md). Data only.
+// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
+//
+// Each hero has 14 abilities: 6 from their style's shared pool (archer, melee, caster) and 8 of their own. Three sit in
+// the hero's slots (Q, W, E) beside Attack, Parry and Dodge. A passive takes a slot, has no button and is always on.
+//   ABILITIES[id] = { id, hero, code, name, short, kind, tier, path, pow, cd, dt, hits, desc, line }
+//     kind   'damage' | 'buff' | 'debuff' | 'passive' | 'finisher'
+//     tier   1-5: the Scroll it needs (and the hero level that tier opens, ABILITY_TIERS); the starter is free
+//     pow    power, as a share of the hero's ability power (Attack uses its own power); hits: arrows or blows
+//     cd     cooldown in the hero's turns (0: a passive)
+//     dt     damage type: 'phys' | 'fire' | 'frost' | 'holy'
+//   HERO_ABILITIES[hero] = [ids in the order the Abilities screen lists them]; HERO_PATHS[hero] = [{ name, ids }]
+//   ABILITY_TIERS[t] = { lv, scroll }: the hero level that opens tier t and the Scroll that pays for it
+//   SCROLLS[id] = { id, name, tier, from }: account items, dropped by zone bosses (56e-abilities.js)
+//   SCROLL_BANDS = [[last zone, scroll id], ...]: which Scroll a zone's boss drops
+// The rules (statuses, resources, clocks) live in 59k-turn.js; numbers here, behaviour there.
+
+const ABILITY_TIERS = {
+  1: { lv: 1, scroll: 'moss' }, 2: { lv: 8, scroll: 'hollow' }, 3: { lv: 16, scroll: 'barrow' },
+  4: { lv: 25, scroll: 'roadlight' }, 5: { lv: 35, scroll: 'mother' }
+};
+const SCROLLS = {
+  moss: { id: 'moss', name: 'Moss Scroll', tier: 1, col: '#8FD36A', from: 'zone bosses 1 to 4' },
+  hollow: { id: 'hollow', name: 'Hollow Scroll', tier: 2, col: '#B58CFF', from: 'zone bosses 5 to 12' },
+  barrow: { id: 'barrow', name: 'Barrow Scroll', tier: 3, col: '#FFB36B', from: 'zone bosses 13 to 20' },
+  roadlight: { id: 'roadlight', name: 'Roadlight Scroll', tier: 4, col: '#F2C14E', from: 'zone bosses 21 and on' },
+  mother: { id: 'mother', name: 'Mother Scroll', tier: 5, col: '#BFF7E8', from: 'the Fenmother and other region bosses' }
+};
+const SCROLL_ORDER = ['moss', 'hollow', 'barrow', 'roadlight', 'mother'];
+// a zone boss's Scroll by zone; a region boss (the Fenmother, zone 35) always drops the Mother Scroll
+const SCROLL_BANDS = [[4, 'moss'], [12, 'hollow'], [20, 'barrow'], [Infinity, 'roadlight']];
+
+const ABILITIES = {};
+{
+  const A = (hero, code, id, name, short, kind, tier, pow, cd, dt, desc, line, extra) =>
+    (ABILITIES[id] = Object.assign({ id, hero, code, name, short, kind, tier, pow, cd, dt, hits: 1, desc, line }, extra || {}));
+  // ---------------- Wren: the archer pool, then her own (Mark the foe, build Aim, then cash it in) ----------------
+  A('wren', 'A1', 'powershot', 'Power Shot', 'Power', 'damage', 1, 1.8, 3, 'phys', 'A heavy arrow for 180% power. A critical hit gives 1 Aim.', 'A heavy arrow. A crit gives Aim.');
+  A('wren', 'A2', 'barbed', 'Barbed Arrow', 'Barbed', 'damage', 2, 0.9, 3, 'phys', 'An arrow for 90% power that leaves 2 Bleed.', 'Leaves 2 Bleed.');
+  A('wren', 'A3', 'pinning', 'Pinning Shot', 'Pin', 'debuff', 3, 1.0, 4, 'phys', 'An arrow for 100% power that Pins the foe: its next attack is easier to parry and dodge, and it slows.', 'Pins: its next attack is easier to read.');
+  A('wren', 'A4', 'huntmark', "Hunter's Mark", 'Mark', 'debuff', 2, 0.6, 4, 'phys', 'A light arrow for 60% power. Marks the foe for 4 turns: it takes 20% more damage.', 'Marks the foe for 4 turns.');
+  A('wren', 'A5', 'volley', 'Volley', 'Volley', 'damage', 4, 0.7, 4, 'phys', 'Three arrows, 70% power each. Each one can crit.', 'Three arrows, each can crit.', { hits: 3 });
+  A('wren', 'A6', 'twinshot', 'Twin Shot', 'Twin', 'passive', 3, 0.55, 0, 'phys', 'Passive. Attack fires two arrows, 55% power each, and each can crit.', 'Passive: Attack fires two arrows.');
+  A('wren', 'W1', 'echo', 'Echo Shot', 'Echo', 'damage', 0, 1.8, 5, 'phys', 'A piercing arrow for 180% power that Marks the foe for 3 turns. On a foe that is already Marked it echoes: a second hit for 60% power.', 'Marks the foe. Echoes on a Marked foe.');
+  A('wren', 'W2', 'batswarm', 'Bat Swarm', 'Bats', 'debuff', 2, 0.3, 5, 'phys', 'Her bats harry the foe for 3 turns: 30% power each turn, and it is Blinded (it can miss).', 'Bats: damage each turn, and Blind.');
+  A('wren', 'W3', 'deadeye', 'Deadeye', 'Deadeye', 'damage', 2, 1.8, 5, 'phys', 'An arrow for 180% power. A sure crit on a Marked foe, and it uses up the Mark.', 'A sure crit on a Marked foe.');
+  A('wren', 'W4', 'sonic', 'Sonic Arrow', 'Sonic', 'damage', 3, 1.0, 5, 'phys', 'An arrow for 100% power. On a Pinned or Marked foe it Stuns: the foe loses its next turn. Uses up the Pin first, else the Mark.', 'Stuns a Pinned or Marked foe.');
+  A('wren', 'W5', 'shadowstep', 'Shadow Step', 'Step', 'buff', 3, 0, 4, 'phys', 'For the next 2 enemy turns, your next Dodge cannot fail. That dodge makes your next ability Keen (it crits harder).', 'Your next Dodge cannot fail.');
+  A('wren', 'W6', 'moonvolley', 'Moonlit Volley', 'Moonlit', 'damage', 4, 0.5, 6, 'phys', 'Five arrows fall from above, 50% power each. On a Marked foe each one adds 1 Bleed.', 'Five arrows. Bleed on a Marked foe.', { hits: 5 });
+  A('wren', 'W7', 'nighthunter', 'Night Hunter', 'Hunter', 'passive', 4, 0, 0, 'phys', 'Passive. Each Attack on a Marked foe gives 1 more Aim.', 'Passive: more Aim on a Marked foe.');
+  A('wren', 'W8', 'finalecho', 'Final Echo', 'Final', 'finisher', 5, 1.5, 7, 'phys', 'Finisher, from your third turn. 150% power, plus 50% for each Bleed and each Aim. Uses them all. Needs 1 Bleed or Aim.', 'Spends all Bleed and Aim for a big hit.');
+  // ---------------- Tobin: the melee pool, then his own (brace and parry, build Grit, then stun and smash) ----------------
+  A('tobin', 'M1', 'heavystrike', 'Heavy Strike', 'Heavy', 'damage', 1, 2.0, 3, 'phys', 'A heavy blow for 200% power. On an Exposed foe it hits 25% harder and uses up the opening.', 'A heavy blow. Harder on an Exposed foe.');
+  A('tobin', 'M2', 'cleave', 'Cleave', 'Cleave', 'damage', 2, 1.4, 3, 'phys', 'A wide swing for 140% power that leaves 1 Bleed.', 'A wide swing. Leaves Bleed.');
+  A('tobin', 'M3', 'sundering', 'Sunder', 'Sunder', 'debuff', 3, 1.0, 4, 'phys', 'A blow for 100% power that Sunders the foe for 3 turns: its armour does half as much.', 'Breaks armour for 3 turns.');
+  A('tobin', 'M4', 'momentum', 'Momentum', 'Momentum', 'passive', 2, 0, 0, 'phys', 'Passive. Each Attack in a row hits 10% harder, up to 50%. An ability starts the chain again.', 'Passive: Attacks in a row hit harder.');
+  A('tobin', 'M5', 'brace', 'Brace', 'Brace', 'buff', 3, 0, 4, 'phys', 'Guard for 2 enemy turns (40% less damage). The next attack is easier to parry.', 'Guard, and an easier parry.');
+  A('tobin', 'M6', 'lunge', 'Lunge', 'Lunge', 'damage', 4, 1.2, 3, 'phys', 'Lunge in for 120% power. You are 20% faster for your next 2 turns.', 'A quick hit. You get faster.');
+  A('tobin', 'T1', 'bash', 'Shield Bash', 'Bash', 'damage', 0, 1.6, 4, 'phys', 'A shield blow for 160% power. Stuns the foe (it loses its next turn) and leaves it Exposed. You Guard for 2 enemy turns.', 'Stuns, Exposes, and you Guard.');
+  A('tobin', 'T2', 'riposte', 'Riposte', 'Riposte', 'damage', 2, 1.6, 3, 'phys', 'A sure crit for 160% power. Only right after you parried a hit of the enemy attack.', 'After a parry: a sure crit.');
+  A('tobin', 'T3', 'ironwill', 'Iron Will', 'Iron', 'buff', 2, 0, 5, 'phys', 'Gain 3 Grit and a Ward worth 15% of your max HP.', '3 Grit and a Ward.');
+  A('tobin', 'T4', 'roar', 'Taunting Roar', 'Roar', 'debuff', 3, 0, 5, 'phys', 'The foe is Weakened for 2 turns (25% less damage) and Pinned (its next attack is easier to read).', 'Weakens and Pins the foe.');
+  A('tobin', 'T5', 'hammerfall', 'Hammerfall', 'Hammer', 'damage', 3, 1.4, 5, 'phys', '140% power, plus 25% for each Grit. Uses all your Grit; needs 2. Hits 25% harder on an Exposed foe.', 'Spends all Grit for a big blow.');
+  A('tobin', 'T6', 'shieldthrow', 'Shield Throw', 'Throw', 'damage', 4, 1.4, 4, 'phys', 'Throw your shield for 140% power. On a Sundered foe it Stuns and leaves it Exposed.', 'Stuns a Sundered foe.');
+  A('tobin', 'T7', 'bulwark', 'Bulwark', 'Bulwark', 'passive', 4, 0, 0, 'phys', 'Passive. Each parried hit gives 1 more Grit, and your counters hit 25% harder.', 'Passive: parries give more.');
+  A('tobin', 'T8', 'laststand', 'Last Stand', 'Stand', 'finisher', 5, 0, 8, 'phys', 'Finisher, from your third turn, once a fight. For 2 enemy turns you cannot fall below 1 HP, parries are twice as easy and counters hit twice as hard. Then heal 15%.', 'You cannot fall, and counters hit hard.');
+  // ---------------- Pip: the caster pool, then her own (gather Embers, set the foe alight, feed or detonate the fire) ----------------
+  A('pip', 'C1', 'spark', 'Spark', 'Spark', 'damage', 1, 1.3, 2, 'fire', 'A quick fire bolt for 130% power. Gain 1 Ember.', 'A quick bolt. Gain an Ember.');
+  A('pip', 'C2', 'frostshard', 'Frost Shard', 'Frost', 'damage', 2, 1.1, 3, 'frost', 'A frost bolt for 110% power that adds 2 Chill (it slows). At 3 Chill the foe Freezes: it loses its next turn and is Exposed.', '2 Chill. At 3 the foe Freezes.');
+  A('pip', 'C3', 'arcaneward', 'Arcane Ward', 'Ward', 'buff', 2, 0, 5, 'holy', 'A Ward worth 20% of your max HP for 3 enemy turns.', 'A Ward for 20% of your HP.');
+  A('pip', 'C4', 'hex', 'Hex', 'Hex', 'debuff', 3, 0, 5, 'holy', 'Curse the foe for 3 turns. It stores 20% of the damage it takes and takes it again when the Curse ends.', 'Stores damage, then bursts.');
+  A('pip', 'C5', 'afterglow', 'Afterglow', 'Glow', 'passive', 3, 0, 0, 'fire', 'Passive. After a spell that hits, your next Attack within 2 turns hits 50% harder.', 'Passive: an Attack after a spell hits harder.');
+  A('pip', 'C6', 'nova', 'Nova', 'Nova', 'damage', 4, 1.6, 4, 'holy', 'A ring of force for 160% power.', 'A strong blast.');
+  A('pip', 'P1', 'fire', 'Fireball', 'Fireball', 'damage', 0, 1.8, 5, 'fire', 'A fireball for 180% power that Burns the foe for 3 turns. It spends your Embers: 10% more power for each.', 'Burns the foe. Spends Embers.');
+  A('pip', 'P2', 'kindle', 'Kindle', 'Kindle', 'damage', 2, 0.6, 2, 'fire', 'A small flame for 60% power. Gain 2 Embers. On a burning foe the Burn lasts 1 turn longer.', '2 Embers. Stretches a Burn.');
+  A('pip', 'P3', 'ignite', 'Ignite', 'Ignite', 'damage', 2, 0.8, 4, 'fire', 'Needs a Burn. 80% power, plus all the Burn still to come at 125%, at once. Uses up the Burn.', 'Sets off the Burn at once.');
+  A('pip', 'P4', 'searing', 'Searing Eye', 'Searing', 'buff', 3, 0, 6, 'fire', 'Needs a Burn. Your next 2 turns, every hit on a burning foe is a sure crit.', 'Sure crits on a burning foe.');
+  A('pip', 'P5', 'wildfire', 'Wildfire', 'Wildfire', 'debuff', 3, 0, 5, 'fire', 'Needs a Burn. Renews it to 3 turns, and it grows hotter each turn.', 'The Burn grows each turn.');
+  A('pip', 'P6', 'flare', 'Lantern Flare', 'Flare', 'debuff', 4, 0.5, 5, 'holy', 'A flash of light for 50% power. The foe is Blinded for 2 turns (it can miss). A burning foe is also Marked.', 'Blinds. Marks a burning foe.');
+  A('pip', 'P7', 'emberheart', 'Ember Heart', 'Heart', 'passive', 4, 0, 0, 'fire', 'Passive. Each Burn tick on the foe gives you 1 Ember.', 'Passive: Burn gives Embers.');
+  A('pip', 'P8', 'lanternburst', 'Lanternburst', 'Burst', 'finisher', 5, 2.0, 7, 'fire', 'Finisher, from your third turn. 200% power, plus 60% for each Ember, 25% more on a burning foe. Needs 3 Embers; spends them and the Burn.', 'Spends Embers and Burn for a blast.');
+}
+// Timed abilities (59k TURN_TIMED): press again as the ring closes, one ring per hit. What a Perfect press adds:
+const ABILITY_PERFECT = { powershot: 'a sure crit', volley: '1 Aim for each Perfect arrow', deadeye: 'the Mark stays',
+  moonvolley: '1 more Bleed for each Perfect arrow', heavystrike: '50% more damage', bash: 'Guard lasts 3 enemy turns',
+  hammerfall: 'half the Grit comes back', shieldthrow: '2 turns off its cooldown', frostshard: '1 more Chill',
+  fire: 'the Burn lasts 1 turn longer', ignite: 'the Burn bursts at 200%', lanternburst: '2 Embers come back' };
+for (const id in ABILITY_PERFECT) ABILITIES[id].perfect = ABILITY_PERFECT[id];
+// The Abilities screen's order and its three groups (ability-tree-details.md 10: interface groups, not subclasses)
+const HERO_PATHS = {
+  wren: [{ name: 'True Aim', ids: ['echo', 'powershot', 'huntmark', 'deadeye', 'twinshot'] },
+    { name: 'Blood Trail', ids: ['barbed', 'volley', 'moonvolley', 'finalecho'] },
+    { name: 'Night Wings', ids: ['batswarm', 'pinning', 'sonic', 'shadowstep', 'nighthunter'] }],
+  tobin: [{ name: 'Shield Oath', ids: ['bash', 'brace', 'ironwill', 'shieldthrow'] },
+    { name: 'Sword Oath', ids: ['heavystrike', 'cleave', 'sundering', 'lunge', 'hammerfall'] },
+    { name: 'Last Light', ids: ['momentum', 'riposte', 'roar', 'bulwark', 'laststand'] }],
+  pip: [{ name: 'Kindling', ids: ['fire', 'spark', 'kindle', 'wildfire'] },
+    { name: 'Wild Flame', ids: ['ignite', 'searing', 'hex', 'afterglow', 'lanternburst'] },
+    { name: 'Lantern Keeper', ids: ['frostshard', 'arcaneward', 'nova', 'flare', 'emberheart'] }]
+};
+const HERO_ABILITIES = {};
+for (const k in HERO_PATHS) {
+  HERO_ABILITIES[k] = HERO_PATHS[k].flatMap(p => p.ids);
+  for (const p of HERO_PATHS[k]) for (const id of p.ids) ABILITIES[id].path = p.name;
+}
+// The legacy (real-time) fight and the bar read SOLO_ABILITIES (24b): the new abilities join it. A legacy fight casts a
+// new one as a plain hit of its power (59j); only the turn fight knows their rules.
+for (const id in ABILITIES) {
+  const a = ABILITIES[id];
+  if (!SOLO_ABILITIES[id]) SOLO_ABILITIES[id] = { id, name: a.name, short: a.short, cd: Math.max(4, a.cd * 2), line: a.line, desc: a.desc, x: a.pow * (a.hits || 1) };
+  else Object.assign(SOLO_ABILITIES[id], { line: a.line, turnDesc: a.desc });
+}
+
+// ---- src/js/24d-data-turnfoes.js ----
+// 24d-data-turnfoes: what foes do in turn fights (59k-turn.js). Data only.
+// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
+//
+// A move is one enemy turn of one or more hits. Every hit can be parried or dodged.
+//   { id, name, hits: [{ wind, x, dt, ride }], ranged, charge }
+//     wind   seconds of wind-up before that hit lands (a later hit counts from the hit before it): the rhythm to read
+//     x      damage as a share of the zone's reference hero HP (59k turnRefHp), before armour and Guard
+//     dt     damage type ('phys' default); ride: a status on the hero when that hit lands ('bleed', 'burn', 'venom',
+//            'chill', 'weaken', 'blind')
+//     charge the boss spends one turn gathering it (no damage) and lets it go on its next turn. Stun or Freeze it, or
+//            hit it for TURN_TUNE.chargeBreak of its max HP in between, and it is broken (59k)
+// Zone monsters with their own art (59l ZONE_FOES) bring their own moves. Every other normal foe uses TURN_FOE_BASIC
+// (an elite adds TURN_FOE_ELITE). A zone boss uses TURN_BOSS_SETS[its BOSS_KITS id] (else TURN_BOSS_BASIC): its moves
+// in turn are a, b, the charge, then c, and again. Below half HP it speeds up (TURN_TUNE.bossPhaseSpd).
+// Numbers follow the C22 contract (docs/design/enemies-c22-final-contract.md): a normal move is about 20% of the
+// reference HP, split across its hits; bosses hit harder and in longer strings (owner, 2026-10-02: genuinely hard).
+
+const TURN_FOE_BASIC = [
+  { id: 'strike', name: 'Strike', hits: [{ wind: 1.0, x: 0.2 }] },
+  { id: 'flurry', name: 'Flurry', hits: [{ wind: 0.95, x: 0.1 }, { wind: 0.65, x: 0.1 }] }
+];
+const TURN_FOE_RANGED = [
+  { id: 'shot', name: 'Shot', ranged: true, hits: [{ wind: 1.05, x: 0.2 }] },
+  { id: 'twin', name: 'Twin Shot', ranged: true, hits: [{ wind: 0.9, x: 0.1 }, { wind: 0.75, x: 0.1 }] }
+];
+const TURN_FOE_ELITE = { id: 'crush', name: 'Crushing Blow', hits: [{ wind: 1.35, x: 0.27 }] };
+
+const TURN_BOSS_SETS = {
+  slime: { a: { id: 'engulf', name: 'Engulf', hits: [{ wind: 1.3, x: 0.28, dt: 'poison' }] },
+    b: { id: 'lash', name: 'Ooze Lash', hits: [{ wind: 0.9, x: 0.1, dt: 'poison' }, { wind: 0.5, x: 0.1, dt: 'poison' }, { wind: 0.85, x: 0.1, dt: 'poison', ride: 'venom' }] },
+    charge: { id: 'swell', name: 'Great Engulf', charge: true, hits: [{ wind: 1.4, x: 0.26, dt: 'poison' }, { wind: 0.6, x: 0.26, dt: 'poison', ride: 'venom' }] },
+    c: { id: 'slap', name: 'Split Slap', hits: [{ wind: 0.6, x: 0.14 }, { wind: 1.1, x: 0.14 }] } },
+  bat: { a: { id: 'bite', name: 'Rending Bite', hits: [{ wind: 1.15, x: 0.26, ride: 'bleed' }] },
+    b: { id: 'flurry', name: 'Wing Flurry', hits: [{ wind: 0.7, x: 0.08 }, { wind: 0.35, x: 0.08 }, { wind: 0.35, x: 0.08 }, { wind: 0.6, x: 0.08 }] },
+    charge: { id: 'storm', name: 'Dive Storm', charge: true, hits: [{ wind: 1.2, x: 0.18 }, { wind: 0.5, x: 0.18 }, { wind: 0.9, x: 0.18 }] },
+    c: { id: 'shriek', name: 'Shriek', hits: [{ wind: 1.0, x: 0.2, ride: 'blind' }] } },
+  bones: { a: { id: 'graveblow', name: 'Grave Blow', hits: [{ wind: 1.4, x: 0.3 }] },
+    b: { id: 'volley', name: 'Bone Volley', ranged: true, hits: [{ wind: 0.9, x: 0.09 }, { wind: 0.45, x: 0.09 }, { wind: 0.45, x: 0.09 }] },
+    charge: { id: 'crush', name: 'Ossuary Crush', charge: true, hits: [{ wind: 1.5, x: 0.27 }, { wind: 0.7, x: 0.27 }] },
+    c: { id: 'rattle', name: 'Rattle', hits: [{ wind: 0.8, x: 0.12 }, { wind: 0.8, x: 0.12, ride: 'weaken' }] } },
+  beetle: { a: { id: 'mandibles', name: 'Mandibles', hits: [{ wind: 1.0, x: 0.14 }, { wind: 0.55, x: 0.14 }] },
+    b: { id: 'shellbash', name: 'Shell Bash', hits: [{ wind: 1.25, x: 0.28 }] },
+    charge: { id: 'erupt', name: 'Erupt', charge: true, hits: [{ wind: 1.7, x: 0.5 }] },
+    c: { id: 'thorns', name: 'Thorn Spray', ranged: true, hits: [{ wind: 0.8, x: 0.09 }, { wind: 0.5, x: 0.09 }, { wind: 0.5, x: 0.09, ride: 'bleed' }] } },
+  spore: { a: { id: 'burst', name: 'Spore Burst', hits: [{ wind: 0.95, x: 0.12, dt: 'poison' }, { wind: 0.6, x: 0.12, dt: 'poison', ride: 'venom' }] },
+    b: { id: 'capslam', name: 'Cap Slam', hits: [{ wind: 1.3, x: 0.27 }] },
+    charge: { id: 'bloom', name: 'Spore Storm', charge: true, hits: [{ wind: 1.2, x: 0.11, dt: 'poison' }, { wind: 0.45, x: 0.11, dt: 'poison' }, { wind: 0.45, x: 0.11, dt: 'poison' }, { wind: 0.8, x: 0.11, dt: 'poison', ride: 'venom' }] },
+    c: { id: 'choke', name: 'Choking Cloud', ranged: true, hits: [{ wind: 1.1, x: 0.16, dt: 'poison', ride: 'weaken' }] } },
+  golem: { a: { id: 'fist', name: 'Stone Fist', hits: [{ wind: 1.35, x: 0.3 }] },
+    b: { id: 'combo', name: 'Quarry Combo', hits: [{ wind: 1.0, x: 0.11 }, { wind: 0.4, x: 0.11 }, { wind: 1.2, x: 0.11 }] },
+    charge: { id: 'shatter', name: 'Shatter', charge: true, hits: [{ wind: 1.6, x: 0.26 }, { wind: 0.55, x: 0.26 }] },
+    c: { id: 'hail', name: 'Pebble Hail', ranged: true, hits: [{ wind: 0.8, x: 0.06 }, { wind: 0.35, x: 0.06 }, { wind: 0.35, x: 0.06 }, { wind: 0.35, x: 0.06 }] } },
+  wraith: { a: { id: 'touch', name: 'Chill Touch', hits: [{ wind: 1.1, x: 0.22, dt: 'frost', ride: 'chill' }] },
+    b: { id: 'wail', name: 'Wail', ranged: true, hits: [{ wind: 0.9, x: 0.12, dt: 'frost' }, { wind: 0.7, x: 0.12, dt: 'frost' }] },
+    charge: { id: 'drown', name: 'Drown', charge: true, hits: [{ wind: 1.3, x: 0.17, dt: 'frost' }, { wind: 0.5, x: 0.17, dt: 'frost' }, { wind: 0.95, x: 0.17, dt: 'frost', ride: 'chill' }] },
+    c: { id: 'fade', name: 'Fade Strike', hits: [{ wind: 1.75, x: 0.25, dt: 'frost' }] } },
+  // the Hollow's region boss (zone 35): four moves, two charges, harder strings
+  fenmother: { a: { id: 'grasp', name: 'Fen Grasp', hits: [{ wind: 1.2, x: 0.3, dt: 'frost', ride: 'chill' }] },
+    b: { id: 'reeds', name: 'Reed Lash', hits: [{ wind: 0.8, x: 0.1 }, { wind: 0.4, x: 0.1 }, { wind: 0.7, x: 0.1 }, { wind: 0.4, x: 0.1, ride: 'bleed' }] },
+    charge: { id: 'flood', name: 'The Flood', charge: true, hits: [{ wind: 1.4, x: 0.2, dt: 'frost' }, { wind: 0.6, x: 0.2, dt: 'frost' }, { wind: 0.6, x: 0.2, dt: 'frost' }] },
+    c: { id: 'lull', name: 'Drowning Lull', ranged: true, hits: [{ wind: 1.6, x: 0.32, dt: 'frost', ride: 'weaken' }] } }
+};
+// any other boss (the Coast's elders until their turn kits exist, Silas): a fair, hard set
+const TURN_BOSS_BASIC = {
+  a: { id: 'heavy', name: 'Heavy Blow', hits: [{ wind: 1.3, x: 0.28 }] },
+  b: { id: 'combo', name: 'Combo', hits: [{ wind: 0.9, x: 0.1 }, { wind: 0.5, x: 0.1 }, { wind: 0.8, x: 0.1 }] },
+  charge: { id: 'smash', name: 'Gathered Smash', charge: true, hits: [{ wind: 1.5, x: 0.27 }, { wind: 0.6, x: 0.27 }] },
+  c: { id: 'jab', name: 'Quick Jab', hits: [{ wind: 0.7, x: 0.16 }] }
+};
+// Speed relative to the reference hero (1.0 = Speed 10): foes without their own
+const TURN_FOE_SPEED = { normal: 0.9, ranged: 0.95, elite: 1.0, boss: 1.05, region: 1.1 };
+// Fight length in the hero's ordinary Attack actions at zone-ready power (the C22 contract's HP budgets)
+const TURN_FOE_HP = { zoneFoe: 4, normal: 5, elite: 9, boss: 16, region: 30 };
 
 // ---- src/js/30-state.js ----
 // 30-state: the save (S), load, save(), registered feature fields, and
@@ -9565,40 +9835,11 @@ function awayBase(r) {
     r.note = 'You kept hammering the raid boss.';
     return r;
   }
-  // C20: sample one fixed Auto profile in scratch state, then apply one aggregate reward path.
+  // Turn fights are active only (owner, 2026-10-01): nothing fights while you are away. Gathering keeps going.
   if (typeof turnCombatScope === 'function' && turnCombatScope()) {
-    const q = S.turn || (S.turn = { awayKillsCarry: 0, awayEssCarry: 0, awayProfile: null, awaySample: null, awaySig: '' });
-    // Level and XP can change as a claim is credited. Keep the sampled profile across split
-    // claims and save/reload, but invalidate it when the player changes gear, training or zone.
-    // Version/tuning changes between builds must invalidate a persisted scratch sample.
-    // XP and mastery are intentionally excluded to keep split claims on one anchored profile.
-    const sig = JSON.stringify([1, S.solo.hero, S.zone, S.equip,
-      S.solo.tr && S.solo.tr[S.solo.hero], TURN_TUNE, SOLO_TUNE, COMBAT_TUNE]);
-    let p = q.awaySig === sig && q.awayProfile && q.awayProfile.foeHp > 0 ? q.awayProfile : null;
-    if (!p) { p = turnCombatProfile(); if (!p) { spawn(); p = turnCombatProfile(); }
-      if (p) { q.awayProfile = p; q.awaySample = null; q.awaySig = sig; } }
-    if (!p || !(t > 0)) {
-      r.turnCombat = { generatedEss: 0, storedEss: 0, kills: 0, deaths: 0, sampledSeconds: 0, boost, zone: S.zone };
-      return r;
-    }
-    const sampledSeconds = 3600, sample = q.awaySample && q.awaySample.seconds === sampledSeconds ? q.awaySample :
-      turnCombatSample({ profile: p, seconds: sampledSeconds, seed: 1, mode: 'auto' });
-    q.awaySample = sample;
-    const carry = v => Number.isFinite(v) && v >= 0 && v < 1 ? v : 0;
-    const ratio = t * boost / sampledSeconds;
-    const k0 = sample.kills * ratio + carry(q.awayKillsCarry), kills = Math.floor(k0);
-    const e0 = sample.generatedEss * ratio + carry(q.awayEssCarry), generatedEss = Math.floor(e0);
-    q.awayKillsCarry = k0 - kills; q.awayEssCarry = e0 - generatedEss;
-    const gold = kills * p.goldPerKill, tier = zoneTier(p.zone);
-    const storedEss = generatedEss > 0 ? stashAdd('ess', tier, generatedEss, 'flow', true) : 0;
-    S.gold += gold; S.totalGold += gold; S.totalKills += kills; econEarn('away', gold);
-    if (kills > 0) gainXp(kills * p.xpPerKill * PACE.heroAwayXp, true);
-    r.lines.push({ icon: { ic: ['coin', '#F2C14E'] }, txt: '+' + fmt(gold) });
-    if (storedEss) r.lines.push({ icon: { mat: ['ess', tier] }, txt: `+${fmt(storedEss)} ${matName('ess', tier)}` });
-    r.turnCombat = { generatedEss, storedEss, kills, deaths: sample.deaths * ratio, sampledSeconds,
-      boost, zone: p.zone };
-    emit('awayKills', { kills, zone: p.zone, generatedEss, lines: r.lines });
-    r.note = `You held ${zoneName(p.zone)}.`;
+    r.turnCombat = { kills: 0, zone: S.zone };
+    r.note = 'Fights only happen while you play. Set your hero to gather before you go, and they keep working.';
+    if (r.secs >= 300) toast('Fights wait for you while you are away. Gather before you go to keep earning.', 'raid', null, 'normal');
     return r;
   }
   // Kills are capped by the respawn gap, same as live play; away play earns 75% of the live rate.
@@ -12303,11 +12544,18 @@ const fireMats = () => (typeof HEARTH_TUNE === 'object' ? HEARTH_TUNE.light : []
 // extra condition for the pause. Attack and the ability need a live foe; Dodge and Parry need a wind-up still on its
 // way, and the guide's press ignores a cooldown left by an earlier press (59j: `forgive`), so a paused game never waits on one.
 const liveFoe = () => { try { return combatFoes().some(f => f && !f.dead && f.hp > 0 && !f.gone); } catch (e) { return false; } };
+// Turn fights (59k): Attack and the ability wait for your turn; Dodge and Parry pause inside their window, so the
+// paused press lands. In a legacy fight the old conditions stand.
+const turnSnap = () => { try { return typeof turnCombatOn === 'function' && turnCombatOn() ? turnCombatSnapshot() : null; } catch (e) { return null; } };
+const heroTurnNow = () => { const q = turnSnap(); return !q || q.phase === 'hero'; };
+// (a hit you already dodged or parried is not a new lesson: the next step waits for the next hit)
+const hitComing = () => { const q = turnSnap(); return q ? q.canDefend && q.closesAt > q.now : heavyShowing(); };
+const inWindow = k => { const q = turnSnap(); if (!q) return heavyShowing(); const open = k === 'parry' ? q.parryOpensAt : q.dodgeOpensAt; return q.canDefend && q.now >= open && q.closesAt - q.now > 0.02; };
 const GUIDE_STEPS = [
-  { id: 'attack', pause: 1, pauseWhen: liveFoe, when: () => fightingNow(), done: () => (O().atk || 0) >= 1 || S.totalKills >= 12 },
-  { id: 'ability', pause: 1, pauseWhen: liveFoe, when: () => stepDone('attack') && fightingNow() && abilityOk(), done: () => O().casts >= 1 },
-  { id: 'dodge', pause: 1, pauseWhen: () => liveFoe() && heavyShowing(), when: () => stepDone('ability') && fightingNow() && heavyShowing(), done: () => (O().dodges || 0) >= 1 },
-  { id: 'parry', pause: 1, pauseWhen: () => liveFoe() && heavyShowing(), when: () => stepDone('dodge') && fightingNow() && heavyShowing(), done: () => (O().parries || 0) >= 1 },
+  { id: 'attack', pause: 1, pauseWhen: () => liveFoe() && heroTurnNow(), when: () => fightingNow(), done: () => (O().atk || 0) >= 1 || S.totalKills >= 12 },
+  { id: 'ability', pause: 1, pauseWhen: () => liveFoe() && heroTurnNow(), when: () => stepDone('attack') && fightingNow() && abilityOk(), done: () => O().casts >= 1 },
+  { id: 'dodge', pause: 1, pauseWhen: () => liveFoe() && inWindow('dodge'), when: () => stepDone('ability') && fightingNow() && hitComing(), done: () => (O().dodges || 0) >= 1 },
+  { id: 'parry', pause: 1, pauseWhen: () => liveFoe() && inWindow('parry'), when: () => stepDone('dodge') && fightingNow() && hitComing(), done: () => (O().parries || 0) >= 1 },
   { id: 'boss', pause: 1, ok: 1, when: () => S.maxZone === 1 && S.zone === 1 && typeof fightBoss !== 'undefined' && !!fightBoss, done: () => S.maxZone >= 2 },
   // W2-A: Train Attack on the Hero tab (it opens with the step: the tab is unlocked by then, hero level 3 or zone 2)
   { id: 'upgrade', pause: 1, when: () => stepDone('ability') && isUnlocked('party') && S.gold >= cheapestUp(), done: () => upBought() },
@@ -13907,10 +14155,12 @@ function trainRec(k) {
 function trainKind(mv) { return TRAIN_BASIC.includes(mv) ? mv : 'ab'; }
 function trainMoves(k) {
   k = trainHero(k);
-  const abs = typeof soloAbilities === 'function' ? soloAbilities(k) : (SOLO_HEROES[k] ? SOLO_HEROES[k].abs : []);
+  // turn fights: the signature's Training is the hero's ability power, for every ability they learn (59k)
+  const abs = SOLO_HEROES[k] ? SOLO_HEROES[k].abs : [];
   return ['atk', ...abs, 'parry', 'dodge'];
 }
-function trainName(mv) { return mv === 'atk' ? 'Attack' : mv === 'parry' ? 'Parry' : mv === 'dodge' ? 'Dodge' : (SOLO_ABILITIES[mv] ? SOLO_ABILITIES[mv].name : mv); }
+const trainTurns = () => typeof TURN_TUNE === 'object' && !!TURN_TUNE.on;
+function trainName(mv) { return mv === 'atk' ? 'Attack' : mv === 'parry' ? 'Parry' : mv === 'dodge' ? 'Dodge' : trainTurns() ? 'Ability power' : (SOLO_ABILITIES[mv] ? SOLO_ABILITIES[mv].name : mv); }
 function trainLv(mv, k) { if (!S || !S.solo) return 0; const v = trainRec(k)[mv]; return v > 0 ? Math.floor(v) : 0; }
 function trainStage(k) {
   k = trainHero(k);
@@ -14001,6 +14251,10 @@ function trainInfo(mv, k) {
   if (kind === 'atk') {
     now = `Hits for ${f(atkCurve(lv) * pow)}`; next = `${f(atkCurve(lv + 1) * pow)}`;
     const m = (Math.floor(lv / PACE.atkEvery) + 1) * PACE.atkEvery; ms = `Lv ${m}: hits x${m > PACE.atkBend ? PACE.atkX2 : PACE.atkX} harder`;
+  } else if (kind === 'ab' && trainTurns()) {
+    // turn fights: ability power is the hero's Attack power, and each level of this adds to it for every ability (59k)
+    const pc = l => Math.round(100 * TURN_TUNE.abTrain * l);
+    now = `Every ability +${pc(lv)}% power`; next = `+${pc(lv + 1)}%`;
   } else if (kind === 'ab') {
     const a = SOLO_ABILITIES[mv], x = mv === 'echo' ? SOLO_TUNE.echo.x : mv === 'bash' ? SOLO_TUNE.bash.x : mv === 'fire' ? SOLO_TUNE.fire.x : 1;
     now = `Hits for ${f(trainAbCurve(lv) * pow * x)}`; next = `${f(trainAbCurve(lv + 1) * pow * x)}`;
@@ -14008,6 +14262,10 @@ function trainInfo(mv, k) {
     if (a) now += `, every ${+trainAbCd(mv, a.cd, lv).toFixed(1)} s`;
   } else if (kind === 'parry') {
     now = `Counter x${trainCounterX(lv).toFixed(1)}`; next = `x${trainCounterX(lv + 1).toFixed(1)}`;
+  } else if (trainTurns()) {
+    // turn fights: Dodge training widens the dodge window (59k turnMakeProfile)
+    const w = l => Math.round(1000 * Math.min(TURN_TUNE.windowCaps.dodge, SOLO_TUNE.turnDodgeWindow + TURN_TUNE.dodgeTrain * l));
+    now = `Dodge window ${w(lv)} ms`; next = w(lv + 1) > w(lv) ? `${w(lv + 1)} ms` : '';
   } else {
     const a = trainDodgeCd(lv), b = trainDodgeCd(lv + 1);
     now = `Cooldown ${a.toFixed(2)} s`; next = b < a ? `${b.toFixed(2)} s` : '';
@@ -14021,7 +14279,7 @@ function trainNext(k) {
   k = trainHero(k);
   const eq = k === (typeof soloHero === 'function' && soloHero()) && typeof soloEquipped === 'function' ? soloEquipped() : [];
   const pick = list => { let best = null; for (const mv of list) { const p = trainPlan(mv, '1', k); if (p.n > 0 && (!best || p.cost < best.cost)) best = { move: mv, cost: p.cost, lv: trainLv(mv, k) + 1 }; } return best; };
-  return pick(trainMoves(k).filter(mv => mv === 'atk' || eq.includes(mv))) || pick(['parry', 'dodge']);
+  return pick(trainMoves(k).filter(mv => mv === 'atk' || eq.includes(mv) || (trainKind(mv) === 'ab' && trainTurns()))) || pick(['parry', 'dodge']);
 }
 // A rough dps for the sim's buyer (tools/sim.mjs): the auto swing, the equipped abilities at their cooldown, and for an
 // active player the counters (about one parry every 20 s) and presses.
@@ -14318,6 +14576,81 @@ function heroUnlockStateValid(u) {
     }
   }
   return true;
+}
+
+// ---- src/js/56e-abilities.js ----
+// 56e-abilities: learning abilities with Scrolls (docs/design/combat-turn-build.md "Unlocks"; data: 24c-data-abilities.js).
+// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
+//
+// Each hero starts with their signature (Echo Shot, Shield Bash, Fireball). The other 13 are learned on the Hero tab
+// (75-abilities-ui.js) by spending a Scroll of their tier, once the hero reaches that tier's level (ABILITY_TIERS).
+// A higher Scroll can pay for a lower tier. Scrolls belong to the lamp (shared by every hero) and drop from zone bosses:
+// one for sure the first time each zone's boss falls, then a 1 in 5 chance on a replay, never more than 5 replays dry.
+//   abilityOwned(hero, id) -> bool
+//   abLearnInfo(hero, id) -> { id, a, owned, tier, lv, lvOk, scroll, payWith, why }   why: '' (can learn now) | a reason
+//   abilityLearn(hero, id) -> bool (spends the Scroll; emits abilityLearned { hero, id })
+//   scrollCount(id) -> n; scrollFor(zone) -> the Scroll id a zone's boss drops
+// Events: scrollDrop { id, n, first }, abilityLearned { hero, id }.
+// Save: registerState('abil', { unl: { hero: [ids] }, scrolls: { id: n }, dry: { id: n }, got: { id: n } }).
+var abilityOwned, abLearnInfo, abilityLearn, scrollCount, scrollFor;
+{
+  const SCROLL_TUNE = { replay: 0.2, pity: 5 };
+  const blank = () => ({ unl: { wren: [], tobin: [], pip: [] }, scrolls: {}, dry: {}, got: {} });
+  registerState('abil', blank());
+  const A = () => S.abil || (S.abil = blank());
+  const lvOf = k => { try { const l = soloLevels()[k]; return l ? l.L : 1; } catch (e) { return S.L || 1; } };
+  abilityOwned = (k, id) => {
+    const a = ABILITIES[id]; if (!a || a.hero !== k) return false;
+    if (!a.tier) return true;
+    const u = A().unl[k]; return Array.isArray(u) && u.includes(id);
+  };
+  scrollCount = id => Math.max(0, A().scrolls[id] | 0);
+  // the Scroll that pays for tier t: that tier's own if you have one, else the lowest higher one you have
+  const payFor = t => { for (let i = t - 1; i < SCROLL_ORDER.length; i++) if (scrollCount(SCROLL_ORDER[i]) > 0) return SCROLL_ORDER[i]; return ''; };
+  abLearnInfo = (k, id) => {
+    const a = ABILITIES[id], tier = a ? a.tier : 0, T = ABILITY_TIERS[tier] || null;
+    const owned = abilityOwned(k, id), lv = T ? T.lv : 1, lvOk = lvOf(k) >= lv, scroll = T ? T.scroll : '', payWith = tier ? payFor(tier) : '';
+    const why = owned ? 'owned' : !a || a.hero !== k ? 'other' : !lvOk ? `Level ${lv}` : !payWith ? `Needs a ${SCROLLS[scroll].name}` : '';
+    return { id, a, owned, tier, lv, lvOk, scroll, payWith, why };
+  };
+  abilityLearn = (k, id) => {
+    const i = abLearnInfo(k, id);
+    if (i.why) return false;
+    const s = A();
+    s.scrolls[i.payWith] = scrollCount(i.payWith) - 1;
+    if (!Array.isArray(s.unl[k])) s.unl[k] = [];
+    s.unl[k].push(id);
+    emit('abilityLearned', { hero: k, id });
+    return true;
+  };
+  scrollFor = z => {
+    if (typeof isRegionBoss === 'function' && isRegionBoss(z)) return 'mother';
+    for (const [last, id] of SCROLL_BANDS) if (z <= last) return id;
+    return 'roadlight';
+  };
+  // Next Up (55-goals): a Scroll in hand and an ability it can teach the hero you play
+  const learnable = () => { const k = soloHero(); if (!k || typeof HERO_ABILITIES !== 'object' || !HERO_ABILITIES[k]) return null;
+    let best = null; for (const id of HERO_ABILITIES[k]) { const i = abLearnInfo(k, id); if (!i.why && (!best || i.tier < best.tier)) best = i; } return best; };
+  registerGoal({ id: 'learn-ability', sys: 'hero', prio: 4, pct: () => (learnable() ? 1 : null),
+    label: () => { const i = learnable(); return i ? `Learn ${i.a.name}: your ${SCROLLS[i.payWith].name} is ready` : ''; },
+    icon: () => ({ ic: ['sword', '#F2C14E'] }),
+    go: () => { const i = learnable(); return { tab: 'party', view: 'abilities', sel: i ? `.ab-card[data-ab="${i.id}"]` : '#sec-abilities' }; } });
+  // the drop: a zone boss's kill (50-sim killPack emits zoneClear on a first clear, then kill)
+  let firstZ = 0;
+  on('zoneClear', p => { firstZ = p ? p.zone : 0; });
+  on('kill', p => {
+    if (!p || !p.mob || !p.mob.boss) return;
+    const z = p.zone, id = scrollFor(z), s = A(), first = firstZ === z; firstZ = 0;
+    let drop = first;
+    if (!drop) { s.dry[id] = (s.dry[id] | 0) + 1; drop = s.dry[id] >= SCROLL_TUNE.pity || Math.random() < SCROLL_TUNE.replay; }
+    if (!drop) return;
+    s.dry[id] = 0; s.scrolls[id] = scrollCount(id) + 1; s.got[id] = (s.got[id] | 0) + 1;
+    emit('scrollDrop', { id, n: s.scrolls[id], first });
+    // the first Scroll ever teaches what it is for; after that a quiet line (the stage float shows it)
+    const ever = SCROLL_ORDER.reduce((n, k) => n + (s.got[k] | 0), 0);
+    if (ever <= 1) toast(`${SCROLLS[id].name}! Spend it on the Hero tab to learn an ability.`, 'good', null, 'high');
+    else toast(`${SCROLLS[id].name} found.`, 'good', null, 'low');
+  });
 }
 
 // ---- src/js/57-camp.js ----
@@ -18384,7 +18717,7 @@ let deeds, deedBonus, wearGet;
   on('tap', () => {
     if (campSince >= 0) campSince = clock;
   });
-  on('soloAttack', p => { if (p && p.kind === 'hit') drumHit(); });
+  on('soloPress', () => drumHit());   // C29: every Attack press counts (a turn fight lands one a turn; the rain is the pressing)
   on('menuView', ({ view }) => { lastView = view || ''; campSince = lastView === 'camp' ? clock : -1; });
 
   // Per-second secrets and polls.
@@ -18952,13 +19285,14 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     const z = S.zone, cyc = zoneCycle(z), zt = zoneType(z);
     foes = []; packDown = false; packT = 0; focusIdx = -1; lead = null; packGold = 0; inArena = false;
     refreshUnits(false);
-    if (!boss && typeof turnCombatScope === 'function' && turnCombatScope()) {
-      // C20: one stronger foe; the existing pack-clear path still pays one kill and its rewards.
-      const hp = mobHp(z) * TURN_TUNE.foeHpX * mod('foeHp');
-      const f = mkFoe(zt, hp, mobGold(z) * T.packGold, Math.ceil(1.5 * z), z, false, TYPES[zt].name, cyc, T.packAtkN);
-      f.turn = 1;   // a turn-prototype foe (50-sim respawns a legacy one when the prototype takes over)
-      if (typeof zoneFoeSkin === 'function') zoneFoeSkin(f, z);   // C22: the zone's own monster (59l)
-      foes.push(f); lead = f; packN = 1; packSize = 'brute'; aoeK = 1;
+    if (typeof turnCombatScope === 'function' && turnCombatScope()) {
+      // A turn fight (59k): one foe, its HP, moves, gold and XP set by turnFoeSetup; the pack-clear path pays its kill.
+      // A zone with its own monster (59l) sends only it; else the zone's type, now and then the next type of the cycle.
+      const ti = boss || (typeof ZONE_FOES === 'object' && ZONE_FOES[z]) || Math.random() < T.mixP ? zt : zoneNextType(z);
+      const f = mkFoe(ti, 1, 0, 0, z, boss, (boss ? 'Elder ' : '') + TYPES[ti].name, cyc, 1);
+      if (!boss && ti === zt && typeof zoneFoeSkin === 'function') zoneFoeSkin(f, z);   // C22: the zone's own monster (59l)
+      turnFoeSetup(f, z);
+      foes.push(f); lead = f; packN = 1; packSize = boss ? 'boss' : 'brute'; aoeK = 1;
     } else if (boss) {
       const hp = mobHp(z) * bossHpMult(z) * mod('bossHp') * mod('foeHp');
       const f = mkFoe(zt, hp, mobGold(z) * 6, Math.ceil(1.5 * z) * 5, z, true, 'Elder ' + TYPES[zt].name, cyc);
@@ -19145,19 +19479,24 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   };
   // C20 scalar adapter: the turn resolver calculates one hit once for both live and scratch play.
   // This applies that hit to the live foe while retaining the established death/reward path.
-  cbTurnDamageFoe = (f, amount, kind) => {
+  const DOT_KIND = { burn: 1, bleed: 1, swarm: 1, curse: 1 };
+  cbTurnDamageFoe = (f, amount, kind, crit, dt) => {
     if (!alive(f) || !(amount > 0)) return 0;
     const a = Math.max(0, amount);
-    f.hp -= a; f.hit = 0.08; ST.heroDmg += a; if (kind !== 'burn') ST.heroHits++;
-    emit('float', { txt: fmt(a), color: kind === 'counter' ? '#FF9E3D' : '#FFFFFF', big: kind !== 'attack' });
+    f.hp -= a; if (!DOT_KIND[kind]) f.hit = 0.08; ST.heroDmg += a; if (!DOT_KIND[kind]) ST.heroHits++;
+    FLOAT_EV.txt = (kind === 'counter' ? 'COUNTER ' : '') + fmt(a) + (crit ? '!' : ''); FLOAT_EV.color = kind === 'counter' || crit ? '#FF9E3D' : kind === 'burn' ? '#FFB347' : kind === 'bleed' ? '#E0524F' : '#FFFFFF';
+    FLOAT_EV.big = !!crit || kind === 'counter' || !(kind === 'attack' || DOT_KIND[kind]); FLOAT_EV.x = undefined; FLOAT_EV.y = undefined;
+    FLOAT_EV.dt = dt && dt !== 'phys' ? dt : ''; FLOAT_EV.rel = dt && typeof typeRel === 'function' ? typeRel(f.txRow || f.type, dt) : 0; FLOAT_EV.crit = !!crit;
+    emit('float', FLOAT_EV);
+    if (crit) emit('crit', { tap: true });
     if (f.hp <= 0) foeDies(f, 0, kind || 'turn');
     return a;
   };
-  cbTurnHitHero = (amount, blocked) => {
+  cbTurnHitHero = (amount, blocked, kind) => {
     const u = U[0]; if (!u || u.down || !(amount > 0)) return 0;
     const a = Math.max(0, amount); u.hp -= a; u.taken += a; ST.taken += a;
     if (blocked) ST.blocked++;
-    emit('unitHit', { key: u.key, amount: a, kind: 'hit', foe: mob, blocked: !!blocked, shield: 0 });
+    emit('unitHit', { key: u.key, amount: a, kind: kind === 'dot' ? 'poison' : 'hit', foe: mob, blocked: !!blocked, shield: 0 });
     if (u.hp <= 0) knockOut(u);
     return a;
   };
@@ -20067,6 +20406,7 @@ var typeX, typeXKey, typeRel, typeZone, lbType, heroType, unitType,
   const BADGES = [], BPOOL = [];
   for (let i = 0; i < 4; i++) BPOOL.push({ id: '', n: 0, f: -1 });
   stBadges = f => {
+    if (f && f.turn && typeof turnBadgesFor === 'function') return turnBadgesFor(f);   // a turn fight's statuses (59k)
     BADGES.length = 0;
     if (!f || f.dead) return BADGES;
     for (const id of ST_BADGE_ORDER) {
@@ -22107,6 +22447,7 @@ var eliteRoll, eliteRollDeep, eliteTraits, eliteHit, eliteDealt, eliteTick, elit
 // hit comes from the buttons, and they hit harder (atkX, abHandX).
 
 var soloPickerOpen = () => false;   // 75-solo-ui: the ability picker is open (90-boot waits)
+var turnPaused = () => false;   // 59k: the page is hidden, so a turn fight waits
 var soloActive = () => false, soloTouch = () => {}, soloGoIdle = () => {}, soloWake = () => {}, soloSetAuto = () => true, soloAuto = () => true;
 var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbility, soloAbilityInfo, soloButtons, soloAbilities, soloEquipped, soloEquip,
   soloTakenX, soloCounter, SOLO_STATS;
@@ -22186,6 +22527,7 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
   const autoOn = () => Sx().auto !== false;
   const flip = v => { ACT_EV.on = v; emit('soloActive', ACT_EV); };
   soloActive = () => !autoOn() && !hiddenIdle;
+  turnPaused = () => hiddenIdle;   // 59k: a turn fight waits while the page is hidden
   const change = fn => { const was = soloActive(); fn(); const now = soloActive(); if (was !== now) flip(now); };
   soloTouch = () => { if (!soloHero()) return; change(() => { hiddenIdle = false; }); };   // a press acts; only the toggle changes Auto
   soloGoIdle = () => change(() => { hiddenIdle = true; });
@@ -22195,9 +22537,11 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
 
   // ---- the buttons ----
   let atkT = 0, dodgeT = 0, parryT = 0, openT = 0, clock = 0;
+  const PRESS_EV = { kind: 'atk' };
   const readyFor = [0, 0, 0], cds = {};   // idle wait per ability slot; cooldown left per ability id (runtime)
   soloAttack = () => {
     soloTouch();
+    emit('soloPress', PRESS_EV);   // every press, landed or not (58-deeds Drummer: a turn fight takes one Attack a turn)
     if (typeof turnCombatOn === 'function' && turnCombatOn()) return turnCombatAction('attack') ? 'hit' : 'cd';
     if (!fighting() || !heroUp()) return '';
     if (atkT > 0) return 'cd';
@@ -22270,7 +22614,10 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
   // ---- the abilities: three slots per hero (owner: the player picks what goes where) ----
   // S.solo.eq[hero] = [id | null] x 3. soloAbilities(k) the hero's unlocked ids (one each for now), soloEquipped() the
   // playing hero's slots, soloEquip(slot, id | null) places (swapping if equipped elsewhere) or clears; saved.
-  soloAbilities = k => { k = k || soloHero(); return k && SOLO_HEROES[k] ? SOLO_HEROES[k].abs.filter(id => SOLO_ABILITIES[id]) : []; };
+  // the starter's signature, then what the hero has learned with Seals (56e), in the Abilities screen's order
+  soloAbilities = k => { k = k || soloHero(); if (!k || !SOLO_HEROES[k]) return [];
+    const own = typeof abilityOwned === 'function' ? abilityOwned : (h, id) => SOLO_HEROES[h].abs.includes(id);
+    return (typeof HERO_ABILITIES === 'object' && HERO_ABILITIES[k] ? HERO_ABILITIES[k] : SOLO_HEROES[k].abs).filter(id => SOLO_ABILITIES[id] && own(k, id)); };
   soloEquipped = () => {
     const k = soloHero(); if (!k) return [null, null, null];
     const s = Sx(), own = soloAbilities(k);
@@ -22338,6 +22685,11 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
       }
       patchT = T.fire.patchT + ms.patch * TT.msv.patch; patchTick = 1; patchP = P * T.fire.burnP;
       emit('shake', 0.3);
+    } else {
+      // an ability learned for turn fights (24c), cast in a real-time fight (the Deepwell): a plain hit of its power
+      const f = focus(), b = typeof ABILITIES === 'object' && ABILITIES[a.id];
+      if (b && b.kind === 'passive') return false;
+      if (f) cbDamageFoe(f, P * T.echo.x * Math.max(0.5, a.x || 1) / 1.8, 0, b && b.dt !== 'phys' ? 'magic' : 'phys', b ? b.dt : ty, tags);
     }
     cds[a.id] = abCd(a); readyFor[slot] = 0;
     mirrorCd();
@@ -22444,138 +22796,537 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
 }
 
 // ---- src/js/59k-turn.js ----
-// C20: default-off, zone-one turn prototype for the three unevolved starters.
-// The scheduler and scalar action rules are shared by live play and reward-free away sampling.
+// 59k-turn: turn-based fights (owner, 2026-09-30 to 2026-10-02; docs/design/combat-turns.md, hero-abilities.md,
+// enemies-c22-final-contract.md; the build: docs/design/combat-turn-build.md).
+// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
+//
+// Every fight of the solo hero in a zone is a turn fight: one foe, the hero's Attack and three ability slots, and a
+// parry or a dodge for every enemy hit. Combat is active only (owner, 2026-10-01): nothing fights for you, the fight
+// waits on your turn, and a hidden page pauses it. Away time earns no fights (50-sim awayBase).
+//   Speed   each side fills a gauge at its Speed and acts at 100 (ties go to the hero). Nobody acts more than twice in a
+//           row (a boss three times). turnPreview shows the next turns.
+//   Hero    Attack (builds the hero's resource: Wren Aim, Tobin Grit, Pip Embers) or an ability (ABILITIES, 24c). Cooldowns
+//           count the hero's turns and reset every fight. Finishers open on the hero's third turn. Twelve abilities are
+//           timed (TURN_TIMED): press again as a ring closes, once per hit: Perfect adds a bonus, a Miss hits for 70%.
+//   Foe     one move a turn (24d, 59l): each hit has a wind-up, then lands. Parry it in the last TURN parry window (hard:
+//           blocks it, takes 1 turn off every cooldown, and a move parried in full earns a counter), or dodge it (easier:
+//           avoids it). A boss gathers a charged move over a turn: break it with a Stun or a big hit.
+//   Status  on the foe: Burn, Bleed, Chill, Stun/Freeze (a lost turn; a boss Staggers instead), Exposed, Mark, Sunder,
+//           Weaken, Pinned, Blind, Curse. On the hero: Guard, Ward, Keen, and the boss riders (Bleed, Burn, Venom, Chill,
+//           Weaken, Blind).
+// Numbers: TURN_TUNE. Foe HP and hits come from the zone's reference hero (turnRefAtk, turnRefHp): a zone-ready hero
+// kills a normal foe in about TURN_FOE_HP.normal Attacks, and a move does about 20% of that hero's HP.
+//
+// Exposed names:
+//   TURN_TUNE, turnCombatScope(), turnCombatOn(), turnRefAtk(z), turnRefHp(z), turnFoeSetup(f, z), turnCdFor(id)
+//   turnMakeProfile(f, u), turnNew(p, io), turnResolve(m, cmd, dt, io), turnPreview(m, n), turnUsable(m, id)
+//   turnCombatSnapshot(), turnCombatProfile(), turnCombatAction(kind, slot), turnCombatTick(dt), turnBadgesFor(f),
+//   turnHeroChips(), turnChoose(m), turnCombatSample({ profile, seconds, seed, skill })
+// Events: fightStart { heroHaste, foeHaste, first }, turn { who, n }, timingRing { id, i, n, opensAt, closesAt },
+//   timingGrade { id, i, grade }, foeMove { id, name, anim, hits }, parryWindow
+//   { opensAt, closesAt, hit, hits }, foeContact { id, hit, hits, res }, foeCharge { name }, chargeBroken { name },
+//   foeSkip { why }, turnPhase { name }, fightEnd { reason }, ability { cls: 'solo', id, name, slot }, soloAttack, soloParry,
+//   soloDodge, soloCounter.
 const TURN_TUNE = {
-  on: 0, heroRecovery: 0.28, foeWindup: 0.85, foeRecovery: 0.28,
-  introHand: 1.2, introAuto: 0.6, attackCd: 1, echoCd: 5, bashCd: 4, fireCd: 5,
-  heroHaste: { wren: 10, tobin: 9, pip: 10 }, foeHaste: 9,
-  foeHpX: 1.6, foeAtkX: 1, autoAttackX: 0.75,
-  // Effective heroX only inside this default-off prototype; legacy SOLO_TUNE.heroX is unchanged.
-  heroX: { wren: 1.45, tobin: 1.2, pip: 1.26 },
-  autoParry: 0.1, autoDodge: 0.25, autoParryCap: 0.3, autoDodgeCap: 0.5,
-  autoParryCounters: true, essenceX: 1
+  on: 1,
+  heroRecovery: 0.35, foeRecovery: 0.4, foeWindup: 0.9, introHand: 1.2, introAuto: 0.6,
+  // the reference hero at zone z (measured from the balance sim's saves at each hero's frontier, 2026-10-02): one Attack
+  // action and max HP, as shares of the zone's legacy foe HP (mobHp, 40-rules). Attack falls behind mobHp as zones climb
+  // (gear tiers come slower than foe HP), so refAtk is a table over zones, straight lines between the points.
+  refAtk: [[1, 0.7], [10, 0.7], [15, 0.55], [22, 0.42], [30, 0.3], [35, 0.2]], refHpX: 1.2,
+  heroHaste: { wren: 10, tobin: 9, pip: 10 },
+  heroX: { wren: 1.45, tobin: 1.2, pip: 1.26 },   // per-hero damage parity (Attack and abilities)
+  foeAtkX: 1,
+  goldX: 3, xpX: 2.5, essenceX: 1.6,              // fewer, longer fights pay more each (balance: docs/design/combat-turn-build.md)
+  consec: 2, consecBoss: 3,                        // the most turns in a row
+  speedMin: 0.5, speedMax: 2,                      // Speed changes stay within these shares of the base
+  critCap: 3, critChanceCap: 0.75,
+  aimCrit: 0.05, gritDmg: 0.03, gritDr: 0.01, emberX: 0.1,
+  burnP: 0.4, burnT: 3, burnMaxT: 4, bleedP: 0.12, bleedT: 3, bleedMax: 5, chillMax: 3, chillT: 4, chillSlow: 0.1,
+  markV: 0.2, exposedX: 1.25, sunderX: 0.5, weakenX: 0.75, guardX: 0.6, drCap: 0.75, wardCap: 0.3, keenX: 0.5,
+  pinWin: 1.5, pinSlow: 0.1, blindP: 0.3, blindBossP: 0.15, curseP: 0.2, curseCap: 3,
+  stagger: { stun: 25, freeze: 35 }, lock: 3, chargeBreak: 0.06, bossPhaseAt: 0.5, bossPhaseSpd: 1.12, bossEase: [0.65, 0.8, 0.9],
+  // the boss riders on the hero (shares of the reference HP a tick, two hero turns)
+  heroDot: { bleed: 0.02, burn: 0.04, venom: 0.02 }, heroDotT: 2, heroChill: 0.1, heroBlind: 0.3,
+  windowCaps: { parry: 0.35, dodge: 0.5 }, dodgeTrain: 0.004,   // Dodge Training: +4 ms of dodge window a level
+  abTrain: 0.02,                                                  // Ability power Training: +2% ability power a level
+  // timed abilities (owner, 2026-10-01; hero-abilities.md 2a.4): press again as the ring closes. Perfect within +-perfect s
+  // adds the ability's bonus, Good within +-good s is the ability as written, a Miss hits for missX. One ring per hit.
+  timed: { ring: 0.9, gap: 0.55, perfect: 0.06, good: 0.15, missX: 0.7 }
 };
+// the twelve timed abilities and how many rings each has (one per arrow or blow)
+const TURN_TIMED = { powershot: 1, volley: 3, deadeye: 1, moonvolley: 5, heavystrike: 1, bash: 1, hammerfall: 1, shieldthrow: 1,
+  frostshard: 1, fire: 1, ignite: 1, lanternburst: 1 };
 SOLO_TUNE.turnParryWindow = 0.18;
 SOLO_TUNE.turnDodgeWindow = 0.35;
 registerState('turn', { awayKillsCarry: 0, awayEssCarry: 0, awayProfile: null, awaySample: null, awaySig: '' });
 addModifier('essence', () => turnCombatScope() ? TURN_TUNE.essenceX : 1);
 
 function turnCombatScope() {
-  return !!(TURN_TUNE.on && S && S.activity === 'fight' && S.zone === 1 &&
-    S.solo && SOLO_HEROES[S.solo.hero] && !(S.cls && S.cls.evo) &&
-    typeof partyCombatOn === 'function' && partyCombatOn() && !fightBoss && !arena && target() === 'mob');
+  return !!(TURN_TUNE.on && S && S.activity === 'fight' && S.solo && SOLO_HEROES[S.solo.hero] &&
+    typeof partyCombatOn === 'function' && partyCombatOn() && !arena && target() === 'mob');
 }
 function turnCombatOn() { return turnCombatScope(); }
-const TURN_CD_KEYS = ['attack', 'echo', 'bash', 'fire'];
+const turnRefAtkX = z => {
+  const P = TURN_TUNE.refAtk; if (z <= P[0][0]) return P[0][1];
+  for (let i = 1; i < P.length; i++) if (z <= P[i][0]) { const [z0, a] = P[i - 1], [z1, c] = P[i]; return a + (c - a) * (z - z0) / (z1 - z0); }
+  return P[P.length - 1][1];
+};
+const turnRefAtk = z => turnRefAtkX(z) * mobHp(z) * mod('foeHp');
+const turnRefHp = z => TURN_TUNE.refHpX * mobHp(z);
+const TURN_SIG = { wren: 'echo', tobin: 'bash', pip: 'fire' };
+const turnAb = id => (typeof ABILITIES === 'object' && ABILITIES[id]) || null;
 function turnCdFor(id) {
-  if (id === 'attack') return TURN_TUNE.attackCd;
-  const ab = SOLO_ABILITIES[id], base = TURN_TUNE[id + 'Cd'];
-  return ab && base ? Math.max(1, Math.ceil(base * trainAbCd(id, ab.cd) / ab.cd * mod('abilityCd'))) : 1;
+  if (id === 'attack') return 1;
+  const a = turnAb(id); if (!a || !(a.cd > 0)) return 0;
+  // Focus (the gear line that shortens cooldowns, mod abilityCd): never under 2 turns (hero-abilities.md 2)
+  return Math.max(Math.min(2, a.cd), Math.ceil(a.cd * mod('abilityCd') - 1e-9));
 }
-function turnOdds() {
-  const g = gear(); // future enchantments can populate these optional fields without a crafting change here
-  return { parry: Math.max(0, Math.min(TURN_TUNE.autoParryCap, TURN_TUNE.autoParry + (g.autoParry || 0) / 100)),
-    dodge: Math.max(0, Math.min(TURN_TUNE.autoDodgeCap, TURN_TUNE.autoDodge + (g.autoDodge || 0) / 100)),
-    parryWindow: SOLO_TUNE.turnParryWindow + (g.parryWindow || 0) / 1000,
-    dodgeWindow: SOLO_TUNE.turnDodgeWindow + (g.dodgeWindow || 0) / 1000 };
+
+// ---------------- the foe ----------------
+// cbSpawn (59-combat) makes the foe, then this sets it up for a turn fight: HP from the reference hero, its moves and
+// script, Speed, armour, gold and XP. kind: 'boss' | 'normal' (an elite rolls here).
+function turnFoeSetup(f, z, kind) {
+  const T = TURN_TUNE, Z = !f.boss && typeof zoneFoeOf === 'function' ? zoneFoeOf(f) : null;
+  const region = !!(f.boss && typeof isRegionBoss === 'function' && isRegionBoss(z));
+  let moves, script, spd, hpA;
+  if (f.boss) {
+    const kit = typeof kitOf === 'function' ? kitOf(f) : null, id = region ? (regionIdx(z) === 0 ? 'fenmother' : '') : f.type;
+    const set = TURN_BOSS_SETS[id] || TURN_BOSS_BASIC;
+    script = [set.a, set.b, set.charge, set.c]; moves = script;
+    spd = region ? TURN_FOE_SPEED.region : TURN_FOE_SPEED.boss; hpA = region ? TURN_FOE_HP.region : TURN_FOE_HP.boss;
+    if (kit) f.name = kit.name;
+  } else if (Z) {
+    moves = Z.moves; script = Z.moves; spd = Z.speed || TURN_FOE_SPEED.normal; hpA = Z.hp || TURN_FOE_HP.zoneFoe;
+  } else {
+    const ranged = !!f.ranged;
+    moves = ranged ? TURN_FOE_RANGED : TURN_FOE_BASIC; script = moves.slice();
+    spd = ranged ? TURN_FOE_SPEED.ranged : TURN_FOE_SPEED.normal; hpA = TURN_FOE_HP.normal;
+    const C = COMBAT_TUNE;
+    if (z >= C.eliteFrom && Math.random() < C.eliteP) {
+      f.elite = true; f.name = 'Elite ' + f.name; script = script.concat([TURN_FOE_ELITE]);
+      spd = TURN_FOE_SPEED.elite; hpA = TURN_FOE_HP.elite;
+    }
+  }
+  // the first zone bosses come in easier while you learn to parry and dodge (bossEase: their HP share in zones 1, 2, 3)
+  const ease = f.boss && !region ? (T.bossEase[z - 1] || 1) : 1;
+  const hp = hpA * ease * turnRefAtk(z) * (0.95 + Math.random() * 0.1);
+  f.hp = f.max = hp; f.turn = 1;
+  f.tk = { script, spd: spd * 10, arm: Z && Z.armour ? Z.armour : f.armoured ? 0.3 : 0, boss: !!f.boss, region, elite: !!f.elite };
+  const C = COMBAT_TUNE;
+  f.gold = mobGold(z) * C.packGold * T.goldX * (f.boss ? 5 : f.elite ? C.eliteGold : 1);
+  f.xp = Math.ceil(Math.ceil(1.5 * z) * T.xpX * (f.boss ? 5 : f.elite ? 2 : 1));
+  return f;
 }
-function turnEffects() { return { mark: 0, markV: 0, focus: 0, focusV: 0,
-  stun: 0, burn: 0, burnDmg: 0, patch: 0, guard: 0, grit: 0, embers: 0 }; }
-// These numbers are captured once at fight start. Both adapters use the same scalar functions below.
+
+// ---------------- the profile: numbers captured when a fight starts ----------------
 function turnMakeProfile(f, u) {
-  if (!f || !u || !soloHero()) return null;
-  const key = soloHero(), g = gear(), cls = S.party && S.party.cls, ab = SOLO_HEROES[key].ab;
-  const heroX = (TURN_TUNE.heroX[key] || SOLO_TUNE.heroX[key]) / SOLO_TUNE.heroX[key];
-  const tap = cls === 'warden' ? CLASS_ABILITIES.heavy.coef : cls === 'lanternmage' ? CLASS_ABILITIES.ember.coef : CLASS_ABILITIES.focus.coef;
-  const pow = trainAbPow(ab.id) * heroX * (1 + (g.abil || 0) / 100);
+  if (!f || !u || !soloHero() || !f.tk) return null;
+  const T = TURN_TUNE, key = soloHero(), g = gear(), cls = S.party && S.party.cls;
+  const heroX = (T.heroX[key] || SOLO_TUNE.heroX[key]) / SOLO_TUNE.heroX[key];
+  const tap = cls === 'warden' || cls === 'warrior' ? CLASS_ABILITIES.heavy.coef : cls === 'lanternmage' || cls === 'mage' ? CLASS_ABILITIES.ember.coef : CLASS_ABILITIES.focus.coef;
+  const k = heroX * SOLO_TUNE.atkX * aps() * tapMult();
+  const A = heroAtk() * tap * k;
+  // ability power: the hero's Attack power, raised by Ability power Training (the signature's line: +abTrain a level)
+  // and ability gear. Tied to Attack so a geared hero's abilities never fall behind their Attack.
+  const U = A * (1 + T.abTrain * trainLv(TURN_SIG[key] || 'echo')) * (1 + (g.abil || 0) / 100);
   const ar = Math.max(0, u.armour || 0), armRed = Math.min(COMBAT_TUNE.redMax, ar / (ar + 100));
   const classDr = cls === 'warden' ? (1 - COMBAT_TUNE.wardenDr) * (1 - COMBAT_TUNE.tankDr) : 1;
-  const foeDamage = cbFoeAtk(f) * TURN_TUNE.foeAtkX * (1 - SOLO_TUNE.drX) * classDr * (1 - armRed);
-  const heroHaste = (TURN_TUNE.heroHaste[key] || 0) + (g.initiative || 0), foeHaste = TURN_TUNE.foeHaste;
-  const Z = typeof zoneFoeOf === 'function' ? zoneFoeOf(f) : null;
-  return { heroKey: key, zone: S.zone, heroHp: u.hp, heroMaxHp: u.maxHp,
-    heroAtk: heroAtk() * heroX * tap * SOLO_TUNE.atkX * aps() * tapMult(),
-    counterDamage: heroAtk() * heroX * SOLO_TUNE.counterX * aps() * critMult() * trainCounterX() *
-      (1 + (g.counter || 0) / 100) * (1 + (g.echo || 0)),
-    abilityDamage: { echo: pow * SOLO_TUNE.echo.x, bash: pow * SOLO_TUNE.bash.x, fire: pow * SOLO_TUNE.fire.x },
-    fireBurn: pow * SOLO_TUNE.fire.burnP, foeHp: f.max, foeAtk: foeDamage,
-    hitCap: u.maxHp * COMBAT_TUNE.caps.pack, blockP: u.blockP, blockC: u.blockC,
-    blockN: u.blockN || 0, blockX: COMBAT_TUNE.blockX, regen: COMBAT_TUNE.regen,
-    heroHaste, foeHaste, armoured: !!f.armoured, armourX: COMBAT_TUNE.armourX,
+  const z = f.z || S.zone;
+  const eq = soloEquipped().filter(Boolean);
+  const cds = { attack: 1 }; for (const id of eq) cds[id] = turnCdFor(id);
+  return { heroKey: key, zone: z, heroMaxHp: u.maxHp, refHp: turnRefHp(z), A, U, heroType: heroType(key) || 'phys',
+    counter: heroAtk() * heroX * SOLO_TUNE.counterX * aps() * critMult() * trainCounterX() * (1 + (g.counter || 0) / 100) * (1 + (g.echo || 0)),
     critChance: critChance(), critMult: critMult(), nonCrit: mod('nonCrit'), echo: g.echo || 0,
-    markCritX: key === 'wren' && !bonus('ks:pack') ? 1.5 : 1,
-    essChance: essChance(), essExtra: g.essExtra || 0, goldPerKill: f.gold,
-    xpPerKill: f.xp, healOnKill: COMBAT_TUNE.packHealF, respawn: Math.max(0.45, typeof zoneFoeDeathS === 'function' ? zoneFoeDeathS(f) : 0),   // as 50-sim killPack
-    ability: ab.id, cooldowns: Object.fromEntries(TURN_CD_KEYS.map(id => [id, turnCdFor(id)])), odds: turnOdds(),
-    // C22: a zone monster's own moves (59l); its hits are shares of the zone's fixed reference HP, less armour, uncapped
-    moves: Z ? Z.moves : null, moveDamage: Z ? Z.refHp * TURN_TUNE.foeAtkX * (1 - armRed) : 0 };
+    hitX: T.foeAtkX * (1 - armRed) * classDr, blockP: u.blockP || 0, blockC: u.blockC || 0, blockN: u.blockN || 0, blockX: COMBAT_TUNE.blockX,
+    heroSpd: (T.heroHaste[key] || 10) + (g.initiative || 0), foeSpd: f.tk.spd, foeMaxHp: f.max, foeHp: f.hp,
+    foeName: f.name, foeType: f.txRow || f.type, foeArm: f.tk.arm, boss: f.tk.boss, region: f.tk.region,
+    script: f.tk.script, eq, cds,
+    parryWindow: SOLO_TUNE.turnParryWindow + (g.parryWindow || 0) / 1000, dodgeWindow: SOLO_TUNE.turnDodgeWindow + (g.dodgeWindow || 0) / 1000 + T.dodgeTrain * trainLv('dodge'),
+    essChance: essChance(), essExtra: g.essExtra || 0, goldPerKill: f.gold, xpPerKill: f.xp, healOnKill: COMBAT_TUNE.packHealF,
+    respawn: Math.max(0.45, typeof zoneFoeDeathS === 'function' ? zoneFoeDeathS(f) : 0) };
 }
-// Mark is a vulnerability amount (0.20, not a 1.20 multiplier). All effects count actor turns.
-function turnScalarHit(p, e, id, auto, roll) {
-  // The starter tap riders land before their hit, as they do in the legacy class tap.
-  if (id === 'attack') {
-    if (p.heroKey === 'wren') { e.focus = 3; e.focusV = auto ? 0.125 : 0.25; }
-    else if (p.heroKey === 'tobin') e.grit = Math.min(10, e.grit + 1);
-    else if (p.heroKey === 'pip') e.embers = Math.min(5, e.embers + 1);
-  } else if (id === 'echo') { e.mark = 3; e.markV = 0.2; }
-  let d = id === 'attack' ? p.heroAtk * (auto ? TURN_TUNE.autoAttackX : 1) :
-    id === 'counter' ? p.counterDamage : (p.abilityDamage[id] || 0) * (auto ? 1 : SOLO_TUNE.abHandX);
-  if (!(d > 0)) return 0;
-  if (id === 'attack' && p.heroKey === 'tobin') d *= 1 + 0.03 * e.grit;
-  if (id === 'fire' && e.embers) d *= 1 + 0.1 * e.embers;
-  if (id !== 'counter') {
-    const crit = roll() < Math.min(0.75, p.critChance * (e.focus > 0 ? p.markCritX : 1));
-    d *= crit ? p.critMult * (1 + p.echo) : p.nonCrit;
-  }
-  if (e.focus > 0) d *= 1 + e.focusV;
-  if (e.mark > 0) d *= 1 + e.markV;
-  if (p.armoured && id !== 'fire' && !(e.mark > 0)) d *= p.armourX;
-  if (id === 'bash') { e.stun = 1; e.guard = 2; }
-  else if (id === 'fire') { e.burn = 3; e.burnDmg = p.fireBurn * (auto ? 1 : SOLO_TUNE.abHandX) * (1 + 0.1 * e.embers);
-    e.patch = 3; e.embers = 0; }
-  return d;
-}
-function turnScalarFoeStart(e) {
-  const skip = e.stun > 0;
-  if (skip) e.stun--;
-  if (e.patch > 0) { e.patch--; e.burn = Math.max(e.burn, 1); }
-  const burn = e.burn > 0 ? e.burnDmg : 0;
-  if (e.burn > 0) e.burn--;
-  if (e.mark > 0 && --e.mark === 0) e.markV = 0;
-  if (e.focus > 0 && --e.focus === 0) e.focusV = 0;
-  return { skip, burn };
-}
-// hit: a move's hit ({ x }, 59l): x * p.moveDamage and no per-hit cap; none: the legacy foe swing.
-function turnScalarFoeHit(p, e, roll, hit) {
-  let amount = (hit && hit.x > 0 ? hit.x * p.moveDamage : p.foeAtk) * (e.guard > 0 ? 1 - SOLO_TUNE.bash.dr : 1) * (1 - 0.01 * e.grit);
-  let blocked = false;
-  if (p.blockP > 0 && roll() < p.blockP) blocked = true;
-  if (!blocked && p.blockC > 0 && (e.blockN += p.blockC) >= 1) { e.blockN -= 1; blocked = true; }
-  if (blocked) amount *= p.blockX;
-  return { amount: hit && hit.x > 0 ? amount : Math.min(amount, p.hitCap), blocked };
-}
-function turnScalarRegen(p, hp, dt) { return Math.min(p.heroMaxHp, hp + p.heroMaxHp * p.regen * dt); }
-function turnScalarHeroStart(e) { if (e.guard > 0) e.guard--; }
 
-function turnNew(first, auto, io) {
-  const m = { now: 0, phase: 'intro', until: auto ? TURN_TUNE.introAuto : TURN_TUNE.introHand,
-    next: first, first, n: 0, auto, lockedAuto: auto, defense: '', usedDefense: false, skipFoe: false,
-    move: null, moveN: 0, hitI: 0, parried: 0,
-    cooldowns: io.initialCooldowns ? { ...io.initialCooldowns() } :
-      { attack: 0, echo: 0, bash: 0, fire: 0 }, ended: false };
+// ---------------- the fight ----------------
+const turnHeroFx = () => ({ aim: 0, grit: 0, embers: 0, keen: 0, guard: 0, ward: 0, wardT: 0, brace: 0, lunge: 0, shadow: 0,
+  last: 0, lastUsed: 0, sear: 0, mom: 0, glow: 0, glowDt: '', ripo: 0, opening: 0,
+  dot: { bleed: 0, burn: 0, venom: 0 }, chill: 0, chillT: 0, weaken: 0, blind: 0 });
+const turnFoeFx = () => ({ burn: 0, burnDmg: 0, grow: 0, growN: 0, growCap: 0, bleed: 0, bleedT: 0, bleedDmg: 0,
+  chill: 0, chillT: 0, skip: 0, lock: 0, exposed: 0, mark: 0, markV: 0, sunder: 0, weaken: 0, pin: 0, pinSlow: 0,
+  blind: 0, curse: 0, curseStore: 0, curseCap: 0, swarm: 0, swarmDmg: 0, stagger: 0, recover: 0 });
+function turnNew(p, io) {
+  const m = { p, now: 0, phase: 'intro', until: TURN_TUNE.introHand, next: null, n: 0, gH: 0, gF: 0, last: '', run: 0,
+    heroOps: 0, foeOps: 0, cds: {}, h: turnHeroFx(), e: turnFoeFx(), move: null, hitI: 0, parried: 0, landed: 0,
+    defense: '', usedDefense: false, si: 0, charge: null, phase2: false, ended: false, first: '', blockN: p.blockN || 0 };
+  for (const id in p.cds) m.cds[id] = 0;
+  m.first = turnPick(m).who;
   return m;
 }
-// A legacy foe's action: one swing after the standard wind-up.
-const TURN_SWING = { id: 'swing', name: '', hits: [{ wind: 0, x: 0 }] };
-// Open hit m.hitI of the move: its wind-up, its own defence attempt and its parry window.
+// Speed now (temporary changes clamp to TURN_TUNE.speedMin..Max of the base; a boss takes slows at half)
+function turnRate(m, who) {
+  const T = TURN_TUNE, p = m.p;
+  if (who === 'hero') { let x = 1 + (m.h.lunge > 0 ? 0.2 : 0) - T.heroChill * m.h.chill; return p.heroSpd * Math.max(T.speedMin, Math.min(T.speedMax, x)); }
+  const half = p.boss ? 0.5 : 1;
+  let x = (1 - half * (T.chillSlow * m.e.chill + (m.e.pinSlow > 0 ? T.pinSlow : 0))) * (m.phase2 ? T.bossPhaseSpd : 1);
+  return p.foeSpd * Math.max(T.speedMin, Math.min(T.speedMax, x));
+}
+// who acts next, and the time it takes; g: optional { gH, gF, last, run, hold } to look ahead without changing m
+function turnPick(m, g) {
+  const s = g || m, lim = who => who === 'foe' && m.p.boss ? TURN_TUNE.consecBoss : TURN_TUNE.consec;
+  const hold = g ? g.hold : !!(m.charge && m.charge.heroSince === 0);   // a charged release waits for one hero turn
+  const ok = who => !(s.last === who && s.run >= lim(who)) && !(who === 'foe' && hold);
+  const rH = turnRate(m, 'hero'), rF = turnRate(m, 'foe');
+  const tH = Math.max(0, (100 - s.gH) / rH), tF = Math.max(0, (100 - s.gF) / rF);
+  let who = ok('hero') && (!ok('foe') || tH <= tF) ? 'hero' : 'foe';
+  if (!ok(who)) who = who === 'hero' ? 'foe' : 'hero';
+  return { who, dt: who === 'hero' ? tH : tF, rH, rF };
+}
+function turnAdvance(m, s) {
+  const k = turnPick(m, s === m ? null : s);
+  s.gH = Math.min(100, s.gH + k.rH * k.dt); s.gF = Math.min(100, s.gF + k.rF * k.dt);
+  if (k.who === 'hero') s.gH = 0; else s.gF = 0;
+  if (s.last === k.who) s.run++; else { s.last = k.who; s.run = 1; }
+  return k.who;
+}
+// the next n turns as the scheduler sees them now (unknown choices are not guessed: a skip or a charge can change it)
+function turnPreview(m, n) {
+  const out = [];
+  if (!m || m.ended) return out;
+  const cur = m.phase === 'hero' ? 'hero' : m.phase === 'foeWindup' ? 'foe' : null;
+  if (cur) out.push(cur);
+  const s = { gH: m.gH, gF: m.gF, last: m.last, run: m.run, hold: !!(m.charge && m.charge.heroSince === 0) };
+  while (out.length < n) { const w = turnAdvance(m, s); if (w === 'hero') s.hold = false; out.push(w); }
+  return out;
+}
+function turnNextTurn(m, io) {
+  if (m.ended) return;
+  const who = turnAdvance(m, m);
+  turnBegin(m, who, io);
+}
+
+// ---------------- damage ----------------
+const turnTX = (m, dt) => (typeof typeXKey === 'function' && m.p.foeType ? typeXKey(m.p.foeType, dt) : 1);
+// A direct hit (or DoT: o.dot) from the hero on the foe. o: { dt, sure, payoff, dot, kind, noCrit }
+function turnHitFoe(m, io, pow, o) {
+  if (!io.alive().foe || !(pow > 0)) return 0;
+  const T = TURN_TUNE, p = m.p, h = m.h, e = m.e;
+  let d = pow, crit = false;
+  if (!o.dot && !o.noCrit) {
+    const burning = e.burn > 0;
+    crit = !!o.sure || (h.sear > 0 && burning) || io.random() < Math.min(T.critChanceCap, p.critChance + T.aimCrit * h.aim);
+    const cm = Math.min(T.critCap, p.critMult + (h.keen && o.keenOk ? T.keenX : 0));
+    d *= crit ? cm * (1 + p.echo) : p.nonCrit;
+  }
+  d *= turnTX(m, o.dt || 'phys');
+  if (!o.stored) {
+    if (e.mark > 0) d *= 1 + e.markV;
+    if ((o.dt || 'phys') === 'phys' && p.foeArm > 0 && o.kind !== 'bleed') d *= 1 - p.foeArm * (e.sunder > 0 ? T.sunderX : 1);
+    if (!o.dot && h.weaken > 0) d *= T.weakenX;
+  }
+  if (o.payoff && e.exposed > 0) { d *= T.exposedX; e.exposed = 0; }
+  const got = io.damageFoe(d, o.kind || 'hit', crit, o.dt || 'phys');
+  if (got > 0) {
+    if (e.curse > 0 && o.kind !== 'curse') e.curseStore = Math.min(e.curseCap, e.curseStore + T.curseP * got);
+    if (m.charge) { m.charge.dmg += got; if (m.charge.dmg >= T.chargeBreak * p.foeMaxHp) turnBreakCharge(m, io); }
+  }
+  if (crit) o.critted = true;
+  return got;
+}
+function turnBreakCharge(m, io) {
+  if (!m.charge) return;
+  const name = m.charge.mv.name; m.charge = null; m.e.recover = 1;
+  io.emit('chargeBroken', { name });
+}
+// Stun ('stun') or Freeze ('freeze'): an ordinary foe loses its next turn (then a lock: no new control for 3 of its
+// turns); a boss Staggers instead (25 / 35 toward 100). Either way an accepted control breaks a charge. -> accepted
+function turnControl(m, io, kind) {
+  const T = TURN_TUNE, e = m.e;
+  if (e.lock > 0) return false;
+  if (m.charge) turnBreakCharge(m, io);
+  if (m.p.boss) {
+    e.stagger += T.stagger[kind] || 25;
+    io.emit('foeStagger', { v: Math.min(100, e.stagger) });
+    if (e.stagger < 100) return true;
+    e.stagger = 0;
+  }
+  e.skip = 1; e.lock = T.lock; m.gF = 0; m.lastCtl = kind;
+  io.emit('foeSkip', { why: kind });
+  return true;
+}
+const turnBurnSet = (e, dmg, t) => { if (dmg >= e.burnDmg || !(e.burn > 0)) e.burnDmg = dmg; e.burn = Math.min(TURN_TUNE.burnMaxT, Math.max(e.burn, t)); };
+const turnBleedAdd = (m, n) => { const T = TURN_TUNE, e = m.e; e.bleed = Math.min(T.bleedMax, e.bleed + n); e.bleedT = T.bleedT; e.bleedDmg = Math.max(e.bleedDmg, T.bleedP * m.p.U); };
+function turnChillAdd(m, io, n) {
+  const T = TURN_TUNE, e = m.e;
+  e.chill = Math.min(T.chillMax, e.chill + n); e.chillT = T.chillT;
+  if (e.chill >= T.chillMax) { e.chill = 0; e.chillT = 0; turnControl(m, io, 'freeze'); e.exposed = 2; io.emit('foeFrozen', {}); }
+}
+const turnMark = (e, t) => { e.mark = Math.max(e.mark, t); e.markV = TURN_TUNE.markV; };
+const turnWard = (m, share) => { const v = Math.min(TURN_TUNE.wardCap, share) * m.p.heroMaxHp; if (v > m.h.ward) m.h.ward = v; m.h.wardT = 3; };
+const turnGain = (h, k, n) => { const cap = k === 'aim' ? 3 : k === 'grit' ? 10 : 5; h[k] = Math.min(cap, h[k] + n); };
+
+// ---------------- the hero's actions ----------------
+// Can the hero use id now? -> '' or why not: 'cd' | 'gate' | 'once' | 'need:<what>'
+function turnUsable(m, id) {
+  if (!m || m.ended) return 'turn';
+  if (id !== 'attack') { const a = turnAb(id); if (!a || a.kind === 'passive') return 'passive'; }
+  if (m.cds[id] > 0) return 'cd';
+  const h = m.h, e = m.e, a = turnAb(id);
+  if (a && a.kind === 'finisher' && m.heroOps < 3) return 'gate';
+  switch (id) {
+    case 'finalecho': return e.bleed > 0 || h.aim > 0 ? '' : 'need:Bleed or Aim';
+    case 'riposte': return h.ripo > 0 ? '' : 'need:a parry first';
+    case 'hammerfall': return h.grit >= 2 ? '' : 'need:2 Grit';
+    case 'laststand': return h.lastUsed ? 'once' : '';
+    case 'ignite': case 'searing': case 'wildfire': return e.burn > 0 ? '' : 'need:a Burn';
+    case 'lanternburst': return h.embers >= 3 ? '' : 'need:3 Embers';
+  }
+  return '';
+}
+const has = (m, id) => m.p.eq.includes(id);
+// the hero acts: 'attack' or an ability id. -> true when it happened
+function turnHeroAct(m, io, id, slot, grades) {
+  const T = TURN_TUNE, p = m.p, h = m.h, e = m.e, U = p.U;
+  if (turnUsable(m, id)) return false;
+  // a timed ability's rings, one per direct hit in order: 'perfect' | 'good' | 'miss' (none: not timed, as written)
+  let gi = 0;
+  const G = grades || [], gNext = () => G[gi++] || 'good', perfects = G.filter(g => g === 'perfect').length;
+  // a Blinded hero (a boss rider) may miss a direct action
+  const blindMiss = h.blind > 0 && io.random() < T.heroBlind; if (h.blind > 0) h.blind = 0;
+  const marked = e.mark > 0, burning = e.burn > 0;
+  const o = (x, more) => Object.assign({ dt: x || 'phys', keenOk: true, kind: id }, more || {});
+  const hit = (pow, more) => {
+    let x = 1;
+    if (G.length && !(more && more.untimed)) { const g = gNext(); if (g === 'miss') x = T.timed.missX; else if (g === 'perfect' && more && more.perfect) more.perfect(more); }
+    const oo = o(more && more.dt, more), got = blindMiss ? 0 : turnHitFoe(m, io, pow * x * (more && more.px || 1), oo);
+    if (more) more.critted = oo.critted;   // Power Shot reads whether it crit
+    return got;
+  };
+  let spell = false;
+  if (id === 'attack') {
+    let dt = p.heroType, x = 1 + (p.heroKey === 'tobin' ? T.gritDmg * h.grit : 0);
+    if (has(m, 'momentum')) { h.mom++; x *= 1 + Math.min(0.5, 0.1 * h.mom); }
+    if (has(m, 'afterglow') && h.glow > 0) { x *= 1.5; dt = h.glowDt || dt; h.glow = 0; }
+    if (p.heroKey === 'wren' && has(m, 'twinshot')) { hit(p.A * 0.55 * x, { dt, kind: 'attack' }); hit(p.A * 0.55 * x, { dt, kind: 'attack' }); }
+    else hit(p.A * x, { dt, kind: 'attack' });
+    if (p.heroKey === 'wren') turnGain(h, 'aim', 1 + (has(m, 'nighthunter') && marked ? 1 : 0));
+    else if (p.heroKey === 'tobin') turnGain(h, 'grit', 1);
+    else if (p.heroKey === 'pip') turnGain(h, 'embers', 1);
+    h.keen = 0;
+    io.emit('soloAttack', { kind: blindMiss ? 'miss' : 'hit' });
+  } else {
+    const a = turnAb(id); h.mom = 0;
+    const dt = a.dt;
+    switch (id) {
+      // Wren
+      case 'echo': hit(U * a.pow, { dt }); if (marked) hit(U * 0.6, { dt, kind: 'echo2' }); turnMark(e, 3); break;
+      case 'powershot': { const r = { dt, perfect: x => { x.sure = true; } }; hit(U * a.pow, r); if (r.critted) turnGain(h, 'aim', 1); break; }
+      case 'barbed': hit(U * a.pow, { dt }); turnBleedAdd(m, 2); break;
+      case 'pinning': hit(U * a.pow, { dt }); e.pin = 1; e.pinSlow = 2; break;
+      case 'huntmark': hit(U * a.pow, { dt }); turnMark(e, 4); break;
+      case 'volley': for (let i = 0; i < 3; i++) hit(U * a.pow, { dt }); if (perfects) turnGain(h, 'aim', perfects); break;
+      case 'batswarm': e.swarm = 3; e.swarmDmg = U * a.pow; e.blind = Math.max(e.blind, 3); break;
+      case 'deadeye': { let keep = false; hit(U * a.pow, { dt, sure: marked, perfect: () => { keep = marked; } }); if (marked && !keep) { e.mark = 0; e.markV = 0; } break; }
+      case 'sonic': {
+        hit(U * a.pow, { dt });
+        if (e.pin > 0 || h.opening > 0) { e.pin = 0; h.opening = 0; turnControl(m, io, 'stun'); }
+        else if (e.mark > 0) { e.mark = 0; e.markV = 0; turnControl(m, io, 'stun'); }
+        break;
+      }
+      case 'shadowstep': h.shadow = 2; break;
+      case 'moonvolley': for (let i = 0; i < 5; i++) { let pf = false; hit(U * a.pow, { dt, perfect: () => { pf = true; } }); if (marked || pf) turnBleedAdd(m, marked && pf ? 2 : 1); } break;
+      case 'finalecho': hit(U * (a.pow + 0.5 * e.bleed + 0.5 * h.aim), { dt }); e.bleed = 0; e.bleedT = 0; h.aim = 0; break;
+      // Tobin
+      case 'heavystrike': hit(U * a.pow, { dt, payoff: true, perfect: x => { x.px = 1.5; } }); break;
+      case 'cleave': hit(U * a.pow, { dt }); turnBleedAdd(m, 1); break;
+      case 'sundering': hit(U * a.pow, { dt }); e.sunder = Math.max(e.sunder, 3); break;
+      case 'brace': h.guard = Math.max(h.guard, 2); h.brace = 1; break;
+      case 'lunge': hit(U * a.pow, { dt }); h.lunge = 2; break;
+      case 'bash': { let g3 = false; hit(U * a.pow, { dt, perfect: () => { g3 = true; } }); turnControl(m, io, 'stun'); e.exposed = 2; h.guard = Math.max(h.guard, g3 ? 3 : 2); break; }
+      case 'riposte': hit(U * a.pow, { dt, sure: true }); h.ripo = 0; break;
+      case 'ironwill': turnGain(h, 'grit', 3); turnWard(m, 0.15); break;
+      case 'roar': e.weaken = Math.max(e.weaken, 2); e.pin = 1; e.pinSlow = 2; break;
+      case 'hammerfall': { const spent = h.grit; let back = 0; hit(U * (a.pow + 0.25 * spent), { dt, payoff: true, perfect: () => { back = Math.floor(spent / 2); } }); h.grit = back; break; }
+      case 'shieldthrow': { const s = e.sunder > 0; hit(U * a.pow, { dt, perfect: () => { m.cdCut = 2; } }); if (s) { turnControl(m, io, 'stun'); e.exposed = 2; } break; }
+      case 'laststand': h.last = 2; h.lastUsed = 1; break;
+      // Pip
+      case 'spark': hit(U * a.pow, { dt, payoff: true }); turnGain(h, 'embers', 1); spell = true; break;
+      case 'frostshard': { let more = 0; hit(U * a.pow, { dt, perfect: () => { more = 1; } }); turnChillAdd(m, io, 2 + more); spell = true; break; }
+      case 'arcaneward': turnWard(m, 0.2); break;
+      case 'hex': e.curse = 3; e.curseStore = 0; e.curseCap = T.curseCap * U; break;
+      case 'nova': hit(U * a.pow, { dt }); spell = true; break;
+      case 'fire': {
+        const em = h.embers; let t = T.burnT; hit(U * a.pow * (1 + T.emberX * em), { dt, payoff: true, perfect: () => { t = T.burnT + 1; } });
+        turnBurnSet(e, T.burnP * U * (1 + T.emberX * em), t); h.embers = 0; spell = true; break;
+      }
+      case 'kindle': hit(U * a.pow, { dt }); turnGain(h, 'embers', 2); if (burning) e.burn = Math.min(T.burnMaxT, e.burn + 1); spell = true; break;
+      case 'ignite': {
+        let k = 1.25, mx = 1; const g0 = G[0];
+        hit(U * a.pow, { dt, payoff: true, perfect: () => { k = 2; } });
+        if (g0 === 'miss') mx = T.timed.missX;
+        const stored = e.burnDmg * e.burn * k * mx; e.burn = 0; e.burnDmg = 0; e.growN = 0;
+        if (stored > 0 && !blindMiss) turnHitFoe(m, io, stored, { dt, noCrit: true, kind: 'ignite' });
+        spell = true; break;
+      }
+      case 'searing': h.sear = 3; break;   // this action, then the next two
+      case 'wildfire': e.burn = Math.max(e.burn, T.burnT); e.grow = 0.15 * U; e.growN = 3; e.growCap = 0.8 * U; break;
+      case 'flare': hit(U * a.pow, { dt }); e.blind = Math.max(e.blind, 2); if (burning) turnMark(e, 3); spell = true; break;
+      case 'lanternburst': { let back = 0; hit(U * (a.pow + 0.6 * h.embers) * (burning ? 1.25 : 1), { dt, payoff: true, perfect: () => { back = 2; } }); h.embers = back; e.burn = 0; e.burnDmg = 0; e.growN = 0; spell = true; break; }
+      default: hit(U * a.pow, { dt }); break;
+    }
+    if (spell && has(m, 'afterglow') && !blindMiss) { h.glow = 3; h.glowDt = a.dt; }
+    h.keen = 0;
+    io.emit('ability', { cls: 'solo', id, name: a.name, slot, auto: false });
+  }
+  if (blindMiss) io.emit('heroMiss', {});
+  m.cds[id] = id === 'attack' ? 1 : (p.cds[id] || turnCdFor(id));
+  if (m.cdCut) { m.cds[id] = Math.max(1, m.cds[id] - m.cdCut); m.cdCut = 0; }   // Shield Throw caught Perfect
+  // a hero action ages what lasts through it
+  if (e.exposed > 0) e.exposed--;
+  if (h.ripo > 0) h.ripo--;
+  if (h.opening > 0) h.opening--;
+  if (h.sear > 0) h.sear--;
+  if (h.weaken > 0) h.weaken--;
+  return true;
+}
+
+// ---------------- turns ----------------
+function turnBegin(m, who, io) {
+  if (m.ended) return;
+  m.n++; m.next = who;
+  const T = TURN_TUNE, h = m.h, e = m.e;
+  if (who === 'hero') {
+    m.heroOps++;
+    if (m.charge) m.charge.heroSince++;
+    for (const k in m.cds) m.cds[k] = Math.max(0, m.cds[k] - 1);
+    if (h.lunge > 0) h.lunge--;
+    if (h.glow > 0) h.glow--;   // Afterglow: the next two hero turns
+    // the boss riders on the hero tick at its turn start
+    for (const k of ['bleed', 'burn', 'venom']) if (h.dot[k] > 0) { h.dot[k]--; io.damageHero(T.heroDot[k] * m.p.refHp, false, 'dot'); }
+    if (h.chillT > 0 && --h.chillT === 0) h.chill = 0;
+    if (!io.alive().hero) { turnEnd(m, 'defeat', io); return; }
+    m.phase = 'hero';
+    io.emit('turn', { who, n: m.n });
+    return;
+  }
+  m.foeOps++;
+  // damage over time at the foe's turn start (skipped turns too)
+  let emberTick = false;
+  if (e.burn > 0) {
+    if (e.growN > 0) { e.burnDmg = Math.min(Math.max(e.burnDmg, e.growCap), e.burnDmg + e.grow); e.growN--; }
+    turnHitFoe(m, io, e.burnDmg, { dt: 'fire', dot: true, kind: 'burn' }); e.burn--; emberTick = true;
+    if (!e.burn) { e.burnDmg = 0; e.growN = 0; }
+  }
+  if (e.bleed > 0) { turnHitFoe(m, io, e.bleed * e.bleedDmg, { dt: 'phys', dot: true, kind: 'bleed' }); if (--e.bleedT <= 0) { e.bleed = 0; e.bleedDmg = 0; } }
+  if (e.swarm > 0) { turnHitFoe(m, io, e.swarmDmg, { dt: 'phys', dot: true, kind: 'swarm' }); e.swarm--; }
+  if (emberTick && has(m, 'emberheart')) turnGain(h, 'embers', 1);
+  if (!io.alive().foe) { turnEnd(m, 'victory', io); return; }
+  if (e.skip > 0 || e.recover > 0) {
+    const why = e.recover > 0 ? 'recover' : 'stun';
+    e.skip = 0; e.recover = 0;
+    io.emit('turn', { who, n: m.n });
+    io.emit('foeSkip', { why, turn: true });
+    turnFoeEnd(m, io);
+    return;
+  }
+  let mv;
+  if (m.charge) { mv = m.charge.mv; m.charge = null; }
+  else {
+    mv = m.p.script[m.si++ % m.p.script.length];
+    if (mv.charge) {   // it gathers its strength: no damage this turn; it lets go on its next turn
+      m.charge = { mv, dmg: 0, heroSince: 0 };
+      io.emit('turn', { who, n: m.n });
+      io.emit('foeCharge', { name: mv.name });
+      turnFoeEnd(m, io);
+      return;
+    }
+  }
+  m.move = mv; m.hitI = 0; m.parried = 0; m.landed = 0;
+  io.emit('turn', { who, n: m.n });
+  io.emit('foeMove', { id: mv.id, name: mv.name, anim: mv.anim || '', hits: mv.hits.length, charged: !!mv.charge });
+  turnHitStart(m, io);
+}
+// the windows of the hit now coming (Pinned and Brace widen them, Last Stand doubles the parry, under the caps)
+function turnWindows(m) {
+  const T = TURN_TUNE, p = m.p, h = m.h, e = m.e;
+  let px = 1, dx = 1;
+  if (e.pin > 0) { px *= T.pinWin; dx *= T.pinWin; }
+  else if (h.brace > 0) px *= T.pinWin;
+  if (h.last > 0) px *= 2;
+  return { parry: Math.min(T.windowCaps.parry, p.parryWindow * px), dodge: Math.min(T.windowCaps.dodge, p.dodgeWindow * dx) };
+}
 function turnHitStart(m, io) {
-  const h = m.move.hits[m.hitI];
-  m.phase = 'foeWindup'; m.until = m.now + (h.wind > 0 ? h.wind : TURN_TUNE.foeWindup);
+  const hit = m.move.hits[m.hitI];
+  m.phase = 'foeWindup'; m.until = m.now + (hit.wind > 0 ? hit.wind : TURN_TUNE.foeWindup);
   m.defense = ''; m.usedDefense = false;
-  if (m.lockedAuto) { const o = io.odds(); if (io.random() < o.parry) m.defense = 'autoParry';
-    else if (io.random() < o.dodge) m.defense = 'autoDodge'; }
-  io.emit('parryWindow', { opensAt: m.until - io.odds().parryWindow, closesAt: m.until, hit: m.hitI, hits: m.move.hits.length });
+  const w = turnWindows(m);
+  io.emit('parryWindow', { opensAt: m.until - w.parry, closesAt: m.until, hit: m.hitI, hits: m.move.hits.length });
+}
+// a landed hit on the hero
+function turnLand(m, io, hit) {
+  const T = TURN_TUNE, p = m.p, h = m.h, e = m.e;
+  let amt = (hit.x || 0.2) * p.refHp * p.hitX * (e.weaken > 0 ? T.weakenX : 1);
+  let red = 1;
+  if (h.guard > 0) red *= T.guardX;
+  if (h.grit > 0) red *= 1 - T.gritDr * h.grit;
+  amt *= Math.max(1 - T.drCap, red);
+  let blocked = false;
+  if (p.blockP > 0 && io.random() < p.blockP) blocked = true;
+  if (!blocked && p.blockC > 0 && (m.blockN = (m.blockN || 0) + p.blockC) >= 1) { m.blockN -= 1; blocked = true; }
+  if (blocked) amt *= p.blockX;
+  if (h.ward > 0) { const take = Math.min(h.ward, amt); h.ward -= take; amt -= take; if (h.ward <= 0) { h.ward = 0; h.wardT = 0; } }
+  if (h.last > 0) amt = Math.min(amt, Math.max(0, io.heroHp() - 1));
+  if (amt > 0) io.damageHero(amt, blocked, 'hit');
+  const r = hit.ride;
+  if (r === 'bleed' || r === 'burn' || r === 'venom') h.dot[r] = T.heroDotT;
+  else if (r === 'chill') { h.chill = Math.min(2, h.chill + 1); h.chillT = 2; }
+  else if (r === 'weaken') h.weaken = 1;
+  else if (r === 'blind') h.blind = 1;
+}
+function turnContact(m, io) {
+  const T = TURN_TUNE, h = m.h, e = m.e, hit = m.move.hits[m.hitI];
+  let res = 'hit';
+  if (m.defense === 'parry') {
+    for (const k in m.cds) m.cds[k] = Math.max(0, m.cds[k] - 1);
+    m.parried++; res = 'parry';
+    if (m.p.heroKey === 'tobin') turnGain(h, 'grit', 1 + (has(m, 'bulwark') ? 1 : 0));
+  } else if (m.defense === 'dodge') {
+    res = 'dodge';
+    if (m.shadowUsed) { m.shadowUsed = 0; h.shadow = 0; h.keen = 1; }
+  } else if (e.blind > 0 && io.random() < (m.p.boss ? T.blindBossP : T.blindP)) res = 'miss';
+  else { turnLand(m, io, hit); m.landed++; }
+  io.emit('foeContact', { id: m.move.id, hit: m.hitI, hits: m.move.hits.length, res });
+  if (!io.alive().hero) { turnEnd(m, 'defeat', io); return; }
+  m.hitI++;
+  if (m.hitI < m.move.hits.length) { turnHitStart(m, io); return; }
+  // the move is over: a counter if every hit was parried; Riposte opens after any parry
+  if (m.parried > 0) h.ripo = 1;
+  if (m.parried === m.move.hits.length) {
+    let d = m.p.counter * (has(m, 'bulwark') ? 1.25 : 1) * (h.last > 0 ? 2 : 1);
+    const got = turnHitFoe(m, io, d, { dt: 'phys', noCrit: true, kind: 'counter' });
+    io.emit('soloCounter', { foe: io.foe ? io.foe() : null, dmg: got, auto: false });
+    io.emit('crit', { tap: true, counter: true });
+  }
+  if (e.pin > 0) { e.pin = 0; h.opening = 2; }
+  if (h.brace > 0) h.brace = 0;
+  if (!io.alive().foe) { turnEnd(m, 'victory', io); return; }
+  turnFoeEnd(m, io);
+}
+// the end of a foe turn: its statuses and the hero's defences age; a boss below half HP turns harder
+function turnFoeEnd(m, io) {
+  const e = m.e, h = m.h;
+  for (const k of ['mark', 'sunder', 'weaken', 'blind', 'pinSlow', 'lock']) if (e[k] > 0) e[k]--;
+  if (!e.mark) e.markV = 0;
+  if (e.chillT > 0 && --e.chillT === 0) e.chill = 0;
+  if (e.curse > 0 && --e.curse === 0 && e.curseStore > 0) { const v = e.curseStore; e.curseStore = 0; turnHitFoe(m, io, v, { dt: 'holy', noCrit: true, stored: true, kind: 'curse' }); }
+  if (h.guard > 0) h.guard--;
+  if (h.wardT > 0 && --h.wardT === 0) h.ward = 0;
+  if (h.shadow > 0) h.shadow--;
+  if (h.last > 0 && --h.last === 0 && io.alive().hero) io.healHero(0.15 * m.p.heroMaxHp);
+  if (!io.alive().foe) { turnEnd(m, 'victory', io); return; }
+  if (m.p.boss && !m.phase2 && io.foeHp() <= m.p.foeMaxHp * TURN_TUNE.bossPhaseAt) {
+    m.phase2 = true; io.emit('turnPhase', { name: m.p.foeName });
+  }
+  m.move = null; m.phase = 'recovery'; m.until = m.now + TURN_TUNE.foeRecovery;
 }
 function turnEnd(m, reason, io) {
   if (!m || m.ended) return;
@@ -22583,245 +23334,222 @@ function turnEnd(m, reason, io) {
   if (io.endFight) io.endFight(m, reason);
   io.emit('fightEnd', { reason, now: m.now });
 }
-function turnBegin(m, who, io) {
-  if (m.ended) return;
-  m.n++; m.next = who;
-  if (who === 'hero') {
-    for (const k of TURN_CD_KEYS) m.cooldowns[k] = Math.max(0, m.cooldowns[k] - 1);
-    m.phase = 'hero'; m.auto = io.auto(); io.turnStart('hero', m);
-  } else {
-    m.lockedAuto = io.auto(); m.usedDefense = false; m.defense = '';
-    io.turnStart('foe', m);
-    if (!io.alive().foe) { turnEnd(m, 'victory', io); return; } // Burn killed the foe before its attack.
-    if (!m.skipFoe) {
-      // C22: one foe action is one move of one or more hits (a zone monster alternates its moves; else one swing)
-      const moves = io.moves ? io.moves() : null;
-      m.move = moves && moves.length ? moves[m.moveN++ % moves.length] : TURN_SWING;
-      m.hitI = 0; m.parried = 0;
-      io.emit('foeMove', { id: m.move.id, name: m.move.name, anim: m.move.anim || '', hits: m.move.hits.length });
-      turnHitStart(m, io);
-    } else { m.phase = 'recovery'; m.until = m.now + TURN_TUNE.foeRecovery; m.next = 'hero'; }
-  }
-  if (!m.ended) io.emit('turn', { who, n: m.n });
-}
-// The shared scheduler handles one accepted action per hero turn and one defence attempt per foe turn.
+// One step of the fight: { kind: 'tick' } with dt, or a command: attack | ability (slot or id) | parry | dodge.
 function turnResolve(m, cmd, dt, io) {
   if (!m || m.ended) return false;
   if (cmd.kind === 'tick') {
     m.now += Math.max(0, dt || 0);
     const live = io.alive();
     if (!live.hero || !live.foe) { turnEnd(m, live.hero ? 'victory' : 'defeat', io); return false; }
-    if (m.phase === 'intro' && m.now >= m.until) turnBegin(m, m.first, io);
-    if (m.phase === 'recovery' && m.now >= m.until) turnBegin(m, m.next, io);
-    if (m.phase === 'hero' && io.auto()) { const choice = io.choose(m); if (choice) turnResolve(m, choice, 0, io); }
-    if (m.phase === 'foeWindup' && m.now >= m.until) {
-      // C22: every hit is its own parry or dodge; each timed parry takes 1 turn off every cooldown; the counter
-      // comes once, after the move, and only if every hit of it was parried.
-      const defense = m.defense, hit = m.move.hits[m.hitI];
-      let res = 'hit';
-      if (defense === 'parry' || defense === 'autoParry') {
-        if (defense === 'parry') for (const k of TURN_CD_KEYS) m.cooldowns[k] = Math.max(0, m.cooldowns[k] - 1);
-        if (defense === 'autoParry') io.defense('parry', true, true);
-        if (defense === 'parry' || TURN_TUNE.autoParryCounters) m.parried++;
-        res = 'parry';
-      } else if (defense === 'autoDodge') { io.defense('dodge', true, true); res = 'dodge'; }
-      else if (defense === 'dodge') res = 'dodge';
-      else io.foeHit(hit.x > 0 ? hit : null);
-      io.emit('foeContact', { id: m.move.id, hit: m.hitI, hits: m.move.hits.length, res });
-      if (++m.hitI >= m.move.hits.length && m.parried === m.move.hits.length) io.counter(defense === 'autoParry');
-      const after = io.alive();
-      if (!after.hero || !after.foe) { turnEnd(m, after.hero ? 'victory' : 'defeat', io); return true; }
-      if (m.hitI < m.move.hits.length) turnHitStart(m, io);
-      else { m.phase = 'recovery'; m.next = 'hero'; m.until = m.now + TURN_TUNE.foeRecovery; }
-    }
+    if (m.phase === 'intro' && m.now >= m.until) turnNextTurn(m, io);
+    if (m.phase === 'recovery' && m.now >= m.until) turnNextTurn(m, io);
+    if (m.phase === 'foeWindup' && m.now >= m.until) turnContact(m, io);
+    if (m.phase === 'timing' && m.now > m.until + TURN_TUNE.timed.good) turnRingGrade(m, io, 'miss');   // no press: a Miss
     return true;
   }
   if (m.phase === 'hero' && (cmd.kind === 'attack' || cmd.kind === 'ability')) {
-    const id = cmd.kind === 'attack' ? 'attack' : cmd.id || io.abilityId(cmd.slot);
-    if (!id || !(id in m.cooldowns) || m.cooldowns[id] > 0) return false;
-    if (!io.heroAction(id, cmd.slot, io.auto())) return false;
-    m.cooldowns[id] = io.cooldown(id);
-    if (!io.alive().foe) turnEnd(m, 'victory', io);
-    else { m.phase = 'recovery'; m.next = 'foe'; m.until = m.now + TURN_TUNE.heroRecovery; }
+    const id = cmd.kind === 'attack' ? 'attack' : cmd.id || (cmd.slot != null ? io.slotId(cmd.slot) : null);
+    if (!id || !(id in m.cds) || turnUsable(m, id)) return false;
+    if (TURN_TIMED[id] && !m.noTiming) {   // a timed ability: its rings first, then it resolves with their grades
+      m.tm = { id, slot: cmd.slot, n: TURN_TIMED[id], i: 0, grades: [] };
+      turnRingStart(m, io, TURN_TUNE.timed.ring);
+      return true;
+    }
+    return turnHeroDone(m, io, id, cmd.slot);
+  }
+  if (m.phase === 'timing' && (cmd.kind === 'attack' || cmd.kind === 'ability' || cmd.kind === 'time')) {
+    const T = TURN_TUNE.timed, d = Math.abs(m.now - m.until);
+    turnRingGrade(m, io, d <= T.perfect ? 'perfect' : d <= T.good ? 'good' : 'miss');
     return true;
   }
-  if (m.phase === 'foeWindup' && !m.lockedAuto && !m.usedDefense &&
-      (cmd.kind === 'parry' || cmd.kind === 'dodge')) {
+  if (m.phase === 'foeWindup' && !m.usedDefense && (cmd.kind === 'parry' || cmd.kind === 'dodge')) {
     m.usedDefense = true;
-    const left = m.until - m.now, window = cmd.kind === 'parry' ? io.odds().parryWindow : io.odds().dodgeWindow;
-    const ok = left >= 0 && left <= window;
+    const w = turnWindows(m), left = m.until - m.now;
+    let ok = left >= 0 && left <= (cmd.kind === 'parry' ? w.parry : w.dodge);
+    if (cmd.kind === 'dodge' && !ok && m.h.shadow > 0 && left >= 0) { ok = true; m.shadowUsed = 1; }   // Shadow Step: it cannot fail
+    else if (cmd.kind === 'dodge' && ok && m.h.shadow > 0) m.shadowUsed = 1;
     if (ok) m.defense = cmd.kind;
-    io.defense(cmd.kind, ok, false);
+    io.defense(cmd.kind, ok);
     return ok;
   }
   return false;
 }
 
+// the timed ability's rings
+function turnRingStart(m, io, lead) {
+  m.phase = 'timing'; m.until = m.now + lead;
+  io.emit('timingRing', { id: m.tm.id, i: m.tm.i, n: m.tm.n, opensAt: m.now, closesAt: m.until });
+}
+function turnRingGrade(m, io, grade) {
+  const tm = m.tm; if (!tm) return;
+  tm.grades.push(grade); io.emit('timingGrade', { id: tm.id, i: tm.i, grade });
+  if (++tm.i < tm.n) { turnRingStart(m, io, TURN_TUNE.timed.gap); return; }
+  m.tm = null; m.phase = 'hero';
+  if (!turnHeroDone(m, io, tm.id, tm.slot, tm.grades)) m.phase = 'hero';
+}
+function turnHeroDone(m, io, id, slot, grades) {
+  if (!turnHeroAct(m, io, id, slot, grades)) return false;
+  if (!io.alive().foe) turnEnd(m, 'victory', io);
+  else { m.phase = 'recovery'; m.until = m.now + TURN_TUNE.heroRecovery; }
+  return true;
+}
+
+// ---------------- the live fight ----------------
 let TURN_LIVE = null, TURN_RECOVER = 0, TURN_LAST_PROFILE = null;
-// Cooldowns reset every fight (owner, 2026-10-01: "It should feel like a new fight each time"): each foe starts
-// with every action ready. They never carry from one foe to the next.
-const turnFreshCds = () => ({ attack: 0, echo: 0, bash: 0, fire: 0 });
-const TURN_NONE = { now: 0, phase: 'off', auto: false, foe: null, next: null, n: 0,
-  cooldowns: { attack: 0, echo: 0, bash: 0, fire: 0 }, dodgeOpensAt: 0, parryOpensAt: 0, move: null,
-  closesAt: 0, heroHaste: 0, foeHaste: 0 };
+const TURN_NONE = { now: 0, phase: 'off', foe: null, next: null, n: 0, cooldowns: {}, dodgeOpensAt: 0, parryOpensAt: 0, move: null,
+  closesAt: 0, heroHaste: 0, foeHaste: 0, order: [], hero: null, foeFx: null, charge: '', heroOps: 0 };
 function turnCombatSnapshot() {
   const m = TURN_LIVE;
   if (!m || m.ended) return TURN_NONE;
-  const f = combatFoes().find(x => x && !x.dead && x.hp > 0), close = m.phase === 'foeWindup' ? m.until : 0;
-  const o = m.profile.odds;
-  return { now: m.now, phase: m.phase, auto: m.phase === 'foeWindup' ? m.lockedAuto : !soloActive(),
-    foe: f ? { key: f.key, name: f.name, hp: f.hp, maxHp: f.max } : null, next: m.next, n: m.n,
-    cooldowns: { ...m.cooldowns }, dodgeOpensAt: close ? close - o.dodgeWindow : 0,
-    parryOpensAt: close ? close - o.parryWindow : 0, closesAt: close,
-    move: close && m.move ? { id: m.move.id, name: m.move.name, hit: m.hitI, hits: m.move.hits.length } : null,
-    heroHaste: m.profile.heroHaste, foeHaste: m.profile.foeHaste };
+  const f = m.foe, close = m.phase === 'foeWindup' ? m.until : 0, w = turnWindows(m);
+  return { now: m.now, phase: m.phase, foe: f ? { key: f.key, name: f.name, hp: f.hp, maxHp: f.max } : null, next: m.next, n: m.n,
+    cooldowns: { ...m.cds }, dodgeOpensAt: close ? close - w.dodge : 0, parryOpensAt: close ? close - w.parry : 0, closesAt: close,
+    move: m.move ? { id: m.move.id, name: m.move.name, hit: m.hitI, hits: m.move.hits.length } : null,
+    heroHaste: Math.round(turnRate(m, 'hero')), foeHaste: Math.round(turnRate(m, 'foe')), order: turnPreview(m, 6),
+    hero: { aim: m.h.aim, grit: m.h.grit, embers: m.h.embers }, charge: m.charge ? m.charge.mv.name : '', heroOps: m.heroOps,
+    canDefend: m.phase === 'foeWindup' && !m.usedDefense,
+    timing: m.phase === 'timing' && m.tm ? { id: m.tm.id, i: m.tm.i, n: m.tm.n, closesAt: m.until } : null,
+    shadow: m.h.shadow > 0 };
 }
 function turnCombatProfile() {
-  if (TURN_LIVE && !TURN_LIVE.ended) return { ...TURN_LIVE.profile, cooldowns: { ...TURN_LIVE.profile.cooldowns }, odds: { ...TURN_LIVE.profile.odds } };
+  if (TURN_LIVE && !TURN_LIVE.ended) return { ...TURN_LIVE.p, cds: { ...TURN_LIVE.p.cds } };
   const f = combatFoes().find(x => x && !x.dead && x.hp > 0) || combatFoes()[0], u = cbUnitByKey('hero');
   return turnMakeProfile(f, u) || TURN_LAST_PROFILE;
 }
 const TURN_LIVE_IO = {
-  heroHaste: 0, foeHaste: 0,
-  initialCooldowns: turnFreshCds,
-  endFight: () => {},
-  random: () => Math.random(), auto: () => !soloActive(), odds: () => TURN_LIVE.profile.odds,
+  random: () => Math.random(),
   emit: (name, payload) => emit(name, payload),
-  alive: () => { const u = cbUnitByKey('hero'); return { hero: !!u && !u.down && u.hp > 0,
-    foe: combatFoes().some(f => f && !f.dead && f.hp > 0 && !f.gone) }; },
-  cooldown: id => TURN_LIVE.profile.cooldowns[id],
-  abilityId: slot => { const eq = soloEquipped(); return slot == null ? eq.find(id => id && !(TURN_LIVE.cooldowns[id] > 0)) : eq[slot]; },
-  choose: m => { const eq = soloEquipped(); for (let i = 0; i < eq.length; i++)
-    if (eq[i] && !(m.cooldowns[eq[i]] > 0)) return { kind: 'ability', slot: i, id: eq[i] };
-    return { kind: 'attack' }; },
-  turnStart: (who, m) => {
-    const e = m.effects, f = m.foe;
-    if (who === 'hero') turnScalarHeroStart(e);
-    else {
-      const x = turnScalarFoeStart(e); m.skipFoe = x.skip;
-      if (f && x.burn > 0) cbTurnDamageFoe(f, x.burn, 'burn');
-      if (f) { f.markT = Math.max(e.mark, e.focus); f.mkV = e.mark > 0 ? e.markV : e.focusV;
-        f.stunT = e.stun; f.burnT = e.burn; }
-    }
+  alive: () => { const u = cbUnitByKey('hero'), f = TURN_LIVE && TURN_LIVE.foe;
+    return { hero: !!u && !u.down && u.hp > 0, foe: !!f && !f.dead && f.hp > 0 && !f.gone }; },
+  foe: () => TURN_LIVE && TURN_LIVE.foe,
+  foeHp: () => (TURN_LIVE && TURN_LIVE.foe ? Math.max(0, TURN_LIVE.foe.hp) : 0),
+  heroHp: () => { const u = cbUnitByKey('hero'); return u ? u.hp : 0; },
+  slotId: slot => soloEquipped()[slot] || null,
+  damageFoe: (d, kind, crit, dt) => { const f = TURN_LIVE.foe; return cbTurnDamageFoe(f, d, kind, crit, dt); },
+  damageHero: (d, blocked, kind) => cbTurnHitHero(d, blocked, kind),
+  healHero: d => { const u = cbUnitByKey('hero'); if (u && !u.down) { u.hp = Math.min(u.maxHp, u.hp + d); emit('unitHeal', { key: u.key, amount: d }); } },
+  defense: (kind, ok) => {
+    if (kind === 'parry') { if (ok) SOLO_STATS.parries++; else SOLO_STATS.misses++; emit('soloParry', { res: ok ? 'parry' : 'miss', auto: false }); }
+    else { if (ok) SOLO_STATS.dodges++; else SOLO_STATS.early++; emit('soloDodge', { res: ok ? 'dodge' : 'miss', auto: false }); }
   },
-  heroAction: (id, slot, auto) => {
-    const m = TURN_LIVE, f = m.foe;
-    if (!f || f.dead || f.hp <= 0) return false;
-    const d = turnScalarHit(m.profile, m.effects, id, auto, Math.random);
-    if (!(d > 0)) return false;
-    cbTurnDamageFoe(f, d, id);
-    f.markT = Math.max(m.effects.mark, m.effects.focus);
-    f.mkV = m.effects.mark > 0 ? m.effects.markV : m.effects.focusV;
-    f.stunT = m.effects.stun; f.burnT = m.effects.burn;
-    if (id === 'attack') { SOLO_STATS.attacks++; emit('soloAttack', { kind: 'hit' }); }
-    else { const a = SOLO_ABILITIES[id]; SOLO_STATS.casts++; if (auto) SOLO_STATS.auto++; else SOLO_STATS.hand++;
-      emit('ability', { cls: 'solo', id, name: a.name, auto, slot }); }
-    return true;
-  },
-  moves: () => TURN_LIVE.profile.moves,
-  foeHit: hit => { const m = TURN_LIVE, z = turnScalarFoeHit(m.profile, m.effects, Math.random, hit), u = cbUnitByKey('hero');
-    if (u) u.blockN = m.effects.blockN;
-    cbTurnHitHero(z.amount, z.blocked); },
-  counter: auto => { const m = TURN_LIVE, d = turnScalarHit(m.profile, m.effects, 'counter', auto, Math.random);
-    cbTurnDamageFoe(m.foe, d, 'counter'); SOLO_STATS.counters++;
-    emit('soloCounter', { foe: m.foe, dmg: d, auto }); emit('crit', { tap: true, counter: true }); },
-  defense: (kind, ok, auto) => {
-    if (kind === 'parry') { if (ok) SOLO_STATS.parries++; else SOLO_STATS.misses++;
-      emit('soloParry', { res: ok ? 'parry' : 'miss', auto }); }
-    else { if (ok) SOLO_STATS.dodges++; else SOLO_STATS.early++;
-      emit('soloDodge', { res: ok ? 'dodge' : 'miss', auto }); }
-  }
+  endFight: () => {}
 };
+on('ability', p => { if (p && p.cls === 'solo' && TURN_LIVE && !TURN_LIVE.ended) SOLO_STATS.casts++, SOLO_STATS.hand++; });
+on('soloAttack', () => { if (TURN_LIVE && !TURN_LIVE.ended) SOLO_STATS.attacks++; });
+on('soloCounter', () => { if (TURN_LIVE && !TURN_LIVE.ended) SOLO_STATS.counters++; });
 function turnCombatAction(kind, slot) {
   if (!turnCombatOn() || !TURN_LIVE || TURN_LIVE.ended) return false;
-  if (kind === 'attack' || kind === 'ability' || kind === 'parry' || kind === 'dodge')
+  if (kind === 'attack' || kind === 'ability' || kind === 'parry' || kind === 'dodge' || kind === 'time')
     return turnResolve(TURN_LIVE, { kind, slot }, 0, TURN_LIVE_IO);
   return false;
 }
 function turnCombatTick(dt) {
-  if (dt > 0 && S.turn) { S.turn.awayProfile = null; S.turn.awaySample = null; S.turn.awaySig = ''; } // Live play starts a new sampling session.
   if (!turnCombatScope()) {
     if (TURN_LIVE && !TURN_LIVE.ended) turnEnd(TURN_LIVE, 'abandon', TURN_LIVE_IO);
     TURN_LIVE = null; TURN_RECOVER = 0; return;
   }
+  if (typeof turnPaused === 'function' && turnPaused()) return;   // a hidden page (59j): the fight waits (active only, owner 2026-10-01)
   if (TURN_RECOVER > 0) { TURN_RECOVER -= dt; if (TURN_RECOVER <= 0) { cbRestore(true); spawn(); } return; }
   const f = combatFoes().find(x => x && !x.dead && x.hp > 0 && !x.gone);
   if (!f) { if (TURN_LIVE && !TURN_LIVE.ended) turnEnd(TURN_LIVE, 'victory', TURN_LIVE_IO); return; }
   if (!(f.born >= 1)) f.born = (f.born || 0) + dt;   // the legacy tick that grows a new foe in does not run here
   if (!TURN_LIVE || TURN_LIVE.ended || TURN_LIVE.foe !== f) {
     if (TURN_LIVE && !TURN_LIVE.ended) turnEnd(TURN_LIVE, 'abandon', TURN_LIVE_IO);
-    const p = turnMakeProfile(f, cbUnitByKey('hero')); if (!p) return;
-    TURN_LIVE_IO.heroHaste = p.heroHaste; TURN_LIVE_IO.foeHaste = p.foeHaste;
-    TURN_LIVE = turnNew(p.heroHaste >= p.foeHaste ? 'hero' : 'foe', !soloActive(), TURN_LIVE_IO);
-    TURN_LIVE.foe = f; TURN_LIVE.profile = p; TURN_LIVE.effects = turnEffects(); TURN_LIVE.effects.blockN = p.blockN; TURN_LAST_PROFILE = p;
-    emit('fightStart', { heroHaste: p.heroHaste, foeHaste: p.foeHaste, first: TURN_LIVE.first });
+    const u = cbUnitByKey('hero');
+    if (f.boss && u && !u.down) u.hp = u.maxHp;   // a boss is met at full health
+    const p = turnMakeProfile(f, u); if (!p) return;
+    TURN_LIVE = turnNew(p, TURN_LIVE_IO); TURN_LIVE.foe = f; TURN_LAST_PROFILE = p;
+    emit('fightStart', { heroHaste: p.heroSpd, foeHaste: p.foeSpd, first: TURN_LIVE.first });
   }
-  const u = cbUnitByKey('hero'); if (u && !u.down && u.hp > 0) u.hp = turnScalarRegen(TURN_LIVE.profile, u.hp, dt);
   const m = TURN_LIVE;
   turnResolve(m, { kind: 'tick' }, dt, TURN_LIVE_IO);
-  // A lethal hit emits sceneReset from the legacy wipe path during turnResolve.
-  // That handler may clear TURN_LIVE; the local fight still determines recovery.
+  // A lethal hit emits sceneReset from the legacy wipe path during turnResolve; that handler may clear TURN_LIVE.
   if (m.ended && !TURN_LIVE_IO.alive().hero) TURN_RECOVER = 5;
 }
-on('sceneReset', () => { if (TURN_LIVE && !TURN_LIVE.ended)
-  turnEnd(TURN_LIVE, TURN_LIVE_IO.alive().hero ? 'abandon' : 'defeat', TURN_LIVE_IO);
+on('sceneReset', () => { if (TURN_LIVE && !TURN_LIVE.ended) {
+  const a = TURN_LIVE_IO.alive(); turnEnd(TURN_LIVE, !a.hero ? 'defeat' : !a.foe ? 'victory' : 'abandon', TURN_LIVE_IO); }
   TURN_LIVE = null; TURN_RECOVER = 0; TURN_LAST_PROFILE = null; });
 on('soloHero', () => { if (TURN_LIVE && !TURN_LIVE.ended) turnEnd(TURN_LIVE, 'abandon', TURN_LIVE_IO);
   TURN_LIVE = null; TURN_RECOVER = 0; TURN_LAST_PROFILE = null; });
 onTick(() => { if (TURN_LIVE && !TURN_LIVE.ended && !turnCombatScope()) {
   turnEnd(TURN_LIVE, 'abandon', TURN_LIVE_IO); TURN_LIVE = null; TURN_RECOVER = 0; TURN_LAST_PROFILE = null; } });
 
-// Reward-free scratch run using precisely the same scheduler and scalar rules as live play.
-function turnCombatSample({ profile: p, seconds, seed = 1, mode = 'auto' }) {
-  if (!p || !(seconds > 0) || !['auto', 'hand'].includes(mode)) return null;
-  let x = (seed | 0) || 1, roll = () => ((x = (Math.imul(x, 1664525) + 1013904223) | 0) >>> 0) / 4294967296;
-  const out = { seconds, kills: 0, deaths: 0, generatedEss: 0, damageDone: 0, damageTaken: 0,
-    foeHits: 0, blocks: 0, directHits: 0, totalDirectHits: 0,
+// ---------------- what the UI reads ----------------
+// the foe's status chips (59a stBadges asks): { id, n (a digit), f (time left 0..1) }
+const TURN_BADGES = [];
+function turnBadgesFor(f) {
+  TURN_BADGES.length = 0;
+  const m = TURN_LIVE; if (!m || m.ended || m.foe !== f) return TURN_BADGES;
+  const e = m.e, add = (id, n, f_) => { if (TURN_BADGES.length < 6) TURN_BADGES.push({ id, n, f: f_ }); };
+  if (e.skip > 0) add(e.lock === TURN_TUNE.lock && m.lastCtl === 'freeze' ? 'frozen' : 'stun', 0, 1);
+  if (e.burn > 0) add('burn', e.burn, Math.min(1, e.burn / 3));
+  if (e.bleed > 0) add('bleed', e.bleed, Math.min(1, e.bleedT / 3));
+  if (e.chill > 0) add('chill', e.chill, Math.min(1, e.chillT / 4));
+  if (e.mark > 0) add('mark', e.mark, Math.min(1, e.mark / 4));
+  if (e.exposed > 0) add('exposed', 0, 1);
+  if (e.sunder > 0) add('sunder', e.sunder, Math.min(1, e.sunder / 3));
+  if (e.pin > 0) add('pinned', 0, 1);
+  if (e.weaken > 0) add('weaken', e.weaken, Math.min(1, e.weaken / 2));
+  if (e.blind > 0) add('blind', e.blind, Math.min(1, e.blind / 3));
+  if (e.curse > 0) add('curse', e.curse, Math.min(1, e.curse / 3));
+  return TURN_BADGES;
+}
+// the hero's side: resource and defences, for the bar (75-turn-ui)
+function turnHeroChips() {
+  const m = TURN_LIVE; if (!m || m.ended) return null;
+  const h = m.h, k = m.p.heroKey;
+  return { key: k, res: k === 'wren' ? { name: 'Aim', n: h.aim, max: 3 } : k === 'tobin' ? { name: 'Grit', n: h.grit, max: 10 } : { name: 'Embers', n: h.embers, max: 5 },
+    guard: h.guard, ward: Math.round(h.ward), keen: h.keen > 0, last: h.last, shadow: h.shadow, sear: h.sear > 0,
+    riders: Object.keys(h.dot).filter(x => h.dot[x] > 0).concat(h.chill ? ['chill'] : [], h.weaken ? ['weaken'] : [], h.blind ? ['blind'] : []),
+    stagger: m.p.boss ? Math.min(100, m.e.stagger) : -1, charge: m.charge ? m.charge.mv.name : '' };
+}
+// why an equipped ability cannot be used now (the bar dims it and says so): '' ready
+function turnWhyNot(id) { const m = TURN_LIVE; return m && !m.ended ? turnUsable(m, id) : 'turn'; }
+
+// ---------------- a scratch fight (balance tools, checks) ----------------
+// A simple player: the first usable equipped ability in slot order, else Attack; on each enemy hit it parries with
+// chance skill.parry, else dodges with chance skill.dodge (both land in the window when tried).
+function turnChoose(m) {
+  for (const id of m.p.eq) if (!turnUsable(m, id)) return { kind: 'ability', id };
+  return { kind: 'attack' };
+}
+function turnCombatSample({ profile: p, seconds, seed = 1, skill = { parry: 0.5, dodge: 0.7, perfect: 0.35, good: 0.5 } }) {
+  if (!p || !(seconds > 0)) return null;
+  let x = (seed | 0) || 1;
+  const roll = () => ((x = (Math.imul(x, 1664525) + 1013904223) | 0) >>> 0) / 4294967296;
+  const out = { seconds, kills: 0, deaths: 0, generatedEss: 0, damageDone: 0, damageTaken: 0, foeHits: 0, parries: 0, dodges: 0,
     completedFights: 0, totalHeroTurns: 0, totalFightSeconds: 0 };
-  let heroHp = p.heroHp, foeHp = p.foeHp, blockN = p.blockN || 0, m, downtime = 0,
-    fightHeroTurns = 0, fightDirectHits = 0;
-  const io = { heroHaste: p.heroHaste, foeHaste: p.foeHaste, random: roll,
-    initialCooldowns: turnFreshCds,
-    endFight: () => {},
-    auto: () => mode === 'auto', odds: () => p.odds, emit: () => {},
-    alive: () => ({ hero: heroHp > 0, foe: foeHp > 0 }), cooldown: id => p.cooldowns[id],
-    abilityId: () => p.ability,
-    choose: s => s.cooldowns[p.ability] <= 0 ? { kind: 'ability', id: p.ability } : { kind: 'attack' },
-    turnStart: (who, state) => { if (who === 'hero') { fightHeroTurns++; turnScalarHeroStart(state.effects); }
-      else { const z = turnScalarFoeStart(state.effects); state.skipFoe = z.skip;
-        if (z.burn > 0) { foeHp -= z.burn; out.damageDone += z.burn; } } },
-    heroAction: (id, _, auto) => { const d = turnScalarHit(p, m.effects, id, auto, roll);
-      if (!(d > 0)) return false; foeHp -= d; out.damageDone += d; out.directHits++; fightDirectHits++; return true; },
-    moves: () => p.moves,
-    foeHit: hit => { const z = turnScalarFoeHit(p, m.effects, roll, hit); blockN = m.effects.blockN;
-      out.foeHits++; if (z.blocked) out.blocks++;
-      heroHp -= z.amount; out.damageTaken += z.amount; },
-    counter: auto => { const d = turnScalarHit(p, m.effects, 'counter', auto, roll);
-      foeHp -= d; out.damageDone += d; out.directHits++; fightDirectHits++; }, defense: () => {} };
-  const start = () => { foeHp = p.foeHp; fightHeroTurns = 0; fightDirectHits = 0;
-    m = turnNew(p.heroHaste >= p.foeHaste ? 'hero' : 'foe', mode === 'auto', io);
-    m.effects = turnEffects(); m.effects.blockN = blockN;
-    io.emit('fightStart', { heroHaste: p.heroHaste, foeHaste: p.foeHaste, first: m.first }); };
+  let heroHp = p.heroMaxHp, foeHp = p.foeMaxHp, m, downtime = 0, plan = '', tplan = null;
+  const io = { random: roll, emit: () => {}, alive: () => ({ hero: heroHp > 0, foe: foeHp > 0 }), foeHp: () => Math.max(0, foeHp),
+    heroHp: () => heroHp, slotId: i => p.eq[i] || null,
+    damageFoe: d => { foeHp -= d; out.damageDone += d; return d; },
+    damageHero: d => { heroHp -= d; out.damageTaken += d; if (d > 0) out.foeHits++; return d; },
+    healHero: d => { heroHp = Math.min(p.heroMaxHp, heroHp + d); }, defense: (k, ok) => { if (ok) out[k === 'parry' ? 'parries' : 'dodges']++; } };
+  const start = () => { foeHp = p.foeMaxHp; m = turnNew(p, io); plan = ''; };
   start();
   const step = 0.05;
   for (let t = 0; t < seconds; t += step) {
-    const dt = Math.min(step, seconds - t);
-    if (downtime > 0) { downtime -= dt; if (downtime <= 0) start(); continue; }
-    heroHp = turnScalarRegen(p, heroHp, dt);
-    if (mode === 'hand' && m.phase === 'hero') turnResolve(m, io.choose(m), 0, io);
-    if (mode === 'hand' && m.phase === 'foeWindup' && !m.usedDefense && m.until - m.now <= p.odds.parryWindow * 0.5)
-      turnResolve(m, { kind: 'parry' }, 0, io);
-    turnResolve(m, { kind: 'tick' }, dt, io);
+    if (downtime > 0) { downtime -= step; if (downtime <= 0) start(); continue; }
+    if (m.phase === 'hero') turnResolve(m, turnChoose(m), 0, io);
+    if (m.phase === 'timing') {   // a ring: Perfect, Good or no press, by the player's skill
+      if (!tplan || tplan.i !== m.tm.i) { const r = roll(); tplan = { i: m.tm.i, off: r < (skill.perfect || 0) ? 0 : r < (skill.perfect || 0) + (skill.good || 0) ? 0.1 : -1 }; }
+      if (tplan.off >= 0 && m.now >= m.until - tplan.off) turnResolve(m, { kind: 'time' }, 0, io);
+    }
+    if (m.phase === 'foeWindup' && !m.usedDefense) {
+      if (!plan) plan = roll() < skill.parry ? 'parry' : roll() < skill.dodge ? 'dodge' : 'none';
+      const w = turnWindows(m), left = m.until - m.now;
+      if (plan !== 'none' && left <= (plan === 'parry' ? w.parry : w.dodge) * 0.5) turnResolve(m, { kind: plan }, 0, io);
+    } else if (m.phase !== 'foeWindup') plan = '';
+    const hitBefore = m.hitI;
+    turnResolve(m, { kind: 'tick' }, step, io);
+    if (m.hitI !== hitBefore) plan = '';
     if (m.ended) {
       if (foeHp <= 0) {
-        out.kills++; out.completedFights++; out.totalHeroTurns += fightHeroTurns;
-        out.totalDirectHits += fightDirectHits;
-        out.totalFightSeconds += m.now; const ess = p.essChance;
-        out.generatedEss += Math.floor(ess) + (roll() < ess % 1 ? 1 : 0) + (roll() < p.essExtra ? 1 : 0);
+        out.kills++; out.completedFights++; out.totalHeroTurns += m.heroOps; out.totalFightSeconds += m.now;
+        const ess = p.essChance; out.generatedEss += Math.floor(ess) + (roll() < ess % 1 ? 1 : 0) + (roll() < p.essExtra ? 1 : 0);
         heroHp = Math.min(p.heroMaxHp, heroHp + p.heroMaxHp * p.healOnKill);
-      } else { out.deaths++; heroHp = p.heroMaxHp; }
-      // Live tick decrements its 0.45s respawn timer in the kill tick itself.
-      downtime = foeHp <= 0 ? Math.max(0, p.respawn - dt) : 5;
+        downtime = p.respawn;
+      } else { out.deaths++; heroHp = p.heroMaxHp; downtime = 5; }
     }
   }
   return out;
@@ -22834,10 +23562,11 @@ function turnCombatSample({ profile: p, seconds, seed = 1, mode = 'auto' }) {
 // that type's index for the systems keyed by type (mastery, trophies, bounties, the Codex) and its damage-type row
 // (the Imp: the Moss Slime's plant row, weak to fire 1.5x and resisting poison 0.6x, as the roster asks), and brings
 // its own name, art and, in turn fights (59k), its own moves.
-//   ZONE_FOES[z] -> { key, name, refHp, moves }   key: the art key (FOE_ART). refHp: the fixed reference hero HP the
-//        zone's hits are authored against (not the player's HP). moves: the foe's moves in order (it alternates them);
+//   ZONE_FOES[z] -> { key, name, speed, armour, moves }   key: the art key (FOE_ART). speed: relative to the reference
+//        hero (1 = Speed 10); armour: its physical damage reduction. moves: the foe's moves in order (it alternates them);
 //        each { id, name, hits: [{ wind, x }] }: wind, the seconds of anticipation before that contact (the parry and
-//        dodge windows close on it); x, its damage as a share of refHp. Every hit is its own parry or dodge.
+//        dodge windows close on it); x, its damage as a share of the zone's reference hero HP (59k turnRefHp, not the
+//        player's HP). Every hit is its own parry or dodge.
 //        A move's anim names its action in the approved pack (FOE_ART, 21za); its winds then come from the pack's own
 //        timing (zoneFoeWinds), so each parry window closes on the frame where the blade lands: the first hit adds the
 //        hop in (the foe hops to you, then attacks); a later hit counts from the contact before it.
@@ -22850,7 +23579,7 @@ function turnCombatSample({ profile: p, seconds, seed = 1, mode = 'auto' }) {
 //   zoneFoeOf(f) -> the ZONE_FOES entry of a skinned foe, or null
 //   zoneFoeDeathS(f) -> seconds its death animation runs (50-sim waits that long before the next foe), or 0
 const ZONE_FOES = {
-  1: { key: 'imp', name: 'Thorn Imp', refHp: 80,
+  1: { key: 'imp', name: 'Thorn Imp', speed: 0.9, armour: 0,
     moves: [
       { id: 'jab', name: 'Briar Jab', anim: 'jab', hits: [{ wind: 1.61, x: 0.2 }] },
       // its two cuts land 0.88 s after the hop and 1.0 s apart (the owner-approved animation, 2026-10-02)
@@ -22858,7 +23587,7 @@ const ZONE_FOES = {
     ] },
   // Gloomjaw (owner-approved pack, 2026-10-02). Spit the Light is a dark void bolt (owner); the roster's numbers stand.
   // It takes the Moss Slime's plant row (weak to fire, resists poison) over zone 2's Cave Bat slot.
-  2: { key: 'gloomjaw', name: 'Gloomjaw', refHp: 80, row: 'slime',
+  2: { key: 'gloomjaw', name: 'Gloomjaw', speed: 0.8, armour: 0.05, row: 'slime',
     moves: [
       { id: 'snap', name: 'Snap Shut', anim: 'snap-shut', hits: [{ wind: 1.61, x: 0.22 }] },
       { id: 'bolt', name: 'Spit the Light', anim: 'void-bolt', ranged: true, flight: 0.35, hits: [{ wind: 1.4, x: 0.2 }] }
@@ -29427,7 +30156,9 @@ var heroArtId, heroArtDraw, heroArtStates, heroArtStage, heroArtDecode, heroArtP
   const WIND = 0.14;
   const ST = { id: '', s: 'fightIdle', t0: 0, hitT: -1, lastSt: 0, lastFl: 0, ab: -9, parry: -9, sawParry: -9 };
   if (typeof on === 'function') {
-    on('ability', () => { ST.ab = typeof T === 'number' ? T : 0; });
+    // the ability pose belongs to the signature it was drawn for; a turn fight's other abilities (24c) play the attack until
+    // their own poses are drawn (ability-art-brief.md)
+    on('ability', p => { if (p && p.cls === 'solo' && p.id && !/^(echo|bash|fire)$/.test(p.id)) return; ST.ab = typeof T === 'number' ? T : 0; });
     on('soloParry', p => { if (p && p.res === 'parry') ST.parry = typeof T === 'number' ? T : 0; });
   }
   const now = () => (typeof T === 'number' ? T : 0);
@@ -31683,6 +32414,120 @@ var handsTradeOpenPicker;
     },
     update() { draw(); }
   });
+}
+
+// ---- src/js/75-abilities-ui.js ----
+// 75-abilities-ui: Hero tab > Abilities (docs/design/combat-turn-build.md "Where abilities sit"). Browser file.
+// Core: 56e-abilities.js (abLearnInfo, abilityLearn, scrollCount), 59j-solo.js (soloEquip, soloEquipped), data 24c.
+//   - The Scrolls you hold (shared by every hero), and what drops them.
+//   - Your three slots (Q, W, E on the action bar): what sits in each; clear one.
+//   - Every ability of the hero you play, in its three groups: name, kind, cooldown in turns, what it does, and:
+//       learned       Slot 1 / 2 / 3 buttons put it in a slot (swapping if it sits in another)
+//       can learn     "Learn" spends the Scroll (tap twice: it is never one stray tap)
+//       locked        the level and the Scroll it needs
+// Ability icons: the approved pack has the three starters (Echo Shot, Shield Bash, Fireball); the rest show a lettered
+// tile until their icons are drawn (art freeze, owner 2026-09-30).
+{
+  const icon = id => (typeof soloIconURL === 'function' ? soloIconURL(id) : '');
+  const KIND = { damage: 'Damage', buff: 'Buff', debuff: 'Debuff', passive: 'Passive', finisher: 'Finisher' };
+  const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V'];
+  let root = null, sig = '', armed = '';
+  const heroNm = k => (typeof ROSTER === 'object' && ROSTER[k] ? ROSTER[k].name.split(' ')[0] : k);
+  function tile(id) {
+    const u = icon(id);
+    if (u) { const i = el('img', 'ab-ic px'); i.alt = ''; i.src = u; return i; }
+    const a = SOLO_ABILITIES[id]; return el('span', 'ab-ic ab-mono', ((a && (a.short || a.name)) || '?').slice(0, 2));
+  }
+  const persist = () => { try { save(); } catch (e) {} ui(true); };
+  function build() {
+    const k = soloHero(); if (!root) return;
+    root.textContent = '';
+    if (!k || typeof HERO_PATHS !== 'object' || !HERO_PATHS[k]) { root.append(el('p', 'note', 'Choose a hero first.')); return; }
+    root.append(el('p', 'note ab-note', `${heroNm(k)} takes three abilities into a fight, in the slots Q, W and E. Learn more with Scrolls from zone bosses.`));
+    // the Scrolls
+    const scrolls = el('div', 'ab-scrolls');
+    for (const id of SCROLL_ORDER) {
+      const n = scrollCount(id), s = SCROLLS[id];
+      const c = el('span', 'ab-scroll' + (n ? ' has' : '')); c.style.setProperty('--scroll', s.col);
+      c.append(el('i', 'ab-gem'), el('b', null, s.name), el('small', null, '× ' + n));
+      c.title = `Tier ${ROMAN[s.tier]}. From ${s.from}.`;
+      scrolls.append(c);
+    }
+    root.append(scrolls);
+    root.append(el('p', 'note ab-src', 'The first win over each zone boss drops a Scroll. A replay drops one now and then. A higher Scroll can stand in for a lower one.'));
+    // the slots
+    const eq = soloEquipped(), slots = el('div', 'ab-slots');
+    eq.forEach((id, i) => {
+      const b = el('div', 'ab-slot' + (id ? '' : ' empty'));
+      b.append(el('small', null, `Slot ${i + 1} · ${'QWE'[i]}`));
+      if (id) {
+        const a = SOLO_ABILITIES[id]; b.append(tile(id), el('b', null, a.name));
+        const x = el('button', 'ab-clear', '×'); x.type = 'button'; x.setAttribute('aria-label', `Clear slot ${i + 1}`);
+        x.addEventListener('click', () => { soloEquip(i, null); persist(); });
+        b.append(x);
+      } else b.append(el('b', null, 'Empty'));
+      slots.append(b);
+    });
+    root.append(slots);
+    // the groups
+    for (const path of HERO_PATHS[k]) {
+      const g = el('div', 'ab-path'); g.append(el('h3', 'ab-pname', path.name));
+      for (const id of path.ids) g.append(cardFor(k, id, eq));
+      root.append(g);
+    }
+  }
+  function cardFor(k, id, eq) {
+    const a = ABILITIES[id], i = abLearnInfo(k, id), where = eq.indexOf(id);
+    const c = el('div', 'ab-card' + (i.owned ? ' owned' : i.why ? ' locked' : ' ready') + (a.kind === 'passive' ? ' passive' : ''));
+    c.dataset.ab = id;
+    const top = el('div', 'ab-top'), t = el('div', 'ab-t');
+    const cd = a.kind === 'passive' ? 'Always on' : `${typeof turnCdFor === 'function' ? turnCdFor(id) : a.cd} turn cooldown`;
+    t.append(el('b', null, a.name), el('small', null, `${KIND[a.kind]} · ${cd}` + (a.tier ? ` · Tier ${ROMAN[a.tier]}` : ' · Starter')));
+    top.append(tile(id), t);
+    c.append(top, el('p', 'ab-desc', a.desc));
+    if (a.perfect) c.append(el('p', 'ab-timed', `Timed: press again as the ring closes. Perfect: ${a.perfect}. A miss hits for 70%.`));
+    const foot = el('div', 'ab-foot');
+    if (i.owned) {
+      for (let s = 0; s < 3; s++) {
+        const b = el('button', 'ab-put' + (where === s ? ' on' : ''), `Slot ${s + 1}`); b.type = 'button';
+        b.setAttribute('aria-pressed', String(where === s));
+        b.addEventListener('click', () => { if (where === s) soloEquip(s, null); else soloEquip(s, id); persist(); });
+        foot.append(b);
+      }
+    } else if (!i.why) {
+      const pay = SCROLLS[i.payWith], b = el('button', 'big ab-learn'); b.type = 'button';
+      putText(b, armed === id ? `Tap again to spend a ${pay.name}` : `Learn · ${pay.name}`);
+      b.addEventListener('click', () => {
+        if (armed !== id) { armed = id; sig = ''; refresh(); return; }
+        armed = '';
+        if (abilityLearn(k, id)) {
+          toast(`${heroNm(k)} learned ${a.name}.`, 'good', null, 'normal');
+          const e2 = soloEquipped(), free = e2.indexOf(null); if (free >= 0) soloEquip(free, id);
+          persist();
+        }
+        sig = ''; refresh();
+      });
+      foot.append(b);
+    } else {
+      const s = SCROLLS[i.scroll];
+      foot.append(el('span', 'ab-need', !i.lvOk ? `Needs level ${i.lv} and a ${s.name}` : `Needs a ${s.name}`));
+    }
+    c.append(foot);
+    return c;
+  }
+  function refresh() {
+    if (!root || !root.isConnected) return;
+    const k = soloHero(); if (!k) { if (sig !== 'none') { sig = 'none'; build(); } return; }
+    const lv = soloLevels()[k], A = S.abil || {};
+    const s = [k, lv && lv.L, JSON.stringify(A.unl && A.unl[k]), JSON.stringify(A.scrolls), soloEquipped().join(), armed].join('|');
+    if (s === sig) return;
+    sig = s; build();
+  }
+  registerView('party', { id: 'abilities', label: 'Abilities', order: 15, feature: 'party' });
+  registerSection('party', { id: 'abilities', title: 'Abilities', view: 'abilities', feature: 'party',
+    mount(sec) { sec.classList.add('ab-sec'); root = el('div', 'ab-root'); sec.append(root); sig = ''; refresh(); },
+    update: () => { try { refresh(); } catch (e) { console.error('[lanternfall] abilities', e); } } });
+  for (const ev of ['abilityLearned', 'scrollDrop', 'soloEquip', 'soloHero', 'levelup']) on(ev, () => { sig = ''; try { refresh(); } catch (e) {} });
 }
 
 // ---- src/js/75-almanac-ui.js ----
@@ -36333,13 +37178,14 @@ let navUI = null;
   };
   // SOLO1: the button row under the stage (75-solo-ui)
   const sbtn = id => q(`#soloBar .sb-${id}`);
+  const turnTxt = () => typeof turnCombatOn === 'function' && turnCombatOn();
   const abName = () => { try { const a = abilityInfo(); return a ? a.name : 'Your ability'; } catch (e) { return 'Your ability'; } };
   const SOLO_UI = {
     attack: () => onCtrl() && target() === 'mob' ? { node: sbtn('atk'), side: 'up', text: 'Foes ahead. Press Attack to strike the one in front.' } : null,
     ability: () => onCtrl() && target() === 'mob' ? { node: sbtn('ab0'), side: 'up', text: `${abName()} is ready. Press it. (Hold an ability slot to change what it holds.)` } : null,
-    dodge: () => onCtrl() && target() === 'mob' ? { node: sbtn('dodge'), side: 'up', text: 'A foe winds up a heavy hit (the red ring). Press Dodge to step out of the way.' } : null,
-    parry: () => onCtrl() && target() === 'mob' ? { node: sbtn('parry'), side: 'up', text: 'Another heavy hit. Press Parry just before it lands: no damage, the foe staggers and you counter.' } : null,
-    boss: () => target() !== 'mob' || !mob || !mob.boss ? null : onGame() ? { node: $('stage'), at: [0.72, 0.62], side: 'up', text: 'The zone boss! Its red rings are your cue: Dodge, or Parry at the last moment.' }
+    dodge: () => onCtrl() && target() === 'mob' ? { node: sbtn('dodge'), side: 'up', text: turnTxt() ? 'The foe is about to hit you. Press Dodge now to step out of the way. Every hit can be dodged or parried.' : 'A foe winds up a heavy hit (the red ring). Press Dodge to step out of the way.' } : null,
+    parry: () => onCtrl() && target() === 'mob' ? { node: sbtn('parry'), side: 'up', text: turnTxt() ? 'Parry is harder: press it just before the hit lands. It blocks the hit and takes a turn off your cooldowns. Parry every hit of an attack to counter.' : 'Another heavy hit. Press Parry just before it lands: no damage, the foe staggers and you counter.' } : null,
+    boss: () => target() !== 'mob' || !mob || !mob.boss ? null : onGame() ? { node: $('stage'), at: [0.72, 0.62], side: 'up', text: turnTxt() ? 'The zone boss! It strikes in strings of blows: Dodge or Parry each one. When it gathers a big move, Stun it or hit it hard to break it.' : 'The zone boss! Its red rings are your cue: Dodge, or Parry at the last moment.' }
       : isWide() ? { node: q(`.tab[data-tab="${S.tab}"]`), text: 'The zone boss is here! Close this menu to watch the fight.' } : null,   // UX-L1: a landscape menu
     gather: () => {
       if (!onCtrl()) return null;
@@ -37180,11 +38026,20 @@ var soloIconURL = () => '';
   // C26: the approved action icons (ACTION_ICONS, 60n-nicons) at the size the bar shows; the pixel maps above stay
   // as the fallback for a move the pack has no icon for. Attack is the hero's own ('attack-wren', ...).
   const packId = mv => mv === 'atk' ? 'attack-' + (soloHero() || 'tobin') : mv;
-  const setIc = (cv, mv, px) => { if (!nicSet(cv, 'act', packId(mv), px)) drawIc(cv, ICON[mv === 'atk' ? WEAPON_IC[soloHero()] || 'sword' : mv] || ICON.fire); };
+  // an ability learned for turn fights (24c) has no approved icon yet: its slot shows a plain lettered tile (no art)
+  const noIcon = mv => mv !== 'atk' && !ICON[mv] && !nicHas('act', packId(mv));
+  const setIc = (cv, mv, px) => {
+    const b = cv.parentElement, mono = noIcon(mv);
+    if (b) { b.classList.toggle('mono', mono); if (mono) b.dataset.mono = monoOf(mv); else delete b.dataset.mono; }
+    if (mono) { const g = cv.getContext('2d'); g.clearRect(0, 0, cv.width, cv.height); return; }
+    if (!nicSet(cv, 'act', packId(mv), px)) drawIc(cv, ICON[mv === 'atk' ? WEAPON_IC[soloHero()] || 'sword' : mv] || ICON.fire);
+  };
+  const monoOf = id => { const a = SOLO_ABILITIES[id]; const n = (a && (a.short || a.name)) || '?'; return n.slice(0, 2); };
   setIc(bParry._ic, 'parry', 48); setIc(bDodge._ic, 'dodge', 48);
   const icURLs = {};
   soloIconURL = mv => {
     const u = nicURL('act', packId(mv), 48); if (u) return u;
+    if (noIcon(mv)) return '';
     const id = mv === 'atk' ? WEAPON_IC[soloHero()] || 'sword' : mv;
     if (icURLs[id]) return icURLs[id];
     const cv = document.createElement('canvas'); cv.width = 12; cv.height = 12; drawIc(cv, ICON[id] || ICON.fire);
@@ -37200,6 +38055,8 @@ var soloIconURL = () => '';
   const guideWants = id => { try { return typeof soloGuideWants === 'function' && soloGuideWants() === id; } catch (e) { return false; } };
   const castSlot = i => {
     if (!soloEquipped()[i]) { openPicker(i); return; }
+    const pa = typeof ABILITIES === 'object' && ABILITIES[soloEquipped()[i]];
+    if (pa && pa.kind === 'passive') { nope(bAbs[i]); return; }   // always on: no button to press
     if (!soloAbility({ slot: i })) nope(bAbs[i]); else flash(bAbs[i], 'good');
   };
   const act = {
@@ -37245,17 +38102,20 @@ var soloIconURL = () => '';
     sh.append(head);
     const eq = soloEquipped();
     // W2-A: the slot's ability, its Training level and a Train button
-    if (eq[slot] && typeof trainCard === 'function') { const c = trainCard(eq[slot]); c.onLeave = closePicker; sh.append(c); ov._card = c; }
+    const sig = SOLO_HEROES[k] && SOLO_HEROES[k].abs[0];   // its Training is the hero's ability power (59k)
+    if (eq[slot] && eq[slot] === sig && typeof trainCard === 'function') { const c = trainCard(eq[slot]); c.onLeave = closePicker; sh.append(c); ov._card = c; }
     for (const id of soloAbilities(k)) {
       const a = SOLO_ABILITIES[id], where = eq.indexOf(id);
       const r = el('button', 'sp-ab' + (where === slot ? ' on' : '')); r.type = 'button'; r.dataset.ab = id;
-      const cv = el('canvas', 'sp-ic px'); cv.width = 12; cv.height = 12; setIc(cv, id, 36);
-      const t = el('div', 'sp-t'); t.append(el('b', null, a.name), el('span', null, a.line), el('small', null, `Lv ${typeof trainLv === 'function' ? trainLv(id) : 0} · cooldown ${+(typeof trainAbCd === 'function' ? trainAbCd(id, a.cd) : a.cd).toFixed(1)} s` + (where >= 0 ? ` · in slot ${where + 1}` : '')));
+      let cv; if (noIcon(id)) cv = el('span', 'sp-mono', monoOf(id)); else { cv = el('canvas', 'sp-ic px'); cv.width = 12; cv.height = 12; setIc(cv, id, 36); }
+      const b = typeof ABILITIES === 'object' && ABILITIES[id];
+      const cdTxt = b ? (b.kind === 'passive' ? 'Passive' : `Cooldown ${typeof turnCdFor === 'function' ? turnCdFor(id) : b.cd} turns`) : `cooldown ${+(typeof trainAbCd === 'function' ? trainAbCd(id, a.cd) : a.cd).toFixed(1)} s`;
+      const t = el('div', 'sp-t'); t.append(el('b', null, a.name), el('span', null, a.line), el('small', null, cdTxt + (where >= 0 ? ` · in slot ${where + 1}` : '')));
       r.append(cv, t);
       r.addEventListener('click', () => { soloEquip(slot, id); try { save(); } catch (e) {} closePicker(); });
       sh.append(r);
     }
-    sh.append(el('p', 'note sp-more', 'More abilities come from rare boss drops, later.'));
+    sh.append(el('p', 'note sp-more', 'Learn more on the Hero tab, under Abilities. Zone bosses drop the Scrolls that teach them.'));
     const clr = el('button', 'sp-clear', 'Clear this slot'); clr.type = 'button'; clr.disabled = !eq[slot];
     clr.addEventListener('click', () => { soloEquip(slot, null); try { save(); } catch (e) {} closePicker(); });
     sh.append(clr);
@@ -37288,7 +38148,7 @@ var soloIconURL = () => '';
     if (bar.hidden || pick || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
     const t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable || (t.tagName === 'BUTTON' && (e.key === ' ' || e.key === 'Enter')))) return;
     if (S.tab && !isWide()) return;   // a menu covers the fight (UX-L1: in landscape the bar stays live beside the menu)
-    if (e.key.toLowerCase() === 'f') { e.preventDefault(); flipAuto(); return; }   // F: the Auto toggle
+    if (e.key.toLowerCase() === 'f') { if (typeof turnCombatOn === 'function' && turnCombatOn()) return; e.preventDefault(); flipAuto(); return; }   // F: the Auto toggle (no Auto in turn fights)
     const id = KEYS[e.key.toLowerCase()]; if (!id) return;
     e.preventDefault();
     act[id]();
@@ -37335,7 +38195,8 @@ var soloIconURL = () => '';
   function update() {
     const show = !!soloHero() && target() === 'mob' && !!(S.party && S.party.chosen);
     if (bar.hidden === show) { bar.hidden = !show; if (!show) closePicker(); }
-    if (badge.hidden === show) badge.hidden = !show;
+    const showBadge = show && !(typeof turnCombatOn === 'function' && turnCombatOn());   // turn fights are active only: no Auto
+    if (badge.hidden === showBadge) badge.hidden = !showBadge;
     if (!show) return;
     setBadge();
     const s = soloButtons(), k = soloHero();
@@ -37345,8 +38206,9 @@ var soloIconURL = () => '';
       if (o.id !== abIds[i]) {
         abIds[i] = o.id; setIc(b._ic, o.id || 'empty', 48); putText(b._lb, o.id ? (SOLO_ABILITIES[o.id].short || o.name) : 'Empty');
         b.classList.toggle('empty', !o.id);
-        const a = o.id ? SOLO_ABILITIES[o.id] : null;
-        b.setAttribute('aria-label', a ? `${a.name} (${KEY_LB['ab' + i]}). ${a.desc} Hold to change the slot.` : `Empty ability slot ${i + 1} (${KEY_LB['ab' + i]}). Tap to choose an ability.`);
+        const a = o.id ? SOLO_ABILITIES[o.id] : null, pa = o.id && typeof ABILITIES === 'object' ? ABILITIES[o.id] : null;
+        b.classList.toggle('passive', !!(pa && pa.kind === 'passive'));
+        b.setAttribute('aria-label', a ? `${a.name} (${KEY_LB['ab' + i]}). ${a.turnDesc || a.desc} Hold to change the slot.` : `Empty ability slot ${i + 1} (${KEY_LB['ab' + i]}). Tap to choose an ability.`);
       }
       setCd(b, o.left, o.max); setN(b, secs(o.left));
       b.classList.toggle('ready', !!o.id && o.ready);
@@ -37365,9 +38227,19 @@ var soloIconURL = () => '';
     // C20 turn fights (75-turn-ui): cooldowns count in turns; hero actions only on the hero's turn, defence on the foe's wind-up
     const tb = typeof turnBarInfo === 'function' ? turnBarInfo() : null;
     if (tb) {
-      for (let i = 0; i < 3; i++) { const o = s.abs[i], b = bAbs[i]; if (!o.id) continue; const cd = tb.cds[o.id] || 0; setCd(b, cd, tb.max(o.id)); setN(b, cd ? String(cd) : ''); b.classList.toggle('ready', !cd && tb.heroTurn); }
+      for (let i = 0; i < 3; i++) {
+        const o = s.abs[i], b = bAbs[i]; if (!o.id) continue;
+        const cd = tb.cds[o.id] || 0, why = tb.why(o.id), pas = why === 'passive';
+        setCd(b, pas ? 0 : cd, tb.max(o.id));
+        // why it cannot be used: its cooldown (turns), the finisher's third turn, or what it needs (a Burn, Grit, ...)
+        setN(b, pas ? '' : cd ? String(cd) : why === 'gate' ? 'T3' : why && why !== 'cd' && why !== 'turn' ? '!' : '');
+        putAttr(b, 'title', why.startsWith('need:') ? 'Needs ' + why.slice(5) : why === 'gate' ? 'A finisher: from your third turn' : why === 'once' ? 'Once a fight' : '');
+        b.classList.toggle('ready', !why && tb.heroTurn);
+        b.classList.toggle('blocked', !!why && why !== 'cd' && !pas);
+      }
       setCd(bAtk, tb.cds.attack || 0, tb.max('attack'));
-      for (const b of [bAtk, ...bAbs]) b.classList.toggle('off', !tb.heroTurn);
+      for (const b of [bAtk, ...bAbs]) b.classList.toggle('off', !tb.heroTurn && !b.classList.contains('passive') && !(tb.timing && (b === bAtk || abIds[+b.dataset.slot] === tb.timing)));
+      for (let i = 0; i < 3; i++) bAbs[i].classList.toggle('live', !!tb.timing && abIds[i] === tb.timing);   // the ring: press it again
       for (const b of [bParry, bDodge]) { b.classList.toggle('off', !tb.windup); b.classList.toggle('live', tb.windup); }
       setN(bDodge, ''); setN(bParry, '');
     }
@@ -38685,28 +39557,25 @@ var trainCard = null;
 }
 
 // ---- src/js/75-turn-ui.js ----
-// 75-turn-ui: the turn-based prototype's screens (C20 engine in 59k-turn.js; owner design in docs/design/combat-turns.md).
-//   Versus card  opens each fight (fightStart): the hero on the left, the foe on the right, both Haste numbers, and a
-//                banner saying who goes first. It lasts as long as the engine's intro (TURN_TUNE.introHand / introAuto);
-//                with reduced motion it only fades.
-//   Turn strip   at the top of the stage while a turn fight runs: the next 4 turns as portraits, the current one lit,
-//                and under it a timing bar while the foe winds up (the dodge and parry windows marked).
-//   Action bar   in a turn fight the ability slots and Attack show cooldowns in turns, not seconds (75-solo-ui reads
-//                turnBarInfo()); hero actions dim outside the hero's turn.
-//   Test switch  Journal > Test: "Turn-based fights (zone 1)". Kept in this browser only (localStorage), never in the
-//                save, so the shipped game stays on the legacy fight until the owner decides.
+// 75-turn-ui: the turn fight on screen (engine 59k-turn.js; docs/design/combat-turns.md, combat-turn-build.md).
+//   Versus card  opens each fight (fightStart): the hero on the left, the foe on the right, both Speeds, and a banner
+//                saying who goes first. It lasts the engine's intro; with reduced motion it only fades.
+//   Turn strip   at the top of the stage: the next 6 turns as portraits (the Speed gauges decide them), the current
+//                one lit; under it a timing bar while the foe winds up a hit (the dodge and parry windows marked).
+//   Warnings     a banner when a boss gathers a charged move ("Stun it or hit it hard"), when it is broken, when a boss
+//                turns harder at half HP, and "Your turn" while the fight waits on you.
+//   Hero row     under the strip: the hero's resource as pips (Aim, Grit, Embers) and their own statuses (Guard, Ward,
+//                Keen, and what a boss put on them), with the approved status icons (21v).
+//   Action bar   75-solo-ui reads turnBarInfo(): cooldowns in turns, and why a slot cannot be used now.
 var turnBarInfo = () => null;
 
 {
-  const TEST_KEY = 'lanternfall.test.turns';
-  const readTest = () => { try { return localStorage.getItem(TEST_KEY) === '1'; } catch (e) { return false; } };
-  const writeTest = v => { try { if (v) localStorage.setItem(TEST_KEY, '1'); else localStorage.removeItem(TEST_KEY); } catch (e) {} };
-  const setOn = v => { if (typeof TURN_TUNE === 'object') TURN_TUNE.on = v ? 1 : 0; };
-  setOn(readTest());
-
+  // checks only (tools/check.mjs): a browser test of the real-time fight sets this key before the game loads. Never in the
+  // save, never in the UI; the Deepwell and Trials keep the real-time fight either way.
+  try { if (localStorage.getItem('lanternfall.test.realtime') === '1' && typeof TURN_TUNE === 'object') TURN_TUNE.on = 0; } catch (e) {}
   const reduced = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } };
   const box = $('stageBox');
-  const heroName = () => { const k = soloHero(); return (k && SOLO_HEROES[k] && (SOLO_HEROES[k].name || SOLO_HEROES[k].n)) || S.name || 'You'; };
+  const heroName = () => { const k = soloHero(); return (k && typeof ROSTER === 'object' && ROSTER[k] && ROSTER[k].name.split(' ')[0]) || S.name || 'You'; };
   const heroFace = () => { try { const id = typeof heroArtId === 'function' && heroArtId(); const u = id && typeof heroArtPortraitURL === 'function' ? heroArtPortraitURL(id) : ''; return u || (typeof portraitURL === 'function' ? portraitURL('hero') : ''); } catch (e) { return ''; } };
   // the foe as the stage draws it (enemyFrames idle0), cropped to its opaque box, once per kind
   const foeFaces = new Map();
@@ -38735,6 +39604,7 @@ var turnBarInfo = () => null;
   };
   const foeNow = () => { try { return combatFoes().find(x => x && !x.dead && x.hp > 0) || null; } catch (e) { return null; } };
   const img = (cls, url, alt) => { const i = el('img', cls); i.alt = alt || ''; if (url) i.src = url; return i; };
+  const stIcon = id => (typeof STATUS_ICONS === 'object' && STATUS_ICONS[id] ? STATUS_ICONS[id]['24'] || STATUS_ICONS[id]['16'] : '');
 
   // ---- the versus card ----
   const card = el('div', 'tv-card'); card.hidden = true; card.setAttribute('role', 'status'); card.setAttribute('aria-live', 'polite');
@@ -38746,54 +39616,109 @@ var turnBarInfo = () => null;
   on('fightStart', p => {
     if (!box || !p) return;
     const f = foeNow(), fname = (f && f.name) || 'The foe', heroFirst = p.first === 'hero';
-    L.f.replaceChildren(img('tv-img', heroFace(), heroName())); putText(L.n, heroName()); putText(L.h, `Haste ${p.heroHaste}`);
+    L.f.replaceChildren(img('tv-img', heroFace(), heroName())); putText(L.n, heroName()); putText(L.h, `Speed ${Math.round(p.heroHaste)}`);
     R.f.replaceChildren(img('tv-img', foeFace(f), fname)); putText(R.n, fname);
-    // C25: a foe kind you have not beaten yet keeps its haste hidden
-    const known = !(f && typeof masteryApi === 'object' && masteryApi.typeKills) || masteryApi.typeKills(f.type) >= 1;
-    putText(R.h, known ? `Haste ${p.foeHaste}` : 'Haste ?');
+    // C25: a foe kind you have not beaten yet keeps its Speed hidden
+    const known = !(f && typeof masteryApi === 'object' && masteryApi.typeKills) || masteryApi.typeKills(f.type) >= 1 || f.boss;
+    putText(R.h, known ? `Speed ${Math.round(p.foeHaste)}` : 'Speed ?');
     putText(banner, heroFirst ? 'You go first' : `${fname} goes first`);
     card.classList.toggle('foe-first', !heroFirst);
+    card.classList.toggle('boss', !!(f && f.boss));
     card.classList.toggle('calm', reduced());
-    const secs = typeof TURN_TUNE === 'object' ? (soloActive() ? TURN_TUNE.introHand : TURN_TUNE.introAuto) : 1.2;
+    const secs = typeof TURN_TUNE === 'object' ? TURN_TUNE.introHand : 1.2;
     card.style.setProperty('--tv-dur', secs + 's');
     card.hidden = false; card.classList.remove('play'); void card.offsetWidth; card.classList.add('play');
     cardAt = performance.now();
-    // the card follows the engine's intro (draw() closes it when the phase moves on); the timer is only a backstop
     clearTimeout(cardT); cardT = setTimeout(() => { card.hidden = true; card.classList.remove('play'); }, secs * 2000);
   });
   on('fightEnd', () => { clearTimeout(cardT); card.hidden = true; });
 
-  // ---- the turn strip and the timing bar ----
+  // ---- the turn strip, the timing bar, the hero row ----
   const strip = el('div', 'tv-strip'); strip.hidden = true; strip.setAttribute('aria-label', 'Turn order');
-  const slots = []; for (let i = 0; i < 4; i++) { const s = el('div', 'tv-slot'); slots.push(s); strip.append(s); }
+  const slots = []; for (let i = 0; i < 6; i++) { const s = el('div', 'tv-slot'); slots.push(s); strip.append(s); }
   const turnN = el('span', 'tv-n');
   const bar = el('div', 'tv-time'), fill = el('i', 'tv-fill'), dz = el('i', 'tv-dodge'), pz = el('i', 'tv-parry');
   bar.append(dz, pz, fill); bar.hidden = true; bar.setAttribute('aria-hidden', 'true');
-  const wrap = el('div', 'tv-top'); wrap.append(strip, turnN, bar);
+  const heroRow = el('div', 'tv-hero'), pipsLb = el('span', 'tv-res'), pips = el('span', 'tv-pips'), chips = el('span', 'tv-chips');
+  heroRow.append(pipsLb, pips, chips);
+  const warn = el('div', 'tv-warn'); warn.hidden = true; warn.setAttribute('role', 'status'); warn.setAttribute('aria-live', 'assertive');
+  const wrap = el('div', 'tv-top'); wrap.append(strip, turnN, bar, heroRow, warn);
   if (box) box.append(wrap);
-  let lastSig = '', winT0 = 0;
+  // a timed ability's ring: it closes on the foe; press the ability (or Attack) again as it meets the inner circle
+  const ring = el('div', 'tv-ring'), ringO = el('i', 'tv-ring-o'), ringI = el('i', 'tv-ring-i'), ringT = el('b', 'tv-ring-t', 'Now!');
+  ring.append(ringI, ringO, ringT); ring.hidden = true; ring.setAttribute('aria-hidden', 'true');
+  if (box) box.append(ring);
+  let ringAt = 0, ringClose = 0;
+  on('timingRing', p => { ringAt = p.opensAt; ringClose = p.closesAt; ring.hidden = false; ring.classList.remove('done'); putText(ringT, p.n > 1 ? `${p.i + 1} / ${p.n}` : 'Now!'); });
+  on('timingGrade', p => {
+    ring.classList.add('done');
+    emit('float', { txt: p.grade === 'perfect' ? 'PERFECT' : p.grade === 'good' ? 'Good' : 'Miss', color: p.grade === 'perfect' ? '#F2C14E' : p.grade === 'good' ? '#EDE3D1' : '#A9B1BD', big: p.grade === 'perfect', x: 0.66, y: 0.3 });
+  });
+  const drawRing = s => {
+    const on_ = !!(s && s.timing);
+    if (!on_) { if (!ring.hidden) ring.hidden = true; return; }
+    const u = Math.max(0, Math.min(1, (ringClose - s.now) / Math.max(0.05, ringClose - ringAt)));
+    ringO.style.transform = `translate(-50%, -50%) scale(${(1 + 2 * u).toFixed(3)})`;
+    ring.classList.toggle('hot', Math.abs(ringClose - s.now) <= (TURN_TUNE.timed ? TURN_TUNE.timed.good : 0.15));
+  };
+
+  // warnings: a short banner (a charge stays up while it is gathering)
+  let warnT = 0, warnSticky = '';
+  const say = (txt, cls, secs) => { putText(warn, txt); warn.className = 'tv-warn ' + (cls || ''); warn.hidden = false; warnT = performance.now() + (secs || 1.6) * 1000; };
+  on('foeCharge', p => { warnSticky = p.name; say(`${p.name}! Stun it or hit it hard to break it.`, 'charge', 30); });
+  on('chargeBroken', p => { warnSticky = ''; say(`${p.name} is broken!`, 'good', 1.8); emit('float', { txt: 'BROKEN', color: '#F2C14E', big: true }); });
+  on('foeMove', p => { if (p && p.charged) { warnSticky = ''; say(`${p.name}: parry or dodge every hit!`, 'charge', 2.5); } });
+  on('turnPhase', p => say(`${p.name} is furious and faster!`, 'charge', 2.2));
+  on('foeSkip', p => { if (p && p.turn) emit('float', { txt: p.why === 'recover' ? 'Recovering' : p.why === 'freeze' ? 'Frozen' : 'Stunned', color: '#8FB8FF', big: true }); });
+  on('foeFrozen', () => emit('float', { txt: 'FROZEN', color: '#8FD8FF', big: true }));
+  on('heroMiss', () => emit('float', { txt: 'Miss', color: '#A9B1BD', big: false, x: 0.66, y: 0.42 }));
+  on('foeContact', p => { if (p && p.res === 'miss') emit('float', { txt: 'Missed you', color: '#8FB8FF', big: false, x: 0.27, y: 0.42 }); });
+  on('fightEnd', () => { warnSticky = ''; warn.hidden = true; });
+  on('scrollDrop', p => { if (p && SCROLLS[p.id]) emit('float', { txt: SCROLLS[p.id].name, color: SCROLLS[p.id].col, big: true, x: 0.66, y: 0.24 }); });
+
+  let lastSig = '', winT0 = 0, chipSig = '';
   on('parryWindow', () => { winT0 = 0; });
-  const current = s => s.phase === 'hero' ? 'hero' : s.phase === 'foeWindup' ? 'foe' : s.next || 'hero';
+  function drawHero() {
+    const c = typeof turnHeroChips === 'function' ? turnHeroChips() : null;
+    if (!c) { if (!heroRow.hidden) heroRow.hidden = true; return; }
+    if (heroRow.hidden) heroRow.hidden = false;
+    const r = c.res, list = [];
+    if (c.guard > 0) list.push(['guard', c.guard]);
+    if (c.ward > 0) list.push(['ward', 0]);
+    if (c.keen) list.push(['keen', 0]);
+    for (const x of c.riders) list.push([x === 'venom' ? 'bleed' : x, 0]);
+    const sig = r.name + r.n + '/' + r.max + '|' + list.map(x => x.join(':')).join(',') + '|' + c.last + c.shadow + c.sear;
+    if (sig === chipSig) return;
+    chipSig = sig;
+    putText(pipsLb, r.name);
+    pips.replaceChildren(...Array.from({ length: r.max }, (_, i) => el('i', 'tv-pip' + (i < r.n ? ' on' : '') + (r.max > 5 ? ' sm' : ''))));
+    pips.setAttribute('aria-label', `${r.name} ${r.n} of ${r.max}`);
+    chips.replaceChildren(...list.map(([id, n]) => { const s = el('span', 'tv-chip'); const u = stIcon(id); if (u) s.append(img('tv-chip-ic', u, id)); else s.append(el('b', null, id)); if (n) s.append(el('small', null, String(n))); return s; }),
+      ...(c.last > 0 ? [el('span', 'tv-tag', 'Last Stand')] : []), ...(c.shadow > 0 ? [el('span', 'tv-tag', 'Shadow Step')] : []), ...(c.sear ? [el('span', 'tv-tag', 'Searing')] : []));
+  }
   function draw() {
     const on_ = typeof turnCombatOn === 'function' && turnCombatOn() && typeof turnCombatSnapshot === 'function';
     const s = on_ ? turnCombatSnapshot() : null, live = !!(s && s.phase !== 'off');
     if (!card.hidden && (!s || s.phase !== 'intro') && performance.now() - cardAt > 250) { card.hidden = true; card.classList.remove('play'); }
     if (wrap.hidden === live) wrap.hidden = !live;
     if (strip.hidden === live) strip.hidden = !live;
+    if (!warn.hidden && performance.now() > warnT) warn.hidden = true;
+    drawRing(live ? s : null);
     if (!live) { if (!bar.hidden) bar.hidden = true; return; }
-    const who = current(s), order = []; let w = who;
-    for (let i = 0; i < 4; i++) { order.push(w); w = w === 'hero' ? 'foe' : 'hero'; }
+    const order = s.order && s.order.length ? s.order : ['hero'];
     const f = foeNow(), sig = order.join() + '|' + (f && f.key) + '|' + s.phase;
     if (sig !== lastSig) {
       lastSig = sig;
-      const hf = heroFace(), ff = foeFace(f);
-      order.forEach((o, i) => {
-        const sl = slots[i]; sl.className = 'tv-slot ' + o + (i === 0 ? ' now' : '');
+      const hf = heroFace(), ff = foeFace(f), now = s.phase === 'hero' || s.phase === 'foeWindup';
+      slots.forEach((sl, i) => {
+        const o = order[i]; if (!o) { sl.hidden = true; return; }
+        sl.hidden = false; sl.className = 'tv-slot ' + o + (i === 0 && now ? ' now' : '');
         sl.replaceChildren(img('tv-mini', o === 'hero' ? hf : ff, o === 'hero' ? heroName() : ((f && f.name) || 'Foe')));
       });
       strip.setAttribute('aria-label', `Turn order: ${order.map(o => o === 'hero' ? 'you' : ((f && f.name) || 'the foe')).join(', then ')}`);
     }
-    putText(turnN, s.n ? `Turn ${s.n}` : '');
+    putText(turnN, s.phase === 'hero' ? 'Your turn' : s.timing ? 'Press again as the ring closes' : s.charge ? `${s.charge} is coming` : s.n ? `Turn ${s.n}` : '');
+    turnN.classList.toggle('mine', s.phase === 'hero' || !!s.timing);
     // the foe winds up: the bar fills to the hit; the dodge and parry windows sit at its end
     const winding = s.phase === 'foeWindup' && s.closesAt > s.now;
     if (bar.hidden === winding) bar.hidden = !winding;
@@ -38804,6 +39729,7 @@ var turnBarInfo = () => null;
       dz.style.left = pct((s.dodgeOpensAt - winT0) / span); dz.style.width = pct((s.closesAt - s.dodgeOpensAt) / span);
       pz.style.left = pct((s.parryOpensAt - winT0) / span); pz.style.width = pct((s.closesAt - s.parryOpensAt) / span);
     } else winT0 = 0;
+    drawHero();
   }
   (function loop() { try { draw(); } catch (e) {} requestAnimationFrame(loop); })();
 
@@ -38812,21 +39738,9 @@ var turnBarInfo = () => null;
     if (!(typeof turnCombatOn === 'function' && turnCombatOn())) return null;
     const s = turnCombatSnapshot(); if (!s || s.phase === 'off') return null;
     const max = id => (typeof turnCdFor === 'function' ? turnCdFor(id) : 1);
-    return { cds: s.cooldowns, max, heroTurn: s.phase === 'hero', windup: s.phase === 'foeWindup' };
+    return { cds: s.cooldowns, max, heroTurn: s.phase === 'hero', windup: s.phase === 'foeWindup', timing: s.timing ? s.timing.id : '',
+      why: id => (typeof turnWhyNot === 'function' ? turnWhyNot(id) : '') };
   };
-
-  // ---- Journal > Test: the switch ----
-  registerSection('log', {
-    id: 'turn-test', title: 'Test',
-    mount(sec) {
-      const p = el('p', 'note', 'Try the new turn-based fights. Zone 1 only. Bosses and other zones fight as before. This switch stays in this browser; your save does not change.');
-      const b = el('button', 'big tv-switch'); b.type = 'button';
-      const paint = () => { const v = readTest(); putText(b, v ? 'Turn-based fights: On' : 'Turn-based fights: Off'); putAttr(b, 'aria-pressed', String(v)); };
-      b.addEventListener('click', () => { const v = !readTest(); writeTest(v); setOn(v); paint(); toast(v ? 'Turn-based fights are on in zone 1.' : 'Turn-based fights are off.', 'good', null, 'low'); });
-      paint(); sec.append(p, b);
-    },
-    update() {}
-  });
 }
 
 // ---- src/js/76-audio.js ----

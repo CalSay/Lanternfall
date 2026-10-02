@@ -74,11 +74,20 @@ var soloIconURL = () => '';
   // C26: the approved action icons (ACTION_ICONS, 60n-nicons) at the size the bar shows; the pixel maps above stay
   // as the fallback for a move the pack has no icon for. Attack is the hero's own ('attack-wren', ...).
   const packId = mv => mv === 'atk' ? 'attack-' + (soloHero() || 'tobin') : mv;
-  const setIc = (cv, mv, px) => { if (!nicSet(cv, 'act', packId(mv), px)) drawIc(cv, ICON[mv === 'atk' ? WEAPON_IC[soloHero()] || 'sword' : mv] || ICON.fire); };
+  // an ability learned for turn fights (24c) has no approved icon yet: its slot shows a plain lettered tile (no art)
+  const noIcon = mv => mv !== 'atk' && !ICON[mv] && !nicHas('act', packId(mv));
+  const setIc = (cv, mv, px) => {
+    const b = cv.parentElement, mono = noIcon(mv);
+    if (b) { b.classList.toggle('mono', mono); if (mono) b.dataset.mono = monoOf(mv); else delete b.dataset.mono; }
+    if (mono) { const g = cv.getContext('2d'); g.clearRect(0, 0, cv.width, cv.height); return; }
+    if (!nicSet(cv, 'act', packId(mv), px)) drawIc(cv, ICON[mv === 'atk' ? WEAPON_IC[soloHero()] || 'sword' : mv] || ICON.fire);
+  };
+  const monoOf = id => { const a = SOLO_ABILITIES[id]; const n = (a && (a.short || a.name)) || '?'; return n.slice(0, 2); };
   setIc(bParry._ic, 'parry', 48); setIc(bDodge._ic, 'dodge', 48);
   const icURLs = {};
   soloIconURL = mv => {
     const u = nicURL('act', packId(mv), 48); if (u) return u;
+    if (noIcon(mv)) return '';
     const id = mv === 'atk' ? WEAPON_IC[soloHero()] || 'sword' : mv;
     if (icURLs[id]) return icURLs[id];
     const cv = document.createElement('canvas'); cv.width = 12; cv.height = 12; drawIc(cv, ICON[id] || ICON.fire);
@@ -94,6 +103,8 @@ var soloIconURL = () => '';
   const guideWants = id => { try { return typeof soloGuideWants === 'function' && soloGuideWants() === id; } catch (e) { return false; } };
   const castSlot = i => {
     if (!soloEquipped()[i]) { openPicker(i); return; }
+    const pa = typeof ABILITIES === 'object' && ABILITIES[soloEquipped()[i]];
+    if (pa && pa.kind === 'passive') { nope(bAbs[i]); return; }   // always on: no button to press
     if (!soloAbility({ slot: i })) nope(bAbs[i]); else flash(bAbs[i], 'good');
   };
   const act = {
@@ -139,17 +150,20 @@ var soloIconURL = () => '';
     sh.append(head);
     const eq = soloEquipped();
     // W2-A: the slot's ability, its Training level and a Train button
-    if (eq[slot] && typeof trainCard === 'function') { const c = trainCard(eq[slot]); c.onLeave = closePicker; sh.append(c); ov._card = c; }
+    const sig = SOLO_HEROES[k] && SOLO_HEROES[k].abs[0];   // its Training is the hero's ability power (59k)
+    if (eq[slot] && eq[slot] === sig && typeof trainCard === 'function') { const c = trainCard(eq[slot]); c.onLeave = closePicker; sh.append(c); ov._card = c; }
     for (const id of soloAbilities(k)) {
       const a = SOLO_ABILITIES[id], where = eq.indexOf(id);
       const r = el('button', 'sp-ab' + (where === slot ? ' on' : '')); r.type = 'button'; r.dataset.ab = id;
-      const cv = el('canvas', 'sp-ic px'); cv.width = 12; cv.height = 12; setIc(cv, id, 36);
-      const t = el('div', 'sp-t'); t.append(el('b', null, a.name), el('span', null, a.line), el('small', null, `Lv ${typeof trainLv === 'function' ? trainLv(id) : 0} · cooldown ${+(typeof trainAbCd === 'function' ? trainAbCd(id, a.cd) : a.cd).toFixed(1)} s` + (where >= 0 ? ` · in slot ${where + 1}` : '')));
+      let cv; if (noIcon(id)) cv = el('span', 'sp-mono', monoOf(id)); else { cv = el('canvas', 'sp-ic px'); cv.width = 12; cv.height = 12; setIc(cv, id, 36); }
+      const b = typeof ABILITIES === 'object' && ABILITIES[id];
+      const cdTxt = b ? (b.kind === 'passive' ? 'Passive' : `Cooldown ${typeof turnCdFor === 'function' ? turnCdFor(id) : b.cd} turns`) : `cooldown ${+(typeof trainAbCd === 'function' ? trainAbCd(id, a.cd) : a.cd).toFixed(1)} s`;
+      const t = el('div', 'sp-t'); t.append(el('b', null, a.name), el('span', null, a.line), el('small', null, cdTxt + (where >= 0 ? ` · in slot ${where + 1}` : '')));
       r.append(cv, t);
       r.addEventListener('click', () => { soloEquip(slot, id); try { save(); } catch (e) {} closePicker(); });
       sh.append(r);
     }
-    sh.append(el('p', 'note sp-more', 'More abilities come from rare boss drops, later.'));
+    sh.append(el('p', 'note sp-more', 'Learn more on the Hero tab, under Abilities. Zone bosses drop the Scrolls that teach them.'));
     const clr = el('button', 'sp-clear', 'Clear this slot'); clr.type = 'button'; clr.disabled = !eq[slot];
     clr.addEventListener('click', () => { soloEquip(slot, null); try { save(); } catch (e) {} closePicker(); });
     sh.append(clr);
@@ -182,7 +196,7 @@ var soloIconURL = () => '';
     if (bar.hidden || pick || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
     const t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable || (t.tagName === 'BUTTON' && (e.key === ' ' || e.key === 'Enter')))) return;
     if (S.tab && !isWide()) return;   // a menu covers the fight (UX-L1: in landscape the bar stays live beside the menu)
-    if (e.key.toLowerCase() === 'f') { e.preventDefault(); flipAuto(); return; }   // F: the Auto toggle
+    if (e.key.toLowerCase() === 'f') { if (typeof turnCombatOn === 'function' && turnCombatOn()) return; e.preventDefault(); flipAuto(); return; }   // F: the Auto toggle (no Auto in turn fights)
     const id = KEYS[e.key.toLowerCase()]; if (!id) return;
     e.preventDefault();
     act[id]();
@@ -229,7 +243,8 @@ var soloIconURL = () => '';
   function update() {
     const show = !!soloHero() && target() === 'mob' && !!(S.party && S.party.chosen);
     if (bar.hidden === show) { bar.hidden = !show; if (!show) closePicker(); }
-    if (badge.hidden === show) badge.hidden = !show;
+    const showBadge = show && !(typeof turnCombatOn === 'function' && turnCombatOn());   // turn fights are active only: no Auto
+    if (badge.hidden === showBadge) badge.hidden = !showBadge;
     if (!show) return;
     setBadge();
     const s = soloButtons(), k = soloHero();
@@ -239,8 +254,9 @@ var soloIconURL = () => '';
       if (o.id !== abIds[i]) {
         abIds[i] = o.id; setIc(b._ic, o.id || 'empty', 48); putText(b._lb, o.id ? (SOLO_ABILITIES[o.id].short || o.name) : 'Empty');
         b.classList.toggle('empty', !o.id);
-        const a = o.id ? SOLO_ABILITIES[o.id] : null;
-        b.setAttribute('aria-label', a ? `${a.name} (${KEY_LB['ab' + i]}). ${a.desc} Hold to change the slot.` : `Empty ability slot ${i + 1} (${KEY_LB['ab' + i]}). Tap to choose an ability.`);
+        const a = o.id ? SOLO_ABILITIES[o.id] : null, pa = o.id && typeof ABILITIES === 'object' ? ABILITIES[o.id] : null;
+        b.classList.toggle('passive', !!(pa && pa.kind === 'passive'));
+        b.setAttribute('aria-label', a ? `${a.name} (${KEY_LB['ab' + i]}). ${a.turnDesc || a.desc} Hold to change the slot.` : `Empty ability slot ${i + 1} (${KEY_LB['ab' + i]}). Tap to choose an ability.`);
       }
       setCd(b, o.left, o.max); setN(b, secs(o.left));
       b.classList.toggle('ready', !!o.id && o.ready);
@@ -259,9 +275,19 @@ var soloIconURL = () => '';
     // C20 turn fights (75-turn-ui): cooldowns count in turns; hero actions only on the hero's turn, defence on the foe's wind-up
     const tb = typeof turnBarInfo === 'function' ? turnBarInfo() : null;
     if (tb) {
-      for (let i = 0; i < 3; i++) { const o = s.abs[i], b = bAbs[i]; if (!o.id) continue; const cd = tb.cds[o.id] || 0; setCd(b, cd, tb.max(o.id)); setN(b, cd ? String(cd) : ''); b.classList.toggle('ready', !cd && tb.heroTurn); }
+      for (let i = 0; i < 3; i++) {
+        const o = s.abs[i], b = bAbs[i]; if (!o.id) continue;
+        const cd = tb.cds[o.id] || 0, why = tb.why(o.id), pas = why === 'passive';
+        setCd(b, pas ? 0 : cd, tb.max(o.id));
+        // why it cannot be used: its cooldown (turns), the finisher's third turn, or what it needs (a Burn, Grit, ...)
+        setN(b, pas ? '' : cd ? String(cd) : why === 'gate' ? 'T3' : why && why !== 'cd' && why !== 'turn' ? '!' : '');
+        putAttr(b, 'title', why.startsWith('need:') ? 'Needs ' + why.slice(5) : why === 'gate' ? 'A finisher: from your third turn' : why === 'once' ? 'Once a fight' : '');
+        b.classList.toggle('ready', !why && tb.heroTurn);
+        b.classList.toggle('blocked', !!why && why !== 'cd' && !pas);
+      }
       setCd(bAtk, tb.cds.attack || 0, tb.max('attack'));
-      for (const b of [bAtk, ...bAbs]) b.classList.toggle('off', !tb.heroTurn);
+      for (const b of [bAtk, ...bAbs]) b.classList.toggle('off', !tb.heroTurn && !b.classList.contains('passive') && !(tb.timing && (b === bAtk || abIds[+b.dataset.slot] === tb.timing)));
+      for (let i = 0; i < 3; i++) bAbs[i].classList.toggle('live', !!tb.timing && abIds[i] === tb.timing);   // the ring: press it again
       for (const b of [bParry, bDodge]) { b.classList.toggle('off', !tb.windup); b.classList.toggle('live', tb.windup); }
       setN(bDodge, ''); setN(bParry, '');
     }

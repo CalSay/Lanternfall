@@ -278,40 +278,11 @@ function awayBase(r) {
     r.note = 'You kept hammering the raid boss.';
     return r;
   }
-  // C20: sample one fixed Auto profile in scratch state, then apply one aggregate reward path.
+  // Turn fights are active only (owner, 2026-10-01): nothing fights while you are away. Gathering keeps going.
   if (typeof turnCombatScope === 'function' && turnCombatScope()) {
-    const q = S.turn || (S.turn = { awayKillsCarry: 0, awayEssCarry: 0, awayProfile: null, awaySample: null, awaySig: '' });
-    // Level and XP can change as a claim is credited. Keep the sampled profile across split
-    // claims and save/reload, but invalidate it when the player changes gear, training or zone.
-    // Version/tuning changes between builds must invalidate a persisted scratch sample.
-    // XP and mastery are intentionally excluded to keep split claims on one anchored profile.
-    const sig = JSON.stringify([1, S.solo.hero, S.zone, S.equip,
-      S.solo.tr && S.solo.tr[S.solo.hero], TURN_TUNE, SOLO_TUNE, COMBAT_TUNE]);
-    let p = q.awaySig === sig && q.awayProfile && q.awayProfile.foeHp > 0 ? q.awayProfile : null;
-    if (!p) { p = turnCombatProfile(); if (!p) { spawn(); p = turnCombatProfile(); }
-      if (p) { q.awayProfile = p; q.awaySample = null; q.awaySig = sig; } }
-    if (!p || !(t > 0)) {
-      r.turnCombat = { generatedEss: 0, storedEss: 0, kills: 0, deaths: 0, sampledSeconds: 0, boost, zone: S.zone };
-      return r;
-    }
-    const sampledSeconds = 3600, sample = q.awaySample && q.awaySample.seconds === sampledSeconds ? q.awaySample :
-      turnCombatSample({ profile: p, seconds: sampledSeconds, seed: 1, mode: 'auto' });
-    q.awaySample = sample;
-    const carry = v => Number.isFinite(v) && v >= 0 && v < 1 ? v : 0;
-    const ratio = t * boost / sampledSeconds;
-    const k0 = sample.kills * ratio + carry(q.awayKillsCarry), kills = Math.floor(k0);
-    const e0 = sample.generatedEss * ratio + carry(q.awayEssCarry), generatedEss = Math.floor(e0);
-    q.awayKillsCarry = k0 - kills; q.awayEssCarry = e0 - generatedEss;
-    const gold = kills * p.goldPerKill, tier = zoneTier(p.zone);
-    const storedEss = generatedEss > 0 ? stashAdd('ess', tier, generatedEss, 'flow', true) : 0;
-    S.gold += gold; S.totalGold += gold; S.totalKills += kills; econEarn('away', gold);
-    if (kills > 0) gainXp(kills * p.xpPerKill * PACE.heroAwayXp, true);
-    r.lines.push({ icon: { ic: ['coin', '#F2C14E'] }, txt: '+' + fmt(gold) });
-    if (storedEss) r.lines.push({ icon: { mat: ['ess', tier] }, txt: `+${fmt(storedEss)} ${matName('ess', tier)}` });
-    r.turnCombat = { generatedEss, storedEss, kills, deaths: sample.deaths * ratio, sampledSeconds,
-      boost, zone: p.zone };
-    emit('awayKills', { kills, zone: p.zone, generatedEss, lines: r.lines });
-    r.note = `You held ${zoneName(p.zone)}.`;
+    r.turnCombat = { kills: 0, zone: S.zone };
+    r.note = 'Fights only happen while you play. Set your hero to gather before you go, and they keep working.';
+    if (r.secs >= 300) toast('Fights wait for you while you are away. Gather before you go to keep earning.', 'raid', null, 'normal');
     return r;
   }
   // Kills are capped by the respawn gap, same as live play; away play earns 75% of the live rate.

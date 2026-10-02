@@ -1,0 +1,37 @@
+/* 75-abilities-ui: Hero tab > Abilities. Scrolls, the three slots, and every ability of the hero in its groups. */
+.ab-root { display: grid; gap: 10px; }
+.ab-note, .ab-src { margin: 0; }
+.ab-scrolls { display: flex; flex-wrap: wrap; gap: 6px; }
+.ab-scroll { display: flex; align-items: center; gap: 5px; min-height: 32px; padding: 3px 8px 3px 5px; background: var(--panel-2); border: 2px solid #0B0810; color: var(--muted); }
+.ab-scroll.has { color: var(--bone); box-shadow: inset 0 0 0 1px var(--scroll); }
+.ab-scroll b { font: 600 calc(14px * var(--display-k, 1))/1 var(--display); }
+.ab-scroll small { font-size: 13px; }
+.ab-gem { display: block; width: 10px; height: 10px; background: var(--scroll); transform: rotate(45deg); box-shadow: 0 0 0 1px #0B0810; opacity: .5; }
+.ab-scroll.has .ab-gem { opacity: 1; }
+.ab-slots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.ab-slot { position: relative; display: grid; justify-items: center; gap: 3px; padding: 6px 4px 8px; background: #231A30; border: 2px solid #0B0810;
+  box-shadow: inset 0 0 0 1px #6B5320; text-align: center; }
+.ab-slot.empty { opacity: .7; box-shadow: inset 0 0 0 1px #4E4060; }
+.ab-slot small { color: var(--muted); font-size: 12px; }
+.ab-slot b { font: 600 calc(14px * var(--display-k, 1))/1.1 var(--display); color: var(--gold); }
+.ab-clear { position: absolute; top: 0; right: 0; width: 36px; height: 36px; background: none; border: 0; color: var(--muted); font: 600 20px/1 var(--display); cursor: pointer; }
+.ab-path { display: grid; gap: 6px; }
+.ab-pname { margin: 4px 0 0; font: 600 calc(16px * var(--display-k, 1))/1 var(--display); color: var(--gold); letter-spacing: .03em; }
+.ab-card { display: grid; gap: 6px; padding: 8px 10px; background: #1B1424; border: 2px solid #0B0810; box-shadow: inset 0 0 0 1px #3A3046; }
+.ab-card.owned { box-shadow: inset 0 0 0 1px #6B5320; }
+.ab-card.ready { box-shadow: inset 0 0 0 2px var(--gold); }
+.ab-card.locked { opacity: .78; }
+.ab-card.passive .ab-t small { color: #8FB8FF; }
+.ab-top { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 8px; align-items: center; }
+.ab-ic { width: 36px; height: 36px; image-rendering: pixelated; }
+.ab-mono { display: grid; place-items: center; background: #33283E; color: #FFE7A8; font: 700 calc(16px * var(--display-k, 1))/1 var(--display); box-shadow: inset 0 0 0 1px #6B5320; }
+.ab-t { display: grid; gap: 2px; }
+.ab-t b { font: 600 calc(17px * var(--display-k, 1))/1.1 var(--display); color: var(--bone); }
+.ab-t small { color: var(--muted); font-size: 12px; }
+.ab-desc { margin: 0; font-size: 14px; color: var(--bone); }
+.ab-foot { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.ab-put { flex: 1 1 0; min-height: 40px; background: var(--panel-2); color: var(--bone); border: 2px solid #0B0810; font: 600 calc(14px * var(--display-k, 1)) var(--display); cursor: pointer; }
+.ab-put.on { background: var(--gold); color: #1A1420; }
+.ab-learn { flex: 1 1 auto; min-height: 44px; }
+.ab-need { color: var(--muted); font-size: 13px; }
+.ab-timed { margin: 0; font-size: 13px; color: var(--gold); }
