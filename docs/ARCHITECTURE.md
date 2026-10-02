@@ -3,6 +3,11 @@
 The published game is one HTML file, `dist/lanternfall.html`, built from `src/`.
 Never edit `dist/` by hand.
 
+What the game is and why: `docs/GAME.md` (every live system and its files) and `docs/DECISIONS.md` (owner decisions).
+Spec names below that no longer exist in `docs/design/` (deepwell.md, combat-2.md, solo-hero.md, onboarding.md and the
+like) were retired on 2026-10-02; read one with `git show 1536ffa:docs/design/<name>.md`. The same goes for spec names
+in code comments.
+
 ## Build
 
 `tools/build.mjs` = `src/shell.html` with `<!-- @styles -->` replaced by every

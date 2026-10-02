@@ -102,8 +102,15 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 - **Versus header:** fighting-game HP bars across the top, hero left, foe right. (2026-10-01)
 - **A zone foe resets after every attack** (hop in, attack, hop home, rest), so approved animations play in full.
   (2026-10-02)
-- **Real-time leftovers** (Deepwell, Trials): a local raid fight is accepted; an Assist timing setting is parked; Deep
-  Elders give at most one buff item a run; Hollow bosses give no buff items. (2026-09-28)
+- **No telegraph of the foe's next move:** it makes combat easier. (2026-10-02)
+- **No suggested builds or combos in the game.** Finding what works should be hard and rewarding. (2026-10-02)
+- **No healing between fights.** (2026-10-02)
+- **Elite traits in turn fights,** but Speed never gives a foe endless turns (2 in a row at most, a boss 3). (2026-10-02)
+- **Talents** (Codex's star forks): two picks per ability and for Attack, Parry and Dodge. (2026-10-02)
+- **The Deepwell and the Provings fight in turns** like the zones. (2026-10-02)
+- **An Assist setting** that widens the timing windows: yes, low priority. A late-zone balance pass: yes. (2026-10-02)
+- **Leftovers:** a local raid fight is accepted; Deep Elders give at most one buff item a run; Hollow bosses give no
+  buff items. (2026-09-28)
 
 ## Enemies and the world
 

@@ -6,6 +6,8 @@ and hunt unique boss loot. Mobile-first, one-screen layout.
 
 Live artifact: https://claude.ai/artifact/GqrXAutCJ6vgdV9TaPxAJH
 
+Start with `docs/GAME.md` (what the game is now, by system) and `docs/DECISIONS.md` (every standing owner decision).
+
 ## Current focus
 
 Single-player depth. Do not change the online layer (world raid, tavern, leaderboard,
