@@ -804,19 +804,20 @@ let resize, animate, draw, stageStats, warmScene;
   }
   // Legacy fights: the core's swing timer (m.swing, 59-combat) is the authority. The foe hops into reach once, then
   // each swing plays the whole approved Jab from its first frame, started so its contact frame lands as the swing does.
-  // Legacy fights: the core's swing timer (m.swing, 59-combat) is the authority. A melee foe hops into reach once; each
-  // swing plays the next one-hit move from its first frame (they alternate), started so its contact (a projectile: its
-  // landing) comes as the swing does. 59l slows a skinned foe's swings so each move plays in full.
+  // Legacy fights: the core's swing timer (m.swing, 59-combat) is the authority. Each swing is a full reset cycle (owner,
+  // 2026-10-02: "they need to reset after each attack"): a melee move hops in, attacks from its first frame and hops
+  // home; a projectile fires from home. The moves alternate, each started so its contact (a projectile: its landing)
+  // comes as the swing does. 59l slows a skinned foe's swings so every cycle plays in full, with a rest between.
   const artLegacyMoves = s => { const Z = s.m && typeof zoneFoeOf === 'function' && zoneFoeOf(s.m); return Z ? Z.moves.filter(m => m.hits.length === 1 && artOf(s).acts[m.anim]) : []; };
   function artLegacy(s) {
     const F = artOf(s), m = s.m, hop = F.acts.hop, L = artLegacyMoves(s);
     if (!L.length || !m || m.dead || s.aq || !(m.born >= 0.3) || !(m.swing >= 0) || m.stunT > 0) return;
     const mv = L[(s.lmI || 0) % L.length], A = F.acts[mv.anim];
-    if (!mv.ranged && !(s.ax >= 1)) { s.ae = artEngage(s, mv.anim); s.aq = [{ act: 'hop', a: 1, b: hop.fr.length, hop: [s.ax || 0, 1] }]; s.at = 0; s.ar = 1; return; }
-    const toC = mv.ranged ? actMs(A, A.start, A.rel[0] - 1) + (mv.flight || 0) * 1000 : actMs(A, A.start, A.con[0] - 1);   // first frame to the hit
+    const hopIn = mv.ranged || s.ax >= 1 ? 0 : actMs(hop, 1, hop.fr.length);
+    const toC = hopIn + (mv.ranged ? actMs(A, A.start, A.rel[0] - 1) + (mv.flight || 0) * 1000 : actMs(A, A.start, A.con[0] - 1));   // to the hit
     if (m.swing * 1000 > toC) return;
     s.lmI = (s.lmI || 0) + 1;
-    artMove(s, mv.anim, A.start, false); s.at = Math.max(0, toC - m.swing * 1000);   // part-way in if the swing is closer
+    artMove(s, mv.anim, A.start, true); s.at = Math.max(0, toC - m.swing * 1000);   // part-way in if the swing is closer
   }
   function artStrike(s, kind) {   // legacy: the hit has landed. The playing move marks it; else show one from the release, in reach
     const F = artOf(s), c = s.aq && s.aq[0], A = c && !c.hop && F.acts[c.act];
@@ -827,7 +828,7 @@ let resize, animate, draw, stageStats, warmScene;
       return;
     }
     const L = artLegacyMoves(s), mv = L.find(m => !m.ranged) || L[0]; if (!mv) return;
-    const B = F.acts[mv.anim]; s.ax = mv.ranged ? s.ax : 1; artMove(s, mv.anim, B.rel[0] || B.start, false);
+    const B = F.acts[mv.anim]; s.ax = mv.ranged ? s.ax : 1; artMove(s, mv.anim, B.rel[0] || B.start, true);
     for (let i = 0; i < Math.max(1, B.con.length); i++) s.al[i] = true;
     if (F.fx['bite-fx'] || s.amr) artImpact(s, true);
   }

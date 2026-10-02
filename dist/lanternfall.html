@@ -22834,8 +22834,9 @@ function turnCombatSample({ profile: p, seconds, seed = 1, mode = 'auto' }) {
 //        ranged: a projectile move (no hop): its wind runs to the release frame, then flight seconds to the hero.
 //        row: the foe type whose weakness row it uses when that differs from its zone's slot (59a typeX).
 //   zoneFoeSkin(f, z)   cbSpawn (59-combat): make a regular foe of zone z that zone's monster (no-op elsewhere). In a
-//        legacy fight a skinned foe swings no faster than its slowest one-hit attack animation runs (zoneFoeCycle),
-//        and each swing hits harder by as much, so the approved timings play in full at the same damage a second.
+//        legacy fight a skinned foe resets after every attack (owner, 2026-10-02): hop in, attack, hop home, a rest of
+//        ZONE_FOE_REST s, then the next. Its swings come no faster than that cycle (zoneFoeCycle), and each hits harder by
+//        as much, so the approved timings play in full at the same damage a second.
 //   zoneFoeOf(f) -> the ZONE_FOES entry of a skinned foe, or null
 //   zoneFoeDeathS(f) -> seconds its death animation runs (50-sim waits that long before the next foe), or 0
 const ZONE_FOES = {
@@ -22882,15 +22883,18 @@ function zoneFoeDeathS(f) {
   const P = f && f.skin && typeof FOE_ART === 'object' && FOE_ART[f.skin], D = P && P.acts.death;
   return D ? zoneFoeMs(D, 1, D.f.length + 1) / 1000 : 0;
 }
-// The shortest legacy swing period that plays every one-hit move in full when they alternate (as 62-stage plays them):
-// the most, over each move and the next, of the first's tail (its hit to its last frame) plus the next's lead (its first
-// frame to its hit; a projectile's hit is its landing).
+// The legacy swing period that plays every one-hit move as a full reset cycle when they alternate (as 62-stage plays
+// them): the most, over each move and the next, of the first's tail (its hit to its last frame, then its hop home) plus
+// the rest plus the next's lead (its hop in, then its first frame to its hit; a projectile needs no hop, its hit is its
+// landing).
+const ZONE_FOE_REST = 0.6;
 function zoneFoeCycle(Z) {
   const P = Z && typeof FOE_ART === 'object' && FOE_ART[Z.key]; if (!P) return 0;
+  const hop = P.acts.hop ? zoneFoeMs(P.acts.hop, 1, P.acts.hop.f.length + 1) : 0;
   const L = Z.moves.filter(m => m.hits.length === 1 && P.acts[m.anim]).map(m => {
-    const A = P.acts[m.anim], all = zoneFoeMs(A, A.start, A.end + 1);
+    const A = P.acts[m.anim], all = zoneFoeMs(A, A.start, A.end + 1), h = m.ranged ? 0 : hop;
     const lead = m.ranged && A.rel.length ? zoneFoeMs(A, A.start, A.rel[0]) + (m.flight || 0) * 1000 : A.con.length ? zoneFoeMs(A, A.start, A.con[0]) : all;
-    return { lead, tail: Math.max(0, all - lead) };
+    return { lead: h + lead, tail: Math.max(0, all - lead) + h + ZONE_FOE_REST * 1000 };
   });
   let c = 0;
   for (let i = 0; i < L.length; i++) c = Math.max(c, L[i].tail + L[(i + 1) % L.length].lead);
@@ -24655,19 +24659,20 @@ let resize, animate, draw, stageStats, warmScene;
   }
   // Legacy fights: the core's swing timer (m.swing, 59-combat) is the authority. The foe hops into reach once, then
   // each swing plays the whole approved Jab from its first frame, started so its contact frame lands as the swing does.
-  // Legacy fights: the core's swing timer (m.swing, 59-combat) is the authority. A melee foe hops into reach once; each
-  // swing plays the next one-hit move from its first frame (they alternate), started so its contact (a projectile: its
-  // landing) comes as the swing does. 59l slows a skinned foe's swings so each move plays in full.
+  // Legacy fights: the core's swing timer (m.swing, 59-combat) is the authority. Each swing is a full reset cycle (owner,
+  // 2026-10-02: "they need to reset after each attack"): a melee move hops in, attacks from its first frame and hops
+  // home; a projectile fires from home. The moves alternate, each started so its contact (a projectile: its landing)
+  // comes as the swing does. 59l slows a skinned foe's swings so every cycle plays in full, with a rest between.
   const artLegacyMoves = s => { const Z = s.m && typeof zoneFoeOf === 'function' && zoneFoeOf(s.m); return Z ? Z.moves.filter(m => m.hits.length === 1 && artOf(s).acts[m.anim]) : []; };
   function artLegacy(s) {
     const F = artOf(s), m = s.m, hop = F.acts.hop, L = artLegacyMoves(s);
     if (!L.length || !m || m.dead || s.aq || !(m.born >= 0.3) || !(m.swing >= 0) || m.stunT > 0) return;
     const mv = L[(s.lmI || 0) % L.length], A = F.acts[mv.anim];
-    if (!mv.ranged && !(s.ax >= 1)) { s.ae = artEngage(s, mv.anim); s.aq = [{ act: 'hop', a: 1, b: hop.fr.length, hop: [s.ax || 0, 1] }]; s.at = 0; s.ar = 1; return; }
-    const toC = mv.ranged ? actMs(A, A.start, A.rel[0] - 1) + (mv.flight || 0) * 1000 : actMs(A, A.start, A.con[0] - 1);   // first frame to the hit
+    const hopIn = mv.ranged || s.ax >= 1 ? 0 : actMs(hop, 1, hop.fr.length);
+    const toC = hopIn + (mv.ranged ? actMs(A, A.start, A.rel[0] - 1) + (mv.flight || 0) * 1000 : actMs(A, A.start, A.con[0] - 1));   // to the hit
     if (m.swing * 1000 > toC) return;
     s.lmI = (s.lmI || 0) + 1;
-    artMove(s, mv.anim, A.start, false); s.at = Math.max(0, toC - m.swing * 1000);   // part-way in if the swing is closer
+    artMove(s, mv.anim, A.start, true); s.at = Math.max(0, toC - m.swing * 1000);   // part-way in if the swing is closer
   }
   function artStrike(s, kind) {   // legacy: the hit has landed. The playing move marks it; else show one from the release, in reach
     const F = artOf(s), c = s.aq && s.aq[0], A = c && !c.hop && F.acts[c.act];
@@ -24678,7 +24683,7 @@ let resize, animate, draw, stageStats, warmScene;
       return;
     }
     const L = artLegacyMoves(s), mv = L.find(m => !m.ranged) || L[0]; if (!mv) return;
-    const B = F.acts[mv.anim]; s.ax = mv.ranged ? s.ax : 1; artMove(s, mv.anim, B.rel[0] || B.start, false);
+    const B = F.acts[mv.anim]; s.ax = mv.ranged ? s.ax : 1; artMove(s, mv.anim, B.rel[0] || B.start, true);
     for (let i = 0; i < Math.max(1, B.con.length); i++) s.al[i] = true;
     if (F.fx['bite-fx'] || s.amr) artImpact(s, true);
   }
