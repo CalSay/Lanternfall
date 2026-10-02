@@ -5,6 +5,11 @@ GPT draws each **key pose as one complete sprite**, so the anatomy is right. We 
 breathing, cloth drift, companions, bow strings, projectiles, swooshes, sound waves and other effects.
 We do not hand-assemble limbs from parts. It failed at this scale: floating heads, lumps on the chest, and hands over faces.
 
+> **Art freeze (owner, 2026-09-30; `CLAUDE.md`):** effects and props (arrows, bow strings, tools, sparks, chips) now come
+> from the artist inside the pack, drawn to match the art. Where this page says "code adds" an effect or a prop, that
+> applies only to the effects already in the game; agents do not draw new art in code. One hero stands on the stage
+> and one enemy at a time (owner, 2026-09-29 and 2026-10-01).
+
 ## 1. The fixed spec (same for every hero)
 
 - Strict pixel art on a true grid, no noise or dithering, a clean 1-pixel dark outline.
@@ -96,46 +101,16 @@ rows and columns and breaks outlines. Pip's trial was shrunk this way, so her fi
   ground, optional foreground. Two states per area: shrouded and relit. Lamps drawn unlit or softly lit;
   glow, fog, flicker and fireflies are code.
 - On a landscape phone (about 740 x 360 CSS px) the stage is about 480 x 240 logical px, so a 96 px hero is
-  about 40% of the stage height, and a party of three plus a pack of 8-10 fits across.
+  about 40% of the stage height.
 
-> **Superseded in part (owner, 2026-09-29, solo-hero pivot, see docs/design/solo-hero.md):** there is no party
-> any more. One hero stands on the left of the road. The party formation and spacing rules in 9, 10 and 10a
-> no longer apply; the enemy size bands, the quiet background, contact shadows and the low foreground still do.
+## 9. Keeping the fight readable (owner: "it looks so cluttered", 2026-09-29)
 
-## 9. Formation and enemy sizes (owner, 2026-09-29)
+1. **Quiet background behind the fight.** The far and mid layers sit well back (lower saturation and contrast, dimmed
+   toward night blue) with a soft vignette, so only the road and the fighters are bright.
+2. **A clear gap in the middle** of the road between the hero and the foe, for arrows, fireballs and swooshes.
+3. **Contact shadows** under every fighter, so they stand on the road instead of floating on the picture.
+4. **Lower foreground.** The front plants stay a thin dark strip, so they frame the road without covering feet.
+5. **Heroes are never shrunk** (pixel art cannot be scaled down cleanly). Enemy size follows the monster's design in
+   its C22 card; poses follow its moves.
 
-- The party stands **staggered and overlapping** on the road: the back lane a few pixels higher (further up
-  the road), the front lane lower and slightly in front, so three 96 px heroes fit in the left ~40% of the
-  stage. Mock-up: art/backgrounds/mossy-hollow/formation-mock.png.
-- Enemies are sized by pack type, not all hero-sized: **swarm foes about 24-36 px** (bats, slimes, spores),
-  **normal foes about 48-64 px**, **brutes and elders about 96 px**, region bosses bigger. Packs stand in 2-3
-  staggered rows in the right half. Heroes are never shrunk (pixel art can't be scaled down cleanly).
-
-## 10. Keeping the fight readable (owner: "it looks so cluttered", 2026-09-29)
-
-Mock-up: art/backgrounds/mossy-hollow/formation-clean.png.
-1. **Quiet background behind the fight.** Code pushes the far and mid layers well back (lower saturation and
-   contrast, dimmed toward night blue) and adds a soft vignette, so only the road and the fighters are bright.
-2. **All foes stay visible (owner: up to 10 on screen).** Size follows pack size, as combat-2 already sets
-   pack sizes: brute packs of 3 at about 96 px, normal packs of 5-6 at about 48 px, swarms of 8-10 at about
-   24-32 px, in 2-3 staggered rows on the right half. Mock-up: art/backgrounds/mossy-hollow/packs-mock.png.
-3. **A clear gap in the middle** of the road between the two sides, for arrows, fireballs and swooshes.
-4. **Contact shadows** under every fighter, so they stand on the road instead of floating on the picture.
-5. **Lower foreground.** The front plants stay a thin dark strip, so they frame the road without covering feet.
-
-### 10a. Party spacing (owner: the heroes looked cluttered)
-
-Mock-up: art/backgrounds/mossy-hollow/formation-spread.png. With foes capped at 3-4 visible bodies, the party
-gets the whole left half: three distinct spots about 80 px apart, heroes barely touching. The back row stands a
-little higher on the road and is shaded slightly darker for depth; the front row (the tank by default) stands
-lowest and brightest. Draw back to front.
-
-## 11. Lane combat (owner, 2026-09-29)
-
-> **Scrapped (owner, 2026-09-29, with the solo-hero change).** Enemies do not walk in; packs stand on the right.
-> Enemy prompts do not need walk-cycle poses. Short ground patches (like Fireball's) are still code effects.
-
-Enemies walk in from the right along the road (Age of War style); the front ones fight, the rest queue behind.
-Area attacks are drawn as **ground zones** on the road (a fire patch, a poison cloud, a frost field) that hurt
-anything walking through until they fade: code effects, like the fire. **Every enemy needs a walk cycle**:
-add two poses to each enemy prompt ("walking, left foot forward" and "walking, right foot forward"), facing left.
+Lane combat (enemies walking in) was scrapped on 2026-09-29: enemies need no walk cycle.

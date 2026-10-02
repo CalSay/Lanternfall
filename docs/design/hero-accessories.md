@@ -4,9 +4,9 @@ Every item a hero visibly carries in their art becomes a **craftable gear piece*
 build each hero (art pipeline: docs/design/art-pipeline.md), so gear follows the art: if Tobin carries a sword,
 Tobin's weapon slot takes a sword.
 
-Materials follow gear-2's two-material rule (owner, "Owner answers to 9.3"): Ranger-line weapons wood + metal,
+Materials follow the two-material rule (owner, 2026-09-28; docs/DECISIONS.md): Ranger-line weapons wood + metal,
 armour leather + cloth; Warrior-line weapons metal + wood, armour metal + leather; Lanternmage-line weapons
-wood + gem, armour cloth + leather. Material names come from docs/design/materials.md.
+wood + gem, armour cloth + leather. Material names come from art/resources/regional-audit/complete-ladder.json.
 
 | Hero | Accessory | Gear slot | Crafted at | Materials (main + second) | Look changes with grade? |
 |---|---|---|---|---|---|
@@ -29,7 +29,7 @@ Not craftable (character, not gear): Wren's scarf, chest strap and bat companion
 1. **Hero gear slots grow to match the art.** Today heroes have 2 positions (`wpn` by role, plus a trinket), and
    a tank's `wpn` is a Shield. Proposal: a hero's weapon kind is what they carry (Tobin: sword; Wren: bow), and
    heroes gain the off-hand or head slot when their art shows one (Wren: quiver and hood). This also covers the
-   owner's playtest note that tanks should be able to hold a sword (playtest-1.md, item 6).
+   owner's playtest note that tanks should be able to hold a sword (playtest 1, 2026-09-29).
 2. **Grade shows on the sprite.** Each hero's palette is locked, so a crafted item's grade can recolour just
    that item's pixels (e.g. oak to ebony to heartwood on the bow). That's cheap in code and makes upgrades visible.
 3. **Uniques keep their own look.** A boss unique could be a separate GPT-drawn prop that replaces the base

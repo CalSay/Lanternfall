@@ -1,6 +1,6 @@
 # Ability tree details
 
-This companion contains the detailed star, unlock and loadout maps linked from hero-abilities.md. It gives each of the 42 abilities its two star branches, maps tier relics to verified boss IDs and displayed names, and lists complete three-slot loadouts. Everything here is a proposal for review; relics and branches are not implemented.
+This companion to hero-abilities.md gives each of the 42 abilities its two branches, maps tiers to bosses and lists three-slot loadouts. Status (2 October 2026): the branches are built as **talents** (`24e-data-talents.js`) and the tiers as **Scrolls** by zone band (`56e-abilities.js`); see [combat-turn-build.md](combat-turn-build.md). The relic-to-boss map and the star wording below are the C19 proposal, kept as design history.
 
 The owner-specified base critical multiplier is **2.5x**. A guaranteed critical applies that multiplier once; it does not roll a second critical or multiply twice. Gear and star effects add percentage points to 2.5x, with a proposed cap of 3.0x. Keen adds 0.5x to the next eligible direct cast under that same cap. Damage over time and stored damage cannot crit. Parry counters use their existing guaranteed-critical rule with the owner's new 2.5x base, exactly once; they do not roll an additional crit.
 

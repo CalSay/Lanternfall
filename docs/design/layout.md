@@ -59,7 +59,7 @@ panel between the stage's left strip and the side column: width `min(560px, max(
 - The bar, Next Up and notices stay live on the right, so a boss's heavy hit can still be parried or dodged
   with a menu open (keys too). Covering the bar would make every menu visit a gamble in a boss fight.
 - The strip on the left is where the hero stands: you still see them fight and their HP over their head. The
-  foes' side is what the panel covers; the fight runs on as usual (auto-play unless you press the bar).
+  foes' side is what the panel covers; the turn fight waits for your input as usual.
 - A true split (stage shrunk beside a menu) would re-lay out and re-zoom the stage on every open and close, and
   at 740 px it leaves neither a readable stage nor a 300 px menu.
 - The top row stays too: gold is in view while you spend it, and Fight / Gather / Switch work from any menu.
@@ -91,7 +91,7 @@ picker, the Attack sheet at 740 x 360 and 1280 x 720; the first guide step at 74
 | 360 x 740 | 336 x 526 (71%) | 360 x 528 (was 416-460) |
 | 412 x 915 | 388 x 701 (77%) | 412 x 703 (was 503-635) |
 
-Mid/late save (`tests/fixtures/save-v2-late.json` with a class chosen), Chromium. The portrait stage
+Mid/late save (`tests/fixtures/save-late.json`), Chromium. The portrait stage
 fills what the header, control row, chip and tab bar leave (more than the 45-60% first sketched, because
 the alternative is empty space under it).
 
@@ -104,19 +104,18 @@ Screenshots (`img/menus-*.png`, portrait): `menus-360-game`, `-fight`, `-party`,
 
 | Tab | Views (first is the default) | Holds |
 |---|---|---|
-| Fight | Upgrades · Bounties · Bestiary | Omen banner, boss gate, hero upgrades, old companions (before the roster) · bounties · zone mastery, bestiary |
-| Party | Team · Roster | formation, your hero, fighting beside you, synergies · roster grid, leads |
-| Gather | Mining · Wood · Foraging · Pack | skill cards, home ground and a how-to line on each node view · the pack (materials and trophies) |
-| Craft | Make · Gear · Powers · Uniques | stations, recipes, Enchanter's Table · your gear, the bag · legendary powers: your powers, the Lantern Book, circle sets (opens with the first legendary power or Circle Crest) · unique loot |
-| Camp | Camp · Tavern · Almanac · Raid | camp, buildings, blessings, roster board · visitor, who is online, hall of heroes, rename · today's Omen and the week · world raid, war horn, relics |
+| Fight (`adv`) | Boss · Bounties · Bestiary · Deepwell | Omen banner, the zone's fight count and boss · bounties · zone mastery, bestiary · Deepwell runs |
+| Hero (`party`) | Hero · Abilities · Training · Stars | the hero card and gear row · Scrolls, slots, abilities and talents · Training · the star map |
+| Gather (`gat`) | Mining · Wood · Forage · Hunting · Store | skill views with nodes and the Now card · the Storehouse |
+| Craft (`forge`) | Make · Gear · Uniques | stations and recipes · your gear and the bag · unique loot |
+| Camp (`world`) | Camp · Tavern · Almanac · Raid | camp scene, buildings, gatherers, Blessings · gatherer board and Tavern perks · today's Omen and the week · world raid |
 
-The **Journal** (lifetime stats) and **Achievements** moved to the bell: the bell sheet has
-Notices | Journal.
+The **Journal** (lifetime stats, Achievements, the Codex) and **Settings** sit in the bell sheet: Notices | Journal |
+Settings.
 
 The switcher is one row of equal buttons (40 px tall plus borders). The open view has the lit bottom edge.
-A dot marks a view with news while it is not open: Bounties (a bounty is ready to claim), Roster (a
-promotion, milestone or new face; same rule as the Party tab's dot), Camp (a build finished), Tavern
-(today's visitor can be hired), Almanac (a weekly goal to claim). A tab gets the same dot when one of its
+A dot marks a view with news the player should act on while it is not open: for example a bounty to claim, a
+finished build, a weekly goal to claim. A tab gets the same dot when one of its
 views has news and the tab is not open (unless the tab already shows its own dot).
 
 The last view per tab and the last tab are remembered in `localStorage` key `lanternfall.ui.v1`
@@ -129,8 +128,7 @@ The last view per tab and the last tab are remembered in `localStorage` key `lan
   old part id (`'tav'`). `sel` (selector or node) opens the view that holds it and scrolls to it. If the
   element does not exist yet (rows built in `update()`), the tab's sections are updated once to build it.
 - Next Up `go: { tab, view, sel, fn }` goes through `setTab`, then scrolls smoothly and flashes the row.
-  All built-in goals were checked to land on a visible target (promote and recruit now go to the Roster;
-  they pointed at the retired companion rows).
+  Every built-in goal must land on a visible target.
 - `closeMenu()` returns to the game view (both layouts since UX-L1). `S.tab` is `''` while no menu is open, so
   "is this tab open?" checks (`S.tab === 'world'`) stay true only while the player can see it.
 

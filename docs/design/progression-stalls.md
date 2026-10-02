@@ -5,6 +5,10 @@ active only (no Auto, no away combat earnings); 175 zones (5 regions x 7 areas x
 Shadowborn Captain; Champions (area) and Elders (region) are fought once; enemies drop gold, Essence, relics, uniques
 and Trophies only; every crafting material comes from a gathering skill; saves can be wiped before 1.0.
 
+> Retired specs named on this page (for example `gear-2.md`, `pacing.md`, `ability-validation.md`) are no longer in
+> `docs/`. Read them with `git show 1536ffa:docs/design/<file>.md`. Current rules: `docs/GAME.md` and
+> `docs/DECISIONS.md`.
+
 Goal: getting new gear stays exciting from zone 1 to zone 175.
 
 ## 0. The short version

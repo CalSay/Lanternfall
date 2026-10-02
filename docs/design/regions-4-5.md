@@ -8,6 +8,16 @@ neither reads as a lamp-keeper or a lantern guardian, replaces Region 5 ("the Lo
 place, **the Gloamvale**, and adds a milestone table for all five region bosses plus the Season 1
 finale. See lore.md 4.4, 4.4a and 8.4-8.8 for the parts of this that also live there.
 
+> **Later decisions override parts of this draft** (see `docs/DECISIONS.md`):
+>
+> - Each region has **7 areas of 5 zones**: Frostgate Bastion and the Heart of the Gloamvale are full seventh areas
+>   (`world-structure.md`, 2026-10-01). Enemies are darkness-born; the roster is `enemies-c22-pale-reach-final.md` and
+>   `enemies-c22-gloamvale-final.md`.
+> - Material names follow the C26 ladder (`art/resources/regional-audit/complete-ladder.json`, owner 2026-10-01),
+>   which replaced the MAT1 names below except for ore.
+> - Retired docs named below (`materials.md`, `core-2.md`, `plan-4.md`, `region-2.md`, `classes-2.md`) are read with
+>   `git show 1536ffa:docs/design/<file>.md`.
+
 **Material and buff-item names: MAT1 has landed.** The owner's rule was real or standard fantasy
 materials (Silver, Cobalt, Orichalcum, Adamantite, Yew, Ebony, Silk, Wyvernhide, Mandrake, Sapphire),
 not invented compounds like "Coralsteel" or "Cinderwool". Task **MAT1** renamed the whole 15-grade
@@ -430,101 +440,11 @@ full table, and sections 1.4, 2.4 and 3 above for the region-by-region breakdown
 
 ---
 
-## 5. Open questions for the owner
+## 5. Decided
 
-1. **Region 5's chapter-end beat, the Seam (2.7).** This doc proposes it as a story beat only (no
-   rank, no gear gate), matching the same "no Great Lantern for Region 5" rule as before, and ties it
-   visually to the final arena's own "seam in the sky" (lore.md 8.7). Confirm the beat, or say if
-   Region 5 should get some other chapter-end reward instead (a title only, for symmetry with the
-   other four regions, without a full Great Lantern ceremony).
-2. **Whether the Deepwell's Season 1 addition (2.8: one new reachable stretch past the Climber's
-   landing, opened only after the ending, for the Voice's rematch) is the right size of change**, or
-   whether the coordinator wants the Deepwell to stay completely untouched until Season 2 and have
-   the rematch live somewhere else (for example, back in the Gloamvale, unlocked after the ending).
-3. **All new character names in this doc** (Rowan, Haldor, Liv): approve as a set, or flag any that
-   should change. (Material and buff-item names are no longer an open question here — see MAT1.)
-
----
-
-## LORE-R45b changes
-
-### What changed
-
-- **Region bosses are Shrouds, not Listeners** (lore.md 4.4, 4.4a). None of the five reads as a lamp
-  role any more: no guarding, keeping or listening for a light. Each one already took a region's
-  light away, once, and holds the region shrouded since.
-  - The Hollow: **The Drowning Dark** (was "The Listener"). Same creature (the Elder Marsh Wraith of
-    Wraithmarsh V); the "hears every lamp" framing is dropped for "drowned the marsh's own lights and
-    has held the fog since."
-  - The Sunken Coast: **Silas Penrow, the Fogbound** (was "The Drowned Keeper"). Same character and
-    the same broad history (he gave his light to the sea's promise); the "lamp-keeper who agreed"
-    framing is dropped for "the sea-fog he wears is the shroud, and it is what the Voice wanted all
-    along, not his light specifically."
-  - The Emberwaste: **the Pyre Knight** keeps his name; "guards the fire for the Voice" is dropped —
-    he does not guard or keep anything, he is what holds the Lea's stolen light captive.
-  - The Pale Reach: **the Whitehush** (was "the Star-Fallen"). A new identity, not a renamed person:
-    it is what killed the comrade named on Kestrel's spear, not a shape that comrade turned into.
-    That comrade is now named: **Rowan**.
-  - The Gloamvale (Region 5): still no Shroud; the Voice itself waits at its heart. Unchanged in kind,
-    renamed in place (below).
-- **The Voice's reveal line changes** from "There were lamps before this one" to **"Every flame goes
-  out. I can wait."** (lore.md 8.6). The Season 1 closing question changes to match: not a riddle
-  about an older lantern, but the plain fact that the Voice has gone to wait under the party's own
-  camp.
-- **Region 5 is a new place, the Gloamvale**, not the Deepwell continued (lore.md 8.4; this doc,
-  section 2, fully rewritten). It has its own palette, landmarks, seven zone types and elders. The
-  Season 1 finale moves from "the Bottom of the Stair" to "the Heart of the Gloamvale" (lore.md 8.6,
-  8.7). The Deepwell stays its own dungeon, unchanged, except for one new reachable stretch that opens
-  only after the ending, where the Voice's rematch lives (2.8).
-- **Milestones for all five region-boss falls, plus the Season 1 finale**, written as a table (lore.md
-  4.4a): each gives a sight (the shroud lifts, for good), a person (someone freed comes to Hollow's
-  Rest and brings a building or service), and a power (a new system, timed to plan-4.md's unlock
-  order where that order is already fixed — the Hollow's Proving, the Coast's Enchanting — and
-  flagged as a draft where it is not yet fixed — the Emberwaste's and the Pale Reach's).
-- **The Whiteout is explained** for players (1.3a): an optional Pale Reach hazard, like the Coast's
-  tide, that halves visibility, delays danger warnings, and rewards frost resist; farming through it
-  pays better.
-- **Material and buff-item names are marked superseded by MAT1** throughout both docs (coordinator
-  correction, this task): nothing new was invented for the Gloamvale, and the existing Region 1-4
-  draft tables are flagged, not rewritten, pending MAT1's rename to real/standard fantasy words.
-
-### src/ files and strings a code task should check
-
-None of this has been built yet, so nothing in `src/` is wrong today — but the following already use
-the terms and names this revision retires, and a code task drawing on this doc (or on the earlier
-LORE-R45 draft) should use the new names instead:
-
-- `src/js/21h-lore-hollow.js`: `HOLLOW_ARRIVAL_BOSS` comment and the `listener` beat id/title/text (11,
-  71, 161) all say "the Listener" — rename to reflect "The Drowning Dark" (a Shroud) when this file is
-  next touched.
-- `src/js/22-data-regions.js`: `boss: { zone: 35, name: 'The Listener', ... }` (line 48) — the display
-  name should become `'The Drowning Dark'` when a code task updates it (not done by this doc; docs
-  only, per CLAUDE.md).
-- `src/js/55-story.js`: comments at lines 13 and 176 refer to "the Listener" for the Hollow's boss
-  name slot — update the comment text alongside the display-name change above.
-- `src/js/57c-codex.js` (line ~119) and `src/js/58-deeds.js` (line ~113) and `src/js/21i-lore-exped.js`
-  (line ~14): comments mentioning "the Listener" — cosmetic, but should be updated for anyone reading
-  the code after this doc lands.
-- `src/js/21b-stories-coast.js`: no code line currently says "Listener", but several written lines
-  lean on the "lamp-keeper who kept his promise" framing this revision drops. A future coast-story
-  pass should look at: the `win` lines `'The light stays lit. That was the promise.'` and `'Go home.
-  Keep your little lamps.'`, and the `fall` lines `'It promised the light would never go out.'` and
-  `'Tell Hallam I kept it lit.'` (all currently readable as "he is still a keeper, just a corrupted
-  one," which is exactly the framing the owner asked to drop in favour of "the fog is the point").
-  This doc does not rewrite them, since `21b-stories-coast.js` belongs to a different task's file
-  ownership; it only flags them.
-- No file in `src/` contains "Star-Fallen", "lamps before this one" or "Lamp-Thief" (checked by grep):
-  the Star-Fallen and the old reveal line were never wired into code, so there is no in-code string to
-  migrate for those; the Warlock's title was already changed to "the Shadowbinder" in `classes-2.md`
-  ahead of this task and needs no further follow-up here.
-- Any future Region 4/5 build task should read core-2.md 5.2/5.4 and wait on **MAT1** for grade and
-  buff-item names rather than using the working names in sections 1.4, 2.3, 2.4, 3 and 4 of this doc.
-
-### Open questions for the owner
-
-Kept to three; see section 5 above for the full text of each:
-
-1. Confirm the Gloamvale's chapter-end beat, the Seam, or ask for a different close (section 5.1).
-2. Confirm the size of the Deepwell's Season 1 addition (the rematch's new stretch), or move the
-   rematch elsewhere (section 5.2).
-3. Approve the new character names — Rowan, Haldor, Liv (section 5.3).
+- The Seam as Region 5's chapter-end beat, and the Deepwell's one new stretch for the Voice's rematch: yes
+  (coordinator, 2026-09-28, owner delegated).
+- New names (Rowan, Haldor, Liv and others) follow the NAME1 pass, adopted 2026-09-29.
+- LORE-R45b replaced the Listener framing: region bosses are the Voice's Shrouds (the Fenmother, Silas the Fogbound,
+  the Pyre Knight, the Whitehush), the Voice's line is "Every flame goes out. I can wait.", and the finale is at the
+  Heart of the Gloamvale. The code renames were done in LORE-C1.

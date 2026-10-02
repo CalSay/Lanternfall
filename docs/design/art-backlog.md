@@ -13,10 +13,10 @@ GPT keeps the same character and colours.
 | Tobin | done | done | done (7 poses; code draws pickaxe, axe, sickle, spear) | |
 | Pip | done | done | done (7 poses; code draws the tools) | optional: redraw natively at 86 px (art-pipeline 7) |
 
-**Gathering tools.** The game has four gathering places (63c-scenery-gather): ore (mine), wood (woods), fibre and
-herbs (meadow), crystal (glade). Three tools cover them: a **pickaxe** for ore and crystal, an **axe** for wood and a
-**sickle** for fibre and herbs. The heroes are drawn with **empty fists** and code draws the tool in their hands, so
-one set of 8 poses serves all three tools. Code also adds the chips, sparks, wood splinters and cut grass.
+**Gathering tools.** The game has five gathering places (63c-scenery-gather and Hunting): ore (mine), gems (glade),
+wood (woods), fibre and herbs (meadow) and hide (hunting grounds). Today code draws the pickaxe, axe, sickle and spear in
+the heroes' empty fists. Under the art freeze (owner, 2026-09-30) new tools, chips and sparks come from the artist in
+the pack; the code-drawn ones stay until a vetted pack replaces them.
 
 Received 2026-09-30 for Wren, Tobin and Pip as one 8-pose sheet each (large, soft-edged). A script shrinks each pose
 to the 224x192 canvas and snaps it to the hero's palette; a Tobin trial came out clean. Pose order on the sheets:
@@ -47,20 +47,17 @@ to the 224x192 canvas and snaps it to the hero's palette; a Tobin trial came out
 > 2. Fallen: lying on her side on the ground, facing the viewer, eyes closed, bow beside her.
 > Export each pose as its own PNG, plus a contact sheet.
 
-## 2. Enemies (Region 1)
+## 2. Enemies
 
-Seven areas: Mossy Hollow, Batwing Caves, The Bonefield, Beetle Barrows, Fungal Deep, Quarry Ruins, Wraithmarsh.
-Each needs its regular foes, its zone boss, and the region boss (the Fenmother). No walking poses (lane combat is
-scrapped). Per enemy: **idle, attack wind-up, attack, hurt, death**, facing left, sized by band (art-pipeline 9:
-swarm 24-36 px, normal 48-64, brutes about 96, bosses bigger). Bosses and elites also need a **heavy wind-up** pose
-(the telegraph players parry or dodge) and a **staggered** pose. A full list of enemies per area comes with the
-first enemy request.
+The roster is `enemies-c22-roster.md` (215 enemies plus 175 Captains), with each monster's moves in its regional
+`enemies-c22-*-final.md` card. Poses follow the moves: one pack per monster, its Captain in the same pack. Done and in
+the game: the Thorn Imp (zone 1) and Gloomjaw (zone 2). Next: zone 3 onward, in order.
 
-## 3. Backgrounds (paused by the owner)
+## 3. Backgrounds
 
-Mossy Hollow v3 needs the road fix, then the other six Region 1 areas. They wait for the landscape layout.
+Mossy Hollow's painted night background is approved and used for zones 1-7 (2026-10-02). The other areas follow.
 
 ## 4. Icons
 
-The draft icons in docs/design/mockups/combat-screen.html are drawn in code (24x24). Keep them, or ask GPT for a
-matching icon sheet later.
+The C26 icon packs are approved and in the game (resources, gear, actions, menus, statuses). Ability icons: see
+`ability-art-brief.md`.

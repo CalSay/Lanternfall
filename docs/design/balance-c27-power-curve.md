@@ -9,6 +9,10 @@ for owner and coordinator review. Read with `hero-abilities.md` §2a (binding), 
 one foe on the Speed timeline, per-hit defence, cooldown refunds and counters; not the game engine). **[R]** marks a
 number measured from the real game core (`tools/lib/core.mjs`, seed 1, today's `main`).
 
+> Retired specs named on this page (for example `gear-2.md`, `pacing.md`, `ability-validation.md`) are no longer in
+> `docs/`. Read them with `git show 1536ffa:docs/design/<file>.md`. Current rules: `docs/GAME.md` and
+> `docs/DECISIONS.md`.
+
 ## 0. The short version
 
 - **One scale for everything.** Zone 1: hero about 110 HP and 22 Attack, Speed 100. Zone 175: about 11,500 HP and

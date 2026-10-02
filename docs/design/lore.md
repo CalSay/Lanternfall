@@ -20,6 +20,22 @@ This file is the single source of truth for the world's story. It builds on ever
 written in the game (Appendix A lists those facts) and contradicts none of it. Where old lines
 could be read two ways, section 11 says which reading is canon now.
 
+> **Later owner decisions override parts of this bible** (see `docs/DECISIONS.md`):
+>
+> - **4.1 and 4.2 (what monsters are):** combat enemies are agents born from the darkness, not things the dark soaked
+>   too long. Only Hunting's beasts are ordinary animals driven into a rage, and they are never fought as enemies
+>   (2026-10-01). The roster is in `enemies-c22-roster.md`.
+> - **The party is gone (2026-09-29).** One hero carries the lamp; the companions are playable heroes. Sections 5 and
+>   6 that speak of a party, companions in the field, Bonds, Sworn, Lanternborn and Lanternlit are history: Bonds
+>   become a campaign story told through NPCs.
+> - **4.6 the pinnacles:** not in the game (removed with the party systems). Their story ideas can feed the Voice.
+> - **The Voice** is one big fight in phases, the Gloamvale's region boss (2026-10-01).
+> - **Story delivery:** the owner found the current lines meaningless in context (2026-10-01); `story-c28.md` proposes
+>   the fix.
+>
+> Retired design docs named below (`plan-4.md`, `region-2.md`, `classes-2.md`, `materials.md` and others) are no longer
+> in `docs/`. Read them with `git show 1536ffa:docs/design/<file>.md`.
+
 Who reads this:
 
 - **Writers** (tasks LORE2 and later, and any task that writes player-facing text): sections 1-9.
