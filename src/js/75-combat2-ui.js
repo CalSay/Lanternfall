@@ -6,7 +6,8 @@
 //     "Enrage in 0:12", the three lantern pips of the active reward (3.8); for a big pack, "6 of 9"
 //   - the ability buttons' rims: purple while a boss casts its big move (interrupt now), gold while a Stagger or a
 //     reaction window is open on the focus foe (hit now)
-//   - haptics (a setting, on by default where the device has it) and "Buttons on the left" (a setting)
+//   - haptics (a setting, on by default where the device has it), "Buttons on the left" (a setting) and "Wider timing
+//     windows" (a setting for turn fights, S.turn.assist: 59k turnAssistX)
 // Reduced motion: no pulses or sweeps (60-combat2.css); the banner appears in place.
 
 {
@@ -89,20 +90,22 @@
   side();
   on('sceneReset', side);
 
-  // ---- the two settings rows (the Journal's settings) ----
+  // ---- the settings rows (Settings > Combat) ----
   registerSection('log', {
     id: 'cb2set', title: 'Combat',
     mount(sec) {
-      const row = (label, key, note) => {
+      // st: the save object the setting lives in (S.cb2, or S.turn for the turn fight's Wider timing windows, 59k)
+      const row = (label, key, note, st = () => S.cb2) => {
         const b = el('button', 'cb-toggle'); b.type = 'button';
-        const put = () => { const on_ = !!(S.cb2 && S.cb2[key]); b.textContent = `${label}: ${on_ ? 'On' : 'Off'}`; b.setAttribute('aria-pressed', on_ ? 'true' : 'false'); };
-        b.addEventListener('click', () => { if (!S.cb2) return; S.cb2[key] = S.cb2[key] ? 0 : 1; put(); side(); save(); });
+        const put = () => { const on_ = !!(st() && st()[key]); b.textContent = `${label}: ${on_ ? 'On' : 'Off'}`; b.setAttribute('aria-pressed', on_ ? 'true' : 'false'); };
+        b.addEventListener('click', () => { const o = st(); if (!o) return; o[key] = o[key] ? 0 : 1; put(); side(); save(); });
         put();
         const w = el('div', 'cb-set'); w.append(b, el('p', 'note', note));
         return w;
       };
       sec.append(row('Haptics', 'haptic', 'A short buzz when a warning starts, and when you answer it.'),
-        row('Buttons on the left', 'left', 'Moves the ability buttons to the left side, for your left thumb.'));
+        row('Buttons on the left', 'left', 'Moves the ability buttons to the left side, for your left thumb.'),
+        row('Wider timing windows', 'assist', 'Gives you more time to parry and dodge, from your next fight. Rewards stay the same.', () => S.turn));
     },
     update() {}
   });

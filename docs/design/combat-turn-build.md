@@ -149,15 +149,22 @@ the real-time fight.
   Fireball, Ignite and Lanternburst (Codex's list, `hero-abilities.md` 2a.4).
 - **The parry window** is 0.18 s and the dodge window 0.35 s. Pinned and Brace widen them, Last Stand doubles the
   parry, under caps of 0.35 s and 0.5 s.
+- **Wider timing windows** (owner, 2026-10-02: an assist, "yes, but not high priority"): a setting in Settings > Combat,
+  off by default, saved as `S.turn.assist`. On, every fight from the next one has parry and dodge windows x1.5
+  (`TURN_TUNE.assistX`, in `turnMakeProfile`), under the same caps: 0.27 s and 0.5 s. Rewards do not change. The
+  Deepwell and the Provings take it too, since they build the same profile.
 
 ## Numbers (the reference hero)
 
 Foe HP and hits are set against a **reference hero for the zone**, measured from the balance sim's saves at each
 hero's frontier (three heroes, 25 days each, 2 October 2026):
 
-- One Attack of the reference hero: a share of the zone's old foe HP (`mobHp`), 0.7 up to zone 10, then falling to 0.2 by
-  zone 35. Gear gets harder to keep up as zones climb, and the sim shows it.
-- The reference hero's max HP: 1.2 x `mobHp`.
+- One Attack of the reference hero: a share of the zone's old foe HP (`mobHp`), 0.7 up to zone 10, then falling to 0.22 by
+  zone 34, 0.12 at zone 35, 0.09 at 38 and 0.065 from 42 (`TURN_TUNE.refAtk`). Gear gets harder to keep up as zones
+  climb, and the sim shows it.
+- The reference hero's max HP: 1.2 x `mobHp` to zone 34, then 0.95 at 35, 0.6 at 38 and 0.4 from 42 (`TURN_TUNE.refHpX`).
+  Both still grow every zone in absolute terms (Attack about 11-13% a zone from 33 to 42), so the Deepwell's
+  `turnPowerZone` still works.
 - A normal foe has about 5 Attacks of HP (the Thorn Imp and Gloomjaw 4), an elite 9, a zone boss 16, a region boss 30.
   With abilities that is 2 to 4 of your turns for a normal foe and 5 to 9 for a boss. The first three zone bosses are
   easier (65%, 80%, 90% of that HP) while you learn to parry and dodge.
@@ -166,8 +173,32 @@ hero's frontier (three heroes, 25 days each, 2 October 2026):
 - Rewards per fight are higher, since fights are fewer: gold x3, XP x2.5, Essence chance x1.6 (`TURN_TUNE`).
   These are first numbers, to be set from the owner's play and a turn-based sim pass.
 
-First sim pass (`node tools/sim.mjs --report turns`, 2 seeds; "good" parries 60% of hits and dodges 90% of the rest,
-"casual" 25% and 50%; the bot acts at once, so real fights take longer):
+### Late zones (balance pass, 2 October 2026; owner: "late-zone balance: yes")
+
+The late fixture (Pip, level 49, zone 38) had 0.21 of the reference Attack and 0.40 of its HP. Two things made it weak:
+
+1. **The fixture is undergeared.** Its Attack Training is stuck at 40, the base class's cap, at level 49: it never did
+   the Proving after the Fenmother. Training to its level (about 0.5M gold; it holds 7.3M) is x2.44 Attack. Its gear
+   (class pieces and Charm) is rare or uncommon tier 4 +10; epic is x1.29 more. It slots only Fireball (it predates
+   Scrolls). Made whole, its Attack is 0.66 of the old reference.
+2. **The old reference was wrong past zone 34.** `mobHp` steps x1.7 at zone 35 (the region step, so x2.07 from 34 to 35)
+   and grows x1.22 a zone after. The old table's 0.2 at zone 35 matched a hero against `mobHp` without that step (0.2 /
+   1.7 = 0.12), and it stayed flat past 35. Measured on a hero who keeps up (a full epic tier-4 +10 set, Training at
+   their level, level 40 at zone 35): their Attack is 0.09-0.15 of `mobHp` at zone 35 (Pip 0.09, Wren 0.15; Tobin 0.07
+   with twice their HP; the legacy sim's Wren at her zone 35 frontier: 0.10-0.12) and 0.04-0.08 at zone 38. That hero
+   barely grows there: turn fights give a level every 2,000-8,000 kills at levels 40-45, Training never passes the
+   hero's level, and Starlit (tier 5) gear opens at zone 42. Their HP falls the same way (Pip: 1.4 x `mobHp` at zone 35,
+   0.8 at 38).
+
+So from zone 35 the reference follows that hero: refAtk and refHpX are zone tables that fall after the region step.
+Zones 1-34 are unchanged. Foe HP in reference Attacks (`TURN_FOE_HP`: normal 5, elite 9, boss 16, region 30) and the
+move shares are unchanged; the Fenmother (zone 35) takes 30 Attacks of a lower reference. The coast past zone 42 keeps
+the 0.065 / 0.4 shares, so its foes grow x1.22 a zone again: the coast needs its own pass with its own foes.
+The Provings fight at zone 35's reference, so their foes now have 40% less HP (their hits are shares of your own
+health, so those stay). The Deepwell finds its depth from the same table (`turnPowerZone`), so it follows on its own.
+
+Sim pass (`node tools/sim.mjs --report turns`, 2 seeds; the late rows from the late-zone pass; "good" parries 60% of
+hits and dodges 90% of the rest, "casual" 25% and 50%; the bot acts at once, so real fights take longer):
 
 | Profile | Foe | Good: win %, hero turns | Casual: win %, hero turns |
 |---|---|---|---|
@@ -177,10 +208,19 @@ First sim pass (`node tools/sim.mjs --report turns`, 2 seeds; "good" parries 60%
 | Fresh Pip, zone 1 | boss | 100%, 3.9 | 85%, 4.5 |
 | Early fixture (Wren, zone 8) | boss | 100%, 4.1 | 91%, 4.9 |
 | Mid fixture (Tobin, zone 20) | boss | 100%, 6.4 | 100%, 8.0 |
-| Late fixture (Pip, zone 38) | boss | 66%, 22.6 | 0% |
+| Late fixture (Pip, zone 38) | normal | 100%, 3.8 | 88%, 4.5 |
+| Late fixture (Pip, zone 38) | boss | 99%, 10.4 | 30% |
+| Late fixture kept up, zone 35 | normal | 100%, 2.0 | 100%, 2.1 |
+| Late fixture kept up, the Fenmother (zone 35) | region boss | 100%, 9.4 | 73%, 10.1 |
+| Late fixture kept up, zone 38 | normal | 100%, 2.7 | 100%, 2.8 |
+| Late fixture kept up, zone 38 | boss | 100%, 6.9 | 90%, 7.3 |
 
-The late fixture is a weak hero for zone 38 (its Attack is a quarter of the reference); the coast's numbers need their
-own pass once the coast has its own foes.
+"Kept up" (`late-kept-35`, `late-kept-38` in the sim): the late fixture's Pip at level 40 (zone 35) or 41 (zone 38),
+Attack Training at her level, her gear (four class pieces and the Charm) epic +10, and Fireball, Spark and Nova slotted.
+Before the late-zone pass the same hero won 38% of Fenmother fights played casually (15.4 hero turns played well), and
+at zone 38 took 4.9 turns for a normal foe and 14.5 for a boss (30% casual). The raw late fixture stays behind on
+purpose: it is undergeared (above), and before the pass it won 71% of zone 38 bosses played well (22 turns) and none
+played casually. Zones 1-34 are unchanged, and so are their rows.
 
 ## Art
 

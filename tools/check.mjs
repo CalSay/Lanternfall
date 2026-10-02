@@ -7098,6 +7098,15 @@ if (section('turn UI (browser)')) try {
           return { slot: !!h && !h.hidden, chip: !!c && c.offsetParent !== null, time: (document.querySelector('.tr-time') || {}).textContent || '', turn: turnCombatOn() }; })()`);
         await X(`trialEnd(false, 'quit'); 1`); await page.waitForTimeout(200);
         out.provingEnd = await X(`(() => { const h = document.querySelector('.tr-hud'); return !!h && h.hidden && !document.querySelector('#nuSlot.tr-on'); })()`);
+        if (abilities) {   // Settings > Combat: Wider timing windows (off by default; one tap turns it on and saves it)
+          await page.click('#bellBtn'); await page.locator('.nlog-seg button[data-v="settings"]').click();
+          const btn = page.locator('#sec-cb2set button.cb-toggle', { hasText: 'Wider timing windows' });
+          out.assist0 = await btn.textContent();
+          await btn.click(); await page.waitForTimeout(100);
+          out.assist1 = await btn.textContent();
+          out.assistOn = await X(`S.turn.assist === 1 && JSON.parse(localStorage.getItem('lanternfall.save.v5')).turn.assist === 1 && Math.abs(turnMakeProfile(combatFoes()[0], cbUnitByKey('hero')).parryWindow - 0.27) < 1e-9`);
+          out.assistNote = await X(`(document.querySelector('#sec-cb2set .cb-set:last-child .note') || {}).textContent || ''`);
+        }
         await ctx.close(); return out;
       };
       const on = await run(844, 390, true);
@@ -7108,6 +7117,8 @@ if (section('turn UI (browser)')) try {
       assert(/Tap again/.test(on.armed) && on.learned, `turn UI: Learn takes two taps, spends the Scroll, and puts the ability in a free slot (${JSON.stringify(on.armed)}, ${on.learned})`);
       assert(on.proving && on.proving.slot && !on.proving.chip && /Foe 1\/5, \d+ turns/.test(on.proving.time) && on.proving.turn && on.provingEnd,
         `turn UI: a Proving fights in turns; its banner sits where the Next up chip was and counts foes and turns, and goes on Give up (${JSON.stringify(on.proving)}, ${on.provingEnd})`);
+      assert(on.assist0 === 'Wider timing windows: Off' && on.assist1 === 'Wider timing windows: On' && on.assistOn && /parry and dodge/.test(on.assistNote),
+        `turn UI: Settings > Combat has Wider timing windows, off by default; a tap turns it on, saves it and widens the parry window from the next fight (${JSON.stringify([on.assist0, on.assist1, on.assistOn, on.assistNote])})`);
       assert(!on.errors.length, 'turn UI: no page errors' + (on.errors.length ? ': ' + on.errors[0] : ''));
       const port = await run(360, 740, false);
       assert(/VS/.test(port.seen.card) && port.seen.strip >= 5 && !port.errors.length, `turn UI 360x740: the versus card and turn strip work in portrait (${JSON.stringify(port.seen)})`);
@@ -7394,6 +7405,49 @@ if (section('C29 turn fights (core)')) try {
   { const { E } = fresh('pip', 13);
     assert(/^Hits for about \d+, Burn \d+ a turn\.$/.test(E('turnAbilityNumbers("fire")')) && E('turnAbilityNumbers("hex")') === '', `C29: an ability's details give its numbers at your power now (${E('turnAbilityNumbers("fire")')})`); }
 } catch (e) { fail('C29 turn fights crashed: ' + (e.stack || e)); }
+
+if (section('C29 late zones and Wider timing windows (core)')) try {
+  // Late-zone pass (combat-turn-build.md "Numbers"): zones 1-34 keep the first reference; from zone 35 (the region step) the
+  // reference hero's Attack and HP shares fall, so a hero who keeps up plays zones 35+ in the same band as earlier ones.
+  const FX = n => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-' + n + '.json'), 'utf8');
+  { const g = loadCore({ seed: 1, turns: true }), E = s => g.eval(s);
+    const old = z => { const P = [[1, 0.7], [10, 0.7], [15, 0.55], [22, 0.42], [30, 0.3], [35, 0.2]]; if (z <= 1) return 0.7;
+      for (let i = 1; i < P.length; i++) if (z <= P[i][0]) { const [z0, a] = P[i - 1], [z1, c] = P[i]; return a + (c - a) * (z - z0) / (z1 - z0); } return 0.2; };
+    const same = [], rising = [];
+    for (let z = 1; z <= 34; z++) if (Math.abs(E(`turnRefAtkX(${z})`) - old(z)) > 1e-12 || Math.abs(E(`turnRefHp(${z}) / mobHp(${z})`) - 1.2) > 1e-12) same.push(z);
+    for (let z = 2; z <= 80; z++) if (!(E(`turnRefAtk(${z}) > turnRefAtk(${z - 1}) && turnRefHp(${z}) > turnRefHp(${z - 1})`))) rising.push(z);
+    assert(!same.length, `late zones: zones 1-34 keep the first reference hero (Attack share and 1.2x HP) (${same.join() || 'ok'})`);
+    assert(!rising.length && E('turnRefAtkX(35) <= 0.2 / 1.6 && turnRefHp(35) / mobHp(35) < 1.2'),
+      `late zones: from zone 35 the reference leaves out the x1.7 region step, and its Attack and HP still grow every zone, so turnPowerZone holds (${rising.join() || 'ok'})`); }
+  // the late fixture made a hero who keeps up (as sim --report turns late-kept-38): good players win, fights stay in the band
+  { const g = loadCore({ seed: 3, turns: true, storage: memoryStorage({ [KEY]: FX('late') }) }), E = s => g.eval(s);
+    E(`loadSave(); S.L = 41; S.solo.asc.pip = 1; S.solo.tr.pip.atk = 41;
+      for (const sl of Object.keys(S.equip)) { const it = itemById(S.equip[sl]); if (it && !['pick', 'axe', 'sickle', 'spear'].includes(it.slot)) { it.r = 'epic'; it.plus = 10; } }
+      S.abil.unl.pip = ['spark', 'nova']; S.solo.eq.pip = ['fire', 'spark', 'nova']; S.maxZone = 38; setZone(38); S.activity = 'fight'; arena = null; gearDirty()`);
+    const run = (boss, skill) => E(`fightBoss = ${boss}; spawn(); (r => ({ win: r.kills / Math.max(1, r.kills + r.deaths), turns: r.totalHeroTurns / Math.max(1, r.completedFights) }))(turnCombatSample({ profile: turnCombatProfile(), seconds: 1800, seed: 3, skill: ${JSON.stringify(skill)} }))`);
+    const good = { parry: 0.6, dodge: 0.9, perfect: 0.4, good: 0.45 }, casual = { parry: 0.25, dodge: 0.5, perfect: 0.1, good: 0.4 };
+    const n = run(false, good), b = run(true, good), c = run(true, casual);
+    assert(n.win >= 0.98 && n.turns >= 2 && n.turns <= 4 && b.win >= 0.95 && b.turns >= 5 && b.turns <= 9 && c.win >= 0.6 && c.win <= 0.98 && !g.errors.length,
+      `late zones: a zone-38 hero who keeps up wins normal foes in 2-4 turns and bosses in 5-9 played well, and 60-98% of bosses played casually (${JSON.stringify({ n, b, c })})`); }
+  // Wider timing windows (Settings > Combat; owner 2026-10-02): off by default, parry and dodge windows x1.5 under the caps, rewards unchanged
+  { const g = loadCore({ seed: 29, turns: true }), E = s => g.eval(s);
+    E('soloPick("wren", {now:true}); S.onboard && (S.onboard.tips = false, S.onboard.all = true); S.activity = "fight"; spawn()');
+    const off = E('(p => ({ parry: p.parryWindow, dodge: p.dodgeWindow, gold: p.goldPerKill, xp: p.xpPerKill, ess: p.essChance }))(turnCombatProfile())');
+    assert(E('S.turn.assist === 0 && STATE_DEFAULTS.turn.assist === 0') && Math.abs(off.parry - 0.18) < 1e-9 && Math.abs(off.dodge - 0.35) < 1e-9,
+      `Wider timing windows: off by default (save default 0), the windows are 0.18 s and 0.35 s (${JSON.stringify(off)})`);
+    E('S.turn.assist = 1');
+    const on = E('(p => ({ parry: p.parryWindow, dodge: p.dodgeWindow, gold: p.goldPerKill, xp: p.xpPerKill, ess: p.essChance }))(turnCombatProfile())');
+    assert(Math.abs(on.parry - 0.27) < 1e-9 && on.dodge === E('TURN_TUNE.windowCaps.dodge') && on.gold === off.gold && on.xp === off.xp && on.ess === off.ess,
+      `Wider timing windows: on, the parry window is x1.5 (0.27 s) and the dodge x1.5 up to its 0.5 s cap; gold, XP and Essence are unchanged (${JSON.stringify(on)})`);
+    E('globalThis.__w = []; on("parryWindow", x => __w.push(+(x.closesAt - x.opensAt).toFixed(3))); spawn(); combatFoes()[0].hp = combatFoes()[0].max = 1e12');
+    for (let t = 0; t < 12 && !E('__w.length'); t += 0.05) { E('turnCombatSnapshot().phase === "hero" && turnCombatAction("attack")'); g.fn.tick(0.05); }
+    assert(E('__w[0]') === 0.27 && !g.errors.length, `Wider timing windows: a live fight opens the wider parry window (${E('__w.join()')})`);
+    E('save()');
+    const g2 = loadCore({ seed: 2, turns: true, storage: memoryStorage({ [KEY]: g.storage.get(KEY) }) });
+    const g3 = loadCore({ seed: 2, turns: true, storage: memoryStorage({ [KEY]: FX('mid') }) });
+    assert(g2.eval('loadSave(); S.turn.assist') === 1 && g3.eval('loadSave(); S.turn.assist') === 0,
+      'Wider timing windows: the setting is kept in the save, and a save from before it loads with it off'); }
+} catch (e) { fail('C29 late zones crashed: ' + (e.stack || e)); }
 
 if (section('C29 Deepwell and Provings in turns (core)')) try {
   // owner (2026-10-02): the Deepwell and the Provings fight in turns too. A floor's foes come one at a time; Oil burns only

@@ -1444,7 +1444,7 @@ async function runEconReport() {
 
 // C29: the turn fight's numbers (59k turnCombatSample, the live rules in a scratch fight). For each profile (a fresh
 // hero at zone 1, and the early, mid and late fixtures at their frontier) it fights normal foes and the zone boss with two
-// players: 'good' (parries 60% of hits and dodges 90% of the rest; timed rings 40% Perfect, 45% Good) and 'casual' (25% and
+// players (and the late fixture made a hero who keeps up, at zones 35 and 38: see late-kept below): 'good' (parries 60% of hits and dodges 90% of the rest; timed rings 40% Perfect, 45% Good) and 'casual' (25% and
 // 50%; 10% Perfect, 40% Good). It reports the win rate,
 // hero turns and seconds a fight, and kills, gold and Essence an hour of play.
 // Usage: --report turns [--hours 1] [--seeds 3] [--json path]
@@ -1454,15 +1454,24 @@ async function runTurnReport() {
   const seconds = Number(args.hours || 1) * 3600, count = Number(args.seeds || 3);
   if (!(seconds > 0) || !Number.isInteger(count) || count < 1) throw new Error('Positive hours and integer seeds required');
   const fx = n => fs.readFileSync(path.join(ROOT, 'tests/fixtures/save-' + n + '.json'), 'utf8');
-  const profiles = [['fresh-wren', 'wren'], ['fresh-tobin', 'tobin'], ['fresh-pip', 'pip'], ['early', '', fx('early')], ['mid', '', fx('mid')], ['late', '', fx('late')]];
+  // late-kept-35 / late-kept-38: the late fixture's Pip as a hero who keeps up (the late-zone balance pass): level 40 at
+  // zone 35 (the Fenmother) and 41 at zone 38 (turn fights give a level every 2,000-8,000 kills there), Attack Training
+  // at her level (ascended after the Fenmother), her gear (four class pieces and the Charm) epic +10, tier 4, and three abilities slotted
+  // (Fireball, Spark, Nova). The raw fixture has Training stuck at 40 by level 49, rare gear and only Fireball.
+  const kept = (z, L) => `S.L = ${L}; S.solo.asc.pip = ${L > 40 ? 1 : 0}; S.solo.tr.pip.atk = ${L};
+    for (const sl of Object.keys(S.equip)) { const it = itemById(S.equip[sl]); if (it && !['pick', 'axe', 'sickle', 'spear'].includes(it.slot)) { it.r = 'epic'; it.plus = 10; } }
+    S.abil.unl.pip = ['spark', 'nova']; S.solo.eq.pip = ['fire', 'spark', 'nova']; S.maxZone = ${z};`;
+  const profiles = [['fresh-wren', 'wren'], ['fresh-tobin', 'tobin'], ['fresh-pip', 'pip'], ['early', '', fx('early')], ['mid', '', fx('mid')], ['late', '', fx('late')],
+    ['late-kept-35', '', fx('late'), kept(35, 40)], ['late-kept-38', '', fx('late'), kept(38, 41)]];
   // perfect / good: the share of timed-ability rings pressed Perfect / Good (the rest are missed)
   const players = { good: { parry: 0.6, dodge: 0.9, perfect: 0.4, good: 0.45 }, casual: { parry: 0.25, dodge: 0.5, perfect: 0.1, good: 0.4 } };
   const rows = [];
-  for (const [name, hero, save] of profiles) for (const boss of [false, true]) for (const [pl, skill] of Object.entries(players)) {
+  for (const [name, hero, save, setup] of profiles) for (const boss of [false, true]) for (const [pl, skill] of Object.entries(players)) {
     let agg = null;
     for (let i = 0; i < count; i++) {
       const sd = (Number(args.seed) || 1) + i, core = loadCoreRaw({ seed: sd, prelude: 'Date.now = () => 1791187200000;' }), e = s => core.eval(s);
       if (save) { core.storage.set(SAVE_KEY, save); e('loadSave()'); }
+      if (setup) e(setup);
       e(`TURN_TUNE.on = 1; ${hero ? `soloPick(${JSON.stringify(hero)}, {now:true});` : ''} setZone(Math.max(1, S.maxZone)); S.activity='fight'; arena=null; gearDirty();
         fightBoss = ${boss}; spawn();`);
       if (args.eval) e(String(args.eval));
