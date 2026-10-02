@@ -7190,16 +7190,48 @@ if (section('turn UI (browser)')) try {
           await X(`document.querySelector('.tv-restip').hidden = true; document.querySelector('.tv-resbtn').click(); 1`);
           out.resTap = await X(`(() => { const t = document.querySelector('.tv-restip'); return t && !t.hidden ? t.textContent : ''; })()`);
         }
-        if (abilities) {
+        if (abilities) {   // Hero > Abilities: the list, the detail (tap a row), Learn on two taps, the A / B talents, the filters
           await X(`S.L = Math.max(S.L, 10); S.abil.scrolls = { moss: 1, hollow: 1 }; setTab('abilities'); 1`); await page.waitForTimeout(400);
-          out.cards = await X(`document.querySelectorAll('#sec-abilities .ab-card').length`);
+          out.cards = await X(`document.querySelectorAll('#sec-abilities .ab-row').length`);
           out.groups = await X(`[...document.querySelectorAll('#sec-abilities .ab-pname')].map(x => x.textContent).join()`);
           out.resLine = await X(`(document.querySelector('#sec-abilities .ab-res') || {}).textContent || ''`);
-          const learn = '#sec-abilities .ab-card[data-ab="powershot"] .ab-learn';
+          out.rowBadge = await X(`(document.querySelector('#sec-abilities .ab-row[data-ab="powershot"] .ab-badge') || {}).textContent || ''`);
+          out.lockBadge = await X(`(document.querySelector('#sec-abilities .ab-row[data-ab="twinshot"] .ab-badge') || {}).textContent || ''`);
+          await page.click('#sec-abilities .ab-row[data-ab="powershot"]'); await page.waitForTimeout(150);
+          out.det = await X(`(() => { const d = document.querySelector('#sec-abilities .ab-det'); return d ? { ab: d.dataset.ab, vis: d.offsetParent !== null, desc: (d.querySelector('.ab-desc') || {}).textContent || '',
+            perfect: (d.querySelector('.ab-timed') || {}).textContent || '', nums: (d.querySelector('.ab-nums') || {}).textContent || '', tal: d.querySelectorAll('.ab-talb:disabled').length } : null; })()`);
+          const learn = '#sec-abilities .ab-det[data-ab="powershot"] .ab-learn';
           await page.click(learn); await page.waitForTimeout(150);
           out.armed = await X(`(document.querySelector('${learn}') || {}).textContent || ''`);
+          out.armedSafe = await X(`!abilityOwned('wren', 'powershot') && scrollCount('moss') === 1`);
           await page.click(learn); await page.waitForTimeout(250);
-          out.learned = await X(`abilityOwned('wren', 'powershot') && soloEquipped().includes('powershot') && scrollCount('moss') === 0 && !!document.querySelector('#sec-abilities .ab-card[data-ab="powershot"].owned')`);
+          out.learned = await X(`abilityOwned('wren', 'powershot') && soloEquipped().includes('powershot') && scrollCount('moss') === 0 && !!document.querySelector('#sec-abilities .ab-row[data-ab="powershot"].owned')
+            && document.querySelectorAll('#sec-abilities .ab-det[data-ab="powershot"] .ab-slotb').length === 3 && !!document.querySelector('#sec-abilities .ab-det .ab-slotb.on')`);
+          // the A / B talent choice: take A, switch to B (no more points), give it back
+          const tal = c => `#sec-abilities .ab-det[data-ab="powershot"] .ab-talb[data-c="${c}"]`, pts = `talentPoints('wren').free`;
+          const free0 = await X(pts);
+          await page.click(tal('a')); await page.waitForTimeout(150);
+          out.talA = await X(`talentsOf('wren').powershot === 'a' && ${pts} === ${free0} - TALENT_TUNE.cost && document.querySelector('${tal('a')}').getAttribute('aria-pressed') === 'true'
+            && JSON.parse(localStorage.getItem('lanternfall.save.v5')).abil.tal.wren.powershot === 'a' && /Talent A/.test(document.querySelector('#sec-abilities .ab-row[data-ab="powershot"]').textContent)`);
+          await page.click(tal('b')); await page.waitForTimeout(150);
+          out.talB = await X(`talentsOf('wren').powershot === 'b' && ${pts} === ${free0} - TALENT_TUNE.cost && document.querySelector('${tal('a')}').getAttribute('aria-pressed') === 'false' && document.querySelector('${tal('b')}').classList.contains('on')`);
+          await page.click(tal('b')); await page.waitForTimeout(150);
+          out.talOff = await X(`!talentsOf('wren').powershot && ${pts} === ${free0}`);
+          // Attack, Parry and Dodge: their own rows, and their talents in the detail
+          await page.click('#sec-abilities .ab-det .ab-x'); await page.waitForTimeout(150);
+          out.closed = await X(`!document.querySelector('#sec-abilities .ab-det')`);
+          await page.click('#sec-abilities .ab-row[data-mv="parry"]'); await page.waitForTimeout(150);
+          await page.click('#sec-abilities .ab-det[data-mv="parry"] .ab-talb[data-c="a"]'); await page.waitForTimeout(150);
+          out.parryTal = await X(`talentsOf('wren')['wren:parry'] === 'a'`);
+          await page.click('#sec-abilities .ab-det .ab-x'); await page.waitForTimeout(150);
+          // the filters: Learned shows the learned ones (and Attack, Parry, Dodge); Can learn the ones a Scroll can teach now
+          const vis = `[...document.querySelectorAll('#sec-abilities .ab-row[data-ab]')].map(r => r.dataset.ab).sort().join()`;
+          await page.click('#sec-abilities .ab-fb[data-f="learned"]'); await page.waitForTimeout(150);
+          out.fLearned = await X(`${vis} === HERO_ABILITIES.wren.filter(id => abilityOwned('wren', id)).sort().join() && document.querySelectorAll('#sec-abilities .ab-row[data-mv]').length === 3`);
+          await page.click('#sec-abilities .ab-fb[data-f="can"]'); await page.waitForTimeout(150);
+          out.fCan = await X(`(() => { const want = HERO_ABILITIES.wren.filter(id => !abLearnInfo('wren', id).why).sort().join(); return want.length > 0 && ${vis} === want; })()`);
+          await page.click('#sec-abilities .ab-fb[data-f="all"]'); await page.waitForTimeout(150);
+          out.fAll = await X(`document.querySelectorAll('#sec-abilities .ab-row').length`);
         }
         // a Proving in turns: its banner takes the Next up chip's place (off the fight), and counts foes and turns
         await X(`if (S.tab) closeMenu(); trialStart('warrior', { kind: 'trial' }); 1`); await page.waitForTimeout(600);
@@ -7223,7 +7255,13 @@ if (section('turn UI (browser)')) try {
       assert(on.seen.strip >= 5 && !on.seen.onStage && on.seen.bar && on.seen.mine, `turn UI 844x390: the versus card shows the turn order (the next turns; owner: not on the stage during the fight), the timing bar shows on the foe's wind-up, and "Your turn" says when the fight waits on you (${JSON.stringify(on.seen)})`);
       assert(on.seen.cdTurns && !on.seen.autoBadge, 'turn UI 844x390: the Echo slot shows its cooldown in turns, and there is no Auto badge (active only)');
       assert(on.cards === 17 && on.groups === 'True Aim,Blood Trail,Night Wings,Attack, Parry and Dodge', `turn UI: Hero tab > Abilities lists Wren's 14 abilities in their three groups, then Attack, Parry and Dodge (${on.cards}: ${on.groups})`);
-      assert(/Tap again/.test(on.armed) && on.learned, `turn UI: Learn takes two taps, spends the Scroll, and puts the ability in a free slot (${JSON.stringify(on.armed)}, ${on.learned})`);
+      assert(on.rowBadge === 'Learn' && on.lockBadge === 'Level 16', `turn UI: each row says whether it can be learned now, or why not (${JSON.stringify([on.rowBadge, on.lockBadge])})`);
+      assert(on.det && on.det.ab === 'powershot' && on.det.vis && /180% power/.test(on.det.desc) && /Perfect: a sure crit/.test(on.det.perfect) && /Hits for about/.test(on.det.nums) && on.det.tal === 2,
+        `turn UI: a tap on a row opens its detail: the full text, its numbers, the Perfect text, and its two talents (shut until learned) (${JSON.stringify(on.det)})`);
+      assert(/Tap again/.test(on.armed) && on.armedSafe && on.learned, `turn UI: Learn takes two taps, spends the Scroll, and puts the ability in a free slot; the detail then offers Q, W and E (${JSON.stringify(on.armed)}, ${on.armedSafe}, ${on.learned})`);
+      assert(on.talA && on.talB && on.talOff, `turn UI: the detail's A / B talents: A takes 2 points and saves, B swaps for no more, a second tap gives it back (${on.talA}, ${on.talB}, ${on.talOff})`);
+      assert(on.closed && on.parryTal, `turn UI: the detail closes; Parry has its own row and its talents in the detail (${on.closed}, ${on.parryTal})`);
+      assert(on.fLearned && on.fCan && on.fAll === 17, `turn UI: the filters show the learned abilities, the ones a Scroll can teach now, and all again (${on.fLearned}, ${on.fCan}, ${on.fAll})`);
       assert(on.proving && on.proving.slot && !on.proving.chip && /Foe 1\/5, \d+ turns/.test(on.proving.time) && on.proving.turn && on.provingEnd,
         `turn UI: a Proving fights in turns; its banner sits where the Next up chip was and counts foes and turns, and goes on Give up (${JSON.stringify(on.proving)}, ${on.provingEnd})`);
       assert(on.assist0 === 'Wider timing windows: Off' && on.assist1 === 'Wider timing windows: On' && on.assistOn && /parry and dodge/.test(on.assistNote),
@@ -7233,6 +7271,57 @@ if (section('turn UI (browser)')) try {
       assert(!on.errors.length, 'turn UI: no page errors' + (on.errors.length ? ': ' + on.errors[0] : ''));
       const port = await run(360, 740, false);
       assert(/VS/.test(port.seen.card) && port.seen.strip >= 5 && !port.seen.onStage && !port.errors.length, `turn UI 360x740: the versus card and its turn order work in portrait (${JSON.stringify(port.seen)})`);
+      // Hero > Abilities fits a landscape phone (740x360) and a portrait one (360x740): no sideways scroll, 44 px touch
+      // targets, the loadout bar stays on top while the list scrolls, and the detail opens in view (portrait: a sheet over
+      // the list; the small landscape panel: in the list's place, and Back brings the list back where it was)
+      for (const [w, h] of [[740, 360], [360, 740]]) {
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h } }), page = await ctx.newPage(), errors = [];
+        page.on('pageerror', e => errors.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(600);
+        await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go');
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X(`S.onboard && (S.onboard.tips = false, S.onboard.all = true); S.L = 30; S.abil.scrolls = { roadlight: 1, hollow: 1 };
+          S.abil.unl.wren = ['powershot', 'huntmark', 'barbed']; S.abil.tal.wren = { echo: 'a' }; soloEquip(1, 'huntmark'); setTab('abilities'); 1`);
+        await page.waitForTimeout(400);
+        const fit = `(() => { const p = document.getElementById('panels'), s = document.getElementById('sec-abilities'), bad = [];
+          if (document.documentElement.scrollWidth > innerWidth + 1) bad.push('page ' + document.documentElement.scrollWidth);
+          if (p.scrollWidth > p.clientWidth + 1) bad.push('panel ' + p.scrollWidth + '>' + p.clientWidth);
+          const pr = p.getBoundingClientRect();
+          for (const b of s.querySelectorAll('button')) { if (!b.offsetParent) continue; const r = b.getBoundingClientRect();
+            if (r.height < 44 || r.width < 44) bad.push('small ' + b.className + ' ' + Math.round(r.width) + 'x' + Math.round(r.height));
+            if (r.left < pr.left - 1 || r.right > pr.right + 1) bad.push('wide ' + b.className); }
+          return bad.slice(0, 4); })()`;
+        const r = { list: await X(fit) };
+        await X(`document.getElementById('panels').scrollTop = 99999; 1`); await page.waitForTimeout(100);
+        r.sticky = await X(`(() => { const p = document.getElementById('panels').getBoundingClientRect(), b = document.querySelector('#sec-abilities .ab-bar').getBoundingClientRect();
+          return document.getElementById('panels').scrollTop > 200 && b.top >= p.top - 1 && b.top <= p.top + 2; })()`);
+        await X(`document.querySelector('#sec-abilities .ab-row[data-ab="huntmark"]').scrollIntoView({ block: 'center' }); 1`);
+        const before = await X(`document.getElementById('panels').scrollTop`);
+        await page.click('#sec-abilities .ab-row[data-ab="huntmark"]'); await page.waitForTimeout(200);
+        r.det = await X(`(() => { const p = document.getElementById('panels').getBoundingClientRect(), d = document.querySelector('#sec-abilities .ab-det'), l = document.querySelector('#sec-abilities .ab-list');
+          if (!d) return 'none'; const b = d.getBoundingClientRect(), x = d.querySelector('.ab-x').getBoundingClientRect();
+          return { inView: b.top >= p.top - 1 && b.top < p.bottom - 100 && x.top >= p.top - 1 && x.bottom <= p.bottom + 1, list: l.offsetParent !== null, slots: d.querySelectorAll('.ab-slotb').length,
+            onW: !!d.querySelector('.ab-slotb[data-slot="1"].on'), talOn: !!d.querySelector('.ab-talb') }; })()`);
+        r.detFit = await X(fit);
+        await page.click('#sec-abilities .ab-det .ab-slotb[data-slot="2"]'); await page.waitForTimeout(150);
+        r.moved = await X(`soloEquipped()[2] === 'huntmark' && soloEquipped()[1] === null && JSON.parse(localStorage.getItem('lanternfall.save.v5')).solo.eq.wren[2] === 'huntmark'`);
+        await page.click('#sec-abilities .ab-det .ab-x'); await page.waitForTimeout(200);
+        r.back = await X(`(() => { const ok = !document.querySelector('#sec-abilities .ab-det') && document.querySelector('#sec-abilities .ab-list').offsetParent !== null && Math.abs(document.getElementById('panels').scrollTop - ${before}) < 4;
+          return ok || [!!document.querySelector('#sec-abilities .ab-det'), document.getElementById('panels').scrollTop, ${before}].join(); })()`);
+        await page.click('#sec-abilities .ab-infob'); await page.waitForTimeout(150);
+        r.info = await X(`(() => { const t = (document.querySelector('#sec-abilities .ab-info .ab-tp') || {}).textContent || '';
+          return document.querySelectorAll('#sec-abilities .ab-info .ab-scroll').length === 5 && /Talent points: \\d+ free of 29/.test(t) || t || 'no drawer'; })()`);
+        r.infoFit = await X(fit);
+        const port = h > w;
+        assert(!r.list.length && !r.detFit.length && !r.infoFit.length, `abilities UI ${w}x${h}: no sideways scroll, every button at least 44 px (${JSON.stringify([r.list, r.detFit, r.infoFit])})`);
+        assert(r.sticky, `abilities UI ${w}x${h}: the loadout bar (Q, W, E, Scrolls, talent points) stays at the top while the list scrolls`);
+        assert(r.det && r.det.inView && r.det.list === port && r.det.slots === 3 && r.det.onW && r.det.talOn && r.moved,
+          `abilities UI ${w}x${h}: a row's detail opens in view (${port ? 'a sheet over the list' : 'in the list\'s place'}), shows the slot it is in, and E moves it there (${JSON.stringify(r.det)}, ${r.moved})`);
+        assert(r.back === true && r.info === true, `abilities UI ${w}x${h}: closing the detail brings the list back where it was; the Scrolls button shows each Scroll and the talent points (${r.back}, ${r.info})`);
+        assert(!errors.length, `abilities UI ${w}x${h}: no page errors` + (errors.length ? ': ' + errors[0] : ''));
+        await ctx.close();
+      }
       // a new player follows the guide through the first fights: Attack, the ability, Dodge and Parry, each pressed when
       // the guide asks (it pauses on your turn, or inside the defence window, so the paused press lands)
       { const ctx = await browser.newContext({ turns: true, viewport: { width: 740, height: 360 } }), page = await ctx.newPage(), errors = [];
