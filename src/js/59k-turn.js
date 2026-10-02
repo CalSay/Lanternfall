@@ -46,12 +46,15 @@ const TURN_TUNE = {
   refHpX: [[1, 1.2], [34, 1.2], [35, 0.95], [38, 0.6], [42, 0.4]],
   heroHaste: { wren: 10, tobin: 9, pip: 10 },
   heroX: { wren: 1.45, tobin: 1.2, pip: 1.26 },   // per-hero damage parity (Attack and abilities)
+  // Tobin pass (owner, 2026-10-02: the tank survives best and kills a little slower, not boringly): his counters
+  // hit harder, Grit pays more (Attack, Hammerfall), Shield Bash gives Grit, and his Attack takes the opening it leaves
+  counterX: { wren: 1, tobin: 1.2, pip: 1 },      // per-hero counter damage (on top of heroX)
   foeAtkX: 1,
   goldX: 3, xpX: 2.5, essenceX: 1.6,              // fewer, longer fights pay more each (balance: docs/design/combat-turn-build.md)
   consec: 2, consecBoss: 3,                        // the most turns in a row
   speedMin: 0.5, speedMax: 2,                      // Speed changes stay within these shares of the base
   critCap: 3, critChanceCap: 0.75,
-  aimCrit: 0.05, gritDmg: 0.03, gritDr: 0.01, emberX: 0.1,
+  aimCrit: 0.05, gritDmg: 0.06, gritDr: 0.01, gritHammer: 0.45, bashGrit: 2, emberX: 0.1,
   burnP: 0.4, burnT: 3, burnMaxT: 4, bleedP: 0.12, bleedT: 3, bleedMax: 5, chillMax: 3, chillT: 4, chillSlow: 0.1,
   markV: 0.2, exposedX: 1.25, sunderX: 0.5, weakenX: 0.75, guardX: 0.6, drCap: 0.75, wardCap: 0.3, keenX: 0.5,
   pinWin: 1.5, pinSlow: 0.1, blindP: 0.3, blindBossP: 0.15, curseP: 0.2, curseCap: 3,
@@ -186,7 +189,7 @@ function turnMakeProfile(f, u) {
   const cds = { attack: 1 }; for (const id of eq) cds[id] = turnCdFor(id);
   // a Proving's foes hit for shares of your own health (59f: the fight stays a fight at any power, as before turns)
   return { heroKey: key, zone: z, heroMaxHp: u.maxHp, refHp: f.trial ? u.maxHp : turnRefHp(z), A, U, heroType: heroType(key) || 'phys',
-    counter: heroAtk() * heroX * SOLO_TUNE.counterX * aps() * critMult() * trainCounterX() * (1 + (g.counter || 0) / 100) * (1 + (g.echo || 0)),
+    counter: heroAtk() * heroX * (T.counterX[key] || 1) * SOLO_TUNE.counterX * aps() * critMult() * trainCounterX() * (1 + (g.counter || 0) / 100) * (1 + (g.echo || 0)),
     critChance: critChance(), critMult: critMult(), nonCrit: mod('nonCrit'), echo: g.echo || 0,
     hitX: T.foeAtkX * (1 - armRed) * classDr, blockP: u.blockP || 0, blockC: u.blockC || 0, blockN: u.blockN || 0, blockX: COMBAT_TUNE.blockX,
     heroSpd: (T.heroHaste[key] || 10) + (g.initiative || 0), foeSpd: f.tk.spd, foeMaxHp: f.max, foeHp: f.hp,
@@ -215,7 +218,7 @@ function turnAbilityNumbers(id) {
   if (id === 'twinshot') return `Each arrow hits for about ${f(P.A * a.pow)}.`;
   if (hit) parts.push(a.hits > 1 ? `Hits for about ${f(U * a.pow)} an arrow` : `Hits for about ${f(U * a.pow)}`);
   if (id === 'finalecho') parts.push(`+${f(U * 0.5)} a Bleed or Aim`);
-  if (id === 'hammerfall') parts.push(`+${f(U * 0.25)} a Grit`);
+  if (id === 'hammerfall') parts.push(`+${f(U * T.gritHammer)} a Grit`);
   if (id === 'lanternburst') parts.push(`+${f(U * 0.6)} an Ember`);
   if (id === 'fire') parts.push(`Burn ${f(T.burnP * U)} a turn`);
   if (id === 'batswarm') parts.push(`Bats hit for ${f(U * a.pow)} a turn`);
@@ -411,7 +414,7 @@ function turnHeroAct(m, io, id, slot, grades) {
     if (has(m, 'momentum')) { h.mom++; x *= 1 + Math.min(0.5, 0.1 * h.mom + (t('momentum') === 'a' ? 0.1 : 0)); }
     let glowed = false;
     if (has(m, 'afterglow') && h.glow > 0) { x *= 1.5; dt = h.glowDt || dt; h.glow = 0; glowed = true; }
-    const more = { dt, kind: 'attack', armX: h.pierce ? 0 : 1 }; h.pierce = 0;   // Read the Blow: this Attack ignores armour
+    const more = { dt, kind: 'attack', armX: h.pierce ? 0 : 1, payoff: k === 'tobin' }; h.pierce = 0;   // Read the Blow: this Attack ignores armour; Tobin's Attack takes an opening (Exposed)
     if (k === 'wren' && has(m, 'twinshot')) { const a1 = hit(p.A * 0.55 * x, { ...more }), a2 = hit(p.A * 0.55 * x, { ...more });
       if (t('twinshot') === 'a' && a1 > 0 && a2 > 0) turnGain(h, 'aim', 1); if (t('twinshot') === 'b') h.escape = 1; }
     else hit(p.A * x, more);
@@ -494,13 +497,13 @@ function turnHeroAct(m, io, id, slot, grades) {
       case 'brace': h.guard = Math.max(h.guard, 2); h.brace = 1; h.braceT = t('brace'); break;
       case 'lunge': hit(U * a.pow, { dt }); if (t('lunge') === 'b') h.guard = Math.max(h.guard, 1); else h.lunge = 2; if (sundered && t('lunge') === 'a') turnGain(h, 'grit', 2); break;
       case 'bash': { let g3 = false; hit(U * a.pow, { dt, perfect: () => { g3 = true; } });
-        const ok = turnControl(m, io, 'stun'); e.exposed = 2; h.guard = Math.max(h.guard, g3 ? 3 : 2);
+        const ok = turnControl(m, io, 'stun'); e.exposed = 2; h.guard = Math.max(h.guard, g3 ? 3 : 2); turnGain(h, 'grit', T.bashGrit);
         if (t('bash') === 'a') e.sunder = Math.max(e.sunder, 2); if (!ok && t('bash') === 'b') turnGain(h, 'grit', 2); break; }
       case 'riposte': hit(U * a.pow, { dt, sure: true }); h.ripo = 0; if (t('riposte') === 'a') e.sunder = Math.max(e.sunder, 2); else if (t('riposte') === 'b') turnGain(h, 'grit', 2); break;
       case 'ironwill': turnGain(h, 'grit', 3); turnWard(m, 0.15); if (t('ironwill') === 'a') turnCleanse(h); else if (t('ironwill') === 'b') h.setFeet = 1; break;
       case 'roar': e.weaken = Math.max(e.weaken, 2); e.pin = 1; e.pinSlow = 2; if (t('roar') === 'a') e.sunder = Math.max(e.sunder, 1); else if (t('roar') === 'b') h.answer = 1; break;
       case 'hammerfall': { const spent = h.grit, keep = t('hammerfall') === 'b' ? Math.min(2, spent) : 0; let back = 0;
-        hit(U * (a.pow + 0.25 * (spent - keep)), { dt, payoff: true, perfect: () => { back = Math.floor((spent - keep) / 2); } });
+        hit(U * (a.pow + T.gritHammer * (spent - keep)), { dt, payoff: true, perfect: () => { back = Math.floor((spent - keep) / 2); } });
         h.grit = Math.min(10, keep + back); if (t('hammerfall') === 'a') turnBleedAdd(m, 2); break; }
       case 'shieldthrow': { hit(U * a.pow, { dt, perfect: () => { m.cdCut = 2; } }); if (sundered) { turnControl(m, io, 'stun'); e.exposed = 2; }
         if (t('shieldthrow') === 'a') { e.pin = 1; e.pinSlow = Math.max(e.pinSlow, 2); } else if (t('shieldthrow') === 'b') turnWard(m, 0.05); break; }

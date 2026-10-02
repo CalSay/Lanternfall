@@ -53,16 +53,16 @@ const ABILITIES = {};
   // ---------------- Tobin: the melee pool, then his own (brace and parry, build Grit, then stun and smash) ----------------
   A('tobin', 'M1', 'heavystrike', 'Heavy Strike', 'Heavy', 'damage', 1, 2.0, 3, 'phys', 'A heavy blow for 200% power. On an Exposed foe it hits 25% harder and uses up the opening.', 'A heavy blow. Harder on an Exposed foe.');
   A('tobin', 'M2', 'cleave', 'Cleave', 'Cleave', 'damage', 2, 1.4, 3, 'phys', 'A wide swing for 140% power that leaves 1 Bleed.', 'A wide swing. Leaves Bleed.');
-  A('tobin', 'M3', 'sundering', 'Sunder', 'Sunder', 'debuff', 3, 1.0, 4, 'phys', 'A blow for 100% power that Sunders the foe for 3 turns: its armour does half as much.', 'Breaks armour for 3 turns.');
+  A('tobin', 'M3', 'sundering', 'Sunder', 'Sunder', 'debuff', 3, 1.4, 4, 'phys', 'A blow for 140% power that Sunders the foe for 3 turns: its armour does half as much.', 'Breaks armour for 3 turns.');
   A('tobin', 'M4', 'momentum', 'Momentum', 'Momentum', 'passive', 2, 0, 0, 'phys', 'Passive. Each Attack in a row hits 10% harder, up to 50%. An ability starts the chain again.', 'Passive: Attacks in a row hit harder.');
   A('tobin', 'M5', 'brace', 'Brace', 'Brace', 'buff', 3, 0, 4, 'phys', 'Guard for 2 enemy turns (40% less damage). The next attack is easier to parry.', 'Guard, and an easier parry.');
   A('tobin', 'M6', 'lunge', 'Lunge', 'Lunge', 'damage', 4, 1.2, 3, 'phys', 'Lunge in for 120% power. You are 20% faster for your next 2 turns.', 'A quick hit. You get faster.');
-  A('tobin', 'T1', 'bash', 'Shield Bash', 'Bash', 'damage', 0, 1.6, 4, 'phys', 'A shield blow for 160% power. Stuns the foe (it loses its next turn) and leaves it Exposed. You Guard for 2 enemy turns.', 'Stuns, Exposes, and you Guard.');
+  A('tobin', 'T1', 'bash', 'Shield Bash', 'Bash', 'damage', 0, 1.7, 4, 'phys', 'A shield blow for 170% power. Stuns the foe (it loses its next turn) and leaves it Exposed: your next Attack or Heavy Strike hits 25% harder. You Guard for 2 enemy turns and gain 2 Grit.', 'Stuns, Exposes, Guards, and 2 Grit.');
   A('tobin', 'T2', 'riposte', 'Riposte', 'Riposte', 'damage', 2, 1.6, 3, 'phys', 'A sure crit for 160% power. Only right after you parried a hit of the enemy attack.', 'After a parry: a sure crit.');
   A('tobin', 'T3', 'ironwill', 'Iron Will', 'Iron', 'buff', 2, 0, 5, 'phys', 'Gain 3 Grit and a Ward worth 15% of your max HP.', '3 Grit and a Ward.');
   A('tobin', 'T4', 'roar', 'Taunting Roar', 'Roar', 'debuff', 3, 0, 5, 'phys', 'The foe is Weakened for 2 turns (25% less damage) and Pinned (its next attack is easier to read).', 'Weakens and Pins the foe.');
-  A('tobin', 'T5', 'hammerfall', 'Hammerfall', 'Hammer', 'damage', 3, 1.4, 5, 'phys', '140% power, plus 25% for each Grit. Uses all your Grit; needs 2. Hits 25% harder on an Exposed foe.', 'Spends all Grit for a big blow.');
-  A('tobin', 'T6', 'shieldthrow', 'Shield Throw', 'Throw', 'damage', 4, 1.4, 4, 'phys', 'Throw your shield for 140% power. On a Sundered foe it Stuns and leaves it Exposed.', 'Stuns a Sundered foe.');
+  A('tobin', 'T5', 'hammerfall', 'Hammerfall', 'Hammer', 'damage', 3, 1.4, 5, 'phys', '140% power, plus 45% for each Grit. Uses all your Grit; needs 2. Hits 25% harder on an Exposed foe.', 'Spends all Grit for a big blow.');
+  A('tobin', 'T6', 'shieldthrow', 'Shield Throw', 'Throw', 'damage', 4, 2.0, 4, 'phys', 'Throw your shield for 200% power. On a Sundered foe it Stuns and leaves it Exposed.', 'Stuns a Sundered foe.');
   A('tobin', 'T7', 'bulwark', 'Bulwark', 'Bulwark', 'passive', 4, 0, 0, 'phys', 'Passive. Each parried hit gives 1 more Grit, and your counters hit 25% harder.', 'Passive: parries give more.');
   A('tobin', 'T8', 'laststand', 'Last Stand', 'Stand', 'finisher', 5, 0, 8, 'phys', 'Finisher, from your third turn, once a fight. For 2 enemy turns you cannot fall below 1 HP, parries are twice as easy and counters hit twice as hard. Then heal 15%.', 'You cannot fall, and counters hit hard.');
   // ---------------- Pip: the caster pool, then her own (gather Embers, set the foe alight, feed or detonate the fire) ----------------

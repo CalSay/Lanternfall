@@ -204,10 +204,10 @@ hits and dodges 90% of the rest, "casual" 25% and 50%; the bot acts at once, so 
 |---|---|---|---|
 | Fresh Wren, zone 1 | normal | 100%, 2.1 | 94%, 2.6 |
 | Fresh Wren, zone 1 | boss | 99%, 5.0 | 59%, 5.8 |
-| Fresh Tobin, zone 1 | boss | 100%, 6.0 | 100%, 7.7 |
+| Fresh Tobin, zone 1 | boss | 100%, 5.0 | 100%, 6.2 |
 | Fresh Pip, zone 1 | boss | 100%, 3.9 | 85%, 4.5 |
 | Early fixture (Wren, zone 8) | boss | 100%, 4.1 | 91%, 4.9 |
-| Mid fixture (Tobin, zone 20) | boss | 100%, 6.4 | 100%, 8.0 |
+| Mid fixture (Tobin, zone 20) | boss | 100%, 5.5 | 100%, 6.8 |
 | Late fixture (Pip, zone 38) | normal | 100%, 3.8 | 88%, 4.5 |
 | Late fixture (Pip, zone 38) | boss | 99%, 10.4 | 30% |
 | Late fixture kept up, zone 35 | normal | 100%, 2.0 | 100%, 2.1 |
@@ -220,7 +220,70 @@ Attack Training at her level, her gear (four class pieces and the Charm) epic +1
 Before the late-zone pass the same hero won 38% of Fenmother fights played casually (15.4 hero turns played well), and
 at zone 38 took 4.9 turns for a normal foe and 14.5 for a boss (30% casual). The raw late fixture stays behind on
 purpose: it is undergeared (above), and before the pass it won 71% of zone 38 bosses played well (22 turns) and none
-played casually. Zones 1-34 are unchanged, and so are their rows.
+played casually. Zones 1-34 are unchanged, and so are their rows. The two Tobin rows are from after the Tobin pass
+(below); before it they were 6.0 / 7.7 and 6.4 / 8.0 turns.
+
+### Tobin (balance pass, 2 October 2026; owner: "tobin should have better survivability but take longer to kill ... We don't want it to be boringly slower")
+
+The aim: Tobin is the safest hero by far, and the slowest killer by a moderate margin, about 15-30% more hero turns a
+fight than the mean of Wren and Pip, inside the bands above. His turns should be Grit, counters and Shield Bash, not
+Attack after Attack.
+
+**Measured on the same footing** (`node tools/sim.mjs --report heroes`, 3 seeds x 1 h a set): each stage puts all three
+heroes on one save with the same level, Attack and signature Training, gear (the lamp's, refitted to the hero) and
+zone, and fights with three natural ability sets each, from what they could have learned by then (zone 1: the
+signature alone). Zones 8-30 scale every hero's Attack and HP alike so the stage's middle hero is the zone's reference
+hero; zone 1 and kept up (the `late-kept` setup, for every hero) are the game's own numbers. Hero turns are each hero's
+mean over their sets; "x" is Tobin's turns over the Wren and Pip mean. The kept-up zone 35 boss is the Fenmother
+(a region boss, 30 Attacks of HP).
+
+| Stage, foe | Good: Wren, Pip turns | Good: Tobin before -> after | Casual: Wren, Pip turns (win %) | Casual: Tobin before -> after (win %) |
+|---|---|---|---|---|
+| Zone 1, normal | 2.0, 1.4 | 3.2 (x1.90) -> 3.1 (x1.85) | 2.5, 1.7 (97, 100) | 3.5 (x1.70) -> 3.4 (x1.65) (100) |
+| Zone 1, boss | 4.8, 3.6 | 5.8 (x1.38) -> 4.9 (x1.17) | 5.7, 4.3 (67, 88) | 7.7 (x1.53) -> 6.2 (x1.25) (100) |
+| Zone 8, normal | 1.9, 1.9 | 1.7 (x0.91) -> 1.7 (x0.91) | 2.0, 2.1 (100, 100) | 2.3 (x1.13) -> 2.3 (x1.13) (100) |
+| Zone 8, boss | 4.2, 4.2 | 5.4 (x1.27) -> 5.0 (x1.20) | 5.0, 5.0 (72, 83) | 7.1 (x1.43) -> 6.7 (x1.35) (100) |
+| Zone 20, normal | 2.0, 2.2 | 2.9 (x1.34) -> 2.1 (x1.00) | 2.2, 2.3 (100, 100) | 2.9 (x1.28) -> 2.2 (x0.99) (100) |
+| Zone 20, boss | 4.7, 4.9 | 5.8 (x1.21) -> 4.8 (x1.00) | 6.1, 5.5 (72, 88) | 7.5 (x1.29) -> 6.5 (x1.13) (100) |
+| Zone 30, normal | 1.7, 1.4 | 2.5 (x1.59) -> 1.9 (x1.26) | 1.7, 1.7 (100, 100) | 2.7 (x1.58) -> 2.1 (x1.25) (100) |
+| Zone 30, boss | 3.1, 3.8 | 4.2 (x1.24) -> 3.4 (x0.98) | 3.6, 4.7 (91, 94) | 6.1 (x1.47) -> 4.8 (x1.16) (100) |
+| Kept up zone 35, normal | 1.9, 2.0 | 2.5 (x1.31) -> 2.3 (x1.20) | 2.1, 2.1 (100, 100) | 3.1 (x1.48) -> 2.9 (x1.37) (100) |
+| Kept up zone 35, the Fenmother | 8.4, 9.7 | 12.3 (x1.36) -> 10.2 (x1.13) | 10.2, 11.5 (56, 61) | 17.3 (x1.59) -> 14.3 (x1.32) (95 -> 98) |
+| Kept up zone 38, normal | 2.6, 2.2 | 3.9 (x1.62) -> 3.3 (x1.40) | 3.1, 2.9 (100, 100) | 5.0 (x1.67) -> 4.4 (x1.47) (100) |
+| Kept up zone 38, boss | 7.0, 7.0 | 10.1 (x1.44) -> 8.5 (x1.21) | 8.7, 8.6 (71, 82) | 13.7 (x1.59) -> 11.6 (x1.34) (100) |
+
+Played well every hero wins every fight. **Survival:** played casually Tobin wins 98-100% of fights everywhere (Wren
+56-91% of bosses, Pip 61-94%), and loses 6-15% of his max HP a boss fight (Wren 23-56%, Pip 20-50%; he lost 7-19%
+before). Over the whole table Tobin went from about 1.43 times the Wren and Pip mean to about 1.24 (1.19 played
+well, 1.28 casually). Wren and Pip did not change.
+
+**Why he was slow:** not his Attack. On the same save Tobin's Attack is within 10% of Wren's and Pip's. It was his kit:
+
+- Wren crits (25% base, +5% an Aim, Deadeye's sure crit), and Pip's Fireball adds a Burn and spends Embers. Tobin's
+  damage was flat: Shield Bash 160%, Heavy Strike 200%, Hammerfall 140% + 25% a Grit, and an Attack worth +3% a Grit.
+  Played casually he parries less, so he had less Grit, fewer counters and fewer cooldown refunds: his casual gap
+  (x1.3-1.7) was wider than his good one.
+- Grit came only from Attacks and parries, and his best sets cast an ability almost every turn, so Hammerfall usually
+  spent 2-3 Grit.
+- His counters hit the softest of the three (1.5 Attacks against Wren's 2.0), though he is the hero who parries.
+- Shield Bash's opening (Exposed) only paid off with Heavy Strike or Hammerfall, so a fresh Tobin (Bash alone) wasted it.
+- Sunder (100%) and Shield Throw (140%) were the weakest hits in his kit, so his armour-breaking sets were the slowest.
+
+**What changed** (`TURN_TUNE` and 24c; `heroX` is unchanged, so this is his kit, not a flat bump):
+
+- **Shield Bash** gives 2 Grit (`bashGrit`), hits for 170% (was 160%), and Tobin's own Attack now takes its opening
+  (Exposed: 25% harder), so Bash, then Attack, is a combo from his first fight.
+- **Grit pays more:** each Grit adds 6% to his Attack (was 3%, `gritDmg`) and 45% to Hammerfall (was 25%, `gritHammer`).
+- **His counters hit 20% harder** (`counterX.tobin` 1.2): the parry hero's payoff.
+- **Sunder** hits for 140% (was 100%) and **Shield Throw** for 200% (was 140%).
+
+His Grit damage reduction, HP, Speed (9) and Guard are unchanged, so his survival edge stays whole.
+
+**Left open:** the stages do not agree. At zones 20-30 played well he now kills as fast as Wren and Pip (x1.0), while
+at zone 38 he is still x1.4 on normal foes, and 4.4 turns a normal foe played casually (one set over the band of 4; his
+best set, Bash, Hammerfall and Heavy Strike, takes 4.0). Part of it is Last Stand: his finisher does no damage, while
+Wren's and Pip's do, so his late sets trail. A look at Last Stand (a Grit payoff, say) is the next lever, not more
+power across the board.
 
 ## Art
 

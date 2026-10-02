@@ -28,6 +28,7 @@
 //   --turns 1: run the cores with turn fights on (59k; they are active only, so the idle policies earn nothing from
 //             fights). Default off here: the day and target reports measure the legacy real-time pacing model.
 //   --report turns --hours 1 --seeds 3 --json rates.json: the turn fight's win rates, fight length and income (C29).
+//   --report heroes --hours 1 --seeds 3: the three heroes on the same footing (the Tobin pass, combat-turn-build.md).
 //   --report early (SOLO1): the three starters, idle and active, 1 h of mixed play each: first boss, zone 5,
 //             zone 10, zones at 30 and 60 min, wipes, answers; PASS/FAIL against the early targets.
 //   --roster auto|off: roster policy (default auto): recruit when affordable, promote when
@@ -118,6 +119,7 @@ if (args.profile && !profile) { console.error('--profile must be idle, normal or
 if (profile) for (const k of ['checkins', 'session', 'first']) if (args[k] === undefined) args[k] = String(profile[k]);
 
 if (args.report === 'turns') { await runTurnReport(); process.exit(0); }
+if (args.report === 'heroes') { await runHeroReport(); process.exit(0); }
 if (args.report === 'early') { await runEarlyReport(); process.exit(0); }
 if (args.targets) { await runEarlyReport(true); await runTargets(); process.exit(0); }
 if (args.report === 'skills') { await runSkillsReport(); process.exit(0); }
@@ -1496,4 +1498,80 @@ async function runTurnReport() {
   const report = { seconds, seeds: count, players, rows };
   if (args.json && args.json !== '1') fs.writeFileSync(String(args.json), JSON.stringify(report, null, 2) + '\n');
   return report;
+}
+
+// The Tobin pass (owner, 2026-10-02): Wren, Tobin and Pip on the same footing. Each stage puts every hero on the same save
+// at the same level, Attack and signature Training, gear (the lamp's, refitted to the hero) and zone, with a few natural
+// three-ability sets from what they could have learned by then (the bot casts the first ready one in slot order). Zones
+// 8-30 scale every hero's Attack and HP alike so the stage's middle hero sits at the zone's reference hero; zone 1 and
+// the kept-up rows are the game's own numbers. It fights normal foes and the boss, played well and casually (as
+// --report turns), and prints each hero's mean over their sets: hero turns a fight, win %, and the share of max HP lost a
+// fight; then Tobin against the Wren and Pip average. Usage: --report heroes [--hours 1] [--seeds 3] [--eval js] [--rows 1]
+async function runHeroReport() {
+  const fs = await import('node:fs'), path = await import('node:path');
+  const { ROOT } = await import('./lib/core.mjs');
+  const seconds = Number(args.hours || 1) * 3600, count = Number(args.seeds || 3);
+  const fx = n => fs.readFileSync(path.join(ROOT, 'tests/fixtures/save-' + n + '.json'), 'utf8');
+  const SIG = { wren: 'echo', tobin: 'bash', pip: 'fire' }, J = JSON.stringify;
+  const make = (L, z, epic, asc) => k => `soloPick(${J(k)}, {now:true}); S.L = ${L}; S.solo.tr[${J(k)}].atk = ${L}; S.solo.tr[${J(k)}][${J(SIG[k])}] = ${L}; S.solo.asc[${J(k)}] = ${asc ? 1 : 0};
+    ${epic ? `for (const sl of Object.keys(S.equip)) { const it = itemById(S.equip[sl]); if (it && !['pick', 'axe', 'sickle', 'spear'].includes(it.slot)) { it.r = 'epic'; it.plus = 10; } }` : ''}
+    S.maxZone = Math.max(S.maxZone, ${z}); setZone(${z});`;
+  const SETS = {
+    1: { wren: [['echo']], tobin: [['bash']], pip: [['fire']] },
+    10: { wren: [['echo', 'powershot', 'deadeye'], ['huntmark', 'deadeye', 'powershot'], ['echo', 'barbed', 'powershot']],
+      tobin: [['bash', 'heavystrike', 'riposte'], ['bash', 'heavystrike', 'cleave'], ['heavystrike', 'bash', 'ironwill']],
+      pip: [['fire', 'spark', 'kindle'], ['fire', 'ignite', 'spark'], ['frostshard', 'fire', 'spark']] },
+    20: { wren: [['echo', 'deadeye', 'powershot'], ['twinshot', 'echo', 'deadeye'], ['echo', 'barbed', 'sonic']],
+      tobin: [['bash', 'heavystrike', 'hammerfall'], ['bash', 'riposte', 'hammerfall'], ['sundering', 'bash', 'heavystrike']],
+      pip: [['fire', 'ignite', 'spark'], ['kindle', 'fire', 'ignite'], ['fire', 'wildfire', 'spark']] },
+    30: { wren: [['echo', 'volley', 'deadeye'], ['twinshot', 'echo', 'volley'], ['echo', 'moonvolley', 'deadeye']],
+      tobin: [['bash', 'hammerfall', 'heavystrike'], ['sundering', 'shieldthrow', 'heavystrike'], ['bulwark', 'bash', 'hammerfall']],
+      pip: [['fire', 'spark', 'nova'], ['fire', 'ignite', 'nova'], ['fire', 'ignite', 'spark']] },
+    38: { wren: [['echo', 'deadeye', 'finalecho'], ['echo', 'volley', 'deadeye'], ['echo', 'moonvolley', 'deadeye']],
+      tobin: [['bash', 'hammerfall', 'heavystrike'], ['sundering', 'shieldthrow', 'hammerfall'], ['bash', 'heavystrike', 'laststand']],
+      pip: [['fire', 'spark', 'nova'], ['fire', 'ignite', 'lanternburst'], ['fire', 'ignite', 'spark']] }
+  };
+  // [name, ability sets, fixture, setup, Attack scale, HP scale]: the scales put the stage's middle hero at the reference
+  const STAGES = [
+    ['zone 1 (fresh)', 1, null, k => `soloPick(${J(k)}, {now:true}); setZone(1);`, 1, 1],
+    ['zone 8 (early save, L14)', 10, 'early', make(14, 8, false, false), 1 / 1.63, 1 / 1.95],
+    ['zone 20 (mid save, L33)', 20, 'mid', make(33, 20, false, false), 1 / 1.48, 1 / 4.23],
+    ['zone 30 (late save, L37, epic)', 30, 'late', make(37, 30, true, false), 1 / 0.82, 1 / 3.53],
+    ['kept up, zone 35 (L40)', 38, 'late', make(40, 35, true, false), 1, 1],
+    ['kept up, zone 38 (L41)', 38, 'late', make(41, 38, true, true), 1, 1]
+  ];
+  const players = { good: { parry: 0.6, dodge: 0.9, perfect: 0.4, good: 0.45 }, casual: { parry: 0.25, dodge: 0.5, perfect: 0.1, good: 0.4 } };
+  const out = [];
+  for (const [st, sz, save, setup, fa, fh] of STAGES) for (const k of ['wren', 'tobin', 'pip']) {
+    const core = loadCoreRaw({ seed: 1, prelude: 'Date.now = () => 1791187200000;' }), e = s => core.eval(s);
+    if (save) { core.storage.set(SAVE_KEY, fx(save)); e('loadSave()'); }
+    e(setup(k));
+    if (args.eval) e(String(args.eval));
+    for (const boss of [false, true]) {
+      e(`TURN_TUNE.on = 1; S.activity = 'fight'; arena = null; gearDirty(); fightBoss = ${boss}; spawn();`);
+      for (const set of SETS[sz][k]) {
+        const row = { st, hero: k, foe: boss ? 'boss' : 'normal', set: set.join('+') };
+        for (const [pl, skill] of Object.entries(players)) {
+          let K = 0, D = 0, T = 0, F = 0, L = 0;
+          for (let i = 0; i < count; i++) {
+            const r = e(`(() => { const p = turnCombatProfile(); p.eq = ${J(set)}; p.cds = { attack: 1 }; for (const id of p.eq) p.cds[id] = turnCdFor(id);
+              p.A *= ${fa}; p.U *= ${fa}; p.counter *= ${fa}; p.heroMaxHp *= ${fh};
+              const r = turnCombatSample({ profile: p, seconds: ${seconds}, seed: ${i + 1}, skill: ${J(skill)} }); r.lost = r.damageTaken / p.heroMaxHp; return r; })()`);
+            K += r.kills; D += r.deaths; T += r.totalHeroTurns; F += r.completedFights; L += r.lost;
+          }
+          row[pl] = { win: K / Math.max(1, K + D), turns: F ? T / F : NaN, lost: L / Math.max(1, K + D) };
+        }
+        if (core.errors.length) throw new Error(`${st} ${k}: ${core.errors.join('; ')}`);
+        out.push(row);
+        if (args.rows) console.log(`${st} / ${k} / ${row.foe} / ${row.set} / good ${(100 * row.good.win).toFixed(0)}% ${row.good.turns.toFixed(1)} / casual ${(100 * row.casual.win).toFixed(0)}% ${row.casual.turns.toFixed(1)}`);
+      }
+    }
+  }
+  console.log(`The heroes on the same footing, ${count} seed(s) x ${seconds / 3600} h a set. Each hero's mean over their ability sets.`);
+  console.log('stage / foe / player / hero turns: Wren, Pip, Tobin (Tobin / their mean) / win %: Wren, Pip, Tobin / max HP lost a fight %: Wren, Pip, Tobin');
+  for (const st of STAGES.map(x => x[0])) for (const foe of ['normal', 'boss']) for (const pl of Object.keys(players)) {
+    const m = (h, f) => { const rs = out.filter(r => r.st === st && r.foe === foe && r.hero === h); return rs.reduce((a, r) => a + f(r[pl]), 0) / rs.length; };
+    const t = h => m(h, x => x.turns), w = h => (100 * m(h, x => x.win)).toFixed(0), l = h => (100 * m(h, x => x.lost)).toFixed(0);
+    console.log(`${st} / ${foe} / ${pl} / ${t('wren').toFixed(1)}, ${t('pip').toFixed(1)}, ${t('tobin').toFixed(1)} (x${(2 * t('tobin') / (t('wren') + t('pip'))).toFixed(2)}) / ${w('wren')}, ${w('pip')}, ${w('tobin')} / ${l('wren')}, ${l('pip')}, ${l('tobin')}`);
+  }
 }
