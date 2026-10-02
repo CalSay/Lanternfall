@@ -8,7 +8,7 @@ page says what was picked.
 ## What changed for the player
 
 - **Every zone fight is a turn fight** for the solo hero: zones 1 and up, regular foes, elites and zone bosses. The
-  Deepwell and the world raid keep their own fights for now.
+  Deepwell and the Provings are turn fights too (below). The world raid keeps its own fight.
 - **Active only** (owner, 2026-10-01). There is no Auto in a turn fight. The fight waits for your turn, and a hidden page
   pauses it. Time away earns nothing from fights; gathering still works while you are away. The away screen says so.
 - **One foe at a time.** Speed decides the turn order. The strip at the top shows the next six turns.
@@ -93,6 +93,36 @@ says what it does.
 The old Explosive and Summoner traits stay out: one blasts after it dies and the other adds a second foe, which the
 turn fight does not have.
 
+## The Deepwell and the Provings (owner, 2026-10-02: "move them to turn based")
+
+**The Deepwell** (59c-deepwell-combat.js, 57d):
+
+- A floor's foes come **one at a time**, each a turn fight: a normal floor is 3 foes, an elite floor the elite (with a
+  trait) and a normal foe, a boss floor the Deep Elder with its boss moves (charge, half-HP phase). Your health carries
+  from foe to foe and floor to floor, as before; a boss floor does not heal you to full.
+- **Depth:** floor f is fought at zone `z0 - 4 + 1.2 x (f - 1)`, where z0 is the zone whose reference hero hits as hard
+  as you do when the run begins (Deep Edge left out, so it still takes you deeper). Every hero meets the same curve, as
+  the real-time Deepwell did. Foe HP: 4 Attacks (normal), 8 (elite), 14 (boss) of that zone's reference hero.
+- **Oil burns only while the foe acts**, at half speed, and never while the fight waits on you, so thinking costs
+  nothing. A parried hit gives 1 s back, a broken charge 2 s, a counter 3 s (12 s a floor at most).
+- **Boons:** 23 boons that need the real-time fight (the old class boons, Attack Rhythm, Wildfire, Duelist, Thorn
+  Plate and the like) stay out of the draft while you fight in turns. Quick Parry and Steady Feet widen the turn
+  windows. Damage, crit, Oil, Executioner, First Strike and Overflow work as written.
+- Balance probe (bot, every foe acted on at once, greedy picks): the mid save reaches floor 15 played well and 14
+  played casually; the late save 18 and 13. The real-time Deepwell's median was 19.
+
+**The Provings** (59f-trials.js): one foe at a time at zone 35's reference (the Fenmother's), foe hits a share of
+your own health (as before). No clock: limits count turns, so the time you take to choose never counts.
+
+| Proving | In turns | Fails on |
+|---|---|---|
+| Hold the Bridge | 4 foes, then the Bridge Beetle (boss moves). A hit you do not parry or dodge burns the lamp (14 of 100) | the lamp goes out, or 40 of your turns |
+| The Running Wraith | the herald (16 Attacks of HP). At its 3rd, 6th and 9th turn it stops at a lamp: it takes x1.5 until its next turn | its 13th turn (it escapes) |
+| The Cursed Wave | a bat, a spore cap, then a Leeching wraith. A spore cap's turn curses you for 2 of your turns (5% health a turn, no healing); otherwise your lamp heals 6% a turn | 26 of your turns |
+
+The banner sits where the Next up chip was, off the fight. A Proving with a second unit (the Stand, not built) keeps
+the real-time fight.
+
 ## The rules as built (59k-turn.js)
 
 - **Speed gauges:** each side fills a gauge at its Speed and acts at 100; ties go to the hero. Nobody gets more than
@@ -163,6 +193,5 @@ ability art brief (`ability-art-brief.md`) is the list of what is still needed.
 
 - **Captains, Champions and Elders of Darkness** with their own moves and art: the zone bosses are still the old Elders,
   with new turn move sets.
-- **The Deepwell and Trials** still use the real-time fight.
 - **Balance** beyond first numbers: the turn-based pacing sim (`tools/sim.mjs --report turns`) needs rewriting for
   active-only play.

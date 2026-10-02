@@ -18,6 +18,13 @@
 /* The Proving on the stage */
 .tr-hud { position: absolute; left: 50%; top: 6px; transform: translateX(-50%); width: min(340px, calc(100% - 24px)); z-index: 30; display: grid; grid-template-columns: 1fr auto; gap: 4px 8px; padding: 8px 10px; background: #0B0810; border: 2px solid var(--gold); color: var(--bone); font-size: 13px; }
 .tr-hud[hidden] { display: none; }
+.tr-hud.tr-slot { position: relative; left: auto; top: auto; transform: none; width: auto; z-index: auto; padding: 6px 8px; }
+.tr-slot .tr-top { flex-wrap: wrap; column-gap: 8px; row-gap: 0; align-self: center; }
+.tr-slot .tr-name { white-space: normal; }
+.tr-slot .tr-goal, .tr-slot .tr-bar { grid-column: 1 / span 2; }
+.tr-slot .tr-goal { font-size: 12px; line-height: 1.3; }
+.tr-slot .tr-quit { grid-row: 1; min-height: 36px; padding: 0 10px; }
+#nuSlot.tr-on .nu-chip { display: none; }
 .tr-top { display: flex; justify-content: space-between; gap: 8px; min-width: 0; grid-column: 1; }
 .tr-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--gold); }
 .tr-time { font-variant-numeric: tabular-nums; }

@@ -94,21 +94,30 @@ var classEvoUI;
   hud.append(hTop, hGoal, hBar, hQuit);
   hud.addEventListener('pointerdown', e => e.stopPropagation());
   if (stage) stage.append(hud);
-  on('trialStart', () => { putHidden(hud, false); updateHud(); });
+  // a turn Proving (59f): the banner takes the Next up chip's place, off the fight (the turn strip and bar sit up top)
+  const slot = $('nuSlot');
+  let inSlot = false;
+  on('trialStart', () => {
+    const t = typeof trialInfo === 'function' ? trialInfo() : null;
+    inSlot = !!(t && t.turn && slot);
+    if (inSlot) { slot.append(hud); slot.classList.add('tr-on'); } else if (stage && hud.parentNode !== stage) stage.append(hud);
+    putHidden(hud, false); updateHud();
+  });
   on('trialEnd', e => {
     putHidden(hud, true);
+    if (slot) slot.classList.remove('tr-on');
     if (!e || e.kind !== 'proving' || e.won) return;
-    const why = { lamp: 'The lamp went out.', escaped: 'The herald got away.', time: 'Time ran out.', fell: 'You fell.', quit: 'You stepped back.' }[e.reason] || '';
+    const why = { lamp: 'The lamp went out.', escaped: 'The herald got away.', time: e.turn ? 'You ran out of turns.' : 'Time ran out.', fell: 'You fell.', quit: 'You stepped back.' }[e.reason] || '';
     toast(`The Proving: not this time. ${why} Best so far: ${Math.max(e.pct, (S.cls.trials[e.id] || {}).best || 0)}%. Try again: it is free.`, 'raid', null, 'high');
   });
   function updateHud() {
     const t = typeof trialInfo === 'function' ? trialInfo() : null;
     if (!t) { putHidden(hud, true); return; }
     putHidden(hud, false);
-    putText(hName, t.name); putText(hTime, `${Math.ceil(t.left)}s`); putText(hGoal, t.goal);
+    putText(hName, t.name); putText(hTime, t.timeTxt || `${Math.ceil(t.left)}s`); putText(hGoal, t.goal);
     const f = t.tpl === 'hold' ? t.lamp / Math.max(1, t.lampMax) : Math.max(0, Math.min(1, t.pct / 100));
     putStyle(hFill, 'transform', `scaleX(${f.toFixed(3)})`);
-    putClass(hud, 'tr-hud tr-' + t.tpl);
+    putClass(hud, 'tr-hud tr-' + t.tpl + (inSlot ? ' tr-slot' : ''));
   }
 
   // ---------------- the second ability button and the meter ----------------

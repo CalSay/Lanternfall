@@ -310,7 +310,7 @@
         const l = el('ul', 'dw-need'); for (const n of need) l.append(el('li', null, n)); b.append(el('p', 'dw-lock', 'Opens when you:'), l);
         return;
       }
-      setTxt(ent.sub, 'Go down floor by floor. Oil is your run: it drains while a foe stands. Your farm keeps working while you are below.');
+      setTxt(ent.sub, `Go down floor by floor. Oil is your run: ${typeof turnArenaNow === 'function' && turnArenaNow() ? 'it burns while a foe acts' : 'it drains while a foe stands'}. Your farm keeps working while you are below.`);
       if (r && !r.paused) {
         b.append(el('p', 'dw-now', `You are below, on floor ${r.floor}.`));
         b.append(btn('big dw-go', 'Back to the well', () => closeMenu()));

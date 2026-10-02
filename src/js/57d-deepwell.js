@@ -292,6 +292,7 @@ let DEEP_ARENA = null;
   function eligible(id, r, opts) {
     const b = DEEP_BOONS[id];
     if (b.c && !deepStageC()) return false;
+    if (b.turnOff && typeof turnArenaNow === 'function' && turnArenaNow()) return false;   // needs the real-time fight (59c)
     if ((r.boons[id] || 0) >= b.max) return false;
     if (r.banned.includes(id)) return false;
     if (b.cls === 'any' ? !cls() : b.cls && b.cls !== cls()) return false;
@@ -608,7 +609,9 @@ let DEEP_ARENA = null;
     if (!alive) { if (!mob || !mob.deep) spawn(); return; }
     r.ft += dt;
     const free = (setOn('oil') && r.ft < 4) || (r.wallT >= 0 && r.ft < r.wallT);
-    if (!free) r.oil -= dt * drainRate();
+    // a turn fight (59c): Oil burns only while the foe acts, at TURN_TUNE.deep.oilX, never while you choose
+    const tf = typeof turnCombatOn === 'function' && turnCombatOn();
+    if (!free && !(tf && turnWaiting())) r.oil -= dt * drainRate() * (tf ? TURN_TUNE.deep.oilX : 1);
     if (r.oil < T.oilLow && !r.lowWarned) { r.lowWarned = true; emit('deepOil', { oil: r.oil }); }
     if (r.boons.exec && mob.hp > 0 && mob.hp < mob.max * DEEP_BOONS.exec.v) strike(mob.hp * 1.0001 + 1e-9, '#9FE8FF', true, null, 'EXECUTE');
     if (r.oil <= 0) {
@@ -715,7 +718,9 @@ let DEEP_ARENA = null;
   });
 
   function tip(i) {
-    const txt = ['Oil is your run. It drains while a foe stands, and each floor you clear refunds some.',
+    const txt = [typeof turnArenaNow === 'function' && turnArenaNow()
+      ? 'Oil is your run. It burns while a foe acts, never while you choose, and each floor you clear refunds some.'
+      : 'Oil is your run. It drains while a foe stands, and each floor you clear refunds some.',
       'After each floor, pick 1 of 3 boons. Three boons of one set switch on its bonus.',
       'You can climb out between floors. You keep every Mark you found.'][i];
     if (!txt) return;

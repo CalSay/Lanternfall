@@ -7092,6 +7092,12 @@ if (section('turn UI (browser)')) try {
           await page.click(learn); await page.waitForTimeout(250);
           out.learned = await X(`abilityOwned('wren', 'powershot') && soloEquipped().includes('powershot') && scrollCount('moss') === 0 && !!document.querySelector('#sec-abilities .ab-card[data-ab="powershot"].owned')`);
         }
+        // a Proving in turns: its banner takes the Next up chip's place (off the fight), and counts foes and turns
+        await X(`if (S.tab) closeMenu(); trialStart('warrior', { kind: 'trial' }); 1`); await page.waitForTimeout(600);
+        out.proving = await X(`(() => { const h = document.querySelector('#nuSlot .tr-hud.tr-slot'), c = document.querySelector('#nuChip');
+          return { slot: !!h && !h.hidden, chip: !!c && c.offsetParent !== null, time: (document.querySelector('.tr-time') || {}).textContent || '', turn: turnCombatOn() }; })()`);
+        await X(`trialEnd(false, 'quit'); 1`); await page.waitForTimeout(200);
+        out.provingEnd = await X(`(() => { const h = document.querySelector('.tr-hud'); return !!h && h.hidden && !document.querySelector('#nuSlot.tr-on'); })()`);
         await ctx.close(); return out;
       };
       const on = await run(844, 390, true);
@@ -7100,6 +7106,8 @@ if (section('turn UI (browser)')) try {
       assert(on.seen.cdTurns && !on.seen.autoBadge, 'turn UI 844x390: the Echo slot shows its cooldown in turns, and there is no Auto badge (active only)');
       assert(on.cards === 17 && on.groups === 'True Aim,Blood Trail,Night Wings,Attack, Parry and Dodge', `turn UI: Hero tab > Abilities lists Wren's 14 abilities in their three groups, then Attack, Parry and Dodge (${on.cards}: ${on.groups})`);
       assert(/Tap again/.test(on.armed) && on.learned, `turn UI: Learn takes two taps, spends the Scroll, and puts the ability in a free slot (${JSON.stringify(on.armed)}, ${on.learned})`);
+      assert(on.proving && on.proving.slot && !on.proving.chip && /Foe 1\/5, \d+ turns/.test(on.proving.time) && on.proving.turn && on.provingEnd,
+        `turn UI: a Proving fights in turns; its banner sits where the Next up chip was and counts foes and turns, and goes on Give up (${JSON.stringify(on.proving)}, ${on.provingEnd})`);
       assert(!on.errors.length, 'turn UI: no page errors' + (on.errors.length ? ': ' + on.errors[0] : ''));
       const port = await run(360, 740, false);
       assert(/VS/.test(port.seen.card) && port.seen.strip >= 5 && !port.errors.length, `turn UI 360x740: the versus card and turn strip work in portrait (${JSON.stringify(port.seen)})`);
@@ -7386,6 +7394,57 @@ if (section('C29 turn fights (core)')) try {
   { const { E } = fresh('pip', 13);
     assert(/^Hits for about \d+, Burn \d+ a turn\.$/.test(E('turnAbilityNumbers("fire")')) && E('turnAbilityNumbers("hex")') === '', `C29: an ability's details give its numbers at your power now (${E('turnAbilityNumbers("fire")')})`); }
 } catch (e) { fail('C29 turn fights crashed: ' + (e.stack || e)); }
+
+if (section('C29 Deepwell and Provings in turns (core)')) try {
+  // owner (2026-10-02): the Deepwell and the Provings fight in turns too. A floor's foes come one at a time; Oil burns only
+  // while the foe acts; a Proving counts turns, not seconds. The real-time versions stay for the turns-off loads above.
+  const BOT = `globalThis.__bot = (mode) => { const q = turnCombatSnapshot();
+    if (q.phase === 'hero') { const eq = soloEquipped(); let ok = false; for (let i = 0; i < 3 && !ok; i++) if (eq[i]) ok = turnCombatAction('ability', i); if (!ok) turnCombatAction('attack'); }
+    if (q.phase === 'foeWindup' && mode && q.closesAt - q.now <= 0.06 && q.closesAt - q.now >= 0) turnCombatAction(mode); }`;
+  const fresh = (seed, setup) => { const g = loadCore({ seed, turns: true }), E = s => g.eval(s);
+    E(`soloPick("wren", {now:true}); S.onboard && (S.onboard.tips = false, S.onboard.all = true); S.activity = 'fight'; ${BOT}; ${setup || ''}`);
+    for (let i = 0; i < 20; i++) g.fn.tick(0.05);
+    return { g, E }; };
+  const play = (g, E, until, secs, mode) => { for (let t = 0; t < secs && !E(until); t += 0.05) { E(`__bot(${JSON.stringify(mode == null ? 'parry' : mode)})`); g.fn.tick(0.05); } };
+  // a floor: its foes one after another, each a turn fight at the floor's zone; nothing is paid to the main game
+  { const { g, E } = fresh(41, 'S.maxZone = 25; S.zone = 25; S.camp.b.hearth = 3; addModifier("dmg", () => 1e4); globalThis.__dk = 0; on("deepKill", () => __dk++)');
+    const gold = E('S.gold'), kills = E('S.totalKills');
+    assert(E('deepUnlocked() && DW.start(false)') && E('turnCombatOn() && mob.deep && mob.turn && combatFoes().length === 1'), 'C29 Deepwell: a run starts and floor 1 is a turn fight against one foe');
+    assert(E('DW.run().tz0 === turnPowerZone(turnPowerNow().A) && mob.tz === turnDeepZone(DW.run().tz0, 1)'), `C29 Deepwell: floor 1 is fought from the zone your Attack matches (${E('DW.run().tz0')}, floor 1 at ${E('mob.tz')})`);
+    // Oil does not burn while the fight waits on you
+    play(g, E, 'turnCombatSnapshot().phase === "hero"', 30, '');
+    const o0 = E('DW.run().oil'); for (let i = 0; i < 100; i++) g.fn.tick(0.1);
+    assert(E('turnCombatSnapshot().phase') === 'hero' && E('DW.run().oil') === o0, 'C29 Deepwell: Oil does not burn while the fight waits on your turn');
+    E('const u = cbUnitByKey("hero"); u.hp = u.maxHp = u.maxHp * 1e4');
+    const n = E('DW.floorFoes(1).length');
+    play(g, E, '!DW.run() || DW.run().phase !== "fight"', 300);
+    assert(E('__dk') === n && E('DW.run() && DW.run().phase') === 'draft' && E('S.gold') === gold && E('S.totalKills') === kills && !g.errors.length,
+      `C29 Deepwell: floor 1's ${n} foes fall one by one, then the boon draft; no gold or kills for the main game (${E('__dk')}, ${E('DW.run() && DW.run().phase')})`);
+    const ids = []; for (let i = 0; i < 12; i++) { ids.push(...E('DW.offerView().cards.map(c => c.id)')); E('DW.run().rr = 5; DW.reroll()'); }
+    assert(ids.length && !ids.some(id => E(`!!DEEP_BOONS[${JSON.stringify(id)}].turnOff`)), `C29 Deepwell: boons that need the real-time fight are not offered in turns (${[...new Set(ids)].join()})`);
+    E('DW.pick(DW.offerView().cards[0].id)');
+    play(g, E, 'mob && mob.deep && mob.floor === 2 && mob.turn', 20);
+    assert(E('mob.floor === 2 && mob.tz === turnDeepZone(DW.run().tz0, 2) && mob.tz > turnDeepZone(DW.run().tz0, 1)'), 'C29 Deepwell: floor 2 comes next, a little deeper');
+    // a fall ends the run
+    E('cbUnitByKey("hero").hp = 1; mob.hp = mob.max = 1e300');
+    play(g, E, '!DW.run()', 120, '');
+    assert(E('!DW.run() && S.deep.last && S.deep.last.reason') === 'wipe' && !E('arena'), `C29 Deepwell: falling in a turn fight ends the run (${E('S.deep.last && S.deep.last.reason')})`);
+    assert(!g.errors.length, 'C29 Deepwell: no errors: ' + g.errors.slice(0, 2).join(' | ')); }
+  // the three Provings: one foe at a time, limits in turns; a strong hero passes each, a weak one fails each its own way
+  const prove = (id, strong) => { const { g, E } = fresh(50 + id.length, `S.maxZone = 36; S.zone = 36; ${strong ? 'addModifier("dmg", () => 1e7); ' : ''}globalThis.__end = null; on("trialEnd", e => __end = e)`);
+    assert(E(`trialStart(${JSON.stringify(id)}, { kind: 'trial' })`) && E('trialLive().turn && turnCombatOn() && combatFoes().length === 1 && mob.trial'), `C29 Proving ${id}: starts as a turn fight`);
+    const t0 = E('trialInfo().timeTxt');
+    for (let i = 0; i < 4; i++) g.fn.tick(0.05);   // the fight takes its numbers (foe hits: shares of your health then)
+    E('const u = cbUnitByKey("hero"); u.hp = u.maxHp = 1e15');   // the twist decides, not the hero's health
+    play(g, E, '__end', 600, strong ? 'parry' : '');
+    return { end: E('__end'), t0, errors: g.errors.slice(0, 2) }; };
+  for (const [id, lose] of [['warrior', 'lamp'], ['ranger', 'escaped'], ['mage', 'time']]) {
+    const w = prove(id, true);
+    assert(w.end && w.end.won && w.end.turn && !/^\d+s$/.test(w.t0) && !w.errors.length, `C29 Proving ${id}: a strong hero passes in turns, and the clock counts turns or foes (${JSON.stringify(w)})`);
+    const l = prove(id, false);
+    assert(l.end && !l.end.won && l.end.reason === lose && !l.errors.length, `C29 Proving ${id}: a hero who cannot hurt it and never defends fails: ${lose} (${JSON.stringify(l.end)})`);
+  }
+} catch (e) { fail('C29 arenas crashed: ' + (e.stack || e)); }
 
 if (section('removed systems (W2-C)')) try {
   const strip = t => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/([^:'"`\\])\/\/[^\n'"`]*$/gm, '$1');

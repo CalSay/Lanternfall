@@ -49,6 +49,7 @@ let deepCombatOn, dcLifeline, DWC;
   // ---------------- packs: the whole floor at once ----------------
   const baseSpawn = DEEP_ARENA.spawn, baseKill = DEEP_ARENA.onKill;
   DEEP_ARENA.spawn = function () {
+    if (typeof turnArenaNow === 'function' && turnArenaNow()) return turnSpawn.call(this);
     if (!partyCombatOn()) return baseSpawn.call(this);
     const r = R();
     if (!r || r.phase !== 'fight') return null;
@@ -63,10 +64,41 @@ let deepCombatOn, dcLifeline, DWC;
     lead.pack = pack;
     return lead;
   };
+  // ---------------- turn fights (owner, 2026-10-02): the floor's foes one at a time ----------------
+  // A floor's foes come one after another, each a turn fight (59k) at the zone turnDeepZone(r.tz0, floor) gives; r.tz0
+  // is the zone your Attack matches as the run's first foe comes (turnPowerZone), so every hero meets the same curve. HP carries as before. First Strike and Overflow keep their cut of the foe's HP.
+  function turnSpawn() {
+    const r = R();
+    if (!r || r.phase !== 'fight') return null;
+    if (mob && mob.deep && !mob.dead && mob.run === r.id) return mob.turn ? mob : turnDeep(mob, r);
+    const m = baseSpawn.call(this);
+    return m ? turnDeep(m, r) : null;
+  }
+  function turnDeep(m, r) {
+    const share = m.max > 0 ? Math.max(0.01, Math.min(1, m.hp / m.max)) : 1;
+    const kind = m.boss ? 'boss' : m.champ ? 'elite' : 'normal', b = typeof FOE_BEH === 'object' ? FOE_BEH[m.type] : null;
+    if (!(r.tz0 > 0)) {   // the anchor: your power as the run began (without Deep Edge, which should take you deeper)
+      const P = turnPowerNow(), k = !r.trial ? S.deep.lore.edge || 0 : 0;
+      r.tz0 = P ? turnPowerZone(P.A / (1 + T.edge * k)) : Math.max(1, S.maxZone || 1);
+    }
+    m.ranged = !!(b && b.ranged); m.armoured = !!(b && b.armoured);
+    if (kind === 'elite') m.name = m.name.replace(' (elite)', '');
+    turnFoeSetup(m, turnDeepZone(r.tz0, r.floor), { elite: kind === 'elite', set: m.boss ? m.type : '', hpA: TURN_TUNE.deep.hpA[kind] });
+    m.hp = m.max * share; m.gold = 0; m.xp = 0; m.champ = kind === 'elite';
+    return m;
+  }
+  // Boons that need the real-time fight stay out of the draft while you fight in turns (57d eligible)
+  for (const id of ['thorn', 'taunt', 'dward', 'wild', 'duel', 'breaker', 'coup', 'silence', 'lward', 'rhythm', 'lheart',
+    'kindle', 'shield', 'fletch', 'psalm', 'focus', 'double', 'bulwark', 'choir', 'twice', 'wallnight', 'storm', 'hymn'])
+    if (DEEP_BOONS[id]) DEEP_BOONS[id].turnOff = 1;
+  const rk = id => { const r = R(); return r && deepActive() ? r.boons[id] || 0 : 0; };
+  addBonus('turnParryWin', () => (rk('parry') ? DEEP_BOONS.parry.v * 0.375 : 0));   // Quick Parry: +0.15 s
+  addBonus('turnDodgeWin', () => (rk('feet') ? DEEP_BOONS.feet.v * 0.667 : 0));     // Steady Feet: +0.2 s
+
   // One pack is the floor: its clear is the floor's last kill.
   DEEP_ARENA.onKill = function (m, over) {
     const r = R();
-    if (partyCombatOn() && r && m && m.deep) r.foeI = Math.max(r.foeI, DW.floorFoes(r.floor).length - 1);
+    if (partyCombatOn() && r && m && m.deep && !m.turn) r.foeI = Math.max(r.foeI, DW.floorFoes(r.floor).length - 1);
     return baseKill.call(this, m, over);
   };
 
@@ -149,6 +181,10 @@ let deepCombatOn, dcLifeline, DWC;
   on('interrupt', () => answerOil(T.intrOil));
   on('dodge', p => { if (p && p.perfect) { const r = R(); answerOil(T.perfOil + (r && typeof DW.setProgress === 'function' && (DW.setProgress().find(x => x.id === 'dance') || {}).on ? T.danceOil : 0)); } });
   on('finisher', () => answerOil(T.finOil));
+  // turn fights: a parried hit, a broken charge and a counter give Oil back (the same cap a floor)
+  on('foeContact', p => { if (p && p.res === 'parry') answerOil(T.parryOil / 2); });
+  on('chargeBroken', () => answerOil(T.intrOil));
+  on('soloCounter', () => answerOil(T.finOil));
   // An active Deep Elder kill (59g, combat-2 3.8): the next draft shows four cards, all Rare or better.
   on('activeKill', () => { const r = R(); if (deepCombatOn() && r) r.actKill = 1; });
   addBonus('deepRefund', () => partyCombatOn() && R() ? T.refund : 0);

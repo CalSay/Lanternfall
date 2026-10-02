@@ -2682,6 +2682,13 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
 /* The Proving on the stage */
 .tr-hud { position: absolute; left: 50%; top: 6px; transform: translateX(-50%); width: min(340px, calc(100% - 24px)); z-index: 30; display: grid; grid-template-columns: 1fr auto; gap: 4px 8px; padding: 8px 10px; background: #0B0810; border: 2px solid var(--gold); color: var(--bone); font-size: 13px; }
 .tr-hud[hidden] { display: none; }
+.tr-hud.tr-slot { position: relative; left: auto; top: auto; transform: none; width: auto; z-index: auto; padding: 6px 8px; }
+.tr-slot .tr-top { flex-wrap: wrap; column-gap: 8px; row-gap: 0; align-self: center; }
+.tr-slot .tr-name { white-space: normal; }
+.tr-slot .tr-goal, .tr-slot .tr-bar { grid-column: 1 / span 2; }
+.tr-slot .tr-goal { font-size: 12px; line-height: 1.3; }
+.tr-slot .tr-quit { grid-row: 1; min-height: 36px; padding: 0 10px; }
+#nuSlot.tr-on .nu-chip { display: none; }
 .tr-top { display: flex; justify-content: space-between; gap: 8px; min-width: 0; grid-column: 1; }
 .tr-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--gold); }
 .tr-time { font-variant-numeric: tabular-nums; }
@@ -16091,6 +16098,7 @@ let DEEP_ARENA = null;
   function eligible(id, r, opts) {
     const b = DEEP_BOONS[id];
     if (b.c && !deepStageC()) return false;
+    if (b.turnOff && typeof turnArenaNow === 'function' && turnArenaNow()) return false;   // needs the real-time fight (59c)
     if ((r.boons[id] || 0) >= b.max) return false;
     if (r.banned.includes(id)) return false;
     if (b.cls === 'any' ? !cls() : b.cls && b.cls !== cls()) return false;
@@ -16407,7 +16415,9 @@ let DEEP_ARENA = null;
     if (!alive) { if (!mob || !mob.deep) spawn(); return; }
     r.ft += dt;
     const free = (setOn('oil') && r.ft < 4) || (r.wallT >= 0 && r.ft < r.wallT);
-    if (!free) r.oil -= dt * drainRate();
+    // a turn fight (59c): Oil burns only while the foe acts, at TURN_TUNE.deep.oilX, never while you choose
+    const tf = typeof turnCombatOn === 'function' && turnCombatOn();
+    if (!free && !(tf && turnWaiting())) r.oil -= dt * drainRate() * (tf ? TURN_TUNE.deep.oilX : 1);
     if (r.oil < T.oilLow && !r.lowWarned) { r.lowWarned = true; emit('deepOil', { oil: r.oil }); }
     if (r.boons.exec && mob.hp > 0 && mob.hp < mob.max * DEEP_BOONS.exec.v) strike(mob.hp * 1.0001 + 1e-9, '#9FE8FF', true, null, 'EXECUTE');
     if (r.oil <= 0) {
@@ -16514,7 +16524,9 @@ let DEEP_ARENA = null;
   });
 
   function tip(i) {
-    const txt = ['Oil is your run. It drains while a foe stands, and each floor you clear refunds some.',
+    const txt = [typeof turnArenaNow === 'function' && turnArenaNow()
+      ? 'Oil is your run. It burns while a foe acts, never while you choose, and each floor you clear refunds some.'
+      : 'Oil is your run. It drains while a foe stands, and each floor you clear refunds some.',
       'After each floor, pick 1 of 3 boons. Three boons of one set switch on its bonus.',
       'You can climb out between floors. You keep every Mark you found.'][i];
     if (!txt) return;
@@ -20939,6 +20951,7 @@ let deepCombatOn, dcLifeline, DWC;
   // ---------------- packs: the whole floor at once ----------------
   const baseSpawn = DEEP_ARENA.spawn, baseKill = DEEP_ARENA.onKill;
   DEEP_ARENA.spawn = function () {
+    if (typeof turnArenaNow === 'function' && turnArenaNow()) return turnSpawn.call(this);
     if (!partyCombatOn()) return baseSpawn.call(this);
     const r = R();
     if (!r || r.phase !== 'fight') return null;
@@ -20953,10 +20966,41 @@ let deepCombatOn, dcLifeline, DWC;
     lead.pack = pack;
     return lead;
   };
+  // ---------------- turn fights (owner, 2026-10-02): the floor's foes one at a time ----------------
+  // A floor's foes come one after another, each a turn fight (59k) at the zone turnDeepZone(r.tz0, floor) gives; r.tz0
+  // is the zone your Attack matches as the run's first foe comes (turnPowerZone), so every hero meets the same curve. HP carries as before. First Strike and Overflow keep their cut of the foe's HP.
+  function turnSpawn() {
+    const r = R();
+    if (!r || r.phase !== 'fight') return null;
+    if (mob && mob.deep && !mob.dead && mob.run === r.id) return mob.turn ? mob : turnDeep(mob, r);
+    const m = baseSpawn.call(this);
+    return m ? turnDeep(m, r) : null;
+  }
+  function turnDeep(m, r) {
+    const share = m.max > 0 ? Math.max(0.01, Math.min(1, m.hp / m.max)) : 1;
+    const kind = m.boss ? 'boss' : m.champ ? 'elite' : 'normal', b = typeof FOE_BEH === 'object' ? FOE_BEH[m.type] : null;
+    if (!(r.tz0 > 0)) {   // the anchor: your power as the run began (without Deep Edge, which should take you deeper)
+      const P = turnPowerNow(), k = !r.trial ? S.deep.lore.edge || 0 : 0;
+      r.tz0 = P ? turnPowerZone(P.A / (1 + T.edge * k)) : Math.max(1, S.maxZone || 1);
+    }
+    m.ranged = !!(b && b.ranged); m.armoured = !!(b && b.armoured);
+    if (kind === 'elite') m.name = m.name.replace(' (elite)', '');
+    turnFoeSetup(m, turnDeepZone(r.tz0, r.floor), { elite: kind === 'elite', set: m.boss ? m.type : '', hpA: TURN_TUNE.deep.hpA[kind] });
+    m.hp = m.max * share; m.gold = 0; m.xp = 0; m.champ = kind === 'elite';
+    return m;
+  }
+  // Boons that need the real-time fight stay out of the draft while you fight in turns (57d eligible)
+  for (const id of ['thorn', 'taunt', 'dward', 'wild', 'duel', 'breaker', 'coup', 'silence', 'lward', 'rhythm', 'lheart',
+    'kindle', 'shield', 'fletch', 'psalm', 'focus', 'double', 'bulwark', 'choir', 'twice', 'wallnight', 'storm', 'hymn'])
+    if (DEEP_BOONS[id]) DEEP_BOONS[id].turnOff = 1;
+  const rk = id => { const r = R(); return r && deepActive() ? r.boons[id] || 0 : 0; };
+  addBonus('turnParryWin', () => (rk('parry') ? DEEP_BOONS.parry.v * 0.375 : 0));   // Quick Parry: +0.15 s
+  addBonus('turnDodgeWin', () => (rk('feet') ? DEEP_BOONS.feet.v * 0.667 : 0));     // Steady Feet: +0.2 s
+
   // One pack is the floor: its clear is the floor's last kill.
   DEEP_ARENA.onKill = function (m, over) {
     const r = R();
-    if (partyCombatOn() && r && m && m.deep) r.foeI = Math.max(r.foeI, DW.floorFoes(r.floor).length - 1);
+    if (partyCombatOn() && r && m && m.deep && !m.turn) r.foeI = Math.max(r.foeI, DW.floorFoes(r.floor).length - 1);
     return baseKill.call(this, m, over);
   };
 
@@ -21039,6 +21083,10 @@ let deepCombatOn, dcLifeline, DWC;
   on('interrupt', () => answerOil(T.intrOil));
   on('dodge', p => { if (p && p.perfect) { const r = R(); answerOil(T.perfOil + (r && typeof DW.setProgress === 'function' && (DW.setProgress().find(x => x.id === 'dance') || {}).on ? T.danceOil : 0)); } });
   on('finisher', () => answerOil(T.finOil));
+  // turn fights: a parried hit, a broken charge and a counter give Oil back (the same cap a floor)
+  on('foeContact', p => { if (p && p.res === 'parry') answerOil(T.parryOil / 2); });
+  on('chargeBroken', () => answerOil(T.intrOil));
+  on('soloCounter', () => answerOil(T.finOil));
   // An active Deep Elder kill (59g, combat-2 3.8): the next draft shows four cards, all Rare or better.
   on('activeKill', () => { const r = R(); if (deepCombatOn() && r) r.actKill = 1; });
   addBonus('deepRefund', () => partyCombatOn() && R() ? T.refund : 0);
@@ -21538,7 +21586,7 @@ var clsHeroStats, clsDr, clsHeroHitX, clsHeroHit, clsNoGrit, clsMarkAdd, clsStag
 //      trialField() -> [heroIds] while a run is live (59-combat fieldIds), else null; trialRefDps(base)
 // Events: trialStart { id, kind }, trialEnd { id, kind, won, pct, reason, secs }. Runtime only: nothing saved.
 
-var TRIAL_TUNE, TRIAL_ARENA, TRIAL_TPL, trialStart, trialEnd, trialLive, trialInfo, trialField, trialRefDps;
+var TRIAL_TUNE, TRIAL_ARENA, TRIAL_TPL, TRIAL_TURN, trialStart, trialEnd, trialLive, trialInfo, trialField, trialRefDps;
 
 {
   const T = TRIAL_TUNE = {
@@ -21546,7 +21594,14 @@ var TRIAL_TUNE, TRIAL_ARENA, TRIAL_TPL, trialStart, trialEnd, trialLive, trialIn
     share: { warrior: 0.1, ranger: 0.5, mage: 0.2 },  // the base class's share of its party's damage at the reference
     hold: { foeSecs: 10, bossSecs: 35, hitPct: 0.03, bossHitPct: 0.05, lampHit: 5.8 },
     hunt: { quarrySecs: 52, markX: 1.25, screenSecs: 1.5, hitPct: 0.02, stops: [9, 20, 31], stopX: 1.5 },
-    wave: { secs: { bat: 4.2, spore: 8.4, wraith: 14 }, hitPct: 0.008, curseEvery: 4, curseT: 3, drain: 0.015, lampHeal: 0.03 }
+    wave: { secs: { bat: 4.2, spore: 8.4, wraith: 14 }, hitPct: 0.008, curseEvery: 4, curseT: 3, drain: 0.015, lampHeal: 0.03 },
+    // turn fights (owner, 2026-10-02): foes one at a time at refZone's reference (59k turnFoeSetup), HP in Attacks of
+    // that reference hero (hpA). No clock: limits count turns, so the time you take to choose never counts.
+    turn: {
+      hold: { foes: 4, hpA: 4, bossHpA: 12, lampHit: 14, turns: 40 },
+      hunt: { hpA: 16, escape: 12, stops: [3, 6, 9], stopX: 1.5 },
+      wave: { list: [['bat', 4, 0], ['spore', 5, 0], ['wraith', 7, 'vampiric']], turns: 26, curseT: 2, drain: 0.05, lampHeal: 0.06 }
+    }
   };
   const alive = f => f && !f.dead && f.hp > 0 && !f.gone;
   const foes = () => (typeof combatFoes === 'function' ? combatFoes() : []);
@@ -21653,6 +21708,85 @@ var TRIAL_TUNE, TRIAL_ARENA, TRIAL_TPL, trialStart, trialEnd, trialLive, trialIn
     }
   };
 
+  // ---------------- the same three in turns ----------------
+  // One foe at a time; 'turn' and 'foeContact' (59k) drive the twists. Info adds timeTxt (turns left, or '').
+  const TT = T.turn;
+  function tfoe(type, hpA, o) {
+    o = o || {};
+    const f = foe(type, 1, o.f), b = typeof FOE_BEH === 'object' ? FOE_BEH[type] : null;
+    f.ranged = !!(b && b.ranged); f.armoured = !!(b && b.armoured);
+    turnFoeSetup(f, T.refZone, { elite: !!o.trait, trait: o.trait || '', set: f.boss ? type : '', hpA });
+    f.hp *= run.ref; f.max *= run.ref; f.gold = 0; f.xp = 0;
+    return f;
+  }
+  const liveFoe = () => foes().find(alive) || null;
+  TRIAL_TURN = {
+    hold: {
+      init(r) { r.lamp = r.lampMax = r.def.lamp || 100; r.n = 0; r.total = TT.hold.foes + 1; r.heroT = 0; },
+      spawn(r) {
+        if (r.n >= r.total) return null;
+        r.n++;
+        const ty = r.def.types || ['bones', 'beetle'];
+        if (r.n === r.total) return tfoe('beetle', TT.hold.bossHpA, { f: { boss: true, name: 'Bridge Beetle' } });
+        return tfoe(ty[r.n % ty.length], TT.hold.hpA);
+      },
+      turn(r, who) { if (who === 'hero') r.heroT++; },
+      contact(r, res) { if (res === 'hit') { r.lamp = Math.max(0, r.lamp - TT.hold.lampHit); emit('trialLamp', { lamp: r.lamp }); } },
+      tick(r) { return r.lamp <= 0 ? 'lamp' : r.heroT > TT.hold.turns ? 'time' : null; },
+      cleared(r) { return r.n >= r.total ? 'won' : null; },
+      pct: r => { const f = liveFoe(), part = f ? 1 - f.hp / f.max : 1; return Math.round(100 * Math.max(0, r.n - 1 + part) / r.total * (r.lamp > 0 ? 1 : 0.5)); },
+      goal: r => `Keep the lamp lit: ${Math.ceil(r.lamp)} of ${r.lampMax}. Hits you take reach it.`,
+      timeTxt: r => `Foe ${Math.max(1, r.n)}/${r.total}, ${Math.max(0, TT.hold.turns - r.heroT)} turns`
+    },
+    hunt: {
+      init(r) { r.quarry = null; r.foeT = 0; },
+      spawn(r) {
+        if (r.quarry) return null;
+        r.quarry = tfoe(r.def.quarry || 'wraith', TT.hunt.hpA, { f: { champ: true, name: "The Fenmother's Herald", quarry: 1 } });
+        return r.quarry;
+      },
+      turn(r, who) {
+        const q = r.quarry; if (who !== 'foe' || !q || !alive(q)) return;
+        r.foeT++;
+        const stop = TT.hunt.stops.indexOf(r.foeT);
+        q.turnX = stop >= 0 ? TT.hunt.stopX : 1;   // at a lamp it takes more until its next turn (59k foeX)
+        if (stop >= 0) emit('trialStop', { i: stop });
+      },
+      tick(r) {
+        const q = r.quarry;
+        if (q && !alive(q)) return 'won';
+        return r.foeT > TT.hunt.escape ? 'escaped' : null;
+      },
+      cleared: () => 'won',
+      pct: r => (r.quarry ? Math.round(100 * Math.max(0, Math.min(1, 1 - r.quarry.hp / r.quarry.max))) : 0),
+      goal: r => (r.quarry && alive(r.quarry) && r.quarry.turnX > 1 ? 'It stopped at a lamp. Hit it now!' : 'Bring down the herald before it escapes'),
+      timeTxt: r => `${Math.max(0, TT.hunt.escape - r.foeT)} turns`
+    },
+    wave: {
+      init(r) { r.wave = 0; r.waves = TT.wave.list.length; r.cursed = 0; r.heroT = 0; },
+      spawn(r) {
+        const w = TT.wave.list[r.wave]; if (!w) return null;
+        r.wave++;
+        return tfoe(w[0], w[1], { trait: w[2] || '' });
+      },
+      // a spore cap's turn curses you: no healing and a drain for 2 of your turns; else your lamp heals you
+      turn(r, who) {
+        const h = hero(); if (!h || h.down) return;
+        if (who === 'foe') { const f = liveFoe(); if (f && f.type === 'spore') { r.cursed = TT.wave.curseT; if (typeof stUnitApply === 'function') stUnitApply(h, 'curse', 1, { dur: 3 }); } return; }
+        r.heroT++;
+        if (r.cursed > 0) { r.cursed--; cbTurnHitHero(h.maxHp * TT.wave.drain, false, 'dot'); }
+        else if (h.hp < h.maxHp) { const d = Math.min(h.maxHp - h.hp, h.maxHp * TT.wave.lampHeal); h.hp += d; emit('unitHeal', { key: h.key, amount: d }); }
+      },
+      tick(r) { return r.heroT > TT.wave.turns ? 'time' : null; },
+      cleared(r) { return r.wave >= r.waves ? 'won' : null; },
+      pct: r => Math.round(100 * (r.wave - (foes().some(alive) ? 1 : 0)) / Math.max(1, r.waves)),
+      goal: r => `Wave ${Math.max(1, r.wave)} of ${r.waves}` + (r.cursed > 0 ? ': cursed, no healing' : ''),
+      timeTxt: r => `${Math.max(0, TT.wave.turns - r.heroT)} turns`
+    }
+  };
+  on('turn', p => { if (run && run.turn && run.tpl.turn && p) run.tpl.turn(run, p.who); });
+  on('foeContact', p => { if (run && run.turn && run.tpl.contact && p) run.tpl.contact(run, p.res); });
+
   // ---------------- the arena (50-sim calls it) ----------------
   TRIAL_ARENA = {
     spawn() {
@@ -21669,7 +21803,7 @@ var TRIAL_TUNE, TRIAL_ARENA, TRIAL_TPL, trialStart, trialEnd, trialLive, trialIn
   // Foe hits: a share of the hero's own health (set once the pack is adopted by 59-combat).
   on('packSpawn', p => {
     const list = p.foes, lead = list && list[0];
-    if (!run || !lead || lead.trial !== run.id) return;
+    if (!run || run.turn || !lead || lead.trial !== run.id) return;   // a turn fight's foes hit with their moves (59k)
     const h = hero(), hp = h ? h.maxHp : 1, now = cbT();
     for (const f of list) { if (f.trialAtk) continue; f.trialAtk = 1; f.atk = hp * run.tpl.hitPct(f); f.tIn = now; }
   });
@@ -21695,8 +21829,10 @@ var TRIAL_TUNE, TRIAL_ARENA, TRIAL_TPL, trialStart, trialEnd, trialLive, trialIn
     if (run || !def || !TRIAL_TPL[def.tpl]) return false;
     if (typeof deepActive === 'function' && deepActive()) return false;
     if (!(typeof partyCombatOn === 'function' && partyCombatOn())) return false;
-    const base = def.base || id;
-    run = { id, def, kind: o.kind || 'trial', tpl: TRIAL_TPL[def.tpl], t: 0, secs: def.secs || 60, units: (o.units || []).slice(0, 2),
+    const base = def.base || id, units = (o.units || []).slice(0, 2);
+    // the hero fights in turns (59k): so does a Proving (one with a second unit keeps the real-time fight)
+    const turn = !units.length && typeof turnArenaNow === 'function' && turnArenaNow() && !!TRIAL_TURN[def.tpl];
+    run = { id, def, kind: o.kind || 'trial', turn, tpl: turn ? TRIAL_TURN[def.tpl] : TRIAL_TPL[def.tpl], t: 0, secs: def.secs || 60, units,
       act: S.activity || 'fight', ref: o.ref > 0 ? o.ref : 1, refDps: trialRefDps(base), pending: null };
     run.tpl.init(run);
     S.activity = 'fight'; fightBoss = false;
@@ -21711,7 +21847,7 @@ var TRIAL_TUNE, TRIAL_ARENA, TRIAL_TPL, trialStart, trialEnd, trialLive, trialIn
   trialEnd = (won, reason) => {
     if (!run) return null;
     const r = run, pct = won ? 100 : Math.max(0, Math.min(99, r.tpl.pct(r) || 0));
-    const rec = { id: r.id, kind: r.kind, won: !!won, pct, reason: reason || (won ? 'won' : 'lost'), secs: Math.round(r.t) };
+    const rec = { id: r.id, kind: r.kind, won: !!won, pct, reason: reason || (won ? 'won' : 'lost'), secs: Math.round(r.t), turn: !!r.turn };
     run = null;
     retire();
     if (typeof cbRestore === 'function') cbRestore(true);
@@ -21724,13 +21860,14 @@ var TRIAL_TUNE, TRIAL_ARENA, TRIAL_TPL, trialStart, trialEnd, trialLive, trialIn
     emit('activity', { activity: S.activity });
     return rec;
   };
-  const INFO = { id: '', name: '', tpl: '', kind: '', t: 0, secs: 0, left: 0, pct: 0, lamp: 0, lampMax: 0, wave: 0, waves: 0, goal: '' };
+  const INFO = { id: '', name: '', tpl: '', kind: '', t: 0, secs: 0, left: 0, pct: 0, lamp: 0, lampMax: 0, wave: 0, waves: 0, goal: '', turn: false, timeTxt: '' };
   trialInfo = () => {
     if (!run) return null;
     const r = run;
     INFO.id = r.id; INFO.name = r.def.name || ''; INFO.tpl = r.def.tpl; INFO.kind = r.kind; INFO.t = r.t; INFO.secs = r.secs;
     INFO.left = Math.max(0, r.secs - r.t); INFO.pct = r.tpl.pct(r) || 0; INFO.lamp = r.lamp || 0; INFO.lampMax = r.lampMax || 0;
     INFO.wave = r.wave || 0; INFO.waves = r.waves || 0; INFO.goal = r.tpl.goal(r);
+    INFO.turn = !!r.turn; INFO.timeTxt = r.turn && r.tpl.timeTxt ? r.tpl.timeTxt(r) : `${Math.ceil(INFO.left)}s`;
     return INFO;
   };
 
@@ -22961,7 +23098,8 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
 // kills a normal foe in about TURN_FOE_HP.normal Attacks, and a move does about 20% of that hero's HP.
 //
 // Exposed names:
-//   TURN_TUNE, turnCombatScope(), turnCombatOn(), turnRefAtk(z), turnRefHp(z), turnFoeSetup(f, z), turnCdFor(id)
+//   TURN_TUNE, turnCombatScope(), turnCombatOn(), turnRefAtk(z), turnRefHp(z), turnFoeSetup(f, z, o), turnCdFor(id)
+//   turnArenaOk(), turnArenaNow(), turnPowerZone(a), turnDeepZone(z0, floor), turnWaiting() (the Deepwell and the Provings: 59c, 59f, 57d)
 //   turnMakeProfile(f, u), turnNew(p, io), turnResolve(m, cmd, dt, io), turnPreview(m, n), turnUsable(m, id)
 //   turnCombatSnapshot(), turnCombatProfile(), turnCombatAction(kind, slot), turnCombatTick(dt), turnBadgesFor(f),
 //   turnHeroChips(), turnChoose(m), turnCombatSample({ profile, seconds, seed, skill })
@@ -22998,7 +23136,12 @@ const TURN_TUNE = {
   abTrain: 0.02,                                                  // Ability power Training: +2% ability power a level
   // timed abilities (owner, 2026-10-01; hero-abilities.md 2a.4): press again as the ring closes. Perfect within +-perfect s
   // adds the ability's bonus, Good within +-good s is the ability as written, a Miss hits for missX. One ring per hit.
-  timed: { ring: 0.9, gap: 0.55, perfect: 0.06, good: 0.15, missX: 0.7 }
+  timed: { ring: 0.9, gap: 0.55, perfect: 0.06, good: 0.15, missX: 0.7 },
+  // the Deepwell and the Provings in turns (owner, 2026-10-02). Deepwell floor f is fought at zone
+  // turnDeepZone(z0, f): z0 is the zone whose reference hero hits as hard as you did as the run began (turnPowerZone),
+  // then `step` zones a floor from `from`. Oil burns only while the foe acts (oilX of real time), never while you choose.
+  arena: 1,
+  deep: { from: -4, step: 1.2, oilX: 0.5, hpA: { normal: 4, elite: 8, boss: 14 } }
 };
 // the twelve timed abilities and how many rings each has (one per arrow or blow)
 const TURN_TIMED = { powershot: 1, volley: 3, deadeye: 1, moonvolley: 5, heavystrike: 1, bash: 1, hammerfall: 1, shieldthrow: 1,
@@ -23010,7 +23153,30 @@ addModifier('essence', () => turnCombatScope() ? TURN_TUNE.essenceX : 1);
 
 function turnCombatScope() {
   return !!(TURN_TUNE.on && S && S.activity === 'fight' && S.solo && SOLO_HEROES[S.solo.hero] &&
-    typeof partyCombatOn === 'function' && partyCombatOn() && !arena && target() === 'mob');
+    typeof partyCombatOn === 'function' && partyCombatOn() && turnArenaOk() && target() === 'mob');
+}
+// the Deepwell and a Proving fight in turns too (an arena: 50-sim); any other arena keeps the real-time fight
+function turnArenaOk() {
+  if (!arena) return true;
+  if (!TURN_TUNE.arena) return false;
+  if (typeof DEEP_ARENA !== 'undefined' && arena === DEEP_ARENA) return true;
+  return typeof TRIAL_ARENA !== 'undefined' && arena === TRIAL_ARENA && typeof trialLive === 'function' && !!trialLive() && !!trialLive().turn;
+}
+// would a fight now be a turn fight, for an arena that is about to make its foe (arena set, S.activity 'fight')
+const turnArenaNow = () => !!(TURN_TUNE.on && TURN_TUNE.arena && S && S.solo && SOLO_HEROES[S.solo.hero] && typeof partyCombatOn === 'function' && partyCombatOn());
+// the zone whose reference hero hits as hard as Attack a (the Deepwell's anchor: every hero meets the same curve)
+function turnPowerZone(a) {
+  let z = 1;
+  while (z < 300 && turnRefAtk(z + 1) <= a) z++;
+  return z;
+}
+// the zone a Deepwell floor is fought at: from the power zone the run began at
+const turnDeepZone = (z0, floor) => Math.max(1, Math.round(z0 + TURN_TUNE.deep.from + TURN_TUNE.deep.step * (floor - 1)));
+// the fight waits on the player (or a beat): Deepwell Oil does not burn
+function turnWaiting() {
+  const m = TURN_LIVE;
+  if (!m || m.ended) return false;
+  return m.phase === 'hero' || m.phase === 'handoff' || m.phase === 'intro' || m.stop > 0 || (typeof turnPaused === 'function' && turnPaused());
 }
 function turnCombatOn() { return turnCombatScope(); }
 const turnRefAtkX = z => {
@@ -23032,12 +23198,14 @@ function turnCdFor(id) {
 // ---------------- the foe ----------------
 // cbSpawn (59-combat) makes the foe, then this sets it up for a turn fight: HP from the reference hero, its moves and
 // script, Speed, armour, gold and XP. kind: 'boss' | 'normal' (an elite rolls here).
-function turnFoeSetup(f, z, kind) {
+// o (the Deepwell and the Provings): { elite: true (always) | false (never), trait, set (a boss move set id), hpA }
+function turnFoeSetup(f, z, o) {
+  o = o || {};
   const T = TURN_TUNE, Z = !f.boss && typeof zoneFoeOf === 'function' ? zoneFoeOf(f) : null;
-  const region = !!(f.boss && typeof isRegionBoss === 'function' && isRegionBoss(z));
+  const region = !!(f.boss && !o.set && typeof isRegionBoss === 'function' && isRegionBoss(z));
   let moves, script, spd, hpA;
   if (f.boss) {
-    const kit = typeof kitOf === 'function' ? kitOf(f) : null, id = region ? (regionIdx(z) === 0 ? 'fenmother' : '') : f.type;
+    const kit = !o.set && typeof kitOf === 'function' ? kitOf(f) : null, id = o.set || (region ? (regionIdx(z) === 0 ? 'fenmother' : '') : f.type);
     const set = TURN_BOSS_SETS[id] || TURN_BOSS_BASIC;
     script = [set.a, set.b, set.charge, set.c]; moves = script;
     spd = region ? TURN_FOE_SPEED.region : TURN_FOE_SPEED.boss; hpA = region ? TURN_FOE_HP.region : TURN_FOE_HP.boss;
@@ -23049,17 +23217,18 @@ function turnFoeSetup(f, z, kind) {
     moves = ranged ? TURN_FOE_RANGED : TURN_FOE_BASIC; script = moves.slice();
     spd = ranged ? TURN_FOE_SPEED.ranged : TURN_FOE_SPEED.normal; hpA = TURN_FOE_HP.normal;
     const C = COMBAT_TUNE;
-    if (z >= C.eliteFrom && Math.random() < C.eliteP) {
+    if (o.elite === true || (o.elite !== false && z >= C.eliteFrom && Math.random() < C.eliteP)) {
       f.elite = true; script = script.concat([TURN_FOE_ELITE]);
-      const ids = Object.keys(TURN_TRAITS), tr = ids[(Math.random() * ids.length) | 0];   // one trait (24d TURN_TRAITS)
+      const ids = Object.keys(TURN_TRAITS), tr = o.trait || ids[(Math.random() * ids.length) | 0];   // one trait (24d TURN_TRAITS)
       f.tr = [tr]; f.name = ((typeof ELITE_TRAITS === 'object' && ELITE_TRAITS[tr] && ELITE_TRAITS[tr].name) || 'Elite') + ' ' + f.name;
       spd = TURN_FOE_SPEED.elite; hpA = TURN_FOE_HP.elite;
     }
   }
   // the first zone bosses come in easier while you learn to parry and dodge (bossEase: their HP share in zones 1, 2, 3)
-  const ease = f.boss && !region ? (T.bossEase[z - 1] || 1) : 1;
+  const ease = f.boss && !region && !o.set ? (T.bossEase[z - 1] || 1) : 1;
+  if (o.hpA > 0) hpA = o.hpA;
   const hp = hpA * ease * turnRefAtk(z) * (0.95 + Math.random() * 0.1);
-  f.hp = f.max = hp; f.turn = 1;
+  f.hp = f.max = hp; f.turn = 1; f.tz = z;
   f.tk = { script, spd: spd * 10, arm: Z && Z.armour ? Z.armour : f.armoured ? 0.3 : 0, boss: !!f.boss, region, elite: !!f.elite };
   const C = COMBAT_TUNE;
   f.gold = mobGold(z) * C.packGold * T.goldX * (f.boss ? 5 : f.elite ? C.eliteGold : 1);
@@ -23080,17 +23249,19 @@ function turnMakeProfile(f, u) {
   const U = A * (1 + T.abTrain * trainLv(TURN_SIG[key] || 'echo')) * (1 + (g.abil || 0) / 100);
   const ar = Math.max(0, u.armour || 0), armRed = Math.min(COMBAT_TUNE.redMax, ar / (ar + 100));
   const classDr = cls === 'warden' ? (1 - COMBAT_TUNE.wardenDr) * (1 - COMBAT_TUNE.tankDr) : 1;
-  const z = f.z || S.zone;
+  const z = f.tz || f.z || S.zone;   // tz: the zone its numbers were set for (a Deepwell floor or a Proving has its own)
   const eq = soloEquipped().filter(Boolean);
   const cds = { attack: 1 }; for (const id of eq) cds[id] = turnCdFor(id);
-  return { heroKey: key, zone: z, heroMaxHp: u.maxHp, refHp: turnRefHp(z), A, U, heroType: heroType(key) || 'phys',
+  // a Proving's foes hit for shares of your own health (59f: the fight stays a fight at any power, as before turns)
+  return { heroKey: key, zone: z, heroMaxHp: u.maxHp, refHp: f.trial ? u.maxHp : turnRefHp(z), A, U, heroType: heroType(key) || 'phys',
     counter: heroAtk() * heroX * SOLO_TUNE.counterX * aps() * critMult() * trainCounterX() * (1 + (g.counter || 0) / 100) * (1 + (g.echo || 0)),
     critChance: critChance(), critMult: critMult(), nonCrit: mod('nonCrit'), echo: g.echo || 0,
     hitX: T.foeAtkX * (1 - armRed) * classDr, blockP: u.blockP || 0, blockC: u.blockC || 0, blockN: u.blockN || 0, blockX: COMBAT_TUNE.blockX,
     heroSpd: (T.heroHaste[key] || 10) + (g.initiative || 0), foeSpd: f.tk.spd, foeMaxHp: f.max, foeHp: f.hp,
     foeName: f.name, foeType: f.txRow || f.type, foeArm: f.tk.arm, boss: f.tk.boss, region: f.tk.region, trait: f.tr && TURN_TRAITS[f.tr[0]] ? f.tr[0] : '',
     script: f.tk.script, eq, cds, tal: typeof talentsOf === 'function' ? talentsOf(key) : {},
-    parryWindow: SOLO_TUNE.turnParryWindow + (g.parryWindow || 0) / 1000, dodgeWindow: SOLO_TUNE.turnDodgeWindow + (g.dodgeWindow || 0) / 1000 + T.dodgeTrain * trainLv('dodge'),
+    parryWindow: SOLO_TUNE.turnParryWindow + (g.parryWindow || 0) / 1000 + bonus('turnParryWin'),
+    dodgeWindow: SOLO_TUNE.turnDodgeWindow + (g.dodgeWindow || 0) / 1000 + T.dodgeTrain * trainLv('dodge') + bonus('turnDodgeWin'),
     essChance: essChance(), essExtra: g.essExtra || 0, goldPerKill: f.gold, xpPerKill: f.xp, healOnKill: COMBAT_TUNE.packHealF,
     respawn: Math.max(0.45, typeof zoneFoeDeathS === 'function' ? zoneFoeDeathS(f) : 0) };
 }
@@ -23220,6 +23391,7 @@ function turnHitFoe(m, io, pow, o) {
     if (e.shield <= 0) { e.shield = 0; io.emit('traitBroken', { id: 'shielded', txt: 'Shield broken!' }); }
     if (!(d > 0)) { io.emit('shieldHit', { left: e.shield }); return 0; }
   }
+  if (io.foeX) d *= io.foeX();   // a Proving's quarry at a lamp takes more
   const got = io.damageFoe(d, o.kind || 'hit', crit, o.dt || 'phys', o.n || 0);
   if (got > 0) {
     if (e.curse > 0 && o.kind !== 'curse') e.curseStore = Math.min(e.curseCap, e.curseStore + T.curseP * got);
@@ -23724,6 +23896,7 @@ const TURN_LIVE_IO = {
     return { hero: !!u && !u.down && u.hp > 0, foe: !!f && !f.dead && f.hp > 0 && !f.gone }; },
   foe: () => TURN_LIVE && TURN_LIVE.foe,
   foeHp: () => (TURN_LIVE && TURN_LIVE.foe ? Math.max(0, TURN_LIVE.foe.hp) : 0),
+  foeX: () => { const f = TURN_LIVE && TURN_LIVE.foe; return f && f.turnX > 0 ? f.turnX : 1; },
   heroHp: () => { const u = cbUnitByKey('hero'); return u ? u.hp : 0; },
   healFoe: d => { const f = TURN_LIVE.foe; if (f && !f.dead && f.hp > 0) { f.hp = Math.min(f.max, f.hp + d); emit('float', { txt: '+' + fmt(d), color: '#6FCB6A', big: false }); } },
   slotId: slot => soloEquipped()[slot] || null,
@@ -23773,7 +23946,7 @@ function turnCombatTick(dt) {
   if (!TURN_LIVE || TURN_LIVE.ended || TURN_LIVE.foe !== f) {
     if (TURN_LIVE && !TURN_LIVE.ended) turnEnd(TURN_LIVE, 'abandon', TURN_LIVE_IO);
     const u = cbUnitByKey('hero');
-    if (f.boss && u && !u.down) u.hp = u.maxHp;   // a boss is met at full health
+    if (f.boss && !f.deep && !f.trial && u && !u.down) u.hp = u.maxHp;   // a zone boss is met at full health (the Deepwell carries HP)
     const p = turnMakeProfile(f, u); if (!p) return;
     TURN_LIVE = turnNew(p, TURN_LIVE_IO); TURN_LIVE.foe = f; TURN_LAST_PROFILE = p;
     emit('fightStart', { heroHaste: p.heroSpd, foeHaste: p.foeSpd, first: TURN_LIVE.first });
@@ -34000,21 +34173,30 @@ var classEvoUI;
   hud.append(hTop, hGoal, hBar, hQuit);
   hud.addEventListener('pointerdown', e => e.stopPropagation());
   if (stage) stage.append(hud);
-  on('trialStart', () => { putHidden(hud, false); updateHud(); });
+  // a turn Proving (59f): the banner takes the Next up chip's place, off the fight (the turn strip and bar sit up top)
+  const slot = $('nuSlot');
+  let inSlot = false;
+  on('trialStart', () => {
+    const t = typeof trialInfo === 'function' ? trialInfo() : null;
+    inSlot = !!(t && t.turn && slot);
+    if (inSlot) { slot.append(hud); slot.classList.add('tr-on'); } else if (stage && hud.parentNode !== stage) stage.append(hud);
+    putHidden(hud, false); updateHud();
+  });
   on('trialEnd', e => {
     putHidden(hud, true);
+    if (slot) slot.classList.remove('tr-on');
     if (!e || e.kind !== 'proving' || e.won) return;
-    const why = { lamp: 'The lamp went out.', escaped: 'The herald got away.', time: 'Time ran out.', fell: 'You fell.', quit: 'You stepped back.' }[e.reason] || '';
+    const why = { lamp: 'The lamp went out.', escaped: 'The herald got away.', time: e.turn ? 'You ran out of turns.' : 'Time ran out.', fell: 'You fell.', quit: 'You stepped back.' }[e.reason] || '';
     toast(`The Proving: not this time. ${why} Best so far: ${Math.max(e.pct, (S.cls.trials[e.id] || {}).best || 0)}%. Try again: it is free.`, 'raid', null, 'high');
   });
   function updateHud() {
     const t = typeof trialInfo === 'function' ? trialInfo() : null;
     if (!t) { putHidden(hud, true); return; }
     putHidden(hud, false);
-    putText(hName, t.name); putText(hTime, `${Math.ceil(t.left)}s`); putText(hGoal, t.goal);
+    putText(hName, t.name); putText(hTime, t.timeTxt || `${Math.ceil(t.left)}s`); putText(hGoal, t.goal);
     const f = t.tpl === 'hold' ? t.lamp / Math.max(1, t.lampMax) : Math.max(0, Math.min(1, t.pct / 100));
     putStyle(hFill, 'transform', `scaleX(${f.toFixed(3)})`);
-    putClass(hud, 'tr-hud tr-' + t.tpl);
+    putClass(hud, 'tr-hud tr-' + t.tpl + (inSlot ? ' tr-slot' : ''));
   }
 
   // ---------------- the second ability button and the meter ----------------
@@ -36559,7 +36741,7 @@ let deedsUI = null;
         const l = el('ul', 'dw-need'); for (const n of need) l.append(el('li', null, n)); b.append(el('p', 'dw-lock', 'Opens when you:'), l);
         return;
       }
-      setTxt(ent.sub, 'Go down floor by floor. Oil is your run: it drains while a foe stands. Your farm keeps working while you are below.');
+      setTxt(ent.sub, `Go down floor by floor. Oil is your run: ${typeof turnArenaNow === 'function' && turnArenaNow() ? 'it burns while a foe acts' : 'it drains while a foe stands'}. Your farm keeps working while you are below.`);
       if (r && !r.paused) {
         b.append(el('p', 'dw-now', `You are below, on floor ${r.floor}.`));
         b.append(btn('big dw-go', 'Back to the well', () => closeMenu()));
