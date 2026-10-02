@@ -111,6 +111,8 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 - **An Assist setting** that widens the timing windows: yes, low priority. A late-zone balance pass: yes. (2026-10-02)
 - **Stars and class evolutions become picto-style effects** (like Expedition 33's Pictos) that add to abilities and
   combos and feel useful ("1% damage feels unrewarding"), without breaking balance. (2026-10-02)
+- **Tobin is the safest hero and a slower killer,** within reason: more survivability, more turns to kill, never
+  boringly slow. (2026-10-02)
 - **Leftovers:** a local raid fight is accepted; Deep Elders give at most one buff item a run; Hollow bosses give no
   buff items. (2026-09-28)
 
