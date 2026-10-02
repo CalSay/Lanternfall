@@ -7166,11 +7166,12 @@ if (section('turn UI (browser)')) try {
         for (let i = 0; i < 120 && !(seen.card && seen.strip && seen.bar && seen.cdTurns); i++) {
           await page.waitForTimeout(100);
           const st = JSON.parse(await X(`JSON.stringify({ card: document.querySelector('.tv-card').hidden ? '' : document.querySelector('.tv-card').textContent,
-            strip: document.querySelector('.tv-strip').hidden ? 0 : [...document.querySelectorAll('.tv-strip .tv-slot')].filter(x => !x.hidden && x.querySelector('img')).length,
+            strip: document.querySelector('.tv-card').hidden ? 0 : [...document.querySelectorAll('.tv-card .tv-strip .tv-slot')].filter(x => !x.hidden && x.querySelector('img')).length,
+            onStage: !!document.querySelector('.tv-top .tv-strip'),
             bar: !document.querySelector('.tv-time').hidden, q: (document.querySelector('#soloBar .sb-ab0 .sb-n') || {}).textContent || '', cd: turnCombatSnapshot().cooldowns.echo,
             ph: turnCombatSnapshot().phase, badge: !document.getElementById('autoBadge').hidden, mine: document.querySelector('.tv-n').textContent })`));
           if (st.card && !seen.card) seen.card = st.card;
-          seen.strip = Math.max(seen.strip, st.strip);
+          seen.strip = Math.max(seen.strip, st.strip); if (st.onStage) seen.onStage = true;
           if (st.bar) seen.bar = true;
           if (st.badge) seen.autoBadge = true;
           if (st.mine === 'Your turn') seen.mine = true;
@@ -7219,7 +7220,7 @@ if (section('turn UI (browser)')) try {
       };
       const on = await run(844, 390, true);
       assert(/Wren/.test(on.seen.card) && /VS/.test(on.seen.card) && /Speed \d+/.test(on.seen.card) && /(You go first|goes first)/.test(on.seen.card), `turn UI 844x390: the versus card names both sides, their Speed and who goes first (${JSON.stringify(on.seen.card)})`);
-      assert(on.seen.strip >= 5 && on.seen.bar && on.seen.mine, `turn UI 844x390: the turn strip shows the next turns, the timing bar shows on the foe's wind-up, and "Your turn" says when the fight waits on you (${JSON.stringify(on.seen)})`);
+      assert(on.seen.strip >= 5 && !on.seen.onStage && on.seen.bar && on.seen.mine, `turn UI 844x390: the versus card shows the turn order (the next turns; owner: not on the stage during the fight), the timing bar shows on the foe's wind-up, and "Your turn" says when the fight waits on you (${JSON.stringify(on.seen)})`);
       assert(on.seen.cdTurns && !on.seen.autoBadge, 'turn UI 844x390: the Echo slot shows its cooldown in turns, and there is no Auto badge (active only)');
       assert(on.cards === 17 && on.groups === 'True Aim,Blood Trail,Night Wings,Attack, Parry and Dodge', `turn UI: Hero tab > Abilities lists Wren's 14 abilities in their three groups, then Attack, Parry and Dodge (${on.cards}: ${on.groups})`);
       assert(/Tap again/.test(on.armed) && on.learned, `turn UI: Learn takes two taps, spends the Scroll, and puts the ability in a free slot (${JSON.stringify(on.armed)}, ${on.learned})`);
@@ -7231,7 +7232,7 @@ if (section('turn UI (browser)')) try {
         `turn UI: Aim explains itself: once on its own, on a tap of the pips, and on Hero > Abilities (${on.resAuto}, ${JSON.stringify(on.resTap)}, ${JSON.stringify(on.resLine)})`);
       assert(!on.errors.length, 'turn UI: no page errors' + (on.errors.length ? ': ' + on.errors[0] : ''));
       const port = await run(360, 740, false);
-      assert(/VS/.test(port.seen.card) && port.seen.strip >= 5 && !port.errors.length, `turn UI 360x740: the versus card and turn strip work in portrait (${JSON.stringify(port.seen)})`);
+      assert(/VS/.test(port.seen.card) && port.seen.strip >= 5 && !port.seen.onStage && !port.errors.length, `turn UI 360x740: the versus card and its turn order work in portrait (${JSON.stringify(port.seen)})`);
       // a new player follows the guide through the first fights: Attack, the ability, Dodge and Parry, each pressed when
       // the guide asks (it pauses on your turn, or inside the defence window, so the paused press lands)
       { const ctx = await browser.newContext({ turns: true, viewport: { width: 740, height: 360 } }), page = await ctx.newPage(), errors = [];

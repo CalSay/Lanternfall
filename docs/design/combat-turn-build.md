@@ -11,7 +11,8 @@ page says what was picked.
   Deepwell and the Provings are turn fights too (below). The world raid keeps its own fight.
 - **Active only** (owner, 2026-10-01). There is no Auto in a turn fight. The fight waits for your turn, and a hidden page
   pauses it. Time away earns nothing from fights; gathering still works while you are away. The away screen says so.
-- **One foe at a time.** Speed decides the turn order. The strip at the top shows the next six turns.
+- **One foe at a time.** Speed decides the turn order. The versus card at the start of each fight shows the next six
+  turns (owner, 2026-10-02: not on the stage during the fight).
 - **Your turn:** Attack, or one of your three abilities (Q, W, E). Attack builds your hero's resource: Aim (Wren), Grit
   (Tobin), Cinders (Pip). Each hero's resource explains itself (24c HERO_RESOURCE): on Hero > Abilities, when you tap
   its pips in a fight, and once on its own the first time you gain one. Pip's was called Embers until 2026-10-02; it was

@@ -23,6 +23,8 @@
 @media (prefers-reduced-motion: reduce) { .tv-card.play .tv-side { animation: none !important; } }
 .tv-top { position: absolute; left: 50%; top: 80px; transform: translateX(-50%); z-index: 5; display: flex; flex-direction: column; align-items: center; gap: 2px; pointer-events: none; }
 .tv-top[hidden] { display: none; }
+.tv-order { display: flex; flex-direction: column; align-items: center; gap: 3px; margin-top: 4px; }
+.tv-order-lb { font-size: 11px; color: #E0D6C2; text-shadow: 1px 1px 0 #0B0810; }
 .tv-strip { display: flex; gap: 3px; }
 .tv-strip[hidden] { display: none; }
 .tv-slot { width: 22px; height: 22px; display: grid; place-items: center; background: #16111C; border: 2px solid #0B0810; opacity: .7; }
