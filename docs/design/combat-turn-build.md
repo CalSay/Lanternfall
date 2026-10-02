@@ -99,64 +99,138 @@ Line, Pack Leader, Quickdraw, Hawk Eye, Deadeye, Rain of Arrows, Afterglow, Fini
 evolutions' rings (8 stars each) and their passives and second abilities (Fury, Bulwark, Venom, traps, Hex, Sanctuary)
 were the same: in turn fights an evolution gives only its stats and its damage line. No save fixture had a star lit.
 
-**What it is now.** A star is one small rule change in a turn fight. 25 of them (24f-data-stars.js, rules in
-57e-stars.js):
+**What it is now.** A star is one small rule change in a turn fight. 43 of them (24f-data-stars.js, rules in
+57e-stars.js): 25 from the rework, and 18 more from the second pass (owner, 2026-10-02, below).
 
 - **Find** each star once. It belongs to the lamp, so every hero can use it.
 - **Set** up to 3 on a hero (Hero > Stars). A star found while a slot is free is set at once.
-- **Learn** a star by winning 4 fights with it set (any fight in turns: zones, the Deepwell, a Proving).
+- **Learn** a star by winning 4 fights with it set (any fight in turns: zones, the Deepwell, a Proving). Each of the
+  first two complete constellations cuts that by 1 (3, then 2).
 - **Light** a learned star with star points, on any hero, up to 2. Star points are the old ones: a point every 3 hero
-  levels and 4 for each Great Lantern (`starPoints()`). A star costs 1 to 3.
+  levels and 4 for each Great Lantern, plus 1 for each complete constellation (`starPoints()`). A star costs 1 to 3.
 - A fight takes the 3 set and the 2 lit stars as it starts: 5 at most. With fewer points (a lower level), the lit stars
   the points no longer pay for stay home.
 - No new currency. Each hero keeps its own slots and lit stars; finding and learning are shared.
 
-| Star | Cost | Found | What it does |
-|---|---|---|---|
-| Ready Lamp | 1 | zone 6 boss | Start each fight with 2 Aim, 3 Grit or 2 Cinders. |
-| Spark Guard | 2 | zone 8 | A parried hit gives you 1 Aim, Grit or Cinder. |
-| Turning Point | 2 | zone 10 | When the foe falls below a third of its health, your next ability is a sure crit. |
-| Hunter's Step | 1 | zone 12 | A dodge Marks the foe for 2 turns. |
-| Serrated | 2 | zone 14 | A critical hit adds 1 Bleed. |
-| Cold Steel | 2 | zone 16 | A parried hit adds 1 Chill. At 3 Chill the foe Freezes. |
-| Quick Return | 2 | zone 18 | A counter makes your shortest cooldown ready. |
-| Ember Edge | 2 | zone 20 | A critical hit sets the foe alight: a small Burn (30% power) for 2 turns. |
-| Open Veins | 2 | zone 23 | Bleed ticks can crit. |
-| Brand | 1 | zone 26 | Setting a foe alight also Marks it for 2 turns. |
-| Slip and Strike | 2 | zone 29 | After a dodge, your next ability hits 30% harder. |
-| Dazed Prey | 1 | zone 32 | A Stun or Freeze also Marks the foe for 3 turns. On a boss, so does a Stagger. |
-| Killing Mark | 2 | zone 34 | Your critical hits on a Marked foe deal 30% more. |
-| Encore | 3 | the Fenmother | The third ability you use each fight is ready again at once. |
-| Cinder Riposte | 2 | elites | A counter sets the foe alight for 3 turns. |
-| Open Guard | 1 | elites | A counter leaves the foe Exposed: your next payoff hits 25% harder. |
-| Perfect Time | 2 | elites | A Perfect press takes 1 turn off your other cooldowns (once an ability). |
-| Banked Coal | 2 | elites | When an ability spends your Aim, Grit or Cinders, 1 comes back. |
-| Crushing Blow | 2 | elites | Every 4th Attack in a fight hits twice as hard. |
-| Blood Price | 2 | Warrior's Proving (Reaver) | Below half health you deal 25% more. |
-| Holy Sparks | 2 | Warrior's Proving (Warden) | A parried hit strikes back for 20% of your ability power, as holy damage. |
-| Deep Wounds | 2 | Ranger's Proving (Venomstalker) | Bleed holds up to 8 stacks (was 5) and lasts 1 turn longer. |
-| Tripwire | 1 | Ranger's Proving (Trapper) | Each fight starts with the foe Pinned. |
-| Witchfire | 2 | Mage's Proving (Warlock) | When a Curse bursts, the foe catches fire for 3 turns. |
-| Sanctuary | 2 | Mage's Proving (Lightkeeper) | Each fight starts with a Ward worth 12% of your max health. |
+The full list, by constellation (the star map, below). Kit: whose kit the star plays with (the view's filter).
 
-- **Zone bosses:** the first win over the boss of zones 6, 8, ... 34 and the Fenmother finds that zone's star.
-- **Elites:** from zone 15 an elite win finds one of the five elite stars 1 time in 8, and never more than 12 in a row
-  without one, until all five are found. Never in the Deepwell or a Proving.
+| Star | Cost | Kit | Found | What it does |
+|---|---|---|---|---|
+| **The Hollow** | | | | |
+| Ready Lamp | 1 | any | zone 6 boss | Start each fight with 2 Aim, 3 Grit or 2 Cinders. |
+| Spark Guard | 2 | any | zone 8 | A parried hit gives you 1 Aim, Grit or Cinder. |
+| Turning Point | 2 | any | zone 10 | When the foe falls below a third of its health, your next ability is a sure crit. |
+| Hunter's Step | 1 | Wren | zone 12 | A dodge Marks the foe for 2 turns. |
+| Serrated | 2 | Wren | zone 14 | A critical hit adds 1 Bleed. |
+| Cold Steel | 2 | Pip | zone 16 | A parried hit adds 1 Chill. At 3 Chill the foe Freezes. |
+| Quick Return | 2 | Tobin | zone 18 | A counter makes your shortest cooldown ready. |
+| **The Fen** | | | | |
+| Ember Edge | 2 | Pip | zone 20 | A critical hit sets the foe alight: a small Burn (30% power) for 2 turns. |
+| Open Veins | 2 | Wren | zone 23 | Bleed ticks can crit. |
+| Brand | 1 | Pip | zone 26 | Setting a foe alight also Marks it for 2 turns. |
+| Slip and Strike | 2 | any | zone 29 | After a dodge, your next ability hits 30% harder. |
+| Dazed Prey | 1 | any | zone 32 | A Stun or Freeze also Marks the foe for 3 turns. On a boss, so does a Stagger. |
+| Killing Mark | 2 | Wren | zone 34 | Your critical hits on a Marked foe deal 30% more. |
+| Encore | 3 | any | the Fenmother | The third ability you use each fight is ready again at once. |
+| **The Coast** (new) | | | | |
+| Bloodscent | 2 | Wren | zone 37 | Each Bleed tick on the foe gives you 1 Aim, Grit or Cinder. |
+| Spite | 1 | any | zone 40 | A hit that lands on you gives you 1 Aim, Grit or Cinder. |
+| Evil Eye | 1 | Pip | zone 44 | A Cursed foe is Marked for as long as the Curse lasts. |
+| Ringing Blow | 2 | Tobin | zone 48 | Your Stuns build twice the Stagger on a boss. |
+| Frostfire | 2 | Pip | zone 53 | Spending Cinders chills the foe: 1 Chill for every 2 you spend. |
+| Riptide | 2 | any | zone 60 | Dodge every hit of an attack and you strike back for half a counter. |
+| Swift Tide | 2 | any | zone 70 (the Coast's boss) | Finishers are ready from your first turn, and come back 2 turns sooner. |
+| **The Wild Hunt** | | | | |
+| Cinder Riposte | 2 | Tobin | elites, zone 15+ | A counter sets the foe alight for 3 turns. |
+| Open Guard | 1 | Tobin | elites, zone 15+ | A counter leaves the foe Exposed: your next payoff hits 25% harder. |
+| Perfect Time | 2 | any | elites, zone 15+ | A Perfect press takes 1 turn off your other cooldowns (once an ability). |
+| Banked Coal | 2 | any | elites, zone 15+ | When an ability spends your Aim, Grit or Cinders, 1 comes back. |
+| Crushing Blow | 2 | any | elites, zone 15+ | Every 4th Attack in a fight hits twice as hard. |
+| Brimming (new) | 2 | any | elites, zone 36+ | Aim, Grit or Cinders you gain past full strike the foe for 50% power each. |
+| Mending Steel (new) | 2 | Tobin | elites, zone 36+ | A counter heals you for 6% of your max health. |
+| Avalanche (new) | 2 | Tobin | elites, zone 36+ | Spending 5 Grit or more at once Stuns the foe. |
+| **The Deepwell** (new) | | | | |
+| Full Draw | 2 | Wren | floor 3 | At 3 Aim, your next ability is a sure crit. It spends 1 Aim. |
+| Kindling | 2 | Pip | floor 6 | Burn ticks can crit. |
+| Stoneskin | 1 | Tobin | floor 9 | A hit that lands on you spends 2 Grit to take half the damage. |
+| Scarred | 1 | Wren | floor 12 | When a Mark wears off, it leaves 2 Bleed. |
+| Last Light | 3 | any | floor 15 | Once a fight, a hit that would fell you leaves you at 1 health. |
+| **The Provings** | | | | |
+| Blood Price | 2 | any | Warrior's Proving (Reaver) | Below half health you deal 25% more. |
+| Holy Sparks | 2 | Tobin | Warrior's Proving (Warden) | A parried hit strikes back for 20% of your ability power, as holy damage. |
+| Shatterpoint (new) | 2 | any | Warrior's Proving, a second pass | Breaking a boss's charge strikes back with a full counter. |
+| Deep Wounds | 2 | Wren | Ranger's Proving (Venomstalker) | Bleed holds up to 8 stacks (was 5) and lasts 1 turn longer. |
+| Tripwire | 1 | any | Ranger's Proving (Trapper) | Each fight starts with the foe Pinned. |
+| Snare (new) | 1 | Wren | Ranger's Proving, a second pass | A Stun or Freeze also Pins the foe: its next attack is easier to read. |
+| Witchfire | 2 | Pip | Mage's Proving (Warlock) | When a Curse bursts, the foe catches fire for 3 turns. |
+| Sanctuary | 2 | any | Mage's Proving (Lightkeeper) | Each fight starts with a Ward worth 12% of your max health. |
+| Thermal Shock (new) | 2 | Pip | Mage's Proving, a second pass | Your fire hits on a Chilled foe deal 25% more for each Chill. |
+
+- **Zone bosses:** the first win over the boss of zones 6, 8, ... 34, the Fenmother, and zones 37 to 70 (the Coast's
+  boss) finds that zone's star.
+- **Elites:** from zone 15 an elite win finds one of the elite stars not yet found 1 time in 8, and never more than 12
+  in a row without one. Brimming, Mending Steel and Avalanche join the draw from zone 36. Never in the Deepwell or a
+  Proving.
+- **The Deepwell:** the first time you clear (or pass) floors 3, 6, 9, 12 and 15, any run.
 - **Provings:** passing a class's Proving finds both of its paths' stars. These carry each evolution's real-time idea into
-  turns (Blood Price, Holy Sparks, Venom's stacks, Tripwire, Witchfire, Sanctuary). Subclasses (Ascension) are a later
-  task; the evolution choice itself is unchanged.
+  turns (Blood Price, Holy Sparks, Venom's stacks, Tripwire, Witchfire, Sanctuary). Passing it a second time finds its
+  third star (Shatterpoint, Snare, Thermal Shock; `S.stars.pw` counts the passes, and a save that had passed one counts
+  1). Subclasses (Ascension) are a later task; the evolution choice itself is unchanged.
 - A critical hit counts a counter (a sure crit) too; Bleed and Burn ticks never set off Serrated or Ember Edge, so no
   star feeds itself.
 - Combos are for the player to find (owner: no suggested builds). A few that the rules allow: Ember Edge with Brand and
   Killing Mark (crits Burn, the Burn Marks, crits on the Mark hit harder); Cold Steel with Dazed Prey; Hunter's Step
-  with Wren's Sonic Arrow; Open Guard with Tobin's Heavy Strike; Serrated with Deep Wounds, Open Veins and Final Echo.
+  with Wren's Sonic Arrow; Open Guard with Tobin's Heavy Strike; Serrated with Deep Wounds, Open Veins and Final Echo;
+  Bloodscent with Full Draw (Bleed refills the Aim the sure crit spends); Frostfire or Cold Steel with Thermal Shock;
+  Evil Eye with Witchfire; Ready Lamp with Swift Tide (a finisher on the first turn).
+- No star feeds itself: Riptide and Shatterpoint strike back without counting as a counter (Quick Return, Cinder
+  Riposte and Mending Steel do not fire from them), Brimming's hit gives nothing back, and a Stun from Avalanche or a
+  Freeze from Frostfire still meets the control lock (no new control for 3 of the foe's turns).
+
+**The second pass** (owner, 2026-10-02: "Yeah that's fine. Might need more of them though. We also need much better
+menus for abilities and stars. I kinda miss the star map too :/ idk how you'd incorporate it though").
+
+- **18 more stars** (the table's "new" rows), on the same rules: each changes how a fight plays, none is a flat stat.
+  They cover each kit (Wren: Bloodscent, Full Draw, Scarred, Snare; Tobin: Ringing Blow, Mending Steel, Avalanche,
+  Stoneskin; Pip: Evil Eye, Frostfire, Kindling, Thermal Shock) and six work for anyone (Spite, Riptide, Swift Tide,
+  Brimming, Last Light, Shatterpoint). They come from later places: zone bosses 37 to 70, elites from zone 36, the
+  Deepwell's floors and a second pass of each Proving. New hooks in 59k, all behind `m.sf`: `turnStarsMove` (a move
+  over), `turnStarsHurt` (a landed hit), `turnStarsBreak` (a charge broken), `turnStarsMarkOut` (a Mark wore off), and
+  flags it reads (`e.snare`, `e.ring`, `e.burnCrit`, `h.brim`, `m.sf.swifttide`).
+- **The star map is back** as the Stars view: a night sky with six constellations, one for each place stars are found
+  (the Hollow, the Fen, the Coast, the Wild Hunt, the Deepwell, the Provings; `STAR_SKY` in 24f gives each star a fixed
+  spot and its lines). A star not found is a faint dot, found is bright, set glows gold, lit shines with a four-point
+  glint (it twinkles unless the player asks for reduced motion), and lines join learned stars; a complete constellation
+  turns gold. It is an SVG of dots, lines and glows: interface, not art (the art freeze). Tap a star (or Enter on it) to
+  open its card. The old map's layouts stay in `S.stars.maps`, unused.
+- **A complete constellation** (every star in it learned) gives +1 star point, and each of the first two cuts the wins
+  to learn a star by 1 (4, 3, then 2; stars already that close are learned at once). It pops a line ("The Hollow is
+  complete: +1 star point, and stars now learn in 3 won fights."; notice `stars:sky`, held to the log). The reward is
+  outside the fight: the 3 set and 2 lit limits stay, so a fight never takes more than 5 stars.
+- **The menu.** Before (screenshots at 740x360 and 360x740): the view opened on a paragraph of rules; in landscape the
+  panel was 338 px wide and 266 px tall, so the slots were the only thing in view and the 25 cards ran 4,000 px down; a
+  card for each star (25 tall cards, 19 of them "Not found yet") was the only way to see or compare stars; slots only
+  showed name tiles; there was no filter; the set and lit slots scrolled away as soon as you looked at a star. Now:
+  - the loadout strip sits at the top and stays there as the view scrolls: star points (free of total), the 3 set
+    stars (and how far each is from learned) and the 2 lit (and their cost). Tap one to open its card; an empty slot
+    lights up when the open star can go there, and a tap puts it there;
+  - the map, then the open star's card: name, whose kit, learned or how many wins to go, what it does, where it is
+    found and its constellation, Slot 1/2/3 (each names the star it holds now, to compare; on a phone on its side, its 2-letter tile) and Light / Put out;
+  - filters (whose kit: All, Wren, Tobin, Pip, Any hero; and All, Found, Learned) narrow the list and dim the map;
+  - the list: one compact row a star with its rule, to scan and compare; a tap opens its card and brings it into view;
+  - the rules moved into a "How stars work" fold at the bottom;
+  - landscape: the menu takes the whole stage while Stars is open (the side column, the bar and Next Up stay live), the
+    strip on top, the map on the left (it shrinks to the height left, so the whole sky shows at 740x360) and the card on
+    the right with its buttons first.
+  - Next Up opens the map on its star's card (`starsUiPick`).
 
 **Old saves.** The save key stays `lanternfall.save.v5`. `S.stars` gains `own`, `wins`, `learned`, `set`, `lit`, `dry`,
-`seenN` and `v: 3`. An old save's star-map layouts stay in `S.stars.maps` and do nothing; star points were always
+`seenN`, `pw` (the second pass: Provings passed) and `v: 3`. An old save's star-map layouts stay in `S.stars.maps` and do nothing; star points were always
 derived, so every point is free again (the refund). A save that had lit stars gets one bell line saying so. On load a
-save finds, quietly, the stars of every zone boss behind it and of every Proving it passed, and a bell line counts them.
+save finds, quietly, the stars of every zone boss behind it, of every Proving it passed (a third star needs a second pass
+from now) and of the Deepwell floors it reached (`S.deep.best`), and a bell line counts them.
 Nothing is set for it: the player chooses. The Deeds track Stargazer now counts stars found (3, 8, 15, 25), the
-Keystones track stars learned (1, 5, 12, 25), and the feat Stars in Every Sky asks for all 25 learned. The old map's
+Keystones track stars learned (1, 5, 12, 25), and the feat Stars in Every Sky asks for every star learned (43 now). The old map's
 crit damage stars (Precision's +15% a class) are gone with it; no fixture had them lit.
 
 **Balance.** `node tools/sim.mjs --report turns --seeds 2`, before and with `--stars typical` (each profile carries the
@@ -185,6 +259,42 @@ foe's health, not half (at half it took a fifth off the mid Tobin's bosses on it
 Pip's zone 38 bosses at 4.7 turns). The boss pass (below) made bosses longer; a strong set still takes about a quarter
 off them (zone 38: 10.0 to 7.5 turns). No star gives a turn: the most turns in a row (2, a boss 3) still holds with every
 star at once (tools/check.mjs "stars").
+
+**Balance, second pass.** `node tools/sim.mjs --report turns --stars typical --seeds 2` before and after: the same, row
+for row (the typical sets carry the first 25 stars, and the 59k hooks change nothing without a star that uses them).
+The new stars on builds that use them: `node tools/sim.mjs --report stars --seeds 2` (a kept-up hero at zone 38, boss
+fights; good play: hero turns; casual: wins):
+
+| Star | Hero, build | Boss turns, good | Casual boss wins | Best pair |
+|---|---|---|---|---|
+| Bloodscent | Wren, Barbed + Echo + Final Echo | 12.9 -> 10.5 (18%) | 25 -> 39% | + Full Draw 34% |
+| Spite | Pip, Fireball + Ignite + Lanternburst | 11.1 -> 11.0 | 26 -> 42% | + Spark Guard 14% |
+| Evil Eye | Pip, Hex + Fireball + Ignite | 11.9 -> 10.7 (10%) | 28 -> 46% | + Holy Sparks 22% |
+| Ringing Blow | Tobin, Bash + Shield Throw + Sunder | 15.6 -> 16.1 | 100% | + Brimming 15% |
+| Frostfire | Pip, Frost Shard + Fireball + Spark | 12.2 -> 12.7 | 84 -> 81% | + Dazed Prey 11% |
+| Riptide | Wren, Echo + Deadeye + Final Echo | 11.6 -> 11.2 (4%) | 16 -> 19% | + Killing Mark 17% |
+| Swift Tide | Wren, Final Echo + Echo + Barbed | 13.4 -> 13.5 | 20 -> 17% | + Spark Guard 21% |
+| Brimming | Wren, Echo + Deadeye + Power Shot | 10.2 -> 10.1 | 27 -> 31% | + Killing Mark 16% |
+| Mending Steel | Tobin, Bash + Hammerfall + Heavy Strike | 11.3 -> 11.3 | 100% | + Dazed Prey 13% |
+| Avalanche | Tobin, Heavy Strike + Bash + Hammerfall | 10.8 -> 10.9 | 100% | + Cinder Riposte 10% |
+| Full Draw | Wren, Power Shot + Barbed + Final Echo | 10.3 -> 10.2 | 37 -> 42% | + Bloodscent 11% |
+| Kindling | Pip, Fireball + Kindle + Spark | 11.6 -> 11.2 (3%) | 60 -> 57% | + Holy Sparks 11% |
+| Stoneskin | Tobin, Bash + Hammerfall + Heavy Strike | 11.3 -> 11.0 (2%) | 100% | + Dazed Prey 11% |
+| Scarred | Wren, Hunter's Mark + Echo + Barbed | 15.6 -> 15.3 (2%) | 14% | + Serrated 19% |
+| Last Light | Pip, Fireball + Ignite + Lanternburst | 11.1 -> 11.1 | 26 -> 47% | + Spark Guard 9% |
+| Shatterpoint | Tobin, Bash + Hammerfall + Heavy Strike | 11.3 -> 10.4 (8%) | 100% | + Dazed Prey 20% |
+| Snare | Wren, Sonic Arrow + Echo + Deadeye | 14.6 -> 14.5 | 14 -> 21% | + Serrated 14% |
+| Thermal Shock | Pip, Frost Shard + Fireball + Spark | 12.2 -> 11.6 (5%) | 84 -> 82% | + Dazed Prey 16% |
+
+No star alone takes more than a fifth off a boss, and no pair more than 34% (Bloodscent with Full Draw: 8.5 turns, in
+the bosses' band); the report flags a star over 25% or a pair over 40%. Many second-pass stars are about staying alive
+rather than speed: they lift casual boss wins by up to 20 points (Last Light, Spite, Evil Eye) and leave a good
+player's turns alone. Some only show in the play they ask for, which the bot does not do: Avalanche needs Grit banked
+for a big Hammerfall, Brimming a full bar, Swift Tide an opener (Ready Lamp), Ringing Blow is safety (more boss turns
+lost; Tobin's counters come from the boss's turns, so his own count barely moves). Five were tuned on these runs:
+Thermal Shock first spent the Chill for a burst (it cost Pip her Freezes: casual wins fell), Full Draw first fired
+only when Aim filled (about once a fight), Avalanche needed 6 Grit (rarely banked), Brimming hit for 30%, and Swift Tide
+only opened finishers early (it now also brings them back 2 turns sooner). Every star at once still gives no hero more than 2 turns in a row (tools/check.mjs "stars").
 
 ## Fight feel (owner, 2026-10-02)
 

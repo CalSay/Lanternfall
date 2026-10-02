@@ -31,6 +31,10 @@
 //     --stars typical: each profile carries a typical Stars loadout (24f, 57e): the stars its zone has found (zone bosses
 //     behind it, and the hero's own Proving past zone 35), learned, with a set of 3 and up to 2 lit (STARS_TYPICAL below).
 //   --report heroes --hours 1 --seeds 3: the three heroes on the same footing (the Tobin pass, combat-turn-build.md).
+//   --report stars --hours 0.5 --seeds 2 [--pairs 0] [--only <star id>]: the Stars' second pass (combat-turn-build.md
+//             "Stars"): each star of the second pass on a build that uses it (a kept-up hero at zone 38), alone and
+//             paired with every star; boss turns played well, casual boss wins, normal-foe turns. FLAG lines: a star
+//             alone that takes more than a quarter off a boss, a pair more than 40%.
 //   --report early (SOLO1): the three starters, idle and active, 1 h of mixed play each: first boss, zone 5,
 //             zone 10, zones at 30 and 60 min, wipes, answers; PASS/FAIL against the early targets.
 //   --roster auto|off: roster policy (default auto): recruit when affordable, promote when
@@ -135,6 +139,7 @@ if (profile) for (const k of ['checkins', 'session', 'first']) if (args[k] === u
 
 if (args.report === 'turns') { await runTurnReport(); process.exit(0); }
 if (args.report === 'heroes') { await runHeroReport(); process.exit(0); }
+if (args.report === 'stars') { await runStarsReport(); process.exit(0); }
 if (args.report === 'early') { await runEarlyReport(); process.exit(0); }
 if (args.targets) { await runEarlyReport(true); await runTargets(); process.exit(0); }
 if (args.report === 'skills') { await runSkillsReport(); process.exit(0); }
@@ -1642,4 +1647,72 @@ async function runHeroReport() {
       hh = h => (100 * m(h, x => x.hit)).toFixed(0) + (foe === 'boss' ? ` (${(100 * m(h, x => x.charge)).toFixed(0)})` : '');
     console.log(`${st} / ${foe} / ${pl} / ${t('wren').toFixed(1)}, ${t('pip').toFixed(1)}, ${t('tobin').toFixed(1)} (x${(2 * t('tobin') / (t('wren') + t('pip'))).toFixed(2)}) / ${w('wren')}, ${w('pip')}, ${w('tobin')} / ${l('wren')}, ${l('pip')}, ${l('tobin')} / ${hh('wren')}, ${hh('pip')}, ${hh('tobin')}`);
   }
+}
+
+// The Stars' second pass (owner, 2026-10-02: "Might need more of them though"): each new star on a build that uses it,
+// for a kept-up hero at zone 38 (the late fixture made level 41, ascended, epic +10 gear, Training at their level), in
+// scratch boss fights and normal fights (59k turnCombatSample with the profile's stars set directly). Hero turns a boss
+// fight played well, against the same build with no star; casual boss wins; normal-foe turns. Pairs: the star with
+// every other star on that build. The bands (combat-turn-build.md "Stars"): one star takes at most about a quarter off a
+// boss for the hero it suits; a pair at most 40%.
+async function runStarsReport() {
+  const fs = await import('node:fs'), path = await import('node:path');
+  const { ROOT } = await import('./lib/core.mjs');
+  const seconds = Number(args.hours || 0.5) * 3600, count = Number(args.seeds || 2), pairs = args.pairs !== '0', J = JSON.stringify;
+  const fx = fs.readFileSync(path.join(ROOT, 'tests/fixtures/save-late.json'), 'utf8');
+  const SIG = { wren: 'echo', tobin: 'bash', pip: 'fire' };
+  const FIT = {
+    bloodscent: ['wren', ['barbed', 'echo', 'finalecho']], spite: ['pip', ['fire', 'ignite', 'lanternburst']], evileye: ['pip', ['hex', 'fire', 'ignite']],
+    ringing: ['tobin', ['bash', 'shieldthrow', 'sundering']], frostfire: ['pip', ['frostshard', 'fire', 'spark']], riptide: ['wren', ['echo', 'deadeye', 'finalecho']],
+    swifttide: ['wren', ['finalecho', 'echo', 'barbed']], brimming: ['wren', ['echo', 'deadeye', 'powershot']], mending: ['tobin', ['bash', 'hammerfall', 'heavystrike']],
+    avalanche: ['tobin', ['heavystrike', 'bash', 'hammerfall']], fulldraw: ['wren', ['powershot', 'barbed', 'finalecho']], kindling: ['pip', ['fire', 'kindle', 'spark']],
+    stoneskin: ['tobin', ['bash', 'hammerfall', 'heavystrike']], scarred: ['wren', ['huntmark', 'echo', 'barbed']], lastlight: ['pip', ['fire', 'ignite', 'lanternburst']],
+    shatterpoint: ['tobin', ['bash', 'hammerfall', 'heavystrike']], snare: ['wren', ['sonic', 'echo', 'deadeye']], thermalshock: ['pip', ['frostshard', 'fire', 'spark']]
+  };
+  const players = { good: { parry: 0.6, dodge: 0.9, perfect: 0.4, good: 0.45 }, casual: { parry: 0.25, dodge: 0.5, perfect: 0.1, good: 0.4 } };
+  const cores = {};
+  const coreFor = (k, boss) => {
+    const key = k + boss; if (cores[key]) return cores[key];
+    const core = loadCoreRaw({ seed: 1, prelude: 'Date.now = () => 1791187200000;' }), e = s => core.eval(s);
+    core.storage.set(SAVE_KEY, fx); e('loadSave()');
+    e(`soloPick(${J(k)}, {now:true}); S.L = 41; S.solo.tr[${J(k)}].atk = 41; S.solo.tr[${J(k)}][${J(SIG[k])}] = 41; S.solo.asc[${J(k)}] = 1;
+      for (const sl of Object.keys(S.equip)) { const it = itemById(S.equip[sl]); if (it && !['pick', 'axe', 'sickle', 'spear'].includes(it.slot)) { it.r = 'epic'; it.plus = 10; } }
+      S.maxZone = Math.max(S.maxZone, 38); setZone(38); TURN_TUNE.on = 1; S.activity = 'fight'; arena = null; gearDirty(); fightBoss = ${boss}; spawn();`);
+    return (cores[key] = { core, e });
+  };
+  const run = (k, set, stars, pl, boss) => {
+    const { e } = coreFor(k, boss);
+    let K = 0, D = 0, T = 0, F = 0;
+    for (let i = 0; i < count; i++) {
+      const r = e(`(() => { const p = turnCombatProfile(); p.eq = ${J(set)}; p.cds = { attack: 1 }; for (const id of p.eq) p.cds[id] = turnCdFor(id);
+        p.stars = ${J(stars)}; p.starSet = [];
+        return turnCombatSample({ profile: p, seconds: ${seconds}, seed: ${i + 1}, skill: ${J(players[pl])} }); })()`);
+      K += r.kills; D += r.deaths; T += r.totalHeroTurns; F += r.completedFights;
+    }
+    return { turns: F ? T / F : NaN, win: K / Math.max(1, K + D) };
+  };
+  const ALL = coreFor('wren', true).e('STAR_ORDER'), flags = [];
+  console.log(`The Stars' second pass, ${count} seed(s) x ${seconds / 3600} h a row: a kept-up hero at zone 38.`);
+  console.log('star / hero / build / boss turns played well: none -> with it (cut) / casual boss win % / normal-foe turns / the pair that cuts most');
+  for (const [id, [k, set]] of Object.entries(FIT)) {
+    if (args.only && args.only !== id) continue;
+    const b = { good: run(k, set, [], 'good', true), casual: run(k, set, [], 'casual', true), norm: run(k, set, [], 'good', false) };
+    const s = { good: run(k, set, [id], 'good', true), casual: run(k, set, [id], 'casual', true), norm: run(k, set, [id], 'good', false) };
+    const cut = 1 - s.good.turns / b.good.turns;
+    let line = `${id} / ${k} / ${set.join('+')} / ${b.good.turns.toFixed(1)} -> ${s.good.turns.toFixed(1)} (${(100 * cut).toFixed(0)}%) / ${(100 * b.casual.win).toFixed(0)} -> ${(100 * s.casual.win).toFixed(0)} / ${b.norm.turns.toFixed(2)} -> ${s.norm.turns.toFixed(2)}`;
+    if (cut > 0.25) flags.push(`${id} alone ${(100 * cut).toFixed(0)}%`);
+    if (pairs) {
+      let worst = null;
+      for (const o of ALL) {
+        if (o === id) continue;
+        const g = run(k, set, [id, o], 'good', true), c = 1 - g.turns / b.good.turns;
+        if (!worst || c > worst.c) worst = { o, c, t: g.turns };
+        if (c > 0.4) flags.push(`${id} + ${o} (${k}) ${(100 * c).toFixed(0)}%`);
+      }
+      line += ` / +${worst.o} ${(100 * worst.c).toFixed(0)}% (${worst.t.toFixed(1)} turns)`;
+    }
+    console.log(line);
+  }
+  for (const { core } of Object.values(cores)) if (core.errors.length) throw new Error(core.errors.slice(0, 3).join('; '));
+  console.log(flags.length ? 'FLAG ' + flags.join('; ') : 'No star or pair outside the bands.');
 }

@@ -41,10 +41,12 @@ The bell opens Notices, the Journal and Settings. Achievements (Deeds) and the C
   the Mirror of Embers. In turn fights an evolution gives its stats and its damage line; its own powers were built for the
   real-time fight, and each one's turn-fight effect is now a star that passing the Proving finds.
 - **Stars** (`24f-data-stars.js`, `57e-stars.js`, `75-stars-ui.js`; [combat-turn-build.md](design/combat-turn-build.md)
-  "Stars"): 25 small rule changes for turn fights ("A parried hit adds 1 Chill"), found on zone bosses' first wins
-  (zones 6 to 35), elites and the Provings. A hero sets 3; 4 won fights with a star set learn it, and then any hero can
-  light it with star points (a point every 3 levels, 4 per Great Lantern), up to 2. The view opens with the first star
-  or at hero level 10.
+  "Stars"): 43 small rule changes for turn fights ("A parried hit adds 1 Chill"), found on zone bosses' first wins
+  (zones 6 to 70), elites, Deepwell floors and the Provings (a third star on a second pass). A hero sets 3; 4 won fights
+  with a star set learn it, and then any hero can light it with star points (a point every 3 levels, 4 per Great
+  Lantern), up to 2. The view is a star map: six constellations, one per place stars are found, with the loadout
+  (points, 3 set, 2 lit) always in view, a card per star, filters and a list. Learn a whole constellation for a star
+  point and quicker learning (4 wins, then 3, then 2). The view opens with the first star or at hero level 10.
 - **Well Rested** (`55-rested.js`): gathering banks a short damage bonus for the next fights.
 
 ## Fights

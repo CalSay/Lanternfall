@@ -2428,22 +2428,141 @@ body.solo-on .stage .abil, body.solo-on .stage .abil2 { display: none !important
 .sb-abslot.blocked .sb-ic, .sb-abslot.blocked::before { opacity: .45; }
 .sp-ab .sp-mono { width: 36px; height: 36px; margin-left: 6px; display: grid; place-items: center; background: #33283E; color: #FFE7A8;
   font: 700 calc(16px * var(--display-k, 1))/1 var(--display); box-shadow: inset 0 0 0 1px #6B5320; }
-/* 60-stars: Hero tab > Stars (75-stars-ui.js; docs/design/combat-turn-build.md "Stars"). Cards and slots share the
-   Abilities view's look (60-abilities.css: .ab-card, .ab-slot, .ab-put, .ab-mono). */
-.sr-note, .sr-src { margin: 0; }
-.sr-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
-.sr-pts { font: 600 calc(16px * var(--display-k, 1))/1.1 var(--display); color: var(--gold); font-variant-numeric: tabular-nums; }
-.sr-head small { color: var(--muted); font-size: 13px; }
-.sr-slot .sr-cost { color: var(--muted); font-size: 12px; }
-.sr-ic { width: 36px; height: 36px; }
-.sr-unk { color: var(--muted); }
-.sr-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 6px; }
-.sr-card.locked { opacity: .6; }
-.sr-card .ab-foot { gap: 4px; }
-.sr-card .ab-put { min-width: 0; padding: 0 4px; white-space: nowrap; }
-.sr-light { flex: 1 1 100%; }
+/* 60-stars: Hero tab > Stars, the star map (75-stars-ui.js; docs/design/combat-turn-build.md "Stars").
+   Portrait: the loadout strip (sticky), the map, the open star's card, then filters and the list.
+   Landscape: the menu takes the whole stage while Stars is open; under the strip the map sits left and the card right.
+   The map is interface (dots, lines and glows), not art. Lit stars twinkle unless the player asks for reduced motion. */
+.sr-root { display: grid; gap: 8px; min-width: 0; }
+.sr-ic { width: 30px; height: 30px; flex: none; display: grid; place-items: center; background: #2B2140; color: #FFE7A8;
+  font: 700 calc(14px * var(--display-k, 1))/1 var(--display); box-shadow: inset 0 0 0 1px #6B5320; }
+.sr-ic.sr-unk, .sr-ic.sr-empty { color: var(--muted); box-shadow: inset 0 0 0 1px #4E4060; background: #1F1729; }
+
+/* ---- the loadout strip: points, 3 set, 2 lit (always in view) ---- */
+.sr-top { position: sticky; top: -12px; z-index: 3; margin: -12px 0 0; padding: 8px 0;
+  display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "pts set" "pts lit"; gap: 6px 8px; align-items: stretch;
+  background: #18121F; border-bottom: 1px solid var(--line);
+  /* full bleed over the panel's side padding (shadows do not widen the scroll area) */
+  box-shadow: calc(-1 * var(--gut, 12px)) 0 0 #18121F, var(--gut, 12px) 0 0 #18121F, 0 8px 10px -6px rgba(0,0,0,.6); }
+.sr-pts { grid-area: pts; display: grid; align-content: center; justify-items: center; min-width: 46px; padding: 0 3px;
+  background: #120D18; box-shadow: inset 0 0 0 1px #6B5320; }
+.sr-pts b { font: 700 calc(24px * var(--display-k, 1))/1 var(--display); color: var(--gold); font-variant-numeric: tabular-nums; }
+.sr-pts small { color: var(--muted); font-size: 11px; text-align: center; line-height: 1.1; }
+.sr-row3, .sr-row2 { display: grid; gap: 4px; min-width: 0; }
+.sr-row3 { grid-area: set; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.sr-row2 { grid-area: lit; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.sr-chip { position: relative; min-width: 0; display: flex; background: #231A30; box-shadow: inset 0 0 0 1px #6B5320; }
+.sr-chip.lit { background: #2A2238; box-shadow: inset 0 0 0 1px #8C7AD8; }
+.sr-chip.empty { background: transparent; box-shadow: inset 0 0 0 1px #4E4060; }
+.sr-chip.sel { box-shadow: inset 0 0 0 2px var(--gold); }
+.sr-chip-b { flex: 1; min-width: 0; min-height: 40px; display: grid; grid-template-columns: minmax(0, 1fr); align-content: center;
+  padding: 3px 6px; background: none; border: 0; color: var(--bone); text-align: left; cursor: pointer; }
+.sr-chip-t { font: 600 calc(12px * var(--display-k, 1))/1 var(--display); color: var(--gold); overflow: hidden;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.sr-chip-b small { color: var(--muted); font-size: 11px; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sr-chip.empty .sr-chip-t { color: var(--muted); }
+.sr-chip-b:disabled { cursor: default; }
+.sr-chip.empty .sr-chip-b:not(:disabled) { box-shadow: inset 0 0 0 1px var(--gold); }
+.sr-chip.empty .sr-chip-b:not(:disabled) small { color: var(--gold); }
+
+/* ---- the map and the card ---- */
+.sr-main { display: grid; gap: 8px; min-width: 0; }
+.sr-map { position: relative; min-width: 0; aspect-ratio: 600 / 440; background: radial-gradient(ellipse at 30% 20%, #241B3A 0%, #140F22 55%, #0C0914 100%);
+  box-shadow: inset 0 0 0 1px #3A2F47; }
+.sr-map svg { display: block; width: 100%; height: 100%; }
+.sr-dust circle { fill: #CFC6F0; }
+.sr-sky-t { font: 600 21px var(--display); letter-spacing: .04em; fill: #A79CC2; text-transform: uppercase; }
+.sr-sky-n { fill: #7C7196; }
+.sr-sky.done .sr-sky-t { fill: var(--gold); }
+.sr-ln { stroke: #6C6290; stroke-width: 1.5; stroke-dasharray: 2 5; opacity: .5; }
+.sr-ln.on { stroke: #CFC6F0; stroke-dasharray: none; stroke-width: 2; opacity: .85; }
+.sr-sky.done .sr-ln.on { stroke: var(--gold); }
+.sr-st { cursor: pointer; outline: none; }
+.sr-hit { fill: transparent; }
+.sr-dot { fill: #F4EEFF; }
+.sr-st.unk .sr-dot { fill: #8A80A6; opacity: .7; }
+.sr-st.found .sr-dot { fill: #E8E2FA; }
+.sr-st.learned .sr-dot { fill: #FFF8E4; }
+.sr-glow { fill: rgba(242,193,78,.22); stroke: rgba(242,193,78,.7); stroke-width: 1.5; }
+.sr-st.lit .sr-glow { fill: rgba(190,170,255,.28); stroke: rgba(210,195,255,.85); }
+.sr-ray { fill: rgba(235,225,255,.75); transform-origin: 0 0; transform-box: fill-box; }
+.sr-st.lit .sr-ray { animation: sr-twinkle 2.4s ease-in-out infinite; }
+.sr-ring { fill: none; stroke: var(--gold); stroke-width: 2.5; }
+.sr-st.dim { opacity: .28; }
+.sr-st:focus-visible .sr-hit { stroke: var(--ember); stroke-width: 2; }
+.sr-st:hover .sr-dot { fill: #FFFFFF; }
+@keyframes sr-twinkle { 0%, 100% { opacity: .55; transform: scale(.85); } 50% { opacity: 1; transform: scale(1.1); } }
+@media (prefers-reduced-motion: reduce) { .sr-st.lit .sr-ray { animation: none; opacity: .9; } }
+
+.sr-card { display: grid; gap: 6px; align-content: start; min-width: 0; padding: 8px 10px; background: #1B1424; border: 2px solid #0B0810; box-shadow: inset 0 0 0 1px #3A3046; }
+.sr-card.learned { box-shadow: inset 0 0 0 1px #6B5320; }
+.sr-card.ready { box-shadow: inset 0 0 0 2px var(--gold); }
+.sr-card.locked { opacity: .8; }
+.sr-head { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.sr-t { display: grid; min-width: 0; }
+.sr-t b { font: 600 calc(16px * var(--display-k, 1))/1.1 var(--display); color: var(--gold); }
+.sr-t small { color: var(--muted); font-size: 12px; }
+.sr-desc { margin: 0; font-size: 14px; line-height: 1.35; color: var(--bone); }
+.sr-from { color: var(--muted); font-size: 12px; }
+.sr-why { color: var(--muted); font-size: 12px; }
+.sr-foot { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
+.sr-put, .sr-light { min-width: 0; min-height: 40px; padding: 2px 4px; background: var(--panel-2); color: var(--bone); border: 2px solid #0B0810;
+  font: 600 calc(14px * var(--display-k, 1))/1.05 var(--display); cursor: pointer; }
+.sr-put { display: grid; align-content: center; }
+.sr-put small { font: 400 11px var(--body, sans-serif); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sr-put.on, .sr-light.on { background: var(--gold); color: #1A1420; }
+.sr-put.on small { color: #3A2C10; }
+.sr-put-c { display: none; }
 .sr-light:disabled { opacity: .5; cursor: default; }
+
+/* ---- filters and the list ---- */
+.sr-lhead { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+.sr-h { margin: 0; font: 600 calc(16px * var(--display-k, 1))/1 var(--display); color: var(--gold); letter-spacing: .03em; }
+.sr-lhead small { color: var(--muted); font-size: 12px; }
+.sr-filt { display: flex; flex-wrap: wrap; gap: 6px; }
+.sr-seg { display: flex; flex-wrap: wrap; box-shadow: inset 0 0 0 1px #3A3046; }
+.sr-seg button { min-height: 36px; padding: 0 9px; background: none; border: 0; color: var(--muted); font: 600 calc(13px * var(--display-k, 1)) var(--display); cursor: pointer; }
+.sr-seg button.on { background: #33283E; color: var(--gold); box-shadow: inset 0 -2px 0 var(--gold); }
+.sr-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 4px; }
+.sr-row { display: flex; align-items: flex-start; gap: 8px; min-height: 44px; padding: 6px 8px; background: #1B1424; border: 0; box-shadow: inset 0 0 0 1px #3A3046;
+  color: var(--bone); text-align: left; cursor: pointer; }
+.sr-row.ready { box-shadow: inset 0 0 0 1px #6B5320; }
+.sr-row.sel { box-shadow: inset 0 0 0 2px var(--gold); }
+.sr-row.locked { opacity: .65; }
+.sr-row-t { display: grid; min-width: 0; }
+.sr-row-t b { font: 600 calc(14px * var(--display-k, 1))/1.1 var(--display); color: var(--gold); }
+.sr-row-t small { color: var(--muted); font-size: 11px; }
+.sr-row-d { font-size: 12px; line-height: 1.3; color: var(--bone); }
+.sr-how summary { cursor: pointer; color: var(--muted); font-size: 13px; min-height: 36px; display: flex; align-items: center; }
+.sr-how p { margin: 0 0 6px; }
 @media (max-width: 420px) { .sr-list { grid-template-columns: 1fr; } }
+
+/* ---- landscape: the whole stage, map left and card right under the strip ---- */
+@media (min-aspect-ratio: 1/1) and (min-width: 600px) {
+  .app.menu-open .menu:has(#p-party:not([hidden]) > #sec-stars:not(.off-view):not(.f-off)) { width: 100%; max-width: 980px; }
+  .sr-top { top: -10px; margin: -10px 0 0; padding: 6px 0; box-shadow: -10px 0 0 #18121F, 10px 0 0 #18121F, 0 8px 10px -6px rgba(0,0,0,.6); grid-template-columns: auto minmax(0, 3fr) minmax(0, 2fr); grid-template-areas: "pts set lit"; }
+  .sr-main { grid-template-columns: minmax(0, 1fr) minmax(170px, 34%); align-items: start; }
+  /* the whole sky in view under the strip: the map keeps its shape and shrinks to the height left */
+  .sr-main .sr-map { max-height: calc(100dvh - var(--toprow, 44px) - 120px); }
+  .sr-main .sr-card { max-height: calc(100dvh - var(--toprow, 44px) - 44px - 70px); overflow-y: auto; overscroll-behavior: contain; }
+}
+/* phones on their side: tighter type so the card fits next to the map */
+@media (min-aspect-ratio: 1/1) and (min-width: 600px) and (max-height: 500px) {
+  .sr-card { padding: 6px 8px; gap: 4px; }
+  .sr-desc { font-size: 13px; line-height: 1.3; }
+  .sr-t b { font-size: calc(14px * var(--display-k, 1)); }
+  .sr-chip-b { min-height: 38px; }
+  .sr-chip-b small { display: none; }
+  .sr-put-w { display: none; }
+  .sr-chip-b { padding: 3px 4px; }
+  .sr-chip-t { font-size: calc(11px * var(--display-k, 1)); }
+  .sr-card .sr-ic { display: none; }
+  /* the actions first: they stay in view next to the map; what it does reads below them */
+  .sr-card .sr-foot { order: 1; } .sr-card .sr-light { order: 2; } .sr-card .sr-why { order: 3; } .sr-card .sr-desc { order: 4; } .sr-card .sr-from { order: 5; }
+  .sr-put, .sr-light { min-height: 38px; font-size: calc(12px * var(--display-k, 1)); }
+  .sr-put small { font-size: 10px; }
+  .sr-put-n { display: none; } .sr-put-c { display: inline; }
+  .sr-chip-t.long { font-size: calc(9px * var(--display-k, 1)); letter-spacing: -.02em; }
+}
 /* 60-store: the Storehouse view in the Gather tab (75-store-ui.js; H3, rebuilt by UX-A GX1). */
 .sh-view { gap: 12px; }
 .sh-card { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; background: var(--panel); border: 1px solid var(--line-hi); box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 2px 0 #0B0810; }
@@ -8215,7 +8334,7 @@ const DEED_FEATS = [
   { id: 'f_gold', n: "Dragon's Hoard", needs: '500M gold earned', about: '3-5 months', rar: 'epic', title: 'Goldwyrm', look: 'fl_coin', need: 5e8 },   // ECON-A (economy-2 3.6): was 1e24
   { id: 'f_raid', n: 'Wyrmfall', needs: '100 raid bosses felled', about: 'months (shared)', rar: 'epic', title: 'Wyrmslayer', look: 'c_wyrm' },
   { id: 'f_champs', n: 'Bane of Champions', needs: '10,000 champions defeated', about: 'about 10 months', rar: 'legendary', title: 'Championbane', look: 'a_ember' },
-  { id: 'f_stars', n: 'Stars in Every Sky', needs: 'Learn all 25 stars', about: 'months (every Proving and every elite star)', rar: 'legendary', title: 'Starwright', look: 'a_star' },
+  { id: 'f_stars', n: 'Stars in Every Sky', needs: 'Learn every star', about: 'months (every Proving and every elite star)', rar: 'legendary', title: 'Starwright', look: 'a_star' },
   { id: 'f_town', n: "Warden of Hollow's Rest", needs: 'Every building at its top level, 6 Hands housed, a Legendary Hand, the Kitchen at its top level', about: '2-3 months', rar: 'rare', title: 'the Steward', look: 'cr_cat', wait: 'N1' },
   { id: 'f_stock', n: 'Quartermaster', needs: 'Every gathered and fought material cell full at Storehouse 8, at the same moment', about: 'weeks of planning', rar: 'epic', title: 'Quartermaster', look: 'l_store', wait: 'H3' },
   { id: 'f_oaths', n: 'Oathbound', needs: 'An Oath Seal at 20+ on all 14 zone kinds', about: 'months', rar: 'legendary', title: 'Oathbound', look: 'h_circlet', wait: 'O1' },
@@ -8410,6 +8529,7 @@ const NOTICES = [
   { id: 'stars:learned', key: 'stars:learned', ch: 'log', why: 'any hero can light it now; the star card and Next Up show it' },
   { id: 'stars:catchup', key: 'stars:catchup', ch: 'bell', why: 'an old save: the stars of the zone bosses and Provings behind it' },
   { id: 'stars:new', key: 'stars:new', ch: 'bell', why: 'an old save that had lit stars on the old star map: the points are free again' },
+  { id: 'stars:sky', key: 'stars:sky', ch: 'pop', wait: 40, held: 'log', why: 'a constellation complete on the star map (rare: six in the game); held: the map shows it gold' },
 
   // ---- combat tips ----
   // The guide teaches Dodge and Parry, so the heavy-hit tips stay quiet; a new kind of attack pops once.
@@ -9268,16 +9388,25 @@ for (const k of ['wren', 'tobin', 'pip']) HERO_TALENTS[k] = (typeof HERO_ABILITI
 // A star is found once (it belongs to the lamp, shared by every hero), then set in one of a hero's 3 star slots. Win
 // STARS_TUNE.learnWins fights with a star set and it is learned: from then on any hero can also light it for its cost
 // in star points (starPoints(): a point every 3 hero levels, 4 for each Great Lantern), up to STARS_TUNE.litMax lit.
-//   STARS[id] = { id, name, short, text, cost, from, fold? }
+// Owner, 2026-10-02 (second pass): "Might need more of them though. We also need much better menus for abilities and
+// stars. I kinda miss the star map too": 18 more stars (43), and the Stars view is a star map again (STAR_SKY).
+//   STARS[id] = { id, name, short, text, cost, from, kit, sky, fold? }
 //     text   what it does, as the player reads it (the rules are in 57e-stars.js, starFx; numbers in STARS_TUNE.fx)
 //     cost   star points to light it once learned (1-3)
-//     from   where it is found: { zone: z } the first win over zone z's boss | { elite: 1 } an elite's drop, from zone
-//            STARS_TUNE.eliteFrom | { proving: base } passing that base class's Proving (both of its paths' stars)
+//     from   where it is found: { zone: z } the first win over zone z's boss | { elite: z } an elite's drop, from zone z
+//            | { proving: base } passing that base class's Proving (both of its paths' stars) | { proving: base, pass: 2 }
+//            passing it a second time | { deep: f } reaching Deepwell floor f
+//     kit    whose kit it plays with, for the view's filter: 'wren' | 'tobin' | 'pip' | 'all'
+//     sky    its constellation (STAR_SKY id)
 //     fold   the class evolution whose real-time effect it carries into turn fights (Reaver, Warden, ...)
-//   STAR_ORDER: the Stars view's order (by where they are found)
+//   STAR_ORDER: the Stars view's order (by constellation, then where they are found)
+//   STAR_SKY: the star map. Six constellations, one per place stars are found. Each sits in a cell of a 3 x 2 grid
+//     (STAR_SKY_CELL units; the map's viewBox is 3 cells by 2), and each star has a fixed spot in its cell and lines to
+//     its neighbours. Learn every star of a constellation and it is complete (57e: starSkyDone): +1 star point, and the
+//     first two complete constellations each cut the wins to learn a star by 1 (4, 3, then 2).
 
 const STARS_TUNE = {
-  slots: 3, litMax: 2, learnWins: 4,
+  slots: 3, litMax: 2, learnWins: 4, learnMin: 2, skyPoints: 1,
   eliteFrom: 15, eliteP: 0.125, elitePity: 12,
   // the numbers each star uses (57e-stars.js reads them; the text on the star says the same)
   fx: {
@@ -9285,45 +9414,104 @@ const STARS_TUNE = {
     sparkGuard: 1, coldSteel: 1, huntStep: 2, dazed: 3, brand: 2, turning: 1 / 3,
     emberEdge: { p: 0.3, t: 2 }, cinder: { t: 3 }, witch: { t: 3 },
     killMark: 1.3, slip: 1.3, crush: { every: 4, x: 2 }, blood: { at: 0.5, x: 1.25 },
-    sparks: 0.2, deep: { max: 8, t: 1 }, ward: 0.12, encore: 3
+    sparks: 0.2, deep: { max: 8, t: 1 }, ward: 0.12, encore: 3,
+    // the second pass (2026-10-02)
+    riptide: 0.5, shock: 0.25, ring: 2, brim: { p: 0.5, max: 3 }, mend: 0.06, stone: { grit: 2, x: 0.5 },
+    scarred: 2, shatter: 1, frostfire: 2, avalanche: 5, draw: 3, swift: 2
   }
 };
 const STARS = {};
 {
-  const T = (id, name, short, cost, from, text, fold) => (STARS[id] = { id, name, short, cost, from, text, fold: fold || '' });
-  // ---- zone bosses: the first win over each of these zones' bosses ----
-  T('readylamp', 'Ready Lamp', 'RL', 1, { zone: 6 }, 'Start each fight with 2 Aim, 3 Grit or 2 Cinders.');
-  T('sparkguard', 'Spark Guard', 'SG', 2, { zone: 8 }, 'A parried hit gives you 1 Aim, Grit or Cinder.');
-  T('turning', 'Turning Point', 'TP', 2, { zone: 10 }, 'When the foe falls below a third of its health, your next ability is a sure crit.');
-  T('huntstep', "Hunter's Step", 'HS', 1, { zone: 12 }, 'A dodge Marks the foe for 2 turns.');
-  T('serrated', 'Serrated', 'Se', 2, { zone: 14 }, 'A critical hit adds 1 Bleed.');
-  T('coldsteel', 'Cold Steel', 'CS', 2, { zone: 16 }, 'A parried hit adds 1 Chill. At 3 Chill the foe Freezes.');
-  T('quickreturn', 'Quick Return', 'QR', 2, { zone: 18 }, 'A counter makes your shortest cooldown ready.');
-  T('emberedge', 'Ember Edge', 'EE', 2, { zone: 20 }, 'A critical hit sets the foe alight: a small Burn for 2 turns.');
-  T('openveins', 'Open Veins', 'OV', 2, { zone: 23 }, 'Bleed ticks can crit.');
-  T('brand', 'Brand', 'Br', 1, { zone: 26 }, 'Setting a foe alight also Marks it for 2 turns.');
-  T('slipstrike', 'Slip and Strike', 'SS', 2, { zone: 29 }, 'After a dodge, your next ability hits 30% harder.');
-  T('dazedprey', 'Dazed Prey', 'DP', 1, { zone: 32 }, 'A Stun or Freeze also Marks the foe for 3 turns. On a boss, so does a Stagger.');
-  T('killmark', 'Killing Mark', 'KM', 2, { zone: 34 }, 'Your critical hits on a Marked foe deal 30% more.');
-  T('encore', 'Encore', 'En', 3, { zone: 35 }, 'The third ability you use each fight is ready again at once.');
-  // ---- elites: one of these now and then, from zone 15 ----
-  T('cinder', 'Cinder Riposte', 'CR', 2, { elite: 1 }, 'A counter sets the foe alight for 3 turns.');
-  T('openguard', 'Open Guard', 'OG', 1, { elite: 1 }, 'A counter leaves the foe Exposed: your next payoff hits 25% harder.');
-  T('perfecttime', 'Perfect Time', 'PT', 2, { elite: 1 }, 'A Perfect press takes 1 turn off your other cooldowns (once an ability).');
-  T('bankedcoal', 'Banked Coal', 'BC', 2, { elite: 1 }, 'When an ability spends your Aim, Grit or Cinders, 1 comes back.');
-  T('crushing', 'Crushing Blow', 'CB', 2, { elite: 1 }, 'Every 4th Attack in a fight hits twice as hard.');
-  // ---- the Provings: passing a class's Proving gives both of its paths' stars (the evolutions' effects, in turns) ----
-  T('bloodprice', 'Blood Price', 'BP', 2, { proving: 'warrior' }, 'Below half health you deal 25% more.', 'reaver');
-  T('holysparks', 'Holy Sparks', 'Ho', 2, { proving: 'warrior' }, 'A parried hit strikes back for 20% of your ability power, as holy damage.', 'warden');
-  T('deepwounds', 'Deep Wounds', 'DW', 2, { proving: 'ranger' }, 'Bleed holds up to 8 stacks (was 5) and lasts 1 turn longer.', 'venomstalker');
-  T('tripwire', 'Tripwire', 'Tw', 1, { proving: 'ranger' }, 'Each fight starts with the foe Pinned: its first attack is easier to parry and dodge.', 'trapper');
-  T('witchfire', 'Witchfire', 'Wf', 2, { proving: 'mage' }, 'When a Curse bursts, the foe catches fire for 3 turns.', 'warlock');
-  T('sanctuary', 'Sanctuary', 'Sa', 2, { proving: 'mage' }, 'Each fight starts with a Ward worth 12% of your max health.', 'priest');
+  const T = (id, name, short, cost, from, kit, text, fold) => (STARS[id] = { id, name, short, cost, from, kit, text, fold: fold || '', sky: '' });
+  // ---- the Hollow: zone bosses 6 to 18 ----
+  T('readylamp', 'Ready Lamp', 'RL', 1, { zone: 6 }, 'all', 'Start each fight with 2 Aim, 3 Grit or 2 Cinders.');
+  T('sparkguard', 'Spark Guard', 'SG', 2, { zone: 8 }, 'all', 'A parried hit gives you 1 Aim, Grit or Cinder.');
+  T('turning', 'Turning Point', 'TP', 2, { zone: 10 }, 'all', 'When the foe falls below a third of its health, your next ability is a sure crit.');
+  T('huntstep', "Hunter's Step", 'HS', 1, { zone: 12 }, 'wren', 'A dodge Marks the foe for 2 turns.');
+  T('serrated', 'Serrated', 'Se', 2, { zone: 14 }, 'wren', 'A critical hit adds 1 Bleed.');
+  T('coldsteel', 'Cold Steel', 'CS', 2, { zone: 16 }, 'pip', 'A parried hit adds 1 Chill. At 3 Chill the foe Freezes.');
+  T('quickreturn', 'Quick Return', 'QR', 2, { zone: 18 }, 'tobin', 'A counter makes your shortest cooldown ready.');
+  // ---- the Fen: zone bosses 20 to 34, and the Fenmother ----
+  T('emberedge', 'Ember Edge', 'EE', 2, { zone: 20 }, 'pip', 'A critical hit sets the foe alight: a small Burn for 2 turns.');
+  T('openveins', 'Open Veins', 'OV', 2, { zone: 23 }, 'wren', 'Bleed ticks can crit.');
+  T('brand', 'Brand', 'Br', 1, { zone: 26 }, 'pip', 'Setting a foe alight also Marks it for 2 turns.');
+  T('slipstrike', 'Slip and Strike', 'SS', 2, { zone: 29 }, 'all', 'After a dodge, your next ability hits 30% harder.');
+  T('dazedprey', 'Dazed Prey', 'DP', 1, { zone: 32 }, 'all', 'A Stun or Freeze also Marks the foe for 3 turns. On a boss, so does a Stagger.');
+  T('killmark', 'Killing Mark', 'KM', 2, { zone: 34 }, 'wren', 'Your critical hits on a Marked foe deal 30% more.');
+  T('encore', 'Encore', 'En', 3, { zone: 35 }, 'all', 'The third ability you use each fight is ready again at once.');
+  // ---- the Coast: zone bosses 37 to 70 ----
+  T('bloodscent', 'Bloodscent', 'Bs', 2, { zone: 37 }, 'wren', 'Each Bleed tick on the foe gives you 1 Aim, Grit or Cinder.');
+  T('spite', 'Spite', 'Sp', 1, { zone: 40 }, 'all', 'A hit that lands on you gives you 1 Aim, Grit or Cinder.');
+  T('evileye', 'Evil Eye', 'Ev', 1, { zone: 44 }, 'pip', 'A Cursed foe is Marked for as long as the Curse lasts.');
+  T('ringing', 'Ringing Blow', 'RB', 2, { zone: 48 }, 'tobin', 'Your Stuns build twice the Stagger on a boss.');
+  T('frostfire', 'Frostfire', 'Ff', 2, { zone: 53 }, 'pip', 'Spending Cinders chills the foe: 1 Chill for every 2 you spend.');
+  T('riptide', 'Riptide', 'Rt', 2, { zone: 60 }, 'all', 'Dodge every hit of an attack and you strike back for half a counter.');
+  T('swifttide', 'Swift Tide', 'ST', 2, { zone: 70 }, 'all', 'Finishers are ready from your first turn, and come back 2 turns sooner.');
+  // ---- the Wild Hunt: elites, from zone 15 (the last three from zone 36) ----
+  T('cinder', 'Cinder Riposte', 'CR', 2, { elite: 15 }, 'tobin', 'A counter sets the foe alight for 3 turns.');
+  T('openguard', 'Open Guard', 'OG', 1, { elite: 15 }, 'tobin', 'A counter leaves the foe Exposed: your next payoff hits 25% harder.');
+  T('perfecttime', 'Perfect Time', 'PT', 2, { elite: 15 }, 'all', 'A Perfect press takes 1 turn off your other cooldowns (once an ability).');
+  T('bankedcoal', 'Banked Coal', 'BC', 2, { elite: 15 }, 'all', 'When an ability spends your Aim, Grit or Cinders, 1 comes back.');
+  T('crushing', 'Crushing Blow', 'CB', 2, { elite: 15 }, 'all', 'Every 4th Attack in a fight hits twice as hard.');
+  T('brimming', 'Brimming', 'Bm', 2, { elite: 36 }, 'all', 'Aim, Grit or Cinders you gain past full strike the foe for 50% power each.');
+  T('mending', 'Mending Steel', 'MS', 2, { elite: 36 }, 'tobin', 'A counter heals you for 6% of your max health.');
+  T('avalanche', 'Avalanche', 'Av', 2, { elite: 36 }, 'tobin', 'Spending 5 Grit or more at once Stuns the foe.');
+  // ---- the Deepwell: the first time you reach these floors ----
+  T('fulldraw', 'Full Draw', 'FD', 2, { deep: 3 }, 'wren', 'At 3 Aim, your next ability is a sure crit. It spends 1 Aim.');
+  T('kindling', 'Kindling', 'Ki', 2, { deep: 6 }, 'pip', 'Burn ticks can crit.');
+  T('stoneskin', 'Stoneskin', 'Sk', 1, { deep: 9 }, 'tobin', 'A hit that lands on you spends 2 Grit to take half the damage.');
+  T('scarred', 'Scarred', 'Sc', 1, { deep: 12 }, 'wren', 'When a Mark wears off, it leaves 2 Bleed.');
+  T('lastlight', 'Last Light', 'LL', 3, { deep: 15 }, 'all', 'Once a fight, a hit that would fell you leaves you at 1 health.');
+  // ---- the Provings: passing a class's Proving gives both of its paths' stars (the evolutions' effects, in turns);
+  //      passing it a second time gives a third ----
+  T('bloodprice', 'Blood Price', 'BP', 2, { proving: 'warrior' }, 'all', 'Below half health you deal 25% more.', 'reaver');
+  T('holysparks', 'Holy Sparks', 'Ho', 2, { proving: 'warrior' }, 'tobin', 'A parried hit strikes back for 20% of your ability power, as holy damage.', 'warden');
+  T('shatterpoint', 'Shatterpoint', 'Sh', 2, { proving: 'warrior', pass: 2 }, 'all', "Breaking a boss's charge strikes back with a full counter.");
+  T('deepwounds', 'Deep Wounds', 'DW', 2, { proving: 'ranger' }, 'wren', 'Bleed holds up to 8 stacks (was 5) and lasts 1 turn longer.', 'venomstalker');
+  T('tripwire', 'Tripwire', 'Tw', 1, { proving: 'ranger' }, 'all', 'Each fight starts with the foe Pinned: its first attack is easier to parry and dodge.', 'trapper');
+  T('snare', 'Snare', 'Sn', 1, { proving: 'ranger', pass: 2 }, 'wren', 'A Stun or Freeze also Pins the foe: its next attack is easier to read.');
+  T('witchfire', 'Witchfire', 'Wf', 2, { proving: 'mage' }, 'pip', 'When a Curse bursts, the foe catches fire for 3 turns.', 'warlock');
+  T('sanctuary', 'Sanctuary', 'Sa', 2, { proving: 'mage' }, 'all', 'Each fight starts with a Ward worth 12% of your max health.', 'priest');
+  T('thermalshock', 'Thermal Shock', 'TS', 2, { proving: 'mage', pass: 2 }, 'pip', 'Your fire hits on a Chilled foe deal 25% more for each Chill.');
 }
-const STAR_ORDER = Object.keys(STARS);
+// The star map: six constellations in a 3 x 2 grid of cells (each STAR_SKY_CELL wide and tall, the top 34 units the
+// name). stars: [id, x, y] in the cell; lines: pairs of star ids. A line shows faint until both its stars are learned.
+const STAR_SKY_CELL = { w: 200, h: 220 };
+const STAR_SKY = [
+  { id: 'hollow', name: 'The Hollow', from: 'Zone bosses 6 to 18', col: 0, row: 0,
+    stars: [['readylamp', 36, 70], ['sparkguard', 86, 92], ['turning', 140, 66], ['huntstep', 168, 122], ['serrated', 132, 168], ['coldsteel', 80, 196], ['quickreturn', 34, 150]],
+    lines: [['readylamp', 'sparkguard'], ['sparkguard', 'turning'], ['turning', 'huntstep'], ['huntstep', 'serrated'], ['serrated', 'coldsteel'], ['coldsteel', 'quickreturn'], ['quickreturn', 'sparkguard']] },
+  { id: 'fen', name: 'The Fen', from: 'Zone bosses 20 to 35', col: 1, row: 0,
+    stars: [['emberedge', 30, 82], ['openveins', 88, 58], ['brand', 152, 76], ['encore', 100, 126], ['slipstrike', 168, 150], ['dazedprey', 120, 196], ['killmark', 46, 172]],
+    lines: [['emberedge', 'openveins'], ['openveins', 'brand'], ['openveins', 'encore'], ['brand', 'slipstrike'], ['slipstrike', 'dazedprey'], ['encore', 'dazedprey'], ['dazedprey', 'killmark'], ['killmark', 'emberedge']] },
+  { id: 'coast', name: 'The Coast', from: 'Zone bosses 37 to 70', col: 2, row: 0,
+    stars: [['bloodscent', 28, 132], ['spite', 70, 84], ['evileye', 110, 128], ['ringing', 150, 76], ['frostfire', 174, 132], ['riptide', 128, 190], ['swifttide', 58, 194]],
+    lines: [['bloodscent', 'spite'], ['spite', 'evileye'], ['evileye', 'ringing'], ['ringing', 'frostfire'], ['evileye', 'riptide'], ['riptide', 'swifttide'], ['swifttide', 'bloodscent']] },
+  { id: 'hunt', name: 'The Wild Hunt', from: 'Elites, from zone 15', col: 0, row: 1,
+    stars: [['cinder', 28, 70], ['openguard', 78, 52], ['perfecttime', 132, 62], ['bankedcoal', 174, 104], ['crushing', 150, 160], ['brimming', 100, 122], ['mending', 46, 158], ['avalanche', 102, 200]],
+    lines: [['cinder', 'openguard'], ['openguard', 'perfecttime'], ['perfecttime', 'bankedcoal'], ['bankedcoal', 'crushing'], ['crushing', 'brimming'], ['brimming', 'openguard'], ['brimming', 'mending'], ['mending', 'avalanche'], ['avalanche', 'crushing']] },
+  { id: 'deep', name: 'The Deepwell', from: 'Deepwell floors 3 to 15', col: 1, row: 1,
+    stars: [['fulldraw', 100, 56], ['kindling', 50, 98], ['stoneskin', 150, 120], ['scarred', 64, 164], ['lastlight', 120, 200]],
+    lines: [['fulldraw', 'kindling'], ['fulldraw', 'stoneskin'], ['kindling', 'scarred'], ['stoneskin', 'scarred'], ['scarred', 'lastlight'], ['stoneskin', 'lastlight']] },
+  { id: 'provings', name: 'The Provings', from: 'The three Provings', col: 2, row: 1,
+    stars: [['bloodprice', 26, 62], ['holysparks', 82, 52], ['shatterpoint', 52, 104], ['deepwounds', 126, 62], ['tripwire', 178, 80], ['snare', 148, 118],
+      ['witchfire', 52, 160], ['sanctuary', 104, 148], ['thermalshock', 140, 200]],
+    lines: [['bloodprice', 'holysparks'], ['holysparks', 'shatterpoint'], ['shatterpoint', 'bloodprice'], ['deepwounds', 'tripwire'], ['tripwire', 'snare'], ['snare', 'deepwounds'],
+      ['witchfire', 'sanctuary'], ['sanctuary', 'thermalshock'], ['thermalshock', 'witchfire'], ['shatterpoint', 'sanctuary'], ['snare', 'sanctuary']] }
+];
+for (const c of STAR_SKY) for (const [id] of c.stars) if (STARS[id]) STARS[id].sky = c.id;
+const STAR_ORDER = STAR_SKY.flatMap(c => c.stars.map(s => s[0])).filter(id => STARS[id]);
+const starSkyOf = id => (STARS[id] ? STAR_SKY.find(c => c.id === STARS[id].sky) || null : null);
 // where a star is found, as the player reads it
-const starFromText = s => !s ? '' : s.from.zone ? (s.from.zone === 35 ? 'The Fenmother (zone 35)' : `The zone ${s.from.zone} boss`)
-  : s.from.elite ? `Elites, from zone ${STARS_TUNE.eliteFrom}` : s.from.proving ? `The ${CLASS_DEFS && CLASS_DEFS[s.from.proving] ? CLASS_DEFS[s.from.proving].name : s.from.proving}'s Proving` : '';
+const starFromText = s => {
+  if (!s) return '';
+  const f = s.from, cls = b => `${typeof CLASS_DEFS === 'object' && CLASS_DEFS[b] ? CLASS_DEFS[b].name : b}'s Proving`;
+  if (f.zone) return f.zone === 35 ? 'The Fenmother (zone 35)' : `The zone ${f.zone} boss`;
+  if (f.elite) return `Elites, from zone ${f.elite}`;
+  if (f.deep) return `Deepwell floor ${f.deep}`;
+  if (f.proving) return f.pass > 1 ? `A second win in the ${cls(f.proving)}` : `The ${cls(f.proving)}`;
+  return '';
+};
 
 // ---- src/js/30-state.js ----
 // 30-state: the save (S), load, save(), registered feature fields, and
@@ -16816,41 +17004,53 @@ let DEEP_ARENA = null;
 
 // ---- src/js/57e-stars.js ----
 // 57e-stars: the Stars (owner, 2026-10-02: "Think of this section like pictos from E33"; docs/design/combat-turn-build.md
-// "Stars"). Data: 24f-data-stars.js. UI: 75-stars-ui.js (Hero > Stars).
+// "Stars"). Data: 24f-data-stars.js. UI: 75-stars-ui.js (Hero > Stars, the star map).
 // CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
 //
 // A star is one small rule change in a turn fight ("A parried hit adds 1 Chill"). Players find them (zone bosses' first
-// wins, elites, the Provings), set up to 3 on a hero, and learn a star by winning STARS_TUNE.learnWins fights with it set.
-// A learned star can also be lit by any hero for its cost in star points, up to STARS_TUNE.litMax lit. Found and learned
-// stars belong to the lamp (every hero); each hero keeps its own 3 slots and lit stars. A fight takes them as it starts.
+// wins, elites, the Deepwell's floors, the Provings), set up to 3 on a hero, and learn a star by winning starNeed()
+// fights with it set. A learned star can also be lit by any hero for its cost in star points, up to STARS_TUNE.litMax
+// lit. Found and learned stars belong to the lamp (every hero); each hero keeps its own 3 slots and lit stars. A fight
+// takes them as it starts.
 //
-// Points: starPoints() = floor(S.L / 3) + 4 x greatLanternsLit() (region bosses beaten). Derived, never stored.
+// Points: starPoints() = floor(S.L / 3) + 4 x greatLanternsLit() (region bosses beaten) + 1 for each complete
+// constellation (STARS_TUNE.skyPoints). Derived, never stored.
+// The star map (STAR_SKY, 24f): learn every star of a constellation and it is complete (starSkyDone). The first two
+// complete constellations each cut the wins to learn a star by 1 (starNeed(): 4, 3, then 2; STARS_TUNE.learnMin).
 //
 // API: greatLanternsLit, starPoints, starOwned(id), starLearned(id), starWins(id), starSlots(hero), starLit(hero),
 //   starFree(hero), starSet(slot, id | null, hero) -> bool, starLight(id, hero) -> bool, starUnlight(id, hero) -> bool,
 //   starWhy(id, hero) -> '' | why it cannot be lit, starGrant(id, quiet) -> bool, starsActive(hero) -> [ids],
-//   starsSetIds(hero) -> [ids], starsFound() -> n, starsLearnedN() -> n.
+//   starsSetIds(hero) -> [ids], starsFound() -> n, starsLearnedN() -> n, starNeed() -> wins to learn a star,
+//   starSkyDone(skyId) -> bool, starSkiesDone() -> n, starSkyCount(skyId) -> { n, found, learned }.
 // Turn-fight hooks (59k-turn.js calls them only when the fight has stars, m.sf):
 //   turnStarsStart(m, io)            turnNew: flags and openers (Ready Lamp, Tripwire, Sanctuary, ...)
 //   turnStarsAct(m, io, id, when, G) turnHeroAct, when 'pre' (before) and 'post' (after the cooldown is set)
-//   turnStarsPre(m, io, o)           turnHitFoe before the crit roll (Turning Point)
+//   turnStarsPre(m, io, o)           turnHitFoe before the crit roll (Turning Point, Full Draw)
 //   turnStarsX(m, io, o, crit)       turnHitFoe: a damage multiplier
-//   turnStarsAfter(m, io, o, crit)   turnHitFoe after the damage (Serrated, Ember Edge, Witchfire)
+//   turnStarsAfter(m, io, o, crit)   turnHitFoe after the damage (Serrated, Ember Edge, Witchfire, Bloodscent)
 //   turnStarsDef(m, io, kind)        turnContact: 'parry' (a parried hit), 'dodge', 'counter' (after the counter lands)
-//   The foe flags set at the start are read inside 59k: e.brand (turnBurnSet), e.dazed (turnControl), e.bleedMax /
-//   e.bleedPlus (turnBleedAdd), e.bleedCrit (the Bleed tick).
-// Events: starFound { id, quiet }, starLearned { id }, starsChange { hero }.
+//   turnStarsMove(m, io)             turnContact: the foe's move is over (Riptide: every hit dodged)
+//   turnStarsHurt(m, io, amt) -> amt turnLand: a hit that lands on the hero, after Guard and Ward (Stoneskin, Spite, Last Light)
+//   turnStarsBreak(m, io)            turnBreakCharge: a boss's charge broken (Shatterpoint)
+//   turnStarsMarkOut(m, io)          turnFoeEnd: a Mark wore off (Scarred)
+//   The flags set at the start are read inside 59k: e.brand (turnBurnSet), e.dazed and e.snare (turnControl), e.ring
+//   (the Stagger a Stun builds), e.bleedMax / e.bleedPlus (turnBleedAdd), e.bleedCrit (the Bleed tick), e.burnCrit (the
+//   Burn tick), h.brim (turnGain counts what spills past full), m.sf.swifttide (the finisher gate in turnUsable).
+// Events: starFound { id, quiet }, starLearned { id }, starsChange { hero }, starSky { id } (a constellation complete).
 // Save: S.stars = { v: 3, own: { id: 1 }, wins: { id: n }, learned: { id: 1 }, set: { hero: [id | null] x 3 },
-//   lit: { hero: [ids] }, dry, seenN }. A save from the old star map (v 2) keeps its maps field untouched; it does nothing
-//   now, and every star point is free again (the points were always derived).
+//   lit: { hero: [ids] }, dry, seenN, pw: { base: n } (Provings passed, counted from the second Stars pass: the third
+//   star comes on the second) }. A save from the old star map (v 2) keeps its maps field untouched; it does nothing now,
+//   and every star point is free again (the points were always derived).
 
 var greatLanternsLit, starPoints, starOwned, starLearned, starWins, starSlots, starLit, starFree, starSet, starLight, starUnlight,
-  starWhy, starGrant, starsActive, starsSetIds, starsFound, starsLearnedN;
+  starWhy, starGrant, starsActive, starsSetIds, starsFound, starsLearnedN, starNeed, starSkyDone, starSkiesDone, starSkyCount;
 
 {
   const TU = STARS_TUNE;
-  registerState('stars', { v: 3, own: {}, wins: {}, learned: {}, set: {}, lit: {}, dry: 0, seenN: 0 });
-  const HEROES = ['wren', 'tobin', 'pip'];
+  const fresh = () => ({ v: 3, own: {}, wins: {}, learned: {}, set: {}, lit: {}, dry: 0, seenN: 0, pw: {} });
+  registerState('stars', fresh());
+  const HEROES = ['wren', 'tobin', 'pip'], BASES = ['warrior', 'ranger', 'mage'];
   const isObj = x => !!x && typeof x === 'object' && !Array.isArray(x);
   const ok = id => typeof id === 'string' && !!STARS[id];
   const hk = k => k || (typeof soloHero === 'function' ? soloHero() : null);
@@ -16860,12 +17060,15 @@ var greatLanternsLit, starPoints, starOwned, starLearned, starWins, starSlots, s
   const ST = () => { if (initFor !== S) ensure(); return S.stars; };
   function ensure() {
     initFor = S;
-    if (!isObj(S.stars)) S.stars = { v: 3, own: {}, wins: {}, learned: {}, set: {}, lit: {}, dry: 0, seenN: 0 };
+    if (!isObj(S.stars)) S.stars = fresh();
     const st = S.stars;
-    for (const k of ['own', 'wins', 'learned', 'set', 'lit']) if (!isObj(st[k])) st[k] = {};
+    for (const k of ['own', 'wins', 'learned', 'set', 'lit', 'pw']) if (!isObj(st[k])) st[k] = {};
     for (const id of Object.keys(st.own)) if (!ok(id)) delete st.own[id];
     for (const id of Object.keys(st.learned)) if (!ok(id) || !st.own[id]) delete st.learned[id];
     for (const id of Object.keys(st.wins)) if (!ok(id) || !(st.wins[id] >= 0)) delete st.wins[id];
+    for (const b of Object.keys(st.pw)) if (!BASES.includes(b) || !(st.pw[b] >= 0)) delete st.pw[b];
+    // a Proving passed before the second pass counts once: the next pass finds its third star
+    for (const b of BASES) if (!(st.pw[b] >= 1) && provingWon(b)) st.pw[b] = 1;
     if (!(st.dry >= 0)) st.dry = 0;
     if (!(st.seenN >= 0)) st.seenN = 0;
     for (const k of Object.keys(st.set)) if (!HEROES.includes(k)) delete st.set[k];
@@ -16882,31 +17085,45 @@ var greatLanternsLit, starPoints, starOwned, starLearned, starWins, starSlots, s
     const n = catchUp();
     if (n && was !== 3) emit('toast', { key: 'stars:catchup', msg: `You found ${n} star${n > 1 ? 's' : ''} on the road behind you. See Hero, Stars.`, kind: 'good', prio: 'normal' });
   }
-  // stars a save already earned: zone bosses beaten (maxZone past the zone), Provings passed
+  // stars a save already earned: zone bosses beaten (maxZone past the zone), Provings passed (the third star: passed
+  // twice since the second pass), the deepest Deepwell floor reached. Quiet: nothing is set for it.
   function catchUp() {
     const st = S.stars; let n = 0;
+    const deep = isObj(S.deep) ? Math.max(S.deep.best | 0, isObj(S.deep.trial) ? S.deep.trial.best | 0 : 0) : 0;
     for (const id of STAR_ORDER) {
       if (st.own[id]) continue;
       const fr = STARS[id].from;
-      if ((fr.zone && (S.maxZone || 1) > fr.zone) || (fr.proving && provingWon(fr.proving))) { st.own[id] = 1; n++; }
+      if ((fr.zone && (S.maxZone || 1) > fr.zone) || (fr.proving && provingWon(fr.proving) && (st.pw[fr.proving] | 0) >= (fr.pass || 1))
+        || (fr.deep && deep >= fr.deep)) { st.own[id] = 1; n++; }
     }
     return n;
   }
-  const provingWon = base => {
+  function provingWon(base) {
     const c = S.cls; if (!isObj(c)) return false;
     if (isObj(c.trials) && c.trials[base] && c.trials[base].won) return true;
     if (isObj(c.proven)) for (const e in c.proven) if (c.proven[e] && typeof EVO_NAMES === 'object' && EVO_NAMES[e] && EVO_NAMES[e].base === base) return true;
     return false;
+  }
+
+  // ---- constellations (STAR_SKY): complete when every star in it is learned ----
+  starSkyCount = sid => {
+    const c = STAR_SKY.find(x => x.id === sid), st = ST(); if (!c) return { n: 0, found: 0, learned: 0 };
+    const ids = c.stars.map(x => x[0]);
+    return { n: ids.length, found: ids.filter(id => st.own[id]).length, learned: ids.filter(id => st.learned[id]).length };
   };
+  starSkyDone = sid => { const k = starSkyCount(sid); return k.n > 0 && k.learned === k.n; };
+  starSkiesDone = () => STAR_SKY.filter(c => starSkyDone(c.id)).length;
+  // wins to learn a star: 4, less 1 for each complete constellation, never under STARS_TUNE.learnMin
+  starNeed = () => Math.max(TU.learnMin, TU.learnWins - starSkiesDone());
 
   // ---- points ----
   greatLanternsLit = () => lanternsLitAt(S.maxZone);
-  starPoints = () => Math.floor((S.L || 1) / 3) + 4 * greatLanternsLit();
+  starPoints = () => Math.floor((S.L || 1) / 3) + 4 * greatLanternsLit() + TU.skyPoints * starSkiesDone();
 
   // ---- reads ----
   starOwned = id => !!ST().own[id];
   starLearned = id => !!ST().learned[id];
-  starWins = id => Math.min(TU.learnWins, ST().wins[id] | 0);
+  starWins = id => Math.min(starNeed(), ST().wins[id] | 0);
   starsFound = () => Object.keys(ST().own).length;
   starsLearnedN = () => Object.keys(ST().learned).length;
   function slotsRec(k) {
@@ -16952,7 +17169,7 @@ var greatLanternsLit, starPoints, starOwned, starLearned, starWins, starSlots, s
   starWhy = (id, k) => {
     k = hk(k); if (!k) return 'Choose a hero first.';
     if (!ok(id) || !ST().own[id]) return 'Find it first.';
-    if (!S.stars.learned[id]) return `Win ${TU.learnWins - starWins(id)} more fight${TU.learnWins - starWins(id) === 1 ? '' : 's'} with it set to learn it.`;
+    if (!S.stars.learned[id]) { const n = starNeed() - starWins(id); return `Win ${n} more fight${n === 1 ? '' : 's'} with it set to learn it.`; }
     if (slotsRec(k).includes(id)) return 'It is set in a slot.';
     const lit = litRec(k);
     if (lit.includes(id)) return '';
@@ -16995,18 +17212,25 @@ var greatLanternsLit, starPoints, starOwned, starLearned, starWins, starSlots, s
   };
   // a zone boss's first win
   on('zoneClear', p => { const z = p && p.zone; if (!z) return; for (const id of STAR_ORDER) if (STARS[id].from.zone === z) starGrant(id); });
-  // an elite's drop, from zone STARS_TUNE.eliteFrom (never in an arena: the Deepwell, a Proving)
+  // an elite's drop, from zone STARS_TUNE.eliteFrom (each elite star from its own zone; never in an arena: the
+  // Deepwell, a Proving)
   on('kill', p => {
     const f = p && p.mob; if (!f || !f.elite || f.boss || (typeof arena !== 'undefined' && arena) || !(p.zone >= TU.eliteFrom)) return;
-    const st = ST(), left = STAR_ORDER.filter(id => STARS[id].from.elite && !st.own[id]);
+    const st = ST(), left = STAR_ORDER.filter(id => STARS[id].from.elite && p.zone >= STARS[id].from.elite && !st.own[id]);
     if (!left.length) return;
     st.dry = (st.dry | 0) + 1;
     if (!(st.dry >= TU.elitePity || Math.random() < TU.eliteP)) return;
     st.dry = 0;
     starGrant(left[(Math.random() * left.length) | 0]);
   });
-  // a Proving passed: both of that class's paths' stars
-  on('trialEnd', e => { if (!e || e.kind !== 'proving' || !e.won) return; for (const id of STAR_ORDER) if (STARS[id].from.proving === e.id) starGrant(id); });
+  // a Proving passed: both of that class's paths' stars; passed a second time: its third star
+  on('trialEnd', e => {
+    if (!e || e.kind !== 'proving' || !e.won || !BASES.includes(e.id)) return;
+    const st = ST(); st.pw[e.id] = (st.pw[e.id] | 0) + 1;
+    for (const id of STAR_ORDER) { const fr = STARS[id].from; if (fr.proving === e.id && st.pw[e.id] >= (fr.pass || 1)) starGrant(id); }
+  });
+  // the Deepwell: a floor cleared (or passed on the Lantern Stair) finds the stars of the floors up to it
+  on('deepFloor', e => { const f = e && e.floor; if (!(f > 0)) return; for (const id of STAR_ORDER) if (STARS[id].from.deep && f >= STARS[id].from.deep) starGrant(id); });
 
   // ---- learning: a won fight with the star set ----
   on('fightEnd', e => {
@@ -17015,13 +17239,21 @@ var greatLanternsLit, starPoints, starOwned, starLearned, starWins, starSlots, s
     for (const id of e.stars) {
       if (!ok(id) || !st.own[id] || st.learned[id]) continue;
       st.wins[id] = (st.wins[id] | 0) + 1;
-      if (st.wins[id] >= TU.learnWins) {
-        st.learned[id] = 1; delete st.wins[id];
-        emit('starLearned', { id });
-        emit('toast', { key: 'stars:learned', msg: `${STARS[id].name} is learned. Any hero can light it now.`, kind: 'good', prio: 'normal' });
-      }
+      if (st.wins[id] >= starNeed()) learn(id);
     }
   });
+  function learn(id) {
+    const st = S.stars, c = starSkyOf(id), was = c ? starSkyDone(c.id) : true;
+    st.learned[id] = 1; delete st.wins[id];
+    emit('starLearned', { id });
+    emit('toast', { key: 'stars:learned', msg: `${STARS[id].name} is learned. Any hero can light it now.`, kind: 'good', prio: 'normal' });
+    if (!c || was || !starSkyDone(c.id)) return;
+    // a constellation complete: a star point, and (the first two) stars learn in one fewer won fight
+    const need = starNeed(), faster = starSkiesDone() <= TU.learnWins - TU.learnMin;
+    emit('starSky', { id: c.id });
+    emit('toast', { key: 'stars:sky', msg: `${c.name} is complete: +${TU.skyPoints} star point` + (faster ? `, and stars now learn in ${need} won fights.` : '.'), kind: 'good', prio: 'high', icon: { ic: ['constel', '#F2C14E'] } });
+    for (const x of STAR_ORDER) if (st.own[x] && !st.learned[x] && (st.wins[x] | 0) >= need) learn(x);   // stars already that close
+  }
 
   // ---- news: a new star point, while there is a learned star to light ----
   on('levelup', ({ L, quiet }) => {
@@ -17042,7 +17274,8 @@ var greatLanternsLit, starPoints, starOwned, starLearned, starWins, starSlots, s
     id: 'stars', sys: 'stars', prio: 3,
     label: () => { const n = nextUp(); return n ? n.txt : ''; },
     pct: () => (nextUp() ? 1 : null),
-    go: () => { const n = nextUp(); return { tab: 'party', view: 'stars', sel: n ? `.sr-card[data-star="${n.id}"]` : '#sec-stars' }; },
+    // the star map opens on that star's card (75-stars-ui starsUiPick)
+    go: () => { const n = nextUp(); if (n && typeof starsUiPick === 'function') starsUiPick(n.id); return { tab: 'party', view: 'stars', sel: '#sec-stars' }; },
     icon: () => ({ ic: ['constel', '#F2C14E'] })
   });
 
@@ -17056,7 +17289,8 @@ var greatLanternsLit, starPoints, starOwned, starLearned, starWins, starSlots, s
 function turnStarsStart(m, io) {
   const ids = m.p.stars;
   if (!Array.isArray(ids) || !ids.length) { m.sf = null; return; }
-  const sf = { act: '', atk: 0, abil: 0, half: 0, sure: 0, slip: 0, slipHit: 0, crush: 0, res0: 0 }, F = STARS_TUNE.fx, h = m.h, e = m.e;
+  const sf = { act: '', atk: 0, abil: 0, half: 0, sure: 0, slip: 0, slipHit: 0, crush: 0, res0: 0, mvD: 0, last: 0 },
+    F = STARS_TUNE.fx, h = m.h, e = m.e;
   for (const id of ids) if (STARS[id]) sf[id] = 1;
   m.sf = sf;
   const res = { wren: 'aim', tobin: 'grit', pip: 'embers' }[m.p.heroKey];
@@ -17066,12 +17300,24 @@ function turnStarsStart(m, io) {
   if (sf.sanctuary) turnWard(m, F.ward);
   if (sf.deepwounds) { e.bleedMax = F.deep.max; e.bleedPlus = F.deep.t; }
   if (sf.openveins) e.bleedCrit = 1;
+  if (sf.kindling) e.burnCrit = 1;
   if (sf.brand) e.brand = F.brand;
   if (sf.dazedprey) e.dazed = F.dazed;
+  if (sf.snare) e.snare = 1;
+  if (sf.ringing) e.ring = F.ring;
+  if (sf.brimming) h.brim = 0;   // counted from here: Ready Lamp's opener never spills
+}
+// resources that spilled past full strike the foe (Brimming)
+function turnStarsRes(m, io) {
+  const sf = m.sf, h = m.h, F = STARS_TUNE.fx;
+  if (sf.brimming && h.brim > 0) {
+    const n = Math.min(F.brim.max, h.brim); h.brim = 0;
+    turnHitFoe(m, io, F.brim.p * m.p.U * n, { dt: m.p.heroType || 'phys', noCrit: true, kind: 'brim' });
+  }
 }
 // the hero acts: 'pre' before the action, 'post' after it (its cooldown is set). G: the timed grades.
 function turnStarsAct(m, io, id, when, G) {
-  const sf = m.sf, h = m.h, F = STARS_TUNE.fx;
+  const sf = m.sf, h = m.h, e = m.e, F = STARS_TUNE.fx;
   if (when === 'pre') {
     sf.act = id; sf.slipHit = 0;
     sf.res0 = sf.res ? h[sf.res] : 0;
@@ -17079,19 +17325,30 @@ function turnStarsAct(m, io, id, when, G) {
     return;
   }
   sf.act = '';
-  if (sf.sure === 2) sf.sure = 1;   // Turning Point: the foe fell below half during this action; the next ability takes it
-  if (id === 'attack') return;
-  sf.abil++;
-  if (sf.sureUsed) { sf.sure = 0; sf.sureUsed = 0; }
-  if (sf.slipHit) { sf.slip = 0; sf.slipHit = 0; }
-  if (sf.bankedcoal && sf.res && h[sf.res] < sf.res0) turnGain(h, sf.res, 1);
-  if (sf.encore && sf.abil === F.encore) m.cds[id] = 0;
-  if (sf.perfecttime && G && G.includes('perfect')) for (const k in m.cds) if (k !== id && k !== 'attack') m.cds[k] = Math.max(0, m.cds[k] - 1);
+  if (sf.sure === 2) sf.sure = 1;   // Turning Point: the foe fell below a third during this action; the next ability takes it
+  const spent = sf.res ? Math.max(0, sf.res0 - h[sf.res]) : 0;
+  if (id !== 'attack') {
+    sf.abil++;
+    if (sf.sureUsed) { sf.sure = 0; sf.sureUsed = 0; }
+    if (sf.drawUsed) { sf.drawUsed = 0; if (h.aim > 0) h.aim--; }   // Full Draw: the sure crit spends 1 Aim
+    if (sf.slipHit) { sf.slip = 0; sf.slipHit = 0; }
+    if (sf.bankedcoal && spent > 0) turnGain(h, sf.res, 1);
+    if (sf.encore && sf.abil === F.encore) m.cds[id] = 0;
+    if (sf.swifttide && typeof ABILITIES === 'object' && ABILITIES[id] && ABILITIES[id].kind === 'finisher') m.cds[id] = Math.max(1, m.cds[id] - F.swift);
+    if (sf.perfecttime && G && G.includes('perfect')) for (const k in m.cds) if (k !== id && k !== 'attack') m.cds[k] = Math.max(0, m.cds[k] - 1);
+  }
+  if (sf.frostfire && sf.res === 'embers' && spent >= F.frostfire) turnChillAdd(m, io, Math.floor(spent / F.frostfire));
+  if (sf.avalanche && sf.res === 'grit' && spent >= F.avalanche) turnControl(m, io, 'stun');
+  if (sf.evileye && e.curse > 0) turnMark(e, e.curse);
+  turnStarsRes(m, io);
 }
-// before the crit roll: Turning Point makes the next ability after the foe falls below half a sure crit (every hit of it)
+// before the crit roll: Turning Point (after the foe falls below a third) and Full Draw (at 3 Aim, as the ability began)
+// make the next ability a sure crit
 function turnStarsPre(m, io, o) {
-  const sf = m.sf;
-  if (sf.sure === 1 && sf.act && sf.act !== 'attack' && !o.dot && !o.noCrit) { o.sure = true; sf.sureUsed = 1; }
+  const sf = m.sf, ab = sf.act && sf.act !== 'attack' && !o.dot && !o.noCrit;
+  if (!ab) return;
+  if (sf.sure === 1) { o.sure = true; sf.sureUsed = 1; }
+  if (sf.fulldraw && sf.res === 'aim' && sf.res0 >= STARS_TUNE.fx.draw) { o.sure = true; sf.drawUsed = 1; }
 }
 // a damage multiplier for one hit
 function turnStarsX(m, io, o, crit) {
@@ -17101,17 +17358,20 @@ function turnStarsX(m, io, o, crit) {
   if (sf.crush && sf.act === 'attack' && o.kind === 'attack') x *= F.crush.x;
   if (sf.killmark && (crit || o.kind === 'counter') && m.e.mark > 0) x *= F.killMark;
   if (sf.bloodprice && io.heroHp && io.heroHp() < F.blood.at * m.p.heroMaxHp) x *= F.blood.x;
+  if (sf.thermalshock && o.dt === 'fire' && !o.dot && m.e.chill > 0) x *= 1 + F.shock * m.e.chill;
   return x;
 }
-// after a hit lands: a crit (or a counter, a sure crit) can Bleed or Burn; a Curse burst catches fire
+// after a hit lands: a crit (or a counter, a sure crit) can Bleed or Burn; a Curse burst catches fire; a Bleed tick
+// gives a resource
 function turnStarsAfter(m, io, o, crit) {
-  const sf = m.sf, F = STARS_TUNE.fx, T = TURN_TUNE, U = m.p.U;
+  const sf = m.sf, F = STARS_TUNE.fx, T = TURN_TUNE, U = m.p.U, e = m.e;
   if ((crit && !o.dot) || o.kind === 'counter') {
     if (sf.serrated) turnBleedAdd(m, 1);
-    if (sf.emberedge) turnBurnSet(m.e, F.emberEdge.p * U, F.emberEdge.t);
+    if (sf.emberedge) turnBurnSet(e, F.emberEdge.p * U, F.emberEdge.t);
   }
-  if (o.kind === 'curse' && sf.witchfire) turnBurnSet(m.e, T.burnP * U, F.witch.t);
+  if (o.kind === 'curse' && sf.witchfire) turnBurnSet(e, T.burnP * U, F.witch.t);
   if (sf.turning && !sf.half && io.foeHp && io.foeHp() < F.turning * m.p.foeMaxHp) { sf.half = 1; sf.sure = sf.act ? 2 : 1; }
+  if (sf.bloodscent && o.kind === 'bleed' && sf.res) { turnGain(m.h, sf.res, 1); turnStarsRes(m, io); }
 }
 // the parry / dodge / counter loop
 function turnStarsDef(m, io, kind) {
@@ -17121,13 +17381,39 @@ function turnStarsDef(m, io, kind) {
     if (sf.coldsteel) turnChillAdd(m, io, F.coldSteel);
     if (sf.holysparks) turnHitFoe(m, io, F.sparks * U, { dt: 'holy', noCrit: true, kind: 'sparks' });
   } else if (kind === 'dodge') {
+    sf.mvD++;
     if (sf.huntstep) turnMark(e, F.huntStep);
     if (sf.slipstrike) sf.slip = 1;
   } else if (kind === 'counter') {
     if (sf.quickreturn) { let best = ''; for (const k in m.cds) if (k !== 'attack' && m.cds[k] > 0 && (!best || m.cds[k] < m.cds[best])) best = k; if (best) m.cds[best] = 0; }
     if (sf.cinder) turnBurnSet(e, T.burnP * U, F.cinder.t);
     if (sf.openguard) e.exposed = Math.max(e.exposed, 1);
+    if (sf.mending && io.healHero) io.healHero(F.mend * m.p.heroMaxHp);
   }
+  turnStarsRes(m, io);
+}
+// the foe's move is over: Riptide strikes back when every hit was dodged
+function turnStarsMove(m, io) {
+  const sf = m.sf, n = m.move ? m.move.hits.length : 0, dodged = sf.mvD; sf.mvD = 0;
+  if (sf.riptide && n > 0 && dodged >= n) turnHitFoe(m, io, STARS_TUNE.fx.riptide * m.p.counter, { dt: 'phys', noCrit: true, kind: 'riptide' });
+}
+// a hit lands on the hero (after Guard, Grit and Ward): Stoneskin spends Grit to halve it, Spite gives a resource,
+// Last Light keeps the hero at 1 health once a fight. -> the damage that lands
+function turnStarsHurt(m, io, amt) {
+  const sf = m.sf, h = m.h, F = STARS_TUNE.fx;
+  if (!(amt > 0)) return amt;
+  if (sf.stoneskin && h.grit >= F.stone.grit) { h.grit -= F.stone.grit; amt *= F.stone.x; }
+  if (sf.lastlight && !sf.last && io.heroHp && amt >= io.heroHp() && io.heroHp() > 1) { sf.last = 1; amt = io.heroHp() - 1; }
+  if (sf.spite && sf.res) { turnGain(h, sf.res, 1); turnStarsRes(m, io); }
+  return amt;
+}
+// a boss's charge broken (a Stun, a Freeze, or a big hit while it gathers): Shatterpoint strikes back
+function turnStarsBreak(m, io) {
+  if (m.sf.shatterpoint) turnHitFoe(m, io, STARS_TUNE.fx.shatter * m.p.counter, { dt: 'phys', noCrit: true, kind: 'counter' });
+}
+// a Mark wore off at the end of the foe's turn (not spent): Scarred leaves Bleed
+function turnStarsMarkOut(m, io) {
+  if (m.sf.scarred) turnBleedAdd(m, STARS_TUNE.fx.scarred);
 }
 
 // ---- src/js/57f-hands.js ----
@@ -23308,6 +23594,7 @@ function turnBreakCharge(m, io) {
   if (!m.charge) return;
   const name = m.charge.mv.name; m.charge = null; m.e.recover = 1;
   io.emit('chargeBroken', { name });
+  if (m.sf) turnStarsBreak(m, io);   // the Stars: Shatterpoint
 }
 // Stun ('stun') or Freeze ('freeze'): an ordinary foe loses its next turn (then a lock: no new control for 3 of its
 // turns); a boss Staggers instead (25 / 35 toward 100). Either way an accepted control breaks a charge. -> accepted
@@ -23315,9 +23602,10 @@ function turnControl(m, io, kind) {
   const T = TURN_TUNE, e = m.e;
   if (e.lock > 0) return false;
   if (e.dazed) turnMark(e, e.dazed);   // the Stars: Dazed Prey
+  if (e.snare) { e.pin = 1; e.pinSlow = Math.max(e.pinSlow, 2); }   // the Stars: Snare
   if (m.charge) turnBreakCharge(m, io);
   if (m.p.boss) {
-    e.stagger += (T.stagger[kind] || 25) * (m.p.ctrlX || 1);   // Control (gear) staggers more
+    e.stagger += (T.stagger[kind] || 25) * (m.p.ctrlX || 1) * (kind === 'stun' && e.ring > 0 ? e.ring : 1);   // Control (gear) staggers more; e.ring: the Stars' Ringing Blow
     io.emit('foeStagger', { v: Math.min(100, e.stagger) });
     if (e.stagger < 100) return true;
     e.stagger = 0;
@@ -23342,7 +23630,7 @@ function turnHeal(m, io, amt) {
   const over = a - room, cap = (p.wardOver || 0) * p.heroMaxHp;
   if (over > 0 && cap > m.h.ward) { m.h.ward = Math.min(cap, m.h.ward + over); m.h.wardT = 3; }
 }
-const turnGain = (h, k, n) => { const cap = k === 'aim' ? 3 : k === 'grit' ? 10 : 5; h[k] = Math.min(cap, h[k] + n); };
+const turnGain = (h, k, n) => { const cap = k === 'aim' ? 3 : k === 'grit' ? 10 : 5; if (h.brim >= 0 && h[k] + n > cap) h.brim += h[k] + n - cap; h[k] = Math.min(cap, h[k] + n); };   // h.brim: the Stars' Brimming
 
 // ---------------- the hero's actions ----------------
 // Can the hero use id now? -> '' or why not: 'cd' | 'gate' | 'once' | 'need:<what>'
@@ -23351,7 +23639,7 @@ function turnUsable(m, id) {
   if (id !== 'attack') { const a = turnAb(id); if (!a || a.kind === 'passive') return 'passive'; }
   if (m.cds[id] > 0) return 'cd';
   const h = m.h, e = m.e, a = turnAb(id);
-  if (a && a.kind === 'finisher' && m.heroOps < 3) return 'gate';
+  if (a && a.kind === 'finisher' && m.heroOps < (m.sf && m.sf.swifttide ? 1 : 3)) return 'gate';   // the Stars: Swift Tide
   switch (id) {
     case 'finalecho': return e.bleed > 0 || h.aim > 0 ? '' : 'need:Bleed or Aim';
     case 'riposte': return h.ripo > 0 ? '' : 'need:a parry first';
@@ -23576,7 +23864,7 @@ function turnBegin(m, who, io) {
   let emberTick = false;
   if (e.burn > 0) {
     if (e.growN > 0) { e.burnDmg = Math.min(Math.max(e.burnDmg, e.growCap), e.burnDmg + e.grow); e.growN--; if (e.wfWeaken) { e.wfWeaken = 0; e.weaken = Math.max(e.weaken, 1); } }
-    turnHitFoe(m, io, e.burnDmg, { dt: 'fire', dot: true, kind: 'burn', n: e.burn }); e.burn--; emberTick = true;
+    turnHitFoe(m, io, e.burnDmg, { dt: 'fire', dot: true, kind: 'burn', n: e.burn, dotCrit: !!e.burnCrit }); e.burn--; emberTick = true;   // e.burnCrit: the Stars' Kindling
     if (!e.burn) { e.burnDmg = 0; e.growN = 0; }
   }
   if (e.bleed > 0) { turnHitFoe(m, io, e.bleed * e.bleedDmg, { dt: 'phys', dot: true, kind: 'bleed', n: e.bleed, dotCrit: !!e.bleedCrit }); if (--e.bleedT <= 0) { e.bleed = 0; e.bleedDmg = 0; } }
@@ -23646,6 +23934,7 @@ function turnLand(m, io, hit) {
   const warded = h.ward > 0;
   if (h.ward > 0) { const take = Math.min(h.ward, amt); h.ward -= take; amt -= take; if (h.ward <= 0) { h.ward = 0; h.wardT = 0; if (h.setFeet) { h.setFeet = 0; h.guard = Math.max(h.guard, 1); } } }
   if (h.last > 0) amt = Math.min(amt, Math.max(0, io.heroHp() - 1));
+  if (m.sf && amt > 0) amt = turnStarsHurt(m, io, amt);   // the Stars: Stoneskin, Spite, Last Light
   if (amt > 0) io.damageHero(amt, blocked, 'hit');
   if (p.trait === 'vampiric' && amt > 0 && !(e.curse > 0) && e.bleed < TURN_TRAITS.vampiric.stop && io.healFoe) io.healFoe(amt * TURN_TRAITS.vampiric.heal);
   if (p.trait === 'cursed' && amt > 0) h.weaken = Math.max(h.weaken, 1);
@@ -23697,6 +23986,7 @@ function turnContact(m, io) {
     io.emit('soloCounter', { foe: io.foe ? io.foe() : null, dmg: got, auto: false });
     io.emit('crit', { tap: true, counter: true });
   }
+  if (m.sf) turnStarsMove(m, io);   // the Stars: Riptide (every hit dodged)
   if (e.pin > 0) { e.pin = 0; h.opening = 2; }
   if (h.brace > 0) h.brace = 0;
   h.answer = 0;
@@ -23705,9 +23995,10 @@ function turnContact(m, io) {
 }
 // the end of a foe turn: its statuses and the hero's defences age; a boss below half HP turns harder
 function turnFoeEnd(m, io) {
-  const e = m.e, h = m.h;
+  const e = m.e, h = m.h, mk0 = e.mark;
   for (const k of ['mark', 'sunder', 'weaken', 'blind', 'pinSlow', 'lock']) if (e[k] > 0) e[k]--;
   if (!e.mark) e.markV = 0;
+  if (m.sf && mk0 > 0 && !e.mark) turnStarsMarkOut(m, io);   // the Stars: Scarred
   if (e.chillT > 0 && --e.chillT === 0) e.chill = 0;
   if (e.curse > 0 && --e.curse === 0 && e.curseStore > 0) { const v = e.curseStore; e.curseStore = 0; turnHitFoe(m, io, v, { dt: 'holy', noCrit: true, stored: true, kind: 'curse' }); }
   if (h.guard > 0) h.guard--;
@@ -38947,19 +39238,38 @@ var soloIconURL = () => '';
 }
 
 // ---- src/js/75-stars-ui.js ----
-// 75-stars-ui: Hero tab > Stars (docs/design/combat-turn-build.md "Stars"). Browser file.
-// Core: 57e-stars.js (starSet, starLight, starUnlight, starWhy, starPoints, ...); data 24f-data-stars.js.
-//   - Star points: free and total (they pay for lit stars).
-//   - The hero's 3 star slots (a found star) and up to 3 lit stars (a learned star, for its cost in points); x clears one.
-//   - Every star, in the order they are found: name, what it does, learned or how many wins to go, and Slot 1/2/3 and
-//     Light / Put out buttons. A star not found yet shows only where it is found.
-// Star tiles are lettered (no art: the art freeze, owner 2026-09-30), like the abilities that have no icon yet.
+// 75-stars-ui: Hero tab > Stars, the star map (docs/design/combat-turn-build.md "Stars"; owner, 2026-10-02: "We also need
+// much better menus for abilities and stars. I kinda miss the star map too"). Browser file.
+// Core: 57e-stars.js (starSet, starLight, starUnlight, starWhy, starPoints, starSkyCount, ...); data 24f-data-stars.js
+// (STARS, STAR_SKY: the constellations and each star's fixed spot).
+//   - The loadout strip (.sr-top, sticky at the top of the menu): star points, the hero's 3 set and 2 lit stars. Tap a
+//     star in it to open its card; x clears it; an empty slot takes the open star.
+//   - The map (.sr-map, an SVG): six constellations, one per place stars are found. A star not found is a faint dot,
+//     found is bright, set glows, lit shines (it twinkles unless the player asks for reduced motion); lines join learned
+//     stars to their constellation, and a complete constellation turns gold. Tap a star (or Enter on it) to open its card.
+//   - The card (.sr-card[data-star]): name, what it does, where it is found, learning progress, Slot 1/2/3 (each says
+//     what it holds now, to compare) and Light / Put out.
+//   - Filters (by hero kit; found or learned) and a list of the stars (.sr-row) to scan and compare; the map dims the
+//     stars the filters leave out.
+// Landscape: the menu takes the whole stage while Stars is open (60-stars.css), the map on the left and the card on the
+// right, under the loadout strip. Tiles are lettered (no art: the art freeze, owner 2026-09-30); the map is interface:
+// dots, lines and glows.
+var starsUiPick;   // starsUiPick(id): open the star map on that star's card (57e's Next Up goal)
 {
+  const SVGNS = 'http://www.w3.org/2000/svg';
   const heroNm = k => (typeof ROSTER === 'object' && ROSTER[k] ? ROSTER[k].name.split(' ')[0] : k);
-  let root = null, sig = '';
-  const tile = (id, cls) => el('span', 'sr-ic ab-mono' + (cls ? ' ' + cls : ''), id && STARS[id] ? STARS[id].short : '?');
-  const persist = () => { try { save(); } catch (e) {} sig = ''; refresh(); };
+  const KITS = [['all', 'All'], ['wren', 'Wren'], ['tobin', 'Tobin'], ['pip', 'Pip'], ['shared', 'Any hero']];
+  const SHOWS = [['all', 'All'], ['found', 'Found'], ['learned', 'Learned']];
+  let root = null, sig = '', pick = null, fKit = 'all', fShow = 'all', scrollCard = false;
+  const tile = (id, cls) => el('span', 'sr-ic' + (cls ? ' ' + cls : ''), id && STARS[id] ? STARS[id].short : '?');
   const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
+  const persist = () => { try { save(); } catch (e) {} sig = ''; refresh(); };
+  const btn = (cls, txt) => { const b = el('button', cls, txt); b.type = 'button'; return b; };
+  const svg = (tag, attrs, cls) => { const n = document.createElementNS(SVGNS, tag); if (cls) n.setAttribute('class', cls); for (const k in attrs) n.setAttribute(k, attrs[k]); return n; };
+  const kitOk = s => fKit === 'all' || (fKit === 'shared' ? s.kit === 'all' : s.kit === fKit);
+  const showOk = id => fShow === 'all' || (fShow === 'found' ? starOwned(id) : starLearned(id));
+  const passes = id => kitOk(STARS[id]) && showOk(id);
+  starsUiPick = id => { if (STARS[id]) { pick = id; scrollCard = true; sig = ''; } };
 
   registerView('party', { id: 'stars', label: 'Stars', order: 30, feature: 'stars',
     dot: () => !!(S.stars && typeof starsFound === 'function' && starsFound() > (S.stars.seenN | 0)) });
@@ -38969,89 +39279,215 @@ var soloIconURL = () => '';
     toast('New on the Hero tab: Stars. Each star changes how your fights play.', 'good', { ic: ['constel', '#F2C14E'] }, 'high');
   });
 
-  function slotBox(label, id, extra, onClear) {
-    const b = el('div', 'ab-slot sr-slot' + (id ? '' : ' empty'));
-    b.append(el('small', null, label));
+  // ---- the loadout strip: points, 3 set, 2 lit ----
+  function chip(k, label, id, kind, i) {
+    const c = el('div', 'sr-chip' + (id ? '' : ' empty') + (id && id === pick ? ' sel' : '') + ' ' + kind);
+    c.dataset.slot = String(i);
+    const b = btn('sr-chip-b');
     if (id) {
-      b.append(tile(id), el('b', null, STARS[id].name));
-      if (extra) b.append(el('small', 'sr-cost', extra));
-      const x = el('button', 'ab-clear', '×'); x.type = 'button'; x.setAttribute('aria-label', `Clear ${label}`);
-      x.addEventListener('click', onClear);
-      b.append(x);
-    } else b.append(el('b', null, 'Empty'));
-    return b;
-  }
-  function build() {
-    const k = soloHero(); if (!root) return;
-    root.textContent = '';
-    if (!k) { root.append(el('p', 'note', 'Choose a hero first.')); return; }
-    const pts = starPoints(), free = starFree(k), set = starSlots(k), lit = starLit(k);
-    root.append(el('p', 'note sr-note', `Each star changes how a fight plays. ${heroNm(k)} sets up to ${STARS_TUNE.slots}. Win ${STARS_TUNE.learnWins} fights with a star set and you learn it: then any hero can light it with star points, up to ${STARS_TUNE.litMax}. Changes count from your next fight.`));
-    const head = el('div', 'sr-head');
-    head.append(el('b', 'sr-pts', `Star points: ${Math.max(0, free)} free of ${pts}`),
-      el('small', null, `Found ${starsFound()} of ${STAR_ORDER.length} · Learned ${starsLearnedN()}`));
-    root.append(head);
-    root.append(el('h3', 'ab-pname', 'Set'));
-    const sl = el('div', 'ab-slots sr-slots');
-    set.forEach((id, i) => sl.append(slotBox(`Slot ${i + 1}`, id, id && !starLearned(id) ? `${starWins(id)} of ${STARS_TUNE.learnWins} wins` : id ? 'Learned' : '', () => { starSet(i, null, k); persist(); })));
-    root.append(sl);
-    root.append(el('h3', 'ab-pname', 'Lit'));
-    const ll = el('div', 'ab-slots sr-slots');
-    for (let i = 0; i < STARS_TUNE.litMax; i++) {
-      const id = lit[i] || null;
-      ll.append(slotBox(`Lit ${i + 1}`, id, id ? plural(STARS[id].cost, 'point') : '', () => { starUnlight(id, k); persist(); }));
+      // a tap opens its card (Slot N there clears it; Put out puts a lit star out)
+      const s = STARS[id], sub = kind === 'lit' ? plural(s.cost, 'point') : starLearned(id) ? 'Learned' : `${starWins(id)}/${starNeed()} wins`;
+      // a long one-word name takes a smaller face so it is not cut in a narrow chip
+      b.append(el('span', 'sr-chip-t' + (s.name.split(' ').some(w => w.length > 8) ? ' long' : ''), s.name), el('small', null, sub));
+      b.setAttribute('aria-label', `${label}: ${s.name}, ${sub}. Open its card.`);
+      b.addEventListener('click', () => { pick = id; scrollCard = true; sig = ''; refresh(); });
+      c.append(b);
+    } else {
+      // an empty slot takes the open star, when it can
+      const can = kind === 'set' ? !!pick && starOwned(pick) && !starSlots(k).includes(pick)
+        : !!pick && starLearned(pick) && !starLit(k).includes(pick) && !starWhy(pick, k);
+      b.append(el('span', 'sr-chip-t', '+ ' + label), el('small', null, can ? 'Tap to set' : 'Empty'));
+      b.setAttribute('aria-label', `${label}: empty` + (can ? `. Tap to put ${STARS[pick].name} here.` : ''));
+      b.disabled = !can;
+      b.addEventListener('click', () => { if (kind === 'set') starSet(i, pick, k); else starLight(pick, k); persist(); });
+      c.append(b);
     }
-    root.append(ll);
-    if (!starsLearnedN()) root.append(el('p', 'note sr-src', 'Learn a star to light it here.'));
-    root.append(el('h3', 'ab-pname', 'Your stars'));
-    const list = el('div', 'sr-list');
-    for (const id of STAR_ORDER) list.append(cardFor(k, id, set, lit));
-    root.append(list);
-    root.append(el('p', 'note sr-src', 'Stars are found on zone bosses the first time they fall, on elites now and then, and by passing a Proving. They belong to the lamp: every hero can set them.'));
+    return c;
   }
-  function cardFor(k, id, set, lit) {
-    const s = STARS[id], own = starOwned(id), learned = own && starLearned(id), where = set.indexOf(id), on = lit.includes(id);
-    const c = el('div', 'ab-card sr-card' + (!own ? ' locked' : where >= 0 || on ? ' ready' : ' owned'));
-    c.dataset.star = id;
-    const top = el('div', 'ab-top'), t = el('div', 'ab-t');
+  function strip(k) {
+    const top = el('div', 'sr-top'), pts = starPoints(), free = Math.max(0, starFree(k)), set = starSlots(k), lit = starLit(k);
+    const p = el('div', 'sr-pts');
+    p.setAttribute('aria-label', `Star points: ${free} free of ${pts}`); p.title = 'Star points pay for lit stars: a point every 3 levels, 4 for each Great Lantern, 1 for each complete constellation.';
+    p.append(el('b', null, String(free)), el('small', null, `of ${pts} points`));
+    const sl = el('div', 'sr-row3'), ll = el('div', 'sr-row2');
+    set.forEach((id, i) => sl.append(chip(k, `Set ${i + 1}`, id, 'set', i)));
+    for (let i = 0; i < STARS_TUNE.litMax; i++) ll.append(chip(k, `Lit ${i + 1}`, lit[i] || null, 'lit', i));
+    top.append(p, sl, ll);
+    return top;
+  }
+
+  // ---- the map ----
+  function sky(k) {
+    const C = STAR_SKY_CELL, W = 3 * C.w, H = 2 * C.h, set = starSlots(k), lit = starLit(k);
+    const box = el('div', 'sr-map');
+    const s = svg('svg', { viewBox: `0 0 ${W} ${H}`, role: 'group', 'aria-label': 'Star map: six constellations. Tap a star to see it.' });
+    // the night: faint specks at fixed places (no art: dots)
+    let seed = 7;
+    const rnd = () => (seed = seed * 16807 % 2147483647) / 2147483647;
+    const dust = svg('g', {}, 'sr-dust');
+    for (let i = 0; i < 70; i++) dust.append(svg('circle', { cx: (rnd() * W).toFixed(1), cy: (rnd() * H).toFixed(1), r: (0.6 + rnd() * 0.9).toFixed(2), opacity: (0.15 + rnd() * 0.35).toFixed(2) }));
+    s.append(dust);
+    for (const c of STAR_SKY) {
+      const g = svg('g', { transform: `translate(${c.col * C.w} ${c.row * C.h})` }, 'sr-sky' + (starSkyDone(c.id) ? ' done' : ''));
+      g.dataset.sky = c.id;
+      const n = starSkyCount(c.id);
+      const t = svg('text', { x: C.w / 2, y: 26, 'text-anchor': 'middle' }, 'sr-sky-t'), cn = svg('tspan', {}, 'sr-sky-n');
+      t.textContent = c.name.replace(/^The /, '') + ' ';
+      cn.textContent = `${n.learned}/${n.n}`; t.append(cn);
+      g.append(t);
+      const at = {}; for (const [id, x, y] of c.stars) at[id] = [x, y];
+      for (const [a, b] of c.lines) {
+        if (!at[a] || !at[b]) continue;
+        const on = starLearned(a) && starLearned(b);
+        g.append(svg('line', { x1: at[a][0], y1: at[a][1], x2: at[b][0], y2: at[b][1] }, 'sr-ln' + (on ? ' on' : '')));
+      }
+      for (const [id, x, y] of c.stars) {
+        const own = starOwned(id), learned = own && starLearned(id), isSet = set.includes(id), isLit = lit.includes(id);
+        const st = svg('g', { transform: `translate(${x} ${y})`, role: 'button', tabindex: '0' },
+          'sr-st ' + (!own ? 'unk' : learned ? 'learned' : 'found') + (isSet ? ' set' : '') + (isLit ? ' lit' : '') + (id === pick ? ' sel' : '') + (passes(id) ? '' : ' dim'));
+        st.dataset.star = id;
+        st.setAttribute('aria-label', own ? `${STARS[id].name}${learned ? ', learned' : ''}${isSet ? ', set' : ''}${isLit ? ', lit' : ''}` : `A star not found yet (${starFromText(STARS[id])})`);
+        st.setAttribute('aria-pressed', String(id === pick));
+        st.append(svg('circle', { r: 21 }, 'sr-hit'));
+        if (isSet || isLit) st.append(svg('circle', { r: isLit ? 15 : 12 }, 'sr-glow'));
+        if (isLit) st.append(svg('path', { d: 'M0,-17 L3,-3 L17,0 L3,3 L0,17 L-3,3 L-17,0 L-3,-3 Z' }, 'sr-ray'));
+        st.append(svg('circle', { r: !own ? 3 : learned ? 6 : 5 }, 'sr-dot'));
+        if (id === pick) st.append(svg('circle', { r: 11 }, 'sr-ring'));
+        const go = () => { pick = id; scrollCard = !isWide(); sig = ''; refresh(); };
+        st.addEventListener('click', go);
+        st.addEventListener('keydown', ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); go(); } });
+        g.append(st);
+      }
+      s.append(g);
+    }
+    box.append(s);
+    return box;
+  }
+
+  // ---- the open star's card ----
+  function card(k, id) {
+    const s = STARS[id], own = starOwned(id), learned = own && starLearned(id), set = starSlots(k), lit = starLit(k);
+    const where = set.indexOf(id), on = lit.includes(id), c = starSkyOf(id);
+    const box = el('div', 'sr-card' + (!own ? ' locked' : where >= 0 || on ? ' ready' : learned ? ' learned' : ''));
+    box.dataset.star = id;
+    const head = el('div', 'sr-head'), t = el('div', 'sr-t');
     if (!own) {
-      t.append(el('b', null, 'Not found yet'), el('small', null, starFromText(s)));
-      top.append(tile(null, 'sr-unk'), t); c.append(top);
-      return c;
+      t.append(el('b', null, 'Not found yet'), el('small', 'sr-from', starFromText(s)));
+      head.append(tile(null, 'sr-unk'), t); box.append(head);
+      box.append(el('p', 'sr-desc', `A star of ${c ? c.name : 'the sky'}. Find it to see what it does.`));
+      return box;
     }
-    t.append(el('b', null, s.name), el('small', null, (learned ? 'Learned' : `Learning: ${starWins(id)} of ${STARS_TUNE.learnWins} wins`) + ` · Lights for ${plural(s.cost, 'point')}`));
-    top.append(tile(id), t);
-    c.append(top, el('p', 'ab-desc', s.text));
-    const foot = el('div', 'ab-foot');
+    const kit = s.kit === 'all' ? 'Any hero' : heroNm(s.kit);
+    t.append(el('b', null, s.name), el('small', null, `${kit} · ` + (learned ? `Learned · lights for ${plural(s.cost, 'point')}` : `Learning: ${starWins(id)} of ${starNeed()} wins`)));
+    head.append(tile(id), t);
+    box.append(head, el('p', 'sr-desc', s.text), el('small', 'sr-from', `Found: ${starFromText(s)}` + (c ? ` · ${c.name}` : '')));
+    const foot = el('div', 'sr-foot');
     for (let i = 0; i < STARS_TUNE.slots; i++) {
-      const b = el('button', 'ab-put' + (where === i ? ' on' : ''), `Slot ${i + 1}`); b.type = 'button';
+      const cur = set[i], b = btn('sr-put' + (where === i ? ' on' : ''));
+      b.dataset.slot = String(i);
+      const lb = el('span'); lb.append(el('span', 'sr-put-w', 'Slot '), String(i + 1));
+      // what the slot holds now, to compare: the name, or its 2-letter tile where the card is narrow (60-stars.css)
+      const sub = el('small');
+      if (where === i) sub.append(el('span', 'sr-put-n', 'Set here'), el('span', 'sr-put-c', 'Set'));
+      else if (cur) sub.append(el('span', 'sr-put-n', STARS[cur].name), el('span', 'sr-put-c', 'for ' + STARS[cur].short));
+      else sub.textContent = 'Empty';
+      b.append(lb, sub);
       b.setAttribute('aria-pressed', String(where === i));
+      b.setAttribute('aria-label', where === i ? `Slot ${i + 1}: set here. Tap to clear.` : `Set in slot ${i + 1}` + (cur ? `, in place of ${STARS[cur].name}` : ''));
       b.addEventListener('click', () => { if (where === i) starSet(i, null, k); else starSet(i, id, k); persist(); });
       foot.append(b);
     }
+    box.append(foot);
     if (learned) {
       const can = on || (lit.length < STARS_TUNE.litMax && starFree(k) >= s.cost);
       const why = on || can ? '' : where >= 0 ? (lit.length >= STARS_TUNE.litMax ? `You can light ${STARS_TUNE.litMax} stars. Put one out first.` : `Needs ${plural(s.cost, 'star point')}.`) : starWhy(id, k);
-      const b = el('button', 'ab-put sr-light' + (on ? ' on' : ''), on ? 'Put out' : 'Light'); b.type = 'button';
+      const b = btn('sr-light' + (on ? ' on' : ''), on ? 'Put out' : where >= 0 ? `Light instead (${plural(s.cost, 'point')})` : `Light (${plural(s.cost, 'point')})`);
       b.setAttribute('aria-pressed', String(on));
       b.disabled = !can;
       b.title = on ? 'Put it out: its points come back' : why || `Light it for ${plural(s.cost, 'point')}`;
       b.addEventListener('click', () => { if (on) starUnlight(id, k); else { if (where >= 0) starSet(where, null, k); starLight(id, k); } persist(); });
-      foot.append(b);
+      box.append(b);
+      if (why) box.append(el('small', 'sr-why', why));
+    } else box.append(el('small', 'sr-why', `Win ${plural(starNeed() - starWins(id), 'more fight')} with it set to learn it. Then any hero can light it.`));
+    return box;
+  }
+
+  // ---- filters and the list ----
+  function filters() {
+    const f = el('div', 'sr-filt');
+    const seg = (opts, cur, set, name) => {
+      const g = el('div', 'sr-seg'); g.setAttribute('role', 'group'); g.setAttribute('aria-label', name);
+      for (const [v, txt] of opts) {
+        const b = btn(v === cur ? 'on' : '', txt); b.setAttribute('aria-pressed', String(v === cur)); b.dataset.v = v;
+        b.addEventListener('click', () => { set(v); sig = ''; refresh(); });
+        g.append(b);
+      }
+      return g;
+    };
+    f.append(seg(KITS, fKit, v => { fKit = v; }, 'Whose kit'), seg(SHOWS, fShow, v => { fShow = v; }, 'Show'));
+    return f;
+  }
+  function list(k) {
+    const box = el('div', 'sr-list'), set = starSlots(k), lit = starLit(k);
+    let n = 0;
+    for (const id of STAR_ORDER) {
+      if (!passes(id)) continue;
+      n++;
+      const s = STARS[id], own = starOwned(id), learned = own && starLearned(id);
+      const r = btn('sr-row' + (!own ? ' locked' : '') + (id === pick ? ' sel' : '') + (set.includes(id) || lit.includes(id) ? ' ready' : ''));
+      r.dataset.star = id;
+      const tx = el('span', 'sr-row-t');
+      if (!own) tx.append(el('b', null, 'Not found yet'), el('small', null, starFromText(s)));
+      else tx.append(el('b', null, s.name), el('small', null, (set.includes(id) ? 'Set · ' : lit.includes(id) ? 'Lit · ' : '') + (learned ? `Learned · ${plural(s.cost, 'point')}` : `${starWins(id)}/${starNeed()} wins`)), el('span', 'sr-row-d', s.text));
+      r.append(tile(own ? id : null, own ? '' : 'sr-unk'), tx);
+      r.addEventListener('click', () => { pick = id; scrollCard = true; sig = ''; refresh(); });
+      box.append(r);
     }
-    c.append(foot);
-    return c;
+    if (!n) box.append(el('p', 'note', 'No stars match. Try another filter.'));
+    return box;
+  }
+
+  function build() {
+    const k = soloHero(); if (!root) return;
+    root.textContent = '';
+    if (!k) { root.append(el('p', 'note', 'Choose a hero first.')); return; }
+    if (!pick || !STARS[pick]) pick = starSlots(k).find(Boolean) || STAR_ORDER.find(id => starOwned(id)) || STAR_ORDER[0];
+    root.append(strip(k));
+    const main = el('div', 'sr-main');
+    main.append(sky(k), card(k, pick));
+    root.append(main);
+    const head = el('div', 'sr-lhead');
+    head.append(el('h3', 'sr-h', 'All stars'), el('small', null, `Found ${starsFound()} of ${STAR_ORDER.length} · Learned ${starsLearnedN()} · ${starSkiesDone()} of ${STAR_SKY.length} constellations`));
+    root.append(head, filters(), list(k));
+    const how = el('details', 'sr-how');
+    how.append(el('summary', null, 'How stars work'),
+      el('p', 'note', `Each star changes how a fight plays. ${heroNm(k)} can set ${STARS_TUNE.slots}. Win ${starNeed()} fights with a star set to learn it.`),
+      el('p', 'note', `Any hero can light a learned star with star points, up to ${STARS_TUNE.litMax}. Changes count from your next fight.`),
+      el('p', 'note', 'Learn every star in a constellation to complete it: +1 star point, and the first two make every star quicker to learn.'),
+      el('p', 'note', 'Stars come from zone bosses the first time they fall, elites now and then, Deepwell floors and the Provings. They belong to the lamp: every hero can use them.'));
+    root.append(how);
+    if (scrollCard) { scrollCard = false; showCard(); }
+  }
+  // bring the open card into view below the sticky loadout strip (a tap in the list, or Next Up)
+  function showCard() {
+    const c = root.querySelector('.sr-card'), box = $('panels'), top = root.querySelector('.sr-top');
+    if (!c || !box || c.offsetParent === null) return;
+    const r = c.getBoundingClientRect(), b = box.getBoundingClientRect(), y0 = top ? top.getBoundingClientRect().bottom + 6 : b.top;
+    let d = 0;
+    if (r.top < y0) d = r.top - y0;
+    else if (r.bottom > b.bottom) d = Math.min(r.bottom - b.bottom + 6, r.top - y0);
+    if (d) box.scrollTop += d;
   }
   function refresh() {
     if (!root || !root.isConnected) return;
     const k = soloHero(); if (!k) { if (sig !== 'none') { sig = 'none'; build(); } return; }
     const st = S.stars || {};
-    const s = [k, S.L, starPoints(), JSON.stringify(st.own), JSON.stringify(st.learned), JSON.stringify(st.wins), JSON.stringify(st.set && st.set[k]), JSON.stringify(st.lit && st.lit[k])].join('|');
+    const s = [k, S.L, S.maxZone, starPoints(), pick, fKit, fShow, JSON.stringify(st.own), JSON.stringify(st.learned), JSON.stringify(st.wins), JSON.stringify(st.set && st.set[k]), JSON.stringify(st.lit && st.lit[k])].join('|');
     if (s === sig) return;
     sig = s; build();
   }
-  registerSection('party', { id: 'stars', title: 'Stars', view: 'stars', feature: 'stars',
-    mount(sec) { sec.classList.add('sr-sec'); root = el('div', 'ab-root sr-root'); sec.append(root); sig = ''; refresh(); },
+  registerSection('party', { id: 'stars', view: 'stars', feature: 'stars',
+    mount(sec) { sec.classList.add('sr-sec'); root = el('div', 'sr-root'); sec.append(root); sig = ''; refresh(); },
     update: () => { try { refresh(); } catch (e) { console.error('[lanternfall] stars', e); } } });
   for (const ev of ['starFound', 'starLearned', 'starsChange', 'soloHero', 'levelup']) on(ev, () => { sig = ''; try { refresh(); } catch (e) {} });
 }

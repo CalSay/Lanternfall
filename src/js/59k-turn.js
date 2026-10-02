@@ -413,6 +413,7 @@ function turnBreakCharge(m, io) {
   if (!m.charge) return;
   const name = m.charge.mv.name; m.charge = null; m.e.recover = 1;
   io.emit('chargeBroken', { name });
+  if (m.sf) turnStarsBreak(m, io);   // the Stars: Shatterpoint
 }
 // Stun ('stun') or Freeze ('freeze'): an ordinary foe loses its next turn (then a lock: no new control for 3 of its
 // turns); a boss Staggers instead (25 / 35 toward 100). Either way an accepted control breaks a charge. -> accepted
@@ -420,9 +421,10 @@ function turnControl(m, io, kind) {
   const T = TURN_TUNE, e = m.e;
   if (e.lock > 0) return false;
   if (e.dazed) turnMark(e, e.dazed);   // the Stars: Dazed Prey
+  if (e.snare) { e.pin = 1; e.pinSlow = Math.max(e.pinSlow, 2); }   // the Stars: Snare
   if (m.charge) turnBreakCharge(m, io);
   if (m.p.boss) {
-    e.stagger += (T.stagger[kind] || 25) * (m.p.ctrlX || 1);   // Control (gear) staggers more
+    e.stagger += (T.stagger[kind] || 25) * (m.p.ctrlX || 1) * (kind === 'stun' && e.ring > 0 ? e.ring : 1);   // Control (gear) staggers more; e.ring: the Stars' Ringing Blow
     io.emit('foeStagger', { v: Math.min(100, e.stagger) });
     if (e.stagger < 100) return true;
     e.stagger = 0;
@@ -447,7 +449,7 @@ function turnHeal(m, io, amt) {
   const over = a - room, cap = (p.wardOver || 0) * p.heroMaxHp;
   if (over > 0 && cap > m.h.ward) { m.h.ward = Math.min(cap, m.h.ward + over); m.h.wardT = 3; }
 }
-const turnGain = (h, k, n) => { const cap = k === 'aim' ? 3 : k === 'grit' ? 10 : 5; h[k] = Math.min(cap, h[k] + n); };
+const turnGain = (h, k, n) => { const cap = k === 'aim' ? 3 : k === 'grit' ? 10 : 5; if (h.brim >= 0 && h[k] + n > cap) h.brim += h[k] + n - cap; h[k] = Math.min(cap, h[k] + n); };   // h.brim: the Stars' Brimming
 
 // ---------------- the hero's actions ----------------
 // Can the hero use id now? -> '' or why not: 'cd' | 'gate' | 'once' | 'need:<what>'
@@ -456,7 +458,7 @@ function turnUsable(m, id) {
   if (id !== 'attack') { const a = turnAb(id); if (!a || a.kind === 'passive') return 'passive'; }
   if (m.cds[id] > 0) return 'cd';
   const h = m.h, e = m.e, a = turnAb(id);
-  if (a && a.kind === 'finisher' && m.heroOps < 3) return 'gate';
+  if (a && a.kind === 'finisher' && m.heroOps < (m.sf && m.sf.swifttide ? 1 : 3)) return 'gate';   // the Stars: Swift Tide
   switch (id) {
     case 'finalecho': return e.bleed > 0 || h.aim > 0 ? '' : 'need:Bleed or Aim';
     case 'riposte': return h.ripo > 0 ? '' : 'need:a parry first';
@@ -681,7 +683,7 @@ function turnBegin(m, who, io) {
   let emberTick = false;
   if (e.burn > 0) {
     if (e.growN > 0) { e.burnDmg = Math.min(Math.max(e.burnDmg, e.growCap), e.burnDmg + e.grow); e.growN--; if (e.wfWeaken) { e.wfWeaken = 0; e.weaken = Math.max(e.weaken, 1); } }
-    turnHitFoe(m, io, e.burnDmg, { dt: 'fire', dot: true, kind: 'burn', n: e.burn }); e.burn--; emberTick = true;
+    turnHitFoe(m, io, e.burnDmg, { dt: 'fire', dot: true, kind: 'burn', n: e.burn, dotCrit: !!e.burnCrit }); e.burn--; emberTick = true;   // e.burnCrit: the Stars' Kindling
     if (!e.burn) { e.burnDmg = 0; e.growN = 0; }
   }
   if (e.bleed > 0) { turnHitFoe(m, io, e.bleed * e.bleedDmg, { dt: 'phys', dot: true, kind: 'bleed', n: e.bleed, dotCrit: !!e.bleedCrit }); if (--e.bleedT <= 0) { e.bleed = 0; e.bleedDmg = 0; } }
@@ -751,6 +753,7 @@ function turnLand(m, io, hit) {
   const warded = h.ward > 0;
   if (h.ward > 0) { const take = Math.min(h.ward, amt); h.ward -= take; amt -= take; if (h.ward <= 0) { h.ward = 0; h.wardT = 0; if (h.setFeet) { h.setFeet = 0; h.guard = Math.max(h.guard, 1); } } }
   if (h.last > 0) amt = Math.min(amt, Math.max(0, io.heroHp() - 1));
+  if (m.sf && amt > 0) amt = turnStarsHurt(m, io, amt);   // the Stars: Stoneskin, Spite, Last Light
   if (amt > 0) io.damageHero(amt, blocked, 'hit');
   if (p.trait === 'vampiric' && amt > 0 && !(e.curse > 0) && e.bleed < TURN_TRAITS.vampiric.stop && io.healFoe) io.healFoe(amt * TURN_TRAITS.vampiric.heal);
   if (p.trait === 'cursed' && amt > 0) h.weaken = Math.max(h.weaken, 1);
@@ -802,6 +805,7 @@ function turnContact(m, io) {
     io.emit('soloCounter', { foe: io.foe ? io.foe() : null, dmg: got, auto: false });
     io.emit('crit', { tap: true, counter: true });
   }
+  if (m.sf) turnStarsMove(m, io);   // the Stars: Riptide (every hit dodged)
   if (e.pin > 0) { e.pin = 0; h.opening = 2; }
   if (h.brace > 0) h.brace = 0;
   h.answer = 0;
@@ -810,9 +814,10 @@ function turnContact(m, io) {
 }
 // the end of a foe turn: its statuses and the hero's defences age; a boss below half HP turns harder
 function turnFoeEnd(m, io) {
-  const e = m.e, h = m.h;
+  const e = m.e, h = m.h, mk0 = e.mark;
   for (const k of ['mark', 'sunder', 'weaken', 'blind', 'pinSlow', 'lock']) if (e[k] > 0) e[k]--;
   if (!e.mark) e.markV = 0;
+  if (m.sf && mk0 > 0 && !e.mark) turnStarsMarkOut(m, io);   // the Stars: Scarred
   if (e.chillT > 0 && --e.chillT === 0) e.chill = 0;
   if (e.curse > 0 && --e.curse === 0 && e.curseStore > 0) { const v = e.curseStore; e.curseStore = 0; turnHitFoe(m, io, v, { dt: 'holy', noCrit: true, stored: true, kind: 'curse' }); }
   if (h.guard > 0) h.guard--;

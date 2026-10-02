@@ -196,7 +196,7 @@ const DEED_FEATS = [
   { id: 'f_gold', n: "Dragon's Hoard", needs: '500M gold earned', about: '3-5 months', rar: 'epic', title: 'Goldwyrm', look: 'fl_coin', need: 5e8 },   // ECON-A (economy-2 3.6): was 1e24
   { id: 'f_raid', n: 'Wyrmfall', needs: '100 raid bosses felled', about: 'months (shared)', rar: 'epic', title: 'Wyrmslayer', look: 'c_wyrm' },
   { id: 'f_champs', n: 'Bane of Champions', needs: '10,000 champions defeated', about: 'about 10 months', rar: 'legendary', title: 'Championbane', look: 'a_ember' },
-  { id: 'f_stars', n: 'Stars in Every Sky', needs: 'Learn all 25 stars', about: 'months (every Proving and every elite star)', rar: 'legendary', title: 'Starwright', look: 'a_star' },
+  { id: 'f_stars', n: 'Stars in Every Sky', needs: 'Learn every star', about: 'months (every Proving and every elite star)', rar: 'legendary', title: 'Starwright', look: 'a_star' },
   { id: 'f_town', n: "Warden of Hollow's Rest", needs: 'Every building at its top level, 6 Hands housed, a Legendary Hand, the Kitchen at its top level', about: '2-3 months', rar: 'rare', title: 'the Steward', look: 'cr_cat', wait: 'N1' },
   { id: 'f_stock', n: 'Quartermaster', needs: 'Every gathered and fought material cell full at Storehouse 8, at the same moment', about: 'weeks of planning', rar: 'epic', title: 'Quartermaster', look: 'l_store', wait: 'H3' },
   { id: 'f_oaths', n: 'Oathbound', needs: 'An Oath Seal at 20+ on all 14 zone kinds', about: 'months', rar: 'legendary', title: 'Oathbound', look: 'h_circlet', wait: 'O1' },

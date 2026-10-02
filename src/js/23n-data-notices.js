@@ -102,6 +102,7 @@ const NOTICES = [
   { id: 'stars:learned', key: 'stars:learned', ch: 'log', why: 'any hero can light it now; the star card and Next Up show it' },
   { id: 'stars:catchup', key: 'stars:catchup', ch: 'bell', why: 'an old save: the stars of the zone bosses and Provings behind it' },
   { id: 'stars:new', key: 'stars:new', ch: 'bell', why: 'an old save that had lit stars on the old star map: the points are free again' },
+  { id: 'stars:sky', key: 'stars:sky', ch: 'pop', wait: 40, held: 'log', why: 'a constellation complete on the star map (rare: six in the game); held: the map shows it gold' },
 
   // ---- combat tips ----
   // The guide teaches Dodge and Parry, so the heavy-hit tips stay quiet; a new kind of attack pops once.

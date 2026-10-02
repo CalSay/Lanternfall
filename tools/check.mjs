@@ -1460,18 +1460,32 @@ if (section('stars')) try {
   const rawOf = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
   const errs = [];
   const g = loadCore({ seed: 41, turns: true }), E = s => g.eval(s);
-  assert(E('JSON.stringify(S.stars)') === '{"v":3,"own":{},"wins":{},"learned":{},"set":{},"lit":{},"dry":0,"seenN":0}', 'new game: S.stars defaults');
+  assert(E('JSON.stringify(S.stars)') === '{"v":3,"own":{},"wins":{},"learned":{},"set":{},"lit":{},"dry":0,"seenN":0,"pw":{}}', 'new game: S.stars defaults');
   // star points: a point every 3 hero levels, 4 for each Great Lantern (unchanged from the old map)
   const pts = (L, z) => E(`S.L = ${L}; S.maxZone = ${z}; starPoints()`);
   assert(pts(1, 1) === 0 && pts(3, 1) === 1 && pts(20, 20) === 6 && pts(35, 35) === 11, 'a star point every 3 hero levels');
   assert(pts(35, 36) === 15 && pts(54, 71) === 26 && E('greatLanternsLit()') === 2, 'a Great Lantern (+4) for each region boss: the zone 35 boss first');
   E('S.L = 1; S.maxZone = 1');
-  // the data: 25 stars, each a plain rule with a cost of 1-3 and one place it is found
+  // the data: 43 stars (25, then 18 more in the second pass, owner 2026-10-02: "Might need more of them though"), each a
+  // plain rule with a cost of 1-3, one place it is found, whose kit it plays with, and one constellation on the map
   const D = JSON.parse(E('JSON.stringify(STAR_ORDER.map(id => STARS[id]))'));
   const zones = D.filter(s => s.from.zone).map(s => s.from.zone), shorts = D.map(s => s.short);
-  assert(D.length === 25 && D.every(s => s.cost >= 1 && s.cost <= 3 && s.text.length <= 110 && s.name.length <= 16 && /^[A-Z]/.test(s.text) && /\.$/.test(s.text)), `25 stars, each with a name, one short rule and a cost of 1-3 star points (${D.length})`);
-  assert(zones.length === 14 && new Set(zones).size === 14 && D.filter(s => s.from.elite).length === 5 && ['warrior', 'ranger', 'mage'].every(b => D.filter(s => s.from.proving === b).length === 2)
-    && new Set(shorts).size === shorts.length && shorts.every(x => x.length === 2), 'found on 14 zone bosses (6 to 35), 5 from elites, 2 from each Proving; each has its own 2-letter tile');
+  assert(D.length === 43 && D.every(s => s.cost >= 1 && s.cost <= 3 && s.text.length <= 110 && s.name.length <= 16 && /^[A-Z]/.test(s.text) && /\.$/.test(s.text)), `43 stars, each with a name, one short rule and a cost of 1-3 star points (${D.length})`);
+  assert(zones.length === 21 && new Set(zones).size === 21 && zones.filter(z => z > 35).length === 7 && D.filter(s => s.from.elite === 15).length === 5 && D.filter(s => s.from.elite === 36).length === 3
+    && ['warrior', 'ranger', 'mage'].every(b => D.filter(s => s.from.proving === b && !s.from.pass).length === 2 && D.filter(s => s.from.proving === b && s.from.pass === 2).length === 1)
+    && JSON.stringify(D.filter(s => s.from.deep).map(s => s.from.deep)) === '[3,6,9,12,15]'
+    && new Set(shorts).size === shorts.length && shorts.every(x => x.length === 2), 'found on 21 zone bosses (6 to 70, 7 past zone 35), 8 from elites (3 from zone 36), 3 from each Proving (the third on a second pass), 5 on Deepwell floors 3-15; each has its own 2-letter tile');
+  const kits = k => D.filter(s => s.kit === k).length;
+  assert(D.every(s => ['wren', 'tobin', 'pip', 'all'].includes(s.kit)) && kits('wren') >= 8 && kits('tobin') >= 8 && kits('pip') >= 8 && kits('all') >= 12,
+    `every star names whose kit it plays with (Wren ${kits('wren')}, Tobin ${kits('tobin')}, Pip ${kits('pip')}, any hero ${kits('all')})`);
+  // the star map: six constellations, every star once, at a spot inside its cell (below the name), lines between its own stars
+  const SKY = JSON.parse(E('JSON.stringify({ sky: STAR_SKY, cell: STAR_SKY_CELL })'));
+  const onMap = SKY.sky.flatMap(c => c.stars.map(x => x[0])), cells = new Set(SKY.sky.map(c => c.col + ',' + c.row));
+  const skyBad = SKY.sky.filter(c => !c.stars.every(([id, x, y]) => x >= 16 && x <= SKY.cell.w - 16 && y >= 44 && y <= SKY.cell.h - 14)
+    || !c.lines.every(([a, b]) => c.stars.some(x => x[0] === a) && c.stars.some(x => x[0] === b))
+    || c.stars.some(([a, x1, y1]) => c.stars.some(([b, x2, y2]) => a !== b && Math.hypot(x1 - x2, y1 - y2) < 40))).map(c => c.id);
+  assert(SKY.sky.length === 6 && cells.size === 6 && onMap.length === 43 && new Set(onMap).size === 43 && D.every(s => SKY.sky.some(c => c.id === s.sky && c.stars.some(x => x[0] === s.id))) && !skyBad.length,
+    'the star map: 6 constellations in a 3 x 2 sky, each star once at its own spot (40 units apart at least), lines only between its own stars' + (skyBad.length ? ': ' + skyBad.join() : ''));
   assert(D.filter(s => s.fold).map(s => s.fold).sort().join() === 'priest,reaver,trapper,venomstalker,warden,warlock', 'the six evolutions each fold one effect into a Proving star');
   assert(E('String(STARS_TUNE.slots) + STARS_TUNE.litMax + STARS_TUNE.learnWins') === '324', 'the limits: 3 set, 2 lit, learned after 4 won fights');
 
@@ -1493,7 +1507,21 @@ if (section('stars')) try {
   assert(elite(14) === 0, 'no elite star before zone 15');
   let n = 0; for (let i = 0; i < 11; i++) n = elite(15);
   assert(n === 0 && elite(15) === 1 && E('S.stars.dry') === 0, 'an elite star at the latest on the 12th elite win from zone 15 (a dry-streak cap)');
+  for (let i = 0; i < 60; i++) elite(35);
+  const late = () => E('["brimming", "mending", "avalanche"].filter(id => S.stars.own[id]).length');
+  assert(elite(35) === 5 && late() === 0, 'below zone 36 the elites find only the first five elite stars');
+  for (let i = 0; i < 12; i++) elite(36);
+  assert(late() === 1, 'from zone 36 they find Brimming, Mending Steel and Avalanche too');
   E('STARS_TUNE.eliteP = 0.125');
+  // the Deepwell: a floor cleared finds the stars of the floors up to it
+  E('emit("deepFloor", { floor: 2, kind: "normal" })');
+  assert(!E('starOwned("fulldraw")'), 'Deepwell floor 2 finds no star');
+  E('emit("deepFloor", { floor: 7, kind: "elite" })');
+  assert(E('starOwned("fulldraw") && starOwned("kindling") && !starOwned("stoneskin")'), 'reaching Deepwell floor 7 finds the floor 3 and 6 stars (Full Draw, Kindling)');
+  // a Proving's third star: passing it a second time
+  assert(!E('starOwned("shatterpoint")') && E('S.stars.pw.warrior') === 1, "one pass of the Warrior's Proving: not its third star yet");
+  E('emit("trialEnd", { kind: "proving", id: "warrior", won: true })');
+  assert(E('starOwned("shatterpoint") && S.stars.pw.warrior === 2'), "a second pass of the Warrior's Proving finds Shatterpoint");
 
   // setting and lighting: 3 slots a hero, a learned star lights for its points, 2 lit at most
   E('for (const id of STAR_ORDER) S.stars.own[id] = 1; S.stars.set = {}; S.stars.lit = {}; S.stars.learned = {}; S.L = 30');
@@ -1576,7 +1604,32 @@ if (section('stars')) try {
     deepwounds: ['const a = __mk("wren", ["deepwounds"]); turnBleedAdd(a.m, 10); const b = __mk("wren", []); turnBleedAdd(b.m, 10);', 'a.m.e.bleed === 8 && a.m.e.bleedT === TURN_TUNE.bleedT + 1 && b.m.e.bleed === 5'],
     tripwire: ['const a = __mk("tobin", ["tripwire"]);', 'a.m.e.pin === 1 && a.m.e.pinSlow === 2'],
     witchfire: ['const a = __mk("pip", ["witchfire"]); a.m.e.curse = 1; a.m.e.curseStore = 50; turnFoeEnd(a.m, a.io);', 'a.t.dmg.some(x => x.kind === "curse") && a.m.e.burn === 3'],
-    sanctuary: ['const a = __mk("pip", ["sanctuary"]);', 'Math.abs(a.m.h.ward - 120) < 1e-9 && a.m.h.wardT === 3']
+    sanctuary: ['const a = __mk("pip", ["sanctuary"]);', 'Math.abs(a.m.h.ward - 120) < 1e-9 && a.m.h.wardT === 3'],
+    // the second pass (2026-10-02)
+    bloodscent: ['const go = st => { const a = __mk("wren", st); a.m.e.bleed = 2; a.m.e.bleedT = 3; a.m.e.bleedDmg = 5; turnBegin(a.m, "foe", a.io); return a.m.h.aim; };', 'go(["bloodscent"]) === 1 && go([]) === 0'],
+    spite: ['const go = st => { const a = __mk("tobin", st); __move(a.m, a.io, ["", ""]); return a.m.h.grit; };', 'go(["spite"]) === 2 && go([]) === 0'],
+    evileye: ['const a = __mk("pip", ["evileye"], { eq: ["hex", null, null] }); turnHeroAct(a.m, a.io, "hex"); const b = __mk("pip", [], { eq: ["hex", null, null] }); turnHeroAct(b.m, b.io, "hex");', 'a.m.e.curse === 3 && a.m.e.mark === 3 && b.m.e.mark === 0'],
+    ringing: ['const go = st => { const a = __mk("tobin", st); a.m.p.boss = true; turnControl(a.m, a.io, "stun"); const s1 = a.m.e.stagger; a.m.e.lock = 0; turnControl(a.m, a.io, "freeze"); return [s1, a.m.e.stagger - s1]; };',
+      'JSON.stringify(go(["ringing"])) === JSON.stringify([2 * TURN_TUNE.stagger.stun, TURN_TUNE.stagger.freeze]) && go([])[0] === TURN_TUNE.stagger.stun'],
+    frostfire: ['const go = (st, n) => { const a = __mk("pip", st, { eq: ["fire", null, null] }); a.m.h.embers = n; turnHeroAct(a.m, a.io, "fire"); return a.m.e.chill; };', 'go(["frostfire"], 5) === 2 && go(["frostfire"], 1) === 0 && go([], 5) === 0'],
+    riptide: ['const a = __mk("wren", ["riptide"]); __move(a.m, a.io, ["dodge", "dodge"]); const r = a.t.dmg.filter(x => x.kind === "riptide"); const b = __mk("wren", ["riptide"]); __move(b.m, b.io, ["dodge", "parry"]);'
+      + ' const c = __mk("wren", []); __move(c.m, c.io, ["parry"]); const k = c.t.dmg.find(x => x.kind === "counter");', 'r.length === 1 && Math.abs(r[0].d / k.d - 0.5) < 1e-9 && !b.t.dmg.some(x => x.kind === "riptide")'],
+    swifttide: ['const go = st => { const a = __mk("wren", st, { eq: ["finalecho", null, null] }); a.m.heroOps = 1; a.m.h.aim = 1; return turnUsable(a.m, "finalecho"); };', 'go(["swifttide"]) === "" && go([]) === "gate"'],
+    brimming: ['const go = (st, aim) => { const a = __mk("wren", st); a.m.h.aim = aim; turnHeroAct(a.m, a.io, "attack"); return a.t.dmg.filter(x => x.kind === "brim"); }; const x = go(["brimming"], 3); const z = __mk("wren", []);',
+      'x.length === 1 && Math.abs(x[0].d / (STARS_TUNE.fx.brim.p * z.U * turnTX(z.m, "phys")) - 1) < 1e-9 && STARS_TUNE.fx.brim.p === 0.5 && go(["brimming"], 1).length === 0 && go([], 3).length === 0'],
+    mending: ['const a = __mk("tobin", ["mending"], { hp: 500 }); __move(a.m, a.io, ["parry"]); const b = __mk("tobin", ["mending"], { hp: 500 }); __move(b.m, b.io, ["parry", "dodge"]);', 'Math.abs(a.t.hp - 560) < 1e-9 && b.t.hp === 500'],
+    avalanche: ['const go = (st, g) => { const a = __mk("tobin", st, { eq: ["hammerfall", null, null] }); a.m.h.grit = g; turnHeroAct(a.m, a.io, "hammerfall"); return a.m.e.skip; };', 'go(["avalanche"], 5) === 1 && go(["avalanche"], 4) === 0 && go([], 7) === 0'],
+    fulldraw: ['const a = __mk("wren", ["fulldraw"], { eq: ["powershot", null, null] }); a.m.h.aim = 2; turnHeroAct(a.m, a.io, "attack"); turnHeroAct(a.m, a.io, "powershot"); const c1 = a.last().crit;'
+      + ' a.m.cds.powershot = 0; turnHeroAct(a.m, a.io, "powershot"); const c2 = a.last().crit; const b = __mk("wren", [], { eq: ["powershot", null, null] }); b.m.h.aim = 2; turnHeroAct(b.m, b.io, "attack"); turnHeroAct(b.m, b.io, "powershot");', 'c1 && !c2 && !b.last().crit'],
+    kindling: ['const go = st => { const a = __mk("pip", st, { rand: 0 }); a.m.e.burn = 2; a.m.e.burnDmg = 5; a.m.p.critChance = 0.5; turnBegin(a.m, "foe", a.io); return a.t.dmg.find(x => x.kind === "burn"); };', 'go(["kindling"]).crit === true && go([]).crit === false'],
+    stoneskin: ['const go = st => { const a = __mk("tobin", st); a.m.h.grit = 3; __move(a.m, a.io, [""]); return [1000 - a.t.hp, a.m.h.grit]; }; const x = go(["stoneskin"]), y = go([]);', 'Math.abs(x[0] / y[0] - 0.5) < 1e-9 && x[1] === 1 && y[1] === 3'],
+    scarred: ['const a = __mk("wren", ["scarred"]); a.m.e.mark = 1; a.m.e.markV = 0.2; turnFoeEnd(a.m, a.io); const b = __mk("wren", ["scarred"]); b.m.e.mark = 2; turnFoeEnd(b.m, b.io); const c = __mk("wren", []); c.m.e.mark = 1; turnFoeEnd(c.m, c.io);', 'a.m.e.bleed === 2 && b.m.e.bleed === 0 && c.m.e.bleed === 0'],
+    lastlight: ['const a = __mk("wren", ["lastlight"], { hp: 5 }); a.m.p.refHp = 1e5; __move(a.m, a.io, [""]); const h1 = a.t.hp; a.m.ended = false; __move(a.m, a.io, [""]);', 'h1 === 1 && a.t.hp <= 0'],
+    shatterpoint: ['const a = __mk("tobin", ["shatterpoint"]); a.m.charge = { mv: { name: "x", hits: [] }, dmg: 0, heroSince: 0 }; turnBreakCharge(a.m, a.io); const c = a.t.dmg.filter(x => x.kind === "counter");'
+      + ' const b = __mk("tobin", []); __move(b.m, b.io, ["parry"]); const k = b.t.dmg.find(x => x.kind === "counter");', 'c.length === 1 && Math.abs(c[0].d / k.d - 1) < 1e-9 && a.m.e.recover === 1'],
+    snare: ['const a = __mk("tobin", ["snare"]); const ok = turnControl(a.m, a.io, "stun"); const b = __mk("tobin", []); turnControl(b.m, b.io, "stun");', 'ok && a.m.e.pin === 1 && a.m.e.skip === 1 && b.m.e.pin === 0'],
+    thermalshock: ['const go = (st, c) => { const a = __mk("pip", st); a.m.e.chill = c; a.m.e.chillT = 3; turnHitFoe(a.m, a.io, 10, { kind: "fire", dt: "fire" }); return [a.last().d, a.m.e.chill]; };'
+      + ' const x = go(["thermalshock"], 2), y = go([], 2), z = go(["thermalshock"], 0), w = go([], 0);', 'Math.abs(x[0] / y[0] - 1.5) < 1e-9 && x[1] === 2 && Math.abs(z[0] / w[0] - 1) < 1e-9']
   };
   const missed = E('STAR_ORDER').filter(id => !fx[id]);
   assert(!missed.length, 'every star has a check below' + (missed.length ? ': ' + missed.join(', ') : ''));
@@ -1643,6 +1696,23 @@ if (section('stars')) try {
     const p = loadCore({ seed: 46, storage: memoryStorage({ [KEY]: o.storage.get(KEY) }) });
     assert(p.eval('JSON.stringify(starSlots("tobin"))') === '[null,null,null]' && p.eval('starLit("tobin").length') === 0 && !p.eval('"zzz" in S.stars.own') && !p.errors.length,
       `a broken stars save is repaired: unknown and unowned stars leave their slots (${p.eval('JSON.stringify(starSlots("tobin"))')})`);
+  }
+  // a constellation complete (every star in it learned): +1 star point, and the first two cut the wins to learn a star (4, 3, 2)
+  {
+    const c = loadCore({ seed: 47, turns: true }), C = s => c.eval(s);
+    C('soloPick("wren", { now: true }); S.L = 30; S.maxZone = 30; for (const id of STAR_ORDER) S.stars.own[id] = 1; globalThis.__ts = []; on("toast", t => __ts.push(t)); 1');
+    const p0 = C('starPoints()');
+    C('const ids = STAR_SKY[0].stars.map(x => x[0]); for (const id of ids.slice(0, -1)) S.stars.learned[id] = 1; S.stars.wins.encore = 3; 1');
+    assert(!C('starSkyDone("hollow")') && C('starNeed()') === 4 && C('starPoints()') === p0, 'a constellation with a star left to learn is not complete');
+    for (let i = 0; i < 4; i++) C('emit("fightEnd", { reason: "victory", stars: ["quickreturn"] })');
+    const ts = JSON.parse(C('JSON.stringify(__ts.filter(t => t.key === "stars:sky"))'));
+    assert(C('starSkyDone("hollow") && starSkiesDone() === 1') && C('starPoints()') === p0 + 1 && C('starNeed()') === 3 && C('starLearned("encore")')
+      && ts.length === 1 && /^The Hollow is complete: \+1 star point, and stars now learn in 3 won fights\.$/.test(ts[0].msg),
+      `learning the last star of the Hollow completes it: +1 star point, stars learn in 3 wins (Encore, at 3 already, is learned at once), and it says so (${ts[0] && ts[0].msg})`);
+    C('for (const cc of STAR_SKY.slice(1)) for (const [id] of cc.stars) S.stars.learned[id] = 1');
+    assert(C('starSkiesDone()') === 6 && C('starNeed()') === 2 && C('starPoints()') === p0 + 6, 'every constellation complete: +6 star points, and a star learns in 2 wins at the least');
+    assert(c.eval('NOTICES.find(r => r.id === "stars:sky").ch') === 'pop', 'a constellation complete pops (the notice policy), held to the log');
+    errs.push(...c.errors);
   }
   assert(!errs.length, 'no star errors' + (errs.length ? ': ' + errs[0] : ''));
 } catch (e) { fail('stars crashed: ' + (e.stack || e)); }
@@ -7348,8 +7418,10 @@ if (section('turn UI (browser)')) try {
 } catch (e) { fail('turn UI crashed: ' + (e.stack || e)); }
 
 if (section('stars (browser)')) try {
-  // Hero tab > Stars at 740x360 landscape and 360x740 portrait: the slots, every star's card, Set and Light by tap, no
-  // sideways scroll, and the fight takes the set stars
+  // Hero tab > Stars, the star map (owner 2026-10-02: "I kinda miss the star map too"), at 740x360 landscape and 360x740
+  // portrait: the loadout strip (3 set, 2 lit, points) stays in view, every star sits on the map, a tap opens its card,
+  // Set and Light work from the card, the filters narrow the list, no sideways scroll, big enough taps, the fight takes
+  // the set stars; lit stars twinkle unless the player asks for reduced motion
   const { pw, exe } = browserTools, distFile = path.join(ROOT, 'dist', 'lanternfall.html');
   if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('stars UI: Playwright, Chromium or dist not available');
   else {
@@ -7358,7 +7430,8 @@ if (section('stars (browser)')) try {
     const browser = await pw.chromium.launch({ executablePath: exe });
     try {
       for (const [w, h] of [[740, 360], [360, 740]]) {
-        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h } }), page = await ctx.newPage(), errors = [];
+        const wide = w > h, rm = wide ? 'no-preference' : 'reduce';
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, reducedMotion: rm }), page = await ctx.newPage(), errors = [];
         page.on('pageerror', e => errors.push(String(e)));
         await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
         await page.goto('http://lf.test/'); await page.waitForTimeout(600);
@@ -7368,25 +7441,63 @@ if (section('stars (browser)')) try {
           for (const id of ['readylamp', 'sparkguard', 'turning', 'huntstep', 'serrated', 'coldsteel']) S.stars.own[id] = 1;
           S.stars.learned.huntstep = 1; S.stars.learned.turning = 1; setTab('stars'); 1`);
         await page.waitForTimeout(400);
-        const r0 = JSON.parse(await X(`JSON.stringify({ cards: document.querySelectorAll('#sec-stars .sr-card').length, locked: document.querySelectorAll('#sec-stars .sr-card.locked').length,
-          slots: document.querySelectorAll('#sec-stars .sr-slot').length, pts: (document.querySelector('#sec-stars .sr-pts') || {}).textContent || '',
+        const r0 = JSON.parse(await X(`JSON.stringify({ stars: document.querySelectorAll('#sec-stars .sr-map .sr-st').length, unk: document.querySelectorAll('#sec-stars .sr-map .sr-st.unk').length,
+          skies: [...document.querySelectorAll('#sec-stars .sr-sky')].map(g => g.dataset.sky).join(), chips: document.querySelectorAll('#sec-stars .sr-top .sr-chip').length,
+          set: document.querySelectorAll('#sec-stars .sr-top .sr-chip.set').length, lit: document.querySelectorAll('#sec-stars .sr-top .sr-chip.lit').length,
+          pts: (document.querySelector('#sec-stars .sr-pts') || { getAttribute: () => '' }).getAttribute('aria-label') || '',
           visible: !!document.querySelector('#sec-stars') && document.querySelector('#sec-stars').offsetParent !== null })`));
-        await page.click('#sec-stars .sr-card[data-star="serrated"] .ab-put >> nth=0'); await page.waitForTimeout(150);
-        await page.click('#sec-stars .sr-card[data-star="huntstep"] .sr-light'); await page.waitForTimeout(150);
-        const r1 = JSON.parse(await X(`JSON.stringify({ set: starSlots('wren')[0], lit: starLit('wren').join(), ready: !!document.querySelector('#sec-stars .sr-card[data-star="serrated"].ready'),
-          pts: (document.querySelector('#sec-stars .sr-pts') || {}).textContent || '', unk: (document.querySelector('#sec-stars .sr-card.locked small') || {}).textContent || '',
-          saved: JSON.parse(localStorage.getItem('lanternfall.save.v5')).stars.set.wren[0],
-          wide: (() => { const s = document.querySelector('#sec-stars'), out = []; if (s.scrollWidth > s.clientWidth + 1) out.push('section ' + s.scrollWidth + '>' + s.clientWidth);
-            for (const c of s.querySelectorAll('.sr-card, .sr-slot')) { const b = c.getBoundingClientRect(); if (b.right > innerWidth + 1 || b.left < -1) out.push(c.className + ' ' + Math.round(b.left) + '-' + Math.round(b.right)); }
-            return out.slice(0, 3); })(),
-          taps: [...document.querySelectorAll('#sec-stars .ab-put')].filter(b => b.offsetParent && b.getBoundingClientRect().height < 36).length,
-          profile: (() => { closeMenu(); S.activity = 'fight'; spawn(); const p = turnMakeProfile(combatFoes()[0], cbUnitByKey('hero')); return p ? p.stars.join() : ''; })() })`));
-        assert(r0.visible && r0.cards === 25 && r0.locked === 19 && r0.slots === 5 && /^Star points: 10 free of 10$/.test(r0.pts),
-          `stars UI ${w}x${h}: Hero > Stars shows 3 set and 2 lit slots, the points, and a card for each of the 25 stars (19 not found yet) (${JSON.stringify(r0)})`);
-        assert(r1.set === 'serrated' && r1.ready && r1.lit === 'huntstep' && r1.saved === 'serrated' && /^Star points: 9 free of 10$/.test(r1.pts) && /^The zone \d+ boss$|^Elites|Proving$/.test(r1.unk),
-          `stars UI ${w}x${h}: Slot 1 sets Serrated, Light lights Hunter's Step for 1 point, both saved; a star not found yet shows where it is found (${JSON.stringify(r1)})`);
-        assert(!r1.wide.length && !r1.taps, `stars UI ${w}x${h}: no sideways scroll, every button at least 36 px tall (${JSON.stringify(r1.wide)}, ${r1.taps} small)`);
-        assert(r1.profile === 'serrated,huntstep', `stars UI ${w}x${h}: the next fight takes the set and lit stars (${r1.profile})`);
+        assert(r0.visible && r0.stars === 43 && r0.unk === 37 && r0.skies === 'hollow,fen,coast,hunt,deep,provings' && r0.chips === 5 && r0.set === 3 && r0.lit === 2 && r0.pts === 'Star points: 10 free of 10',
+          `stars UI ${w}x${h}: Hero > Stars shows the loadout (3 set, 2 lit, the points) and a map of six constellations with all 43 stars, 37 of them faint (not found) (${JSON.stringify(r0)})`);
+        // a tap on a star opens its card; Slot 1 sets it
+        await page.click('#sec-stars .sr-st[data-star="serrated"]'); await page.waitForTimeout(150);
+        const c1 = JSON.parse(await X(`JSON.stringify({ id: (document.querySelector('#sec-stars .sr-card') || {}).dataset.star, name: (document.querySelector('#sec-stars .sr-card .sr-t b') || {}).textContent,
+          text: (document.querySelector('#sec-stars .sr-card .sr-desc') || {}).textContent, from: (document.querySelector('#sec-stars .sr-card .sr-from') || {}).textContent,
+          prog: (document.querySelector('#sec-stars .sr-card .sr-t small') || {}).textContent, sel: !!document.querySelector('#sec-stars .sr-st.sel[data-star="serrated"]') })`));
+        assert(c1.id === 'serrated' && c1.name === 'Serrated' && c1.text === 'A critical hit adds 1 Bleed.' && /^Found: The zone 14 boss · The Hollow$/.test(c1.from) && /Learning: 0 of 4 wins/.test(c1.prog) && c1.sel,
+          `stars UI ${w}x${h}: a tap on a star opens its card: name, what it does, where it is found, learning progress (${JSON.stringify(c1)})`);
+        await page.click('#sec-stars .sr-card .sr-put[data-slot="0"]'); await page.waitForTimeout(150);
+        await page.click('#sec-stars .sr-st[data-star="huntstep"]'); await page.waitForTimeout(150);
+        await page.click('#sec-stars .sr-card .sr-light'); await page.waitForTimeout(150);
+        await page.click('#sec-stars .sr-st[data-star="encore"]'); await page.waitForTimeout(150);
+        const r1 = JSON.parse(await X(`JSON.stringify({ set: starSlots('wren')[0], lit: starLit('wren').join(), mapSet: !!document.querySelector('#sec-stars .sr-st.set[data-star="serrated"]'),
+          mapLit: !!document.querySelector('#sec-stars .sr-st.lit[data-star="huntstep"] .sr-ray'), chip: (document.querySelector('#sec-stars .sr-top .sr-chip.set .sr-chip-t') || {}).textContent,
+          pts: document.querySelector('#sec-stars .sr-pts').getAttribute('aria-label'), unk: (document.querySelector('#sec-stars .sr-card.locked .sr-from') || {}).textContent || '',
+          anim: getComputedStyle(document.querySelector('#sec-stars .sr-st.lit .sr-ray')).animationName,
+          saved: JSON.parse(localStorage.getItem('lanternfall.save.v5')).stars.set.wren[0] })`));
+        assert(r1.set === 'serrated' && r1.mapSet && r1.chip === 'Serrated' && r1.lit === 'huntstep' && r1.mapLit && r1.saved === 'serrated' && r1.pts === 'Star points: 9 free of 10' && /^The Fenmother \(zone 35\)$/.test(r1.unk),
+          `stars UI ${w}x${h}: Slot 1 sets Serrated (it glows on the map and shows in the strip), Light lights Hunter's Step for 1 point (it shines), both saved; a star not found yet shows where it is found (${JSON.stringify(r1)})`);
+        assert(r1.anim === (wide ? 'sr-twinkle' : 'none'), `stars UI ${w}x${h}: a lit star twinkles, and holds still under reduced motion (${rm}: ${r1.anim})`);
+        // filters: Pip's kit, then learned only
+        await page.click('#sec-stars .sr-seg button[data-v="pip"]'); await page.waitForTimeout(120);
+        const f1 = JSON.parse(await X(`JSON.stringify({ rows: [...document.querySelectorAll('#sec-stars .sr-row')].map(r => r.dataset.star), want: STAR_ORDER.filter(id => STARS[id].kit === 'pip'),
+          dim: document.querySelectorAll('#sec-stars .sr-st.dim').length })`));
+        await page.click('#sec-stars .sr-seg button[data-v="all"] >> nth=0'); await page.click('#sec-stars .sr-seg button[data-v="learned"]'); await page.waitForTimeout(120);
+        const f2 = await X(`[...document.querySelectorAll('#sec-stars .sr-row')].map(r => r.dataset.star).join()`);
+        await page.click('#sec-stars .sr-seg button[data-v="all"] >> nth=1'); await page.waitForTimeout(120);
+        assert(JSON.stringify(f1.rows) === JSON.stringify(f1.want) && f1.dim === 43 - f1.want.length && f2 === 'turning,huntstep',
+          `stars UI ${w}x${h}: the filters narrow the list (Pip's kit: ${f1.rows.length}, the rest dim on the map; learned: ${f2})`);
+        // a tap in the list opens that star's card, in view below the strip
+        await page.click('#sec-stars .sr-row[data-star="coldsteel"]'); await page.waitForTimeout(200);
+        const l1 = JSON.parse(await X(`(() => { const c = document.querySelector('#sec-stars .sr-card'), t = document.querySelector('#sec-stars .sr-top').getBoundingClientRect(), b = document.getElementById('panels').getBoundingClientRect(), r = c.getBoundingClientRect();
+          return JSON.stringify({ id: c.dataset.star, inView: r.top >= t.bottom - 1 && r.top < b.bottom - 40 }); })()`));
+        assert(l1.id === 'coldsteel' && l1.inView, `stars UI ${w}x${h}: a tap in the list opens that star's card, in view (${JSON.stringify(l1)})`);
+        // layout: no sideways scroll; the strip stays in view as the menu scrolls; big enough taps; landscape: map left, card right
+        const lay = JSON.parse(await X(`(() => { const s = document.querySelector('#sec-stars'), box = document.getElementById('panels'), out = [];
+          if (s.scrollWidth > s.clientWidth + 1) out.push('section ' + s.scrollWidth + '>' + s.clientWidth);
+          for (const c of s.querySelectorAll('.sr-chip, .sr-card, .sr-map, .sr-row, .sr-seg')) { const b = c.getBoundingClientRect(); if (b.right > innerWidth + 1 || b.left < -1) out.push(c.className + ' ' + Math.round(b.left) + '-' + Math.round(b.right)); }
+          const small = [...s.querySelectorAll('.sr-put, .sr-light, .sr-chip-b, .sr-seg button, .sr-row')].filter(b => b.offsetParent && b.getBoundingClientRect().height < 36).map(b => b.className);
+          const hits = [...s.querySelectorAll('.sr-hit')].map(c => c.getBoundingClientRect().width), map = s.querySelector('.sr-map').getBoundingClientRect(), card = s.querySelector('.sr-card').getBoundingClientRect();
+          box.scrollTop = box.scrollHeight; const top = s.querySelector('.sr-top').getBoundingClientRect(), pb = box.getBoundingClientRect(); const stuck = top.top >= pb.top - 1 && top.bottom <= pb.bottom && top.height > 30;
+          box.scrollTop = 0;
+          return JSON.stringify({ wide: out.slice(0, 3), small: small.slice(0, 3), hit: Math.min(...hits), mapW: Math.round(map.width), side: card.left >= map.right - 1 && card.top < map.bottom, stuck,
+            menuW: Math.round(document.getElementById('menu').getBoundingClientRect().width) }); })()`));
+        assert(!lay.wide.length && !lay.small.length && lay.hit >= 17 && lay.stuck, `stars UI ${w}x${h}: no sideways scroll, every button at least 36 px tall, each star's tap circle ${Math.round(lay.hit)} px (17+), and the loadout strip stays in view as the menu scrolls (${JSON.stringify(lay)})`);
+        assert(wide ? lay.side && lay.menuW >= 470 : lay.mapW >= 320, wide ? `stars UI ${w}x${h}: the menu takes the stage (${lay.menuW} px) with the map on the left and the card on the right` : `stars UI ${w}x${h}: the map takes the width (${lay.mapW} px), the card below it`);
+        // Next Up opens the map on its star's card
+        await X(`closeMenu(); starsUiPick('sparkguard'); setTab('stars'); 1`); await page.waitForTimeout(250);
+        const nu = await X(`(document.querySelector('#sec-stars .sr-card') || {}).dataset.star`);
+        const profile = await X(`(() => { closeMenu(); S.activity = 'fight'; spawn(); const p = turnMakeProfile(combatFoes()[0], cbUnitByKey('hero')); return p ? p.stars.join() : ''; })()`);
+        assert(nu === 'sparkguard' && profile === 'serrated,huntstep', `stars UI ${w}x${h}: Next Up opens the map on its star (${nu}), and the next fight takes the set and lit stars (${profile})`);
         assert(!errors.length, `stars UI ${w}x${h}: no page errors` + (errors.length ? ': ' + errors[0] : ''));
         await ctx.close();
       }
