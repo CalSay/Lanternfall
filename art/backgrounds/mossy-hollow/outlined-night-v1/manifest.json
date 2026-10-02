@@ -1,0 +1,131 @@
+{
+  "id": "mossy-hollow-outlined-night-v1",
+  "type": "fixed-battle-background",
+  "state": "moonlit-shrouded",
+  "masterSize": [
+    1672,
+    941
+  ],
+  "logicalSize": [
+    480,
+    270
+  ],
+  "recommendedFile": "runtime/mossy-hollow-night-960x540.webp",
+  "aspectRatio": "16:9",
+  "opaque": true,
+  "tileable": false,
+  "parallax": false,
+  "actorsBakedIn": false,
+  "lightingBakedIn": true,
+  "suggestedFeetY": 208,
+  "suggestedFeetYNormalized": 0.7703703703703704,
+  "suggestedActorXNormalized": [
+    0.33,
+    0.65
+  ],
+  "placementStatus": "Initial integration guides; verify against actual game stage and 96px hero sprites.",
+  "backgroundSampling": "smooth",
+  "spriteSampling": "nearest",
+  "bodyTintScope": "Body sprites only; exclude separately rendered ability effects.",
+  "approval": "Owner authorized packaging and Claude handoff on 2026-10-02.",
+  "exports": [
+    {
+      "path": "runtime/mossy-hollow-night-480x270.png",
+      "width": 480,
+      "height": 270,
+      "bytes": 273882
+    },
+    {
+      "path": "runtime/mossy-hollow-night-480x270.webp",
+      "width": 480,
+      "height": 270,
+      "bytes": 207778
+    },
+    {
+      "path": "runtime/mossy-hollow-night-960x540.png",
+      "width": 960,
+      "height": 540,
+      "bytes": 1024859
+    },
+    {
+      "path": "runtime/mossy-hollow-night-960x540.webp",
+      "width": 960,
+      "height": 540,
+      "bytes": 758512
+    },
+    {
+      "path": "runtime/mossy-hollow-night-1440x810.png",
+      "width": 1440,
+      "height": 810,
+      "bytes": 2086466
+    },
+    {
+      "path": "runtime/mossy-hollow-night-1440x810.webp",
+      "width": 1440,
+      "height": 810,
+      "bytes": 1587338
+    }
+  ],
+  "portrait": {
+    "status": "Owner authorized packaging and Claude handoff on 2026-10-02.",
+    "masterSize": [
+      916,
+      1717
+    ],
+    "logicalSize": [
+      480,
+      900
+    ],
+    "observedStageSizes": [
+      {
+        "viewport": [
+          390,
+          844
+        ],
+        "stage": [
+          362,
+          674
+        ]
+      },
+      {
+        "viewport": [
+          360,
+          740
+        ],
+        "stage": [
+          332,
+          570
+        ]
+      }
+    ],
+    "measurementScope": "Local dist build, initial game state; stage flexes with UI and viewport.",
+    "suggestedFeetYNormalized": 0.89,
+    "integrationNote": "Upper extension places road near 89% height. Existing stage uses 80%; align actor feet to painted road when integrating. Not a drop-in scenery replacement.",
+    "exports": [
+      {
+        "path": "runtime/mossy-hollow-night-portrait-480x900.png",
+        "width": 480,
+        "height": 900,
+        "bytes": 875817
+      },
+      {
+        "path": "runtime/mossy-hollow-night-portrait-480x900.webp",
+        "width": 480,
+        "height": 900,
+        "bytes": 666544
+      },
+      {
+        "path": "runtime/mossy-hollow-night-portrait-960x1800.png",
+        "width": 960,
+        "height": 1800,
+        "bytes": 3125664
+      },
+      {
+        "path": "runtime/mossy-hollow-night-portrait-960x1800.webp",
+        "width": 960,
+        "height": 1800,
+        "bytes": 2423070
+      }
+    ]
+  }
+}
