@@ -1531,12 +1531,17 @@ async function runTurnReport() {
 }
 
 // The Tobin pass (owner, 2026-10-02): Wren, Tobin and Pip on the same footing. Each stage puts every hero on the same save
-// at the same level, Attack and signature Training, gear (the lamp's, refitted to the hero) and zone, with a few natural
-// three-ability sets from what they could have learned by then (the bot casts the first ready one in slot order). Zones
-// 8-30 scale every hero's Attack and HP alike so the stage's middle hero sits at the zone's reference hero; zone 1 and
-// the kept-up rows are the game's own numbers. It fights normal foes and the boss, played well and casually (as
-// --report turns), and prints each hero's mean over their sets: hero turns a fight, win %, and the share of max HP lost a
-// fight; then Tobin against the Wren and Pip average. Usage: --report heroes [--hours 1] [--seeds 3] [--eval js] [--rows 1]
+// at the same level, Attack and signature Training and zone, with a few natural three-ability sets from what they could
+// have learned by then (the bot casts the first ready one in slot order). Mid-game HP pass (2026-10-02): zones 8-34 are
+// heroes who keep up: each wears their own class set (weapon, off-hand, head, body) and a Charm at the zone's gear tier,
+// rare +5 (the same seeded affix rolls for every hero), and the stage scales each hero's Attack and HP by one factor, so
+// every hero hits as hard as the zone's reference hero and their HP keeps its natural ratio to Attack (as in the game,
+// where HP grows with Attack). Zone 1 and the zone 35 and 38 rows are the game's own numbers (the late fixture's
+// gear made epic +10). It fights normal foes and the boss, played well and casually (as --report turns), and prints each
+// hero's mean over their sets: hero turns a fight, win %, the share of max HP lost a fight, and what one landed hit (a
+// boss's biggest plain hit) and a landed charge cost; then Tobin against the Wren and Pip average.
+// Usage: --report heroes [--hours 1] [--seeds 3] [--eval js] [--rows 1] [--tier -1|1: every worn piece a gear tier
+// behind or ahead, the stage's scale kept from its own tier]
 async function runHeroReport() {
   const fs = await import('node:fs'), path = await import('node:path');
   const { ROOT } = await import('./lib/core.mjs');
@@ -1546,6 +1551,16 @@ async function runHeroReport() {
   const make = (L, z, epic, asc) => k => `soloPick(${J(k)}, {now:true}); S.L = ${L}; S.solo.tr[${J(k)}].atk = ${L}; S.solo.tr[${J(k)}][${J(SIG[k])}] = ${L}; S.solo.asc[${J(k)}] = ${asc ? 1 : 0};
     ${epic ? `for (const sl of Object.keys(S.equip)) { const it = itemById(S.equip[sl]); if (it && !['pick', 'axe', 'sickle', 'spear'].includes(it.slot)) { it.r = 'epic'; it.plus = 10; } }` : ''}
     S.maxZone = Math.max(S.maxZone, ${z}); setZone(${z});`;
+  // a hero who keeps up at zone z: their own class set and a Charm at the zone's gear tier, rare +5. Affixes: the same
+  // seeded rolls for every hero (their pools are the same size), keeping only the shared HP line, so no hero's role
+  // lines tilt the footing (a striker's Attack and crit lines work in turn fights; a caster's spell, area and control
+  // lines do not yet)
+  const KINDS = { wren: ['bow', 'quiver', 'hood', 'leathers'], tobin: ['warblade', 'shield', 'greathelm', 'plate'], pip: ['staff', 'lantern', 'circlet', 'robe'] };
+  const keptUp = (L, z) => k => make(L, z, false, false)(k) + `(() => { let sd = 7919; const rnd = () => (sd = sd * 16807 % 2147483647) / 2147483647, t = zoneTier(${z});
+    ${J(KINDS[k])}.concat(['charm']).forEach((kind, i) => { const it = newItem(kind, t, 'rare', { rnd }); it.plus = 5; if (it.a) it.a = it.a.filter(l => l[0] === 'hp');
+      S.items.push(it); S.equip[['weapon', 'off', 'helm', 'body', 'charm'][i]] = it.id; }); })();`;
+  const tierD = Number(args.tier || 0);
+  const shiftTier = `for (const sl of Object.keys(S.equip)) { const it = itemById(S.equip[sl]); if (it && !['pick', 'axe', 'sickle', 'spear'].includes(it.slot)) it.t = Math.max(1, Math.min(5, it.t + (${tierD}))); }`;
   const SETS = {
     1: { wren: [['echo']], tobin: [['bash']], pip: [['fire']] },
     10: { wren: [['echo', 'powershot', 'deadeye'], ['huntmark', 'deadeye', 'powershot'], ['echo', 'barbed', 'powershot']],
@@ -1561,36 +1576,50 @@ async function runHeroReport() {
       tobin: [['bash', 'hammerfall', 'heavystrike'], ['sundering', 'shieldthrow', 'hammerfall'], ['bash', 'heavystrike', 'laststand']],
       pip: [['fire', 'spark', 'nova'], ['fire', 'ignite', 'lanternburst'], ['fire', 'ignite', 'spark']] }
   };
-  // [name, ability sets, fixture, setup, Attack scale, HP scale]: the scales put the stage's middle hero at the reference
+  // [name, ability sets, fixture, setup, scaled]: a scaled stage puts each hero's Attack at the zone's reference and scales
+  // their HP by the same factor
   const STAGES = [
-    ['zone 1 (fresh)', 1, null, k => `soloPick(${J(k)}, {now:true}); setZone(1);`, 1, 1],
-    ['zone 8 (early save, L14)', 10, 'early', make(14, 8, false, false), 1 / 1.63, 1 / 1.95],
-    ['zone 20 (mid save, L33)', 20, 'mid', make(33, 20, false, false), 1 / 1.48, 1 / 4.23],
-    ['zone 30 (late save, L37, epic)', 30, 'late', make(37, 30, true, false), 1 / 0.82, 1 / 3.53],
-    ['kept up, zone 35 (L40)', 38, 'late', make(40, 35, true, false), 1, 1],
-    ['kept up, zone 38 (L41)', 38, 'late', make(41, 38, true, true), 1, 1]
+    ['zone 1 (fresh)', 1, null, k => `soloPick(${J(k)}, {now:true}); setZone(1);`, false],
+    ['zone 8 (kept up, L14)', 10, 'early', keptUp(14, 8), true],
+    ['zone 15 (kept up, L25)', 10, 'mid', keptUp(25, 15), true],
+    ['zone 20 (kept up, L33)', 20, 'mid', keptUp(33, 20), true],
+    ['zone 25 (kept up, L35)', 20, 'mid', keptUp(35, 25), true],
+    ['zone 30 (kept up, L37)', 30, 'late', keptUp(37, 30), true],
+    ['zone 34 (kept up, L39)', 30, 'late', keptUp(39, 34), true],
+    ['kept up, zone 35 (L40)', 38, 'late', make(40, 35, true, false), false],
+    ['kept up, zone 38 (L41)', 38, 'late', make(41, 38, true, true), false]
   ];
   const players = { good: { parry: 0.6, dodge: 0.9, perfect: 0.4, good: 0.45 }, casual: { parry: 0.25, dodge: 0.5, perfect: 0.1, good: 0.4 } };
-  const out = [];
-  for (const [st, sz, save, setup, fa, fh] of STAGES) for (const k of ['wren', 'tobin', 'pip']) {
+  const out = [], scaleOf = {};
+  const build = (save, setup, k, shift) => {
     const core = loadCoreRaw({ seed: 1, prelude: 'Date.now = () => 1791187200000;' }), e = s => core.eval(s);
     if (save) { core.storage.set(SAVE_KEY, fx(save)); e('loadSave()'); }
-    e(setup(k));
+    e(setup(k)); if (shift && tierD) e(shiftTier);
     if (args.eval) e(String(args.eval));
+    return { core, e };
+  };
+  // each hero's Attack (gear at the zone's own tier) at the zone's reference: a hero who keeps up hits as hard as it
+  for (const [st, , save, setup, scaled] of STAGES) for (const k of ['wren', 'tobin', 'pip'])
+    scaleOf[st + k] = scaled ? 1 / build(save, setup, k, false).e(`TURN_TUNE.on = 1; S.activity = 'fight'; arena = null; gearDirty(); fightBoss = false; spawn(); turnCombatProfile().A / turnRefAtk(S.zone)`) : 1;
+  for (const [st, sz, save, setup] of STAGES) for (const k of ['wren', 'tobin', 'pip']) {
+    const fa = scaleOf[st + k], fh = fa;
+    const { core, e } = build(save, setup, k, true);
     for (const boss of [false, true]) {
       e(`TURN_TUNE.on = 1; S.activity = 'fight'; arena = null; gearDirty(); fightBoss = ${boss}; spawn();`);
       for (const set of SETS[sz][k]) {
         const row = { st, hero: k, foe: boss ? 'boss' : 'normal', set: set.join('+') };
         for (const [pl, skill] of Object.entries(players)) {
-          let K = 0, D = 0, T = 0, F = 0, L = 0, H = 0;
+          let K = 0, D = 0, T = 0, F = 0, L = 0, H = 0, C = 0;
           for (let i = 0; i < count; i++) {
             const r = e(`(() => { const p = turnCombatProfile(); p.eq = ${J(set)}; p.cds = { attack: 1 }; for (const id of p.eq) p.cds[id] = turnCdFor(id);
               p.A *= ${fa}; p.U *= ${fa}; p.counter *= ${fa}; p.heroMaxHp *= ${fh};
               const r = turnCombatSample({ profile: p, seconds: ${seconds}, seed: ${i + 1}, skill: ${J(skill)} }); r.lost = r.damageTaken / p.heroMaxHp;
-              r.hit = p.refHp * p.hitX * (p.bossHitX || 1) / p.heroMaxHp * Math.max(...p.script.filter(m => !m.charge).flatMap(m => m.hits.map(h => h.x))); return r; })()`);
-            K += r.kills; D += r.deaths; T += r.totalHeroTurns; F += r.completedFights; L += r.lost; H = r.hit;
+              const k = p.refHp * p.hitX * (p.bossHitX || 1) / p.heroMaxHp, ch = p.script.find(m => m.charge);
+              r.hit = k * Math.max(...p.script.filter(m => !m.charge).flatMap(m => m.hits.map(h => h.x)));
+              r.charge = ch ? k * (p.bossChargeX || 1) * ch.hits.reduce((a, h) => a + h.x, 0) : 0; return r; })()`);
+            K += r.kills; D += r.deaths; T += r.totalHeroTurns; F += r.completedFights; L += r.lost; H = r.hit; C = r.charge;
           }
-          row[pl] = { win: K / Math.max(1, K + D), turns: F ? T / F : NaN, lost: L / Math.max(1, K + D), hit: H };
+          row[pl] = { win: K / Math.max(1, K + D), turns: F ? T / F : NaN, lost: L / Math.max(1, K + D), hit: H, charge: C };
         }
         if (core.errors.length) throw new Error(`${st} ${k}: ${core.errors.join('; ')}`);
         out.push(row);
@@ -1598,11 +1627,12 @@ async function runHeroReport() {
       }
     }
   }
-  console.log(`The heroes on the same footing, ${count} seed(s) x ${seconds / 3600} h a set. Each hero's mean over their ability sets.`);
-  console.log('stage / foe / player / hero turns: Wren, Pip, Tobin (Tobin / their mean) / win %: Wren, Pip, Tobin / max HP lost a fight %: Wren, Pip, Tobin / a landed hit, % of max HP: Wren, Pip, Tobin');
+  console.log(`The heroes on the same footing, ${count} seed(s) x ${seconds / 3600} h a set. Each hero's mean over their ability sets.${tierD ? ` Gear a tier ${tierD < 0 ? 'behind' : 'ahead'} (${tierD}).` : ''}`);
+  console.log('stage / foe / player / hero turns: Wren, Pip, Tobin (Tobin / their mean) / win %: Wren, Pip, Tobin / max HP lost a fight %: Wren, Pip, Tobin / a landed hit (a charge), % of max HP: Wren, Pip, Tobin');
   for (const st of STAGES.map(x => x[0])) for (const foe of ['normal', 'boss']) for (const pl of Object.keys(players)) {
     const m = (h, f) => { const rs = out.filter(r => r.st === st && r.foe === foe && r.hero === h); return rs.reduce((a, r) => a + f(r[pl]), 0) / rs.length; };
-    const t = h => m(h, x => x.turns), w = h => (100 * m(h, x => x.win)).toFixed(0), l = h => (100 * m(h, x => x.lost)).toFixed(0), hh = h => (100 * m(h, x => x.hit)).toFixed(0);
+    const t = h => m(h, x => x.turns), w = h => (100 * m(h, x => x.win)).toFixed(0), l = h => (100 * m(h, x => x.lost)).toFixed(0),
+      hh = h => (100 * m(h, x => x.hit)).toFixed(0) + (foe === 'boss' ? ` (${(100 * m(h, x => x.charge)).toFixed(0)})` : '');
     console.log(`${st} / ${foe} / ${pl} / ${t('wren').toFixed(1)}, ${t('pip').toFixed(1)}, ${t('tobin').toFixed(1)} (x${(2 * t('tobin') / (t('wren') + t('pip'))).toFixed(2)}) / ${w('wren')}, ${w('pip')}, ${w('tobin')} / ${l('wren')}, ${l('pip')}, ${l('tobin')} / ${hh('wren')}, ${hh('pip')}, ${hh('tobin')}`);
   }
 }

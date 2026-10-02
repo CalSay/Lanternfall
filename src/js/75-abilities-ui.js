@@ -63,6 +63,8 @@
     const basic = el('div', 'ab-path'); basic.append(el('h3', 'ab-pname', 'Attack, Parry and Dodge'));
     for (const [mv, nm] of [['attack', 'Attack'], ['parry', 'Parry'], ['dodge', 'Dodge']]) {
       const c = el('div', 'ab-card owned ab-basic'); c.append(el('b', 'ab-bname', nm));
+      const own = mv === 'dodge' && typeof turnDodgeLine === 'function' ? turnDodgeLine(k) : '';   // Wren's Out of Reach (59k)
+      if (own) c.append(el('p', 'ab-desc', own));
       const row = talentRow(k, k + ':' + mv); if (row) c.append(row);
       basic.append(c);
     }

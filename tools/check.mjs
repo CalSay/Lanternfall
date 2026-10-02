@@ -7558,10 +7558,12 @@ if (section('C29 late zones and Wider timing windows (core)')) try {
     const old = z => { const P = [[1, 0.7], [10, 0.7], [15, 0.55], [22, 0.42], [30, 0.3], [35, 0.2]]; if (z <= 1) return 0.7;
       for (let i = 1; i < P.length; i++) if (z <= P[i][0]) { const [z0, a] = P[i - 1], [z1, c] = P[i]; return a + (c - a) * (z - z0) / (z1 - z0); } return 0.2; };
     const same = [], rising = [];
-    for (let z = 1; z <= 34; z++) if (Math.abs(E(`turnRefAtkX(${z})`) - old(z)) > 1e-12 || Math.abs(E(`turnRefHp(${z}) / mobHp(${z})`) - 1.2) > 1e-12) same.push(z);
-    for (let z = 2; z <= 80; z++) if (!(E(`turnRefAtk(${z}) > turnRefAtk(${z - 1}) && turnRefHp(${z}) > turnRefHp(${z - 1})`))) rising.push(z);
-    assert(!same.length, `late zones: zones 1-34 keep the first reference hero (Attack share and 1.2x HP) (${same.join() || 'ok'})`);
-    assert(!rising.length && E('turnRefAtkX(35) <= 0.2 / 1.6 && turnRefHp(35) / mobHp(35) < 1.2'),
+    // the mid-game HP pass (2026-10-02) moved the reference HP of zones 4-34 (section "C29 mid-game HP and Wren"); zones
+    // 1-3 and the Deepwell keep 1.2x, and the Attack share is the first one to zone 34
+    for (let z = 1; z <= 34; z++) if (Math.abs(E(`turnRefAtkX(${z})`) - old(z)) > 1e-12 || Math.abs(E(`turnRefHp(${z}, true) / mobHp(${z})`) - 1.2) > 1e-12 || (z <= 3 && Math.abs(E(`turnRefHp(${z}) / mobHp(${z})`) - 1.2) > 1e-12)) same.push(z);
+    for (let z = 2; z <= 80; z++) if (!(E(`turnRefAtk(${z}) > turnRefAtk(${z - 1}) && turnRefHp(${z}) > turnRefHp(${z - 1}) && turnRefHp(${z}, true) > turnRefHp(${z - 1}, true)`))) rising.push(z);
+    assert(!same.length, `late zones: zones 1-34 keep the first reference Attack share; zones 1-3 and the Deepwell keep 1.2x HP (${same.join() || 'ok'})`);
+    assert(!rising.length && E('turnRefAtkX(35) <= 0.2 / 1.6 && turnRefHp(35) / mobHp(35) < 1.2 && turnRefHp(35, true) === turnRefHp(35)'),
       `late zones: from zone 35 the reference leaves out the x1.7 region step, and its Attack and HP still grow every zone, so turnPowerZone holds (${rising.join() || 'ok'})`); }
   // the late fixture made a hero who keeps up (as sim --report turns late-kept-38): good players win, fights stay in the band
   { const g = loadCore({ seed: 3, turns: true, storage: memoryStorage({ [KEY]: FX('late') }) }), E = s => g.eval(s);
@@ -7603,14 +7605,17 @@ if (section('C29 boss pass (core)')) try {
     // a zone boss's HP in reference Attacks: 16 x the zone's hpX (x bossEase in zones 1-3); the Fenmother 30 x regionHpX; normal foes unchanged
     const at = (z, boss) => E(`(() => { S.maxZone = Math.max(S.maxZone, ${z}); setZone(${z}); fightBoss = ${boss}; spawn(); const f = combatFoes()[0];
       return { a: f.max / turnRefAtk(${z}), hx: f.tk.hx, cx: f.tk.cx, region: f.tk.region, gold: f.gold, full: turnCombatProfile().fullHp }; })()`);
-    const want = { 1: 16 * 0.65, 2: 16 * 0.8, 3: 16 * 0.9, 10: 16 * 1.45, 20: 16 * 1.85, 30: 16 * 3.3, 35: 30 * 1.25, 38: 16 * 1.5 }, bad = [];
+    const want = { 1: 16 * 0.65, 2: 16 * 0.8, 3: 16 * 0.9, 10: 16 * 1.8, 15: 16 * 2.3, 20: 16 * 2.2, 30: 16 * 3.3, 35: 30 * 1.25, 38: 16 * 1.5 }, bad = [];
     for (const z of Object.keys(want)) { const r = at(+z, true); if (!(r.a > want[z] * 0.94 && r.a < want[z] * 1.06)) bad.push(`${z}: ${r.a.toFixed(1)} (want ${want[z].toFixed(1)})`); }
     assert(!bad.length, `boss pass: a boss lasts longer as the game goes on: its HP in reference Attacks is 16 x the zone's hpX (zones 1-3 keep their onboarding), the Fenmother 30 x 1.25 (${bad.join('; ') || 'ok'})`);
     const n20 = at(20, false), b20 = at(20, true), b3 = at(3, true), b8 = at(8, true), b38 = at(38, true);
-    assert(n20.a > 4.7 && n20.a < 5.3 && n20.hx === 1 && n20.cx === 1 && !n20.full, `boss pass: a normal foe is unchanged (5 reference Attacks, its hits as written) (${JSON.stringify(n20)})`);
-    assert(b3.hx === 1 && b3.cx === 1 && Math.abs(b8.hx - 1.3) < 1e-9 && Math.abs(b8.cx - 1.3) < 1e-9 && Math.abs(b38.hx - 1.95) < 1e-9 && Math.abs(b38.cx - 1.35) < 1e-9 && b20.full,
-      `boss pass: boss hits x1.3 (charges x1.3 more) from zone 6, x1.95 (x1.35) from zone 35; zones 1-3 as before; a zone boss is met at full health (${JSON.stringify([b3, b8, b38].map(r => [r.hx, r.cx]))})`);
-    assert(Math.abs(b20.gold / n20.gold - 5 * (1 + 0.85 * 0.5)) < 1e-6, `boss pass: a longer boss pays more: 5 x (1 + half its extra length) a normal foe's gold (${(b20.gold / n20.gold).toFixed(2)})`);
+    // the mid-game HP pass: a normal foe's hits x0.7 from zone 8 to 34 (normHitX) against the higher reference HP
+    const n3 = at(3, false), n38 = at(38, false);
+    assert(n20.a > 4.7 && n20.a < 5.3 && Math.abs(n20.hx - 0.7) < 1e-9 && n3.hx === 1 && n38.hx === 1 && n20.cx === 1 && !n20.full,
+      `boss pass: a normal foe keeps 5 reference Attacks; its hits x0.7 in zones 8-34 (the mid-game HP pass), as written in zones 1-3 and 35+ (${JSON.stringify([n3, n20, n38].map(r => [+r.a.toFixed(2), r.hx]))})`);
+    assert(b3.hx === 1 && b3.cx === 1 && Math.abs(b8.hx - 1.6) < 1e-9 && Math.abs(b8.cx - 1.3) < 1e-9 && Math.abs(b38.hx - 1.9) < 1e-9 && Math.abs(b38.cx - 1.35) < 1e-9 && b20.full,
+      `boss pass: boss hits x1.6 at zone 8 (charges x1.3 more), x1.9 (x1.35) from zone 35; zones 1-3 as before; a zone boss is met at full health (${JSON.stringify([b3, b8, b38].map(r => [r.hx, r.cx]))})`);
+    assert(Math.abs(b20.gold / n20.gold - 5 * (1 + 1.2 * 0.5)) < 1e-6, `boss pass: a longer boss pays more: 5 x (1 + half its extra length) a normal foe's gold (${(b20.gold / n20.gold).toFixed(2)})`);
     // the Deepwell's Elders and the Provings' bosses keep their own numbers (they pass a move set and their HP in Attacks)
     const deep = E(`(() => { const f = { boss: true, type: 'bones', name: 'Elder' }; turnFoeSetup(f, 30, { set: 'bones', hpA: TURN_TUNE.deep.hpA.boss }); return { a: f.max / turnRefAtk(30), hx: f.tk.hx, cx: f.tk.cx }; })()`);
     assert(deep.a > 14 * 0.94 && deep.a < 14 * 1.06 && deep.hx === 1 && deep.cx === 1, `boss pass: a Deepwell boss floor (and a Proving's boss) keeps its HP and hits (${JSON.stringify(deep)})`);
@@ -7631,6 +7636,71 @@ if (section('C29 boss pass (core)')) try {
     assert(lo.b.hit > 0.5 && lo.casual.win < 0.2 && lo.good.turns > k.good.turns * 1.3 && hi.good.turns < k.good.turns * 0.8 && hi.casual.win >= k.casual.win && hi.b.hit < 0.15,
       `boss pass: gear matters: a gear tier behind, a boss hit costs half your health and casual play loses; a tier ahead, bosses go quicker and barely hurt (turns ${[lo, k, hi].map(r => r.good.turns.toFixed(1)).join(' / ')}, casual win ${[lo, k, hi].map(r => (100 * r.casual.win).toFixed(0) + '%').join(' / ')}, a boss hit ${[lo, k, hi].map(r => (100 * r.b.hit).toFixed(0) + '%').join(' / ')})`); }
 } catch (e) { fail('C29 boss pass crashed: ' + (e.stack || e)); }
+
+if (section('C29 mid-game HP and Wren (core)')) try {
+  // the mid-game HP pass (2026-10-02, combat-turn-build.md "Mid-game HP and Wren"): the reference HP of zones 4-34 follows
+  // a hero who keeps up, so boss hits stay serious mid-game; Wren's HP no longer carries the real-time damage parity
+  const FX = n => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-' + n + '.json'), 'utf8');
+  const KINDS = { wren: ['bow', 'quiver', 'hood', 'leathers'], tobin: ['warblade', 'shield', 'greathelm', 'plate'], pip: ['staff', 'lantern', 'circlet', 'robe'] };
+  // a hero who keeps up (as sim --report heroes): their class set and a Charm at the zone's tier, rare +5, the shared HP
+  // affix line only, Training at their level, and Attack and HP scaled together so their Attack is the zone's reference
+  const kept = (k, z, L, fx, d) => { const g = loadCore({ seed: 7, turns: true, storage: memoryStorage({ [KEY]: FX(fx) }) }), E = s => g.eval(s), J = JSON.stringify;
+    E(`loadSave(); soloPick(${J(k)}, {now:true}); S.L = ${L}; S.solo.tr[${J(k)}].atk = ${L}; S.solo.tr[${J(k)}][${J({ wren: 'echo', tobin: 'bash', pip: 'fire' }[k])}] = ${L}; S.solo.asc[${J(k)}] = 0;
+      S.maxZone = Math.max(S.maxZone, ${z}); setZone(${z});
+      (() => { let sd = 7919; const rnd = () => (sd = sd * 16807 % 2147483647) / 2147483647, t = zoneTier(${z}) + (${d || 0});
+        ${J(KINDS[k])}.concat(['charm']).forEach((kind, i) => { const it = newItem(kind, t, 'rare', { rnd }); it.plus = 5; if (it.a) it.a = it.a.filter(l => l[0] === 'hp'); S.items.push(it); S.equip[['weapon', 'off', 'helm', 'body', 'charm'][i]] = it.id; }); })();
+      S.activity = 'fight'; arena = null; gearDirty(); fightBoss = false; spawn(); globalThis.__f = 1 / (turnCombatProfile().A / turnRefAtk(${z}));`);
+    const prof = boss => `(() => { fightBoss = ${boss}; spawn(); const p = turnCombatProfile(); p.A *= __f; p.U *= __f; p.counter *= __f; p.heroMaxHp *= __f; return p; })()`;
+    const hit = boss => E(`(p => { const k = p.refHp * p.hitX * p.bossHitX / p.heroMaxHp, ch = p.script.find(m => m.charge);
+      return { hit: k * Math.max(...p.script.filter(m => !m.charge).flatMap(m => m.hits.map(h => h.x))), charge: ch ? k * p.bossChargeX * ch.hits.reduce((a, h) => a + h.x, 0) : 0 }; })(${prof(boss)})`);
+    // the mean over ability sets and seeds 1-3 (one sample swings a lot)
+    const run = (skill, sets) => E(`(p => { let K = 0, D = 0, T = 0, F = 0; for (const eq of ${J(sets)}) for (let sd = 1; sd <= 3; sd++) {
+      p.eq = eq; p.cds = { attack: 1 }; for (const id of p.eq) p.cds[id] = turnCdFor(id);
+      const r = turnCombatSample({ profile: p, seconds: 3600, seed: sd, skill: ${J(skill)} }); K += r.kills; D += r.deaths; T += r.totalHeroTurns; F += r.completedFights; }
+      return { win: +(K / Math.max(1, K + D)).toFixed(3), turns: +(T / Math.max(1, F)).toFixed(2) }; })(${prof(true)})`);
+    return { n: hit(false), b: hit(true), run, err: () => g.errors.slice(0, 2) }; };
+  const good = { parry: 0.6, dodge: 0.9, perfect: 0.4, good: 0.45 }, casual = { parry: 0.25, dodge: 0.5, perfect: 0.1, good: 0.4 };
+  // what a landed hit costs a hero who keeps up, by zone band: a normal foe 8-15%, a boss 25-35%, its charge 60-90%
+  { const bad = [], seen = [];
+    for (const [z, L, fx] of [[8, 14, 'early'], [15, 25, 'mid'], [20, 33, 'mid'], [25, 35, 'mid'], [30, 37, 'late'], [34, 39, 'late']]) for (const k of ['wren', 'pip']) {
+      const r = kept(k, z, L, fx), s = `${k} ${z}: ${[r.n.hit, r.b.hit, r.b.charge].map(x => (100 * x).toFixed(0)).join('/')}`; seen.push(s);
+      if (!(r.n.hit >= 0.08 && r.n.hit <= 0.15 && r.b.hit >= 0.25 && r.b.hit <= 0.36 && r.b.charge >= 0.6 && r.b.charge <= 0.9) || r.err().length) bad.push(s); }
+    assert(!bad.length, `mid-game HP: for a hero who keeps up (zones 8-34), a landed normal hit costs 8-15% of max HP, a boss hit 25-35%, a charge 60-90% (${bad.length ? 'off: ' + bad.join('; ') : seen.join('; ')})`); }
+  // played: good players win zone-20 bosses in 8-10 turns or so, casual players win some and lose some; Tobin stays the safest
+  { const w = kept('wren', 20, 33, 'mid'), p = kept('pip', 20, 33, 'mid'), t = kept('tobin', 20, 33, 'mid');
+    const WS = [['echo', 'deadeye', 'powershot'], ['twinshot', 'echo', 'deadeye'], ['echo', 'barbed', 'sonic']], PS = [['fire', 'ignite', 'spark'], ['kindle', 'fire', 'ignite'], ['fire', 'wildfire', 'spark']];
+    const wg = w.run(good, WS), wc = w.run(casual, WS), pg = p.run(good, PS), pc = p.run(casual, PS), tc = t.run(casual, [['bash', 'heavystrike', 'hammerfall'], ['bash', 'riposte', 'hammerfall']]);
+    assert(wg.win >= 0.95 && pg.win >= 0.95 && wg.turns >= 6 && wg.turns <= 12 && pg.turns >= 6 && pg.turns <= 12 && wc.win >= 0.35 && wc.win <= 0.85 && pc.win >= 0.35 && pc.win <= 0.85
+      && tc.win >= 0.95 && t.b.hit < p.b.hit / 3 && !w.err().length,
+      `mid-game HP: at zone 20 a hero who keeps up wins bosses played well in 6-12 turns and 35-85% played casually; Tobin wins nearly all, a hit costs him under a third of Pip's (${JSON.stringify({ wg, wc, pg, pc, tc, tobinHit: +t.b.hit.toFixed(3), pipHit: +p.b.hit.toFixed(3) })})`); }
+  // gear matters: a tier behind, a zone-20 boss hit takes most of your health; a tier ahead, it barely hurts
+  { const lo = kept('pip', 20, 33, 'mid', -1), hi = kept('pip', 20, 33, 'mid', 1);
+    assert(lo.b.hit > 0.5 && lo.b.charge > 1 && hi.b.hit < 0.2, `mid-game HP: a gear tier behind, a zone-20 boss hit costs over half your health and its charge kills; a tier ahead, under a fifth (${[lo, hi].map(r => (100 * r.b.hit).toFixed(0) + '% / ' + (100 * r.b.charge).toFixed(0) + '%').join(', ')})`); }
+  // Wren: her max HP in turn fights is x1.2 (TURN_TUNE.heroHpX; the real-time fight is unchanged), and Out of Reach: after
+  // she dodges a hit, the rest of that move hits her for 70%
+  { const g = loadCore({ seed: 8, turns: true }), E = s => g.eval(s);
+    const hp = k => E(`TURN_TUNE.on = 1; soloPick(${JSON.stringify(k)}, {now:true}); S.activity = 'fight'; arena = null; gearDirty(); spawn(); const a = cbUnitByKey('hero').maxHp;
+      TURN_TUNE.on = 0; gearDirty(); spawn(); const b = cbUnitByKey('hero').maxHp; TURN_TUNE.on = 1; gearDirty(); a / b`);
+    const hw = hp('wren'), hpip = hp('pip'), ht = hp('tobin');
+    assert(Math.abs(hw - 1.2) < 1e-6 && Math.abs(hpip - 1) < 1e-9 && Math.abs(ht - 1) < 1e-9, `Wren: her max HP in turn fights is x1.2, Pip's and Tobin's as before (${[hw, hpip, ht].map(x => x.toFixed(3)).join(', ')})`);
+    const reach = k => E(`(() => { soloPick(${JSON.stringify(k)}, {now:true}); S.activity = 'fight'; arena = null; gearDirty(); fightBoss = false; spawn();
+      const d = [], io = { random: () => 0.99, emit() {}, alive: () => ({ hero: true, foe: true }), heroHp: () => 1e15, foeHp: () => 1e15, foe: () => null, foeX: () => 1,
+        damageHero: a => { d.push(a); return a; }, healFoe() {}, healHero() {} };
+      const p = turnCombatProfile(); p.blockP = 0; p.blockC = 0; const m = turnNew(p, io);
+      m.move = { id: 't', name: 'T', hits: [{ x: 0.2 }, { x: 0.2 }, { x: 0.2 }] }; m.hitI = 0; m.reach = 0; m.parried = 0;
+      turnContact(m, io); m.defense = 'dodge'; turnContact(m, io); m.defense = ''; turnContact(m, io);
+      return { n: d.length, x: d[1] / d[0], reach: m.reach }; })()`);
+    const rw = reach('wren'), rp = reach('pip');
+    assert(rw.n === 2 && Math.abs(rw.x - 0.7) < 1e-9 && rp.n === 2 && Math.abs(rp.x - 1) < 1e-9 && !g.errors.length
+      && /^Out of Reach: .*30% softer\.$/.test(E('turnDodgeLine("wren")')) && E('turnDodgeLine("pip")') === '',
+      `Wren's Out of Reach: after she dodges a hit, the rest of that move hits her for 70% (Pip: as before) (${JSON.stringify({ rw, rp })})`); }
+  // the Deepwell keeps the first reference HP (1.2x to zone 34) and its foes' hits as written, so runs end where they did
+  { const g = loadCore({ seed: 9, turns: true }), E = s => g.eval(s);
+    E('soloPick("pip", {now:true}); S.activity = "fight"; arena = null; gearDirty(); spawn()');
+    const d = E(`(() => { const f = { type: 'bat', name: 'Bat', deep: true }; turnFoeSetup(f, 20, { hpA: TURN_TUNE.deep.hpA.normal }); const u = cbUnitByKey('hero'), p = turnMakeProfile(f, u);
+      return { ref: p.refHp / mobHp(20), hx: f.tk.hx, zone: turnRefHp(20) / mobHp(20) }; })()`);
+    assert(Math.abs(d.ref - 1.2) < 1e-9 && d.hx === 1 && d.zone > 2, `mid-game HP: a Deepwell foe at zone 20 keeps the first reference HP (1.2x) and its hits; a zone foe there meets the new one (${JSON.stringify(d)})`); }
+} catch (e) { fail('C29 mid-game HP crashed: ' + (e.stack || e)); }
 
 if (section('C29 Deepwell and Provings in turns (core)')) try {
   // owner (2026-10-02): the Deepwell and the Provings fight in turns too. A floor's foes come one at a time; Oil burns only

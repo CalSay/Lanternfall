@@ -19031,6 +19031,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     u.hpP = u.pow;
     let maxHp = (ev ? ev.hp * ev.hpX : T.heroHp[cls]) * u.hpP * (1 + g.hp / 100);
     maxHp *= SOLO_TUNE.hpX * ((typeof soloHero === 'function' && SOLO_TUNE.heroHp[soloHero()]) || 1);   // the hero takes every hit
+    if (SOLO_TUNE.turnHpX && typeof soloHero === 'function') maxHp *= SOLO_TUNE.turnHpX(soloHero());   // turn fights (59k TURN_TUNE.heroHpX)
     u.armour = (ev ? ev.armour : T.heroArmour[cls]) + g.armour + 0.1 * (equipped('helm') ? itemPower(equipped('helm')) : 0);
     // Unbroken: each guard stack also gives 2 armour. Slow Burn / Everburn: Embers burn their foe.
     if (cls === 'warden' && ks('unbroken') && typeof heroGuardN === 'function') u.armour += 2 * heroGuardN();
@@ -22768,8 +22769,8 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
 // kills a normal foe in about TURN_FOE_HP.normal Attacks, and a move does about 20% of that hero's HP.
 //
 // Exposed names:
-//   TURN_TUNE, turnCombatScope(), turnCombatOn(), turnRefAtk(z), turnRefHp(z), turnFoeSetup(f, z, o), turnCdFor(id)
-//   turnAssistX() (the Wider timing windows setting, S.turn.assist), turnArenaOk(), turnArenaNow(), turnPowerZone(a), turnDeepZone(z0, floor), turnWaiting() (the Deepwell and the Provings: 59c, 59f, 57d)
+//   TURN_TUNE, turnCombatScope(), turnCombatOn(), turnRefAtk(z), turnRefHp(z, deep), turnFoeSetup(f, z, o), turnCdFor(id)
+//   turnDodgeLine(k) (Wren's Out of Reach, for the Dodge help), turnAssistX() (the Wider timing windows setting, S.turn.assist), turnArenaOk(), turnArenaNow(), turnPowerZone(a), turnDeepZone(z0, floor), turnWaiting() (the Deepwell and the Provings: 59c, 59f, 57d)
 //   turnMakeProfile(f, u), turnNew(p, io), turnResolve(m, cmd, dt, io), turnPreview(m, n), turnUsable(m, id)
 //   turnCombatSnapshot(), turnCombatProfile(), turnCombatAction(kind, slot), turnCombatTick(dt), turnBadgesFor(f),
 //   turnHeroChips(), turnChoose(m), turnCombatSample({ profile, seconds, seed, skill })
@@ -22790,8 +22791,19 @@ const TURN_TUNE = {
   // the last. Late-zone pass (2026-10-02, combat-turn-build.md "Numbers"): mobHp steps x1.7 at zone 35 (the region step)
   // and grows x1.22 a zone after, while a hero who keeps up (epic tier-4 +10, Training at their level, about a level
   // every 2 zones there) barely grows until Starlit gear at 42. So from zone 35 both the Attack and the HP shares fall.
+  // Mid-game HP pass (2026-10-02, combat-turn-build.md "Mid-game HP and Wren"): refHpX follows the max HP of a hero who
+  // keeps up (gear at the zone's tier, rare +5, Attack at refAtk), the Wren and Pip middle: HP grows with Attack, and
+  // gear's HP lines grow with each tier, so it rises to zone 20 and falls with refAtk after. Zones 1-3 keep 1.2.
   refAtk: [[1, 0.7], [10, 0.7], [15, 0.55], [22, 0.42], [30, 0.3], [34, 0.22], [35, 0.12], [38, 0.09], [42, 0.065]],
-  refHpX: [[1, 1.2], [34, 1.2], [35, 0.95], [38, 0.6], [42, 0.4]],
+  refHpX: [[1, 1.2], [3, 1.2], [8, 2.5], [15, 3], [20, 4], [30, 2.9], [34, 1.85], [35, 0.95], [38, 0.6], [42, 0.4]],
+  // a normal foe's (and an elite's) hits x this, so a landed hit costs a hero who keeps up about 8-15% of their health
+  // against the higher reference HP above (zone fights and the Deepwell; a Proving's foes hit for shares of your health)
+  normHitX: [[3, 1], [8, 0.7], [34, 0.7], [35, 1]],
+  // the hero's max HP in turn fights x this. Wren's HP grows with her Attack, which carries the real-time fight's damage
+  // parity (SOLO_TUNE.heroX 0.76, against Pip's 1.15), while turn fights give that back to her damage only (heroX below)
+  heroHpX: { wren: 1.2, tobin: 1, pip: 1 },
+  // Out of Reach (Wren, the archer): after she dodges a hit, the rest of that move hits her for this share
+  reach: { wren: 0.7 },
   heroHaste: { wren: 10, tobin: 9, pip: 10 },
   heroX: { wren: 1.45, tobin: 1.2, pip: 1.26 },   // per-hero damage parity (Attack and abilities)
   // Tobin pass (owner, 2026-10-02: the tank survives best and kills a little slower, not boringly): his counters
@@ -22817,8 +22829,8 @@ const TURN_TUNE = {
   //            kept-up hero about a quarter to a third of their health, a landed charge about two thirds. From zone 35
   //            the reference HP sits below a kept-up hero's (the late-zone pass), so hitX steps up there.
   //   payX     a longer boss pays more: gold and XP x (1 + payX x (its HP share - 1)), so an hour of play pays as before
-  boss: { hpX: [[3, 1], [10, 1.45], [20, 1.85], [30, 3.3], [34, 3.3], [36, 1.5]], regionHpX: 1.25,
-    hitX: [[3, 1], [6, 1.3], [34, 1.3], [35, 1.95]], chargeX: [[3, 1], [6, 1.3], [34, 1.3], [35, 1.35]], payX: 0.5 },
+  boss: { hpX: [[3, 1], [10, 1.8], [15, 2.3], [20, 2.2], [25, 2.4], [30, 3.3], [34, 3.3], [36, 1.5]], regionHpX: 1.25,
+    hitX: [[3, 1], [6, 1.4], [8, 1.6], [15, 1.6], [20, 1.5], [26, 1.3], [34, 1.3], [35, 1.9]], chargeX: [[3, 1], [6, 1.3], [34, 1.3], [35, 1.35]], payX: 0.5 },
   // the boss riders on the hero (shares of the reference HP a tick, two hero turns)
   heroDot: { bleed: 0.02, burn: 0.04, venom: 0.02 }, heroDotT: 2, heroChill: 0.1, heroBlind: 0.3,
   windowCaps: { parry: 0.35, dodge: 0.5 }, dodgeTrain: 0.004,   // Dodge Training: +4 ms of dodge window a level
@@ -22831,12 +22843,17 @@ const TURN_TUNE = {
   // turnDeepZone(z0, f): z0 is the zone whose reference hero hits as hard as you did as the run began (turnPowerZone),
   // then `step` zones a floor from `from`. Oil burns only while the foe acts (oilX of real time), never while you choose.
   arena: 1,
-  deep: { from: -4, step: 1.2, oilX: 0.5, hpA: { normal: 4, elite: 8, boss: 14 } }
+  // refHpX: the Deepwell keeps the first reference HP (1.2 x mobHp to zone 34): its depth curve and Oil were set against
+  // it, so runs still end where they did (the mid-game HP pass raised the zone table, combat-turn-build.md)
+  deep: { from: -4, step: 1.2, oilX: 0.5, hpA: { normal: 4, elite: 8, boss: 14 }, refHpX: [[1, 1.2], [34, 1.2], [35, 0.95], [38, 0.6], [42, 0.4]] }
 };
 // the twelve timed abilities and how many rings each has (one per arrow or blow)
 const TURN_TIMED = { powershot: 1, volley: 3, deadeye: 1, moonvolley: 5, heavystrike: 1, bash: 1, hammerfall: 1, shieldthrow: 1,
   frostshard: 1, fire: 1, ignite: 1, lanternburst: 1 };
 SOLO_TUNE.turnParryWindow = 0.18;
+SOLO_TUNE.turnHpX = k => (TURN_TUNE.on && TURN_TUNE.heroHpX[k]) || 1;   // the hero's HP in turn fights (59-combat statUnit)
+// a hero's own line on their Dodge (the Abilities view and the Dodge help, 75): Wren's Out of Reach
+const turnDodgeLine = k => TURN_TUNE.on && TURN_TUNE.reach[k] < 1 ? `Out of Reach: after you dodge a hit, the rest of that attack hits you ${Math.round(100 * (1 - TURN_TUNE.reach[k]))}% softer.` : '';
 SOLO_TUNE.turnDodgeWindow = 0.35;
 registerState('turn', { awayKillsCarry: 0, awayEssCarry: 0, awayProfile: null, awaySample: null, awaySig: '', seen: {}, assist: 0 });
 // the Wider timing windows setting (owner, 2026-10-02: an assist for players who find timing hard; off by default)
@@ -22880,7 +22897,7 @@ const turnZoneLine = (P, z) => {
 };
 const turnRefAtkX = z => turnZoneLine(TURN_TUNE.refAtk, z);
 const turnRefAtk = z => turnRefAtkX(z) * mobHp(z) * mod('foeHp');
-const turnRefHp = z => turnZoneLine(TURN_TUNE.refHpX, z) * mobHp(z);
+const turnRefHp = (z, deep) => turnZoneLine(deep ? TURN_TUNE.deep.refHpX : TURN_TUNE.refHpX, z) * mobHp(z);   // deep: a Deepwell floor
 const TURN_SIG = { wren: 'echo', tobin: 'bash', pip: 'fire' };
 const turnAb = id => (typeof ABILITIES === 'object' && ABILITIES[id]) || null;
 function turnCdFor(id) {
@@ -22928,7 +22945,7 @@ function turnFoeSetup(f, z, o) {
   const hp = hpA * ease * len * turnRefAtk(z) * (0.95 + Math.random() * 0.1);
   f.hp = f.max = hp; f.turn = 1; f.tz = z;
   f.tk = { script, spd: spd * 10, arm: Z && Z.armour ? Z.armour : f.armoured ? 0.3 : 0, boss: !!f.boss, region, elite: !!f.elite,
-    hx: zb ? turnZoneLine(B.hitX, z) : 1, cx: zb ? turnZoneLine(B.chargeX, z) : 1 };
+    hx: zb ? turnZoneLine(B.hitX, z) : f.boss || f.trial || f.deep ? 1 : turnZoneLine(T.normHitX, z), cx: zb ? turnZoneLine(B.chargeX, z) : 1 };
   const C = COMBAT_TUNE;
   // a longer boss pays more (the boss pass: payX of its extra length), so an hour of play pays about as before
   const pay = 1 + (len - 1) * B.payX;
@@ -22954,7 +22971,7 @@ function turnMakeProfile(f, u) {
   const eq = soloEquipped().filter(Boolean);
   const cds = { attack: 1 }; for (const id of eq) cds[id] = turnCdFor(id);
   // a Proving's foes hit for shares of your own health (59f: the fight stays a fight at any power, as before turns)
-  return { heroKey: key, zone: z, heroMaxHp: u.maxHp, refHp: f.trial ? u.maxHp : turnRefHp(z), A, U, heroType: heroType(key) || 'phys',
+  return { heroKey: key, zone: z, heroMaxHp: u.maxHp, refHp: f.trial ? u.maxHp : turnRefHp(z, !!f.deep), A, U, heroType: heroType(key) || 'phys',
     counter: heroAtk() * heroX * (T.counterX[key] || 1) * SOLO_TUNE.counterX * aps() * critMult() * trainCounterX() * (1 + (g.counter || 0) / 100) * (1 + (g.echo || 0)),
     critChance: critChance(), critMult: critMult(), nonCrit: mod('nonCrit'), echo: g.echo || 0,
     hitX: T.foeAtkX * (1 - armRed) * classDr, blockP: u.blockP || 0, blockC: u.blockC || 0, blockN: u.blockN || 0, blockX: COMBAT_TUNE.blockX,
@@ -23401,7 +23418,7 @@ function turnBegin(m, who, io) {
       return;
     }
   }
-  m.move = mv; m.hitI = 0; m.parried = 0; m.landed = 0;
+  m.move = mv; m.hitI = 0; m.parried = 0; m.landed = 0; m.reach = 0;
   io.emit('turn', { who, n: m.n });
   io.emit('foeMove', { id: mv.id, name: mv.name, anim: mv.anim || '', hits: mv.hits.length, charged: !!mv.charge });
   turnHitStart(m, io);
@@ -23431,6 +23448,7 @@ function turnLand(m, io, hit) {
   if (h.guard > 0) red *= T.guardX;
   if (h.grit > 0) red *= 1 - T.gritDr * h.grit;
   if (h.escape) red *= 0.8;   // Twin Shot: Quick Escape
+  if (m.reach) red *= T.reach[p.heroKey] || 1;   // Out of Reach (Wren): a hit after she dodged one of this move
   amt *= Math.max(1 - T.drCap, red);
   let blocked = false;
   if (p.blockP > 0 && io.random() < p.blockP) blocked = true;
@@ -23464,7 +23482,7 @@ function turnContact(m, io) {
     if (h.brace > 0 && h.braceT === 'b') h.pierce = 1;   // Brace: Read the Blow
     if (m.sf) turnStarsDef(m, io, 'parry');
   } else if (m.defense === 'dodge') {
-    res = 'dodge'; h.postDodge = 1;
+    res = 'dodge'; h.postDodge = 1; if (T.reach[m.p.heroKey]) m.reach = 1;   // Wren's Out of Reach: the rest of this move hits softer
     if (m.sf) turnStarsDef(m, io, 'dodge');
     if (m.shadowUsed) { m.shadowUsed = 0; h.shadow = 0; h.keen = 1; if (turnTal(m, 'shadowstep') === 'b') turnGain(h, 'aim', 1); }
   } else if (e.blind > 0 && io.random() < (m.p.boss ? T.blindBossP : T.blindP)) res = 'miss';
@@ -32702,6 +32720,8 @@ var handsTradeOpenPicker;
     const basic = el('div', 'ab-path'); basic.append(el('h3', 'ab-pname', 'Attack, Parry and Dodge'));
     for (const [mv, nm] of [['attack', 'Attack'], ['parry', 'Parry'], ['dodge', 'Dodge']]) {
       const c = el('div', 'ab-card owned ab-basic'); c.append(el('b', 'ab-bname', nm));
+      const own = mv === 'dodge' && typeof turnDodgeLine === 'function' ? turnDodgeLine(k) : '';   // Wren's Out of Reach (59k)
+      if (own) c.append(el('p', 'ab-desc', own));
       const row = talentRow(k, k + ':' + mv); if (row) c.append(row);
       basic.append(c);
     }
@@ -38341,6 +38361,8 @@ var soloIconURL = () => '';
     const x = el('button', 'sp-x', '×'); x.type = 'button'; x.setAttribute('aria-label', 'Close'); x.addEventListener('click', closePicker);
     head.append(x);
     sh.append(head, el('p', 'sp-desc', i.desc));
+    const own = id === 'dodge' && typeof turnDodgeLine === 'function' && typeof soloHero === 'function' ? turnDodgeLine(soloHero()) : '';
+    if (own) sh.append(el('p', 'sp-desc', own));   // Wren's Out of Reach (59k)
     if (typeof trainCard === 'function' && MOVE[id]) { const c = trainCard(MOVE[id]); c.onLeave = closePicker; sh.append(c); ov._card = c; }
     ov.append(sh);
     ov.addEventListener('pointerdown', e => { if (e.target === ov) closePicker(); });

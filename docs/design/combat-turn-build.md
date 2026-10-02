@@ -21,7 +21,8 @@ page says what was picked.
   (a red banner says so) and lands on its next turn as a string of big hits. Stun or Freeze it, or hit it for 6% of its
   max HP while it gathers, and it breaks: it loses its next turn instead. Below half HP a boss gets faster. You meet a
   boss at full health. Since the boss pass (below) a boss fight grows longer as the game goes on, and a boss hit you do
-  not parry or dodge costs about a quarter to a third of your health; a charged move most of it.
+  not parry or dodge costs about a quarter to a third of your health; a charged move most of it. Since the mid-game
+  HP pass (below) that holds from zone 8 to the end for a hero whose gear keeps up with the zones.
 
 ## Where the abilities sit
 
@@ -264,17 +265,20 @@ hero's frontier (three heroes, 25 days each, 2 October 2026):
 - One Attack of the reference hero: a share of the zone's old foe HP (`mobHp`), 0.7 up to zone 10, then falling to 0.22 by
   zone 34, 0.12 at zone 35, 0.09 at 38 and 0.065 from 42 (`TURN_TUNE.refAtk`). Gear gets harder to keep up as zones
   climb, and the sim shows it.
-- The reference hero's max HP: 1.2 x `mobHp` to zone 34, then 0.95 at 35, 0.6 at 38 and 0.4 from 42 (`TURN_TUNE.refHpX`).
-  Both still grow every zone in absolute terms (Attack about 11-13% a zone from 33 to 42), so the Deepwell's
+- The reference hero's max HP (`TURN_TUNE.refHpX`): since the mid-game HP pass (below) the max HP of a hero who keeps up:
+  1.2 x `mobHp` to zone 3, 2.5 at 8, 3 at 15, 4 at 20, 2.9 at 30, 1.85 at 34, then 0.95 at 35, 0.6 at 38 and 0.4 from
+  42 (it was 1.2 to zone 34). The Deepwell keeps the first table (`TURN_TUNE.deep.refHpX`). Both still grow every zone
+  in absolute terms (Attack about 11-13% a zone from 33 to 42), so the Deepwell's
   `turnPowerZone` still works.
 - A normal foe has about 5 Attacks of HP (the Thorn Imp and Gloomjaw 4), an elite 9, a zone boss 16, a region boss 30.
   With abilities that is 2 to 4 of your turns for a normal foe. The first three zone bosses are easier (65%, 80%, 90% of
   that HP) while you learn to parry and dodge. The boss pass (below) multiplies a zone boss's HP by zone (x1 to zone 3,
   up to x3.3 by zone 30, x1.5 from zone 36) and the region boss's by 1.25, so a boss takes 5-7 turns to zone 10, 8-10 to
   25 and 10-14 after.
-- A normal move does about 20% of the reference HP, split across its hits. Boss moves do 25-50%, often in strings of 2
-  to 4 hits with uneven rhythm, and since the boss pass x1.3 from zone 6 (charged moves x1.3 more) and x1.95 from zone
-  35 (charges x1.35 more).
+- A normal move does about 20% of the reference HP, split across its hits, x0.7 from zone 8 to 34 since the mid-game HP
+  pass (`TURN_TUNE.normHitX`). Boss moves do 25-50%, often in strings of 2 to 4 hits with uneven rhythm, and since the
+  boss pass and the mid-game HP pass x1.4 at zone 6, x1.6 from 8 to 15, x1.5 at 20, x1.3 from 26 to 34 and x1.9 from 35
+  (charged moves x1.3 more, x1.35 from 35).
 - Rewards per fight are higher, since fights are fewer: gold x3, XP x2.5, Essence chance x1.6 (`TURN_TUNE`).
   These are first numbers, to be set from the owner's play and a turn-based sim pass.
 
@@ -458,16 +462,114 @@ Fenmother 11.6 -> 8.8, the mid Tobin 9.9 -> 8.0) and lifts casual wins (zone 38 
 
 **Left open:**
 
-- **Mid-game HP.** The reference HP is 1.2 x `mobHp` for zones 1-34 while the reference Attack falls from 0.7 to 0.22 of
-  it, and a hero's HP grows with their Attack. Real saves carry far more than the reference at mid zones (Pip on the late
-  save at zone 30: 5.0x the reference HP at 1.7x its Attack; the heroes report scales HP by 1/2 to 1/4.2 there). In those
-  saves every foe hit, boss or normal, lands at a third to a half of the shares above. The fix is `refHpX` for zones
-  10-34 (falling with `refAtk`), a shared reference table that also moves normal foes and the Deepwell: the
-  coordinator's call.
-- **Wren is fragile.** With her lower HP a boss hit costs her about 1.4x what it costs Pip, so played casually she wins
-  15-63% of bosses (Pip 27-94%). A hero HP look, not a boss one.
+- **Mid-game HP** and **Wren is fragile**: done in the mid-game HP pass (below).
 - **The Fenmother** sits mid-band (11.6 turns, Wren-Pip-Tobin 10.4-12.3), not at the top: longer cost too many casual
   wins (51% for the kept-up Pip).
+
+### Mid-game HP and Wren (2 October 2026; owner: "it should always be very bad for us to get hit by a boss")
+
+The boss pass met the owner's direction for kept-up late heroes but left two gaps (its "Left open" list): the
+reference HP sat at 1.2 x `mobHp` for zones 1-34, far below a real hero's, so mid-game boss hits landed at a third to a
+half of their designed share; and Wren lost far more of her health to a boss hit than Pip did.
+
+**Measured: a hero who keeps up** (`node tools/sim.mjs --report heroes`, whose zone 8-34 stages are now these heroes):
+their own class set and a Charm at the zone's gear tier, rare +5, Training at their level, Attack scaled to the zone's
+reference Attack and HP by the same factor (HP grows with Attack in the game: it is `heroAtk` x the class's HP). Max HP
+as a share of `mobHp` (Wren before her x1.2 below in brackets):
+
+| Zone | Wren | Tobin | Pip | `refHpX` before -> after |
+|---|---|---|---|---|
+| 5 | 1.79 (1.49) | 4.73 | 1.93 | 1.2 -> 1.72 |
+| 8-10 | 2.63 (2.19) | 7.52 | 2.85 | 1.2 -> 2.5-2.64 |
+| 15 | 3.00 (2.50) | 9.02 | 3.24 | 1.2 -> 3.0 |
+| 20 | 3.93 (3.28) | 12.2 | 4.25 | 1.2 -> 4.0 |
+| 25 | 3.22 (2.68) | 10.0 | 3.49 | 1.2 -> 3.45 |
+| 30 | 2.48 (2.07) | 7.73 | 2.69 | 1.2 -> 2.9 |
+| 34 | 1.82 (1.52) | 5.67 | 1.97 | 1.2 -> 1.85 |
+
+The same hero in epic +10 has about 1.7-2x these. HP rises to zone 20 as each gear tier adds HP lines, then falls with
+the reference Attack (tier 4 lasts from zone 19 to 41). The fixtures as they are: the early Wren (zone 8, tier 1 common,
+a tier behind) 1.6, the mid Tobin (zone 20) 9.9, the late Pip (zone 38) 0.48.
+
+**Why Wren was fragile.** Her HP comes from her Attack (`heroAtk` in 59-combat `statUnit`), and her Attack still carries
+the real-time fight's damage parity (`SOLO_TUNE.heroX`: Wren 0.76, Pip 1.15, Tobin 1.2). Turn fights give that back to
+her damage (`TURN_TUNE.heroX`) but not to her HP. At the same level, Training and gear she had 1/1.5 of Pip's max HP;
+her armour (20 to Pip's 10) gave a little back, so a hit cost her about 1.4x. Her kit has no Ward, Guard or Grit.
+
+**What changed** (`TURN_TUNE` in 59k; zones 1-3, the Provings and the Deepwell's numbers are unchanged):
+
+- **Reference HP** (`refHpX`): the Wren and Pip middle of the table above: 1.2 to zone 3, 2.5 at 8, 3 at 15, 4 at 20,
+  2.9 at 30, 1.85 at 34, then as before (0.95 at 35, 0.6 at 38, 0.4 from 42). It still grows every zone in absolute
+  terms.
+- **Normal foes** hit x0.7 from zone 8 to 34 (`normHitX`), so a landed normal hit costs a kept-up hero 10-11% (it was
+  4-11%, and would have been 15-17% without this).
+- **Bosses** (`boss.hitX`, `boss.hpX`): with HP at the kept-up hero, the old x1.3 put a landed boss hit at 27% and casual
+  players still won 97% of bosses at zones 8-15. Boss hits are now x1.4 at zone 6, x1.6 from 8 to 15, x1.5 at 20 and
+  x1.3 from 26 to 34; x1.9 from 35 (was 1.95, which with Wren's new HP put the kept-up zone 38 Pip's hit at 24%). Boss HP
+  is x1.8 at zone 10 (was 1.45), 2.3 at 15, 2.2 at 20 (was 1.85), 2.4 at 25, then as before (3.3 at 30-34, 1.5 from 36),
+  so zone 15 bosses reach the 8-10 turn band.
+- **Wren:** her max HP in turn fights is x1.2 (`heroHpX`; the real-time fight is unchanged), and a kit trait, **Out of
+  Reach**: after she dodges a hit, the rest of that move hits her 30% softer (`reach`). It shows on her Dodge card
+  (Hero > Abilities) and in the Dodge help. Strings and charged moves are where it counts.
+- **The Deepwell** keeps the first reference HP (`deep.refHpX`, 1.2 to zone 34) and its foes' hits as written: its depth
+  curve and Oil were set against it. Runs end where they did (probe below).
+- **The Provings** are unaffected: their foes hit for shares of your own health, and the normal-foe factor skips them.
+
+**After** (`--report heroes --seeds 2`, before -> after; Wren, Pip, Tobin; "hit": one landed boss hit, undefended, as a
+share of max HP; good play wins 100% of bosses everywhere, before and after):
+
+| Stage | Boss turns, good | Boss win, casual | Boss hit (charge) | Normal hit |
+|---|---|---|---|---|
+| Zone 1 (fresh) | 4.9, 3.7, 5.0 (same) | 95, 100, 100 -> 98, 100, 100 | Wren 34 -> 29 (64 -> 53), Pip 26, Tobin 6 | Wren 25 -> 20 |
+| Zone 8 | 5.1, 5.5, 6.4 -> 6.0, 6.3, 7.5 | 100, 100, 100 -> 84, 89, 100 | 16, 13, 2 -> 34, 34, 5 (81) | 9, 7, 1 -> 10, 11, 2 |
+| Zone 15 | 5.3, 5.9, 7.0 -> 7.0, 8.0, 9.5 | 100, 100, 100 -> 73, 74, 100 | 13, 11, 2 -> 34, 34, 5 (81) | 7, 6, 1 -> 11, 11, 2 |
+| Zone 20 | 6.7, 8.6, 8.2 -> 7.7, 10.1, 9.7 | 100, 100, 100 -> 61, 61, 100 | 10, 8, 1 -> 32, 32, 5 (72) | 5, 4, 1 -> 10, 10, 2 |
+| Zone 25 | 6.9, 10.9, 8.3 -> 6.6, 10.3, 7.9 | 100, 99, 100 -> 86, 39, 100 | 11, 9, 1 -> 28, 28, 4 (65) | 6, 5, 1 -> 10, 10, 2 |
+| Zone 30 | 7.0, 11.9, 10.0 (same) | 99, 96, 100 -> 83, 31, 100 | 14, 11, 2 -> 27, 27, 4 (74) | 8, 7, 1 -> 11, 11, 2 |
+| Zone 34 | 9.2, 11.9, 12.8 (same) | 72, 77, 100 -> 57, 36, 100 | 21, 18, 3 -> 28, 27, 4 (62) | 11, 9, 1 -> 10, 10, 2 |
+| Kept up, the Fenmother | 10.4, 11.6, 12.3 (same) | 15, 27, 99 -> 25, 30, 99 | 37, 27, 6 -> 30, 26, 6 (77) | 12, 9, 2 -> 10, 9, 2 |
+| Kept up, zone 38 | 10.2, 9.9, 12.0 (same) | 21, 50, 100 -> 41, 51, 100 | 39, 28, 7 -> 31, 27, 6 (76) | 13, 10, 2 -> 11, 10, 2 |
+
+Normal foes: 100% won, played well or casually, in 1.2-2.5 hero turns (kept-up heroes kill them quicker than the 2-4
+band; unchanged). Tobin stays the safest (99-100% of bosses casually, a boss hit 4-6% of his health) and a little slower
+(x1.05-1.33). Before the pass, on the old footing (the lamp's gear refitted, HP at the reference), Wren won 15-63% of
+bosses casually and Pip 27-94%; now Wren and Pip are level on a hit (within 1 point to zone 34, 27-31% to Pip's 26-27%
+after), and Wren's casual wins sit within 5 points of Pip's to zone 20 and above them after, where she kills faster.
+
+**Gear matters** (`--tier -1` and `--tier 1`: every worn piece a tier behind or ahead, the stage's scale kept; Wren and
+Pip; good turns, good win %, casual win %, a boss hit):
+
+| Stage | A tier behind | As is | A tier ahead |
+|---|---|---|---|
+| Zone 8 | 7.5-8.1, 99%, 19-22%, 66% (charge 158%) | 6.0-6.3, 100%, 84-89%, 34% | 4.3-4.9, 100%, 100%, 15% |
+| Zone 20 | 11.3-14.0, 88-91%, 1%, 78% (177%) | 7.7-10.1, 100%, 61%, 32% | 5.4-7.0, 100%, 100%, 12% |
+| Zone 30 | 10.6-16.5, 87-96%, 0-4%, 68% (183%) | 7.0-11.9, 100%, 31-83%, 27% | 4.4-8.1, 100%, 100%, 10% |
+| Kept up, zone 38 | 15.2-15.3, 85-88%, 0%, 82-94% | 9.9-10.2, 100%, 41-51%, 27-31% | 6.5-6.7, 100%, 100%, 8-10% |
+
+A tier behind, a boss's charge kills you outright and its plain hits take two thirds of your health: casual play loses
+nearly every boss and good play loses 1 in 10. A tier ahead, bosses take a third fewer turns and barely hurt. On the real
+saves (`--report turns`): the early Wren (a tier behind at zone 8) takes 48% a hit and 116% a charge, and wins 59% of
+bosses casually (was 100%); the mid Tobin takes 6% (was 2%), 13% a tier behind; the kept-up zone 38 Pip 27% and 66% (was
+28% and 68%), 82% and 200% a tier behind.
+
+**Stars** (`--stars typical`) still take a noticeable chunk off a boss: the kept-up zone 38 Pip 10.0 -> 7.5 turns, the
+Fenmother 11.6 -> 8.8, the mid Tobin 11.5 -> 9.4, the early Wren 5.8 -> 5.5.
+
+**The Deepwell** (a probe bot: acts at once, parries and dodges at the good and casual rates, takes the first boon,
+Refill at landings; 4 runs): the mid save reaches floor 18.8 played well and 11.5 casually, the late save 21.3 and 17.5,
+the same before and after (the Deepwell keeps its own reference). **The Provings**: unchanged (`tools/check.mjs` "C29
+Deepwell and Provings in turns").
+
+**Left open:**
+
+- **Zones 6-10 stay kinder.** Kept-up heroes win 84-89% of zone 8 bosses casually, above the 40-70% aim, at the top of
+  the hit band (34%) and in the 5-7 turn band. Going lower would break one of those bands; the early fixture (a tier
+  behind) wins 59%.
+- **Kill speed, not HP, splits Wren and Pip from zone 25.** On the same Attack Wren kills a boss in 6.6-9.2 turns and
+  Pip in 10.3-11.9, so Pip wins 31-39% casually at zones 25-30 and Wren 83-86%. Wren's quiver gives crit, and her
+  striker lines (Attack, crit) work in turn fights; Pip's lantern gives spell power, and the caster lines (spell, area,
+  control) are not read by turn fights at all. A damage parity look (what spell power does in turns), not an HP one.
+- **The Fenmother** still sits below the casual band (25-30%); the region boss is the hardest fight of the Hollow.
 
 ## Art
 
