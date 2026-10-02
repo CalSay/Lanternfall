@@ -23099,7 +23099,7 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
 //
 // Exposed names:
 //   TURN_TUNE, turnCombatScope(), turnCombatOn(), turnRefAtk(z), turnRefHp(z), turnFoeSetup(f, z, o), turnCdFor(id)
-//   turnArenaOk(), turnArenaNow(), turnPowerZone(a), turnDeepZone(z0, floor), turnWaiting() (the Deepwell and the Provings: 59c, 59f, 57d)
+//   turnAssistX() (the Wider timing windows setting, S.turn.assist), turnArenaOk(), turnArenaNow(), turnPowerZone(a), turnDeepZone(z0, floor), turnWaiting() (the Deepwell and the Provings: 59c, 59f, 57d)
 //   turnMakeProfile(f, u), turnNew(p, io), turnResolve(m, cmd, dt, io), turnPreview(m, n), turnUsable(m, id)
 //   turnCombatSnapshot(), turnCombatProfile(), turnCombatAction(kind, slot), turnCombatTick(dt), turnBadgesFor(f),
 //   turnHeroChips(), turnChoose(m), turnCombatSample({ profile, seconds, seed, skill })
@@ -23116,8 +23116,12 @@ const TURN_TUNE = {
   hitstop: { crit: 0.06, counter: 0.14, perfect: 0.1, broken: 0.18, big: 0.08 },   // owner (2026-10-02): a pause at every change of turn, while a banner says whose turn it is (turnCard)
   // the reference hero at zone z (measured from the balance sim's saves at each hero's frontier, 2026-10-02): one Attack
   // action and max HP, as shares of the zone's legacy foe HP (mobHp, 40-rules). Attack falls behind mobHp as zones climb
-  // (gear tiers come slower than foe HP), so refAtk is a table over zones, straight lines between the points.
-  refAtk: [[1, 0.7], [10, 0.7], [15, 0.55], [22, 0.42], [30, 0.3], [35, 0.2]], refHpX: 1.2,
+  // (gear tiers come slower than foe HP), so refAtk is a table over zones, straight lines between the points, flat past
+  // the last. Late-zone pass (2026-10-02, combat-turn-build.md "Numbers"): mobHp steps x1.7 at zone 35 (the region step)
+  // and grows x1.22 a zone after, while a hero who keeps up (epic tier-4 +10, Training at their level, about a level
+  // every 2 zones there) barely grows until Starlit gear at 42. So from zone 35 both the Attack and the HP shares fall.
+  refAtk: [[1, 0.7], [10, 0.7], [15, 0.55], [22, 0.42], [30, 0.3], [34, 0.22], [35, 0.12], [38, 0.09], [42, 0.065]],
+  refHpX: [[1, 1.2], [34, 1.2], [35, 0.95], [38, 0.6], [42, 0.4]],
   heroHaste: { wren: 10, tobin: 9, pip: 10 },
   heroX: { wren: 1.45, tobin: 1.2, pip: 1.26 },   // per-hero damage parity (Attack and abilities)
   foeAtkX: 1,
@@ -23133,6 +23137,7 @@ const TURN_TUNE = {
   // the boss riders on the hero (shares of the reference HP a tick, two hero turns)
   heroDot: { bleed: 0.02, burn: 0.04, venom: 0.02 }, heroDotT: 2, heroChill: 0.1, heroBlind: 0.3,
   windowCaps: { parry: 0.35, dodge: 0.5 }, dodgeTrain: 0.004,   // Dodge Training: +4 ms of dodge window a level
+  assistX: 1.5,   // the Wider timing windows setting (S.turn.assist, Settings > Combat): parry and dodge windows x1.5, under the caps; rewards unchanged
   abTrain: 0.02,                                                  // Ability power Training: +2% ability power a level
   // timed abilities (owner, 2026-10-01; hero-abilities.md 2a.4): press again as the ring closes. Perfect within +-perfect s
   // adds the ability's bonus, Good within +-good s is the ability as written, a Miss hits for missX. One ring per hit.
@@ -23148,7 +23153,9 @@ const TURN_TIMED = { powershot: 1, volley: 3, deadeye: 1, moonvolley: 5, heavyst
   frostshard: 1, fire: 1, ignite: 1, lanternburst: 1 };
 SOLO_TUNE.turnParryWindow = 0.18;
 SOLO_TUNE.turnDodgeWindow = 0.35;
-registerState('turn', { awayKillsCarry: 0, awayEssCarry: 0, awayProfile: null, awaySample: null, awaySig: '', seen: {} });
+registerState('turn', { awayKillsCarry: 0, awayEssCarry: 0, awayProfile: null, awaySample: null, awaySig: '', seen: {}, assist: 0 });
+// the Wider timing windows setting (owner, 2026-10-02: an assist for players who find timing hard; off by default)
+const turnAssistX = () => (S && S.turn && S.turn.assist ? TURN_TUNE.assistX : 1);
 addModifier('essence', () => turnCombatScope() ? TURN_TUNE.essenceX : 1);
 
 function turnCombatScope() {
@@ -23179,13 +23186,16 @@ function turnWaiting() {
   return m.phase === 'hero' || m.phase === 'handoff' || m.phase === 'intro' || m.stop > 0 || (typeof turnPaused === 'function' && turnPaused());
 }
 function turnCombatOn() { return turnCombatScope(); }
-const turnRefAtkX = z => {
-  const P = TURN_TUNE.refAtk; if (z <= P[0][0]) return P[0][1];
+// a zone table [[zone, value], ...]: straight lines between the points, flat past the ends (a number is flat everywhere)
+const turnZoneLine = (P, z) => {
+  if (typeof P === 'number') return P;
+  if (z <= P[0][0]) return P[0][1];
   for (let i = 1; i < P.length; i++) if (z <= P[i][0]) { const [z0, a] = P[i - 1], [z1, c] = P[i]; return a + (c - a) * (z - z0) / (z1 - z0); }
   return P[P.length - 1][1];
 };
+const turnRefAtkX = z => turnZoneLine(TURN_TUNE.refAtk, z);
 const turnRefAtk = z => turnRefAtkX(z) * mobHp(z) * mod('foeHp');
-const turnRefHp = z => TURN_TUNE.refHpX * mobHp(z);
+const turnRefHp = z => turnZoneLine(TURN_TUNE.refHpX, z) * mobHp(z);
 const TURN_SIG = { wren: 'echo', tobin: 'bash', pip: 'fire' };
 const turnAb = id => (typeof ABILITIES === 'object' && ABILITIES[id]) || null;
 function turnCdFor(id) {
@@ -23260,8 +23270,8 @@ function turnMakeProfile(f, u) {
     heroSpd: (T.heroHaste[key] || 10) + (g.initiative || 0), foeSpd: f.tk.spd, foeMaxHp: f.max, foeHp: f.hp,
     foeName: f.name, foeType: f.txRow || f.type, foeArm: f.tk.arm, boss: f.tk.boss, region: f.tk.region, trait: f.tr && TURN_TRAITS[f.tr[0]] ? f.tr[0] : '',
     script: f.tk.script, eq, cds, tal: typeof talentsOf === 'function' ? talentsOf(key) : {},
-    parryWindow: SOLO_TUNE.turnParryWindow + (g.parryWindow || 0) / 1000 + bonus('turnParryWin'),
-    dodgeWindow: SOLO_TUNE.turnDodgeWindow + (g.dodgeWindow || 0) / 1000 + T.dodgeTrain * trainLv('dodge') + bonus('turnDodgeWin'),
+    parryWindow: Math.min(T.windowCaps.parry, (SOLO_TUNE.turnParryWindow + (g.parryWindow || 0) / 1000 + bonus('turnParryWin')) * turnAssistX()),
+    dodgeWindow: Math.min(T.windowCaps.dodge, (SOLO_TUNE.turnDodgeWindow + (g.dodgeWindow || 0) / 1000 + T.dodgeTrain * trainLv('dodge') + bonus('turnDodgeWin')) * turnAssistX()),
     essChance: essChance(), essExtra: g.essExtra || 0, goldPerKill: f.gold, xpPerKill: f.xp, healOnKill: COMBAT_TUNE.packHealF,
     respawn: Math.max(0.45, typeof zoneFoeDeathS === 'function' ? zoneFoeDeathS(f) : 0) };
 }
@@ -34729,7 +34739,8 @@ var classEvoUI;
 //     "Enrage in 0:12", the three lantern pips of the active reward (3.8); for a big pack, "6 of 9"
 //   - the ability buttons' rims: purple while a boss casts its big move (interrupt now), gold while a Stagger or a
 //     reaction window is open on the focus foe (hit now)
-//   - haptics (a setting, on by default where the device has it) and "Buttons on the left" (a setting)
+//   - haptics (a setting, on by default where the device has it), "Buttons on the left" (a setting) and "Wider timing
+//     windows" (a setting for turn fights, S.turn.assist: 59k turnAssistX)
 // Reduced motion: no pulses or sweeps (60-combat2.css); the banner appears in place.
 
 {
@@ -34812,20 +34823,22 @@ var classEvoUI;
   side();
   on('sceneReset', side);
 
-  // ---- the two settings rows (the Journal's settings) ----
+  // ---- the settings rows (Settings > Combat) ----
   registerSection('log', {
     id: 'cb2set', title: 'Combat',
     mount(sec) {
-      const row = (label, key, note) => {
+      // st: the save object the setting lives in (S.cb2, or S.turn for the turn fight's Wider timing windows, 59k)
+      const row = (label, key, note, st = () => S.cb2) => {
         const b = el('button', 'cb-toggle'); b.type = 'button';
-        const put = () => { const on_ = !!(S.cb2 && S.cb2[key]); b.textContent = `${label}: ${on_ ? 'On' : 'Off'}`; b.setAttribute('aria-pressed', on_ ? 'true' : 'false'); };
-        b.addEventListener('click', () => { if (!S.cb2) return; S.cb2[key] = S.cb2[key] ? 0 : 1; put(); side(); save(); });
+        const put = () => { const on_ = !!(st() && st()[key]); b.textContent = `${label}: ${on_ ? 'On' : 'Off'}`; b.setAttribute('aria-pressed', on_ ? 'true' : 'false'); };
+        b.addEventListener('click', () => { const o = st(); if (!o) return; o[key] = o[key] ? 0 : 1; put(); side(); save(); });
         put();
         const w = el('div', 'cb-set'); w.append(b, el('p', 'note', note));
         return w;
       };
       sec.append(row('Haptics', 'haptic', 'A short buzz when a warning starts, and when you answer it.'),
-        row('Buttons on the left', 'left', 'Moves the ability buttons to the left side, for your left thumb.'));
+        row('Buttons on the left', 'left', 'Moves the ability buttons to the left side, for your left thumb.'),
+        row('Wider timing windows', 'assist', 'Gives you more time to parry and dodge, from your next fight. Rewards stay the same.', () => S.turn));
     },
     update() {}
   });
