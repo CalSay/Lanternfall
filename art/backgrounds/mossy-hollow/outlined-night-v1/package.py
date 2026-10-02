@@ -56,6 +56,9 @@ manifest = {
 }
 (ROOT / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
 files = sorted(p for p in ROOT.rglob('*') if p.is_file() and p.name != 'sha256.json' and '__pycache__' not in p.parts)
+for p in files:
+    if p.suffix in {'.py', '.md', '.txt', '.html', '.json'}:
+        p.write_bytes(p.read_bytes().replace(b'\r\n', b'\n'))
 hashes = {p.relative_to(ROOT).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest() for p in files}
 (ROOT / 'sha256.json').write_text(json.dumps(hashes, indent=2) + '\n', encoding='utf-8')
 archive = ROOT.with_suffix('.zip')
