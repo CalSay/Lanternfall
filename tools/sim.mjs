@@ -1463,7 +1463,8 @@ async function runEconReport() {
 // hero at zone 1, and the early, mid and late fixtures at their frontier) it fights normal foes and the zone boss with two
 // players (and the late fixture made a hero who keeps up, at zones 35 and 38: see late-kept below): 'good' (parries 60% of hits and dodges 90% of the rest; timed rings 40% Perfect, 45% Good) and 'casual' (25% and
 // 50%; 10% Perfect, 40% Good). It reports the win rate,
-// hero turns and seconds a fight, and kills, gold and Essence an hour of play.
+// hero turns and seconds a fight, kills, gold and Essence an hour of play, and (the boss pass) what one landed hit, one
+// landed charge and a fight cost as shares of max HP. A zone boss is met at full health (59k fullHp), as in play.
 // Usage: --report turns [--hours 1] [--seeds 3] [--json path]
 async function runTurnReport() {
   const fs = await import('node:fs'), path = await import('node:path');
@@ -1478,8 +1479,14 @@ async function runTurnReport() {
   const kept = (z, L) => `S.L = ${L}; S.solo.asc.pip = ${L > 40 ? 1 : 0}; S.solo.tr.pip.atk = ${L};
     for (const sl of Object.keys(S.equip)) { const it = itemById(S.equip[sl]); if (it && !['pick', 'axe', 'sickle', 'spear'].includes(it.slot)) { it.r = 'epic'; it.plus = 10; } }
     S.abil.unl.pip = ['spark', 'nova']; S.solo.eq.pip = ['fire', 'spark', 'nova']; S.maxZone = ${z};`;
-  const profiles = [['fresh-wren', 'wren'], ['fresh-tobin', 'tobin'], ['fresh-pip', 'pip'], ['early', '', fx('early')], ['mid', '', fx('mid')], ['late', '', fx('late')],
-    ['late-kept-35', '', fx('late'), kept(35, 40)], ['late-kept-38', '', fx('late'), kept(38, 41)]];
+  // the boss pass (owner, 2026-10-02: "We should feel it necessary to scale ourselves with crafting higher level gear"):
+  // the same hero a gear tier behind (-1) or ahead (+1): every worn piece (not the tools) one tier lower or higher, same
+  // rarity and +N. mid: tier 3 -> 2 or 4 (tier 4 opens at zone 19); late-kept-38: tier 4 -> 3 or 5 (Starlit, from zone 42).
+  const tier = d => `for (const sl of Object.keys(S.equip)) { const it = itemById(S.equip[sl]); if (it && !['pick', 'axe', 'sickle', 'spear'].includes(it.slot)) it.t = Math.max(1, Math.min(5, it.t + (${d}))); }`;
+  const profiles = [['fresh-wren', 'wren'], ['fresh-tobin', 'tobin'], ['fresh-pip', 'pip'], ['early', '', fx('early')], ['mid', '', fx('mid')],
+    ['mid-tier-1', '', fx('mid'), tier(-1)], ['mid-tier+1', '', fx('mid'), tier(1)], ['late', '', fx('late')],
+    ['late-kept-35', '', fx('late'), kept(35, 40)], ['late-kept-38', '', fx('late'), kept(38, 41)],
+    ['late-kept-38-tier-1', '', fx('late'), kept(38, 41) + tier(-1)], ['late-kept-38-tier+1', '', fx('late'), kept(38, 41) + tier(1)]];
   // perfect / good: the share of timed-ability rings pressed Perfect / Good (the rest are missed)
   const players = { good: { parry: 0.6, dodge: 0.9, perfect: 0.4, good: 0.45 }, casual: { parry: 0.25, dodge: 0.5, perfect: 0.1, good: 0.4 } };
   const rows = [];
@@ -1495,6 +1502,12 @@ async function runTurnReport() {
       if (args.eval) e(String(args.eval));
       const p = e('turnCombatProfile()');
       const r = e(`turnCombatSample({ profile: turnCombatProfile(), seconds: ${seconds}, seed: ${sd}, skill: ${JSON.stringify(skill)} })`);
+      // what one landed hit costs, undefended (no Guard, Grit or Ward), as a share of max HP: the biggest single hit of
+      // its plain moves, and a charged move's whole string
+      const k = p.refHp * p.hitX * (p.bossHitX || 1) / p.heroMaxHp, plain = p.script.filter(mv => !mv.charge), ch = p.script.find(mv => mv.charge);
+      r.hitShare = k * Math.max(...plain.flatMap(mv => mv.hits.map(h => h.x)));
+      r.chargeShare = ch ? k * (p.bossChargeX || 1) * ch.hits.reduce((a, h) => a + h.x, 0) : 0;
+      r.lostShare = r.damageTaken / p.heroMaxHp;
       if (core.errors.length) throw new Error(`${name}: ${core.errors.join('; ')}`);
       r.zone = p.zone; r.gold = r.kills * p.goldPerKill;
       agg = agg ? Object.fromEntries(Object.entries(agg).map(([k, v]) => [k, typeof v === 'number' ? v + r[k] : v])) : { ...r };
@@ -1503,14 +1516,15 @@ async function runTurnReport() {
     rows.push({ profile: name, zone: agg.zone / n, foe: boss ? 'boss' : 'normal', player: pl,
       winRate: agg.kills + agg.deaths ? agg.kills / (agg.kills + agg.deaths) : 0,
       heroTurns: fights ? agg.totalHeroTurns / fights : null, fightSecs: fights ? agg.totalFightSeconds / fights : null,
+      hitShare: agg.hitShare / n, chargeShare: agg.chargeShare / n, lostPerFight: agg.kills + agg.deaths ? agg.lostShare / (agg.kills + agg.deaths) : 0,
       killsPerHour: agg.kills / n * 3600 / seconds, deathsPerHour: agg.deaths / n * 3600 / seconds,
       goldPerHour: agg.gold / n * 3600 / seconds, essPerHour: agg.generatedEss / n * 3600 / seconds });
   }
   const f = (x, d = 1) => x == null ? 'n/a' : x.toFixed(d);
   const fmtN = x => x >= 1e9 ? (x / 1e9).toFixed(1) + 'B' : x >= 1e6 ? (x / 1e6).toFixed(1) + 'M' : x >= 1e3 ? (x / 1e3).toFixed(1) + 'K' : x.toFixed(0);
   console.log(`C29 turn fights, ${count} seed(s) x ${seconds / 3600} h of play. good: parry 60%, dodge 90%, rings 40% Perfect 45% Good; casual: 25% / 50%, rings 10% / 40%.`);
-  console.log('profile / zone / foe / player / win % / hero turns / fight s / kills/h / deaths/h / gold/h / Essence/h');
-  for (const r of rows) console.log(`${r.profile} / ${r.zone} / ${r.foe} / ${r.player} / ${f(100 * r.winRate, 0)} / ${f(r.heroTurns)} / ${f(r.fightSecs)} / ${f(r.killsPerHour, 0)} / ${f(r.deathsPerHour, 1)} / ${fmtN(r.goldPerHour)} / ${f(r.essPerHour, 0)}`);
+  console.log('profile / zone / foe / player / win % / hero turns / fight s / kills/h / deaths/h / gold/h / Essence/h / max HP %: a landed hit, a landed charge, lost a fight');
+  for (const r of rows) console.log(`${r.profile} / ${r.zone} / ${r.foe} / ${r.player} / ${f(100 * r.winRate, 0)} / ${f(r.heroTurns)} / ${f(r.fightSecs)} / ${f(r.killsPerHour, 0)} / ${f(r.deathsPerHour, 1)} / ${fmtN(r.goldPerHour)} / ${f(r.essPerHour, 0)} / ${f(100 * r.hitShare, 0)}, ${r.chargeShare ? f(100 * r.chargeShare, 0) : '-'}, ${f(100 * r.lostPerFight, 0)}`);
   const report = { seconds, seeds: count, players, rows };
   if (args.json && args.json !== '1') fs.writeFileSync(String(args.json), JSON.stringify(report, null, 2) + '\n');
   return report;
@@ -1568,14 +1582,15 @@ async function runHeroReport() {
       for (const set of SETS[sz][k]) {
         const row = { st, hero: k, foe: boss ? 'boss' : 'normal', set: set.join('+') };
         for (const [pl, skill] of Object.entries(players)) {
-          let K = 0, D = 0, T = 0, F = 0, L = 0;
+          let K = 0, D = 0, T = 0, F = 0, L = 0, H = 0;
           for (let i = 0; i < count; i++) {
             const r = e(`(() => { const p = turnCombatProfile(); p.eq = ${J(set)}; p.cds = { attack: 1 }; for (const id of p.eq) p.cds[id] = turnCdFor(id);
               p.A *= ${fa}; p.U *= ${fa}; p.counter *= ${fa}; p.heroMaxHp *= ${fh};
-              const r = turnCombatSample({ profile: p, seconds: ${seconds}, seed: ${i + 1}, skill: ${J(skill)} }); r.lost = r.damageTaken / p.heroMaxHp; return r; })()`);
-            K += r.kills; D += r.deaths; T += r.totalHeroTurns; F += r.completedFights; L += r.lost;
+              const r = turnCombatSample({ profile: p, seconds: ${seconds}, seed: ${i + 1}, skill: ${J(skill)} }); r.lost = r.damageTaken / p.heroMaxHp;
+              r.hit = p.refHp * p.hitX * (p.bossHitX || 1) / p.heroMaxHp * Math.max(...p.script.filter(m => !m.charge).flatMap(m => m.hits.map(h => h.x))); return r; })()`);
+            K += r.kills; D += r.deaths; T += r.totalHeroTurns; F += r.completedFights; L += r.lost; H = r.hit;
           }
-          row[pl] = { win: K / Math.max(1, K + D), turns: F ? T / F : NaN, lost: L / Math.max(1, K + D) };
+          row[pl] = { win: K / Math.max(1, K + D), turns: F ? T / F : NaN, lost: L / Math.max(1, K + D), hit: H };
         }
         if (core.errors.length) throw new Error(`${st} ${k}: ${core.errors.join('; ')}`);
         out.push(row);
@@ -1584,10 +1599,10 @@ async function runHeroReport() {
     }
   }
   console.log(`The heroes on the same footing, ${count} seed(s) x ${seconds / 3600} h a set. Each hero's mean over their ability sets.`);
-  console.log('stage / foe / player / hero turns: Wren, Pip, Tobin (Tobin / their mean) / win %: Wren, Pip, Tobin / max HP lost a fight %: Wren, Pip, Tobin');
+  console.log('stage / foe / player / hero turns: Wren, Pip, Tobin (Tobin / their mean) / win %: Wren, Pip, Tobin / max HP lost a fight %: Wren, Pip, Tobin / a landed hit, % of max HP: Wren, Pip, Tobin');
   for (const st of STAGES.map(x => x[0])) for (const foe of ['normal', 'boss']) for (const pl of Object.keys(players)) {
     const m = (h, f) => { const rs = out.filter(r => r.st === st && r.foe === foe && r.hero === h); return rs.reduce((a, r) => a + f(r[pl]), 0) / rs.length; };
-    const t = h => m(h, x => x.turns), w = h => (100 * m(h, x => x.win)).toFixed(0), l = h => (100 * m(h, x => x.lost)).toFixed(0);
-    console.log(`${st} / ${foe} / ${pl} / ${t('wren').toFixed(1)}, ${t('pip').toFixed(1)}, ${t('tobin').toFixed(1)} (x${(2 * t('tobin') / (t('wren') + t('pip'))).toFixed(2)}) / ${w('wren')}, ${w('pip')}, ${w('tobin')} / ${l('wren')}, ${l('pip')}, ${l('tobin')}`);
+    const t = h => m(h, x => x.turns), w = h => (100 * m(h, x => x.win)).toFixed(0), l = h => (100 * m(h, x => x.lost)).toFixed(0), hh = h => (100 * m(h, x => x.hit)).toFixed(0);
+    console.log(`${st} / ${foe} / ${pl} / ${t('wren').toFixed(1)}, ${t('pip').toFixed(1)}, ${t('tobin').toFixed(1)} (x${(2 * t('tobin') / (t('wren') + t('pip'))).toFixed(2)}) / ${w('wren')}, ${w('pip')}, ${w('tobin')} / ${l('wren')}, ${l('pip')}, ${l('tobin')} / ${hh('wren')}, ${hh('pip')}, ${hh('tobin')}`);
   }
 }

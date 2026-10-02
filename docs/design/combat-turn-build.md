@@ -20,7 +20,8 @@ page says what was picked.
 - **Bosses** have four moves in turn: two attacks, a charged move, a third attack. A charged move takes a turn to gather
   (a red banner says so) and lands on its next turn as a string of big hits. Stun or Freeze it, or hit it for 6% of its
   max HP while it gathers, and it breaks: it loses its next turn instead. Below half HP a boss gets faster. You meet a
-  boss at full health.
+  boss at full health. Since the boss pass (below) a boss fight grows longer as the game goes on, and a boss hit you do
+  not parry or dodge costs about a quarter to a third of your health; a charged move most of it.
 
 ## Where the abilities sit
 
@@ -162,7 +163,8 @@ Turning Point 12%) and often by nothing for a hero it does not suit. A strong se
 of five makes bosses about 20-30% shorter, which keeps a hero who keeps up inside the bands (bosses 5 to 9 turns, normal
 foes about 2); casual players win more bosses. Two changes came from these runs: Turning Point fires at a third of the
 foe's health, not half (at half it took a fifth off the mid Tobin's bosses on its own), and 2 lit stars, not 3 (three put a kept-up
-Pip's zone 38 bosses at 4.7 turns). No star gives a turn: the most turns in a row (2, a boss 3) still holds with every
+Pip's zone 38 bosses at 4.7 turns). The boss pass (below) made bosses longer; a strong set still takes about a quarter
+off them (zone 38: 10.0 to 7.5 turns). No star gives a turn: the most turns in a row (2, a boss 3) still holds with every
 star at once (tools/check.mjs "stars").
 
 ## Fight feel (owner, 2026-10-02)
@@ -266,10 +268,13 @@ hero's frontier (three heroes, 25 days each, 2 October 2026):
   Both still grow every zone in absolute terms (Attack about 11-13% a zone from 33 to 42), so the Deepwell's
   `turnPowerZone` still works.
 - A normal foe has about 5 Attacks of HP (the Thorn Imp and Gloomjaw 4), an elite 9, a zone boss 16, a region boss 30.
-  With abilities that is 2 to 4 of your turns for a normal foe and 5 to 9 for a boss. The first three zone bosses are
-  easier (65%, 80%, 90% of that HP) while you learn to parry and dodge.
+  With abilities that is 2 to 4 of your turns for a normal foe. The first three zone bosses are easier (65%, 80%, 90% of
+  that HP) while you learn to parry and dodge. The boss pass (below) multiplies a zone boss's HP by zone (x1 to zone 3,
+  up to x3.3 by zone 30, x1.5 from zone 36) and the region boss's by 1.25, so a boss takes 5-7 turns to zone 10, 8-10 to
+  25 and 10-14 after.
 - A normal move does about 20% of the reference HP, split across its hits. Boss moves do 25-50%, often in strings of 2
-  to 4 hits with uneven rhythm.
+  to 4 hits with uneven rhythm, and since the boss pass x1.3 from zone 6 (charged moves x1.3 more) and x1.95 from zone
+  35 (charges x1.35 more).
 - Rewards per fight are higher, since fights are fewer: gold x3, XP x2.5, Essence chance x1.6 (`TURN_TUNE`).
   These are first numbers, to be set from the owner's play and a turn-based sim pass.
 
@@ -297,7 +302,7 @@ the 0.065 / 0.4 shares, so its foes grow x1.22 a zone again: the coast needs its
 The Provings fight at zone 35's reference, so their foes now have 40% less HP (their hits are shares of your own
 health, so those stay). The Deepwell finds its depth from the same table (`turnPowerZone`), so it follows on its own.
 
-Sim pass (`node tools/sim.mjs --report turns`, 2 seeds; the late rows from the late-zone pass; "good" parries 60% of
+Sim pass (`node tools/sim.mjs --report turns`, 2 seeds; the late rows from the late-zone pass, before the boss pass; "good" parries 60% of
 hits and dodges 90% of the rest, "casual" 25% and 50%; the bot acts at once, so real fights take longer):
 
 | Profile | Foe | Good: win %, hero turns | Casual: win %, hero turns |
@@ -384,6 +389,85 @@ at zone 38 he is still x1.4 on normal foes, and 4.4 turns a normal foe played ca
 best set, Bash, Hammerfall and Heavy Strike, takes 4.0). Part of it is Last Stand: his finisher does no damage, while
 Wren's and Pip's do, so his late sets trail. A look at Last Stand (a Grit payoff, say) is the next lever, not more
 power across the board.
+
+### Boss pass (2 October 2026; owner: "make the bosses take longer and still hit hard")
+
+The owner's direction: "Yes make the bosses take longer and still hit hard. We should feel it necessary to scale
+ourselves with crafting higher level gear. With that said, it should always be very bad for us to get hit by a boss.
+Regular monsters we should be able to take a few bits but bosses should be serious." Like Expedition 33: basic enemies
+die quickly, bosses take a lot of hits.
+
+**Before:** a boss took 3-10 hero turns with no rise through the game (zone 30: 3.1-3.7), a landed boss hit cost the
+kept-up and fixture heroes 14-17% of their max HP (Wren and Pip at their zone's reference: 14-34%), and played casually
+they won 84-100% of bosses.
+
+**What changed** (`TURN_TUNE.boss` in 59k; normal foes, elites, the reference tables and zones 1-3 are unchanged):
+
+- **Longer bosses.** A zone boss's HP (16 reference Attacks) x `hpX`, a zone table: 1 to zone 3, 1.45 at 10, 1.85 at 20,
+  3.3 at 30-34, 1.5 from 36 (the reference Attack's region step at 35 already makes zones 35+ longer). The region boss
+  (30 Attacks) x `regionHpX` 1.25.
+- **Harder hits.** Every boss hit x `hitX`: 1 to zone 3, 1.3 from zone 6, 1.95 from zone 35 (the late-zone pass set the
+  reference HP below a kept-up hero's there). A charged move x `chargeX` on top: 1.3, 1.35 from zone 35. A charge can
+  still be broken (a Stun, a Freeze, or 6% of the boss's HP while it gathers). The basic boss set's Heavy Blow (the
+  Coast's elders) hits for 0.3 of the reference HP (was 0.28), like the other sets' big single hits.
+- **Boss pay.** Gold and XP x (1 + half the boss's extra length): a longer boss pays more, and an hour of zone play pays
+  about as before (bot, good play, a zone of 5 foes and its boss: zone 8 -3%, zone 20 -11%, zone 38 -5% gold an hour).
+- **Not the Deepwell or the Provings.** Their bosses pass a move set (59c, 59f), so the Deep Elders (14 Attacks, HP
+  carried) and the Bridge Beetle (hits as shares of your own health) keep their numbers; runs still end where they did.
+- **The sim** meets a zone boss at full health, as the game does (it carried HP from one boss to the next before: casual
+  boss wins were too low by up to 30 points). The turns report has a column for what a landed hit, a landed charge and
+  a fight cost in max HP, and four gear profiles: the mid save a gear tier behind and ahead (tier 2 or 4 for its tier 3),
+  and the kept-up zone 38 Pip a tier behind and ahead (tier 3 or 5 for her tier 4; tier 5 opens at zone 42).
+
+**After** (`node tools/sim.mjs --report turns --seeds 2` and `--report heroes --seeds 2`; good / casual; "hit" and
+"charge": one landed, undefended, as a share of max HP; before -> after):
+
+| Profile | Boss turns, good | Boss win, casual | Boss hit / charge | Normal turns, hit |
+|---|---|---|---|---|
+| Fresh heroes, zone 1 | 3.7-5.0 (unchanged) | 92-100% (unchanged) | 26-34% / 47-64% (Tobin 6 / 10) | 1.4-3.0, 18-25% |
+| Early fixture (Wren, zone 8) | 4.0 -> 5.0 | 100% | 17 / 32% -> 23 / 54% | 1.3, 12% |
+| Zone 8 stage (Wren, Pip, Tobin) | 4.2-4.9 -> 5.2-6.3 | 92, 100, 100 -> 63, 94, 100% | Wren 44%, Pip 33%, Tobin 7% | 1.7-1.9 |
+| Mid fixture (Tobin, zone 20) | 5.5 -> 9.9 | 100% | 1 / 2% -> 2 / 3% | 2.7, 1% |
+| Zone 20 stage | 4.8-4.9 -> 8.1-8.3 | 98, 100, 100 -> 39, 85, 100% | 38%, 28%, 6% | 2.0-2.2 |
+| Zone 30 stage | 3.1-3.7 -> 9.1-11.2 | 100 -> 48, 54, 100% | 30%, 22%, 5% | 1.4-1.9 |
+| Kept up, the Fenmother (Pip) | 9.4 -> 11.6 | 99 -> 51% | 14 / 26% -> 27 / 69% | 2.0, 9% |
+| Kept up, zone 35 stage | 8.5-10.1 -> 10.4-12.3 | 84, 94, 100 -> 15, 27, 99% | 37%, 27%, 6% | 1.9-2.3 |
+| Kept up, zone 38 (Pip) | 6.9 -> 10.0 | 100 -> 76% | 14 / 26% -> 28 / 68% | 2.7, 10% |
+| Kept up, zone 38 stage | 6.9-8.4 -> 9.9-12.0 | 94, 100, 100 -> 21, 50, 100% | 39%, 28%, 7% | 2.2-3.3 |
+| Late fixture (undergeared, zone 38) | 10.4 -> 15.4 | 42 -> 0% (good: 95%) | 28 / 50% -> 55 / 133% | 3.8, 19% |
+
+Stage rows are Wren, Pip, Tobin from `--report heroes` (the stage's middle hero at the zone's reference Attack and HP).
+Played well every kept-up hero wins 100% of bosses. Normal foes did not change: 2-4 turns, and a landed hit costs a
+kept-up hero 9-13% (the reference hero 13-25%). Tobin stays the safest (99-100% of bosses played casually, 6-7% a hit)
+and a little slower (x0.97-1.20 played well, x1.08-1.36 casually).
+
+**Gear matters** (good: turns, win %; casual win %; a landed boss hit):
+
+| Hero | A tier behind | As is | A tier ahead |
+|---|---|---|---|
+| Kept-up Pip, zone 38 boss | 15.3 turns, 85%; casual 0%; 84% | 10.0, 100%; 76%; 28% | 6.5, 100%; 100%; 9% |
+| Kept-up Pip, zone 38 normal | 3.7 turns; casual 84%; 29% | 2.7; 100%; 10% | 1.9; 100%; 3% |
+| Mid Tobin, zone 20 boss | 12.8 turns, 100%; 100%; 3% | 9.9, 100%; 100%; 2% | 7.1, 100%; 100%; 1% |
+
+A tier behind, a boss hit takes most of your health and its charge kills you outright: casual play loses every boss
+and good play loses 1 in 7. A tier ahead, bosses take a third fewer turns and barely hurt. Tobin's save carries eight
+times the reference HP, so on him gear shows only in the turns.
+
+**Stars** (`--stars typical`): a strong set still takes about a quarter off a boss (zone 38 10.0 -> 7.5 turns, the
+Fenmother 11.6 -> 8.8, the mid Tobin 9.9 -> 8.0) and lifts casual wins (zone 38 76 -> 97%, the Fenmother 51 -> 72%).
+
+**Left open:**
+
+- **Mid-game HP.** The reference HP is 1.2 x `mobHp` for zones 1-34 while the reference Attack falls from 0.7 to 0.22 of
+  it, and a hero's HP grows with their Attack. Real saves carry far more than the reference at mid zones (Pip on the late
+  save at zone 30: 5.0x the reference HP at 1.7x its Attack; the heroes report scales HP by 1/2 to 1/4.2 there). In those
+  saves every foe hit, boss or normal, lands at a third to a half of the shares above. The fix is `refHpX` for zones
+  10-34 (falling with `refAtk`), a shared reference table that also moves normal foes and the Deepwell: the
+  coordinator's call.
+- **Wren is fragile.** With her lower HP a boss hit costs her about 1.4x what it costs Pip, so played casually she wins
+  15-63% of bosses (Pip 27-94%). A hero HP look, not a boss one.
+- **The Fenmother** sits mid-band (11.6 turns, Wren-Pip-Tobin 10.4-12.3), not at the top: longer cost too many casual
+  wins (51% for the kept-up Pip).
 
 ## Art
 

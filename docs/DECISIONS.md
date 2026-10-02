@@ -116,6 +116,11 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 - **Tobin survives best and kills a little slower,** but never boringly: a balance pass yes, balanced around that
   (the safest hero, about 15-30% more turns a fight than Wren and Pip, his turns full of Grit, counters and Shield Bash).
   (2026-10-02)
+- **Bosses take longer and still hit hard:** "Yes make the bosses take longer and still hit hard. We should feel it
+  necessary to scale ourselves with crafting higher level gear. With that said, it should always be very bad for us to
+  get hit by a boss. Regular monsters we should be able to take a few bits but bosses should be serious." Like
+  Expedition 33: basic enemies die quickly, bosses take a lot of hits. Built as the boss pass (`combat-turn-build.md`).
+  (2026-10-02)
 - **Leftovers:** a local raid fight is accepted; Deep Elders give at most one buff item a run; Hollow bosses give no
   buff items. (2026-09-28)
 

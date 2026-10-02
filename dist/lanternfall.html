@@ -9018,7 +9018,7 @@ const TURN_BOSS_SETS = {
 };
 // any other boss (the Coast's elders until their turn kits exist, Silas): a fair, hard set
 const TURN_BOSS_BASIC = {
-  a: { id: 'heavy', name: 'Heavy Blow', hits: [{ wind: 1.3, x: 0.28 }] },
+  a: { id: 'heavy', name: 'Heavy Blow', hits: [{ wind: 1.3, x: 0.3 }] },
   b: { id: 'combo', name: 'Combo', hits: [{ wind: 0.9, x: 0.1 }, { wind: 0.5, x: 0.1 }, { wind: 0.8, x: 0.1 }] },
   charge: { id: 'smash', name: 'Gathered Smash', charge: true, hits: [{ wind: 1.5, x: 0.27 }, { wind: 0.6, x: 0.27 }] },
   c: { id: 'jab', name: 'Quick Jab', hits: [{ wind: 0.7, x: 0.16 }] }
@@ -22807,6 +22807,18 @@ const TURN_TUNE = {
   markV: 0.2, exposedX: 1.25, sunderX: 0.5, weakenX: 0.75, guardX: 0.6, drCap: 0.75, wardCap: 0.3, keenX: 0.5,
   pinWin: 1.5, pinSlow: 0.1, blindP: 0.3, blindBossP: 0.15, curseP: 0.2, curseCap: 3,
   stagger: { stun: 25, freeze: 35 }, lock: 3, chargeBreak: 0.06, bossPhaseAt: 0.5, bossPhaseSpd: 1.12, bossEase: [0.65, 0.8, 0.9],
+  // Boss pass (owner, 2026-10-02: "make the bosses take longer and still hit hard ... it should always be very bad for
+  // us to get hit by a boss"; combat-turn-build.md "Boss pass"). Zone and region bosses only: the Deepwell's Elders and
+  // the Provings' bosses keep their own numbers (59c, 59f pass a move set), and zones 1-3 keep their onboarding.
+  //   hpX      zone table: the zone boss's HP (TURN_FOE_HP.boss) x this, so a boss lasts longer as the game goes on (about
+  //            5-7 hero turns to zone 10, 8-10 to 25, 10-14 after, played well). It falls at 35 with the reference
+  //            Attack's region step (refAtk), which already makes zones 35+ longer. regionHpX: the region boss's (.region)
+  //   hitX     zone table: every boss hit x this; chargeX: a charged move's hits x this on top. A landed boss hit costs a
+  //            kept-up hero about a quarter to a third of their health, a landed charge about two thirds. From zone 35
+  //            the reference HP sits below a kept-up hero's (the late-zone pass), so hitX steps up there.
+  //   payX     a longer boss pays more: gold and XP x (1 + payX x (its HP share - 1)), so an hour of play pays as before
+  boss: { hpX: [[3, 1], [10, 1.45], [20, 1.85], [30, 3.3], [34, 3.3], [36, 1.5]], regionHpX: 1.25,
+    hitX: [[3, 1], [6, 1.3], [34, 1.3], [35, 1.95]], chargeX: [[3, 1], [6, 1.3], [34, 1.3], [35, 1.35]], payX: 0.5 },
   // the boss riders on the hero (shares of the reference HP a tick, two hero turns)
   heroDot: { bleed: 0.02, burn: 0.04, venom: 0.02 }, heroDotT: 2, heroChill: 0.1, heroBlind: 0.3,
   windowCaps: { parry: 0.35, dodge: 0.5 }, dodgeTrain: 0.004,   // Dodge Training: +4 ms of dodge window a level
@@ -22910,12 +22922,18 @@ function turnFoeSetup(f, z, o) {
   // the first zone bosses come in easier while you learn to parry and dodge (bossEase: their HP share in zones 1, 2, 3)
   const ease = f.boss && !region && !o.set ? (T.bossEase[z - 1] || 1) : 1;
   if (o.hpA > 0) hpA = o.hpA;
-  const hp = hpA * ease * turnRefAtk(z) * (0.95 + Math.random() * 0.1);
+  // the boss pass: a zone or region boss lasts longer and hits harder (TURN_TUNE.boss; not the Deepwell's or a Proving's)
+  const B = T.boss, zb = !!(f.boss && !o.set);
+  const len = zb ? (region ? B.regionHpX : turnZoneLine(B.hpX, z)) : 1;
+  const hp = hpA * ease * len * turnRefAtk(z) * (0.95 + Math.random() * 0.1);
   f.hp = f.max = hp; f.turn = 1; f.tz = z;
-  f.tk = { script, spd: spd * 10, arm: Z && Z.armour ? Z.armour : f.armoured ? 0.3 : 0, boss: !!f.boss, region, elite: !!f.elite };
+  f.tk = { script, spd: spd * 10, arm: Z && Z.armour ? Z.armour : f.armoured ? 0.3 : 0, boss: !!f.boss, region, elite: !!f.elite,
+    hx: zb ? turnZoneLine(B.hitX, z) : 1, cx: zb ? turnZoneLine(B.chargeX, z) : 1 };
   const C = COMBAT_TUNE;
-  f.gold = mobGold(z) * C.packGold * T.goldX * (f.boss ? 5 : f.elite ? C.eliteGold : 1);
-  f.xp = Math.ceil(Math.ceil(1.5 * z) * T.xpX * (f.boss ? 5 : f.elite ? 2 : 1));
+  // a longer boss pays more (the boss pass: payX of its extra length), so an hour of play pays about as before
+  const pay = 1 + (len - 1) * B.payX;
+  f.gold = mobGold(z) * C.packGold * T.goldX * (f.boss ? 5 * pay : f.elite ? C.eliteGold : 1);
+  f.xp = Math.ceil(Math.ceil(1.5 * z) * T.xpX * (f.boss ? 5 * pay : f.elite ? 2 : 1));
   return f;
 }
 
@@ -22941,6 +22959,7 @@ function turnMakeProfile(f, u) {
     critChance: critChance(), critMult: critMult(), nonCrit: mod('nonCrit'), echo: g.echo || 0,
     hitX: T.foeAtkX * (1 - armRed) * classDr, blockP: u.blockP || 0, blockC: u.blockC || 0, blockN: u.blockN || 0, blockX: COMBAT_TUNE.blockX,
     heroSpd: (T.heroHaste[key] || 10) + (g.initiative || 0), foeSpd: f.tk.spd, foeMaxHp: f.max, foeHp: f.hp,
+    bossHitX: f.tk.hx || 1, bossChargeX: f.tk.cx || 1, fullHp: !!(f.boss && !f.deep && !f.trial),   // the boss pass; a zone boss is met at full health
     foeName: f.name, foeType: f.txRow || f.type, foeArm: f.tk.arm, boss: f.tk.boss, region: f.tk.region, trait: f.tr && TURN_TRAITS[f.tr[0]] ? f.tr[0] : '',
     script: f.tk.script, eq, cds, tal: typeof talentsOf === 'function' ? talentsOf(key) : {},
     stars: typeof starsActive === 'function' ? starsActive(key) : [], starSet: typeof starsSetIds === 'function' ? starsSetIds(key) : [],   // the Stars (57e)
@@ -23406,7 +23425,8 @@ function turnHitStart(m, io) {
 // a landed hit on the hero
 function turnLand(m, io, hit) {
   const T = TURN_TUNE, p = m.p, h = m.h, e = m.e;
-  let amt = (hit.x || 0.2) * p.refHp * p.hitX * (e.weaken > 0 ? T.weakenX : 1) * (m.enraged ? TURN_TRAITS.enraged.dmg : 1);
+  let amt = (hit.x || 0.2) * p.refHp * p.hitX * (p.bossHitX || 1) * (m.move && m.move.charge ? p.bossChargeX || 1 : 1) *
+    (e.weaken > 0 ? T.weakenX : 1) * (m.enraged ? TURN_TRAITS.enraged.dmg : 1);
   let red = 1;
   if (h.guard > 0) red *= T.guardX;
   if (h.grit > 0) red *= 1 - T.gritDr * h.grit;
@@ -23715,7 +23735,7 @@ function turnCombatSample({ profile: p, seconds, seed = 1, skill = { parry: 0.5,
     damageFoe: d => { foeHp -= d; out.damageDone += d; return d; },
     damageHero: d => { heroHp -= d; out.damageTaken += d; if (d > 0) out.foeHits++; return d; },
     healHero: d => { heroHp = Math.min(p.heroMaxHp, heroHp + d); }, healFoe: d => { foeHp = Math.min(p.foeMaxHp, foeHp + d); }, defense: (k, ok) => { if (ok) out[k === 'parry' ? 'parries' : 'dodges']++; } };
-  const start = () => { foeHp = p.foeMaxHp; m = turnNew(p, io); plan = ''; };
+  const start = () => { foeHp = p.foeMaxHp; if (p.fullHp) heroHp = p.heroMaxHp; m = turnNew(p, io); plan = ''; };   // a zone boss is met at full health, as in play
   start();
   const step = 0.05;
   for (let t = 0; t < seconds; t += step) {

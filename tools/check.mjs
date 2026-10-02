@@ -7571,8 +7571,9 @@ if (section('C29 late zones and Wider timing windows (core)')) try {
     const run = (boss, skill) => E(`fightBoss = ${boss}; spawn(); (r => ({ win: r.kills / Math.max(1, r.kills + r.deaths), turns: r.totalHeroTurns / Math.max(1, r.completedFights) }))(turnCombatSample({ profile: turnCombatProfile(), seconds: 1800, seed: 3, skill: ${JSON.stringify(skill)} }))`);
     const good = { parry: 0.6, dodge: 0.9, perfect: 0.4, good: 0.45 }, casual = { parry: 0.25, dodge: 0.5, perfect: 0.1, good: 0.4 };
     const n = run(false, good), b = run(true, good), c = run(true, casual);
-    assert(n.win >= 0.98 && n.turns >= 2 && n.turns <= 4 && b.win >= 0.95 && b.turns >= 5 && b.turns <= 9 && c.win >= 0.6 && c.win <= 0.98 && !g.errors.length,
-      `late zones: a zone-38 hero who keeps up wins normal foes in 2-4 turns and bosses in 5-9 played well, and 60-98% of bosses played casually (${JSON.stringify({ n, b, c })})`); }
+    // the boss pass (owner, 2026-10-02: bosses take longer and hit hard): a zone-38 boss takes 8-14 hero turns played well
+    assert(n.win >= 0.98 && n.turns >= 2 && n.turns <= 4 && b.win >= 0.95 && b.turns >= 8 && b.turns <= 14 && c.win >= 0.4 && c.win <= 0.98 && !g.errors.length,
+      `late zones: a zone-38 hero who keeps up wins normal foes in 2-4 turns and bosses in 8-14 played well (the boss pass), and 40-98% of bosses played casually (${JSON.stringify({ n, b, c })})`); }
   // Wider timing windows (Settings > Combat; owner 2026-10-02): off by default, parry and dodge windows x1.5 under the caps, rewards unchanged
   { const g = loadCore({ seed: 29, turns: true }), E = s => g.eval(s);
     E('soloPick("wren", {now:true}); S.onboard && (S.onboard.tips = false, S.onboard.all = true); S.activity = "fight"; spawn()');
@@ -7592,6 +7593,44 @@ if (section('C29 late zones and Wider timing windows (core)')) try {
     assert(g2.eval('loadSave(); S.turn.assist') === 1 && g3.eval('loadSave(); S.turn.assist') === 0,
       'Wider timing windows: the setting is kept in the save, and a save from before it loads with it off'); }
 } catch (e) { fail('C29 late zones crashed: ' + (e.stack || e)); }
+
+if (section('C29 boss pass (core)')) try {
+  // owner (2026-10-02): "make the bosses take longer and still hit hard ... it should always be very bad for us to get
+  // hit by a boss. Regular monsters we should be able to take a few bits but bosses should be serious." (combat-turn-build.md "Boss pass")
+  const FX = n => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-' + n + '.json'), 'utf8');
+  { const g = loadCore({ seed: 4, turns: true }), E = s => g.eval(s);
+    E('soloPick("pip", { now: true }); S.activity = "fight"; arena = null');
+    // a zone boss's HP in reference Attacks: 16 x the zone's hpX (x bossEase in zones 1-3); the Fenmother 30 x regionHpX; normal foes unchanged
+    const at = (z, boss) => E(`(() => { S.maxZone = Math.max(S.maxZone, ${z}); setZone(${z}); fightBoss = ${boss}; spawn(); const f = combatFoes()[0];
+      return { a: f.max / turnRefAtk(${z}), hx: f.tk.hx, cx: f.tk.cx, region: f.tk.region, gold: f.gold, full: turnCombatProfile().fullHp }; })()`);
+    const want = { 1: 16 * 0.65, 2: 16 * 0.8, 3: 16 * 0.9, 10: 16 * 1.45, 20: 16 * 1.85, 30: 16 * 3.3, 35: 30 * 1.25, 38: 16 * 1.5 }, bad = [];
+    for (const z of Object.keys(want)) { const r = at(+z, true); if (!(r.a > want[z] * 0.94 && r.a < want[z] * 1.06)) bad.push(`${z}: ${r.a.toFixed(1)} (want ${want[z].toFixed(1)})`); }
+    assert(!bad.length, `boss pass: a boss lasts longer as the game goes on: its HP in reference Attacks is 16 x the zone's hpX (zones 1-3 keep their onboarding), the Fenmother 30 x 1.25 (${bad.join('; ') || 'ok'})`);
+    const n20 = at(20, false), b20 = at(20, true), b3 = at(3, true), b8 = at(8, true), b38 = at(38, true);
+    assert(n20.a > 4.7 && n20.a < 5.3 && n20.hx === 1 && n20.cx === 1 && !n20.full, `boss pass: a normal foe is unchanged (5 reference Attacks, its hits as written) (${JSON.stringify(n20)})`);
+    assert(b3.hx === 1 && b3.cx === 1 && Math.abs(b8.hx - 1.3) < 1e-9 && Math.abs(b8.cx - 1.3) < 1e-9 && Math.abs(b38.hx - 1.95) < 1e-9 && Math.abs(b38.cx - 1.35) < 1e-9 && b20.full,
+      `boss pass: boss hits x1.3 (charges x1.3 more) from zone 6, x1.95 (x1.35) from zone 35; zones 1-3 as before; a zone boss is met at full health (${JSON.stringify([b3, b8, b38].map(r => [r.hx, r.cx]))})`);
+    assert(Math.abs(b20.gold / n20.gold - 5 * (1 + 0.85 * 0.5)) < 1e-6, `boss pass: a longer boss pays more: 5 x (1 + half its extra length) a normal foe's gold (${(b20.gold / n20.gold).toFixed(2)})`);
+    // the Deepwell's Elders and the Provings' bosses keep their own numbers (they pass a move set and their HP in Attacks)
+    const deep = E(`(() => { const f = { boss: true, type: 'bones', name: 'Elder' }; turnFoeSetup(f, 30, { set: 'bones', hpA: TURN_TUNE.deep.hpA.boss }); return { a: f.max / turnRefAtk(30), hx: f.tk.hx, cx: f.tk.cx }; })()`);
+    assert(deep.a > 14 * 0.94 && deep.a < 14 * 1.06 && deep.hx === 1 && deep.cx === 1, `boss pass: a Deepwell boss floor (and a Proving's boss) keeps its HP and hits (${JSON.stringify(deep)})`);
+    assert(!g.errors.length, 'boss pass: no errors: ' + g.errors.slice(0, 2).join(' | ')); }
+  // the late fixture made a hero who keeps up (sim late-kept-38): what a landed hit costs, and a gear tier behind or ahead
+  { const kept = d => { const g = loadCore({ seed: 3, turns: true, storage: memoryStorage({ [KEY]: FX('late') }) }), E = s => g.eval(s);
+      E(`loadSave(); S.L = 41; S.solo.asc.pip = 1; S.solo.tr.pip.atk = 41;
+        for (const sl of Object.keys(S.equip)) { const it = itemById(S.equip[sl]); if (it && !['pick', 'axe', 'sickle', 'spear'].includes(it.slot)) { it.r = 'epic'; it.plus = 10; it.t += ${d}; } }
+        S.abil.unl.pip = ['spark', 'nova']; S.solo.eq.pip = ['fire', 'spark', 'nova']; S.maxZone = 38; setZone(38); S.activity = 'fight'; arena = null; gearDirty()`);
+      const hit = boss => E(`(() => { fightBoss = ${boss}; spawn(); const p = turnCombatProfile(), k = p.refHp * p.hitX * p.bossHitX / p.heroMaxHp, ch = p.script.find(m => m.charge);
+        return { name: p.foeName + ' ' + p.script.map(m => m.id).join('+'), hit: k * Math.max(...p.script.filter(m => !m.charge).flatMap(m => m.hits.map(h => h.x))), charge: ch ? k * p.bossChargeX * ch.hits.reduce((a, h) => a + h.x, 0) : 0 }; })()`);
+      const run = skill => E(`(r => ({ win: r.kills / Math.max(1, r.kills + r.deaths), turns: r.totalHeroTurns / Math.max(1, r.completedFights) }))(turnCombatSample({ profile: turnCombatProfile(), seconds: 1800, seed: 3, skill: ${JSON.stringify(skill)} }))`);
+      const n = hit(false), b = hit(true);
+      return { n, b, good: run({ parry: 0.6, dodge: 0.9, perfect: 0.4, good: 0.45 }), casual: run({ parry: 0.25, dodge: 0.5, perfect: 0.1, good: 0.4 }), err: g.errors.length }; };
+    const k = kept(0), lo = kept(-1), hi = kept(1);
+    assert(k.n.hit >= 0.08 && k.n.hit <= 0.15 && k.b.hit >= 0.25 && k.b.hit <= 0.35 && k.b.charge >= 0.6 && k.b.charge <= 0.9 && !k.err,
+      `boss pass: for a hero who keeps up, a landed normal hit costs 8-15% of max HP, a landed boss hit 25-35%, a landed charge 60-90% (${[k.n.hit, k.b.hit, k.b.charge].map(x => (100 * x).toFixed(1) + '%').join(', ')}; ${k.b.name})`);
+    assert(lo.b.hit > 0.5 && lo.casual.win < 0.2 && lo.good.turns > k.good.turns * 1.3 && hi.good.turns < k.good.turns * 0.8 && hi.casual.win >= k.casual.win && hi.b.hit < 0.15,
+      `boss pass: gear matters: a gear tier behind, a boss hit costs half your health and casual play loses; a tier ahead, bosses go quicker and barely hurt (turns ${[lo, k, hi].map(r => r.good.turns.toFixed(1)).join(' / ')}, casual win ${[lo, k, hi].map(r => (100 * r.casual.win).toFixed(0) + '%').join(' / ')}, a boss hit ${[lo, k, hi].map(r => (100 * r.b.hit).toFixed(0) + '%').join(' / ')})`); }
+} catch (e) { fail('C29 boss pass crashed: ' + (e.stack || e)); }
 
 if (section('C29 Deepwell and Provings in turns (core)')) try {
   // owner (2026-10-02): the Deepwell and the Provings fight in turns too. A floor's foes come one at a time; Oil burns only

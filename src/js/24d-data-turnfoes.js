@@ -62,7 +62,7 @@ const TURN_BOSS_SETS = {
 };
 // any other boss (the Coast's elders until their turn kits exist, Silas): a fair, hard set
 const TURN_BOSS_BASIC = {
-  a: { id: 'heavy', name: 'Heavy Blow', hits: [{ wind: 1.3, x: 0.28 }] },
+  a: { id: 'heavy', name: 'Heavy Blow', hits: [{ wind: 1.3, x: 0.3 }] },
   b: { id: 'combo', name: 'Combo', hits: [{ wind: 0.9, x: 0.1 }, { wind: 0.5, x: 0.1 }, { wind: 0.8, x: 0.1 }] },
   charge: { id: 'smash', name: 'Gathered Smash', charge: true, hits: [{ wind: 1.5, x: 0.27 }, { wind: 0.6, x: 0.27 }] },
   c: { id: 'jab', name: 'Quick Jab', hits: [{ wind: 0.7, x: 0.16 }] }
