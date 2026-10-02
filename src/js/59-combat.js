@@ -450,13 +450,16 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   // C20 scalar adapter: the turn resolver calculates one hit once for both live and scratch play.
   // This applies that hit to the live foe while retaining the established death/reward path.
   const DOT_KIND = { burn: 1, bleed: 1, swarm: 1, curse: 1 };
-  cbTurnDamageFoe = (f, amount, kind, crit, dt) => {
+  // what a turn hit was, on its number: a Burn tick in orange with the Burn icon, Bleed in red with its stacks, ...
+  const TURN_SRC = { burn: ['#FF9E3D', 'burn'], ignite: ['#FF9E3D', 'burn'], bleed: ['#E0524F', 'bleed'], swarm: ['#C9A6FF', 'blind'], curse: ['#D7B8FF', 'curse'] };
+  cbTurnDamageFoe = (f, amount, kind, crit, dt, n) => {
     if (!alive(f) || !(amount > 0)) return 0;
-    const a = Math.max(0, amount);
+    const a = Math.max(0, amount), src = TURN_SRC[kind];
     f.hp -= a; if (!DOT_KIND[kind]) f.hit = 0.08; ST.heroDmg += a; if (!DOT_KIND[kind]) ST.heroHits++;
-    FLOAT_EV.txt = (kind === 'counter' ? 'COUNTER ' : '') + fmt(a) + (crit ? '!' : ''); FLOAT_EV.color = kind === 'counter' || crit ? '#FF9E3D' : kind === 'burn' ? '#FFB347' : kind === 'bleed' ? '#E0524F' : '#FFFFFF';
-    FLOAT_EV.big = !!crit || kind === 'counter' || !(kind === 'attack' || DOT_KIND[kind]); FLOAT_EV.x = undefined; FLOAT_EV.y = undefined;
-    FLOAT_EV.dt = dt && dt !== 'phys' ? dt : ''; FLOAT_EV.rel = dt && typeof typeRel === 'function' ? typeRel(f.txRow || f.type, dt) : 0; FLOAT_EV.crit = !!crit;
+    FLOAT_EV.txt = (kind === 'counter' ? 'COUNTER ' : '') + fmt(a) + (n > 1 ? ` x${n}` : '') + (crit ? '!' : '');
+    FLOAT_EV.color = src ? src[0] : kind === 'counter' || crit ? '#FF9E3D' : '#FFFFFF';
+    FLOAT_EV.big = !!crit || kind === 'counter' || kind === 'ignite' || !(kind === 'attack' || DOT_KIND[kind]); FLOAT_EV.x = undefined; FLOAT_EV.y = undefined;
+    FLOAT_EV.dt = src ? 'st:' + src[1] : dt && dt !== 'phys' ? dt : ''; FLOAT_EV.rel = !src && dt && typeof typeRel === 'function' ? typeRel(f.txRow || f.type, dt) : 0; FLOAT_EV.crit = !!crit;
     emit('float', FLOAT_EV);
     if (crit) emit('crit', { tap: true });
     if (f.hp <= 0) foeDies(f, 0, kind || 'turn');

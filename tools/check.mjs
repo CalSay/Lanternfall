@@ -7098,7 +7098,7 @@ if (section('turn UI (browser)')) try {
       assert(/Wren/.test(on.seen.card) && /VS/.test(on.seen.card) && /Speed \d+/.test(on.seen.card) && /(You go first|goes first)/.test(on.seen.card), `turn UI 844x390: the versus card names both sides, their Speed and who goes first (${JSON.stringify(on.seen.card)})`);
       assert(on.seen.strip >= 5 && on.seen.bar && on.seen.mine, `turn UI 844x390: the turn strip shows the next turns, the timing bar shows on the foe's wind-up, and "Your turn" says when the fight waits on you (${JSON.stringify(on.seen)})`);
       assert(on.seen.cdTurns && !on.seen.autoBadge, 'turn UI 844x390: the Echo slot shows its cooldown in turns, and there is no Auto badge (active only)');
-      assert(on.cards === 14 && on.groups === 'True Aim,Blood Trail,Night Wings', `turn UI: Hero tab > Abilities lists Wren's 14 abilities in their three groups (${on.cards}: ${on.groups})`);
+      assert(on.cards === 17 && on.groups === 'True Aim,Blood Trail,Night Wings,Attack, Parry and Dodge', `turn UI: Hero tab > Abilities lists Wren's 14 abilities in their three groups, then Attack, Parry and Dodge (${on.cards}: ${on.groups})`);
       assert(/Tap again/.test(on.armed) && on.learned, `turn UI: Learn takes two taps, spends the Scroll, and puts the ability in a free slot (${JSON.stringify(on.armed)}, ${on.learned})`);
       assert(!on.errors.length, 'turn UI: no page errors' + (on.errors.length ? ': ' + on.errors[0] : ''));
       const port = await run(360, 740, false);
@@ -7348,6 +7348,43 @@ if (section('C29 turn fights (core)')) try {
     assert(ms.dmg > 0 && Math.abs(ms.dmg / gd.dmg - 0.7) < 0.12 && ms.phase !== 'timing', `C29: a missed ring (no press) still resolves the ability, at 70% damage (${(ms.dmg / gd.dmg).toFixed(2)})`);
     const v = ring(['perfect', 'good', 'miss'], 'volley', 'wren');
     assert(v.grades === 'perfect,good,miss' && !v.err, `C29: Volley has one ring per arrow (${v.grades})`); }
+  // elite traits in turn fights (owner, 2026-10-02): each works, and an Enraged elite never gets more than 2 turns in a row
+  { const mid = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-mid.json'), 'utf8'), out = {};
+    for (const tr of ['shielded', 'vampiric', 'enraged', 'frozen', 'cursed']) {
+      const g = loadCore({ seed: 5, turns: true, storage: memoryStorage({ [KEY]: mid }) }), E = s => g.eval(s);
+      E(`loadSave(); gearDirty(); S.activity = 'fight'; setZone(S.maxZone); COMBAT_TUNE.eliteP = 1; for (let i = 0; i < 80 && !(combatFoes()[0].tr && combatFoes()[0].tr[0] === '${tr}'); i++) spawn()`);
+      out[tr] = E(`(() => { const p = turnCombatProfile(), x = turnCombatSample({ profile: p, seconds: 300, seed: 3, skill: { parry: .5, dodge: .8, perfect: .3, good: .5 } });
+        const m = turnNew(p, { random: () => .5, emit: () => {}, alive: () => ({ hero: true, foe: true }), foeHp: () => 0, heroHp: () => 1 }); m.enraged = true; m.n = 1;
+        const s = { gH: 0, gF: 0, last: '', run: 0, hold: false }, seq = []; for (let i = 0; i < 12; i++) seq.push(turnAdvance(m, s)[0]);
+        return { trait: p.trait, name: combatFoes()[0].name, kills: x.kills, seq: seq.join('') }; })()`);
+      if (g.errors.length) out[tr].err = g.errors[0];
+    }
+    assert(Object.entries(out).every(([k, r]) => r.trait === k && r.kills > 0 && !r.err && !/fff/.test(r.seq)),
+      `C29: each elite trait (Shielded, Leeching, Enraged, Ice-Clad, Cursed) works in turn fights, and an Enraged elite never takes 3 turns in a row (${JSON.stringify(Object.values(out).map(r => r.name + ' ' + r.kills + ' ' + r.seq))})`); }
+  // talents (24e): points from levels, two choices each, every choice works in fights
+  { const { E } = fresh('pip', 14);
+    assert(E('talentPoints("pip").total === 0 && !talentSet("pip", "fire", "a")'), 'C29: a level 1 hero has no talent points');
+    E('S.L = 5; soloLevels');
+    assert(E('talentPoints("pip").total === 4 && talentSet("pip", "fire", "a") && talentSet("pip", "pip:parry", "b") && !talentSet("pip", "pip:dodge", "a") && talentSet("pip", "fire", "b") && talentPoints("pip").free === 0'),
+      'C29: a talent costs 2 points from 1 a level; switching between its two choices is free');
+    assert(E('!talentSet("pip", "spark", "a") && talentSet("pip", "fire", null) && talentPoints("pip").free === 2'), 'C29: only a learned ability takes a talent, and one can be given back');
+    const bad = [];
+    for (const hero of ['wren', 'tobin', 'pip']) for (const c of ['a', 'b']) {
+      const g = loadCore({ seed: 31, turns: true }), H = x => g.eval(x);
+      H(`soloPick('${hero}'); S.L = 40; S.abil.unl.${hero} = HERO_ABILITIES.${hero}.filter(id => ABILITIES[id].tier); S.zone = 5; S.maxZone = 5; S.activity = 'fight'; spawn();
+        for (const id of HERO_TALENTS.${hero}) S.abil.tal.${hero}[id] = '${c}'`);
+      const ids = H(`HERO_ABILITIES.${hero}`);
+      for (let i = 0; i < ids.length; i += 3) {
+        const r = H(`(() => { const p = turnCombatProfile(); p.eq = ${JSON.stringify(ids.slice(i, i + 3))}; p.cds = { attack: 1 }; for (const id of p.eq) p.cds[id] = turnCdFor(id);
+          return turnCombatSample({ profile: p, seconds: 120, seed: 5, skill: { parry: 0.6, dodge: 0.9, perfect: .4, good: .4 } }); })()`);
+        if (!(r.kills > 0) || !Number.isFinite(r.damageDone)) bad.push(`${hero} ${c} ${ids.slice(i, i + 3).join('+')}`);
+      }
+      if (g.errors.length) bad.push(hero + ' ' + c + ': ' + g.errors[0]);
+    }
+    assert(!bad.length, `C29: every talent of every hero (all A, then all B) works in fights (${bad.join('; ') || 'ok'})`); }
+  // damage numbers: on the Abilities screen, at your power now
+  { const { E } = fresh('pip', 13);
+    assert(/^Hits for about \d+, Burn \d+ a turn\.$/.test(E('turnAbilityNumbers("fire")')) && E('turnAbilityNumbers("hex")') === '', `C29: an ability's details give its numbers at your power now (${E('turnAbilityNumbers("fire")')})`); }
 } catch (e) { fail('C29 turn fights crashed: ' + (e.stack || e)); }
 
 if (section('removed systems (W2-C)')) try {

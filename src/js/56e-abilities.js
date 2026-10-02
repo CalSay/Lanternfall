@@ -11,10 +11,15 @@
 //   scrollCount(id) -> n; scrollFor(zone) -> the Scroll id a zone's boss drops
 // Events: scrollDrop { id, n, first }, abilityLearned { hero, id }.
 // Save: registerState('abil', { unl: { hero: [ids] }, scrolls: { id: n }, dry: { id: n }, got: { id: n } }).
-var abilityOwned, abLearnInfo, abilityLearn, scrollCount, scrollFor;
+// Talents (24e): each learned ability, and Attack, Parry and Dodge, has two talents; pick one for TALENT_TUNE.cost points.
+// A hero earns TALENT_TUNE.perLevel points a level after level 1. Choices change freely; a fight takes them as it starts.
+//   talentsOf(hero) -> { id: 'a' | 'b' } (only abilities the hero owns), talentPoints(hero) -> { total, spent, free }
+//   talentSet(hero, id, 'a' | 'b' | null) -> bool (null clears it; emits talentSet)
+// Save: S.abil.tal = { hero: { id: 'a' | 'b' } }.
+var abilityOwned, abLearnInfo, abilityLearn, scrollCount, scrollFor, talentsOf, talentPoints, talentSet;
 {
   const SCROLL_TUNE = { replay: 0.2, pity: 5 };
-  const blank = () => ({ unl: { wren: [], tobin: [], pip: [] }, scrolls: {}, dry: {}, got: {} });
+  const blank = () => ({ unl: { wren: [], tobin: [], pip: [] }, scrolls: {}, dry: {}, got: {}, tal: { wren: {}, tobin: {}, pip: {} } });
   registerState('abil', blank());
   const A = () => S.abil || (S.abil = blank());
   const lvOf = k => { try { const l = soloLevels()[k]; return l ? l.L : 1; } catch (e) { return S.L || 1; } };
@@ -40,6 +45,21 @@ var abilityOwned, abLearnInfo, abilityLearn, scrollCount, scrollFor;
     if (!Array.isArray(s.unl[k])) s.unl[k] = [];
     s.unl[k].push(id);
     emit('abilityLearned', { hero: k, id });
+    return true;
+  };
+  const talOk = (k, id) => typeof TALENTS === 'object' && !!TALENTS[id] && (id.includes(':') ? id.startsWith(k + ':') : abilityOwned(k, id));
+  const talRec = k => { const s = A(); if (!s.tal || typeof s.tal !== 'object') s.tal = {}; if (!s.tal[k] || typeof s.tal[k] !== 'object') s.tal[k] = {}; return s.tal[k]; };
+  talentsOf = k => { const out = {}, r = talRec(k); for (const id in r) if ((r[id] === 'a' || r[id] === 'b') && talOk(k, id)) out[id] = r[id]; return out; };
+  talentPoints = k => {
+    const total = Math.max(0, (lvOf(k) - 1) * TALENT_TUNE.perLevel), spent = Object.keys(talentsOf(k)).length * TALENT_TUNE.cost;
+    return { total, spent, free: total - spent };
+  };
+  talentSet = (k, id, c) => {
+    if (!talOk(k, id) || (c != null && c !== 'a' && c !== 'b')) return false;
+    const r = talRec(k);
+    if (c == null) { delete r[id]; emit('talentSet', { hero: k, id, choice: null }); return true; }
+    if (!r[id] && talentPoints(k).free < TALENT_TUNE.cost) return false;   // a switch between a and b costs nothing more
+    r[id] = c; emit('talentSet', { hero: k, id, choice: c });
     return true;
   };
   scrollFor = z => {

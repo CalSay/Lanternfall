@@ -397,6 +397,18 @@ img[src*="#nic:"] { image-rendering: auto; }   /* a gear icon set by code that d
 .ab-learn { flex: 1 1 auto; min-height: 44px; }
 .ab-need { color: var(--muted); font-size: 13px; }
 .ab-timed { margin: 0; font-size: 13px; color: var(--gold); }
+.ab-nums { margin: 0; font-size: 13px; color: #E0D6C2; font-variant-numeric: tabular-nums; }
+.ab-tp { margin: 0; }
+.ab-tal { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.ab-talb { display: grid; gap: 2px; align-content: start; min-height: 52px; padding: 6px 8px; text-align: left; background: #231A30; color: var(--bone);
+  border: 2px solid #0B0810; box-shadow: inset 0 0 0 1px #4E4060; cursor: pointer; }
+.ab-talb b { font: 600 calc(14px * var(--display-k, 1))/1.1 var(--display); color: var(--gold); }
+.ab-talb small { font-size: 12px; color: var(--muted); }
+.ab-talb.on { box-shadow: inset 0 0 0 2px var(--gold); background: #2E2214; }
+.ab-talb.on small { color: var(--bone); }
+.ab-talb:disabled { opacity: .5; cursor: default; }
+.ab-bname { font: 600 calc(16px * var(--display-k, 1))/1 var(--display); color: var(--bone); }
+@media (max-width: 420px) { .ab-tal { grid-template-columns: 1fr; } }
 /* 60-almanac: the Omen banner (Fight tab) and the Almanac part of the World tab (75-almanac-ui.js). */
 
 /* ---- banner ---- */
@@ -2538,7 +2550,7 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
 @media (prefers-reduced-motion: reduce) { .tr-go.tr-ok { animation: none; } }
 /* 75-turn-ui: the turn fight's versus card, turn strip, timing bar, hero row and warnings. The strip sits under the
    foe's name and HP bar at the top of the stage. */
-.tv-card { position: absolute; inset: 0; z-index: 6; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+.tv-card { position: absolute; inset: 0; z-index: 5; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
   background: rgba(10, 7, 14, .78); pointer-events: none; }
 .tv-card[hidden] { display: none; }
 .tv-row { display: flex; align-items: center; gap: 14px; }
@@ -2559,7 +2571,7 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
 @keyframes tv-in-r { 0% { transform: translateX(40px); opacity: 0; } 25%, 100% { transform: none; opacity: 1; } }
 @keyframes tv-fade { 0% { opacity: 0; } 12%, 82% { opacity: 1; } 100% { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .tv-card.play .tv-side { animation: none !important; } }
-.tv-top { position: absolute; left: 50%; top: 80px; transform: translateX(-50%); z-index: 7; display: flex; flex-direction: column; align-items: center; gap: 2px; pointer-events: none; }
+.tv-top { position: absolute; left: 50%; top: 80px; transform: translateX(-50%); z-index: 5; display: flex; flex-direction: column; align-items: center; gap: 2px; pointer-events: none; }
 .tv-top[hidden] { display: none; }
 .tv-strip { display: flex; gap: 3px; }
 .tv-strip[hidden] { display: none; }
@@ -2570,7 +2582,7 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
 .tv-mini { max-width: 20px; max-height: 20px; image-rendering: pixelated; }
 .tv-slot.now .tv-mini { max-width: 24px; max-height: 24px; }
 .tv-n { font: calc(10px * var(--display-k, 1))/1 var(--display); color: #B8AEC4; text-shadow: 1px 1px 0 #0B0810; }
-.tv-time { display: grid; gap: 2px; width: min(280px, 72vw); margin-top: 2px; padding: 3px 4px; background: rgba(10, 7, 14, .78); }   /* above a place caption (z 7 over 60-story .sty-cap 5) */
+.tv-time { display: grid; gap: 2px; width: min(280px, 72vw); margin-top: 2px; padding: 3px 4px; background: rgba(10, 7, 14, .78); }   /* a place caption fades under it (.tv-winding) */
 .tv-time[hidden] { display: grid; visibility: hidden; }   /* keeps its room, so the rows under it never jump */
 .tv-track { position: relative; height: 16px; background: #16111C; border: 2px solid #0B0810; box-shadow: inset 0 0 0 1px #3A3046; }
 .tv-track i { position: absolute; top: 0; bottom: 0; display: block; }
@@ -2607,7 +2619,7 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
 @keyframes tv-pulse { 50% { box-shadow: inset 0 0 0 2px #FFD27A, 2px 2px 0 #0B0810; } }
 @media (prefers-reduced-motion: reduce) { .tv-warn.charge { animation: none !important; } }
 /* a timed ability's ring (59k TURN_TIMED): it closes on the foe; the inner circle is the moment */
-.tv-ring { position: absolute; left: 66%; top: 58%; width: 0; height: 0; z-index: 6; pointer-events: none; }
+.tv-ring { position: absolute; left: 66%; top: 58%; width: 0; height: 0; z-index: 5; pointer-events: none; }
 .tv-ring[hidden] { display: none; }
 .tv-ring i { position: absolute; left: 0; top: 0; width: 44px; height: 44px; border-radius: 50%; transform: translate(-50%, -50%); }
 .tv-ring-i { border: 3px solid rgba(242, 193, 78, .9); box-shadow: 0 0 0 2px #0B0810; }
@@ -2617,7 +2629,7 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
 .tv-ring-t { position: absolute; left: 0; top: 34px; transform: translateX(-50%); white-space: nowrap; font: 700 calc(13px * var(--display-k, 1))/1 var(--display);
   color: var(--gold, #F2C14E); text-shadow: 1px 1px 0 #0B0810; }
 /* whose turn: the banner in the pause between turns (59k turnCard) */
-.tv-turncard { position: absolute; left: 0; right: 0; top: 42%; z-index: 6; display: flex; align-items: center; justify-content: center; gap: 10px;
+.tv-turncard { position: absolute; left: 0; right: 0; top: 42%; z-index: 5; display: flex; align-items: center; justify-content: center; gap: 10px;
   padding: 6px 12px; transform: translateY(-50%); pointer-events: none; background: linear-gradient(90deg, transparent, rgba(10, 7, 14, .94) 18%, rgba(10, 7, 14, .94) 82%, transparent); }
 .tv-turncard[hidden] { display: none; }
 .tv-tc-face { width: 36px; height: 36px; display: grid; place-items: center; background: #16111C; border: 2px solid #0B0810; }
@@ -8287,7 +8299,7 @@ const NOTICES = [
   { id: 'fell-back', re: /(fell back a zone|fell back to regroup|couldn't finish the pack)/, ch: 'bell' },
   { id: 'beaten', re: /Catch your breath and go again/, ch: 'log', why: 'you stay in the zone and the fight starts again on screen' },
   { id: 'away-fights', re: /^Fights wait for you while you are away\./, ch: 'bell', once: 'session', why: 'turn fights are active only (C29): say once why a fight earned nothing away' },
-  { id: 'scroll', re: /^(Moss|Hollow|Barrow|Roadlight|Mother) Scroll! Spend it/, site: /SCROLLS\[id\]\.name\}! Spend it/, ch: 'pop', wait: 20, why: 'the first Scroll teaches what Scrolls are for (C29)' },
+  { id: 'scroll', re: /^(Moss|Hollow|Barrow|Roadlight|Mother) Scroll! Spend it/, site: /SCROLLS\[id\]\.name\}! Spend it/, ch: 'log', why: 'the stage float shows it and Next Up says what it can teach (the bell stays calm)' },
   { id: 'scroll-more', re: /^(Moss|Hollow|Barrow|Roadlight|Mother) Scroll found\.$/, site: /SCROLLS\[id\]\.name\} found/, ch: 'log', why: 'the stage float shows it, and Next Up offers what it teaches' },
   { id: 'learned', re: /^\w+ learned [A-Z][\w' ]+\.$/, site: /learned \$\{a\.name\}/, ch: 'log', why: 'you just pressed Learn and see the card change' },
   { id: 'pace', key: 'pace', re: /back to Zone \d+ to keep earning\.$/, ch: 'bell', once: 'session', why: 'audit 3.14: one line a session' },
@@ -9086,6 +9098,91 @@ const TURN_BOSS_BASIC = {
 const TURN_FOE_SPEED = { normal: 0.9, ranged: 0.95, elite: 1.0, boss: 1.05, region: 1.1 };
 // Fight length in the hero's ordinary Attack actions at zone-ready power (the C22 contract's HP budgets)
 const TURN_FOE_HP = { zoneFoe: 4, normal: 5, elite: 9, boss: 16, region: 30 };
+
+// Elite traits in turn fights (owner, 2026-10-02): one per elite, from zone COMBAT_TUNE.eliteFrom (59k turnFoeSetup).
+// Names and badges are the old traits' (ELITE_TRAITS, 21g); these are their turn rules and the line the first one shows.
+//   shielded  a shield of `share` of its max HP takes hits first; a hit of `heavy` of its max HP or more counts twice on it
+//   vampiric  heals `heal` of the damage its landed hits do, unless it is Cursed or carries `stop` Bleed
+//   enraged   below half HP it is `spd` faster and hits `dmg` harder (still never more than 2 turns in a row)
+//   frozen    its ice halves every hit but fire; fire hits it x`fire` and breaks the ice
+//   cursed    its landed hits Weaken you; holy damage hurts it x`holy`
+const TURN_TRAITS = {
+  shielded: { share: 0.3, heavy: 0.08, first: 'Shielded elite: its shield soaks your hits first. Big hits break it twice as fast.' },
+  vampiric: { heal: 0.5, stop: 3, first: 'Leeching elite: it heals from every hit it lands. Curse it, or stack 3 Bleed, to stop it.' },
+  enraged: { spd: 1.3, dmg: 1.2, first: 'Enraged elite: under half health it gets faster and hits harder. Chill slows it.' },
+  frozen: { resist: 0.5, fire: 1.5, first: 'Ice-Clad elite: its ice halves your damage. Fire breaks the ice.' },
+  cursed: { holy: 1.5, first: 'Cursed elite: its hits Weaken you. Holy damage hurts it more.' }
+};
+
+// ---- src/js/24e-data-talents.js ----
+// 24e-data-talents: each ability's two talents, and the Attack, Parry and Dodge talents of each hero (C19 "star forks",
+// docs/design/ability-tree-details.md 10; the build: docs/design/combat-turn-build.md "Talents"). Data only.
+// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
+//
+// A talent is a choice of two (A or B) for one ability, or for the hero's Attack, Parry or Dodge. It costs
+// TALENT_TUNE.cost talent points; the hero earns TALENT_TUNE.perLevel a level after level 1. You can change a choice
+// between fights for free. The rules live in 59k-turn.js (turnTal); the text here is what the player reads.
+//   TALENTS[id] = { a: { name, text }, b: { name, text } }   id: an ability id, or '<hero>:attack' / ':parry' / ':dodge'
+const TALENT_TUNE = { cost: 2, perLevel: 1 };
+const TALENTS = {
+  // ---------------- Wren ----------------
+  powershot: { a: { name: 'Piercing Head', text: 'Ignores half of the foe\'s armour.' }, b: { name: 'Measured Draw', text: 'Spends 1 Aim, if you have it, for 30% more power. It no longer gains Aim.' } },
+  barbed: { a: { name: 'Deep Barb', text: 'Leaves 3 Bleed instead of 2.' }, b: { name: 'Hooked Head', text: 'Leaves 1 Bleed and Pins the foe.' } },
+  pinning: { a: { name: 'Hunter\'s Opening', text: 'Also Marks the foe for 2 turns.' }, b: { name: 'Leg Shot', text: 'Also Weakens the foe for 1 turn.' } },
+  huntmark: { a: { name: 'Study Prey', text: 'Also gives 1 Aim.' }, b: { name: 'Lasting Trail', text: 'When an ability uses up the Mark, a fresh 1-turn Mark stays.' } },
+  volley: { a: { name: 'Raking Flight', text: 'The last arrow leaves 2 Bleed.' }, b: { name: 'Tight Grouping', text: 'The last arrow ignores armour if the foe was Marked.' } },
+  twinshot: { a: { name: 'Steady Hand', text: 'If both arrows hit, gain 1 more Aim.' }, b: { name: 'Quick Escape', text: 'After a Twin Shot Attack, take 20% less damage on the foe\'s next turn.' } },
+  echo: { a: { name: 'Reverberation', text: 'The echo Pins the foe.' }, b: { name: 'Blood Echo', text: 'The echo leaves 2 Bleed.' } },
+  batswarm: { a: { name: 'Scent Blood', text: 'On a Bleeding foe, the first bite adds 1 Bleed.' }, b: { name: 'Dark Wings', text: 'No bat damage; the foe is Weakened for 2 turns as well as Blinded.' } },
+  deadeye: { a: { name: 'Split Barb', text: 'On a Marked foe it also leaves 2 Bleed.' }, b: { name: 'Patient Eye', text: 'Spends 2 Aim, if you have them, for 20% more power.' } },
+  sonic: { a: { name: 'Ringing Ears', text: 'A Stun also Weakens the foe for 1 turn.' }, b: { name: 'Returning Note', text: 'A Stun also gives 1 Aim.' } },
+  shadowstep: { a: { name: 'Slip the Snare', text: 'Also clears one Bleed, Burn or Venom from you.' }, b: { name: 'Find the Angle', text: 'Its sure Dodge also gives 1 Aim.' } },
+  moonvolley: { a: { name: 'Silver Rain', text: 'The first arrow renews a Mark to at least 2 turns.' }, b: { name: 'Needle Rain', text: 'Each arrow ignores a fifth of the foe\'s armour.' } },
+  nighthunter: { a: { name: 'Predator\'s Patience', text: 'The first Aim it gives each fight also makes your next ability Keen.' }, b: { name: 'Quiet Cover', text: 'The first Aim it gives each fight also Guards you for 1 enemy turn.' } },
+  finalecho: { a: { name: 'Lingering Wound', text: 'Leaves up to 2 Bleed behind (they no longer add damage).' }, b: { name: 'Saved Breath', text: 'Keeps 1 Aim (it no longer adds damage).' } },
+  'wren:attack': { a: { name: 'Quick Eye', text: 'Your first Attack each fight gives 2 Aim.' }, b: { name: 'Bloodied', text: 'Attacking a Marked foe leaves 1 Bleed.' } },
+  'wren:parry': { a: { name: 'Marked Riposte', text: 'Your first counter each fight Marks the foe for 2 turns.' }, b: { name: 'Steady Riposte', text: 'Each counter gives 1 Aim.' } },
+  'wren:dodge': { a: { name: 'Light Feet', text: 'After a dodge, your next Attack gives 1 more Aim.' }, b: { name: 'Pinning Step', text: 'After a dodge, your next Attack Pins the foe.' } },
+  // ---------------- Tobin ----------------
+  heavystrike: { a: { name: 'Crack the Plate', text: 'Sunders the foe for 2 turns.' }, b: { name: 'Drive Back', text: 'Using an opening (Exposed) gives 2 Grit.' } },
+  cleave: { a: { name: 'Open Wound', text: 'Leaves 2 Bleed instead of 1.' }, b: { name: 'Close Guard', text: 'Guards you for 1 enemy turn instead of Bleed.' } },
+  sundering: { a: { name: 'Riven Guard', text: 'Sunder lasts 4 turns.' }, b: { name: 'Buckled Plate', text: 'Also Weakens the foe for 1 turn.' } },
+  momentum: { a: { name: 'Relentless Rhythm', text: 'A new chain starts at 20%.' }, b: { name: 'Measured Cadence', text: 'Your fifth Attack in a row gives 1 more Grit.' } },
+  brace: { a: { name: 'Hold Firm', text: 'The first hit that lands on you while Braced gives 1 Grit.' }, b: { name: 'Read the Blow', text: 'A parry while Braced makes your next Attack ignore armour.' } },
+  lunge: { a: { name: 'Press the Crack', text: 'On a Sundered foe, gain 2 Grit.' }, b: { name: 'Return to Guard', text: 'Guards you for 1 enemy turn instead of the speed.' } },
+  bash: { a: { name: 'Shield Edge', text: 'Also Sunders the foe for 2 turns.' }, b: { name: 'Stand Fast', text: 'If the Stun does not take, gain 2 Grit.' } },
+  riposte: { a: { name: 'Open the Seam', text: 'Sunders the foe for 2 turns.' }, b: { name: 'Earned Ground', text: 'Gives 2 Grit.' } },
+  ironwill: { a: { name: 'Steeled Nerves', text: 'Also clears one Bleed, Burn or Venom from you.' }, b: { name: 'Set Your Feet', text: 'When the Ward breaks or ends, Guard for 1 enemy turn.' } },
+  roar: { a: { name: 'Rattled', text: 'Also Sunders the foe for 1 turn.' }, b: { name: 'Answer Me', text: 'A parry during its next attack gives 2 more Grit.' } },
+  hammerfall: { a: { name: 'Mighty Fall', text: 'Leaves 2 Bleed.' }, b: { name: 'Unbowed', text: 'Keeps 2 Grit (they no longer add damage).' } },
+  shieldthrow: { a: { name: 'Ringing Rim', text: 'Pins the foe as the shield comes back.' }, b: { name: 'Guarding Return', text: 'A Ward worth 5% of your max HP as it comes back.' } },
+  bulwark: { a: { name: 'Reprisal', text: 'The first hit that lands on you each enemy turn gives 1 Grit.' }, b: { name: 'Shelter', text: 'Parrying a whole attack gives a 5% Ward instead of the bigger counter.' } },
+  laststand: { a: { name: 'The Borrowed Sword', text: 'Each counter during it Sunders the foe for 2 turns.' }, b: { name: 'The Hedge Knight', text: 'Its heal also clears one Bleed, Burn or Venom from you.' } },
+  'tobin:attack': { a: { name: 'Plate Breaker', text: 'Attacking a Sundered foe gives 2 Grit.' }, b: { name: 'Shield First', text: 'Your first Attack each fight gives a 5% Ward.' } },
+  'tobin:parry': { a: { name: 'Split the Guard', text: 'Your first counter each fight Sunders the foe for 2 turns.' }, b: { name: 'Shield Up', text: 'Your first counter each fight Guards you for 1 enemy turn.' } },
+  'tobin:dodge': { a: { name: 'Roll and Rise', text: 'After a dodge, your next Attack gives 2 Grit.' }, b: { name: 'Covered Step', text: 'After a dodge, your next Attack Guards you for 1 enemy turn.' } },
+  // ---------------- Pip ----------------
+  spark: { a: { name: 'Bank the Spark', text: 'At 0 Embers it gives 2.' }, b: { name: 'Cold Spark', text: 'Frost instead of fire: 1 Chill and no Ember.' } },
+  frostshard: { a: { name: 'Rime Needle', text: 'Also Weakens the foe for 1 turn.' }, b: { name: 'Thaw Point', text: 'A Freeze it causes keeps the foe Exposed for 1 more turn.' } },
+  arcaneward: { a: { name: 'Mending Light', text: 'Cast while a Ward holds: heal 5% of your max HP, once a fight.' }, b: { name: 'Hard Shell', text: 'The Ward blocks the next status a hit would put on you.' } },
+  hex: { a: { name: 'Long Sentence', text: 'The Curse lasts 4 turns.' }, b: { name: 'Short Sentence', text: 'The Curse lasts 2 turns and hits for 30% at once.' } },
+  afterglow: { a: { name: 'Banked Flame', text: 'The boosted Attack gives 1 more Ember.' }, b: { name: 'Clear Mind', text: 'The boosted Attack clears one status from you, once a fight.' } },
+  nova: { a: { name: 'Rime Ring', text: 'Frost instead of holy, and 1 Chill.' }, b: { name: 'Sheltering Ring', text: 'Also a Ward worth 5% of your max HP.' } },
+  fire: { a: { name: 'Scattered Cinders', text: 'Three smaller fireballs, each timed and each able to crit.' }, b: { name: 'Hearthfire', text: 'The Burn lasts 1 turn longer.' } },
+  kindle: { a: { name: 'Careful Tending', text: 'On a foe that is not burning, it lights a small 2-turn Burn.' }, b: { name: 'Bright Spark', text: 'Cast with 4 or more Embers: your next ability is Keen.' } },
+  ignite: { a: { name: 'Ash Seed', text: 'Leaves a small 1-turn Burn behind.' }, b: { name: 'Gather Ash', text: 'Gives 1 Ember.' } },
+  searing: { a: { name: 'Patient Flame', text: 'Lasts 1 turn, but the Burn lasts 1 turn longer.' }, b: { name: 'Piercing Gaze', text: 'Its sure crits hit 20% harder.' } },
+  wildfire: { a: { name: 'Hungry Fire', text: 'The Burn grows faster.' }, b: { name: 'Cinder Veil', text: 'Its first growth Weakens the foe for 1 turn.' } },
+  flare: { a: { name: 'Revealing Light', text: 'A burning foe is also Sundered for 2 turns.' }, b: { name: 'Guiding Light', text: 'Gives 1 Ember instead of the Mark.' } },
+  emberheart: { a: { name: 'Kindling Pulse', text: 'The first Burn tick each fight gives 2 Embers.' }, b: { name: 'Warmth Within', text: 'The first Burn tick each fight heals you 5% of your max HP.' } },
+  lanternburst: { a: { name: 'Afterglow', text: 'Leaves a small 2-turn Burn behind.' }, b: { name: 'Homeward Light', text: 'A Ward worth 10% of your max HP after the blast.' } },
+  'pip:attack': { a: { name: 'Stoke', text: 'Attacking a burning foe gives 2 Embers.' }, b: { name: 'Frost Touch', text: 'Your first Attack each fight Chills the foe.' } },
+  'pip:parry': { a: { name: 'Spark Back', text: 'Your first counter each fight gives 1 Ember.' }, b: { name: 'Dim Its Eyes', text: 'Your first counter each fight Weakens the foe for 1 turn.' } },
+  'pip:dodge': { a: { name: 'Fanned Flame', text: 'After a dodge, your next Attack makes the Burn last 1 turn longer.' }, b: { name: 'Warding Step', text: 'After a dodge, your next Attack gives a 5% Ward.' } }
+};
+// the talent ids of each hero, in the Abilities screen's order (its abilities, then Attack, Parry and Dodge)
+const HERO_TALENTS = {};
+for (const k of ['wren', 'tobin', 'pip']) HERO_TALENTS[k] = (typeof HERO_ABILITIES === 'object' ? HERO_ABILITIES[k] : []).concat([k + ':attack', k + ':parry', k + ':dodge']);
 
 // ---- src/js/30-state.js ----
 // 30-state: the save (S), load, save(), registered feature fields, and
@@ -14615,10 +14712,15 @@ function heroUnlockStateValid(u) {
 //   scrollCount(id) -> n; scrollFor(zone) -> the Scroll id a zone's boss drops
 // Events: scrollDrop { id, n, first }, abilityLearned { hero, id }.
 // Save: registerState('abil', { unl: { hero: [ids] }, scrolls: { id: n }, dry: { id: n }, got: { id: n } }).
-var abilityOwned, abLearnInfo, abilityLearn, scrollCount, scrollFor;
+// Talents (24e): each learned ability, and Attack, Parry and Dodge, has two talents; pick one for TALENT_TUNE.cost points.
+// A hero earns TALENT_TUNE.perLevel points a level after level 1. Choices change freely; a fight takes them as it starts.
+//   talentsOf(hero) -> { id: 'a' | 'b' } (only abilities the hero owns), talentPoints(hero) -> { total, spent, free }
+//   talentSet(hero, id, 'a' | 'b' | null) -> bool (null clears it; emits talentSet)
+// Save: S.abil.tal = { hero: { id: 'a' | 'b' } }.
+var abilityOwned, abLearnInfo, abilityLearn, scrollCount, scrollFor, talentsOf, talentPoints, talentSet;
 {
   const SCROLL_TUNE = { replay: 0.2, pity: 5 };
-  const blank = () => ({ unl: { wren: [], tobin: [], pip: [] }, scrolls: {}, dry: {}, got: {} });
+  const blank = () => ({ unl: { wren: [], tobin: [], pip: [] }, scrolls: {}, dry: {}, got: {}, tal: { wren: {}, tobin: {}, pip: {} } });
   registerState('abil', blank());
   const A = () => S.abil || (S.abil = blank());
   const lvOf = k => { try { const l = soloLevels()[k]; return l ? l.L : 1; } catch (e) { return S.L || 1; } };
@@ -14644,6 +14746,21 @@ var abilityOwned, abLearnInfo, abilityLearn, scrollCount, scrollFor;
     if (!Array.isArray(s.unl[k])) s.unl[k] = [];
     s.unl[k].push(id);
     emit('abilityLearned', { hero: k, id });
+    return true;
+  };
+  const talOk = (k, id) => typeof TALENTS === 'object' && !!TALENTS[id] && (id.includes(':') ? id.startsWith(k + ':') : abilityOwned(k, id));
+  const talRec = k => { const s = A(); if (!s.tal || typeof s.tal !== 'object') s.tal = {}; if (!s.tal[k] || typeof s.tal[k] !== 'object') s.tal[k] = {}; return s.tal[k]; };
+  talentsOf = k => { const out = {}, r = talRec(k); for (const id in r) if ((r[id] === 'a' || r[id] === 'b') && talOk(k, id)) out[id] = r[id]; return out; };
+  talentPoints = k => {
+    const total = Math.max(0, (lvOf(k) - 1) * TALENT_TUNE.perLevel), spent = Object.keys(talentsOf(k)).length * TALENT_TUNE.cost;
+    return { total, spent, free: total - spent };
+  };
+  talentSet = (k, id, c) => {
+    if (!talOk(k, id) || (c != null && c !== 'a' && c !== 'b')) return false;
+    const r = talRec(k);
+    if (c == null) { delete r[id]; emit('talentSet', { hero: k, id, choice: null }); return true; }
+    if (!r[id] && talentPoints(k).free < TALENT_TUNE.cost) return false;   // a switch between a and b costs nothing more
+    r[id] = c; emit('talentSet', { hero: k, id, choice: c });
     return true;
   };
   scrollFor = z => {
@@ -19503,13 +19620,16 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   // C20 scalar adapter: the turn resolver calculates one hit once for both live and scratch play.
   // This applies that hit to the live foe while retaining the established death/reward path.
   const DOT_KIND = { burn: 1, bleed: 1, swarm: 1, curse: 1 };
-  cbTurnDamageFoe = (f, amount, kind, crit, dt) => {
+  // what a turn hit was, on its number: a Burn tick in orange with the Burn icon, Bleed in red with its stacks, ...
+  const TURN_SRC = { burn: ['#FF9E3D', 'burn'], ignite: ['#FF9E3D', 'burn'], bleed: ['#E0524F', 'bleed'], swarm: ['#C9A6FF', 'blind'], curse: ['#D7B8FF', 'curse'] };
+  cbTurnDamageFoe = (f, amount, kind, crit, dt, n) => {
     if (!alive(f) || !(amount > 0)) return 0;
-    const a = Math.max(0, amount);
+    const a = Math.max(0, amount), src = TURN_SRC[kind];
     f.hp -= a; if (!DOT_KIND[kind]) f.hit = 0.08; ST.heroDmg += a; if (!DOT_KIND[kind]) ST.heroHits++;
-    FLOAT_EV.txt = (kind === 'counter' ? 'COUNTER ' : '') + fmt(a) + (crit ? '!' : ''); FLOAT_EV.color = kind === 'counter' || crit ? '#FF9E3D' : kind === 'burn' ? '#FFB347' : kind === 'bleed' ? '#E0524F' : '#FFFFFF';
-    FLOAT_EV.big = !!crit || kind === 'counter' || !(kind === 'attack' || DOT_KIND[kind]); FLOAT_EV.x = undefined; FLOAT_EV.y = undefined;
-    FLOAT_EV.dt = dt && dt !== 'phys' ? dt : ''; FLOAT_EV.rel = dt && typeof typeRel === 'function' ? typeRel(f.txRow || f.type, dt) : 0; FLOAT_EV.crit = !!crit;
+    FLOAT_EV.txt = (kind === 'counter' ? 'COUNTER ' : '') + fmt(a) + (n > 1 ? ` x${n}` : '') + (crit ? '!' : '');
+    FLOAT_EV.color = src ? src[0] : kind === 'counter' || crit ? '#FF9E3D' : '#FFFFFF';
+    FLOAT_EV.big = !!crit || kind === 'counter' || kind === 'ignite' || !(kind === 'attack' || DOT_KIND[kind]); FLOAT_EV.x = undefined; FLOAT_EV.y = undefined;
+    FLOAT_EV.dt = src ? 'st:' + src[1] : dt && dt !== 'phys' ? dt : ''; FLOAT_EV.rel = !src && dt && typeof typeRel === 'function' ? typeRel(f.txRow || f.type, dt) : 0; FLOAT_EV.crit = !!crit;
     emit('float', FLOAT_EV);
     if (crit) emit('crit', { tap: true });
     if (f.hp <= 0) foeDies(f, 0, kind || 'turn');
@@ -22853,7 +22973,9 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
 const TURN_TUNE = {
   on: 1,
   heroRecovery: 0.35, foeRecovery: 0.4, foeWindup: 0.9, introHand: 1.2, introAuto: 0.6,
-  turnPause: 0.9,   // owner (2026-10-02): a pause at every change of turn, while a banner says whose turn it is (turnCard)
+  turnPause: 0.9,
+  // hit feel (owner, 2026-10-02): the fight clock stops for a beat on a big moment (seconds), with a shake and a flash
+  hitstop: { crit: 0.06, counter: 0.14, perfect: 0.1, broken: 0.18, big: 0.08 },   // owner (2026-10-02): a pause at every change of turn, while a banner says whose turn it is (turnCard)
   // the reference hero at zone z (measured from the balance sim's saves at each hero's frontier, 2026-10-02): one Attack
   // action and max HP, as shares of the zone's legacy foe HP (mobHp, 40-rules). Attack falls behind mobHp as zones climb
   // (gear tiers come slower than foe HP), so refAtk is a table over zones, straight lines between the points.
@@ -22883,7 +23005,7 @@ const TURN_TIMED = { powershot: 1, volley: 3, deadeye: 1, moonvolley: 5, heavyst
   frostshard: 1, fire: 1, ignite: 1, lanternburst: 1 };
 SOLO_TUNE.turnParryWindow = 0.18;
 SOLO_TUNE.turnDodgeWindow = 0.35;
-registerState('turn', { awayKillsCarry: 0, awayEssCarry: 0, awayProfile: null, awaySample: null, awaySig: '' });
+registerState('turn', { awayKillsCarry: 0, awayEssCarry: 0, awayProfile: null, awaySample: null, awaySig: '', seen: {} });
 addModifier('essence', () => turnCombatScope() ? TURN_TUNE.essenceX : 1);
 
 function turnCombatScope() {
@@ -22928,7 +23050,9 @@ function turnFoeSetup(f, z, kind) {
     spd = ranged ? TURN_FOE_SPEED.ranged : TURN_FOE_SPEED.normal; hpA = TURN_FOE_HP.normal;
     const C = COMBAT_TUNE;
     if (z >= C.eliteFrom && Math.random() < C.eliteP) {
-      f.elite = true; f.name = 'Elite ' + f.name; script = script.concat([TURN_FOE_ELITE]);
+      f.elite = true; script = script.concat([TURN_FOE_ELITE]);
+      const ids = Object.keys(TURN_TRAITS), tr = ids[(Math.random() * ids.length) | 0];   // one trait (24d TURN_TRAITS)
+      f.tr = [tr]; f.name = ((typeof ELITE_TRAITS === 'object' && ELITE_TRAITS[tr] && ELITE_TRAITS[tr].name) || 'Elite') + ' ' + f.name;
       spd = TURN_FOE_SPEED.elite; hpA = TURN_FOE_HP.elite;
     }
   }
@@ -22964,17 +23088,46 @@ function turnMakeProfile(f, u) {
     critChance: critChance(), critMult: critMult(), nonCrit: mod('nonCrit'), echo: g.echo || 0,
     hitX: T.foeAtkX * (1 - armRed) * classDr, blockP: u.blockP || 0, blockC: u.blockC || 0, blockN: u.blockN || 0, blockX: COMBAT_TUNE.blockX,
     heroSpd: (T.heroHaste[key] || 10) + (g.initiative || 0), foeSpd: f.tk.spd, foeMaxHp: f.max, foeHp: f.hp,
-    foeName: f.name, foeType: f.txRow || f.type, foeArm: f.tk.arm, boss: f.tk.boss, region: f.tk.region,
-    script: f.tk.script, eq, cds,
+    foeName: f.name, foeType: f.txRow || f.type, foeArm: f.tk.arm, boss: f.tk.boss, region: f.tk.region, trait: f.tr && TURN_TRAITS[f.tr[0]] ? f.tr[0] : '',
+    script: f.tk.script, eq, cds, tal: typeof talentsOf === 'function' ? talentsOf(key) : {},
     parryWindow: SOLO_TUNE.turnParryWindow + (g.parryWindow || 0) / 1000, dodgeWindow: SOLO_TUNE.turnDodgeWindow + (g.dodgeWindow || 0) / 1000 + T.dodgeTrain * trainLv('dodge'),
     essChance: essChance(), essExtra: g.essExtra || 0, goldPerKill: f.gold, xpPerKill: f.xp, healOnKill: COMBAT_TUNE.packHealF,
     respawn: Math.max(0.45, typeof zoneFoeDeathS === 'function' ? zoneFoeDeathS(f) : 0) };
 }
 
+// Attack and ability power now, outside a fight (the Abilities screen's numbers; the fight itself never shows them)
+function turnPowerNow() {
+  const key = soloHero(); if (!key) return null;
+  const T = TURN_TUNE, g = gear(), cls = S.party && S.party.cls;
+  const heroX = (T.heroX[key] || SOLO_TUNE.heroX[key]) / SOLO_TUNE.heroX[key];
+  const tap = cls === 'warden' || cls === 'warrior' ? CLASS_ABILITIES.heavy.coef : cls === 'lanternmage' || cls === 'mage' ? CLASS_ABILITIES.ember.coef : CLASS_ABILITIES.focus.coef;
+  const A = heroAtk() * tap * heroX * SOLO_TUNE.atkX * aps() * tapMult();
+  return { A, U: A * (1 + T.abTrain * trainLv(TURN_SIG[key] || 'echo')) * (1 + (g.abil || 0) / 100), crit: critMult() };
+}
+// One line of numbers for an ability (75-abilities-ui): its hit, and what its Burn, Bleed or spend adds
+function turnAbilityNumbers(id) {
+  const a = turnAb(id), P = turnPowerNow(); if (!a || !P) return '';
+  const T = TURN_TUNE, U = P.U, f = x => fmt(Math.round(x)), hit = a.pow > 0 && a.kind !== 'passive' && id !== 'batswarm';
+  const parts = [];
+  if (id === 'twinshot') return `Each arrow hits for about ${f(P.A * a.pow)}.`;
+  if (hit) parts.push(a.hits > 1 ? `Hits for about ${f(U * a.pow)} an arrow` : `Hits for about ${f(U * a.pow)}`);
+  if (id === 'finalecho') parts.push(`+${f(U * 0.5)} a Bleed or Aim`);
+  if (id === 'hammerfall') parts.push(`+${f(U * 0.25)} a Grit`);
+  if (id === 'lanternburst') parts.push(`+${f(U * 0.6)} an Ember`);
+  if (id === 'fire') parts.push(`Burn ${f(T.burnP * U)} a turn`);
+  if (id === 'batswarm') parts.push(`Bats hit for ${f(U * a.pow)} a turn`);
+  if (id === 'barbed' || id === 'cleave' || id === 'moonvolley') parts.push(`Bleed ${f(T.bleedP * U)} a stack a turn`);
+  if (id === 'arcaneward' || id === 'ironwill') { const u = cbUnitByKey && cbUnitByKey('hero'); if (u) parts.push(`Ward ${f(u.maxHp * (id === 'arcaneward' ? 0.2 : 0.15))}`); }
+  return parts.length ? `${parts.join(', ')}.` : '';
+}
+
 // ---------------- the fight ----------------
 const turnHeroFx = () => ({ aim: 0, grit: 0, embers: 0, keen: 0, guard: 0, ward: 0, wardT: 0, brace: 0, lunge: 0, shadow: 0,
   last: 0, lastUsed: 0, sear: 0, mom: 0, glow: 0, glowDt: '', ripo: 0, opening: 0,
-  dot: { bleed: 0, burn: 0, venom: 0 }, chill: 0, chillT: 0, weaken: 0, blind: 0 });
+  dot: { bleed: 0, burn: 0, venom: 0 }, chill: 0, chillT: 0, weaken: 0, blind: 0,
+  // talents (24e): what they track within one fight
+  attacked: 0, postDodge: 0, nhFirst: 0, pierce: 0, escape: 0, setFeet: 0, answer: 0, shell: 0, mendUsed: 0, clearUsed: 0,
+  countered: 0, ehFirst: 0, repr: 0, braceT: '', searX: 1 });
 const turnFoeFx = () => ({ burn: 0, burnDmg: 0, grow: 0, growN: 0, growCap: 0, bleed: 0, bleedT: 0, bleedDmg: 0,
   chill: 0, chillT: 0, skip: 0, lock: 0, exposed: 0, mark: 0, markV: 0, sunder: 0, weaken: 0, pin: 0, pinSlow: 0,
   blind: 0, curse: 0, curseStore: 0, curseCap: 0, swarm: 0, swarmDmg: 0, stagger: 0, recover: 0 });
@@ -22983,6 +23136,8 @@ function turnNew(p, io) {
     heroOps: 0, foeOps: 0, cds: {}, h: turnHeroFx(), e: turnFoeFx(), move: null, hitI: 0, parried: 0, landed: 0,
     defense: '', usedDefense: false, si: 0, charge: null, phase2: false, ended: false, first: '', blockN: p.blockN || 0 };
   for (const id in p.cds) m.cds[id] = 0;
+  if (p.trait === 'shielded') m.e.shield = TURN_TRAITS.shielded.share * p.foeMaxHp;
+  if (p.trait === 'frozen') m.e.ice = 1;
   m.first = turnPick(m).who;
   return m;
 }
@@ -22991,7 +23146,7 @@ function turnRate(m, who) {
   const T = TURN_TUNE, p = m.p;
   if (who === 'hero') { let x = 1 + (m.h.lunge > 0 ? 0.2 : 0) - T.heroChill * m.h.chill; return p.heroSpd * Math.max(T.speedMin, Math.min(T.speedMax, x)); }
   const half = p.boss ? 0.5 : 1;
-  let x = (1 - half * (T.chillSlow * m.e.chill + (m.e.pinSlow > 0 ? T.pinSlow : 0))) * (m.phase2 ? T.bossPhaseSpd : 1);
+  let x = (1 - half * (T.chillSlow * m.e.chill + (m.e.pinSlow > 0 ? T.pinSlow : 0))) * (m.phase2 ? T.bossPhaseSpd : 1) * (m.enraged ? TURN_TRAITS.enraged.spd : 1);
   return p.foeSpd * Math.max(T.speedMin, Math.min(T.speedMax, x));
 }
 // who acts next, and the time it takes; g: optional { gH, gF, last, run, hold } to look ahead without changing m
@@ -23045,17 +23200,27 @@ function turnHitFoe(m, io, pow, o) {
   if (!o.dot && !o.noCrit) {
     const burning = e.burn > 0;
     crit = !!o.sure || (h.sear > 0 && burning) || io.random() < Math.min(T.critChanceCap, p.critChance + T.aimCrit * h.aim);
-    const cm = Math.min(T.critCap, p.critMult + (h.keen && o.keenOk ? T.keenX : 0));
+    const cm = Math.min(T.critCap, p.critMult + (h.keen && o.keenOk ? T.keenX : 0)) * (crit && h.sear > 0 && burning ? h.searX || 1 : 1);
     d *= crit ? cm * (1 + p.echo) : p.nonCrit;
   }
   d *= turnTX(m, o.dt || 'phys');
   if (!o.stored) {
     if (e.mark > 0) d *= 1 + e.markV;
-    if ((o.dt || 'phys') === 'phys' && p.foeArm > 0 && o.kind !== 'bleed') d *= 1 - p.foeArm * (e.sunder > 0 ? T.sunderX : 1);
+    if ((o.dt || 'phys') === 'phys' && p.foeArm > 0 && o.kind !== 'bleed') d *= 1 - p.foeArm * (e.sunder > 0 ? T.sunderX : 1) * (o.armX != null ? o.armX : 1);
     if (!o.dot && h.weaken > 0) d *= T.weakenX;
   }
   if (o.payoff && e.exposed > 0) { d *= T.exposedX; e.exposed = 0; }
-  const got = io.damageFoe(d, o.kind || 'hit', crit, o.dt || 'phys');
+  // elite traits (24d TURN_TRAITS)
+  const tr = p.trait;
+  if (tr === 'frozen' && e.ice) { if ((o.dt || 'phys') === 'fire' && !o.dot) { d *= TURN_TRAITS.frozen.fire; e.ice = 0; io.emit('traitBroken', { id: 'frozen', txt: 'The ice breaks!' }); } else d *= TURN_TRAITS.frozen.resist; }
+  if (tr === 'cursed' && o.dt === 'holy') d *= TURN_TRAITS.cursed.holy;
+  if (tr === 'shielded' && e.shield > 0 && !o.dot) {
+    const k = d >= TURN_TRAITS.shielded.heavy * p.foeMaxHp ? 2 : 1, take = Math.min(e.shield, d * k);
+    e.shield -= take; d -= take / k;
+    if (e.shield <= 0) { e.shield = 0; io.emit('traitBroken', { id: 'shielded', txt: 'Shield broken!' }); }
+    if (!(d > 0)) { io.emit('shieldHit', { left: e.shield }); return 0; }
+  }
+  const got = io.damageFoe(d, o.kind || 'hit', crit, o.dt || 'phys', o.n || 0);
   if (got > 0) {
     if (e.curse > 0 && o.kind !== 'curse') e.curseStore = Math.min(e.curseCap, e.curseStore + T.curseP * got);
     if (m.charge) { m.charge.dmg += got; if (m.charge.dmg >= T.chargeBreak * p.foeMaxHp) turnBreakCharge(m, io); }
@@ -23114,16 +23279,19 @@ function turnUsable(m, id) {
   return '';
 }
 const has = (m, id) => m.p.eq.includes(id);
+// the hero's talent for an ability (or '<hero>:attack' / ':parry' / ':dodge'): 'a' | 'b' | '' (24e TALENTS, 56e)
+const turnTal = (m, id) => (m.p.tal && m.p.tal[id]) || '';
 // the hero acts: 'attack' or an ability id. -> true when it happened
 function turnHeroAct(m, io, id, slot, grades) {
-  const T = TURN_TUNE, p = m.p, h = m.h, e = m.e, U = p.U;
+  const T = TURN_TUNE, p = m.p, h = m.h, e = m.e, U = p.U, k = p.heroKey;
   if (turnUsable(m, id)) return false;
   // a timed ability's rings, one per direct hit in order: 'perfect' | 'good' | 'miss' (none: not timed, as written)
   let gi = 0;
   const G = grades || [], gNext = () => G[gi++] || 'good', perfects = G.filter(g => g === 'perfect').length;
   // a Blinded hero (a boss rider) may miss a direct action
   const blindMiss = h.blind > 0 && io.random() < T.heroBlind; if (h.blind > 0) h.blind = 0;
-  const marked = e.mark > 0, burning = e.burn > 0;
+  const marked = e.mark > 0, burning = e.burn > 0, sundered = e.sunder > 0;
+  const t = x => turnTal(m, x);   // this hero's talent for x: 'a' | 'b' | '' (24e TALENTS)
   const o = (x, more) => Object.assign({ dt: x || 'phys', keenOk: true, kind: id }, more || {});
   const hit = (pow, more) => {
     let x = 1;
@@ -23132,80 +23300,154 @@ function turnHeroAct(m, io, id, slot, grades) {
     if (more) more.critted = oo.critted;   // Power Shot reads whether it crit
     return got;
   };
+  const spendMark = () => { e.mark = 0; e.markV = 0; if (has(m, 'huntmark') && t('huntmark') === 'b') turnMark(e, 1); };   // Lasting Trail
   let spell = false;
   if (id === 'attack') {
-    let dt = p.heroType, x = 1 + (p.heroKey === 'tobin' ? T.gritDmg * h.grit : 0);
-    if (has(m, 'momentum')) { h.mom++; x *= 1 + Math.min(0.5, 0.1 * h.mom); }
-    if (has(m, 'afterglow') && h.glow > 0) { x *= 1.5; dt = h.glowDt || dt; h.glow = 0; }
-    if (p.heroKey === 'wren' && has(m, 'twinshot')) { hit(p.A * 0.55 * x, { dt, kind: 'attack' }); hit(p.A * 0.55 * x, { dt, kind: 'attack' }); }
-    else hit(p.A * x, { dt, kind: 'attack' });
-    if (p.heroKey === 'wren') turnGain(h, 'aim', 1 + (has(m, 'nighthunter') && marked ? 1 : 0));
-    else if (p.heroKey === 'tobin') turnGain(h, 'grit', 1);
-    else if (p.heroKey === 'pip') turnGain(h, 'embers', 1);
-    h.keen = 0;
+    let dt = p.heroType, x = 1 + (k === 'tobin' ? T.gritDmg * h.grit : 0);
+    if (has(m, 'momentum')) { h.mom++; x *= 1 + Math.min(0.5, 0.1 * h.mom + (t('momentum') === 'a' ? 0.1 : 0)); }
+    let glowed = false;
+    if (has(m, 'afterglow') && h.glow > 0) { x *= 1.5; dt = h.glowDt || dt; h.glow = 0; glowed = true; }
+    const more = { dt, kind: 'attack', armX: h.pierce ? 0 : 1 }; h.pierce = 0;   // Read the Blow: this Attack ignores armour
+    if (k === 'wren' && has(m, 'twinshot')) { const a1 = hit(p.A * 0.55 * x, { ...more }), a2 = hit(p.A * 0.55 * x, { ...more });
+      if (t('twinshot') === 'a' && a1 > 0 && a2 > 0) turnGain(h, 'aim', 1); if (t('twinshot') === 'b') h.escape = 1; }
+    else hit(p.A * x, more);
+    const first = !h.attacked; h.attacked = 1;
+    const dodged = h.postDodge; h.postDodge = 0;
+    if (k === 'wren') {
+      let aim = 1 + (has(m, 'nighthunter') && marked ? 1 : 0) + (first && t('wren:attack') === 'a' ? 1 : 0) + (dodged && t('wren:dodge') === 'a' ? 1 : 0);
+      if (has(m, 'nighthunter') && marked && !h.nhFirst) { h.nhFirst = 1; if (t('nighthunter') === 'a') h.keen = 2; else if (t('nighthunter') === 'b') h.guard = Math.max(h.guard, 1); }
+      turnGain(h, 'aim', aim);
+      if (marked && t('wren:attack') === 'b') turnBleedAdd(m, 1);
+      if (dodged && t('wren:dodge') === 'b') { e.pin = 1; e.pinSlow = Math.max(e.pinSlow, 2); }
+    } else if (k === 'tobin') {
+      let grit = sundered && t('tobin:attack') === 'a' ? 2 : 1;
+      if (dodged && t('tobin:dodge') === 'a') grit += 2;
+      if (has(m, 'momentum') && t('momentum') === 'b' && h.mom === 5) grit++;
+      turnGain(h, 'grit', grit);
+      if (first && t('tobin:attack') === 'b') turnWard(m, 0.05);
+      if (dodged && t('tobin:dodge') === 'b') h.guard = Math.max(h.guard, 1);
+    } else if (k === 'pip') {
+      turnGain(h, 'embers', burning && t('pip:attack') === 'a' ? 2 : 1);
+      if (first && t('pip:attack') === 'b') turnChillAdd(m, io, 1);
+      if (dodged && t('pip:dodge') === 'a' && e.burn > 0) e.burn = Math.min(T.burnMaxT, e.burn + 1);
+      if (dodged && t('pip:dodge') === 'b') turnWard(m, 0.05);
+      if (glowed && t('afterglow') === 'a') turnGain(h, 'embers', 1);
+      if (glowed && t('afterglow') === 'b' && !h.clearUsed) { h.clearUsed = 1; turnCleanse(h); }
+    }
+    if (h.keen === 1) h.keen = 0; else if (h.keen === 2) h.keen = 1;   // a Keen from this Attack waits for the next ability
     io.emit('soloAttack', { kind: blindMiss ? 'miss' : 'hit' });
   } else {
     const a = turnAb(id); h.mom = 0;
     const dt = a.dt;
     switch (id) {
       // Wren
-      case 'echo': hit(U * a.pow, { dt }); if (marked) hit(U * 0.6, { dt, kind: 'echo2' }); turnMark(e, 3); break;
-      case 'powershot': { const r = { dt, perfect: x => { x.sure = true; } }; hit(U * a.pow, r); if (r.critted) turnGain(h, 'aim', 1); break; }
-      case 'barbed': hit(U * a.pow, { dt }); turnBleedAdd(m, 2); break;
-      case 'pinning': hit(U * a.pow, { dt }); e.pin = 1; e.pinSlow = 2; break;
-      case 'huntmark': hit(U * a.pow, { dt }); turnMark(e, 4); break;
-      case 'volley': for (let i = 0; i < 3; i++) hit(U * a.pow, { dt }); if (perfects) turnGain(h, 'aim', perfects); break;
-      case 'batswarm': e.swarm = 3; e.swarmDmg = U * a.pow; e.blind = Math.max(e.blind, 3); break;
-      case 'deadeye': { let keep = false; hit(U * a.pow, { dt, sure: marked, perfect: () => { keep = marked; } }); if (marked && !keep) { e.mark = 0; e.markV = 0; } break; }
+      case 'echo': hit(U * a.pow, { dt }); if (marked) { hit(U * 0.6, { dt, kind: 'echo2', untimed: true }); if (t('echo') === 'a') { e.pin = 1; e.pinSlow = Math.max(e.pinSlow, 2); } else if (t('echo') === 'b') turnBleedAdd(m, 2); } turnMark(e, 3); break;
+      case 'powershot': {
+        let px = 1, gain = true;
+        if (t('powershot') === 'b' && h.aim > 0) { h.aim--; px = 1.3; gain = false; }
+        const r = { dt, px, armX: t('powershot') === 'a' ? 0.5 : 1, perfect: x => { x.sure = true; } }; hit(U * a.pow, r); if (r.critted && gain) turnGain(h, 'aim', 1); break;
+      }
+      case 'barbed': hit(U * a.pow, { dt }); if (t('barbed') === 'b') { turnBleedAdd(m, 1); e.pin = 1; e.pinSlow = Math.max(e.pinSlow, 2); } else turnBleedAdd(m, t('barbed') === 'a' ? 3 : 2); break;
+      case 'pinning': hit(U * a.pow, { dt }); e.pin = 1; e.pinSlow = 2; if (t('pinning') === 'a') turnMark(e, 2); else if (t('pinning') === 'b') e.weaken = Math.max(e.weaken, 1); break;
+      case 'huntmark': hit(U * a.pow, { dt }); turnMark(e, 4); if (t('huntmark') === 'a') turnGain(h, 'aim', 1); break;
+      case 'volley':
+        for (let i = 0; i < 3; i++) hit(U * a.pow, { dt, armX: i === 2 && marked && t('volley') === 'b' ? 0 : 1 });
+        if (t('volley') === 'a') turnBleedAdd(m, 2);
+        if (perfects) turnGain(h, 'aim', perfects); break;
+      case 'batswarm': e.swarm = 3; e.swarmDmg = t('batswarm') === 'b' ? 0 : U * a.pow; e.swarmBite = t('batswarm') === 'a' ? 1 : 0; e.blind = Math.max(e.blind, 3);
+        if (t('batswarm') === 'b') e.weaken = Math.max(e.weaken, 2); break;
+      case 'deadeye': {
+        let keep = false, px = 1;
+        if (t('deadeye') === 'b' && h.aim >= 2) { h.aim -= 2; px = 1.2; }
+        hit(U * a.pow, { dt, px, sure: marked, perfect: () => { keep = marked; } });
+        if (marked && t('deadeye') === 'a') turnBleedAdd(m, 2);
+        if (marked && !keep) spendMark(); break;
+      }
       case 'sonic': {
         hit(U * a.pow, { dt });
-        if (e.pin > 0 || h.opening > 0) { e.pin = 0; h.opening = 0; turnControl(m, io, 'stun'); }
-        else if (e.mark > 0) { e.mark = 0; e.markV = 0; turnControl(m, io, 'stun'); }
+        let ok = false;
+        if (e.pin > 0 || h.opening > 0) { e.pin = 0; h.opening = 0; ok = turnControl(m, io, 'stun'); }
+        else if (e.mark > 0) { spendMark(); ok = turnControl(m, io, 'stun'); }
+        if (ok && t('sonic') === 'a') e.weaken = Math.max(e.weaken, 1);
+        if (ok && t('sonic') === 'b') turnGain(h, 'aim', 1);
         break;
       }
-      case 'shadowstep': h.shadow = 2; break;
-      case 'moonvolley': for (let i = 0; i < 5; i++) { let pf = false; hit(U * a.pow, { dt, perfect: () => { pf = true; } }); if (marked || pf) turnBleedAdd(m, marked && pf ? 2 : 1); } break;
-      case 'finalecho': hit(U * (a.pow + 0.5 * e.bleed + 0.5 * h.aim), { dt }); e.bleed = 0; e.bleedT = 0; h.aim = 0; break;
+      case 'shadowstep': h.shadow = 2; if (t('shadowstep') === 'a') turnCleanse(h); break;
+      case 'moonvolley': for (let i = 0; i < 5; i++) {
+        let pf = false; hit(U * a.pow, { dt, armX: t('moonvolley') === 'b' ? 0.8 : 1, perfect: () => { pf = true; } });
+        if (i === 0 && t('moonvolley') === 'a' && e.mark > 0) e.mark = Math.max(e.mark, 2);
+        if (marked || pf) turnBleedAdd(m, marked && pf ? 2 : 1); } break;
+      case 'finalecho': {
+        const keepB = t('finalecho') === 'a' ? Math.min(2, e.bleed) : 0, keepA = t('finalecho') === 'b' ? Math.min(1, h.aim) : 0;
+        hit(U * (a.pow + 0.5 * (e.bleed - keepB) + 0.5 * (h.aim - keepA)), { dt });
+        e.bleed = keepB; if (!keepB) e.bleedT = 0; h.aim = keepA; break;
+      }
       // Tobin
-      case 'heavystrike': hit(U * a.pow, { dt, payoff: true, perfect: x => { x.px = 1.5; } }); break;
-      case 'cleave': hit(U * a.pow, { dt }); turnBleedAdd(m, 1); break;
-      case 'sundering': hit(U * a.pow, { dt }); e.sunder = Math.max(e.sunder, 3); break;
-      case 'brace': h.guard = Math.max(h.guard, 2); h.brace = 1; break;
-      case 'lunge': hit(U * a.pow, { dt }); h.lunge = 2; break;
-      case 'bash': { let g3 = false; hit(U * a.pow, { dt, perfect: () => { g3 = true; } }); turnControl(m, io, 'stun'); e.exposed = 2; h.guard = Math.max(h.guard, g3 ? 3 : 2); break; }
-      case 'riposte': hit(U * a.pow, { dt, sure: true }); h.ripo = 0; break;
-      case 'ironwill': turnGain(h, 'grit', 3); turnWard(m, 0.15); break;
-      case 'roar': e.weaken = Math.max(e.weaken, 2); e.pin = 1; e.pinSlow = 2; break;
-      case 'hammerfall': { const spent = h.grit; let back = 0; hit(U * (a.pow + 0.25 * spent), { dt, payoff: true, perfect: () => { back = Math.floor(spent / 2); } }); h.grit = back; break; }
-      case 'shieldthrow': { const s = e.sunder > 0; hit(U * a.pow, { dt, perfect: () => { m.cdCut = 2; } }); if (s) { turnControl(m, io, 'stun'); e.exposed = 2; } break; }
+      case 'heavystrike': { const ex = e.exposed > 0; hit(U * a.pow, { dt, payoff: true, perfect: x => { x.px = 1.5; } });
+        if (t('heavystrike') === 'a') e.sunder = Math.max(e.sunder, 2); if (ex && t('heavystrike') === 'b') turnGain(h, 'grit', 2); break; }
+      case 'cleave': hit(U * a.pow, { dt }); if (t('cleave') === 'b') h.guard = Math.max(h.guard, 1); else turnBleedAdd(m, t('cleave') === 'a' ? 2 : 1); break;
+      case 'sundering': hit(U * a.pow, { dt }); e.sunder = Math.max(e.sunder, t('sundering') === 'a' ? 4 : 3); if (t('sundering') === 'b') e.weaken = Math.max(e.weaken, 1); break;
+      case 'brace': h.guard = Math.max(h.guard, 2); h.brace = 1; h.braceT = t('brace'); break;
+      case 'lunge': hit(U * a.pow, { dt }); if (t('lunge') === 'b') h.guard = Math.max(h.guard, 1); else h.lunge = 2; if (sundered && t('lunge') === 'a') turnGain(h, 'grit', 2); break;
+      case 'bash': { let g3 = false; hit(U * a.pow, { dt, perfect: () => { g3 = true; } });
+        const ok = turnControl(m, io, 'stun'); e.exposed = 2; h.guard = Math.max(h.guard, g3 ? 3 : 2);
+        if (t('bash') === 'a') e.sunder = Math.max(e.sunder, 2); if (!ok && t('bash') === 'b') turnGain(h, 'grit', 2); break; }
+      case 'riposte': hit(U * a.pow, { dt, sure: true }); h.ripo = 0; if (t('riposte') === 'a') e.sunder = Math.max(e.sunder, 2); else if (t('riposte') === 'b') turnGain(h, 'grit', 2); break;
+      case 'ironwill': turnGain(h, 'grit', 3); turnWard(m, 0.15); if (t('ironwill') === 'a') turnCleanse(h); else if (t('ironwill') === 'b') h.setFeet = 1; break;
+      case 'roar': e.weaken = Math.max(e.weaken, 2); e.pin = 1; e.pinSlow = 2; if (t('roar') === 'a') e.sunder = Math.max(e.sunder, 1); else if (t('roar') === 'b') h.answer = 1; break;
+      case 'hammerfall': { const spent = h.grit, keep = t('hammerfall') === 'b' ? Math.min(2, spent) : 0; let back = 0;
+        hit(U * (a.pow + 0.25 * (spent - keep)), { dt, payoff: true, perfect: () => { back = Math.floor((spent - keep) / 2); } });
+        h.grit = Math.min(10, keep + back); if (t('hammerfall') === 'a') turnBleedAdd(m, 2); break; }
+      case 'shieldthrow': { hit(U * a.pow, { dt, perfect: () => { m.cdCut = 2; } }); if (sundered) { turnControl(m, io, 'stun'); e.exposed = 2; }
+        if (t('shieldthrow') === 'a') { e.pin = 1; e.pinSlow = Math.max(e.pinSlow, 2); } else if (t('shieldthrow') === 'b') turnWard(m, 0.05); break; }
       case 'laststand': h.last = 2; h.lastUsed = 1; break;
       // Pip
-      case 'spark': hit(U * a.pow, { dt, payoff: true }); turnGain(h, 'embers', 1); spell = true; break;
-      case 'frostshard': { let more = 0; hit(U * a.pow, { dt, perfect: () => { more = 1; } }); turnChillAdd(m, io, 2 + more); spell = true; break; }
-      case 'arcaneward': turnWard(m, 0.2); break;
-      case 'hex': e.curse = 3; e.curseStore = 0; e.curseCap = T.curseCap * U; break;
-      case 'nova': hit(U * a.pow, { dt }); spell = true; break;
+      case 'spark':
+        if (t('spark') === 'b') { hit(U * a.pow, { dt: 'frost' }); turnChillAdd(m, io, 1); }
+        else { const zero = h.embers === 0; hit(U * a.pow, { dt, payoff: true }); turnGain(h, 'embers', zero && t('spark') === 'a' ? 2 : 1); }
+        spell = true; break;
+      case 'frostshard': { let more = 0; hit(U * a.pow, { dt, perfect: () => { more = 1; } }); const ex0 = e.exposed; turnChillAdd(m, io, 2 + more);
+        if (t('frostshard') === 'a') e.weaken = Math.max(e.weaken, 1); if (t('frostshard') === 'b' && e.exposed > ex0) e.exposed++; spell = true; break; }
+      case 'arcaneward': if (t('arcaneward') === 'a' && h.ward > 0 && !h.mendUsed) { h.mendUsed = 1; io.healHero(0.05 * p.heroMaxHp); }
+        turnWard(m, 0.2); if (t('arcaneward') === 'b') h.shell = 1; break;
+      case 'hex': e.curse = t('hex') === 'a' ? 4 : t('hex') === 'b' ? 2 : 3; e.curseStore = 0; e.curseCap = T.curseCap * U;
+        if (t('hex') === 'b') { hit(U * 0.3, { dt: 'holy' }); spell = true; } break;
+      case 'nova': if (t('nova') === 'a') { hit(U * a.pow, { dt: 'frost' }); turnChillAdd(m, io, 1); } else hit(U * a.pow, { dt }); if (t('nova') === 'b') turnWard(m, 0.05); spell = true; break;
       case 'fire': {
-        const em = h.embers; let t = T.burnT; hit(U * a.pow * (1 + T.emberX * em), { dt, payoff: true, perfect: () => { t = T.burnT + 1; } });
-        turnBurnSet(e, T.burnP * U * (1 + T.emberX * em), t); h.embers = 0; spell = true; break;
+        const em = h.embers; let tt = T.burnT + (t('fire') === 'b' ? 1 : 0);
+        if (t('fire') === 'a') { let pf = false; for (let i = 0; i < 3; i++) hit(U * a.pow * (1 + T.emberX * em) / 3, { dt, payoff: i === 0, perfect: () => { pf = true; } }); if (pf) tt++; }
+        else hit(U * a.pow * (1 + T.emberX * em), { dt, payoff: true, perfect: () => { tt++; } });
+        turnBurnSet(e, T.burnP * U * (1 + T.emberX * em), tt); h.embers = 0; spell = true; break;
       }
-      case 'kindle': hit(U * a.pow, { dt }); turnGain(h, 'embers', 2); if (burning) e.burn = Math.min(T.burnMaxT, e.burn + 1); spell = true; break;
-      case 'ignite': {
-        let k = 1.25, mx = 1; const g0 = G[0];
-        hit(U * a.pow, { dt, payoff: true, perfect: () => { k = 2; } });
-        if (g0 === 'miss') mx = T.timed.missX;
-        const stored = e.burnDmg * e.burn * k * mx; e.burn = 0; e.burnDmg = 0; e.growN = 0;
-        if (stored > 0 && !blindMiss) turnHitFoe(m, io, stored, { dt, noCrit: true, kind: 'ignite' });
+      case 'kindle': {
+        const bright = t('kindle') === 'b' && h.embers >= 4;
+        hit(U * a.pow, { dt }); turnGain(h, 'embers', 2); if (bright) h.keen = 2;
+        if (burning) e.burn = Math.min(T.burnMaxT, e.burn + 1); else if (t('kindle') === 'a') turnBurnSet(e, 0.2 * U, 2);
         spell = true; break;
       }
-      case 'searing': h.sear = 3; break;   // this action, then the next two
-      case 'wildfire': e.burn = Math.max(e.burn, T.burnT); e.grow = 0.15 * U; e.growN = 3; e.growCap = 0.8 * U; break;
-      case 'flare': hit(U * a.pow, { dt }); e.blind = Math.max(e.blind, 2); if (burning) turnMark(e, 3); spell = true; break;
-      case 'lanternburst': { let back = 0; hit(U * (a.pow + 0.6 * h.embers) * (burning ? 1.25 : 1), { dt, payoff: true, perfect: () => { back = 2; } }); h.embers = back; e.burn = 0; e.burnDmg = 0; e.growN = 0; spell = true; break; }
+      case 'ignite': {
+        let kx = 1.25, mx = 1; const g0 = G[0];
+        hit(U * a.pow, { dt, payoff: true, perfect: () => { kx = 2; } });
+        if (g0 === 'miss') mx = T.timed.missX;
+        const stored = e.burnDmg * e.burn * kx * mx; e.burn = 0; e.burnDmg = 0; e.growN = 0;
+        if (stored > 0 && !blindMiss) turnHitFoe(m, io, stored, { dt, noCrit: true, kind: 'ignite' });
+        if (t('ignite') === 'a') turnBurnSet(e, 0.2 * U, 1); else if (t('ignite') === 'b') turnGain(h, 'embers', 1);
+        spell = true; break;
+      }
+      case 'searing': if (t('searing') === 'a') { h.sear = 2; e.burn = Math.min(T.burnMaxT, e.burn + 1); } else h.sear = 3; h.searX = t('searing') === 'b' ? 1.2 : 1; break;   // this action, then the next (one or two)
+      case 'wildfire': e.burn = Math.max(e.burn, T.burnT); e.grow = (t('wildfire') === 'a' ? 0.2 : 0.15) * U; e.growN = 3; e.growCap = 0.8 * U; e.wfWeaken = t('wildfire') === 'b' ? 1 : 0; break;
+      case 'flare': hit(U * a.pow, { dt }); e.blind = Math.max(e.blind, 2);
+        if (burning) { if (t('flare') === 'b') turnGain(h, 'embers', 1); else turnMark(e, 3); if (t('flare') === 'a') e.sunder = Math.max(e.sunder, 2); }
+        else if (t('flare') === 'b') turnGain(h, 'embers', 1);
+        spell = true; break;
+      case 'lanternburst': { let back = 0; hit(U * (a.pow + 0.6 * h.embers) * (burning ? 1.25 : 1), { dt, payoff: true, perfect: () => { back = 2; } });
+        h.embers = back; e.burn = 0; e.burnDmg = 0; e.growN = 0;
+        if (t('lanternburst') === 'a') turnBurnSet(e, 0.2 * U, 2); else if (t('lanternburst') === 'b') turnWard(m, 0.1);
+        spell = true; break; }
       default: hit(U * a.pow, { dt }); break;
     }
     if (spell && has(m, 'afterglow') && !blindMiss) { h.glow = 3; h.glowDt = a.dt; }
-    h.keen = 0;
+    if (h.keen === 1) h.keen = 0; else if (h.keen === 2) h.keen = 1;   // a Keen made by this cast waits for the next one
     io.emit('ability', { cls: 'solo', id, name: a.name, slot, auto: false });
   }
   if (blindMiss) io.emit('heroMiss', {});
@@ -23219,6 +23461,8 @@ function turnHeroAct(m, io, id, slot, grades) {
   if (h.weaken > 0) h.weaken--;
   return true;
 }
+// clears one damage-over-time effect from the hero (Bleed, then Burn, then Venom) -> bool
+function turnCleanse(h) { for (const k of ['bleed', 'burn', 'venom']) if (h.dot[k] > 0) { h.dot[k] = 0; return true; } return false; }
 
 // ---------------- turns ----------------
 function turnBegin(m, who, io) {
@@ -23243,13 +23487,17 @@ function turnBegin(m, who, io) {
   // damage over time at the foe's turn start (skipped turns too)
   let emberTick = false;
   if (e.burn > 0) {
-    if (e.growN > 0) { e.burnDmg = Math.min(Math.max(e.burnDmg, e.growCap), e.burnDmg + e.grow); e.growN--; }
-    turnHitFoe(m, io, e.burnDmg, { dt: 'fire', dot: true, kind: 'burn' }); e.burn--; emberTick = true;
+    if (e.growN > 0) { e.burnDmg = Math.min(Math.max(e.burnDmg, e.growCap), e.burnDmg + e.grow); e.growN--; if (e.wfWeaken) { e.wfWeaken = 0; e.weaken = Math.max(e.weaken, 1); } }
+    turnHitFoe(m, io, e.burnDmg, { dt: 'fire', dot: true, kind: 'burn', n: e.burn }); e.burn--; emberTick = true;
     if (!e.burn) { e.burnDmg = 0; e.growN = 0; }
   }
-  if (e.bleed > 0) { turnHitFoe(m, io, e.bleed * e.bleedDmg, { dt: 'phys', dot: true, kind: 'bleed' }); if (--e.bleedT <= 0) { e.bleed = 0; e.bleedDmg = 0; } }
-  if (e.swarm > 0) { turnHitFoe(m, io, e.swarmDmg, { dt: 'phys', dot: true, kind: 'swarm' }); e.swarm--; }
-  if (emberTick && has(m, 'emberheart')) turnGain(h, 'embers', 1);
+  if (e.bleed > 0) { turnHitFoe(m, io, e.bleed * e.bleedDmg, { dt: 'phys', dot: true, kind: 'bleed', n: e.bleed }); if (--e.bleedT <= 0) { e.bleed = 0; e.bleedDmg = 0; } }
+  if (e.swarm > 0) { if (e.swarmDmg > 0) turnHitFoe(m, io, e.swarmDmg, { dt: 'phys', dot: true, kind: 'swarm' }); if (e.swarmBite && e.bleed > 0) { e.swarmBite = 0; turnBleedAdd(m, 1); } e.swarm--; }
+  if (emberTick && has(m, 'emberheart')) {
+    const first = !h.ehFirst, et = turnTal(m, 'emberheart'); h.ehFirst = 1;
+    turnGain(h, 'embers', first && et === 'a' ? 2 : 1);
+    if (first && et === 'b') io.healHero(0.05 * m.p.heroMaxHp);
+  }
   if (!io.alive().foe) { turnEnd(m, 'victory', io); return; }
   if (e.skip > 0 || e.recover > 0) {
     const why = e.recover > 0 ? 'recover' : 'stun';
@@ -23295,19 +23543,28 @@ function turnHitStart(m, io) {
 // a landed hit on the hero
 function turnLand(m, io, hit) {
   const T = TURN_TUNE, p = m.p, h = m.h, e = m.e;
-  let amt = (hit.x || 0.2) * p.refHp * p.hitX * (e.weaken > 0 ? T.weakenX : 1);
+  let amt = (hit.x || 0.2) * p.refHp * p.hitX * (e.weaken > 0 ? T.weakenX : 1) * (m.enraged ? TURN_TRAITS.enraged.dmg : 1);
   let red = 1;
   if (h.guard > 0) red *= T.guardX;
   if (h.grit > 0) red *= 1 - T.gritDr * h.grit;
+  if (h.escape) red *= 0.8;   // Twin Shot: Quick Escape
   amt *= Math.max(1 - T.drCap, red);
   let blocked = false;
   if (p.blockP > 0 && io.random() < p.blockP) blocked = true;
   if (!blocked && p.blockC > 0 && (m.blockN = (m.blockN || 0) + p.blockC) >= 1) { m.blockN -= 1; blocked = true; }
   if (blocked) amt *= p.blockX;
-  if (h.ward > 0) { const take = Math.min(h.ward, amt); h.ward -= take; amt -= take; if (h.ward <= 0) { h.ward = 0; h.wardT = 0; } }
+  const warded = h.ward > 0;
+  if (h.ward > 0) { const take = Math.min(h.ward, amt); h.ward -= take; amt -= take; if (h.ward <= 0) { h.ward = 0; h.wardT = 0; if (h.setFeet) { h.setFeet = 0; h.guard = Math.max(h.guard, 1); } } }
   if (h.last > 0) amt = Math.min(amt, Math.max(0, io.heroHp() - 1));
   if (amt > 0) io.damageHero(amt, blocked, 'hit');
-  const r = hit.ride;
+  if (p.trait === 'vampiric' && amt > 0 && !(e.curse > 0) && e.bleed < TURN_TRAITS.vampiric.stop && io.healFoe) io.healFoe(amt * TURN_TRAITS.vampiric.heal);
+  if (p.trait === 'cursed' && amt > 0) h.weaken = Math.max(h.weaken, 1);
+  if (amt > 0 || warded) {   // a landed hit (through a Ward too): Brace's Hold Firm, Bulwark's Reprisal
+    if (h.braceT === 'a') { h.braceT = ''; turnGain(h, 'grit', 1); }
+    if (has(m, 'bulwark') && turnTal(m, 'bulwark') === 'a' && !h.repr) { h.repr = 1; turnGain(h, 'grit', 1); }
+  }
+  let r = hit.ride;
+  if (r && h.shell && h.ward > 0) { h.shell = 0; r = ''; }   // Arcane Ward: Hard Shell blocks it
   if (r === 'bleed' || r === 'burn' || r === 'venom') h.dot[r] = T.heroDotT;
   else if (r === 'chill') { h.chill = Math.min(2, h.chill + 1); h.chillT = 2; }
   else if (r === 'weaken') h.weaken = 1;
@@ -23319,10 +23576,12 @@ function turnContact(m, io) {
   if (m.defense === 'parry') {
     for (const k in m.cds) m.cds[k] = Math.max(0, m.cds[k] - 1);
     m.parried++; res = 'parry';
-    if (m.p.heroKey === 'tobin') turnGain(h, 'grit', 1 + (has(m, 'bulwark') ? 1 : 0));
+    if (m.p.heroKey === 'tobin') turnGain(h, 'grit', 1 + (has(m, 'bulwark') ? 1 : 0) + (h.answer ? 2 : 0));
+    h.answer = 0;   // Taunting Roar: Answer Me, once
+    if (h.brace > 0 && h.braceT === 'b') h.pierce = 1;   // Brace: Read the Blow
   } else if (m.defense === 'dodge') {
-    res = 'dodge';
-    if (m.shadowUsed) { m.shadowUsed = 0; h.shadow = 0; h.keen = 1; }
+    res = 'dodge'; h.postDodge = 1;
+    if (m.shadowUsed) { m.shadowUsed = 0; h.shadow = 0; h.keen = 1; if (turnTal(m, 'shadowstep') === 'b') turnGain(h, 'aim', 1); }
   } else if (e.blind > 0 && io.random() < (m.p.boss ? T.blindBossP : T.blindP)) res = 'miss';
   else { turnLand(m, io, hit); m.landed++; }
   io.emit('foeContact', { id: m.move.id, hit: m.hitI, hits: m.move.hits.length, res });
@@ -23332,13 +23591,21 @@ function turnContact(m, io) {
   // the move is over: a counter if every hit was parried; Riposte opens after any parry
   if (m.parried > 0) h.ripo = 1;
   if (m.parried === m.move.hits.length) {
-    let d = m.p.counter * (has(m, 'bulwark') ? 1.25 : 1) * (h.last > 0 ? 2 : 1);
+    const shelter = has(m, 'bulwark') && turnTal(m, 'bulwark') === 'b';
+    let d = m.p.counter * (has(m, 'bulwark') && !shelter ? 1.25 : 1) * (h.last > 0 ? 2 : 1);
     const got = turnHitFoe(m, io, d, { dt: 'phys', noCrit: true, kind: 'counter' });
+    if (shelter) turnWard(m, 0.05);
+    if (h.last > 0 && turnTal(m, 'laststand') === 'a') e.sunder = Math.max(e.sunder, 2);
+    const k = m.p.heroKey, pt = turnTal(m, k + ':parry'), first = !h.countered; h.countered = 1;
+    if (k === 'wren') { if (pt === 'a' && first) turnMark(e, 2); else if (pt === 'b') turnGain(h, 'aim', 1); }
+    else if (k === 'tobin' && first) { if (pt === 'a') e.sunder = Math.max(e.sunder, 2); else if (pt === 'b') h.guard = Math.max(h.guard, 1); }
+    else if (k === 'pip' && first) { if (pt === 'a') turnGain(h, 'embers', 1); else if (pt === 'b') e.weaken = Math.max(e.weaken, 1); }
     io.emit('soloCounter', { foe: io.foe ? io.foe() : null, dmg: got, auto: false });
     io.emit('crit', { tap: true, counter: true });
   }
   if (e.pin > 0) { e.pin = 0; h.opening = 2; }
   if (h.brace > 0) h.brace = 0;
+  h.answer = 0;
   if (!io.alive().foe) { turnEnd(m, 'victory', io); return; }
   turnFoeEnd(m, io);
 }
@@ -23350,10 +23617,12 @@ function turnFoeEnd(m, io) {
   if (e.chillT > 0 && --e.chillT === 0) e.chill = 0;
   if (e.curse > 0 && --e.curse === 0 && e.curseStore > 0) { const v = e.curseStore; e.curseStore = 0; turnHitFoe(m, io, v, { dt: 'holy', noCrit: true, stored: true, kind: 'curse' }); }
   if (h.guard > 0) h.guard--;
-  if (h.wardT > 0 && --h.wardT === 0) h.ward = 0;
+  if (h.wardT > 0 && --h.wardT === 0) { h.ward = 0; if (h.setFeet) { h.setFeet = 0; h.guard = Math.max(h.guard, 1); } }
+  h.escape = 0; h.repr = 0;
   if (h.shadow > 0) h.shadow--;
-  if (h.last > 0 && --h.last === 0 && io.alive().hero) io.healHero(0.15 * m.p.heroMaxHp);
+  if (h.last > 0 && --h.last === 0 && io.alive().hero) { io.healHero(0.15 * m.p.heroMaxHp); if (turnTal(m, 'laststand') === 'b') turnCleanse(h); }
   if (!io.alive().foe) { turnEnd(m, 'victory', io); return; }
+  if (m.p.trait === 'enraged' && !m.enraged && io.foeHp() <= m.p.foeMaxHp * 0.5) { m.enraged = true; io.emit('turnPhase', { name: m.p.foeName }); }
   if (m.p.boss && !m.phase2 && io.foeHp() <= m.p.foeMaxHp * TURN_TUNE.bossPhaseAt) {
     m.phase2 = true; io.emit('turnPhase', { name: m.p.foeName });
   }
@@ -23383,7 +23652,7 @@ function turnResolve(m, cmd, dt, io) {
     const id = cmd.kind === 'attack' ? 'attack' : cmd.id || (cmd.slot != null ? io.slotId(cmd.slot) : null);
     if (!id || !(id in m.cds) || turnUsable(m, id)) return false;
     if (TURN_TIMED[id] && !m.noTiming) {   // a timed ability: its rings first, then it resolves with their grades
-      m.tm = { id, slot: cmd.slot, n: TURN_TIMED[id], i: 0, grades: [] };
+      m.tm = { id, slot: cmd.slot, n: id === 'fire' && turnTal(m, 'fire') === 'a' ? 3 : TURN_TIMED[id], i: 0, grades: [] };   // Scattered Cinders: three
       turnRingStart(m, io, TURN_TUNE.timed.ring);
       return true;
     }
@@ -23456,8 +23725,17 @@ const TURN_LIVE_IO = {
   foe: () => TURN_LIVE && TURN_LIVE.foe,
   foeHp: () => (TURN_LIVE && TURN_LIVE.foe ? Math.max(0, TURN_LIVE.foe.hp) : 0),
   heroHp: () => { const u = cbUnitByKey('hero'); return u ? u.hp : 0; },
+  healFoe: d => { const f = TURN_LIVE.foe; if (f && !f.dead && f.hp > 0) { f.hp = Math.min(f.max, f.hp + d); emit('float', { txt: '+' + fmt(d), color: '#6FCB6A', big: false }); } },
   slotId: slot => soloEquipped()[slot] || null,
-  damageFoe: (d, kind, crit, dt) => { const f = TURN_LIVE.foe; return cbTurnDamageFoe(f, d, kind, crit, dt); },
+  damageFoe: (d, kind, crit, dt, n) => {
+    const f = TURN_LIVE.foe, got = cbTurnDamageFoe(f, d, kind, crit, dt, n), H = TURN_TUNE.hitstop;
+    // hit feel: a crit or a hit for a fifth of the foe's HP stops the clock for a beat and shakes the stage
+    if (got > 0 && kind !== 'counter' && !/^(burn|bleed|swarm|curse)$/.test(kind)) {
+      const big = f && got >= 0.2 * f.max;
+      if (crit || big) { turnHitstop(crit ? H.crit : H.big); emit('shake', big ? 0.22 : 0.14); }
+    }
+    return got;
+  },
   damageHero: (d, blocked, kind) => cbTurnHitHero(d, blocked, kind),
   healHero: d => { const u = cbUnitByKey('hero'); if (u && !u.down) { u.hp = Math.min(u.maxHp, u.hp + d); emit('unitHeal', { key: u.key, amount: d }); } },
   defense: (kind, ok) => {
@@ -23467,6 +23745,12 @@ const TURN_LIVE_IO = {
   endFight: () => {}
 };
 on('ability', p => { if (p && p.cls === 'solo' && TURN_LIVE && !TURN_LIVE.ended) SOLO_STATS.casts++, SOLO_STATS.hand++; });
+// hit feel: the clock stops for a beat (turnCombatTick waits it out), with a shake and a flash on the big moments
+function turnHitstop(s) { if (TURN_LIVE && !TURN_LIVE.ended) TURN_LIVE.stop = Math.max(TURN_LIVE.stop || 0, s); }
+on('soloCounter', () => { if (!TURN_LIVE || TURN_LIVE.ended) return; turnHitstop(TURN_TUNE.hitstop.counter); emit('shake', 0.3); emit('hitFlash', { rgb: '255,158,61', a: 0.35 }); });
+on('timingGrade', p => { if (p && p.grade === 'perfect' && TURN_LIVE && !TURN_LIVE.ended) { turnHitstop(TURN_TUNE.hitstop.perfect); emit('hitFlash', { rgb: '255,243,196', a: 0.3 }); } });
+on('chargeBroken', () => { if (!TURN_LIVE || TURN_LIVE.ended) return; turnHitstop(TURN_TUNE.hitstop.broken); emit('shake', 0.35); emit('hitFlash', { rgb: '242,193,78', a: 0.4 }); });
+on('soloParry', p => { if (p && p.res === 'parry' && TURN_LIVE && !TURN_LIVE.ended) emit('shake', 0.12); });
 on('soloAttack', () => { if (TURN_LIVE && !TURN_LIVE.ended) SOLO_STATS.attacks++; });
 on('soloCounter', () => { if (TURN_LIVE && !TURN_LIVE.ended) SOLO_STATS.counters++; });
 function turnCombatAction(kind, slot) {
@@ -23481,6 +23765,7 @@ function turnCombatTick(dt) {
     TURN_LIVE = null; TURN_RECOVER = 0; return;
   }
   if (typeof turnPaused === 'function' && turnPaused()) return;   // a hidden page (59j): the fight waits (active only, owner 2026-10-01)
+  if (TURN_LIVE && TURN_LIVE.stop > 0) { TURN_LIVE.stop -= dt; return; }   // a hitstop: the beat after a big hit
   if (TURN_RECOVER > 0) { TURN_RECOVER -= dt; if (TURN_RECOVER <= 0) { cbRestore(true); spawn(); } return; }
   const f = combatFoes().find(x => x && !x.dead && x.hp > 0 && !x.gone);
   if (!f) { if (TURN_LIVE && !TURN_LIVE.ended) turnEnd(TURN_LIVE, 'victory', TURN_LIVE_IO); return; }
@@ -23492,6 +23777,11 @@ function turnCombatTick(dt) {
     const p = turnMakeProfile(f, u); if (!p) return;
     TURN_LIVE = turnNew(p, TURN_LIVE_IO); TURN_LIVE.foe = f; TURN_LAST_PROFILE = p;
     emit('fightStart', { heroHaste: p.heroSpd, foeHaste: p.foeSpd, first: TURN_LIVE.first });
+    if (p.trait) {   // an elite's trait: the first of each kind explains itself
+      const seen = S.turn.seen || (S.turn.seen = {});
+      emit('traitSeen', { id: p.trait, first: !seen[p.trait], txt: TURN_TRAITS[p.trait].first });
+      seen[p.trait] = 1;
+    }
   }
   const m = TURN_LIVE;
   turnResolve(m, { kind: 'tick' }, dt, TURN_LIVE_IO);
@@ -23556,7 +23846,7 @@ function turnCombatSample({ profile: p, seconds, seed = 1, skill = { parry: 0.5,
     heroHp: () => heroHp, slotId: i => p.eq[i] || null,
     damageFoe: d => { foeHp -= d; out.damageDone += d; return d; },
     damageHero: d => { heroHp -= d; out.damageTaken += d; if (d > 0) out.foeHits++; return d; },
-    healHero: d => { heroHp = Math.min(p.heroMaxHp, heroHp + d); }, defense: (k, ok) => { if (ok) out[k === 'parry' ? 'parries' : 'dodges']++; } };
+    healHero: d => { heroHp = Math.min(p.heroMaxHp, heroHp + d); }, healFoe: d => { foeHp = Math.min(p.foeMaxHp, foeHp + d); }, defense: (k, ok) => { if (ok) out[k === 'parry' ? 'parries' : 'dodges']++; } };
   const start = () => { foeHp = p.foeMaxHp; m = turnNew(p, io); plan = ''; };
   start();
   const step = 0.05;
@@ -24694,11 +24984,19 @@ let resize, animate, draw, stageStats, warmScene;
   // record's own canvas; frames only copy it (scaled during the first pop), so a screen of numbers
   // costs a few drawImage calls, not a stroke and a fill of text each. Rebaked on a zoom change.
   // S1: dt puts the type icon in front (instead of a glyph); rel 1 / -1 adds a weak / resisted triangle after.
+  // C29: dt 'st:<status>' puts that status's approved icon (21v) in front instead: a Burn or Bleed tick, a Curse burst.
+  const ST_FLOAT = {};
+  const stFloatIcon = id => {
+    if (typeof STATUS_ICONS !== 'object' || !STATUS_ICONS[id]) return null;
+    let im = ST_FLOAT[id]; if (!im) { im = ST_FLOAT[id] = new Image(); im.src = STATUS_ICONS[id]['24'] || STATUS_ICONS[id]['16']; }
+    return im.complete && im.naturalWidth ? im : (typeof statusIcon === 'function' ? statusIcon(id) : null);
+  };
+  for (const id of ['burn', 'bleed', 'curse', 'blind']) stFloatIcon(id);   // decoded before the first tick
   function bakeText(r, txt, col, size, lw, glyph, dt, rel) {
     const K = DPR * ZM, px = Math.max(6, Math.round(size * K)), l = Math.max(1, Math.round(lw * K));
     const c = r.cv || (r.cv = document.createElement('canvas'));
     let g = c.getContext('2d'); g.font = fontPx(px);
-    const tIc = dt ? typeIcon(dt) : null; if (tIc) glyph = 1;
+    const tIc = dt ? (dt.startsWith('st:') ? stFloatIcon(dt.slice(3)) : typeIcon(dt)) : null; if (tIc) glyph = 1;
     const tw = Math.ceil(g.measureText(txt).width), gw = glyph ? Math.round(px * 0.7) : 0, gap = glyph ? Math.round(px * 0.12) : 0;
     const aw = rel ? Math.round(px * 0.5) + gap : 0;
     const w = tw + gw + gap + aw + l * 2 + 4, h = Math.ceil(px * 1.25) + l * 2;
@@ -25598,6 +25896,8 @@ let resize, animate, draw, stageStats, warmScene;
     A.burstPx(x, y, b.color || '#FFFFFF', Math.min(16, b.n || 4), (b.spd || 0.7) * 70);
   });
   on('shake', amt => { shake = reduced ? 0 : amt; });
+  // C29 hit feel: a screen flash in a colour (a counter, a Perfect, a broken charge); reduced motion keeps a soft one
+  on('hitFlash', p => { if (!p) return; flashA = Math.max(flashA, (reduced ? 0.4 : 1) * (p.a || 0.3)); flashRgb = p.rgb || '255,210,122'; });
   on('lunge', () => { if (!(target() === 'node' && typeof gatherWalking === 'function' && gatherWalking())) attack(hero); });
   on('nodeHit', () => { nodeShake = 0.12; });
   on('wyrmHit', () => { wyrmHit = 0.1; });
@@ -32501,12 +32801,38 @@ var handsTradeOpenPicker;
       slots.append(b);
     });
     root.append(slots);
+    // talents (24e, 56e): the points this hero has
+    const tp = typeof talentPoints === 'function' ? talentPoints(k) : null;
+    if (tp) root.append(el('p', 'note ab-tp', `Talent points: ${tp.free} free of ${tp.total}. Each learned ability, and your Attack, Parry and Dodge, has two talents: pick one for ${TALENT_TUNE.cost} points. You earn ${TALENT_TUNE.perLevel === 1 ? 'one' : TALENT_TUNE.perLevel} a level. Change them any time between fights.`));
     // the groups
     for (const path of HERO_PATHS[k]) {
       const g = el('div', 'ab-path'); g.append(el('h3', 'ab-pname', path.name));
       for (const id of path.ids) g.append(cardFor(k, id, eq));
       root.append(g);
     }
+    // Attack, Parry and Dodge: talents only
+    const basic = el('div', 'ab-path'); basic.append(el('h3', 'ab-pname', 'Attack, Parry and Dodge'));
+    for (const [mv, nm] of [['attack', 'Attack'], ['parry', 'Parry'], ['dodge', 'Dodge']]) {
+      const c = el('div', 'ab-card owned ab-basic'); c.append(el('b', 'ab-bname', nm));
+      const row = talentRow(k, k + ':' + mv); if (row) c.append(row);
+      basic.append(c);
+    }
+    root.append(basic);
+  }
+  // the two talents of an ability (or of '<hero>:attack' etc.): tap one to take it, tap it again to give it back
+  function talentRow(k, id) {
+    if (typeof TALENTS !== 'object' || !TALENTS[id]) return null;
+    const T = TALENTS[id], cur = (talentsOf(k) || {})[id] || '', tp = talentPoints(k), row = el('div', 'ab-tal');
+    for (const c of ['a', 'b']) {
+      const on = cur === c, can = on || !!cur || tp.free >= TALENT_TUNE.cost;
+      const b = el('button', 'ab-talb' + (on ? ' on' : '')); b.type = 'button'; b.disabled = !can;
+      b.setAttribute('aria-pressed', String(on));
+      b.append(el('b', null, T[c].name), el('small', null, T[c].text));
+      b.title = on ? 'Tap to give this talent back' : can ? `Take this talent (${TALENT_TUNE.cost} points)` : 'Not enough talent points';
+      b.addEventListener('click', () => { if (talentSet(k, id, on ? null : c)) persist(); sig = ''; refresh(); });
+      row.append(b);
+    }
+    return row;
   }
   function cardFor(k, id, eq) {
     const a = ABILITIES[id], i = abLearnInfo(k, id), where = eq.indexOf(id);
@@ -32517,6 +32843,9 @@ var handsTradeOpenPicker;
     t.append(el('b', null, a.name), el('small', null, `${KIND[a.kind]} · ${cd}` + (a.tier ? ` · Tier ${ROMAN[a.tier]}` : ' · Starter')));
     top.append(tile(id), t);
     c.append(top, el('p', 'ab-desc', a.desc));
+    // its numbers at your power now (owner, 2026-10-02: in the details, never during a fight)
+    const nums = typeof turnAbilityNumbers === 'function' ? turnAbilityNumbers(id) : '';
+    if (nums) c.append(el('p', 'ab-nums', nums));
     if (a.perfect) c.append(el('p', 'ab-timed', `Timed: press again as the ring closes. Perfect: ${a.perfect}. A miss hits for 70%.`));
     const foot = el('div', 'ab-foot');
     if (i.owned) {
@@ -32545,13 +32874,15 @@ var handsTradeOpenPicker;
       foot.append(el('span', 'ab-need', !i.lvOk ? `Needs level ${i.lv} and a ${s.name}` : `Needs a ${s.name}`));
     }
     c.append(foot);
+    if (i.owned) { const row = talentRow(k, id); if (row) c.append(row); }
     return c;
   }
   function refresh() {
     if (!root || !root.isConnected) return;
     const k = soloHero(); if (!k) { if (sig !== 'none') { sig = 'none'; build(); } return; }
     const lv = soloLevels()[k], A = S.abil || {};
-    const s = [k, lv && lv.L, JSON.stringify(A.unl && A.unl[k]), JSON.stringify(A.scrolls), soloEquipped().join(), armed].join('|');
+    const P = typeof turnPowerNow === 'function' ? turnPowerNow() : null;
+    const s = [k, lv && lv.L, JSON.stringify(A.unl && A.unl[k]), JSON.stringify(A.scrolls), soloEquipped().join(), armed, P ? fmt(Math.round(P.U)) : '', JSON.stringify(A.tal && A.tal[k])].join('|');
     if (s === sig) return;
     sig = s; build();
   }
@@ -39725,6 +40056,10 @@ var turnBarInfo = () => null;
   on('turnPhase', p => say(`${p.name} is furious and faster!`, 'charge', 2.2));
   on('foeSkip', p => { if (p && p.turn) emit('float', { txt: p.why === 'recover' ? 'Recovering' : p.why === 'freeze' ? 'Frozen' : 'Stunned', color: '#8FB8FF', big: true }); });
   on('foeFrozen', () => emit('float', { txt: 'FROZEN', color: '#8FD8FF', big: true }));
+  // elite traits (59k, 24d TURN_TRAITS): the first of each kind says what it does; breaking one shows
+  on('traitSeen', p => { if (p && p.first) say(p.txt, 'charge', 4); });
+  on('traitBroken', p => { if (p) { emit('float', { txt: p.txt, color: '#BFE6FF', big: true }); emit('shake', 0.2); } });
+  on('shieldHit', () => emit('float', { txt: 'Shield', color: '#BFE6FF', big: false }));
   on('heroMiss', () => emit('float', { txt: 'Miss', color: '#A9B1BD', big: false, x: 0.66, y: 0.42 }));
   on('foeContact', p => { if (p && p.res === 'miss') emit('float', { txt: 'Missed you', color: '#8FB8FF', big: false, x: 0.27, y: 0.42 }); });
   on('fightEnd', () => { warnSticky = ''; warn.hidden = true; });

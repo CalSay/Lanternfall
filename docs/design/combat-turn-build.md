@@ -55,6 +55,44 @@ page says what was picked.
 - The C19 tiers and paths are Codex's (`ability-tree-details.md` 11). The C19 relic plan named old Elder bosses; with a
   boss at the end of every zone, Scrolls by zone band replace it. The names avoid the shop's existing Relics.
 
+## Talents (owner, 2026-10-02: "Sure let's do it")
+
+Codex's C19 forks, built as **talents** (24e-data-talents.js, 56e-abilities.js). Each learned ability has two talents,
+and so do the hero's Attack, Parry and Dodge: pick one of the two for 2 talent points. A hero earns 1 point a level after
+level 1, so a level 35 hero has 34: enough for 17 of the 17 picks. Choices can be changed or given back any time; a fight
+takes them as it starts. They show on each ability card on Hero > Abilities, and Attack, Parry and Dodge have their own
+cards at the bottom. They are named talents, not stars, so they do not clash with the Stars view (the old talent map).
+
+There are no suggested builds (owner: finding what works should be hard and rewarding).
+
+## Fight feel (owner, 2026-10-02)
+
+- **A pause between turns** (0.9 s) with a banner saying whose turn it is.
+- **A bigger timing bar**, labelled, with a moving marker; it glows blue in the dodge window and gold in the parry
+  window. The parry band sits inside the dodge band: you can still dodge there.
+- **Hits land:** a crit, a hit for a fifth of the foe's HP, a counter, a Perfect ring and a broken charge stop the clock
+  for a beat, shake the stage, and the bigger ones flash.
+- **Damage says where it came from:** a Burn tick is orange with the Burn icon and its turns left, Bleed is red with
+  its stacks, the bats and a Curse burst have their own icon and colour.
+- **Numbers only out of a fight:** each ability card on Hero > Abilities says what it hits for at your power now. The
+  fight itself never shows them.
+
+## Elite traits
+
+From zone 15, about one regular fight in five is an elite with one trait (24d TURN_TRAITS). The first of each kind
+says what it does.
+
+| Trait | In a turn fight | Its answer |
+|---|---|---|
+| Shielded | a shield worth 30% of its HP soaks hits first | big hits (8% of its HP or more) count twice on it |
+| Leeching | heals half the damage its hits do | Curse it, or keep 3 Bleed on it |
+| Enraged | under half HP it is 30% faster and hits 20% harder | Chill slows it; it still never takes 3 turns in a row |
+| Ice-Clad | its ice halves every hit but fire | fire hits it x1.5 and breaks the ice |
+| Cursed | its hits Weaken you | holy damage hurts it x1.5 |
+
+The old Explosive and Summoner traits stay out: one blasts after it dies and the other adds a second foe, which the
+turn fight does not have.
+
 ## The rules as built (59k-turn.js)
 
 - **Speed gauges:** each side fills a gauge at its Speed and acts at 100; ties go to the hero. Nobody gets more than
@@ -123,7 +161,6 @@ ability art brief (`ability-art-brief.md`) is the list of what is still needed.
 
 ## Not in this build yet
 
-- **Star forks** (two choices per ability): later, with Stars.
 - **Captains, Champions and Elders of Darkness** with their own moves and art: the zone bosses are still the old Elders,
   with new turn move sets.
 - **The Deepwell and Trials** still use the real-time fight.

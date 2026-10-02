@@ -50,12 +50,38 @@
       slots.append(b);
     });
     root.append(slots);
+    // talents (24e, 56e): the points this hero has
+    const tp = typeof talentPoints === 'function' ? talentPoints(k) : null;
+    if (tp) root.append(el('p', 'note ab-tp', `Talent points: ${tp.free} free of ${tp.total}. Each learned ability, and your Attack, Parry and Dodge, has two talents: pick one for ${TALENT_TUNE.cost} points. You earn ${TALENT_TUNE.perLevel === 1 ? 'one' : TALENT_TUNE.perLevel} a level. Change them any time between fights.`));
     // the groups
     for (const path of HERO_PATHS[k]) {
       const g = el('div', 'ab-path'); g.append(el('h3', 'ab-pname', path.name));
       for (const id of path.ids) g.append(cardFor(k, id, eq));
       root.append(g);
     }
+    // Attack, Parry and Dodge: talents only
+    const basic = el('div', 'ab-path'); basic.append(el('h3', 'ab-pname', 'Attack, Parry and Dodge'));
+    for (const [mv, nm] of [['attack', 'Attack'], ['parry', 'Parry'], ['dodge', 'Dodge']]) {
+      const c = el('div', 'ab-card owned ab-basic'); c.append(el('b', 'ab-bname', nm));
+      const row = talentRow(k, k + ':' + mv); if (row) c.append(row);
+      basic.append(c);
+    }
+    root.append(basic);
+  }
+  // the two talents of an ability (or of '<hero>:attack' etc.): tap one to take it, tap it again to give it back
+  function talentRow(k, id) {
+    if (typeof TALENTS !== 'object' || !TALENTS[id]) return null;
+    const T = TALENTS[id], cur = (talentsOf(k) || {})[id] || '', tp = talentPoints(k), row = el('div', 'ab-tal');
+    for (const c of ['a', 'b']) {
+      const on = cur === c, can = on || !!cur || tp.free >= TALENT_TUNE.cost;
+      const b = el('button', 'ab-talb' + (on ? ' on' : '')); b.type = 'button'; b.disabled = !can;
+      b.setAttribute('aria-pressed', String(on));
+      b.append(el('b', null, T[c].name), el('small', null, T[c].text));
+      b.title = on ? 'Tap to give this talent back' : can ? `Take this talent (${TALENT_TUNE.cost} points)` : 'Not enough talent points';
+      b.addEventListener('click', () => { if (talentSet(k, id, on ? null : c)) persist(); sig = ''; refresh(); });
+      row.append(b);
+    }
+    return row;
   }
   function cardFor(k, id, eq) {
     const a = ABILITIES[id], i = abLearnInfo(k, id), where = eq.indexOf(id);
@@ -66,6 +92,9 @@
     t.append(el('b', null, a.name), el('small', null, `${KIND[a.kind]} · ${cd}` + (a.tier ? ` · Tier ${ROMAN[a.tier]}` : ' · Starter')));
     top.append(tile(id), t);
     c.append(top, el('p', 'ab-desc', a.desc));
+    // its numbers at your power now (owner, 2026-10-02: in the details, never during a fight)
+    const nums = typeof turnAbilityNumbers === 'function' ? turnAbilityNumbers(id) : '';
+    if (nums) c.append(el('p', 'ab-nums', nums));
     if (a.perfect) c.append(el('p', 'ab-timed', `Timed: press again as the ring closes. Perfect: ${a.perfect}. A miss hits for 70%.`));
     const foot = el('div', 'ab-foot');
     if (i.owned) {
@@ -94,13 +123,15 @@
       foot.append(el('span', 'ab-need', !i.lvOk ? `Needs level ${i.lv} and a ${s.name}` : `Needs a ${s.name}`));
     }
     c.append(foot);
+    if (i.owned) { const row = talentRow(k, id); if (row) c.append(row); }
     return c;
   }
   function refresh() {
     if (!root || !root.isConnected) return;
     const k = soloHero(); if (!k) { if (sig !== 'none') { sig = 'none'; build(); } return; }
     const lv = soloLevels()[k], A = S.abil || {};
-    const s = [k, lv && lv.L, JSON.stringify(A.unl && A.unl[k]), JSON.stringify(A.scrolls), soloEquipped().join(), armed].join('|');
+    const P = typeof turnPowerNow === 'function' ? turnPowerNow() : null;
+    const s = [k, lv && lv.L, JSON.stringify(A.unl && A.unl[k]), JSON.stringify(A.scrolls), soloEquipped().join(), armed, P ? fmt(Math.round(P.U)) : '', JSON.stringify(A.tal && A.tal[k])].join('|');
     if (s === sig) return;
     sig = s; build();
   }

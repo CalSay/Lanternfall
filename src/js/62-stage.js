@@ -68,11 +68,19 @@ let resize, animate, draw, stageStats, warmScene;
   // record's own canvas; frames only copy it (scaled during the first pop), so a screen of numbers
   // costs a few drawImage calls, not a stroke and a fill of text each. Rebaked on a zoom change.
   // S1: dt puts the type icon in front (instead of a glyph); rel 1 / -1 adds a weak / resisted triangle after.
+  // C29: dt 'st:<status>' puts that status's approved icon (21v) in front instead: a Burn or Bleed tick, a Curse burst.
+  const ST_FLOAT = {};
+  const stFloatIcon = id => {
+    if (typeof STATUS_ICONS !== 'object' || !STATUS_ICONS[id]) return null;
+    let im = ST_FLOAT[id]; if (!im) { im = ST_FLOAT[id] = new Image(); im.src = STATUS_ICONS[id]['24'] || STATUS_ICONS[id]['16']; }
+    return im.complete && im.naturalWidth ? im : (typeof statusIcon === 'function' ? statusIcon(id) : null);
+  };
+  for (const id of ['burn', 'bleed', 'curse', 'blind']) stFloatIcon(id);   // decoded before the first tick
   function bakeText(r, txt, col, size, lw, glyph, dt, rel) {
     const K = DPR * ZM, px = Math.max(6, Math.round(size * K)), l = Math.max(1, Math.round(lw * K));
     const c = r.cv || (r.cv = document.createElement('canvas'));
     let g = c.getContext('2d'); g.font = fontPx(px);
-    const tIc = dt ? typeIcon(dt) : null; if (tIc) glyph = 1;
+    const tIc = dt ? (dt.startsWith('st:') ? stFloatIcon(dt.slice(3)) : typeIcon(dt)) : null; if (tIc) glyph = 1;
     const tw = Math.ceil(g.measureText(txt).width), gw = glyph ? Math.round(px * 0.7) : 0, gap = glyph ? Math.round(px * 0.12) : 0;
     const aw = rel ? Math.round(px * 0.5) + gap : 0;
     const w = tw + gw + gap + aw + l * 2 + 4, h = Math.ceil(px * 1.25) + l * 2;
@@ -972,6 +980,8 @@ let resize, animate, draw, stageStats, warmScene;
     A.burstPx(x, y, b.color || '#FFFFFF', Math.min(16, b.n || 4), (b.spd || 0.7) * 70);
   });
   on('shake', amt => { shake = reduced ? 0 : amt; });
+  // C29 hit feel: a screen flash in a colour (a counter, a Perfect, a broken charge); reduced motion keeps a soft one
+  on('hitFlash', p => { if (!p) return; flashA = Math.max(flashA, (reduced ? 0.4 : 1) * (p.a || 0.3)); flashRgb = p.rgb || '255,210,122'; });
   on('lunge', () => { if (!(target() === 'node' && typeof gatherWalking === 'function' && gatherWalking())) attack(hero); });
   on('nodeHit', () => { nodeShake = 0.12; });
   on('wyrmHit', () => { wyrmHit = 0.1; });

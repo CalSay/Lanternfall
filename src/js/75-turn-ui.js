@@ -134,6 +134,10 @@ var turnBarInfo = () => null;
   on('turnPhase', p => say(`${p.name} is furious and faster!`, 'charge', 2.2));
   on('foeSkip', p => { if (p && p.turn) emit('float', { txt: p.why === 'recover' ? 'Recovering' : p.why === 'freeze' ? 'Frozen' : 'Stunned', color: '#8FB8FF', big: true }); });
   on('foeFrozen', () => emit('float', { txt: 'FROZEN', color: '#8FD8FF', big: true }));
+  // elite traits (59k, 24d TURN_TRAITS): the first of each kind says what it does; breaking one shows
+  on('traitSeen', p => { if (p && p.first) say(p.txt, 'charge', 4); });
+  on('traitBroken', p => { if (p) { emit('float', { txt: p.txt, color: '#BFE6FF', big: true }); emit('shake', 0.2); } });
+  on('shieldHit', () => emit('float', { txt: 'Shield', color: '#BFE6FF', big: false }));
   on('heroMiss', () => emit('float', { txt: 'Miss', color: '#A9B1BD', big: false, x: 0.66, y: 0.42 }));
   on('foeContact', p => { if (p && p.res === 'miss') emit('float', { txt: 'Missed you', color: '#8FB8FF', big: false, x: 0.27, y: 0.42 }); });
   on('fightEnd', () => { warnSticky = ''; warn.hidden = true; });

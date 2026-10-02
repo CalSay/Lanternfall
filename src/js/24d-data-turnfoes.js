@@ -71,3 +71,18 @@ const TURN_BOSS_BASIC = {
 const TURN_FOE_SPEED = { normal: 0.9, ranged: 0.95, elite: 1.0, boss: 1.05, region: 1.1 };
 // Fight length in the hero's ordinary Attack actions at zone-ready power (the C22 contract's HP budgets)
 const TURN_FOE_HP = { zoneFoe: 4, normal: 5, elite: 9, boss: 16, region: 30 };
+
+// Elite traits in turn fights (owner, 2026-10-02): one per elite, from zone COMBAT_TUNE.eliteFrom (59k turnFoeSetup).
+// Names and badges are the old traits' (ELITE_TRAITS, 21g); these are their turn rules and the line the first one shows.
+//   shielded  a shield of `share` of its max HP takes hits first; a hit of `heavy` of its max HP or more counts twice on it
+//   vampiric  heals `heal` of the damage its landed hits do, unless it is Cursed or carries `stop` Bleed
+//   enraged   below half HP it is `spd` faster and hits `dmg` harder (still never more than 2 turns in a row)
+//   frozen    its ice halves every hit but fire; fire hits it x`fire` and breaks the ice
+//   cursed    its landed hits Weaken you; holy damage hurts it x`holy`
+const TURN_TRAITS = {
+  shielded: { share: 0.3, heavy: 0.08, first: 'Shielded elite: its shield soaks your hits first. Big hits break it twice as fast.' },
+  vampiric: { heal: 0.5, stop: 3, first: 'Leeching elite: it heals from every hit it lands. Curse it, or stack 3 Bleed, to stop it.' },
+  enraged: { spd: 1.3, dmg: 1.2, first: 'Enraged elite: under half health it gets faster and hits harder. Chill slows it.' },
+  frozen: { resist: 0.5, fire: 1.5, first: 'Ice-Clad elite: its ice halves your damage. Fire breaks the ice.' },
+  cursed: { holy: 1.5, first: 'Cursed elite: its hits Weaken you. Holy damage hurts it more.' }
+};

@@ -1,6 +1,6 @@
 /* 75-turn-ui: the turn fight's versus card, turn strip, timing bar, hero row and warnings. The strip sits under the
    foe's name and HP bar at the top of the stage. */
-.tv-card { position: absolute; inset: 0; z-index: 6; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+.tv-card { position: absolute; inset: 0; z-index: 5; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
   background: rgba(10, 7, 14, .78); pointer-events: none; }
 .tv-card[hidden] { display: none; }
 .tv-row { display: flex; align-items: center; gap: 14px; }
@@ -21,7 +21,7 @@
 @keyframes tv-in-r { 0% { transform: translateX(40px); opacity: 0; } 25%, 100% { transform: none; opacity: 1; } }
 @keyframes tv-fade { 0% { opacity: 0; } 12%, 82% { opacity: 1; } 100% { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .tv-card.play .tv-side { animation: none !important; } }
-.tv-top { position: absolute; left: 50%; top: 80px; transform: translateX(-50%); z-index: 7; display: flex; flex-direction: column; align-items: center; gap: 2px; pointer-events: none; }
+.tv-top { position: absolute; left: 50%; top: 80px; transform: translateX(-50%); z-index: 5; display: flex; flex-direction: column; align-items: center; gap: 2px; pointer-events: none; }
 .tv-top[hidden] { display: none; }
 .tv-strip { display: flex; gap: 3px; }
 .tv-strip[hidden] { display: none; }
@@ -32,7 +32,7 @@
 .tv-mini { max-width: 20px; max-height: 20px; image-rendering: pixelated; }
 .tv-slot.now .tv-mini { max-width: 24px; max-height: 24px; }
 .tv-n { font: calc(10px * var(--display-k, 1))/1 var(--display); color: #B8AEC4; text-shadow: 1px 1px 0 #0B0810; }
-.tv-time { display: grid; gap: 2px; width: min(280px, 72vw); margin-top: 2px; padding: 3px 4px; background: rgba(10, 7, 14, .78); }   /* above a place caption (z 7 over 60-story .sty-cap 5) */
+.tv-time { display: grid; gap: 2px; width: min(280px, 72vw); margin-top: 2px; padding: 3px 4px; background: rgba(10, 7, 14, .78); }   /* a place caption fades under it (.tv-winding) */
 .tv-time[hidden] { display: grid; visibility: hidden; }   /* keeps its room, so the rows under it never jump */
 .tv-track { position: relative; height: 16px; background: #16111C; border: 2px solid #0B0810; box-shadow: inset 0 0 0 1px #3A3046; }
 .tv-track i { position: absolute; top: 0; bottom: 0; display: block; }
@@ -69,7 +69,7 @@
 @keyframes tv-pulse { 50% { box-shadow: inset 0 0 0 2px #FFD27A, 2px 2px 0 #0B0810; } }
 @media (prefers-reduced-motion: reduce) { .tv-warn.charge { animation: none !important; } }
 /* a timed ability's ring (59k TURN_TIMED): it closes on the foe; the inner circle is the moment */
-.tv-ring { position: absolute; left: 66%; top: 58%; width: 0; height: 0; z-index: 6; pointer-events: none; }
+.tv-ring { position: absolute; left: 66%; top: 58%; width: 0; height: 0; z-index: 5; pointer-events: none; }
 .tv-ring[hidden] { display: none; }
 .tv-ring i { position: absolute; left: 0; top: 0; width: 44px; height: 44px; border-radius: 50%; transform: translate(-50%, -50%); }
 .tv-ring-i { border: 3px solid rgba(242, 193, 78, .9); box-shadow: 0 0 0 2px #0B0810; }
@@ -79,7 +79,7 @@
 .tv-ring-t { position: absolute; left: 0; top: 34px; transform: translateX(-50%); white-space: nowrap; font: 700 calc(13px * var(--display-k, 1))/1 var(--display);
   color: var(--gold, #F2C14E); text-shadow: 1px 1px 0 #0B0810; }
 /* whose turn: the banner in the pause between turns (59k turnCard) */
-.tv-turncard { position: absolute; left: 0; right: 0; top: 42%; z-index: 6; display: flex; align-items: center; justify-content: center; gap: 10px;
+.tv-turncard { position: absolute; left: 0; right: 0; top: 42%; z-index: 5; display: flex; align-items: center; justify-content: center; gap: 10px;
   padding: 6px 12px; transform: translateY(-50%); pointer-events: none; background: linear-gradient(90deg, transparent, rgba(10, 7, 14, .94) 18%, rgba(10, 7, 14, .94) 82%, transparent); }
 .tv-turncard[hidden] { display: none; }
 .tv-tc-face { width: 36px; height: 36px; display: grid; place-items: center; background: #16111C; border: 2px solid #0B0810; }
