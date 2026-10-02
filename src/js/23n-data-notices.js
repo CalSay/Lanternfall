@@ -45,7 +45,7 @@ const NOTICES = [
   { id: 'zone-won', re: /^Zone .+ won\. On to Zone .+\.$/, ch: 'log', why: 'a replayed zone won: the zone title shows where you are',
     merge: ms => ms[ms.length - 1] },
   { id: 'level', key: 'level', re: /^Level \d+\. Your hero hits/, ch: m => noteNum(m, /^Level (\d+)/) % 25 === 0 ? 'bell' : 'log',
-    why: 'the LEVEL UP float says it; every 25th level is a bell line (level 10 pops as the Stars unlock)',
+    why: 'the LEVEL UP float says it; every 25th level is a bell line (the Stars may unlock at level 10)',
     merge: ms => `${ms.length} levels gained. Level ${noteNum(ms[ms.length - 1], /^Level (\d+)/)}.` },
   { id: 'skill', key: 'skill', re: /^\S+ level \d+\./, ch: m => /You can now|open to you/.test(m) ? 'bell' : 'none', why: 'only a new tier is news' },
   { id: 'boss-fail', re: /^(The zone boss held its ground|The zone boss beat you|Your party fell to the zone boss)/, ch: 'pop', wait: 10, why: 'tells you to grow stronger' },
@@ -90,14 +90,18 @@ const NOTICES = [
   // While the guide runs it points at each new tab itself, so the tab lines only pop once tips are off.
   { id: 'unlock-tab', re: /^(New tab: |Next Up shows your best next goal|You made camp\. A new tab)/, ch: (m, n, ctx) => ctx && ctx.guide ? 'log' : 'pop', wait: 30,
     site: /toast\(OPEN_TXT\[id\]/, why: 'the guide points at the tab' },
-  { id: 'unlock-stars', re: /^New on the (Party|Hero) tab: Stars\./, ch: 'pop', wait: 60, why: 'level 10: star points to spend' },
+  { id: 'unlock-stars', re: /^New on the (Party|Hero) tab: Stars\./, ch: 'pop', wait: 60, held: 'log', why: 'the first star found (or level 10); held: the Stars tab dot keeps it' },
   { id: 'unlock', re: /^(New on the |.* (is|are) open on the Camp tab\.$|The Codex is open\.|Where each one stands matters)/, ch: 'log',
     why: 'the tab shows a New mark (and the guide names a new tab), so the bell lists it without counting it', merge: ms => `New: ${ms.map(m => (/^New on the [^:]+: (the )?([^.]+)/.exec(m) || [0, 0, m.replace(/\..*$/, '')])[2]).join(', ')}.` },
   // W2-A Training: the player just pressed Train and the row shows it; a stage cap is worth a bell line
   { id: 'training', key: 'training', re: /^Training: .* Lv \d+\. /, ch: 'log', why: 'an ability milestone; the Training row shows it' },
   { id: 'training-cap', key: 'training-cap', re: /^Training: .* is at Lv \d+, the most /, ch: 'bell', why: 'a move reached its class-stage cap (the Proving lifts it)' },
   { id: 'star-point', re: /^\+1 star point\. /, ch: 'log', merge: ms => `+${ms.length} star points. ${ms[ms.length - 1].replace(/^\+1 star point\. /, '')}` },
-  { id: 'stars-reset', re: /^Your star map changed/, ch: 'bell' },
+  // the Stars (57e-stars): a found star is news (rare: a zone boss's first win, an elite, a Proving); learning one is a bell line
+  { id: 'stars:found', key: 'stars:found', ch: 'pop', wait: 40, held: 'log', why: 'a new star, and whether it is set for the next fight (held: the Stars tab dot and Next Up keep it)' },
+  { id: 'stars:learned', key: 'stars:learned', ch: 'log', why: 'any hero can light it now; the star card and Next Up show it' },
+  { id: 'stars:catchup', key: 'stars:catchup', ch: 'bell', why: 'an old save: the stars of the zone bosses and Provings behind it' },
+  { id: 'stars:new', key: 'stars:new', ch: 'bell', why: 'an old save that had lit stars on the old star map: the points are free again' },
 
   // ---- combat tips ----
   // The guide teaches Dodge and Parry, so the heavy-hit tips stay quiet; a new kind of attack pops once.
@@ -113,7 +117,7 @@ const NOTICES = [
   { id: 'deed-group', key: 'deed-group', wait: 40, ch: (m, n) => n && n.lv >= 2 ? 'pop' : 'bell' },
   { id: 'deed-feat', key: 'deed-feat', ch: 'pop', why: 'only when there is no Feat card (DEED_TUNE.featToast)' },
   { id: 'deed-points', key: 'deed-points', site: /key: x\.key \|\| 'deed-points'/, ch: 'bell', why: 'also carries the Deeds queue (group and Feat lines name their own key)' },
-  { id: 'deed-secret', re: /^Secret found: /, ch: 'pop', wait: 40 },
+  { id: 'deed-secret', re: /^Secret found: /, ch: 'pop', wait: 40, held: 'log', why: 'held: the Deeds view keeps it' },
   { id: 'mastery', key: 'mastery', re: /: mastery star \d of 5\./, ch: 'log', why: 'the zone shows its stars' },
   { id: 'bestiary', key: 'bestiary', re: /^Bestiary: /, ch: 'log', why: 'the Bestiary view marks it' },
   { id: 'weekly', re: /^Weekly goal done: /, ch: 'bell' },
@@ -139,8 +143,7 @@ const NOTICES = [
 
   // ---- answers to a press: they show at once (a reply is never held) ----
   { id: 'reply', ch: 'pop', reply: 1, site: /toast\(w, 'raid'/,
-    re: /^(Chop more Pine Log first|Climb out of the Deepwell first|Give your hero a name first|The Proving cannot start now|That change did not go through|The free change has run out|Save loaded)/,
-    test: m => typeof starLocked === 'function' && (() => { try { return m === starLocked(); } catch (e) { return false; } })() },
+    re: /^(Chop more Pine Log first|Climb out of the Deepwell first|Give your hero a name first|The Proving cannot start now|That change did not go through|The free change has run out|Save loaded)/ },
 
   // ---- C4: completed gatherer trade runs ----
   { id: 'hands-trade', re: /^.+ returns from .+: \+.+ gold\.$/, ch: 'log' },

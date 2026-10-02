@@ -42,7 +42,7 @@
 
   // What opened, in one plain sentence. Tabs pop (high); views and smaller things are normal.
   const OPEN_TXT = {
-    party: 'New tab: Hero. Your gear, level and star map.',
+    party: 'New tab: Hero. Your gear, level and abilities.',
     gather: 'New tab: Gather. Mine ore and chop wood.',
     camp: typeof hearthCold === 'function' && hearthCold() ? 'New tab: Camp. Build your first station there.' : 'You made camp. A new tab: Camp.',
     craft: 'New tab: Craft. Make gear from your materials.',
@@ -163,7 +163,7 @@
       const b = q('#modeSeg button[data-act="gather"]');
       return b && !b.hidden ? { node: b, text: 'The road is cold. Tap Gather and chop Pine Log for a camp fire.' } : null;
     },
-    'tab:party': () => S.tab === 'party' ? null : { node: q('.tab[data-tab="party"]'), text: 'New tab: Hero. See your gear, level and star map.' }
+    'tab:party': () => S.tab === 'party' ? null : { node: q('.tab[data-tab="party"]'), text: 'New tab: Hero. See your gear, level and abilities.' }
   };
   const STEP_UI = {
     // UX-L1: in landscape a menu leaves the rail and top row in view, so the hint stays and points at the lit tab (close the menu)

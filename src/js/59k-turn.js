@@ -195,6 +195,7 @@ function turnMakeProfile(f, u) {
     heroSpd: (T.heroHaste[key] || 10) + (g.initiative || 0), foeSpd: f.tk.spd, foeMaxHp: f.max, foeHp: f.hp,
     foeName: f.name, foeType: f.txRow || f.type, foeArm: f.tk.arm, boss: f.tk.boss, region: f.tk.region, trait: f.tr && TURN_TRAITS[f.tr[0]] ? f.tr[0] : '',
     script: f.tk.script, eq, cds, tal: typeof talentsOf === 'function' ? talentsOf(key) : {},
+    stars: typeof starsActive === 'function' ? starsActive(key) : [], starSet: typeof starsSetIds === 'function' ? starsSetIds(key) : [],   // the Stars (57e)
     parryWindow: Math.min(T.windowCaps.parry, (SOLO_TUNE.turnParryWindow + (g.parryWindow || 0) / 1000 + bonus('turnParryWin')) * turnAssistX()),
     dodgeWindow: Math.min(T.windowCaps.dodge, (SOLO_TUNE.turnDodgeWindow + (g.dodgeWindow || 0) / 1000 + T.dodgeTrain * trainLv('dodge') + bonus('turnDodgeWin')) * turnAssistX()),
     essChance: essChance(), essExtra: g.essExtra || 0, goldPerKill: f.gold, xpPerKill: f.xp, healOnKill: COMBAT_TUNE.packHealF,
@@ -244,6 +245,7 @@ function turnNew(p, io) {
   for (const id in p.cds) m.cds[id] = 0;
   if (p.trait === 'shielded') m.e.shield = TURN_TRAITS.shielded.share * p.foeMaxHp;
   if (p.trait === 'frozen') m.e.ice = 1;
+  m.sf = null; if (p.stars && p.stars.length) turnStarsStart(m, io);   // the Stars (57e): flags and openers
   m.first = turnPick(m).who;
   return m;
 }
@@ -303,12 +305,14 @@ function turnHitFoe(m, io, pow, o) {
   if (!io.alive().foe || !(pow > 0)) return 0;
   const T = TURN_TUNE, p = m.p, h = m.h, e = m.e;
   let d = pow, crit = false;
-  if (!o.dot && !o.noCrit) {
+  if (m.sf) turnStarsPre(m, io, o);   // the Stars (57e): First Light
+  if ((!o.dot || o.dotCrit) && !o.noCrit) {
     const burning = e.burn > 0;
     crit = !!o.sure || (h.sear > 0 && burning) || io.random() < Math.min(T.critChanceCap, p.critChance + T.aimCrit * h.aim);
     const cm = Math.min(T.critCap, p.critMult + (h.keen && o.keenOk ? T.keenX : 0)) * (crit && h.sear > 0 && burning ? h.searX || 1 : 1);
     d *= crit ? cm * (1 + p.echo) : p.nonCrit;
   }
+  if (m.sf) d *= turnStarsX(m, io, o, crit);
   d *= turnTX(m, o.dt || 'phys');
   if (!o.stored) {
     if (e.mark > 0) d *= 1 + e.markV;
@@ -333,6 +337,7 @@ function turnHitFoe(m, io, pow, o) {
     if (m.charge) { m.charge.dmg += got; if (m.charge.dmg >= T.chargeBreak * p.foeMaxHp) turnBreakCharge(m, io); }
   }
   if (crit) o.critted = true;
+  if (m.sf && got > 0) turnStarsAfter(m, io, o, crit);
   return got;
 }
 function turnBreakCharge(m, io) {
@@ -345,6 +350,7 @@ function turnBreakCharge(m, io) {
 function turnControl(m, io, kind) {
   const T = TURN_TUNE, e = m.e;
   if (e.lock > 0) return false;
+  if (e.dazed) turnMark(e, e.dazed);   // the Stars: Dazed Prey
   if (m.charge) turnBreakCharge(m, io);
   if (m.p.boss) {
     e.stagger += T.stagger[kind] || 25;
@@ -356,8 +362,8 @@ function turnControl(m, io, kind) {
   io.emit('foeSkip', { why: kind });
   return true;
 }
-const turnBurnSet = (e, dmg, t) => { if (dmg >= e.burnDmg || !(e.burn > 0)) e.burnDmg = dmg; e.burn = Math.min(TURN_TUNE.burnMaxT, Math.max(e.burn, t)); };
-const turnBleedAdd = (m, n) => { const T = TURN_TUNE, e = m.e; e.bleed = Math.min(T.bleedMax, e.bleed + n); e.bleedT = T.bleedT; e.bleedDmg = Math.max(e.bleedDmg, T.bleedP * m.p.U); };
+const turnBurnSet = (e, dmg, t) => { if (dmg >= e.burnDmg || !(e.burn > 0)) e.burnDmg = dmg; e.burn = Math.min(TURN_TUNE.burnMaxT, Math.max(e.burn, t)); if (e.brand) turnMark(e, e.brand); };   // e.brand: the Stars' Brand
+const turnBleedAdd = (m, n) => { const T = TURN_TUNE, e = m.e; e.bleed = Math.min(e.bleedMax || T.bleedMax, e.bleed + n); e.bleedT = T.bleedT + (e.bleedPlus || 0); e.bleedDmg = Math.max(e.bleedDmg, T.bleedP * m.p.U); };
 function turnChillAdd(m, io, n) {
   const T = TURN_TUNE, e = m.e;
   e.chill = Math.min(T.chillMax, e.chill + n); e.chillT = T.chillT;
@@ -392,6 +398,7 @@ const turnTal = (m, id) => (m.p.tal && m.p.tal[id]) || '';
 function turnHeroAct(m, io, id, slot, grades) {
   const T = TURN_TUNE, p = m.p, h = m.h, e = m.e, U = p.U, k = p.heroKey;
   if (turnUsable(m, id)) return false;
+  if (m.sf) turnStarsAct(m, io, id, 'pre');
   // a timed ability's rings, one per direct hit in order: 'perfect' | 'good' | 'miss' (none: not timed, as written)
   let gi = 0;
   const G = grades || [], gNext = () => G[gi++] || 'good', perfects = G.filter(g => g === 'perfect').length;
@@ -560,6 +567,7 @@ function turnHeroAct(m, io, id, slot, grades) {
   if (blindMiss) io.emit('heroMiss', {});
   m.cds[id] = id === 'attack' ? 1 : (p.cds[id] || turnCdFor(id));
   if (m.cdCut) { m.cds[id] = Math.max(1, m.cds[id] - m.cdCut); m.cdCut = 0; }   // Shield Throw caught Perfect
+  if (m.sf) turnStarsAct(m, io, id, 'post', G);
   // a hero action ages what lasts through it
   if (e.exposed > 0) e.exposed--;
   if (h.ripo > 0) h.ripo--;
@@ -598,7 +606,7 @@ function turnBegin(m, who, io) {
     turnHitFoe(m, io, e.burnDmg, { dt: 'fire', dot: true, kind: 'burn', n: e.burn }); e.burn--; emberTick = true;
     if (!e.burn) { e.burnDmg = 0; e.growN = 0; }
   }
-  if (e.bleed > 0) { turnHitFoe(m, io, e.bleed * e.bleedDmg, { dt: 'phys', dot: true, kind: 'bleed', n: e.bleed }); if (--e.bleedT <= 0) { e.bleed = 0; e.bleedDmg = 0; } }
+  if (e.bleed > 0) { turnHitFoe(m, io, e.bleed * e.bleedDmg, { dt: 'phys', dot: true, kind: 'bleed', n: e.bleed, dotCrit: !!e.bleedCrit }); if (--e.bleedT <= 0) { e.bleed = 0; e.bleedDmg = 0; } }
   if (e.swarm > 0) { if (e.swarmDmg > 0) turnHitFoe(m, io, e.swarmDmg, { dt: 'phys', dot: true, kind: 'swarm' }); if (e.swarmBite && e.bleed > 0) { e.swarmBite = 0; turnBleedAdd(m, 1); } e.swarm--; }
   if (emberTick && has(m, 'emberheart')) {
     const first = !h.ehFirst, et = turnTal(m, 'emberheart'); h.ehFirst = 1;
@@ -686,13 +694,16 @@ function turnContact(m, io) {
     if (m.p.heroKey === 'tobin') turnGain(h, 'grit', 1 + (has(m, 'bulwark') ? 1 : 0) + (h.answer ? 2 : 0));
     h.answer = 0;   // Taunting Roar: Answer Me, once
     if (h.brace > 0 && h.braceT === 'b') h.pierce = 1;   // Brace: Read the Blow
+    if (m.sf) turnStarsDef(m, io, 'parry');
   } else if (m.defense === 'dodge') {
     res = 'dodge'; h.postDodge = 1;
+    if (m.sf) turnStarsDef(m, io, 'dodge');
     if (m.shadowUsed) { m.shadowUsed = 0; h.shadow = 0; h.keen = 1; if (turnTal(m, 'shadowstep') === 'b') turnGain(h, 'aim', 1); }
   } else if (e.blind > 0 && io.random() < (m.p.boss ? T.blindBossP : T.blindP)) res = 'miss';
   else { turnLand(m, io, hit); m.landed++; }
   io.emit('foeContact', { id: m.move.id, hit: m.hitI, hits: m.move.hits.length, res });
   if (!io.alive().hero) { turnEnd(m, 'defeat', io); return; }
+  if (!io.alive().foe) { turnEnd(m, 'victory', io); return; }   // a parried hit can strike back (the Stars' Holy Sparks)
   m.hitI++;
   if (m.hitI < m.move.hits.length) { turnHitStart(m, io); return; }
   // the move is over: a counter if every hit was parried; Riposte opens after any parry
@@ -707,6 +718,7 @@ function turnContact(m, io) {
     if (k === 'wren') { if (pt === 'a' && first) turnMark(e, 2); else if (pt === 'b') turnGain(h, 'aim', 1); }
     else if (k === 'tobin' && first) { if (pt === 'a') e.sunder = Math.max(e.sunder, 2); else if (pt === 'b') h.guard = Math.max(h.guard, 1); }
     else if (k === 'pip' && first) { if (pt === 'a') turnGain(h, 'embers', 1); else if (pt === 'b') e.weaken = Math.max(e.weaken, 1); }
+    if (m.sf) turnStarsDef(m, io, 'counter');
     io.emit('soloCounter', { foe: io.foe ? io.foe() : null, dmg: got, auto: false });
     io.emit('crit', { tap: true, counter: true });
   }
@@ -739,7 +751,7 @@ function turnEnd(m, reason, io) {
   if (!m || m.ended) return;
   m.ended = true; m.phase = 'off'; m.next = null;
   if (io.endFight) io.endFight(m, reason);
-  io.emit('fightEnd', { reason, now: m.now });
+  io.emit('fightEnd', { reason, now: m.now, stars: m.p.starSet || null });   // stars: the set ones learn from a win (57e)
 }
 // One step of the fight: { kind: 'tick' } with dt, or a command: attack | ability (slot or id) | parry | dodge.
 function turnResolve(m, cmd, dt, io) {

@@ -28,6 +28,8 @@
 //   --turns 1: run the cores with turn fights on (59k; they are active only, so the idle policies earn nothing from
 //             fights). Default off here: the day and target reports measure the legacy real-time pacing model.
 //   --report turns --hours 1 --seeds 3 --json rates.json: the turn fight's win rates, fight length and income (C29).
+//     --stars typical: each profile carries a typical Stars loadout (24f, 57e): the stars its zone has found (zone bosses
+//     behind it, and the hero's own Proving past zone 35), learned, with a set of 3 and up to 2 lit (STARS_TYPICAL below).
 //   --report heroes --hours 1 --seeds 3: the three heroes on the same footing (the Tobin pass, combat-turn-build.md).
 //   --report early (SOLO1): the three starters, idle and active, 1 h of mixed play each: first boss, zone 5,
 //             zone 10, zones at 30 and 60 min, wipes, answers; PASS/FAIL against the early targets.
@@ -91,6 +93,19 @@ import { loadCore as loadCoreRaw } from './lib/core.mjs';
 // C29: zone fights are turn fights and active only (59k), so the idle and check-in policies below would earn nothing
 // from fights. They measure the legacy real-time pacing model: every core here runs with TURN_TUNE.on = 0 unless
 // --turns 1 is given. The turn fight's own numbers: --report turns.
+// The Stars (57e-stars, owner 2026-10-02) a player would carry at each profile's zone: everything found behind it is
+// learned, 3 set and (with the points) 3 lit. A fresh hero at zone 1 has found none yet.
+const STARS_TYPICAL = `(() => {
+  const k = soloHero(), z = S.maxZone, base = SOLO_HEROES[k].base;
+  for (const id of STAR_ORDER) { const f = STARS[id].from; if ((f.zone && z > f.zone) || (f.proving === base && z > 35)) { S.stars.own[id] = 1; S.stars.learned[id] = 1; } }
+  const pick = { wren: [['turning', 'emberedge', 'serrated'], ['readylamp', 'huntstep', 'sparkguard']],
+    tobin: [['turning', 'serrated', 'quickreturn'], ['readylamp', 'sparkguard', 'huntstep']],
+    pip: [['turning', 'brand', 'killmark'], ['readylamp', 'sparkguard', 'sanctuary']] }[k];
+  const own = id => !!S.stars.own[id];
+  S.stars.set[k] = pick[0].filter(own).concat([null, null, null]).slice(0, 3);
+  S.stars.lit[k] = [];
+  for (const id of pick[1]) if (own(id)) starLight(id, k);
+})()`;
 const TURNS_ON = (() => { const i = process.argv.indexOf('--turns'); return i >= 0 && process.argv[i + 1] !== '0'; })();
 const loadCore = o => loadCoreRaw({ ...(o || {}), extraSource: ((o && o.extraSource) || '') + `\nTURN_TUNE.on = ${TURNS_ON ? 1 : 0};` });
 import { writeFileSync } from 'node:fs';
@@ -1476,6 +1491,7 @@ async function runTurnReport() {
       if (setup) e(setup);
       e(`TURN_TUNE.on = 1; ${hero ? `soloPick(${JSON.stringify(hero)}, {now:true});` : ''} setZone(Math.max(1, S.maxZone)); S.activity='fight'; arena=null; gearDirty();
         fightBoss = ${boss}; spawn();`);
+      if (args.stars === 'typical') e(STARS_TYPICAL);
       if (args.eval) e(String(args.eval));
       const p = e('turnCombatProfile()');
       const r = e(`turnCombatSample({ profile: turnCombatProfile(), seconds: ${seconds}, seed: ${sd}, skill: ${JSON.stringify(skill)} })`);

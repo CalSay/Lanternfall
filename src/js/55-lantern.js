@@ -7,7 +7,7 @@
 //     n: 1 for the Hollow, 2 for the Coast. head/text/note: COAST_STORY[region.beat] (21b-stories-coast).
 //     quiet: true for a save that was already past the boss before this system existed (it gets one
 //       bell line through emit('whatsNew') instead of the card).
-//     rewards: listeners push { txt, ic } lines while the event runs (57e-constellations: the star
+//     rewards: listeners push { txt, ic } lines while the event runs (57e-stars: the star
 //       points; later the Oaths, rank 8 ...). The card and the bell line list them.
 // The reward itself is never granted here: each system derives its own from S.maxZone or listens.
 //

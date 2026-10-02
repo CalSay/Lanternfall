@@ -69,7 +69,7 @@ let unitHp, unitCd, bossTelegraph;
   // Deepwell boons (57d-deepwell.js) tune the knobs below through bonus('tune:<knob>') and
   // mod('abilityCd'); both are 0 / 1 outside a Deepwell run.
   const tn = k => T[k] + bonus('tune:' + k);
-  // Constellation keystones and notables (57e-constellations.js STAR_KS): bonus('ks:<id>') > 0.
+  // The old star map's keystones (STAR_KS, retired 2026-10-02 with 57e-constellations.js): bonus('ks:<id>') is always 0 now.
   const ks = id => bonus('ks:' + id) > 0;
   let heavyN = 0, tapN = 0, rainLeft = 0, rainNext = 0;
 

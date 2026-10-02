@@ -117,16 +117,8 @@ let deeds, deedBonus, wearGet;
   const pagesOf = keysList => { let n = 0; for (const k of keysList) n += masteryApi.tierFor(num(S.mastery.types[k])); return n; };
   const allTypeKeys = () => TYPES.map(t => t.key);
   const hollowTypeKeys = () => REGIONS[0].types.map(i => TYPES[i].key);
-  // S2 (classes-2 4.4): 3 class maps; each reads the best of its own layouts.
-  const starBest = cls => {
-    const m = starMap(cls), maps = S.stars && S.stars.maps;
-    if (!m || !maps) return 0;
-    let best = 0;
-    const r = maps[cls];
-    if (r && Array.isArray(r.layouts)) for (const l of r.layouts) { let s = 0; for (const id of (l && l.lit) || []) s += m.stars[id] ? m.stars[id].cost : 0; if (s > best) best = s; }
-    return best;
-  };
-  const starClasses = () => Object.keys(STAR_MAPS).filter(c => !STAR_MAPS[c].legacy);
+  // the Stars (57e-stars): found and learned
+  const starsN = k => (S.stars && S.stars[k] && typeof S.stars[k] === 'object' ? Object.keys(S.stars[k]).filter(id => typeof STARS === 'object' && STARS[id]).length : 0);
   const tiersByLadder = r => r >= 7 ? 4 : r >= 5 ? 3 : r >= 3 ? 2 : r >= 1 ? 1 : 0;
   const skillUnits = (skill, t) => { let s = 0; for (const f of GATHER) if (DS().g[f] && safe(() => skillOf(f), '') === skill) s += num(DS().g[f][t - 1]); return s; };
   const seamLadder = skill => { let k = 0; if (skillUnits(skill, 2) >= 1e3) k = 1; else return 0; if (skillUnits(skill, 3) >= 1e3) k = 2; else return k; if (skillUnits(skill, 4) >= 1e3) k = 3; else return k; if (skillUnits(skill, 5) >= 1e4) k = 4; return k; };
@@ -164,7 +156,7 @@ let deeds, deedBonus, wearGet;
     hands: () => handsInfo().hired, handhrs: () => handsInfo().hours, meals: () => N().meal,
     depth: () => num(S.deep && S.deep.best), floors: () => num(S.deep && S.deep.floors), marks: () => num(S.deep && S.deep.marksTotal),
     boons: () => keys(S.deep && S.deep.seen), trial: trialSeals,
-    starmap: () => starClasses().reduce((a, c) => Math.max(a, starBest(c)), 0), keystones: () => keys(DS().rec.ks),
+    starmap: () => starsN('own'), keystones: () => starsN('learned'),
     lanternlight: () => typeof codexLight === 'function' ? num(codexLight()) : 0, pageseals: () => keys(S.codex && S.codex.seal),
     omens: () => keys(S.almanac && S.almanac.seen), dares: () => N().dare, weekly: () => N().weekly,
     stamps: () => num(S.almanac && S.almanac.stamps), wanted: () => num(S.bounties && S.bounties.claimed),
@@ -366,7 +358,7 @@ let deeds, deedBonus, wearGet;
     f_gold: () => [P('Gold earned', S.totalGold, FE.f_gold.need)],
     f_raid: () => [P('Raid bosses', num(S.wyrms), 100)],
     f_champs: () => [P('Champions', num(S.craft && S.craft.champ), 10000)],
-    f_stars: () => [P('Class maps at 36', starClasses().filter(c => starBest(c) >= 36).length, starClasses().length)],
+    f_stars: () => [P('Stars learned', starsN('learned'), typeof STAR_ORDER === 'object' ? STAR_ORDER.length : 25)],
     f_town: () => {
       const list = typeof campList === 'function' ? campList() : [], h = S.hands || {}, hl = Array.isArray(h.list) ? h.list : [];
       return [P('Buildings at the top', list.filter(id => campLv(id) >= campMaxLevel(id)).length, list.length), P('Hands housed', hl.length, 6),
@@ -529,7 +521,6 @@ let deeds, deedBonus, wearGet;
   on('raidReward', ({ embers }) => { N().embers += num(embers); });
   on('meal', () => { N().meal++; });
   on('storeCap', () => { const sx = DS().sx; sx.rat = num(sx.rat) + 1; if (sx.rat >= T.ratHits) grantSecret('s_rat'); });
-  on('starLit', ({ cls, id }) => { const m = safe(() => starMap(cls), null), s = m && m.stars[id]; if (s && (s.kind === 'key' || s.kind === 'crown')) DS().rec.ks[cls + ':' + id] = 1; });
   let oilSeen = Infinity;
   on('deepEnd', ({ summary }) => { if (summary && summary.reason === 'leave' && oilSeen < 1) grantSecret('s_oil'); oilSeen = Infinity; });
   // Hot Streak: a hero crit right after the last one (59-combat counts hero strikes in CB_STATS.heroHits).

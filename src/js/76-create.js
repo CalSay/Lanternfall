@@ -146,7 +146,7 @@ var classUI;
       // The evolution: granted or the two paths and their gate.
       else if (info.evo) {
         const txt = info.evo === 'priest'
-          ? 'You keep your Blessing, Rally Hymn and Lightkeeper stars. New Lightkeeper powers come in a later update.'
+          ? 'You keep your Blessing and Rally Hymn. New Lightkeeper powers come in a later update.'
           : `You play the ${d.name}'s kit for now. The ${info.evoName}'s own powers come in a later update.`;
         const r = row(`Path: ${info.evoName}`, info.proven ? info.evoTitle : 'Granted', txt, 'cl-evo');
         if (!info.proven) r.append(el('p', 'cl-note', `The title ${info.evoTitle} waits for your Proving, after the Fenmother.`));

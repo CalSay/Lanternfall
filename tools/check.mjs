@@ -1455,99 +1455,197 @@ if (section('onboarding hint placement (HINT1)')) try {
   }
 } catch (e) { fail('onboarding hint placement crashed: ' + (e.stack || e)); }
 
-// ---- constellations: the talent star map (57e-constellations.js) ----
-if (section('constellations')) try {
-  const { coreFiles } = await import('./lib/core.mjs');
-  const FIX = ['save-early.json', 'save-mid.json', 'save-late.json'];
+// ---- the Stars: small rule changes for turn fights (57e-stars.js, 24f-data-stars.js; owner 2026-10-02, "like pictos from E33") ----
+if (section('stars')) try {
   const rawOf = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
   const errs = [];
-  // points from hero levels and Great Lanterns
-  const g = loadCore({ seed: 41 }), E = s => g.eval(s);
-  assert(E('JSON.stringify(S.stars)') === '{"v":2,"maps":{},"seen":0}', 'new game: S.stars defaults');
+  const g = loadCore({ seed: 41, turns: true }), E = s => g.eval(s);
+  assert(E('JSON.stringify(S.stars)') === '{"v":3,"own":{},"wins":{},"learned":{},"set":{},"lit":{},"dry":0,"seenN":0}', 'new game: S.stars defaults');
+  // star points: a point every 3 hero levels, 4 for each Great Lantern (unchanged from the old map)
   const pts = (L, z) => E(`S.L = ${L}; S.maxZone = ${z}; starPoints()`);
   assert(pts(1, 1) === 0 && pts(3, 1) === 1 && pts(20, 20) === 6 && pts(35, 35) === 11, 'a star point every 3 hero levels');
   assert(pts(35, 36) === 15 && pts(54, 71) === 26 && E('greatLanternsLit()') === 2, 'a Great Lantern (+4) for each region boss: the zone 35 boss first');
-  assert(E('Object.values(STAR_MAPS).every((_, i) => true) && ["warrior","mage","ranger","lightkeeper"].every(c => starMap(c).order.length === 31 && starMap(c).edges.length === 33)'), 'four maps of 31 stars (3 classes and the legacy Lightkeeper map) (Hearthstar, 3 arms of 8, 5 ring stars, crown)');
-  assert(E('["warrior","mage","ranger","lightkeeper"].every(c => { const m = starMap(c); return Object.values(m.stars).filter(s => s.kind === "key" || s.kind === "crown").length === 4 && Object.values(m.stars).reduce((a, s) => a + s.cost, 0) === 44; })'), 'each map: 4 keystones, 44 points to light it all');
-  assert(E('["warrior","mage","ranger","lightkeeper"].every(c => { const st = Object.values(starMap(c).stars); for (let i = 0; i < st.length; i++) for (let j = i + 1; j < st.length; j++) if (Math.hypot(st[i].pos[0] - st[j].pos[0], st[i].pos[1] - st[j].pos[1]) < 44) return false; return true; })'), 'stars sit at least 44 map units apart (clean taps at 360px)');
-  // allocation rules
-  E('soloPick("tobin"); S.L = 30; S.maxZone = 20; S.stars.maps = {}');
-  assert(E('starPoints()') === 10 && E('starFree()') === 10, 'warden at level 30: 10 points');
-  assert(!E('starLight("a0s2")') && E('starCheck("a0s2").why') === 'Light a star next to it first.', 'a star needs a lit neighbour');
-  assert(E('starLight("a0s1") && starLight("a0s2") && starLight("a0s3")') && E('starFree()') === 6, 'lighting spends points (notable = 2)');
-  assert(!E('starUnlight("a0s1")') && /hang from this one/.test(E('starCheck("a0s1").why')), 'cannot unlight a star others hang from');
-  assert(E('starLight("a0s4") && starLight("a0s5") && starLight("a0s8")') && E('starFree()') === 1 && E('starKeysLit()') === 1, 'the cheapest keystone costs 9 (spine 6 + 3)');
-  assert(E('bonus("tune:guardMax")') === 7 && E('bonus("tune:guard")') < 0 && E('starKeystone("unbroken") && bonus("ks:unbroken") === 1'), 'stars feed tune: bonuses and ks: flags');
-  assert(!E('starLight("a1s1") && starLight("a1s2")') || E('starFree()') >= 0, 'never below 0 points');
-  E('starReset()');
-  assert(E('starLayout().lit.length') === 0 && E('starFree()') === 10 && !E('starKeystone("unbroken")') && E('bonus("tune:guardMax")') === 0, 'reset (respec) refunds every point');
-  // modifiers
-  const d0 = E('mod("dmg")'), dps0 = E('totalDps()');
-  E('starLight("a1s1"); starLight("a1s2")');
-  assert(Math.abs(E('mod("dmg")') / d0 - 1.015) < 1e-9 && E('mod("tap")') > 1.049, 'Edge adds +1.5% damage, Heavy Arm +5% taps');
-  assert(E('totalDps()') > dps0, 'dps rises with damage stars');
-  E('starReset()');
-  // keystone limit and the crown's need
-  E('S.L = 120');
-  for (const a of [0, 1, 2]) E(`["a${a}s1","a${a}s2","a${a}s3","a${a}s4","a${a}s5"].forEach(id => starLight(id))`);
-  assert(E('starLight("a0s8") && starLight("a1s8")') && E('starKeysLit()') === 2, 'two keystones lit');
-  assert(!E('starLight("a2s8")') && /^Unlight a keystone first/.test(E('starCheck("a2s8").why')), 'a third keystone: "Unlight a keystone first"');
-  E('starUnlight("a1s8")');
-  assert(/ring stars/.test(E('(starLight("b0"), starCheck("crown").why)')), 'the crown needs 3 ring stars');
-  E('starLight("b1"); starLight("b4")');
-  assert(E('starLight("crown")') && E('starKeysLit()') === 2, 'crown: 3 ring stars and 3 stars in every arm');
-  assert(/needs this star/.test(E('starCheck("b4").why')) || /hang/.test(E('starCheck("b4").why')), 'cannot unlight a ring star the crown needs');
-  assert(!E('starUnlight("a2s3")'), 'cannot drop an arm under the crown\'s need');
-  E('starReset()');
-  E('starReset()');
-  // boss fight and Deepwell lock
-  E('fightBoss = true; spawn()');
-  assert(E('starCheck("a0s1").why') === 'Not during a boss fight.' && !E('starReset()') && !E('starUseLayout(1)'), 'no changes during a boss fight');
-  E('fightBoss = false; spawn()');
-  assert(E('starCheck("a0s1").ok'), 'free again after the fight');
-  // layouts
-  E('starLight("a0s1"); starLight("a0s2")');
-  assert(E('starUseLayout(1)') && E('starLayout().lit.length') === 0 && E('starLayout().name') === 'Push', 'switch to the Push layout: empty');
-  E('starLight("a1s1")');
-  assert(E('starRename(1, "  Boss rush forever  ")') && E('starLayout().name') === 'Boss rush fo', 'rename (12 characters)');
-  assert(E('starUseLayout(0)') && E('starLayout().lit.join()') === 'a0s1,a0s2', 'back to Farm: its stars are kept');
+  E('S.L = 1; S.maxZone = 1');
+  // the data: 25 stars, each a plain rule with a cost of 1-3 and one place it is found
+  const D = JSON.parse(E('JSON.stringify(STAR_ORDER.map(id => STARS[id]))'));
+  const zones = D.filter(s => s.from.zone).map(s => s.from.zone), shorts = D.map(s => s.short);
+  assert(D.length === 25 && D.every(s => s.cost >= 1 && s.cost <= 3 && s.text.length <= 110 && s.name.length <= 16 && /^[A-Z]/.test(s.text) && /\.$/.test(s.text)), `25 stars, each with a name, one short rule and a cost of 1-3 star points (${D.length})`);
+  assert(zones.length === 14 && new Set(zones).size === 14 && D.filter(s => s.from.elite).length === 5 && ['warrior', 'ranger', 'mage'].every(b => D.filter(s => s.from.proving === b).length === 2)
+    && new Set(shorts).size === shorts.length && shorts.every(x => x.length === 2), 'found on 14 zone bosses (6 to 35), 5 from elites, 2 from each Proving; each has its own 2-letter tile');
+  assert(D.filter(s => s.fold).map(s => s.fold).sort().join() === 'priest,reaver,trapper,venomstalker,warden,warlock', 'the six evolutions each fold one effect into a Proving star');
+  assert(E('String(STARS_TUNE.slots) + STARS_TUNE.litMax + STARS_TUNE.learnWins') === '324', 'the limits: 3 set, 2 lit, learned after 4 won fights');
+
+  // finding: a zone boss's first win, a Proving, an elite (with a dry-streak cap)
+  E('soloPick("wren", { now: true }); starsFound(); S.L = 30; S.maxZone = 30; S.onboard.all = 1');   // (the save is read first: a later maxZone is play, not an old save's catch-up)
+  E('emit("zoneClear", { zone: 7 })');
+  assert(E('starsFound()') === 0, 'zone 7 drops no star');
+  const toasts = []; E('on("toast", t => globalThis.__toasts.push(t)); globalThis.__toasts = []; 1');
+  const tl = () => JSON.parse(E('JSON.stringify(globalThis.__toasts)'));
+  E('emit("zoneClear", { zone: 6 })');
+  assert(E('starOwned("readylamp") && starSlots("wren")[0] === "readylamp"') && tl().some(t => t.key === 'stars:found' && /^Star found: Ready Lamp\./.test(t.msg)),
+    `the zone 6 boss's first win finds Ready Lamp, sets it in a free slot and says so (${(tl().find(t => t.key === 'stars:found') || {}).msg})`);
+  E('emit("trialEnd", { kind: "proving", id: "warrior", won: false })');
+  assert(!E('starOwned("bloodprice")'), 'a lost Proving finds nothing');
+  E('emit("trialEnd", { kind: "proving", id: "warrior", won: true })');
+  assert(E('starOwned("bloodprice") && starOwned("holysparks") && !starOwned("deepwounds")'), "passing the Warrior's Proving finds its two paths' stars (Blood Price, Holy Sparks)");
+  E('STARS_TUNE.eliteP = 0');
+  const elite = z => E(`emit("kill", { mob: { elite: true, boss: false }, zone: ${z} }); STAR_ORDER.filter(id => STARS[id].from.elite && S.stars.own[id]).length`);
+  assert(elite(14) === 0, 'no elite star before zone 15');
+  let n = 0; for (let i = 0; i < 11; i++) n = elite(15);
+  assert(n === 0 && elite(15) === 1 && E('S.stars.dry') === 0, 'an elite star at the latest on the 12th elite win from zone 15 (a dry-streak cap)');
+  E('STARS_TUNE.eliteP = 0.125');
+
+  // setting and lighting: 3 slots a hero, a learned star lights for its points, 2 lit at most
+  E('for (const id of STAR_ORDER) S.stars.own[id] = 1; S.stars.set = {}; S.stars.lit = {}; S.stars.learned = {}; S.L = 30');
+  assert(!E('starSet(0, "nope")') && !E('starSet(3, "brand")'), 'an unknown star or a 4th slot is refused');
+  assert(E('starSet(0, "brand") && starSet(1, "serrated") && starSet(2, "coldsteel") && starSet(0, "serrated")') && E('starSlots().join()') === 'serrated,brand,coldsteel', 'a star set in another slot swaps places');
+  assert(/^Win 4 more fights/.test(E('starWhy("encore")')) && !E('starLight("encore")'), `a star not learned yet cannot be lit ("${E('starWhy("encore")')}")`);
+  E('for (const id of ["encore", "turning", "huntstep", "brand"]) S.stars.learned[id] = 1');
+  assert(E('starPoints()') === 10 && E('starLight("encore") && starLight("turning")') && E('starFree()') === 5, 'lighting spends star points (Encore 3, Turning Point 2: 5 of 10 left)');
+  assert(!E('starLight("huntstep")') && /^You can light 2 stars/.test(E('starWhy("huntstep")')), 'a third lit star is refused: 2 at most');
+  assert(E('starWhy("brand")') === 'It is set in a slot.', 'a set star is not lit as well');
+  assert(E('starUnlight("turning") && starLight("huntstep")') && E('starLit().join()') === 'encore,huntstep', 'putting a star out gives its points back');
+  assert(E('starSet(2, "encore")') && E('starLit().join()') === 'huntstep' && E('starSlots()[2]') === 'encore', 'setting a lit star puts it out first');
+  E('starLight("turning")');
+  assert(E('JSON.stringify(starsActive("wren"))') === '["serrated","brand","encore","huntstep","turning"]', `a fight takes the 3 set and the 2 lit stars, never more than 5 (${E('JSON.stringify(starsActive("wren"))')})`);
+  E('S.L = 6');
+  assert(E('JSON.stringify(starsActive("wren"))') === '["serrated","brand","encore","huntstep"]', 'with fewer points (a lower level) only the lit stars the points still pay for come along');
+  E('S.L = 30');
+  assert(E('starSlots("tobin").every(x => x === null) && starLit("tobin").length === 0'), 'each hero has its own slots: Tobin starts empty');
+  E('S.activity = "fight"; arena = null; fightBoss = false; spawn()');
+  assert(E('JSON.stringify(turnMakeProfile(combatFoes()[0], cbUnitByKey("hero")).stars)') === JSON.stringify(['serrated', 'brand', 'encore', 'huntstep', 'turning']), 'a turn fight takes the hero\'s stars as it starts (the profile)');
+  // save round trip
   E('save()');
-  const g2 = loadCore({ seed: 42, storage: memoryStorage({ [KEY]: g.storage.get(KEY) }) });
-  assert(g2.eval('JSON.stringify(S.stars)') === E('JSON.stringify(S.stars)') && g2.eval('starLayouts("warrior")[1].lit.join()') === 'a1s1', 'layouts survive save and load');
-  // Mirror of Embers: another class starts empty, warden keeps its map
-  E('S.party.chosen = false; soloPick("wren")');
-  assert(E('starLayout().lit.length') === 0 && E('starEffects().m.dmg') === undefined && E('starLayouts("warrior")[0].lit.length') === 2, 'changing class keeps each class\'s map');
-  // Next Up
-  E('S.L = 30; S.maxZone = 20; S.onboard.t = 5; onboardReveal("stars")');   // (W2-B: a hero switch in solo restores that hero's own level)
+  const g2 = loadCore({ seed: 42, storage: memoryStorage({ [KEY]: g.storage.get(KEY) }), turns: true });
+  assert(g2.eval('JSON.stringify(S.stars)') === E('JSON.stringify(S.stars)') && g2.eval('starSlots("wren").join()') === 'serrated,brand,encore', 'found, learned, set and lit stars survive save and load');
+  errs.push(...g2.errors);
+
+  // learning: STARS_TUNE.learnWins won fights with the star set (lit stars are learned already; a loss does not count)
+  E('S.stars.learned = {}; S.stars.wins = {}; S.stars.set.wren = ["coldsteel", null, null]; S.stars.lit.wren = []');
+  E('emit("fightEnd", { reason: "defeat", stars: ["coldsteel"] })');
+  for (let i = 0; i < 3; i++) E('emit("fightEnd", { reason: "victory", stars: ["coldsteel"] })');
+  assert(E('starWins("coldsteel")') === 3 && !E('starLearned("coldsteel")'), '3 wins (and a loss) with Cold Steel set: not learned yet');
+  E('emit("fightEnd", { reason: "victory", stars: ["coldsteel"] })');
+  assert(E('starLearned("coldsteel")') && tl().some(t => t.key === 'stars:learned' && /^Cold Steel is learned\. Any hero can light it now\.$/.test(t.msg)), 'the 4th win learns it, and the bell says any hero can light it');
+  assert(E('starLight("coldsteel", "tobin")') && E('starLit("tobin").join()') === 'coldsteel', 'another hero can light a learned star');
+
+  // each star does what it says, in a scratch turn fight (no crits unless one is sure; numbers from the hero's profile)
+  E(`globalThis.__mk = (hero, stars, o = {}) => {
+    if (soloHero() !== hero) soloPick(hero, { now: true });
+    S.activity = 'fight'; arena = null; fightBoss = false; spawn();
+    const p0 = turnCombatProfile(), eq = o.eq || p0.eq;
+    const p = Object.assign({}, p0, { stars: stars.slice(), starSet: stars.slice(), eq, cds: { attack: 1 }, foeMaxHp: 1e6, foeHp: 1e6, heroMaxHp: 1000, refHp: 1000,
+      critChance: 0, foeArm: 0, trait: '', tal: {}, echo: 0, nonCrit: 1, critMult: 2.5 });
+    for (const id of eq) if (id) p.cds[id] = turnCdFor(id);
+    const t = { fhp: 1e6, hp: o.hp || 1000, dmg: [], ev: [], r: o.rand == null ? 0.99 : o.rand };
+    const io = { random: () => t.r, emit: (n, x) => t.ev.push([n, x]), alive: () => ({ hero: t.hp > 0, foe: t.fhp > 0 }), foeHp: () => t.fhp, heroHp: () => t.hp,
+      slotId: i => p.eq[i] || null, damageFoe: (d, kind, crit) => { t.fhp -= d; t.dmg.push({ d, kind, crit }); return d; }, damageHero: d => { t.hp -= d; return d; },
+      healHero: d => { t.hp += d; }, healFoe: () => {}, defense: () => {} };
+    const m = turnNew(p, io); m.phase = 'hero';
+    return { m, io, t, p, U: p.U, last: () => t.dmg[t.dmg.length - 1] || { d: 0 } };
+  };
+  globalThis.__move = (m, io, defs) => { m.move = { id: 't', name: 't', hits: defs.map(() => ({ x: 0.01 })) }; m.hitI = 0; m.parried = 0; m.landed = 0;
+    for (const d of defs) { m.defense = d; turnContact(m, io); } }; 1`);
+  // each entry: statements, then the test as its last expression
+  const fx = {
+    readylamp: ['const a = __mk("wren", ["readylamp"]), b = __mk("tobin", ["readylamp"]), c = __mk("pip", ["readylamp"]);', 'a.m.h.aim === 2 && b.m.h.grit === 3 && c.m.h.embers === 2'],
+    sparkguard: ['const a = __mk("wren", ["sparkguard"]); __move(a.m, a.io, ["parry", "dodge"]); const b = __mk("wren", []); __move(b.m, b.io, ["parry", "dodge"]);', 'a.m.h.aim === 1 && b.m.h.aim === 0'],
+    turning: ['const a = __mk("wren", ["turning"], { eq: ["echo", "powershot", null] }); turnHeroAct(a.m, a.io, "attack"); const c0 = a.last().crit; a.t.fhp = 3e5; turnHitFoe(a.m, a.io, 1, { kind: "burn", dot: true });'
+      + ' a.m.cds.attack = 0; turnHeroAct(a.m, a.io, "attack"); const c1 = a.last().crit; turnHeroAct(a.m, a.io, "echo"); const c2 = a.last().crit; turnHeroAct(a.m, a.io, "powershot");', '!c0 && !c1 && c2 && !a.last().crit'],
+    huntstep: ['const a = __mk("wren", ["huntstep"]); __move(a.m, a.io, ["dodge"]);', 'a.m.e.mark === 1'],
+    serrated: ['const a = __mk("wren", ["serrated"]); turnHitFoe(a.m, a.io, 10, { kind: "echo" }); const b0 = a.m.e.bleed; turnHitFoe(a.m, a.io, 10, { kind: "echo", sure: true });', 'b0 === 0 && a.m.e.bleed === 1'],
+    coldsteel: ['const a = __mk("tobin", ["coldsteel"]); __move(a.m, a.io, ["parry", "parry"]); const c = a.m.e.chill; __move(a.m, a.io, ["parry"]);', 'c === 2 && a.m.e.chill === 0 && a.m.e.skip === 1'],
+    quickreturn: ['const a = __mk("wren", ["quickreturn"], { eq: ["echo", "powershot", null] }); a.m.cds.echo = 4; a.m.cds.powershot = 3; __move(a.m, a.io, ["parry"]);', 'a.m.cds.powershot === 0 && a.m.cds.echo === 3'],
+    emberedge: ['const a = __mk("wren", ["emberedge"]); turnHitFoe(a.m, a.io, 10, { kind: "echo", sure: true });', 'a.m.e.burn === 2 && Math.abs(a.m.e.burnDmg - 0.3 * a.U) < 1e-6'],
+    openveins: ['const go = st => { const a = __mk("wren", st, { rand: 0 }); a.m.e.bleed = 2; a.m.e.bleedT = 3; a.m.e.bleedDmg = 5; a.m.p.critChance = 0.5; turnBegin(a.m, "foe", a.io); return a.t.dmg.find(x => x.kind === "bleed"); };', 'go(["openveins"]).crit === true && go([]).crit === false'],
+    brand: ['const a = __mk("pip", ["brand"]); turnBurnSet(a.m.e, 5, 3); const b = __mk("pip", []); turnBurnSet(b.m.e, 5, 3);', 'a.m.e.mark === 2 && b.m.e.mark === 0'],
+    slipstrike: ['const go = st => { const a = __mk("wren", st, { eq: ["powershot", null, null] }); __move(a.m, a.io, ["dodge"]); turnHeroAct(a.m, a.io, "powershot"); const d1 = a.last().d; a.m.cds.powershot = 0; turnHeroAct(a.m, a.io, "powershot"); return [d1, a.last().d]; };'
+      + ' const x = go(["slipstrike"]), y = go([]);', 'Math.abs(x[0] / y[0] - 1.3) < 1e-9 && Math.abs(x[1] / y[1] - 1) < 1e-9'],
+    dazedprey: ['const a = __mk("tobin", ["dazedprey"]); const ok = turnControl(a.m, a.io, "stun");', 'ok && a.m.e.mark === 3'],
+    killmark: ['const go = st => { const a = __mk("wren", st); a.m.e.mark = 2; a.m.e.markV = 0.2; turnHitFoe(a.m, a.io, 10, { kind: "echo", sure: true }); const c = a.last().d; turnHitFoe(a.m, a.io, 10, { kind: "echo" }); return [c, a.last().d]; };'
+      + ' const x = go(["killmark"]), y = go([]);', 'Math.abs(x[0] / y[0] - 1.3) < 1e-9 && Math.abs(x[1] / y[1] - 1) < 1e-9'],
+    encore: ['const a = __mk("wren", ["encore"], { eq: ["echo", "powershot", "barbed"] }); turnHeroAct(a.m, a.io, "echo"); turnHeroAct(a.m, a.io, "powershot"); turnHeroAct(a.m, a.io, "barbed");', 'a.m.cds.echo > 0 && a.m.cds.powershot > 0 && a.m.cds.barbed === 0'],
+    cinder: ['const a = __mk("wren", ["cinder"]); __move(a.m, a.io, ["parry"]);', 'a.m.e.burn === 3 && a.t.dmg.some(x => x.kind === "counter")'],
+    openguard: ['const a = __mk("tobin", ["openguard"]); __move(a.m, a.io, ["parry", "parry"]); const b = __mk("tobin", ["openguard"]); __move(b.m, b.io, ["parry", "dodge"]);', 'a.m.e.exposed === 1 && b.m.e.exposed === 0'],
+    perfecttime: ['const a = __mk("tobin", ["perfecttime"], { eq: ["bash", "heavystrike", "cleave"] }); a.m.cds.heavystrike = 3; a.m.cds.cleave = 2; turnHeroAct(a.m, a.io, "bash", 0, ["perfect"]); const ok1 = a.m.cds.heavystrike === 2 && a.m.cds.cleave === 1;'
+      + ' a.m.cds.bash = 0; turnHeroAct(a.m, a.io, "bash", 0, ["good"]);', 'ok1 && a.m.cds.heavystrike === 2'],
+    bankedcoal: ['const a = __mk("pip", ["bankedcoal"]); a.m.h.embers = 4; turnHeroAct(a.m, a.io, "fire"); const b = __mk("pip", []); b.m.h.embers = 4; turnHeroAct(b.m, b.io, "fire");', 'a.m.h.embers === 1 && b.m.h.embers === 0'],
+    crushing: ['const a = __mk("tobin", ["crushing"]); const d = []; for (let i = 0; i < 5; i++) { const g0 = a.m.h.grit; a.m.cds.attack = 0; turnHeroAct(a.m, a.io, "attack"); d.push(a.last().d / (1 + TURN_TUNE.gritDmg * g0)); }', 'Math.abs(d[3] / d[2] - 2) < 1e-9 && Math.abs(d[4] / d[2] - 1) < 1e-9'],
+    bloodprice: ['const go = (st, hp) => { const a = __mk("wren", st, { hp }); turnHitFoe(a.m, a.io, 10, { kind: "echo" }); return a.last().d; };', 'Math.abs(go(["bloodprice"], 400) / go([], 400) - 1.25) < 1e-9 && Math.abs(go(["bloodprice"], 600) / go([], 600) - 1) < 1e-9'],
+    holysparks: ['const a = __mk("tobin", ["holysparks"]); __move(a.m, a.io, ["parry", "dodge"]); const s = a.t.dmg.filter(x => x.kind === "sparks");', 's.length === 1 && Math.abs(s[0].d - 0.2 * a.U) < 1e-6'],
+    deepwounds: ['const a = __mk("wren", ["deepwounds"]); turnBleedAdd(a.m, 10); const b = __mk("wren", []); turnBleedAdd(b.m, 10);', 'a.m.e.bleed === 8 && a.m.e.bleedT === TURN_TUNE.bleedT + 1 && b.m.e.bleed === 5'],
+    tripwire: ['const a = __mk("tobin", ["tripwire"]);', 'a.m.e.pin === 1 && a.m.e.pinSlow === 2'],
+    witchfire: ['const a = __mk("pip", ["witchfire"]); a.m.e.curse = 1; a.m.e.curseStore = 50; turnFoeEnd(a.m, a.io);', 'a.t.dmg.some(x => x.kind === "curse") && a.m.e.burn === 3'],
+    sanctuary: ['const a = __mk("pip", ["sanctuary"]);', 'Math.abs(a.m.h.ward - 120) < 1e-9 && a.m.h.wardT === 3']
+  };
+  const missed = E('STAR_ORDER').filter(id => !fx[id]);
+  assert(!missed.length, 'every star has a check below' + (missed.length ? ': ' + missed.join(', ') : ''));
+  for (const id of Object.keys(fx)) {
+    let r; try { r = E(`(() => { ${fx[id][0]} return ${fx[id][1]}; })()`); } catch (e) { r = 'threw: ' + e.message; }
+    assert(r === true, `${E(`STARS["${id}"].name`)}: ${E(`STARS["${id}"].text`)}` + (r === true ? '' : ` (${r})`));
+  }
+  // no star gives endless turns or a one-shot loop: every star at once (far past the limit) in scratch boss fights
+  const bad = [];
+  for (const k of ['wren', 'tobin', 'pip']) {
+    E(`soloPick("${k}", { now: true }); S.L = 20; S.maxZone = 3; setZone(3); S.activity = "fight"; arena = null; fightBoss = true; spawn()`);
+    const r = JSON.parse(E(`JSON.stringify(turnCombatSample({ profile: Object.assign({}, turnCombatProfile(), { stars: STAR_ORDER.slice(), starSet: [] }), seconds: 1200, seed: 3, skill: { parry: 0.6, dodge: 0.9, perfect: 0.4, good: 0.45 } }))`));
+    if (badNumbers(r).length || !(r.completedFights > 0)) bad.push(`${k}: ${r.completedFights} fights, ${badNumbers(r).length} bad numbers`);
+    else if (r.totalHeroTurns / r.completedFights < 2) bad.push(`${k}: a boss in ${(r.totalHeroTurns / r.completedFights).toFixed(1)} hero turns`);
+  }
+  // the most turns in a row still holds with every star (Tripwire's slow, Cold Steel's Freezes, Quick Return, Encore)
+  const runs = JSON.parse(E(`(() => { const a = __mk("tobin", STAR_ORDER.slice()); let last = '', run = 0, worst = 0; const io = a.io, em = io.emit;
+    io.emit = (n, x) => { if (n === 'turn') { if (x.who === 'hero' && last === 'hero') run++; else run = 1; last = x.who; if (x.who === 'hero') worst = Math.max(worst, run); } em(n, x); };
+    a.m.phase = 'intro'; a.m.until = 0; a.m.p.script = [{ id: 'x', name: 'x', hits: [{ x: 0.01 }, { x: 0.01 }] }];
+    for (let i = 0; i < 4000 && !a.m.ended; i++) { if (a.m.phase === 'hero') turnResolve(a.m, { kind: 'attack' }, 0, io); if (a.m.phase === 'foeWindup' && !a.m.usedDefense) { a.m.usedDefense = true; a.m.defense = 'parry'; a.m.until = a.m.now; } turnResolve(a.m, { kind: 'tick' }, 0.05, io); }
+    return JSON.stringify({ worst, n: a.m.n }); })()`));
+  assert(!bad.length && runs.worst <= 2 && runs.n > 50, `every star at once (far past the limit): no bad numbers, bosses still take 2+ hero turns, and the hero never gets more than 2 turns in a row (${runs.worst} in ${runs.n} turns)` + (bad.length ? ': ' + bad.join('; ') : ''));
+  // a won fight in a live turn fight carries the set stars, and counts toward learning them
+  {
+    const h = loadCore({ seed: 45, turns: true }), H = s => h.eval(s);
+    H('soloPick("pip", { now: true }); S.L = 20; S.maxZone = 3; setZone(1); S.activity = "fight"; S.stars.own.brand = 1; S.stars.set.pip = ["brand", null, null]; spawn()');
+    H('globalThis.__ends = []; on("fightEnd", e => globalThis.__ends.push(e)); 1');
+    for (let i = 0; i < 3000 && !H('__ends.some(e => e.reason === "victory")'); i++) { H('turnCombatSnapshot().phase === "hero" && turnCombatAction("attack")'); h.fn.tick(0.1); }
+    const v = JSON.parse(H('JSON.stringify(__ends.find(e => e.reason === "victory") || null)'));
+    assert(v && JSON.stringify(v.stars) === '["brand"]' && H('starWins("brand")') >= 1, `a live turn fight: its win carries the set stars (fightEnd stars ${v && JSON.stringify(v.stars)}) and counts toward learning them (${H('starWins("brand")')})`);
+    errs.push(...h.errors);
+  }
+  // Next Up: a found star and a free slot
+  E('soloPick("wren", { now: true }); S.stars.set.wren = [null, null, null]; S.stars.lit.wren = []; S.onboard.t = 5; onboardReveal("stars")');
   const gl = E('(topGoals(60, { sticky: false }).find(x => x.id === "stars") || {}).label');
-  assert(/^You have \d+ star points?$/.test(gl || ''), `Next Up: "${gl}"`);
-  errs.push(...g.errors, ...g2.errors);
-  // the fixtures: no star map yet, dps unchanged, the points they earned; broken layouts repaired
-  const noStars = coreFiles().filter(f => !f.startsWith('57e'));
-  for (const f of FIX) {
+  assert(/^Set .+ in a star slot$/.test(gl || ''), `Next Up: "${gl}"`);
+  const md0 = E('mod("dmg") * mod("crit") * mod("critDmg") * mod("tap") * mod("abilityCd")');
+  E('S.stars.set.wren = ["brand", "serrated", "turning"]');
+  assert(!E('keenSources().some(s => s.id === "constel")') && E('mod("dmg") * mod("crit") * mod("critDmg") * mod("tap") * mod("abilityCd")') === md0, 'the Stars add no flat stat: no crit damage source, no damage, crit, Attack or cooldown modifier');
+  errs.push(...g.errors);
+
+  // old saves: the fixtures load, find the stars of the zone bosses behind them, and set nothing
+  for (const f of ['save-early.json', 'save-mid.json', 'save-late.json']) {
+    const raw = JSON.parse(rawOf(f));
     const o = loadCore({ seed: 43, storage: memoryStorage({ [KEY]: rawOf(f) }) });
-    const b = loadCore({ seed: 43, storage: memoryStorage({ [KEY]: rawOf(f) }), files: noStars });
-    const raw = JSON.parse(rawOf(f)), want = Math.floor(raw.L / 3) + 4 * Math.floor((raw.maxZone - 1) / 35);
-    assert(o.eval('JSON.stringify(S.stars)') === '{"v":2,"maps":{},"seen":0}' && o.eval('starPoints()') === want, `${f}: empty star maps and the ${want} points it earned`);
-    assert(Math.abs(o.eval('totalDps()') / b.eval('totalDps()') - 1) < 1e-12, `${f}: totalDps unchanged`);
-    errs.push(...o.errors);
+    o.fn.tick(0.1);
+    const want = JSON.parse(o.eval('JSON.stringify(STAR_ORDER.filter(id => STARS[id].from.zone && STARS[id].from.zone < S.maxZone))'));
+    assert(o.eval('S.stars.v') === 3 && JSON.stringify(Object.keys(o.eval('S.stars.own'))) === JSON.stringify(want) && o.eval('starsActive().length') === 0
+      && o.eval('starPoints()') === Math.floor(raw.L / 3) + 4 * Math.floor((raw.maxZone - 1) / 35) && !o.errors.length,
+      `${f}: loads, finds the ${want.length} stars of the zone bosses behind it (zone ${raw.maxZone}), sets none, keeps its star points` + (o.errors[0] ? ': ' + o.errors[0] : ''));
   }
-  const bad = JSON.parse(rawOf('save-early.json'));
-  bad.stars = { v: 2, maps: { warrior: { layouts: [{ name: 'X', lit: ['a0s2', 'zzz', 'a0s1', 'a0s1', 'a0s3', 'a0s4'] }], active: 5 }, nope: {} }, seen: 2 };
-  bad.party = Object.assign({}, bad.party || {}, { cls: 'warden', chosen: true });
-  const v = loadCore({ seed: 44, storage: memoryStorage({ [KEY]: JSON.stringify(bad) }) });
-  assert(v.eval('S.stars.maps.warrior.layouts.length === 2 && S.stars.maps.warrior.active === 0 && S.stars.maps.nope !== undefined'), 'a broken map gets 2 layouts and a valid active one (unknown classes kept)');
-  assert(v.eval('starLayouts("warrior")[0].lit.join()') === 'a0s2,a0s1,a0s3' && v.eval('starSpent("warrior") <= starPoints()'), `over-budget layout trimmed from the tips to fit ${v.eval('starPoints()')} points (${v.eval('starLayouts("warrior")[0].lit.join()')})`);
-  errs.push(...v.errors.filter(e => !/toast/.test(e)));
-  // power: the best build stays inside the pace caps (docs/design/pacing.md; owner wants a slower game)
-  const out = [];
-  for (const c of ["warrior", "mage", "ranger", "lightkeeper"]) {
-    const r = [6, 17, 28].map(p => E(`starBest("${c}", ${p}).p`));
-    out.push(`${c} ${r.map(x => '+' + ((x - 1) * 100).toFixed(0) + '%').join('/')}`);
-    assert(r[0] <= 1.15 && r[1] <= 1.25 && r[2] <= 1.35, `best build at 6/17/28 points (L20/L40/L60) within +15/+25/+35%: ${out[out.length - 1]}`);
+  // a save from the old star map (stars lit on its layouts): it loads, its points are free, the bell says the Stars changed
+  {
+    const old = JSON.parse(rawOf('save-mid.json'));
+    old.stars = { v: 2, maps: { warrior: { layouts: [{ name: 'Farm', lit: ['a0s1', 'a0s2', 'a0s3'] }, { name: 'Push', lit: [] }], active: 0 } }, seen: 6 };
+    old.cls = Object.assign({}, old.cls, { proven: { warden: 1 }, evo: 'warden', trials: { warrior: { n: 1, won: 1, best: 100 } } });
+    const o = loadCore({ seed: 44, storage: memoryStorage({ [KEY]: JSON.stringify(old) }) });
+    o.eval('globalThis.__ts = []; on("toast", t => globalThis.__ts.push(t)); 1');
+    o.fn.tick(0.1);
+    const ts = JSON.parse(o.eval('JSON.stringify(__ts)'));
+    assert(o.eval('S.stars.v === 3 && S.stars.maps.warrior.layouts[0].lit.length === 3 && starFree() === starPoints() && starOwned("bloodprice") && starOwned("holysparks")') && ts.some(t => t.key === 'stars:new') && ts.some(t => t.key === 'stars:catchup') && !o.errors.length,
+      'an old star-map save loads: the old layout stays in the save and does nothing, every star point is free, the Proving it passed finds its stars, and the bell says so' + (o.errors[0] ? ': ' + o.errors[0] : ''));
+    o.eval('S.stars.set.tobin = ["zzz", "brand", "brand", "x"]; S.stars.lit = { tobin: "no", nope: [1] }; S.stars.own.zzz = 1; save()');
+    const p = loadCore({ seed: 46, storage: memoryStorage({ [KEY]: o.storage.get(KEY) }) });
+    assert(p.eval('JSON.stringify(starSlots("tobin"))') === '[null,null,null]' && p.eval('starLit("tobin").length') === 0 && !p.eval('"zzz" in S.stars.own') && !p.errors.length,
+      `a broken stars save is repaired: unknown and unowned stars leave their slots (${p.eval('JSON.stringify(starSlots("tobin"))')})`);
   }
-  assert(!errs.length, 'no constellation errors' + (errs.length ? ': ' + errs[0] : ''));
-} catch (e) { fail('constellations crashed: ' + (e.stack || e)); }
+  assert(!errs.length, 'no star errors' + (errs.length ? ': ' + errs[0] : ''));
+} catch (e) { fail('stars crashed: ' + (e.stack || e)); }
 
 // ---- the Watchtower hold hint and the Omen pin ----
 if (section('hold hint')) try {
@@ -2860,7 +2958,7 @@ if (section('nav')) try {
     const nav = JSON.parse(E('JSON.stringify(S.nav)'));
     const sk = E('skillOf(S.node.kind)');
     const cur = JSON.parse(E('JSON.stringify(S)')); delete cur.party; const o2 = Object.assign({}, old); delete o2.party;   // the party's own migrations (F1) are checked in their sections
-    if (o2.stars) o2.stars = Object.assign({}, o2.stars, { v: cur.stars.v });   // S2: the star maps' v 1 -> 2 (checked in 'classes')
+    if (o2.stars) o2.stars = Object.assign({}, o2.stars, { v: cur.stars.v });   // the Stars' v 2 -> 3 (checked in 'stars')
     const d = c11SaveSubsetDiff(o2, cur);
     assert(nav && nav.v === 1 && Array.isArray(nav.recent) && nav.last && ['mine', 'wood', 'forage'].every(k => k in nav.last)
       && !deepDiff(old.nav, nav) && !d && !g.errors.length,
@@ -3222,7 +3320,7 @@ if (section('types and statuses (S1)')) try {
       const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
       const h = loadCore({ seed: 75, storage: memoryStorage({ [KEY]: raw }) }), H = s => h.eval(s);
       const cmp = JSON.parse(raw); if (cmp.party) { delete cmp.party.field; delete cmp.party.cells; }
-      if (cmp.stars) delete cmp.stars.v;   // S2: the star maps' v 1 -> 2 (checked in 'classes')
+      if (cmp.stars) delete cmp.stars.v;   // the Stars' v 2 -> 3 (checked in 'stars')
       const d = c11SaveSubsetDiff(cmp, JSON.parse(JSON.stringify(H('S'))));
       H('S.activity = "fight"; spawn()');
       for (let i = 0; i < 600; i++) h.fn.tick(0.1);
@@ -4593,7 +4691,7 @@ if (section('solo copy (W1-C)')) try {
     for (const k of Object.keys(v)) { if (!SKIP.has(k)) walk(v[k], `${p}.${k}`, seen, depth + 1, k); }
   };
   const tables = ['UNIQ', 'RELICS', 'HERO_CLASSES', 'CLASS_DEFS', 'CLASS_ABILITIES', 'CLASS_TRIALS', 'EVO_DEFS', 'EVO_NAMES', 'SOLO_ABILITIES', 'SOLO_HEROES',
-    'DEEP_SETS', 'DEEP_BOONS', 'DEEP_RULES', 'DEEP_SHOP', 'STAR_MAPS', 'STAR_BRIDGES', 'CAMP_BLESS', 'CODEX_MILESTONES', 'BESTIARY_PERKS', 'CRAFT_STATS', 'CRAFT_AFFIXES', 'CRAFT_KINDS',
+    'DEEP_SETS', 'DEEP_BOONS', 'DEEP_RULES', 'DEEP_SHOP', 'STARS', 'CAMP_BLESS', 'CODEX_MILESTONES', 'BESTIARY_PERKS', 'CRAFT_STATS', 'CRAFT_AFFIXES', 'CRAFT_KINDS',
     'CRAFT_STATIONS', 'CRAFT_TROPHIES', 'DEED_LADDER', 'DEED_CHAPTERS'];
   let missing = [];
   for (const n of tables) { let v; try { v = E(n); } catch (e) { missing.push(n); continue; } walk(v, n, new Set(), 0, n); }
@@ -4977,9 +5075,8 @@ if (section('training (W2-A)')) try {
   assert(E('cheapestUp()') === 6 && !E('upBought()'), `the guide's upgrade step waits for Attack Lv 1 (${E('cheapestUp()')} gold)`);
   E('S.gold = 100; train("echo", "1")'); assert(E('upBought()'), 'any Training level ends the step');
 
-  // Precision's crit damage moved into the stars (the pool, capped): +15% a class
-  const sk = JSON.parse(E('JSON.stringify(["warrior", "ranger", "mage"].map(c => { let k = 0, m = 0; for (const [, stars] of STAR_MAPS[c].arms) for (const s of stars) { const fx = s[2] || {}; k += fx.keen || 0; if (fx.m && fx.m.critDmg) m++; } return [c, Math.round(k * 100), m]; }))'));
-  assert(sk.every(([, k, m]) => k === 15 && m === 0), `solo stars: each class's crit damage stars add +15% to the capped pool, none multiply on top (${sk.map(x => x.join(' ')).join(', ')})`);
+  // Precision's crit damage went into the old star map's crit damage stars; the Stars (2026-10-02) are rule changes, so no star feeds the pool
+  assert(!E('keenSources().some(s => s.id === "constel")'), 'no star source in the solo crit damage pool (the Stars change rules, not stats)');
   assert(!E('keenSources().some(s => s.id === "precision")'), 'no Precision source in the solo crit damage pool');
   // an ability hits with its own level: Echo Shot at Lv 0 and Lv 10 on a pack
   E('S.solo.tr.wren = { atk: 5, parry: 0, dodge: 0, echo: 0 }; S.L = 20; S.maxZone = 3; setZone(3); setActivity("fight"); spawn()');
@@ -7147,6 +7244,53 @@ if (section('turn UI (browser)')) try {
   }
 } catch (e) { fail('turn UI crashed: ' + (e.stack || e)); }
 
+if (section('stars (browser)')) try {
+  // Hero tab > Stars at 740x360 landscape and 360x740 portrait: the slots, every star's card, Set and Light by tap, no
+  // sideways scroll, and the fight takes the set stars
+  const { pw, exe } = browserTools, distFile = path.join(ROOT, 'dist', 'lanternfall.html');
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('stars UI: Playwright, Chromium or dist not available');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe });
+    try {
+      for (const [w, h] of [[740, 360], [360, 740]]) {
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h } }), page = await ctx.newPage(), errors = [];
+        page.on('pageerror', e => errors.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(600);
+        await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go');
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X(`S.onboard && (S.onboard.tips = false, S.onboard.all = true); S.L = 30; S.maxZone = 21;
+          for (const id of ['readylamp', 'sparkguard', 'turning', 'huntstep', 'serrated', 'coldsteel']) S.stars.own[id] = 1;
+          S.stars.learned.huntstep = 1; S.stars.learned.turning = 1; setTab('stars'); 1`);
+        await page.waitForTimeout(400);
+        const r0 = JSON.parse(await X(`JSON.stringify({ cards: document.querySelectorAll('#sec-stars .sr-card').length, locked: document.querySelectorAll('#sec-stars .sr-card.locked').length,
+          slots: document.querySelectorAll('#sec-stars .sr-slot').length, pts: (document.querySelector('#sec-stars .sr-pts') || {}).textContent || '',
+          visible: !!document.querySelector('#sec-stars') && document.querySelector('#sec-stars').offsetParent !== null })`));
+        await page.click('#sec-stars .sr-card[data-star="serrated"] .ab-put >> nth=0'); await page.waitForTimeout(150);
+        await page.click('#sec-stars .sr-card[data-star="huntstep"] .sr-light'); await page.waitForTimeout(150);
+        const r1 = JSON.parse(await X(`JSON.stringify({ set: starSlots('wren')[0], lit: starLit('wren').join(), ready: !!document.querySelector('#sec-stars .sr-card[data-star="serrated"].ready'),
+          pts: (document.querySelector('#sec-stars .sr-pts') || {}).textContent || '', unk: (document.querySelector('#sec-stars .sr-card.locked small') || {}).textContent || '',
+          saved: JSON.parse(localStorage.getItem('lanternfall.save.v5')).stars.set.wren[0],
+          wide: (() => { const s = document.querySelector('#sec-stars'), out = []; if (s.scrollWidth > s.clientWidth + 1) out.push('section ' + s.scrollWidth + '>' + s.clientWidth);
+            for (const c of s.querySelectorAll('.sr-card, .sr-slot')) { const b = c.getBoundingClientRect(); if (b.right > innerWidth + 1 || b.left < -1) out.push(c.className + ' ' + Math.round(b.left) + '-' + Math.round(b.right)); }
+            return out.slice(0, 3); })(),
+          taps: [...document.querySelectorAll('#sec-stars .ab-put')].filter(b => b.offsetParent && b.getBoundingClientRect().height < 36).length,
+          profile: (() => { closeMenu(); S.activity = 'fight'; spawn(); const p = turnMakeProfile(combatFoes()[0], cbUnitByKey('hero')); return p ? p.stars.join() : ''; })() })`));
+        assert(r0.visible && r0.cards === 25 && r0.locked === 19 && r0.slots === 5 && /^Star points: 10 free of 10$/.test(r0.pts),
+          `stars UI ${w}x${h}: Hero > Stars shows 3 set and 2 lit slots, the points, and a card for each of the 25 stars (19 not found yet) (${JSON.stringify(r0)})`);
+        assert(r1.set === 'serrated' && r1.ready && r1.lit === 'huntstep' && r1.saved === 'serrated' && /^Star points: 9 free of 10$/.test(r1.pts) && /^The zone \d+ boss$|^Elites|Proving$/.test(r1.unk),
+          `stars UI ${w}x${h}: Slot 1 sets Serrated, Light lights Hunter's Step for 1 point, both saved; a star not found yet shows where it is found (${JSON.stringify(r1)})`);
+        assert(!r1.wide.length && !r1.taps, `stars UI ${w}x${h}: no sideways scroll, every button at least 36 px tall (${JSON.stringify(r1.wide)}, ${r1.taps} small)`);
+        assert(r1.profile === 'serrated,huntstep', `stars UI ${w}x${h}: the next fight takes the set and lit stars (${r1.profile})`);
+        assert(!errors.length, `stars UI ${w}x${h}: no page errors` + (errors.length ? ': ' + errors[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('stars UI crashed: ' + (e.stack || e)); }
+
 if (section('zones stay where you put them')) try {
   // Owner (2026-10-01): "I should be able to select zone 1 and play through it". The game never moves you between zones
   // on its own: no fall-back on a wipe, no climb back after one, no pace (farming) moves.
@@ -7505,7 +7649,7 @@ if (section('removed systems (W2-C)')) try {
   const files = [];
   const walkDir = d => { for (const n of fs.readdirSync(d)) { const p = path.join(d, n); if (fs.statSync(p).isDirectory()) walkDir(p); else files.push(p); } };
   walkDir(path.join(ROOT, 'src'));
-  const GONE_FILES = ['11b-art-legend.js', '21c-data-legend.js', '55-legend.js', '75-legend-ui.js', '21d-data-pinnacle.js', '21e-stories-pinnacle.js', '21i-lore-exped.js', '57b-expeditions.js', '75-exped-ui.js', '60-legend.css', '60-exped.css', '55-welcome.js', '56e-formation.js', '56d-autofield.js', '56b-synergy.js', '56f-bonds.js', '21f-stories-bonds.js', '75-bonds-ui.js', '75-unlocks-ui.js', '60-formation.css', '60-lineup.css', '60-unlocks.css', '55-skillpace.js'];
+  const GONE_FILES = ['11b-art-legend.js', '21c-data-legend.js', '55-legend.js', '75-legend-ui.js', '21d-data-pinnacle.js', '21e-stories-pinnacle.js', '21i-lore-exped.js', '57b-expeditions.js', '75-exped-ui.js', '60-legend.css', '60-exped.css', '55-welcome.js', '56e-formation.js', '56d-autofield.js', '56b-synergy.js', '56f-bonds.js', '21f-stories-bonds.js', '75-bonds-ui.js', '75-unlocks-ui.js', '60-formation.css', '60-lineup.css', '60-unlocks.css', '55-skillpace.js', '57e-constellations.js'];
   assert(!files.some(f => GONE_FILES.includes(path.basename(f))), 'removed systems: none of the removed source files is back');
   const RE = /\b(LEG_[A-Z_]+|PIN_[A-Z_]+|EXPED_[A-Z_]+|legend(?:UI|Drop|Learn|Inscribe|Mark|Sigil|Sets|Active|Known|Text|Val|Rank|Echoes|Budget|Change|HeroCheck|CanWear|ItemState|CardLines|IconSafe|Icon|Owe|PayOwed)|sigilIcon|SIGIL_[A-Z_]+|expedOut|expedSend|expedCollect|expedOpen|expedSlots|expedRoom|expedGoto|expedBack|expedSent|expedHaulText|campMapRoom|lgFits|itemLegendLines|S\.legend|S\.exped|S\.pin|maproom|expSlots|expHaul|welcomeApply|welcomeNote|welcomeInfo|skillKept|skillPaceInfo|S\.welcome|S\.skillPace|FORM_TUNE|SYN_TUNE|HERO_UPS|COMPS|soloOn|SOLO_LOAD|__SOLO|hireComp|buyHero|compDps|rosterLive|rosterList|charRec|isRecruited|unlockChar|canRecruit|recruitCost|setField|autoField|synergyMods|BOND_[A-Z_]+|bondXp|ROSTER_TUNE|charGear|equipChar|unequipChar|paceXp|storySay|foesGold|keenCharMult|partyHymnOn|S\.comp|S\.party\.field|S\.party\.cells|S\.blade|S\.swift|S\.precision|formEnsure|cbWallOn|companionTick|Kin blessing)\b/;
   const hits = [];

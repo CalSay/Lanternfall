@@ -38,9 +38,13 @@ The bell opens Notices, the Journal and Settings. Achievements (Deeds) and the C
   passes the hero's level, nor 40 before the Proving and 80 after it.
 - **Classes and the Proving** (`55-classes.js`, `59e-class-combat.js`, `59f-trials.js`, `75-class-ui.js`): after the
   Fenmother (zone 35) and hero level 35 the hero can take the Proving and choose an evolution path. Changing class uses
-  the Mirror of Embers.
-- **Stars** (`57e-constellations.js`, `75-stars-ui.js`): the older per-class talent map, open from hero level 10. Points
-  come from levels and Great Lanterns.
+  the Mirror of Embers. In turn fights an evolution gives its stats and its damage line; its own powers were built for the
+  real-time fight, and each one's turn-fight effect is now a star that passing the Proving finds.
+- **Stars** (`24f-data-stars.js`, `57e-stars.js`, `75-stars-ui.js`; [combat-turn-build.md](design/combat-turn-build.md)
+  "Stars"): 25 small rule changes for turn fights ("A parried hit adds 1 Chill"), found on zone bosses' first wins
+  (zones 6 to 35), elites and the Provings. A hero sets 3; 4 won fights with a star set learn it, and then any hero can
+  light it with star points (a point every 3 levels, 4 per Great Lantern), up to 2. The view opens with the first star
+  or at hero level 10.
 - **Well Rested** (`55-rested.js`): gathering banks a short damage bonus for the next fights.
 
 ## Fights
@@ -51,6 +55,7 @@ The bell opens Notices, the Journal and Settings. Achievements (Deeds) and the C
 - **Abilities** (`24c-data-abilities.js`, `56e-abilities.js`, `75-abilities-ui.js`): 14 a hero; the signature is free
   and the rest cost a Scroll of their tier from zone bosses. **Talents** (`24e-data-talents.js`): two choices for each
   ability and for Attack, Parry and Dodge.
+- **Stars** change the rules of a fight on top: up to 3 set and 2 lit a hero (see The hero).
 - **Zones:** 5 won fights, then the zone boss, then the next zone (`ZONE_FIGHTS` in `40-rules.js`). Losing never moves
   you. Bosses have no timer.
 - **Foes:** zone 1 is the Thorn Imp and zone 2 Gloomjaw, from the C22 roster with approved art (`59l-zone-foes.js`,
