@@ -109,6 +109,10 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 - **Talents** (Codex's star forks): two picks per ability and for Attack, Parry and Dodge. (2026-10-02)
 - **The Deepwell and the Provings fight in turns** like the zones. (2026-10-02)
 - **An Assist setting** that widens the timing windows: yes, low priority. A late-zone balance pass: yes. (2026-10-02)
+- **Rework the Stars like E33's Pictos:** "Rework them. Make them feel actually useful without breaking the balance of the
+  game. 1% damage feels unrewarding. Maybe let them add to the abilities and combos. Think of this section like pictos
+  from E33." Built as the Stars: rule-changing effects that are found, set (3), learned in 4 won fights and then lit by
+  any hero for star points (2); the old star map and its keystones are gone. (2026-10-02)
 - **Leftovers:** a local raid fight is accepted; Deep Elders give at most one buff item a run; Hollow bosses give no
   buff items. (2026-09-28)
 
@@ -250,6 +254,8 @@ Kept only to explain current rules. Each line: the old decision, then what repla
 - Haste checks who goes first, then turns alternate; Haste bought with gold; a versus card (2026-09-30) -> Speed sets
   turn frequency (2026-10-01) and a versus header (2026-10-01).
 - The boss Enrage timer (2026-09-28) -> no timer and no Enrage (2026-10-01).
+- The Stars as a per-class star map of small stat stars and keystones -> rule-changing stars like E33's Pictos
+  (2026-10-02).
 - The auto-Finisher at 50% and swarms with 1.25x HP (2026-09-28) -> active only, one enemy per fight (2026-10-01).
 - Awakenings (2026-09-28) -> Hallowed (2026-09-29).
 - Bench gathering jobs (2026-09-27) -> Hands (2026-09-28).

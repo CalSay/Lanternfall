@@ -61,9 +61,109 @@ Codex's C19 forks, built as **talents** (24e-data-talents.js, 56e-abilities.js).
 and so do the hero's Attack, Parry and Dodge: pick one of the two for 2 talent points. A hero earns 1 point a level after
 level 1, so a level 35 hero has 34: enough for 17 of the 17 picks. Choices can be changed or given back any time; a fight
 takes them as it starts. They show on each ability card on Hero > Abilities, and Attack, Parry and Dodge have their own
-cards at the bottom. They are named talents, not stars, so they do not clash with the Stars view (the old talent map).
+cards at the bottom. They are named talents, not stars, so they do not clash with the Stars view (below).
 
 There are no suggested builds (owner: finding what works should be hard and rewarding).
+
+## Stars (owner, 2026-10-02: "Think of this section like pictos from E33")
+
+The owner's direction: "Rework them. Make them feel actually useful without breaking the balance of the game. 1% damage
+feels unrewarding. Maybe let them add to the abilities and combos. Think of this section like pictos from E33."
+
+**What was there.** Hero > Stars was the old per-class star map (31 stars a class, built for the real-time party fight).
+In turn fights its stat stars still worked (+1.5% damage, +5% Attack, +3% crit chance, crit damage into the capped pool,
+-4% cooldowns), but every keystone and most notables hooked the real-time kit (taps, seconds, Shield Wall, Flare, Volley,
+auto-cast) through `bonus('ks:<id>')` and `bonus('tune:<knob>')`, which the turn fight never reads: Unbroken, Crushing
+Blow, Challenger, Bastion, Twin Spark, Slow Burn, Wildfire, Overkill, Everburn, Kindling Storm, Glass Lantern, Next in
+Line, Pack Leader, Quickdraw, Hawk Eye, Deadeye, Rain of Arrows, Afterglow, Finisher and the like did nothing. The six
+evolutions' rings (8 stars each) and their passives and second abilities (Fury, Bulwark, Venom, traps, Hex, Sanctuary)
+were the same: in turn fights an evolution gives only its stats and its damage line. No save fixture had a star lit.
+
+**What it is now.** A star is one small rule change in a turn fight. 25 of them (24f-data-stars.js, rules in
+57e-stars.js):
+
+- **Find** each star once. It belongs to the lamp, so every hero can use it.
+- **Set** up to 3 on a hero (Hero > Stars). A star found while a slot is free is set at once.
+- **Learn** a star by winning 4 fights with it set (any fight in turns: zones, the Deepwell, a Proving).
+- **Light** a learned star with star points, on any hero, up to 2. Star points are the old ones: a point every 3 hero
+  levels and 4 for each Great Lantern (`starPoints()`). A star costs 1 to 3.
+- A fight takes the 3 set and the 2 lit stars as it starts: 5 at most. With fewer points (a lower level), the lit stars
+  the points no longer pay for stay home.
+- No new currency. Each hero keeps its own slots and lit stars; finding and learning are shared.
+
+| Star | Cost | Found | What it does |
+|---|---|---|---|
+| Ready Lamp | 1 | zone 6 boss | Start each fight with 2 Aim, 3 Grit or 2 Embers. |
+| Spark Guard | 2 | zone 8 | A parried hit gives you 1 Aim, Grit or Ember. |
+| Turning Point | 2 | zone 10 | When the foe falls below a third of its health, your next ability is a sure crit. |
+| Hunter's Step | 1 | zone 12 | A dodge Marks the foe for 2 turns. |
+| Serrated | 2 | zone 14 | A critical hit adds 1 Bleed. |
+| Cold Steel | 2 | zone 16 | A parried hit adds 1 Chill. At 3 Chill the foe Freezes. |
+| Quick Return | 2 | zone 18 | A counter makes your shortest cooldown ready. |
+| Ember Edge | 2 | zone 20 | A critical hit sets the foe alight: a small Burn (30% power) for 2 turns. |
+| Open Veins | 2 | zone 23 | Bleed ticks can crit. |
+| Brand | 1 | zone 26 | Setting a foe alight also Marks it for 2 turns. |
+| Slip and Strike | 2 | zone 29 | After a dodge, your next ability hits 30% harder. |
+| Dazed Prey | 1 | zone 32 | A Stun or Freeze also Marks the foe for 3 turns. On a boss, so does a Stagger. |
+| Killing Mark | 2 | zone 34 | Your critical hits on a Marked foe deal 30% more. |
+| Encore | 3 | the Fenmother | The third ability you use each fight is ready again at once. |
+| Cinder Riposte | 2 | elites | A counter sets the foe alight for 3 turns. |
+| Open Guard | 1 | elites | A counter leaves the foe Exposed: your next payoff hits 25% harder. |
+| Perfect Time | 2 | elites | A Perfect press takes 1 turn off your other cooldowns (once an ability). |
+| Banked Coal | 2 | elites | When an ability spends your Aim, Grit or Embers, 1 comes back. |
+| Crushing Blow | 2 | elites | Every 4th Attack in a fight hits twice as hard. |
+| Blood Price | 2 | Warrior's Proving (Reaver) | Below half health you deal 25% more. |
+| Holy Sparks | 2 | Warrior's Proving (Warden) | A parried hit strikes back for 20% of your ability power, as holy damage. |
+| Deep Wounds | 2 | Ranger's Proving (Venomstalker) | Bleed holds up to 8 stacks (was 5) and lasts 1 turn longer. |
+| Tripwire | 1 | Ranger's Proving (Trapper) | Each fight starts with the foe Pinned. |
+| Witchfire | 2 | Mage's Proving (Warlock) | When a Curse bursts, the foe catches fire for 3 turns. |
+| Sanctuary | 2 | Mage's Proving (Lightkeeper) | Each fight starts with a Ward worth 12% of your max health. |
+
+- **Zone bosses:** the first win over the boss of zones 6, 8, ... 34 and the Fenmother finds that zone's star.
+- **Elites:** from zone 15 an elite win finds one of the five elite stars 1 time in 8, and never more than 12 in a row
+  without one, until all five are found. Never in the Deepwell or a Proving.
+- **Provings:** passing a class's Proving finds both of its paths' stars. These carry each evolution's real-time idea into
+  turns (Blood Price, Holy Sparks, Venom's stacks, Tripwire, Witchfire, Sanctuary). Subclasses (Ascension) are a later
+  task; the evolution choice itself is unchanged.
+- A critical hit counts a counter (a sure crit) too; Bleed and Burn ticks never set off Serrated or Ember Edge, so no
+  star feeds itself.
+- Combos are for the player to find (owner: no suggested builds). A few that the rules allow: Ember Edge with Brand and
+  Killing Mark (crits Burn, the Burn Marks, crits on the Mark hit harder); Cold Steel with Dazed Prey; Hunter's Step
+  with Wren's Sonic Arrow; Open Guard with Tobin's Heavy Strike; Serrated with Deep Wounds, Open Veins and Final Echo.
+
+**Old saves.** The save key stays `lanternfall.save.v5`. `S.stars` gains `own`, `wins`, `learned`, `set`, `lit`, `dry`,
+`seenN` and `v: 3`. An old save's star-map layouts stay in `S.stars.maps` and do nothing; star points were always
+derived, so every point is free again (the refund). A save that had lit stars gets one bell line saying so. On load a
+save finds, quietly, the stars of every zone boss behind it and of every Proving it passed, and a bell line counts them.
+Nothing is set for it: the player chooses. The Deeds track Stargazer now counts stars found (3, 8, 15, 25), the
+Keystones track stars learned (1, 5, 12, 25), and the feat Stars in Every Sky asks for all 25 learned. The old map's
+crit damage stars (Precision's +15% a class) are gone with it; no fixture had them lit.
+
+**Balance.** `node tools/sim.mjs --report turns --seeds 2`, before and with `--stars typical` (each profile carries the
+stars its zone has found, learned: a typical strong set of 3 and 2 lit; a fresh hero at zone 1 has none). Hero turns a
+fight, played well and casually, and the casual boss win rate:
+
+| Profile | Foe | Before: good / casual turns | Stars: good / casual turns | Casual win, before -> stars |
+|---|---|---|---|---|
+| Fresh heroes, zone 1 | all | unchanged (no star found yet) | | |
+| Early (Wren, zone 8: Ready Lamp) | boss | 4.0 / 4.9 | 3.8 / 4.6 | 93% -> 95% |
+| Mid (Tobin, zone 20) | normal | 2.9 / 3.0 | 2.9 / 3.0 | 100% -> 100% |
+| Mid (Tobin, zone 20) | boss | 6.6 / 8.0 | 5.3 / 6.7 | 100% -> 100% |
+| Late kept up, zone 35 | normal | 2.0 / 2.1 | 1.6 / 1.8 | 100% -> 100% |
+| Late kept up, the Fenmother | region boss | 9.4 / 10.1 | 6.9 / 7.9 | 73% -> 83% |
+| Late kept up, zone 38 | normal | 2.7 / 2.8 | 2.1 / 2.5 | 100% -> 100% |
+| Late kept up, zone 38 | boss | 6.9 / 7.3 | 5.1 / 5.6 | 90% -> 97% |
+| Late fixture (undergeared), zone 38 | boss | 10.4 / 11.6 | 8.0 / 9.0 | 30% -> 42% |
+
+Mid: Turning Point, Serrated, Quick Return set, Ready Lamp and Spark Guard lit. Late (Pip): Turning Point, Brand,
+Killing Mark set, Ready Lamp and Spark Guard lit. One star alone shortens a boss fight by up to about a quarter for the hero
+it suits (on the mid Tobin, who parries a lot: Holy Sparks 24%, Cinder Riposte 19%, Ember Edge 15%, Slip and Strike 14%,
+Turning Point 12%) and often by nothing for a hero it does not suit. A strong set
+of five makes bosses about 20-30% shorter, which keeps a hero who keeps up inside the bands (bosses 5 to 9 turns, normal
+foes about 2); casual players win more bosses. Two changes came from these runs: Turning Point fires at a third of the
+foe's health, not half (at half it took a fifth off the mid Tobin's bosses on its own), and 2 lit stars, not 3 (three put a kept-up
+Pip's zone 38 bosses at 4.7 turns). No star gives a turn: the most turns in a row (2, a boss 3) still holds with every
+star at once (tools/check.mjs "stars").
 
 ## Fight feel (owner, 2026-10-02)
 
@@ -227,7 +327,8 @@ played casually. Zones 1-34 are unchanged, and so are their rows.
 No new art. The three starters keep their approved icons; the other 39 abilities show a lettered tile on the bar and
 the Abilities view until their icons are drawn. Hero poses reuse what the hero already has (their attack and ability
 poses). The boss and normal foe moves reuse the foe's current art. Status chips use Codex's approved status icons. The
-ability art brief (`ability-art-brief.md`) is the list of what is still needed.
+ability art brief (`ability-art-brief.md`) is the list of what is still needed. The 25 Stars show a two-letter tile (the art freeze); they
+need an icon each when their pack is drawn.
 
 ## Not in this build yet
 

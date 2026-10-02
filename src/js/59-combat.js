@@ -159,7 +159,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     for (const x of setsCache) if (x.id === s) return !!x.on;
     return false;
   };
-  // Constellation keystones (57e-constellations.js STAR_KS): bonus('ks:<id>') > 0.
+  // The old star map's keystones (STAR_KS, retired 2026-10-02 with 57e-constellations.js): bonus('ks:<id>') is always 0 now.
   const ks = id => bonus('ks:' + id) > 0;
   let emberBurn = 0, challUntil = -1;
 

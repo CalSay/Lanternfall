@@ -265,11 +265,11 @@ var classEvoUI;
         const opts = [];
         if (c.evo && EVO_DEFS[c.evo]) {
           const other = CLASS_DEFS[c.base].evos.find(e => e !== c.evo), free = typeof clsSwitchInfo === 'function' && clsSwitchInfo().ok;
-          opts.push({ key: 'evo:' + other, title: `Switch path: become a ${EVO_DEFS[other].name}`, what: 'New second ability, Finisher, title and look. Your ring stars go dark and their points come back. Your Proving stays passed.',
+          opts.push({ key: 'evo:' + other, title: `Switch path: become a ${EVO_DEFS[other].name}`, what: 'New second ability, Finisher, title and look. Your Proving stays passed.',
             cost: free ? null : respecCost('evo'), free, run: () => respecEvo(other) });
         }
         for (const b of CLASS_BASES) if (b !== c.base) opts.push({ key: 'base:' + b, title: `Change class: become a ${CLASS_DEFS[b].name}`,
-          what: 'Your gear changes to the new class. Each class keeps its own stars. Your path is cleared; if you passed a Proving, you choose the new class\'s path at once.',
+          what: 'Your gear changes to the new class. Your path is cleared; if you passed a Proving, you choose the new class\'s path at once.',
           cost: respecCost('base'), run: () => respecBase(b) });
         for (const o of opts) {
           const d = el('div', 'cs-kit1 cl-row evo-opt');

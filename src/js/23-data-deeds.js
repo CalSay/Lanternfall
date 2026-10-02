@@ -138,8 +138,8 @@ const DEED_TRACKS = [
   { id: 'boons', g: 'deep', n: 'Pick of the Well', what: 'Different boons picked', need: [10, 25, 40, 46], star: null, bonus: 'deepOil', src: 'save', kind: 'level', u: ['boon', 'boons'] },
   { id: 'trial', g: 'deep', n: 'Trialgoer', what: 'Trial Seals (weeks at floor 15+)', need: [1, 5, 15, 30], star: null, bonus: 'deepOil', src: 'save', kind: 'level', u: ['Trial Seal', 'Trial Seals'] },
   // ---- 2.10 Stars (no bonus: these systems have their own caps) ----
-  { id: 'starmap', g: 'stars', n: 'Stargazer', what: 'Star points spent on your best class map', need: [6, 15, 26, 36], star: null, bonus: null, src: 'derived', kind: 'level', u: ['star point', 'star points'] },
-  { id: 'keystones', g: 'stars', n: 'Keystones', what: 'Different keystones ever lit', need: [1, 3, 6, 10], star: null, bonus: null, src: 'new', kind: 'level', u: ['keystone', 'keystones'] },
+  { id: 'starmap', g: 'stars', n: 'Stargazer', what: 'Stars found', need: [3, 8, 15, 25], star: null, bonus: null, src: 'derived', kind: 'level', u: ['star', 'stars'] },
+  { id: 'keystones', g: 'stars', n: 'Star Learner', what: 'Stars learned', need: [1, 5, 12, 25], star: null, bonus: null, src: 'derived', kind: 'level', u: ['star', 'stars'] },
   // ---- 2.11 The Codex, the Almanac and bounties ----
   { id: 'lanternlight', g: 'codex', n: 'Lantern Light', what: 'Lantern Light', need: [100, 300, 600, 1e3], star: { add: 500 }, bonus: 'offline', src: 'derived', kind: 'level', u: ['Light', 'Light'] },
   { id: 'pageseals', g: 'codex', n: 'Page Seals', what: 'Codex pages completed', need: [1, 4, 8, 14], star: null, bonus: 'offline', src: 'save', kind: 'level', u: ['Codex page', 'Codex pages'] },
@@ -196,7 +196,7 @@ const DEED_FEATS = [
   { id: 'f_gold', n: "Dragon's Hoard", needs: '500M gold earned', about: '3-5 months', rar: 'epic', title: 'Goldwyrm', look: 'fl_coin', need: 5e8 },   // ECON-A (economy-2 3.6): was 1e24
   { id: 'f_raid', n: 'Wyrmfall', needs: '100 raid bosses felled', about: 'months (shared)', rar: 'epic', title: 'Wyrmslayer', look: 'c_wyrm' },
   { id: 'f_champs', n: 'Bane of Champions', needs: '10,000 champions defeated', about: 'about 10 months', rar: 'legendary', title: 'Championbane', look: 'a_ember' },
-  { id: 'f_stars', n: 'Stars in Every Sky', needs: '36 star points spent on each of the 3 class maps', about: 'months (3 classes)', rar: 'legendary', title: 'Starwright', look: 'a_star' },
+  { id: 'f_stars', n: 'Stars in Every Sky', needs: 'Learn all 25 stars', about: 'months (every Proving and every elite star)', rar: 'legendary', title: 'Starwright', look: 'a_star' },
   { id: 'f_town', n: "Warden of Hollow's Rest", needs: 'Every building at its top level, 6 Hands housed, a Legendary Hand, the Kitchen at its top level', about: '2-3 months', rar: 'rare', title: 'the Steward', look: 'cr_cat', wait: 'N1' },
   { id: 'f_stock', n: 'Quartermaster', needs: 'Every gathered and fought material cell full at Storehouse 8, at the same moment', about: 'weeks of planning', rar: 'epic', title: 'Quartermaster', look: 'l_store', wait: 'H3' },
   { id: 'f_oaths', n: 'Oathbound', needs: 'An Oath Seal at 20+ on all 14 zone kinds', about: 'months', rar: 'legendary', title: 'Oathbound', look: 'h_circlet', wait: 'O1' },

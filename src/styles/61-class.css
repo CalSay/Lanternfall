@@ -62,11 +62,6 @@
 .evo-confirm[hidden] { display: none; }
 .evo-confirm p { margin: 0; }
 
-/* The evolution ring under the star map */
-.st-ringbox { display: grid; gap: 4px; margin-top: 8px; padding: 8px; border: 1px solid var(--line); background: var(--well); }
-.st-ringbox .note { margin: 0; }
-.st-ring-svg { width: 100%; max-width: 340px; justify-self: center; aspect-ratio: 240 / 170; }
-.st-suggest { justify-self: start; min-height: 44px; }
 
 /* The lamp flash when an evolution is chosen or proven */
 .evo-flash { position: absolute; inset: 0; pointer-events: none; z-index: 5; background: radial-gradient(circle at 30% 65%, var(--evo) 0, transparent 55%); opacity: 0; animation: evo-flash 1.3s ease-out; }

@@ -1,338 +1,108 @@
-// 75-stars-ui: the Stars view on the Party tab (docs/design/constellations.md section 4).
-// Browser-only. Rules and state: 57e-constellations.js. Unlocks at hero level 10 (55-onboard FEATURES 'stars').
-// One section: points and keystones, the Farm/Push layout chips (hold or Rename to rename, Reset with
-// an in-page confirm), a Map | List switch, the 400x400 SVG star map (tap a star: nearest star within
-// reach, so taps stay clean on a 336px map) with its detail card, and the list view (56px rows).
+// 75-stars-ui: Hero tab > Stars (docs/design/combat-turn-build.md "Stars"). Browser file.
+// Core: 57e-stars.js (starSet, starLight, starUnlight, starWhy, starPoints, ...); data 24f-data-stars.js.
+//   - Star points: free and total (they pay for lit stars).
+//   - The hero's 3 star slots (a found star) and up to 3 lit stars (a learned star, for its cost in points); x clears one.
+//   - Every star, in the order they are found: name, what it does, learned or how many wins to go, and Slot 1/2/3 and
+//     Light / Put out buttons. A star not found yet shows only where it is found.
+// Star tiles are lettered (no art: the art freeze, owner 2026-09-30), like the abilities that have no icon yet.
 {
-  const NS = 'http://www.w3.org/2000/svg';
-  const sv = (tag, attrs) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; };
-  const KIND_R = { hearth: 13, minor: 7, bridge: 7, notable: 10, key: 13, crown: 13 };
-  const UI = { mode: 'map' };
-  try { const m = JSON.parse(localStorage.getItem('lanternfall.stars.ui') || '{}'); if (m.mode === 'list') UI.mode = 'list'; } catch (e) {}
-  const saveUi = () => { try { localStorage.setItem('lanternfall.stars.ui', JSON.stringify({ mode: UI.mode })); } catch (e) {} };
-  const ICON_OF = c => iconURL('constel', c ? STAR_MAPS[c].color : '#F2C14E');
-  // SVG elements: className is read-only there, so write the attribute (on change only).
-  const svgClass = (e, c) => { if (e._c !== c) { e._c = c; e.setAttribute('class', c); } };
+  const heroNm = k => (typeof ROSTER === 'object' && ROSTER[k] ? ROSTER[k].name.split(' ')[0] : k);
+  let root = null, sig = '';
+  const tile = (id, cls) => el('span', 'sr-ic ab-mono' + (cls ? ' ' + cls : ''), id && STARS[id] ? STARS[id].short : '?');
+  const persist = () => { try { save(); } catch (e) {} sig = ''; refresh(); };
   const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
 
   registerView('party', { id: 'stars', label: 'Stars', order: 30, feature: 'stars',
-    dot: () => !!(starCls() && S.stars && starPoints() > S.stars.seen && starFree() > 0) });
-  on('menuView', ({ view }) => { if (view === 'stars' && S.stars) S.stars.seen = Math.max(S.stars.seen, starPoints()); });
+    dot: () => !!(S.stars && typeof starsFound === 'function' && starsFound() > (S.stars.seenN | 0)) });
+  on('menuView', ({ view }) => { if (view === 'stars' && S.stars && typeof starsFound === 'function') S.stars.seenN = starsFound(); });
   on('unlock', ({ id, quiet }) => {
     if (id !== 'stars' || quiet) return;
-    toast('New on the Hero tab: Stars. Spend star points on your class.', 'good', ICON_OF(starCls()), 'high');
+    toast('New on the Hero tab: Stars. Each star changes how your fights play.', 'good', { ic: ['constel', '#F2C14E'] }, 'high');
   });
 
-  let R = null;      // DOM refs
-  let sel = null;    // selected star id
-  let builtFor = '', sig = '';
-
-  function mount(sec) {
-    sec.classList.add('st-sec');
-    R = {};
-    const head = el('div', 'st-head');
-    R.title = el('h3', 'st-title');
-    R.pts = el('span', 'st-pts');
-    head.append(R.title, R.pts);
-    R.sub = el('div', 'st-sub');
-    R.keys = el('span', 'st-keys');
-    R.how = el('p', 'note st-how', 'You earn a star point every 3 hero levels, and 4 for each region boss. Unlighting is free.');
-    // layouts, rename, reset
-    const bar = el('div', 'st-bar');
-    R.chips = el('div', 'seg st-chips'); R.chips.setAttribute('role', 'group'); R.chips.setAttribute('aria-label', 'Layouts');
-    R.chipBtns = [0, 1].map(i => {
-      const b = el('button', 'st-chip'); b.type = 'button';
-      b.addEventListener('click', () => { if (b._held) { b._held = false; return; } if (starUseLayout(i)) { sel = null; save(); } else flashLock(); refresh(true); });
-      let t = null;
-      const cancel = () => { if (t) { clearTimeout(t); t = null; } };
-      b.addEventListener('pointerdown', () => { cancel(); t = setTimeout(() => { t = null; b._held = true; openRename(i); }, 550); });
-      b.addEventListener('pointerup', cancel); b.addEventListener('pointerleave', cancel); b.addEventListener('pointercancel', cancel);
-      b.addEventListener('contextmenu', e => e.preventDefault());
-      R.chips.append(b); return b;
-    });
-    R.renBtn = el('button', 'mini st-mini', 'Rename'); R.renBtn.type = 'button';
-    R.resetBtn = el('button', 'mini st-mini warn', 'Reset'); R.resetBtn.type = 'button';
-    R.renBtn.addEventListener('click', () => openRename(starCls() ? S.stars.maps[starCls()] ? S.stars.maps[starCls()].active : 0 : 0));
-    R.resetBtn.addEventListener('click', () => { closePanels(); R.confirm.hidden = false; putText(R.confirmTxt, `Unlight every star in ${starLayout().name}? It is free.`); R.confirmYes.focus(); });
-    const btns = el('div', 'st-btns'); btns.append(R.renBtn, R.resetBtn);
-    bar.append(R.chips, btns);
-
-    R.rename = el('form', 'st-panel st-rename'); R.rename.hidden = true;
-    R.renInput = el('input', 'st-input'); R.renInput.maxLength = STAR_TUNE.nameMax; R.renInput.setAttribute('aria-label', 'Layout name'); R.renInput.autocomplete = 'off';
-    const rs = el('button', 'mini go', 'Save'); rs.type = 'submit';
-    const rc = el('button', 'mini', 'Cancel'); rc.type = 'button';
-    R.rename.append(R.renInput, rs, rc);
-    R.rename.addEventListener('submit', e => { e.preventDefault(); if (starRename(R.renIdx, R.renInput.value)) save(); R.rename.hidden = true; refresh(true); });
-    rc.addEventListener('click', () => { R.rename.hidden = true; });
-
-    R.confirm = el('div', 'st-panel st-confirm'); R.confirm.hidden = true;
-    R.confirmTxt = el('p', 'note');
-    R.confirmYes = el('button', 'mini go', 'Unlight all'); R.confirmYes.type = 'button';
-    const cn = el('button', 'mini', 'Keep them'); cn.type = 'button';
-    const cb = el('div', 'st-btns'); cb.append(R.confirmYes, cn);
-    R.confirm.append(R.confirmTxt, cb);
-    R.confirmYes.addEventListener('click', () => { if (starReset()) { toast('Every star is dark again. Your points are back.', 'good', ICON_OF(starCls()), 'low'); save(); } else flashLock(); R.confirm.hidden = true; sel = null; refresh(true); });
-    cn.addEventListener('click', () => { R.confirm.hidden = true; });
-
-    R.lock = el('p', 'note warn st-lock'); R.lock.hidden = true;
-    // S3: a Lightkeeper's stars moved into the Lightkeeper ring; one tap lights the Flare arm and the ring.
-    R.suggest = el('button', 'mini go st-suggest', 'Suggested layout'); R.suggest.type = 'button'; R.suggest.hidden = true;
-    R.suggest.addEventListener('click', () => { if (typeof starSuggest === 'function' && starSuggest()) save(); else flashLock(); refresh(true); });
-    R.mode = el('div', 'seg st-mode'); R.mode.setAttribute('role', 'group'); R.mode.setAttribute('aria-label', 'Show as');
-    R.modeBtns = ['map', 'list'].map(m => {
-      const b = el('button', null, m === 'map' ? 'Map' : 'List'); b.type = 'button';
-      b.addEventListener('click', () => { UI.mode = m; saveUi(); refresh(true); });
-      R.mode.append(b); return b;
-    });
-
-    R.mapBox = el('div', 'st-map');
-    R.card = el('div', 'st-card'); R.card.setAttribute('aria-live', 'polite');
-    R.cName = el('div', 'st-cname'); R.cKind = el('div', 'st-ckind'); R.cText = el('p', 'st-ctext'); R.cC = el('p', 'st-cc');
-    R.cBtn = el('button', 'buy st-cbtn'); R.cBtn.type = 'button';
-    R.cWhy = el('p', 'st-cwhy');
-    const cl = el('div', 'st-cl'); cl.append(R.cName, R.cKind, R.cText, R.cC, R.cWhy);
-    R.card.append(cl, R.cBtn);
-    R.cBtn.addEventListener('click', () => act(sel));
-
-    R.list = el('div', 'st-list');
-    R.none = el('p', 'note', 'Choose a class to see its stars.'); R.none.hidden = true;
-    R.sub.append(R.keys, R.mode);
-    sec.append(head, R.sub, bar, R.rename, R.confirm, R.lock, R.suggest, R.mapBox, R.card, R.list, R.how, R.none);
+  function slotBox(label, id, extra, onClear) {
+    const b = el('div', 'ab-slot sr-slot' + (id ? '' : ' empty'));
+    b.append(el('small', null, label));
+    if (id) {
+      b.append(tile(id), el('b', null, STARS[id].name));
+      if (extra) b.append(el('small', 'sr-cost', extra));
+      const x = el('button', 'ab-clear', '×'); x.type = 'button'; x.setAttribute('aria-label', `Clear ${label}`);
+      x.addEventListener('click', onClear);
+      b.append(x);
+    } else b.append(el('b', null, 'Empty'));
+    return b;
   }
-
-  // After a tap on the map, bring the card into view if it is below the fold (the map stays mostly on screen).
-  function showCard() {
-    const box = $('panels'); if (!box || !R.card.getClientRects().length) return;
-    const b = box.getBoundingClientRect(), c = R.card.getBoundingClientRect();
-    const over = c.bottom - b.bottom + 8; if (over <= 0) return;
-    const y = box.scrollTop + over;
-    if (!reduced) { try { box.scrollTo({ top: y, behavior: 'smooth' }); return; } catch (e) {} }
-    box.scrollTop = y;
+  function build() {
+    const k = soloHero(); if (!root) return;
+    root.textContent = '';
+    if (!k) { root.append(el('p', 'note', 'Choose a hero first.')); return; }
+    const pts = starPoints(), free = starFree(k), set = starSlots(k), lit = starLit(k);
+    root.append(el('p', 'note sr-note', `Each star changes how a fight plays. ${heroNm(k)} sets up to ${STARS_TUNE.slots}. Win ${STARS_TUNE.learnWins} fights with a star set and you learn it: then any hero can light it with star points, up to ${STARS_TUNE.litMax}. Changes count from your next fight.`));
+    const head = el('div', 'sr-head');
+    head.append(el('b', 'sr-pts', `Star points: ${Math.max(0, free)} free of ${pts}`),
+      el('small', null, `Found ${starsFound()} of ${STAR_ORDER.length} · Learned ${starsLearnedN()}`));
+    root.append(head);
+    root.append(el('h3', 'ab-pname', 'Set'));
+    const sl = el('div', 'ab-slots sr-slots');
+    set.forEach((id, i) => sl.append(slotBox(`Slot ${i + 1}`, id, id && !starLearned(id) ? `${starWins(id)} of ${STARS_TUNE.learnWins} wins` : id ? 'Learned' : '', () => { starSet(i, null, k); persist(); })));
+    root.append(sl);
+    root.append(el('h3', 'ab-pname', 'Lit'));
+    const ll = el('div', 'ab-slots sr-slots');
+    for (let i = 0; i < STARS_TUNE.litMax; i++) {
+      const id = lit[i] || null;
+      ll.append(slotBox(`Lit ${i + 1}`, id, id ? plural(STARS[id].cost, 'point') : '', () => { starUnlight(id, k); persist(); }));
+    }
+    root.append(ll);
+    if (!starsLearnedN()) root.append(el('p', 'note sr-src', 'Learn a star to light it here.'));
+    root.append(el('h3', 'ab-pname', 'Your stars'));
+    const list = el('div', 'sr-list');
+    for (const id of STAR_ORDER) list.append(cardFor(k, id, set, lit));
+    root.append(list);
+    root.append(el('p', 'note sr-src', 'Stars are found on zone bosses the first time they fall, on elites now and then, and by passing a Proving. They belong to the lamp: every hero can set them.'));
   }
-  function closePanels() { R.rename.hidden = true; R.confirm.hidden = true; }
-  function openRename(i) {
-    if (!starCls()) return;
-    closePanels();
-    R.renIdx = i; R.renInput.value = starLayouts()[i].name; R.rename.hidden = false;
-    try { R.renInput.focus(); R.renInput.select(); } catch (e) {}
+  function cardFor(k, id, set, lit) {
+    const s = STARS[id], own = starOwned(id), learned = own && starLearned(id), where = set.indexOf(id), on = lit.includes(id);
+    const c = el('div', 'ab-card sr-card' + (!own ? ' locked' : where >= 0 || on ? ' ready' : ' owned'));
+    c.dataset.star = id;
+    const top = el('div', 'ab-top'), t = el('div', 'ab-t');
+    if (!own) {
+      t.append(el('b', null, 'Not found yet'), el('small', null, starFromText(s)));
+      top.append(tile(null, 'sr-unk'), t); c.append(top);
+      return c;
+    }
+    t.append(el('b', null, s.name), el('small', null, (learned ? 'Learned' : `Learning: ${starWins(id)} of ${STARS_TUNE.learnWins} wins`) + ` · Lights for ${plural(s.cost, 'point')}`));
+    top.append(tile(id), t);
+    c.append(top, el('p', 'ab-desc', s.text));
+    const foot = el('div', 'ab-foot');
+    for (let i = 0; i < STARS_TUNE.slots; i++) {
+      const b = el('button', 'ab-put' + (where === i ? ' on' : ''), `Slot ${i + 1}`); b.type = 'button';
+      b.setAttribute('aria-pressed', String(where === i));
+      b.addEventListener('click', () => { if (where === i) starSet(i, null, k); else starSet(i, id, k); persist(); });
+      foot.append(b);
+    }
+    if (learned) {
+      const can = on || (lit.length < STARS_TUNE.litMax && starFree(k) >= s.cost);
+      const why = on || can ? '' : where >= 0 ? (lit.length >= STARS_TUNE.litMax ? `You can light ${STARS_TUNE.litMax} stars. Put one out first.` : `Needs ${plural(s.cost, 'star point')}.`) : starWhy(id, k);
+      const b = el('button', 'ab-put sr-light' + (on ? ' on' : ''), on ? 'Put out' : 'Light'); b.type = 'button';
+      b.setAttribute('aria-pressed', String(on));
+      b.disabled = !can;
+      b.title = on ? 'Put it out: its points come back' : why || `Light it for ${plural(s.cost, 'point')}`;
+      b.addEventListener('click', () => { if (on) starUnlight(id, k); else { if (where >= 0) starSet(where, null, k); starLight(id, k); } persist(); });
+      foot.append(b);
+    }
+    c.append(foot);
+    return c;
   }
-  function flashLock() { const w = starLocked(); if (w) toast(w, 'raid', null, 'normal'); }
-  function act(id) {
-    if (!id) return;
-    const c = starCheck(id);
-    if (!c.ok) { flashLock(); return; }
-    const s = starMap(starCls()).stars[id];
-    const done = c.act === 'light' ? starLight(id) : starUnlight(id);
-    if (done) {
-      save();
-      if (!reduced && c.act === 'light' && R.nodes && R.nodes[id]) { const g = R.nodes[id].g; g.classList.remove('pop'); void g.getBoundingClientRect(); g.classList.add('pop'); }
-      if (c.act === 'light' && (s.kind === 'key' || s.kind === 'crown')) toast(`${s.name} is lit.`, 'good', ICON_OF(starCls()), 'low');
-    }
-    refresh(true);
+  function refresh() {
+    if (!root || !root.isConnected) return;
+    const k = soloHero(); if (!k) { if (sig !== 'none') { sig = 'none'; build(); } return; }
+    const st = S.stars || {};
+    const s = [k, S.L, starPoints(), JSON.stringify(st.own), JSON.stringify(st.learned), JSON.stringify(st.wins), JSON.stringify(st.set && st.set[k]), JSON.stringify(st.lit && st.lit[k])].join('|');
+    if (s === sig) return;
+    sig = s; build();
   }
-
-  // ---- the SVG map (built once per class) ----
-  function buildMap(cls) {
-    const map = starMap(cls);
-    R.mapBox.textContent = '';
-    const [vx, vy, vw, vh] = STAR_GEO.view, cx = STAR_GEO.cx, cy = STAR_GEO.cy;
-    const svg = sv('svg', { viewBox: STAR_GEO.view.join(' '), class: 'st-svg', role: 'group', 'aria-label': `${STAR_MAPS[cls].name} star map` });
-    svg.style.setProperty('--role', map.color);
-    // backdrop: faint rings and dust (seeded, static)
-    const bg = sv('g', { class: 'st-bg', 'aria-hidden': 'true' });
-    for (const r of [STAR_GEO.ring, 184]) bg.append(sv('circle', { cx, cy, r, class: 'st-orbit' }));
-    // faint dividers between the three arms
-    for (const a of STAR_GEO.axes) { const t = (a + 60) * Math.PI / 180; bg.append(sv('line', { x1: cx + 70 * Math.cos(t), y1: cy + 70 * Math.sin(t), x2: cx + 200 * Math.cos(t), y2: cy + 200 * Math.sin(t), class: 'st-div' })); }
-    const rnd = rng(7);
-    for (let i = 0; i < 46; i++) bg.append(sv('circle', { cx: (vx + rnd() * vw).toFixed(1), cy: (vy + rnd() * vh).toFixed(1), r: (0.6 + rnd() * 0.9).toFixed(2), class: 'st-dust' }));
-    svg.append(bg);
-    const eg = sv('g', { class: 'st-edges', 'aria-hidden': 'true' });
-    R.edges = map.edges.map(([a, b]) => {
-      const [x1, y1] = map.stars[a].pos, [x2, y2] = map.stars[b].pos;
-      const ln = sv('line', { x1, y1, x2, y2, class: 'st-edge' }); eg.append(ln); return { a, b, ln };
-    });
-    svg.append(eg);
-    const ng = sv('g', { class: 'st-nodes' });
-    R.nodes = {};
-    // S3: the evolution ring is its own small map under this one (its stars open from star 5 of each arm)
-    let rsvg = null, rng_ = null;
-    if (map.evo) {
-      rsvg = sv('svg', { viewBox: RING_GEO.view.join(' '), class: 'st-svg st-ring-svg', role: 'group', 'aria-label': `${EVO_DEFS[map.evo].name} ring` });
-      rsvg.style.setProperty('--role', EVO_DEFS[map.evo].tint);
-      const rb = sv('g', { class: 'st-bg', 'aria-hidden': 'true' });
-      rb.append(sv('circle', { cx: RING_GEO.cx, cy: RING_GEO.cy, r: RING_GEO.r, class: 'st-orbit' }));
-      const re = sv('g', { class: 'st-edges', 'aria-hidden': 'true' });
-      for (const [a, b] of map.ringEdges) {
-        const [x1, y1] = map.stars[a].pos, [x2, y2] = map.stars[b].pos;
-        const ln = sv('line', { x1, y1, x2, y2, class: 'st-edge' }); re.append(ln); R.edges.push({ a, b, ln });
-      }
-      rng_ = sv('g', { class: 'st-nodes' });
-      rsvg.append(rb, re, rng_);
-    }
-    for (const id of map.order) {
-      const s = map.stars[id], [x, y] = s.pos, r = KIND_R[s.kind];
-      const g = sv('g', { class: `st-star k-${s.kind}`, transform: `translate(${x} ${y})`, tabindex: '0', role: 'button', 'data-id': id, 'aria-label': `${s.name}, ${starText(s)}` });
-      const glow = sv('circle', { r: r + 9, class: 'st-glow' });
-      const ring = sv('circle', { r: r + 5, class: 'st-ring' });
-      let body;
-      if (s.kind === 'key' || s.kind === 'crown' || s.kind === 'hearth') {
-        const pts = []; for (let i = 0; i < 8; i++) { const a = -Math.PI / 2 + i * Math.PI / 4, rr = i % 2 ? r * 0.45 : r; pts.push((rr * Math.cos(a)).toFixed(1) + ',' + (rr * Math.sin(a)).toFixed(1)); }
-        body = sv('polygon', { points: pts.join(' '), class: 'st-body' });
-      } else if (s.kind === 'notable') body = sv('rect', { x: -r * 0.78, y: -r * 0.78, width: r * 1.56, height: r * 1.56, transform: 'rotate(45)', class: 'st-body' });
-      else body = sv('circle', { r, class: 'st-body' });
-      const lock = sv('g', { class: 'st-lockic', transform: `translate(${r * 0.7} ${-r * 0.9})` });
-      lock.append(sv('rect', { x: -4, y: -1, width: 8, height: 6, rx: 1 }), sv('path', { d: 'M-2.5 -1 v-2 a2.5 2.5 0 0 1 5 0 v2', fill: 'none' }));
-      g.append(glow, ring, body, lock);
-      (s.ring ? rng_ : ng).append(g);
-      R.nodes[id] = { g, s };
-    }
-    svg.append(ng);
-    // Tap: the nearest star within reach (the map is 336px wide on a phone, so stars are about 40px apart).
-    const onTap = (box, view, ring) => box.addEventListener('click', e => {
-      const r = box.getBoundingClientRect(); if (!r.width) return;
-      const [bx, by, bw, bh] = view, k = bw / r.width, x = bx + (e.clientX - r.left) * k, y = by + (e.clientY - r.top) * (bh / r.height);
-      let best = null, bd = 34 * Math.max(1, k * 0.9);
-      for (const id of map.order) { if (!map.stars[id].ring !== !ring) continue; const [sx, sy] = map.stars[id].pos, d = Math.hypot(sx - x, sy - y); if (d < bd) { bd = d; best = id; } }
-      if (best) { sel = best; closePanels(); refresh(true); showCard(); }
-    });
-    const onKey = box => box.addEventListener('keydown', e => {
-      const id = e.target && e.target.getAttribute && e.target.getAttribute('data-id');
-      if (!id || (e.key !== 'Enter' && e.key !== ' ')) return;
-      e.preventDefault();
-      if (sel === id) act(id); else { sel = id; refresh(true); showCard(); }
-    });
-    onTap(svg, STAR_GEO.view, false); onKey(svg);
-    if (rsvg) { onTap(rsvg, RING_GEO.view, true); onKey(rsvg); }
-    R.svg = svg;
-    // legend: which arm points where, and how many of its stars are lit
-    R.legend = el('div', 'st-legend');
-    R.legBits = map.armNames.map((n, a) => { const b = el('span', 'st-leg'); b.append(el('i', 'st-arrow', ['↑', '↘', '↙'][a]), el('b', null, n), el('span', 'st-legn')); R.legend.append(b); return b; });
-    const rb = el('span', 'st-leg'); rb.append(el('i', 'st-arrow', '○'), el('b', null, 'Ring'), el('span', 'st-legn')); R.legend.append(rb); R.legBits.push(rb);
-    R.mapBox.append(svg, R.legend);
-    if (rsvg) {
-      const eb = el('span', 'st-leg'); eb.append(el('i', 'st-arrow', '✦'), el('b', null, EVO_DEFS[map.evo].name), el('span', 'st-legn')); R.legend.append(eb); R.legBits.push(eb);
-      const box = el('div', 'st-ringbox');
-      box.append(el('h4', 'st-gtitle', `${EVO_DEFS[map.evo].name} ring`),
-        el('p', 'note', 'Opens from star 5 of any arm. Its keystone does not count toward your 2.'), rsvg);
-      R.mapBox.append(box);
-    }
-  }
-
-  // ---- the list view (built once per class) ----
-  function buildList(cls) {
-    const map = starMap(cls);
-    R.list.textContent = '';
-    R.list.style.setProperty('--role', map.color);
-    R.rows = {};
-    const group = (title, ids) => {
-      const box = el('div', 'st-group');
-      box.append(el('h4', 'st-gtitle', title));
-      for (const id of ids) {
-        const s = map.stars[id];
-        const row = el('div', 'st-row k-' + s.kind);
-        const dot = el('i', 'st-dot');
-        const txt = el('div', 'st-rtxt');
-        const nm = el('div', 'st-rname'); const nmT = el('span', null, s.name); const kd = el('span', 'st-rkind', starText(s)); nm.append(nmT, kd);
-        const d = el('div', 'st-rdesc', s.text);
-        const why = el('div', 'st-rwhy');
-        txt.append(nm, d, why);
-        const b = el('button', 'mini st-rbtn'); b.type = 'button';
-        b.addEventListener('click', () => { sel = id; act(id); });
-        row.addEventListener('click', e => { if (e.target === b) return; sel = id; refresh(true); });
-        row.append(dot, txt, b);
-        if (s.kind === 'hearth') b.remove();
-        box.append(row);
-        R.rows[id] = { row, b, why };
-      }
-      R.list.append(box);
-    };
-    group('Hearthstar', ['hearth']);
-    map.armNames.forEach((n, a) => group(n, [1, 2, 3, 4, 5, 6, 7, 8].map(k => `a${a}s${k}`)));
-    group('Crown ring', ['b0', 'b1', 'b2', 'b3', 'b4', 'crown']);
-    if (map.evo) group(`${EVO_DEFS[map.evo].name} ring`, [1, 2, 3, 4, 5, 6, 7, 8].map(k => `e1s${k}`));
-  }
-
-  // ---- update ----
-  function refresh(force) {
-    if (!R) return;
-    const cls = starCls();
-    putHidden(R.none, !!cls);
-    for (const n of [R.mode, R.mapBox, R.card, R.list, R.lock]) if (!cls) putHidden(n, true);
-    putDisabled(R.renBtn, !cls); putDisabled(R.resetBtn, !cls);
-    if (!cls) { putText(R.title, 'Stars'); putText(R.pts, ''); putText(R.keys, ''); R.chipBtns.forEach(b => putHidden(b, true)); return; }
-    const map = starMap(cls), key = cls + '|' + (map.evo || '');   // S3: the evolution ring rebuilds the map
-    if (builtFor !== key) { builtFor = key; sel = null; buildMap(cls); buildList(cls); sig = ''; }
-    const lay = starLayout(), lays = starLayouts(), ai = S.stars.maps[cls] ? S.stars.maps[cls].active : 0;
-    const pts = starPoints(), free = starFree(), keys = starKeysLit(), lock = starLocked();
-    if (!sel || !map.stars[sel]) {
-      // default: the cheapest star you can light, else the Hearthstar
-      let best = null;
-      for (const id of map.order) { const s = map.stars[id]; if (id !== 'hearth' && !starIsLit(id) && starCheck(id).ok && (!best || s.cost < map.stars[best].cost)) best = id; }
-      sel = best || 'hearth';
-    }
-    const s2 = [cls, ai, lay.lit.join(','), pts, lock || '', sel, UI.mode, lays[0].name, lays[1].name].join('|');
-    if (!force && s2 === sig) return;
-    sig = s2;
-    putText(R.title, `${STAR_MAPS[cls].name} stars`);
-    putText(R.pts, `${free} of ${plural(pts, 'point')} left`);
-    putToggle(R.pts, 'has', free > 0);
-    putText(R.keys, `Keystones ${keys} of ${STAR_TUNE.keyMax}`);
-    putToggle(R.keys, 'full', keys >= STAR_TUNE.keyMax);
-    R.chipBtns.forEach((b, i) => { putHidden(b, false); putText(b, lays[i].name); putAttr(b, 'aria-pressed', String(i === ai)); putAttr(b, 'title', 'Hold to rename'); });
-    putHidden(R.lock, !lock); if (lock) putText(R.lock, lock + ' Your stars stay as they are until it ends.');
-    putHidden(R.suggest, !(map.evo === 'priest' && !lay.lit.length && free > 0));
-    putHidden(R.mode, false);
-    R.modeBtns.forEach((b, i) => putAttr(b, 'aria-pressed', String((i === 0) === (UI.mode === 'map'))));
-    putHidden(R.mapBox, UI.mode !== 'map'); putHidden(R.card, UI.mode !== 'map'); putHidden(R.list, UI.mode !== 'list');
-
-    // star states
-    const litSet = new Set(['hearth', ...lay.lit]);
-    const state = {};
-    for (const id of map.order) {
-      const s = map.stars[id], lit = litSet.has(id);
-      const c = lit ? null : starCheck(id);
-      const keyBlocked = !lit && (s.kind === 'key' || s.kind === 'crown') && keys >= STAR_TUNE.keyMax;
-      state[id] = { lit, open: !lit && c.ok, keyBlocked, near: !lit && map.adj[id].some(n => litSet.has(n)) };
-    }
-    if (UI.mode === 'map') {
-      for (const id of map.order) {
-        const n = R.nodes[id], st = state[id];
-        svgClass(n.g, `st-star k-${n.s.kind}${st.lit ? ' lit' : st.open ? ' open' : st.near ? ' near' : ' dim'}${st.keyBlocked ? ' kblock' : ''}${sel === id ? ' sel' : ''}`);
-      }
-      const cnt = [0, 0, 0, 0, 0];
-      for (const id of lay.lit) { const s = map.stars[id]; if (s) cnt[s.ring ? 4 : s.arm >= 0 ? s.arm : 3]++; }
-      R.legBits.forEach((b, i) => putText(b.lastChild, `${cnt[i]}/${i < 3 || i === 4 ? 8 : 6}`));
-      for (const e of R.edges) svgClass(e.ln, 'st-edge' + (litSet.has(e.a) && litSet.has(e.b) ? ' lit' : litSet.has(e.a) || litSet.has(e.b) ? ' half' : ''));
-      // detail card
-      const s = map.stars[sel], st = state[sel], c = sel === 'hearth' ? null : starCheck(sel);
-      putText(R.cName, s.name);
-      putText(R.cKind, starText(s) + (s.arm >= 0 ? ` · ${map.armNames[s.arm]}` : ''));
-      putText(R.cText, s.text);
-      putHidden(R.cC, !s.c); if (s.c) putText(R.cC, 'Also: ' + s.c);
-      putHidden(R.cBtn, !c);
-      if (c) {
-        putText(R.cBtn, st.lit ? 'Unlight' : c.ok ? `Light (${s.cost})` : 'Locked');
-        putDisabled(R.cBtn, !c.ok);
-        putToggle(R.cBtn, 'off', st.lit);
-      }
-      const why = c && !c.ok ? c.why : st.lit && sel !== 'hearth' ? 'Lit. Unlighting is free.' : '';
-      putText(R.cWhy, why); putHidden(R.cWhy, !why);
-      putToggle(R.card, 'is-lit', st.lit);
-    } else {
-      for (const id of map.order) {
-        const r = R.rows[id], st = state[id]; if (!r) continue;
-        putClass(r.row, `st-row k-${map.stars[id].kind}${st.lit ? ' lit' : st.open ? ' open' : ' dim'}${sel === id ? ' sel' : ''}`);
-        if (id === 'hearth') continue;
-        const c = st.lit || st.open ? null : starCheck(id);
-        putText(r.b, st.lit ? 'Unlight' : st.open ? `Light (${map.stars[id].cost})` : 'Locked');
-        putDisabled(r.b, !st.lit && !st.open);
-        putToggle(r.b, 'go', st.open);
-        const w = c ? c.why : '';
-        putText(r.why, w); putHidden(r.why, !w);
-      }
-    }
-  }
-
-  registerSection('party', { id: 'stars', title: '', view: 'stars', feature: 'stars', mount, update: force => refresh(force) });
-  on('classChosen', () => { sel = null; refresh(true); });
+  registerSection('party', { id: 'stars', title: 'Stars', view: 'stars', feature: 'stars',
+    mount(sec) { sec.classList.add('sr-sec'); root = el('div', 'ab-root sr-root'); sec.append(root); sig = ''; refresh(); },
+    update: () => { try { refresh(); } catch (e) { console.error('[lanternfall] stars', e); } } });
+  for (const ev of ['starFound', 'starLearned', 'starsChange', 'soloHero', 'levelup']) on(ev, () => { sig = ''; try { refresh(); } catch (e) {} });
 }
