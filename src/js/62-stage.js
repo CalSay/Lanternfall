@@ -1340,7 +1340,7 @@ let resize, animate, draw, stageStats, warmScene;
     return !reduced && ((T * 1.6 + (s.hx & 7) * 0.25) % 2) >= 1 && ART.ready(f, 'idle1') ? f.idle1 : f.idle0;
   }
   function drawFoe(s, cam, tele) {
-    const f = foeFrame(s, tele); s.dF = null; if (!f) return;
+    const f = foeFrame(s, tele); s.dF = null; s.fxOn = false; if (!f) return;
     const tg = target(), m = tg === 'mob' ? s.m : null;
     let x = s.x + s.dx - cam, y = s.gy, alpha = 1, sy = 1;
     if (m) {
@@ -1361,18 +1361,7 @@ let resize, animate, draw, stageStats, warmScene;
     else ctx.drawImage(c, dx, Math.round(y - f.oy));
     // hit: a half-strength white flash over the frame (a pack takes hits from the whole party; a full
     // white silhouette each time would hide the foe)
-    const fx = artOf(s) && s.aCur;   // a pack's effects: the attack trail, then the landed-hit spark, on the body's world root
-    if (fx && sy === 1) {
-      for (const L of [fx.atk, fx.hit]) if (L) ctx.drawImage(L.c, Math.round(x - L.ox), Math.round(y - L.oy));
-      const F = s.fr, M = F.mouth;
-      if (fx.mouth && M) ctx.drawImage(fx.mouth.c, Math.round(x + M[0] - fx.mouth.ox), Math.round(y + M[1] - fx.mouth.oy));
-      if (s.pj && F.fx.projectile) {   // the bolt, its black core on the line from the throat to the hero
-        const P = s.pj, t = artTarget(), u = Math.min(1, P.t / Math.max(1, P.dur)), X = F.fx.projectile, n = actMs(X, 1, X.fr.length);
-        const f = X.fr[clipFrame(X, 1, X.fr.length, P.t % n) - 1];
-        ctx.drawImage(f.c, Math.round(P.x0 + (t.x - P.x0) * u - cam - f.ox), Math.round(P.y0 + (t.y - P.y0) * u - f.oy));
-      }
-      if (s.ifx) { const X = F.fx[s.ifx.id], f = X && X.fr[clipFrame(X, 1, X.fr.length, s.ifx.t) - 1]; if (f) ctx.drawImage(f.c, Math.round(s.ifx.x - cam - f.ox), Math.round(s.ifx.y - f.oy)); }
-    }
+    s.fxX = x; s.fxY = y; s.fxOn = !!(artOf(s) && s.aCur && sy === 1);   // its effects draw over the hero (drawFoeFx)
     if (m && !m.dead && s.fl > 0.02 && sy === 1 && !artOf(s)) { ctx.globalAlpha = 0.55 * alpha; ctx.drawImage(s.fr.hit.c, dx, Math.round(y - f.oy)); }
     // stunned: three sparks circle over its head (still under reduced motion)
     if (m && !m.dead && m.stunT > 0) {
@@ -1384,6 +1373,21 @@ let resize, animate, draw, stageStats, warmScene;
     }
     ctx.globalAlpha = 1;
     s.dX = dx; s.dY = Math.round(y - f.oy); s.dF = sy < 1 ? null : f;
+  }
+  // A pack foe's effects (64j), drawn after the party so they land on top of the hero: the attack trail, the landed-hit
+  // spark (on the body's world root), the throat charge, the bolt in flight and impacts on the hero.
+  function drawFoeFx(s, cam) {
+    const fx = s.fxOn && s.aCur; if (!fx) return;
+    const x = s.fxX, y = s.fxY;
+    for (const L of [fx.atk, fx.hit]) if (L) ctx.drawImage(L.c, Math.round(x - L.ox), Math.round(y - L.oy));
+    const F = s.fr, M = F.mouth;
+    if (fx.mouth && M) ctx.drawImage(fx.mouth.c, Math.round(x + M[0] - fx.mouth.ox), Math.round(y + M[1] - fx.mouth.oy));
+    if (s.pj && F.fx.projectile) {   // the bolt, its black core on the line from the throat to the hero
+      const P = s.pj, t = artTarget(), u = Math.min(1, P.t / Math.max(1, P.dur)), X = F.fx.projectile, n = actMs(X, 1, X.fr.length);
+      const f = X.fr[clipFrame(X, 1, X.fr.length, P.t % n) - 1];
+      ctx.drawImage(f.c, Math.round(P.x0 + (t.x - P.x0) * u - cam - f.ox), Math.round(P.y0 + (t.y - P.y0) * u - f.oy));
+    }
+    if (s.ifx) { const X = F.fx[s.ifx.id], f = X && X.fr[clipFrame(X, 1, X.fr.length, s.ifx.t) - 1]; if (f) ctx.drawImage(f.c, Math.round(s.ifx.x - cam - f.ox), Math.round(s.ifx.y - f.oy)); }
   }
   // Foe lights (eyes, cores), and a glow in the telegraph colour pulsing at 4 Hz on a winding-up foe.
   function foeLights(s, tele) {
@@ -1448,6 +1452,7 @@ let resize, animate, draw, stageStats, warmScene;
       if (typeof gatherDraw === 'function') gatherDraw(ctx, scene, cam, 'front', solo);
     }
     for (const a of order) drawActor(a, cam);
+    if (fight) for (let i = 0; i < packN; i++) drawFoeFx(slots[i], cam);   // a pack foe's attack effects, over the hero
     if (stageDeco) stageDeco(ctx, 'front', dv);
     if (fight) for (let i = 0; i < packN; i++) if (slots[i].dv > 0) drawFoe(slots[i], cam, tele);
     ctx.globalAlpha = 1;
