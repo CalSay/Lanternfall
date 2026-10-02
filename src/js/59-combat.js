@@ -271,7 +271,9 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       const nt = zoneNextType(z), ba = FOE_BEH[TYPES[zt].key] || FOE_BEH.slime, bb = FOE_BEH[TYPES[nt].key] || ba;
       const size = T.sizes ? ba.size || 'brute' : 'brute', n = T.single ? 1 : T.sizes ? Math.max(1, Math.min(FOE_MAX, ba.n || T.packSize)) : T.packSize;
       const swarm = size === 'swarm', sizeB = T.sizes ? bb.size || size : size;
-      const mixOk = nt !== zt && Math.abs((SZ_I[size] || 0) - (SZ_I[sizeB] || 0)) < 2, mixMax = T.sizes ? Math.max(1, Math.floor(n / 3)) : n;
+      // a zone with its own monster (59l ZONE_FOES) sends only that monster (owner, 2026-10-02)
+      const own = typeof ZONE_FOES === 'object' && !!ZONE_FOES[z];
+      const mixOk = !own && nt !== zt && Math.abs((SZ_I[size] || 0) - (SZ_I[sizeB] || 0)) < 2, mixMax = T.sizes ? Math.max(1, Math.floor(n / 3)) : n;
       // the plan: one type index per member and its shares (a brute in a normal pack is 2)
       PLAN.length = 0;
       let shares = 0, mixN = 0;

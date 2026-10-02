@@ -3670,7 +3670,7 @@ if (section('solo hero')) try {
   //    parry = no damage, a stagger for the counter's length, the counter lands inside it
   {
     const g = T(), E = s => g.eval(s);
-    E('soloPick("wren")'); run(g, 2);
+    E('soloPick("wren")'); run(g, 2); E('for (const f of combatFoes()) f.hp = f.max = 1e12');   // a foe that stays up (a zone monster's death plays 2.3 s)
     assert(E('soloAttack()') === 'hit' && E('soloAttack()') === 'cd', 'Attack hits, then waits for its cooldown (mashing does nothing)');
     run(g, E('SOLO_TUNE.atkCd') + 0.05);
     assert(E('soloAttack()') === 'hit', `Attack is back after ${E('SOLO_TUNE.atkCd')} s`);
@@ -3804,7 +3804,7 @@ if (section('solo hero')) try {
     assert(E('onboardStep().id') === 'ability' && E('onboardPaused(onboardStep())') === true, 'W1-D: the ability step pauses while a foe is alive');
     E('combatFoes().forEach(f => { if (f && !f.dead) f.hp = 1; })'); run(g, 0.8); E('soloAttack()'); run(g, 0.1);   // Wren's Attack clears the pack (the 44% lock)
     assert(!E('combatFoes().some(f => f && !f.dead && f.hp > 0)') && E('onboardStep().id') === 'ability' && E('onboardPaused(onboardStep())') === false, 'W1-D: ...and does not pause once the pack is dead, so the respawn can happen');
-    run(g, 1.5);
+    run(g, 3);   // (a zone monster's death plays 2.31 s first)
     assert(E('combatFoes().some(f => f && !f.dead && f.hp > 0)') && E('onboardPaused(onboardStep())') === true && E('soloAbility()') === true, 'W1-D: a foe respawns, the step pauses again and the ability casts (Echo Shot needs a target)');
   }
   {
@@ -7160,6 +7160,8 @@ if (section('C22 Thorn Imp (zone 1)')) try {
       'C22: zone 1\'s regular foe is one Thorn Imp (it keeps the Moss Slime\'s type slot for mastery, trophies and weaknesses)');
     H('TURN_TUNE.on=0;globalThis.__imps=0;for(let i=0;i<30;i++){spawn();for(const f of combatFoes()){if(f.type==="slime"&&f.name!=="Thorn Imp")__imps=-99;if(f.skin==="imp")__imps++}}');
     assert(H('__imps') > 0, 'C22: the legacy fight in zone 1 shows the Thorn Imp too (in place of every Moss Slime)');
+    H('globalThis.__other=0;for(const z of [1,2]){setZone(z);for(let i=0;i<60;i++){spawn();for(const f of combatFoes())if(!f.skin)__other++}}');
+    assert(H('__other')===0, `C22: zones 1 and 2 send only their own monster, never the next area's foe (owner) (${H('__other')} others in 120 spawns)`);
     H('S.zone=3;spawn()');
     assert(H('combatFoes().every(f=>!f.skin&&f.name!=="Thorn Imp")'), 'C22: zones without a zone monster yet keep their foes (zone 3)');
     H('S.zone=1;fightBoss=true;spawn()');

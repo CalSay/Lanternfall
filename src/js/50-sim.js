@@ -40,7 +40,7 @@ function spawn() {
   if (partyCombatOn()) { cbSpawn(fightBoss); return; }   // owner (2026-10-01): no boss timer and no Enrage: a boss fight ends when one side falls
   const z = S.zone, cyc = zoneCycle(z);
   const boss = fightBoss;
-  const ti = boss || Math.random() < 0.72 ? zoneType(z) : zoneNextType(z);
+  const ti = boss || (typeof ZONE_FOES === 'object' && ZONE_FOES[z]) || Math.random() < 0.72 ? zoneType(z) : zoneNextType(z);   // a zone monster's zone sends only it
   const t = TYPES[ti];
   const hp = mobHp(z) * (boss ? bossHpMult(z) * mod('bossHp') : (0.9 + Math.random() * 0.2)) * mod('foeHp');
   mob = {
