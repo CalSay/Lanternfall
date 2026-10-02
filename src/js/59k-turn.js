@@ -60,7 +60,7 @@ function turnMakeProfile(f, u) {
     critChance: critChance(), critMult: critMult(), nonCrit: mod('nonCrit'), echo: g.echo || 0,
     markCritX: key === 'wren' && !bonus('ks:pack') ? 1.5 : 1,
     essChance: essChance(), essExtra: g.essExtra || 0, goldPerKill: f.gold,
-    xpPerKill: f.xp, healOnKill: COMBAT_TUNE.packHealF, respawn: 0.45,
+    xpPerKill: f.xp, healOnKill: COMBAT_TUNE.packHealF, respawn: Math.max(0.45, typeof zoneFoeDeathS === 'function' ? zoneFoeDeathS(f) : 0),   // as 50-sim killPack
     ability: ab.id, cooldowns: Object.fromEntries(TURN_CD_KEYS.map(id => [id, turnCdFor(id)])), odds: turnOdds(),
     // C22: a zone monster's own moves (59l); its hits are shares of the zone's fixed reference HP, less armour, uncapped
     moves: Z ? Z.moves : null, moveDamage: Z ? Z.refHp * TURN_TUNE.foeAtkX * (1 - armRed) : 0 };
@@ -152,7 +152,7 @@ function turnBegin(m, who, io) {
       const moves = io.moves ? io.moves() : null;
       m.move = moves && moves.length ? moves[m.moveN++ % moves.length] : TURN_SWING;
       m.hitI = 0; m.parried = 0;
-      io.emit('foeMove', { id: m.move.id, name: m.move.name, hits: m.move.hits.length });
+      io.emit('foeMove', { id: m.move.id, name: m.move.name, anim: m.move.anim || '', hits: m.move.hits.length });
       turnHitStart(m, io);
     } else { m.phase = 'recovery'; m.until = m.now + TURN_TUNE.foeRecovery; m.next = 'hero'; }
   }

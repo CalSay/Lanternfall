@@ -123,7 +123,7 @@ function killPack(m, g) {
     S.kills = Math.min(ZONE_FIGHTS, S.kills + 1);
   }
   emit('kill', { mob: m, zone: z, gold: g, ess, tier });
-  respawn = 0.45;
+  respawn = Math.max(0.45, typeof zoneFoeDeathS === 'function' ? zoneFoeDeathS(m) : 0);   // a pack foe's death animation plays out first
 }
 
 // quiet: no float or toast (away gains; the away card reports the levels).

@@ -7108,11 +7108,18 @@ if (section('C22 Thorn Imp (zone 1)')) try {
   // Imp, and in turn fights it alternates Briar Jab (1 hit) and Crosscut (2 hits, slow then fast), each hit its own parry.
   { const { spawnSync } = await import('node:child_process'), r = spawnSync(process.execPath, [path.join(ROOT, 'tools', 'art', 'embed-foes.mjs'), '--check'], { encoding: 'utf8' });
     assert(r.status === 0, 'C22: src/js/21za-data-foeart.js is up to date with the approved packs (node tools/art/embed-foes.mjs)' + (r.status ? ': ' + (r.stderr || r.stdout) : '')); }
-  { const dir = path.join(ROOT, 'art', 'enemies', 'thorn-imp', 'v1'), man = JSON.parse(fs.readFileSync(path.join(dir, 'manifest.json'), 'utf8'));
+  { const dir = path.join(ROOT, 'art', 'enemies', 'thorn-imp', 'approved-v2'), man = JSON.parse(fs.readFileSync(path.join(dir, 'manifest.json'), 'utf8'));
     const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '21za-data-foeart.js'), 'utf8'), A = JSON.parse(src.slice(src.indexOf('const FOE_ART = ') + 16, src.lastIndexOf('}') + 1)).imp;
-    const same = man.frames.every(f => A.frames[f.id] && A.frames[f.id][2] === fs.readFileSync(path.join(dir, f.file)).toString('base64') &&
-      A.frames[f.id][0] === f.ground_anchor[0] && A.frames[f.id][1] === f.ground_anchor[1]);
-    assert(man.frames.length === 14 && Object.keys(A.frames).length === 14 && same, 'C22: all 14 Thorn Imp poses are embedded with their approved bytes and ground anchors'); }
+    const frames = Object.values(A.acts).reduce((n, a) => n + a.f.length, 0);
+    const bytes = Object.entries(A.atlases).every(([p, b64]) => b64 === fs.readFileSync(path.join(dir, p)).toString('base64'));
+    const timing = Object.entries(man.actions).every(([id, a]) => A.acts[id] && a.frames.every((f, i) => A.acts[id].f[i][0] === f.duration_ms) &&
+      JSON.stringify(A.acts[id].con) === JSON.stringify(a.contacts) && JSON.stringify(A.acts[id].rel) === JSON.stringify(a.release_cues));
+    assert(frames === 55 && Object.keys(A.acts).length === 7 && bytes && timing && A.acts.death.f[8][3] === -1,
+      `C22: the approved Thorn Imp pack (7 actions, ${frames} frames) is embedded with its atlases byte for byte, its timings, releases and contacts; death ends empty`); }
+  { const g = loadCore({ seed: 1 }), E = s => g.eval(s);
+    const w = JSON.parse(E('JSON.stringify(ZONE_FOES[1].moves.map(m => m.hits.map(h => h.wind)))'));
+    assert(JSON.stringify(w) === '[[1.61],[1.61,1]]' && E('zoneFoeDeathS({ skin: "imp" })') === 2.31,
+      `C22: the Imp's parry windows close on the art's contact frames (hop 0.73 s + 0.88 s to the first contact; 1.0 s between the Crosscut's two) and the next foe waits for its 2.31 s death (${JSON.stringify(w)})`); }
   const imp = hero => { const h = loadCore({ seed: 7 }), H = x => h.eval(x);
     H(`soloPick(${JSON.stringify(hero)},{now:true});S.zone=1;S.activity='fight';TURN_TUNE.on=1;soloSetAuto(false);S.auto=false;gearDirty();spawn()`); return { h, H }; };
   { const { H } = imp('wren');
@@ -7150,7 +7157,7 @@ if (section('C22 Thorn Imp (zone 1)')) try {
   })()`); };
   const all = run(['parry', 'parry']), one = run(['parry', '']), dodge = run(['dodge', 'parry']);
   assert(all.move === 'cross' && all.winds[0] > all.winds[1] && all.contacts.join() === 'parry,parry' && all.counters === 1 && all.hits === 0 && all.echo === 3 && all.phase === 'recovery',
-    `C22: Crosscut is two hits, slow then fast; parrying both refunds a turn each and earns one counter (${JSON.stringify(all)})`);
+    `C22: Crosscut is two hits, each its own window; parrying both refunds a turn each and earns one counter (${JSON.stringify(all)})`);
   assert(one.contacts.join() === 'parry,hit' && one.counters === 0 && one.hits === 1 && one.echo === 4,
     `C22: a missed second hit lands and there is no counter (${JSON.stringify(one)})`);
   assert(dodge.contacts.join() === 'dodge,parry' && dodge.counters === 0 && dodge.hits === 0 && dodge.echo === 4,
@@ -7180,7 +7187,7 @@ if (section('C20 turn combat (core)')) try {
   assert(E('soloAbility({slot:0}) && turnCombatSnapshot().cooldowns.echo===5 && !soloAbility({slot:0})'), 'C20: one ability commits the hero turn and its cooldown is counted in turns');
   for (let i = 0; i < 3; i++) g.fn.tick(0.1);
   assert(E('turnCombatSnapshot().phase==="foeWindup" && turnCombatSnapshot().closesAt>turnCombatSnapshot().parryOpensAt'), 'C20: the foe turn publishes fight-local defense bounds');
-  for (let i = 0; i < 7; i++) g.fn.tick(0.1);
+  for (let i = 0; i < 40 && E('(q => q.closesAt - q.now > 0.12)(turnCombatSnapshot())'); i++) g.fn.tick(0.05);   // into the parry window (the wind-up follows the foe's art)
   assert(E('soloParry()==="parry" && soloDodge()==="miss"'), 'C20: a timed parry succeeds and a second defense attempt cannot replace it');
   for (let i = 0; i < 5; i++) g.fn.tick(0.1);
   assert(E('turnCombatSnapshot().phase==="hero" && turnCombatSnapshot().cooldowns.echo===3'), 'C20: timed parry refunds one, then the next hero turn decrements one');
