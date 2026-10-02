@@ -1,7 +1,7 @@
 # Hero ability trees: Wren, Tobin and Pip (C19 draft)
 
-Status: **complete design proposal for owner and Claude review**, 1 October 2026. Updated against Claude checkpoint `3795483`, including the later owner decisions. The full ability engine is not built yet; base crit 2.5 is already live. The 6+8 count and **2.5× base critical damage** are owner directions; other tuning remains proposed. The linked tree, art and validation documents complete this specification. No measured balance claim is made.
-It replaces the "about 10 abilities" sketch in `solo-hero.md` (Abilities) with the owner's new count.
+Status: **built** in the C29 turn fight (2 October 2026; [combat-turn-build.md](combat-turn-build.md)). This was Codex's C19 design, 1 October 2026, with the owner's later decisions in §2a. The game's data (`24c-data-abilities.js`, `24e-data-talents.js`) is the truth where it differs; the build page says what it picked. Mentions of Auto, relics and the chapel below are void: combat is active only, and Scrolls replaced relics.
+It replaces the earlier "about 10 abilities" sketch with the owner's new count.
 
 ## 1. The brief
 
@@ -271,7 +271,7 @@ After design approval:
 4. Coordinate Training, star choices, relics and Hallowed with Ascension and chapel work. C22 now denotes the enemy overhaul in the current roadmap. Claude owns save-key and migration decisions.
 5. Review complete hero art packs and validate layered fit before runtime wiring.
 
-[Ability validation](ability-validation.md) records the numerical sanity checks and required behavioral/balance tests. No runtime files or art assets are changed by this design proposal.
+The C29 build ([combat-turn-build.md](combat-turn-build.md)) records what was built and its first sim numbers. No runtime files or art assets are changed by this design proposal.
 
 ## 9. Review decisions
 

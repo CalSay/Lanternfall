@@ -1,8 +1,10 @@
 # Art direction: B1 (16-bit, bold outline)
 
-Status: live. Chosen by the owner on 2026-09-27 from the style study (direction **B1**, with the
-lantern lighting of direction D on the stage). Replaces the Hi-bit direction, which is kept for
-history in [art-direction-hibit.md](art-direction-hibit.md).
+Status: the rules for the **code-drawn B1 kit** (`12a`-`12g`, `13`, `13b`, `60b-baker.js`). Chosen by the owner on
+2026-09-27 (direction **B1**, with the lantern lighting of direction D on the stage). The three playable heroes and all
+new art are drawn sprites instead: they follow [art-pipeline.md](art-pipeline.md) and the art freeze in `CLAUDE.md`
+(match Wren, Tobin and Pip). Party-era notes below (several party members on the stage, `party-and-classes.md`
+briefs) are history: there is one hero on the stage now.
 
 Why: the owner found the old figures "too thin and tall", the clothing "didn't feel right" and the
 art "lacked definition between different sections". B1 answers all three: stocky 4-head figures,

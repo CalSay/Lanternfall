@@ -1,0 +1,145 @@
+# Lanternfall: the game as it is now
+
+A short map of what is in the game on 2026-10-02, with the files that hold each system. The code is the truth: when
+this page and a file disagree, the file wins and this page needs a fix. Owner decisions are in
+[DECISIONS.md](DECISIONS.md); file-level details are in [ARCHITECTURE.md](ARCHITECTURE.md).
+
+## The loop
+
+The player picks one hero and climbs the Lantern Road zone by zone. Fights pay gold, XP, Essence, relics, Scrolls,
+uniques and Trophies. Gathering and gatherers bring materials. Materials and gold build the camp and craft gear. Every
+fight is played by hand. Gathering, gatherer shifts and camp builds keep running while the game is closed.
+
+## Screen
+
+Five tabs, each a full-screen menu over the stage ([layout.md](design/layout.md)):
+
+| Tab | Views |
+|---|---|
+| Fight (`adv`) | Boss, Bounties, Bestiary, Deepwell |
+| Hero (`party`) | Hero, Abilities, Training, Stars |
+| Gather (`gat`) | Mining, Wood, Forage, Hunting, Store |
+| Craft (`forge`) | Make, Gear, Uniques |
+| Camp (`world`) | Camp, Tavern, Almanac, Raid |
+
+The bell opens Notices, the Journal and Settings. Achievements (Deeds) and the Codex open from the Journal. Landscape
+(740x360 and up) is the main target; portrait still works at 360 px wide.
+
+## The hero
+
+- **Three playable heroes:** Wren (archer, Ranger class), Tobin (tank, Warrior class, Warden kit) and Pip (caster, Mage
+  class, Lanternmage kit). Data: `24b-data-solo.js`; runtime: `59j-solo.js`; picker and switch: `76-create.js`,
+  `75-solo-ui.js`.
+- **The road is shared.** Gold, gear, the camp and the furthest zone (`maxZone`) belong to the save. Each hero has its
+  own level and remembers its own zone (`S.solo.zn`).
+- **The roster** holds 32 heroes (`56-roster.js`); only the three with complete kits can carry the lamp. Unlock routes,
+  Renown and boss tokens: `56c-unlocks.js`.
+- **Training** (Hero > Training, `55-training.js`): gold levels up Attack, Parry, Dodge and ability power. A move never
+  passes the hero's level, nor 40 before the Proving and 80 after it.
+- **Classes and the Proving** (`55-classes.js`, `59e-class-combat.js`, `59f-trials.js`, `75-class-ui.js`): after the
+  Fenmother (zone 35) and hero level 35 the hero can take the Proving and choose an evolution path. Changing class uses
+  the Mirror of Embers.
+- **Stars** (`57e-constellations.js`, `75-stars-ui.js`): the older per-class talent map, open from hero level 10. Points
+  come from levels and Great Lanterns.
+- **Well Rested** (`55-rested.js`): gathering banks a short damage bonus for the next fights.
+
+## Fights
+
+- **Every zone fight is a turn fight** (`59k-turn.js`, UI `75-turn-ui.js`). The full rules are in
+  [combat-turn-build.md](design/combat-turn-build.md). In short: one foe, a Speed timeline, Attack or one of three
+  abilities on your turn, a parry or a dodge for every enemy hit, statuses, cooldowns in turns, no Auto.
+- **Abilities** (`24c-data-abilities.js`, `56e-abilities.js`, `75-abilities-ui.js`): 14 a hero; the signature is free
+  and the rest cost a Scroll of their tier from zone bosses. **Talents** (`24e-data-talents.js`): two choices for each
+  ability and for Attack, Parry and Dodge.
+- **Zones:** 5 won fights, then the zone boss, then the next zone (`ZONE_FIGHTS` in `40-rules.js`). Losing never moves
+  you. Bosses have no timer.
+- **Foes:** zone 1 is the Thorn Imp and zone 2 Gloomjaw, from the C22 roster with approved art (`59l-zone-foes.js`,
+  `64j-foe-art.js`). Other zones still use the old foe types with turn move sets (`24d-data-turnfoes.js`). From zone
+  15 about one fight in five is an elite with one trait.
+- **Regions in code** (`22-data-regions.js`): the Hollow (zones 1-35, the Fenmother) and the Sunken Coast (36-70). The
+  Coast reuses the Hollow's foes and scenery until its content lands. The first kill of a region boss relights a
+  Great Lantern (`55-lantern.js`).
+- **Real-time fights** remain for the Deepwell, the Provings and the world raid (`59-combat.js`, `59g-active.js`,
+  `59h-bosses.js`, `59i-elites.js`).
+- **Away:** fights earn nothing while you are away (`50-sim.js` `awayGains`). The away cap is 4 hours, raised by the
+  Hourglass and the Watchtower, up to 24 hours.
+
+## Gathering and gatherers
+
+- **Skills:** Mining (ore, gems), Woodcutting, Foraging (fibre, herbs) and Hunting (hide) (`55-gathering.js`,
+  `72-ui-gather.js`, scenes in `63c-scenery-gather.js`). Node tiers open at skill levels (`SKILL_TUNE`). Hunting uses
+  Codex's interim art (`HUNT_TUNE` in `21-data-craft.js`; numbers in [hunting-c24.md](design/hunting-c24.md)).
+- **Tools** (`55-tools.js`): pickaxe, axe, sickle and spear, made at the Workbench. The right tool is a speed bonus,
+  never a gate. Each tool kind has its own mastery.
+- **The Storehouse** (`55-store.js`): a cap per material and grade, from every source. Skill XP keeps counting at the
+  cap.
+- **Gatherers (Hands)** (`57f-hands.js`, `21f-data-hands.js`, `74-ui-hands.js`): open at Hearth 2 with a Tavern.
+  Applicants appear on the Tavern board with a rarity and traits; named gatherers arrive by their routes. Tents cap the
+  crew (2 to start). A send prepays one or two 4-hour shifts. Gatherers stand in the camp scene; tap one to talk and
+  send it.
+- **Trade runs** (`57k-trade.js`, `74b-ui-trade.js`): from Tavern 2 a gatherer can carry goods away for 2 hours and
+  bring back gold.
+- **Tavern perks** (`57g-tavern-perks.js`): Omen forecasts, applicant timing, rumours, bounty bonuses.
+
+## The camp
+
+- **Hollow's Rest** (`57-camp.js`, `75-camp-ui.js`, scene `63d-scenery-camp.js`): the Hearth, Watchtower, Forge,
+  Workbench, Loom, Enchanter's Table, Tavern, Storehouse, Tents, Library and Shrine. Builds run on the wall clock.
+- **A new game starts cold** (`55-hearth.js`): the hero lights the fire, then builds the Workbench, the first tool and
+  the Forge.
+- **Shrine Blessings** open as Codex pages fill.
+
+## Gear and crafting
+
+- **Crafting** (`55-crafting.js`, `41-items.js`, `21-data-craft.js`, `75-craft-ui.js`): class gear at the camp's
+  stations, grades 1-5. Items roll affix lines by rarity. Upgrades go to +10 (Trophies gate +8 to +10). Reforge,
+  Masterwork and salvage are in the Craft tab.
+- **Uniques** (`UNIQ` in `20-data.js`): rare zone-boss drops with a strong effect and modest stats.
+- **Economy** (`55-econ.js`, `21w-data-econ.js`): gold per foe steps up by region; every price follows that curve.
+  Gold-gain beyond gear became crit damage, capped.
+
+## Side systems
+
+- **Deepwell** (`57d-deepwell.js`, `59c-deepwell-combat.js`, `75-deepwell-ui.js`): from zone 20 and Hearth 3. Runs
+  floor by floor on Oil, with boons, Depth Marks and a weekly Trial. A run never changes main progress.
+- **Bounties** (`55-bounties.js`): three short goals that pay gold, materials or Essence, and Renown.
+- **Mastery and the Bestiary** (`55-mastery.js`): zone stars and per-foe perks from kills.
+- **Almanac** (`55-almanac.js`): a daily Omen, optional Dares and a weekly board.
+- **Codex** (`57c-codex.js`, `75-codex-ui.js`): the collection book. Lantern Light gives titles, cosmetics and small
+  capped perks.
+- **Deeds** (`23-data-deeds.js`, `58-deeds.js`, `75-deeds-ui.js`): tracks, Feats, titles and looks drawn on the hero
+  (`12g-art-accessories.js`, `64-looks.js`), and the Trophy Wall at camp (`63e-scenery-wall.js`).
+- **Next Up** (`55-goals.js`): the goals closest to done, with Go buttons.
+- **Story** (`55-story.js`, `21h-lore-hollow.js`, `21b-stories-coast.js`, `21j-lore-omens.js`): arrival lines, story
+  beats, elder lines and bestiary lines, once per save. The bible is [lore.md](design/lore.md).
+
+## Onboarding and notices
+
+- **Unlocks** (`FEATURES` in `55-onboard.js`): a new game shows the Fight tab only. Tabs and views open as the player
+  reaches them: Hero at hero level 3, Gather after the first boss, Bounties at zone 4, Camp at zone 5, Craft and the
+  Bestiary around zone 6, the Almanac at 7 minutes, Uniques, the Tavern, the Codex (zone 10), the Raid (zone 12),
+  Stars (hero level 10), the Deepwell (zone 18) and Hands (Hearth 2 and a Tavern). Once open, a feature stays open.
+- **The guide** (`GUIDE_STEPS` in `55-onboard.js`, UI `75-onboard-ui.js`): one hint at a time, docked in the toast band.
+  A step pauses the game only while it waits for a press; a step that needs game time shows live progress instead.
+- **Notices** (`23n-data-notices.js`, `notify()`): every message goes to a channel (card, pop, bell, log or none),
+  with a quiet start and a cap on pops a minute.
+
+## Saves and tools for players
+
+- **Save:** `localStorage` key `lanternfall.save.v5` (`30-state.js`, `05-platform.js`).
+- **Save codes** (`55-savecode.js`, `75-savecode-ui.js`): export and import, with a strict check and an in-page confirm.
+- **Feedback** (`55-errors.js`, `75-feedback-ui.js`): local error capture and a Send feedback button.
+- **Away report** (`75-away.js`) and the stats wall (`55-stats.js`, `75-stats-ui.js`).
+
+## Online (do not change without a task that says so)
+
+The world raid (`52-raid.js`, `74-ui-raid.js`), the Tavern's online parts (`74-ui-tavern.js`) and presence
+(`80-online.js`). Shapes are frozen in `CLAUDE.md`.
+
+## Not in the game
+
+Designed or decided but not built: the rest of the C22 roster (173 zone monsters, the Shadowborn Captains, Champions
+and new Elders); subclasses and Hallowed; hero quests; the 29 other heroes' kits; Regions 2-5 content; grades 6-15,
+production chains, sockets, enchanting and the Armoury; the world map; campaign NPCs; equipment art on the hero.
+Removed from the code: the party, formation and Bonds, expeditions, legendary powers and pinnacle bosses. Oaths were
+never built.

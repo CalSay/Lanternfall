@@ -56,7 +56,7 @@ built game for local testing. Keep real player saves out of commits and test wit
 The offline audit compares actual live ticks with away progress from the same seeded save at 30 minutes,
 2 hours, the 4-hour starting cap, 8 hours and 24 hours. It also checks the 24-hour maximum cap.
 Add `--mastered` for the same gathering fixture with Pickaxe mastery already complete. This is a
-core-only diagnostic, not a requirement that intentional offline rates equal live rates; see
-`docs/coord/offline-c14-recovery.md`. Hero comparisons match the live snapshot to credited away time;
+core-only diagnostic, not a requirement that intentional offline rates equal live rates (C14). Fights earn
+nothing while away (combat is active only), so its combat rows are informational. Hero comparisons match the live snapshot to credited away time;
 workers and other scheduled systems retain the full wall-clock comparison. The table shows raw away
 gains and the boost-normalized hero delta, while optional JSON retains every snapshot and report line.

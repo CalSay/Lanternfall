@@ -1,6 +1,6 @@
 # C24 Hunting: numbers for sign-off
 
-**Status:** mechanics approved by Claude on 30 September 2026 ([sign-off](https://github.com/CalSay/Lanternfall/issues/25#issuecomment-5918464534)); implementation is behind `HUNT_TUNE.on = false`. Public entry additionally requires `huntingArtReady()`, currently false. No art is integrated. Issue #25 replaces the old “Hide is fight-only” rule; Essence and Trophies remain fight-only. The owner clarified that targets are hostile beasts and the tool is a hunting spear. The owner has since allowed new digital assets despite Claude's earlier art freeze; any eventual beast, spear and action assets should form a consistent pack matching the three playable heroes.
+**Status:** live. Mechanics approved by Claude on 30 September 2026 ([sign-off](https://github.com/CalSay/Lanternfall/issues/25#issuecomment-5918464534)). The owner turned on Hunting on 1 October 2026 with Codex's drafts as interim art (`HUNT_TUNE = { on: true, interim: true }`; the pipeline is in `CLAUDE.md`). One beast at a time: it falls in place and a fresh one fades in. Hide comes only from Hunting; Essence and Trophies stay fight-only. Targets are hostile beasts and the tool is a hunting spear. The sections below are the approved numbers; where they say the art gate is false, that changed when Hunting went live.
 
 ## Proposed rate and gates
 
