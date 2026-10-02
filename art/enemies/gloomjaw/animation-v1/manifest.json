@@ -1,0 +1,485 @@
+{
+  "config": {
+    "bodySize": 128,
+    "anchor": [
+      64,
+      112
+    ],
+    "fxAnchor": [
+      64,
+      64
+    ],
+    "mouth": [
+      48,
+      63
+    ],
+    "homeX": 345,
+    "contactX": 147,
+    "targetX": 123,
+    "groundY": 177,
+    "idleMs": 600,
+    "hopMs": 600,
+    "biteWindupMs": 950,
+    "biteCloseMs": 150,
+    "biteFollowMs": 100,
+    "biteRecoverMs": 300,
+    "rangedWindupMs": 1050,
+    "rangedReleaseMs": 100,
+    "rangedRecoilMs": 120,
+    "rangedRecoverMs": 300,
+    "flightMs": 500,
+    "impactMs": 350,
+    "chargeInterruptMs": 850,
+    "interruptMs": 600,
+    "terminalBlankMs": 300,
+    "snapDurations": [
+      100,
+      91.25,
+      91.25,
+      91.25,
+      91.25,
+      91.25,
+      91.25,
+      91.25,
+      91.25,
+      220,
+      60,
+      90,
+      100,
+      100,
+      100,
+      100
+    ],
+    "voidDurations": [
+      100,
+      92.22222222222223,
+      92.22222222222223,
+      92.22222222222223,
+      92.22222222222223,
+      92.22222222222223,
+      92.22222222222223,
+      92.22222222222223,
+      92.22222222222223,
+      92.22222222222223,
+      220,
+      100,
+      120,
+      100,
+      100,
+      100
+    ]
+  },
+  "actions": {
+    "idle": {
+      "duration": 170,
+      "frames": [
+        {
+          "name": "idle-1",
+          "src": "idle/idle-1.png"
+        },
+        {
+          "name": "idle-2",
+          "src": "idle/idle-2.png"
+        },
+        {
+          "name": "idle-3",
+          "src": "idle/idle-3.png"
+        },
+        {
+          "name": "idle-4",
+          "src": "idle/idle-4.png"
+        },
+        {
+          "name": "idle-5",
+          "src": "idle/idle-5.png"
+        },
+        {
+          "name": "idle-6",
+          "src": "idle/idle-6.png"
+        }
+      ]
+    },
+    "snap-shut": {
+      "duration": 85,
+      "frames": [
+        {
+          "name": "attack-1",
+          "src": "snap-shut/attack-1.png"
+        },
+        {
+          "name": "attack-2",
+          "src": "snap-shut/attack-2.png"
+        },
+        {
+          "name": "attack-3",
+          "src": "snap-shut/attack-3.png"
+        },
+        {
+          "name": "attack-4",
+          "src": "snap-shut/attack-4.png"
+        },
+        {
+          "name": "attack-5",
+          "src": "snap-shut/attack-5.png"
+        },
+        {
+          "name": "attack-6",
+          "src": "snap-shut/attack-6.png"
+        },
+        {
+          "name": "attack-7",
+          "src": "snap-shut/attack-7.png"
+        },
+        {
+          "name": "attack-8",
+          "src": "snap-shut/attack-8.png"
+        },
+        {
+          "name": "attack-9",
+          "src": "snap-shut/attack-9.png"
+        },
+        {
+          "name": "attack-10",
+          "src": "snap-shut/attack-10.png"
+        },
+        {
+          "name": "attack-11",
+          "src": "snap-shut/attack-11.png"
+        },
+        {
+          "name": "attack-12",
+          "src": "snap-shut/attack-12.png"
+        },
+        {
+          "name": "attack-13",
+          "src": "snap-shut/attack-13.png"
+        },
+        {
+          "name": "attack-14",
+          "src": "snap-shut/attack-14.png"
+        },
+        {
+          "name": "attack-15",
+          "src": "snap-shut/attack-15.png"
+        },
+        {
+          "name": "attack-16",
+          "src": "snap-shut/attack-16.png"
+        }
+      ]
+    },
+    "hop": {
+      "duration": 85,
+      "frames": [
+        {
+          "name": "jump-1",
+          "src": "hop/jump-1.png"
+        },
+        {
+          "name": "jump-2",
+          "src": "hop/jump-2.png"
+        },
+        {
+          "name": "jump-3",
+          "src": "hop/jump-3.png"
+        },
+        {
+          "name": "jump-4",
+          "src": "hop/jump-4.png"
+        },
+        {
+          "name": "jump-5",
+          "src": "hop/jump-5.png"
+        },
+        {
+          "name": "jump-6",
+          "src": "hop/jump-6.png"
+        },
+        {
+          "name": "jump-7",
+          "src": "hop/jump-7.png"
+        },
+        {
+          "name": "jump-8",
+          "src": "hop/jump-8.png"
+        }
+      ]
+    },
+    "void-bolt": {
+      "duration": 90,
+      "frames": [
+        {
+          "name": "cast-1",
+          "src": "void-bolt/cast-1.png"
+        },
+        {
+          "name": "cast-2",
+          "src": "void-bolt/cast-2.png"
+        },
+        {
+          "name": "cast-3",
+          "src": "void-bolt/cast-3.png"
+        },
+        {
+          "name": "cast-4",
+          "src": "void-bolt/cast-4.png"
+        },
+        {
+          "name": "cast-5",
+          "src": "void-bolt/cast-5.png"
+        },
+        {
+          "name": "cast-6",
+          "src": "void-bolt/cast-6.png"
+        },
+        {
+          "name": "cast-7",
+          "src": "void-bolt/cast-7.png"
+        },
+        {
+          "name": "cast-8",
+          "src": "void-bolt/cast-8.png"
+        },
+        {
+          "name": "cast-9",
+          "src": "void-bolt/cast-9.png"
+        },
+        {
+          "name": "cast-10",
+          "src": "void-bolt/cast-10.png"
+        },
+        {
+          "name": "cast-11",
+          "src": "void-bolt/cast-11.png"
+        },
+        {
+          "name": "cast-12",
+          "src": "void-bolt/cast-12.png"
+        },
+        {
+          "name": "cast-13",
+          "src": "void-bolt/cast-13.png"
+        },
+        {
+          "name": "cast-14",
+          "src": "void-bolt/cast-14.png"
+        },
+        {
+          "name": "cast-15",
+          "src": "void-bolt/cast-15.png"
+        },
+        {
+          "name": "cast-16",
+          "src": "void-bolt/cast-16.png"
+        }
+      ]
+    },
+    "hurt": {
+      "duration": 110,
+      "frames": [
+        {
+          "name": "hurt-1",
+          "src": "hurt/hurt-1.png"
+        },
+        {
+          "name": "hurt-2",
+          "src": "hurt/hurt-2.png"
+        },
+        {
+          "name": "hurt-3",
+          "src": "hurt/hurt-3.png"
+        },
+        {
+          "name": "hurt-4",
+          "src": "hurt/hurt-4.png"
+        }
+      ]
+    },
+    "stagger": {
+      "duration": 110,
+      "frames": [
+        {
+          "name": "hurt-1",
+          "src": "stagger/hurt-1.png"
+        },
+        {
+          "name": "hurt-2",
+          "src": "stagger/hurt-2.png"
+        },
+        {
+          "name": "hurt-3",
+          "src": "stagger/hurt-3.png"
+        },
+        {
+          "name": "hurt-4",
+          "src": "stagger/hurt-4.png"
+        },
+        {
+          "name": "hurt-5",
+          "src": "stagger/hurt-5.png"
+        },
+        {
+          "name": "hurt-6",
+          "src": "stagger/hurt-6.png"
+        }
+      ]
+    },
+    "death": {
+      "duration": 125,
+      "frames": [
+        {
+          "name": "death-1",
+          "src": "death/death-1.png"
+        },
+        {
+          "name": "death-2",
+          "src": "death/death-2.png"
+        },
+        {
+          "name": "death-3",
+          "src": "death/death-3.png"
+        },
+        {
+          "name": "death-5",
+          "src": "death/death-5.png"
+        },
+        {
+          "name": "death-6",
+          "src": "death/death-6.png"
+        },
+        {
+          "name": "death-7",
+          "src": "death/death-7.png"
+        },
+        {
+          "name": "death-8",
+          "src": "death/death-8.png"
+        },
+        {
+          "name": "death-9",
+          "src": "death/death-9.png"
+        },
+        {
+          "name": "death-10",
+          "src": "death/death-10.png"
+        },
+        {
+          "name": "death-11",
+          "src": "death/death-11.png"
+        },
+        {
+          "name": "death-12",
+          "src": "death/death-12.png"
+        }
+      ]
+    },
+    "bite-fx": {
+      "duration": 70,
+      "frames": [
+        {
+          "name": "bite-fx-1",
+          "src": "bite-fx/bite-fx-1.png"
+        },
+        {
+          "name": "bite-fx-2",
+          "src": "bite-fx/bite-fx-2.png"
+        },
+        {
+          "name": "bite-fx-3",
+          "src": "bite-fx/bite-fx-3.png"
+        },
+        {
+          "name": "bite-fx-4",
+          "src": "bite-fx/bite-fx-4.png"
+        },
+        {
+          "name": "bite-fx-5",
+          "src": "bite-fx/bite-fx-5.png"
+        },
+        {
+          "name": "bite-fx-6",
+          "src": "bite-fx/bite-fx-6.png"
+        }
+      ]
+    },
+    "void-fx": {
+      "duration": 70,
+      "frames": [
+        {
+          "name": "void-fx-1",
+          "src": "void-fx/void-fx-1.png"
+        },
+        {
+          "name": "void-fx-2",
+          "src": "void-fx/void-fx-2.png"
+        },
+        {
+          "name": "void-fx-3",
+          "src": "void-fx/void-fx-3.png"
+        },
+        {
+          "name": "void-fx-4",
+          "src": "void-fx/void-fx-4.png"
+        },
+        {
+          "name": "void-fx-5",
+          "src": "void-fx/void-fx-5.png"
+        },
+        {
+          "name": "void-fx-6",
+          "src": "void-fx/void-fx-6.png"
+        }
+      ]
+    },
+    "projectile": {
+      "duration": 70,
+      "frames": [
+        {
+          "name": "projectile-1",
+          "src": "projectile/projectile-1.png"
+        },
+        {
+          "name": "projectile-2",
+          "src": "projectile/projectile-2.png"
+        },
+        {
+          "name": "projectile-3",
+          "src": "projectile/projectile-3.png"
+        },
+        {
+          "name": "projectile-4",
+          "src": "projectile/projectile-4.png"
+        }
+      ]
+    },
+    "impact": {
+      "duration": 70,
+      "frames": [
+        {
+          "name": "impact-1",
+          "src": "impact/impact-1.png"
+        },
+        {
+          "name": "impact-2",
+          "src": "impact/impact-2.png"
+        },
+        {
+          "name": "impact-3",
+          "src": "impact/impact-3.png"
+        },
+        {
+          "name": "impact-4",
+          "src": "impact/impact-4.png"
+        },
+        {
+          "name": "impact-5",
+          "src": "impact/impact-5.png"
+        },
+        {
+          "name": "impact-6",
+          "src": "impact/impact-6.png"
+        }
+      ]
+    }
+  }
+}

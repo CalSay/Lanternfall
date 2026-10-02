@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "name": "gloomjaw",
+  "processing": {
+    "cell_size": 128,
+    "fit_scale": 0.74,
+    "trim_border": 0,
+    "edge_clean_depth": 3,
+    "align": "feet",
+    "shared_scale": true,
+    "scale_strategy": "preserve",
+    "component_mode": "largest",
+    "component_padding": 0,
+    "min_component_area": 1,
+    "edge_touch_margin": 0
+  },
+  "output_origin": [
+    64.0,
+    112
+  ],
+  "reference": {
+    "target": "creature",
+    "mode": "idle",
+    "rows": 2,
+    "cols": 3,
+    "body_scale_mean": 0.525840949041142,
+    "body_scale_cv": 0.02027224159078379,
+    "anchor_y_mean": 0.8707010582010583
+  },
+  "qc": {
+    "max_body_scale_drift": 0.1
+  }
+}
