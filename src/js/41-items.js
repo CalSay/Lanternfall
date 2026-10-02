@@ -17,7 +17,7 @@
 //   stats    itemLines(item) -> [[stat, value], ...] in the order gear() adds them
 //            itemStats(item) -> { stat: total } (base lines + affixes + Masterwork + unique fx)
 //            gearCalc() the uncached gear() over CRAFT_HERO_POS (40-rules caches it)
-//            spellMult() 1 + spell power / 100 (for the ability code; not wired yet)
+//            spellMult() 1 + spell power / 100 (turn fights: fire, frost and holy hits, 59k turnMakeProfile)
 //   names    kindName(slot, t, u), kindColor(slot, t, u), kindCost(kind, t), kindUpgradeCost(item)
 //            (40-rules' itemName/craftCost/upgradeCost and 20-data's itemColor delegate here)
 //   make     newItem(kind, t, r, opts) -> item with a fresh id (not added to the bag)
@@ -50,9 +50,9 @@
 // are exactly what they were. Only the name, look, recipe for upgrades and salvage change.//
 // gear() keys: the old ones, unchanged and in the same order, then every other CRAFT_STATS
 // key. Stage C made the combat stats live (hp, armour, threat, block, pierce, area, control,
-// heal, ward, haste: 59-combat.js reads them; they keep their caps, flagged combat: true).
-// aspd stays live:false and only aggregates (forageSpd/forageDbl and the H2 *Find lines are live); their total caps are applied
-// in gear(). The old live stats are never capped here (old gear already goes past crit 35;
+// heal, ward, haste: 59-combat.js reads them; they keep their caps, flagged combat: true). The gear pass (2026-10-02)
+// adds spell and aspd (Speed) to them: turn fights (59k turnMakeProfile) read every combat line, capped here. The
+// forageSpd/forageDbl and H2 *Find lines are live; caps of lines that are not live are applied in gear() too. The old live stats are never capped here (old gear already goes past crit 35;
 // critChance() caps at 75%).
 // 'attack' feeds heroAtk() (40-rules). 'spell' is exposed through spellMult().
 
@@ -153,7 +153,7 @@ let itemKind, kindPos, fits, heroWho, retoolItems, RETOOL, itemLines, itemStats,
   itemStats = it => { const s = {}; for (const [k, v] of itemLines(it)) s[k] = k === 'tap' ? (s[k] || 1) * v : (s[k] || 0) + v; return s; };
   // Stage C (K11): party combat (59-combat.js) reads the role stats, so they are live now. They keep
   // their caps (combat: true); the old live stats stay uncapped here.
-  for (const k of ['hp', 'armour', 'threat', 'block', 'ward', 'heal', 'area', 'control', 'pierce', 'haste']) if (CRAFT_STATS[k]) { CRAFT_STATS[k].live = true; CRAFT_STATS[k].combat = true; }
+  for (const k of ['hp', 'armour', 'threat', 'block', 'ward', 'heal', 'area', 'control', 'pierce', 'haste', 'spell', 'aspd']) if (CRAFT_STATS[k]) { CRAFT_STATS[k].live = true; CRAFT_STATS[k].combat = true; }
   const capNonLive = s => { for (const k of NEW_KEYS) { const c = CRAFT_STATS[k]; if ((!c.live || c.combat) && c.cap != null && s[k] > c.cap) s[k] = c.cap; } return s; };
   gearCalc = () => {
     const s = blank(), who = heroWho();

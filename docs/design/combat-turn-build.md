@@ -249,13 +249,17 @@ the real-time fight.
 - **Speed gauges:** each side fills a gauge at its Speed and acts at 100; ties go to the hero. Nobody gets more than
   2 turns in a row (a boss 3). Hero Speed: Wren 10, Tobin 9, Pip 10, plus gear initiative. Foes: Thorn Imp 9,
   Gloomjaw 8, other normals 9, elites 10, zone bosses 10.5, region bosses 11.
-- **Cooldowns** count your turns and reset every fight. Focus (the ability-cooldown gear line) shortens them, never
-  under 2 turns.
+- **Cooldowns** count your turns and reset every fight. The Deepwell's cooldown boons shorten them, never under 2
+  turns. Focus (the ability-cooldown gear line) is a steady refund: with 20% Focus, every 4th turn takes a turn off
+  every cooldown, as a parry does (the gear pass).
 - **Power:** an ability's power is a share of the hero's own Attack (Power Shot 180% means 1.8 Attacks), so abilities
   never fall behind as Attack Training and gear grow. The signature's Training line is now "Ability power" on the Training
   view: +2% for every ability a level. (Measured on the sim's saves, the old per-ability Training left a geared hero's
   abilities at a fifth of their Attack.) Dodge Training now widens the dodge window (+4 ms a level).
 - **Crits:** base x2.5. Aim adds 5% crit chance a point. Keen adds +0.5 to one cast (cap x3).
+- **Resources pay as they build:** each Aim adds 5% crit chance, each Grit 8% to Tobin's Attack (and 1% less damage
+  taken), each Cinder 4% to Pip's fire damage (the gear pass, below).
+- **Gear lines:** every combat line a player can roll works in a turn fight ("Gear stats in turn fights", below).
 - **Statuses on the foe:** Burn (40% power a turn, 3 turns), Bleed (12% a stack a turn, up to 5), Chill (3 stacks
   Freeze it), Stun and Freeze (it loses its next turn, then no new control for 3 of its turns; a boss Staggers instead,
   25 or 35 toward 100), Exposed (the next payoff hits 25% harder), Mark (+20% damage taken), Sunder (half armour),
@@ -291,7 +295,7 @@ hero's frontier (three heroes, 25 days each, 2 October 2026):
 - A normal foe has about 5 Attacks of HP (the Thorn Imp and Gloomjaw 4), an elite 9, a zone boss 16, a region boss 30.
   With abilities that is 2 to 4 of your turns for a normal foe. The first three zone bosses are easier (65%, 80%, 90% of
   that HP) while you learn to parry and dodge. The boss pass (below) multiplies a zone boss's HP by zone (x1 to zone 3,
-  up to x3.3 by zone 30, x1.5 from zone 36) and the region boss's by 1.25, so a boss takes 5-7 turns to zone 10, 8-10 to
+  up to x3.6 by zone 30, x1.85 from zone 36; the gear pass) and the region boss's by 1.4, so a boss takes 5-7 turns to zone 10, 8-10 to
   25 and 10-14 after.
 - A normal move does about 20% of the reference HP, split across its hits, x0.7 from zone 8 to 34 since the mid-game HP
   pass (`TURN_TUNE.normHitX`). Boss moves do 25-50%, often in strings of 2 to 4 hits with uneven rhythm, and since the
@@ -587,7 +591,120 @@ Deepwell and Provings in turns").
   Pip in 10.3-11.9, so Pip wins 31-39% casually at zones 25-30 and Wren 83-86%. Wren's quiver gives crit, and her
   striker lines (Attack, crit) work in turn fights; Pip's lantern gives spell power, and the caster lines (spell, area,
   control) are not read by turn fights at all. A damage parity look (what spell power does in turns), not an HP one.
+  Done in the gear pass (below).
 - **The Fenmother** still sits below the casual band (25-30%); the region boss is the hardest fight of the Hollow.
+
+### Gear stats in turn fights (the gear pass, 2 October 2026; owner: "Gear stats should be looked at then I guess?")
+
+The mid-game HP pass left this open: from zone 25 Pip killed bosses slowly (10-12 turns to Wren's 7-9 on the same
+Attack) and won 31-39% of them casually, because her Lantern's spell line and the caster lines did nothing in turns.
+The gear was built for the old real-time party fight, and its lines feed the turn fight only through `gear()` and the
+modifiers that `turnMakeProfile` (59k) reads. This pass checked every line a player can get.
+
+**The audit.** a: works as intended. b: works, but weak or odd. c: did nothing in a turn fight. "Now" is after this pass.
+
+| Stat (line) | Where it rolls | What it did in turn fights | | What it does now |
+|---|---|---|---|---|
+| Damage (`might`) | every weapon's base line; old Sword; Lantern Eater's Fang | your Attack, so Attack and abilities | a | the same |
+| Attack (`attack`) | striker affix (Bow, Quiver, Hood, Leathers) | your Attack | a | the same |
+| Crit chance (`crit`) | Quiver base line, striker affix, old Helm, Hydra Glass | crit chance, with Aim, up to 75% | a | the same |
+| Crit damage (`critMult`) | the striker crit affix, old Helm; the Loaded Die relic | x2.5 plus the line, but a hit never crits past x3 (Keen included) | b | the same: capped by design (Keen's x3); open below |
+| Max HP (`hp`) | every body, helm and Shield; the HP affix on every piece; Moss Heart | max HP | a | the same |
+| Armour (`armour`) | tank affix, old Helm, Beetle Horn | less damage taken (up to 60%) | a | the same |
+| Block (`block`) | tank affix, Golem Core | a blocked hit takes half | a | the same |
+| Threat (`threat`) | tank affix (Warblade, Shield, Greathelm, Plate) | nothing: one foe, nobody to pull it from | c | **Counter:** counters hit that much harder |
+| Pierce (`pierce`) | striker affix, Grave Knuckle | nothing (armoured foes take 30% less) | c | a physical hit ignores that share of the foe's armour |
+| Spell power (`spell`) | the Lantern's base line (1 x item power: +236% on a tier 4 rare +5), caster affix | nothing | c | **Spell damage:** fire, frost and holy hits (Burn too) x (1 + line). The Lantern's line is now 0.2 x power, up to 45% (like the Quiver's crit, 0.12 x power up to 35%); the affix 0.2 a point; all spell lines at most 75% |
+| Area (`area`) | caster affix | nothing (it was splash; there is one foe) | c | **Damage over time:** Burn, Bleed, the bats and Ignite, up to +50% |
+| Control (`control`) | caster affix | nothing | c | a Stun or Freeze staggers a boss that much more (Shield Bash: 25 -> 40 at +60%) |
+| Healing (`heal`) | support affix (no piece the three heroes wear), Spore Crown; the Mending Draught | nothing (the old Lightkeeper's heals) | c | heals and Wards that much bigger (up to +100%; Wards keep their 30% cap) |
+| Ward (`ward`) | support affix only: no piece the three heroes wear | nothing | c | healing past full health becomes a Ward, up to the line |
+| Focus (`haste`) | support affix, Trinket, Wraith Veil | cooldowns x (1 - line), rounded up: a 3-turn cooldown needed 34% (the cap is 30%) | b | a steady refund: every 1 / line - 1 turns a turn comes off every cooldown, as a parry does |
+| Attack speed (`aspd`) | Bat Fang | nothing (attack speed went with Swiftness) | c | **Speed:** you act that much more often. Now 0.05 a point (5.9% on a tier 4 epic +10 piece), up to 10% |
+| Rattlebone Charm (`abil`) | unique | abilities +20% | a | the same |
+| Echo Cowl (`echo`) | unique | crits (and counters) x1.5 | a | the same |
+| Lantern Eater's Fang (`counter`) | unique | counters x2 | a | the same |
+| Golemfist (`tap`) | unique; also the Deepwell's Heavy Hands, Drum and Echo rules and the Press On deed | "Your Attack deals double damage", but abilities took it too (their power came from the Attack's) | b | the Attack only |
+| Sproutblade, Charm, Crown of Hollows | uniques, Charm base | Essence and gold from kills | a | the same |
+| Sporeheart (`offline`) | unique | gathering while away (fights earn nothing away, by design) | a | the same |
+| Wyrmscale Helm (`raid`) | unique | the world raid only | a | the same (online layer) |
+| Tool lines | Pickaxe, Woodaxe, Sickle, Spear; Carapace Pick, Wisp Axe, Colossus Pick, Pale Tyrant's Axe | gathering | a | the same |
+| Vigor Tonic, Warbanner | tonic, relic | +damage | a | the same |
+| Mending Draught (mod `heal`) | tonic | nothing | c | with the Healing line |
+
+28 lines: 16 work as intended, 3 were weak or odd, 9 did nothing. All 9 dead lines and 2 of the odd ones now work;
+crit damage stays capped at x3. Not in the game yet, so not audited: sockets and gems, enchanting buff items, gear
+sets (the Deepwell's sets and boons belong to a run, not to gear). The fight also reads `initiative`, `parryWindow`,
+`dodgeWindow` and `stag`, but no gear line gives them. Every gear stat is now live, so the Craft view never marks a
+line "not active yet". Line text changed where the old name would mislead (Threat is Counter, Area is Damage over
+time, Attack speed is Speed, Spell power says spell damage); save keys are unchanged, and old items keep their rolls
+(an item's lines are worked out from its power and roll, so old Lanterns show the new line at once).
+
+**Pip.** With the Lantern and caster lines working, two more changes:
+
+- **Cinders pay as they build** (`TURN_TUNE.cinderX`): each Cinder Pip holds adds 4% to her fire damage, hits and Burn
+  ticks (5 Cinders: +20%), as Aim and Grit do for Wren and Tobin. Fireball still spends them (+10% Burn each), so the
+  choice is now: hold for a hotter Fireball or a Lanternburst, or spend. Her resource line on Hero > Abilities says so.
+- Her damage parity (`heroX` 1.26) is unchanged.
+
+**Bosses and Tobin, to keep the bands.** Pip was the slow third of the mean that the boss pass set its bands on. With
+her at Wren's speed, bosses grew a little so a hero who keeps up stays in the bands: zones 15-34 about x1.09 (`hpX`
+2.5, 2.4, 2.6, 3.6, 3.6), zone 36+ 1.5 -> 1.85, the Fenmother 1.25 -> 1.4. And Tobin, so he stays a little slower,
+not much slower: each Grit adds 8% to his Attack (was 6%), Hammerfall 65% a Grit (was 45%), his counters x1.5 (was
+x1.2). His HP, Guard, Grit damage reduction and Speed are unchanged.
+
+**The footing.** `--report heroes` now dresses the kept-up zone 35 and 38 heroes in their own class kinds (the late
+fixture's gear is Pip's: retooled, Wren and Tobin wore her Lantern's line, not a Quiver or a Shield), and every "keeps
+up" hero, there and in `--report turns` (late-kept) and the checks, keeps only the shared HP affix line, as the zone 8-34
+stages already did. `--affixes all` keeps every rolled line.
+
+**After** (`--report heroes --seeds 2`; Wren, Pip, Tobin; before -> after, the before on the same footing; hits and
+charges did not change: a landed boss hit 27-34%, a charge 62-81%, a normal hit 10-11%):
+
+| Stage | Boss turns, good | Pip / Wren | Tobin / their mean | Boss win, casual |
+|---|---|---|---|---|
+| Zone 1 (fresh) | 4.9, 3.7, 4.9 -> 4.9, 3.7, 4.5 | 0.76 | x1.16 -> x1.04 | 98, 100, 100 (same) |
+| Zone 8 | 6.0, 6.3, 7.5 -> 6.0, 5.7, 7.2 | 1.05 -> 0.95 | x1.21 -> x1.23 | 84, 89, 100 -> 84, 94, 100 |
+| Zone 15 | 7.0, 8.0, 9.5 -> 7.9, 7.2, 10.4 | 1.14 -> 0.91 | x1.27 -> x1.37 | 72, 74, 100 -> 63, 81, 100 |
+| Zone 20 | 7.7, 10.0, 9.6 -> 8.8, 8.1, 10.1 | 1.30 -> 0.92 | x1.08 -> x1.20 | 61, 62, 100 -> 46, 86, 100 |
+| Zone 25 | 6.6, 10.3, 7.9 -> 7.2, 8.3, 8.2 | 1.56 -> 1.15 | x0.93 -> x1.05 | 85, 38, 100 -> 82, 69, 100 |
+| Zone 30 | 7.0, 11.9, 10.0 -> 8.1, 10.1, 10.5 | 1.70 -> 1.25 | x1.06 -> x1.15 | 83, 32, 100 -> 69, 50, 100 |
+| Zone 34 | 9.1, 11.9, 12.8 -> 10.8, 10.0, 13.6 | 1.31 -> 0.93 | x1.22 -> x1.31 | 57, 36, 100 -> 48, 60, 100 |
+| Kept up, the Fenmother | 8.5, 11.6, 12.3 -> 10.3, 10.1, 13.4 | 1.36 -> 0.98 | x1.22 -> x1.31 | 47, 30, 100 -> 32, 44, 100 |
+| Kept up, zone 38 | 8.5, 9.9, 12.0 -> 11.3, 9.3, 14.3 | 1.16 -> 0.82 | x1.31 -> x1.39 | 61, 52, 100 -> 34, 61, 100 |
+
+- **Pip** now takes 0.82-1.25 of Wren's turns from zone 25 (1.03 on average; was 1.16-1.70), and wins 44-69% of bosses
+  casually at zones 25-35 (was 30-38%). She is a little quicker than Wren at zone 38, where Wren's crit is near its
+  75% cap, and a little slower at zones 25-30.
+- **Bands** (the mean of the three, good play): zone 8 6.3 turns (5-7), zones 15-25 7.9-9.0 (8-10), zones 30-38
+  9.6-11.6 (10-14). Normal foes: 1.3-3.4 turns, all won. Tobin wins 100% of bosses casually, a boss hit costs him 4-5%.
+- **Tobin** is x1.04-1.39 the Wren and Pip mean played well (about 1.23 overall; the decision is 15-30%) and x1.14-1.61
+  casually (about 1.38). He went from x1.16 / x1.29 before: the Grit and counter changes gave back most of what Pip's
+  catch-up took.
+- **Gear tiers** (`--report turns`): the mid Tobin at zone 20 takes 14.9 / 11.4 / 8.1 boss turns a tier behind / as is /
+  a tier ahead; the kept-up zone 38 Pip 14.3 / 9.3 / 6.1, with a landed boss hit at 82% / 27% / 8% of her health and
+  casual wins 1% / 84% / 100%. The raw late fixture (undergeared) now wins 99% of zone 38 bosses played well in 10.9
+  turns (was 15.4) and 6% casually (was 0%): its Lantern counts now.
+- **The real-game footing** (`--affixes all`, every rolled line kept; the zone 8-34 stages still even out Attack, so
+  the striker's Attack line drops out there): at zones 8-34 Pip takes 0.94-1.2 of Wren's boss
+  turns (Wren 5.5-6.9, Pip 5.3-8.0, Tobin 7.0-12.8) and wins 77-95% casually. At zones 35 and 38 (Attack as it
+  comes) an epic Wren with her own Attack lines kills a boss in 2.0-2.3 turns, Pip in 6.9-7.4, Tobin in 11.9-12.9:
+  see Left open.
+- **The Deepwell and the Provings** keep their own numbers (they pass a move set; the boss changes skip them). The
+  tap fix makes the Deepwell's Heavy Hands and Drum rules the Attack's only, as their text says.
+
+**Left open:**
+
+- **The striker's Attack affix.** An epic Bow, Quiver, Hood and Leathers roll an Attack line each (+40-45% each at tier
+  4 +10), a separate multiplier on everything Wren does. The reference hero has none (every "keeps up" hero carries
+  only the HP line), so an epic Wren with her own affixes is far ahead of the bands: at zone 38 she kills a boss in
+  about 2 turns (`--affixes all`). Pip's spell lines are capped at 75% and Tobin's lines are defensive. Before 1.0 the
+  role affix pools want one look together: the Attack line's size, or bands that count role lines.
+- **Crit damage** is capped at x3 (with Keen); crit damage lines and the Loaded Die past it do nothing.
+- **Tobin** is x1.3-1.4 at zones 34-38 (14.3 boss turns at zone 38, just past the band) and slower casually; Last
+  Stand (no damage) is still the lever the Tobin pass named.
+- **Normal foes** at zone 38 now take a kept-up Pip 2.0 turns (the check's band was 2-4; it is now 1.5-4, as kept-up
+  heroes at zones 8-34 already took 1.2-2.5).
 
 ## Art
 

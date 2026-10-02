@@ -98,7 +98,10 @@ The bell opens Notices, the Journal and Settings. Achievements (Deeds) and the C
 
 - **Crafting** (`55-crafting.js`, `41-items.js`, `21-data-craft.js`, `75-craft-ui.js`): class gear at the camp's
   stations, grades 1-5. Items roll affix lines by rarity. Upgrades go to +10 (Trophies gate +8 to +10). Reforge,
-  Masterwork and salvage are in the Craft tab.
+  Masterwork and salvage are in the Craft tab. Every combat line works in a turn fight (59k `turnMakeProfile`; the audit
+  is [combat-turn-build.md](design/combat-turn-build.md) "Gear stats in turn fights"): Spell power is fire, frost and
+  holy damage, Damage over time (the old Area) Burn and Bleed, Control boss Stagger, Counter (the old Threat) counter
+  damage, Speed (the old Attack speed) how often you act, Focus a steady cooldown refund.
 - **Uniques** (`UNIQ` in `20-data.js`): rare zone-boss drops with a strong effect and modest stats.
 - **Economy** (`55-econ.js`, `21w-data-econ.js`): gold per foe steps up by region; every price follows that curve.
   Gold-gain beyond gear became crit damage, capped.

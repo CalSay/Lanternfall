@@ -61,12 +61,12 @@ const ABILITIES = {};
   A('tobin', 'T2', 'riposte', 'Riposte', 'Riposte', 'damage', 2, 1.6, 3, 'phys', 'A sure crit for 160% power. Only right after you parried a hit of the enemy attack.', 'After a parry: a sure crit.');
   A('tobin', 'T3', 'ironwill', 'Iron Will', 'Iron', 'buff', 2, 0, 5, 'phys', 'Gain 3 Grit and a Ward worth 15% of your max HP.', '3 Grit and a Ward.');
   A('tobin', 'T4', 'roar', 'Taunting Roar', 'Roar', 'debuff', 3, 0, 5, 'phys', 'The foe is Weakened for 2 turns (25% less damage) and Pinned (its next attack is easier to read).', 'Weakens and Pins the foe.');
-  A('tobin', 'T5', 'hammerfall', 'Hammerfall', 'Hammer', 'damage', 3, 1.4, 5, 'phys', '140% power, plus 45% for each Grit. Uses all your Grit; needs 2. Hits 25% harder on an Exposed foe.', 'Spends all Grit for a big blow.');
+  A('tobin', 'T5', 'hammerfall', 'Hammerfall', 'Hammer', 'damage', 3, 1.4, 5, 'phys', '140% power, plus 65% for each Grit. Uses all your Grit; needs 2. Hits 25% harder on an Exposed foe.', 'Spends all Grit for a big blow.');
   A('tobin', 'T6', 'shieldthrow', 'Shield Throw', 'Throw', 'damage', 4, 2.0, 4, 'phys', 'Throw your shield for 200% power. On a Sundered foe it Stuns and leaves it Exposed.', 'Stuns a Sundered foe.');
   A('tobin', 'T7', 'bulwark', 'Bulwark', 'Bulwark', 'passive', 4, 0, 0, 'phys', 'Passive. Each parried hit gives 1 more Grit, and your counters hit 25% harder.', 'Passive: parries give more.');
   A('tobin', 'T8', 'laststand', 'Last Stand', 'Stand', 'finisher', 5, 0, 8, 'phys', 'Finisher, from your third turn, once a fight. For 2 enemy turns you cannot fall below 1 HP, parries are twice as easy and counters hit twice as hard. Then heal 15%.', 'You cannot fall, and counters hit hard.');
   // ---------------- Pip: the caster pool, then her own (gather Embers, set the foe alight, feed or detonate the fire) ----------------
-  A('pip', 'C1', 'spark', 'Spark', 'Spark', 'damage', 1, 1.3, 2, 'fire', 'A quick fire bolt for 130% power. Gain 1 Cinder.', 'A quick bolt. Gain an Cinder.');
+  A('pip', 'C1', 'spark', 'Spark', 'Spark', 'damage', 1, 1.3, 2, 'fire', 'A quick fire bolt for 130% power. Gain 1 Cinder.', 'A quick bolt. Gain a Cinder.');
   A('pip', 'C2', 'frostshard', 'Frost Shard', 'Frost', 'damage', 2, 1.1, 3, 'frost', 'A frost bolt for 110% power that adds 2 Chill (it slows). At 3 Chill the foe Freezes: it loses its next turn and is Exposed.', '2 Chill. At 3 the foe Freezes.');
   A('pip', 'C3', 'arcaneward', 'Arcane Ward', 'Ward', 'buff', 2, 0, 5, 'holy', 'A Ward worth 20% of your max HP for 3 enemy turns.', 'A Ward for 20% of your HP.');
   A('pip', 'C4', 'hex', 'Hex', 'Hex', 'debuff', 3, 0, 5, 'holy', 'Curse the foe for 3 turns. It stores 20% of the damage it takes and takes it again when the Curse ends.', 'Stores damage, then bursts.');
@@ -117,6 +117,6 @@ for (const id in ABILITIES) {
 // now, so it no longer shares a name with the raid's Embers (the save key stays `embers`).
 const HERO_RESOURCE = {
   wren: { name: 'Aim', txt: 'Aim: each Attack gives 1, up to 3. Each Aim adds 5% crit chance. Final Echo spends it for a bigger hit.' },
-  tobin: { name: 'Grit', txt: 'Grit: each Attack and parried hit gives 1, Shield Bash 2, up to 10. Each Grit adds 6% to your Attack and takes 1% off the damage you take. Hammerfall spends it all for a big hit.' },
-  pip: { name: 'Cinders', txt: 'Cinders: each Attack gives 1, up to 5. Fireball spends them all for a hotter Burn (10% more each). Lanternburst needs 3 and spends them for a blast.' }
+  tobin: { name: 'Grit', txt: 'Grit: each Attack and parried hit gives 1, Shield Bash 2, up to 10. Each Grit adds 8% to your Attack and takes 1% off the damage you take. Hammerfall spends it all for a big hit.' },
+  pip: { name: 'Cinders', txt: 'Cinders: each Attack gives 1, up to 5. Each Cinder you hold adds 4% to your fire damage. Fireball spends them all for a hotter Burn (10% more each). Lanternburst needs 3 and spends them for a blast.' }
 };

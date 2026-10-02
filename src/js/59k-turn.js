@@ -59,13 +59,16 @@ const TURN_TUNE = {
   heroX: { wren: 1.45, tobin: 1.2, pip: 1.26 },   // per-hero damage parity (Attack and abilities)
   // Tobin pass (owner, 2026-10-02: the tank survives best and kills a little slower, not boringly): his counters
   // hit harder, Grit pays more (Attack, Hammerfall), Shield Bash gives Grit, and his Attack takes the opening it leaves
-  counterX: { wren: 1, tobin: 1.2, pip: 1 },      // per-hero counter damage (on top of heroX)
+  counterX: { wren: 1, tobin: 1.5, pip: 1 },      // per-hero counter damage (on top of heroX); the gear pass: Tobin 1.2 -> 1.5
   foeAtkX: 1,
   goldX: 3, xpX: 2.5, essenceX: 1.6,              // fewer, longer fights pay more each (balance: docs/design/combat-turn-build.md)
   consec: 2, consecBoss: 3,                        // the most turns in a row
   speedMin: 0.5, speedMax: 2,                      // Speed changes stay within these shares of the base
   critCap: 3, critChanceCap: 0.75,
-  aimCrit: 0.05, gritDmg: 0.06, gritDr: 0.01, gritHammer: 0.45, bashGrit: 2, emberX: 0.1,
+  // gear pass (2026-10-02): Grit 6% -> 8% an Attack, Hammerfall 45% -> 65% a Grit, so Tobin stays a little slower, not
+  // much slower, once Pip's Lantern and Cinders count
+  aimCrit: 0.05, gritDmg: 0.08, gritDr: 0.01, gritHammer: 0.65, bashGrit: 2, emberX: 0.1,
+  cinderX: 0.04,   // the gear pass (2026-10-02): each Cinder Pip holds adds 4% to her fire damage (hits and Burn ticks), as Aim and Grit pay as they build
   burnP: 0.4, burnT: 3, burnMaxT: 4, bleedP: 0.12, bleedT: 3, bleedMax: 5, chillMax: 3, chillT: 4, chillSlow: 0.1,
   markV: 0.2, exposedX: 1.25, sunderX: 0.5, weakenX: 0.75, guardX: 0.6, drCap: 0.75, wardCap: 0.3, keenX: 0.5,
   pinWin: 1.5, pinSlow: 0.1, blindP: 0.3, blindBossP: 0.15, curseP: 0.2, curseCap: 3,
@@ -80,7 +83,7 @@ const TURN_TUNE = {
   //            kept-up hero about a quarter to a third of their health, a landed charge about two thirds. From zone 35
   //            the reference HP sits below a kept-up hero's (the late-zone pass), so hitX steps up there.
   //   payX     a longer boss pays more: gold and XP x (1 + payX x (its HP share - 1)), so an hour of play pays as before
-  boss: { hpX: [[3, 1], [10, 1.8], [15, 2.3], [20, 2.2], [25, 2.4], [30, 3.3], [34, 3.3], [36, 1.5]], regionHpX: 1.25,
+  boss: { hpX: [[3, 1], [10, 1.8], [15, 2.5], [20, 2.4], [25, 2.6], [30, 3.6], [34, 3.6], [36, 1.85]], regionHpX: 1.4,   // the gear pass (2026-10-02): zones 15-34 about x1.09, 36+ 1.5 -> 1.85, region 1.25 -> 1.4
     hitX: [[3, 1], [6, 1.4], [8, 1.6], [15, 1.6], [20, 1.5], [26, 1.3], [34, 1.3], [35, 1.9]], chargeX: [[3, 1], [6, 1.3], [34, 1.3], [35, 1.35]], payX: 0.5 },
   // the boss riders on the hero (shares of the reference HP a tick, two hero turns)
   heroDot: { bleed: 0.02, burn: 0.04, venom: 0.02 }, heroDotT: 2, heroChill: 0.1, heroBlind: 0.3,
@@ -154,8 +157,10 @@ const turnAb = id => (typeof ABILITIES === 'object' && ABILITIES[id]) || null;
 function turnCdFor(id) {
   if (id === 'attack') return 1;
   const a = turnAb(id); if (!a || !(a.cd > 0)) return 0;
-  // Focus (the gear line that shortens cooldowns, mod abilityCd): never under 2 turns (hero-abilities.md 2)
-  return Math.max(Math.min(2, a.cd), Math.ceil(a.cd * mod('abilityCd') - 1e-9));
+  // mod abilityCd (the Deepwell's boons): never under 2 turns (hero-abilities.md 2). Gear Focus is not in it here: in a
+  // turn fight it is a steady refund (turnFocus, below), since a share off a 3-turn cooldown rounded back up to 3
+  const gf = typeof partyCombatOn === 'function' && partyCombatOn() ? 1 - (gear().haste || 0) / 100 : 1;
+  return Math.max(Math.min(2, a.cd), Math.ceil(a.cd * mod('abilityCd') / gf - 1e-9));
 }
 
 // ---------------- the foe ----------------
@@ -205,17 +210,33 @@ function turnFoeSetup(f, z, o) {
   return f;
 }
 
+// ---------------- the gear lines in a turn fight (the gear pass, 2026-10-02) ----------------
+// Every combat line a player can roll does something here (combat-turn-build.md "Gear stats in turn fights"):
+//   spell    Spell power: fire, frost and holy hits (Burn too) x (1 + spell / 100)       the Lantern's line, caster affixes
+//   area     damage over time (Burn, Bleed, bats, Ignite) x (1 + area / 100)             one foe: there is nothing to splash
+//   control  a Stun or Freeze adds (1 + control / 100) x its Stagger to a boss
+//   threat   counters hit (1 + threat / 100) x harder                                    the tank's lines; one foe to hold
+//   pierce   a physical hit ignores that share of the foe's armour
+//   heal     healing and Wards x (1 + heal / 100) (and the Mending Draught, mod heal)
+//   ward     healing past full HP becomes a Ward, up to ward % of max HP
+//   haste    Focus: a steady cooldown refund, focus / (1 - focus) of a turn every turn (turnCdFor leaves it out)
+//   aspd     Speed: your Speed x (1 + aspd / 100)
+// The Golemfist's (and the Deepwell's) Attack multiplier (tap) is the Attack's only: abilities no longer take it.
+const turnHealX = () => (1 + Math.min(100, gear().heal || 0) / 100) * mod('heal');
+const turnFocus = () => { const h = Math.min(0.3, Math.max(0, gear().haste || 0) / 100); return h / (1 - h); };
+
 // ---------------- the profile: numbers captured when a fight starts ----------------
 function turnMakeProfile(f, u) {
   if (!f || !u || !soloHero() || !f.tk) return null;
   const T = TURN_TUNE, key = soloHero(), g = gear(), cls = S.party && S.party.cls;
   const heroX = (T.heroX[key] || SOLO_TUNE.heroX[key]) / SOLO_TUNE.heroX[key];
   const tap = cls === 'warden' || cls === 'warrior' ? CLASS_ABILITIES.heavy.coef : cls === 'lanternmage' || cls === 'mage' ? CLASS_ABILITIES.ember.coef : CLASS_ABILITIES.focus.coef;
-  const k = heroX * SOLO_TUNE.atkX * aps() * tapMult();
-  const A = heroAtk() * tap * k;
+  const k = heroX * SOLO_TUNE.atkX * aps();
+  const A = heroAtk() * tap * k * tapMult();
   // ability power: the hero's Attack power, raised by Ability power Training (the signature's line: +abTrain a level)
-  // and ability gear. Tied to Attack so a geared hero's abilities never fall behind their Attack.
-  const U = A * (1 + T.abTrain * trainLv(TURN_SIG[key] || 'echo')) * (1 + (g.abil || 0) / 100);
+  // and ability gear. Tied to Attack so a geared hero's abilities never fall behind their Attack. Not the Attack's own
+  // multiplier (tapMult: the Golemfist, the Deepwell's Heavy Hands): "your Attack deals double" means the Attack.
+  const U = heroAtk() * tap * k * (1 + T.abTrain * trainLv(TURN_SIG[key] || 'echo')) * (1 + (g.abil || 0) / 100);
   const ar = Math.max(0, u.armour || 0), armRed = Math.min(COMBAT_TUNE.redMax, ar / (ar + 100));
   const classDr = cls === 'warden' ? (1 - COMBAT_TUNE.wardenDr) * (1 - COMBAT_TUNE.tankDr) : 1;
   const z = f.tz || f.z || S.zone;   // tz: the zone its numbers were set for (a Deepwell floor or a Proving has its own)
@@ -223,17 +244,20 @@ function turnMakeProfile(f, u) {
   const cds = { attack: 1 }; for (const id of eq) cds[id] = turnCdFor(id);
   // a Proving's foes hit for shares of your own health (59f: the fight stays a fight at any power, as before turns)
   return { heroKey: key, zone: z, heroMaxHp: u.maxHp, refHp: f.trial ? u.maxHp : turnRefHp(z, !!f.deep), A, U, heroType: heroType(key) || 'phys',
-    counter: heroAtk() * heroX * (T.counterX[key] || 1) * SOLO_TUNE.counterX * aps() * critMult() * trainCounterX() * (1 + (g.counter || 0) / 100) * (1 + (g.echo || 0)),
+    counter: heroAtk() * heroX * (T.counterX[key] || 1) * SOLO_TUNE.counterX * aps() * critMult() * trainCounterX() * (1 + (g.counter || 0) / 100) * (1 + (g.threat || 0) / 100) * (1 + (g.echo || 0)),
+    // the gear pass (above): spell, area, control, pierce, heal, ward, Focus
+    spellX: 1 + (g.spell || 0) / 100, dotX: 1 + (g.area || 0) / 100, ctrlX: 1 + (g.control || 0) / 100, pierce: Math.min(1, (g.pierce || 0) / 100),
+    healX: turnHealX(), wardOver: Math.min(0.4, (g.ward || 0) / 100), focus: turnFocus(),
     critChance: critChance(), critMult: critMult(), nonCrit: mod('nonCrit'), echo: g.echo || 0,
     hitX: T.foeAtkX * (1 - armRed) * classDr, blockP: u.blockP || 0, blockC: u.blockC || 0, blockN: u.blockN || 0, blockX: COMBAT_TUNE.blockX,
-    heroSpd: (T.heroHaste[key] || 10) + (g.initiative || 0), foeSpd: f.tk.spd, foeMaxHp: f.max, foeHp: f.hp,
+    heroSpd: ((T.heroHaste[key] || 10) + (g.initiative || 0)) * (1 + (g.aspd || 0) / 100), foeSpd: f.tk.spd, foeMaxHp: f.max, foeHp: f.hp,
     bossHitX: f.tk.hx || 1, bossChargeX: f.tk.cx || 1, fullHp: !!(f.boss && !f.deep && !f.trial),   // the boss pass; a zone boss is met at full health
     foeName: f.name, foeType: f.txRow || f.type, foeArm: f.tk.arm, boss: f.tk.boss, region: f.tk.region, trait: f.tr && TURN_TRAITS[f.tr[0]] ? f.tr[0] : '',
     script: f.tk.script, eq, cds, tal: typeof talentsOf === 'function' ? talentsOf(key) : {},
     stars: typeof starsActive === 'function' ? starsActive(key) : [], starSet: typeof starsSetIds === 'function' ? starsSetIds(key) : [],   // the Stars (57e)
     parryWindow: Math.min(T.windowCaps.parry, (SOLO_TUNE.turnParryWindow + (g.parryWindow || 0) / 1000 + bonus('turnParryWin')) * turnAssistX()),
     dodgeWindow: Math.min(T.windowCaps.dodge, (SOLO_TUNE.turnDodgeWindow + (g.dodgeWindow || 0) / 1000 + T.dodgeTrain * trainLv('dodge') + bonus('turnDodgeWin')) * turnAssistX()),
-    essChance: essChance(), essExtra: g.essExtra || 0, goldPerKill: f.gold, xpPerKill: f.xp, healOnKill: COMBAT_TUNE.packHealF,
+    essChance: essChance(), essExtra: g.essExtra || 0, goldPerKill: f.gold, xpPerKill: f.xp, healOnKill: COMBAT_TUNE.packHealF * turnHealX(),
     respawn: Math.max(0.45, typeof zoneFoeDeathS === 'function' ? zoneFoeDeathS(f) : 0) };
 }
 
@@ -243,22 +267,23 @@ function turnPowerNow() {
   const T = TURN_TUNE, g = gear(), cls = S.party && S.party.cls;
   const heroX = (T.heroX[key] || SOLO_TUNE.heroX[key]) / SOLO_TUNE.heroX[key];
   const tap = cls === 'warden' || cls === 'warrior' ? CLASS_ABILITIES.heavy.coef : cls === 'lanternmage' || cls === 'mage' ? CLASS_ABILITIES.ember.coef : CLASS_ABILITIES.focus.coef;
-  const A = heroAtk() * tap * heroX * SOLO_TUNE.atkX * aps() * tapMult();
-  return { A, U: A * (1 + T.abTrain * trainLv(TURN_SIG[key] || 'echo')) * (1 + (g.abil || 0) / 100), crit: critMult() };
+  const A0 = heroAtk() * tap * heroX * SOLO_TUNE.atkX * aps();
+  return { A: A0 * tapMult(), U: A0 * (1 + T.abTrain * trainLv(TURN_SIG[key] || 'echo')) * (1 + (g.abil || 0) / 100), crit: critMult(),
+    spell: 1 + (g.spell || 0) / 100, dot: 1 + (g.area || 0) / 100 };
 }
 // One line of numbers for an ability (75-abilities-ui): its hit, and what its Burn, Bleed or spend adds
 function turnAbilityNumbers(id) {
   const a = turnAb(id), P = turnPowerNow(); if (!a || !P) return '';
-  const T = TURN_TUNE, U = P.U, f = x => fmt(Math.round(x)), hit = a.pow > 0 && a.kind !== 'passive' && id !== 'batswarm';
+  const T = TURN_TUNE, U = P.U * (a.dt && a.dt !== 'phys' ? P.spell : 1), D = U * P.dot, f = x => fmt(Math.round(x)), hit = a.pow > 0 && a.kind !== 'passive' && id !== 'batswarm';   // Spell power, damage over time (gear)
   const parts = [];
   if (id === 'twinshot') return `Each arrow hits for about ${f(P.A * a.pow)}.`;
   if (hit) parts.push(a.hits > 1 ? `Hits for about ${f(U * a.pow)} an arrow` : `Hits for about ${f(U * a.pow)}`);
   if (id === 'finalecho') parts.push(`+${f(U * 0.5)} a Bleed or Aim`);
   if (id === 'hammerfall') parts.push(`+${f(U * T.gritHammer)} a Grit`);
   if (id === 'lanternburst') parts.push(`+${f(U * 0.6)} a Cinder`);
-  if (id === 'fire') parts.push(`Burn ${f(T.burnP * U)} a turn`);
-  if (id === 'batswarm') parts.push(`Bats hit for ${f(U * a.pow)} a turn`);
-  if (id === 'barbed' || id === 'cleave' || id === 'moonvolley') parts.push(`Bleed ${f(T.bleedP * U)} a stack a turn`);
+  if (id === 'fire') parts.push(`Burn ${f(T.burnP * D)} a turn`);
+  if (id === 'batswarm') parts.push(`Bats hit for ${f(D * a.pow)} a turn`);
+  if (id === 'barbed' || id === 'cleave' || id === 'moonvolley') parts.push(`Bleed ${f(T.bleedP * D)} a stack a turn`);
   if (id === 'arcaneward' || id === 'ironwill') { const u = cbUnitByKey && cbUnitByKey('hero'); if (u) parts.push(`Ward ${f(u.maxHp * (id === 'arcaneward' ? 0.2 : 0.15))}`); }
   return parts.length ? `${parts.join(', ')}.` : '';
 }
@@ -335,6 +360,8 @@ function turnNextTurn(m, io) {
 
 // ---------------- damage ----------------
 const turnTX = (m, dt) => (typeof typeXKey === 'function' && m.p.foeType ? typeXKey(m.p.foeType, dt) : 1);
+// what damage over time is (the Area gear line): the ticks, and Ignite (the Burn still to come, at once)
+const TURN_DOT_KINDS = { burn: 1, bleed: 1, swarm: 1, ignite: 1 };
 // A direct hit (or DoT: o.dot) from the hero on the foe. o: { dt, sure, payoff, dot, kind, noCrit }
 function turnHitFoe(m, io, pow, o) {
   if (!io.alive().foe || !(pow > 0)) return 0;
@@ -349,9 +376,16 @@ function turnHitFoe(m, io, pow, o) {
   }
   if (m.sf) d *= turnStarsX(m, io, o, crit);
   d *= turnTX(m, o.dt || 'phys');
+  if (p.heroKey === 'pip' && h.embers > 0 && (o.dt || 'phys') === 'fire' && !o.stored) d *= 1 + T.cinderX * h.embers;   // Cinders held: hotter fire
+  // the gear pass: Spell power on fire, frost and holy hits; damage over time (Area) on ticks and Ignite. A Curse's burst
+  // stores hits that already had them.
+  if (!o.stored) {
+    if ((o.dt || 'phys') !== 'phys') d *= p.spellX || 1;
+    if (TURN_DOT_KINDS[o.kind]) d *= p.dotX || 1;
+  }
   if (!o.stored) {
     if (e.mark > 0) d *= 1 + e.markV;
-    if ((o.dt || 'phys') === 'phys' && p.foeArm > 0 && o.kind !== 'bleed') d *= 1 - p.foeArm * (e.sunder > 0 ? T.sunderX : 1) * (o.armX != null ? o.armX : 1);
+    if ((o.dt || 'phys') === 'phys' && p.foeArm > 0 && o.kind !== 'bleed') d *= 1 - p.foeArm * (e.sunder > 0 ? T.sunderX : 1) * (o.armX != null ? o.armX : 1) * (1 - (p.pierce || 0));
     if (!o.dot && h.weaken > 0) d *= T.weakenX;
   }
   if (o.payoff && e.exposed > 0) { d *= T.exposedX; e.exposed = 0; }
@@ -388,7 +422,7 @@ function turnControl(m, io, kind) {
   if (e.dazed) turnMark(e, e.dazed);   // the Stars: Dazed Prey
   if (m.charge) turnBreakCharge(m, io);
   if (m.p.boss) {
-    e.stagger += T.stagger[kind] || 25;
+    e.stagger += (T.stagger[kind] || 25) * (m.p.ctrlX || 1);   // Control (gear) staggers more
     io.emit('foeStagger', { v: Math.min(100, e.stagger) });
     if (e.stagger < 100) return true;
     e.stagger = 0;
@@ -405,7 +439,14 @@ function turnChillAdd(m, io, n) {
   if (e.chill >= T.chillMax) { e.chill = 0; e.chillT = 0; turnControl(m, io, 'freeze'); e.exposed = 2; io.emit('foeFrozen', {}); }
 }
 const turnMark = (e, t) => { e.mark = Math.max(e.mark, t); e.markV = TURN_TUNE.markV; };
-const turnWard = (m, share) => { const v = Math.min(TURN_TUNE.wardCap, share) * m.p.heroMaxHp; if (v > m.h.ward) m.h.ward = v; m.h.wardT = 3; };
+const turnWard = (m, share) => { const v = Math.min(TURN_TUNE.wardCap, share * (m.p.healX || 1)) * m.p.heroMaxHp; if (v > m.h.ward) m.h.ward = v; m.h.wardT = 3; };   // Healing (gear) makes Wards bigger, under the cap
+// a heal on the hero in a fight: Healing (gear) makes it bigger, and with the Ward line what goes past full HP becomes a Ward
+function turnHeal(m, io, amt) {
+  const p = m.p, a = amt * (p.healX || 1), room = Math.max(0, p.heroMaxHp - (io.heroHp ? io.heroHp() : p.heroMaxHp));
+  io.healHero(a);
+  const over = a - room, cap = (p.wardOver || 0) * p.heroMaxHp;
+  if (over > 0 && cap > m.h.ward) { m.h.ward = Math.min(cap, m.h.ward + over); m.h.wardT = 3; }
+}
 const turnGain = (h, k, n) => { const cap = k === 'aim' ? 3 : k === 'grit' ? 10 : 5; h[k] = Math.min(cap, h[k] + n); };
 
 // ---------------- the hero's actions ----------------
@@ -557,7 +598,7 @@ function turnHeroAct(m, io, id, slot, grades) {
         spell = true; break;
       case 'frostshard': { let more = 0; hit(U * a.pow, { dt, perfect: () => { more = 1; } }); const ex0 = e.exposed; turnChillAdd(m, io, 2 + more);
         if (t('frostshard') === 'a') e.weaken = Math.max(e.weaken, 1); if (t('frostshard') === 'b' && e.exposed > ex0) e.exposed++; spell = true; break; }
-      case 'arcaneward': if (t('arcaneward') === 'a' && h.ward > 0 && !h.mendUsed) { h.mendUsed = 1; io.healHero(0.05 * p.heroMaxHp); }
+      case 'arcaneward': if (t('arcaneward') === 'a' && h.ward > 0 && !h.mendUsed) { h.mendUsed = 1; turnHeal(m, io, 0.05 * p.heroMaxHp); }
         turnWard(m, 0.2); if (t('arcaneward') === 'b') h.shell = 1; break;
       case 'hex': e.curse = t('hex') === 'a' ? 4 : t('hex') === 'b' ? 2 : 3; e.curseStore = 0; e.curseCap = T.curseCap * U;
         if (t('hex') === 'b') { hit(U * 0.3, { dt: 'holy' }); spell = true; } break;
@@ -623,6 +664,8 @@ function turnBegin(m, who, io) {
     m.heroOps++;
     if (m.charge) m.charge.heroSince++;
     for (const k in m.cds) m.cds[k] = Math.max(0, m.cds[k] - 1);
+    // Focus (gear): a steady refund; each time it fills a whole turn, every cooldown is a turn shorter (as a parry is)
+    if (m.p.focus > 0) { m.fb = (m.fb || 0) + m.p.focus; if (m.fb >= 1) { m.fb -= 1; for (const k in m.cds) m.cds[k] = Math.max(0, m.cds[k] - 1); } }
     if (h.lunge > 0) h.lunge--;
     if (h.glow > 0) h.glow--;   // Afterglow: the next two hero turns
     // the boss riders on the hero tick at its turn start
@@ -646,7 +689,7 @@ function turnBegin(m, who, io) {
   if (emberTick && has(m, 'emberheart')) {
     const first = !h.ehFirst, et = turnTal(m, 'emberheart'); h.ehFirst = 1;
     turnGain(h, 'embers', first && et === 'a' ? 2 : 1);
-    if (first && et === 'b') io.healHero(0.05 * m.p.heroMaxHp);
+    if (first && et === 'b') turnHeal(m, io, 0.05 * m.p.heroMaxHp);
   }
   if (!io.alive().foe) { turnEnd(m, 'victory', io); return; }
   if (e.skip > 0 || e.recover > 0) {
@@ -776,7 +819,7 @@ function turnFoeEnd(m, io) {
   if (h.wardT > 0 && --h.wardT === 0) { h.ward = 0; if (h.setFeet) { h.setFeet = 0; h.guard = Math.max(h.guard, 1); } }
   h.escape = 0; h.repr = 0;
   if (h.shadow > 0) h.shadow--;
-  if (h.last > 0 && --h.last === 0 && io.alive().hero) { io.healHero(0.15 * m.p.heroMaxHp); if (turnTal(m, 'laststand') === 'b') turnCleanse(h); }
+  if (h.last > 0 && --h.last === 0 && io.alive().hero) { turnHeal(m, io, 0.15 * m.p.heroMaxHp); if (turnTal(m, 'laststand') === 'b') turnCleanse(h); }
   if (!io.alive().foe) { turnEnd(m, 'victory', io); return; }
   if (m.p.trait === 'enraged' && !m.enraged && io.foeHp() <= m.p.foeMaxHp * 0.5) { m.enraged = true; io.emit('turnPhase', { name: m.p.foeName }); }
   if (m.p.boss && !m.phase2 && io.foeHp() <= m.p.foeMaxHp * TURN_TUNE.bossPhaseAt) {
