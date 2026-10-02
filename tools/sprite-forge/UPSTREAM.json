@@ -1,0 +1,8 @@
+{
+  "repository": "https://github.com/0x0funky/agent-sprite-forge",
+  "commit": "64fd0b57d3f2ae117ef0a95e4c2decc25b4c9dd2",
+  "license": "MIT",
+  "installed_skills": ["generate2dsprite", "generate2dmap"],
+  "destination": ".agents/skills",
+  "local_skill_modifications": false
+}

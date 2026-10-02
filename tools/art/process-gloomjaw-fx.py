@@ -8,7 +8,7 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[2]
 PACK = ROOT / 'art/enemies/gloomjaw/animation-v1'
-FORGE = Path.home() / '.codex/skills/generate2dsprite/scripts/generate2dsprite.py'
+FORGE = ROOT / '.agents/skills/generate2dsprite/scripts/generate2dsprite.py'
 ACTIONS = {'bite-fx': (2, 3, .48), 'void-fx': (2, 3, .42),
            'projectile': (2, 2, .55), 'impact': (2, 3, .62)}
 

@@ -162,7 +162,7 @@ def close_snap(module):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--processor', type=Path, default=Path.home()/'.codex/skills/generate2dsprite/scripts/generate2dsprite.py')
+    parser.add_argument('--processor', type=Path, default=ROOT/'.agents/skills/generate2dsprite/scripts/generate2dsprite.py')
     parser.add_argument('--action', action='append', choices=SPECS)
     parser.add_argument('--close-snap', action='store_true')
     parser.add_argument('--reuse-processor', action='store_true', help='Reapply final extraction to existing unchanged-source processor output')

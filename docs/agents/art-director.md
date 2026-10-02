@@ -10,3 +10,9 @@ is assigned, use the available image skill/tool, start with one bounded draft an
 Owner review of the whole pack precedes integration except the documented Hunting interim exception.
 Do not wire, convert, redraw or retune frozen art, hand-edit generated modules or claim owner approval.
 Edit only assigned paths and report to the coordinator.
+
+Sprite Forge is installed repo-locally. For sprites/props/FX read
+`.agents/skills/generate2dsprite/SKILL.md`; for backgrounds/maps read
+`.agents/skills/generate2dmap/SKILL.md`. Setup and Lanternfall-specific usage are in
+`docs/SPRITE_FORGE.md`. Use the existing HTML/canvas asset contracts, not Godot/Unity exports.
+The project art freeze and approved pack anchors/timings override generic skill defaults.

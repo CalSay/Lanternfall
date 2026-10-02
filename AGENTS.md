@@ -36,6 +36,10 @@ Keep small, clear tasks in the main chat. Delegate only independent work with a 
 | Implementation, defects and validation | `docs/agents/engineer.md` |
 | Dependencies, ownership, milestones and handoff | `docs/agents/producer.md` |
 
+Sprite Forge's `generate2dsprite` and `generate2dmap` skills are installed under `.agents/skills/`.
+For requested asset creation, read the relevant skill and `docs/SPRITE_FORGE.md`; route through the art director.
+Installing tools does not authorize replacing approved packs or runtime integration.
+
 Read the selected role file and include its instructions in the subagent assignment; role files are not
 automatically registered agents. Include the exact base SHA, question, owned files, relevant docs, acceptance
 criteria, validation and a stopping condition. Specialists report to the main chat, which reconciles results.
