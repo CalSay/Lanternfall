@@ -2352,7 +2352,7 @@ body.solo-on .stage .abil, body.solo-on .stage .abil2 { display: none !important
 .sr-st { cursor: pointer; outline: none; }
 .sr-hit { fill: transparent; }
 .sr-dot { fill: #F4EEFF; }
-.sr-st.unk .sr-dot { fill: #7D7398; opacity: .55; }
+.sr-st.unk .sr-dot { fill: #8A80A6; opacity: .7; }
 .sr-st.found .sr-dot { fill: #E8E2FA; }
 .sr-st.learned .sr-dot { fill: #FFF8E4; }
 .sr-glow { fill: rgba(242,193,78,.22); stroke: rgba(242,193,78,.7); stroke-width: 1.5; }
@@ -2384,6 +2384,7 @@ body.solo-on .stage .abil, body.solo-on .stage .abil2 { display: none !important
 .sr-put small { font: 400 11px var(--body, sans-serif); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sr-put.on, .sr-light.on { background: var(--gold); color: #1A1420; }
 .sr-put.on small { color: #3A2C10; }
+.sr-put-c { display: none; }
 .sr-light:disabled { opacity: .5; cursor: default; }
 
 /* ---- filters and the list ---- */
@@ -2413,6 +2414,8 @@ body.solo-on .stage .abil, body.solo-on .stage .abil2 { display: none !important
   .app.menu-open .menu:has(#p-party:not([hidden]) > #sec-stars:not(.off-view):not(.f-off)) { width: 100%; max-width: 980px; }
   .sr-top { top: -10px; margin: -10px 0 0; padding: 6px 0; box-shadow: -10px 0 0 #18121F, 10px 0 0 #18121F, 0 8px 10px -6px rgba(0,0,0,.6); grid-template-columns: auto minmax(0, 3fr) minmax(0, 2fr); grid-template-areas: "pts set lit"; }
   .sr-main { grid-template-columns: minmax(0, 1fr) minmax(170px, 34%); align-items: start; }
+  /* the whole sky in view under the strip: the map keeps its shape and shrinks to the height left */
+  .sr-main .sr-map { max-height: calc(100dvh - var(--toprow, 44px) - 120px); }
   .sr-main .sr-card { max-height: calc(100dvh - var(--toprow, 44px) - 44px - 70px); overflow-y: auto; overscroll-behavior: contain; }
 }
 /* phones on their side: tighter type so the card fits next to the map */
@@ -2430,6 +2433,8 @@ body.solo-on .stage .abil, body.solo-on .stage .abil2 { display: none !important
   .sr-card .sr-foot { order: 1; } .sr-card .sr-light { order: 2; } .sr-card .sr-why { order: 3; } .sr-card .sr-desc { order: 4; } .sr-card .sr-from { order: 5; }
   .sr-put, .sr-light { min-height: 38px; font-size: calc(12px * var(--display-k, 1)); }
   .sr-put small { font-size: 10px; }
+  .sr-put-n { display: none; } .sr-put-c { display: inline; }
+  .sr-chip-t.long { font-size: calc(9px * var(--display-k, 1)); letter-spacing: -.02em; }
 }
 /* 60-store: the Storehouse view in the Gather tab (75-store-ui.js; H3, rebuilt by UX-A GX1). */
 .sh-view { gap: 12px; }
@@ -38990,7 +38995,8 @@ var starsUiPick;   // starsUiPick(id): open the star map on that star's card (57
     if (id) {
       // a tap opens its card (Slot N there clears it; Put out puts a lit star out)
       const s = STARS[id], sub = kind === 'lit' ? plural(s.cost, 'point') : starLearned(id) ? 'Learned' : `${starWins(id)}/${starNeed()} wins`;
-      b.append(el('span', 'sr-chip-t', s.name), el('small', null, sub));
+      // a long one-word name takes a smaller face so it is not cut in a narrow chip
+      b.append(el('span', 'sr-chip-t' + (s.name.split(' ').some(w => w.length > 8) ? ' long' : ''), s.name), el('small', null, sub));
       b.setAttribute('aria-label', `${label}: ${s.name}, ${sub}. Open its card.`);
       b.addEventListener('click', () => { pick = id; scrollCard = true; sig = ''; refresh(); });
       c.append(b);
@@ -39088,7 +39094,12 @@ var starsUiPick;   // starsUiPick(id): open the star map on that star's card (57
       const cur = set[i], b = btn('sr-put' + (where === i ? ' on' : ''));
       b.dataset.slot = String(i);
       const lb = el('span'); lb.append(el('span', 'sr-put-w', 'Slot '), String(i + 1));
-      b.append(lb, el('small', null, where === i ? 'Set here' : cur ? `Swap ${STARS[cur].short}` : 'Empty'));
+      // what the slot holds now, to compare: the name, or its 2-letter tile where the card is narrow (60-stars.css)
+      const sub = el('small');
+      if (where === i) sub.append(el('span', 'sr-put-n', 'Set here'), el('span', 'sr-put-c', 'Set'));
+      else if (cur) sub.append(el('span', 'sr-put-n', STARS[cur].name), el('span', 'sr-put-c', 'for ' + STARS[cur].short));
+      else sub.textContent = 'Empty';
+      b.append(lb, sub);
       b.setAttribute('aria-pressed', String(where === i));
       b.setAttribute('aria-label', where === i ? `Slot ${i + 1}: set here. Tap to clear.` : `Set in slot ${i + 1}` + (cur ? `, in place of ${STARS[cur].name}` : ''));
       b.addEventListener('click', () => { if (where === i) starSet(i, null, k); else starSet(i, id, k); persist(); });

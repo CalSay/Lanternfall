@@ -1615,10 +1615,10 @@ if (section('stars')) try {
     riptide: ['const a = __mk("wren", ["riptide"]); __move(a.m, a.io, ["dodge", "dodge"]); const r = a.t.dmg.filter(x => x.kind === "riptide"); const b = __mk("wren", ["riptide"]); __move(b.m, b.io, ["dodge", "parry"]);'
       + ' const c = __mk("wren", []); __move(c.m, c.io, ["parry"]); const k = c.t.dmg.find(x => x.kind === "counter");', 'r.length === 1 && Math.abs(r[0].d / k.d - 0.5) < 1e-9 && !b.t.dmg.some(x => x.kind === "riptide")'],
     swifttide: ['const go = st => { const a = __mk("wren", st, { eq: ["finalecho", null, null] }); a.m.heroOps = 1; a.m.h.aim = 1; return turnUsable(a.m, "finalecho"); };', 'go(["swifttide"]) === "" && go([]) === "gate"'],
-    brimming: ['const go = (st, aim) => { const a = __mk("wren", st); a.m.h.aim = aim; turnHeroAct(a.m, a.io, "attack"); return a.t.dmg.filter(x => x.kind === "brim"); }; const x = go(["brimming"], 3);',
-      'x.length === 1 && Math.abs(x[0].d / (0.3 * __mk("wren", []).U * turnTX(__mk("wren", []).m, "phys")) - 1) < 1e-9 && go(["brimming"], 1).length === 0 && go([], 3).length === 0'],
+    brimming: ['const go = (st, aim) => { const a = __mk("wren", st); a.m.h.aim = aim; turnHeroAct(a.m, a.io, "attack"); return a.t.dmg.filter(x => x.kind === "brim"); }; const x = go(["brimming"], 3); const z = __mk("wren", []);',
+      'x.length === 1 && Math.abs(x[0].d / (STARS_TUNE.fx.brim.p * z.U * turnTX(z.m, "phys")) - 1) < 1e-9 && STARS_TUNE.fx.brim.p === 0.5 && go(["brimming"], 1).length === 0 && go([], 3).length === 0'],
     mending: ['const a = __mk("tobin", ["mending"], { hp: 500 }); __move(a.m, a.io, ["parry"]); const b = __mk("tobin", ["mending"], { hp: 500 }); __move(b.m, b.io, ["parry", "dodge"]);', 'Math.abs(a.t.hp - 560) < 1e-9 && b.t.hp === 500'],
-    avalanche: ['const go = (st, g) => { const a = __mk("tobin", st, { eq: ["hammerfall", null, null] }); a.m.h.grit = g; turnHeroAct(a.m, a.io, "hammerfall"); return a.m.e.skip; };', 'go(["avalanche"], 7) === 1 && go(["avalanche"], 5) === 0 && go([], 7) === 0'],
+    avalanche: ['const go = (st, g) => { const a = __mk("tobin", st, { eq: ["hammerfall", null, null] }); a.m.h.grit = g; turnHeroAct(a.m, a.io, "hammerfall"); return a.m.e.skip; };', 'go(["avalanche"], 5) === 1 && go(["avalanche"], 4) === 0 && go([], 7) === 0'],
     fulldraw: ['const a = __mk("wren", ["fulldraw"], { eq: ["powershot", null, null] }); a.m.h.aim = 2; turnHeroAct(a.m, a.io, "attack"); turnHeroAct(a.m, a.io, "powershot"); const c1 = a.last().crit;'
       + ' a.m.cds.powershot = 0; turnHeroAct(a.m, a.io, "powershot"); const c2 = a.last().crit; const b = __mk("wren", [], { eq: ["powershot", null, null] }); b.m.h.aim = 2; turnHeroAct(b.m, b.io, "attack"); turnHeroAct(b.m, b.io, "powershot");', 'c1 && !c2 && !b.last().crit'],
     kindling: ['const go = st => { const a = __mk("pip", st, { rand: 0 }); a.m.e.burn = 2; a.m.e.burnDmg = 5; a.m.p.critChance = 0.5; turnBegin(a.m, "foe", a.io); return a.t.dmg.find(x => x.kind === "burn"); };', 'go(["kindling"]).crit === true && go([]).crit === false'],
@@ -1628,8 +1628,8 @@ if (section('stars')) try {
     shatterpoint: ['const a = __mk("tobin", ["shatterpoint"]); a.m.charge = { mv: { name: "x", hits: [] }, dmg: 0, heroSince: 0 }; turnBreakCharge(a.m, a.io); const c = a.t.dmg.filter(x => x.kind === "counter");'
       + ' const b = __mk("tobin", []); __move(b.m, b.io, ["parry"]); const k = b.t.dmg.find(x => x.kind === "counter");', 'c.length === 1 && Math.abs(c[0].d / k.d - 1) < 1e-9 && a.m.e.recover === 1'],
     snare: ['const a = __mk("tobin", ["snare"]); const ok = turnControl(a.m, a.io, "stun"); const b = __mk("tobin", []); turnControl(b.m, b.io, "stun");', 'ok && a.m.e.pin === 1 && a.m.e.skip === 1 && b.m.e.pin === 0'],
-    thermalshock: ['const a = __mk("pip", ["thermalshock"]); a.m.e.chill = 2; a.m.e.chillT = 3; turnHitFoe(a.m, a.io, 10, { kind: "fire", dt: "fire" }); const s = a.t.dmg.filter(x => x.kind === "shock");'
-      + ' const b = __mk("pip", ["thermalshock"]); turnHitFoe(b.m, b.io, 10, { kind: "fire", dt: "fire" });', 's.length === 1 && Math.abs(s[0].d / (a.U * turnTX(a.m, "frost")) - 1) < 1e-9 && a.m.e.chill === 0 && !b.t.dmg.some(x => x.kind === "shock")']
+    thermalshock: ['const go = (st, c) => { const a = __mk("pip", st); a.m.e.chill = c; a.m.e.chillT = 3; turnHitFoe(a.m, a.io, 10, { kind: "fire", dt: "fire" }); return [a.last().d, a.m.e.chill]; };'
+      + ' const x = go(["thermalshock"], 2), y = go([], 2), z = go(["thermalshock"], 0), w = go([], 0);', 'Math.abs(x[0] / y[0] - 1.5) < 1e-9 && x[1] === 2 && Math.abs(z[0] / w[0] - 1) < 1e-9']
   };
   const missed = E('STAR_ORDER').filter(id => !fx[id]);
   assert(!missed.length, 'every star has a check below' + (missed.length ? ': ' + missed.join(', ') : ''));

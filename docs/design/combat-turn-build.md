@@ -199,12 +199,13 @@ menus for abilities and stars. I kinda miss the star map too :/ idk how you'd in
     stars (and how far each is from learned) and the 2 lit (and their cost). Tap one to open its card; an empty slot
     lights up when the open star can go there, and a tap puts it there;
   - the map, then the open star's card: name, whose kit, learned or how many wins to go, what it does, where it is
-    found and its constellation, Slot 1/2/3 (each says what it holds now, "Swap EE", to compare) and Light / Put out;
+    found and its constellation, Slot 1/2/3 (each names the star it holds now, to compare; on a phone on its side, its 2-letter tile) and Light / Put out;
   - filters (whose kit: All, Wren, Tobin, Pip, Any hero; and All, Found, Learned) narrow the list and dim the map;
   - the list: one compact row a star with its rule, to scan and compare; a tap opens its card and brings it into view;
   - the rules moved into a "How stars work" fold at the bottom;
   - landscape: the menu takes the whole stage while Stars is open (the side column, the bar and Next Up stay live), the
-    strip on top, the map on the left and the card on the right with its buttons first.
+    strip on top, the map on the left (it shrinks to the height left, so the whole sky shows at 740x360) and the card on
+    the right with its buttons first.
   - Next Up opens the map on its star's card (`starsUiPick`).
 
 **Old saves.** The save key stays `lanternfall.save.v5`. `S.stars` gains `own`, `wins`, `learned`, `set`, `lit`, `dry`,

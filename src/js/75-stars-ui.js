@@ -47,7 +47,8 @@ var starsUiPick;   // starsUiPick(id): open the star map on that star's card (57
     if (id) {
       // a tap opens its card (Slot N there clears it; Put out puts a lit star out)
       const s = STARS[id], sub = kind === 'lit' ? plural(s.cost, 'point') : starLearned(id) ? 'Learned' : `${starWins(id)}/${starNeed()} wins`;
-      b.append(el('span', 'sr-chip-t', s.name), el('small', null, sub));
+      // a long one-word name takes a smaller face so it is not cut in a narrow chip
+      b.append(el('span', 'sr-chip-t' + (s.name.split(' ').some(w => w.length > 8) ? ' long' : ''), s.name), el('small', null, sub));
       b.setAttribute('aria-label', `${label}: ${s.name}, ${sub}. Open its card.`);
       b.addEventListener('click', () => { pick = id; scrollCard = true; sig = ''; refresh(); });
       c.append(b);
@@ -145,7 +146,12 @@ var starsUiPick;   // starsUiPick(id): open the star map on that star's card (57
       const cur = set[i], b = btn('sr-put' + (where === i ? ' on' : ''));
       b.dataset.slot = String(i);
       const lb = el('span'); lb.append(el('span', 'sr-put-w', 'Slot '), String(i + 1));
-      b.append(lb, el('small', null, where === i ? 'Set here' : cur ? `Swap ${STARS[cur].short}` : 'Empty'));
+      // what the slot holds now, to compare: the name, or its 2-letter tile where the card is narrow (60-stars.css)
+      const sub = el('small');
+      if (where === i) sub.append(el('span', 'sr-put-n', 'Set here'), el('span', 'sr-put-c', 'Set'));
+      else if (cur) sub.append(el('span', 'sr-put-n', STARS[cur].name), el('span', 'sr-put-c', 'for ' + STARS[cur].short));
+      else sub.textContent = 'Empty';
+      b.append(lb, sub);
       b.setAttribute('aria-pressed', String(where === i));
       b.setAttribute('aria-label', where === i ? `Slot ${i + 1}: set here. Tap to clear.` : `Set in slot ${i + 1}` + (cur ? `, in place of ${STARS[cur].name}` : ''));
       b.addEventListener('click', () => { if (where === i) starSet(i, null, k); else starSet(i, id, k); persist(); });
