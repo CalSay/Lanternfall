@@ -126,6 +126,8 @@ var soloIconURL = () => '';
     const x = el('button', 'sp-x', '×'); x.type = 'button'; x.setAttribute('aria-label', 'Close'); x.addEventListener('click', closePicker);
     head.append(x);
     sh.append(head, el('p', 'sp-desc', i.desc));
+    const own = id === 'dodge' && typeof turnDodgeLine === 'function' && typeof soloHero === 'function' ? turnDodgeLine(soloHero()) : '';
+    if (own) sh.append(el('p', 'sp-desc', own));   // Wren's Out of Reach (59k)
     if (typeof trainCard === 'function' && MOVE[id]) { const c = trainCard(MOVE[id]); c.onLeave = closePicker; sh.append(c); ov._card = c; }
     ov.append(sh);
     ov.addEventListener('pointerdown', e => { if (e.target === ov) closePicker(); });
