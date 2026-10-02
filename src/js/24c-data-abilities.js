@@ -66,26 +66,26 @@ const ABILITIES = {};
   A('tobin', 'T7', 'bulwark', 'Bulwark', 'Bulwark', 'passive', 4, 0, 0, 'phys', 'Passive. Each parried hit gives 1 more Grit, and your counters hit 25% harder.', 'Passive: parries give more.');
   A('tobin', 'T8', 'laststand', 'Last Stand', 'Stand', 'finisher', 5, 0, 8, 'phys', 'Finisher, from your third turn, once a fight. For 2 enemy turns you cannot fall below 1 HP, parries are twice as easy and counters hit twice as hard. Then heal 15%.', 'You cannot fall, and counters hit hard.');
   // ---------------- Pip: the caster pool, then her own (gather Embers, set the foe alight, feed or detonate the fire) ----------------
-  A('pip', 'C1', 'spark', 'Spark', 'Spark', 'damage', 1, 1.3, 2, 'fire', 'A quick fire bolt for 130% power. Gain 1 Ember.', 'A quick bolt. Gain an Ember.');
+  A('pip', 'C1', 'spark', 'Spark', 'Spark', 'damage', 1, 1.3, 2, 'fire', 'A quick fire bolt for 130% power. Gain 1 Cinder.', 'A quick bolt. Gain an Cinder.');
   A('pip', 'C2', 'frostshard', 'Frost Shard', 'Frost', 'damage', 2, 1.1, 3, 'frost', 'A frost bolt for 110% power that adds 2 Chill (it slows). At 3 Chill the foe Freezes: it loses its next turn and is Exposed.', '2 Chill. At 3 the foe Freezes.');
   A('pip', 'C3', 'arcaneward', 'Arcane Ward', 'Ward', 'buff', 2, 0, 5, 'holy', 'A Ward worth 20% of your max HP for 3 enemy turns.', 'A Ward for 20% of your HP.');
   A('pip', 'C4', 'hex', 'Hex', 'Hex', 'debuff', 3, 0, 5, 'holy', 'Curse the foe for 3 turns. It stores 20% of the damage it takes and takes it again when the Curse ends.', 'Stores damage, then bursts.');
   A('pip', 'C5', 'afterglow', 'Afterglow', 'Glow', 'passive', 3, 0, 0, 'fire', 'Passive. After a spell that hits, your next Attack within 2 turns hits 50% harder.', 'Passive: an Attack after a spell hits harder.');
   A('pip', 'C6', 'nova', 'Nova', 'Nova', 'damage', 4, 1.6, 4, 'holy', 'A ring of force for 160% power.', 'A strong blast.');
-  A('pip', 'P1', 'fire', 'Fireball', 'Fireball', 'damage', 0, 1.8, 5, 'fire', 'A fireball for 180% power that Burns the foe for 3 turns. It spends your Embers: 10% more power for each.', 'Burns the foe. Spends Embers.');
-  A('pip', 'P2', 'kindle', 'Kindle', 'Kindle', 'damage', 2, 0.6, 2, 'fire', 'A small flame for 60% power. Gain 2 Embers. On a burning foe the Burn lasts 1 turn longer.', '2 Embers. Stretches a Burn.');
+  A('pip', 'P1', 'fire', 'Fireball', 'Fireball', 'damage', 0, 1.8, 5, 'fire', 'A fireball for 180% power that Burns the foe for 3 turns. It spends your Cinders: 10% more power for each.', 'Burns the foe. Spends Cinders.');
+  A('pip', 'P2', 'kindle', 'Kindle', 'Kindle', 'damage', 2, 0.6, 2, 'fire', 'A small flame for 60% power. Gain 2 Cinders. On a burning foe the Burn lasts 1 turn longer.', '2 Cinders. Stretches a Burn.');
   A('pip', 'P3', 'ignite', 'Ignite', 'Ignite', 'damage', 2, 0.8, 4, 'fire', 'Needs a Burn. 80% power, plus all the Burn still to come at 125%, at once. Uses up the Burn.', 'Sets off the Burn at once.');
   A('pip', 'P4', 'searing', 'Searing Eye', 'Searing', 'buff', 3, 0, 6, 'fire', 'Needs a Burn. Your next 2 turns, every hit on a burning foe is a sure crit.', 'Sure crits on a burning foe.');
   A('pip', 'P5', 'wildfire', 'Wildfire', 'Wildfire', 'debuff', 3, 0, 5, 'fire', 'Needs a Burn. Renews it to 3 turns, and it grows hotter each turn.', 'The Burn grows each turn.');
   A('pip', 'P6', 'flare', 'Lantern Flare', 'Flare', 'debuff', 4, 0.5, 5, 'holy', 'A flash of light for 50% power. The foe is Blinded for 2 turns (it can miss). A burning foe is also Marked.', 'Blinds. Marks a burning foe.');
-  A('pip', 'P7', 'emberheart', 'Ember Heart', 'Heart', 'passive', 4, 0, 0, 'fire', 'Passive. Each Burn tick on the foe gives you 1 Ember.', 'Passive: Burn gives Embers.');
-  A('pip', 'P8', 'lanternburst', 'Lanternburst', 'Burst', 'finisher', 5, 2.0, 7, 'fire', 'Finisher, from your third turn. 200% power, plus 60% for each Ember, 25% more on a burning foe. Needs 3 Embers; spends them and the Burn.', 'Spends Embers and Burn for a blast.');
+  A('pip', 'P7', 'emberheart', 'Cinder Heart', 'Heart', 'passive', 4, 0, 0, 'fire', 'Passive. Each Burn tick on the foe gives you 1 Cinder.', 'Passive: Burn gives Cinders.');
+  A('pip', 'P8', 'lanternburst', 'Lanternburst', 'Burst', 'finisher', 5, 2.0, 7, 'fire', 'Finisher, from your third turn. 200% power, plus 60% for each Cinder, 25% more on a burning foe. Needs 3 Cinders; spends them and the Burn.', 'Spends Cinders and Burn for a blast.');
 }
 // Timed abilities (59k TURN_TIMED): press again as the ring closes, one ring per hit. What a Perfect press adds:
 const ABILITY_PERFECT = { powershot: 'a sure crit', volley: '1 Aim for each Perfect arrow', deadeye: 'the Mark stays',
   moonvolley: '1 more Bleed for each Perfect arrow', heavystrike: '50% more damage', bash: 'Guard lasts 3 enemy turns',
   hammerfall: 'half the Grit comes back', shieldthrow: '2 turns off its cooldown', frostshard: '1 more Chill',
-  fire: 'the Burn lasts 1 turn longer', ignite: 'the Burn bursts at 200%', lanternburst: '2 Embers come back' };
+  fire: 'the Burn lasts 1 turn longer', ignite: 'the Burn bursts at 200%', lanternburst: '2 Cinders come back' };
 for (const id in ABILITY_PERFECT) ABILITIES[id].perfect = ABILITY_PERFECT[id];
 // The Abilities screen's order and its three groups (ability-tree-details.md 10: interface groups, not subclasses)
 const HERO_PATHS = {
@@ -111,3 +111,12 @@ for (const id in ABILITIES) {
   if (!SOLO_ABILITIES[id]) SOLO_ABILITIES[id] = { id, name: a.name, short: a.short, cd: Math.max(4, a.cd * 2), line: a.line, desc: a.desc, x: a.pow * (a.hits || 1) };
   else Object.assign(SOLO_ABILITIES[id], { line: a.line, turnDesc: a.desc });
 }
+
+// Each hero's fight resource, in one plain line (owner, 2026-10-02: say what it is). Shown on Hero > Abilities, when you tap
+// the pips in a fight, and once on its own the first time a hero gains one (75-turn-ui). Pip's was Embers; it is Cinders
+// now, so it no longer shares a name with the raid's Embers (the save key stays `embers`).
+const HERO_RESOURCE = {
+  wren: { name: 'Aim', txt: 'Aim: each Attack gives 1, up to 3. Each Aim adds 5% crit chance. Final Echo spends it for a bigger hit.' },
+  tobin: { name: 'Grit', txt: 'Grit: each Attack and parried hit gives 1, Shield Bash 2, up to 10. Each Grit adds 6% to your Attack and takes 1% off the damage you take. Hammerfall spends it all for a big hit.' },
+  pip: { name: 'Cinders', txt: 'Cinders: each Attack gives 1, up to 5. Fireball spends them all for a hotter Burn (10% more each). Lanternburst needs 3 and spends them for a blast.' }
+};

@@ -15,11 +15,11 @@
 // A hero earns TALENT_TUNE.perLevel points a level after level 1. Choices change freely; a fight takes them as it starts.
 //   talentsOf(hero) -> { id: 'a' | 'b' } (only abilities the hero owns), talentPoints(hero) -> { total, spent, free }
 //   talentSet(hero, id, 'a' | 'b' | null) -> bool (null clears it; emits talentSet)
-// Save: S.abil.tal = { hero: { id: 'a' | 'b' } }.
+// Save: S.abil.tal = { hero: { id: 'a' | 'b' } }; S.abil.resTip = { hero: 1 } (the resource line has shown on its own, 75-turn-ui).
 var abilityOwned, abLearnInfo, abilityLearn, scrollCount, scrollFor, talentsOf, talentPoints, talentSet;
 {
   const SCROLL_TUNE = { replay: 0.2, pity: 5 };
-  const blank = () => ({ unl: { wren: [], tobin: [], pip: [] }, scrolls: {}, dry: {}, got: {}, tal: { wren: {}, tobin: {}, pip: {} } });
+  const blank = () => ({ unl: { wren: [], tobin: [], pip: [] }, scrolls: {}, dry: {}, got: {}, tal: { wren: {}, tobin: {}, pip: {} }, resTip: {} });
   registerState('abil', blank());
   const A = () => S.abil || (S.abil = blank());
   const lvOf = k => { try { const l = soloLevels()[k]; return l ? l.L : 1; } catch (e) { return S.L || 1; } };

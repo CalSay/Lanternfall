@@ -30,8 +30,8 @@ const STARS = {};
 {
   const T = (id, name, short, cost, from, text, fold) => (STARS[id] = { id, name, short, cost, from, text, fold: fold || '' });
   // ---- zone bosses: the first win over each of these zones' bosses ----
-  T('readylamp', 'Ready Lamp', 'RL', 1, { zone: 6 }, 'Start each fight with 2 Aim, 3 Grit or 2 Embers.');
-  T('sparkguard', 'Spark Guard', 'SG', 2, { zone: 8 }, 'A parried hit gives you 1 Aim, Grit or Ember.');
+  T('readylamp', 'Ready Lamp', 'RL', 1, { zone: 6 }, 'Start each fight with 2 Aim, 3 Grit or 2 Cinders.');
+  T('sparkguard', 'Spark Guard', 'SG', 2, { zone: 8 }, 'A parried hit gives you 1 Aim, Grit or Cinder.');
   T('turning', 'Turning Point', 'TP', 2, { zone: 10 }, 'When the foe falls below a third of its health, your next ability is a sure crit.');
   T('huntstep', "Hunter's Step", 'HS', 1, { zone: 12 }, 'A dodge Marks the foe for 2 turns.');
   T('serrated', 'Serrated', 'Se', 2, { zone: 14 }, 'A critical hit adds 1 Bleed.');
@@ -48,7 +48,7 @@ const STARS = {};
   T('cinder', 'Cinder Riposte', 'CR', 2, { elite: 1 }, 'A counter sets the foe alight for 3 turns.');
   T('openguard', 'Open Guard', 'OG', 1, { elite: 1 }, 'A counter leaves the foe Exposed: your next payoff hits 25% harder.');
   T('perfecttime', 'Perfect Time', 'PT', 2, { elite: 1 }, 'A Perfect press takes 1 turn off your other cooldowns (once an ability).');
-  T('bankedcoal', 'Banked Coal', 'BC', 2, { elite: 1 }, 'When an ability spends your Aim, Grit or Embers, 1 comes back.');
+  T('bankedcoal', 'Banked Coal', 'BC', 2, { elite: 1 }, 'When an ability spends your Aim, Grit or Cinders, 1 comes back.');
   T('crushing', 'Crushing Blow', 'CB', 2, { elite: 1 }, 'Every 4th Attack in a fight hits twice as hard.');
   // ---- the Provings: passing a class's Proving gives both of its paths' stars (the evolutions' effects, in turns) ----
   T('bloodprice', 'Blood Price', 'BP', 2, { proving: 'warrior' }, 'Below half health you deal 25% more.', 'reaver');

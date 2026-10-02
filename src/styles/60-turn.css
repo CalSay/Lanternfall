@@ -51,6 +51,9 @@
 .tv-n.mine { color: var(--gold, #F2C14E); font-weight: 700; }
 .tv-hero { display: flex; align-items: center; gap: 4px; min-height: 18px; }
 .tv-hero[hidden] { display: none; }
+.tv-resbtn { display: flex; align-items: center; gap: 4px; padding: 7px 8px; margin: -7px -8px; background: none; border: 0; color: inherit; cursor: pointer; pointer-events: auto; }
+.tv-restip { max-width: min(320px, 86vw); padding: 5px 8px; font-size: 12px; line-height: 1.3; color: var(--bone, #E0D6C2); background: rgba(10, 7, 14, .92); border: 1px solid #5b4a33; text-align: center; }
+.tv-restip[hidden] { display: none; }
 .tv-res { font: calc(10px * var(--display-k, 1))/1 var(--display); color: #E0D6C2; text-shadow: 1px 1px 0 #0B0810; }
 .tv-pips { display: flex; gap: 2px; }
 .tv-pip { display: block; width: 7px; height: 7px; background: #16111C; border: 1px solid #0B0810; box-shadow: inset 0 0 0 1px #4E4060; }

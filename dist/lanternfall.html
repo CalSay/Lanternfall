@@ -2525,6 +2525,9 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
 .tv-n.mine { color: var(--gold, #F2C14E); font-weight: 700; }
 .tv-hero { display: flex; align-items: center; gap: 4px; min-height: 18px; }
 .tv-hero[hidden] { display: none; }
+.tv-resbtn { display: flex; align-items: center; gap: 4px; padding: 7px 8px; margin: -7px -8px; background: none; border: 0; color: inherit; cursor: pointer; pointer-events: auto; }
+.tv-restip { max-width: min(320px, 86vw); padding: 5px 8px; font-size: 12px; line-height: 1.3; color: var(--bone, #E0D6C2); background: rgba(10, 7, 14, .92); border: 1px solid #5b4a33; text-align: center; }
+.tv-restip[hidden] { display: none; }
 .tv-res { font: calc(10px * var(--display-k, 1))/1 var(--display); color: #E0D6C2; text-shadow: 1px 1px 0 #0B0810; }
 .tv-pips { display: flex; gap: 2px; }
 .tv-pip { display: block; width: 7px; height: 7px; background: #16111C; border: 1px solid #0B0810; box-shadow: inset 0 0 0 1px #4E4060; }
@@ -8907,26 +8910,26 @@ const ABILITIES = {};
   A('tobin', 'T7', 'bulwark', 'Bulwark', 'Bulwark', 'passive', 4, 0, 0, 'phys', 'Passive. Each parried hit gives 1 more Grit, and your counters hit 25% harder.', 'Passive: parries give more.');
   A('tobin', 'T8', 'laststand', 'Last Stand', 'Stand', 'finisher', 5, 0, 8, 'phys', 'Finisher, from your third turn, once a fight. For 2 enemy turns you cannot fall below 1 HP, parries are twice as easy and counters hit twice as hard. Then heal 15%.', 'You cannot fall, and counters hit hard.');
   // ---------------- Pip: the caster pool, then her own (gather Embers, set the foe alight, feed or detonate the fire) ----------------
-  A('pip', 'C1', 'spark', 'Spark', 'Spark', 'damage', 1, 1.3, 2, 'fire', 'A quick fire bolt for 130% power. Gain 1 Ember.', 'A quick bolt. Gain an Ember.');
+  A('pip', 'C1', 'spark', 'Spark', 'Spark', 'damage', 1, 1.3, 2, 'fire', 'A quick fire bolt for 130% power. Gain 1 Cinder.', 'A quick bolt. Gain an Cinder.');
   A('pip', 'C2', 'frostshard', 'Frost Shard', 'Frost', 'damage', 2, 1.1, 3, 'frost', 'A frost bolt for 110% power that adds 2 Chill (it slows). At 3 Chill the foe Freezes: it loses its next turn and is Exposed.', '2 Chill. At 3 the foe Freezes.');
   A('pip', 'C3', 'arcaneward', 'Arcane Ward', 'Ward', 'buff', 2, 0, 5, 'holy', 'A Ward worth 20% of your max HP for 3 enemy turns.', 'A Ward for 20% of your HP.');
   A('pip', 'C4', 'hex', 'Hex', 'Hex', 'debuff', 3, 0, 5, 'holy', 'Curse the foe for 3 turns. It stores 20% of the damage it takes and takes it again when the Curse ends.', 'Stores damage, then bursts.');
   A('pip', 'C5', 'afterglow', 'Afterglow', 'Glow', 'passive', 3, 0, 0, 'fire', 'Passive. After a spell that hits, your next Attack within 2 turns hits 50% harder.', 'Passive: an Attack after a spell hits harder.');
   A('pip', 'C6', 'nova', 'Nova', 'Nova', 'damage', 4, 1.6, 4, 'holy', 'A ring of force for 160% power.', 'A strong blast.');
-  A('pip', 'P1', 'fire', 'Fireball', 'Fireball', 'damage', 0, 1.8, 5, 'fire', 'A fireball for 180% power that Burns the foe for 3 turns. It spends your Embers: 10% more power for each.', 'Burns the foe. Spends Embers.');
-  A('pip', 'P2', 'kindle', 'Kindle', 'Kindle', 'damage', 2, 0.6, 2, 'fire', 'A small flame for 60% power. Gain 2 Embers. On a burning foe the Burn lasts 1 turn longer.', '2 Embers. Stretches a Burn.');
+  A('pip', 'P1', 'fire', 'Fireball', 'Fireball', 'damage', 0, 1.8, 5, 'fire', 'A fireball for 180% power that Burns the foe for 3 turns. It spends your Cinders: 10% more power for each.', 'Burns the foe. Spends Cinders.');
+  A('pip', 'P2', 'kindle', 'Kindle', 'Kindle', 'damage', 2, 0.6, 2, 'fire', 'A small flame for 60% power. Gain 2 Cinders. On a burning foe the Burn lasts 1 turn longer.', '2 Cinders. Stretches a Burn.');
   A('pip', 'P3', 'ignite', 'Ignite', 'Ignite', 'damage', 2, 0.8, 4, 'fire', 'Needs a Burn. 80% power, plus all the Burn still to come at 125%, at once. Uses up the Burn.', 'Sets off the Burn at once.');
   A('pip', 'P4', 'searing', 'Searing Eye', 'Searing', 'buff', 3, 0, 6, 'fire', 'Needs a Burn. Your next 2 turns, every hit on a burning foe is a sure crit.', 'Sure crits on a burning foe.');
   A('pip', 'P5', 'wildfire', 'Wildfire', 'Wildfire', 'debuff', 3, 0, 5, 'fire', 'Needs a Burn. Renews it to 3 turns, and it grows hotter each turn.', 'The Burn grows each turn.');
   A('pip', 'P6', 'flare', 'Lantern Flare', 'Flare', 'debuff', 4, 0.5, 5, 'holy', 'A flash of light for 50% power. The foe is Blinded for 2 turns (it can miss). A burning foe is also Marked.', 'Blinds. Marks a burning foe.');
-  A('pip', 'P7', 'emberheart', 'Ember Heart', 'Heart', 'passive', 4, 0, 0, 'fire', 'Passive. Each Burn tick on the foe gives you 1 Ember.', 'Passive: Burn gives Embers.');
-  A('pip', 'P8', 'lanternburst', 'Lanternburst', 'Burst', 'finisher', 5, 2.0, 7, 'fire', 'Finisher, from your third turn. 200% power, plus 60% for each Ember, 25% more on a burning foe. Needs 3 Embers; spends them and the Burn.', 'Spends Embers and Burn for a blast.');
+  A('pip', 'P7', 'emberheart', 'Cinder Heart', 'Heart', 'passive', 4, 0, 0, 'fire', 'Passive. Each Burn tick on the foe gives you 1 Cinder.', 'Passive: Burn gives Cinders.');
+  A('pip', 'P8', 'lanternburst', 'Lanternburst', 'Burst', 'finisher', 5, 2.0, 7, 'fire', 'Finisher, from your third turn. 200% power, plus 60% for each Cinder, 25% more on a burning foe. Needs 3 Cinders; spends them and the Burn.', 'Spends Cinders and Burn for a blast.');
 }
 // Timed abilities (59k TURN_TIMED): press again as the ring closes, one ring per hit. What a Perfect press adds:
 const ABILITY_PERFECT = { powershot: 'a sure crit', volley: '1 Aim for each Perfect arrow', deadeye: 'the Mark stays',
   moonvolley: '1 more Bleed for each Perfect arrow', heavystrike: '50% more damage', bash: 'Guard lasts 3 enemy turns',
   hammerfall: 'half the Grit comes back', shieldthrow: '2 turns off its cooldown', frostshard: '1 more Chill',
-  fire: 'the Burn lasts 1 turn longer', ignite: 'the Burn bursts at 200%', lanternburst: '2 Embers come back' };
+  fire: 'the Burn lasts 1 turn longer', ignite: 'the Burn bursts at 200%', lanternburst: '2 Cinders come back' };
 for (const id in ABILITY_PERFECT) ABILITIES[id].perfect = ABILITY_PERFECT[id];
 // The Abilities screen's order and its three groups (ability-tree-details.md 10: interface groups, not subclasses)
 const HERO_PATHS = {
@@ -8952,6 +8955,15 @@ for (const id in ABILITIES) {
   if (!SOLO_ABILITIES[id]) SOLO_ABILITIES[id] = { id, name: a.name, short: a.short, cd: Math.max(4, a.cd * 2), line: a.line, desc: a.desc, x: a.pow * (a.hits || 1) };
   else Object.assign(SOLO_ABILITIES[id], { line: a.line, turnDesc: a.desc });
 }
+
+// Each hero's fight resource, in one plain line (owner, 2026-10-02: say what it is). Shown on Hero > Abilities, when you tap
+// the pips in a fight, and once on its own the first time a hero gains one (75-turn-ui). Pip's was Embers; it is Cinders
+// now, so it no longer shares a name with the raid's Embers (the save key stays `embers`).
+const HERO_RESOURCE = {
+  wren: { name: 'Aim', txt: 'Aim: each Attack gives 1, up to 3. Each Aim adds 5% crit chance. Final Echo spends it for a bigger hit.' },
+  tobin: { name: 'Grit', txt: 'Grit: each Attack and parried hit gives 1, Shield Bash 2, up to 10. Each Grit adds 6% to your Attack and takes 1% off the damage you take. Hammerfall spends it all for a big hit.' },
+  pip: { name: 'Cinders', txt: 'Cinders: each Attack gives 1, up to 5. Fireball spends them all for a hotter Burn (10% more each). Lanternburst needs 3 and spends them for a blast.' }
+};
 
 // ---- src/js/24d-data-turnfoes.js ----
 // 24d-data-turnfoes: what foes do in turn fights (59k-turn.js). Data only.
@@ -9091,22 +9103,22 @@ const TALENTS = {
   'tobin:parry': { a: { name: 'Split the Guard', text: 'Your first counter each fight Sunders the foe for 2 turns.' }, b: { name: 'Shield Up', text: 'Your first counter each fight Guards you for 1 enemy turn.' } },
   'tobin:dodge': { a: { name: 'Roll and Rise', text: 'After a dodge, your next Attack gives 2 Grit.' }, b: { name: 'Covered Step', text: 'After a dodge, your next Attack Guards you for 1 enemy turn.' } },
   // ---------------- Pip ----------------
-  spark: { a: { name: 'Bank the Spark', text: 'At 0 Embers it gives 2.' }, b: { name: 'Cold Spark', text: 'Frost instead of fire: 1 Chill and no Ember.' } },
+  spark: { a: { name: 'Bank the Spark', text: 'At 0 Cinders it gives 2.' }, b: { name: 'Cold Spark', text: 'Frost instead of fire: 1 Chill and no Cinder.' } },
   frostshard: { a: { name: 'Rime Needle', text: 'Also Weakens the foe for 1 turn.' }, b: { name: 'Thaw Point', text: 'A Freeze it causes keeps the foe Exposed for 1 more turn.' } },
   arcaneward: { a: { name: 'Mending Light', text: 'Cast while a Ward holds: heal 5% of your max HP, once a fight.' }, b: { name: 'Hard Shell', text: 'The Ward blocks the next status a hit would put on you.' } },
   hex: { a: { name: 'Long Sentence', text: 'The Curse lasts 4 turns.' }, b: { name: 'Short Sentence', text: 'The Curse lasts 2 turns and hits for 30% at once.' } },
-  afterglow: { a: { name: 'Banked Flame', text: 'The boosted Attack gives 1 more Ember.' }, b: { name: 'Clear Mind', text: 'The boosted Attack clears one status from you, once a fight.' } },
+  afterglow: { a: { name: 'Banked Flame', text: 'The boosted Attack gives 1 more Cinder.' }, b: { name: 'Clear Mind', text: 'The boosted Attack clears one status from you, once a fight.' } },
   nova: { a: { name: 'Rime Ring', text: 'Frost instead of holy, and 1 Chill.' }, b: { name: 'Sheltering Ring', text: 'Also a Ward worth 5% of your max HP.' } },
   fire: { a: { name: 'Scattered Cinders', text: 'Three smaller fireballs, each timed and each able to crit.' }, b: { name: 'Hearthfire', text: 'The Burn lasts 1 turn longer.' } },
-  kindle: { a: { name: 'Careful Tending', text: 'On a foe that is not burning, it lights a small 2-turn Burn.' }, b: { name: 'Bright Spark', text: 'Cast with 4 or more Embers: your next ability is Keen.' } },
-  ignite: { a: { name: 'Ash Seed', text: 'Leaves a small 1-turn Burn behind.' }, b: { name: 'Gather Ash', text: 'Gives 1 Ember.' } },
+  kindle: { a: { name: 'Careful Tending', text: 'On a foe that is not burning, it lights a small 2-turn Burn.' }, b: { name: 'Bright Spark', text: 'Cast with 4 or more Cinders: your next ability is Keen.' } },
+  ignite: { a: { name: 'Ash Seed', text: 'Leaves a small 1-turn Burn behind.' }, b: { name: 'Gather Ash', text: 'Gives 1 Cinder.' } },
   searing: { a: { name: 'Patient Flame', text: 'Lasts 1 turn, but the Burn lasts 1 turn longer.' }, b: { name: 'Piercing Gaze', text: 'Its sure crits hit 20% harder.' } },
   wildfire: { a: { name: 'Hungry Fire', text: 'The Burn grows faster.' }, b: { name: 'Cinder Veil', text: 'Its first growth Weakens the foe for 1 turn.' } },
-  flare: { a: { name: 'Revealing Light', text: 'A burning foe is also Sundered for 2 turns.' }, b: { name: 'Guiding Light', text: 'Gives 1 Ember instead of the Mark.' } },
-  emberheart: { a: { name: 'Kindling Pulse', text: 'The first Burn tick each fight gives 2 Embers.' }, b: { name: 'Warmth Within', text: 'The first Burn tick each fight heals you 5% of your max HP.' } },
+  flare: { a: { name: 'Revealing Light', text: 'A burning foe is also Sundered for 2 turns.' }, b: { name: 'Guiding Light', text: 'Gives 1 Cinder instead of the Mark.' } },
+  emberheart: { a: { name: 'Kindling Pulse', text: 'The first Burn tick each fight gives 2 Cinders.' }, b: { name: 'Warmth Within', text: 'The first Burn tick each fight heals you 5% of your max HP.' } },
   lanternburst: { a: { name: 'Afterglow', text: 'Leaves a small 2-turn Burn behind.' }, b: { name: 'Homeward Light', text: 'A Ward worth 10% of your max HP after the blast.' } },
-  'pip:attack': { a: { name: 'Stoke', text: 'Attacking a burning foe gives 2 Embers.' }, b: { name: 'Frost Touch', text: 'Your first Attack each fight Chills the foe.' } },
-  'pip:parry': { a: { name: 'Spark Back', text: 'Your first counter each fight gives 1 Ember.' }, b: { name: 'Dim Its Eyes', text: 'Your first counter each fight Weakens the foe for 1 turn.' } },
+  'pip:attack': { a: { name: 'Stoke', text: 'Attacking a burning foe gives 2 Cinders.' }, b: { name: 'Frost Touch', text: 'Your first Attack each fight Chills the foe.' } },
+  'pip:parry': { a: { name: 'Spark Back', text: 'Your first counter each fight gives 1 Cinder.' }, b: { name: 'Dim Its Eyes', text: 'Your first counter each fight Weakens the foe for 1 turn.' } },
   'pip:dodge': { a: { name: 'Fanned Flame', text: 'After a dodge, your next Attack makes the Burn last 1 turn longer.' }, b: { name: 'Warding Step', text: 'After a dodge, your next Attack gives a 5% Ward.' } }
 };
 // the talent ids of each hero, in the Abilities screen's order (its abilities, then Attack, Parry and Dodge)
@@ -9146,8 +9158,8 @@ const STARS = {};
 {
   const T = (id, name, short, cost, from, text, fold) => (STARS[id] = { id, name, short, cost, from, text, fold: fold || '' });
   // ---- zone bosses: the first win over each of these zones' bosses ----
-  T('readylamp', 'Ready Lamp', 'RL', 1, { zone: 6 }, 'Start each fight with 2 Aim, 3 Grit or 2 Embers.');
-  T('sparkguard', 'Spark Guard', 'SG', 2, { zone: 8 }, 'A parried hit gives you 1 Aim, Grit or Ember.');
+  T('readylamp', 'Ready Lamp', 'RL', 1, { zone: 6 }, 'Start each fight with 2 Aim, 3 Grit or 2 Cinders.');
+  T('sparkguard', 'Spark Guard', 'SG', 2, { zone: 8 }, 'A parried hit gives you 1 Aim, Grit or Cinder.');
   T('turning', 'Turning Point', 'TP', 2, { zone: 10 }, 'When the foe falls below a third of its health, your next ability is a sure crit.');
   T('huntstep', "Hunter's Step", 'HS', 1, { zone: 12 }, 'A dodge Marks the foe for 2 turns.');
   T('serrated', 'Serrated', 'Se', 2, { zone: 14 }, 'A critical hit adds 1 Bleed.');
@@ -9164,7 +9176,7 @@ const STARS = {};
   T('cinder', 'Cinder Riposte', 'CR', 2, { elite: 1 }, 'A counter sets the foe alight for 3 turns.');
   T('openguard', 'Open Guard', 'OG', 1, { elite: 1 }, 'A counter leaves the foe Exposed: your next payoff hits 25% harder.');
   T('perfecttime', 'Perfect Time', 'PT', 2, { elite: 1 }, 'A Perfect press takes 1 turn off your other cooldowns (once an ability).');
-  T('bankedcoal', 'Banked Coal', 'BC', 2, { elite: 1 }, 'When an ability spends your Aim, Grit or Embers, 1 comes back.');
+  T('bankedcoal', 'Banked Coal', 'BC', 2, { elite: 1 }, 'When an ability spends your Aim, Grit or Cinders, 1 comes back.');
   T('crushing', 'Crushing Blow', 'CB', 2, { elite: 1 }, 'Every 4th Attack in a fight hits twice as hard.');
   // ---- the Provings: passing a class's Proving gives both of its paths' stars (the evolutions' effects, in turns) ----
   T('bloodprice', 'Blood Price', 'BP', 2, { proving: 'warrior' }, 'Below half health you deal 25% more.', 'reaver');
@@ -14711,11 +14723,11 @@ function heroUnlockStateValid(u) {
 // A hero earns TALENT_TUNE.perLevel points a level after level 1. Choices change freely; a fight takes them as it starts.
 //   talentsOf(hero) -> { id: 'a' | 'b' } (only abilities the hero owns), talentPoints(hero) -> { total, spent, free }
 //   talentSet(hero, id, 'a' | 'b' | null) -> bool (null clears it; emits talentSet)
-// Save: S.abil.tal = { hero: { id: 'a' | 'b' } }.
+// Save: S.abil.tal = { hero: { id: 'a' | 'b' } }; S.abil.resTip = { hero: 1 } (the resource line has shown on its own, 75-turn-ui).
 var abilityOwned, abLearnInfo, abilityLearn, scrollCount, scrollFor, talentsOf, talentPoints, talentSet;
 {
   const SCROLL_TUNE = { replay: 0.2, pity: 5 };
-  const blank = () => ({ unl: { wren: [], tobin: [], pip: [] }, scrolls: {}, dry: {}, got: {}, tal: { wren: {}, tobin: {}, pip: {} } });
+  const blank = () => ({ unl: { wren: [], tobin: [], pip: [] }, scrolls: {}, dry: {}, got: {}, tal: { wren: {}, tobin: {}, pip: {} }, resTip: {} });
   registerState('abil', blank());
   const A = () => S.abil || (S.abil = blank());
   const lvOf = k => { try { const l = soloLevels()[k]; return l ? l.L : 1; } catch (e) { return S.L || 1; } };
@@ -22987,7 +22999,7 @@ function turnAbilityNumbers(id) {
   if (hit) parts.push(a.hits > 1 ? `Hits for about ${f(U * a.pow)} an arrow` : `Hits for about ${f(U * a.pow)}`);
   if (id === 'finalecho') parts.push(`+${f(U * 0.5)} a Bleed or Aim`);
   if (id === 'hammerfall') parts.push(`+${f(U * T.gritHammer)} a Grit`);
-  if (id === 'lanternburst') parts.push(`+${f(U * 0.6)} an Ember`);
+  if (id === 'lanternburst') parts.push(`+${f(U * 0.6)} a Cinder`);
   if (id === 'fire') parts.push(`Burn ${f(T.burnP * U)} a turn`);
   if (id === 'batswarm') parts.push(`Bats hit for ${f(U * a.pow)} a turn`);
   if (id === 'barbed' || id === 'cleave' || id === 'moonvolley') parts.push(`Bleed ${f(T.bleedP * U)} a stack a turn`);
@@ -23154,7 +23166,7 @@ function turnUsable(m, id) {
     case 'hammerfall': return h.grit >= 2 ? '' : 'need:2 Grit';
     case 'laststand': return h.lastUsed ? 'once' : '';
     case 'ignite': case 'searing': case 'wildfire': return e.burn > 0 ? '' : 'need:a Burn';
-    case 'lanternburst': return h.embers >= 3 ? '' : 'need:3 Embers';
+    case 'lanternburst': return h.embers >= 3 ? '' : 'need:3 Cinders';
   }
   return '';
 }
@@ -23708,7 +23720,7 @@ function turnBadgesFor(f) {
 function turnHeroChips() {
   const m = TURN_LIVE; if (!m || m.ended) return null;
   const h = m.h, k = m.p.heroKey;
-  return { key: k, res: k === 'wren' ? { name: 'Aim', n: h.aim, max: 3 } : k === 'tobin' ? { name: 'Grit', n: h.grit, max: 10 } : { name: 'Embers', n: h.embers, max: 5 },
+  return { key: k, res: k === 'wren' ? { name: 'Aim', n: h.aim, max: 3 } : k === 'tobin' ? { name: 'Grit', n: h.grit, max: 10 } : { name: 'Cinders', n: h.embers, max: 5 },
     guard: h.guard, ward: Math.round(h.ward), keen: h.keen > 0, last: h.last, shadow: h.shadow, sear: h.sear > 0,
     riders: Object.keys(h.dot).filter(x => h.dot[x] > 0).concat(h.chill ? ['chill'] : [], h.weaken ? ['weaken'] : [], h.blind ? ['blind'] : []),
     stagger: m.p.boss ? Math.min(100, m.e.stagger) : -1, charge: m.charge ? m.charge.mv.name : '' };
@@ -32664,6 +32676,7 @@ var handsTradeOpenPicker;
     root.textContent = '';
     if (!k || typeof HERO_PATHS !== 'object' || !HERO_PATHS[k]) { root.append(el('p', 'note', 'Choose a hero first.')); return; }
     root.append(el('p', 'note ab-note', `${heroNm(k)} takes three abilities into a fight, in the slots Q, W and E. Learn more with Scrolls from zone bosses.`));
+    if (typeof HERO_RESOURCE === 'object' && HERO_RESOURCE[k]) root.append(el('p', 'note ab-res', HERO_RESOURCE[k].txt));
     // the Scrolls
     const scrolls = el('div', 'ab-scrolls');
     for (const id of SCROLL_ORDER) {
@@ -39695,9 +39708,19 @@ var turnBarInfo = () => null;
   const legend = el('div', 'tv-legend'); legend.append(el('span', 'tv-lg-d', 'Dodge'), el('span', 'tv-lg-p', 'Parry'));
   track.append(dz, pz, fill, head); bar.append(track, legend); bar.hidden = true; bar.setAttribute('aria-hidden', 'true');
   const heroRow = el('div', 'tv-hero'), pipsLb = el('span', 'tv-res'), pips = el('span', 'tv-pips'), chips = el('span', 'tv-chips');
-  heroRow.append(pipsLb, pips, chips);
+  // the resource (Aim, Grit, Cinders) explains itself: tap the label or pips, and once on its own the first time a hero gains one
+  const resBtn = el('button', 'tv-resbtn'); resBtn.type = 'button'; resBtn.append(pipsLb, pips);
+  const resTip = el('div', 'tv-restip'); resTip.hidden = true; resTip.setAttribute('role', 'status');
+  let resTipT = 0;
+  const showRes = secs => {
+    const k = soloHero(), R = typeof HERO_RESOURCE === 'object' && k ? HERO_RESOURCE[k] : null; if (!R) return;
+    putText(resTip, R.txt); resTip.hidden = false; resTipT = performance.now() + secs * 1000;
+  };
+  resBtn.addEventListener('pointerdown', e => e.stopPropagation());
+  resBtn.addEventListener('click', e => { e.stopPropagation(); if (!resTip.hidden) { resTip.hidden = true; return; } showRes(5); });
+  heroRow.append(resBtn, chips);
   const warn = el('div', 'tv-warn'); warn.hidden = true; warn.setAttribute('role', 'status'); warn.setAttribute('aria-live', 'assertive');
-  const wrap = el('div', 'tv-top'); wrap.append(strip, turnN, bar, heroRow, warn);
+  const wrap = el('div', 'tv-top'); wrap.append(strip, turnN, bar, heroRow, resTip, warn);
   if (box) box.append(wrap);
   // a timed ability's ring: it closes on the foe; press the ability (or Attack) again as it meets the inner circle
   const ring = el('div', 'tv-ring'), ringO = el('i', 'tv-ring-o'), ringI = el('i', 'tv-ring-i'), ringT = el('b', 'tv-ring-t', 'Now!');
@@ -39752,10 +39775,15 @@ var turnBarInfo = () => null;
     putText(pipsLb, r.name);
     pips.replaceChildren(...Array.from({ length: r.max }, (_, i) => el('i', 'tv-pip' + (i < r.n ? ' on' : '') + (r.max > 5 ? ' sm' : ''))));
     pips.setAttribute('aria-label', `${r.name} ${r.n} of ${r.max}`);
+    resBtn.setAttribute('aria-label', `${r.name} ${r.n} of ${r.max}. Tap for what it does.`);
+    // the first time this hero gains its resource, the line shows on its own (once a hero: S.abil.resTip)
+    const k = soloHero();
+    if (r.n > 0 && k && S.abil && !(S.abil.resTip || (S.abil.resTip = {}))[k]) { S.abil.resTip[k] = 1; showRes(7); }
     chips.replaceChildren(...list.map(([id, n]) => { const s = el('span', 'tv-chip'); const u = stIcon(id); if (u) s.append(img('tv-chip-ic', u, id)); else s.append(el('b', null, id)); if (n) s.append(el('small', null, String(n))); return s; }),
       ...(c.last > 0 ? [el('span', 'tv-tag', 'Last Stand')] : []), ...(c.shadow > 0 ? [el('span', 'tv-tag', 'Shadow Step')] : []), ...(c.sear ? [el('span', 'tv-tag', 'Searing')] : []));
   }
   function draw() {
+    if (!resTip.hidden && performance.now() > resTipT) resTip.hidden = true;
     const on_ = typeof turnCombatOn === 'function' && turnCombatOn() && typeof turnCombatSnapshot === 'function';
     const s = on_ ? turnCombatSnapshot() : null, live = !!(s && s.phase !== 'off');
     if (!card.hidden && (!s || s.phase !== 'intro') && performance.now() - cardAt > 250) { card.hidden = true; card.classList.remove('play'); }

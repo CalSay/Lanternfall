@@ -13,7 +13,9 @@ page says what was picked.
   pauses it. Time away earns nothing from fights; gathering still works while you are away. The away screen says so.
 - **One foe at a time.** Speed decides the turn order. The strip at the top shows the next six turns.
 - **Your turn:** Attack, or one of your three abilities (Q, W, E). Attack builds your hero's resource: Aim (Wren), Grit
-  (Tobin), Embers (Pip).
+  (Tobin), Cinders (Pip). Each hero's resource explains itself (24c HERO_RESOURCE): on Hero > Abilities, when you tap
+  its pips in a fight, and once on its own the first time you gain one. Pip's was called Embers until 2026-10-02; it was
+  renamed so it does not share a name with the raid's Embers.
 - **Its turn:** one move, of one or more hits. Every hit can be parried or dodged. A parry is harder, blocks the hit and
   takes 1 turn off every cooldown. Parry every hit of a move and you counter (a sure crit). A dodge is easier and only
   avoids the hit.
@@ -27,7 +29,7 @@ page says what was picked.
 
 - **On the action bar:** three ability slots (Q, W, E) above Parry, Dodge and Attack. This is the bar the game already
   had. A passive takes a slot, has no button and is always on; its slot shows blue. A slot shows its cooldown in turns,
-  "T3" for a finisher before your third turn, and "!" when it needs something first (a Burn, 2 Grit, 3 Embers, a parry).
+  "T3" for a finisher before your third turn, and "!" when it needs something first (a Burn, 2 Grit, 3 Cinders, a parry).
 - **On the Hero tab, a new Abilities view** (between Hero and Training): your Scrolls, your three slots, and all 14 of the
   hero's abilities in their three groups (for Wren: True Aim, Blood Trail, Night Wings). Each card has the name, kind,
   cooldown, tier and what it does, and either Slot 1/2/3 buttons, a Learn button, or what it still needs.
@@ -94,8 +96,8 @@ were the same: in turn fights an evolution gives only its stats and its damage l
 
 | Star | Cost | Found | What it does |
 |---|---|---|---|
-| Ready Lamp | 1 | zone 6 boss | Start each fight with 2 Aim, 3 Grit or 2 Embers. |
-| Spark Guard | 2 | zone 8 | A parried hit gives you 1 Aim, Grit or Ember. |
+| Ready Lamp | 1 | zone 6 boss | Start each fight with 2 Aim, 3 Grit or 2 Cinders. |
+| Spark Guard | 2 | zone 8 | A parried hit gives you 1 Aim, Grit or Cinder. |
 | Turning Point | 2 | zone 10 | When the foe falls below a third of its health, your next ability is a sure crit. |
 | Hunter's Step | 1 | zone 12 | A dodge Marks the foe for 2 turns. |
 | Serrated | 2 | zone 14 | A critical hit adds 1 Bleed. |
@@ -111,7 +113,7 @@ were the same: in turn fights an evolution gives only its stats and its damage l
 | Cinder Riposte | 2 | elites | A counter sets the foe alight for 3 turns. |
 | Open Guard | 1 | elites | A counter leaves the foe Exposed: your next payoff hits 25% harder. |
 | Perfect Time | 2 | elites | A Perfect press takes 1 turn off your other cooldowns (once an ability). |
-| Banked Coal | 2 | elites | When an ability spends your Aim, Grit or Embers, 1 comes back. |
+| Banked Coal | 2 | elites | When an ability spends your Aim, Grit or Cinders, 1 comes back. |
 | Crushing Blow | 2 | elites | Every 4th Attack in a fight hits twice as hard. |
 | Blood Price | 2 | Warrior's Proving (Reaver) | Below half health you deal 25% more. |
 | Holy Sparks | 2 | Warrior's Proving (Warden) | A parried hit strikes back for 20% of your ability power, as holy damage. |
@@ -364,7 +366,7 @@ well, 1.28 casually). Wren and Pip did not change.
 
 **Why he was slow:** not his Attack. On the same save Tobin's Attack is within 10% of Wren's and Pip's. It was his kit:
 
-- Wren crits (25% base, +5% an Aim, Deadeye's sure crit), and Pip's Fireball adds a Burn and spends Embers. Tobin's
+- Wren crits (25% base, +5% an Aim, Deadeye's sure crit), and Pip's Fireball adds a Burn and spends Cinders. Tobin's
   damage was flat: Shield Bash 160%, Heavy Strike 200%, Hammerfall 140% + 25% a Grit, and an Attack worth +3% a Grit.
   Played casually he parries less, so he had less Grit, fewer counters and fewer cooldown refunds: his casual gap
   (x1.3-1.7) was wider than his good one.

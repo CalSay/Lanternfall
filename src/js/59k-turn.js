@@ -239,7 +239,7 @@ function turnAbilityNumbers(id) {
   if (hit) parts.push(a.hits > 1 ? `Hits for about ${f(U * a.pow)} an arrow` : `Hits for about ${f(U * a.pow)}`);
   if (id === 'finalecho') parts.push(`+${f(U * 0.5)} a Bleed or Aim`);
   if (id === 'hammerfall') parts.push(`+${f(U * T.gritHammer)} a Grit`);
-  if (id === 'lanternburst') parts.push(`+${f(U * 0.6)} an Ember`);
+  if (id === 'lanternburst') parts.push(`+${f(U * 0.6)} a Cinder`);
   if (id === 'fire') parts.push(`Burn ${f(T.burnP * U)} a turn`);
   if (id === 'batswarm') parts.push(`Bats hit for ${f(U * a.pow)} a turn`);
   if (id === 'barbed' || id === 'cleave' || id === 'moonvolley') parts.push(`Bleed ${f(T.bleedP * U)} a stack a turn`);
@@ -406,7 +406,7 @@ function turnUsable(m, id) {
     case 'hammerfall': return h.grit >= 2 ? '' : 'need:2 Grit';
     case 'laststand': return h.lastUsed ? 'once' : '';
     case 'ignite': case 'searing': case 'wildfire': return e.burn > 0 ? '' : 'need:a Burn';
-    case 'lanternburst': return h.embers >= 3 ? '' : 'need:3 Embers';
+    case 'lanternburst': return h.embers >= 3 ? '' : 'need:3 Cinders';
   }
   return '';
 }
@@ -960,7 +960,7 @@ function turnBadgesFor(f) {
 function turnHeroChips() {
   const m = TURN_LIVE; if (!m || m.ended) return null;
   const h = m.h, k = m.p.heroKey;
-  return { key: k, res: k === 'wren' ? { name: 'Aim', n: h.aim, max: 3 } : k === 'tobin' ? { name: 'Grit', n: h.grit, max: 10 } : { name: 'Embers', n: h.embers, max: 5 },
+  return { key: k, res: k === 'wren' ? { name: 'Aim', n: h.aim, max: 3 } : k === 'tobin' ? { name: 'Grit', n: h.grit, max: 10 } : { name: 'Cinders', n: h.embers, max: 5 },
     guard: h.guard, ward: Math.round(h.ward), keen: h.keen > 0, last: h.last, shadow: h.shadow, sear: h.sear > 0,
     riders: Object.keys(h.dot).filter(x => h.dot[x] > 0).concat(h.chill ? ['chill'] : [], h.weaken ? ['weaken'] : [], h.blind ? ['blind'] : []),
     stagger: m.p.boss ? Math.min(100, m.e.stagger) : -1, charge: m.charge ? m.charge.mv.name : '' };

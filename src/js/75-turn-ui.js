@@ -103,9 +103,19 @@ var turnBarInfo = () => null;
   const legend = el('div', 'tv-legend'); legend.append(el('span', 'tv-lg-d', 'Dodge'), el('span', 'tv-lg-p', 'Parry'));
   track.append(dz, pz, fill, head); bar.append(track, legend); bar.hidden = true; bar.setAttribute('aria-hidden', 'true');
   const heroRow = el('div', 'tv-hero'), pipsLb = el('span', 'tv-res'), pips = el('span', 'tv-pips'), chips = el('span', 'tv-chips');
-  heroRow.append(pipsLb, pips, chips);
+  // the resource (Aim, Grit, Cinders) explains itself: tap the label or pips, and once on its own the first time a hero gains one
+  const resBtn = el('button', 'tv-resbtn'); resBtn.type = 'button'; resBtn.append(pipsLb, pips);
+  const resTip = el('div', 'tv-restip'); resTip.hidden = true; resTip.setAttribute('role', 'status');
+  let resTipT = 0;
+  const showRes = secs => {
+    const k = soloHero(), R = typeof HERO_RESOURCE === 'object' && k ? HERO_RESOURCE[k] : null; if (!R) return;
+    putText(resTip, R.txt); resTip.hidden = false; resTipT = performance.now() + secs * 1000;
+  };
+  resBtn.addEventListener('pointerdown', e => e.stopPropagation());
+  resBtn.addEventListener('click', e => { e.stopPropagation(); if (!resTip.hidden) { resTip.hidden = true; return; } showRes(5); });
+  heroRow.append(resBtn, chips);
   const warn = el('div', 'tv-warn'); warn.hidden = true; warn.setAttribute('role', 'status'); warn.setAttribute('aria-live', 'assertive');
-  const wrap = el('div', 'tv-top'); wrap.append(strip, turnN, bar, heroRow, warn);
+  const wrap = el('div', 'tv-top'); wrap.append(strip, turnN, bar, heroRow, resTip, warn);
   if (box) box.append(wrap);
   // a timed ability's ring: it closes on the foe; press the ability (or Attack) again as it meets the inner circle
   const ring = el('div', 'tv-ring'), ringO = el('i', 'tv-ring-o'), ringI = el('i', 'tv-ring-i'), ringT = el('b', 'tv-ring-t', 'Now!');
@@ -160,10 +170,15 @@ var turnBarInfo = () => null;
     putText(pipsLb, r.name);
     pips.replaceChildren(...Array.from({ length: r.max }, (_, i) => el('i', 'tv-pip' + (i < r.n ? ' on' : '') + (r.max > 5 ? ' sm' : ''))));
     pips.setAttribute('aria-label', `${r.name} ${r.n} of ${r.max}`);
+    resBtn.setAttribute('aria-label', `${r.name} ${r.n} of ${r.max}. Tap for what it does.`);
+    // the first time this hero gains its resource, the line shows on its own (once a hero: S.abil.resTip)
+    const k = soloHero();
+    if (r.n > 0 && k && S.abil && !(S.abil.resTip || (S.abil.resTip = {}))[k]) { S.abil.resTip[k] = 1; showRes(7); }
     chips.replaceChildren(...list.map(([id, n]) => { const s = el('span', 'tv-chip'); const u = stIcon(id); if (u) s.append(img('tv-chip-ic', u, id)); else s.append(el('b', null, id)); if (n) s.append(el('small', null, String(n))); return s; }),
       ...(c.last > 0 ? [el('span', 'tv-tag', 'Last Stand')] : []), ...(c.shadow > 0 ? [el('span', 'tv-tag', 'Shadow Step')] : []), ...(c.sear ? [el('span', 'tv-tag', 'Searing')] : []));
   }
   function draw() {
+    if (!resTip.hidden && performance.now() > resTipT) resTip.hidden = true;
     const on_ = typeof turnCombatOn === 'function' && turnCombatOn() && typeof turnCombatSnapshot === 'function';
     const s = on_ ? turnCombatSnapshot() : null, live = !!(s && s.phase !== 'off');
     if (!card.hidden && (!s || s.phase !== 'intro') && performance.now() - cardAt > 250) { card.hidden = true; card.classList.remove('play'); }

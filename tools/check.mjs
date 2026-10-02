@@ -7179,10 +7179,21 @@ if (section('turn UI (browser)')) try {
           if (st.ph === 'hero') await X(st.cd ? 'soloAttack()' : 'soloAbility({ slot: 0 })');
         }
         const out = { seen, errors };
+        // the resource explains itself: once on its own the first time Wren gains Aim, and on a tap of the pips
+        for (let i = 0; i < 60 && !(await X(`!!(S.abil.resTip && S.abil.resTip.wren)`)); i++) {
+          if (await X(`turnCombatSnapshot().phase === 'hero'`)) await X(`turnCombatAction('attack')`);
+          await page.waitForTimeout(150);
+        }
+        out.resAuto = await X(`!!(S.abil.resTip && S.abil.resTip.wren)`);
+        if (await X(`!!document.querySelector('.tv-resbtn') && document.querySelector('.tv-resbtn').offsetParent !== null`)) {
+          await X(`document.querySelector('.tv-restip').hidden = true; document.querySelector('.tv-resbtn').click(); 1`);
+          out.resTap = await X(`(() => { const t = document.querySelector('.tv-restip'); return t && !t.hidden ? t.textContent : ''; })()`);
+        }
         if (abilities) {
           await X(`S.L = Math.max(S.L, 10); S.abil.scrolls = { moss: 1, hollow: 1 }; setTab('abilities'); 1`); await page.waitForTimeout(400);
           out.cards = await X(`document.querySelectorAll('#sec-abilities .ab-card').length`);
           out.groups = await X(`[...document.querySelectorAll('#sec-abilities .ab-pname')].map(x => x.textContent).join()`);
+          out.resLine = await X(`(document.querySelector('#sec-abilities .ab-res') || {}).textContent || ''`);
           const learn = '#sec-abilities .ab-card[data-ab="powershot"] .ab-learn';
           await page.click(learn); await page.waitForTimeout(150);
           out.armed = await X(`(document.querySelector('${learn}') || {}).textContent || ''`);
@@ -7216,6 +7227,8 @@ if (section('turn UI (browser)')) try {
         `turn UI: a Proving fights in turns; its banner sits where the Next up chip was and counts foes and turns, and goes on Give up (${JSON.stringify(on.proving)}, ${on.provingEnd})`);
       assert(on.assist0 === 'Wider timing windows: Off' && on.assist1 === 'Wider timing windows: On' && on.assistOn && /parry and dodge/.test(on.assistNote),
         `turn UI: Settings > Combat has Wider timing windows, off by default; a tap turns it on, saves it and widens the parry window from the next fight (${JSON.stringify([on.assist0, on.assist1, on.assistOn, on.assistNote])})`);
+      assert(on.resAuto && /^Aim: each Attack gives 1/.test(on.resTap || '') && /^Aim: /.test(on.resLine || ''),
+        `turn UI: Aim explains itself: once on its own, on a tap of the pips, and on Hero > Abilities (${on.resAuto}, ${JSON.stringify(on.resTap)}, ${JSON.stringify(on.resLine)})`);
       assert(!on.errors.length, 'turn UI: no page errors' + (on.errors.length ? ': ' + on.errors[0] : ''));
       const port = await run(360, 740, false);
       assert(/VS/.test(port.seen.card) && port.seen.strip >= 5 && !port.errors.length, `turn UI 360x740: the versus card and turn strip work in portrait (${JSON.stringify(port.seen)})`);

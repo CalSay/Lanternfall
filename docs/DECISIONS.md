@@ -121,6 +121,8 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   get hit by a boss. Regular monsters we should be able to take a few bits but bosses should be serious." Like
   Expedition 33: basic enemies die quickly, bosses take a lot of hits. Built as the boss pass (`combat-turn-build.md`).
   (2026-10-02)
+- **Explain each hero's resource** (Aim, Grit, Cinders) in the game. Pip's resource is called **Cinders**, not Embers,
+  so it does not clash with the raid's Embers. (2026-10-02)
 - **Leftovers:** a local raid fight is accepted; Deep Elders give at most one buff item a run; Hollow bosses give no
   buff items. (2026-09-28)
 

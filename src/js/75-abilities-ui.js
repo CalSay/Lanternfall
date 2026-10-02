@@ -25,6 +25,7 @@
     root.textContent = '';
     if (!k || typeof HERO_PATHS !== 'object' || !HERO_PATHS[k]) { root.append(el('p', 'note', 'Choose a hero first.')); return; }
     root.append(el('p', 'note ab-note', `${heroNm(k)} takes three abilities into a fight, in the slots Q, W and E. Learn more with Scrolls from zone bosses.`));
+    if (typeof HERO_RESOURCE === 'object' && HERO_RESOURCE[k]) root.append(el('p', 'note ab-res', HERO_RESOURCE[k].txt));
     // the Scrolls
     const scrolls = el('div', 'ab-scrolls');
     for (const id of SCROLL_ORDER) {
