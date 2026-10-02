@@ -121,6 +121,13 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   get hit by a boss. Regular monsters we should be able to take a few bits but bosses should be serious." Like
   Expedition 33: basic enemies die quickly, bosses take a lot of hits. Built as the boss pass (`combat-turn-build.md`).
   (2026-10-02)
+- **Gear stats work in turn fights** (owner: "Gear stats should be looked at then I guess?"). Built as the gear pass: every
+  line a player can roll does something in a turn fight. Threat reads as Counter (counter damage), Area as Damage over time, Attack speed
+  as Speed (the Speed gear line), Spell power as spell damage (fire, frost, holy); Control staggers bosses, Pierce
+  ignores armour, Healing and Ward work on heals and Wards, Focus is a steady cooldown refund, and the Golemfist doubles
+  the Attack only. Each Cinder Pip holds adds 4% to her fire damage (the passive Claude offered; the owner has not ruled on it yet), so she kills
+  bosses about as fast as Wren; bosses and Tobin's Grit were retuned to keep the boss bands and Tobin a little slower.
+  (2026-10-02; `combat-turn-build.md` "Gear stats in turn fights")
 - **Explain each hero's resource** (Aim, Grit, Cinders) in the game. Pip's resource is called **Cinders**, not Embers,
   so it does not clash with the raid's Embers. (2026-10-02)
 - **Leftovers:** a local raid fight is accepted; Deep Elders give at most one buff item a run; Hollow bosses give no

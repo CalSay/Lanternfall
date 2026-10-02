@@ -7578,17 +7578,21 @@ if (section('C29 late zones and Wider timing windows (core)')) try {
     assert(!same.length, `late zones: zones 1-34 keep the first reference Attack share; zones 1-3 and the Deepwell keep 1.2x HP (${same.join() || 'ok'})`);
     assert(!rising.length && E('turnRefAtkX(35) <= 0.2 / 1.6 && turnRefHp(35) / mobHp(35) < 1.2 && turnRefHp(35, true) === turnRefHp(35)'),
       `late zones: from zone 35 the reference leaves out the x1.7 region step, and its Attack and HP still grow every zone, so turnPowerZone holds (${rising.join() || 'ok'})`); }
-  // the late fixture made a hero who keeps up (as sim --report turns late-kept-38): good players win, fights stay in the band
+  // the late fixture made a hero who keeps up (as sim --report turns late-kept-38): good players win, fights stay in the band.
+  // The gear pass (2026-10-02): her caster affix lines work now, so, like every "keeps up" hero (sim --report heroes, the
+  // mid-game HP checks), she keeps only the shared HP line; her Lantern's own line counts
   { const g = loadCore({ seed: 3, turns: true, storage: memoryStorage({ [KEY]: FX('late') }) }), E = s => g.eval(s);
     E(`loadSave(); S.L = 41; S.solo.asc.pip = 1; S.solo.tr.pip.atk = 41;
-      for (const sl of Object.keys(S.equip)) { const it = itemById(S.equip[sl]); if (it && !['pick', 'axe', 'sickle', 'spear'].includes(it.slot)) { it.r = 'epic'; it.plus = 10; } }
+      for (const sl of Object.keys(S.equip)) { const it = itemById(S.equip[sl]); if (it && !['pick', 'axe', 'sickle', 'spear'].includes(it.slot)) { it.r = 'epic'; it.plus = 10; if (it.a) it.a = it.a.filter(l => l[0] === 'hp'); } }
       S.abil.unl.pip = ['spark', 'nova']; S.solo.eq.pip = ['fire', 'spark', 'nova']; S.maxZone = 38; setZone(38); S.activity = 'fight'; arena = null; gearDirty()`);
     const run = (boss, skill) => E(`fightBoss = ${boss}; spawn(); (r => ({ win: r.kills / Math.max(1, r.kills + r.deaths), turns: r.totalHeroTurns / Math.max(1, r.completedFights) }))(turnCombatSample({ profile: turnCombatProfile(), seconds: 1800, seed: 3, skill: ${JSON.stringify(skill)} }))`);
     const good = { parry: 0.6, dodge: 0.9, perfect: 0.4, good: 0.45 }, casual = { parry: 0.25, dodge: 0.5, perfect: 0.1, good: 0.4 };
     const n = run(false, good), b = run(true, good), c = run(true, casual);
-    // the boss pass (owner, 2026-10-02: bosses take longer and hit hard): a zone-38 boss takes 8-14 hero turns played well
-    assert(n.win >= 0.98 && n.turns >= 2 && n.turns <= 4 && b.win >= 0.95 && b.turns >= 8 && b.turns <= 14 && c.win >= 0.4 && c.win <= 0.98 && !g.errors.length,
-      `late zones: a zone-38 hero who keeps up wins normal foes in 2-4 turns and bosses in 8-14 played well (the boss pass), and 40-98% of bosses played casually (${JSON.stringify({ n, b, c })})`); }
+    // the boss pass (owner, 2026-10-02: bosses take longer and hit hard): a zone-38 boss takes 8-14 hero turns played well.
+    // Normal foes: 2-4 turns until the gear pass (2026-10-02); with her Lantern's line counting she takes 1.9, as kept-up
+    // heroes at zones 8-34 already did (1.2-2.5, combat-turn-build.md): basic foes die quickly (owner, the E33 brief)
+    assert(n.win >= 0.98 && n.turns >= 1.5 && n.turns <= 4 && b.win >= 0.95 && b.turns >= 8 && b.turns <= 14 && c.win >= 0.4 && c.win <= 0.98 && !g.errors.length,
+      `late zones: a zone-38 hero who keeps up wins normal foes in 1.5-4 turns and bosses in 8-14 played well (the boss pass), and 40-98% of bosses played casually (${JSON.stringify({ n, b, c })})`); }
   // Wider timing windows (Settings > Combat; owner 2026-10-02): off by default, parry and dodge windows x1.5 under the caps, rewards unchanged
   { const g = loadCore({ seed: 29, turns: true }), E = s => g.eval(s);
     E('soloPick("wren", {now:true}); S.onboard && (S.onboard.tips = false, S.onboard.all = true); S.activity = "fight"; spawn()');
@@ -7618,9 +7622,9 @@ if (section('C29 boss pass (core)')) try {
     // a zone boss's HP in reference Attacks: 16 x the zone's hpX (x bossEase in zones 1-3); the Fenmother 30 x regionHpX; normal foes unchanged
     const at = (z, boss) => E(`(() => { S.maxZone = Math.max(S.maxZone, ${z}); setZone(${z}); fightBoss = ${boss}; spawn(); const f = combatFoes()[0];
       return { a: f.max / turnRefAtk(${z}), hx: f.tk.hx, cx: f.tk.cx, region: f.tk.region, gold: f.gold, full: turnCombatProfile().fullHp }; })()`);
-    const want = { 1: 16 * 0.65, 2: 16 * 0.8, 3: 16 * 0.9, 10: 16 * 1.8, 15: 16 * 2.3, 20: 16 * 2.2, 30: 16 * 3.3, 35: 30 * 1.25, 38: 16 * 1.5 }, bad = [];
+    const want = { 1: 16 * 0.65, 2: 16 * 0.8, 3: 16 * 0.9, 10: 16 * 1.8, 15: 16 * 2.5, 20: 16 * 2.4, 30: 16 * 3.6, 35: 30 * 1.4, 38: 16 * 1.85 }, bad = [];
     for (const z of Object.keys(want)) { const r = at(+z, true); if (!(r.a > want[z] * 0.94 && r.a < want[z] * 1.06)) bad.push(`${z}: ${r.a.toFixed(1)} (want ${want[z].toFixed(1)})`); }
-    assert(!bad.length, `boss pass: a boss lasts longer as the game goes on: its HP in reference Attacks is 16 x the zone's hpX (zones 1-3 keep their onboarding), the Fenmother 30 x 1.25 (${bad.join('; ') || 'ok'})`);
+    assert(!bad.length, `boss pass: a boss lasts longer as the game goes on: its HP in reference Attacks is 16 x the zone's hpX (zones 1-3 keep their onboarding), the Fenmother 30 x 1.4 (the gear pass: was 1.25; zones 15-34 x1.1; zone 38 16 x 1.85, was 1.5) (${bad.join('; ') || 'ok'})`);
     const n20 = at(20, false), b20 = at(20, true), b3 = at(3, true), b8 = at(8, true), b38 = at(38, true);
     // the mid-game HP pass: a normal foe's hits x0.7 from zone 8 to 34 (normHitX) against the higher reference HP
     const n3 = at(3, false), n38 = at(38, false);
@@ -7628,7 +7632,7 @@ if (section('C29 boss pass (core)')) try {
       `boss pass: a normal foe keeps 5 reference Attacks; its hits x0.7 in zones 8-34 (the mid-game HP pass), as written in zones 1-3 and 35+ (${JSON.stringify([n3, n20, n38].map(r => [+r.a.toFixed(2), r.hx]))})`);
     assert(b3.hx === 1 && b3.cx === 1 && Math.abs(b8.hx - 1.6) < 1e-9 && Math.abs(b8.cx - 1.3) < 1e-9 && Math.abs(b38.hx - 1.9) < 1e-9 && Math.abs(b38.cx - 1.35) < 1e-9 && b20.full,
       `boss pass: boss hits x1.6 at zone 8 (charges x1.3 more), x1.9 (x1.35) from zone 35; zones 1-3 as before; a zone boss is met at full health (${JSON.stringify([b3, b8, b38].map(r => [r.hx, r.cx]))})`);
-    assert(Math.abs(b20.gold / n20.gold - 5 * (1 + 1.2 * 0.5)) < 1e-6, `boss pass: a longer boss pays more: 5 x (1 + half its extra length) a normal foe's gold (${(b20.gold / n20.gold).toFixed(2)})`);
+    assert(Math.abs(b20.gold / n20.gold - 5 * (1 + 1.4 * 0.5)) < 1e-6, `boss pass: a longer boss pays more: 5 x (1 + half its extra length) a normal foe's gold (${(b20.gold / n20.gold).toFixed(2)})`);
     // the Deepwell's Elders and the Provings' bosses keep their own numbers (they pass a move set and their HP in Attacks)
     const deep = E(`(() => { const f = { boss: true, type: 'bones', name: 'Elder' }; turnFoeSetup(f, 30, { set: 'bones', hpA: TURN_TUNE.deep.hpA.boss }); return { a: f.max / turnRefAtk(30), hx: f.tk.hx, cx: f.tk.cx }; })()`);
     assert(deep.a > 14 * 0.94 && deep.a < 14 * 1.06 && deep.hx === 1 && deep.cx === 1, `boss pass: a Deepwell boss floor (and a Proving's boss) keeps its HP and hits (${JSON.stringify(deep)})`);
@@ -7636,7 +7640,7 @@ if (section('C29 boss pass (core)')) try {
   // the late fixture made a hero who keeps up (sim late-kept-38): what a landed hit costs, and a gear tier behind or ahead
   { const kept = d => { const g = loadCore({ seed: 3, turns: true, storage: memoryStorage({ [KEY]: FX('late') }) }), E = s => g.eval(s);
       E(`loadSave(); S.L = 41; S.solo.asc.pip = 1; S.solo.tr.pip.atk = 41;
-        for (const sl of Object.keys(S.equip)) { const it = itemById(S.equip[sl]); if (it && !['pick', 'axe', 'sickle', 'spear'].includes(it.slot)) { it.r = 'epic'; it.plus = 10; it.t += ${d}; } }
+        for (const sl of Object.keys(S.equip)) { const it = itemById(S.equip[sl]); if (it && !['pick', 'axe', 'sickle', 'spear'].includes(it.slot)) { it.r = 'epic'; it.plus = 10; it.t += ${d}; if (it.a) it.a = it.a.filter(l => l[0] === 'hp'); } }
         S.abil.unl.pip = ['spark', 'nova']; S.solo.eq.pip = ['fire', 'spark', 'nova']; S.maxZone = 38; setZone(38); S.activity = 'fight'; arena = null; gearDirty()`);
       const hit = boss => E(`(() => { fightBoss = ${boss}; spawn(); const p = turnCombatProfile(), k = p.refHp * p.hitX * p.bossHitX / p.heroMaxHp, ch = p.script.find(m => m.charge);
         return { name: p.foeName + ' ' + p.script.map(m => m.id).join('+'), hit: k * Math.max(...p.script.filter(m => !m.charge).flatMap(m => m.hits.map(h => h.x))), charge: ch ? k * p.bossChargeX * ch.hits.reduce((a, h) => a + h.x, 0) : 0 }; })()`);
@@ -7714,6 +7718,67 @@ if (section('C29 mid-game HP and Wren (core)')) try {
       return { ref: p.refHp / mobHp(20), hx: f.tk.hx, zone: turnRefHp(20) / mobHp(20) }; })()`);
     assert(Math.abs(d.ref - 1.2) < 1e-9 && d.hx === 1 && d.zone > 2, `mid-game HP: a Deepwell foe at zone 20 keeps the first reference HP (1.2x) and its hits; a zone foe there meets the new one (${JSON.stringify(d)})`); }
 } catch (e) { fail('C29 mid-game HP crashed: ' + (e.stack || e)); }
+
+if (section('C29 gear stats in turn fights (core)')) try {
+  // the gear pass (owner, 2026-10-02: "Gear stats should be looked at then I guess?"; combat-turn-build.md "Gear stats in
+  // turn fights"): every combat line a player can roll changes a turn fight. Each line below did nothing in turns before.
+  // A scratch fight: no crits (random 0.99), every hit counted; the gear line is set on the cached gear() for one profile,
+  // against the same profile with that line at 0.
+  const g = loadCore({ seed: 41, turns: true }), E = s => g.eval(s), J = JSON.stringify;
+  E(`globalThis.__gp = (hero, lines, act, o) => { o = o || {}; soloPick(hero, {now:true}); S.L = 20; S.activity = 'fight'; arena = null; gearDirty(); fightBoss = !!o.boss; spawn();
+      Object.assign(gear(), lines); const p = turnCombatProfile(); if (o.arm != null) p.foeArm = o.arm;
+      const r = { dmg: 0, heal: 0, hp: o.hp != null ? o.hp * p.heroMaxHp : p.heroMaxHp, p };
+      const io = { random: () => 0.99, emit() {}, alive: () => ({ hero: true, foe: true }), heroHp: () => r.hp, foeHp: () => 1e18, foe: () => null, foeX: () => 1,
+        damageFoe: d => { r.dmg += d; return d; }, damageHero: d => d, healHero: d => { r.heal += d; r.hp = Math.min(p.heroMaxHp, r.hp + d); }, healFoe() {}, defense() {} };
+      const m = turnNew(p, io); r.m = m; act(m, io, p, r); gearDirty(); return r; }`);
+  const zero = line => Object.fromEntries(Object.keys(line).map(k => [k, k === 'tap' ? 1 : 0]));
+  const ratio = (hero, line, act, o) => E(`(() => { const act = ${act}, a = __gp(${J(hero)}, ${J(zero(line))}, act, ${J(o || {})}), b = __gp(${J(hero)}, ${J(line)}, act, ${J(o || {})});
+    return { a: a.dmg, b: b.dmg, x: +(b.dmg / a.dmg).toFixed(4) }; })()`);
+  const prof = (hero, line, f) => E(`[__gp(${J(hero)}, ${J(zero(line))}, () => {}).p.${f}, __gp(${J(hero)}, ${J(line)}, () => {}).p.${f}]`);
+  // Spell power (the Lantern's line, caster affixes): fire, frost and holy hits, not physical ones
+  const sp = ratio('pip', { spell: 50 }, `(m, io) => turnHeroAct(m, io, 'spark')`), sw = ratio('wren', { spell: 50 }, `(m, io) => turnHeroAct(m, io, 'echo')`);
+  assert(Math.abs(sp.x - 1.5) < 1e-6 && Math.abs(sw.x - 1) < 1e-9, `gear pass: Spell power 50% makes Pip's Spark (fire) hit 50% harder and leaves Wren's Echo Shot (physical) alone (${sp.x}, ${sw.x})`);
+  // the Lantern's line is about the Quiver's: 0.2 x item power, at most 45% (the Quiver: crit 0.12 x power, at most 35%)
+  const lan = E(`(() => { const it = { id: -1, slot: 'lantern', t: 4, r: 'rare', plus: 5 }, p = itemPower(it), l = itemLines(it)[0]; return { p, l, txt: craftFmtLine(l[0], l[1]) }; })()`);
+  assert(lan.l[0] === 'spell' && Math.abs(lan.l[1] - Math.min(45, 0.2 * lan.p)) < 1e-9 && /spell damage$/.test(lan.txt), `gear pass: a Lantern's base line is spell damage, 0.2 x its power, at most 45% (${lan.txt})`);
+  // Damage over time (the old Area line): Burn ticks and Ignite
+  const dot = ratio('pip', { area: 40 }, `(m, io, p) => { m.e.burn = 3; m.e.burnDmg = p.U; turnBegin(m, 'foe', io); }`);
+  const ign = ratio('pip', { area: 40 }, `(m, io, p) => { m.e.burn = 3; m.e.burnDmg = p.U; turnHeroAct(m, io, 'ignite'); }`);
+  assert(Math.abs(dot.x - 1.4) < 1e-6 && Math.abs(ign.x - 1.4) < 1e-6 && /damage over time/.test(E(`craftFmtLine('area', 40)`)),
+    `gear pass: Damage over time (the old Area line) 40% makes a Burn tick and Ignite 40% bigger (${dot.x}, Ignite ${ign.x})`);
+  // Control: a Stun or Freeze staggers a boss more
+  const ctl = E(`(() => { const s = l => __gp('tobin', l, (m, io, p, r) => { turnControl(m, io, 'stun'); r.dmg = m.e.stagger; }, { boss: true }).dmg; return [s({ control: 0 }), s({ control: 60 })]; })()`);
+  assert(ctl[0] === 25 && Math.abs(ctl[1] - 40) < 1e-9, `gear pass: Control 60% makes a Stun stagger a boss 40 (was 25) (${ctl.join(' -> ')})`);
+  // Counter (the old Threat line): counters hit harder
+  const thr = prof('tobin', { threat: 50 }, 'counter');
+  assert(Math.abs(thr[1] / thr[0] - 1.5) < 1e-9 && /counter damage/.test(E(`craftFmtLine('threat', 50)`)), `gear pass: Counter (the old Threat line) 50% makes counters hit 50% harder (${(thr[1] / thr[0]).toFixed(3)})`);
+  // Pierce: a physical hit ignores that share of the foe's armour
+  const prc = ratio('wren', { pierce: 100 }, `(m, io) => turnHeroAct(m, io, 'attack')`, { arm: 0.3 });
+  assert(Math.abs(prc.x - 1 / 0.7) < 1e-3, `gear pass: Pierce 100% ignores a foe's 30% armour (${prc.x})`);
+  // Healing: heals and Wards; Ward: healing past full HP becomes a Ward
+  const hl = E(`(() => { const h = l => __gp('pip', l, (m, io, p, r) => { turnHeal(m, io, 0.1 * p.heroMaxHp); turnWard(m, 0.1); r.dmg = r.heal / p.heroMaxHp; r.w = m.h.ward / p.heroMaxHp; }, { hp: 0.5 });
+    const a = h({ heal: 0 }), b = h({ heal: 50 }); return [a.dmg, b.dmg, a.w, b.w]; })()`);
+  assert(Math.abs(hl[1] / hl[0] - 1.5) < 1e-6 && Math.abs(hl[3] / hl[2] - 1.5) < 1e-6, `gear pass: Healing 50% makes heals and Wards 50% bigger (${hl.map(x => x.toFixed(3)).join(', ')})`);
+  const wd = E(`(() => { const w = l => __gp('pip', l, (m, io, p, r) => { turnHeal(m, io, 0.2 * p.heroMaxHp); r.dmg = m.h.ward / p.heroMaxHp; }, { hp: 0.95 }).dmg; return [w({ ward: 0, heal: 0 }), w({ ward: 10, heal: 0 })]; })()`);
+  assert(wd[0] === 0 && Math.abs(wd[1] - 0.1) < 1e-9, `gear pass: with the Ward line, healing past full HP becomes a Ward, up to the line (${wd.join(', ')})`);
+  // Focus: a steady refund (a 20% line takes a turn off every cooldown every 4 hero turns), not rounded away
+  const fc = E(`(() => { const f = l => __gp('pip', l, (m, io, p, r) => { m.cds.fire = 5; for (let i = 0; i < 4; i++) turnBegin(m, 'hero', io); r.dmg = m.cds.fire + 1; }).dmg - 1;
+    soloPick('pip', {now:true}); gearDirty(); gear().haste = 0; const cd0 = turnCdFor('fire'); gear().haste = 20; const cd = turnCdFor('fire'); gearDirty(); return [f({ haste: 0 }), f({ haste: 20 }), cd0, cd]; })()`);
+  assert(fc[0] === 1 && fc[1] === 0 && fc[2] === fc[3], `gear pass: Focus 20% takes a turn off every cooldown every 4 of your turns; the cooldown shown stays as written (${fc.join(', ')})`);
+  // Speed (the old Attack speed line): you act more often
+  const spd = prof('wren', { aspd: 10 }, 'heroSpd');
+  assert(Math.abs(spd[1] / spd[0] - 1.1) < 1e-9 && E(`CRAFT_STATS.aspd.live && CRAFT_STATS.aspd.n === 'Speed'`), `gear pass: Speed (the old Attack speed line) 10% makes you 10% faster (${spd.join(' -> ')})`);
+  // the Golemfist (tap): "Your Attack deals double damage" is the Attack's, not every ability's
+  const tA = prof('tobin', { tap: 2 }, 'A'), tU = prof('tobin', { tap: 2 }, 'U');
+  assert(Math.abs(tA[1] / tA[0] - 2) < 1e-9 && Math.abs(tU[1] / tU[0] - 1) < 1e-9, `gear pass: the Golemfist doubles the Attack only, not abilities (${(tA[1] / tA[0]).toFixed(3)}, ${(tU[1] / tU[0]).toFixed(3)})`);
+  // Pip's Cinders: each one she holds adds 4% to her fire damage, and her resource line says so
+  const cin = E(`(() => { const r = n => __gp('pip', { spell: 0 }, (m, io) => { m.h.embers = n; turnHeroAct(m, io, 'spark'); }).dmg; return [r(0), r(3)]; })()`);
+  assert(Math.abs(cin[1] / cin[0] - 1.12) < 1e-6 && E(`TURN_TUNE.cinderX === 0.04 && /Each Cinder you hold adds 4% to your fire damage\\./.test(HERO_RESOURCE.pip.txt)`),
+    `gear pass: each Cinder Pip holds adds 4% to her fire damage, and Hero > Abilities says so (3 Cinders: x${(cin[1] / cin[0]).toFixed(3)})`);
+  // nothing a hero can roll is marked "not active yet" (75-craft-ui) any more
+  const dead = E(`Object.keys(CRAFT_STATS).filter(k => !CRAFT_STATS[k].live)`);
+  assert(!dead.length && !g.errors.length, `gear pass: every gear stat is live (${dead.join(', ') || 'all'}; ${g.errors.slice(0, 2).join(' | ')})`);
+} catch (e) { fail('C29 gear stats crashed: ' + (e.stack || e)); }
 
 if (section('C29 Deepwell and Provings in turns (core)')) try {
   // owner (2026-10-02): the Deepwell and the Provings fight in turns too. A floor's foes come one at a time; Oil burns only

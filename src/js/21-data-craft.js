@@ -158,19 +158,22 @@ const CRAFT_STATS = {
   might: { n: 'Damage', f: '+{v}% damage', live: true, gear: 'might' },
   hp: { n: 'Max HP', f: '+{v}% max HP' },
   armour: { n: 'Armour', f: '+{v} armour', dp: 1 },
-  threat: { n: 'Threat', f: '+{v}% threat', dp: 1, cap: 100 },
+  // Gear stats in turn fights (gear pass, 2026-10-02; combat-turn-build.md "Gear stats in turn fights"): every line a
+  // player can roll does something in a turn fight (59k turnMakeProfile reads them). Keys stay for saves; some lines
+  // read differently now: Threat is counter damage, Area damage over time, Attack speed is Speed.
+  threat: { n: 'Counter', f: '+{v}% counter damage', dp: 1, cap: 100 },
   block: { n: 'Block', f: '+{v}% block chance', dp: 1, cap: 40 },
   attack: { n: 'Attack', f: '+{v}% attack', live: true },
   crit: { n: 'Crit', f: '+{v}% crit chance', dp: 1, cap: 35, live: true, gear: 'crit' },
   critMult: { n: 'Crit damage', f: '+{v}x crit damage', dp: 2, live: true, gear: 'critMult' },
   pierce: { n: 'Pierce', f: 'Ignores {v}% of armour', dp: 1, cap: 100 },
-  spell: { n: 'Spell power', f: '+{v}% spell power', live: true },
-  area: { n: 'Area', f: '+{v}% splash damage', dp: 1, cap: 50 },
-  control: { n: 'Control', f: 'Stuns and slows last {v}% longer', dp: 1, cap: 100 },
-  heal: { n: 'Healing', f: '+{v}% healing' },
-  ward: { n: 'Ward', f: 'Overhealing shields up to {v}% HP', dp: 1, cap: 40 },
+  spell: { n: 'Spell power', f: '+{v}% spell damage', dp: 1, cap: 75, live: true },   // fire, frost and holy hits (Burn too)
+  area: { n: 'Damage over time', f: '+{v}% damage over time', dp: 1, cap: 50 },   // Burn, Bleed, bats, Ignite (one foe: no splash)
+  control: { n: 'Control', f: 'Stuns and Freezes stagger bosses {v}% more', dp: 1, cap: 100 },
+  heal: { n: 'Healing', f: '+{v}% healing and Wards', cap: 100 },
+  ward: { n: 'Ward', f: 'Overhealing becomes a Ward, up to {v}% HP', dp: 1, cap: 40 },
   haste: { n: 'Focus', f: '-{v}% ability cooldown', dp: 1, cap: 30 },   // owner 2026-09-30: shown as Focus (Haste now means who goes first in turn fights); the key stays 'haste' for saves
-  aspd: { n: 'Attack speed', f: '+{v}% attack speed', dp: 1, cap: 40 },
+  aspd: { n: 'Speed', f: '+{v}% Speed', dp: 1, cap: 10 },   // turn fights: you act more often (was attack speed, which nothing read)
   gold: { n: 'Gold', f: '+{v}% gold', live: true, gear: 'gold' },
   ess: { n: 'Essence', f: '+{v}% essence drops', live: true, gear: 'ess' },
   mineSpd: { n: 'Mining speed', f: '+{v}% mining speed', live: true, gear: 'mineSpd' },
@@ -209,7 +212,7 @@ const CRAFT_KINDS = {
   staff: { noun: 'Staff', pos: 'weapon', comp: 'wpn', st: 'bench', rec: { wood: 5, crystal: 3, ess: 2 }, pre: 'wood', base: [['might', 1]], role: 'caster', cls: 'lanternmage' },
   bow: { noun: 'Bow', pos: 'weapon', comp: 'wpn', st: 'bench', rec: { wood: 6, hide: 2, ess: 2 }, pre: 'wood', base: [['might', 1]], role: 'striker', cls: 'ranger' },
   quiver: { noun: 'Quiver', pos: 'off', st: 'bench', rec: { hide: 3, wood: 3, fibre: 2 }, pre: 'hide', base: [['crit', 0.12, 35]], role: 'striker', cls: 'ranger' },
-  lantern: { noun: 'Lantern', pos: 'off', st: 'ench', rec: { crystal: 5, ore: 2, ess: 2 }, pre: 'crystal', base: [['spell', 1]], role: 'caster', cls: 'lanternmage' },
+  lantern: { noun: 'Lantern', pos: 'off', st: 'ench', rec: { crystal: 5, ore: 2, ess: 2 }, pre: 'crystal', base: [['spell', 0.2, 45]], role: 'caster', cls: 'lanternmage' },   // gear pass: was spell 1 x p (read by nothing); now like the Quiver's crit line
   circlet: { noun: 'Circlet', pos: 'helm', st: 'loom', rec: { crystal: 4, fibre: 2, ess: 1 }, pre: 'crystal', base: [['hp', 0.5]], role: 'caster', cls: 'lanternmage' },
   robe: { noun: 'Robe', pos: 'body', st: 'loom', rec: { fibre: 7, crystal: 1, herb: 1, ess: 2 }, pre: 'fibre', base: [['hp', 1]], role: 'caster', cls: 'lanternmage' },
   hood: { noun: 'Hood', pos: 'helm', st: 'loom', rec: { hide: 4, fibre: 2, ess: 1 }, pre: 'hide', base: [['hp', 0.5]], role: 'striker', cls: 'ranger' },
@@ -272,7 +275,7 @@ const CRAFT_AFFIXES = {
   attack: { give: [['attack', 1]] },
   crit: { give: [['crit', 0.12], ['critMult', 0.005]] },
   pierce: { give: [['pierce', 1.5]] },
-  spell: { give: [['spell', 1]] },
+  spell: { give: [['spell', 0.2]] },
   area: { give: [['area', 0.4]] },
   control: { give: [['control', 0.5]] },
   heal: { give: [['heal', 1]] },
@@ -317,7 +320,7 @@ const CRAFT_TROPHIES = [
   { key: 'core', n: 'Golem Core', col: '#9C8F7A', mw: { gear: 'block', tool: 'gather' } },
   { key: 'veil', n: 'Wraith Veil', col: '#9FD8C9', mw: { gear: 'haste', tool: null } }
 ];
-const CRAFT_MW = { share: 0.25, per: { hp: 1, aspd: 0.2, pierce: 1.5, armour: 0.3, heal: 1, block: 0.1, haste: 0.05, gather: 1 } };
+const CRAFT_MW = { share: 0.25, per: { hp: 1, aspd: 0.05, pierce: 1.5, armour: 0.3, heal: 1, block: 0.1, haste: 0.05, gather: 1 } };
 function craftTrophyLine(i, kind, p) {
   const tr = CRAFT_TROPHIES[i], d = CRAFT_KINDS[kind]; if (!tr || !d) return null;
   const s = d.tool ? tr.mw.tool : tr.mw.gear; if (!s) return null;

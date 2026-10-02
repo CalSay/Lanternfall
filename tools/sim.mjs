@@ -1475,9 +1475,11 @@ async function runTurnReport() {
   // late-kept-35 / late-kept-38: the late fixture's Pip as a hero who keeps up (the late-zone balance pass): level 40 at
   // zone 35 (the Fenmother) and 41 at zone 38 (turn fights give a level every 2,000-8,000 kills there), Attack Training
   // at her level (ascended after the Fenmother), her gear (four class pieces and the Charm) epic +10, tier 4, and three abilities slotted
-  // (Fireball, Spark, Nova). The raw fixture has Training stuck at 40 by level 49, rare gear and only Fireball.
+  // (Fireball, Spark, Nova). The raw fixture has Training stuck at 40 by level 49, rare gear and only Fireball. The gear
+  // pass (2026-10-02): every gear line works in turn fights now, so a hero who keeps up keeps only the shared HP affix line,
+  // as in --report heroes (her caster lines would put her ahead of the reference; --report heroes --affixes all shows them).
   const kept = (z, L) => `S.L = ${L}; S.solo.asc.pip = ${L > 40 ? 1 : 0}; S.solo.tr.pip.atk = ${L};
-    for (const sl of Object.keys(S.equip)) { const it = itemById(S.equip[sl]); if (it && !['pick', 'axe', 'sickle', 'spear'].includes(it.slot)) { it.r = 'epic'; it.plus = 10; } }
+    for (const sl of Object.keys(S.equip)) { const it = itemById(S.equip[sl]); if (it && !['pick', 'axe', 'sickle', 'spear'].includes(it.slot)) { it.r = 'epic'; it.plus = 10; if (it.a) it.a = it.a.filter(l => l[0] === 'hp'); } }
     S.abil.unl.pip = ['spark', 'nova']; S.solo.eq.pip = ['fire', 'spark', 'nova']; S.maxZone = ${z};`;
   // the boss pass (owner, 2026-10-02: "We should feel it necessary to scale ourselves with crafting higher level gear"):
   // the same hero a gear tier behind (-1) or ahead (+1): every worn piece (not the tools) one tier lower or higher, same
@@ -1541,23 +1543,28 @@ async function runTurnReport() {
 // hero's mean over their sets: hero turns a fight, win %, the share of max HP lost a fight, and what one landed hit (a
 // boss's biggest plain hit) and a landed charge cost; then Tobin against the Wren and Pip average.
 // Usage: --report heroes [--hours 1] [--seeds 3] [--eval js] [--rows 1] [--tier -1|1: every worn piece a gear tier
-// behind or ahead, the stage's scale kept from its own tier]
+// behind or ahead, the stage's scale kept from its own tier] [--affixes all: keep every rolled affix line]
 async function runHeroReport() {
   const fs = await import('node:fs'), path = await import('node:path');
   const { ROOT } = await import('./lib/core.mjs');
   const seconds = Number(args.hours || 1) * 3600, count = Number(args.seeds || 3);
   const fx = n => fs.readFileSync(path.join(ROOT, 'tests/fixtures/save-' + n + '.json'), 'utf8');
-  const SIG = { wren: 'echo', tobin: 'bash', pip: 'fire' }, J = JSON.stringify;
+  const SIG = { wren: 'echo', tobin: 'bash', pip: 'fire' }, J = JSON.stringify, ALL = args.affixes === 'all';
+  const KINDS = { wren: ['bow', 'quiver', 'hood', 'leathers'], tobin: ['warblade', 'shield', 'greathelm', 'plate'], pip: ['staff', 'lantern', 'circlet', 'robe'] };
+  // epic: the late fixture's gear made epic +10. The gear pass (2026-10-02): each piece is remade as the hero's own class
+  // kind for its position (the fixture is Pip's: retooled, Wren and Tobin wore her Lantern's line, not a Quiver or a
+  // Shield), with the shared HP affix line only (as keptUp below), unless --affixes all
   const make = (L, z, epic, asc) => k => `soloPick(${J(k)}, {now:true}); S.L = ${L}; S.solo.tr[${J(k)}].atk = ${L}; S.solo.tr[${J(k)}][${J(SIG[k])}] = ${L}; S.solo.asc[${J(k)}] = ${asc ? 1 : 0};
-    ${epic ? `for (const sl of Object.keys(S.equip)) { const it = itemById(S.equip[sl]); if (it && !['pick', 'axe', 'sickle', 'spear'].includes(it.slot)) { it.r = 'epic'; it.plus = 10; } }` : ''}
+    ${epic ? `for (const sl of Object.keys(S.equip)) { const it = itemById(S.equip[sl]); if (it && !['pick', 'axe', 'sickle', 'spear'].includes(it.slot)) { it.r = 'epic'; it.plus = 10;
+      const own = { weapon: 0, off: 1, helm: 2, body: 3 }[sl]; if (own != null) { it.slot = ${J(KINDS[k] || [])}[own]; delete it.rt; }
+      if (it.a) it.a = ${ALL ? `rollAffixes(it.slot, 'epic', it.t, undefined, (s => () => (s = s * 16807 % 2147483647) / 2147483647)(7919 + it.id))` : "it.a.filter(l => l[0] === 'hp')"}; } } gearDirty();` : ''}
     S.maxZone = Math.max(S.maxZone, ${z}); setZone(${z});`;
   // a hero who keeps up at zone z: their own class set and a Charm at the zone's gear tier, rare +5. Affixes: the same
   // seeded rolls for every hero (their pools are the same size), keeping only the shared HP line, so no hero's role
-  // lines tilt the footing (a striker's Attack and crit lines work in turn fights; a caster's spell, area and control
-  // lines do not yet)
-  const KINDS = { wren: ['bow', 'quiver', 'hood', 'leathers'], tobin: ['warblade', 'shield', 'greathelm', 'plate'], pip: ['staff', 'lantern', 'circlet', 'robe'] };
+  // lines tilt the footing. --affixes all keeps every rolled line (the gear pass, 2026-10-02: every role's lines work in
+  // turn fights now; a scaled stage still evens out Attack, so the striker's Attack line drops out of it)
   const keptUp = (L, z) => k => make(L, z, false, false)(k) + `(() => { let sd = 7919; const rnd = () => (sd = sd * 16807 % 2147483647) / 2147483647, t = zoneTier(${z});
-    ${J(KINDS[k])}.concat(['charm']).forEach((kind, i) => { const it = newItem(kind, t, 'rare', { rnd }); it.plus = 5; if (it.a) it.a = it.a.filter(l => l[0] === 'hp');
+    ${J(KINDS[k])}.concat(['charm']).forEach((kind, i) => { const it = newItem(kind, t, 'rare', { rnd }); it.plus = 5; ${ALL ? '' : "if (it.a) it.a = it.a.filter(l => l[0] === 'hp');"}
       S.items.push(it); S.equip[['weapon', 'off', 'helm', 'body', 'charm'][i]] = it.id; }); })();`;
   const tierD = Number(args.tier || 0);
   const shiftTier = `for (const sl of Object.keys(S.equip)) { const it = itemById(S.equip[sl]); if (it && !['pick', 'axe', 'sickle', 'spear'].includes(it.slot)) it.t = Math.max(1, Math.min(5, it.t + (${tierD}))); }`;

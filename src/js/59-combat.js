@@ -758,7 +758,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     for (let i = 0; i < nU; i++) {
       const u = U[i];
       if (u.down) standUp(u, T.revive);
-      else u.hp = Math.min(u.maxHp, u.hp + u.maxHp * T.packHealF);
+      else u.hp = Math.min(u.maxHp, u.hp + u.maxHp * T.packHealF * (TURN_TUNE.on ? turnHealX() : 1));   // the Healing gear line (59k)
       u.fight = 0;
     }
     packDown = false;
