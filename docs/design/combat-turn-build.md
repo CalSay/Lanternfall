@@ -31,9 +31,24 @@ page says what was picked.
 - **On the action bar:** three ability slots (Q, W, E) above Parry, Dodge and Attack. This is the bar the game already
   had. A passive takes a slot, has no button and is always on; its slot shows blue. A slot shows its cooldown in turns,
   "T3" for a finisher before your third turn, and "!" when it needs something first (a Burn, 2 Grit, 3 Cinders, a parry).
-- **On the Hero tab, a new Abilities view** (between Hero and Training): your Scrolls, your three slots, and all 14 of the
-  hero's abilities in their three groups (for Wren: True Aim, Blood Trail, Night Wings). Each card has the name, kind,
-  cooldown, tier and what it does, and either Slot 1/2/3 buttons, a Learn button, or what it still needs.
+- **On the Hero tab, the Abilities view** (between Hero and Training; redone 2026-10-02 after the owner's "We also need much
+  better menus for abilities", 75-abilities-ui.js):
+  - **The loadout bar** stays at the top while the list scrolls. It holds the slots Q, W and E (tap one to open what sits
+    there; an empty one shows your learned abilities) and a button with your Scrolls and free talent points. That button
+    opens a drawer with each Scroll, its count and where it drops, and how slots and talent points work.
+  - **The resource line** (Aim, Grit, Cinders) sits under the bar.
+  - **Filters:** All, Learned and Can learn, with counts.
+  - **The list:** the hero's 14 abilities in their three groups (for Wren: True Aim, Blood Trail, Night Wings), then
+    Attack, Parry and Dodge. Each row shows the tile, name, kind and cooldown, and a badge:
+    - In Q / W / E, Learned, or Learn (a Scroll can teach it now).
+    - If it is locked, the reason: "Level 16" or "Needs a Barrow Scroll".
+    - For a learned ability, its talent ("Talent A") or "Pick a talent" when you have the points.
+  - **The detail** opens when you tap a row. It has the full text, the numbers at your power now, and the Perfect text of a
+    timed ability. It has one action: Learn, Slot Q / W / E (tap the lit slot to take it out), or what it still needs. Its
+    two talents show as an A / B choice. Where it sits:
+    - Portrait: a bottom sheet over the list.
+    - The small landscape panel (360 px at 740x360): in the list's place, with Back. Back returns to the same spot.
+    - A wide panel (desktop): beside the list.
 - **A long press on a slot** still opens the quick picker with the hero's learned abilities.
 
 ## How the player unlocks them
@@ -54,8 +69,8 @@ page says what was picked.
 - **A higher Scroll can pay for a lower tier**, so a hero who is ahead never waits on an early boss.
 - **Scrolls belong to the lamp**, shared by every hero. One hero's first clears unlock most of their own set by about
   zone 30; the other heroes fill theirs from replays. That gives old zones a reason to be played again.
-- **Learning takes two taps** on the card ("Learn", then "Tap again to spend a Hollow Scroll") and drops the new ability
-  into a free slot.
+- **Learning takes two taps** in the ability's detail ("Learn", then "Tap again to spend a Hollow Scroll") and drops the
+  new ability into a free slot.
 - The C19 tiers and paths are Codex's (`ability-tree-details.md` 11). The C19 relic plan named old Elder bosses; with a
   boss at the end of every zone, Scrolls by zone band replace it. The names avoid the shop's existing Relics.
 
@@ -64,8 +79,8 @@ page says what was picked.
 Codex's C19 forks, built as **talents** (24e-data-talents.js, 56e-abilities.js). Each learned ability has two talents,
 and so do the hero's Attack, Parry and Dodge: pick one of the two for 2 talent points. A hero earns 1 point a level after
 level 1, so a level 35 hero has 34: enough for 17 of the 17 picks. Choices can be changed or given back any time; a fight
-takes them as it starts. They show on each ability card on Hero > Abilities, and Attack, Parry and Dodge have their own
-cards at the bottom. They are named talents, not stars, so they do not clash with the Stars view (below).
+takes them as it starts. They show as an A / B choice in each ability's detail on Hero > Abilities, and Attack, Parry and
+Dodge have their own rows at the bottom of the list. They are named talents, not stars, so they do not clash with the Stars view (below).
 
 There are no suggested builds (owner: finding what works should be hard and rewarding).
 
@@ -179,7 +194,7 @@ star at once (tools/check.mjs "stars").
   for a beat, shake the stage, and the bigger ones flash.
 - **Damage says where it came from:** a Burn tick is orange with the Burn icon and its turns left, Bleed is red with
   its stacks, the bats and a Curse burst have their own icon and colour.
-- **Numbers only out of a fight:** each ability card on Hero > Abilities says what it hits for at your power now. The
+- **Numbers only out of a fight:** each ability's detail on Hero > Abilities says what it hits for at your power now. The
   fight itself never shows them.
 
 ## Elite traits
