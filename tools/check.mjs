@@ -1647,7 +1647,7 @@ if (section('regions and the Great Lantern')) try {
     for (let z = 1; z <= 35; z++) {
       const nm = ZONES[T(z)] + (C(z) ? ' ' + roman(C(z) + 1) : '');
       if (zoneType(z) !== T(z) || zonePlace(z) !== T(z) || zoneCycle(z) !== C(z) || zoneName(z) !== nm || zoneNextType(z) !== (T(z) + 1) % 7
-        || zoneTheme(z) !== ZONE_THEME[T(z)] || zoneHue(z) !== (C(z) * 70) % 360 || zoneUnique(z) !== ZONE_UNIQ[T(z)] || zoneHome(z) !== CRAFT_HOME[T(z)]) out.push(z);
+        || zoneTheme(z) !== (z <= MOSSY_ZONES ? 'forest' : ZONE_THEME[T(z)]) || zoneHue(z) !== (C(z) * 70) % 360 || zoneUnique(z) !== ZONE_UNIQ[T(z)] || zoneHome(z) !== CRAFT_HOME[T(z)]) out.push(z);
     }
     return out; })()`;
   for (const f of FIX) {
