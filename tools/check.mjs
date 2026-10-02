@@ -7103,6 +7103,17 @@ if (section('zones stay where you put them')) try {
     assert(/^F,k,F/.test(E('__k.join()')) && E('S.zone') === 1, `after a lost boss you win one regular fight, then the boss is back (${E('__k.join()')})`); }
 } catch (e) { fail('zones stay crashed: ' + (e.stack || e)); }
 
+if (section('fixed battle backgrounds')) try {
+  // Codex's owner-approved Mossy Hollow night scene (art/backgrounds/mossy-hollow/outlined-night-v1): embedded byte for byte
+  { const { spawnSync } = await import('node:child_process'), r = spawnSync(process.execPath, [path.join(ROOT, 'tools', 'art', 'embed-bg.mjs'), '--check'], { encoding: 'utf8' });
+    assert(r.status === 0, 'backgrounds: src/js/21zb-data-bgart.js is up to date with the approved packs (node tools/art/embed-bg.mjs)' + (r.status ? ': ' + (r.stderr || r.stdout) : '')); }
+  const dir = path.join(ROOT, 'art', 'backgrounds', 'mossy-hollow', 'outlined-night-v1'), src = fs.readFileSync(path.join(ROOT, 'src', 'js', '21zb-data-bgart.js'), 'utf8');
+  const B = JSON.parse(src.slice(src.indexOf('const BG_ART = ') + 15, src.lastIndexOf('}') + 1)).forest;
+  assert(B.land.src === fs.readFileSync(path.join(dir, 'runtime', 'mossy-hollow-night-960x540.webp')).toString('base64') &&
+    B.port.src === fs.readFileSync(path.join(dir, 'runtime', 'mossy-hollow-night-portrait-480x900.webp')).toString('base64') &&
+    Math.abs(B.land.road - 208 / 270) < 1e-9 && B.port.road === 0.89, 'backgrounds: the Mossy Hollow landscape and portrait scenes are the approved WebP bytes, with their painted road lines');
+} catch (e) { fail('backgrounds crashed: ' + (e.stack || e)); }
+
 if (section('C22 Thorn Imp (zone 1)')) try {
   // The owner-approved Thorn Imp (art/enemies/thorn-imp/v1): the art is embedded byte for byte, zone 1's regular foe is the
   // Imp, and in turn fights it alternates Briar Jab (1 hit) and Crosscut (2 hits, slow then fast), each hit its own parry.

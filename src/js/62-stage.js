@@ -1389,6 +1389,22 @@ let resize, animate, draw, stageStats, warmScene;
     }
     if (s.ifx) { const X = F.fx[s.ifx.id], f = X && X.fr[clipFrame(X, 1, X.fr.length, s.ifx.t) - 1]; if (f) ctx.drawImage(f.c, Math.round(s.ifx.x - cam - f.ox), Math.round(s.ifx.y - f.oy)); }
   }
+  // A fixed battle background (BG_ART, 21zb): the landscape export on a wide stage, the portrait one on a tall stage,
+  // scaled (smooth) to cover the stage with its painted road on the ground line GY, centred. False until it has loaded.
+  const bgImgs = {};
+  function bgArtDraw(g, theme) {
+    const B = typeof BG_ART === 'object' && BG_ART[theme]; if (!B) return false;
+    const o = SW >= SH ? 'land' : 'port', E = B[o], k0 = theme + o;
+    let img = bgImgs[k0];
+    if (!img) { img = bgImgs[k0] = new Image(); img.src = 'data:image/webp;base64,' + E.src; }
+    if (!img.complete || !img.naturalWidth) return false;
+    const k = Math.max(SW / E.w, GY / (E.road * E.h), (SH - GY) / ((1 - E.road) * E.h));
+    const sm = g.imageSmoothingEnabled; g.imageSmoothingEnabled = true;
+    g.fillStyle = '#0B0810'; g.fillRect(0, 0, SW, SH);
+    g.drawImage(img, (SW - E.w * k) / 2, GY - E.road * E.h * k, E.w * k, E.h * k);
+    g.imageSmoothingEnabled = sm;
+    return true;
+  }
   // Foe lights (eyes, cores), and a glow in the telegraph colour pulsing at 4 Hz on a winding-up foe.
   function foeLights(s, tele) {
     const f = s.dF; if (!f) return;
@@ -1418,7 +1434,10 @@ let resize, animate, draw, stageStats, warmScene;
     ctx.imageSmoothingEnabled = false;
     ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
     // The backdrop (#0B0810) shows only where the sky does not reach: drawScene fills it.
-    drawScene(ctx, scene, camF, 'back', K, sx * K, sy * K, '#0B0810');
+    // an approved fixed battle background (21zb, Mossy Hollow): one painted scene with its light baked in, in place of
+    // the procedural layers, their fog, glows and vignette
+    const bgArt = fight && !deepOn() && bgArtDraw(ctx, curTheme);
+    if (!bgArt) drawScene(ctx, scene, camF, 'back', K, sx * K, sy * K, '#0B0810');
     const huntBg = gath && S.node.kind === 'hide' && typeof huntBgDraw === 'function' && HUNT_TUNE.interim && huntBgDraw(ctx, SW, GY);   // interim Hunting grounds (64i)
     const dv = DECO_V; if (stageDeco) { dv.cam = cam; dv.SW = SW; dv.SH = SH; dv.GY = GY; dv.T = T; dv.tg = tg; dv.nodeR = gath && foe.fr ? (typeof gatherRight === 'function' ? gatherRight(foe.left + foe.w) : foe.left + foe.w) : SW * 0.8; dv.hx = hero.fr ? ax(hero) : null; dv.hy = hero.hy; dv.hl = hero.lane; dv.hd = hero.down; dv.hf = hero._f; dv.hX = hero._x; dv.hY = hero._y; ctx.imageSmoothingEnabled = false; stageDeco(ctx, 'back', dv); }
 
@@ -1462,7 +1481,7 @@ let resize, animate, draw, stageStats, warmScene;
       for (let i = 0; i < guardN; i++) { const x = hero._x + hero._f.ox - guardN * 3 + i * 6; ctx.fillStyle = '#0B0810'; ctx.fillRect(x - 1, top - 1, 5, 5); ctx.fillStyle = i % 2 ? '#8FB8FF' : '#C8DCFF'; ctx.fillRect(x, top, 3, 3); }
     }
     A.drawProj(ctx);
-    if (!huntBg) drawScene(ctx, scene, camF, 'fg', K, sx * K, sy * K);   // the hunting grounds bring their own foreground
+    if (!huntBg && !bgArt) drawScene(ctx, scene, camF, 'fg', K, sx * K, sy * K);   // the hunting grounds bring their own foreground
 
     // smooth pass: slashes, character and effect lights
     ctx.imageSmoothingEnabled = true;
@@ -1473,7 +1492,7 @@ let resize, animate, draw, stageStats, warmScene;
     for (const a of order) lightsOf(a);
     if (fight) { for (let i = 0; i < packN; i++) foeLights(slots[i], tele); } else foeLights(solo, null);
     ctx.globalCompositeOperation = 'source-over';
-    drawAtmosphere(ctx, scene, T, SW, SCH, camF);
+    if (!bgArt) drawAtmosphere(ctx, scene, T, SW, SCH, camF);
 
     // class and ability effects, on top of the atmosphere so they read
     ctx.imageSmoothingEnabled = true;

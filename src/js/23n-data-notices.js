@@ -81,7 +81,7 @@ const NOTICES = [
   { id: 'hands', re: /^Tam, Hesketh's nephew/, ch: 'bell' },
   { id: 'hands-small', re: /(applicants? (are|is) waiting at the Tavern|is back from the .*|The pack waits by the Storehouse\.$)/, site: /backText\(e\)/, ch: 'log' },
   { id: 'tool-mastery', re: /(mastered! | mastery \S+\.)/, ch: m => /mastered!/.test(m) ? 'bell' : 'log' },
-  { id: 'rested', re: /^Well Rested: /, ch: 'bell', why: 'unread ones fold into the latest (it comes back often)', merge: ms => ms[ms.length - 1] },
+  { id: 'rested', re: /^Well Rested: /, ch: 'log', why: 'a short buff with nothing to do; it shows on the hero (the bell keeps what needs you)' },
 
   // ---- unlocks (75-onboard-ui, 75-stars-ui) ----
   // While the guide runs it points at each new tab itself, so the tab lines only pop once tips are off.
