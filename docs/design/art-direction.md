@@ -10,8 +10,7 @@ Why: the owner found the old figures "too thin and tall", the clothing "didn't f
 art "lacked definition between different sections". B1 answers all three: stocky 4-head figures,
 costumes built from separate coloured pieces, and a dark line wherever one piece sits on another.
 
-Reference pictures: `img/roster-b1.png` (every character from the real code), `img/stage-b1.png`
-(the game at 360 x 740), `img/style-study-zoom.png` (the B1 row is the target look).
+The old reference screenshots were removed on 2026-10-02 (owner: not needed); git history keeps them.
 Preview page: `prototypes/roster.html` (`#dbg=warden,tobin&s=6` shows every frame of the named
 characters at 6 CSS px per art px; `e_slime`, `e_node_ore` show enemies and nodes).
 
@@ -226,8 +225,7 @@ Frame timing and movement are in 62-stage.js (wind 0.14 s, strike 0.12 s, recove
 
 Monsters, elders, the raid wyrm and the gather nodes are drawn in B1 with kit pieces
 (13-art-enemies.js; crystal, fibre and herb node rigs in 11-art-craft.js) and baked by the same
-passes as the party (`enemyFrames(key, variant)`, rigs marked `b1: 1`). Reference sheet:
-`img/enemies-b1.png`; preview page `prototypes/enemies.html` (`#frames=slime,golem&s=4`, add
+passes as the party (`enemyFrames(key, variant)`, rigs marked `b1: 1`). Preview page `prototypes/enemies.html` (`#frames=slime,golem&s=4`, add
 `&elder` for elders).
 
 - Creatures face left, feet at 0. Bones with pivots and poses (`idle0`, `idle1`, `wind`, `strike`;

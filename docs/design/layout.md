@@ -25,8 +25,8 @@ scrolling content. It closes on: the close button, tapping the open tab again, E
 The tab bar stays live, so the player hops between menus without closing them.
 
 **Landscape (UX-L1, 2026-09-30; viewport at least as wide as tall and 600 px or wider: phones on their side,
-tablets, desktop).** The main target now (owner: mobile is landscape only). From the approved mock-up
-(docs/design/mockups/combat-screen.html). Styles: `src/styles/80-landscape.css`; `isWide()` in 70-ui is this layout.
+tablets, desktop).** The main target now (owner: mobile is landscape only). From the approved mock-up (removed 2026-10-02; in git history).
+Styles: `src/styles/80-landscape.css`; `isWide()` in 70-ui is this layout.
 
 ```
 +------+----------------------------------------------+-------------+

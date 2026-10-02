@@ -1,4 +1,4 @@
-/* 80-landscape: the landscape layout (UX-L1, docs/design/layout.md "Landscape", mock-up docs/design/mockups/combat-screen.html).
+/* 80-landscape: the landscape layout (UX-L1, docs/design/layout.md "Landscape").
    Active when the viewport is at least as wide as tall and 600 px or wider (phones on their side, tablets, desktop): the same
    query as 70-ui's WIDE_Q (isWide()). Portrait keeps its own layout (10-base, 30-panels).
 

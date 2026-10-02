@@ -51,7 +51,7 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 - **Rework for solo:** recruit routes become hero unlock routes; party-damage uniques get solo effects; pinnacle bosses
   and legendary circle sets need solo versions; expeditions become trade runs by gatherers. (2026-09-29)
 - **Training:** gold levels up each hero's Attack, Parry, Dodge and abilities, with level caps. It replaced the gold
-  upgrades. (2026-09-29)
+  upgrades. (2026-09-29) Training will be overhauled later; its caps (40/80) stay as they are until then. (2026-10-02)
 - **Classes:** three base classes by armour weight: Warrior (heavy), Ranger (medium), Mage (light). Evolutions: Warrior
   to Reaver (damage) or Warden (utility); Ranger to Venomstalker or Trapper; Mage to Warlock or Priest. Each evolution
   must feel special and clearly stronger. The Warlock's title is the Shadowbinder. (2026-09-28) The support class is
@@ -109,6 +109,8 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 - **Talents** (Codex's star forks): two picks per ability and for Attack, Parry and Dodge. (2026-10-02)
 - **The Deepwell and the Provings fight in turns** like the zones. (2026-10-02)
 - **An Assist setting** that widens the timing windows: yes, low priority. A late-zone balance pass: yes. (2026-10-02)
+- **Stars and class evolutions become picto-style effects** (like Expedition 33's Pictos) that add to abilities and
+  combos and feel useful ("1% damage feels unrewarding"), without breaking balance. (2026-10-02)
 - **Leftovers:** a local raid fight is accepted; Deep Elders give at most one buff item a run; Hollow bosses give no
   buff items. (2026-09-28)
 
