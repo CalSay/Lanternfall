@@ -7111,12 +7111,13 @@ if (section('turn UI (browser)')) try {
         await page.goto('http://lf.test/'); await page.waitForTimeout(600);
         await page.click('#createScreen .ccard[data-hero="tobin"]'); await page.click('#createScreen .create-go');
         const X = s => page.evaluate(s => window.__t.x(s), s);
-        let st = {};
-        for (let i = 0; i < 1500; i++) {
+        let st = {}, heroWait = 0;
+        for (let i = 0; i < 2500; i++) {
           st = JSON.parse(await X(`(q => JSON.stringify({ want: soloGuideWants(), ph: q.phase, now: q.now, d: q.dodgeOpensAt, p: q.parryOpensAt, c: q.closesAt,
             done: Object.keys((S.onboard || {}).done || {}).filter(k => /^(attack|ability|dodge|parry)$/.test(k)).sort().join() }))(turnCombatSnapshot())`));
           if (st.done === 'ability,attack,dodge,parry') break;
-          if (st.ph === 'hero') await page.keyboard.press(st.want === 'ability' ? 'q' : 'd');
+          heroWait = st.ph === 'hero' ? heroWait + 1 : 0;   // a player looks at the turn first, so the guide's next step can show
+          if (st.ph === 'hero' && (st.want || heroWait > 8)) await page.keyboard.press(st.want === 'ability' ? 'q' : 'd');
           else if (st.ph === 'foeWindup' && st.want === 'dodge' && st.now >= st.d) await page.keyboard.press('s');
           else if (st.ph === 'foeWindup' && st.want === 'parry' && st.now >= st.p) await page.keyboard.press('a');
           await page.waitForTimeout(40);
@@ -7260,10 +7261,12 @@ if (section('C29 turn fights (core)')) try {
     const gold = E('S.gold'), kills = E('S.totalKills'); E('awayGains(3600)');
     assert(E('S.gold') === gold && E('S.totalKills') === kills, 'C29: an hour away earns no fights (active only); gathering is unchanged');
     // a zone plays out: five fights, the boss, the next zone, and the first clear drops a Moss Scroll
-    E('globalThis.__seq = []; on("kill", x => __seq.push(x.mob.boss ? "B" : "k"))');
+    E('globalThis.__seq = []; on("kill", x => __seq.push(x.mob.boss ? "B" : "k")); globalThis.__tc = []; on("turnCard", x => __tc.push(x.who + ":" + turnCombatSnapshot().phase))');
     for (let t = 0; t < 600 && E('S.zone') === 1; t += 0.05) { E('__bot("parry")'); g.fn.tick(0.05); }
     assert(E('__seq.join()') === 'k,k,k,k,k,B' && E('S.zone') === 2 && E('scrollCount("moss")') === 1 && !g.errors.length,
-      `C29: zone 1 is five turn fights then its boss; the first win drops a Moss Scroll (${E('__seq.join()')}, Scrolls ${E('JSON.stringify(S.abil.scrolls)')})`); }
+      `C29: zone 1 is five turn fights then its boss; the first win drops a Moss Scroll (${E('__seq.join()')}, Scrolls ${E('JSON.stringify(S.abil.scrolls)')})`);
+    assert(E('__tc.length') > 10 && E('__tc.every(x => /^(hero|foe):handoff$/.test(x))') && E('__tc.some(x => x.startsWith("foe"))'),
+      `C29: every change of turn pauses (owner) while a banner says whose turn it is (${E('__tc.slice(0, 4).join()')})`); }
   // the Speed gauges: equal Speed alternates; a hero twice as fast acts twice, never three times, in a row
   { const { E } = fresh('wren');
     E('S.zone = 1; spawn()'); E('tick(0.05)');

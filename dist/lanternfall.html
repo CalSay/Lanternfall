@@ -2559,7 +2559,7 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
 @keyframes tv-in-r { 0% { transform: translateX(40px); opacity: 0; } 25%, 100% { transform: none; opacity: 1; } }
 @keyframes tv-fade { 0% { opacity: 0; } 12%, 82% { opacity: 1; } 100% { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .tv-card.play .tv-side { animation: none !important; } }
-.tv-top { position: absolute; left: 50%; top: 80px; transform: translateX(-50%); z-index: 5; display: flex; flex-direction: column; align-items: center; gap: 2px; pointer-events: none; }
+.tv-top { position: absolute; left: 50%; top: 80px; transform: translateX(-50%); z-index: 7; display: flex; flex-direction: column; align-items: center; gap: 2px; pointer-events: none; }
 .tv-top[hidden] { display: none; }
 .tv-strip { display: flex; gap: 3px; }
 .tv-strip[hidden] { display: none; }
@@ -2570,12 +2570,20 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
 .tv-mini { max-width: 20px; max-height: 20px; image-rendering: pixelated; }
 .tv-slot.now .tv-mini { max-width: 24px; max-height: 24px; }
 .tv-n { font: calc(10px * var(--display-k, 1))/1 var(--display); color: #B8AEC4; text-shadow: 1px 1px 0 #0B0810; }
-.tv-time { position: relative; width: 120px; height: 6px; background: #16111C; border: 1px solid #0B0810; }
-.tv-time[hidden] { display: none; }
-.tv-time i { position: absolute; top: 0; bottom: 0; display: block; }
-.tv-fill { left: 0; background: #E0D6C2; opacity: .8; }
-.tv-dodge { background: rgba(120, 170, 255, .55); }
-.tv-parry { background: var(--gold, #F2C14E); }
+.tv-time { display: grid; gap: 2px; width: min(280px, 72vw); margin-top: 2px; padding: 3px 4px; background: rgba(10, 7, 14, .78); }   /* above a place caption (z 7 over 60-story .sty-cap 5) */
+.tv-time[hidden] { display: grid; visibility: hidden; }   /* keeps its room, so the rows under it never jump */
+.tv-track { position: relative; height: 16px; background: #16111C; border: 2px solid #0B0810; box-shadow: inset 0 0 0 1px #3A3046; }
+.tv-track i { position: absolute; top: 0; bottom: 0; display: block; }
+.tv-fill { left: 0; background: rgba(224, 214, 194, .35); }
+.tv-dodge { background: rgba(120, 170, 255, .7); box-shadow: inset 0 0 0 1px #8FB8FF; }
+.tv-parry { top: 3px !important; bottom: 3px !important; background: var(--gold, #F2C14E); box-shadow: inset 0 0 0 1px #FFF3C4; }   /* inside the dodge band: you can still dodge there */
+.tv-head { width: 3px; margin-left: -1px; background: #FFFFFF; box-shadow: 0 0 0 1px #0B0810; }
+.tv-legend { display: flex; justify-content: flex-end; gap: 10px; font: 700 calc(12px * var(--display-k, 1))/1 var(--display); text-shadow: 1px 1px 0 #0B0810; }
+.tv-lg-d { color: #8FB8FF; }
+.tv-lg-p { color: var(--gold, #F2C14E); }
+.tv-time.in-dodge .tv-track { box-shadow: inset 0 0 0 1px #3A3046, 0 0 0 2px #8FB8FF, 0 0 10px rgba(143, 184, 255, .7); }
+.tv-time.in-parry .tv-track { box-shadow: inset 0 0 0 1px #3A3046, 0 0 0 2px #F2C14E, 0 0 12px rgba(242, 193, 78, .8); }
+.tv-time.in-dodge .tv-lg-d, .tv-time.in-parry .tv-lg-p { font-size: calc(15px * var(--display-k, 1)); }
 .tv-card.boss .tv-vs { color: #FF9B8A; }
 .tv-slot[hidden] { display: none; }
 .tv-n.mine { color: var(--gold, #F2C14E); font-weight: 700; }
@@ -2608,6 +2616,21 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
 .tv-ring.done { opacity: .35; }
 .tv-ring-t { position: absolute; left: 0; top: 34px; transform: translateX(-50%); white-space: nowrap; font: 700 calc(13px * var(--display-k, 1))/1 var(--display);
   color: var(--gold, #F2C14E); text-shadow: 1px 1px 0 #0B0810; }
+/* whose turn: the banner in the pause between turns (59k turnCard) */
+.tv-turncard { position: absolute; left: 0; right: 0; top: 42%; z-index: 6; display: flex; align-items: center; justify-content: center; gap: 10px;
+  padding: 6px 12px; transform: translateY(-50%); pointer-events: none; background: linear-gradient(90deg, transparent, rgba(10, 7, 14, .94) 18%, rgba(10, 7, 14, .94) 82%, transparent); }
+.tv-turncard[hidden] { display: none; }
+.tv-tc-face { width: 36px; height: 36px; display: grid; place-items: center; background: #16111C; border: 2px solid #0B0810; }
+.tv-tc-img { max-width: 32px; max-height: 32px; image-rendering: pixelated; }
+.tv-tc-txt { font: 700 calc(22px * var(--display-k, 1))/1 var(--display); letter-spacing: .04em; text-shadow: 2px 2px 0 #0B0810; }
+.tv-turncard.hero .tv-tc-txt { color: var(--gold, #F2C14E); }
+.tv-turncard.hero .tv-tc-face { box-shadow: inset 0 0 0 1px var(--gold, #F2C14E); }
+.tv-turncard.foe .tv-tc-txt { color: #FF9B8A; }
+.tv-turncard.foe .tv-tc-face { box-shadow: inset 0 0 0 1px #A8323A; }
+.tv-turncard.play:not(.calm) { animation: tv-tc var(--tc-dur, .9s) linear both; }
+.tv-turncard.play.calm { animation: tv-fade var(--tc-dur, .9s) linear both; }
+@keyframes tv-tc { 0% { opacity: 0; transform: translate(-24px, -50%); } 18%, 78% { opacity: 1; transform: translate(0, -50%); } 100% { opacity: 0; transform: translate(12px, -50%); } }
+.tv-winding .sty-cap { opacity: .15; transition: opacity .15s; }
 /* 60-wall: the Trophy Wall card on the Camp view (63e-scenery-wall.js, AC5). */
 .tw-scene { display: flex; justify-content: center; width: 100%; min-height: 144px; margin: 0; padding: 0; overflow: hidden; background: #0E0B1E; border: 2px solid var(--line); box-shadow: 0 2px 0 #0B0810; cursor: pointer; }
 .tw-scene:hover, .tw-scene:focus-visible { border-color: var(--gold); }
@@ -22830,6 +22853,7 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
 const TURN_TUNE = {
   on: 1,
   heroRecovery: 0.35, foeRecovery: 0.4, foeWindup: 0.9, introHand: 1.2, introAuto: 0.6,
+  turnPause: 0.9,   // owner (2026-10-02): a pause at every change of turn, while a banner says whose turn it is (turnCard)
   // the reference hero at zone z (measured from the balance sim's saves at each hero's frontier, 2026-10-02): one Attack
   // action and max HP, as shares of the zone's legacy foe HP (mobHp, 40-rules). Attack falls behind mobHp as zones climb
   // (gear tiers come slower than foe HP), so refAtk is a table over zones, straight lines between the points.
@@ -22992,15 +23016,22 @@ function turnAdvance(m, s) {
 function turnPreview(m, n) {
   const out = [];
   if (!m || m.ended) return out;
-  const cur = m.phase === 'hero' ? 'hero' : m.phase === 'foeWindup' ? 'foe' : null;
+  const cur = m.phase === 'hero' || m.phase === 'timing' ? 'hero' : m.phase === 'foeWindup' ? 'foe' : m.phase === 'handoff' ? m.pending : null;
   if (cur) out.push(cur);
   const s = { gH: m.gH, gF: m.gF, last: m.last, run: m.run, hold: !!(m.charge && m.charge.heroSince === 0) };
   while (out.length < n) { const w = turnAdvance(m, s); if (w === 'hero') s.hold = false; out.push(w); }
   return out;
 }
+// The next turn. After the first one (the versus card already says who opens) a short pause comes first: phase
+// 'handoff', while 75-turn-ui shows whose turn it is (turnCard); the turn itself (its damage over time too) starts after it.
 function turnNextTurn(m, io) {
   if (m.ended) return;
   const who = turnAdvance(m, m);
+  if (m.n > 0 && TURN_TUNE.turnPause > 0) {
+    m.phase = 'handoff'; m.pending = who; m.next = who; m.until = m.now + TURN_TUNE.turnPause;
+    io.emit('turnCard', { who, again: m.run > 1, secs: TURN_TUNE.turnPause });
+    return;
+  }
   turnBegin(m, who, io);
 }
 
@@ -23343,6 +23374,7 @@ function turnResolve(m, cmd, dt, io) {
     if (!live.hero || !live.foe) { turnEnd(m, live.hero ? 'victory' : 'defeat', io); return false; }
     if (m.phase === 'intro' && m.now >= m.until) turnNextTurn(m, io);
     if (m.phase === 'recovery' && m.now >= m.until) turnNextTurn(m, io);
+    if (m.phase === 'handoff' && m.now >= m.until) turnBegin(m, m.pending, io);
     if (m.phase === 'foeWindup' && m.now >= m.until) turnContact(m, io);
     if (m.phase === 'timing' && m.now > m.until + TURN_TUNE.timed.good) turnRingGrade(m, io, 'miss');   // no press: a Miss
     return true;
@@ -39633,12 +39665,34 @@ var turnBarInfo = () => null;
   });
   on('fightEnd', () => { clearTimeout(cardT); card.hidden = true; });
 
+  // ---- whose turn: a banner across the stage during the pause between turns (owner, 2026-10-02) ----
+  const tcard = el('div', 'tv-turncard'); tcard.hidden = true; tcard.setAttribute('role', 'status'); tcard.setAttribute('aria-live', 'polite');
+  const tcFace = el('span', 'tv-tc-face'), tcTxt = el('b', 'tv-tc-txt');
+  tcard.append(tcFace, tcTxt);
+  if (box) box.append(tcard);
+  let tcT = null;
+  on('turnCard', p => {
+    if (!box || !p) return;
+    const f = foeNow(), mine = p.who === 'hero', name = mine ? heroName() : (f && f.name) || 'The foe';
+    tcFace.replaceChildren(img('tv-tc-img', mine ? heroFace() : foeFace(f), name));
+    putText(tcTxt, mine ? (p.again ? 'Your turn again' : 'Your turn') : p.again ? `${name} goes again` : `${name}'s turn`);
+    tcard.className = 'tv-turncard ' + (mine ? 'hero' : 'foe') + (reduced() ? ' calm' : '');
+    tcard.style.setProperty('--tc-dur', (p.secs || 0.9) + 's');
+    tcard.hidden = false; void tcard.offsetWidth; tcard.classList.add('play');
+    clearTimeout(tcT); tcT = setTimeout(() => { tcard.hidden = true; }, (p.secs || 0.9) * 1000 + 150);
+  });
+  on('turn', () => { clearTimeout(tcT); tcard.hidden = true; });
+  on('fightEnd', () => { clearTimeout(tcT); tcard.hidden = true; });
+
   // ---- the turn strip, the timing bar, the hero row ----
   const strip = el('div', 'tv-strip'); strip.hidden = true; strip.setAttribute('aria-label', 'Turn order');
   const slots = []; for (let i = 0; i < 6; i++) { const s = el('div', 'tv-slot'); slots.push(s); strip.append(s); }
   const turnN = el('span', 'tv-n');
-  const bar = el('div', 'tv-time'), fill = el('i', 'tv-fill'), dz = el('i', 'tv-dodge'), pz = el('i', 'tv-parry');
-  bar.append(dz, pz, fill); bar.hidden = true; bar.setAttribute('aria-hidden', 'true');
+  // the timing bar (owner, 2026-10-02: bigger): the track fills to the hit; the dodge (blue) and parry (gold) windows sit
+  // at its end, labelled; the whole bar lights up in the colour of the window you are in now
+  const bar = el('div', 'tv-time'), track = el('div', 'tv-track'), fill = el('i', 'tv-fill'), dz = el('i', 'tv-dodge'), pz = el('i', 'tv-parry'), head = el('i', 'tv-head');
+  const legend = el('div', 'tv-legend'); legend.append(el('span', 'tv-lg-d', 'Dodge'), el('span', 'tv-lg-p', 'Parry'));
+  track.append(dz, pz, fill, head); bar.append(track, legend); bar.hidden = true; bar.setAttribute('aria-hidden', 'true');
   const heroRow = el('div', 'tv-hero'), pipsLb = el('span', 'tv-res'), pips = el('span', 'tv-pips'), chips = el('span', 'tv-chips');
   heroRow.append(pipsLb, pips, chips);
   const warn = el('div', 'tv-warn'); warn.hidden = true; warn.setAttribute('role', 'status'); warn.setAttribute('aria-live', 'assertive');
@@ -39709,7 +39763,7 @@ var turnBarInfo = () => null;
     const f = foeNow(), sig = order.join() + '|' + (f && f.key) + '|' + s.phase;
     if (sig !== lastSig) {
       lastSig = sig;
-      const hf = heroFace(), ff = foeFace(f), now = s.phase === 'hero' || s.phase === 'foeWindup';
+      const hf = heroFace(), ff = foeFace(f), now = s.phase === 'hero' || s.phase === 'foeWindup' || s.phase === 'handoff' || s.phase === 'timing';
       slots.forEach((sl, i) => {
         const o = order[i]; if (!o) { sl.hidden = true; return; }
         sl.hidden = false; sl.className = 'tv-slot ' + o + (i === 0 && now ? ' now' : '');
@@ -39722,10 +39776,13 @@ var turnBarInfo = () => null;
     // the foe winds up: the bar fills to the hit; the dodge and parry windows sit at its end
     const winding = s.phase === 'foeWindup' && s.closesAt > s.now;
     if (bar.hidden === winding) bar.hidden = !winding;
+    if (box && box.classList.contains('tv-winding') !== winding) box.classList.toggle('tv-winding', winding);   // a place caption fades under the bar
     if (winding) {
       if (!winT0 || winT0 > s.now) winT0 = s.now;
       const span = Math.max(0.1, s.closesAt - winT0), pct = x => Math.max(0, Math.min(100, x * 100)) + '%';
-      fill.style.width = pct((s.now - winT0) / span);
+      fill.style.width = pct((s.now - winT0) / span); head.style.left = pct((s.now - winT0) / span);
+      const inP = s.now >= s.parryOpensAt, inD = s.now >= s.dodgeOpensAt;
+      bar.classList.toggle('in-parry', inP); bar.classList.toggle('in-dodge', inD && !inP);
       dz.style.left = pct((s.dodgeOpensAt - winT0) / span); dz.style.width = pct((s.closesAt - s.dodgeOpensAt) / span);
       pz.style.left = pct((s.parryOpensAt - winT0) / span); pz.style.width = pct((s.closesAt - s.parryOpensAt) / span);
     } else winT0 = 0;

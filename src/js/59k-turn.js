@@ -32,6 +32,7 @@
 const TURN_TUNE = {
   on: 1,
   heroRecovery: 0.35, foeRecovery: 0.4, foeWindup: 0.9, introHand: 1.2, introAuto: 0.6,
+  turnPause: 0.9,   // owner (2026-10-02): a pause at every change of turn, while a banner says whose turn it is (turnCard)
   // the reference hero at zone z (measured from the balance sim's saves at each hero's frontier, 2026-10-02): one Attack
   // action and max HP, as shares of the zone's legacy foe HP (mobHp, 40-rules). Attack falls behind mobHp as zones climb
   // (gear tiers come slower than foe HP), so refAtk is a table over zones, straight lines between the points.
@@ -194,15 +195,22 @@ function turnAdvance(m, s) {
 function turnPreview(m, n) {
   const out = [];
   if (!m || m.ended) return out;
-  const cur = m.phase === 'hero' ? 'hero' : m.phase === 'foeWindup' ? 'foe' : null;
+  const cur = m.phase === 'hero' || m.phase === 'timing' ? 'hero' : m.phase === 'foeWindup' ? 'foe' : m.phase === 'handoff' ? m.pending : null;
   if (cur) out.push(cur);
   const s = { gH: m.gH, gF: m.gF, last: m.last, run: m.run, hold: !!(m.charge && m.charge.heroSince === 0) };
   while (out.length < n) { const w = turnAdvance(m, s); if (w === 'hero') s.hold = false; out.push(w); }
   return out;
 }
+// The next turn. After the first one (the versus card already says who opens) a short pause comes first: phase
+// 'handoff', while 75-turn-ui shows whose turn it is (turnCard); the turn itself (its damage over time too) starts after it.
 function turnNextTurn(m, io) {
   if (m.ended) return;
   const who = turnAdvance(m, m);
+  if (m.n > 0 && TURN_TUNE.turnPause > 0) {
+    m.phase = 'handoff'; m.pending = who; m.next = who; m.until = m.now + TURN_TUNE.turnPause;
+    io.emit('turnCard', { who, again: m.run > 1, secs: TURN_TUNE.turnPause });
+    return;
+  }
   turnBegin(m, who, io);
 }
 
@@ -545,6 +553,7 @@ function turnResolve(m, cmd, dt, io) {
     if (!live.hero || !live.foe) { turnEnd(m, live.hero ? 'victory' : 'defeat', io); return false; }
     if (m.phase === 'intro' && m.now >= m.until) turnNextTurn(m, io);
     if (m.phase === 'recovery' && m.now >= m.until) turnNextTurn(m, io);
+    if (m.phase === 'handoff' && m.now >= m.until) turnBegin(m, m.pending, io);
     if (m.phase === 'foeWindup' && m.now >= m.until) turnContact(m, io);
     if (m.phase === 'timing' && m.now > m.until + TURN_TUNE.timed.good) turnRingGrade(m, io, 'miss');   // no press: a Miss
     return true;

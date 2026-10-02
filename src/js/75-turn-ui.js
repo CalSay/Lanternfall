@@ -74,12 +74,34 @@ var turnBarInfo = () => null;
   });
   on('fightEnd', () => { clearTimeout(cardT); card.hidden = true; });
 
+  // ---- whose turn: a banner across the stage during the pause between turns (owner, 2026-10-02) ----
+  const tcard = el('div', 'tv-turncard'); tcard.hidden = true; tcard.setAttribute('role', 'status'); tcard.setAttribute('aria-live', 'polite');
+  const tcFace = el('span', 'tv-tc-face'), tcTxt = el('b', 'tv-tc-txt');
+  tcard.append(tcFace, tcTxt);
+  if (box) box.append(tcard);
+  let tcT = null;
+  on('turnCard', p => {
+    if (!box || !p) return;
+    const f = foeNow(), mine = p.who === 'hero', name = mine ? heroName() : (f && f.name) || 'The foe';
+    tcFace.replaceChildren(img('tv-tc-img', mine ? heroFace() : foeFace(f), name));
+    putText(tcTxt, mine ? (p.again ? 'Your turn again' : 'Your turn') : p.again ? `${name} goes again` : `${name}'s turn`);
+    tcard.className = 'tv-turncard ' + (mine ? 'hero' : 'foe') + (reduced() ? ' calm' : '');
+    tcard.style.setProperty('--tc-dur', (p.secs || 0.9) + 's');
+    tcard.hidden = false; void tcard.offsetWidth; tcard.classList.add('play');
+    clearTimeout(tcT); tcT = setTimeout(() => { tcard.hidden = true; }, (p.secs || 0.9) * 1000 + 150);
+  });
+  on('turn', () => { clearTimeout(tcT); tcard.hidden = true; });
+  on('fightEnd', () => { clearTimeout(tcT); tcard.hidden = true; });
+
   // ---- the turn strip, the timing bar, the hero row ----
   const strip = el('div', 'tv-strip'); strip.hidden = true; strip.setAttribute('aria-label', 'Turn order');
   const slots = []; for (let i = 0; i < 6; i++) { const s = el('div', 'tv-slot'); slots.push(s); strip.append(s); }
   const turnN = el('span', 'tv-n');
-  const bar = el('div', 'tv-time'), fill = el('i', 'tv-fill'), dz = el('i', 'tv-dodge'), pz = el('i', 'tv-parry');
-  bar.append(dz, pz, fill); bar.hidden = true; bar.setAttribute('aria-hidden', 'true');
+  // the timing bar (owner, 2026-10-02: bigger): the track fills to the hit; the dodge (blue) and parry (gold) windows sit
+  // at its end, labelled; the whole bar lights up in the colour of the window you are in now
+  const bar = el('div', 'tv-time'), track = el('div', 'tv-track'), fill = el('i', 'tv-fill'), dz = el('i', 'tv-dodge'), pz = el('i', 'tv-parry'), head = el('i', 'tv-head');
+  const legend = el('div', 'tv-legend'); legend.append(el('span', 'tv-lg-d', 'Dodge'), el('span', 'tv-lg-p', 'Parry'));
+  track.append(dz, pz, fill, head); bar.append(track, legend); bar.hidden = true; bar.setAttribute('aria-hidden', 'true');
   const heroRow = el('div', 'tv-hero'), pipsLb = el('span', 'tv-res'), pips = el('span', 'tv-pips'), chips = el('span', 'tv-chips');
   heroRow.append(pipsLb, pips, chips);
   const warn = el('div', 'tv-warn'); warn.hidden = true; warn.setAttribute('role', 'status'); warn.setAttribute('aria-live', 'assertive');
@@ -150,7 +172,7 @@ var turnBarInfo = () => null;
     const f = foeNow(), sig = order.join() + '|' + (f && f.key) + '|' + s.phase;
     if (sig !== lastSig) {
       lastSig = sig;
-      const hf = heroFace(), ff = foeFace(f), now = s.phase === 'hero' || s.phase === 'foeWindup';
+      const hf = heroFace(), ff = foeFace(f), now = s.phase === 'hero' || s.phase === 'foeWindup' || s.phase === 'handoff' || s.phase === 'timing';
       slots.forEach((sl, i) => {
         const o = order[i]; if (!o) { sl.hidden = true; return; }
         sl.hidden = false; sl.className = 'tv-slot ' + o + (i === 0 && now ? ' now' : '');
@@ -163,10 +185,13 @@ var turnBarInfo = () => null;
     // the foe winds up: the bar fills to the hit; the dodge and parry windows sit at its end
     const winding = s.phase === 'foeWindup' && s.closesAt > s.now;
     if (bar.hidden === winding) bar.hidden = !winding;
+    if (box && box.classList.contains('tv-winding') !== winding) box.classList.toggle('tv-winding', winding);   // a place caption fades under the bar
     if (winding) {
       if (!winT0 || winT0 > s.now) winT0 = s.now;
       const span = Math.max(0.1, s.closesAt - winT0), pct = x => Math.max(0, Math.min(100, x * 100)) + '%';
-      fill.style.width = pct((s.now - winT0) / span);
+      fill.style.width = pct((s.now - winT0) / span); head.style.left = pct((s.now - winT0) / span);
+      const inP = s.now >= s.parryOpensAt, inD = s.now >= s.dodgeOpensAt;
+      bar.classList.toggle('in-parry', inP); bar.classList.toggle('in-dodge', inD && !inP);
       dz.style.left = pct((s.dodgeOpensAt - winT0) / span); dz.style.width = pct((s.closesAt - s.dodgeOpensAt) / span);
       pz.style.left = pct((s.parryOpensAt - winT0) / span); pz.style.width = pct((s.closesAt - s.parryOpensAt) / span);
     } else winT0 = 0;
