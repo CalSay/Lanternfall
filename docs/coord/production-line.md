@@ -101,6 +101,7 @@ New state: ...    Save impact: none | needs key bump (Claude)
 After: <tasks>    Owner decision needed: yes/no
 Checks: build, check --only="...", sim (seed, policy, hero) | browser | perf
 Stop when: ...
+Run this through your orchestration setup (AGENTS.md, docs/coord/codex-orchestration.md): coordinate, let the specialists in docs/agents/ do the work, report one handoff.
 ```
 **Handoff (Codex to Claude):** the existing template in `two-agent-split.md`. Claude replies with the next checkpoint SHA.
 
@@ -117,6 +118,8 @@ Stop when: ...
 Codex works in the owner's own Codex session and reads GitHub, so the hand-off is the existing protocol: one `owner:codex`
 issue per card, a `codex/<id>-<name>` branch from a pushed base SHA, a one-line note on PR #1, and Codex's handoff comment back.
 Claude then reviews the diff, re-runs build and checks itself, and answers on #1 (details: `.claude/skills/delegate-codex/SKILL.md`).
+
+**Return loop:** at review (stage 5) Claude either accepts or returns the task to Codex with the failed acceptance line and evidence. Codex reworks it on the same branch through its agent setup and re-posts the handoff. Two returns at most, then the owner decides. Claude does not patch returned work itself.
 
 Rules: never interrupt a Codex task in progress; nothing is created for Codex or posted on #1 until the owner says go for that card;
 drafts wait in `docs/coord/cards/`. The first draft is `cards/C-first-trial.md`. The Codex CLI route (`codex exec`) is on hold: it

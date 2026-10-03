@@ -8,11 +8,11 @@ Claude plans and reviews; Codex builds. Codex works in the owner's own Codex ses
 **Before anything outward:** Codex may be mid-task. Do not create issues, branches or comments for Codex, and never post on PR #1, until the owner says go for this card. Drafts live in `docs/coord/cards/` on Claude's branch.
 
 1. **Check the queue.** Read the open `owner:codex` issues and the latest comments on PR #1. If Codex says it is in progress or blocked, add the card to the queue and do not wake it.
-2. **Write the card** from the template in `docs/coord/production-line.md` (base SHA, owned files, acceptance, checks, stop condition). Pin the base to a pushed SHA on the accumulation branch.
+2. **Write the card** from the template in `docs/coord/production-line.md` (base SHA, owned files, acceptance, checks, stop condition). Pin the base to a pushed SHA on the accumulation branch. Every card ends with: "Run this through your orchestration setup (`AGENTS.md`, `docs/coord/codex-orchestration.md`): you coordinate, specialists in `docs/agents/` do the work, and you report one handoff." Claude does not pick Codex's roles or models.
 3. **Publish it (owner go required):** open an issue titled `C<n>: <name>` with label `owner:codex` and the card as its body; create `codex/c<n>-<name>` from the base SHA; post one line on PR #1: `Claude: C<n> queued (#issue), start from <sha>. Finish the task in hand first.`
 4. **Wait.** Codex pushes its branch and posts the handoff on PR #1. Do not poll; PR events wake this session. Never message mid-task.
 5. **Review.** Fetch the branch, read the handoff, then the diff. Check owned files only, save impact, art freeze, online layer untouched. Re-run `node tools/build.mjs` and `node tools/check.mjs` (via `qa-runner`); never accept a reported green. Balance, save or cross-system risk goes to `systems-reviewer`.
-6. **Answer on #1:** merged (with the new checkpoint SHA) or one bounded change request with evidence. A second failed round goes to the owner.
+6. **Answer on #1:** accepted (with the new checkpoint SHA) or **returned**. Claude may return a task that has not hit the mark: say which acceptance line failed, with evidence (check output, diff lines, a measurement), and what "done" looks like. Codex reworks it through the same setup on the same branch. Return at most twice; after the second return, ask the owner. Never fix a returned task yourself.
 7. **Integrate** into the accumulation branch only with the owner's say-so. Never publish the artifact.
 
 Limits: one card at a time per Codex session unless the owner says otherwise; no recursive delegation. The Codex CLI route (`codex exec`) is on hold: it needs an API key and network access this environment lacks.

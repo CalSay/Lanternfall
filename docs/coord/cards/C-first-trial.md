@@ -17,6 +17,7 @@ New state: none.   Save impact: none.
 After: none.   Owner decision needed: no.
 Checks: node tools/build.mjs; node tools/check.mjs --only="docs and agents"; then the full check.
 Stop when: the section passes, the full check is green, and the handoff is posted on PR #1.
+Run this through your orchestration setup (AGENTS.md, docs/coord/codex-orchestration.md): coordinate, let the specialists in docs/agents/ do the work, report one handoff.
 ```
 
 Why this card: small, no game code, no save or balance risk, touches one shared file at its extension point, and it exercises every step (card, branch, handoff, review, checks).
