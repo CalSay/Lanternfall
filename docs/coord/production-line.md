@@ -6,12 +6,11 @@ Sprite Forge). This page builds on both: [codex-orchestration.md](codex-orchestr
 [two-agent-split.md](two-agent-split.md) and [claude-orchestration.md](claude-orchestration.md).
 
 **Roles (owner, 2026-10-03).** Codex is the main worker. Claude organises and reviews it: intake, specs, task cards,
-review, integration, publishing. Claude drives Codex through its CLI as a subagent (`codex exec`, see the `delegate-codex`
-skill): one card in, one branch out, then Claude reviews the diff and re-runs the checks itself.
+review, integration, publishing. Claude hands Codex one card at a time through GitHub (see the `delegate-codex` skill and section 8): one card in, one branch out,
+then Claude reviews the diff and re-runs the checks itself.
 This supersedes the lane table in `claude-orchestration.md`, which now only describes what Claude reviews and the rare things it builds.
 
-**Status:** the Codex CLI is not installed in this cloud environment and no OpenAI credential is set, so no run has happened.
-Setup steps are in section 8.
+**Status:** no card has been handed to Codex yet. Codex is busy; the first card is a draft.
 
 ## 1. The game as it is now
 
@@ -43,7 +42,7 @@ Every change moves through the same stages. Skipping a stage needs an owner reas
 |---|---|---|---|---|
 | 1 | **Intake** | Claude | A task card on a GitHub issue (template below), labelled `owner:codex` or `owner:claude` | Owner request or an owner-approved roadmap item |
 | 2 | **Spec** | Claude (Codex for design-first items) | Acceptance criteria, owned files, class (A-F), risk, dependencies, base SHA | Owner sign-off if the card says "owner decision" |
-| 3 | **Build** | Codex via `codex exec`, started and watched by Claude, `codex/<id>-<name>`, own worktree | Commits, new state defaults, own check section | `node tools/build.mjs` ok |
+| 3 | **Build** | Codex, handed the card through GitHub, `codex/<id>-<name>`, own worktree | Commits, new state defaults, own check section | `node tools/build.mjs` ok |
 | 4 | **Verify** | Codex, then `qa-runner` | Full `check.mjs` result with skips counted, sim run for balance, browser look for UI | No failing section; skips stated |
 | 5 | **Review** | Claude `systems-reviewer` (read-only) | Verdict on save compat, active/away parity, economy, perf, lane and shared-file rules | No blocking finding |
 | 6 | **Integrate** | Claude | Merge into the accumulation branch, rebuild `dist/`, full check, `perf.mjs --quick` after each merge wave | Green on the combined game |
@@ -113,16 +112,16 @@ Stop when: ...
 - Wave = a small set of independent cards merged together. Claude posts the new checkpoint SHA on #1 after each wave.
 - Weekly: Claude reconciles issues against `GAME.md`, closes finished cards and flags stale ones. No timers or schedules start without the owner's OK.
 
-## 8. Driving Codex from the CLI
+## 8. Driving Codex through GitHub
 
-Per card (details in `.claude/skills/delegate-codex/SKILL.md`): worktree on the card's base SHA, card file, `codex exec` in
-workspace-write mode, then Claude reads the output, reviews the diff, runs build and checks, and sends at most one bounded
-follow-up before escalating. Codex never pushes, merges or publishes.
+Codex works in the owner's own Codex session and reads GitHub, so the hand-off is the existing protocol: one `owner:codex`
+issue per card, a `codex/<id>-<name>` branch from a pushed base SHA, a one-line note on PR #1, and Codex's handoff comment back.
+Claude then reviews the diff, re-runs build and checks itself, and answers on #1 (details: `.claude/skills/delegate-codex/SKILL.md`).
 
-To switch it on the owner needs to: (a) allow installing the Codex CLI (`@openai/codex` from npm) in the cloud environment
-setup script; (b) store an OpenAI credential as an environment variable (suggested name `OPENAI_API_KEY`) under Project
-settings, Cloud environment, never in chat; (c) allow the OpenAI API host in the environment's network policy. A new session
-picks these up. Until then Claude writes the cards and reviews branches Codex pushes from its own workspace.
+Rules: never interrupt a Codex task in progress; nothing is created for Codex or posted on #1 until the owner says go for that card;
+drafts wait in `docs/coord/cards/`. The first draft is `cards/C-first-trial.md`. The Codex CLI route (`codex exec`) is on hold: it
+needs an API key and an allowed OpenAI host in this environment. If the owner wants it later, store the key as an environment variable,
+allow `api.openai.com`, and add `npm install -g @openai/codex` to the setup script.
 
 ## 9. Open questions for the owner
 
