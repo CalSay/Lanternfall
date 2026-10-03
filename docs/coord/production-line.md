@@ -5,9 +5,13 @@ orchestration workspace is `codex/orchestration-architecture` (latest commits 20
 Sprite Forge). This page builds on both: [codex-orchestration.md](codex-orchestration.md) (on that branch),
 [two-agent-split.md](two-agent-split.md) and [claude-orchestration.md](claude-orchestration.md).
 
-**Roles (owner, 2026-10-03).** Claude is the main coordinator: intake, specs, sign-off, integration, publishing. Codex is
-the main workhorse: it builds most tasks. Claude builds directly only where coordination needs it (see Claude builds).
-This supersedes the narrower lane table in `claude-orchestration.md`, which becomes Claude's own-work list.
+**Roles (owner, 2026-10-03).** Codex is the main worker. Claude organises and reviews it: intake, specs, task cards,
+review, integration, publishing. Claude drives Codex through its CLI as a subagent (`codex exec`, see the `delegate-codex`
+skill): one card in, one branch out, then Claude reviews the diff and re-runs the checks itself.
+This supersedes the lane table in `claude-orchestration.md`, which now only describes what Claude reviews and the rare things it builds.
+
+**Status:** the Codex CLI is not installed in this cloud environment and no OpenAI credential is set, so no run has happened.
+Setup steps are in section 8.
 
 ## 1. The game as it is now
 
@@ -39,7 +43,7 @@ Every change moves through the same stages. Skipping a stage needs an owner reas
 |---|---|---|---|---|
 | 1 | **Intake** | Claude | A task card on a GitHub issue (template below), labelled `owner:codex` or `owner:claude` | Owner request or an owner-approved roadmap item |
 | 2 | **Spec** | Claude (Codex for design-first items) | Acceptance criteria, owned files, class (A-F), risk, dependencies, base SHA | Owner sign-off if the card says "owner decision" |
-| 3 | **Build** | Codex, `codex/<id>-<name>`, own worktree | Commits, new state defaults, own check section | `node tools/build.mjs` ok |
+| 3 | **Build** | Codex via `codex exec`, started and watched by Claude, `codex/<id>-<name>`, own worktree | Commits, new state defaults, own check section | `node tools/build.mjs` ok |
 | 4 | **Verify** | Codex, then `qa-runner` | Full `check.mjs` result with skips counted, sim run for balance, browser look for UI | No failing section; skips stated |
 | 5 | **Review** | Claude `systems-reviewer` (read-only) | Verdict on save compat, active/away parity, economy, perf, lane and shared-file rules | No blocking finding |
 | 6 | **Integrate** | Claude | Merge into the accumulation branch, rebuild `dist/`, full check, `perf.mjs --quick` after each merge wave | Green on the combined game |
@@ -82,7 +86,7 @@ Reconcile with the open `owner:codex` issues (#7 to #27, last updated 2026-10-01
 
 ## 5. Claude builds directly
 
-Only these, so Codex stays the workhorse: the shell and layout (`70-ui`, `75-nav-ui`, `shell.html`, landscape CSS); onboarding and notices policy;
+Rarely. Codex builds by default; Claude edits only these, and only when a card for Codex would cost more than the edit: the shell and layout (`70-ui`, `75-nav-ui`, `shell.html`, landscape CSS); onboarding and notices policy;
 engine hooks Codex asks for (`59k-turn`, `59a-status`); save state and the save key; `tools/check.mjs` structure, `sim.mjs`, `perf.mjs`; integration and `dist/`.
 Everything else goes to a Codex card, even when Claude could do it faster, unless the owner says otherwise.
 
@@ -109,9 +113,19 @@ Stop when: ...
 - Wave = a small set of independent cards merged together. Claude posts the new checkpoint SHA on #1 after each wave.
 - Weekly: Claude reconciles issues against `GAME.md`, closes finished cards and flags stale ones. No timers or schedules start without the owner's OK.
 
-## 8. Open questions for the owner
+## 8. Driving Codex from the CLI
 
-1. Is the Claude/Codex split in section 5 right, or should Claude build more (UI and mechanics, as first proposed)?
-2. Confirm the backlog order in section 4, and whether the C26 art programme keeps running in parallel.
-3. Claude stays integrator and publisher, with you publishing the artifact. Correct?
-4. Should the issue list (#7-#27) be refreshed against the code now? Claude can do it read-only.
+Per card (details in `.claude/skills/delegate-codex/SKILL.md`): worktree on the card's base SHA, card file, `codex exec` in
+workspace-write mode, then Claude reads the output, reviews the diff, runs build and checks, and sends at most one bounded
+follow-up before escalating. Codex never pushes, merges or publishes.
+
+To switch it on the owner needs to: (a) allow installing the Codex CLI (`@openai/codex` from npm) in the cloud environment
+setup script; (b) store an OpenAI credential as an environment variable (suggested name `OPENAI_API_KEY`) under Project
+settings, Cloud environment, never in chat; (c) allow the OpenAI API host in the environment's network policy. A new session
+picks these up. Until then Claude writes the cards and reviews branches Codex pushes from its own workspace.
+
+## 9. Open questions for the owner
+
+1. Confirm the backlog order in section 4, and whether the C26 art programme keeps running in parallel.
+2. Claude stays integrator and publisher, with you publishing the artifact. Correct?
+3. Should the issue list (#7-#27) be refreshed against the code now? Claude can do it read-only.

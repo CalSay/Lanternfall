@@ -6,6 +6,8 @@ Nothing here changes game code or existing config. It adds `.claude/agents/`, `.
 
 ## Lanes (owner, 2026-10-03)
 
+Superseded in part by [production-line.md](production-line.md): Codex is the main worker, driven by Claude through its CLI. The lanes below describe who owns and reviews what.
+
 Codex is stronger at characters, abilities and character visuals. Claude is stronger at core mechanics and UI.
 
 | Lane | Owns | Typical files |
