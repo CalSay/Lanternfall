@@ -1,19 +1,18 @@
 ---
 name: delegate-codex
-description: Hand a Lanternfall task card to the Codex CLI as a worker, then review its branch. Use when a card is ready to build and the owner wants Codex to do the work.
+description: Hand a Lanternfall task card to Codex through GitHub (issue, branch, PR #1 inbox), then review what Codex pushes. Use when a card is ready to build.
 ---
 
-Claude plans and reviews; Codex builds. Treat `codex exec` like a subagent: one bounded card in, one branch out.
+Claude plans and reviews; Codex builds. Codex works in the owner's own Codex session and reads GitHub, so the hand-off is a task issue, a branch and a note on PR #1. This is the existing protocol in `docs/coord/two-agent-split.md`.
 
-**Preconditions (stop and tell the owner if any fails):** `command -v codex` works; `OPENAI_API_KEY` is set in the environment (never ask for it in chat, never print it); the card has a base SHA, owned files, acceptance criteria and a stopping condition.
+**Before anything outward:** Codex may be mid-task. Do not create issues, branches or comments for Codex, and never post on PR #1, until the owner says go for this card. Drafts live in `docs/coord/cards/` on Claude's branch.
 
-1. **Worktree.** `git fetch origin && git worktree add ../lf-<id> -b codex/<id>-<name> <base-sha>`. One worktree per card; never reuse Claude's branch.
-2. **Brief.** Write the card to `../lf-<id>.card.md` (template in `docs/coord/production-line.md`). Point to `AGENTS.md`, `CLAUDE.md` and the role file in `docs/agents/` instead of pasting them. State: no push, no merge, no publish, no deploy, owned files only.
-3. **Run.** From the worktree, non-interactive, write-scoped to it:
-   `codex exec --cd ../lf-<id> --sandbox workspace-write --output-last-message ../lf-<id>.out.md "$(cat ../lf-<id>.card.md)"`
-   Verify the flag names with `codex exec --help` the first time; the CLI changes. Pass `--model` only if the owner chose one. Run long jobs in the background and wait for exit.
-4. **Review before trusting.** Read `../lf-<id>.out.md`, then the diff (`git -C ../lf-<id> diff <base-sha>..HEAD --stat`, then the files). Check owned-files-only, save impact, art freeze, online layer untouched. Re-run `node tools/build.mjs` and `node tools/check.mjs` yourself via `qa-runner`; never accept Codex's own claim of green.
-5. **Decide.** Blocking findings go back as ONE bounded follow-up `codex exec` with the failure evidence (second attempt only; after that escalate to the owner). Risky or balance-affecting diffs get `systems-reviewer`.
-6. **Hand off.** Use the `handoff` skill. Pushing `codex/<id>-<name>` and merging into the accumulation branch need the owner's go-ahead unless they have granted it for this card.
+1. **Check the queue.** Read the open `owner:codex` issues and the latest comments on PR #1. If Codex says it is in progress or blocked, add the card to the queue and do not wake it.
+2. **Write the card** from the template in `docs/coord/production-line.md` (base SHA, owned files, acceptance, checks, stop condition). Pin the base to a pushed SHA on the accumulation branch.
+3. **Publish it (owner go required):** open an issue titled `C<n>: <name>` with label `owner:codex` and the card as its body; create `codex/c<n>-<name>` from the base SHA; post one line on PR #1: `Claude: C<n> queued (#issue), start from <sha>. Finish the task in hand first.`
+4. **Wait.** Codex pushes its branch and posts the handoff on PR #1. Do not poll; PR events wake this session. Never message mid-task.
+5. **Review.** Fetch the branch, read the handoff, then the diff. Check owned files only, save impact, art freeze, online layer untouched. Re-run `node tools/build.mjs` and `node tools/check.mjs` (via `qa-runner`); never accept a reported green. Balance, save or cross-system risk goes to `systems-reviewer`.
+6. **Answer on #1:** merged (with the new checkpoint SHA) or one bounded change request with evidence. A second failed round goes to the owner.
+7. **Integrate** into the accumulation branch only with the owner's say-so. Never publish the artifact.
 
-Limits: at most two Codex runs at once; no recursive delegation (Codex does not spawn Codex); stop on pause.
+Limits: one card at a time per Codex session unless the owner says otherwise; no recursive delegation. The Codex CLI route (`codex exec`) is on hold: it needs an API key and network access this environment lacks.
