@@ -1,0 +1,21 @@
+{
+  "id": "oriel",
+  "base_sha": "e630166d11e2f9e054187f10b90a5fed944a203c",
+  "source": "art/concepts/hero-corrections-v1/oriel.png",
+  "source_sha256": "b094afecb129e0fabc307b9fbbc7c157086d23701a4bab151060a3d1e046617f",
+  "generated_path": "/workspace/generated_images/exec-ec2048ba-0ad5-4fa9-8a88-3e58aa2f643f.png",
+  "output": "art/concepts/hero-corrections-v4/oriel.png",
+  "sha256": "1be9bc10aa07feb724f07a4207cdae2903bca52a9d11f27399722e64eda762cb",
+  "prompt_sha256": "1a46086925c30ee6469c4f7e201479738ece713d8a7dfc59ffbd75fabfab068c",
+  "dimensions": [
+    1536,
+    1024
+  ],
+  "status": "pending-owner-review",
+  "attempts": 1,
+  "workflow": "Built-in image_gen reference edit under owner concept-only exception; no production pose gate claimed",
+  "qc_notes": [
+    "Duplicate waist tome removed; robe embroidery restored; held tome and hip lantern retained.",
+    "Inherited held-tome/detail page perspective difference remains; this edit was only the duplicate removal."
+  ]
+}

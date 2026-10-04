@@ -1,0 +1,21 @@
+{
+  "id": "ione-hart",
+  "base_sha": "e630166d11e2f9e054187f10b90a5fed944a203c",
+  "source": "art/concepts/hero-corrections-v1/ione-hart.png",
+  "source_sha256": "2d86ca11f1871033a62a408484b39e5ef5ae11fff13c28b34e83e9f9380bfea3",
+  "generated_path": "/workspace/generated_images/exec-bc1b4571-7f60-4a6b-b69d-425a92d75067.png",
+  "output": "art/concepts/hero-corrections-v4/ione-hart.png",
+  "sha256": "b7d8757ed3c5f3ee708cbe962ca3dd4957b90db27af11cbedcbcb1a06772908a",
+  "prompt_sha256": "4ad32a4aac1314168da7b11c9a731e1fb2772b006dec4e620c5fef2205783a0b",
+  "dimensions": [
+    1536,
+    1024
+  ],
+  "status": "pending-owner-review",
+  "attempts": 1,
+  "workflow": "Built-in image_gen reference edit under owner concept-only exception; no production pose gate claimed",
+  "qc_notes": [
+    "Long shaft is now visibly straight, without spiral wrap changing its contour.",
+    "Prism head remains approximately upright while shaft leans slightly; focus-to-shaft axis alignment is not fully exact and warrants owner inspection."
+  ]
+}

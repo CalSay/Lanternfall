@@ -1,0 +1,21 @@
+{
+  "id": "adela-wych",
+  "base_sha": "e630166d11e2f9e054187f10b90a5fed944a203c",
+  "source": "art/concepts/hero-corrections-v1/adela-wych.png",
+  "source_sha256": "72405b66cad83ce8df3929734e297a2f2ef9ee66454e86561088c7e4b135e367",
+  "generated_path": "/workspace/generated_images/exec-b73ca7b5-c4e4-4759-9ae9-825d55667f77.png",
+  "output": "art/concepts/hero-corrections-v4/adela-wych.png",
+  "sha256": "007e275c5fae39e59676461182f50668ea99d36e00f5d927be454438a264a36b",
+  "prompt_sha256": "6647cc2a2610112ccf15cfb2ee63b6954481cd22394332369f3cf7678b5141d3",
+  "dimensions": [
+    1536,
+    1024
+  ],
+  "status": "pending-owner-review",
+  "attempts": 1,
+  "workflow": "Built-in image_gen reference edit under owner concept-only exception; no production pose gate claimed",
+  "qc_notes": [
+    "Rounded arch replaced with angular pointed diamond frame in full figure and closeup; purple crystal retained.",
+    "No obvious new blocking defect on visual inspection."
+  ]
+}

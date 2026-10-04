@@ -1,0 +1,22 @@
+{
+  "id": "linnet",
+  "base_sha": "e630166d11e2f9e054187f10b90a5fed944a203c",
+  "source": "art/concepts/hero-corrections-v1/linnet.png",
+  "source_sha256": "347cddca0be47270814ce70af23e3135d77f2246d0bb7256666efefc0a84894e",
+  "generated_path": "/workspace/generated_images/exec-ff27490c-6670-42c6-a116-05ca2ba6236b.png",
+  "output": "art/concepts/hero-corrections-v4/linnet.png",
+  "sha256": "a6167ea00d4027e8803e9f2f0a482f47d935ccc41a4df4b91b45befc56f81a9a",
+  "prompt_sha256": "84a7244e1687f8a43aa63613f18caf6925b62b7158899397b3c848d67e37e29d",
+  "dimensions": [
+    1536,
+    1024
+  ],
+  "status": "pending-owner-review",
+  "attempts": 1,
+  "workflow": "Built-in image_gen reference edit under owner concept-only exception; no production pose gate claimed",
+  "qc_notes": [
+    "Workshop apron/tools replaced with intact tailored teal frost/glass mage coat, glass-facet cuffs/shoulders and matching portrait collar.",
+    "Hair, mature face, frostglass staff, tome and warm lantern preserved; small glass vial retained as personal accessory.",
+    "No obvious new blocking defect on visual inspection."
+  ]
+}
