@@ -1,0 +1,43 @@
+{
+  "branch": "codex/hero-ability-expansion",
+  "baseSHA": "1bf81c9d6f3eec4065f27dbefd6ef46f64396537",
+  "heroes": 34,
+  "newHeroes": 13,
+  "signatureCards": 408,
+  "activeSignatures": 306,
+  "passiveSignatures": 102,
+  "timedSignatures": 136,
+  "workshopBuilds": 102,
+  "classes": {
+    "Ranger": 8,
+    "Warrior": 11,
+    "Mage": 15
+  },
+  "allCardAndStarReferencesValid": true,
+  "allFrozenGuideCopiesMatch": true,
+  "requiredChecks": {
+    "node tools/build.mjs": "passed",
+    "LF_CHROMIUM=/usr/bin/chromium node tools/check.mjs": "passed",
+    "browserSectionsSkipped": 0
+  },
+  "designReviews": {
+    "new_kit_audit": "zero actionable design findings after four passes",
+    "roster_ability_comparison": "zero actionable design findings after structural and timing revisions"
+  },
+  "numericalBalance": "Unmeasured; real-core prototype gate remains open.",
+  "runtimeIntegration": false,
+  "artChanges": false,
+  "browserChecks": {
+    "desktopWidth": 1200,
+    "mobileWidth": 390,
+    "javascriptEnabled": false,
+    "all34ProfilesOpenAndClose": true,
+    "all34EmbeddedBoardsDecode": true,
+    "all408SignaturesVisibleInDOM": true,
+    "all136TimingLabelsPresent": true,
+    "all102BuildFoldsPresent": true,
+    "horizontalOverflow": false,
+    "externalProfileLinks": 0
+  },
+  "gameAssertionsPassed": 2300
+}

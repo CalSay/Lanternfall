@@ -1,0 +1,290 @@
+[
+  {
+    "hero": "Linnet Cole",
+    "card": "Draw a Needle",
+    "before": "Cost 2; `1.5 U` frost; with Chill present ignore armour and consume 1 Chill after resolution; CD 3.",
+    "after": "Cost 2; 1.5U frost. Consume one opening Chill before contact for +0.2U direct power, or retain Chill for a later control attempt. No armour ignore on frost; CD3."
+  },
+  {
+    "hero": "Linnet Cole",
+    "card": "Perfect Pane",
+    "before": "Cost 4; `2.6 U` frost; choose to keep Ward and apply one Chill, or consume Ward before contact for 30% armour ignore and keep existing Chill unchanged. No Ward: the retained-Ward mode still adds Chill. One finishing treatment; CD 6.",
+    "after": "Cost 4; 2U frost. Retain Ward and apply one Chill after contact, or consume Ward before contact for +0.25U direct power while retaining Chill. With no Ward, baseline plus one Chill. One treatment, no dead armour benefit; CD6."
+  },
+  {
+    "hero": "Inga Fallow",
+    "card": "Below the Surface",
+    "before": "Cost 2; `1.7 U` frost, ignores armour; consumes Mark if present for 1 Chill after damage; CD 4.",
+    "after": "Cost 2; 1.5U frost. Consume opening Mark for one Chill after contact, or keep Mark for its normal damage setup. No armour ignore on frost; CD4."
+  },
+  {
+    "hero": "Inga Fallow",
+    "card": "Open the Stratum",
+    "before": "Cost 4; `2.6 U` frost; choose to keep Sunder for a 30% armour-ignoring hit, or consume it before contact for one-F Weaken and 8% Ward after contact. No Sunder: base hit and 5% Ward. One layer treatment; CD 6.",
+    "after": "Cost 4; 2U frost. Keep opening Sunder for +0.25U direct power, or consume it before contact for one-F Weaken and 8% Ward after contact. No Sunder: baseline and 5% Ward. No frost penetration; CD6."
+  },
+  {
+    "hero": "Cass Penhallow",
+    "card": "Eel Hunter",
+    "before": "Attack against Venom gains 20% action damage. No per-stack scaling.",
+    "after": "Attack against opening Venom gains +15% direct damage. Every third chosen Attack applies one Venom after contact if that Attack did not consume Venom; the counter resets even when application is suppressed. No per-stack scaling or passive refund."
+  },
+  {
+    "hero": "Wren Hollowmere",
+    "card": "Deadeye",
+    "before": "Heavy 1.5U arrow. May spend one Aim for half-armour penetration; independently keep Mark for income or consume it for +0.35U direct power. Perfect uses the normal timed budget and does not restore the consumed Mark.",
+    "after": "Heavy 1.5U physical arrow. May spend one Aim for half-armour penetration; independently retain Mark or consume it for +0.25U direct power. Perfect uses the common aggregate budget, never restores Mark or refunds its passive preparation."
+  },
+  {
+    "hero": "Tobin Reed",
+    "card": "Answering Cut",
+    "before": "1.2U sword hit. On the first chosen action after a wholly manually defended move, choose half-armour damage with +0.5U, or half-armour damage with two Grit instead. Attack can use that answer for one Bleed; another action expires it. Parry/Dodge mixes qualify.",
+    "after": "1.2U physical sword hit. On the first chosen action after a wholly manually defended move, choose half-armour penetration with +0.25U direct power, or half-armour penetration with two Grit instead. Attack can use that answer for one Bleed; another action expires it. Any manual Parry/Dodge mix qualifies."
+  },
+  {
+    "hero": "Bram Hollis",
+    "card": "Clean Cut",
+    "before": "Deal 2U; if opening Grain was exactly 3, add 0.5U and ignore half current armour for this hit only.",
+    "after": "1.7U physical axe cut. If opening Grain was exactly three before paying three, gain +0.25U direct power and ignore half armour. Exact reserve is a choice, not an extra resource ramp."
+  },
+  {
+    "hero": "Bram Hollis",
+    "card": "Deep Kerf",
+    "before": "Deal 1.5U; place Kerf for two foe moves. Next Bram direct signature gains +0.6U and consumes Kerf once.",
+    "after": "1.2U physical axe cut; place one Kerf for two subsequent H. The next Bram direct signature may consume it for +0.25U direct power. Replacement discards old charge; no stacking with a second Kerf."
+  },
+  {
+    "hero": "Bram Hollis",
+    "card": "Split Kindling",
+    "before": "Deal two authored 0.7U chop packets; if Kerf exists, consume it for +0.6U once. Neither hit generates Grain.",
+    "after": "Two authored 0.6U physical chop packets sharing one grade/proc budget. May consume opening Kerf for +0.25U aggregate direct power once; neither packet generates Grain."
+  },
+  {
+    "hero": "Ser Aldric Vane",
+    "card": "Renewed Vow",
+    "before": "Deal 1.6U; if Oath or its held sword charge exists, choose to fulfil it for +0.5U and Exposed, or release it for Guard through the next enemy move. Clear the chosen preparation first; charge bonus cannot also attach. No preparation still gives the base hit.",
+    "after": "1.4U physical cut. Consume Oath or its held sword charge for +0.25U direct power and one-F Exposed, or cancel that preparation for Guard through the next enemy move instead. Clear chosen preparation before contact; its ordinary charge cannot also attach. With no preparation, useful baseline cut."
+  },
+  {
+    "hero": "Kestrel Thane",
+    "card": "Pass Held Open",
+    "before": "Guard for next enemy move; on full defence switch Long and prepare next signature +0.7U. Miss gives no extra charge.",
+    "after": "Guard through the next enemy move. Whole manual defence switches to Long and prepares one +0.25U next-signature charge for two subsequent H. Failed or incomplete defence gives no charge; refreshing Guard does not rearm it."
+  },
+  {
+    "hero": "Thessaly Gloam",
+    "card": "Drowned Roofs",
+    "before": "Deal 1.5U plus 0.25U per stored Insight; consume Insight. No scaling from actual boss damage taken.",
+    "after": "1.4U frost water spell. Consume Insight for +0.1U per recorded hit, maximum three, under the shared optional modifier ceiling. Record comes only from a completed enemy attack; never incoming damage or future information."
+  },
+  {
+    "hero": "Thessaly Gloam",
+    "card": "Spill the Future",
+    "before": "Deal 1.9U; choose to consume Insight for +0.25U per recorded point (maximum three), or preserve Insight and apply Weaken for one F. No Insight: choose the base hit with Weaken. The record never scales with boss damage taken.",
+    "after": "1.7U frost water spell. Consume Insight for +0.1U per recorded hit, maximum three, or retain it and apply one-F Weaken instead. With no Insight, baseline plus Weaken. No damage-taken scaling."
+  },
+  {
+    "hero": "Caedmon the Unburnt",
+    "card": "Open the Plate",
+    "before": "Next direct Caedmon signature gains +0.8U; until his next action ends, received direct damage +15%. No forced hit, no defence restriction.",
+    "after": "Prepare one +0.25U next-direct-signature charge for two subsequent H. Until the next chosen action ends, incoming direct damage is 15% higher. Manual defence remains unchanged. Consuming/cancelling charge ends the vulnerability; no forced hit, free action or stacking charge."
+  },
+  {
+    "hero": "Corvin Black",
+    "card": "You Asked",
+    "before": "Gain 1 Freedom and hold one Opening: next Corvin direct signature adds 0.5U.",
+    "after": "Gain one Freedom and establish one Corvin Opening for two subsequent H. A later Corvin direct signature may consume it for +0.25U direct power, or a named refusal may cancel it. Reapplication replaces rather than banks; no benefit on the creation action."
+  },
+  {
+    "hero": "Brynja Berg",
+    "card": "Open the Line",
+    "before": "Warblade strike, 1.5U physical. Choose to preserve Set, or consume opening Set and end remaining Guard before contact for +0.45U. Without Set, base strike remains usable.",
+    "after": "Warblade strike, 1.5U physical. Retain opening Set or consume it and end remaining Guard before contact for +0.25U direct power. Without Set, baseline remains usable."
+  },
+  {
+    "hero": "Brynja Berg",
+    "card": "Three Nights",
+    "before": "2.2U physical. Hold: preserve Set without refreshing and gain Guard for one enemy move after contact. Open: consume opening Set and end Guard before contact for +0.6U instead of new Guard. Without Set, Hold remains usable. Perfect follows the shared timed budget, never another action/refund.",
+    "after": "1.8U physical timed warblade strike. Hold: retain opening Set without refreshing and gain Guard through the next move. Open: consume Set and end remaining Guard before contact for +0.25U instead of new Guard. Without Set, Hold works. Perfect shares the aggregate +0.40U ceiling; no extra action/refund."
+  },
+  {
+    "hero": "Grenna Holt",
+    "card": "Bare Hands",
+    "before": "1.2U with 25% armour penetration. Choose to retain Fault or consume it for 50% penetration. Does not gain HP damage from shield size or emit a second break event.",
+    "after": "1.2U physical held-maul head/haft strike, never an unarmed punch. Ignore 25% armour; consume Fault for 50% instead or retain it. No shield-size damage conversion or duplicate break event."
+  },
+  {
+    "hero": "Grenna Holt",
+    "card": "Palm on Stone",
+    "before": "Gain 2 Load; next Attack gains +20% armour ignore. Can prepare even against an unarmoured foe.",
+    "after": "Preparation gesture with one hand while retaining the maul; gain two Load and one next-Attack 20% armour-ignore token lasting two subsequent H. No palm damage, bare-fist strike or equipment throw."
+  },
+  {
+    "hero": "Grenna Holt",
+    "card": "Hammer After",
+    "before": "At opening Load >=3, Attack may spend three for a derived 0.8U and consume Fault, or 0.5U without Fault. Alternatively keep Load/Fault. One secondary payoff; it cannot crit or generate another proc.",
+    "after": "Attack may pay three opening Load for one derived 0.5U held-maul payoff while consuming Fault, or 0.3U without Fault. One secondary payout, never a crit/resource/Star trigger. Optional hold preserves Load and Fault."
+  },
+  {
+    "hero": "Old Hesketh",
+    "card": "First Lamp",
+    "before": "Set one Roadlamp charge: next Attack adds 0.6U holy damage and grants 1 additional Oil. Replaces existing charge.",
+    "after": "Set one Roadlamp charge: next Attack adds 0.25U holy direct power and grants 1 additional Oil. Replaces existing charge."
+  },
+  {
+    "hero": "Old Hesketh",
+    "card": "Last Lamp on the Hill",
+    "before": "Gain 15% Ward and a held 0.8U next-Attack light charge; does not resurrect a defeated hero.",
+    "after": "Gain 15% Ward and a held +0.25U next-Attack light charge; does not resurrect a defeated hero."
+  },
+  {
+    "hero": "Ser Aldric Vane",
+    "card": "Keep the Light",
+    "before": "Gain 12% Ward and arm one 0.6U holy next-Attack charge.",
+    "after": "Gain 12% Ward and arm one +0.25U holy next-Attack charge."
+  },
+  {
+    "hero": "Kestrel Thane",
+    "card": "The Name on the Shaft",
+    "before": "Hold spear charge: next Attack adds 1U and switches Close after contact. One held charge.",
+    "after": "Hold spear charge: next Attack adds 0.25U and switches Close after contact. One held charge."
+  },
+  {
+    "hero": "Isolde Marrow",
+    "card": "Seal the Terms",
+    "before": "Place one Seal for three foe moves. Next Isolde direct signature consumes Seal for +0.5U; gain 1 Term.",
+    "after": "Place one Seal for three foe moves. Next Isolde direct signature consumes Seal for +0.25U; gain 1 Term."
+  },
+  {
+    "hero": "Isolde Marrow",
+    "card": "Break the Seal",
+    "before": "If Seal exists, consume it to deal 2U and Weaken; otherwise 1U and Weaken. No double +0.5U seal rider.",
+    "after": "If Seal exists, consume it to deal 2U and Weaken; otherwise 1U and Weaken. No double +0.25U seal rider."
+  },
+  {
+    "hero": "Isolde Marrow",
+    "card": "A Word for It",
+    "before": "Heal 8% HP; prepare next manual Attack +0.5U. Solo relief has an action/resource cost.",
+    "after": "Heal 8% HP; prepare next manual Attack +0.25U. Solo relief has an action/resource cost."
+  },
+  {
+    "hero": "Oriel Vess",
+    "card": "Someone Looks Up",
+    "before": "Heal 8% HP and gain one alignment charge for next Attack +0.5U. Replaces other alignment charge.",
+    "after": "Heal 8% HP and gain one alignment charge for next Attack +0.25U. Replaces other alignment charge."
+  },
+  {
+    "hero": "Caedmon the Unburnt",
+    "card": "Ashfall Cut",
+    "before": "Deal 2U; consume up to two remaining Burn ticks for +0.3U each, max +0.6U. Deleted ticks do not also resolve.",
+    "after": "Deal 2U; consume up to two remaining Burn ticks for +0.3U each, max +0.25U. Deleted ticks do not also resolve."
+  },
+  {
+    "hero": "Thessaly Gloam",
+    "card": "Reflected Face",
+    "before": "If a completed enemy move is recorded, Attack may spend 2 Ripples to read it: a single-hit record gives 30% armour ignore; a two/three-hit record applies one Chill after contact. Alternatively keep Ripples and gain Guard through the next enemy move by consuming held Insight, if any. No prior record/Insight: normal Attack still generates Ripples. No future-move preview or extra reflection packet.",
+    "after": "If a completed enemy attack is recorded, Attack may spend two Ripples: a single-hit record gives +0.2U direct frost power; a two/three-hit record gives one Chill after contact. Alternatively retain Ripples and consume held Insight for Guard through the next enemy move. No record/Insight: ordinary Attack still generates Ripples. No future preview, armour ignore on frost or extra reflection packet."
+  },
+  {
+    "hero": "Linnet Cole",
+    "card": "Warm the Flaw",
+    "before": "Cost 1; `1 U` fire; consumes 1 Chill for Sunder 2 turns, otherwise gain 1 Temper; CD 3.",
+    "after": "Cost 1; 1U fire spell. Consume one opening Chill for one-F Weaken and 6% Ward after contact, or retain Chill and gain one Temper instead. No Sunder/armour benefit on magical damage; CD3."
+  },
+  {
+    "hero": "Inga Fallow",
+    "card": "Patient Excavation",
+    "before": "Every third Attack Sunders 1 turn after damage, once/action.",
+    "after": "Every third chosen Attack applies Sunder for two F after contact, once/action. Its two-F lifetime leaves an ordinary alternating-turn window for a later Attack to preserve or spend it. No Sunder if that Attack consumed its last opening Sunder; counter still resets."
+  },
+  {
+    "hero": "Wren Hollowmere",
+    "card": "Wingbeat",
+    "before": "After a full manual Dodge, next basic Attack applies one-F Mark after contact. One token/move. It does not make the dodge itself automatic.",
+    "after": "A whole enemy attack fully Dodged manually primes next chosen Attack to apply Mark for two F after contact. One held token per move, expires after two subsequent H. The Mark survives an ordinary intervening foe opportunity for a later Night Hunter/precision choice; no automatic evasion."
+  },
+  {
+    "hero": "Eskil Hauk",
+    "card": "Clean Line",
+    "before": "At opening Tracks cap, Attack may spend 1 Track and consume authored Pin before contact to ignore armour, or keep Pin and forego normal Track income to apply one Venom after contact. Declining keeps Tracks/Pin. Leave a Sign authors Pin independently; no extra physical packet or Tracks from passive Pin.",
+    "after": "At opening Tracks cap, Attack may spend one Track and consume authored Pin or the core Exposed opening earned when that authored Pin was used by an enemy attack, for half-armour penetration. Clear the selected status and its source eligibility before contact; this replaces that Exposed payoff, never also applies it. Alternatively keep the sign and forgo normal Track income to apply one Venom after contact. Leave a Sign supplies preparation independently; no extra arrow or passive refund. Source-labelled Pin-earned opening lasts two subsequent H; it expires with the underlying Exposed or on consumption."
+  },
+  {
+    "hero": "Caedmon the Unburnt",
+    "card": "Ashfall Cut",
+    "before": "Deal 2U; consume up to two remaining Burn ticks for +0.3U each, max +0.25U. Deleted ticks do not also resolve.",
+    "after": "2U held-sword fire strike. May consume one or two opening Burn ticks for one derived 0.125U payout per removed tick, maximum 0.25U. Snapshot before clearing; ticks do not also resolve naturally, and the derived total cannot crit/amplify, store or trigger Stars. Retain ticks for later fire pressure instead."
+  },
+  {
+    "hero": "Eskil Hauk",
+    "card": "Clean Line",
+    "before": "At opening Tracks cap, Attack may spend one Track and consume authored Pin or the core Exposed opening earned when that authored Pin was used by an enemy attack, for half-armour penetration. Clear the selected status and its source eligibility before contact; this replaces that Exposed payoff, never also applies it. Alternatively keep the sign and forgo normal Track income to apply one Venom after contact. Leave a Sign supplies preparation independently; no extra arrow or passive refund. Source-labelled Pin-earned opening lasts two subsequent H; it expires with the underlying Exposed or on consumption.",
+    "after": "At opening Tracks cap, Attack may spend one Track and consume authored Pin or the actual hero Opening earned when that authored Pin was used by an enemy attack, for half-armour penetration. Clear Opening and source eligibility before contact; it cannot also fund Sonic Arrow or another Opening spender. Alternatively retain the sign and forgo normal Track income to apply one Venom after contact. Leave a Sign supplies the Pin independently. Pin-earned Opening follows core h.opening lifetime (two subsequent hero action ends); no invented foe Exposed event, extra arrow or passive refund."
+  },
+  {
+    "hero": "Grenna Holt",
+    "card": "Stonebreak",
+    "before": "1.4U and one-F Sunder. Consume Fault for half-armour penetration and two-F Sunder; against an armourless foe the Fault instead adds 0.4U. Clears Fault before its payoff.",
+    "after": "1.4U held-maul physical contact and two-F Sunder. Consume Fault for half-armour penetration while retaining the same two-F Sunder; against armourless foes use +0.25U direct power instead of penetration. Clear Fault before payout."
+  },
+  {
+    "hero": "Caedmon the Unburnt",
+    "card": "Refused the Voice",
+    "before": "Deal 2.5U fire; choose to retain Heat left after paying four and Sunder for one F, or spend that remaining Heat (maximum two) to close Open the Plate and gain Guard through the next enemy move. Closing clears its unused offensive charge; no immunity or second charge payoff.",
+    "after": "2.2U held-sword fire strike. Retain Heat left after paying four and apply two-F Sunder for a later physical Attack, or spend the remainder (maximum two) to close Open the Plate and gain Guard instead. Closing clears the unused charge; no second charge payout or immunity."
+  },
+  {
+    "hero": "Corvin Black",
+    "card": "Through the Front Gate",
+    "before": "Deal 2.2U; if Opening exists, choose to consume it for its usual damage bonus and Exposed, or cancel it to regain one Freedom without the bonus. No Opening: base hit and one-F Sunder. Refusal is a capped authored grant, not reuse of the removed charge.",
+    "after": "2U physical cut. Consume Corvin Opening for its ordinary bounded direct rider and next-action Exposed, or cancel Opening to regain one Freedom without its rider. Without Opening, baseline and two-F Sunder. The recovered Freedom is authored generation, not a cost refund or reuse of the removed charge."
+  },
+  {
+    "hero": "Isolde Marrow",
+    "card": "Read by Touch",
+    "before": "Gain 10% Ward; if Seal remains, grant 1 Term afterward without consuming Seal. One refund per cast.",
+    "after": "Gain 10% Ward. If opening Seal remains after payment, return one actually spent Term without consuming Seal. This is a cost refund: combined with Banked Coal or another refund, aggregate returned resource is at most one and never above this action’s gross cost. No refund when nothing was spent."
+  },
+  {
+    "hero": "Kestrel Thane",
+    "card": "Kept Point",
+    "before": "After Attack contact, may spend 1 Poise to change reach. Long -> Close grants Guard for the next enemy move; Close -> Long primes the next Attack to ignore 25% armour, expiring after two H. Declining keeps reach and Poise. Snapshot Ground Is Certain before the switch; no extra thrust or automatic defence.",
+    "after": "Before Attack contact, may commit one opening Poise to change reach after contact. Long -> Close gives Guard through the next enemy move; Close -> Long primes the next Attack for 25% armour ignore within two subsequent H. Declining retains reach/Poise. Ground Is Certain snapshots the pre-switch stance; this Attack’s later resource income cannot pay the commitment. No extra thrust or automatic defence."
+  },
+  {
+    "hero": "Saint Elowen",
+    "card": "The Last Lantern",
+    "before": "Deal 2.3U holy. Choose to spend only 4 and retain the remaining Light, or spend 2 additional Light, if available, for Exposed and Weaken for one F each. The brighter gift sacrifices the reserve, never Ward, and does not cancel the enemy turn.",
+    "after": "Deal 2.3U holy. Choose to spend only 4 and retain the remaining Light, or spend 2 additional Light, if available, for next-action Exposed and one-F Weaken. The brighter gift sacrifices the reserve, never Ward, and does not cancel the enemy turn."
+  },
+  {
+    "hero": "Tobin Reed",
+    "card": "Shield Press",
+    "before": "Plant and press the **held** shield into the foe; standard hit and one control attempt only if already Sundered. Otherwise Sunder for one F. No loose shield/catch/return.",
+    "after": "Plant and press the **held** shield into the foe; standard hit and one control attempt only if already Sundered. Otherwise Sunder for two F. No loose shield/catch/return."
+  },
+  {
+    "hero": "Pip Cinderly",
+    "card": "Lantern Flare",
+    "before": "Light holy hit and brief Blind. On an already burning target, apply one-F Mark after contact. No per-tick Mark upkeep.",
+    "after": "Light holy hit and brief Blind. On an already burning target, apply two-F Mark after contact. No per-tick Mark upkeep."
+  },
+  {
+    "hero": "Maren Ashvale",
+    "card": "Two Hundred",
+    "before": "Tagged heavy; deal 2.2U. Choose to retain remaining Ward and Sunder for one F, or consume that Ward for a bounded holy bonus up to 0.6U based on its remaining value. Clearing first prevents the same Ward from powering this hit and surviving it. No summoned dead.",
+    "after": "Tagged heavy; deal 2.2U. Choose to retain remaining Ward and Sunder for two F, or consume that Ward for a one derived holy payout up to 0.6U based on its snapshotted remaining value, with no second crit/amplification/proc. Clearing first prevents the same Ward from powering this hit and surviving it. No summoned dead."
+  },
+  {
+    "hero": "Kestrel Thane",
+    "card": "Skyfall Thrust",
+    "before": "Deal 2.2U with a grounded held-spear drive. From Long choose to stay Long and ignore 30% armour, or enter Close and Sunder for one F. From Close choose to stay Close for +0.4U, or return Long with Guard through the next enemy move. One stance payoff; no extra action or spear flight.",
+    "after": "Deal 2.2U with a grounded held-spear drive. From Long choose to stay Long and ignore 30% armour, or enter Close and Sunder for two F. From Close choose to stay Close for +0.4U, or return Long with Guard through the next enemy move. One stance payoff; no extra action or spear flight."
+  },
+  {
+    "hero": "Flint Mercer",
+    "card": "Test the Line",
+    "before": "0.6U holy-electric spell; gain one Charge after contact. With reserve opening at least three, choose one-F Mark instead of that gain.",
+    "after": "0.6U holy-electric spell; gain one Charge after contact. With reserve opening at least three, choose two-F Mark instead of that gain."
+  }
+]

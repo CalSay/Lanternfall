@@ -1,0 +1,2039 @@
+{
+  "version": 1,
+  "contract": {
+    "status": "Expanded design proposals. No runtime implementation, numerical balance sign-off, art generation or equipment migration.",
+    "basis": "Current one-hero/one-foe Speed timeline, three selectable active/passive slots. Twelve signature choices plus existing six class tools per hero is a deliberate expanded proposal following owner creative brief; the historical fourteen-total rule is not silently treated as live eighteen-card support.",
+    "units": "U is pre-crit hero ability power. H means a subsequent completed hero action; F means a foe opportunity, including a skipped foe turn for generic status expiry/ticks. Printed cooldown decreases at hero-turn start under core rules, with existing Parry/Focus refunds. Token durations count subsequent actions, never their creation action; expiry occurs after their final eligible action. A duration stated in enemy moves instead lasts through completion of the next actual attack, with a maximum two-F timeout to avoid windup/skip immortality, unless an explicitly paid multi-move exception states its longer finite timeout.",
+    "actions": "Each active consumes one hero opportunity. Passives occupy a slot and never add an action, free strike, equipment slot or autonomous defence. Attack/Parry/Dodge remain core buttons. Optional passive choices are displayed as mutually exclusive intentions on Attack before committing, not a fourth ability button. A passive choice consumes opening tokens and resource before contact; ordinary Attack earns one primary resource after contact. An Attack may choose at most one token-consuming passive spend across the kit; passive spend is not an active expenditure for Star refunds.",
+    "resource": "Every expanded hero starts at zero, with the displayed native cap; chosen Attack gains one native resource after contact unless its own mode explicitly forgoes that income. Source-specific passive rewards are consumed even at cap. All state resets each fight. Costs and optional modes are paid once before contact, from gross opening resources; passive spending is not an active cost for Star refunds.",
+    "damage": "One direct budget and at most one explicit bounded derived payout per action. Multi-hit presentation shares one timing grade, crit budget and proc allowance. Derived stored payouts snapshot U when authored, clear source first, cannot crit or amplify a second time, and cannot generate resources, new tokens, Curse storage or on-hit Star procs. Optional direct modifiers add within a proposed +40% U ceiling, not successive multipliers. Every card has a useful fallback without a special token; no free token on its own consumption action. Timing’s +0.15U bonus is included in the +0.40U optional direct-modifier ceiling. Alternate branches explicitly printing a larger resource-priced base are separate bases, not modifiers; each still takes one grade and one action budget. Protection-plus-damage outputs are explicit starting allocations for real-core measurement, not proof of equal value. For percentage kit bonuses, convert the stated percentage of the selected action’s printed direct base (A for basic Attack, U coefficient for a signature) into raw damage, add flat-U held charges and timing, then cap the total optional kit increment at 0.40U. Multiple charges do not each get that ceiling. Armour ignore is multiplicative under core caps and remains physical-only. Core gear, crit, native Mark and equipped Star multipliers stay in their existing pipeline; this kit-only ceiling does not silently retune them. Any overflowing authored bonus is visibly capped, never banked.",
+    "timing": "Four new signatures per hero use the existing ring input. Good gives written baseline, Miss uses core reduced damage, Perfect adds 0.15U to the single direct action budget unless the card explicitly names another Perfect result; then that replaces the numerical rider. Utility/status application is not silently cancelled on Miss. No bonus turn, cost refund, passive rearm or control-lock bypass on Perfect. Explicit original exceptions: Tobin Oathstrike and Pip Lanternburst may refund one actually spent native unit on Perfect instead of the ordinary +0.15U direct rider. Combined with Banked Coal or any other refund, the aggregate refund cannot exceed one or the gross actual cost. Zero-cost use refunds nothing. New kits retain the no-Perfect-refund default. Expanded roster: each of all34 has four timed signatures; untimed actives, preparation and recovery retain lower-attention options. Shared Power Strike, Flurry, Heavy Strike and Frost Shard also expose pooled timing. Equal access does not imply equal measured difficulty.",
+    "defence": "Parry and Dodge always require manual per-hit input. Guard is proposed 25% mitigation during the next enemy attack, does not replace either choice, expires at completion or after two F. Ward replaces with greater remaining amount, never sums, subject to core Ward cap/gear scaling; card-authored amounts are maximum-HP percentages. Heal uses maximum HP, capped by missing HP; no overheal-to-Ward except actual equipped gear rule. A status-blocking Ward has one eligibility per application; refresh cannot rearm it. Ward lasts three F using the core expiry clock. A greater authored replacement updates amount and duration; a smaller application keeps remaining amount and may refresh duration to three F but never rearms a status-block eligibility. Cleared/expired Ward removes that eligibility. Ward cannot exceed the core cap after gear. A card explicitly granting two moves of Guard is a paid exception: at most two actual enemy attacks, three-F timeout. Explicit two-F Wards keep the shorter duration; other Wards use three F. A card-defined status-block instance cannot rearm by refresh.",
+    "statuses": "Reuse core Mark, Pin, Sunder, Weaken, Exposed, Chill, Burn, Bleed and Venom caps/durations. Exposed is a core hero-action-clock setup, not a foe-F timer: application after contact sets e.exposed to 2; the creation action’s end reduces it to 1, so it survives the intervening foe turn for the next chosen hero action. It is consumed by the first eligible direct payoff, or expires at that next hero action’s end. Printed next-action Exposed means this exact core window. Expanded proposals tag directly selected damaging actives and basic Attack as eligible payoffs; extending eligibility beyond current core tags is an explicit implementation dependency, not already live behaviour. One eligible self-cleanse removes one existing Burn, Bleed, Venom, Chill, Blind or Weaken in the player-selected eligible family, never cooldowns, control lock, fight-only vows or beneficial setup; expanding live turnCleanse beyond DoTs is an explicit implementation dependency. Applying Chill three invokes core Freeze, clears Chill and meets core lock. Rejected control gives no skip/freeze-success reward. Stun/Freeze attempts use boss Stagger and charge-breaking core; no guaranteed interruption, even when a card name sounds decisive.",
+    "stars": "Preserve distinction between currently implemented 43 Stars and revised dossier Star proposals. Structural interaction review uses revised definitions; no claim that generic-resource eligibility is implemented for new heroes. Counters remain core sure crits, Parry per-hit refunds remain live: kit rewards whole moves, not individual hits. No new kit hook fires recursively from Star-generated damage, status, Ward, counter or passive spender. Actual full-gross active spending is snapshotted before any Banked Coal refund.",
+    "shared": "Existing six shared class tools are available; no shared tool supplies a hero-specific token unless explicitly revised in this deliverable. H finisher third-opportunity gate uses actual core heroOps, unlike token expiry which uses completed actions. Class/evolution names in dossiers are proposals where they differ from accepted names. All held hero Openings/charges are source-labelled. Shared Heavy Strike may consume an eligible Opening for only its printed shared payout; it replaces the signature payout and cannot attach that charge again. Generic Exposed is a separate core foe status and follows its native next-payoff rules. A source-specific vow/watch/line token is not automatically an Opening.",
+    "equipment": "Every hero carries a lantern. Mage combat gear target is staff+tome, still pending crafting/migration. No physical thrown assets, unarmed kits, movement requirement, party healing, summons, extra enemies, brand-new weapon families or lightning damage type. Abilities use held weapons and artist-authored overlays; no new art integrated.",
+    "attackTypes": "Proposed new basic Attacks: Warriors/Rangers physical held-weapon contact or arrows; Mages holy spells in the existing damage pipeline, with artist-authored thread/clock/prism/ledger/conductor visuals. This is an explicit provisional type mapping, not an implemented arcane/lightning/death resistance system. Fire/frost actives retain printed types. Armour penetration only benefits physical packets; holy Attack riders use direct power instead. Original proposed Attack types are listed per hero; Inga uses physical held-staff contact to make Sunder/penetration meaningful while her signature spells stay frost. Ragna uses existing holy witchlight for direct magical packets and separate Venom for poison; no unsupported poison-resistance system is implied. Old spell effects with no printed type use that hero’s declared spell theme; ordinary sword/spear/maul/axe actions stay physical, while explicitly elemental strikes keep their stated type.",
+    "curseArbitration": "One foe Curse slot, source-labelled Mab or Hex. Applying either discards the other’s storage, age and unused eligibility. Generic Nova/Final Word may consume either for stored damage under that source’s cap, clearing source-specific maturity first; never awards Mab’s maturity direct rider. Mab-specific consumption may act only on Mab-authored Curse; Hex cannot activate its maturity or passive rewards."
+  },
+  "heroes": [
+    {
+      "id": "nerys-fleet",
+      "name": "Nerys Fleet",
+      "family": "Ranger",
+      "title": "The Foxstep Archer",
+      "equipment": "Bow + quiver",
+      "lore": "Nerys once carried medicine through a village whose doors opened only to strangers. She learned to leave before gratitude became a trap. Now she returns for the people she left behind.",
+      "visual": "A wiry woman in her forties, long nose, dark cropped curls and a russet split riding coat. Plain shortbow, fox-brass belt lantern, sturdy boots; no dangling tails.",
+      "resource": {
+        "name": "Footing",
+        "cap": 4,
+        "start": 0,
+        "attackGain": 1
+      },
+      "mechanic": "A courier archer who chooses what to do with earned evasive momentum. Slip is preparation for the next choice, not automatic evasion.",
+      "tokens": {
+        "Slip": "One token, expires after two subsequent H. Replacement refreshes expiry but never banks multiple Slips. Dodge origin and paid preparation have identical spending options."
+      },
+      "cards": [
+        {
+          "name": "Foxstep Shot",
+          "kind": "Active",
+          "cost": 1,
+          "cooldown": 3,
+          "timed": true,
+          "meta": "Active · cost 1 · CD3 · timed",
+          "effect": "1.1U physical arrow. May consume opening Slip for half-armour penetration instead of holding it for recovery."
+        },
+        {
+          "name": "Parting Arrow",
+          "kind": "Active",
+          "cost": 0,
+          "cooldown": 3,
+          "timed": false,
+          "meta": "Active · cost 0 · CD3",
+          "effect": "0.7U arrow; establish Slip after contact. Cannot spend the newly created Slip on this action."
+        },
+        {
+          "name": "Homeward Turn",
+          "kind": "Active",
+          "cost": 1,
+          "cooldown": 4,
+          "timed": false,
+          "meta": "Active · cost 1 · CD4",
+          "effect": "Gain Guard for the next enemy move. May consume Slip to clear one eligible self-debuff; keep Slip if no removal is needed."
+        },
+        {
+          "name": "Doorway Shot",
+          "kind": "Active",
+          "cost": 1,
+          "cooldown": 3,
+          "timed": true,
+          "meta": "Active · cost 1 · CD3 · timed",
+          "effect": "0.8U arrow and Pin for one F. If Slip exists, choose to spend it for 1.1U total damage instead of Pin."
+        },
+        {
+          "name": "Long Way Round",
+          "kind": "Active",
+          "cost": 2,
+          "cooldown": 4,
+          "timed": false,
+          "meta": "Active · cost 2 · CD4",
+          "effect": "1.4U arrow. Consume Slip for one extra 0.2U direct modifier, or retain it and gain 6% Ward after contact. Choose one."
+        },
+        {
+          "name": "Medicine Run",
+          "kind": "Active",
+          "cost": 2,
+          "cooldown": 5,
+          "timed": false,
+          "meta": "Active · cost 2 · CD5",
+          "effect": "Heal 5% maximum HP. Consume Slip for 8% instead, or keep it and clear one eligible self-debuff instead of increasing the heal."
+        },
+        {
+          "name": "Empty Lane",
+          "kind": "Active",
+          "cost": 0,
+          "cooldown": 4,
+          "timed": false,
+          "meta": "Active · cost 0 · CD4",
+          "effect": "0.6U arrow; gain one Footing after contact, plus Guard through the next move. Establish no Slip."
+        },
+        {
+          "name": "Cut Across",
+          "kind": "Active",
+          "cost": 2,
+          "cooldown": 4,
+          "timed": true,
+          "meta": "Active · cost 2 · CD4 · timed",
+          "effect": "1U penetrating arrow ignoring 30% armour; if a foe visibly gathers, may consume Slip for one Stun attempt instead of penetration. Base damage remains."
+        },
+        {
+          "name": "Last Door Before Dawn",
+          "kind": "Active",
+          "cost": 3,
+          "cooldown": 6,
+          "timed": true,
+          "meta": "Active · cost 3 · CD6 · timed",
+          "effect": "1.7U arrow. Consume Slip for half-armour penetration, or keep Slip and gain Guard after contact. Available from third hero opportunity."
+        },
+        {
+          "name": "Light Feet",
+          "kind": "Passive",
+          "cost": 0,
+          "cooldown": 0,
+          "timed": false,
+          "meta": "Passive · occupies one slot",
+          "effect": "A whole enemy move fully Dodged manually establishes Slip once per move. On a chosen Attack without Slip, may spend one opening Footing to establish Slip after contact instead. These are alternative sources of the same token."
+        },
+        {
+          "name": "Leave No Trail",
+          "kind": "Passive",
+          "cost": 0,
+          "cooldown": 0,
+          "timed": false,
+          "meta": "Passive · occupies one slot",
+          "effect": "A whole move manually defended with any Parry/Dodge mix grants one extra Footing if Slip was held when the move began, once per move. Does not require a successful automatic evade."
+        },
+        {
+          "name": "Open Road",
+          "kind": "Passive",
+          "cost": 0,
+          "cooldown": 0,
+          "timed": false,
+          "meta": "Passive · occupies one slot",
+          "effect": "Attack may consume opening Slip and pay one Footing for 30% armour penetration, or pay one Footing and consume Slip for 6% Ward after contact. Holding Slip keeps recovery available; damage mode has no Ward."
+        }
+      ],
+      "routes": [
+        [
+          "Courier’s opening",
+          "Foxstep Shot",
+          "Parting Arrow",
+          "Light Feet"
+        ],
+        [
+          "A safe way home",
+          "Parting Arrow",
+          "Homeward Turn",
+          "Leave No Trail"
+        ],
+        [
+          "Spend the distance",
+          "Parting Arrow",
+          "Long Way Round",
+          "Open Road"
+        ]
+      ],
+      "artReview": {
+        "releaseOrder": 1,
+        "comment": "Nerys' bow looks a little weird and I don't know why she's two handing it. The string also disappears over her body.",
+        "action": "Rework bow into a clear shortbow; ready pose uses one hand at the central grip, with the other free. Continuous straight undrawn string tip-to-tip, rendered visibly across the body. Preserve the character direction."
+      },
+      "status": "Owner-selected hero; expanded ability design proposal, not live or balance-approved"
+    },
+    {
+      "id": "mab-vale",
+      "name": "Mab Vale",
+      "family": "Mage",
+      "title": "The Threadbinder",
+      "equipment": "Staff + hex tome",
+      "lore": "Mab repaired mourning clothes until the dead began leaving instructions in their hems. She does not raise them. She finishes the promises they cannot.",
+      "visual": "A broad older woman with a hooked nose, deep brown skin and a single white braid. Indigo fitted coat, ivory seam markings, spindle-shaped staff; amber lantern and stitched black tome.",
+      "resource": {
+        "name": "Thread",
+        "cap": 5,
+        "start": 0,
+        "attackGain": 1
+      },
+      "mechanic": "One woven Curse matures after a real defended-or-landed enemy attack finishes. Cut it for pressure, unravel it for safety, or invest in its natural release.",
+      "tokens": {
+        "Mab Curse": "One Curse using the generic Curse status, lasts three F unless stated otherwise; matures after one completed actual damaging enemy move after application. A windup, skipped turn or DoT tick cannot mature it. Storage is 20% of subsequent hero-authored direct damage actually dealt, capped 0.6U; Star damage, DoT, counters and derived payouts are excluded. Natural expiry releases existing storage once without mature bonus, then clears. Consuming clears before contact; subsequent fresh Curse cannot inherit storage. Mab-specific readers/spenders/rewards ignore a Hex-authored Curse; only Mab-authored application has maturity eligibility. Shared replacement/consumption arbitration is defined globally."
+      },
+      "cards": [
+        {
+          "name": "Last Stitch",
+          "kind": "Active",
+          "cost": 0,
+          "cooldown": 3,
+          "timed": false,
+          "meta": "Active · cost 0 · CD3",
+          "effect": "0.5U holy spell and apply one Mab Curse: store up to 0.6U from subsequent eligible direct damage under the Curse contract. Replacing it discards old storage and maturity."
+        },
+        {
+          "name": "Cut the Thread",
+          "kind": "Active",
+          "cost": 2,
+          "cooldown": 3,
+          "timed": true,
+          "meta": "Active · cost 2 · CD3 · timed",
+          "effect": "0.8U holy spell; optionally consume Mab Curse for its stored derived damage, capped 0.6U. A mature Curse adds 0.2U authored direct power; an immature one can still be collected."
+        },
+        {
+          "name": "Unpick the Knot",
+          "kind": "Active",
+          "cost": 1,
+          "cooldown": 3,
+          "timed": false,
+          "meta": "Active · cost 1 · CD3",
+          "effect": "Consume Mab Curse for one-F Weaken and 6% Ward, or, without a Curse, receive 6% Ward only. Mature Curse gives two-F Weaken instead. No damage payout."
+        },
+        {
+          "name": "Seam Allowance",
+          "kind": "Active",
+          "cost": 1,
+          "cooldown": 4,
+          "timed": true,
+          "meta": "Active · cost 1 · CD4 · timed",
+          "effect": "0.7U holy spell. Keep existing Curse and add one F duration, maximum four remaining; with no Curse, gain Guard instead. Extending never grants a maturation reward."
+        },
+        {
+          "name": "Spindle Turn",
+          "kind": "Active",
+          "cost": 2,
+          "cooldown": 4,
+          "timed": false,
+          "meta": "Active · cost 2 · CD4",
+          "effect": "1.2U holy spell. If opening Curse is mature, choose to retain it for continued storage or consume it for one Stun attempt, discarding stored damage; rejection still consumes it."
+        },
+        {
+          "name": "Keep the Pattern",
+          "kind": "Active",
+          "cost": 1,
+          "cooldown": 4,
+          "timed": false,
+          "meta": "Active · cost 1 · CD4",
+          "effect": "Guard through the next move and protect one existing Mab Curse from natural expiry during that move only. Protection does not prevent replacement or consumption; mature timing is unchanged."
+        },
+        {
+          "name": "Needle Through",
+          "kind": "Active",
+          "cost": 2,
+          "cooldown": 4,
+          "timed": true,
+          "meta": "Active · cost 2 · CD4 · timed",
+          "effect": "1.1U holy spell. Consume a mature Curse for next-action Exposed instead of its stored damage; otherwise retain the Curse and deal 1.3U total."
+        },
+        {
+          "name": "Mend by Hand",
+          "kind": "Active",
+          "cost": 2,
+          "cooldown": 5,
+          "timed": false,
+          "meta": "Active · cost 2 · CD5",
+          "effect": "Heal 5% maximum HP and clear one eligible self-debuff. May consume Curse for 8% heal instead of clearing; lost storage gives no extra damage."
+        },
+        {
+          "name": "The Last Unravelling",
+          "kind": "Active",
+          "cost": 3,
+          "cooldown": 6,
+          "timed": true,
+          "meta": "Active · cost 3 · CD6 · timed",
+          "effect": "1.5U holy spell. Consume Curse for its stored derived damage; a mature Curse additionally gives Guard after contact. Available from third H."
+        },
+        {
+          "name": "Patient Hands",
+          "kind": "Passive",
+          "cost": 0,
+          "cooldown": 0,
+          "timed": false,
+          "meta": "Passive · occupies one slot",
+          "effect": "First natural maturation of each freshly applied Mab Curse grants one Thread, once per application even at cap. Attack may pay one Thread to apply an empty two-F Mab Curse after damage if none exists; its own contact is not stored."
+        },
+        {
+          "name": "Loose Hem",
+          "kind": "Passive",
+          "cost": 0,
+          "cooldown": 0,
+          "timed": false,
+          "meta": "Passive · occupies one slot",
+          "effect": "First whole manually defended move while a Mab Curse exists grants a 6% Ward after the move, once per Curse application. Replacement discards unused eligibility; extending never resets it."
+        },
+        {
+          "name": "Threadbare",
+          "kind": "Passive",
+          "cost": 0,
+          "cooldown": 0,
+          "timed": false,
+          "meta": "Passive · occupies one slot",
+          "effect": "Attack may consume opening Mab Curse for its stored derived damage capped 0.4U, or pay one Thread and consume it to Weaken for one F. No payout from the Attack itself is recorded into the consumed Curse."
+        }
+      ],
+      "routes": [
+        [
+          "Cut at the right moment",
+          "Last Stitch",
+          "Cut the Thread",
+          "Patient Hands"
+        ],
+        [
+          "Unpick the danger",
+          "Last Stitch",
+          "Unpick the Knot",
+          "Loose Hem"
+        ],
+        [
+          "Let the curse finish",
+          "Last Stitch",
+          "Spindle Turn",
+          "Threadbare"
+        ]
+      ],
+      "artReview": {
+        "releaseOrder": 2,
+        "comment": "Love it. Great design. Made me realise how we need more different race characters.",
+        "action": "Preserve the liked spindle/thread design. Broaden ethnicity and facial diversity across future additions; do not recolour existing approved characters to satisfy a quota."
+      },
+      "status": "Owner-selected hero; expanded ability design proposal, not live or balance-approved"
+    },
+    {
+      "id": "peregrine-clocks",
+      "name": "Peregrine Clocks",
+      "family": "Mage",
+      "title": "The Watchmaker",
+      "equipment": "Staff + watchmaker tome",
+      "lore": "Peregrine repaired the village clock until it began striking for people who had not yet died. He dismantled it, kept one spring, and went to find who had wound it.",
+      "visual": "A thin older man with a long face, deep brown skin and short tightly coiled silver hair and a close, textured silver beard. Prussian-blue tailored work coat, straight staff with one enclosed clock dial, indexed brass tome and amber pocket lantern.",
+      "resource": {
+        "name": "Ticks",
+        "cap": 6,
+        "start": 0,
+        "attackGain": 1
+      },
+      "mechanic": "Move one real cooldown turn between two cooling actives, then decide whether a receipt is worth collecting now. A clockmaker manipulates availability, never grants a free turn.",
+      "tokens": {
+        "Receipt": "One token expires after two subsequent H. No growth from repeated transfers or donated duration.",
+        "Appointment": "One token matures after one subsequent hero action completes; expires after two subsequent H. Consecutive hero turns count normally; no scheduling change."
+      },
+      "cards": [
+        {
+          "name": "Borrow Tomorrow",
+          "kind": "Active",
+          "cost": 1,
+          "cooldown": 3,
+          "timed": false,
+          "meta": "Active · cost 1 · CD3",
+          "effect": "Choose two different other equipped actives both already cooling: add one cooldown turn to donor, subtract one from recipient. Donor cannot exceed printed cooldown plus one. Cannot transfer again until a later chosen Attack resets the transfer lock. If Clockstrike is the donor, establish Receipt. If no legal pair exists, choose before payment a next-Attack +0.2U direct-power token lasting two H instead; no Receipt."
+        },
+        {
+          "name": "Clockstrike",
+          "kind": "Active",
+          "cost": 1,
+          "cooldown": 3,
+          "timed": true,
+          "meta": "Active · cost 1 · CD3 · timed",
+          "effect": "1.1U holy spell. May consume opening Receipt for +0.25U direct power; keep it for a later Clockstrike or a protective Attack instead."
+        },
+        {
+          "name": "Stop the Pendulum",
+          "kind": "Active",
+          "cost": 1,
+          "cooldown": 4,
+          "timed": false,
+          "meta": "Active · cost 1 · CD4",
+          "effect": "10% Ward and clear one eligible self-debuff. No automatic cooldown change; can be a cooling donor or recipient."
+        },
+        {
+          "name": "Set the Alarm",
+          "kind": "Active",
+          "cost": 0,
+          "cooldown": 4,
+          "timed": true,
+          "meta": "Active · cost 0 · CD4 · timed",
+          "effect": "0.5U holy spell. Establish Appointment for the next two H. It matures after exactly one subsequent H completes; replace to discard its age."
+        },
+        {
+          "name": "Meet the Hour",
+          "kind": "Active",
+          "cost": 2,
+          "cooldown": 4,
+          "timed": false,
+          "meta": "Active · cost 2 · CD4",
+          "effect": "1.3U holy spell. Consume a mature Appointment for +0.2U direct power, or consume an immature one for Guard after contact. A miss reduces damage but still consumes the chosen token."
+        },
+        {
+          "name": "Wind by Hand",
+          "kind": "Active",
+          "cost": 0,
+          "cooldown": 4,
+          "timed": false,
+          "meta": "Active · cost 0 · CD4",
+          "effect": "Gain two Ticks and Guard through the next enemy move. This is a paid opportunity, not a cooldown refund or transfer-lock reset."
+        },
+        {
+          "name": "Second Hand",
+          "kind": "Active",
+          "cost": 2,
+          "cooldown": 4,
+          "timed": true,
+          "meta": "Active · cost 2 · CD4 · timed",
+          "effect": "1U holy spell; reduce one other selected cooling active by one CD turn, then add one CD turn to this ability after setting its printed cooldown. One exchange; cannot target itself."
+        },
+        {
+          "name": "Close the Case",
+          "kind": "Active",
+          "cost": 2,
+          "cooldown": 5,
+          "timed": false,
+          "meta": "Active · cost 2 · CD5",
+          "effect": "Heal 5% HP and gain 6% Ward. May cancel Receipt or Appointment to clear one eligible self-debuff; cancel at most one, without damage."
+        },
+        {
+          "name": "The Hour Held Open",
+          "kind": "Active",
+          "cost": 3,
+          "cooldown": 6,
+          "timed": true,
+          "meta": "Active · cost 3 · CD6 · timed",
+          "effect": "1.6U holy spell. Consume Receipt for +0.25U direct power, or mature Appointment for +0.2U and one-F Weaken. Choose at most one. Available from third H."
+        },
+        {
+          "name": "Escapement",
+          "kind": "Passive",
+          "cost": 0,
+          "cooldown": 0,
+          "timed": false,
+          "meta": "Passive · occupies one slot",
+          "effect": "Every second chosen Attack establishes one Receipt after contact, replacing any old one. A Borrow Tomorrow receipt is the same token. Attack may consume an opening Receipt and pay one Tick for +0.2U direct power; it cannot collect and create a receipt on the same Attack."
+        },
+        {
+          "name": "On the Minute",
+          "kind": "Passive",
+          "cost": 0,
+          "cooldown": 0,
+          "timed": false,
+          "meta": "Passive · occupies one slot",
+          "effect": "A chosen Attack after a signature active gains one extra Tick, once/action. Alternatively every third consecutive Attack gains one extra Tick. Signature use resets the consecutive counter; bonuses never stack."
+        },
+        {
+          "name": "Clockwork Habit",
+          "kind": "Passive",
+          "cost": 0,
+          "cooldown": 0,
+          "timed": false,
+          "meta": "Passive · occupies one slot",
+          "effect": "Attack may pay one Tick and consume an opening Receipt for 6% Ward after contact instead of Escapement’s direct-power rider. Consumption resolves before any new receipt creation; a consuming Attack cannot create another Receipt."
+        }
+      ],
+      "routes": [
+        [
+          "Borrow and repay",
+          "Borrow Tomorrow",
+          "Clockstrike",
+          "Stop the Pendulum"
+        ],
+        [
+          "Keep one appointment",
+          "Set the Alarm",
+          "Meet the Hour",
+          "On the Minute"
+        ],
+        [
+          "Working under pressure",
+          "Stop the Pendulum",
+          "Wind by Hand",
+          "Escapement"
+        ]
+      ],
+      "artReview": {
+        "releaseOrder": 4,
+        "comment": "He needs hair that's of African origin. He has white guy hair (facial and head). I like that he's old though.",
+        "action": "Preserve elderly identity and skin tone; revise head hair to short tightly coiled silver hair and beard to an appropriately textured close silver beard. Match both views."
+      },
+      "status": "Owner-selected hero; expanded ability design proposal, not live or balance-approved"
+    },
+    {
+      "id": "tamsin-rook",
+      "name": "Tamsin Rook",
+      "family": "Warrior",
+      "title": "The Bellsword",
+      "equipment": "Warblade + shield",
+      "lore": "Tamsin learned sword forms from the tolling of a cracked watch bell. She still counts the missing note, waiting for the day she can bring its maker home.",
+      "visual": "Tall, strong woman with a square jaw, close black undercut and a burn scar along one cheek. Clean burgundy fencing coat over compact armour; small round shield and warm belt lantern. No bell weapon.",
+      "resource": {
+        "name": "Tempo",
+        "cap": 4,
+        "start": 0,
+        "attackGain": 1
+      },
+      "mechanic": "A bellsword with a steady rhythm and an optional timing flourish: Perfect creates Accent, but ordinary Attack also supplies preparation at an action cost.",
+      "tokens": {
+        "Accent": "One replaceable token expires after two subsequent H. Perfect establishes it only if the card explicitly says so; shared timed cards cannot farm it."
+      },
+      "cards": [
+        {
+          "name": "Downbeat",
+          "kind": "Active",
+          "cost": 0,
+          "cooldown": 3,
+          "timed": true,
+          "meta": "Active · cost 0 · CD3 · timed",
+          "effect": "0.9U sword cut. Perfect establishes Accent after contact; Good is useful ordinary damage and Miss retains the lower core damage."
+        },
+        {
+          "name": "Ringing Cut",
+          "kind": "Active",
+          "cost": 1,
+          "cooldown": 3,
+          "timed": true,
+          "meta": "Active · cost 1 · CD3 · timed",
+          "effect": "1.2U sword cut. May consume Accent for +0.2U direct power, or retain it for safety."
+        },
+        {
+          "name": "Rest Note",
+          "kind": "Active",
+          "cost": 1,
+          "cooldown": 4,
+          "timed": false,
+          "meta": "Active · cost 1 · CD4",
+          "effect": "Guard through next move; consume Accent to clear one eligible self-debuff instead of keeping it for a cut."
+        },
+        {
+          "name": "Quiet Measure",
+          "kind": "Active",
+          "cost": 0,
+          "cooldown": 4,
+          "timed": false,
+          "meta": "Active · cost 0 · CD4",
+          "effect": "0.5U sword cut and establish Accent after contact. No timing input needed; gives an all-active preparation route."
+        },
+        {
+          "name": "Upstroke",
+          "kind": "Active",
+          "cost": 1,
+          "cooldown": 3,
+          "timed": false,
+          "meta": "Active · cost 1 · CD3",
+          "effect": "0.9U sword cut and next-action Exposed. May spend Accent for 1.3U total damage instead of Exposed."
+        },
+        {
+          "name": "Crescendo",
+          "kind": "Active",
+          "cost": 2,
+          "cooldown": 4,
+          "timed": true,
+          "meta": "Active · cost 2 · CD4 · timed",
+          "effect": "1.4U sword cut. Consume Accent for one Stun attempt instead of +0.2U direct power; keep Accent for neither rider. One chosen branch."
+        },
+        {
+          "name": "Measured Guard",
+          "kind": "Active",
+          "cost": 2,
+          "cooldown": 4,
+          "timed": false,
+          "meta": "Active · cost 2 · CD4",
+          "effect": "0.7U sword cut and 8% Ward. Consuming Accent changes Ward to 12%, replacing the lower amount."
+        },
+        {
+          "name": "Step Out of Time",
+          "kind": "Active",
+          "cost": 1,
+          "cooldown": 4,
+          "timed": false,
+          "meta": "Active · cost 1 · CD4",
+          "effect": "Gain one Tempo and Guard. Consume Accent to Pin for one F instead of gaining the Tempo; no actual movement or evasion is automated."
+        },
+        {
+          "name": "The Final Measure",
+          "kind": "Active",
+          "cost": 3,
+          "cooldown": 6,
+          "timed": true,
+          "meta": "Active · cost 3 · CD6 · timed",
+          "effect": "1.7U sword cut. Consume Accent for +0.2U direct power, or retain it and gain Guard after contact. Available from third H."
+        },
+        {
+          "name": "Measured Hand",
+          "kind": "Passive",
+          "cost": 0,
+          "cooldown": 0,
+          "timed": false,
+          "meta": "Passive · occupies one slot",
+          "effect": "Every third chosen Attack establishes Accent after contact. Attack after a signature active may pay one Tempo and consume opening Accent for 30% armour penetration. A consuming Attack never establishes new Accent."
+        },
+        {
+          "name": "Keep the Beat",
+          "kind": "Passive",
+          "cost": 0,
+          "cooldown": 0,
+          "timed": false,
+          "meta": "Passive · occupies one slot",
+          "effect": "First fully manually defended enemy move after a chosen Attack gives one Tempo, once until another Attack rearms it. Perfect never refunds the cost of a signature."
+        },
+        {
+          "name": "Second Measure",
+          "kind": "Passive",
+          "cost": 0,
+          "cooldown": 0,
+          "timed": false,
+          "meta": "Passive · occupies one slot",
+          "effect": "Attack may pay one Tempo and consume opening Accent for 8% Ward after contact instead of Measured Hand’s penetration. No reward for an Accent created on that same Attack."
+        }
+      ],
+      "routes": [
+        [
+          "Strike on the accent",
+          "Downbeat",
+          "Ringing Cut",
+          "Measured Hand"
+        ],
+        [
+          "A rest is a choice",
+          "Rest Note",
+          "Quiet Measure",
+          "Keep the Beat"
+        ],
+        [
+          "Build the crescendo",
+          "Quiet Measure",
+          "Crescendo",
+          "Second Measure"
+        ]
+      ],
+      "artReview": {
+        "releaseOrder": 3,
+        "comment": "Strong design as well. Good work.",
+        "action": "Preserve the liked core design and scar/undercut identity; earlier unwanted quiver and warblade compatibility still need attention."
+      },
+      "status": "Owner-selected hero; expanded ability design proposal, not live or balance-approved"
+    },
+    {
+      "id": "sable-quill",
+      "name": "Sable Quill",
+      "family": "Mage",
+      "title": "The Ash Reader",
+      "equipment": "Staff + remedy tome",
+      "lore": "Sable was a plague-house clerk who remembered every name the town tried to erase. Her cures have become sharper since the town stopped asking politely.",
+      "visual": "A tall, angular woman in her fifties, olive skin, severe straight nose and tightly bound black-and-white hair. Cream high-collared coat with plum sleeves; ringed staff, ledger tome and brass lantern.",
+      "resource": {
+        "name": "Reagents",
+        "cap": 5,
+        "start": 0,
+        "attackGain": 1
+      },
+      "mechanic": "A diagnostic mage who turns an actual cleanse into a choice between remedy pressure and prevention. A clean fight still has a deliberate, smaller preparation route.",
+      "tokens": {
+        "Remedy": "One token with full or prepared strength, expires after three subsequent H. Actual status removal is the only source of full Remedy. Replacement discards old strength. Ward consumption or blocked statuses cannot create full Remedy."
+      },
+      "cards": [
+        {
+          "name": "Read the Fever",
+          "kind": "Active",
+          "cost": 1,
+          "cooldown": 3,
+          "timed": false,
+          "meta": "Active · cost 1 · CD3",
+          "effect": "Clear one eligible self-debuff and establish full Remedy only if actually removed. If none is removable, choose before payment between 8% Ward or establishing prepared Remedy. Only one route; no cleanse and preparation together."
+        },
+        {
+          "name": "Bitter Cure",
+          "kind": "Active",
+          "cost": 1,
+          "cooldown": 3,
+          "timed": true,
+          "meta": "Active · cost 1 · CD3 · timed",
+          "effect": "1U holy spell. Consume Remedy for +0.3U full / +0.15U prepared direct power, or for Weaken lasting two F full / one F prepared. Choose one rider."
+        },
+        {
+          "name": "Write the Prescription",
+          "kind": "Active",
+          "cost": 0,
+          "cooldown": 4,
+          "timed": false,
+          "meta": "Active · cost 0 · CD4",
+          "effect": "0.5U holy spell; establish prepared Remedy after contact. Replacement never converts prepared into full."
+        },
+        {
+          "name": "Preventive Seal",
+          "kind": "Active",
+          "cost": 2,
+          "cooldown": 4,
+          "timed": false,
+          "meta": "Active · cost 2 · CD4",
+          "effect": "10% Ward. While this Ward survives, block the next eligible harmful self-status application, once. Consume Remedy for 12% full / 11% prepared Ward instead; no immediate cleanse."
+        },
+        {
+          "name": "Measured Dose",
+          "kind": "Active",
+          "cost": 2,
+          "cooldown": 4,
+          "timed": true,
+          "meta": "Active · cost 2 · CD4 · timed",
+          "effect": "1.3U holy spell. Consume Remedy to Mark for three F full / two F prepared instead of retaining it."
+        },
+        {
+          "name": "Rule Out",
+          "kind": "Active",
+          "cost": 1,
+          "cooldown": 4,
+          "timed": false,
+          "meta": "Active · cost 1 · CD4",
+          "effect": "0.8U holy spell and one-F Weaken. Consume full Remedy to extend Weaken to two F, or prepared Remedy for 6% Ward instead."
+        },
+        {
+          "name": "Check the Pulse",
+          "kind": "Active",
+          "cost": 2,
+          "cooldown": 5,
+          "timed": false,
+          "meta": "Active · cost 2 · CD5",
+          "effect": "Heal 5% HP. Consume full Remedy to heal 8% instead, or prepared Remedy for 6% Ward after the ordinary heal."
+        },
+        {
+          "name": "Ink Against Fever",
+          "kind": "Active",
+          "cost": 2,
+          "cooldown": 4,
+          "timed": true,
+          "meta": "Active · cost 2 · CD4 · timed",
+          "effect": "1.1U holy spell. Consume Remedy for next-action Exposed, full or prepared; a full Remedy also clears one eligible self-debuff. No new Remedy is created."
+        },
+        {
+          "name": "No Cause for Mourning",
+          "kind": "Active",
+          "cost": 3,
+          "cooldown": 6,
+          "timed": true,
+          "meta": "Active · cost 3 · CD6 · timed",
+          "effect": "1.5U holy spell. Consume Remedy for +0.3U full / +0.15U prepared direct power, or 10% full / 6% prepared Ward instead. Available from third H."
+        },
+        {
+          "name": "Clean Hands",
+          "kind": "Passive",
+          "cost": 0,
+          "cooldown": 0,
+          "timed": false,
+          "meta": "Passive · occupies one slot",
+          "effect": "Every third chosen Attack establishes prepared Remedy after contact if none exists. Attack may pay one Reagent and consume opening Remedy for 8% full / 6% prepared Ward. A spending Attack does not prepare another Remedy."
+        },
+        {
+          "name": "Clinical Eye",
+          "kind": "Passive",
+          "cost": 0,
+          "cooldown": 0,
+          "timed": false,
+          "meta": "Passive · occupies one slot",
+          "effect": "Attack while holding opening Remedy gains +15% direct action damage. Consuming Remedy before contact forfeits this held-preparation bonus. No stacking per status cleansed or armour penetration on magical damage."
+        },
+        {
+          "name": "Steady Hands",
+          "kind": "Passive",
+          "cost": 0,
+          "cooldown": 0,
+          "timed": false,
+          "meta": "Passive · occupies one slot",
+          "effect": "First whole enemy move fully defended manually after a chosen Attack earns one Reagent, once until another Attack rearms it. If Remedy exists, Attack may instead pay one Reagent and consume it for one-F Weaken, forfeiting Clean Hands’ Ward."
+        }
+      ],
+      "routes": [
+        [
+          "Read and answer",
+          "Read the Fever",
+          "Bitter Cure",
+          "Clean Hands"
+        ],
+        [
+          "Prepare before harm",
+          "Write the Prescription",
+          "Preventive Seal",
+          "Clinical Eye"
+        ],
+        [
+          "Risk a stronger remedy",
+          "Write the Prescription",
+          "Measured Dose",
+          "Steady Hands"
+        ]
+      ],
+      "artReview": {
+        "releaseOrder": 8,
+        "comment": "Wow Sable Quill looks exceptional! Big fan of this one.",
+        "action": "Preserve the strongly liked face, colours and costume. Earlier reviewer suggestions do not override this direct feedback; any ledger/focus change must preserve the identity the owner likes."
+      },
+      "status": "Owner-selected hero; expanded ability design proposal, not live or balance-approved"
+    },
+    {
+      "id": "ione-hart",
+      "name": "Ione Hart",
+      "family": "Mage",
+      "title": "The Prism Warden",
+      "equipment": "Staff + prism tome",
+      "lore": "Ione restored stained windows in a chapel with no congregation. The colours now remember the sunlight more faithfully than the sky does.",
+      "visual": "A short woman in her thirties, East Asian features, strong brows and blunt navy-black bob. White-and-cobalt intact coat, triangular glass staff head; red lantern and folded colour-chart tome.",
+      "resource": {
+        "name": "Light",
+        "cap": 5,
+        "start": 0,
+        "attackGain": 1
+      },
+      "mechanic": "A prism mage with a one-colour reserve. Repeating the colour means shelter; mixing sacrifices the reserve for pressure. She is not a second Frostfire stack mage.",
+      "tokens": {
+        "Inscription": "One red or blue token expires after three subsequent H. Repeating colour may refresh expiry only when the card explicitly reapplies it; Red/Blue repetition retains original expiry. Colour snapshot precedes payment; mixed hits are a single typed budget, not elemental proc cascades."
+      },
+      "cards": [
+        {
+          "name": "Red Window",
+          "kind": "Active",
+          "cost": 1,
+          "cooldown": 3,
+          "timed": false,
+          "meta": "Active · cost 1 · CD3",
+          "effect": "1U fire spell. With opening blue inscription choose consume it for +0.2U mixed direct power or replace it with red. With opening red, retain it and gain 6% Ward. With none, establish red. Mixed rider stays within this packet; no Burn. The entire mixed packet retains this spell’s printed fire/frost damage type; the opposite inscription gives no second elemental hit."
+        },
+        {
+          "name": "Blue Window",
+          "kind": "Active",
+          "cost": 1,
+          "cooldown": 3,
+          "timed": false,
+          "meta": "Active · cost 1 · CD3",
+          "effect": "1U frost spell. With opening red inscription choose consume it for +0.2U mixed direct power or replace it with blue. With opening blue, retain it and gain 6% Ward. With none, establish blue. No Chill or Freeze. The entire mixed packet retains this spell’s printed fire/frost damage type; the opposite inscription gives no second elemental hit."
+        },
+        {
+          "name": "Clear Pane",
+          "kind": "Active",
+          "cost": 0,
+          "cooldown": 4,
+          "timed": false,
+          "meta": "Active · cost 0 · CD4",
+          "effect": "0.5U holy spell; establish chosen red or blue inscription after contact, replacing the old one. No same-action colour reaction."
+        },
+        {
+          "name": "Leadwork Seal",
+          "kind": "Active",
+          "cost": 1,
+          "cooldown": 4,
+          "timed": false,
+          "meta": "Active · cost 1 · CD4",
+          "effect": "8% Ward. May consume opening inscription for 12% instead; Ward never adds its own inscription."
+        },
+        {
+          "name": "Spectrum Cut",
+          "kind": "Active",
+          "cost": 2,
+          "cooldown": 4,
+          "timed": true,
+          "meta": "Active · cost 2 · CD4 · timed",
+          "effect": "1.4U holy spell. Consume inscription for next-action Exposed for the next payoff, or keep it for 1.6U total direct damage instead. No armour penetration is promised on holy damage."
+        },
+        {
+          "name": "Closed Shutter",
+          "kind": "Active",
+          "cost": 2,
+          "cooldown": 4,
+          "timed": false,
+          "meta": "Active · cost 2 · CD4",
+          "effect": "0.8U holy spell and one-F Weaken. Consume inscription to clear one eligible self-debuff after contact instead of retaining the reserve."
+        },
+        {
+          "name": "Amber Window",
+          "kind": "Active",
+          "cost": 1,
+          "cooldown": 4,
+          "timed": true,
+          "meta": "Active · cost 1 · CD4 · timed",
+          "effect": "0.9U holy spell. Consume inscription for 6% Ward and Mark lasting two F; or retain it for 1.1U total damage."
+        },
+        {
+          "name": "White Reflection",
+          "kind": "Active",
+          "cost": 2,
+          "cooldown": 4,
+          "timed": true,
+          "meta": "Active · cost 2 · CD4 · timed",
+          "effect": "1.2U holy spell. Consume blue inscription for one Freeze attempt or red for one Stun attempt; both respect control locks and lose the reserve on rejection."
+        },
+        {
+          "name": "All the Glass at Once",
+          "kind": "Active",
+          "cost": 3,
+          "cooldown": 6,
+          "timed": true,
+          "meta": "Active · cost 3 · CD6 · timed",
+          "effect": "1.7U spell, fire if red, frost if blue, holy if no inscription. Consume inscription for +0.2U direct power, or retain it for 10% Ward after contact. Available from third H."
+        },
+        {
+          "name": "Colour Study",
+          "kind": "Passive",
+          "cost": 0,
+          "cooldown": 0,
+          "timed": false,
+          "meta": "Passive · occupies one slot",
+          "effect": "Every second chosen Attack establishes the player’s preselected red or blue inscription after contact if none exists; choose the colour before pressing Attack, no fourth action. Consumption this Attack prevents immediate re-establishment."
+        },
+        {
+          "name": "Leadwork",
+          "kind": "Passive",
+          "cost": 0,
+          "cooldown": 0,
+          "timed": false,
+          "meta": "Passive · occupies one slot",
+          "effect": "Attack may pay one Light and consume opening inscription for 8% Ward after contact. No same-action mixed damage rider."
+        },
+        {
+          "name": "True Colour",
+          "kind": "Passive",
+          "cost": 0,
+          "cooldown": 0,
+          "timed": false,
+          "meta": "Passive · occupies one slot",
+          "effect": "Attack while holding opening inscription gains +15% direct damage. Alternatively pay one Light and consume it for one-F Weaken after contact; the held-colour damage bonus is forfeited on consumption."
+        }
+      ],
+      "routes": [
+        [
+          "Change the window",
+          "Red Window",
+          "Blue Window",
+          "Colour Study"
+        ],
+        [
+          "Hold one colour",
+          "Clear Pane",
+          "Leadwork Seal",
+          "Leadwork"
+        ],
+        [
+          "Cut the spectrum",
+          "Clear Pane",
+          "Spectrum Cut",
+          "True Colour"
+        ]
+      ],
+      "artReview": {
+        "releaseOrder": 9,
+        "comment": "Ione is great. My only issue is with the top of the staff and the design of the tome.",
+        "action": "Retain Ione. Refine the prism staff head into a coherent glass focus and redesign the tome with clear broad fire/cold prism motifs, matching the focus detail."
+      },
+      "status": "Owner-selected hero; expanded ability design proposal, not live or balance-approved"
+    },
+    {
+      "id": "adela-wych",
+      "name": "Adela Wych",
+      "family": "Mage",
+      "title": "The Pale Advocate",
+      "equipment": "Staff + testament tome",
+      "lore": "Adela settles the debts of people buried without their names. She will not bring a soul back; she will make the living acknowledge what they owe.",
+      "visual": "A statuesque woman in her sixties, warm brown skin, pronounced cheekbones and short white hair. Clean black-and-pearl ceremonial coat, bone-white staff finial shaped as a closed arch; violet lantern.",
+      "resource": {
+        "name": "Writs",
+        "cap": 5,
+        "start": 0,
+        "attackGain": 1
+      },
+      "mechanic": "A pale advocate whose fixed authored Debt can be collected, forgiven or used to close an account. Nothing copies arbitrary damage or runs a second crit calculation.",
+      "tokens": {
+        "Debt": "One fixed authored 0.2U or 0.3U token expires after three subsequent H, without a natural damage payout. Its value is snapshotted when recorded and never multiplied again on collection. Consuming clears before contact."
+      },
+      "cards": [
+        {
+          "name": "Name the Debt",
+          "kind": "Active",
+          "cost": 0,
+          "cooldown": 3,
+          "timed": false,
+          "meta": "Active · cost 0 · CD3",
+          "effect": "0.7U holy spell; after contact record one 0.3U Debt only if positive direct HP damage was dealt. A shield-only hit cannot record it. Replace old Debt without collecting it."
+        },
+        {
+          "name": "Final Account",
+          "kind": "Active",
+          "cost": 2,
+          "cooldown": 3,
+          "timed": true,
+          "meta": "Active · cost 2 · CD3 · timed",
+          "effect": "1.1U holy spell; may consume Debt for its fixed derived payout capped 0.4U, or preserve it. No additional scaling from damage previously dealt."
+        },
+        {
+          "name": "Stay the Claim",
+          "kind": "Active",
+          "cost": 1,
+          "cooldown": 4,
+          "timed": false,
+          "meta": "Active · cost 1 · CD4",
+          "effect": "Guard through next move. Consume Debt for 10% Ward instead of Guard; gives no damage payout."
+        },
+        {
+          "name": "Write It Off",
+          "kind": "Active",
+          "cost": 1,
+          "cooldown": 4,
+          "timed": false,
+          "meta": "Active · cost 1 · CD4",
+          "effect": "Consume Debt to clear one eligible self-debuff and gain 8% Ward. Without Debt or without a removable status, choose a 6% Ward fallback before payment; fallback does not consume Debt."
+        },
+        {
+          "name": "Notice Served",
+          "kind": "Active",
+          "cost": 1,
+          "cooldown": 3,
+          "timed": true,
+          "meta": "Active · cost 1 · CD3 · timed",
+          "effect": "0.9U holy spell and two-F Mark. With no Debt, may instead record 0.2U Debt after a positive HP hit, forgoing Mark."
+        },
+        {
+          "name": "Seal the Account",
+          "kind": "Active",
+          "cost": 2,
+          "cooldown": 4,
+          "timed": false,
+          "meta": "Active · cost 2 · CD4",
+          "effect": "1.2U holy spell; consume Debt for next-action Exposed, discarding its stored damage. Otherwise retain it and gain one-F Weaken."
+        },
+        {
+          "name": "A Last Courtesy",
+          "kind": "Active",
+          "cost": 2,
+          "cooldown": 5,
+          "timed": false,
+          "meta": "Active · cost 2 · CD5",
+          "effect": "Heal 5% HP. Consume Debt for 8% instead; forfeit collection damage."
+        },
+        {
+          "name": "No Appeal",
+          "kind": "Active",
+          "cost": 2,
+          "cooldown": 4,
+          "timed": true,
+          "meta": "Active · cost 2 · CD4 · timed",
+          "effect": "1.3U holy spell. Consume Debt for one Stun attempt instead of its payout; the base spell remains useful on rejection."
+        },
+        {
+          "name": "Close the Book",
+          "kind": "Active",
+          "cost": 3,
+          "cooldown": 6,
+          "timed": true,
+          "meta": "Active · cost 3 · CD6 · timed",
+          "effect": "1.6U holy spell. Consume Debt for its fixed derived payout, or retain it and gain Guard after contact. Available from third H."
+        },
+        {
+          "name": "Witness Mark",
+          "kind": "Passive",
+          "cost": 0,
+          "cooldown": 0,
+          "timed": false,
+          "meta": "Passive · occupies one slot",
+          "effect": "Every third chosen Attack records 0.2U Debt after a positive HP hit if none exists. A consuming Attack cannot record fresh Debt. No recording from counters, Star packets or ward absorption."
+        },
+        {
+          "name": "Merciful Ledger",
+          "kind": "Passive",
+          "cost": 0,
+          "cooldown": 0,
+          "timed": false,
+          "meta": "Passive · occupies one slot",
+          "effect": "Attack may pay one Writ and cancel opening Debt to clear one eligible self-debuff, or gain 6% Ward instead. Select before contact; with no eligible debuff the cleanse choice is unavailable."
+        },
+        {
+          "name": "No Double Entry",
+          "kind": "Passive",
+          "cost": 0,
+          "cooldown": 0,
+          "timed": false,
+          "meta": "Passive · occupies one slot",
+          "effect": "Attack may pay one Writ and consume opening Debt for its fixed derived payout capped 0.3U, or keep it and gain +15% direct Attack damage. Derived payouts do not record or crit."
+        }
+      ],
+      "routes": [
+        [
+          "Name and collect",
+          "Name the Debt",
+          "Final Account",
+          "Witness Mark"
+        ],
+        [
+          "An act of mercy",
+          "Name the Debt",
+          "Write It Off",
+          "Merciful Ledger"
+        ],
+        [
+          "The account comes due",
+          "Notice Served",
+          "Seal the Account",
+          "No Double Entry"
+        ]
+      ],
+      "artReview": {
+        "releaseOrder": 10,
+        "comment": "Very cool design. Just need a review of the top of the staff.",
+        "action": "Retain Adela. Refine the closed-arch staff head while preserving the liked overall design and violet lantern."
+      },
+      "status": "Owner-selected hero; expanded ability design proposal, not live or balance-approved"
+    },
+    {
+      "id": "ysabet-fen",
+      "name": "Ysabet Fen",
+      "family": "Ranger",
+      "title": "The Winter Arrow",
+      "equipment": "Bow + quiver",
+      "lore": "Ysabet charts the roads by listening to ice crack under distant feet. She hunts the thing that has begun walking across lakes without leaving a sound.",
+      "visual": "A heavyset older woman with weathered copper skin, narrow dark eyes and a short iron-grey braid. Deep teal wool coat, white cuff lining, long ash bow; frosted-glass lantern.",
+      "resource": {
+        "name": "Rime",
+        "cap": 4,
+        "start": 0,
+        "attackGain": 1
+      },
+      "mechanic": "A patient winter archer who decides between preserving Chill for reliable shots and spending it to attempt control. Ordinary shots work even when a boss cannot be frozen.",
+      "tokens": {
+        "Chill": "Use the existing foe Chill status, not a parallel hero stack. Core threshold is three; two-F expiry is refreshed by adding a stack. White Silence consumes two before attempting control, even while control locked; no bonus for a rejected attempt."
+      },
+      "cards": [
+        {
+          "name": "Rime Arrow",
+          "kind": "Active",
+          "cost": 0,
+          "cooldown": 3,
+          "timed": false,
+          "meta": "Active · cost 0 · CD3",
+          "effect": "0.8U physical arrow and one Chill after contact. Chill uses the core threshold of three; adding the third invokes normal Freeze and clears Chill."
+        },
+        {
+          "name": "White Silence",
+          "kind": "Active",
+          "cost": 2,
+          "cooldown": 4,
+          "timed": true,
+          "meta": "Active · cost 2 · CD4 · timed",
+          "effect": "1.2U physical arrow. May consume exactly two opening Chill for one Freeze attempt instead of retaining them. Fewer than two: ordinary shot only; control rejection still consumes the two."
+        },
+        {
+          "name": "Glass Fletching",
+          "kind": "Active",
+          "cost": 1,
+          "cooldown": 3,
+          "timed": false,
+          "meta": "Active · cost 1 · CD3",
+          "effect": "1.1U physical arrow. If opening Chill exists, ignore 30% armour without consuming it; otherwise apply one-F Pin instead."
+        },
+        {
+          "name": "Snowblind",
+          "kind": "Active",
+          "cost": 1,
+          "cooldown": 4,
+          "timed": false,
+          "meta": "Active · cost 1 · CD4",
+          "effect": "0.7U physical arrow and one-F Weaken. May consume one opening Chill for two-F Weaken instead; no new Chill."
+        },
+        {
+          "name": "Thawline",
+          "kind": "Active",
+          "cost": 2,
+          "cooldown": 4,
+          "timed": true,
+          "meta": "Active · cost 2 · CD4 · timed",
+          "effect": "1.4U physical arrow. Consume one opening Chill for +0.2U direct power, or keep Chill and gain 6% Ward after contact."
+        },
+        {
+          "name": "Still Water",
+          "kind": "Active",
+          "cost": 1,
+          "cooldown": 4,
+          "timed": false,
+          "meta": "Active · cost 1 · CD4",
+          "effect": "Guard through next enemy move and 6% Ward. May pay one additional Rime to add one Chill to the foe after preparation instead of gaining Ward; this can reach the core Freeze threshold."
+        },
+        {
+          "name": "Cold Notch",
+          "kind": "Active",
+          "cost": 0,
+          "cooldown": 4,
+          "timed": false,
+          "meta": "Active · cost 0 · CD4",
+          "effect": "0.5U physical arrow and gain one Rime after contact. With no opening Chill, apply one Chill after contact; never add Chill if any already exists."
+        },
+        {
+          "name": "Ice at the Sill",
+          "kind": "Active",
+          "cost": 2,
+          "cooldown": 4,
+          "timed": true,
+          "meta": "Active · cost 2 · CD4 · timed",
+          "effect": "1U physical arrow; consume one opening Chill for next-action Exposed, or retain Chill for 1.2U total direct damage."
+        },
+        {
+          "name": "The Long White Road",
+          "kind": "Active",
+          "cost": 3,
+          "cooldown": 6,
+          "timed": true,
+          "meta": "Active · cost 3 · CD6 · timed",
+          "effect": "1.7U physical arrow; may consume two opening Chill for one Freeze attempt instead of half-armour penetration. With no Chill, normal 1.7U shot; penetration requires at least one retained Chill. Available from third H."
+        },
+        {
+          "name": "Clear Ice",
+          "kind": "Passive",
+          "cost": 0,
+          "cooldown": 0,
+          "timed": false,
+          "meta": "Passive · occupies one slot",
+          "effect": "Attack against opening Chill ignores 20% remaining armour. If consuming Chill before contact leaves none, no penetration applies."
+        },
+        {
+          "name": "Cold Watch",
+          "kind": "Passive",
+          "cost": 0,
+          "cooldown": 0,
+          "timed": false,
+          "meta": "Passive · occupies one slot",
+          "effect": "Every third chosen Attack adds one Chill after contact unless that Attack consumed opening Chill. The third-Attack counter resets even when application is suppressed. Core threshold, lock and duration apply; a skipped foe turn is not an extra application."
+        },
+        {
+          "name": "Winter Patience",
+          "kind": "Passive",
+          "cost": 0,
+          "cooldown": 0,
+          "timed": false,
+          "meta": "Passive · occupies one slot",
+          "effect": "Attack may pay one Rime and consume one opening Chill for 8% Ward after contact, or retain Chill and pay one Rime for one-F Weaken. No second arrow or same-action refund."
+        }
+      ],
+      "routes": [
+        [
+          "Keep the frost",
+          "Rime Arrow",
+          "Glass Fletching",
+          "Clear Ice"
+        ],
+        [
+          "A quiet winter",
+          "White Silence",
+          "Snowblind",
+          "Cold Watch"
+        ],
+        [
+          "Break the thaw",
+          "Thawline",
+          "Still Water",
+          "Winter Patience"
+        ]
+      ],
+      "artReview": {
+        "releaseOrder": 12,
+        "comment": "Love Ysabet but her bow is skewed and the string isn't right either.",
+        "action": "Retain Ysabet. Rebuild bow with coherent symmetric limb geometry, central grip and a continuous tip-to-tip string; ensure the bow remains in front of the body."
+      },
+      "status": "Owner-selected hero; expanded ability design proposal, not live or balance-approved"
+    },
+    {
+      "id": "eamon-grey",
+      "name": "Eamon Grey",
+      "family": "Warrior",
+      "title": "The Road Duellist",
+      "equipment": "Warblade + shield",
+      "lore": "Eamon challenged a toll collector and won the bridge. He has spent the years since learning that winning a crossing is easier than keeping it open.",
+      "visual": "A lanky man in his thirties with a crooked smile, red-brown skin and cropped auburn hair. Clean sand-coloured coat, slim warblade, small plain shield and bridge-brass lantern.",
+      "resource": {
+        "name": "Poise",
+        "cap": 5,
+        "start": 0,
+        "attackGain": 1
+      },
+      "mechanic": "A road duellist with High and Low lines. Alternate to press through armour, repeat to settle behind Guard, or clear the line for a different kind of answer.",
+      "tokens": {
+        "Line": "One High or Low token expires after two subsequent H. Attack-generated and active-generated lines share spending options. Every tagged cut snapshots opening Line before applying any new Line."
+      },
+      "cards": [
+        {
+          "name": "High Cut",
+          "kind": "Active",
+          "cost": 0,
+          "cooldown": 3,
+          "timed": true,
+          "meta": "Active · cost 0 · CD3 · timed",
+          "effect": "0.9U sword cut tagged High. Opening Low may be consumed for 30% armour penetration without re-priming; otherwise establish High after contact."
+        },
+        {
+          "name": "Low Answer",
+          "kind": "Active",
+          "cost": 1,
+          "cooldown": 3,
+          "timed": false,
+          "meta": "Active · cost 1 · CD3",
+          "effect": "1.1U sword cut tagged Low. Opening High may be consumed for half-armour penetration without re-priming; otherwise establish Low after contact."
+        },
+        {
+          "name": "Same Road Cut",
+          "kind": "Active",
+          "cost": 1,
+          "cooldown": 4,
+          "timed": false,
+          "meta": "Active · cost 1 · CD4",
+          "effect": "0.8U sword cut: choose High or Low before contact. If tag matches opening Line, consume Line for Guard after contact instead of re-priming it. If different, establish new Line; no penetration rider."
+        },
+        {
+          "name": "Cross the Bridge",
+          "kind": "Active",
+          "cost": 1,
+          "cooldown": 4,
+          "timed": false,
+          "meta": "Active · cost 1 · CD4",
+          "effect": "8% Ward and clear one eligible self-debuff. Optional consume Line for 12% Ward instead of cleansing; no Line re-priming."
+        },
+        {
+          "name": "Centre Line",
+          "kind": "Active",
+          "cost": 2,
+          "cooldown": 4,
+          "timed": true,
+          "meta": "Active · cost 2 · CD4 · timed",
+          "effect": "1.4U sword thrust, neither High nor Low. Consume opening Line for next-action Exposed; otherwise retain Line. This is a held sword, not a new polearm."
+        },
+        {
+          "name": "Empty Scabbard",
+          "kind": "Active",
+          "cost": 0,
+          "cooldown": 4,
+          "timed": false,
+          "meta": "Active · cost 0 · CD4",
+          "effect": "0.5U sword cut. Freely clear Line to gain one Poise after contact, or retain it and gain Guard; no same-action line creation."
+        },
+        {
+          "name": "Cut the Toll",
+          "kind": "Active",
+          "cost": 2,
+          "cooldown": 4,
+          "timed": true,
+          "meta": "Active · cost 2 · CD4 · timed",
+          "effect": "1.2U sword cut. Consume Line to remove a bounded share of enemy Ward/shield: at most 0.5U shield points under one action budget; without shield choose 30% armour penetration instead."
+        },
+        {
+          "name": "Take the Lower Road",
+          "kind": "Active",
+          "cost": 2,
+          "cooldown": 5,
+          "timed": false,
+          "meta": "Active · cost 2 · CD5",
+          "effect": "Heal 5% HP and Guard. Consume Line to clear one eligible self-debuff instead of Guard; no additional damage."
+        },
+        {
+          "name": "The Road Goes On",
+          "kind": "Active",
+          "cost": 3,
+          "cooldown": 6,
+          "timed": true,
+          "meta": "Active · cost 3 · CD6 · timed",
+          "effect": "1.7U sword cut: choose High or Low. Consume opposite Line for half-armour penetration, same Line for 10% Ward, or retain Line for neither rider. No re-priming. Available from third H."
+        },
+        {
+          "name": "Road Memory",
+          "kind": "Passive",
+          "cost": 0,
+          "cooldown": 0,
+          "timed": false,
+          "meta": "Passive · occupies one slot",
+          "effect": "Every second chosen Attack establishes selected High or Low Line after contact if none exists. The choice is attached to Attack, not a fourth combat action. A consuming Attack cannot prime a new Line."
+        },
+        {
+          "name": "Same Road",
+          "kind": "Passive",
+          "cost": 0,
+          "cooldown": 0,
+          "timed": false,
+          "meta": "Passive · occupies one slot",
+          "effect": "A signature High/Low cut with matching opening Line may consume it for Guard after contact, replacing all other token riders and suppressing re-priming. In passive-only play, every third chosen Attack establishes selected High/Low Line after contact if absent; Attack may instead pay one Poise and consume opening Line for Guard. A consuming Attack cannot establish a new Line or use Unhurried’s rider."
+        },
+        {
+          "name": "Unhurried",
+          "kind": "Passive",
+          "cost": 0,
+          "cooldown": 0,
+          "timed": false,
+          "meta": "Passive · occupies one slot",
+          "effect": "Attack may pay one Poise and consume opening Line for 30% armour penetration, or 8% Ward instead. Retaining Line gives neither; same Attack never re-primes it."
+        }
+      ],
+      "routes": [
+        [
+          "One line answers another",
+          "High Cut",
+          "Low Answer",
+          "Road Memory"
+        ],
+        [
+          "Repeat for shelter",
+          "Same Road Cut",
+          "Cross the Bridge",
+          "Same Road"
+        ],
+        [
+          "Choose a third answer",
+          "High Cut",
+          "Centre Line",
+          "Unhurried"
+        ]
+      ],
+      "artReview": {
+        "releaseOrder": 18,
+        "comment": "Eamon is decent too.",
+        "action": "Retain Eamon as a viable candidate; no additional owner correction specified."
+      },
+      "status": "Owner-selected hero; expanded ability design proposal, not live or balance-approved"
+    },
+    {
+      "id": "celandine-orr",
+      "name": "Celandine Orr",
+      "family": "Mage",
+      "title": "The Dawn Surgeon",
+      "equipment": "Staff + anatomical tome",
+      "lore": "Celandine studied wounds by lamplight after the battle surgeons left. She now seeks the source of the dark that keeps opening old scars.",
+      "visual": "A middle-aged woman with deep-set eyes, dark olive skin and closely clipped grey hair. Clean pale gold coat with broad black cuffs, slender split-circle staff and red medical tome; amber lantern.",
+      "resource": {
+        "name": "Grace",
+        "cap": 5,
+        "start": 0,
+        "attackGain": 1
+      },
+      "mechanic": "A holy surgeon who leaves a single Incision for precision, closes it for recovery, or chooses to reopen it. Healing spends the offensive setup and a hero opportunity.",
+      "tokens": {
+        "Incision": "One foe setup expires after two F, without damage or healing on expiry. Reapplication replaces remaining duration, no maturation payout. The design is a light seam in the foe silhouette, not a persistent summoned entity."
+      },
+      "cards": [
+        {
+          "name": "Clean Incision",
+          "kind": "Active",
+          "cost": 0,
+          "cooldown": 3,
+          "timed": false,
+          "meta": "Active · cost 0 · CD3",
+          "effect": "0.7U holy spell; establish Incision after a positive direct HP hit. Its duration is two F; replacement grants no heal."
+        },
+        {
+          "name": "Close the Wound",
+          "kind": "Active",
+          "cost": 2,
+          "cooldown": 4,
+          "timed": true,
+          "meta": "Active · cost 2 · CD4 · timed",
+          "effect": "1.2U holy spell; may consume opening Incision for 5% HP heal or +0.2U direct power, choosing one."
+        },
+        {
+          "name": "Sterile Field",
+          "kind": "Active",
+          "cost": 1,
+          "cooldown": 4,
+          "timed": false,
+          "meta": "Active · cost 1 · CD4",
+          "effect": "8% Ward. While this Ward survives, block the next eligible harmful self-status once; no cleanse or Incision creation."
+        },
+        {
+          "name": "A Steady Pulse",
+          "kind": "Active",
+          "cost": 1,
+          "cooldown": 4,
+          "timed": false,
+          "meta": "Active · cost 1 · CD4",
+          "effect": "0.7U holy spell and one-F Weaken. Consume Incision for two-F Weaken instead of retaining it."
+        },
+        {
+          "name": "Suture Light",
+          "kind": "Active",
+          "cost": 2,
+          "cooldown": 4,
+          "timed": true,
+          "meta": "Active · cost 2 · CD4 · timed",
+          "effect": "1.3U holy spell. Consume Incision for 10% Ward instead of retaining it; grants no heal."
+        },
+        {
+          "name": "Mercy Is Precise",
+          "kind": "Active",
+          "cost": 2,
+          "cooldown": 5,
+          "timed": false,
+          "meta": "Active · cost 2 · CD5",
+          "effect": "Heal 5% HP and clear one eligible self-debuff. Consume Incision to heal 8% instead of clearing; does not apply a new Incision."
+        },
+        {
+          "name": "Read the Scar",
+          "kind": "Active",
+          "cost": 1,
+          "cooldown": 3,
+          "timed": true,
+          "meta": "Active · cost 1 · CD3 · timed",
+          "effect": "1U holy spell. Retain Incision for +0.15U direct power, or consume it for next-action Exposed. No armour penetration on holy damage."
+        },
+        {
+          "name": "Clean Instruments",
+          "kind": "Active",
+          "cost": 0,
+          "cooldown": 4,
+          "timed": false,
+          "meta": "Active · cost 0 · CD4",
+          "effect": "Gain two Grace; with existing Incision choose to retain it or freely cancel it for Guard. No offensive contact or fourth equipment requirement."
+        },
+        {
+          "name": "No One Dies Here",
+          "kind": "Active",
+          "cost": 3,
+          "cooldown": 6,
+          "timed": true,
+          "meta": "Active · cost 3 · CD6 · timed",
+          "effect": "1.6U holy spell. Consume Incision for 5% heal and 6% Ward after contact, or +0.2U direct power instead of both recovery effects. No resurrection. Available from third H."
+        },
+        {
+          "name": "Exact Hand",
+          "kind": "Passive",
+          "cost": 0,
+          "cooldown": 0,
+          "timed": false,
+          "meta": "Passive · occupies one slot",
+          "effect": "Attack against opening Incision gains +15% direct action damage; avoids an armour-penetration promise for holy magic. Every third chosen Attack establishes Incision after a positive HP hit if absent; a consuming Attack cannot reapply it."
+        },
+        {
+          "name": "First Principles",
+          "kind": "Passive",
+          "cost": 0,
+          "cooldown": 0,
+          "timed": false,
+          "meta": "Passive · occupies one slot",
+          "effect": "First fully manually defended move after chosen Attack grants one Grace, once until another Attack rearms it. No resource for Ward absorption or getting hurt."
+        },
+        {
+          "name": "Aftercare",
+          "kind": "Passive",
+          "cost": 0,
+          "cooldown": 0,
+          "timed": false,
+          "meta": "Passive · occupies one slot",
+          "effect": "Attack may pay one Grace and consume opening Incision for 6% Ward or one eligible self-cleanse after contact, choosing one. A consumed Incision forfeits Exact Hand’s held-setup damage bonus."
+        }
+      ],
+      "routes": [
+        [
+          "Open and close",
+          "Clean Incision",
+          "Close the Wound",
+          "Exact Hand"
+        ],
+        [
+          "Prevent the next wound",
+          "Clean Incision",
+          "Sterile Field",
+          "First Principles"
+        ],
+        [
+          "Operate under pressure",
+          "Clean Incision",
+          "Suture Light",
+          "Aftercare"
+        ]
+      ],
+      "artReview": {
+        "releaseOrder": 17,
+        "comment": "Holy mage is good.",
+        "action": "Retain the holy-mage direction and anatomical tome/split-circle identity."
+      },
+      "status": "Owner-selected hero; expanded ability design proposal, not live or balance-approved"
+    },
+    {
+      "id": "flint-mercer",
+      "name": "Flint Mercer",
+      "family": "Mage",
+      "title": "The Stormwright",
+      "equipment": "Staff + conductor tome",
+      "lore": "Flint maintained the road’s lightning rods. When the lamps went dark, he discovered the storm was still answering somewhere beneath the ground.",
+      "visual": "A stocky middle-aged man with a broken nose and tightly curled silver hair. Navy work coat, broad copper cuffs, straight forked conductor staff; caged lantern and blue circuit tome.",
+      "resource": {
+        "name": "Charge",
+        "cap": 5,
+        "start": 0,
+        "attackGain": 1
+      },
+      "mechanic": "A stormwright who budgets the same small reserve between immediate lightning, a fully committed ground strike and shelter. Charge damage contributes to the actual boss-break threshold.",
+      "tokens": {
+        "Electric presentation": "Use holy damage and existing spell-power/resistance path provisionally, explicitly a new visual theme rather than implemented lightning type. New type requires a later system review.",
+        "Charge": "Primary resource, not a second parallel reserve. A full-reserve spend snapshots gross opening charge before refunds; at least three is required for Earth Wire’s signature reward."
+      },
+      "cards": [
+        {
+          "name": "Coil Up",
+          "kind": "Active",
+          "cost": 0,
+          "cooldown": 4,
+          "timed": false,
+          "meta": "Active · cost 0 · CD4",
+          "effect": "Gain two Charge and Guard through next enemy move. One full preparation opportunity; gains stop at cap."
+        },
+        {
+          "name": "Groundstrike",
+          "kind": "Active",
+          "cost": "1–3 or full reserve",
+          "cooldown": 4,
+          "timed": true,
+          "meta": "Active · cost 1–3 or full reserve · CD4 · timed",
+          "effect": "Choose before payment: spend one/two/three Charge for 1.0/1.3/1.6U holy-electric spell. While foe visibly gathers, may instead spend full reserve of at least three for 1.6U at three, 1.8U at four, 2U at five plus 6% Ward. This is real damage toward the break threshold, not an automatic interrupt."
+        },
+        {
+          "name": "Test the Line",
+          "kind": "Active",
+          "cost": 0,
+          "cooldown": 3,
+          "timed": false,
+          "meta": "Active · cost 0 · CD3",
+          "effect": "0.6U holy-electric spell; gain one Charge after contact. With reserve opening at least three, choose two-F Mark instead of that gain."
+        },
+        {
+          "name": "Insulated Grip",
+          "kind": "Active",
+          "cost": 1,
+          "cooldown": 4,
+          "timed": false,
+          "meta": "Active · cost 1 · CD4",
+          "effect": "10% Ward and clear one eligible self-debuff. Never earns Charge from prevented damage or blocked statuses."
+        },
+        {
+          "name": "Copper Arc",
+          "kind": "Active",
+          "cost": 2,
+          "cooldown": 4,
+          "timed": true,
+          "meta": "Active · cost 2 · CD4 · timed",
+          "effect": "1.2U holy-electric spell and two-F Mark. Not chain lightning: one opponent, one aggregate packet. Mark supports the magical pressure route without a physical-only Sunder dependency."
+        },
+        {
+          "name": "Trip the Breaker",
+          "kind": "Active",
+          "cost": 2,
+          "cooldown": 4,
+          "timed": false,
+          "meta": "Active · cost 2 · CD4",
+          "effect": "1U holy-electric spell; may spend one additional Charge for one Stun attempt, or keep that Charge for later. No extra reward when boss control rejects it."
+        },
+        {
+          "name": "Bleed the Coil",
+          "kind": "Active",
+          "cost": 1,
+          "cooldown": 3,
+          "timed": false,
+          "meta": "Active · cost 1 · CD3",
+          "effect": "1.3U holy-electric spell for the optional three-Charge branch, or 0.8U and Guard for one Charge. These are separate printed bases chosen before payment, not a +0.5U modifier. Three-Charge branch requires at least four opening Charge; no Guard in that branch."
+        },
+        {
+          "name": "Storm Glass",
+          "kind": "Active",
+          "cost": 2,
+          "cooldown": 4,
+          "timed": true,
+          "meta": "Active · cost 2 · CD4 · timed",
+          "effect": "1.2U holy-electric spell. May consume existing authored Mark for next-action Exposed instead of retaining Mark’s general damage setup; no invented lightning-resistance stat."
+        },
+        {
+          "name": "A Storm in Copper",
+          "kind": "Active",
+          "cost": "3–5",
+          "cooldown": 6,
+          "timed": true,
+          "meta": "Active · cost 3–5 · CD6 · timed",
+          "effect": "Spend selected three/four/five Charge for 1.6/1.8/2U holy-electric spell. Full-reserve expenditure gains Guard after contact instead of an extra damage rider. Available from third H."
+        },
+        {
+          "name": "Earth Wire",
+          "kind": "Passive",
+          "cost": 0,
+          "cooldown": 0,
+          "timed": false,
+          "meta": "Passive · occupies one slot",
+          "effect": "Attack may spend two opening Charge for 8% Ward after contact. A signature that spends the entire opening reserve of at least three gains 6% Ward once/action; replacement Ward uses the greater remaining value, so Groundstrike does not stack Wards."
+        },
+        {
+          "name": "Live Circuit",
+          "kind": "Passive",
+          "cost": 0,
+          "cooldown": 0,
+          "timed": false,
+          "meta": "Passive · occupies one slot",
+          "effect": "Attack opening Charge at least three gains +15% direct damage. Consuming below three before contact forfeits it; retaining charge competes with discharge."
+        },
+        {
+          "name": "Stored Current",
+          "kind": "Passive",
+          "cost": 0,
+          "cooldown": 0,
+          "timed": false,
+          "meta": "Passive · occupies one slot",
+          "effect": "Every third chosen Attack gains one additional Charge. Attack may spend two opening Charge for +0.25U direct power instead of Earth Wire’s Ward; no extra packet, passive refund or forced damage-taken charge gain."
+        }
+      ],
+      "routes": [
+        [
+          "Charge the conductor",
+          "Coil Up",
+          "Groundstrike",
+          "Earth Wire"
+        ],
+        [
+          "Keep a live reserve",
+          "Test the Line",
+          "Insulated Grip",
+          "Live Circuit"
+        ],
+        [
+          "Discharge at the opening",
+          "Copper Arc",
+          "Trip the Breaker",
+          "Stored Current"
+        ]
+      ],
+      "artReview": {
+        "releaseOrder": 5,
+        "comment": "Is he intentionally short? He looks stocky and short for some reason. I think it's that his feet are massive compared to his head.",
+        "action": "Preserve stocky build, not a deliberately short stature. Reduce oversized boots and restore balanced head/body/foot proportions."
+      },
+      "status": "Owner-selected hero; expanded ability design proposal, not live or balance-approved"
+    },
+    {
+      "id": "merrick-low",
+      "name": "Merrick Low",
+      "family": "Ranger",
+      "title": "The Quiet Hunter",
+      "equipment": "Bow + quiver",
+      "lore": "Merrick stopped speaking after his brother’s voice came back from the forest without him. He answers with chalk marks, and never wastes a second arrow on the same warning.",
+      "visual": "A compact middle-aged man with a broad nose, dark brown skin and shaved head. Muted green fitted jacket, ivory chalk tabs, plain bow; hooded lantern with narrow light slit.",
+      "resource": {
+        "name": "Breath",
+        "cap": 4,
+        "start": 0,
+        "attackGain": 1
+      },
+      "mechanic": "A quiet hunter who builds a three-step shot cadence with ordinary Attacks. Spend rhythm on the right release, cash it out early for cover or deliberately restart it.",
+      "tokens": {
+        "Cadence": "Intrinsic count zero–three, advances once after an ordinary chosen Attack unless that Attack consumed it. Any active resets it before its own declared preparation; release cards snapshot before reset. Never changes from Parry, Dodge, counter or Star packet. Reset after two subsequent H without an Attack or explicit preparation; step never advances automatically."
+      },
+      "cards": [
+        {
+          "name": "Quiet Release",
+          "kind": "Active",
+          "cost": 1,
+          "cooldown": 3,
+          "timed": true,
+          "meta": "Active · cost 1 · CD3 · timed",
+          "effect": "1.1U arrow. Snapshot and consume Cadence before contact: at step two ignore half armour; at step three gain +0.25U direct power; at zero/one use baseline. Does not reset into a new cadence."
+        },
+        {
+          "name": "Count the Breath",
+          "kind": "Active",
+          "cost": 0,
+          "cooldown": 4,
+          "timed": false,
+          "meta": "Active · cost 0 · CD4",
+          "effect": "0.5U arrow; reset opening Cadence and establish step two after contact. This is deliberate active preparation, not two free Attacks."
+        },
+        {
+          "name": "Break Silence",
+          "kind": "Active",
+          "cost": 1,
+          "cooldown": 3,
+          "timed": false,
+          "meta": "Active · cost 1 · CD3",
+          "effect": "0.8U arrow and two-F Weaken; reset Cadence before contact. Tagged defensive active for Steady Breath."
+        },
+        {
+          "name": "Close the Hood",
+          "kind": "Active",
+          "cost": 1,
+          "cooldown": 4,
+          "timed": false,
+          "meta": "Active · cost 1 · CD4",
+          "effect": "Guard through next enemy move and 8% Ward; reset Cadence. Tagged defensive active; manual Parry/Dodge remains unchanged."
+        },
+        {
+          "name": "Chalk the Distance",
+          "kind": "Active",
+          "cost": 1,
+          "cooldown": 4,
+          "timed": false,
+          "meta": "Active · cost 1 · CD4",
+          "effect": "0.7U arrow and two-F Mark. Reset opening Cadence; establish step one after contact. Choose a marked pressure route instead of preserving existing rhythm."
+        },
+        {
+          "name": "One Clean Arrow",
+          "kind": "Active",
+          "cost": 2,
+          "cooldown": 4,
+          "timed": true,
+          "meta": "Active · cost 2 · CD4 · timed",
+          "effect": "1.4U arrow. Consume Cadence: step two grants next-action Exposed; step three grants 1.7U total direct power; zero/one remains baseline."
+        },
+        {
+          "name": "The Held Breath",
+          "kind": "Active",
+          "cost": 1,
+          "cooldown": 4,
+          "timed": false,
+          "meta": "Active · cost 1 · CD4",
+          "effect": "0.9U arrow. Consume Cadence for 6% Ward at step one/two or 10% at three instead of damage bonus. Tagged defensive active."
+        },
+        {
+          "name": "No Sudden Motion",
+          "kind": "Active",
+          "cost": 2,
+          "cooldown": 4,
+          "timed": true,
+          "meta": "Active · cost 2 · CD4 · timed",
+          "effect": "1.2U arrow and one-F Pin. Consume step two/three for one Stun attempt instead of Pin; rejected control still loses Cadence."
+        },
+        {
+          "name": "Until the Lantern Dims",
+          "kind": "Active",
+          "cost": 3,
+          "cooldown": 6,
+          "timed": true,
+          "meta": "Active · cost 3 · CD6 · timed",
+          "effect": "1.7U arrow. Consume step two for half-armour penetration or step three for +0.25U direct power. With zero/one, baseline; no finisher deadlock. Available from third H."
+        },
+        {
+          "name": "Steady Breath",
+          "kind": "Passive",
+          "cost": 0,
+          "cooldown": 0,
+          "timed": false,
+          "meta": "Passive · occupies one slot",
+          "effect": "The first chosen Attack after an explicitly defensive active advances Cadence by two rather than one, once/action. All-passive fallback: every third consecutive Attack advances by two instead. Cap remains three; never rewards Parry/Dodge per hit."
+        },
+        {
+          "name": "Not Yet",
+          "kind": "Passive",
+          "cost": 0,
+          "cooldown": 0,
+          "timed": false,
+          "meta": "Passive · occupies one slot",
+          "effect": "Attack may pay one Breath and consume opening Cadence for Guard at one/two or 8% Ward at three. A consuming Attack does not advance cadence; normal resource income still follows."
+        },
+        {
+          "name": "Plain Fletching",
+          "kind": "Passive",
+          "cost": 0,
+          "cooldown": 0,
+          "timed": false,
+          "meta": "Passive · occupies one slot",
+          "effect": "Attack may pay one Breath and consume opening step two for 30% armour penetration or step three for +0.25U direct power. A consuming Attack does not advance Cadence; cannot also use Not Yet."
+        }
+      ],
+      "routes": [
+        [
+          "Release on the third beat",
+          "Quiet Release",
+          "Count the Breath",
+          "Steady Breath"
+        ],
+        [
+          "Take safety now",
+          "Break Silence",
+          "Close the Hood",
+          "Not Yet"
+        ],
+        [
+          "Keep the shot honest",
+          "Chalk the Distance",
+          "One Clean Arrow",
+          "Plain Fletching"
+        ]
+      ],
+      "artReview": {
+        "releaseOrder": 6,
+        "comment": "Again his bow is a bit dodgy looking (hand hold not in the centre).",
+        "action": "Rebuild bow geometry and place the hand at its central grip. Continuous correctly attached straight undrawn string."
+      },
+      "status": "Owner-selected hero; expanded ability design proposal, not live or balance-approved"
+    },
+    {
+      "id": "gideon-march",
+      "name": "Gideon March",
+      "family": "Warrior",
+      "title": "The Gate Interceptor",
+      "equipment": "Warblade + shield",
+      "lore": "Gideon guarded caravans for thirty years without losing a passenger. The one empty carriage he brought home still follows him in his dreams.",
+      "visual": "A lean elderly man with a long rectangular face, dark skin and close grey beard. Weather-blue intact coat, small practical shield, plain straight sword and shuttered hip lantern.",
+      "resource": {
+        "name": "Vigil",
+        "cap": 5,
+        "start": 0,
+        "attackGain": 1
+      },
+      "mechanic": "An elderly gatekeeper who prepares a Watch and chooses between contesting a visible charge, a penetrating strike and a safe release. He cannot predict the next enemy move.",
+      "tokens": {
+        "Watch": "One token expires after three subsequent H. Refreshing while held preserves once-per-establishment Answer eligibility; consuming or natural expiry clears Answer.",
+        "Answer": "One token belonging to current Watch, never stacks and cannot outlive that Watch. Charge windups/skips are not wholly defended moves."
+      },
+      "cards": [
+        {
+          "name": "Take Watch",
+          "kind": "Active",
+          "cost": 0,
+          "cooldown": 4,
+          "timed": false,
+          "meta": "Active · cost 0 · CD4",
+          "effect": "0.5U sword cut and establish Watch after contact. No immediate control or information about future enemy moves."
+        },
+        {
+          "name": "Across the Gate",
+          "kind": "Active",
+          "cost": 2,
+          "cooldown": 4,
+          "timed": true,
+          "meta": "Active · cost 2 · CD4 · timed",
+          "effect": "1.2U sword cut. Consume Watch for half-armour penetration, or only while foe visibly gathers, for one Stun attempt instead of penetration. Rejection consumes Watch; ordinary damage remains."
+        },
+        {
+          "name": "Shuttered Light",
+          "kind": "Active",
+          "cost": 1,
+          "cooldown": 4,
+          "timed": false,
+          "meta": "Active · cost 1 · CD4",
+          "effect": "8% Ward and Guard through next move. Consume Watch for 12% Ward instead of Guard; sacrifices charge-interruption setup."
+        },
+        {
+          "name": "Stand Relieved",
+          "kind": "Active",
+          "cost": 2,
+          "cooldown": 5,
+          "timed": false,
+          "meta": "Active · cost 2 · CD5",
+          "effect": "Heal 5% HP; may consume Watch to clear one eligible self-debuff, or retain it for a later response."
+        },
+        {
+          "name": "Not This Road",
+          "kind": "Active",
+          "cost": 1,
+          "cooldown": 3,
+          "timed": true,
+          "meta": "Active · cost 1 · CD3 · timed",
+          "effect": "0.8U sword cut and one-F Weaken. With Watch, choose to retain it or consume it for two-F Weaken instead."
+        },
+        {
+          "name": "Gatepost Cut",
+          "kind": "Active",
+          "cost": 2,
+          "cooldown": 4,
+          "timed": false,
+          "meta": "Active · cost 2 · CD4",
+          "effect": "1.3U sword cut. Consume Watch plus optional Answer for next-action Exposed; with Answer also gain 6% Ward after contact. No automatic counter or immediate extra action."
+        },
+        {
+          "name": "Relight the Window",
+          "kind": "Active",
+          "cost": 0,
+          "cooldown": 4,
+          "timed": false,
+          "meta": "Active · cost 0 · CD4",
+          "effect": "Gain two Vigil. Establish Watch if none exists; otherwise preserve its original expiry and gain Guard. Refreshed preparation never rearms defence reward eligibility."
+        },
+        {
+          "name": "Give Ground",
+          "kind": "Active",
+          "cost": 1,
+          "cooldown": 4,
+          "timed": true,
+          "meta": "Active · cost 1 · CD4 · timed",
+          "effect": "0.8U sword cut and one-F Pin. Consume Watch for 10% Ward instead of Pin; no automatic Dodge or stage movement."
+        },
+        {
+          "name": "The Gate Stays Open",
+          "kind": "Active",
+          "cost": 3,
+          "cooldown": 6,
+          "timed": true,
+          "meta": "Active · cost 3 · CD6 · timed",
+          "effect": "1.7U sword cut; consume Watch for half-armour penetration, or Watch and Answer for +0.25U direct power plus Guard instead of penetration. Available from third H."
+        },
+        {
+          "name": "Kept Vigil",
+          "kind": "Passive",
+          "cost": 0,
+          "cooldown": 0,
+          "timed": false,
+          "meta": "Passive · occupies one slot",
+          "effect": "Every third chosen Attack establishes Watch if absent. The first whole enemy move fully defended manually during each Watch banks Answer once per establishment, even if resource is capped. Refreshing Watch does not reset eligibility."
+        },
+        {
+          "name": "A Place to Stand",
+          "kind": "Passive",
+          "cost": 0,
+          "cooldown": 0,
+          "timed": false,
+          "meta": "Passive · occupies one slot",
+          "effect": "Attack may pay one Vigil and consume Watch for 8% Ward; with opening Answer, consume it too for 10% Ward instead. Same Attack cannot establish a new Watch."
+        },
+        {
+          "name": "The Old Watch",
+          "kind": "Passive",
+          "cost": 0,
+          "cooldown": 0,
+          "timed": false,
+          "meta": "Passive · occupies one slot",
+          "effect": "Attack may pay one Vigil and consume Watch for 30% armour penetration, or Watch and Answer for +0.25U direct power instead. Same Attack cannot establish a new Watch; cannot also gain A Place to Stand’s Ward."
+        }
+      ],
+      "routes": [
+        [
+          "Watch the gate",
+          "Take Watch",
+          "Across the Gate",
+          "Kept Vigil"
+        ],
+        [
+          "Keep the household safe",
+          "Take Watch",
+          "Shuttered Light",
+          "A Place to Stand"
+        ],
+        [
+          "Choose the answer",
+          "Take Watch",
+          "Gatepost Cut",
+          "Kept Vigil"
+        ]
+      ],
+      "artReview": {
+        "releaseOrder": 11,
+        "comment": "Decent.",
+        "action": "Retain as a viable design candidate; no additional owner correction specified."
+      },
+      "status": "Owner-selected hero; expanded ability design proposal, not live or balance-approved"
+    }
+  ]
+}
