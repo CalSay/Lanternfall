@@ -16,3 +16,6 @@ Sprite Forge is installed repo-locally. For sprites/props/FX read
 `.agents/skills/generate2dmap/SKILL.md`. Setup and Lanternfall-specific usage are in
 `docs/SPRITE_FORGE.md`. Use the existing HTML/canvas asset contracts, not Godot/Unity exports.
 The project art freeze and approved pack anchors/timings override generic skill defaults.
+
+Pose lock (`.agents/skills/pose-lock/SKILL.md`) is mandatory for every static pose build and review. A pose without
+a passing `pose_lock.py gate` and `verify` result is not ready for owner review.

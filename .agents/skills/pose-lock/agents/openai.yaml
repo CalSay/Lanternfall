@@ -1,0 +1,4 @@
+interface:
+  display_name: "Pose Lock"
+  short_description: "Mandatory drift-free workflow for static pose builds."
+  default_prompt: "Use $pose-lock for every static pose build: kit, edit from a parent inside a mask, gate, register, verify. Never run approve."

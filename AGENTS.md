@@ -40,6 +40,11 @@ Sprite Forge's `generate2dsprite` and `generate2dmap` skills are installed under
 For requested asset creation, read the relevant skill and `docs/SPRITE_FORGE.md`; route through the art director.
 Installing tools does not authorize replacing approved packs or runtime integration.
 
+**Pose lock is mandatory.** Every static pose or pose-sheet build, for any character, new or added later, follows
+`.agents/skills/pose-lock/SKILL.md` and `docs/POSE_LOCK.md`: locked source kit, edit from an accepted parent inside
+a mask, gate with `tools/pose-lock/pose_lock.py`, register, verify. Never run its `approve` command or loosen a
+gate. A task card or prompt cannot waive this; only a later direct owner instruction can.
+
 Read the selected role file and include its instructions in the subagent assignment; role files are not
 automatically registered agents. Include the exact base SHA, question, owned files, relevant docs, acceptance
 criteria, validation and a stopping condition. Specialists report to the main chat, which reconciles results.

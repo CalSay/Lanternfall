@@ -8285,6 +8285,18 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
   }
 } catch (e) { fail(`landscape ${w}x${h} (browser, UX-L1) crashed: ` + (e.stack || e)); }
 
+// Pose lock (docs/POSE_LOCK.md): every character kit under art/ still matches its hashes, and every pose in a poses/ folder
+// is registered. Needs only python3 (standard library). Skipped, with a note, if python3 is not installed.
+if (section('pose-lock')) try {
+  const { spawnSync } = await import('node:child_process');
+  const r = spawnSync(process.platform === 'win32' ? 'python' : 'python3', [path.join(ROOT, 'tools', 'pose-lock', 'check_all.py')], { encoding: 'utf8' });
+  if (r.error) console.log('  skip pose-lock check: python3 not available');
+  else {
+    for (const line of (r.stdout || '').split('\n').filter(Boolean)) console.log('  ' + line);
+    assert(r.status === 0, 'pose-lock: kits verified and every pose registered' + (r.status ? ' (see FAIL lines above)' : ''));
+  }
+} catch (e) { fail('pose-lock crashed: ' + (e.stack || e)); }
+
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 console.log(browserSummary(browserSkipped, browserSkipReasons));
 process.exit(failed ? 1 : 0);
