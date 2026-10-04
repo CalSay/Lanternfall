@@ -13,12 +13,13 @@ from hero_concept_approvals import load_approvals
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 BASE = '227bda460a6c89f03da3cafb2ad6278431e24c14'
 FOLDER = ROOT / 'art/concepts/hero-corrections-v1'
-LATEST = ROOT / 'art/concepts/hero-corrections-v2'
+LATEST = ROOT / 'art/concepts/hero-corrections-v3'
+VERSIONS = [ROOT / f'art/concepts/hero-corrections-v{i}' for i in (2, 3)]
 APPROVALS = load_approvals(ROOT)
 OUT = ROOT / 'docs/design/hero-concept-corrections-review.html'
 CHANGES = {
     'hesketh': 'Add belt-stowed lamp-service tome; preserve liked lamplighter design.',
-    'nerys-fleet': 'Pass two: mirror bow, centre hand on grip and shorten lower-right coat tail.',
+    'nerys-fleet': 'Pass three: centre the hand vertically on the wrapped grip, preserving the corrected bow orientation and shortened coat tail. Centring remains unresolved; see review notes.',
     'wren': 'Closed eyes in both views; correct bow placement, grip and string.',
     'eskil': 'Pass two: lower bow limb curves left; add missing carried lantern.',
     'tobin': 'Pass two: raise shield-side knee pad and match shield detail to held shield.',
@@ -71,9 +72,11 @@ for h in roster['existing'] + roster['additions']:
     assert hashlib.sha256(original).hexdigest() == sha(ROOT / source), f'Source changed: {source}'
     draft = FOLDER / (ident + '.png')
     row = {'id': ident, 'name': h['name'], 'family': h['family'], 'source': str(source), 'source_sha256': sha(ROOT / source)}
-    if (LATEST / (ident + '.png')).exists():
-        row['comparison'] = str(draft.relative_to(ROOT))
-        draft = LATEST / (ident + '.png')
+    for folder in VERSIONS:
+        candidate = folder / (ident + '.png')
+        if candidate.exists():
+            row['comparison'] = str(draft.relative_to(ROOT))
+            draft = candidate
     if draft.exists():
         metadata_path = draft.with_name(ident + '.metadata.json')
         metadata = json.loads(metadata_path.read_text())
@@ -94,7 +97,7 @@ profile = ROOT / 'docs/design/selected-34-heroes.html'
 approved_count = sum(h['status'] == 'owner-approved-concept' for h in heroes)
 pending_count = sum(h['status'] == 'pending-owner-review' for h in heroes)
 assert len(heroes) == 34 and approved_count == len(APPROVALS) and approved_count + pending_count == 28
-manifest = {'branch': subprocess.check_output(['git','branch','--show-current'],cwd=ROOT,text=True).strip(), 'base_sha': '8872088e2a93f8a9ac98a59a46a0778d2451dd4a', 'status': 'Only directly signed-off concepts replace profile art; all other drafts remain pending.', 'profile_sha256': sha(profile), 'heroes': heroes}
+manifest = {'branch': subprocess.check_output(['git','branch','--show-current'],cwd=ROOT,text=True).strip(), 'base_sha': '55fd318abb16d1cd17c9c9b3905d10e26eb04d6c', 'status': 'Only directly signed-off concepts replace profile art; all other drafts remain pending.', 'profile_sha256': sha(profile), 'heroes': heroes}
 (LATEST / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
 parts = []
 for family in ['Warrior', 'Ranger', 'Mage']:

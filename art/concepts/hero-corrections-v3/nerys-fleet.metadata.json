@@ -1,0 +1,19 @@
+{
+  "hero_id": "nerys-fleet",
+  "status": "pending-owner-review",
+  "base_sha": "55fd318abb16d1cd17c9c9b3905d10e26eb04d6c",
+  "source": "art/concepts/hero-corrections-v2/nerys-fleet.png",
+  "generated_original": "/workspace/generated_images/exec-c46b596d-812d-4faf-abf0-9d2a42f60b2a.png",
+  "attempts": 1,
+  "qc_notes": [
+    "Hand moved upward but overshot: almost no red wrapping is exposed above the hand, with a substantial section below. Exact vertical centring remains unresolved.",
+    "Bow orientation, shortened tail and character identity preserved; raised forearm is the main collateral change. One owner-guided attempt; no further rerolls."
+  ],
+  "draft_sha256": "ccd7f295d7dca993641952c2d3986a816850fe87c94df1574917a06359b56fdd",
+  "source_sha256": "0b729fa2caaa1c076051010e83635a34db1335ed9611775b05024f6ebec8fc89",
+  "prompt_sha256": "53ebb7131aa80fa86df37f9eb580f19e425bb847963c2b58d22c7ff5af77bff5",
+  "dimensions": [
+    1536,
+    1024
+  ]
+}

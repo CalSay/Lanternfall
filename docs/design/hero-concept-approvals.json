@@ -117,6 +117,28 @@
       "approved_by": "Cal (direct chat sign-off)",
       "owner_decision": "Design signed off; use this concept in the hero profile.",
       "remaining_notes": []
+    },
+    "Eskil Hauk": {
+      "id": "eskil",
+      "file": "art/concepts/hero-corrections-v2/eskil.png",
+      "sha256": "c5bc504ec507731e307f1d72beb7e7faeacf6a080e85ebb0a15d0e5717cbc8b4",
+      "status": "owner-approved-concept",
+      "approved_on": "2026-10-04",
+      "approved_by": "Cal (direct chat sign-off)",
+      "owner_decision": "Design signed off; use this exact second-pass concept in the hero profile.",
+      "remaining_notes": [],
+      "source_commit": "55fd318abb16d1cd17c9c9b3905d10e26eb04d6c"
+    },
+    "Tobin Reed": {
+      "id": "tobin",
+      "file": "art/concepts/hero-corrections-v2/tobin.png",
+      "sha256": "7886da53c411bc67be6bfd09a0ca16ebd496614918c5115217687084acc05f68",
+      "status": "owner-approved-concept",
+      "approved_on": "2026-10-04",
+      "approved_by": "Cal (direct chat sign-off)",
+      "owner_decision": "Design signed off; use this exact second-pass concept in the hero profile.",
+      "remaining_notes": [],
+      "source_commit": "55fd318abb16d1cd17c9c9b3905d10e26eb04d6c"
     }
   }
 }
