@@ -1,0 +1,19 @@
+{
+  "status": "sent to Claude's existing GitHub inbox",
+  "branch": "codex/hero-animation-icons",
+  "base_sha": "9ac67cec30924c289989118cee6cca60f188fa49",
+  "payload_sha": "1e1aa794eeb1ecd4dd00d4a297718f8831070069",
+  "animation_plan_first_receipt": "https://github.com/CalSay/Lanternfall/pull/1#issuecomment-5985489308",
+  "combined_handoff_receipt": "https://github.com/CalSay/Lanternfall/pull/1#issuecomment-5985805833",
+  "scope": "34-hero animation plan and 426 ability icon drafts",
+  "owner_approval": "pending for new icon drafts and planned production poses",
+  "integration": "none; review only",
+  "validation": {
+    "animation_plan": "passed",
+    "icon_audit": "426 icons, 1704 exports, current visual hashes closed; passed without exceptions",
+    "html_gallery": "426 cards, 1704 embedded images, 37 anchors; JS on/off; 390/320px widths; passed",
+    "game_build": "passed",
+    "game_check_assertions_passed": 2300,
+    "browser_sections_skipped": 0
+  }
+}
