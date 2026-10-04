@@ -1,0 +1,27 @@
+{
+  "branch": "codex/consolidated-hero-roster",
+  "baseSHA": "26ed4df",
+  "document": "docs/design/selected-34-heroes.html",
+  "heroes": 34,
+  "classCounts": {
+    "Warrior": 11,
+    "Ranger": 8,
+    "Mage": 15
+  },
+  "browserChecks": {
+    "widths": [
+      1200,
+      390
+    ],
+    "javascriptEnabled": false,
+    "all34ProfilesOpenClose": true,
+    "all34EmbeddedBoardsDecode": true,
+    "externalDocumentLinks": 0,
+    "horizontalOverflow": false
+  },
+  "scope": "Self-contained review document; source art and game code unchanged. Codex client rendering not directly verified.",
+  "requiredChecks": {
+    "node tools/build.mjs": "passed",
+    "LF_CHROMIUM=/usr/bin/chromium node tools/check.mjs": "passed; browser sections skipped: 0"
+  }
+}

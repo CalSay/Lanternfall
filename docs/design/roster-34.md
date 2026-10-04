@@ -57,3 +57,5 @@ Rufus stays withdrawn under the no-unarmed rule. Hilda, Roscoe, Petra and Nim re
 The owner’s inaccessible original document was the 32-board concept-art gallery, not the abilities dossier. Correct review exports must show those original concept boards and their current roster/NPC disposition. The old original gallery was roughly 37 MB; testing its internal HTML did not establish that Codex’s file preview could open it. No public hosting or deployment is authorized.
 
 Review documents: [original concept art](original-hero-concepts.html) and [selected additions](hero-profiles.html).
+
+The complete roster is also available in one self-contained [34-hero page organised by class](selected-34-heroes.html), with all concept boards and profiles embedded.
