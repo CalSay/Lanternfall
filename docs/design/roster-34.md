@@ -2,6 +2,8 @@
 
 The owner retains the existing 21 design candidates and selects 13 additions. This supersedes the previous 32-hero target and coordinator top-eleven recommendation. Selection means an intended playable roster; it does not imply 34 runtime kits or approved production art packs.
 
+All 34 concept boards are now officially signed off by Cal (4 October 2026). The exact files and SHA-256 hashes are in `hero-concept-approvals.json`. Earlier correction requests are historical; gameplay and production-pack approval remain separate.
+
 ## Selected additions
 
 1. **Nerys Fleet** — The Foxstep Archer (Ranger).
@@ -40,7 +42,7 @@ Input spellings Tasmin Rook, Celadine Orr and Merrick Lowe are mapped to the exi
 16. Cass Penhallow — Reef polearm hunter (Ranger).
 17. Linnet Cole — Frost-and-glass mage (Mage).
 18. Eskil Hauk — Pin-and-venom scout (Ranger).
-19. Brynja Berg — Heavy shield-and-warblade anchor — review candidate (Warrior).
+19. Brynja Berg — Heavy shield-and-warblade anchor (Warrior).
 20. Inga Fallow — Strata and cold-shard mage (Mage).
 21. Ragna Vik — Winter venom witch (Mage).
 

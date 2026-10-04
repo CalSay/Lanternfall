@@ -264,6 +264,17 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 - **Preview:** after each merge wave the owner gets a private preview artifact with its own save key. Preview builds
   never go to the live artifact. (2026-09-27)
 
+## Official playable concept sign-off (2026-10-04)
+
+- Cal signs off all 34 selected playable hero concepts: 11 Warriors, 8 Rangers and 15 Mages. Latest revisions of
+  Merrick, Ysabet, Ione and Adela are approved, and selected concepts without correction notes are approved too.
+  Exact reference PNGs and SHA-256 hashes are recorded in `design/hero-concept-approvals.json`.
+- These are official character design references. Earlier pending concept-correction requests are superseded;
+  production pose kits, complete animation packs, runtime integration and numerical ability balance remain separate.
+- Cal authorizes returning the concepts, new-hero data and all-34 ability reworks to Claude through the existing
+  handoff process on a dedicated Codex branch. Claude remains integration coordinator; no game publication,
+  deployment, upstream merge or push to main/Claude branches is authorized by this handoff.
+
 ## Replaced decisions
 
 Kept only to explain current rules. Each line: the old decision, then what replaced it.

@@ -1,5 +1,5 @@
 {
-  "scope": "Concept boards in hero profiles only. No production pose or game-pack approval.",
+  "scope": "Official owner-approved concept designs for all 34 selected playable heroes. No production pose, animation-pack, ability-balance or gameplay-integration approval.",
   "source_branch": "codex/hero-concept-corrections",
   "source_commit": "8872088e2a93f8a9ac98a59a46a0778d2451dd4a",
   "approvals": {
@@ -273,6 +273,116 @@
       "owner_decision": "Design signed off; use this exact fourth-pass concept in hero profile.",
       "remaining_notes": [],
       "source_commit": "6bad160d43f8e16f41c4dc5e2be87618c4bc0ceb"
+    },
+    "Pip Cinderly": {
+      "id": "pip",
+      "file": "art/concepts/hero-roster-v1/pip.png",
+      "sha256": "cd1bb0dd59d810acfeb2eae9a74115c8cd470d4f2efa18936913c0c7284198df",
+      "status": "owner-approved-concept",
+      "approved_on": "2026-10-04",
+      "approved_by": "Cal (direct chat sign-off)",
+      "owner_decision": "Owner explicitly signed off all selected playable concepts without correction notes.",
+      "remaining_notes": [],
+      "source_commit": "22d111d98593f81b2da335845f1d423e83035ed0"
+    },
+    "Mab Vale": {
+      "id": "mab-vale",
+      "file": "art/concepts/hero-candidates-v1/mab-vale.png",
+      "sha256": "e27592af9b1a3e270e69177955f10b701de0eb3dd2f4624db14a20fc68b9708e",
+      "status": "owner-approved-concept",
+      "approved_on": "2026-10-04",
+      "approved_by": "Cal (direct chat sign-off)",
+      "owner_decision": "Owner explicitly signed off all selected playable concepts without correction notes.",
+      "remaining_notes": [],
+      "source_commit": "22d111d98593f81b2da335845f1d423e83035ed0"
+    },
+    "Sable Quill": {
+      "id": "sable-quill",
+      "file": "art/concepts/hero-candidates-v1/sable-quill.png",
+      "sha256": "9c742251e7063f90d6ff810e4d64127f00c2984114abde88c82e11dcd61c454c",
+      "status": "owner-approved-concept",
+      "approved_on": "2026-10-04",
+      "approved_by": "Cal (direct chat sign-off)",
+      "owner_decision": "Owner explicitly signed off all selected playable concepts without correction notes.",
+      "remaining_notes": [],
+      "source_commit": "22d111d98593f81b2da335845f1d423e83035ed0"
+    },
+    "Ione Hart": {
+      "id": "ione-hart",
+      "file": "art/concepts/hero-corrections-v5/ione-hart.png",
+      "sha256": "94b57a6ff691f115b60c28e98054bc64022baa481f466998b998010f9548db08",
+      "status": "owner-approved-concept",
+      "approved_on": "2026-10-04",
+      "approved_by": "Cal (direct chat sign-off)",
+      "owner_decision": "Latest fifth-pass concept explicitly signed off.",
+      "remaining_notes": [],
+      "source_commit": "22d111d98593f81b2da335845f1d423e83035ed0"
+    },
+    "Adela Wych": {
+      "id": "adela-wych",
+      "file": "art/concepts/hero-corrections-v5/adela-wych.png",
+      "sha256": "bde7861fd32bd97cb1aca947c5a1dc203d7eeb7cb45ecd5084c12c9003c9c1e8",
+      "status": "owner-approved-concept",
+      "approved_on": "2026-10-04",
+      "approved_by": "Cal (direct chat sign-off)",
+      "owner_decision": "Latest fifth-pass concept explicitly signed off.",
+      "remaining_notes": [],
+      "source_commit": "22d111d98593f81b2da335845f1d423e83035ed0"
+    },
+    "Ysabet Fen": {
+      "id": "ysabet-fen",
+      "file": "art/concepts/hero-corrections-v5/ysabet-fen.png",
+      "sha256": "ca0dfee19017af92b062421e20b75f9bca6179710d20dcb17ba613752ae6d046",
+      "status": "owner-approved-concept",
+      "approved_on": "2026-10-04",
+      "approved_by": "Cal (direct chat sign-off)",
+      "owner_decision": "Latest fifth-pass concept explicitly signed off.",
+      "remaining_notes": [],
+      "source_commit": "22d111d98593f81b2da335845f1d423e83035ed0"
+    },
+    "Eamon Grey": {
+      "id": "eamon-grey",
+      "file": "art/concepts/hero-candidates-v1/eamon-grey.png",
+      "sha256": "c1e369233dc6753a1ac93fc5e03a97583b38c01fab8d6260888086b6b974f9b8",
+      "status": "owner-approved-concept",
+      "approved_on": "2026-10-04",
+      "approved_by": "Cal (direct chat sign-off)",
+      "owner_decision": "Owner explicitly signed off all selected playable concepts without correction notes.",
+      "remaining_notes": [],
+      "source_commit": "22d111d98593f81b2da335845f1d423e83035ed0"
+    },
+    "Celandine Orr": {
+      "id": "celandine-orr",
+      "file": "art/concepts/hero-candidates-v1/celandine-orr.png",
+      "sha256": "c8b20dd4bd3c7302b6e1c01cdd353d5d19dd2ba4b078385d1a488b24ccecf129",
+      "status": "owner-approved-concept",
+      "approved_on": "2026-10-04",
+      "approved_by": "Cal (direct chat sign-off)",
+      "owner_decision": "Owner explicitly signed off all selected playable concepts without correction notes.",
+      "remaining_notes": [],
+      "source_commit": "22d111d98593f81b2da335845f1d423e83035ed0"
+    },
+    "Merrick Low": {
+      "id": "merrick-low",
+      "file": "art/concepts/hero-corrections-v5/merrick-low.png",
+      "sha256": "0543ce4487d0ebc96396cad39eedd5df6ada415351c58d8eb52842582a0d0a10",
+      "status": "owner-approved-concept",
+      "approved_on": "2026-10-04",
+      "approved_by": "Cal (direct chat sign-off)",
+      "owner_decision": "Latest fifth-pass concept explicitly signed off.",
+      "remaining_notes": [],
+      "source_commit": "22d111d98593f81b2da335845f1d423e83035ed0"
+    },
+    "Gideon March": {
+      "id": "gideon-march",
+      "file": "art/concepts/hero-candidates-v1/gideon-march.png",
+      "sha256": "541ad86e9b88a479efb1184c4e3fc1cab4830ff12763e52d88a7862fb7aa71c3",
+      "status": "owner-approved-concept",
+      "approved_on": "2026-10-04",
+      "approved_by": "Cal (direct chat sign-off)",
+      "owner_decision": "Owner explicitly signed off all selected playable concepts without correction notes.",
+      "remaining_notes": [],
+      "source_commit": "22d111d98593f81b2da335845f1d423e83035ed0"
     }
   }
 }

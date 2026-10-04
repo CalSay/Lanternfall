@@ -1,0 +1,136 @@
+{
+  "branch": "codex/official-34-hero-handoff",
+  "base_sha": "22d111d98593f81b2da335845f1d423e83035ed0",
+  "ability_design_checkpoint": "227bda460a6c89f03da3cafb2ad6278431e24c14",
+  "counts": {
+    "heroes": 34,
+    "new_heroes": 13,
+    "signatures": 408,
+    "shared_class_tools": 18,
+    "workshop_builds": 102,
+    "stars": 72,
+    "subclass_paths": 6
+  },
+  "files": [
+    {
+      "path": "docs/design/hero-concept-approvals.json",
+      "sha256": "791b7e290e91a663a1a337ff59905882d7ddfb49e194150985bd21a5b23ebf94",
+      "bytes": 17761
+    },
+    {
+      "path": "docs/design/roster-34.json",
+      "sha256": "d9844c627f99fe3a30845090d9b094639a7c3362bd27cb9e277b8e04044987b1",
+      "bytes": 12249
+    },
+    {
+      "path": "docs/design/hero-new-abilities.json",
+      "sha256": "390d582de3a0cb5be60209c496d01c127646aca1335ed79966bb12c10d40374f",
+      "bytes": 97283
+    },
+    {
+      "path": "docs/design/hero-dossier.json",
+      "sha256": "ec4597fafea0b6f52650f1e1f9e9aa3e910083317bae46b20b1d236549305c06",
+      "bytes": 332097
+    },
+    {
+      "path": "docs/design/hero-abilities-34.json",
+      "sha256": "94f0c776eff4f233607ea2f46c8231dc257157d65c2534c7b23b28a02753adff",
+      "bytes": 526059
+    },
+    {
+      "path": "docs/design/brynja-doorward-revision.json",
+      "sha256": "b800be3eac653e9862043416aecbe621653a85a74feb0ecce179cc77d3569419",
+      "bytes": 14188
+    },
+    {
+      "path": "docs/design/hero-gap-candidates.json",
+      "sha256": "20a19e8447ebb8f1fad4679cbb6838077738b6438aae86c23e3ea87ff51c89bd",
+      "bytes": 57982
+    },
+    {
+      "path": "docs/design/hero-gap-review.md",
+      "sha256": "76c2fdc5eec4b0dbfd05717d9eacf4e9e96af4a608b090a1756f620dec2aa094",
+      "bytes": 4434
+    },
+    {
+      "path": "docs/design/hero-roster-revision-plan.md",
+      "sha256": "9963d0d45792f3187579e762dbe996748bc49b6106e328dcf55a05d0a004b74f",
+      "bytes": 17620
+    },
+    {
+      "path": "docs/design/hero-accessories.md",
+      "sha256": "f8302425dc470fd4d168f062419a76fb70689cd75473405fc6585bde41051b8b",
+      "bytes": 3063
+    },
+    {
+      "path": "docs/design/hero-ability-expansion.md",
+      "sha256": "ddfe48ec808a1160a775e31bf29695129a117e9ca1a1101a6fb6b29ceb3cbd0a",
+      "bytes": 4259
+    },
+    {
+      "path": "docs/design/hero-ability-balance-contract.md",
+      "sha256": "b29408cbfba93802114b1c3767c147e6ec03951be3687b8201754566f131568a",
+      "bytes": 4600
+    },
+    {
+      "path": "docs/design/reviews/new-hero-ability-audit.md",
+      "sha256": "14507ceeba38a61c2463900cc79448b42618870ca4a662aa42434f5ce4750b62",
+      "bytes": 2782
+    },
+    {
+      "path": "docs/design/reviews/whole-roster-ability-audit.md",
+      "sha256": "0d1cae89869a3e79d8bb8d1bcf61bc3212aee4fa863d93f4b39f28791bcb54e9",
+      "bytes": 8670
+    },
+    {
+      "path": "docs/design/reviews/whole-roster-changes.json",
+      "sha256": "a0c1e860818173499c1e963ff03f5e88c8e39fa3ce09c54e9278f174b2924458",
+      "bytes": 23858
+    },
+    {
+      "path": "docs/design/selected-34-heroes.html",
+      "sha256": "f01e7beb7dd5dad053c14bb85edcc9c915aa7e8d93acba91e9767705880d19f5",
+      "bytes": 7547758
+    },
+    {
+      "path": "docs/design/hero-concept-corrections-review.html",
+      "sha256": "60acb79447927d8cee79cf390341639423e33ca020db51d1904265a1a08ae9d7",
+      "bytes": 32364787
+    },
+    {
+      "path": "tools/hero-abilities-34.py",
+      "sha256": "d58bc875dcf69be20dea6404949fe36c922dde3849a7ad6f9c9a6ba9d3bf1c35",
+      "bytes": 2403
+    },
+    {
+      "path": "tools/hero-roster-page.py",
+      "sha256": "eb96f6ed2c56997fae39162c16a324cc2dca3ccc0f58e775193dab71ef74e398",
+      "bytes": 8761
+    },
+    {
+      "path": "tools/hero_concept_approvals.py",
+      "sha256": "76b8f17329502925cb248f59484c59ed825b46242de7b576ccce68bd93c29f05",
+      "bytes": 847
+    },
+    {
+      "path": ".agents/skills/pose-lock/SKILL.md",
+      "sha256": "56c6e1da9becd127db58eab3ae705bbff4a5293394fc85e416e86e58cefa4521",
+      "bytes": 6559
+    },
+    {
+      "path": ".agents/skills/generate2dsprite/SKILL.md",
+      "sha256": "4e04edbcc96a182e9e5496329bfb2c2b353c72d2efec2afdb8bb7fc1da984288",
+      "bytes": 29102
+    },
+    {
+      "path": "docs/POSE_LOCK.md",
+      "sha256": "f980e742dcd0bc45efa40e93afc01d8feaf6af44ee75f478b617d1a9abea7bf2",
+      "bytes": 1301
+    },
+    {
+      "path": "docs/SPRITE_FORGE.md",
+      "sha256": "5f6420b46f3d53afd0866cbbae8fe18a622de433edd0de2359447beab05c6930",
+      "bytes": 3498
+    }
+  ]
+}
