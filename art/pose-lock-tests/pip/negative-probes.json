@@ -1,0 +1,83 @@
+[
+  {
+    "case": "baseline",
+    "command": "python3 /tmp/pose-lock-real-fixture/tools/pose-lock/check_all.py",
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "stdout": "pose-lock: 1 kit(s) verified and audited\n",
+    "stderr": "",
+    "passed": true
+  },
+  {
+    "case": "baseline",
+    "command": "/workspace/Lanternfall/.venv-sprite-forge/bin/python /workspace/Lanternfall-pose-lock/tools/pose-lock/pose_lock.py verify /tmp/pose-lock-real-fixture/art/pose-lock-tests/pip/source-v1",
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "stdout": "verify ok\n",
+    "stderr": "",
+    "passed": true
+  },
+  {
+    "case": "baseline",
+    "command": "/workspace/Lanternfall/.venv-sprite-forge/bin/python /workspace/Lanternfall-pose-lock/tools/pose-lock/pose_lock.py audit /tmp/pose-lock-real-fixture/art/pose-lock-tests/pip/source-v1",
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "stdout": "audit ok: every pose in poses/ is registered\n",
+    "stderr": "",
+    "passed": true
+  },
+  {
+    "case": "kit-mutation",
+    "command": "python3 /tmp/pose-lock-real-fixture/tools/pose-lock/check_all.py",
+    "exit_code": 1,
+    "expected_exit_code": 1,
+    "stdout": "FAIL: art/pose-lock-tests/pip/source-v1: kit file changed or missing: identity.md\n",
+    "stderr": "",
+    "passed": true
+  },
+  {
+    "case": "kit-mutation",
+    "command": "/workspace/Lanternfall/.venv-sprite-forge/bin/python /workspace/Lanternfall-pose-lock/tools/pose-lock/pose_lock.py verify /tmp/pose-lock-real-fixture/art/pose-lock-tests/pip/source-v1",
+    "exit_code": 1,
+    "expected_exit_code": 1,
+    "stdout": "",
+    "stderr": "FAIL: kit file changed or missing: identity.md\n",
+    "passed": true
+  },
+  {
+    "case": "pose-mutation",
+    "command": "python3 /tmp/pose-lock-real-fixture/tools/pose-lock/check_all.py",
+    "exit_code": 1,
+    "expected_exit_code": 1,
+    "stdout": "FAIL: art/pose-lock-tests/pip/source-v1: pose changed after registration: free-hand-v1\n",
+    "stderr": "",
+    "passed": true
+  },
+  {
+    "case": "pose-mutation",
+    "command": "/workspace/Lanternfall/.venv-sprite-forge/bin/python /workspace/Lanternfall-pose-lock/tools/pose-lock/pose_lock.py verify /tmp/pose-lock-real-fixture/art/pose-lock-tests/pip/source-v1",
+    "exit_code": 1,
+    "expected_exit_code": 1,
+    "stdout": "",
+    "stderr": "FAIL: pose changed after registration: free-hand-v1\n",
+    "passed": true
+  },
+  {
+    "case": "unregistered-pose",
+    "command": "python3 /tmp/pose-lock-real-fixture/tools/pose-lock/check_all.py",
+    "exit_code": 1,
+    "expected_exit_code": 1,
+    "stdout": "FAIL: art/pose-lock-tests/pip/source-v1: unregistered pose: art/pose-lock-tests/pip/poses/unregistered-probe.png\n",
+    "stderr": "",
+    "passed": true
+  },
+  {
+    "case": "unregistered-pose",
+    "command": "/workspace/Lanternfall/.venv-sprite-forge/bin/python /workspace/Lanternfall-pose-lock/tools/pose-lock/pose_lock.py audit /tmp/pose-lock-real-fixture/art/pose-lock-tests/pip/source-v1",
+    "exit_code": 1,
+    "expected_exit_code": 1,
+    "stdout": "",
+    "stderr": "FAIL: unregistered pose file(s): poses/unregistered-probe.png\n",
+    "passed": true
+  }
+]

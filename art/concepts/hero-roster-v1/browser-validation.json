@@ -1,0 +1,17 @@
+{
+  "passed": true,
+  "heroesOpened": 32,
+  "imageDimensions": [
+    1536,
+    1024
+  ],
+  "classFilters": 3,
+  "search": true,
+  "emptySearch": true,
+  "navigation": true,
+  "keyboard": true,
+  "mobile": true,
+  "pageErrors": [],
+  "externalRequests": [],
+  "fileNavigation": "Managed Chromium blocks file://; embedded HTML tested with setContent"
+}

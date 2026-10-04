@@ -1,0 +1,16 @@
+{
+ "poses": [
+  {
+   "id": "free-hand-v1",
+   "file": "poses/free-hand-v1.png",
+   "sha256": "c55db78546330406a295cdf185a7bbb17663dd44f51c8818e2027685be10f342",
+   "parent": "source-v1/master.png",
+   "parent_sha256": "cedfd741a1794e18cd8d98b765fdac49419573784a75581ac421e9215d66df83",
+   "mask_sha256": "9f6941bd57b3937fc85394987fabc5ceeb4be7a6b180cb9a3cbd6ffaa4b9ebae",
+   "prompt_sha256": "4d9273ce6a5ba11b83bc4b8ba04c6e25c30dbdc09ee74fbfe50adafb65e94ea0",
+   "gate": "pass",
+   "status": "pending-review",
+   "registered": "2026-10-04"
+  }
+ ]
+}

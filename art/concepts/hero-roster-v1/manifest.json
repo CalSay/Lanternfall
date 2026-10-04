@@ -1,0 +1,401 @@
+{
+  "kind": "concept-review-pack",
+  "roster_source": "docs/design/character-roster-kits.md at 219ba99",
+  "base": "2f46628a109c0ef0711dfb58ea9455f7007336bc",
+  "production_pose_pack": false,
+  "owner_exceptions": [
+    "Allow concept-only exception; lock kits after master approval",
+    "Use Pip (isolated real-art test only; approved packs untouched)"
+  ],
+  "class_counts": {
+    "Ranger": 7,
+    "Warrior": 11,
+    "Mage": 14
+  },
+  "heroes": [
+    {
+      "id": "wren",
+      "name": "Wren Hollowmere",
+      "file": "wren.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "sha256": "c2b946f3aa92807ede785a22073c365d4261455aee9d17accd26e35510d1d836",
+      "status": "draft-pending-owner-review",
+      "prompt": "wren.prompt.txt"
+    },
+    {
+      "id": "tobin",
+      "name": "Tobin Reed",
+      "file": "tobin.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "sha256": "ab320b596d9bfc4f3ac8bd42234f1a48fb0cb82ca6a872de527586417a305d1c",
+      "status": "draft-pending-owner-review",
+      "prompt": "tobin.prompt.txt"
+    },
+    {
+      "id": "pip",
+      "name": "Pip Cinderly",
+      "file": "pip.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "sha256": "cd1bb0dd59d810acfeb2eae9a74115c8cd470d4f2efa18936913c0c7284198df",
+      "status": "supplied-reference",
+      "prompt": null
+    },
+    {
+      "id": "hesketh",
+      "name": "Old Hesketh",
+      "file": "hesketh.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "sha256": "cd893008e9af0c0c84fcf4bf579cf5e84976a18f885a795e5a3e9be2914a4ff4",
+      "status": "draft-pending-owner-review",
+      "prompt": "hesketh.prompt.txt"
+    },
+    {
+      "id": "bram",
+      "name": "Bram Hollis",
+      "file": "bram.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "sha256": "143dea6e72e83de5642d3b8ba1595b5a78cf4ef0f53877d5dc19182817a7e550",
+      "status": "draft-pending-owner-review",
+      "prompt": "bram.prompt.txt"
+    },
+    {
+      "id": "maren",
+      "name": "Maren Ashvale",
+      "file": "maren.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "sha256": "70ef293d17034b957656959cbfee7e930641b83db0b9cede10cfa9a378425ae9",
+      "status": "draft-pending-owner-review",
+      "prompt": "maren.prompt.txt"
+    },
+    {
+      "id": "aldric",
+      "name": "Ser Aldric Vane",
+      "file": "aldric.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "sha256": "bf954e7ce2c0cd5eeb10f5cd2ce62f7a8da2dd5383edc8c785aa87ff99904c2a",
+      "status": "draft-pending-owner-review",
+      "prompt": "aldric.prompt.txt"
+    },
+    {
+      "id": "kestrel",
+      "name": "Kestrel Thane",
+      "file": "kestrel.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "sha256": "b68d0fbd47d57cac2fa8914c618a49703b8ea12db2af83ae70d1e87583acbfbe",
+      "status": "draft-pending-owner-review",
+      "prompt": "kestrel.prompt.txt"
+    },
+    {
+      "id": "thessaly",
+      "name": "Thessaly Gloam",
+      "file": "thessaly.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "sha256": "c53b81a4a1bd7f4eccf16b1c6134b8df6632dec3ec3777aee4f170c9ce397124",
+      "status": "draft-pending-owner-review",
+      "prompt": "thessaly.prompt.txt"
+    },
+    {
+      "id": "anselm",
+      "name": "Brother Anselm",
+      "file": "anselm.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "sha256": "e18d39b3e238dffb951b66925a2fb33f38ad0fee4f615f55b9e0e5c78a93a555",
+      "status": "draft-pending-owner-review",
+      "prompt": "anselm.prompt.txt"
+    },
+    {
+      "id": "grenna",
+      "name": "Grenna Holt",
+      "file": "grenna.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "sha256": "b76942881b6e31354d2ef56c958b8b84c763ee4e1dd5872ae6eb19ee582d2ac4",
+      "status": "draft-pending-owner-review",
+      "prompt": "grenna.prompt.txt"
+    },
+    {
+      "id": "isolde",
+      "name": "Isolde Marrow",
+      "file": "isolde.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "sha256": "164d5179dd7498f92530f8767c83bc6bf713305eea786e2ceb1f832af756e0c8",
+      "status": "draft-pending-owner-review",
+      "prompt": "isolde.prompt.txt"
+    },
+    {
+      "id": "oriel",
+      "name": "Oriel Vess",
+      "file": "oriel.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "sha256": "bbf5d91943af0cf136897ef7e224c7f67d7fe6dd31de60a68596a4c59b0957be",
+      "status": "draft-pending-owner-review",
+      "prompt": "oriel.prompt.txt"
+    },
+    {
+      "id": "morwen",
+      "name": "Morwen Tallow",
+      "file": "morwen.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "sha256": "d4c43369cfe7f1b547fd146878edf59768709bc2a251eb5dc6b4b86c0b9a4d46",
+      "status": "draft-pending-owner-review",
+      "prompt": "morwen.prompt.txt"
+    },
+    {
+      "id": "vesper",
+      "name": "Vesper Lark",
+      "file": "vesper.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "sha256": "f5daee939b3420709023c0eef89aade12fc9a2a4ac22383c7135339d0f5d3702",
+      "status": "draft-pending-owner-review",
+      "prompt": "vesper.prompt.txt"
+    },
+    {
+      "id": "elowen",
+      "name": "Saint Elowen",
+      "file": "elowen.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "sha256": "d5af82e3847064ad057863affab63bae0d0b27db6d1427bccfd20a6ae5d7d21f",
+      "status": "draft-pending-owner-review",
+      "prompt": "elowen.prompt.txt"
+    },
+    {
+      "id": "caedmon",
+      "name": "Caedmon the Unburnt",
+      "file": "caedmon.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "sha256": "d07bab786f8e6a980ae28e204ee39345f89feb29dd28bcac228ce0e623a34998",
+      "status": "draft-pending-owner-review",
+      "prompt": "caedmon.prompt.txt"
+    },
+    {
+      "id": "corvin",
+      "name": "Corvin Black",
+      "file": "corvin.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "sha256": "58e9ce9788f78b5ef8fde53bc7b67b2ba95ee4f08b2bfb23a4b01d81373a9426",
+      "status": "draft-pending-owner-review",
+      "prompt": "corvin.prompt.txt"
+    },
+    {
+      "id": "cass",
+      "name": "Cass Penhallow",
+      "file": "cass.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "sha256": "38d2dd11b0f4fac3d532eaf915ffd7769637faad3b40cc287657324e4b3020e2",
+      "status": "draft-pending-owner-review",
+      "prompt": "cass.prompt.txt"
+    },
+    {
+      "id": "loveday",
+      "name": "Loveday Penrow",
+      "file": "loveday.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "sha256": "08af7f195358fc84afb974584bbbb9c390402fe8efc746b89fec2b0edd219b1c",
+      "status": "draft-pending-owner-review",
+      "prompt": "loveday.prompt.txt"
+    },
+    {
+      "id": "davy",
+      "name": "Davy Ashby",
+      "file": "davy.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "sha256": "aa3258f59720029d1f2d31022c6aa02933936373657619218b82a296d53e737f",
+      "status": "draft-pending-owner-review",
+      "prompt": "davy.prompt.txt"
+    },
+    {
+      "id": "ferrin",
+      "name": "Ferrin Slake",
+      "file": "ferrin.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "sha256": "77004e84aac963da0e7ec31ccbfd1fbf6884b138b8d557f7112d6f1c51d6fec3",
+      "status": "draft-pending-owner-review",
+      "prompt": "ferrin.prompt.txt"
+    },
+    {
+      "id": "linnet",
+      "name": "Linnet Cole",
+      "file": "linnet.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "sha256": "b3f9cc3d59c219f91a276fbff610071e1edafbded743770e49aa318983f8318f",
+      "status": "draft-pending-owner-review",
+      "prompt": "linnet.prompt.txt"
+    },
+    {
+      "id": "oswin",
+      "name": "Oswin Hale",
+      "file": "oswin.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "sha256": "1cf61b6948487b4e6d8bd721fdea40002097c6261ae6261e62165e76339577c3",
+      "status": "draft-pending-owner-review",
+      "prompt": "oswin.prompt.txt"
+    },
+    {
+      "id": "hob",
+      "name": "Hob Tarrow",
+      "file": "hob.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "sha256": "f3304b1662744091e997fa1342626922353aa152d6b796b274a1c400bd42ce12",
+      "status": "draft-pending-owner-review",
+      "prompt": "hob.prompt.txt"
+    },
+    {
+      "id": "beatrix",
+      "name": "Beatrix Fairweather",
+      "file": "beatrix.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "sha256": "d9e850dc360a27d66126052b67c1cc3327d5921730ae869f7bfec07999861b0e",
+      "status": "draft-pending-owner-review",
+      "prompt": "beatrix.prompt.txt"
+    },
+    {
+      "id": "eskil",
+      "name": "Eskil Hauk",
+      "file": "eskil.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "sha256": "ab911a3b48743deec9a47897e574e423a5bbdcfca9602a169c2db5c80db6ceed",
+      "status": "draft-pending-owner-review",
+      "prompt": "eskil.prompt.txt"
+    },
+    {
+      "id": "brynja",
+      "name": "Brynja Berg",
+      "file": "brynja.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "sha256": "82b4f5c53069b944532850f6046a9f348bd0e3ba95b4fcf919549da04358cc6f",
+      "status": "draft-pending-owner-review",
+      "prompt": "brynja.prompt.txt"
+    },
+    {
+      "id": "inga",
+      "name": "Inga Fallow",
+      "file": "inga.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "sha256": "61307236826f330cf48a6e7b708e527b87b12e4fc2cec801096fc8a5496954be",
+      "status": "draft-pending-owner-review",
+      "prompt": "inga.prompt.txt"
+    },
+    {
+      "id": "ragna",
+      "name": "Ragna Vik",
+      "file": "ragna.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "sha256": "23df3d4ace7c2350a6e9ca3aad3f17cf7498c4aa42c279a4aeafc6318846afd8",
+      "status": "draft-pending-owner-review",
+      "prompt": "ragna.prompt.txt"
+    },
+    {
+      "id": "solveig",
+      "name": "Solveig Lund",
+      "file": "solveig.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "sha256": "fc0e1f23f335ea14857620c2253e1f13361de7188c42e7f04e78caf257ae343a",
+      "status": "draft-pending-owner-review",
+      "prompt": "solveig.prompt.txt"
+    },
+    {
+      "id": "asta",
+      "name": "Asta Grey",
+      "file": "asta.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "sha256": "7befad90b92bf2efd41ec5c653697f29bb2ceed3f338f71f8a55a72b3f42f6c9",
+      "status": "draft-pending-owner-review",
+      "prompt": "asta.prompt.txt"
+    }
+  ]
+}

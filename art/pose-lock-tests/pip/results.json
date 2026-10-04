@@ -1,0 +1,46 @@
+{
+  "commands": [
+    {
+      "command": "/workspace/Lanternfall/.venv-sprite-forge/bin/python tools/pose-lock/pose_lock.py edit art/pose-lock-tests/pip/source-v1 --parent art/pose-lock-tests/pip/source-v1/master.png --generated art/pose-lock-tests/pip/drafts/generated-native.png --mask art/pose-lock-tests/pip/masks/free-hand.png --out art/pose-lock-tests/pip/drafts/free-hand-edit.png",
+      "exit_code": 0,
+      "stdout": "edit ok: 342 masked pixels taken from generated, rest from parent -> art/pose-lock-tests/pip/drafts/free-hand-edit.png\n",
+      "stderr": ""
+    },
+    {
+      "command": "/workspace/Lanternfall/.venv-sprite-forge/bin/python tools/pose-lock/pose_lock.py gate art/pose-lock-tests/pip/source-v1 --pose art/pose-lock-tests/pip/drafts/free-hand-edit.png --parent art/pose-lock-tests/pip/source-v1/master.png --mask art/pose-lock-tests/pip/masks/free-hand.png --head-box 63,43,122,80",
+      "exit_code": 0,
+      "stdout": "gate ok: art/pose-lock-tests/pip/drafts/free-hand-edit.png\n",
+      "stderr": ""
+    },
+    {
+      "command": "/workspace/Lanternfall/.venv-sprite-forge/bin/python tools/pose-lock/pose_lock.py register art/pose-lock-tests/pip/source-v1 --id free-hand-v1 --file art/pose-lock-tests/pip/poses/free-hand-v1.png --parent art/pose-lock-tests/pip/source-v1/master.png --mask art/pose-lock-tests/pip/masks/free-hand.png --head-box 63,43,122,80 --prompt-file art/pose-lock-tests/pip/drafts/free-hand-prompt.txt",
+      "exit_code": 0,
+      "stdout": "registered free-hand-v1 (pending-review)\n",
+      "stderr": ""
+    },
+    {
+      "command": "/workspace/Lanternfall/.venv-sprite-forge/bin/python tools/pose-lock/pose_lock.py verify art/pose-lock-tests/pip/source-v1",
+      "exit_code": 0,
+      "stdout": "verify ok\n",
+      "stderr": ""
+    },
+    {
+      "command": "/workspace/Lanternfall/.venv-sprite-forge/bin/python tools/pose-lock/pose_lock.py audit art/pose-lock-tests/pip/source-v1",
+      "exit_code": 0,
+      "stdout": "audit ok: every pose in poses/ is registered\n",
+      "stderr": ""
+    }
+  ],
+  "pixels_changed_inside_mask": 331,
+  "pixels_changed_outside_mask": 0,
+  "head_pixels_changed": 0,
+  "palette_size": 37,
+  "source_master": "art/heroes/pip/poses/01-ready.png",
+  "source_master_byte_identical": true,
+  "masked_opaque_before": 337,
+  "masked_opaque_after": 36,
+  "visual_review": "FAILED: free hand and nearby cloak erased inside mask; mechanical checks are false positive for visual completeness. No retry, approval or integration.",
+  "outline_coverage_percent": 99.05660377358491,
+  "feet_lowest_y": 131,
+  "anchor_y": 132
+}
