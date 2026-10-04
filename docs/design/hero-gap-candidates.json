@@ -1,0 +1,847 @@
+{
+  "status": "Unapproved design candidates; no gameplay or approved artwork changes.",
+  "baseSHA": "2a946bd822c9aaeef243f318dd9f26be3e25d9e6",
+  "ranking": "Coordinator judgement: missing decisions first, then mechanical fit, distinctness, three-slot flexibility, visual readability and implementation cost. Not measured balance. Top 11 are a provisional shortlist, not roster approval.",
+  "counts": {
+    "Ranger": 5,
+    "Warrior": 8,
+    "Mage": 8
+  },
+  "existing": [
+    {
+      "name": "Wren Hollowmere",
+      "family": "Ranger",
+      "role": "Listening precision archer",
+      "decision": "Holding a Mark supports resource income; spending it changes the payoff. Wounds offer a separate route."
+    },
+    {
+      "name": "Tobin Reed",
+      "family": "Warrior",
+      "role": "Counterattack squire",
+      "decision": "Spend Grit on protection or reserve it for a decisive sword response; timing remains manual."
+    },
+    {
+      "name": "Pip Cinderly",
+      "family": "Mage",
+      "role": "Fire cultivation mage",
+      "decision": "Early detonation sacrifices future fire ticks. Every release clears the consumed source."
+    },
+    {
+      "name": "Old Hesketh",
+      "family": "Mage",
+      "role": "Prepared-light mage",
+      "decision": "A protected low-oil rhythm competes with spending the prepared lamp for immediate pressure."
+    },
+    {
+      "name": "Bram Hollis",
+      "family": "Warrior",
+      "role": "Measured heavy cutter",
+      "decision": "Spend early to brace, aim for the exact-three Grain cut or reserve five for a larger fall."
+    },
+    {
+      "name": "Maren Ashvale",
+      "family": "Warrior",
+      "role": "Vigil and Ward fighter",
+      "decision": "Retain Ward to sustain sword work or surrender protection for rebuke; manual defence funds remembrance."
+    },
+    {
+      "name": "Ser Aldric Vane",
+      "family": "Warrior",
+      "role": "Oathbound greatsword fighter",
+      "decision": "Declare a commitment, fulfil it on another chosen action or release the vow for safety."
+    },
+    {
+      "name": "Kestrel Thane",
+      "family": "Warrior",
+      "role": "Grounded reach fighter",
+      "decision": "Keep Long reach for penetration or enter Close for protected haft contact, then pay to step out."
+    },
+    {
+      "name": "Thessaly Gloam",
+      "family": "Mage",
+      "role": "Water-reading control mage",
+      "decision": "Retain a reading for protection or release it into reflection damage; cold adds a different control route."
+    },
+    {
+      "name": "Grenna Holt",
+      "family": "Warrior",
+      "role": "Armour-breaking impact fighter",
+      "decision": "Open intact defences first or build Load for an impact while the foe is already open."
+    },
+    {
+      "name": "Isolde Marrow",
+      "family": "Ranger",
+      "role": "Dagger-and-sigil duellist",
+      "decision": "Let a contract wound accrue, close the Seal for an opening or preserve wounds while controlling the foe."
+    },
+    {
+      "name": "Oriel Vess",
+      "family": "Mage",
+      "role": "Delayed celestial mage",
+      "decision": "Schedule one impact and wait, pull it early at reduced strength or cancel it for protection."
+    },
+    {
+      "name": "Saint Elowen",
+      "family": "Mage",
+      "role": "Radiant light mage",
+      "decision": "Use a steady small-light window or hold a brighter reserve for a costly burst."
+    },
+    {
+      "name": "Caedmon the Unburnt",
+      "family": "Warrior",
+      "role": "Contained-ember heavy knight",
+      "decision": "Hold Heat for offensive pressure, risk opening the plate or vent the reserve into safety; being hit is never required."
+    },
+    {
+      "name": "Corvin Black",
+      "family": "Ranger",
+      "role": "Measured blade master",
+      "decision": "Prepare an Opening, spend it on an answer or refuse it to recover Freedom."
+    },
+    {
+      "name": "Cass Penhallow",
+      "family": "Ranger",
+      "role": "Reef polearm hunter",
+      "decision": "Keep venom and the sounding mark working or consume setup for penetration and safer follow-up."
+    },
+    {
+      "name": "Linnet Cole",
+      "family": "Mage",
+      "role": "Frost-and-glass mage",
+      "decision": "Leave Chill to mature into control or anneal a layer into an opening; preserve or spend protective glass."
+    },
+    {
+      "name": "Eskil Hauk",
+      "family": "Ranger",
+      "role": "Pin-and-venom scout",
+      "decision": "Keep Pin while poison works or consume the sign for a clear shot; poison stacks have finite duration."
+    },
+    {
+      "name": "Brynja Berg",
+      "family": "Warrior",
+      "role": "Heavy shield-and-warblade anchor — review candidate",
+      "decision": "Keep the shield planted for protection or surrender the position and its Guard to release a heavier sword strike."
+    },
+    {
+      "name": "Inga Fallow",
+      "family": "Mage",
+      "role": "Strata and cold-shard mage",
+      "decision": "Preserve Sunder for penetration or spend an exposed layer to excavate cold underneath."
+    },
+    {
+      "name": "Ragna Vik",
+      "family": "Mage",
+      "role": "Winter venom witch",
+      "decision": "Let venom mature, reduce it for damage or dilute it for cover while buying separate frost treatment."
+    }
+  ],
+  "heroes": [
+    {
+      "rank": 1,
+      "id": "nerys-fleet",
+      "name": "Nerys Fleet",
+      "title": "The Foxstep Archer",
+      "family": "Ranger",
+      "gap": "Dodge follow-up",
+      "equipment": "Bow + quiver",
+      "lore": "Nerys once carried medicine through a village whose doors opened only to strangers. She learned to leave before gratitude became a trap. Now she returns for the people she left behind.",
+      "visual": "A wiry woman in her forties, long nose, dark cropped curls and a russet split riding coat. Plain shortbow, fox-brass belt lantern, sturdy boots; no dangling tails.",
+      "loop": "Attack earns resource. A fully manual Dodge banks one Slip; the next chosen shot spends it for penetration or protection. Attack remains useful when no Slip is available.",
+      "tradeoff": "Spend the earned Slip on a hard shot, or keep it for a safer recovery. A new Slip replaces the old one; it never stacks.",
+      "build": [
+        {
+          "name": "Foxstep Shot",
+          "kind": "Active",
+          "effect": "Spend one Slip for a penetrating arrow; without Slip, a normal useful shot."
+        },
+        {
+          "name": "Homeward Turn",
+          "kind": "Active",
+          "effect": "Spend resource to gain brief Guard and clear one eligible slow or Chill; consumes Slip for a stronger recovery instead of damage."
+        },
+        {
+          "name": "Light Feet",
+          "kind": "Passive",
+          "effect": "Passive: fully Dodge every hit of one enemy move to bank one Slip, once per move. No automatic evasion or countershot."
+        }
+      ],
+      "alternative": "All-active: Foxstep Shot / Homeward Turn / Parting Arrow (a paid shot that primes one Slip after it resolves). Trade the passive for deliberate preparation.",
+      "dependencies": "New Slip token and hero kit; existing gear families.",
+      "rankReason": "Best current candidate for a dedicated Dodge-led loop. Wren and Eskil already have Dodge riders; her claim is the repeated damage-versus-recovery Slip decision, not introducing Dodge rewards.",
+      "recommended": true
+    },
+    {
+      "rank": 2,
+      "id": "mab-vale",
+      "name": "Mab Vale",
+      "title": "The Threadbinder",
+      "family": "Mage",
+      "gap": "Curse and delayed judgement",
+      "equipment": "Staff + hex tome",
+      "lore": "Mab repaired mourning clothes until the dead began leaving instructions in their hems. She does not raise them. She finishes the promises they cannot.",
+      "visual": "A broad older woman with a hooked nose, deep brown skin and a single white braid. Indigo fitted coat, ivory seam markings, spindle-shaped staff; amber lantern and stitched black tome.",
+      "loop": "Attack builds resource. Bind one visible Curse to the foe; after one complete foe move it ripens. Cut it for damage, or unpick it to weaken the next move.",
+      "tradeoff": "An early release works but loses the mature payoff. Only one Curse may exist; replacing it discards its age.",
+      "build": [
+        {
+          "name": "Last Stitch",
+          "kind": "Active",
+          "effect": "Apply or replace the single Curse; it matures after a resolved foe move, not each hit."
+        },
+        {
+          "name": "Cut the Thread",
+          "kind": "Active",
+          "effect": "Consume the Curse for direct damage, or choose Weaken instead; mature Curse strengthens the selected result."
+        },
+        {
+          "name": "Patient Hands",
+          "kind": "Passive",
+          "effect": "Passive: the first natural maturation of each newly authored Curse grants one resource; extensions and replacements do not count."
+        }
+      ],
+      "alternative": "All-active: Last Stitch / Cut the Thread / Unpick (consume Curse to clear one eligible self-debuff and gain brief Ward).",
+      "dependencies": "Curse timing/ownership must be specified; mage tome compatibility migration.",
+      "rankReason": "Adds a genuinely absent hex specialist with a readable setup and two different releases; no minions required.",
+      "recommended": true
+    },
+    {
+      "rank": 3,
+      "id": "peregrine-clocks",
+      "name": "Peregrine Clocks",
+      "title": "The Watchmaker",
+      "family": "Mage",
+      "gap": "Cooldown investment",
+      "equipment": "Staff + mirror tome",
+      "lore": "Peregrine repaired the village clock until it began striking for people who had not yet died. He dismantled it, kept one spring, and went to find who had wound it.",
+      "visual": "A thin older man with a long face, deep brown skin and short silver hair. Prussian-blue tailored work coat, straight staff with one enclosed clock dial, indexed brass tome and amber pocket lantern.",
+      "loop": "Attack earns resource. A paid preparation delays one selected equipped active by a turn to shorten a different equipped active by a turn. Or use the preparation for a bounded direct strike without altering cooldowns.",
+      "tradeoff": "A transfer costs an action, resource and real future availability from an already-cooling donor. Attack resets the transfer lock. Passives, ready skills and unequipped cards cannot be targets.",
+      "build": [
+        {
+          "name": "Borrow Tomorrow",
+          "kind": "Active",
+          "effect": "Paid preparation: choose two different other equipped active skills, both already cooling. Add one cooldown turn to the donor and remove one from the recipient. Cannot target itself. One transfer until a normal Attack intrinsically resets the lock. Actually delaying Clockstrike creates one replaceable Receipt. If no legal pair exists, choose a paid next-Attack penetration fallback before payment; it creates no Receipt."
+        },
+        {
+          "name": "Clockstrike",
+          "kind": "Active",
+          "effect": "Useful paid direct spell. If Borrow Tomorrow delayed it, its next resolved use may consume one non-stacking Receipt for a bounded damage rider; spending the Receipt clears it first."
+        },
+        {
+          "name": "Stop the Pendulum",
+          "kind": "Active",
+          "effect": "Paid brief Ward. It is a legal cooling donor or recipient for Borrow Tomorrow; no automatic cooldown refund."
+        }
+      ],
+      "alternative": "Passive route: Borrow Tomorrow / Clockstrike / Small Hours (passive: exchange Borrow’s fallback penetration for brief Ward). Without two other actives, use the fallback; this trades cooldown-transfer access for a simpler Attack-led route.",
+      "dependencies": "New explicit cooldown transfer/Receipt contract and mage tome migration. Native Parry reductions still apply; no negative cooldowns, repeated transfers, refunds or extra actions.",
+      "rankReason": "One of the clearest missing decisions: exchange future availability at a real cost, rather than another stored elemental burst.",
+      "recommended": true
+    },
+    {
+      "rank": 4,
+      "id": "tamsin-rook",
+      "name": "Tamsin Rook",
+      "title": "The Bellsword",
+      "family": "Warrior",
+      "gap": "Timing mastery without defence dependence",
+      "equipment": "Warblade + shield",
+      "lore": "Tamsin learned sword forms from the tolling of a cracked watch bell. She still counts the missing note, waiting for the day she can bring its maker home.",
+      "visual": "Tall, strong woman with a square jaw, close black undercut and a burn scar along one cheek. Clean burgundy fencing coat over compact armour; small round shield and warm belt lantern. No bell weapon.",
+      "loop": "Attack builds resource. A timed cut earns one Accent only on Perfect. A later cut can spend Accent on damage, or a defensive action can spend it on recovery.",
+      "tradeoff": "Perfect improves a branch rather than being required to function. One Accent maximum; a miss never disables the whole kit.",
+      "build": [
+        {
+          "name": "Downbeat",
+          "kind": "Active",
+          "effect": "Timed sword cut; ordinary success deals useful damage, Perfect banks one Accent."
+        },
+        {
+          "name": "Rest Note",
+          "kind": "Active",
+          "effect": "Paid Guard; spend Accent for a modest self-cleanse instead of saving it for the next cut."
+        },
+        {
+          "name": "Measured Hand",
+          "kind": "Passive",
+          "effect": "Passive: an Attack following an active may spend Accent for penetration. No bonus Attack or extra proc."
+        }
+      ],
+      "alternative": "All-active: Downbeat / Rest Note / Final Measure (a timed paid cut that consumes Accent for a larger direct result).",
+      "dependencies": "New Accent state; existing gear. Timing grades use existing input.",
+      "rankReason": "Makes the owner’s manual combat feel different through timing and sequence rather than another shield-counter loop.",
+      "recommended": true
+    },
+    {
+      "rank": 5,
+      "id": "sable-quill",
+      "name": "Sable Quill",
+      "title": "The Ash Reader",
+      "family": "Mage",
+      "gap": "Debuff recovery and reversal",
+      "equipment": "Staff + remedy tome",
+      "lore": "Sable was a plague-house clerk who remembered every name the town tried to erase. Her cures have become sharper since the town stopped asking politely.",
+      "visual": "A tall, angular woman in her fifties, olive skin, severe straight nose and tightly bound black-and-white hair. Cream high-collared coat with plum sleeves; ringed staff, ledger tome and brass lantern.",
+      "loop": "Attack earns resource. A paid remedy clears one eligible harmful status. If one was actually removed, bank one Remedy; spend it on a later spell or protective seal.",
+      "tradeoff": "Against a clean foe, deliberate preparation still supplies a smaller Remedy route. Clearing harmless effects cannot farm tokens.",
+      "build": [
+        {
+          "name": "Read the Fever",
+          "kind": "Active",
+          "effect": "Paid cleanse of one eligible self-debuff; successful removal banks one Remedy. If none exists, gain modest Ward instead. With no removable status, choose before payment between modest Ward or a smaller prepared Remedy; either spends the action and full stated cost. No same-action cleanse and preparation."
+        },
+        {
+          "name": "Bitter Cure",
+          "kind": "Active",
+          "effect": "Paid spell; consume Remedy for added direct damage or Weaken, choosing one."
+        },
+        {
+          "name": "Clean Hands",
+          "kind": "Passive",
+          "effect": "Passive: Attack may spend Remedy for brief Ward after contact instead of carrying it for a spell."
+        }
+      ],
+      "alternative": "All-active: Read the Fever / Bitter Cure / Prepare the Salve (a non-damaging paid preparation that banks Remedy without needing to be afflicted).",
+      "dependencies": "Eligible status list, Remedy provenance and mage tome migration. No mandatory taking damage.",
+      "rankReason": "Adds a missing self-recovery specialist who still wins fights; unlike a party healer, all decisions serve the solo hero.",
+      "recommended": true
+    },
+    {
+      "rank": 6,
+      "id": "flint-mercer",
+      "name": "Flint Mercer",
+      "title": "The Stormwright",
+      "family": "Mage",
+      "gap": "Lightning and charge-break planning",
+      "equipment": "Staff + conductor tome",
+      "lore": "Flint maintained the road’s lightning rods. When the lamps went dark, he discovered the storm was still answering somewhere beneath the ground.",
+      "visual": "A stocky middle-aged man with a broken nose and tightly curled silver hair. Navy work coat, broad copper cuffs, straight forked conductor staff; caged lantern and blue circuit tome.",
+      "loop": "Attack charges a small reserve. Choose an immediate bolt or reserve charge for a stronger later strike. Against a gathering boss, the paid strike contributes real damage to the existing break threshold.",
+      "tradeoff": "An immediate bolt wins ordinary pressure. The paid grounded branch instead spends the entire reserve on a bounded gathering-phase strike and subsequent brief Ward, sacrificing future bolts; it must still meet real damage/control break rules, with no guaranteed interrupt.",
+      "build": [
+        {
+          "name": "Coil Up",
+          "kind": "Active",
+          "effect": "A non-damaging preparation action that adds charge up to the cap."
+        },
+        {
+          "name": "Groundstrike",
+          "kind": "Active",
+          "effect": "Spend a chosen amount of charge on one ordinary bolt. Alternatively, while the foe is visibly gathering, spend the whole reserve on a Grounded strike: allocate the fixed action budget to damage toward the core break threshold plus brief Ward after contact. One grade/proc budget; no guaranteed disruption."
+        },
+        {
+          "name": "Earth Wire",
+          "kind": "Passive",
+          "effect": "Passive: spending the full reserve grants brief Ward after the strike, once per action; no refund."
+        }
+      ],
+      "alternative": "All-active: Coil Up / Groundstrike / Bleed the Coil (spend charge for a smaller strike and Weaken).",
+      "dependencies": "New reserve and lightning presentation; mage tome migration. Charge breaks use core rules.",
+      "rankReason": "Lightning charge-threat specialist with a visible offence/safety branch. Reserve-and-release is already crowded; promote only if the grounded trade-off proves different in real-core tests.",
+      "recommended": true
+    },
+    {
+      "rank": 7,
+      "id": "merrick-low",
+      "name": "Merrick Low",
+      "title": "The Quiet Hunter",
+      "family": "Ranger",
+      "gap": "Cadence and low-spend precision",
+      "equipment": "Bow + quiver",
+      "lore": "Merrick stopped speaking after his brother’s voice came back from the forest without him. He answers with chalk marks, and never wastes a second arrow on the same warning.",
+      "visual": "A compact middle-aged man with a broad nose, dark brown skin and shaved head. Muted green fitted jacket, ivory chalk tabs, plain bow; hooded lantern with narrow light slit.",
+      "loop": "Attack earns resource and advances a capped three-step cadence. Quiet Release snapshots and consumes the opening cadence: second step gives penetration, third gives direct power. Other actives reset cadence before applying their own stated preparation. Manual Parry/Dodge never changes cadence.",
+      "tradeoff": "Spending a hero turn on safety resets your shot rhythm; manual defence does not. Early releases work normally. No free Attack is generated.",
+      "build": [
+        {
+          "name": "Quiet Release",
+          "kind": "Active",
+          "effect": "Paid arrow; consumes current cadence for its declared second-step or third-step payoff."
+        },
+        {
+          "name": "Break Silence",
+          "kind": "Active",
+          "effect": "Paid Weaken shot that resets cadence in exchange for immediate safety. This is explicitly tagged as a defensive active for Steady Breath."
+        },
+        {
+          "name": "Steady Breath",
+          "kind": "Passive",
+          "effect": "Passive: the first Attack after a defensive active starts cadence at one extra step, bounded once per action."
+        }
+      ],
+      "alternative": "All-active: Quiet Release / Break Silence / Hold Breath (paid preparation: reset the old cadence, then establish one new step). Trade the passive’s defensive-action follow-up for deliberate setup.",
+      "dependencies": "Visible cadence counter; exact reset rules. No Speed manipulation.",
+      "rankReason": "Offers an economical bow rhythm with clear interruption costs, rather than another Mark or poison loop.",
+      "recommended": true
+    },
+    {
+      "rank": 8,
+      "id": "hilda-vane",
+      "name": "Hilda Vane",
+      "title": "The Last Mercy",
+      "family": "Ranger",
+      "gap": "Enemy-health execution window",
+      "equipment": "Bow + quiver",
+      "lore": "Hilda once hunted to feed a besieged hamlet. She still leaves a portion for the next traveller, but has stopped offering mercy to the things that wear stolen faces.",
+      "visual": "A broad strong woman in her fifties with a wide nose, dark skin and close silver curls. Cream padded hunting coat, brick-red scarf, sturdy bow and oven-glass hip lantern.",
+      "loop": "Attack earns resource. A paid shot establishes one Chance. Spend it immediately for reliable penetration, or hold it until the foe is visibly below a declared health threshold for a stronger direct finish.",
+      "tradeoff": "The same finite Chance pays for either branch. Waiting may mean spending several turns without the payoff; the finish never kills automatically and works above the threshold.",
+      "build": [
+        {
+          "name": "Find the Seam",
+          "kind": "Active",
+          "effect": "Paid arrow that establishes one Chance, replacing the old one."
+        },
+        {
+          "name": "Last Mercy",
+          "kind": "Active",
+          "effect": "Consume Chance for a penetrating arrow, or choose a larger direct rider only if the foe begins the action below the proposed 35% health window. The threshold is provisional tuning, not measured balance."
+        },
+        {
+          "name": "Enough for One",
+          "kind": "Passive",
+          "effect": "Attack may consume Chance for modest direct power instead of waiting for Last Mercy. No on-kill income or extra Attack."
+        }
+      ],
+      "alternative": "All-active: Find the Seam / Last Mercy / Spare Breath (consume Chance for brief Guard rather than the finish).",
+      "dependencies": "New Chance token and explicit start-of-action health snapshot; existing bow gear. Threshold and damage need real-core tuning.",
+      "rankReason": "Adds a missing visible finishing-window choice without instant kills or a kit that only works after victory.",
+      "recommended": true
+    },
+    {
+      "rank": 9,
+      "id": "ione-hart",
+      "name": "Ione Hart",
+      "title": "The Prism Warden",
+      "family": "Mage",
+      "gap": "Element sequencing",
+      "equipment": "Staff + prism tome",
+      "lore": "Ione restored stained windows in a chapel with no congregation. The colours now remember the sunlight more faithfully than the sky does.",
+      "visual": "A short woman in her thirties, East Asian features, strong brows and blunt navy-black bob. White-and-cobalt intact coat, triangular glass staff head; red lantern and folded colour-chart tome.",
+      "loop": "Attack earns resource. Choose a fire or cold inscription. A later opposite-element active may consume it for a bounded mixed strike, or replace it with the new element. Repeating the element retains it and grants brief non-stacking Ward instead of a mixed rider.",
+      "tradeoff": "Only one inscription exists. Mixing sacrifices the defensive reserve; no recursive reactions or extra action.",
+      "build": [
+        {
+          "name": "Red Window",
+          "kind": "Active",
+          "effect": "Paid fire spell. With an opening cold inscription, choose to consume it for bounded mixed direct power or replace it with fire. With opening fire, retain it and gain brief non-stacking Ward. With none, establish fire. All branches use one action budget."
+        },
+        {
+          "name": "Blue Window",
+          "kind": "Active",
+          "effect": "Paid cold spell, symmetrically: consume opening fire for mixed direct power or replace it with cold; repeat opening cold for brief non-stacking Ward; establish cold when none exists. It does not apply Freeze."
+        },
+        {
+          "name": "Leadwork",
+          "kind": "Passive",
+          "effect": "Passive: an Attack while an inscription exists may clear it for brief Ward after contact."
+        }
+      ],
+      "alternative": "All-active: Red Window / Blue Window / Close the Shutters (clear inscription for stronger Ward and eligible cleanse).",
+      "dependencies": "Inscription and symmetric fire/cold branch rules; mage tome migration.",
+      "rankReason": "Compelling three-slot puzzle and clean art; Pip already has cold conversion, so elemental novelty alone is insufficient.",
+      "recommended": true
+    },
+    {
+      "rank": 10,
+      "id": "gideon-march",
+      "name": "Gideon March",
+      "title": "The Gate Interceptor",
+      "family": "Warrior",
+      "gap": "Visible-threat interception",
+      "equipment": "Warblade + shield",
+      "lore": "Gideon guarded caravans for thirty years without losing a passenger. The one empty carriage he brought home still follows him in his dreams.",
+      "visual": "A lean elderly man with a long rectangular face, dark skin and close grey beard. Weather-blue intact coat, small practical shield, plain straight sword and shuttered hip lantern.",
+      "loop": "Attack earns resource. Prepare one Watch. When a foe visibly gathers, spend Watch on a paid interruption attempt; otherwise choose a reliable penetrating strike or abandon it for protection. No hidden future-move prediction.",
+      "tradeoff": "Preparation buys a choice, not a guaranteed boss skip. A rejected interruption consumes Watch and grants no success reward. Never wait helplessly: ordinary attacks and the damage branch remain useful.",
+      "build": [
+        {
+          "name": "Take Watch",
+          "kind": "Active",
+          "effect": "Paid preparation establishes one replaceable Watch; no damage or immediate control."
+        },
+        {
+          "name": "Across the Gate",
+          "kind": "Active",
+          "effect": "Paid sword strike; consume Watch for penetration, or, only against a visibly gathering foe, exchange that rider for one charge-disruption attempt through normal core locks. Ordinary damage remains on rejection."
+        },
+        {
+          "name": "Kept Vigil",
+          "kind": "Passive",
+          "effect": "After wholly manually defending one foe move while Watch exists, bank one Answer once per Watch. Attack may consume Watch and Answer for brief Ward after contact, sacrificing the interrupt setup. No automatic counter."
+        }
+      ],
+      "alternative": "All-active: Take Watch / Across the Gate / Stand Down (consume Watch for Ward and an eligible self-cleanse instead of offence).",
+      "dependencies": "Watch/Answer provenance and core interruption contract; existing gear. No Pin, automatic control or extra turns.",
+      "rankReason": "Makes the currently displayed charge the central melee decision rather than a side utility card. Kestrel and Brynja already disrupt charges, so the full kit must prove a stronger identity.",
+      "recommended": true
+    },
+    {
+      "rank": 11,
+      "id": "adela-wych",
+      "name": "Adela Wych",
+      "title": "The Pale Advocate",
+      "family": "Mage",
+      "gap": "Finite death-magic debt",
+      "equipment": "Staff + testament tome",
+      "lore": "Adela settles the debts of people buried without their names. She will not bring a soul back; she will make the living acknowledge what they owe.",
+      "visual": "A statuesque woman in her sixties, warm brown skin, pronounced cheekbones and short white hair. Clean black-and-pearl ceremonial coat, bone-white staff finial shaped as a closed arch; violet lantern.",
+      "loop": "Attack earns resource. A paid death spell records a bounded Debt from its own direct hit. Collect it with a later spell, or cancel it for Ward.",
+      "tradeoff": "Debt stores a fixed authored amount, never a percentage of arbitrary incoming damage, and cannot record its own collection.",
+      "build": [
+        {
+          "name": "Name the Debt",
+          "kind": "Active",
+          "effect": "Direct spell that records one bounded Debt, replacing the previous one."
+        },
+        {
+          "name": "Final Account",
+          "kind": "Active",
+          "effect": "Consume Debt for a single additional damage rider; no repeat crit or recording that rider."
+        },
+        {
+          "name": "Merciful Ledger",
+          "kind": "Passive",
+          "effect": "Passive: Attack may cancel existing Debt for a small eligible self-cleanse, forfeiting the stored damage; no cancellation benefit when no eligible debuff exists. No additional Attack or Debt creation."
+        }
+      ],
+      "alternative": "All-active: Name the Debt / Final Account / Lay to Rest (consume Debt for Ward; works for lesser protection without it).",
+      "dependencies": "New finite Debt token and mage tome migration; no summons or life-drain immortality.",
+      "rankReason": "Distinct death-magic presentation with bounded accounting, but competes with Mab for a finite delayed-payoff place. Rank eleven is the least certain shortlist pick.",
+      "recommended": true
+    },
+    {
+      "rank": 12,
+      "id": "ysabet-fen",
+      "name": "Ysabet Fen",
+      "title": "The Winter Arrow",
+      "family": "Ranger",
+      "gap": "Enemy-tempo archer",
+      "equipment": "Bow + quiver",
+      "lore": "Ysabet charts the roads by listening to ice crack under distant feet. She hunts the thing that has begun walking across lakes without leaving a sound.",
+      "visual": "A heavyset older woman with weathered copper skin, narrow dark eyes and a short iron-grey braid. Deep teal wool coat, white cuff lining, long ash bow; frosted-glass lantern.",
+      "loop": "Attack earns resource. Chilling shots build pressure; choose to retain Chill for reliable penetration, or consume it for one bounded Freeze attempt.",
+      "tradeoff": "Losing Chill means losing the penetration setup. Boss control rejection gives no Freeze rewards; the shot still has ordinary damage.",
+      "build": [
+        {
+          "name": "Rime Arrow",
+          "kind": "Active",
+          "effect": "Paid arrow that applies Chill through existing status rules."
+        },
+        {
+          "name": "White Silence",
+          "kind": "Active",
+          "effect": "Consume authored Chill for a Freeze attempt plus a normal shot; no guaranteed skipped boss turn."
+        },
+        {
+          "name": "Clear Ice",
+          "kind": "Passive",
+          "effect": "Passive: Attack against a chilled foe has a bounded penetration rider; it does not apply more Chill."
+        }
+      ],
+      "alternative": "All-active: Rime Arrow / White Silence / Thawshot (consume Chill for direct damage instead of control).",
+      "dependencies": "Bow family ready; frost-arrow VFX and precise status consumption rules.",
+      "rankReason": "A control-led bow differs from Wren’s Mark precision and Eskil’s poison, with cheap body-animation requirements.",
+      "recommended": false
+    },
+    {
+      "rank": 13,
+      "id": "roscoe-bell",
+      "name": "Roscoe Bell",
+      "title": "The Unbowed",
+      "family": "Warrior",
+      "gap": "Aggressive guard breaking",
+      "equipment": "Warblade + shield",
+      "lore": "Roscoe was ordered to close the granary during a famine. He broke its lock instead. Now every locked door reminds him that obedience is also a choice.",
+      "visual": "A massive Black man in his forties, broad cheekbones, shaved head and clipped beard. Ochre quilted coat, battered steel shield, wide warblade and square iron lantern.",
+      "loop": "Attack earns resource. Establish one Breach through a paid blow; spend it to cut through armour, or use it to weaken the foe while keeping normal offence.",
+      "tradeoff": "Breach is your visible setup, not a promise that every enemy has removable buffs. Boss protection is never deleted wholesale.",
+      "build": [
+        {
+          "name": "Break the Lock",
+          "kind": "Active",
+          "effect": "Paid blow that applies one Breach; no Stun."
+        },
+        {
+          "name": "No Permission",
+          "kind": "Active",
+          "effect": "Consume Breach for penetration or Weaken, choosing one."
+        },
+        {
+          "name": "Hard Welcome",
+          "kind": "Passive",
+          "effect": "Passive: Attack against Breach gives a bounded direct rider, but consumes it, sacrificing the stronger active release."
+        }
+      ],
+      "alternative": "All-active: Break the Lock / No Permission / Bar the Door (consume Breach for brief Guard and a modest normal sword hit).",
+      "dependencies": "New Breach marker; existing gear. Similarity review needed versus Grenna’s armour-opening.",
+      "rankReason": "Supported heavy male option; its flexible breach answers help, but armour-opening overlap lowers its rank.",
+      "recommended": false
+    },
+    {
+      "rank": 14,
+      "id": "petra-crowe",
+      "name": "Petra Crowe",
+      "title": "The Last Shot",
+      "family": "Ranger",
+      "gap": "Declared heavy-shot commitment",
+      "equipment": "Bow + quiver",
+      "lore": "Petra defended a ferry with one arrow left. She still carves a notch for every passenger who crossed, and none for the people who turned her into a legend.",
+      "visual": "A tall muscular woman with a broken nose, tawny skin and tightly braided dark hair. Slate sleeveless overcoat, broad leather bracer, heavy ash bow and ferry-token lantern.",
+      "loop": "Attack earns resource. Spend an action preparing one Draw. Your next chosen shot spends it for a larger hit, or you abandon it to recover protection.",
+      "tradeoff": "Readiness is a stored token between turns, never a held real-time channel during the foe’s move. Delaying cannot grow it infinitely.",
+      "build": [
+        {
+          "name": "Set the Draw",
+          "kind": "Active",
+          "effect": "Paid preparation that readies one capped Draw; no damage."
+        },
+        {
+          "name": "Ferry’s End",
+          "kind": "Active",
+          "effect": "Paid heavy arrow; consumes Draw for direct power, normal useful shot without it."
+        },
+        {
+          "name": "Last Passenger",
+          "kind": "Passive",
+          "effect": "Passive: a fully manually defended foe move while Draw is ready grants brief Ward once per Draw, not a stronger arrow."
+        }
+      ],
+      "alternative": "All-active: Set the Draw / Ferry’s End / Lower the Bow (consume Draw to regain a limited resource amount and Guard, less than its preparation cost).",
+      "dependencies": "Draw state; existing gear. Must distinguish Wren precision and Oriel’s queued impact.",
+      "rankReason": "Satisfying charge-and-release fantasy, but preparation overlaps other candidates, so an alternate rather than an automatic pick.",
+      "recommended": false
+    },
+    {
+      "rank": 15,
+      "id": "eamon-grey",
+      "name": "Eamon Grey",
+      "title": "The Road Duellist",
+      "family": "Warrior",
+      "gap": "Offensive sequence variation",
+      "equipment": "Warblade + shield",
+      "lore": "Eamon challenged a toll collector and won the bridge. He has spent the years since learning that winning a crossing is easier than keeping it open.",
+      "visual": "A lanky man in his thirties with a crooked smile, red-brown skin and cropped auburn hair. Clean sand-coloured coat, slim warblade, small plain shield and bridge-brass lantern.",
+      "loop": "Attack earns resource. A cut primes High or Low; choose a different next active for penetration, or repeat the line for Guard.",
+      "tradeoff": "High and Low are action tags, not reach or movement controls. Only one line can be primed; every response uses a hero turn.",
+      "build": [
+        {
+          "name": "High Cut",
+          "kind": "Active",
+          "effect": "Paid sword blow that primes High."
+        },
+        {
+          "name": "Low Answer",
+          "kind": "Active",
+          "effect": "Paid sword blow: consume High for penetration, or prime Low if no High exists."
+        },
+        {
+          "name": "Same Road",
+          "kind": "Passive",
+          "effect": "Passive: snapshot the opening Line before an active cut. If its tag repeats that Line, choose to consume the old Line for brief Guard after contact; choosing Guard suppresses that action’s re-priming. A first cut with no Line cannot qualify."
+        }
+      ],
+      "alternative": "All-active: High Cut / Low Answer / Close Measure (consume either line for a defensive sword action).",
+      "dependencies": "One Line token with explicit action tags; existing gear.",
+      "rankReason": "Readable sword branching, though Corvin and Aldric already occupy planned-answer space.",
+      "recommended": false
+    },
+    {
+      "rank": 16,
+      "id": "nim-rowan",
+      "name": "Nim Rowan",
+      "title": "The Needle Archer",
+      "family": "Ranger",
+      "gap": "Bleed pacing and voluntary expiry",
+      "equipment": "Bow + quiver",
+      "lore": "Nim once stitched banners for a lord who forgot the names beneath them. They now travel with a plain cloak, a bow and a list that grows shorter very slowly.",
+      "visual": "A nonbinary adult with a narrow triangular face, pale skin, freckles and close-cropped chestnut hair. Plum-and-cream tailored coat, unornamented bow and needle-etched lantern.",
+      "loop": "Attack earns resource. An authored arrow starts a single finite wound. Reopen it to preserve steady damage, or close it early for a bounded direct release.",
+      "tradeoff": "Renewing the wound prevents its natural expiry reward; expired and consumed are different events. No unlimited stack or tick-trigger recursion.",
+      "build": [
+        {
+          "name": "Fine Point",
+          "kind": "Active",
+          "effect": "Paid arrow applying or refreshing one authored wound through normal Bleed rules."
+        },
+        {
+          "name": "Pull the Stitch",
+          "kind": "Active",
+          "effect": "Consume eligible authored Bleed for a bounded direct arrow rider, clearing it first."
+        },
+        {
+          "name": "Clean Finish",
+          "kind": "Passive",
+          "effect": "Passive: natural expiry of your wound grants one resource once per application lineage; refresh cannot farm it."
+        }
+      ],
+      "alternative": "All-active: Fine Point / Pull the Stitch / Seal the Cut (consume authored wound for Weaken instead of direct release).",
+      "dependencies": "Wound lineage/expiry metadata; existing gear.",
+      "rankReason": "Low-cost art and a useful expiry decision, but Wren and Isolde already offer Bleed routes.",
+      "recommended": false
+    },
+    {
+      "rank": 17,
+      "id": "rufus-wold",
+      "name": "Rufus Wold",
+      "title": "The Bareknuckle Saint",
+      "family": "Warrior",
+      "gap": "Close-range fist fighter",
+      "equipment": "Combat gauntlets + bracer (future gear)",
+      "lore": "Rufus carried stone for a monastery that would not let him through its front gate. He left the stones there and took its promise of shelter with him.",
+      "visual": "A thickset older man with a flattened nose, brown skin and shaved head. Plain blue work tunic, wrapped forearms, compact iron gauntlets and broad hip lantern. No giant floating fists.",
+      "loop": "Attack earns resource. Alternate authored lead-hand and rear-hand active strikes to prime a single Finish; spend it on a hard punch or a defensive cover.",
+      "tradeoff": "The passive does not create punches by itself. Every strike takes a normal hero turn; a three-slot loadout trades a defence option for sequence efficiency.",
+      "build": [
+        {
+          "name": "Lead Hand",
+          "kind": "Active",
+          "effect": "Paid close strike that primes Lead."
+        },
+        {
+          "name": "Rear Hand",
+          "kind": "Active",
+          "effect": "Paid close strike; consumes Lead to prime Finish, otherwise works as a normal blow."
+        },
+        {
+          "name": "Tight Guard",
+          "kind": "Passive",
+          "effect": "Passive: an Attack may consume Finish for brief Guard after contact rather than using a heavy finisher."
+        }
+      ],
+      "alternative": "All-active: Lead Hand / Rear Hand / Breakthrough (consume Finish for a heavy direct punch).",
+      "dependencies": "New combat gauntlet category, attack anchors and hand-animation set; slot/stat migration.",
+      "rankReason": "Strong missing physical fantasy, but expensive new gear and distinct poses push it below compatible candidates.",
+      "recommended": false
+    },
+    {
+      "rank": 18,
+      "id": "celandine-orr",
+      "name": "Celandine Orr",
+      "title": "The Dawn Surgeon",
+      "family": "Mage",
+      "gap": "Precision holy damage",
+      "equipment": "Staff + anatomical tome",
+      "lore": "Celandine studied wounds by lamplight after the battle surgeons left. She now seeks the source of the dark that keeps opening old scars.",
+      "visual": "A middle-aged woman with deep-set eyes, dark olive skin and closely clipped grey hair. Clean pale gold coat with broad black cuffs, slender split-circle staff and red medical tome; amber lantern.",
+      "loop": "Attack earns resource. Place one Incision through a holy spell. Preserve it for low-pressure penetration or close it with a stronger strike and self-recovery.",
+      "tradeoff": "Recovery is bounded per release and competes with damage; no damage-to-heal percentage exploit or automatic resurrection.",
+      "build": [
+        {
+          "name": "Clean Incision",
+          "kind": "Active",
+          "effect": "Paid holy spell placing one Incision."
+        },
+        {
+          "name": "Close the Wound",
+          "kind": "Active",
+          "effect": "Consume Incision for direct damage plus modest self-recovery within one action budget."
+        },
+        {
+          "name": "Exact Hand",
+          "kind": "Passive",
+          "effect": "Passive: Attack against Incision gains bounded penetration without extending it."
+        }
+      ],
+      "alternative": "All-active: Clean Incision / Close the Wound / Aseptic Seal (consume Incision for Ward instead of a strike).",
+      "dependencies": "New Incision token; mage tome migration.",
+      "rankReason": "Good visual and holy battle-mage flavour, but Elowen and Sable cover much of the sustain/cleanse space.",
+      "recommended": false
+    },
+    {
+      "rank": 19,
+      "id": "maud-flint",
+      "name": "Maud Flint",
+      "title": "The Chainwarden",
+      "family": "Warrior",
+      "gap": "Reach restraint without throws",
+      "equipment": "Two-handed combat poleaxe (future gear)",
+      "lore": "Maud broke prison chains for a living and remembered the wrists inside them. She hunts the keeper who made her forge the last lock.",
+      "visual": "A tall broad woman in her forties with a long scarred face, warm brown skin and cropped copper hair. Clean charcoal armour, single intact waist panel; fixed poleaxe blade and heavy lantern. No swinging chain weapon.",
+      "loop": "Attack earns resource. Apply a bounded Snare through a haft strike. Keep it for safe pressure or consume it for one interrupt attempt on a gathering move.",
+      "tradeoff": "No drag, displacement or repeated boss skips. Rejected control spends the setup and produces no success reward.",
+      "build": [
+        {
+          "name": "Bar the Way",
+          "kind": "Active",
+          "effect": "Paid poleaxe blow applying eligible Pin using its ordinary duration/window rules; Pin itself is not a Stun or automatic charge break."
+        },
+        {
+          "name": "Break the Bar",
+          "kind": "Active",
+          "effect": "Consume authored Pin for one charge-disruption attempt and normal damage; otherwise a useful direct blow."
+        },
+        {
+          "name": "Held Ground",
+          "kind": "Passive",
+          "effect": "Passive: Attack while authored Pin exists may consume it for brief Guard instead of retaining control."
+        }
+      ],
+      "alternative": "All-active: Bar the Way / Break the Bar / Release (consume authored Pin for penetration rather than interruption).",
+      "dependencies": "New poleaxe equipment and pose set; clear Pin provenance.",
+      "rankReason": "Solid fantasy, but Kestrel and Grenna already occupy much of the heavy reach/control territory.",
+      "recommended": false
+    },
+    {
+      "rank": 20,
+      "id": "ludo-finch",
+      "name": "Ludo Finch",
+      "title": "The Windlass Hunter",
+      "family": "Ranger",
+      "gap": "Reload and prepared volleys",
+      "equipment": "Combat crossbow + bolt case (future gear)",
+      "lore": "Ludo kept a watchtower alone until the signal fires answered with the wrong colours. He took its smallest windlass and went looking for the true keepers.",
+      "visual": "A short sturdy man in his sixties with a broad face, ruddy skin and thick white eyebrows. Intact dark green watch coat, compact crossbow and square shuttered lantern.",
+      "loop": "Attack always remains usable and earns resource. A paid Load prepares one Volley token; spend it for a pooled multi-bolt action or trade it for protection.",
+      "tradeoff": "Reload is a chosen ability action, never a hidden restriction on normal Attack. Multiple bolts share a single grade and proc budget.",
+      "build": [
+        {
+          "name": "Wind the Ratchet",
+          "kind": "Active",
+          "effect": "Paid preparation that stores one Volley, replacing the old one."
+        },
+        {
+          "name": "Watchfire Volley",
+          "kind": "Active",
+          "effect": "Spend Volley for one pooled heavy action; without it, a useful single-bolt strike."
+        },
+        {
+          "name": "Night Watch",
+          "kind": "Passive",
+          "effect": "Passive: a fully manually defended move while Volley is ready primes brief Guard once per Volley."
+        }
+      ],
+      "alternative": "All-active: Wind the Ratchet / Watchfire Volley / Unload (consume Volley for Weaken and a smaller direct hit).",
+      "dependencies": "New crossbow/bolt-case gear and reload poses.",
+      "rankReason": "Readable prepared ranged hero, but crossbows add crafting cost and overlap Petra’s setup/release, making this the weakest fit today.",
+      "recommended": false
+    }
+  ],
+  "gaps": [
+    {
+      "title": "Most convincing gaps",
+      "text": "Dedicated Curse, Dodge-led follow-up, offensive timing, cooldown investment, cleanse/prevention, and visible finishing windows. Existing riders do not yet make these a complete hero identity."
+    },
+    {
+      "title": "Crowded territory",
+      "text": "Poison, frost, Ward/Guard retention, armour opening, prepared burst and delayed impacts already have several candidates. New entrants here must justify a different action decision; they rank lower when they mainly change presentation."
+    },
+    {
+      "title": "Roster shape",
+      "text": "Current proposals: 8 Warriors, 5 Rangers, 8 Mages. Top 11 add 2 Warriors, 3 Rangers and 6 Mages, producing 10 / 8 / 14. This is a playstyle-first shortlist, not a class-parity target; lower-ranked bow and melee alternatives remain available."
+    },
+    {
+      "title": "Honest scope",
+      "text": "Only Wren, Tobin and Pip are implemented starters. This audit uses the revised 21 design candidates, including proposed Brynja Doorward, not 21 production-ready kits. All 20 additions are proposals. NPCs, benched designs and the rejected bard direction are not recycled."
+    },
+    {
+      "title": "Foundation rules",
+      "text": "One hero, one foe, Speed timeline. Attack generates the hero resource. Every enemy hit still uses manual Parry/Dodge. Three selected slots include passives. No parties, automatic counters from passives, free turns, movement lanes, summons or thrown physical props. Every hero carries a lantern; Mage staff+tome compatibility remains a gear migration."
+    },
+    {
+      "title": "Build scope",
+      "text": "Each profile gives a concrete three-slot loadout and an alternative route. Most illustrate two actives plus a passive; Peregrine uses three actives to demonstrate cooldown transfer. These are concept slices, not complete unlock trees or validated full-passive builds. Complete costs, cooldowns, Stars, talents and boss simulations follow only after selection."
+    }
+  ],
+  "review": "Read-only designer and balance reviews identified unusable passive sources, cadence/reset ambiguities and overlap. Coordinator corrected the listed builds, cooldown legality, symmetric inscriptions, Pin semantics and ranking qualifications. Qualitative review only; no combat measurements or numeric approval."
+}

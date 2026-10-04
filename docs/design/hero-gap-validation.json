@@ -1,0 +1,26 @@
+{
+  "profiles": 20,
+  "existingAudit": 21,
+  "threeSlotBuilds": 20,
+  "internalLinks": "passed",
+  "filters": "passed",
+  "mobile390": "passed",
+  "javascriptDisabledLinks": 20,
+  "pageErrors": [],
+  "externalRequests": [],
+  "method": "Playwright Chromium setContent; managed browser blocks file:// navigation. Portable native fragment links verified with JavaScript disabled.",
+  "balance": "Not measured. Qualitative design review only.",
+  "gameBuild": {
+    "command": "node tools/build.mjs",
+    "result": "passed",
+    "artifactKB": 7306.1
+  },
+  "gameCheck": {
+    "command": "LF_CHROMIUM=/usr/bin/chromium node tools/check.mjs",
+    "exitCode": 0,
+    "result": "all checks passed",
+    "okLines": 2300,
+    "browserSectionsSkipped": 0
+  },
+  "initialBrowserIssue": "Smooth scrolling caused repeated link-click stability timeout; removed smooth scrolling, then the full browser validation passed."
+}
