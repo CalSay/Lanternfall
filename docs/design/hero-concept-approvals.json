@@ -251,6 +251,28 @@
       "owner_decision": "Design signed off; use this exact concept in the hero profile.",
       "remaining_notes": [],
       "source_commit": "e630166d11e2f9e054187f10b90a5fed944a203c"
+    },
+    "Oriel Vess": {
+      "id": "oriel",
+      "file": "art/concepts/hero-corrections-v4/oriel.png",
+      "sha256": "1be9bc10aa07feb724f07a4207cdae2903bca52a9d11f27399722e64eda762cb",
+      "status": "owner-approved-concept",
+      "approved_on": "2026-10-04",
+      "approved_by": "Cal (direct chat sign-off)",
+      "owner_decision": "Design signed off; use this exact fourth-pass concept in hero profile.",
+      "remaining_notes": [],
+      "source_commit": "6bad160d43f8e16f41c4dc5e2be87618c4bc0ceb"
+    },
+    "Linnet Cole": {
+      "id": "linnet",
+      "file": "art/concepts/hero-corrections-v4/linnet.png",
+      "sha256": "a6167ea00d4027e8803e9f2f0a482f47d935ccc41a4df4b91b45befc56f81a9a",
+      "status": "owner-approved-concept",
+      "approved_on": "2026-10-04",
+      "approved_by": "Cal (direct chat sign-off)",
+      "owner_decision": "Design signed off; use this exact fourth-pass concept in hero profile.",
+      "remaining_notes": [],
+      "source_commit": "6bad160d43f8e16f41c4dc5e2be87618c4bc0ceb"
     }
   }
 }

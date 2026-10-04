@@ -1,0 +1,19 @@
+{
+  "hero_id": "ysabet-fen",
+  "status": "pending-owner-review",
+  "base_sha": "6bad160d43f8e16f41c4dc5e2be87618c4bc0ceb",
+  "source": "art/concepts/hero-corrections-v4/ysabet-fen.png",
+  "source_sha256": "9d18a7357f5036c885938a91315accd320581323aac52e731eb7a1ccb784a227",
+  "generated_original": "/workspace/generated_images/exec-a044638e-e308-4409-9392-3bf899a99375.png",
+  "draft_sha256": "ca0dfee19017af92b062421e20b75f9bca6179710d20dcb17ba613752ae6d046",
+  "prompt_sha256": "829bf2a23437a0d9243b55195d7de70ee40fee9af1320f7159871e114a7c95c5",
+  "attempts": 1,
+  "dimensions": [
+    1536,
+    1024
+  ],
+  "qc_notes": [
+    "Greater bend provides clear string-to-grip separation in both views. String remains drawn over forearm/wrist.",
+    "Fullfigure lower bow limb overlaps face-detail shoulder area."
+  ]
+}

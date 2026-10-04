@@ -13,9 +13,7 @@
     1024
   ],
   "qc_notes": [
-    "Entire head and crystal now incline with shaft, instead of upright head on diagonal rod; no cyan guide rendered.",
-    "Single rigid axis visibly improved but exact apex/centre/collar collinearity has small residual deviations; pending owner review, not claimed mathematically exact.",
-    "Character identity, costume, tome, lantern and concept layout retained; full staff remains in canvas."
+    "Head follows shaft tilt, but slight offset remains at base/collar; exact top-to-bottom collinearity not achieved. Equipment detail appears centred on its vertical shaft."
   ],
   "geometry_reference": "/tmp/lanternfall-staff-guides/adela-wych-axis-guide.png",
   "guide_endpoints": [

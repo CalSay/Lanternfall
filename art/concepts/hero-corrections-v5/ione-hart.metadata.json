@@ -13,9 +13,8 @@
     1024
   ],
   "qc_notes": [
-    "Entire head and crystal now incline with shaft, instead of upright head on diagonal rod; no cyan guide rendered.",
-    "Single rigid axis visibly improved but exact apex/centre/collar collinearity has small residual deviations; pending owner review, not claimed mathematically exact.",
-    "Character identity, costume, tome, lantern and concept layout retained; full staff remains in canvas."
+    "Head now tilts with shaft, but central head spine remains slightly offset from shaft axis; exact top-to-bottom collinearity not achieved.",
+    "Bottom staff point overlaps boot. Equipment detail appears centred on its vertical shaft."
   ],
   "geometry_reference": "/tmp/lanternfall-staff-guides/ione-hart-axis-guide.png",
   "guide_endpoints": [

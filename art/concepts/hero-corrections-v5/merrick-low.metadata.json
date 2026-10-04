@@ -1,0 +1,18 @@
+{
+  "hero_id": "merrick-low",
+  "status": "pending-owner-review",
+  "base_sha": "6bad160d43f8e16f41c4dc5e2be87618c4bc0ceb",
+  "source": "art/concepts/hero-corrections-v4/merrick-low.png",
+  "source_sha256": "28c428636f7859747c1a2beb74aca66f62b817ca0f1f72545af0a91edfd8e7d6",
+  "generated_original": "/workspace/generated_images/exec-d4e2d1e2-e2b9-4cf2-929b-05a252ba8f53.png",
+  "draft_sha256": "0543ce4487d0ebc96396cad39eedd5df6ada415351c58d8eb52842582a0d0a10",
+  "prompt_sha256": "fe859dc678788d8bfb989ea593bfba167fc4764503f642c3a14944aea44055cb",
+  "attempts": 1,
+  "dimensions": [
+    1536,
+    1024
+  ],
+  "qc_notes": [
+    "Fingers now enclose solid wrapped grip. String is still drawn visibly over forearm/wrist instead of occluded behind it."
+  ]
+}
