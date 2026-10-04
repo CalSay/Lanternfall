@@ -1,0 +1,32 @@
+{
+  "hero_id": "ione-hart",
+  "status": "pending-owner-review",
+  "base_sha": "6bad160d43f8e16f41c4dc5e2be87618c4bc0ceb",
+  "source": "art/concepts/hero-corrections-v4/ione-hart.png",
+  "source_sha256": "b7d8757ed3c5f3ee708cbe962ca3dd4957b90db27af11cbedcbcb1a06772908a",
+  "generated_original": "/workspace/generated_images/exec-d8875856-11c7-4744-98ff-3eb5d7dac8c0.png",
+  "draft_sha256": "94b57a6ff691f115b60c28e98054bc64022baa481f466998b998010f9548db08",
+  "prompt_sha256": "3f8110aa89b9c64f1f70eb936d5aad6592a86e94f1eb65f6fe2dade63bc1511f",
+  "attempts": 1,
+  "dimensions": [
+    1536,
+    1024
+  ],
+  "qc_notes": [
+    "Entire head and crystal now incline with shaft, instead of upright head on diagonal rod; no cyan guide rendered.",
+    "Single rigid axis visibly improved but exact apex/centre/collar collinearity has small residual deviations; pending owner review, not claimed mathematically exact.",
+    "Character identity, costume, tome, lantern and concept layout retained; full staff remains in canvas."
+  ],
+  "geometry_reference": "/tmp/lanternfall-staff-guides/ione-hart-axis-guide.png",
+  "guide_endpoints": [
+    [
+      136,
+      55
+    ],
+    [
+      242,
+      932
+    ]
+  ],
+  "workflow": "Owner concept-only exception; built-in image_gen reference edit, geometry guide only; no production pose gate claimed"
+}

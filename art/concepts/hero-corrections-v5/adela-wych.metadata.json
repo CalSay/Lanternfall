@@ -1,0 +1,32 @@
+{
+  "hero_id": "adela-wych",
+  "status": "pending-owner-review",
+  "base_sha": "6bad160d43f8e16f41c4dc5e2be87618c4bc0ceb",
+  "source": "art/concepts/hero-corrections-v4/adela-wych.png",
+  "source_sha256": "007e275c5fae39e59676461182f50668ea99d36e00f5d927be454438a264a36b",
+  "generated_original": "/workspace/generated_images/exec-2ef9596f-ecbf-4fcc-ab7f-e70754450b41.png",
+  "draft_sha256": "bde7861fd32bd97cb1aca947c5a1dc203d7eeb7cb45ecd5084c12c9003c9c1e8",
+  "prompt_sha256": "4612c3b0ce3f803473a58543fdf3bbe71b5d4ee62e21727d399b3cdb1118428b",
+  "attempts": 1,
+  "dimensions": [
+    1536,
+    1024
+  ],
+  "qc_notes": [
+    "Entire head and crystal now incline with shaft, instead of upright head on diagonal rod; no cyan guide rendered.",
+    "Single rigid axis visibly improved but exact apex/centre/collar collinearity has small residual deviations; pending owner review, not claimed mathematically exact.",
+    "Character identity, costume, tome, lantern and concept layout retained; full staff remains in canvas."
+  ],
+  "geometry_reference": "/tmp/lanternfall-staff-guides/adela-wych-axis-guide.png",
+  "guide_endpoints": [
+    [
+      148,
+      16
+    ],
+    [
+      331,
+      977
+    ]
+  ],
+  "workflow": "Owner concept-only exception; built-in image_gen reference edit, geometry guide only; no production pose gate claimed"
+}
