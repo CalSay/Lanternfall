@@ -1,0 +1,2415 @@
+dist
+  ok   starts with <title>
+  ok   no doctype/html/head/body tags
+  ok   one inline <script>
+  ok   script parses
+smoke
+  ok   new game starts solo with no hero picked yet
+  ok   picked Wren
+  ok   boss attempted (maxZone 8, fails 24, clears 7)
+  ok   boss fight in progress after challenge
+  ok   fight progress (L12, kills 71)
+  ok   gathering progress (ore 261, mine lv 9)
+  ok   the legacy Sword is no longer forged
+  ok   forged an item
+  ok   equipped forged pickaxe
+  ok   no NaN/Infinity in state
+  ok   dps finite
+  ok   save/load round-trip lossless
+  ok   no handler errors
+  ok   addModifier(dmg) doubles dps
+  ok   registerState merges into S and fresh()
+  ok   onTick fires
+  ok   mastery state registered
+  ok   kill increments mastery and bestiary
+  ok   new game flagged newGame
+  ok   hero picked
+  ok   ability cast (idle or by hand) starts its cooldown
+  ok   class tap marks the mob
+  ok   no party handler errors
+retool
+  ok   save-early.json warden: no legacy Sword/Helm; 6 items, ids, tier, rarity and +N unchanged
+  ok   save-early.json warden: heroDps 862.20 -> 17.29 (finite)
+  ok   save-early.json warden: round trip lossless
+  ok   save-early.json warden: no handler errors
+  ok   save-early.json lanternmage: no legacy Sword/Helm; 6 items, ids, tier, rarity and +N unchanged
+  ok   save-early.json lanternmage: heroDps 862.20 -> 16.57 (finite)
+  ok   save-early.json lanternmage: round trip lossless
+  ok   save-early.json lanternmage: no handler errors
+  ok   save-early.json ranger: no legacy Sword/Helm; 6 items, ids, tier, rarity and +N unchanged
+  ok   save-early.json ranger: heroDps 862.20 -> 862.20 (finite)
+  ok   save-early.json ranger: round trip lossless
+  ok   save-early.json ranger: no handler errors
+  ok   save-early.json lightkeeper: no legacy Sword/Helm; 6 items, ids, tier, rarity and +N unchanged
+  ok   save-early.json lightkeeper: heroDps 862.20 -> 16.57 (finite)
+  ok   save-early.json lightkeeper: round trip lossless
+  ok   save-early.json lightkeeper: no handler errors
+       save-early.json heroDps: warden 862.2->17.3, lanternmage 862.2->16.6, ranger 862.2->862.2, lightkeeper 862.2->16.6
+  ok   save-mid.json warden: no legacy Sword/Helm; 8 items, ids, tier, rarity and +N unchanged
+  ok   save-mid.json warden: heroDps 130688.50 -> 130688.50 (finite)
+  ok   save-mid.json warden: round trip lossless
+  ok   save-mid.json warden: no handler errors
+  ok   save-mid.json lanternmage: no legacy Sword/Helm; 8 items, ids, tier, rarity and +N unchanged
+  ok   save-mid.json lanternmage: heroDps 130688.50 -> 87.33 (finite)
+  ok   save-mid.json lanternmage: round trip lossless
+  ok   save-mid.json lanternmage: no handler errors
+  ok   save-mid.json ranger: no legacy Sword/Helm; 8 items, ids, tier, rarity and +N unchanged
+  ok   save-mid.json ranger: heroDps 130688.50 -> 73.68 (finite)
+  ok   save-mid.json ranger: round trip lossless
+  ok   save-mid.json ranger: no handler errors
+  ok   save-mid.json lightkeeper: no legacy Sword/Helm; 8 items, ids, tier, rarity and +N unchanged
+  ok   save-mid.json lightkeeper: heroDps 130688.50 -> 87.33 (finite)
+  ok   save-mid.json lightkeeper: round trip lossless
+  ok   save-mid.json lightkeeper: no handler errors
+       save-mid.json heroDps: warden 130688.5->130688.5, lanternmage 130688.5->87.3, ranger 130688.5->73.7, lightkeeper 130688.5->87.3
+  ok   save-late.json warden: no legacy Sword/Helm; 10 items, ids, tier, rarity and +N unchanged
+  ok   save-late.json warden: heroDps 1779647.54 -> 268.01 (finite)
+  ok   save-late.json warden: round trip lossless
+  ok   save-late.json warden: no handler errors
+  ok   save-late.json lanternmage: no legacy Sword/Helm; 10 items, ids, tier, rarity and +N unchanged
+  ok   save-late.json lanternmage: heroDps 1779647.54 -> 1779647.54 (finite)
+  ok   save-late.json lanternmage: round trip lossless
+  ok   save-late.json lanternmage: no handler errors
+  ok   save-late.json ranger: no legacy Sword/Helm; 10 items, ids, tier, rarity and +N unchanged
+  ok   save-late.json ranger: heroDps 1779647.54 -> 219.43 (finite)
+  ok   save-late.json ranger: round trip lossless
+  ok   save-late.json ranger: no handler errors
+  ok   save-late.json lightkeeper: no legacy Sword/Helm; 10 items, ids, tier, rarity and +N unchanged
+  ok   save-late.json lightkeeper: heroDps 1779647.54 -> 1779647.54 (finite)
+  ok   save-late.json lightkeeper: round trip lossless
+  ok   save-late.json lightkeeper: no handler errors
+       save-late.json heroDps: warden 1779647.5->268.0, lanternmage 1779647.5->1779647.5, ranger 1779647.5->219.4, lightkeeper 1779647.5->1779647.5
+  ok   a Ranger cannot equip a Warblade or a Sword, and wears a Bow
+  ok   no retool handler errors
+gathering
+  ok   ore tier 1: harvested 7, mine XP gained
+  ok   ore tier 3: locked below Mining 30, harvested 7, mine XP gained
+  ok   crystal tier 1: harvested 6, mine XP gained
+  ok   crystal tier 3: locked below Mining 30, harvested 6, mine XP gained
+  ok   wood tier 1: harvested 11, wood XP gained
+  ok   wood tier 3: locked below Woodcutting 30, harvested 9, wood XP gained
+  ok   fibre tier 1: harvested 9, forage XP gained
+  ok   fibre tier 3: locked below Foraging 30, harvested 9, forage XP gained
+  ok   herb tier 1: harvested 8, forage XP gained
+  ok   herb tier 3: locked below Foraging 30, harvested 8, forage XP gained
+  ok   Geodes take x1.25 the vein time, Fibre x0.9 the herb time
+  ok   Crystal XP x1.25
+  ok   Foraging catch-up: x2 XP while below Mining/Woodcutting
+  ok   ...and x1 once level
+  ok   Foraging never gives Hide or Essence; Hunting offers Hide grades 1-3 only
+  ok   400 kills in the Barrow Beetle zone drop no Hide or other material (only Essence rolls remain)
+  ok   Batwing Caves: Gems +25% (home ground), Ore +0%
+  ok   home ground +50% with 3 mastery stars
+  ok   champion spawns with x3 HP (Champion Elite Moss Slime)
+  ok   champion kill: 1 Trophy of its type, counted, and no material drop
+  ok   first kill of a zone boss (zone 20+) gives a Trophy
+  ok   a boss rematch gives no Trophy
+  ok   bosses below zone 20 give no Trophy
+  ok   no champions below zone 20
+  ok   a Glint shows within 25s; tapping it gives 2 ore
+  ok   no Glint, no bonus
+  ok   no gathering errors
+  ok   offline ore 1h within 15% of live (1539 vs 1539)
+  ok   offline crystal 1h within 15% of live (1231 vs 1231)
+  ok   offline wood 1h within 15% of live (1539 vs 1539)
+  ok   offline fibre 1h within 15% of live (1713 vs 1713)
+  ok   offline herb 1h within 15% of live (1924 vs 1911)
+  ok   no Hide from fights, live or away (0.000 vs 0.000)
+  ok   offline champions credit Trophies with an away line (40)
+  ok   save-early.json: every family loads, the piles are untouched, node times and yields are finite
+  ok   save-mid.json: every family loads, the piles are untouched, node times and yields are finite
+  ok   save-late.json: every family loads, the piles are untouched, node times and yields are finite
+hollow writing
+  ok   hollow: 21h-lore-hollow.js is data only (no DOM, no state)
+  ok   hollow: 7 arrival lines (one per place, named first) and the zone 35 line, each 80 chars or less
+  ok   hollow: beats wisps, crowns, chapel, listener in zone order; cards 2-5 sentences, notes, say lines by real characters
+  ok   hollow: Hesketh's line for the Great Lantern I card
+  ok   hollow: every foe family (7: slime bat bones beetle spore golem wraith) has bestiary lines for the foe, its Elder and its champion, 90 chars or less
+  ok   hollow: every foe family's Elder has an intro and a fall line, 80 chars or less
+  ok   hollow: 14 bestiary entries (7 Hollow, 7 Coast), each with its Elder's lines
+  ok   hollow: the Fenmother (zone 35) has its name, intro, fall and bestiary line
+  ok   hollow: a raid line for each of the 6 great foes, 90 chars or less
+  ok   hollow: none of 151 lines uses a banned verb of the dark
+cold hearth
+  ok   a new game starts at a cold Hearth
+  ok   stations and Hearth at 0, no camp yet
+  ok   a new solo game starts fighting, with the grove picked for when the guide sends the hero to chop (W1-A)
+  ok   nothing to build before the fire: Light the fire first.
+  ok   crafting refused: "Build the Workbench first."
+  ok   the Forge too
+  ok   Transmute and Tonics wait for the Enchanter's Table
+  ok   the fire needs 8 Pine Log: 3 more Pine Log
+  ok   hearthLight(): pays 8 Oak, Hearth 1, the camp opens, the hero walks out to fight
+  ok   campOpen { quiet: false } and hearthLit, once
+  ok   the Workbench plot opens with the fire (the Forge and Loom wait)
+  ok   Workbench Lv 1: 20 Oak, no gold, 10 s (playtest-1 note 8: was 30 s) ([["wood",1,20]], 0 gold, 10 s)
+  ok   Lv 2 keeps the old row
+  ok   Workbench building
+  ok   Workbench built after 30 s; the Forge plot opens
+  ok   a Copper Pickaxe made at the Workbench; the guide's tool step is done
+  ok   the Forge building (25 Copper, 10 Oak)
+  ok   Forge built after 60 s: its recipes open
+  ok   the Storehouse plot opens with the Forge
+  ok   Loom, Enchanter's Table and Tavern plots wait for their zones
+  ok   zone 5: the Loom plot
+  ok   zone 6: the Enchanter's Table plot
+  ok   zone 8: the Tavern plot
+  ok   Tavern and Enchanter's Table rows as the spec (1.3; Lv 1 in 45 s, playtest-1 note 8)
+  ok   reload: still a cold save, stations as built
+  ok   reload before the fire: the same cold start
+  ok   hearthWarm(): the old warm start (tools only); a lit Hearth stays
+  ok   a warm game crafts without building (the gate is for cold saves only)
+  ok   save-early.json: the Hearth state loads as saved and survives a reload
+  ok   save-mid.json: the Hearth state loads as saved and survives a reload
+  ok   save-late.json: the Hearth state loads as saved and survives a reload
+       timeline: nextup 0:11, zone2 0:52, party 0:53, gather 0:53, chop 0:53, lit 1:14, camp 1:15, bench1 2:14, craft 2:15, tool 3:23, zone3 3:47, forge1 4:44, weapon 4:44, almanac 7:00, store1 7:06, zone4 8:10, bounties 8:11, uniques 8:11, zone5 8:37, forage 8:38
+       guide: boss 0:53, upgrade 0:53, gather 0:53, chop 1:15, light 1:15, stock:bench 2:04, bench 2:04, tool 3:23, stock:tool 3:23, attack 3:47, ability 3:47, stock:forge 4:28, forge 4:28, tab:party 4:29, nextup 4:29, stock:store 6:45, store 6:45 | zone 5 at 10:00
+  ok   the fire lit under 1:30: the first boss falls, the hero chops 8 Pine Log (1:14; solo, W2-B)
+  ok   first upgrade affordable under 1:30 (0:07)
+  ok   Next Up by 2:30 (0:11)
+  ok   Gather with the first boss, Camp with the fire, Craft with the Workbench (0:53, 1:15, 2:15)
+  ok   a tool by 5:00 (3:23)
+  ok   Workbench by 4:00, Forge by 10:00 (2:14, 4:44)
+  ok   something new at least every 3 minutes in the first 10 (20 events, longest gap 136s)
+  ok   guide (solo): Gather, chop, then light; the old tab steps are done for a cold save
+  ok   guide: bench, tool and forge steps done
+  ok   no cold hearth errors
+looks
+  ok   every look has art (33 looks)
+  ok   looks: capes, hats, lanterns and flames build on every class, bare and geared, in every pose (3680 builds); critters and auras build; no bad numbers
+  ok   looks: a hat is worn only while Show helm is off
+  ok   looks: 'l_moon' reads as the Deepwell colour in the Flame slot and as the Moon Paper Lantern in the Lamp slot
+  ok   looks: nothing worn gives no acc; no look carries a bonus
+  ok   looks: no errors
+  ok   looks: the baker drops the helm under a worn hat (drawing only) and keeps it without one
+  ok   looks: the preview hook draws the dressed hero (68 draws)
+  ok   looks: every look has a tile icon; Deepwell colours get a flame icon; trails keep the UI icon
+  ok   looks (browser side): no errors
+gatherers: tents, fees, unpaid, let go (W1-E)
+  ok   Hands open with Hearth 2 and the Tavern (no Bunkhouse needed): 2 Tents, Tam in one
+  ok   the board has an applicant with a price, and it can be hired
+  ok   hiring Nell Porter spends 1500 gold and takes the second Tent
+  ok   Tents full: the hire is refused ("All 2 tents are taken. Let a gatherer go to make room.")
+  ok   Tam's first shifts are free
+  ok   the hired gatherer has a job of their profession open (hide tier 1)
+  ok   a shift shows a fee (2000) and a haul before you send
+  ok   Send on a job charges the fee once and the gatherer goes out
+  ok   after the shift the gatherer is home and the haul is in the Storehouse (+622)
+  ok   no gold: the shift does not start ("Needs 2.00K more gold for the shifts."), the gatherer is unpaid and stays
+  ok   unpaid gatherers never leave, even after hours
+  ok   Let go frees the Tent; a random gatherer leaves for good
+  ok   a named gatherer let go returns to the board with their level, free to hire again
+  ok   hiring them back is free and keeps the level
+  ok   74-ui-hands.js uses no online, room, db or user calls, and no alert/confirm/prompt
+  ok   no gatherer errors
+error capture
+  ok   errors state registered with list array and next index
+  ok   three errors reported newest-last (first -> second -> third)
+  ok   ring buffer caps at 20 (has 20)
+  ok   wrap: error 0-4 gone, 5-24 kept (newest errors 5-24)
+  ok   capture and clear never throw even with broken storage
+  ok   no handler errors
+save codes
+  ok   save-early.json: encodeSave makes an LF1: code
+  ok   save-early.json: its own code round-trips (decodeSave.ok)
+  ok   save-early.json: round-trip keeps every field
+  ok   save-early.json: summarizeSave has level, maxZone, region, heroes, name, savedAt (got {"name":"Wren","level":14,"maxZone":8,"region":"the Hollow","hero":"Wren","heroes":1,"savedAt":"10/5/2026, 8:19:00 AM"})
+  ok   save-late.json: encodeSave makes an LF1: code
+  ok   save-late.json: its own code round-trips (decodeSave.ok)
+  ok   save-late.json: round-trip keeps every field
+  ok   save-late.json: summarizeSave has level, maxZone, region, heroes, name, savedAt (got {"name":"Pip","level":49,"maxZone":38,"region":"the Sunken Coast","hero":"Pip","heroes":1,"savedAt":"9/30/2026, 5:34:19 AM"})
+  ok   save-mid.json: encodeSave makes an LF1: code
+  ok   save-mid.json: its own code round-trips (decodeSave.ok)
+  ok   save-mid.json: round-trip keeps every field
+  ok   save-mid.json: summarizeSave has level, maxZone, region, heroes, name, savedAt (got {"name":"Tobin","level":33,"maxZone":20,"region":"the Hollow","hero":"Tobin","heroes":1,"savedAt":"10/8/2026, 7:14:00 PM"})
+  ok   decodeSave rejects a one-character change with a checksum error, never throws
+  ok   decodeSave never throws on garbage input ("")
+  ok   decodeSave rejects garbage input cleanly ("")
+  ok   decodeSave never throws on garbage input ("not a save code")
+  ok   decodeSave rejects garbage input cleanly ("not a save code")
+  ok   decodeSave never throws on garbage input ("LF1:")
+  ok   decodeSave rejects garbage input cleanly ("LF1:")
+  ok   decodeSave never throws on garbage input ("LF1:%%%:1")
+  ok   decodeSave rejects garbage input cleanly ("LF1:%%%:1")
+  ok   decodeSave never throws on garbage input ("{\"v\":2}")
+  ok   decodeSave rejects garbage input cleanly ("{\"v\":2}")
+  ok   decodeSave never throws on garbage input (null)
+  ok   decodeSave rejects garbage input cleanly (null)
+  ok   decodeSave never throws on garbage input (undefined)
+  ok   decodeSave rejects garbage input cleanly (undefined)
+  ok   decodeSave never throws on garbage input (12345)
+  ok   decodeSave rejects garbage input cleanly (12345)
+  ok   decodeSave never throws on garbage input ({})
+  ok   decodeSave rejects garbage input cleanly ({})
+  ok   save codes: no errors
+  ok   55-savecode.js is a core file: no DOM, window or storage
+W1-D (browser)
+  ok   W1-D: 12 fresh starts (4 per hero) press through the first combat steps and the game never stays paused on one (none locked)
+  ok   W1-D: at 740x360 all six action slots are on screen, 44 px or bigger (225-284 225-284 225-284 292-352 292-352 292-352)
+  ok   W1-D: ...and the stage keeps its room beside them (480x316 px)
+  ok   W1-D: the guide ring marks the Attack slot, inside the screen
+  ok   W1-D: the hero picker draws the new hand-drawn art for Wren, Tobin and Pip (true,true,true)
+  ok   W1-D: at 360 px no header pill, tab or sub-view label is cut off (none)
+  ok   W1-D: the zone arrows stay on screen at 360 px (right edge 354)
+  ok   W1-D: a COUNTER number still rising is dropped when you go to a gather scene (1 -> 0)
+  ok   W1-D: the Journal open for 1 s raises no "section update failed" error (0 errors)
+landscape 1280x720 (browser, UX-L1)
+  ok   1280x720: the guide walks the first session by pressing what it points at (attack > ability > dodge > parry > upgrade > gather > chop > light > stock:bench > bench > stock:tool > tool > stock:forge > forge > stock:store > store > nextup; 39 of 220 passes, 13 idle)
+  ok   1280x720: every guide step's target is on screen and on top (a click at its centre reaches it), the ring marks it and the hint is on screen (23 states)
+  ok   1280x720: no page errors in the guide walk
+  ok   1280x720: the rail runs down the left edge with the five tabs, each 44 px or taller, on screen (rail {"l":0,"t":0,"r":64,"b":720,"w":64,"h":720}, tabs 54-116 118-180 182-244 246-308 310-372)
+  ok   1280x720: one top row (48 px) holds gold, Fight / Gather, Switch, the zone arrows and the bell, all on screen (purse 64-184/0-48, modeSeg 192-366/3-45, switchBtn 374-469/5-43, zStep 477-626/4-44, bellBtn 1236-1280/2-46)
+  ok   1280x720: the stage fills the middle (960x672) at a whole-pixel zoom (x2: 480x336 logical px, the heroes drawn at their ~96 art px)
+  ok   1280x720: the bar is two rows (ab0,ab1,ab2|parry,dodge,atk) of square slots of 44 px or more in the bottom-right corner, all on top; Attack is the bottom-right slot (ab0 75@1034,555 ab1 75@1117,555 ab2 75@1199,555 parry 75@1034,637 dodge 75@1117,637 atk 75@1199,637)
+  ok   1280x720: Next Up sits at the top of the side column, above the bar ({"l":1024,"t":48,"r":1280,"b":108,"w":256,"h":60})
+  ok   1280x720: no label cut off and no sideways scroll (none; page 0, app 0)
+  ok   1280x720: a notice pops in the side column, above the bar and clear of the stage ({"l":1031,"r":1274,"b":544.65625,"barT":554.65625,"stageR":1024,"W":1280})
+  ok   1280x720: each tab's menu opens as a panel (300 px or wider, the stage's left strip still showing, no sideways scroll), the bar stays on top and Attack still acts, and it closes with its X, the lit tab or Escape
+  ok   1280x720: over an open menu, notices stay in the side column ({"l":1031,"mr":1024})
+  ok   1280x720: Hero > Training and the Tavern's gatherer board show inside the panel with no sideways scroll ({"tr":{"ok":true,"l":476,"r":1014,"t":177,"ml":464,"mr":1024},"hb":{"ok":true,"l":476,"r":1014,"t":98,"ml":464,"mr":1024}})
+  ok   1280x720: the ability picker and the Attack sheet (with Training) fit the screen with their Train button in view, and close with Escape ({"pk":{"ok":true,"top":152,"bottom":568,"go":358},"ms":{"ok":true,"top":219,"bottom":501,"go":473}})
+  ok   1280x720: no page errors
+saves
+  ok   save-early.json: is a v5 save
+  ok   save-early.json: every saved field is kept
+  ok   save-early.json: a newly registered feature field is added with its default
+  ok   save-early.json: dps is finite
+  ok   save-early.json: a minute of play, no NaN/Infinity
+  ok   save-early.json: save/load round-trip lossless
+  ok   save-early.json: no handler errors
+  ok   save-mid.json: is a v5 save
+  ok   save-mid.json: every saved field is kept
+  ok   save-mid.json: a newly registered feature field is added with its default
+  ok   save-mid.json: dps is finite
+  ok   save-mid.json: a minute of play, no NaN/Infinity
+  ok   save-mid.json: save/load round-trip lossless
+  ok   save-mid.json: no handler errors
+  ok   save-late.json: is a v5 save
+  ok   save-late.json: every saved field is kept
+  ok   save-late.json: a newly registered feature field is added with its default
+  ok   save-late.json: dps is finite
+  ok   save-late.json: a minute of play, no NaN/Infinity
+  ok   save-late.json: save/load round-trip lossless
+  ok   save-late.json: no handler errors
+  ok   an older key: starts a fresh game with no error
+  ok   garbage text: starts a fresh game with no error
+  ok   an empty object: starts a fresh game with no error
+  ok   null: starts a fresh game with no error
+  ok   a number: starts a fresh game with no error
+goals
+  ok   save-early.json: topGoals -> stars 100%, zone-boss 100%, forge 100%
+  ok   save-mid.json: topGoals -> hero-up 100%, stars 100%, zone-boss 100%
+  ok   save-late.json: topGoals -> hero-up 100%, camp-bless 100%, stars 100%
+  ok   diversity: one per system first (a1,b1,c1): a1,b1,c1
+  ok   a second goal from the same system fills a gap: a1,a2,b1
+  ok   ready goals first, then by pct; prio breaks ready ties: r1,a1,b1
+  ok   ready goal pct clamps to 1
+  ok   sticky baseline a1,b1,c1
+  ok   hysteresis: a small lead does not reorder
+  ok   a clear lead reorders
+  ok   hysteresis: a newcomer barely ahead does not replace a shown goal
+  ok   a newcomer clearly ahead replaces the weakest (registerGoal replaces by id)
+  ok   cached within 450 ms
+  ok   a throwing goal is skipped
+  ok   remove fn unregisters
+bounties
+  ok   mining a lower tier than your best still counts
+  ok   other families do not count as ore
+  ok   gathering while away counts
+balance
+  ok   1 tier-5 ore breaks into 2 tier-4
+  ok   broken-down ore cannot be broken down again (with a plain reason)
+  ok   a gathered unit of that tier still breaks down, once
+  ok   spending the flagged units frees the pile (the flag never exceeds the pile)
+  ok   the flag is saved in S.craft.tmd
+  ok   a save without S.craft gets an empty flag table
+  ok   old save stuck at zone 60 (a foe takes 12072s) falls back to zone 30 (holds up to 32); solo says "You fell back" (1 steps: a late fixture with a level-1 hero)
+  ok   no second toast; the max zone and the save are untouched (fell back from is remembered)
+  ok   away gains farm zone 1 (the best zone <= S.zone the party holds): +425K gold
+  ok   with power to spare it climbs back to the zone it fell from
+  ok   a new game never falls back; no errors
+  ok   no zone ping-pong: an early save auto-fighting for 30 min falls back 0 time(s) (was every 1-2 min)
+  ok   craft goal names a class item (Craft a Pine Bow: 1 more Pine Log)
+  ok   Go picks bow tier 1 and focuses #forgeBtn in the Craft tab
+  ok   no class: the goal never suggests the legacy Sword or Helm (Craft a Dim Charm: you have the materials)
+tools
+  ok   Pickaxe, Woodaxe and Sickle are made at the Workbench with speed, double and rare find lines
+  ok   an empty slot is the rough tool (tier 0): Stone Pick, Flint Hatchet, Bone Sickle
+  ok   a new game starts every tool kind at mastery 1
+  ok   right tool: a common Copper Pickaxe mines a Copper vein 32.5% faster than the Stone Pick (HS15)
+  ok   no right-tool bonus on a higher-tier node or another skill (a bonus, never a gate)
+  ok   TOOL_TUNE.on = 0 restores the old node maths (right tool and mastery speed off)
+  ok   a Sickle made at the Workbench: tier 3 with Smithing 22, Woodcraft XP only
+  ok   mastery XP counts with nothing gathered (Pickaxe mastery 2 after 5 min, 1 s into it)
+  ok   mastery speed: +1% a level, on that tool kind only
+  ok   away gathering adds mastery 1:1 (Pickaxe mastery 9 after 3 h) with an away line
+  ok   mastery caps at 20 (950 minutes in all)
+  ok   perks: Lv 5 rare find +1, Lv 10 Glint +1 s, Lv 15 +5% yield, Lv 20 Master (Hands +10%)
+  ok   rare find 8% (tier 5 Epic +10): +160 Iron from 2000 Copper away, +165 tier-2 crystal live, +160 Mithril on tier 5
+  ok   TOOL_TUNE.on = 0: no rare finds
+  ok   toolBest: nothing to make over a tier-5 pick; a tier-1 Woodaxe for Woodcutting
+  ok   no errors
+  ok   save-early.json: materials exact, dps unchanged, every tool recipe open at the same tiers, old tools gain the rare find line (pick 0.22%)
+  ok   save-early.json: without S.tools it defaults in (mastery 1) and survives a round trip
+  ok   save-mid.json: materials exact, dps unchanged, every tool recipe open at the same tiers, old tools gain the rare find line (pick 0.78%)
+  ok   save-mid.json: without S.tools it defaults in (mastery 1) and survives a round trip
+  ok   save-late.json: materials exact, dps unchanged, every tool recipe open at the same tiers, old tools gain the rare find line (pick 7.02%)
+  ok   save-late.json: without S.tools it defaults in (mastery 1) and survives a round trip
+onboarding
+  ok   save-early.json: the saved guide state loads untouched
+  ok   save-mid.json: the saved guide state loads untouched
+  ok   save-late.json: the saved guide state loads untouched
+  ok   a new game with progress stays guided after a reload
+  ok   new game: every feature starts hidden (unknown ids are open)
+  ok   Next Up hides goals of hidden systems: 
+  ok   the guide starts with "Attack" (solo)
+  ok   one Attack -> "your ability"
+       timeline: nextup 0:02, party 0:45, gather 0:45, bounties 2:34, camp 3:08, forage 3:08, craft 3:55, bestiary 3:55, almanac 6:48, stars 6:48, tavern 11:43, uniques 12:01
+  ok   first upgrade affordable in under a minute (0s)
+  ok   Party and Next Up open in the first 2 minutes (0:45, 0:02)
+  ok   Gather and Bounties open by 4-5 minutes (0:45, 2:34)
+  ok   Camp, Foraging, Craft, Bestiary and Almanac open by 11 minutes; the Roster never opens (solo)
+  ok   something new at least every 3.5 minutes in the first 10 (10 unlocks, longest gap 173s)
+  ok   Skip tips: no hint shows
+  ok   Show every tab: everything opens
+  ok   a late feature (Hands) stays hidden after "Show every tab" until its rule holds
+  ok   Next Up shows every system again once it is open (solo: not the Roster)
+  ok   reveal after all is harmless
+  ok   no onboarding errors
+hold hint
+  ok   the Omen is pinned to none for the whole check run
+  ok   hold hint with party combat: zone 32; without it (3-second kills): 34
+  ok   hold hint reads partyHoldEstimate() ({ zone } or a number)
+  ok   hold hint: capped at your best zone; falls back if the estimate fails
+  ok   no hold hint errors
+omen writing
+  ok   lore: 21j-lore-omens.js is data only (no DOM, no save)
+  ok   lore: all 33 Omens have a line, 59 chars or less
+  ok   lore: all 7 Dares have a line, 59 chars or less
+  ok   lore: omenLine picks the Dare line while it is taken, falls back to the Omen and the coast lines
+skill gates (GP1)
+  ok   the gates are the SKILL_TUNE table (NODE_REQ, SMITH_REQ, CRAFT_STATION_REQ)
+  ok   the gaps between tiers widen: gathering 1/14/30/64/112 (gaps 13/16/34/48), crafting 1/10/22/36/54 (gaps 9/12/14/18)
+  ok   skillNeed reads SKILL_TUNE (gathering and crafting curves; C10a: levels below 14 need half)
+  ok   C10a: gathering levels 1-13 need half the XP, 14 and up unchanged
+  ok   nodeXp reads SKILL_TUNE
+  ok   new game: Mining 13 cannot work the Iron Vein
+  ok   new game: Mining 14 opens it; next tier at 30
+  ok   new game: a tier-2 recipe below the gate says "Needs Smithing 10"
+  ok   where-to-get text reads NODE_REQ and PACE.essTier: Silver Ore: Mining level 30, Silver Seam. +25% while camped in Quarry Ruins.
+  ok   the level-up that opens a tier names it: Mining level 30. The Silver Seam and the Amethyst Grotto are open to you.
+  ok   other level-ups name the next gate: Mining level 31. Next tier at level 64.
+  ok   no errors (new game)
+store
+  ok   save-early.json (zone 8): Storehouse Lv 1, S.mats exact and every item kept at load
+  ok   save-early.json: after the first ticks no pile went down and every item is kept
+  ok   save-early.json: round trip keeps S.store, the level and the piles
+  ok   save-late.json (zone 38): Storehouse Lv 6, S.mats exact and every item kept at load
+  ok   save-late.json: after the first ticks no pile went down and every item is kept
+  ok   save-late.json: round trip keeps S.store, the level and the piles
+  ok   save-mid.json (zone 20): Storehouse Lv 3, S.mats exact and every item kept at load
+  ok   save-mid.json: after the first ticks no pile went down and every item is kept
+  ok   save-mid.json: round trip keeps S.store, the level and the piles
+  ok   more Dim Essence than Lv 8 holds: one over cell, all of it kept
+  ok   the over pile is still whole after two seconds
+  ok   an over cell gains nothing from a flow
+  ok   spent below the cap: it gains up to the cap again
+  ok   3 fixtures checked
+  ok   a new game (cold Hearth): no Storehouse, packs hold 5,000, the plot not open yet
+  ok   packs 80% full: the Storehouse plot opens (H1 rule) with its 20 s Lv 1 row (playtest-1 note 8)
+  ok   rare finds stop at the cap (Iron Ore stays at 5,000, no finds counted)
+  ok   a new game: packs hold 5,000 of each gathered material, 2,500 hide and essence
+  ok   Storehouse Lv 3: 100,000 / 50,000
+  ok   a flow adds up to the cap, the rest is not made
+  ok   a gift always lands, even above the cap
+  ok   a parcel adds all of it or nothing
+  ok   a preview adds what fits
+  ok   random flows never raise a cell above its cap
+  ok   gathering a full pile: Mining XP still counts, the pile stays at 40,000
+  ok   away gathering stops at the cap, XP counts, the card says so
+  ok   Spillover on at Lv 3; the next node is the highest open tier that is not full
+  ok   live Spillover: the hero moves on (now ore 2)
+  ok   away Spillover: the time left goes to crystal 2
+  ok   salvage (after the in-page ask): only what fits lands
+  ok   transmute is refused when the result does not fit ("Storehouse full: Jasper.")
+  ok   a bounty whose reward does not fit waits (claim refused, the bounty keeps its slot)
+  ok   ...and pays once there is room
+  ok   Storehouse Lv 1 (a camp building): 30 Oak Log, 20 Copper Ore, no gold, 20 s
+  ok   a refund is a gift: it lands above the packs' cap (half back once started: +15 on a full pile)
+  ok   built: Lv 1 holds 40,000; Lv 2 needs Hearth 2
+  ok   effect lines: Holds 100,000 of each material · 50,000 hide and essence · Spillover: move on when a pile is full
+  ok   HS8: every cost reachable at Hearth H fits Storehouse Lv H
+  ok   HS19 a full away session fits the cap at every expected Storehouse level: Lv 1 T1 wood 4031/h x 8 h = 32251 <= 40000 (fills in 9.9 h away, ~5.1 h tapping); Lv 2 T2 wood 4911/h x 8 h = 39285 <= 50000 (fills in 10.2 h away, ~5.4 h tapping); Lv 3 T3 wood 7503/h x 10 h = 75031 <= 100000 (fills in 13.3 h away, ~7.3 h tapping); Lv 4 T3 wood 15133/h x 12 h = 181597 <= 200000 (fills in 13.2 h away, ~7.4 h tapping); Lv 5 T4 wood 18558/h x 14 h = 259810 <= 300000 (fills in 16.2 h away, ~9.3 h tapping); Lv 6 T4 wood 38484/h x 16 h = 615745 <= 750000 (fills in 19.5 h away, ~11.5 h tapping); Lv 7 T5 wood 51863/h x 20 h = 1037261 <= 1250000 (fills in 24.1 h away, ~14.6 h tapping); Lv 8 T5 wood 74813/h x 24 h = 1795509 <= 2500000 (fills in 33.4 h away, ~20.7 h tapping)
+  info Storehouse pace: [{"L":1,"t":1,"lv":25,"h":8,"k":"wood","rate":4031,"live":3914,"h8":32251,"hh":32251,"cap":40000,"fillH":9.9,"tapH":5.1},{"L":2,"t":2,"lv":40,"h":8,"k":"wood","rate":4911,"live":4633,"h8":39285,"hh":39285,"cap":50000,"fillH":10.2,"tapH":5.4},{"L":3,"t":3,"lv":50,"h":10,"k":"wood","rate":7503,"live":6884,"h8":60025,"hh":75031,"cap":100000,"fillH":13.3,"tapH":7.3},{"L":4,"t":3,"lv":74,"h":12,"k":"wood","rate":15133,"live":13512,"h8":121065,"hh":181597,"cap":200000,"fillH":13.2,"tapH":7.4},{"L":5,"t":4,"lv":90,"h":14,"k":"wood","rate":18558,"live":16137,"h8":148463,"hh":259810,"cap":300000,"fillH":16.2,"tapH":9.3},{"L":6,"t":4,"lv":110,"h":16,"k":"wood","rate":38484,"live":32614,"h8":307873,"hh":615745,"cap":750000,"fillH":19.5,"tapH":11.5},{"L":7,"t":5,"lv":135,"h":20,"k":"wood","rate":51863,"live":42862,"h8":414904,"hh":1037261,"cap":1250000,"fillH":24.1,"tapH":14.6},{"L":8,"t":5,"lv":210,"h":24,"k":"wood","rate":74813,"live":60333,"h8":598503,"hh":1795509,"cap":2500000,"fillH":33.4,"tapH":20.7}]
+  ok   no store errors
+gatherers UI (browser)
+  ok   the Tavern shows the board with an applicant and Your gatherers with Tam
+  ok   the online parts of the Tavern are still there
+  ok   Hire asks once first (in the page, no dialog)
+  ok   the second tap hires: gold spent, Tents 2/2
+  ok   with no free tent the board folds to one line: Tents full, Build a Tent
+  ok   with no free tent the Hire button is off and says why
+  ok   Send on a job: pick a job, the fee is charged, the card says On shift
+  ok   no gold: the gatherer shows Unpaid and stays
+  ok   Let go asks first
+  ok   the second tap lets them go
+  ok   no gatherer UI errors
+cb2
+  ok   boss kits: 16 rows, 2-3 phases, one new mechanic a phase, core-2 telegraph ids, an answer and an idle answer each, wind-ups >= 1.2 s, casts >= 1.5 s, region bosses have a hard cast
+  ok   the Hollow's seven elders and the Fenmother have kits and carry no buff item (owner D2)
+  ok   hit caps: telegraphed 35%, boss swings 15%, pack swings 10% (swarm 4%), a blast 20% (combat-2 1.4)
+  ok   elite traits: exactly core-2's seven, each with a first-sighting line and a 5x5 badge
+  ok   Region 1 elites roll no trait; the Coast 1; the Pale Reach 2
+  ok   every region's 7 zone places lean to two real traits
+  ok   two traits never share a counter: 20 pairs rolled (Deepwell floor 25, equal weights), never Explosive + Enraged
+  ok   every foe type has a size, a family, a hit type and its members in range
+  ok   pack totals: members' HP and gold sum to the pack's (swarms x1.25): z29 normal 6, z30 swarm 9, z31 normal 5, z32 brute 3
+  ok   one enemy at a time: every zone fight is a single foe carrying the pack's HP ([[1,1],[1,1],[1,1],[1,1]])
+  ok   a swarm of 9 dies as one kill (1)
+  ok   no one-shots: 120 s of each Hollow elder, the biggest hit on a member Moss Slime 3%, Cave Bat 3%, Rattlebones 5%, Barrow Beetle 6%, Spore Cap 2%, Quarry Golem 13%, The Fenmother 20%
+  ok   idle is whole: idle gold a minute at zone 36, 10 minutes, late fixture: 103.7% of HEAD's (want >= 97%)
+  ok   no overlap: in 50 fights per kit, answer warnings one at a time and >= 1.0 s apart (29: 100 warnings, gap 1.60; 30: 75 warnings, gap 1.00; 31: 100 warnings, gap 1.60; 32: 75 warnings, gap 1.00; 33: 25 warnings, gap 5.70; 34: 75 warnings, gap 1.00; 35: 75 warnings, gap 1.00; fen: 75 warnings, gap 1.00)
+  ok   no boss timer and no Enrage: two minutes into a boss fight it is still on, unchanged, and nothing failed
+  ok   no Dare touches a boss timer
+  ok   the active reward: 3 of your own answers give +50% XP on the kill (x1.5, 3 answers); idle x1 (buff items wait for S5)
+  ok   a full stagger bar: Staggered 5 s, takes x1.5; the Finisher fires by itself (hammerfall auto)
+  ok   each later Stagger needs 25% more fill
+  ok   Shielded: the shield takes the hit first; heavy hits deal x2 to it (0.20 -> 0.12)
+  ok   Ice-Clad: half from physical until 3 fire hits break the ice (50 -> 100)
+  ok   Explosive: killed while Chilled it fizzles, no blast
+  ok   S.cb2 { v, haptic, left, seen, n } for a new game
+  ok   the cb2 counters and settings survive a save and load
+  ok   every fixture loads with S.cb2; stagger, casts, traits and phases stay out of the save
+  ok   59g-active.js is a core file: no DOM, window, canvas or storage
+  ok   59h-bosses.js is a core file: no DOM, window, canvas or storage
+  ok   59i-elites.js is a core file: no DOM, window, canvas or storage
+  ok   21g-data-bosses.js is a core file: no DOM, window, canvas or storage
+  ok   no cb2 errors
+solo effects (W1-C)
+  ok   the Rattlebone Charm makes a by-hand Echo Shot hit 1.200x as hard (gear().abil 20)
+  ok   with the Fang the counter deals 2.000x (counter 100%, gear().might 48%; the same fang without its counter line is the baseline)
+  ok   gathering banks rest for the hero (30 s after a minute; "Gathering rests you: +10% damage for 29s in your next fight.")
+  ok   the next fight is Well Rested: +10% damage (x1.100)
+  ok   a solo Deepwell run starts
+  ok   Battle Drill III and War Cry add up to x2.320 to your own damage (they were the companions')
+  ok   Echo Week: abilities come back twice as fast, Attack hits for half, your damage is not cut to 1% (Company Week was unwinnable solo)
+  ok   the rule list has Echo Week and no Company Week
+  ok   Quick Parry and Steady Feet reach the solo buttons (parry 0.50 s, dodge 1.00 s)
+  ok   Parry Drill: the counter hits 1.500x
+  ok   parries, counters and abilities cast by hand count toward their weekly goals (idle casts do not)
+  ok   Untouched (was Bare-Knuckled, which fired for any early hero with no weapon): a zone 10 boss beaten without a hit takes it
+  ok   Untouched does not fire once you took a hit; Last Lamp Standing does not fire at full health
+  ok   Last Lamp Standing (solo): a zone 10 boss beaten after your health fell under 10%
+  ok   Drummer (solo): 60 Attack presses in a minute
+  ok   no handler errors in the solo effect checks
+training (W2-A)
+  ok   save key lanternfall.save.v5 (S.v 5): v4 saves are never read
+  ok   fresh(): every hero's moves start at Lv 0 ({"wren":{"atk":0,"parry":0,"dodge":0,"echo":0},"tobin":{"atk":0,"parry":0,"dodge":0,"bash":0},"pip":{"atk":0,"parry":0,"dodge":0,"fire":0}})
+  ok   fresh(): no hero has passed the Proving (asc {})
+  ok   a save without Training fields loads with them at 0 (defaults merge)
+  ok   moves: Attack, each unlocked ability, Parry, Dodge (per hero)
+  ok   Blade, Swiftness and Precision are gone (buyHero and hireComp are deleted)
+  ok   prices: base x1.2 a level to Lv 20, x1.28 to Lv 40, x1.15 past it (Attack Lv 1 costs 6, as Blade's did)
+  ok   every price rises and the last level (Lv 80) costs 12.4M, under 1e8 (EC10)
+  ok   cap: a move never passes the hero's level (Lv 5)
+  ok   Max at hero Lv 5 trains Attack to 5 and stops (5)
+  ok   cap: the base class stops at Lv 40 (hero Lv 60)
+  ok   Max stops at the stage cap (40)
+  ok   after the Proving (S.solo.asc) the cap is the hero's level again (60), up to the next stage; other heroes keep theirs
+  ok   after the Proving the stage cap is 80
+  ok   x10: 10 levels at the sum of their prices (159.0)
+  ok   Max: 19 levels for 937 of 1,000 gold, the next (192) out of reach; the ledger counts it under "up"
+  ok   Max with too little gold shows the next price and trains nothing
+  ok   Attack Lv 11: the hit x1.094 (atkCurve), abilities and the counter unchanged
+  ok   Echo Shot Lv 11: its power rises (trainAbCurve), Attack unchanged
+  ok   Parry Lv 3: counter x1.30 (+10% a level)
+  ok   Dodge Lv 5: cooldown 1.2 s -> 1.03 s
+  ok   Dodge never goes under 0.4 s
+  ok   timing windows never grow from gold (parry 0.35 s, dodge 0.8 s)
+  ok   attack speed is fixed (1 a second; Swiftness left)
+  ok   Attack's damage curve: x1.7 every 5 levels, x2 past Lv 25
+  ok   Echo Shot: Lv 5 cooldown 9 -> 8.5 s; Lv 10 the Mark lasts 2 s longer; Lv 15 another 0.5 s off
+  ok   milestones take turns: Shield Bash one more foe (Lv 5), a longer Stun (Lv 10); Fireball a longer fire patch (Lv 5), a shorter cooldown (Lv 10)
+  ok   cooldown milestones stop at 50% of the base
+  ok   Training levels belong to each hero (Wren 12, Tobin 3) and survive a switch
+  ok   Training levels survive save and load
+  ok   Next Up: the next Training level is Attack Lv 1 for 6 gold, not the cheaper Dodge ({"move":"atk","cost":6,"lv":1})
+  ok   Next Up "Train Attack to Lv 1: ready" opens Hero > Training on the Attack row
+  ok   every move at its cap: the goal hides
+  ok   the guide's upgrade step waits for Attack Lv 1 (6 gold)
+  ok   any Training level ends the step
+  ok   no star source in the solo crit damage pool (the Stars change rules, not stats)
+  ok   no Precision source in the solo crit damage pool
+  ok   training: no errors
+training (W2-A, browser)
+  ok   360x740: the guide's upgrade step says "Train Attack. Each level hits harder.Got it×" on Hero > Training
+  ok   360x740: Train Attack ends the step (Attack Lv 1)
+  ok   360x740: Hero > Training lists Tobin's moves with the bar's icons, Lv n/14, the next level and Train (atk Lv 1/14, bash Lv 0/14, parry Lv 0/14, dodge Lv 0/14)
+  ok   360x740: Train raises Shield Bash 0 -> 1 and spends gold
+  ok   360x740: Max trains Attack to the hero's level (14) and the row says Maxed (Maxed)
+  ok   360x740: no sideways scroll
+  ok   360x740: the Fight tab has no Blade, Swiftness or Precision rows
+  ok   360x740: a long press on Dodge shows "Dodge Lv 0of 14Cooldown 1.20 s. Next level: 1.16 s"
+  ok   360x740: its Train button trains Dodge (0 -> 1); the game waits while the sheet is open
+  ok   360x740: a long press on an ability slot shows its Training in the picker ("Shield Bash Lv 1of 14Hits for 80, every ")
+  ok   360x740: no page errors
+  ok   740x360: Hero > Training lists Tobin's moves with the bar's icons, Lv n/14, the next level and Train (atk Lv 0/14, bash Lv 0/14, parry Lv 0/14, dodge Lv 0/14)
+  ok   740x360: Train raises Shield Bash 0 -> 1 and spends gold
+  ok   740x360: Max trains Attack to the hero's level (14) and the row says Maxed (Maxed)
+  ok   740x360: no sideways scroll
+  ok   740x360: the Fight tab has no Blade, Swiftness or Precision rows
+  ok   740x360: a long press on Dodge shows "Dodge Lv 0of 14Cooldown 1.20 s. Next level: 1.16 s"
+  ok   740x360: its Train button trains Dodge (0 -> 1); the game waits while the sheet is open
+  ok   740x360: a long press on an ability slot shows its Training in the picker ("Shield Bash Lv 1of 14Hits for 80, every ")
+  ok   740x360: no page errors
+tavern perks and rumours (C3)
+  ok   C3: an unbuilt Tavern has no Omen forecast
+  ok   C3: Tavern 1 forecasts tomorrow's actual Omen
+  ok   C3: Tavern 2 keeps the one-day forecast
+  ok   C3: Tavern 3 forecasts two actual Omens
+  ok   C3: reading perks, gossip and rumours never changes the Almanac
+  ok   C3: tier copy describes tomorrow's Omen, named rumours and the six-hour board
+  ok   C3: top-tier copy retains the bounty and Renown perks
+  ok   C3: a closed camp does not reveal forecasts
+  ok   C3: Tavern 4 still raises bounty rewards by exactly 15%
+  ok   C3: the first four bounties pay only their normal Renown
+  ok   C3: after save/reload the fifth bounty pays exactly one additional Renown
+  ok   C3: a repeated claim and Tavern reads cannot duplicate gold or Renown
+  ok   C3: named rumours cannot be accepted at Tavern 1
+  ok   C3: Tavern 2 offers an actionable Dorrie rumour
+  ok   C3: hearing the rumour brings one Dorrie star spot without replacing random applicants or charging gold
+  ok   C3: Dorrie's accepted rumour survives reload and cannot duplicate her
+  ok   C3: Nan waiting on the board does not unlock Rook's task
+  ok   C3: mining before accepting the rumour gives no Rook progress
+  ok   C3: Rook's work can be accepted once with Nan at camp
+  ok   C3: paused play and invalid offline durations add no mining progress
+  ok   C3: fighting, other nodes, harvest counts and gatherer work do not advance Rook
+  ok   C3: a save round trip preserves ten minutes of accepted mining
+  ok   C3: 19 minutes 59 seconds is still short of Rook's twenty-minute task
+  ok   C3: twenty minutes of grade-2 ore work brings Rook once
+  ok   C3: extra mining and repeated acceptance cannot duplicate Rook
+  ok   C3: Nan waiting on the board does not unlock Rook's task
+  ok   C3: offline fighting adds no mining progress
+  ok   C3: offline grade-2 mining credits its eligible elapsed work
+  ok   C3: saved offline mining can complete the same twenty-minute route
+  ok   C3: existing progress-fallback arrivals make their rumours complete
+  ok   C3: fallback routes and Tavern rumours never produce duplicate named applicants
+  ok   C3: Tavern perks never touch online capabilities
+  ok   C3: no Tavern perk handler errors
+gatherer engine gaps (C1)
+  ok   C1: the Tavern grants two Tents; Tam occupies one
+  ok   C1: Tents replace the Bunkhouse in the camp, capped at ten
+  ok   C1: Tent 3 cannot start before Hearth 4
+  ok   C1: Tent 3 costs 23,000 gold, 120 Birch, 80 Flax Fibre and 40 Duskfang Pelt
+  ok   C1: starting Tent 3 pays once and keeps capacity at two until completion
+  ok   C1: Tent 3 takes one hour
+  ok   C1: cancelling a started Tent refunds half its gold and materials
+  ok   C1: cancelling an unstarted Tent returns its entire gold and material cost
+  ok   C1: a completed Tent increases the hiring cap once
+  ok   C1: Tent 4 requires the Coast
+  ok   C1: Tent 4 opens on reaching the Coast
+  ok   C1: Tent 5 stays closed before zone 50
+  ok   C1: Tent 5 retains its authored price and explains its unavailable materials
+  ok   C1: Tent 6 stays closed before zone 71
+  ok   C1: Tent 6 retains its authored price and explains its unavailable materials
+  ok   C1: Tent 7 stays closed before zone 85
+  ok   C1: Tent 7 retains its authored price and explains its unavailable materials
+  ok   C1: Tent 8 stays closed before zone 106
+  ok   C1: Tent 8 retains its authored price and explains its unavailable materials
+  ok   C1: Tent 9 stays closed before zone 120
+  ok   C1: Tent 9 retains its authored price and explains its unavailable materials
+  ok   C1: Tent 10 stays closed before zone 141
+  ok   C1: Tent 10 retains its authored price and explains its unavailable materials
+  ok   C1: every rarity and former duration trait has a four-hour base, by day and night
+  ok   C1: higher levels also keep the flat four-hour shift
+  ok   C1: Tam is Legendary and his first shift is free
+  ok   C1: exactly Tam's first three started shifts are free
+  ok   C1: Send again repeats the previous node and pays the fourth shift fee
+  ok   C1: Send again never sends an already busy gatherer twice
+  ok   C1: two shifts pay both 2,000-gold fees at send
+  ok   C1: recalling after an hour refunds only the unstarted shift
+  ok   C1: recall awards one hour of haul and work credit, with only seeded rounding
+  ok   C1: a second recall pays nothing and gatherers give no hero skill or tool XP
+  ok   C1: an unpaid gatherer stays home unchanged
+  ok   C1: the prepaid second shift waits thirty minutes before departure
+  ok   C1: recall during rest refunds the next fee without adding work
+  ok   C1: a full Storehouse stops the queue and refunds the unstarted shift
+  ok   C1: repeated catch-up or recall cannot refund the blocked queue twice
+  ok   C1: Empty pack discards the blocked haul and frees the gatherer
+  ok   C1: a save round trip preserves active shift, queued seed, fees and counters
+  ok   C1: both queued shifts pay the same after reload and offline, including the half-hour rest
+  ok   C1: levelling between queued shifts does not reprice prepaid fees
+  ok   C1: recalling an overdue first shift catches up, then recalls one hour of the already-started second shift without refund
+  ok   C1: recalling Tam during rest consumes only the free shift he actually started
+  ok   C1: staggered Friendly/Felling queues and at-camp Chatterbox XP match online and saved offline catch-up
+  ok   C1: Send again repeats the previous two-shift queue and charges its current full price
+  ok   C1: Send all preview reports one of two ready gatherers and its 2,000-gold cost without changing state
+  ok   C1: Send all again starts the cheapest affordable job first and an old last-job record defaults to one shift
+  ok   C1: simultaneous queued departures apply Felling Song exactly once
+  ok   C1: Loom 2 brings Gammer Loy to a star spot even when three random applicants wait
+  ok   C1: a named applicant cannot be turned away
+  ok   C1: named star spots neither expire nor duplicate over a month
+  ok   C1: a route arrival pays the Region 1 Legendary hire fee
+  ok   C1: a hired named gatherer is marked hired in their star spot
+  ok   C1: letting a named gatherer go restores their star spot and preserves their level for free rehire
+  ok   C1: 1,000 random applicants are Common–Epic only, with Rare/Epic pity intact
+  ok   C1: progress fallback does not reveal Nan or Bracken before zone 25
+  ok   C1: zone 25 brings Nan and Bracken even without their optional hero/elder routes
+  ok   C1: zone 30 brings Rook and Fennel without their unfinished rumour/quest systems
+  ok   C1: zone 32 brings Dorrie while the unavailable Hunter route remains closed
+  ok   C1: the ninetieth-applicant pity brings a named star spot rather than rolling a random Legendary
+  ok   C1: no gatherer or camp handler errors
+gatherers at camp (C2)
+  ok   C2: talk info identifies the gatherer and gives a real conversation line
+  ok   C2: reading talk info is pure and a missing gatherer has no panel data
+  ok   C2: ordinary conversation advances its own counter with an earned story waiting
+  ok   C2: ordinary talk does not mark a level story heard
+  ok   C2: the talk action persists its counter while preserving the pending story
+  ok   C2: a stale conversation target cannot change story state
+  ok   C2: mine conversation offers only open jobs in its own profession
+  ok   C2: the mine conversation's offered job starts the real gatherer shift
+  ok   C2: wood conversation offers only open jobs in its own profession
+  ok   C2: the wood conversation's offered job starts the real gatherer shift
+  ok   C2: forage conversation offers only open jobs in its own profession
+  ok   C2: the forage conversation's offered job starts the real gatherer shift
+  ok   C2: a gatherer already away cannot be sent from stale conversation data
+  ok   C2: a pack waiting in camp keeps every send action unavailable
+  ok   C2: an unpaid gatherer gets the core fee checks in the conversation
+  ok   C2: the wide 1,024×192 camp scene includes Tam at home
+  ok   C2: an away gatherer leaves the camp actors and appears in the away list
+  ok   C2: an overdue return stays off the scene until its job is settled
+  ok   C2: a gatherer resting between shifts remains visible in camp
+  ok   C2: a gatherer with a waiting pack remains visible in camp
+  ok   C2: ten workers have distinct, generously sized hit areas inside the panorama
+  ok   C2: reduced motion keeps the procedural worker sprites and camp painting still
+  ok   C2: drawing and laying out the camp never change jobs, conversations or story counters
+  ok   C2: all twelve job/outfit variants bake and paint through the real B1 character renderer
+  ok   C2: repeated scene draws reuse worker sprite caches
+  ok   C2: the real Camp mount provides a keyboard-focusable native horizontal panorama
+  ok   C2: the scene exposes the gatherer as a named native button
+  ok   C2: dragging from a worker does not open a conversation
+  ok   C2: a cancelled touch does not accidentally talk
+  ok   C2: keyboard activation opens the conversation and counts exactly one talk
+  ok   C2: panel refreshes neither retell a conversation nor consume the pending story
+  ok   C2: the actual talk picker renders the miner’s available profession nodes
+  ok   C2: an affordability refresh preserves keyboard focus in the job picker
+  ok   C2: clicking a talk job starts the real mining shift and charges its actual fee
+  ok   C2: sending removes the scene button and disables another send in the open panel
+  ok   C2: closing after departure restores focus to the scene when the worker button is gone
+  ok   C2: the status strip shortcut targets the existing Tavern crew section
+  ok   C2: the real Tavern mounts hired gatherers before new applicants under its heading
+  ok   C2: the status strip counts ready, away, resting and waiting-pack gatherers separately
+  ok   C2: the mounted scene keeps resting and pack workers present while the outgoing miner stays absent
+  ok   C2: no camp conversation handler errors
+save import recovery UI (C5)
+  ok   C5 UI: repeated clipboard failure leaves one selected, valid manual-copy field
+  ok   C5 UI: checking and arming import neither writes the save nor changes the live game
+  ok   C5 UI: confirmed import verifies exact candidate bytes before requesting reload
+  ok   C5 UI: a no-op reload keeps a visible recovery state and prevents a second import
+  ok   C5 UI: real autosave, pagehide and visibility handlers cannot overwrite the verified import
+  ok   C5 UI: pending recovery can export the captured original game in one reusable manual-copy field
+  ok   C5 UI: the pending-import guard only blocks the game save key
+  ok   C5 UI: Retry reload rechecks the candidate and does not write it again
+  ok   C5 UI: Cancel restores the exact captured current-game snapshot and releases the guard
+  ok   C5 UI: the real pagehide save resumes after a verified restore
+  ok   C5 UI: a thrown reload keeps the verified import protected and offers recovery
+  ok   C5 UI: retrying after a blocked reload keeps the same imported bytes
+  ok   C5 UI: a changed stored candidate stops further reloads while keeping the guard
+  ok   C5 UI: a swallowed import write is detected by readback and never reloads
+  ok   C5 UI: failed write verification plus failed restore retains the recovery guard
+  ok   C5 UI: lifecycle saves remain blocked while restore cannot be verified
+  ok   C5 UI: restoring after storage recovers releases the guard only after exact readback
+  ok   C5 UI: a failed cancellation leaves the import protected instead of falsely resuming autosave
+  ok   C5 UI: retrying cancellation restores the original snapshot once storage accepts writes
+  ok   C5 UI: throwing storage on a first import enters recovery without attempting reload
+  ok   C5 UI: a current-game backup remains exportable even while storage throws
+  ok   C5 UI: a game without an earlier persisted save recovers its captured live snapshot
+  ok   C5 UI: save recovery and real lifecycle callbacks produce no handler errors
+camp guide tracking (C2, browser)
+  ok   C2 740x360: first showing an offscreen target still scrolls it into view ({"same":true,"top":106.1875,"bottom":150.1875,"scroll":567,"visible":true,"shown":true,"error":0.1875})
+  ok   C2 740x360: the real Workbench target starts visible and marked ({"same":true,"top":164.1875,"bottom":208.1875,"scroll":509,"visible":true,"shown":true,"error":0.1875})
+  ok   C2 740x360: native panel scrolling tracks a visible target within 2px before the next guide poll ({"same":true,"top":146.1875,"bottom":190.1875,"scroll":527,"visible":true,"shown":true,"error":0.1875})
+  ok   C2 740x360: content reflow above the same target moves its ring within 2px without scrolling ({"same":true,"top":170.1875,"bottom":214.1875,"scroll":527,"visible":true,"shown":true,"error":0.1875})
+  ok   C2 740x360: scrolling away from a target stays where the player left it across guide polls ({"same":true,"top":-69.8125,"bottom":-25.8125,"scroll":767,"visible":false,"shown":true,"error":0.1875})
+  ok   C2 740x360: a resize notification does not pull the player back to an offscreen target
+  ok   C2 740x360: a moving stage keeps the cached guide marker ({"stage0":{"stage":true,"top":44,"shown":true,"transform":"translate(369px, 211px)"},"stage1":{"stage":true,"top":57,"shown":true,"transform":"translate(369px, 211px)"}})
+  ok   C2 740x360: no browser errors during guide tracking
+  ok   C2 844x390: first showing an offscreen target still scrolls it into view ({"same":true,"top":105.875,"bottom":149.875,"scroll":543,"visible":true,"shown":true,"error":0.125})
+  ok   C2 844x390: the real Workbench target starts visible and marked ({"same":true,"top":163.875,"bottom":207.875,"scroll":485,"visible":true,"shown":true,"error":0.125})
+  ok   C2 844x390: native panel scrolling tracks a visible target within 2px before the next guide poll ({"same":true,"top":145.875,"bottom":189.875,"scroll":503,"visible":true,"shown":true,"error":0.125})
+  ok   C2 844x390: content reflow above the same target moves its ring within 2px without scrolling ({"same":true,"top":169.875,"bottom":213.875,"scroll":503,"visible":true,"shown":true,"error":0.125})
+  ok   C2 844x390: scrolling away from a target stays where the player left it across guide polls ({"same":true,"top":-70.125,"bottom":-26.125,"scroll":743,"visible":false,"shown":true,"error":0.125})
+  ok   C2 844x390: a resize notification does not pull the player back to an offscreen target
+  ok   C2 844x390: a moving stage keeps the cached guide marker ({"stage0":{"stage":true,"top":44,"shown":true,"transform":"translate(443px, 230px)"},"stage1":{"stage":true,"top":57,"shown":true,"transform":"translate(443px, 230px)"}})
+  ok   C2 844x390: no browser errors during guide tracking
+trade save compatibility (C4, C5)
+  ok   C4/C5: a real active trade code preserves every field without mutating the live save
+  ok   C4/C5: a fresh game can validate an active trade import without needing the importer’s camp or cargo state
+  ok   C4/C5: the CLI preserves active cargo, departure time and frozen quote
+  ok   C4/C5: malformed imported trade data is rejected before changing the live game
+  ok   C4/C5: malformed imported trade data is rejected before changing the live game
+  ok   C4/C5: malformed imported trade data is rejected before changing the live game
+  ok   C4/C5: loading the validated candidate preserves the reserved cargo and quote without a second debit or early reward
+  ok   C4/C5: imported active trade settles once through the real offline event and keeps the previous gathering assignment
+  ok   C4/C5: reloading the settled save cannot pay again or refund sold cargo
+  ok   C4: the actual trade completion message matches its quiet notice rule
+  ok   C4/C5: a recalled trade with a full Storehouse round-trips its waiting refund marker unchanged
+  ok   C4/C5: a saved refund waits for room for its whole parcel and retains its source marker and original gathering counters
+  ok   C4/C5: another code/import/load cycle unloads the waiting refund exactly once with no gold or gathered-stat gain
+  ok   C4/C5: trade save-code and reload paths produce no handler errors
+gatherer trait balance (C8)
+  ok   C8: Packmule never rolls while every gathering skill is below grade 3
+  ok   C8: mine alone opens Packmule applicants; retired duration/penalty traits stay excluded
+  ok   C8: wood alone opens Packmule applicants; retired duration/penalty traits stay excluded
+  ok   C8: forage alone opens Packmule applicants; retired duration/penalty traits stay excluded
+  ok   C8: an existing Packmule remains readable below the applicant gate; its new low-grade sends use the approved grade condition
+  ok   C8: a previously rolled Packmule applicant can still be hired below the new-roll gate
+  ok   C8: 3750 rarity/level/profession/family/grade/time environments preserve share and approved grade identities (single 1.2, whole 1.4000000000000001)
+  ok   C8: 392 real 24h gathering schedules bound one swapped direct-yield slot at 20% (max 1.2000000000000002); same fees, fixed 4h and seeded rounding
+  ok   C8: real daily whole two-trait rolls are at most 1.40x no traits, including Friendly multiplication (max 1.4)
+  ok   C8: Early Riser 5/9/13/17/21/25 sends ×1 shifts yield 1.0666666666666667x per day from send snapshots
+  ok   C8: Early Riser 5/17 sends ×2 shifts yield 1.1x per day from send snapshots
+  ok   C8: Early Riser 5 sends ×2 shifts yield 1.2x per day from send snapshots
+  ok   C8: Early Riser 11/23 sends ×2 shifts yield 1x per day from send snapshots
+  ok   C8: 4:59 initial rate survives a queued departure and worker level-up
+  ok   C8: 4:59 queued payout matches saved offline catch-up
+  ok   C8: 5:00 initial rate survives a queued departure and worker level-up
+  ok   C8: 5:00 queued payout matches saved offline catch-up
+  ok   C8: 10:59 initial rate survives a queued departure and worker level-up
+  ok   C8: 10:59 queued payout matches saved offline catch-up
+  ok   C8: 11:00 initial rate survives a queued departure and worker level-up
+  ok   C8: 11:00 queued payout matches saved offline catch-up
+  ok   C8: Friendly delay 0h multiplies actual overlap (1.265x)
+  ok   C8: Friendly delay 2h multiplies actual overlap (1.2075x)
+  ok   C8: Friendly delay 4h multiplies actual overlap (1.15x)
+  ok   C8: Friendly delay 0h with half-shift recall multiplies actual overlap (1.2075x)
+  ok   C8: old IDs remain readable and saved running rates load unchanged
+  ok   C8: a pre-balance queued job retains its stored rate after the first return
+  ok   C8: the real v5 save validator still accepts legacy trait IDs and frozen jobs
+  ok   C8: approved utility find, XP, meal and away numbers are unchanged
+  ok   C8: camp utilities remain active while the worker stays home
+  ok   C8: sending the utility worker removes their at-camp benefits
+  ok   C8: trait probes produce no core handler errors
+milestone feats (C11)
+  ok   C11 early: every saved earned flag/date transfers; retired state/API are absent
+  ok   C11 early: measured milestone rewards, points and crafting counters unchanged
+  ok   C11 early: 21 fixed Codex tiles, 2 Light each, unchanged half/Seal gates
+  ok   C11 early: dmg retains its independent milestone multiplier
+  ok   C11 early: xp retains its independent milestone multiplier
+  ok   C11 early: skillXp retains its independent milestone multiplier
+  ok   C11 early: gatherSpeed retains its independent milestone multiplier
+  ok   C11 early: crit retains its independent milestone multiplier
+  ok   C11 early: essence retains its independent milestone multiplier
+  ok   C11 early: offline retains its independent milestone multiplier
+  ok   C11 early: new export contains only Deeds progress
+  ok   C11 early: first load, export/import and repeated load grant no duplicate feats or notices
+  ok   C11 early: no handler errors
+  ok   C11 mid: every saved earned flag/date transfers; retired state/API are absent
+  ok   C11 mid: measured milestone rewards, points and crafting counters unchanged
+  ok   C11 mid: 21 fixed Codex tiles, 2 Light each, unchanged half/Seal gates
+  ok   C11 mid: dmg retains its independent milestone multiplier
+  ok   C11 mid: xp retains its independent milestone multiplier
+  ok   C11 mid: skillXp retains its independent milestone multiplier
+  ok   C11 mid: gatherSpeed retains its independent milestone multiplier
+  ok   C11 mid: crit retains its independent milestone multiplier
+  ok   C11 mid: essence retains its independent milestone multiplier
+  ok   C11 mid: offline retains its independent milestone multiplier
+  ok   C11 mid: new export contains only Deeds progress
+  ok   C11 mid: first load, export/import and repeated load grant no duplicate feats or notices
+  ok   C11 mid: no handler errors
+  ok   C11 late: every saved earned flag/date transfers; retired state/API are absent
+  ok   C11 late: measured milestone rewards, points and crafting counters unchanged
+  ok   C11 late: 21 fixed Codex tiles, 2 Light each, unchanged half/Seal gates
+  ok   C11 late: dmg retains its independent milestone multiplier
+  ok   C11 late: xp retains its independent milestone multiplier
+  ok   C11 late: skillXp retains its independent milestone multiplier
+  ok   C11 late: gatherSpeed retains its independent milestone multiplier
+  ok   C11 late: crit retains its independent milestone multiplier
+  ok   C11 late: essence retains its independent milestone multiplier
+  ok   C11 late: offline retains its independent milestone multiplier
+  ok   C11 late: new export contains only Deeds progress
+  ok   C11 late: first load, export/import and repeated load grant no duplicate feats or notices
+  ok   C11 late: no handler errors
+  ok   C11 mixed v5 record: max counter, OR epic, original earned date and known flags survive once
+  ok   C11 fixture comparison accepts preserved mixed progress after conversion
+  ok   C11 fixture comparison rejects lost flags, dates, crafting counts and epic progress
+  ok   C11 fixture comparison rejects retained legacy state and unrelated saved-field changes
+  ok   C11 all 21 saved flags/dates survive alongside an earned capstone, selected title and trophy pin
+  ok   C11 malformed optional v5 achievement record rejected without mutating game
+  ok   C11 malformed optional v5 achievement record rejected without mutating game
+  ok   C11 malformed optional v5 achievement record rejected without mutating game
+  ok   C11 malformed optional v5 achievement record rejected without mutating game
+  ok   C11 malformed optional v5 achievement record rejected without mutating game
+  ok   C11 malformed optional v5 achievement record rejected without mutating game
+  ok   C11 malformed optional v5 achievement record rejected without mutating game
+  ok   C11 malformed optional v5 achievement record rejected without mutating game
+  ok   C11 malformed optional v5 achievement record rejected without mutating game
+  ok   C11 new counters reject negative counts and non-boolean epic flags
+  ok   C11 zone10: exact earning boundary and permanent reward after statistic drops
+  ok   C11 zone25: exact earning boundary and permanent reward after statistic drops
+  ok   C11 zone50: exact earning boundary and permanent reward after statistic drops
+  ok   C11 lv20: exact earning boundary and permanent reward after statistic drops
+  ok   C11 lv50: exact earning boundary and permanent reward after statistic drops
+  ok   C11 kill1k: exact earning boundary and permanent reward after statistic drops
+  ok   C11 kill25k: exact earning boundary and permanent reward after statistic drops
+  ok   C11 kill100k: exact earning boundary and permanent reward after statistic drops
+  ok   C11 gold1m: exact earning boundary and permanent reward after statistic drops
+  ok   C11 gold1b: exact earning boundary and permanent reward after statistic drops
+  ok   C11 mine25: exact earning boundary and permanent reward after statistic drops
+  ok   C11 wood25: exact earning boundary and permanent reward after statistic drops
+  ok   C11 smith25: exact earning boundary and permanent reward after statistic drops
+  ok   C11 forge1: exact earning boundary and permanent reward after statistic drops
+  ok   C11 forge25: exact earning boundary and permanent reward after statistic drops
+  ok   C11 epic: exact earning boundary and permanent reward after statistic drops
+  ok   C11 uniq1: exact earning boundary and permanent reward after statistic drops
+  ok   C11 uniq3: exact earning boundary and permanent reward after statistic drops
+  ok   C11 uniq7: exact earning boundary and permanent reward after statistic drops
+  ok   C11 bty10: exact earning boundary and permanent reward after statistic drops
+  ok   C11 bty50: exact earning boundary and permanent reward after statistic drops
+  ok   C11 item semantics: unique additions excluded; legendary does not invent epic credit
+  ok   C11 live item additions earn once on the one-second cadence with one log notice each
+  ok   C11 notice policy: small milestone log replaces removed legacy rule
+  ok   C11 all milestone rewards retain 14% damage and 10% keen; capped track damage combines to x1.197
+  ok   C11 disabling track bonuses leaves milestone rewards intact
+  ok   C11 milestone keen uses the shared 40% cap
+  ok   C11 milestones add no capstone requirement, trophy pin, title or cosmetic
+milestone feats UI (C11, browser)
+  ok   C11 UI: converted First Spark appears once in the unified feat grid with its exact bonus
+  ok   C11 UI: legacy v5 load removes old state without opening feat cards
+  ok   C11 UI: milestone detail shows its reward and has no invented title or trophy controls
+  ok   C11 UI: Classic group/grid are removed
+  ok   C11 UI: Journal retains the lifetime crafting count
+  ok   C11 UI: live Busy Anvil earning updates the grid without a hard-feat card
+  ok   C11 UI: converted save reload retains counters/feats quietly
+  ok   C11 UI: no browser errors
+C9 hero registry (core)
+  ok   C9: 32 unique heroes, with the three starters first in both pickers
+  ok   C9: every registry row has a bio, title, rarity, role, type, signature status and route
+  ok   C9: designed roster matches eight heroes per role and the 7/7/6/6/6 damage types
+  ok   C9: only Wren, Tobin and Pip have complete, unlocked solo kits
+  ok   C9: picker and token-chance reads do not mutate state or consume resources
+  ok   C9: unknown and inherited IDs cannot unlock or pick heroes
+  ok   C9: an incomplete quest cannot charge or unlock
+  ok   C9: quest hand-in spends the named grade first, persists completion and shows Coming soon without a kit
+  ok   C9: repeating a quest claim never spends again
+  ok   C9: Aldric checks the tuned Renown balance and charges his gold once
+  ok   C9: repeated claims and route probes do not duplicate unlocks or charges
+  ok   C9: a route configured to spend Renown pays once, atomically with the unlock
+  ok   C9: a completed free Renown route remains unlocked after the balance changes
+  ok   C9: grenna token is guaranteed by its tuned pity and cannot be won twice
+  ok   C9: ferrin token is guaranteed by its tuned pity and cannot be won twice
+  ok   C9: ragna token is guaranteed by its tuned pity and cannot be won twice
+  ok   C9: isolde token is guaranteed by its tuned pity and cannot be won twice
+  ok   C9: Grenna token does not roll below its zone gate
+  ok   C9: a Coast place cannot masquerade as the Hollow’s Quarry boss
+  ok   C9: an eligible Quarry boss unlocks Grenna’s route, but cannot supply her kit
+  ok   C9: solo boss quest, Star Chart, bestiary and Kingslayer conditions complete their routes
+  ok   C9: Loveday’s designed letters and gem hand-in route is available without a solo kit
+  ok   C9: unspecified future unlock prices stay unclaimable with honest copy
+  ok   C9: completed paid and free routes survive save/reload unchanged
+  ok   C9: the expanded unlock state round-trips through v5 save codes
+  ok   C9: the validator hook accepts old v5 Renown-only state and rejects unsafe route records
+  ok   C9: an existing v5 Renown-only save loads new defaults without a wipe
+  ok   C9: save import rejects unsafe unlock records without mutating the live game
+  ok   C9: save import rejects unsafe unlock records without mutating the live game
+  ok   C9: save import rejects unsafe unlock records without mutating the live game
+  ok   C9: save import rejects unsafe unlock records without mutating the live game
+  ok   C9: a solo registration without shipped art cannot become playable
+  ok   C9: a complete kit stays locked until its route is complete
+  ok   C9: supplying a complete kit and completing its route makes a future hero playable
+  ok   C9: route scenarios emit no handler errors
+C9 hero registry (browser)
+  ok   C9 360x740: new game shows all 32 heroes and exactly three unlocked starters
+  ok   C9 360x740: locked cards keep their bios and explain the route in plain words
+  ok   C9 360x740: selecting a locked hero cannot begin the game
+  ok   C9 360x740: route-complete Bram shows Coming soon and cannot be picked without a kit
+  ok   C9 360x740: the complete new-game registry fits the viewport width
+  ok   C9 360x740: camp chips show the playable heroes and the ready unlock, not the whole roster (wren,tobin,pip,bram)
+  ok   C9 360x740: camp shows the same registry and a ready quest hand-in
+  ok   C9 360x740: the first unlock press asks for a second tap without charging
+  ok   C9 360x740: confirming pays once and shows Coming soon without switching
+  ok   C9 360x740: an unlocked starter still switches freely and keeps each hero’s level
+  ok   C9 360x740: switching back restores the playing hero’s level and XP
+  ok   C9 360x740: the browser reload keeps route completion without charging again
+  ok   C9 360x740: registry and switch flows raise no browser errors
+  ok   C9 740x360: new game shows all 32 heroes and exactly three unlocked starters
+  ok   C9 740x360: locked cards keep their bios and explain the route in plain words
+  ok   C9 740x360: selecting a locked hero cannot begin the game
+  ok   C9 740x360: route-complete Bram shows Coming soon and cannot be picked without a kit
+  ok   C9 740x360: the complete new-game registry fits the viewport width
+  ok   C9 740x360: camp chips show the playable heroes and the ready unlock, not the whole roster (wren,tobin,pip,bram)
+  ok   C9 740x360: camp shows the same registry and a ready quest hand-in
+  ok   C9 740x360: the first unlock press asks for a second tap without charging
+  ok   C9 740x360: confirming pays once and shows Coming soon without switching
+  ok   C9 740x360: an unlocked starter still switches freely and keeps each hero’s level
+  ok   C9 740x360: switching back restores the playing hero’s level and XP
+  ok   C9 740x360: the browser reload keeps route completion without charging again
+  ok   C9 740x360: registry and switch flows raise no browser errors
+bulk salvage (C23 core)
+  ok   C23: five actual crafts salvage four spares, protecting the worn tool and equipment
+  ok   C23: batch materials match the sum of unchanged per-item previews
+  ok   C23: duplicate requested IDs still produce exactly one batch toast and one save
+  ok   C23: repeated/stale and invalid batches neither repay nor save
+  ok   C23: uniques and items equipped after selection are protected by the core
+  ok   C23: ambiguous duplicate bag IDs are not destroyed or paid twice
+  ok   C23: combined returns stop at Storehouse capacity
+  ok   C23: existing salvage modifier and affix essence chance still run for each item
+  ok   C23: the existing salvage notice matcher covers the batch toast
+  ok   C23: no core handler errors
+bulk salvage (C23 browser)
+  ok   C23 740x360: real Salvage spares selects four unworn crafts and protects worn/unique buttons
+  ok   C23 740x360: selection toggles instead of opening an item sheet
+  ok   C23 740x360: keyboard selection preserves focus and toggles the item back
+  ok   C23 740x360: one in-page review combines returns without destroying items
+  ok   C23 740x360: confirm is in view, receives taps and creates no horizontal page overflow
+  ok   C23 740x360: an ordinary stock gain with ample room keeps the same reviewed confirmation button
+  ok   C23 740x360: confirming removes exactly four and pays the displayed aggregate; worn gear is unchanged
+  ok   C23 740x360: no-worn ranking keeps one best copy per kind by grade, plus, rarity, then stable tie
+  ok   C23 740x360: combined overflow warns even when each item fits on its own
+  ok   C23 740x360: an item equipped after review invalidates confirmation without loss
+  ok   C23 740x360: reduced collectible returns require a fresh review
+  ok   C23 740x360: no browser or handler errors
+  ok   C23 360x740: real Salvage spares selects four unworn crafts and protects worn/unique buttons
+  ok   C23 360x740: selection toggles instead of opening an item sheet
+  ok   C23 360x740: keyboard selection preserves focus and toggles the item back
+  ok   C23 360x740: one in-page review combines returns without destroying items
+  ok   C23 360x740: confirm is in view, receives taps and creates no horizontal page overflow
+  ok   C23 360x740: an ordinary stock gain with ample room keeps the same reviewed confirmation button
+  ok   C23 360x740: confirming removes exactly four and pays the displayed aggregate; worn gear is unchanged
+  ok   C23 360x740: no-worn ranking keeps one best copy per kind by grade, plus, rarity, then stable tie
+  ok   C23 360x740: combined overflow warns even when each item fits on its own
+  ok   C23 360x740: an item equipped after review invalidates confirmation without loss
+  ok   C23 360x740: reduced collectible returns require a fresh review
+  ok   C23 360x740: no browser or handler errors
+resource icons (C26)
+  ok   C26: all 35 materials (7 families x grades 1-5) show the approved icon and name
+  ok   C26: matIcon (60-gfx) shows the approved icon first
+  ok   C26: no core errors
+offline accounting and schedules (C14)
+  ok   C14: the fight fixture explicitly enables the current Auto setting
+  ok   C14: real live and away harvests each add their actual units to Gathered exactly once
+  ok   C14: removing duplicate statistics preserves the actual away material report
+  ok   C14 0.5h: hero work respects its cap; paid worker shifts follow their own schedule without adding hero Gathered units
+  ok   C14 0.5h: the reserved trade settles at its two-hour deadline exactly once
+  ok   C14 0.5h: both camp builds retain their ordered twenty-minute schedules
+  ok   C14 0.5h: Tavern arrivals use wall time and the heard Rook lead earns its required mining time once
+  ok   C14 0.5h: gathering banks at most three minutes of Well Rested with no handler errors
+  ok   C14 2h: hero work respects its cap; paid worker shifts follow their own schedule without adding hero Gathered units
+  ok   C14 2h: the reserved trade settles at its two-hour deadline exactly once
+  ok   C14 2h: both camp builds retain their ordered twenty-minute schedules
+  ok   C14 2h: Tavern arrivals use wall time and the heard Rook lead earns its required mining time once
+  ok   C14 2h: gathering banks at most three minutes of Well Rested with no handler errors
+  ok   C14 4h: hero work respects its cap; paid worker shifts follow their own schedule without adding hero Gathered units
+  ok   C14 4h: the reserved trade settles at its two-hour deadline exactly once
+  ok   C14 4h: both camp builds retain their ordered twenty-minute schedules
+  ok   C14 4h: Tavern arrivals use wall time and the heard Rook lead earns its required mining time once
+  ok   C14 4h: gathering banks at most three minutes of Well Rested with no handler errors
+  ok   C14 8h: hero work respects its cap; paid worker shifts follow their own schedule without adding hero Gathered units
+  ok   C14 8h: the reserved trade settles at its two-hour deadline exactly once
+  ok   C14 8h: both camp builds retain their ordered twenty-minute schedules
+  ok   C14 8h: Tavern arrivals use wall time and the heard Rook lead earns its required mining time once
+  ok   C14 8h: gathering banks at most three minutes of Well Rested with no handler errors
+  ok   C14 24h: hero work respects its cap; paid worker shifts follow their own schedule without adding hero Gathered units
+  ok   C14 24h: the reserved trade settles at its two-hour deadline exactly once
+  ok   C14 24h: both camp builds retain their ordered twenty-minute schedules
+  ok   C14 24h: Tavern arrivals use wall time and the heard Rook lead earns its required mining time once
+  ok   C14 24h: gathering banks at most three minutes of Well Rested with no handler errors
+  ok   C14 0.5h: live and away pick mastery match within 1.1s at level/progress [3,899.6000000000186] / [4,0] (-0.40s)
+  ok   C14 0.5h: matched-duration live/away harvest yields stay within 5% after offline boost normalization (0.09%)
+  ok   C14 2h: live and away pick mastery match within 1.1s at level/progress [7,899.4999999999575] / [7,900] (-0.50s)
+  ok   C14 2h: matched-duration live/away harvest yields stay within 5% after offline boost normalization (0.20%)
+  ok   C14 4h: live and away pick mastery match within 1.1s at level/progress [10,898.999999999661] / [10,900] (-1.00s)
+  ok   C14 4h: matched-duration live/away harvest yields stay within 5% after offline boost normalization (-1.28%)
+  ok   C14 8h: live and away pick mastery match within 1.1s at level/progress [14,1499.0999999988817] / [14,1500] (-0.90s)
+  ok   C14 8h: matched-duration live/away harvest yields stay within 5% after offline boost normalization (-1.96%)
+  ok   C14 24h: live and away pick mastery match within 1.1s at level/progress [20,0] / [20,0] (0.00s)
+  ok   C14 24h: matched-duration live/away harvest yields stay within 5% after offline boost normalization (-2.25%)
+  ok   C14: live and away gathering both reach the mastery cap without excess progress
+  ok   C14: a repeated zero-time away claim cannot award tool mastery twice
+  ok   C14: a second four-hour shift finishes after its half-hour rest, not at eight hours
+  ok   C14: raising the hero cap to 24 hours extends hero work without paying scheduled jobs again
+  ok   C14: two completed shifts merge into one truthful worker line
+  ok   C14: completed camp builds merge into one source line
+  ok   C14: the named Rook arrival appears in the away report even before a random applicant is due
+  ok   C14: returning reserved cargo during away raises stock by 1000 but earns no hero or trade progress
+  ok   C14: two trades pay separately and merge into one summed return line
+  ok   C14: a subsequent report cannot repeat settled jobs, builds or arrivals
+  ok   C14: ore away harvest units count once
+  ok   C14: wood away harvest units count once
+  ok   C14: crystal away harvest units count once
+  ok   C14: fibre away harvest units count once
+  ok   C14: herb away harvest units count once
+  ok   C14: full-pile Spillover harvests also count exactly once and keep their material report
+  ok   C14: away fighting spends the resting bank without applying a live-only damage bonus to the whole absence
+  ok   C14: accounting, multi-return and refund probes have no core handler errors
+gather scene warmup (C12, browser)
+  ok   C12 844x390: all four real gathering scenes finish without endless restarts ([["gmine|584|346|0",{"calls":10,"done":1}],["gglade|584|346|0",{"calls":10,"done":1}],["gwoods|584|346|0",{"calls":10,"done":1}],["gmeadow|584|346|0",{"calls":10,"done":1}]])
+  ok   C12 844x390: reopening Gather reuses the completed warm-up
+  ok   C12 920x420: all four real gathering scenes finish without endless restarts ([["gmine|660|376|0",{"calls":10,"done":1}],["gglade|660|376|0",{"calls":10,"done":1}],["gwoods|660|376|0",{"calls":10,"done":1}],["gmeadow|660|376|0",{"calls":10,"done":1}]])
+  ok   C12 920x420: reopening Gather reuses the completed warm-up
+  ok   C12: real scene warm-up has no page errors
+hunting hidden (C24 browser)
+  ok   C24 on: an imported Hunting selection loads as it was
+  ok   C24 on: Gather has a Hunting view; the beast frames, the spear reach and the grounds underlay are there
+  ok   C24 flag false: Gathering and navigation keep Hunting hidden
+  ok   C24 flag false: imported spear stays out of the Bag
+  ok   C24 flag false: imported item and picker entrypoints cannot open hidden spear sheets
+  ok   C24 flag false: equipment has no empty or selectable spear slot
+  ok   C24 flag false: crafting offers no hidden spear recipe
+  ok   C24 flag false: Hide help offers fighting without a hidden Hunting action
+  ok   C24 flag true: Gathering and navigation keep Hunting hidden
+  ok   C24 flag true: imported spear stays out of the Bag
+  ok   C24 flag true: imported item and picker entrypoints cannot open hidden spear sheets
+  ok   C24 flag true: equipment has no empty or selectable spear slot
+  ok   C24 flag true: crafting offers no hidden spear recipe
+  ok   C24 flag true: Hide help offers fighting without a hidden Hunting action
+  ok   C24 borrowArt off: no existing scene, sprite or effect fallback is selected
+  ok   C24: no hidden-feature browser errors
+C25 enemy profiles
+  ok   C25: an unmet foe kind reveals nothing
+  ok   C25: one kill reveals its zone, HP and hit (from the foe you beat): {"z":1,"hp":98,"atk":0.6}
+  ok   C25: 1 kill stats, 5 weakness, 15 tell, 50 +5% damage (owner tiers): [[true,false,false,false,1],[true,false,false,false,1],[true,true,false,false,1],[true,true,false,false,1],[true,true,true,false,1],[true,true,true,false,1],[true,true,true,true,1.05]]
+  ok   C25: every Hollow foe has a tell line
+  ok   C25: at 50 kills hits on that kind deal +5% (100 -> 105)
+  ok   C25: the bonus leaves weak / resist labels alone
+  ok   C25: no core errors
+C10a pacing (owner targets)
+  ok   C10a: Hearth 2 is zone 10, a token price, at most 20 of each grade 1 material and a short build: {"z":10,"gold":110,"mats":[["wood",1,20],["ore",1,20],["ess",1,5]],"secs":120}
+  ok   C10a: kill and bounty gold x2 to zone 20, x1 from zone 35: 2 / 2 / 1.47 / 1 / 1
+  ok   C10a: gold still rises into Region 2
+  ok   C10a: one gathering skill reaches level 14 in about 13 min of gathering (13.0 min)
+  ok   C10a: no core errors
+action and menu icons (C26, browser)
+  ok   C26 at 390x844: item tiles show the approved gear icons (old Sword -> Warblade), uniques keep theirs ({"w28":28,"n28":24,"id28":"bow-g3","fit":"none","w48":48,"n48":24,"id48":"warblade-g2","tf48":"scale(2)","uniq":true})
+  ok   C26 at 390x844: a 28 px gear tile shows the 24 px icon unscaled, a 48 px one at x2 (24; 48 px: 24 scale(2))
+  ok   C26 at 390x844: tabs, bell and action bar show the approved icons at native size (6 seen)
+  ok   C26 at 390x844: no page errors
+  ok   C26 at 740x360: item tiles show the approved gear icons (old Sword -> Warblade), uniques keep theirs ({"w28":28,"n28":24,"id28":"bow-g3","fit":"none","w48":48,"n48":24,"id48":"warblade-g2","tf48":"scale(2)","uniq":true})
+  ok   C26 at 740x360: a 28 px gear tile shows the 24 px icon unscaled, a 48 px one at x2 (24; 48 px: 24 scale(2))
+  ok   C26 at 740x360: tabs, bell and action bar show the approved icons at native size (6 seen)
+  ok   C26 at 740x360: no page errors
+  ok   C26 at 1280x800: item tiles show the approved gear icons (old Sword -> Warblade), uniques keep theirs ({"w28":28,"n28":24,"id28":"bow-g3","fit":"none","w48":48,"n48":24,"id48":"warblade-g2","tf48":"scale(2)","uniq":true})
+  ok   C26 at 1280x800: a 28 px gear tile shows the 24 px icon unscaled, a 48 px one at x2 (24; 48 px: 24 scale(2))
+  ok   C26 at 1280x800: tabs, bell and action bar show the approved icons at native size (6 seen)
+  ok   C26 at 1280x800: no page errors
+zones stay where you put them
+  ok   a picked zone holds until you win it, then you move on one zone (zones: 3,4,5,6,7,8,9,10,11,12,13,14,15,16)
+  ok   entering an earlier zone starts at fight 1
+  ok   a zone is 5 fights, then its boss, then the next zone (1/1,2/1,3/1,4/1,5/1,B)
+  ok   a beaten hero gets up in the zone it chose (6 defeats, zone 25)
+  ok   after a lost boss you win one regular fight, then the boss is back (F,k,F)
+C29 turn fights (core)
+  ok   C29: turn fights are the zone fight by default; the parry window is 0.18 s and the dodge 0.35 s (owner)
+  ok   C29: the fight waits on your turn (active only): a minute with no input and the foe has acted at most twice (hero)
+  ok   C29: a hidden page pauses the turn fight clock
+  ok   C29: an hour away earns no fights (active only); gathering is unchanged
+  ok   C29: zone 1 is five turn fights then its boss; the first win drops a Moss Scroll (k,k,k,k,k,B, Scrolls {"moss":1})
+  ok   C29: every change of turn pauses (owner) while a banner says whose turn it is (foe:handoff,hero:handoff,foe:handoff,hero:handoff)
+  ok   C29: Speed sets turn frequency, ties go to the hero, two turns in a row at most (equal hfhfhf, hero x2 hhfhhf, foe x3 ffhffh)
+  ok   C29: each parried hit takes a turn off every cooldown, and parrying the whole move earns one counter ({"cd0":4,"cd":2,"counters":1,"res":"parry,parry"})
+  ok   C29: a dodge avoids its hit with no refund, and the counter needs every hit parried ({"cd0":4,"cd":3,"counters":0,"res":"dodge,parry"})
+  ok   C29: a zone boss has four moves, the third a charged move
+  ok   C29: a charged move takes a turn to gather and a hit of 6% of the boss's HP breaks it (foeCharge,chargeBroken)
+  ok   C29: all 14 of wren's abilities resolve in fights, three slots at a time (ok)
+  ok   C29: all 14 of tobin's abilities resolve in fights, three slots at a time (ok)
+  ok   C29: all 14 of pip's abilities resolve in fights, three slots at a time (ok)
+  ok   C29: each hero starts with their signature only
+  ok   C29: an ability needs its Scroll, and its tier's hero level
+  ok   C29: a higher Scroll can pay for a lower tier, and the ability is learned
+  ok   C29: an ability is learned once, and only by its own hero
+  ok   C29: zone bosses drop Scrolls by zone band; the Fenmother drops the Mother Scroll
+  ok   C29: replayed bosses drop a Scroll about 1 in 5 wins, never 5 dry in a row (16 in 50)
+  ok   C29: zone 1's Thorn Imp has 4 reference Attacks of HP, its Briar Jab is 20% of the reference HP, Speed 9 against Wren's 10 ({"name":"Thorn Imp","hpA":4.140310678444803,"jab":0.2,"ref":1.2,"spd":9,"hero":10})
+  ok   C29: Shield Bash is timed: a Perfect press Guards for 3 enemy turns, a Good one for 2 (["perfect:3","good:2","miss:2"])
+  ok   C29: a missed ring (no press) still resolves the ability, at 70% damage (0.70)
+  ok   C29: Volley has one ring per arrow (perfect,good,miss)
+  ok   C29: each elite trait (Shielded, Leeching, Enraged, Ice-Clad, Cursed) works in turn fights, and an Enraged elite never takes 3 turns in a row (["Shielded Marsh Wraith 22 fhfhffhfhffh","Leeching Marsh Wraith 22 fhfhffhfhffh","Enraged Quarry Golem 22 fhfhffhfhffh","Ice-Clad Quarry Golem 13 fhfhffhfhffh","Cursed Quarry Golem 20 fhfhffhfhffh"])
+  ok   C29: a level 1 hero has no talent points
+  ok   C29: a talent costs 2 points from 1 a level; switching between its two choices is free
+  ok   C29: only a learned ability takes a talent, and one can be given back
+  ok   C29: every talent of every hero (all A, then all B) works in fights (ok)
+  ok   C29: an ability's details give its numbers at your power now (Hits for about 103, Burn 23 a turn.)
+C29 mid-game HP and Wren (core)
+  ok   mid-game HP: for a hero who keeps up (zones 8-34), a landed normal hit costs 8-15% of max HP, a boss hit 25-35%, a charge 60-90% (wren 8: 10/34/81; pip 8: 11/34/81; wren 15: 14/34/81; pip 15: 14/34/81; wren 20: 10/32/72; pip 20: 10/32/71; wren 25: 10/28/65; pip 25: 10/28/64; wren 30: 11/27/74; pip 30: 11/27/74; wren 34: 10/28/62; pip 34: 10/27/62)
+  ok   mid-game HP: at zone 20 a hero who keeps up wins bosses played well in 6-12 turns and 35-85% played casually; Tobin wins nearly all, a hit costs him under a third of Pip's ({"wg":{"win":1,"turns":8.83},"wc":{"win":0.529,"turns":10.32},"pg":{"win":1,"turns":8.58},"pc":{"win":0.769,"turns":9.07},"tc":{"win":1,"turns":13.12},"tobinHit":0.049,"pipHit":0.317})
+  ok   mid-game HP: a gear tier behind, a zone-20 boss hit costs over half your health and its charge kills; a tier ahead, under a fifth (54% / 122%, 17% / 39%)
+  ok   Wren: her max HP in turn fights is x1.2, Pip's and Tobin's as before (1.200, 1.000, 1.000)
+  ok   Wren's Out of Reach: after she dodges a hit, the rest of that move hits her for 70% (Pip: as before) ({"rw":{"n":2,"x":0.7,"reach":1},"rp":{"n":2,"x":1,"reach":0}})
+  ok   mid-game HP: a Deepwell foe at zone 20 keeps the first reference HP (1.2x) and its hits; a zone foe there meets the new one ({"ref":1.2,"hx":1,"zone":4})
+removed systems (W2-C)
+  ok   removed systems: none of the removed source files is back
+  ok   removed systems: no code, data, CSS or markup reads a removed global, save field or building
+  ok   removed old-save code and party leftovers: no undefined global is read, no migrate function is left
+  ok   removed old-save code: none of the removed names exists in the game
+  ok   removed old-save code: a new save has no migration fields (S.cls.mig, S.store.mig, S.hands.mig)
+  ok   removed systems: none of the removed globals exists in the game
+  ok   removed systems: a new save has no legend, exped or pin field, no Map Room and no Wayfarer Blessing
+  ok   removed systems: no handler errors on a new solo game
+  ok   removed systems (browser): 19 tab views opened with no page or console error and no leftover element
+pose-lock
+  pose-lock: 1 kit(s) verified and audited
+  ok   pose-lock: kits verified and every pose registered
+craft data
+  ok   craft tables consistent
+  ok   skillOf is table-driven
+almanac
+  ok   Omen pick is deterministic per day (two games agree over 700 days)
+  ok   same Omen all day (steadyHands)
+  ok   A1: each of 33 Omens scheduled 10 times in 330 days
+  ok   A1: no category twice in a row over 700 days, cycle edges included (0 repeats)
+  ok   daily pick never plays an Omen whose system is missing
+  ok   no crafting Omen before the Forge (107 scheduled days fall back, 0 leak)
+  ok   with the Forge built, every scheduled crafting Omen plays
+  ok   every Omen is pure upside; only Dares carry a twist
+  ok   twist keys appear only in Dares
+  ok   Gold Rain: +30% gold, foes unchanged
+  ok   Dare on: gold +80% and foes +30% HP together
+  ok   Dare dropped: twist and reward both off
+  ok   a Dare ends at midnight
+  ok   Omens without a Dare refuse one
+  ok   away time plays the Omen of the day you left (longNight:false)
+  ok   after away, today's Omen is back
+  ok   A7: 8h away on Long Night is exactly x1.25 (1.250000)
+  ok   board: 3 Easy + 2 Steady for this week
+  ok   board draw is deterministic per week, no two of a kind
+  ok   board only draws goals this save can progress
+  ok   swap replaces an unfinished goal and uses one of 2 swaps
+  ok   live kills count toward weekly goals
+  ok   week rollover claims finished goals for you and draws a new board
+  ok   auto-claimed Easy goal paid its crate (3 x 60 before the Deepwell; got 180)
+  ok   new week starts at 0
+  ok   a save without an Almanac gets its defaults
+  ok   partial Almanac state merges without loss
+  ok   no almanac handler errors
+  ok   no almanac handler errors
+  ok   no almanac handler errors
+omen-day load
+  ok   Deepwell Omen day 4: loads, plays keenWinds as after load (got keenWinds), first tick fills 2 bounty slots
+  ok   K6 Omen day 9: loads, plays transmuter as after load (got transmuter), first tick fills 2 bounty slots
+  ok   B7 Omen day 12: loads, plays renownDay as after load (got renownDay), first tick fills 2 bounty slots
+  ok   found an Omen day for each of K6, B7, Deepwell: {"Deepwell":4,"K6":9,"B7":12}
+art
+  ok   four hero classes drawn: warden, lanternmage, ranger, lightkeeper
+  ok   the 18 shipped outfits remain, with exactly 14 designed registry stubs (18, missing cass, loveday, davy, ferrin, linnet, oswin, hob, beatrix, eskil, brynja, inga, ragna, solveig, asta)
+  ok   every outfit builds in every pose and tier without bad numbers
+  ok   no art errors
+codex
+  ok   new game: codex defaults
+  ok   new game: first load credits only today's Omen (1) and stays quiet
+  ok   Deepwell and Wardrobe pages are locked until the Deepwell exists
+  ok   Region 1 Light available today: 632 (spec 1,105 with every system)
+  ok   save-early.json: 53 Lantern Light loads as saved (now 53), no first-load toast
+  ok   save-early.json: round trip keeps S.codex
+  ok   save-mid.json: 155 Lantern Light loads as saved (now 155), no first-load toast
+  ok   save-mid.json: round trip keeps S.codex
+  ok   save-late.json: 293 Lantern Light loads as saved (now 293), no first-load toast
+  ok   save-late.json: round trip keeps S.codex
+  ok   itemAdded records affix tiers (bitmask) and the Masterwork line
+  ok   materials, trophies and champion kills are recorded
+  ok   events raise Light within the refresh window (25)
+  ok   Light never goes down (items lost, materials spent)
+  ok   Light only rises as pages fill (25 -> 63)
+  ok   Blade Blessing closed while the Bestiary is under 50%
+  ok   Bestiary at 69%: Blade opens, with a toast
+  ok   an opened Blessing stays open; others stay closed
+  ok   milestones up to 200 granted; exact hints on
+  ok   200 Light grants the Wayfinder title; Bag +10 waits for 350
+  ok   only earned titles can be picked; None always
+  ok   every Seal is 3% or less; every cap is 5%
+  ok   Seal bonuses add up but stop at the 5% cap (dmg 0.02 + 0.04 + 0.04 -> 0.05)
+  ok   mod("dmg") carries exactly the capped Codex bonus
+  ok   no events, no recompute (the page cache is reused)
+  ok   away: no Codex toasts; the away card lists the Codex news
+  ok   no codex errors
+onboarding hint placement (HINT1)
+  ok   still polls for the active step
+  ok   place() skips the reposition when nothing real changed (no per-frame follow)
+  ok   place() itself is never put on its own interval
+  ok   the hint bubble is docked (a fixed offset within its parent), not translated to the target every tick
+  ok   the hint band and placeToasts share --toast-h so they cannot collide
+  ok   source: tick only recomputes on a real change, the bubble is CSS-docked, toasts and hints share one band variable
+  ok   browser: the guide shows a hint bubble docked with a real gutter, not at the viewport edge ({"x":20,"y":166})
+  ok   browser: the hint band does not move while the stage animates under it ({"x":20,"y":166} -> {"x":20,"y":166}, --toast-h unchanged)
+  ok   browser: the hint band does not move while the stage animates under it ({"x":20,"y":166} -> {"x":20,"y":166}, --toast-h unchanged)
+  ok   browser: the hint band does not move while the stage animates under it ({"x":20,"y":166} -> {"x":20,"y":166}, --toast-h unchanged)
+  ok   browser: the hint band does not move while the stage animates under it ({"x":20,"y":166} -> {"x":20,"y":166}, --toast-h unchanged)
+  ok   browser: the hint band does not move while the stage animates under it ({"x":20,"y":166} -> {"x":20,"y":166}, --toast-h unchanged)
+  ok   browser: the hint band does not move while the stage animates under it ({"x":20,"y":166} -> {"x":20,"y":166}, --toast-h unchanged)
+  ok   browser: docked near the stage HUD, not floating at the target ({"position":"absolute","top":62})
+  ok   browser: the over-menu band sits above the tab bar (bottom 62px, tabs 54px; was 226.281px)
+  ok   browser: "New" shows after a fresh unlock and not 2 hours of play later (true,false)
+  ok   browser: no page errors
+tools and Well Rested
+  ok   toolFor: Stone Pick (rough), Flint Hatchet (rough), Bone Sickle (rough), Copper Fishing Rod; none for Smithing
+  ok   every class builds with every tool, tier and swing (192 kits)
+  ok   every gathering hero carries a lit lantern (the Lightkeeper gets a hip lantern)
+  ok   gather spec: no weapon or off-hand, keeps the look, one cached outfit per class, tool and tier
+  ok   new game: S.rested = { left: 0 }
+  ok   save-early.json: a save without S.rested gets { left: 0 }, nothing lost
+  ok   save-late.json: a save without S.rested gets { left: 0 }, nothing lost
+  ok   a saved Well Rested (and any later field in it) survives a load and save
+  ok   2 min of gathering banks 1 min (60.0 s); no bonus while gathering
+  ok   capped at 180 s
+  ok   Gather tab line: Gathering rests you: +10% damage for 3m 0s in your next fight (full).
+  ok   fighting: damage x1.10
+  ok   toast on the way to the fight: Well Rested: +10% damage for 3 min.
+  ok   a minute of fighting uses a minute (120.0 s left)
+  ok   used up after 3 minutes of fighting: damage back to normal
+  ok   solo: gathering always banks Well Rested for the hero (30 s after a minute)
+  ok   away gathering: ore +1925, Well Rested full; note "You kept working the Copper Vein. Mining is now level 16."
+  ok   away fighting: the same gold with or without Well Rested (766), and it is used up
+  ok   no Well Rested errors
+story
+  ok   story: 55-story.js is core (no DOM)
+  ok   story: S.story registered ({ v: 1, seen, read, init })
+  ok   story: the zone 35 boss shows as "The Fenmother"
+  ok   story: 8 arrival lines, once each (the 7 Hollow places, then zone 35): Mossy Hollow, Batwing Caves, The Bonefield, Beetle Barrows, Fungal Deep, Quarry Ruins, Wraithmarsh, Wraithmarsh V
+  ok   story: the 4 Hollow beats play once each, as cards, on arriving at their zones (wisps @7, crowns @14, chapel @28, listener @35)
+  ok   story: every Hollow elder and the Fenmother shows its intro when it first appears and its fall on its first kill, once
+  ok   story: walking back through beaten zones plays nothing again
+  ok   story: the coast is not plugged in yet (R2-1): coast arrivals wait for it; its elders reuse the Hollow types, already seen
+  ok   story: storyElderKey: zone 8 slime, 35 the Fenmother, 70 none (the Fogbound has his own lines)
+  ok   story (solo): the Great Lantern I card carries no companion lines (0); Hesketh cannot be recruited
+  ok   story: the list holds the 4 beats (unread until opened) and the Great Lantern beat (read: the card)
+  ok   story: storyRead marks a beat read
+  ok   story: storyBeat(id) plays once ("card", then false), unknown ids are false, { quiet } gives the note
+  ok   story: a save that got past zones 7 and 14 without fighting there gets the two beats quiet, no arrival
+  ok   save-early.json (zone 8): no flood (0 arrival, 0 beat, 0 elder line); 1 beats wait under "Catch up on the story"
+  ok   save-early.json: a reload plays nothing; the catch-up list is kept
+  ok   save-mid.json (zone 20): no flood (0 arrival, 0 beat, 0 elder line); 2 beats wait under "Catch up on the story"
+  ok   save-mid.json: a reload plays nothing; the catch-up list is kept
+  ok   save-late.json (zone 38): no flood (0 arrival, 0 beat, 0 elder line); 5 beats wait under "Catch up on the story"
+  ok   save-late.json: a reload plays nothing; the catch-up list is kept
+  ok   story: Codex bestiary tiles show no line before tier 1; the foe line at tier 1, then the Elder line once beaten
+  ok   story: the Marsh Wraith tile adds the Fenmother's line once zone 35 is beaten
+  ok   story: the UI listens for arrivals, elders and beats; the Codex has the Story row and bestiary lines; reduced motion handled
+  ok   story: the class screen says "one of the last lanterns" (lore.md 11.1)
+  ok   story: no handler errors
+hands
+  ok   save-early.json: S.hands loads as saved (0 Hands, Tam not yet)
+  ok   save-early.json (Hearth 1, Tavern 1, Bunkhouse 0): Hands not open yet
+  ok   save-early.json: round trip keeps S.hands; Tam does not come twice
+  ok   save-late.json: S.hands loads as saved (1 Hands, Tam came)
+  ok   save-late.json (Hearth 6, Tavern 4, Bunkhouse 4): Hands are open and Tam has come
+  ok   save-late.json: round trip keeps S.hands; Tam does not come twice
+  ok   save-mid.json: S.hands loads as saved (1 Hands, Tam came)
+  ok   save-mid.json (Hearth 3, Tavern 2, Bunkhouse 2): Hands are open and Tam has come
+  ok   save-mid.json: round trip keeps S.hands; Tam does not come twice
+  ok   HS10 a Hand's rate over the hero's reference: 10.00%..24.75% (Common Lv 20 14.75%)
+  ok   off-skill nodes pay half (a Common Miner at a grove: 5%)
+  ok   a Forager's Draught speeds the hero, not the Hands' reference rate
+  ok   Pickaxe mastery 20: Hands mining get +10%
+  ok   beds: the Bunkhouse level, +1 at Hearth 8 (6 at most); the Bunkhouse lists them, the Tavern says Hands apply there
+  ok   the bed cap is data-driven: bonuses handBeds and handBedsMax raise it (8 with +2 / +2)
+  ok   C1: Tents replace new Bunkhouse builds; old bed data remains readable
+  ok   C1: a cold Hearth opens the Tents plot with Hearth 2 and the Tavern
+  ok   C1: Tam arrives free: a Legendary Woodcutter, Steady
+  ok   W1-E: 2 Tents come free with the Tavern (Bunkhouse or not); Tam has one
+  ok   a second gatherer takes the second Tent; the hire costs 1500 gold (econHireFee)
+  ok   Tents full: hiring is refused with a reason
+  ok   three days closed: 3 applicants wait, no more
+  ok   turning one away frees the spot; the next one comes in 8 h
+  ok   Tavern Lv 3: applicants every 6 h
+  ok   Tam comes once (let go, he does not come back)
+  ok   C1: a Lv 1 shift is 4 h, fixed at send (rate 307.7 an hour)
+  ok   the shift ends: Tam comes home, the pack unloads (+1231 Pine Log), he waits at camp
+  ok   the same haul online and through awayGains ([[["wood",1,1231]],[["hide",1,622]]]); the away card: "Tam finished 1 shift: +1,231 Pine Log."
+  ok   the same seed gives the same haul
+  ok   Hands emit no harvest: no skill XP, no tool mastery, no rare finds, no achievement gathered units (live: no Journal units either)
+  ok   C1: levels by hours worked (Tam Lv 2 after 4 h; 8.0 h in all)
+  ok   the pack waits whole when the Storehouse lacks room (1231 Oak Log, 10 free)
+  ok   a Hand with a pack cannot be sent ("Tam's pack waits for room in the Storehouse.")
+  ok   a Hand with a pack cannot be let go
+  ok   ...and it lands once there is room
+  ok   Empty the pack throws it away (1246) and frees the Hand
+  ok   a Hand out on a shift cannot be let go
+  ok   C1: random pity holds over 3,000 applicants: Rare/Epic longest gaps 8 / 25 (want <= 8 / 25); {"epic":233,"common":1475,"uncommon":801,"rare":491}
+  ok   C1: Word on the Road puts named Legendaries in star spots; the 90th random applicant stays Common–Epic
+  ok   round trip keeps S.hands mid-shift (jobs, seeds, board, pity)
+  ok   after the reload the shifts pay exactly the same
+  ok   Next Up: a Hand at camp asks to be sent ("Tam is at camp: send again")
+  ok   the achievements read Hands hired from handsStats()
+  ok   no hands errors
+types and statuses (S1)
+  ok   five damage types, each with a colour and a 7x7 icon (core-2 2.1)
+  ok   weak x1.5, neutral x1, resists x0.6 (core-2 2.3)
+  ok   nine families, each 1 weakness and at most 2 resists, never both (core-2 2.3)
+  ok   Hollow resists at x0.85 (S1, pending), the Coast at x0.6
+  ok   every foe takes a resisted, neutral or weak share from every type: nothing is immune
+  ok   the chart per foe matches core-2 2.3 (18 spot checks)
+  ok   typeRel: weak 1, resisted -1, neutral 0 (the number marks)
+  ok   typeZone weighs a zone's pack (72% its type, 28% the next)
+  ok   eight harmful statuses and Staggered (SOLO1: a parry), each with a 5x5 badge in its own shape (core-2 3.1)
+  ok   no type chart errors
+  ok   7 Hollow and 7 Coast foes, each with size, members in its size's range, family, hit type dt and weakness
+  ok   the Hollow's 7 foe types carry size, fam and dt in FOE_BEH (core-2 8.2)
+  ok   the Coast has 2 brutes, 3 normal and 2 swarms (combat-2 2.1: {"brute":2,"swarm":2,"normal":3})
+  ok   Hollow hit types: Slime and Spore poison, Wraith frost, the rest physical (combat-2 1.2: {"poison":2,"phys":4,"frost":1})
+  ok   swarm totals recorded at 1.25 / 1.25 (owner D7, used from S6); packs stay 3 in S1
+  ok   every hero has a base type (ROSTER[id].dt) and a signature status
+  ok   each type is on at least 2 heroes (phys/holy/poison/fire/frost: 7/7/6/6/6)
+  ok   each role has a non-physical hero
+  ok   spot checks: Maren holy, Caedmon fire, Kestrel frost, Isolde and Corvin poison, Pip fire, Elowen holy, Tobin physical
+  ok   the Lanternbearer has a type for every class (the Mage is fire: change log CL1 8.2-1)
+  ok   the Lanternbearer's combat unit carries its type
+  ok   a Moss Slime takes fire x1.5, poison at the resist, physical and holy x1
+  ok   a Marked foe takes +20% from every source (core-2 3.1)
+  ok   a weaker Mark does not replace a stronger one
+  ok   Σ vuln is capped at +60%
+  ok   armour cuts a physical hit, not a typed one (core-2 1.2)
+  ok   no hit errors
+  ok   Bleed stacks to 5 at most; a new stack refreshes all (6 s)
+  ok   Venom stacks to 10 at most (8 s)
+  ok   one beat: Bleed 0.08 P x 5 and Venom 0.04 P x 10 x (1 + 0.1 x 10), by the chart (108.0 of 108.0)
+  ok   Venom 5+ halves a foe's healing (anti-heal, core-2 3.2)
+  ok   one Burn per foe: the stronger stays (4 s)
+  ok   a stronger Burn replaces a weaker one
+  ok   Curse: no healing (it wins over Venom), one per foe
+  ok   Chill slows 30%, capped at 6 s
+  ok   Stun: capped at 3 s; a second within 8 s lasts half; a third is ignored (3, 1, 0)
+  ok   8 s without a stun resets the diminishing returns
+  ok   an elite is stunned half as long
+  ok   a boss is immune to Stun and Root; each stun second fills 8 stagger instead
+  ok   a Chilled boss is slowed 15%
+  ok   Root lasts 3 s
+  ok   the focus foe shows at most 4 badges, the most important first, with stack digits (root0,burn0,curse0,venom10)
+  ok   no status errors
+  ok   Blight: Venom and Burn on one foe set it off
+  ok   a Blighted beat: the Burn tick plus the Venom twice (56.1 = 2 x 19.0 + 18.0)
+  ok   a reaction opens the 3 s window on its foe (a beat later, 2 s are left)
+  ok   an ability landing in the window deals x1.25 (timingX)
+  ok   a Burning foe's death spreads its Burn to 2 others, with half its Venom (2 burning, 2 with 2 Venom)
+  ok   Shatter: a heavy hit on a Chilled foe deals x2 and ends the Chill (150 -> 300)
+  ok   once per Chill: the next heavy hit is plain (the window may still add x1.25 to abilities only)
+  ok   a Shatter on a boss fills 20 stagger (and the heavy hit its +5, S6-B)
+  ok   a hit under 3 P is not heavy (no Shatter)
+  ok   a hit of 3 P or more is heavy (Shatter)
+  ok   holy damage on an unmarked foe heals nobody
+  ok   Judgement: holy damage on a Marked foe heals every member 10% of it (9.50 of 120.0)
+  ok   Judgement healing stops at 5% of max HP a second per member
+  ok   no reaction errors
+  ok   all damage over time on one member: at most 5% of max HP a tick (Bleed 5 + Venom 10 + Burn ask 5.00%)
+  ok   a cleanse removes the worst harmful status (here Venom), all its stacks
+  ok   a Cursed member takes no healing
+  ok   a Spore cloud Venoms the party: 3 stacks for 4 s, not added up by a second cloud (one cloud per pack, S6-A)
+  ok   a typed hit meets half the armour rating (physical 3.8, frost 5.1)
+  ok   a Marked member takes +20%
+  ok   no party status errors
+  ok   a live fight: Pip's Burn, 73 damage-over-time ticks in 123 beats
+  ok   runtime statuses are never saved (core-2 8.1-5)
+  ok   no errors and no NaN after 3 minutes of statuses
+  ok   save-early.json: loads, keeps every field, fights a minute with types and statuses, saves and loads again
+  ok   save-late.json: loads, keeps every field, fights a minute with types and statuses, saves and loads again
+  ok   save-mid.json: loads, keeps every field, fights a minute with types and statuses, saves and loads again
+  ok   62-stage draws the type icon and weak / resisted marks on numbers and the focus foe's status badges
+  ok   21x and 59a are core files: no DOM, window or storage
+solo hero (browser)
+  ok   the picker offers exactly the three playable starters (wren:Wren Hollowmere, tobin:Tobin Reed, pip:Pip Cinderly)
+  ok   the game waits while the hero is being chosen
+  ok   Pip is the hero on the stage (her own art)
+  ok   the action bar: two rows, Ability 1-3 over Parry, Dodge, Attack (ab0,ab1,ab2 | parry,dodge,atk)
+  ok   six square slots of 48 px or more; Attack bottom right (107x107 107x107 107x107 107x107 107x107 107x107)
+  ok   the bar touches the stage (not over it) and is the lowest thing above the tab bar (ctrl>stageBox>soloBar; stage 451, bar 451-686, tabs 686)
+  ok   slot 1 holds the hero's ability; slots 2 and 3 show empty
+  ok   no party UI (formation, bench, roster, Bonds, visitor); the tab is Hero; only the hero on the stage (false|Hero|hero)
+  ok   guide step "attack": its target (sbtn sb-atk) exists, is visible and marked; one hint; the game waits exactly when the step waits for a press ({"ok":true,"paused":true,"want":true,"bubs":1,"sel":"sbtn sb-atk"})
+  ok   guide step "ability": its target (sbtn sb-ab0 sb-abslot ready off) exists, is visible and marked; one hint; the game waits exactly when the step waits for a press ({"ok":true,"paused":false,"want":false,"bubs":1,"sel":"sbtn sb-ab0 sb-abslot ready off"})
+  ok   guide step "dodge": its target (sbtn sb-dodge live) exists, is visible and marked; one hint; the game waits exactly when the step waits for a press ({"ok":true,"paused":true,"want":true,"bubs":1,"sel":"sbtn sb-dodge live"})
+  ok   guide step "boss": its target (stage) exists, is visible and marked; one hint; the game waits exactly when the step waits for a press ({"ok":true,"paused":true,"want":true,"bubs":1,"sel":"stage"})
+  ok   guide step "parry": its target (sbtn sb-parry live) exists, is visible and marked; one hint; the game waits exactly when the step waits for a press ({"ok":true,"paused":true,"want":true,"bubs":1,"sel":"sbtn sb-parry live"})
+  ok   guide step "upgrade": its target (tab is-new) exists, is visible and marked; one hint; the game waits exactly when the step waits for a press ({"ok":true,"paused":true,"want":true,"bubs":1,"sel":"tab is-new"})
+  ok   the first session walks Attack, the ability, Dodge and Parry (attack, ability, dodge, boss, parry, upgrade)
+  ok   after a cast the slot sweeps dark with the seconds left ({"cd":0.96,"n":"10","cool":true})
+  ok   a heavy hit coming: Parry and Dodge glow (t3:heavy, true,true)
+  ok   tapping an empty slot opens the picker with the hero's unlocked abilities (fire)
+  ok   picking places it in that slot (swapping it out of slot 1)
+  ok   idle: the Auto button is lit, small, at the stage's bottom left under the fighters ({"on":true,"vis":true,"left":8,"bottom":26,"w":70.96875,"h":24,"sw":332,"sh":292.65625})
+  ok   each combat key acts (D, A, S, Space, Q, W, E) and Auto stays on
+  ok   Space dodges, not attacks (dodges 2 -> 3, attacks 2 -> 2)
+  ok   a tap on Attack or on an ability acts; opening the picker (an empty slot, a long press) does not (true,true,false,false)
+  ok   the page hidden: Auto fights at once, and the Auto button lights
+  ok   Auto toggle: back on screen returns to hand play; a tap on the button turns Auto on and lights it; F turns it off and dims it; off stays off past the old 5 s (true,true,true,true,true,true)
+  ok   a counter shows a crit number on the stage (the crit look: its colour, a longer, higher rise) ({"n":9,"live":[{"txt":"COUNTER 125","color":"#FF9E3D","life":1.2}],"pr":"parry"})
+  ok   no page errors in the solo run
+hero art
+  ok   hero art: src/js/21y-data-heroart.js is up to date with art/heroes (node tools/heroart.mjs)
+  ok   interim Hunting art: src/js/21z-data-huntart.js is up to date with art/hunting/interim-v1 (node tools/art/embed-hunt.mjs)
+  ok   hero art: Tobin and Pip have 7 gathering poses, each with a grip; the pickaxe, axe, sickle and spear each have rest, wind-up and strike
+  ok   hero art: the data and the module stay modest (210.3 KB, budget 220)
+  ok   hero art: 224x192 frames, feet on the anchor (96, 132)
+  ok   hero art: each hero has its 40-colour palette ({"wren":40,"tobin":40,"pip":40})
+  ok   hero art: every pose and fx sprite decodes to its PNG exactly (palette index + runs; Wren after the outline trim)
+  ok   hero art: frame counts and timings match the approved viewer; every hero has all seven states
+  ok   hero art: Ranger -> wren, Warden -> tobin, Lanternmage -> pip, others keep the old sprite (wren,tobin,pip,)
+  ok   hero art: heroArtDraw draws every state and frame of all three heroes (351 frames, 818 draws)
+  ok   hero art: the stage hook plays idle, attack, hurt, ability, death and camp for each hero and sets _x, _y, _f; other classes fall back (true,true,true,true)
+  ok   hero art (reduced motion): heroArtDraw draws every state and frame of all three heroes (351 frames, 742 draws)
+  ok   hero art (reduced motion): the stage hook plays idle, attack, hurt, ability, death and camp for each hero and sets _x, _y, _f; other classes fall back (true,true,true,true)
+  ok   hero art: 62-stage drawActor calls heroArtStage for the hero (the one hook)
+  ok   hero art: no save field or storage; the data file is pure data
+  ok   hero art: no errors
+notices (W1-B)
+  ok   every toast source has a channel: 103 call sites in src/js and 16 unlock lines each match a NOTICES rule (by key, message or call site)
+  ok   every NOTICES rule has a source (no dead rules)
+  ok   NOTICES: unique ids; every rule gives one of card, pop, bell, log, none
+  ok   policy: level ups go to the bell list (every 25th counts); "New tab" lines are quiet while the guide runs; "You head to", "Work starts" say nothing; the fire goes to the bell list; no elder fall caption; Deeds Bronze/Silver quiet, Gold bell, Everflame pops ({"lv":["log","log","bell"],"tab":["log","pop"],"go":["none","none","none","log"],"fall":"none","deeds":["log","log","bell","pop"]})
+  ok   a new game's Codex says nothing about past deeds (4 kills in 40 s; no Codex lines)
+notices (browser, W1-B)
+  ok   the bot played 10 minutes of a fresh solo game (600 s, zone 10, level 12, 113 notices)
+  ok   a fresh game's first 10 minutes pop at most 8 notices (toasts and captions): 7 (6s deed-secret, 26s tip, 88s caption:elder, 109s unique, 134s stars:found, 155s unlock-stars, 600s caption:beat)
+  ok   never two pops within 20 s
+  ok   nothing pops while a guide step shows
+  ok   every toast on screen went through the policy (5 drawn, 7 pops)
+  ok   the bell stays calm: at most 5 unread at any time (max 3; bell notices: 119s codex, 511s weekly)
+  ok   every notice raised in play matched a rule
+  ok   no page errors
+browser tooling portability (C5)
+  ok   C5: explicit module-folder and browser overrides win over discovered installations
+  ok   C5: a broken module override reports its reason without silently using a fallback
+  ok   C5: a broken executable override reports its reason without switching browsers
+  ok   C5: a project playwright-core install and its managed browser work without global packages
+  ok   C5: the coordinator's Linux fallback remains usable at /opt/pw-browsers/chromium
+  ok   C5: the coordinator's Linux fallback remains usable at /opt/pw-browsers/chromium/chrome
+  ok   C5: the coordinator's Linux fallback remains usable at /opt/pw-browsers/chromium/chrome-linux/chrome
+  ok   C5: the coordinator's Linux fallback remains usable at /opt/pw-browsers/chromium-1194/chrome-linux/chrome
+  ok   C5: the coordinator's Linux fallback remains usable at /opt/pw-browsers/chromium-1300/chrome-linux64/chrome
+  ok   C5: an installed Windows browser is discovered at C:\Program Files\Google\Chrome\Application\chrome.exe
+  ok   C5: an installed Windows browser is discovered at C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe
+  ok   C5: missing driver and missing executable have distinct actionable explanations
+  ok   C5: the real sharded runner resolves its file URL correctly and prints one final browser summary
+  ok   C5: the parent totals four intentionally skipped browser sections across shards and retains the reason
+  ok   C5: the actual site exporter resolves a path containing spaces, a hash and non-ASCII text
+save codec validation (C5)
+  ok   C5: raw save-early.json keeps every field before any migration
+  ok   C5: raw save-late.json keeps every field before any migration
+  ok   C5: raw save-mid.json keeps every field before any migration
+  ok   C5: absent optional fields are allowed without being filled
+  ok   C5: fractional gold, null ability slots, negative ledger/sentinels and Unicode names are retained
+  ok   C5: validation returns the original object reference
+  ok   C5: rejects v4 before loading
+  ok   C5: rejects missing items before loading
+  ok   C5: rejects null item before loading
+  ok   C5: rejects dangling equipment before loading
+  ok   C5: rejects duplicate IDs before loading
+  ok   C5: rejects reused next ID before loading
+  ok   C5: rejects unknown item kind before loading
+  ok   C5: rejects unknown item rarity before loading
+  ok   C5: rejects unknown item tier before loading
+  ok   C5: rejects null skills before loading
+  ok   C5: rejects null skill before loading
+  ok   C5: rejects absurd skill XP before loading
+  ok   C5: rejects negative materials before loading
+  ok   C5: rejects unknown material family before loading
+  ok   C5: rejects null camp before loading
+  ok   C5: rejects null camp build before loading
+  ok   C5: rejects null hand before loading
+  ok   C5: rejects null board before loading
+  ok   C5: rejects bad solo slots before loading
+  ok   C5: rejects wrong hero ability before loading
+  ok   C5: rejects null training before loading
+  ok   C5: rejects invalid activity before loading
+  ok   C5: rejects negative gold before loading
+  ok   C5: rejects absurd level before loading
+  ok   C5: rejects frontier behind zone before loading
+  ok   C5: rejects absurd relic level before loading
+  ok   C5: rejects reserved __proto__ at any depth
+  ok   C5: rejects reserved constructor at any depth
+  ok   C5: rejects reserved prototype at any depth
+  ok   C5: rejects JSON numeric overflow
+  ok   C5: cycles and sparse non-JSON lists are rejected
+  ok   C5: deeply nested data is rejected
+  ok   C5: text-size limit applies before trimming
+  ok   C5: oversized exports are refused
+  ok   C5: checksummed malformed UTF-8 c0 af is rejected
+  ok   C5: checksummed malformed UTF-8 e2 82 is rejected
+  ok   C5: checksummed malformed UTF-8 ed a0 80 is rejected
+  ok   C5: checksummed malformed UTF-8 f4 90 80 80 is rejected
+  ok   C5: checksummed malformed UTF-8 80 is rejected
+  ok   C5: a new checksum cannot legitimise malformed Base64 padding or bits
+  ok   C5: a new checksum cannot legitimise malformed Base64 padding or bits
+  ok   C5: a new checksum cannot legitimise malformed Base64 padding or bits
+  ok   C5: failed validations leave the live game untouched
+  ok   C5: real runtime creates active/queued builds, affixes, unique/masterwork/tool, tonic, queued shift and training
+  ok   C5: real active feature state round-trips without mutation
+  ok   C5: preview names the selected solo hero
+  ok   C5: runtime return creates rest
+  ok   C5: real gatherer rest round-trips without mutation
+  ok   C5: full store creates a waiting pack
+  ok   C5: real waiting pack round-trips without mutation
+  ok   C5: runtime creates a trophy-cost Hearth build
+  ok   C5: real trophy-cost build round-trips without mutation
+  ok   C5: CLI rejects bad data before loading it
+  ok   C5: CLI rejects bad data before loading it
+  ok   C5: CLI rejects bad data before loading it
+  ok   C5: CLI rejects bad data before loading it
+  ok   C5: CLI rejects bad data before loading it
+  ok   C5: CLI accepts save-early.json
+  ok   C5: CLI accepts save-late.json
+  ok   C5: CLI accepts save-mid.json
+  ok   C5: positive gameplay states have no handler errors
+gatherer trade runs (C4)
+  ok   C4: Tavern 1 cannot quote or start a trade
+  ok   C4: trade also requires the gatherers to be open
+  ok   C4: an open Tavern 2 quotes a two-hour trip with exactly 5,000 units across three lines
+  ok   C4: quoting cargo does not reserve stock, spend gold or change the gatherer
+  ok   C4: rarity, levels and gathering traits do not multiply trade prices
+  ok   C4: wood cargo offers only its own unlocked grade 1–3 raw materials
+  ok   C4: wood can trade every supported family of its profession
+  ok   C4: mine cargo offers only its own unlocked grade 1–3 raw materials
+  ok   C4: mine can trade every supported family of its profession
+  ok   C4: forage cargo offers only its own unlocked grade 1–3 raw materials
+  ok   C4: forage can trade every supported family of its profession
+  ok   C4: any cargo offers only its own unlocked grade 1–3 raw materials
+  ok   C4: any can trade every supported family of its profession
+  ok   C4: owned stock cannot bypass the hero’s node unlocks
+  ok   C4: malformed or ineligible cargo null is rejected without side effects
+  ok   C4: malformed or ineligible cargo [] is rejected without side effects
+  ok   C4: malformed or ineligible cargo {} is rejected without side effects
+  ok   C4: malformed or ineligible cargo [["wood",1,0]] is rejected without side effects
+  ok   C4: malformed or ineligible cargo [["wood",1,-1]] is rejected without side effects
+  ok   C4: malformed or ineligible cargo [["wood",1,0.5]] is rejected without side effects
+  ok   C4: malformed or ineligible cargo [["wood",1,NaN]] is rejected without side effects
+  ok   C4: malformed or ineligible cargo [["wood",1,Infinity]] is rejected without side effects
+  ok   C4: malformed or ineligible cargo [["wood",1,5001]] is rejected without side effects
+  ok   C4: malformed or ineligible cargo [["wood",1,1],["wood",1,2]] is rejected without side effects
+  ok   C4: malformed or ineligible cargo [["wood",1,1],["wood",2,1],["wood",3,1],["ore",1,1]] is rejected without side effects
+  ok   C4: malformed or ineligible cargo [["ore",1,1]] is rejected without side effects
+  ok   C4: malformed or ineligible cargo [["hide",1,1]] is rejected without side effects
+  ok   C4: malformed or ineligible cargo [["ess",1,1]] is rejected without side effects
+  ok   C4: malformed or ineligible cargo [["fake",1,1]] is rejected without side effects
+  ok   C4: malformed or ineligible cargo [["wood",4,1]] is rejected without side effects
+  ok   C4: malformed or ineligible cargo [["wood",0,1]] is rejected without side effects
+  ok   C4: malformed or ineligible cargo [["wood",1.5,1]] is rejected without side effects
+  ok   C4: malformed or ineligible cargo [["wood",1]] is rejected without side effects
+  ok   C4: malformed or ineligible cargo [null] is rejected without side effects
+  ok   C4: a stale gatherer id cannot reserve cargo
+  ok   C4: Send rechecks stock after the quote and never makes a partial reservation
+  ok   C4: an unavailable later cargo line leaves every earlier line unreserved
+  ok   C4: a waiting pack prevents a trade departure
+  ok   C4: a gathering shift prevents a trade departure
+  ok   C4: the rest between prepaid shifts is still busy for trade
+  ok   C4: Send atomically reserves each cargo line and charges no fee
+  ok   C4: the trade occupies the normal busy slot for exactly two hours
+  ok   C4: camp conversation describes the trade destination without treating it as a gathering node
+  ok   C4: a double Send cannot reserve the same cargo twice
+  ok   C4: a trade has no payout before its two-hour completion
+  ok   C4: live and saved offline completion pay the frozen gold exactly once
+  ok   C4: the trade and economy ledgers record one trip and its exact gold reward
+  ok   C4: completion consumes reserved cargo and grants no materials or trophies
+  ok   C4: a trade leaves XP, work hours, Tam’s free shifts, last gathering job and spending unchanged
+  ok   C4: repeated catch-up, away and Recall after completion cannot pay or refund twice
+  ok   C4: reloading an already settled trip cannot restore its reservation or reward
+  ok   C4: an early recall returns the full reserved cargo with no reward
+  ok   C4: repeated early recall cannot duplicate cargo
+  ok   C4: recalled cargo waits in the pack when the Storehouse has filled during the trip
+  ok   C4: a saved waiting refund unloads without counting existing cargo as newly gathered material
+  ok   C4: making room unloads the recalled cargo once without overflow or loss
+  ok   C4: each weekly market has three wanted lines, two gluts and ten normal raw lines
+  ok   C4: demand covers the fifteen supported family/grade pairs without duplicate rows
+  ok   C4: market quotes are deterministic reads and do not consume the game random stream
+  ok   C4: market demand changes at UTC Monday, not during the preceding week
+  ok   C4: a prior-week review cannot send cargo until the player gets a fresh quote
+  ok   C4: a trip crossing the weekly reset pays the quote frozen at its departure
+  ok   C4: a reasonable economy retune does not reprice or invalidate an existing frozen quote
+  ok   C4: Send crossing UTC Monday uses one timestamp for the saved price week and departure
+  ok   C4: recalling an already completed trip settles its reward without returning the sold cargo
+  ok   C4: malformed saved trade fails closed without profit or repeat refund (handsGet("tam").job.end=-1)
+  ok   C4: malformed saved trade fails closed without profit or repeat refund (handsGet("tam").job.quote.gold=1e12)
+  ok   C4: malformed saved trade fails closed without profit or repeat refund (handsGet("tam").job.quote.micros[0]=-1)
+  ok   C4: malformed saved trade fails closed without profit or repeat refund (handsGet("tam").job.quote.micros[0]=1e12; handsGet("tam").job.quote.gold=1e9)
+  ok   C4: malformed saved trade fails closed without profit or repeat refund (handsGet("tam").job.cargo[0][2]=-1)
+  ok   C4: malformed saved trade fails closed without profit or repeat refund (handsGet("tam").job.cargo.push(["fake",1,5000]))
+  ok   C4: a trading Friendly/Felling gatherer gives no overlap bonus to a gathering partner
+  ok   C4: sending a trader cannot retroactively create gathering overlap windows
+  ok   C4: a gatherer can depart with cargo even when the player has no gold
+  ok   C4: an existing trip still returns after a loaded save lowers the opening buildings
+  ok   C4: a numerically unsafe gold credit waits without blocking another payable return
+  ok   C4: spending down the gold balance lets the deferred trip settle exactly once
+  ok   C4: the comparison uses the same worker’s actual two-hour gathering yield, within seeded rounding
+  ok   C4 diagnostic: 5,000 stored grade-1 logs trade for 750.00 gold/hour; the same worker gathers 652 logs in two hours, worth 97.80 gold/hour at that market price (gathering fee 0; cargo is pre-existing stock, not produced by the trade)
+  ok   C4: the actual crew Trade action opens only the woodcutter’s three eligible cargo grades
+  ok   C4: the locked picker explains the Tavern 2 gate without exposing cargo controls
+  ok   C4: entering cargo previews a quote without reserving anything
+  ok   C4: reviewing a quote exposes Send while leaving the cargo in storage
+  ok   C4: the real Send handler rejects stock spent after review without taking cargo
+  ok   C4: a weekly market refresh requires a new review in the live picker
+  ok   C4: the reviewed UI Send reserves once and shows the actual frozen gold due
+  ok   C4: the crew card blocks trade and gathering while the run is active
+  ok   C4: the first Recall press only arms the in-page confirmation
+  ok   C4: confirmed UI Recall returns cargo with no reward and repeating requires a new quote review
+  ok   C4: trade validation, settlement and recall produce no handler errors
+camp trade and import (C4, browser)
+  ok   C4 740x360: the Camp conversation shows the Tavern 2 reason on its locked Trade action
+  ok   C4 740x360: upgrading the Tavern enables Trade in the already open conversation
+  ok   C4 740x360: the real Camp Trade press closes the conversation and opens this worker’s cargo controls in Tavern
+  ok   C4 740x360: cargo review fits the landscape panel, receives a real press and creates no sideways overflow ({"ok":true,"top":204.71875,"bottom":248.71875,"panelOverflow":0})
+  ok   C4 740x360: reviewing the actual quote leaves cargo in the Storehouse
+  ok   C4 740x360: one real Review press exposes Send (Quote reviewed. Send this cargo when ready.  1.00K units to Mossy Hollow · 2 hours · 300 gold on return. No fee.  1.00K Pine Log · 100% demand · 0.30 gold each  This week’s prices are locked in when you send. Trade returns gold only.  Send trade run)
+  ok   C4 740x360: an unrelated stock refresh keeps the reviewed Send action focused
+  ok   C4 740x360: the reviewed Send reserves cargo exactly once with the displayed frozen gold and no fee
+  ok   C4 740x360: the departing trader leaves the Camp scene and counts as away
+  ok   C4 740x360: the browser exports an active trade code without page errors
+  ok   C4/C5 740x360: checking and arming the trade import leaves the fresh game unchanged
+  ok   C4/C5 740x360: confirmed import and real reload preserve the active job, frozen quote and reserved cargo
+  ok   C4/C5 740x360: a second real reload keeps the trade active without another cargo debit
+  ok   C4/C5 740x360: the imported trade pays its frozen quote once on completion
+  ok   C4/C5 740x360: reloading after completion cannot repeat the reward or return sold cargo
+  ok   C4/C5 740x360: real Camp Trade and import/reload flows have no browser errors
+  ok   C4 844x390: the Camp conversation shows the Tavern 2 reason on its locked Trade action
+  ok   C4 844x390: upgrading the Tavern enables Trade in the already open conversation
+  ok   C4 844x390: the real Camp Trade press closes the conversation and opens this worker’s cargo controls in Tavern
+  ok   C4 844x390: cargo review fits the landscape panel, receives a real press and creates no sideways overflow ({"ok":true,"top":219.53125,"bottom":263.53125,"panelOverflow":0})
+  ok   C4 844x390: reviewing the actual quote leaves cargo in the Storehouse
+  ok   C4 844x390: one real Review press exposes Send (Quote reviewed. Send this cargo when ready.  1.00K units to Mossy Hollow · 2 hours · 300 gold on return. No fee.  1.00K Pine Log · 100% demand · 0.30 gold each  This week’s prices are locked in when you send. Trade returns gold only.  Send trade run)
+  ok   C4 844x390: an unrelated stock refresh keeps the reviewed Send action focused
+  ok   C4 844x390: the reviewed Send reserves cargo exactly once with the displayed frozen gold and no fee
+  ok   C4 844x390: the departing trader leaves the Camp scene and counts as away
+  ok   C4 844x390: the browser exports an active trade code without page errors
+  ok   C4/C5 844x390: checking and arming the trade import leaves the fresh game unchanged
+  ok   C4/C5 844x390: confirmed import and real reload preserve the active job, frozen quote and reserved cargo
+  ok   C4/C5 844x390: a second real reload keeps the trade active without another cargo debit
+  ok   C4/C5 844x390: the imported trade pays its frozen quote once on completion
+  ok   C4/C5 844x390: reloading after completion cannot repeat the reward or return sold cargo
+  ok   C4/C5 844x390: real Camp Trade and import/reload flows have no browser errors
+future-dated save
+  ok   a save stamped 16 days ahead: away gains are nothing, never negative (gold 7324209 -> 7324209, t 0)
+  ok   boot measures time away as at least 0 (90-boot)
+  ok   a future-dated save loads without core errors
+C14 away card (browser)
+  ok   C14 browser: a fresh local game opens the away card with its time and hero summary (while you were away | 30m 0s | your hero worked 30m 0s of 4h |  | you held cinder road. |  | +28 | gold | gatherers | 2 shifts finished: +3,396 ore. | trade | trader returned: +300 gold. | camp | workbench and forge finished. | tavern | a new applicant is waiting. | well rested | 3 minutes spent. | gathering | storehouse full | the storehouse kept the extra ore safe. | collect)
+  ok   C14 browser: the card displays the material explanation and each separate source group (while you were away | 30m 0s | your hero worked 30m 0s of 4h |  | you held cinder road. |  | +28 | gold | gatherers | 2 shifts finished: +3,396 ore. | trade | trader returned: +300 gold. | camp | workbench and forge finished. | tavern | a new applicant is waiting. | well rested | 3 minutes spent. | gathering | storehouse full | the storehouse kept the extra ore safe. | collect)
+  ok   C14 browser: the card offers a modal Collect action
+  ok   C14 browser: the keyed report is shown as a card without a duplicate toast
+  ok   C14 browser: opening and reading the card raises no page errors
+hunting (C24 core)
+  ok   C24 (owner 2026-10-01): Hunting is on by default, opens with Foraging and shows its interim art
+  ok   C24 interim art: every beast has its six poses, and the hunting grounds are packed
+  ok   C24: with the flag off, mechanics, nodes and Hunter applicant pool are off
+  ok   C24: disabled direct node, craft and imported equipment entrypoints are blocked
+  ok   C24: public node/craft/equip guards stay closed until art approval
+  ok   C24: mechanics flag does not expose Hunting or reuse fallback art
+  ok   C24 grade 1: time, Hide rate and skill XP rate match Fibre parity
+  ok   C24 grade 1: off-skill half share and Tracker +20%
+  ok   C24 grade 2: time, Hide rate and skill XP rate match Fibre parity
+  ok   C24 grade 2: off-skill half share and Tracker +20%
+  ok   C24 grade 3: time, Hide rate and skill XP rate match Fibre parity
+  ok   C24 grade 3: off-skill half share and Tracker +20%
+  ok   C24: approved four-hour Common Hunter payouts 621/602/613 (621/602/613)
+  ok   C24: later-region beasts remain unavailable at any skill level
+  ok   C24: Hunting home grounds add 25% on bat, bones and beetle zones
+  ok   C24: three-star Hunting home bonus is 50%; Hands and existing home families are unchanged
+  ok   C24: spear has separate equipment/mastery with Sickle recipe and numeric stat parity
+  ok   C24: Tracker is Hide-only and all direct two-trait Hunting rolls stay within C8 1.40x
+  ok   C24: enabled applicant rolls include Hunters and Tracker
+  ok   C24: a beast gives five Hide and 35 XP through harvest without combat rewards
+  ok   C24: full Hide storage caps units but keeps skill XP
+  ok   C24: real away resolver preserves Fibre unit and XP parity
+  ok   C24: queued Hunting preserves the sent rate and thirty-minute rest
+  ok   C24: split and single catch-up deliver both prepaid Hunting shifts identically
+  ok   C24: v5 loading adds only missing Hunting skill, equipment and mastery defaults
+  ok   C24 on: an imported Hunting selection keeps hunting (Hide harvested) with its spear equipped
+  ok   C24: no core event errors
+bounty variety
+  ok   bounties come from at least 10 kinds by 30 minutes in (11: chop, hunt, crit, gems, forage, ability, mine, kill, forge, boss, make)
+  ok   a kind rarely comes back within its last 6 draws (0 of 120)
+  ok   Contracts turn up now and then (15 of 120)
+  ok   a hunt bounty counts only its own kind of foe
+  ok   hunt and Contract wording
+  ok   bounty variety: no core errors
+auto-challenge (boss switch)
+  ok   auto-challenge starts the zone boss on its own (party fights; at 41 s)
+  ok   Next Up says when a ready boss held you off, with the way back as its bar (The Zone 1 boss beat you. Train, then try again|0.43 / Boss ready in Zone 1|1.00)
+  ok   with the switch off the boss still comes after 5 won fights (party fights; 5)
+action and menu icons (C26)
+  ok   C26: 16 action icons at 16, 24, 36 and 48 px (16)
+  ok   C26: 32 menu icons at 12-22 px (32)
+  ok   C26: every icon the UI asks for exists: 
+  ok   C26: every crafted kind has its approved gear icon at grades 1-5, at 24 and 32 px (110 icons)
+  ok   C26 icons: no core errors
+turn UI (browser)
+  ok   turn UI 844x390: the versus card names both sides, their Speed and who goes first ("WrenSpeed 10VSThorn ImpSpeed ?You go firstTurn order")
+  ok   turn UI 844x390: the versus card shows the turn order (the next turns; owner: not on the stage during the fight), the timing bar shows on the foe's wind-up, and "Your turn" says when the fight waits on you ({"card":"WrenSpeed 10VSThorn ImpSpeed ?You go firstTurn order","strip":6,"bar":true,"cdTurns":true,"autoBadge":false,"mine":true})
+  ok   turn UI 844x390: the Echo slot shows its cooldown in turns, and there is no Auto badge (active only)
+  ok   turn UI: Hero tab > Abilities lists Wren's 14 abilities in their three groups, then Attack, Parry and Dodge (17: True Aim,Blood Trail,Night Wings,Attack, Parry and Dodge)
+  ok   turn UI: each row says whether it can be learned now, or why not (["Learn","Level 16"])
+  ok   turn UI: a tap on a row opens its detail: the full text, its numbers, the Perfect text, and its two talents (shut until learned) ({"ab":"powershot","vis":true,"desc":"A heavy arrow for 180% power. A critical hit gives 1 Aim.","perfect":"Timed: press again as the ring closes. Perfect: a sure crit. A miss hits for 70%.","nums":"Hits for about 124.","tal":2})
+  ok   turn UI: Learn takes two taps, spends the Scroll, and puts the ability in a free slot; the detail then offers Q, W and E ("Tap again to spend a Moss Scroll", true, true)
+  ok   turn UI: the detail's A / B talents: A takes 2 points and saves, B swaps for no more, a second tap gives it back (true, true, true)
+  ok   turn UI: the detail closes; Parry has its own row and its talents in the detail (true, true)
+  ok   turn UI: the filters show the learned abilities, the ones a Scroll can teach now, and all again (true, true, 17)
+  ok   turn UI: a Proving fights in turns; its banner sits where the Next up chip was and counts foes and turns, and goes on Give up ({"slot":true,"chip":false,"time":"Foe 1/5, 40 turns","turn":true}, true)
+  ok   turn UI: Settings > Combat has Wider timing windows, off by default; a tap turns it on, saves it and widens the parry window from the next fight (["Wider timing windows: Off","Wider timing windows: On",true,"Gives you more time to parry and dodge, from your next fight. Rewards stay the same."])
+  ok   turn UI: Aim explains itself: once on its own, on a tap of the pips, and on Hero > Abilities (true, "Aim: each Attack gives 1, up to 3. Each Aim adds 5% crit chance. Final Echo spends it for a bigger hit.", "Aim: each Attack gives 1, up to 3. Each Aim adds 5% crit chance. Final Echo spends it for a bigger hit.")
+  ok   turn UI: no page errors
+  ok   turn UI 360x740: the versus card and its turn order work in portrait ({"card":"WrenSpeed 10VSThorn ImpSpeed ?You go firstTurn order","strip":6,"bar":true,"cdTurns":true,"autoBadge":false,"mine":true})
+  ok   abilities UI 740x360: no sideways scroll, every button at least 44 px ([[],[],[]])
+  ok   abilities UI 740x360: the loadout bar (Q, W, E, Scrolls, talent points) stays at the top while the list scrolls
+  ok   abilities UI 740x360: a row's detail opens in view (in the list's place), shows the slot it is in, and E moves it there ({"inView":true,"list":false,"slots":3,"onW":true,"talOn":true}, true)
+  ok   abilities UI 740x360: closing the detail brings the list back where it was; the Scrolls button shows each Scroll and the talent points (true, true)
+  ok   abilities UI 740x360: no page errors
+  ok   abilities UI 360x740: no sideways scroll, every button at least 44 px ([[],[],[]])
+  ok   abilities UI 360x740: the loadout bar (Q, W, E, Scrolls, talent points) stays at the top while the list scrolls
+  ok   abilities UI 360x740: a row's detail opens in view (a sheet over the list), shows the slot it is in, and E moves it there ({"inView":true,"list":true,"slots":3,"onW":true,"talOn":true}, true)
+  ok   abilities UI 360x740: closing the detail brings the list back where it was; the Scrolls button shows each Scroll and the talent points (true, true)
+  ok   abilities UI 360x740: no page errors
+  ok   turn UI: the guide walks a new player through Attack, the ability, Dodge and Parry in turn fights ({"want":"","ph":"foeWindup","now":8.916100000000027,"d":8.72610000000004,"p":8.89610000000004,"c":9.07610000000004,"done":"ability,attack,dodge,parry"})
+fixed battle backgrounds
+  ok   backgrounds: src/js/21zb-data-bgart.js is up to date with the approved packs (node tools/art/embed-bg.mjs)
+  ok   backgrounds: the Mossy Hollow landscape and portrait scenes are the approved WebP bytes, with their painted road lines
+C29 late zones and Wider timing windows (core)
+  ok   late zones: zones 1-34 keep the first reference Attack share; zones 1-3 and the Deepwell keep 1.2x HP (ok)
+  ok   late zones: from zone 35 the reference leaves out the x1.7 region step, and its Attack and HP still grow every zone, so turnPowerZone holds (ok)
+  ok   late zones: a zone-38 hero who keeps up wins normal foes in 1.5-4 turns and bosses in 8-14 played well (the boss pass), and 40-98% of bosses played casually ({"n":{"win":1,"turns":1.9078498293515358},"b":{"win":1,"turns":8.62},"c":{"win":0.925,"turns":10.324324324324325}})
+  ok   Wider timing windows: off by default (save default 0), the windows are 0.18 s and 0.35 s ({"parry":0.18,"dodge":0.35,"gold":36,"xp":5,"ess":0.4})
+  ok   Wider timing windows: on, the parry window is x1.5 (0.27 s) and the dodge x1.5 up to its 0.5 s cap; gold, XP and Essence are unchanged ({"parry":0.27,"dodge":0.5,"gold":36,"xp":5,"ess":0.4})
+  ok   Wider timing windows: a live fight opens the wider parry window (0.27)
+  ok   Wider timing windows: the setting is kept in the save, and a save from before it loads with it off
+C29 gear stats in turn fights (core)
+  ok   gear pass: Spell power 50% makes Pip's Spark (fire) hit 50% harder and leaves Wren's Echo Shot (physical) alone (1.5, 1)
+  ok   gear pass: a Lantern's base line is spell damage, 0.2 x its power, at most 45% (+45.0% spell damage)
+  ok   gear pass: Damage over time (the old Area line) 40% makes a Burn tick and Ignite 40% bigger (1.4, Ignite 1.4)
+  ok   gear pass: Control 60% makes a Stun stagger a boss 40 (was 25) (25 -> 40)
+  ok   gear pass: Counter (the old Threat line) 50% makes counters hit 50% harder (1.500)
+  ok   gear pass: Pierce 100% ignores a foe's 30% armour (1.4286)
+  ok   gear pass: Healing 50% makes heals and Wards 50% bigger (0.100, 0.150, 0.100, 0.150)
+  ok   gear pass: with the Ward line, healing past full HP becomes a Ward, up to the line (0, 0.09999999999999999)
+  ok   gear pass: Focus 20% takes a turn off every cooldown every 4 of your turns; the cooldown shown stays as written (1, 0, 5, 5)
+  ok   gear pass: Speed (the old Attack speed line) 10% makes you 10% faster (10 -> 11)
+  ok   gear pass: the Golemfist doubles the Attack only, not abilities (2.000, 1.000)
+  ok   gear pass: each Cinder Pip holds adds 4% to her fire damage, and Hero > Abilities says so (3 Cinders: x1.120)
+  ok   gear pass: every gear stat is live (all; )
+landscape 740x360 (browser, UX-L1)
+  ok   740x360: the guide walks the first session by pressing what it points at (attack > ability > dodge > parry > upgrade > gather > chop > light > stock:bench > bench > stock:tool > tool > stock:forge > forge > stock:store > store > nextup; 50 of 220 passes, 24 idle)
+  ok   740x360: every guide step's target is on screen and on top (a click at its centre reaches it), the ring marks it and the hint is on screen (23 states)
+  ok   740x360: no page errors in the guide walk
+  ok   740x360: the rail runs down the left edge with the five tabs, each 44 px or taller, on screen (rail {"l":0,"t":0,"r":52,"b":360,"w":52,"h":360}, tabs 50-104 106-160 162-216 218-272 274-328)
+  ok   740x360: one top row (44 px) holds gold, Fight / Gather, Switch, the zone arrows and the bell, all on screen (purse 52-172/0-44, modeSeg 180-354/3-41, switchBtn 362-457/5-39, zStep 465-614/2-42, bellBtn 696-740/0-44)
+  ok   740x360: the stage fills the middle (480x316) at a whole-pixel zoom (x1: 480x316 logical px, the heroes drawn at their ~96 art px)
+  ok   740x360: the bar is two rows (ab0,ab1,ab2|parry,dodge,atk) of square slots of 44 px or more in the bottom-right corner, all on top; Attack is the bottom-right slot (ab0 60@539,225 ab1 60@607,225 ab2 60@674,225 parry 60@539,292 dodge 60@607,292 atk 60@674,292)
+  ok   740x360: Next Up sits at the top of the side column, above the bar ({"l":532,"t":44,"r":740,"b":104,"w":208,"h":60})
+  ok   740x360: no label cut off and no sideways scroll (none; page 0, app 0)
+  ok   740x360: a notice pops in the side column, above the bar and clear of the stage ({"l":539,"r":734,"b":214.65625,"barT":224.65625,"stageR":532,"W":740})
+  ok   740x360: each tab's menu opens as a panel (300 px or wider, the stage's left strip still showing, no sideways scroll), the bar stays on top and Attack still acts, and it closes with its X, the lit tab or Escape
+  ok   740x360: over an open menu, notices stay in the side column ({"l":539,"mr":532})
+  ok   740x360: Hero > Training and the Tavern's gatherer board show inside the panel with no sideways scroll ({"tr":{"ok":true,"l":184,"r":522,"t":94,"ml":172,"mr":532},"hb":{"ok":true,"l":184,"r":522,"t":94,"ml":172,"mr":532}})
+  ok   740x360: the ability picker and the Attack sheet (with Training) fit the screen with their Train button in view, and close with Escape ({"pk":{"ok":true,"top":8,"bottom":352,"go":214},"ms":{"ok":true,"top":39,"bottom":321,"go":293}})
+  ok   740x360: no page errors
+  ok   turning the phone keeps the open menu and docks notices for the layout (forge,app,toasts side-dock / forge,app,toasts over-menu)
+  ok   no page errors while turning
+items
+  ok   save-early.json: materials, 6 items, ids, equip and skills identical after load
+  ok   save-early.json: gear() is finite
+  ok   save-early.json: heroDps 862.1954939253345 finite (total 862.1954939253345 = hero)
+  ok   save-early.json: every equipped item fits its slot
+  ok   save-early.json: items keep names and colours
+  ok   save-early.json: load-save-load round trip lossless
+  ok   save-mid.json: materials, 8 items, ids, equip and skills identical after load
+  ok   save-mid.json: gear() is finite
+  ok   save-mid.json: heroDps 130688.50076340004 finite (total 130688.50076340004 = hero)
+  ok   save-mid.json: every equipped item fits its slot
+  ok   save-mid.json: items keep names and colours
+  ok   save-mid.json: load-save-load round trip lossless
+  ok   save-late.json: materials, 10 items, ids, equip and skills identical after load
+  ok   save-late.json: gear() is finite
+  ok   save-late.json: heroDps 1779647.5400967211 finite (total 1779647.5400967211 = hero)
+  ok   save-late.json: every equipped item fits its slot
+  ok   save-late.json: items keep names and colours
+  ok   save-late.json: load-save-load round trip lossless
+  ok   loading 76 items deletes none; equipped ones are not in the bag
+  ok   affix rolls deterministic, distinct and within range
+  ok   reforge keeps lines distinct, leaves mw alone, cost rises per reforge
+  ok   Ranger wears Bow, Quiver, Leathers; not a Warblade
+  ok   gear() adds base, affix and Masterwork lines over the new positions
+  ok   class gear raises hero dps (7.3 -> 9.2)
+  ok   gear that no longer fits the class is ignored
+  ok   equipped items do not count towards the bag
+  ok   fits(): class, role, character rules; legacy Sword/Helm only without a class; uniques fit every class
+  ok   upgrades to +8, +9 and +10 name a Trophy
+  ok   names, colours and costs for new kinds
+  ok   legacy forge items carry no new fields
+  ok   no items handler errors
+crafting
+  ok   canCraft names what is missing (7 more Hemp Fibre, 1 more Quartz, 1 more Sage Sprig, 2 more Dim Essence)
+  ok   station tier gate: Needs Tailoring 10
+  ok   Charm gates on the Enchanter's Table...
+  ok   ...or Smithing, so old saves keep the recipe (camp N4)
+  ok   craftItem makes a Robe with 2 affix line(s)
+  ok   craft pays the recipe exactly ({"ess":2,"crystal":1,"fibre":7,"herb":1})
+  ok   Tailoring XP 20 (no catch-up when level) and a crafted event
+  ok   catch-up: x2 XP while below Smithing
+  ok   Trinket rolls from the chosen role
+  ok   forgeItem delegates new kinds to craftItem
+  ok   the legacy Sword and Helm are no longer made
+  ok   forgeItem keeps the old Pickaxe path (Smithing XP)
+  ok   Masterwork needs its Trophy
+  ok   Masterwork craft spends the Trophy and marks the item
+  ok   full bag: no craft, nothing paid
+  ok   salvage returns 40% of a Robe
+  ok   Reforge cost: 3 essence and 75 gold (15 foes of zone 1; {"mats":{"ess":3},"gold":75})
+  ok   reforgeItem pays and counts
+  ok   a reforged line never duplicates a stat
+  ok   the next Reforge costs more
+  ok   Reforge needs Enchanting for the tier
+  ok   Transmute up needs Enchanting for the new tier
+  ok   Transmute up: 4 Copper -> 1 Iron
+  ok   Transmute down: 1 Iron -> 2 Copper
+  ok   Transmute never crosses families or goes past tier 5
+  ok   +8 needs a Trophy
+  ok   +8 spends one Trophy
+  ok   upgradeEquipped honours the gate too
+  ok   below +8 no Trophy is needed
+  ok   bagCount counts the items not worn
+  ok   a classed hero cannot equip a legacy Helm
+  ok   class change retools: Staff -> Warblade, Lantern -> Shield, old Helm -> Greathelm (worn), bag Hood -> Greathelm, bag Bow (companion kind) kept (warblade,shield,greathelm,greathelm,bow)
+  ok   class change: same ids, count, +N; rt keeps the original kind
+  ok   class change keeps every gear() line (hero dps 10.7 -> 11.1)
+  ok   class change tells the player once: Your old helm was reforged into Warrior gear. | Your Lanternmage gear was reforged into Warrior gear.
+  ok   Star Chart needs Enchanting 22
+  ok   Star Chart needs a Wraith Veil
+  ok   Star Chart pays and grants Oriel's route
+  ok   no second Star Chart (solo: the Star Chart only opens the party route, so nobody joins; the Craft tab hides it)
+  ok   Vigor Tonic: +15% damage
+  ok   the Tonic timer runs offline
+  ok   no crafting errors
+  ok   save-early.json: a save without S.craft gets its defaults, items and equip untouched, round trip ok
+  ok   save-mid.json: a save without S.craft gets its defaults, items and equip untouched, round trip ok
+  ok   save-late.json: a save without S.craft gets its defaults, items and equip untouched, round trip ok
+pacing
+  ok   mob HP rises every zone to 140
+  ok   region 1 step lands on zone 35 and stays
+  ok   essence tiers by zone (Starlit from 42): 1,1,2,4,4,5,5
+  ok   away time levels the hero quietly (L1 -> L14, 0 toasts)
+camp
+  ok   new game: camp closed, stations and Tavern at Lv 1
+  ok   camp opens at zone 5 with Hearth 1
+  ok   the Almanac's camp Omens switch on
+  ok   no build without the cost
+  ok   Watchtower Lv 1 paid (0 gold, wood 1 15, ore 1 12)
+  ok   one build per building at a time
+  ok   the Library needs Hearth 2
+  ok   a second build queues behind the first and is paid now
+  ok   one builder with one queued build: the third is refused
+  ok   cancelling a queued build refunds it all
+  ok   finished while away; the queued build started at the old end
+  ok   the away report lists the finished build
+  ok   the tick finishes builds; 'campBuilt' {id, lv} fires
+  ok   cancelling a started build refunds half
+  ok   Watchtower Lv 3: +6h away
+  ok   away cap never above 24h (Hourglass 5 + Watchtower 5 + another +7h: 24h)
+  ok   station Lv 5 perks: XP +30%, salvage, reforge, transmute, rarity
+  ok   Hearth 10 +30% away, Library 5 XP, Tavern 4 bounties
+  ok   Hearth Day doubles the Hearth bonus
+  ok   station levels never gate a recipe
+  ok   no Blessing without the Shrine
+  ok   Shrine 1: one Blessing, swapping replaces it
+  ok   Shrine 3: two Blessings, 25% stronger (Blade +10%)
+  ok   Hearth 5 adds a second builder
+  ok   Next Up: "ready to build"
+  ok   Hearth 6 started
+  ok   Next Up: "build finishes in <time>"
+  ok   no NaN in the camp state
+  ok   no camp errors
+  ok   save-early.json: camp state loads, opens by zone, dps and gear unchanged, round trip keeps S.camp
+  ok   save-mid.json: camp state loads, opens by zone, dps and gear unchanged, round trip keeps S.camp
+  ok   save-late.json: camp state loads, opens by zone, dps and gear unchanged, round trip keeps S.camp
+deepwell
+  ok   new game: S.deep defaults, no run, locked
+  ok   a locked Deepwell cannot start a run
+  ok   save-early.json: gets the Deepwell defaults
+  ok   save-early.json: round trip keeps S.deep
+  ok   save-mid.json: gets the Deepwell defaults
+  ok   save-mid.json: round trip keeps S.deep
+  ok   save-late.json: gets the Deepwell defaults
+  ok   save-late.json: round trip keeps S.deep
+  ok   a partial S.deep keeps its values and gains the missing fields
+  ok   zone 38 but Hearth 2: still locked
+  ok   zone 20+ and Hearth 3: open
+  ok   start: the arena supplies floor 1; your own activity (gather) is kept in the run
+  ok   starting Oil 60s, most Oil 120s
+  ok   Oil drains 1 per second while a foe stands (2.00 in 2s)
+  ok   three kills clear floor 1 and open the draft
+  ok   a normal floor refunds 20s of Oil (15s, +5s with party combat)
+  ok   the draft offers 3 different boons (map, taunt, iron)
+  ok   one reroll a run; then none
+  ok   picking mend starts floor 2
+  ok   arena kills fire no kill event
+  ok   main progress is untouched while below (gold, XP, zones, kills, materials, items)
+  ok   reload: the run is kept, paused on floor 2; your activity is gather again
+  ok   reload: Oil is back to what the floor began with, boons kept
+  ok   resume: the same floor restarts with the same Oil
+  ok   no climbing out mid-floor
+  ok   climb out: the run ends and gather resumes
+  ok   climb out pays 8 Depth Marks and sets the best floor
+  ok   the 3.8s below are credited as away gains
+  ok   boons stop when the run ends
+  ok   out of Oil ends the run
+  ok   the shop sells Deep Lore, looks, titles and Lore pages only
+  ok   bought all 53 shop rows
+  ok   a full Deep Lore changes nothing outside the Deepwell (dps, gold)
+  ok   bought titles are picked in the Codex
+  ok   the Codex Deepwell page opens and shows the bought Lore pages
+  ok   Deep Lore works below: Oil, rerolls, banish, Deep Pockets
+  ok   a run that opens on a draft sets the zone foe aside (no gold, no kills)
+  ok   Lantern Stair II: starts on floor 11 after two Common picks, floors 1-10 paid
+  ok   the Stair picks offer Commons
+  ok   no abandoning mid-floor while live
+  ok   the Trial gives the same seed, rule, foes and offers on two saves in the same week
+  ok   the Trial ignores Deep Lore
+  ok   every rule once in each 12-week cycle; the same week always gives the same rule
+  ok   a Trial run from an earlier week is scored
+  ok   no deepwell errors
+stars
+  ok   new game: S.stars defaults
+  ok   a star point every 3 hero levels
+  ok   a Great Lantern (+4) for each region boss: the zone 35 boss first
+  ok   43 stars, each with a name, one short rule and a cost of 1-3 star points (43)
+  ok   found on 21 zone bosses (6 to 70, 7 past zone 35), 8 from elites (3 from zone 36), 3 from each Proving (the third on a second pass), 5 on Deepwell floors 3-15; each has its own 2-letter tile
+  ok   every star names whose kit it plays with (Wren 9, Tobin 8, Pip 8, any hero 18)
+  ok   the star map: 6 constellations in a 3 x 2 sky, each star once at its own spot (40 units apart at least), lines only between its own stars
+  ok   the six evolutions each fold one effect into a Proving star
+  ok   the limits: 3 set, 2 lit, learned after 4 won fights
+  ok   zone 7 drops no star
+  ok   the zone 6 boss's first win finds Ready Lamp, sets it in a free slot and says so (Star found: Ready Lamp. Start each fight with 2 Aim, 3 Grit or 2 Cinders. It is set for your next fight.)
+  ok   a lost Proving finds nothing
+  ok   passing the Warrior's Proving finds its two paths' stars (Blood Price, Holy Sparks)
+  ok   no elite star before zone 15
+  ok   an elite star at the latest on the 12th elite win from zone 15 (a dry-streak cap)
+  ok   below zone 36 the elites find only the first five elite stars
+  ok   from zone 36 they find Brimming, Mending Steel and Avalanche too
+  ok   Deepwell floor 2 finds no star
+  ok   reaching Deepwell floor 7 finds the floor 3 and 6 stars (Full Draw, Kindling)
+  ok   one pass of the Warrior's Proving: not its third star yet
+  ok   a second pass of the Warrior's Proving finds Shatterpoint
+  ok   an unknown star or a 4th slot is refused
+  ok   a star set in another slot swaps places
+  ok   a star not learned yet cannot be lit ("Win 4 more fights with it set to learn it.")
+  ok   lighting spends star points (Encore 3, Turning Point 2: 5 of 10 left)
+  ok   a third lit star is refused: 2 at most
+  ok   a set star is not lit as well
+  ok   putting a star out gives its points back
+  ok   setting a lit star puts it out first
+  ok   a fight takes the 3 set and the 2 lit stars, never more than 5 (["serrated","brand","encore","huntstep","turning"])
+  ok   with fewer points (a lower level) only the lit stars the points still pay for come along
+  ok   each hero has its own slots: Tobin starts empty
+  ok   a turn fight takes the hero's stars as it starts (the profile)
+  ok   found, learned, set and lit stars survive save and load
+  ok   3 wins (and a loss) with Cold Steel set: not learned yet
+  ok   the 4th win learns it, and the bell says any hero can light it
+  ok   another hero can light a learned star
+  ok   every star has a check below
+  ok   Ready Lamp: Start each fight with 2 Aim, 3 Grit or 2 Cinders.
+  ok   Spark Guard: A parried hit gives you 1 Aim, Grit or Cinder.
+  ok   Turning Point: When the foe falls below a third of its health, your next ability is a sure crit.
+  ok   Hunter's Step: A dodge Marks the foe for 2 turns.
+  ok   Serrated: A critical hit adds 1 Bleed.
+  ok   Cold Steel: A parried hit adds 1 Chill. At 3 Chill the foe Freezes.
+  ok   Quick Return: A counter makes your shortest cooldown ready.
+  ok   Ember Edge: A critical hit sets the foe alight: a small Burn for 2 turns.
+  ok   Open Veins: Bleed ticks can crit.
+  ok   Brand: Setting a foe alight also Marks it for 2 turns.
+  ok   Slip and Strike: After a dodge, your next ability hits 30% harder.
+  ok   Dazed Prey: A Stun or Freeze also Marks the foe for 3 turns. On a boss, so does a Stagger.
+  ok   Killing Mark: Your critical hits on a Marked foe deal 30% more.
+  ok   Encore: The third ability you use each fight is ready again at once.
+  ok   Cinder Riposte: A counter sets the foe alight for 3 turns.
+  ok   Open Guard: A counter leaves the foe Exposed: your next payoff hits 25% harder.
+  ok   Perfect Time: A Perfect press takes 1 turn off your other cooldowns (once an ability).
+  ok   Banked Coal: When an ability spends your Aim, Grit or Cinders, 1 comes back.
+  ok   Crushing Blow: Every 4th Attack in a fight hits twice as hard.
+  ok   Blood Price: Below half health you deal 25% more.
+  ok   Holy Sparks: A parried hit strikes back for 20% of your ability power, as holy damage.
+  ok   Deep Wounds: Bleed holds up to 8 stacks (was 5) and lasts 1 turn longer.
+  ok   Tripwire: Each fight starts with the foe Pinned: its first attack is easier to parry and dodge.
+  ok   Witchfire: When a Curse bursts, the foe catches fire for 3 turns.
+  ok   Sanctuary: Each fight starts with a Ward worth 12% of your max health.
+  ok   Bloodscent: Each Bleed tick on the foe gives you 1 Aim, Grit or Cinder.
+  ok   Spite: A hit that lands on you gives you 1 Aim, Grit or Cinder.
+  ok   Evil Eye: A Cursed foe is Marked for as long as the Curse lasts.
+  ok   Ringing Blow: Your Stuns build twice the Stagger on a boss.
+  ok   Frostfire: Spending Cinders chills the foe: 1 Chill for every 2 you spend.
+  ok   Riptide: Dodge every hit of an attack and you strike back for half a counter.
+  ok   Swift Tide: Finishers are ready from your first turn, and come back 2 turns sooner.
+  ok   Brimming: Aim, Grit or Cinders you gain past full strike the foe for 50% power each.
+  ok   Mending Steel: A counter heals you for 6% of your max health.
+  ok   Avalanche: Spending 5 Grit or more at once Stuns the foe.
+  ok   Full Draw: At 3 Aim, your next ability is a sure crit. It spends 1 Aim.
+  ok   Kindling: Burn ticks can crit.
+  ok   Stoneskin: A hit that lands on you spends 2 Grit to take half the damage.
+  ok   Scarred: When a Mark wears off, it leaves 2 Bleed.
+  ok   Last Light: Once a fight, a hit that would fell you leaves you at 1 health.
+  ok   Shatterpoint: Breaking a boss's charge strikes back with a full counter.
+  ok   Snare: A Stun or Freeze also Pins the foe: its next attack is easier to read.
+  ok   Thermal Shock: Your fire hits on a Chilled foe deal 25% more for each Chill.
+  ok   every star at once (far past the limit): no bad numbers, bosses still take 2+ hero turns, and the hero never gets more than 2 turns in a row (2 in 148 turns)
+  ok   a live turn fight: its win carries the set stars (fightEnd stars ["brand"]) and counts toward learning them (1)
+  ok   Next Up: "Set Ready Lamp in a star slot"
+  ok   the Stars add no flat stat: no crit damage source, no damage, crit, Attack or cooldown modifier
+  ok   save-early.json: loads, finds the 1 stars of the zone bosses behind it (zone 8), sets none, keeps its star points
+  ok   save-mid.json: loads, finds the 7 stars of the zone bosses behind it (zone 20), sets none, keeps its star points
+  ok   save-late.json: loads, finds the 15 stars of the zone bosses behind it (zone 38), sets none, keeps its star points
+  ok   an old star-map save loads: the old layout stays in the save and does nothing, every star point is free, the Proving it passed finds its stars, and the bell says so
+  ok   a broken stars save is repaired: unknown and unowned stars leave their slots ([null,null,null])
+  ok   a constellation with a star left to learn is not complete
+  ok   learning the last star of the Hollow completes it: +1 star point, stars learn in 3 wins (Encore, at 3 already, is learned at once), and it says so (The Hollow is complete: +1 star point, and stars now learn in 3 won fights.)
+  ok   every constellation complete: +6 star points, and a star learns in 2 wins at the least
+  ok   a constellation complete pops (the notice policy), held to the log
+  ok   no star errors
+coast writing
+  ok   coast: 7 arrival lines and the boss arrival, each under 80 chars
+  ok   coast: beats 0-5, text 2-5 sentences, notes, Great Lantern heads, character lines
+  ok   coast: Keeper lines for every moment, barks under 60 chars
+  ok   coast: 3 bounty texts (one and many) under 40 chars
+  ok   coast: 3 Omen texts (name, effect, line) inside limits
+regions and the Great Lantern
+  ok   save-early.json: zone type, place, cycle, name, next type, theme, hue, unique and home ground for zones 1-35 are the old ones; zone, max zone, uniques and mastery kept
+  ok   save-mid.json: zone type, place, cycle, name, next type, theme, hue, unique and home ground for zones 1-35 are the old ones; zone, max zone, uniques and mastery kept
+  ok   save-late.json: zone type, place, cycle, name, next type, theme, hue, unique and home ground for zones 1-35 are the old ones; zone, max zone, uniques and mastery kept
+  ok   regions: 35 is the Hollow, 36 and 70 the Coast (place 0 cycle I, place 6 cycle V), 71 stays on the Coast (cycle VI)
+  ok   coast placeholder: zones 36-90 keep the Hollow foe types, packs and uniques they had
+  ok   coast placeholder names read as their own places: Seamoss Hollow, Sea Caves, Seamoss Hollow II, Saltmarsh V, Seamoss Hollow VI
+  ok   a save at zone 35: no Great Lantern yet
+  ok   the zone 35 boss's first kill: one Great Lantern card ("The Great Lantern of the Hollow burns again."), story beat 0, no bell line
+  ok   constellations: the card lists +4 star points and they are granted (greatLanternsLit 1)
+  ok   it fires once: not on a rematch, not further on, not after a reload; the points stay +4
+  ok   the zone 70 boss lights the second (the Coast, beat 5)
+  ok   save-early.json (zone 8): nothing yet
+  ok   save-early.json: nothing more after a reload; star points unchanged (4)
+  ok   save-mid.json (zone 20): nothing yet
+  ok   save-mid.json: nothing more after a reload; star points unchanged (11)
+  ok   save-late.json (zone 38): one bell line, no card: "The Great Lantern of the Hollow burns again. A green light blinks far out at sea. The road runs down to the coast."
+  ok   save-late.json: nothing more after a reload; star points unchanged (20)
+  ok   lanternRoad(): Hollow and Coast lit, the Emberwaste dark beyond, the party on the Coast
+deeds
+  ok   AD1 ids unique: 73 tracks, 37 Feats, 13 secrets, 33 looks, 10 groups
+  ok   AD1 counts: 73 tracks, 21 milestone and 16 hard Feats, 13 secrets, 29 accessories and 4 frames, 10 groups
+  ok   AD1 every track rises tier to tier, sits in a group, and feeds a capped key
+  ok   AD1 every reward id resolves; every look has exactly one source and carries no modifier
+  ok   AD1 titles are short epithets (<= 14 characters, <= 2 words): 41 listed now
+  ok   AD1 all 56 designed titles fit the rule (56; kept by name: the Last Lantern)
+  ok   waiting tracks are hidden until their system exists: 66 live, hidden fish g_fish g_pearl lanterns meals oath oathseals
+  ok   a runtime probe lights a waiting track up when its save field appears (S.store)
+  ok   probes of later systems never throw
+  ok   AD7 letters: every value below 1e36 prints as before; 1e36 = 1.00aa, 1e39 = 1.00ab, 1e114 = 1.00ba
+  ok   AD7 scientific: 4.2e16 = 4.20e16, 12,345 = 1.23e4
+  ok   AD7 the switch goes back to letters
+  ok   AD4 with every tier on, each key stays at its cap (dmg raw 10.0% -> 5%); party damage from deeds x1.0500 <= 1.092
+  ok   AD4 the cap holds at runtime: mod("dmg") x1.0500 from deeds; deepOil 8s
+  ok   no tier, no bonus (Bronze and Silver pay points only)
+  ok   registerGoal cap: 1 takes one row at most (zz)
+  ok   a new game runs the same first-load path with nothing to grant
+  ok   event counters: harvest by family and tier, Glints, weekly goals, Embers, Trophies, upgrades, best craft
+  ok   combat counters are read as CB_STATS deltas once a second; the biggest hit is a record (Heavy Hand 1; [3,508,2000000,4])
+  ok   a CB_STATS reset never subtracts from a counter
+  ok   secrets: Drummer (60 Attack presses in a minute), 15 points, one toast; Namesake (a companion's name) never fires in solo
+  ok   unfound secrets keep their names hidden
+  ok   deeds titles join the Codex picker (S.codex.title); unearned ones cannot be picked
+  ok   near tiers read plainly: 50 foes to Slayer I
+  ok   Next Up shows one nudge (50 foes to Slayer I 0.95), capped below Ready; it hides for 3 minutes after a tier
+  ok   a Feat gives its look; it can be worn (wearGet)
+  ok   Codex bridge: the Feat tile (5 Light) and the Wardrobe entry (1 Light): 3 -> 9
+  ok   looks: only owned, in their own slot; None always
+  ok   the Flame slot falls back to the Deepwell lantern colour (S.deep.eq keeps its meaning)
+  ok   no errors (deeds on a new game)
+  ok   AD2 the 21 milestone feats: ids, thresholds and bonuses as ECON-A set them
+  ok   AD2 save-early.json: converted rewards retain the saved milestone sums
+  ok   AD3 save-early.json: the saved deeds load; no track is behind its tier, no first-load line
+  ok   AD3 save-early.json: a second load grants nothing
+  ok   AD6 save-early.json: save and load round-trip with S.deeds; unrelated saved fields are preserved
+  ok   save-early.json: no errors
+  ok   AD2 save-late.json: converted rewards retain the saved milestone sums
+  ok   AD3 save-late.json: the saved deeds load; no track is behind its tier, no first-load line
+  ok   AD3 save-late.json: a second load grants nothing
+  ok   AD6 save-late.json: save and load round-trip with S.deeds; unrelated saved fields are preserved
+  ok   save-late.json: no errors
+  ok   AD2 save-mid.json: converted rewards retain the saved milestone sums
+  ok   AD3 save-mid.json: the saved deeds load; no track is behind its tier, no first-load line
+  ok   AD3 save-mid.json: a second load grants nothing
+  ok   AD6 save-mid.json: save and load round-trip with S.deeds; unrelated saved fields are preserved
+  ok   save-mid.json: no errors
+  ok   AD5 online shapes unchanged: raiders {name,L,maxZone,wyrms,gear,dps,gen,dmg}, presence {hero,lvl,zone,act,raiding}; 80-online.js never reads deeds or titles
+  ok   AD8 one deedsCheck pass (a quarter of the tracks) takes 0.062 ms on the late fixture (< 0.5; Node 18-24)
+wall
+  ok   wall: 19 Feat trophies (12 x 12, B1 tones, ink outline, each its own), pennants and 11 group medals at Gold and Everflame
+  ok   wall: pennants stir in 2 frames; featTrophyURL gives every Feat's trophy (AC3's hook), '' for an unknown id
+  ok   wall: 4, 8 and 12 hooks at stages 1-3 (0, 4, 8, 12)
+  ok   wall: under 250 points the plot is dark and nothing hangs
+  ok   wall: 385 points opens stage 1 and plot p13; 4 hooks hold the newest Feat first, then chapters, then medals (f_watch, f_gold, f_parry, ch1; stage 1)
+  ok   wall: pins hang first (unearned pins skipped), then the automatic order (combat1, f_parry, f_watch, f_gold, ch1)
+  ok   wall: a full wall holds 12; the rest wait for a pin
+  ok   wall: every stage paints (5 / 420 / 865 / 1250 rects)
+  ok   wall: no errors
+  ok   wall: the Camp view carries the Trophy Wall card (75-camp-ui); it shares the camp fire painter (63d)
+  ok   wall: plot p13 at x 990 on a 1,024 art px panorama (55-hearth)
+  ok   wall: reduced motion holds one frame; plates bake in idle time; a tap opens Feats; no new save field
+nav
+  ok   save-early.json: S.nav loads as saved (last {"mine":{"kind":"crystal","t":1},"wood":{"kind":"wood","t":1},"forage":{"kind":"herb","t":1}}), no field lost
+  ok   save-late.json: S.nav loads as saved (last {"mine":{"kind":"ore","t":5},"wood":{"kind":"wood","t":4},"forage":{"kind":"fibre","t":4}}), no field lost
+  ok   save-mid.json: S.nav loads as saved (last {"mine":{"kind":"ore","t":3},"wood":{"kind":"wood","t":3},"forage":{"kind":"fibre","t":3}}), no field lost
+  ok   a late save lists every open skill in the switcher (mine,wood,forage,hunt)
+  ok   navGo gather: the activity and the node change, navGo { place, ok } fires with close (the UI closes menus on it)
+  ok   navGo by skill resumes that skill's last node (wood3)
+  ok   Mining remembers its last node (Silver Seam) while you chop
+  ok   a node the switcher already lists (a skill's last node) is not repeated under Recent
+  ok   nodes you left show under Recent (ore2, ore3, NaN)
+  ok   navGo fight: the pill reads "Fighting · Zone 20"
+  ok   a failed boss shows as a Recent place ("Zone N boss")
+  ok   the pill while mining: "Mining · Cobalt Crater"
+  ok   a full cell turns the pill red ("· full")
+  ok   time to full: 1450 min at 69.0 a minute
+  ok   Best for you: crystal T4 (Home +25%); ore T3 (for the Hearth Lv 4)
+  ok   a full cell is never "best for you"
+  ok   S.nav survives a save and load ({"mine":{"kind":"ore","t":4},"wood":{"kind":"wood","t":3},"forage":{"kind":"fibre","t":3}}, 6 recent)
+  ok   stale or broken nav entries are ignored
+  ok   nav: no handler errors
+  ok   cold Hearth: the switcher and Gather show only Woodcutting (wood), Gather opens on the Oak Grove
+  ok   after the fire: Mining opens too (mine,wood)
+  ok   cold nav: no errors
+  ok   while a Deepwell run is live the pill reads "Deepwell · Floor 1" and switching waits
+  ok   75-nav-ui: the pill updates through uiHooks, navGo { close } closes menus, the header flag picks the variant
+  ok   70-ui: uiHooks, followGo (toast go), the Pack view is labelled Store (id kept)
+  ok   72-ui-gather: Mining shows once open, the Hands hook is there, the stale "lays down their swords" copy is gone
+  ok   shell: the Gather panel is built by script
+  ok   dist carries the pill, the switcher and the Storehouse view
+  ok   browser: from inside the Craft menu the pill opens the switcher (5 rows); Chop switches to Woodcutting · Oak Stand. Switch activity, closes the sheet and the menu
+  ok   browser: on the Mining view while chopping, a one-line strip; tapping the Cobalt Crater row moves you there and keeps the menu open (Wood keeps its own last node)
+  ok   browser: Back to fight fights at your zone and closes the menu
+  ok   browser: a sideways swipe moves Mining -> wood
+  ok   browser: no page errors
+econ (ECON-A)
+  ok   EC1 gold a foe at each region's first zone (5 / 17 / 60 / 210 / 735) and boss (13.5 / 45.9 / 162 / 567 / 1,985)
+  ok   EC1 the table in economy-2 2.2 (within its rounding)
+  ok   the curve steps x1.26-1.31 at each region boss (1.26, 1.31, 1.30, 1.30) and grows under x500 in all
+  ok   mobGold reads the curve
+  ok   prices as economy-2 lists them (23: Hearth, rows, Shrine, Storehouse, Tents, hires, shifts, upgrades, reforge)
+  ok   item upgrades and reforges charge the econ price
+  ok   every price table rises: hearth, rows, shrine, store, tents, balefire, hireR1, hireLeg, hireCom, fee, feeLv, up, upG, reforge, reforgeG
+  ok   EC10 (static) every price under 1e8 (biggest: Tent 10 2.30M)
+  ok   the Lucky Coin is the Loaded Die (cap 5), the Crown of Hollows gives +10% gold (raid docs untouched)
+  ok   one gold modifier left (the Omen), and with it off goldMult() is x1 with no gear (1; 1 gold modifiers)
+  ok   EC8 gear gold is capped at +30% (a grade-5 Unique +10 charm rolls +41.6%, goldMult x1.3)
+  ok   the Gold Rain Omen stays a gold day: x1.69 with capped gear, x2.34 on its Dare (at most 1.3 x 1.8)
+  ok   crit damage cap: the sources add to +38% (die, mastery, bestiary, edge, deed-milestones), the pool gives +38% (at most +40%)
+  ok   player-facing text says "crit damage" (no "Keen")
+  ok   the ledger counts a Training level under "up"
+  ok   the ledger counts fighting gold (78 in 30 s)
+  ok   econ: no errors
+  ok   save key v5 (W3-A), S.v 5: with a v1 save present the game starts fresh (zone 1, no gold, the new fields at their defaults)
+  ok   a minute of play and a save: no errors, the v1 save is untouched, the game saves under v4
+  ok   a broken v1 and v2 save in storage: a new game, no crash
+  ok   tools/check.mjs reads the v2 key
+  ok   tools/sim.mjs reads the v2 key
+  ok   tools/savecode.mjs reads the v2 key
+  ok   tools/perf.mjs reads the v2 key
+  ok   55-econ.js is a core file: no DOM, window or storage
+solo hero
+  ok   a new game has no hero yet; the picker offers Wren, Tobin and Pip
+  ok   Wren plays the ranger kit (ranger) with Echo Shot (wren|ranger|ranger|Wren|Echo Shot|true)
+  ok   Tobin plays the warrior kit (warden) with Shield Bash (tobin|warden|warrior|Tobin|Shield Bash|true)
+  ok   Pip plays the mage kit (lanternmage) with Fireball (pip|lanternmage|mage|Pip|Fireball|true)
+  ok   only the hero fights
+  ok   no recruiting code and no Roster tab
+  ok   Next Up shows no recruit or promotion goal
+  ok   no Companions achievements show
+  ok   switching to Tobin: his own level (1), the same gold
+  ok   back to Wren: her level 7 again; Tobin keeps his 4
+  ok   a new hero starts with its ability in slot 1; slots 2 and 3 are empty
+  ok   placing it in slot 3 moves it there (a swap with the empty slot 1)
+  ok   another hero's ability cannot be equipped
+  ok   idle play casts the ability from whatever slot holds it
+  ok   the slots are saved per hero
+  ok   a slot can be cleared
+  ok   with every slot empty nothing is cast, idle or by hand
+  ok   each hero keeps its own slots (Wren's are hers; Pip's stay cleared)
+  ok   Attack hits, then waits for its cooldown (mashing does nothing)
+  ok   Attack is back after 0.6 s
+  ok   the parry window (0.35 s) is tighter than the dodge window (0.8 s)
+  ok   a parry outside its window misses: you are open (more damage taken)
+  ok   while open, Parry does nothing
+  ok   the same moment is inside the easier dodge window
+  ok   Dodge has a short cooldown
+  ok   a dodged heavy hit deals no damage
+  ok   a parry in the last moment lands
+  ok   the parried foe is Staggered at once (the Staggered status, 59a)
+  ok   the counter attack lands while the foe is still staggered
+  ok   the stagger ends when the counter ends
+  ok   a parried heavy hit deals no damage
+  ok   the zone 1 boss runs its kit
+  ok   the boss winds up a heavy hit
+  ok   Dodge answers the boss heavy
+  ok   a dodge does not stagger the boss and gives no counter
+  ok   the boss winds up its next heavy hit
+  ok   a parry on the boss heavy staggers the boss
+  ok   while staggered the boss does nothing: its next telegraph timer waits
+  ok   the stagger clears when the counter ends; the boss timers run again from there
+  ok   Echo Shot hits every foe in the lane (6) and Marks them
+  ok   the ability then waits for its cooldown
+  ok   Shield Bash hits the front foe, Stuns it, and Tobin takes less damage for a few seconds
+  ok   Fireball bursts on the target, Burns it and nearby foes, and leaves a burning patch
+  ok   the burning patch keeps every foe on it burning
+  ok   idle: the hero kills (11 packs) and casts its ability alone (16 casts); no parries, dodges or counters
+  ok   away: an hour earns gold (1843) ("You held Batwing Caves.")
+  ok   wren: 10 minutes from a fresh save, no errors (zone 10, level 13, 2 parries)
+  ok   wren: the save loads back with its hero
+  ok   tobin: 10 minutes from a fresh save, no errors (zone 13, level 14, 8 parries)
+  ok   tobin: the save loads back with its hero
+  ok   pip: 10 minutes from a fresh save, no errors (zone 10, level 13, 1 parries)
+  ok   pip: the save loads back with its hero
+  ok   a v2 save is not read: a new game starts (v3)
+  ok   Wren (a bow) cannot equip the Sproutblade (a sword)
+  ok   Tobin (sword and shield) can
+  ok   Lv 1 buildings build in seconds (Workbench 10 s, Forge 15 s, other rows 45 s; Lv 2 20 min)
+  ok   the guide: Attack, the ability, Dodge, Parry, the first boss, an upgrade, Gather, chop, light the fire, then camp (attack,ability,dodge,parry,boss,upgrade,gather,chop,light,stock:bench,bench,stock:tool,tool,stock:forge,forge,stock:store,store,tab:party,nextup)
+  ok   every step pauses the game while it shows, except the ones that wait for materials (live progress) and two notes (W1-A: see "solo guide pause rules")
+  ok   after choosing a hero: "Press Attack"
+  ok   then the ability
+  ok   a heavy hit: "Press Dodge" (the guide's first press always counts)
+  ok   the next heavy hit: "Press Parry" and counter
+  ok   W1-D: the ability step pauses while a foe is alive
+  ok   W1-D: ...and does not pause once the pack is dead, so the respawn can happen
+  ok   W1-D: a foe respawns, the step pauses again and the ability casts (Echo Shot needs a target)
+  ok   W1-D: the guide's Dodge counts even when an earlier press left the button on cooldown (the paused game could never clear it)
+  ok   W1-D: switching to a hero who has not played keeps the road (zone 12); their level is their own
+  ok   W1-D: switching back returns Wren to zone 12 at level 30 (not the zone the weak hero fell to)
+  ok   W1-D: ...and Tobin to his own zone 2
+  ok   W1-D: a remembered zone never goes past the furthest zone cleared
+  ok   a new game starts with Auto on
+  ok   the six combat inputs never flip the Auto toggle, on or off (only soloSetAuto does) (true)
+  ok   Auto off stays off with no press for 30 s (no timer)
+  ok   soloGoIdle (the page hidden) fights on Auto at once, without changing the toggle
+  ok   soloWake (back on screen) returns to fighting by hand
+  ok   soloSetAuto(true) turns Auto back on and saves it in S.solo.auto
+  ok   an auto-cast does not flip anything
+  ok   while active (8 s, a press every 3 s): no auto swing, no auto-tap, no auto-cast, no damage (0 dealt, 0 swings, 0 auto-taps, 0 auto-casts)
+  ok   the Attack button hits
+  ok   Auto turned back on: auto-play resumes (12 swings, 4 auto-taps, 2 auto-casts)
+  ok   by hand hits harder: Attack x5 x attack speed, a hand cast x2.5
+  ok   the counter always crits (3/3 at the crit multiplier with crits off, 3 crit events), and its number carries the crit look
+  ok   a crit's number carries the crit flag (the pop, sparks and higher rise in 62-stage); a normal hit's does not ([{"txt":"22!","color":"#FF9E3D","crit":true},{"txt":"9.0","color":"#FFFFFF","crit":false}])
+  ok   a tap on the fight stage does not attack (62-stage)
+  ok   the button row calls Attack, Parry, Dodge and the ability; switching hero is on the Hero tab (menu audit: not atop Camp)
+  ok   59j-solo.js is a core file: no DOM, window, canvas or storage
+  ok   no solo errors
+solo guide pause rules
+  ok   no guide step that waits for materials has pause (chop, stock:bench, stock:tool, stock:forge, stock:store)
+  ok   the press steps that cost materials (bench, tool, forge, store) pause only through pauseUnless
+  ok   each of them has a stock step that says what to gather
+  ok   Next Up and the Hero tab hint never pause the game (Next Up is a Got it note)
+  ok   the Workbench step needs 20 Pine Log ([{"fam":"wood","t":1,"kind":"wood","have":0,"n":20,"name":"Pine Log"}])
+  ok   the guard: the Workbench press step does not pause while 20 Pine Log are missing; a plain press step does pause
+  ok   with 20 Pine Log in hand the Workbench press step pauses again
+  ok   the first wood is Pine Log in the guide, camp, roster and fire copy (Oak left in: none)
+solo guide: gathering never freezes (browser)
+  ok   a fresh game that only presses what the guide asks reaches a Workbench build (steps: gather > chop > light > stock:bench > bench)
+  ok   no taps on the gather node; the guide waited on Pine Log twice (chop, stock:bench)
+  ok   the game clock advanced on every step that waited for materials, and none of them paused
+  ok   the Workbench finishes building
+  ok   no guide errors
+solo copy (W1-C)
+  ok   the scan reads 2630 strings from 25 tables, the Codex pages, the Deeds lists, the weekly goals and 26 Omens
+  ok   no "party", "companion", "Bond", "formation", "roster", "recruit" or "expedition" (or a tap-the-stage line) in the data a solo player can reach
+  ok   the tap bounty says "Press Attack 100 times"
+  ok   the weekly board offers no expedition or companion goals; it offers parries, casts and counters
+  ok   no Deed that shows in solo pays a party, companion or expedition bonus (Signature Moves pay damage, Not Today pays crit damage)
+  ok   the companion and Bond Feats and secrets are hidden in solo
+  ok   the Codex has no Companions or Lore page in solo; the 200 Light reward is a title, not an expedition slot
+  ok   no handler errors in the solo copy scan
+solo copy: items, sets, heroes (W1-F)
+  ok   the item, set and hero scan reads 1379 strings from 17 tables, every kind name and stat line, and the bios and stories of 3 heroes
+  ok   no party, companion, ally, "your heroes", Bench, Bond or partner-advice text in an item, affix, unique, set, Sigil, relic, class, subclass or hero string
+  ok   no handler errors in the item and hero scan
+solo copy (browser, W1-C)
+  ok   wren: every item sheet had text when read (0 empty)
+  ok   wren: no page errors while reading every screen
+  ok   tobin: every item sheet had text when read (0 empty)
+  ok   tobin: no page errors while reading every screen
+  ok   pip: every item sheet had text when read (0 empty)
+  ok   pip: no page errors while reading every screen
+  ok   the scan read 83675 texts in 515 screens (three heroes, every tab, sub-view and sheet at 360x740)
+  ok   W1-F: the scan opened 348 item sheets (at least 116 per hero: every unique, every kind at four rarities, every Trophy line; the compare box), 4 subclass cards, the class change, the hero sheet and its story and Kit rows, the hero picker cards and 18 long-presses (Attack, Parry, Dodge, the three ability slots), three heroes
+  ok   no party, companion, Bond, formation, roster, recruit, expedition, ally, Bench or partner-advice text on any screen
+stars (browser)
+  ok   stars UI 740x360: Hero > Stars shows the loadout (3 set, 2 lit, the points) and a map of six constellations with all 43 stars, 37 of them faint (not found) ({"stars":43,"unk":37,"skies":"hollow,fen,coast,hunt,deep,provings","chips":5,"set":3,"lit":2,"pts":"Star points: 10 free of 10","visible":true})
+  ok   stars UI 740x360: a tap on a star opens its card: name, what it does, where it is found, learning progress ({"id":"serrated","name":"Serrated","text":"A critical hit adds 1 Bleed.","from":"Found: The zone 14 boss · The Hollow","prog":"Wren · Learning: 0 of 4 wins","sel":true})
+  ok   stars UI 740x360: Slot 1 sets Serrated (it glows on the map and shows in the strip), Light lights Hunter's Step for 1 point (it shines), both saved; a star not found yet shows where it is found ({"set":"serrated","lit":"huntstep","mapSet":true,"mapLit":true,"chip":"Serrated","pts":"Star points: 9 free of 10","unk":"The Fenmother (zone 35)","anim":"sr-twinkle","saved":"serrated"})
+  ok   stars UI 740x360: a lit star twinkles, and holds still under reduced motion (no-preference: sr-twinkle)
+  ok   stars UI 740x360: the filters narrow the list (Pip's kit: 8, the rest dim on the map; learned: turning,huntstep)
+  ok   stars UI 740x360: a tap in the list opens that star's card, in view ({"id":"coldsteel","inView":true})
+  ok   stars UI 740x360: no sideways scroll, every button at least 36 px tall, each star's tap circle 19 px (17+), and the loadout strip stays in view as the menu scrolls ({"wide":[],"small":[],"hit":18.70758056640625,"mapW":267,"side":true,"stuck":true,"menuW":480})
+  ok   stars UI 740x360: the menu takes the stage (480 px) with the map on the left and the card on the right
+  ok   stars UI 740x360: Next Up opens the map on its star (sparkguard), and the next fight takes the set and lit stars (serrated,huntstep)
+  ok   stars UI 740x360: no page errors
+  ok   stars UI 360x740: Hero > Stars shows the loadout (3 set, 2 lit, the points) and a map of six constellations with all 43 stars, 37 of them faint (not found) ({"stars":43,"unk":37,"skies":"hollow,fen,coast,hunt,deep,provings","chips":5,"set":3,"lit":2,"pts":"Star points: 10 free of 10","visible":true})
+  ok   stars UI 360x740: a tap on a star opens its card: name, what it does, where it is found, learning progress ({"id":"serrated","name":"Serrated","text":"A critical hit adds 1 Bleed.","from":"Found: The zone 14 boss · The Hollow","prog":"Wren · Learning: 0 of 4 wins","sel":true})
+  ok   stars UI 360x740: Slot 1 sets Serrated (it glows on the map and shows in the strip), Light lights Hunter's Step for 1 point (it shines), both saved; a star not found yet shows where it is found ({"set":"serrated","lit":"huntstep","mapSet":true,"mapLit":true,"chip":"Serrated","pts":"Star points: 9 free of 10","unk":"The Fenmother (zone 35)","anim":"none","saved":"serrated"})
+  ok   stars UI 360x740: a lit star twinkles, and holds still under reduced motion (reduce: none)
+  ok   stars UI 360x740: the filters narrow the list (Pip's kit: 8, the rest dim on the map; learned: turning,huntstep)
+  ok   stars UI 360x740: a tap in the list opens that star's card, in view ({"id":"coldsteel","inView":true})
+  ok   stars UI 360x740: no sideways scroll, every button at least 36 px tall, each star's tap circle 24 px (17+), and the loadout strip stays in view as the menu scrolls ({"wide":[],"small":[],"hit":23.519073486328125,"mapW":336,"side":false,"stuck":true,"menuW":360})
+  ok   stars UI 360x740: the map takes the width (336 px), the card below it
+  ok   stars UI 360x740: Next Up opens the map on its star (sparkguard), and the next fight takes the set and lit stars (serrated,huntstep)
+  ok   stars UI 360x740: no page errors
+C22 Thorn Imp (zone 1)
+  ok   C22: src/js/21za-data-foeart.js is up to date with the approved packs (node tools/art/embed-foes.mjs)
+  ok   C22: the approved Thorn Imp pack (7 actions, 55 frames) is embedded with its atlases byte for byte, its timings, releases and contacts; death ends empty
+  ok   C22: the Imp's parry windows close on the art's contact frames (hop 0.73 s + 0.88 s to the first contact; 1.0 s between the Crosscut's two) and the next foe waits for its 2.31 s death ([[1.61],[1.61,1]])
+  ok   C22: the approved Gloomjaw pack (67 body frames, 22 effect frames) is embedded byte for byte with its timings, Snap Shut's contact, the bolt's release, the throat anchor and the empty last death frame
+  ok   C22: zone 2's foe is Gloomjaw (the bat's slot; the plant row: fire x1.5, poison resisted); its windows come from the art (bite 0.6 s hop + 1.01 s; bolt 1.05 s + 0.35 s flight); in legacy fights it swings every 3.09 s (its two moves in full) at its slot's damage a second, and never dives ({"name":"Gloomjaw","type":"bat","fire":1.5,"poison":0.85,"period":3.08998,"dps":0.8965132458586431,"winds":[[1.61],[1.4]],"cyc":3.08998})
+  ok   C22: zone 1's regular foe is one Thorn Imp (it keeps the Moss Slime's type slot for mastery, trophies and weaknesses)
+  ok   C22: the legacy fight in zone 1 shows the Thorn Imp too (in place of every Moss Slime)
+  ok   C22: zones 1 and 2 send only their own monster, never the next area's foe (owner) (0 others in 120 spawns)
+  ok   C22: zones without a zone monster yet keep their foes (zone 3)
+  ok   C22: the zone 1 boss is unchanged until the Captain's recolour is approved
+  ok   C22: beating the Thorn Imp counts for zone 1's foe slot in mastery and the profile
+  ok   C22: against wren the Thorn Imp has 4 reference Attacks of HP, and its Briar Jab is 20% of the zone's reference HP ({"hp":4.1907630531117315,"jab":0.2,"ref":1.2})
+  ok   C22: against tobin the Thorn Imp has 4 reference Attacks of HP, and its Briar Jab is 20% of the zone's reference HP ({"hp":4.1907630531117315,"jab":0.2,"ref":1.2})
+  ok   C22: against pip the Thorn Imp has 4 reference Attacks of HP, and its Briar Jab is 20% of the zone's reference HP ({"hp":4.1907630531117315,"jab":0.2,"ref":1.2})
+  ok   C22: the live Imp alternates Briar Jab and Crosscut (jab1,cross2,jab1,cross2)
+C29 boss pass (core)
+  ok   boss pass: a boss lasts longer as the game goes on: its HP in reference Attacks is 16 x the zone's hpX (zones 1-3 keep their onboarding), the Fenmother 30 x 1.4 (the gear pass: was 1.25; zones 15-34 x1.1; zone 38 16 x 1.85, was 1.5) (ok)
+  ok   boss pass: a normal foe keeps 5 reference Attacks; its hits x0.7 in zones 8-34 (the mid-game HP pass), as written in zones 1-3 and 35+ ([[5.2,1],[4.93,0.7],[5.11,1]])
+  ok   boss pass: boss hits x1.6 at zone 8 (charges x1.3 more), x1.9 (x1.35) from zone 35; zones 1-3 as before; a zone boss is met at full health ([[1,1],[1.6,1.3],[1.9,1.35]])
+  ok   boss pass: a longer boss pays more: 5 x (1 + half its extra length) a normal foe's gold (8.50)
+  ok   boss pass: a Deepwell boss floor (and a Proving's boss) keeps its HP and hits ({"a":14.508975198958069,"hx":1,"cx":1})
+  ok   boss pass: no errors: 
+  ok   boss pass: for a hero who keeps up, a landed normal hit costs 8-15% of max HP, a landed boss hit 25-35%, a landed charge 60-90% (9.0%, 25.5%, 62.1%; Elder Rattlebones graveblow+volley+crush+rattle)
+  ok   boss pass: gear matters: a gear tier behind, a boss hit costs half your health and casual play loses; a tier ahead, bosses go quicker and barely hurt (turns 13.1 / 8.6 / 5.6, casual win 4% / 90% / 100%, a boss hit 77% / 26% / 8%)
+C29 Deepwell and Provings in turns (core)
+  ok   C29 Deepwell: a run starts and floor 1 is a turn fight against one foe
+  ok   C29 Deepwell: floor 1 is fought from the zone your Attack matches (20, floor 1 at 16)
+  ok   C29 Deepwell: Oil does not burn while the fight waits on your turn
+  ok   C29 Deepwell: floor 1's 3 foes fall one by one, then the boon draft; no gold or kills for the main game (3, draft)
+  ok   C29 Deepwell: boons that need the real-time fight are not offered in turns (luck,sconce,study,ration,map,warm,feet,twin,first,heavy,crown,whet,exec,drill,flow,sharp,glass,heart,cascade)
+  ok   C29 Deepwell: floor 2 comes next, a little deeper
+  ok   C29 Deepwell: falling in a turn fight ends the run (wipe)
+  ok   C29 Deepwell: no errors: 
+  ok   C29 Proving warrior: starts as a turn fight
+  ok   C29 Proving warrior: a strong hero passes in turns, and the clock counts turns or foes ({"end":{"id":"warrior","kind":"trial","won":true,"pct":100,"reason":"won","secs":13,"turn":true},"t0":"Foe 1/5, 40 turns","errors":[]})
+  ok   C29 Proving warrior: starts as a turn fight
+  ok   C29 Proving warrior: a hero who cannot hurt it and never defends fails: lamp ({"id":"warrior","kind":"trial","won":false,"pct":0,"reason":"lamp","secs":23,"turn":true})
+  ok   C29 Proving ranger: starts as a turn fight
+  ok   C29 Proving ranger: a strong hero passes in turns, and the clock counts turns or foes ({"end":{"id":"ranger","kind":"trial","won":true,"pct":100,"reason":"won","secs":1,"turn":true},"t0":"12 turns","errors":[]})
+  ok   C29 Proving ranger: starts as a turn fight
+  ok   C29 Proving ranger: a hero who cannot hurt it and never defends fails: escaped ({"id":"ranger","kind":"trial","won":false,"pct":0,"reason":"escaped","secs":52,"turn":true})
+  ok   C29 Proving mage: starts as a turn fight
+  ok   C29 Proving mage: a strong hero passes in turns, and the clock counts turns or foes ({"end":{"id":"mage","kind":"trial","won":true,"pct":100,"reason":"won","secs":4,"turn":true},"t0":"26 turns","errors":[]})
+  ok   C29 Proving mage: starts as a turn fight
+  ok   C29 Proving mage: a hero who cannot hurt it and never defends fails: time ({"id":"mage","kind":"trial","won":false,"pct":0,"reason":"time","secs":102,"turn":true})
+landscape 844x390 (browser, UX-L1)
+  ok   844x390: the guide walks the first session by pressing what it points at (attack > ability > dodge > boss > parry > upgrade > gather > chop > light > stock:bench > bench > stock:tool > tool > stock:forge > forge > stock:store > store > nextup; 53 of 220 passes, 26 idle)
+  ok   844x390: every guide step's target is on screen and on top (a click at its centre reaches it), the ring marks it and the hint is on screen (24 states)
+  ok   844x390: no page errors in the guide walk
+  ok   844x390: the rail runs down the left edge with the five tabs, each 44 px or taller, on screen (rail {"l":0,"t":0,"r":52,"b":390,"w":52,"h":390}, tabs 50-104 106-160 162-216 218-272 274-328)
+  ok   844x390: one top row (44 px) holds gold, Fight / Gather, Switch, the zone arrows and the bell, all on screen (purse 52-172/0-44, modeSeg 180-354/3-41, switchBtn 362-457/5-39, zStep 465-614/2-42, bellBtn 800-844/0-44)
+  ok   844x390: the stage fills the middle (584x346) at a whole-pixel zoom (x1: 584x346 logical px, the heroes drawn at their ~96 art px)
+  ok   844x390: the bar is two rows (ab0,ab1,ab2|parry,dodge,atk) of square slots of 44 px or more in the bottom-right corner, all on top; Attack is the bottom-right slot (ab0 60@643,255 ab1 60@711,255 ab2 60@778,255 parry 60@643,322 dodge 60@711,322 atk 60@778,322)
+  ok   844x390: Next Up sits at the top of the side column, above the bar ({"l":636,"t":44,"r":844,"b":104,"w":208,"h":60})
+  ok   844x390: no label cut off and no sideways scroll (none; page 0, app 0)
+  ok   844x390: a notice pops in the side column, above the bar and clear of the stage ({"l":643,"r":838,"b":244.65625,"barT":254.65625,"stageR":636,"W":844})
+  ok   844x390: each tab's menu opens as a panel (300 px or wider, the stage's left strip still showing, no sideways scroll), the bar stays on top and Attack still acts, and it closes with its X, the lit tab or Escape
+  ok   844x390: over an open menu, notices stay in the side column ({"l":643,"mr":636})
+  ok   844x390: Hero > Training and the Tavern's gatherer board show inside the panel with no sideways scroll ({"tr":{"ok":true,"l":184,"r":626,"t":94,"ml":172,"mr":636},"hb":{"ok":true,"l":184,"r":626,"t":94,"ml":172,"mr":636}})
+  ok   844x390: the ability picker and the Attack sheet (with Training) fit the screen with their Train button in view, and close with Escape ({"pk":{"ok":true,"top":8,"bottom":382,"go":214},"ms":{"ok":true,"top":54,"bottom":336,"go":308}})
+  ok   844x390: no page errors
+
+all checks passed
+browser sections skipped: 0 (none)
