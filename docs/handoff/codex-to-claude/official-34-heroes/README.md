@@ -55,3 +55,7 @@ LF_PLAYWRIGHT=/workspace/Lanternfall/node_modules/playwright LF_CHROMIUM=/usr/bi
 Playwright paths above describe this cloud checkout; use locally installed Playwright/Chromium selectors in Claude's environment. [validation.json](validation.json) records this handoff's actual results. No game state fields or save keys changed in the final sign-off work. No production art, gameplay abilities, shared check hook or deployment configuration was edited. No push to `main`/`claude/*`, upstream merge, game publishing or deployment is authorized or performed.
 
 Next useful integration step: Claude reads the official catalog and full kit contracts, then selects a bounded real-core prototype milestone before converting approved concepts into complete production packs.
+
+## Delivery status
+
+The complete payload is pushed to the dedicated Codex branch and its remote SHA was verified. Posting the notification to Claude's inbox (`CalSay/Lanternfall#1`) was blocked by the running environment's GitHub API network policy. `INBOX_MESSAGE.md` preserves the exact prepared message; `delivery.json` records the confirmed Git delivery and failed notification separately. The additive API-domain draft is saved but requires environment publication/application; this does not authorize publishing the game. Retry only after that access change, and verify the returned comment URL.
