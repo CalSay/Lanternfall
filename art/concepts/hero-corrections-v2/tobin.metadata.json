@@ -1,0 +1,16 @@
+{
+  "hero_id": "tobin",
+  "status": "pending-owner-review",
+  "base_sha": "8872088e2a93f8a9ac98a59a46a0778d2451dd4a",
+  "source": "art/concepts/hero-corrections-v1/tobin.png",
+  "generated_original": "/workspace/generated_images/exec-6420b3e0-fc9e-4909-8ae8-21b54fcb4f91.png",
+  "attempts": 1,
+  "qc_notes": [],
+  "draft_sha256": "7886da53c411bc67be6bfd09a0ca16ebd496614918c5115217687084acc05f68",
+  "source_sha256": "eaf4be725a3f544d7315116fc92b249746b94b05ce5f546c66aa696d85cb28c7",
+  "prompt_sha256": "57aa1c60f7ca2dbf6550b74bb79f5333c8cc540bd5d7674fe46641f1193db2b9",
+  "dimensions": [
+    1536,
+    1024
+  ]
+}

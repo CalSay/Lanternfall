@@ -1,0 +1,18 @@
+{
+  "hero_id": "eskil",
+  "status": "pending-owner-review",
+  "base_sha": "8872088e2a93f8a9ac98a59a46a0778d2451dd4a",
+  "source": "art/concepts/hero-corrections-v1/eskil.png",
+  "generated_original": "/workspace/generated_images/exec-47714760-75cf-47f8-b166-80145a471525.png",
+  "attempts": 1,
+  "qc_notes": [
+    "Full-figure lower bow limb corrected and lantern added; equipment-detail bow still has opposite orientation."
+  ],
+  "draft_sha256": "c5bc504ec507731e307f1d72beb7e7faeacf6a080e85ebb0a15d0e5717cbc8b4",
+  "source_sha256": "e1d3b2cd588e1d7f6c365dee90e89fbf69a81feb8e9bc9bf92d8b1c64edb3e74",
+  "prompt_sha256": "245d9e5b7dc6f4597e922b849a2e01d6fa25a34a1da2e1d8512fb3192b304f0b",
+  "dimensions": [
+    1536,
+    1024
+  ]
+}

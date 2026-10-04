@@ -1,0 +1,18 @@
+{
+  "hero_id": "nerys-fleet",
+  "status": "pending-owner-review",
+  "base_sha": "8872088e2a93f8a9ac98a59a46a0778d2451dd4a",
+  "source": "art/concepts/hero-corrections-v1/nerys-fleet.png",
+  "generated_original": "/workspace/generated_images/exec-0c6ae9a6-12e2-4dfe-b2df-7dabae3ef8c8.png",
+  "attempts": 1,
+  "qc_notes": [
+    "Bow orientation and coat tail corrected; hand still below the exact middle of the wrapped grip."
+  ],
+  "draft_sha256": "0b729fa2caaa1c076051010e83635a34db1335ed9611775b05024f6ebec8fc89",
+  "source_sha256": "96e3533189eaf4c46e49b106b28b951e5904b5dc7ae4533953b07b898ce5d931",
+  "prompt_sha256": "1b4072ae322d7dffbdedab72a39faf326bf5abfb972af201246fc8926b95f06b",
+  "dimensions": [
+    1536,
+    1024
+  ]
+}

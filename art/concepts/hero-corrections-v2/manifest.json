@@ -1,0 +1,452 @@
+{
+  "branch": "codex/hero-art-signoffs-pass-two",
+  "base_sha": "8872088e2a93f8a9ac98a59a46a0778d2451dd4a",
+  "status": "Only directly signed-off concepts replace profile art; all other drafts remain pending.",
+  "profile_sha256": "9f849b71f29fdd3af2260336887da3f7a66d8e00aae6427cf0b80dbb89c060a7",
+  "heroes": [
+    {
+      "id": "wren",
+      "name": "Wren Hollowmere",
+      "family": "Ranger",
+      "source": "art/concepts/hero-roster-v1/wren.png",
+      "source_sha256": "c2b946f3aa92807ede785a22073c365d4261455aee9d17accd26e35510d1d836",
+      "status": "owner-approved-concept",
+      "draft": "art/concepts/hero-corrections-v1/wren.png",
+      "draft_sha256": "3e3bc85d838cfce9ce147c49cc04d9344c22cc459c8782ce8e36da93feadfb72",
+      "correction": "Closed eyes in both views; correct bow placement, grip and string.",
+      "qc_notes": [],
+      "owner_notes": []
+    },
+    {
+      "id": "tobin",
+      "name": "Tobin Reed",
+      "family": "Warrior",
+      "source": "art/concepts/hero-roster-v1/tobin.png",
+      "source_sha256": "ab320b596d9bfc4f3ac8bd42234f1a48fb0cb82ca6a872de527586417a305d1c",
+      "comparison": "art/concepts/hero-corrections-v1/tobin.png",
+      "status": "pending-owner-review",
+      "draft": "art/concepts/hero-corrections-v2/tobin.png",
+      "draft_sha256": "7886da53c411bc67be6bfd09a0ca16ebd496614918c5115217687084acc05f68",
+      "correction": "Pass two: raise shield-side knee pad and match shield detail to held shield.",
+      "qc_notes": []
+    },
+    {
+      "id": "pip",
+      "name": "Pip Cinderly",
+      "family": "Mage",
+      "source": "art/concepts/hero-roster-v1/pip.png",
+      "source_sha256": "cd1bb0dd59d810acfeb2eae9a74115c8cd470d4f2efa18936913c0c7284198df",
+      "status": "retained-original",
+      "correction": "No owner-requested visual correction; retained without regeneration.",
+      "qc_notes": []
+    },
+    {
+      "id": "hesketh",
+      "name": "Old Hesketh",
+      "family": "Mage",
+      "source": "art/concepts/hero-roster-v1/hesketh.png",
+      "source_sha256": "cd893008e9af0c0c84fcf4bf579cf5e84976a18f885a795e5a3e9be2914a4ff4",
+      "status": "owner-approved-concept",
+      "draft": "art/concepts/hero-corrections-v1/hesketh.png",
+      "draft_sha256": "4af03a380d5357ebbc16cb2371b8d5cf3a771d2e057aace0a8f224636f3c68d5",
+      "correction": "Add belt-stowed lamp-service tome; preserve liked lamplighter design.",
+      "qc_notes": [],
+      "owner_notes": []
+    },
+    {
+      "id": "bram",
+      "name": "Bram Hollis",
+      "family": "Warrior",
+      "source": "art/concepts/hero-roster-v1/bram.png",
+      "source_sha256": "143dea6e72e83de5642d3b8ba1595b5a78cf4ef0f53877d5dc19182817a7e550",
+      "status": "owner-approved-concept",
+      "draft": "art/concepts/hero-corrections-v1/bram.png",
+      "draft_sha256": "4c76656bb46bcf32dd48e1a5694b7e990509d5e95af5059a6deeb8ed26666401",
+      "correction": "Rotate tree engraving with axe blade; match equipment detail.",
+      "qc_notes": [],
+      "owner_notes": [
+        "Crafting/skilling overhaul still pending."
+      ]
+    },
+    {
+      "id": "maren",
+      "name": "Maren Ashvale",
+      "family": "Warrior",
+      "source": "art/concepts/hero-roster-v1/maren.png",
+      "source_sha256": "70ef293d17034b957656959cbfee7e930641b83db0b9cede10cfa9a378425ae9",
+      "status": "owner-approved-concept",
+      "draft": "art/concepts/hero-corrections-v1/maren.png",
+      "draft_sha256": "6bd8270ff1444e283989f6fd8aeddc0a653b5ab18b0b6d2585b80eb5daa3c943",
+      "correction": "Intact mantle and broad memorial cloth; remove dense shredding.",
+      "qc_notes": [],
+      "owner_notes": []
+    },
+    {
+      "id": "aldric",
+      "name": "Ser Aldric Vane",
+      "family": "Warrior",
+      "source": "art/concepts/hero-roster-v1/aldric.png",
+      "source_sha256": "bf954e7ce2c0cd5eeb10f5cd2ce62f7a8da2dd5383edc8c785aa87ff99904c2a",
+      "status": "owner-approved-concept",
+      "draft": "art/concepts/hero-corrections-v1/aldric.png",
+      "draft_sha256": "25cd952358e68b4a7a17ccfd8c12ddcf4c07acbc3b16108f0d56b4ec14c29100",
+      "correction": "Replace banner with held two-handed greatsword; attached oath seal/key and lantern.",
+      "qc_notes": [],
+      "owner_notes": [
+        "Two-handed weapon/offhand rule remains undecided."
+      ]
+    },
+    {
+      "id": "kestrel",
+      "name": "Kestrel Thane",
+      "family": "Warrior",
+      "source": "art/concepts/hero-roster-v1/kestrel.png",
+      "source_sha256": "b68d0fbd47d57cac2fa8914c618a49703b8ea12db2af83ae70d1e87583acbfbe",
+      "status": "owner-approved-concept",
+      "draft": "art/concepts/hero-corrections-v1/kestrel.png",
+      "draft_sha256": "e85c5ea60c53db7f306edd609a78f3650dc67f52a968fae4ad78923d72108731",
+      "correction": "Narrower short coat, two-handed spear, visible lantern and safe weapon framing.",
+      "qc_notes": [],
+      "owner_notes": [
+        "Two-handed weapon/offhand rule remains undecided."
+      ]
+    },
+    {
+      "id": "thessaly",
+      "name": "Thessaly Gloam",
+      "family": "Mage",
+      "source": "art/concepts/hero-roster-v1/thessaly.png",
+      "source_sha256": "c53b81a4a1bd7f4eccf16b1c6134b8df6632dec3ec3777aee4f170c9ce397124",
+      "status": "pending-owner-review",
+      "draft": "art/concepts/hero-corrections-v1/thessaly.png",
+      "draft_sha256": "32df0349bf09e2ff44666286f38ba21da7eb298312b066134924ad823b4b1d74",
+      "correction": "Reduce foliage; retain reed staff and add water-reading tome.",
+      "qc_notes": []
+    },
+    {
+      "id": "grenna",
+      "name": "Grenna Holt",
+      "family": "Warrior",
+      "source": "art/concepts/hero-roster-v1/grenna.png",
+      "source_sha256": "b76942881b6e31354d2ef56c958b8b84c763ee4e1dd5872ae6eb19ee582d2ac4",
+      "status": "pending-owner-review",
+      "draft": "art/concepts/hero-corrections-v1/grenna.png",
+      "draft_sha256": "ec78d128b019d167eb07f35ff98c32f1fb9942fee14febb7a31354cb0594a7ea",
+      "correction": "Preserve quarry identity; add carried lantern and clear two-handed maul grip.",
+      "qc_notes": [
+        "Lantern sits centrally near the maul shaft; its attachment is partly obscured by the hand/haft."
+      ]
+    },
+    {
+      "id": "isolde",
+      "name": "Isolde Marrow",
+      "family": "Ranger",
+      "source": "art/concepts/hero-roster-v1/isolde.png",
+      "source_sha256": "164d5179dd7498f92530f8767c83bc6bf713305eea786e2ceb1f832af756e0c8",
+      "status": "pending-owner-review",
+      "draft": "art/concepts/hero-corrections-v1/isolde.png",
+      "draft_sha256": "68da8cfd8557f34196cdcabf91aed7c37329ca80babf0f576b0487a0d12bffae",
+      "correction": "Dagger plus explicit sigil folio; cleaner short cloak and less armour clutter.",
+      "qc_notes": [
+        "Enlarged folio includes dangling ribbons that are absent from the belt folio."
+      ]
+    },
+    {
+      "id": "oriel",
+      "name": "Oriel Vess",
+      "family": "Mage",
+      "source": "art/concepts/hero-roster-v1/oriel.png",
+      "source_sha256": "bbf5d91943af0cf136897ef7e224c7f67d7fe6dd31de60a68596a4c59b0957be",
+      "status": "pending-owner-review",
+      "draft": "art/concepts/hero-corrections-v1/oriel.png",
+      "draft_sha256": "b094afecb129e0fabc307b9fbbc7c157086d23701a4bab151060a3d1e046617f",
+      "correction": "Readable Starcaller tome, simpler focus and conservatively distinct face.",
+      "qc_notes": [
+        "Held tome shows a chart page opposite a decorated cover, while enlarged detail shows two chart pages; the views do not agree."
+      ]
+    },
+    {
+      "id": "elowen",
+      "name": "Saint Elowen",
+      "family": "Mage",
+      "source": "art/concepts/hero-roster-v1/elowen.png",
+      "source_sha256": "d5af82e3847064ad057863affab63bae0d0b27db6d1427bccfd20a6ae5d7d21f",
+      "status": "pending-owner-review",
+      "draft": "art/concepts/hero-corrections-v1/elowen.png",
+      "draft_sha256": "46da6667eec1fc0c760ba675d9f97efe1f655fb3094c5ce5ff9cc2e4c72af11f",
+      "correction": "Dignified intact ceremonial clothing, staff and sacred tome.",
+      "qc_notes": []
+    },
+    {
+      "id": "caedmon",
+      "name": "Caedmon the Unburnt",
+      "family": "Warrior",
+      "source": "art/concepts/hero-roster-v1/caedmon.png",
+      "source_sha256": "d07bab786f8e6a980ae28e204ee39345f89feb29dd28bcac228ce0e623a34998",
+      "status": "owner-approved-concept",
+      "draft": "art/concepts/hero-corrections-v1/caedmon.png",
+      "draft_sha256": "3f6d624b365e923fb16afeb65ab4abee19366b1c574d2d7cb9f4dfff698b6482",
+      "correction": "Cleaner cloth and cloak, two-handed sword grip and physical lantern.",
+      "qc_notes": [],
+      "owner_notes": [
+        "Two-handed weapon/offhand rule remains undecided."
+      ]
+    },
+    {
+      "id": "corvin",
+      "name": "Corvin Black",
+      "family": "Ranger",
+      "source": "art/concepts/hero-roster-v1/corvin.png",
+      "source_sha256": "58e9ce9788f78b5ef8fde53bc7b67b2ba95ee4f08b2bfb23a4b01d81373a9426",
+      "status": "owner-approved-concept",
+      "draft": "art/concepts/hero-corrections-v1/corvin.png",
+      "draft_sha256": "459987060080323d8c17a4b0995704196c164597f27c2facc9dea7374d5edf57",
+      "correction": "Two-handed duelling blade, cleaner coat and attached contract seal/lantern.",
+      "qc_notes": [],
+      "owner_notes": [
+        "Two-handed weapon/offhand rule remains undecided."
+      ]
+    },
+    {
+      "id": "cass",
+      "name": "Cass Penhallow",
+      "family": "Ranger",
+      "source": "art/concepts/hero-roster-v1/cass.png",
+      "source_sha256": "38d2dd11b0f4fac3d532eaf915ffd7769637faad3b40cc287657324e4b3020e2",
+      "status": "owner-approved-concept",
+      "draft": "art/concepts/hero-corrections-v1/cass.png",
+      "draft_sha256": "a95f659812c01d0bd179ea150a37ba67ffaaf8c1e6e22e39db6f53468dd46691",
+      "correction": "Single-ended hooked combat spear, simpler rope and shell details.",
+      "qc_notes": [],
+      "owner_notes": [
+        "Two-handed weapon/offhand rule remains undecided.",
+        "Owner prefers the full-body weapon head; equipment-detail mismatch remains recorded."
+      ]
+    },
+    {
+      "id": "linnet",
+      "name": "Linnet Cole",
+      "family": "Mage",
+      "source": "art/concepts/hero-roster-v1/linnet.png",
+      "source_sha256": "b3f9cc3d59c219f91a276fbff610071e1edafbded743770e49aa318983f8318f",
+      "status": "pending-owner-review",
+      "draft": "art/concepts/hero-corrections-v1/linnet.png",
+      "draft_sha256": "347cddca0be47270814ce70af23e3135d77f2246d0bb7256666efefc0a84894e",
+      "correction": "Frost-glass focus, workshop tome and face distinct from Pip.",
+      "qc_notes": []
+    },
+    {
+      "id": "eskil",
+      "name": "Eskil Hauk",
+      "family": "Ranger",
+      "source": "art/concepts/hero-roster-v1/eskil.png",
+      "source_sha256": "ab911a3b48743deec9a47897e574e423a5bbdcfca9602a169c2db5c80db6ceed",
+      "comparison": "art/concepts/hero-corrections-v1/eskil.png",
+      "status": "pending-owner-review",
+      "draft": "art/concepts/hero-corrections-v2/eskil.png",
+      "draft_sha256": "c5bc504ec507731e307f1d72beb7e7faeacf6a080e85ebb0a15d0e5717cbc8b4",
+      "correction": "Pass two: lower bow limb curves left; add missing carried lantern.",
+      "qc_notes": [
+        "Full-figure lower bow limb corrected and lantern added; equipment-detail bow still has opposite orientation."
+      ]
+    },
+    {
+      "id": "brynja",
+      "name": "Brynja Berg",
+      "family": "Warrior",
+      "source": "art/concepts/hero-roster-v1/brynja.png",
+      "source_sha256": "82b4f5c53069b944532850f6046a9f348bd0e3ba95b4fcf919549da04358cc6f",
+      "status": "owner-approved-concept",
+      "draft": "art/concepts/hero-corrections-v1/brynja.png",
+      "draft_sha256": "1ba65debe7c60c06aedf6df3d09eb4f244b6223ab8c63ab975ae8ec5f1d8bde7",
+      "correction": "Heavy adult female shield-and-warblade anchor; practical plate and cleaner cloak.",
+      "qc_notes": [],
+      "owner_notes": [
+        "Previously flagged cropped shield-detail panel remains in the explicitly signed-off concept."
+      ]
+    },
+    {
+      "id": "inga",
+      "name": "Inga Fallow",
+      "family": "Mage",
+      "source": "art/concepts/hero-roster-v1/inga.png",
+      "source_sha256": "61307236826f330cf48a6e7b708e527b87b12e4fc2cec801096fc8a5496954be",
+      "status": "pending-owner-review",
+      "draft": "art/concepts/hero-corrections-v1/inga.png",
+      "draft_sha256": "917808e6b80fcf0136d69b617ef2c33a98b2a9f8988e99eb7509f2348d787413",
+      "correction": "Add strata/Starscar survey tome while retaining measuring identity.",
+      "qc_notes": [
+        "Handheld measuring calipers became a rolled scroll, losing part of the measurement identity. Staff retains some orbital resemblance to Oriel."
+      ]
+    },
+    {
+      "id": "ragna",
+      "name": "Ragna Vik",
+      "family": "Mage",
+      "source": "art/concepts/hero-roster-v1/ragna.png",
+      "source_sha256": "23df3d4ace7c2350a6e9ca3aad3f17cf7498c4aa42c279a4aeafc6318846afd8",
+      "status": "pending-owner-review",
+      "draft": "art/concepts/hero-corrections-v1/ragna.png",
+      "draft_sha256": "cb247b547a3a3ab15f4271056f8eccb0956c3fafdc9e0ea7e8f3d860357ca880",
+      "correction": "Replace bell with crescent frost-glass focus, recipe tome and colder witch identity.",
+      "qc_notes": [
+        "Layered garment fringe remains visually dense despite the clearer frost-witch equipment."
+      ]
+    },
+    {
+      "id": "nerys-fleet",
+      "name": "Nerys Fleet",
+      "family": "Ranger",
+      "source": "art/concepts/hero-candidates-v1/nerys-fleet.png",
+      "source_sha256": "24468a3483d0623aeeabca0d4ea50d64dcb409f4d0c924371f860094a4a4d147",
+      "comparison": "art/concepts/hero-corrections-v1/nerys-fleet.png",
+      "status": "pending-owner-review",
+      "draft": "art/concepts/hero-corrections-v2/nerys-fleet.png",
+      "draft_sha256": "0b729fa2caaa1c076051010e83635a34db1335ed9611775b05024f6ebec8fc89",
+      "correction": "Pass two: mirror bow, centre hand on grip and shorten lower-right coat tail.",
+      "qc_notes": [
+        "Bow orientation and coat tail corrected; hand still below the exact middle of the wrapped grip."
+      ]
+    },
+    {
+      "id": "mab-vale",
+      "name": "Mab Vale",
+      "family": "Mage",
+      "source": "art/concepts/hero-candidates-v1/mab-vale.png",
+      "source_sha256": "e27592af9b1a3e270e69177955f10b701de0eb3dd2f4624db14a20fc68b9708e",
+      "status": "retained-original",
+      "correction": "No owner-requested visual correction; retained without regeneration.",
+      "qc_notes": []
+    },
+    {
+      "id": "peregrine-clocks",
+      "name": "Peregrine Clocks",
+      "family": "Mage",
+      "source": "art/concepts/hero-candidates-v1/peregrine-clocks.png",
+      "source_sha256": "af9d70a606f29701e776d1efa4621c6e1c3a33252012ebf83668cbbb02b94669",
+      "status": "pending-owner-review",
+      "draft": "art/concepts/hero-corrections-v1/peregrine-clocks.png",
+      "draft_sha256": "a24a27029b191ba0ed73cd237cf0b8bc97eb11dabd60839ce203d1e30379b57a",
+      "correction": "Short coiled silver hair and textured beard, consistent between views.",
+      "qc_notes": []
+    },
+    {
+      "id": "tamsin-rook",
+      "name": "Tamsin Rook",
+      "family": "Warrior",
+      "source": "art/concepts/hero-candidates-v1/tamsin-rook.png",
+      "source_sha256": "52c25af11b5f61e20c0725a9d608a6f8a87902d4e3fa2c7543009a679b369edc",
+      "status": "pending-owner-review",
+      "draft": "art/concepts/hero-corrections-v1/tamsin-rook.png",
+      "draft_sha256": "ff262e72725270d3b4f7f7a2a1328a6383df1a6a5499acd2d020ccf0f17942dc",
+      "correction": "Remove unwanted quiver and clarify warblade; retain liked scar/undercut.",
+      "qc_notes": []
+    },
+    {
+      "id": "sable-quill",
+      "name": "Sable Quill",
+      "family": "Mage",
+      "source": "art/concepts/hero-candidates-v1/sable-quill.png",
+      "source_sha256": "9c742251e7063f90d6ff810e4d64127f00c2984114abde88c82e11dcd61c454c",
+      "status": "retained-original",
+      "correction": "No owner-requested visual correction; retained without regeneration.",
+      "qc_notes": []
+    },
+    {
+      "id": "ione-hart",
+      "name": "Ione Hart",
+      "family": "Mage",
+      "source": "art/concepts/hero-candidates-v1/ione-hart.png",
+      "source_sha256": "512ca89e35aeb1d8789c5225be871682f0832759c18f8884048100fc8842faf2",
+      "status": "pending-owner-review",
+      "draft": "art/concepts/hero-corrections-v1/ione-hart.png",
+      "draft_sha256": "2d86ca11f1871033a62a408484b39e5ef5ae11fff13c28b34e83e9f9380bfea3",
+      "correction": "Coherent prism staff head and identifiable fire/cold prism tome.",
+      "qc_notes": []
+    },
+    {
+      "id": "adela-wych",
+      "name": "Adela Wych",
+      "family": "Mage",
+      "source": "art/concepts/hero-candidates-v1/adela-wych.png",
+      "source_sha256": "4ddbc3712615d087ef3cf763c961522663ae4096bb74f78835cf250648fe4e7e",
+      "status": "pending-owner-review",
+      "draft": "art/concepts/hero-corrections-v1/adela-wych.png",
+      "draft_sha256": "72405b66cad83ce8df3929734e297a2f2ef9ee66454e86561088c7e4b135e367",
+      "correction": "Connected closed-arch staff head matching the equipment detail.",
+      "qc_notes": []
+    },
+    {
+      "id": "ysabet-fen",
+      "name": "Ysabet Fen",
+      "family": "Ranger",
+      "source": "art/concepts/hero-candidates-v1/ysabet-fen.png",
+      "source_sha256": "00fab8d9366dbe63bace2229494d81eb98c11d08b7a179ee5451cd766bfac3d0",
+      "status": "pending-owner-review",
+      "draft": "art/concepts/hero-corrections-v1/ysabet-fen.png",
+      "draft_sha256": "bd13490f0ecde6a3b06992a1ed69d2a40a247c8f00aab651ac2a29a3b62b2f29",
+      "correction": "Rebuild skewed bow and string while preserving the liked older archer.",
+      "qc_notes": [
+        "Bow fully contained, but upper clearance is about22px and enlarged detail sits close to its label."
+      ]
+    },
+    {
+      "id": "eamon-grey",
+      "name": "Eamon Grey",
+      "family": "Warrior",
+      "source": "art/concepts/hero-candidates-v1/eamon-grey.png",
+      "source_sha256": "c1e369233dc6753a1ac93fc5e03a97583b38c01fab8d6260888086b6b974f9b8",
+      "status": "retained-original",
+      "correction": "No owner-requested visual correction; retained without regeneration.",
+      "qc_notes": []
+    },
+    {
+      "id": "celandine-orr",
+      "name": "Celandine Orr",
+      "family": "Mage",
+      "source": "art/concepts/hero-candidates-v1/celandine-orr.png",
+      "source_sha256": "c8b20dd4bd3c7302b6e1c01cdd353d5d19dd2ba4b078385d1a488b24ccecf129",
+      "status": "retained-original",
+      "correction": "No owner-requested visual correction; retained without regeneration.",
+      "qc_notes": []
+    },
+    {
+      "id": "flint-mercer",
+      "name": "Flint Mercer",
+      "family": "Mage",
+      "source": "art/concepts/hero-candidates-v1/flint-mercer.png",
+      "source_sha256": "4e3aa16c498cb6376a92d6106fae2d4511ac4aca7963727005b5d0600d5712fd",
+      "status": "pending-owner-review",
+      "draft": "art/concepts/hero-corrections-v1/flint-mercer.png",
+      "draft_sha256": "13dea7e83ca9064f00abe50a5614022cc53462cf4e150425b5d2a2f108ae4b43",
+      "correction": "Reduce oversized boots; balance adult proportions while retaining stockiness.",
+      "qc_notes": [
+        "Proportions improved, but stockiness is less pronounced than the liked original."
+      ]
+    },
+    {
+      "id": "merrick-low",
+      "name": "Merrick Low",
+      "family": "Ranger",
+      "source": "art/concepts/hero-candidates-v1/merrick-low.png",
+      "source_sha256": "d8f48961618017201f711a4999810ff040327f3c00c166556e9438d339998a4c",
+      "status": "pending-owner-review",
+      "draft": "art/concepts/hero-corrections-v1/merrick-low.png",
+      "draft_sha256": "9a7354aad6bd0c4b1fb05c5ff6277b42ddeacf027eadf2ed6d953cde7246731c",
+      "correction": "Correct bow geometry, central grip and continuous straight string.",
+      "qc_notes": [
+        "Bow fully contained, but its upper tip has only about15px clearance."
+      ]
+    },
+    {
+      "id": "gideon-march",
+      "name": "Gideon March",
+      "family": "Warrior",
+      "source": "art/concepts/hero-candidates-v1/gideon-march.png",
+      "source_sha256": "541ad86e9b88a479efb1184c4e3fc1cab4830ff12763e52d88a7862fb7aa71c3",
+      "status": "retained-original",
+      "correction": "No owner-requested visual correction; retained without regeneration.",
+      "qc_notes": []
+    }
+  ]
+}

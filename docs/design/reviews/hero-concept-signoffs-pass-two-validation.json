@@ -1,0 +1,55 @@
+{
+  "branch": "codex/hero-art-signoffs-pass-two",
+  "base_sha": "8872088e2a93f8a9ac98a59a46a0778d2451dd4a",
+  "image_validation": {
+    "approved_profile_replacements": 10,
+    "other_profile_images_byte_identical": 24,
+    "historical_concepts_changed": 0,
+    "game_source_or_frozen_packs_changed": 0,
+    "new_draft_copies_match_generated_originals": 3
+  },
+  "build": {
+    "command": "node tools/build.mjs",
+    "exit_code": 0,
+    "output": "built dist/lanternfall.html (7306.1 KB)"
+  },
+  "initial_full_check": {
+    "exit_code": 1,
+    "passed": 2299,
+    "failures": [
+      "the bell stays calm: at most 5 unread at any time (max 6; bell notices: 130s codex, 214s unique, 298s deed-tier, 298s deed-points, 554s weekly)"
+    ],
+    "browser_sections_skipped": 0
+  },
+  "isolated_notice_recheck": {
+    "exit_code": 0,
+    "passed": 8,
+    "failures": [],
+    "browser_sections_skipped": 0
+  },
+  "html_browser": {
+    "exit_code": 0,
+    "files": [
+      "selected-34-heroes.html",
+      "hero-concept-corrections-review.html"
+    ],
+    "profile_panels_opened_and_closed": 68,
+    "signed_off_count_per_document": 10,
+    "review_comparisons_opened": 28,
+    "profile_build_guides_opened": 34,
+    "embedded_images_loaded": 96,
+    "external_requests": 0,
+    "page_errors": 0,
+    "mobile_horizontal_overflow": false,
+    "javascript_enabled": false,
+    "document_load": "Exact file bytes loaded with setContent; cloud file URL navigation is blocked."
+  },
+  "full_check_repeat": {
+    "exit_code": 0,
+    "passed": 2300,
+    "failures": [],
+    "browser_sections_skipped": 0,
+    "command": "LF_PLAYWRIGHT=/workspace/Lanternfall/node_modules/playwright LF_CHROMIUM=/usr/bin/chromium node tools/check.mjs",
+    "note": "Initial full run failed one bell-unread assertion; isolated recheck and unchanged full rerun passed. No game-source or test changes, seed override or disabled checks."
+  }
+}
