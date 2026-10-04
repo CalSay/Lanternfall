@@ -1,0 +1,20 @@
+{
+  "profiles": 20,
+  "embeddedSheets": 20,
+  "embeddedFaces": 20,
+  "decodedImages": 40,
+  "faceAndSheetMapping": "passed: exact preview bytes for each hero",
+  "nativeProfileLinks": 40,
+  "javascriptDisabledPortraitLinks": 20,
+  "originalPNGDownloadTargets": 20,
+  "filters": "passed",
+  "mobileWidths": [
+    390,
+    740
+  ],
+  "horizontalOverflow": false,
+  "pageErrors": [],
+  "externalRequests": [],
+  "method": "Chromium setContent: managed environment blocks file://. Embedded previews and native fragment navigation validated, including JavaScript disabled.",
+  "artApproval": "None; pending concept drafts. Visual issues retained in review-notes.json and on profiles."
+}

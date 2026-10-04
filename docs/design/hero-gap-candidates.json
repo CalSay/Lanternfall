@@ -211,7 +211,7 @@
       "title": "The Watchmaker",
       "family": "Mage",
       "gap": "Cooldown investment",
-      "equipment": "Staff + mirror tome",
+      "equipment": "Staff + watchmaker tome",
       "lore": "Peregrine repaired the village clock until it began striking for people who had not yet died. He dismantled it, kept one spring, and went to find who had wound it.",
       "visual": "A thin older man with a long face, deep brown skin and short silver hair. Prussian-blue tailored work coat, straight staff with one enclosed clock dial, indexed brass tome and amber pocket lantern.",
       "loop": "Attack earns resource. A paid preparation delays one selected equipped active by a turn to shorten a different equipped active by a turn. Or use the preparation for a bounded direct strike without altering cooldowns.",

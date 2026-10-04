@@ -1,0 +1,162 @@
+[
+  {
+    "id": "nerys-fleet",
+    "tool": "image_gen.imagegen",
+    "generatedOriginal": "/workspace/generated_images/exec-c6ab441d-51f1-4463-9dbc-b8698b10f3d6.png",
+    "reference": "art/concepts/hero-roster-v1/pip.png",
+    "attempt": 1,
+    "status": "pending-owner-review"
+  },
+  {
+    "id": "mab-vale",
+    "tool": "image_gen.imagegen",
+    "generatedOriginal": "/workspace/generated_images/exec-7e5bc887-47c1-4722-8384-a9627fbacd37.png",
+    "reference": "art/concepts/hero-roster-v1/pip.png",
+    "attempt": 1,
+    "status": "pending-owner-review"
+  },
+  {
+    "id": "peregrine-clocks",
+    "tool": "image_gen.imagegen",
+    "generatedOriginal": "/workspace/generated_images/exec-eaa52b4d-31ca-416d-b5e0-fc11207f2d5f.png",
+    "reference": "art/concepts/hero-roster-v1/pip.png",
+    "attempt": 1,
+    "status": "pending-owner-review"
+  },
+  {
+    "id": "tamsin-rook",
+    "tool": "image_gen.imagegen",
+    "generatedOriginal": "/workspace/generated_images/exec-6c3d93e7-2f85-4de0-9a11-208ba9cc14a8.png",
+    "reference": "art/concepts/hero-roster-v1/pip.png",
+    "attempt": 1,
+    "status": "pending-owner-review"
+  },
+  {
+    "id": "sable-quill",
+    "tool": "image_gen.imagegen",
+    "generatedOriginal": "/workspace/generated_images/exec-a74a1410-fe55-43a7-a216-6a56ba0d09f3.png",
+    "reference": "art/concepts/hero-roster-v1/pip.png",
+    "attempt": 1,
+    "status": "pending-owner-review"
+  },
+  {
+    "id": "flint-mercer",
+    "tool": "image_gen.imagegen",
+    "generatedOriginal": "/workspace/generated_images/exec-92b36aab-e8ba-4ec3-8f60-2538eb4188fd.png",
+    "reference": "art/concepts/hero-roster-v1/pip.png",
+    "attempt": 1,
+    "status": "pending-owner-review"
+  },
+  {
+    "id": "merrick-low",
+    "tool": "image_gen.imagegen",
+    "generatedOriginal": "/workspace/generated_images/exec-da65edaa-62b7-44c0-8c8e-543d5dbc21d6.png",
+    "reference": "art/concepts/hero-roster-v1/pip.png",
+    "attempt": 1,
+    "status": "pending-owner-review"
+  },
+  {
+    "id": "hilda-vane",
+    "tool": "image_gen.imagegen",
+    "generatedOriginal": "/workspace/generated_images/exec-16e0f56e-c374-449e-b112-f893cdda2650.png",
+    "reference": "art/concepts/hero-roster-v1/pip.png",
+    "attempt": 1,
+    "status": "pending-owner-review"
+  },
+  {
+    "id": "ione-hart",
+    "tool": "image_gen.imagegen",
+    "generatedOriginal": "/workspace/generated_images/exec-12cdb3dc-3d10-47ce-b571-915e6afb71e5.png",
+    "reference": "art/concepts/hero-roster-v1/pip.png",
+    "attempt": 1,
+    "status": "pending-owner-review"
+  },
+  {
+    "id": "gideon-march",
+    "tool": "image_gen.imagegen",
+    "generatedOriginal": "/workspace/generated_images/exec-827a5d70-2755-43ca-bf89-345b55a6faf8.png",
+    "reference": "art/concepts/hero-roster-v1/pip.png",
+    "attempt": 1,
+    "status": "pending-owner-review"
+  },
+  {
+    "id": "adela-wych",
+    "tool": "image_gen.imagegen",
+    "generatedOriginal": "/workspace/generated_images/exec-798f6cea-6cc7-4356-b8d8-c759e12018ac.png",
+    "reference": "art/concepts/hero-roster-v1/pip.png",
+    "attempt": 1,
+    "status": "pending-owner-review"
+  },
+  {
+    "id": "ysabet-fen",
+    "tool": "image_gen.imagegen",
+    "generatedOriginal": "/workspace/generated_images/exec-6daf3c09-fce1-4125-ad77-396c91decc86.png",
+    "reference": "art/concepts/hero-roster-v1/pip.png",
+    "attempt": 1,
+    "status": "pending-owner-review"
+  },
+  {
+    "id": "roscoe-bell",
+    "tool": "image_gen.imagegen",
+    "generatedOriginal": "/workspace/generated_images/exec-ee8449de-38ef-443f-9791-03b4483412d3.png",
+    "reference": "art/concepts/hero-roster-v1/pip.png",
+    "attempt": 1,
+    "status": "pending-owner-review"
+  },
+  {
+    "id": "petra-crowe",
+    "tool": "image_gen.imagegen",
+    "generatedOriginal": "/workspace/generated_images/exec-b4df0d7d-6205-4e61-8785-e6b3f0a4fdd3.png",
+    "reference": "art/concepts/hero-roster-v1/pip.png",
+    "attempt": 1,
+    "status": "pending-owner-review"
+  },
+  {
+    "id": "eamon-grey",
+    "tool": "image_gen.imagegen",
+    "generatedOriginal": "/workspace/generated_images/exec-36ff8d10-a491-4b13-8c9d-024a7210a163.png",
+    "reference": "art/concepts/hero-roster-v1/pip.png",
+    "attempt": 1,
+    "status": "pending-owner-review"
+  },
+  {
+    "id": "nim-rowan",
+    "tool": "image_gen.imagegen",
+    "generatedOriginal": "/workspace/generated_images/exec-f8ea7d88-9a3e-42bd-bc89-28143b0a4e33.png",
+    "reference": "art/concepts/hero-roster-v1/pip.png",
+    "attempt": 1,
+    "status": "pending-owner-review"
+  },
+  {
+    "id": "rufus-wold",
+    "tool": "image_gen.imagegen",
+    "generatedOriginal": "/workspace/generated_images/exec-c3dbda9c-fb01-412d-8777-3fd7e65f9024.png",
+    "reference": "art/concepts/hero-roster-v1/pip.png",
+    "attempt": 1,
+    "status": "pending-owner-review"
+  },
+  {
+    "id": "celandine-orr",
+    "tool": "image_gen.imagegen",
+    "generatedOriginal": "/workspace/generated_images/exec-46e143b7-5dca-440b-8180-5acb9c27bb83.png",
+    "reference": "art/concepts/hero-roster-v1/pip.png",
+    "attempt": 1,
+    "status": "pending-owner-review"
+  },
+  {
+    "id": "maud-flint",
+    "tool": "image_gen.imagegen",
+    "generatedOriginal": "/workspace/generated_images/exec-40d10237-544a-412b-8d88-29f03f283672.png",
+    "reference": "art/concepts/hero-roster-v1/pip.png",
+    "attempt": 1,
+    "status": "pending-owner-review"
+  },
+  {
+    "id": "ludo-finch",
+    "tool": "image_gen.imagegen",
+    "generatedOriginal": "/workspace/generated_images/exec-7676dc12-b965-4513-835f-3ab5d31e3842.png",
+    "reference": "art/concepts/hero-roster-v1/pip.png",
+    "attempt": 1,
+    "status": "pending-owner-review"
+  }
+]

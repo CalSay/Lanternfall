@@ -1,0 +1,22 @@
+{
+ "nerys-fleet":{"notes":["Reads younger than the intended forties; curls are longer than the cropped brief. Bow is larger than the specified shortbow."]},
+ "mab-vale":{"notes":["Spindle and stitch identity works. Broad build could be more pronounced; lantern and gold trim are more ornate than intended."]},
+ "peregrine-clocks":{"notes":["Clock focus reads clearly. Gold ornaments make practical watchmaker workwear more ceremonial than intended."]},
+ "tamsin-rook":{"notes":["Scar and undercut read well. An unwanted arrow quiver was generated behind her shoulder; remove in a later agreed design revision. Blade is a fencing sword rather than the intended warblade; swept hair is longer than brief."]},
+ "sable-quill":{"notes":["Reads younger than the intended fifties. Ringed focus became a fire-orb apparatus and the tome gained Pip-like leaf ornament instead of a ledger motif."]},
+ "flint-mercer":{"notes":["Conductor silhouette is clear. Numerous gold fittings make the work coat more ornate than the intended practical design."]},
+ "merrick-low":{"notes":["Shaved head, broad nose and green palette distinguish him. Lantern is bright rather than hooded with a narrow slit."]},
+ "hilda-vane":{"notes":["Strong build, cream padding and red scarf fit the brief. Curls are more expansive than intended; oven-glass lantern identity is not clear."]},
+ "ione-hart":{"notes":["Bob, triangular glass focus and cobalt colours work. Coat reads longer and more ceremonial than the practical brief."]},
+ "gideon-march":{"faceCrop":[810,240,1200,650],"notes":["Elderly face and muted blue fit. Shield is more substantial than intended; added hood broadens the silhouette."]},
+ "adela-wych":{"notes":["Arch focus, testament motif and violet lantern work. Intended age of sixties remains understated."]},
+ "ysabet-fen":{"notes":["Heavyset silhouette is less pronounced than intended. Braid is longer; lantern lacks clear frosted-glass identity."]},
+ "roscoe-bell":{"faceCrop":[825,240,1200,655],"notes":["Massive build and ochre palette fit well. Shield has more gold ornament than the plain equipment direction."]},
+ "petra-crowe":{"notes":["Muscular sleeveless silhouette works. Loose curls dominate instead of tightly braided hair; broken nose is not clearly conveyed."]},
+ "eamon-grey":{"faceCrop":[825,240,1210,655],"notes":["Lanky build, sand coat and auburn hair fit. Sword is slender fencing gear; shield is more decorated than the plain brief."]},
+ "nim-rowan":{"notes":["Freckles and plum palette work. Tousled hair replaces the close crop; face reads younger than the intended adult."]},
+ "rufus-wold":{"notes":["Thickset older fighter and compact matching gauntlets are strong identity matches. Gloves are heavily padded."]},
+ "celandine-orr":{"notes":["Clipped hair, anatomical tome and split-circle staff fit. Staff is heavier and more luminous than the slender brief."]},
+ "maud-flint":{"notes":["Heavy female silhouette and fixed poleaxe work. Poleaxe top nearly touches the board edge and needs more margin before a production master."]},
+ "ludo-finch":{"faceCrop":[845,230,1215,650],"notes":["Older short, sturdy crossbow identity works well. Ammunition case reads more like an arrow quiver than a compact bolt case."]}
+}

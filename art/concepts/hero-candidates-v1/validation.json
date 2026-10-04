@@ -1,0 +1,21 @@
+{
+  "branch": "codex/hero-candidate-concepts",
+  "baseSHA": "a819774b76122de78662fdfb889f70a7ca9ed2de",
+  "build": {
+    "command": "node tools/build.mjs",
+    "exitCode": 0,
+    "output": "built dist/lanternfall.html (7306.1 KB)"
+  },
+  "check": {
+    "command": "LF_CHROMIUM=/usr/bin/chromium node tools/check.mjs",
+    "exitCode": 0,
+    "okLines": 2300,
+    "output": "all checks passed; browser sections skipped: 0 (none)"
+  },
+  "originalArtHashes": {
+    "checked": 20,
+    "result": "passed"
+  },
+  "poseLock": "Not run: concept-only owner exception. No source kit, registered production pose or approved pack touched.",
+  "browser": "See browser-validation.json: 40 decoded embedded images, correct per-hero mapping, 40 native profile links, 20 no-JavaScript face links, 390/740px layouts and filters passed."
+}
