@@ -14,14 +14,20 @@ produced many convincing NPCs, unclear weapons and repeated ornate travel costum
 around distinct combat decisions, clear equipment and readable game-scale designs. Preserve the characters,
 stories and useful ideas; assigning an NPC role does not delete their identity or immediately move live content.
 
-Working recommendation: **20 playable candidates**, **8 NPC candidates**, **3 held for major rethink**,
-and **Anselm's playable concept retired**. This is a design shortlist, not a promise to ship 20 complete packs.
+Updated after Cal's acceptance and request to reconsider Brynja: **20 retained playable candidates plus
+Brynja's new review proposal**, **8 owner-supported NPC directions**, **2 held for major rethink**,
+and **Anselm's playable concept retired**. This is a design shortlist, not a promise to ship 21 complete packs.
 No replacement for Anselm is needed until the remaining roster's missing playstyle is established.
 
 Playable candidates: Wren, Tobin, Pip, Hesketh, Bram, Maren, Aldric, Kestrel, Thessaly, Grenna,
 Isolde, Oriel, Elowen, Caedmon, Corvin, Cass, Linnet, Eskil, Inga, Ragna.
 NPC candidates: Morwen, Vesper, Loveday, Davy, Ferrin, Hob, Beatrix, Solveig.
-Major-rethink bench: Oswin, Brynja, Asta.
+Major-rethink bench: Oswin, Asta. Brynja receives a revised heavy-female Warrior proposal for review.
+
+Cal confirmed every character should carry a lantern and mages should equip staff and tome. The lantern
+is carried identity equipment, not an extra free stat slot. See `equipment-crafting-revision-scope.md` for
+compatibility and future crafting dependencies. Beatrix remains a mentor NPC first, with future hero
+potential preserved. None of these role/equipment directions has been implemented by this design task.
 
 ## Consolidated character actions
 
@@ -54,7 +60,7 @@ Major-rethink bench: Oswin, Brynja, Asta.
 | Hob | Recommend icehouse/gathering NPC. Remove the frozen saw treatment; keep ordinary working steel, felt cap, vest and shelter story. Do not equate icehouse occupation with magical combat class. |
 | Beatrix | Recommend scholar/mentor NPC. She authored Pip's fire book; use that relationship for lore and future spell/crafting research, not an unexplained generic scholar mage. Do not promise a teaching system yet. |
 | Eskil | Keep provisionally if playstyle comparison passes. Fix bow tips/string as for Wren; use shorter practical cloak. Wren develops Mark/precision/Bleed and delayed echo choices; Eskil develops Pin/venom, reserves a control opening or spends it for a clear shot. Make patient trap/control archer versus listening precision archer visible in equipment and build examples. |
-| Brynja | Bench combat concept: door-bar weapon and required off-hand are unsupported; owner not enthused. Strong future shelter/inn-keeper NPC candidate. If reconsidered as hero, start from a defined weapon and distinctly manual defensive payoff, not the existing door-bar drawing. |
+| Brynja | Reconsidered at Cal's request. New heavy female shield-and-warblade Warrior: hold a planted position, or give it and its Guard up for a heavy release. Supported weapon family, hip lantern, broad adult body and practical heavy plate. Door-bar/brazier stay in her history. See `brynja-doorward-revision.json` and the new dossier; review candidate, not approved kit/art. |
 | Inga | Keep favourite design. Add a strata/Starscar survey tome: layered cross-sections, measuring tabs and small cold shard motif. Frost/Sunder/penetration magic, not plant magic. Keep auger and calipers dominant; reduce armillary similarities to Oriel. |
 | Ragna | Keep witch candidate. Proposed magic is venom, frost and remedies: mature poison, reduce it for payoff or dilute it for protection. Reduce earthy foliage; use colder witchcraft colours and sparse ingredients. Remove staff bell; propose a carved crescent cradle containing a small sealed frost-glass focus, with recipe tome and attached closed kettle. Different face and visibly mature age. |
 | Solveig | Recommend village hearth/candle NPC. Cal identified a missing right arm: record as anatomy defect, not intentional design or approval. Her next NPC concept must show both arms clearly; plain intact winter clothing and sheltered candle suit her story. |
@@ -119,3 +125,10 @@ Read-only specialist review confirmed the disposition accounts for all 32 charac
 proposed niches for Hesketh, Eskil, Linnet and Ragna; Oswin remains the weakest distinction. Ragna/Cass
 poison overlap also needs direct comparison. Equipment findings were checked against the craft table.
 This is design review, not measured balance approval. Planning-only change: no new gameplay tests run.
+
+First milestone delivered: `revised-hero-dossier.html`, generated from `hero-dossier.json`, gives 21
+candidate pages, 63 three-slot build guides, signature/shared cards, proposed Stars, subclass growth,
+equipment and identity briefs, and the accepted NPC/held-character directions. Brynja received a separate
+designer and qualitative balance review; paid passive release fixes the otherwise weak defence-income
+outlet. No combat simulation or production balance approval is claimed. Presentation validation is recorded
+separately; no art generation, kit approval or runtime equipment migration occurred.

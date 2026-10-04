@@ -1,0 +1,26 @@
+{
+  "passed": true,
+  "heroPages": 21,
+  "buildPages": 63,
+  "allFragmentTargets": true,
+  "starNavigation": true,
+  "search": true,
+  "classFilters": true,
+  "mobile": true,
+  "noJavaScriptNavigation": true,
+  "pageErrors": [],
+  "externalRequests": [],
+  "fileNavigation": "Managed Chromium blocks file://; embedded document tested with setContent",
+  "build": {
+    "command": "node tools/build.mjs",
+    "exitCode": 0,
+    "stdout": "built dist/lanternfall.html (7306.1 KB)"
+  },
+  "gameChecks": {
+    "command": "LF_CHROMIUM=/usr/bin/chromium node tools/check.mjs",
+    "exitCode": 0,
+    "passedChecks": 2300,
+    "browserSectionsSkipped": 0
+  },
+  "balance": "Qualitative structural review only; no Brynja combat simulation or production balance approval"
+}
