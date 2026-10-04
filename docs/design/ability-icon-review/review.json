@@ -3594,6 +3594,18 @@
           "verdict": "closed",
           "hash128": "dae9a97f49175683328d9d2aaa4b6288fde6806fda6e5b350d46ac5c3d20fba4",
           "hash48": "b0d05607c085a1a5a830d309a51acad02444d5bae1dfe3832df5421256b3d6c5"
+        },
+        {
+          "pass": "same-raw empty-gutter re-extraction",
+          "viewed_native_sizes": [
+            32,
+            48,
+            128
+          ],
+          "verdict": "closed",
+          "hash128": "dae9a97f49175683328d9d2aaa4b6288fde6806fda6e5b350d46ac5c3d20fba4",
+          "hash48": "b0d05607c085a1a5a830d309a51acad02444d5bae1dfe3832df5421256b3d6c5",
+          "resolution": "Actual same raw and revised 32/48/128 inspected. Grounded spear/impact and seam silhouettes preserved; empty-gutter source rectangles avoid nominal-edge fringe. No actionable defect."
         }
       ]
     },
@@ -3664,6 +3676,18 @@
           "verdict": "closed",
           "hash128": "7e882fff34ffee183c52c717c986b0deea61f09ec72d3b4ed73588d00919df61",
           "hash48": "41ff949f9a094305e9013c2f521b2dc8fdf909b23a0fd80dc682987c97e3e3c7"
+        },
+        {
+          "pass": "same-raw empty-gutter re-extraction",
+          "viewed_native_sizes": [
+            32,
+            48,
+            128
+          ],
+          "verdict": "closed",
+          "hash128": "7e882fff34ffee183c52c717c986b0deea61f09ec72d3b4ed73588d00919df61",
+          "hash48": "41ff949f9a094305e9013c2f521b2dc8fdf909b23a0fd80dc682987c97e3e3c7",
+          "resolution": "Actual same raw and revised 32/48/128 inspected. Grounded spear/impact and seam silhouettes preserved; empty-gutter source rectangles avoid nominal-edge fringe. No actionable defect."
         }
       ]
     },
@@ -15563,7 +15587,7 @@
     "hero-16": "All12 raw+native32/48/128 exactcard inspected.03 scytheblade needs triangular hooked spear identity; other11 adequate venom/sounding/pin/rope/ward metaphors. Eel emblem not summon and defensive shield is symbol not handheld offhand. Revised 03 inspected at native 32/48/128 and raw; spear compatibility issue resolved. Other eleven unchanged.",
     "hero-07": "All12 raw+native32/48/128 exactcard reviewed. Oathseal, greatsword, road/door, ward, key+sunder, cleansedcloth and healrelease distinct and complete.04 lavender dome materially intact key-safe, not warm keypink. Zero actionable findings; owner approval pending.",
     "hero-17": "All12 raw+native32/48/128 exactcard inspected; cooled glass, pane, annealingheat, shell, needle, rim and protection clear at32. Isolated glass needles/shards are spell symbols, not thrown physical equipment. Shell06 vs SafetyGlass11 impactglint distinguishes passive. Zero actionable findings; owner approval pending.",
-    "hero-08": "All 12 inspected at native 32/48/128 and raw. Held spear, grounded drive, reach arcs and footing distinguish the authored mechanics; no missing silhouette, cropped ornament or neighbor contamination. Guard symbols are conditional ability metaphors, not automatic defence.",
+    "hero-08": "All 12 inspected at native 32/48/128 and raw. Held spear, grounded drive, reach arcs and footing distinguish the authored mechanics; no missing silhouette, cropped ornament or neighbor contamination. Guard symbols are conditional ability metaphors, not automatic defence. Final same-raw empty-gutter extraction for 09/11 rechecked at all three native sizes; preserved correct symbols with raw_edge_contact false. No exception required.",
     "hero-18": "All 12 actual native sizes and raw inspected. Arrows, cairn, wind, passage, obscured trail and venom footprints distinguish the primary mechanics. Passive sign arrows encode cadence rather than an added hit. No actionable contamination, cropping or key deletion.",
     "hero-19": "All 12 native sizes and raw inspected. Threshold, shield contact, warblade, hearth balance, warming and status barrier are distinct primary metaphors; icons preserve timber/iron/brass palette. Set/Guard symbols do not claim automatic defence. No actionable crop, contamination or key deletion.",
     "hero-09": "All 12 native sizes and raw inspected. Ripple, chilled drop, wave, roof, healing heart, mire restraint, spill and reflected face distinguish primary mechanics. Olive mire/debuff accents intentional; no actionable deletion, cropping or contaminated cells.",
@@ -15602,10 +15626,6 @@
     "open_actionable_findings": 0,
     "missing_or_mismapped_cells": 0,
     "scope": "Concept ability icon drafts only; no production, pose-kit or owner approval.",
-    "raw_section_edge_observations": {
-      "hero-08-09": "Squared shaft segment at nominal upper cell boundary; raw and native images reviewed; no missing spear tip or imported neighbor.",
-      "hero-08-11": "Squared shaft segment at nominal upper cell boundary; raw and native images reviewed; no missing spear tip or imported neighbor."
-    },
     "gallery": {
       "cards": 426,
       "effect_details": 426,
@@ -15613,6 +15633,8 @@
       "sections": 37,
       "embedded_image_hashes_match_exports": true,
       "rendered_browser_layout_checked": false
-    }
+    },
+    "raw_edge_contact_exceptions": 0,
+    "all_raw_edge_contact_false": true
   }
 }
