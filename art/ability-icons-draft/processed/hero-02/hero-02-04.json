@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-02-04",
+  "name": "Challenge",
+  "source": "art/ability-icons-draft/raw/hero-02/revision-01.png",
+  "source_sha256": "afeade7e11cd68ba6d01f4b9430e0ffa26465e190b3b1cea01bb880e844a3aea",
+  "cell": [
+    3,
+    0,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    29,
+    122,
+    292,
+    319
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-02/hero-02-04-128.png",
+      "sha256": "4de5a5ee0b9cfcd06dbf7ff42c3f0bf068645d27beb6328112cc2b26bb695ee2"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-02/hero-02-04-64.png",
+      "sha256": "5ca212d9af0afdd6e2c4106d52c28003487a60b619e93c978429451e1c32b57d"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-02/hero-02-04-48.png",
+      "sha256": "1b85adef816e5e2edbabd776fd2984fb0898c451e0bf6078cbb766ec4a8fb835"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-02/hero-02-04-32.png",
+      "sha256": "a6d0fb30b32dbca521b8d246f1e965b0d9b0805bdf49e8b4b642ec21c702f53b"
+    }
+  }
+}

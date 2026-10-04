@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-06-01",
+  "name": "Say Their Names",
+  "source": "art/ability-icons-draft/raw/hero-06/initial.png",
+  "source_sha256": "6bcfc8612b6c75bfe975c206de9d5b5f7cca0499b032aad52e2836bf2fc74d24",
+  "cell": [
+    0,
+    0,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    78,
+    81,
+    354,
+    329
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-06/hero-06-01-128.png",
+      "sha256": "c3364b098bdd752032a9b5d569f9f88a69a0b5789973069a6b21aae05e3acea6"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-06/hero-06-01-64.png",
+      "sha256": "53dc83ffbf92f4f0ade634ceeb0c3ee50bd4b310130ea701c5de1b7d5b59c816"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-06/hero-06-01-48.png",
+      "sha256": "d4f36ba43c8071e08584190a077943cc35431b3acd3fa12acb633690ce4292f1"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-06/hero-06-01-32.png",
+      "sha256": "679f96aa84dc674caaaea387b61e69c1d0922418cb6dad598f8ba32cd933f840"
+    }
+  }
+}

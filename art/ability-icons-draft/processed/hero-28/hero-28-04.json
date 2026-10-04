@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-28-04",
+  "name": "Write It Off",
+  "source": "art/ability-icons-draft/raw/hero-28/initial.png",
+  "source_sha256": "428331c78cae5c25ef7947e5702d1b6b4ce92ac8d63e0b40a896b8afda7dcb72",
+  "cell": [
+    3,
+    0,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    1152,
+    0,
+    1536,
+    341
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    24,
+    71,
+    321,
+    322
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-28/hero-28-04-128.png",
+      "sha256": "1b93038a2b08e578cc97526433c66d5bc4e45208469ebf8b605dddf167a0b5a8"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-28/hero-28-04-64.png",
+      "sha256": "468b804b9e6e9e628c396473181c058c7cf7e37b4aaea65b3c33839376f325a4"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-28/hero-28-04-48.png",
+      "sha256": "c19b4402cc589b31e0e09c712c369cd0e4339fdcca43de690c9a13bf81a4f831"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-28/hero-28-04-32.png",
+      "sha256": "d7ea5959bd2c26f70cbd60595a2a5577276925db333dae369f4e6024e8ddb6e8"
+    }
+  }
+}

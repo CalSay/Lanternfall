@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-15-07",
+  "name": "No Crown",
+  "source": "art/ability-icons-draft/raw/hero-15/initial.png",
+  "source_sha256": "cd746813bfccf8c7b0f3d3a40ca7abe7b64c2cc6e4e511f8e42f77a98ae6d045",
+  "cell": [
+    2,
+    1,
+    384,
+    323
+  ],
+  "source_rectangle": [
+    768,
+    341,
+    1152,
+    664
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    57,
+    44,
+    336,
+    290
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-15/hero-15-07-128.png",
+      "sha256": "3390d7e364d13ba7f4b9505a28ac205d7a596c1d81d888bb6618de714b6df49b"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-15/hero-15-07-64.png",
+      "sha256": "bfe4f645ae4656259c660d132b522eeb1ab6fd3a5ff1eb061b988c3effabfa8d"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-15/hero-15-07-48.png",
+      "sha256": "37036f090519130440a385316a9f19dededbc1ab8a4553bbe71d8c69534e47e7"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-15/hero-15-07-32.png",
+      "sha256": "7bfff64db9baea262f794b66bac3f8168599ddbe0801f877e5436ce9aa2ae410"
+    }
+  }
+}

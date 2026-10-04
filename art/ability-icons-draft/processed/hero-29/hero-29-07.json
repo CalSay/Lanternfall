@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-29-07",
+  "name": "Cold Notch",
+  "source": "art/ability-icons-draft/raw/hero-29/initial.png",
+  "source_sha256": "912d763e5359c1b9ad35d60650781b2012c2b0fb1f1ca14bb79e94c7978d6287",
+  "cell": [
+    2,
+    1,
+    384,
+    342
+  ],
+  "source_rectangle": [
+    768,
+    341,
+    1152,
+    683
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    55,
+    48,
+    316,
+    268
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-29/hero-29-07-128.png",
+      "sha256": "6b3b66d56ef96ded226f6c60b133d6332fc93583423341da26d99e0bd03b8957"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-29/hero-29-07-64.png",
+      "sha256": "ceb4b2633cdcebb0696b33f1839193619dabbf1ecf38e6450ff02780b592dacf"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-29/hero-29-07-48.png",
+      "sha256": "2bf4d7a70aa218051b49eec32bae40c2fe85a383f056d7d46d64596912df8ee7"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-29/hero-29-07-32.png",
+      "sha256": "5422c1beb90bc6e6390109c605c021a6aaee15695f9acf2f35f655ee01f9ed92"
+    }
+  }
+}

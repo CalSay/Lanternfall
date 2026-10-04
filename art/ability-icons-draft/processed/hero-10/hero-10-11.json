@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-10-11",
+  "name": "Stone Remembers",
+  "source": "art/ability-icons-draft/raw/hero-10/initial.png",
+  "source_sha256": "b35142971fba2f77cf87c5e0395b982c6f7b1cf9e45bbdb95d5aa84133dd1e0b",
+  "cell": [
+    2,
+    2,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    68,
+    50,
+    315,
+    262
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-10/hero-10-11-128.png",
+      "sha256": "7d2b4a727244510948b348ea21b36e4f7754eda7fddb3f86d608f049d37f0183"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-10/hero-10-11-64.png",
+      "sha256": "eea5cbfb2de52b759081b5a8691d1bb04baadd75c70f1242f1e2c8cc6f7d8d0b"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-10/hero-10-11-48.png",
+      "sha256": "e7f7002f9e01d5fd5eeb04ed3ecfedf53a8c83290281d8a9d29dd3b38edf191e"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-10/hero-10-11-32.png",
+      "sha256": "4971f0efd600b2fcfff82da8000c947bfb4f47764624c1ea6d5b6431e658936e"
+    }
+  }
+}

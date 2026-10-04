@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-30-10",
+  "name": "Road Memory",
+  "source": "art/ability-icons-draft/raw/hero-30/initial.png",
+  "source_sha256": "078b54b220dba9d46949fdf410cdff7ee878a534128984536902d78eae20a6fc",
+  "cell": [
+    1,
+    2,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    384,
+    683,
+    768,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    57,
+    29,
+    338,
+    279
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-30/hero-30-10-128.png",
+      "sha256": "33c4a669dd4c58f134ca3f3815d1e81d727460228670df07878078f65a2f75cc"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-30/hero-30-10-64.png",
+      "sha256": "83c9f6118859c4eb3d5897b81d728e6dacef62f0be9a8d2127edde13221d1a55"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-30/hero-30-10-48.png",
+      "sha256": "76c90081e45f2a5db2e8ec49eb523c5149831ac80233956da74419e70bd2b528"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-30/hero-30-10-32.png",
+      "sha256": "13f709473675ab73a24b1dc1bc917ee9feee9ceb395f8189205864490f1c4f7c"
+    }
+  }
+}

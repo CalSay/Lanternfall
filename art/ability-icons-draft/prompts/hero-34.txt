@@ -1,0 +1,14 @@
+Create a Lanternfall ability ICON PROP PACK for Gideon March. Exactly TWELVE isolated symbols in FOUR columns THREE rows, row-major, equal invisible slots on1536x1024. Native48px pixel-art shape language matching the approved six small action icons: broad confident dark outline, THREE TO FIVE flat opaque material shade clusters, very few secondary marks; readable at32px. Palette navy, iron, brass lantern, warm amber watchlight. No human bodies, poses or portraits. Every COMPLETE glyph including rays, tails and particles fits CENTRAL50% WIDTH AND HEIGHT (max192x170 pixels) of its slot, quarter slot empty every side. Safe50 guide invisible layout only. Entire background solid #FF00FF. Art NEVER near magenta: deep blue-violet or lavender with substantial green, no fuchsia. No gradients into magenta, antialiasing, microtexture, tiny sparkles, frames, UI, text, numerals, watermark, floor. Manually authored row-major assignments below, names not drawn. Nine actives directional; three passives settled compact emblems. No resurrection, summons, automatic defence, new gear or extra targets. Geometric Ward arcs are shields. Interpret dominant mechanic only.
+1. Take Watch (Active): held sword and one watch lantern notch.
+2. Across the Gate (Active): single held sword crossing a gate opening and armour seam.
+3. Shuttered Light (Active): shuttered watch lantern inside a ward rim.
+4. Stand Relieved (Active): rested watch lantern beside a recovery droplet.
+5. Not This Road (Active): held sword across a road line with a weak sigil.
+6. Gatepost Cut (Active): gatepost sword cut opening a notch beside an answer ward glint.
+7. Relight the Window (Active): newly lit lantern window and two vigil beads.
+8. Give Ground (Active): small held sword cut beside pin or ward choice.
+9. The Gate Stays Open (Active): grand held sword cut through an open gate and answer spark.
+10. Kept Vigil (Passive): three vigil marks around a watch lantern.
+11. A Place to Stand (Passive): small watch lantern protected by a sturdy ward footing.
+12. The Old Watch (Passive): old watch lantern shining along a sharp sword edge.
+Only these twelve independent draft glyphs; no integration.

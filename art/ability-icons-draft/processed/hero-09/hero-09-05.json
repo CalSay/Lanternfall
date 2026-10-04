@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-09-05",
+  "name": "Spring Water",
+  "source": "art/ability-icons-draft/raw/hero-09/initial.png",
+  "source_sha256": "e6605ef65a770ee350f590eead7a41b5c6ce9bb31afd30ad5439cac709249fe8",
+  "cell": [
+    0,
+    1,
+    384,
+    342
+  ],
+  "raw_bbox": [
+    60,
+    40,
+    341,
+    297
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-09/hero-09-05-128.png",
+      "sha256": "6892dce6de4ecece79c5f6d78e563b1dff4679644ddb812efbb1d1e5955b3472"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-09/hero-09-05-64.png",
+      "sha256": "58cd5e8a6b75342a2023728d1234a5ca3f7a4ec835b1b1100fe6de85909963a8"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-09/hero-09-05-48.png",
+      "sha256": "31f4eb22d90057ba0f5fc0c4dedd48457b3be11eb8f6ca2699b51d1f82cca758"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-09/hero-09-05-32.png",
+      "sha256": "f479659f4f50ecd09f836f64232c6308893d3acdafb466ccb159b1a66b70bc53"
+    }
+  }
+}

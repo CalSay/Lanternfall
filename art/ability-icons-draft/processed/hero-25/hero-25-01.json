@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-25-01",
+  "name": "Downbeat",
+  "source": "art/ability-icons-draft/raw/hero-25/initial.png",
+  "source_sha256": "772274f9f964339e53f7321b8ad188f03b105c2ecdd4754320cb6b84b1d5c7ec",
+  "cell": [
+    0,
+    0,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    0,
+    0,
+    384,
+    341
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    87,
+    53,
+    284,
+    307
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-25/hero-25-01-128.png",
+      "sha256": "0ab5a26848c62ff0171a28296c95ef837db1ecd97cb706a4499616051d98d347"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-25/hero-25-01-64.png",
+      "sha256": "09c20446d88e7f5c4f8fe87438bfbbc58e936bf77581145c2a40df4283b22cc1"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-25/hero-25-01-48.png",
+      "sha256": "609dabb0ccf5f64a868f0f914af2280163664fd8f14b3d72c17ef5d784fea31f"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-25/hero-25-01-32.png",
+      "sha256": "3ddbc5fcd60d275577c7947e1d102b2510baefb518fb4573e4c2fdc9d7663f28"
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-16-09",
+  "name": "Saltreach Reckoning",
+  "source": "art/ability-icons-draft/raw/hero-16/initial.png",
+  "source_sha256": "74cf5dd1ac2b8b7ce64109521292450ad8b345131b157d7de885bdce619a6c87",
+  "cell": [
+    0,
+    2,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    0,
+    683,
+    384,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    56,
+    13,
+    377,
+    274
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-16/hero-16-09-128.png",
+      "sha256": "bdaf63e2a97ca6e8c9eefbb7678d440ead766619443510c345025521d3ed1c55"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-16/hero-16-09-64.png",
+      "sha256": "52263e3c7467bf0d7a7854ae7dbf3051efda8dd300caf547002e3928d990b3fb"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-16/hero-16-09-48.png",
+      "sha256": "3604cf723a5f0575a69f445670575e152edd002a0be23444011ddfd0e3ce401d"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-16/hero-16-09-32.png",
+      "sha256": "a80c2d5a64aa6d3f15b9485b47896fdd9e1938b6e547ce451724f2583baeb06d"
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-15-10",
+  "name": "No Footsteps Needed",
+  "source": "art/ability-icons-draft/raw/hero-15/initial.png",
+  "source_sha256": "cd746813bfccf8c7b0f3d3a40ca7abe7b64c2cc6e4e511f8e42f77a98ae6d045",
+  "cell": [
+    1,
+    2,
+    362,
+    360
+  ],
+  "source_rectangle": [
+    406,
+    664,
+    768,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    69,
+    55,
+    318,
+    275
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-15/hero-15-10-128.png",
+      "sha256": "35a49242fd075b7996efd6a00fb8133f9edcf560e5e2a59eb8e1d8252d22422a"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-15/hero-15-10-64.png",
+      "sha256": "f681d8dd90727db8e636f412cc2f36a033b766d7944a1f6d16ef80644b0cc006"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-15/hero-15-10-48.png",
+      "sha256": "97442e1a354e4f2e55781f6bd801491da4ed8b9da55c57d9fc98793fa6c02fb1"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-15/hero-15-10-32.png",
+      "sha256": "c14665c81eec162f34af6c6c909fe72cb1fd0d6187dffb5451d583feef975b6b"
+    }
+  }
+}

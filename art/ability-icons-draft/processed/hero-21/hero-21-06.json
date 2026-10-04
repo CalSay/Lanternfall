@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-21-06",
+  "name": "Wolf's Dislike",
+  "source": "art/ability-icons-draft/raw/hero-21/initial.png",
+  "source_sha256": "faf603fa06d58e42be4c3368499fe7a58f08b8b5bf31d98c730bf6a6c5879a45",
+  "cell": [
+    1,
+    1,
+    384,
+    342
+  ],
+  "source_rectangle": [
+    384,
+    341,
+    768,
+    683
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    56,
+    51,
+    333,
+    284
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-21/hero-21-06-128.png",
+      "sha256": "271c9b1b963ccbd2badde04ec4c8ad11c70a96f3d2fd57eaabcf8399ab667fbf"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-21/hero-21-06-64.png",
+      "sha256": "11263a6653b496ff3ba59bd97eceb5f297a46d38886576837211f65a58c7cd65"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-21/hero-21-06-48.png",
+      "sha256": "4c76c64d060d4b422812d9e1363dd1aea57eb58087b39350856df21bb9bb30f9"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-21/hero-21-06-32.png",
+      "sha256": "8201bb848ba6f2b75931792815d9568eb36fbad61c0ed093980483c0ede358ab"
+    }
+  }
+}

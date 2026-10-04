@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-05-11",
+  "name": "Axe That Knows",
+  "source": "art/ability-icons-draft/raw/hero-05/initial.png",
+  "source_sha256": "9e802dd0953c2985fdf4d4c9400993bbbf2cd90f6dd6a5754c946c3e7c818373",
+  "cell": [
+    2,
+    2,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    43,
+    13,
+    324,
+    279
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-05/hero-05-11-128.png",
+      "sha256": "00a3b8f9d87ef533b6b6bff8ce2f4b2e7a4d3eab8d1afc43b3cf19014688f0cf"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-05/hero-05-11-64.png",
+      "sha256": "f4558060b048bbb9e3cf9063f39714b89c5244a4ba98c641f0cbc1015118e54a"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-05/hero-05-11-48.png",
+      "sha256": "493903c47ce01c0507bb91755ec5e3044e71d7b9d162f5b0f833681ebc575834"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-05/hero-05-11-32.png",
+      "sha256": "6a291c211c10a4da9aea07387f0ae01291fa9cc9e456bd9072fce2ea4a5d13b9"
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-33-03",
+  "name": "Break Silence",
+  "source": "art/ability-icons-draft/raw/hero-33/initial.png",
+  "source_sha256": "34c3cbedc4bc8535718528feb955cbdcecccb350fca27325ff2b86a023189d00",
+  "cell": [
+    2,
+    0,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    768,
+    0,
+    1152,
+    341
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    50,
+    102,
+    314,
+    338
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-33/hero-33-03-128.png",
+      "sha256": "cb7210df41e35a503a71bdb34abe06faa3bf8128155f4cce42aa03c86e04dd24"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-33/hero-33-03-64.png",
+      "sha256": "753a8064efc17c7a23cd72a7e82a18b42fc1a9063361b45fc5b21508485252ce"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-33/hero-33-03-48.png",
+      "sha256": "001bcce2b844f86170b747dc76af34620b2d019011e70da6a8df8338b7378009"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-33/hero-33-03-32.png",
+      "sha256": "9fe527b0a27cd3e22a344fcf8ce3f3b3a04a1b72775acfc4de916e3f1ffdcb24"
+    }
+  }
+}

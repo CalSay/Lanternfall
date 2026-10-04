@@ -1,0 +1,45 @@
+{
+  "icon_id": "shared-mage-02",
+  "name": "Frost Shard",
+  "source": "art/ability-icons-draft/raw/shared-mage/initial.png",
+  "source_sha256": "8e20ae4f85e78a3499d3db9aa5387191856f5f3434a84d793278955f76b8527d",
+  "cell": [
+    1,
+    0,
+    512,
+    512
+  ],
+  "source_rectangle": [
+    512,
+    0,
+    1024,
+    512
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    90,
+    104,
+    414,
+    454
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/shared-mage/shared-mage-02-128.png",
+      "sha256": "0745f1637316552e61286cf28707a0613d719102f10af7c52c202eca39c5bd36"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/shared-mage/shared-mage-02-64.png",
+      "sha256": "fb9fa9249cf9c6be85349af7e3f16a86d5fe3acdc3a6883489d865f62d3b9a4b"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/shared-mage/shared-mage-02-48.png",
+      "sha256": "fe437d3204fe96081c2cf11d3c9e83356027da62930aa8b933d69f695e294d8d"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/shared-mage/shared-mage-02-32.png",
+      "sha256": "d19a07faab97aed161ba519e36cd30c2eb6c76f87a09ad0866448f551ece10fb"
+    }
+  }
+}

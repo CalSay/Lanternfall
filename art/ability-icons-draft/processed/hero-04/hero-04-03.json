@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-04-03",
+  "name": "Pools of Light",
+  "source": "art/ability-icons-draft/raw/hero-04/hero-04-03-revision-01.png",
+  "source_sha256": "0c93732f62e7e3620d2dc707c496cb248c0d5dfddfe8499c4dbdb814d33d4fd3",
+  "cell": [
+    0,
+    0,
+    1331,
+    1182
+  ],
+  "raw_bbox": [
+    206,
+    229,
+    1081,
+    1111
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-04/hero-04-03-128.png",
+      "sha256": "8b17918c02ad8892f72edc871110c6ec5f20a8a9896ecb942cff7b50ec640ffa"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-04/hero-04-03-64.png",
+      "sha256": "e3c83944cb6c8e477f8d547e24edc6445ec4555dc77b6b5ca4b8847efe9e5c01"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-04/hero-04-03-48.png",
+      "sha256": "50d5519c56703b7e77b2986bf881c92f4356fbedad08bdb89f628da70ab6b2b0"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-04/hero-04-03-32.png",
+      "sha256": "659be4732c2b04f2950b3bec4f7743e4f8f7a7df6e08edb67e780c70b8019772"
+    }
+  }
+}

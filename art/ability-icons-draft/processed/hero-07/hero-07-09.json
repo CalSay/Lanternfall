@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-07-09",
+  "name": "Last at the Door",
+  "source": "art/ability-icons-draft/raw/hero-07/initial.png",
+  "source_sha256": "c5a611d4b3e52f2396d0c4927d0089255fcab855408bd199f60994a281e3ee6b",
+  "cell": [
+    0,
+    2,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    63,
+    5,
+    321,
+    281
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-07/hero-07-09-128.png",
+      "sha256": "68a6b0c93ae72fd6a2528151d18b45aa58aa4478fdcc1f58b51f78d83d323698"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-07/hero-07-09-64.png",
+      "sha256": "70de089a3474852e444020de35c0c1036e2a23209b53441b3d7af4d966461e0e"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-07/hero-07-09-48.png",
+      "sha256": "cbe3f73d8106f3c696f4fe0ef56652df72120b1fa489e44771b089399e1c4202"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-07/hero-07-09-32.png",
+      "sha256": "ca779f6282d671fb22170c6852e2ec9e3779e867d0f94005f306041fed47394f"
+    }
+  }
+}

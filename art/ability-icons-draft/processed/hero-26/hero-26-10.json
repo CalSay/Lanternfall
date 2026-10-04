@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-26-10",
+  "name": "Clean Hands",
+  "source": "art/ability-icons-draft/raw/hero-26/initial.png",
+  "source_sha256": "69282736452127fdf3a6439efe454715873075762e622279e016f31c72b4e9f4",
+  "cell": [
+    1,
+    2,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    384,
+    683,
+    768,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    72,
+    13,
+    334,
+    271
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-26/hero-26-10-128.png",
+      "sha256": "c4a9089c6b27a12d9bd50b335bd57991fef1bda4ccfe795ca922bba11a79eb1a"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-26/hero-26-10-64.png",
+      "sha256": "4ccc19fc0baa760c71d735a3dc5a649810023fbd31d3b29c3fdc2eab7c4c92e3"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-26/hero-26-10-48.png",
+      "sha256": "73bd7ffd66f8c93e2bfc9160ef963866c5b458c6ac4fbbd645649e1c167195c9"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-26/hero-26-10-32.png",
+      "sha256": "32d13dfb65cd39074f7ce719877e07f5bce21a10096bf1026c6aec99e2623fa1"
+    }
+  }
+}

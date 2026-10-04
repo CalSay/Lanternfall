@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-13-11",
+  "name": "Small Flame",
+  "source": "art/ability-icons-draft/raw/hero-13/revision-01.png",
+  "source_sha256": "6f7b927a2ed54e245494b44fb6c52ac4cd14e0d139a28693b2082fc6605e7fbb",
+  "cell": [
+    2,
+    2,
+    384,
+    343
+  ],
+  "source_rectangle": [
+    768,
+    681,
+    1152,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    54,
+    2,
+    343,
+    287
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-13/hero-13-11-128.png",
+      "sha256": "4bad39117f6623f5d3e9d6c8486c1ce627b8e59c32e0988434d467a7dc79b7b9"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-13/hero-13-11-64.png",
+      "sha256": "8d9ea9cf9b44899f8df9b5c5c2e619d1cd3d328528757e39086dae6ed520839d"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-13/hero-13-11-48.png",
+      "sha256": "129a573da0e279e70053f64cd70d1b587213b51957fb542cda972f787efa06ac"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-13/hero-13-11-32.png",
+      "sha256": "a98e5351a7a8e1ab0a9c18d74a9d89bf9e41def89f638de15124d2d94e0faa95"
+    }
+  }
+}

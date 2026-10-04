@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-33-08",
+  "name": "No Sudden Motion",
+  "source": "art/ability-icons-draft/raw/hero-33/initial.png",
+  "source_sha256": "34c3cbedc4bc8535718528feb955cbdcecccb350fca27325ff2b86a023189d00",
+  "cell": [
+    3,
+    1,
+    384,
+    342
+  ],
+  "source_rectangle": [
+    1152,
+    341,
+    1536,
+    683
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    34,
+    92,
+    333,
+    252
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-33/hero-33-08-128.png",
+      "sha256": "029c5f475a5489c5f1a96c10d0d51f977bca270425c8b737bbd55bacba102e57"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-33/hero-33-08-64.png",
+      "sha256": "f51ec08647d6ef75723ab2d562033924651586c677a7a148b76429cb99b7436d"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-33/hero-33-08-48.png",
+      "sha256": "1a92f5d7b72ea5c20bf941810991ee94d19838d6828c66e1fb5a9d99aaf03a08"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-33/hero-33-08-32.png",
+      "sha256": "b3999e3e20311c9415064195361476e9638067c78b7565d7094213c1eb714b07"
+    }
+  }
+}

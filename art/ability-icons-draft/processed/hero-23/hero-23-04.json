@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-23-04",
+  "name": "Seam Allowance",
+  "source": "art/ability-icons-draft/raw/hero-23/initial.png",
+  "source_sha256": "1601ed146f61b6c06aa62535d51dadccfc29c97d940c4ae00205acccd3746d55",
+  "cell": [
+    3,
+    0,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    1152,
+    0,
+    1536,
+    341
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    42,
+    62,
+    307,
+    305
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-23/hero-23-04-128.png",
+      "sha256": "4d819aef3fea13005792518ff965597568006b73fc271fa8d892a8d07ea1cd87"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-23/hero-23-04-64.png",
+      "sha256": "50cb317df38686a1e00862694c81c3c7115292b3c056df70816aed61ea726fe7"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-23/hero-23-04-48.png",
+      "sha256": "ec442e28db2dfa06042839417eccbb881fd66f85a277e33b5dca89d2231bc178"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-23/hero-23-04-32.png",
+      "sha256": "fbcf3336b5e14a9efe4b6139a81d77b07544f6691c056e2df54a96c4b524c20e"
+    }
+  }
+}

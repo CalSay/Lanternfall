@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-34-05",
+  "name": "Not This Road",
+  "source": "art/ability-icons-draft/raw/hero-34/initial.png",
+  "source_sha256": "3285f8e88d13e6e3e4d9f91664993d1184fa81bbe2aac5fe250494319ab069e0",
+  "cell": [
+    0,
+    1,
+    384,
+    342
+  ],
+  "source_rectangle": [
+    0,
+    341,
+    384,
+    683
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    57,
+    54,
+    348,
+    280
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-34/hero-34-05-128.png",
+      "sha256": "cfe1f93bd4a573e9b8bd5582cbf983c866a654205b2087fcef89ad73291bf48b"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-34/hero-34-05-64.png",
+      "sha256": "bb3618b7723a02da43be764243821110bd5629694c286443d94a06c80d3294a3"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-34/hero-34-05-48.png",
+      "sha256": "4c56e48d1e73058e157441c32bc909580d211ecd6d72a373af94b074908dcc94"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-34/hero-34-05-32.png",
+      "sha256": "b1a351f75fba8de2e654698f37861a1e56fa53912944e33304294a322e066b17"
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-32-10",
+  "name": "Earth Wire",
+  "source": "art/ability-icons-draft/raw/hero-32/initial.png",
+  "source_sha256": "9fc99b0c96185debff12f3ef83d57429535b2f83b2ff399b7d563437f74a65f3",
+  "cell": [
+    1,
+    2,
+    383,
+    349
+  ],
+  "source_rectangle": [
+    385,
+    675,
+    768,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    65,
+    11,
+    317,
+    270
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-32/hero-32-10-128.png",
+      "sha256": "925ae5b752046eabbef1af611759f2850867c5eb214fa13cc882189c8e274cd7"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-32/hero-32-10-64.png",
+      "sha256": "ee9b7ac3797d554f184f9ea0453457fb78bef28ab03ed15f1b1f056cfd1277f2"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-32/hero-32-10-48.png",
+      "sha256": "959a5a2ef03bc986906f43aa2fda1a09355dff51dabc00810c21e06867c33efb"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-32/hero-32-10-32.png",
+      "sha256": "f4b6c46b445928b72cac491cd7c8fa984f5ebdefbeae731db1d9775becc10538"
+    }
+  }
+}

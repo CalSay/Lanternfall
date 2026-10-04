@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-10-07",
+  "name": "Waking Quarry",
+  "source": "art/ability-icons-draft/raw/hero-10/initial.png",
+  "source_sha256": "b35142971fba2f77cf87c5e0395b982c6f7b1cf9e45bbdb95d5aa84133dd1e0b",
+  "cell": [
+    2,
+    1,
+    384,
+    342
+  ],
+  "raw_bbox": [
+    61,
+    63,
+    327,
+    282
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-10/hero-10-07-128.png",
+      "sha256": "1a07f80241f1e7c7de4a70e5768aef6bf1ca64fee0534a6fe1b80b31aee25ae3"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-10/hero-10-07-64.png",
+      "sha256": "279945a6dc0cd92d47e363e5586f082f7fe2ac791824e2c8f0d0ffa984fe2429"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-10/hero-10-07-48.png",
+      "sha256": "8c025b7b6854c34cab94f2315bc1ca5a47e777358b49e3b9e28b0c7fc7ea4cb9"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-10/hero-10-07-32.png",
+      "sha256": "17c72fa515d01a8cecc06c85510e0478d34ab350931f14a9170627761119ee64"
+    }
+  }
+}

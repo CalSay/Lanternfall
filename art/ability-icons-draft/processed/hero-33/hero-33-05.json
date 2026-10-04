@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-33-05",
+  "name": "Chalk the Distance",
+  "source": "art/ability-icons-draft/raw/hero-33/initial.png",
+  "source_sha256": "34c3cbedc4bc8535718528feb955cbdcecccb350fca27325ff2b86a023189d00",
+  "cell": [
+    0,
+    1,
+    384,
+    342
+  ],
+  "source_rectangle": [
+    0,
+    341,
+    384,
+    683
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    77,
+    54,
+    349,
+    279
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-33/hero-33-05-128.png",
+      "sha256": "4b89f88d195b8d83c2f46ecd6bc919bc09ef87d164f7efd1fe19ff8a9682caf1"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-33/hero-33-05-64.png",
+      "sha256": "cffe83e1ece457922e101b96fddf87b11d288e7d23ce9bac28cca7d0e613cf80"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-33/hero-33-05-48.png",
+      "sha256": "9b925e0a73bf22a42d6869ec20cb4adceb22581c268773f0868187c821244d01"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-33/hero-33-05-32.png",
+      "sha256": "d5c8005c107219f32b91a94174667b4c42f94b29188404399dcb26c2bc330b56"
+    }
+  }
+}

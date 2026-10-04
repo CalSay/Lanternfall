@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-23-08",
+  "name": "Mend by Hand",
+  "source": "art/ability-icons-draft/raw/hero-23/initial.png",
+  "source_sha256": "1601ed146f61b6c06aa62535d51dadccfc29c97d940c4ae00205acccd3746d55",
+  "cell": [
+    3,
+    1,
+    384,
+    342
+  ],
+  "source_rectangle": [
+    1152,
+    341,
+    1536,
+    683
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    28,
+    33,
+    320,
+    304
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-23/hero-23-08-128.png",
+      "sha256": "59f12644e773b3b8c9fd274a60e7e6cd7aa17113800a5474f0fdaf5f13a1adaa"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-23/hero-23-08-64.png",
+      "sha256": "189dc5cabfbd245776e06f73b2b240a83c8f675623dcc1ef9691b70bd55dbcd0"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-23/hero-23-08-48.png",
+      "sha256": "84eee9dd571198ff36b4618e854348afbba021df3d02e8c4893242d6c44e8f78"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-23/hero-23-08-32.png",
+      "sha256": "b3a84daee8e00ef57dd1609a6324f6fe12804afac140644e38ec3faa02abf2b4"
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-21-03",
+  "name": "Snow Listens",
+  "source": "art/ability-icons-draft/raw/hero-21/initial.png",
+  "source_sha256": "faf603fa06d58e42be4c3368499fe7a58f08b8b5bf31d98c730bf6a6c5879a45",
+  "cell": [
+    2,
+    0,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    768,
+    0,
+    1152,
+    341
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    69,
+    63,
+    312,
+    326
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-21/hero-21-03-128.png",
+      "sha256": "10f2c8879676db42ca73e52ea1291525164a4fab44179f0de60df3c74d08ddbb"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-21/hero-21-03-64.png",
+      "sha256": "e509f0030b5d92e6287e4fb53cd46f078390ea6135b4cae771f14cd36d863e3d"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-21/hero-21-03-48.png",
+      "sha256": "de572e66b6eab9761120e48581b0514772a1ce7e9d1063ee3d5bf3ed11c20e72"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-21/hero-21-03-32.png",
+      "sha256": "174ca0d08022c6bb6addf01543a251d009aecc3365fcd629099c4217fc90f57a"
+    }
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-06-12",
+  "name": "Carry the Names",
+  "source": "art/ability-icons-draft/raw/hero-06/initial.png",
+  "source_sha256": "6bcfc8612b6c75bfe975c206de9d5b5f7cca0499b032aad52e2836bf2fc74d24",
+  "cell": [
+    3,
+    2,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    29,
+    33,
+    322,
+    277
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-06/hero-06-12-128.png",
+      "sha256": "704deff56c24d42a0d70c1ebb6b131518e0312ec879e3d7ed7f199e1d08c774e"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-06/hero-06-12-64.png",
+      "sha256": "76774d497105948ee92c019c65b59cb78afb40df1378df172121abf5007b3111"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-06/hero-06-12-48.png",
+      "sha256": "b3ad88f2c01792c1f39ef620e876caeef4333ff37af0b74375db75d8750ad4d5"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-06/hero-06-12-32.png",
+      "sha256": "95394925b39c11b182bae3a4a1871d59415549bff21cf0918d327ed89639a260"
+    }
+  }
+}

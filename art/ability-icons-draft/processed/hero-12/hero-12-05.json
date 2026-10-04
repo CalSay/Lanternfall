@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-12-05",
+  "name": "Bad News",
+  "source": "art/ability-icons-draft/raw/hero-12/initial.png",
+  "source_sha256": "e9d7f4768b72255d55ca1234951443b9e5483cad20fe37bace1d8f5924ed3971",
+  "cell": [
+    0,
+    1,
+    384,
+    342
+  ],
+  "raw_bbox": [
+    121,
+    45,
+    280,
+    279
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-12/hero-12-05-128.png",
+      "sha256": "9bbd0712251a6bef196e03c67d36680596122e706a1c596c338f8819158c3dd3"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-12/hero-12-05-64.png",
+      "sha256": "9f0b767c1aae9147c9d3af792a3390bccb326a701e991c996334058bca01120e"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-12/hero-12-05-48.png",
+      "sha256": "761d3541935c0a40a2dd80a74a661a0c582ff24dccea7d32f068ebb40e13f911"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-12/hero-12-05-32.png",
+      "sha256": "d7f7d23b73215ee650781531a78a5e9b2ed4717738b2eefd754736aa7d220412"
+    }
+  }
+}

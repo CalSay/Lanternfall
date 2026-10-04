@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-28-10",
+  "name": "Witness Mark",
+  "source": "art/ability-icons-draft/raw/hero-28/initial.png",
+  "source_sha256": "428331c78cae5c25ef7947e5702d1b6b4ce92ac8d63e0b40a896b8afda7dcb72",
+  "cell": [
+    1,
+    2,
+    384,
+    346
+  ],
+  "source_rectangle": [
+    384,
+    678,
+    768,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    64,
+    35,
+    336,
+    241
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-28/hero-28-10-128.png",
+      "sha256": "6b822d997fe8e7d3be280b3ca4249273660877739053010c3ca696eabbfde8c6"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-28/hero-28-10-64.png",
+      "sha256": "154f9c673f809aee11b8c540448d6587f5c96e8a5365ba049c7f4179a1a7910a"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-28/hero-28-10-48.png",
+      "sha256": "415de466f41113ff4735451aa367c401f550c4fa5d8bcaf009fb594bdbdbfc28"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-28/hero-28-10-32.png",
+      "sha256": "5e70384dfd5ad62bef37768279349eba7d807783b77096d4e7a9f00fd09fdf1f"
+    }
+  }
+}

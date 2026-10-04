@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-08-03",
+  "name": "Spear Butt",
+  "source": "art/ability-icons-draft/raw/hero-08/initial.png",
+  "source_sha256": "8856b593573385548ec836d3a260d557b8d279395bd3cc3dda3e63937f7c3b96",
+  "cell": [
+    2,
+    0,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    57,
+    69,
+    327,
+    302
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-08/hero-08-03-128.png",
+      "sha256": "dde290f5c8d38d1cc86ff4fcc71d315295edf2ee31027334e1964ea6a684e63d"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-08/hero-08-03-64.png",
+      "sha256": "5bd2fdabcc52090ba11cd9bdaa34b6c1e284ae62cccdd314a17d348ecb0f0edb"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-08/hero-08-03-48.png",
+      "sha256": "31500c5cb4b09c954dc6cb2630bfaac916537a524170659fb220aab974411c21"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-08/hero-08-03-32.png",
+      "sha256": "729cabb5172cc5db66f84e0a96d6d657a4cf6f2923a8c2eb460808a1343aa755"
+    }
+  }
+}

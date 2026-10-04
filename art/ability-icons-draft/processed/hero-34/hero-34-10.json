@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-34-10",
+  "name": "Kept Vigil",
+  "source": "art/ability-icons-draft/raw/hero-34/initial.png",
+  "source_sha256": "3285f8e88d13e6e3e4d9f91664993d1184fa81bbe2aac5fe250494319ab069e0",
+  "cell": [
+    1,
+    2,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    384,
+    683,
+    768,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    82,
+    34,
+    330,
+    285
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-34/hero-34-10-128.png",
+      "sha256": "15f8d7a7feeaa4216e48d73c070cec1c8d57f6d4311d96940f587b78473a4259"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-34/hero-34-10-64.png",
+      "sha256": "c4142d9399a92a37d3ffb6f021d72c15c8050a4f9c7ebf6633f8989db8e46872"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-34/hero-34-10-48.png",
+      "sha256": "84917d3395484e61376350aff260c0ad890b6f8571b9497dfc4c2798dd6cebd7"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-34/hero-34-10-32.png",
+      "sha256": "41b5fbad07e01530cc98af6fcdc79c620c59e0cd1e89e75a0a9eb10427b66978"
+    }
+  }
+}

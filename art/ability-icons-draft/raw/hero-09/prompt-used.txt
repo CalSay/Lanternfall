@@ -1,0 +1,16 @@
+Create twelve Thessaly Gloam abilityicons4cols3rows equalinvisiblecells1536x1024. Concept marshteal olive cream brass watermagic; existingicons darkoutline flatclusters readable32px. Nohero bodies/scenes/futurevision/UItext/grid. Central70% solid#FF00FF margins. Rowmajor:
+1 Read the Ripples: two water-ripple circles surrounding one recorded drop.
+2 Still Water: quiet cyan droplet with small frosttip and held glint.
+3 Moving Water: curved surging droplet consuming one small icenotch.
+4 Drowned Roofs: compact waterwave over simple roof-shaped glyph, not landscape.
+5 Spring Water: clear drop cupping healingheart with dark wounddrop fading.
+6 Mire Is Patient: deep marshdrop around one pin-notch.
+7 Further Along: flowing wardarc with waterdrop and recorded ripple.
+8 Spill the Future: tipped waterbowl pouring three broad recordedripples, no prophetic eye.
+9 Do Not Drink It: murky drop beneath downward weakeningchevron.
+10 Water Remembers PASSIVE: two nested ripples around completed small guardmark.
+11 Quiet Surface PASSIVE: level waterline and frosted small spellglint.
+12 Reflected Face PASSIVE: watermirror ring with one/two broad reflectionripples and small guardarc, no face portrait.
+Exactly12distinct compact symbols, flatmagenta no lettering.
+
+Override entireglyph CENTRAL50%WIDTHHEIGHT withquarteremptymagentaevery side. Image1 actualtinyicons STYLEONLY opaque3–5flatcolourclusters crispdarkoutline native32readable NOTornate. Image2 invisible4x3safe50guide no lines in final. Palette opaque teal deepblue olive bonecreamcyan, no purplepinkormagenta inglyph. Protectiveglowhardedge opaque notgradient, waterreading isrecordedpastneverfuture.12exact.

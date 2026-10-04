@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-11-07",
+  "name": "Break the Seal",
+  "source": "art/ability-icons-draft/raw/hero-11/initial.png",
+  "source_sha256": "21cf5ca6babe0402a4bc4e23f094601acc7db487dd0e518ca5320ecf4b3b8950",
+  "cell": [
+    2,
+    1,
+    384,
+    342
+  ],
+  "raw_bbox": [
+    60,
+    56,
+    335,
+    290
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-11/hero-11-07-128.png",
+      "sha256": "4404898b8c9628ed4c084e6ba7b0b597da2f83965e55f9288e3066f86ca75a98"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-11/hero-11-07-64.png",
+      "sha256": "a0703c01abab550e21fb23061eedaf862cd4e7532acb5abc4a59895a0977f948"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-11/hero-11-07-48.png",
+      "sha256": "4b6897429ac159f26cd941f682b028343d46c8de81d32cbe0e5b46b066143d8e"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-11/hero-11-07-32.png",
+      "sha256": "296be014b1c762d481482616ac43746aa85a8bf9d027d60108832514a76ab382"
+    }
+  }
+}

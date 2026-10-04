@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-25-06",
+  "name": "Crescendo",
+  "source": "art/ability-icons-draft/raw/hero-25/initial.png",
+  "source_sha256": "772274f9f964339e53f7321b8ad188f03b105c2ecdd4754320cb6b84b1d5c7ec",
+  "cell": [
+    1,
+    1,
+    384,
+    342
+  ],
+  "source_rectangle": [
+    384,
+    341,
+    768,
+    683
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    45,
+    37,
+    377,
+    288
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-25/hero-25-06-128.png",
+      "sha256": "cdc70f6ac489f7496787e155ae071c00a53c041b7640c7d771536c84951c5dbc"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-25/hero-25-06-64.png",
+      "sha256": "4f28d17f580aa1235d118b22513c5dc09e97ab8aa79608505d03db409d47bb95"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-25/hero-25-06-48.png",
+      "sha256": "2c078c9d3d2d74f23b394d780d1e8e4aefd25ae92c1be5ca564fea3ee514c252"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-25/hero-25-06-32.png",
+      "sha256": "701a345615ceecc388de4132f02efe63d8ceaf4a12d8fed1c96edf6d8c360f56"
+    }
+  }
+}

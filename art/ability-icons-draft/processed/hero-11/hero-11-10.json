@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-11-10",
+  "name": "Contract by Touch",
+  "source": "art/ability-icons-draft/raw/hero-11/initial.png",
+  "source_sha256": "21cf5ca6babe0402a4bc4e23f094601acc7db487dd0e518ca5320ecf4b3b8950",
+  "cell": [
+    1,
+    2,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    95,
+    17,
+    334,
+    254
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-11/hero-11-10-128.png",
+      "sha256": "681545d3553fbd2b3dabeb47729c73a183b9d2f1b3fa41f3a5d9364947f036b0"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-11/hero-11-10-64.png",
+      "sha256": "0590b8f6130f35a0a1dfa438ad8a28b98c6e68285d4f464d45d20e4431ab031e"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-11/hero-11-10-48.png",
+      "sha256": "6eb7ecd13e1ba34ff9a2b384a46bb904d71a8cac09da9b6ab8524c1a5e64ce38"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-11/hero-11-10-32.png",
+      "sha256": "14b6242f7a35840d1520b60ca7e61dcb562f460592fc7e9398d30c148d048b68"
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-30-08",
+  "name": "Take the Lower Road",
+  "source": "art/ability-icons-draft/raw/hero-30/initial.png",
+  "source_sha256": "078b54b220dba9d46949fdf410cdff7ee878a534128984536902d78eae20a6fc",
+  "cell": [
+    3,
+    1,
+    384,
+    342
+  ],
+  "source_rectangle": [
+    1152,
+    341,
+    1536,
+    683
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    45,
+    60,
+    327,
+    282
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-30/hero-30-08-128.png",
+      "sha256": "c9e7f1a30dcc07951fabf5895cc3668d26574d83dd90f10caeb5beff57f6e7b7"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-30/hero-30-08-64.png",
+      "sha256": "5dbd3326f0c1bd3447cbb40d5d7453a1bfb2759e6d7fca1f6d7a1fbae4939310"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-30/hero-30-08-48.png",
+      "sha256": "577324f085879142f3f02472ed4a040f70bbf9a0844bff6cc698c602701e8163"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-30/hero-30-08-32.png",
+      "sha256": "2c02cb4bee51eb4c1618b00fac3601119628dd26d6170c8710ac790fd3433741"
+    }
+  }
+}

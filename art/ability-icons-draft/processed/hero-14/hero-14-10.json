@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-14-10",
+  "name": "Still in Front",
+  "source": "art/ability-icons-draft/raw/hero-14/initial.png",
+  "source_sha256": "620ff6b97e16026aa6628720b90134f03a9e0c764cfec18ef55a5eccd6ba16ca",
+  "cell": [
+    1,
+    2,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    384,
+    683,
+    768,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    76,
+    22,
+    330,
+    267
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-14/hero-14-10-128.png",
+      "sha256": "e998ed32b70f801b79f7785f9100fa0f8a583d95e46c6f08189a09c9373a1795"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-14/hero-14-10-64.png",
+      "sha256": "510b6b2dd4c04cc48d014da2a1aa3c7f7e93ece4abd7d575892a12e4ed48d553"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-14/hero-14-10-48.png",
+      "sha256": "a883e94e4465a4bbc4568f1bc9436ed280cc6fb55f74fae3de143e35084a2793"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-14/hero-14-10-32.png",
+      "sha256": "241425258932f6dc9c641b00cc4be197e9bf9151691dde1445ede32e4f217422"
+    }
+  }
+}

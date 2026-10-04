@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-32-02",
+  "name": "Groundstrike",
+  "source": "art/ability-icons-draft/raw/hero-32/initial.png",
+  "source_sha256": "9fc99b0c96185debff12f3ef83d57429535b2f83b2ff399b7d563437f74a65f3",
+  "cell": [
+    1,
+    0,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    384,
+    0,
+    768,
+    341
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    80,
+    55,
+    323,
+    316
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-32/hero-32-02-128.png",
+      "sha256": "e13f4f174e081d572c4aeeb868fe370b055e0750c69431170a31f42a73286a89"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-32/hero-32-02-64.png",
+      "sha256": "37b26c9711c968b90d3c996a2e9dfd01d07d65dace267ae51c8223067736504e"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-32/hero-32-02-48.png",
+      "sha256": "5129ae2000c06f675b0655191943dc7f54ec6db34bb979016d70f552538d1e27"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-32/hero-32-02-32.png",
+      "sha256": "19f1b47c46e9811e5d88143a92103306840ff56d21502d8f6c765cd3f93752ab"
+    }
+  }
+}

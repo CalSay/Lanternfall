@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-03-06",
+  "name": "Lantern Flare",
+  "source": "art/ability-icons-draft/raw/hero-03/initial.png",
+  "source_sha256": "0cff4fe45795d22d75052e4382ce9f72075703ecc749e305a8f75badb5f8b7b3",
+  "cell": [
+    1,
+    1,
+    384,
+    342
+  ],
+  "raw_bbox": [
+    79,
+    45,
+    335,
+    296
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-03/hero-03-06-128.png",
+      "sha256": "31c9d8a780de0c40578d955252c74b2118edc640e1f93224d8e6d9f519945ab3"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-03/hero-03-06-64.png",
+      "sha256": "12592b23ee1f22579104d6cfccac7345aa6ab26b572d02e3417c23e6b1b93aa6"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-03/hero-03-06-48.png",
+      "sha256": "f5f8be9c19a6fe4f1386ceaae2e0b785200b6a047945730b15638896fc235194"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-03/hero-03-06-32.png",
+      "sha256": "7221392a1f15f55c6444fe022ae0d550a02728aa5b62f092387803b2ffc2807c"
+    }
+  }
+}

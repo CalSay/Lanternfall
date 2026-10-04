@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-29-05",
+  "name": "Thawline",
+  "source": "art/ability-icons-draft/raw/hero-29/initial.png",
+  "source_sha256": "912d763e5359c1b9ad35d60650781b2012c2b0fb1f1ca14bb79e94c7978d6287",
+  "cell": [
+    0,
+    1,
+    384,
+    342
+  ],
+  "source_rectangle": [
+    0,
+    341,
+    384,
+    683
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    62,
+    43,
+    317,
+    290
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-29/hero-29-05-128.png",
+      "sha256": "1f4c8a568eb1cfffd194cb33a011c6c655fe16d81bf9f3b995950060a48e3973"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-29/hero-29-05-64.png",
+      "sha256": "ea35b781e03ab697da09de4e6fc5e53cc7f910f4037ce719fe6178cdcd0cdc0f"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-29/hero-29-05-48.png",
+      "sha256": "0c92a2e218a50d38fed8fcc579bfc1a527340c0a6bc164ccb08c2b28b73867cb"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-29/hero-29-05-32.png",
+      "sha256": "838b48002e38d15b365e7089b5c8611fb91ee0912995ce3be96af69969c1537c"
+    }
+  }
+}

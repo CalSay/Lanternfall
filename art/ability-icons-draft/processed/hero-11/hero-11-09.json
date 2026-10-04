@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-11-09",
+  "name": "A Word for It",
+  "source": "art/ability-icons-draft/raw/hero-11/initial.png",
+  "source_sha256": "21cf5ca6babe0402a4bc4e23f094601acc7db487dd0e518ca5320ecf4b3b8950",
+  "cell": [
+    0,
+    2,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    76,
+    31,
+    346,
+    259
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-11/hero-11-09-128.png",
+      "sha256": "36a66fd215a8c362638886839f2edb7573a9d563376b496640fbbd48d4ad756d"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-11/hero-11-09-64.png",
+      "sha256": "8a993b1e05e4c4b8562b48182fe63e1bbb76be32616b14aff27a28b56ec047cf"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-11/hero-11-09-48.png",
+      "sha256": "9029a9c65be08704998e551e52ac64b40cfb2ebe66d8edc6c2c80afd6a12bf8b"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-11/hero-11-09-32.png",
+      "sha256": "d6e40bbb579708f684946a9e377019110de327259a749f1b1364fdacd9748fee"
+    }
+  }
+}

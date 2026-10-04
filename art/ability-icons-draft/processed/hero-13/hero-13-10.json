@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-13-10",
+  "name": "Lit for You",
+  "source": "art/ability-icons-draft/raw/hero-13/revision-01.png",
+  "source_sha256": "6f7b927a2ed54e245494b44fb6c52ac4cd14e0d139a28693b2082fc6605e7fbb",
+  "cell": [
+    1,
+    2,
+    367,
+    343
+  ],
+  "source_rectangle": [
+    401,
+    681,
+    768,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    27,
+    13,
+    336,
+    278
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-13/hero-13-10-128.png",
+      "sha256": "1f4208c5aa8cd7334eaed7f8db97afd50cdee86425f418bf61d38e7d409ce3e9"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-13/hero-13-10-64.png",
+      "sha256": "60ded73a38759c75db43ac70e325c416a1c38ca0415ab37dcfd1e23c85468d4f"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-13/hero-13-10-48.png",
+      "sha256": "869b37e1f14accd6450a0f411e803d024781144a414b703f09ed59a2359d838c"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-13/hero-13-10-32.png",
+      "sha256": "6267ac0adbaa434b506aca49a4f83c2d47d7cab08e8baaaa8fd8d6c27b849642"
+    }
+  }
+}

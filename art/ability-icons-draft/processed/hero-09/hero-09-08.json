@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-09-08",
+  "name": "Spill the Future",
+  "source": "art/ability-icons-draft/raw/hero-09/initial.png",
+  "source_sha256": "e6605ef65a770ee350f590eead7a41b5c6ce9bb31afd30ad5439cac709249fe8",
+  "cell": [
+    3,
+    1,
+    384,
+    342
+  ],
+  "raw_bbox": [
+    42,
+    36,
+    308,
+    297
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-09/hero-09-08-128.png",
+      "sha256": "28efce1a04a80a96a24032ad1a53017a7d7807088b3bb09debe6640034eab59d"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-09/hero-09-08-64.png",
+      "sha256": "0e5c5ab0aa9e3753be6bd45be3a21b132e6d7bd4bbc253a74d69202b54963334"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-09/hero-09-08-48.png",
+      "sha256": "d6984bb0448f8807e4bc0220b9a9eb521c9526e96b58b7619fb9b70510bccc50"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-09/hero-09-08-32.png",
+      "sha256": "ab602e8af0855c7bfee2431814cf3f3d102011da14a741279d3e0c8418998fd2"
+    }
+  }
+}

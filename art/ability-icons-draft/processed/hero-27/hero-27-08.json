@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-27-08",
+  "name": "White Reflection",
+  "source": "art/ability-icons-draft/raw/hero-27/initial.png",
+  "source_sha256": "c1c235d767948d31faaaf50f54f359a0a9b42b897b4e25e7f020fb4f7197168f",
+  "cell": [
+    3,
+    1,
+    384,
+    328
+  ],
+  "source_rectangle": [
+    1152,
+    341,
+    1536,
+    669
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    15,
+    41,
+    331,
+    287
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-27/hero-27-08-128.png",
+      "sha256": "01ac726e45ffff824b225bca7616db450c9dad0e2ca35614d045113be96bbf58"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-27/hero-27-08-64.png",
+      "sha256": "c3a501e417a740fae4e3a7bf58f6a8cb56615d6bd4714d5b86d03be064bbbf56"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-27/hero-27-08-48.png",
+      "sha256": "6e8ff385ec0956b01cfe6cc0db2c2a1469da48d7893fd540d6426048638a2c12"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-27/hero-27-08-32.png",
+      "sha256": "855b7b21098ffafa4cc6ea392c05617d88084222f527dd7a722262f65f90a3ba"
+    }
+  }
+}

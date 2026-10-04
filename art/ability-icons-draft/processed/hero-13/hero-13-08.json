@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-13-08",
+  "name": "One Still Burning",
+  "source": "art/ability-icons-draft/raw/hero-13/revision-01.png",
+  "source_sha256": "6f7b927a2ed54e245494b44fb6c52ac4cd14e0d139a28693b2082fc6605e7fbb",
+  "cell": [
+    3,
+    1,
+    384,
+    340
+  ],
+  "source_rectangle": [
+    1152,
+    341,
+    1536,
+    681
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    79,
+    28,
+    313,
+    302
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-13/hero-13-08-128.png",
+      "sha256": "157792b5b92cd8113d8ee4217edc290df4fca92de0f7ec51534395d8d90d15ce"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-13/hero-13-08-64.png",
+      "sha256": "3e7bcc8855819c4a4a9ed58faf69aa0020f5245e23f626c1fa94a27ff55fd6b5"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-13/hero-13-08-48.png",
+      "sha256": "45c9fe541a509e522faebd151c62990eb058ef4984b8d3d12de471ea37198b21"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-13/hero-13-08-32.png",
+      "sha256": "2bece1637dce4e7e4aa6793a974871c14849474dd34dd88f5933a2128af3795a"
+    }
+  }
+}

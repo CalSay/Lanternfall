@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-07-02",
+  "name": "Oathbound Cut",
+  "source": "art/ability-icons-draft/raw/hero-07/initial.png",
+  "source_sha256": "c5a611d4b3e52f2396d0c4927d0089255fcab855408bd199f60994a281e3ee6b",
+  "cell": [
+    1,
+    0,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    69,
+    64,
+    336,
+    323
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-07/hero-07-02-128.png",
+      "sha256": "ec6054b40b2fb68cbcf98ab4a47a604bd90d272cfef8de9ebf060a0384d5b2b1"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-07/hero-07-02-64.png",
+      "sha256": "1d187ff62e681a072c81caf2770d6f0fa876b912542a16075bddb9fec1ad1cc9"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-07/hero-07-02-48.png",
+      "sha256": "c052e16849a0f9855aed63cb433182c15751db525b716305c7c48baf3225db64"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-07/hero-07-02-32.png",
+      "sha256": "4a76bdbf1392357632ff1d700a1af74a06849372a194e55dd6779e1468927ff7"
+    }
+  }
+}

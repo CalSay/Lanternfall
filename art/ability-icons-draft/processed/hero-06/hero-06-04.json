@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-06-04",
+  "name": "Names on Iron",
+  "source": "art/ability-icons-draft/raw/hero-06/initial.png",
+  "source_sha256": "6bcfc8612b6c75bfe975c206de9d5b5f7cca0499b032aad52e2836bf2fc74d24",
+  "cell": [
+    3,
+    0,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    40,
+    64,
+    308,
+    326
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-06/hero-06-04-128.png",
+      "sha256": "f0a9ee2c56cd9251db69f07d7d808c362f182ef3d8b94dc9d1941c9ca1448ae5"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-06/hero-06-04-64.png",
+      "sha256": "cb4c9cc4f0066fb734201497bcd6b8a06b78486d4d4e112f69d4c98a2757afff"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-06/hero-06-04-48.png",
+      "sha256": "d0e3702bf2e9f502f69101fec34e2b254cf3a6a769a4bd7117c25ed73d97c6ad"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-06/hero-06-04-32.png",
+      "sha256": "c959376f5c5766dc184595cc6e236fe0aff392806bc97ea333b566118dc39121"
+    }
+  }
+}

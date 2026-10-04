@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-06-09",
+  "name": "Two Hundred",
+  "source": "art/ability-icons-draft/raw/hero-06/initial.png",
+  "source_sha256": "6bcfc8612b6c75bfe975c206de9d5b5f7cca0499b032aad52e2836bf2fc74d24",
+  "cell": [
+    0,
+    2,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    66,
+    13,
+    370,
+    281
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-06/hero-06-09-128.png",
+      "sha256": "6adaf1bc1cdab4f24d083825e10b8a3988992946465e97d091f42eb60be39e45"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-06/hero-06-09-64.png",
+      "sha256": "aab7faef616a700cba62e13837589c0a1fc3ea45a9a4bd1d4dbfe3a146064d8a"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-06/hero-06-09-48.png",
+      "sha256": "2106e974f3ff700bcded37470dc1c33152588243f85a4bf730ec29f440dbdd02"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-06/hero-06-09-32.png",
+      "sha256": "81b6471c07ca5bc1ad72528d6a37e81431826fb88c9a20f3951153e40e524058"
+    }
+  }
+}

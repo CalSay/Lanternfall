@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-29-06",
+  "name": "Still Water",
+  "source": "art/ability-icons-draft/raw/hero-29/initial.png",
+  "source_sha256": "912d763e5359c1b9ad35d60650781b2012c2b0fb1f1ca14bb79e94c7978d6287",
+  "cell": [
+    1,
+    1,
+    384,
+    342
+  ],
+  "source_rectangle": [
+    384,
+    341,
+    768,
+    683
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    54,
+    49,
+    319,
+    278
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-29/hero-29-06-128.png",
+      "sha256": "c17f6c5cb76f9ba9e7eeb48ffecd363fc491cda66ff480b15b3cd913db153c52"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-29/hero-29-06-64.png",
+      "sha256": "9fea0ed319b222280a7f2a188f5e8384bc020661abb32ea7a58594fe89cc1f5c"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-29/hero-29-06-48.png",
+      "sha256": "eb908e00f4d723d835a2d369f0a44cc2ee6463541e5684234e12bbebd28bc58b"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-29/hero-29-06-32.png",
+      "sha256": "a936f20dd47bc97ad17acc3077299be33d143ad4f7cbba82af151bfc36e527c5"
+    }
+  }
+}

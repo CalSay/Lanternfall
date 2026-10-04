@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-21-05",
+  "name": "Glassbranch Remedy",
+  "source": "art/ability-icons-draft/raw/hero-21/initial.png",
+  "source_sha256": "faf603fa06d58e42be4c3368499fe7a58f08b8b5bf31d98c730bf6a6c5879a45",
+  "cell": [
+    0,
+    1,
+    384,
+    342
+  ],
+  "source_rectangle": [
+    0,
+    341,
+    384,
+    683
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    72,
+    40,
+    309,
+    292
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-21/hero-21-05-128.png",
+      "sha256": "9eff61ec40fa00b6cccd59d70f1a5595375596c5302ddd79be06c8d426630ba6"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-21/hero-21-05-64.png",
+      "sha256": "1f1f37d97c0defe6f253659bdbc923b11fe02404a6097429a8daba4522a7fcd6"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-21/hero-21-05-48.png",
+      "sha256": "3cf8d7f41aad427060e56e75f3d98b9e319ace0f576c684ba3465cba86f7746b"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-21/hero-21-05-32.png",
+      "sha256": "f6cf116f87faa80653cea46e4c948771921d5fe32abe3c314f25d1bf848d1045"
+    }
+  }
+}

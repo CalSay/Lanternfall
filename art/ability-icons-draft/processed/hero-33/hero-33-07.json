@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-33-07",
+  "name": "The Held Breath",
+  "source": "art/ability-icons-draft/raw/hero-33/initial.png",
+  "source_sha256": "34c3cbedc4bc8535718528feb955cbdcecccb350fca27325ff2b86a023189d00",
+  "cell": [
+    2,
+    1,
+    384,
+    342
+  ],
+  "source_rectangle": [
+    768,
+    341,
+    1152,
+    683
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    51,
+    63,
+    317,
+    285
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-33/hero-33-07-128.png",
+      "sha256": "f05cc1dddc83be04382889aef78d3c46d2c36b7416dba9b622c5bce515fa5e7a"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-33/hero-33-07-64.png",
+      "sha256": "d71c3bac8bd670ac79318dc48852142c8dae33902fb4cb20875d02a893c0f8df"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-33/hero-33-07-48.png",
+      "sha256": "b212e7df2e1926d27f2cdeed72d1487b406e71e55bb2ec9688d9863ce79fce7d"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-33/hero-33-07-32.png",
+      "sha256": "b48ebf55511f16fbcfc6f3a4af633a2c5cd608af05dd247336aa8b4474862537"
+    }
+  }
+}

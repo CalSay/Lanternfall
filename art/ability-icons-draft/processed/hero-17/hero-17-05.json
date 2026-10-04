@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-17-05",
+  "name": "Quench",
+  "source": "art/ability-icons-draft/raw/hero-17/initial.png",
+  "source_sha256": "9cfb6c123f64254a36401115884f7626809e770bd1176b0701853f40da447634",
+  "cell": [
+    0,
+    1,
+    384,
+    342
+  ],
+  "source_rectangle": [
+    0,
+    341,
+    384,
+    683
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    66,
+    51,
+    340,
+    296
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-17/hero-17-05-128.png",
+      "sha256": "793afa6565e058cd81d221eafa8fc4af178f216c0de3b5afd013484434525496"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-17/hero-17-05-64.png",
+      "sha256": "8b9f27fa9f71cc1b8f78944de745b30aa69bfa37df1e213bf6447d4c2a473ad0"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-17/hero-17-05-48.png",
+      "sha256": "f07973f6eeeed0009c0d3910cf2322d66ecf31dc4506cd98006a57db7f3a0d15"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-17/hero-17-05-32.png",
+      "sha256": "54119c7cf72dc85ee7c9fc9c1cd8da84ea1d70cd197ddec505451652d11986b1"
+    }
+  }
+}

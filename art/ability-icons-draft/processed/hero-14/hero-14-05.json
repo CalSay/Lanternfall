@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-14-05",
+  "name": "Walked Out",
+  "source": "art/ability-icons-draft/raw/hero-14/initial.png",
+  "source_sha256": "620ff6b97e16026aa6628720b90134f03a9e0c764cfec18ef55a5eccd6ba16ca",
+  "cell": [
+    0,
+    1,
+    384,
+    342
+  ],
+  "source_rectangle": [
+    0,
+    341,
+    384,
+    683
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    84,
+    65,
+    338,
+    277
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-14/hero-14-05-128.png",
+      "sha256": "ebe50cdd68a8fec65e9a73ef16b79393f0443cc1c96bb29c7dddbe26cffa2a91"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-14/hero-14-05-64.png",
+      "sha256": "340bb5e5256e18124f87184a8492c5159096f01576b78dcfd3d5cfc61826619d"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-14/hero-14-05-48.png",
+      "sha256": "ef9b1deb81c32c825e0236bca409f42453e91064bba4c9df2e629bdb6a50e934"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-14/hero-14-05-32.png",
+      "sha256": "15478f21fd15d54e48f99c2dd438f5bfb6c5770a33c757d51252b1a6b2e19532"
+    }
+  }
+}

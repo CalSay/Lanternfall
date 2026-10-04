@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-01-12",
+  "name": "Wingbeat",
+  "source": "art/ability-icons-draft/raw/hero-01/revision-01.png",
+  "source_sha256": "58437daa8a585639577e47e4bb3b0af12948a073085ff6a6987e21dab0e1dd42",
+  "cell": [
+    3,
+    2,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    34,
+    29,
+    351,
+    271
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-01/hero-01-12-128.png",
+      "sha256": "470a722bc670ee99372f403261cda2d1d2c3cf7315cb25a9186458b89df22bd9"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-01/hero-01-12-64.png",
+      "sha256": "49839e9c962856fbfb82ac4ad1b3abcc58332c1a9bbab7f56b74a208a1784851"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-01/hero-01-12-48.png",
+      "sha256": "da90d65bd94e39c1ca86e9816b2ef5f17901e6ca202cb8e9fcd00998b3612eeb"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-01/hero-01-12-32.png",
+      "sha256": "44fc8ac2ec7dee31f7f1b65087a73a2626040ddcf9cf6a0a63023b5d505a3ce2"
+    }
+  }
+}

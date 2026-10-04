@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-18-10",
+  "name": "Leave a Sign",
+  "source": "art/ability-icons-draft/raw/hero-18/initial.png",
+  "source_sha256": "d254bc2ae451f3f659c623424d93dbb712ce0be89485830b714f395280ab0c4f",
+  "cell": [
+    1,
+    2,
+    355,
+    341
+  ],
+  "source_rectangle": [
+    413,
+    683,
+    768,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    76,
+    39,
+    303,
+    270
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-18/hero-18-10-128.png",
+      "sha256": "c37575fbdd5382419ad1bc660d4b2eab653ee6de3c6ffba5dd3073109d7ba1fb"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-18/hero-18-10-64.png",
+      "sha256": "7a95cbe535a06a0014a24f6aade1f9377d164ae04280d839612c7a547f243780"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-18/hero-18-10-48.png",
+      "sha256": "56321557e2d76dd4ecb5b36ebc583392b85077487f7d3c667c7dfc1d3b33e38e"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-18/hero-18-10-32.png",
+      "sha256": "f234b980f7e35bc0d477c7e0f1908176d7e2aa5f08ca0d0abb4ae4ec937f84e8"
+    }
+  }
+}

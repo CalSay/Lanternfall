@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-10-08",
+  "name": "Crooked Knuckles",
+  "source": "art/ability-icons-draft/raw/hero-10/initial.png",
+  "source_sha256": "b35142971fba2f77cf87c5e0395b982c6f7b1cf9e45bbdb95d5aa84133dd1e0b",
+  "cell": [
+    3,
+    1,
+    384,
+    342
+  ],
+  "raw_bbox": [
+    74,
+    54,
+    304,
+    287
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-10/hero-10-08-128.png",
+      "sha256": "4d1ac384a89bd62906c402222cbee55395c46b3999da3deb4a6a066d9d18a911"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-10/hero-10-08-64.png",
+      "sha256": "ad568e5cc2d10599e441ae4c40bbd92821b7511d75f9500306a379b7ecf312a7"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-10/hero-10-08-48.png",
+      "sha256": "5ba4a5bed56646741f34b4dda78aa07777f39ff3f0e72f17ad71a2f8c0fcd4ad"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-10/hero-10-08-32.png",
+      "sha256": "0072c268d3671230d5e1bea707186eab7c77ee4d9b1f831f9ad0b63ff6634a16"
+    }
+  }
+}

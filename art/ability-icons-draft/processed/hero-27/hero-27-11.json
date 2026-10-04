@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-27-11",
+  "name": "Leadwork",
+  "source": "art/ability-icons-draft/raw/hero-27/initial.png",
+  "source_sha256": "c1c235d767948d31faaaf50f54f359a0a9b42b897b4e25e7f020fb4f7197168f",
+  "cell": [
+    2,
+    2,
+    384,
+    355
+  ],
+  "source_rectangle": [
+    768,
+    669,
+    1152,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    56,
+    19,
+    299,
+    287
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-27/hero-27-11-128.png",
+      "sha256": "c63f15ae98d6a79ceeac1aae2a32f41f2dbeb240d9f3dab69416a80b689d3e20"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-27/hero-27-11-64.png",
+      "sha256": "ea553ce8d8e8189c191d2d6aeb0c1c4c0f5985b8f9326df69533cf47564d6f9b"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-27/hero-27-11-48.png",
+      "sha256": "cc2cd3c5320b53df6d53c5ecc902bcec3b275a46cf80e1f0e64ae3f6fbb3df92"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-27/hero-27-11-32.png",
+      "sha256": "0f50a6edeb68f256f3f09810a9abdf7d0c51637b5258ada10f523adf061e3901"
+    }
+  }
+}

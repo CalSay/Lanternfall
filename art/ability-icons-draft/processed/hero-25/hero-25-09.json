@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-25-09",
+  "name": "The Final Measure",
+  "source": "art/ability-icons-draft/raw/hero-25/initial.png",
+  "source_sha256": "772274f9f964339e53f7321b8ad188f03b105c2ecdd4754320cb6b84b1d5c7ec",
+  "cell": [
+    0,
+    2,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    0,
+    683,
+    384,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    53,
+    21,
+    367,
+    276
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-25/hero-25-09-128.png",
+      "sha256": "1a42550ac96cce75cb66946129e63b9db81929d22053909f9587fe4de47a584f"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-25/hero-25-09-64.png",
+      "sha256": "07699cc0b5229d202561810a84319dc736260af1768d4b52295a02d11f9f9de7"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-25/hero-25-09-48.png",
+      "sha256": "5889baaac6aa6a7588b504822ae449d8cc1aa3a747e5a4e64350d91b33aea451"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-25/hero-25-09-32.png",
+      "sha256": "402052caead6c367f1377b3efe202342a24fa085bb940f2b9d3257e84ca59a63"
+    }
+  }
+}

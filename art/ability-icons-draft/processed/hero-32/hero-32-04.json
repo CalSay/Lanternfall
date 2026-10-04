@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-32-04",
+  "name": "Insulated Grip",
+  "source": "art/ability-icons-draft/raw/hero-32/initial.png",
+  "source_sha256": "9fc99b0c96185debff12f3ef83d57429535b2f83b2ff399b7d563437f74a65f3",
+  "cell": [
+    3,
+    0,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    1152,
+    0,
+    1536,
+    341
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    55,
+    65,
+    325,
+    304
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-32/hero-32-04-128.png",
+      "sha256": "58dd37985f1b2fe7b9dbbe39fff6be0c1673d5f83c8739439accd85a9b589931"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-32/hero-32-04-64.png",
+      "sha256": "33812f7ddca27daa2ddddb62b547aff7ca831947e262c6078e7f77653ea279a4"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-32/hero-32-04-48.png",
+      "sha256": "ea8a34a976cd31610cc4d94e3dc32acc50da3060bf8d177f93e2679bce26b89d"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-32/hero-32-04-32.png",
+      "sha256": "0b97d4a11b24f20470a34b71e7f3545bf130e85e349ed187ba50aaf63669aea2"
+    }
+  }
+}

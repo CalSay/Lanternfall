@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-07-07",
+  "name": "No Borrowed Courage",
+  "source": "art/ability-icons-draft/raw/hero-07/initial.png",
+  "source_sha256": "c5a611d4b3e52f2396d0c4927d0089255fcab855408bd199f60994a281e3ee6b",
+  "cell": [
+    2,
+    1,
+    384,
+    342
+  ],
+  "raw_bbox": [
+    34,
+    32,
+    330,
+    307
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-07/hero-07-07-128.png",
+      "sha256": "d87eb46e2b326c5b8b6c2f9bf93829440bc664485dcc75629cd2b3e2dbcef1d9"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-07/hero-07-07-64.png",
+      "sha256": "c4280fc28575419d8f530c75f766fc90ab94e72e82bf70e092d4ced7017ad02f"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-07/hero-07-07-48.png",
+      "sha256": "9ce8d9a1bee91ae3df641c2ffeaa2a972160a8711606ddc581be23b713b8d58c"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-07/hero-07-07-32.png",
+      "sha256": "7d00ca4ea19db99b8550eb9cb1658eb1fe0d0e783da1869b32c5e6657ae60d59"
+    }
+  }
+}

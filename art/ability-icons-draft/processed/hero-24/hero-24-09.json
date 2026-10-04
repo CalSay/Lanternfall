@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-24-09",
+  "name": "The Hour Held Open",
+  "source": "art/ability-icons-draft/raw/hero-24/initial.png",
+  "source_sha256": "4e22efa85f0d09ff8bcb5771888ece2abc454c3e19a02de4660c7c60992fd240",
+  "cell": [
+    0,
+    2,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    0,
+    683,
+    384,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    56,
+    18,
+    365,
+    282
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-24/hero-24-09-128.png",
+      "sha256": "b1358bfb085966b5c244336f6e1482b053dfc7af2699fb8960169c3f8c24af7b"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-24/hero-24-09-64.png",
+      "sha256": "d8539bf3bb7bca196a4adaf8495f23d90deca602a922429c870a8656e37fcb92"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-24/hero-24-09-48.png",
+      "sha256": "20dd6a50620efb2e0364025831d1d489d296a75bce103695237942f1d29669ac"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-24/hero-24-09-32.png",
+      "sha256": "68203679a83b4efda99ce34bb87bc98c5caef19aba5dc00ad9c0ad616a420205"
+    }
+  }
+}

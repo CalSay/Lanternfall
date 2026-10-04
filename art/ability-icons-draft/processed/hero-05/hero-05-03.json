@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-05-03",
+  "name": "Deep Kerf",
+  "source": "art/ability-icons-draft/raw/hero-05/initial.png",
+  "source_sha256": "9e802dd0953c2985fdf4d4c9400993bbbf2cd90f6dd6a5754c946c3e7c818373",
+  "cell": [
+    2,
+    0,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    55,
+    48,
+    313,
+    324
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-05/hero-05-03-128.png",
+      "sha256": "478ca7849843d362dd0b056147d984819e3eb7e2826f2437f137aed658d0aa01"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-05/hero-05-03-64.png",
+      "sha256": "b0b8e26324675d8b0da8b5b6efd09752ad0b105a0dad83703954cd3d1ef7d5cf"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-05/hero-05-03-48.png",
+      "sha256": "12353bb56fd8c57e3968b042491ff054ddaab91391b30e66de85df7df935dc36"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-05/hero-05-03-32.png",
+      "sha256": "04651ea6072509bf983c7e5d04a2f83d0acde8496776f77389da0ad4b93dd0b0"
+    }
+  }
+}

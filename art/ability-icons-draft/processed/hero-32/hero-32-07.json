@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-32-07",
+  "name": "Bleed the Coil",
+  "source": "art/ability-icons-draft/raw/hero-32/initial.png",
+  "source_sha256": "9fc99b0c96185debff12f3ef83d57429535b2f83b2ff399b7d563437f74a65f3",
+  "cell": [
+    2,
+    1,
+    384,
+    334
+  ],
+  "source_rectangle": [
+    768,
+    341,
+    1152,
+    675
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    41,
+    69,
+    355,
+    285
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-32/hero-32-07-128.png",
+      "sha256": "346d81726cbef330ccca0c522e945b842b45046cf77fee05e61bc0d1949a2a0f"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-32/hero-32-07-64.png",
+      "sha256": "472c5e8640a1d980d4f2c29b9860e9a585fa115d39b2ba563ccadff8441e1500"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-32/hero-32-07-48.png",
+      "sha256": "af31a9490f30672492989d3044cb446a4e8e67f137c41c501111a2d1bf4c90d7"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-32/hero-32-07-32.png",
+      "sha256": "6baef05d29d7e1bdf1065f756f8fb8d6b0c95df6eeaa90a930581a10b0542653"
+    }
+  }
+}

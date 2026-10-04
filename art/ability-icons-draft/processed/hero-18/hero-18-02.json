@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-18-02",
+  "name": "Bitter Fletching",
+  "source": "art/ability-icons-draft/raw/hero-18/initial.png",
+  "source_sha256": "d254bc2ae451f3f659c623424d93dbb712ce0be89485830b714f395280ab0c4f",
+  "cell": [
+    1,
+    0,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    384,
+    0,
+    768,
+    341
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    76,
+    80,
+    327,
+    307
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-18/hero-18-02-128.png",
+      "sha256": "4bd6e10622aaa760a39b1c63cf301d32717a3bc8ea83614237397ccd8454d93a"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-18/hero-18-02-64.png",
+      "sha256": "b57ec416a97df33af7e403bcf543d5db75d47022155a8499147e479318291aed"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-18/hero-18-02-48.png",
+      "sha256": "db5fa942dd74428ee8c2dd07fef9a031ed1e242c0eed9202dc59bd686644f8be"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-18/hero-18-02-32.png",
+      "sha256": "7151483db9f220d00913e231bc44398b2cfc04a69e2abe1921e0d24de8b4d14b"
+    }
+  }
+}

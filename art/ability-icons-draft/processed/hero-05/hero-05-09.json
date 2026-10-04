@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-05-09",
+  "name": "Stay the Trunk",
+  "source": "art/ability-icons-draft/raw/hero-05/initial.png",
+  "source_sha256": "9e802dd0953c2985fdf4d4c9400993bbbf2cd90f6dd6a5754c946c3e7c818373",
+  "cell": [
+    0,
+    2,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    68,
+    12,
+    361,
+    279
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-05/hero-05-09-128.png",
+      "sha256": "dbed3ab6a4ddc141659413501b417c41b4b934131896a3d7c23e4c2b0061284e"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-05/hero-05-09-64.png",
+      "sha256": "72d54fd3aef7fbf79c24ac2ceeb92b1cf321c29d682b06df0940b5a1cc12ecc1"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-05/hero-05-09-48.png",
+      "sha256": "342ec7389f59fb99a5d370cbea9805230ba0bef6d767951763a7d9dca3534520"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-05/hero-05-09-32.png",
+      "sha256": "3068f41fb5a57c3b238d90fb854d0a072a386ad21404a026d9ab2b5a750413ef"
+    }
+  }
+}

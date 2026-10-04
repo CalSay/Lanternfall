@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-22-07",
+  "name": "Empty Lane",
+  "source": "art/ability-icons-draft/raw/hero-22/initial.png",
+  "source_sha256": "dbfb104d6ff11ee7589c8f600764bd335af518c5e7f46b39f23da5a9ddc9dc80",
+  "cell": [
+    2,
+    1,
+    384,
+    339
+  ],
+  "source_rectangle": [
+    768,
+    341,
+    1152,
+    680
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    44,
+    71,
+    335,
+    277
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-22/hero-22-07-128.png",
+      "sha256": "c22f06b01f0e760b6f67a1eba8235cc77c44b7d8f2efdab5b18435aa5c1d1ac0"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-22/hero-22-07-64.png",
+      "sha256": "d8e169640e82ba0e016ccb62db1d9b3990991dacaa419d0e5561f030246ac033"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-22/hero-22-07-48.png",
+      "sha256": "b44ecc8677593558e2b6767caabba64875c53cfe1fa3b8511631c7a7d832363c"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-22/hero-22-07-32.png",
+      "sha256": "6899f85d046cdb1fb78095531aebcdceab458102803648fbaa788ef02c7c7059"
+    }
+  }
+}

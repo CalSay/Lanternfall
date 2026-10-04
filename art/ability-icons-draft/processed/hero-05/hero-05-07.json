@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-05-07",
+  "name": "Fork Mark",
+  "source": "art/ability-icons-draft/raw/hero-05/initial.png",
+  "source_sha256": "9e802dd0953c2985fdf4d4c9400993bbbf2cd90f6dd6a5754c946c3e7c818373",
+  "cell": [
+    2,
+    1,
+    384,
+    342
+  ],
+  "raw_bbox": [
+    65,
+    49,
+    293,
+    306
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-05/hero-05-07-128.png",
+      "sha256": "3cc3622759de97f719a2950282425bc4a263f1dcb906aa98af450afb1d256536"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-05/hero-05-07-64.png",
+      "sha256": "2821f4a4e9ac52721f604c62d193ec32e597899d620b7081c0a645d3c74d9f07"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-05/hero-05-07-48.png",
+      "sha256": "defed4c78b3e005748fe3a0d547a74663e82b6ee71bf594955b9edb52bff7ccf"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-05/hero-05-07-32.png",
+      "sha256": "51176ca455cc3717ede61f6c3ddf7ef3b64058bc1bee5e8a9215ce74f6e8b6b7"
+    }
+  }
+}

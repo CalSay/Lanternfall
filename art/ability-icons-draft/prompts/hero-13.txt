@@ -1,0 +1,16 @@
+Create a Lanternfall draft ability ICON PROP PACK for Saint Elowen, NOT a character pose or a concept board. Exactly twelve isolated symbols in FOUR columns and THREE rows, row-major order, equal invisible cells on a 1536x1024 landscape canvas. The geometry reference only sets slot centres and padding: never reproduce its grid, outlines, crosses, labels or white background. Entire background solid magenta #FF00FF, including all gaps. No labels, lettering, numbers, watermark, frames, UI, floor or shadows.
+Use the approved Saint Elowen concept only for ivory, warm gold, amber holy-light materials and lantern identity. Use the action icon reference only for small confident dark outlines and broad readable pixel-art shade clusters; do NOT reproduce that page or its text. Symbols should read at native32px: one dominant silhouette plus at most two large secondary marks, no intricate miniature scenes, no fine engraving. Render apparent native48px cluster shapes enlarged, without soft anti-aliasing, with generous clear magenta margin. Keep each symbol within central65% of its cell, fully separated. Nine actives cells1–9 have directional energy; three passives10–12 are settled compact emblems. No human bodies or portraits. Do not imply resurrection, party members, automatic defence, summoned actors or extra gameplay hits. Marks are symbolic, not additional equipable gear.
+Exact manually authored cell designs (the ability names identify cells to YOU and MUST NOT appear as text):
+1. Keep It Low (Active): low sheltered golden flame over a small ward plate.
+2. A Light for Someone (Active): radiant lantern and one outward gift beam beside a ward glint.
+3. Spark Offered (Active): single offered golden spark with a protective rim.
+4. The Choice Again (Active): a fork of three small lights and a brighter five-ray choice.
+5. Rest, I Watch (Active): warm restful lantern sheltered under a guard arch.
+6. Lamps Answer (Active): held lantern emitting an outward marking halo.
+7. What They Got Wrong (Active): gold beam clearing a broken dark eye sigil.
+8. One Still Burning (Active): one burning wick beside a reserved ward droplet.
+9. The Last Lantern (Active): majestic last lantern casting one powerful golden ray.
+10. Lit for You (Passive): small lamp and a manual defence chevron.
+11. Small Flame (Passive): one modest flame illuminating a sharp sunray.
+12. Given Freely (Passive): gifted flame cradled beside a small ward plate.
+Make all twelve distinguishable in silhouette, not merely slightly different glow. One initial review draft.

@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-31-01",
+  "name": "Clean Incision",
+  "source": "art/ability-icons-draft/raw/hero-31/initial.png",
+  "source_sha256": "d11b74289f59a67b5f207d83ad7a9343dc59f2b929acf4163ecf39acdceb61a3",
+  "cell": [
+    0,
+    0,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    0,
+    0,
+    384,
+    341
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    100,
+    64,
+    318,
+    301
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-31/hero-31-01-128.png",
+      "sha256": "3c41fe0222be4542904ef27b85b82adf2b5cf2ce3ab6629e53d20213e5382e1e"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-31/hero-31-01-64.png",
+      "sha256": "4a96487d410528aae75b041dafd3064c26ba69a4d8bcc3a08eab0bb25d286cda"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-31/hero-31-01-48.png",
+      "sha256": "42f6e832787748becd819f52a964e993dce831ca34feaf7c846b3424e4a84333"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-31/hero-31-01-32.png",
+      "sha256": "517d9415c8c5a6f795b6529356f4d28bd5375d0197fd8a196bf7f2c49b7f274f"
+    }
+  }
+}

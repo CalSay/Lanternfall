@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-04-01",
+  "name": "First Lamp",
+  "source": "art/ability-icons-draft/raw/hero-04/initial.png",
+  "source_sha256": "0df9fb5388348a9c5278e44fe3f1c19d8b774d1e8fa08f78952f14e101071b48",
+  "cell": [
+    0,
+    0,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    127,
+    78,
+    317,
+    311
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-04/hero-04-01-128.png",
+      "sha256": "be61fa5d82071a70ef91b2bb289b61268d7751143a5e4322d7590d4332249d9e"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-04/hero-04-01-64.png",
+      "sha256": "10255171b9ee28f6fb79bd76cd10d9c93f8289549c049e51421bf3970df6d025"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-04/hero-04-01-48.png",
+      "sha256": "ad2f63a72b5af790f80edfb5a4b7d953c0aaf203711e8a6303d1f89c3aa59485"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-04/hero-04-01-32.png",
+      "sha256": "ec5ecba99cb2435db202c67d024e89dc50794bf6d2f78d05aa15a5a78d994556"
+    }
+  }
+}

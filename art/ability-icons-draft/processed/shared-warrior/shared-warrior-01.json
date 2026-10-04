@@ -1,0 +1,45 @@
+{
+  "icon_id": "shared-warrior-01",
+  "name": "Heavy Strike",
+  "source": "art/ability-icons-draft/raw/shared-warrior/initial.png",
+  "source_sha256": "d75cd506f53c21d7873999edc6d1086d1f180120c49eb92c2e4b7374dc5a0d9b",
+  "cell": [
+    0,
+    0,
+    512,
+    512
+  ],
+  "source_rectangle": [
+    0,
+    0,
+    512,
+    512
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    78,
+    86,
+    466,
+    461
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/shared-warrior/shared-warrior-01-128.png",
+      "sha256": "96a82a8f8524155b4e5a7216c98fac6dc9aaf248ff63fec3e0804a1fa0610159"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/shared-warrior/shared-warrior-01-64.png",
+      "sha256": "a334842d9a659b65996c9e65d431262547e62ec76c7d2fcee735dcdccda34d2a"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/shared-warrior/shared-warrior-01-48.png",
+      "sha256": "8dcce6c4f08558caa1b37c037dab243969f2828e4066285a5d6c66871832b753"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/shared-warrior/shared-warrior-01-32.png",
+      "sha256": "767ffa88b41f7852340fb46ae149af130e163ba1d9af82a5168e568cc04a634d"
+    }
+  }
+}

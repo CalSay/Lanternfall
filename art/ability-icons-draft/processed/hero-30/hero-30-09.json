@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-30-09",
+  "name": "The Road Goes On",
+  "source": "art/ability-icons-draft/raw/hero-30/initial.png",
+  "source_sha256": "078b54b220dba9d46949fdf410cdff7ee878a534128984536902d78eae20a6fc",
+  "cell": [
+    0,
+    2,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    0,
+    683,
+    384,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    51,
+    20,
+    334,
+    279
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-30/hero-30-09-128.png",
+      "sha256": "c173d0694ee12d9c2deb5102480aa4aa8af7cef2a74b632706ab35c162226b0b"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-30/hero-30-09-64.png",
+      "sha256": "c595ecf9ca56e774c30cb775bb326aadf9ab3e5d61b284f2964be902c7402912"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-30/hero-30-09-48.png",
+      "sha256": "a29a96362a6c57e2ea3c13eca0dd800002ee246a639d3c1bbf918034301b3743"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-30/hero-30-09-32.png",
+      "sha256": "c91eb20dcb52bdb6e3ec4764ece9166b75c6a3ad3a478e1d962e337f90afe089"
+    }
+  }
+}

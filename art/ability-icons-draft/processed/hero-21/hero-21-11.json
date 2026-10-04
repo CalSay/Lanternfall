@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-21-11",
+  "name": "A Little Bitter",
+  "source": "art/ability-icons-draft/raw/hero-21/initial.png",
+  "source_sha256": "faf603fa06d58e42be4c3368499fe7a58f08b8b5bf31d98c730bf6a6c5879a45",
+  "cell": [
+    2,
+    2,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    768,
+    683,
+    1152,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    59,
+    47,
+    320,
+    268
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-21/hero-21-11-128.png",
+      "sha256": "a08fab71e23821819e305b9ff354e98ef2a3c819f890efdc770cffc2cd486f20"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-21/hero-21-11-64.png",
+      "sha256": "af711581d9666516883c9ebb6b59a4cab6bdfa4a6ae6348aa0178318f7b032ae"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-21/hero-21-11-48.png",
+      "sha256": "0f721a30f1e20ded2588048737a01a83d8a732dbe14f2ef1fc8dcee726353272"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-21/hero-21-11-32.png",
+      "sha256": "2155854404c6d951ca3db4c4949b0ad7f592380141eef5cc07e9f98237eea4ad"
+    }
+  }
+}

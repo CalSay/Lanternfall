@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-11-11",
+  "name": "Low and Quick",
+  "source": "art/ability-icons-draft/raw/hero-11/initial.png",
+  "source_sha256": "21cf5ca6babe0402a4bc4e23f094601acc7db487dd0e518ca5320ecf4b3b8950",
+  "cell": [
+    2,
+    2,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    59,
+    86,
+    327,
+    237
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-11/hero-11-11-128.png",
+      "sha256": "527c67506a77ca3ebc437aaef689eb08ed4f1747e0f67c1c51c920f79426eb16"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-11/hero-11-11-64.png",
+      "sha256": "aab240443b7f974ad8db77ea0854399580e5ada570e8148d9b5d213d700172e1"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-11/hero-11-11-48.png",
+      "sha256": "05d1e733e760346afc5c3c9e21ee99046ef1b92da656c6ed663c87102e2f7afb"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-11/hero-11-11-32.png",
+      "sha256": "21a496de35fbb9b8552cd9542609d8b4b65b7a47d77f3165fe80d99008f67e90"
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "icon_id": "hero-16-03",
+  "status": "pending-actual-icon-review",
+  "owner_approval": "pending",
+  "attempt": 1,
+  "generated_original": "/workspace/generated_images/exec-d240e9dd-ffe6-4ade-96cf-26114a4988a4.png",
+  "sha256": "3e13ee9442e737d8b23aa05c9883faeb2e2ae73c047963947c2ebfc796d9b9a9",
+  "prompt_sha256": "83f34fab9ed4043b934ae7db75b4e10be11aee4aa2e51c2ae6558dd4327feb84",
+  "reason": "Actual reviewer found scythe-like head inconsistent with approved triangular spearhead; targeted correction retains green control arc.",
+  "current_processed_review": "closed; zero actionable findings after actual raw and native32/48/128 inspection"
+}

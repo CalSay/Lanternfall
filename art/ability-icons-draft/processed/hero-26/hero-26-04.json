@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-26-04",
+  "name": "Preventive Seal",
+  "source": "art/ability-icons-draft/raw/hero-26/initial.png",
+  "source_sha256": "69282736452127fdf3a6439efe454715873075762e622279e016f31c72b4e9f4",
+  "cell": [
+    3,
+    0,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    1152,
+    0,
+    1536,
+    341
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    32,
+    58,
+    316,
+    332
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-26/hero-26-04-128.png",
+      "sha256": "4b13c0d63d6de8ff91362f66e4403fb5a403ce12e5de47f93a9dab8c22e4f457"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-26/hero-26-04-64.png",
+      "sha256": "48a9e54bf7f9a48daf928ee2e1b9bf0c215e4608555056d2da4ea7ed6b69eec7"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-26/hero-26-04-48.png",
+      "sha256": "41d9dbbaa260c0e03af1e29e0e325d8cdf03455d9733fb3077e2e887ed91fc62"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-26/hero-26-04-32.png",
+      "sha256": "12d9f683c2e2b44275c38dfd0518b6b5f7f63777a1b7168da408c9c6eabeaa73"
+    }
+  }
+}

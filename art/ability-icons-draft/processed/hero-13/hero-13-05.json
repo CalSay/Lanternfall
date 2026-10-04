@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-13-05",
+  "name": "Rest, I Watch",
+  "source": "art/ability-icons-draft/raw/hero-13/revision-01.png",
+  "source_sha256": "6f7b927a2ed54e245494b44fb6c52ac4cd14e0d139a28693b2082fc6605e7fbb",
+  "cell": [
+    0,
+    1,
+    384,
+    340
+  ],
+  "source_rectangle": [
+    0,
+    341,
+    384,
+    681
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    52,
+    31,
+    357,
+    299
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-13/hero-13-05-128.png",
+      "sha256": "db04a5abe6b7ac75bc86bbf824c76588cb22d5c5d323219b4893c6c24687ef6e"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-13/hero-13-05-64.png",
+      "sha256": "0bab2b5b6be217100ef49070dd93ac364a72aff092853b6ddecb1e6f1751709c"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-13/hero-13-05-48.png",
+      "sha256": "e1691565cfe06a649cb1c4d06fa6205193d884c71bb8d6645c42957a48ff114a"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-13/hero-13-05-32.png",
+      "sha256": "709b709641691e19b0a184bc547ab5fe5a8f153a2ddbc8c7033380ccbd12edc3"
+    }
+  }
+}

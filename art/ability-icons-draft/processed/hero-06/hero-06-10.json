@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-06-10",
+  "name": "Names Remembered",
+  "source": "art/ability-icons-draft/raw/hero-06/initial.png",
+  "source_sha256": "6bcfc8612b6c75bfe975c206de9d5b5f7cca0499b032aad52e2836bf2fc74d24",
+  "cell": [
+    1,
+    2,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    87,
+    13,
+    322,
+    261
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-06/hero-06-10-128.png",
+      "sha256": "5ee68aef293eb55c5210a7babc0b38058ace9a6f8a50114918cdf900c9a5f21d"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-06/hero-06-10-64.png",
+      "sha256": "9fc432b54f57cde86b5bddf0fbd1da2a6378bfaa16ec6ed1cb1fcd8b92c8cea1"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-06/hero-06-10-48.png",
+      "sha256": "3491033067547d01ba718028403a7cf10b772acdad60d81e4a06ef1fe21b287d"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-06/hero-06-10-32.png",
+      "sha256": "7beaa8f048d3d1ddd3e7f7d56dcbd2e80e56abcf77e038647ef8f2e99bccddea"
+    }
+  }
+}

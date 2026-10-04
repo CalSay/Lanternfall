@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-25-07",
+  "name": "Measured Guard",
+  "source": "art/ability-icons-draft/raw/hero-25/initial.png",
+  "source_sha256": "772274f9f964339e53f7321b8ad188f03b105c2ecdd4754320cb6b84b1d5c7ec",
+  "cell": [
+    2,
+    1,
+    384,
+    342
+  ],
+  "source_rectangle": [
+    768,
+    341,
+    1152,
+    683
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    62,
+    51,
+    338,
+    292
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-25/hero-25-07-128.png",
+      "sha256": "efae18f0d978d2dc718e8a66a41dda16c1d611ba9e51aaba373336167e6db248"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-25/hero-25-07-64.png",
+      "sha256": "01560ee1a7d2261b06e1d5279a12bc15bbb994f48daa5839828edb599cbf47e9"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-25/hero-25-07-48.png",
+      "sha256": "d507a53427a6c1ed91726f545375e0a00ab66556c6757bd7ee0b348c392d50bb"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-25/hero-25-07-32.png",
+      "sha256": "d72ba43e2a986365d95c3acb8de2664e085509fd7e2ab29177d3e3c4f6c76631"
+    }
+  }
+}

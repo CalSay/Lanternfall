@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-17-11",
+  "name": "Safety Glass",
+  "source": "art/ability-icons-draft/raw/hero-17/initial.png",
+  "source_sha256": "9cfb6c123f64254a36401115884f7626809e770bd1176b0701853f40da447634",
+  "cell": [
+    2,
+    2,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    768,
+    683,
+    1152,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    61,
+    17,
+    318,
+    256
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-17/hero-17-11-128.png",
+      "sha256": "e6086e47b7fea871cda23996683993883e0f18f98a8681063f294cfeccec93ad"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-17/hero-17-11-64.png",
+      "sha256": "7ed23a7546e1994f200557a3537a0858f8df2ca7bb483ab51131afc0de7e6931"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-17/hero-17-11-48.png",
+      "sha256": "1fde3ba55f52cd9f92eaab13239aee1468c0bd38a4fb85d426f46462cacdf919"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-17/hero-17-11-32.png",
+      "sha256": "302f9313992dfb51363e982903d57a6ff0ad1d5a5c28e489aab139e9cdafbb43"
+    }
+  }
+}

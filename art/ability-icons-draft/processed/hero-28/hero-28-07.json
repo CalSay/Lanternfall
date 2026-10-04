@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-28-07",
+  "name": "A Last Courtesy",
+  "source": "art/ability-icons-draft/raw/hero-28/initial.png",
+  "source_sha256": "428331c78cae5c25ef7947e5702d1b6b4ce92ac8d63e0b40a896b8afda7dcb72",
+  "cell": [
+    2,
+    1,
+    384,
+    337
+  ],
+  "source_rectangle": [
+    768,
+    341,
+    1152,
+    678
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    49,
+    53,
+    306,
+    287
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-28/hero-28-07-128.png",
+      "sha256": "b73decfa7b65c28840d7a5417b71133e30e8485735766399ba79ffff8102fef9"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-28/hero-28-07-64.png",
+      "sha256": "8a6bec32de8ed1c6c80d0b20ed194bb4236495294b87c13d4a2fb5c1f14cd982"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-28/hero-28-07-48.png",
+      "sha256": "7aef3735fdc8fc1a23f7ba9a7a3533c86f25fab5f4c504f20dacc0f74e4e8753"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-28/hero-28-07-32.png",
+      "sha256": "a3baf9326542073d71b26ab829d806bff0bb56deaf9bb4cf2c74dc5c235d2b7d"
+    }
+  }
+}

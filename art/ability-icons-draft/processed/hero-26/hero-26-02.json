@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-26-02",
+  "name": "Bitter Cure",
+  "source": "art/ability-icons-draft/raw/hero-26/initial.png",
+  "source_sha256": "69282736452127fdf3a6439efe454715873075762e622279e016f31c72b4e9f4",
+  "cell": [
+    1,
+    0,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    384,
+    0,
+    768,
+    341
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    68,
+    58,
+    319,
+    320
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-26/hero-26-02-128.png",
+      "sha256": "29b75e4059ba6f868abe6d81ddab46aa834b6e022320af82a0c1e829f61d191a"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-26/hero-26-02-64.png",
+      "sha256": "af80c73c817c08dfe94ecc33b7a4075d23bd59b5f189b35cc9f51ae0ddf0e490"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-26/hero-26-02-48.png",
+      "sha256": "9ebd2f78ad19d718d7a84270d9e5e44ce71131bd9f4f58309fef8797a51d3518"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-26/hero-26-02-32.png",
+      "sha256": "4324c87ced23cb5ef53592c87af0692513fad81b6cf1e10d557dbd1a945c54a5"
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-19-05",
+  "name": "Measure the Weight",
+  "source": "art/ability-icons-draft/raw/hero-19/initial.png",
+  "source_sha256": "bfe18f630518f6f67979ba1b2bdb21b6cb1cb8951856bd93442dcb4f33ac57fd",
+  "cell": [
+    0,
+    1,
+    384,
+    339
+  ],
+  "source_rectangle": [
+    0,
+    341,
+    384,
+    680
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    61,
+    51,
+    368,
+    292
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-19/hero-19-05-128.png",
+      "sha256": "80a98ae1b0023b2f377fe74182bbe0012a546306f3fac1c591a1cb36978b970e"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-19/hero-19-05-64.png",
+      "sha256": "f2a3de4fc6df9829de74bd33ba3954fe1a2051b1863a9f1f01c84a171890e180"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-19/hero-19-05-48.png",
+      "sha256": "1e81e9c7c773d3ba9ca8be34354abf40fcd5a2f3a5de79f1403a69d8d624574e"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-19/hero-19-05-32.png",
+      "sha256": "692515c7b73145c724f5cf3aefbdfea8af99d0bebe3a42bd0864049ff889f8e6"
+    }
+  }
+}

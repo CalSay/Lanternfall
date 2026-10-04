@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-27-09",
+  "name": "All the Glass at Once",
+  "source": "art/ability-icons-draft/raw/hero-27/initial.png",
+  "source_sha256": "c1c235d767948d31faaaf50f54f359a0a9b42b897b4e25e7f020fb4f7197168f",
+  "cell": [
+    0,
+    2,
+    384,
+    355
+  ],
+  "source_rectangle": [
+    0,
+    669,
+    384,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    37,
+    2,
+    366,
+    314
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-27/hero-27-09-128.png",
+      "sha256": "6bc67be3dae1436f98fd7bec179e0a6849f1091cd8a341c2891becc70fe6a079"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-27/hero-27-09-64.png",
+      "sha256": "80671d40189c06e96d5930ae8a7cf6e46eef192fc1473c20dc267dad543138d3"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-27/hero-27-09-48.png",
+      "sha256": "cfec41e15cd449b9f2fe740b60c0b8821e79a5471eb8f9eaa8b46770630a00fd"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-27/hero-27-09-32.png",
+      "sha256": "111b46ff8b590962154ada5cf5f2e0d77184247ed4e2bad6030a0b4cd2c8f915"
+    }
+  }
+}

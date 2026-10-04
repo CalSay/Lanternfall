@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-33-06",
+  "name": "One Clean Arrow",
+  "source": "art/ability-icons-draft/raw/hero-33/initial.png",
+  "source_sha256": "34c3cbedc4bc8535718528feb955cbdcecccb350fca27325ff2b86a023189d00",
+  "cell": [
+    1,
+    1,
+    384,
+    342
+  ],
+  "source_rectangle": [
+    384,
+    341,
+    768,
+    683
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    72,
+    48,
+    329,
+    298
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-33/hero-33-06-128.png",
+      "sha256": "c076af190e34a06766e0b2da5d06fa9df2152df10160e446daa72cdbf7caf3dc"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-33/hero-33-06-64.png",
+      "sha256": "75ea67ca4923672176322134db785dd7ea564cf0d01c73e9c962831fe2bae678"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-33/hero-33-06-48.png",
+      "sha256": "6731922235d0c6dadfd9308027183c51c935e0aa8d6d23d7459c60adbbf7ee92"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-33/hero-33-06-32.png",
+      "sha256": "504c118e6f687cd9ec3ea1348d0141a821fc73d5a4f629125d999a4430227b00"
+    }
+  }
+}

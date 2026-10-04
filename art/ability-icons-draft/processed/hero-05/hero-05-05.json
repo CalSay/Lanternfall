@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-05-05",
+  "name": "Heel of the Axe",
+  "source": "art/ability-icons-draft/raw/hero-05/initial.png",
+  "source_sha256": "9e802dd0953c2985fdf4d4c9400993bbbf2cd90f6dd6a5754c946c3e7c818373",
+  "cell": [
+    0,
+    1,
+    384,
+    342
+  ],
+  "raw_bbox": [
+    68,
+    77,
+    361,
+    274
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-05/hero-05-05-128.png",
+      "sha256": "d4f686ca873723739e1667732800047a1e5b6f04b9c960073a023af0a36b48e6"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-05/hero-05-05-64.png",
+      "sha256": "4ea9fe517b76b2b79e5ee586c8a3fdda88e2e0f3562e856a152baaa28a3b853d"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-05/hero-05-05-48.png",
+      "sha256": "596e36102c7d71321cedb441eec9338b170440bb7897ad72d27d1ef44fe5d889"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-05/hero-05-05-32.png",
+      "sha256": "a7ca4f815516446f968775d3534d654a1cecc9fea6967a933f72de570e59daa7"
+    }
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-11-08",
+  "name": "No Loose Ends",
+  "source": "art/ability-icons-draft/raw/hero-11/initial.png",
+  "source_sha256": "21cf5ca6babe0402a4bc4e23f094601acc7db487dd0e518ca5320ecf4b3b8950",
+  "cell": [
+    3,
+    1,
+    384,
+    342
+  ],
+  "raw_bbox": [
+    55,
+    51,
+    318,
+    300
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-11/hero-11-08-128.png",
+      "sha256": "bdd07d438833e4ecd4615f181ca9be4611dc26c076210479bf58b920aade5f58"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-11/hero-11-08-64.png",
+      "sha256": "efbb9ab701af67a4e5b82522470b0f6c9941c6a2a1dca12fb639bc1b6b3cf686"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-11/hero-11-08-48.png",
+      "sha256": "627c639bc9d693425222e36c1ed52bc9fa34e83a1da9ba771939d78c01d65c5d"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-11/hero-11-08-32.png",
+      "sha256": "4b2643a092fb4726a88910e8e0ff64f89c80c86e630ad580b9b729a9b82af9ad"
+    }
+  }
+}

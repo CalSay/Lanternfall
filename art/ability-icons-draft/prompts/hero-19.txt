@@ -1,0 +1,16 @@
+Create a Lanternfall ability ICON PROP PACK for Brynja Berg. Exactly TWELVE isolated symbols in FOUR columns THREE rows, row-major, equal invisible slots on1536x1024. Native48px pixel-art shape language matching the approved six small action icons: broad confident dark outline, THREE TO FIVE flat opaque material shade clusters, very few secondary marks; not ornate illustrations. Symbols must read at32px. Use heavy iron, russet red, warm brass and hearth amber. matching the approved hero concept's palette/materials. No human bodies, poses or portraits.
+Containment: every COMPLETE glyph, including every ray, tail, motif and particle, fits CENTRAL50% WIDTH AND HEIGHT (max192x170 pixels) of its slot, at leastone-quarter slot plain background on every side. Safe50 guide is invisible layout only; never reproduce its boxes, lines, crosses, labels or white. Background entirely exact flat magenta#FF00FF. Actual art colours NEVER near that chroma: violet uses deep blue-violet or lavender with substantial green, no fuchsia/hot-pink. No gradients/glow blending into magenta, no soft antialiasing, microtexture, tiny sparkles, frames, UI, letters, numerals, watermark, floor/shadow.
+The following manually authored designs are exact cell assignments. Names identify them toyou but MUSTNOT be drawn as text. Interpret dominant mechanic metaphor, not all optional clauses; symbolic props do not add equipment or gameplay. Nine actives1–9 directional; three passives10–12 settled compact emblems. Distinguish silhouettes withinthishero, not just small glow changes. No resurrection, party actor, automaticdefence, summons, thrown held equipment, extra targets or implied extra proc hits. Geometric Guard/Ward arcs are shields, not flame tongues.
+1. Close the Door (Active): heavy held shield closing a doorway gap.
+2. Shoulder Forward (Active): heavy shield edge pushed forward with one dull weak sigil.
+3. Open the Line (Active): sturdy warblade opening a line beside a set shield notch.
+4. Keep the Threshold (Active): shield held square across a threshold arch.
+5. Measure the Weight (Active): two hearth coals on a balance beam.
+6. Make Room (Active): warblade making room around a pin notch.
+7. Warm Hands (Active): warm restorative flame and one melting chill shard.
+8. Take the Weight (Active): large braced shield sheltering one clean status-block rune.
+9. Three Nights (Active): grand warblade and heavy shield threshold with three night sparks.
+10. Doorward’s Habit (Passive): doorway shield notch offered beside a basic blade.
+11. Heavy Footing (Passive): heavy planted shield base and one deliberate blade cut.
+12. Still Here (Passive): three small defended night dots behind a sturdy threshold.
+Only these twelve independent game-ready draft glyphs; an initial reviewer draft, no production integration.

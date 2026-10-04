@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-08-10",
+  "name": "Sure Footing",
+  "source": "art/ability-icons-draft/raw/hero-08/initial.png",
+  "source_sha256": "8856b593573385548ec836d3a260d557b8d279395bd3cc3dda3e63937f7c3b96",
+  "cell": [
+    1,
+    2,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    50,
+    29,
+    326,
+    256
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-08/hero-08-10-128.png",
+      "sha256": "caae057ef33fd4c730f5984fdea6f07db8402e23d0a95d40212644739255b419"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-08/hero-08-10-64.png",
+      "sha256": "edbba149d7fa392b38ad978c8790c96ca249b19f7bc666b2c3b56e8b0c3a5e70"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-08/hero-08-10-48.png",
+      "sha256": "2e922411593313bf136b40dc69d06f57b9c72bbff067f0750e7748f5046b788f"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-08/hero-08-10-32.png",
+      "sha256": "887dd5f5285370a58c186ba109e6dd45e5ec698fb20af66d4ed5751e24ca63d2"
+    }
+  }
+}

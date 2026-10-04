@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-04-07",
+  "name": "Dawn by Hand",
+  "source": "art/ability-icons-draft/raw/hero-04/initial.png",
+  "source_sha256": "0df9fb5388348a9c5278e44fe3f1c19d8b774d1e8fa08f78952f14e101071b48",
+  "cell": [
+    2,
+    1,
+    384,
+    342
+  ],
+  "raw_bbox": [
+    69,
+    66,
+    300,
+    292
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-04/hero-04-07-128.png",
+      "sha256": "805cb54428c71e8f6ecdd668abf4138c01fbbe84f96a954a72e066bfd05896a1"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-04/hero-04-07-64.png",
+      "sha256": "eb4cb3f4a9795062249343ab6695807c85415d1075ee17e204ed377dce3821ca"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-04/hero-04-07-48.png",
+      "sha256": "609eb8499a563d1bcdf1c1ec10f6458a16d5730e99136a54993d9ae4f7043840"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-04/hero-04-07-32.png",
+      "sha256": "7ee346e0a19d1f5db80aee1c292090e0f99c2c95161f8a1df7882c558c61257f"
+    }
+  }
+}

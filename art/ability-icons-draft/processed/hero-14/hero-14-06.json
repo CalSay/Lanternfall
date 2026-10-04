@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-14-06",
+  "name": "Ashfall Cut",
+  "source": "art/ability-icons-draft/raw/hero-14/initial.png",
+  "source_sha256": "620ff6b97e16026aa6628720b90134f03a9e0c764cfec18ef55a5eccd6ba16ca",
+  "cell": [
+    1,
+    1,
+    384,
+    342
+  ],
+  "source_rectangle": [
+    384,
+    341,
+    768,
+    683
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    57,
+    45,
+    343,
+    303
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-14/hero-14-06-128.png",
+      "sha256": "15c9ff602c8adc11cc44b26a199a05a22e6ff3d62f22aa0789143283aa7e8277"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-14/hero-14-06-64.png",
+      "sha256": "b206e3d1dd6629d2bb7a4e73ac3121dbc52cc30bf0fd2aa4688b8657e6e6195b"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-14/hero-14-06-48.png",
+      "sha256": "d5d288a2bb5d348e1dc1e80afdfaf78ce6bb16f42f3e7eaad6dd98977119ac2d"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-14/hero-14-06-32.png",
+      "sha256": "871d13d3796f54c058ea47a37365c875807119d7fc8d09668e1db73f81ac3e16"
+    }
+  }
+}

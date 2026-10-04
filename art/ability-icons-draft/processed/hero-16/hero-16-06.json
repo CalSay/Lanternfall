@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-16-06",
+  "name": "Not Twice",
+  "source": "art/ability-icons-draft/raw/hero-16/initial.png",
+  "source_sha256": "74cf5dd1ac2b8b7ce64109521292450ad8b345131b157d7de885bdce619a6c87",
+  "cell": [
+    1,
+    1,
+    384,
+    342
+  ],
+  "source_rectangle": [
+    384,
+    341,
+    768,
+    683
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    55,
+    38,
+    348,
+    292
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-16/hero-16-06-128.png",
+      "sha256": "76aa7b6793362eae604bbd51d4864f5828d5a92645e2707255c4662a728e1e23"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-16/hero-16-06-64.png",
+      "sha256": "dfc786eb3bfad9fde522c696b7e53d963e8ab74cfe4d32cef56243fbe6437acd"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-16/hero-16-06-48.png",
+      "sha256": "a1ccec61f4836bac131354b18d85cd25d192ec12a9e409714c418657fef8d540"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-16/hero-16-06-32.png",
+      "sha256": "6cd958a52633511050dd3be533173aece8c72d9749956211a4f8b372c3a2ef91"
+    }
+  }
+}

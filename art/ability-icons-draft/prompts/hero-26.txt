@@ -1,0 +1,16 @@
+Create a Lanternfall ability ICON PROP PACK for Sable Quill. Exactly TWELVE isolated symbols in FOUR columns THREE rows, row-major, equal invisible slots on1536x1024. Native48px pixel-art shape language matching the approved six small action icons: broad confident dark outline, THREE TO FIVE flat opaque material shade clusters, very few secondary marks; not ornate illustrations. Symbols must read at32px. Use parchment, gold, charcoal ink; clean amber holy medicine. matching the approved hero concept's palette/materials. No human bodies, poses or portraits.
+Containment: every COMPLETE glyph, including every ray, tail, motif and particle, fits CENTRAL50% WIDTH AND HEIGHT (max192x170 pixels) of its slot, at leastone-quarter slot plain background on every side. Safe50 guide is invisible layout only; never reproduce its boxes, lines, crosses, labels or white. Background entirely exact flat magenta#FF00FF. Actual art colours NEVER near that chroma: violet uses deep blue-violet or lavender with substantial green, no fuchsia/hot-pink. No gradients/glow blending into magenta, no soft antialiasing, microtexture, tiny sparkles, frames, UI, letters, numerals, watermark, floor/shadow.
+The following manually authored designs are exact cell assignments. Names identify them toyou but MUSTNOT be drawn as text. Interpret dominant mechanic metaphor, not all optional clauses; symbolic props do not add equipment or gameplay. Nine actives1–9 directional; three passives10–12 settled compact emblems. Distinguish silhouettes withinthishero, not just small glow changes. No resurrection, party actor, automaticdefence, summons, thrown held equipment, extra targets or implied extra proc hits. Geometric Guard/Ward arcs are shields, not flame tongues.
+1. Read the Fever (Active): quill inspecting a harmful droplet beside prepared remedy vial.
+2. Bitter Cure (Active): one bright medicinal spell lance and a bitter remedy drop.
+3. Write the Prescription (Active): gold quill writing a small clean remedy seal.
+4. Preventive Seal (Active): protective prescription seal around a status-block ward.
+5. Measured Dose (Active): measured medicine droplet illuminating a quarry mark.
+6. Rule Out (Active): crossed out dark symptom mote beside a weak sigil.
+7. Check the Pulse (Active): simple pulse stroke beside one restorative drop.
+8. Ink Against Fever (Active): dark ink becoming a precise luminous spell notch.
+9. No Cause for Mourning (Active): grand gold clinical spell burst backed by remedy shield.
+10. Clean Hands (Passive): clean quill and a tiny protected remedy vial.
+11. Clinical Eye (Passive): sharp clinical eye glyph beside a retained remedy.
+12. Steady Hands (Passive): steady quill balanced over a defence chevron.
+Only these twelve independent game-ready draft glyphs; an initial reviewer draft, no production integration.

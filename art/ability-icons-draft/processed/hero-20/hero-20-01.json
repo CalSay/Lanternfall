@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-20-01",
+  "name": "Sound the Hollow",
+  "source": "art/ability-icons-draft/raw/hero-20/initial.png",
+  "source_sha256": "83ca2e1f4fa66f8e7c6688e57e6f7a66ce819373bfe97a5c64b5ac8249c5717a",
+  "cell": [
+    0,
+    0,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    0,
+    0,
+    384,
+    341
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    63,
+    66,
+    339,
+    307
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-20/hero-20-01-128.png",
+      "sha256": "8ba249a8bcf9e432417b5267213bc977f9e171675b3cf6145d5c754b2e6219d6"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-20/hero-20-01-64.png",
+      "sha256": "e8500ed1f286a9999ad8ee8958a32013c7ba54450f0b1b2f06c9dfc41e22a019"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-20/hero-20-01-48.png",
+      "sha256": "979aa2f1661e9bac71832c0cc4136bd6e4270e80a408288490adb92b922ae49c"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-20/hero-20-01-32.png",
+      "sha256": "315c9d782d192714b2caa628fa458d9304605cd7e4fc18301b0e95173bb77b31"
+    }
+  }
+}

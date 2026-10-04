@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-32-11",
+  "name": "Live Circuit",
+  "source": "art/ability-icons-draft/raw/hero-32/initial.png",
+  "source_sha256": "9fc99b0c96185debff12f3ef83d57429535b2f83b2ff399b7d563437f74a65f3",
+  "cell": [
+    2,
+    2,
+    384,
+    349
+  ],
+  "source_rectangle": [
+    768,
+    675,
+    1152,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    73,
+    29,
+    315,
+    242
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-32/hero-32-11-128.png",
+      "sha256": "1b74ff6f3a5c1feecffbaa2162d2c276ac5ba18adbfa19ef687fe1c8937c3888"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-32/hero-32-11-64.png",
+      "sha256": "e505a857add5b7b2a6d3c3eb24b9366c552d875c557dcec0fefb91ed64cf4edb"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-32/hero-32-11-48.png",
+      "sha256": "3bf9e5f123079bc500fb3d4071e42a968336991365db1607e348d773a406bd8f"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-32/hero-32-11-32.png",
+      "sha256": "a65f51bf210b36b0232d0264499e1ae36af4d3a8f284ca160264e79143b752c6"
+    }
+  }
+}

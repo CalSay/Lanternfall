@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-05-08",
+  "name": "Split Kindling",
+  "source": "art/ability-icons-draft/raw/hero-05/hero-05-08-revision-01.png",
+  "source_sha256": "43847d765249d7d652cd2ec83ee81e253895105148d2d15d6842dee3f3f23656",
+  "cell": [
+    0,
+    0,
+    1329,
+    1183
+  ],
+  "raw_bbox": [
+    116,
+    126,
+    1119,
+    1040
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-05/hero-05-08-128.png",
+      "sha256": "1e810f6c8bc21a7543dcb0c6b3cd4e2026d3c4afccd7886f411ae36f51f96793"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-05/hero-05-08-64.png",
+      "sha256": "a245f2801eb888b4afe86b510aaff9d01281b4bc04b5d0ec3a01be8f12c349f8"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-05/hero-05-08-48.png",
+      "sha256": "7448e893b0dafe01d05237a484518e53beaa0545fa107469ffd8e0a6f26cfcd3"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-05/hero-05-08-32.png",
+      "sha256": "34999cab2d061ae0ddabce155791573c13206034c80a8ccc54e21f49a7d4579b"
+    }
+  }
+}

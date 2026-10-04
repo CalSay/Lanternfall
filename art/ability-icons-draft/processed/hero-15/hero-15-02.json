@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-15-02",
+  "name": "A Man, Not an Order",
+  "source": "art/ability-icons-draft/raw/hero-15/initial.png",
+  "source_sha256": "cd746813bfccf8c7b0f3d3a40ca7abe7b64c2cc6e4e511f8e42f77a98ae6d045",
+  "cell": [
+    1,
+    0,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    384,
+    0,
+    768,
+    341
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    96,
+    60,
+    340,
+    319
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-15/hero-15-02-128.png",
+      "sha256": "112a3e04b43f497171386f19e1b7d2bc78a1bfabc2b571049b2cdc83d7662267"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-15/hero-15-02-64.png",
+      "sha256": "675bc9420e34336f1da3adc1b74be1a18df7cced3949a5dcb096fab2058ae9d1"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-15/hero-15-02-48.png",
+      "sha256": "f5639c351e9a2ad56d8aab217cc7bee6809246985fb5dd8f565a1d8556482581"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-15/hero-15-02-32.png",
+      "sha256": "c6f74ba6bc825b85e4b43a642c44c885d7eec7d85e6ac2f93cebd62e1f384ff1"
+    }
+  }
+}

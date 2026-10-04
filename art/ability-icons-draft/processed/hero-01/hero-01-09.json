@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-01-09",
+  "name": "Threadneedle",
+  "source": "art/ability-icons-draft/raw/hero-01/revision-01.png",
+  "source_sha256": "58437daa8a585639577e47e4bb3b0af12948a073085ff6a6987e21dab0e1dd42",
+  "cell": [
+    0,
+    2,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    62,
+    10,
+    352,
+    279
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-01/hero-01-09-128.png",
+      "sha256": "111308908c5a2e07c0d837a19f050928fcc3103eef498fcae63d244c08e90d23"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-01/hero-01-09-64.png",
+      "sha256": "1bb7f31b515ed3cb52e6722e304bf423421e815ab70ad191193b56d3eff42e6e"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-01/hero-01-09-48.png",
+      "sha256": "14105f1ed7f44062ebfd596ab57313188db01238345421b0d0c2abae93ca4a86"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-01/hero-01-09-32.png",
+      "sha256": "5408c34416f116d5652966387651b44f5a2db20c27795099019c2d49e20ee0d1"
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-23-05",
+  "name": "Spindle Turn",
+  "source": "art/ability-icons-draft/raw/hero-23/initial.png",
+  "source_sha256": "1601ed146f61b6c06aa62535d51dadccfc29c97d940c4ae00205acccd3746d55",
+  "cell": [
+    0,
+    1,
+    384,
+    342
+  ],
+  "source_rectangle": [
+    0,
+    341,
+    384,
+    683
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    64,
+    33,
+    346,
+    305
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-23/hero-23-05-128.png",
+      "sha256": "313fcf276212881ac152667e687395b3a298cb4abc09d8f08e36b5902e84c7a4"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-23/hero-23-05-64.png",
+      "sha256": "cc12aa2e0f9c1453eec619b04c1dc4fd3d52a29579f73ecc63ed1ea890d2b865"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-23/hero-23-05-48.png",
+      "sha256": "3343eb57e11b2f560b08e54555342a5d80f7102d05d587799eea4462d902dd8c"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-23/hero-23-05-32.png",
+      "sha256": "0e674f6759319c760de5d57f6977b58222b2828c2ab1ff1ef95b5bfb867106d6"
+    }
+  }
+}

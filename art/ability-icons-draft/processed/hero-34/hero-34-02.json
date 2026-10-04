@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-34-02",
+  "name": "Across the Gate",
+  "source": "art/ability-icons-draft/raw/hero-34/initial.png",
+  "source_sha256": "3285f8e88d13e6e3e4d9f91664993d1184fa81bbe2aac5fe250494319ab069e0",
+  "cell": [
+    1,
+    0,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    384,
+    0,
+    768,
+    341
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    59,
+    61,
+    340,
+    310
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-34/hero-34-02-128.png",
+      "sha256": "cbf3937ed9442abc1b52e36704dbb156b55d4ce247defd0cd1cac4257c12be05"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-34/hero-34-02-64.png",
+      "sha256": "fb8249173fe435acd19b28b0d50775df859fe9a7e8e37b14ca27bfa807c5693a"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-34/hero-34-02-48.png",
+      "sha256": "39b1eb46ce40e11f0f385f484cce5c6391ee99f49540b08b42787408fda5dd74"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-34/hero-34-02-32.png",
+      "sha256": "af07803cf2e2210d2932ffe243b5191e752ff2d1c70ca126849de37ca575eadf"
+    }
+  }
+}

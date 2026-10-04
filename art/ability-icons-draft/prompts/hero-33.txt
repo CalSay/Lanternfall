@@ -1,0 +1,14 @@
+Create a Lanternfall ability ICON PROP PACK for Merrick Low. Exactly TWELVE isolated symbols in FOUR columns THREE rows, row-major, equal invisible slots on1536x1024. Native48px pixel-art shape language matching the approved six small action icons: broad confident dark outline, THREE TO FIVE flat opaque material shade clusters, very few secondary marks; readable at32px. Palette moss, warm wood, ivory fletching and quiet amber. No human bodies, poses or portraits. Every COMPLETE glyph including rays, tails and particles fits CENTRAL50% WIDTH AND HEIGHT (max192x170 pixels) of its slot, quarter slot empty every side. Safe50 guide invisible layout only. Entire background solid #FF00FF. Art NEVER near magenta: deep blue-violet or lavender with substantial green, no fuchsia. No gradients into magenta, antialiasing, microtexture, tiny sparkles, frames, UI, text, numerals, watermark, floor. Manually authored row-major assignments below, names not drawn. Nine actives directional; three passives settled compact emblems. No resurrection, summons, automatic defence, new gear or extra targets. Geometric Ward arcs are shields. Interpret dominant mechanic only.
+1. Quiet Release (Active): single clean quiet arrow with a restrained cadence arc.
+2. Count the Breath (Active): two breath arcs behind one ordinary arrow.
+3. Break Silence (Active): single arrow breaking a small silence ring into a weak sigil.
+4. Close the Hood (Active): hooded lantern sheltering a guard and ward rim.
+5. Chalk the Distance (Active): one chalk distance line and arrow marking ring.
+6. One Clean Arrow (Active): one emphatic clean arrow with a precise exposed notch.
+7. The Held Breath (Active): one held breath arc forming a small ward beside arrow.
+8. No Sudden Motion (Active): single stable arrow and one pin-control notch.
+9. Until the Lantern Dims (Active): grand last quiet arrow beside a dimming lantern glint.
+10. Steady Breath (Passive): steady two-step breath arc and a basic arrow tip.
+11. Not Yet (Passive): one held cadence bead beneath a guard hood.
+12. Plain Fletching (Passive): plain fletching and one concentrated precision glint.
+Only these twelve independent draft glyphs; no integration.

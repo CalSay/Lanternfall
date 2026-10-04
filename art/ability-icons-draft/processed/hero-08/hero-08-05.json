@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-08-05",
+  "name": "Step Back",
+  "source": "art/ability-icons-draft/raw/hero-08/initial.png",
+  "source_sha256": "8856b593573385548ec836d3a260d557b8d279395bd3cc3dda3e63937f7c3b96",
+  "cell": [
+    0,
+    1,
+    384,
+    342
+  ],
+  "raw_bbox": [
+    43,
+    45,
+    338,
+    273
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-08/hero-08-05-128.png",
+      "sha256": "b9a12953466e035e4363d24abdc9833c5ca127eff82da06ded172aa97e2d5c48"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-08/hero-08-05-64.png",
+      "sha256": "fd8593f8c5377911c875ec6bacf5f5674568b3ed29865fede37b92df6dec7857"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-08/hero-08-05-48.png",
+      "sha256": "d54c5466016d1d3980025c7597fa06bbed415e6db7b2ece0ec078e1ddb3c2160"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-08/hero-08-05-32.png",
+      "sha256": "ecb4d0b7907c9ee651734d0dcc76d262c3a4fd8c9f2c13eba0d4c6cd6c59bedb"
+    }
+  }
+}

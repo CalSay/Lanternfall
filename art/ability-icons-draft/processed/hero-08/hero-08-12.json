@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-08-12",
+  "name": "Kept Point",
+  "source": "art/ability-icons-draft/raw/hero-08/initial.png",
+  "source_sha256": "8856b593573385548ec836d3a260d557b8d279395bd3cc3dda3e63937f7c3b96",
+  "cell": [
+    3,
+    2,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    34,
+    43,
+    347,
+    249
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-08/hero-08-12-128.png",
+      "sha256": "33354ae0cf019460a761e975fb3644eabacd31a75dec46a02edee5ce1a31b75f"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-08/hero-08-12-64.png",
+      "sha256": "5e1bd16f365254730a32b83c2a84be42a181648ee423565a8557254a54c57a4f"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-08/hero-08-12-48.png",
+      "sha256": "dfe22dca76fd46c87b113da77b0b4a86ce64ce80c3dade36aa6fdd96d20105ae"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-08/hero-08-12-32.png",
+      "sha256": "006887cfd2321a2b8ea524c21f2d8011a91e7fd4dadb8eaede9612eeba50daf7"
+    }
+  }
+}

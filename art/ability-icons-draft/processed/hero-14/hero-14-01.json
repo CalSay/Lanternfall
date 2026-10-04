@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-14-01",
+  "name": "Emberlea Road",
+  "source": "art/ability-icons-draft/raw/hero-14/initial.png",
+  "source_sha256": "620ff6b97e16026aa6628720b90134f03a9e0c764cfec18ef55a5eccd6ba16ca",
+  "cell": [
+    0,
+    0,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    0,
+    0,
+    384,
+    341
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    77,
+    57,
+    314,
+    314
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-14/hero-14-01-128.png",
+      "sha256": "dff6a25b287500d9e54554d5e3ee56952e63e24a8bf31dc49008d5cab180dbd3"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-14/hero-14-01-64.png",
+      "sha256": "7075a855fbd0e1210d5e6756feac3dd87a592523497c048c9e03f05aaf4f7f6b"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-14/hero-14-01-48.png",
+      "sha256": "b4d603dbe50df41a47e2906dc344a825dd522690b4c371445e1171796f2584eb"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-14/hero-14-01-32.png",
+      "sha256": "3c91a42d1a907e3f2cda49794b34cc08f0c0eeeacfec393040d4dc0cf6e3f39c"
+    }
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-08-02",
+  "name": "Grounded Advance",
+  "source": "art/ability-icons-draft/raw/hero-08/initial.png",
+  "source_sha256": "8856b593573385548ec836d3a260d557b8d279395bd3cc3dda3e63937f7c3b96",
+  "cell": [
+    1,
+    0,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    49,
+    98,
+    351,
+    312
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-08/hero-08-02-128.png",
+      "sha256": "5077185b21dce0bcd7f6e5cf83b41e7fec8e5121dcc4ae4ef6dc37247ed503d7"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-08/hero-08-02-64.png",
+      "sha256": "8f76e7c045da062642ade7bb315020b27e48c1ea106a92d0316f4ec113b4d4e0"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-08/hero-08-02-48.png",
+      "sha256": "b2aebeada9dbe7808e39a78ce02d9b9bbb2ea8f5ac55d34927677796f5fad602"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-08/hero-08-02-32.png",
+      "sha256": "8e87dd598dc11f886d9f5528ef5eea5f1a045495e3a68561d773bea2f40d7a92"
+    }
+  }
+}

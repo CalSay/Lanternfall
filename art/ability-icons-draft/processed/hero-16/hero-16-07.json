@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-16-07",
+  "name": "Cut the Line",
+  "source": "art/ability-icons-draft/raw/hero-16/initial.png",
+  "source_sha256": "74cf5dd1ac2b8b7ce64109521292450ad8b345131b157d7de885bdce619a6c87",
+  "cell": [
+    2,
+    1,
+    384,
+    342
+  ],
+  "source_rectangle": [
+    768,
+    341,
+    1152,
+    683
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    36,
+    33,
+    330,
+    293
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-16/hero-16-07-128.png",
+      "sha256": "c4f1c179cebd4c9e838046f6ccecf10a4f6d0babe7d69c188d32aa8680c58978"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-16/hero-16-07-64.png",
+      "sha256": "ba09b7fa574fab0a4ffd1d5c9469b0a6a2990bee44f2704143e99ebf4d9859fa"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-16/hero-16-07-48.png",
+      "sha256": "a751f1b2621443b72cb8e5b13c580563b8b57abdf8d04f86ba25a3d1c7c529b4"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-16/hero-16-07-32.png",
+      "sha256": "49125cd22e6597832924a4e16d564bd8251cab42c88386fc27f0b6366d8fedd0"
+    }
+  }
+}

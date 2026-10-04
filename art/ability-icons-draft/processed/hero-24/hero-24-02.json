@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-24-02",
+  "name": "Clockstrike",
+  "source": "art/ability-icons-draft/raw/hero-24/initial.png",
+  "source_sha256": "4e22efa85f0d09ff8bcb5771888ece2abc454c3e19a02de4660c7c60992fd240",
+  "cell": [
+    1,
+    0,
+    384,
+    345
+  ],
+  "source_rectangle": [
+    384,
+    0,
+    768,
+    345
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    60,
+    77,
+    365,
+    340
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-24/hero-24-02-128.png",
+      "sha256": "896507f5238986fd7ae3888ee7669f14f9badd8e95303068f0094e742e1c14e4"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-24/hero-24-02-64.png",
+      "sha256": "00d47e22e482e8c17b5d7527a293e52d4352cb79677c4a1ad112eedbc836a9aa"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-24/hero-24-02-48.png",
+      "sha256": "a95221bd185ed3046baaf2ab4e79dfb8bca20551186726e54966b27bee7776a7"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-24/hero-24-02-32.png",
+      "sha256": "1551101e813db94e41cf70bcd53a0bd457bd6ae250b366f7b7e2ad4ea27f6656"
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-31-12",
+  "name": "Aftercare",
+  "source": "art/ability-icons-draft/raw/hero-31/initial.png",
+  "source_sha256": "d11b74289f59a67b5f207d83ad7a9343dc59f2b929acf4163ecf39acdceb61a3",
+  "cell": [
+    3,
+    2,
+    384,
+    349
+  ],
+  "source_rectangle": [
+    1152,
+    675,
+    1536,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    52,
+    28,
+    307,
+    253
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-31/hero-31-12-128.png",
+      "sha256": "44ab0ed9e4bd1d455a71a673025245d5dae0c0632de9f0d67bdf5fd500d95e71"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-31/hero-31-12-64.png",
+      "sha256": "f40740b2316748b72ec642bbea0f85c7631fea2d89a569706a6ef35e6895518f"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-31/hero-31-12-48.png",
+      "sha256": "7682a2f815f5b91f77e8922649ba7ba157637bbb97621ed5385ee6d9c8ee4a96"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-31/hero-31-12-32.png",
+      "sha256": "cad3abc7b545670a510c6341dee6838b1976921b6fe315527092a6e52fc1af9f"
+    }
+  }
+}

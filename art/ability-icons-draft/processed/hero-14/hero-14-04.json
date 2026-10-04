@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-14-04",
+  "name": "Open the Plate",
+  "source": "art/ability-icons-draft/raw/hero-14/initial.png",
+  "source_sha256": "620ff6b97e16026aa6628720b90134f03a9e0c764cfec18ef55a5eccd6ba16ca",
+  "cell": [
+    3,
+    0,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    1152,
+    0,
+    1536,
+    341
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    39,
+    80,
+    314,
+    319
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-14/hero-14-04-128.png",
+      "sha256": "901582c587d66040162b4f0b750f9a6675b99596e4f1ef18287366a521f6efc9"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-14/hero-14-04-64.png",
+      "sha256": "1ca387e27bdcd7330be1816d5edb03b78e4b54bd0980bf6e6ee0c8fe53b29e47"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-14/hero-14-04-48.png",
+      "sha256": "077ec959a73365a96335937a7e9a2c626067260bc94d934c7c85c07bc7ff8861"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-14/hero-14-04-32.png",
+      "sha256": "b50e5e42db414bee3c237f86306b20cbf7c1bb5ee565a441312308936c715b8a"
+    }
+  }
+}

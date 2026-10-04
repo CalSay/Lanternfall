@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-04-08",
+  "name": "Mind the Step",
+  "source": "art/ability-icons-draft/raw/hero-04/initial.png",
+  "source_sha256": "0df9fb5388348a9c5278e44fe3f1c19d8b774d1e8fa08f78952f14e101071b48",
+  "cell": [
+    3,
+    1,
+    384,
+    342
+  ],
+  "raw_bbox": [
+    59,
+    91,
+    343,
+    280
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-04/hero-04-08-128.png",
+      "sha256": "4f2549815020a16aa8a922f0b32e417a9636ab8d95518ee4c5ab1a2c1103b6f0"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-04/hero-04-08-64.png",
+      "sha256": "420df9b8277b6e480506b390dfdafc17b77f0db6c57bdc86138c8f87521784e3"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-04/hero-04-08-48.png",
+      "sha256": "2105ebd7d6968f72f4af6ce05818fee54b0d2bc4b50e7ce3b33055fcac7bde1f"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-04/hero-04-08-32.png",
+      "sha256": "a7f78aeb0464593db1ed032e72d889ba16fb556a7ae8aceaa477520858655362"
+    }
+  }
+}

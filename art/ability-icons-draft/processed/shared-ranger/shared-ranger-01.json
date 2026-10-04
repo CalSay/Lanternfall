@@ -1,0 +1,45 @@
+{
+  "icon_id": "shared-ranger-01",
+  "name": "Power Strike",
+  "source": "art/ability-icons-draft/raw/shared-ranger/initial.png",
+  "source_sha256": "06a5ffe6d4dae5ff287b23ec933b19a4188953f6794a5dd9bb1d5c4cfdf57826",
+  "cell": [
+    0,
+    0,
+    512,
+    512
+  ],
+  "source_rectangle": [
+    0,
+    0,
+    512,
+    512
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    87,
+    85,
+    456,
+    439
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/shared-ranger/shared-ranger-01-128.png",
+      "sha256": "da258bb658d4185dcff83426f75d0171232f8177f3f96ff50fca4be55d6016ba"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/shared-ranger/shared-ranger-01-64.png",
+      "sha256": "51b2df5f1172656a70327ea4f4aabee3e28e2589312aa86ebe4418dd20961b0e"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/shared-ranger/shared-ranger-01-48.png",
+      "sha256": "375e1ce43d95eb4e73a698f077d44472eab4dd0c1077116741f71acb0d9375c9"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/shared-ranger/shared-ranger-01-32.png",
+      "sha256": "b29ce33e284256ae868fa88e959a7e2246de1f9459fa5e27662902dc352092f3"
+    }
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-01-10",
+  "name": "Night Hunter",
+  "source": "art/ability-icons-draft/raw/hero-01/revision-01.png",
+  "source_sha256": "58437daa8a585639577e47e4bb3b0af12948a073085ff6a6987e21dab0e1dd42",
+  "cell": [
+    1,
+    2,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    41,
+    7,
+    349,
+    277
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-01/hero-01-10-128.png",
+      "sha256": "0b8b4f7dab4683de9d695acad36d13deca7eaf929be8e3f3859c1fce33352917"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-01/hero-01-10-64.png",
+      "sha256": "1aed02a26fa8aa06ff15ce7751b4e2ec5766d51b85c104d45523ebe9976d25e4"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-01/hero-01-10-48.png",
+      "sha256": "e017ee9e59665146491a99177753d5d9d2a3b9874fb61ca8eb439a0517e08cc5"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-01/hero-01-10-32.png",
+      "sha256": "ea22814f976bf6414f4048df3d5481c2ec7211ceaab80176eeb8547384b3c49e"
+    }
+  }
+}

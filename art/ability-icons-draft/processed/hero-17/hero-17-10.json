@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-17-10",
+  "name": "Work the Rim",
+  "source": "art/ability-icons-draft/raw/hero-17/initial.png",
+  "source_sha256": "9cfb6c123f64254a36401115884f7626809e770bd1176b0701853f40da447634",
+  "cell": [
+    1,
+    2,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    384,
+    683,
+    768,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    76,
+    51,
+    330,
+    238
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-17/hero-17-10-128.png",
+      "sha256": "078648bc92ee4497381b619c23121310544a2d06a0ea302479f794f851be3649"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-17/hero-17-10-64.png",
+      "sha256": "aaea28b1a659ecd6bf545f89d6384a3cd2333cd69bb1c3a83e2ab1dafe10eeb4"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-17/hero-17-10-48.png",
+      "sha256": "4f4921ba9c585905f48433d1f6c379d6bcf24fd92bd60cd6ad45f5e1e9ee0060"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-17/hero-17-10-32.png",
+      "sha256": "6f8fba912752eae37b2a566dbd700b32c37990fe80117a07da39de9dd453fb00"
+    }
+  }
+}

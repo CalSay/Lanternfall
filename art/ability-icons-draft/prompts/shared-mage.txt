@@ -1,0 +1,8 @@
+Create a Lanternfall ability ICON PROP PACK: Shared Mage. EXACTLY SIX isolated symbols in THREE columns TWO rows, row-major, invisible equal512x512 slots on1536x1024. Native48px pixel-art shapes like the approved small icons: strong dark outlines, THREE TO FIVE flat opaque material clusters, no ornate microtexture; readable at32px. Palette ivory/gold holy light, cyan frost, deep violet source-labelled hex. No bodies or poses. Each COMPLETE glyph, rays/tails included, inside CENTRAL50% WIDTH AND HEIGHT of its slot (max256x256), quarter blank space on each side. Reference layout boxes/lines/white invisible, MUST NOT appear. Solid uniform #FF00FF background. No magenta/fuchsia glyph colours; violet deep blue-violet/lavender with green, no pink. No antialiasing, soft glows, gradients into magenta, tiny sparkles, UI frames, text, numerals, borders, watermark or shadows. Names not drawn. First five active directional symbols, sixth passive settled compact emblem. No new gear, thrown weapons, resurrection, automatic defence, summons, extra foes/proc hits; interpret symbolic dominant mechanism only. Exact manually authored designs:
+1. Spark (Active): one compact spell spark and one reserve bead.
+2. Frost Shard (Active): single frost spell shard and two chill facets.
+3. Arcane Ward (Active): faceted arcane ward shield and two duration motes.
+4. Hex (Active): source-specific knotted hex sigil enclosing one stored glint.
+5. Nova (Active): single powerful holy nova consuming one small status knot.
+6. Afterglow (Passive): one spell ember illuminating the next basic staff spark.
+Only six independent draft glyphs.

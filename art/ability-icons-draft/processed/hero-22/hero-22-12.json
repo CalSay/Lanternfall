@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-22-12",
+  "name": "Open Road",
+  "source": "art/ability-icons-draft/raw/hero-22/initial.png",
+  "source_sha256": "dbfb104d6ff11ee7589c8f600764bd335af518c5e7f46b39f23da5a9ddc9dc80",
+  "cell": [
+    3,
+    2,
+    384,
+    344
+  ],
+  "source_rectangle": [
+    1152,
+    680,
+    1536,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    28,
+    42,
+    340,
+    264
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-22/hero-22-12-128.png",
+      "sha256": "163b669ce7a00aa4ce086e365bf78607c40c4f64995e0f6c8af6dc5ee111ce2c"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-22/hero-22-12-64.png",
+      "sha256": "8e9a655cee7d03f962493a63b9786185d0e65f65c2af2bf0ba3adedeebdbb46a"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-22/hero-22-12-48.png",
+      "sha256": "86ed663c6b68408481c68506e6f4c04722086f62b7b67196bd82dc560933512b"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-22/hero-22-12-32.png",
+      "sha256": "ff3b03b12dd47a2237bca97a6cc7c5cb9806621e9997ed17d82cdd8b69170d15"
+    }
+  }
+}

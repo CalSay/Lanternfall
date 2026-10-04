@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-01-08",
+  "name": "Listening Post",
+  "source": "art/ability-icons-draft/raw/hero-01/revision-01.png",
+  "source_sha256": "58437daa8a585639577e47e4bb3b0af12948a073085ff6a6987e21dab0e1dd42",
+  "cell": [
+    3,
+    1,
+    384,
+    342
+  ],
+  "raw_bbox": [
+    59,
+    46,
+    324,
+    299
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-01/hero-01-08-128.png",
+      "sha256": "952f6caf5480134099e662460fd8827b8ecf82a757b5cc8a5a82f37fef099766"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-01/hero-01-08-64.png",
+      "sha256": "65909d2dc02793c49486465b28a27b8373b92036a8ce771806620fe903557ebd"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-01/hero-01-08-48.png",
+      "sha256": "5d8b18eddf62216928d80566380124bca6e898e567ffd8a3b1caac8102837f6a"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-01/hero-01-08-32.png",
+      "sha256": "fdae2f61e337364964e279daa65ce47067bb0a06c20584351a750da57adca2a2"
+    }
+  }
+}

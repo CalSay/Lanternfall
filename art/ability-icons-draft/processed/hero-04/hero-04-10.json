@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-04-10",
+  "name": "Forty Years",
+  "source": "art/ability-icons-draft/raw/hero-04/initial.png",
+  "source_sha256": "0df9fb5388348a9c5278e44fe3f1c19d8b774d1e8fa08f78952f14e101071b48",
+  "cell": [
+    1,
+    2,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    79,
+    44,
+    276,
+    245
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-04/hero-04-10-128.png",
+      "sha256": "31576f623a71368091c8104ed22ce16f944d35f7cfc642c4131f36374c35a32e"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-04/hero-04-10-64.png",
+      "sha256": "16b3ca78797e155892fd53c474e725543f973f7510f64e93c70eb8dfc6b28a20"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-04/hero-04-10-48.png",
+      "sha256": "4bc104a2854e7d02a2246b126ccf1d0f870c88e41f50e37a2113c60cacdf87e9"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-04/hero-04-10-32.png",
+      "sha256": "874e8526b77a760255fa6f18f07bdd38d013417b7f112f45e8fe82754a9a8095"
+    }
+  }
+}

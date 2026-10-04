@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-22-03",
+  "name": "Homeward Turn",
+  "source": "art/ability-icons-draft/raw/hero-22/initial.png",
+  "source_sha256": "dbfb104d6ff11ee7589c8f600764bd335af518c5e7f46b39f23da5a9ddc9dc80",
+  "cell": [
+    2,
+    0,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    768,
+    0,
+    1152,
+    341
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    54,
+    61,
+    325,
+    328
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-22/hero-22-03-128.png",
+      "sha256": "9b7a01684d747b11cef76bf246a265671d3ef386d75ae90abafe6e1fc5a33cdb"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-22/hero-22-03-64.png",
+      "sha256": "9303535784ba3bda88c847fd5066d23e584b9ca3d7d5170dffafe4c745f75424"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-22/hero-22-03-48.png",
+      "sha256": "c7a81a5944dc327d48d37cf60052a2472772f0b1c6feb1cc5bcacd969d10f022"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-22/hero-22-03-32.png",
+      "sha256": "edebb98b4f57faaa77303a46961d77de3634c1d0890bd871d637c68344fa2e34"
+    }
+  }
+}

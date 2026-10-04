@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-25-04",
+  "name": "Quiet Measure",
+  "source": "art/ability-icons-draft/raw/hero-25/initial.png",
+  "source_sha256": "772274f9f964339e53f7321b8ad188f03b105c2ecdd4754320cb6b84b1d5c7ec",
+  "cell": [
+    3,
+    0,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    1152,
+    0,
+    1536,
+    341
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    55,
+    80,
+    314,
+    307
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-25/hero-25-04-128.png",
+      "sha256": "22d9db4b7f77261c7df08b67a501b89876900939ecd796c2cde1eacfc0605cfa"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-25/hero-25-04-64.png",
+      "sha256": "6b98ae9b7d9372426ed2c33bc4bb64a5558331df02c0dbc74f46379d517799c5"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-25/hero-25-04-48.png",
+      "sha256": "5ab06d510ad1e9bd46460ed9a30e736664ecbf1f5cc649b67a20e6f3f6f91825"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-25/hero-25-04-32.png",
+      "sha256": "28e662776141bbb461d0f07ccd3ac90cec9a7aa00262188a07f5a936d71dbe0f"
+    }
+  }
+}

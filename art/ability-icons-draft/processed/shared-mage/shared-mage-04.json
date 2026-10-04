@@ -1,0 +1,45 @@
+{
+  "icon_id": "shared-mage-04",
+  "name": "Hex",
+  "source": "art/ability-icons-draft/raw/shared-mage/initial.png",
+  "source_sha256": "8e20ae4f85e78a3499d3db9aa5387191856f5f3434a84d793278955f76b8527d",
+  "cell": [
+    0,
+    1,
+    512,
+    512
+  ],
+  "source_rectangle": [
+    0,
+    512,
+    512,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    93,
+    43,
+    416,
+    423
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/shared-mage/shared-mage-04-128.png",
+      "sha256": "243d0da542bdcfed36ab1ed4606a326470a113e60a1682c38135ed3745f09c3b"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/shared-mage/shared-mage-04-64.png",
+      "sha256": "4150927253f5f70dbd3e1190878dfb0430eab3422c6f7d9b2b8ca3ab2b04e283"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/shared-mage/shared-mage-04-48.png",
+      "sha256": "f6c68f75f3b5de6771417ae52f5096c4645cf3d783aa0fdc6428731e191729ff"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/shared-mage/shared-mage-04-32.png",
+      "sha256": "2a1a19b2e062c599f65ef856ba63692cface2ea50e9ee30298d2eb2db7357fa9"
+    }
+  }
+}

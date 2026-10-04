@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-29-10",
+  "name": "Clear Ice",
+  "source": "art/ability-icons-draft/raw/hero-29/initial.png",
+  "source_sha256": "912d763e5359c1b9ad35d60650781b2012c2b0fb1f1ca14bb79e94c7978d6287",
+  "cell": [
+    1,
+    2,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    384,
+    683,
+    768,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    75,
+    35,
+    299,
+    257
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-29/hero-29-10-128.png",
+      "sha256": "0ad8137d7726bd92b979802451bb72e19a851de86a538da9686b8e621cb99394"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-29/hero-29-10-64.png",
+      "sha256": "61de7c58dd16d26fd7eec4fd988f57d44d0dacb862ac66b999d40c8e0e578e44"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-29/hero-29-10-48.png",
+      "sha256": "a4a83d109fcc5661adad3a7f82c0891ccfee02bdc14fd823b67aa5ddb00b34ef"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-29/hero-29-10-32.png",
+      "sha256": "159a0ccff56575f9a42c60a06d8f16ab069f09612e9ae9df173c684a1edd72a8"
+    }
+  }
+}

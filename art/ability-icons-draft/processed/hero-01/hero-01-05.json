@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-01-05",
+  "name": "Shadow Step",
+  "source": "art/ability-icons-draft/raw/hero-01/revision-01.png",
+  "source_sha256": "58437daa8a585639577e47e4bb3b0af12948a073085ff6a6987e21dab0e1dd42",
+  "cell": [
+    0,
+    1,
+    384,
+    342
+  ],
+  "raw_bbox": [
+    63,
+    41,
+    348,
+    306
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-01/hero-01-05-128.png",
+      "sha256": "7e171f37b1d6a3ebc89be9e87c4f937ecc054a407a61718ca1806523900ada56"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-01/hero-01-05-64.png",
+      "sha256": "bcd1c08369904d449d38759a0e53dbc2ff1e743cb8d2c74cad9b4eb834e66aeb"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-01/hero-01-05-48.png",
+      "sha256": "63850935155ff90f08b0c296cf9884015ee9f3d305b2b3576b99bbcb4cb7ab4b"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-01/hero-01-05-32.png",
+      "sha256": "47c02b0dac3f38c186293449a35ea46b17d15f58b65b02b818fbb23db43ce6d2"
+    }
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-04-11",
+  "name": "Kept Low",
+  "source": "art/ability-icons-draft/raw/hero-04/initial.png",
+  "source_sha256": "0df9fb5388348a9c5278e44fe3f1c19d8b774d1e8fa08f78952f14e101071b48",
+  "cell": [
+    2,
+    2,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    58,
+    57,
+    320,
+    251
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-04/hero-04-11-128.png",
+      "sha256": "b58f042cbd088bdbf326af9487f6fedcdf8e709154d73a5787e6bdcfcbfd995f"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-04/hero-04-11-64.png",
+      "sha256": "cbc3476f5ec7cd814d820c548cfa0e48c24e0ecd9973387ca6e9ec2abca91ef2"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-04/hero-04-11-48.png",
+      "sha256": "3dc8093d97c3a5888a6e281acd530fc6f51ceb03f99c0af65487bb4065a30abe"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-04/hero-04-11-32.png",
+      "sha256": "34c5515987e64c35a892e43dc03e25607e2dcb4f7b29f5194e7a1dc8c106cbc9"
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-27-05",
+  "name": "Spectrum Cut",
+  "source": "art/ability-icons-draft/raw/hero-27/initial.png",
+  "source_sha256": "c1c235d767948d31faaaf50f54f359a0a9b42b897b4e25e7f020fb4f7197168f",
+  "cell": [
+    0,
+    1,
+    384,
+    328
+  ],
+  "source_rectangle": [
+    0,
+    341,
+    384,
+    669
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    74,
+    37,
+    352,
+    300
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-27/hero-27-05-128.png",
+      "sha256": "619699d25d7407eecc064d82cdaaf5d1e35634afa7d448dbd6aba86d147c9ac7"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-27/hero-27-05-64.png",
+      "sha256": "e3c11ec596a700b1e28827f774e9ce87bea5994cb459e331114efcbe18bc5d72"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-27/hero-27-05-48.png",
+      "sha256": "41813b1f7b6d20b525cc29546a09967d3c485567eb52212c1a1ce7c672a2df08"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-27/hero-27-05-32.png",
+      "sha256": "f96fc3b622b365269b9dbec3dbad5547b887f5f5c6b31dea9ac5de66fa094636"
+    }
+  }
+}

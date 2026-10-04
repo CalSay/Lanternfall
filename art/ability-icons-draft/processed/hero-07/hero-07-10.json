@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-07-10",
+  "name": "An Oath Kept Doing",
+  "source": "art/ability-icons-draft/raw/hero-07/initial.png",
+  "source_sha256": "c5a611d4b3e52f2396d0c4927d0089255fcab855408bd199f60994a281e3ee6b",
+  "cell": [
+    1,
+    2,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    62,
+    16,
+    329,
+    282
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-07/hero-07-10-128.png",
+      "sha256": "b837e0e0f3c57ae57f53b36f5842a19f09cea12e85ffed4c11a79679d51bdfe5"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-07/hero-07-10-64.png",
+      "sha256": "1479ac7c86a9b6efdcd3d86cb4b022567fc19e77eb96a8fe1f787dfb5767578a"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-07/hero-07-10-48.png",
+      "sha256": "f8b77250b3e049629a93bf00a624991c61d70fa4b69cccf40f78173e8f9fb22c"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-07/hero-07-10-32.png",
+      "sha256": "dcc49dba19c9bbe187ecb1ccf956263a1e170ad213cccf326dda1d2ec92c25f1"
+    }
+  }
+}

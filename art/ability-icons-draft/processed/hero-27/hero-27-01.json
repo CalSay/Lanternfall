@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-27-01",
+  "name": "Red Window",
+  "source": "art/ability-icons-draft/raw/hero-27/initial.png",
+  "source_sha256": "c1c235d767948d31faaaf50f54f359a0a9b42b897b4e25e7f020fb4f7197168f",
+  "cell": [
+    0,
+    0,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    0,
+    0,
+    384,
+    341
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    68,
+    80,
+    354,
+    306
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-27/hero-27-01-128.png",
+      "sha256": "b2450d42af6fa3c61206ee485f63a872624cde99f669a0f9011a93d87cdbb8e0"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-27/hero-27-01-64.png",
+      "sha256": "1f50f5fb9839d5c7408a0920ab5777c9fddee0ec2c9f623bd31eafed526c6492"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-27/hero-27-01-48.png",
+      "sha256": "b093b5d8136d52483d7882e623a20f6e261955429830a7350bfc3d384859ce28"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-27/hero-27-01-32.png",
+      "sha256": "d0c4528b2327bf53c53f1ed744052ea6ee56bbfeebe4205e04956395ec855c6f"
+    }
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-01-01",
+  "name": "Echo Shot",
+  "source": "art/ability-icons-draft/raw/hero-01/revision-01.png",
+  "source_sha256": "58437daa8a585639577e47e4bb3b0af12948a073085ff6a6987e21dab0e1dd42",
+  "cell": [
+    0,
+    0,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    74,
+    104,
+    348,
+    305
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-01/hero-01-01-128.png",
+      "sha256": "a4f800bb925fcbd9d4a7f34b386ac01aff322efc6d88f6b63aa52b419c47b5a4"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-01/hero-01-01-64.png",
+      "sha256": "bf1bb6b2d3617ae8fa7d30c8da09f6e71d3251b8610e77a0083d0b8ea07a1207"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-01/hero-01-01-48.png",
+      "sha256": "34a4b9ab545b59e3b1f709c3a3ab7e50f26e145a723d882d4e584301b940020d"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-01/hero-01-01-32.png",
+      "sha256": "62737020d8851f7e3dd0281d573e4d9ffdf5546ff4adf43360da919eca2ea127"
+    }
+  }
+}

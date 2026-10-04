@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-14-03",
+  "name": "One More Hour",
+  "source": "art/ability-icons-draft/raw/hero-14/initial.png",
+  "source_sha256": "620ff6b97e16026aa6628720b90134f03a9e0c764cfec18ef55a5eccd6ba16ca",
+  "cell": [
+    2,
+    0,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    768,
+    0,
+    1152,
+    341
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    56,
+    57,
+    317,
+    314
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-14/hero-14-03-128.png",
+      "sha256": "b07e2a1fadbf13beaa58e5ee7acb069293770be54452b3db3077d340b33d392a"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-14/hero-14-03-64.png",
+      "sha256": "b0def8e1838cc4c2c292edd8d30dd1e080f2cd2ec18938d2698946db73599982"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-14/hero-14-03-48.png",
+      "sha256": "959b58dce573026058d1e46b17dde5305f317b7076a45045d70887cd993bb86f"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-14/hero-14-03-32.png",
+      "sha256": "c151d0af11fe6b7ba152382e995a98aa6f7b1436a118e35cbe748f88751dbe7e"
+    }
+  }
+}

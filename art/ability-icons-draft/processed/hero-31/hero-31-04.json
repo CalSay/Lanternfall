@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-31-04",
+  "name": "A Steady Pulse",
+  "source": "art/ability-icons-draft/raw/hero-31/initial.png",
+  "source_sha256": "d11b74289f59a67b5f207d83ad7a9343dc59f2b929acf4163ecf39acdceb61a3",
+  "cell": [
+    3,
+    0,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    1152,
+    0,
+    1536,
+    341
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    46,
+    90,
+    302,
+    291
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-31/hero-31-04-128.png",
+      "sha256": "fe0e46c29fc5355f2121184b21aa582c4c169991c1efd04165bb5bb9fc6c5cd5"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-31/hero-31-04-64.png",
+      "sha256": "9197bec7f13c4a06393745a3622e1efca7d2ce94e82bf3d8c0a349c7ac2b9867"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-31/hero-31-04-48.png",
+      "sha256": "01f01dfdcccab531f64cfe33f9e8d65274fff8ccac57e470022c6ae1cefbf245"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-31/hero-31-04-32.png",
+      "sha256": "da4b3844e84dcd1784cb186515172ca78cd77f41a677344f9825c63140ff8f40"
+    }
+  }
+}

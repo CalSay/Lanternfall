@@ -1,0 +1,14 @@
+Create twelve Tobin Reed ability icons, 4columns3rows equal invisible cells1536x1024. Shown approved concept locks kite shield/sword/red/brass; shown action icons lock crisp darkoutline simple flatclusters readable32px. Props/effects only no hero body, UI/text/borders. Center each distinct symbol central70%, generous solid#FF00FF margin. Rowmajor order:
+1 Shield Bash: red kite shield face with one forward steel impact spark.
+2 Answering Cut: silver sword and short hooked return-cut arc behind protective guard edge.
+3 Iron Will: upright steel breastplate clasp inside small brass ward dome.
+4 Challenge: swordpoint confronting one dimmed foe-strength chevron, no allies/threat banner.
+5 Oathstrike: sword with compact red/gold committed strike flare.
+6 Shield Press: tilted held kite shield pressing cracked armour plate, never thrown.
+7 Last Stand: planted sword within enclosing red ward and courage flame.
+8 Borrowed Edge: sword with two reserved red wound notches, no extra weapon.
+9 Hold the Line: broad kite shield bordered by ward arc and small opening gap.
+10 Bulwark PASSIVE: shield over single earned brass grit spark.
+11 Borrowed Courage PASSIVE: ward crescent touching sword edge with restrained gold charge.
+12 Hedge Guard PASSIVE: sword behind small hedge-shaped shield protection, no summoned plants.
+Exactly12symbols ordered, full silhouettes fit, flatmagenta no labels.

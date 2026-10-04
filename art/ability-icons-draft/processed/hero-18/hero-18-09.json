@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-18-09",
+  "name": "Rowan's Last Route",
+  "source": "art/ability-icons-draft/raw/hero-18/initial.png",
+  "source_sha256": "d254bc2ae451f3f659c623424d93dbb712ce0be89485830b714f395280ab0c4f",
+  "cell": [
+    0,
+    2,
+    413,
+    341
+  ],
+  "source_rectangle": [
+    0,
+    683,
+    413,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    75,
+    31,
+    412,
+    267
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-18/hero-18-09-128.png",
+      "sha256": "1c2afbd39ee58d05c24cec2dfedf4561bcbfb717df7c36600ce2b751576b6649"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-18/hero-18-09-64.png",
+      "sha256": "5a7c2ac358b0f2ab3ae162f5df6ecf09b30be394bc997d1a391178a7eb855cfe"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-18/hero-18-09-48.png",
+      "sha256": "c4fae3e57a9a98c24fb20661ea11f6527fe18d052ba56d461fd2e5e3aaf918b8"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-18/hero-18-09-32.png",
+      "sha256": "22eb90cb90f927f4d89133c342629f3228aedba996b0bbf2b7fbf0ef64e36e2c"
+    }
+  }
+}

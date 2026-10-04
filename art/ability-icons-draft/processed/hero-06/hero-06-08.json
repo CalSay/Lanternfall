@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-06-08",
+  "name": "Tired, Still Standing",
+  "source": "art/ability-icons-draft/raw/hero-06/initial.png",
+  "source_sha256": "6bcfc8612b6c75bfe975c206de9d5b5f7cca0499b032aad52e2836bf2fc74d24",
+  "cell": [
+    3,
+    1,
+    384,
+    342
+  ],
+  "raw_bbox": [
+    39,
+    31,
+    308,
+    301
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-06/hero-06-08-128.png",
+      "sha256": "8ae34bad8c2d61233586be5f4d251792b2795773291042d8d083bc60720beade"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-06/hero-06-08-64.png",
+      "sha256": "200001077f8e89620b53daf19ddb6dba1429455f1b9e26d9c02f83826ce2fba9"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-06/hero-06-08-48.png",
+      "sha256": "8e8116f108add88989031bd4ef787072a6e3847749e6cb05de433497e337ffdc"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-06/hero-06-08-32.png",
+      "sha256": "a852bb91bfd4e5525a5f7222231b461d0a6f944d210464f5ad3b219ec5bf3691"
+    }
+  }
+}

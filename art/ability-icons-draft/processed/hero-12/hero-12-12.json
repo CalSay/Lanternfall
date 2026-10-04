@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-12-12",
+  "name": "Sky Answers",
+  "source": "art/ability-icons-draft/raw/hero-12/initial.png",
+  "source_sha256": "e9d7f4768b72255d55ca1234951443b9e5483cad20fe37bace1d8f5924ed3971",
+  "cell": [
+    3,
+    2,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    36,
+    77,
+    343,
+    213
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-12/hero-12-12-128.png",
+      "sha256": "f9bcd036b8f2dcce7cf4dd4cead79d3d8da345eab0cc09480bdcbc9967bc1e0a"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-12/hero-12-12-64.png",
+      "sha256": "87f61acbe3a64544f7ada3171ef8f53c6d7353b29e8fa92a65533bd52347d2cb"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-12/hero-12-12-48.png",
+      "sha256": "47ce965dc8a346daa886494ce7cc9eea832101e84ce0dee3e7442718e50d56bf"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-12/hero-12-12-32.png",
+      "sha256": "a5be896379b9240b180df536f66a70c0ebd5d15ca927b3aac8c259725a6ef67a"
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-20-07",
+  "name": "Counterpressure",
+  "source": "art/ability-icons-draft/raw/hero-20/initial.png",
+  "source_sha256": "83ca2e1f4fa66f8e7c6688e57e6f7a66ce819373bfe97a5c64b5ac8249c5717a",
+  "cell": [
+    2,
+    1,
+    384,
+    342
+  ],
+  "source_rectangle": [
+    768,
+    341,
+    1152,
+    683
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    57,
+    48,
+    311,
+    290
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-20/hero-20-07-128.png",
+      "sha256": "cf396f6d028c3643864eb05aa20df09384a9141ec36bfb0c4cbb4d0889f766c4"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-20/hero-20-07-64.png",
+      "sha256": "a6cd5321ba40295c7f2a2e10462ded5493907084db0ea89e6f78abf109037cdc"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-20/hero-20-07-48.png",
+      "sha256": "aa8be3fd92dbd5cef73375af6124c3aa633c97ada41924c34f5c803b48ff7f7b"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-20/hero-20-07-32.png",
+      "sha256": "cb8e19390361799750c76b403ea1885a01c19fe6bf525a230ff816514654f218"
+    }
+  }
+}

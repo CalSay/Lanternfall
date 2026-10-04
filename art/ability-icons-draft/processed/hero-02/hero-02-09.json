@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-02-09",
+  "name": "Hold the Line",
+  "source": "art/ability-icons-draft/raw/hero-02/revision-01.png",
+  "source_sha256": "afeade7e11cd68ba6d01f4b9430e0ffa26465e190b3b1cea01bb880e844a3aea",
+  "cell": [
+    0,
+    2,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    96,
+    16,
+    348,
+    227
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-02/hero-02-09-128.png",
+      "sha256": "1633d7d27ff799fe13c68b5d43f7b0359c89beea9fda47ab9787f8678088ba44"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-02/hero-02-09-64.png",
+      "sha256": "56da6bc92292adfd25cb10c5e260a188864f8ea5c16f0c91f41a92c54e1d758d"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-02/hero-02-09-48.png",
+      "sha256": "91ceb250703df4de71b2d2ca35ae44c60598c7a097482c68ff0184d9ed094938"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-02/hero-02-09-32.png",
+      "sha256": "c64b2e7f62d033ade0109935be73873529de0998483cad3e05c05d6ee3bdf658"
+    }
+  }
+}

@@ -1,0 +1,16 @@
+Create twelve Pip Cinderly ability icons in4columns3rows equal invisiblecells1536x1024. Approved concept palette orangefire, charcoal, warmbrass; existing actioniconreference crisp darkoutlined clusters, vivid large silhouettes readable32px. Prop/effect symbols only, no hero bodies/UI/text/borders. Center central70% eachcell with solid#FF00FF margin. Rowmajor:
+1 Fireball: round fireball with bright core and short trailing flame.
+2 Kindle: small igniting ember with two upward cinder sparks.
+3 Ignite: compact burst consuming one darker flame tick into bright central flare.
+4 Searing Eye: fiery eye-shaped focus with single targeted glint, not a character eye portrait.
+5 Wildfire: three rising fire tongues, stepped taller growth silhouette.
+6 Lantern Flare: familiar brass lantern projecting broad holy light flash.
+7 Lanternburst: lantern-lit compressed fire explosion, stronger round silhouette than Flare.
+8 Ashen Ward: dark ash rim surrounding protective ember dome.
+9 Cold Cinder: blue frostflame holding one warm ember at its root.
+10 Cinder Heart PASSIVE: heart-shaped glowing coal within restrained flame.
+11 Hearthspark PASSIVE: tiny hearth coal and two sequential ignition wisps.
+12 Bellows PASSIVE: simple leather bellows breathing into single longer flame, no weapon throw.
+Exactly12, effects inside owncell, no lettering, flatmagenta.
+
+IMPORTANT override: every ENTIRE glyph inclrays/trails fullyinside CENTRAL50%WIDTH/HEIGHT eachcell, onequarter emptymagentaeachside, no detached outsidepixels. Image1 existing tinyicon STYLEONLY simpleopaque3–5flatcolourclusters crispdarkoutline native32readable, NOTornateart. Image2 invisible4x3safe50 layout no guide/borders in final. No pinkmagenta inglyphs, background#FF00FFonly. Pip firecolours amberorangecharcoal.

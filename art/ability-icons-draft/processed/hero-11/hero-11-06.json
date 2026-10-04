@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-11-06",
+  "name": "Point at Something",
+  "source": "art/ability-icons-draft/raw/hero-11/initial.png",
+  "source_sha256": "21cf5ca6babe0402a4bc4e23f094601acc7db487dd0e518ca5320ecf4b3b8950",
+  "cell": [
+    1,
+    1,
+    384,
+    342
+  ],
+  "raw_bbox": [
+    70,
+    60,
+    318,
+    295
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-11/hero-11-06-128.png",
+      "sha256": "9a395b6e73c7129c1a3a8985dc395390ea5ef35583857a7ecb08da5ecba4d523"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-11/hero-11-06-64.png",
+      "sha256": "b616e7ba548f5e68603e77b4c4a52fe8f9e942144d58b5cab9f9e1659615e06e"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-11/hero-11-06-48.png",
+      "sha256": "de5e77d4b2c9ed5c9587cf98d6ec62c6d442108182284a4f60157fc150bce2ef"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-11/hero-11-06-32.png",
+      "sha256": "5343e20f1e180c2772012414399865131e47a97b7e49b896545dec966caf390f"
+    }
+  }
+}

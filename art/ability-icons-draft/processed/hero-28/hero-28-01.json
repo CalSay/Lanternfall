@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-28-01",
+  "name": "Name the Debt",
+  "source": "art/ability-icons-draft/raw/hero-28/initial.png",
+  "source_sha256": "428331c78cae5c25ef7947e5702d1b6b4ce92ac8d63e0b40a896b8afda7dcb72",
+  "cell": [
+    0,
+    0,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    0,
+    0,
+    384,
+    341
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    68,
+    65,
+    338,
+    327
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-28/hero-28-01-128.png",
+      "sha256": "672ca5f09aa059cbbcbb17d5572a38a06ea7f0ad54a5a5282fcdd79087cdc8de"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-28/hero-28-01-64.png",
+      "sha256": "d01f57aabd5b7e5083bead2c438c244261ff1f27406f70de4e190b5537a76979"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-28/hero-28-01-48.png",
+      "sha256": "6f1ac6ac7930487de3d08d3607f0eb6e34a4488b4785efaa3e27bed584e386c9"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-28/hero-28-01-32.png",
+      "sha256": "4c16a775693e1246be9a70b51cc81f75f7e329250684c84d29429f9636d5015a"
+    }
+  }
+}

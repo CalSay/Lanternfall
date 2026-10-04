@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-03-09",
+  "name": "Cold Cinder",
+  "source": "art/ability-icons-draft/raw/hero-03/initial.png",
+  "source_sha256": "0cff4fe45795d22d75052e4382ce9f72075703ecc749e305a8f75badb5f8b7b3",
+  "cell": [
+    0,
+    2,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    100,
+    26,
+    305,
+    277
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-03/hero-03-09-128.png",
+      "sha256": "daa3096e30c9da94b5ce6869c1e753aede2f598a3a568f4ea59d3b85d1b8194e"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-03/hero-03-09-64.png",
+      "sha256": "fc97647b0116f5689c3072c9e82feec1568a9f53902e90ed1bb92bb6d56225eb"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-03/hero-03-09-48.png",
+      "sha256": "e14dbedfe62957094796f73e65f74af0238abc7f2f66586a6f904feeb9b42157"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-03/hero-03-09-32.png",
+      "sha256": "585ed83e6d6a8b2cf32edbab8bcada16e0eb1b1c343fa8fc0e008cca6b303920"
+    }
+  }
+}

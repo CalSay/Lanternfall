@@ -1,0 +1,45 @@
+{
+  "icon_id": "shared-ranger-05",
+  "name": "Flurry",
+  "source": "art/ability-icons-draft/raw/shared-ranger/initial.png",
+  "source_sha256": "06a5ffe6d4dae5ff287b23ec933b19a4188953f6794a5dd9bb1d5c4cfdf57826",
+  "cell": [
+    1,
+    1,
+    512,
+    512
+  ],
+  "source_rectangle": [
+    512,
+    512,
+    1024,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    72,
+    43,
+    440,
+    420
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/shared-ranger/shared-ranger-05-128.png",
+      "sha256": "3c8eab66aea7bc0d09bce52fc4284aeb42328f6ed51cc1e7691001796c22a051"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/shared-ranger/shared-ranger-05-64.png",
+      "sha256": "0d95f8a1e6ad2b48697cc25d40e2cea66ef6aefaefaac0e300c69688872946b5"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/shared-ranger/shared-ranger-05-48.png",
+      "sha256": "a6f16140a62981a9166066152ac641cbcabe6c9969e0e4d28ec96a7a9fcbbab1"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/shared-ranger/shared-ranger-05-32.png",
+      "sha256": "e0fdd04af1b23f62590933951afef1744a2863adf0aefb13632941c0fda3c0cf"
+    }
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-16-03",
+  "name": "Reef Hook",
+  "source": "art/ability-icons-draft/raw/hero-16/revision-01.png",
+  "source_sha256": "3e13ee9442e737d8b23aa05c9883faeb2e2ae73c047963947c2ebfc796d9b9a9",
+  "cell": [
+    0,
+    0,
+    1254,
+    1254
+  ],
+  "raw_bbox": [
+    196,
+    261,
+    1061,
+    1030
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-16/hero-16-03-128.png",
+      "sha256": "9d194e0b509e08ce4360e9e639da417e2bbc07386d09b0961162e7b04f8a87e9"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-16/hero-16-03-64.png",
+      "sha256": "c79aa02b17d21cc54638d1506fccd299742a80283e7168b4fc3f344ca969a14f"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-16/hero-16-03-48.png",
+      "sha256": "1cd0bdcdba809333054b0b2705af0c56e00da889be2a2a8ee86e89b7ec8d496b"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-16/hero-16-03-32.png",
+      "sha256": "5201b20a41a77714e25630ce59415448e79366cf442731c55478c1f0842abb0d"
+    }
+  }
+}

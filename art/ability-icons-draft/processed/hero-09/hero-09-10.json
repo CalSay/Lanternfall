@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-09-10",
+  "name": "Water Remembers",
+  "source": "art/ability-icons-draft/raw/hero-09/initial.png",
+  "source_sha256": "e6605ef65a770ee350f590eead7a41b5c6ce9bb31afd30ad5439cac709249fe8",
+  "cell": [
+    1,
+    2,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    62,
+    50,
+    326,
+    248
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-09/hero-09-10-128.png",
+      "sha256": "322b30109e790343a6e8903498ff4e3902336b616e1ac17f151d06308e571801"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-09/hero-09-10-64.png",
+      "sha256": "376aeaddd31670aebe2b117cb9aef872ee996c9bb83cb068717385198f26af98"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-09/hero-09-10-48.png",
+      "sha256": "1d4befe6bffd1a02f43e6104721490d6e4ee4311e04f40e93fb54a910eb5a142"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-09/hero-09-10-32.png",
+      "sha256": "0b4044196ac3a5ea8203d85946eec339b602eb73cb40e1cfa192cdaa5673cdbf"
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-22-10",
+  "name": "Light Feet",
+  "source": "art/ability-icons-draft/raw/hero-22/initial.png",
+  "source_sha256": "dbfb104d6ff11ee7589c8f600764bd335af518c5e7f46b39f23da5a9ddc9dc80",
+  "cell": [
+    1,
+    2,
+    384,
+    344
+  ],
+  "source_rectangle": [
+    384,
+    680,
+    768,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    89,
+    42,
+    328,
+    260
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-22/hero-22-10-128.png",
+      "sha256": "fccbb80f65190edc7d3bd2d1bbc01b2bf5230f0bec48d024db4918bad8e20e5e"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-22/hero-22-10-64.png",
+      "sha256": "20129b424d8a44d319db0a038e2b9f6b76328d44d37e4aebd849fe5a24a204a5"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-22/hero-22-10-48.png",
+      "sha256": "ab3d04c574391d8be36559fb448fe0a176e794dbcab0d3159d7dc0e4dc2a984a"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-22/hero-22-10-32.png",
+      "sha256": "b9434e58b320d6eb9642a0321c5b399d6f9165ce41d11d61538d6d014e03be75"
+    }
+  }
+}

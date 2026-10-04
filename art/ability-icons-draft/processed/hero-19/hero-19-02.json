@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-19-02",
+  "name": "Shoulder Forward",
+  "source": "art/ability-icons-draft/raw/hero-19/initial.png",
+  "source_sha256": "bfe18f630518f6f67979ba1b2bdb21b6cb1cb8951856bd93442dcb4f33ac57fd",
+  "cell": [
+    1,
+    0,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    384,
+    0,
+    768,
+    341
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    71,
+    76,
+    355,
+    322
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-19/hero-19-02-128.png",
+      "sha256": "10c757db1212edee984e52254a9219210acbbfef48312c7ed62dafe4e1662965"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-19/hero-19-02-64.png",
+      "sha256": "c90cd4bc4d5b603b731ecad0a7ad756752a5109eb5b034141e3d5d9f4a0dc491"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-19/hero-19-02-48.png",
+      "sha256": "a3421e03277f1ed26749e09f068e2e18bcf38df5dafdfa3600f512de9ed978ea"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-19/hero-19-02-32.png",
+      "sha256": "89ccc86c731f773ad0da9325f0d9b0d6302ad94351dc2806846eeb87fb3c710f"
+    }
+  }
+}

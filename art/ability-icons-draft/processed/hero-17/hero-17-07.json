@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-17-07",
+  "name": "Warm the Flaw",
+  "source": "art/ability-icons-draft/raw/hero-17/initial.png",
+  "source_sha256": "9cfb6c123f64254a36401115884f7626809e770bd1176b0701853f40da447634",
+  "cell": [
+    2,
+    1,
+    384,
+    342
+  ],
+  "source_rectangle": [
+    768,
+    341,
+    1152,
+    683
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    75,
+    47,
+    309,
+    291
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-17/hero-17-07-128.png",
+      "sha256": "ff6da7505ec2d45bf6d4ee1281158c569e162d5960f2c51de0e533aa6133dd1a"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-17/hero-17-07-64.png",
+      "sha256": "74d9fe5883cff6d7451e4b9d5e93f59a3a637e365b619f2425891ce54218388b"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-17/hero-17-07-48.png",
+      "sha256": "a4177f9072837eb42c62213bb9bbb2021554c9aafea8c0009f750a1743f3f8c2"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-17/hero-17-07-32.png",
+      "sha256": "0475698f218a796afc246bc9fdbb01261671091647f9b33fc0d5ea8be73f747f"
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-28-06",
+  "name": "Seal the Account",
+  "source": "art/ability-icons-draft/raw/hero-28/initial.png",
+  "source_sha256": "428331c78cae5c25ef7947e5702d1b6b4ce92ac8d63e0b40a896b8afda7dcb72",
+  "cell": [
+    1,
+    1,
+    384,
+    337
+  ],
+  "source_rectangle": [
+    384,
+    341,
+    768,
+    678
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    64,
+    64,
+    342,
+    288
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-28/hero-28-06-128.png",
+      "sha256": "5a5dfadffe83cf43ba285aea95f9e133083ab845bdd401dfa9ee5fab99425cf8"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-28/hero-28-06-64.png",
+      "sha256": "00b61a91d24cd73e25daafa8380b8e4bf5cfa56e52f0750e9b84cc6690f53fb3"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-28/hero-28-06-48.png",
+      "sha256": "291319680443b5b23f8873f3d6d900b7afaf466b898d6cd26bef47ee452e51ed"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-28/hero-28-06-32.png",
+      "sha256": "72c3e529875d76f2018a2562adfcd28cec58ee3778b768c6701c8190afe1ac3e"
+    }
+  }
+}

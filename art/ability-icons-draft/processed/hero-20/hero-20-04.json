@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-20-04",
+  "name": "Below the Surface",
+  "source": "art/ability-icons-draft/raw/hero-20/initial.png",
+  "source_sha256": "83ca2e1f4fa66f8e7c6688e57e6f7a66ce819373bfe97a5c64b5ac8249c5717a",
+  "cell": [
+    3,
+    0,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    1152,
+    0,
+    1536,
+    341
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    40,
+    67,
+    341,
+    309
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-20/hero-20-04-128.png",
+      "sha256": "c4c9ed83cf717048b0ae2b0edbb988bb628919d368bf8078540cd19c3571215a"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-20/hero-20-04-64.png",
+      "sha256": "a0e116342cb6a0f95b1376492bc952bd4a2e2b61717d3663e211a8890e01ad05"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-20/hero-20-04-48.png",
+      "sha256": "67132151b9aab4f6d15945cd3aeab447ff81b654ed1cbdc357c0fa7b56c52b17"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-20/hero-20-04-32.png",
+      "sha256": "fdf18e02af228e1923e9d398278a0daf7a31304c0a98070f169a8861cfc22a71"
+    }
+  }
+}

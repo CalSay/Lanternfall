@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-27-07",
+  "name": "Amber Window",
+  "source": "art/ability-icons-draft/raw/hero-27/initial.png",
+  "source_sha256": "c1c235d767948d31faaaf50f54f359a0a9b42b897b4e25e7f020fb4f7197168f",
+  "cell": [
+    2,
+    1,
+    384,
+    328
+  ],
+  "source_rectangle": [
+    768,
+    341,
+    1152,
+    669
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    34,
+    29,
+    317,
+    297
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-27/hero-27-07-128.png",
+      "sha256": "2ccf902fa13604a8840b870c09077ec8c4a52b03543b9d22c1c5fd3fed386ab3"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-27/hero-27-07-64.png",
+      "sha256": "477c4095a791010899b3ff56966e442aba9c467edbc3d35e7505e4e8c02b2257"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-27/hero-27-07-48.png",
+      "sha256": "674ba4bfac312f24e2a87fff515233043f8cd49c635259f8cd300c122740e17c"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-27/hero-27-07-32.png",
+      "sha256": "287dc974dfa9fd124a322f2ca4fb6be4933e9a1bf5a35cc67ffbc3d503a170a4"
+    }
+  }
+}

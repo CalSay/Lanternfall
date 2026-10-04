@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-33-09",
+  "name": "Until the Lantern Dims",
+  "source": "art/ability-icons-draft/raw/hero-33/initial.png",
+  "source_sha256": "34c3cbedc4bc8535718528feb955cbdcecccb350fca27325ff2b86a023189d00",
+  "cell": [
+    0,
+    2,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    0,
+    683,
+    384,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    65,
+    4,
+    349,
+    257
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-33/hero-33-09-128.png",
+      "sha256": "82fbfe95240f8872c60e94431ded6d8265d69488ca64863319dbdd0abd25becc"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-33/hero-33-09-64.png",
+      "sha256": "46072991e086a3bb9062c858bb1bab2ffdbe5988df969427f64d7dedef492b6b"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-33/hero-33-09-48.png",
+      "sha256": "af358a7922d68c2c327e56e2cd65773c5dd66308f3cb409c27038c6ea1fa3e75"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-33/hero-33-09-32.png",
+      "sha256": "392715e951e78bbde6c8c7ca2ab53c648ca48023d6a11d2ecd5d84ebc6e0d0f6"
+    }
+  }
+}

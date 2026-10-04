@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-34-04",
+  "name": "Stand Relieved",
+  "source": "art/ability-icons-draft/raw/hero-34/initial.png",
+  "source_sha256": "3285f8e88d13e6e3e4d9f91664993d1184fa81bbe2aac5fe250494319ab069e0",
+  "cell": [
+    3,
+    0,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    1152,
+    0,
+    1536,
+    341
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    90,
+    86,
+    311,
+    302
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-34/hero-34-04-128.png",
+      "sha256": "9286a0661e3249ab7cdc94b34ae36d2ac0cff3a8f7d543becb1b638d793d0e09"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-34/hero-34-04-64.png",
+      "sha256": "49a5fb6605d2e9bf0c2782c1c3a741f5656ed1a01d216bbe731e087605ba01d2"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-34/hero-34-04-48.png",
+      "sha256": "4c3eea2ac75ed692831a842b4826c33afe317be61b6dd6dcd9668fd7430abc38"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-34/hero-34-04-32.png",
+      "sha256": "26a192048ed70f793e2991037a31531d771c40a349ee69f2259f1f3f493024ca"
+    }
+  }
+}

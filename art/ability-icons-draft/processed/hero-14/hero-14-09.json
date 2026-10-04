@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-14-09",
+  "name": "Refused the Voice",
+  "source": "art/ability-icons-draft/raw/hero-14/initial.png",
+  "source_sha256": "620ff6b97e16026aa6628720b90134f03a9e0c764cfec18ef55a5eccd6ba16ca",
+  "cell": [
+    0,
+    2,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    0,
+    683,
+    384,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    57,
+    2,
+    352,
+    283
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-14/hero-14-09-128.png",
+      "sha256": "8e10e41d296864446e2da5c9d79cb3f6e428a18125fa9b7c5880d63509cd4e97"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-14/hero-14-09-64.png",
+      "sha256": "d20ea855061e2f7279cd667db123cf0fa1c4e9c982dc3fe6198c40bda57f1d76"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-14/hero-14-09-48.png",
+      "sha256": "d1bd44ad4788c1545a66ca89c9942fb729f35a6ff2f08ad7e5ee43fc4ba0c17f"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-14/hero-14-09-32.png",
+      "sha256": "11e48865b7b9f1ffe594960254de0e7906b349e9b29e42d6840b5d4f139c81ae"
+    }
+  }
+}

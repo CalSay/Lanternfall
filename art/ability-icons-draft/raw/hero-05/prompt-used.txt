@@ -1,0 +1,16 @@
+Create twelve Bram Hollis abilityicons,4cols3rows equalinvisiblecells1536x1024. Concept locks heavyaxe pine/bronze/steel; actioniconreference crispdarkoutline flatclusters readable32px. Props/effects only noheroUItextborders. Center70% generous#FF00FF margin. Rowmajor:
+1 Find the Grain: axe edge beside two visible broad woodgrain channels.
+2 Clean Cut: sharp axe blade slicing one clean straight grain seam.
+3 Deep Kerf: axehead leaving a deep single V-notch in compact wood crosssection.
+4 Timber: broad downward axehead stroke into splitting wooden block, no thrownaxe/tree scene.
+5 Heel of the Axe: solid axe haft butt with short blunt contact flash.
+6 Workman's Rest: resting axehandle within soft healing/guard crescent.
+7 Fork Mark: forked grainmark with one restrained return loop.
+8 Split Kindling: two compact parallel chopping arcs beside same axehead.
+9 Stay the Trunk: held axehead pinning compact trunk wedge, norootspell.
+10 One Clean Stroke PASSIVE: single axe edge with paired earned grain marks.
+11 Axe That Knows PASSIVE: keen axeblade cutting through small armour seam.
+12 Camp Kindling PASSIVE: three woodgrain bands beside axe and small guardarc, no campfire healing promise.
+Exactly12symbols, fullsilhouettes fit owncell, flatmagenta nolettering.
+
+Override containment ENTIREglyph inclparticles CENTRAL50%widthheight eachcell quarteremptyspace eachside. Image1 actualtinyiconstyleonly opaque3–5flatshadeclusters crispdarkoutline native32 notornateart. Image2 invisible4x3safe50guide don'trenderguides. Bram ordinary heavywoodaxe blade silversteel broadbronze wrap leather haft pinegreen accents. No magenta inpixels exceptbackground.12exactsymbols.

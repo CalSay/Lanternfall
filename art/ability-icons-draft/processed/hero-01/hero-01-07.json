@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-01-07",
+  "name": "Final Echo",
+  "source": "art/ability-icons-draft/raw/hero-01/revision-01.png",
+  "source_sha256": "58437daa8a585639577e47e4bb3b0af12948a073085ff6a6987e21dab0e1dd42",
+  "cell": [
+    2,
+    1,
+    384,
+    342
+  ],
+  "raw_bbox": [
+    38,
+    64,
+    357,
+    267
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-01/hero-01-07-128.png",
+      "sha256": "713e0812ee05c10dd1f285f2150c338d2ff94365e972148d99962df1add6c4ef"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-01/hero-01-07-64.png",
+      "sha256": "b9d8da5809f2fd6403563245ec31df7e68680395ab9dc5efc6978be85ecbcee3"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-01/hero-01-07-48.png",
+      "sha256": "43f116c6c1f7512d1531ab9c09f7d6261f8edacabff14beb27c623ca08c09a64"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-01/hero-01-07-32.png",
+      "sha256": "b1fed77c4eccaab62ca9d8c4733d1aa9355cad27f8b0742ee84fe62d10a24242"
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-15-09",
+  "name": "Through the Front Gate",
+  "source": "art/ability-icons-draft/raw/hero-15/initial.png",
+  "source_sha256": "cd746813bfccf8c7b0f3d3a40ca7abe7b64c2cc6e4e511f8e42f77a98ae6d045",
+  "cell": [
+    0,
+    2,
+    406,
+    360
+  ],
+  "source_rectangle": [
+    0,
+    664,
+    406,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    37,
+    13,
+    405,
+    291
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-15/hero-15-09-128.png",
+      "sha256": "a8de0ede89988eaa00323ac5c1f4975f71ab384df4ea7b2fcd4ffcce0c0292a4"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-15/hero-15-09-64.png",
+      "sha256": "c368ad407c11a73bb2c1a5e9e499b1cf908ad0844e714a9fd03a91c37d1f4554"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-15/hero-15-09-48.png",
+      "sha256": "49e376f31b3838f1a4115f7c36d12646bd5cf2b6f786f027c9209e896e646c80"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-15/hero-15-09-32.png",
+      "sha256": "777a2980081838131b40e515af71ec905cadc22bb6172a2ffc22e4ffb4522306"
+    }
+  }
+}

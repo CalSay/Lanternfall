@@ -1,0 +1,16 @@
+Create twelve Isolde Marrow abilityicons4cols3rows equalinvisiblecells1536x1024. Concept steel dagger charcoal plum waxseal folio; existingicons darkoutline flatclusters readable32px. No hero bodies/UItext/borders. Central70%solid#FF00FF margin. Rowmajor:
+1 Seal the Terms: intact plum circular waxseal on compact folio corner.
+2 Fine Print: narrow daggercut with one wounddrop, nolegibletext.
+3 Finish: strong downward daggerpoint and small low-vitality crescent, no executionhead.
+4 Read by Touch: closed sigilfolio sheltered by small wardarc and returning termglint.
+5 Debt Collected: daggeredge drawing two wounddrops inward.
+6 Point at Something: daggerpoint beside clear markring.
+7 Break the Seal: split waxseal with short daggerflare.
+8 No Loose Ends: clean daggercut beside clipped sealribbon and two woundnotches.
+9 A Word for It: healingheart beside one reserved daggerglint.
+10 Contract by Touch PASSIVE: sealfolio with defended guardtick and single termglint.
+11 Low and Quick PASSIVE: horizontal short daggercut with one blooddrop.
+12 Paid in Full PASSIVE: daggerpoint through armour seam beside wounddrop and weakeningchevron.
+Exactly12clear symbols, noextraweapon orcharacter, flatmagenta.
+
+Override central70%: EVERY glyph including all arcs,rays,drops,particles fits CENTRAL50% WIDTH AND HEIGHT each invisible equal cell; quartercell empty on all four sides. Reference1 native48 icons chunky flat opaque shapes, reference2 ONLY layout; final no boxes/grid. Pure solid FF00FF background only. Isolde charcoal, cool steel, parchmentcream, deep opaque blue-plum wax, mutedwineblood; no pink or magenta INSIDE glyphs, no gradients/blending into key. Three to five flat clusters, crisp dark outline, simple native32-readable silhouettes, no ornate badges or tiny decorative letters. Twelve rowmajor symbols. Contract seal circular flat wax; dagger compact straight steel. Heart ONLY09 actual heal.

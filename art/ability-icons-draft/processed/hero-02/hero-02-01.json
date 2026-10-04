@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-02-01",
+  "name": "Shield Bash",
+  "source": "art/ability-icons-draft/raw/hero-02/revision-01.png",
+  "source_sha256": "afeade7e11cd68ba6d01f4b9430e0ffa26465e190b3b1cea01bb880e844a3aea",
+  "cell": [
+    0,
+    0,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    119,
+    128,
+    336,
+    319
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-02/hero-02-01-128.png",
+      "sha256": "0071a411e6ae8323e92b3833a797b21bde56d2d57b0f210140e38d773b5f6f65"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-02/hero-02-01-64.png",
+      "sha256": "4a89a0a1faa9e9486c0b38147e89ac5690cb82454d97183625485a6d00ec5694"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-02/hero-02-01-48.png",
+      "sha256": "a143ebe5444de0fc23bba29c4b0fbc1daa9a34d009af2060d6ea60e748ff2cc2"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-02/hero-02-01-32.png",
+      "sha256": "36896dea68aee307bfcb52dd665d46a7b16c84ad7fdb33f66d04c6df7557c0ba"
+    }
+  }
+}

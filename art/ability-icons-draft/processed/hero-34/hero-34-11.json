@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-34-11",
+  "name": "A Place to Stand",
+  "source": "art/ability-icons-draft/raw/hero-34/initial.png",
+  "source_sha256": "3285f8e88d13e6e3e4d9f91664993d1184fa81bbe2aac5fe250494319ab069e0",
+  "cell": [
+    2,
+    2,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    768,
+    683,
+    1152,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    65,
+    27,
+    324,
+    294
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-34/hero-34-11-128.png",
+      "sha256": "e3e83646a1029298fdcf54812fd58a6c3447921a94a901099095d5e8e4b817fe"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-34/hero-34-11-64.png",
+      "sha256": "09ca7b66d8da664330f62c100b39869fe98e0aa85da5120c4009200effca06cc"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-34/hero-34-11-48.png",
+      "sha256": "c0cc2f5badf2ea60e2ed168ecc38729d4c681f28172ba211d0094f1e88f4a2e0"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-34/hero-34-11-32.png",
+      "sha256": "28f84ed197ce87eb18d66dfa799ab223ff85e4c8f81c1b1c8fc383d68d99df61"
+    }
+  }
+}

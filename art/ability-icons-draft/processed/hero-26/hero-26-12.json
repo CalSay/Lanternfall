@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-26-12",
+  "name": "Steady Hands",
+  "source": "art/ability-icons-draft/raw/hero-26/initial.png",
+  "source_sha256": "69282736452127fdf3a6439efe454715873075762e622279e016f31c72b4e9f4",
+  "cell": [
+    3,
+    2,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    1152,
+    683,
+    1536,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    8,
+    14,
+    310,
+    275
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-26/hero-26-12-128.png",
+      "sha256": "5469acf82f6c11ad5ccf16dac957bf0024fbf673f79ebc39933e60b02e9a4947"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-26/hero-26-12-64.png",
+      "sha256": "4d697a15aabb5befa59287cb4893ef44556bb626566f57d3a585f7552476c20c"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-26/hero-26-12-48.png",
+      "sha256": "1acbf9c7e1dbe2e20711107b9bd9e9ac7b224c97ac268689c1c989e3e6a96f9d"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-26/hero-26-12-32.png",
+      "sha256": "8102a87d62cacb718e24da2cfb881f0982f8246ff6d92c1b9feb5e01f765aa92"
+    }
+  }
+}

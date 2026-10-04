@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-02-06",
+  "name": "Shield Press",
+  "source": "art/ability-icons-draft/raw/hero-02/revision-01.png",
+  "source_sha256": "afeade7e11cd68ba6d01f4b9430e0ffa26465e190b3b1cea01bb880e844a3aea",
+  "cell": [
+    1,
+    1,
+    384,
+    342
+  ],
+  "raw_bbox": [
+    91,
+    69,
+    323,
+    273
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-02/hero-02-06-128.png",
+      "sha256": "45948b29dca73a834c36704a5c544db7fba8cb3c17e477c9b47d7fda97f82888"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-02/hero-02-06-64.png",
+      "sha256": "3cf1102c9572f8540a14069a9d688a1364f98e634aa07d8cf0f52b034bb2db1b"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-02/hero-02-06-48.png",
+      "sha256": "b8e477332f2ffdc328db85ca0fbbc25421d06ca271c8d05837751fc5dca6a350"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-02/hero-02-06-32.png",
+      "sha256": "220e93b06b9bf38b17c0d8b8e80dc280582f1bf17a169df88b1b1270c3e63c8e"
+    }
+  }
+}

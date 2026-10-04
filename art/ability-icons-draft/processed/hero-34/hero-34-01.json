@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-34-01",
+  "name": "Take Watch",
+  "source": "art/ability-icons-draft/raw/hero-34/initial.png",
+  "source_sha256": "3285f8e88d13e6e3e4d9f91664993d1184fa81bbe2aac5fe250494319ab069e0",
+  "cell": [
+    0,
+    0,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    0,
+    0,
+    384,
+    341
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    73,
+    53,
+    318,
+    311
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-34/hero-34-01-128.png",
+      "sha256": "cf99b4f6afd6af04e038fe891958df32de9757646e7bd3f20d9ad326bd93d520"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-34/hero-34-01-64.png",
+      "sha256": "a40ef2454728a3f54b091c8fe274c68e923f9da7a84e782ed6e5ce4e1bde6ef3"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-34/hero-34-01-48.png",
+      "sha256": "f77709877ff55b460214908e36bdf1c241a785ab12904aab59a969a17dc9cdd6"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-34/hero-34-01-32.png",
+      "sha256": "c972e0724f95a5ba740f1b29e5000609f2041ba2450d01874d7c0b13416833b0"
+    }
+  }
+}

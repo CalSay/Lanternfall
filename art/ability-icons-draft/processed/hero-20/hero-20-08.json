@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-20-08",
+  "name": "Buried Light",
+  "source": "art/ability-icons-draft/raw/hero-20/initial.png",
+  "source_sha256": "83ca2e1f4fa66f8e7c6688e57e6f7a66ce819373bfe97a5c64b5ac8249c5717a",
+  "cell": [
+    3,
+    1,
+    384,
+    342
+  ],
+  "source_rectangle": [
+    1152,
+    341,
+    1536,
+    683
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    58,
+    42,
+    318,
+    292
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-20/hero-20-08-128.png",
+      "sha256": "3c355c717d55339f15a755259b83389260a9293c50c3eeb0c160e8b24e5e7e51"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-20/hero-20-08-64.png",
+      "sha256": "f764c5bd7347df31696dbddf272748af630b50d5406d47bff30ee2307e6b85af"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-20/hero-20-08-48.png",
+      "sha256": "934975e5108126df45fbff1a433c9be1532d787edaae7a060993fdad810ec594"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-20/hero-20-08-32.png",
+      "sha256": "1b6b0d8fcfb7f17c18bafb4339fc1da5ea2d293ffacae04dd3a1a4740bf7500e"
+    }
+  }
+}

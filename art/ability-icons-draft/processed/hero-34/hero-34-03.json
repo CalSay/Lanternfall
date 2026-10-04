@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-34-03",
+  "name": "Shuttered Light",
+  "source": "art/ability-icons-draft/raw/hero-34/initial.png",
+  "source_sha256": "3285f8e88d13e6e3e4d9f91664993d1184fa81bbe2aac5fe250494319ab069e0",
+  "cell": [
+    2,
+    0,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    768,
+    0,
+    1152,
+    341
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    63,
+    76,
+    331,
+    320
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-34/hero-34-03-128.png",
+      "sha256": "e732c389433ebb5c5558df4dc08f0f43bb5acaafd1ae432c7b7a5cb6688dbf92"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-34/hero-34-03-64.png",
+      "sha256": "19a6590a38eb8a8de4c371613d178e42e2d235f240354eb9ec2060202b36c11a"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-34/hero-34-03-48.png",
+      "sha256": "1c17b82b46cd2d0006603e619fb68b543db21126b70a0cf5db925d497ff13b6a"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-34/hero-34-03-32.png",
+      "sha256": "385c3d5731191ef6827df8a3105ade459967a71f034097d8a9e6c02e71dd64e5"
+    }
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-06-02",
+  "name": "Barrow Vigil",
+  "source": "art/ability-icons-draft/raw/hero-06/initial.png",
+  "source_sha256": "6bcfc8612b6c75bfe975c206de9d5b5f7cca0499b032aad52e2836bf2fc74d24",
+  "cell": [
+    1,
+    0,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    74,
+    65,
+    334,
+    320
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-06/hero-06-02-128.png",
+      "sha256": "ffa0f16fb8d5a8f7db88cb860aa205702c501e1d0649caf1d733d5bd3289b317"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-06/hero-06-02-64.png",
+      "sha256": "555e92957304664b7d0a23e42508805553b0e66ee3c578418e7ed60d361a03f0"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-06/hero-06-02-48.png",
+      "sha256": "8ed6043bbf40655d4219190d3eec72e3feea5a012ba094df3a5b28b2fc251ef9"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-06/hero-06-02-32.png",
+      "sha256": "059b49ba7cb790190caecee553c58887a56f074e1835344dd2db107e1e1d48bf"
+    }
+  }
+}

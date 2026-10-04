@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-14-12",
+  "name": "Cooled Edge",
+  "source": "art/ability-icons-draft/raw/hero-14/initial.png",
+  "source_sha256": "620ff6b97e16026aa6628720b90134f03a9e0c764cfec18ef55a5eccd6ba16ca",
+  "cell": [
+    3,
+    2,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    1152,
+    683,
+    1536,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    26,
+    32,
+    319,
+    277
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-14/hero-14-12-128.png",
+      "sha256": "f0514a29ae20a25994175c194b6005dac4a74a9a0176c37318af14a6ced9d9ce"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-14/hero-14-12-64.png",
+      "sha256": "5001db62daf72af1efba2ac056ebdfab0a9ade044d448abb950fa9e01c237419"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-14/hero-14-12-48.png",
+      "sha256": "57ce2dd90cd50a2365e8e186289f7a66848725a0d972e2dc398fb3363d52c87d"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-14/hero-14-12-32.png",
+      "sha256": "eec099f3a6b0cb19618dda82bb80ef12b2ff9935d478f6c14a85578365d602b9"
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-23-12",
+  "name": "Threadbare",
+  "source": "art/ability-icons-draft/raw/hero-23/initial.png",
+  "source_sha256": "1601ed146f61b6c06aa62535d51dadccfc29c97d940c4ae00205acccd3746d55",
+  "cell": [
+    3,
+    2,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    1152,
+    683,
+    1536,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    44,
+    34,
+    321,
+    272
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-23/hero-23-12-128.png",
+      "sha256": "30a8291c3dfc8ccf207f092e74b61faaf5a8e7a6350c9eb153798e7fa4523c30"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-23/hero-23-12-64.png",
+      "sha256": "21a27fa9633294321234e0c56bfbd40bf60fbba82358db41ee24a1f91ecd5b61"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-23/hero-23-12-48.png",
+      "sha256": "1e88683d8b913abde746b3017294f1c858fd0fe23b772e321c3b2ceb51785332"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-23/hero-23-12-32.png",
+      "sha256": "a747f13d153aaeccbcac911f83263808f425442b345ef2bf923a22e63ce3fb57"
+    }
+  }
+}

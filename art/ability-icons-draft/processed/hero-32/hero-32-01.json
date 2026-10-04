@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-32-01",
+  "name": "Coil Up",
+  "source": "art/ability-icons-draft/raw/hero-32/initial.png",
+  "source_sha256": "9fc99b0c96185debff12f3ef83d57429535b2f83b2ff399b7d563437f74a65f3",
+  "cell": [
+    0,
+    0,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    0,
+    0,
+    384,
+    341
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    78,
+    72,
+    317,
+    307
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-32/hero-32-01-128.png",
+      "sha256": "72e7384282d585f2debc941024f863cce162005a645e79d2b25f19097c1e4c38"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-32/hero-32-01-64.png",
+      "sha256": "8964e457cd350ec8b0e770554d07682ac377bb801f06ba8147cd2a956c69649d"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-32/hero-32-01-48.png",
+      "sha256": "a305f8528c4e6f54f0137eb2809b1df30ca5bec85b4782ca2353ba0ced34877d"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-32/hero-32-01-32.png",
+      "sha256": "ea02efe864b1c1ebf172371e339fa604ecfb19d342b1f3dbdc71acb605e9221a"
+    }
+  }
+}

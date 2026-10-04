@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-01-04",
+  "name": "Sonic Arrow",
+  "source": "art/ability-icons-draft/raw/hero-01/revision-01.png",
+  "source_sha256": "58437daa8a585639577e47e4bb3b0af12948a073085ff6a6987e21dab0e1dd42",
+  "cell": [
+    3,
+    0,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    34,
+    86,
+    351,
+    312
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-01/hero-01-04-128.png",
+      "sha256": "82a4efea3b1fb579d41ff0f5d32b7a47e3fff86d5bbc503861bd8ff6400014a4"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-01/hero-01-04-64.png",
+      "sha256": "aa12333bca63c684fc30a8ae2385c6ae1b1f377612649e2f048fbc503d758e76"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-01/hero-01-04-48.png",
+      "sha256": "fc298cc5e8ff7c5bc0a9c3cbb90143b433d6deb3e2ee2a2820372f8d51b20c7f"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-01/hero-01-04-32.png",
+      "sha256": "f6f9c6aa1041fda418a507f60db1c9dbd4b176bd01a4ee91d1ca667d39359ffa"
+    }
+  }
+}

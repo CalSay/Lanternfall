@@ -1,0 +1,45 @@
+{
+  "icon_id": "shared-ranger-04",
+  "name": "Quarry Mark",
+  "source": "art/ability-icons-draft/raw/shared-ranger/initial.png",
+  "source_sha256": "06a5ffe6d4dae5ff287b23ec933b19a4188953f6794a5dd9bb1d5c4cfdf57826",
+  "cell": [
+    0,
+    1,
+    512,
+    512
+  ],
+  "source_rectangle": [
+    0,
+    512,
+    512,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    103,
+    43,
+    436,
+    423
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/shared-ranger/shared-ranger-04-128.png",
+      "sha256": "965f88f2b2d8fb0ad4e1fc47722441222d2371a70769c4d4ed8ffa8ee499ce2f"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/shared-ranger/shared-ranger-04-64.png",
+      "sha256": "68570c97f6486ced0008272899c6922ec671436d9c046d9d83377317c89b1061"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/shared-ranger/shared-ranger-04-48.png",
+      "sha256": "f2ac22082fe3c4799faf58a8a45d4b496980a8cd5254119842d93e8c666f4ffd"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/shared-ranger/shared-ranger-04-32.png",
+      "sha256": "eccc248c8506c0174848b7782d6084a8ab2168704e38b50014466f7b12493629"
+    }
+  }
+}

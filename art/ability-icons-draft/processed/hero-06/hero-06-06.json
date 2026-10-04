@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-06-06",
+  "name": "The Living First",
+  "source": "art/ability-icons-draft/raw/hero-06/initial.png",
+  "source_sha256": "6bcfc8612b6c75bfe975c206de9d5b5f7cca0499b032aad52e2836bf2fc74d24",
+  "cell": [
+    1,
+    1,
+    384,
+    342
+  ],
+  "raw_bbox": [
+    60,
+    36,
+    338,
+    287
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-06/hero-06-06-128.png",
+      "sha256": "3081c8b5a589f496dc3cac74a63b560b7d0dfccdd7259366cbfc671de7c357eb"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-06/hero-06-06-64.png",
+      "sha256": "f929b3bce9bd16f464e696248938adcce619533ddaae314f0b9b7468cf9aa671"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-06/hero-06-06-48.png",
+      "sha256": "d946314a072cf283b016d69da623f2660cb7f23a5dbcddd35e7440e1a8bc2f5f"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-06/hero-06-06-32.png",
+      "sha256": "69ecabbfceb6ecb7da7421d0d24d6a9e7a9c0b116842781ebbb2a3c87857ada1"
+    }
+  }
+}

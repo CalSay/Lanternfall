@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-07-11",
+  "name": "Upright",
+  "source": "art/ability-icons-draft/raw/hero-07/initial.png",
+  "source_sha256": "c5a611d4b3e52f2396d0c4927d0089255fcab855408bd199f60994a281e3ee6b",
+  "cell": [
+    2,
+    2,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    111,
+    8,
+    253,
+    294
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-07/hero-07-11-128.png",
+      "sha256": "84e6f9eee8c91de1c51090b172f0f7be052f2f6dc21eba366e70d015d6068b38"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-07/hero-07-11-64.png",
+      "sha256": "73c40d5ab79ccd9c3508cad5a1c6dc94aef5b57244330ba01ed404a7f58ef77b"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-07/hero-07-11-48.png",
+      "sha256": "90fc5542edef2f1fd7dabb45cb8132bfe54342b5c74d8d7bc279f52fa3aad929"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-07/hero-07-11-32.png",
+      "sha256": "2e4c92802f97085c4c4a141ed9e1e7ea920eb4ab18f291d2ce2b60ce3a02e981"
+    }
+  }
+}

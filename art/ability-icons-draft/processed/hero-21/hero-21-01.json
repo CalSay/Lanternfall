@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-21-01",
+  "name": "Bitter Vapour",
+  "source": "art/ability-icons-draft/raw/hero-21/initial.png",
+  "source_sha256": "faf603fa06d58e42be4c3368499fe7a58f08b8b5bf31d98c730bf6a6c5879a45",
+  "cell": [
+    0,
+    0,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    0,
+    0,
+    384,
+    341
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    106,
+    61,
+    330,
+    308
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-21/hero-21-01-128.png",
+      "sha256": "ff9dac4208f1b92c5fb91673e6835e72c7714f6f13d5b530e2510bc9fc83902b"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-21/hero-21-01-64.png",
+      "sha256": "4bb86f676582a621347813124270d40fcd2672c4756895c36ee434c23daac5f8"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-21/hero-21-01-48.png",
+      "sha256": "c98afc4a22e67cde0ec876acf1057925750f0cced5fd156fcc2b917ddb22a58c"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-21/hero-21-01-32.png",
+      "sha256": "af387a7a090d48449c024eaa89c707c305c83797cc52ddd17c32df7a0ea57ea2"
+    }
+  }
+}

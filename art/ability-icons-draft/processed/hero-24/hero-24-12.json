@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-24-12",
+  "name": "Clockwork Habit",
+  "source": "art/ability-icons-draft/raw/hero-24/initial.png",
+  "source_sha256": "4e22efa85f0d09ff8bcb5771888ece2abc454c3e19a02de4660c7c60992fd240",
+  "cell": [
+    3,
+    2,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    1152,
+    683,
+    1536,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    62,
+    2,
+    306,
+    282
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-24/hero-24-12-128.png",
+      "sha256": "3085f2bf02e5cf5e24f2920f16c9417e0025320fa272a399f452db4b6bddcc91"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-24/hero-24-12-64.png",
+      "sha256": "5278d37039bcbfeeb0701127d23802afebf9dd0e8a613cfd25a4e889defeff64"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-24/hero-24-12-48.png",
+      "sha256": "cb7c56f1f9ea30ce1968068179beb780e30c629ae8fa45dddc3e625be0cb9beb"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-24/hero-24-12-32.png",
+      "sha256": "17b285933e2072fe28492fd16d57e454073f3aeaa780fb9066dfa4add1886b3c"
+    }
+  }
+}

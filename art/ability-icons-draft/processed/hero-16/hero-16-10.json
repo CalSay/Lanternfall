@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-16-10",
+  "name": "Eel Hunter",
+  "source": "art/ability-icons-draft/raw/hero-16/initial.png",
+  "source_sha256": "74cf5dd1ac2b8b7ce64109521292450ad8b345131b157d7de885bdce619a6c87",
+  "cell": [
+    1,
+    2,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    384,
+    683,
+    768,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    66,
+    13,
+    320,
+    280
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-16/hero-16-10-128.png",
+      "sha256": "e7d4e75e429e1776a5750267b96dd9b62f79e7f327585d42ffaee6512ef531d4"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-16/hero-16-10-64.png",
+      "sha256": "cabbd19055e6de15cd49d129ffd885e5ddac5a2adc4c0aadce8356de9b1ed5d6"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-16/hero-16-10-48.png",
+      "sha256": "97085a525f958ffaba8cd7702fb937e63012dca4b8c537a10d48f4d2bdc16bc8"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-16/hero-16-10-32.png",
+      "sha256": "95eaab31893ad8bf6d8cf643a6c60b66fcde12fcf32c3db64ccf8aa2de9f7ef1"
+    }
+  }
+}

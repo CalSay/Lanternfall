@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-15-05",
+  "name": "Did Not Kneel",
+  "source": "art/ability-icons-draft/raw/hero-15/initial.png",
+  "source_sha256": "cd746813bfccf8c7b0f3d3a40ca7abe7b64c2cc6e4e511f8e42f77a98ae6d045",
+  "cell": [
+    0,
+    1,
+    384,
+    323
+  ],
+  "source_rectangle": [
+    0,
+    341,
+    384,
+    664
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    80,
+    40,
+    348,
+    282
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-15/hero-15-05-128.png",
+      "sha256": "1ab891b1068d63564336870f4c7416f22ec51917f97f870a636f9b2b3fe099c5"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-15/hero-15-05-64.png",
+      "sha256": "c6a4151d0cb157fce7201336789efc33011bf14187fa451f2668e4d02e7180ef"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-15/hero-15-05-48.png",
+      "sha256": "18c540e3da6affce11d818de5c6827c689f96df32c7513b569b958bc3a599659"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-15/hero-15-05-32.png",
+      "sha256": "dcceea786e4ffabce806431b9db2e84cf9288e71492745d0a26196a8f9dfb68f"
+    }
+  }
+}

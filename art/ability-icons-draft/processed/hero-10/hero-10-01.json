@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-10-01",
+  "name": "Find the Seam",
+  "source": "art/ability-icons-draft/raw/hero-10/initial.png",
+  "source_sha256": "b35142971fba2f77cf87c5e0395b982c6f7b1cf9e45bbdb95d5aa84133dd1e0b",
+  "cell": [
+    0,
+    0,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    75,
+    72,
+    330,
+    303
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-10/hero-10-01-128.png",
+      "sha256": "5d7d772a70fe421f0e84dd150c8592ef5dd3ce3f3158470d65cfe9a4b00e7153"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-10/hero-10-01-64.png",
+      "sha256": "b96c1212341164306bf1420d4d49168f09a5a10ec1da2ba3a4e0374560c92ecb"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-10/hero-10-01-48.png",
+      "sha256": "86c210553b60606e4ba2e1797053579d7cbe2511e68b61ad8416d39e5cf3282d"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-10/hero-10-01-32.png",
+      "sha256": "7f68df1ea3e48b26d9673df2df21c25cd73a7c372dc90dd5dc68bedd926cc743"
+    }
+  }
+}

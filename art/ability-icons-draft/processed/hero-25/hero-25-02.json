@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-25-02",
+  "name": "Ringing Cut",
+  "source": "art/ability-icons-draft/raw/hero-25/initial.png",
+  "source_sha256": "772274f9f964339e53f7321b8ad188f03b105c2ecdd4754320cb6b84b1d5c7ec",
+  "cell": [
+    1,
+    0,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    384,
+    0,
+    768,
+    341
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    59,
+    79,
+    354,
+    307
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-25/hero-25-02-128.png",
+      "sha256": "ea2a576f122143e4ef17806fd862982f554cd992fa42a835a91aba9d922801da"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-25/hero-25-02-64.png",
+      "sha256": "1af7cc7345f420a38d6ed7803efbe77ec1bfbc973022b02d533a792990c7f2ef"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-25/hero-25-02-48.png",
+      "sha256": "5f3315ef893b8d7a9e34b74a88f5eb294766d83c36e50136907426e85b1232f8"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-25/hero-25-02-32.png",
+      "sha256": "260cf2585df0e05db2a424f7f3c9165b73fa0b4de56d3b855fca0277fb2560ce"
+    }
+  }
+}

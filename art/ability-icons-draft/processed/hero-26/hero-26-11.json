@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-26-11",
+  "name": "Clinical Eye",
+  "source": "art/ability-icons-draft/raw/hero-26/initial.png",
+  "source_sha256": "69282736452127fdf3a6439efe454715873075762e622279e016f31c72b4e9f4",
+  "cell": [
+    2,
+    2,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    768,
+    683,
+    1152,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    54,
+    12,
+    294,
+    262
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-26/hero-26-11-128.png",
+      "sha256": "75efb2723e06205b65971c5eeb386e2aa672a9f4d5c52b18e65c5fb3f1ed338a"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-26/hero-26-11-64.png",
+      "sha256": "c10e972e7778528c63110872cac4de80411fd22bdb25de9ef5524f2df6d2ca56"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-26/hero-26-11-48.png",
+      "sha256": "e56ed34578725531e70ae861d98b41cf7a4759b025062c41d1b535b88841aa42"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-26/hero-26-11-32.png",
+      "sha256": "83aa9786fda02da0f5be1865b03b100120d20537da5ddc1d2794a14f64ad6cdc"
+    }
+  }
+}

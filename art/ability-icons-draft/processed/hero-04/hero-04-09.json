@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-04-09",
+  "name": "Another Hinge",
+  "source": "art/ability-icons-draft/raw/hero-04/initial.png",
+  "source_sha256": "0df9fb5388348a9c5278e44fe3f1c19d8b774d1e8fa08f78952f14e101071b48",
+  "cell": [
+    0,
+    2,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    94,
+    61,
+    305,
+    250
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-04/hero-04-09-128.png",
+      "sha256": "a192b211afe339e50e96831036ddadf4a1cfc5d9e465add2dc690951dd4781f0"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-04/hero-04-09-64.png",
+      "sha256": "f6e03de88a7d520752e76e7a9c657896871f85f2791a8250a892bb2c7a78cc0c"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-04/hero-04-09-48.png",
+      "sha256": "8f073071da72875c91801ab6e74068705fec604d43d5bb58de2e3c121d2849b4"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-04/hero-04-09-32.png",
+      "sha256": "27b8f3d8abbf6e80d0e229541fdd5f0adb9f835c2caa1a0a68597825fa23d824"
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "tool": "image_gen.imagegen",
+  "attempt": "initial",
+  "raw": "initial.png",
+  "prompt": "art/ability-icons-draft/prompts/hero-33.txt",
+  "creative_art": "manually authored prompt; no procedural artwork",
+  "owner_approval": "pending"
+}

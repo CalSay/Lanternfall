@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-13-06",
+  "name": "Lamps Answer",
+  "source": "art/ability-icons-draft/raw/hero-13/revision-01.png",
+  "source_sha256": "6f7b927a2ed54e245494b44fb6c52ac4cd14e0d139a28693b2082fc6605e7fbb",
+  "cell": [
+    1,
+    1,
+    384,
+    340
+  ],
+  "source_rectangle": [
+    384,
+    341,
+    768,
+    681
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    45,
+    20,
+    340,
+    315
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-13/hero-13-06-128.png",
+      "sha256": "cc4387dc5dc53ba86fbc65da8e7145fdbdca49fd1164f80d36dce5c8a446bc3f"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-13/hero-13-06-64.png",
+      "sha256": "3a541ab877f1749e9a76b43cf7cd647b922da7b36d968500de0a1efccb35ab20"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-13/hero-13-06-48.png",
+      "sha256": "5e2881c508ff23aa2cef10f39d8e9aed2e93189602c95dc55e82ee595598deba"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-13/hero-13-06-32.png",
+      "sha256": "f398bb0857e3ce5fbc045e1d7b6d1bb2ba411787ac72e522e2a4eace9b6e979d"
+    }
+  }
+}

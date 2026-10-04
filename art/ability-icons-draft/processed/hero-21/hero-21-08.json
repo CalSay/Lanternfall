@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-21-08",
+  "name": "Taste the Air",
+  "source": "art/ability-icons-draft/raw/hero-21/initial.png",
+  "source_sha256": "faf603fa06d58e42be4c3368499fe7a58f08b8b5bf31d98c730bf6a6c5879a45",
+  "cell": [
+    3,
+    1,
+    384,
+    342
+  ],
+  "source_rectangle": [
+    1152,
+    341,
+    1536,
+    683
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    70,
+    45,
+    306,
+    294
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-21/hero-21-08-128.png",
+      "sha256": "04918506856722a4df11105540b765d2cb30fd1e34e34887d471b3d99937673a"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-21/hero-21-08-64.png",
+      "sha256": "bf71b2d24a429524627cac9065f883e9fc4e2a04f474a56825ca100e442f65b6"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-21/hero-21-08-48.png",
+      "sha256": "6656c82109e5fbfcf35fc8ed37039d23f96be1d022ec3c82323d412ac56a689e"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-21/hero-21-08-32.png",
+      "sha256": "be0272d1272d67b9a181676d1398489aa372e0ab3058d46dbe30b4f2fd0d5f2f"
+    }
+  }
+}

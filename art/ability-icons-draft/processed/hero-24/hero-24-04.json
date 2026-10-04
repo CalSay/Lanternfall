@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-24-04",
+  "name": "Set the Alarm",
+  "source": "art/ability-icons-draft/raw/hero-24/initial.png",
+  "source_sha256": "4e22efa85f0d09ff8bcb5771888ece2abc454c3e19a02de4660c7c60992fd240",
+  "cell": [
+    3,
+    0,
+    384,
+    345
+  ],
+  "source_rectangle": [
+    1152,
+    0,
+    1536,
+    345
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    50,
+    40,
+    316,
+    344
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-24/hero-24-04-128.png",
+      "sha256": "e1d24ab89fa4ea4b59c7e7ece9440a9e1f191e217721b37232352f092d0c2724"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-24/hero-24-04-64.png",
+      "sha256": "30d2bb9d31b667f687caca189643cef9d92f42eee741dbf8bd933b644a7b5efb"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-24/hero-24-04-48.png",
+      "sha256": "7197affb8b191f2e42d2d6a90fe0fddf7284e77cfca8a7aaba2fd72233c4b80f"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-24/hero-24-04-32.png",
+      "sha256": "1cfd88189b93d55a0a8af64f2f09294950834b04c3aaa18f3e26de0ea8d958c2"
+    }
+  }
+}

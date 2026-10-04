@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-05-04",
+  "name": "Timber",
+  "source": "art/ability-icons-draft/raw/hero-05/initial.png",
+  "source_sha256": "9e802dd0953c2985fdf4d4c9400993bbbf2cd90f6dd6a5754c946c3e7c818373",
+  "cell": [
+    3,
+    0,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    32,
+    48,
+    323,
+    324
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-05/hero-05-04-128.png",
+      "sha256": "6b32a60301c09edb7bea451f970dbf1954f8d94059dee021b9c25d81fa138f1c"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-05/hero-05-04-64.png",
+      "sha256": "8c6f9d4ddf0357ea2925656686da705fabeed6edbb01e7af35f734949cce3284"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-05/hero-05-04-48.png",
+      "sha256": "a8d61a0a921c9b3b3949ed125d567b60e6b87d40f6b51145ab48a67fdece0418"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-05/hero-05-04-32.png",
+      "sha256": "fd7d3040539ac2a09fda20d21428608039fa386f3aa937c99fe0ca12b1dc906c"
+    }
+  }
+}

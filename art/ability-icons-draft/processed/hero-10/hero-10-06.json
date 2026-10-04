@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-10-06",
+  "name": "Palm on Stone",
+  "source": "art/ability-icons-draft/raw/hero-10/initial.png",
+  "source_sha256": "b35142971fba2f77cf87c5e0395b982c6f7b1cf9e45bbdb95d5aa84133dd1e0b",
+  "cell": [
+    1,
+    1,
+    384,
+    342
+  ],
+  "raw_bbox": [
+    70,
+    60,
+    338,
+    279
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-10/hero-10-06-128.png",
+      "sha256": "25d50247d5d7a8529e9fe638340ee2700cf1667a17ee750b507dfa2d9fbad346"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-10/hero-10-06-64.png",
+      "sha256": "db1822b4268ed18b9b36748659c97d082c474b98198ec32dd37ba7ae5d3379ba"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-10/hero-10-06-48.png",
+      "sha256": "69f612c2c2e98b18b1f1e4ce3c7fcc5db5bf8831573affaf056b1c58216239c2"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-10/hero-10-06-32.png",
+      "sha256": "94b835a335f11f0f75c3630418dd272d268af12132b99d290a0434692357beaf"
+    }
+  }
+}

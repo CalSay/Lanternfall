@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-22-04",
+  "name": "Doorway Shot",
+  "source": "art/ability-icons-draft/raw/hero-22/initial.png",
+  "source_sha256": "dbfb104d6ff11ee7589c8f600764bd335af518c5e7f46b39f23da5a9ddc9dc80",
+  "cell": [
+    3,
+    0,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    1152,
+    0,
+    1536,
+    341
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    28,
+    62,
+    334,
+    312
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-22/hero-22-04-128.png",
+      "sha256": "528d68d0135dd82eb9c5caa4d8b05a248a165684dae58b267f2267b234504c46"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-22/hero-22-04-64.png",
+      "sha256": "bf46ab8561db1650408309584c4a906abd8413e0faab62b886adb95c4c6d3a18"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-22/hero-22-04-48.png",
+      "sha256": "75e2203e0d08b5fa2a08a63d3f91f9bb6d9ff085f0e4fe255ffca081d65e97ed"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-22/hero-22-04-32.png",
+      "sha256": "e44ed9d139b92ec0e1e005020f881ed9b4dcf96db6dd2596f3c94dcb0b86d19a"
+    }
+  }
+}

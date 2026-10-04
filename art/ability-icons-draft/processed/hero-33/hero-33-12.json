@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-33-12",
+  "name": "Plain Fletching",
+  "source": "art/ability-icons-draft/raw/hero-33/initial.png",
+  "source_sha256": "34c3cbedc4bc8535718528feb955cbdcecccb350fca27325ff2b86a023189d00",
+  "cell": [
+    3,
+    2,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    1152,
+    683,
+    1536,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    48,
+    24,
+    312,
+    234
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-33/hero-33-12-128.png",
+      "sha256": "c1a39167d4b6768ea8065cb783e4cafff067c89b964eeacc30b5cde3e9de2f77"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-33/hero-33-12-64.png",
+      "sha256": "48f03ad036599bf7290438cd76492afdcdc35e568be2b134340725efaaf00d58"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-33/hero-33-12-48.png",
+      "sha256": "1432df6e19d6157dce891886df37c61a7615ee1d24df66bc7fc9dba295aef36b"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-33/hero-33-12-32.png",
+      "sha256": "1b2fc0f75f8001d9b2e49026c6d2661661e9d6ddcaa402bd293d7300509a5f25"
+    }
+  }
+}

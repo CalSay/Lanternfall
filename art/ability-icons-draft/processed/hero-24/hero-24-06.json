@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-24-06",
+  "name": "Wind by Hand",
+  "source": "art/ability-icons-draft/raw/hero-24/initial.png",
+  "source_sha256": "4e22efa85f0d09ff8bcb5771888ece2abc454c3e19a02de4660c7c60992fd240",
+  "cell": [
+    1,
+    1,
+    384,
+    338
+  ],
+  "source_rectangle": [
+    384,
+    345,
+    768,
+    683
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    44,
+    51,
+    356,
+    313
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-24/hero-24-06-128.png",
+      "sha256": "adaa0f0c1dba637c7914992911b085f9d31d0728679a8c7484c07b1f94f57d38"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-24/hero-24-06-64.png",
+      "sha256": "529fa1a2295ac635f535211b9114796119492408b7266b6bc061e2fcaf64f947"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-24/hero-24-06-48.png",
+      "sha256": "3ba5ae52f513ada2ca468dfc2d0224715aa80b6bad8d1135c7b611ce8d6cb1ce"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-24/hero-24-06-32.png",
+      "sha256": "76a8545d8fc10ab0776babfea155c5a003cf01c556173a9a93c4f76b98ca297c"
+    }
+  }
+}

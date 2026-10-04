@@ -1,0 +1,14 @@
+Create twelve Kestrel Thane abilityicons4cols3rows equalinvisiblecells1536x1024. Approvedconcept locks pale steel ochre Combat Spear. Existingicons lock darkoutline flatclusters readable32px. Nohero bodies/UItext/borders; spear is HELD not thrown. Central70% solid#FF00FF margin. Rowmajor:
+1 Measure the Reach: spearpoint with two clean near/far reachbrackets.
+2 Grounded Advance: forward spear with grounded bootsole mark and compact thrustline.
+3 Spear Butt: blunt spearbutt with single weakening impactstar.
+4 Long Point: spearpoint penetrating compact armourplate seam.
+5 Step Back: bootheel behind protective wardarc noportal.
+6 The Name on the Shaft: wrapped spears haft with one reserved goldchargeband, nolegiblewords.
+7 Low Sweep: horizontal spearshaft with low sweepcrescent and pinnotch.
+8 Pass Held Open: spearpoint bracing open guardarch with lightchargedtip.
+9 Skyfall Thrust: strong downward heldspeardrive and grounded solebar, no flyingweapon.
+10 Sure Footing PASSIVE: firm bootsole and one poised ochrespark.
+11 Ground Is Certain PASSIVE: spearpoint above solid angular groundbracket.
+12 Kept Point PASSIVE: near/far opposing spearreachbrackets and small guardarc.
+Only12symbols, no text noactors, fullsilhouettes insidecell.

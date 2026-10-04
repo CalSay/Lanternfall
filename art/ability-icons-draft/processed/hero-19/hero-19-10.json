@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-19-10",
+  "name": "Doorward\u2019s Habit",
+  "source": "art/ability-icons-draft/raw/hero-19/initial.png",
+  "source_sha256": "bfe18f630518f6f67979ba1b2bdb21b6cb1cb8951856bd93442dcb4f33ac57fd",
+  "cell": [
+    1,
+    2,
+    384,
+    344
+  ],
+  "source_rectangle": [
+    384,
+    680,
+    768,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    76,
+    29,
+    318,
+    271
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-19/hero-19-10-128.png",
+      "sha256": "88011cc71cc7b77ee83a019fad79fa0fdb2e659ebf2715658cf0e9e32413065d"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-19/hero-19-10-64.png",
+      "sha256": "601350673cee8233712310a42a707aae37988424c69a75e22317b9cb0a382eda"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-19/hero-19-10-48.png",
+      "sha256": "db45a8c91fea6eb2668a3042ccbf65016a450014115ab7da3a90ee5d7489e98c"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-19/hero-19-10-32.png",
+      "sha256": "cba2f0848f00833d77c798fb4b0fb70d6f339a80518230138d14b5d2adfe90f9"
+    }
+  }
+}

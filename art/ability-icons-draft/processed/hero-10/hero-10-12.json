@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-10-12",
+  "name": "Hammer After",
+  "source": "art/ability-icons-draft/raw/hero-10/initial.png",
+  "source_sha256": "b35142971fba2f77cf87c5e0395b982c6f7b1cf9e45bbdb95d5aa84133dd1e0b",
+  "cell": [
+    3,
+    2,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    41,
+    38,
+    317,
+    266
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-10/hero-10-12-128.png",
+      "sha256": "d592992b2e91aae20c3e336ce7ba91439313d85d6d02a6f9e8ab45ffb48a3f80"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-10/hero-10-12-64.png",
+      "sha256": "83a90589d7d0aead686762cfd024b84e2b9c936c6c934099c1c349736aaefa48"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-10/hero-10-12-48.png",
+      "sha256": "f3bf251358b2ea9031b7d695bddd5f5a25119dd9d579862fc8f9814ef83f7583"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-10/hero-10-12-32.png",
+      "sha256": "1a87e57989b5816b6aa3df9a0b0e8cfd6261c807b860883ae344df3d32a33688"
+    }
+  }
+}

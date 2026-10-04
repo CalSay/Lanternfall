@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-06-07",
+  "name": "Quiet the Barrow",
+  "source": "art/ability-icons-draft/raw/hero-06/initial.png",
+  "source_sha256": "6bcfc8612b6c75bfe975c206de9d5b5f7cca0499b032aad52e2836bf2fc74d24",
+  "cell": [
+    2,
+    1,
+    384,
+    342
+  ],
+  "raw_bbox": [
+    74,
+    30,
+    323,
+    301
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-06/hero-06-07-128.png",
+      "sha256": "3d8da66aff1885971f948de01a6ead6e74c1227b9b722adfc36668030a7a8fb3"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-06/hero-06-07-64.png",
+      "sha256": "f8bbac7ac9f2162a58630e8d8517a4a134e7ccb2ae7560da794bcf6b3a57c89b"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-06/hero-06-07-48.png",
+      "sha256": "1805c4c4bce6f49339f699863cf7214b59ae1280953009bcd3190a5829131773"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-06/hero-06-07-32.png",
+      "sha256": "8d8f9c198f0a14158bb77e9b2907ac1fe60855f0d258a10e108605f47c44d494"
+    }
+  }
+}

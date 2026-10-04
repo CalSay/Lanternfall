@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-17-04",
+  "name": "Draw a Needle",
+  "source": "art/ability-icons-draft/raw/hero-17/initial.png",
+  "source_sha256": "9cfb6c123f64254a36401115884f7626809e770bd1176b0701853f40da447634",
+  "cell": [
+    3,
+    0,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    1152,
+    0,
+    1536,
+    341
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    50,
+    84,
+    301,
+    309
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-17/hero-17-04-128.png",
+      "sha256": "679637a0d40369a465959f1e25d52079f5d9c491ddcb5047b9b73db64efe6db1"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-17/hero-17-04-64.png",
+      "sha256": "81c49a9ce5721ef66856e7e1064174158a2e1e371af7ad062e9101c590f725c0"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-17/hero-17-04-48.png",
+      "sha256": "46a7048d2aa4050bd4b2e77952878bf93111af18d3dd2b504bcfe35074cc29d0"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-17/hero-17-04-32.png",
+      "sha256": "eef83e0b6efa3c650cfb172bb54b6fcc2b84897e1c0153517d3900b36abb4c14"
+    }
+  }
+}

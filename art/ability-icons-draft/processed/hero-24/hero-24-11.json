@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-24-11",
+  "name": "On the Minute",
+  "source": "art/ability-icons-draft/raw/hero-24/initial.png",
+  "source_sha256": "4e22efa85f0d09ff8bcb5771888ece2abc454c3e19a02de4660c7c60992fd240",
+  "cell": [
+    2,
+    2,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    768,
+    683,
+    1152,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    48,
+    23,
+    341,
+    275
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-24/hero-24-11-128.png",
+      "sha256": "4e902cef08d096f7df92bbfb39a3b7a14009d72c805c67ea7755c8d538e14d7b"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-24/hero-24-11-64.png",
+      "sha256": "c99a49280418fde069987708cbb0c3405b77f54a4b047fb0f2ce7feaa6ea768b"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-24/hero-24-11-48.png",
+      "sha256": "3c88f21598ec82e5c046676847955bcda8d25fe68a1cfa60119793e27a0e681d"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-24/hero-24-11-32.png",
+      "sha256": "4e4c9f89fba3048ee9b2ab5bbc5eedcd5a1bd79beee122541b725aa3678f4d01"
+    }
+  }
+}

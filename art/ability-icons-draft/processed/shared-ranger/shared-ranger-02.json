@@ -1,0 +1,45 @@
+{
+  "icon_id": "shared-ranger-02",
+  "name": "Barbed Strike",
+  "source": "art/ability-icons-draft/raw/shared-ranger/initial.png",
+  "source_sha256": "06a5ffe6d4dae5ff287b23ec933b19a4188953f6794a5dd9bb1d5c4cfdf57826",
+  "cell": [
+    1,
+    0,
+    512,
+    512
+  ],
+  "source_rectangle": [
+    512,
+    0,
+    1024,
+    512
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    86,
+    97,
+    423,
+    450
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/shared-ranger/shared-ranger-02-128.png",
+      "sha256": "d58c973b12adf5f280e0a4737b193524c3ba4452f70d2f34a0e7236b2a219485"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/shared-ranger/shared-ranger-02-64.png",
+      "sha256": "0031da78571afffe83ffb9a5d8d552efc4f6aebd114da2e092b8f1b3bcc20ef7"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/shared-ranger/shared-ranger-02-48.png",
+      "sha256": "ccde48ad8d8d61dc6f79c7b0e7c79c815bbb5c43f8aac7801718ef38ca374e57"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/shared-ranger/shared-ranger-02-32.png",
+      "sha256": "0f5e0f469a5a4a8b9cb48d48410d26f194c6ad442f10a92478cbdad7b89048a9"
+    }
+  }
+}

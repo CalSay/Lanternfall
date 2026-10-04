@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-07-06",
+  "name": "The Chapter Key",
+  "source": "art/ability-icons-draft/raw/hero-07/initial.png",
+  "source_sha256": "c5a611d4b3e52f2396d0c4927d0089255fcab855408bd199f60994a281e3ee6b",
+  "cell": [
+    1,
+    1,
+    384,
+    342
+  ],
+  "raw_bbox": [
+    57,
+    41,
+    332,
+    304
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-07/hero-07-06-128.png",
+      "sha256": "48cf3e4b5958f22bc8e3b756e62accdf5f18fcbc0ac0309664294c985983c79e"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-07/hero-07-06-64.png",
+      "sha256": "c2eaeaf846994608a32dac5ffc93aba91d7d4de064eaa0bc1534e86736d5cb65"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-07/hero-07-06-48.png",
+      "sha256": "24be74c8569636f3e3fa4a20e6e32a64f00e561a3a328b158d10c0bf5b9b58d6"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-07/hero-07-06-32.png",
+      "sha256": "a0ead36aa7417e1744ff03489a5269e3fa0e2072cdd5ee0f760e66e7ee0bec9b"
+    }
+  }
+}

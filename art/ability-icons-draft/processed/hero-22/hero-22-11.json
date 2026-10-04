@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-22-11",
+  "name": "Leave No Trail",
+  "source": "art/ability-icons-draft/raw/hero-22/initial.png",
+  "source_sha256": "dbfb104d6ff11ee7589c8f600764bd335af518c5e7f46b39f23da5a9ddc9dc80",
+  "cell": [
+    2,
+    2,
+    384,
+    344
+  ],
+  "source_rectangle": [
+    768,
+    680,
+    1152,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    66,
+    49,
+    317,
+    276
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-22/hero-22-11-128.png",
+      "sha256": "75618aa0d079a9da14a856c5cbfc25466c958221ac5e4ce00acae307b6f933a6"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-22/hero-22-11-64.png",
+      "sha256": "0587ecf0808e6d37bb58927b03a33680d6ea2f19e4453e6cde44889b92cd3ac6"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-22/hero-22-11-48.png",
+      "sha256": "ad8da660e3fe4b65c1ea74e8742be08ff74aaca2ab9544c9352e20403c28a84b"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-22/hero-22-11-32.png",
+      "sha256": "5fe3133fdf9c37fc16ffdca816dedc98bf50c636f3fe4d93e49567f8262917c5"
+    }
+  }
+}

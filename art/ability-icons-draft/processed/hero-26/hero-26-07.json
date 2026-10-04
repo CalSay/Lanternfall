@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-26-07",
+  "name": "Check the Pulse",
+  "source": "art/ability-icons-draft/raw/hero-26/initial.png",
+  "source_sha256": "69282736452127fdf3a6439efe454715873075762e622279e016f31c72b4e9f4",
+  "cell": [
+    2,
+    1,
+    384,
+    342
+  ],
+  "source_rectangle": [
+    768,
+    341,
+    1152,
+    683
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    24,
+    75,
+    326,
+    298
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-26/hero-26-07-128.png",
+      "sha256": "7064493b853e444aad2e0de76af470df329b0814cb4a09fc41177bb59e58733a"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-26/hero-26-07-64.png",
+      "sha256": "bf15ad874d0f26205f06e81ebb0cd33135ccbe59ae5a248dab402ad5f0bb8e40"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-26/hero-26-07-48.png",
+      "sha256": "7954359cf874bfe5e35d40266ea539e75ef80abd0a39b2d5f0a0c078097596cb"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-26/hero-26-07-32.png",
+      "sha256": "2a820bc752308e6b212ef04f96406ff112e26f06735170c5678fba921dff28cd"
+    }
+  }
+}

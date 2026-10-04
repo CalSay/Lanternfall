@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-26-03",
+  "name": "Write the Prescription",
+  "source": "art/ability-icons-draft/raw/hero-26/initial.png",
+  "source_sha256": "69282736452127fdf3a6439efe454715873075762e622279e016f31c72b4e9f4",
+  "cell": [
+    2,
+    0,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    768,
+    0,
+    1152,
+    341
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    47,
+    61,
+    310,
+    338
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-26/hero-26-03-128.png",
+      "sha256": "9e281f8ed0da372746fdcd5af93a3c0b6ee3d6ebb85eceddef260bd887eac5d3"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-26/hero-26-03-64.png",
+      "sha256": "6e77ddaab19242929ad78949b93e3afa8869efdb0e607bd886b8ce84fc97ee51"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-26/hero-26-03-48.png",
+      "sha256": "49596bf2a7ae7464be2361404a20005f2855460d57615513af6aaf3fd1183577"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-26/hero-26-03-32.png",
+      "sha256": "720c8b773c22a32115c0b9ca2f85184417379419be77a94e196cc46a351f549d"
+    }
+  }
+}

@@ -1,0 +1,16 @@
+Create exactly twelve Wren Hollowmere ABILITY ICON symbols as a prop/effect pack, four columns three rows equal invisible cells, 1536x1024. Use shown approved concept for violet/gold bow material and shown existing action icons for crisp dark-outline, simple flat-cluster rendering. No hero bodies, scenes, UI, text, numbers or borders. Each centered silhouette occupies central70% of its cell with generous solid #FF00FF background margin. Optimise distinguishable silhouettes at32px, not miniature illustrations. Read left to right then next row:
+1 Echo Shot: one silver arrow with two short violet echo arcs and small mark ring.
+2 Bat Swarm: three broad violet bat silhouettes clustered over a dimmed eye symbol, spell overlay not summoned actors.
+3 Deadeye: heavy gold-tipped arrow through a precise open target ring.
+4 Sonic Arrow: arrow with broad sonic ring compressing a single pin sigil.
+5 Shadow Step: dark boot under a protective violet crescent, no teleport portal.
+6 Moonlit Volley: five clearly separated small arrows forming one compact crescent fan.
+7 Final Echo: arrowhead with three darkred wound notches dissolving into violet echo.
+8 Listening Post: stylised pointed bat ear and two listening ripples, no future vision eye.
+9 Threadneedle: narrow needle arrow piercing one split ward pane.
+10 Night Hunter PASSIVE: violet marked target with one arrow and small aim glint.
+11 Night Ear PASSIVE: bat ear paired with arrow barb and one blood droplet.
+12 Wingbeat PASSIVE: folded bat wing beside a boot-shaped dodge curve and target ring.
+Exactly these12different symbols in prescribed order; entire effects stay inside cells, flat magenta only, no lettering.
+
+Image1 concept palette/equipment only; Image2 existing icons STYLE ONLY do not reproduce page UI; Image3 pure invisible4x3layout guide no marks in final. Magenta is background only, never icon colour. Twelve symbols total.

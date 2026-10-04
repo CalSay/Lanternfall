@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-01-06",
+  "name": "Moonlit Volley",
+  "source": "art/ability-icons-draft/raw/hero-01/revision-01.png",
+  "source_sha256": "58437daa8a585639577e47e4bb3b0af12948a073085ff6a6987e21dab0e1dd42",
+  "cell": [
+    1,
+    1,
+    384,
+    342
+  ],
+  "raw_bbox": [
+    67,
+    40,
+    320,
+    315
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-01/hero-01-06-128.png",
+      "sha256": "14554bc6ee81c530d9892a18bf22ff6dd41e691fe3e4986e5bcc6f379e310ac0"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-01/hero-01-06-64.png",
+      "sha256": "b48d9aa34d5d0dedadf25853fffad8c4f923447e5f18b584c6ea2af8c8119217"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-01/hero-01-06-48.png",
+      "sha256": "ab4bd6cb47f9d7b9b0afae3afa8c93dae0e319ce478f74a5ac76d47f72107fea"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-01/hero-01-06-32.png",
+      "sha256": "1021b5ffd4d03d6876df98078bd7b263989e5d9dd977208082a818372c4e355b"
+    }
+  }
+}

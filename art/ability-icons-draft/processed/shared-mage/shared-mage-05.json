@@ -1,0 +1,45 @@
+{
+  "icon_id": "shared-mage-05",
+  "name": "Nova",
+  "source": "art/ability-icons-draft/raw/shared-mage/initial.png",
+  "source_sha256": "8e20ae4f85e78a3499d3db9aa5387191856f5f3434a84d793278955f76b8527d",
+  "cell": [
+    1,
+    1,
+    512,
+    512
+  ],
+  "source_rectangle": [
+    512,
+    512,
+    1024,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    47,
+    37,
+    490,
+    423
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/shared-mage/shared-mage-05-128.png",
+      "sha256": "6c94377632913b3f0d3dab0bb924a374906f77dcea84c6e2707428151df532ed"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/shared-mage/shared-mage-05-64.png",
+      "sha256": "ceece8235d48efb3b1b79b22f9897476cd7a2ac39647ba4b4f1323f2a902b578"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/shared-mage/shared-mage-05-48.png",
+      "sha256": "d9c522d513a0ea704e5b095159efcf11fd95fe7a2432aa9c81644bd95228fc48"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/shared-mage/shared-mage-05-32.png",
+      "sha256": "c7c037d2c0e8aaba2880a0cb189de475503bf09714f75d07f14d857744481c18"
+    }
+  }
+}

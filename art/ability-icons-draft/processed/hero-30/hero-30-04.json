@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-30-04",
+  "name": "Cross the Bridge",
+  "source": "art/ability-icons-draft/raw/hero-30/initial.png",
+  "source_sha256": "078b54b220dba9d46949fdf410cdff7ee878a534128984536902d78eae20a6fc",
+  "cell": [
+    3,
+    0,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    1152,
+    0,
+    1536,
+    341
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    61,
+    61,
+    313,
+    309
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-30/hero-30-04-128.png",
+      "sha256": "c0ba8f0436e23f4c4f357d2444eb532385a7bc7bb4a21460de6f4d34bafe9860"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-30/hero-30-04-64.png",
+      "sha256": "a6e3d671999a8f8e1ec4d219266904400ef869e5fe6467cc8324b2a5d2eeebc2"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-30/hero-30-04-48.png",
+      "sha256": "8799016f167882037730e9932b6a615198663d1087ae57fce5effb60e89245ca"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-30/hero-30-04-32.png",
+      "sha256": "370d4d56459761067fd108d49ce906bad60c57537326928ac15aa644844b3c90"
+    }
+  }
+}

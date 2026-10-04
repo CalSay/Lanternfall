@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-34-08",
+  "name": "Give Ground",
+  "source": "art/ability-icons-draft/raw/hero-34/initial.png",
+  "source_sha256": "3285f8e88d13e6e3e4d9f91664993d1184fa81bbe2aac5fe250494319ab069e0",
+  "cell": [
+    3,
+    1,
+    384,
+    342
+  ],
+  "source_rectangle": [
+    1152,
+    341,
+    1536,
+    683
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    26,
+    62,
+    322,
+    270
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-34/hero-34-08-128.png",
+      "sha256": "b415e6345c635cdc4f84b61e197101b86d4d48445e6dfeb021e61a56b427f7cf"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-34/hero-34-08-64.png",
+      "sha256": "2052e4d0a00540fab50cfdf3002ad837072c555ef98fe3c1f4943340cbe87a68"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-34/hero-34-08-48.png",
+      "sha256": "2861f6d0f9cd7ce02021b9d967b2adf708127f1db1fe2ee949ceba222fbfd9ba"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-34/hero-34-08-32.png",
+      "sha256": "4eb4988deeedfbc27d4c7dc0a7652d46ec1c838bcc006c37ff55679bf10cc506"
+    }
+  }
+}

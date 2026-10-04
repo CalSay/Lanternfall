@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-04-06",
+  "name": "Shutter the Lamp",
+  "source": "art/ability-icons-draft/raw/hero-04/initial.png",
+  "source_sha256": "0df9fb5388348a9c5278e44fe3f1c19d8b774d1e8fa08f78952f14e101071b48",
+  "cell": [
+    1,
+    1,
+    384,
+    342
+  ],
+  "raw_bbox": [
+    77,
+    67,
+    317,
+    280
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-04/hero-04-06-128.png",
+      "sha256": "488eb34dfaada07b2a789154aff1c7c419a92c30b514a09b60c6429f341c9049"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-04/hero-04-06-64.png",
+      "sha256": "a190a5da8e6bde972d94f0e7e538035053e8d4d274f009964962ff2086706b71"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-04/hero-04-06-48.png",
+      "sha256": "0f2a50b6b92614f641436c8781ad38a18f3676b49433cb932d6af703453c48a5"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-04/hero-04-06-32.png",
+      "sha256": "c02b34637fb6f5ba99832e5e78e7fdd787217f9d0fa1b941e58a31b662c4e3a0"
+    }
+  }
+}

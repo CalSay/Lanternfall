@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-19-09",
+  "name": "Three Nights",
+  "source": "art/ability-icons-draft/raw/hero-19/initial.png",
+  "source_sha256": "bfe18f630518f6f67979ba1b2bdb21b6cb1cb8951856bd93442dcb4f33ac57fd",
+  "cell": [
+    0,
+    2,
+    384,
+    344
+  ],
+  "source_rectangle": [
+    0,
+    680,
+    384,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    70,
+    2,
+    359,
+    280
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-19/hero-19-09-128.png",
+      "sha256": "4f2701615487310761b4c24fc999646abb9d0fcbb041b40d044d82957ef50cd7"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-19/hero-19-09-64.png",
+      "sha256": "a873d6c8f448687947281c252a8f5d6c8f5b0bc7f1dfd13e9fac30464eea4e47"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-19/hero-19-09-48.png",
+      "sha256": "aee8104ed5f96e31b4b9750f6add5d2f207ea9de7072e2f7a51352fe12e1c65a"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-19/hero-19-09-32.png",
+      "sha256": "1f4cae4400b32ccee613dd01eda15e02745b89b162efea4654c826bac4f36f18"
+    }
+  }
+}

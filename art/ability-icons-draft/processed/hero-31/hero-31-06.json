@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-31-06",
+  "name": "Mercy Is Precise",
+  "source": "art/ability-icons-draft/raw/hero-31/initial.png",
+  "source_sha256": "d11b74289f59a67b5f207d83ad7a9343dc59f2b929acf4163ecf39acdceb61a3",
+  "cell": [
+    1,
+    1,
+    384,
+    334
+  ],
+  "source_rectangle": [
+    384,
+    341,
+    768,
+    675
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    73,
+    56,
+    339,
+    268
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-31/hero-31-06-128.png",
+      "sha256": "e311f4a452fdc438e2f4251cd7ebe1aa222ec81b53797536af94d6b0f9bbda67"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-31/hero-31-06-64.png",
+      "sha256": "1526260a87876518bddab41cfeefaa59f4a1873b97e1d106115737abe08e162e"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-31/hero-31-06-48.png",
+      "sha256": "238541c90027ead8d84924c73eb8fae884ec21d6f84d1b3249d2fa25d997cbfb"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-31/hero-31-06-32.png",
+      "sha256": "393fe8085fc43d3d3bb566a2a98a8a0aa36df09980e4f53b308212e3e990ac4c"
+    }
+  }
+}

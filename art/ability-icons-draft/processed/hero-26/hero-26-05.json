@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-26-05",
+  "name": "Measured Dose",
+  "source": "art/ability-icons-draft/raw/hero-26/initial.png",
+  "source_sha256": "69282736452127fdf3a6439efe454715873075762e622279e016f31c72b4e9f4",
+  "cell": [
+    0,
+    1,
+    384,
+    342
+  ],
+  "source_rectangle": [
+    0,
+    341,
+    384,
+    683
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    108,
+    38,
+    322,
+    314
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-26/hero-26-05-128.png",
+      "sha256": "ff6052f21ea6770e5343a098d9f6393bd1fec436244667c304589f843c4e06ba"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-26/hero-26-05-64.png",
+      "sha256": "7478d970f31aaa600174b3792965522e00543de9d6df94e9c687fbece9c6ad1c"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-26/hero-26-05-48.png",
+      "sha256": "1bed197c98f0fca1983c293968d97fbd34dd05a615d9bd27386d69797867a8a0"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-26/hero-26-05-32.png",
+      "sha256": "6d85194ee6ec471207a738f38d8349974dbe8fd076c081d2e3ecf3701b8925b7"
+    }
+  }
+}

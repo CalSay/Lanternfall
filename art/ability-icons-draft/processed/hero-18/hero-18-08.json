@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-18-08",
+  "name": "Count the Footprints",
+  "source": "art/ability-icons-draft/raw/hero-18/initial.png",
+  "source_sha256": "d254bc2ae451f3f659c623424d93dbb712ce0be89485830b714f395280ab0c4f",
+  "cell": [
+    3,
+    1,
+    384,
+    342
+  ],
+  "source_rectangle": [
+    1152,
+    341,
+    1536,
+    683
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    28,
+    65,
+    291,
+    284
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-18/hero-18-08-128.png",
+      "sha256": "f4b98ee5450a2bf71ddaf8fb93755bcbb791a263384cc2415c48a56b74e2e432"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-18/hero-18-08-64.png",
+      "sha256": "8594f7240125490d62fc51e9f11ebc199b2f4b476e931976c756471c92d43428"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-18/hero-18-08-48.png",
+      "sha256": "6638999e94528beaa17842be871aa2fb7f7e886e57e4fb91e5cb8767887fb1af"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-18/hero-18-08-32.png",
+      "sha256": "156b258f7b42f70f95d779fdf7f23f9e537a7d11bd55d805d5a624914e4aa71d"
+    }
+  }
+}

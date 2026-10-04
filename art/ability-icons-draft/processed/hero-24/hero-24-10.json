@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-24-10",
+  "name": "Escapement",
+  "source": "art/ability-icons-draft/raw/hero-24/initial.png",
+  "source_sha256": "4e22efa85f0d09ff8bcb5771888ece2abc454c3e19a02de4660c7c60992fd240",
+  "cell": [
+    1,
+    2,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    384,
+    683,
+    768,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    78,
+    61,
+    356,
+    259
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-24/hero-24-10-128.png",
+      "sha256": "c07ba8aa418bc824c2356fad4c0b25999a247df703bd9445bf405eab727ac4a4"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-24/hero-24-10-64.png",
+      "sha256": "cd4da88efccd9da857ad2c69dc44e51b0a898fd689e4bd2a5144cb5e4ecff1a3"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-24/hero-24-10-48.png",
+      "sha256": "e59b8b5179daff56bd9abb4964abab304a5e5058c7a440fab68711e039b34f35"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-24/hero-24-10-32.png",
+      "sha256": "3154b28bf3f2c6aaad60dbdef96dd834392ec7bcec206cb98555749f8bb508ab"
+    }
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-04-04",
+  "name": "Last Lamp on the Hill",
+  "source": "art/ability-icons-draft/raw/hero-04/hero-04-04-revision-01.png",
+  "source_sha256": "74967828f30ae566a9042ee806cff7bdde3f31ce16e38a633837b8e0555f9fa9",
+  "cell": [
+    0,
+    0,
+    1331,
+    1182
+  ],
+  "raw_bbox": [
+    214,
+    297,
+    1109,
+    1029
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-04/hero-04-04-128.png",
+      "sha256": "18894b59d1e20e1d71747378c4a9371efb0c46eb1826058da61a9e758aadeb06"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-04/hero-04-04-64.png",
+      "sha256": "8f8df1735ea98ee70c1ba878b33f6c9e58bfaae58fc2466fc58eeadb6bd81caa"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-04/hero-04-04-48.png",
+      "sha256": "85c8006257af1c6a142d2c58f35bc6b57687a8329521e6c6f52eba1589e98197"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-04/hero-04-04-32.png",
+      "sha256": "dcc0f4a0c15152941b89e7ea16167a184f69e65f1461969a6131cabb5b49f9d7"
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-21-09",
+  "name": "Winter's Recipe",
+  "source": "art/ability-icons-draft/raw/hero-21/initial.png",
+  "source_sha256": "faf603fa06d58e42be4c3368499fe7a58f08b8b5bf31d98c730bf6a6c5879a45",
+  "cell": [
+    0,
+    2,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    0,
+    683,
+    384,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    62,
+    13,
+    328,
+    291
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-21/hero-21-09-128.png",
+      "sha256": "a3bf6991ca7a744fce849a98a87c7181069fc7726cd7e1d23b1b79133c4949fa"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-21/hero-21-09-64.png",
+      "sha256": "10d321cd26aff227ab2e036b4344851d7c2d485429f9965b10b4f61d03dbb1a7"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-21/hero-21-09-48.png",
+      "sha256": "b8b0fb09404e7e6e02dc45d8805ed719096f731ef6732edba9ee13f234192e7c"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-21/hero-21-09-32.png",
+      "sha256": "88bc297f8dbccf4e53305db2c63f1d24826084c53e4a3b0fb4daae6708f961a6"
+    }
+  }
+}

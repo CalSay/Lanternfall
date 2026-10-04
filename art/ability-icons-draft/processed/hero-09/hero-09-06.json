@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-09-06",
+  "name": "Mire Is Patient",
+  "source": "art/ability-icons-draft/raw/hero-09/initial.png",
+  "source_sha256": "e6605ef65a770ee350f590eead7a41b5c6ce9bb31afd30ad5439cac709249fe8",
+  "cell": [
+    1,
+    1,
+    384,
+    342
+  ],
+  "raw_bbox": [
+    95,
+    41,
+    302,
+    308
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-09/hero-09-06-128.png",
+      "sha256": "2fa27ac88a2480e8e5f0d768b6b1753a867c40861213eb7af2bd79f91b35d85d"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-09/hero-09-06-64.png",
+      "sha256": "6dba4c623ee558ac2eeacfbe45d88719b94b69fb37d8457a348d913d17b9cb10"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-09/hero-09-06-48.png",
+      "sha256": "2d7d12684bbca1b56fb4bbd731cd932fa0f12500525b957ffa66aa5cda470153"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-09/hero-09-06-32.png",
+      "sha256": "e1afbea2f69acb70d85f9290b7bd4b03a933c5bdf8cdbd3d343ea2e87460b5e6"
+    }
+  }
+}

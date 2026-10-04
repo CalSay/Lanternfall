@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-33-10",
+  "name": "Steady Breath",
+  "source": "art/ability-icons-draft/raw/hero-33/initial.png",
+  "source_sha256": "34c3cbedc4bc8535718528feb955cbdcecccb350fca27325ff2b86a023189d00",
+  "cell": [
+    1,
+    2,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    384,
+    683,
+    768,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    88,
+    13,
+    319,
+    255
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-33/hero-33-10-128.png",
+      "sha256": "c89ec189fb95744ea7196d8db8c1fea0693c85611014ba7277414c1f9dc18867"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-33/hero-33-10-64.png",
+      "sha256": "e9654e59c644cdc6aeb12127fc8d04b7f24cdfa6cafe5a1b2f0417742c382b05"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-33/hero-33-10-48.png",
+      "sha256": "201f824c301cfddfef54dcfb35ff860f8b132df1b88c995b43169d7316edda07"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-33/hero-33-10-32.png",
+      "sha256": "47627d2a86f3d103c7f77f327b7143cad80b521e21e53d8e29d4df575df3371a"
+    }
+  }
+}

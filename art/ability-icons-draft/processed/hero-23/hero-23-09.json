@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-23-09",
+  "name": "The Last Unravelling",
+  "source": "art/ability-icons-draft/raw/hero-23/initial.png",
+  "source_sha256": "1601ed146f61b6c06aa62535d51dadccfc29c97d940c4ae00205acccd3746d55",
+  "cell": [
+    0,
+    2,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    0,
+    683,
+    384,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    60,
+    15,
+    375,
+    291
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-23/hero-23-09-128.png",
+      "sha256": "7faa6c8b4519141915477752a216b0f8706a5e95953e1c8930a2adc5f1ddf9cb"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-23/hero-23-09-64.png",
+      "sha256": "6f743f8f4cacb51ed1a96e35ab397600100ffa23092a4872fbfb89fb9537b3aa"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-23/hero-23-09-48.png",
+      "sha256": "0f6515edf0e36aa15eb72d3c636d0b0ae6552536ab7322c868b49108e6d1e294"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-23/hero-23-09-32.png",
+      "sha256": "d07bba1a0f557307fbe41e341efc6836b7519ac95312953cc3715827ecd000e6"
+    }
+  }
+}

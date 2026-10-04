@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-23-07",
+  "name": "Needle Through",
+  "source": "art/ability-icons-draft/raw/hero-23/initial.png",
+  "source_sha256": "1601ed146f61b6c06aa62535d51dadccfc29c97d940c4ae00205acccd3746d55",
+  "cell": [
+    2,
+    1,
+    384,
+    342
+  ],
+  "source_rectangle": [
+    768,
+    341,
+    1152,
+    683
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    42,
+    49,
+    325,
+    298
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-23/hero-23-07-128.png",
+      "sha256": "c1ef1b8ab1348f27849e6136ec7ff68106c50f19bb40ab961b8e4f42aa023561"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-23/hero-23-07-64.png",
+      "sha256": "0881b50a87deea9de2513b4120898da95394a1b41b125c391f820b118650c2fe"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-23/hero-23-07-48.png",
+      "sha256": "22cf47d8e051174e00a1b4d31686f577a384c4d5daf11a5731df784c5403cf9d"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-23/hero-23-07-32.png",
+      "sha256": "e97417fdcf46e69470c15adad588621dcfefe95f35cbb91fe537d1ead7bc944b"
+    }
+  }
+}

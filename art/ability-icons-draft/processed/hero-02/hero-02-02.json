@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-02-02",
+  "name": "Answering Cut",
+  "source": "art/ability-icons-draft/raw/hero-02/revision-01.png",
+  "source_sha256": "afeade7e11cd68ba6d01f4b9430e0ffa26465e190b3b1cea01bb880e844a3aea",
+  "cell": [
+    1,
+    0,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    97,
+    135,
+    305,
+    319
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-02/hero-02-02-128.png",
+      "sha256": "f3f99f706666293044ab3a6eb02cedf0270526a6e43cce3e2e15d431062c4315"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-02/hero-02-02-64.png",
+      "sha256": "16347aa7b8f24d0058dc09973d66e0eafd3ba2b31de5e818595046ade43f72df"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-02/hero-02-02-48.png",
+      "sha256": "841c06f7a035204a1954cdecbd487c5f2a6e015b3fd66278fc274c897f79c328"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-02/hero-02-02-32.png",
+      "sha256": "0358fe322bdda4669af83abcfdacbe4402d6fa27d90136e23efab68b22fe40e5"
+    }
+  }
+}

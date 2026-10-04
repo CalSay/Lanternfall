@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-18-11",
+  "name": "Stay Downwind",
+  "source": "art/ability-icons-draft/raw/hero-18/initial.png",
+  "source_sha256": "d254bc2ae451f3f659c623424d93dbb712ce0be89485830b714f395280ab0c4f",
+  "cell": [
+    2,
+    2,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    768,
+    683,
+    1152,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    57,
+    35,
+    291,
+    256
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-18/hero-18-11-128.png",
+      "sha256": "661c91c5d9f335816d0c9708ba5b1e052205707f325c7994c9ecacd9d1ff1337"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-18/hero-18-11-64.png",
+      "sha256": "66cf5a40dc76277833db43f970027f05741f2469dbb115b7e9ec5f7ef9479ab6"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-18/hero-18-11-48.png",
+      "sha256": "919f4b53cddae971a18d0efcf7087be5c0921dc9be6623175863f30758786fcc"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-18/hero-18-11-32.png",
+      "sha256": "2b6be46ff902e97a5186f74e6cfc5dd26c128c243947bbe5940a48ce26d4f6e3"
+    }
+  }
+}

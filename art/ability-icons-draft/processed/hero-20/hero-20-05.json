@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-20-05",
+  "name": "Brace the Cut",
+  "source": "art/ability-icons-draft/raw/hero-20/initial.png",
+  "source_sha256": "83ca2e1f4fa66f8e7c6688e57e6f7a66ce819373bfe97a5c64b5ac8249c5717a",
+  "cell": [
+    0,
+    1,
+    384,
+    342
+  ],
+  "source_rectangle": [
+    0,
+    341,
+    384,
+    683
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    62,
+    40,
+    347,
+    292
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-20/hero-20-05-128.png",
+      "sha256": "3238a71da70662ae3178a5fde0d1b918cb689b2f1c8c31662e70f3de0c349f7a"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-20/hero-20-05-64.png",
+      "sha256": "03297c5e989796a922aee94eff900c2e9610675e23ecece47e4ec93809e3c84a"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-20/hero-20-05-48.png",
+      "sha256": "6c39a810bc5958d05df87f441af22d2c111056062ce10765f4a16f6dd1ebf81a"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-20/hero-20-05-32.png",
+      "sha256": "539a6148a3320845e670106ea96730f2d47bbd6aa2203bcd2b95ac5012eb4e1c"
+    }
+  }
+}

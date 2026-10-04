@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-12-04",
+  "name": "Clear Night",
+  "source": "art/ability-icons-draft/raw/hero-12/initial.png",
+  "source_sha256": "e9d7f4768b72255d55ca1234951443b9e5483cad20fe37bace1d8f5924ed3971",
+  "cell": [
+    3,
+    0,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    76,
+    95,
+    311,
+    310
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-12/hero-12-04-128.png",
+      "sha256": "6226a52bb625bcfab93fc1c4b004b9f9f303e1ea994c4361bdb4b2bbe535d1cc"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-12/hero-12-04-64.png",
+      "sha256": "d69ab9094125992dc96fcc40681ced2ce2739a7bb31de12c0ce2c5de86a30c72"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-12/hero-12-04-48.png",
+      "sha256": "62c4965023d7de4259a1597ddf128fd02f1fc28cfc119ab7eb61113f1e3ddff0"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-12/hero-12-04-32.png",
+      "sha256": "8610b569ec2248986adadce91d844f49b94a9778063460b9a0ae39ed7a4b3520"
+    }
+  }
+}

@@ -1,0 +1,16 @@
+Create twelve Ser Aldric Vane abilityicons4cols3rows equalinvisiblecells1536x1024. Concept provides silver greatsword crimson goldoathseal; existingicons crispdarkoutline flatclusters readable32px. Props/effects only no bodies/UItext/flags/grid. Central70% solid#FF00FF margins. Rowmajor:
+1 Declare the Oath: sealed crimson oathscroll with restrained swordchargeglint.
+2 Oathbound Cut: broad greatswordedge through small oathring.
+3 Hold the Road: greatsword across protective road-arch guard.
+4 Keep the Light: goldlight inside silver warddome touching swordedge.
+5 Renewed Vow: cracked oathseal with pointed swordflare beside guardarc.
+6 The Chapter Key: greatsword splitting armour with small attached key emblem, key notweapon.
+7 No Borrowed Courage: sword beneath clearing dark veil.
+8 Release the Vow: opened oathseal dissolving into healingheart.
+9 Last at the Door: planted sword before simple doorarch and reserved goldresponseglint.
+10 An Oath Kept Doing PASSIVE: steel sword with three compact linked oathmarks.
+11 Upright PASSIVE: firm vertical sword crossed by one goldcommitmentband.
+12 Sworn Steel PASSIVE: oathseal on steelblade next to small guardcrescent.
+Exactly12distinctsymbols, allwithin cells, no lettering, flatmagenta.
+
+Containmentoverride entireglyph/allrays CENTRAL50%WIDTHHEIGHTquarteremptyallside; Image1 actualnativeiconSTYLEONLY opaque3–5flatclusters crispdarkoutline native32readable notornatebadges. Image2 invisible4x3safe50guide no marks. Silvergreatsword crimsonoathseal wornbrass; no pinkgradientsormagenta insideglyphs.12exact.

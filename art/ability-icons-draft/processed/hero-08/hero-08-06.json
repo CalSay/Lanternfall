@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-08-06",
+  "name": "The Name on the Shaft",
+  "source": "art/ability-icons-draft/raw/hero-08/initial.png",
+  "source_sha256": "8856b593573385548ec836d3a260d557b8d279395bd3cc3dda3e63937f7c3b96",
+  "cell": [
+    1,
+    1,
+    384,
+    342
+  ],
+  "raw_bbox": [
+    62,
+    38,
+    327,
+    288
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-08/hero-08-06-128.png",
+      "sha256": "609eeaa999f43f3ebf9895c9113b011558ea624dc7df1c8fc3a1d540503e5aa4"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-08/hero-08-06-64.png",
+      "sha256": "3dbe73c2546309783f88b72164c7b97da7d53abbf6e059354ed460e7d181d5e3"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-08/hero-08-06-48.png",
+      "sha256": "62f65c68bd21eeeb996fc425b3f3f62f474e2573010ee773b1d6578e53485749"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-08/hero-08-06-32.png",
+      "sha256": "094992e6b4c241f41eb620dbcacca40d86e500bc151c89bc98b84d66b8f3781b"
+    }
+  }
+}

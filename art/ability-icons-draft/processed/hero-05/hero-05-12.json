@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-05-12",
+  "name": "Camp Kindling",
+  "source": "art/ability-icons-draft/raw/hero-05/initial.png",
+  "source_sha256": "9e802dd0953c2985fdf4d4c9400993bbbf2cd90f6dd6a5754c946c3e7c818373",
+  "cell": [
+    3,
+    2,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    32,
+    12,
+    323,
+    278
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-05/hero-05-12-128.png",
+      "sha256": "d6581fe4050e4c1b32374e3fd3df9085c3c9377f659d7c563566bfc9135f0d91"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-05/hero-05-12-64.png",
+      "sha256": "9b478fc78b20596b8f7095dfac0f7502a9b28e78510e50975c9d5c45882b4208"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-05/hero-05-12-48.png",
+      "sha256": "92451f4ca76c7f3e1f8ba60df0aaea1680c4366d35cd7eb086ed716dc8183f91"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-05/hero-05-12-32.png",
+      "sha256": "1c3197493dbc63863a8df0baa5fcbffa6af10527f703090584bf568b805a6991"
+    }
+  }
+}

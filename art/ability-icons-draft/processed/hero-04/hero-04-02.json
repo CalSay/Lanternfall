@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-04-02",
+  "name": "Trim the Wick",
+  "source": "art/ability-icons-draft/raw/hero-04/initial.png",
+  "source_sha256": "0df9fb5388348a9c5278e44fe3f1c19d8b774d1e8fa08f78952f14e101071b48",
+  "cell": [
+    1,
+    0,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    61,
+    89,
+    306,
+    318
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-04/hero-04-02-128.png",
+      "sha256": "b166505987fe6578fc3c7b88ad7caef00b94e3f3f3cd649c67780e9c610378a3"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-04/hero-04-02-64.png",
+      "sha256": "90588e1896bb0baed0837baf6e5c86c152322a597bdf20801605513f9a9e506d"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-04/hero-04-02-48.png",
+      "sha256": "ff6dac8f6b206b4348f81ead490edbde61cdd783c1d98731e056d30827039ac3"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-04/hero-04-02-32.png",
+      "sha256": "94af7961a2025eed838719922134627bff7908b49c2506adfc203cefd7120ca8"
+    }
+  }
+}

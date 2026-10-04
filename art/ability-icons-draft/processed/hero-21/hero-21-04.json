@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-21-04",
+  "name": "Reduce the Draught",
+  "source": "art/ability-icons-draft/raw/hero-21/initial.png",
+  "source_sha256": "faf603fa06d58e42be4c3368499fe7a58f08b8b5bf31d98c730bf6a6c5879a45",
+  "cell": [
+    3,
+    0,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    1152,
+    0,
+    1536,
+    341
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    70,
+    67,
+    288,
+    308
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-21/hero-21-04-128.png",
+      "sha256": "37f71265d4a379e77e8c6b111c6e0b14f46939b02c8a2ab6cdb513d39fefe416"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-21/hero-21-04-64.png",
+      "sha256": "a910c234465423663c41f1591b42609ddcbcb83a00fef84b993fc2093c46e6bd"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-21/hero-21-04-48.png",
+      "sha256": "cd6fd684840c2ad34bc824e400cfaf25f21e4fb7d95d32e059b791c7dd795fd8"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-21/hero-21-04-32.png",
+      "sha256": "6bea84312b771b55f798e602b31d6543f1b3545c115d9e060114da2f063d48c1"
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-32-09",
+  "name": "A Storm in Copper",
+  "source": "art/ability-icons-draft/raw/hero-32/initial.png",
+  "source_sha256": "9fc99b0c96185debff12f3ef83d57429535b2f83b2ff399b7d563437f74a65f3",
+  "cell": [
+    0,
+    2,
+    385,
+    349
+  ],
+  "source_rectangle": [
+    0,
+    675,
+    385,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    30,
+    2,
+    384,
+    276
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-32/hero-32-09-128.png",
+      "sha256": "ec8273f99b146b13ad5258d150f0674cbdd1f68c0d724390debc74b1e8d1acd5"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-32/hero-32-09-64.png",
+      "sha256": "e4d2c06bcdea59c2139734dc160976b0a9c0b2dd7cc09d4244bc8681f6600bab"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-32/hero-32-09-48.png",
+      "sha256": "e5cf36b6cd45fd60473bd931586fad9f77cef7730d5df810edfa6dd35584093f"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-32/hero-32-09-32.png",
+      "sha256": "36d06962f67ff41f8eb2c595aecf7d8688280cf3d0fce94ebbee371e41dfb327"
+    }
+  }
+}

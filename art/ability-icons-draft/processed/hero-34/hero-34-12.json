@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-34-12",
+  "name": "The Old Watch",
+  "source": "art/ability-icons-draft/raw/hero-34/initial.png",
+  "source_sha256": "3285f8e88d13e6e3e4d9f91664993d1184fa81bbe2aac5fe250494319ab069e0",
+  "cell": [
+    3,
+    2,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    1152,
+    683,
+    1536,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    43,
+    7,
+    322,
+    285
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-34/hero-34-12-128.png",
+      "sha256": "62b9bf601b853dd0d8713fa7490aa1af3506c81127f01f3c629cb621079fdd41"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-34/hero-34-12-64.png",
+      "sha256": "e1d476fdf3851549f683c1e21a6dfe67d9a1c18f1f43a1adf827dba40d2f4e17"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-34/hero-34-12-48.png",
+      "sha256": "7d20469a28b3f3b4df2c2d4cb892d594fe845bc79ded4f16da3fd6fa9fe88e1c"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-34/hero-34-12-32.png",
+      "sha256": "b544d698e00ebdd06da4c4a49620ee379d374a96ebf948a617020f61214d9172"
+    }
+  }
+}

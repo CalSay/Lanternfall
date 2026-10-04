@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-15-01",
+  "name": "You Asked",
+  "source": "art/ability-icons-draft/raw/hero-15/initial.png",
+  "source_sha256": "cd746813bfccf8c7b0f3d3a40ca7abe7b64c2cc6e4e511f8e42f77a98ae6d045",
+  "cell": [
+    0,
+    0,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    0,
+    0,
+    384,
+    341
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    76,
+    54,
+    348,
+    323
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-15/hero-15-01-128.png",
+      "sha256": "028a075e3c1e1eede28dbecfe6a8f830f785b2e0ea81a4837ebd75ca4f7e70e0"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-15/hero-15-01-64.png",
+      "sha256": "178f22190cc81652e7d93d4b9f591ef34451150c58858a854794c199549d41ec"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-15/hero-15-01-48.png",
+      "sha256": "1c0a5d2d59ad0354b0474f97ad6ff066d19ad9c7e41a8318cb360303376cffe5"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-15/hero-15-01-32.png",
+      "sha256": "a99b18e01493250acc2a256431a74665aef5de12180d2c0ffa2935e16ea68518"
+    }
+  }
+}

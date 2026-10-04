@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-10-04",
+  "name": "Shoulder the Wall",
+  "source": "art/ability-icons-draft/raw/hero-10/initial.png",
+  "source_sha256": "b35142971fba2f77cf87c5e0395b982c6f7b1cf9e45bbdb95d5aa84133dd1e0b",
+  "cell": [
+    3,
+    0,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    52,
+    79,
+    317,
+    303
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-10/hero-10-04-128.png",
+      "sha256": "ea6bcf64a38f60bab5e9650ff65b223215c539c792260440e38aa063dc7c75ba"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-10/hero-10-04-64.png",
+      "sha256": "14fbcd0dbd713e88d98c61bb4e7635dbba9878114c6e64fcf86443451a65044a"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-10/hero-10-04-48.png",
+      "sha256": "b05d6a448f5d770df49c3055219f49614059996e70bb1bc92c11279f543a8798"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-10/hero-10-04-32.png",
+      "sha256": "e5573decb692a7e75454d9d0033e2ad120c691a35aa5e8e483e9d66b70c17e45"
+    }
+  }
+}

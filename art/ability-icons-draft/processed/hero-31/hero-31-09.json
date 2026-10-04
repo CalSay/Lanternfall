@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-31-09",
+  "name": "No One Dies Here",
+  "source": "art/ability-icons-draft/raw/hero-31/initial.png",
+  "source_sha256": "d11b74289f59a67b5f207d83ad7a9343dc59f2b929acf4163ecf39acdceb61a3",
+  "cell": [
+    0,
+    2,
+    384,
+    349
+  ],
+  "source_rectangle": [
+    0,
+    675,
+    384,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    77,
+    2,
+    336,
+    262
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-31/hero-31-09-128.png",
+      "sha256": "4da7e85cb02fa81aa3cb1de0dbb559388bf3eea20355777b76b7c424e196482a"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-31/hero-31-09-64.png",
+      "sha256": "9156feea2e1e412120b15eb8d2d9d0a9810c393e954454de3b76c7d3d4b285eb"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-31/hero-31-09-48.png",
+      "sha256": "a3cd116009c32b177f78bf657fd5d9186bff0b33a82e603693b470fb3bc407fa"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-31/hero-31-09-32.png",
+      "sha256": "e402cd0f1a3ea65c221edd58e94cf60c55408f43e92d4a06b2dd11248c9d6532"
+    }
+  }
+}

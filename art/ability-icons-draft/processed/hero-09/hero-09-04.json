@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-09-04",
+  "name": "Drowned Roofs",
+  "source": "art/ability-icons-draft/raw/hero-09/initial.png",
+  "source_sha256": "e6605ef65a770ee350f590eead7a41b5c6ce9bb31afd30ad5439cac709249fe8",
+  "cell": [
+    3,
+    0,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    36,
+    96,
+    324,
+    288
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-09/hero-09-04-128.png",
+      "sha256": "2f991ae6c8c6ca4e80e72dcb000dcbb2187d47975e0ed742d56431e503205f7d"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-09/hero-09-04-64.png",
+      "sha256": "69e5af859977ed0c9a31e14b9398eca7e5b7f8bdf1651f22b20266be4f20e090"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-09/hero-09-04-48.png",
+      "sha256": "21a2e3e64cbe0fe07e5777ef1ef19dc7663cdf5c8e12ac94666b80c130496b59"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-09/hero-09-04-32.png",
+      "sha256": "e9b8ab06d652fa18822d0775d61aa15f146fc15733169d05c7c56bb229e09165"
+    }
+  }
+}

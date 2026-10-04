@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-34-07",
+  "name": "Relight the Window",
+  "source": "art/ability-icons-draft/raw/hero-34/initial.png",
+  "source_sha256": "3285f8e88d13e6e3e4d9f91664993d1184fa81bbe2aac5fe250494319ab069e0",
+  "cell": [
+    2,
+    1,
+    384,
+    342
+  ],
+  "source_rectangle": [
+    768,
+    341,
+    1152,
+    683
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    83,
+    54,
+    295,
+    286
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-34/hero-34-07-128.png",
+      "sha256": "5f1363e19a3e2738042d574a427adab20afa35989d789fae4e1b67dc58cdeeb1"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-34/hero-34-07-64.png",
+      "sha256": "f11200ea4f9e939f1374fd55d9ef60269504b39462adfd4edf2884cc5bd74e07"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-34/hero-34-07-48.png",
+      "sha256": "c0dcb55e478ad7b84b0dc6aaceca4429dcbd192f47e4663c61dfa0c894cf5a31"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-34/hero-34-07-32.png",
+      "sha256": "49a53855009be2e37576d3dcf4990a1900d6d8fff973ff7214258a10240b28e6"
+    }
+  }
+}

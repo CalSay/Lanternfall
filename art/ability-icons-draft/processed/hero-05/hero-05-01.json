@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-05-01",
+  "name": "Find the Grain",
+  "source": "art/ability-icons-draft/raw/hero-05/initial.png",
+  "source_sha256": "9e802dd0953c2985fdf4d4c9400993bbbf2cd90f6dd6a5754c946c3e7c818373",
+  "cell": [
+    0,
+    0,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    68,
+    68,
+    345,
+    324
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-05/hero-05-01-128.png",
+      "sha256": "03a7af9c2bb60a82e31dba766a5e18c031ccaef218e185cda672f987a0c44e65"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-05/hero-05-01-64.png",
+      "sha256": "9a84079140c270bf7c217344fa883cbce927701f1e559c2e487f652379bc0565"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-05/hero-05-01-48.png",
+      "sha256": "848f8c56451214553882133eed954fedd90e52831a5839c2a5880dd40cbd29da"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-05/hero-05-01-32.png",
+      "sha256": "68322c230404e8c3c1f9f331778af66c78e589dc7f59aa635a0f2f696b6c3402"
+    }
+  }
+}

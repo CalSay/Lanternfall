@@ -1,0 +1,14 @@
+Create twelve Grenna Holt abilityicons4cols3rows equalinvisiblecells1536x1024. Concept slatechalkrust square heavymaul; existingicons crispdarkoutline flatclusters readable32px. Props/effects only no unarmedfists, bodies, UItext/grid. Central70%solid#FF00FF margin. Rowmajor:
+1 Find the Seam: maulhead beside one glowing crackedstone fault.
+2 Stonebreak: maulhead opening split armourplate.
+3 Bare Hands: maul head/haft close-contact impact, absolutely no barefist despite ability name.
+4 Shoulder the Wall: maul braced across broad stoneguardarc.
+5 Quarry Weight: square maulhead with three/five implied broad loadbands, no numerals.
+6 Palm on Stone: compact quarry stone bearing chargeglint beside retained maulhaft, no punch.
+7 Waking Quarry: maulimpact with one angular staggerstar.
+8 Crooked Knuckles: repaired leather grip and warm healing/wardcrescent, no unarmedcombat.
+9 Rubble Followthrough: maulhead over brokenplate shards with short continuationarc.
+10 Hands First PASSIVE: maul grip and one earned loadspark beside fault.
+11 Stone Remembers PASSIVE: maulhead with armour-seam glint and three loadnotches.
+12 Hammer After PASSIVE: same heldmaulhead with compact secondary impactecho.
+Exactly12symbols, matchapprovedweapon, nocharacters or lettering, cell-contained.

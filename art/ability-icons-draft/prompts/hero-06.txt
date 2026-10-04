@@ -1,0 +1,14 @@
+Create twelve Maren Ashvale abilityicons4cols3rows equalinvisiblecells1536x1024. Concept gives bonecharcoalbronze shield/sword memorial motif; existing icons darkoutline flatclusters readable32px. No bodies/ghostactors/UItext/borders. Central70% eachcell#FF00FF margin. Rowmajor:
+1 Say Their Names: small engraved memorial plaque inside wardcrescent, no legible writing.
+2 Barrow Vigil: holy swordglint and solid bronze wardarc.
+3 Eleven Winters: shield with two broad frost-ring guard bands.
+4 Names on Iron: sword marked by broad memorial notches enclosed by intact ward.
+5 Grave Reproof: shattered ward dome compressing into one stern holy strike.
+6 The Living First: warm livingheart and fading dark wounddrop.
+7 Quiet the Barrow: swordpoint dimming one upward strengthchevron.
+8 Tired Still Standing: tilted but intact shield with approaching wardglow, no immortality.
+9 Two Hundred: heavy swordcut beside intactward and brokenarmour alternative cues, no dead summons.
+10 Names Remembered PASSIVE: memorial plaque with one earned bronze spark.
+11 Polite Company PASSIVE: sword sheltered under intact ward dome.
+12 Carry the Names PASSIVE: carried memorial seal within extended wardcrescent.
+Exactly12different uncluttered symbols, nolettering, no UI, no cutoffs.

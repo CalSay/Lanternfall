@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-21-07",
+  "name": "Second Steeping",
+  "source": "art/ability-icons-draft/raw/hero-21/initial.png",
+  "source_sha256": "faf603fa06d58e42be4c3368499fe7a58f08b8b5bf31d98c730bf6a6c5879a45",
+  "cell": [
+    2,
+    1,
+    384,
+    342
+  ],
+  "source_rectangle": [
+    768,
+    341,
+    1152,
+    683
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    72,
+    41,
+    319,
+    300
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-21/hero-21-07-128.png",
+      "sha256": "09934ea287cf1b942dc281b988b429bd2bc10a054b686a10010b1765c9b03827"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-21/hero-21-07-64.png",
+      "sha256": "74bc1e985d5c5cccf6b0902f31bb49ef762ced8c94c8322fc6d3c988251d0350"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-21/hero-21-07-48.png",
+      "sha256": "1f6cba4a3631e7fcd15a972e110182acee47c233a6c6d99f99ef9487b0eb170a"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-21/hero-21-07-32.png",
+      "sha256": "8d9cfb5d5de087baa99be948fe8718cd7ecaf4f5339a80894795fa3849b3ef06"
+    }
+  }
+}

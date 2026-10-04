@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-19-01",
+  "name": "Close the Door",
+  "source": "art/ability-icons-draft/raw/hero-19/initial.png",
+  "source_sha256": "bfe18f630518f6f67979ba1b2bdb21b6cb1cb8951856bd93442dcb4f33ac57fd",
+  "cell": [
+    0,
+    0,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    0,
+    0,
+    384,
+    341
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    93,
+    59,
+    339,
+    321
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-19/hero-19-01-128.png",
+      "sha256": "8aee9ae8cb7dac13fa52118751d72dc744e3115581cd97d7efd2184d75c0364d"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-19/hero-19-01-64.png",
+      "sha256": "dd6b17459fcdfc814810fd03f27a63d2a2cad49befcb0cce143503f0e44cc4fe"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-19/hero-19-01-48.png",
+      "sha256": "a1804d8932e3e8a049fe2ce1350b4d73964c0b962ac560d750540009189e96b8"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-19/hero-19-01-32.png",
+      "sha256": "3ae0020b5093ecf9d468d74de89b6d9f9afc5c5526429e8ce1936b9acb8a9af5"
+    }
+  }
+}

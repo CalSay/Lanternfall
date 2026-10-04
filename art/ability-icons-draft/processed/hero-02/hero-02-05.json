@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-02-05",
+  "name": "Oathstrike",
+  "source": "art/ability-icons-draft/raw/hero-02/revision-01.png",
+  "source_sha256": "afeade7e11cd68ba6d01f4b9430e0ffa26465e190b3b1cea01bb880e844a3aea",
+  "cell": [
+    0,
+    1,
+    384,
+    342
+  ],
+  "raw_bbox": [
+    108,
+    68,
+    325,
+    263
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-02/hero-02-05-128.png",
+      "sha256": "10578d26dc5a3bed32638f37191783b853814232b06cb3cc419bed736272989f"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-02/hero-02-05-64.png",
+      "sha256": "c3ad1bb4307ba164b724f6699ed05c7c3c30cf6a9de0789b25f3a66e8f385f12"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-02/hero-02-05-48.png",
+      "sha256": "cccaef3b56a50135d1154508cae1f3f9aad24ad2b32a677b6deb3064bf78a7cc"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-02/hero-02-05-32.png",
+      "sha256": "752f937af7e87ccf1210de08b502ff39d5fe48e339a6c1a8f26fce02df27f635"
+    }
+  }
+}

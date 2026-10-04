@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-32-08",
+  "name": "Storm Glass",
+  "source": "art/ability-icons-draft/raw/hero-32/initial.png",
+  "source_sha256": "9fc99b0c96185debff12f3ef83d57429535b2f83b2ff399b7d563437f74a65f3",
+  "cell": [
+    3,
+    1,
+    384,
+    334
+  ],
+  "source_rectangle": [
+    1152,
+    341,
+    1536,
+    675
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    93,
+    41,
+    324,
+    290
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-32/hero-32-08-128.png",
+      "sha256": "24f7a811aedaa8b1520bf57dcab423e4c79831e74df037ca8a3dd844a1c9701e"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-32/hero-32-08-64.png",
+      "sha256": "820b32920f84a0b1e6141ac89180ce2b5196d1f4833b986382fe7d2f045ce7a6"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-32/hero-32-08-48.png",
+      "sha256": "d81ad8feb652ec1cd4b13e64ad26cae2c5dd07fa44d960d535fbe40a2bcfcd80"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-32/hero-32-08-32.png",
+      "sha256": "36aa3f80b1b05c9f8988f70ce4b408b535396649994dbf1c7d442745a12f999c"
+    }
+  }
+}

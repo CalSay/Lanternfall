@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-02-08",
+  "name": "Borrowed Edge",
+  "source": "art/ability-icons-draft/raw/hero-02/revision-01.png",
+  "source_sha256": "afeade7e11cd68ba6d01f4b9430e0ffa26465e190b3b1cea01bb880e844a3aea",
+  "cell": [
+    3,
+    1,
+    384,
+    342
+  ],
+  "raw_bbox": [
+    53,
+    65,
+    277,
+    262
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-02/hero-02-08-128.png",
+      "sha256": "4a2ac6c3c86373d5b48b30b7ff3e18399d0ca9300b30302d031ad7c2a84967d4"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-02/hero-02-08-64.png",
+      "sha256": "ac0e63ed9118bb993816fd2b828f124e01a3a89c2b4bc0c9c44f53994c17e367"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-02/hero-02-08-48.png",
+      "sha256": "7886cea911e9e191995b15a6b7e04a7fd8a928a62e77866141eaee6f9b5d19b5"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-02/hero-02-08-32.png",
+      "sha256": "4b4fc13aa12d2d45a67c6116f8e9cc6636c57f82d11c7e544ccb6abe6d0fd7f2"
+    }
+  }
+}

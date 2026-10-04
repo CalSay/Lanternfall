@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-31-03",
+  "name": "Sterile Field",
+  "source": "art/ability-icons-draft/raw/hero-31/initial.png",
+  "source_sha256": "d11b74289f59a67b5f207d83ad7a9343dc59f2b929acf4163ecf39acdceb61a3",
+  "cell": [
+    2,
+    0,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    768,
+    0,
+    1152,
+    341
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    40,
+    68,
+    325,
+    295
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-31/hero-31-03-128.png",
+      "sha256": "84acda21887c33241034af38440ec71548d6e5f35612033a05ac48065ade4725"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-31/hero-31-03-64.png",
+      "sha256": "6d3c0bcb87c75cd9359f5532113fc96a5a1fbb5d87bec097d8bc8cfa8a7dceb8"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-31/hero-31-03-48.png",
+      "sha256": "d9dbeb40f2cd117a5c50be5d7771b05604821169ec516f8de8b2628f88dc74eb"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-31/hero-31-03-32.png",
+      "sha256": "63e3652fcfdef5fcb6412e54069e0d72908f60cacc4dd64463a3135f4f9d5f42"
+    }
+  }
+}

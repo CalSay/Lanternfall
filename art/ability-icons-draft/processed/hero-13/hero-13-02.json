@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-13-02",
+  "name": "A Light for Someone",
+  "source": "art/ability-icons-draft/raw/hero-13/revision-01.png",
+  "source_sha256": "6f7b927a2ed54e245494b44fb6c52ac4cd14e0d139a28693b2082fc6605e7fbb",
+  "cell": [
+    1,
+    0,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    384,
+    0,
+    768,
+    341
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    29,
+    70,
+    370,
+    324
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-13/hero-13-02-128.png",
+      "sha256": "c312bcc578159fdc0b1dd881d8e0acfa2edce121bed24a953c5f92d4e51cca05"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-13/hero-13-02-64.png",
+      "sha256": "5db3283618a6ecaa7cb1ad46d05dd19d21d2953d945a41b575dfa7eb5d806a45"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-13/hero-13-02-48.png",
+      "sha256": "cf2718a5f0b356d372d6fbc1375bf7347f68c51d0c263b52ea1652f59f07320d"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-13/hero-13-02-32.png",
+      "sha256": "7969190aca33cef4356ce9536fd0418a1321a8c1e54c1273f4280cb9362121cd"
+    }
+  }
+}

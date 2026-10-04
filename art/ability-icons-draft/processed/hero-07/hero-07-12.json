@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-07-12",
+  "name": "Sworn Steel",
+  "source": "art/ability-icons-draft/raw/hero-07/initial.png",
+  "source_sha256": "c5a611d4b3e52f2396d0c4927d0089255fcab855408bd199f60994a281e3ee6b",
+  "cell": [
+    3,
+    2,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    53,
+    23,
+    318,
+    286
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-07/hero-07-12-128.png",
+      "sha256": "036cdc28642c1693a88d321238e890b42611714b2084590cd977c0527e5c0fe2"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-07/hero-07-12-64.png",
+      "sha256": "59e62d80ba0493e48dfc1f71111bf043efcf3597ec7d7926aeeda368dd60a96c"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-07/hero-07-12-48.png",
+      "sha256": "da7420d8b7ff57c29f7afad9af71af51af63c0b5b9345f55e9b11fae9b1fba31"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-07/hero-07-12-32.png",
+      "sha256": "9fc0dbb2e40fa2cc115df0e388c773277ec3455ed4bb2d845202c05acb09082c"
+    }
+  }
+}

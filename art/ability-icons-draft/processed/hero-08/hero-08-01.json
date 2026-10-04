@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-08-01",
+  "name": "Measure the Reach",
+  "source": "art/ability-icons-draft/raw/hero-08/initial.png",
+  "source_sha256": "8856b593573385548ec836d3a260d557b8d279395bd3cc3dda3e63937f7c3b96",
+  "cell": [
+    0,
+    0,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    43,
+    86,
+    345,
+    310
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-08/hero-08-01-128.png",
+      "sha256": "b0152ad220ab5a693c6297c2b680948bda008af284a5691ca6278157c5c8e9f0"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-08/hero-08-01-64.png",
+      "sha256": "32608736858780b9e5431f394f19f070688113d2efd43db86b3af835baaf1131"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-08/hero-08-01-48.png",
+      "sha256": "6dfb906eb9fcef7e19d72ca8cb947227e0e0123c5564f3bac4630bd83e022024"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-08/hero-08-01-32.png",
+      "sha256": "2dbf2089685692f7508eca5e5d3e302e7ffd10a8cc838a74bce0e1b4f6842621"
+    }
+  }
+}

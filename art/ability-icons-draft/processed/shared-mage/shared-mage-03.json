@@ -1,0 +1,45 @@
+{
+  "icon_id": "shared-mage-03",
+  "name": "Arcane Ward",
+  "source": "art/ability-icons-draft/raw/shared-mage/initial.png",
+  "source_sha256": "8e20ae4f85e78a3499d3db9aa5387191856f5f3434a84d793278955f76b8527d",
+  "cell": [
+    2,
+    0,
+    512,
+    512
+  ],
+  "source_rectangle": [
+    1024,
+    0,
+    1536,
+    512
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    71,
+    115,
+    452,
+    449
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/shared-mage/shared-mage-03-128.png",
+      "sha256": "8c10895d54f559c462ac43e032353a103781256284ea6586c9634035da58da29"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/shared-mage/shared-mage-03-64.png",
+      "sha256": "a93a2059ea367fce27a6ad7d17bca6bc5af39de1f31b700aa5c3e1b74ad281ab"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/shared-mage/shared-mage-03-48.png",
+      "sha256": "37c23628fb65c3c16b3c414051998df5e2c21e192a09666df4ab477ad5a4b316"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/shared-mage/shared-mage-03-32.png",
+      "sha256": "1e43c2ccf2621d407b96cbb5b8b20f59830f2aa2ed2b01dee6aa122309e15cba"
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-17-09",
+  "name": "Perfect Pane",
+  "source": "art/ability-icons-draft/raw/hero-17/initial.png",
+  "source_sha256": "9cfb6c123f64254a36401115884f7626809e770bd1176b0701853f40da447634",
+  "cell": [
+    0,
+    2,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    0,
+    683,
+    384,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    71,
+    7,
+    340,
+    265
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-17/hero-17-09-128.png",
+      "sha256": "d7fd83eca4a8ef8a354d17c2f3976418aad9425d7cf3eb9f38bed0ef1f6d18ca"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-17/hero-17-09-64.png",
+      "sha256": "4cf2619caa1cde2ebb7440f1340bced8b7568b673da242886115c0c8a5222639"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-17/hero-17-09-48.png",
+      "sha256": "d31f1d1719c30429cd4b49e4ae7fdf868b67252571b88a2975bee10842bb96d6"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-17/hero-17-09-32.png",
+      "sha256": "8933fab7ae37401634ea00b3f8e54bc70a651ab2175441450143d7d5c6b00377"
+    }
+  }
+}

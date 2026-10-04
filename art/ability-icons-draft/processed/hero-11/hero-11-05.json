@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-11-05",
+  "name": "Debt Collected",
+  "source": "art/ability-icons-draft/raw/hero-11/initial.png",
+  "source_sha256": "21cf5ca6babe0402a4bc4e23f094601acc7db487dd0e518ca5320ecf4b3b8950",
+  "cell": [
+    0,
+    1,
+    384,
+    342
+  ],
+  "raw_bbox": [
+    78,
+    46,
+    329,
+    283
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-11/hero-11-05-128.png",
+      "sha256": "8521d847e773d19775e591530f7b1efe095769bc68ae18f8bfff542d144370e6"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-11/hero-11-05-64.png",
+      "sha256": "d33af1d5b3b8a17a3799ae1729df3265a923108043ad3718121e3d701785f857"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-11/hero-11-05-48.png",
+      "sha256": "76901219c75463da66c4935549ed74798915c0ae27b7643a50080b6e99d0614b"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-11/hero-11-05-32.png",
+      "sha256": "60dd2409d7a2560c6b9cdc36d54d73a870789f46558afcfe88baaf9baa2b2c82"
+    }
+  }
+}

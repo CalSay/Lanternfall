@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-13-01",
+  "name": "Keep It Low",
+  "source": "art/ability-icons-draft/raw/hero-13/revision-01.png",
+  "source_sha256": "6f7b927a2ed54e245494b44fb6c52ac4cd14e0d139a28693b2082fc6605e7fbb",
+  "cell": [
+    0,
+    0,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    0,
+    0,
+    384,
+    341
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    72,
+    104,
+    338,
+    334
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-13/hero-13-01-128.png",
+      "sha256": "18689b4c80ca51c20c31245daa613875453ee5fe768ebc5522be8a3f6f9b0440"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-13/hero-13-01-64.png",
+      "sha256": "5701040e9d5d68271f1d1ebcf9a6ed169eaaed3ec6d6b192e093b1f76954a95f"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-13/hero-13-01-48.png",
+      "sha256": "9a202bedb7076a0007dcdb4721b3daa63fab5e01b7942df5e554dba05e54522d"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-13/hero-13-01-32.png",
+      "sha256": "57990c6586b74dd3307e6b55fe1d9e2516e5d25377345a732c9e01bb4472a585"
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-14-02",
+  "name": "Burning Seams",
+  "source": "art/ability-icons-draft/raw/hero-14/initial.png",
+  "source_sha256": "620ff6b97e16026aa6628720b90134f03a9e0c764cfec18ef55a5eccd6ba16ca",
+  "cell": [
+    1,
+    0,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    384,
+    0,
+    768,
+    341
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    57,
+    63,
+    316,
+    314
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-14/hero-14-02-128.png",
+      "sha256": "f797a983f00126ea6bf76882e4f55c7771906a8eb3061a49da5087418a69f12b"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-14/hero-14-02-64.png",
+      "sha256": "7cd8a5e0259b11daf9e7e1bdd1a3fcae86ad01df71ba27dd2486ad2a3f0d94bb"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-14/hero-14-02-48.png",
+      "sha256": "1ce40488e0b12ccb7e5ef3484446fcec9622c2588644aace4e9dd0b7b57dbe14"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-14/hero-14-02-32.png",
+      "sha256": "6891da55b577039372860b3e3692246a2b79484147eeab2af0791a63946230b7"
+    }
+  }
+}

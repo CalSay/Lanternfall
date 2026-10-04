@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-24-05",
+  "name": "Meet the Hour",
+  "source": "art/ability-icons-draft/raw/hero-24/initial.png",
+  "source_sha256": "4e22efa85f0d09ff8bcb5771888ece2abc454c3e19a02de4660c7c60992fd240",
+  "cell": [
+    0,
+    1,
+    384,
+    338
+  ],
+  "source_rectangle": [
+    0,
+    345,
+    384,
+    683
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    73,
+    49,
+    342,
+    295
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-24/hero-24-05-128.png",
+      "sha256": "1474e11672c7fd2415fbda3de21ae3816844cbb41a7ff926950cb85f4e07afee"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-24/hero-24-05-64.png",
+      "sha256": "52ca5bc4bd61e6b35759351cdb89a4e2c1967ccd2509d8373b40c1bfea013966"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-24/hero-24-05-48.png",
+      "sha256": "0997f6b8df7d645c3458b7a384acf9ca3ac37c57a11b60218f7ad954965f10d6"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-24/hero-24-05-32.png",
+      "sha256": "0968d7fc82f8ab97c2f4e8a0a2ef872d474c6c56b74fde30247f762c454544e5"
+    }
+  }
+}

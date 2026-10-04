@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-06-05",
+  "name": "Grave Reproof",
+  "source": "art/ability-icons-draft/raw/hero-06/initial.png",
+  "source_sha256": "6bcfc8612b6c75bfe975c206de9d5b5f7cca0499b032aad52e2836bf2fc74d24",
+  "cell": [
+    0,
+    1,
+    384,
+    342
+  ],
+  "raw_bbox": [
+    57,
+    32,
+    375,
+    300
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-06/hero-06-05-128.png",
+      "sha256": "9b412fb8f4f2fa5d2315840da146f3cd09c0d6ee55f5e15e41f69436a9d8cef6"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-06/hero-06-05-64.png",
+      "sha256": "674b8fd71a7ecdc88b7af9484e05aa1e167170852d04cd2e6395204cc36d8b4e"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-06/hero-06-05-48.png",
+      "sha256": "0566e9c7c289ece87a2f810e2fd9774107adc929024ac3f5534cc53b380147d9"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-06/hero-06-05-32.png",
+      "sha256": "93e9a31b12ada900c1d9194a68857bbca4fc9c3fd4dd56e394f7b144af9ae549"
+    }
+  }
+}

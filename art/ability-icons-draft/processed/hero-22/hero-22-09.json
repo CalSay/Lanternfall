@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-22-09",
+  "name": "Last Door Before Dawn",
+  "source": "art/ability-icons-draft/raw/hero-22/initial.png",
+  "source_sha256": "dbfb104d6ff11ee7589c8f600764bd335af518c5e7f46b39f23da5a9ddc9dc80",
+  "cell": [
+    0,
+    2,
+    384,
+    344
+  ],
+  "source_rectangle": [
+    0,
+    680,
+    384,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    32,
+    2,
+    383,
+    271
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-22/hero-22-09-128.png",
+      "sha256": "87abe50817d9dfd2950d8036f63b930c4f6339e6ec982baec46c4b2d83c7861c"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-22/hero-22-09-64.png",
+      "sha256": "d251ece6bc6ef44b44a07a59b18c67b92af99d1c888ef96524dc23df37c1d292"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-22/hero-22-09-48.png",
+      "sha256": "e235da67b4eb2561d9aa97fa0c23e0904af0e105b5de98287fc5963a6d9f0c2b"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-22/hero-22-09-32.png",
+      "sha256": "6b1e56533ab6393ab5a2b3c74f145a7fd6d99db2baa6a32730a64d9e811fdbc5"
+    }
+  }
+}

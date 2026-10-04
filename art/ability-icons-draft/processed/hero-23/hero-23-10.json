@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-23-10",
+  "name": "Patient Hands",
+  "source": "art/ability-icons-draft/raw/hero-23/initial.png",
+  "source_sha256": "1601ed146f61b6c06aa62535d51dadccfc29c97d940c4ae00205acccd3746d55",
+  "cell": [
+    1,
+    2,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    384,
+    683,
+    768,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    76,
+    25,
+    320,
+    266
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-23/hero-23-10-128.png",
+      "sha256": "e43099db87e279487fe6394cfb1e7f72007f72658485981bdce4eba874881185"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-23/hero-23-10-64.png",
+      "sha256": "53f0c115f40a168c40086e2c7d72c1f6dba8ade4b6441a4c2beed60bc9d7ee8c"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-23/hero-23-10-48.png",
+      "sha256": "08991da859316d1e8d7bb51f852718e79149518d907c83140d2bff19646a5cf8"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-23/hero-23-10-32.png",
+      "sha256": "acbee2bb142a28e5a6bac8836298f2c2562e82cf9ca8647607b13864c84535de"
+    }
+  }
+}

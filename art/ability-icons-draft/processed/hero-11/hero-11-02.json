@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-11-02",
+  "name": "Fine Print",
+  "source": "art/ability-icons-draft/raw/hero-11/initial.png",
+  "source_sha256": "21cf5ca6babe0402a4bc4e23f094601acc7db487dd0e518ca5320ecf4b3b8950",
+  "cell": [
+    1,
+    0,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    96,
+    89,
+    328,
+    294
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-11/hero-11-02-128.png",
+      "sha256": "25cd36024e3b086394235097af411464ce2581a9709e6cca91e9f034603c7ac4"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-11/hero-11-02-64.png",
+      "sha256": "865d1ccad2f88576db7d5ea0f973d0d165656b2a34220e29d990a4259aa01a05"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-11/hero-11-02-48.png",
+      "sha256": "c5b2a3ae9b5a09ebcdec5bc0b17dddc81520dfff3df5dea8ed5bb2fbf13fc443"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-11/hero-11-02-32.png",
+      "sha256": "e808cfc62ddcffd9fb09b9e6d182ff7164671b8ff3f3e566ace4a16096237c18"
+    }
+  }
+}

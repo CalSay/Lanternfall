@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-13-04",
+  "name": "The Choice Again",
+  "source": "art/ability-icons-draft/raw/hero-13/revision-01.png",
+  "source_sha256": "6f7b927a2ed54e245494b44fb6c52ac4cd14e0d139a28693b2082fc6605e7fbb",
+  "cell": [
+    3,
+    0,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    1152,
+    0,
+    1536,
+    341
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    78,
+    66,
+    313,
+    331
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-13/hero-13-04-128.png",
+      "sha256": "f30440c43b0b60ed769fb8edc3d034c74ad33ae7b6ab15544ce069dcd588619e"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-13/hero-13-04-64.png",
+      "sha256": "1b7720d70b3a3a3395e1ac8910169573b3630d317361053eaa800ddb17e63549"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-13/hero-13-04-48.png",
+      "sha256": "075e19f593a01a1ce65900bab89db9a643abb7e02ca563c442454279d06528d0"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-13/hero-13-04-32.png",
+      "sha256": "3281a437465cde4e5617e3d0856daedc99243eea4d1a3101591650d19eb18d66"
+    }
+  }
+}

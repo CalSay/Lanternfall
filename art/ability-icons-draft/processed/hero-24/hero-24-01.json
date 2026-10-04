@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-24-01",
+  "name": "Borrow Tomorrow",
+  "source": "art/ability-icons-draft/raw/hero-24/initial.png",
+  "source_sha256": "4e22efa85f0d09ff8bcb5771888ece2abc454c3e19a02de4660c7c60992fd240",
+  "cell": [
+    0,
+    0,
+    384,
+    345
+  ],
+  "source_rectangle": [
+    0,
+    0,
+    384,
+    345
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    67,
+    72,
+    354,
+    340
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-24/hero-24-01-128.png",
+      "sha256": "a6cfee44a2c8e17dadf9d01504cc800b0cf28a22bf38945ad2d951b6a49b5ff5"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-24/hero-24-01-64.png",
+      "sha256": "7b4d94a6c26c7b1e6f0fc798e91b1a2822ec8f9ff93fe71bfcba5cc8de7e960d"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-24/hero-24-01-48.png",
+      "sha256": "f1624193f111bd2d2d4cfcb40f2ba18362c5a6ca5abe2c3927bcb75703b529ee"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-24/hero-24-01-32.png",
+      "sha256": "e117d902d7385f61a2703b24cae94516527a866abc7a25a42eedeafcb495859d"
+    }
+  }
+}

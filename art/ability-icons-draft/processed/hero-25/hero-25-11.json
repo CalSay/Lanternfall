@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-25-11",
+  "name": "Keep the Beat",
+  "source": "art/ability-icons-draft/raw/hero-25/initial.png",
+  "source_sha256": "772274f9f964339e53f7321b8ad188f03b105c2ecdd4754320cb6b84b1d5c7ec",
+  "cell": [
+    2,
+    2,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    768,
+    683,
+    1152,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    86,
+    47,
+    285,
+    260
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-25/hero-25-11-128.png",
+      "sha256": "7c663351f0c745662e5e103c3b651edac69829fe650b22d6c04d5330cd635037"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-25/hero-25-11-64.png",
+      "sha256": "4015cbe441d6f4ab94e5c9cb0dd1077fbca66f862e0f325b43621512cda8ab21"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-25/hero-25-11-48.png",
+      "sha256": "394add181f247f94fab1bd98a2d5361964943e40a11771f8eda0a105b09d2b26"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-25/hero-25-11-32.png",
+      "sha256": "21a38678a1b0dec81119658b26e76e637f99245a697e87e1383685fb157423e9"
+    }
+  }
+}

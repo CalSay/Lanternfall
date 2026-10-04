@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-10-10",
+  "name": "Hands First",
+  "source": "art/ability-icons-draft/raw/hero-10/initial.png",
+  "source_sha256": "b35142971fba2f77cf87c5e0395b982c6f7b1cf9e45bbdb95d5aa84133dd1e0b",
+  "cell": [
+    1,
+    2,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    65,
+    32,
+    334,
+    266
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-10/hero-10-10-128.png",
+      "sha256": "976c78b24b587b7d3782a7a3af36401a0f7a9b712eb1e96d9aa3a9cfe71d1ae3"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-10/hero-10-10-64.png",
+      "sha256": "034c766ef9349a49ec1be0e0c1a1df61b5c2e52ef52079dea309f04935ce8aef"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-10/hero-10-10-48.png",
+      "sha256": "3a33ebdf706d219e255965eb2369c1f521e0673987aa405227271620f3b162bc"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-10/hero-10-10-32.png",
+      "sha256": "b6377260aa6b8292c88b1ff735f76b33c9ca89ada94c8c346fa91770b2a5a5f7"
+    }
+  }
+}

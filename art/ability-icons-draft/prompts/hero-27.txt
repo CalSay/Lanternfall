@@ -1,0 +1,16 @@
+Create a Lanternfall ability ICON PROP PACK for Ione Hart. Exactly TWELVE isolated symbols in FOUR columns THREE rows, row-major, equal invisible slots on1536x1024. Native48px pixel-art shape language matching the approved six small action icons: broad confident dark outline, THREE TO FIVE flat opaque material shade clusters, very few secondary marks; not ornate illustrations. Symbols must read at32px. Use navy, gold leadwork, red/blue stained glass and white holy light. matching the approved hero concept's palette/materials. No human bodies, poses or portraits.
+Containment: every COMPLETE glyph, including every ray, tail, motif and particle, fits CENTRAL50% WIDTH AND HEIGHT (max192x170 pixels) of its slot, at leastone-quarter slot plain background on every side. Safe50 guide is invisible layout only; never reproduce its boxes, lines, crosses, labels or white. Background entirely exact flat magenta#FF00FF. Actual art colours NEVER near that chroma: violet uses deep blue-violet or lavender with substantial green, no fuchsia/hot-pink. No gradients/glow blending into magenta, no soft antialiasing, microtexture, tiny sparkles, frames, UI, letters, numerals, watermark, floor/shadow.
+The following manually authored designs are exact cell assignments. Names identify them toyou but MUSTNOT be drawn as text. Interpret dominant mechanic metaphor, not all optional clauses; symbolic props do not add equipment or gameplay. Nine actives1–9 directional; three passives10–12 settled compact emblems. Distinguish silhouettes withinthishero, not just small glow changes. No resurrection, party actor, automaticdefence, summons, thrown held equipment, extra targets or implied extra proc hits. Geometric Guard/Ward arcs are shields, not flame tongues.
+1. Red Window (Active): red stained glass diamond projecting a single fire ray.
+2. Blue Window (Active): blue stained glass diamond projecting a single frost ray.
+3. Clear Pane (Active): clear pane with a reserved red and blue edge.
+4. Leadwork Seal (Active): dark leadwork lattice forming a compact ward shield.
+5. Spectrum Cut (Active): prismatic glass edge producing one clean holy cut.
+6. Closed Shutter (Active): closed stained glass shutter and one weak sigil.
+7. Amber Window (Active): amber window radiating a mark ring and ward glint.
+8. White Reflection (Active): white reflection through forked red control and blue freeze facets.
+9. All the Glass at Once (Active): grand concentrated red blue and white glass rays in one centre.
+10. Colour Study (Passive): two colour study chips and a clear basic spell glint.
+11. Leadwork (Passive): leadwork frame enclosing a ward facet.
+12. True Colour (Passive): single true-colour pane radiating a retained light.
+Only these twelve independent game-ready draft glyphs; an initial reviewer draft, no production integration.

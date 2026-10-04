@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-11-04",
+  "name": "Read by Touch",
+  "source": "art/ability-icons-draft/raw/hero-11/initial.png",
+  "source_sha256": "21cf5ca6babe0402a4bc4e23f094601acc7db487dd0e518ca5320ecf4b3b8950",
+  "cell": [
+    3,
+    0,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    57,
+    96,
+    302,
+    313
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-11/hero-11-04-128.png",
+      "sha256": "7de71df94db3b49515cf3425b25afcb676300bf9a0e8cd0ddd7c22aa26a230ac"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-11/hero-11-04-64.png",
+      "sha256": "1c9300809406d44bcda97eccc9aff1f2a0befe4bacd76fef9ff7ea8eaaef5ded"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-11/hero-11-04-48.png",
+      "sha256": "fb1d4b7e6f50e13b358ab4b493fee3073d9a868626f2faed5d98e4f75d2a4b92"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-11/hero-11-04-32.png",
+      "sha256": "7f82499b1ee35b0ba2f0c7f760fb68b96342c34f1b0e89dab4d0d2eff835aef4"
+    }
+  }
+}

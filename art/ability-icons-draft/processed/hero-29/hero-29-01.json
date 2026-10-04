@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-29-01",
+  "name": "Rime Arrow",
+  "source": "art/ability-icons-draft/raw/hero-29/initial.png",
+  "source_sha256": "912d763e5359c1b9ad35d60650781b2012c2b0fb1f1ca14bb79e94c7978d6287",
+  "cell": [
+    0,
+    0,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    0,
+    0,
+    384,
+    341
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    67,
+    88,
+    315,
+    322
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-29/hero-29-01-128.png",
+      "sha256": "64c7646a00eb3dd4f05a104c5b6591ec6bf4e2bfec55034684b1c4f929c69400"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-29/hero-29-01-64.png",
+      "sha256": "3e7c26652243c71e9a6af9a53a44f97e1fcc8debd46516f5e213e9dc32946504"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-29/hero-29-01-48.png",
+      "sha256": "4f89889dae82e9b937eca9cf43df15f623034b5a6df1836382388efd0a8d3a51"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-29/hero-29-01-32.png",
+      "sha256": "89e5ef7e28704d8432664f12634df50ed3c7d8b0d34a0bb01c2cd2ee9c5fbaf7"
+    }
+  }
+}

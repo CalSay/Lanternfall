@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-21-02",
+  "name": "Stir Slowly",
+  "source": "art/ability-icons-draft/raw/hero-21/initial.png",
+  "source_sha256": "faf603fa06d58e42be4c3368499fe7a58f08b8b5bf31d98c730bf6a6c5879a45",
+  "cell": [
+    1,
+    0,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    384,
+    0,
+    768,
+    341
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    66,
+    59,
+    306,
+    313
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-21/hero-21-02-128.png",
+      "sha256": "0ac792b97c9180c48af57fc8ffa46236e75b5da35709c4fc36ad8cb12a978844"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-21/hero-21-02-64.png",
+      "sha256": "bef1c7a8a8be18311783603e7ce7e95df52a1fd414f4126b60a251a303d90c1b"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-21/hero-21-02-48.png",
+      "sha256": "6b0134699c159b0498c8f56d65992d820c182c21e17491b21469b0f4a5763b1e"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-21/hero-21-02-32.png",
+      "sha256": "966ed2ad9d0c2ad1b5756d055d99b1af1ed4fcc1e5c75bc8ab8c8a6e1a1462d2"
+    }
+  }
+}

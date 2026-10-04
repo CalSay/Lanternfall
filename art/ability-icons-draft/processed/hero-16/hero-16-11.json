@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-16-11",
+  "name": "Knotted Rope",
+  "source": "art/ability-icons-draft/raw/hero-16/initial.png",
+  "source_sha256": "74cf5dd1ac2b8b7ce64109521292450ad8b345131b157d7de885bdce619a6c87",
+  "cell": [
+    2,
+    2,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    768,
+    683,
+    1152,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    43,
+    19,
+    323,
+    280
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-16/hero-16-11-128.png",
+      "sha256": "0e1a2f5523453d73311c32ce4ccaa0b40e9d3bb30478975245ec218a6b20f390"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-16/hero-16-11-64.png",
+      "sha256": "c491a380a177fbaa4e476efae1c70b1a5c2f73d7282538afb9b79a2934adec8f"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-16/hero-16-11-48.png",
+      "sha256": "2b8b45b916f6bc11d1654730387da6e730cbb6085225de5e2c86d2021df84d5a"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-16/hero-16-11-32.png",
+      "sha256": "6df28748c6e5ecae7e57cd23d45da0b2772c25ed5aeb96c3b103a37da3378c84"
+    }
+  }
+}

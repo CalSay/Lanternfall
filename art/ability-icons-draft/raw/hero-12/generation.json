@@ -1,0 +1,10 @@
+{
+  "plate_key": "hero-12",
+  "generated_original": "/workspace/generated_images/exec-7986e104-73cf-4f99-b8e0-0ad48782c4e0.png",
+  "attempt": 2,
+  "status": "pending-actual-icon-review",
+  "operational_recovery": "Attempt1 displayed correct art but returned no output_hint; full result was not retained. Same exact prompt repeated with parent release. Incorrect concurrent file detected visually and replaced before review or integration.",
+  "sha256": "e9d7f4768b72255d55ca1234951443b9e5483cad20fe37bace1d8f5924ed3971",
+  "current_processed_review": "closed; zero actionable findings after actual raw and native32/48/128 inspection",
+  "owner_approval": "pending"
+}

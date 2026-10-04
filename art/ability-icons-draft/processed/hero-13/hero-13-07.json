@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-13-07",
+  "name": "What They Got Wrong",
+  "source": "art/ability-icons-draft/raw/hero-13/revision-01.png",
+  "source_sha256": "6f7b927a2ed54e245494b44fb6c52ac4cd14e0d139a28693b2082fc6605e7fbb",
+  "cell": [
+    2,
+    1,
+    384,
+    340
+  ],
+  "source_rectangle": [
+    768,
+    341,
+    1152,
+    681
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    39,
+    64,
+    376,
+    288
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-13/hero-13-07-128.png",
+      "sha256": "c978300bdff70db1f924da84ed9ab295d0d858ae6739a3198fceaae02af3f5d9"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-13/hero-13-07-64.png",
+      "sha256": "5687cfddc825f7840714f2718450d762f95e028620828fdbbb2dfc5d060a1a26"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-13/hero-13-07-48.png",
+      "sha256": "28114b8b4f536ada56ac8c5e570429233b80f5c7c617442b1d20b183bee73b4b"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-13/hero-13-07-32.png",
+      "sha256": "c938a7a568f22ec81ced7921bd44f55be397716da3316b2ce6f24a447ef273bd"
+    }
+  }
+}

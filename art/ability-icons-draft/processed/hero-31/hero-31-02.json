@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-31-02",
+  "name": "Close the Wound",
+  "source": "art/ability-icons-draft/raw/hero-31/initial.png",
+  "source_sha256": "d11b74289f59a67b5f207d83ad7a9343dc59f2b929acf4163ecf39acdceb61a3",
+  "cell": [
+    1,
+    0,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    384,
+    0,
+    768,
+    341
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    84,
+    64,
+    301,
+    308
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-31/hero-31-02-128.png",
+      "sha256": "24e5a2a85985cfbc5fbbfd889f35aba3052cf6a30bb2ebdafd86ceb2c4f2eae7"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-31/hero-31-02-64.png",
+      "sha256": "de2caf1fddf5988f72332ecd56d7d303e96d0c415b44c0504386b390d3a997af"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-31/hero-31-02-48.png",
+      "sha256": "5ceb6ceaf5b0333a00dbaa437c64dd299dcbe1a32937ae923015d7ce1884a5e9"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-31/hero-31-02-32.png",
+      "sha256": "7b1926d3dfa8d2767a35cce33c8b9274baa973246b11644caff4857d4a687a8d"
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "icon_id": "shared-warrior-06",
+  "name": "Momentum",
+  "source": "art/ability-icons-draft/raw/shared-warrior/initial.png",
+  "source_sha256": "d75cd506f53c21d7873999edc6d1086d1f180120c49eb92c2e4b7374dc5a0d9b",
+  "cell": [
+    2,
+    1,
+    512,
+    512
+  ],
+  "source_rectangle": [
+    1024,
+    512,
+    1536,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    48,
+    50,
+    448,
+    409
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/shared-warrior/shared-warrior-06-128.png",
+      "sha256": "67a4437e3c926c6142c3736d16707ca136328b4f2157367be046a257fa953383"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/shared-warrior/shared-warrior-06-64.png",
+      "sha256": "4281abbabdbd3a63964e0f1da51066b69321da5a6db660a4113021a6b47529e1"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/shared-warrior/shared-warrior-06-48.png",
+      "sha256": "0c7236be541a9738b06161e687fe5251fc8980a57b6d81152c2127721a55838a"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/shared-warrior/shared-warrior-06-32.png",
+      "sha256": "aa757291a53d3b7dfc3839af9a7314b1a48a69b79e990d3f4308a7a66bb56918"
+    }
+  }
+}

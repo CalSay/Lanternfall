@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-22-06",
+  "name": "Medicine Run",
+  "source": "art/ability-icons-draft/raw/hero-22/initial.png",
+  "source_sha256": "dbfb104d6ff11ee7589c8f600764bd335af518c5e7f46b39f23da5a9ddc9dc80",
+  "cell": [
+    1,
+    1,
+    384,
+    339
+  ],
+  "source_rectangle": [
+    384,
+    341,
+    768,
+    680
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    61,
+    70,
+    336,
+    276
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-22/hero-22-06-128.png",
+      "sha256": "ca1b170aa0af3192827ad4d155ea3ae828baeea3596f3530124232ac27bc29e3"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-22/hero-22-06-64.png",
+      "sha256": "384d870ffa3b2a951b57be2ef7cbc1e89b7924eecc89947ad0589c6ef6189d3d"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-22/hero-22-06-48.png",
+      "sha256": "bbd3483d6b46f5e9ae62fd8bcd934ece09ae18cef5bbd1cb821df3129b6d30f1"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-22/hero-22-06-32.png",
+      "sha256": "acb404f1666cef673b6adf7d25e639bf3f463812be283381db216cfb7da500a6"
+    }
+  }
+}

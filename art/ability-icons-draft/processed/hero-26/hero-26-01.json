@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-26-01",
+  "name": "Read the Fever",
+  "source": "art/ability-icons-draft/raw/hero-26/initial.png",
+  "source_sha256": "69282736452127fdf3a6439efe454715873075762e622279e016f31c72b4e9f4",
+  "cell": [
+    0,
+    0,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    0,
+    0,
+    384,
+    341
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    92,
+    60,
+    339,
+    324
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-26/hero-26-01-128.png",
+      "sha256": "06ada3f3553e2a686721733d9fc164538a723b5df065ad7eec9b1fe3acdbcdee"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-26/hero-26-01-64.png",
+      "sha256": "312a66c12d7159cadfac00933d99cd8e9cc806ed823869a35fb89b8fe5d44dd0"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-26/hero-26-01-48.png",
+      "sha256": "1650128eb264e9963d010f166519bbf5e68aef3e06398b31a76c9769e2a6e6bb"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-26/hero-26-01-32.png",
+      "sha256": "fc862b2d241dc417b817119f9fb57b4991737e4bcfc4245a5e81918fcea389d1"
+    }
+  }
+}

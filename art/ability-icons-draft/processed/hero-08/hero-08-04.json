@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-08-04",
+  "name": "Long Point",
+  "source": "art/ability-icons-draft/raw/hero-08/initial.png",
+  "source_sha256": "8856b593573385548ec836d3a260d557b8d279395bd3cc3dda3e63937f7c3b96",
+  "cell": [
+    3,
+    0,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    34,
+    60,
+    337,
+    312
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-08/hero-08-04-128.png",
+      "sha256": "6bf73d528becae08fd703cbec878ece139a18ea2cfdbb54624f389eb56f98b7e"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-08/hero-08-04-64.png",
+      "sha256": "e1907af61a57dd27ab166308aa1eaa26119b32fd7675be2196edc82c9ad26195"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-08/hero-08-04-48.png",
+      "sha256": "630a43dd42ab81d831115cead283ebe7a035fa8b335743ae744a5e90ca235af3"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-08/hero-08-04-32.png",
+      "sha256": "dc46c675413d70b4ec874b3cbe8ce1a94c35a37ac766a46da42be42a4e22d031"
+    }
+  }
+}

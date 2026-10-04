@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-06-11",
+  "name": "Polite Company",
+  "source": "art/ability-icons-draft/raw/hero-06/initial.png",
+  "source_sha256": "6bcfc8612b6c75bfe975c206de9d5b5f7cca0499b032aad52e2836bf2fc74d24",
+  "cell": [
+    2,
+    2,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    46,
+    1,
+    318,
+    292
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-06/hero-06-11-128.png",
+      "sha256": "8d59eaf5217e96b53265b6e02ea276abdccaa439e274a2dca87f21346a3e3296"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-06/hero-06-11-64.png",
+      "sha256": "89398c0617452ac2c65e8c4eff9e6b60dd342e5ebcdae00ea249948f9d4255c1"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-06/hero-06-11-48.png",
+      "sha256": "45f032943060d28bf8479f926611a1127ace96b7295fbd63f7fb29874ca02822"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-06/hero-06-11-32.png",
+      "sha256": "e311ebf76c4fdd1b3e339172953889ba9661238eebcdb0528557e2c4cdf1fd64"
+    }
+  }
+}

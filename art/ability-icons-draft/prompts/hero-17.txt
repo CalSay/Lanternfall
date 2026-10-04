@@ -1,0 +1,16 @@
+Create a Lanternfall ability ICON PROP PACK for Linnet Cole. Exactly TWELVE isolated symbols in FOUR columns THREE rows, row-major, equal invisible slots on1536x1024. Native48px pixel-art shape language matching the approved six small action icons: broad confident dark outline, THREE TO FIVE flat opaque material shade clusters, very few secondary marks; not ornate illustrations. Symbols must read at32px. Use slate teal, silver glass, pale cyan frost, tiny orange annealing accents. matching the approved hero concept's palette/materials. No human bodies, poses or portraits.
+Containment: every COMPLETE glyph, including every ray, tail, motif and particle, fits CENTRAL50% WIDTH AND HEIGHT (max192x170 pixels) of its slot, at leastone-quarter slot plain background on every side. Safe50 guide is invisible layout only; never reproduce its boxes, lines, crosses, labels or white. Background entirely exact flat magenta#FF00FF. Actual art colours NEVER near that chroma: violet uses deep blue-violet or lavender with substantial green, no fuchsia/hot-pink. No gradients/glow blending into magenta, no soft antialiasing, microtexture, tiny sparkles, frames, UI, letters, numerals, watermark, floor/shadow.
+The following manually authored designs are exact cell assignments. Names identify them toyou but MUSTNOT be drawn as text. Interpret dominant mechanic metaphor, not all optional clauses; symbolic props do not add equipment or gameplay. Nine actives1–9 directional; three passives10–12 settled compact emblems. Distinguish silhouettes withinthishero, not just small glow changes. No resurrection, party actor, automaticdefence, summons, thrown held equipment, extra targets or implied extra proc hits. Geometric Guard/Ward arcs are shields, not flame tongues.
+1. Cooling Breath (Active): cool breath-shaped frost wisp and one chill crystal.
+2. Gather the Glass (Active): three glass fragments gathering into a ward pane.
+3. Anneal (Active): tempered glass arch with a dark status flake falling away.
+4. Draw a Needle (Active): one long fine glass needle and a chill mote.
+5. Quench (Active): bright quenching frost splash around two chill shards.
+6. Glass Shell (Active): single faceted glass shield with a reactive frost chip.
+7. Warm the Flaw (Active): tiny warm flame illuminating a glass flaw beside ward glint.
+8. Slow Cooling (Active): slow cooling glass rim and a lingering frost hour arc.
+9. Perfect Pane (Active): grand perfect frost pane with forked ward and chill choices.
+10. Work the Rim (Passive): glass rim with two measured frost notches.
+11. Safety Glass (Passive): glass shield shedding one restorative glint.
+12. Finished Edge (Passive): fine grey glass edge and a small protected ward facet.
+Only these twelve independent game-ready draft glyphs; an initial reviewer draft, no production integration.

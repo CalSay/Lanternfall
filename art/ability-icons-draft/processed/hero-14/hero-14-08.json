@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-14-08",
+  "name": "A Wooden Table",
+  "source": "art/ability-icons-draft/raw/hero-14/initial.png",
+  "source_sha256": "620ff6b97e16026aa6628720b90134f03a9e0c764cfec18ef55a5eccd6ba16ca",
+  "cell": [
+    3,
+    1,
+    384,
+    342
+  ],
+  "source_rectangle": [
+    1152,
+    341,
+    1536,
+    683
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    46,
+    51,
+    322,
+    293
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-14/hero-14-08-128.png",
+      "sha256": "e8dd91ba809e9192fd70e0f2f1dd1af0d591bfbd5efb9c1c4fe0f651442c1ea7"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-14/hero-14-08-64.png",
+      "sha256": "d8c04f484299531d49f2aaf74dbc3aec47456d0707b490b8a239ca11fc1be510"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-14/hero-14-08-48.png",
+      "sha256": "4d6efa86966eccdccd09d2e1270745b085ec07912149c883fda408d73c7b0faa"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-14/hero-14-08-32.png",
+      "sha256": "d03605ffec4efab922b0b870eac2c68c5096f08ba266245d5e09384bd0da0639"
+    }
+  }
+}

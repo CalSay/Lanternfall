@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-03-11",
+  "name": "Hearthspark",
+  "source": "art/ability-icons-draft/raw/hero-03/initial.png",
+  "source_sha256": "0cff4fe45795d22d75052e4382ce9f72075703ecc749e305a8f75badb5f8b7b3",
+  "cell": [
+    2,
+    2,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    87,
+    30,
+    272,
+    265
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-03/hero-03-11-128.png",
+      "sha256": "62b9ec186b496a8d388190a2ddce2ac55b5d9d78d790ce73fcb270a3a51f33c5"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-03/hero-03-11-64.png",
+      "sha256": "6033a71042a74a1473bbaa2ff7d9bbe6a656347b1894c00dd22b44f55f8924c5"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-03/hero-03-11-48.png",
+      "sha256": "f44d00f3e5d2782b19b1f4174488795bcba3377278635abb642645af47f55684"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-03/hero-03-11-32.png",
+      "sha256": "4b2bc9fe2e0ee1ebda9bfbead6388caa89ca8838e0864589e6fb28441393fe9d"
+    }
+  }
+}

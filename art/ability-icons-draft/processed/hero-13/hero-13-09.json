@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-13-09",
+  "name": "The Last Lantern",
+  "source": "art/ability-icons-draft/raw/hero-13/revision-01.png",
+  "source_sha256": "6f7b927a2ed54e245494b44fb6c52ac4cd14e0d139a28693b2082fc6605e7fbb",
+  "cell": [
+    0,
+    2,
+    401,
+    343
+  ],
+  "source_rectangle": [
+    0,
+    681,
+    401,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    34,
+    13,
+    400,
+    273
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-13/hero-13-09-128.png",
+      "sha256": "0e680c87d90f958066864b7348b83ea7e37d7c759c570ae8cac362a966bfcd0e"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-13/hero-13-09-64.png",
+      "sha256": "8515a3525759ce3180a0c3b19eef252e6aac0f5f102751f1af12974b260575ce"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-13/hero-13-09-48.png",
+      "sha256": "c7fa2b9d2c8f1cdbc77548f5c27a5db0c8405951500e169173a6d15b6873d7cb"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-13/hero-13-09-32.png",
+      "sha256": "b2ecf14ef198d9d90c42306de3b0176790e6d06f1f17c132fa1f9a797dc76cb8"
+    }
+  }
+}

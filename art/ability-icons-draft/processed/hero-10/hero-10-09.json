@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-10-09",
+  "name": "Rubble Follow-through",
+  "source": "art/ability-icons-draft/raw/hero-10/initial.png",
+  "source_sha256": "b35142971fba2f77cf87c5e0395b982c6f7b1cf9e45bbdb95d5aa84133dd1e0b",
+  "cell": [
+    0,
+    2,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    64,
+    32,
+    351,
+    266
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-10/hero-10-09-128.png",
+      "sha256": "5691120c5e63bae107044f119472a39c90d6ef4e9d16673feb99c185a5281001"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-10/hero-10-09-64.png",
+      "sha256": "85b93939596738f4389e1739ea6d87c71e6d0c2cac70854c1d5340f82b575f97"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-10/hero-10-09-48.png",
+      "sha256": "2a5330d2a009373f5d7e801f7b4586bce2ff0b840cea54ede2dd6030f5f3eb50"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-10/hero-10-09-32.png",
+      "sha256": "c8f9c69b8a14fcbadb362192b6b254938c3cb69dff93b14384c1079043281e2f"
+    }
+  }
+}

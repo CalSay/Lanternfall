@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-22-05",
+  "name": "Long Way Round",
+  "source": "art/ability-icons-draft/raw/hero-22/initial.png",
+  "source_sha256": "dbfb104d6ff11ee7589c8f600764bd335af518c5e7f46b39f23da5a9ddc9dc80",
+  "cell": [
+    0,
+    1,
+    384,
+    339
+  ],
+  "source_rectangle": [
+    0,
+    341,
+    384,
+    680
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    47,
+    41,
+    346,
+    292
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-22/hero-22-05-128.png",
+      "sha256": "eed493b1356c119fdad7cb857bcbdf4342b692de33763ee29c99b20556d57d9b"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-22/hero-22-05-64.png",
+      "sha256": "4b7edcecfb328f889265a9216a8def7010e2b00e22c5e0ddf4ebd1914d47cb1d"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-22/hero-22-05-48.png",
+      "sha256": "3ddcf671f41e75a224ccd3ae29c6e7ca1380bbcead4408e839b746e48ed72eac"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-22/hero-22-05-32.png",
+      "sha256": "15b5c3c16bf1124a73145998090048a5c2413346970902abd48ce6cc78a696b3"
+    }
+  }
+}

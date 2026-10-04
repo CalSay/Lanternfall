@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-20-10",
+  "name": "Patient Excavation",
+  "source": "art/ability-icons-draft/raw/hero-20/initial.png",
+  "source_sha256": "83ca2e1f4fa66f8e7c6688e57e6f7a66ce819373bfe97a5c64b5ac8249c5717a",
+  "cell": [
+    1,
+    2,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    384,
+    683,
+    768,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    57,
+    22,
+    304,
+    264
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-20/hero-20-10-128.png",
+      "sha256": "82fdea325320b99e7b8b8a5acef5d3c9f57167990bb726de7166def196f01c3f"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-20/hero-20-10-64.png",
+      "sha256": "41e1d09daa8e6ce63f997cade7d9d720772056deab6194d321a51ce1c8d96d2f"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-20/hero-20-10-48.png",
+      "sha256": "295adf4feabf038c51ddc8f2259e03243074d34c989af88fff8eb4de215eef10"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-20/hero-20-10-32.png",
+      "sha256": "57d8bf640e4343f507940e1e28e504276df0cdd0a957e75e50f7480ae15ee0c8"
+    }
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-02-07",
+  "name": "Last Stand",
+  "source": "art/ability-icons-draft/raw/hero-02/revision-01.png",
+  "source_sha256": "afeade7e11cd68ba6d01f4b9430e0ffa26465e190b3b1cea01bb880e844a3aea",
+  "cell": [
+    2,
+    1,
+    384,
+    342
+  ],
+  "raw_bbox": [
+    49,
+    48,
+    294,
+    274
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-02/hero-02-07-128.png",
+      "sha256": "773861648bd728e1270dd6f132b0b3fcfba678091ecbddfbc0c4e271a2eb0386"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-02/hero-02-07-64.png",
+      "sha256": "9af29fc5d576344048623a7cf6854cd7e6f64444accc002915f1fe61d06be1a4"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-02/hero-02-07-48.png",
+      "sha256": "19dad3c5ffc3cd541491210a5e7ab8f784c5c340637ed723569d3ca854a5fc5d"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-02/hero-02-07-32.png",
+      "sha256": "89d8b6e37bfedda05e19b51b0ea520ba345f10c30c66c358a413caaf1b3f224d"
+    }
+  }
+}

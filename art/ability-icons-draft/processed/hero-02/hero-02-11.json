@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-02-11",
+  "name": "Borrowed Courage",
+  "source": "art/ability-icons-draft/raw/hero-02/revision-01.png",
+  "source_sha256": "afeade7e11cd68ba6d01f4b9430e0ffa26465e190b3b1cea01bb880e844a3aea",
+  "cell": [
+    2,
+    2,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    44,
+    21,
+    298,
+    237
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-02/hero-02-11-128.png",
+      "sha256": "023476ecca8aa90d5b4b0a6c1162bfa75b0c139ee8cde35e0683cb1b64eea559"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-02/hero-02-11-64.png",
+      "sha256": "ab19debd76e37d13d9c6ca13540ab1e87b0d73fadfd711abbcaa172007a8c63d"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-02/hero-02-11-48.png",
+      "sha256": "1b979e182e2ddafa3bb31d459205f9786c375a76ae1d4fa923ed26d61c3c6a49"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-02/hero-02-11-32.png",
+      "sha256": "59f6a1d655d7deb7fc4d0ba65031fe814acb912a9b5165ba24de07d8f92d103c"
+    }
+  }
+}

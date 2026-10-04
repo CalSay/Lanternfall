@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-20-09",
+  "name": "Open the Stratum",
+  "source": "art/ability-icons-draft/raw/hero-20/initial.png",
+  "source_sha256": "83ca2e1f4fa66f8e7c6688e57e6f7a66ce819373bfe97a5c64b5ac8249c5717a",
+  "cell": [
+    0,
+    2,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    0,
+    683,
+    384,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    49,
+    14,
+    340,
+    274
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-20/hero-20-09-128.png",
+      "sha256": "f1c582d3a22ebc4ed3e7ec7fe21e407effa411c84f01466087147734bf78011a"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-20/hero-20-09-64.png",
+      "sha256": "e4177ec71065e61dcb5f0a6d7eb017d7b1054bc27bdd2d9a9386e5bee80aea00"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-20/hero-20-09-48.png",
+      "sha256": "229f294d7cc7e48340ba03efc51d49b6d1aef1c4d553c31ffadbebc8d0dd82dd"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-20/hero-20-09-32.png",
+      "sha256": "881911231d4018e880a8822c8a9a77315ce80d688aeab8b10f29a7fccc3a05b7"
+    }
+  }
+}

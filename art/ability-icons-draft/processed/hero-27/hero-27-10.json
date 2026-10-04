@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-27-10",
+  "name": "Colour Study",
+  "source": "art/ability-icons-draft/raw/hero-27/initial.png",
+  "source_sha256": "c1c235d767948d31faaaf50f54f359a0a9b42b897b4e25e7f020fb4f7197168f",
+  "cell": [
+    1,
+    2,
+    384,
+    355
+  ],
+  "source_rectangle": [
+    384,
+    669,
+    768,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    66,
+    47,
+    314,
+    268
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-27/hero-27-10-128.png",
+      "sha256": "80f87be17cdf8ea1f8082f9ef2a0e69d217e6d2763c60adfb76eb6d527b926bd"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-27/hero-27-10-64.png",
+      "sha256": "ed6c2df7485c7ccdedae0d140dfb42700fe92760a88e415dc811f26bfc492e16"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-27/hero-27-10-48.png",
+      "sha256": "2ad783f6a122d24c04db501f2775a1ea76f8e6aa8faa85fba9769af5591a0d50"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-27/hero-27-10-32.png",
+      "sha256": "8f8b0b0875ff59391d5ec4631dd3a5c7f75ca9f497c3d5a517842b18f61252e5"
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-14-11",
+  "name": "Fire Held In",
+  "source": "art/ability-icons-draft/raw/hero-14/initial.png",
+  "source_sha256": "620ff6b97e16026aa6628720b90134f03a9e0c764cfec18ef55a5eccd6ba16ca",
+  "cell": [
+    2,
+    2,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    768,
+    683,
+    1152,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    29,
+    68,
+    322,
+    273
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-14/hero-14-11-128.png",
+      "sha256": "4a913dc0486635763dac271aeef8a26f50421234d8e1f3bb16ca78b57cb5d168"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-14/hero-14-11-64.png",
+      "sha256": "65940035f993b6188f5887524526aa2e9d5aa1ea800222c5b36d9b832078d552"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-14/hero-14-11-48.png",
+      "sha256": "2be8a1361fa5985e14bfa57539d74a8da8523b1d76a2790c7980f7cbcee4d8e0"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-14/hero-14-11-32.png",
+      "sha256": "31fbf4974fb032d6d8b0af121ad0256bf70884f2af67a78de7f241657a087207"
+    }
+  }
+}

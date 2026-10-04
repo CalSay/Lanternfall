@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-21-10",
+  "name": "Scraps in the Pot",
+  "source": "art/ability-icons-draft/raw/hero-21/initial.png",
+  "source_sha256": "faf603fa06d58e42be4c3368499fe7a58f08b8b5bf31d98c730bf6a6c5879a45",
+  "cell": [
+    1,
+    2,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    384,
+    683,
+    768,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    75,
+    20,
+    306,
+    281
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-21/hero-21-10-128.png",
+      "sha256": "0332b8f7411d1b5adc362f109159682d805238510b1b2b1a0427cfdf60b321ef"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-21/hero-21-10-64.png",
+      "sha256": "0342fe1050329ff42f8706addd34dda27d1798e8eee02f2ca44d5fc693f216c1"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-21/hero-21-10-48.png",
+      "sha256": "119f28cd1cf70b950a34449c3fae6c5860ed70380652f420b32f43eaca31aef8"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-21/hero-21-10-32.png",
+      "sha256": "4e3a5b8cc142dc91aa162bce841d82714f63aa2b8ed30ae7d78ea86dba0539b5"
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-17-02",
+  "name": "Gather the Glass",
+  "source": "art/ability-icons-draft/raw/hero-17/initial.png",
+  "source_sha256": "9cfb6c123f64254a36401115884f7626809e770bd1176b0701853f40da447634",
+  "cell": [
+    1,
+    0,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    384,
+    0,
+    768,
+    341
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    68,
+    87,
+    318,
+    300
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-17/hero-17-02-128.png",
+      "sha256": "4b055231ca0dee790afdba3f1d73be5449db7b53282fb81cc212ae4b3ab9f826"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-17/hero-17-02-64.png",
+      "sha256": "16d8f045de7865544686bf119291f7ba2eeefa7ff6e76de87deefe3a6593ab03"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-17/hero-17-02-48.png",
+      "sha256": "25aac11e1f835bb860a8e2f9056fa93fc5d68a897a15ba8de4280ae842e874cb"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-17/hero-17-02-32.png",
+      "sha256": "c28bf7b3f4664ccf3e8b1e4d7d65ae28c7e752f89675043cf96023fd7c263445"
+    }
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-02-10",
+  "name": "Bulwark",
+  "source": "art/ability-icons-draft/raw/hero-02/revision-01.png",
+  "source_sha256": "afeade7e11cd68ba6d01f4b9430e0ffa26465e190b3b1cea01bb880e844a3aea",
+  "cell": [
+    1,
+    2,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    101,
+    10,
+    299,
+    236
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-02/hero-02-10-128.png",
+      "sha256": "871c74a1a602d223d037ec9db8510cfdfac67b3c880f1744ef34e3566b191b81"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-02/hero-02-10-64.png",
+      "sha256": "0e8df506fe75bb8ca3e459a65dabfee3fce7488df4b7402d46e52cc1028c645f"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-02/hero-02-10-48.png",
+      "sha256": "5123931b0cb544c262e669de848d7c3282690b0b9a7850465df1013b4c70409c"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-02/hero-02-10-32.png",
+      "sha256": "a6c054034d19f78866124f18cf153618214fc64c47d03dff7ebcd2f44807fe86"
+    }
+  }
+}

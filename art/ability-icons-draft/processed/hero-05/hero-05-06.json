@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-05-06",
+  "name": "Workman's Rest",
+  "source": "art/ability-icons-draft/raw/hero-05/initial.png",
+  "source_sha256": "9e802dd0953c2985fdf4d4c9400993bbbf2cd90f6dd6a5754c946c3e7c818373",
+  "cell": [
+    1,
+    1,
+    384,
+    342
+  ],
+  "raw_bbox": [
+    66,
+    37,
+    331,
+    306
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-05/hero-05-06-128.png",
+      "sha256": "1d9bbf686da2f92ad15194c1eabe72791199fbcc6f07d429d0dbac5185a99972"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-05/hero-05-06-64.png",
+      "sha256": "a1c1e6395fdfbce1b1602fbd5c10fb57cc7e8a7cc541112caa770218fa93bcd3"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-05/hero-05-06-48.png",
+      "sha256": "da227dfdb39151f84e7308d18cd256678fd93cb5ab8ea2747ce2402475dd2c8c"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-05/hero-05-06-32.png",
+      "sha256": "57c4fc48d7e6870139aefd217a55826c4745617d64e4440c3222840f30bd54a4"
+    }
+  }
+}

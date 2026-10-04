@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-33-02",
+  "name": "Count the Breath",
+  "source": "art/ability-icons-draft/raw/hero-33/initial.png",
+  "source_sha256": "34c3cbedc4bc8535718528feb955cbdcecccb350fca27325ff2b86a023189d00",
+  "cell": [
+    1,
+    0,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    384,
+    0,
+    768,
+    341
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    73,
+    96,
+    319,
+    332
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-33/hero-33-02-128.png",
+      "sha256": "f03eee19b49f10bc6ad9f67a94d19c55ac193ac15946a806ad04be42313a5ca0"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-33/hero-33-02-64.png",
+      "sha256": "48e31245393a5021f4111f65a2d1f051abc63aabbac8c27ef104331056b0566f"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-33/hero-33-02-48.png",
+      "sha256": "47fb4e247ff9e8aec8ffea5055dc649058b5e7c1a5a91eaeb0cc57603063386a"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-33/hero-33-02-32.png",
+      "sha256": "584127610e0da861eb5e00eb084cfbe5bf0e27cffb854a6675c806deafce8bbc"
+    }
+  }
+}

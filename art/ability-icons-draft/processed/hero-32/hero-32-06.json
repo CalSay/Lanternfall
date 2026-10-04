@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-32-06",
+  "name": "Trip the Breaker",
+  "source": "art/ability-icons-draft/raw/hero-32/initial.png",
+  "source_sha256": "9fc99b0c96185debff12f3ef83d57429535b2f83b2ff399b7d563437f74a65f3",
+  "cell": [
+    1,
+    1,
+    384,
+    334
+  ],
+  "source_rectangle": [
+    384,
+    341,
+    768,
+    675
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    56,
+    41,
+    343,
+    270
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-32/hero-32-06-128.png",
+      "sha256": "8aaa1d1e6b2ecb6d6532b5c62d6cae7761a46489115dac53bd8ec14a160f264e"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-32/hero-32-06-64.png",
+      "sha256": "c75d356693aba243b380c45f901b7b343578049e004250897bcf3f8e6df62037"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-32/hero-32-06-48.png",
+      "sha256": "41d280ca5dbeeb922b27c2bf2696e306454f0bdfab8c11556f04770333f3a2a8"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-32/hero-32-06-32.png",
+      "sha256": "ae0732fd406cbcbb2642ab770718af124dad8194672cb5be4e0b6bcaac79ca24"
+    }
+  }
+}

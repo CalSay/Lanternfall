@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-12-08",
+  "name": "Letters Unsent",
+  "source": "art/ability-icons-draft/raw/hero-12/initial.png",
+  "source_sha256": "e9d7f4768b72255d55ca1234951443b9e5483cad20fe37bace1d8f5924ed3971",
+  "cell": [
+    3,
+    1,
+    384,
+    342
+  ],
+  "raw_bbox": [
+    52,
+    83,
+    336,
+    258
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-12/hero-12-08-128.png",
+      "sha256": "7b70c98ee5647ba5f2e3a231a173e38a32f3705f4a66aa2f8012d658d74c384d"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-12/hero-12-08-64.png",
+      "sha256": "a67152838ceaa6c415044cd07f61ea756ab92e619e5ee8cba627b564da21680e"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-12/hero-12-08-48.png",
+      "sha256": "6eab3abc5c60a401f6e94b37dc408674bade9570b3f46cbf0c4276f818196f8a"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-12/hero-12-08-32.png",
+      "sha256": "1666a051fa1913a5f2c977e8a9752af300c95c2407a57a5d7b6711dbb487327e"
+    }
+  }
+}

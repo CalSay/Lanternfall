@@ -1,0 +1,45 @@
+{
+  "icon_id": "shared-warrior-03",
+  "name": "Sunder",
+  "source": "art/ability-icons-draft/raw/shared-warrior/initial.png",
+  "source_sha256": "d75cd506f53c21d7873999edc6d1086d1f180120c49eb92c2e4b7374dc5a0d9b",
+  "cell": [
+    2,
+    0,
+    512,
+    512
+  ],
+  "source_rectangle": [
+    1024,
+    0,
+    1536,
+    512
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    37,
+    87,
+    438,
+    471
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/shared-warrior/shared-warrior-03-128.png",
+      "sha256": "dd8a46e91a08e745bbdee84dc02e03674ffecfaa7cdb754a1231fbe68004cf40"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/shared-warrior/shared-warrior-03-64.png",
+      "sha256": "b8a01e5a29c858800d79ac9c0728da11aa21fa79465d89787cbeb05de67e729e"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/shared-warrior/shared-warrior-03-48.png",
+      "sha256": "e1f755eb0f7f20e08e857e6a12b961387d6b95c569bac2b1b608b422be36f9ca"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/shared-warrior/shared-warrior-03-32.png",
+      "sha256": "578c0f659f47bfaf0710db7208d4ccaf698da729a995112d3f55a8f75e829470"
+    }
+  }
+}

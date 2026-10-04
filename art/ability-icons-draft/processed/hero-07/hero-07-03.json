@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-07-03",
+  "name": "Hold the Road",
+  "source": "art/ability-icons-draft/raw/hero-07/initial.png",
+  "source_sha256": "c5a611d4b3e52f2396d0c4927d0089255fcab855408bd199f60994a281e3ee6b",
+  "cell": [
+    2,
+    0,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    33,
+    64,
+    344,
+    313
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-07/hero-07-03-128.png",
+      "sha256": "776ad229549cae203e3d98a1d169f4a7e908353fe7bd848a048c628e319c228c"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-07/hero-07-03-64.png",
+      "sha256": "74c61c2d1fd77e3f4a6e1823ff2a56e53a2c60f980070f437f68dce86935e89d"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-07/hero-07-03-48.png",
+      "sha256": "03a845a437ad27f2f4882e9ed9d296de2447ad9a0ed2ed6131c479a4e4cebed8"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-07/hero-07-03-32.png",
+      "sha256": "0a1e9f6242aa18332674b5a8fe76a47ca499ed3bf1f1776c0ab2183ef2bd3cde"
+    }
+  }
+}

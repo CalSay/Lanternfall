@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-25-10",
+  "name": "Measured Hand",
+  "source": "art/ability-icons-draft/raw/hero-25/initial.png",
+  "source_sha256": "772274f9f964339e53f7321b8ad188f03b105c2ecdd4754320cb6b84b1d5c7ec",
+  "cell": [
+    1,
+    2,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    384,
+    683,
+    768,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    77,
+    37,
+    332,
+    259
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-25/hero-25-10-128.png",
+      "sha256": "4e04a0c689a8f89b96c5847df76db1d437b24feb217b120c039b47e1ce5d3f5c"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-25/hero-25-10-64.png",
+      "sha256": "79b59fb8232295705acbc5a27fb742967ab854f099e204d83afcccf14b0cb72c"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-25/hero-25-10-48.png",
+      "sha256": "247ed243fd0bf9ea86330bd579154e8c57687f9ac9000ef3cd91b00ce89fce15"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-25/hero-25-10-32.png",
+      "sha256": "58bbf3dc2b52693e05ff339f3b48ca958b51b48eb3c86b841e73ad5040c96b74"
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-24-07",
+  "name": "Second Hand",
+  "source": "art/ability-icons-draft/raw/hero-24/initial.png",
+  "source_sha256": "4e22efa85f0d09ff8bcb5771888ece2abc454c3e19a02de4660c7c60992fd240",
+  "cell": [
+    2,
+    1,
+    384,
+    338
+  ],
+  "source_rectangle": [
+    768,
+    345,
+    1152,
+    683
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    48,
+    51,
+    308,
+    313
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-24/hero-24-07-128.png",
+      "sha256": "5a11b9691a1cfece57b86e04fb2ba0499d72dc546ae14b07ef99d9c04039d8e6"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-24/hero-24-07-64.png",
+      "sha256": "8a6e776dc00644e967df7f4e3c7c14c776150cb7f26f073d98cd72aa4d4b95f8"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-24/hero-24-07-48.png",
+      "sha256": "300ac49062aa38d2207c7e8844f131e0e9c06fdd6f5c25d9de1c7d06c085e5f4"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-24/hero-24-07-32.png",
+      "sha256": "2d35e45b6832b34d3a441b084cd35a2f941a337d13c7309e5fd0f188645d0950"
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "icon_id": "shared-warrior-02",
+  "name": "Cleave",
+  "source": "art/ability-icons-draft/raw/shared-warrior/initial.png",
+  "source_sha256": "d75cd506f53c21d7873999edc6d1086d1f180120c49eb92c2e4b7374dc5a0d9b",
+  "cell": [
+    1,
+    0,
+    512,
+    512
+  ],
+  "source_rectangle": [
+    512,
+    0,
+    1024,
+    512
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    69,
+    97,
+    428,
+    456
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/shared-warrior/shared-warrior-02-128.png",
+      "sha256": "eddd9083d559cb864a95e4569d458dbb0da6cd93ed6cdc307061473991915e2f"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/shared-warrior/shared-warrior-02-64.png",
+      "sha256": "c139a2e0c1fad87d23a99f882f57dc1c52ffec5af054587e129ccdbcffdf0f3f"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/shared-warrior/shared-warrior-02-48.png",
+      "sha256": "e8d4946cb16486eeb8a0771ffa102e88e5055a25322645b1088dda6e94277056"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/shared-warrior/shared-warrior-02-32.png",
+      "sha256": "e8c714d7ba49a1cb69bb3794ff8d82155db795e7a3804ea16ca6b5c5c95fc119"
+    }
+  }
+}

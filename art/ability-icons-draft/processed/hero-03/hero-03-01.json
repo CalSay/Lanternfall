@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-03-01",
+  "name": "Fireball",
+  "source": "art/ability-icons-draft/raw/hero-03/initial.png",
+  "source_sha256": "0cff4fe45795d22d75052e4382ce9f72075703ecc749e305a8f75badb5f8b7b3",
+  "cell": [
+    0,
+    0,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    91,
+    73,
+    346,
+    300
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-03/hero-03-01-128.png",
+      "sha256": "3c3a8843f320a1484fa376d598bc9dd98f92f916e311472f4d33207ed66b24d8"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-03/hero-03-01-64.png",
+      "sha256": "347d9c4a6cca11c782fbe2a0d619e8f957c326f92b23d061d48ac545b35d749d"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-03/hero-03-01-48.png",
+      "sha256": "622385a365ed84265dbfdd1eac7bb2ff885f0d05081de89dd1c80cc8471be266"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-03/hero-03-01-32.png",
+      "sha256": "cdff0b2a6ea0d68c3fb2d0c406d1ec1f095168a76045268249fce5df1562bb9f"
+    }
+  }
+}

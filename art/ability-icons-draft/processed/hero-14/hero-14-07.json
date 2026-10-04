@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-14-07",
+  "name": "Vent the Fire",
+  "source": "art/ability-icons-draft/raw/hero-14/initial.png",
+  "source_sha256": "620ff6b97e16026aa6628720b90134f03a9e0c764cfec18ef55a5eccd6ba16ca",
+  "cell": [
+    2,
+    1,
+    384,
+    342
+  ],
+  "source_rectangle": [
+    768,
+    341,
+    1152,
+    683
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    56,
+    55,
+    317,
+    288
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-14/hero-14-07-128.png",
+      "sha256": "2ead1a559c5e8d06e16efcbae70c77694d499ec48f0482b0bf6df18d9f2932bd"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-14/hero-14-07-64.png",
+      "sha256": "03615b4cfc1474b9463cb8fdc083180abf811003f71d2697da74d82d82237b64"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-14/hero-14-07-48.png",
+      "sha256": "5622dc6ed8f5bcd707215ff569c4831fe1d42ccf7f5acd15fd833cb1be0c2e56"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-14/hero-14-07-32.png",
+      "sha256": "9d3be94d627ab369f01a84ea7c4aaf5e25551a553d5da341e1c428557115f3f4"
+    }
+  }
+}

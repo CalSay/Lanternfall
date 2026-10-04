@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-15-06",
+  "name": "Twenty Years",
+  "source": "art/ability-icons-draft/raw/hero-15/initial.png",
+  "source_sha256": "cd746813bfccf8c7b0f3d3a40ca7abe7b64c2cc6e4e511f8e42f77a98ae6d045",
+  "cell": [
+    1,
+    1,
+    384,
+    323
+  ],
+  "source_rectangle": [
+    384,
+    341,
+    768,
+    664
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    80,
+    52,
+    326,
+    279
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-15/hero-15-06-128.png",
+      "sha256": "cbcd6aebb35945acba3c7fb0f109aeb0f6d5d8f5ab556bbfa4c3a4cc7e4915e5"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-15/hero-15-06-64.png",
+      "sha256": "ebbc358ceee37636a06fae810e71de4a3731e10f05ce73a5b714213db71f5387"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-15/hero-15-06-48.png",
+      "sha256": "a9cf586b611b7c4426490d3b497530e5122d06242bdd2f17efd738453c5e5adf"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-15/hero-15-06-32.png",
+      "sha256": "4b4ed27cdc4fda9a5057f13a25cf884619e43078bd4ddb6925154bc2a9e5eca9"
+    }
+  }
+}

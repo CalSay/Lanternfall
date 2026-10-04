@@ -1,0 +1,45 @@
+{
+  "icon_id": "shared-ranger-06",
+  "name": "Twin Strike",
+  "source": "art/ability-icons-draft/raw/shared-ranger/initial.png",
+  "source_sha256": "06a5ffe6d4dae5ff287b23ec933b19a4188953f6794a5dd9bb1d5c4cfdf57826",
+  "cell": [
+    2,
+    1,
+    512,
+    512
+  ],
+  "source_rectangle": [
+    1024,
+    512,
+    1536,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    78,
+    82,
+    413,
+    387
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/shared-ranger/shared-ranger-06-128.png",
+      "sha256": "59d39eec610c6c92cecb2314be533c0a4242aa2d585073b1a7c936d38a9c1f3f"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/shared-ranger/shared-ranger-06-64.png",
+      "sha256": "da078d40c2ad24c9fcb485a33314da4ac34e417bc4caba17e27b544ff0d6e11f"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/shared-ranger/shared-ranger-06-48.png",
+      "sha256": "38296fc8ef31b6df196b8b054c7966588426ac355442fdbb53ccd5ade250af5d"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/shared-ranger/shared-ranger-06-32.png",
+      "sha256": "2aeaa8bbd7b1cb401926f8c958acccc539b680be03c71374810c945e1fa813c2"
+    }
+  }
+}

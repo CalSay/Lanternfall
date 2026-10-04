@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-28-09",
+  "name": "Close the Book",
+  "source": "art/ability-icons-draft/raw/hero-28/initial.png",
+  "source_sha256": "428331c78cae5c25ef7947e5702d1b6b4ce92ac8d63e0b40a896b8afda7dcb72",
+  "cell": [
+    0,
+    2,
+    384,
+    346
+  ],
+  "source_rectangle": [
+    0,
+    678,
+    384,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    58,
+    2,
+    351,
+    289
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-28/hero-28-09-128.png",
+      "sha256": "62fd7922fa6cff983d7e58fd5733aff6569979ea0bed27d764a4fa8674c674a9"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-28/hero-28-09-64.png",
+      "sha256": "265319f2399d072b9eedb75a5c896ad69a8caa9fe0dcfbf3dddb5bb6aac7e1b6"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-28/hero-28-09-48.png",
+      "sha256": "439bce11662a1d3f77c377a4947747f435f9bced025ec6c59d189a388f56c70b"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-28/hero-28-09-32.png",
+      "sha256": "3cec0eeb5369044cc3c2ac631b6ad53c70c59afb016fd40c957a2daf1229445d"
+    }
+  }
+}

@@ -1,0 +1,14 @@
+Create twelve Old Hesketh abilityicons,4columns3rows invisibleequalcells1536x1024. Concept supplies roadlantern wornbrass/charcoal/cream; existing actionicons supplies crispdarkoutline flatclusters readable32px. No bodies/UI/text/numbers/grid. Center70% with flat#FF00FF margins. Rowmajor:
+1 First Lamp: lit brass roadlantern with one reserved light spark.
+2 Trim the Wick: lampwick neatly clipped beside extinguished redember.
+3 Pools of Light: broad golden light pool pressing down one dim strength-chevron.
+4 Last Lamp on the Hill: lantern within rounded ward dome, no resurrection motif.
+5 Night Route: three small linked amber roadlights along compact curvedpath.
+6 Shutter the Lamp: lantern shutter closing into concentrated goldbeam.
+7 Dawn by Hand: warm sunrise flare emerging from lampbase with restrained committed light.
+8 Mind the Step: bootsole protected by low lamp-lit guardarc.
+9 Another Hinge: brass hinge and one circular cooldown-turn arrow, no numbers.
+10 Forty Years PASSIVE: weathered lantern clasp and one earned oil drop.
+11 Kept Low PASSIVE: low hooded lamp casting shallow strong goldbeam.
+12 Road Still Lit PASSIVE: small carried lamp beside protective crescent with one held flame.
+Only12prescribed symbols, isolated props/effects, no text, no borders, generousmagenta.

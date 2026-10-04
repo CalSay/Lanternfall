@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-31-07",
+  "name": "Read the Scar",
+  "source": "art/ability-icons-draft/raw/hero-31/initial.png",
+  "source_sha256": "d11b74289f59a67b5f207d83ad7a9343dc59f2b929acf4163ecf39acdceb61a3",
+  "cell": [
+    2,
+    1,
+    384,
+    334
+  ],
+  "source_rectangle": [
+    768,
+    341,
+    1152,
+    675
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    92,
+    40,
+    302,
+    285
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-31/hero-31-07-128.png",
+      "sha256": "c9c5173ea98dd0ec96f7ecee6e0d314d2ba823db5b4e0f4f4e4d368025266600"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-31/hero-31-07-64.png",
+      "sha256": "a0c252245ef496e943ed4fb7400e1b7770e731c668e46624a9506af55ddbd90c"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-31/hero-31-07-48.png",
+      "sha256": "c1db70662c54e6d977e01b09634e8bd92e17b53026b2ca09fe88a2fe56733f08"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-31/hero-31-07-32.png",
+      "sha256": "2e3f103d36d5fdc0ee16caa5eeb8f27c9c5fd33da21b40fde8a2b5516f5707f4"
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-28-11",
+  "name": "Merciful Ledger",
+  "source": "art/ability-icons-draft/raw/hero-28/initial.png",
+  "source_sha256": "428331c78cae5c25ef7947e5702d1b6b4ce92ac8d63e0b40a896b8afda7dcb72",
+  "cell": [
+    2,
+    2,
+    384,
+    346
+  ],
+  "source_rectangle": [
+    768,
+    678,
+    1152,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    34,
+    40,
+    339,
+    262
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-28/hero-28-11-128.png",
+      "sha256": "07fa1bc26706056d630ad7643175a43ae04032211239f7f472aa1c3afdaf6695"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-28/hero-28-11-64.png",
+      "sha256": "51b6a1a085d55778896d12e8a3fde6f6fae0151a9c8936ef84c0f3a8dfbe632d"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-28/hero-28-11-48.png",
+      "sha256": "b92a9e658538c33287f23311e16da131abdd2893c0da089163896fd61f6953f7"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-28/hero-28-11-32.png",
+      "sha256": "25cea832ea5a388148fb658387fbaa97e37ff7f5d94a3d37f772d5533ecec40d"
+    }
+  }
+}

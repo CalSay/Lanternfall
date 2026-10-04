@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-28-03",
+  "name": "Stay the Claim",
+  "source": "art/ability-icons-draft/raw/hero-28/initial.png",
+  "source_sha256": "428331c78cae5c25ef7947e5702d1b6b4ce92ac8d63e0b40a896b8afda7dcb72",
+  "cell": [
+    2,
+    0,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    768,
+    0,
+    1152,
+    341
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    60,
+    70,
+    330,
+    317
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-28/hero-28-03-128.png",
+      "sha256": "6df0082a18aec1e70abad77af6ee9e8cd4b670f580ef50950aa57d1245bbed86"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-28/hero-28-03-64.png",
+      "sha256": "3e14d7cc826754e30d4cb58faf12bce823f778c37a53c4ab09be19bb13e58dbb"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-28/hero-28-03-48.png",
+      "sha256": "47b5d425733de8364ee0635d16d2d6c677bdac9c7be87d87cc1247b43421601a"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-28/hero-28-03-32.png",
+      "sha256": "af886d830a2d78c59c59b70b736f4ffe0af6798d6cce68a8cda6b6078193b1e1"
+    }
+  }
+}

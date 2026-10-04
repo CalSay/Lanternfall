@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-07-01",
+  "name": "Declare the Oath",
+  "source": "art/ability-icons-draft/raw/hero-07/initial.png",
+  "source_sha256": "c5a611d4b3e52f2396d0c4927d0089255fcab855408bd199f60994a281e3ee6b",
+  "cell": [
+    0,
+    0,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    80,
+    64,
+    333,
+    321
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-07/hero-07-01-128.png",
+      "sha256": "74aab57e5ca2e01ce8f560b7939064b6ab055f5f0b24892abe744143e76cb542"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-07/hero-07-01-64.png",
+      "sha256": "7f5f6fa28029dfd01ebcb5ca06c0156354a469fdf277cf7920447fb9e37f27a4"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-07/hero-07-01-48.png",
+      "sha256": "101799bdb80244a3a01d07dd70816052b1eec36a6a2b4f27ebf02619c1660473"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-07/hero-07-01-32.png",
+      "sha256": "cf24f42634c4c0a89aa2850d2a4090f208300ee8e81667cf9850b818c07d3d6b"
+    }
+  }
+}

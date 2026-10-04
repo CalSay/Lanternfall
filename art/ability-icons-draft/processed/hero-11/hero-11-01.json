@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-11-01",
+  "name": "Seal the Terms",
+  "source": "art/ability-icons-draft/raw/hero-11/initial.png",
+  "source_sha256": "21cf5ca6babe0402a4bc4e23f094601acc7db487dd0e518ca5320ecf4b3b8950",
+  "cell": [
+    0,
+    0,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    92,
+    81,
+    323,
+    323
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-11/hero-11-01-128.png",
+      "sha256": "31f582c97c574ecea9a02bf0e03efe47725986162cf554b2844ba40f72f6ffcf"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-11/hero-11-01-64.png",
+      "sha256": "5cae6838cfe69d72dd088abce9e5b06b291755adb7c7f6f14c168126c12d98b2"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-11/hero-11-01-48.png",
+      "sha256": "8cf028252e16afedde9861f85a639d499d73060f430c7a528002699be468d050"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-11/hero-11-01-32.png",
+      "sha256": "6991fe33272cdb4948054f337aeb02ae40d5815930aa1ba456c08afdac06165d"
+    }
+  }
+}

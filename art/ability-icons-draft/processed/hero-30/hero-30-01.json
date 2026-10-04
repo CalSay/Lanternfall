@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-30-01",
+  "name": "High Cut",
+  "source": "art/ability-icons-draft/raw/hero-30/initial.png",
+  "source_sha256": "078b54b220dba9d46949fdf410cdff7ee878a534128984536902d78eae20a6fc",
+  "cell": [
+    0,
+    0,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    0,
+    0,
+    384,
+    341
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    67,
+    75,
+    329,
+    314
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-30/hero-30-01-128.png",
+      "sha256": "6eed2c25fc40f9de58c6fc6c592a54b6a8349e00444c4ee56471e1b97ce7908b"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-30/hero-30-01-64.png",
+      "sha256": "4c95e94019c6ad9867ce55ef2783dcd9cb78f2199bb0bb89f759732c471d3608"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-30/hero-30-01-48.png",
+      "sha256": "2663d189fb9d154155703c21074b95f19903b95ef79dd27c8ffda0131542d843"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-30/hero-30-01-32.png",
+      "sha256": "c1f27507bfcd52703a68f6b2d22dc06fa65b8029fc887d6fee4dcf7d1cb10c98"
+    }
+  }
+}

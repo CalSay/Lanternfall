@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-20-12",
+  "name": "A Shard at Last",
+  "source": "art/ability-icons-draft/raw/hero-20/initial.png",
+  "source_sha256": "83ca2e1f4fa66f8e7c6688e57e6f7a66ce819373bfe97a5c64b5ac8249c5717a",
+  "cell": [
+    3,
+    2,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    1152,
+    683,
+    1536,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    58,
+    33,
+    284,
+    273
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-20/hero-20-12-128.png",
+      "sha256": "ffe4a97af4c916099456083e28035e75186fa62007781d18725f2161ab025715"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-20/hero-20-12-64.png",
+      "sha256": "6f717950472fdeb767219a586747cf1184476ec9da6d1bf242188518622af32f"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-20/hero-20-12-48.png",
+      "sha256": "906efd7ebf16115220d83926b92b5045ca0671a81a40cba780a82aff8b2f75e8"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-20/hero-20-12-32.png",
+      "sha256": "b98d71a16d2a7b1e66604c1e9a39a30a674cd5531cc2fd67905dd086a99680a2"
+    }
+  }
+}

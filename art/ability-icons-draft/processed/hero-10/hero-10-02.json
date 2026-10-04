@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-10-02",
+  "name": "Stonebreak",
+  "source": "art/ability-icons-draft/raw/hero-10/initial.png",
+  "source_sha256": "b35142971fba2f77cf87c5e0395b982c6f7b1cf9e45bbdb95d5aa84133dd1e0b",
+  "cell": [
+    1,
+    0,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    74,
+    85,
+    326,
+    303
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-10/hero-10-02-128.png",
+      "sha256": "5b81f23f3f7f2e8c2cc482f9d152acaa44d61387f470a0149bcf14ae942d7f1e"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-10/hero-10-02-64.png",
+      "sha256": "ffab77b8db2d341bd242a6ac94ae7a8b49d786fdd6f4c22cfca7b5579303dc2a"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-10/hero-10-02-48.png",
+      "sha256": "3e125f6186b879102f365adf767ba5cfd6149087c5626cfeda0262c64acebff5"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-10/hero-10-02-32.png",
+      "sha256": "59eba90cf9bef29ac48b46bde93020b9e9b7b25f624afd9c2a752eca167d7479"
+    }
+  }
+}

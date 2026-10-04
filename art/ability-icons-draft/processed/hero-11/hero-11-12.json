@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-11-12",
+  "name": "Paid in Full",
+  "source": "art/ability-icons-draft/raw/hero-11/initial.png",
+  "source_sha256": "21cf5ca6babe0402a4bc4e23f094601acc7db487dd0e518ca5320ecf4b3b8950",
+  "cell": [
+    3,
+    2,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    49,
+    21,
+    308,
+    254
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-11/hero-11-12-128.png",
+      "sha256": "7ceea00c99fd279fe0932e21888b2bdd0f0d97cebfea54a0b8a56df2d300f585"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-11/hero-11-12-64.png",
+      "sha256": "c432e2fcb47d6fad03fef19a686988446d5b7404be17838e6b46954ef3c29eb7"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-11/hero-11-12-48.png",
+      "sha256": "064c653e1f28bdec8ac900bf32385a671f0b683867d6a49a6cecd708da130962"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-11/hero-11-12-32.png",
+      "sha256": "5dd453b516c8a07abd0f79157bdd9745c2afcbfb29daf69a0bbcbce34eedb750"
+    }
+  }
+}

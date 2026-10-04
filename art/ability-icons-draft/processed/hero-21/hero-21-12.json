@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-21-12",
+  "name": "Brewed Enough",
+  "source": "art/ability-icons-draft/raw/hero-21/initial.png",
+  "source_sha256": "faf603fa06d58e42be4c3368499fe7a58f08b8b5bf31d98c730bf6a6c5879a45",
+  "cell": [
+    3,
+    2,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    1152,
+    683,
+    1536,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    44,
+    37,
+    320,
+    277
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-21/hero-21-12-128.png",
+      "sha256": "be53d227c793af9bbb00cf0e0eb6f6d410749434e8d87dad0a2f26bf0df93ea9"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-21/hero-21-12-64.png",
+      "sha256": "6268c4843a6656d0bd267643785258cd2203a13509203c3815a3663364728f54"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-21/hero-21-12-48.png",
+      "sha256": "9e572965d3a98baee94ce8a764f156979a0fed3d0c7465be531ccaea67cbc718"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-21/hero-21-12-32.png",
+      "sha256": "d4f96079883fa211b740118259fd6ebe8139ba1d8665bc0900c195f9c2847730"
+    }
+  }
+}

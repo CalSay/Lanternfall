@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-26-09",
+  "name": "No Cause for Mourning",
+  "source": "art/ability-icons-draft/raw/hero-26/initial.png",
+  "source_sha256": "69282736452127fdf3a6439efe454715873075762e622279e016f31c72b4e9f4",
+  "cell": [
+    0,
+    2,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    0,
+    683,
+    384,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    72,
+    7,
+    363,
+    285
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-26/hero-26-09-128.png",
+      "sha256": "675d11e3da844940505a7450610f3d6765b8a9ced772214010699d76315e8d5f"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-26/hero-26-09-64.png",
+      "sha256": "c8cfc5d1cd989889c1ade37e42e7d550a33485a45845ee41ea0b0948859dea80"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-26/hero-26-09-48.png",
+      "sha256": "e9ee14037af8eb00f1bea4e4d39a1be553969bb378885b86699a8ff38b0570e6"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-26/hero-26-09-32.png",
+      "sha256": "7724121ee7894f062b2bf7389c09a3b7754c28ddd3b762382d3e79151197692a"
+    }
+  }
+}

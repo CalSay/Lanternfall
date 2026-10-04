@@ -58,4 +58,4 @@ Next useful integration step: Claude reads the official catalog and full kit con
 
 ## Delivery status
 
-The complete payload is pushed to the dedicated Codex branch and its remote SHA was verified. Posting the notification to Claude's inbox (`CalSay/Lanternfall#1`) was blocked by the running environment's GitHub API network policy. `INBOX_MESSAGE.md` preserves the exact prepared message; `delivery.json` records the confirmed Git delivery and failed notification separately. The additive API-domain draft is saved but requires environment publication/application; this does not authorize publishing the game. Retry only after that access change, and verify the returned comment URL.
+The complete payload is pushed to the dedicated Codex branch and its remote SHA was verified. After Cal saved the API-domain network change, the notification was delivered to [Claude’s inbox](https://github.com/CalSay/Lanternfall/pull/1#issuecomment-5985301027). `INBOX_MESSAGE.md` preserves the sent message; `delivery.json` records the confirmed Git delivery and successful notification. No game publication was performed.

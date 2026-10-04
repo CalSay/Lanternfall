@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-34-09",
+  "name": "The Gate Stays Open",
+  "source": "art/ability-icons-draft/raw/hero-34/initial.png",
+  "source_sha256": "3285f8e88d13e6e3e4d9f91664993d1184fa81bbe2aac5fe250494319ab069e0",
+  "cell": [
+    0,
+    2,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    0,
+    683,
+    384,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    57,
+    27,
+    362,
+    270
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-34/hero-34-09-128.png",
+      "sha256": "9fdab5175cc8104d0a90cec4048225e3e719565e757e00f1ca16a560c4647a10"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-34/hero-34-09-64.png",
+      "sha256": "87b290853ec3f58c65584e886a1471ce1506cc48b4daffdb2365ad24986ebe31"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-34/hero-34-09-48.png",
+      "sha256": "cad169449246e608b81fc42f0f886ebd6dd51d911a6bfa006922ea48ffad45a1"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-34/hero-34-09-32.png",
+      "sha256": "fa4a67f85cdb9119fbae809dc85fadd3044001ee3a2affefc2484c51d7a36566"
+    }
+  }
+}

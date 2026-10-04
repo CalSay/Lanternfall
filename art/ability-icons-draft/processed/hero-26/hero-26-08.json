@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-26-08",
+  "name": "Ink Against Fever",
+  "source": "art/ability-icons-draft/raw/hero-26/initial.png",
+  "source_sha256": "69282736452127fdf3a6439efe454715873075762e622279e016f31c72b4e9f4",
+  "cell": [
+    3,
+    1,
+    384,
+    342
+  ],
+  "source_rectangle": [
+    1152,
+    341,
+    1536,
+    683
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    32,
+    70,
+    310,
+    298
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-26/hero-26-08-128.png",
+      "sha256": "2a437c1123eb6483af0f06c2e5b750a43e0080d09309b042620c4b0d1fdcde3f"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-26/hero-26-08-64.png",
+      "sha256": "1f68f1cf5d618455a770fbf931ab9e111a3ec7e7fc60ea7eee17943ac71986c5"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-26/hero-26-08-48.png",
+      "sha256": "9e63442a38f4cdec4adaddaac2266c89c8d4cb19cd5c2908c3525031fb71c5c5"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-26/hero-26-08-32.png",
+      "sha256": "c3418299ef6eb0e61b684929a37c97c7145ea456070d5d83ec07459cb3cf9dca"
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-24-08",
+  "name": "Close the Case",
+  "source": "art/ability-icons-draft/raw/hero-24/initial.png",
+  "source_sha256": "4e22efa85f0d09ff8bcb5771888ece2abc454c3e19a02de4660c7c60992fd240",
+  "cell": [
+    3,
+    1,
+    384,
+    338
+  ],
+  "source_rectangle": [
+    1152,
+    345,
+    1536,
+    683
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    56,
+    49,
+    313,
+    306
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-24/hero-24-08-128.png",
+      "sha256": "59e21ef01663be640d8b26be0b037bd5a320612e74fc4d1ed5ec0f3d85ba11a4"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-24/hero-24-08-64.png",
+      "sha256": "fbb94465add6139d3c13aad091127c7605f555f0052192ddb6042b546ea4e46a"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-24/hero-24-08-48.png",
+      "sha256": "62b691b35dc0de66f8b6b051d9a93f96eb3fc3ce019ef5d3c4074c0c415b1ca7"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-24/hero-24-08-32.png",
+      "sha256": "65f37ed5a5d8682522f03a514085a1e6e86b40bc3d7439e73072093a1f8c1bf2"
+    }
+  }
+}

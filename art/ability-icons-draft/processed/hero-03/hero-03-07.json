@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-03-07",
+  "name": "Lanternburst",
+  "source": "art/ability-icons-draft/raw/hero-03/initial.png",
+  "source_sha256": "0cff4fe45795d22d75052e4382ce9f72075703ecc749e305a8f75badb5f8b7b3",
+  "cell": [
+    2,
+    1,
+    384,
+    342
+  ],
+  "raw_bbox": [
+    54,
+    32,
+    335,
+    291
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-03/hero-03-07-128.png",
+      "sha256": "e4ff10d754f42c40d0effd4a5df419734fc66e06497a89ff30307e867e154d4a"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-03/hero-03-07-64.png",
+      "sha256": "a9e54157da89f736111759479b2563ad3ced8b2f7f9d47c6df7066dafd8ba639"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-03/hero-03-07-48.png",
+      "sha256": "9f9476e7b8f2ea5377222f1bfce9b294a368e6ece3ea6f018fe358feacfb9b5f"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-03/hero-03-07-32.png",
+      "sha256": "9296300d922496600f9ab34cbe24bacdb21f4b5a94c63b090d9715f4b08e31e0"
+    }
+  }
+}

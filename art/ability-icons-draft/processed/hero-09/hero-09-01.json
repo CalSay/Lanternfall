@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-09-01",
+  "name": "Read the Ripples",
+  "source": "art/ability-icons-draft/raw/hero-09/initial.png",
+  "source_sha256": "e6605ef65a770ee350f590eead7a41b5c6ce9bb31afd30ad5439cac709249fe8",
+  "cell": [
+    0,
+    0,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    76,
+    102,
+    335,
+    297
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-09/hero-09-01-128.png",
+      "sha256": "d96b80afaa49cb84932e79d3924b551e364afe44f9328cfae0558cd8704167d5"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-09/hero-09-01-64.png",
+      "sha256": "bf8406b1d371e39cede7f421dc5445d9e7fd48dd57b4b1f63d38b79a394659ab"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-09/hero-09-01-48.png",
+      "sha256": "66735ebaa549e8539698f6ec10896554b1b5935ec896ff9c4d15f8d943e086dc"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-09/hero-09-01-32.png",
+      "sha256": "f109399a922a6ef7241298769e5c08bdee3ebe85a0ab4c655b0ff8c70b6fa747"
+    }
+  }
+}

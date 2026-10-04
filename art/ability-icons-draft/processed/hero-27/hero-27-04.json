@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-27-04",
+  "name": "Leadwork Seal",
+  "source": "art/ability-icons-draft/raw/hero-27/initial.png",
+  "source_sha256": "c1c235d767948d31faaaf50f54f359a0a9b42b897b4e25e7f020fb4f7197168f",
+  "cell": [
+    3,
+    0,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    1152,
+    0,
+    1536,
+    341
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    81,
+    54,
+    305,
+    329
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-27/hero-27-04-128.png",
+      "sha256": "1b86d526d61e1324fae3dd3681e3a2f8f4406e73f2805b9e3047ee8f00790ba2"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-27/hero-27-04-64.png",
+      "sha256": "45d99c7b07c1185fbc228c838bbd16c35baf5262eeb98f33e1259a04b112892d"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-27/hero-27-04-48.png",
+      "sha256": "6d735566741b0d75fd531da6e62922aeaba10c6871050a5920707751696c8357"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-27/hero-27-04-32.png",
+      "sha256": "df102ebb378afb46285b481105648aab3b05c0bdd232ce9f42e1487c7abd1a8c"
+    }
+  }
+}

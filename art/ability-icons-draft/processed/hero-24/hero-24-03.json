@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-24-03",
+  "name": "Stop the Pendulum",
+  "source": "art/ability-icons-draft/raw/hero-24/initial.png",
+  "source_sha256": "4e22efa85f0d09ff8bcb5771888ece2abc454c3e19a02de4660c7c60992fd240",
+  "cell": [
+    2,
+    0,
+    384,
+    345
+  ],
+  "source_rectangle": [
+    768,
+    0,
+    1152,
+    345
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    53,
+    62,
+    330,
+    328
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-24/hero-24-03-128.png",
+      "sha256": "c31044f062fa78ff74c1a3e860dfcb1c1d311099aa7e0886d0834b72f2358823"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-24/hero-24-03-64.png",
+      "sha256": "eb7c9a2d5aef07d953dff671a632d33c25798da2240ad8bf3ceb0b8e8bebe398"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-24/hero-24-03-48.png",
+      "sha256": "840836faa141620ce08bc0a819605c7abdf908f7fb567ee26fa1298eb86e9f05"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-24/hero-24-03-32.png",
+      "sha256": "a500aab5237b44cbfa399ee0c647754d4e08e80d14b9524b4493d3cb7b77ed82"
+    }
+  }
+}

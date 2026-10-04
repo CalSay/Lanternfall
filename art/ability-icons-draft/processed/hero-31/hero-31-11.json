@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-31-11",
+  "name": "First Principles",
+  "source": "art/ability-icons-draft/raw/hero-31/initial.png",
+  "source_sha256": "d11b74289f59a67b5f207d83ad7a9343dc59f2b929acf4163ecf39acdceb61a3",
+  "cell": [
+    2,
+    2,
+    384,
+    349
+  ],
+  "source_rectangle": [
+    768,
+    675,
+    1152,
+    1024
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    102,
+    24,
+    287,
+    248
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-31/hero-31-11-128.png",
+      "sha256": "6dcf8b321039ede2635327e6e5105c2dbf5422f64d3e34cfc9602c516e9fc7e2"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-31/hero-31-11-64.png",
+      "sha256": "fe0d12629808d21fb082a6f73f01228af520a7c846aa6cd4eabc9597888fc6bf"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-31/hero-31-11-48.png",
+      "sha256": "6fc6c2c105806ab0db47c6c0f513f162e920d8f0fe49cb70bff13e992f11d9ca"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-31/hero-31-11-32.png",
+      "sha256": "1799fe589b484c680c5cb69606ced4e1b326f447c40807e82ddaa8fa53e33cab"
+    }
+  }
+}

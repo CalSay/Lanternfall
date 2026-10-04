@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-33-04",
+  "name": "Close the Hood",
+  "source": "art/ability-icons-draft/raw/hero-33/initial.png",
+  "source_sha256": "34c3cbedc4bc8535718528feb955cbdcecccb350fca27325ff2b86a023189d00",
+  "cell": [
+    3,
+    0,
+    384,
+    341
+  ],
+  "source_rectangle": [
+    1152,
+    0,
+    1536,
+    341
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    51,
+    86,
+    304,
+    332
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-33/hero-33-04-128.png",
+      "sha256": "928948c11ae9f32a6f2021742c398b29a1f53cc906cbf406eb8a78ae81704133"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-33/hero-33-04-64.png",
+      "sha256": "ef88716c40b23719a26faf33727f3d1e22bd7bcc543f9be8258ebe2d39abc189"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-33/hero-33-04-48.png",
+      "sha256": "bc20b466c56e616979b30d6f517a9e8c36b09eade00080fa8808cc5af0eb558b"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-33/hero-33-04-32.png",
+      "sha256": "fe0ddc96ba8f2c10006961132f3be7b1e1bdf4e4bfdf46ccd2a13a2e23330f5d"
+    }
+  }
+}

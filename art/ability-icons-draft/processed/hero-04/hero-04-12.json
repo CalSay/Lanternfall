@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-04-12",
+  "name": "Road Still Lit",
+  "source": "art/ability-icons-draft/raw/hero-04/initial.png",
+  "source_sha256": "0df9fb5388348a9c5278e44fe3f1c19d8b774d1e8fa08f78952f14e101071b48",
+  "cell": [
+    3,
+    2,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    75,
+    31,
+    295,
+    262
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-04/hero-04-12-128.png",
+      "sha256": "27e92d4a1941917694ebc14e5e0c592474d61e5a79fa25788ae48a4c7d1ba29a"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-04/hero-04-12-64.png",
+      "sha256": "56b02cfc47415a50959d17b93b0454a9f6e6231a2db2d15a165107ad4fbda98e"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-04/hero-04-12-48.png",
+      "sha256": "79b5a816497516e858925090b8628db58ae0664b0528bfe460fb0158ba020921"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-04/hero-04-12-32.png",
+      "sha256": "70e0c23a5e3aab0456d20ea20043af867950e00af089ec3d5cdaa09751d1d8fd"
+    }
+  }
+}

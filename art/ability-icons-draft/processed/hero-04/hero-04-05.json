@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-04-05",
+  "name": "Night Route",
+  "source": "art/ability-icons-draft/raw/hero-04/initial.png",
+  "source_sha256": "0df9fb5388348a9c5278e44fe3f1c19d8b774d1e8fa08f78952f14e101071b48",
+  "cell": [
+    0,
+    1,
+    384,
+    342
+  ],
+  "raw_bbox": [
+    77,
+    67,
+    316,
+    280
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-04/hero-04-05-128.png",
+      "sha256": "c059b627e15b09791746f2c18d3014116c9b10f09dc04ebcd2087d1a1b44311d"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-04/hero-04-05-64.png",
+      "sha256": "7a5eb7a5b8b0663aa88a841bef94c2b000686dad4ac37c683e4a42d021363ec3"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-04/hero-04-05-48.png",
+      "sha256": "d975fcfef844f645e3995d301a1ac6e103e6832ec0910737cf7948bbc0ddfaf2"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-04/hero-04-05-32.png",
+      "sha256": "85dbe1c0084aa08024f168ba3a005dbe931df8d7b67a1294171f7d600fd0b308"
+    }
+  }
+}

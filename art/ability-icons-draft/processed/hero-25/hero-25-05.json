@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-25-05",
+  "name": "Upstroke",
+  "source": "art/ability-icons-draft/raw/hero-25/initial.png",
+  "source_sha256": "772274f9f964339e53f7321b8ad188f03b105c2ecdd4754320cb6b84b1d5c7ec",
+  "cell": [
+    0,
+    1,
+    384,
+    342
+  ],
+  "source_rectangle": [
+    0,
+    341,
+    384,
+    683
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    87,
+    37,
+    324,
+    291
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-25/hero-25-05-128.png",
+      "sha256": "e6a029c3a4c37eb268b9a1d08bfe1fe5a5547fabe62b52ca4ee954396574c0e3"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-25/hero-25-05-64.png",
+      "sha256": "5e83a0cabfaa8d3435100da8a8458c8fea1c4d5d035059e7e79e998b3e41e0b1"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-25/hero-25-05-48.png",
+      "sha256": "9bf518c695d603cc8299f8fb3ba8da0c572c4f3256698d60f6004da0f350997e"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-25/hero-25-05-32.png",
+      "sha256": "db8e0cc09b042aded6384614f13ba11609a284ce0745e8f9e8da1e4b57a2db95"
+    }
+  }
+}

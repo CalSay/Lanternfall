@@ -1,0 +1,16 @@
+Create twelve Oriel Vess abilityicons4cols3rows equalinvisiblecells1536x1024. Concept midnightbluecreamgold starstaff/charttome; existingicons crispdarkoutline flatclusters readable32px. Prop/effectonly no bodies/UItext/grid. Central70%solid#FF00FF margin. Rowmajor:
+1 Take a Bearing: gold compassstar with two compact alignmentnotches.
+2 Falling Letter: one suspended gold starimpact above two small delaydots, not letters or text.
+3 Pull the Reading: single star drawn inward by curved pullingarc.
+4 Clear Night: clear sharp fourpoint star in open navy crescent.
+5 Bad News: dimmed star beneath downward strengthchevron.
+6 Slivers Hum: crystal starsliver with single broad charging halo.
+7 Fold the Chart: folded star-chart tome within protective wardarc; cancelled tiny starmark.
+8 Letters Unsent: fractured queued star feeding one direct goldspellpoint, no envelopeswithtext.
+9 Someone Looks Up: star above small healingheart and alignmentglint.
+10 Chart by Hand PASSIVE: open charttome with three broad bearingnotches.
+11 News Arrives PASSIVE: radiant queued star over basic spellglint, no damage numbers.
+12 Sky Answers PASSIVE: single waiting star on short two-step delayarc with release arrow, no second impact.
+Exactly12distinct native-readable symbols, noextraactors nolettering, flatmagenta.
+
+Override central70%: all glyphs including rays/arcs/stars/particles confined CENTRAL50% WIDTH AND HEIGHT each equal invisible cell, quartercell clear space on each side. Reference1 native48 icons chunky opaque flat clusters; reference2 onlylayout no lines final. Midnight navy, cream parchment, opaque palegold and steelblue. No magenta or pink inside glyphs; outside pure FF00FF only, no gradients/keyblending. Crisp darkoutline,3–5flatclusters,simple native32 silhouettes rather than ornate cosmic badges. Twelve rowmajor glyphs. Protectively shielded tome07, healheart ONLY09. Stars compact4point solidcreamgold, clearly distinctdelay/pull/weakening/chartmetaphors.

@@ -1,0 +1,38 @@
+{
+  "icon_id": "hero-02-12",
+  "name": "Hedge Guard",
+  "source": "art/ability-icons-draft/raw/hero-02/revision-01.png",
+  "source_sha256": "afeade7e11cd68ba6d01f4b9430e0ffa26465e190b3b1cea01bb880e844a3aea",
+  "cell": [
+    3,
+    2,
+    384,
+    341
+  ],
+  "raw_bbox": [
+    37,
+    6,
+    296,
+    243
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-02/hero-02-12-128.png",
+      "sha256": "1b8b7da4b288a69b87d9da61f4985e950b37ba77096b084efa55754e1ec974a6"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-02/hero-02-12-64.png",
+      "sha256": "3aef8487a040642e86475d1dce0e6f8afd23b6d59f7961da317ddb8099d9c48c"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-02/hero-02-12-48.png",
+      "sha256": "eacf99ea025b6e5a55865cc6be2c4325d9db187317b8b523a312fb344ff3972b"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-02/hero-02-12-32.png",
+      "sha256": "56e4c5978637f55b2c12f190ac43f4204f1fd835e57abf684422b8973c609b5a"
+    }
+  }
+}

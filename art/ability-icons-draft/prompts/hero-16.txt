@@ -1,0 +1,16 @@
+Create a Lanternfall ability ICON PROP PACK for Cass Penhallow. Exactly TWELVE isolated symbols in FOUR columns THREE rows, row-major, equal invisible slots on1536x1024. Native48px pixel-art shape language matching the approved six small action icons: broad confident dark outline, THREE TO FIVE flat opaque material shade clusters, very few secondary marks; not ornate illustrations. Symbols must read at32px. Use dark teal, worn brass, silver spear edge; green venom. matching the approved hero concept's palette/materials. No human bodies, poses or portraits.
+Containment: every COMPLETE glyph, including every ray, tail, motif and particle, fits CENTRAL50% WIDTH AND HEIGHT (max192x170 pixels) of its slot, at leastone-quarter slot plain background on every side. Safe50 guide is invisible layout only; never reproduce its boxes, lines, crosses, labels or white. Background entirely exact flat magenta#FF00FF. Actual art colours NEVER near that chroma: violet uses deep blue-violet or lavender with substantial green, no fuchsia/hot-pink. No gradients/glow blending into magenta, no soft antialiasing, microtexture, tiny sparkles, frames, UI, letters, numerals, watermark, floor/shadow.
+The following manually authored designs are exact cell assignments. Names identify them toyou but MUSTNOT be drawn as text. Interpret dominant mechanic metaphor, not all optional clauses; symbolic props do not add equipment or gameplay. Nine actives1–9 directional; three passives10–12 settled compact emblems. Distinguish silhouettes withinthishero, not just small glow changes. No resurrection, party actor, automaticdefence, summons, thrown held equipment, extra targets or implied extra proc hits. Geometric Guard/Ward arcs are shields, not flame tongues.
+1. Jellypoint (Active): held eel spear point beaded with two green venom droplets.
+2. Sound the Depth (Active): spear point and a sounding ripple with a pin notch.
+3. Reef Hook (Active): hooked reef spear and restrained green warning ring.
+4. Haul Against the Tide (Active): tight spear pull and three consumed venom motes beside a sunder crack.
+5. Green Warning (Active): green protective arch clearing a small harmful droplet.
+6. Not Twice (Active): spear point marked with one clean sharp prepared glint.
+7. Cut the Line (Active): held spear slicing a short rope into a quarry mark.
+8. Hold Fast (Active): steady spear brace with one venom drop beside a lingering weak sigil.
+9. Saltreach Reckoning (Active): dramatic long thrust through a salt spray arc and one poison reserve.
+10. Eel Hunter (Passive): eel-shaped decorative spear crest and one venom drop.
+11. Knotted Rope (Passive): knotted rope around a compact ward plate.
+12. Sting in Reserve (Passive): three reserved green droplets beside an eel spear edge.
+Only these twelve independent game-ready draft glyphs; an initial reviewer draft, no production integration.

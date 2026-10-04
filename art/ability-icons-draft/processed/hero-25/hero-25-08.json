@@ -1,0 +1,45 @@
+{
+  "icon_id": "hero-25-08",
+  "name": "Step Out of Time",
+  "source": "art/ability-icons-draft/raw/hero-25/initial.png",
+  "source_sha256": "772274f9f964339e53f7321b8ad188f03b105c2ecdd4754320cb6b84b1d5c7ec",
+  "cell": [
+    3,
+    1,
+    384,
+    342
+  ],
+  "source_rectangle": [
+    1152,
+    341,
+    1536,
+    683
+  ],
+  "extraction": "nearest empty magenta gutter, no painted pixels crossed",
+  "raw_bbox": [
+    66,
+    54,
+    314,
+    276
+  ],
+  "raw_edge_contact": false,
+  "status": "draft; see current individual agent review; owner approval pending",
+  "files": {
+    "128": {
+      "file": "art/ability-icons-draft/processed/hero-25/hero-25-08-128.png",
+      "sha256": "4871052b2e74625e8023b45c27f7e902fa1c6469f5c0dfc8ad03fb8bba61c0ab"
+    },
+    "64": {
+      "file": "art/ability-icons-draft/processed/hero-25/hero-25-08-64.png",
+      "sha256": "307a13b95c705fd44a65c41798a1ddf81468fd8018c3355fb1159223755399aa"
+    },
+    "48": {
+      "file": "art/ability-icons-draft/processed/hero-25/hero-25-08-48.png",
+      "sha256": "049c986edaaeaefa3760d13bbbc41b36b4adcc01c77496532f48d05ba15c1a99"
+    },
+    "32": {
+      "file": "art/ability-icons-draft/processed/hero-25/hero-25-08-32.png",
+      "sha256": "d4ec238f97ee71e37ca52164b261e7529aff04bc45741c41d39c29b89c7bf351"
+    }
+  }
+}

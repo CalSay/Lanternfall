@@ -3,8 +3,9 @@
   "payload_commit": "626e1330b7388ae42b921a6cd64b7fba3f5dd359",
   "git_push": "succeeded; remote branch SHA independently verified",
   "claude_inbox": "CalSay/Lanternfall#1",
-  "notification_posted": false,
-  "notification_error": "POST https://api.github.com/repos/CalSay/Lanternfall/issues/1/comments: Forbidden",
-  "network_draft": "Add api.github.com preserving existing domains; saved, requires_publish=true",
-  "retry_condition": "After the saved environment network configuration is published/applied, post INBOX_MESSAGE.md to issue/PR #1 using a UTF-8 body file. Verify returned comment URL; do not duplicate after ambiguous success."
+  "notification_posted": true,
+  "notification_error": null,
+  "network_draft": "Owner saved API-domain network change; actual GitHub API read and POST now succeed.",
+  "retry_condition": null,
+  "notification_url": "https://github.com/CalSay/Lanternfall/pull/1#issuecomment-5985301027"
 }
