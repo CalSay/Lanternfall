@@ -1,0 +1,20 @@
+{
+  "id": "linnet",
+  "prompt": "Edit Linnet Cole's supplied concept board keeping her tied copper hair, sturdy leather GLASSWORKER APRON, rolled cream sleeves, workgloves, dark green trousers and brass workshop tools. Replace FIRE staff orb with a sealed FROST GLASS orb: pale cool blue glass enclosing crystalline ice patterns, cool white-blue highlights, absolutely no orange flames at staff head. Both fullfigure and equipmentdetail show the exact same cooled focus. Distinguish her face from Pip with a mature practical glassworker appearance: slightly wider cheekbones, broad straight nose, firm square chin, calmer smaller grey-blue eyes, matching face closeup and fullfigure. Preserve copper hair, not Pip's wild orange hair. Add a clearly readable compact frost/workshop SPELL TOME attached at her belt, dark green leather cover with icy geometric glass lattice/snowflake engraving; show tome also beside staff detail. Keep a distinct visible warm brass hip lantern (not just potion bottles). Reduce ragged loose strips into workwear intact hems. Staff still securely connected to hands; no extra arms. Same rich crisp pixel-inspired art blackoutline gray background1536x1024 landscape fullfigureleft closeupcenter-right equipmentfar-right palettebelow. Full body staff and boots uncropped.",
+  "hint": "Generated images are saved to /workspace/generated_images as /workspace/generated_images/exec-fb4032c2-a042-4b56-bb7d-a269e4617348.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+  "generatedPath": "/workspace/generated_images/exec-fb4032c2-a042-4b56-bb7d-a269e4617348.png",
+  "status": "pending-owner-review",
+  "dimensions": [
+    1536,
+    1024
+  ],
+  "hero_id": "linnet",
+  "qc_notes": [],
+  "attempts": 1,
+  "base_sha": "227bda460a6c89f03da3cafb2ad6278431e24c14",
+  "source": "art/concepts/hero-roster-v1/linnet.png",
+  "generated_original": "/workspace/generated_images/exec-fb4032c2-a042-4b56-bb7d-a269e4617348.png",
+  "source_sha256": "b3f9cc3d59c219f91a276fbff610071e1edafbded743770e49aa318983f8318f",
+  "draft_sha256": "347cddca0be47270814ce70af23e3135d77f2246d0bb7256666efefc0a84894e",
+  "prompt_sha256": "477e8e0738b31d85d3766e92cd26195592e1d1b72cdacd97a6d052e1c438a0c7"
+}

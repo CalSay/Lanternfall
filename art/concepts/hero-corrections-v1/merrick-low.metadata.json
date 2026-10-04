@@ -1,0 +1,26 @@
+{
+  "hero_id": "merrick-low",
+  "status": "pending-owner-review",
+  "base_sha": "227bda460a6c89f03da3cafb2ad6278431e24c14",
+  "source": "art/concepts/hero-candidates-v1/merrick-low.png",
+  "generated_original": "/workspace/generated_images/exec-f1748be4-8e96-4546-86d7-04de3267bf86.png",
+  "attempts": 1,
+  "workflow": "Owner-authorized concept-only exception; no production pose-lock approval or registration.",
+  "qc_notes": [
+    "Bow fully contained, but its upper tip has only about15px clearance."
+  ],
+  "source_sha256": "d8f48961618017201f711a4999810ff040327f3c00c166556e9438d339998a4c",
+  "draft_sha256": "9a7354aad6bd0c4b1fb05c5ff6277b42ddeacf027eadf2ed6d953cde7246731c",
+  "prompt_sha256": "698f44ba5ec7a088212e3f4c3874bdf495371aa694ab8f100b344d9d7906a86a",
+  "dimensions": [
+    1536,
+    1024
+  ],
+  "source_dimensions": [
+    1536,
+    1024
+  ],
+  "generation_notes": [
+    "Bow geometry and onehand grip corrected. Upper bowtip margin about15px; fully contained, tight presentation."
+  ]
+}

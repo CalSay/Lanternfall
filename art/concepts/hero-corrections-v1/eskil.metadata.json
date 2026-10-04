@@ -1,0 +1,22 @@
+{
+  "hero_id": "eskil",
+  "status": "pending-owner-review",
+  "base_sha": "227bda460a6c89f03da3cafb2ad6278431e24c14",
+  "source": "art/concepts/hero-roster-v1/eskil.png",
+  "generated_original": "/workspace/generated_images/exec-b154b636-d512-458b-a1cc-a7bdb4a9bebe.png",
+  "attempts": 1,
+  "workflow": "Owner-authorized concept-only exception; no production pose-lock approval or registration.",
+  "qc_notes": [
+    "Required carried lantern is still missing."
+  ],
+  "generation_notes": [
+    "Required carried lantern is still missing."
+  ],
+  "source_sha256": "ab911a3b48743deec9a47897e574e423a5bbdcfca9602a169c2db5c80db6ceed",
+  "draft_sha256": "e1d3b2cd588e1d7f6c365dee90e89fbf69a81feb8e9bc9bf92d8b1c64edb3e74",
+  "prompt_sha256": "8f89d305bacbffeff06601e10d7953e0991cd5af05871166929af92bdb089c1f",
+  "dimensions": [
+    1536,
+    1024
+  ]
+}

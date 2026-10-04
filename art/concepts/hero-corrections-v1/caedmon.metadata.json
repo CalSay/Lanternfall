@@ -1,0 +1,18 @@
+{
+  "hero_id": "caedmon",
+  "status": "pending-owner-review",
+  "base_sha": "227bda460a6c89f03da3cafb2ad6278431e24c14",
+  "source": "art/concepts/hero-roster-v1/caedmon.png",
+  "generated_original": "/workspace/generated_images/exec-6e1663a5-157b-4db2-95fa-1a00446fed7a.png",
+  "attempts": 1,
+  "workflow": "Owner-authorized concept-only exception; no production pose-lock approval or registration.",
+  "qc_notes": [],
+  "generation_notes": [],
+  "source_sha256": "d07bab786f8e6a980ae28e204ee39345f89feb29dd28bcac228ce0e623a34998",
+  "draft_sha256": "3f6d624b365e923fb16afeb65ab4abee19366b1c574d2d7cb9f4dfff698b6482",
+  "prompt_sha256": "3ca05e5322c9364ab53c507bdf3d756dbf7f2547be9307ebf7a5eab93466f0a9",
+  "dimensions": [
+    1536,
+    1024
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "hero_id": "ione-hart",
+  "status": "pending-owner-review",
+  "base_sha": "227bda460a6c89f03da3cafb2ad6278431e24c14",
+  "source": "art/concepts/hero-candidates-v1/ione-hart.png",
+  "generated_original": "/workspace/generated_images/exec-141dc92c-c18f-4949-a34a-f4489324d11f.png",
+  "attempts": 1,
+  "workflow": "Owner-authorized concept-only exception; no production pose-lock approval or registration.",
+  "qc_notes": [],
+  "source_sha256": "512ca89e35aeb1d8789c5225be871682f0832759c18f8884048100fc8842faf2",
+  "draft_sha256": "2d86ca11f1871033a62a408484b39e5ef5ae11fff13c28b34e83e9f9380bfea3",
+  "prompt_sha256": "81e8a65a98d1e66872ae2db60d4fd5574f1367b2acf1109b3f5eb470500dd83f",
+  "dimensions": [
+    1536,
+    1024
+  ],
+  "source_dimensions": [
+    1536,
+    1024
+  ],
+  "generation_notes": [
+    "Coherent symmetric fire/cold prism and identifiable matching tome. Generator enlarged face panel slightly and added isolated tome detail, presentation change flagged."
+  ]
+}

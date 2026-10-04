@@ -1,0 +1,22 @@
+{
+  "id": "inga",
+  "prompt": "Edit this Inga Fallow concept sheet preserving her liked stern face, long brown braid, hat, charcoal earthgold cream clothing, mechanical auger staff shaft and caliperlike ring cradle around pale Starscar crystal. Add her missing combat SPELL TOME: an unmistakable belt-stowed dark charcoal leather geological survey tome with layered STRATA CROSS SECTIONS, Starscar faultline symbols and a few measuring tabs. Replace the rightmost equipmentdetail panel with the exact matching tome enlarged and the unchanged staffhead alongside if space permits. Make the tome physically visible at her waist; not a rolled map or potion. Add a visible small warm brass lantern attached on her opposite hip, staff and tome are combat equipment and lantern is universal light. Preserve recognisable existing design, not generic starcaller overhaul. Only simplify ragged small cloak ends enough for a broad readable silhouette. Same crisp rich pixel-inspired darkoutline fantasyart gray1536x1024landscape board with full uncropped right-facing figureleft matched facecloseupcenter-right equipmentfar-right palettebelow. No extra hands or detachedweaponparts.",
+  "hint": "Generated images are saved to /workspace/generated_images as /workspace/generated_images/exec-ba658b26-0263-4fa3-a7e5-a266dda576c1.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+  "generatedPath": "/workspace/generated_images/exec-ba658b26-0263-4fa3-a7e5-a266dda576c1.png",
+  "status": "pending-owner-review",
+  "dimensions": [
+    1536,
+    1024
+  ],
+  "hero_id": "inga",
+  "qc_notes": [
+    "Handheld measuring calipers became a rolled scroll, losing part of the measurement identity. Staff retains some orbital resemblance to Oriel."
+  ],
+  "attempts": 1,
+  "base_sha": "227bda460a6c89f03da3cafb2ad6278431e24c14",
+  "source": "art/concepts/hero-roster-v1/inga.png",
+  "generated_original": "/workspace/generated_images/exec-ba658b26-0263-4fa3-a7e5-a266dda576c1.png",
+  "source_sha256": "61307236826f330cf48a6e7b708e527b87b12e4fc2cec801096fc8a5496954be",
+  "draft_sha256": "917808e6b80fcf0136d69b617ef2c33a98b2a9f8988e99eb7509f2348d787413",
+  "prompt_sha256": "6f1205538d7493a8a7acd8be18be8345c870a566e2a71a97d4f1f4982cdf560b"
+}

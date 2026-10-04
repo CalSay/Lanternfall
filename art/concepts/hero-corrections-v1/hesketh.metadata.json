@@ -1,0 +1,17 @@
+{
+  "hero_id": "hesketh",
+  "status": "pending-owner-review",
+  "base_sha": "227bda460a6c89f03da3cafb2ad6278431e24c14",
+  "source": "art/concepts/hero-roster-v1/hesketh.png",
+  "generated_original": "/workspace/generated_images/exec-a2485eab-9095-44ae-9124-d855b7e7306d.png",
+  "attempts": 1,
+  "workflow": "Owner-authorized concept-only exception; minimal tome compatibility addition to liked original.",
+  "qc_notes": [],
+  "source_sha256": "cd893008e9af0c0c84fcf4bf579cf5e84976a18f885a795e5a3e9be2914a4ff4",
+  "draft_sha256": "4af03a380d5357ebbc16cb2371b8d5cf3a771d2e057aace0a8f224636f3c68d5",
+  "prompt_sha256": "a36712505fb452e5880534298ebc4996edcfdf7dbcf37be1b4ddbb23b4bdff74",
+  "dimensions": [
+    1536,
+    1024
+  ]
+}

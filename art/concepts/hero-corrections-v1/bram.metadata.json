@@ -1,0 +1,18 @@
+{
+  "hero_id": "bram",
+  "status": "pending-owner-review",
+  "base_sha": "227bda460a6c89f03da3cafb2ad6278431e24c14",
+  "source": "art/concepts/hero-roster-v1/bram.png",
+  "generated_original": "/workspace/generated_images/exec-e077b494-0425-4fba-b7cc-07cb7dc73126.png",
+  "attempts": 1,
+  "workflow": "Owner-authorized concept-only exception; no production pose-lock approval or registration.",
+  "qc_notes": [],
+  "generation_notes": [],
+  "source_sha256": "143dea6e72e83de5642d3b8ba1595b5a78cf4ef0f53877d5dc19182817a7e550",
+  "draft_sha256": "4c76656bb46bcf32dd48e1a5694b7e990509d5e95af5059a6deeb8ed26666401",
+  "prompt_sha256": "6fbf57e12a7d4e649af63b5240f2f49d5c2104c8cbb4b34da24d58e73ae0b5f5",
+  "dimensions": [
+    1536,
+    1024
+  ]
+}

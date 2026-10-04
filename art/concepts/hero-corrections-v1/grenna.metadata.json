@@ -1,0 +1,26 @@
+{
+  "hero_id": "grenna",
+  "status": "pending-owner-review",
+  "base_sha": "227bda460a6c89f03da3cafb2ad6278431e24c14",
+  "source": "art/concepts/hero-roster-v1/grenna.png",
+  "generated_original": "/workspace/generated_images/exec-338a8b91-de36-4423-b751-5b96edfcde2d.png",
+  "attempts": 1,
+  "workflow": "Owner-authorized concept-only exception; no production pose-lock approval or registration.",
+  "dimensions": [
+    1536,
+    1024
+  ],
+  "source_dimensions": [
+    1536,
+    1024
+  ],
+  "source_sha256": "b76942881b6e31354d2ef56c958b8b84c763ee4e1dd5872ae6eb19ee582d2ac4",
+  "draft_sha256": "ec78d128b019d167eb07f35ff98c32f1fb9942fee14febb7a31354cb0594a7ea",
+  "prompt_sha256": "a3cbce17ccad6b9ce5128d4b35ba0e6c28f9f7832dbc0e7792f6a0bb9b008505",
+  "qc_notes": [
+    "Lantern sits centrally near the maul shaft; its attachment is partly obscured by the hand/haft."
+  ],
+  "generation_notes": [
+    "Warm attached lantern added; twohand maul grip achieved; liked quarry identity preserved. Residual: lantern hangs at front apron near shaft rather than hip and its chain attachment is partly obscured by hand; owner review needed. Hands close together, could space farther apart in later guided pass."
+  ]
+}

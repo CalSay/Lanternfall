@@ -1,0 +1,18 @@
+{
+  "hero_id": "wren",
+  "status": "pending-owner-review",
+  "base_sha": "227bda460a6c89f03da3cafb2ad6278431e24c14",
+  "source": "art/concepts/hero-roster-v1/wren.png",
+  "generated_original": "/workspace/generated_images/exec-622b79f3-a4ce-456f-b6a4-98081bf1ccfa.png",
+  "attempts": 1,
+  "workflow": "Owner-authorized concept-only exception; no production pose-lock approval or registration.",
+  "qc_notes": [],
+  "generation_notes": [],
+  "source_sha256": "c2b946f3aa92807ede785a22073c365d4261455aee9d17accd26e35510d1d836",
+  "draft_sha256": "3e3bc85d838cfce9ce147c49cc04d9344c22cc459c8782ce8e36da93feadfb72",
+  "prompt_sha256": "06e01701e159431c7bcfb11fcb918443ba344d9a6fe6285622941e3714cd3921",
+  "dimensions": [
+    1536,
+    1024
+  ]
+}

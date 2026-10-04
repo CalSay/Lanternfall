@@ -1,0 +1,24 @@
+{
+  "hero_id": "tamsin-rook",
+  "status": "pending-owner-review",
+  "base_sha": "227bda460a6c89f03da3cafb2ad6278431e24c14",
+  "source": "art/concepts/hero-candidates-v1/tamsin-rook.png",
+  "generated_original": "/workspace/generated_images/exec-0289a18d-4123-41b7-aeac-8768d078df64.png",
+  "attempts": 1,
+  "workflow": "Owner-authorized concept-only exception; no production pose-lock approval or registration.",
+  "qc_notes": [],
+  "source_sha256": "52c25af11b5f61e20c0725a9d608a6f8a87902d4e3fa2c7543009a679b369edc",
+  "draft_sha256": "ff262e72725270d3b4f7f7a2a1328a6383df1a6a5499acd2d020ccf0f17942dc",
+  "prompt_sha256": "2a79b2915417ce4f5cc9c32a533ef8c39f21394503b8c57c761a37b751f07ed3",
+  "dimensions": [
+    1536,
+    1024
+  ],
+  "source_dimensions": [
+    1536,
+    1024
+  ],
+  "generation_notes": [
+    "Broad warblade and simple crossguard match equipment detail. No visible quiver. Liked identity retained."
+  ]
+}

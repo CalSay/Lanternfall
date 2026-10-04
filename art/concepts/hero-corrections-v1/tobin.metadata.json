@@ -1,0 +1,22 @@
+{
+  "hero_id": "tobin",
+  "status": "pending-owner-review",
+  "base_sha": "227bda460a6c89f03da3cafb2ad6278431e24c14",
+  "source": "art/concepts/hero-roster-v1/tobin.png",
+  "generated_original": "/workspace/generated_images/exec-8423238f-e3ae-49b0-93f9-f4b79ce1ab1b.png",
+  "attempts": 1,
+  "workflow": "Owner-authorized concept-only exception; no production pose-lock approval or registration.",
+  "qc_notes": [
+    "Hair and cap are corrected; the face remains softer than the requested tougher youthful expression."
+  ],
+  "generation_notes": [
+    "Hair/cap fixed; face remains softer than requested."
+  ],
+  "source_sha256": "ab320b596d9bfc4f3ac8bd42234f1a48fb0cb82ca6a872de527586417a305d1c",
+  "draft_sha256": "eaf4be725a3f544d7315116fc92b249746b94b05ce5f546c66aa696d85cb28c7",
+  "prompt_sha256": "ef9ebca66f1bdb363cf5be877a922af59ecdab8c2dc2f7ff4032aad33ef4b863",
+  "dimensions": [
+    1536,
+    1024
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "id": "ragna",
+  "prompt": "Edit Ragna Vik's supplied concept sheet to clarify her frost witch identity while retaining mature silverbraided face, sturdy practical boots, layered witch costume, purple undertones, dark wooden staff and attached CLOSED kettle. REMOVE the bell from staff completely. Instead the top is a clean connected darkwood CRESCENT CRADLE holding a sealed pale blue FROST GLASS orb with fine icy crystals, no bell, foliage or hanging bundle at the top. Make that staffhead clearly visible and show EXACT same focus enlarged in Equipment Detail together with a leather SPELL RECIPE TOME. Tome attached at belt, muted violet/slate cover with a small frostcrystal-and-mortar sigil and broad recipe tabs, clearly a book. Shift clothing from heavy earthy green into colder slateblue dustyviolet cream, remove most lichen/herb layers and dangling grass leaving only one small ingredient bundle. Keep mature age with realistic crowfeet and stronger weathered cheekbones matching closeup; not young Pip face. Retain closed attached kettle as small personal prop and ADD a separate visible warm brass hip lantern. Intact broad clothing panels readable at game scale. Preserve rich crisp pixel-inspired style gray1536x1024landscape fullbody-left matchedface-closeup-center equipment-right palettebelow, uncropped boots and staff, normal two connected arms/hands.",
+  "hint": "Generated images are saved to /workspace/generated_images as /workspace/generated_images/exec-499207ad-1f05-4c65-92ad-6c4e311c6bf3.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+  "generatedPath": "/workspace/generated_images/exec-499207ad-1f05-4c65-92ad-6c4e311c6bf3.png",
+  "status": "pending-owner-review",
+  "dimensions": [
+    1536,
+    1024
+  ],
+  "hero_id": "ragna",
+  "qc_notes": [
+    "Layered garment fringe remains visually dense despite the clearer frost-witch equipment."
+  ],
+  "attempts": 1,
+  "base_sha": "227bda460a6c89f03da3cafb2ad6278431e24c14",
+  "source": "art/concepts/hero-roster-v1/ragna.png",
+  "generated_original": "/workspace/generated_images/exec-499207ad-1f05-4c65-92ad-6c4e311c6bf3.png",
+  "source_sha256": "23df3d4ace7c2350a6e9ca3aad3f17cf7498c4aa42c279a4aeafc6318846afd8",
+  "draft_sha256": "cb247b547a3a3ab15f4271056f8eccb0956c3fafdc9e0ea7e8f3d860357ca880",
+  "prompt_sha256": "72f5d51c625776f9e1604b4fd763cbf1fc421de90517d5eb4197089bb418ceb1"
+}

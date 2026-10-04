@@ -1,0 +1,22 @@
+{
+  "hero_id": "kestrel",
+  "status": "pending-owner-review",
+  "base_sha": "227bda460a6c89f03da3cafb2ad6278431e24c14",
+  "source": "art/concepts/hero-roster-v1/kestrel.png",
+  "generated_original": "/workspace/generated_images/exec-3584fb99-9c02-4626-aa9a-da5f05e10422.png",
+  "attempts": 1,
+  "workflow": "Owner-authorized concept-only exception; no production pose-lock approval or registration.",
+  "qc_notes": [
+    "Spear contained, but only about6px upper clearance; requested safe framing margin remains unmet."
+  ],
+  "generation_notes": [
+    "Spear tip fully contained but only about6px top margin; requested safe margin unmet."
+  ],
+  "source_sha256": "b68d0fbd47d57cac2fa8914c618a49703b8ea12db2af83ae70d1e87583acbfbe",
+  "draft_sha256": "e85c5ea60c53db7f306edd609a78f3650dc67f52a968fae4ad78923d72108731",
+  "prompt_sha256": "81095878d1134d9baaf5a77b354221d80fcdafbeeee8952ab5107a69d2ade41d",
+  "dimensions": [
+    1536,
+    1024
+  ]
+}

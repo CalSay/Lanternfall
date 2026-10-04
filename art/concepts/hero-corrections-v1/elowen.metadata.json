@@ -1,0 +1,20 @@
+{
+  "id": "elowen",
+  "prompt": "Edit Saint Elowen's supplied concept board as a dignified radiant compassionate mage, preserving honeybrown tied hair and her kind serious face, age and identity. REMOVE shredded ragged strips and tattered cloak completely: clean intact luxurious ivory ceremonial mantle and charcoal underrobe with restrained luminous gold embroidery, strong broad elegant panels, tailored hems, modest fine gold circlet or clasp. Glamour is dignity, graceful quality fabric and deliberate light, not skin exposure, no confirmed goddess or wings. Put a functional elegant palegold STAFF in her left hand, connected shaft with small enclosed warmlight crystal in a simple sunarch cradle. Her right hand supports a clearly recognisable sacred SPELL TOME with ivory/gold cover and luminous lantern/sun sigil, or beltstowed if hand anatomy requires. Keep her EXISTING ornate warm brass lantern as a visible attached hip light, no longer only handheld combat item. Equipment Detail shows matching staffhead and sacred tome; facecloseup matches new intact mantle/circlet. Both hands natural connected arms, full body boots and staff uncropped. Same rich crisp pixel-inspired darkoutlined art gray1536x1024 landscape fullfigureleft facecloseupcenter equipmentright palettebelow, preserve name Saint Elowen Mage Last Lantern.",
+  "hint": "Generated images are saved to /workspace/generated_images as /workspace/generated_images/exec-b742f1bf-724e-4243-a49c-0f0530940f1c.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+  "generatedPath": "/workspace/generated_images/exec-b742f1bf-724e-4243-a49c-0f0530940f1c.png",
+  "status": "pending-owner-review",
+  "dimensions": [
+    1536,
+    1024
+  ],
+  "hero_id": "elowen",
+  "qc_notes": [],
+  "attempts": 1,
+  "base_sha": "227bda460a6c89f03da3cafb2ad6278431e24c14",
+  "source": "art/concepts/hero-roster-v1/elowen.png",
+  "generated_original": "/workspace/generated_images/exec-b742f1bf-724e-4243-a49c-0f0530940f1c.png",
+  "source_sha256": "d5af82e3847064ad057863affab63bae0d0b27db6d1427bccfd20a6ae5d7d21f",
+  "draft_sha256": "46da6667eec1fc0c760ba675d9f97efe1f655fb3094c5ce5ff9cc2e4c72af11f",
+  "prompt_sha256": "d566f2820ec874553347f77be9fe1ec3e27f7255983d5c4a846c8dad4810f200"
+}

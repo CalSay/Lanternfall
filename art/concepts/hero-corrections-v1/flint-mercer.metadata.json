@@ -1,0 +1,26 @@
+{
+  "hero_id": "flint-mercer",
+  "status": "pending-owner-review",
+  "base_sha": "227bda460a6c89f03da3cafb2ad6278431e24c14",
+  "source": "art/concepts/hero-candidates-v1/flint-mercer.png",
+  "generated_original": "/workspace/generated_images/exec-bc2f549e-7e63-417a-bfd2-8c2b50bdf70b.png",
+  "attempts": 1,
+  "workflow": "Owner-authorized concept-only exception; no production pose-lock approval or registration.",
+  "qc_notes": [
+    "Proportions improved, but stockiness is less pronounced than the liked original."
+  ],
+  "source_sha256": "4e3aa16c498cb6376a92d6106fae2d4511ac4aca7963727005b5d0600d5712fd",
+  "draft_sha256": "13dea7e83ca9064f00abe50a5614022cc53462cf4e150425b5d2a2f108ae4b43",
+  "prompt_sha256": "2a2d61b5cd0478ef3b114e7bbb606fb2a10d7e96360e081ea22311532cee68f0",
+  "dimensions": [
+    1536,
+    1024
+  ],
+  "source_dimensions": [
+    1536,
+    1024
+  ],
+  "generation_notes": [
+    "Boots smaller and adult proportions improved; fullfigure reads slightly less stocky than source, owner judgment."
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "hero_id": "corvin",
+  "status": "pending-owner-review",
+  "base_sha": "227bda460a6c89f03da3cafb2ad6278431e24c14",
+  "source": "art/concepts/hero-roster-v1/corvin.png",
+  "generated_original": "/workspace/generated_images/exec-ab8c3449-7d2a-40d0-9827-5cb843b8199d.png",
+  "attempts": 1,
+  "workflow": "Owner-authorized concept-only exception; no production pose-lock approval or registration.",
+  "qc_notes": [],
+  "generation_notes": [],
+  "source_sha256": "58e9ce9788f78b5ef8fde53bc7b67b2ba95ee4f08b2bfb23a4b01d81373a9426",
+  "draft_sha256": "459987060080323d8c17a4b0995704196c164597f27c2facc9dea7374d5edf57",
+  "prompt_sha256": "1b20a363ac2167c74df2d5b5fdf70cc5d23a860639d72471eb26cbd9431ac887",
+  "dimensions": [
+    1536,
+    1024
+  ]
+}

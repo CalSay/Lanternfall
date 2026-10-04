@@ -1,0 +1,18 @@
+{
+  "hero_id": "aldric",
+  "status": "pending-owner-review",
+  "base_sha": "227bda460a6c89f03da3cafb2ad6278431e24c14",
+  "source": "art/concepts/hero-roster-v1/aldric.png",
+  "generated_original": "/workspace/generated_images/exec-aff111c3-35dd-4c30-94dd-fe808f4c8ba8.png",
+  "attempts": 1,
+  "workflow": "Owner-authorized concept-only exception; no production pose-lock approval or registration.",
+  "qc_notes": [],
+  "generation_notes": [],
+  "source_sha256": "bf954e7ce2c0cd5eeb10f5cd2ce62f7a8da2dd5383edc8c785aa87ff99904c2a",
+  "draft_sha256": "25cd952358e68b4a7a17ccfd8c12ddcf4c07acbc3b16108f0d56b4ec14c29100",
+  "prompt_sha256": "3004033ec66ff2cc1f83b2f01234eb8faa4ca574c2b8d30d68c4e470777a9164",
+  "dimensions": [
+    1536,
+    1024
+  ]
+}

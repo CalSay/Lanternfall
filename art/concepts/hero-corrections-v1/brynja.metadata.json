@@ -1,0 +1,22 @@
+{
+  "hero_id": "brynja",
+  "status": "pending-owner-review",
+  "base_sha": "227bda460a6c89f03da3cafb2ad6278431e24c14",
+  "source": "art/concepts/hero-roster-v1/brynja.png",
+  "generated_original": "/workspace/generated_images/exec-a56b7fd6-252e-456b-a401-f55841b992c5.png",
+  "attempts": 1,
+  "workflow": "Owner-authorized concept-only exception; no production pose-lock approval or registration.",
+  "qc_notes": [
+    "Isolated shield detail is clipped at the right edge. Face remains youthful rather than fully matching the requested mature heavy-fighter direction."
+  ],
+  "generation_notes": [
+    "Isolated shield detail clipped at right edge; face remains youthful."
+  ],
+  "source_sha256": "82b4f5c53069b944532850f6046a9f348bd0e3ba95b4fcf919549da04358cc6f",
+  "draft_sha256": "1ba65debe7c60c06aedf6df3d09eb4f244b6223ab8c63ab975ae8ec5f1d8bde7",
+  "prompt_sha256": "acbb50eab9c6f53afc75b544363a1d6b4580d5c0ec017a5123632b94fece98d1",
+  "dimensions": [
+    1536,
+    1024
+  ]
+}

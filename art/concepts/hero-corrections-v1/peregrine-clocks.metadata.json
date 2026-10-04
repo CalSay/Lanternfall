@@ -1,0 +1,24 @@
+{
+  "hero_id": "peregrine-clocks",
+  "status": "pending-owner-review",
+  "base_sha": "227bda460a6c89f03da3cafb2ad6278431e24c14",
+  "source": "art/concepts/hero-candidates-v1/peregrine-clocks.png",
+  "generated_original": "/workspace/generated_images/exec-23b446a8-f297-4a1c-b154-f3b9a1901701.png",
+  "attempts": 1,
+  "workflow": "Owner-authorized concept-only exception; no production pose-lock approval or registration.",
+  "qc_notes": [],
+  "source_sha256": "af9d70a606f29701e776d1efa4621c6e1c3a33252012ebf83668cbbb02b94669",
+  "draft_sha256": "a24a27029b191ba0ed73cd237cf0b8bc97eb11dabd60839ce203d1e30379b57a",
+  "prompt_sha256": "897fa681584032c13f37021430d59139eebfa6626bb83e08d543ab1a255e995b",
+  "dimensions": [
+    1536,
+    1024
+  ],
+  "source_dimensions": [
+    1536,
+    1024
+  ],
+  "generation_notes": [
+    "Short tightly coiled silver hair and textured beard consistent in both views; elderly identity preserved."
+  ]
+}

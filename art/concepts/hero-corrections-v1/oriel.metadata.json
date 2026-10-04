@@ -1,0 +1,22 @@
+{
+  "id": "oriel",
+  "prompt": "Edit the supplied Oriel Vess concept board. Preserve favourite blue-black swept hair, midnightblue and cream clothing, gold stars, skin and adult identity. Replace the confusing held folding instrument with an unmistakable OPEN STARCALLER SPELL TOME: two ordinary rectangular parchment pages bound at a central spine, visible star charts and constellation circles, midnightblue leather covers. Her right hand supports the tome naturally. The Equipment Detail shows the exact same open star-chart tome enlarged, NOT a folding armillary instrument. Retain her existing golden star staff but remove dangling chains and pendant clutter from it, keep a single clean concentric ring cradle for the star. Keep a separate warm brass lantern visibly attached at belt. Conservatively give her face a slightly longer nose and firmer angular jaw and intelligent arched brows to distinguish from other young mages, matching both views without changing ethnicity age or hair. Rich crisp pixel-inspired darkoutlined art, same gray background and1536x1024 landscape fullbody-left face-closeup-center-right equipment-right palette-below format, fullbody and staff uncropped. Two normal connected arms and hands. No other redesign.",
+  "hint": "Generated images are saved to /workspace/generated_images as /workspace/generated_images/exec-b19357f4-39a7-4a3d-9950-31b7fb138c48.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+  "generatedPath": "/workspace/generated_images/exec-b19357f4-39a7-4a3d-9950-31b7fb138c48.png",
+  "status": "pending-owner-review",
+  "dimensions": [
+    1536,
+    1024
+  ],
+  "hero_id": "oriel",
+  "qc_notes": [
+    "Held tome shows a chart page opposite a decorated cover, while enlarged detail shows two chart pages; the views do not agree."
+  ],
+  "attempts": 1,
+  "base_sha": "227bda460a6c89f03da3cafb2ad6278431e24c14",
+  "source": "art/concepts/hero-roster-v1/oriel.png",
+  "generated_original": "/workspace/generated_images/exec-b19357f4-39a7-4a3d-9950-31b7fb138c48.png",
+  "source_sha256": "bbf5d91943af0cf136897ef7e224c7f67d7fe6dd31de60a68596a4c59b0957be",
+  "draft_sha256": "b094afecb129e0fabc307b9fbbc7c157086d23701a4bab151060a3d1e046617f",
+  "prompt_sha256": "2bf3c1a466755955d121862a2d6a478b1ec5feb4bbf6e8790f848fdda6126657"
+}

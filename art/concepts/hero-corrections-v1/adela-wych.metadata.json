@@ -1,0 +1,24 @@
+{
+  "hero_id": "adela-wych",
+  "status": "pending-owner-review",
+  "base_sha": "227bda460a6c89f03da3cafb2ad6278431e24c14",
+  "source": "art/concepts/hero-candidates-v1/adela-wych.png",
+  "generated_original": "/workspace/generated_images/exec-4cef0525-5b38-44cb-818b-4ca89ca1b6ba.png",
+  "attempts": 1,
+  "workflow": "Owner-authorized concept-only exception; no production pose-lock approval or registration.",
+  "qc_notes": [],
+  "source_sha256": "4ddbc3712615d087ef3cf763c961522663ae4096bb74f78835cf250648fe4e7e",
+  "draft_sha256": "72405b66cad83ce8df3929734e297a2f2ef9ee66454e86561088c7e4b135e367",
+  "prompt_sha256": "6e5326655452ee665cbfd8b6aed6f127545cf83c093e37a1a1d17b81a7bfdaba",
+  "dimensions": [
+    1536,
+    1024
+  ],
+  "source_dimensions": [
+    1536,
+    1024
+  ],
+  "generation_notes": [
+    "Connected symmetrical closed arch and matching staff detail; no obvious residual structural issue."
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "hero_id": "ysabet-fen",
+  "status": "pending-owner-review",
+  "base_sha": "227bda460a6c89f03da3cafb2ad6278431e24c14",
+  "source": "art/concepts/hero-candidates-v1/ysabet-fen.png",
+  "generated_original": "/workspace/generated_images/exec-5260809e-7600-4f7f-84df-9351be2ec26d.png",
+  "attempts": 1,
+  "workflow": "Owner-authorized concept-only exception; no production pose-lock approval or registration.",
+  "qc_notes": [
+    "Bow fully contained, but upper clearance is about22px and enlarged detail sits close to its label."
+  ],
+  "source_sha256": "00fab8d9366dbe63bace2229494d81eb98c11d08b7a179ee5451cd766bfac3d0",
+  "draft_sha256": "bd13490f0ecde6a3b06992a1ed69d2a40a247c8f00aab651ac2a29a3b62b2f29",
+  "prompt_sha256": "4c48659f54dec7ab7c802cb679b6b4c0983193050f183fe792ddd39b3d8602f8",
+  "dimensions": [
+    1536,
+    1024
+  ],
+  "source_dimensions": [
+    1536,
+    1024
+  ],
+  "generation_notes": [
+    "Bow geometry and onehand grip corrected. Upper margin about22px; detail lower tip lies close to Bow Detail label."
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "id": "isolde",
+  "prompt": "Edit Isolde Marrow's supplied concept board, preserving her liked closequarter fighter face, short black hair, subtle cheekscar, athletic adult build, charcoal leather and subdued plum colours. She is a RANGER SEAL SPECIALIST wielding a dagger plus a compact SIGIL FOLIO, not a generic staffmage. Keep her steel dagger recognisable and physically attached to the hand. Make belt folio clearly a small leather-bound book bearing a deliberate circular WAX SEAL rune and simple geometric seal diagrams, replace botanical leaf markings with this Seal identity. Equipment detail shows EXACT matching sigil folio cover and dagger with same proportions, no additional magical weapon. Remove huge shredded cloak and dangling rag strips: SHORT intact plum shouldercloak ending around thigh, broad clean silhouette, minimal worn edge only. Simplify excess overlapping shoulder/thigh armour and buckles to practical light leather; preserve personality. Add a visible compact warm brass lantern attached at other hip separate from folio. Same crisp rich pixel-inspired darkoutlined fantasyart gray background1536x1024landscape fullbody-left matchedface-closeup-center-right equipmentfar-right palettebelow. Full body boots dagger uncropped, exactly two connected arms and normal hands.",
+  "hint": "Generated images are saved to /workspace/generated_images as /workspace/generated_images/exec-29b50a4d-cd0b-4f52-8117-d5bc50fee2fb.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+  "generatedPath": "/workspace/generated_images/exec-29b50a4d-cd0b-4f52-8117-d5bc50fee2fb.png",
+  "status": "pending-owner-review",
+  "dimensions": [
+    1536,
+    1024
+  ],
+  "hero_id": "isolde",
+  "qc_notes": [
+    "Enlarged folio includes dangling ribbons that are absent from the belt folio."
+  ],
+  "attempts": 1,
+  "base_sha": "227bda460a6c89f03da3cafb2ad6278431e24c14",
+  "source": "art/concepts/hero-roster-v1/isolde.png",
+  "generated_original": "/workspace/generated_images/exec-29b50a4d-cd0b-4f52-8117-d5bc50fee2fb.png",
+  "source_sha256": "164d5179dd7498f92530f8767c83bc6bf713305eea786e2ceb1f832af756e0c8",
+  "draft_sha256": "68da8cfd8557f34196cdcabf91aed7c37329ca80babf0f576b0487a0d12bffae",
+  "prompt_sha256": "b7a38c824d393364288929d07289f0082444c4cfd1a24a2ca9a85f7b7122b6d6"
+}

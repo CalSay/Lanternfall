@@ -1,0 +1,18 @@
+{
+  "hero_id": "nerys-fleet",
+  "status": "pending-owner-review",
+  "base_sha": "227bda460a6c89f03da3cafb2ad6278431e24c14",
+  "source": "art/concepts/hero-candidates-v1/nerys-fleet.png",
+  "generated_original": "/workspace/generated_images/exec-cb9b848a-d527-4215-9fdb-c154829a5291.png",
+  "attempts": 1,
+  "workflow": "Owner-authorized concept-only exception; no production pose-lock approval or registration.",
+  "qc_notes": [],
+  "generation_notes": [],
+  "source_sha256": "24468a3483d0623aeeabca0d4ea50d64dcb409f4d0c924371f860094a4a4d147",
+  "draft_sha256": "96e3533189eaf4c46e49b106b28b951e5904b5dc7ae4533953b07b898ce5d931",
+  "prompt_sha256": "630f07f437faa52fe7b2e2f91eccf125152555b01029259891666bbf7007880e",
+  "dimensions": [
+    1536,
+    1024
+  ]
+}

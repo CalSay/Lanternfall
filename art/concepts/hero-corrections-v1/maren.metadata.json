@@ -1,0 +1,18 @@
+{
+  "hero_id": "maren",
+  "status": "pending-owner-review",
+  "base_sha": "227bda460a6c89f03da3cafb2ad6278431e24c14",
+  "source": "art/concepts/hero-roster-v1/maren.png",
+  "generated_original": "/workspace/generated_images/exec-f6f9ce27-9e69-48bc-bb4b-aac11c8a45a2.png",
+  "attempts": 1,
+  "workflow": "Owner-authorized concept-only exception; no production pose-lock approval or registration.",
+  "qc_notes": [],
+  "generation_notes": [],
+  "source_sha256": "70ef293d17034b957656959cbfee7e930641b83db0b9cede10cfa9a378425ae9",
+  "draft_sha256": "6bd8270ff1444e283989f6fd8aeddc0a653b5ab18b0b6d2585b80eb5daa3c943",
+  "prompt_sha256": "a2814e2354cedaad84e24caac409d9a3fd5759eb34afb9fa71d4f29ca7d375af",
+  "dimensions": [
+    1536,
+    1024
+  ]
+}

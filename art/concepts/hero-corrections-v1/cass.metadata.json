@@ -1,0 +1,18 @@
+{
+  "hero_id": "cass",
+  "status": "pending-owner-review",
+  "base_sha": "227bda460a6c89f03da3cafb2ad6278431e24c14",
+  "source": "art/concepts/hero-roster-v1/cass.png",
+  "generated_original": "/workspace/generated_images/exec-5ab0ecfc-9203-4e99-b56a-b37fd05fdd97.png",
+  "attempts": 1,
+  "workflow": "Owner-authorized concept-only exception; no production pose-lock approval or registration.",
+  "qc_notes": [],
+  "generation_notes": [],
+  "source_sha256": "38d2dd11b0f4fac3d532eaf915ffd7769637faad3b40cc287657324e4b3020e2",
+  "draft_sha256": "a95f659812c01d0bd179ea150a37ba67ffaaf8c1e6e22e39db6f53468dd46691",
+  "prompt_sha256": "02621c051fce0e6acffc41fc90fb6b15ebc612f22f3ec27a791014434f9ef20c",
+  "dimensions": [
+    1536,
+    1024
+  ]
+}
