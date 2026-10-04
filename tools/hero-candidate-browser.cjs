@@ -22,7 +22,7 @@ const root=path.resolve(__dirname,'..'),pack=path.join(root,'art/concepts/hero-c
    const download=await profile.locator('.concept a[download]').getAttribute('href');assert(fs.existsSync(path.resolve(root,'docs/design',download)));
   }
   assert.equal(await page.evaluate(()=>[...document.querySelectorAll('a[href^="#"]')].filter(a=>!document.getElementById(a.hash.slice(1))).length),0);
-  await page.locator('#shortlist-filter').click();assert.equal(await page.locator('.card:visible').count(),11);
+  await page.locator('#shortlist-filter').click();assert.equal(await page.locator('.card:visible').count(),13);
   await page.locator('#family').selectOption('Ranger');assert.equal(await page.locator('.card:visible').count(),3);
   await page.locator('#search').fill('nonexistent hero');assert(await page.locator('#empty').isVisible());
   await page.locator('#search').fill('');await page.locator('#family').selectOption('');await page.locator('#shortlist-filter').click();

@@ -1,7 +1,7 @@
 {
   "status": "Unapproved design candidates; no gameplay or approved artwork changes.",
   "baseSHA": "2a946bd822c9aaeef243f318dd9f26be3e25d9e6",
-  "ranking": "Coordinator judgement: missing decisions first, then mechanical fit, distinctness, three-slot flexibility, visual readability and implementation cost. Not measured balance. Top 11 are a provisional shortlist, not roster approval.",
+  "ranking": "Original coordinator ranking retained for comparison. The owner has selected thirteen additions, superseding the provisional top-eleven shortlist. Selection, not rank, now determines the intended 34-hero roster.",
   "counts": {
     "Ranger": 5,
     "Warrior": 8,
@@ -174,7 +174,7 @@
         "comment": "Nerys' bow looks a little weird and I don't know why she's two handing it. The string also disappears over her body.",
         "action": "Rework bow into a clear shortbow; ready pose uses one hand at the central grip, with the other free. Continuous straight undrawn string tip-to-tip, rendered visibly across the body. Preserve the character direction."
       },
-      "selectionStatus": "art-revision"
+      "selectionStatus": "selected"
     },
     {
       "rank": 2,
@@ -214,7 +214,7 @@
         "comment": "Love it. Great design. Made me realise how we need more different race characters.",
         "action": "Preserve the liked spindle/thread design. Broaden ethnicity and facial diversity across future additions; do not recolour existing approved characters to satisfy a quota."
       },
-      "selectionStatus": "retained"
+      "selectionStatus": "selected"
     },
     {
       "rank": 3,
@@ -254,7 +254,7 @@
         "comment": "He needs hair that's of African origin. He has white guy hair (facial and head). I like that he's old though.",
         "action": "Preserve elderly identity and skin tone; revise head hair to short tightly coiled silver hair and beard to an appropriately textured close silver beard. Match both views."
       },
-      "selectionStatus": "art-revision"
+      "selectionStatus": "selected"
     },
     {
       "rank": 4,
@@ -294,7 +294,7 @@
         "comment": "Strong design as well. Good work.",
         "action": "Preserve the liked core design and scar/undercut identity; earlier unwanted quiver and warblade compatibility still need attention."
       },
-      "selectionStatus": "retained"
+      "selectionStatus": "selected"
     },
     {
       "rank": 5,
@@ -334,7 +334,7 @@
         "comment": "Wow Sable Quill looks exceptional! Big fan of this one.",
         "action": "Preserve the strongly liked face, colours and costume. Earlier reviewer suggestions do not override this direct feedback; any ledger/focus change must preserve the identity the owner likes."
       },
-      "selectionStatus": "retained"
+      "selectionStatus": "selected"
     },
     {
       "rank": 6,
@@ -374,7 +374,7 @@
         "comment": "Is he intentionally short? He looks stocky and short for some reason. I think it's that his feet are massive compared to his head.",
         "action": "Preserve stocky build, not a deliberately short stature. Reduce oversized boots and restore balanced head/body/foot proportions."
       },
-      "selectionStatus": "art-revision"
+      "selectionStatus": "selected"
     },
     {
       "rank": 7,
@@ -414,7 +414,7 @@
         "comment": "Again his bow is a bit dodgy looking (hand hold not in the centre).",
         "action": "Rebuild bow geometry and place the hand at its central grip. Continuous correctly attached straight undrawn string."
       },
-      "selectionStatus": "art-revision"
+      "selectionStatus": "selected"
     },
     {
       "rank": 8,
@@ -448,13 +448,13 @@
       "alternative": "All-active: Find the Seam / Last Mercy / Spare Breath (consume Chance for brief Guard rather than the finish).",
       "dependencies": "New Chance token and explicit start-of-action health snapshot; existing bow gear. Threshold and damage need real-core tuning.",
       "rankReason": "Adds a missing visible finishing-window choice without instant kills or a kit that only works after victory.",
-      "recommended": true,
+      "recommended": false,
       "ownerFeedback": {
         "releaseOrder": 7,
         "comment": "Weirdly the bow is much better on this character.",
         "action": "Preserve the liked archer design and stronger bow geometry; this does not approve the whole production pack."
       },
-      "selectionStatus": "retained"
+      "selectionStatus": "reserve"
     },
     {
       "rank": 9,
@@ -494,7 +494,7 @@
         "comment": "Ione is great. My only issue is with the top of the staff and the design of the tome.",
         "action": "Retain Ione. Refine the prism staff head into a coherent glass focus and redesign the tome with clear broad fire/cold prism motifs, matching the focus detail."
       },
-      "selectionStatus": "art-revision"
+      "selectionStatus": "selected"
     },
     {
       "rank": 10,
@@ -534,7 +534,7 @@
         "comment": "Decent.",
         "action": "Retain as a viable design candidate; no additional owner correction specified."
       },
-      "selectionStatus": "retained"
+      "selectionStatus": "selected"
     },
     {
       "rank": 11,
@@ -574,7 +574,7 @@
         "comment": "Very cool design. Just need a review of the top of the staff.",
         "action": "Retain Adela. Refine the closed-arch staff head while preserving the liked overall design and violet lantern."
       },
-      "selectionStatus": "art-revision"
+      "selectionStatus": "selected"
     },
     {
       "rank": 12,
@@ -608,13 +608,13 @@
       "alternative": "All-active: Rime Arrow / White Silence / Thawshot (consume Chill for direct damage instead of control).",
       "dependencies": "Bow family ready; frost-arrow VFX and precise status consumption rules.",
       "rankReason": "A control-led bow differs from Wren’s Mark precision and Eskil’s poison, with cheap body-animation requirements.",
-      "recommended": false,
+      "recommended": true,
       "ownerFeedback": {
         "releaseOrder": 12,
         "comment": "Love Ysabet but her bow is skewed and the string isn't right either.",
         "action": "Retain Ysabet. Rebuild bow with coherent symmetric limb geometry, central grip and a continuous tip-to-tip string; ensure the bow remains in front of the body."
       },
-      "selectionStatus": "art-revision"
+      "selectionStatus": "selected"
     },
     {
       "rank": 13,
@@ -654,7 +654,7 @@
         "comment": "Roscoe proportions are weird. His body is so big compared to his head.",
         "action": "Keep the heavy build but rebalance head against torso; massive physique should not read as a tiny head on an oversized body."
       },
-      "selectionStatus": "art-revision"
+      "selectionStatus": "reserve"
     },
     {
       "rank": 14,
@@ -728,13 +728,13 @@
       "alternative": "All-active: High Cut / Low Answer / Close Measure (consume either line for a defensive sword action).",
       "dependencies": "One Line token with explicit action tags; existing gear.",
       "rankReason": "Readable sword branching, though Corvin and Aldric already occupy planned-answer space.",
-      "recommended": false,
+      "recommended": true,
       "ownerFeedback": {
         "releaseOrder": 18,
         "comment": "Eamon is decent too.",
         "action": "Retain Eamon as a viable candidate; no additional owner correction specified."
       },
-      "selectionStatus": "retained"
+      "selectionStatus": "selected"
     },
     {
       "rank": 16,
@@ -774,7 +774,7 @@
         "comment": "Bow is dodgy and needs work but the design is decent.",
         "action": "Retain visual direction; rebuild bow, central grip and connected string."
       },
-      "selectionStatus": "art-revision"
+      "selectionStatus": "reserve"
     },
     {
       "rank": 17,
@@ -848,13 +848,13 @@
       "alternative": "All-active: Clean Incision / Close the Wound / Aseptic Seal (consume Incision for Ward instead of a strike).",
       "dependencies": "New Incision token; mage tome migration.",
       "rankReason": "Good visual and holy battle-mage flavour, but Elowen and Sable cover much of the sustain/cleanse space.",
-      "recommended": false,
+      "recommended": true,
       "ownerFeedback": {
         "releaseOrder": 17,
         "comment": "Holy mage is good.",
         "action": "Retain the holy-mage direction and anatomical tome/split-circle identity."
       },
-      "selectionStatus": "retained"
+      "selectionStatus": "selected"
     },
     {
       "rank": 19,
@@ -948,7 +948,7 @@
     },
     {
       "title": "Roster shape",
-      "text": "Current proposals: 8 Warriors, 5 Rangers, 8 Mages. Top 11 add 2 Warriors, 3 Rangers and 6 Mages, producing 10 / 8 / 14. This is a playstyle-first shortlist, not a class-parity target; lower-ranked bow and melee alternatives remain available."
+      "text": "The existing 21 comprise 8 Warriors, 5 Rangers and 8 Mages. The owner selected 13 additions: 3 Warriors, 3 Rangers and 7 Mages. Intended roster: 34 heroes (11 Warriors, 8 Rangers, 15 Mages). This is a design roster, not a claim of 34 implemented kits."
     },
     {
       "title": "Honest scope",
@@ -971,5 +971,46 @@
     "eligibleCandidates": 19,
     "artApproval": "Positive feedback preserves design direction; it is not whole-pack runtime approval.",
     "notExplicitlyDeferredForCrafting": 17
+  },
+  "ownerRosterSelection": {
+    "target": 34,
+    "existing": 21,
+    "selectedAdditionIds": [
+      "nerys-fleet",
+      "mab-vale",
+      "peregrine-clocks",
+      "tamsin-rook",
+      "sable-quill",
+      "ione-hart",
+      "adela-wych",
+      "ysabet-fen",
+      "eamon-grey",
+      "celandine-orr",
+      "flint-mercer",
+      "merrick-low",
+      "gideon-march"
+    ],
+    "requestedNames": [
+      "Nerys Fleet",
+      "Mab Vale",
+      "Peregrine Clocks",
+      "Tasmin Rook",
+      "Sable Quill",
+      "Ione Hart",
+      "Adela Wych",
+      "Ysabet Fen",
+      "Eamon Grey",
+      "Celadine Orr",
+      "Flint Mercer",
+      "Merrick Lowe",
+      "Gideon March"
+    ],
+    "status": "Owner-selected intended roster; runtime integration and production art approval remain pending.",
+    "aliases": {
+      "Tasmin Rook": "Tamsin Rook",
+      "Celadine Orr": "Celandine Orr",
+      "Merrick Lowe": "Merrick Low"
+    },
+    "artFeedback": "Existing owner correction notes remain in force; selection preserves the design direction but does not waive production gates."
   }
 }

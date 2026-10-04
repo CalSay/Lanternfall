@@ -1,0 +1,28 @@
+{
+  "branch": "codex/roster-34-selection",
+  "baseSha": "4767f76db3f46bf8e562463e475347663fd8dbdb",
+  "intendedRoster": 34,
+  "selectedAdditions": 13,
+  "families": {
+    "Warrior": 11,
+    "Ranger": 8,
+    "Mage": 15
+  },
+  "validation": {
+    "node tools/build.mjs": "passed",
+    "LF_CHROMIUM=/usr/bin/chromium node tools/check.mjs": {
+      "result": "passed",
+      "browserSectionsSkipped": 0
+    },
+    "node tools/hero-candidate-browser.cjs": "passed: 20 profiles, 13 selected, native links and mobile layouts",
+    "node tools/hero-art-review-smoke.cjs": "passed: 32 original boards, HTTP navigation, images, mobile and no-JavaScript links"
+  },
+  "pdfPages": {
+    "originalConceptArt": 32,
+    "selectedAndReserveConcepts": 20
+  },
+  "limits": [
+    "Roster selection is not runtime integration or production art approval.",
+    "Codex client document rendering was not directly verified."
+  ]
+}

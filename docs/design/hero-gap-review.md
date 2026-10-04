@@ -14,7 +14,7 @@ Poison, frost, Ward/Guard retention, armour opening, prepared burst and delayed 
 
 ### Roster shape
 
-Current proposals: 8 Warriors, 5 Rangers, 8 Mages. Top 11 add 2 Warriors, 3 Rangers and 6 Mages, producing 10 / 8 / 14. This is a playstyle-first shortlist, not a class-parity target; lower-ranked bow and melee alternatives remain available.
+The existing 21 comprise 8 Warriors, 5 Rangers and 8 Mages. The owner selected 13 additions: 3 Warriors, 3 Rangers and 7 Mages. Intended roster: 34 heroes (11 Warriors, 8 Rangers, 15 Mages). This is a design roster, not a claim of 34 implemented kits.
 
 ### Honest scope
 
@@ -30,7 +30,7 @@ Each profile gives a concrete three-slot loadout and an alternative route. Most 
 
 ## Ranked candidates
 
-Coordinator judgement: missing decisions first, then mechanical fit, distinctness, three-slot flexibility, visual readability and implementation cost. Not measured balance. Top 11 are a provisional shortlist, not roster approval.
+Original coordinator ranking retained for comparison. The owner has selected thirteen additions, superseding the provisional top-eleven shortlist. Selection, not rank, now determines the intended 34-hero roster.
 
 | Rank | Hero | Family | Missing decision |
 |---|---|---|---|

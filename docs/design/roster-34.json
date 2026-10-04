@@ -1,0 +1,274 @@
+{
+  "target": 34,
+  "status": "Owner-selected intended playable roster. Only Wren, Tobin and Pip are currently implemented starters.",
+  "existing": [
+    {
+      "name": "Wren Hollowmere",
+      "family": "Ranger",
+      "role": "Listening precision archer",
+      "decision": "Holding a Mark supports resource income; spending it changes the payoff. Wounds offer a separate route.",
+      "selectionSource": "Existing revised 21-hero dossier"
+    },
+    {
+      "name": "Tobin Reed",
+      "family": "Warrior",
+      "role": "Counterattack squire",
+      "decision": "Spend Grit on protection or reserve it for a decisive sword response; timing remains manual.",
+      "selectionSource": "Existing revised 21-hero dossier"
+    },
+    {
+      "name": "Pip Cinderly",
+      "family": "Mage",
+      "role": "Fire cultivation mage",
+      "decision": "Early detonation sacrifices future fire ticks. Every release clears the consumed source.",
+      "selectionSource": "Existing revised 21-hero dossier"
+    },
+    {
+      "name": "Old Hesketh",
+      "family": "Mage",
+      "role": "Prepared-light mage",
+      "decision": "A protected low-oil rhythm competes with spending the prepared lamp for immediate pressure.",
+      "selectionSource": "Existing revised 21-hero dossier"
+    },
+    {
+      "name": "Bram Hollis",
+      "family": "Warrior",
+      "role": "Measured heavy cutter",
+      "decision": "Spend early to brace, aim for the exact-three Grain cut or reserve five for a larger fall.",
+      "selectionSource": "Existing revised 21-hero dossier"
+    },
+    {
+      "name": "Maren Ashvale",
+      "family": "Warrior",
+      "role": "Vigil and Ward fighter",
+      "decision": "Retain Ward to sustain sword work or surrender protection for rebuke; manual defence funds remembrance.",
+      "selectionSource": "Existing revised 21-hero dossier"
+    },
+    {
+      "name": "Ser Aldric Vane",
+      "family": "Warrior",
+      "role": "Oathbound greatsword fighter",
+      "decision": "Declare a commitment, fulfil it on another chosen action or release the vow for safety.",
+      "selectionSource": "Existing revised 21-hero dossier"
+    },
+    {
+      "name": "Kestrel Thane",
+      "family": "Warrior",
+      "role": "Grounded reach fighter",
+      "decision": "Keep Long reach for penetration or enter Close for protected haft contact, then pay to step out.",
+      "selectionSource": "Existing revised 21-hero dossier"
+    },
+    {
+      "name": "Thessaly Gloam",
+      "family": "Mage",
+      "role": "Water-reading control mage",
+      "decision": "Retain a reading for protection or release it into reflection damage; cold adds a different control route.",
+      "selectionSource": "Existing revised 21-hero dossier"
+    },
+    {
+      "name": "Grenna Holt",
+      "family": "Warrior",
+      "role": "Armour-breaking impact fighter",
+      "decision": "Open intact defences first or build Load for an impact while the foe is already open.",
+      "selectionSource": "Existing revised 21-hero dossier"
+    },
+    {
+      "name": "Isolde Marrow",
+      "family": "Ranger",
+      "role": "Dagger-and-sigil duellist",
+      "decision": "Let a contract wound accrue, close the Seal for an opening or preserve wounds while controlling the foe.",
+      "selectionSource": "Existing revised 21-hero dossier"
+    },
+    {
+      "name": "Oriel Vess",
+      "family": "Mage",
+      "role": "Delayed celestial mage",
+      "decision": "Schedule one impact and wait, pull it early at reduced strength or cancel it for protection.",
+      "selectionSource": "Existing revised 21-hero dossier"
+    },
+    {
+      "name": "Saint Elowen",
+      "family": "Mage",
+      "role": "Radiant light mage",
+      "decision": "Use a steady small-light window or hold a brighter reserve for a costly burst.",
+      "selectionSource": "Existing revised 21-hero dossier"
+    },
+    {
+      "name": "Caedmon the Unburnt",
+      "family": "Warrior",
+      "role": "Contained-ember heavy knight",
+      "decision": "Hold Heat for offensive pressure, risk opening the plate or vent the reserve into safety; being hit is never required.",
+      "selectionSource": "Existing revised 21-hero dossier"
+    },
+    {
+      "name": "Corvin Black",
+      "family": "Ranger",
+      "role": "Measured blade master",
+      "decision": "Prepare an Opening, spend it on an answer or refuse it to recover Freedom.",
+      "selectionSource": "Existing revised 21-hero dossier"
+    },
+    {
+      "name": "Cass Penhallow",
+      "family": "Ranger",
+      "role": "Reef polearm hunter",
+      "decision": "Keep venom and the sounding mark working or consume setup for penetration and safer follow-up.",
+      "selectionSource": "Existing revised 21-hero dossier"
+    },
+    {
+      "name": "Linnet Cole",
+      "family": "Mage",
+      "role": "Frost-and-glass mage",
+      "decision": "Leave Chill to mature into control or anneal a layer into an opening; preserve or spend protective glass.",
+      "selectionSource": "Existing revised 21-hero dossier"
+    },
+    {
+      "name": "Eskil Hauk",
+      "family": "Ranger",
+      "role": "Pin-and-venom scout",
+      "decision": "Keep Pin while poison works or consume the sign for a clear shot; poison stacks have finite duration.",
+      "selectionSource": "Existing revised 21-hero dossier"
+    },
+    {
+      "name": "Brynja Berg",
+      "family": "Warrior",
+      "role": "Heavy shield-and-warblade anchor — review candidate",
+      "decision": "Keep the shield planted for protection or surrender the position and its Guard to release a heavier sword strike.",
+      "selectionSource": "Existing revised 21-hero dossier"
+    },
+    {
+      "name": "Inga Fallow",
+      "family": "Mage",
+      "role": "Strata and cold-shard mage",
+      "decision": "Preserve Sunder for penetration or spend an exposed layer to excavate cold underneath.",
+      "selectionSource": "Existing revised 21-hero dossier"
+    },
+    {
+      "name": "Ragna Vik",
+      "family": "Mage",
+      "role": "Winter venom witch",
+      "decision": "Let venom mature, reduce it for damage or dilute it for cover while buying separate frost treatment.",
+      "selectionSource": "Existing revised 21-hero dossier"
+    }
+  ],
+  "additions": [
+    {
+      "id": "nerys-fleet",
+      "name": "Nerys Fleet",
+      "family": "Ranger",
+      "title": "The Foxstep Archer",
+      "selectionSource": "Direct owner selection",
+      "remainingWork": "Rework bow into a clear shortbow; ready pose uses one hand at the central grip, with the other free. Continuous straight undrawn string tip-to-tip, rendered visibly across the body. Preserve the character direction."
+    },
+    {
+      "id": "mab-vale",
+      "name": "Mab Vale",
+      "family": "Mage",
+      "title": "The Threadbinder",
+      "selectionSource": "Direct owner selection",
+      "remainingWork": "Preserve the liked spindle/thread design. Broaden ethnicity and facial diversity across future additions; do not recolour existing approved characters to satisfy a quota."
+    },
+    {
+      "id": "peregrine-clocks",
+      "name": "Peregrine Clocks",
+      "family": "Mage",
+      "title": "The Watchmaker",
+      "selectionSource": "Direct owner selection",
+      "remainingWork": "Preserve elderly identity and skin tone; revise head hair to short tightly coiled silver hair and beard to an appropriately textured close silver beard. Match both views."
+    },
+    {
+      "id": "tamsin-rook",
+      "name": "Tamsin Rook",
+      "family": "Warrior",
+      "title": "The Bellsword",
+      "selectionSource": "Direct owner selection",
+      "remainingWork": "Preserve the liked core design and scar/undercut identity; earlier unwanted quiver and warblade compatibility still need attention."
+    },
+    {
+      "id": "sable-quill",
+      "name": "Sable Quill",
+      "family": "Mage",
+      "title": "The Ash Reader",
+      "selectionSource": "Direct owner selection",
+      "remainingWork": "Preserve the strongly liked face, colours and costume. Earlier reviewer suggestions do not override this direct feedback; any ledger/focus change must preserve the identity the owner likes."
+    },
+    {
+      "id": "ione-hart",
+      "name": "Ione Hart",
+      "family": "Mage",
+      "title": "The Prism Warden",
+      "selectionSource": "Direct owner selection",
+      "remainingWork": "Retain Ione. Refine the prism staff head into a coherent glass focus and redesign the tome with clear broad fire/cold prism motifs, matching the focus detail."
+    },
+    {
+      "id": "adela-wych",
+      "name": "Adela Wych",
+      "family": "Mage",
+      "title": "The Pale Advocate",
+      "selectionSource": "Direct owner selection",
+      "remainingWork": "Retain Adela. Refine the closed-arch staff head while preserving the liked overall design and violet lantern."
+    },
+    {
+      "id": "ysabet-fen",
+      "name": "Ysabet Fen",
+      "family": "Ranger",
+      "title": "The Winter Arrow",
+      "selectionSource": "Direct owner selection",
+      "remainingWork": "Retain Ysabet. Rebuild bow with coherent symmetric limb geometry, central grip and a continuous tip-to-tip string; ensure the bow remains in front of the body."
+    },
+    {
+      "id": "eamon-grey",
+      "name": "Eamon Grey",
+      "family": "Warrior",
+      "title": "The Road Duellist",
+      "selectionSource": "Direct owner selection",
+      "remainingWork": "Retain Eamon as a viable candidate; no additional owner correction specified."
+    },
+    {
+      "id": "celandine-orr",
+      "name": "Celandine Orr",
+      "family": "Mage",
+      "title": "The Dawn Surgeon",
+      "selectionSource": "Direct owner selection",
+      "remainingWork": "Retain the holy-mage direction and anatomical tome/split-circle identity."
+    },
+    {
+      "id": "flint-mercer",
+      "name": "Flint Mercer",
+      "family": "Mage",
+      "title": "The Stormwright",
+      "selectionSource": "Direct owner selection",
+      "remainingWork": "Preserve stocky build, not a deliberately short stature. Reduce oversized boots and restore balanced head/body/foot proportions."
+    },
+    {
+      "id": "merrick-low",
+      "name": "Merrick Low",
+      "family": "Ranger",
+      "title": "The Quiet Hunter",
+      "selectionSource": "Direct owner selection",
+      "remainingWork": "Rebuild bow geometry and place the hand at its central grip. Continuous correctly attached straight undrawn string."
+    },
+    {
+      "id": "gideon-march",
+      "name": "Gideon March",
+      "family": "Warrior",
+      "title": "The Gate Interceptor",
+      "selectionSource": "Direct owner selection",
+      "remainingWork": "Retain as a viable design candidate; no additional owner correction specified."
+    }
+  ],
+  "aliases": {
+    "Tasmin Rook": "Tamsin Rook",
+    "Celadine Orr": "Celandine Orr",
+    "Merrick Lowe": "Merrick Low"
+  },
+  "counts": {
+    "Ranger": 8,
+    "Warrior": 11,
+    "Mage": 15
+  },
+  "excluded": [
+    "No unarmed heroes: Rufus Wold withdrawn.",
+    "Unselected concepts remain in the development pool; NPC/benched/retired identities are not restored.",
+    "Crossbow and poleaxe candidates remain deferred behind the crafting overhaul."
+  ]
+}
