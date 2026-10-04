@@ -1,0 +1,226 @@
+{
+  "date": "2026-10-04",
+  "mappingBasis": "Saved generated-original completion order; confirmed by named heroes in owner feedback. Profile ranking preserved separately.",
+  "feedback": [
+    {
+      "releaseOrder": 1,
+      "id": "nerys-fleet",
+      "name": "Nerys Fleet",
+      "profileRank": 1,
+      "generatedOriginal": "/workspace/generated_images/exec-c6ab441d-51f1-4463-9dbc-b8698b10f3d6.png",
+      "sourceCompletionUTC": "2026-10-04T19:02:10.564352+00:00",
+      "comment": "Nerys' bow looks a little weird and I don't know why she's two handing it. The string also disappears over her body.",
+      "action": "Rework bow into a clear shortbow; ready pose uses one hand at the central grip, with the other free. Continuous straight undrawn string tip-to-tip, rendered visibly across the body. Preserve the character direction.",
+      "status": "art-revision"
+    },
+    {
+      "releaseOrder": 2,
+      "id": "mab-vale",
+      "name": "Mab Vale",
+      "profileRank": 2,
+      "generatedOriginal": "/workspace/generated_images/exec-7e5bc887-47c1-4722-8384-a9627fbacd37.png",
+      "sourceCompletionUTC": "2026-10-04T19:03:36.765969+00:00",
+      "comment": "Love it. Great design. Made me realise how we need more different race characters.",
+      "action": "Preserve the liked spindle/thread design. Broaden ethnicity and facial diversity across future additions; do not recolour existing approved characters to satisfy a quota.",
+      "status": "retained"
+    },
+    {
+      "releaseOrder": 3,
+      "id": "tamsin-rook",
+      "name": "Tamsin Rook",
+      "profileRank": 4,
+      "generatedOriginal": "/workspace/generated_images/exec-6c3d93e7-2f85-4de0-9a11-208ba9cc14a8.png",
+      "sourceCompletionUTC": "2026-10-04T19:04:40.435120+00:00",
+      "comment": "Strong design as well. Good work.",
+      "action": "Preserve the liked core design and scar/undercut identity; earlier unwanted quiver and warblade compatibility still need attention.",
+      "status": "retained"
+    },
+    {
+      "releaseOrder": 4,
+      "id": "peregrine-clocks",
+      "name": "Peregrine Clocks",
+      "profileRank": 3,
+      "generatedOriginal": "/workspace/generated_images/exec-eaa52b4d-31ca-416d-b5e0-fc11207f2d5f.png",
+      "sourceCompletionUTC": "2026-10-04T19:05:41.980219+00:00",
+      "comment": "He needs hair that's of African origin. He has white guy hair (facial and head). I like that he's old though.",
+      "action": "Preserve elderly identity and skin tone; revise head hair to short tightly coiled silver hair and beard to an appropriately textured close silver beard. Match both views.",
+      "status": "art-revision"
+    },
+    {
+      "releaseOrder": 5,
+      "id": "flint-mercer",
+      "name": "Flint Mercer",
+      "profileRank": 6,
+      "generatedOriginal": "/workspace/generated_images/exec-92b36aab-e8ba-4ec3-8f60-2538eb4188fd.png",
+      "sourceCompletionUTC": "2026-10-04T19:06:50.997416+00:00",
+      "comment": "Is he intentionally short? He looks stocky and short for some reason. I think it's that his feet are massive compared to his head.",
+      "action": "Preserve stocky build, not a deliberately short stature. Reduce oversized boots and restore balanced head/body/foot proportions.",
+      "status": "art-revision"
+    },
+    {
+      "releaseOrder": 6,
+      "id": "merrick-low",
+      "name": "Merrick Low",
+      "profileRank": 7,
+      "generatedOriginal": "/workspace/generated_images/exec-da65edaa-62b7-44c0-8c8e-543d5dbc21d6.png",
+      "sourceCompletionUTC": "2026-10-04T19:07:48.786407+00:00",
+      "comment": "Again his bow is a bit dodgy looking (hand hold not in the centre).",
+      "action": "Rebuild bow geometry and place the hand at its central grip. Continuous correctly attached straight undrawn string.",
+      "status": "art-revision"
+    },
+    {
+      "releaseOrder": 7,
+      "id": "hilda-vane",
+      "name": "Hilda Vane",
+      "profileRank": 8,
+      "generatedOriginal": "/workspace/generated_images/exec-16e0f56e-c374-449e-b112-f893cdda2650.png",
+      "sourceCompletionUTC": "2026-10-04T19:08:45.927365+00:00",
+      "comment": "Weirdly the bow is much better on this character.",
+      "action": "Preserve the liked archer design and stronger bow geometry; this does not approve the whole production pack.",
+      "status": "retained"
+    },
+    {
+      "releaseOrder": 8,
+      "id": "sable-quill",
+      "name": "Sable Quill",
+      "profileRank": 5,
+      "generatedOriginal": "/workspace/generated_images/exec-a74a1410-fe55-43a7-a216-6a56ba0d09f3.png",
+      "sourceCompletionUTC": "2026-10-04T19:09:44.108343+00:00",
+      "comment": "Wow Sable Quill looks exceptional! Big fan of this one.",
+      "action": "Preserve the strongly liked face, colours and costume. Earlier reviewer suggestions do not override this direct feedback; any ledger/focus change must preserve the identity the owner likes.",
+      "status": "retained"
+    },
+    {
+      "releaseOrder": 9,
+      "id": "ione-hart",
+      "name": "Ione Hart",
+      "profileRank": 9,
+      "generatedOriginal": "/workspace/generated_images/exec-12cdb3dc-3d10-47ce-b571-915e6afb71e5.png",
+      "sourceCompletionUTC": "2026-10-04T19:10:43.089302+00:00",
+      "comment": "Ione is great. My only issue is with the top of the staff and the design of the tome.",
+      "action": "Retain Ione. Refine the prism staff head into a coherent glass focus and redesign the tome with clear broad fire/cold prism motifs, matching the focus detail.",
+      "status": "art-revision"
+    },
+    {
+      "releaseOrder": 10,
+      "id": "adela-wych",
+      "name": "Adela Wych",
+      "profileRank": 11,
+      "generatedOriginal": "/workspace/generated_images/exec-798f6cea-6cc7-4356-b8d8-c759e12018ac.png",
+      "sourceCompletionUTC": "2026-10-04T19:11:44.594335+00:00",
+      "comment": "Very cool design. Just need a review of the top of the staff.",
+      "action": "Retain Adela. Refine the closed-arch staff head while preserving the liked overall design and violet lantern.",
+      "status": "art-revision"
+    },
+    {
+      "releaseOrder": 11,
+      "id": "gideon-march",
+      "name": "Gideon March",
+      "profileRank": 10,
+      "generatedOriginal": "/workspace/generated_images/exec-827a5d70-2755-43ca-bf89-345b55a6faf8.png",
+      "sourceCompletionUTC": "2026-10-04T19:12:30.719085+00:00",
+      "comment": "Decent.",
+      "action": "Retain as a viable design candidate; no additional owner correction specified.",
+      "status": "retained"
+    },
+    {
+      "releaseOrder": 12,
+      "id": "ysabet-fen",
+      "name": "Ysabet Fen",
+      "profileRank": 12,
+      "generatedOriginal": "/workspace/generated_images/exec-6daf3c09-fce1-4125-ad77-396c91decc86.png",
+      "sourceCompletionUTC": "2026-10-04T19:13:26.952005+00:00",
+      "comment": "Love Ysabet but her bow is skewed and the string isn't right either.",
+      "action": "Retain Ysabet. Rebuild bow with coherent symmetric limb geometry, central grip and a continuous tip-to-tip string; ensure the bow remains in front of the body.",
+      "status": "art-revision"
+    },
+    {
+      "releaseOrder": 13,
+      "id": "roscoe-bell",
+      "name": "Roscoe Bell",
+      "profileRank": 13,
+      "generatedOriginal": "/workspace/generated_images/exec-ee8449de-38ef-443f-9791-03b4483412d3.png",
+      "sourceCompletionUTC": "2026-10-04T19:13:33.616113+00:00",
+      "comment": "Roscoe proportions are weird. His body is so big compared to his head.",
+      "action": "Keep the heavy build but rebalance head against torso; massive physique should not read as a tiny head on an oversized body.",
+      "status": "art-revision"
+    },
+    {
+      "releaseOrder": 14,
+      "id": "petra-crowe",
+      "name": "Petra Crowe",
+      "profileRank": 14,
+      "generatedOriginal": "/workspace/generated_images/exec-b4df0d7d-6205-4e61-8785-e6b3f0a4fdd3.png",
+      "sourceCompletionUTC": "2026-10-04T19:15:50.522365+00:00",
+      "comment": "Cool visual design. Her kit feels a bit standard. How is she different from a basic archer?",
+      "action": "Retain the liked visual design. Kit review required: current prepared heavy shot is insufficiently distinct from existing setup/release archers. Do not claim its intended identity already delivers a unique playstyle.",
+      "status": "kit-review"
+    },
+    {
+      "releaseOrder": 15,
+      "id": "rufus-wold",
+      "name": "Rufus Wold",
+      "profileRank": 17,
+      "generatedOriginal": "/workspace/generated_images/exec-c3dbda9c-fb01-412d-8777-3fd7e65f9024.png",
+      "sourceCompletionUTC": "2026-10-04T19:16:04.982606+00:00",
+      "comment": "No unarmed characters.",
+      "action": "Withdraw Rufus from playable consideration under the direct no-unarmed rule. Preserve the draft as an archive; do not silently rearm him or move him into an NPC roster.",
+      "status": "withdrawn"
+    },
+    {
+      "releaseOrder": 16,
+      "id": "nim-rowan",
+      "name": "Nim Rowan",
+      "profileRank": 16,
+      "generatedOriginal": "/workspace/generated_images/exec-f8ea7d88-9a3e-42bd-bc89-28143b0a4e33.png",
+      "sourceCompletionUTC": "2026-10-04T19:16:35.611299+00:00",
+      "comment": "Bow is dodgy and needs work but the design is decent.",
+      "action": "Retain visual direction; rebuild bow, central grip and connected string.",
+      "status": "art-revision"
+    },
+    {
+      "releaseOrder": 17,
+      "id": "celandine-orr",
+      "name": "Celandine Orr",
+      "profileRank": 18,
+      "generatedOriginal": "/workspace/generated_images/exec-46e143b7-5dca-440b-8180-5acb9c27bb83.png",
+      "sourceCompletionUTC": "2026-10-04T19:17:00.375716+00:00",
+      "comment": "Holy mage is good.",
+      "action": "Retain the holy-mage direction and anatomical tome/split-circle identity.",
+      "status": "retained"
+    },
+    {
+      "releaseOrder": 18,
+      "id": "eamon-grey",
+      "name": "Eamon Grey",
+      "profileRank": 15,
+      "generatedOriginal": "/workspace/generated_images/exec-36ff8d10-a491-4b13-8c9d-024a7210a163.png",
+      "sourceCompletionUTC": "2026-10-04T19:17:35.872343+00:00",
+      "comment": "Eamon is decent too.",
+      "action": "Retain Eamon as a viable candidate; no additional owner correction specified.",
+      "status": "retained"
+    },
+    {
+      "releaseOrder": 19,
+      "id": "ludo-finch",
+      "name": "Ludo Finch",
+      "profileRank": 20,
+      "generatedOriginal": "/workspace/generated_images/exec-7676dc12-b965-4513-835f-3ab5d31e3842.png",
+      "sourceCompletionUTC": "2026-10-04T19:17:56.280724+00:00",
+      "comment": "Would require new weapon and off hand for one character. Makes him low priority.",
+      "action": "Defer Ludo behind equipment/crafting work: a one-character crossbow and bolt-case pair does not justify immediate categories. No new gear implementation.",
+      "status": "deferred-crafting"
+    },
+    {
+      "releaseOrder": 20,
+      "id": "maud-flint",
+      "name": "Maud Flint",
+      "profileRank": 19,
+      "generatedOriginal": "/workspace/generated_images/exec-40d10237-544a-412b-8d88-29f03f283672.png",
+      "sourceCompletionUTC": "2026-10-04T19:18:42.577798+00:00",
+      "comment": "Again, new weapon type so would have to wait for crafting/skilling overhaul.",
+      "action": "Defer Maud behind the crafting/skilling overhaul: combat poleaxe category is not currently available. No new gear implementation.",
+      "status": "deferred-crafting"
+    }
+  ]
+}

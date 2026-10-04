@@ -168,7 +168,13 @@
       "alternative": "All-active: Foxstep Shot / Homeward Turn / Parting Arrow (a paid shot that primes one Slip after it resolves). Trade the passive for deliberate preparation.",
       "dependencies": "New Slip token and hero kit; existing gear families.",
       "rankReason": "Best current candidate for a dedicated Dodge-led loop. Wren and Eskil already have Dodge riders; her claim is the repeated damage-versus-recovery Slip decision, not introducing Dodge rewards.",
-      "recommended": true
+      "recommended": true,
+      "ownerFeedback": {
+        "releaseOrder": 1,
+        "comment": "Nerys' bow looks a little weird and I don't know why she's two handing it. The string also disappears over her body.",
+        "action": "Rework bow into a clear shortbow; ready pose uses one hand at the central grip, with the other free. Continuous straight undrawn string tip-to-tip, rendered visibly across the body. Preserve the character direction."
+      },
+      "selectionStatus": "art-revision"
     },
     {
       "rank": 2,
@@ -202,7 +208,13 @@
       "alternative": "All-active: Last Stitch / Cut the Thread / Unpick (consume Curse to clear one eligible self-debuff and gain brief Ward).",
       "dependencies": "Curse timing/ownership must be specified; mage tome compatibility migration.",
       "rankReason": "Adds a genuinely absent hex specialist with a readable setup and two different releases; no minions required.",
-      "recommended": true
+      "recommended": true,
+      "ownerFeedback": {
+        "releaseOrder": 2,
+        "comment": "Love it. Great design. Made me realise how we need more different race characters.",
+        "action": "Preserve the liked spindle/thread design. Broaden ethnicity and facial diversity across future additions; do not recolour existing approved characters to satisfy a quota."
+      },
+      "selectionStatus": "retained"
     },
     {
       "rank": 3,
@@ -213,7 +225,7 @@
       "gap": "Cooldown investment",
       "equipment": "Staff + watchmaker tome",
       "lore": "Peregrine repaired the village clock until it began striking for people who had not yet died. He dismantled it, kept one spring, and went to find who had wound it.",
-      "visual": "A thin older man with a long face, deep brown skin and short silver hair. Prussian-blue tailored work coat, straight staff with one enclosed clock dial, indexed brass tome and amber pocket lantern.",
+      "visual": "A thin older man with a long face, deep brown skin and short tightly coiled silver hair and a close, textured silver beard. Prussian-blue tailored work coat, straight staff with one enclosed clock dial, indexed brass tome and amber pocket lantern.",
       "loop": "Attack earns resource. A paid preparation delays one selected equipped active by a turn to shorten a different equipped active by a turn. Or use the preparation for a bounded direct strike without altering cooldowns.",
       "tradeoff": "A transfer costs an action, resource and real future availability from an already-cooling donor. Attack resets the transfer lock. Passives, ready skills and unequipped cards cannot be targets.",
       "build": [
@@ -236,7 +248,13 @@
       "alternative": "Passive route: Borrow Tomorrow / Clockstrike / Small Hours (passive: exchange Borrow’s fallback penetration for brief Ward). Without two other actives, use the fallback; this trades cooldown-transfer access for a simpler Attack-led route.",
       "dependencies": "New explicit cooldown transfer/Receipt contract and mage tome migration. Native Parry reductions still apply; no negative cooldowns, repeated transfers, refunds or extra actions.",
       "rankReason": "One of the clearest missing decisions: exchange future availability at a real cost, rather than another stored elemental burst.",
-      "recommended": true
+      "recommended": true,
+      "ownerFeedback": {
+        "releaseOrder": 4,
+        "comment": "He needs hair that's of African origin. He has white guy hair (facial and head). I like that he's old though.",
+        "action": "Preserve elderly identity and skin tone; revise head hair to short tightly coiled silver hair and beard to an appropriately textured close silver beard. Match both views."
+      },
+      "selectionStatus": "art-revision"
     },
     {
       "rank": 4,
@@ -270,7 +288,13 @@
       "alternative": "All-active: Downbeat / Rest Note / Final Measure (a timed paid cut that consumes Accent for a larger direct result).",
       "dependencies": "New Accent state; existing gear. Timing grades use existing input.",
       "rankReason": "Makes the owner’s manual combat feel different through timing and sequence rather than another shield-counter loop.",
-      "recommended": true
+      "recommended": true,
+      "ownerFeedback": {
+        "releaseOrder": 3,
+        "comment": "Strong design as well. Good work.",
+        "action": "Preserve the liked core design and scar/undercut identity; earlier unwanted quiver and warblade compatibility still need attention."
+      },
+      "selectionStatus": "retained"
     },
     {
       "rank": 5,
@@ -304,7 +328,13 @@
       "alternative": "All-active: Read the Fever / Bitter Cure / Prepare the Salve (a non-damaging paid preparation that banks Remedy without needing to be afflicted).",
       "dependencies": "Eligible status list, Remedy provenance and mage tome migration. No mandatory taking damage.",
       "rankReason": "Adds a missing self-recovery specialist who still wins fights; unlike a party healer, all decisions serve the solo hero.",
-      "recommended": true
+      "recommended": true,
+      "ownerFeedback": {
+        "releaseOrder": 8,
+        "comment": "Wow Sable Quill looks exceptional! Big fan of this one.",
+        "action": "Preserve the strongly liked face, colours and costume. Earlier reviewer suggestions do not override this direct feedback; any ledger/focus change must preserve the identity the owner likes."
+      },
+      "selectionStatus": "retained"
     },
     {
       "rank": 6,
@@ -338,7 +368,13 @@
       "alternative": "All-active: Coil Up / Groundstrike / Bleed the Coil (spend charge for a smaller strike and Weaken).",
       "dependencies": "New reserve and lightning presentation; mage tome migration. Charge breaks use core rules.",
       "rankReason": "Lightning charge-threat specialist with a visible offence/safety branch. Reserve-and-release is already crowded; promote only if the grounded trade-off proves different in real-core tests.",
-      "recommended": true
+      "recommended": true,
+      "ownerFeedback": {
+        "releaseOrder": 5,
+        "comment": "Is he intentionally short? He looks stocky and short for some reason. I think it's that his feet are massive compared to his head.",
+        "action": "Preserve stocky build, not a deliberately short stature. Reduce oversized boots and restore balanced head/body/foot proportions."
+      },
+      "selectionStatus": "art-revision"
     },
     {
       "rank": 7,
@@ -372,7 +408,13 @@
       "alternative": "All-active: Quiet Release / Break Silence / Hold Breath (paid preparation: reset the old cadence, then establish one new step). Trade the passive’s defensive-action follow-up for deliberate setup.",
       "dependencies": "Visible cadence counter; exact reset rules. No Speed manipulation.",
       "rankReason": "Offers an economical bow rhythm with clear interruption costs, rather than another Mark or poison loop.",
-      "recommended": true
+      "recommended": true,
+      "ownerFeedback": {
+        "releaseOrder": 6,
+        "comment": "Again his bow is a bit dodgy looking (hand hold not in the centre).",
+        "action": "Rebuild bow geometry and place the hand at its central grip. Continuous correctly attached straight undrawn string."
+      },
+      "selectionStatus": "art-revision"
     },
     {
       "rank": 8,
@@ -406,7 +448,13 @@
       "alternative": "All-active: Find the Seam / Last Mercy / Spare Breath (consume Chance for brief Guard rather than the finish).",
       "dependencies": "New Chance token and explicit start-of-action health snapshot; existing bow gear. Threshold and damage need real-core tuning.",
       "rankReason": "Adds a missing visible finishing-window choice without instant kills or a kit that only works after victory.",
-      "recommended": true
+      "recommended": true,
+      "ownerFeedback": {
+        "releaseOrder": 7,
+        "comment": "Weirdly the bow is much better on this character.",
+        "action": "Preserve the liked archer design and stronger bow geometry; this does not approve the whole production pack."
+      },
+      "selectionStatus": "retained"
     },
     {
       "rank": 9,
@@ -440,7 +488,13 @@
       "alternative": "All-active: Red Window / Blue Window / Close the Shutters (clear inscription for stronger Ward and eligible cleanse).",
       "dependencies": "Inscription and symmetric fire/cold branch rules; mage tome migration.",
       "rankReason": "Compelling three-slot puzzle and clean art; Pip already has cold conversion, so elemental novelty alone is insufficient.",
-      "recommended": true
+      "recommended": true,
+      "ownerFeedback": {
+        "releaseOrder": 9,
+        "comment": "Ione is great. My only issue is with the top of the staff and the design of the tome.",
+        "action": "Retain Ione. Refine the prism staff head into a coherent glass focus and redesign the tome with clear broad fire/cold prism motifs, matching the focus detail."
+      },
+      "selectionStatus": "art-revision"
     },
     {
       "rank": 10,
@@ -474,7 +528,13 @@
       "alternative": "All-active: Take Watch / Across the Gate / Stand Down (consume Watch for Ward and an eligible self-cleanse instead of offence).",
       "dependencies": "Watch/Answer provenance and core interruption contract; existing gear. No Pin, automatic control or extra turns.",
       "rankReason": "Makes the currently displayed charge the central melee decision rather than a side utility card. Kestrel and Brynja already disrupt charges, so the full kit must prove a stronger identity.",
-      "recommended": true
+      "recommended": true,
+      "ownerFeedback": {
+        "releaseOrder": 11,
+        "comment": "Decent.",
+        "action": "Retain as a viable design candidate; no additional owner correction specified."
+      },
+      "selectionStatus": "retained"
     },
     {
       "rank": 11,
@@ -508,7 +568,13 @@
       "alternative": "All-active: Name the Debt / Final Account / Lay to Rest (consume Debt for Ward; works for lesser protection without it).",
       "dependencies": "New finite Debt token and mage tome migration; no summons or life-drain immortality.",
       "rankReason": "Distinct death-magic presentation with bounded accounting, but competes with Mab for a finite delayed-payoff place. Rank eleven is the least certain shortlist pick.",
-      "recommended": true
+      "recommended": true,
+      "ownerFeedback": {
+        "releaseOrder": 10,
+        "comment": "Very cool design. Just need a review of the top of the staff.",
+        "action": "Retain Adela. Refine the closed-arch staff head while preserving the liked overall design and violet lantern."
+      },
+      "selectionStatus": "art-revision"
     },
     {
       "rank": 12,
@@ -542,7 +608,13 @@
       "alternative": "All-active: Rime Arrow / White Silence / Thawshot (consume Chill for direct damage instead of control).",
       "dependencies": "Bow family ready; frost-arrow VFX and precise status consumption rules.",
       "rankReason": "A control-led bow differs from Wren’s Mark precision and Eskil’s poison, with cheap body-animation requirements.",
-      "recommended": false
+      "recommended": false,
+      "ownerFeedback": {
+        "releaseOrder": 12,
+        "comment": "Love Ysabet but her bow is skewed and the string isn't right either.",
+        "action": "Retain Ysabet. Rebuild bow with coherent symmetric limb geometry, central grip and a continuous tip-to-tip string; ensure the bow remains in front of the body."
+      },
+      "selectionStatus": "art-revision"
     },
     {
       "rank": 13,
@@ -576,7 +648,13 @@
       "alternative": "All-active: Break the Lock / No Permission / Bar the Door (consume Breach for brief Guard and a modest normal sword hit).",
       "dependencies": "New Breach marker; existing gear. Similarity review needed versus Grenna’s armour-opening.",
       "rankReason": "Supported heavy male option; its flexible breach answers help, but armour-opening overlap lowers its rank.",
-      "recommended": false
+      "recommended": false,
+      "ownerFeedback": {
+        "releaseOrder": 13,
+        "comment": "Roscoe proportions are weird. His body is so big compared to his head.",
+        "action": "Keep the heavy build but rebalance head against torso; massive physique should not read as a tiny head on an oversized body."
+      },
+      "selectionStatus": "art-revision"
     },
     {
       "rank": 14,
@@ -610,7 +688,13 @@
       "alternative": "All-active: Set the Draw / Ferry’s End / Lower the Bow (consume Draw to regain a limited resource amount and Guard, less than its preparation cost).",
       "dependencies": "Draw state; existing gear. Must distinguish Wren precision and Oriel’s queued impact.",
       "rankReason": "Satisfying charge-and-release fantasy, but preparation overlaps other candidates, so an alternate rather than an automatic pick.",
-      "recommended": false
+      "recommended": false,
+      "ownerFeedback": {
+        "releaseOrder": 14,
+        "comment": "Cool visual design. Her kit feels a bit standard. How is she different from a basic archer?",
+        "action": "Retain the liked visual design. Kit review required: current prepared heavy shot is insufficiently distinct from existing setup/release archers. Do not claim its intended identity already delivers a unique playstyle."
+      },
+      "selectionStatus": "kit-review"
     },
     {
       "rank": 15,
@@ -644,7 +728,13 @@
       "alternative": "All-active: High Cut / Low Answer / Close Measure (consume either line for a defensive sword action).",
       "dependencies": "One Line token with explicit action tags; existing gear.",
       "rankReason": "Readable sword branching, though Corvin and Aldric already occupy planned-answer space.",
-      "recommended": false
+      "recommended": false,
+      "ownerFeedback": {
+        "releaseOrder": 18,
+        "comment": "Eamon is decent too.",
+        "action": "Retain Eamon as a viable candidate; no additional owner correction specified."
+      },
+      "selectionStatus": "retained"
     },
     {
       "rank": 16,
@@ -678,7 +768,13 @@
       "alternative": "All-active: Fine Point / Pull the Stitch / Seal the Cut (consume authored wound for Weaken instead of direct release).",
       "dependencies": "Wound lineage/expiry metadata; existing gear.",
       "rankReason": "Low-cost art and a useful expiry decision, but Wren and Isolde already offer Bleed routes.",
-      "recommended": false
+      "recommended": false,
+      "ownerFeedback": {
+        "releaseOrder": 16,
+        "comment": "Bow is dodgy and needs work but the design is decent.",
+        "action": "Retain visual direction; rebuild bow, central grip and connected string."
+      },
+      "selectionStatus": "art-revision"
     },
     {
       "rank": 17,
@@ -712,7 +808,13 @@
       "alternative": "All-active: Lead Hand / Rear Hand / Breakthrough (consume Finish for a heavy direct punch).",
       "dependencies": "New combat gauntlet category, attack anchors and hand-animation set; slot/stat migration.",
       "rankReason": "Strong missing physical fantasy, but expensive new gear and distinct poses push it below compatible candidates.",
-      "recommended": false
+      "recommended": false,
+      "ownerFeedback": {
+        "releaseOrder": 15,
+        "comment": "No unarmed characters.",
+        "action": "Withdraw Rufus from playable consideration under the direct no-unarmed rule. Preserve the draft as an archive; do not silently rearm him or move him into an NPC roster."
+      },
+      "selectionStatus": "withdrawn"
     },
     {
       "rank": 18,
@@ -746,7 +848,13 @@
       "alternative": "All-active: Clean Incision / Close the Wound / Aseptic Seal (consume Incision for Ward instead of a strike).",
       "dependencies": "New Incision token; mage tome migration.",
       "rankReason": "Good visual and holy battle-mage flavour, but Elowen and Sable cover much of the sustain/cleanse space.",
-      "recommended": false
+      "recommended": false,
+      "ownerFeedback": {
+        "releaseOrder": 17,
+        "comment": "Holy mage is good.",
+        "action": "Retain the holy-mage direction and anatomical tome/split-circle identity."
+      },
+      "selectionStatus": "retained"
     },
     {
       "rank": 19,
@@ -780,7 +888,13 @@
       "alternative": "All-active: Bar the Way / Break the Bar / Release (consume authored Pin for penetration rather than interruption).",
       "dependencies": "New poleaxe equipment and pose set; clear Pin provenance.",
       "rankReason": "Solid fantasy, but Kestrel and Grenna already occupy much of the heavy reach/control territory.",
-      "recommended": false
+      "recommended": false,
+      "ownerFeedback": {
+        "releaseOrder": 20,
+        "comment": "Again, new weapon type so would have to wait for crafting/skilling overhaul.",
+        "action": "Defer Maud behind the crafting/skilling overhaul: combat poleaxe category is not currently available. No new gear implementation."
+      },
+      "selectionStatus": "deferred-crafting"
     },
     {
       "rank": 20,
@@ -814,7 +928,13 @@
       "alternative": "All-active: Wind the Ratchet / Watchfire Volley / Unload (consume Volley for Weaken and a smaller direct hit).",
       "dependencies": "New crossbow/bolt-case gear and reload poses.",
       "rankReason": "Readable prepared ranged hero, but crossbows add crafting cost and overlap Petra’s setup/release, making this the weakest fit today.",
-      "recommended": false
+      "recommended": false,
+      "ownerFeedback": {
+        "releaseOrder": 19,
+        "comment": "Would require new weapon and off hand for one character. Makes him low priority.",
+        "action": "Defer Ludo behind equipment/crafting work: a one-character crossbow and bolt-case pair does not justify immediate categories. No new gear implementation."
+      },
+      "selectionStatus": "deferred-crafting"
     }
   ],
   "gaps": [
@@ -843,5 +963,13 @@
       "text": "Each profile gives a concrete three-slot loadout and an alternative route. Most illustrate two actives plus a passive; Peregrine uses three actives to demonstrate cooldown transfer. These are concept slices, not complete unlock trees or validated full-passive builds. Complete costs, cooldowns, Stars, talents and boss simulations follow only after selection."
     }
   ],
-  "review": "Read-only designer and balance reviews identified unusable passive sources, cadence/reset ambiguities and overlap. Coordinator corrected the listed builds, cooldown legality, symmetric inscriptions, Pin semantics and ranking qualifications. Qualitative review only; no combat measurements or numeric approval."
+  "review": "Read-only designer and balance reviews identified unusable passive sources, cadence/reset ambiguities and overlap. Coordinator corrected the listed builds, cooldown legality, symmetric inscriptions, Pin semantics and ranking qualifications. Qualitative review only; no combat measurements or numeric approval.",
+  "ownerArtReview": {
+    "date": "2026-10-04",
+    "ordering": "Original generation completion order, not profile rank. Hero-named comments cross-check the mapping.",
+    "noUnarmed": true,
+    "eligibleCandidates": 19,
+    "artApproval": "Positive feedback preserves design direction; it is not whole-pack runtime approval.",
+    "notExplicitlyDeferredForCrafting": 17
+  }
 }

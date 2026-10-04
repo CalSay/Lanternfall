@@ -1,0 +1,27 @@
+{
+  "branch": "codex/hero-concept-owner-review",
+  "ownerNotesMapped": 20,
+  "eligibleCandidates": 19,
+  "withdrawn": "Rufus Wold",
+  "deferredForCrafting": [
+    "Ludo Finch",
+    "Maud Flint"
+  ],
+  "kitReview": "Petra Crowe",
+  "originalConceptHashes": {
+    "checked": 20,
+    "result": "unchanged"
+  },
+  "pipReferenceHash": "unchanged",
+  "browser": "Navigation, embedded images, filters, JavaScript-disabled links, 390px and 740px layout passed via tools/hero-candidate-browser.cjs.",
+  "build": {
+    "command": "node tools/build.mjs",
+    "exitCode": 0
+  },
+  "checks": {
+    "command": "LF_CHROMIUM=/usr/bin/chromium node tools/check.mjs",
+    "exitCode": 0,
+    "okLines": 2300,
+    "browserSectionsSkipped": 0
+  }
+}
