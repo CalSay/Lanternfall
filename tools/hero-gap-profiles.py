@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Build the offline, review-only hero candidate catalogue."""
-import json, html, pathlib, base64
+import json, html, pathlib, base64, re
 root=pathlib.Path(__file__).resolve().parents[1]; folder=root/'docs/design'
 d=json.loads((folder/'hero-gap-candidates.json').read_text()); esc=html.escape
 art=root/'art/concepts/hero-candidates-v1'
 manifest=json.loads((art/'manifest.json').read_text()) if (art/'manifest.json').exists() else None
 def embedded(filename):
- return 'data:image/jpeg;base64,'+base64.b64encode((art/filename).read_bytes()).decode('ascii')
+ return 'data:image/jpeg;base64,'+base64.b64encode((art/'web'/filename).read_bytes()).decode('ascii')
 def portrait(h):
  if not manifest: return ''
  return '<a class="portrait-link" href="#'+h['id']+'"><img class="portrait" width="400" height="400" loading="lazy" src="'+embedded(h['id']+'.face.jpg')+'" alt="'+esc(h['name'])+' face reference, concept draft"></a>'
@@ -18,13 +18,13 @@ def owner_review(h):
 def concept(h):
  if not manifest: return ''
  notes=manifest['heroes'][h['id']].get('reviewNotes',[])
- return '<figure class="concept"><img width="1536" height="1024" loading="lazy" src="'+embedded(h['id']+'.preview.jpg')+'" alt="'+esc(h['name'])+' concept sheet: full figure, face, equipment and palette"><figcaption>Concept draft · full figure, face reference, equipment detail and palette. <a href="../../art/concepts/hero-candidates-v1/'+h['id']+'.png" download>Original PNG</a></figcaption></figure>'+('<details><summary>Art review notes</summary><p>'+esc(' '.join(notes))+'</p></details>' if notes else '')
+ return '<figure class="concept"><img width="1536" height="1024" loading="lazy" src="'+embedded(h['id']+'.preview.jpg')+'" alt="'+esc(h['name'])+' concept sheet: full figure, face, equipment and palette"><figcaption>Compact preview · <a href="hero-profiles/'+h['id']+'.html">Open detailed profile and full-size sheet</a> · <a href="../../art/concepts/hero-candidates-v1/'+h['id']+'.png" download>Original PNG</a></figcaption></figure>'+('<details><summary>Art review notes</summary><p>'+esc(' '.join(notes))+'</p></details>' if notes else '')
 assert len(d['heroes'])==20 and len(d['existing'])==21
 assert [h['rank'] for h in d['heroes']]==list(range(1,21))
 assert len({h['id'] for h in d['heroes']})==20
 assert all(len(h['build'])==3 and len({s['name'] for s in h['build']})==3 for h in d['heroes'])
 css='''*{box-sizing:border-box}html{scroll-behavior:auto}body{margin:0;background:#111820;color:#eee8dc;font:17px/1.6 system-ui,sans-serif}a{color:#fac995}button,select,input{font:inherit}a,button,select{touch-action:manipulation}header,main,footer{max-width:1180px;margin:auto;padding:28px}header{padding-top:55px}h1,h2,h3{line-height:1.15}h1{font-family:Georgia,serif;font-size:clamp(40px,7vw,76px);margin:14px 0}h2{font-family:Georgia,serif;font-size:35px}h3{font-size:23px}p{margin:12px 0}.eyebrow,.badge{font-size:13px;letter-spacing:.09em;text-transform:uppercase}.eyebrow{color:#edae80}.intro{max-width:850px;font-size:20px}.notice{border-left:3px solid #dca975;padding:10px 18px;background:#1b2630}.toolbar{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin:25px 0;position:sticky;top:0;background:#111820f5;padding:12px 0;z-index:2}select,input,button{background:#233240;color:#fff;border:1px solid #61717d;padding:10px;border-radius:9px}input{min-width:0;flex:1}button{cursor:pointer}button[aria-pressed=true]{background:#693f3d}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(285px,1fr));gap:20px}.card{background:#1b2630;border:1px solid #38434d;border-radius:18px;padding:25px;display:flex;flex-direction:column}.rank{font:42px Georgia;color:#efb485}.card h3{margin:10px 0}.card .open{margin-top:auto;padding-top:15px}.badge{color:#acdad4}.profile{margin:60px 0;padding:32px;background:#1b2630;border:1px solid #52616a;border-radius:22px;scroll-margin-top:100px}.profile:target{border-color:#efb485;box-shadow:0 0 0 3px #efb48533}.profile-title{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}.columns{display:grid;grid-template-columns:1fr 1fr;gap:25px}.box{background:#14202a;padding:20px;border-radius:12px}.skills{list-style:none;padding:0}.skills li{padding:16px 0;border-bottom:1px solid #40505d}.skills strong{display:block}.muted{color:#bcc6cc}.heart{font-size:20px}.audit{margin:35px 0}details{background:#1b2630;padding:18px;margin:12px 0;border-radius:12px}summary{cursor:pointer;font-weight:bold}table{width:100%;border-collapse:collapse;font-size:15px}td,th{padding:12px;text-align:left;border-bottom:1px solid #40505d;vertical-align:top}.table-scroll{overflow:auto}.results{color:#bcc6cc}nav{display:flex;gap:20px;flex-wrap:wrap}.shortlist{columns:2;padding-left:24px}.shortlist li{padding:4px}a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid #fac995;outline-offset:4px}[hidden]{display:none!important}@media(max-width:650px){header,main,footer{padding:20px}.columns{grid-template-columns:1fr}.profile{padding:22px}.toolbar{position:static}.shortlist{columns:1}h2{font-size:30px}}@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}'''
-css+=''' .portrait-link{display:block;margin:-10px -10px 20px}.portrait{display:block;width:100%;height:auto;aspect-ratio:1;object-fit:contain;border-radius:12px;background:#77766e}.concept{margin:22px 0 32px}.concept img{display:block;width:100%;height:auto;border-radius:12px}.concept figcaption{font-size:14px;color:#bcc6cc;margin-top:9px} '''
+css+=''' .portrait-link{display:block;margin:-10px -10px 20px}.portrait{display:block;width:100%;height:auto;aspect-ratio:1;object-fit:contain;border-radius:12px;background:#77766e}.concept{margin:22px 0 32px}.concept img{display:block;width:100%;height:auto;max-width:540px;border-radius:12px}.concept figcaption{font-size:14px;color:#bcc6cc;margin-top:9px} '''
 parts=['<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lanternfall • Meet your next main</title><style>'+css+'</style></head><body>', '<header id="top"><div class="eyebrow">Lanternfall · Recruitment night · 20 design proposals</div><h1>Meet your next main.</h1><p class="intro">Twenty concept profiles. Nineteen eligible candidates. Eleven open places. Looking for a meaningful connection with your three ability slots.</p><p class="notice">'+esc(d['status'])+' Rankings are design judgement, not combat measurements. No candidate is approved or integrated.</p><nav><a href="#browse">Browse profiles</a><a href="#shortlist">The first eleven</a><a href="#audit">Current roster audit</a></nav></header><main>']
 parts.append('<section class="audit" id="audit"><h2>Who’s already at the party?</h2><p>21 revised hero candidates: <strong>8 Warriors · 5 Rangers · 8 Mages.</strong> Expanded kits are proposals; Wren, Tobin and Pip are the implemented starters.</p>')
 for g in d['gaps']:parts.append('<details><summary>'+esc(g['title'])+'</summary><p>'+esc(g['text'])+'</p></details>')
@@ -44,8 +44,25 @@ for h in d['heroes']:
  if h['rank']>1:parts.append('<a href="#'+d['heroes'][h['rank']-2]['id']+'">← Previous match</a>')
  if h['rank']<20:parts.append('<a href="#'+d['heroes'][h['rank']]['id']+'">Next match →</a>')
  parts.append('<a href="#top">Back to top</a></nav></article>')
-parts.append('</section></main><footer><p>Review draft on codex/hero-concept-owner-review. No game changes, approved-art edits or deployments.</p><p>All profile links work without JavaScript. Filters use JavaScript locally; no network services, tracking or remote assets.</p></footer><script>const search=document.querySelector("#search"),family=document.querySelector("#family"),short=document.querySelector("#shortlist-filter"),cards=[...document.querySelectorAll(".card")];document.querySelector("#filters").hidden=false;function filter(){let n=0;for(const c of cards){const show=(!family.value||c.dataset.family===family.value)&&c.dataset.search.includes(search.value.toLowerCase().trim())&&(short.getAttribute("aria-pressed")!=="true"||+c.dataset.rank<=11);c.hidden=!show;if(show)n++}document.querySelector("#count").textContent=n+" matches";document.querySelector("#empty").hidden=n!==0}search.addEventListener("input",filter);family.addEventListener("change",filter);short.addEventListener("click",()=>{short.setAttribute("aria-pressed",short.getAttribute("aria-pressed")==="true"?"false":"true");filter()});</script></body></html>')
-(folder/'hero-gap-profiles.html').write_text('\n'.join(parts)+'\n')
+parts.append('</section></main><footer><p>Review draft on codex/hero-profile-loading-fix. No game changes, approved-art edits or deployments.</p><p>All profile links work without JavaScript. Filters use JavaScript locally; no network services, tracking or remote assets.</p></footer><script>const search=document.querySelector("#search"),family=document.querySelector("#family"),short=document.querySelector("#shortlist-filter"),cards=[...document.querySelectorAll(".card")];document.querySelector("#filters").hidden=false;function filter(){let n=0;for(const c of cards){const show=(!family.value||c.dataset.family===family.value)&&c.dataset.search.includes(search.value.toLowerCase().trim())&&(short.getAttribute("aria-pressed")!=="true"||+c.dataset.rank<=11);c.hidden=!show;if(show)n++}document.querySelector("#count").textContent=n+" matches";document.querySelector("#empty").hidden=n!==0}search.addEventListener("input",filter);family.addEventListener("change",filter);short.addEventListener("click",()=>{short.setAttribute("aria-pressed",short.getAttribute("aria-pressed")==="true"?"false":"true");filter()});</script></body></html>')
+document='\n'.join(parts)+'\n'
+(folder/'hero-gap-profiles.html').write_text(document)
+(folder/'hero-profiles.html').write_text(document)
+detail_dir=folder/'hero-profiles';detail_dir.mkdir(exist_ok=True)
+for h in d['heroes']:
+ profile=re.search(r'<article class="profile" id="'+re.escape(h['id'])+r'">.*?</article>',document,re.S).group(0)
+ compact=embedded(h['id']+'.preview.jpg')
+ full='data:image/jpeg;base64,'+base64.b64encode((art/(h['id']+'.preview.jpg')).read_bytes()).decode('ascii')
+ profile=profile.replace(compact,full)
+ profile=re.sub(r'Compact preview · <a href="hero-profiles/[^"]+">Open detailed profile and full-size sheet</a> · ', 'Full-resolution concept preview · ',profile)
+ profile=profile.replace('../../art/', '../../../art/')
+ profile=profile.replace('href="#browse"','href="../hero-gap-profiles.html#browse"').replace('href="#top"','href="../hero-gap-profiles.html#top"')
+ for other in d['heroes']:
+  profile=profile.replace('href="#'+other['id']+'"','href="'+other['id']+'.html"')
+ single='<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+esc(h['name'])+' · Lanternfall</title><style>'+css+'.concept img{max-width:100%}</style></head><body><main>'+profile+'</main></body></html>'
+ (detail_dir/(h['id']+'.html')).write_text(single+'\n')
+assert len(document.encode())<1024*1024, 'Compact catalogue must stay under 1 MiB'
+print('Compact catalogue:',len(document.encode()),'bytes; 20 full-size individual profiles.')
 md=['# Hero gap review and ranked candidates','','Review-only proposals. Base: `'+d['baseSHA']+'`. Branch: `codex/hero-gap-candidates`.','','## Audit']
 for g in d['gaps']:md.extend(['','### '+g['title'],'',g['text']])
 md.extend(['','## Ranked candidates','',d['ranking'],'','| Rank | Hero | Family | Missing decision |','|---|---|---|---|'])

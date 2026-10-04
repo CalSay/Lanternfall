@@ -1,0 +1,23 @@
+{
+  "catalogueBytes": 884676,
+  "previousCatalogueBytes": 10867066,
+  "individualProfiles": 20,
+  "fullResolutionImageMappings": 20,
+  "httpDocuments": 21,
+  "httpStatus": 200,
+  "browserMode": "HTTP navigation",
+  "pageErrors": [],
+  "detailAndBackNavigation": "20 passed",
+  "cause": "Client loading failure not directly reproduced. Excessive embedded payload was a plausible cause; reduced payload and actual HTTP navigation validated.",
+  "gameBuild": {
+    "result": "passed",
+    "command": "node tools/build.mjs"
+  },
+  "gameChecks": {
+    "result": "all checks passed",
+    "command": "LF_CHROMIUM=/usr/bin/chromium node tools/check.mjs",
+    "okLines": 2300,
+    "browserSectionsSkipped": 0
+  },
+  "originalArt": "20 original PNG hashes unchanged"
+}

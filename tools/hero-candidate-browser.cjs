@@ -14,8 +14,8 @@ const root=path.resolve(__dirname,'..'),pack=path.join(root,'art/concepts/hero-c
   await page.evaluate(async()=>{const imgs=[...document.images];for(const im of imgs)im.loading='eager';await Promise.all(imgs.map(im=>im.decode()));if(imgs.some(im=>!im.naturalWidth))throw Error('Undecoded image')});
   for(const h of data.heroes){
    const card=page.locator('.card[data-rank="'+h.rank+'"]'),profile=page.locator('#'+h.id);
-   assert.equal(await card.locator('.portrait').getAttribute('src'),'data:image/jpeg;base64,'+fs.readFileSync(path.join(pack,h.id+'.face.jpg')).toString('base64'));
-   assert.equal(await profile.locator('.concept img').getAttribute('src'),'data:image/jpeg;base64,'+fs.readFileSync(path.join(pack,h.id+'.preview.jpg')).toString('base64'));
+   assert.equal(await card.locator('.portrait').getAttribute('src'),'data:image/jpeg;base64,'+fs.readFileSync(path.join(pack,'web',h.id+'.face.jpg')).toString('base64'));
+   assert.equal(await profile.locator('.concept img').getAttribute('src'),'data:image/jpeg;base64,'+fs.readFileSync(path.join(pack,'web',h.id+'.preview.jpg')).toString('base64'));
    await card.locator('.portrait-link').click();assert.equal(await page.evaluate(()=>location.hash),'#'+h.id);
    await card.locator('.open').click();assert.equal(await page.evaluate(()=>location.hash),'#'+h.id);
    assert.equal(await profile.locator('.skills li').count(),3);
