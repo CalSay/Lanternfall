@@ -17,5 +17,8 @@
   "qc_notes": [
     "Duplicate waist tome removed; robe embroidery restored; held tome and hip lantern retained.",
     "Inherited held-tome/detail page perspective difference remains; this edit was only the duplicate removal."
-  ]
+  ],
+  "draft_sha256": "1be9bc10aa07feb724f07a4207cdae2903bca52a9d11f27399722e64eda762cb",
+  "hero_id": "oriel",
+  "generated_original": "/workspace/generated_images/exec-ec2048ba-0ad5-4fa9-8a88-3e58aa2f643f.png"
 }

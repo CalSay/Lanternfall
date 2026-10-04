@@ -139,6 +139,118 @@
       "owner_decision": "Design signed off; use this exact second-pass concept in the hero profile.",
       "remaining_notes": [],
       "source_commit": "55fd318abb16d1cd17c9c9b3905d10e26eb04d6c"
+    },
+    "Nerys Fleet": {
+      "id": "nerys-fleet",
+      "file": "art/concepts/hero-corrections-v3/nerys-fleet.png",
+      "sha256": "ccd7f295d7dca993641952c2d3986a816850fe87c94df1574917a06359b56fdd",
+      "status": "owner-approved-concept",
+      "approved_on": "2026-10-04",
+      "approved_by": "Cal (direct chat sign-off)",
+      "owner_decision": "Design signed off; use this exact concept in the hero profile.",
+      "remaining_notes": [],
+      "source_commit": "e630166d11e2f9e054187f10b90a5fed944a203c"
+    },
+    "Peregrine Clocks": {
+      "id": "peregrine-clocks",
+      "file": "art/concepts/hero-corrections-v1/peregrine-clocks.png",
+      "sha256": "a24a27029b191ba0ed73cd237cf0b8bc97eb11dabd60839ce203d1e30379b57a",
+      "status": "owner-approved-concept",
+      "approved_on": "2026-10-04",
+      "approved_by": "Cal (direct chat sign-off)",
+      "owner_decision": "Design signed off; use this exact concept in the hero profile.",
+      "remaining_notes": [],
+      "source_commit": "e630166d11e2f9e054187f10b90a5fed944a203c"
+    },
+    "Flint Mercer": {
+      "id": "flint-mercer",
+      "file": "art/concepts/hero-corrections-v1/flint-mercer.png",
+      "sha256": "13dea7e83ca9064f00abe50a5614022cc53462cf4e150425b5d2a2f108ae4b43",
+      "status": "owner-approved-concept",
+      "approved_on": "2026-10-04",
+      "approved_by": "Cal (direct chat sign-off)",
+      "owner_decision": "Design signed off; use this exact concept in the hero profile.",
+      "remaining_notes": [],
+      "source_commit": "e630166d11e2f9e054187f10b90a5fed944a203c"
+    },
+    "Tamsin Rook": {
+      "id": "tamsin-rook",
+      "file": "art/concepts/hero-corrections-v1/tamsin-rook.png",
+      "sha256": "ff262e72725270d3b4f7f7a2a1328a6383df1a6a5499acd2d020ccf0f17942dc",
+      "status": "owner-approved-concept",
+      "approved_on": "2026-10-04",
+      "approved_by": "Cal (direct chat sign-off)",
+      "owner_decision": "Design signed off; use this exact concept in the hero profile.",
+      "remaining_notes": [],
+      "source_commit": "e630166d11e2f9e054187f10b90a5fed944a203c"
+    },
+    "Grenna Holt": {
+      "id": "grenna",
+      "file": "art/concepts/hero-corrections-v1/grenna.png",
+      "sha256": "ec78d128b019d167eb07f35ff98c32f1fb9942fee14febb7a31354cb0594a7ea",
+      "status": "owner-approved-concept",
+      "approved_on": "2026-10-04",
+      "approved_by": "Cal (direct chat sign-off)",
+      "owner_decision": "Design signed off; use this exact concept in the hero profile.",
+      "remaining_notes": [
+        "Crafting/skilling overhaul still pending."
+      ],
+      "source_commit": "e630166d11e2f9e054187f10b90a5fed944a203c"
+    },
+    "Thessaly Gloam": {
+      "id": "thessaly",
+      "file": "art/concepts/hero-corrections-v1/thessaly.png",
+      "sha256": "32df0349bf09e2ff44666286f38ba21da7eb298312b066134924ad823b4b1d74",
+      "status": "owner-approved-concept",
+      "approved_on": "2026-10-04",
+      "approved_by": "Cal (direct chat sign-off)",
+      "owner_decision": "Design signed off; use this exact concept in the hero profile.",
+      "remaining_notes": [],
+      "source_commit": "e630166d11e2f9e054187f10b90a5fed944a203c"
+    },
+    "Inga Fallow": {
+      "id": "inga",
+      "file": "art/concepts/hero-corrections-v1/inga.png",
+      "sha256": "917808e6b80fcf0136d69b617ef2c33a98b2a9f8988e99eb7509f2348d787413",
+      "status": "owner-approved-concept",
+      "approved_on": "2026-10-04",
+      "approved_by": "Cal (direct chat sign-off)",
+      "owner_decision": "Design signed off; use this exact concept in the hero profile.",
+      "remaining_notes": [],
+      "source_commit": "e630166d11e2f9e054187f10b90a5fed944a203c"
+    },
+    "Ragna Vik": {
+      "id": "ragna",
+      "file": "art/concepts/hero-corrections-v1/ragna.png",
+      "sha256": "cb247b547a3a3ab15f4271056f8eccb0956c3fafdc9e0ea7e8f3d860357ca880",
+      "status": "owner-approved-concept",
+      "approved_on": "2026-10-04",
+      "approved_by": "Cal (direct chat sign-off)",
+      "owner_decision": "Design signed off; use this exact concept in the hero profile.",
+      "remaining_notes": [],
+      "source_commit": "e630166d11e2f9e054187f10b90a5fed944a203c"
+    },
+    "Saint Elowen": {
+      "id": "elowen",
+      "file": "art/concepts/hero-corrections-v1/elowen.png",
+      "sha256": "46da6667eec1fc0c760ba675d9f97efe1f655fb3094c5ce5ff9cc2e4c72af11f",
+      "status": "owner-approved-concept",
+      "approved_on": "2026-10-04",
+      "approved_by": "Cal (direct chat sign-off)",
+      "owner_decision": "Design signed off; use this exact concept in the hero profile.",
+      "remaining_notes": [],
+      "source_commit": "e630166d11e2f9e054187f10b90a5fed944a203c"
+    },
+    "Isolde Marrow": {
+      "id": "isolde",
+      "file": "art/concepts/hero-corrections-v1/isolde.png",
+      "sha256": "68da8cfd8557f34196cdcabf91aed7c37329ca80babf0f576b0487a0d12bffae",
+      "status": "owner-approved-concept",
+      "approved_on": "2026-10-04",
+      "approved_by": "Cal (direct chat sign-off)",
+      "owner_decision": "Design signed off; use this exact concept in the hero profile.",
+      "remaining_notes": [],
+      "source_commit": "e630166d11e2f9e054187f10b90a5fed944a203c"
     }
   }
 }

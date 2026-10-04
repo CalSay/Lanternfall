@@ -17,5 +17,8 @@
   "qc_notes": [
     "Long shaft is now visibly straight, without spiral wrap changing its contour.",
     "Prism head remains approximately upright while shaft leans slightly; focus-to-shaft axis alignment is not fully exact and warrants owner inspection."
-  ]
+  ],
+  "draft_sha256": "b7d8757ed3c5f3ee708cbe962ca3dd4957b90db27af11cbedcbcb1a06772908a",
+  "hero_id": "ione-hart",
+  "generated_original": "/workspace/generated_images/exec-bc1b4571-7f60-4a6b-b69d-425a92d75067.png"
 }

@@ -1,0 +1,17 @@
+{
+  "hero_id": "ysabet-fen",
+  "status": "pending-owner-review",
+  "base_sha": "e630166d11e2f9e054187f10b90a5fed944a203c",
+  "source": "art/concepts/hero-corrections-v1/ysabet-fen.png",
+  "source_sha256": "bd13490f0ecde6a3b06992a1ed69d2a40a247c8f00aab651ac2a29a3b62b2f29",
+  "generated_original": "/workspace/generated_images/exec-0350ab34-91da-481f-9a64-c62a5ae273ad.png",
+  "draft_sha256": "9d18a7357f5036c885938a91315accd320581323aac52e731eb7a1ccb784a227",
+  "prompt_sha256": "0f3c50251e53b44e56561de7b0faa75031224e05ab061440f683b122c5ba67a2",
+  "attempts": 1,
+  "dimensions": [
+    1536,
+    1024
+  ],
+  "qc_notes": [],
+  "art_director_review": "Requested bow orientation/grip/string corrections passed visual inspection against v1; no material residual found. Awaiting owner sign-off."
+}

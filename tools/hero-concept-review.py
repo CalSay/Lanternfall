@@ -13,13 +13,13 @@ from hero_concept_approvals import load_approvals
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 BASE = '227bda460a6c89f03da3cafb2ad6278431e24c14'
 FOLDER = ROOT / 'art/concepts/hero-corrections-v1'
-LATEST = ROOT / 'art/concepts/hero-corrections-v3'
-VERSIONS = [ROOT / f'art/concepts/hero-corrections-v{i}' for i in (2, 3)]
+LATEST = ROOT / 'art/concepts/hero-corrections-v4'
+VERSIONS = [ROOT / f'art/concepts/hero-corrections-v{i}' for i in (2, 3, 4)]
 APPROVALS = load_approvals(ROOT)
 OUT = ROOT / 'docs/design/hero-concept-corrections-review.html'
 CHANGES = {
     'hesketh': 'Add belt-stowed lamp-service tome; preserve liked lamplighter design.',
-    'nerys-fleet': 'Pass three: centre the hand vertically on the wrapped grip, preserving the corrected bow orientation and shortened coat tail. Centring remains unresolved; see review notes.',
+    'nerys-fleet': 'Owner signed off the third-pass concept.',
     'wren': 'Closed eyes in both views; correct bow placement, grip and string.',
     'eskil': 'Pass two: lower bow limb curves left; add missing carried lantern.',
     'tobin': 'Pass two: raise shield-side knee pad and match shield detail to held shield.',
@@ -32,16 +32,16 @@ CHANGES = {
     'brynja': 'Heavy adult female shield-and-warblade anchor; practical plate and cleaner cloak.',
     'kestrel': 'Narrower short coat, two-handed spear, visible lantern and safe weapon framing.',
     'grenna': 'Preserve quarry identity; add carried lantern and clear two-handed maul grip.',
-    'merrick-low': 'Correct bow geometry, central grip and continuous straight string.',
-    'ysabet-fen': 'Rebuild skewed bow and string while preserving the liked older archer.',
+    'merrick-low': 'Pass four: mirror bow so wooden limbs face right and string sits left.',
+    'ysabet-fen': 'Pass four: move bow to other hand and face bow right, string left.',
     'peregrine-clocks': 'Short coiled silver hair and textured beard, consistent between views.',
     'flint-mercer': 'Reduce oversized boots; balance adult proportions while retaining stockiness.',
-    'ione-hart': 'Coherent prism staff head and identifiable fire/cold prism tome.',
-    'adela-wych': 'Connected closed-arch staff head matching the equipment detail.',
+    'ione-hart': 'Pass four: straighten staff shaft and align prism focus.',
+    'adela-wych': 'Pass four: replace rounded staff-head arch with sharp angular edges.',
     'tamsin-rook': 'Remove unwanted quiver and clarify warblade; retain liked scar/undercut.',
     'thessaly': 'Reduce foliage; retain reed staff and add water-reading tome.',
-    'oriel': 'Readable Starcaller tome, simpler focus and conservatively distinct face.',
-    'linnet': 'Frost-glass focus, workshop tome and face distinct from Pip.',
+    'oriel': 'Pass four: retain held Starcaller tome and remove duplicate waist tome.',
+    'linnet': 'Pass four: redesign clothing to fit frost-glass magic while preserving character identity.',
     'inga': 'Add strata/Starscar survey tome while retaining measuring identity.',
     'ragna': 'Replace bell with crescent frost-glass focus, recipe tome and colder witch identity.',
     'elowen': 'Dignified intact ceremonial clothing, staff and sacred tome.',
@@ -97,7 +97,7 @@ profile = ROOT / 'docs/design/selected-34-heroes.html'
 approved_count = sum(h['status'] == 'owner-approved-concept' for h in heroes)
 pending_count = sum(h['status'] == 'pending-owner-review' for h in heroes)
 assert len(heroes) == 34 and approved_count == len(APPROVALS) and approved_count + pending_count == 28
-manifest = {'branch': subprocess.check_output(['git','branch','--show-current'],cwd=ROOT,text=True).strip(), 'base_sha': '55fd318abb16d1cd17c9c9b3905d10e26eb04d6c', 'status': 'Only directly signed-off concepts replace profile art; all other drafts remain pending.', 'profile_sha256': sha(profile), 'heroes': heroes}
+manifest = {'branch': subprocess.check_output(['git','branch','--show-current'],cwd=ROOT,text=True).strip(), 'base_sha': 'e630166d11e2f9e054187f10b90a5fed944a203c', 'status': 'Only directly signed-off concepts replace profile art; all other drafts remain pending.', 'profile_sha256': sha(profile), 'heroes': heroes}
 (LATEST / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
 parts = []
 for family in ['Warrior', 'Ranger', 'Mage']:

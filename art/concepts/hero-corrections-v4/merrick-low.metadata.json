@@ -1,0 +1,17 @@
+{
+  "hero_id": "merrick-low",
+  "status": "pending-owner-review",
+  "base_sha": "e630166d11e2f9e054187f10b90a5fed944a203c",
+  "source": "art/concepts/hero-corrections-v1/merrick-low.png",
+  "source_sha256": "9a7354aad6bd0c4b1fb05c5ff6277b42ddeacf027eadf2ed6d953cde7246731c",
+  "generated_original": "/workspace/generated_images/exec-065e5265-13db-4f65-a26c-a95e662e52c8.png",
+  "draft_sha256": "28c428636f7859747c1a2beb74aca66f62b817ca0f1f72545af0a91edfd8e7d6",
+  "prompt_sha256": "388fa5a0ca2c7030aab1f803621f1755a2717f6c4307f4198b6f3aa4b70de815",
+  "attempts": 1,
+  "dimensions": [
+    1536,
+    1024
+  ],
+  "qc_notes": [],
+  "art_director_review": "Requested bow orientation/grip/string corrections passed visual inspection against v1; no material residual found. Awaiting owner sign-off."
+}
