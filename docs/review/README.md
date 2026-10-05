@@ -44,12 +44,13 @@ finding is open.
 
 ## Verdict format
 
-Codex's GitHub review (`chatgpt-codex-connector[bot]`) reviews each PR when it opens and reports P0/P1/P2 on the PR
-itself. The connector can only return findings, so score every criterion but report only what fails: each failed hard
-check and each score of 1 or 2 becomes a finding (with the score and evidence in its text), and scores of 3 or more need
-no comment. The full verdict layout below is for Claude's Opus reviewer and the fallback for Cal's local Codex. The layout below is the fallback for Cal's local Codex, which comments on
-PR #1. For that, one comment per PR on PR #1, starting with `Codex review:` (Claude's Opus reviewer writes `Opus review:` on the PR
-itself, same layout):
+Codex's GitHub review (`chatgpt-codex-connector[bot]`) reports P0/P1/P2 findings on the PR itself. The connector can
+only return findings, so score every criterion and report these as findings, with the score and evidence in the text:
+each failed hard check, each score of 1 or 2, and each P2 defect the `AGENTS.md` list names (including copy slips that
+score a 3). Other scores of 3 or more need no comment.
+
+The layout below is for Claude's Opus reviewer (`Opus review:`, on the PR itself) and the fallback for Cal's local
+Codex (`Codex review:`, one comment per PR on PR #1):
 
 ```
 Codex review: #<pr> (<card id>)   Rubric: <name>   Verdict: pass | changes needed
