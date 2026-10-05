@@ -14,7 +14,7 @@ Owned files: docked hint module
 New save state: none
 
 ## Source
-Fun-library idea gate, 2026-10-05: `research/catalogue/judge-v2.md` (rerun on final evidence) (brief, red team and Opus judge verdict). Coverage-map area 7, 3.
+Fun-library idea gate, 2026-10-05: `docs/design/fun-library-gate/judge-v2.md` (rerun on final evidence) (brief, red team and Opus judge verdict). Coverage-map area 7, 3.
 
 ## Stop when
 The acceptance line passes in `node tools/check.mjs` and the 360px look is clean.

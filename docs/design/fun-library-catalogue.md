@@ -6,10 +6,11 @@ Every suggestion below came from `fun-library.md` and passed the idea gate befor
 is kept only as a record. **The second run on the final evidence (`red-team-v2.md`, `judge-v2.md`) is the verdict.** All gate
 records are committed in `fun-library-gate/`, with the cards in `fun-library-gate/cards/`.
 
-Outcome of the second run: 14 ideas (S11 was withdrawn earlier because save codes already exist): **3 admitted narrowed
-(ap-first-use-hints, ap-collection-counts, ap-stall-facts), 10 merged into existing cards, 1 dropped (S8)**. One verdict
-changed from the first run: S7 (in-game What's new) went from admitted to merged into the weekly deploy routine, so its card
-was deleted. Counts are floors from the final library (11,374 reviews plus a separate 632-review long-play set).
+Outcome of the second run: 14 ideas (S11 was withdrawn earlier because save codes already exist): **2 admitted narrowed
+(ap-first-use-hints, ap-collection-counts), 11 merged into existing cards, 1 dropped (S8)**. Two verdicts
+changed from the first run: S7 (in-game What's new) went from admitted to merged into the weekly deploy routine, and S12
+(stall facts) went from admitted to merged after the judge re-ran it against the 10% time-stuck bar (see the addendum in
+`judge-v2.md`). Both cards were deleted. Counts are floors from the final library (11,374 reviews plus a separate 632-review long-play set).
 
 ## Verdict table
 
@@ -25,13 +26,13 @@ was deleted. Counts are floors from the final library (11,374 reviews plus a sep
 | S8 | Mastery that unlocks things | 2 | 1 | 1 | 2 | 4 | 10 | DROP | already an `f-health` metric | same |
 | S9 | Content remaining (count new things) | 3 | 3 | 3 | 4 | 5 | 18 | MERGE (reframed) | `xp-gold-pacing-report` | same, with a carding trigger |
 | S10 | Dominance detector | 2 | 1 | 4 | 4 | 5 | 16 | MERGE (narrowed, no new work) | `f-health-long` | target only (`f-health` is done) |
-| S12 | Stall facts | 4 | 3 | 3 | 4 | 5 | 19 | ADMIT-NARROWED | `ap-stall-facts` | same verdict, acceptance changed |
+| S12 | Stall facts | 2 | 2 | 3 | 3 | 5 | 15 | **MERGE** | `xp-gold-pacing-report` (walls) plus a separate owner-decision task (Region 2 limit hint) | **CHANGED: was ADMIT-NARROWED** (re-judged on the 10% criterion) |
 | S13 | Menu budget | 2 | 1 | 4 | 4 | 5 | 16 | MERGE | `f-playtest-bots` (counts) + `ap-first-use-hints` | same |
 | S14 | No wait timers or energy (reworded) | 2 | 2 | 2 | 5 | 5 | 16 | MERGE (one line, with S3) | `f-compass` | same verdict, scores up |
 | S15 | Repeat-craft queue | 2 | 1 | 2 | 3 | 4 | 12 | MERGE | `crafting-levelling-spec` | same |
 
-Counts: ADMIT 0, ADMIT-NARROWED 3, MERGE 10, DROP 1 (14 ideas). Earlier: ADMIT-NARROWED 4 (after S11's withdrawal),
-MERGE 9, DROP 1. The one verdict change is S7, ADMIT-NARROWED to MERGE.
+Counts: ADMIT 0, ADMIT-NARROWED 2, MERGE 11, DROP 1 (14 ideas). Earlier: ADMIT-NARROWED 4 (after S11's withdrawal),
+MERGE 9, DROP 1. The verdict changes are S7 and S12, both ADMIT-NARROWED to MERGE.
 
 ## Reasons, idea by idea
 
@@ -97,14 +98,7 @@ the sim side; no extra work there.
 already reports the dominant build "for reference, not ranked as a priority". That is enough: gear lines and Stars only,
 report only, no threshold until a first run sets one.
 
-**S12, ADMIT-NARROWED as `ap-stall-facts` (same verdict, acceptance changed).** Q2 walls is the top long-play reason:
-99 of 632 (15.7%), 423 general (11.0%). Caveats: its leaders are gacha power walls (RAID 60, AFK Arena 23) and it overlaps
-Q4 and Q7, and no review says "I did not know why I was stuck". So the evidence backs reducing walls (the pacing report's
-job) more than explaining them. The card stays because it also delivers a standing owner decision ("Region 2 ... with a
-hint when the hero hits its limit", 2026-09-28) in a form that stays honest when balance changes and cannot become a
-suggested build. Per red-team-v2 the acceptance now measures time stuck, not hint views, and it no longer leans on
-"visible next step" (close to the ungated visible-goals idea). It waits for the pacing report (so the trigger matches
-real stalls) and for `f-playtest-bots` (so time stuck can be measured). `f-health` is done and leaves the after list.
+**S12, MERGE into `xp-gold-pacing-report` (CHANGED from ADMIT-NARROWED).** Re-judged on the 10% bar (median time stuck must fall 10% or the card is dropped): a line with no advice cannot close a power gap, the persona result is hard to measure honestly, and no review says "I did not know why I was stuck". Q2 walls (99 of 632 long-play, 423 general) backs shorter walls, which is the pacing report's job; it adds one line, the casual persona's median time stuck at each stall it finds. The Region 2 limit hint (owner decision 2026-09-28) becomes its own task with no time-stuck threshold: one docked line of live numbers, the existing no-item/talent/ability/Star/advice-word check, no new save state.
 
 **S13, MERGE into `f-playtest-bots` (counts) and `ap-first-use-hints` (same).** Q8 is 58 general, 14 long-play. The
 playtest driver's `look` records buttons and notices per screen as a baseline; `ap-first-use-hints` already caps notices
@@ -130,9 +124,8 @@ was gated.
 |---|---|---|---|---|---|---|---|---|
 | ap-first-use-hints | Each new system explains itself once | claude | A content + C UI | sonnet-medium | auto | menu-polish | A `check.mjs` section lists every system that unlocks after the first fight and fails if any has 0 or 2+ first-use lines in the existing docked hint; in the new-player playtest no unlock shows more than 1 notice. | 16, 4 |
 | ap-collection-counts | See how much of each place you have found | claude | C UI | sonnet-medium | auto | f-ci, menu-polish | Bestiary, uniques and Deeds show "n of m" per region or place at 360px (and landscape) with no overflow, and a check fails if any unfound item's name or drop source appears in the rendered text. | 12, 3 |
-| ap-stall-facts | The game tells you plainly when you are stuck | claude | B mechanic (small) | sonnet-medium | judge | xp-gold-pacing-report, f-playtest-bots | From a stall fixture save, one docked line appears after 3 lost fights in a row at one zone using only live numbers (a check fails if it names an item, talent, ability or Star or uses a listed advice word), and the playtest lab records the casual persona's time stuck at that stall before and after, with the judge keeping the line only if median time stuck falls by at least 10%, and dropping the card if it does not. | 7, 3 |
 
-The three admitted cards were updated to match this table (ap-stall-facts acceptance and After; Source lines point at judge-v2).
+The two admitted cards' Source lines point at `judge-v2.md`. `ap-stall-facts` was dropped (merged) and its card deleted.
 
 ## Not yet gated (nothing from this list is in a card made by this thread)
 Candidates from the first judge: an error watch, "locked things say what opens them", and "visible goals by range". None has
@@ -146,4 +139,4 @@ S11 (`ap-save-export`): the game already ships save export and import (`src/js/5
 
 ## Audit trail
 `fun-library-gate/` holds `briefs.md`, `red-team.md`, `judge.md` (first run, superseded), `red-team-v2.md`, `judge-v2.md`
-(final) and the three admitted cards.
+(final, with the S12 addendum) and the two admitted cards.

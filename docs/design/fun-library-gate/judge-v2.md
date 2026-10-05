@@ -159,3 +159,54 @@ Card edits the Foreman should make (I am read-only):
    7 long-play.
 4. **`judge.md` and the catalogue's verdict table** still show S7 as admitted and S2/S10 going to `f-health`; this file
    supersedes them.
+
+## Addendum: S12 re-judged on the 10% criterion
+
+Written 2026-10-05 by the idea-gate judge (Opus), after Codex's review. Codex is right that "time stuck does not rise"
+lets a line with zero player benefit pass. The acceptance line is now: "the judge keeps the line only if the casual
+persona's median time stuck at that stall falls by at least 10%, and drops the card if it does not." S12 is re-judged
+against that line, final counts only (`../fun-library.md`; Q2 walls 423 general, 99 of 632 long-play).
+
+| id | Idea | Imp | Ev | Fit | Cost | Rev | Total | Verdict | Goes to | Change from the S12 row above |
+|---|---|---|---|---|---|---|---|---|---|---|
+| S12 | Stall facts | 2 | 2 | 3 | 3 | 5 | 15 | **MERGE** | `xp-gold-pacing-report` (walls); Region 2 limit hint handed to the coordinator as an owner-decision task | **CHANGED: was ADMIT-NARROWED, 19** |
+
+Reasons:
+1. **The 10% bar is the right bar, and this card will probably miss it.** Time stuck at a wall is mostly the power gap:
+   the levels and gear the hero still needs. A line with no advice cannot shrink that gap. It can only cut the part of
+   the stall spent retrying without knowing why, and the card is forbidden to say what to do instead. After 3 lost fights
+   the player already knows they are stuck, so "lost 3 fights in a row at zone 12" plus live numbers mostly repeats what
+   the fight log shows. I see no clear path from this line to a 10% drop. Imp 4 to 2.
+2. **It is hard to measure honestly.** If the casual persona is scripted, it reacts to the line only if we script it to,
+   so any drop is something we built in. If it is model-driven and reads the screen, a 10% move in a median needs enough
+   seeded runs per arm to beat run-to-run noise, and neither the card nor `f-playtest-bots` says how many. Either way the
+   measurement costs more than the line. Cost 4 to 3.
+3. **The evidence never backed explaining walls.** Q2 is the top long-play reason (99 of 632, 15.7%), but its leaders are
+   gacha power walls (RAID 60, AFK Arena 23, Idle Archer TD 20, Hero Wars 19), it overlaps Q4 and Q7, and no counted
+   review says "I did not know why I was stuck". The library supports making walls shorter. That is already
+   `xp-gold-pacing-report`'s job, so S12's evidence merges there. Ev 3 to 2.
+4. **The card was propped up by an owner decision, and the 10% bar should not decide that.** "Region 2 expects a
+   trained-up, stronger hero, with a hint when the hero hits its limit" (2026-09-28) is a standing owner decision. Owner
+   decisions do not need the fun gate, and a fun-gate kill switch must not be able to cancel one. So I split the two: the
+   fun-library card goes, and the owner's Region 2 hint is delivered as its own small task, judged on being correct and
+   advice-free, not on a 10% playtest delta. Fit stays 3: the decision wants a hint, while "no suggested builds" limits
+   what any hint can say.
+5. **Bias to subtraction.** Merging leaves one less mechanic, one less playtest arm and one less gated card, and loses
+   nothing the evidence supports.
+
+What should change in the catalogue (`../fun-library-catalogue.md`) and cards (the Foreman makes these; I am read-only):
+- Verdict table: the S12 row becomes `| S12 | Stall facts | 2 | 2 | 3 | 3 | 5 | 15 | MERGE | xp-gold-pacing-report (walls) + owner-decision task (Region 2 limit hint) | CHANGED: was ADMIT-NARROWED |`.
+- Headline counts become **ADMIT 0, ADMIT-NARROWED 2 (ap-first-use-hints, ap-collection-counts), MERGE 11, DROP 1**
+  (14 ideas). Verdict changes in this rerun are now S7 and S12.
+- Remove the `ap-stall-facts` row from the admitted-cards table and its S12 paragraph's "ADMIT-NARROWED" wording; replace
+  it with a pointer to this addendum.
+- Mark `ap-stall-facts` dropped (merged) and delete `cards/ap-stall-facts.md`.
+- `xp-gold-pacing-report`: add one line to its report: for each stall it finds, the time the casual persona spends there
+  (median over the seeded runs it already uses). Walls are cut by pacing, not by text.
+- New coordinator item, outside the fun gate: deliver the owner decision "a hint when the hero hits its limit" for
+  Region 2. Constraints carried over: one docked line, live numbers only, the existing check that fails on any item,
+  talent, ability or Star name or listed advice word, no new save state. Acceptance: the line appears at the Region 2
+  limit in a fixture save and passes that check. No time-stuck threshold. If the owner wants a measured benefit, that is
+  the owner's call, not this gate's.
+- Re-brief a fun-library stall card only if the playtest lab or Cal's playtests show players stuck because they did not
+  understand the stall (for example, retrying a zone they cannot win while an easier zone would level them faster).
