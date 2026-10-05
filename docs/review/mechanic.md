@@ -25,6 +25,8 @@ For new or changed mechanics, systems, hero kits and combat rules. Coverage-map 
 | Player clarity | Player can't tell what happened or why | Clear after one try | Result and cause are visible in the moment |
 | Reversibility | Can't be switched off without a save break | Can be hidden behind a flag | One flag turns it off cleanly |
 
+Until `docs/design/compass.md` exists, score "Fit with the Compass" against `docs/DECISIONS.md` instead: 1 = breaks a standing decision, 3 = follows every decision and adds nothing the card's player problem needed, 5 = follows every decision and solves the card's player problem.
+
 ## Blocking
 
 Any failed hard check; a score of 1 or 2; a way to lose or duplicate rewards; a dominant option that makes other
