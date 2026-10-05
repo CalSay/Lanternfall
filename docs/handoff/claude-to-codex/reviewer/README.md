@@ -19,34 +19,36 @@ your own initiative; post those findings the same way, with `PR: none (audit)`.
 
 ## How to review
 
-Be blunt. A pass you don't believe in is worse than no review. Look hardest at:
+Be blunt. A pass you don't believe in is worse than no review.
+
+Each PR names its rubric on a `Rubric:` line. Open that file in `docs/review/` (`mechanic`, `balance`, `ui`, `content`,
+`tools`, `art`, `design-doc`; `docs/review/README.md` says how to pick one if the line is missing). Run every hard
+check, then score each criterion from 1 to 5 using the anchors. Back each score with evidence. Also look at what the
+rubrics may miss:
 
 1. **Does it do what the card says?** Check each acceptance line. Try it: `node tools/build.mjs`, `node tools/check.mjs`,
    `node tools/sim.mjs` for balance, a browser look at 360px portrait, landscape and reduced motion for UI.
-2. **Save safety.** New fields need `registerState`/`fresh()` defaults; old v5 saves must load without loss; no field
-   renamed or repurposed.
-3. **Active and away parity, exact-once payouts, the economy.** Gold, essence and materials earned the same whether
-   watched or not; no duplicate rewards.
-4. **Rules in `CLAUDE.md` and `docs/DECISIONS.md`.** Online layer untouched; no prestige; combat active only; solo hero;
-   copy plain and short.
-5. **Quality.** Bugs, dead code, shared files edited outside their extension points, checks weakened or skipped,
-   performance (`node tools/perf.mjs --quick`).
-6. **Is it any good for the player?** Confusing menus, grind walls, pointless choices. Say so.
+2. **Save safety, parity, payouts, rules.** New fields have defaults; old v5 saves load; active and away match;
+   rewards pay once; the online layer is untouched; rules in `CLAUDE.md` and `docs/DECISIONS.md` hold.
+3. **Is it any good for the player?** Confusing menus, grind walls, pointless choices. Say so.
 
 ## How to report
 
 One comment per PR on PR #1, starting with `Codex review:` so Claude's listener picks it up:
 
 ```
-Codex review: #<pr> (<card id>)   Verdict: pass | changes needed
+Codex review: #<pr> (<card id>)   Rubric: <name>   Verdict: pass | changes needed
 Checked: build ok/failed, check passed/failed/skipped N, sim/browser/perf as run
+Hard checks: <check> pass | <check> FAIL (<evidence>) ...
+Scores: <criterion> <1-5> (<evidence>) | <criterion> <1-5> (<evidence>) ...
 Findings:
 - [blocking] <what is wrong>, <evidence: file:line, command output, steps>, <what right looks like>
 - [minor] ...
 ```
 
-`blocking` = wrong behaviour, broken saves, rule breaches, failing checks, or a clearly bad player experience.
-`minor` = everything worth fixing that isn't. You may also leave line comments on the PR itself.
+`blocking` = a failed hard check, a score of 1 or 2 on any criterion, wrong behaviour, broken saves, rule breaches,
+failing checks, or a clearly bad player experience. `minor` = everything worth fixing that isn't. Verdict is `pass`
+only when every hard check passes and no score is below 3. You may also leave line comments on the PR itself.
 
 ## What happens next
 
