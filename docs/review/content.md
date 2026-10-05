@@ -1,11 +1,12 @@
 # Rubric: content
 
-For copy, lore, item, enemy and quest data, and story. Coverage-map areas 12, 15, 16, 21.
+For copy, lore, item, enemy and quest data, and story. Story scenes, chapter scripts and canon changes also use
+[`story.md`](story.md). Coverage-map areas 12, 15, 16, 21.
 
 ## Hard checks
 
 - Build and full `node tools/check.mjs` pass (data checks included).
-- Lore and names match canon in `docs/design/lore.md` and `docs/DECISIONS.md`. A canon change is a `judge` card
+- Lore and names match canon in `docs/design/story-bible.md` and `docs/DECISIONS.md`. A canon change is a `judge` card
   and the PR links the ruling.
 - Data fits the schema; no missing ids, stats or art slots; nothing duplicated.
 - New items and enemies have a place in the economy (a source and a use).
