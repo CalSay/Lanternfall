@@ -220,7 +220,8 @@ function verdict(cur, b) {
   if (off(d, allow)) return { label: `FAIL (${d > 0 ? '+' : ''}${r2(d)}, allowed ${r2(allow)}${bad === 'both' ? ' either way' : bad === 'up' ? ' up' : ' down'})`, fail: true };
   if (!/\.heroParity$/.test(cur.key || '')) for (const [h, v] of Object.entries(cur.perHero || {})) {
     const bv = (b.perHero || {})[h];
-    if (!num(v) || !num(bv)) continue;
+    if (num(v) !== num(bv)) return { label: `FAIL (${h} value ${num(v) ? v : 'missing'} against baseline ${num(bv) ? bv : 'missing'})`, fail: true };
+    if (!num(v)) continue;
     const a2 = 2 * Math.max(abs, rel * Math.abs(bv));
     if (off(v - bv, a2)) return { label: `FAIL (${h} ${v} against ${bv}, allowed ${r2(a2)})`, fail: true };
   }
