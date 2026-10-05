@@ -2,7 +2,7 @@
 
 Every suggestion below came from `fun-library.md`, then passed the idea gate before entering the backlog:
 brief (`catalogue/briefs.md`), red team (Sonnet, `catalogue/red-team.md`), Opus high judge (`catalogue/judge.md`).
-Outcome on 2026-10-05: 15 ideas in, **5 admitted (narrowed), 9 merged into existing cards, 1 dropped**.
+Outcome on 2026-10-05: 15 ideas in, **5 admitted (narrowed; 1 later withdrawn, see Correction), 9 merged into existing cards, 1 dropped**.
 Codex reviews this document on the PR before merge. Evidence counts are floors (see the library's limits).
 
 ## Verdict table
@@ -31,7 +31,7 @@ Counts: ADMIT 0, ADMIT-NARROWED 5, MERGE 9, DROP 1.
 
 | card id | title (player words) | lane | class | model | gate | after | acceptance (measurable) | area |
 |---|---|---|---|---|---|---|---|---|
-| ap-save-export | Back up your save and bring it back | claude | A save + C UI | sonnet-medium (Opus high save review) | judge | f-ci, fix-bounty-kind | A save exported from each fixture in the CI save corpus imports back to an identical `S` (deep-equal after `fresh()` merge), and a bad or truncated paste changes nothing and says why | 20 |
+| ~~ap-save-export~~ (withdrawn: save codes already exist) | Back up your save and bring it back | claude | A save + C UI | sonnet-medium (Opus high save review) | judge | f-ci, fix-bounty-kind | A save exported from each fixture in the CI save corpus imports back to an identical `S` (deep-equal after `fresh()` merge), and a bad or truncated paste changes nothing and says why | 20 |
 | ap-stall-facts | The game tells you plainly when you are stuck | claude | B mechanic (small) | sonnet-medium | judge | xp-gold-pacing-report, f-health | After 3 lost fights in a row at the same zone (or no zone gained in a set time from the pacing report), one docked factual line appears with live numbers and no advice; the casual persona's longest stretch with no visible next step drops against the `f-health` baseline | 7, 3 |
 | ap-collection-counts | See how much of each place you have found | claude | C UI | sonnet-medium | auto | f-ci, menu-polish | Bestiary, uniques and Deeds show "n of m" per region or place at 360px with no overflow; a check asserts no unfound item's name or drop source appears anywhere in the rendered text | 12, 3 |
 | ap-first-use-hints | Each new system explains itself once | claude | A content + C UI | sonnet-medium | auto | menu-polish | Every system that unlocks after the first fight has exactly one first-use line in the existing docked hint (check lists systems with 0 or 2+ lines and fails); notices per unlock is at most 1 in the new-player playtest | 16, 4 |
@@ -125,5 +125,11 @@ The error watch needs a brief and the gate before it becomes `ap-error-watch`.
 
 ## Audit trail
 `catalogue/briefs.md`, `catalogue/red-team.md` and `catalogue/judge.md` in the project folder hold the full gate record.
-Cards written to `autopilot/cards/`: ap-save-export, ap-stall-facts, ap-collection-counts, ap-first-use-hints,
+Cards written to `autopilot/cards/`: ap-stall-facts, ap-collection-counts, ap-first-use-hints,
 ap-whats-new-notes. The Foreman adds their backlog rows.
+
+## Correction after the judge ran (2026-10-05, f-fun-library thread)
+The judge said the game has no save export or import. That is wrong: `src/js/55-savecode.js` and `75-savecode-ui.js`
+already ship save codes with a copy fallback and a guarded import, and `check.mjs` tests them ("C5 UI" lines). **S11 /
+`ap-save-export` is withdrawn as a duplicate and its card file deleted.** What remains of Q1 (bugs and lost saves are the top
+quit theme) is the error watch below, which still needs its own brief and gate. Admitted cards: 4, not 5.
