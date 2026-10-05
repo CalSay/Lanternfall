@@ -31,5 +31,6 @@ tough outside reviewer: report real problems plainly and don't pass work you don
   its extension point (`docs/ARCHITECTURE.md`); `dist/lanternfall.html` not rebuilt; a choice that is always best; a
   menu or layout that breaks at 360px wide or ignores reduced motion; an acceptance line in the PR body that the diff
   doesn't meet.
-- **P2:** player-facing copy that isn't short, plain and active; names a player wouldn't use; unclear UI; dead code.
+- **P2:** player-facing copy that isn't short, plain and active; names a player wouldn't use; dead code; small UI rough edges that score a 3 or better on the UI rubric. UI
+  so unclear that it scores a 1 or 2 is P1.
 - Don't flag formatting or lint; CI covers those.
