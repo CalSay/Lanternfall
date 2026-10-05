@@ -1,37 +1,38 @@
 {
  "slug": "gnorp-apologue",
- "n_reviews": 52,
+ "n_reviews": 54,
  "n_pos": 25,
- "n_neg": 27,
- "n_longplay_neg": 4,
+ "n_neg": 29,
+ "n_longplay_neg": 6,
  "sources": [
   "steam"
  ],
  "themes": {
   "P-offline": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "The perfect blend of being AFK and needing to be active to do things. (steam+, 40h)"
+   ]
+  },
+  "P-respect": {
    "n": 0,
    "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
-  "P-respect": {
-   "n": 1,
-   "of": 25,
-   "longplay_n": 0,
-   "quotes": [
-    "It respects your time, gives you synergies to solve, and feels rewarding when your setup finally shatters the rock on Compression 10. (steam+, 22h)"
-   ]
-  },
   "P-active": {
-   "n": 1,
+   "n": 2,
    "of": 25,
    "longplay_n": 0,
    "quotes": [
-    "I've unlocked about half the skill tree so far and completed the base game mode. (steam+, 60h)"
+    "I've unlocked about half the skill tree so far and completed the base game mode. (steam+, 60h)",
+    "The skill tree isn't necessarily linear and gives you a lot of options for what build you want to g (steam+, 30h)"
    ]
   },
   "P-dev": {
-   "n": 0,
+   "n": 1,
    "of": 25,
    "longplay_n": 0,
    "quotes": []
@@ -47,8 +48,8 @@
    "of": 25,
    "longplay_n": 0,
    "quotes": [
-    "Simple but really fun and nice achievements (steam+, 69h)",
-    "Simple but really fun and nice achievements (steam+, 69h)"
+    "but the game isn't about collection. (steam+, 51h)",
+    "The Gnorps are cute and customizable based on the achievements you unlock. (steam+, 30h)"
    ]
   },
   "P-goals": {
@@ -58,12 +59,12 @@
    "quotes": []
   },
   "P-depth": {
-   "n": 4,
+   "n": 8,
    "of": 25,
    "longplay_n": 0,
    "quotes": [
-    "Just don't expect deep build variety or endless content - it's pretty linear and short. (steam+, 60h)",
-    "Strategy fans will likely appreciate the steady sense of progression, even if the experience doesn\u2019t push far beyond familiar idle game territory. (steam+, 43h)"
+    "Less an idle game about gradual linear progression, Gnorp Apologue rewards players who like to tinker with various builds. (steam+, 73h)",
+    "Just don't expect deep build variety or endless content - it's pretty linear and short. (steam+, 60h)"
    ]
   },
   "P-fair": {
@@ -77,14 +78,15 @@
    "of": 25,
    "longplay_n": 0,
    "quotes": [
-    "It respects your time, gives you synergies to solve, and feels rewarding when your setup finally shatters the rock on Compression 10. (steam+, 22h)"
+    "An Idler that has heavy strategy and synergy building. (steam+, 20h)"
    ]
   },
   "P-prestige": {
-   "n": 4,
+   "n": 2,
    "of": 25,
    "longplay_n": 0,
    "quotes": [
+    "- The progression can be a little slow at times without a lot of ways to progress, often leading to me pressing prestige. (steam+, 36h)",
     "The music is serviceable for the genre and delivers a sense of progression with each run. (steam+, 44h)"
    ]
   },
@@ -100,16 +102,16 @@
    "longplay_n": 0,
    "quotes": [
     "It's a polished, addictive experience with great visuals and a relaxing vibe. (steam+, 60h)",
-    "May they continue a peaceful life of gnorping. (steam+, 87h)"
+    "It is active enough that you can speedrun it if you want, or just chill with it and try combos. (steam+, 69h)"
    ]
   },
   "P-art": {
-   "n": 11,
+   "n": 10,
    "of": 25,
    "longplay_n": 0,
    "quotes": [
-    "A linear incremental idle game with charming pixel art and satisfying progression. (steam+, 60h)",
-    "The music is serviceable for the genre and delivers a sense of progression with each run. (steam+, 44h)"
+    "The soundtrack, albeit repetitive works in the games favour. (steam+, 60h)",
+    "A linear incremental idle game with charming pixel art and satisfying progression. (steam+, 60h)"
    ]
   },
   "P-story": {
@@ -120,112 +122,113 @@
   },
   "N-ads": {
    "n": 0,
-   "of": 27,
+   "of": 29,
    "longplay_n": 0,
    "quotes": []
   },
   "N-wall": {
    "n": 8,
-   "of": 27,
+   "of": 29,
    "longplay_n": 2,
    "quotes": [
-    "The Gnorp Apologue starts strong enough, but eventually settles into a grind that feels more tedious than rewarding. (steam-, 33h)",
-    "Upgrades become too expensive too quickly and the game slows to a crawl. (steam-, 23h)"
+    "Getting stuck and having to restart with no gained advantages is not fun or what I'm looking for in an idler. (steam-, 20h)",
+    "too grindy, the prestiges don't feel meaningful enough to combo, wizard tower is a better example of combos done right (steam-, 3h)"
    ]
   },
   "N-pay": {
    "n": 0,
-   "of": 27,
+   "of": 29,
    "longplay_n": 0,
    "quotes": []
   },
   "N-dominant": {
-   "n": 2,
-   "of": 27,
-   "longplay_n": 2,
+   "n": 6,
+   "of": 29,
+   "longplay_n": 1,
    "quotes": [
-    "This extends from minute-to-minute gameplay to the perk tree you make meta-changing builds with. (steam-, 79h)",
+    "An Idle game that requires you to meta build is kind of annoying to be honest. (steam-, 7h)",
     "This extends from minute-to-minute gameplay to the perk tree you make meta-changing builds with. (steam-, 79h)"
    ]
   },
   "N-late": {
-   "n": 4,
-   "of": 27,
+   "n": 1,
+   "of": 29,
    "longplay_n": 0,
-   "quotes": [
-    "I really wanted to like this game, but man the endgame is rough, and continues to be a major complaint to this day. (steam-, 37h)",
-    "I really wanted to like this game, but man the endgame is rough, and continues to be a major complaint to this day. (steam-, 37h)"
-   ]
+   "quotes": []
   },
   "N-offline": {
-   "n": 2,
-   "of": 27,
+   "n": 1,
+   "of": 29,
    "longplay_n": 0,
    "quotes": []
   },
   "N-mobile": {
    "n": 0,
-   "of": 27,
+   "of": 29,
    "longplay_n": 0,
    "quotes": []
   },
   "N-bug": {
    "n": 0,
-   "of": 27,
+   "of": 29,
    "longplay_n": 0,
    "quotes": []
   },
   "N-energy": {
-   "n": 0,
-   "of": 27,
+   "n": 1,
+   "of": 29,
    "longplay_n": 0,
    "quotes": []
   },
   "N-bloat": {
-   "n": 2,
-   "of": 27,
-   "longplay_n": 0,
-   "quotes": []
+   "n": 1,
+   "of": 29,
+   "longplay_n": 1,
+   "quotes": [
+    "The Gnorp Analogue manages to be confusing, sometimes tedious and fails to bring the fun. (steam-, 51h)"
+   ]
   },
   "N-chore": {
-   "n": 0,
-   "of": 27,
+   "n": 1,
+   "of": 29,
    "longplay_n": 0,
-   "quotes": []
+   "quotes": [
+    "The limit of Zybellium (or whatever it's called) makes experimenting with different builds a chore and things that requir (steam-, 10h)"
+   ]
   },
   "N-tutorial": {
    "n": 0,
-   "of": 27,
+   "of": 29,
    "longplay_n": 0,
    "quotes": []
   },
   "N-shallow": {
    "n": 0,
-   "of": 27,
+   "of": 29,
    "longplay_n": 0,
    "quotes": []
   },
   "N-reset": {
    "n": 0,
-   "of": 27,
+   "of": 29,
    "longplay_n": 0,
    "quotes": []
   },
   "N-pace": {
    "n": 0,
-   "of": 27,
+   "of": 29,
    "longplay_n": 0,
    "quotes": []
   },
   "N-fast": {
    "n": 0,
-   "of": 27,
+   "of": 29,
    "longplay_n": 0,
    "quotes": []
   },
   "N-balance": {
    "n": 0,
-   "of": 27,
+   "of": 29,
    "longplay_n": 0,
    "quotes": []
   }

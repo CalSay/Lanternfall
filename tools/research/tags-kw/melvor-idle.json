@@ -1,8 +1,8 @@
 {
  "slug": "melvor-idle",
- "n_reviews": 453,
- "n_pos": 270,
- "n_neg": 183,
+ "n_reviews": 395,
+ "n_pos": 244,
+ "n_neg": 151,
  "n_longplay_neg": 25,
  "sources": [
   "steam",
@@ -11,34 +11,34 @@
  "themes": {
   "P-offline": {
    "n": 22,
-   "of": 270,
+   "of": 244,
    "longplay_n": 0,
    "quotes": [
-    "Game is pretty fun, A nice afk game that doesn't require constant watching. (steam+, 166h)",
-    "Sometimes offline progress doesn\u2019t work super well. (apple5)"
+    "Sometimes offline progress doesn\u2019t work super well. (apple5)",
+    "Once you get going you can just afk every 18 hours if that\u2019s what you want till you hit offline cap. (apple5)"
    ]
   },
   "P-respect": {
-   "n": 7,
-   "of": 270,
+   "n": 8,
+   "of": 244,
    "longplay_n": 0,
    "quotes": [
-    "Game is pretty fun, A nice afk game that doesn't require constant watching. (steam+, 166h)",
+    "This game somehow delivers the depth and long\u2011term progression of a full MMORPG\u2026 while being an idle game you can play at your own pace. (steam+, 2134h)",
     "This game will take a few minutes and maybe an hour to learn, but is very, very well worth it. (apple5)"
    ]
   },
   "P-active": {
-   "n": 23,
-   "of": 270,
+   "n": 27,
+   "of": 244,
    "longplay_n": 0,
    "quotes": [
-    "My one and only complaint is with the Herblore skill. (apple5)",
-    "Because I can) I found this while I was trying out the new rs3 skill finally. (apple5)"
+    "Melvor is the kind of game where you log in to check one skill, then suddenly you\u2019re planning a week\u2011long training route, reorgan (steam+, 2134h)",
+    "The addition of the Township skill should be studied in the idle genre. (steam+, 181h)"
    ]
   },
   "P-dev": {
-   "n": 9,
-   "of": 270,
+   "n": 8,
+   "of": 244,
    "longplay_n": 0,
    "quotes": [
     "This game is 5 stars across the board, and you can tell that the developers care. (apple5)",
@@ -47,7 +47,7 @@
   },
   "P-unlock": {
    "n": 5,
-   "of": 270,
+   "of": 244,
    "longplay_n": 0,
    "quotes": [
     "Family life and the controversial release of the new skill \u201cNecromancy\u201d made me not want to continue. (apple5)",
@@ -55,53 +55,57 @@
    ]
   },
   "P-collect": {
-   "n": 16,
-   "of": 270,
+   "n": 12,
+   "of": 244,
    "longplay_n": 0,
    "quotes": [
-    "[spoiler]i \u2665\u2665\u2665\u2665\u2665\u2665\u2665 cheated idgaf man i just wanted the steam achievements[/spoiler] (steam+, 79h)",
-    "If you are goal oriented and/or a completionist, this is an excellent game and, for the price, an obscenely excellent game. (steam+, 899h)"
+    "There's no 3D world, there's not character, but you still have the level/collect/quest grinds. (steam+, 2264h)",
+    "The game is literally just the enjoyment of seeing those fat exp drops constantly. (apple5)"
    ]
   },
   "P-goals": {
    "n": 0,
-   "of": 270,
+   "of": 244,
    "longplay_n": 0,
    "quotes": []
   },
   "P-depth": {
-   "n": 19,
-   "of": 270,
+   "n": 24,
+   "of": 244,
    "longplay_n": 0,
    "quotes": [
-    "It\u2019s got way more depth in it than most idle games. (apple5)",
-    "If you don\u2019t like in-depth games don\u2019t waste your time downloading it. (apple5)"
+    "This game somehow delivers the depth and long\u2011term progression of a full MMORPG\u2026 while being an idle game you can play at your own pace. (steam+, 2134h)",
+    "Has a lot of depth without being a boring, hard to read wall of numbers. (steam+, 165h)"
    ]
   },
   "P-fair": {
-   "n": 16,
-   "of": 270,
+   "n": 17,
+   "of": 244,
    "longplay_n": 0,
    "quotes": [
-    "Thank you very much to the devs for creating this masterpiece, and thank you oh so much for making the full version a one-time payment! (apple5)",
-    "It\u2019s also not pay to win like most mobile games out there. (apple5)"
+    "In Melvor, no ads, no mtx, no reason to stay focused on the game all the time. (steam+, 854h)",
+    "Best of all, there's no pay to win or \"speed up\" boosts. (steam+, 2264h)"
    ]
   },
   "P-interlock": {
-   "n": 0,
-   "of": 270,
+   "n": 1,
+   "of": 244,
    "longplay_n": 0,
-   "quotes": []
+   "quotes": [
+    "That satisfaction of increasing your skills, and using them to craft items that feed into your combat and quests is just as satisfying. (steam+, 2264h)"
+   ]
   },
   "P-prestige": {
-   "n": 0,
-   "of": 270,
+   "n": 2,
+   "of": 244,
    "longplay_n": 0,
-   "quotes": []
+   "quotes": [
+    "I'll still recommend Melvor, as I think it did a good thing by doing away with the prestige system. (steam+, 181h)"
+   ]
   },
   "P-qol": {
-   "n": 12,
-   "of": 270,
+   "n": 11,
+   "of": 244,
    "longplay_n": 0,
    "quotes": [
     "One of the biggest draws, I can maintain quality of life while playing. (apple5)",
@@ -109,34 +113,32 @@
    ]
   },
   "P-calm": {
-   "n": 3,
-   "of": 270,
+   "n": 0,
+   "of": 244,
    "longplay_n": 0,
-   "quotes": [
-    "Great game to chill on, tons of easter eggs and new things to find after hundreds of hours in the game. (steam+, 911h)"
-   ]
+   "quotes": []
   },
   "P-art": {
-   "n": 13,
-   "of": 270,
+   "n": 9,
+   "of": 244,
    "longplay_n": 0,
    "quotes": [
-    "If you\u2019re like me and can\u2019t focus on actual games with 3d graphics then i recommend this - it's basically OSRS without the 3d graphics (steam+, 71h)",
-    "If you love flashy graphics and fast paced combat, you're in the wrong place. (steam+, 899h)"
+    "Now, some mild sound effects and a riveting music score and I think this game could be a classic. (apple5)",
+    "Graphics are simple but very smooth and gameplay and functions are always operational and up to date. (apple5)"
    ]
   },
   "P-story": {
-   "n": 24,
-   "of": 270,
+   "n": 27,
+   "of": 244,
    "longplay_n": 0,
    "quotes": [
-    "The bar fills up as your character gets to the bank and back. (apple5)",
-    "I rarely ever write reviews but I\u2019m writing this in hopes that the creators see a but of advice. (apple5)"
+    "You can min\u2011max like a spreadsheet warlord or just let your character quietly grind while you do something else. (steam+, 2134h)",
+    "I also like that you can choose to manage multiple characters at the same time. (steam+, 198h)"
    ]
   },
   "N-ads": {
    "n": 10,
-   "of": 183,
+   "of": 151,
    "longplay_n": 0,
    "quotes": [
     "On second launch I was shown ugly ads at the top and bottom of the page. (apple1)",
@@ -144,17 +146,17 @@
    ]
   },
   "N-wall": {
-   "n": 20,
-   "of": 183,
-   "longplay_n": 0,
+   "n": 17,
+   "of": 151,
+   "longplay_n": 1,
    "quotes": [
     "However, when I opened it up today I noticed there is now a pay wall to most of the content. (apple2)",
-    "I dislike the amount of times I tried to do an action but was blocked by the pay wall. (apple2)"
+    "Melvor doesn't have any content like that, and it expects you to start grinding for grinding's sake as soon you finish the short tutorial. (steam-, 823h)"
    ]
   },
   "N-pay": {
-   "n": 18,
-   "of": 183,
+   "n": 15,
+   "of": 151,
    "longplay_n": 0,
    "quotes": [
     "I understand that this is inspired by RuneScape, where a ton of skills are behind the paywall. (apple2)",
@@ -163,95 +165,95 @@
   },
   "N-dominant": {
    "n": 0,
-   "of": 183,
+   "of": 151,
    "longplay_n": 0,
    "quotes": []
   },
   "N-late": {
    "n": 1,
-   "of": 183,
+   "of": 151,
    "longplay_n": 0,
    "quotes": []
   },
   "N-offline": {
    "n": 0,
-   "of": 183,
+   "of": 151,
    "longplay_n": 0,
    "quotes": []
   },
   "N-mobile": {
    "n": 1,
-   "of": 183,
+   "of": 151,
    "longplay_n": 0,
    "quotes": [
     "When I\u2019m trying to do things I\u2019ve been spammed with offline notifications every time i gather a single resource. (apple2)"
    ]
   },
   "N-bug": {
-   "n": 20,
-   "of": 183,
-   "longplay_n": 5,
+   "n": 17,
+   "of": 151,
+   "longplay_n": 3,
    "quotes": [
     "Game worked for a while, but now on startup crashes immediately at loading screen. (steam-, 79h)",
-    "Game worked for a while, but now on startup crashes immediately at loading screen. (steam-, 79h)"
+    "Turns out it's a bug on how damage is applied and confusion on how auto-eat works. (steam-, 184h)"
    ]
   },
   "N-energy": {
-   "n": 3,
-   "of": 183,
-   "longplay_n": 2,
+   "n": 4,
+   "of": 151,
+   "longplay_n": 3,
    "quotes": [
-    "I was probably expecting too much, but where is the \"game\" element of the idle gameplay, or story, anything but timers? (steam-, 70h)",
-    "I was probably expecting too much, but where is the \"game\" element of the idle gameplay, or story, anything but timers? (steam-, 70h)"
+    "By the time inventory stopped being crippingly annoying, I no longer cared to come back in. (steam-, 161h)",
+    "-Boring, just waiting for various timers (steam-, 56h)"
    ]
   },
   "N-bloat": {
-   "n": 7,
-   "of": 183,
-   "longplay_n": 0,
+   "n": 9,
+   "of": 151,
+   "longplay_n": 1,
    "quotes": [
-    "The interface can be a bit confusing, I had trouble navigating the drop down menus a few times. (apple2)",
-    "The interface is absolutely horrible and confusing. (apple1)"
+    "Want to buy a certain number of items, ohhh welcome to an exceptionally click heavy and confusing interface that constantly gets in your way. (steam-, 184h)",
+    "Just like my review, it's a cluttered mess. (steam-)"
    ]
   },
   "N-chore": {
-   "n": 0,
-   "of": 183,
-   "longplay_n": 0,
-   "quotes": []
+   "n": 1,
+   "of": 151,
+   "longplay_n": 1,
+   "quotes": [
+    "Then there are the things that need you to check in every hour or so. (steam-, 182h)"
+   ]
   },
   "N-tutorial": {
-   "n": 16,
-   "of": 183,
-   "longplay_n": 0,
+   "n": 13,
+   "of": 151,
+   "longplay_n": 2,
    "quotes": [
-    "Finished the tutorial and it looked pretty good, only to realize a large portion of the game is behind a paywall. (apple1)",
-    "The tutorial shows you some skills that aren\u2019t even available on the free version. (apple3)"
+    "Melvor doesn't have any content like that, and it expects you to start grinding for grinding's sake as soon you finish the short tutorial. (steam-, 823h)",
+    "The tutorial is horribly done, the UX is overly complex, unintuitive and does its best to avoid making sense or giving clear feedback. (steam-, 184h)"
    ]
   },
   "N-shallow": {
-   "n": 5,
-   "of": 183,
+   "n": 3,
+   "of": 151,
    "longplay_n": 0,
-   "quotes": [
-    "Too expensive for a simple idle game. (apple1)"
-   ]
+   "quotes": []
   },
   "N-reset": {
    "n": 0,
-   "of": 183,
+   "of": 151,
    "longplay_n": 0,
    "quotes": []
   },
   "N-pace": {
    "n": 0,
-   "of": 183,
+   "of": 151,
    "longplay_n": 0,
    "quotes": []
   },
   "N-fast": {
    "n": 1,
-   "of": 183,
+   "of": 151,
    "longplay_n": 0,
    "quotes": [
     "Too easy to finish the game using mods like Time Skip (apple2)"
@@ -259,7 +261,7 @@
   },
   "N-balance": {
    "n": 1,
-   "of": 183,
+   "of": 151,
    "longplay_n": 0,
    "quotes": []
   }

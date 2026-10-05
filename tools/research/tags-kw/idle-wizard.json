@@ -1,9 +1,9 @@
 {
  "slug": "idle-wizard",
- "n_reviews": 157,
+ "n_reviews": 159,
  "n_pos": 118,
- "n_neg": 39,
- "n_longplay_neg": 1,
+ "n_neg": 41,
+ "n_longplay_neg": 6,
  "sources": [
   "steam",
   "apple"
@@ -37,23 +37,25 @@
    "of": 118,
    "longplay_n": 0,
    "quotes": [
-    "Devs are highly active in their discord, as are a number of veteran players who help maintain community driven guides and resources. (steam+, 27229h)",
-    "Devs are highly active in their discord, as are a number of veteran players who help maintain community driven guides and resources. (steam+, 27229h)"
+    "Devs are highly active in their discord, as are a number of veteran players who help maintain community driven guides and resources. (steam+, 27224h)",
+    "The devs are constantly adding new updates and constantly giving away free stuff to help you progress. (steam+, 5472h)"
    ]
   },
   "P-unlock": {
-   "n": 0,
-   "of": 118,
-   "longplay_n": 0,
-   "quotes": []
-  },
-  "P-collect": {
-   "n": 7,
+   "n": 1,
    "of": 118,
    "longplay_n": 0,
    "quotes": [
-    "Friends passing by can touch her and click Like to pet her once. (steam+, 26h)",
-    "Friends passing by can touch her and click Like to pet her once. (steam+, 26h)"
+    "Unlocking new classes, ascensions, pets, items, all of it feels very rewarding. (steam+, 5472h)"
+   ]
+  },
+  "P-collect": {
+   "n": 5,
+   "of": 118,
+   "longplay_n": 0,
+   "quotes": [
+    "Many cycles may be similar, but they're not all the same, every time, thanks to the variety of classes, pets, and spells available for use. (steam+, 1684h)",
+    "Unlocking new classes, ascensions, pets, items, all of it feels very rewarding. (steam+, 5472h)"
    ]
   },
   "P-goals": {
@@ -63,12 +65,12 @@
    "quotes": []
   },
   "P-depth": {
-   "n": 8,
+   "n": 7,
    "of": 118,
    "longplay_n": 0,
    "quotes": [
-    "A lot more in depth than it may seem at first. (steam+, 1270h)",
-    "A lot more in depth than it may seem at first. (steam+, 1270h)"
+    "A lot more in depth than it may seem at first. (steam+, 1248h)",
+    "At a certain point in the game it becomes very difficult to eyeball your decision (steam+, 7212h)"
    ]
   },
   "P-fair": {
@@ -87,13 +89,13 @@
    "quotes": []
   },
   "P-prestige": {
-   "n": 0,
+   "n": 1,
    "of": 118,
    "longplay_n": 0,
    "quotes": []
   },
   "P-qol": {
-   "n": 2,
+   "n": 1,
    "of": 118,
    "longplay_n": 0,
    "quotes": []
@@ -108,7 +110,7 @@
    ]
   },
   "P-art": {
-   "n": 9,
+   "n": 8,
    "of": 118,
    "longplay_n": 0,
    "quotes": [
@@ -126,7 +128,7 @@
   },
   "N-ads": {
    "n": 6,
-   "of": 39,
+   "of": 41,
    "longplay_n": 0,
    "quotes": [
     "To progress in this game (to have a chance to get any of the items), you HAVE to watch ads. (apple1)",
@@ -134,101 +136,106 @@
    ]
   },
   "N-wall": {
-   "n": 2,
-   "of": 39,
+   "n": 3,
+   "of": 41,
    "longplay_n": 0,
    "quotes": [
     "I hated the ads grind, and game play itself is quite boring. (apple1)",
-    "There are too many ads, and not enough things to do, the balancing feels off and way too slow if you don\u2019t watch the ads. (apple3)"
+    "For free I'd advise to treat it as a casual grind game but as an actual game to spend money on? (steam-, 10h)"
    ]
   },
   "N-pay": {
-   "n": 0,
-   "of": 39,
-   "longplay_n": 0,
-   "quotes": []
+   "n": 2,
+   "of": 41,
+   "longplay_n": 1,
+   "quotes": [
+    "A ton of microtransactions for a single player game, and for things you either can't get for free, or can't realistically get for free, gross. (steam-, 22h)",
+    "Without the microtransactions you are still just spinning your wheels. (steam-, 221h)"
+   ]
   },
   "N-dominant": {
    "n": 0,
-   "of": 39,
+   "of": 41,
    "longplay_n": 0,
    "quotes": []
   },
   "N-late": {
    "n": 0,
-   "of": 39,
+   "of": 41,
    "longplay_n": 0,
    "quotes": []
   },
   "N-offline": {
    "n": 0,
-   "of": 39,
+   "of": 41,
    "longplay_n": 0,
    "quotes": []
   },
   "N-mobile": {
    "n": 0,
-   "of": 39,
+   "of": 41,
    "longplay_n": 0,
    "quotes": []
   },
   "N-bug": {
-   "n": 1,
-   "of": 39,
+   "n": 2,
+   "of": 41,
    "longplay_n": 0,
-   "quotes": []
+   "quotes": [
+    "i would not recommend this unless you are a fan of time wasting bugs like this. (steam-, 3h)"
+   ]
   },
   "N-energy": {
    "n": 0,
-   "of": 39,
+   "of": 41,
    "longplay_n": 0,
    "quotes": []
   },
   "N-bloat": {
-   "n": 3,
-   "of": 39,
+   "n": 1,
+   "of": 41,
    "longplay_n": 0,
    "quotes": []
   },
   "N-chore": {
    "n": 0,
-   "of": 39,
+   "of": 41,
    "longplay_n": 0,
    "quotes": []
   },
   "N-tutorial": {
    "n": 0,
-   "of": 39,
+   "of": 41,
    "longplay_n": 0,
    "quotes": []
   },
   "N-shallow": {
    "n": 0,
-   "of": 39,
+   "of": 41,
    "longplay_n": 0,
    "quotes": []
   },
   "N-reset": {
    "n": 0,
-   "of": 39,
+   "of": 41,
    "longplay_n": 0,
    "quotes": []
   },
   "N-pace": {
    "n": 0,
-   "of": 39,
+   "of": 41,
    "longplay_n": 0,
    "quotes": []
   },
   "N-fast": {
    "n": 0,
-   "of": 39,
+   "of": 41,
    "longplay_n": 0,
    "quotes": []
   },
   "N-balance": {
    "n": 0,
-   "of": 39,
+   "of": 41,
    "longplay_n": 0,
    "quotes": []
   }

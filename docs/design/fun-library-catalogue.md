@@ -134,8 +134,15 @@ already ship save codes with a copy fallback and a guarded import, and `check.mj
 `ap-save-export` is withdrawn as a duplicate and its card file deleted.** What remains of Q1 (bugs and lost saves are the top
 quit theme) is the error watch below, which still needs its own brief and gate. Admitted cards: 4, not 5.
 
-## Update after widening to 56 games (2026-10-05)
-Cal asked why only 21 games were read. The corpus is now 56 (14,465 reviews). Counts changed, rankings did not flip:
-energy gates tripled (171 reviews, driven by RAID and Hero Wars), which strengthens S14 as a Compass line; the empty
-endgame has 48 long-play reviews. No verdict was re-run through the gate because none changed; the judge should
-re-score S9 and S14 if the Compass thread wants the new numbers.
+## Update after widening to 56 games and removing duplicates (2026-10-05)
+The gate ran on the first 21-game counts. Cal asked why only 21 games were read, the corpus became 56, and Codex review then
+found that the first Steam samples held duplicate reviews (about 36%). The library was rebuilt on 11,679 distinct
+reviews. Re-checking the verdicts against the rebuilt counts, none flips:
+- S12 (stall facts): walls are still the top long-play reason (99 of 632 Steam negatives).
+- S5 and S13 (first-use hints, menu budget): cluttered menus 61 negatives, 14 long-play (up from 27).
+- S6 (collection counts): collection is the third most praised theme (480 reviews, 31 games).
+- S9 (content remaining) and S14 (no energy gates): empty endgame is 183 negatives, 48 long-play; energy and timer gates are
+  158 negatives, 22 long-play, so S14 now has real support for a Compass line.
+- S10 (dominance detector): dominant strategy is rare (29 negatives, 7 long-play), weaker than the gate believed (it said
+  14 of 14). It stays a report-only line in f-health, no card.
+No verdict was re-run through the red team and judge; the Compass or planner thread may re-score S9, S10 and S14.

@@ -1,8 +1,8 @@
 {
  "slug": "idle-slayer",
- "n_reviews": 508,
+ "n_reviews": 503,
  "n_pos": 393,
- "n_neg": 115,
+ "n_neg": 110,
  "n_longplay_neg": 25,
  "sources": [
   "steam",
@@ -10,7 +10,7 @@
  ],
  "themes": {
   "P-offline": {
-   "n": 17,
+   "n": 16,
    "of": 393,
    "longplay_n": 0,
    "quotes": [
@@ -28,12 +28,12 @@
    ]
   },
   "P-active": {
-   "n": 23,
+   "n": 25,
    "of": 393,
    "longplay_n": 0,
    "quotes": [
-    "There are cool upgrades and abilities and a pretty massive skill tree. (apple5)",
-    "Extra souls and coins for landing well times hits on big enemies would add a LOT to the fun and skill factor of the game. (apple4)"
+    "Blend of idle + active gameplay. (steam+, 1007h)",
+    "There are cool upgrades and abilities and a pretty massive skill tree. (apple5)"
    ]
   },
   "P-dev": {
@@ -55,12 +55,12 @@
    ]
   },
   "P-collect": {
-   "n": 32,
+   "n": 33,
    "of": 393,
    "longplay_n": 0,
    "quotes": [
     "You run through a pixel-art world, collect coins, defeat enemies, and buy upgrades. (steam+, 64h)",
-    "I was looking for something that had hundreds of achievements. (steam+, 669h)"
+    "all of my progress was on mobile and i am getting constant notifications from these achievements. (steam+)"
    ]
   },
   "P-goals": {
@@ -81,7 +81,7 @@
    ]
   },
   "P-fair": {
-   "n": 21,
+   "n": 22,
    "of": 393,
    "longplay_n": 0,
    "quotes": [
@@ -96,12 +96,12 @@
    "quotes": []
   },
   "P-prestige": {
-   "n": 42,
+   "n": 43,
    "of": 393,
    "longplay_n": 0,
    "quotes": [
-    "They have a simple rebirth system and a monster killing mechanic where you have to jump or tap to kill them which keeps me active. (apple4)",
-    "2:it doesn\u2019t get too tedious,the first few rebirths you do it introduces new things after you rebirth (apple5)"
+    "To continue progressing in Idle Slayer, you need to ascend (rebirth) quite regularly to u (steam+, 18h)",
+    "They have a simple rebirth system and a monster killing mechanic where you have to jump or tap to kill them which keeps me active. (apple4)"
    ]
   },
   "P-qol": {
@@ -118,8 +118,8 @@
    "of": 393,
    "longplay_n": 0,
    "quotes": [
-    "Cross-platform sync, great Ukrainian localization, and cozy gameplay make this delightful title a solid ten. (steam+)",
-    "Cross-platform sync, great Ukrainian localization, and cozy gameplay make this delightful title a solid ten. (steam+)"
+    "Overall, a solid game that\u2019s fun, relaxing, and has just the right amount of challenge. (steam+, 2h)",
+    "This game is a comfort and a way to channel my mind that has become invaluable. (apple5)"
    ]
   },
   "P-art": {
@@ -127,22 +127,22 @@
    "of": 393,
    "longplay_n": 0,
    "quotes": [
-    "You run through a pixel-art world, collect coins, defeat enemies, and buy upgrades. (steam+, 64h)",
-    "I researched and found that Idle Slayer, a pixel game on steam had well over 500 achievements. (steam+, 669h)"
+    "I love the graphics and the different worlds you can enter in the portals! (steam+, 153h)",
+    "You run through a pixel-art world, collect coins, defeat enemies, and buy upgrades. (steam+, 64h)"
    ]
   },
   "P-story": {
-   "n": 60,
+   "n": 61,
    "of": 393,
    "longplay_n": 0,
    "quotes": [
-    "I found myself at a new dimension called \"The Village\", to think there would be MORE lore later on?! (steam+, 669h)",
-    "also, i tried activating the elf character by linking my account to both phone and pc but nothing happened (steam+, 28h)"
+    "Upgrade gear, complete quests, get your numbers up! (steam+, 1h)",
+    "There is one thing I\u2019m not to fond of however and that\u2019s doing the same quests in dimensions that don\u2019t reap much rewards. (apple5)"
    ]
   },
   "N-ads": {
    "n": 22,
-   "of": 115,
+   "of": 110,
    "longplay_n": 0,
    "quotes": [
     "7 bucks to remove ads is too much. (apple3)",
@@ -150,77 +150,73 @@
    ]
   },
   "N-wall": {
-   "n": 15,
-   "of": 115,
-   "longplay_n": 4,
+   "n": 19,
+   "of": 110,
+   "longplay_n": 7,
    "quotes": [
-    "If you're fine with that then maybe try but it's a slow grind regardless. (steam-, 175h)",
-    "If you're fine with that then maybe try but it's a slow grind regardless. (steam-, 175h)"
+    "It also feels VERY scummy that you hit such an insane progression wall so early. (steam-, 3h)",
+    "Offline grinding (the IDLE part of the title) was nerfed for the 2nd major time now. (steam-, 636h)"
    ]
   },
   "N-pay": {
    "n": 4,
-   "of": 115,
+   "of": 110,
    "longplay_n": 2,
    "quotes": [
-    "Yes its an idle game, but without spending money you need faaar longer to progress.Also the premium currency permanent upgrades have different level???? (steam-, 285h)",
-    "Yes its an idle game, but without spending money you need faaar longer to progress.Also the premium currency permanent upgrades have different level???? (steam-, 286h)"
+    "There's no other method for getting the P2W currency that speeds up the incremental process other than buying it with real money. (steam-, 51h)",
+    "There are a lot of RNG elements that heavily gate progress that seem to be intentionally promoting premium currency. (steam-, 62h)"
    ]
   },
   "N-dominant": {
-   "n": 2,
-   "of": 115,
-   "longplay_n": 2,
-   "quotes": [
-    "Slow meta progression and buggy mobile collab for the recent event (steam-, 322h)",
-    "Slow meta progression and buggy mobile collab for the recent event (steam-, 322h)"
-   ]
+   "n": 0,
+   "of": 110,
+   "longplay_n": 0,
+   "quotes": []
   },
   "N-late": {
-   "n": 6,
-   "of": 115,
-   "longplay_n": 0,
+   "n": 10,
+   "of": 110,
+   "longplay_n": 4,
    "quotes": [
-    "Also the non idle aspect of the game is quite boring and repetitive. (apple3)",
-    "I\u2019m not sure if the developers are able to, but it gets bland to the point where it\u2019s repetitive. (apple3)"
+    "To be able to get to the endgame you have to complete quest bundles which can be done idle but the giant quests feel slow. (steam-, 2590h)",
+    "It takes actual years of active time to even get close to end game. (steam-, 454h)"
    ]
   },
   "N-offline": {
    "n": 0,
-   "of": 115,
+   "of": 110,
    "longplay_n": 0,
    "quotes": []
   },
   "N-mobile": {
    "n": 0,
-   "of": 115,
+   "of": 110,
    "longplay_n": 0,
    "quotes": []
   },
   "N-bug": {
-   "n": 8,
-   "of": 115,
-   "longplay_n": 6,
+   "n": 2,
+   "of": 110,
+   "longplay_n": 0,
    "quotes": [
-    "Slow meta progression and buggy mobile collab for the recent event (steam-, 322h)",
-    "Slow meta progression and buggy mobile collab for the recent event (steam-, 322h)"
+    "Not Very Idle, Ad Boosts Crash the Game. (apple3)"
    ]
   },
   "N-energy": {
    "n": 2,
-   "of": 115,
+   "of": 110,
    "longplay_n": 0,
    "quotes": []
   },
   "N-bloat": {
    "n": 1,
-   "of": 115,
+   "of": 110,
    "longplay_n": 0,
    "quotes": []
   },
   "N-chore": {
    "n": 1,
-   "of": 115,
+   "of": 110,
    "longplay_n": 0,
    "quotes": [
     "This was a really fun game for about a week but there\u2019s a certain point where it straight up turns into an absolute chore. (apple2)"
@@ -228,43 +224,46 @@
   },
   "N-tutorial": {
    "n": 1,
-   "of": 115,
+   "of": 110,
    "longplay_n": 0,
    "quotes": [
     "I\u2019m not going to even finish the tutorial because there\u2019s no option to sign in with an apple account for non android users. (apple1)"
    ]
   },
   "N-shallow": {
-   "n": 2,
-   "of": 115,
-   "longplay_n": 0,
+   "n": 5,
+   "of": 110,
+   "longplay_n": 1,
    "quotes": [
-    "It\u2019s a 3 at best there are many other options as a idle and clicker game enthusiast it\u2019s simple there is better. (apple3)"
+    "It's not a bad idle-style game, but it requires too much attention for such simple gameplay. (steam-, 14h)",
+    "Very simple infinite runner/side-scroller where all you really need to do is jump. (steam-, 51h)"
    ]
   },
   "N-reset": {
    "n": 0,
-   "of": 115,
+   "of": 110,
    "longplay_n": 0,
    "quotes": []
   },
   "N-pace": {
    "n": 0,
-   "of": 115,
+   "of": 110,
    "longplay_n": 0,
    "quotes": []
   },
   "N-fast": {
    "n": 0,
-   "of": 115,
+   "of": 110,
    "longplay_n": 0,
    "quotes": []
   },
   "N-balance": {
-   "n": 0,
-   "of": 115,
-   "longplay_n": 0,
-   "quotes": []
+   "n": 1,
+   "of": 110,
+   "longplay_n": 1,
+   "quotes": [
+    "Offline grinding (the IDLE part of the title) was nerfed for the 2nd major time now. (steam-, 636h)"
+   ]
   }
  }
 }

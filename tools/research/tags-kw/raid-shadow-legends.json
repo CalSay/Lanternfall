@@ -1,9 +1,9 @@
 {
  "slug": "raid-shadow-legends",
- "n_reviews": 554,
+ "n_reviews": 564,
  "n_pos": 227,
- "n_neg": 327,
- "n_longplay_neg": 20,
+ "n_neg": 337,
+ "n_longplay_neg": 25,
  "sources": [
   "steam",
   "apple"
@@ -19,12 +19,12 @@
    ]
   },
   "P-respect": {
-   "n": 3,
+   "n": 5,
    "of": 227,
    "longplay_n": 0,
    "quotes": [
-    "Keep it casual so you'll always have fun.. (apple5)",
-    "It\u2019s at all around if your a casual gamer which I feel most people on phones are. (apple5)"
+    "Doesn't require powerful GPU and is great for killing the boredom. (steam+, 4276h)",
+    "Keep it casual so you'll always have fun.. (apple5)"
    ]
   },
   "P-active": {
@@ -45,15 +45,16 @@
    ]
   },
   "P-unlock": {
-   "n": 1,
+   "n": 2,
    "of": 227,
    "longplay_n": 0,
    "quotes": [
+    "Can be a bit repetitious, but new content almost fixes this negative. (steam+, 3672h)",
     "This game has som many champions and so many sets of gear that unlock new possibilities for your champions. (apple5)"
    ]
   },
   "P-collect": {
-   "n": 32,
+   "n": 25,
    "of": 227,
    "longplay_n": 0,
    "quotes": [
@@ -70,16 +71,16 @@
    ]
   },
   "P-depth": {
-   "n": 19,
+   "n": 20,
    "of": 227,
    "longplay_n": 0,
    "quotes": [
     "All the champions in the game can be customized with unique gear that changes your strategic buffs and abilities! (apple5)",
-    "All the champions in the game can be customized with unique gear that changes your strategic buffs and abilities! (apple5)"
+    "The artifact and gear system is deeply complex, offering a massive amount of strategic depth for building your champions and theorycrafting teams. (steam+, 25h)"
    ]
   },
   "P-fair": {
-   "n": 5,
+   "n": 7,
    "of": 227,
    "longplay_n": 0,
    "quotes": [
@@ -102,25 +103,22 @@
    ]
   },
   "P-qol": {
-   "n": 7,
+   "n": 5,
    "of": 227,
    "longplay_n": 0,
    "quotes": [
     "Maybe the only downside is that the game is part pay-to-win, but you can easily make up for that by using the auto-battle tool. (apple5)",
-    "There have been many QOL improvements over the years and it's getting better. (steam+)"
+    "The only thing you get is an automated response which has absolutely nothing to do with the issue you are writing in about. (apple5)"
    ]
   },
   "P-calm": {
-   "n": 2,
+   "n": 0,
    "of": 227,
    "longplay_n": 0,
-   "quotes": [
-    "Also a good option if you are looking to play a chill game, while being in a discord call for example. (steam+, 44h)",
-    "Also a good option if you are looking to play a chill game, while being in a discord call for example. (steam+, 44h)"
-   ]
+   "quotes": []
   },
   "P-art": {
-   "n": 35,
+   "n": 39,
    "of": 227,
    "longplay_n": 0,
    "quotes": [
@@ -138,59 +136,58 @@
    ]
   },
   "N-ads": {
-   "n": 27,
-   "of": 327,
-   "longplay_n": 3,
+   "n": 29,
+   "of": 337,
+   "longplay_n": 1,
    "quotes": [
-    "EVERYTIME  you sign on the game bombards you with several ads all saying hey buy this for 20$,50$,99$. (apple1)",
-    "The amount of ads I saw for this game finally made me try it. (apple1)"
+    "The aggressive marketing and constant ads even while playing is what truly kill it, even for whale players. (steam-, 8h)",
+    "The game everybody heard of (because of its atrocious ad campaigns and shills on YouTube), but nobody likes. (steam-)"
    ]
   },
   "N-wall": {
-   "n": 59,
-   "of": 327,
-   "longplay_n": 4,
+   "n": 62,
+   "of": 337,
+   "longplay_n": 5,
    "quotes": [
     "Drains the batteries, if you don\u2019t want to spend money, be ready for lots and lots of grinding. (apple1)",
     "Today its a constant, eternal grind if you are on a free account and refuse to spend a dime like me. (steam-, 4007h)"
    ]
   },
   "N-pay": {
-   "n": 41,
-   "of": 327,
-   "longplay_n": 0,
+   "n": 50,
+   "of": 337,
+   "longplay_n": 3,
    "quotes": [
     "Why can you just make a game where the micro transactions are for cosmetic stuff only why have a pay to win game ? (apple2)",
-    "Update to dev: I\u2019m sorry let me clarify a bit more on what I mean a paywall is. (apple1)"
+    "The aggressive marketing and constant ads even while playing is what truly kill it, even for whale players. (steam-, 8h)"
    ]
   },
   "N-dominant": {
-   "n": 4,
-   "of": 327,
-   "longplay_n": 2,
+   "n": 3,
+   "of": 337,
+   "longplay_n": 1,
    "quotes": [
-    "Good luck if you miss one because the meta is built around these fusion champions. (steam-, 4007h)",
     "Good luck if you miss one because the meta is built around these fusion champions. (steam-, 4007h)"
    ]
   },
   "N-late": {
-   "n": 12,
-   "of": 327,
+   "n": 10,
+   "of": 337,
    "longplay_n": 0,
    "quotes": [
     "Where this game falters for me is in the end game play style. (apple3)",
-    "lack lustre pulls of green shards only, given rubbish heroes, repetitive battles. (steam-, 34h)"
+    "Only 10% or so are viable late game. (apple1)"
    ]
   },
   "N-offline": {
    "n": 0,
-   "of": 327,
+   "of": 337,
    "longplay_n": 0,
    "quotes": []
   },
   "N-mobile": {
    "n": 4,
-   "of": 327,
+   "of": 337,
    "longplay_n": 0,
    "quotes": [
     "You would think that they would let players opt out of these notifications. (apple1)"
@@ -198,7 +195,7 @@
   },
   "N-bug": {
    "n": 21,
-   "of": 327,
+   "of": 337,
    "longplay_n": 2,
    "quotes": [
     "The updates they push out as \u201ccontent\u201d are really just patches for bugs with the occasional character balance. (apple1)",
@@ -206,9 +203,9 @@
    ]
   },
   "N-energy": {
-   "n": 40,
-   "of": 327,
-   "longplay_n": 0,
+   "n": 41,
+   "of": 337,
+   "longplay_n": 2,
    "quotes": [
     "An other majorly huge problem is the games use of \u201cenergy\u201d and silver coins. (apple2)",
     "First and probably the biggest issue is the amount of energy required to accomplish anything is extremely high. (apple2)"
@@ -216,22 +213,22 @@
   },
   "N-bloat": {
    "n": 0,
-   "of": 327,
+   "of": 337,
    "longplay_n": 0,
    "quotes": []
   },
   "N-chore": {
-   "n": 11,
-   "of": 327,
-   "longplay_n": 0,
+   "n": 12,
+   "of": 337,
+   "longplay_n": 1,
    "quotes": [
-    "It\u2019s possible to be F2P but it\u2019s a chore. (apple3)",
-    "Which i can\u2019t complete until basically the end of the month to do all the daily quests 30. (apple1)"
+    "Feels more like chore than an actual game. (steam-, 1787h)",
+    "It\u2019s possible to be F2P but it\u2019s a chore. (apple3)"
    ]
   },
   "N-tutorial": {
    "n": 4,
-   "of": 327,
+   "of": 337,
    "longplay_n": 0,
    "quotes": [
     "No where in the tutorial is this stated or given direction to do so. (apple3)",
@@ -239,9 +236,9 @@
    ]
   },
   "N-shallow": {
-   "n": 14,
-   "of": 327,
-   "longplay_n": 5,
+   "n": 11,
+   "of": 337,
+   "longplay_n": 2,
    "quotes": [
     "It seems simple, you pick one to four characters and the characters you pick should be the ones to fight. (apple1)",
     "Why did I give it one star simple, forced to endure poor design. (apple1)"
@@ -249,31 +246,31 @@
   },
   "N-reset": {
    "n": 0,
-   "of": 327,
+   "of": 337,
    "longplay_n": 0,
    "quotes": []
   },
   "N-pace": {
    "n": 0,
-   "of": 327,
+   "of": 337,
    "longplay_n": 0,
    "quotes": []
   },
   "N-fast": {
    "n": 1,
-   "of": 327,
+   "of": 337,
    "longplay_n": 0,
    "quotes": [
     "A lot of the events would go by too fast not leaving enough time for me to earn good rewards, if any. (apple3)"
    ]
   },
   "N-balance": {
-   "n": 15,
-   "of": 327,
-   "longplay_n": 2,
+   "n": 14,
+   "of": 337,
+   "longplay_n": 1,
    "quotes": [
     "First create an OP Champion as a problem and then release the counter in another fusion. (steam-, 4007h)",
-    "First create an OP Champion as a problem and then release the counter in another fusion. (steam-, 4007h)"
+    "The updates they push out as \u201ccontent\u201d are really just patches for bugs with the occasional character balance. (apple1)"
    ]
   }
  }

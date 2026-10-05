@@ -1,9 +1,9 @@
 {
  "slug": "rogue-legacy-2",
- "n_reviews": 36,
+ "n_reviews": 52,
  "n_pos": 25,
- "n_neg": 11,
- "n_longplay_neg": 4,
+ "n_neg": 27,
+ "n_longplay_neg": 5,
  "sources": [
   "steam"
  ],
@@ -15,25 +15,26 @@
    "quotes": []
   },
   "P-respect": {
-   "n": 0,
-   "of": 25,
-   "longplay_n": 0,
-   "quotes": []
-  },
-  "P-active": {
    "n": 2,
    "of": 25,
    "longplay_n": 0,
    "quotes": [
-    "very fun, over 50 hours and i still havent beaten the game (might be skill issue but every hour was extremely fun anyway) (steam+, 94h)",
-    "very fun, over 50 hours and i still havent beaten the game (might be skill issue but every hour was extremely fun anyway) (steam+, 94h)"
+    "Amazing casual game, everything is well polished, graphics are nice, didnt find any bugs for my 237 hours of playing (steam+, 219h)"
    ]
   },
-  "P-dev": {
+  "P-active": {
    "n": 0,
    "of": 25,
    "longplay_n": 0,
    "quotes": []
+  },
+  "P-dev": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "also the game and the devs are woke (based) (steam+, 115h)"
+   ]
   },
   "P-unlock": {
    "n": 0,
@@ -42,7 +43,7 @@
    "quotes": []
   },
   "P-collect": {
-   "n": 0,
+   "n": 2,
    "of": 25,
    "longplay_n": 0,
    "quotes": []
@@ -54,10 +55,12 @@
    "quotes": []
   },
   "P-depth": {
-   "n": 0,
+   "n": 3,
    "of": 25,
    "longplay_n": 0,
-   "quotes": []
+   "quotes": [
+    "Looks better, controls better, has more interesting builds, challenges and all that. (steam+, 11h)"
+   ]
   },
   "P-fair": {
    "n": 0,
@@ -84,92 +87,95 @@
    "quotes": []
   },
   "P-calm": {
-   "n": 0,
+   "n": 1,
    "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "P-art": {
-   "n": 2,
+   "n": 3,
    "of": 25,
    "longplay_n": 0,
    "quotes": [
-    "AWSOME mechanics, AWSOME graphics, AWSOME Game!!! (steam+, 157h)",
-    "AWSOME mechanics, AWSOME graphics, AWSOME Game!!! (steam+, 157h)"
+    "Fantastic graphics, superb challenge, great music, fun secrets, nice characters, and the most addictive gameplay loop I've ever experienced to this day. (steam+, 716h)",
+    "Amazing casual game, everything is well polished, graphics are nice, didnt find any bugs for my 237 hours of playing (steam+, 219h)"
    ]
   },
   "P-story": {
-   "n": 2,
+   "n": 7,
    "of": 25,
    "longplay_n": 0,
    "quotes": [
-    "It's got secrets, side-challenges, a story and lore, alternate modes, accessibility options, pretty much anything you could ask for. (steam+, 169h)",
-    "It's got secrets, side-challenges, a story and lore, alternate modes, accessibility options, pretty much anything you could ask for. (steam+, 169h)"
+    "Fantastic graphics, superb challenge, great music, fun secrets, nice characters, and the most addictive gameplay loop I've ever experienced to this day. (steam+, 716h)",
+    "Classes are more interesting, more content in the castle, more story as well. (steam+, 496h)"
    ]
   },
   "N-ads": {
    "n": 0,
-   "of": 11,
+   "of": 27,
    "longplay_n": 0,
    "quotes": []
   },
   "N-wall": {
-   "n": 3,
-   "of": 11,
+   "n": 9,
+   "of": 27,
    "longplay_n": 0,
    "quotes": [
-    "upgrades are very very incremental worse than any idle game = heavy grind (steam-, 8h)",
-    "It is ultra grindy cookie clicker where you must die infinite times to upgrade your character. (steam-, 5h)"
+    "but all that fell apart for me when I had to start grinding. (steam-, 15h)",
+    "It's a more polished version of Rogue Legacy, but more grindy and repetitive due to poorly designed upgrade scaling. (steam-, 31h)"
    ]
   },
   "N-pay": {
    "n": 0,
-   "of": 11,
+   "of": 27,
    "longplay_n": 0,
    "quotes": []
   },
   "N-dominant": {
-   "n": 0,
-   "of": 11,
+   "n": 4,
+   "of": 27,
    "longplay_n": 0,
-   "quotes": []
+   "quotes": [
+    "What really killed this one for me is the meta progression. (steam-, 15h)"
+   ]
   },
   "N-late": {
-   "n": 0,
-   "of": 11,
+   "n": 1,
+   "of": 27,
    "longplay_n": 0,
-   "quotes": []
+   "quotes": [
+    "It's a more polished version of Rogue Legacy, but more grindy and repetitive due to poorly designed upgrade scaling. (steam-, 31h)"
+   ]
   },
   "N-offline": {
    "n": 0,
-   "of": 11,
+   "of": 27,
    "longplay_n": 0,
    "quotes": []
   },
   "N-mobile": {
    "n": 0,
-   "of": 11,
+   "of": 27,
    "longplay_n": 0,
    "quotes": []
   },
   "N-bug": {
-   "n": 3,
-   "of": 11,
-   "longplay_n": 3,
+   "n": 1,
+   "of": 27,
+   "longplay_n": 1,
    "quotes": [
-    "The game is good, the directional bug is bad. (steam-, 58h)",
     "The game is good, the directional bug is bad. (steam-, 58h)"
    ]
   },
   "N-energy": {
    "n": 0,
-   "of": 11,
+   "of": 27,
    "longplay_n": 0,
    "quotes": []
   },
   "N-bloat": {
    "n": 1,
-   "of": 11,
+   "of": 27,
    "longplay_n": 1,
    "quotes": [
     "No, the correct response to overwhelming negative feedback on a new mode isn't to suggest players enable cheats for it. (steam-, 143h)"
@@ -177,19 +183,19 @@
   },
   "N-chore": {
    "n": 0,
-   "of": 11,
+   "of": 27,
    "longplay_n": 0,
    "quotes": []
   },
   "N-tutorial": {
-   "n": 0,
-   "of": 11,
+   "n": 1,
+   "of": 27,
    "longplay_n": 0,
    "quotes": []
   },
   "N-shallow": {
    "n": 1,
-   "of": 11,
+   "of": 27,
    "longplay_n": 1,
    "quotes": [
     "There's no mastery to the game when a simple coin toss determines whether the enemy spawn pos (steam-, 143h)"
@@ -197,25 +203,25 @@
   },
   "N-reset": {
    "n": 0,
-   "of": 11,
+   "of": 27,
    "longplay_n": 0,
    "quotes": []
   },
   "N-pace": {
    "n": 0,
-   "of": 11,
+   "of": 27,
    "longplay_n": 0,
    "quotes": []
   },
   "N-fast": {
    "n": 0,
-   "of": 11,
+   "of": 27,
    "longplay_n": 0,
    "quotes": []
   },
   "N-balance": {
    "n": 0,
-   "of": 11,
+   "of": 27,
    "longplay_n": 0,
    "quotes": []
   }

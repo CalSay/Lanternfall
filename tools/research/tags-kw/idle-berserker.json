@@ -1,8 +1,8 @@
 {
  "slug": "idle-berserker",
- "n_reviews": 318,
- "n_pos": 213,
- "n_neg": 105,
+ "n_reviews": 359,
+ "n_pos": 240,
+ "n_neg": 119,
  "n_longplay_neg": 0,
  "sources": [
   "apple"
@@ -10,7 +10,7 @@
  "themes": {
   "P-offline": {
    "n": 3,
-   "of": 213,
+   "of": 240,
    "longplay_n": 0,
    "quotes": [
     "This game is definitely an AFK grinder and one of the best that I\u2019ve played. (apple5)",
@@ -19,7 +19,7 @@
   },
   "P-respect": {
    "n": 1,
-   "of": 213,
+   "of": 240,
    "longplay_n": 0,
    "quotes": [
     "It\u2019s very easy to play and it\u2019s very easy to get the concept after just a few minutes. (apple5)"
@@ -27,7 +27,7 @@
   },
   "P-active": {
    "n": 3,
-   "of": 213,
+   "of": 240,
    "longplay_n": 0,
    "quotes": [
     "It\u2019s fun and engaging with an incredible theme. (apple5)",
@@ -36,7 +36,7 @@
   },
   "P-dev": {
    "n": 2,
-   "of": 213,
+   "of": 240,
    "longplay_n": 0,
    "quotes": [
     "I\u2019ve been playing this for about a month and the constant updates are really great and there is always stuff to do. (apple5)"
@@ -44,7 +44,7 @@
   },
   "P-unlock": {
    "n": 3,
-   "of": 213,
+   "of": 240,
    "longplay_n": 0,
    "quotes": [
     "I also like that they care enough to consistently update the game, fixing the game and adding new content, to keep the game fresh. (apple5)",
@@ -53,7 +53,7 @@
   },
   "P-collect": {
    "n": 6,
-   "of": 213,
+   "of": 240,
    "longplay_n": 0,
    "quotes": [
     "The button is hidden with the other stuff in the menu drop down which makes it hard to remember it\u2019s there and counterintuitive to use. (apple5)",
@@ -62,13 +62,13 @@
   },
   "P-goals": {
    "n": 0,
-   "of": 213,
+   "of": 240,
    "longplay_n": 0,
    "quotes": []
   },
   "P-depth": {
    "n": 3,
-   "of": 213,
+   "of": 240,
    "longplay_n": 0,
    "quotes": [
     "Only because your not limited to much stuff you kinda have the freedom to make whatever build you want (apple5)",
@@ -77,25 +77,25 @@
   },
   "P-fair": {
    "n": 1,
-   "of": 213,
+   "of": 240,
    "longplay_n": 0,
    "quotes": []
   },
   "P-interlock": {
    "n": 0,
-   "of": 213,
+   "of": 240,
    "longplay_n": 0,
    "quotes": []
   },
   "P-prestige": {
    "n": 0,
-   "of": 213,
+   "of": 240,
    "longplay_n": 0,
    "quotes": []
   },
   "P-qol": {
    "n": 4,
-   "of": 213,
+   "of": 240,
    "longplay_n": 0,
    "quotes": [
     "They truly care about the quality of life with this game. (apple5)",
@@ -103,14 +103,14 @@
    ]
   },
   "P-calm": {
-   "n": 0,
-   "of": 213,
+   "n": 1,
+   "of": 240,
    "longplay_n": 0,
    "quotes": []
   },
   "P-art": {
-   "n": 20,
-   "of": 213,
+   "n": 23,
+   "of": 240,
    "longplay_n": 0,
    "quotes": [
     "beatiful art and the bosses look beautiful. (apple4)",
@@ -119,7 +119,7 @@
   },
   "P-story": {
    "n": 9,
-   "of": 213,
+   "of": 240,
    "longplay_n": 0,
    "quotes": [
     "Overall a very well maintained game with plenty of events and quests. (apple5)",
@@ -128,7 +128,7 @@
   },
   "N-ads": {
    "n": 6,
-   "of": 105,
+   "of": 119,
    "longplay_n": 0,
    "quotes": [
     "I had bought the basic ad package for the game in order to have unlimited time on the buffs and to remove ads. (apple1)",
@@ -136,8 +136,8 @@
    ]
   },
   "N-wall": {
-   "n": 15,
-   "of": 105,
+   "n": 16,
+   "of": 119,
    "longplay_n": 0,
    "quotes": [
     "Actually, at this point no one can catch any of the top players because of the massive time-wall (apple2)",
@@ -146,7 +146,7 @@
   },
   "N-pay": {
    "n": 11,
-   "of": 105,
+   "of": 119,
    "longplay_n": 0,
    "quotes": [
     "yes it is a free game but they added so much paywall stuff that the game is almost impossible without spending $50 or more. (apple1)",
@@ -155,13 +155,13 @@
   },
   "N-dominant": {
    "n": 0,
-   "of": 105,
+   "of": 119,
    "longplay_n": 0,
    "quotes": []
   },
   "N-late": {
-   "n": 3,
-   "of": 105,
+   "n": 4,
+   "of": 119,
    "longplay_n": 0,
    "quotes": [
     "Starts off pretty interesting, then gets boring for me\u2026 i think there\u2019s not enough to do, and it\u2019s too repetitive. (apple3)",
@@ -170,13 +170,13 @@
   },
   "N-offline": {
    "n": 0,
-   "of": 105,
+   "of": 119,
    "longplay_n": 0,
    "quotes": []
   },
   "N-mobile": {
    "n": 1,
-   "of": 105,
+   "of": 119,
    "longplay_n": 0,
    "quotes": [
     "However, sometimes the notifications I receive will say weird things such as \u201cNotification_text_1\u201d, \u201cNotification_text_2\u201d, \u201cNotification_text_3\u201d. (apple2)"
@@ -184,7 +184,7 @@
   },
   "N-bug": {
    "n": 17,
-   "of": 105,
+   "of": 119,
    "longplay_n": 0,
    "quotes": [
     "Thanks for a good game when I could play but no thanks to the buggy update. (apple1)",
@@ -193,31 +193,31 @@
   },
   "N-energy": {
    "n": 0,
-   "of": 105,
+   "of": 119,
    "longplay_n": 0,
    "quotes": []
   },
   "N-bloat": {
    "n": 0,
-   "of": 105,
+   "of": 119,
    "longplay_n": 0,
    "quotes": []
   },
   "N-chore": {
    "n": 0,
-   "of": 105,
+   "of": 119,
    "longplay_n": 0,
    "quotes": []
   },
   "N-tutorial": {
    "n": 0,
-   "of": 105,
+   "of": 119,
    "longplay_n": 0,
    "quotes": []
   },
   "N-shallow": {
    "n": 2,
-   "of": 105,
+   "of": 119,
    "longplay_n": 0,
    "quotes": [
     "The game in and of itself is simple and a good time killer. (apple1)",
@@ -226,25 +226,25 @@
   },
   "N-reset": {
    "n": 0,
-   "of": 105,
+   "of": 119,
    "longplay_n": 0,
    "quotes": []
   },
   "N-pace": {
    "n": 0,
-   "of": 105,
+   "of": 119,
    "longplay_n": 0,
    "quotes": []
   },
   "N-fast": {
    "n": 0,
-   "of": 105,
+   "of": 119,
    "longplay_n": 0,
    "quotes": []
   },
   "N-balance": {
    "n": 1,
-   "of": 105,
+   "of": 119,
    "longplay_n": 0,
    "quotes": [
     "You can instantly buy your way to being overpowered as well so the ranking doesn\u2019t matter. (apple3)"

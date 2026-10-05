@@ -1,9 +1,9 @@
 {
  "slug": "antimatter-dimensions",
- "n_reviews": 89,
+ "n_reviews": 88,
  "n_pos": 45,
- "n_neg": 44,
- "n_longplay_neg": 17,
+ "n_neg": 43,
+ "n_longplay_neg": 25,
  "sources": [
   "steam",
   "apple"
@@ -22,10 +22,11 @@
    "quotes": []
   },
   "P-active": {
-   "n": 1,
+   "n": 3,
    "of": 45,
    "longplay_n": 0,
    "quotes": [
+    "322 days and 765 hours of active play later, I have finally beaten this game. (steam+, 765h)",
     "One of the best incrementals I've ever played, with a massive focus on active play. (steam+, 1461h)"
    ]
   },
@@ -36,21 +37,20 @@
    "quotes": []
   },
   "P-unlock": {
-   "n": 2,
+   "n": 1,
    "of": 45,
    "longplay_n": 0,
    "quotes": [
-    "Said mechanics are stripped down to their bare essentials: purchase upgrades, harvest antimatter, increase production, prestige, unlock new systems, repeat. (steam+, 12h)",
     "Said mechanics are stripped down to their bare essentials: purchase upgrades, harvest antimatter, increase production, prestige, unlock new systems, repeat. (steam+, 12h)"
    ]
   },
   "P-collect": {
-   "n": 5,
+   "n": 3,
    "of": 45,
    "longplay_n": 0,
    "quotes": [
     "Didn't really understand what was going on but I got a cool L4D achievement out of this so it gets a positive from me. (steam+, 2h)",
-    "Didn't really understand what was going on but I got a cool L4D achievement out of this so it gets a positive from me. (steam+, 2h)"
+    "However, I have since then gotten a new phone, and was dismayed that I could not collect antimatter on IPhone. (apple5)"
    ]
   },
   "P-goals": {
@@ -63,10 +63,12 @@
    "n": 2,
    "of": 45,
    "longplay_n": 0,
-   "quotes": []
+   "quotes": [
+    "It comes with all the basic stuff like big number goes up, but then throws decisions and strategy in the mix. (steam+, 760h)"
+   ]
   },
   "P-fair": {
-   "n": 1,
+   "n": 2,
    "of": 45,
    "longplay_n": 0,
    "quotes": []
@@ -78,11 +80,11 @@
    "quotes": []
   },
   "P-prestige": {
-   "n": 3,
+   "n": 4,
    "of": 45,
    "longplay_n": 0,
    "quotes": [
-    "Said mechanics are stripped down to their bare essentials: purchase upgrades, harvest antimatter, increase production, prestige, unlock new systems, repeat. (steam+, 12h)",
+    "More than 300+ Upgrades, with each Prestige Layer having their own mechanics. (steam+, 732h)",
     "Said mechanics are stripped down to their bare essentials: purchase upgrades, harvest antimatter, increase production, prestige, unlock new systems, repeat. (steam+, 12h)"
    ]
   },
@@ -99,40 +101,41 @@
    "quotes": []
   },
   "P-art": {
-   "n": 1,
+   "n": 2,
    "of": 45,
    "longplay_n": 0,
    "quotes": [
+    "While many games are expanded haphazardly, I never expected this game to have such a beautiful ending. (steam+, 1484h)",
     "Don\u2019t be fooled by the simple looking graphics or text, this is an incredibly well made game. (apple5)"
    ]
   },
   "P-story": {
-   "n": 0,
+   "n": 1,
    "of": 45,
    "longplay_n": 0,
    "quotes": []
   },
   "N-ads": {
-   "n": 4,
-   "of": 44,
-   "longplay_n": 0,
+   "n": 5,
+   "of": 43,
+   "longplay_n": 1,
    "quotes": [
     "Absolute amateur hour that doesn\u2019t give the genius of the original AD game any justice. (apple1)",
-    "I love AD & played Steam & the unofficial iOS version, iPad & iPhone felt like steam version on my device. (apple1)"
+    "I saw someone ranting about how \"Revolution Idle copied AD\" (which arguably it didn't), checked their profile, an (steam-, 1076h)"
    ]
   },
   "N-wall": {
-   "n": 4,
-   "of": 44,
-   "longplay_n": 2,
+   "n": 5,
+   "of": 43,
+   "longplay_n": 4,
    "quotes": [
-    "im softlocked and its way too grindy (steam-, 27h)",
-    "im softlocked and its way too grindy (steam-, 27h)"
+    "I love idle games but this is just way too slow for me. (steam-, 62h)",
+    "I am a sucker fr these games, but this game is way too slow to the end. (steam-, 650h)"
    ]
   },
   "N-pay": {
    "n": 1,
-   "of": 44,
+   "of": 43,
    "longplay_n": 0,
    "quotes": [
     "Is this a weird low effort iAP cash grab? (apple1)"
@@ -140,91 +143,90 @@
   },
   "N-dominant": {
    "n": 0,
-   "of": 44,
+   "of": 43,
    "longplay_n": 0,
    "quotes": []
   },
   "N-late": {
    "n": 0,
-   "of": 44,
+   "of": 43,
    "longplay_n": 0,
    "quotes": []
   },
   "N-offline": {
    "n": 0,
-   "of": 44,
+   "of": 43,
    "longplay_n": 0,
    "quotes": []
   },
   "N-mobile": {
    "n": 0,
-   "of": 44,
+   "of": 43,
    "longplay_n": 0,
    "quotes": []
   },
   "N-bug": {
-   "n": 2,
-   "of": 44,
+   "n": 0,
+   "of": 43,
    "longplay_n": 0,
    "quotes": []
   },
   "N-energy": {
    "n": 0,
-   "of": 44,
+   "of": 43,
    "longplay_n": 0,
    "quotes": []
   },
   "N-bloat": {
    "n": 0,
-   "of": 44,
+   "of": 43,
    "longplay_n": 0,
    "quotes": []
   },
   "N-chore": {
-   "n": 2,
-   "of": 44,
-   "longplay_n": 2,
+   "n": 1,
+   "of": 43,
+   "longplay_n": 1,
    "quotes": [
-    "Way too slow even for an idle/clicker type game, eternity challenges made me quit, it just became a chore even with offline progression. (steam-, 294h)",
     "Way too slow even for an idle/clicker type game, eternity challenges made me quit, it just became a chore even with offline progression. (steam-, 294h)"
    ]
   },
   "N-tutorial": {
    "n": 0,
-   "of": 44,
+   "of": 43,
    "longplay_n": 0,
    "quotes": []
   },
   "N-shallow": {
    "n": 3,
-   "of": 44,
+   "of": 43,
    "longplay_n": 3,
    "quotes": [
-    "At least at the beginning its a simple design, and the gameplay is quite cyclical. (steam-, 250h)",
-    "At least at the beginning its a simple design, and the gameplay is quite cyclical. (steam-, 251h)"
+    "At least at the beginning its a simple design, and the gameplay is quite cyclical. (steam-, 252h)",
+    "Game get to a point that you have to leave it afk for a week to just click 1 button. (steam-, 389h)"
    ]
   },
   "N-reset": {
    "n": 0,
-   "of": 44,
+   "of": 43,
    "longplay_n": 0,
    "quotes": []
   },
   "N-pace": {
    "n": 0,
-   "of": 44,
+   "of": 43,
    "longplay_n": 0,
    "quotes": []
   },
   "N-fast": {
    "n": 0,
-   "of": 44,
+   "of": 43,
    "longplay_n": 0,
    "quotes": []
   },
   "N-balance": {
    "n": 0,
-   "of": 44,
+   "of": 43,
    "longplay_n": 0,
    "quotes": []
   }

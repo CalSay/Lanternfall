@@ -15,26 +15,25 @@ def get(url):
     return {"_error": err}
 
 def steam(appid):
-    base = "https://store.steampowered.com/appreviews/%s?json=1&language=english&filter=all&num_per_page=100&purchase_type=all&cursor=" % appid
+    """One page of 100 per sentiment. filter=all uses sliding helpfulness windows and does not paginate reliably
+    (Steam docs), so we read one page per sentiment over the widest window the API allows (day_range=365: the most helpful reviews
+    of the last year) and deduplicate by recommendationid."""
+    base = "https://store.steampowered.com/appreviews/%s?json=1&language=english&filter=all&num_per_page=100&purchase_type=all&day_range=365&cursor=*&review_type=" % appid
     out = {"summary": None, "pos": [], "neg": []}
-    for kind in ("positive", "negative"):
-        cur, seen = "*", 0
-        for _ in range(3):
-            d = get(base.replace("filter=all", "filter=all") + urllib.parse.quote(cur) + "&review_type=" + kind)
-            if "_error" in d: raise RuntimeError("steam %s %s feed failed: %s" % (appid, kind, d["_error"]))
-            if not d.get("reviews"): break
-            if not out["summary"]: out["summary"] = d.get("query_summary")
-            for r in d["reviews"]:
-                out["pos" if kind == "positive" else "neg"].append({
-                    "votes_up": r["votes_up"], "hours": round(r["author"].get("playtime_forever", 0) / 60),
-                    "text": r["review"][:900]})
-            cur = d.get("cursor", cur)
-    for k in ("pos", "neg"):
-        out[k].sort(key=lambda r: -r["votes_up"])
+    for kind, key in (("positive", "pos"), ("negative", "neg")):
+        d = get(base + kind)
+        if "_error" in d: raise RuntimeError("steam %s %s feed failed: %s" % (appid, kind, d["_error"]))
+        if not out["summary"]: out["summary"] = d.get("query_summary")
+        seen = set()
+        for r in d.get("reviews", []):
+            if r["recommendationid"] in seen: continue
+            seen.add(r["recommendationid"])
+            out[key].append({"id": r["recommendationid"], "votes_up": r["votes_up"],
+                             "hours": round(r["author"].get("playtime_forever", 0) / 60), "text": r["review"][:900]})
+        out[key].sort(key=lambda r: -r["votes_up"])
     out["pos"] = out["pos"][:25]
-    long_neg = [r for r in out["neg"] if r["hours"] >= 50][:25]
+    out["neg_longplay_50h"] = [r for r in out["neg"] if r["hours"] >= 50][:25]
     out["neg"] = out["neg"][:25]
-    out["neg_longplay_50h"] = long_neg
     return out
 
 def apple(appid, country="us"):

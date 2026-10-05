@@ -1,213 +1,228 @@
 {
  "slug": "crusaders-lost-idols",
- "n_reviews": 24,
- "n_pos": 12,
- "n_neg": 12,
- "n_longplay_neg": 2,
+ "n_reviews": 38,
+ "n_pos": 25,
+ "n_neg": 13,
+ "n_longplay_neg": 5,
  "sources": [
   "steam"
  ],
  "themes": {
   "P-offline": {
    "n": 0,
-   "of": 12,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "P-respect": {
-   "n": 0,
-   "of": 12,
+   "n": 2,
+   "of": 25,
    "longplay_n": 0,
-   "quotes": []
+   "quotes": [
+    "Good for casual play but also has depth for hardcore min-maxers. (steam+, 12h)"
+   ]
   },
   "P-active": {
    "n": 0,
-   "of": 12,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "P-dev": {
    "n": 0,
-   "of": 12,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "P-unlock": {
    "n": 0,
-   "of": 12,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "P-collect": {
-   "n": 6,
-   "of": 12,
+   "n": 4,
+   "of": 25,
    "longplay_n": 0,
    "quotes": [
     "peanut would love some pets and treats :) (steam+, 100h)",
-    "peanut would love some pets and treats :) (steam+, 100h)"
+    "I really enjoyed 100%ing the achievements. (steam+, 3157h)"
    ]
   },
   "P-goals": {
-   "n": 0,
-   "of": 12,
+   "n": 1,
+   "of": 25,
    "longplay_n": 0,
-   "quotes": []
+   "quotes": [
+    "There is always something to do. (steam+, 10h)"
+   ]
   },
   "P-depth": {
-   "n": 0,
-   "of": 12,
+   "n": 3,
+   "of": 25,
    "longplay_n": 0,
-   "quotes": []
+   "quotes": [
+    "Nothing else comes close to this depth.\u200d (steam+, 11h)",
+    "Good for casual play but also has depth for hardcore min-maxers. (steam+, 12h)"
+   ]
   },
   "P-fair": {
    "n": 0,
-   "of": 12,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "P-interlock": {
    "n": 0,
-   "of": 12,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "P-prestige": {
    "n": 0,
-   "of": 12,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "P-qol": {
    "n": 0,
-   "of": 12,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "P-calm": {
    "n": 0,
-   "of": 12,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "P-art": {
    "n": 0,
-   "of": 12,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "P-story": {
-   "n": 0,
-   "of": 12,
+   "n": 3,
+   "of": 25,
    "longplay_n": 0,
-   "quotes": []
+   "quotes": [
+    "I cant explain why, but moving cartoon characters around a grid is incredibly compelling gameplay.\u200d (steam+, 10h)",
+    "The progression loop starts slow, but once you unlock stronger characters, things scale exponentially\u2014just expect the journey to take longer than you think. (steam+, 3157h)"
+   ]
   },
   "N-ads": {
-   "n": 5,
-   "of": 12,
-   "longplay_n": 2,
+   "n": 2,
+   "of": 13,
+   "longplay_n": 1,
    "quotes": [
-    "very slow, very in your face with ads, it takes the worst elements of clicker heroes 1 and 2 and merges them into this turd. (steam-, 67h)",
     "very slow, very in your face with ads, it takes the worst elements of clicker heroes 1 and 2 and merges them into this turd. (steam-, 67h)"
    ]
   },
   "N-wall": {
-   "n": 3,
-   "of": 12,
-   "longplay_n": 0,
-   "quotes": []
+   "n": 2,
+   "of": 13,
+   "longplay_n": 1,
+   "quotes": [
+    "You have to grind through a bunch of objectives for a character you'll never use because their only ability is increas (steam-, 5951h)"
+   ]
   },
   "N-pay": {
-   "n": 5,
-   "of": 12,
-   "longplay_n": 2,
+   "n": 4,
+   "of": 13,
+   "longplay_n": 3,
    "quotes": [
-    "In addition to the DLC here on the Steam store, the game is LITTERED with different microtransactions. (steam-, 2h)",
+    "On top of that, it\u2019s loaded with microtransactions and FOMO junk that constantly nags you to spend money. (steam-, 235h)",
     "Do you want a game where you can whale away your money for only a tiny bit of progress? (steam-, 67h)"
    ]
   },
   "N-dominant": {
    "n": 0,
-   "of": 12,
+   "of": 13,
    "longplay_n": 0,
    "quotes": []
   },
   "N-late": {
    "n": 0,
-   "of": 12,
+   "of": 13,
    "longplay_n": 0,
    "quotes": []
   },
   "N-offline": {
    "n": 0,
-   "of": 12,
+   "of": 13,
    "longplay_n": 0,
    "quotes": []
   },
   "N-mobile": {
    "n": 0,
-   "of": 12,
+   "of": 13,
    "longplay_n": 0,
    "quotes": []
   },
   "N-bug": {
-   "n": 0,
-   "of": 12,
+   "n": 1,
+   "of": 13,
    "longplay_n": 0,
-   "quotes": []
+   "quotes": [
+    "The game could be fun and playable, but it clearly needs some bug fixes. (steam-, 8h)"
+   ]
   },
   "N-energy": {
    "n": 0,
-   "of": 12,
+   "of": 13,
    "longplay_n": 0,
    "quotes": []
   },
   "N-bloat": {
    "n": 0,
-   "of": 12,
+   "of": 13,
    "longplay_n": 0,
    "quotes": []
   },
   "N-chore": {
    "n": 0,
-   "of": 12,
+   "of": 13,
    "longplay_n": 0,
    "quotes": []
   },
   "N-tutorial": {
-   "n": 0,
-   "of": 12,
+   "n": 1,
+   "of": 13,
    "longplay_n": 0,
    "quotes": []
   },
   "N-shallow": {
    "n": 0,
-   "of": 12,
+   "of": 13,
    "longplay_n": 0,
    "quotes": []
   },
   "N-reset": {
    "n": 0,
-   "of": 12,
+   "of": 13,
    "longplay_n": 0,
    "quotes": []
   },
   "N-pace": {
    "n": 0,
-   "of": 12,
+   "of": 13,
    "longplay_n": 0,
    "quotes": []
   },
   "N-fast": {
    "n": 0,
-   "of": 12,
+   "of": 13,
    "longplay_n": 0,
    "quotes": []
   },
   "N-balance": {
-   "n": 0,
-   "of": 12,
-   "longplay_n": 0,
-   "quotes": []
+   "n": 1,
+   "of": 13,
+   "longplay_n": 1,
+   "quotes": [
+    "There are a lot of big problems with this game though, the biggest being balance. (steam-, 5951h)"
+   ]
   }
  }
 }

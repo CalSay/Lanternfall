@@ -1,18 +1,20 @@
 {
  "slug": "ngu-idle",
- "n_reviews": 52,
+ "n_reviews": 59,
  "n_pos": 25,
- "n_neg": 27,
- "n_longplay_neg": 18,
+ "n_neg": 34,
+ "n_longplay_neg": 24,
  "sources": [
   "steam"
  ],
  "themes": {
   "P-offline": {
-   "n": 0,
+   "n": 4,
    "of": 25,
    "longplay_n": 0,
-   "quotes": []
+   "quotes": [
+    "+ Can't be fully idled but doesn't need to run in the background except for challenges and boss fights (steam+, 2976h)"
+   ]
   },
   "P-respect": {
    "n": 0,
@@ -35,16 +37,20 @@
    ]
   },
   "P-unlock": {
-   "n": 0,
+   "n": 1,
    "of": 25,
    "longplay_n": 0,
-   "quotes": []
+   "quotes": [
+    "You can't get bored in NGU Idle as there is always something new and fresh to do. (steam+, 1758h)"
+   ]
   },
   "P-collect": {
-   "n": 0,
+   "n": 1,
    "of": 25,
    "longplay_n": 0,
-   "quotes": []
+   "quotes": [
+    "Beating this game is probably my greatest achievement so far in life and there is no one in the real world who understands..... (steam+, 4021h)"
+   ]
   },
   "P-goals": {
    "n": 0,
@@ -71,7 +77,7 @@
    "quotes": []
   },
   "P-prestige": {
-   "n": 0,
+   "n": 1,
    "of": 25,
    "longplay_n": 0,
    "quotes": []
@@ -83,125 +89,135 @@
    "quotes": []
   },
   "P-calm": {
-   "n": 0,
+   "n": 1,
    "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "P-art": {
-   "n": 0,
+   "n": 1,
    "of": 25,
    "longplay_n": 0,
-   "quotes": []
+   "quotes": [
+    "pretty good, would recommend if you are in a depression spiral, the silly graphics give dopamine! (steam+, 12264h)"
+   ]
   },
   "P-story": {
-   "n": 0,
+   "n": 2,
    "of": 25,
    "longplay_n": 0,
-   "quotes": []
+   "quotes": [
+    "It has tons of upgradability, features within the game, lots of different game mechanics, funny characters. (steam+, 18874h)"
+   ]
   },
   "N-ads": {
    "n": 0,
-   "of": 27,
+   "of": 34,
    "longplay_n": 0,
    "quotes": []
   },
   "N-wall": {
-   "n": 0,
-   "of": 27,
-   "longplay_n": 0,
-   "quotes": []
+   "n": 4,
+   "of": 34,
+   "longplay_n": 3,
+   "quotes": [
+    "The grind is not particularly interesting, there's not much skill/decision making, and the kicker is the fact there's in-app purchases to speed things up. (steam-, 5h)",
+    "Doing anything in this game is an extreme grind. (steam-, 186h)"
+   ]
   },
   "N-pay": {
-   "n": 0,
-   "of": 27,
-   "longplay_n": 0,
-   "quotes": []
+   "n": 1,
+   "of": 34,
+   "longplay_n": 1,
+   "quotes": [
+    "Basic automation features are locked behind somewhere between hundreds and thousands of hours of playtime, or a paywall (or a cheatwall). (steam-, 186h)"
+   ]
   },
   "N-dominant": {
    "n": 0,
-   "of": 27,
+   "of": 34,
    "longplay_n": 0,
    "quotes": []
   },
   "N-late": {
    "n": 1,
-   "of": 27,
+   "of": 34,
    "longplay_n": 1,
    "quotes": []
   },
   "N-offline": {
    "n": 0,
-   "of": 27,
+   "of": 34,
    "longplay_n": 0,
    "quotes": []
   },
   "N-mobile": {
    "n": 0,
-   "of": 27,
+   "of": 34,
    "longplay_n": 0,
    "quotes": []
   },
   "N-bug": {
-   "n": 0,
-   "of": 27,
-   "longplay_n": 0,
+   "n": 1,
+   "of": 34,
+   "longplay_n": 1,
    "quotes": []
   },
   "N-energy": {
-   "n": 0,
-   "of": 27,
+   "n": 1,
+   "of": 34,
    "longplay_n": 0,
    "quotes": []
   },
   "N-bloat": {
    "n": 0,
-   "of": 27,
+   "of": 34,
    "longplay_n": 0,
    "quotes": []
   },
   "N-chore": {
    "n": 0,
-   "of": 27,
+   "of": 34,
    "longplay_n": 0,
    "quotes": []
   },
   "N-tutorial": {
-   "n": 2,
-   "of": 27,
+   "n": 1,
+   "of": 34,
    "longplay_n": 0,
    "quotes": [
-    "But the game's presentation, tutorial, and UX are driving me away. (steam-)",
     "But the game's presentation, tutorial, and UX are driving me away. (steam-)"
    ]
   },
   "N-shallow": {
-   "n": 0,
-   "of": 27,
-   "longplay_n": 0,
-   "quotes": []
+   "n": 1,
+   "of": 34,
+   "longplay_n": 1,
+   "quotes": [
+    "So, I really feel like any positivity towards this game is entirely comprised of either Nostalgia, or simple Stockholm Syndrome. (steam-, 186h)"
+   ]
   },
   "N-reset": {
    "n": 0,
-   "of": 27,
+   "of": 34,
    "longplay_n": 0,
    "quotes": []
   },
   "N-pace": {
    "n": 0,
-   "of": 27,
+   "of": 34,
    "longplay_n": 0,
    "quotes": []
   },
   "N-fast": {
    "n": 0,
-   "of": 27,
+   "of": 34,
    "longplay_n": 0,
    "quotes": []
   },
   "N-balance": {
    "n": 0,
-   "of": 27,
+   "of": 34,
    "longplay_n": 0,
    "quotes": []
   }

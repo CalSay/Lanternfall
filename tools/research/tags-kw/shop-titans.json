@@ -1,8 +1,8 @@
 {
  "slug": "shop-titans",
- "n_reviews": 519,
- "n_pos": 273,
- "n_neg": 246,
+ "n_reviews": 356,
+ "n_pos": 176,
+ "n_neg": 180,
  "n_longplay_neg": 25,
  "sources": [
   "steam",
@@ -10,44 +10,43 @@
  ],
  "themes": {
   "P-offline": {
-   "n": 3,
-   "of": 273,
+   "n": 1,
+   "of": 176,
    "longplay_n": 0,
    "quotes": [
-    "The game is fun, easy to play, and despite being an AFK game, there is a lot to do real-time. (apple5)",
-    "Also there is no way to make items when you\u2019re offline. (apple4)"
+    "The game is fun, easy to play, and despite being an AFK game, there is a lot to do real-time. (apple5)"
    ]
   },
   "P-respect": {
-   "n": 11,
-   "of": 273,
+   "n": 9,
+   "of": 176,
    "longplay_n": 0,
    "quotes": [
-    "I\u2019m a minmaxer when it comes to games, and my wife is very casual, and this game suits both of our play styles. (apple5)",
-    "Otherwise, nice game for casual gamers, but it needs a(n) auto-build function. (apple4)"
+    "But for some chill gameplay and casual clicking while working on the computer? (steam+, 299h)",
+    "Managing your shop is super casual. (apple5)"
    ]
   },
   "P-active": {
-   "n": 6,
-   "of": 273,
+   "n": 8,
+   "of": 176,
    "longplay_n": 0,
    "quotes": [
-    "62 perfect skill dice into a conquistador, looking for one of two epic skills. (apple4)",
-    "I can pick this game up in the spare minutes I find during my days while also engaging deeper when I have the time. (apple5)"
+    "I can pick this game up in the spare minutes I find during my days while also engaging deeper when I have the time. (apple5)",
+    "62 perfect skill dice into a conquistador, looking for one of two epic skills. (apple4)"
    ]
   },
   "P-dev": {
-   "n": 14,
-   "of": 273,
+   "n": 9,
+   "of": 176,
    "longplay_n": 0,
    "quotes": [
     "The fact that the Devs are still adding to the content and storyline is great, I am definitely enjoying the storyline. (steam+, 435h)",
-    "The fact that the Devs are still adding to the content and storyline is great, I am definitely enjoying the storyline. (steam+, 435h)"
+    "No ads, multiple \u201cobjectives\u201d, regular updates, 10/10! (apple5)"
    ]
   },
   "P-unlock": {
-   "n": 10,
-   "of": 273,
+   "n": 8,
+   "of": 176,
    "longplay_n": 0,
    "quotes": [
     "You could also add in like a restaurant slot you can buy where you buy tables and cook recipes to unlock more recipes. (apple5)",
@@ -55,84 +54,82 @@
    ]
   },
   "P-collect": {
-   "n": 29,
-   "of": 273,
+   "n": 13,
+   "of": 176,
    "longplay_n": 0,
    "quotes": [
-    "Being able to swap out pet species without loosing the upgrade progress is also a plus. (steam+, 435h)",
+    "Run and decorate your shop and gear up your heroes to go fight for loot! (steam+, 479h)",
     "Being able to swap out pet species without loosing the upgrade progress is also a plus. (steam+, 435h)"
    ]
   },
   "P-goals": {
-   "n": 3,
-   "of": 273,
+   "n": 4,
+   "of": 176,
    "longplay_n": 0,
    "quotes": [
-    "There\u2019s always something to do, but it never feels stressful or overwhelming. (steam+, 42h)"
+    "It's a really good game; there's always something to do. (steam+, 10390h)",
+    "+ There's always something to do. (steam+, 1h)"
    ]
   },
   "P-depth": {
-   "n": 16,
-   "of": 273,
+   "n": 7,
+   "of": 176,
    "longplay_n": 0,
    "quotes": [
-    "Not only are you a shopkeeper but you also gear up hero\u2019s to get supplies for you, you help build the town. (apple5)",
-    "It starts out very easy to understand, but gets very in depth the more you play and do your research. (apple5)"
+    "You get these characters that do auto battles for you but there's no depth to it. (steam+, 572h)",
+    "Not only are you a shopkeeper but you also gear up hero\u2019s to get supplies for you, you help build the town. (apple5)"
    ]
   },
   "P-fair": {
-   "n": 31,
-   "of": 273,
+   "n": 25,
+   "of": 176,
    "longplay_n": 0,
    "quotes": [
     "Amazing progression game with no ads. (apple5)",
-    "I\u2019ve probably spent (being generous here) $1000 on the game and I feel as though the payouts for the gems could be increased by 20%. (apple4)"
+    "You can progress without spending money; there are no ads. (steam+, 10390h)"
    ]
   },
   "P-interlock": {
    "n": 0,
-   "of": 273,
+   "of": 176,
    "longplay_n": 0,
    "quotes": []
   },
   "P-prestige": {
-   "n": 3,
-   "of": 273,
+   "n": 1,
+   "of": 176,
    "longplay_n": 0,
    "quotes": [
     "Also prestige shouldn\u2019t just be a leaderboard thing it should also attract customers. (apple5)"
    ]
   },
   "P-qol": {
-   "n": 6,
-   "of": 273,
+   "n": 3,
+   "of": 176,
    "longplay_n": 0,
-   "quotes": [
-    "I just wish that there was an auto sell option for when I\u2019m not playing, like maybe items would sell every 10 minutes or something? (apple5)",
-    "It starts out very easy to understand, but gets very in depth the more you play and do your research. (apple5)"
-   ]
+   "quotes": []
   },
   "P-calm": {
-   "n": 12,
-   "of": 273,
+   "n": 11,
+   "of": 176,
    "longplay_n": 0,
    "quotes": [
-    "its relaxing and go at your own pace. (steam+, 245h)",
-    "its relaxing and go at your own pace. (steam+, 245h)"
+    "But for some chill gameplay and casual clicking while working on the computer? (steam+, 299h)",
+    "very good game, simple and good to relax (steam+, 601h)"
    ]
   },
   "P-art": {
-   "n": 14,
-   "of": 273,
+   "n": 8,
+   "of": 176,
    "longplay_n": 0,
    "quotes": [
-    "Game is great with graphics and also very interactive I do wish you could add friends but enough opinions. (apple5)",
-    "The graphics are wonderful, especially for an idle-game. (apple5)"
+    "+ The art style is charming and full of personality. (steam+, 1h)",
+    "It has no ads, it\u2019s cute and unique. (apple4)"
    ]
   },
   "P-story": {
-   "n": 58,
-   "of": 273,
+   "n": 24,
+   "of": 176,
    "longplay_n": 0,
    "quotes": [
     "Don\u2019t get me wrong, I\u2019m still playing, and I\u2019d be tempted by the pay content...if it removed all the waiting for gear and/or quests (apple4)",
@@ -140,8 +137,8 @@
    ]
   },
   "N-ads": {
-   "n": 7,
-   "of": 246,
+   "n": 5,
+   "of": 180,
    "longplay_n": 0,
    "quotes": [
     "No ads and no spending money. (apple1)",
@@ -149,129 +146,120 @@
    ]
   },
   "N-wall": {
-   "n": 19,
-   "of": 246,
-   "longplay_n": 2,
+   "n": 16,
+   "of": 180,
+   "longplay_n": 4,
    "quotes": [
-    "Huge parts of the games (for example 3 premium workers) are locked behind a pay wall. (apple3)",
-    "It makes this game complete garbage and you get stuck building level 1 or 2 items because you are bottled necked into (apple2)"
+    "I mostly enjoyed my time with this game overall, but I found that I hit a pretty hard wall. (steam-, 18h)",
+    "I played this game for over a year and the daily grind got me through a period of uncertainty (steam-, 794h)"
    ]
   },
   "N-pay": {
-   "n": 33,
-   "of": 246,
-   "longplay_n": 3,
+   "n": 22,
+   "of": 180,
+   "longplay_n": 5,
    "quotes": [
-    "Devs have been increasingly making it more P2P / P2W (steam-, 197h)",
-    "Devs have been increasingly making it more P2P / P2W (steam-, 197h)"
+    "Game is good but the publisher is so greedy, a bunch of stuff are lock behind a paywall. (steam-, 1h)",
+    "obscene amount of paid options / microtransactions (steam-, 585h)"
    ]
   },
   "N-dominant": {
    "n": 0,
-   "of": 246,
+   "of": 180,
    "longplay_n": 0,
    "quotes": []
   },
   "N-late": {
-   "n": 12,
-   "of": 246,
+   "n": 6,
+   "of": 180,
    "longplay_n": 0,
    "quotes": [
     "That said, progressing to end game is nigh impossible without leveraging a few of your paychecks to this game. (apple3)",
-    "If you want player retention, you also have to think about the \u201clate game\u201d. (apple3)"
+    "Other than that decorations are so sparse and there are no new wall tiles other than bookshelves making lategame shops look really bland. (apple1)"
    ]
   },
   "N-offline": {
-   "n": 1,
-   "of": 246,
+   "n": 0,
+   "of": 180,
    "longplay_n": 0,
-   "quotes": [
-    "There\u2019s also no offline progression, expect to have to check your phone every 1-3 minutes to keep (apple3)"
-   ]
+   "quotes": []
   },
   "N-mobile": {
    "n": 1,
-   "of": 246,
+   "of": 180,
    "longplay_n": 0,
    "quotes": []
   },
   "N-bug": {
-   "n": 46,
-   "of": 246,
-   "longplay_n": 6,
+   "n": 33,
+   "of": 180,
+   "longplay_n": 5,
    "quotes": [
     "Devs did not seem to care enough to fix a steam exclusive bug making it really obviouse that it remains a mobile no. (steam-, 143h)",
-    "Devs did not seem to care enough to fix a steam exclusive bug making it really obviouse that it remains a mobile no. (steam-, 143h)"
+    "full of bugs, bad design, and paywalls (steam-, 71h)"
    ]
   },
   "N-energy": {
-   "n": 18,
-   "of": 246,
+   "n": 9,
+   "of": 180,
    "longplay_n": 0,
    "quotes": [
-    "Have no choice but to wait for outrageously long wait times. (apple1)",
+    "Progression and gameplay locked behind timers/cooldowns and in-game purchased currency? (steam-)",
     "I understand locking skins, premium items, or boosts/speed-ups behind a pay wall but locking core gameplay mechanics is just greed. (apple1)"
    ]
   },
   "N-bloat": {
    "n": 2,
-   "of": 246,
+   "of": 180,
    "longplay_n": 0,
    "quotes": [
     "It\u2019s unique, it\u2019s clean, it\u2019s not too cluttering or confusing. (apple3)"
    ]
   },
   "N-chore": {
-   "n": 1,
-   "of": 246,
+   "n": 0,
+   "of": 180,
    "longplay_n": 0,
    "quotes": []
   },
   "N-tutorial": {
-   "n": 3,
-   "of": 246,
+   "n": 1,
+   "of": 180,
    "longplay_n": 0,
-   "quotes": [
-    "Was in the middle of the tutorial and got to the part where you go to the city to check on your Heros. (apple3)",
-    "During the tutorial, I had a fun time exploring all the features and actions I can make in the game. (apple3)"
-   ]
+   "quotes": []
   },
   "N-shallow": {
-   "n": 5,
-   "of": 246,
+   "n": 1,
+   "of": 180,
    "longplay_n": 0,
    "quotes": [
-    "Its simple and pretty addicting and the progression is pretty smooth over all. (apple1)",
-    "Have no choice but to wait for outrageously long wait times. (apple1)"
+    "HOWEVER, having to spend $15-40 on simple things that other games have at $3-10 is insane. (apple3)"
    ]
   },
   "N-reset": {
    "n": 0,
-   "of": 246,
+   "of": 180,
    "longplay_n": 0,
    "quotes": []
   },
   "N-pace": {
    "n": 0,
-   "of": 246,
+   "of": 180,
    "longplay_n": 0,
    "quotes": []
   },
   "N-fast": {
-   "n": 3,
-   "of": 246,
+   "n": 1,
+   "of": 180,
    "longplay_n": 0,
-   "quotes": [
-    "Tonight I just ran out of the last of my gems to repair my gear. (apple2)",
-    "This game keeps my jittery hands busy and I like the art of it and that it\u2019s not too fast paced. (apple3)"
-   ]
+   "quotes": []
   },
   "N-balance": {
    "n": 4,
-   "of": 246,
+   "of": 180,
    "longplay_n": 2,
    "quotes": [
-    "you can easly kill the Terror tower, but first tomb stage isso overpowered, you can\u00b4t get it with better heroes. (steam-, 4609h)",
+    "I think so, any sane person gamer or not cannot consider this a balance. (steam-, 2780h)",
     "you can easly kill the Terror tower, but first tomb stage isso overpowered, you can\u00b4t get it with better heroes. (steam-, 4609h)"
    ]
   }

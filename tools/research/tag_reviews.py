@@ -49,9 +49,9 @@ def reviews(d):
     if s:
         for r in s['pos']: out.append(('steam+', r['votes_up'], r['hours'], r['text']))
         for r in s['neg']: out.append(('steam-', r['votes_up'], r['hours'], r['text']))
-        ids = {(r['text'][:50]) for r in s['neg']}
+        ids = {r['id'] for r in s['neg']}
         for r in s['neg_longplay_50h']:
-            if r['text'][:50] not in ids: out.append(('steam-', r['votes_up'], r['hours'], r['text']))
+            if r['id'] not in ids: out.append(('steam-', r['votes_up'], r['hours'], r['text']))
     a = d.get('apple')
     if a:
         for r in a['reviews']: out.append(('apple%d' % r['stars'], r['votes'], None, r['title'] + '. ' + r['text']))

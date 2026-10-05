@@ -1,34 +1,30 @@
 {
  "slug": "cookie-clicker",
- "n_reviews": 52,
+ "n_reviews": 59,
  "n_pos": 25,
- "n_neg": 27,
- "n_longplay_neg": 20,
+ "n_neg": 34,
+ "n_longplay_neg": 25,
  "sources": [
   "steam"
  ],
  "themes": {
   "P-offline": {
-   "n": 1,
-   "of": 25,
-   "longplay_n": 0,
-   "quotes": [
-    "I started completely legit, played actively, went AFK for a few days, learned the mechanics, and progressed normally. (steam+, 448h)"
-   ]
-  },
-  "P-respect": {
    "n": 0,
    "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
-  "P-active": {
-   "n": 2,
+  "P-respect": {
+   "n": 1,
    "of": 25,
    "longplay_n": 0,
-   "quotes": [
-    "That immediately made the game much more fun for me because I could focus on upgrades, ascensions, minigames and progression instead of manually clicking nonstop. (steam+, 448h)"
-   ]
+   "quotes": []
+  },
+  "P-active": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
   },
   "P-dev": {
    "n": 0,
@@ -43,12 +39,11 @@
    "quotes": []
   },
   "P-collect": {
-   "n": 5,
+   "n": 4,
    "of": 25,
    "longplay_n": 0,
    "quotes": [
-    "Good game, and done with the game, I have all the achievements (steam+, 16h)",
-    "After about a week of playing like that, I started using console commands to clean up some of the remaining achievements. (steam+, 448h)"
+    "It is primarily clicking, upgrades and achievements, so basically instant dopamine for gamers. (steam+, 1411h)"
    ]
   },
   "P-goals": {
@@ -58,10 +53,13 @@
    "quotes": []
   },
   "P-depth": {
-   "n": 0,
+   "n": 2,
    "of": 25,
    "longplay_n": 0,
-   "quotes": []
+   "quotes": [
+    "every decision we have given in our lives for a thousand years, brought us to this point: cookie clicker. (steam+, 3973h)",
+    "I did not play this game very optimally there are various strategies for various playstyles. (steam+, 15715h)"
+   ]
   },
   "P-fair": {
    "n": 0,
@@ -80,7 +78,7 @@
    "of": 25,
    "longplay_n": 0,
    "quotes": [
-    "With all prestige upgrades there wasn't too much to look forward to. (steam+, 222h)"
+    "Instead I just downloaded a mod that added more prestige upgrades cause I had so many points and then I eventually got those last two. (steam+, 15715h)"
    ]
   },
   "P-qol": {
@@ -99,118 +97,117 @@
    "n": 1,
    "of": 25,
    "longplay_n": 0,
-   "quotes": [
-    "i don't think ive ever seen anything quite as beautiful. (steam+, 87h)"
-   ]
+   "quotes": []
   },
   "P-story": {
-   "n": 1,
+   "n": 0,
    "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-ads": {
    "n": 0,
-   "of": 27,
+   "of": 34,
    "longplay_n": 0,
    "quotes": []
   },
   "N-wall": {
-   "n": 2,
-   "of": 27,
-   "longplay_n": 2,
-   "quotes": [
-    "Progression is honestly way too slow. (steam-, 317h)",
-    "Progression is honestly way too slow. (steam-, 317h)"
-   ]
+   "n": 1,
+   "of": 34,
+   "longplay_n": 1,
+   "quotes": []
   },
   "N-pay": {
    "n": 0,
-   "of": 27,
+   "of": 34,
    "longplay_n": 0,
    "quotes": []
   },
   "N-dominant": {
    "n": 0,
-   "of": 27,
+   "of": 34,
    "longplay_n": 0,
    "quotes": []
   },
   "N-late": {
-   "n": 0,
-   "of": 27,
+   "n": 1,
+   "of": 34,
    "longplay_n": 0,
-   "quotes": []
+   "quotes": [
+    "It's ugly, unfun, music actually sucks and is SO repetitive. (steam-, 12h)"
+   ]
   },
   "N-offline": {
    "n": 0,
-   "of": 27,
+   "of": 34,
    "longplay_n": 0,
    "quotes": []
   },
   "N-mobile": {
    "n": 0,
-   "of": 27,
+   "of": 34,
    "longplay_n": 0,
    "quotes": []
   },
   "N-bug": {
-   "n": 0,
-   "of": 27,
-   "longplay_n": 0,
-   "quotes": []
+   "n": 1,
+   "of": 34,
+   "longplay_n": 1,
+   "quotes": [
+    "Very buggy UI, basically nothing is stable, all Icons are sometimes moving around. (steam-, 209h)"
+   ]
   },
   "N-energy": {
    "n": 0,
-   "of": 27,
+   "of": 34,
    "longplay_n": 0,
    "quotes": []
   },
   "N-bloat": {
    "n": 0,
-   "of": 27,
+   "of": 34,
    "longplay_n": 0,
    "quotes": []
   },
   "N-chore": {
    "n": 0,
-   "of": 27,
+   "of": 34,
    "longplay_n": 0,
    "quotes": []
   },
   "N-tutorial": {
    "n": 0,
-   "of": 27,
+   "of": 34,
    "longplay_n": 0,
    "quotes": []
   },
   "N-shallow": {
    "n": 0,
-   "of": 27,
+   "of": 34,
    "longplay_n": 0,
    "quotes": []
   },
   "N-reset": {
    "n": 0,
-   "of": 27,
+   "of": 34,
    "longplay_n": 0,
    "quotes": []
   },
   "N-pace": {
    "n": 0,
-   "of": 27,
+   "of": 34,
    "longplay_n": 0,
    "quotes": []
   },
   "N-fast": {
    "n": 0,
-   "of": 27,
+   "of": 34,
    "longplay_n": 0,
    "quotes": []
   },
   "N-balance": {
    "n": 0,
-   "of": 27,
+   "of": 34,
    "longplay_n": 0,
    "quotes": []
   }

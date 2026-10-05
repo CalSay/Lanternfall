@@ -1,17 +1,17 @@
 {
  "slug": "vampire-survivors",
- "n_reviews": 503,
- "n_pos": 341,
- "n_neg": 162,
- "n_longplay_neg": 24,
+ "n_reviews": 394,
+ "n_pos": 273,
+ "n_neg": 121,
+ "n_longplay_neg": 25,
  "sources": [
   "steam",
   "apple"
  ],
  "themes": {
   "P-offline": {
-   "n": 9,
-   "of": 341,
+   "n": 7,
+   "of": 273,
    "longplay_n": 0,
    "quotes": [
     "It\u2019s unfortunate that purchasing the dlc, will make them unavailable offline. (apple4)",
@@ -19,70 +19,70 @@
    ]
   },
   "P-respect": {
-   "n": 9,
-   "of": 341,
+   "n": 10,
+   "of": 273,
    "longplay_n": 0,
    "quotes": [
-    "It\u2019s incredibly frustrating to switch to a different app for a few minutes to come back and see you\u2019ve lost like 15-20 minutes of progress. (apple4)",
-    "I honestly almost deleted this game after a few minutes. (apple5)"
+    "First few minutes were a series of [i]\"uhhh\" \"oh, okay\" \"wtf\" \"woah you can evolve items\"[/i]. (steam+, 19h)",
+    "Vampire Survivors stands high above its peers and countless imitators as the best casual, bullet hell, and rogue-lite available. (steam+, 63h)"
    ]
   },
   "P-active": {
-   "n": 8,
-   "of": 341,
+   "n": 7,
+   "of": 273,
    "longplay_n": 0,
    "quotes": [
-    "Portrait mode a huge plus, simplistic but engaging game play, meaningful choices and progression. (apple5)",
-    "Discovering strategies and completing tasks keeps it endlessly engaging. (apple5)"
+    "You don\u2019t aim in the usual way\u2014most attacks happen automatically\u2014so your main skill is positioning. (steam+, 3h)",
+    "Portrait mode a huge plus, simplistic but engaging game play, meaningful choices and progression. (apple5)"
    ]
   },
   "P-dev": {
-   "n": 5,
-   "of": 341,
+   "n": 3,
+   "of": 273,
    "longplay_n": 0,
    "quotes": [
-    "devs are legends and constantly updating the game, one of the go to rogueelite games for me (steam+, 85h)",
+    "Better yet, the developers are awesome human beings, and seem to truly love their fans. (steam+, 288h)",
     "I hope the developers are able to fix this issue as it\u2019s the only reason I don\u2019t rate it at 5 stars. (apple4)"
    ]
   },
   "P-unlock": {
-   "n": 4,
-   "of": 341,
+   "n": 5,
+   "of": 273,
    "longplay_n": 0,
    "quotes": [
-    "There\u2019s a certain point when you are grinding to unlock more in the game, when you hit a sudden game changing experience. (apple5)",
-    "I love the depth and the feeling of unlocking new characters and levels. (apple4)"
+    "And it keeps updating with new content. (steam+, 63h)",
+    "There\u2019s a certain point when you are grinding to unlock more in the game, when you hit a sudden game changing experience. (apple5)"
    ]
   },
   "P-collect": {
-   "n": 25,
-   "of": 341,
+   "n": 22,
+   "of": 273,
    "longplay_n": 0,
    "quotes": [
-    "I had a lot of fun evolving certain items together and growing stronger while trying to unlock every achievement, without needing a guide. (steam+, 96h)",
-    "I like when the achievements go off. (steam+, 19h)"
+    "Also great game, fun to get all the achievements. (steam+, 93h)",
+    "This is especially frustrating if you have unlocked an achievement during the run but you don\u2019t quit before the crash. (apple4)"
    ]
   },
   "P-goals": {
    "n": 1,
-   "of": 341,
+   "of": 273,
    "longplay_n": 0,
    "quotes": [
     "The progression is tuned to perfection\u2014there\u2019s always something to work toward, and the power curve is completely satisfying. (apple5)"
    ]
   },
   "P-depth": {
-   "n": 14,
-   "of": 341,
+   "n": 15,
+   "of": 273,
    "longplay_n": 0,
    "quotes": [
-    "Every decision can affect how long you\u2019ll survive. (apple5)",
-    "love creating the restraining order build and just standing there like a boss (steam+, 22h)"
+    "It builds up nicely then just explodes with amazing euphoria once you max out weapons in a run. (steam+, 5h)",
+    "It looks simple at first, but it\u2019s engineered to keep you chasing the next \u201cperfect\u201d build. (steam+, 3h)"
    ]
   },
   "P-fair": {
    "n": 13,
-   "of": 341,
+   "of": 273,
    "longplay_n": 0,
    "quotes": [
     "You can purchase DLCs if you want but honestly the dlcs add so much that they\u2019re worth the one time purchase of 99 cents. (apple5)",
@@ -90,16 +90,17 @@
    ]
   },
   "P-interlock": {
-   "n": 1,
-   "of": 341,
+   "n": 2,
+   "of": 273,
    "longplay_n": 0,
    "quotes": [
+    "Strong runs come from stacking synergies that complement each other\u2014coverage, damage scal (steam+, 3h)",
     "The new dlc character I can\u2019t use because once I activate his synergy the game crashes. (apple4)"
    ]
   },
   "P-prestige": {
    "n": 2,
-   "of": 341,
+   "of": 273,
    "longplay_n": 0,
    "quotes": [
     "Each run only lasts up to 30 minutes but majority of people will take a good few dozen to complete the 30 minutes. (apple5)"
@@ -107,7 +108,7 @@
   },
   "P-qol": {
    "n": 3,
-   "of": 341,
+   "of": 273,
    "longplay_n": 0,
    "quotes": [
     "Gameplay is very intuitive and simple. (apple5)",
@@ -116,7 +117,7 @@
   },
   "P-calm": {
    "n": 3,
-   "of": 341,
+   "of": 273,
    "longplay_n": 0,
    "quotes": [
     "It\u2019s surprisingly addictive and relaxing, you couldn\u2019t understand unless you\u2019ve played it. (apple5)",
@@ -124,26 +125,26 @@
    ]
   },
   "P-art": {
-   "n": 15,
-   "of": 341,
+   "n": 13,
+   "of": 273,
    "longplay_n": 0,
    "quotes": [
-    "A perfect game to just put your feet up, listen to a banger soundtrack, and watch your character delete 100.000 enemies from existence. (steam+, 159h)",
-    "unbelievably addictive roguelike with insanely satisfying sounds and music! (steam+, 85h)"
+    "[quote]\"Graphics are bad and gameplay looks dumb, I don't like it...\"[/quote] (steam+, 19h)",
+    "It feels so nostalgic despite being a new game, which I credit to the art style, simple game mechanics, and lack of microtransactions. (apple5)"
    ]
   },
   "P-story": {
-   "n": 48,
-   "of": 341,
+   "n": 39,
+   "of": 273,
    "longplay_n": 0,
    "quotes": [
-    "It has like over 220 Characters and a LOT of items and stages, and they keep pumping these numbers with inexpensive DLCs. (steam+, 159h)",
-    "All the features are here, from your favorite weapons to the hidden characters, to the Arcanas, to the unlockables. (apple4)"
+    "All the features are here, from your favorite weapons to the hidden characters, to the Arcanas, to the unlockables. (apple4)",
+    "There\u2019s so many things to unlock, so many funny weird bits of lore, it\u2019s the first game in ages that I found legitimately FUN. (apple5)"
    ]
   },
   "N-ads": {
-   "n": 22,
-   "of": 162,
+   "n": 15,
+   "of": 121,
    "longplay_n": 0,
    "quotes": [
     "I absolutely do not approve or like ads in the IOS version. (apple1)",
@@ -151,124 +152,131 @@
    ]
   },
   "N-wall": {
-   "n": 8,
-   "of": 162,
+   "n": 7,
+   "of": 121,
    "longplay_n": 3,
    "quotes": [
-    "That's not a challenge to beat, just a defeat to stall for a few minutes. (steam-, 287h)",
-    "And why does it slow down during the gameplay? (apple1)"
+    "Our progress didn\u2019t just slow down - it pretty much died. (steam-, 22h)",
+    "That's not a challenge to beat, just a defeat to stall for a few minutes. (steam-, 287h)"
    ]
   },
   "N-pay": {
    "n": 1,
-   "of": 162,
+   "of": 121,
    "longplay_n": 0,
    "quotes": []
   },
   "N-dominant": {
-   "n": 1,
-   "of": 162,
-   "longplay_n": 0,
-   "quotes": []
+   "n": 2,
+   "of": 121,
+   "longplay_n": 1,
+   "quotes": [
+    "Loved this game so much but I can't support the developers choice as an indie dev, to go exclusive on meta. (steam-, 64h)"
+   ]
   },
   "N-late": {
    "n": 7,
-   "of": 162,
+   "of": 121,
    "longplay_n": 4,
    "quotes": [
     "After some time it just feels repetitive and hollow. (steam-, 119h)",
-    "After some time it just feels repetitive and hollow. (steam-, 119h)"
+    "99% of enemies encountered are melee only, slow moving, repetitive, and don't match the stages nor background whatsoever in design. (steam-, 4h)"
    ]
   },
   "N-offline": {
    "n": 0,
-   "of": 162,
+   "of": 121,
    "longplay_n": 0,
    "quotes": []
   },
   "N-mobile": {
-   "n": 4,
-   "of": 162,
+   "n": 3,
+   "of": 121,
    "longplay_n": 0,
    "quotes": [
-    "Still fun overall, and doesn\u2019t eat my battery as much as some games. (apple3)",
-    "This game EATS your battery within 30 mins I lost 40% of my battery. (apple3)"
+    "Still fun overall, and doesn\u2019t eat my battery as much as some games. (apple3)"
    ]
   },
   "N-bug": {
-   "n": 26,
-   "of": 162,
-   "longplay_n": 0,
+   "n": 22,
+   "of": 121,
+   "longplay_n": 2,
    "quotes": [
-    "The crashes use to just be after 100% completed the game, when I got the Moon spell DLC . (apple1)",
-    "Now, I can\u2019t even finish the game without crashing and kicking me out!!!! (apple1)"
+    "Not sure what they did, but the last patch/update causes it to crash about 10 minutes into a game every single time now :/ (steam-, 32h)",
+    "The crashes use to just be after 100% completed the game, when I got the Moon spell DLC . (apple1)"
    ]
   },
   "N-energy": {
-   "n": 4,
-   "of": 162,
-   "longplay_n": 2,
-   "quotes": []
+   "n": 3,
+   "of": 121,
+   "longplay_n": 3,
+   "quotes": [
+    "i liked what they did with some moments, but the overall experience is to sit and wait for the level to end. (steam-, 160h)",
+    "Then it's just a case of chasing \"achievements\" (mostly sitting idle and running out a timer) and new \"characters\". (steam-, 82h)"
+   ]
   },
   "N-bloat": {
-   "n": 2,
-   "of": 162,
+   "n": 3,
+   "of": 121,
    "longplay_n": 2,
    "quotes": [
     "Also for the german translation: It can be confusing when the translation of a word keeps changing. (steam-, 119h)",
-    "Also for the german translation: It can be confusing when the translation of a word keeps changing. (steam-, 119h)"
+    "I'm personally stunned by the overwhelming positive reviews for what is (steam-, 29h)"
    ]
   },
   "N-chore": {
-   "n": 2,
-   "of": 162,
+   "n": 0,
+   "of": 121,
    "longplay_n": 0,
-   "quotes": [
-    "Idler that you have to babysit very often. (steam-, 9h)",
-    "Idler that you have to babysit very often. (steam-, 9h)"
-   ]
+   "quotes": []
   },
   "N-tutorial": {
-   "n": 3,
-   "of": 162,
-   "longplay_n": 0,
+   "n": 2,
+   "of": 121,
+   "longplay_n": 1,
    "quotes": [
-    "i went over the tiny little learning curve and then it's just devoid of anything. (steam-, 11h)",
+    "Knowing who to use or what stage to complete for the next unlock you need to continue in the game itself is completely unclear. (steam-, 60h)",
     "i went over the tiny little learning curve and then it's just devoid of anything. (steam-, 11h)"
    ]
   },
   "N-shallow": {
-   "n": 11,
-   "of": 162,
-   "longplay_n": 0,
+   "n": 8,
+   "of": 121,
+   "longplay_n": 1,
    "quotes": [
-    "If you'd like to play something that feels arcade-y, is repetitive, and simple to understand, this might as well be it- (steam-, 7h)",
-    "If you'd like to play something that feels arcade-y, is repetitive, and simple to understand, this might as well be it- (steam-, 7h)"
+    "I am not recommending this game because it is incredibly shallow with little to offer. (steam-, 29h)",
+    "This game has an extremely shallow identity and experience. (steam-, 68h)"
    ]
   },
   "N-reset": {
    "n": 0,
-   "of": 162,
+   "of": 121,
    "longplay_n": 0,
    "quotes": []
   },
   "N-pace": {
    "n": 0,
-   "of": 162,
+   "of": 121,
    "longplay_n": 0,
    "quotes": []
   },
   "N-fast": {
-   "n": 0,
-   "of": 162,
-   "longplay_n": 0,
-   "quotes": []
+   "n": 2,
+   "of": 121,
+   "longplay_n": 1,
+   "quotes": [
+    "And worst of all, every match either feels too easy or is frustratingly impossible. (steam-, 60h)",
+    "Eventually I ran out of upgrades and then it was just collecting money. (steam-, 2h)"
+   ]
   },
   "N-balance": {
-   "n": 2,
-   "of": 162,
-   "longplay_n": 0,
-   "quotes": []
+   "n": 5,
+   "of": 121,
+   "longplay_n": 2,
+   "quotes": [
+    "This completely breaks the balance and progression for duo play. (steam-, 22h)",
+    "Between not letting certain levels load on co-op, and getting soft locked where both players see the other one picking the level up. (steam-, 108h)"
+   ]
   }
  }
 }

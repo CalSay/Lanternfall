@@ -1,9 +1,9 @@
 {
  "slug": "osrs",
- "n_reviews": 562,
- "n_pos": 377,
- "n_neg": 185,
- "n_longplay_neg": 24,
+ "n_reviews": 516,
+ "n_pos": 346,
+ "n_neg": 170,
+ "n_longplay_neg": 25,
  "sources": [
   "steam",
   "apple"
@@ -11,7 +11,7 @@
  "themes": {
   "P-offline": {
    "n": 18,
-   "of": 377,
+   "of": 346,
    "longplay_n": 0,
    "quotes": [
     "Great way to AFK training or even to kill time. (apple5)",
@@ -19,34 +19,35 @@
    ]
   },
   "P-respect": {
-   "n": 3,
-   "of": 377,
+   "n": 6,
+   "of": 346,
    "longplay_n": 0,
    "quotes": [
-    "Most games on the phone lose my interest within a few minutes. (apple5)"
+    "This game is perfection for casual players. (steam+, 497h)",
+    "It has a frequent update schedule and endless progression & content that engages any type of player (solo/group, casual/hardcore, PvM/PvP, etc.). (steam+, 1h)"
    ]
   },
   "P-active": {
-   "n": 28,
-   "of": 377,
+   "n": 27,
+   "of": 346,
    "longplay_n": 0,
    "quotes": [
-    "That doesn't happen here because the devs actually play the game and care about what makes it unique. (steam+, 82h)",
-    "I literally just started this game but it's actually fun, despite me not liking games where grinding is a core mechanic. (steam+, 8h)"
+    "Pretty chill barrier for entry with a very high skill ceiling depending on the content you like to do. (steam+, 1501h)",
+    "There are many well-written and uniquely engaging quests spread throughout the world to be completed in any order, rather than a single linear chosen-one plot. (apple5)"
    ]
   },
   "P-dev": {
    "n": 7,
-   "of": 377,
+   "of": 346,
    "longplay_n": 0,
    "quotes": [
-    "The developers are in constant contact with their player base and the game is constantly receiving updates. (apple5)",
-    "That doesn't happen here because the devs actually play the game and care about what makes it unique. (steam+, 82h)"
+    "It has a frequent update schedule and endless progression & content that engages any type of player (solo/group, casual/hardcore, PvM/PvP, etc.). (steam+, 1h)",
+    "The developers are in constant contact with their player base and the game is constantly receiving updates. (apple5)"
    ]
   },
   "P-unlock": {
    "n": 6,
-   "of": 377,
+   "of": 346,
    "longplay_n": 0,
    "quotes": [
     "The addition of 95% of content is polled in-game from very minor balancing changes, to the addition of completely new areas. (apple5)",
@@ -55,70 +56,72 @@
   },
   "P-collect": {
    "n": 20,
-   "of": 377,
+   "of": 346,
    "longplay_n": 0,
    "quotes": [
-    "you'll stay up until 3 am killing the same boss for the 900th time trying to get a rare drop (steam+, 877h)",
+    "Every level, every drop, every quest feels earned. (steam+, 7009h)",
     "you'll stay up until 3 am killing the same boss for the 900th time trying to get a rare drop (steam+, 877h)"
    ]
   },
   "P-goals": {
-   "n": 0,
-   "of": 377,
+   "n": 1,
+   "of": 346,
    "longplay_n": 0,
-   "quotes": []
+   "quotes": [
+    "The grind is real but incredibly addictive and there's always something to work towards. (steam+, 276h)"
+   ]
   },
   "P-depth": {
    "n": 11,
-   "of": 377,
+   "of": 346,
    "longplay_n": 0,
    "quotes": [
-    "the game is built on such a simple concept, but allows for so much creativity & depth (steam+, 2h)",
-    "Trust the community, not jagex or decisions made by jagex.. (apple5)"
+    "Trust the community, not jagex or decisions made by jagex.. (apple5)",
+    "With the new MMORPG elements in the group raids and constantly new content OSRS has broken the traditional market strategy and game development. (apple5)"
    ]
   },
   "P-fair": {
-   "n": 3,
-   "of": 377,
+   "n": 4,
+   "of": 346,
    "longplay_n": 0,
    "quotes": [
-    "You can buy one with in game gold (no microtransactions needed) however getting that amount of gold is tough in f2p. (apple5)",
-    "No ads no drama just raw, sweet gameplay. (apple5)"
+    "The game comes with a very generous demo known as F2P. (steam+, 497h)",
+    "You can buy one with in game gold (no microtransactions needed) however getting that amount of gold is tough in f2p. (apple5)"
    ]
   },
   "P-interlock": {
    "n": 0,
-   "of": 377,
+   "of": 346,
    "longplay_n": 0,
    "quotes": []
   },
   "P-prestige": {
    "n": 0,
-   "of": 377,
+   "of": 346,
    "longplay_n": 0,
    "quotes": []
   },
   "P-qol": {
    "n": 14,
-   "of": 377,
+   "of": 346,
    "longplay_n": 0,
    "quotes": [
     "The user interface is easy to understand right from the get go, and functions virtually exactly like the desktop client. (apple5)",
-    "The tap response is pretty good and the interface is extremely easy to use. (apple4)"
+    "I Play on Runelite and i Recommend anyone to download Runelite and play on that instead of Steam, Theres just alot more QoL on Runelite. (steam+)"
    ]
   },
   "P-calm": {
-   "n": 7,
-   "of": 377,
+   "n": 9,
+   "of": 346,
    "longplay_n": 0,
    "quotes": [
     "This makes it to where I am pretty comfortable doing almost anything in the g (apple5)",
-    "now i\u2019m addicted and made cool and really chill friends since i\u2019ve played. (apple5)"
+    "Pretty chill barrier for entry with a very high skill ceiling depending on the content you like to do. (steam+, 1501h)"
    ]
   },
   "P-art": {
-   "n": 40,
-   "of": 377,
+   "n": 36,
+   "of": 346,
    "longplay_n": 0,
    "quotes": [
     "Against all odds the outdated graphics and grindy gameplay has thrived in this generation of video games which are typically the opposite. (apple5)",
@@ -127,7 +130,7 @@
   },
   "P-story": {
    "n": 66,
-   "of": 377,
+   "of": 346,
    "longplay_n": 0,
    "quotes": [
     "It is the full game just as it is on PC and it\u2019s the same character I have on PC. (apple5)",
@@ -136,49 +139,46 @@
   },
   "N-ads": {
    "n": 0,
-   "of": 185,
+   "of": 170,
    "longplay_n": 0,
    "quotes": []
   },
   "N-wall": {
-   "n": 15,
-   "of": 185,
-   "longplay_n": 0,
+   "n": 17,
+   "of": 170,
+   "longplay_n": 3,
    "quotes": [
-    "nope, you need a jagex account to enable authenticator, so i decided to grind the money another way. (apple1)",
-    "I change my password and set a bank pin and, begrudgingly, started to grind all over again. (apple1)"
+    "Paying $30/mo to grind 2 characters on a 20+ year old game is a sin. (steam-, 194h)",
+    "Great game for those who love a grind, but Company couldn't give half a \u2665\u2665\u2665\u2665 about it's community. (steam-, 245h)"
    ]
   },
   "N-pay": {
    "n": 1,
-   "of": 185,
+   "of": 170,
    "longplay_n": 0,
    "quotes": []
   },
   "N-dominant": {
    "n": 0,
-   "of": 185,
+   "of": 170,
    "longplay_n": 0,
    "quotes": []
   },
   "N-late": {
-   "n": 5,
-   "of": 185,
-   "longplay_n": 2,
-   "quotes": [
-    "If I wanted to do repetitive mundane tasks for the sake of working toward large goals, I would rather just play a real idle/incremental game. (steam-, 507h)",
-    "If I wanted to do repetitive mundane tasks for the sake of working toward large goals, I would rather just play a real idle/incremental game. (steam-, 507h)"
-   ]
+   "n": 3,
+   "of": 170,
+   "longplay_n": 0,
+   "quotes": []
   },
   "N-offline": {
    "n": 0,
-   "of": 185,
+   "of": 170,
    "longplay_n": 0,
    "quotes": []
   },
   "N-mobile": {
    "n": 5,
-   "of": 185,
+   "of": 170,
    "longplay_n": 0,
    "quotes": [
     "My phone battery depletes by a percent every few minutes giving my phone about as much battery power as a low end laptop. (apple2)",
@@ -186,8 +186,8 @@
    ]
   },
   "N-bug": {
-   "n": 20,
-   "of": 185,
+   "n": 19,
+   "of": 170,
    "longplay_n": 0,
    "quotes": [
     "On top of all this, the controls are awful and buggy. (apple1)",
@@ -195,31 +195,31 @@
    ]
   },
   "N-energy": {
-   "n": 5,
-   "of": 185,
-   "longplay_n": 0,
+   "n": 7,
+   "of": 170,
+   "longplay_n": 2,
    "quotes": [
-    "If this is not possible I\u2019ll wait for the \u201cnew\u201d school RuneScape where you can actually have your \u201cma (apple1)",
-    "Who would create a new account after putting that much time and energy into their main account? (apple1)"
+    "-Literally over a month wait for a response (steam-, 132h)",
+    "I found myself running out of sprint energy and then  just playing another game waiting for sprint energy to recover. (steam-, 81h)"
    ]
   },
   "N-bloat": {
-   "n": 1,
-   "of": 185,
-   "longplay_n": 0,
+   "n": 3,
+   "of": 170,
+   "longplay_n": 2,
    "quotes": [
     "The ui on the iPhone XS Max is great but when playing on an iPad Pro 12.9\u201d it seems cluttered. (apple3)"
    ]
   },
   "N-chore": {
    "n": 0,
-   "of": 185,
+   "of": 170,
    "longplay_n": 0,
    "quotes": []
   },
   "N-tutorial": {
    "n": 2,
-   "of": 185,
+   "of": 170,
    "longplay_n": 0,
    "quotes": [
     "Mobile gamers have never experienced anything close to this, so with the same old tutorial I knew we would see major problems starting to arise. (apple1)",
@@ -227,8 +227,8 @@
    ]
   },
   "N-shallow": {
-   "n": 8,
-   "of": 185,
+   "n": 5,
+   "of": 170,
    "longplay_n": 0,
    "quotes": [
     "What they DON\u2019T tell you is that this game\u2019s company goes out of its way to make that very simple process as complicated as possible. (apple1)",
@@ -237,26 +237,26 @@
   },
   "N-reset": {
    "n": 0,
-   "of": 185,
+   "of": 170,
    "longplay_n": 0,
    "quotes": []
   },
   "N-pace": {
    "n": 0,
-   "of": 185,
+   "of": 170,
    "longplay_n": 0,
    "quotes": []
   },
   "N-fast": {
    "n": 0,
-   "of": 185,
+   "of": 170,
    "longplay_n": 0,
    "quotes": []
   },
   "N-balance": {
-   "n": 3,
-   "of": 185,
-   "longplay_n": 0,
+   "n": 4,
+   "of": 170,
+   "longplay_n": 1,
    "quotes": [
     "They forgave the outstanding balance as a \u201cone time act of good faith\u201d as the mod put it. (apple1)"
    ]

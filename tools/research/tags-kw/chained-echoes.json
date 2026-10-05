@@ -1,9 +1,9 @@
 {
  "slug": "chained-echoes",
- "n_reviews": 54,
+ "n_reviews": 67,
  "n_pos": 25,
- "n_neg": 29,
- "n_longplay_neg": 8,
+ "n_neg": 42,
+ "n_longplay_neg": 20,
  "sources": [
   "steam"
  ],
@@ -15,20 +15,18 @@
    "quotes": []
   },
   "P-respect": {
-   "n": 2,
+   "n": 0,
    "of": 25,
    "longplay_n": 0,
-   "quotes": [
-    "It has a way of turning short sessions into day-long marathons. (steam+, 76h)",
-    "Chained Echoes respects your time by [b][u]eliminating random encounters entirely and drastically reducing mandatory battles.[/u][/b] Almost every fight is thoughtfully designed. (steam+, 65h)"
-   ]
+   "quotes": []
   },
   "P-active": {
-   "n": 1,
+   "n": 5,
    "of": 25,
    "longplay_n": 0,
    "quotes": [
-    "Besides those 4, the game is still a really engaging story and a great successor to fans of Chrono Trigger. (steam+, 80h)"
+    "Besides those 4, the game is still a really engaging story and a great successor to fans of Chrono Trigger. (steam+, 80h)",
+    "You learn skill points at fixed parts of the story and your team grows accordingly. (steam+, 53h)"
    ]
   },
   "P-dev": {
@@ -38,18 +36,20 @@
    "quotes": []
   },
   "P-unlock": {
-   "n": 0,
+   "n": 1,
    "of": 25,
    "longplay_n": 0,
-   "quotes": []
+   "quotes": [
+    "Some new skills are genuinely strong and useful, but many feel too situational to matter, if not outright pointless. (steam+, 63h)"
+   ]
   },
   "P-collect": {
    "n": 4,
    "of": 25,
    "longplay_n": 0,
    "quotes": [
-    "After completing Chained Echoes and getting all the achievements, I consider this one of the best turn-based RPGs I've ever played. (steam+, 58h)",
-    "My first 100% achievement on 14 years of steam. (steam+, 93h)"
+    "Run around collecting randomly generated cr (steam+, 50h)",
+    "After completing Chained Echoes and getting all the achievements, I consider this one of the best turn-based RPGs I've ever played. (steam+, 58h)"
    ]
   },
   "P-goals": {
@@ -59,11 +59,11 @@
    "quotes": []
   },
   "P-depth": {
-   "n": 6,
+   "n": 4,
    "of": 25,
    "longplay_n": 0,
    "quotes": [
-    "The Overdrive system is also a great idea, keeping battles moving at a good pace while adding an interesting layer of strategy. (steam+, 124h)",
+    "I think I was able to buy or build other airsh (steam+, 68h)",
     "The Overdrive system is also a great idea, keeping battles moving at a good pace while adding an interesting layer of strategy. (steam+, 124h)"
    ]
   },
@@ -86,7 +86,7 @@
    "quotes": []
   },
   "P-qol": {
-   "n": 1,
+   "n": 2,
    "of": 25,
    "longplay_n": 0,
    "quotes": [
@@ -100,133 +100,134 @@
    "quotes": []
   },
   "P-art": {
-   "n": 7,
+   "n": 9,
    "of": 25,
    "longplay_n": 0,
    "quotes": [
-    "The game features beautiful hand drawn 16bit sprites. (steam+, 35h)",
-    "It was a great one from its graphics to QOL to story. (steam+, 44h)"
+    "Be it in the form of graphics or all the included easter eggs. (steam+, 100h)",
+    "Sure, it's taken some inspiration but it's largely original, from the art-style to the music. (steam+, 53h)"
    ]
   },
   "P-story": {
-   "n": 17,
+   "n": 19,
    "of": 25,
    "longplay_n": 0,
    "quotes": [
-    "Besides those 4, the game is still a really engaging story and a great successor to fans of Chrono Trigger. (steam+, 80h)",
-    "the writing ranges from great to OK. (steam+, 88h)"
+    "This applies to everything the game offers -- the characters, the story, the length, the areas, the mechanics. (steam+, 50h)",
+    "Besides those 4, the game is still a really engaging story and a great successor to fans of Chrono Trigger. (steam+, 80h)"
    ]
   },
   "N-ads": {
    "n": 0,
-   "of": 29,
+   "of": 42,
    "longplay_n": 0,
    "quotes": []
   },
   "N-wall": {
-   "n": 8,
-   "of": 29,
-   "longplay_n": 2,
+   "n": 9,
+   "of": 42,
+   "longplay_n": 7,
    "quotes": [
     "The relatively low need for grinding also helped keep the focus on how I used the party. (steam-, 35h)",
-    "The relatively low need for grinding also helped keep the focus on how I used the party. (steam-, 35h)"
+    "leveling is convoluted and takes forever and grinding to gain doesnt exist. (steam-, 62h)"
    ]
   },
   "N-pay": {
    "n": 0,
-   "of": 29,
+   "of": 42,
    "longplay_n": 0,
    "quotes": []
   },
   "N-dominant": {
    "n": 0,
-   "of": 29,
+   "of": 42,
    "longplay_n": 0,
    "quotes": []
   },
   "N-late": {
-   "n": 0,
-   "of": 29,
-   "longplay_n": 0,
+   "n": 1,
+   "of": 42,
+   "longplay_n": 1,
    "quotes": []
   },
   "N-offline": {
    "n": 0,
-   "of": 29,
+   "of": 42,
    "longplay_n": 0,
    "quotes": []
   },
   "N-mobile": {
    "n": 2,
-   "of": 29,
-   "longplay_n": 0,
+   "of": 42,
+   "longplay_n": 1,
    "quotes": [
-    "Being hit sets you into overheat constantly and then you have to use skills that don\u2019t help you as much to cool it down. (steam-, 3h)",
-    "Being hit sets you into overheat constantly and then you have to use skills that don\u2019t help you as much to cool it down. (steam-, 3h)"
+    "But the sluggish and unfair battle, annoying and random overheat system, unnessarily complicated skill and weapon system can never make me finish the game (steam-, 13h)",
+    "The overheat mechanic is kind of annoying when you're starting to get into a flow state. (steam-, 53h)"
    ]
   },
   "N-bug": {
    "n": 0,
-   "of": 29,
+   "of": 42,
    "longplay_n": 0,
    "quotes": []
   },
   "N-energy": {
-   "n": 0,
-   "of": 29,
+   "n": 1,
+   "of": 42,
    "longplay_n": 0,
-   "quotes": []
+   "quotes": [
+    "Wait for your turn and READ to find out. (steam-, 4h)"
+   ]
   },
   "N-bloat": {
    "n": 0,
-   "of": 29,
+   "of": 42,
    "longplay_n": 0,
    "quotes": []
   },
   "N-chore": {
-   "n": 2,
-   "of": 29,
+   "n": 0,
+   "of": 42,
    "longplay_n": 0,
-   "quotes": [
-    "I finished act 1 and enjoyed it until managing gear became a chore (steam-, 28h)",
-    "I finished act 1 and enjoyed it until managing gear became a chore (steam-, 28h)"
-   ]
+   "quotes": []
   },
   "N-tutorial": {
    "n": 0,
-   "of": 29,
+   "of": 42,
    "longplay_n": 0,
    "quotes": []
   },
   "N-shallow": {
-   "n": 0,
-   "of": 29,
+   "n": 1,
+   "of": 42,
    "longplay_n": 0,
    "quotes": []
   },
   "N-reset": {
    "n": 0,
-   "of": 29,
+   "of": 42,
    "longplay_n": 0,
    "quotes": []
   },
   "N-pace": {
    "n": 0,
-   "of": 29,
+   "of": 42,
    "longplay_n": 0,
    "quotes": []
   },
   "N-fast": {
-   "n": 2,
-   "of": 29,
-   "longplay_n": 2,
+   "n": 1,
+   "of": 42,
+   "longplay_n": 1,
    "quotes": []
   },
   "N-balance": {
-   "n": 0,
-   "of": 29,
+   "n": 1,
+   "of": 42,
    "longplay_n": 0,
-   "quotes": []
+   "quotes": [
+    "But the sluggish and unfair battle, annoying and random overheat system, unnessarily complicated skill and weapon system can never make me finish the game (steam-, 13h)"
+   ]
   }
  }
 }

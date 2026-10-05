@@ -1,9 +1,9 @@
 {
  "slug": "octopath",
- "n_reviews": 56,
+ "n_reviews": 65,
  "n_pos": 25,
- "n_neg": 31,
- "n_longplay_neg": 23,
+ "n_neg": 40,
+ "n_longplay_neg": 25,
  "sources": [
   "steam"
  ],
@@ -21,12 +21,12 @@
    "quotes": []
   },
   "P-active": {
-   "n": 2,
+   "n": 3,
    "of": 25,
    "longplay_n": 0,
    "quotes": [
-    "While the story doesn\u2019t quite match FF's depth, the engaging combat system, gorgeous art style, and brilliant soundtrack easily make up for it. (steam+, 17h)",
-    "The combat system is engaging, giving various ways to handle the game. (steam+, 96h)"
+    "Each of the eight characters is lovable in their own way, with personal stories that are engaging and full of heart. (steam+, 41h)",
+    "While the story doesn\u2019t quite match FF's depth, the engaging combat system, gorgeous art style, and brilliant soundtrack easily make up for it. (steam+, 17h)"
    ]
   },
   "P-dev": {
@@ -42,10 +42,13 @@
    "quotes": []
   },
   "P-collect": {
-   "n": 1,
+   "n": 2,
    "of": 25,
    "longplay_n": 0,
-   "quotes": []
+   "quotes": [
+    "The combat system is fun at first, but grinding and replaying content for all achievements became exhausting. (steam+, 101h)",
+    "Collection achievements but no in game tracking? (steam+, 80h)"
+   ]
   },
   "P-goals": {
    "n": 0,
@@ -54,11 +57,12 @@
    "quotes": []
   },
   "P-depth": {
-   "n": 1,
+   "n": 3,
    "of": 25,
    "longplay_n": 0,
    "quotes": [
-    "While the story doesn\u2019t quite match FF's depth, the engaging combat system, gorgeous art style, and brilliant soundtrack easily make up for it. (steam+, 17h)"
+    "The battle is pretty strategic for a turn-based JRPG -- mindlessly attacking or just casting your strongest spells is not the way to go here. (steam+, 81h)",
+    "Its stunning HD-2D pixel art is some of the best in any modern RPG, and the turn-based combat is endlessly fun, strategic, and satisfying. (steam+, 41h)"
    ]
   },
   "P-fair": {
@@ -80,150 +84,157 @@
    "quotes": []
   },
   "P-qol": {
-   "n": 0,
-   "of": 25,
-   "longplay_n": 0,
-   "quotes": []
-  },
-  "P-calm": {
-   "n": 1,
+   "n": 2,
    "of": 25,
    "longplay_n": 0,
    "quotes": [
-    "An RPG reminiscent of the Final Fantasy series, Octopath Traveler pairs modern graphics with a wonderfully cozy style. (steam+, 17h)"
+    "*Play this game before octopath traveler 2, the QOL features in octopath traveler 2 can make this game unenjoyable for some* (steam+, 33h)",
+    "Main issue is the lack of QOL. (steam+, 62h)"
+   ]
+  },
+  "P-calm": {
+   "n": 3,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "I picked up this game on sale wanting a fairly chill, old school RPG experience on the Steam Deck (on which it runs brilliantly). (steam+, 150h)",
+    "Probably my favorite series for classic cozy rpg, octopath traveler is a game you take your time with. (steam+, 33h)"
    ]
   },
   "P-art": {
-   "n": 7,
+   "n": 16,
    "of": 25,
    "longplay_n": 0,
    "quotes": [
-    "An RPG reminiscent of the Final Fantasy series, Octopath Traveler pairs modern graphics with a wonderfully cozy style. (steam+, 17h)",
-    "Despite playing a large amount of Isometric, pixel based games, this one has a unique style to it that grabs me. (steam+, 27h)"
+    "The HD-2D art style is gorgeous. (steam+, 27h)",
+    "*Insanely eye-catching and visually beautiful visuals and effects that blend in perfectly with the retro pixel 2D style. (steam+, 212h)"
    ]
   },
   "P-story": {
-   "n": 11,
+   "n": 19,
    "of": 25,
    "longplay_n": 0,
    "quotes": [
-    "I have completed all the character chapters and unlocked all the special jobs. (steam+, 93h)",
-    "Generally enjoy most of the characters, the combat feels rewarding, and stealing items from every NPC is wonderful. (steam+, 77h)"
+    "Each character having a \u201cjob vibe\u201d and different tools keeps fights from getting stale (most of the time). (steam+, 27h)",
+    "I have completed all the character chapters and unlocked all the special jobs. (steam+, 93h)"
    ]
   },
   "N-ads": {
    "n": 0,
-   "of": 31,
+   "of": 40,
    "longplay_n": 0,
    "quotes": []
   },
   "N-wall": {
-   "n": 2,
-   "of": 31,
-   "longplay_n": 2,
+   "n": 9,
+   "of": 40,
+   "longplay_n": 5,
    "quotes": [
-    "I have been stuck on one of the last available bosses. (steam-, 104h)",
-    "I have been stuck on one of the last available bosses. (steam-, 104h)"
+    "Decided to visit every town and do most of the sidequests/dungeons with my high lvl party before switching to grind the other 4 characters. (steam-, 69h)",
+    "Without a really cohesive story the grind becomes the focus of the game, and unfortunately, the grind is only moderately entertaining at best. (steam-, 70h)"
    ]
   },
   "N-pay": {
    "n": 0,
-   "of": 31,
+   "of": 40,
    "longplay_n": 0,
    "quotes": []
   },
   "N-dominant": {
-   "n": 3,
-   "of": 31,
+   "n": 0,
+   "of": 40,
    "longplay_n": 0,
    "quotes": []
   },
   "N-late": {
-   "n": 6,
-   "of": 31,
-   "longplay_n": 6,
+   "n": 5,
+   "of": 40,
+   "longplay_n": 2,
    "quotes": [
-    "After that the late game is comprised of optional quests. (steam-, 104h)",
-    "After that the late game is comprised of optional quests. (steam-, 104h)"
+    "The problem with the game is the story, how they tell it, and the overall game play loop being repetitive. (steam-, 41h)",
+    "It relies solely on this formula, making the narrative not only repetitive and predictable but also superficial. (steam-, 36h)"
    ]
   },
   "N-offline": {
    "n": 0,
-   "of": 31,
+   "of": 40,
    "longplay_n": 0,
    "quotes": []
   },
   "N-mobile": {
    "n": 0,
-   "of": 31,
+   "of": 40,
    "longplay_n": 0,
    "quotes": []
   },
   "N-bug": {
-   "n": 0,
-   "of": 31,
-   "longplay_n": 0,
-   "quotes": []
+   "n": 1,
+   "of": 40,
+   "longplay_n": 1,
+   "quotes": [
+    "It was a phenomenal game but I just ran into a massive bug error that may stop me from continuing to play. (steam-, 82h)"
+   ]
   },
   "N-energy": {
    "n": 2,
-   "of": 31,
-   "longplay_n": 2,
+   "of": 40,
+   "longplay_n": 1,
    "quotes": [
-    "I just installed a mod to speed up combat, and I wish I had done it from the start. (steam-, 83h)",
+    "Furthermore, the OST is fantastic (Battle II is an all timer imo). (steam-, 36h)",
     "I just installed a mod to speed up combat, and I wish I had done it from the start. (steam-, 83h)"
    ]
   },
   "N-bloat": {
    "n": 0,
-   "of": 31,
+   "of": 40,
    "longplay_n": 0,
    "quotes": []
   },
   "N-chore": {
-   "n": 0,
-   "of": 31,
-   "longplay_n": 0,
-   "quotes": []
+   "n": 1,
+   "of": 40,
+   "longplay_n": 1,
+   "quotes": [
+    "As a result, this game simply feels janky and a chore to play. (steam-, 66h)"
+   ]
   },
   "N-tutorial": {
-   "n": 0,
-   "of": 31,
-   "longplay_n": 0,
+   "n": 1,
+   "of": 40,
+   "longplay_n": 1,
    "quotes": []
   },
   "N-shallow": {
-   "n": 6,
-   "of": 31,
-   "longplay_n": 3,
-   "quotes": [
-    "It's simple, easy to understand, and very satisfying. (steam-, 123h)",
-    "It's simple, easy to understand, and very satisfying. (steam-, 123h)"
-   ]
+   "n": 3,
+   "of": 40,
+   "longplay_n": 2,
+   "quotes": []
   },
   "N-reset": {
    "n": 0,
-   "of": 31,
+   "of": 40,
    "longplay_n": 0,
    "quotes": []
   },
   "N-pace": {
    "n": 0,
-   "of": 31,
+   "of": 40,
    "longplay_n": 0,
    "quotes": []
   },
   "N-fast": {
    "n": 0,
-   "of": 31,
+   "of": 40,
    "longplay_n": 0,
    "quotes": []
   },
   "N-balance": {
-   "n": 0,
-   "of": 31,
+   "n": 1,
+   "of": 40,
    "longplay_n": 0,
-   "quotes": []
+   "quotes": [
+    "additionally, the balance is hella skewed and all but forces you to grind. (steam-, 18h)"
+   ]
   }
  }
 }

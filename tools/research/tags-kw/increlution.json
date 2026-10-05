@@ -1,18 +1,20 @@
 {
  "slug": "increlution",
- "n_reviews": 32,
+ "n_reviews": 37,
  "n_pos": 25,
- "n_neg": 7,
- "n_longplay_neg": 7,
+ "n_neg": 12,
+ "n_longplay_neg": 10,
  "sources": [
   "steam"
  ],
  "themes": {
   "P-offline": {
-   "n": 0,
+   "n": 1,
    "of": 25,
    "longplay_n": 0,
-   "quotes": []
+   "quotes": [
+    "Fun idle game to run in the background. (steam+, 1002h)"
+   ]
   },
   "P-respect": {
    "n": 0,
@@ -27,12 +29,12 @@
    "quotes": []
   },
   "P-dev": {
-   "n": 6,
+   "n": 3,
    "of": 25,
    "longplay_n": 0,
    "quotes": [
-    "It's unfortunate the dev's progress was halted due to long covid (last developer update was December of 2025, saying as much). (steam+, 1857h)",
-    "It's unfortunate the dev's progress was halted due to long covid (last developer update was December of 2025, saying as much). (steam+, 1831h)"
+    "Dev is sick, so the next update might take a while longer to drop. (steam+, 85h)",
+    "It's unfortunate the dev's progress was halted due to long covid (last developer update was December of 2025, saying as much). (steam+, 1862h)"
    ]
   },
   "P-unlock": {
@@ -42,10 +44,12 @@
    "quotes": []
   },
   "P-collect": {
-   "n": 0,
+   "n": 1,
    "of": 25,
    "longplay_n": 0,
-   "quotes": []
+   "quotes": [
+    "Dev is sick, so the next update might take a while longer to drop. (steam+, 85h)"
+   ]
   },
   "P-goals": {
    "n": 0,
@@ -54,21 +58,20 @@
    "quotes": []
   },
   "P-depth": {
-   "n": 8,
+   "n": 4,
    "of": 25,
    "longplay_n": 0,
    "quotes": [
-    "Despite the fact the game has been abandoned, it has exciting gameplay, a nice logical plot, and sufficient depth in its current state. (steam+, 359h)",
+    "There is a tiny sprinkle of strategy and 'builds' as you get near the end of the 220-250 hour game, but nothing crazy. (steam+, 6157h)",
     "Despite the fact the game has been abandoned, it has exciting gameplay, a nice logical plot, and sufficient depth in its current state. (steam+, 359h)"
    ]
   },
   "P-fair": {
-   "n": 3,
+   "n": 1,
    "of": 25,
    "longplay_n": 0,
    "quotes": [
-    "In any case this game is certainly worth the price. (steam+, 1857h)",
-    "In any case this game is certainly worth the price. (steam+, 1831h)"
+    "In any case this game is certainly worth the price. (steam+, 1862h)"
    ]
   },
   "P-interlock": {
@@ -78,12 +81,10 @@
    "quotes": []
   },
   "P-prestige": {
-   "n": 3,
+   "n": 1,
    "of": 25,
    "longplay_n": 0,
-   "quotes": [
-    "I haven't seen any other incremental do prestige exactly like this. (steam+, 2487h)"
-   ]
+   "quotes": []
   },
   "P-qol": {
    "n": 0,
@@ -104,110 +105,118 @@
    "quotes": []
   },
   "P-story": {
-   "n": 0,
+   "n": 2,
    "of": 25,
    "longplay_n": 0,
-   "quotes": []
+   "quotes": [
+    "Other incremental games don't have the sense of story that Increlution has, and the user interface is extremely clean and surprisingly powerful. (steam+, 3514h)",
+    "This game is the perfect balance of story telling, exponential growth, and the right amount of idle and interactive. (steam+, 3035h)"
+   ]
   },
   "N-ads": {
    "n": 0,
-   "of": 7,
+   "of": 12,
    "longplay_n": 0,
    "quotes": []
   },
   "N-wall": {
-   "n": 0,
-   "of": 7,
+   "n": 1,
+   "of": 12,
    "longplay_n": 0,
-   "quotes": []
+   "quotes": [
+    "I'd say this game is probably best suited for those with the patience for grinding. (steam-, 4h)"
+   ]
   },
   "N-pay": {
    "n": 0,
-   "of": 7,
+   "of": 12,
    "longplay_n": 0,
    "quotes": []
   },
   "N-dominant": {
-   "n": 3,
-   "of": 7,
-   "longplay_n": 3,
+   "n": 2,
+   "of": 12,
+   "longplay_n": 2,
    "quotes": []
   },
   "N-late": {
-   "n": 0,
-   "of": 7,
+   "n": 2,
+   "of": 12,
    "longplay_n": 0,
-   "quotes": []
+   "quotes": [
+    "Game is very, very repetitive, with very few decisions to make (none of them seem really impactful, or seem to be a lot more optimized) (steam-, 6h)",
+    "That said, the way this game is built feels pretty repetitive. (steam-, 4h)"
+   ]
   },
   "N-offline": {
    "n": 0,
-   "of": 7,
+   "of": 12,
    "longplay_n": 0,
    "quotes": []
   },
   "N-mobile": {
    "n": 0,
-   "of": 7,
+   "of": 12,
    "longplay_n": 0,
    "quotes": []
   },
   "N-bug": {
    "n": 0,
-   "of": 7,
+   "of": 12,
    "longplay_n": 0,
    "quotes": []
   },
   "N-energy": {
    "n": 0,
-   "of": 7,
+   "of": 12,
    "longplay_n": 0,
    "quotes": []
   },
   "N-bloat": {
    "n": 0,
-   "of": 7,
+   "of": 12,
    "longplay_n": 0,
    "quotes": []
   },
   "N-chore": {
    "n": 0,
-   "of": 7,
+   "of": 12,
    "longplay_n": 0,
    "quotes": []
   },
   "N-tutorial": {
    "n": 0,
-   "of": 7,
+   "of": 12,
    "longplay_n": 0,
    "quotes": []
   },
   "N-shallow": {
    "n": 0,
-   "of": 7,
+   "of": 12,
    "longplay_n": 0,
    "quotes": []
   },
   "N-reset": {
    "n": 0,
-   "of": 7,
+   "of": 12,
    "longplay_n": 0,
    "quotes": []
   },
   "N-pace": {
    "n": 0,
-   "of": 7,
+   "of": 12,
    "longplay_n": 0,
    "quotes": []
   },
   "N-fast": {
    "n": 0,
-   "of": 7,
+   "of": 12,
    "longplay_n": 0,
    "quotes": []
   },
   "N-balance": {
    "n": 0,
-   "of": 7,
+   "of": 12,
    "longplay_n": 0,
    "quotes": []
   }

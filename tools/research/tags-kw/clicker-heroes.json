@@ -1,8 +1,8 @@
 {
  "slug": "clicker-heroes",
- "n_reviews": 459,
- "n_pos": 344,
- "n_neg": 115,
+ "n_reviews": 157,
+ "n_pos": 90,
+ "n_neg": 67,
  "n_longplay_neg": 25,
  "sources": [
   "steam",
@@ -10,249 +10,233 @@
  ],
  "themes": {
   "P-offline": {
-   "n": 17,
-   "of": 344,
+   "n": 6,
+   "of": 90,
    "longplay_n": 0,
    "quotes": [
     "It's a great clicker game with offline earnings and a rebirth system. (steam+, 116h)",
-    "Easy to play chill game - works in background so gathers money while you're offline which is cool! (steam+, 10h)"
+    "You can make some progress while offline but it\u2019s not too much. (apple5)"
    ]
   },
   "P-respect": {
-   "n": 5,
-   "of": 344,
+   "n": 1,
+   "of": 90,
    "longplay_n": 0,
    "quotes": [
-    "They don't respect your time, of course, but that's the point. (steam+, 1318h)",
-    "No forced ads or pay to win features. (apple4)"
+    "They don't respect your time, of course, but that's the point. (steam+, 1318h)"
    ]
   },
   "P-active": {
    "n": 1,
-   "of": 344,
+   "of": 90,
    "longplay_n": 0,
    "quotes": [
-    "Better yet recruit members that actually play the game. (apple4)"
+    "Requires no skill, brain, or purpose (steam+, 1140h)"
    ]
   },
   "P-dev": {
    "n": 0,
-   "of": 344,
+   "of": 90,
    "longplay_n": 0,
    "quotes": []
   },
   "P-unlock": {
-   "n": 1,
-   "of": 344,
+   "n": 2,
+   "of": 90,
    "longplay_n": 0,
    "quotes": [
-    "I just wish this game could have some new content or maybe even a new clicker heroes (besides the clicker heroes 2). (apple5)"
+    "I\u2019m really enjoying it, Its super fun to progress little by little, unlocking new things and upgrades as you go. (steam+, 1088h)"
    ]
   },
   "P-collect": {
-   "n": 16,
-   "of": 344,
+   "n": 7,
+   "of": 90,
    "longplay_n": 0,
    "quotes": [
     "All achievements unlocked at their appropriate times. (steam+, 1318h)",
-    "[h3] 100% Achievement Review: Based on my experience completing all the (available) achievements. (steam+, 1000h)"
+    "I like the game, but I\u2019m playing it to get all the Steam achievements, and... (steam+, 572h)"
    ]
   },
   "P-goals": {
    "n": 0,
-   "of": 344,
+   "of": 90,
    "longplay_n": 0,
    "quotes": []
   },
   "P-depth": {
-   "n": 10,
-   "of": 344,
+   "n": 6,
+   "of": 90,
    "longplay_n": 0,
    "quotes": [
-    "An endless wave game centered around financial decisions. (apple4)",
-    "\ud83c\udfae Difficulty: Very easy to learn, with increasing strategic depth through progression (steam+, 950h)"
+    "My In-Depth Review of Clicker Heroes (steam+, 453h)",
+    "An endless wave game centered around financial decisions. (apple4)"
    ]
   },
   "P-fair": {
-   "n": 8,
-   "of": 344,
+   "n": 1,
+   "of": 90,
    "longplay_n": 0,
    "quotes": [
-    "Lost a star due to no ads. (apple4)",
     "The game is really fun and pretty well balanced, however transcending is way too generous for players early game now. (apple4)"
    ]
   },
   "P-interlock": {
    "n": 0,
-   "of": 344,
+   "of": 90,
    "longplay_n": 0,
    "quotes": []
   },
   "P-prestige": {
-   "n": 9,
-   "of": 344,
+   "n": 3,
+   "of": 90,
    "longplay_n": 0,
    "quotes": [
-    "It's a great clicker game with offline earnings and a rebirth system. (steam+, 116h)",
-    "Has multiple types of \u201cascension\u201d so there\u2019s always something to look forward to. (apple4)"
+    "It's a great clicker game with offline earnings and a rebirth system. (steam+, 116h)"
    ]
   },
   "P-qol": {
    "n": 0,
-   "of": 344,
+   "of": 90,
    "longplay_n": 0,
    "quotes": []
   },
   "P-calm": {
-   "n": 3,
-   "of": 344,
+   "n": 2,
+   "of": 90,
    "longplay_n": 0,
    "quotes": [
     "The creatures are cute and the gameplay is simple and relaxing. (steam+, 1318h)",
-    "Easy to play chill game - works in background so gathers money while you're offline which is cool! (steam+, 10h)"
+    "It\u2019s chill but stimulating and the progression is endlessly satisfying. (apple5)"
    ]
   },
   "P-art": {
-   "n": 8,
-   "of": 344,
+   "n": 2,
+   "of": 90,
    "longplay_n": 0,
    "quotes": [
-    "The creatures are cute and the gameplay is simple and relaxing. (steam+, 1318h)",
-    "And it\u2019s both cute and cool with the characters and gilding them. (apple4)"
+    "The creatures are cute and the gameplay is simple and relaxing. (steam+, 1318h)"
    ]
   },
   "P-story": {
-   "n": 14,
-   "of": 344,
+   "n": 3,
+   "of": 90,
    "longplay_n": 0,
-   "quotes": [
-    "Leeroy Jenkins is a player character created by Ben Schulz in Blizzard Entertainment's multiplayer online video game World of Warcraft. (steam+, 1387h)",
-    "The mercs die too easily to quests that have good rewards. (apple5)"
-   ]
+   "quotes": []
   },
   "N-ads": {
-   "n": 7,
-   "of": 115,
+   "n": 0,
+   "of": 67,
    "longplay_n": 0,
-   "quotes": [
-    "And it keeps saying \u201cad not available. (apple2)",
-    "For example, there is no option to view ads for rewards. (apple3)"
-   ]
+   "quotes": []
   },
   "N-wall": {
-   "n": 14,
-   "of": 115,
-   "longplay_n": 9,
+   "n": 11,
+   "of": 67,
+   "longplay_n": 6,
    "quotes": [
     "It's adictive, but then the boredom sets in and the progression is too slow to be entertaining and too fast to not be a hinderance. (steam-, 203h)",
-    "It's adictive, but then the boredom sets in and the progression is too slow to be entertaining and too fast to not be a hinderance. (steam-, 203h)"
+    "After each slowdown point, the ideal strategy changes, you start grinding again, and t (steam-, 283h)"
    ]
   },
   "N-pay": {
-   "n": 3,
-   "of": 115,
+   "n": 5,
+   "of": 67,
    "longplay_n": 0,
    "quotes": [
-    "The feature is available for purchase with premium currency, and you can (and apparently need to) buy multiple levels of it. (apple2)"
+    "After a certain point, the game turns into an idle-slop with a premium currency autoclicker required (steam-, 20h)"
    ]
   },
   "N-dominant": {
-   "n": 0,
-   "of": 115,
+   "n": 1,
+   "of": 67,
    "longplay_n": 0,
    "quotes": []
   },
   "N-late": {
-   "n": 8,
-   "of": 115,
-   "longplay_n": 8,
+   "n": 3,
+   "of": 67,
+   "longplay_n": 3,
    "quotes": [
     "But when progress becomes late game it starts feeling a bit pointless. (steam-, 585h)",
-    "But when progress becomes late game it starts feeling a bit pointless. (steam-, 585h)"
+    "Some of them require an absurd amount of repetitive grinding, such as: (steam-, 159h)"
    ]
   },
   "N-offline": {
    "n": 0,
-   "of": 115,
+   "of": 67,
    "longplay_n": 0,
    "quotes": []
   },
   "N-mobile": {
-   "n": 1,
-   "of": 115,
+   "n": 0,
+   "of": 67,
    "longplay_n": 0,
-   "quotes": [
-    "How does such a simple game drain my battery so fast and make it heat up like a space heater? (apple1)"
-   ]
+   "quotes": []
   },
   "N-bug": {
-   "n": 21,
-   "of": 115,
+   "n": 5,
+   "of": 67,
    "longplay_n": 2,
    "quotes": [
-    "Fun but screen freezes or returns to home after like 10 days. (apple1)",
-    "theres always been a few buggy moments and some slowness, but its gotten much worse since this update. (apple3)"
+    "A game this simple shouldn't be hogging so much resources and be on the verge of crashing constantly. (steam-, 53h)"
    ]
   },
   "N-energy": {
    "n": 2,
-   "of": 115,
+   "of": 67,
    "longplay_n": 0,
-   "quotes": [
-    "You can UPGRADE HEROES AND WAIT FOR FRICKING COINS TO FALL INTO YOUR POCKET!!!!!!!!!!! (apple1)"
-   ]
+   "quotes": []
   },
   "N-bloat": {
-   "n": 1,
-   "of": 115,
+   "n": 0,
+   "of": 67,
    "longplay_n": 0,
    "quotes": []
   },
   "N-chore": {
    "n": 0,
-   "of": 115,
+   "of": 67,
    "longplay_n": 0,
    "quotes": []
   },
   "N-tutorial": {
    "n": 0,
-   "of": 115,
+   "of": 67,
    "longplay_n": 0,
    "quotes": []
   },
   "N-shallow": {
-   "n": 2,
-   "of": 115,
-   "longplay_n": 0,
+   "n": 3,
+   "of": 67,
+   "longplay_n": 2,
    "quotes": [
-    "and, all of the cosmetic changes made the game less pleasing, since its less simple. (apple3)",
-    "How does such a simple game drain my battery so fast and make it heat up like a space heater? (apple1)"
+    "Surprisingly shallow, even for its time. (steam-, 37h)",
+    "A game this simple shouldn't be hogging so much resources and be on the verge of crashing constantly. (steam-, 53h)"
    ]
   },
   "N-reset": {
    "n": 0,
-   "of": 115,
+   "of": 67,
    "longplay_n": 0,
    "quotes": []
   },
   "N-pace": {
    "n": 0,
-   "of": 115,
+   "of": 67,
    "longplay_n": 0,
    "quotes": []
   },
   "N-fast": {
-   "n": 2,
-   "of": 115,
-   "longplay_n": 2,
+   "n": 1,
+   "of": 67,
+   "longplay_n": 1,
    "quotes": [
-    "It's adictive, but then the boredom sets in and the progression is too slow to be entertaining and too fast to not be a hinderance. (steam-, 203h)",
     "It's adictive, but then the boredom sets in and the progression is too slow to be entertaining and too fast to not be a hinderance. (steam-, 203h)"
    ]
   },
   "N-balance": {
    "n": 1,
-   "of": 115,
+   "of": 67,
    "longplay_n": 0,
    "quotes": [
     "Update heavily nerfed outsiders and ancients, AND making outsider costs go up exponentially now?? (apple1)"

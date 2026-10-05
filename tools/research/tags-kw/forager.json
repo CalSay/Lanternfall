@@ -1,33 +1,36 @@
 {
  "slug": "forager",
- "n_reviews": 65,
+ "n_reviews": 67,
  "n_pos": 25,
- "n_neg": 40,
- "n_longplay_neg": 22,
+ "n_neg": 42,
+ "n_longplay_neg": 25,
  "sources": [
   "steam"
  ],
  "themes": {
   "P-offline": {
-   "n": 0,
-   "of": 25,
-   "longplay_n": 0,
-   "quotes": []
-  },
-  "P-respect": {
-   "n": 2,
+   "n": 1,
    "of": 25,
    "longplay_n": 0,
    "quotes": [
-    "You can easily start playing for a few minutes and suddenly realize you've been playing for hours. (steam+, 30h)",
-    "You can easily start playing for a few minutes and suddenly realize you've been playing for hours. (steam+, 30h)"
+    "I used to play it a ton and would AFK every night, causing my high playtime, but I never fully finished it. (steam+, 777h)"
+   ]
+  },
+  "P-respect": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "9.5/10 \u2013 Highly recommended for casual and hardcore players alike. (steam+, 16h)"
    ]
   },
   "P-active": {
-   "n": 0,
+   "n": 1,
    "of": 25,
    "longplay_n": 0,
-   "quotes": []
+   "quotes": [
+    "-Satisfying progression \u2013 skill trees, upgrades, and new tools keep you motivated. (steam+, 16h)"
+   ]
   },
   "P-dev": {
    "n": 0,
@@ -36,34 +39,33 @@
    "quotes": []
   },
   "P-unlock": {
-   "n": 1,
-   "of": 25,
-   "longplay_n": 0,
-   "quotes": [
-    "You start with almost nothing and slowly build up your resources, unlock new areas, craft upgrades, and expand your world. (steam+, 2h)"
-   ]
-  },
-  "P-collect": {
-   "n": 6,
-   "of": 25,
-   "longplay_n": 0,
-   "quotes": [
-    "A few hours later I\u2019m collecting rocks, mining everything in sight and somehow still telling myself \u201cI\u2019ll stop after this one upgrade.\u201d (steam+, 20h)",
-    "I completed 100% of the achievements and really enjoyed the game. (steam+, 30h)"
-   ]
-  },
-  "P-goals": {
    "n": 0,
    "of": 25,
    "longplay_n": 0,
    "quotes": []
+  },
+  "P-collect": {
+   "n": 2,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "A few hours later I\u2019m collecting rocks, mining everything in sight and somehow still telling myself \u201cI\u2019ll stop after this one upgrade.\u201d (steam+, 20h)"
+   ]
+  },
+  "P-goals": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "-Plenty of variety \u2013 from farming and cooking to puzzles and combat, there\u2019s always something to do. (steam+, 16h)"
+   ]
   },
   "P-depth": {
    "n": 1,
    "of": 25,
    "longplay_n": 0,
    "quotes": [
-    "You start with almost nothing and slowly build up your resources, unlock new areas, craft upgrades, and expand your world. (steam+, 2h)"
+    "You start small, build farms, craft tools, explore islands, and fight monsters. (steam+, 16h)"
    ]
   },
   "P-fair": {
@@ -85,143 +87,152 @@
    "quotes": []
   },
   "P-qol": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-calm": {
+   "n": 4,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "It\u2019s the kind of game you boot up to relax, only to end up busy with one little thing after another. (steam+, 26h)",
+    "Still a great pick if you love chill crafting games. (steam+, 41h)"
+   ]
+  },
+  "P-art": {
+   "n": 5,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "Plus, the music brings the experience to a next level, it just blends right in, its perfect for this game! (steam+, 56h)",
+    "-Colorful, simple graphics \u2013 easy on the eyes and perfect for long sessions. (steam+, 16h)"
+   ]
+  },
+  "P-story": {
    "n": 2,
    "of": 25,
    "longplay_n": 0,
    "quotes": [
-    "[*]Lots of crafting and automation options (steam+, 30h)",
-    "[*]Lots of crafting and automation options (steam+, 30h)"
+    "30 hours to complete this fun, incremental, top down \"fps\", terraria x muck, story, puzzle game. (steam+, 30h)"
    ]
-  },
-  "P-calm": {
-   "n": 0,
-   "of": 25,
-   "longplay_n": 0,
-   "quotes": []
-  },
-  "P-art": {
-   "n": 0,
-   "of": 25,
-   "longplay_n": 0,
-   "quotes": []
-  },
-  "P-story": {
-   "n": 1,
-   "of": 25,
-   "longplay_n": 0,
-   "quotes": []
   },
   "N-ads": {
    "n": 0,
-   "of": 40,
+   "of": 42,
    "longplay_n": 0,
    "quotes": []
   },
   "N-wall": {
-   "n": 8,
-   "of": 40,
+   "n": 5,
+   "of": 42,
    "longplay_n": 4,
    "quotes": [
-    "It becomes slower and slower and more and more grindy the longer you play. (steam-, 46h)",
+    "The game is also [i]very[/i] grindy. (steam-, 120h)",
     "It becomes slower and slower and more and more grindy the longer you play. (steam-, 46h)"
    ]
   },
   "N-pay": {
    "n": 0,
-   "of": 40,
+   "of": 42,
    "longplay_n": 0,
    "quotes": []
   },
   "N-dominant": {
    "n": 0,
-   "of": 40,
+   "of": 42,
    "longplay_n": 0,
    "quotes": []
   },
   "N-late": {
-   "n": 5,
-   "of": 40,
-   "longplay_n": 5,
+   "n": 10,
+   "of": 42,
+   "longplay_n": 7,
    "quotes": [
-    "Severe issues with lag end game even on high end machines. (steam-, 58h)",
-    "Severe issues with lag end game even on high end machines. (steam-, 58h)"
+    "Late game is farming the big void to deeper and deeper levels. (steam-, 27h)",
+    "It doesn't help that some of the final endgame grinds for the feat (steam-, 45h)"
    ]
   },
   "N-offline": {
    "n": 0,
-   "of": 40,
+   "of": 42,
    "longplay_n": 0,
    "quotes": []
   },
   "N-mobile": {
    "n": 0,
-   "of": 40,
+   "of": 42,
    "longplay_n": 0,
    "quotes": []
   },
   "N-bug": {
-   "n": 3,
-   "of": 40,
-   "longplay_n": 0,
-   "quotes": []
-  },
-  "N-energy": {
-   "n": 4,
-   "of": 40,
-   "longplay_n": 0,
+   "n": 8,
+   "of": 42,
+   "longplay_n": 6,
    "quotes": [
-    "You purchase islands , get permanent upgrades (more lives, bigger stamina, more DMG), solve puzzles, do tasks for NPCs (steam-, 29h)",
-    "You purchase islands , get permanent upgrades (more lives, bigger stamina, more DMG), solve puzzles, do tasks for NPCs (steam-, 29h)"
+    "The progression is a mess, lots of bugs and missing QoL. (steam-, 64h)",
+    "If you do buy expect fps stutters, game breaking crashes, and a generally unpolished game. (steam-, 27h)"
    ]
   },
-  "N-bloat": {
-   "n": 0,
-   "of": 40,
-   "longplay_n": 0,
+  "N-energy": {
+   "n": 2,
+   "of": 42,
+   "longplay_n": 1,
    "quotes": []
   },
-  "N-chore": {
-   "n": 0,
-   "of": 40,
+  "N-bloat": {
+   "n": 1,
+   "of": 42,
    "longplay_n": 0,
-   "quotes": []
+   "quotes": [
+    "Crafting anything takes far too many resources and resources are crafted extremely slow, especially late game ones... (steam-, 40h)"
+   ]
+  },
+  "N-chore": {
+   "n": 2,
+   "of": 42,
+   "longplay_n": 2,
+   "quotes": [
+    "Forager isn't nearly as grindy, but it feels like a chore. (steam-, 54h)"
+   ]
   },
   "N-tutorial": {
    "n": 0,
-   "of": 40,
+   "of": 42,
    "longplay_n": 0,
    "quotes": []
   },
   "N-shallow": {
-   "n": 2,
-   "of": 40,
-   "longplay_n": 0,
+   "n": 3,
+   "of": 42,
+   "longplay_n": 1,
    "quotes": [
-    "I only played it because I was too bored and tired and wanted something mindless, and had gotten this for free from a bundle. (steam-, 46h)",
+    "It's pretty simple and enjoyable for the most part. (steam-, 27h)",
     "I only played it because I was too bored and tired and wanted something mindless, and had gotten this for free from a bundle. (steam-, 46h)"
    ]
   },
   "N-reset": {
    "n": 0,
-   "of": 40,
+   "of": 42,
    "longplay_n": 0,
    "quotes": []
   },
   "N-pace": {
    "n": 0,
-   "of": 40,
+   "of": 42,
    "longplay_n": 0,
    "quotes": []
   },
   "N-fast": {
    "n": 0,
-   "of": 40,
+   "of": 42,
    "longplay_n": 0,
    "quotes": []
   },
   "N-balance": {
    "n": 0,
-   "of": 40,
+   "of": 42,
    "longplay_n": 0,
    "quotes": []
   }

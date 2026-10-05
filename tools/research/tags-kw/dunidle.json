@@ -1,16 +1,16 @@
 {
  "slug": "dunidle",
- "n_reviews": 203,
- "n_pos": 143,
- "n_neg": 60,
+ "n_reviews": 150,
+ "n_pos": 103,
+ "n_neg": 47,
  "n_longplay_neg": 0,
  "sources": [
   "apple"
  ],
  "themes": {
   "P-offline": {
-   "n": 5,
-   "of": 143,
+   "n": 4,
+   "of": 103,
    "longplay_n": 0,
    "quotes": [
     "I\u2019d request an actual offline idle mode, and a better item filter/comparison menu. (apple4)",
@@ -18,17 +18,16 @@
    ]
   },
   "P-respect": {
-   "n": 3,
-   "of": 143,
+   "n": 2,
+   "of": 103,
    "longplay_n": 0,
    "quotes": [
-    "Casual game that you can fit into a busy day. (apple5)",
-    "It took me a while to get going on the game, but after a few minutes of playing it really got going (apple5)"
+    "Casual game that you can fit into a busy day. (apple5)"
    ]
   },
   "P-active": {
    "n": 8,
-   "of": 143,
+   "of": 103,
    "longplay_n": 0,
    "quotes": [
     "I don\u2019t call mobile games fun, but this is actually fun. (apple5)",
@@ -36,8 +35,8 @@
    ]
   },
   "P-dev": {
-   "n": 11,
-   "of": 143,
+   "n": 10,
+   "of": 103,
    "longplay_n": 0,
    "quotes": [
     "In addition to fun, customizable gameplay, the developers are very interactive with the player base. (apple5)",
@@ -46,13 +45,13 @@
   },
   "P-unlock": {
    "n": 1,
-   "of": 143,
+   "of": 103,
    "longplay_n": 0,
    "quotes": []
   },
   "P-collect": {
    "n": 3,
-   "of": 143,
+   "of": 103,
    "longplay_n": 0,
    "quotes": [
     "Collecting loot is super fun, and the RNG stats provide a lot of replay value. (apple5)",
@@ -61,13 +60,13 @@
   },
   "P-goals": {
    "n": 0,
-   "of": 143,
+   "of": 103,
    "longplay_n": 0,
    "quotes": []
   },
   "P-depth": {
    "n": 12,
-   "of": 143,
+   "of": 103,
    "longplay_n": 0,
    "quotes": [
     "You go for crit build and effectively mop the floor with bosses. (apple5)",
@@ -76,7 +75,7 @@
   },
   "P-fair": {
    "n": 2,
-   "of": 143,
+   "of": 103,
    "longplay_n": 0,
    "quotes": [
     "I want No Ads without all the bonuses. (apple4)",
@@ -85,7 +84,7 @@
   },
   "P-interlock": {
    "n": 1,
-   "of": 143,
+   "of": 103,
    "longplay_n": 0,
    "quotes": [
     "The synergy of character choice and leveling is interesting. (apple5)"
@@ -93,13 +92,13 @@
   },
   "P-prestige": {
    "n": 0,
-   "of": 143,
+   "of": 103,
    "longplay_n": 0,
    "quotes": []
   },
   "P-qol": {
    "n": 3,
-   "of": 143,
+   "of": 103,
    "longplay_n": 0,
    "quotes": [
     "I\u2019ll be honest though, I\u2019d like to see some quality of life improvements. (apple5)",
@@ -107,8 +106,8 @@
    ]
   },
   "P-calm": {
-   "n": 4,
-   "of": 143,
+   "n": 2,
+   "of": 103,
    "longplay_n": 0,
    "quotes": [
     "Lots of fun, and it can just run while you chill. (apple5)",
@@ -116,17 +115,17 @@
    ]
   },
   "P-art": {
-   "n": 15,
-   "of": 143,
+   "n": 9,
+   "of": 103,
    "longplay_n": 0,
    "quotes": [
     "The art style is very appealing to me, as it creates a dark, cult-y atmosphere. (apple5)",
-    "As someone with a tendency towards retro graphics and idle games, this game is pretty fantastic (apple5)"
+    "The pixel dungeon crawler style is nothing new, but the rapid action and unique characters makes it fun and interesting. (apple4)"
    ]
   },
   "P-story": {
-   "n": 21,
-   "of": 143,
+   "n": 20,
+   "of": 103,
    "longplay_n": 0,
    "quotes": [
     "The leveling system is fantastic, the character models, the almost synchronized look to how the heroes fight, all of those this make this game splendid. (apple5)",
@@ -135,7 +134,7 @@
   },
   "N-ads": {
    "n": 14,
-   "of": 60,
+   "of": 47,
    "longplay_n": 0,
    "quotes": [
     "It\u2019s really not a bad game but the forced ad is what made me uninstall. (apple3)",
@@ -143,8 +142,8 @@
    ]
   },
   "N-wall": {
-   "n": 7,
-   "of": 60,
+   "n": 6,
+   "of": 47,
    "longplay_n": 0,
    "quotes": [
     "This game isn\u2019t terrible, after playing it for a few hours I noticed it was a slow grind that I had to pay attention to. (apple1)",
@@ -152,8 +151,8 @@
    ]
   },
   "N-pay": {
-   "n": 4,
-   "of": 60,
+   "n": 3,
+   "of": 47,
    "longplay_n": 0,
    "quotes": [
     "Everything can be acquired through grinding in the game even the premium currency which a lot of games don\u2019t. (apple2)",
@@ -162,13 +161,13 @@
   },
   "N-dominant": {
    "n": 0,
-   "of": 60,
+   "of": 47,
    "longplay_n": 0,
    "quotes": []
   },
   "N-late": {
    "n": 2,
-   "of": 60,
+   "of": 47,
    "longplay_n": 0,
    "quotes": [
     "Now there is nothing left to do. (apple2)"
@@ -176,19 +175,19 @@
   },
   "N-offline": {
    "n": 0,
-   "of": 60,
+   "of": 47,
    "longplay_n": 0,
    "quotes": []
   },
   "N-mobile": {
    "n": 0,
-   "of": 60,
+   "of": 47,
    "longplay_n": 0,
    "quotes": []
   },
   "N-bug": {
-   "n": 10,
-   "of": 60,
+   "n": 9,
+   "of": 47,
    "longplay_n": 0,
    "quotes": [
     "However, there are a LOT of bugs. (apple3)",
@@ -197,25 +196,25 @@
   },
   "N-energy": {
    "n": 0,
-   "of": 60,
+   "of": 47,
    "longplay_n": 0,
    "quotes": []
   },
   "N-bloat": {
    "n": 1,
-   "of": 60,
+   "of": 47,
    "longplay_n": 0,
    "quotes": []
   },
   "N-chore": {
    "n": 1,
-   "of": 60,
+   "of": 47,
    "longplay_n": 0,
    "quotes": []
   },
   "N-tutorial": {
    "n": 2,
-   "of": 60,
+   "of": 47,
    "longplay_n": 0,
    "quotes": [
     "The tutorial is bugged and locks the game up. (apple2)",
@@ -224,7 +223,7 @@
   },
   "N-shallow": {
    "n": 1,
-   "of": 60,
+   "of": 47,
    "longplay_n": 0,
    "quotes": [
     "The game is simple and fun, nothing great or new but fun enough, and for a single dev it\u2019s impressive. (apple3)"
@@ -232,25 +231,25 @@
   },
   "N-reset": {
    "n": 0,
-   "of": 60,
+   "of": 47,
    "longplay_n": 0,
    "quotes": []
   },
   "N-pace": {
    "n": 0,
-   "of": 60,
+   "of": 47,
    "longplay_n": 0,
    "quotes": []
   },
   "N-fast": {
    "n": 0,
-   "of": 60,
+   "of": 47,
    "longplay_n": 0,
    "quotes": []
   },
   "N-balance": {
    "n": 0,
-   "of": 60,
+   "of": 47,
    "longplay_n": 0,
    "quotes": []
   }

@@ -1,34 +1,32 @@
 {
  "slug": "trials-of-heroes",
- "n_reviews": 390,
- "n_pos": 302,
- "n_neg": 88,
+ "n_reviews": 137,
+ "n_pos": 98,
+ "n_neg": 39,
  "n_longplay_neg": 0,
  "sources": [
   "apple"
  ],
  "themes": {
   "P-offline": {
-   "n": 4,
-   "of": 302,
+   "n": 1,
+   "of": 98,
    "longplay_n": 0,
    "quotes": [
-    "I\u2019ve tried a few of these \u201cgain xp while away\u201d freemium type games and this is the best by far. (apple5)",
-    "Very good game especially the ability to gain experience when offline. (apple5)"
+    "I\u2019ve tried a few of these \u201cgain xp while away\u201d freemium type games and this is the best by far. (apple5)"
    ]
   },
   "P-respect": {
-   "n": 5,
-   "of": 302,
+   "n": 3,
+   "of": 98,
    "longplay_n": 0,
    "quotes": [
-    "Overall this is a pretty good game whether you\u2019re the pay to win type or casual player. (apple4)",
-    "Nice to play a few minutes or hours! (apple5)"
+    "Overall this is a pretty good game whether you\u2019re the pay to win type or casual player. (apple4)"
    ]
   },
   "P-active": {
    "n": 1,
-   "of": 302,
+   "of": 98,
    "longplay_n": 0,
    "quotes": [
     "It\u2019s actually fun to sit and strategize how to get past certain levels and balance out your heroes. (apple5)"
@@ -36,7 +34,7 @@
   },
   "P-dev": {
    "n": 3,
-   "of": 302,
+   "of": 98,
    "longplay_n": 0,
    "quotes": [
     "Overall I do enjoy it, it seems like the developers update it frequently which I like. (apple5)"
@@ -44,31 +42,28 @@
   },
   "P-unlock": {
    "n": 0,
-   "of": 302,
+   "of": 98,
    "longplay_n": 0,
    "quotes": []
   },
   "P-collect": {
-   "n": 10,
-   "of": 302,
+   "n": 5,
+   "of": 98,
    "longplay_n": 0,
    "quotes": [
     "Once a day there is a lot when quests reset but other logins are just quick stops to collect a couple of things. (apple4)",
-    "It\u2019s a rare find when a game isn\u2019t required pay to play. (apple5)"
+    "Out of that time I\u2019ve had fun collecting the awesome-looking heroes the developers have created and getting those heroes the top armor and upgrades. (apple4)"
    ]
   },
   "P-goals": {
-   "n": 2,
-   "of": 302,
+   "n": 0,
+   "of": 98,
    "longplay_n": 0,
-   "quotes": [
-    "Always something to do but not overwhelming! (apple5)",
-    "There is always something to do... (apple5)"
-   ]
+   "quotes": []
   },
   "P-depth": {
-   "n": 10,
-   "of": 302,
+   "n": 6,
+   "of": 98,
    "longplay_n": 0,
    "quotes": [
     "It scratches that \u201cGacha\u201d itch, it\u2019s fun to build your team slowly over months, and the \u201cgrind\u201d happens while I\u2019m working or doing other things. (apple5)",
@@ -77,7 +72,7 @@
   },
   "P-fair": {
    "n": 3,
-   "of": 302,
+   "of": 98,
    "longplay_n": 0,
    "quotes": [
     "This game is definitely more generous with giving out needed equipment rewards. (apple4)"
@@ -85,19 +80,19 @@
   },
   "P-interlock": {
    "n": 0,
-   "of": 302,
+   "of": 98,
    "longplay_n": 0,
    "quotes": []
   },
   "P-prestige": {
    "n": 0,
-   "of": 302,
+   "of": 98,
    "longplay_n": 0,
    "quotes": []
   },
   "P-qol": {
-   "n": 5,
-   "of": 302,
+   "n": 3,
+   "of": 98,
    "longplay_n": 0,
    "quotes": [
     "At this point, you get stuck waiting for your auto battle experience to bump you up another level so that you can progress. (apple4)",
@@ -106,13 +101,13 @@
   },
   "P-calm": {
    "n": 0,
-   "of": 302,
+   "of": 98,
    "longplay_n": 0,
    "quotes": []
   },
   "P-art": {
-   "n": 27,
-   "of": 302,
+   "n": 14,
+   "of": 98,
    "longplay_n": 0,
    "quotes": [
     "My wife was fond of Idle Heroes, but the graphics in that game were too childish and cartoonish for my taste. (apple5)",
@@ -120,8 +115,8 @@
    ]
   },
   "P-story": {
-   "n": 39,
-   "of": 302,
+   "n": 21,
+   "of": 98,
    "longplay_n": 0,
    "quotes": [
     "To date, I\u2019ve spent $30 to get VIP 3 status but at that time I already had one six star character and several five star. (apple5)",
@@ -129,16 +124,14 @@
    ]
   },
   "N-ads": {
-   "n": 1,
-   "of": 88,
+   "n": 0,
+   "of": 39,
    "longplay_n": 0,
-   "quotes": [
-    "I saw this game on Youtube ads. (apple1)"
-   ]
+   "quotes": []
   },
   "N-wall": {
-   "n": 6,
-   "of": 88,
+   "n": 3,
+   "of": 39,
    "longplay_n": 0,
    "quotes": [
     "Even grinding levels and auto battle, you get very few. (apple3)",
@@ -146,107 +139,99 @@
    ]
   },
   "N-pay": {
-   "n": 9,
-   "of": 88,
+   "n": 3,
+   "of": 39,
    "longplay_n": 0,
    "quotes": [
     "Very very very p2w and no pity.. (apple1)",
-    "Compared to other summon and hoard everything games, this ones severely over priced and P2W 100%. (apple1)"
+    "Trash cash grab like the rest,f reviews all bought. (apple1)"
    ]
   },
   "N-dominant": {
    "n": 0,
-   "of": 88,
+   "of": 39,
    "longplay_n": 0,
    "quotes": []
   },
   "N-late": {
    "n": 1,
-   "of": 88,
+   "of": 39,
    "longplay_n": 0,
    "quotes": []
   },
   "N-offline": {
    "n": 0,
-   "of": 88,
+   "of": 39,
    "longplay_n": 0,
    "quotes": []
   },
   "N-mobile": {
    "n": 0,
-   "of": 88,
+   "of": 39,
    "longplay_n": 0,
    "quotes": []
   },
   "N-bug": {
-   "n": 7,
-   "of": 88,
+   "n": 3,
+   "of": 39,
    "longplay_n": 0,
    "quotes": [
-    "Do not download, money is necessary to actual success in the game and there are constant bugs that the devs refuse to address. (apple1)",
     "Now it bugs out all the time. (apple2)"
    ]
   },
   "N-energy": {
-   "n": 2,
-   "of": 88,
+   "n": 0,
+   "of": 39,
    "longplay_n": 0,
-   "quotes": [
-    "Wait for daily stuff to reset which for me is about 7pm. (apple3)",
-    "If you do spend and get strong it will make you wait for you to make levels to continue. (apple2)"
-   ]
+   "quotes": []
   },
   "N-bloat": {
-   "n": 2,
-   "of": 88,
+   "n": 0,
+   "of": 39,
    "longplay_n": 0,
-   "quotes": [
-    "Another game with forced tutorials and cluttered interfaces. (apple2)"
-   ]
+   "quotes": []
   },
   "N-chore": {
    "n": 1,
-   "of": 88,
+   "of": 39,
    "longplay_n": 0,
    "quotes": [
     "What use to be a 5 to 10 minute collection of daily quests can take up to an hour or better. (apple2)"
    ]
   },
   "N-tutorial": {
-   "n": 1,
-   "of": 88,
+   "n": 0,
+   "of": 39,
    "longplay_n": 0,
-   "quotes": [
-    "That tutorial is long winded and boring. (apple3)"
-   ]
+   "quotes": []
   },
   "N-shallow": {
    "n": 0,
-   "of": 88,
+   "of": 39,
    "longplay_n": 0,
    "quotes": []
   },
   "N-reset": {
    "n": 0,
-   "of": 88,
+   "of": 39,
    "longplay_n": 0,
    "quotes": []
   },
   "N-pace": {
    "n": 0,
-   "of": 88,
+   "of": 39,
    "longplay_n": 0,
    "quotes": []
   },
   "N-fast": {
    "n": 0,
-   "of": 88,
+   "of": 39,
    "longplay_n": 0,
    "quotes": []
   },
   "N-balance": {
    "n": 3,
-   "of": 88,
+   "of": 39,
    "longplay_n": 0,
    "quotes": [
     "There\u2019s an insanely OP hero called Balrog that literally EVERY high level player uses. (apple1)",

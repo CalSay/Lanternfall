@@ -9,7 +9,7 @@
   "genre": "Games"
  },
  "apple": {
-  "n": 203,
+  "n": 150,
   "reviews": [
    {
     "sort": "mosthelpful",
@@ -712,724 +712,353 @@
     "votes": 0
    },
    {
-    "sort": "mosthelpful",
-    "stars": 5,
-    "title": "5/5 would recommend",
-    "text": "Game is pretty great, I love the whole dungeon crawler genre, but felt it was becoming stale so this game really brought me back and keeps me glued for more.",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 5,
-    "title": "Addicting and fun!",
-    "text": "One of my new favorite games! 5/5 \nAnd another big thing is the dev is super nice, and listens to the feedback from the community! Come hang out in the discord!",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 5,
-    "title": "Really good idle rpg",
-    "text": "I don\u2019t usually leave reviews on games but this game has captivated me. I love the continuos growth to the game with a very supportive dev team. I wish I would have found this game sooner it is a great time passer.",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 5,
-    "title": "Amazing game!",
-    "text": "I just started playing and I can\u2019t put it down, it\u2019s an amazing game and I can\u2019t wait to see what\u2019s in store for it!",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 5,
-    "title": "Pretty fun",
-    "text": "Great game for those looking to enjoy some classic 8 bit fun. Leveling system is unique and not difficult to understand. The heroes are fun and are all usable. Give it a try!",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 2,
-    "title": "Fun game, but bug stops from playing",
-    "text": "I\u2019ve been playing this game for about a day now and I really like it however all of a sudden the game glitched out and I will no longer get past the initial loading screen would be a fun game if not for that",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 1,
-    "title": "Won\u2019t load",
-    "text": "I decided I wanted to try playing this because it seemed rlly fun and the reviews were very positive, but for some reason I can\u2019t open it on my iPhone 7. Even after resetting my phone it still won\u2019t load. I hope you guys can fix this as soon as conveniently possible.",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 5,
-    "title": "Very fun",
-    "text": "It took me a while to get going on the game, but after a few minutes of playing it really got going",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 5,
-    "title": "Pretty Good",
-    "text": "What stood out was the dialogue in the intro. Felt genuine. The gameplay was not bad, it takes a while to level up if you\u2019re doing it right.",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 2,
-    "title": "Ads?",
-    "text": "So I will be honest that I was enjoying the game. However there are too many ads and no way to purchase anything to remove them. I hate apps that force ads on its users and this game seems to have waaay to many forced ads.",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 5,
-    "title": "Solid Game",
-    "text": "Pretty good, it seems to avoid the issue I have with a lot of idle games I\u2019ve tried. Haven\u2019t had any issues with pay walls or tedious grind",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 5,
-    "title": "Great game",
-    "text": "If you are just trying to have a fun game to play while relaxing or during a break this is that game to choose",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 2,
-    "title": "Great game, Buster menu options",
-    "text": "I put oodles of time in a while back paid for the Unlock all bit, but on trying to get into it again but every time I select restore purchases the game hard crashes.",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 1,
-    "title": "Unplayable on iMac with 1920x1080 resolution",
-    "text": "The app extends off the screen. The developer did not allow for the the app window to be scaled at all. So it the buttons are unreachable making it unplayable.  Contacted dev who said he does not intend to fix the issue.  Don\u2019t waste your time if you have a 1920x1080 or smaller resolution.",
-    "votes": 2
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 5,
-    "title": "Almost too good",
-    "text": "Phenomenal idle game but you still have a lot of participation. Intricate leveling and skill system but easy to learn. So good!!!",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 5,
-    "title": "very cool",
-    "text": "everything was cool\n\nidk about the new skins tho I liked the old ones more",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 5,
-    "title": "Amazing game :)",
-    "text": "It\u2019s a pretty fun game for what it is.\nI love the  concept and the style and I\u2019m having a good time while playing",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 5,
-    "title": "Good Game",
-    "text": "I\u2019ve enjoyed playing Dunidle for the past week or so. It is a solid idle rpg. l would definitely recommend giving it a try.",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 5,
-    "title": "Great game!",
-    "text": "Having fun except for some reason my fastest man alive has stopped working. Please help me figure this out. Other than that the game is great!",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 5,
-    "title": "Great idle game",
-    "text": "For the most part this is just an idle game, but it\u2019s unique and fun to grow your party\u2019s capabilities and try different party compositions to achieve success.",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 2,
-    "title": "Ads",
-    "text": "Understandable that games will have ads at times. Within the first 2-3 minutes there\u2019s already been 3 ads. I wanted to try and play the game but it\u2019s just a little much to even get to do so.",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 1,
-    "title": "Every time I\u2019m actually enjoying the game they change it",
-    "text": "After grinding for a month and being in the 4th to last boss they do a big change making that game les enjoyable and way more confusing not worth the time of day.",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 5,
-    "title": "Great Idle game!",
-    "text": "Love playing a lot of different idle games and as of lately this has been my favorite. Cool characters and skins and good progression to keep it interesting!",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 5,
-    "title": "?",
-    "text": "Why is it asking me to rate the game when I just opened it?",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 4,
-    "title": "Pretty good",
-    "text": "This is a pretty well done game. It\u2019s self aware with amusing dialog. It does take its inspiration from Soda dungeon. Since it\u2019s pretty light on graphics the play is quick and smooth.",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 5,
-    "title": "Love it! \ud83d\udc4d",
-    "text": "This is a very well executed game that is worth playing and supporting.  I think it\u2019s awesome. Well done! \u270c\ufe0f\ud83d\ude0e\u2764\ufe0f",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 5,
-    "title": "One of the best idle games I have played",
-    "text": "This game is awesome it is slow at fast but later on it picks up in pace.",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 5,
-    "title": "Good game",
-    "text": "The game is very fun, and also the community of discord is great. Over all I think it\u2019s a great game that everyone should try",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 1,
-    "title": "Purchased ad removal pack and still ads",
-    "text": "Purchased the ad removal pack and game still throws constant ads. No chest bonus. Still ad watch. No key bonus. Still ad watch. Unable to use contact button in app. Game is a scam. I\u2019ve already filed a chargeback.",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 3,
-    "title": "Missing Chars???",
-    "text": "I have everything unlocked now. But I just saw that are 4 classes that I don\u2019t have and don\u2019t know why. Which is the reaper,Templar Druid and bard",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 1,
-    "title": "Wow",
-    "text": "I love the game however took a long break, I wanted to play again, however it\u2019s saying my saved data is corrupted. I\u2019ve tried getting into the discord to try and receive help, I even paid money for in game purchases. I\u2019m pretty upset.",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 5,
-    "title": "Very fun game!",
-    "text": "I\u2019d recommend this, it\u2019s easy to learn, the progression seems fair, and the graphics are pleasant to look at. :)",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 5,
-    "title": "Great AFK",
-    "text": "It\u2019s a great way to kill some time with this old style rpg. Even got my dad to try it (and he\u2019s 54)",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 5,
-    "title": "Great game - Fun Time",
-    "text": "This game is good. I play a lot of different games to pass the time during quarantine and it is really entertaining.",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 5,
-    "title": "Solid",
-    "text": "I had an issue with IAPS but they were just delayed. Fun game",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 4,
-    "title": "It Scammed Me",
-    "text": "Hey yeah the game is great but when I purchase an pack of diamonds the 3.99$ one it didn\u2019t give me it so just please fix that to make it give me the pack I purchased",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 3,
-    "title": "Fastest man alive upgrade",
-    "text": "Not too sure how this upgrade works or if it does. Game feels the same unless someone would care to explain otherwise interesting concept of a game",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 5,
-    "title": "A great idle rpg",
-    "text": "Well done if you developers randomly spawned in my tavern I would definitely adventure with you guys",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 1,
-    "title": "Can\u2019t even open the game!",
-    "text": "At first this game seemed really cool and interesting just from looking at it. However, I can\u2019t even open the app. I don\u2019t know if it\u2019s sum on my part or not but I would like to play this so hopefully it works.",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 5,
-    "title": "Very fun",
-    "text": "For a mobile idle game, I love the ability to customize your group. Very fun overall.",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 5,
-    "title": "Awesome Game",
-    "text": "Dunidle is a dope game with great skins. Loving the asset packs they use and you don\u2019t mind watching your team climb or descend the dungeon.",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 1,
-    "title": "Give my money back",
-    "text": "Bought the \u201cremove all adds\u201d for $12. Still have adds. There are 2 options to buy for add removal. Guess I have to pay $20 if I want no adds. I feel cheated.",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 2,
-    "title": "Glitched",
-    "text": "I was watching an ad for some random bonus I cant remember and it froze so I quit the game and now I cant get back in would be nice if I could actually play it",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 5,
-    "title": "Great Game",
-    "text": "A lot of content to help keep it interesting for a long while",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 5,
-    "title": "Very interesting",
-    "text": "As someone with a tendency towards retro graphics and idle games, this game is pretty fantastic",
-    "votes": 1
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 3,
-    "title": "Not bad but not great",
-    "text": "It\u2019s really not a bad game but the forced ad is what made me uninstall. Keep the ads optional for bonus items or buffs.",
-    "votes": 1
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 3,
-    "title": "I\u2019d pay .99 for ad removal",
-    "text": "5.99 usd for ad removal is a bit steep for me, considering it\u2019s a game designed for little interaction especially",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 5,
-    "title": "Perfect Idler",
-    "text": "Great balance of gameplay for idle/active play. Quite addictive",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 4,
-    "title": "Fun",
-    "text": "Feels and plays a lot like soda dungeon, which i am a big fan of. Good game and simple to learn mechanics",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 1,
-    "title": "Fix the review sistem on the game",
-    "text": "When the game sends you you click in the review square to give a review doesn\u2019t pop up and stay there always",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 5,
-    "title": "Tons of fun",
-    "text": "The game is great and the devs are amazing 10/10 my fav time killer!",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 5,
-    "title": "Kirbian",
-    "text": "This game is quite fun and enjoyable with nice 2d graphics and is a great way to pass the time.",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 5,
-    "title": "Fun game",
-    "text": "Actually a really good game, passes the time . Only miner visual glitches sometimes. Great free game",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 4,
-    "title": "Nice",
-    "text": "Pretty satisfying to watch the numbers go up",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 5,
-    "title": "Great game for free time",
-    "text": "Enjoying the concept of the game and loving the little bits of humor.",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 4,
-    "title": "Banned for no reason",
-    "text": "Why was I banned?",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 1,
-    "title": "The new update",
-    "text": "This game is unplayable right now, grinding for stuff has been too harsh and not worth the time invested on it. I hope they find a way to simplify the grind or revert the update.",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 4,
-    "title": "Time killer",
-    "text": "Good game to kill time. Nice to see different monsters and bosses. Keeps it interesting",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 5,
-    "title": "Pretty Good",
-    "text": "A couple of hours in and it\u2019s pretty fun",
-    "votes": 1
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 1,
-    "title": "Too big",
-    "text": "The acceptting screen to accept their policies is too big for mac, you cant even get past the first screen, so the game is unplayable",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 5,
-    "title": "Best AppStore Game Yet",
-    "text": "I truly enjoy this game. It\u2019s genuine and has passion behind it.",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 1,
-    "title": "Too many ads",
-    "text": "I gave 1 star because it even shows up ads before entering dungeon. Wth is that.",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 1,
-    "title": "It would be nice",
-    "text": "It would be nice if the in app purchases actually worked. I paid $9 for a package and it didn\u2019t unlock anything. Stay far away!",
-    "votes": 1
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 1,
-    "title": "In app purchase not working",
-    "text": "I bought a pack in the app today but it is not working, otherwise fun game",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 5,
-    "title": "RPG games are the best",
-    "text": "Simply put it\u2019s a good game",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 1,
-    "title": "can't get pass the first screen",
-    "text": "I can press the I accept button on the first thing that shows up this is on mac.",
-    "votes": 2
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 5,
-    "title": "Awesome!",
-    "text": "Simple idle rpg that\u2019s in cool 2D pixel graphics, nice amount of classes, and cool 80\u2019s music?? \u263a\ufe0f",
-    "votes": 1
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 5,
-    "title": "Good game!",
-    "text": "Reminds me a lot of Soda Dungeon",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 3,
-    "title": "cant get past level 1100",
-    "text": "i can play the game perfectly up until level 1100 where the games just seems to give up, great game otherwise",
-    "votes": 6
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 1,
-    "title": "Scammed",
-    "text": "$20 to remove ads, unlock all heroes and party upgrades. Didn\u2019t get any of that. Game is a scam. Stay away.",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 1,
-    "title": "Won\u2019t load :(",
-    "text": "Instantly crashes",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 3,
-    "title": "Fun but comes with a price",
-    "text": "Not a fan of third party data theft",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 1,
-    "title": "Lost $14",
-    "text": "Tried to get a $14 pack and it registered as I bought it but I got none of the benifits",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 4,
-    "title": "Gooood",
-    "text": "It\u2019s a very fun time consuming game",
-    "votes": 1
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 5,
-    "title": "Purple",
-    "text": "This game gets a purple star",
-    "votes": 1
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 1,
-    "title": "I cannot play the game!!!",
-    "text": "can not see the bottom of the start menu! macbook air 2020!!",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 5,
-    "title": "Gg",
-    "text": "Fun easy relaxing game",
-    "votes": 1
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 5,
-    "title": "Old School",
-    "text": "LSolid Classic Rpg",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 3,
-    "title": "Glitch",
-    "text": "If u have life steal and hp regen on knight the regen gets cancelled out",
-    "votes": 1
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 1,
-    "title": "Why",
-    "text": "Why I can\u2019t play \nUnless game",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 5,
-    "title": "It\u2019s an idle game",
-    "text": "\u00af\\_(\u30c4)_/\u00af",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 1,
-    "title": "it wont let me accept",
-    "text": "i cant shrink the tab or scroll down to see the accept button (im on mac)please fix",
-    "votes": 6
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 1,
-    "title": "Trash",
-    "text": "This game is garbage, mostly one big cash grab",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 1,
-    "title": "Waste",
-    "text": "Big waste of time",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 1,
-    "title": "still unplayable ???",
-    "text": "why cant i play this game on mac :( it looks really fun . that kinda blows",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 5,
-    "title": "Great",
-    "text": "Good idle game.",
-    "votes": 1
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 5,
-    "title": "Very Swag",
-    "text": "Cool game for cool cats",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 2,
-    "title": "Enh",
-    "text": "Just go play Soda Dungeon 2",
-    "votes": 1
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 5,
-    "title": "Good",
-    "text": "Great",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 5,
-    "title": "Yeeet",
-    "text": "Blond",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 5,
-    "title": "Nice",
-    "text": "\ud83e\udd7a",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 5,
-    "title": "Goood",
-    "text": "Good",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 5,
-    "title": "WOW!",
-    "text": "WOW!",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 5,
-    "title": "I got banned and im confused",
-    "text": "Why did I get banned I was chilling on YouTube then I felt like playing but na I was banned with this face appearing D:",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 4,
-    "title": "\u041f\u043b\u044e\u0441\u044b \u0438 \u043c\u0438\u043d\u0443\u0441\u044b",
-    "text": "\u0425\u043e\u0440\u043e\u0448\u0438\u0439 \u0438\u043d\u0442\u0443\u0438\u0442\u0438\u0432\u043d\u043e \u043f\u043e\u043d\u044f\u0442\u043d\u044b\u0439 \u0433\u0435\u0439\u043c\u043f\u043b\u0435\u0439, \u0437\u0432\u0443\u043a\u043e\u0432\u043e\u0435 \u0441\u043e\u043f\u0440\u043e\u0432\u043e\u0436\u0434\u0435\u043d\u0438\u0435, \u0438\u0433\u0440\u043e\u0432\u043e\u0435 \u043c\u0435\u043d\u044e, \u0432 \u043d\u043e\u0432\u043e\u0439 \u043e\u0431\u043d\u043e\u0432\u0435 \u043f\u0435\u0440\u0435\u0440\u0430\u0441\u043f\u0440\u0435\u0434\u0435\u043b\u0435\u043d\u0438\u0435 \u0441\u0442\u0430\u0442\u043e\u0432 \u0440\u0430\u0434\u0443\u0435\u0442. \u0418\u0437 \u043c\u0438\u043d\u0443\u0441\u043e\u0432 \u043d\u0435\u0445\u0432\u0430\u0442\u043a\u0430 \u0420\u0443\u0441\u0441\u043a\u043e\u0439 \u043b\u043e\u043a\u0430\u043b\u0438\u0437\u0430\u0446\u0438\u0438 \u0438 \u0432\u043e\u043f\u0440\u043e\u0441 \u043a\u0443\u0434\u0430 \u043e\u043d\u0430 \u043f\u0440\u043e\u043f\u0430\u043b\u0430 \u043e\u043d\u0430 \u0436\u0435 \u0431\u044b\u043b\u0430 \ud83d\ude41.",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
-    "stars": 3,
-    "title": "Review",
-    "text": "No Chinese language.",
-    "votes": 0
-   },
-   {
-    "sort": "mosthelpful",
+    "sort": "mostrecent",
     "stars": 2,
     "title": "Good game in some ways",
     "text": "Many parts of this game just don\u2019t seem to work. Hellrifts, I can\u2019t even open, I just get an error message \u201chellrift failed to open, try again\u201d never works, never has. Which locks me out of a giant part of the game according to the wiki. Which means all my characters are largely underpowered for everything past the start. Theres supposed to be an area where you can pay ingame cash for equipment, but for me that doesn\u2019t exist? It\u2019s only gem purchased equipment in that location. Which it\u2019s like 250-1150 for a basic starter depending on the hero, and I only get like 25 gems a day. The idle functionalities only work if the app is open and in use, otherwise they do next to nothing. Good idea for a game, but it\u2019s just not working for some reason",
     "votes": 0
    },
    {
-    "sort": "mosthelpful",
+    "sort": "mostrecent",
+    "stars": 1,
+    "title": "Scammed",
+    "text": "$20 to remove ads, unlock all heroes and party upgrades. Didn\u2019t get any of that. Game is a scam. Stay away.",
+    "votes": 0
+   },
+   {
+    "sort": "mostrecent",
     "stars": 1,
     "title": "Slight issue",
     "text": "The game is pretty fun, nice to have run in the back while you relax and watch something but the issue i have is i made a purchase and the next day i no longer had what was included in said purchase, it especially sucks when the restore purchase button hasn\u2019t worked at all either. Very unfortunate as i enjoyed the game and found it fun but i don\u2019t believe i will play something that essentially took my money and haven\u2019t given me what i bought",
     "votes": 0
    },
    {
-    "sort": "mosthelpful",
+    "sort": "mostrecent",
+    "stars": 1,
+    "title": "Give my money back",
+    "text": "Bought the \u201cremove all adds\u201d for $12. Still have adds. There are 2 options to buy for add removal. Guess I have to pay $20 if I want no adds. I feel cheated.",
+    "votes": 0
+   },
+   {
+    "sort": "mostrecent",
+    "stars": 1,
+    "title": "Why",
+    "text": "Why I can\u2019t play \nUnless game",
+    "votes": 0
+   },
+   {
+    "sort": "mostrecent",
+    "stars": 1,
+    "title": "Too many ads",
+    "text": "I gave 1 star because it even shows up ads before entering dungeon. Wth is that.",
+    "votes": 0
+   },
+   {
+    "sort": "mostrecent",
+    "stars": 5,
+    "title": "Love it! \ud83d\udc4d",
+    "text": "This is a very well executed game that is worth playing and supporting.  I think it\u2019s awesome. Well done! \u270c\ufe0f\ud83d\ude0e\u2764\ufe0f",
+    "votes": 0
+   },
+   {
+    "sort": "mostrecent",
+    "stars": 5,
+    "title": "I got banned and im confused",
+    "text": "Why did I get banned I was chilling on YouTube then I felt like playing but na I was banned with this face appearing D:",
+    "votes": 0
+   },
+   {
+    "sort": "mostrecent",
+    "stars": 1,
+    "title": "Too big",
+    "text": "The acceptting screen to accept their policies is too big for mac, you cant even get past the first screen, so the game is unplayable",
+    "votes": 0
+   },
+   {
+    "sort": "mostrecent",
+    "stars": 1,
+    "title": "Lost $14",
+    "text": "Tried to get a $14 pack and it registered as I bought it but I got none of the benifits",
+    "votes": 0
+   },
+   {
+    "sort": "mostrecent",
     "stars": 1,
     "title": "IAP bugged",
     "text": "Game is pretty fun, but I paid $14.99 for the bundle which is supposed to give you everything including removing ads, but I still get ads as much as ever. In fact I don\u2019t think I got anything out of the bundle, despite it showing \u201cpurchased\u201d and restarting / restoring purchases. Recommend to avoid.",
     "votes": 0
    },
    {
-    "sort": "mosthelpful",
+    "sort": "mostrecent",
+    "stars": 4,
+    "title": "Banned for no reason",
+    "text": "Why was I banned?",
+    "votes": 0
+   },
+   {
+    "sort": "mostrecent",
+    "stars": 2,
+    "title": "Fun game, but bug stops from playing",
+    "text": "I\u2019ve been playing this game for about a day now and I really like it however all of a sudden the game glitched out and I will no longer get past the initial loading screen would be a fun game if not for that",
+    "votes": 0
+   },
+   {
+    "sort": "mostrecent",
+    "stars": 1,
+    "title": "In app purchase not working",
+    "text": "I bought a pack in the app today but it is not working, otherwise fun game",
+    "votes": 0
+   },
+   {
+    "sort": "mostrecent",
+    "stars": 5,
+    "title": "Awesome Game",
+    "text": "Dunidle is a dope game with great skins. Loving the asset packs they use and you don\u2019t mind watching your team climb or descend the dungeon.",
+    "votes": 0
+   },
+   {
+    "sort": "mostrecent",
+    "stars": 1,
+    "title": "Fix the review sistem on the game",
+    "text": "When the game sends you you click in the review square to give a review doesn\u2019t pop up and stay there always",
+    "votes": 0
+   },
+   {
+    "sort": "mostrecent",
+    "stars": 5,
+    "title": "Amazing game!",
+    "text": "I just started playing and I can\u2019t put it down, it\u2019s an amazing game and I can\u2019t wait to see what\u2019s in store for it!",
+    "votes": 0
+   },
+   {
+    "sort": "mostrecent",
+    "stars": 3,
+    "title": "Missing Chars???",
+    "text": "I have everything unlocked now. But I just saw that are 4 classes that I don\u2019t have and don\u2019t know why. Which is the reaper,Templar Druid and bard",
+    "votes": 0
+   },
+   {
+    "sort": "mostrecent",
+    "stars": 1,
+    "title": "Purchased ad removal pack and still ads",
+    "text": "Purchased the ad removal pack and game still throws constant ads. No chest bonus. Still ad watch. No key bonus. Still ad watch. Unable to use contact button in app. Game is a scam. I\u2019ve already filed a chargeback.",
+    "votes": 0
+   },
+   {
+    "sort": "mostrecent",
+    "stars": 5,
+    "title": "Solid",
+    "text": "I had an issue with IAPS but they were just delayed. Fun game",
+    "votes": 0
+   },
+   {
+    "sort": "mostrecent",
+    "stars": 4,
+    "title": "\u041f\u043b\u044e\u0441\u044b \u0438 \u043c\u0438\u043d\u0443\u0441\u044b",
+    "text": "\u0425\u043e\u0440\u043e\u0448\u0438\u0439 \u0438\u043d\u0442\u0443\u0438\u0442\u0438\u0432\u043d\u043e \u043f\u043e\u043d\u044f\u0442\u043d\u044b\u0439 \u0433\u0435\u0439\u043c\u043f\u043b\u0435\u0439, \u0437\u0432\u0443\u043a\u043e\u0432\u043e\u0435 \u0441\u043e\u043f\u0440\u043e\u0432\u043e\u0436\u0434\u0435\u043d\u0438\u0435, \u0438\u0433\u0440\u043e\u0432\u043e\u0435 \u043c\u0435\u043d\u044e, \u0432 \u043d\u043e\u0432\u043e\u0439 \u043e\u0431\u043d\u043e\u0432\u0435 \u043f\u0435\u0440\u0435\u0440\u0430\u0441\u043f\u0440\u0435\u0434\u0435\u043b\u0435\u043d\u0438\u0435 \u0441\u0442\u0430\u0442\u043e\u0432 \u0440\u0430\u0434\u0443\u0435\u0442. \u0418\u0437 \u043c\u0438\u043d\u0443\u0441\u043e\u0432 \u043d\u0435\u0445\u0432\u0430\u0442\u043a\u0430 \u0420\u0443\u0441\u0441\u043a\u043e\u0439 \u043b\u043e\u043a\u0430\u043b\u0438\u0437\u0430\u0446\u0438\u0438 \u0438 \u0432\u043e\u043f\u0440\u043e\u0441 \u043a\u0443\u0434\u0430 \u043e\u043d\u0430 \u043f\u0440\u043e\u043f\u0430\u043b\u0430 \u043e\u043d\u0430 \u0436\u0435 \u0431\u044b\u043b\u0430 \ud83d\ude41.",
+    "votes": 0
+   },
+   {
+    "sort": "mostrecent",
+    "stars": 1,
+    "title": "Every time I\u2019m actually enjoying the game they change it",
+    "text": "After grinding for a month and being in the 4th to last boss they do a big change making that game les enjoyable and way more confusing not worth the time of day.",
+    "votes": 0
+   },
+   {
+    "sort": "mostrecent",
+    "stars": 2,
+    "title": "Glitched",
+    "text": "I was watching an ad for some random bonus I cant remember and it froze so I quit the game and now I cant get back in would be nice if I could actually play it",
+    "votes": 0
+   },
+   {
+    "sort": "mostrecent",
     "stars": 1,
     "title": "Bought gold pack, didnt get my gold",
     "text": "Lol used 100 gems to get 40.0k gold and it didnt update my currency.",
     "votes": 0
    },
    {
-    "sort": "mosthelpful",
+    "sort": "mostrecent",
     "stars": 5,
-    "title": "Love the game and community",
-    "text": "Played the game on android maxed out everything. Love the game lots and the community as a whole. Join the discord for sure",
+    "title": "Old School",
+    "text": "LSolid Classic Rpg",
     "votes": 0
    },
    {
-    "sort": "mosthelpful",
+    "sort": "mostrecent",
+    "stars": 3,
+    "title": "Not bad but not great",
+    "text": "It\u2019s really not a bad game but the forced ad is what made me uninstall. Keep the ads optional for bonus items or buffs.",
+    "votes": 1
+   },
+   {
+    "sort": "mostrecent",
+    "stars": 4,
+    "title": "Fun",
+    "text": "Feels and plays a lot like soda dungeon, which i am a big fan of. Good game and simple to learn mechanics",
+    "votes": 0
+   },
+   {
+    "sort": "mostrecent",
+    "stars": 3,
+    "title": "Review",
+    "text": "No Chinese language.",
+    "votes": 0
+   },
+   {
+    "sort": "mostrecent",
+    "stars": 2,
+    "title": "Ads?",
+    "text": "So I will be honest that I was enjoying the game. However there are too many ads and no way to purchase anything to remove them. I hate apps that force ads on its users and this game seems to have waaay to many forced ads.",
+    "votes": 0
+   },
+   {
+    "sort": "mostrecent",
+    "stars": 5,
+    "title": "5/5 would recommend",
+    "text": "Game is pretty great, I love the whole dungeon crawler genre, but felt it was becoming stale so this game really brought me back and keeps me glued for more.",
+    "votes": 0
+   },
+   {
+    "sort": "mostrecent",
+    "stars": 5,
+    "title": "very cool",
+    "text": "everything was cool\n\nidk about the new skins tho I liked the old ones more",
+    "votes": 0
+   },
+   {
+    "sort": "mostrecent",
+    "stars": 3,
+    "title": "I\u2019d pay .99 for ad removal",
+    "text": "5.99 usd for ad removal is a bit steep for me, considering it\u2019s a game designed for little interaction especially",
+    "votes": 0
+   },
+   {
+    "sort": "mostrecent",
+    "stars": 5,
+    "title": "It\u2019s an idle game",
+    "text": "\u00af\\_(\u30c4)_/\u00af",
+    "votes": 0
+   },
+   {
+    "sort": "mostrecent",
+    "stars": 5,
+    "title": "Perfect Idler",
+    "text": "Great balance of gameplay for idle/active play. Quite addictive",
+    "votes": 0
+   },
+   {
+    "sort": "mostrecent",
+    "stars": 1,
+    "title": "Won\u2019t load :(",
+    "text": "Instantly crashes",
+    "votes": 0
+   },
+   {
+    "sort": "mostrecent",
+    "stars": 1,
+    "title": "Won\u2019t load",
+    "text": "I decided I wanted to try playing this because it seemed rlly fun and the reviews were very positive, but for some reason I can\u2019t open it on my iPhone 7. Even after resetting my phone it still won\u2019t load. I hope you guys can fix this as soon as conveniently possible.",
+    "votes": 0
+   },
+   {
+    "sort": "mostrecent",
+    "stars": 1,
+    "title": "Can\u2019t even open the game!",
+    "text": "At first this game seemed really cool and interesting just from looking at it. However, I can\u2019t even open the app. I don\u2019t know if it\u2019s sum on my part or not but I would like to play this so hopefully it works.",
+    "votes": 0
+   },
+   {
+    "sort": "mostrecent",
     "stars": 1,
     "title": "Not working",
     "text": "I installed this app on my iPhone 6. It won\u2019t load. I\u2019ve tried restarting my phone and uninstalling the game, still won\u2019t load. Please fix this and please follow my instagram @striiker62",
     "votes": 0
    },
    {
-    "sort": "mosthelpful",
+    "sort": "mostrecent",
     "stars": 5,
-    "title": "Great customer service",
-    "text": "Not the first time I\u2019ve played this game. Definitely improved a lot. Now with giveaways to help you along, plus a better selection of packs in the store. Also when I couldn\u2019t figure out how to get my giveaway code, it was easy to contact somebody to help me through the discord server",
+    "title": "Almost too good",
+    "text": "Phenomenal idle game but you still have a lot of participation. Intricate leveling and skill system but easy to learn. So good!!!",
+    "votes": 0
+   },
+   {
+    "sort": "mostrecent",
+    "stars": 5,
+    "title": "Amazing game :)",
+    "text": "It\u2019s a pretty fun game for what it is.\nI love the  concept and the style and I\u2019m having a good time while playing",
+    "votes": 0
+   },
+   {
+    "sort": "mostrecent",
+    "stars": 5,
+    "title": "RPG games are the best",
+    "text": "Simply put it\u2019s a good game",
+    "votes": 0
+   },
+   {
+    "sort": "mostrecent",
+    "stars": 4,
+    "title": "Nice",
+    "text": "Pretty satisfying to watch the numbers go up",
+    "votes": 0
+   },
+   {
+    "sort": "mostrecent",
+    "stars": 5,
+    "title": "Love the game and community",
+    "text": "Played the game on android maxed out everything. Love the game lots and the community as a whole. Join the discord for sure",
+    "votes": 0
+   },
+   {
+    "sort": "mostrecent",
+    "stars": 5,
+    "title": "Good game!",
+    "text": "Reminds me a lot of Soda Dungeon",
+    "votes": 0
+   },
+   {
+    "sort": "mostrecent",
+    "stars": 1,
+    "title": "Wow",
+    "text": "I love the game however took a long break, I wanted to play again, however it\u2019s saying my saved data is corrupted. I\u2019ve tried getting into the discord to try and receive help, I even paid money for in game purchases. I\u2019m pretty upset.",
+    "votes": 0
+   },
+   {
+    "sort": "mostrecent",
+    "stars": 5,
+    "title": "Tons of fun",
+    "text": "The game is great and the devs are amazing 10/10 my fav time killer!",
+    "votes": 0
+   },
+   {
+    "sort": "mostrecent",
+    "stars": 5,
+    "title": "?",
+    "text": "Why is it asking me to rate the game when I just opened it?",
+    "votes": 0
+   },
+   {
+    "sort": "mostrecent",
+    "stars": 2,
+    "title": "Great game, Buster menu options",
+    "text": "I put oodles of time in a while back paid for the Unlock all bit, but on trying to get into it again but every time I select restore purchases the game hard crashes.",
+    "votes": 0
+   },
+   {
+    "sort": "mostrecent",
+    "stars": 2,
+    "title": "Ads",
+    "text": "Understandable that games will have ads at times. Within the first 2-3 minutes there\u2019s already been 3 ads. I wanted to try and play the game but it\u2019s just a little much to even get to do so.",
+    "votes": 0
+   },
+   {
+    "sort": "mostrecent",
+    "stars": 1,
+    "title": "still unplayable ???",
+    "text": "why cant i play this game on mac :( it looks really fun . that kinda blows",
     "votes": 0
    }
   ]

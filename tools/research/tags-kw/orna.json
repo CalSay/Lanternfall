@@ -1,8 +1,8 @@
 {
  "slug": "orna",
- "n_reviews": 360,
- "n_pos": 253,
- "n_neg": 107,
+ "n_reviews": 338,
+ "n_pos": 233,
+ "n_neg": 105,
  "n_longplay_neg": 0,
  "sources": [
   "apple"
@@ -10,7 +10,7 @@
  "themes": {
   "P-offline": {
    "n": 3,
-   "of": 253,
+   "of": 233,
    "longplay_n": 0,
    "quotes": [
     "- I also add offline features to the game, including when walking and still not turning on wifi, the number of steps is still counted (apple5)"
@@ -18,7 +18,7 @@
   },
   "P-respect": {
    "n": 3,
-   "of": 253,
+   "of": 233,
    "longplay_n": 0,
    "quotes": [
     "Is Orna a game you can play casual at your own pace without being competitively obligated to play any other way? (apple5)",
@@ -26,8 +26,8 @@
    ]
   },
   "P-active": {
-   "n": 10,
-   "of": 253,
+   "n": 9,
+   "of": 233,
    "longplay_n": 0,
    "quotes": [
     "The game is very fun and engaging and (sometimes) can burn through my phone battery unless I disable animations, but otherwise it is pretty awesome. (apple5)",
@@ -35,8 +35,8 @@
    ]
   },
   "P-dev": {
-   "n": 11,
-   "of": 253,
+   "n": 10,
+   "of": 233,
    "longplay_n": 0,
    "quotes": [
     "It's engaging, there's a lot of quests and events as well as an active community. (apple4)",
@@ -45,7 +45,7 @@
   },
   "P-unlock": {
    "n": 2,
-   "of": 253,
+   "of": 233,
    "longplay_n": 0,
    "quotes": [
     "- I suggest adding new character classes and new skills, such as Beast Tamer, Sword Mage, etc. (apple5)",
@@ -53,8 +53,8 @@
    ]
   },
   "P-collect": {
-   "n": 9,
-   "of": 253,
+   "n": 8,
+   "of": 233,
    "longplay_n": 0,
    "quotes": [
     "Good items also regularly drop from slain enemies, always leaving m (apple5)",
@@ -63,15 +63,15 @@
   },
   "P-goals": {
    "n": 1,
-   "of": 253,
+   "of": 233,
    "longplay_n": 0,
    "quotes": [
     "Literally the best game on the app store right now, it\u2019s so fun, there\u2019s always something to do and feel like i never get bored!! (apple5)"
    ]
   },
   "P-depth": {
-   "n": 19,
-   "of": 253,
+   "n": 18,
+   "of": 233,
    "longplay_n": 0,
    "quotes": [
     "Not only can you slay your local beasts, but you can found a kingdom and build it up! (apple5)",
@@ -79,8 +79,8 @@
    ]
   },
   "P-fair": {
-   "n": 16,
-   "of": 253,
+   "n": 15,
+   "of": 233,
    "longplay_n": 0,
    "quotes": [
     "It is free to play with no paywalls, no ads, and no P2W. (apple5)",
@@ -89,19 +89,19 @@
   },
   "P-interlock": {
    "n": 0,
-   "of": 253,
+   "of": 233,
    "longplay_n": 0,
    "quotes": []
   },
   "P-prestige": {
    "n": 0,
-   "of": 253,
+   "of": 233,
    "longplay_n": 0,
    "quotes": []
   },
   "P-qol": {
    "n": 8,
-   "of": 253,
+   "of": 233,
    "longplay_n": 0,
    "quotes": [
     "- I suggest adding an auto-battle feature and a 2x speed mode for battles. (apple5)",
@@ -110,7 +110,7 @@
   },
   "P-calm": {
    "n": 3,
-   "of": 253,
+   "of": 233,
    "longplay_n": 0,
    "quotes": [
     "It\u2019s my go to when I just want to chill. (apple5)"
@@ -118,7 +118,7 @@
   },
   "P-art": {
    "n": 16,
-   "of": 253,
+   "of": 233,
    "longplay_n": 0,
    "quotes": [
     "So if you play this game, you will have all the necessary things to have a beautiful life in the Bahamas. (apple5)",
@@ -126,8 +126,8 @@
    ]
   },
   "P-story": {
-   "n": 36,
-   "of": 253,
+   "n": 35,
+   "of": 233,
    "longplay_n": 0,
    "quotes": [
     "- I suggest adding new character classes and new skills, such as Beast Tamer, Sword Mage, etc. (apple5)",
@@ -136,7 +136,7 @@
   },
   "N-ads": {
    "n": 1,
-   "of": 107,
+   "of": 105,
    "longplay_n": 0,
    "quotes": [
     "it\u2019s free (ofc has a shop but no pop ups or ads) and interactive with the entire planet, so it is for sure amazing. (apple2)"
@@ -144,7 +144,7 @@
   },
   "N-wall": {
    "n": 15,
-   "of": 107,
+   "of": 105,
    "longplay_n": 0,
    "quotes": [
     "The grind is just to much for this country guy. (apple1)",
@@ -153,19 +153,19 @@
   },
   "N-pay": {
    "n": 2,
-   "of": 107,
+   "of": 105,
    "longplay_n": 0,
    "quotes": []
   },
   "N-dominant": {
    "n": 0,
-   "of": 107,
+   "of": 105,
    "longplay_n": 0,
    "quotes": []
   },
   "N-late": {
    "n": 3,
-   "of": 107,
+   "of": 105,
    "longplay_n": 0,
    "quotes": [
     "Super addiction, but then gets repetitive. (apple3)"
@@ -173,13 +173,13 @@
   },
   "N-offline": {
    "n": 0,
-   "of": 107,
+   "of": 105,
    "longplay_n": 0,
    "quotes": []
   },
   "N-mobile": {
    "n": 1,
-   "of": 107,
+   "of": 105,
    "longplay_n": 0,
    "quotes": [
     "Game crashes on iOS a lot. (apple2)"
@@ -187,7 +187,7 @@
   },
   "N-bug": {
    "n": 8,
-   "of": 107,
+   "of": 105,
    "longplay_n": 0,
    "quotes": [
     "Constant crashing after attempting in game purchase. (apple3)",
@@ -196,7 +196,7 @@
   },
   "N-energy": {
    "n": 3,
-   "of": 107,
+   "of": 105,
    "longplay_n": 0,
    "quotes": [
     "Edit: why does it put a 5 minute timer on a monster when I\u2019m about to fight them but disconnect? (apple1)",
@@ -205,7 +205,7 @@
   },
   "N-bloat": {
    "n": 2,
-   "of": 107,
+   "of": 105,
    "longplay_n": 0,
    "quotes": [
     "Confusing to customize your gear or buy items. (apple3)",
@@ -214,19 +214,19 @@
   },
   "N-chore": {
    "n": 0,
-   "of": 107,
+   "of": 105,
    "longplay_n": 0,
    "quotes": []
   },
   "N-tutorial": {
    "n": 0,
-   "of": 107,
+   "of": 105,
    "longplay_n": 0,
    "quotes": []
   },
   "N-shallow": {
    "n": 1,
-   "of": 107,
+   "of": 105,
    "longplay_n": 0,
    "quotes": [
     "There\u2019s virtually no strategy involved in combat it\u2019s either you destroying something or something destroying you. (apple1)"
@@ -234,13 +234,13 @@
   },
   "N-reset": {
    "n": 0,
-   "of": 107,
+   "of": 105,
    "longplay_n": 0,
    "quotes": []
   },
   "N-pace": {
    "n": 1,
-   "of": 107,
+   "of": 105,
    "longplay_n": 0,
    "quotes": [
     "Progress is hella slow and combat is very boring at the beginning. (apple1)"
@@ -248,13 +248,13 @@
   },
   "N-fast": {
    "n": 0,
-   "of": 107,
+   "of": 105,
    "longplay_n": 0,
    "quotes": []
   },
   "N-balance": {
    "n": 3,
-   "of": 107,
+   "of": 105,
    "longplay_n": 0,
    "quotes": []
   }

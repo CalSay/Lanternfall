@@ -1,9 +1,9 @@
 {
  "slug": "sea-of-stars",
- "n_reviews": 149,
+ "n_reviews": 143,
  "n_pos": 85,
- "n_neg": 64,
- "n_longplay_neg": 16,
+ "n_neg": 58,
+ "n_longplay_neg": 10,
  "sources": [
   "steam",
   "apple"
@@ -24,12 +24,12 @@
    ]
   },
   "P-active": {
-   "n": 3,
+   "n": 5,
    "of": 85,
    "longplay_n": 0,
    "quotes": [
     "I find them engaging and above all courageous. (steam+, 33h)",
-    "Very reminiscent of Chrono Trigger and a very engaging story. (apple4)"
+    "Though with a bit of expansion on the base concept, I think it stay engaging for longer. (steam+, 38h)"
    ]
   },
   "P-dev": {
@@ -47,7 +47,7 @@
    ]
   },
   "P-collect": {
-   "n": 2,
+   "n": 3,
    "of": 85,
    "longplay_n": 0,
    "quotes": [
@@ -62,7 +62,7 @@
    "quotes": []
   },
   "P-depth": {
-   "n": 10,
+   "n": 7,
    "of": 85,
    "longplay_n": 0,
    "quotes": [
@@ -79,10 +79,12 @@
    ]
   },
   "P-interlock": {
-   "n": 0,
+   "n": 1,
    "of": 85,
    "longplay_n": 0,
-   "quotes": []
+   "quotes": [
+    "They have strong synergies, and everyone gets their moment to shine. (steam+, 25h)"
+   ]
   },
   "P-prestige": {
    "n": 0,
@@ -91,7 +93,7 @@
    "quotes": []
   },
   "P-qol": {
-   "n": 1,
+   "n": 2,
    "of": 85,
    "longplay_n": 0,
    "quotes": [
@@ -108,32 +110,32 @@
    ]
   },
   "P-art": {
-   "n": 29,
+   "n": 33,
    "of": 85,
    "longplay_n": 0,
    "quotes": [
-    "Otherwise, this game has a pretty artstyle and really good music. (steam+, 39h)",
-    "+ Ost are cute and during battle its great but could've been better (steam+, 34h)"
+    "[b]The art and soundtrack are undeniably beautiful[/b]. (steam+, 50h)",
+    "The pixel-art visual style is absolutely charming and gives the game a strong identity. (steam+, 25h)"
    ]
   },
   "P-story": {
-   "n": 26,
+   "n": 35,
    "of": 85,
    "longplay_n": 0,
    "quotes": [
     "The characters are light hearted but serious when required during certain phases of story telling. (steam+, 33h)",
-    "chrono trigger vibes, very solid game, story debatable (steam+, 26h)"
+    "But it looks/sounds absolutely lovely and the character sprites are very expressive and fun. (steam+, 10h)"
    ]
   },
   "N-ads": {
    "n": 0,
-   "of": 64,
+   "of": 58,
    "longplay_n": 0,
    "quotes": []
   },
   "N-wall": {
-   "n": 4,
-   "of": 64,
+   "n": 3,
+   "of": 58,
    "longplay_n": 0,
    "quotes": [
     "As it stands, this game is like a brick wall where they used peanut butter instead of mortar. (steam-, 36h)",
@@ -142,42 +144,42 @@
   },
   "N-pay": {
    "n": 0,
-   "of": 64,
+   "of": 58,
    "longplay_n": 0,
    "quotes": []
   },
   "N-dominant": {
-   "n": 1,
-   "of": 64,
+   "n": 2,
+   "of": 58,
    "longplay_n": 0,
    "quotes": [
     "I've never seen such cool character concepts be so dull, and the combat has no variety at all. (steam-, 18h)"
    ]
   },
   "N-late": {
-   "n": 4,
-   "of": 64,
-   "longplay_n": 1,
+   "n": 7,
+   "of": 58,
+   "longplay_n": 2,
    "quotes": [
-    "Beautiful game, wonderful soundtrack but the story is really weak, the cast of characters unappealing, the combat repetitive. (steam-, 7h)",
-    "Did you try your best to make the story and dialogues as boring and empty as possible? (steam-, 12h)"
+    "It absolutely squanders some of the best pixel art put to motion with super repetitive gameplay and abysmal story and dialogue. (steam-, 30h)",
+    "It's fun at first, but it gets tedious and repetitive due to how this game progresses. (steam-, 78h)"
    ]
   },
   "N-offline": {
    "n": 0,
-   "of": 64,
+   "of": 58,
    "longplay_n": 0,
    "quotes": []
   },
   "N-mobile": {
    "n": 0,
-   "of": 64,
+   "of": 58,
    "longplay_n": 0,
    "quotes": []
   },
   "N-bug": {
    "n": 11,
-   "of": 64,
+   "of": 58,
    "longplay_n": 0,
    "quotes": [
     "Graphical glitch in the abandoned wizards lab. (apple3)",
@@ -186,7 +188,7 @@
   },
   "N-energy": {
    "n": 1,
-   "of": 64,
+   "of": 58,
    "longplay_n": 0,
    "quotes": [
     ":/ I looked up and it says not to use little fire/energy so I tried again but it still freezes. (apple3)"
@@ -194,61 +196,58 @@
   },
   "N-bloat": {
    "n": 0,
-   "of": 64,
+   "of": 58,
    "longplay_n": 0,
    "quotes": []
   },
   "N-chore": {
    "n": 0,
-   "of": 64,
+   "of": 58,
    "longplay_n": 0,
    "quotes": []
   },
   "N-tutorial": {
-   "n": 5,
-   "of": 64,
-   "longplay_n": 0,
+   "n": 3,
+   "of": 58,
+   "longplay_n": 1,
    "quotes": [
-    "The characters have unclear motivations; except for the squee pet cook, who is solely motivated by pleasing his masters, and the assassin, who wants revenge. (steam-, 39h)",
-    "The characters have unclear motivations; except for the squee pet cook, who is solely motivated by pleasing his masters, and the assassin, who wants revenge. (steam-, 39h)"
+    "It's a 40 hour game with literally the same combat from the tutorial until the end. (steam-, 9h)",
+    "Combat barely gets any deeper after the tutorial to the point where a toddler could master it. (steam-, 56h)"
    ]
   },
   "N-shallow": {
-   "n": 2,
-   "of": 64,
-   "longplay_n": 1,
+   "n": 1,
+   "of": 58,
+   "longplay_n": 0,
    "quotes": [
-    "It makes the world feel shallow. (steam-, 12h)",
-    "Here's a simple example: \"Songster Magic,\" which is used by a late-game character. (steam-, 53h)"
+    "This game is as shallow and lacking in characterization as it is beautiful. (steam-, 9h)"
    ]
   },
   "N-reset": {
    "n": 0,
-   "of": 64,
+   "of": 58,
    "longplay_n": 0,
    "quotes": []
   },
   "N-pace": {
    "n": 0,
-   "of": 64,
+   "of": 58,
    "longplay_n": 0,
    "quotes": []
   },
   "N-fast": {
    "n": 1,
-   "of": 64,
+   "of": 58,
    "longplay_n": 1,
    "quotes": [
     "the journey is too easy and one way. (steam-, 51h)"
    ]
   },
   "N-balance": {
-   "n": 2,
-   "of": 64,
-   "longplay_n": 1,
-   "quotes": [
-    "Perhaps the game would have been more enjoyable if played with local co-op, but many of the fundamental flaws would remain. (steam-, 53h)"
-   ]
+   "n": 1,
+   "of": 58,
+   "longplay_n": 0,
+   "quotes": []
   }
  }
 }

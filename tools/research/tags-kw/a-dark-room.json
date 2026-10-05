@@ -1,8 +1,8 @@
 {
  "slug": "a-dark-room",
- "n_reviews": 449,
- "n_pos": 417,
- "n_neg": 32,
+ "n_reviews": 450,
+ "n_pos": 419,
+ "n_neg": 31,
  "n_longplay_neg": 0,
  "sources": [
   "steam",
@@ -11,7 +11,7 @@
  "themes": {
   "P-offline": {
    "n": 1,
-   "of": 417,
+   "of": 419,
    "longplay_n": 0,
    "quotes": [
     "But I'm guessing iOS does not allow the threads to run in the background or when phone screen is off. (apple4)"
@@ -19,7 +19,7 @@
   },
   "P-respect": {
    "n": 3,
-   "of": 417,
+   "of": 419,
    "longplay_n": 0,
    "quotes": [
     "After a short session, I was hooked. (apple5)",
@@ -28,7 +28,7 @@
   },
   "P-active": {
    "n": 14,
-   "of": 417,
+   "of": 419,
    "longplay_n": 0,
    "quotes": [
     "A Dark Room is a game that takes a simple premise, and finds a way to make it interesting and engaging. (apple5)",
@@ -37,7 +37,7 @@
   },
   "P-dev": {
    "n": 4,
-   "of": 417,
+   "of": 419,
    "longplay_n": 0,
    "quotes": [
     "The developers are very intelligent and creative minds, I would suggest this to anyone!!!! (apple5)",
@@ -45,17 +45,16 @@
    ]
   },
   "P-unlock": {
-   "n": 3,
-   "of": 417,
+   "n": 1,
+   "of": 419,
    "longplay_n": 0,
    "quotes": [
-    "You can unlock new buildings in The (steam+, 7h)",
     "You can unlock new buildings in The (steam+, 7h)"
    ]
   },
   "P-collect": {
    "n": 5,
-   "of": 417,
+   "of": 419,
    "longplay_n": 0,
    "quotes": [
     "Got extremely far then stalled because no enemies drop sulfur and you need sulphur to eventually lift off by building the armory. (apple5)",
@@ -64,22 +63,22 @@
   },
   "P-goals": {
    "n": 0,
-   "of": 417,
+   "of": 419,
    "longplay_n": 0,
    "quotes": []
   },
   "P-depth": {
-   "n": 21,
-   "of": 417,
+   "n": 22,
+   "of": 419,
    "longplay_n": 0,
    "quotes": [
-    "The storyline is very interesting and the subtle shift from villagers to the enslaved adds even another level a story depth which I just adore. (apple5)",
-    "The core gameplay loop is surprisingly satisfying and there's a decent amount of depth to explore here. (apple5)"
+    "[spoiler]The second ending where you don't build huts felt pretty anticlimactic. (steam+, 4h)",
+    "The storyline is very interesting and the subtle shift from villagers to the enslaved adds even another level a story depth which I just adore. (apple5)"
    ]
   },
   "P-fair": {
    "n": 13,
-   "of": 417,
+   "of": 419,
    "longplay_n": 0,
    "quotes": [
     "The mobile game is a sufficient upgrade and worth the price a few times over. (apple5)",
@@ -88,19 +87,19 @@
   },
   "P-interlock": {
    "n": 0,
-   "of": 417,
+   "of": 419,
    "longplay_n": 0,
    "quotes": []
   },
   "P-prestige": {
    "n": 0,
-   "of": 417,
+   "of": 419,
    "longplay_n": 0,
    "quotes": []
   },
   "P-qol": {
-   "n": 4,
-   "of": 417,
+   "n": 2,
+   "of": 419,
    "longplay_n": 0,
    "quotes": [
     "It is well thought out and intuitive in how it unrolls features as the user continues on their journey. (apple5)",
@@ -108,17 +107,17 @@
    ]
   },
   "P-calm": {
-   "n": 7,
-   "of": 417,
+   "n": 8,
+   "of": 419,
    "longplay_n": 0,
    "quotes": [
-    "I go to it whenever I need something familiar and comforting, and it never lets me down. (apple5)",
-    "It\u2019s very peaceful and a little bit disturbing, but the air of mystery it holds throughout is intriguing and fun. (apple5)"
+    "surprisingly comfortable for the type of game that it is and the story it tells. (steam+, 10h)",
+    "I go to it whenever I need something familiar and comforting, and it never lets me down. (apple5)"
    ]
   },
   "P-art": {
-   "n": 57,
-   "of": 417,
+   "n": 56,
+   "of": 419,
    "longplay_n": 0,
    "quotes": [
     "Playing in 2017 most games are all about having the best graphics, character development, and what not. (apple5)",
@@ -126,8 +125,8 @@
    ]
   },
   "P-story": {
-   "n": 110,
-   "of": 417,
+   "n": 109,
+   "of": 419,
    "longplay_n": 0,
    "quotes": [
     "In this very unique Story, I had a theft in the   village. (apple5)",
@@ -136,13 +135,13 @@
   },
   "N-ads": {
    "n": 0,
-   "of": 32,
+   "of": 31,
    "longplay_n": 0,
    "quotes": []
   },
   "N-wall": {
    "n": 2,
-   "of": 32,
+   "of": 31,
    "longplay_n": 0,
    "quotes": [
     "Yes, gameplay was a grind in the middle, but it was for a purpose. (apple1)",
@@ -151,31 +150,33 @@
   },
   "N-pay": {
    "n": 0,
-   "of": 32,
+   "of": 31,
    "longplay_n": 0,
    "quotes": []
   },
   "N-dominant": {
    "n": 0,
-   "of": 32,
+   "of": 31,
    "longplay_n": 0,
    "quotes": []
   },
   "N-late": {
-   "n": 0,
-   "of": 32,
+   "n": 1,
+   "of": 31,
    "longplay_n": 0,
-   "quotes": []
+   "quotes": [
+    "It really did only take me 97 minutes to beat it, and a lot of that was waiting and repetitive actions. (steam-, 2h)"
+   ]
   },
   "N-offline": {
    "n": 0,
-   "of": 32,
+   "of": 31,
    "longplay_n": 0,
    "quotes": []
   },
   "N-mobile": {
    "n": 1,
-   "of": 32,
+   "of": 31,
    "longplay_n": 0,
    "quotes": [
     "I keep getting notifications saying \u201can important notification occurred open console to see details\u201d but nothing shows anywhere. (apple3)"
@@ -183,7 +184,7 @@
   },
   "N-bug": {
    "n": 3,
-   "of": 32,
+   "of": 31,
    "longplay_n": 0,
    "quotes": [
     "This new version is incredibly buggy the game has lost its charm. (apple2)",
@@ -192,13 +193,13 @@
   },
   "N-energy": {
    "n": 0,
-   "of": 32,
+   "of": 31,
    "longplay_n": 0,
    "quotes": []
   },
   "N-bloat": {
    "n": 1,
-   "of": 32,
+   "of": 31,
    "longplay_n": 0,
    "quotes": [
     "Very introspective and a little confusing but that's a perk to be honest. (apple3)"
@@ -206,13 +207,13 @@
   },
   "N-chore": {
    "n": 0,
-   "of": 32,
+   "of": 31,
    "longplay_n": 0,
    "quotes": []
   },
   "N-tutorial": {
    "n": 1,
-   "of": 32,
+   "of": 31,
    "longplay_n": 0,
    "quotes": [
     "Exploring outside your village is  THE ONLY fun part of the game, but it doesn't have a tutorial on how to survive. (apple1)"
@@ -220,7 +221,7 @@
   },
   "N-shallow": {
    "n": 4,
-   "of": 32,
+   "of": 31,
    "longplay_n": 0,
    "quotes": [
     "This game use to be simple, which was part of the charm and appeal\u2026 now it has flashes and loud sounds. (apple1)",
@@ -229,25 +230,25 @@
   },
   "N-reset": {
    "n": 0,
-   "of": 32,
+   "of": 31,
    "longplay_n": 0,
    "quotes": []
   },
   "N-pace": {
    "n": 0,
-   "of": 32,
+   "of": 31,
    "longplay_n": 0,
    "quotes": []
   },
   "N-fast": {
    "n": 0,
-   "of": 32,
+   "of": 31,
    "longplay_n": 0,
    "quotes": []
   },
   "N-balance": {
    "n": 0,
-   "of": 32,
+   "of": 31,
    "longplay_n": 0,
    "quotes": []
   }

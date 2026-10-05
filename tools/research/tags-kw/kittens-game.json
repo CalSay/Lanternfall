@@ -3,14 +3,14 @@
  "n_reviews": 124,
  "n_pos": 89,
  "n_neg": 35,
- "n_longplay_neg": 3,
+ "n_longplay_neg": 2,
  "sources": [
   "steam",
   "apple"
  ],
  "themes": {
   "P-offline": {
-   "n": 2,
+   "n": 3,
    "of": 89,
    "longplay_n": 0,
    "quotes": [
@@ -40,7 +40,7 @@
    ]
   },
   "P-unlock": {
-   "n": 2,
+   "n": 3,
    "of": 89,
    "longplay_n": 0,
    "quotes": [
@@ -49,26 +49,27 @@
    ]
   },
   "P-collect": {
-   "n": 1,
+   "n": 3,
    "of": 89,
    "longplay_n": 0,
    "quotes": [
-    "Everyone works at the edge of the productivity curve depending on their happiness and access to rare resources . (apple5)"
+    "And I don\u2019t say that lightly \u2014 I\u2019ve played basically every idle/incremental game on Steam that has achievements. (steam+, 1h)",
+    "A trade system with neighboring civilizations to balance out and earn rare resources. (steam+, 376h)"
    ]
   },
   "P-goals": {
-   "n": 0,
+   "n": 1,
    "of": 89,
    "longplay_n": 0,
    "quotes": []
   },
   "P-depth": {
-   "n": 12,
+   "n": 13,
    "of": 89,
    "longplay_n": 0,
    "quotes": [
-    "This game has some serious depth to it. (apple5)",
-    "In the top 3 incrementals of all time for me if not at the #1 slot in terms of depth and longevity. (steam+, 275h)"
+    "The extra challenge modifiers of the game can make you reconsider or rethink your strategies/playstyle spanning many runs. (steam+, 734h)",
+    "This game has some serious depth to it. (apple5)"
    ]
   },
   "P-fair": {
@@ -84,7 +85,7 @@
    "quotes": []
   },
   "P-prestige": {
-   "n": 0,
+   "n": 1,
    "of": 89,
    "longplay_n": 0,
    "quotes": []
@@ -98,17 +99,19 @@
    ]
   },
   "P-calm": {
-   "n": 0,
+   "n": 1,
    "of": 89,
    "longplay_n": 0,
-   "quotes": []
+   "quotes": [
+    "There\u2019s something weirdly comforting about it. (steam+, 1h)"
+   ]
   },
   "P-art": {
    "n": 4,
    "of": 89,
    "longplay_n": 0,
    "quotes": [
-    "Melvor has some action and is more interactive and has graphics. (steam+, 1488h)",
+    "I honestly just wanted cute games about cats. (steam+, 5h)",
     "No graphics, no micro transactions, no bs. (apple5)"
    ]
   },
@@ -127,12 +130,12 @@
    "quotes": []
   },
   "N-wall": {
-   "n": 4,
+   "n": 2,
    "of": 35,
-   "longplay_n": 3,
+   "longplay_n": 1,
    "quotes": [
-    "The theme is nice and fun, but it's extremely grindy and asking a lot of time investment. (steam-, 1435h)",
-    "The theme is nice and fun, but it's extremely grindy and asking a lot of time investment. (steam-, 1446h)"
+    "The theme is nice and fun, but it's extremely grindy and asking a lot of time investment. (steam-, 1443h)",
+    "Deleted my progress after weeks of grinding.. (apple1)"
    ]
   },
   "N-pay": {

@@ -1,19 +1,21 @@
 {
  "slug": "loop-hero",
- "n_reviews": 180,
+ "n_reviews": 187,
  "n_pos": 124,
- "n_neg": 56,
- "n_longplay_neg": 0,
+ "n_neg": 63,
+ "n_longplay_neg": 8,
  "sources": [
   "steam",
   "apple"
  ],
  "themes": {
   "P-offline": {
-   "n": 0,
+   "n": 1,
    "of": 124,
    "longplay_n": 0,
-   "quotes": []
+   "quotes": [
+    "(the vast majority of my hours are from AFK farming resources to completely max out my base camp to a ridiculous degree. (steam+, 188h)"
+   ]
   },
   "P-respect": {
    "n": 2,
@@ -22,33 +24,32 @@
    "quotes": []
   },
   "P-active": {
-   "n": 1,
+   "n": 2,
    "of": 124,
    "longplay_n": 0,
    "quotes": [
+    "A very unique, laid-back yet engaging game. (steam+, 40h)",
     "I have no problem forming over for a premium title with complete gameplay and an engaging story. (apple5)"
    ]
   },
   "P-dev": {
-   "n": 2,
+   "n": 0,
    "of": 124,
    "longplay_n": 0,
    "quotes": []
   },
   "P-unlock": {
-   "n": 1,
+   "n": 0,
    "of": 124,
    "longplay_n": 0,
-   "quotes": [
-    "If you stuck at chapter 4, just return to the previous chapters to farm more resources, unlock more abilities and build alchemy building. (steam+, 16h)"
-   ]
+   "quotes": []
   },
   "P-collect": {
-   "n": 7,
+   "n": 10,
    "of": 124,
    "longplay_n": 0,
    "quotes": [
-    "Fun tactical battler with non-ridiculous achievements. (steam+, 94h)",
+    "As you go on expeditions, you collect resources to grow your home camp. (steam+, 40h)",
     "It\u2019s so rare these days to get games you can just buy and not get pestered by ads or micro transactions. (apple5)"
    ]
   },
@@ -59,12 +60,12 @@
    "quotes": []
   },
   "P-depth": {
-   "n": 10,
+   "n": 18,
    "of": 124,
    "longplay_n": 0,
    "quotes": [
-    "The struggle, strategy and endless nights toiling over card variations and heroes made it so much fun. (apple5)",
-    "If you stuck at chapter 4, just return to the previous chapters to farm more resources, unlock more abilities and build alchemy building. (steam+, 16h)"
+    "You don\u2019t actually control the hero, you build the world around them. (steam+, 24h)",
+    "Loop Hero is essentially a game where you build the world your character fights through. (steam+, 17h)"
    ]
   },
   "P-fair": {
@@ -76,10 +77,13 @@
    ]
   },
   "P-interlock": {
-   "n": 0,
+   "n": 2,
    "of": 124,
    "longplay_n": 0,
-   "quotes": []
+   "quotes": [
+    "You\u2019re tuning enemy density, scaling, and build synergies yourself, balancing pressure and payoff, then deciding how far to push before pulling out alive. (steam+, 40h)",
+    "the fun comes from finding which synergies work best together and some secret ones that the game doesn't outright explain. (steam+, 42h)"
+   ]
   },
   "P-prestige": {
    "n": 0,
@@ -88,7 +92,7 @@
    "quotes": []
   },
   "P-qol": {
-   "n": 2,
+   "n": 3,
    "of": 124,
    "longplay_n": 0,
    "quotes": [
@@ -96,82 +100,84 @@
    ]
   },
   "P-calm": {
-   "n": 1,
-   "of": 124,
-   "longplay_n": 0,
-   "quotes": []
-  },
-  "P-art": {
-   "n": 13,
+   "n": 2,
    "of": 124,
    "longplay_n": 0,
    "quotes": [
-    "It also has a charming setting and story, and it\u2019s as well suited to a 15 minute game as it is to a multi-hour binge. (apple5)",
-    "5 Stars for gameplay, 4 for graphics which I hope are better on a sequel, but turn on the pixel shader, it helps a lot. (apple4)"
+    ".The meta progression never feels like a grind, and the atmosphere is oddly cozy for a game about an apocalypse. (steam+, 3h)"
+   ]
+  },
+  "P-art": {
+   "n": 18,
+   "of": 124,
+   "longplay_n": 0,
+   "quotes": [
+    "The retro art and eerie soundtrack are perfect for the game\u2019s strange, post-apocalyptic vibe. (steam+, 24h)",
+    "It features some of the most unique pixel art I've seen, really leaning into a 90's dark fantasy style. (steam+, 40h)"
    ]
   },
   "P-story": {
-   "n": 9,
+   "n": 16,
    "of": 124,
    "longplay_n": 0,
    "quotes": [
-    "Nice little story, fun little gameplay LOOP, and I just really love a semi passive \"base building for upgrades\" mechanic. (steam+, 26h)",
-    "It also has a charming setting and story, and it\u2019s as well suited to a 15 minute game as it is to a multi-hour binge. (apple5)"
+    "While on an expedition, your character fights monsters automatically. (steam+, 40h)",
+    "Loop Hero is essentially a game where you build the world your character fights through. (steam+, 17h)"
    ]
   },
   "N-ads": {
    "n": 0,
-   "of": 56,
+   "of": 63,
    "longplay_n": 0,
    "quotes": []
   },
   "N-wall": {
-   "n": 7,
-   "of": 56,
-   "longplay_n": 0,
+   "n": 18,
+   "of": 63,
+   "longplay_n": 2,
    "quotes": [
-    "The problem is this is a resource/building game and you cant progress without resources. (steam-, 14h)",
-    "The problem is this is a resource/building game and you cant progress without resources. (steam-, 14h)"
+    "Starts fun but quickly turns into a grindy game that makes you question the meaning of everything. (steam-, 25h)",
+    "Looking at all the positive reviews I think I must be missing something here, but the game just feels like a grinding simulator. (steam-, 7h)"
    ]
   },
   "N-pay": {
    "n": 0,
-   "of": 56,
+   "of": 63,
    "longplay_n": 0,
    "quotes": []
   },
   "N-dominant": {
-   "n": 0,
-   "of": 56,
+   "n": 1,
+   "of": 63,
    "longplay_n": 0,
    "quotes": []
   },
   "N-late": {
-   "n": 3,
-   "of": 56,
+   "n": 5,
+   "of": 63,
    "longplay_n": 0,
    "quotes": [
-    "Not a bad game, but for me gets repetitive a bit fast. (steam-, 9h)",
-    "Not a bad game, but for me gets repetitive a bit fast. (steam-, 9h)"
+    "very repetitive and a weird system where the player is making the game harder by \"doing something\" (steam-, 25h)",
+    "It\u2019s a bit too repetitive for me and I don\u2019t enjoy the grind. (steam-, 12h)"
    ]
   },
   "N-offline": {
    "n": 0,
-   "of": 56,
+   "of": 63,
    "longplay_n": 0,
    "quotes": []
   },
   "N-mobile": {
    "n": 1,
-   "of": 56,
+   "of": 63,
    "longplay_n": 0,
    "quotes": [
     "The UI is too small to use with a touch screen, I can\u2019t see anything I\u2019m doing. (apple2)"
    ]
   },
   "N-bug": {
-   "n": 11,
-   "of": 56,
+   "n": 9,
+   "of": 63,
    "longplay_n": 0,
    "quotes": [
     "Started grinding and building up my town but then the game crashed. (apple3)",
@@ -180,55 +186,58 @@
   },
   "N-energy": {
    "n": 0,
-   "of": 56,
+   "of": 63,
    "longplay_n": 0,
    "quotes": []
   },
   "N-bloat": {
    "n": 0,
-   "of": 56,
+   "of": 63,
    "longplay_n": 0,
    "quotes": []
   },
   "N-chore": {
    "n": 0,
-   "of": 56,
+   "of": 63,
    "longplay_n": 0,
    "quotes": []
   },
   "N-tutorial": {
    "n": 0,
-   "of": 56,
+   "of": 63,
    "longplay_n": 0,
    "quotes": []
   },
   "N-shallow": {
-   "n": 0,
-   "of": 56,
+   "n": 2,
+   "of": 63,
    "longplay_n": 0,
-   "quotes": []
+   "quotes": [
+    "Unfortunately the gameplay aspect feels kind of brain dead, as in you can tune out through most of it and do fine. (steam-, 19h)",
+    "What's here is just shallow and grindy. (steam-, 36h)"
+   ]
   },
   "N-reset": {
    "n": 0,
-   "of": 56,
+   "of": 63,
    "longplay_n": 0,
    "quotes": []
   },
   "N-pace": {
    "n": 0,
-   "of": 56,
+   "of": 63,
    "longplay_n": 0,
    "quotes": []
   },
   "N-fast": {
    "n": 0,
-   "of": 56,
+   "of": 63,
    "longplay_n": 0,
    "quotes": []
   },
   "N-balance": {
-   "n": 5,
-   "of": 56,
+   "n": 2,
+   "of": 63,
    "longplay_n": 0,
    "quotes": []
   }

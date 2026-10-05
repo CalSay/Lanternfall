@@ -1,15 +1,15 @@
 {
  "slug": "trimps",
- "n_reviews": 41,
+ "n_reviews": 46,
  "n_pos": 25,
- "n_neg": 16,
- "n_longplay_neg": 12,
+ "n_neg": 21,
+ "n_longplay_neg": 15,
  "sources": [
   "steam"
  ],
  "themes": {
   "P-offline": {
-   "n": 3,
+   "n": 2,
    "of": 25,
    "longplay_n": 0,
    "quotes": []
@@ -21,19 +21,20 @@
    "quotes": []
   },
   "P-active": {
-   "n": 4,
+   "n": 2,
    "of": 25,
    "longplay_n": 0,
    "quotes": [
-    "A deceptively deep and engaging game. (steam+, 837h)",
     "A deceptively deep and engaging game. (steam+, 837h)"
    ]
   },
   "P-dev": {
-   "n": 0,
+   "n": 1,
    "of": 25,
    "longplay_n": 0,
-   "quotes": []
+   "quotes": [
+    "There is still an active community on it, which surprised me, and they have been very supportive too, which also enhances the gameplay significantly. (steam+, 7714h)"
+   ]
   },
   "P-unlock": {
    "n": 0,
@@ -54,12 +55,12 @@
    "quotes": []
   },
   "P-depth": {
-   "n": 9,
+   "n": 4,
    "of": 25,
    "longplay_n": 0,
    "quotes": [
     "The backup has literally followed me between 4 separate PC builds. (steam+, 18h)",
-    "The backup has literally followed me between 4 separate PC builds. (steam+, 18h)"
+    "But the real strategic weight sits in how you allocate your population. (steam+, 4h)"
    ]
   },
   "P-fair": {
@@ -69,25 +70,27 @@
    "quotes": []
   },
   "P-interlock": {
-   "n": 3,
+   "n": 1,
    "of": 25,
    "longplay_n": 0,
    "quotes": [
-    "At its core, it\u2019s a resource\u2011management sandbox: food, wood, metal, housing, population and time all feed into one another, creating a surprisingly deep progression loop. (steam+, 4h)",
     "At its core, it\u2019s a resource\u2011management sandbox: food, wood, metal, housing, population and time all feed into one another, creating a surprisingly deep progression loop. (steam+, 4h)"
    ]
   },
   "P-prestige": {
-   "n": 2,
+   "n": 1,
    "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "P-qol": {
-   "n": 9,
+   "n": 5,
    "of": 25,
    "longplay_n": 0,
-   "quotes": []
+   "quotes": [
+    "Just requires patience, particularly early on before any automation unlocks and any of the numerous types of buffs begin to stack together. (steam+, 3221h)",
+    "As you unlock automation you have to babysit the game less. (steam+, 1668h)"
+   ]
   },
   "P-calm": {
    "n": 0,
@@ -96,12 +99,10 @@
    "quotes": []
   },
   "P-art": {
-   "n": 3,
+   "n": 1,
    "of": 25,
    "longplay_n": 0,
-   "quotes": [
-    "While the game is low on graphics, it is a very fun idle god sim like game (steam+, 34h)"
-   ]
+   "quotes": []
   },
   "P-story": {
    "n": 0,
@@ -111,103 +112,105 @@
   },
   "N-ads": {
    "n": 0,
-   "of": 16,
+   "of": 21,
    "longplay_n": 0,
    "quotes": []
   },
   "N-wall": {
-   "n": 0,
-   "of": 16,
-   "longplay_n": 0,
+   "n": 1,
+   "of": 21,
+   "longplay_n": 1,
    "quotes": []
   },
   "N-pay": {
    "n": 0,
-   "of": 16,
+   "of": 21,
    "longplay_n": 0,
    "quotes": []
   },
   "N-dominant": {
    "n": 0,
-   "of": 16,
+   "of": 21,
    "longplay_n": 0,
    "quotes": []
   },
   "N-late": {
-   "n": 3,
-   "of": 16,
-   "longplay_n": 3,
+   "n": 1,
+   "of": 21,
+   "longplay_n": 1,
    "quotes": []
   },
   "N-offline": {
    "n": 0,
-   "of": 16,
+   "of": 21,
    "longplay_n": 0,
    "quotes": []
   },
   "N-mobile": {
    "n": 0,
-   "of": 16,
+   "of": 21,
    "longplay_n": 0,
    "quotes": []
   },
   "N-bug": {
-   "n": 0,
-   "of": 16,
-   "longplay_n": 0,
-   "quotes": []
+   "n": 1,
+   "of": 21,
+   "longplay_n": 1,
+   "quotes": [
+    "Just like every other incremental game it ends when you overflow one of the resource types and the game crashes. (steam-, 79h)"
+   ]
   },
   "N-energy": {
    "n": 0,
-   "of": 16,
+   "of": 21,
    "longplay_n": 0,
    "quotes": []
   },
   "N-bloat": {
    "n": 0,
-   "of": 16,
+   "of": 21,
    "longplay_n": 0,
    "quotes": []
   },
   "N-chore": {
    "n": 0,
-   "of": 16,
+   "of": 21,
    "longplay_n": 0,
    "quotes": []
   },
   "N-tutorial": {
    "n": 0,
-   "of": 16,
+   "of": 21,
    "longplay_n": 0,
    "quotes": []
   },
   "N-shallow": {
    "n": 0,
-   "of": 16,
+   "of": 21,
    "longplay_n": 0,
    "quotes": []
   },
   "N-reset": {
    "n": 0,
-   "of": 16,
+   "of": 21,
    "longplay_n": 0,
    "quotes": []
   },
   "N-pace": {
    "n": 0,
-   "of": 16,
+   "of": 21,
    "longplay_n": 0,
    "quotes": []
   },
   "N-fast": {
    "n": 0,
-   "of": 16,
+   "of": 21,
    "longplay_n": 0,
    "quotes": []
   },
   "N-balance": {
    "n": 0,
-   "of": 16,
+   "of": 21,
    "longplay_n": 0,
    "quotes": []
   }
