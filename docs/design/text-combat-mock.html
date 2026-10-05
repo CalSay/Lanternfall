@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lanternfall: text combat mock-up</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Handjet:wght@400..700&family=Barlow+Semi+Condensed:wght@400;500;600&display=swap">
+<style>
+/* Mock-up only. Palette, fonts and the Q W E / A S D bar come from the live game (10-base.css, 80-landscape.css).
+   Tiles here are placeholder glyphs; the real build would use the approved ability, status and action icons. */
+:root{color-scheme:dark;--bg:#140F1A;--panel:#1F1827;--panel2:#2A2233;--well:#110D16;--line:#3A2F47;--lineh:#4E4060;--bone:#EFE6D6;--muted:#A597B4;
+--ember:#FF9E3D;--gold:#F2C14E;--hp:#E0524F;--xp:#6FCB6A;--arcane:#B58CFF;--dodge:#8FB8FF;--foe:#A8323A;
+--display:"Handjet","Arial Narrow",monospace;--k:1.2;--body:"Barlow Semi Condensed","Arial Narrow",system-ui,sans-serif}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--bone);font:14px/1.35 var(--body)}
+body{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:10px;gap:8px}
+.note{max-width:740px;color:var(--muted);font-size:12px;text-align:center}
+.note b{color:var(--bone)}
+.app{width:100%;max-width:740px;height:360px;display:grid;grid-template-columns:150px 1fr 196px;grid-template-rows:30px 1fr;gap:4px;padding:4px;background:var(--bg);border:1px solid var(--line)}
+.top{grid-column:1/4;display:flex;align-items:center;gap:8px;padding:0 6px;background:var(--panel);border:1px solid var(--line);min-width:0}
+.place{font:600 calc(15px*var(--k))/1 var(--display);white-space:nowrap}
+.place small{color:var(--muted);font:calc(12px*var(--k))/1 var(--display);margin-left:4px}
+.order{margin-left:auto;display:flex;align-items:center;gap:3px;font:calc(11px*var(--k))/1 var(--display);color:var(--muted)}
+.order i{font-style:normal;padding:2px 5px;border:1px solid var(--line);background:var(--well);color:var(--muted)}
+.order i.h{color:var(--bone)} .order i.f{color:#E8A0A5} .order i.now{border-color:var(--gold);color:var(--gold)}
+.card{background:var(--panel);border:1px solid var(--line);padding:6px;display:flex;flex-direction:column;gap:4px;min-height:0;overflow:hidden}
+.who{display:flex;gap:6px;align-items:center}
+.tile{flex:none;width:34px;height:34px;display:grid;place-items:center;background:var(--well);border:2px solid #0B0810;box-shadow:inset 0 0 0 1px var(--lineh);font:700 calc(15px*var(--k))/1 var(--display)}
+.foe .tile{box-shadow:inset 0 0 0 1px #6A2A30;color:#E8A0A5}
+.nm{font:600 calc(15px*var(--k))/1 var(--display);line-height:1}
+.sub{font:calc(11px*var(--k))/1.1 var(--display);color:var(--muted)}
+.hpl{display:flex;justify-content:space-between;font:calc(12px*var(--k))/1 var(--display)}
+.bar{height:9px;background:var(--well);border:1px solid #0B0810;position:relative;overflow:hidden}
+.bar i{position:absolute;inset:0 auto 0 0;background:var(--hp);transition:width .25s steps(5)}
+.bar i.t{background:rgba(255,255,255,.35);transition:width .7s .15s steps(7)}
+.hero .bar i:not(.t){background:var(--xp)}
+.pips{display:flex;gap:3px;align-items:center;font:calc(12px*var(--k))/1 var(--display)}
+.pip{width:9px;height:9px;background:var(--well);border:1px solid #0B0810;box-shadow:inset 0 0 0 1px var(--lineh)}
+.pip.on{background:var(--gold);box-shadow:inset 0 0 0 1px #FFF3C4}
+.chips{display:flex;flex-wrap:wrap;gap:3px;min-height:18px}
+.chip{font:calc(11px*var(--k))/1 var(--display);padding:2px 4px;background:var(--well);border:1px solid var(--lineh);color:var(--bone)}
+.chip.bad{border-color:#6A2A30;color:#F0B0B4} .chip.good{border-color:#5a7a3a;color:#B8E39A}
+.prof{font:calc(11px*var(--k))/1.15 var(--display);color:var(--muted)}
+.prof b{color:var(--bone);font-weight:600}
+.sp{flex:1}
+.mid{display:flex;flex-direction:column;gap:4px;min-height:0;min-width:0}
+.log{flex:1;min-height:0;overflow-y:auto;background:var(--well);border:1px solid var(--line);padding:5px 7px;display:flex;flex-direction:column;gap:1px;font:calc(13px*var(--k))/1.15 var(--display)}
+.ln{opacity:.92;padding-left:3.6em;text-indent:-3.6em} .ln.sep{color:var(--muted);text-align:center;margin-top:3px;font-size:calc(11px*var(--k));padding-left:0;text-indent:0}
+.ln .who2{display:inline-block;min-width:3.6em;text-indent:0;color:var(--muted)}
+.ln.h .who2{color:var(--xp)} .ln.f .who2{color:#E8A0A5}
+.ln.sub2{color:#CFC6D8}
+.ln.big{color:var(--gold);font-weight:600} .ln.dodge{color:var(--dodge)} .ln.bad{color:#F0B0B4}
+.ln b{font-weight:600;color:var(--bone)} .ln .num{color:#fff} .ln .crit{color:var(--gold)}
+.ln.new{animation:fade .25s steps(3)} @keyframes fade{from{opacity:0}to{opacity:.92}}
+@media (prefers-reduced-motion:reduce){.ln.new{animation:none}.bar i{transition:none}}
+.intent{flex:none;height:56px;background:var(--panel);border:1px solid var(--line);padding:5px 7px;display:flex;flex-direction:column;gap:3px;justify-content:center}
+.intent .t{font:600 calc(14px*var(--k))/1 var(--display)}
+.intent.mine .t{color:var(--gold)} .intent.warn .t{color:#F0B0B4}
+.track{position:relative;height:16px;background:var(--well);border:2px solid #0B0810;box-shadow:inset 0 0 0 1px var(--lineh);visibility:hidden}
+.intent.wind .track{visibility:visible}
+.track i{position:absolute;top:0;bottom:0}
+.tf{left:0;background:rgba(224,214,194,.35)} .td{background:rgba(120,170,255,.7);box-shadow:inset 0 0 0 1px var(--dodge)}
+.tp{top:3px!important;bottom:3px!important;background:var(--gold)} .th{width:3px;background:#fff;box-shadow:0 0 0 1px #0B0810}
+.lg{display:flex;justify-content:flex-end;gap:10px;font:700 calc(11px*var(--k))/1 var(--display);margin-top:-1px;visibility:hidden}
+.intent.wind .lg{visibility:visible} .lg .d{color:var(--dodge)} .lg .p{color:var(--gold)}
+.intent.in-p .track{box-shadow:inset 0 0 0 1px var(--lineh),0 0 0 2px var(--gold)} .intent.in-d .track{box-shadow:inset 0 0 0 1px var(--lineh),0 0 0 2px var(--dodge)}
+.right{display:flex;flex-direction:column;gap:4px;min-height:0}
+.foe{flex:1}
+.bar-actions{flex:none;display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.slot{height:54px;background:var(--panel2);border:2px solid #0B0810;box-shadow:inset 0 0 0 1px var(--lineh);color:var(--bone);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;cursor:pointer;position:relative;padding:0;font:inherit}
+.slot:disabled{opacity:.45;cursor:default}
+.slot .g{font:700 calc(17px*var(--k))/1 var(--display)}
+.slot .l{font:calc(11px*var(--k))/1 var(--display);color:#E0D6C2}
+.slot .k{position:absolute;top:2px;left:3px;font:calc(10px*var(--k))/1 var(--display);color:var(--muted)}
+.slot .cd{position:absolute;top:2px;right:3px;font:700 calc(11px*var(--k))/1 var(--display);color:var(--gold)}
+.slot.hot{box-shadow:inset 0 0 0 1px var(--gold),0 0 8px rgba(242,193,78,.5)}
+.slot.par .g{color:var(--gold)} .slot.dod .g{color:var(--dodge)} .slot.atk{box-shadow:inset 0 0 0 1px var(--ember)}
+.end{position:absolute;inset:0;display:none;place-items:center;background:rgba(10,7,14,.82);z-index:3;text-align:center}
+.end.on{display:grid} .end h2{margin:0 0 4px;font:700 calc(26px*var(--k))/1 var(--display);color:var(--gold)}
+.end button{margin-top:8px;padding:6px 14px;background:var(--gold);color:#1A1420;border:0;font:700 calc(15px*var(--k))/1 var(--display);cursor:pointer}
+.appw{position:relative;width:100%;max-width:740px}
+/* portrait: one column, same parts in a different order */
+@media (max-width:640px){
+ body{padding:6px}
+ .app{grid-template-columns:1fr 1fr;height:calc(100dvh - 96px);min-height:520px;grid-template-rows:auto auto 1fr auto auto}
+ .top{grid-column:1/3;flex-wrap:wrap;padding:4px 6px;height:auto}
+ .right{display:contents} .foe{order:2;grid-column:2} .hero{order:2;grid-column:1}
+ .mid{order:3;grid-column:1/3;display:contents}
+ .log{order:4;grid-column:1/3;flex:none;min-height:0} .intent{order:5;grid-column:1/3}
+ .bar-actions{order:6;grid-column:1/3} .slot{height:58px}
+ .top{order:1}
+}
+</style>
+</head>
+<body>
+<div class="note"><b>Lanternfall text combat: mock-up.</b> Playable: press <b>D</b> / Attack, <b>Q W E</b> for abilities. When the Bog Hound winds up, press <b>S</b> to dodge or <b>A</b> to parry as the white marker reaches the end of the bar.</div>
+<div class="appw">
+<div class="app" id="app">
+  <div class="top">
+    <span class="place">Mossy Hollow<small>Zone 3 &middot; Foe 4 of 10</small></span>
+    <span class="order" id="order" aria-label="Turn order"></span>
+  </div>
+
+  <section class="card hero" aria-label="Wren">
+    <div class="who"><div class="tile">Wr</div><div><div class="nm">Wren</div><div class="sub">Level 12 &middot; Speed 112</div></div></div>
+    <div><div class="hpl"><span>HP</span><span id="hHp"></span></div><div class="bar"><i class="t" id="hT"></i><i id="hF"></i></div></div>
+    <div class="pips"><span>Aim</span><span id="pips" style="display:flex;gap:3px"></span></div>
+    <div class="chips" id="hChips"></div>
+    <div class="sp"></div>
+    <div class="prof"><b>Next up</b><br>Beat 10 foes in Mossy Hollow: 4/10</div>
+  </section>
+
+  <div class="mid">
+    <div class="log" id="log" role="log" aria-live="polite"></div>
+    <div class="intent" id="intent"><div class="t" id="itxt"></div><div class="track" id="track"><i class="td" id="td"></i><i class="tp" id="tp"></i><i class="tf" id="tf"></i><i class="th" id="th"></i></div><div class="lg"><span class="d">Dodge</span><span class="p">Parry</span></div></div>
+  </div>
+
+  <div class="right">
+    <section class="card foe" aria-label="Bog Hound">
+      <div class="who"><div class="tile">Bh</div><div><div class="nm">Bog Hound</div><div class="sub">Foe &middot; Speed 96</div></div></div>
+      <div><div class="hpl"><span>HP</span><span id="fHp"></span></div><div class="bar"><i class="t" id="fT"></i><i id="fF"></i></div></div>
+      <div class="chips" id="fChips"></div>
+      <div class="prof"><b>Profile</b> (3 fights)<br>Weak: frost &middot; Resists: bleed<br>Moves: Snap, Lunge, ?</div>
+    </section>
+    <div class="bar-actions" id="acts"></div>
+  </div>
+</div>
+<div class="end" id="end"><div><h2 id="eh">Victory</h2><div id="et" class="sub"></div><button id="again">Fight again</button></div></div>
+</div>
+<div class="note">Placeholder glyphs stand in for the game's existing ability, status and action icons. No stage, no animation: only the log, bars and timing window move.</div>
+
+<script>
+(() => {
+'use strict';
+const $ = id => document.getElementById(id);
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const H = { max: 140, hp: 140, aim: 0, aimMax: 5, name: 'Wren' };
+let F, turn, phase, heroCd, mark, hGuard, over, windup, queue, lastActs = 0;
+const ABIL = {
+  q: { k: 'Q', g: 'Ps', name: 'Power Shot', cd: 3, pow: 1.8, kind: 'dmg', aimOnCrit: 1 },
+  w: { k: 'W', g: 'Ec', name: 'Echo Shot', cd: 5, pow: 1.8, kind: 'mark' },
+  e: { k: 'E', g: 'Vo', name: 'Volley', cd: 4, pow: 0.7, hits: 3, kind: 'dmg' },
+};
+const MOVES = [ { name: 'Snap', hits: 1, dmg: 20, wind: 1.7 }, { name: 'Lunge', hits: 2, dmg: 14, wind: 1.5 } ];
+const PARRY = 0.22, DODGE = 0.5;   // seconds before the hit that each window is open (the game's tuning starts at 0.18 / 0.35)
+const rnd = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+
+function line(cls, parts) {
+  const d = document.createElement('div'); d.className = 'ln new ' + cls;
+  (Array.isArray(parts) ? parts : [parts]).forEach(p => { if (typeof p === 'string') d.append(p); else d.append(p); });
+  const L = $('log'); L.append(d); while (L.children.length > 80) L.firstChild.remove(); L.scrollTop = L.scrollHeight; return d;
+}
+const sp = (cls, t) => { const s = document.createElement('span'); s.className = cls; s.textContent = t; return s; };
+const who = (c, t) => sp('who2', t);
+
+function render() {
+  const pct = (a, b) => Math.max(0, a / b * 100) + '%';
+  $('hHp').textContent = `${Math.max(0, H.hp)} / ${H.max}`; $('hF').style.width = pct(H.hp, H.max); $('hT').style.width = pct(H.hp, H.max);
+  $('fHp').textContent = `${Math.max(0, F.hp)} / ${F.max}`; $('fF').style.width = pct(F.hp, F.max); $('fT').style.width = pct(F.hp, F.max);
+  $('pips').replaceChildren(...Array.from({ length: H.aimMax }, (_, i) => { const p = document.createElement('i'); p.className = 'pip' + (i < H.aim ? ' on' : ''); return p; }));
+  const hc = [], fc = [];
+  if (hGuard) hc.push(['good', 'Guard']);
+  if (!hc.length) hc.push(['', 'No effects']);
+  if (mark > 0) fc.push(['bad', `Marked ${mark}`]); else fc.push(['', 'No effects']);
+  const put = (id, a) => $(id).replaceChildren(...a.map(([c, t]) => sp('chip ' + c, t)));
+  put('hChips', hc); put('fChips', fc);
+  // turn order: next 6 turns, alternating (Speed 112 vs 96: you open)
+  const o = []; let w = phase === 'hero' ? 'h' : 'f';
+  for (let i = 0; i < 6; i++) { o.push(w); w = w === 'h' ? 'f' : 'h'; }
+  $('order').replaceChildren(sp('', 'Turn ' + turn), ...o.map((x, i) => sp((x === 'h' ? 'h' : 'f') + (i === 0 ? ' now' : ''), x === 'h' ? 'You' : 'Hound')).map(s => { const i = document.createElement('i'); i.className = s.className; i.textContent = s.textContent; return i; }));
+  buildActs();
+}
+
+function buildActs() {
+  const mine = phase === 'hero' && !over, A = $('acts');
+  if (A.dataset.sig === [mine, heroCd.q, heroCd.w, heroCd.e, phase].join()) return;
+  A.dataset.sig = [mine, heroCd.q, heroCd.w, heroCd.e, phase].join();
+  const mk = (key, cls, g, label, cd, dis, fn) => {
+    const b = document.createElement('button'); b.className = 'slot ' + cls; b.type = 'button'; b.disabled = dis;
+    b.innerHTML = `<span class="k">${key}</span><span class="g">${g}</span><span class="l">${label}</span>` + (cd ? `<span class="cd">T${cd}</span>` : '');
+    b.addEventListener('click', fn); return b;
+  };
+  const ab = k => mk(ABIL[k].k, '', ABIL[k].g, ABIL[k].name, heroCd[k], !mine || heroCd[k] > 0, () => heroAct(k));
+  const defend = phase === 'foeWind';
+  A.replaceChildren(ab('q'), ab('w'), ab('e'),
+    mk('A', 'par' + (defend ? ' hot' : ''), 'Pa', 'Parry', 0, !defend, () => react('parry')),
+    mk('S', 'dod' + (defend ? ' hot' : ''), 'Do', 'Dodge', 0, !defend, () => react('dodge')),
+    mk('D', 'atk', 'At', 'Attack', 0, !mine, () => heroAct('atk')));
+}
+
+function newFight() {
+  F = { max: 160, hp: 160, name: 'Bog Hound' }; turn = 1; phase = 'hero'; heroCd = { q: 0, w: 0, e: 0 }; mark = 0; hGuard = 0; over = false; windup = null;
+  H.hp = H.max; H.aim = 0; $('log').replaceChildren(); $('end').classList.remove('on'); $('acts').dataset.sig = '';
+  line('sep', '-- A Bog Hound blocks the path. You go first. --'); line('sep', '-- Turn 1 --');
+  setIntent('Your turn. Pick an action.', 'mine'); render();
+}
+function setIntent(t, cls, wind) { const i = $('intent'); $('itxt').textContent = t; i.className = 'intent ' + (cls || '') + (wind ? ' wind' : ''); }
+
+function heroAct(k) {
+  if (phase !== 'hero' || over) return;
+  const crit = () => Math.random() < 0.2, bonus = 1 + H.aim * 0.06, markMul = mark > 0 ? 1.2 : 1;
+  const hit = (pow, label, hitsNote) => {
+    const c = crit(), d = Math.round(rnd(20, 24) * pow * bonus * markMul * (c ? 1.6 : 1)); F.hp -= d;
+    return { d, c };
+  };
+  const parts = [who('', 'You')];
+  if (k === 'atk') {
+    const r = hit(1); H.aim = Math.min(H.aimMax, H.aim + 1);
+    parts.push('Attack hits the Hound for ', sp(r.c ? 'crit' : 'num', r.d + (r.c ? '!' : '')), '. +1 Aim.');
+  } else {
+    const a = ABIL[k]; heroCd[k] = a.cd;
+    if (a.kind === 'mark') {
+      const was = mark > 0, r = hit(a.pow); mark = 3; parts.push(a.name + ' pierces for ', sp(r.c ? 'crit' : 'num', r.d + (r.c ? '!' : '')), '. Marked for 3 turns.');
+      line('h', parts); if (was) { const e = hit(0.6); line('sub2', ['Echo: a second arrow for ', sp('num', e.d), '.']); }
+      return afterHero();
+    }
+    if (a.hits) { let tot = 0, cs = 0; for (let i = 0; i < a.hits; i++) { const r = hit(a.pow); tot += r.d; cs += r.c ? 1 : 0; }
+      parts.push(a.name + ': three arrows for ', sp('num', tot), cs ? ` (${cs} crit)` : '', '.'); }
+    else { const r = hit(a.pow); if (r.c && a.aimOnCrit) H.aim = Math.min(H.aimMax, H.aim + 1);
+      parts.push(a.name + ' hits for ', sp(r.c ? 'crit' : 'num', r.d + (r.c ? '!' : '')), r.c ? '. Crit: +1 Aim.' : '.'); }
+  }
+  line('h', parts); afterHero();
+}
+function afterHero() {
+  if (F.hp <= 0) return win();
+  phase = 'foeWind'; turn++; render(); setIntent('', ''); setTimeout(startFoe, reduced ? 250 : 600);
+}
+function startFoe() {
+  if (over) return;
+  line('sep', '-- Turn ' + turn + ' --');
+  const m = MOVES[rnd(0, 1)]; queue = { m, i: 0, parried: 0 };
+  line('f', [who('', 'Hound'), sp('', `${m.name}: ${m.hits === 1 ? 'one hit' : m.hits + ' hits'}. Watch the bar.`)]);
+  nextHit();
+}
+function nextHit() {
+  const { m, i } = queue; phase = 'foeWind'; render();
+  const now = performance.now() / 1000; windup = { t0: now, hit: now + m.wind, done: false };
+  setIntent(`Bog Hound ${m.name}: hit ${i + 1} of ${m.hits}`, 'warn', true); $('acts').dataset.sig = '';
+  buildActs(); requestAnimationFrame(tick);
+}
+function tick() {
+  if (!windup || windup.done) return;
+  const now = performance.now() / 1000, span = windup.hit - windup.t0, p = v => Math.max(0, Math.min(100, v * 100)) + '%';
+  const u = (now - windup.t0) / span; $('tf').style.width = p(u); $('th').style.left = p(u);
+  $('td').style.left = p(1 - DODGE / span); $('td').style.width = p(DODGE / span);
+  $('tp').style.left = p(1 - PARRY / span); $('tp').style.width = p(PARRY / span);
+  const inP = windup.hit - now <= PARRY, inD = windup.hit - now <= DODGE;
+  $('intent').classList.toggle('in-p', inP); $('intent').classList.toggle('in-d', inD && !inP);
+  if (now >= windup.hit) return resolve('hit');
+  requestAnimationFrame(tick);
+}
+function react(kind) {
+  if (!windup || windup.done) return;
+  const left = windup.hit - performance.now() / 1000;
+  if (kind === 'parry' && left <= PARRY) return resolve('parry');
+  if (kind === 'dodge' && left <= DODGE) return resolve('dodge');
+  line('sub2', [sp('bad', kind === 'parry' ? 'Too early to parry.' : 'Too early to dodge.')]);
+}
+function resolve(res) {
+  windup.done = true; const { m } = queue; $('intent').className = 'intent warn';
+  const dmg = m.dmg + rnd(-2, 2);
+  if (res === 'parry') { queue.parried++; for (const k of ['q', 'w', 'e']) heroCd[k] = Math.max(0, heroCd[k] - 1);
+    line('big', [who('', ''), `PARRY. Blocked. Cooldowns down 1 turn.`]); }
+  else if (res === 'dodge') line('dodge', [who('', ''), 'Dodged. No damage.']);
+  else { H.hp -= dmg; line('bad', [who('', ''), `Bog Hound ${m.name} hits you for `, sp('num', dmg), '.']); }
+  queue.i++; $('acts').dataset.sig = '';
+  if (H.hp <= 0) return lose();
+  if (queue.i < m.hits) { phase = 'foeGap'; render(); return setTimeout(nextHit, reduced ? 200 : 450); }
+  if (queue.parried === m.hits) { const c = Math.round(rnd(26, 32) * 1.6 * (mark > 0 ? 1.2 : 1)); F.hp -= c;
+    line('big', [who('', 'You'), 'Every hit parried. Counter, a sure crit for ', sp('crit', c), '!']); if (F.hp <= 0) { render(); return win(); } }
+  mark = Math.max(0, mark - 1);
+  for (const k of ['q', 'w', 'e']) heroCd[k] = Math.max(0, heroCd[k] - 1);
+  turn++; phase = 'hero'; line('sep', '-- Turn ' + turn + ' --'); setIntent('Your turn. Pick an action.', 'mine'); render();
+}
+function win() { over = true; phase = 'off'; render(); line('big', [who('', ''), 'The Bog Hound falls.']); line('h', [who('', 'Loot'), '+14 gold, +3 essence, 1 Hound Fang.']);
+  setIntent('Victory', 'mine'); $('eh').textContent = 'Victory'; $('et').textContent = `Won in ${turn} turns. +14 gold, +3 essence.`; setTimeout(() => $('end').classList.add('on'), 700); }
+function lose() { over = true; phase = 'off'; render(); line('bad', [who('', ''), 'You fall.']); setIntent('Defeated', 'warn');
+  $('eh').textContent = 'Defeated'; $('et').textContent = 'You wake at the lamp. No gold lost.'; setTimeout(() => $('end').classList.add('on'), 700); }
+
+addEventListener('keydown', e => {
+  const k = e.key.toLowerCase();
+  if (k === 'q' || k === 'w' || k === 'e') { if (heroCd[k] === 0) heroAct(k); }
+  else if (k === 'd') heroAct('atk'); else if (k === 'a') react('parry'); else if (k === 's') react('dodge');
+});
+$('again').addEventListener('click', newFight);
+newFight();
+})();
+</script>
+</body>
+</html>
