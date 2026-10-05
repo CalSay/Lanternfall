@@ -7,7 +7,8 @@ For specs, direction picks, proposals and `docs/DECISIONS.md` entries ("Claude d
 
 - Names the player problem and its evidence (Cal's playtest notes, playtest lab, health metrics, fun library). Model
   intuition alone is not evidence.
-- Names the Compass pillar and the coverage-map area.
+- Names the coverage-map area, and the Compass pillar once `docs/design/compass.md` exists (until then, skip the
+  pillar; it is not a failure).
 - States a predicted effect as a number and how it will be measured.
 - A red team and an Opus judge were run for a `judge` card, and both are recorded.
 - Names how to switch it off, and what it does to existing saves (or says nothing).

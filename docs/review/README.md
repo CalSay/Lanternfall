@@ -30,6 +30,12 @@ verdict, then pick the closest rubric and name it.
 
 - Any failed hard check is `blocking`.
 - A score of 1 or 2 on any criterion is a `blocking` finding. Say what a 3 would need.
+
+Severity scale: this is the same as the P0/P1/P2 scale in `AGENTS.md` ("Code Review Rules"), which Codex's GitHub
+review uses. `blocking` means P0 or P1: a failed hard check, or a score of 1 or 2 (P1). Save loss, a renamed save
+field, an online-layer change or a save key change is P0. `minor` means P2.
+The lists in `AGENTS.md` take precedence over these mappings: a failure they name keeps its severity (a 1 or 2 on a copy
+criterion in any rubric is P2, so it is `minor`).
 - Each rubric also lists what else blocks for that type.
 - Anything else worth fixing is `minor`.
 
@@ -38,8 +44,13 @@ finding is open.
 
 ## Verdict format
 
-One comment per PR on PR #1, starting with `Codex review:` (Claude's Opus reviewer writes `Opus review:` on the PR
-itself, same layout):
+Codex's GitHub review (`chatgpt-codex-connector[bot]`) reports P0/P1/P2 findings on the PR itself. The connector can
+only return findings, so score every criterion and report these as findings, with the score and evidence in the text:
+each failed hard check, each score of 1 or 2, and each P2 defect the `AGENTS.md` list names (including copy slips that
+score a 3). Other scores of 3 or more need no comment.
+
+The layout below is for Claude's Opus reviewer (`Opus review:`, on the PR itself) and the fallback for Cal's local
+Codex (`Codex review:`, one comment per PR on PR #1):
 
 ```
 Codex review: #<pr> (<card id>)   Rubric: <name>   Verdict: pass | changes needed

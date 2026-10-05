@@ -28,5 +28,5 @@ For menus, screens, layout, navigation and in-page icons. Coverage-map areas 1, 
 
 ## Blocking
 
-Any failed hard check; a score of 1 or 2; a screen with no way back; a button that can't be tapped; text cut off at
+Any failed hard check; a score of 1 or 2 on any criterion except "Copy clarity" (weak copy is `minor`, P2, per `AGENTS.md`); a screen with no way back; a button that can't be tapped; text cut off at
 360px.
