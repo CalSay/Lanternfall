@@ -1,0 +1,251 @@
+{
+ "slug": "sea-of-stars",
+ "n_reviews": 138,
+ "n_pos": 85,
+ "n_neg": 53,
+ "n_longplay_neg": 10,
+ "sources": [
+  "steam",
+  "apple"
+ ],
+ "themes": {
+  "P-offline": {
+   "n": 0,
+   "of": 85,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-respect": {
+   "n": 1,
+   "of": 85,
+   "longplay_n": 0,
+   "quotes": [
+    "I can play a few minutes via touch controls or geek out longer with a controller - seamlessly. (apple5)"
+   ]
+  },
+  "P-active": {
+   "n": 5,
+   "of": 85,
+   "longplay_n": 0,
+   "quotes": [
+    "I find them engaging and above all courageous. (steam+, 33h)",
+    "Though with a bit of expansion on the base concept, I think it stay engaging for longer. (steam+, 38h)"
+   ]
+  },
+  "P-dev": {
+   "n": 0,
+   "of": 85,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-unlock": {
+   "n": 1,
+   "of": 85,
+   "longplay_n": 0,
+   "quotes": [
+    "Luckily new side characters bring new skills, damage types and combos to the table. (steam+, 39h)"
+   ]
+  },
+  "P-collect": {
+   "n": 3,
+   "of": 85,
+   "longplay_n": 0,
+   "quotes": [
+    "P.S.: I don't think New Game+ has much to offer after completing the game, except if you missed 1 or 2 achievements. (steam+, 92h)",
+    "Time for 100% achievements (total): 50.2h (steam+, 50h)"
+   ]
+  },
+  "P-goals": {
+   "n": 0,
+   "of": 85,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-depth": {
+   "n": 7,
+   "of": 85,
+   "longplay_n": 0,
+   "quotes": [
+    "The combat system is simple but in depth enough to keep me hooked. (steam+, 33h)",
+    "Rpg elements are really barebones, stats are basic and have very little depth. (steam+, 9h)"
+   ]
+  },
+  "P-fair": {
+   "n": 1,
+   "of": 85,
+   "longplay_n": 0,
+   "quotes": [
+    "How often do you get a fully-fledged game with no ads or MTX nowadays? (apple5)"
+   ]
+  },
+  "P-interlock": {
+   "n": 1,
+   "of": 85,
+   "longplay_n": 0,
+   "quotes": [
+    "They have strong synergies, and everyone gets their moment to shine. (steam+, 25h)"
+   ]
+  },
+  "P-prestige": {
+   "n": 0,
+   "of": 85,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-qol": {
+   "n": 2,
+   "of": 85,
+   "longplay_n": 0,
+   "quotes": [
+    "This game is made for mobile and the controls are very intuitive. (apple5)"
+   ]
+  },
+  "P-calm": {
+   "n": 3,
+   "of": 85,
+   "longplay_n": 0,
+   "quotes": [
+    "P.S.2: There are items called Relics in the game that let you make the experience easier, harder or more comfortable for you. (steam+, 92h)",
+    "Touch controls are very simple and comfortable and the controller support makes this that much better. (apple5)"
+   ]
+  },
+  "P-art": {
+   "n": 33,
+   "of": 85,
+   "longplay_n": 0,
+   "quotes": [
+    "[b]The art and soundtrack are undeniably beautiful[/b]. (steam+, 50h)",
+    "The pixel-art visual style is absolutely charming and gives the game a strong identity. (steam+, 25h)"
+   ]
+  },
+  "P-story": {
+   "n": 35,
+   "of": 85,
+   "longplay_n": 0,
+   "quotes": [
+    "The characters are light hearted but serious when required during certain phases of story telling. (steam+, 33h)",
+    "But it looks/sounds absolutely lovely and the character sprites are very expressive and fun. (steam+, 10h)"
+   ]
+  },
+  "N-ads": {
+   "n": 0,
+   "of": 53,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-wall": {
+   "n": 3,
+   "of": 53,
+   "longplay_n": 0,
+   "quotes": [
+    "As it stands, this game is like a brick wall where they used peanut butter instead of mortar. (steam-, 36h)",
+    "So you\u2019re encouraged to save all your strongest damaging abilities for when enemies take the least damage, making fights a slow awful grind. (steam-, 9h)"
+   ]
+  },
+  "N-pay": {
+   "n": 0,
+   "of": 53,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-dominant": {
+   "n": 2,
+   "of": 53,
+   "longplay_n": 0,
+   "quotes": [
+    "I've never seen such cool character concepts be so dull, and the combat has no variety at all. (steam-, 18h)"
+   ]
+  },
+  "N-late": {
+   "n": 6,
+   "of": 53,
+   "longplay_n": 2,
+   "quotes": [
+    "It absolutely squanders some of the best pixel art put to motion with super repetitive gameplay and abysmal story and dialogue. (steam-, 30h)",
+    "It's fun at first, but it gets tedious and repetitive due to how this game progresses. (steam-, 78h)"
+   ]
+  },
+  "N-offline": {
+   "n": 0,
+   "of": 53,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-mobile": {
+   "n": 0,
+   "of": 53,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-bug": {
+   "n": 11,
+   "of": 53,
+   "longplay_n": 0,
+   "quotes": [
+    "Graphical glitch in the abandoned wizards lab. (apple3)",
+    "Very fun but Glitch is completely halting progress. (apple3)"
+   ]
+  },
+  "N-energy": {
+   "n": 1,
+   "of": 53,
+   "longplay_n": 0,
+   "quotes": [
+    ":/ I looked up and it says not to use little fire/energy so I tried again but it still freezes. (apple3)"
+   ]
+  },
+  "N-bloat": {
+   "n": 0,
+   "of": 53,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-chore": {
+   "n": 0,
+   "of": 53,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-tutorial": {
+   "n": 3,
+   "of": 53,
+   "longplay_n": 1,
+   "quotes": [
+    "It's a 40 hour game with literally the same combat from the tutorial until the end. (steam-, 9h)",
+    "Combat barely gets any deeper after the tutorial to the point where a toddler could master it. (steam-, 56h)"
+   ]
+  },
+  "N-shallow": {
+   "n": 1,
+   "of": 53,
+   "longplay_n": 0,
+   "quotes": [
+    "This game is as shallow and lacking in characterization as it is beautiful. (steam-, 9h)"
+   ]
+  },
+  "N-reset": {
+   "n": 0,
+   "of": 53,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-pace": {
+   "n": 0,
+   "of": 53,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-fast": {
+   "n": 0,
+   "of": 53,
+   "longplay_n": 1,
+   "quotes": []
+  },
+  "N-balance": {
+   "n": 1,
+   "of": 53,
+   "longplay_n": 0,
+   "quotes": []
+  }
+ }
+}

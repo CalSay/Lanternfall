@@ -1,0 +1,232 @@
+{
+ "slug": "swords-and-souls-neverseen",
+ "n_reviews": 50,
+ "n_pos": 25,
+ "n_neg": 25,
+ "n_longplay_neg": 1,
+ "sources": [
+  "steam"
+ ],
+ "themes": {
+  "P-offline": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-respect": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-active": {
+   "n": 4,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "This game is fundamentally good, the story is engaging, and the characters feel lively and well-written. (steam+, 19h)",
+    "If you wanna zone out and play a bunch of minigames, then see number go up, go ahead and buy this. (steam+, 3h)"
+   ]
+  },
+  "P-dev": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-unlock": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-collect": {
+   "n": 8,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "However, the grind and endless mode, especially for achievement hunters, eventually make it more of a chore than a comfort game. (steam+, 28h)",
+    "However, trying to reach Soulmaster rank in all missions for the related achievement becomes extremely tedious. (steam+, 19h)"
+   ]
+  },
+  "P-goals": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-depth": {
+   "n": 2,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "A truly great game that I loved to replay just to try to speedrun it with different builds. (steam+, 32h)"
+   ]
+  },
+  "P-fair": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-interlock": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-prestige": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-qol": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-calm": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "However, the grind and endless mode, especially for achievement hunters, eventually make it more of a chore than a comfort game. (steam+, 28h)"
+   ]
+  },
+  "P-art": {
+   "n": 4,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "[b]Aesthetic & Vibe -[/b] The game nails that nostalgic Flash game feel in a really charming way. (steam+, 28h)",
+    "The music is delightful but I do wish they brought back a couple of the (steam+, 10h)"
+   ]
+  },
+  "P-story": {
+   "n": 6,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "On top of that, the story has genuine heart, which helps pull you through the campaign. (steam+, 28h)",
+    "This game is fundamentally good, the story is engaging, and the characters feel lively and well-written. (steam+, 19h)"
+   ]
+  },
+  "N-ads": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-wall": {
+   "n": 4,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "Way too repetitive, all the grinding is painfully slow and boring. (steam-, 4h)",
+    "Success is primarily based on how much time a player is willing to grind mini games improve stats to surpass hard checks. (steam-, 4h)"
+   ]
+  },
+  "N-pay": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-dominant": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-late": {
+   "n": 2,
+   "of": 25,
+   "longplay_n": 1,
+   "quotes": [
+    "It becomes repetitive and quickly starts feeling like a mindless waste of time. (steam-, 62h)",
+    "Way too repetitive, all the grinding is painfully slow and boring. (steam-, 4h)"
+   ]
+  },
+  "N-offline": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-mobile": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-bug": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "there is a game breaking save file bug you won't be able to play if u don't fix it (steam-, 11h)"
+   ]
+  },
+  "N-energy": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "The game doesnt have that same impact energy as the prequel. (steam-, 7h)"
+   ]
+  },
+  "N-bloat": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-chore": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-tutorial": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-shallow": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 1,
+   "quotes": [
+    "It becomes repetitive and quickly starts feeling like a mindless waste of time. (steam-, 62h)"
+   ]
+  },
+  "N-reset": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-pace": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-fast": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-balance": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  }
+ }
+}

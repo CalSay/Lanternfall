@@ -1,0 +1,260 @@
+{
+ "slug": "banner-saga",
+ "n_reviews": 297,
+ "n_pos": 214,
+ "n_neg": 83,
+ "n_longplay_neg": 2,
+ "sources": [
+  "steam",
+  "apple"
+ ],
+ "themes": {
+  "P-offline": {
+   "n": 0,
+   "of": 214,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-respect": {
+   "n": 1,
+   "of": 214,
+   "longplay_n": 0,
+   "quotes": [
+    "This is not a casual game. (apple5)"
+   ]
+  },
+  "P-active": {
+   "n": 6,
+   "of": 214,
+   "longplay_n": 0,
+   "quotes": [
+    "Good turn-based RPG, with an engaging gameplay, memorable characters and an engaging story. (steam+, 32h)",
+    "incredible story and atmosphere with engaging gameplay. (steam+, 23h)"
+   ]
+  },
+  "P-dev": {
+   "n": 2,
+   "of": 214,
+   "longplay_n": 0,
+   "quotes": [
+    "My one question for the developer is this: how can I tell when the game has saved? (apple4)",
+    "And the game manages to convey a deep, oppressive sense of darkness that perfectly mirrors the story the developers are telling. (apple5)"
+   ]
+  },
+  "P-unlock": {
+   "n": 0,
+   "of": 214,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-collect": {
+   "n": 5,
+   "of": 214,
+   "longplay_n": 0,
+   "quotes": [
+    "It definitely managed to hit me emotionally, which is pretty rare for a video game. (steam+, 14h)",
+    "It\u2019s so rare to find a game that on every level makes you impressed. (apple5)"
+   ]
+  },
+  "P-goals": {
+   "n": 0,
+   "of": 214,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-depth": {
+   "n": 70,
+   "of": 214,
+   "longplay_n": 0,
+   "quotes": [
+    "The second gameplay loop is grid based type of strategy game. (steam+, 31h)",
+    "The strategies here are way more satisfying to master than similar games where every turn is just a glorified gamble. (steam+, 312h)"
+   ]
+  },
+  "P-fair": {
+   "n": 4,
+   "of": 214,
+   "longplay_n": 0,
+   "quotes": [
+    "This game is worth the price of admission, and I can\u2019t wait for BS3 in 2018. (apple5)",
+    "In all it was a good enough time to garnish 4 stars from me tho perhaps that\u2019s being generous. (apple4)"
+   ]
+  },
+  "P-interlock": {
+   "n": 1,
+   "of": 214,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-prestige": {
+   "n": 0,
+   "of": 214,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-qol": {
+   "n": 3,
+   "of": 214,
+   "longplay_n": 0,
+   "quotes": [
+    "The combat is intuitive and fun, while the unique art style makes you wish for a movie of Banjer Saga. (apple5)",
+    "The controls, on an iPhone 6, are intuitive and for the most part easy to use. (apple5)"
+   ]
+  },
+  "P-calm": {
+   "n": 0,
+   "of": 214,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-art": {
+   "n": 76,
+   "of": 214,
+   "longplay_n": 0,
+   "quotes": [
+    "The Banner Saga is a completely original blend of visual novel, tactics game, and RPG. (steam+, 14h)",
+    "One of the most beautiful art in all of gaming. (steam+, 13h)"
+   ]
+  },
+  "P-story": {
+   "n": 120,
+   "of": 214,
+   "longplay_n": 0,
+   "quotes": [
+    "The story of the game is clearly inspired by game of thrones and witcher. (steam+, 31h)",
+    "The interplay between the narrative choices you make and the tactical battles is very interesting. (steam+, 14h)"
+   ]
+  },
+  "N-ads": {
+   "n": 1,
+   "of": 83,
+   "longplay_n": 0,
+   "quotes": [
+    "Why is there an ad for a completely unrelated game on the title screen. (apple2)"
+   ]
+  },
+  "N-wall": {
+   "n": 4,
+   "of": 83,
+   "longplay_n": 0,
+   "quotes": [
+    "I'm sure the story is good, but the gameplay feels to me very grindy (6 hours in). (steam-, 6h)",
+    "Planning and zooming is broken and will frequently lock making it impossible to progress with restarting from a recent save. (apple3)"
+   ]
+  },
+  "N-pay": {
+   "n": 0,
+   "of": 83,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-dominant": {
+   "n": 0,
+   "of": 83,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-late": {
+   "n": 3,
+   "of": 83,
+   "longplay_n": 0,
+   "quotes": [
+    "No story, just randomness...boring after I got bored with the combat (steam-, 1h)",
+    "Mainly text based and often sitting there reading empty character development while watching a character blink or their hair blow in the wind. (apple1)"
+   ]
+  },
+  "N-offline": {
+   "n": 0,
+   "of": 83,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-mobile": {
+   "n": 2,
+   "of": 83,
+   "longplay_n": 0,
+   "quotes": [
+    "But dear Lord this game crawls and crashes on my iPad 2. (apple3)"
+   ]
+  },
+  "N-bug": {
+   "n": 14,
+   "of": 83,
+   "longplay_n": 0,
+   "quotes": [
+    "iPad mini performance is stuttered and crashes while loading battle scenes, during battle scenes, and just after battle scenes, even after the update. (apple1)",
+    "If it were not for the fairly regular crashes I would have given it a 5. (apple3)"
+   ]
+  },
+  "N-energy": {
+   "n": 1,
+   "of": 83,
+   "longplay_n": 0,
+   "quotes": [
+    "Wait for purchase until new update rolls out. (apple1)"
+   ]
+  },
+  "N-bloat": {
+   "n": 2,
+   "of": 83,
+   "longplay_n": 0,
+   "quotes": [
+    "This game is all at the same time punishing, depressing, and confusing. (apple1)"
+   ]
+  },
+  "N-chore": {
+   "n": 1,
+   "of": 83,
+   "longplay_n": 0,
+   "quotes": [
+    "Even moving around without zooming the screen in and out constantly is a chore. (apple2)"
+   ]
+  },
+  "N-tutorial": {
+   "n": 2,
+   "of": 83,
+   "longplay_n": 0,
+   "quotes": [
+    "Some of the unique abilities are unclear as how to use. (apple3)"
+   ]
+  },
+  "N-shallow": {
+   "n": 6,
+   "of": 83,
+   "longplay_n": 0,
+   "quotes": [
+    "Simple experience progression allows unit specialization. (apple3)",
+    "Not much to do aside from its occasional shallow turn-based battle system. (apple1)"
+   ]
+  },
+  "N-reset": {
+   "n": 0,
+   "of": 83,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-pace": {
+   "n": 0,
+   "of": 83,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-fast": {
+   "n": 2,
+   "of": 83,
+   "longplay_n": 0,
+   "quotes": [
+    "Too short and not enough battles. (apple3)",
+    "It\u2019s not very long and has no replay value. (apple3)"
+   ]
+  },
+  "N-balance": {
+   "n": 2,
+   "of": 83,
+   "longplay_n": 0,
+   "quotes": [
+    "Everything about this game is great apart from the final battle against the Bellower which feels contrived and unfair. (steam-, 13h)"
+   ]
+  }
+ }
+}

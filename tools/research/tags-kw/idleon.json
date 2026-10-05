@@ -1,0 +1,265 @@
+{
+ "slug": "idleon",
+ "n_reviews": 421,
+ "n_pos": 277,
+ "n_neg": 144,
+ "n_longplay_neg": 0,
+ "sources": [
+  "apple"
+ ],
+ "themes": {
+  "P-offline": {
+   "n": 21,
+   "of": 277,
+   "longplay_n": 0,
+   "quotes": [
+    "There\u2019s a ton to do actively, but making progress while you\u2019re offline just feels good with this game. (apple5)",
+    "Gems, AFK Candies, and rare things like that can be gotten simply by playing the game and require almost no interaction with the store. (apple5)"
+   ]
+  },
+  "P-respect": {
+   "n": 6,
+   "of": 277,
+   "longplay_n": 0,
+   "quotes": [
+    "-The text and dialogue is entertaining while being suitable for a casual game. (apple5)",
+    "The game respects your time, allowing you to idle as much or as little as you prefer. (apple5)"
+   ]
+  },
+  "P-active": {
+   "n": 17,
+   "of": 277,
+   "longplay_n": 0,
+   "quotes": [
+    "The hells the point of a game if you\u2019re not meant to actually play it?? (apple5)",
+    "The game starts by benefitting idle play and character management, but as you unlock certain classes snd skills, active play becomes relevant again. (apple4)"
+   ]
+  },
+  "P-dev": {
+   "n": 27,
+   "of": 277,
+   "longplay_n": 0,
+   "quotes": [
+    "But by a single dev is just impressive. (apple5)",
+    "The game gets frequent updates by a single lead developer and tbh idk how he does it. (apple5)"
+   ]
+  },
+  "P-unlock": {
+   "n": 9,
+   "of": 277,
+   "longplay_n": 0,
+   "quotes": [
+    "The frequent updates not only bring new content but also improve gameplay, balance mechanics, and keep things interesting. (apple5)",
+    "Moving onto a new area is always refreshing and ur always making progress towards a new quest. (apple5)"
+   ]
+  },
+  "P-collect": {
+   "n": 18,
+   "of": 277,
+   "longplay_n": 0,
+   "quotes": [
+    "The mobile version is exactly the same as the web browser and Steam versions (minus the Steam-exclusive achievements). (apple5)",
+    "We will get 4 hours worth of loot in exchange for watching an ad\u2026. (apple5)"
+   ]
+  },
+  "P-goals": {
+   "n": 5,
+   "of": 277,
+   "longplay_n": 0,
+   "quotes": [
+    "There is always something to do\u2026 at least most of the time\u2026.\ud83d\ude05 As you get up in the levels it takes longer to gain EXP. (apple5)",
+    "There\u2019s always something to do, something you need. (apple5)"
+   ]
+  },
+  "P-depth": {
+   "n": 13,
+   "of": 277,
+   "longplay_n": 0,
+   "quotes": [
+    "Amazing in-depth customization and afk time that actually feels valuable. (apple5)",
+    "This brings in lots of strategy and planning which makes this game enjoying and hard to get bored of. (apple5)"
+   ]
+  },
+  "P-fair": {
+   "n": 6,
+   "of": 277,
+   "longplay_n": 0,
+   "quotes": [
+    "Genuinely fair monetization where paying money feels more like donating to the developer than anything else. (apple4)",
+    "Very generous content, can be convoluted.. (apple5)"
+   ]
+  },
+  "P-interlock": {
+   "n": 2,
+   "of": 277,
+   "longplay_n": 0,
+   "quotes": [
+    "The abundance of systems that all feed into each other is good fun, but also gets overwhelming. (apple5)"
+   ]
+  },
+  "P-prestige": {
+   "n": 0,
+   "of": 277,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-qol": {
+   "n": 9,
+   "of": 277,
+   "longplay_n": 0,
+   "quotes": [
+    "Can\u2019t find a flaw whenever there is give it a week and he\u2019s figured it out how to balance something or improve quality of life. (apple5)",
+    "Whether it\u2019s new features, QoL improvements, or just fixing bugs quickly, it\u2019s clear that the devs truly care about the community. (apple5)"
+   ]
+  },
+  "P-calm": {
+   "n": 3,
+   "of": 277,
+   "longplay_n": 0,
+   "quotes": [
+    "but I\u2019m glad I made the transition to something far more entertaining, stress free and FUN without it feeling like a job. (apple5)",
+    "As long as you approach the game from a relaxed perspective, you\u2019ll have a blast. (apple5)"
+   ]
+  },
+  "P-art": {
+   "n": 8,
+   "of": 277,
+   "longplay_n": 0,
+   "quotes": [
+    "-Bosses have defining features outside of health bars and art style. (apple5)",
+    "Love the game so far, the art style is cool and I enjoy the gameplay, even though idle games aren't normally my thing. (apple4)"
+   ]
+  },
+  "P-story": {
+   "n": 71,
+   "of": 277,
+   "longplay_n": 0,
+   "quotes": [
+    "Great Game - Hate NEEDING Multi Characters. (apple4)",
+    "Pros -The multi-character system is compelling and surprisingly well balanced. (apple5)"
+   ]
+  },
+  "N-ads": {
+   "n": 0,
+   "of": 144,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-wall": {
+   "n": 7,
+   "of": 144,
+   "longplay_n": 0,
+   "quotes": [
+    "Not all the time but happens enough I\u2019ve broke a tv\u2026my phone ricocheted off the wall. (apple1)",
+    "Immediately got stuck by a bug. (apple1)"
+   ]
+  },
+  "N-pay": {
+   "n": 11,
+   "of": 144,
+   "longplay_n": 0,
+   "quotes": [
+    "Pass this game if you are not a WHALE!. (apple1)",
+    "This means that the game was largely kept from being p2w as you could, over time, earn most premium bonuses. (apple1)"
+   ]
+  },
+  "N-dominant": {
+   "n": 0,
+   "of": 144,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-late": {
+   "n": 4,
+   "of": 144,
+   "longplay_n": 0,
+   "quotes": [
+    "Would not recommend anything over a day or two of playing, as endgame is impossible for mobile players. (apple1)",
+    "It can be incredibly fun to play in world 1, but in w2 and 3 it gets pay to win, boring, and repetitive. (apple2)"
+   ]
+  },
+  "N-offline": {
+   "n": 0,
+   "of": 144,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-mobile": {
+   "n": 0,
+   "of": 144,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-bug": {
+   "n": 37,
+   "of": 144,
+   "longplay_n": 0,
+   "quotes": [
+    "Also I got traded one of the new pets and it\u2019s crashing my game anytime I login since it\u2019s not available on iOS yet. (apple1)",
+    "Unfortunately, it\u2019s riddled with bugs and poor planning. (apple1)"
+   ]
+  },
+  "N-energy": {
+   "n": 0,
+   "of": 144,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-bloat": {
+   "n": 0,
+   "of": 144,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-chore": {
+   "n": 1,
+   "of": 144,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-tutorial": {
+   "n": 3,
+   "of": 144,
+   "longplay_n": 0,
+   "quotes": [
+    "Forced tutorial with a broken system = uninstall. (apple1)",
+    "Keeps crashing as I try to start my character after the tutorial. (apple3)"
+   ]
+  },
+  "N-shallow": {
+   "n": 3,
+   "of": 144,
+   "longplay_n": 0,
+   "quotes": [
+    "I have no problem paying for the option but why can\u2019t something so simple be implemented? (apple3)",
+    "Even with simple pixel graphics it will lag and drop framerate during most tasks. (apple1)"
+   ]
+  },
+  "N-reset": {
+   "n": 0,
+   "of": 144,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-pace": {
+   "n": 0,
+   "of": 144,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-fast": {
+   "n": 0,
+   "of": 144,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-balance": {
+   "n": 3,
+   "of": 144,
+   "longplay_n": 0,
+   "quotes": [
+    "The Doot fiasco, then crazy overpowered bundles costing real world money, and now a Summer Event that is the least F2P friendly event to date. (apple2)"
+   ]
+  }
+ }
+}

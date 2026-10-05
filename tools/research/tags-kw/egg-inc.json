@@ -1,0 +1,246 @@
+{
+ "slug": "egg-inc",
+ "n_reviews": 297,
+ "n_pos": 276,
+ "n_neg": 21,
+ "n_longplay_neg": 0,
+ "sources": [
+  "apple"
+ ],
+ "themes": {
+  "P-offline": {
+   "n": 4,
+   "of": 276,
+   "longplay_n": 0,
+   "quotes": [
+    "There\u2019s a better feeling of progression as far as earning enough to make meaningful upgrades while you\u2019re offline. (apple5)",
+    "Not a bad way to pass the time as far as Apple iPhone games go\u2026 not too brain-draining\u2026 keep collecting points while away. (apple5)"
+   ]
+  },
+  "P-respect": {
+   "n": 9,
+   "of": 276,
+   "longplay_n": 0,
+   "quotes": [
+    "There is no forced ads although you can watch them to get various different rewards and I think more games should take after that. (apple5)",
+    "The most important reason I absolutely adore this mobile game is that it doesnt force you into ads. (apple5)"
+   ]
+  },
+  "P-active": {
+   "n": 1,
+   "of": 276,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-dev": {
+   "n": 0,
+   "of": 276,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-unlock": {
+   "n": 1,
+   "of": 276,
+   "longplay_n": 0,
+   "quotes": [
+    "Please keep updating the game with new content \u2764\ufe0f (apple5)"
+   ]
+  },
+  "P-collect": {
+   "n": 9,
+   "of": 276,
+   "longplay_n": 0,
+   "quotes": [
+    "I also like that there are trophies to collect...does give y (apple5)",
+    "I also like that there are trophies to collect\u2026..does give y (apple5)"
+   ]
+  },
+  "P-goals": {
+   "n": 1,
+   "of": 276,
+   "longplay_n": 0,
+   "quotes": [
+    "There is always something to do, whether it\u2019s contracts, achievements or prestiges. (apple5)"
+   ]
+  },
+  "P-depth": {
+   "n": 7,
+   "of": 276,
+   "longplay_n": 0,
+   "quotes": [
+    "Just a simple little strategic game. (apple5)",
+    "Okay, on the regular permit you can build two silos correct? (apple4)"
+   ]
+  },
+  "P-fair": {
+   "n": 8,
+   "of": 276,
+   "longplay_n": 0,
+   "quotes": [
+    "One of the only games that actually has no ads. (apple4)",
+    "If u have$$$- pay for no ads. (apple5)"
+   ]
+  },
+  "P-interlock": {
+   "n": 0,
+   "of": 276,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-prestige": {
+   "n": 7,
+   "of": 276,
+   "longplay_n": 0,
+   "quotes": [
+    "With this one task come many difficulties like making more money or when to prestige. (apple5)",
+    "The other type of prestige\u2019s are sol (apple5)"
+   ]
+  },
+  "P-qol": {
+   "n": 2,
+   "of": 276,
+   "longplay_n": 0,
+   "quotes": [
+    "It\u2019s a pretty cool game, easy to understand, and pretty fun. (apple4)"
+   ]
+  },
+  "P-calm": {
+   "n": 10,
+   "of": 276,
+   "longplay_n": 0,
+   "quotes": [
+    "THERE ARE NO ADVERTISEMENTS IN THIS GAME, I find this to make the game so much more enjoyable and relaxing! (apple5)",
+    "The game is great it\u2019s relaxing it gets a good grip on the farm work and I\u2019m making good money doing it. (apple5)"
+   ]
+  },
+  "P-art": {
+   "n": 13,
+   "of": 276,
+   "longplay_n": 0,
+   "quotes": [
+    "The graphics (the way the game looks) are not bad but not great. (apple5)",
+    "Still worth it, and once again I can\u2019t say how much I love this game because it\u2019s so cute! (apple5)"
+   ]
+  },
+  "P-story": {
+   "n": 0,
+   "of": 276,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-ads": {
+   "n": 5,
+   "of": 21,
+   "longplay_n": 0,
+   "quotes": [
+    "But now I have to grind for challenges, drones, ads, etc. (apple3)",
+    "The kalshi ad made me delete. (apple1)"
+   ]
+  },
+  "N-wall": {
+   "n": 2,
+   "of": 21,
+   "longplay_n": 0,
+   "quotes": [
+    "But now I have to grind for challenges, drones, ads, etc. (apple3)",
+    "After a certain point it seems impossible to make progress and it becomes a huge grind. (apple3)"
+   ]
+  },
+  "N-pay": {
+   "n": 0,
+   "of": 21,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-dominant": {
+   "n": 0,
+   "of": 21,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-late": {
+   "n": 0,
+   "of": 21,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-offline": {
+   "n": 0,
+   "of": 21,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-mobile": {
+   "n": 1,
+   "of": 21,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-bug": {
+   "n": 1,
+   "of": 21,
+   "longplay_n": 0,
+   "quotes": [
+    "I've never played a game that crashes as often as this one. (apple1)"
+   ]
+  },
+  "N-energy": {
+   "n": 0,
+   "of": 21,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-bloat": {
+   "n": 0,
+   "of": 21,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-chore": {
+   "n": 0,
+   "of": 21,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-tutorial": {
+   "n": 0,
+   "of": 21,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-shallow": {
+   "n": 1,
+   "of": 21,
+   "longplay_n": 0,
+   "quotes": [
+    "Overall, this is a really fun, simple, and addictive game. (apple3)"
+   ]
+  },
+  "N-reset": {
+   "n": 0,
+   "of": 21,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-pace": {
+   "n": 0,
+   "of": 21,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-fast": {
+   "n": 0,
+   "of": 21,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-balance": {
+   "n": 2,
+   "of": 21,
+   "longplay_n": 0,
+   "quotes": [
+    "All of those hours of playing to find out that older people were getting an unfair advantage due to an update that you added. (apple1)"
+   ]
+  }
+ }
+}

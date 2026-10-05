@@ -1,0 +1,269 @@
+{
+ "slug": "idle-heroes",
+ "n_reviews": 494,
+ "n_pos": 318,
+ "n_neg": 176,
+ "n_longplay_neg": 0,
+ "sources": [
+  "apple"
+ ],
+ "themes": {
+  "P-offline": {
+   "n": 2,
+   "of": 318,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-respect": {
+   "n": 5,
+   "of": 318,
+   "longplay_n": 0,
+   "quotes": [
+    "You can easily play as a casual player, or you can get more competitive and invest a lot of time. (apple5)",
+    "This game is a pretty good game for casual players. (apple5)"
+   ]
+  },
+  "P-active": {
+   "n": 7,
+   "of": 318,
+   "longplay_n": 0,
+   "quotes": [
+    "Engaging, rewarding, not pay to win. (apple5)",
+    "Not a bad deal for such an engaging game. (apple4)"
+   ]
+  },
+  "P-dev": {
+   "n": 4,
+   "of": 318,
+   "longplay_n": 0,
+   "quotes": [
+    "There\u2019s an extremely active community, on social media and other places along with in game. (apple5)",
+    "The constant updates and events ensure that there\u2019s always something new to explore, preventing any sense of monotony. (apple5)"
+   ]
+  },
+  "P-unlock": {
+   "n": 4,
+   "of": 318,
+   "longplay_n": 0,
+   "quotes": [
+    "There is always new content for both whale and f2p players every week and I am always looking forward to daily reset on a Thursday. (apple5)",
+    "I find it fun, and look forward to new content. (apple5)"
+   ]
+  },
+  "P-collect": {
+   "n": 18,
+   "of": 318,
+   "longplay_n": 0,
+   "quotes": [
+    "set your heroes in a dungeon, leave, and when you come back you got heaps of loot. (apple5)",
+    "This happens for adding friends, collecting loot, starting any event. (apple4)"
+   ]
+  },
+  "P-goals": {
+   "n": 2,
+   "of": 318,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-depth": {
+   "n": 17,
+   "of": 318,
+   "longplay_n": 0,
+   "quotes": [
+    "It\u2019s totally possible to progress in the game and build an awesome team without ever spending any money (though I\u2019ll admit it can be tempting). (apple5)",
+    "Has become less P2W over the years, strategy and resource management can allow you to go far without money. (apple5)"
+   ]
+  },
+  "P-fair": {
+   "n": 10,
+   "of": 318,
+   "longplay_n": 0,
+   "quotes": [
+    "Engaging, rewarding, not pay to win. (apple5)",
+    "Some of it is true about the RNG, but it\u2019s not pay to win. (apple5)"
+   ]
+  },
+  "P-interlock": {
+   "n": 1,
+   "of": 318,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-prestige": {
+   "n": 1,
+   "of": 318,
+   "longplay_n": 0,
+   "quotes": [
+    "He costs 55K and we only get a few hundred from each run on the Brave Trial. (apple4)"
+   ]
+  },
+  "P-qol": {
+   "n": 3,
+   "of": 318,
+   "longplay_n": 0,
+   "quotes": [
+    "The game is super fun to play and easy to understand I could sit and play for hours (apple5)"
+   ]
+  },
+  "P-calm": {
+   "n": 2,
+   "of": 318,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-art": {
+   "n": 10,
+   "of": 318,
+   "longplay_n": 0,
+   "quotes": [
+    "Loads of shops, game modes and arenas that make the game so fun, as well as fun strong heroes with cool skills and beautiful skins. (apple5)",
+    "The art is very charming and the game play is simple and straight forward. (apple5)"
+   ]
+  },
+  "P-story": {
+   "n": 34,
+   "of": 318,
+   "longplay_n": 0,
+   "quotes": [
+    "Every time I play I can beat ever character on the team. (apple4)",
+    "Which allows you to get 6-10 star characters. (apple5)"
+   ]
+  },
+  "N-ads": {
+   "n": 10,
+   "of": 176,
+   "longplay_n": 0,
+   "quotes": [
+    "The ads are heavily inaccurate, don\u2019t hope it\u2019s like that, because it\u2019s not. (apple1)",
+    "I understand game makers need money, idk throw in advertisements maybe? (apple1)"
+   ]
+  },
+  "N-wall": {
+   "n": 34,
+   "of": 176,
+   "longplay_n": 0,
+   "quotes": [
+    "Then you hit the wall again. (apple3)",
+    "I\u2019m still stuck here, but I would never say to play this game. (apple1)"
+   ]
+  },
+  "N-pay": {
+   "n": 39,
+   "of": 176,
+   "longplay_n": 0,
+   "quotes": [
+    "Every new hero they add is so rediculously OP that any whale who grabs it has an immediate lead and advantage over everyone else. (apple1)",
+    "Yeah it\u2019s pay to win, customer service is no help. (apple2)"
+   ]
+  },
+  "N-dominant": {
+   "n": 1,
+   "of": 176,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-late": {
+   "n": 7,
+   "of": 176,
+   "longplay_n": 0,
+   "quotes": [
+    "Fun early game, not so much late game. (apple2)",
+    "They should not be called \u201ccool events\u201d they should be called \u201csame as always repetitive minimal reward events\u201d. (apple1)"
+   ]
+  },
+  "N-offline": {
+   "n": 0,
+   "of": 176,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-mobile": {
+   "n": 0,
+   "of": 176,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-bug": {
+   "n": 10,
+   "of": 176,
+   "longplay_n": 0,
+   "quotes": [
+    "wants me to purchase something or if I\u2019m doing something wrong or if it\u2019s a glitch. (apple3)",
+    "But all that aside this game is full of bugs, its one after the next. (apple3)"
+   ]
+  },
+  "N-energy": {
+   "n": 8,
+   "of": 176,
+   "longplay_n": 0,
+   "quotes": [
+    "A first I though it was the stupid timer that restricts communication for 30 sec (apple3)",
+    "If there\u2019s a timer that says 48 hours left, you shouldn\u2019t end it. (apple2)"
+   ]
+  },
+  "N-bloat": {
+   "n": 5,
+   "of": 176,
+   "longplay_n": 0,
+   "quotes": [
+    "Too many things gated by cash. (apple2)",
+    "However, the pay to win aspect is a little overwhelming. (apple3)"
+   ]
+  },
+  "N-chore": {
+   "n": 3,
+   "of": 176,
+   "longplay_n": 0,
+   "quotes": [
+    "The game definitely turns into you logging in, blowing through your 10 daily quests, doing whatever summons you have currency for, deleting heroes (apple2)",
+    "You can never complete the daily tasks because it requires you to send 10 friend gifts a day. (apple1)"
+   ]
+  },
+  "N-tutorial": {
+   "n": 6,
+   "of": 176,
+   "longplay_n": 0,
+   "quotes": [
+    "What i was met with was the most aggravating railroaded tutorial i couldn\u2019t skip that forced me to spend currency i didn\u2019t want to. (apple1)",
+    "Pet peeve, this game has the second longest \u201ctutorial\u201d that is unskippable, and you can not turn off the sound. (apple1)"
+   ]
+  },
+  "N-shallow": {
+   "n": 5,
+   "of": 176,
+   "longplay_n": 0,
+   "quotes": [
+    "I\u2019m very disappointed with idle heroes because they won\u2019t help me get back into my account and they won\u2019t fix the simple issues. (apple1)"
+   ]
+  },
+  "N-reset": {
+   "n": 0,
+   "of": 176,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-pace": {
+   "n": 0,
+   "of": 176,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-fast": {
+   "n": 1,
+   "of": 176,
+   "longplay_n": 0,
+   "quotes": [
+    "It\u2019s too easy to get draws. (apple1)"
+   ]
+  },
+  "N-balance": {
+   "n": 6,
+   "of": 176,
+   "longplay_n": 0,
+   "quotes": [
+    "Every new hero they add is so rediculously OP that any whale who grabs it has an immediate lead and advantage over everyone else. (apple1)",
+    "Aside from all this, the actual gameplay is nerfed and annoyingly bad. (apple1)"
+   ]
+  }
+ }
+}

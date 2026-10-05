@@ -1,0 +1,251 @@
+{
+ "slug": "cassette-beasts",
+ "n_reviews": 266,
+ "n_pos": 138,
+ "n_neg": 128,
+ "n_longplay_neg": 4,
+ "sources": [
+  "steam",
+  "apple"
+ ],
+ "themes": {
+  "P-offline": {
+   "n": 1,
+   "of": 138,
+   "longplay_n": 0,
+   "quotes": [
+    "I love the game but I bought the full game but when I go offline it tells me to buy the game every time (apple5)"
+   ]
+  },
+  "P-respect": {
+   "n": 4,
+   "of": 138,
+   "longplay_n": 0,
+   "quotes": [
+    "Cassette Beasts is the most family-casual-friendly collect-them-all type of game I have ever played. (steam+, 69h)",
+    "Recommended for casual play, not recommended for 100%ers. (steam+, 62h)"
+   ]
+  },
+  "P-active": {
+   "n": 0,
+   "of": 138,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-dev": {
+   "n": 0,
+   "of": 138,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-unlock": {
+   "n": 0,
+   "of": 138,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-collect": {
+   "n": 8,
+   "of": 138,
+   "longplay_n": 0,
+   "quotes": [
+    "Cassette Beasts is the most family-casual-friendly collect-them-all type of game I have ever played. (steam+, 69h)",
+    "In term of creature collection games, I do think it's the best I played (steam+, 129h)"
+   ]
+  },
+  "P-goals": {
+   "n": 0,
+   "of": 138,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-depth": {
+   "n": 9,
+   "of": 138,
+   "longplay_n": 0,
+   "quotes": [
+    "You choose which NPCs to bring along, build relationships with them, and even partner up with a dog. (steam+, 125h)",
+    "- Element system actually has some depth rather than just providing bonus damage (steam+, 44h)"
+   ]
+  },
+  "P-fair": {
+   "n": 0,
+   "of": 138,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-interlock": {
+   "n": 0,
+   "of": 138,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-prestige": {
+   "n": 0,
+   "of": 138,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-qol": {
+   "n": 1,
+   "of": 138,
+   "longplay_n": 0,
+   "quotes": [
+    "Mechanically speaking, this game is easy to understand. (steam+, 69h)"
+   ]
+  },
+  "P-calm": {
+   "n": 3,
+   "of": 138,
+   "longplay_n": 0,
+   "quotes": [
+    "It's beautiful, cozy, has a good story, lovable characters, it didn't even need to have romance but it has that too. (steam+, 84h)"
+   ]
+  },
+  "P-art": {
+   "n": 23,
+   "of": 138,
+   "longplay_n": 0,
+   "quotes": [
+    "The storytelling and world building are both creative and consistent - but the best part for sure are the music and characters. (steam+, 32h)",
+    "The game fully commits to its music theme, and it really works. (steam+, 125h)"
+   ]
+  },
+  "P-story": {
+   "n": 32,
+   "of": 138,
+   "longplay_n": 0,
+   "quotes": [
+    "The storytelling and world building are both creative and consistent - but the best part for sure are the music and characters. (steam+, 32h)",
+    "- The story are meaningful, not watered down crap like Pokemon (steam+, 44h)"
+   ]
+  },
+  "N-ads": {
+   "n": 0,
+   "of": 128,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-wall": {
+   "n": 4,
+   "of": 128,
+   "longplay_n": 0,
+   "quotes": [
+    "The game can be fun, but too much of that fun is buried under grinding, backtracking, unclear progression, and unnecessary frustration. (steam-, 12h)",
+    "Then I\u2019m stuck doing the same mission over and over but can\u2019t make it to the end. (apple3)"
+   ]
+  },
+  "N-pay": {
+   "n": 2,
+   "of": 128,
+   "longplay_n": 0,
+   "quotes": [
+    "But I finished the tutorial and realized the rest of the game was locked behind a paywall. (apple3)"
+   ]
+  },
+  "N-dominant": {
+   "n": 0,
+   "of": 128,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-late": {
+   "n": 2,
+   "of": 128,
+   "longplay_n": 0,
+   "quotes": [
+    "Wild encounters also interrupt exploration constantly, while normal battles and repeated animations become repetitive. (steam-, 12h)",
+    "The world is largely empty and only populated by NPCs with surface level references to philosophers (some that quote the wrong philosophers) or block puzzles. (steam-, 11h)"
+   ]
+  },
+  "N-offline": {
+   "n": 0,
+   "of": 128,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-mobile": {
+   "n": 1,
+   "of": 128,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-bug": {
+   "n": 68,
+   "of": 128,
+   "longplay_n": 0,
+   "quotes": [
+    "If I am not having a stroke from the flashing visual bugs I am freezing and crashing for no reason. (steam-, 3h)",
+    "It\u2019s a five for sure if crashes stop. (apple1)"
+   ]
+  },
+  "N-energy": {
+   "n": 4,
+   "of": 128,
+   "longplay_n": 0,
+   "quotes": [
+    "This problem is made worse by the slow movement speed and the presence of a STAMINA BAR with an utterly miniscule amount of stamina. (steam-, 11h)",
+    "The game requires a mod to speed up battles. (steam-, 5h)"
+   ]
+  },
+  "N-bloat": {
+   "n": 3,
+   "of": 128,
+   "longplay_n": 1,
+   "quotes": [
+    "The gameplay mechanics are pretty neat, though the type-handling is fairly bloated (to the game's detriment). (steam-, 9h)",
+    "The game throws a lot of information and leaves most options open to you right from the get go, and it's a bit overwhelming. (steam-, 2h)"
+   ]
+  },
+  "N-chore": {
+   "n": 0,
+   "of": 128,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-tutorial": {
+   "n": 7,
+   "of": 128,
+   "longplay_n": 0,
+   "quotes": [
+    "The game can be fun, but too much of that fun is buried under grinding, backtracking, unclear progression, and unnecessary frustration. (steam-, 12h)",
+    "Out of the 4 times I battled outside of the tutorial it crashed 3 times. (apple3)"
+   ]
+  },
+  "N-shallow": {
+   "n": 2,
+   "of": 128,
+   "longplay_n": 0,
+   "quotes": [
+    "So, overall, the story is a shallow take on having a bunch of parasitic entities which are borne of facets of humanity. (steam-, 9h)"
+   ]
+  },
+  "N-reset": {
+   "n": 0,
+   "of": 128,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-pace": {
+   "n": 0,
+   "of": 128,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-fast": {
+   "n": 0,
+   "of": 128,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-balance": {
+   "n": 2,
+   "of": 128,
+   "longplay_n": 0,
+   "quotes": [
+    "Have not played much of this yet, but the \"co-op\" play in it is not at all. (steam-, 1h)",
+    "Co-op does not let you play the story??? (steam-, 1h)"
+   ]
+  }
+ }
+}

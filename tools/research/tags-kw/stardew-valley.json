@@ -1,0 +1,232 @@
+{
+ "slug": "stardew-valley",
+ "n_reviews": 50,
+ "n_pos": 25,
+ "n_neg": 25,
+ "n_longplay_neg": 25,
+ "sources": [
+  "steam"
+ ],
+ "themes": {
+  "P-offline": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-respect": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "I can just play at my own pace. (steam+, 792h)"
+   ]
+  },
+  "P-active": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "Was first introduced to Stardew Valley during the pandemic, and found it to be charming and engaging. (steam+, 1479h)"
+   ]
+  },
+  "P-dev": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-unlock": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-collect": {
+   "n": 2,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "You inherit a charming little farm, meet friendly townsfolk, pet some chickens, and think, \"I'll just water my crops and then go to bed.\" (steam+, 1910h)"
+   ]
+  },
+  "P-goals": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-depth": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "Whether you want to min-max your profits or just spend your days fishing, the game never forces a specific playstyle on you. (steam+, 181h)"
+   ]
+  },
+  "P-fair": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-interlock": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-prestige": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-qol": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "You work from sunrise to sunset, without modern high-tech drones or automated farms; everything is primitive and simple, just like its pixelated art style. (steam+, 3022h)"
+   ]
+  },
+  "P-calm": {
+   "n": 8,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "So I bought Stardew Valley thinking I'd relax for an hour. (steam+, 1910h)",
+    "I was promised a relaxing game, instead, it made me learn Excel formulas and obsess over my farm like it's an actual job. (steam+, 139h)"
+   ]
+  },
+  "P-art": {
+   "n": 8,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "You inherit a charming little farm, meet friendly townsfolk, pet some chickens, and think, \"I'll just water my crops and then go to bed.\" (steam+, 1910h)",
+    "Its like crack but cheaper and with good music. (steam+, 191h)"
+   ]
+  },
+  "P-story": {
+   "n": 2,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-ads": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-wall": {
+   "n": 3,
+   "of": 25,
+   "longplay_n": 4,
+   "quotes": [
+    "I found myself stuck in a grind that felt more repetitive than rewarding. (steam-, 35h)",
+    "playing this game requires a suprising amount of grinding, which is not what i personally seek from something that seems like a cozy farm game (steam-, 96h)"
+   ]
+  },
+  "N-pay": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-dominant": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 1,
+   "quotes": []
+  },
+  "N-late": {
+   "n": 3,
+   "of": 25,
+   "longplay_n": 2,
+   "quotes": [
+    "I found myself stuck in a grind that felt more repetitive than rewarding. (steam-, 35h)"
+   ]
+  },
+  "N-offline": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-mobile": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-bug": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-energy": {
+   "n": 2,
+   "of": 25,
+   "longplay_n": 3,
+   "quotes": []
+  },
+  "N-bloat": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "probably just not my style of game, but i found it overwhelming and kind of unsatisfyingly grindy. (steam-, 12h)"
+   ]
+  },
+  "N-chore": {
+   "n": 5,
+   "of": 25,
+   "longplay_n": 1,
+   "quotes": [
+    "The rhythm of the days turned into a bit of a chore\u2026 and not the comforting kind. (steam-, 35h)"
+   ]
+  },
+  "N-tutorial": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-shallow": {
+   "n": 3,
+   "of": 25,
+   "longplay_n": 3,
+   "quotes": [
+    "With combat, you just click enemies and walk out of the way of projectiles, it's extremely barebones, but at least understandably so. (steam-, 372h)",
+    "Don\u2019t get me wrong, it\u2019s not a bad game at all, but it\u2019s incredibly shallow. (steam-, 89h)"
+   ]
+  },
+  "N-reset": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-pace": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-fast": {
+   "n": 2,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-balance": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 2,
+   "quotes": []
+  }
+ }
+}

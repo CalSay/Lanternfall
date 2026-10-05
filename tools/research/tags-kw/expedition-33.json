@@ -1,0 +1,222 @@
+{
+ "slug": "expedition-33",
+ "n_reviews": 50,
+ "n_pos": 25,
+ "n_neg": 25,
+ "n_longplay_neg": 22,
+ "sources": [
+  "steam"
+ ],
+ "themes": {
+  "P-offline": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-respect": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "Just a casual player passing through. (steam+, 172h)"
+   ]
+  },
+  "P-active": {
+   "n": 3,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "After beating the first Mime, I realized just how precisely the system is tuned - it rewards focus, timing, and understanding of your enemies. (steam+, 111h)",
+    "Beautiful game with the most gorgeous soundtrack, engaging (and emotional) story and characters, fun content to enjoy, absolutely wicked combat. (steam+, 282h)"
+   ]
+  },
+  "P-dev": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-unlock": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-collect": {
+   "n": 2,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "[b]Clair Obscur: Expedition 33[/b] is one of those rare games where logic and nonsense coexist perfectly. (steam+, 111h)",
+    "I played more and more, and I just couldn't stop until I got all the achievements, beat the game, and finish the side stories. (steam+, 121h)"
+   ]
+  },
+  "P-goals": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-depth": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "It takes the strategic depth of classic turn-based RPGs and injects it with energy, skill, and excitement until every encounter feels meaningful and exhilarating. (steam+, 65h)"
+   ]
+  },
+  "P-fair": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-interlock": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-prestige": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-qol": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-calm": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-art": {
+   "n": 9,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "Beautiful game with the most gorgeous soundtrack, engaging (and emotional) story and characters, fun content to enjoy, absolutely wicked combat. (steam+, 282h)",
+    "Thank you for the incredible story, mesmerizing atmosphere, and magnificent music. (steam+, 131h)"
+   ]
+  },
+  "P-story": {
+   "n": 11,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "The dev story alone is wild: (steam+, 59h)",
+    "I am just writing this in case you were wondering how it performed on steam deck. (steam+)"
+   ]
+  },
+  "N-ads": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-wall": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 1,
+   "quotes": []
+  },
+  "N-pay": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-dominant": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-late": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 3,
+   "quotes": [
+    "The game mechanics quickly become repetitive and lacking depth, so the only reason to play is the story. (steam-, 46h)"
+   ]
+  },
+  "N-offline": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-mobile": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-bug": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 1,
+   "quotes": []
+  },
+  "N-energy": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-bloat": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-chore": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-tutorial": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-shallow": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 1,
+   "quotes": []
+  },
+  "N-reset": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-pace": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-fast": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-balance": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  }
+ }
+}

@@ -1,0 +1,254 @@
+{
+ "slug": "idle-archer-td",
+ "n_reviews": 257,
+ "n_pos": 112,
+ "n_neg": 145,
+ "n_longplay_neg": 0,
+ "sources": [
+  "apple"
+ ],
+ "themes": {
+  "P-offline": {
+   "n": 3,
+   "of": 112,
+   "longplay_n": 0,
+   "quotes": [
+    "There is no offline progression, or at least after six hours it hasn't been made available yet. (apple4)"
+   ]
+  },
+  "P-respect": {
+   "n": 0,
+   "of": 112,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-active": {
+   "n": 5,
+   "of": 112,
+   "longplay_n": 0,
+   "quotes": [
+    "Another thing that could be added for more content would be more skill cards or add sets like how clash Royale has it. (apple5)",
+    "After upgrading a skill, the game bugged and brought it back down to its original starting level. (apple4)"
+   ]
+  },
+  "P-dev": {
+   "n": 2,
+   "of": 112,
+   "longplay_n": 0,
+   "quotes": [
+    "The developers are interacting with the community via their discord more often and taking in player concerns/ideas moving forward. (apple5)",
+    "The Developer added 5x game speed for $5. (apple5)"
+   ]
+  },
+  "P-unlock": {
+   "n": 1,
+   "of": 112,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-collect": {
+   "n": 2,
+   "of": 112,
+   "longplay_n": 0,
+   "quotes": [
+    "It won\u2019t change the normal mode progression, or allow to sweep further, and can even drop more rewards(gold increased) in the NG+. (apple5)"
+   ]
+  },
+  "P-goals": {
+   "n": 0,
+   "of": 112,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-depth": {
+   "n": 6,
+   "of": 112,
+   "longplay_n": 0,
+   "quotes": [
+    "Basically build up your archer, improve stats, beat higher levels etc that type of game. (apple4)",
+    "As long as this takes to build your character and tower up I could certainly use any extra help! (apple5)"
+   ]
+  },
+  "P-fair": {
+   "n": 1,
+   "of": 112,
+   "longplay_n": 0,
+   "quotes": [
+    "I later bought the No Ads. (apple5)"
+   ]
+  },
+  "P-interlock": {
+   "n": 0,
+   "of": 112,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-prestige": {
+   "n": 0,
+   "of": 112,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-qol": {
+   "n": 1,
+   "of": 112,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-calm": {
+   "n": 0,
+   "of": 112,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-art": {
+   "n": 4,
+   "of": 112,
+   "longplay_n": 0,
+   "quotes": [
+    "I want to listen to my stuff, not your repetitive music. (apple4)",
+    "I can\u2019t play this and listen to my own music at the same time. (apple5)"
+   ]
+  },
+  "P-story": {
+   "n": 6,
+   "of": 112,
+   "longplay_n": 0,
+   "quotes": [
+    "As long as this takes to build your character and tower up I could certainly use any extra help! (apple5)",
+    "The daily quest are not very good, you only get 15 jewels and 150 gold. (apple5)"
+   ]
+  },
+  "N-ads": {
+   "n": 21,
+   "of": 145,
+   "longplay_n": 0,
+   "quotes": [
+    "-10 stars it was a 4 star game before all the ads where added (apple1)",
+    "I purchased the remove ads package, which I (as others have as well) strongly recommend. (apple3)"
+   ]
+  },
+  "N-wall": {
+   "n": 20,
+   "of": 145,
+   "longplay_n": 0,
+   "quotes": [
+    "Very fun but just way too slow. (apple1)",
+    "You get stuck in these long, long runs. (apple3)"
+   ]
+  },
+  "N-pay": {
+   "n": 8,
+   "of": 145,
+   "longplay_n": 0,
+   "quotes": [
+    "Not even in a pay to win way. (apple3)",
+    "I wish I could say this game was pay-to-win, but honestly even dripping 100$ on this game would not make much of a difference. (apple1)"
+   ]
+  },
+  "N-dominant": {
+   "n": 1,
+   "of": 145,
+   "longplay_n": 0,
+   "quotes": [
+    "The cards are helpful, but there\u2019s no variety. (apple1)"
+   ]
+  },
+  "N-late": {
+   "n": 6,
+   "of": 145,
+   "longplay_n": 0,
+   "quotes": [
+    "The game moves way too slow for you to progress further and it gets boring after a few minutes. (apple1)",
+    "Some serious time needs to be looked at for the end game. (apple2)"
+   ]
+  },
+  "N-offline": {
+   "n": 0,
+   "of": 145,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-mobile": {
+   "n": 0,
+   "of": 145,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-bug": {
+   "n": 25,
+   "of": 145,
+   "longplay_n": 0,
+   "quotes": [
+    "Has bugs that needs to be fixed. (apple2)",
+    "The game started lagging after I got 19 Exp, then the game crashes. (apple1)"
+   ]
+  },
+  "N-energy": {
+   "n": 3,
+   "of": 145,
+   "longplay_n": 0,
+   "quotes": [
+    "They charge you to speed up game play. (apple1)"
+   ]
+  },
+  "N-bloat": {
+   "n": 0,
+   "of": 145,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-chore": {
+   "n": 1,
+   "of": 145,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-tutorial": {
+   "n": 4,
+   "of": 145,
+   "longplay_n": 0,
+   "quotes": [
+    "Stop forcing me to do tutorial and let me play the game. (apple1)",
+    "Now I am finally able download and play it gets stuck in the tutorial when selecting talents. (apple1)"
+   ]
+  },
+  "N-shallow": {
+   "n": 3,
+   "of": 145,
+   "longplay_n": 0,
+   "quotes": [
+    "It\u2019s a very simple game: Survive as long as you can, use gold to upgrade skills, survive longer, rinse and repeat. (apple3)"
+   ]
+  },
+  "N-reset": {
+   "n": 0,
+   "of": 145,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-pace": {
+   "n": 0,
+   "of": 145,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-fast": {
+   "n": 3,
+   "of": 145,
+   "longplay_n": 0,
+   "quotes": [
+    "With just some leisurely play I\u2019ve managed to beat it in around a week. (apple1)"
+   ]
+  },
+  "N-balance": {
+   "n": 4,
+   "of": 145,
+   "longplay_n": 0,
+   "quotes": [
+    "The balance is just so bad. (apple3)",
+    "The newest balance patch isn\u2019t that. (apple2)"
+   ]
+  }
+ }
+}

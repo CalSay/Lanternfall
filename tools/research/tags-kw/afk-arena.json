@@ -1,0 +1,277 @@
+{
+ "slug": "afk-arena",
+ "n_reviews": 399,
+ "n_pos": 282,
+ "n_neg": 117,
+ "n_longplay_neg": 0,
+ "sources": [
+  "apple"
+ ],
+ "themes": {
+  "P-offline": {
+   "n": 68,
+   "of": 282,
+   "longplay_n": 0,
+   "quotes": [
+    "I have played afk games before but this one is different in the sense that the feeling of waiting.. (apple5)",
+    "The mechanics are interesting because the AFK farming goes hand in hand with doing your own fighting in game to earn lots of rewards. (apple4)"
+   ]
+  },
+  "P-respect": {
+   "n": 10,
+   "of": 282,
+   "longplay_n": 0,
+   "quotes": [
+    "It\u2019s pretty casual and you really only need to buy things if you want to speed things up or want to buy a skin. (apple5)",
+    "Just download this and give it a week playing just a few minutes a day and you will love it. (apple5)"
+   ]
+  },
+  "P-active": {
+   "n": 7,
+   "of": 282,
+   "longplay_n": 0,
+   "quotes": [
+    "I especially don\u2019t like it when you can\u2019t level up your character unless you also unlock the skill that comes with the level up. (apple4)",
+    "It\u2019s struck the ideal balance of skill, strategy and rewards for not a crazy amount of time to put in. (apple5)"
+   ]
+  },
+  "P-dev": {
+   "n": 4,
+   "of": 282,
+   "longplay_n": 0,
+   "quotes": [
+    "I can see that the devs actually put time and effort into this game. (apple5)",
+    "The characters are well made, they try their best to keep the game balanced, and the devs are very nice. (apple5)"
+   ]
+  },
+  "P-unlock": {
+   "n": 4,
+   "of": 282,
+   "longplay_n": 0,
+   "quotes": [
+    "As well as added new content and heros. (apple5)"
+   ]
+  },
+  "P-collect": {
+   "n": 48,
+   "of": 282,
+   "longplay_n": 0,
+   "quotes": [
+    "The longer you wait the more resources you collect to equip your heroes and level them up. (apple5)",
+    "It seems like anytime I click a \u201cBegin\u201d button, try to collect loot, open or c (apple4)"
+   ]
+  },
+  "P-goals": {
+   "n": 1,
+   "of": 282,
+   "longplay_n": 0,
+   "quotes": [
+    "I\u2019m always back every day to do the daily quests and there is always something to do. (apple5)"
+   ]
+  },
+  "P-depth": {
+   "n": 25,
+   "of": 282,
+   "longplay_n": 0,
+   "quotes": [
+    "Strategy Over Spending: Why AFK Arena Isn\u2019t as Pay-to-Win as You Think. (apple4)",
+    "But, it is strategy based (not in the beginning) through a RPS system. (apple5)"
+   ]
+  },
+  "P-fair": {
+   "n": 12,
+   "of": 282,
+   "longplay_n": 0,
+   "quotes": [
+    "The developers and artist did an amazing job on this game making it easy to navigate, not cluttered, no ads! (apple5)",
+    "The game is even very generous with gems. (apple5)"
+   ]
+  },
+  "P-interlock": {
+   "n": 2,
+   "of": 282,
+   "longplay_n": 0,
+   "quotes": [
+    "Each hero has an interesting story attached to them and each hero is incredibly unique but is made definitely with team synergy in mind. (apple5)",
+    "I regularly defeat opponents with double my power by focusing on positioning and synergy within my team. (apple4)"
+   ]
+  },
+  "P-prestige": {
+   "n": 9,
+   "of": 282,
+   "longplay_n": 0,
+   "quotes": [
+    "The sheer amount of duplicates needed to Ascend/upgrade your units is staggering. (apple4)",
+    "Word of advice for new players, blue hero\u2019s can\u2019t ascend beyond Legendary+, so try not to put too much effort into them. (apple4)"
+   ]
+  },
+  "P-qol": {
+   "n": 9,
+   "of": 282,
+   "longplay_n": 0,
+   "quotes": [
+    "The developers and artist did an amazing job on this game making it easy to navigate, not cluttered, no ads! (apple5)",
+    "It\u2019s easy to understand, hero\u2019s are all well created both skills and personality, game modes are great and entertaining and well designed. (apple4)"
+   ]
+  },
+  "P-calm": {
+   "n": 3,
+   "of": 282,
+   "longplay_n": 0,
+   "quotes": [
+    "Its wonderful how cozy and warm it can be while also bringing a dark tone with the undead characters. (apple5)",
+    "Not a bad game to burn some time and chill! (apple4)"
+   ]
+  },
+  "P-art": {
+   "n": 33,
+   "of": 282,
+   "longplay_n": 0,
+   "quotes": [
+    "Cool art style and character designs.. (apple4)",
+    "The graphics and character designs are all beautiful and detailed. (apple5)"
+   ]
+  },
+  "P-story": {
+   "n": 109,
+   "of": 282,
+   "longplay_n": 0,
+   "quotes": [
+    "Keeps me busy, it\u2019s much easier to do daily and weekly quests and all that. (apple5)",
+    "I love the amount of characters that are available in the game, and the progression mechanics are great. (apple4)"
+   ]
+  },
+  "N-ads": {
+   "n": 4,
+   "of": 117,
+   "longplay_n": 0,
+   "quotes": [
+    "If youve seen the ads its certainly stunning to see how poorly made the ads are especially with how much this game has already gotten. (apple1)",
+    "(Unlike the ads for this game) this game is fun. (apple1)"
+   ]
+  },
+  "N-wall": {
+   "n": 23,
+   "of": 117,
+   "longplay_n": 0,
+   "quotes": [
+    "And to get more diamonds after you waste them is to either wait and grind or pay just for the same shorty pulls. (apple1)",
+    "But players are stuck with what RNG has decided for them. (apple1)"
+   ]
+  },
+  "N-pay": {
+   "n": 20,
+   "of": 117,
+   "longplay_n": 0,
+   "quotes": [
+    "Most like it don\u2019t have this system and requires you to pay money and constantly play in order to progress at a good rate. (apple3)",
+    "I\u2019ve officially stopped playing this game because after a certain point, it becomes clear that the game is very P2W. (apple1)"
+   ]
+  },
+  "N-dominant": {
+   "n": 1,
+   "of": 117,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-late": {
+   "n": 5,
+   "of": 117,
+   "longplay_n": 0,
+   "quotes": [
+    "The game itself is pretty decent, but it\u2019s highly repetitive. (apple3)"
+   ]
+  },
+  "N-offline": {
+   "n": 0,
+   "of": 117,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-mobile": {
+   "n": 1,
+   "of": 117,
+   "longplay_n": 0,
+   "quotes": [
+    "Realistically, I only need guild or friend PM\u2019s, but since you can\u2019t block global chats, the chat tab constantly is showing a little notification. (apple1)"
+   ]
+  },
+  "N-bug": {
+   "n": 18,
+   "of": 117,
+   "longplay_n": 0,
+   "quotes": [
+    "In another review of this game, someone had a problem where their game would crash constantly. (apple3)",
+    "there are bugs in loading and it crashes almost every five minutes after playing. (apple1)"
+   ]
+  },
+  "N-energy": {
+   "n": 5,
+   "of": 117,
+   "longplay_n": 0,
+   "quotes": [
+    "At the first, we should get rid of the speed up item. (apple3)",
+    "The graphics are great for a mobile game and have the option to speed up the battles 2x along with the animations is really nice! (apple3)"
+   ]
+  },
+  "N-bloat": {
+   "n": 3,
+   "of": 117,
+   "longplay_n": 0,
+   "quotes": [
+    "Confusing logins and zero customer service.. (apple1)",
+    "Utterly confusing for a new player. (apple2)"
+   ]
+  },
+  "N-chore": {
+   "n": 2,
+   "of": 117,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-tutorial": {
+   "n": 4,
+   "of": 117,
+   "longplay_n": 0,
+   "quotes": [
+    "The events screen is very confusing and unclear. (apple2)"
+   ]
+  },
+  "N-shallow": {
+   "n": 7,
+   "of": 117,
+   "longplay_n": 0,
+   "quotes": [
+    "It's simple button taps here and there. (apple1)",
+    "is this just a cash grab game point and simple. (apple1)"
+   ]
+  },
+  "N-reset": {
+   "n": 0,
+   "of": 117,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-pace": {
+   "n": 0,
+   "of": 117,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-fast": {
+   "n": 0,
+   "of": 117,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-balance": {
+   "n": 6,
+   "of": 117,
+   "longplay_n": 0,
+   "quotes": [
+    "The Easter Event is unfair for those who don\u2019t want to spend money or a whole lot of money on the game. (apple1)",
+    "Not only are these heroes not being thoroughly tested for balance, but it\u2019s nearly impossible to keep up. (apple1)"
+   ]
+  }
+ }
+}
