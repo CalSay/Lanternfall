@@ -47,7 +47,7 @@ Findings:
 - [minor] ...
 ```
 
-`blocking` = a failed hard check, a score of 1 or 2 on any criterion, wrong behaviour, broken saves, rule breaches,
+`blocking` (P0 or P1; `AGENTS.md` lists win where they name a failure, so weak copy is `minor`) = a failed hard check, a score of 1 or 2 on any criterion, wrong behaviour, broken saves, rule breaches,
 failing checks, or a clearly bad player experience. `minor` = everything worth fixing that isn't. Verdict is `pass`
 only when every hard check passes and no score is below 3. You may also leave line comments on the PR itself.
 

@@ -34,8 +34,8 @@ verdict, then pick the closest rubric and name it.
 Severity scale: this is the same as the P0/P1/P2 scale in `AGENTS.md` ("Code Review Rules"), which Codex's GitHub
 review uses. `blocking` means P0 or P1: a failed hard check, or a score of 1 or 2 (P1). Save loss, a renamed save
 field, an online-layer change or a save key change is P0. `minor` means P2.
-The lists in `AGENTS.md` take precedence over these mappings: a failure they name keeps its severity (copy that isn't
-plain is P2, though `content.md` lists it as a hard check).
+The lists in `AGENTS.md` take precedence over these mappings: a failure they name keeps its severity (weak player-facing
+copy is P2, even when scored 1 or 2, so it is `minor`).
 - Each rubric also lists what else blocks for that type.
 - Anything else worth fixing is `minor`.
 
