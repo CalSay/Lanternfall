@@ -49,10 +49,11 @@ Widen a band only with a reason, in the PR. To see the noise on a metric, run `-
 
 ## Retired targets
 
-`tools/sim.mjs --targets` and `--report early` still print their old rows, marked RETIRED: they measure the real-time
-idle pacing model (the shipped game fights in turns, active only) or the party. Nothing passes or fails on them. Current
-numbers come from this tool, `docs/DECISIONS.md` and `docs/design/combat-turn-build.md`. `--report early --turns 1` re-enables
-the early rows.
+`tools/sim.mjs --targets` and `--report early` still print their old first-hours rows (E1 to E6, T1 to T3), marked RETIRED:
+they measure the real-time idle pacing model, and the shipped game fights in turns, active only. Nothing passes or fails on
+them. `--report early --turns 1` re-enables the early rows. The day-scale targets (D1, P1 to P4, EC9) stay live, because this
+tool covers 3 days and 10 hours, not weeks. Party-era code paths are marked retired in comments. Current numbers come from
+this tool, `docs/DECISIONS.md` and `docs/design/combat-turn-build.md`.
 
 ## Found while building it
 

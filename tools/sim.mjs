@@ -195,7 +195,7 @@ const storeStats = { lv1: null };
 // --health path (f-health): write telemetry for tools/health.mjs when the run ends. Event times are active seconds
 // (game ticks only), so away gaps and the fight pauses between visits do not count as play.
 if (args.health) {
-  const H = { act: 0, ev: [], samples: [], casts: {}, kills: 0, bossKills: 0, killGold: 0, killEss: 0, harvest: { live: {}, away: {} }, wipes: [], lastL: 1, lastSample: -1e9, lastSec: -1 };
+  const H = { act: 0, ev: [], samples: [], casts: {}, kills: 0, bossKills: 0, killGold: 0, killEss: 0, harvest: { live: {}, away: {} }, wipes: [], lastL: 1, nextSample: 0, lastSec: -1 };
   const REWARD = ['zoneClear', 'campBuilt', 'deedTier', 'skillUp', 'crafted', 'upgraded', 'trophy', 'scrollDrop', 'starFound', 'starLearned', 'provingPassed', 'handsHire', 'unlock', 'train', 'soloEquip'];
   const stamp = (k, extra) => H.ev.push(Object.assign({ k, a: Math.round(H.act * 10) / 10 }, extra));
   fn.onTick(dt => {
@@ -205,7 +205,8 @@ if (args.health) {
     H.lastSec = sec;
     const L = E('S.L');
     if (L !== H.lastL) { H.lastL = L; stamp('level', { L }); }
-    if (H.act - H.lastSample >= 300) { H.lastSample = H.act; H.samples.push({ a: sec, maxZone: E('S.maxZone'), L, totalGold: Math.round(E('S.totalGold')) }); }
+    // samples sit on exact 300 s boundaries (the first at 0), so hour marks are the real hour marks
+    while (H.act >= H.nextSample) { H.samples.push({ a: H.nextSample, maxZone: E('S.maxZone'), L, totalGold: Math.round(E('S.totalGold')) }); H.nextSample += 300; }
   });
   for (const k of REWARD) fn.on(k, e => {
     if (k === 'unlock' && (!e || e.id === '*')) return;
@@ -217,6 +218,7 @@ if (args.health) {
   fn.on('harvest', ({ kind, n, away }) => { const o = H.harvest[away ? 'away' : 'live']; o[kind] = (o[kind] || 0) + n; });
   process.on('exit', () => {
     try {
+      H.samples.push({ a: Math.round(H.act), maxZone: E('S.maxZone'), L: E('S.L'), totalGold: Math.round(E('S.totalGold')) });
       const gear = {};
       for (const pos of ['weapon', 'off', 'helm', 'body', 'charm', 'pick', 'axe', 'sickle']) { const it = fn.equipped(pos); if (it) gear[pos] = { slot: it.slot, t: it.t, r: it.r, plus: it.plus || 0 }; }
       writeFileSync(String(args.health), JSON.stringify({
@@ -1106,10 +1108,11 @@ function runDays() {
 // active-only turn fights (C29), where idle play earns nothing from fights; these run on the real-time pacing model
 // (TURN_TUNE.on = 0 unless --turns 1). Current numbers come from docs/DECISIONS.md, docs/design/combat-turn-build.md and
 // `node tools/health.mjs` (the personas and baseline in docs/design/health-baseline.json).
-//   retired, real-time idle pacing: E1-E6 (early report, unless --turns 1), T1, T2, T3, D1, P1, P2, P3, P4, EC9
+//   retired, real-time idle pacing in the first hours: E1-E6 (early report, unless --turns 1), T1, T2, T3. The day-scale targets
+//   (D1, P1-P4, EC9) stay live: the health tool covers 3 days and 10 hours, not weeks, so nothing else watches them.
 //   retired, party era: T5-T8, T10, T11, T12-T14, T16, T17 (their code paths only run with a party; see the notes below)
 function retireRows(rows) {
-  const ids = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'T1', 'T2', 'T3', 'D1', 'P1', 'P2', 'P3', 'P4', 'EC9'];
+  const ids = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'T1', 'T2', 'T3'];
   return rows.map(r => ids.some(id => r[1].startsWith(id + ' ')) ? ['RETIRED', r[1], r[2]] : r);
 }
 async function runEarlyReport(inTargets) {

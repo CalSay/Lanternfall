@@ -77,7 +77,7 @@ function analyse(persona, hero, d) {
   gaps.push({ gap: act - prev, zone });
   const stalls = gaps.filter(g => g.gap >= STALL_SEC);
   const longest = gaps.reduce((m, g) => g.gap > m.gap ? g : m, { gap: 0, zone: 1 });
-  const atHour = h => { const s = d.samples.filter(x => x.a <= h * 3600); return act >= h * 3600 && s.length ? s[s.length - 1].maxZone : null; };
+  const atHour = h => { const s = d.samples.filter(x => x.a <= h * 3600 + 1); return act >= h * 3600 - 1 && s.length ? s[s.length - 1].maxZone : null; };
   const earned = sum(d.econ.earned), spent = sum(d.econ.spent);
   const mats = Object.fromEntries(Object.entries(d.mats).map(([k, v]) => [k, v.reduce((a, b) => a + b, 0)]));
   const made = {}; for (const part of Object.values(d.harvest)) for (const [k, n] of Object.entries(part)) made[k] = (made[k] || 0) + n;
@@ -244,7 +244,7 @@ console.log(`\nwrote ${path.relative(ROOT, outPath)} (${report.seconds}s)`);
 
 if (flag('write-baseline')) {
   const old = fs.existsSync(BASELINE) ? JSON.parse(fs.readFileSync(BASELINE, 'utf8')) : { metrics: {} };
-  const metrics = {};
+  const metrics = { ...old.metrics };   // --only rewrites just the selected personas' entries
   for (const [k, a] of Object.entries(agg)) {
     const o = old.metrics[k] || {};
     metrics[k] = { value: a.value, bad: o.bad || a.bad, abs: o.abs ?? a.abs, rel: o.rel ?? a.rel, note: a.note, perHero: a.perHero };
