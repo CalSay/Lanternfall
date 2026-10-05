@@ -7,7 +7,7 @@ Base: integration branch `claude/elegant-johnson-m6k00u` at start    Branch: cla
 When the hero is stuck, one docked line states the facts with live numbers and gives no advice.
 
 ## Acceptance (measurable)
-- From a stall fixture save, one docked line appears after 3 lost fights in a row at one zone using only live numbers (a check fails if it names an item, talent, ability or Star or uses a listed advice word), and the playtest lab records the casual persona's time stuck at that stall before and after; the judge keeps the line only if time stuck does not rise.
+- From a stall fixture save, one docked line appears after 3 lost fights in a row at one zone using only live numbers (a check fails if it names an item, talent, ability or Star or uses a listed advice word), and the playtest lab records the casual persona's time stuck at that stall before and after; the judge keeps the line only if the casual persona's median time stuck at that stall falls by at least 10%, and drops the card if it does not.
 
 ## Scope
 Owned files: docked hint module
