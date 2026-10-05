@@ -18,7 +18,7 @@ For new or changed mechanics, systems, hero kits and combat rules. Coverage-map 
 
 | Criterion | 1 | 3 | 5 |
 |---|---|---|---|
-| Fit with the Compass | Works against a pillar | Fits, adds nothing the pillars asked for | Serves a named pillar and the card's player problem |
+| Fit with the Compass (until it exists, judge against `docs/DECISIONS.md`) | Works against a pillar | Fits, adds nothing the pillars asked for | Serves a named pillar and the card's player problem |
 | Connects to other systems | Stands alone; its outputs are used by nothing | One output feeds one other system | Feeds and is fed by existing systems; nothing is dead |
 | No dominant option | One choice always wins | A best choice exists but others win in some cases | Sim shows each option wins somewhere |
 | Complexity added | A new currency or menu with no clear reason | One new idea, explained once | Simpler to play than before, or adds one idea cheaply |
