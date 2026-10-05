@@ -96,6 +96,29 @@
     return { kind, t: b.rewT, n, txt: `${n} ${kind === 'ess' ? MAT.ess.short[b.rewT - 1] + ' Essence' : matName(kind, b.rewT)}` };
   }
   const bountyText = b => (b.elite ? 'Contract: ' : '') + (BTY_TEXT[b.k] ? BTY_TEXT[b.k](b) : 'A bounty');
+  // The fields each kind reads (its text, its progress test, its reward). btyShape(b) returns the first bad field of a
+  // filled slot, or null; the save-code check runs it on imported saves so a bad slot can't get stuck, throw on claim
+  // or pay nothing. Numbers must sit in the range btyNew makes, with headroom (x: 0.5-1.5; need and rewN stay small).
+  const btyInt = (v, lo, hi = 1e6) => Number.isInteger(v) && v >= lo && v <= hi;
+  const BTY_SHAPE = {
+    kill: b => btyInt(b.z, 1, SAVECODE_LIMITS.progression) ? null : 'z',
+    hunt: b => !btyInt(b.z, 1, SAVECODE_LIMITS.progression) ? 'z' : TYPES.some(t => t.key === b.foe) ? null : 'foe',
+    forage: b => b.fam === 'fibre' || b.fam === 'herb' ? null : 'fam',
+    make: b => Object.prototype.hasOwnProperty.call(STATIONS, b.st) ? null : 'st'
+  };
+  function btyShape(b) {
+    if (!BTY_TEXT[b.k]) return 'kind';
+    if (!btyInt(b.need, 1)) return 'need';
+    if (typeof b.have !== 'number' || !(b.have >= 0) || !Number.isFinite(b.have)) return 'have';
+    if (b.x != null && !(typeof b.x === 'number' && b.x >= 0.25 && b.x <= 2)) return 'x';   // scales the gold: never near 0
+    if (b.elite != null && typeof b.elite !== 'boolean') return 'elite';
+    if (b.rew !== 'gold') {
+      if (typeof b.rew !== 'string' || !Object.prototype.hasOwnProperty.call(MAT, b.rew)) return 'reward';
+      if (!btyInt(b.rewT, 1) || b.rewT > MAT[b.rew].short.length) return 'reward tier';
+      if (!btyInt(b.rewN, 1)) return 'reward amount';   // btyNew always pays at least 1
+    }
+    return BTY_SHAPE[b.k] ? BTY_SHAPE[b.k](b) : null;
+  }
 
   // Fill empty slots whose wait is over (also covers first load and old saves).
   // atLoad: skip the Omen's "refill at once" bonus. At file load bonus() can't see later files
@@ -155,5 +178,6 @@
   }
   bountyRefresh(true);
   // exported to later files via the shared scope
-  var BOUNTY_API = { refresh: bountyRefresh, claim: claimBounty, reroll: rerollBounty, text: bountyText, reward: bountyReward };
+  // kinds: every k a saved slot may hold (the board's kinds plus the retired 'tap'); the save-code check reads it and shape.
+  var BOUNTY_API = { refresh: bountyRefresh, claim: claimBounty, reroll: rerollBounty, text: bountyText, reward: bountyReward, shape: btyShape, kinds: Object.keys(BTY_KINDS).concat('tap') };
 }
