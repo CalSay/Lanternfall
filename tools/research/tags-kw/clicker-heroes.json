@@ -1,8 +1,8 @@
 {
  "slug": "clicker-heroes",
- "n_reviews": 157,
+ "n_reviews": 145,
  "n_pos": 90,
- "n_neg": 67,
+ "n_neg": 55,
  "n_longplay_neg": 25,
  "sources": [
   "steam",
@@ -125,13 +125,13 @@
   },
   "N-ads": {
    "n": 0,
-   "of": 67,
+   "of": 55,
    "longplay_n": 0,
    "quotes": []
   },
   "N-wall": {
-   "n": 11,
-   "of": 67,
+   "n": 8,
+   "of": 55,
    "longplay_n": 6,
    "quotes": [
     "It's adictive, but then the boredom sets in and the progression is too slow to be entertaining and too fast to not be a hinderance. (steam-, 203h)",
@@ -140,7 +140,7 @@
   },
   "N-pay": {
    "n": 5,
-   "of": 67,
+   "of": 55,
    "longplay_n": 0,
    "quotes": [
     "After a certain point, the game turns into an idle-slop with a premium currency autoclicker required (steam-, 20h)"
@@ -148,34 +148,33 @@
   },
   "N-dominant": {
    "n": 1,
-   "of": 67,
+   "of": 55,
    "longplay_n": 0,
    "quotes": []
   },
   "N-late": {
-   "n": 3,
-   "of": 67,
+   "n": 1,
+   "of": 55,
    "longplay_n": 3,
    "quotes": [
-    "But when progress becomes late game it starts feeling a bit pointless. (steam-, 585h)",
-    "Some of them require an absurd amount of repetitive grinding, such as: (steam-, 159h)"
+    "But when progress becomes late game it starts feeling a bit pointless. (steam-, 585h)"
    ]
   },
   "N-offline": {
    "n": 0,
-   "of": 67,
+   "of": 55,
    "longplay_n": 0,
    "quotes": []
   },
   "N-mobile": {
    "n": 0,
-   "of": 67,
+   "of": 55,
    "longplay_n": 0,
    "quotes": []
   },
   "N-bug": {
    "n": 5,
-   "of": 67,
+   "of": 55,
    "longplay_n": 2,
    "quotes": [
     "A game this simple shouldn't be hogging so much resources and be on the verge of crashing constantly. (steam-, 53h)"
@@ -183,31 +182,31 @@
   },
   "N-energy": {
    "n": 2,
-   "of": 67,
+   "of": 55,
    "longplay_n": 0,
    "quotes": []
   },
   "N-bloat": {
    "n": 0,
-   "of": 67,
+   "of": 55,
    "longplay_n": 0,
    "quotes": []
   },
   "N-chore": {
    "n": 0,
-   "of": 67,
+   "of": 55,
    "longplay_n": 0,
    "quotes": []
   },
   "N-tutorial": {
    "n": 0,
-   "of": 67,
+   "of": 55,
    "longplay_n": 0,
    "quotes": []
   },
   "N-shallow": {
-   "n": 3,
-   "of": 67,
+   "n": 2,
+   "of": 55,
    "longplay_n": 2,
    "quotes": [
     "Surprisingly shallow, even for its time. (steam-, 37h)",
@@ -216,19 +215,19 @@
   },
   "N-reset": {
    "n": 0,
-   "of": 67,
+   "of": 55,
    "longplay_n": 0,
    "quotes": []
   },
   "N-pace": {
    "n": 0,
-   "of": 67,
+   "of": 55,
    "longplay_n": 0,
    "quotes": []
   },
   "N-fast": {
    "n": 1,
-   "of": 67,
+   "of": 55,
    "longplay_n": 1,
    "quotes": [
     "It's adictive, but then the boredom sets in and the progression is too slow to be entertaining and too fast to not be a hinderance. (steam-, 203h)"
@@ -236,7 +235,7 @@
   },
   "N-balance": {
    "n": 1,
-   "of": 67,
+   "of": 55,
    "longplay_n": 0,
    "quotes": [
     "Update heavily nerfed outsiders and ancients, AND making outsider costs go up exponentially now?? (apple1)"

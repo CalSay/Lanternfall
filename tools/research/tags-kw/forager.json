@@ -1,8 +1,8 @@
 {
  "slug": "forager",
- "n_reviews": 67,
+ "n_reviews": 50,
  "n_pos": 25,
- "n_neg": 42,
+ "n_neg": 25,
  "n_longplay_neg": 25,
  "sources": [
   "steam"
@@ -120,13 +120,13 @@
   },
   "N-ads": {
    "n": 0,
-   "of": 42,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-wall": {
-   "n": 5,
-   "of": 42,
+   "n": 3,
+   "of": 25,
    "longplay_n": 4,
    "quotes": [
     "The game is also [i]very[/i] grindy. (steam-, 120h)",
@@ -135,19 +135,19 @@
   },
   "N-pay": {
    "n": 0,
-   "of": 42,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-dominant": {
    "n": 0,
-   "of": 42,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-late": {
-   "n": 10,
-   "of": 42,
+   "n": 7,
+   "of": 25,
    "longplay_n": 7,
    "quotes": [
     "Late game is farming the big void to deeper and deeper levels. (steam-, 27h)",
@@ -156,19 +156,19 @@
   },
   "N-offline": {
    "n": 0,
-   "of": 42,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-mobile": {
    "n": 0,
-   "of": 42,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-bug": {
-   "n": 8,
-   "of": 42,
+   "n": 6,
+   "of": 25,
    "longplay_n": 6,
    "quotes": [
     "The progression is a mess, lots of bugs and missing QoL. (steam-, 64h)",
@@ -176,36 +176,34 @@
    ]
   },
   "N-energy": {
-   "n": 2,
-   "of": 42,
+   "n": 1,
+   "of": 25,
    "longplay_n": 1,
    "quotes": []
   },
   "N-bloat": {
    "n": 1,
-   "of": 42,
+   "of": 25,
    "longplay_n": 0,
    "quotes": [
     "Crafting anything takes far too many resources and resources are crafted extremely slow, especially late game ones... (steam-, 40h)"
    ]
   },
   "N-chore": {
-   "n": 2,
-   "of": 42,
+   "n": 1,
+   "of": 25,
    "longplay_n": 2,
-   "quotes": [
-    "Forager isn't nearly as grindy, but it feels like a chore. (steam-, 54h)"
-   ]
+   "quotes": []
   },
   "N-tutorial": {
    "n": 0,
-   "of": 42,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-shallow": {
-   "n": 3,
-   "of": 42,
+   "n": 2,
+   "of": 25,
    "longplay_n": 1,
    "quotes": [
     "It's pretty simple and enjoyable for the most part. (steam-, 27h)",
@@ -214,25 +212,25 @@
   },
   "N-reset": {
    "n": 0,
-   "of": 42,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-pace": {
    "n": 0,
-   "of": 42,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-fast": {
    "n": 0,
-   "of": 42,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-balance": {
    "n": 0,
-   "of": 42,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   }

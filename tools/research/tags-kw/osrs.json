@@ -1,8 +1,8 @@
 {
  "slug": "osrs",
- "n_reviews": 516,
+ "n_reviews": 498,
  "n_pos": 346,
- "n_neg": 170,
+ "n_neg": 152,
  "n_longplay_neg": 25,
  "sources": [
   "steam",
@@ -139,46 +139,46 @@
   },
   "N-ads": {
    "n": 0,
-   "of": 170,
+   "of": 152,
    "longplay_n": 0,
    "quotes": []
   },
   "N-wall": {
-   "n": 17,
-   "of": 170,
+   "n": 14,
+   "of": 152,
    "longplay_n": 3,
    "quotes": [
-    "Paying $30/mo to grind 2 characters on a 20+ year old game is a sin. (steam-, 194h)",
-    "Great game for those who love a grind, but Company couldn't give half a \u2665\u2665\u2665\u2665 about it's community. (steam-, 245h)"
+    "nope, you need a jagex account to enable authenticator, so i decided to grind the money another way. (apple1)",
+    "I change my password and set a bank pin and, begrudgingly, started to grind all over again. (apple1)"
    ]
   },
   "N-pay": {
    "n": 1,
-   "of": 170,
+   "of": 152,
    "longplay_n": 0,
    "quotes": []
   },
   "N-dominant": {
    "n": 0,
-   "of": 170,
+   "of": 152,
    "longplay_n": 0,
    "quotes": []
   },
   "N-late": {
    "n": 3,
-   "of": 170,
+   "of": 152,
    "longplay_n": 0,
    "quotes": []
   },
   "N-offline": {
    "n": 0,
-   "of": 170,
+   "of": 152,
    "longplay_n": 0,
    "quotes": []
   },
   "N-mobile": {
    "n": 5,
-   "of": 170,
+   "of": 152,
    "longplay_n": 0,
    "quotes": [
     "My phone battery depletes by a percent every few minutes giving my phone about as much battery power as a low end laptop. (apple2)",
@@ -187,7 +187,7 @@
   },
   "N-bug": {
    "n": 19,
-   "of": 170,
+   "of": 152,
    "longplay_n": 0,
    "quotes": [
     "On top of all this, the controls are awful and buggy. (apple1)",
@@ -195,17 +195,17 @@
    ]
   },
   "N-energy": {
-   "n": 7,
-   "of": 170,
+   "n": 6,
+   "of": 152,
    "longplay_n": 2,
    "quotes": [
     "-Literally over a month wait for a response (steam-, 132h)",
-    "I found myself running out of sprint energy and then  just playing another game waiting for sprint energy to recover. (steam-, 81h)"
+    "If this is not possible I\u2019ll wait for the \u201cnew\u201d school RuneScape where you can actually have your \u201cma (apple1)"
    ]
   },
   "N-bloat": {
    "n": 3,
-   "of": 170,
+   "of": 152,
    "longplay_n": 2,
    "quotes": [
     "The ui on the iPhone XS Max is great but when playing on an iPad Pro 12.9\u201d it seems cluttered. (apple3)"
@@ -213,13 +213,13 @@
   },
   "N-chore": {
    "n": 0,
-   "of": 170,
+   "of": 152,
    "longplay_n": 0,
    "quotes": []
   },
   "N-tutorial": {
    "n": 2,
-   "of": 170,
+   "of": 152,
    "longplay_n": 0,
    "quotes": [
     "Mobile gamers have never experienced anything close to this, so with the same old tutorial I knew we would see major problems starting to arise. (apple1)",
@@ -228,7 +228,7 @@
   },
   "N-shallow": {
    "n": 5,
-   "of": 170,
+   "of": 152,
    "longplay_n": 0,
    "quotes": [
     "What they DON\u2019T tell you is that this game\u2019s company goes out of its way to make that very simple process as complicated as possible. (apple1)",
@@ -237,25 +237,25 @@
   },
   "N-reset": {
    "n": 0,
-   "of": 170,
+   "of": 152,
    "longplay_n": 0,
    "quotes": []
   },
   "N-pace": {
    "n": 0,
-   "of": 170,
+   "of": 152,
    "longplay_n": 0,
    "quotes": []
   },
   "N-fast": {
    "n": 0,
-   "of": 170,
+   "of": 152,
    "longplay_n": 0,
    "quotes": []
   },
   "N-balance": {
-   "n": 4,
-   "of": 170,
+   "n": 3,
+   "of": 152,
    "longplay_n": 1,
    "quotes": [
     "They forgave the outstanding balance as a \u201cone time act of good faith\u201d as the mod put it. (apple1)"

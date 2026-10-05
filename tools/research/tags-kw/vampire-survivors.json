@@ -1,8 +1,8 @@
 {
  "slug": "vampire-survivors",
- "n_reviews": 394,
+ "n_reviews": 374,
  "n_pos": 273,
- "n_neg": 121,
+ "n_neg": 101,
  "n_longplay_neg": 25,
  "sources": [
   "steam",
@@ -144,7 +144,7 @@
   },
   "N-ads": {
    "n": 15,
-   "of": 121,
+   "of": 101,
    "longplay_n": 0,
    "quotes": [
     "I absolutely do not approve or like ads in the IOS version. (apple1)",
@@ -152,31 +152,29 @@
    ]
   },
   "N-wall": {
-   "n": 7,
-   "of": 121,
+   "n": 4,
+   "of": 101,
    "longplay_n": 3,
    "quotes": [
     "Our progress didn\u2019t just slow down - it pretty much died. (steam-, 22h)",
-    "That's not a challenge to beat, just a defeat to stall for a few minutes. (steam-, 287h)"
+    "And why does it slow down during the gameplay? (apple1)"
    ]
   },
   "N-pay": {
    "n": 1,
-   "of": 121,
+   "of": 101,
    "longplay_n": 0,
    "quotes": []
   },
   "N-dominant": {
-   "n": 2,
-   "of": 121,
+   "n": 1,
+   "of": 101,
    "longplay_n": 1,
-   "quotes": [
-    "Loved this game so much but I can't support the developers choice as an indie dev, to go exclusive on meta. (steam-, 64h)"
-   ]
+   "quotes": []
   },
   "N-late": {
-   "n": 7,
-   "of": 121,
+   "n": 4,
+   "of": 101,
    "longplay_n": 4,
    "quotes": [
     "After some time it just feels repetitive and hollow. (steam-, 119h)",
@@ -185,21 +183,21 @@
   },
   "N-offline": {
    "n": 0,
-   "of": 121,
+   "of": 101,
    "longplay_n": 0,
    "quotes": []
   },
   "N-mobile": {
    "n": 3,
-   "of": 121,
+   "of": 101,
    "longplay_n": 0,
    "quotes": [
     "Still fun overall, and doesn\u2019t eat my battery as much as some games. (apple3)"
    ]
   },
   "N-bug": {
-   "n": 22,
-   "of": 121,
+   "n": 20,
+   "of": 101,
    "longplay_n": 2,
    "quotes": [
     "Not sure what they did, but the last patch/update causes it to crash about 10 minutes into a game every single time now :/ (steam-, 32h)",
@@ -207,17 +205,14 @@
    ]
   },
   "N-energy": {
-   "n": 3,
-   "of": 121,
+   "n": 1,
+   "of": 101,
    "longplay_n": 3,
-   "quotes": [
-    "i liked what they did with some moments, but the overall experience is to sit and wait for the level to end. (steam-, 160h)",
-    "Then it's just a case of chasing \"achievements\" (mostly sitting idle and running out a timer) and new \"characters\". (steam-, 82h)"
-   ]
+   "quotes": []
   },
   "N-bloat": {
-   "n": 3,
-   "of": 121,
+   "n": 2,
+   "of": 101,
    "longplay_n": 2,
    "quotes": [
     "Also for the german translation: It can be confusing when the translation of a word keeps changing. (steam-, 119h)",
@@ -226,13 +221,13 @@
   },
   "N-chore": {
    "n": 0,
-   "of": 121,
+   "of": 101,
    "longplay_n": 0,
    "quotes": []
   },
   "N-tutorial": {
    "n": 2,
-   "of": 121,
+   "of": 101,
    "longplay_n": 1,
    "quotes": [
     "Knowing who to use or what stage to complete for the next unlock you need to continue in the game itself is completely unclear. (steam-, 60h)",
@@ -240,29 +235,29 @@
    ]
   },
   "N-shallow": {
-   "n": 8,
-   "of": 121,
+   "n": 7,
+   "of": 101,
    "longplay_n": 1,
    "quotes": [
     "I am not recommending this game because it is incredibly shallow with little to offer. (steam-, 29h)",
-    "This game has an extremely shallow identity and experience. (steam-, 68h)"
+    "It\u2019s a simple and small game. (apple3)"
    ]
   },
   "N-reset": {
    "n": 0,
-   "of": 121,
+   "of": 101,
    "longplay_n": 0,
    "quotes": []
   },
   "N-pace": {
    "n": 0,
-   "of": 121,
+   "of": 101,
    "longplay_n": 0,
    "quotes": []
   },
   "N-fast": {
    "n": 2,
-   "of": 121,
+   "of": 101,
    "longplay_n": 1,
    "quotes": [
     "And worst of all, every match either feels too easy or is frustratingly impossible. (steam-, 60h)",
@@ -270,12 +265,11 @@
    ]
   },
   "N-balance": {
-   "n": 5,
-   "of": 121,
+   "n": 4,
+   "of": 101,
    "longplay_n": 2,
    "quotes": [
-    "This completely breaks the balance and progression for duo play. (steam-, 22h)",
-    "Between not letting certain levels load on co-op, and getting soft locked where both players see the other one picking the level up. (steam-, 108h)"
+    "This completely breaks the balance and progression for duo play. (steam-, 22h)"
    ]
   }
  }

@@ -1,8 +1,8 @@
 {
  "slug": "gnorp-apologue",
- "n_reviews": 54,
+ "n_reviews": 50,
  "n_pos": 25,
- "n_neg": 29,
+ "n_neg": 25,
  "n_longplay_neg": 6,
  "sources": [
   "steam"
@@ -122,13 +122,13 @@
   },
   "N-ads": {
    "n": 0,
-   "of": 29,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-wall": {
-   "n": 8,
-   "of": 29,
+   "n": 6,
+   "of": 25,
    "longplay_n": 2,
    "quotes": [
     "Getting stuck and having to restart with no gained advantages is not fun or what I'm looking for in an idler. (steam-, 20h)",
@@ -137,13 +137,13 @@
   },
   "N-pay": {
    "n": 0,
-   "of": 29,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-dominant": {
    "n": 6,
-   "of": 29,
+   "of": 25,
    "longplay_n": 1,
    "quotes": [
     "An Idle game that requires you to meta build is kind of annoying to be honest. (steam-, 7h)",
@@ -152,45 +152,43 @@
   },
   "N-late": {
    "n": 1,
-   "of": 29,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-offline": {
    "n": 1,
-   "of": 29,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-mobile": {
    "n": 0,
-   "of": 29,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-bug": {
    "n": 0,
-   "of": 29,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-energy": {
    "n": 1,
-   "of": 29,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-bloat": {
-   "n": 1,
-   "of": 29,
+   "n": 0,
+   "of": 25,
    "longplay_n": 1,
-   "quotes": [
-    "The Gnorp Analogue manages to be confusing, sometimes tedious and fails to bring the fun. (steam-, 51h)"
-   ]
+   "quotes": []
   },
   "N-chore": {
    "n": 1,
-   "of": 29,
+   "of": 25,
    "longplay_n": 0,
    "quotes": [
     "The limit of Zybellium (or whatever it's called) makes experimenting with different builds a chore and things that requir (steam-, 10h)"
@@ -198,37 +196,37 @@
   },
   "N-tutorial": {
    "n": 0,
-   "of": 29,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-shallow": {
    "n": 0,
-   "of": 29,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-reset": {
    "n": 0,
-   "of": 29,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-pace": {
    "n": 0,
-   "of": 29,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-fast": {
    "n": 0,
-   "of": 29,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-balance": {
    "n": 0,
-   "of": 29,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   }

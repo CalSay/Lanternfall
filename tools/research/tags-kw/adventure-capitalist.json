@@ -1,8 +1,8 @@
 {
  "slug": "adventure-capitalist",
- "n_reviews": 362,
+ "n_reviews": 350,
  "n_pos": 188,
- "n_neg": 174,
+ "n_neg": 162,
  "n_longplay_neg": 25,
  "sources": [
   "steam",
@@ -139,8 +139,8 @@
    ]
   },
   "N-ads": {
-   "n": 86,
-   "of": 174,
+   "n": 85,
+   "of": 162,
    "longplay_n": 2,
    "quotes": [
     "Secondly, I\u2019m all for watching the ads. (apple3)",
@@ -149,7 +149,7 @@
   },
   "N-wall": {
    "n": 8,
-   "of": 174,
+   "of": 162,
    "longplay_n": 3,
    "quotes": [
     "There was hard spots where you got stuck and would have to make use some megatickets or something, but overall it was okay. (steam-, 54h)",
@@ -157,8 +157,8 @@
    ]
   },
   "N-pay": {
-   "n": 10,
-   "of": 174,
+   "n": 9,
+   "of": 162,
    "longplay_n": 3,
    "quotes": [
     "This game pushes microtransactions [b]HARD.[/b] It's [i]suffocating.[/i] Meaningful progression is practically impossible without spending money and the devs know it. (steam-, 70h)",
@@ -167,28 +167,28 @@
   },
   "N-dominant": {
    "n": 0,
-   "of": 174,
+   "of": 162,
    "longplay_n": 0,
    "quotes": []
   },
   "N-late": {
-   "n": 6,
-   "of": 174,
+   "n": 3,
+   "of": 162,
    "longplay_n": 3,
    "quotes": [
     "Can be fun for the first couple of days, but it quickly becomes repetitive and uninspired. (steam-, 19h)",
-    "its fun at first but then it gets repetitive and now im trying to get all the achievements and its taking forever (steam-, 99h)"
+    "After a few weeks, it got very repetitive and we both deleted it. (apple3)"
    ]
   },
   "N-offline": {
    "n": 0,
-   "of": 174,
+   "of": 162,
    "longplay_n": 0,
    "quotes": []
   },
   "N-mobile": {
    "n": 7,
-   "of": 174,
+   "of": 162,
    "longplay_n": 0,
    "quotes": [
     "So, first, this apparently always online game greeted me with a \"Connection Error\". (steam-)",
@@ -197,7 +197,7 @@
   },
   "N-bug": {
    "n": 27,
-   "of": 174,
+   "of": 162,
    "longplay_n": 1,
    "quotes": [
     "But they freeze, take forever to load if they even do and often I have to reset the game because it crashed the whole thing. (apple3)",
@@ -205,62 +205,61 @@
    ]
   },
   "N-energy": {
-   "n": 5,
-   "of": 174,
+   "n": 4,
+   "of": 162,
    "longplay_n": 1,
    "quotes": [
-    "Big \"number go up over time\" energy (steam-, 58h)",
     "It skips the timer and gives you instant money when you tap it without a manager on that extremely invested business. (apple3)"
    ]
   },
   "N-bloat": {
    "n": 0,
-   "of": 174,
+   "of": 162,
    "longplay_n": 0,
    "quotes": []
   },
   "N-chore": {
    "n": 0,
-   "of": 174,
+   "of": 162,
    "longplay_n": 0,
    "quotes": []
   },
   "N-tutorial": {
    "n": 0,
-   "of": 174,
+   "of": 162,
    "longplay_n": 0,
    "quotes": []
   },
   "N-shallow": {
-   "n": 13,
-   "of": 174,
+   "n": 9,
+   "of": 162,
    "longplay_n": 6,
    "quotes": [
     "The gameplay loop is mindless and boring. (steam-, 70h)",
-    "And for such a simple 2D game, it uses a ridiculous amount of resources, without the ability to lower the framerate to reduce them. (steam-, 62h)"
+    "This game is addictive, but very shallow. (apple2)"
    ]
   },
   "N-reset": {
    "n": 0,
-   "of": 174,
+   "of": 162,
    "longplay_n": 0,
    "quotes": []
   },
   "N-pace": {
    "n": 0,
-   "of": 174,
+   "of": 162,
    "longplay_n": 0,
    "quotes": []
   },
   "N-fast": {
    "n": 1,
-   "of": 174,
+   "of": 162,
    "longplay_n": 0,
    "quotes": []
   },
   "N-balance": {
    "n": 3,
-   "of": 174,
+   "of": 162,
    "longplay_n": 0,
    "quotes": [
     "It's completely unfair to reset all of that with no consent or knowledge from the user. (apple3)"

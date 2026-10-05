@@ -118,10 +118,10 @@ at a time.
    Add "visible goals by range" to the playtest lab report format in `f-playtest-bots`, so a gap shows up before
    anyone designs a goal system.
 
-## Not yet gated (candidates only, do not card)
-The judge's three missing ideas (error watch, locked things name their unlock, visible goals by range) have not had a
-red team. `ap-first-use-hints` already carries the second; the third is a line in the `f-playtest-bots` report format.
-The error watch needs a brief and the gate before it becomes `ap-error-watch`.
+## Not yet gated (candidates only; nothing was added to any card)
+The judge's three missing ideas (error watch, locked things name their unlock, visible goals by range) have had no red team.
+None is in a card: the locked-things line was removed from the `ap-first-use-hints` card, and the visible-goals line is not in
+the `f-playtest-bots` card. Each needs a brief and the gate before it can become a card or a card line.
 
 ## Audit trail
 `fun-library-gate/briefs.md`, `red-team.md` and `judge.md` hold the full gate record.
@@ -136,13 +136,14 @@ quit theme) is the error watch below, which still needs its own brief and gate. 
 
 ## Update after widening to 56 games and removing duplicates (2026-10-05)
 The gate ran on the first 21-game counts. Cal asked why only 21 games were read, the corpus became 56, and Codex review then
-found that the first Steam samples held duplicate reviews (about 36%). The library was rebuilt on 11,679 distinct
-reviews. Re-checking the verdicts against the rebuilt counts, none flips:
-- S12 (stall facts): walls are still the top long-play reason (99 of 632 Steam negatives).
-- S5 and S13 (first-use hints, menu budget): cluttered menus 61 negatives, 14 long-play (up from 27).
+found duplicate Steam reviews (about 36% of the first sample) and a sampling mix-up between the general and long-play
+samples. The library was rebuilt on 11,374 distinct reviews plus a separate 632-review long-play set. Re-checking the
+verdicts against the rebuilt counts, none flips:
+- S12 (stall facts): walls are still the top long-play reason (99 of 632).
+- S5 and S13 (first-use hints, menu budget): cluttered menus 58 general negatives, 14 long-play.
 - S6 (collection counts): collection is the third most praised theme (480 reviews, 31 games).
-- S9 (content remaining) and S14 (no energy gates): empty endgame is 183 negatives, 48 long-play; energy and timer gates are
-  158 negatives, 22 long-play, so S14 now has real support for a Compass line.
-- S10 (dominance detector): dominant strategy is rare (29 negatives, 7 long-play), weaker than the gate believed (it said
-  14 of 14). It stays a report-only line in f-health, no card.
+- S9 (content remaining) and S14 (no energy gates): empty endgame 160 general negatives, 48 long-play; energy and timer gates
+  145 general negatives, 22 long-play, so S14 has real support for a Compass line.
+- S10 (dominant strategy detector): rare (27 general negatives, 7 long-play), weaker than the gate believed (it said 14 of
+  14). It stays a report-only line in f-health, no card.
 No verdict was re-run through the red team and judge; the Compass or planner thread may re-score S9, S10 and S14.

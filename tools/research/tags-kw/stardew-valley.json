@@ -1,8 +1,8 @@
 {
  "slug": "stardew-valley",
- "n_reviews": 64,
+ "n_reviews": 50,
  "n_pos": 25,
- "n_neg": 39,
+ "n_neg": 25,
  "n_longplay_neg": 25,
  "sources": [
   "steam"
@@ -116,13 +116,13 @@
   },
   "N-ads": {
    "n": 0,
-   "of": 39,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-wall": {
-   "n": 6,
-   "of": 39,
+   "n": 3,
+   "of": 25,
    "longplay_n": 4,
    "quotes": [
     "I found myself stuck in a grind that felt more repetitive than rewarding. (steam-, 35h)",
@@ -131,19 +131,19 @@
   },
   "N-pay": {
    "n": 0,
-   "of": 39,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-dominant": {
-   "n": 1,
-   "of": 39,
+   "n": 0,
+   "of": 25,
    "longplay_n": 1,
    "quotes": []
   },
   "N-late": {
-   "n": 4,
-   "of": 39,
+   "n": 3,
+   "of": 25,
    "longplay_n": 2,
    "quotes": [
     "I found myself stuck in a grind that felt more repetitive than rewarding. (steam-, 35h)"
@@ -151,33 +151,31 @@
   },
   "N-offline": {
    "n": 0,
-   "of": 39,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-mobile": {
    "n": 0,
-   "of": 39,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-bug": {
    "n": 0,
-   "of": 39,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-energy": {
-   "n": 5,
-   "of": 39,
+   "n": 2,
+   "of": 25,
    "longplay_n": 3,
-   "quotes": [
-    "but to chop down a tree and remove the stump that would take around 12 swings draining a lot of energy from your bar. (steam-, 56h)"
-   ]
+   "quotes": []
   },
   "N-bloat": {
    "n": 1,
-   "of": 39,
+   "of": 25,
    "longplay_n": 0,
    "quotes": [
     "probably just not my style of game, but i found it overwhelming and kind of unsatisfyingly grindy. (steam-, 12h)"
@@ -185,7 +183,7 @@
   },
   "N-chore": {
    "n": 5,
-   "of": 39,
+   "of": 25,
    "longplay_n": 1,
    "quotes": [
     "The rhythm of the days turned into a bit of a chore\u2026 and not the comforting kind. (steam-, 35h)"
@@ -193,13 +191,13 @@
   },
   "N-tutorial": {
    "n": 0,
-   "of": 39,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-shallow": {
    "n": 3,
-   "of": 39,
+   "of": 25,
    "longplay_n": 3,
    "quotes": [
     "With combat, you just click enemies and walk out of the way of projectiles, it's extremely barebones, but at least understandably so. (steam-, 372h)",
@@ -208,29 +206,27 @@
   },
   "N-reset": {
    "n": 0,
-   "of": 39,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-pace": {
    "n": 0,
-   "of": 39,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-fast": {
    "n": 2,
-   "of": 39,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-balance": {
-   "n": 2,
-   "of": 39,
+   "n": 0,
+   "of": 25,
    "longplay_n": 2,
-   "quotes": [
-    "The mod that skips the minigame makes it better but \"ruins the balance\" or something. (steam-, 60h)"
-   ]
+   "quotes": []
   }
  }
 }

@@ -1,8 +1,8 @@
 {
  "slug": "slay-the-spire",
- "n_reviews": 517,
+ "n_reviews": 503,
  "n_pos": 300,
- "n_neg": 217,
+ "n_neg": 203,
  "n_longplay_neg": 25,
  "sources": [
   "steam",
@@ -141,13 +141,13 @@
   },
   "N-ads": {
    "n": 0,
-   "of": 217,
+   "of": 203,
    "longplay_n": 0,
    "quotes": []
   },
   "N-wall": {
-   "n": 12,
-   "of": 217,
+   "n": 11,
+   "of": 203,
    "longplay_n": 3,
    "quotes": [
     "The playing process is very stuck. (apple3)",
@@ -156,36 +156,36 @@
   },
   "N-pay": {
    "n": 0,
-   "of": 217,
+   "of": 203,
    "longplay_n": 0,
    "quotes": []
   },
   "N-dominant": {
    "n": 1,
-   "of": 217,
+   "of": 203,
    "longplay_n": 1,
    "quotes": [
     "Usual deck builder strategies do not apply here, you just need to know EXACTLY what is the only viable choice in every situation. (steam-, 127h)"
    ]
   },
   "N-late": {
-   "n": 3,
-   "of": 217,
+   "n": 2,
+   "of": 203,
    "longplay_n": 1,
    "quotes": [
-    "This means that continued replays after failing over & over get very repetitive & stale very quickly. (steam-, 199h)",
-    "So much wasted, empty space and very small characters and cards. (apple2)"
+    "So much wasted, empty space and very small characters and cards. (apple2)",
+    "There is also a bunch of empty space on the screen. (apple3)"
    ]
   },
   "N-offline": {
    "n": 0,
-   "of": 217,
+   "of": 203,
    "longplay_n": 0,
    "quotes": []
   },
   "N-mobile": {
    "n": 9,
-   "of": 217,
+   "of": 203,
    "longplay_n": 0,
    "quotes": [
     "If you\u2019re going to charge 5-10x what other games cost, you need to appropriately adapt the controls for a touch screen. (apple2)",
@@ -193,8 +193,8 @@
    ]
   },
   "N-bug": {
-   "n": 34,
-   "of": 217,
+   "n": 33,
+   "of": 203,
    "longplay_n": 1,
    "quotes": [
     "Fun game but has some bugs lots of crashing. (apple2)",
@@ -202,23 +202,23 @@
    ]
   },
   "N-energy": {
-   "n": 6,
-   "of": 217,
+   "n": 5,
+   "of": 203,
    "longplay_n": 2,
    "quotes": [
-    "Plus one energy is quite nice... (steam-, 99h)",
-    "This game is fantastic, I\u2019ve sunk 100+ hours into the PC version and could not wait for it to be on mobile. (apple1)"
+    "This game is fantastic, I\u2019ve sunk 100+ hours into the PC version and could not wait for it to be on mobile. (apple1)",
+    "You roll into next level same hit points and energy. (apple3)"
    ]
   },
   "N-bloat": {
    "n": 3,
-   "of": 217,
+   "of": 203,
    "longplay_n": 0,
    "quotes": []
   },
   "N-chore": {
    "n": 3,
-   "of": 217,
+   "of": 203,
    "longplay_n": 1,
    "quotes": [
     "Every run feels like a chore, and when it finally over it wants me to play again for what? (steam-, 82h)",
@@ -227,13 +227,13 @@
   },
   "N-tutorial": {
    "n": 0,
-   "of": 217,
+   "of": 203,
    "longplay_n": 0,
    "quotes": []
   },
   "N-shallow": {
    "n": 6,
-   "of": 217,
+   "of": 203,
    "longplay_n": 1,
    "quotes": [
     "A simple toggle for sync would be enough but instead anyone who bought the app individually gets a worse experience overall. (apple1)",
@@ -242,19 +242,19 @@
   },
   "N-reset": {
    "n": 0,
-   "of": 217,
+   "of": 203,
    "longplay_n": 0,
    "quotes": []
   },
   "N-pace": {
    "n": 0,
-   "of": 217,
+   "of": 203,
    "longplay_n": 0,
    "quotes": []
   },
   "N-fast": {
    "n": 2,
-   "of": 217,
+   "of": 203,
    "longplay_n": 0,
    "quotes": [
     "I can see the depth and the strategy, but personally I lost interest long before the game ran out of things to offer. (steam-, 5h)",
@@ -262,8 +262,8 @@
    ]
   },
   "N-balance": {
-   "n": 8,
-   "of": 217,
+   "n": 7,
+   "of": 203,
    "longplay_n": 2,
    "quotes": [
     "The card mechanics are clean, the balance is solid, and everything works exactly the way it\u2019s supposed to. (steam-, 5h)",

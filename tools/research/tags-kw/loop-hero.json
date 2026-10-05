@@ -1,8 +1,8 @@
 {
  "slug": "loop-hero",
- "n_reviews": 187,
+ "n_reviews": 180,
  "n_pos": 124,
- "n_neg": 63,
+ "n_neg": 56,
  "n_longplay_neg": 8,
  "sources": [
   "steam",
@@ -127,13 +127,13 @@
   },
   "N-ads": {
    "n": 0,
-   "of": 63,
+   "of": 56,
    "longplay_n": 0,
    "quotes": []
   },
   "N-wall": {
-   "n": 18,
-   "of": 63,
+   "n": 16,
+   "of": 56,
    "longplay_n": 2,
    "quotes": [
     "Starts fun but quickly turns into a grindy game that makes you question the meaning of everything. (steam-, 25h)",
@@ -142,19 +142,19 @@
   },
   "N-pay": {
    "n": 0,
-   "of": 63,
+   "of": 56,
    "longplay_n": 0,
    "quotes": []
   },
   "N-dominant": {
    "n": 1,
-   "of": 63,
+   "of": 56,
    "longplay_n": 0,
    "quotes": []
   },
   "N-late": {
    "n": 5,
-   "of": 63,
+   "of": 56,
    "longplay_n": 0,
    "quotes": [
     "very repetitive and a weird system where the player is making the game harder by \"doing something\" (steam-, 25h)",
@@ -163,13 +163,13 @@
   },
   "N-offline": {
    "n": 0,
-   "of": 63,
+   "of": 56,
    "longplay_n": 0,
    "quotes": []
   },
   "N-mobile": {
    "n": 1,
-   "of": 63,
+   "of": 56,
    "longplay_n": 0,
    "quotes": [
     "The UI is too small to use with a touch screen, I can\u2019t see anything I\u2019m doing. (apple2)"
@@ -177,7 +177,7 @@
   },
   "N-bug": {
    "n": 9,
-   "of": 63,
+   "of": 56,
    "longplay_n": 0,
    "quotes": [
     "Started grinding and building up my town but then the game crashed. (apple3)",
@@ -186,31 +186,31 @@
   },
   "N-energy": {
    "n": 0,
-   "of": 63,
+   "of": 56,
    "longplay_n": 0,
    "quotes": []
   },
   "N-bloat": {
    "n": 0,
-   "of": 63,
+   "of": 56,
    "longplay_n": 0,
    "quotes": []
   },
   "N-chore": {
    "n": 0,
-   "of": 63,
+   "of": 56,
    "longplay_n": 0,
    "quotes": []
   },
   "N-tutorial": {
    "n": 0,
-   "of": 63,
+   "of": 56,
    "longplay_n": 0,
    "quotes": []
   },
   "N-shallow": {
    "n": 2,
-   "of": 63,
+   "of": 56,
    "longplay_n": 0,
    "quotes": [
     "Unfortunately the gameplay aspect feels kind of brain dead, as in you can tune out through most of it and do fine. (steam-, 19h)",
@@ -219,25 +219,25 @@
   },
   "N-reset": {
    "n": 0,
-   "of": 63,
+   "of": 56,
    "longplay_n": 0,
    "quotes": []
   },
   "N-pace": {
    "n": 0,
-   "of": 63,
+   "of": 56,
    "longplay_n": 0,
    "quotes": []
   },
   "N-fast": {
    "n": 0,
-   "of": 63,
+   "of": 56,
    "longplay_n": 0,
    "quotes": []
   },
   "N-balance": {
    "n": 2,
-   "of": 63,
+   "of": 56,
    "longplay_n": 0,
    "quotes": []
   }

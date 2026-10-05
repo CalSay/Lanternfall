@@ -1,8 +1,8 @@
 {
  "slug": "cookie-clicker",
- "n_reviews": 59,
+ "n_reviews": 50,
  "n_pos": 25,
- "n_neg": 34,
+ "n_neg": 25,
  "n_longplay_neg": 25,
  "sources": [
   "steam"
@@ -107,31 +107,31 @@
   },
   "N-ads": {
    "n": 0,
-   "of": 34,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-wall": {
-   "n": 1,
-   "of": 34,
+   "n": 0,
+   "of": 25,
    "longplay_n": 1,
    "quotes": []
   },
   "N-pay": {
    "n": 0,
-   "of": 34,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-dominant": {
    "n": 0,
-   "of": 34,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-late": {
    "n": 1,
-   "of": 34,
+   "of": 25,
    "longplay_n": 0,
    "quotes": [
     "It's ugly, unfun, music actually sucks and is SO repetitive. (steam-, 12h)"
@@ -139,75 +139,73 @@
   },
   "N-offline": {
    "n": 0,
-   "of": 34,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-mobile": {
    "n": 0,
-   "of": 34,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-bug": {
-   "n": 1,
-   "of": 34,
+   "n": 0,
+   "of": 25,
    "longplay_n": 1,
-   "quotes": [
-    "Very buggy UI, basically nothing is stable, all Icons are sometimes moving around. (steam-, 209h)"
-   ]
+   "quotes": []
   },
   "N-energy": {
    "n": 0,
-   "of": 34,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-bloat": {
    "n": 0,
-   "of": 34,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-chore": {
    "n": 0,
-   "of": 34,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-tutorial": {
    "n": 0,
-   "of": 34,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-shallow": {
    "n": 0,
-   "of": 34,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-reset": {
    "n": 0,
-   "of": 34,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-pace": {
    "n": 0,
-   "of": 34,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-fast": {
    "n": 0,
-   "of": 34,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-balance": {
    "n": 0,
-   "of": 34,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   }

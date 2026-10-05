@@ -1,8 +1,8 @@
 {
  "slug": "expedition-33",
- "n_reviews": 66,
+ "n_reviews": 50,
  "n_pos": 25,
- "n_neg": 41,
+ "n_neg": 25,
  "n_longplay_neg": 22,
  "sources": [
   "steam"
@@ -116,108 +116,105 @@
   },
   "N-ads": {
    "n": 0,
-   "of": 41,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-wall": {
-   "n": 1,
-   "of": 41,
+   "n": 0,
+   "of": 25,
    "longplay_n": 1,
    "quotes": []
   },
   "N-pay": {
    "n": 0,
-   "of": 41,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-dominant": {
    "n": 0,
-   "of": 41,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-late": {
-   "n": 4,
-   "of": 41,
+   "n": 1,
+   "of": 25,
    "longplay_n": 3,
    "quotes": [
-    "The game mechanics quickly become repetitive and lacking depth, so the only reason to play is the story. (steam-, 46h)",
-    "Sure, it'll make battles faster, but it has nothing to do with being able to win fights. (steam-, 64h)"
+    "The game mechanics quickly become repetitive and lacking depth, so the only reason to play is the story. (steam-, 46h)"
    ]
   },
   "N-offline": {
    "n": 0,
-   "of": 41,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-mobile": {
    "n": 0,
-   "of": 41,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-bug": {
-   "n": 1,
-   "of": 41,
+   "n": 0,
+   "of": 25,
    "longplay_n": 1,
    "quotes": []
   },
   "N-energy": {
    "n": 0,
-   "of": 41,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-bloat": {
    "n": 0,
-   "of": 41,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-chore": {
    "n": 0,
-   "of": 41,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-tutorial": {
    "n": 0,
-   "of": 41,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-shallow": {
-   "n": 1,
-   "of": 41,
+   "n": 0,
+   "of": 25,
    "longplay_n": 1,
-   "quotes": [
-    "Story beats become strangled and shallow. (steam-, 57h)"
-   ]
+   "quotes": []
   },
   "N-reset": {
    "n": 0,
-   "of": 41,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-pace": {
    "n": 0,
-   "of": 41,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-fast": {
    "n": 0,
-   "of": 41,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-balance": {
    "n": 0,
-   "of": 41,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   }

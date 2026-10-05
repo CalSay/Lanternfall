@@ -1,8 +1,8 @@
 {
  "slug": "raid-shadow-legends",
- "n_reviews": 564,
+ "n_reviews": 548,
  "n_pos": 227,
- "n_neg": 337,
+ "n_neg": 321,
  "n_longplay_neg": 25,
  "sources": [
   "steam",
@@ -136,8 +136,8 @@
    ]
   },
   "N-ads": {
-   "n": 29,
-   "of": 337,
+   "n": 28,
+   "of": 321,
    "longplay_n": 1,
    "quotes": [
     "The aggressive marketing and constant ads even while playing is what truly kill it, even for whale players. (steam-, 8h)",
@@ -145,8 +145,8 @@
    ]
   },
   "N-wall": {
-   "n": 62,
-   "of": 337,
+   "n": 60,
+   "of": 321,
    "longplay_n": 5,
    "quotes": [
     "Drains the batteries, if you don\u2019t want to spend money, be ready for lots and lots of grinding. (apple1)",
@@ -154,8 +154,8 @@
    ]
   },
   "N-pay": {
-   "n": 50,
-   "of": 337,
+   "n": 49,
+   "of": 321,
    "longplay_n": 3,
    "quotes": [
     "Why can you just make a game where the micro transactions are for cosmetic stuff only why have a pay to win game ? (apple2)",
@@ -164,7 +164,7 @@
   },
   "N-dominant": {
    "n": 3,
-   "of": 337,
+   "of": 321,
    "longplay_n": 1,
    "quotes": [
     "Good luck if you miss one because the meta is built around these fusion champions. (steam-, 4007h)"
@@ -172,7 +172,7 @@
   },
   "N-late": {
    "n": 10,
-   "of": 337,
+   "of": 321,
    "longplay_n": 0,
    "quotes": [
     "Where this game falters for me is in the end game play style. (apple3)",
@@ -181,21 +181,21 @@
   },
   "N-offline": {
    "n": 0,
-   "of": 337,
+   "of": 321,
    "longplay_n": 0,
    "quotes": []
   },
   "N-mobile": {
    "n": 4,
-   "of": 337,
+   "of": 321,
    "longplay_n": 0,
    "quotes": [
     "You would think that they would let players opt out of these notifications. (apple1)"
    ]
   },
   "N-bug": {
-   "n": 21,
-   "of": 337,
+   "n": 19,
+   "of": 321,
    "longplay_n": 2,
    "quotes": [
     "The updates they push out as \u201ccontent\u201d are really just patches for bugs with the occasional character balance. (apple1)",
@@ -203,8 +203,8 @@
    ]
   },
   "N-energy": {
-   "n": 41,
-   "of": 337,
+   "n": 40,
+   "of": 321,
    "longplay_n": 2,
    "quotes": [
     "An other majorly huge problem is the games use of \u201cenergy\u201d and silver coins. (apple2)",
@@ -213,22 +213,22 @@
   },
   "N-bloat": {
    "n": 0,
-   "of": 337,
+   "of": 321,
    "longplay_n": 0,
    "quotes": []
   },
   "N-chore": {
-   "n": 12,
-   "of": 337,
+   "n": 11,
+   "of": 321,
    "longplay_n": 1,
    "quotes": [
-    "Feels more like chore than an actual game. (steam-, 1787h)",
-    "It\u2019s possible to be F2P but it\u2019s a chore. (apple3)"
+    "It\u2019s possible to be F2P but it\u2019s a chore. (apple3)",
+    "Which i can\u2019t complete until basically the end of the month to do all the daily quests 30. (apple1)"
    ]
   },
   "N-tutorial": {
    "n": 4,
-   "of": 337,
+   "of": 321,
    "longplay_n": 0,
    "quotes": [
     "No where in the tutorial is this stated or given direction to do so. (apple3)",
@@ -236,8 +236,8 @@
    ]
   },
   "N-shallow": {
-   "n": 11,
-   "of": 337,
+   "n": 9,
+   "of": 321,
    "longplay_n": 2,
    "quotes": [
     "It seems simple, you pick one to four characters and the characters you pick should be the ones to fight. (apple1)",
@@ -246,19 +246,19 @@
   },
   "N-reset": {
    "n": 0,
-   "of": 337,
+   "of": 321,
    "longplay_n": 0,
    "quotes": []
   },
   "N-pace": {
    "n": 0,
-   "of": 337,
+   "of": 321,
    "longplay_n": 0,
    "quotes": []
   },
   "N-fast": {
    "n": 1,
-   "of": 337,
+   "of": 321,
    "longplay_n": 0,
    "quotes": [
     "A lot of the events would go by too fast not leaving enough time for me to earn good rewards, if any. (apple3)"
@@ -266,7 +266,7 @@
   },
   "N-balance": {
    "n": 14,
-   "of": 337,
+   "of": 321,
    "longplay_n": 1,
    "quotes": [
     "First create an OP Champion as a problem and then release the counter in another fusion. (steam-, 4007h)",

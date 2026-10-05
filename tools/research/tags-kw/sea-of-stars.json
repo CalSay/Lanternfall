@@ -1,8 +1,8 @@
 {
  "slug": "sea-of-stars",
- "n_reviews": 143,
+ "n_reviews": 138,
  "n_pos": 85,
- "n_neg": 58,
+ "n_neg": 53,
  "n_longplay_neg": 10,
  "sources": [
   "steam",
@@ -129,13 +129,13 @@
   },
   "N-ads": {
    "n": 0,
-   "of": 58,
+   "of": 53,
    "longplay_n": 0,
    "quotes": []
   },
   "N-wall": {
    "n": 3,
-   "of": 58,
+   "of": 53,
    "longplay_n": 0,
    "quotes": [
     "As it stands, this game is like a brick wall where they used peanut butter instead of mortar. (steam-, 36h)",
@@ -144,21 +144,21 @@
   },
   "N-pay": {
    "n": 0,
-   "of": 58,
+   "of": 53,
    "longplay_n": 0,
    "quotes": []
   },
   "N-dominant": {
    "n": 2,
-   "of": 58,
+   "of": 53,
    "longplay_n": 0,
    "quotes": [
     "I've never seen such cool character concepts be so dull, and the combat has no variety at all. (steam-, 18h)"
    ]
   },
   "N-late": {
-   "n": 7,
-   "of": 58,
+   "n": 6,
+   "of": 53,
    "longplay_n": 2,
    "quotes": [
     "It absolutely squanders some of the best pixel art put to motion with super repetitive gameplay and abysmal story and dialogue. (steam-, 30h)",
@@ -167,19 +167,19 @@
   },
   "N-offline": {
    "n": 0,
-   "of": 58,
+   "of": 53,
    "longplay_n": 0,
    "quotes": []
   },
   "N-mobile": {
    "n": 0,
-   "of": 58,
+   "of": 53,
    "longplay_n": 0,
    "quotes": []
   },
   "N-bug": {
    "n": 11,
-   "of": 58,
+   "of": 53,
    "longplay_n": 0,
    "quotes": [
     "Graphical glitch in the abandoned wizards lab. (apple3)",
@@ -188,7 +188,7 @@
   },
   "N-energy": {
    "n": 1,
-   "of": 58,
+   "of": 53,
    "longplay_n": 0,
    "quotes": [
     ":/ I looked up and it says not to use little fire/energy so I tried again but it still freezes. (apple3)"
@@ -196,19 +196,19 @@
   },
   "N-bloat": {
    "n": 0,
-   "of": 58,
+   "of": 53,
    "longplay_n": 0,
    "quotes": []
   },
   "N-chore": {
    "n": 0,
-   "of": 58,
+   "of": 53,
    "longplay_n": 0,
    "quotes": []
   },
   "N-tutorial": {
    "n": 3,
-   "of": 58,
+   "of": 53,
    "longplay_n": 1,
    "quotes": [
     "It's a 40 hour game with literally the same combat from the tutorial until the end. (steam-, 9h)",
@@ -217,7 +217,7 @@
   },
   "N-shallow": {
    "n": 1,
-   "of": 58,
+   "of": 53,
    "longplay_n": 0,
    "quotes": [
     "This game is as shallow and lacking in characterization as it is beautiful. (steam-, 9h)"
@@ -225,27 +225,25 @@
   },
   "N-reset": {
    "n": 0,
-   "of": 58,
+   "of": 53,
    "longplay_n": 0,
    "quotes": []
   },
   "N-pace": {
    "n": 0,
-   "of": 58,
+   "of": 53,
    "longplay_n": 0,
    "quotes": []
   },
   "N-fast": {
-   "n": 1,
-   "of": 58,
+   "n": 0,
+   "of": 53,
    "longplay_n": 1,
-   "quotes": [
-    "the journey is too easy and one way. (steam-, 51h)"
-   ]
+   "quotes": []
   },
   "N-balance": {
    "n": 1,
-   "of": 58,
+   "of": 53,
    "longplay_n": 0,
    "quotes": []
   }

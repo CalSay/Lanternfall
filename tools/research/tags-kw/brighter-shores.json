@@ -1,8 +1,8 @@
 {
  "slug": "brighter-shores",
- "n_reviews": 64,
+ "n_reviews": 50,
  "n_pos": 25,
- "n_neg": 39,
+ "n_neg": 25,
  "n_longplay_neg": 25,
  "sources": [
   "steam"
@@ -124,13 +124,13 @@
   },
   "N-ads": {
    "n": 0,
-   "of": 39,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-wall": {
-   "n": 16,
-   "of": 39,
+   "n": 9,
+   "of": 25,
    "longplay_n": 10,
    "quotes": [
     "- I'm too slow at moving around (steam-, 3h)",
@@ -139,7 +139,7 @@
   },
   "N-pay": {
    "n": 4,
-   "of": 39,
+   "of": 25,
    "longplay_n": 0,
    "quotes": [
     "Having a paywall for content on a game with under 100 people is insane. (steam-, 15h)",
@@ -148,13 +148,13 @@
   },
   "N-dominant": {
    "n": 0,
-   "of": 39,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-late": {
    "n": 2,
-   "of": 39,
+   "of": 25,
    "longplay_n": 1,
    "quotes": [
     "Outside of temporary events, the world feels empty, and the lack of meaningful multiplayer systems makes long-term engagement difficult. (steam-, 572h)"
@@ -162,31 +162,31 @@
   },
   "N-offline": {
    "n": 0,
-   "of": 39,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-mobile": {
    "n": 0,
-   "of": 39,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-bug": {
    "n": 0,
-   "of": 39,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-energy": {
    "n": 0,
-   "of": 39,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-bloat": {
    "n": 2,
-   "of": 39,
+   "of": 25,
    "longplay_n": 2,
    "quotes": [
     "UI is a mess and even harder to understand then the original. (steam-, 319h)"
@@ -194,7 +194,7 @@
   },
   "N-chore": {
    "n": 1,
-   "of": 39,
+   "of": 25,
    "longplay_n": 0,
    "quotes": [
     "Brighter Shores is a tedious, clunky chore simulator masquerading as nostalgia. (steam-)"
@@ -202,39 +202,37 @@
   },
   "N-tutorial": {
    "n": 0,
-   "of": 39,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-shallow": {
-   "n": 1,
-   "of": 39,
+   "n": 0,
+   "of": 25,
    "longplay_n": 1,
-   "quotes": [
-    "The reason why this game is so divisive is simple: this is actually an incremental \"idle game\" disguised as a MMORPG. (steam-, 187h)"
-   ]
+   "quotes": []
   },
   "N-reset": {
    "n": 0,
-   "of": 39,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-pace": {
    "n": 0,
-   "of": 39,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-fast": {
    "n": 0,
-   "of": 39,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-balance": {
    "n": 0,
-   "of": 39,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   }

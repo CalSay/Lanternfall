@@ -1,8 +1,8 @@
 {
  "slug": "fantasy-life-i",
- "n_reviews": 87,
+ "n_reviews": 78,
  "n_pos": 47,
- "n_neg": 40,
+ "n_neg": 31,
  "n_longplay_neg": 25,
  "sources": [
   "steam",
@@ -122,13 +122,13 @@
   },
   "N-ads": {
    "n": 0,
-   "of": 40,
+   "of": 31,
    "longplay_n": 0,
    "quotes": []
   },
   "N-wall": {
-   "n": 7,
-   "of": 40,
+   "n": 5,
+   "of": 31,
    "longplay_n": 6,
    "quotes": [
     "After ~38 hours (and grinding every job to Expert, mind you, I'm probably halfway through), story is still bland and rather boring. (steam-, 41h)",
@@ -137,19 +137,19 @@
   },
   "N-pay": {
    "n": 0,
-   "of": 40,
+   "of": 31,
    "longplay_n": 0,
    "quotes": []
   },
   "N-dominant": {
    "n": 0,
-   "of": 40,
+   "of": 31,
    "longplay_n": 0,
    "quotes": []
   },
   "N-late": {
    "n": 4,
-   "of": 40,
+   "of": 31,
    "longplay_n": 2,
    "quotes": [
     "This game's endgame is a pointless grind. (steam-, 128h)",
@@ -158,13 +158,13 @@
   },
   "N-offline": {
    "n": 0,
-   "of": 40,
+   "of": 31,
    "longplay_n": 0,
    "quotes": []
   },
   "N-mobile": {
    "n": 1,
-   "of": 40,
+   "of": 31,
    "longplay_n": 0,
    "quotes": [
     "Please fix controller support, remove touch screen controls when controller is connected (apple1)"
@@ -172,13 +172,13 @@
   },
   "N-bug": {
    "n": 0,
-   "of": 40,
+   "of": 31,
    "longplay_n": 0,
    "quotes": []
   },
   "N-energy": {
    "n": 2,
-   "of": 40,
+   "of": 31,
    "longplay_n": 2,
    "quotes": [
     "It might be charming enough to get you to come back in short bursts, but its too much. (steam-, 64h)"
@@ -186,7 +186,7 @@
   },
   "N-bloat": {
    "n": 1,
-   "of": 40,
+   "of": 31,
    "longplay_n": 1,
    "quotes": [
     "The story and setting are uninspired and confusing. (steam-, 111h)"
@@ -194,24 +194,23 @@
   },
   "N-chore": {
    "n": 1,
-   "of": 40,
+   "of": 31,
    "longplay_n": 1,
    "quotes": [
     "Overall it starts out fun and then it is death by a thousand papercuts of chores that ruin the experience. (steam-, 136h)"
    ]
   },
   "N-tutorial": {
-   "n": 2,
-   "of": 40,
+   "n": 1,
+   "of": 31,
    "longplay_n": 1,
    "quotes": [
-    "A game stripped of all the side stories; the guilds don't advance beyond the tutorial quest. (steam-, 52h)",
     "Still in the tutorial but the buttons still on the screen even when I\u2019m using my controller doesn\u2019t bother me too much. (apple2)"
    ]
   },
   "N-shallow": {
    "n": 2,
-   "of": 40,
+   "of": 31,
    "longplay_n": 2,
    "quotes": [
     "Game mechanics are overall unfocused and shallow. (steam-, 111h)",
@@ -220,25 +219,25 @@
   },
   "N-reset": {
    "n": 0,
-   "of": 40,
+   "of": 31,
    "longplay_n": 0,
    "quotes": []
   },
   "N-pace": {
    "n": 0,
-   "of": 40,
+   "of": 31,
    "longplay_n": 0,
    "quotes": []
   },
   "N-fast": {
    "n": 0,
-   "of": 40,
+   "of": 31,
    "longplay_n": 0,
    "quotes": []
   },
   "N-balance": {
    "n": 3,
-   "of": 40,
+   "of": 31,
    "longplay_n": 0,
    "quotes": [
     "While co-op technically exists, it takes several hours of solo play to unlock, and once available it is severely limited. (steam-, 4h)",

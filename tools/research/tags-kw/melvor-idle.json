@@ -1,8 +1,8 @@
 {
  "slug": "melvor-idle",
- "n_reviews": 395,
+ "n_reviews": 388,
  "n_pos": 244,
- "n_neg": 151,
+ "n_neg": 144,
  "n_longplay_neg": 25,
  "sources": [
   "steam",
@@ -138,7 +138,7 @@
   },
   "N-ads": {
    "n": 10,
-   "of": 151,
+   "of": 144,
    "longplay_n": 0,
    "quotes": [
     "On second launch I was shown ugly ads at the top and bottom of the page. (apple1)",
@@ -147,7 +147,7 @@
   },
   "N-wall": {
    "n": 17,
-   "of": 151,
+   "of": 144,
    "longplay_n": 1,
    "quotes": [
     "However, when I opened it up today I noticed there is now a pay wall to most of the content. (apple2)",
@@ -156,7 +156,7 @@
   },
   "N-pay": {
    "n": 15,
-   "of": 151,
+   "of": 144,
    "longplay_n": 0,
    "quotes": [
     "I understand that this is inspired by RuneScape, where a ton of skills are behind the paywall. (apple2)",
@@ -165,25 +165,25 @@
   },
   "N-dominant": {
    "n": 0,
-   "of": 151,
+   "of": 144,
    "longplay_n": 0,
    "quotes": []
   },
   "N-late": {
    "n": 1,
-   "of": 151,
+   "of": 144,
    "longplay_n": 0,
    "quotes": []
   },
   "N-offline": {
    "n": 0,
-   "of": 151,
+   "of": 144,
    "longplay_n": 0,
    "quotes": []
   },
   "N-mobile": {
    "n": 1,
-   "of": 151,
+   "of": 144,
    "longplay_n": 0,
    "quotes": [
     "When I\u2019m trying to do things I\u2019ve been spammed with offline notifications every time i gather a single resource. (apple2)"
@@ -191,7 +191,7 @@
   },
   "N-bug": {
    "n": 17,
-   "of": 151,
+   "of": 144,
    "longplay_n": 3,
    "quotes": [
     "Game worked for a while, but now on startup crashes immediately at loading screen. (steam-, 79h)",
@@ -199,8 +199,8 @@
    ]
   },
   "N-energy": {
-   "n": 4,
-   "of": 151,
+   "n": 3,
+   "of": 144,
    "longplay_n": 3,
    "quotes": [
     "By the time inventory stopped being crippingly annoying, I no longer cared to come back in. (steam-, 161h)",
@@ -209,7 +209,7 @@
   },
   "N-bloat": {
    "n": 9,
-   "of": 151,
+   "of": 144,
    "longplay_n": 1,
    "quotes": [
     "Want to buy a certain number of items, ohhh welcome to an exceptionally click heavy and confusing interface that constantly gets in your way. (steam-, 184h)",
@@ -218,7 +218,7 @@
   },
   "N-chore": {
    "n": 1,
-   "of": 151,
+   "of": 144,
    "longplay_n": 1,
    "quotes": [
     "Then there are the things that need you to check in every hour or so. (steam-, 182h)"
@@ -226,7 +226,7 @@
   },
   "N-tutorial": {
    "n": 13,
-   "of": 151,
+   "of": 144,
    "longplay_n": 2,
    "quotes": [
     "Melvor doesn't have any content like that, and it expects you to start grinding for grinding's sake as soon you finish the short tutorial. (steam-, 823h)",
@@ -235,25 +235,25 @@
   },
   "N-shallow": {
    "n": 3,
-   "of": 151,
+   "of": 144,
    "longplay_n": 0,
    "quotes": []
   },
   "N-reset": {
    "n": 0,
-   "of": 151,
+   "of": 144,
    "longplay_n": 0,
    "quotes": []
   },
   "N-pace": {
    "n": 0,
-   "of": 151,
+   "of": 144,
    "longplay_n": 0,
    "quotes": []
   },
   "N-fast": {
    "n": 1,
-   "of": 151,
+   "of": 144,
    "longplay_n": 0,
    "quotes": [
     "Too easy to finish the game using mods like Time Skip (apple2)"
@@ -261,7 +261,7 @@
   },
   "N-balance": {
    "n": 1,
-   "of": 151,
+   "of": 144,
    "longplay_n": 0,
    "quotes": []
   }

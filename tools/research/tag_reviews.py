@@ -43,26 +43,28 @@ def quote(text, rx):
             w = s.split()
             if 6 <= len(w) <= 25: return s.strip()
     return None
-def reviews(d):
+def reviews(d, with_longplay=False):
+    """General sample: Steam top positives and top negatives, plus App Store reviews. The separately pulled 50h+ Steam
+    negatives (neg_longplay_50h) are NOT mixed into the general sample; they are returned only when with_longplay=True."""
     out = []
     s = d.get('steam')
     if s:
         for r in s['pos']: out.append(('steam+', r['votes_up'], r['hours'], r['text']))
         for r in s['neg']: out.append(('steam-', r['votes_up'], r['hours'], r['text']))
-        ids = {r['id'] for r in s['neg']}
-        for r in s['neg_longplay_50h']:
-            if r['id'] not in ids: out.append(('steam-', r['votes_up'], r['hours'], r['text']))
+        if with_longplay:
+            for r in s['neg_longplay_50h']: out.append(('steam-lp', r['votes_up'], r['hours'], r['text']))
     a = d.get('apple')
     if a:
         for r in a['reviews']: out.append(('apple%d' % r['stars'], r['votes'], None, r['title'] + '. ' + r['text']))
     return out
+
 if __name__ == '__main__':
     root = sys.argv[1]; os.makedirs(root + '/tags-kw', exist_ok=True); allc = {}
     for f in sorted(glob.glob(root + '/raw/*.json')):
-        d = json.load(open(f)); R = reviews(d)
+        d = json.load(open(f)); R = reviews(d); LP = [r for r in reviews(d, True) if r[0] == 'steam-lp']
         pos = [r for r in R if r[0] == 'steam+' or r[0] in ('apple4', 'apple5')]
         neg = [r for r in R if r[0] == 'steam-' or r[0] in ('apple1', 'apple2', 'apple3')]
-        longneg = [r for r in neg if (r[2] or 0) >= 50]
+        longneg = LP
         res = {'slug': d['slug'], 'n_reviews': len(R), 'n_pos': len(pos), 'n_neg': len(neg), 'n_longplay_neg': len(longneg),
                'sources': [k for k in ('steam', 'apple') if d.get(k)], 'themes': {}}
         for k, rx in RX.items():

@@ -1,8 +1,8 @@
 {
  "slug": "rustys-retirement",
- "n_reviews": 51,
+ "n_reviews": 50,
  "n_pos": 25,
- "n_neg": 26,
+ "n_neg": 25,
  "n_longplay_neg": 8,
  "sources": [
   "steam"
@@ -115,13 +115,13 @@
   },
   "N-ads": {
    "n": 0,
-   "of": 26,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-wall": {
    "n": 3,
-   "of": 26,
+   "of": 25,
    "longplay_n": 1,
    "quotes": [
     "Less of a game and more of interactive wall paper. (steam-, 77h)",
@@ -130,19 +130,19 @@
   },
   "N-pay": {
    "n": 0,
-   "of": 26,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-dominant": {
    "n": 0,
-   "of": 26,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-late": {
    "n": 3,
-   "of": 26,
+   "of": 25,
    "longplay_n": 2,
    "quotes": [
     "Gets repetitive extremely fast, not very fun and requires a lot more attention than an afk game should (steam-, 34h)",
@@ -151,7 +151,7 @@
   },
   "N-offline": {
    "n": 1,
-   "of": 26,
+   "of": 25,
    "longplay_n": 1,
    "quotes": [
     "Its \"game\" elements are very limited and contains no offline progression (not that it needs it). (steam-, 186h)"
@@ -159,67 +159,67 @@
   },
   "N-mobile": {
    "n": 0,
-   "of": 26,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-bug": {
    "n": 1,
-   "of": 26,
+   "of": 25,
    "longplay_n": 1,
    "quotes": []
   },
   "N-energy": {
    "n": 1,
-   "of": 26,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-bloat": {
    "n": 0,
-   "of": 26,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-chore": {
    "n": 0,
-   "of": 26,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-tutorial": {
    "n": 0,
-   "of": 26,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-shallow": {
    "n": 0,
-   "of": 26,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-reset": {
    "n": 0,
-   "of": 26,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-pace": {
    "n": 0,
-   "of": 26,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-fast": {
    "n": 0,
-   "of": 26,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-balance": {
    "n": 0,
-   "of": 26,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   }

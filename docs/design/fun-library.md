@@ -8,8 +8,9 @@ Evidence is committed under `tools/research/`: `raw/` (review text per game), `t
 
 ## 1. How to read this (limits first)
 
-- **Corpus:** 56 games, **11,679 distinct reviews**: 7,516 positive and 4,163 negative (3,000 App Store negatives and 1,163
-  Steam negatives). 632 of the Steam negatives come from players with 50+ hours: the "why committed players quit" set.
+- **Corpus:** 56 games. The general sample is **11,374 distinct reviews**: 7,516 positive and 3,858 negative (3,000 App Store
+  negatives, 858 Steam negatives). Separately, 632 negatives from Steam players with 50+ hours were pulled as the "why
+  committed players quit" set. That set is analysed on its own and never mixed into the general counts or the platform table.
 - **Sources per game:** the Steam review feed (one page of up to 100 reviews per sentiment over the widest window the API
   allows, the last 365 days, helpful-first; deduplicated by review id) and the App Store RSS feed (up to 5 pages each of
   most helpful and most recent). Both work from this container. Steam gives the last year's most helpful reviews, not
@@ -153,26 +154,27 @@ Lanternfall: skills and crafting (area 10). Measure: share of outputs used by an
 
 ## 4. What makes players quit or complain
 
-Counts are negative reviews matching the theme. Long-play counts only Steam negatives from players with 50+ hours (632
-reviews), the closest we have to "why committed players leave".
+Counts are negative reviews matching the theme. The long-play set is a separate pull of Steam negatives from players with 50+
+hours (632 reviews, up to 25 per game from each game's 100 most helpful negatives of the last year), the closest we have to
+"why committed players leave". Its counts are not part of the general column.
 
-| # | Theme | All negatives (4,163) | Long-play (632) | Strongest in |
+| # | Theme | General negatives (3,858) | Long-play set (632) | Strongest in |
 |---|---|---|---|---|
-| Q1 | Bugs, crashes, lost saves | 590 | 33 | Cassette Beasts 68, IdleOn 37, Slay the Spire 34, Shop Titans 33 |
-| Q2 | Progress walls and grind | 472 | 99 | RAID 62, AFK Arena 23, Idle Archer TD 20, Hero Wars 19, Idle Slayer 19 |
-| Q3 | Ads | 435 | 7 | phones: AdVenture Capitalist 86, Idle Miner Tycoon 49, Tiny Tower 35 |
-| Q4 | Pay-to-win and paywalls | 260 | 29 | RAID 50, Shop Titans 22, Hero Wars 21, AFK Arena 20 |
-| Q5 | Empty or repetitive endgame | 183 | 48 | Forager 10, Idle Slayer 10, RAID 10, Potion Craft 9 |
-| Q6 | Shallow, plays itself | 143 | 35 | AdVenture Capitalist 13, RAID 11, Vampire Survivors 8 |
-| Q7 | Energy, timers, wait gates | 158 | 22 | RAID 41, Hero Wars 23, Shop Titans 9 |
-| Q8 | Cluttered or bloated menus | 61 | 14 | Melvor 9, Tiny Tower 5, Leaf Blower 4 |
-| Q9 | One dominant strategy | 29 | 7 | Gnorp Apologue 6, Rogue Legacy 2 4 |
-| Q10 | Confusing start or tutorial | 65 | 6 | Melvor 13, Cassette Beasts 7 |
-| Q11 | Chores and forced check-ins | 49 | 12 | RAID 12, Stardew Valley 5 |
+| Q1 | Bugs, crashes, lost saves | 576 | 33 | Cassette Beasts 68, IdleOn 37, Slay the Spire 33, Idle Miner Tycoon 32 |
+| Q2 | Progress walls and grind | 423 | 99 | RAID 60, AFK Arena 23, Idle Archer TD 20, Hero Wars 19, Idle Slayer 17 |
+| Q3 | Ads | 431 | 7 | phones: AdVenture Capitalist 85, Idle Miner Tycoon 49, Tiny Tower 35 |
+| Q4 | Pay-to-win and paywalls | 251 | 29 | RAID 49, Hero Wars 21, AFK Arena 20, Shop Titans 19 |
+| Q5 | Empty or repetitive endgame | 160 | 48 | RAID 10, Idle Slayer 9, Hero Wars 8, Potion Craft 8 |
+| Q6 | Shallow, plays itself | 124 | 35 | AdVenture Capitalist 9, RAID 9, AFK Arena 7, Vampire Survivors 7 |
+| Q7 | Energy, timers, wait gates | 145 | 22 | RAID 40, Hero Wars 23, Shop Titans 9 |
+| Q8 | Cluttered or bloated menus | 58 | 14 | Melvor 9, Tiny Tower 5, AFK Arena 3, Cassette Beasts 3 |
+| Q9 | One dominant strategy | 27 | 7 | Gnorp Apologue 6, Rogue Legacy 2 4 |
+| Q10 | Confusing start or tutorial | 63 | 6 | Melvor 13, Cassette Beasts 7 |
+| Q11 | Chores and forced check-ins | 45 | 12 | RAID 11, Stardew Valley 5 |
 
 Reading the long-play column: committed players leave over **walls (99), an empty or repetitive endgame (48), shallow
 loops (35), bugs and lost progress (33), pay gates (29) and energy or timer gates (22)**. Ads and tutorials barely
-appear among them (7 and 6), so they drive early churn, not late quits. Dominant strategy is rare everywhere (29), and
+appear among them (7 and 6), so they drive early churn, not late quits. Dominant strategy is rare everywhere (27), and
 mostly a meta-build complaint in Gnorp Apologue and Rogue Legacy 2.
 
 "Late game is farming the big void to deeper and deeper levels." (Forager, Steam, 27h)
@@ -182,22 +184,27 @@ mostly a meta-build complaint in Gnorp Apologue and Rogue Legacy 2.
 
 ## 5. What phone players complain about that PC players do not
 
-Share of each platform's negative reviews (3,000 App Store, 1,163 Steam).
+Share of each source's negative reviews: App Store 3,000, Steam 858. **These are source-specific samples, not matched
+ones**: the Steam sample is each game's top 25 most helpful negatives of the last year, the App Store sample is the helpful
+plus recent feed, and the long-play pull is excluded. Read the table as indicative, not as proof of platform behaviour.
 
-| Theme | Phone | PC | Meaning |
+| Theme | App Store | Steam | Meaning |
 |---|---|---|---|
-| Ads | 14.0% | 1.2% | Phone-only complaint |
-| Bugs and crashes | 18.1% | 4.0% | Phones crash and lose progress more |
-| Battery, notifications, overheating | 1.6% | 0.4% | Small, but only a phone problem |
-| Pay-to-win and paywalls | 6.7% | 5.1% | Similar |
-| Energy and timers | 4.0% | 3.2% | Similar |
-| Progress walls | 9.7% | 15.6% | PC players, who play longer, hit walls more |
-| Empty endgame | 3.0% | 8.1% | Long-play PC players reach it more |
-| Shallow | 2.8% | 5.0% | More on PC |
-| Cluttered menus | 1.3% | 2.0% | Slightly more on PC |
-| Dominant strategy | 0.3% | 1.7% | PC only, but small |
+| Ads | 14.0% | 1.2% | Large gap, far outside sampling noise |
+| Bugs and crashes | 18.1% | 3.8% | Large gap |
+| Battery, notifications, overheating | 1.6% | 0.5% | Small, phone-only in kind |
+| Pay-to-win and paywalls | 6.7% | 5.8% | Similar |
+| Energy and timers | 4.0% | 2.8% | Similar |
+| Progress walls | 9.7% | 15.5% | Steam higher, but the Steam sample is helpful-first |
+| Empty endgame | 3.0% | 8.3% | Steam higher; same caveat |
+| Shallow | 2.8% | 4.5% | Steam higher; same caveat |
+| Cluttered menus | 1.3% | 2.3% | Steam higher; same caveat |
+| Dominant strategy | 0.3% | 2.1% | Steam higher; small counts |
 
-Lanternfall is phone-first, so Q1 and Q3 weigh most; players on a desktop browser reach Q2 and Q5 sooner.
+The two big gaps (ads, bugs) are far larger than a sampling rule would explain, so they are safe to act on. The smaller
+Steam-higher rows could partly come from how Steam reviews were chosen.
+
+Lanternfall is phone-first, so Q1 and Q3 weigh most.
 
 ## 6. Principle count and gate status
 

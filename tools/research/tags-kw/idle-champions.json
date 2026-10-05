@@ -1,8 +1,8 @@
 {
  "slug": "idle-champions",
- "n_reviews": 54,
+ "n_reviews": 50,
  "n_pos": 25,
- "n_neg": 29,
+ "n_neg": 25,
  "n_longplay_neg": 25,
  "sources": [
   "steam"
@@ -117,22 +117,21 @@
   },
   "N-ads": {
    "n": 0,
-   "of": 29,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-wall": {
-   "n": 2,
-   "of": 29,
+   "n": 1,
+   "of": 25,
    "longplay_n": 2,
    "quotes": [
-    "Bad idler, requires constant upkeep to progress, adventures are short and if you get stuck you really have to restart. (steam-, 263h)",
-    "But it's such quick bursts of joy, followed by mindless grinding and optimizing. (steam-, 5361h)"
+    "Bad idler, requires constant upkeep to progress, adventures are short and if you get stuck you really have to restart. (steam-, 263h)"
    ]
   },
   "N-pay": {
    "n": 4,
-   "of": 29,
+   "of": 25,
    "longplay_n": 3,
    "quotes": [
     "Since the release of premium platinum currency, the cash grab has been even worse. (steam-, 8433h)",
@@ -141,25 +140,25 @@
   },
   "N-dominant": {
    "n": 0,
-   "of": 29,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-late": {
    "n": 0,
-   "of": 29,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-offline": {
    "n": 0,
-   "of": 29,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-mobile": {
    "n": 1,
-   "of": 29,
+   "of": 25,
    "longplay_n": 1,
    "quotes": [
     "If a window or notification ha (steam-, 9468h)"
@@ -167,7 +166,7 @@
   },
   "N-bug": {
    "n": 2,
-   "of": 29,
+   "of": 25,
    "longplay_n": 2,
    "quotes": [
     "Consistently has bugs and at times the core strategy for beating difficult missions is to use bugs/exploits. (steam-, 10207h)",
@@ -176,13 +175,13 @@
   },
   "N-energy": {
    "n": 0,
-   "of": 29,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-bloat": {
    "n": 1,
-   "of": 29,
+   "of": 25,
    "longplay_n": 1,
    "quotes": [
     "Too many things interrupt the gameplay. (steam-, 9468h)"
@@ -190,46 +189,45 @@
   },
   "N-chore": {
    "n": 1,
-   "of": 29,
+   "of": 25,
    "longplay_n": 1,
    "quotes": []
   },
   "N-tutorial": {
    "n": 0,
-   "of": 29,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-shallow": {
-   "n": 3,
-   "of": 29,
+   "n": 2,
+   "of": 25,
    "longplay_n": 3,
    "quotes": [
-    "Flop: Even with all graphical features turned off, this relatively simple 2D idle game can become surprisingly resource-hungry and increasingly unstable. (steam-, 9468h)",
-    "But it's such quick bursts of joy, followed by mindless grinding and optimizing. (steam-, 5361h)"
+    "Flop: Even with all graphical features turned off, this relatively simple 2D idle game can become surprisingly resource-hungry and increasingly unstable. (steam-, 9468h)"
    ]
   },
   "N-reset": {
    "n": 0,
-   "of": 29,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-pace": {
    "n": 0,
-   "of": 29,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-fast": {
    "n": 0,
-   "of": 29,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-balance": {
    "n": 0,
-   "of": 29,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   }

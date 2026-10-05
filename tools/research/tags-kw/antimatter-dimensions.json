@@ -1,8 +1,8 @@
 {
  "slug": "antimatter-dimensions",
- "n_reviews": 88,
+ "n_reviews": 78,
  "n_pos": 45,
- "n_neg": 43,
+ "n_neg": 33,
  "n_longplay_neg": 25,
  "sources": [
   "steam",
@@ -116,17 +116,17 @@
    "quotes": []
   },
   "N-ads": {
-   "n": 5,
-   "of": 43,
+   "n": 4,
+   "of": 33,
    "longplay_n": 1,
    "quotes": [
     "Absolute amateur hour that doesn\u2019t give the genius of the original AD game any justice. (apple1)",
-    "I saw someone ranting about how \"Revolution Idle copied AD\" (which arguably it didn't), checked their profile, an (steam-, 1076h)"
+    "I love AD & played Steam & the unofficial iOS version, iPad & iPhone felt like steam version on my device. (apple1)"
    ]
   },
   "N-wall": {
-   "n": 5,
-   "of": 43,
+   "n": 3,
+   "of": 33,
    "longplay_n": 4,
    "quotes": [
     "I love idle games but this is just way too slow for me. (steam-, 62h)",
@@ -135,7 +135,7 @@
   },
   "N-pay": {
    "n": 1,
-   "of": 43,
+   "of": 33,
    "longplay_n": 0,
    "quotes": [
     "Is this a weird low effort iAP cash grab? (apple1)"
@@ -143,90 +143,85 @@
   },
   "N-dominant": {
    "n": 0,
-   "of": 43,
+   "of": 33,
    "longplay_n": 0,
    "quotes": []
   },
   "N-late": {
    "n": 0,
-   "of": 43,
+   "of": 33,
    "longplay_n": 0,
    "quotes": []
   },
   "N-offline": {
    "n": 0,
-   "of": 43,
+   "of": 33,
    "longplay_n": 0,
    "quotes": []
   },
   "N-mobile": {
    "n": 0,
-   "of": 43,
+   "of": 33,
    "longplay_n": 0,
    "quotes": []
   },
   "N-bug": {
    "n": 0,
-   "of": 43,
+   "of": 33,
    "longplay_n": 0,
    "quotes": []
   },
   "N-energy": {
    "n": 0,
-   "of": 43,
+   "of": 33,
    "longplay_n": 0,
    "quotes": []
   },
   "N-bloat": {
    "n": 0,
-   "of": 43,
+   "of": 33,
    "longplay_n": 0,
    "quotes": []
   },
   "N-chore": {
-   "n": 1,
-   "of": 43,
+   "n": 0,
+   "of": 33,
    "longplay_n": 1,
-   "quotes": [
-    "Way too slow even for an idle/clicker type game, eternity challenges made me quit, it just became a chore even with offline progression. (steam-, 294h)"
-   ]
+   "quotes": []
   },
   "N-tutorial": {
    "n": 0,
-   "of": 43,
+   "of": 33,
    "longplay_n": 0,
    "quotes": []
   },
   "N-shallow": {
-   "n": 3,
-   "of": 43,
+   "n": 1,
+   "of": 33,
    "longplay_n": 3,
-   "quotes": [
-    "At least at the beginning its a simple design, and the gameplay is quite cyclical. (steam-, 252h)",
-    "Game get to a point that you have to leave it afk for a week to just click 1 button. (steam-, 389h)"
-   ]
+   "quotes": []
   },
   "N-reset": {
    "n": 0,
-   "of": 43,
+   "of": 33,
    "longplay_n": 0,
    "quotes": []
   },
   "N-pace": {
    "n": 0,
-   "of": 43,
+   "of": 33,
    "longplay_n": 0,
    "quotes": []
   },
   "N-fast": {
    "n": 0,
-   "of": 43,
+   "of": 33,
    "longplay_n": 0,
    "quotes": []
   },
   "N-balance": {
    "n": 0,
-   "of": 43,
+   "of": 33,
    "longplay_n": 0,
    "quotes": []
   }

@@ -1,8 +1,8 @@
 {
  "slug": "chained-echoes",
- "n_reviews": 67,
+ "n_reviews": 50,
  "n_pos": 25,
- "n_neg": 42,
+ "n_neg": 25,
  "n_longplay_neg": 20,
  "sources": [
   "steam"
@@ -119,61 +119,59 @@
   },
   "N-ads": {
    "n": 0,
-   "of": 42,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-wall": {
-   "n": 9,
-   "of": 42,
+   "n": 3,
+   "of": 25,
    "longplay_n": 7,
    "quotes": [
-    "The relatively low need for grinding also helped keep the focus on how I used the party. (steam-, 35h)",
-    "leveling is convoluted and takes forever and grinding to gain doesnt exist. (steam-, 62h)"
+    "The relatively low need for grinding also helped keep the focus on how I used the party. (steam-, 35h)"
    ]
   },
   "N-pay": {
    "n": 0,
-   "of": 42,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-dominant": {
    "n": 0,
-   "of": 42,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-late": {
-   "n": 1,
-   "of": 42,
+   "n": 0,
+   "of": 25,
    "longplay_n": 1,
    "quotes": []
   },
   "N-offline": {
    "n": 0,
-   "of": 42,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-mobile": {
-   "n": 2,
-   "of": 42,
+   "n": 1,
+   "of": 25,
    "longplay_n": 1,
    "quotes": [
-    "But the sluggish and unfair battle, annoying and random overheat system, unnessarily complicated skill and weapon system can never make me finish the game (steam-, 13h)",
-    "The overheat mechanic is kind of annoying when you're starting to get into a flow state. (steam-, 53h)"
+    "But the sluggish and unfair battle, annoying and random overheat system, unnessarily complicated skill and weapon system can never make me finish the game (steam-, 13h)"
    ]
   },
   "N-bug": {
    "n": 0,
-   "of": 42,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-energy": {
    "n": 1,
-   "of": 42,
+   "of": 25,
    "longplay_n": 0,
    "quotes": [
     "Wait for your turn and READ to find out. (steam-, 4h)"
@@ -181,49 +179,49 @@
   },
   "N-bloat": {
    "n": 0,
-   "of": 42,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-chore": {
    "n": 0,
-   "of": 42,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-tutorial": {
    "n": 0,
-   "of": 42,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-shallow": {
    "n": 1,
-   "of": 42,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-reset": {
    "n": 0,
-   "of": 42,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-pace": {
    "n": 0,
-   "of": 42,
+   "of": 25,
    "longplay_n": 0,
    "quotes": []
   },
   "N-fast": {
-   "n": 1,
-   "of": 42,
+   "n": 0,
+   "of": 25,
    "longplay_n": 1,
    "quotes": []
   },
   "N-balance": {
    "n": 1,
-   "of": 42,
+   "of": 25,
    "longplay_n": 0,
    "quotes": [
     "But the sluggish and unfair battle, annoying and random overheat system, unnessarily complicated skill and weapon system can never make me finish the game (steam-, 13h)"

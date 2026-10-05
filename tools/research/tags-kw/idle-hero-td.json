@@ -1,8 +1,8 @@
 {
  "slug": "idle-hero-td",
- "n_reviews": 100,
+ "n_reviews": 87,
  "n_pos": 51,
- "n_neg": 49,
+ "n_neg": 36,
  "n_longplay_neg": 25,
  "sources": [
   "steam",
@@ -124,8 +124,8 @@
    "quotes": []
   },
   "N-ads": {
-   "n": 4,
-   "of": 49,
+   "n": 3,
+   "of": 36,
    "longplay_n": 2,
    "quotes": [
     "I could deal with this if it wasn't for the crazy ads everywhere, trying to fish for whales. (steam-, 45h)",
@@ -134,7 +134,7 @@
   },
   "N-wall": {
    "n": 5,
-   "of": 49,
+   "of": 36,
    "longplay_n": 3,
    "quotes": [
     "the problem is that they call it an 'idler' to cover up the grind and some of the slow, poorly designed aspects of the game. (steam-, 9106h)",
@@ -142,8 +142,8 @@
    ]
   },
   "N-pay": {
-   "n": 14,
-   "of": 49,
+   "n": 13,
+   "of": 36,
    "longplay_n": 6,
    "quotes": [
     "This game hits just about every square in predatory microtransaction bingo. (steam-, 1h)",
@@ -152,13 +152,13 @@
   },
   "N-dominant": {
    "n": 0,
-   "of": 49,
+   "of": 36,
    "longplay_n": 0,
    "quotes": []
   },
   "N-late": {
    "n": 5,
-   "of": 49,
+   "of": 36,
    "longplay_n": 2,
    "quotes": [
     "i would need like 6000 hours to get to the endgame, idc if it's an idle game i am not doing that (steam-, 1h)",
@@ -167,19 +167,19 @@
   },
   "N-offline": {
    "n": 0,
-   "of": 49,
+   "of": 36,
    "longplay_n": 0,
    "quotes": []
   },
   "N-mobile": {
    "n": 1,
-   "of": 49,
+   "of": 36,
    "longplay_n": 0,
    "quotes": []
   },
   "N-bug": {
    "n": 1,
-   "of": 49,
+   "of": 36,
    "longplay_n": 0,
    "quotes": [
     "As far as the game itself, it runs without bugs and there are a lot of buttons to press to level this and that. (steam-, 45h)"
@@ -187,7 +187,7 @@
   },
   "N-energy": {
    "n": 2,
-   "of": 49,
+   "of": 36,
    "longplay_n": 1,
    "quotes": [
     "The primary game loop is: prestige, buy upgrades, come back later, buy upgrades, come back later, prestige, repeat. (steam-, 85h)"
@@ -195,39 +195,37 @@
   },
   "N-bloat": {
    "n": 0,
-   "of": 49,
+   "of": 36,
    "longplay_n": 0,
    "quotes": []
   },
   "N-chore": {
    "n": 0,
-   "of": 49,
+   "of": 36,
    "longplay_n": 0,
    "quotes": []
   },
   "N-tutorial": {
    "n": 0,
-   "of": 49,
+   "of": 36,
    "longplay_n": 0,
    "quotes": []
   },
   "N-shallow": {
-   "n": 1,
-   "of": 49,
+   "n": 0,
+   "of": 36,
    "longplay_n": 1,
-   "quotes": [
-    "One of those simple game that wants you to spend $1000 per week to advance 1 level (steam-, 875h)"
-   ]
+   "quotes": []
   },
   "N-reset": {
    "n": 0,
-   "of": 49,
+   "of": 36,
    "longplay_n": 0,
    "quotes": []
   },
   "N-pace": {
    "n": 1,
-   "of": 49,
+   "of": 36,
    "longplay_n": 1,
    "quotes": [
     "early game is BORING and the whole game after 2 days feels like a waste of time. (steam-, 95h)"
@@ -235,17 +233,16 @@
   },
   "N-fast": {
    "n": 0,
-   "of": 49,
+   "of": 36,
    "longplay_n": 0,
    "quotes": []
   },
   "N-balance": {
-   "n": 2,
-   "of": 49,
+   "n": 1,
+   "of": 36,
    "longplay_n": 1,
    "quotes": [
-    "As someone who specifically seeks out single-player games to avoid the stress and balance issues of player versus player environments, this omission is a dealbreaker. (steam-, 1h)",
-    "Nerfed the premium battlepass, why spend money on things that can then be taken away? (steam-, 2974h)"
+    "As someone who specifically seeks out single-player games to avoid the stress and balance issues of player versus player environments, this omission is a dealbreaker. (steam-, 1h)"
    ]
   }
  }
