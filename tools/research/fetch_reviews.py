@@ -21,9 +21,7 @@ def steam(appid):
         cur, seen = "*", 0
         for _ in range(3):
             d = get(base.replace("filter=all", "filter=all") + urllib.parse.quote(cur) + "&review_type=" + kind)
-            if "_error" in d:
-                if cur == "*": raise RuntimeError("steam %s %s feed failed: %s" % (appid, kind, d["_error"]))
-                break
+            if "_error" in d: raise RuntimeError("steam %s %s feed failed: %s" % (appid, kind, d["_error"]))
             if not d.get("reviews"): break
             if not out["summary"]: out["summary"] = d.get("query_summary")
             for r in d["reviews"]:
@@ -44,8 +42,8 @@ def apple(appid, country="us"):
     for sort in ("mosthelpful", "mostrecent"):
         for p in range(1, 6):
             d = get("https://itunes.apple.com/%s/rss/customerreviews/page=%d/id=%s/sortby=%s/json" % (country, p, appid, sort))
-            if "_error" in d and p == 1 and sort == "mosthelpful":
-                raise RuntimeError("apple %s feed failed: %s" % (appid, d["_error"]))
+            if "_error" in d:  # past the end of a feed Apple returns 200 with no entries, so an error is always real
+                raise RuntimeError("apple %s page %d %s feed failed: %s" % (appid, p, sort, d["_error"]))
             ents = d.get("feed", {}).get("entry", []) if isinstance(d, dict) else []
             if not ents: break
             for e in ents:

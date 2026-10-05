@@ -134,7 +134,12 @@ Treat the count as high-noise (the pattern includes "quests" and "characters").
 Lanternfall: area 15. Medium confidence.
 
 **P11. Charm: art, music and voice.**
-242 positive reviews (13 games). Strong in pixel-art idlers. Lanternfall: area 17 and 18. Low risk, supports Compass.
+869 positive reviews across 41 games in the 56-game run (Banner Saga 79, Tiny Tower 60, A Dark Room 57, Egg Inc 40, OSRS 40);
+adjacent story games inflate this, so read it as "art matters", not as a ranking. Pixel-art idlers are the clearest case.
+"This game is great due to its immense detail, from the pixel art to the new Ambush mechanics." (Soda Dungeon 2, App Store 5 stars)
+"Maybe it's the way the music in this game calms me." (Leaf Blower Revolution, Steam, 37h)
+Lanternfall: areas 17 and 18; no new art goes in until the owner vets a whole pack (art freeze). Measure: audio and art rubric
+scores (`docs/review/art.md`), plus whether playtesters name the art unprompted.
 
 **P12. Quality of life and a UI that is easy to read.**
 159 positive reviews across 24 games (OSRS 14, Melvor 12, AFK Arena 10, IdleOn 9, Trimps 9, Orna 8; 56-game count).
@@ -192,7 +197,7 @@ Quotes:
 
 ## 5. What phone players complain about that PC players do not
 
-Rates are the share of that platform's negative reviews (1,300 App Store, 422 Steam). Steam-only games have no phone view.
+Rates are the share of that platform's negative reviews (App Store 1,300, Steam 422 in pass 1). Steam-only games have no phone view.
 
 | Theme | Phone | PC | Meaning |
 |---|---|---|---|
@@ -219,7 +224,8 @@ Every principle above is a candidate input, not a decision. Ideas built from the
 
 ## 7. Refresh
 
-Monthly: rerun `python3 tools/fetch_reviews.py corpus.json raw` then `python3 tools/tag_reviews.py .` from this folder;
+Monthly, from the repo root: `python3 tools/research/fetch_reviews.py tools/research/corpus.json tools/research/raw` then
+`python3 tools/research/tag_reviews.py tools/research` (the fetcher exits 1 and keeps old data for any game whose feed fails);
 update `ratings-*.json`; diff counts against this file. Copy into the repo as `docs/design/fun-library.md` by PR.
 
 ## 8. Full corpus: 56 games (use these counts)
@@ -270,7 +276,7 @@ judged too weakly supported). (2) **The empty endgame (Q5) now has 48 long-play 
 (5) P-offline's top is now AFK Arena (76), a gacha that sells AFK rewards, so it supports offline gathering but not
 offline combat, which Lanternfall rules out.
 
-### Phone versus PC, 56 games (3,897 negatives: 2,899 App Store, 998 Steam)
+### Phone versus PC, 56 games (4,895 negatives: 3,897 App Store, 998 Steam)
 
 | Theme | Phone | PC |
 |---|---|---|
