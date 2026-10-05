@@ -11044,6 +11044,28 @@ let OMENS, WEEKLY_GOALS;
     return { kind, t: b.rewT, n, txt: `${n} ${kind === 'ess' ? MAT.ess.short[b.rewT - 1] + ' Essence' : matName(kind, b.rewT)}` };
   }
   const bountyText = b => (b.elite ? 'Contract: ' : '') + (BTY_TEXT[b.k] ? BTY_TEXT[b.k](b) : 'A bounty');
+  // The fields each kind reads (its text, its progress test, its reward). btyShape(b) returns the first bad field of a
+  // filled slot, or null; the save-code check runs it on imported saves so a bad slot can't get stuck or throw on claim.
+  const btyInt = (v, lo) => Number.isInteger(v) && v >= lo;
+  const BTY_SHAPE = {
+    kill: b => btyInt(b.z, 1) ? null : 'z',
+    hunt: b => !btyInt(b.z, 1) ? 'z' : TYPES.some(t => t.key === b.foe) ? null : 'foe',
+    forage: b => b.fam === 'fibre' || b.fam === 'herb' ? null : 'fam',
+    make: b => Object.prototype.hasOwnProperty.call(STATIONS, b.st) ? null : 'st'
+  };
+  function btyShape(b) {
+    if (!BTY_TEXT[b.k]) return 'kind';
+    if (!btyInt(b.need, 1)) return 'need';
+    if (typeof b.have !== 'number' || !(b.have >= 0) || !Number.isFinite(b.have)) return 'have';
+    if (b.x != null && !(typeof b.x === 'number' && b.x > 0 && Number.isFinite(b.x))) return 'x';
+    if (b.elite != null && typeof b.elite !== 'boolean') return 'elite';
+    if (b.rew !== 'gold') {
+      if (typeof b.rew !== 'string' || !Object.prototype.hasOwnProperty.call(MAT, b.rew)) return 'reward';
+      if (!btyInt(b.rewT, 1) || b.rewT > MAT[b.rew].short.length) return 'reward tier';
+      if (typeof b.rewN !== 'number' || !(b.rewN >= 0) || !Number.isFinite(b.rewN)) return 'reward amount';
+    }
+    return BTY_SHAPE[b.k] ? BTY_SHAPE[b.k](b) : null;
+  }
 
   // Fill empty slots whose wait is over (also covers first load and old saves).
   // atLoad: skip the Omen's "refill at once" bonus. At file load bonus() can't see later files
@@ -11103,8 +11125,8 @@ let OMENS, WEEKLY_GOALS;
   }
   bountyRefresh(true);
   // exported to later files via the shared scope
-  // kinds: every k a saved slot may hold (the board's kinds plus the retired 'tap'); the save-code check reads it.
-  var BOUNTY_API = { refresh: bountyRefresh, claim: claimBounty, reroll: rerollBounty, text: bountyText, reward: bountyReward, kinds: Object.keys(BTY_KINDS).concat('tap') };
+  // kinds: every k a saved slot may hold (the board's kinds plus the retired 'tap'); the save-code check reads it and shape.
+  var BOUNTY_API = { refresh: bountyRefresh, claim: claimBounty, reroll: rerollBounty, text: bountyText, reward: bountyReward, shape: btyShape, kinds: Object.keys(BTY_KINDS).concat('tap') };
 }
 
 // ---- src/js/55-classes.js ----
@@ -13728,7 +13750,7 @@ function validateSave(data) {
     rows(data.camp, 'builds', b => { known(CAMP_B, b.id, 'camp.build.id'); int(b.to, 'camp.build.to', 1, CAMP_B[b.id].max); num(b.dur, 'camp.build.dur', 1, 864e13); num(b.start, 'camp.build.start', 0, 864e13); num(b.end, 'camp.build.end', 0, 864e13); record(b.cost, 'camp.build.cost'); num(b.cost.gold, 'camp.build.gold'); pack(b.cost.mats, 'camp.build.mats'); array(b.cost.troph, 'camp.build.troph'); for (const l of b.cost.troph) { array(l, 'camp.build.troph[]'); if (l.length !== 2) fail('camp.build.troph[]'); if (l[0] !== 'any') int(l[0], 'camp.build.troph.kind', 0, CRAFT_TROPHIES.length - 1); num(l[1], 'camp.build.troph.units'); } });
     if (data.camp && data.camp.b) for (const [k, n] of Object.entries(data.camp.b)) { known(CAMP_B, k, 'camp.building'); int(n, 'camp.' + k, 0, CAMP_B[k].max); }
     rows(data.camp, 'news'); rows(data.craft, 'jobs'); rows(data.almanac, 'goals'); rows(data.errors, 'list');
-    rows(data.bounties, 'slots', b => { if (b.k != null && !BOUNTY_API.kinds.includes(b.k)) fail('bounty.kind'); });
+    rows(data.bounties, 'slots', b => { if (b.k == null) return; if (!BOUNTY_API.kinds.includes(b.k)) fail('bounty.kind'); const bad = BOUNTY_API.shape(b); if (bad) fail('bounty.' + bad); });
     if (data.craft && data.craft.tonic != null) { record(data.craft.tonic, 'craft.tonic'); known(CRAFT_TONICS, data.craft.tonic.k, 'craft.tonic.kind'); tier(data.craft.tonic.t, 'craft.tonic.tier'); num(data.craft.tonic.left, 'craft.tonic.left'); }
     return { ok: true, data };
   } catch (e) { return { ok: false, error: e instanceof Error ? e.message : 'This save has invalid data.' }; }

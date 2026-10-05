@@ -5828,9 +5828,22 @@ if (section('save codec validation (C5)')) try {
   for(const key of ['__proto__','constructor','prototype']){const raw=original.slice(0,-1)+',"extra":{'+JSON.stringify(key)+':{"polluted":true}}}';assert(!rawCheck(raw).ok&&!decode(codeForBytes(Buffer.from(raw))).ok,`C5: rejects reserved ${key} at any depth`);}
   assert(!rawCheck(original.replace(/"gold":[0-9.]+/,'"gold":1e309')).ok,'C5: rejects JSON numeric overflow');
   assert(E('(()=>{const s=fresh();s.extra=s;return !validateSave(s).ok;})()')&&E('(()=>{const s=fresh();s.extra=Array(2);return !validateSave(s).ok;})()'),'C5: cycles and sparse non-JSON lists are rejected');
-  { const kinds=JSON.parse(E('JSON.stringify(BOUNTY_API.kinds)')), slot=k=>`(()=>{const s=fresh();s.bounties.slots=[{k:${JSON.stringify(k)},need:1,have:0,rew:"gold",rr:0}];return validateSave(s).ok;})()`;
-    const bad=kinds.filter(k=>!E(slot(k)));
-    assert(kinds.length>=15&&kinds.includes('hunt')&&kinds.includes('tap')&&!bad.length&&!E(slot('nope')),`C5: a save code accepts every bounty kind the board can hold (${kinds.length} kinds${bad.length?'; refused '+bad.join(', '):''}) and refuses an unknown one`); }
+  { // every bounty the board really draws (from each fixture's state) passes; malformed slots of each shape are refused
+    const seen=new Set(), refused=[];
+    for (const f of ['save-early.json','save-mid.json','save-late.json']) {
+      const h=loadCore({seed:77,storage:memoryStorage({[KEY]:fs.readFileSync(path.join(ROOT,'tests','fixtures',f),'utf8')})});
+      const out=JSON.parse(h.eval(`JSON.stringify((()=>{const out=[];for(let i=0;i<80;i++){S.bounties.slots=S.bounties.slots.map(b=>({k:null,wait:0,rr:b&&b.rr||0}));BOUNTY_API.refresh();const r=validateSave(S);out.push([S.bounties.slots.map(b=>b.k),r.ok?'':r.error]);}return out;})())`));
+      for (const [ks,err] of out) { ks.forEach(k=>seen.add(k)); if (err) refused.push(f+': '+ks.join('/')+': '+err); }
+    }
+    assert(seen.size>=10&&!refused.length,`C5: a save code accepts every bounty the board draws (${seen.size} kinds drawn: ${[...seen].sort().join(', ')})`+(refused.length?'; refused '+refused[0]:''));
+    const slot=b=>E(`(()=>{const s=fresh();s.bounties.slots=[${JSON.stringify(Object.assign({need:1,have:0,rew:'gold',rr:0},b))}];const r=validateSave(s);return r.ok?'':r.error;})()`);
+    const bad={ 'unknown kind':{k:'nope'}, 'hunt without foe':{k:'hunt',z:3}, 'hunt foe unknown':{k:'hunt',z:3,foe:'dragon'}, 'kill without zone':{k:'kill'},
+      'forage bad family':{k:'forage',fam:'moss'}, 'make bad station':{k:'make',st:'oven'}, 'bogus reward':{k:'forge',rew:'bogus',rewT:1,rewN:5},
+      'reward tier 9':{k:'forge',rew:'ess',rewT:9,rewN:5}, 'reward amount missing':{k:'boss',rew:'ess',rewT:1}, 'need 0':{k:'crit',need:0},
+      'have negative':{k:'crit',have:-1}, 'x not a number':{k:'crit',x:'bad'} };
+    const passed=Object.entries(bad).filter(([,b])=>!slot(b)).map(([n])=>n);
+    const good={k:'hunt',z:3,foe:'slime',need:20,have:4,rew:'ess',rewT:1,rewN:12,x:1.1,elite:true};
+    assert(!passed.length&&!slot(good)&&!slot({k:'tap',need:100}),'C5: a save code refuses malformed bounty slots ('+Object.keys(bad).length+' cases) and keeps good ones'+(passed.length?'; let through: '+passed.join(', '):slot(good)?'; refused good hunt: '+slot(good):'')); }
   const deep=base();let cursor=deep;for(let i=0;i<66;i++)cursor=cursor.extra={};assert(!validate(deep).ok,'C5: deeply nested data is rejected');
   assert(!E('decodeSave(" ".repeat(SAVECODE_LIMITS.codeChars+1)).ok'),'C5: text-size limit applies before trimming');
   assert(E('(()=>{const s=fresh();s.extra="x".repeat(SAVECODE_LIMITS.jsonBytes);try{encodeSave(s);return false;}catch{return true;}})()'),'C5: oversized exports are refused');
