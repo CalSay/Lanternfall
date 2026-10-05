@@ -3,7 +3,7 @@
 Read-only audit of every piece of story and world text in the integration branch, judged against what the screen
 shows at that moment and against `docs/DECISIONS.md`. It answers Cal's note that "some of the popups that give context
 of the world don't even make sense". The full inventory (about 330 rows, exact quotes, file:line, trigger, verdict)
-is in the project folder at `/mnt/project-files/story/audit-inventory-2026-10-05.md`. The fix is the new
+is in [`story-audit-inventory-2026-10-05.md`](story-audit-inventory-2026-10-05.md). The fix is the new
 [story bible](story-bible.md); the work is in Autopilot cards (bible section 13).
 
 ## The short answer

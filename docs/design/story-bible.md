@@ -147,7 +147,7 @@ hero has a line of their own at every big moment (4.6; about 25 moments, so abou
 | **Want** (Ch1) | Keep the dark away from the people you love. You do it by carrying the lamp away from them. |
 | **Flaw** | **"I carry it so nobody else has to."** You take the danger on alone and call it a gift. |
 | **Need** | Let others carry light too. A light alone goes out; a light given and shared holds. |
-| **Tested** | Ch1: running alone with the lamp is what nearly gets it smothered; Hesketh's fire saves it. Ch2: Hallam asks to carry the lens up the two hundred steps, and you let him (a first). Ch3: the Pyre's door opens for you both, and Caedmon asks to go first; you let him, which is harder. Ch4: the Reach lights your lamp for you, and you let them. Ch5: the flaw comes back. At the Stillwood you send Asta back up the road so she'll be safe, and go on alone. That is exactly what the Voice needed, and the lamp goes out. |
+| **Tested** | Ch1: running alone with the lamp is what nearly gets it smothered; Hesketh's fire saves it. Ch2: Hallam asks to carry the lens up the two hundred steps, and you let him (a first). Ch3: the Pyre's door opens for you both, and Caedmon asks to go first; you let him, which is harder. Ch4: the Reach lights your lamp for you, and you let them. Ch5: the flaw comes back. At the Stillwood you send Asta back up the road so she'll be safe, and Hild's candle goes with her. Your lamp now has nothing in sight. That is exactly what the Voice needed, and the lamp goes out. |
 | **Final answer** | The Voice: "Every flame goes out." The hero lights a taper from the returning light, in its face: "Then we light another." |
 
 ### 4.3 The hero's choices
@@ -484,8 +484,9 @@ it, and every recurring person changes. Section 6.4 lists every appearance.
 **Asta Grey, the guide** (Ch4, Ch5).
 - Guided traders over every pass in the Reach for forty years. She walked down into the Gloamvale once, turned back, and
   has been sorry ever since. Ch4 a7 she says she's coming this time. Ch5 a1 and a2 she meets you at each of her old cairns
-  on the way down. At a2 you find the cairn she never finished, and finish it together. Then you send her back up (hero line,
-  4.6): the flaw, and the Voice's opening.
+  on the way down. She carries Hild's candle beside your lamp. At a2 you finish the cairn she never finished together. Then
+  you send her back up with the candle (hero line, 4.6), and your lamp has nothing in sight: the flaw, and the Voice's
+  opening.
 
 **Silas and Loveday Penrow** (Ch2). Loveday waits on Grey Shingle (a1) for a father who carried the lens down to the
 water the night he said yes. She knows the Oath word for word, the scratched line too, and says it to you at a1 without
@@ -711,7 +712,7 @@ for yourselves. They'd take it."
 | # | Area (zones) | Champion | Stake / person | Turn | Plant |
 |---|---|---|---|---|---|
 | 1 | **Frostgate Pass** (106-110) | Skarn, the Mountain Maw | Kestrel, coming home ahead of you on the pass; Eskil at Rowan's cairn | **R**: she says it plainly. "Rowan held the gate when the storm came. He died holding it." Eskil: "Then how did the storm get through?" Kestrel doesn't answer. What she believes is that Rowan opened the door. | Rowan |
-| 2 | **The Eyries** (111-115) | Velka Sixwing | Granny Hild's candle ropes | **G**: cliff villages pass candles on ropes, each lit for someone. Hild sends one down the line to you. You've never been given a light you could see. The Sixwing was cutting the ropes. | Receiving |
+| 2 | **The Eyries** (111-115) | Velka Sixwing | Granny Hild's candle ropes | **G**: cliff villages pass candles on ropes, each lit for someone. Hild sends one down the line to you. You've never been given a light you could see. You carry it beside your lamp from here on. The Sixwing was cutting the ropes. | Receiving |
 | 3 | **The Starscar** (116-120) | Orris, the Starved Orbit | Oriel and her star; Inga | **E (midpoint)**: Oriel has watched a small new star since the night you took up the road. It's your lamp, seen from above. "I could always see it. I think the dark just learned to look." Inga shows you the Starved Orbit's trail through the craters: it has been eating its way toward that star. The storm is hunting you. | You are the target |
 | 4 | **The Blue Caves** (121-125) | Istra, the Unseen Face | Kestrel's grief | **V**: at the cave mouth, Rowan's shape: the Whitehush, walking the storm, wearing what Kestrel hopes to see. It never speaks. Kestrel talks to it, and answers for it in Rowan's words: "Kes. It's warm here." She believes Rowan opened the door. | Shape, never voice |
 | 5 | **The Silent Village** (126-130) | Nera, the Hush Regent | Liss; Solveig and her candle | **L (low point)**: in the storm a voice like a neighbour's knocked at every door. One by one, families shut the door and lit their candles for themselves. Kept, the candles were called. Then the cold offered rest, and they said yes, and each family's voice went to knock on the next door. No one has spoken in ten years. Liss writes in the frost: "Mum shut the door." Only Solveig kept a candle lit for them all, at her window, every night; no Shadowborn could put it out, and the storm hid her window from the Voice. | The cost in full: whole villages |
@@ -747,7 +748,7 @@ and each answers in the finale.
 | # | Area (zones) | Champion | Stake / person | Turn | Plant |
 |---|---|---|---|---|---|
 | 1 | **The Last Descent** (141-145) | Vark, the Gate of Teeth | Kestrel, Caedmon, Durand at the gate fire; Asta beside you | **E**: as you go down, the sky lowers behind you. The gate fire is the last light you can see, and then it isn't. The lamps you hang dim to embers as each falls out of sight of the last. The Voice: "Leave them behind. They'll only slow you." | Rule 3 used against you |
-| 2 | **The Stillwood** (146-150) | Vorra, the Hunger Between | Asta's unfinished cairn; Tam's lamp ("Lit for my uncle. Hang it high.") | **C**: nothing rustles, and Vorra hunts in the gaps between lights. You and Asta finish the cairn she left half built. Then you send her back up the road (hero line): the flaw, back. She goes. | The flaw returns |
+| 2 | **The Stillwood** (146-150) | Vorra, the Hunger Between | Asta's unfinished cairn; Tam's lamp ("Lit for my uncle. Hang it high.") | **C**: nothing rustles, and Vorra hunts in the gaps between lights. Asta carries Hild's candle beside your lamp, so neither is alone. You finish the cairn she left half built. Then you send her back up the road with the candle, so she'll be safe (hero line): the flaw, back. She goes, and her light drops out of sight. Your lamp gutters. | The flaw returns |
 | 3 | **The Blind Mere** (151-155) | Sable of the Mere (roster: Sable, the Deep Listener) | The choir; Rook's lamp ("Lit for Nan. Mind the cracks.") | **R (midpoint)**: under the still water, thousands of voices, held, from every age of the land. This is the choir. The Voice: "They all said yes. You'd be in good company." As your lamp passes, one voice stops singing to listen: a lullaby you almost know. A voice can leave it. | Phase 3; Season 2 |
 | 4 | **The Long Dusk Fields** (156-160) | Kharos, the Threefold Reaper | Corvin Black; Ada's lamp ("Lit for Bram. The kettle's on.") | **V**: fields planted and never ripened; a farmer's name on a gatepost. The Gloamvale was lit once, so the sky can open. Corvin came looking for the king he served twenty years and never saw: "There was never a king. There was a voice behind a curtain." He stays by Ada's lamp: "Somebody should keep this one company." | The Seam; the first voice |
 | 5 | **Coldhearth** (161-165) | Mora, the Unwelcome | Coldhearth; Ashby's lamp ("Lit for my husband. Set a place."); you | **C (low point)**: the Gloamvale's last town. When the sky shut, every house was cut off from every other, and the hearths went out one by one. The lintels say Tallow. Your lamp gutters; it has nothing in sight. The Voice: "This is what every fire becomes." It could finish you here; it wants your yes first. The choice (4.3): light one cold hearth with Morwen's candle and your flame, or keep it all. | The first to answer |
@@ -799,7 +800,7 @@ One line per card, a tap each, all skippable, never replayed. Text on a plain ca
    guarding it."
 5. Vesper finishes the song: "And the dark went down, and the lamps came on. / There. That's the ending. For now."
 6. You walk back into Mossy Hollow. The hook over your door has been empty since the night you left (a still). You light a
-   new lamp from yours and hang it there. Tam is waiting. "This one's for whoever comes next."
+   new lamp from yours and hang it there. Tam is waiting. "This one's lit for you, Tam." (Lit for a named person, so it can't be called.)
 7. At the gate fire, Asta has finished another cairn.
 8. Hesketh at the fire: "Every road needs a place to come back to."
 9. After the credits card: at the bottom of the Deepwell, Maud's Lantern flickers for the first time (a still).
@@ -932,6 +933,19 @@ Never let text run ahead of this table. Every reveal has at least two plants bef
 | Ch4 Elder | It had Rowan's shape, never his voice | Ch1 a3; Ch4 a4 (it never speaks) | |
 
 ---
+
+## 12a. Predicted effect, and how it's measured
+
+The design-doc rubric asks for a number. Chapter 1 is the first test, once `story-opening`, `story-delivery` and
+`story-hollow-script` are in and the browser playtest bots (`f-playtest-bots`) run.
+- **Comprehension:** after zone 5 on a fresh save, at least 4 of 5 new-player persona runs can answer "Why are you
+  fighting?" with the lamp and the dark coming for it. Measure: the bots' end-of-run questions in their playtest report.
+  Missed: 2 or fewer.
+- **Interest:** the story Skip rate on Champion scenes in Chapter 1 stays under 40% across persona runs, and at least one
+  Journal page is opened by zone 35. Measure: story `seen`/`read` counts in the save, read by `tools/health.mjs`. Missed:
+  Skip over 60%, or no Journal opens.
+- **Cal's play prompt:** after Milestone 1, Cal's one-question prompt ("Did the Fenmother feel like the end of a
+  chapter?") gets a yes. A no starts an Opus diagnosis thread (playbook).
 
 ## 13. How the story keeps being built and reviewed
 
