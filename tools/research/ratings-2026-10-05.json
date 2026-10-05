@@ -1,0 +1,180 @@
+{
+ "melvor-idle": {
+  "steam": {
+   "desc": "Very Positive",
+   "pos": 14655,
+   "total": 16288
+  },
+  "ios": {
+   "rating": 4.76,
+   "count": 9107
+  }
+ },
+ "idleon": {
+  "ios": {
+   "rating": 4.26,
+   "count": 2565
+  }
+ },
+ "ngu-idle": {
+  "steam": {
+   "desc": "Overwhelmingly Positive",
+   "pos": 12425,
+   "total": 13001
+  }
+ },
+ "antimatter-dimensions": {
+  "steam": {
+   "desc": "Very Positive",
+   "pos": 4263,
+   "total": 4626
+  },
+  "ios": {
+   "rating": 4.76,
+   "count": 147
+  }
+ },
+ "kittens-game": {
+  "steam": {
+   "desc": "Very Positive",
+   "pos": 76,
+   "total": 80
+  },
+  "ios": {
+   "rating": 4.48,
+   "count": 323
+  }
+ },
+ "trimps": {
+  "steam": {
+   "desc": "Very Positive",
+   "pos": 1355,
+   "total": 1500
+  }
+ },
+ "increlution": {
+  "steam": {
+   "desc": "Very Positive",
+   "pos": 1069,
+   "total": 1259
+  }
+ },
+ "gnorp-apologue": {
+  "steam": {
+   "desc": "Very Positive",
+   "pos": 9460,
+   "total": 9983
+  }
+ },
+ "idle-slayer": {
+  "steam": {
+   "desc": "Very Positive",
+   "pos": 9240,
+   "total": 10937
+  },
+  "ios": {
+   "rating": 4.82,
+   "count": 27889
+  }
+ },
+ "soda-dungeon-2": {
+  "steam": {
+   "desc": "Very Positive",
+   "pos": 5352,
+   "total": 5685
+  },
+  "ios": {
+   "rating": 4.82,
+   "count": 9217
+  }
+ },
+ "leaf-blower-revolution": {
+  "steam": {
+   "desc": "Very Positive",
+   "pos": 24940,
+   "total": 26490
+  },
+  "ios": {
+   "rating": 4.83,
+   "count": 2547
+  }
+ },
+ "shop-titans": {
+  "steam": {
+   "desc": "Mostly Positive",
+   "pos": 14005,
+   "total": 18015
+  },
+  "ios": {
+   "rating": 4.69,
+   "count": 46959
+  }
+ },
+ "osrs": {
+  "steam": {
+   "desc": "Very Positive",
+   "pos": 17302,
+   "total": 20892
+  },
+  "ios": {
+   "rating": 4.78,
+   "count": 92846
+  }
+ },
+ "expedition-33": {
+  "steam": {
+   "desc": "Overwhelmingly Positive",
+   "pos": 266756,
+   "total": 280126
+  }
+ },
+ "idle-champions": {
+  "steam": {
+   "desc": "Mostly Positive",
+   "pos": 11597,
+   "total": 15077
+  }
+ },
+ "cookie-clicker": {
+  "steam": {
+   "desc": "Overwhelmingly Positive",
+   "pos": 90340,
+   "total": 93697
+  }
+ },
+ "clicker-heroes": {
+  "steam": {
+   "desc": "Very Positive",
+   "pos": 55710,
+   "total": 62179
+  },
+  "ios": {
+   "rating": 4.78,
+   "count": 12794
+  }
+ },
+ "tap-titans-2": {
+  "ios": {
+   "rating": 4.76,
+   "count": 82716
+  }
+ },
+ "idle-berserker": {
+  "ios": {
+   "rating": 4.69,
+   "count": 5585
+  }
+ },
+ "slayer-legend": {
+  "ios": {
+   "rating": 4.8,
+   "count": 2616
+  }
+ },
+ "dunidle": {
+  "ios": {
+   "rating": 4.73,
+   "count": 3426
+  }
+ }
+}

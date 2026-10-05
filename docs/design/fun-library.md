@@ -1,0 +1,198 @@
+# Lanternfall fun library (first pass, 2026-10-05)
+
+What the players of 21 well-rated idle and incremental games, plus Old School RuneScape and Clair Obscur: Expedition 33,
+say makes those games good and why committed players leave. Built by `tools/fetch_reviews.py` (raw reviews) and
+`tools/tag_reviews.py` (theme counts); rerun both to refresh. Data in `raw/`, `tags-kw/`, `ratings-2026-10-05.json`.
+
+## 1. How to read this (limits first)
+
+- **Corpus:** 21 games, 5,255 distinct reviews read by script: 3,533 positive and 1,722 negative (1,300 App Store, 422
+  Steam). 266 are negatives from Steam players with 50+ hours (the "why committed players quit" set).
+- **Sources used per game:** Steam review feed (helpful-first, 25 positive and 25 negative per game, plus extra negatives
+  from 50h+ players) and the App Store RSS feed (up to 5 pages each of most helpful and most recent). Both worked.
+- **Reddit: blocked.** `www.reddit.com` answers 403 "Blocked" from this container (Reddit blocks the cloud proxy; the
+  allow-list was not the cause). `old.reddit.com` is denied by the egress proxy. Reddit is **thin**: web-search summaries
+  only, marked weak, in `tags/_thin-sources.json`. No principle below rests on Reddit alone.
+- **Google Play: thin.** The store pages load but carry few reviews and no feed. Search summaries only (weak). Play ratings
+  quoted below are from those summaries and unverified.
+- **Counts are floors.** A review counts for a theme when a keyword pattern matches (the patterns are in
+  `tools/tag_reviews.py`). That misses paraphrases and counts some false hits, so use counts to rank themes, not as
+  exact shares. Quotes are verbatim, picked by the same match, and I kept only ones that actually support the point.
+- **A first tagging pass by Haiku gatherers was discarded.** Its quotes did not match the themes they were filed under
+  (for example a joke review filed as "good UI"). Their files stay in `tags/` for audit and are not used anywhere here.
+- **Sampling bias:** the corpus is each game's most helpful reviews, which skew to strong opinions. Apple counts for
+  small games (Antimatter 147 ratings, Kittens 323) are tiny. Steam-only games have no phone view and vice versa.
+
+Evidence rank (from the quality proposal): this is rung 3 (counted player reviews). It outranks training-knowledge
+design lore and loses to Cal's playtests and to measurements on our game.
+
+## 2. Corpus and ratings (checked 2026-10-05 from Steam and the iTunes lookup API)
+
+| Game | Main platform | Steam | App Store | Used |
+|---|---|---|---|---|
+| Melvor Idle | PC | Very Positive, 16,288 | 4.76 (9,107) | Steam + Apple |
+| Legends of IdleOn | mobile | n/a | 4.26 (2,565) | Apple |
+| NGU Idle | PC | Overwhelmingly Positive, 13,001 | n/a | Steam |
+| Antimatter Dimensions | PC | Very Positive, 4,626 | 4.76 (147) | Steam + Apple |
+| Kittens Game | PC | Very Positive, 80 | 4.48 (323) | Steam + Apple |
+| Trimps | PC | Very Positive, 1,500 | n/a | Steam |
+| Increlution | PC | Very Positive, 1,259 | n/a | Steam |
+| (the) Gnorp Apologue | PC | Very Positive, 9,983 | n/a | Steam |
+| Leaf Blower Revolution | mobile | Very Positive, 26,490 | 4.83 (2,547) | Steam + Apple |
+| Idle Champions of the Forgotten Realms | PC | Mostly Positive, 15,077 | n/a | Steam |
+| Cookie Clicker | PC | Overwhelmingly Positive, 93,697 | n/a | Steam |
+| Clicker Heroes | PC | Very Positive, 62,179 | 4.78 (12,794) | Steam + Apple |
+| Idle Slayer | mobile | Very Positive, 10,937 | 4.82 (27,889) | Steam + Apple |
+| Soda Dungeon 2 | mobile | Very Positive, 5,685 | 4.82 (9,217) | Steam + Apple |
+| Shop Titans | mobile | Mostly Positive, 18,015 | 4.69 (46,959) | Steam + Apple |
+| Tap Titans 2 | mobile | n/a | 4.76 (82,716) | Apple |
+| Idle Berserker | mobile | n/a | 4.69 (5,585) | Apple |
+| Slayer Legend | mobile | n/a | 4.80 (2,616) | Apple |
+| Dunidle | mobile | n/a | 4.73 (3,426) | Apple |
+| Old School RuneScape (reference) | PC + mobile | Very Positive, 20,892 | 4.78 (92,846) | Steam + Apple |
+| Clair Obscur: Expedition 33 (reference) | PC | Overwhelmingly Positive, 280,126 | n/a | Steam |
+
+Mobile-main: 9 (IdleOn, Leaf Blower, Idle Slayer, Soda Dungeon 2, Shop Titans, Tap Titans 2, Idle Berserker, Slayer
+Legend, Dunidle). The library also covers 10 PC-main games and the two references. Reviews are English only.
+
+## 3. Principles that make players love these games
+
+Format: count = reviews matching the theme (a floor) and the number of games where it shows up strongly; coverage areas
+refer to `autopilot/coverage-map.md`. "Measure" is what we can check on Lanternfall.
+
+**P1. Progress that continues while you are away, and feels good to return to.**
+130 positive reviews, 6+ games (Melvor 22, IdleOn 21, OSRS 18, Idle Slayer 17, Clicker Heroes 17, Tap Titans 9).
+"There's a ton to do actively, but making progress while you're offline just feels good with this game." (IdleOn, App Store 5 stars)
+"A nice afk game that doesn't require constant watching." (Melvor, Steam, 166h)
+Lanternfall: the away report is the front door of every visit. Measure: area 13, seconds to read the away report; offline
+parity audit.
+
+**P2. Ads are an optional boost, never a gate.**
+Praise: 68 reviews (Idle Slayer 14 respect-of-time, 21 fair-monetisation hits). Complaints: 129 negative reviews mention ads
+(Soda Dungeon 2 26, Tap Titans 2 23, Idle Slayer 22, Dunidle 14). Ads are the most common phone complaint, and 0 of 422
+Steam negatives mention them.
+"There are no forced ads in this game, every advertisement that you can watch helps double your offline earnings." (Idle Slayer, App Store 5 stars)
+"A fine game ruined by 30-second in-game ads" (review title, Tap Titans 2, App Store 2 stars)
+Lanternfall: stays ad-free by design; keep any future monetisation optional (monetisation is a later area).
+
+**P3. Never put core mechanics behind a paywall.**
+113 negative reviews cite pay-to-win or paywalls (Shop Titans 33, Melvor 18, Tap Titans 2 12, IdleOn 11, Idle Berserker 11),
+mostly on phones (7.4% of phone negatives, 4.0% of Steam negatives). Melvor's mobile skill locks drew many 1-2 star reviews
+despite a 4.76 average.
+"I dislike the amount of times I tried to do an action but was blocked by the pay wall." (Melvor, App Store 2 stars)
+"locking core gameplay mechanics is just greed." (Shop Titans, App Store 1 star)
+Lanternfall: DECISIONS.md already rules out pay-to-win; make it a standing check on any card that adds a currency or timer.
+
+**P4. Active play must matter inside an idle game.**
+149 positive reviews (OSRS 28, Melvor 23, Idle Slayer 23, Tap Titans 2 17, IdleOn 17). Players praise games that are "not
+just idle". Idle Slayer's jump-and-tap layer is cited for keeping players active.
+"They have a simple rebirth system and a monster killing mechanic where you have to jump or tap to kill them which keeps me
+active." (Idle Slayer, App Store 4 stars)
+Lanternfall: supports the combat-is-skilful pillar and Cal's ask for active gold. Measure: area 9, share of session spent
+outside auto-fights by choice.
+
+**P5. Depth that reveals itself gradually.**
+163 positive reviews (Melvor 19, Shop Titans 16, Tap Titans 2 13, IdleOn 13, Kittens 12, Idle Slayer 12).
+"It starts out very easy to understand, but gets very in depth the more you play and do your research." (Shop Titans, App Store 5 stars)
+"It's got way more depth in it than most idle games." (Melvor, App Store 5 stars)
+Lanternfall: one new thing at a time (area 4, area 16). Measure: new mechanics per hour played.
+
+**P6. A collection chase gives idle time a purpose.**
+215 positive reviews (Tap Titans 2 36, Idle Slayer 32, Shop Titans 29, OSRS 20, IdleOn 18, Soda Dungeon 2 17).
+"This addition of collectibles is really the true reason why I continue to play the game." (Tap Titans 2, App Store 5 stars)
+"I was looking for something that had hundreds of achievements." (Idle Slayer, Steam, 669h)
+Lanternfall: bestiary, Almanac, Stars and Deeds (area 12). Measure: completion curves; does each collectible send the
+player somewhere new?
+
+**P7. A developer who keeps adding content and fixing things.**
+92 positive reviews by strict match (IdleOn 27, Shop Titans 14, Dunidle 11, Melvor 9). The strongest reason players
+return after a break.
+"The game gets frequent updates by a single lead developer and tbh idk how he does it." (IdleOn, App Store 5 stars)
+"The fact that the Devs are still adding to the content and storyline is great." (Shop Titans, Steam, 435h)
+Lanternfall: weekly deploys and patch notes are part of the product. Measure: area 21, content hours remaining.
+
+**P8. Prestige or rebirth that opens new things, not just a bigger number.**
+101 positive reviews (Idle Slayer 42, Tap Titans 2 28, Clicker Heroes 9).
+"The first few rebirths you do it introduces new things after you rebirth." (Idle Slayer, App Store 5 stars)
+"The game starts off slow but once you prestige once it picks up quick." (Tap Titans 2, App Store)
+Lanternfall: any reset layer (Stars, Deepwell) should unlock content. No negative reset reviews matched (0 of 1,722), so
+resets are safe when they reward; they hurt when forced.
+
+**P9. New areas and unlocks at a steady rhythm.**
+57 positive reviews (Shop Titans 10, IdleOn 9, Idle Slayer 8). Smaller count but consistent.
+"Moving onto a new area is always refreshing and ur always making progress towards a new quest." (IdleOn, App Store 5 stars)
+Lanternfall: region pacing (area 7). Measure: hours to each zone; longest stretch with no unlock.
+
+**P10. World, characters and quests carry the grind.**
+427 positive reviews match a broad story pattern (IdleOn 71, OSRS 66, Idle Slayer 60, Shop Titans 58, Soda Dungeon 2 39).
+Treat the count as high-noise (the pattern includes "quests" and "characters").
+"The multi-character system is compelling and surprisingly well balanced." (IdleOn, App Store 5 stars)
+Lanternfall: area 15. Medium confidence.
+
+**P11. Charm: art, music and voice.**
+242 positive reviews (13 games). Strong in pixel-art idlers. Lanternfall: area 17 and 18. Low risk, supports Compass.
+
+**P12. Quality of life and automation that respect the player's hands.**
+Not counted cleanly: the keyword patterns for this theme were too weak to trust. It is supported by reading only: Shop
+Titans' most common casual request in the sampled reviews was an auto-build function ("it needs a(n) auto-build function",
+App Store 4 stars). Flagged for a re-count; do not cite a number for it.
+
+## 4. What makes players quit or complain
+
+Counts below are negative reviews matching the theme. "Long-play" counts only Steam negatives from players with 50+ hours
+(266 reviews), the closest we have to "why committed players leave".
+
+| # | Theme | All negatives | Long-play (50h+) | Strongest in |
+|---|---|---|---|---|
+| Q1 | Bugs, crashes, lost saves | 252 | 27 | Shop Titans 46, IdleOn 37, Tap Titans 2 31 |
+| Q2 | Progress walls and grind (includes paywall walls) | 157 | 31 | Melvor 20, Shop Titans 19, Idle Slayer 15, OSRS 15 |
+| Q3 | Ads | 129 | 0 | phones only: Soda Dungeon 2, Tap Titans 2, Idle Slayer |
+| Q4 | Pay-to-win and paywalls | 113 | 11 | Shop Titans 33, Melvor 18 |
+| Q5 | Endgame is empty or repetitive | 69 | 22 | Shop Titans 12, Clicker Heroes 8 (all long-play) |
+| Q6 | Shallow, plays itself | 45 | 8 | OSRS 8, Tap Titans 2 5, Idle Champions 4 |
+| Q7 | Wait timers and energy gates | 36 | 2 | Shop Titans 18 |
+| Q8 | Confusing or bloated menus | 27 | 4 | Melvor 7, Leaf Blower 4 |
+| Q9 | One dominant strategy | 14 | 14 | Idle Champions 5, Increlution 3 (all long-play) |
+| Q10 | Confusing start or poor tutorial | 34 | 0 | Melvor 16 (mostly about locked content) |
+
+Reading the long-play column: committed players leave over **walls (31), bugs and lost progress (27), an empty endgame
+(22) and a single best strategy (14)**. Dominant strategy shows up only among long-play players (14 of 14), which
+means it is a late problem that a short playtest will not find. Ads and tutorials never appear among them.
+
+Quotes:
+"But when progress becomes late game it starts feeling a bit pointless." (Clicker Heroes, Steam, 585h)
+"If you want player retention, you also have to think about the late game." (Shop Titans, App Store 3 stars)
+"Way too many menus and mechanics and its too bloated and slow." (Leaf Blower Revolution, Steam, 57h)
+"Unfortunately, it's riddled with bugs and poor planning." (IdleOn, App Store 1 star)
+
+## 5. What phone players complain about that PC players do not
+
+Rates are the share of that platform's negative reviews (1,300 App Store, 422 Steam). Steam-only games have no phone view.
+
+| Theme | Phone | PC | Meaning |
+|---|---|---|---|
+| Ads | 9.9% | 0.0% | Phone-only complaint |
+| Bugs and crashes | 16.9% | 7.6% | Phones hit more crashes and sync problems |
+| Pay-to-win and paywalls | 7.4% | 4.0% | Higher on phones |
+| Energy, timers, wait gates | 2.6% | 0.5% | Phone monetisation pattern |
+| Confusing tutorial or locked-content surprise | 2.5% | 0.5% | Phone store sells then gates |
+| Battery, notifications, overheating | 0.9% | 0.5% | Rare in counted reviews, but OSRS has several battery reviews |
+| One dominant strategy | 0.0% | 3.3% | PC-only complaint (players optimise more) |
+| Endgame empty | 3.3% | 6.2% | PC long-play players reach it more |
+| Bloated menus | 1.2% | 2.6% | Slightly more on PC |
+
+Lanternfall is phone-first, so Q1, Q3 and Q4 weigh most; a PC browser player will find the late problems (Q5, Q9) sooner.
+
+## 6. Principle count and gate status
+
+12 principles (P1 to P12) and 10 quit themes (Q1 to Q10), 22 items in all, from 21 games. The card asked for at least 12
+games and 15 principles with counts: **games 21 (met), items 22 (met if the quit themes count; strictly 12 principles
+plus 10 quit themes)**. P12 lacks a clean count and is flagged. Reddit and Play remain thin.
+
+Every principle above is a candidate input, not a decision. Ideas built from them go through the idea gate in
+`fun-library-catalogue.md`.
+
+## 7. Refresh
+
+Monthly: rerun `python3 tools/fetch_reviews.py corpus.json raw` then `python3 tools/tag_reviews.py .` from this folder;
+update `ratings-*.json`; diff counts against this file. Copy into the repo as `docs/design/fun-library.md` by PR.
