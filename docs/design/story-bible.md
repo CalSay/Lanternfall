@@ -147,7 +147,7 @@ hero has a line of their own at every big moment (4.6; about 25 moments, so abou
 | **Want** (Ch1) | Keep the dark away from the people you love. You do it by carrying the lamp away from them. |
 | **Flaw** | **"I carry it so nobody else has to."** You take the danger on alone and call it a gift. |
 | **Need** | Let others carry light too. A light alone goes out; a light given and shared holds. |
-| **Tested** | Ch1: running alone with the lamp is what nearly gets it smothered; Hesketh's fire saves it. Ch2: Hallam asks to carry the lens up the two hundred steps, and you let him (a first). Ch3: the Pyre's door opens for you both, and Caedmon asks to go first; you let him, which is harder. Ch4: the Reach lights your lamp for you, and you let them. Ch5: the flaw comes back. At the Stillwood you send Asta back up the road so she'll be safe, and Hild's candle goes with her. Your lamp now has nothing in sight. That is exactly what the Voice needed, and the lamp goes out. |
+| **Tested** | Ch1: running alone with the lamp is what nearly gets it smothered; Hesketh's fire saves it. Ch2: Hallam asks to carry the lens up the two hundred steps, and you let him (a first). Ch3: the Pyre's door opens for you both, and Caedmon asks to go first; you let him, which is harder. Ch4: the Reach lights your lamp for you, and you let them. Ch5: the flaw comes back. At the Stillwood you send Asta back up the road so she'll be safe, and Hild's candle goes with her. Your lamp now has nothing in sight, and it gutters. That is the opening the Voice needed: from here it can find you. It still wants your yes first (Coldhearth, the Offer), and only at the fight's second phase do its hands close and the lamp go out. |
 | **Final answer** | The Voice: "Every flame goes out." The hero lights a taper from the returning light, in its face: "Then we light another." |
 
 ### 4.3 The hero's choices
@@ -852,7 +852,8 @@ two of them waiting for a tap; never on replays; plain words; reduced motion; la
   and so on), plus `voice`, `hero` (keyed `wren`, `tobin`, `pip`), `choice`, `letters`, `pages`, `npc` and `notes` entries.
   New keys under the existing `story` state, merged with defaults, never a repurposed field: `starter` (set once at the
   cold start; existing saves take the first starter they own), `litFor` (one name per Great Lantern), `coldhearth` (lit or
-  kept). The Lamp Rack is derived from progress, not stored. Needs an Opus save review. Hero-unlock gates keep heroes an
+  kept), `ends` (sequence id to `done` or `skipped`, 12a) and `journalOpens` (a count, 12a). The Lamp Rack is derived from
+  progress, not stored. Needs an Opus save review. Hero-unlock gates keep heroes an
   existing save owns.
 - **10.5 Only what's in the game.** A zone line needs its roster monster in `ZONE_FOES`; Champion and Elder scenes need their
   encounter. Until then the slot is silent. **Prerequisite:** the code still runs the old 7-place cycle (zone 8 is "Mossy
@@ -946,8 +947,14 @@ The design-doc rubric asks for a number. Chapter 1 is the first test, once `stor
   fighting?" with the lamp and the dark coming for it. Measure: the bots' end-of-run questions in their playtest report.
   Missed: 2 or fewer.
 - **Interest:** the story Skip rate on Champion scenes in Chapter 1 stays under 40% across persona runs, and at least one
-  Journal page is opened by zone 35. Measure: story `seen`/`read` counts in the save, read by `tools/health.mjs`. Missed:
-  Skip over 60%, or no Journal opens.
+  Journal page is opened by zone 35. Missed: Skip over 60%, or no Journal opens.
+  Measure: `seen`/`read` can't, because a card is marked read the moment it opens (`openBeat()` in `75-story-ui.js`).
+  So `story-delivery` adds two save counters (10.4b): `story.ends`, one entry per multi-card sequence (Champion, Elder,
+  Great Lantern, finale), set to `done` when its last card is closed and `skipped` when Skip or Close ends it early; and
+  `story.journalOpens`. It also adds the reader, `tools/story-stats.mjs`, which takes a save file or save code and prints
+  the Chapter 1 Champion skip rate and Journal opens. Sources: the playtest bots' end-of-run saves (their personas choose
+  when to skip, so these test the plumbing), then the real number from Cal's and the testers' saves, sent as save codes.
+  `tools/health.mjs` (sim personas, no story UI) does not measure this.
 - **Cal's play prompt:** after Milestone 1, Cal's one-question prompt ("Did the Fenmother feel like the end of a
   chapter?") gets a yes. A no starts an Opus diagnosis thread (playbook).
 
@@ -1017,3 +1024,4 @@ it fits this bible, uses it.
 | 2 (v2) | 3.75 average; under 4: Excitement 3, Fit 3, Clarity 3; hard checks: Hands cap, retired words, Elder tap count, mid-fight cards, 14 heroes with no part | not run (fixes were mechanical) | v3: rule 3 airtight (only the Voice's hands, only out of sight of any light), Elowen's kept spark, why tonight, all 32 heroes, no new Hands, Ch5 people via the lamp bundle and a returning flaw, Captain samples, art costed to seven stills, save keys named, ladder rebuilt |
 | 3 (v3) | not run (judge ruled a diff check enough) | Opus high: **4.58 average, every criterion 4+**; failed 13 hard-check items (stray old ladder, line lengths, finale count, "last of the others", Silas's place, Gloamvale campfires, rule 3 "shown", bios, hero keying, Marshal sprite, a name, unlogged rulings); canon rulings a-g all yes | v3.1: all 13 fixed, rulings logged in `DECISIONS.md`, plus the judge's nice-to-haves |
 | 3, diff check (v3.1) | | Opus high: 11 of 13 cleared; 4 line-length and wording edits given word for word and pre-approved | **PASS** (v3.2: the four edits applied; 4.58 average, every criterion 4+) |
+| PR review (Codex, 3 rounds) | | | 12 P1 findings fixed: Tam's lamp, Hild's candle with Asta, predictions (12a) with a real measure (`story.ends`, `story-stats.mjs`), the inventory, Durand and the Fogbound written through the roster docs, the banked spark (rule 2), the first voice (rule 5), the switch-off (10.4), the lamp going out only at the Voice's phase 2 |
