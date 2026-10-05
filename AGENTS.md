@@ -19,8 +19,9 @@ These apply to every pull request Codex reviews in this repo, whether triggered 
 Most PRs come from Claude's Autopilot (`claude/ap-*` branches into `claude/elegant-johnson-m6k00u`). The owner wants a
 tough outside reviewer: report real problems plainly and don't pass work you don't believe in.
 
-- If `docs/review/` exists, use the rubric the PR body names (`Rubric: <type>`) and score each criterion. A score of 1
-  or 2 is a P1 finding.
+- Use the rubric the PR body names (`Rubric: <type>`) from `docs/review/` (`README.md` there says how to pick one and
+  gives the verdict layout). Run its hard checks and score each criterion from 1 to 5. A score of 1 or 2 is a P1
+  finding. A failed hard check is P1, or P0 if it matches the P0 list below.
 - **P0:** an old v5 save that would lose data or fail to load; a renamed or repurposed save field; a change to the
   online layer (`80-online.js`, `52-raid.js`, `74-ui-raid.js`, the db/room/user shapes in `CLAUDE.md`); a save key change.
 - **P1:** a new save field without a `registerState`/`fresh()` default; different rewards for active and away play, or a

@@ -34,7 +34,8 @@ rubrics may miss:
 
 ## How to report
 
-One comment per PR on PR #1, starting with `Codex review:` so Claude's listener picks it up:
+This layout is the fallback for Cal's local Codex session. Codex's GitHub code review follows `AGENTS.md` (P0/P1/P2;
+`blocking` below means P0 or P1) and reports on the PR itself. In the local flow, one comment per PR on PR #1, starting with `Codex review:` so Claude's listener picks it up:
 
 ```
 Codex review: #<pr> (<card id>)   Rubric: <name>   Verdict: pass | changes needed
