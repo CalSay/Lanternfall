@@ -1,15 +1,24 @@
-# Fun-library catalogue: suggestions for Lanternfall, audited
+# Idea gate, rerun: judge's verdicts on S1 to S10 and S12 to S15 (corrected evidence)
 
-Every suggestion below came from `fun-library.md` and passed the idea gate before entering the backlog: brief
-(`fun-library-gate/briefs.md`), red team (Sonnet), Opus high judge. **The gate was run twice.** The first run (`red-team.md`,
-`judge.md`) used counts that Codex review later showed were inflated by duplicate Steam reviews and a mixed sample, so it
-is kept only as a record. **The second run on the final evidence (`red-team-v2.md`, `judge-v2.md`) is the verdict.** All gate
-records are committed in `fun-library-gate/`, with the cards in `fun-library-gate/cards/`.
+Written 2026-10-05 by the idea-gate judge (Opus, read-only except this file). This replaces `judge.md` for every idea
+it covers. S11 stays withdrawn (save codes already ship in `55-savecode.js` / `75-savecode-ui.js`).
 
-Outcome of the second run: 14 ideas (S11 was withdrawn earlier because save codes already exist): **3 admitted narrowed
-(ap-first-use-hints, ap-collection-counts, ap-stall-facts), 10 merged into existing cards, 1 dropped (S8)**. One verdict
-changed from the first run: S7 (in-game What's new) went from admitted to merged into the weekly deploy routine, so its card
-was deleted. Counts are floors from the final library (11,374 reviews plus a separate 632-review long-play set).
+Inputs: `briefs.md` (ideas only; its counts are void), `../fun-library.md` (FINAL, 56 games, 11,374 distinct reviews plus
+a separate 632-review long-play set; the only source of counts here), `red-team-v2.md`, the earlier `red-team.md` and
+`judge.md`, `../fun-library-catalogue.md` (Correction and Update notes), `autopilot/coverage-map.md`,
+`autopilot/backlog.md`, `autopilot/cards/`, and `docs/DECISIONS.md` on `origin/claude/elegant-johnson-m6k00u`.
+
+Scores 1 to 5: Imp = impact, Ev = confidence in the evidence (final counts only), Fit = fit with owner decisions,
+Cost (5 = cheap), Rev = reversibility. Bias to subtraction: improving or connecting an existing system beats a new one,
+and an idea an existing card already covers is merged, not carded. Counts are floors, rung 3 evidence; they rank themes
+and lose to Cal's playtests and to measurements on our game.
+
+Things that changed since `judge.md`, besides the counts:
+- `f-health` is **done** (PR #39). Ideas the old judge merged into it (S2, S10) now go to `f-health-long`, which is
+  ready and owns `tools/health.mjs --long`. S8's covering metric (longest dry stretch, mechanics per hour) is already in
+  `health-baseline.json`.
+- The game already has a warm-save What's new path (`emit('whatsNew')`, the `news` bell channel, `70-ui.js`), which shows
+  new-system lines to returning players today. That matters for S7.
 
 ## Verdict table
 
@@ -132,18 +141,21 @@ was gated.
 | ap-collection-counts | See how much of each place you have found | claude | C UI | sonnet-medium | auto | f-ci, menu-polish | Bestiary, uniques and Deeds show "n of m" per region or place at 360px (and landscape) with no overflow, and a check fails if any unfound item's name or drop source appears in the rendered text. | 12, 3 |
 | ap-stall-facts | The game tells you plainly when you are stuck | claude | B mechanic (small) | sonnet-medium | judge | xp-gold-pacing-report, f-playtest-bots | From a stall fixture save, one docked line appears after 3 lost fights in a row at one zone using only live numbers (a check fails if it names an item, talent, ability or Star or uses a listed advice word), and the playtest lab records the casual persona's time stuck at that stall before and after, with the judge keeping the line only if time stuck does not rise. | 7, 3 |
 
-The three admitted cards were updated to match this table (ap-stall-facts acceptance and After; Source lines point at judge-v2).
+Card edits the Foreman should make (I am read-only):
+- `ap-stall-facts`: replace the acceptance line with the one above; After becomes `xp-gold-pacing-report, f-playtest-bots`.
+- `ap-collection-counts`, `ap-first-use-hints`: acceptance unchanged in substance; point Source at `judge-v2.md` and
+  cite final counts only (P6 480, 31 games; S5 as onboarding and 1.0 guide groundwork, not Q8).
+- `ap-whats-new-notes`: mark dropped (merged into the weekly deploy routine) and delete the card.
 
-## Not yet gated (nothing from this list is in a card made by this thread)
-Candidates from the first judge: an error watch, "locked things say what opens them", and "visible goals by range". None has
-had a red team and judge. Cards outside this gate currently carry two of them, which the coordinator should resolve:
-`f-playtest-bots` has a visible-goals line, and `ap-error-watch` is marked ready without the gate. See
-`fun-library-gate/judge-v2.md`, section "Problems found in existing cards".
+## Problems found in existing cards (outside this gate, for the coordinator)
 
-## Withdrawn
-S11 (`ap-save-export`): the game already ships save export and import (`src/js/55-savecode.js`, `75-savecode-ui.js`, tested in
-`check.mjs`); the first judge was wrong. The card was deleted.
-
-## Audit trail
-`fun-library-gate/` holds `briefs.md`, `red-team.md`, `judge.md` (first run, superseded), `red-team-v2.md`, `judge-v2.md`
-(final) and the three admitted cards.
+1. **`f-playtest-bots` contains the ungated visible-goals line.** Its Acceptance says "Every report counts visible goals
+   by range (minutes, hours, days)". The catalogue says that line is not in the card; it is. Remove it until the idea
+   has a brief and passes the gate.
+2. **`ap-error-watch` is `ready` without a gate.** The catalogue Correction says it "still needs its own brief and gate",
+   and its Source cites void counts (252, 27). Final Q1 counts are 576 general and 33 long-play. Either gate it or note
+   why it is exempt (observability tooling, class F, may count as `auto`), and fix the counts.
+3. **`f-health-long` cites void counts** ("11,679 reviews", "Q9 29 negatives"). Final: 11,374 reviews, Q9 27 general,
+   7 long-play.
+4. **`judge.md` and the catalogue's verdict table** still show S7 as admitted and S2/S10 going to `f-health`; this file
+   supersedes them.
