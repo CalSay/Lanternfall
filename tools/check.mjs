@@ -204,11 +204,15 @@ if (section('smoke')) try {
 // ---- 3. saves: fresh v5 fixtures, and a foreign or broken save starts a new game (W3-C) ----
 // tests/fixtures/save-{early,mid,late}.json are v5 saves written by the game (tools/sim.mjs --snap / --snapday: Wren 20 min,
 // Tobin day 4, Pip on the coast). There is no migration: a save from another key or a broken one is never read.
+// Their empty bounty slots wait until 2100 (edited by hand): load refills an empty slot once the real clock passes its
+// wait, and that refill would read as a lost field here. A re-snapped fixture needs the same edit (checked below).
 if (section('saves')) try {
   const fx = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
   for (const f of ['save-early.json', 'save-mid.json', 'save-late.json']) {
     const raw = fx(f), old = JSON.parse(raw);
     assert(old.v === 5, `${f}: is a v5 save`);
+    const due = ((old.bounties || {}).slots || []).filter(b => b && b.k === null && b.wait < Date.now() + 365 * 864e5);
+    assert(!due.length, `${f}: empty bounty slots wait well past the real clock (else set their wait to 4102444800000)` + (due.length ? ': ' + due.map(b => new Date(b.wait).toISOString()).join(', ') : ''));
     const g = loadCore({ storage: memoryStorage({ [KEY]: raw }), extraSource: "registerState('zz_feature', { n: 0 });\n" });
     const S = JSON.parse(JSON.stringify(g.eval('S')));
     const d = c11SaveSubsetDiff(old, S);

@@ -98,39 +98,7 @@ export function subsetDiff(sub, sup, p = '') {
   if (sub === sup) return null;
   if (sub === null || typeof sub !== 'object') return deepDiff(sub, sup, p);
   if (sup === null || typeof sup !== 'object') return `${p}: missing object`;
-  if (p === 'bounties' && Array.isArray(sub.slots)) return bountiesDiff(sub, sup);
   if (Array.isArray(sub)) return deepDiff(sub, sup, p);
   for (const k of Object.keys(sub)) { const d = subsetDiff(sub[k], sup[k], p ? `${p}.${k}` : k); if (d) return d; }
-  return null;
-}
-
-// Bounties: a slot saved empty (k null) whose wait is over refills at load with a new bounty (55-bounties
-// btyNew). That is play, not a lost field, so it is allowed only in exactly the shape the game makes it: a kind
-// the board can draw that no other slot holds, id = seq + n for the nth refill, nothing done yet, no wait, the
-// same reroll timer; seq up by exactly the number of refills; recent = the old list plus the new kinds, cut to
-// the game's length. Every other slot and field must be kept as saved.
-// (Without this, a fixture's empty slot turns into a failure once the real clock passes its wait.)
-let bountyRules = null;   // { draws, recentN } read once from the shipped game, so the check can't drift from it
-function bountiesDiff(sub, sup) {
-  const { slots, seq = 0, recent, ...rest } = sub, got = sup.slots;
-  if (!Array.isArray(got)) return 'bounties.slots: missing list';
-  const drawn = [];
-  for (let i = 0; i < Math.max(slots.length, got.length); i++) {
-    const a = slots[i], b = got[i], p = `bounties.slots.${i}`;
-    if (!(a && a.k === null && (a.wait || 0) <= Date.now() && b && b.k !== null)) { const d = deepDiff(a, b, p); if (d) return d; continue; }
-    bountyRules = bountyRules || JSON.parse(loadCore().eval('JSON.stringify({ draws: BOUNTY_API.draws, recentN: BOUNTY_API.recentN })'));
-    if (!bountyRules.draws.includes(b.k)) return `${p}.k: ${JSON.stringify(b.k)} is not a bounty the board can draw`;
-    if (got.some((o, j) => j !== i && o && o.k === b.k)) return `${p}.k: ${JSON.stringify(b.k)} is already on another slot`;
-    drawn.push(b.k);
-    if (b.id !== seq + drawn.length) return `${p}.id: ${JSON.stringify(b.id)} !== ${seq + drawn.length} (refill ${drawn.length} after seq ${seq})`;
-    if (b.have !== 0 || b.wait !== 0 || (b.rr || 0) !== (a.rr || 0)) return `${p}: refilled slot must start at have 0, wait 0, rr ${a.rr || 0}`;
-    if (!Number.isInteger(b.need) || b.need < 1 || typeof b.rew !== 'string') return `${p}: refilled slot needs a whole need >= 1 and a reward`;
-  }
-  if (!drawn.length) { if (sub.seq !== undefined) rest.seq = sub.seq; if (recent !== undefined) rest.recent = recent; }
-  else {
-    if (sup.seq !== seq + drawn.length) return `bounties.seq: ${JSON.stringify(sup.seq)} !== ${seq + drawn.length} (${drawn.length} refilled)`;
-    const d = deepDiff((recent || []).concat(drawn).slice(-bountyRules.recentN), sup.recent, 'bounties.recent'); if (d) return d;
-  }
-  for (const k of Object.keys(rest)) { const d = subsetDiff(rest[k], sup[k], `bounties.${k}`); if (d) return d; }
   return null;
 }

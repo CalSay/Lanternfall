@@ -156,7 +156,5 @@
   bountyRefresh(true);
   // exported to later files via the shared scope
   // kinds: every k a saved slot may hold (the board's kinds plus the retired 'tap'); the save-code check reads it.
-  // draws (the kinds a new bounty can be) and recentN let the tools' save-loss check model a refill exactly.
-  var BOUNTY_API = { refresh: bountyRefresh, claim: claimBounty, reroll: rerollBounty, text: bountyText, reward: bountyReward,
-    kinds: Object.keys(BTY_KINDS).concat('tap'), draws: Object.keys(BTY_KINDS), recentN: BTY_RECENT };
+  var BOUNTY_API = { refresh: bountyRefresh, claim: claimBounty, reroll: rerollBounty, text: bountyText, reward: bountyReward, kinds: Object.keys(BTY_KINDS).concat('tap') };
 }
