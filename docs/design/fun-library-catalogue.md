@@ -133,3 +133,9 @@ The judge said the game has no save export or import. That is wrong: `src/js/55-
 already ship save codes with a copy fallback and a guarded import, and `check.mjs` tests them ("C5 UI" lines). **S11 /
 `ap-save-export` is withdrawn as a duplicate and its card file deleted.** What remains of Q1 (bugs and lost saves are the top
 quit theme) is the error watch below, which still needs its own brief and gate. Admitted cards: 4, not 5.
+
+## Update after widening to 56 games (2026-10-05)
+Cal asked why only 21 games were read. The corpus is now 56 (14,465 reviews). Counts changed, rankings did not flip:
+energy gates tripled (171 reviews, driven by RAID and Hero Wars), which strengthens S14 as a Compass line; the empty
+endgame has 48 long-play reviews. No verdict was re-run through the gate because none changed; the judge should
+re-score S9 and S14 if the Compass thread wants the new numbers.

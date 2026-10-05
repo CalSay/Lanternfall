@@ -176,5 +176,290 @@
    "rating": 4.73,
    "count": 3426
   }
+ },
+ "rustys-retirement": {
+  "steam": {
+   "desc": "Overwhelmingly Positive",
+   "pos": 14390,
+   "total": 14882
+  }
+ },
+ "idle-wizard": {
+  "steam": {
+   "desc": "Very Positive",
+   "pos": 1601,
+   "total": 1855
+  },
+  "ios": {
+   "rating": 4.85,
+   "count": 1801
+  }
+ },
+ "crusaders-lost-idols": {
+  "steam": {
+   "desc": "Very Positive",
+   "pos": 2500,
+   "total": 3019
+  }
+ },
+ "egg-inc": {
+  "ios": {
+   "rating": 4.8,
+   "count": 561893
+  }
+ },
+ "adventure-capitalist": {
+  "steam": {
+   "desc": "Very Positive",
+   "pos": 52929,
+   "total": 60448
+  },
+  "ios": {
+   "rating": 4.72,
+   "count": 383443
+  }
+ },
+ "idle-miner-tycoon": {
+  "ios": {
+   "rating": 4.74,
+   "count": 864347
+  }
+ },
+ "idle-heroes": {
+  "ios": {
+   "rating": 4.76,
+   "count": 106581
+  }
+ },
+ "afk-arena": {
+  "ios": {
+   "rating": 4.71,
+   "count": 497702
+  }
+ },
+ "idle-monster-td": {
+  "steam": {
+   "desc": "Mostly Positive",
+   "pos": 617,
+   "total": 857
+  },
+  "ios": {
+   "rating": 4.71,
+   "count": 2555
+  }
+ },
+ "brighter-shores": {
+  "steam": {
+   "desc": "Mixed",
+   "pos": 6322,
+   "total": 9410
+  }
+ },
+ "idle-hero-td": {
+  "steam": {
+   "desc": "Very Positive",
+   "pos": 1103,
+   "total": 1332
+  },
+  "ios": {
+   "rating": 4.79,
+   "count": 1044
+  }
+ },
+ "trials-of-heroes": {
+  "ios": {
+   "rating": 4.48,
+   "count": 6455
+  }
+ },
+ "combat-quest": {
+  "ios": {
+   "rating": 4.45,
+   "count": 635
+  }
+ },
+ "idle-archer-td": {
+  "ios": {
+   "rating": 4.87,
+   "count": 8388
+  }
+ },
+ "swords-and-souls-neverseen": {
+  "steam": {
+   "desc": "Very Positive",
+   "pos": 6064,
+   "total": 6505
+  }
+ },
+ "exponential-idle": {
+  "ios": {
+   "rating": 4.89,
+   "count": 4128
+  }
+ },
+ "a-dark-room": {
+  "steam": {
+   "desc": "Very Positive",
+   "pos": 65,
+   "total": 72
+  },
+  "ios": {
+   "rating": 4.77,
+   "count": 2677
+  }
+ },
+ "cell-to-singularity": {
+  "ios": {
+   "rating": 4.81,
+   "count": 22936
+  }
+ },
+ "tiny-tower": {
+  "ios": {
+   "rating": 4.73,
+   "count": 55012
+  }
+ },
+ "stardew-valley": {
+  "steam": {
+   "desc": "Overwhelmingly Positive",
+   "pos": 1026805,
+   "total": 1042653
+  }
+ },
+ "forager": {
+  "steam": {
+   "desc": "Very Positive",
+   "pos": 39524,
+   "total": 44179
+  }
+ },
+ "potion-craft": {
+  "steam": {
+   "desc": "Very Positive",
+   "pos": 41744,
+   "total": 44900
+  }
+ },
+ "fantasy-life-i": {
+  "steam": {
+   "desc": "Very Positive",
+   "pos": 12397,
+   "total": 13612
+  },
+  "ios": {
+   "rating": 4.53,
+   "count": 55
+  }
+ },
+ "orna": {
+  "ios": {
+   "rating": 4.74,
+   "count": 5046
+  }
+ },
+ "sea-of-stars": {
+  "steam": {
+   "desc": "Very Positive",
+   "pos": 13831,
+   "total": 15644
+  },
+  "ios": {
+   "rating": 4.36,
+   "count": 219
+  }
+ },
+ "octopath": {
+  "steam": {
+   "desc": "Very Positive",
+   "pos": 14814,
+   "total": 17340
+  }
+ },
+ "chained-echoes": {
+  "steam": {
+   "desc": "Very Positive",
+   "pos": 7276,
+   "total": 8214
+  }
+ },
+ "cassette-beasts": {
+  "steam": {
+   "desc": "Very Positive",
+   "pos": 10519,
+   "total": 11187
+  },
+  "ios": {
+   "rating": 3.82,
+   "count": 459
+  }
+ },
+ "loop-hero": {
+  "steam": {
+   "desc": "Very Positive",
+   "pos": 33924,
+   "total": 36587
+  },
+  "ios": {
+   "rating": 4.88,
+   "count": 3897
+  }
+ },
+ "slay-the-spire": {
+  "steam": {
+   "desc": "Overwhelmingly Positive",
+   "pos": 213559,
+   "total": 219136
+  },
+  "ios": {
+   "rating": 4.25,
+   "count": 3230
+  }
+ },
+ "vampire-survivors": {
+  "steam": {
+   "desc": "Overwhelmingly Positive",
+   "pos": 261724,
+   "total": 266232
+  },
+  "ios": {
+   "rating": 4.61,
+   "count": 5118
+  }
+ },
+ "rogue-legacy-2": {
+  "steam": {
+   "desc": "Very Positive",
+   "pos": 13767,
+   "total": 15158
+  }
+ },
+ "banner-saga": {
+  "steam": {
+   "desc": "Very Positive",
+   "pos": 14214,
+   "total": 15976
+  },
+  "ios": {
+   "rating": 4.79,
+   "count": 2059
+  }
+ },
+ "raid-shadow-legends": {
+  "steam": {
+   "desc": "Mixed",
+   "pos": 1703,
+   "total": 2791
+  },
+  "ios": {
+   "rating": 4.71,
+   "count": 529817
+  }
+ },
+ "hero-wars": {
+  "ios": {
+   "rating": 4.54,
+   "count": 216924
+  }
  }
 }

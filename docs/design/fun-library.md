@@ -1,13 +1,17 @@
-# Lanternfall fun library (first pass, 2026-10-05)
+# Lanternfall fun library (2026-10-05, widened to 56 games)
 
-What the players of 21 well-rated idle and incremental games, plus Old School RuneScape and Clair Obscur: Expedition 33,
+What the players of 56 well-rated idle, incremental, mobile RPG and adjacent games (including Old School RuneScape and Clair Obscur: Expedition 33),
 say makes those games good and why committed players leave. Built by `tools/fetch_reviews.py` (raw reviews) and
 `tools/tag_reviews.py` (theme counts); rerun both to refresh. Data in `raw/`, `tags-kw/`, `ratings-2026-10-05.json`.
 
 ## 1. How to read this (limits first)
 
-- **Corpus:** 21 games, 5,255 distinct reviews read by script: 3,533 positive and 1,722 negative (1,300 App Store, 422
-  Steam). 266 are negatives from Steam players with 50+ hours (the "why committed players quit" set).
+- **Two passes.** Cal asked why only 21 games were checked (the card's floor was 15 to 20). Pass 1 (21 games) is written
+  up in sections 2 to 6, with its own counts. **Section 8 repeats the counts for the full 56 games and is the one to
+  cite.** Where the two disagree, section 8 wins; the changes are listed there.
+
+- **Corpus:** pass 1: 21 games, 5,255 reviews (3,533 positive, 1,722 negative; 266 are 50h+ Steam negatives). Pass 2:
+  56 games, 14,465 reviews (9,570 positive, 4,895 negative; 525 are 50h+ Steam negatives).
 - **Sources used per game:** Steam review feed (helpful-first, 25 positive and 25 negative per game, plus extra negatives
   from 50h+ players) and the App Store RSS feed (up to 5 pages each of most helpful and most recent). Both worked.
 - **Reddit: blocked.** `www.reddit.com` answers 403 "Blocked" from this container (Reddit blocks the cloud proxy; the
@@ -196,3 +200,71 @@ Every principle above is a candidate input, not a decision. Ideas built from the
 
 Monthly: rerun `python3 tools/fetch_reviews.py corpus.json raw` then `python3 tools/tag_reviews.py .` from this folder;
 update `ratings-*.json`; diff counts against this file. Copy into the repo as `docs/design/fun-library.md` by PR.
+
+## 8. Full corpus: 56 games (use these counts)
+
+Added in pass 2 (35 games, `corpus.json`): 15 more idle and incremental games and mobile idle RPGs (Rusty's Retirement,
+Idle Wizard, Crusaders of the Lost Idols, Egg Inc., AdVenture Capitalist, Idle Miner Tycoon, Idle Heroes, AFK Arena, Idle
+Monster TD, Brighter Shores, Idle Hero TD, Trials of Heroes, Combat Quest, Idle Archer TD, Swords & Souls Neverseen,
+Exponential Idle, A Dark Room, Cell to Singularity, Tiny Tower), 2 big mobile RPGs (RAID: Shadow Legends, Hero Wars), and
+12 **adjacent** games chosen because Lanternfall borrows from them (gather and craft: Stardew Valley, Forager, Potion Craft,
+Fantasy Life i, Orna; active turn combat: Sea of Stars, Octopath Traveler, Chained Echoes, Cassette Beasts, The Banner
+Saga; roguelite: Loop Hero, Slay the Spire, Vampire Survivors, Rogue Legacy 2). Adjacent games inflate story, art and
+depth counts, so read those three themes with care. Ratings for all 56 are in `ratings-2026-10-05.json`.
+Still missing and worth adding next: more Steam idle RPGs (the Steam tag browser is not reachable here, so picks came
+from name search), non-English reviews, and Google Play beyond summaries.
+
+Counts are reviews matching the theme (floors). "Strong in" = games where at least 4% of that side's reviews match
+(min 3). Long-play = Steam negatives from players with 50+ hours.
+
+| Theme | Reviews | Strong in (games) | Long-play | Top games |
+|---|---|---|---|---|
+| P-offline (P1) | 290 | 9 | n/a | AFK Arena 76, Melvor 22, IdleOn 21, OSRS 18, Clicker Heroes 17 |
+| P-fair (P2, P3) | 287 | 9 | n/a | Shop Titans 31, Idle Slayer 21, Egg Inc 18, Melvor 16, Orna 16 |
+| P-active (P4) | 320 | 15 | n/a | OSRS 28, Idle Slayer 23, Melvor 23, Hero Wars 19, IdleOn 17 |
+| P-depth (P5) | 582 | 27 | n/a | Banner Saga 68, Tiny Tower 50, Slay the Spire 32, Hero Wars 30, AFK Arena 28 |
+| P-collect (P6) | 580 | 31 | n/a | AFK Arena 48, Tap Titans 2 36, Tiny Tower 34, Idle Slayer 32, RAID 32 |
+| P-dev (P7) | 166 | 6 | n/a | IdleOn 27, Shop Titans 14, Dunidle 11, Orna 11, Melvor 9 |
+| P-prestige (P8) | 200 | 8 | n/a | Idle Slayer 42, Egg Inc 33, Tap Titans 2 28, Cell to Singularity 12, Slay the Spire 11 |
+| P-unlock (P9) | 111 | 1 | n/a | Shop Titans 10, IdleOn 9, Hero Wars 8, Idle Slayer 8, OSRS 6 |
+| P-story (P10) | 1,322 | 39 | n/a | Banner Saga 125, AFK Arena 113, A Dark Room 110, IdleOn 71, OSRS 66 |
+| P-art (P11) | 869 | 41 | n/a | Banner Saga 79, Tiny Tower 60, A Dark Room 57, Egg Inc 40, OSRS 40 |
+| N-bug (Q1) | 720 | 37 | 39 | Cassette Beasts 67, Hero Wars 62, Shop Titans 46, IdleOn 37, AdVenture Capitalist 34 |
+| N-wall (Q2) | 492 | 42 | 57 | RAID 59, Idle Heroes 34, AFK Arena 25, Hero Wars 23, Idle Archer TD 20 |
+| N-ads (Q3) | 621 | 25 | 10 | AdVenture Capitalist 167, Idle Miner Tycoon 64, Hero Wars 60, Tiny Tower 45, RAID 27 |
+| N-pay (Q4) | 317 | 20 | 18 | RAID 41, Idle Heroes 39, Shop Titans 33, Hero Wars 24, AFK Arena 22 |
+| N-late (Q5) | 196 | 22 | 48 | RAID 12, Shop Titans 12, Hero Wars 10, Clicker Heroes 8, Cassette Beasts 7 |
+| N-shallow (Q6) | 150 | 14 | 22 | AdVenture Capitalist 15, RAID 14, Vampire Survivors 11, OSRS 8, AFK Arena 7 |
+| N-energy (Q7) | 171 | 7 | 10 | RAID 40, Hero Wars 24, Shop Titans 18, Idle Heroes 8, Idle Miner Tycoon 7 |
+| N-bloat (Q8) | 72 | 4 | 7 | Tiny Tower 9, Melvor 7, Idle Heroes 5, AFK Arena 4, Leaf Blower 4 |
+| N-dominant (Q9) | 30 | 3 | 16 | Idle Champions 5, RAID 4, Hero Wars 3, Increlution 3, Octopath 3 |
+| N-tutorial (Q10) | 86 | 5 | 0 | Melvor 16, Cassette Beasts 8, AFK Arena 6, Idle Heroes 6, Sea of Stars 5 |
+
+**What changed from pass 1.** The order of quit reasons is the same at the top (bugs, walls, ads, pay-to-win, empty
+endgame), so the main lessons hold. Differences: (1) **Wait timers and energy gates (Q7) triple to 171 reviews**, because
+RAID and Hero Wars are built on them; this supports a firm "no energy gates" line for Lanternfall (idea S14, which pass 1
+judged too weakly supported). (2) **The empty endgame (Q5) now has 48 long-play reviews, second only to walls and bugs**.
+(3) **Dominant strategy stays rare (30)** but is still found almost only among 50h+ players (16 of 30 are long-play).
+(4) Ads jump to 621 because AdVenture Capitalist (167) is one very ad-heavy case; treat that count as skewed.
+(5) P-offline's top is now AFK Arena (76), a gacha that sells AFK rewards, so it supports offline gathering but not
+offline combat, which Lanternfall rules out.
+
+### Phone versus PC, 56 games (3,897 negatives: 2,899 App Store, 998 Steam)
+
+| Theme | Phone | PC |
+|---|---|---|
+| Ads | 15.6% | 1.3% |
+| Bugs and crashes | 17.1% | 5.2% |
+| Pay-to-win and paywalls | 7.3% | 3.3% |
+| Energy and timers | 3.8% | 2.3% |
+| Progress walls | 9.6% | 11.7% |
+| Empty endgame | 2.9% | 8.2% |
+| Dominant strategy | 0.3% | 2.0% |
+| Battery, notifications, overheating | 1.5% | 0.4% |
+
+The pattern holds: phones add ads, crashes and pay gates, while PC players, who play longer, hit the empty endgame and
+dominant strategies.
+
+### Effect on the catalogue
+Counts moved but no verdict flips. S14 (no energy gates) gets stronger evidence; the judge merged it into the Compass,
+which now has real numbers to cite. The catalogue file lists this in its correction section.

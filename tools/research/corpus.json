@@ -1,23 +1,361 @@
 [
-{"slug":"melvor-idle","name":"Melvor Idle","platform":"pc","steam":1267910,"ios":1518963622},
-{"slug":"idleon","name":"Legends of IdleOn","platform":"mobile","ios":1636526901},
-{"slug":"ngu-idle","name":"NGU Idle","platform":"pc","steam":1147690},
-{"slug":"antimatter-dimensions","name":"Antimatter Dimensions","platform":"pc","steam":1399720,"ios":6738206800},
-{"slug":"kittens-game","name":"Kittens Game","platform":"pc","steam":1097410,"ios":1198099725},
-{"slug":"trimps","name":"Trimps","platform":"pc","steam":1877960},
-{"slug":"increlution","name":"Increlution","platform":"pc","steam":1593350},
-{"slug":"gnorp-apologue","name":"(the) Gnorp Apologue","platform":"pc","steam":1473350},
-{"slug":"idle-slayer","name":"Idle Slayer","platform":"mobile","steam":1353300,"ios":1526599527},
-{"slug":"soda-dungeon-2","name":"Soda Dungeon 2","platform":"mobile","steam":946050,"ios":1454882086},
-{"slug":"leaf-blower-revolution","name":"Leaf Blower Revolution","platform":"mobile","steam":1468260,"ios":6443698340},
-{"slug":"shop-titans","name":"Shop Titans","platform":"mobile","steam":1258080,"ios":1361253233},
-{"slug":"osrs","name":"Old School RuneScape","platform":"reference","steam":1343370,"ios":1269648762},
-{"slug":"expedition-33","name":"Clair Obscur: Expedition 33","platform":"reference","steam":1903340},
-{"slug":"idle-champions","name":"Idle Champions of the Forgotten Realms","platform":"pc","steam":627690},
-{"slug":"cookie-clicker","name":"Cookie Clicker","platform":"pc","steam":1454400},
-{"slug":"clicker-heroes","name":"Clicker Heroes","platform":"pc","steam":363970,"ios":911107930},
-{"slug":"tap-titans-2","name":"Tap Titans 2","platform":"mobile","ios":1120294802},
-{"slug":"idle-berserker","name":"Idle Berserker","platform":"mobile","ios":1635339933},
-{"slug":"slayer-legend","name":"Slayer Legend","platform":"mobile","ios":1635712706},
-{"slug":"dunidle","name":"Dunidle","platform":"mobile","ios":1452929189}
+{
+"slug": "melvor-idle",
+"name": "Melvor Idle",
+"platform": "pc",
+"steam": 1267910,
+"ios": 1518963622
+},
+{
+"slug": "idleon",
+"name": "Legends of IdleOn",
+"platform": "mobile",
+"ios": 1636526901
+},
+{
+"slug": "ngu-idle",
+"name": "NGU Idle",
+"platform": "pc",
+"steam": 1147690
+},
+{
+"slug": "antimatter-dimensions",
+"name": "Antimatter Dimensions",
+"platform": "pc",
+"steam": 1399720,
+"ios": 6738206800
+},
+{
+"slug": "kittens-game",
+"name": "Kittens Game",
+"platform": "pc",
+"steam": 1097410,
+"ios": 1198099725
+},
+{
+"slug": "trimps",
+"name": "Trimps",
+"platform": "pc",
+"steam": 1877960
+},
+{
+"slug": "increlution",
+"name": "Increlution",
+"platform": "pc",
+"steam": 1593350
+},
+{
+"slug": "gnorp-apologue",
+"name": "(the) Gnorp Apologue",
+"platform": "pc",
+"steam": 1473350
+},
+{
+"slug": "idle-slayer",
+"name": "Idle Slayer",
+"platform": "mobile",
+"steam": 1353300,
+"ios": 1526599527
+},
+{
+"slug": "soda-dungeon-2",
+"name": "Soda Dungeon 2",
+"platform": "mobile",
+"steam": 946050,
+"ios": 1454882086
+},
+{
+"slug": "leaf-blower-revolution",
+"name": "Leaf Blower Revolution",
+"platform": "mobile",
+"steam": 1468260,
+"ios": 6443698340
+},
+{
+"slug": "shop-titans",
+"name": "Shop Titans",
+"platform": "mobile",
+"steam": 1258080,
+"ios": 1361253233
+},
+{
+"slug": "osrs",
+"name": "Old School RuneScape",
+"platform": "reference",
+"steam": 1343370,
+"ios": 1269648762
+},
+{
+"slug": "expedition-33",
+"name": "Clair Obscur: Expedition 33",
+"platform": "reference",
+"steam": 1903340
+},
+{
+"slug": "idle-champions",
+"name": "Idle Champions of the Forgotten Realms",
+"platform": "pc",
+"steam": 627690
+},
+{
+"slug": "cookie-clicker",
+"name": "Cookie Clicker",
+"platform": "pc",
+"steam": 1454400
+},
+{
+"slug": "clicker-heroes",
+"name": "Clicker Heroes",
+"platform": "pc",
+"steam": 363970,
+"ios": 911107930
+},
+{
+"slug": "tap-titans-2",
+"name": "Tap Titans 2",
+"platform": "mobile",
+"ios": 1120294802
+},
+{
+"slug": "idle-berserker",
+"name": "Idle Berserker",
+"platform": "mobile",
+"ios": 1635339933
+},
+{
+"slug": "slayer-legend",
+"name": "Slayer Legend",
+"platform": "mobile",
+"ios": 1635712706
+},
+{
+"slug": "dunidle",
+"name": "Dunidle",
+"platform": "mobile",
+"ios": 1452929189
+},
+{
+"slug": "rustys-retirement",
+"name": "Rusty's Retirement",
+"platform": "pc",
+"steam": 2666510
+},
+{
+"slug": "idle-wizard",
+"name": "Idle Wizard",
+"platform": "mobile",
+"steam": 992070,
+"ios": 1521860288
+},
+{
+"slug": "crusaders-lost-idols",
+"name": "Crusaders of the Lost Idols",
+"platform": "pc",
+"steam": 402840
+},
+{
+"slug": "egg-inc",
+"name": "Egg, Inc.",
+"platform": "mobile",
+"ios": 993492744
+},
+{
+"slug": "adventure-capitalist",
+"name": "AdVenture Capitalist",
+"platform": "mobile",
+"steam": 346900,
+"ios": 927006017
+},
+{
+"slug": "idle-miner-tycoon",
+"name": "Idle Miner Tycoon",
+"platform": "mobile",
+"ios": 1116645064
+},
+{
+"slug": "idle-heroes",
+"name": "Idle Heroes",
+"platform": "mobile",
+"ios": 1153461915
+},
+{
+"slug": "afk-arena",
+"name": "AFK Arena",
+"platform": "mobile",
+"ios": 1375425432
+},
+{
+"slug": "idle-monster-td",
+"name": "Idle Monster TD",
+"platform": "mobile",
+"steam": 1482910,
+"ios": 1493941058
+},
+{
+"slug": "brighter-shores",
+"name": "Brighter Shores",
+"platform": "pc",
+"steam": 2791440
+},
+{
+"slug": "idle-hero-td",
+"name": "Idle Hero TD",
+"platform": "mobile",
+"steam": 2897580,
+"ios": 6479284270
+},
+{
+"slug": "trials-of-heroes",
+"name": "Trials of Heroes",
+"platform": "mobile",
+"ios": 1384826685
+},
+{
+"slug": "combat-quest",
+"name": "Combat Quest: Idle Dungeon RPG",
+"platform": "mobile",
+"ios": 1558423382
+},
+{
+"slug": "idle-archer-td",
+"name": "Idle Archer Tower Defense RPG",
+"platform": "mobile",
+"ios": 1619485045
+},
+{
+"slug": "swords-and-souls-neverseen",
+"name": "Swords & Souls: Neverseen",
+"platform": "pc",
+"steam": 679900
+},
+{
+"slug": "exponential-idle",
+"name": "Exponential Idle",
+"platform": "mobile",
+"ios": 1538487382
+},
+{
+"slug": "a-dark-room",
+"name": "A Dark Room",
+"platform": "mobile",
+"steam": 2460660,
+"ios": 736683061
+},
+{
+"slug": "cell-to-singularity",
+"name": "Cell to Singularity",
+"platform": "mobile",
+"ios": 1327555461
+},
+{
+"slug": "tiny-tower",
+"name": "Tiny Tower",
+"platform": "mobile",
+"ios": 422667065
+},
+{
+"slug": "stardew-valley",
+"name": "Stardew Valley (adjacent: gather/craft)",
+"platform": "adjacent",
+"steam": 413150
+},
+{
+"slug": "forager",
+"name": "Forager (adjacent: gather/craft)",
+"platform": "adjacent",
+"steam": 751780
+},
+{
+"slug": "potion-craft",
+"name": "Potion Craft (adjacent: crafting)",
+"platform": "adjacent",
+"steam": 1210320,
+"ios": 1481379939
+},
+{
+"slug": "fantasy-life-i",
+"name": "Fantasy Life i (adjacent: skills RPG)",
+"platform": "adjacent",
+"steam": 2993780,
+"ios": 6760401505
+},
+{
+"slug": "orna",
+"name": "Orna (adjacent: mobile RPG)",
+"platform": "adjacent",
+"ios": 1451775309
+},
+{
+"slug": "sea-of-stars",
+"name": "Sea of Stars (adjacent: active turn combat)",
+"platform": "adjacent",
+"steam": 1244090,
+"ios": 6673906410
+},
+{
+"slug": "octopath",
+"name": "Octopath Traveler (adjacent: turn combat)",
+"platform": "adjacent",
+"steam": 921570
+},
+{
+"slug": "chained-echoes",
+"name": "Chained Echoes (adjacent: turn combat)",
+"platform": "adjacent",
+"steam": 1229240
+},
+{
+"slug": "cassette-beasts",
+"name": "Cassette Beasts (adjacent: turn combat)",
+"platform": "adjacent",
+"steam": 1321440,
+"ios": 6736517805
+},
+{
+"slug": "loop-hero",
+"name": "Loop Hero (adjacent: idle-ish roguelite)",
+"platform": "adjacent",
+"steam": 1282730,
+"ios": 6464048549
+},
+{
+"slug": "slay-the-spire",
+"name": "Slay the Spire (adjacent: roguelite)",
+"platform": "adjacent",
+"steam": 646570,
+"ios": 1491530147
+},
+{
+"slug": "vampire-survivors",
+"name": "Vampire Survivors (adjacent: roguelite)",
+"platform": "adjacent",
+"steam": 1794680,
+"ios": 6444525702
+},
+{
+"slug": "rogue-legacy-2",
+"name": "Rogue Legacy 2 (adjacent: roguelite)",
+"platform": "adjacent",
+"steam": 1253920
+},
+{
+"slug": "banner-saga",
+"name": "The Banner Saga (adjacent: turn combat)",
+"platform": "adjacent",
+"steam": 237990,
+"ios": 911006986
+},
+{
+"slug": "raid-shadow-legends",
+"name": "RAID: Shadow Legends",
+"platform": "mobile",
+"steam": 2333480,
+"ios": 1371565796
+},
+{
+"slug": "hero-wars",
+"name": "Hero Wars",
+"platform": "mobile",
+"ios": 1158967485
+}
 ]
