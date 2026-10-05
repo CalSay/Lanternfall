@@ -31,6 +31,9 @@ const argv = process.argv.slice(2);
 const flag = n => argv.includes('--' + n);
 const opt = (n, d) => { const i = argv.indexOf('--' + n); return i >= 0 && argv[i + 1] && !argv[i + 1].startsWith('--') ? argv[i + 1] : d; };
 
+{ const known = ['compare', 'write-baseline', 'json', 'only', 'jobs', 'seed-offset', 'baseline-seeds'], bad = argv.filter(a => a.startsWith('--') && !known.includes(a.slice(2)));
+  if (bad.length) { console.error('health: unknown option ' + bad.join(', ') + '; known: ' + known.map(k => '--' + k).join(' ')); process.exit(2); } }
+if (flag('compare') && flag('write-baseline')) { console.error('health: --compare and --write-baseline do not mix; write the baseline, then compare'); process.exit(2); }
 // sim.mjs class names for the three starters
 const HEROES = [['wren', 'ranger'], ['tobin', 'warden'], ['pip', 'lanternmage']];
 const SEED_OFFSET = Number(opt('seed-offset', 0));
