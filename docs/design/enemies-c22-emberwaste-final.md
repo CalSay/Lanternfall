@@ -1,6 +1,7 @@
 # C22 — Emberwaste encounter roster proposal
 
 > **Story note (2026-10-05, story judge ruling b):** each Shadowborn emerges whole from the dark in a shape copied from the place or from memory, and is never the thing it copies (`story-bible.md` rule 4). A story line may claim a copied likeness only where the sprite shows it.
+> **Story note (ruling a):** the Emberwaste Elder is the Pyre Knight, the Lea's held fire wearing Ser Durand's shape. Its shield moves and spoken cues are the fire's, in Durand's voice (lent); the real Durand is held voiceless inside the Pyre and carried out alive by Caedmon after the fight (`story-bible.md` 5.2, 8.3). Moves and numbers below are unchanged; only the subject is renamed when built.
 
 **Status:** complete design proposal for review; no runtime, artwork, loot-table, or progression changes. This roster follows the owner's confirmed world shape in [world-structure.md](world-structure.md): Emberwaste has 35 zone monsters, seven area Champions of Darkness, and Ser Durand as the region's Elder of Darkness. A Shadowborn Captain is a named enhancement of the zone's monster, not a new species or art design. Each area is played once; each zone has five separate regular fights against its own monster followed by one Captain fight. One foe appears in each fight. The player chooses when to enter every fight; no queued fights, automatic transitions, repeat bosses, or farming loops.
 

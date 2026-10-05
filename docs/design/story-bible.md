@@ -83,10 +83,10 @@ Hollow's Rest is the **Deepwell**, a stair cut long ago down toward the **Old Li
 | # | Rule | Player hears it from | Shown by |
 |---|---|---|---|
 | 1 | **Fire is not lantern light, but it is company.** Fire keeps you warm and can't relight a dead lamp. Lantern light, the Old Light from under the land, keeps the dark back. A hearth beside a lantern keeps it from being alone. | Hesketh, opening | His dead lamps that fire won't relight; your lamp steadying by his fire |
-| 2 | **Kept light can be called. Given light cannot.** A light is *given* when it is lit for a person you could name. A light kept for yourself, or for no one, or for anyone at all (a duty to whoever passes, a lighthouse for whichever ship) is *kept*, and the Voice's song can call it out of its lamp. A lamp lit from a given flame, for someone, is given too. | Elowen, end of Ch1 | The Lanternfall night; the Order's road lamps; Maren's lamp; yours |
+| 2 | **Kept light can be called. Given light cannot.** A light is *given* when it is lit for a person you could name. A light kept for yourself, or for no one, or for anyone at all (a duty to whoever passes, a lighthouse for whichever ship) is *kept*. The song calls only what it can hear, and it hears a kept light by its flame: a kept light banked down to a coal under ash, like a fire banked for the night, isn't heard, and gives no light either. Elowen's is the only one known to have lasted that way, and the Voice's song can call it out of its lamp. A lamp lit from a given flame, for someone, is given too. | Elowen, end of Ch1 | The Lanternfall night; the Order's road lamps; Maren's lamp; yours |
 | 3 | **A given light goes out only when it is alone, and only by the Voice's own hands.** Shadowborn and Champions can wear a given light down until it gutters. Only the Voice can put it out, and only when its bearer has no other light in sight. A hearth, a candle or a lamp counts. People don't. The Voice can't hear a given light. It comes only where it's shown one: by a Shadowborn that has seen it in the open, or by a great light or noise. A light behind a shut door, inside a storm, or on Lantern Hill, where no seam opens, can't be shown. | Maren, without words (Ch1 a4); said plainly by Elowen | Mossy Hollow's ten years (hearths in every window); Hesketh's fire; the Long Night; Ch5; the finale |
 | 4 | **The dark has no shape of its own.** What climbs out of it copies shapes it finds: the place, the things in it, and the shapes in people's memory. It copies shapes, never voices. | Anselm (Ch1 a3) | Ossuary Marshal; Emberlea's ash; Rowan's shape |
-| 5 | **The dark has no voice of its own.** It speaks only with voices given to it by people who said yes to one of its offers. A yes costs your voice. The Voice lends held voices to its Elders and to some Champions. When the one holding a voice is beaten, a living person's voice goes home to them; a dead person's voice goes to rest. The first yes was said before the dark could speak, so nobody offered it; nobody knows who said it. | Morwen (hint, Ch1 a5); Silas (Ch2); the cost in full Ch4 a5 | The Oracle; the Fogbound; the Silent Village |
+| 5 | **The dark has no voice of its own.** It speaks only with voices given to it by people who said yes to one of its offers. A yes costs your voice. The Voice lends held voices to its Elders and to some Champions. When the one holding a voice is beaten, a living person's voice goes home to them; a dead person's voice goes to rest. The first yes was said before the dark could speak, so nobody offered it; nobody knows who said it. **A voice can only go where its owner's road is open.** The first voice's owner went down the stair long ago, so when the Voice is beaten that one voice has nowhere to go and stays with what's left of the dark. | Morwen (hint, Ch1 a5); Silas (Ch2); the cost in full Ch4 a5 | The Oracle; the Fogbound; the Silent Village |
 | 6 | **Held things are held, not destroyed.** On the Lanternfall night every called light flew toward the Lea; a few fell short and were caught on the way (in the marsh, in the lagoon). Freed, a light flies back to the lamp it left. Held a long time, it forgets the way, and has to be given a road. People the dark holds (Silas, Durand, Ada and Pell in the fog) are held the same way: they don't age, eat or remember the years. | Ch1 end (a few), Ch2 a5, Ch3 (thousands) | |
 
 Rules 2 and 3 are the heart, and the player only ever needs two sentences of them: **"A light lit for someone can't be
@@ -124,7 +124,7 @@ dark's ranks: the Voice, its Elders, Champions, Captains and Shadowborn.
   wife). And the sparks of the **Mother Lamp**: in the chapel, Elowen felt it pull at her hand, broke its flame and
   pressed each spark into the hands of someone running past in the dark, lit *for* them. She gave away about forty. One
   went into the hands of the one carrying you. You were very small. The last spark she **kept for herself**, and turned
-  so low the song passed over it. Kept, it can be called; that is why she has hidden in the dark chapel for ten years.
+  down to a coal under ash, so the song passed over it (rule 2). Kept, it can be called the moment it burns bright; that is why she has hidden in the dark chapel for ten years.
 - **After the Fall** the dark hunted the given lights the slow way. Shadowborn found each one and wore it down; when its
   bearer was alone, out of sight of any other light, the Voice's hands came. Most of Elowen's forty went out in the first
   years, carried by people who fled alone. **This winter the last one in sight of Mossy Hollow went out.** (Other given lights still burn far off, hidden: Maren's, Hesketh's wife's, Ada's candle, Nan's.) Yours hung over a door in Mossy
@@ -408,7 +408,7 @@ it, and every recurring person changes. Section 6.4 lists every appearance.
 
 **Saint Elowen, the oathbreaker** (the chapel on Lantern Hill).
 - *What she did:* broke the Oath and the Mother Lamp, and gave about forty sparks to strangers. One is your lamp.
-- *Cost:* ten years alone in a dark chapel with her one kept spark turned so low the song passed over it, not knowing if any
+- *Cost:* ten years alone in a dark chapel with her one kept spark banked to a coal so the song passed over it, not knowing if any
   spark survived. The Order's survivors call her an oathbreaker.
 - *Plants:* her mark, a small spiral, scratched on the base of your lamp (seen in the opening card's still), on the
   Barrow Lamp (Ch1 a4) and on Ada's candle (Ch1 a7). Her candle flares when the Chained Star falls (Ch1 a6).
@@ -844,7 +844,11 @@ two of them waiting for a tap; never on replays; plain words; reduced motion; la
   frost, Coldhearth, the warm beat, the Champion and NPC scenes) is text on a plain card with the area background and the
   lamp icon. **The Lamp Rack** is a row of existing lamp icons in the camp panel, one per area cleared; a drawn rack is an
   art request for the owner, not a dependency. Until the pack is vetted, every card is text-only and the story still works.
-- **10.4 Data and save.** C28 7.1 (`STORY_BEATS`), one data file per chapter (`21k-story-hollow.js`, `21k-story-coast.js`
+- **10.4 Switch-off.** One flag turns the whole story layer off: `STORY_ON` in `55-story.js` (dev), and a player option
+  "Story cards: on / off" in Settings. Off, no card plays, the Journal keeps what was read, and the `story` keys are kept
+  but ignored, so turning it back on loses nothing. Rollback is the same flag in a one-line PR; the story data files
+  (`21k-story-*.js`) can also be removed without touching any other system. The `story-delivery` card builds both.
+- **10.4b Data and save.** C28 7.1 (`STORY_BEATS`), one data file per chapter (`21k-story-hollow.js`, `21k-story-coast.js`
   and so on), plus `voice`, `hero` (keyed `wren`, `tobin`, `pip`), `choice`, `letters`, `pages`, `npc` and `notes` entries.
   New keys under the existing `story` state, merged with defaults, never a repurposed field: `starter` (set once at the
   cold start; existing saves take the first starter they own), `litFor` (one name per Great Lantern), `coldhearth` (lit or
