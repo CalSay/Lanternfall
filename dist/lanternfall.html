@@ -12917,6 +12917,39 @@ let navSkillOpen, navSkills, navLast, navNow, navRate, navFullIn, navRecent, bes
   }
 }
 
+// ---- src/js/55-oil.js ----
+// 55-oil: lantern oil. Pay gold to light your lantern with one of three oils; it burns for ten minutes.
+// Counts live and away play the same (a modifier, no per-kill events). No DOM.
+
+const OIL_COST = 500;
+const OIL_MINUTES = 10;
+const OILS = {
+  amber: { name: 'Amber oil', dmg: 1.10, gold: 1.10 },
+  pine: { name: 'Pine oil', dmg: 1.10, gold: 1 },
+  tallow: { name: 'Tallow oil', dmg: 1, gold: 1.10 }
+};
+
+const oilApi = {};
+
+{
+  const lit = () => Date.now() < (S.oilLit || 0);
+  const oil = () => (lit() ? OILS[S.oilKind] : null);
+
+  function lightOil(kind) {
+    if (!OILS[kind] || S.gold < OIL_COST) return false;
+    S.gold -= OIL_COST;
+    S.oilKind = kind;
+    S.oilLit = Date.now() + OIL_MINUTES * 60000;
+    emit('toast', { key: 'oil', msg: `${OILS[kind].name} lit. It burns for ${OIL_MINUTES} minutes.`, kind: 'good' });
+    return true;
+  }
+  const oilLeft = () => Math.max(0, (S.oilLit || 0) - Date.now());
+  Object.assign(oilApi, { lit, oil, lightOil, oilLeft });
+
+  addModifier('dmg', () => (oil() ? oil().dmg : 1));
+  addModifier('gold', () => (oil() ? oil().gold : 1));
+}
+
 // ---- src/js/55-onboard.js ----
 // 55-onboard: the guided first ten minutes (docs/design/onboarding.md). Two parts:
 //   1. Progressive unlocks. Tabs, sub-views and a few sections appear as the player reaches them,
@@ -37930,6 +37963,33 @@ let navUI = null;
   }
 
   navUI = { openSwitcher, pill, swipeView };
+}
+
+// ---- src/js/75-oil-ui.js ----
+// 75-oil-ui: "Lantern oil" section on the Fight tab.
+{
+  const O = oilApi;
+  const rows = {};
+  registerSection('adv', {
+    id: 'oil', title: 'Lantern oil', view: 'bestiary',
+    mount(sec) {
+      sec.append(el('p', 'note', `Light the lantern for ${OIL_COST} gold. It burns ${OIL_MINUTES} minutes.`));
+      for (const k of Object.keys(OILS)) {
+        const r = makeRow(sec, OILS[k].name, false, iconURL('coin', '#F2C14E'));
+        r.btn.addEventListener('click', () => { O.lightOil(k); });
+        r.qty.textContent = 'Re-kindle the lantern wick with fresh oil and keep it burning';
+        rows[k] = r;
+      }
+    },
+    update() {
+      for (const k of Object.keys(OILS)) {
+        const r = rows[k], o = OILS[k];
+        r.desc.textContent = `+${Math.round((o.dmg - 1) * 100)}% damage, +${Math.round((o.gold - 1) * 100)}% gold.`;
+        r.btn.disabled = S.gold < OIL_COST;
+        r.own.textContent = O.lit() && S.oilKind === k ? `${Math.ceil(O.oilLeft() / 60000)} min left` : '';
+      }
+    }
+  });
 }
 
 // ---- src/js/75-onboard-ui.js ----
