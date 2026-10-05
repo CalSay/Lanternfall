@@ -1,6 +1,6 @@
 # Story bible: Lanternfall, Season 1
 
-Status: **v3.1**, 2026-10-05 (thread "Story overhaul"). v1 scored 3.2 and v2 3.75 against a 4.3 bar. v3 makes the
+Status: **v3.2, passed** (judge, 2026-10-05) (thread "Story overhaul"). v1 scored 3.2 and v2 3.75 against a 4.3 bar. v3 makes the
 rules airtight (one meaning of "alone"; only the Voice's own hands put a given light out), fixes roster and Hands
 clashes, gives Chapter 5 its people and set pieces, and costs the art. Review rounds are logged in section 15.
 
@@ -582,10 +582,9 @@ a family is in it. **Climax:** the Fenmother. **Hook:** a green light at sea.
 
 **The opening** (before zone 1). Region card, three lines, over a still of the lamp on its hook (Elowen's spiral on its
 base):
-1. Ten years ago every lamp in the land went out. The one over your door never did.
-2. This winter the last lamp you could see from the village went out. Tonight the dark came up through the moss
-   for yours.
-3. Your village hid. You took the lamp and ran up the road, so the dark would follow you, not them.
+1. Ten years ago every lamp went out. The one over your door never did.
+2. This winter the last lamp in sight went out. Tonight the dark came for yours.
+3. Your village hid. You took the lamp and ran, so the dark would follow you.
 
 Then on the road, the lamp starts to gutter (the dark is close and you are alone). An old man by a dead fire: Hesketh.
 "Wood first. Then we talk." When the fire catches from your lamp, the lamp steadies: "Every road needs a place to come
@@ -610,8 +609,8 @@ the first fight (audit A1).
   the air turns colder." 
 - Hollow Cantor. *Pre:* "The singing comes from inside its chest. A whole choir. / It is the song from the night the lights
   went out." *Post:* "The song breaks. One voice, on its own, says thank you. Then nothing."
-- Ossuary Marshal. *Pre:* "A lance as long as a tree, planted among the graves. / It carries the lance of the Order's best
-  knight. From the road, the living thought the dead rose." *Post:* "The lance cracks. The graves are only graves. / Anselm rings his bell once, softly."
+- Ossuary Marshal. *Pre:* "A lance as long as a tree, planted among the graves. / It carries the Order's best knight's lance.
+  The living thought the dead rose." *Post:* "The lance cracks. The graves are only graves. / Anselm rings his bell once, softly."
 - Sepulchre Engine. *Pre:* "It rams the last barrow door. A thin light leaks through. / It has hit that door every night for
   ten years." *Post:* "Its shell splits. The door holds. / The door opens."
 - Veiled Oracle. *Pre:* "Its veil moves. A hundred tired voices speak at once. / 'You're tired. Nobody is coming. Rest.'"
@@ -737,10 +736,10 @@ kept handing round the light." *Delight:* Kestrel learns to pass a candle on a r
 **Midpoint (a3):** the Voice is a choir, and a voice can leave it. **Low point (a5):** Coldhearth, and your choice.
 **Climax:** the Voice gets you alone. **Ending:** section 9.
 
-The Voice shut the Gloamvale's sky two hundred years ago, and under it no light can see any light outside. Under the shut
+The Voice shut the Gloamvale's sky two hundred years ago, and under it no light can see any light outside. That is its
+last move: get you alone. Under the shut
 sky no wood will catch: nothing burns here that wasn't lit for someone. Coldhearth's hearth takes only because Morwen's
-candle was lit for that family by name. That is its
-last move: get you alone. It speaks to you five times before the gate (a1, a3, a5, a7, and the Offer), always calm, in
+candle was lit for that family by name. The Voice speaks to you five times before the gate (a1, a3, a5, a7, and the Offer), always calm, in
 strangers' voices from the choir. At the Reach gate you were given Hesketh's bundle: small lamps from the rack, each lit at
 camp by a Hand for someone, each with a note. You hang one at every waymark on the way down. Each is a person in the area,
 and each answers in the finale.
@@ -775,7 +774,7 @@ exception to "nothing during a fight" (10.2).
 5. **Victory** (section 9).
 
 **Finale taps:** the Offer 2, Smothered 1, the Road Answers 6, Victory 3 = **12**. The warm beat (9.2) is its own sequence of
-8 after the reward screen, with Skip.
+9 after the reward screen, with Skip.
 
 ---
 
@@ -801,8 +800,9 @@ One line per card, a tap each, all skippable, never replayed. Text on a plain ca
 5. Vesper finishes the song: "And the dark went down, and the lamps came on. / There. That's the ending. For now."
 6. You walk back into Mossy Hollow. The hook over your door has been empty since the night you left (a still). You light a
    new lamp from yours and hang it there. Tam is waiting. "This one's for whoever comes next."
-7. At the gate fire, Asta has finished another cairn. Hesketh at the fire: "Every road needs a place to come back to."
-8. After the credits card: at the bottom of the Deepwell, Maud's Lantern flickers for the first time (a still).
+7. At the gate fire, Asta has finished another cairn.
+8. Hesketh at the fire: "Every road needs a place to come back to."
+9. After the credits card: at the bottom of the Deepwell, Maud's Lantern flickers for the first time (a still).
 
 ### 9.3 Why this satisfies
 
@@ -833,7 +833,7 @@ two of them waiting for a tap; never on replays; plain words; reduced motion; la
   verse** as a Tavern bubble. **Letters and pages** as Journal collectibles. **Lamp icon** by the hero's name in a fight:
   lit, guttering, out (4.3).
 - **10.2 Sequences have their own cap.** An Elder sequence (pre, fight, post, Great Lantern, follow-ups) may hold up to 12
-  taps (Ch1 uses 8); the finale up to 16 (it uses 12; the warm beat is its own sequence of 8). Both always show **Skip**, and everything skipped is filed in the Journal. The
+  taps (Ch1 uses 8); the finale up to 16 (it uses 12; the warm beat is its own sequence of 9). Both always show **Skip**, and everything skipped is filed in the Journal. The
   per-area limit applies everywhere else. **One exception to "nothing during a fight":** the Voice's two phase-change
   cards, which play at the end of a move where the roster already queues its phase change.
 - **10.3 Art.** Art freeze (`CLAUDE.md`): nothing goes in until the owner vets the whole pack, and Codex draws new art.
@@ -998,3 +998,4 @@ it fits this bible, uses it.
 | 1 (v1) | 3.17 average; 10 of 12 criteria under 4; blockers: rule 3 undefined, Long Night vs smother, hero swap, Elders as lamp-keepers | not run (v1 rebuilt first) | v2 written: rules 2 and 3, hero choices and lines, Oath twist, Elders as shapes, cast in every area, ranks (section 5), ending rebuilt |
 | 2 (v2) | 3.75 average; under 4: Excitement 3, Fit 3, Clarity 3; hard checks: Hands cap, retired words, Elder tap count, mid-fight cards, 14 heroes with no part | not run (fixes were mechanical) | v3: rule 3 airtight (only the Voice's hands, only out of sight of any light), Elowen's kept spark, why tonight, all 32 heroes, no new Hands, Ch5 people via the lamp bundle and a returning flaw, Captain samples, art costed to seven stills, save keys named, ladder rebuilt |
 | 3 (v3) | not run (judge ruled a diff check enough) | Opus high: **4.58 average, every criterion 4+**; failed 13 hard-check items (stray old ladder, line lengths, finale count, "last of the others", Silas's place, Gloamvale campfires, rule 3 "shown", bios, hero keying, Marshal sprite, a name, unlogged rulings); canon rulings a-g all yes | v3.1: all 13 fixed, rulings logged in `DECISIONS.md`, plus the judge's nice-to-haves |
+| 3, diff check (v3.1) | | Opus high: 11 of 13 cleared; 4 line-length and wording edits given word for word and pre-approved | **PASS** (v3.2: the four edits applied; 4.58 average, every criterion 4+) |
