@@ -1,0 +1,218 @@
+{
+ "slug": "cookie-clicker",
+ "n_reviews": 52,
+ "n_pos": 25,
+ "n_neg": 27,
+ "n_longplay_neg": 20,
+ "sources": [
+  "steam"
+ ],
+ "themes": {
+  "P-offline": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "I started completely legit, played actively, went AFK for a few days, learned the mechanics, and progressed normally. (steam+, 448h)"
+   ]
+  },
+  "P-respect": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-active": {
+   "n": 2,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "That immediately made the game much more fun for me because I could focus on upgrades, ascensions, minigames and progression instead of manually clicking nonstop. (steam+, 448h)"
+   ]
+  },
+  "P-dev": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-unlock": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-collect": {
+   "n": 5,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "Good game, and done with the game, I have all the achievements (steam+, 16h)",
+    "After about a week of playing like that, I started using console commands to clean up some of the remaining achievements. (steam+, 448h)"
+   ]
+  },
+  "P-goals": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-depth": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-fair": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-interlock": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-prestige": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "With all prestige upgrades there wasn't too much to look forward to. (steam+, 222h)"
+   ]
+  },
+  "P-qol": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-calm": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-art": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "i don't think ive ever seen anything quite as beautiful. (steam+, 87h)"
+   ]
+  },
+  "P-story": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-ads": {
+   "n": 0,
+   "of": 27,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-wall": {
+   "n": 2,
+   "of": 27,
+   "longplay_n": 2,
+   "quotes": [
+    "Progression is honestly way too slow. (steam-, 317h)",
+    "Progression is honestly way too slow. (steam-, 317h)"
+   ]
+  },
+  "N-pay": {
+   "n": 0,
+   "of": 27,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-dominant": {
+   "n": 0,
+   "of": 27,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-late": {
+   "n": 0,
+   "of": 27,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-offline": {
+   "n": 0,
+   "of": 27,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-mobile": {
+   "n": 0,
+   "of": 27,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-bug": {
+   "n": 0,
+   "of": 27,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-energy": {
+   "n": 0,
+   "of": 27,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-bloat": {
+   "n": 0,
+   "of": 27,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-chore": {
+   "n": 0,
+   "of": 27,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-tutorial": {
+   "n": 0,
+   "of": 27,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-shallow": {
+   "n": 0,
+   "of": 27,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-reset": {
+   "n": 0,
+   "of": 27,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-pace": {
+   "n": 0,
+   "of": 27,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-fast": {
+   "n": 0,
+   "of": 27,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-balance": {
+   "n": 0,
+   "of": 27,
+   "longplay_n": 0,
+   "quotes": []
+  }
+ }
+}

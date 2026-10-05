@@ -1,0 +1,233 @@
+{
+ "slug": "gnorp-apologue",
+ "n_reviews": 52,
+ "n_pos": 25,
+ "n_neg": 27,
+ "n_longplay_neg": 4,
+ "sources": [
+  "steam"
+ ],
+ "themes": {
+  "P-offline": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-respect": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "It respects your time, gives you synergies to solve, and feels rewarding when your setup finally shatters the rock on Compression 10. (steam+, 22h)"
+   ]
+  },
+  "P-active": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "I've unlocked about half the skill tree so far and completed the base game mode. (steam+, 60h)"
+   ]
+  },
+  "P-dev": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-unlock": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-collect": {
+   "n": 2,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "Simple but really fun and nice achievements (steam+, 69h)",
+    "Simple but really fun and nice achievements (steam+, 69h)"
+   ]
+  },
+  "P-goals": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-depth": {
+   "n": 4,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "Just don't expect deep build variety or endless content - it's pretty linear and short. (steam+, 60h)",
+    "Strategy fans will likely appreciate the steady sense of progression, even if the experience doesn\u2019t push far beyond familiar idle game territory. (steam+, 43h)"
+   ]
+  },
+  "P-fair": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-interlock": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "It respects your time, gives you synergies to solve, and feels rewarding when your setup finally shatters the rock on Compression 10. (steam+, 22h)"
+   ]
+  },
+  "P-prestige": {
+   "n": 4,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "The music is serviceable for the genre and delivers a sense of progression with each run. (steam+, 44h)"
+   ]
+  },
+  "P-qol": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-calm": {
+   "n": 2,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "It's a polished, addictive experience with great visuals and a relaxing vibe. (steam+, 60h)",
+    "May they continue a peaceful life of gnorping. (steam+, 87h)"
+   ]
+  },
+  "P-art": {
+   "n": 11,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "A linear incremental idle game with charming pixel art and satisfying progression. (steam+, 60h)",
+    "The music is serviceable for the genre and delivers a sense of progression with each run. (steam+, 44h)"
+   ]
+  },
+  "P-story": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-ads": {
+   "n": 0,
+   "of": 27,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-wall": {
+   "n": 8,
+   "of": 27,
+   "longplay_n": 2,
+   "quotes": [
+    "The Gnorp Apologue starts strong enough, but eventually settles into a grind that feels more tedious than rewarding. (steam-, 33h)",
+    "Upgrades become too expensive too quickly and the game slows to a crawl. (steam-, 23h)"
+   ]
+  },
+  "N-pay": {
+   "n": 0,
+   "of": 27,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-dominant": {
+   "n": 2,
+   "of": 27,
+   "longplay_n": 2,
+   "quotes": [
+    "This extends from minute-to-minute gameplay to the perk tree you make meta-changing builds with. (steam-, 79h)",
+    "This extends from minute-to-minute gameplay to the perk tree you make meta-changing builds with. (steam-, 79h)"
+   ]
+  },
+  "N-late": {
+   "n": 4,
+   "of": 27,
+   "longplay_n": 0,
+   "quotes": [
+    "I really wanted to like this game, but man the endgame is rough, and continues to be a major complaint to this day. (steam-, 37h)",
+    "I really wanted to like this game, but man the endgame is rough, and continues to be a major complaint to this day. (steam-, 37h)"
+   ]
+  },
+  "N-offline": {
+   "n": 2,
+   "of": 27,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-mobile": {
+   "n": 0,
+   "of": 27,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-bug": {
+   "n": 0,
+   "of": 27,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-energy": {
+   "n": 0,
+   "of": 27,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-bloat": {
+   "n": 2,
+   "of": 27,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-chore": {
+   "n": 0,
+   "of": 27,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-tutorial": {
+   "n": 0,
+   "of": 27,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-shallow": {
+   "n": 0,
+   "of": 27,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-reset": {
+   "n": 0,
+   "of": 27,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-pace": {
+   "n": 0,
+   "of": 27,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-fast": {
+   "n": 0,
+   "of": 27,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-balance": {
+   "n": 0,
+   "of": 27,
+   "longplay_n": 0,
+   "quotes": []
+  }
+ }
+}

@@ -1,0 +1,244 @@
+{
+ "slug": "kittens-game",
+ "n_reviews": 124,
+ "n_pos": 89,
+ "n_neg": 35,
+ "n_longplay_neg": 3,
+ "sources": [
+  "steam",
+  "apple"
+ ],
+ "themes": {
+  "P-offline": {
+   "n": 2,
+   "of": 89,
+   "longplay_n": 0,
+   "quotes": [
+    "There was a minor bug with offline progression he has already fixed! (apple5)"
+   ]
+  },
+  "P-respect": {
+   "n": 1,
+   "of": 89,
+   "longplay_n": 0,
+   "quotes": [
+    "If you\u2019re looking for an idle game that respects your time this is it. (apple5)"
+   ]
+  },
+  "P-active": {
+   "n": 0,
+   "of": 89,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-dev": {
+   "n": 1,
+   "of": 89,
+   "longplay_n": 0,
+   "quotes": [
+    "Dev listens to players and quickly updates the game. (apple5)"
+   ]
+  },
+  "P-unlock": {
+   "n": 2,
+   "of": 89,
+   "longplay_n": 0,
+   "quotes": [
+    "And unlike most clicker games, you slowly unlock new game elements through multiple playthroughs. (apple5)",
+    "It starts off simply enough but you just keep unlocking more and more things that keep the game fresh and intriguing. (apple5)"
+   ]
+  },
+  "P-collect": {
+   "n": 1,
+   "of": 89,
+   "longplay_n": 0,
+   "quotes": [
+    "Everyone works at the edge of the productivity curve depending on their happiness and access to rare resources . (apple5)"
+   ]
+  },
+  "P-goals": {
+   "n": 0,
+   "of": 89,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-depth": {
+   "n": 12,
+   "of": 89,
+   "longplay_n": 0,
+   "quotes": [
+    "This game has some serious depth to it. (apple5)",
+    "In the top 3 incrementals of all time for me if not at the #1 slot in terms of depth and longevity. (steam+, 275h)"
+   ]
+  },
+  "P-fair": {
+   "n": 0,
+   "of": 89,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-interlock": {
+   "n": 0,
+   "of": 89,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-prestige": {
+   "n": 0,
+   "of": 89,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-qol": {
+   "n": 1,
+   "of": 89,
+   "longplay_n": 0,
+   "quotes": [
+    "If you implement these quality of life changes I'd be very happy. (apple5)"
+   ]
+  },
+  "P-calm": {
+   "n": 0,
+   "of": 89,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-art": {
+   "n": 4,
+   "of": 89,
+   "longplay_n": 0,
+   "quotes": [
+    "Melvor has some action and is more interactive and has graphics. (steam+, 1488h)",
+    "No graphics, no micro transactions, no bs. (apple5)"
+   ]
+  },
+  "P-story": {
+   "n": 1,
+   "of": 89,
+   "longplay_n": 0,
+   "quotes": [
+    "So well-crafted in the way it introduces and repeats various tactics and game concepts while still managing to surprise, with a clever slow-reveal narrative. (apple5)"
+   ]
+  },
+  "N-ads": {
+   "n": 0,
+   "of": 35,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-wall": {
+   "n": 4,
+   "of": 35,
+   "longplay_n": 3,
+   "quotes": [
+    "The theme is nice and fun, but it's extremely grindy and asking a lot of time investment. (steam-, 1435h)",
+    "The theme is nice and fun, but it's extremely grindy and asking a lot of time investment. (steam-, 1446h)"
+   ]
+  },
+  "N-pay": {
+   "n": 0,
+   "of": 35,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-dominant": {
+   "n": 0,
+   "of": 35,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-late": {
+   "n": 2,
+   "of": 35,
+   "longplay_n": 0,
+   "quotes": [
+    "Late game has a lot of issues, both game balance wise as well as calculations. (apple3)",
+    "Additionally, the game does not save every time you exit the app so you can repeat the same block, over and over without realizing it. (apple2)"
+   ]
+  },
+  "N-offline": {
+   "n": 0,
+   "of": 35,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-mobile": {
+   "n": 0,
+   "of": 35,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-bug": {
+   "n": 9,
+   "of": 35,
+   "longplay_n": 0,
+   "quotes": [
+    "It\u2019s the same great game, and I love the portability, but the UI is mad buggy. (apple3)",
+    "This is my favorite idle game ever but this mobile version has bugs that will prevent you from making any progress and breaking your game. (apple3)"
+   ]
+  },
+  "N-energy": {
+   "n": 0,
+   "of": 35,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-bloat": {
+   "n": 1,
+   "of": 35,
+   "longplay_n": 0,
+   "quotes": [
+    "All the text is super small and it is overall super cluttered. (apple3)"
+   ]
+  },
+  "N-chore": {
+   "n": 2,
+   "of": 35,
+   "longplay_n": 0,
+   "quotes": [
+    "If you like heavy resource management games you might like this, but to me it feels more like a chore. (apple3)"
+   ]
+  },
+  "N-tutorial": {
+   "n": 0,
+   "of": 35,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-shallow": {
+   "n": 2,
+   "of": 35,
+   "longplay_n": 0,
+   "quotes": [
+    "I enjoyed the simple design that hides a great degree of choice and customization to optimize your society. (apple1)",
+    "Another fun clicker game much like Cookie Clicker (at first) but much less mindless. (apple3)"
+   ]
+  },
+  "N-reset": {
+   "n": 0,
+   "of": 35,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-pace": {
+   "n": 0,
+   "of": 35,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-fast": {
+   "n": 0,
+   "of": 35,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-balance": {
+   "n": 1,
+   "of": 35,
+   "longplay_n": 0,
+   "quotes": [
+    "Late game has a lot of issues, both game balance wise as well as calculations. (apple3)"
+   ]
+  }
+ }
+}

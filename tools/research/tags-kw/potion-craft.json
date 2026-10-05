@@ -1,0 +1,229 @@
+{
+ "slug": "potion-craft",
+ "n_reviews": 45,
+ "n_pos": 25,
+ "n_neg": 20,
+ "n_longplay_neg": 2,
+ "sources": [
+  "steam",
+  "apple"
+ ],
+ "themes": {
+  "P-offline": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-respect": {
+   "n": 2,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "It doesn't require from a player better skill or understanding mechanics, no, it is just a stupid routine grind. (steam+, 7h)",
+    "It doesn't require from a player better skill or understanding mechanics, no, it is just a stupid routine grind. (steam+, 7h)"
+   ]
+  },
+  "P-active": {
+   "n": 2,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "It doesn't require from a player better skill or understanding mechanics, no, it is just a stupid routine grind. (steam+, 7h)",
+    "It doesn't require from a player better skill or understanding mechanics, no, it is just a stupid routine grind. (steam+, 7h)"
+   ]
+  },
+  "P-dev": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-unlock": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-collect": {
+   "n": 6,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "Once you understand the mechanics and start accumulating money, the difficulty drops dramatically. (steam+, 57h)",
+    "The achievements are not too unattainable, and it is unique without being overcomplicated. (steam+, 30h)"
+   ]
+  },
+  "P-goals": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-depth": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-fair": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-interlock": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-prestige": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-qol": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-calm": {
+   "n": 14,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "The manuscript-style artwork is distinctive, and the music and sound design make it an extremely relaxing game to play. (steam+, 57h)",
+    "A relaxing mostly simple puzzle-shop game with no minimum quota for game failure. (steam+, 22h)"
+   ]
+  },
+  "P-art": {
+   "n": 7,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "The manuscript-style artwork is distinctive, and the music and sound design make it an extremely relaxing game to play. (steam+, 57h)",
+    "The art is beautiful and the dialogue of some notable npc is lively. (steam+, 28h)"
+   ]
+  },
+  "P-story": {
+   "n": 4,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "- Narrative-wise, rejecting an order because I didn't have the ingredients to make it is the same as just telling the (steam+, 22h)",
+    "The colors, customer characters, bottles etc. (steam+, 22h)"
+   ]
+  },
+  "N-ads": {
+   "n": 0,
+   "of": 20,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-wall": {
+   "n": 7,
+   "of": 20,
+   "longplay_n": 2,
+   "quotes": [
+    "Whole game is grindy and harder difficulties advertise as grindy and they mean it. (steam-, 24h)",
+    "Whole game is grindy and harder difficulties advertise as grindy and they mean it. (steam-, 24h)"
+   ]
+  },
+  "N-pay": {
+   "n": 0,
+   "of": 20,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-dominant": {
+   "n": 0,
+   "of": 20,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-late": {
+   "n": 4,
+   "of": 20,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-offline": {
+   "n": 0,
+   "of": 20,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-mobile": {
+   "n": 0,
+   "of": 20,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-bug": {
+   "n": 2,
+   "of": 20,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-energy": {
+   "n": 0,
+   "of": 20,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-bloat": {
+   "n": 0,
+   "of": 20,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-chore": {
+   "n": 0,
+   "of": 20,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-tutorial": {
+   "n": 4,
+   "of": 20,
+   "longplay_n": 0,
+   "quotes": [
+    "And wait, the tutorial doesn't even explain everything, you need to click into a submenu to get details on that. (steam-, 3h)",
+    "And wait, the tutorial doesn't even explain everything, you need to click into a submenu to get details on that. (steam-, 3h)"
+   ]
+  },
+  "N-shallow": {
+   "n": 2,
+   "of": 20,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-reset": {
+   "n": 0,
+   "of": 20,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-pace": {
+   "n": 0,
+   "of": 20,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-fast": {
+   "n": 0,
+   "of": 20,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-balance": {
+   "n": 0,
+   "of": 20,
+   "longplay_n": 0,
+   "quotes": []
+  }
+ }
+}

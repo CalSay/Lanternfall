@@ -1,0 +1,236 @@
+{
+ "slug": "loop-hero",
+ "n_reviews": 180,
+ "n_pos": 124,
+ "n_neg": 56,
+ "n_longplay_neg": 0,
+ "sources": [
+  "steam",
+  "apple"
+ ],
+ "themes": {
+  "P-offline": {
+   "n": 0,
+   "of": 124,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-respect": {
+   "n": 2,
+   "of": 124,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-active": {
+   "n": 1,
+   "of": 124,
+   "longplay_n": 0,
+   "quotes": [
+    "I have no problem forming over for a premium title with complete gameplay and an engaging story. (apple5)"
+   ]
+  },
+  "P-dev": {
+   "n": 2,
+   "of": 124,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-unlock": {
+   "n": 1,
+   "of": 124,
+   "longplay_n": 0,
+   "quotes": [
+    "If you stuck at chapter 4, just return to the previous chapters to farm more resources, unlock more abilities and build alchemy building. (steam+, 16h)"
+   ]
+  },
+  "P-collect": {
+   "n": 7,
+   "of": 124,
+   "longplay_n": 0,
+   "quotes": [
+    "Fun tactical battler with non-ridiculous achievements. (steam+, 94h)",
+    "It\u2019s so rare these days to get games you can just buy and not get pestered by ads or micro transactions. (apple5)"
+   ]
+  },
+  "P-goals": {
+   "n": 0,
+   "of": 124,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-depth": {
+   "n": 10,
+   "of": 124,
+   "longplay_n": 0,
+   "quotes": [
+    "The struggle, strategy and endless nights toiling over card variations and heroes made it so much fun. (apple5)",
+    "If you stuck at chapter 4, just return to the previous chapters to farm more resources, unlock more abilities and build alchemy building. (steam+, 16h)"
+   ]
+  },
+  "P-fair": {
+   "n": 4,
+   "of": 124,
+   "longplay_n": 0,
+   "quotes": [
+    "This game is well worth the price, I\u2019ve gotten a lot of hours out of it on PC. (apple5)"
+   ]
+  },
+  "P-interlock": {
+   "n": 0,
+   "of": 124,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-prestige": {
+   "n": 0,
+   "of": 124,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-qol": {
+   "n": 2,
+   "of": 124,
+   "longplay_n": 0,
+   "quotes": [
+    "Still a very fun game and the devs did a good job getting it to mobile, there\u2019s just some room for QoL improvements. (apple4)"
+   ]
+  },
+  "P-calm": {
+   "n": 1,
+   "of": 124,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-art": {
+   "n": 13,
+   "of": 124,
+   "longplay_n": 0,
+   "quotes": [
+    "It also has a charming setting and story, and it\u2019s as well suited to a 15 minute game as it is to a multi-hour binge. (apple5)",
+    "5 Stars for gameplay, 4 for graphics which I hope are better on a sequel, but turn on the pixel shader, it helps a lot. (apple4)"
+   ]
+  },
+  "P-story": {
+   "n": 9,
+   "of": 124,
+   "longplay_n": 0,
+   "quotes": [
+    "Nice little story, fun little gameplay LOOP, and I just really love a semi passive \"base building for upgrades\" mechanic. (steam+, 26h)",
+    "It also has a charming setting and story, and it\u2019s as well suited to a 15 minute game as it is to a multi-hour binge. (apple5)"
+   ]
+  },
+  "N-ads": {
+   "n": 0,
+   "of": 56,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-wall": {
+   "n": 7,
+   "of": 56,
+   "longplay_n": 0,
+   "quotes": [
+    "The problem is this is a resource/building game and you cant progress without resources. (steam-, 14h)",
+    "The problem is this is a resource/building game and you cant progress without resources. (steam-, 14h)"
+   ]
+  },
+  "N-pay": {
+   "n": 0,
+   "of": 56,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-dominant": {
+   "n": 0,
+   "of": 56,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-late": {
+   "n": 3,
+   "of": 56,
+   "longplay_n": 0,
+   "quotes": [
+    "Not a bad game, but for me gets repetitive a bit fast. (steam-, 9h)",
+    "Not a bad game, but for me gets repetitive a bit fast. (steam-, 9h)"
+   ]
+  },
+  "N-offline": {
+   "n": 0,
+   "of": 56,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-mobile": {
+   "n": 1,
+   "of": 56,
+   "longplay_n": 0,
+   "quotes": [
+    "The UI is too small to use with a touch screen, I can\u2019t see anything I\u2019m doing. (apple2)"
+   ]
+  },
+  "N-bug": {
+   "n": 11,
+   "of": 56,
+   "longplay_n": 0,
+   "quotes": [
+    "Started grinding and building up my town but then the game crashed. (apple3)",
+    "Unfortunately, the game won\u2019t run for more than 5 minutes at a time without freezing up on my brand new M2 iPad Air (apple1)"
+   ]
+  },
+  "N-energy": {
+   "n": 0,
+   "of": 56,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-bloat": {
+   "n": 0,
+   "of": 56,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-chore": {
+   "n": 0,
+   "of": 56,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-tutorial": {
+   "n": 0,
+   "of": 56,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-shallow": {
+   "n": 0,
+   "of": 56,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-reset": {
+   "n": 0,
+   "of": 56,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-pace": {
+   "n": 0,
+   "of": 56,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-fast": {
+   "n": 0,
+   "of": 56,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-balance": {
+   "n": 5,
+   "of": 56,
+   "longplay_n": 0,
+   "quotes": []
+  }
+ }
+}

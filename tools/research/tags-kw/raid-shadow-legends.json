@@ -1,0 +1,280 @@
+{
+ "slug": "raid-shadow-legends",
+ "n_reviews": 554,
+ "n_pos": 227,
+ "n_neg": 327,
+ "n_longplay_neg": 20,
+ "sources": [
+  "steam",
+  "apple"
+ ],
+ "themes": {
+  "P-offline": {
+   "n": 2,
+   "of": 227,
+   "longplay_n": 0,
+   "quotes": [
+    "I wish they can make it to play offline. (apple5)",
+    "super fun to play while at work (apple5)"
+   ]
+  },
+  "P-respect": {
+   "n": 3,
+   "of": 227,
+   "longplay_n": 0,
+   "quotes": [
+    "Keep it casual so you'll always have fun.. (apple5)",
+    "It\u2019s at all around if your a casual gamer which I feel most people on phones are. (apple5)"
+   ]
+  },
+  "P-active": {
+   "n": 5,
+   "of": 227,
+   "longplay_n": 0,
+   "quotes": [
+    "The combat, while not ground-breaking, is quite good and requires planning for skill combos and gearing. (apple4)",
+    "The turn-based battles are engaging and require strategic thinking to succeed. (apple4)"
+   ]
+  },
+  "P-dev": {
+   "n": 1,
+   "of": 227,
+   "longplay_n": 0,
+   "quotes": [
+    "Developers are very straight forward about it too\u2026. (apple4)"
+   ]
+  },
+  "P-unlock": {
+   "n": 1,
+   "of": 227,
+   "longplay_n": 0,
+   "quotes": [
+    "This game has som many champions and so many sets of gear that unlock new possibilities for your champions. (apple5)"
+   ]
+  },
+  "P-collect": {
+   "n": 32,
+   "of": 227,
+   "longplay_n": 0,
+   "quotes": [
+    "I feel like a great solution to this would be to make the spider drops similar to t (apple5)",
+    "The game does give you free chances to collect characters from weekly logins and crystals you find, they do require gold to summon. (apple4)"
+   ]
+  },
+  "P-goals": {
+   "n": 1,
+   "of": 227,
+   "longplay_n": 0,
+   "quotes": [
+    "I\u2019ve been playing for around 45 days and there\u2019s always something to do. (apple5)"
+   ]
+  },
+  "P-depth": {
+   "n": 19,
+   "of": 227,
+   "longplay_n": 0,
+   "quotes": [
+    "All the champions in the game can be customized with unique gear that changes your strategic buffs and abilities! (apple5)",
+    "All the champions in the game can be customized with unique gear that changes your strategic buffs and abilities! (apple5)"
+   ]
+  },
+  "P-fair": {
+   "n": 5,
+   "of": 227,
+   "longplay_n": 0,
+   "quotes": [
+    "The store offers numerous generous offers ranging from legends to resources and sometimes a combination of both. (apple4)",
+    "The game is generous enough to allow for some pretty good champions to drop as rewards, I think that giving players more an (apple4)"
+   ]
+  },
+  "P-interlock": {
+   "n": 0,
+   "of": 227,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-prestige": {
+   "n": 2,
+   "of": 227,
+   "longplay_n": 0,
+   "quotes": [
+    "I love DK he's funny and just like able however i became very sad and depressed when i found out you can't even ascend him. (apple5)"
+   ]
+  },
+  "P-qol": {
+   "n": 7,
+   "of": 227,
+   "longplay_n": 0,
+   "quotes": [
+    "Maybe the only downside is that the game is part pay-to-win, but you can easily make up for that by using the auto-battle tool. (apple5)",
+    "There have been many QOL improvements over the years and it's getting better. (steam+)"
+   ]
+  },
+  "P-calm": {
+   "n": 2,
+   "of": 227,
+   "longplay_n": 0,
+   "quotes": [
+    "Also a good option if you are looking to play a chill game, while being in a discord call for example. (steam+, 44h)",
+    "Also a good option if you are looking to play a chill game, while being in a discord call for example. (steam+, 44h)"
+   ]
+  },
+  "P-art": {
+   "n": 35,
+   "of": 227,
+   "longplay_n": 0,
+   "quotes": [
+    "The graphics are amazing as well, very detailed and realistic. (apple5)",
+    "The graphics on this game are absolutely amazing for a phone app. (apple5)"
+   ]
+  },
+  "P-story": {
+   "n": 63,
+   "of": 227,
+   "longplay_n": 0,
+   "quotes": [
+    "There are literally so many characters in this game. (apple5)",
+    "The other issue I have is that there is no where to see the rank of any of the characters. (apple4)"
+   ]
+  },
+  "N-ads": {
+   "n": 27,
+   "of": 327,
+   "longplay_n": 3,
+   "quotes": [
+    "EVERYTIME  you sign on the game bombards you with several ads all saying hey buy this for 20$,50$,99$. (apple1)",
+    "The amount of ads I saw for this game finally made me try it. (apple1)"
+   ]
+  },
+  "N-wall": {
+   "n": 59,
+   "of": 327,
+   "longplay_n": 4,
+   "quotes": [
+    "Drains the batteries, if you don\u2019t want to spend money, be ready for lots and lots of grinding. (apple1)",
+    "Today its a constant, eternal grind if you are on a free account and refuse to spend a dime like me. (steam-, 4007h)"
+   ]
+  },
+  "N-pay": {
+   "n": 41,
+   "of": 327,
+   "longplay_n": 0,
+   "quotes": [
+    "Why can you just make a game where the micro transactions are for cosmetic stuff only why have a pay to win game ? (apple2)",
+    "Update to dev: I\u2019m sorry let me clarify a bit more on what I mean a paywall is. (apple1)"
+   ]
+  },
+  "N-dominant": {
+   "n": 4,
+   "of": 327,
+   "longplay_n": 2,
+   "quotes": [
+    "Good luck if you miss one because the meta is built around these fusion champions. (steam-, 4007h)",
+    "Good luck if you miss one because the meta is built around these fusion champions. (steam-, 4007h)"
+   ]
+  },
+  "N-late": {
+   "n": 12,
+   "of": 327,
+   "longplay_n": 0,
+   "quotes": [
+    "Where this game falters for me is in the end game play style. (apple3)",
+    "lack lustre pulls of green shards only, given rubbish heroes, repetitive battles. (steam-, 34h)"
+   ]
+  },
+  "N-offline": {
+   "n": 0,
+   "of": 327,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-mobile": {
+   "n": 4,
+   "of": 327,
+   "longplay_n": 0,
+   "quotes": [
+    "You would think that they would let players opt out of these notifications. (apple1)"
+   ]
+  },
+  "N-bug": {
+   "n": 21,
+   "of": 327,
+   "longplay_n": 2,
+   "quotes": [
+    "The updates they push out as \u201ccontent\u201d are really just patches for bugs with the occasional character balance. (apple1)",
+    "The company can get away with bad updates, bugs and so forth if handled in an acceptable manner. (apple1)"
+   ]
+  },
+  "N-energy": {
+   "n": 40,
+   "of": 327,
+   "longplay_n": 0,
+   "quotes": [
+    "An other majorly huge problem is the games use of \u201cenergy\u201d and silver coins. (apple2)",
+    "First and probably the biggest issue is the amount of energy required to accomplish anything is extremely high. (apple2)"
+   ]
+  },
+  "N-bloat": {
+   "n": 0,
+   "of": 327,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-chore": {
+   "n": 11,
+   "of": 327,
+   "longplay_n": 0,
+   "quotes": [
+    "It\u2019s possible to be F2P but it\u2019s a chore. (apple3)",
+    "Which i can\u2019t complete until basically the end of the month to do all the daily quests 30. (apple1)"
+   ]
+  },
+  "N-tutorial": {
+   "n": 4,
+   "of": 327,
+   "longplay_n": 0,
+   "quotes": [
+    "No where in the tutorial is this stated or given direction to do so. (apple3)",
+    "Going through the tutorial takes 10-15 minutes, or something like that. (apple3)"
+   ]
+  },
+  "N-shallow": {
+   "n": 14,
+   "of": 327,
+   "longplay_n": 5,
+   "quotes": [
+    "It seems simple, you pick one to four characters and the characters you pick should be the ones to fight. (apple1)",
+    "Why did I give it one star simple, forced to endure poor design. (apple1)"
+   ]
+  },
+  "N-reset": {
+   "n": 0,
+   "of": 327,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-pace": {
+   "n": 0,
+   "of": 327,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-fast": {
+   "n": 1,
+   "of": 327,
+   "longplay_n": 0,
+   "quotes": [
+    "A lot of the events would go by too fast not leaving enough time for me to earn good rewards, if any. (apple3)"
+   ]
+  },
+  "N-balance": {
+   "n": 15,
+   "of": 327,
+   "longplay_n": 2,
+   "quotes": [
+    "First create an OP Champion as a problem and then release the counter in another fusion. (steam-, 4007h)",
+    "First create an OP Champion as a problem and then release the counter in another fusion. (steam-, 4007h)"
+   ]
+  }
+ }
+}

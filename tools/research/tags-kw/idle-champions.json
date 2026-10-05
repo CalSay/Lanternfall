@@ -1,0 +1,229 @@
+{
+ "slug": "idle-champions",
+ "n_reviews": 57,
+ "n_pos": 25,
+ "n_neg": 32,
+ "n_longplay_neg": 24,
+ "sources": [
+  "steam"
+ ],
+ "themes": {
+  "P-offline": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-respect": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-active": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "If you want to min max everything there is also a high skill ceiling with many different team comps. (steam+, 103h)"
+   ]
+  },
+  "P-dev": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-unlock": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-collect": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-goals": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-depth": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-fair": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-interlock": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-prestige": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-qol": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-calm": {
+   "n": 2,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "Lots of stats to consider, Math, Formation/Balance, Nostalgia, Supportive and peaceful - all inclusive vibe, and so much more. (steam+, 12252h)",
+    "It's fun and relaxing, don't need to think too hard about what your doing. (steam+, 103h)"
+   ]
+  },
+  "P-art": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "The music is the the best part, followed closely by the character design for all of the champions. (steam+, 1217h)"
+   ]
+  },
+  "P-story": {
+   "n": 9,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "The sense of accomplishment that comes from leveling up and deciding how to develop your character is central to the game. (steam+, 6h)",
+    "It's an idle game, kinda fun, a bunch of lore, and plenty of pay to win better packs. (steam+, 618h)"
+   ]
+  },
+  "N-ads": {
+   "n": 0,
+   "of": 32,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-wall": {
+   "n": 2,
+   "of": 32,
+   "longplay_n": 2,
+   "quotes": []
+  },
+  "N-pay": {
+   "n": 6,
+   "of": 32,
+   "longplay_n": 2,
+   "quotes": [
+    "I like the nastalgia of D&D, but I'm not liking their microtransaction of what? (steam-, 20h)",
+    "I like the nastalgia of D&D, but I'm not liking their microtransaction of what? (steam-, 20h)"
+   ]
+  },
+  "N-dominant": {
+   "n": 5,
+   "of": 32,
+   "longplay_n": 5,
+   "quotes": []
+  },
+  "N-late": {
+   "n": 0,
+   "of": 32,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-offline": {
+   "n": 0,
+   "of": 32,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-mobile": {
+   "n": 2,
+   "of": 32,
+   "longplay_n": 2,
+   "quotes": [
+    "If a window or notification ha (steam-, 9468h)",
+    "If a window or notification ha (steam-, 9468h)"
+   ]
+  },
+  "N-bug": {
+   "n": 7,
+   "of": 32,
+   "longplay_n": 7,
+   "quotes": [
+    "Consistently has bugs and at times the core strategy for beating difficult missions is to use bugs/exploits. (steam-, 10199h)",
+    "Consistently has bugs and at times the core strategy for beating difficult missions is to use bugs/exploits. (steam-, 10207h)"
+   ]
+  },
+  "N-energy": {
+   "n": 0,
+   "of": 32,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-bloat": {
+   "n": 2,
+   "of": 32,
+   "longplay_n": 2,
+   "quotes": [
+    "Too many things interrupt the gameplay. (steam-, 9468h)",
+    "Too many things interrupt the gameplay. (steam-, 9468h)"
+   ]
+  },
+  "N-chore": {
+   "n": 0,
+   "of": 32,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-tutorial": {
+   "n": 0,
+   "of": 32,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-shallow": {
+   "n": 4,
+   "of": 32,
+   "longplay_n": 4,
+   "quotes": [
+    "Flop: Even with all graphical features turned off, this relatively simple 2D idle game can become surprisingly resource-hungry and increasingly unstable. (steam-, 9468h)",
+    "Flop: Even with all graphical features turned off, this relatively simple 2D idle game can become surprisingly resource-hungry and increasingly unstable. (steam-, 9468h)"
+   ]
+  },
+  "N-reset": {
+   "n": 0,
+   "of": 32,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-pace": {
+   "n": 0,
+   "of": 32,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-fast": {
+   "n": 0,
+   "of": 32,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-balance": {
+   "n": 0,
+   "of": 32,
+   "longplay_n": 0,
+   "quotes": []
+  }
+ }
+}

@@ -1,9 +1,21 @@
-# Fun-library catalogue: suggestions for Lanternfall, audited
+# Idea gate: judge's verdicts on S1 to S15
 
-Every suggestion below came from `fun-library.md`, then passed the idea gate before entering the backlog:
-brief (`fun-library-gate/briefs.md`), red team (Sonnet, `fun-library-gate/red-team.md`), Opus high judge (`fun-library-gate/judge.md`), all committed beside this file.
-Outcome on 2026-10-05: 15 ideas in, **5 admitted (narrowed; 1 later withdrawn, see Correction), 9 merged into existing cards, 1 dropped**.
-Codex reviews this document on the PR before merge. Evidence counts are floors (see the library's limits).
+Written 2026-10-05 by the idea-gate judge (Opus, read-only). Inputs: `briefs.md`, `red-team.md`, `../fun-library.md`,
+`autopilot/coverage-map.md`, `docs/DECISIONS.md` (integration branch), `autopilot/backlog.md` and `autopilot/cards/`.
+The Compass (`f-compass`) is not written yet, so "fit" is scored against DECISIONS.md and the pillars the briefs name
+(combat active, gathering idle, respect time, no prestige, no suggested builds, one-screen 360px, saves sacred).
+
+Scores are 1 to 5: Imp = impact, Ev = confidence in the evidence, Fit = fit with owner decisions and pillars,
+Cost (5 = cheap), Rev = reversibility. Bias to subtraction applied: ideas that improve or connect an existing system
+win over new systems, and an idea that an existing card already covers is merged, not carded.
+
+Things I checked in the code before judging (integration branch):
+- The away report already exists with a single Collect button (`src/js/75-away.js`). S1 is a tweak, not a feature.
+- A What's new path already exists (`emit('whatsNew')`, the `news` bell channel in `23n-data-notices.js`), used today
+  only for per-system lines on warm saves. S7 can reuse it.
+- There is no save export or import in `src/` yet, although it is a 1.0 commitment ("save safety, export and import at
+  least"). S11 fills a real gap.
+- `f-health` already lists dominant choices, longest stretch without a reward and new mechanics per hour as metrics.
 
 ## Verdict table
 
@@ -118,24 +130,8 @@ at a time.
    Add "visible goals by range" to the playtest lab report format in `f-playtest-bots`, so a gap shows up before
    anyone designs a goal system.
 
-## Not yet gated (candidates only, do not card)
-The judge's three missing ideas (error watch, locked things name their unlock, visible goals by range) have not had a
-red team. `ap-first-use-hints` already carries the second; the third is a line in the `f-playtest-bots` report format.
-The error watch needs a brief and the gate before it becomes `ap-error-watch`.
-
-## Audit trail
-`fun-library-gate/briefs.md`, `red-team.md` and `judge.md` hold the full gate record.
-Cards written to `autopilot/cards/`: ap-stall-facts, ap-collection-counts, ap-first-use-hints,
-ap-whats-new-notes. The Foreman adds their backlog rows.
-
 ## Correction after the judge ran (2026-10-05, f-fun-library thread)
 The judge said the game has no save export or import. That is wrong: `src/js/55-savecode.js` and `75-savecode-ui.js`
 already ship save codes with a copy fallback and a guarded import, and `check.mjs` tests them ("C5 UI" lines). **S11 /
 `ap-save-export` is withdrawn as a duplicate and its card file deleted.** What remains of Q1 (bugs and lost saves are the top
 quit theme) is the error watch below, which still needs its own brief and gate. Admitted cards: 4, not 5.
-
-## Update after widening to 56 games (2026-10-05)
-Cal asked why only 21 games were read. The corpus is now 56 (14,465 reviews). Counts changed, rankings did not flip:
-energy gates tripled (171 reviews, driven by RAID and Hero Wars), which strengthens S14 as a Compass line; the empty
-endgame has 48 long-play reviews. No verdict was re-run through the gate because none changed; the judge should
-re-score S9 and S14 if the Compass thread wants the new numbers.

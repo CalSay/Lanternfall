@@ -2,7 +2,7 @@
 
 What the players of 56 well-rated idle, incremental, mobile RPG and adjacent games (including Old School RuneScape and Clair Obscur: Expedition 33),
 say makes those games good and why committed players leave. Built by `tools/fetch_reviews.py` (raw reviews) and
-`tools/tag_reviews.py` (theme counts); rerun both to refresh. Data in `raw/`, `tags-kw/`, `ratings-2026-10-05.json`.
+`tools/tag_reviews.py` (theme counts); rerun both to refresh. Evidence is committed under `tools/research/`: `raw/` (review text per game), `tags-kw/` (counts and quotes), `ratings-2026-10-05.json`, `corpus.json`. Gate records are in `docs/design/fun-library-gate/`.
 
 ## 1. How to read this (limits first)
 
@@ -61,7 +61,7 @@ Legend, Dunidle). The library also covers 10 PC-main games and the two reference
 
 ## 3. Principles that make players love these games
 
-Format: count = reviews matching the theme (a floor) and the number of games where it shows up strongly; coverage areas
+Format: count = reviews matching the theme (a floor) and the number of games where it shows up strongly. P1 to P11 counts are pass 1 (21 games); P12 to P15 use all 56 games; section 8 has 56-game counts for P1 to P11; coverage areas
 refer to `autopilot/coverage-map.md`. "Measure" is what we can check on Lanternfall.
 
 **P1. Progress that continues while you are away, and feels good to return to.**
@@ -136,10 +136,31 @@ Lanternfall: area 15. Medium confidence.
 **P11. Charm: art, music and voice.**
 242 positive reviews (13 games). Strong in pixel-art idlers. Lanternfall: area 17 and 18. Low risk, supports Compass.
 
-**P12. Quality of life and automation that respect the player's hands.**
-Not counted cleanly: the keyword patterns for this theme were too weak to trust. It is supported by reading only: Shop
-Titans' most common casual request in the sampled reviews was an auto-build function ("it needs a(n) auto-build function",
-App Store 4 stars). Flagged for a re-count; do not cite a number for it.
+**P12. Quality of life and a UI that is easy to read.**
+159 positive reviews across 24 games (OSRS 14, Melvor 12, AFK Arena 10, IdleOn 9, Trimps 9, Orna 8; 56-game count).
+"The user interface is easy to understand right from the get go, and functions virtually exactly like the desktop client." (OSRS, App Store 5 stars)
+"It's clear that the devs truly care about the community." (IdleOn, App Store 5 stars, about quality-of-life updates)
+Automation requests also show up as complaints: "I suggest adding an auto-battle feature and a 2x speed mode" (Orna, App Store 5 stars).
+Lanternfall: menus and navigation (area 11, 16). Measure: taps to common actions; rubric score for the UI.
+
+**P13. Calm, low-pressure play.**
+209 positive reviews across 26 games (Egg Inc 23, Tiny Tower 18, Idle Slayer 16, Idle Miner Tycoon 14, Potion Craft 14).
+"I think the game is relaxing." (Egg, Inc., App Store 4 stars)
+"If you just want a chill game to keep u busy from time to time this is it." (Tiny Tower, App Store 5 stars)
+Lanternfall: the gathering-is-calm pillar. Measure: area 2, a short visit is satisfying without a chore list.
+
+**P14. Always something worth doing, without pressure.**
+31 positive reviews, 4 games with 3 or more (IdleOn 5, Tiny Tower 4, Egg Inc 3, Shop Titans 3). Low count, low confidence.
+"There is always something to do or a goal I'm trying to hit and it never gets old." (Egg, Inc., App Store 5 stars)
+"There's always something to do, but it never feels stressful or overwhelming." (Shop Titans, Steam, 42h)
+Lanternfall: goals at three ranges (area 3). Measure: visible goals by range in the playtest lab.
+
+**P15. Systems that feed each other.**
+30 positive reviews, 5 games with 3 or more (Hero Wars 5, Slay the Spire 4, Idle Hero TD 3, Idle Monster TD 3, Trimps 3).
+Low count: the keyword pattern is narrow and Most hits are about combat or unit synergy rather than skills feeding skills,
+so treat the number as a floor and the principle as medium confidence.
+"It's infinite possibilities of synergies with different cards is fantastic." (Slay the Spire, App Store 5 stars)
+Lanternfall: skills and crafting (area 10). Measure: share of outputs used by another system.
 
 ## 4. What makes players quit or complain
 
@@ -189,9 +210,9 @@ Lanternfall is phone-first, so Q1, Q3 and Q4 weigh most; a PC browser player wil
 
 ## 6. Principle count and gate status
 
-12 principles (P1 to P12) and 10 quit themes (Q1 to Q10), 22 items in all, from 21 games. The card asked for at least 12
-games and 15 principles with counts: **games 21 (met), items 22 (met if the quit themes count; strictly 12 principles
-plus 10 quit themes)**. P12 lacks a clean count and is flagged. Reddit and Play remain thin.
+15 principles (P1 to P15, each with a count) and 10 quit themes (Q1 to Q10), from 56 games. The card asked for at least 12
+games and 15 principles with counts: met. P12 to P15 were counted after the first Codex review; P14 and P15 have low counts
+and are marked low confidence. Reddit and Play remain thin.
 
 Every principle above is a candidate input, not a decision. Ideas built from them go through the idea gate in
 `fun-library-catalogue.md`.

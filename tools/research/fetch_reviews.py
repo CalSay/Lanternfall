@@ -21,7 +21,10 @@ def steam(appid):
         cur, seen = "*", 0
         for _ in range(3):
             d = get(base.replace("filter=all", "filter=all") + urllib.parse.quote(cur) + "&review_type=" + kind)
-            if "_error" in d or not d.get("reviews"): break
+            if "_error" in d:
+                if cur == "*": raise RuntimeError("steam %s %s feed failed: %s" % (appid, kind, d["_error"]))
+                break
+            if not d.get("reviews"): break
             if not out["summary"]: out["summary"] = d.get("query_summary")
             for r in d["reviews"]:
                 out["pos" if kind == "positive" else "neg"].append({
@@ -41,6 +44,8 @@ def apple(appid, country="us"):
     for sort in ("mosthelpful", "mostrecent"):
         for p in range(1, 6):
             d = get("https://itunes.apple.com/%s/rss/customerreviews/page=%d/id=%s/sortby=%s/json" % (country, p, appid, sort))
+            if "_error" in d and p == 1 and sort == "mosthelpful":
+                raise RuntimeError("apple %s feed failed: %s" % (appid, d["_error"]))
             ents = d.get("feed", {}).get("entry", []) if isinstance(d, dict) else []
             if not ents: break
             for e in ents:
@@ -61,9 +66,15 @@ def itunes_meta(appid):
 
 if __name__ == "__main__":
     corpus = json.load(open(sys.argv[1])); outdir = sys.argv[2]; os.makedirs(outdir, exist_ok=True)
+    failed = []
     for g in corpus:
-        res = {"name": g["name"], "slug": g["slug"], "fetched": time.strftime("%Y-%m-%d")}
-        if g.get("steam"): res["steam"] = steam(g["steam"])
-        if g.get("ios"): res["ios_meta"] = itunes_meta(g["ios"]); res["apple"] = apple(g["ios"])
+        try:
+            res = {"name": g["name"], "slug": g["slug"], "fetched": time.strftime("%Y-%m-%d")}
+            if g.get("steam"): res["steam"] = steam(g["steam"])
+            if g.get("ios"): res["ios_meta"] = itunes_meta(g["ios"]); res["apple"] = apple(g["ios"])
+        except Exception as e:  # keep the previous file for this game; report and exit non-zero at the end
+            failed.append(g["slug"]); print("FAILED", g["slug"], e, file=sys.stderr, flush=True); continue
         json.dump(res, open(os.path.join(outdir, g["slug"] + ".json"), "w"), indent=1)
         print(g["slug"], "steam" in res and len(res["steam"]["pos"]), "apple" in res and res["apple"]["n"], flush=True)
+    if failed:
+        print("%d game(s) failed, old data kept: %s" % (len(failed), ", ".join(failed)), file=sys.stderr); sys.exit(1)

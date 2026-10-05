@@ -1,0 +1,229 @@
+{
+ "slug": "octopath",
+ "n_reviews": 56,
+ "n_pos": 25,
+ "n_neg": 31,
+ "n_longplay_neg": 23,
+ "sources": [
+  "steam"
+ ],
+ "themes": {
+  "P-offline": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-respect": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-active": {
+   "n": 2,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "While the story doesn\u2019t quite match FF's depth, the engaging combat system, gorgeous art style, and brilliant soundtrack easily make up for it. (steam+, 17h)",
+    "The combat system is engaging, giving various ways to handle the game. (steam+, 96h)"
+   ]
+  },
+  "P-dev": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-unlock": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-collect": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-goals": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-depth": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "While the story doesn\u2019t quite match FF's depth, the engaging combat system, gorgeous art style, and brilliant soundtrack easily make up for it. (steam+, 17h)"
+   ]
+  },
+  "P-fair": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-interlock": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-prestige": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-qol": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-calm": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "An RPG reminiscent of the Final Fantasy series, Octopath Traveler pairs modern graphics with a wonderfully cozy style. (steam+, 17h)"
+   ]
+  },
+  "P-art": {
+   "n": 7,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "An RPG reminiscent of the Final Fantasy series, Octopath Traveler pairs modern graphics with a wonderfully cozy style. (steam+, 17h)",
+    "Despite playing a large amount of Isometric, pixel based games, this one has a unique style to it that grabs me. (steam+, 27h)"
+   ]
+  },
+  "P-story": {
+   "n": 11,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "I have completed all the character chapters and unlocked all the special jobs. (steam+, 93h)",
+    "Generally enjoy most of the characters, the combat feels rewarding, and stealing items from every NPC is wonderful. (steam+, 77h)"
+   ]
+  },
+  "N-ads": {
+   "n": 0,
+   "of": 31,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-wall": {
+   "n": 2,
+   "of": 31,
+   "longplay_n": 2,
+   "quotes": [
+    "I have been stuck on one of the last available bosses. (steam-, 104h)",
+    "I have been stuck on one of the last available bosses. (steam-, 104h)"
+   ]
+  },
+  "N-pay": {
+   "n": 0,
+   "of": 31,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-dominant": {
+   "n": 3,
+   "of": 31,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-late": {
+   "n": 6,
+   "of": 31,
+   "longplay_n": 6,
+   "quotes": [
+    "After that the late game is comprised of optional quests. (steam-, 104h)",
+    "After that the late game is comprised of optional quests. (steam-, 104h)"
+   ]
+  },
+  "N-offline": {
+   "n": 0,
+   "of": 31,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-mobile": {
+   "n": 0,
+   "of": 31,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-bug": {
+   "n": 0,
+   "of": 31,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-energy": {
+   "n": 2,
+   "of": 31,
+   "longplay_n": 2,
+   "quotes": [
+    "I just installed a mod to speed up combat, and I wish I had done it from the start. (steam-, 83h)",
+    "I just installed a mod to speed up combat, and I wish I had done it from the start. (steam-, 83h)"
+   ]
+  },
+  "N-bloat": {
+   "n": 0,
+   "of": 31,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-chore": {
+   "n": 0,
+   "of": 31,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-tutorial": {
+   "n": 0,
+   "of": 31,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-shallow": {
+   "n": 6,
+   "of": 31,
+   "longplay_n": 3,
+   "quotes": [
+    "It's simple, easy to understand, and very satisfying. (steam-, 123h)",
+    "It's simple, easy to understand, and very satisfying. (steam-, 123h)"
+   ]
+  },
+  "N-reset": {
+   "n": 0,
+   "of": 31,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-pace": {
+   "n": 0,
+   "of": 31,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-fast": {
+   "n": 0,
+   "of": 31,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-balance": {
+   "n": 0,
+   "of": 31,
+   "longplay_n": 0,
+   "quotes": []
+  }
+ }
+}

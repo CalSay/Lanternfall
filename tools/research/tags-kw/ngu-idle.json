@@ -1,0 +1,209 @@
+{
+ "slug": "ngu-idle",
+ "n_reviews": 52,
+ "n_pos": 25,
+ "n_neg": 27,
+ "n_longplay_neg": 18,
+ "sources": [
+  "steam"
+ ],
+ "themes": {
+  "P-offline": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-respect": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-active": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-dev": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "It\u2019s a very detailed game with an active community on Discord, along with various guides, wikis, and more. (steam+, 2389h)"
+   ]
+  },
+  "P-unlock": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-collect": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-goals": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-depth": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-fair": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-interlock": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-prestige": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-qol": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-calm": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-art": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-story": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-ads": {
+   "n": 0,
+   "of": 27,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-wall": {
+   "n": 0,
+   "of": 27,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-pay": {
+   "n": 0,
+   "of": 27,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-dominant": {
+   "n": 0,
+   "of": 27,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-late": {
+   "n": 1,
+   "of": 27,
+   "longplay_n": 1,
+   "quotes": []
+  },
+  "N-offline": {
+   "n": 0,
+   "of": 27,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-mobile": {
+   "n": 0,
+   "of": 27,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-bug": {
+   "n": 0,
+   "of": 27,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-energy": {
+   "n": 0,
+   "of": 27,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-bloat": {
+   "n": 0,
+   "of": 27,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-chore": {
+   "n": 0,
+   "of": 27,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-tutorial": {
+   "n": 2,
+   "of": 27,
+   "longplay_n": 0,
+   "quotes": [
+    "But the game's presentation, tutorial, and UX are driving me away. (steam-)",
+    "But the game's presentation, tutorial, and UX are driving me away. (steam-)"
+   ]
+  },
+  "N-shallow": {
+   "n": 0,
+   "of": 27,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-reset": {
+   "n": 0,
+   "of": 27,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-pace": {
+   "n": 0,
+   "of": 27,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-fast": {
+   "n": 0,
+   "of": 27,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-balance": {
+   "n": 0,
+   "of": 27,
+   "longplay_n": 0,
+   "quotes": []
+  }
+ }
+}

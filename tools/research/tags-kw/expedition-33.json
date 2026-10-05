@@ -1,0 +1,230 @@
+{
+ "slug": "expedition-33",
+ "n_reviews": 70,
+ "n_pos": 25,
+ "n_neg": 45,
+ "n_longplay_neg": 25,
+ "sources": [
+  "steam"
+ ],
+ "themes": {
+  "P-offline": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-respect": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-active": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-dev": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-unlock": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-collect": {
+   "n": 2,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "This is one of those rare games you play and can never forget. (steam+, 51h)"
+   ]
+  },
+  "P-goals": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-depth": {
+   "n": 5,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "The only RPG elements are builds, progression and excellent story. (steam+, 85h)",
+    "The gameplay itself is somewhat interesting, the need to adapt and build synergy between the characters keeps the repetitive gameplay loop bearable. (steam+, 25h)"
+   ]
+  },
+  "P-fair": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-interlock": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "The gameplay itself is somewhat interesting, the need to adapt and build synergy between the characters keeps the repetitive gameplay loop bearable. (steam+, 25h)"
+   ]
+  },
+  "P-prestige": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-qol": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-calm": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-art": {
+   "n": 12,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "Also, The original soundtrack of this game is elite and I fell in love with its music immediately...A blessing to (steam+, 98h)",
+    "im at a loss for words, really\u2014this game excels in every aspect, from the story and character bonds to the gameplay and even the soundtrack. (steam+, 50h)"
+   ]
+  },
+  "P-story": {
+   "n": 19,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "im at a loss for words, really\u2014this game excels in every aspect, from the story and character bonds to the gameplay and even the soundtrack. (steam+, 50h)",
+    "The gameplay, the story, the characters, the music, the art, the world, the emotions\u2014everything just hits. (steam+, 50h)"
+   ]
+  },
+  "N-ads": {
+   "n": 0,
+   "of": 45,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-wall": {
+   "n": 0,
+   "of": 45,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-pay": {
+   "n": 1,
+   "of": 45,
+   "longplay_n": 1,
+   "quotes": []
+  },
+  "N-dominant": {
+   "n": 2,
+   "of": 45,
+   "longplay_n": 2,
+   "quotes": [
+    "Glass cannon is the only viable playstyle in the lategame. (steam-, 52h)",
+    "Glass cannon is the only viable playstyle in the lategame. (steam-, 52h)"
+   ]
+  },
+  "N-late": {
+   "n": 5,
+   "of": 45,
+   "longplay_n": 5,
+   "quotes": [
+    "Sure, it'll make battles faster, but it has nothing to do with being able to win fights. (steam-, 64h)",
+    "Unfortunately, in my opinion, this game\u2019s gameplay is very repetitive. (steam-, 50h)"
+   ]
+  },
+  "N-offline": {
+   "n": 0,
+   "of": 45,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-mobile": {
+   "n": 0,
+   "of": 45,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-bug": {
+   "n": 1,
+   "of": 45,
+   "longplay_n": 1,
+   "quotes": [
+    "Powerscaling feels off, timing is random, buggy in the worst situation (steam-, 61h)"
+   ]
+  },
+  "N-energy": {
+   "n": 0,
+   "of": 45,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-bloat": {
+   "n": 3,
+   "of": 45,
+   "longplay_n": 0,
+   "quotes": [
+    "I found the entire system of pictos/luminas confusing first and annoying through the entire game. (steam-, 46h)",
+    "Worldbuilding bloat that keeps adding entities, systems, dimensions until I, as a player, lose the groun (steam-, 4h)"
+   ]
+  },
+  "N-chore": {
+   "n": 0,
+   "of": 45,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-tutorial": {
+   "n": 0,
+   "of": 45,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-shallow": {
+   "n": 1,
+   "of": 45,
+   "longplay_n": 1,
+   "quotes": [
+    "Of course, it's not as simple as saying, \"This game just wasn't for me.\" (steam-, 55h)"
+   ]
+  },
+  "N-reset": {
+   "n": 0,
+   "of": 45,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-pace": {
+   "n": 0,
+   "of": 45,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-fast": {
+   "n": 2,
+   "of": 45,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-balance": {
+   "n": 2,
+   "of": 45,
+   "longplay_n": 0,
+   "quotes": []
+  }
+ }
+}

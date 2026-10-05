@@ -1,0 +1,227 @@
+{
+ "slug": "rustys-retirement",
+ "n_reviews": 44,
+ "n_pos": 25,
+ "n_neg": 19,
+ "n_longplay_neg": 9,
+ "sources": [
+  "steam"
+ ],
+ "themes": {
+  "P-offline": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-respect": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-active": {
+   "n": 2,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "Rusty's Retirement is a charming idle game that will win you over with its soothing atmosphere and engaging gameplay. (steam+, 10h)",
+    "This man's retirement is more engaging than my entire life (steam+, 160h)"
+   ]
+  },
+  "P-dev": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-unlock": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-collect": {
+   "n": 4,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "If you're aiming for [b]100% achievements[/b], though, here's a small [b]warning[/b]. (steam+, 154h)",
+    "There are a couple of pretty grindy achievements, but once your farm is automated enough, it can mostly take care of those by itself. (steam+, 98h)"
+   ]
+  },
+  "P-goals": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-depth": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "As you progress through the game, you'll help Rusty collect resources, craft items, and build new structures to enhance his life. (steam+, 10h)"
+   ]
+  },
+  "P-fair": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-interlock": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-prestige": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-qol": {
+   "n": 5,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "There are a couple of pretty grindy achievements, but once your farm is automated enough, it can mostly take care of those by itself. (steam+, 98h)",
+    "As the game progresses, you'll need to manage multiple variables - including crops, animals, and automated bots - all working in harmony to maximize efficiency. (steam+, 10h)"
+   ]
+  },
+  "P-calm": {
+   "n": 7,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "Rusty's Retirement does exactly what it promises: a slow, cozy farming idle game. (steam+, 154h)",
+    "The game is slow, relaxing and never really asks for your full attention, which makes it perfect to have running while doing something else. (steam+, 98h)"
+   ]
+  },
+  "P-art": {
+   "n": 13,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "Great art style and gameplay mechanics. (steam+, 12h)",
+    "Great art style and gameplay mechanics. (steam+, 12h)"
+   ]
+  },
+  "P-story": {
+   "n": 3,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "The story follows Rusty, a lovable retiree who's left his mundane office job behind to enjoy the simple pleasures in paradise. (steam+, 10h)",
+    "I loaded into the game, picked my character and world and started playing but I was stuck on what you where supposed to do. (steam+, 8h)"
+   ]
+  },
+  "N-ads": {
+   "n": 0,
+   "of": 19,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-wall": {
+   "n": 2,
+   "of": 19,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-pay": {
+   "n": 0,
+   "of": 19,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-dominant": {
+   "n": 0,
+   "of": 19,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-late": {
+   "n": 0,
+   "of": 19,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-offline": {
+   "n": 2,
+   "of": 19,
+   "longplay_n": 2,
+   "quotes": [
+    "Its \"game\" elements are very limited and contains no offline progression (not that it needs it). (steam-, 186h)",
+    "Its \"game\" elements are very limited and contains no offline progression (not that it needs it). (steam-, 186h)"
+   ]
+  },
+  "N-mobile": {
+   "n": 0,
+   "of": 19,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-bug": {
+   "n": 2,
+   "of": 19,
+   "longplay_n": 2,
+   "quotes": []
+  },
+  "N-energy": {
+   "n": 2,
+   "of": 19,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-bloat": {
+   "n": 0,
+   "of": 19,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-chore": {
+   "n": 0,
+   "of": 19,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-tutorial": {
+   "n": 0,
+   "of": 19,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-shallow": {
+   "n": 0,
+   "of": 19,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-reset": {
+   "n": 0,
+   "of": 19,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-pace": {
+   "n": 0,
+   "of": 19,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-fast": {
+   "n": 0,
+   "of": 19,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-balance": {
+   "n": 0,
+   "of": 19,
+   "longplay_n": 0,
+   "quotes": []
+  }
+ }
+}

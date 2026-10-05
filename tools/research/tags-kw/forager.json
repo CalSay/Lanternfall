@@ -1,0 +1,229 @@
+{
+ "slug": "forager",
+ "n_reviews": 65,
+ "n_pos": 25,
+ "n_neg": 40,
+ "n_longplay_neg": 22,
+ "sources": [
+  "steam"
+ ],
+ "themes": {
+  "P-offline": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-respect": {
+   "n": 2,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "You can easily start playing for a few minutes and suddenly realize you've been playing for hours. (steam+, 30h)",
+    "You can easily start playing for a few minutes and suddenly realize you've been playing for hours. (steam+, 30h)"
+   ]
+  },
+  "P-active": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-dev": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-unlock": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "You start with almost nothing and slowly build up your resources, unlock new areas, craft upgrades, and expand your world. (steam+, 2h)"
+   ]
+  },
+  "P-collect": {
+   "n": 6,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "A few hours later I\u2019m collecting rocks, mining everything in sight and somehow still telling myself \u201cI\u2019ll stop after this one upgrade.\u201d (steam+, 20h)",
+    "I completed 100% of the achievements and really enjoyed the game. (steam+, 30h)"
+   ]
+  },
+  "P-goals": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-depth": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "You start with almost nothing and slowly build up your resources, unlock new areas, craft upgrades, and expand your world. (steam+, 2h)"
+   ]
+  },
+  "P-fair": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-interlock": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-prestige": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-qol": {
+   "n": 2,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "[*]Lots of crafting and automation options (steam+, 30h)",
+    "[*]Lots of crafting and automation options (steam+, 30h)"
+   ]
+  },
+  "P-calm": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-art": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-story": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-ads": {
+   "n": 0,
+   "of": 40,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-wall": {
+   "n": 8,
+   "of": 40,
+   "longplay_n": 4,
+   "quotes": [
+    "It becomes slower and slower and more and more grindy the longer you play. (steam-, 46h)",
+    "It becomes slower and slower and more and more grindy the longer you play. (steam-, 46h)"
+   ]
+  },
+  "N-pay": {
+   "n": 0,
+   "of": 40,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-dominant": {
+   "n": 0,
+   "of": 40,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-late": {
+   "n": 5,
+   "of": 40,
+   "longplay_n": 5,
+   "quotes": [
+    "Severe issues with lag end game even on high end machines. (steam-, 58h)",
+    "Severe issues with lag end game even on high end machines. (steam-, 58h)"
+   ]
+  },
+  "N-offline": {
+   "n": 0,
+   "of": 40,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-mobile": {
+   "n": 0,
+   "of": 40,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-bug": {
+   "n": 3,
+   "of": 40,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-energy": {
+   "n": 4,
+   "of": 40,
+   "longplay_n": 0,
+   "quotes": [
+    "You purchase islands , get permanent upgrades (more lives, bigger stamina, more DMG), solve puzzles, do tasks for NPCs (steam-, 29h)",
+    "You purchase islands , get permanent upgrades (more lives, bigger stamina, more DMG), solve puzzles, do tasks for NPCs (steam-, 29h)"
+   ]
+  },
+  "N-bloat": {
+   "n": 0,
+   "of": 40,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-chore": {
+   "n": 0,
+   "of": 40,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-tutorial": {
+   "n": 0,
+   "of": 40,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-shallow": {
+   "n": 2,
+   "of": 40,
+   "longplay_n": 0,
+   "quotes": [
+    "I only played it because I was too bored and tired and wanted something mindless, and had gotten this for free from a bundle. (steam-, 46h)",
+    "I only played it because I was too bored and tired and wanted something mindless, and had gotten this for free from a bundle. (steam-, 46h)"
+   ]
+  },
+  "N-reset": {
+   "n": 0,
+   "of": 40,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-pace": {
+   "n": 0,
+   "of": 40,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-fast": {
+   "n": 0,
+   "of": 40,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-balance": {
+   "n": 0,
+   "of": 40,
+   "longplay_n": 0,
+   "quotes": []
+  }
+ }
+}

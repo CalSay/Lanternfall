@@ -1,0 +1,267 @@
+{
+ "slug": "melvor-idle",
+ "n_reviews": 453,
+ "n_pos": 270,
+ "n_neg": 183,
+ "n_longplay_neg": 25,
+ "sources": [
+  "steam",
+  "apple"
+ ],
+ "themes": {
+  "P-offline": {
+   "n": 22,
+   "of": 270,
+   "longplay_n": 0,
+   "quotes": [
+    "Game is pretty fun, A nice afk game that doesn't require constant watching. (steam+, 166h)",
+    "Sometimes offline progress doesn\u2019t work super well. (apple5)"
+   ]
+  },
+  "P-respect": {
+   "n": 7,
+   "of": 270,
+   "longplay_n": 0,
+   "quotes": [
+    "Game is pretty fun, A nice afk game that doesn't require constant watching. (steam+, 166h)",
+    "This game will take a few minutes and maybe an hour to learn, but is very, very well worth it. (apple5)"
+   ]
+  },
+  "P-active": {
+   "n": 23,
+   "of": 270,
+   "longplay_n": 0,
+   "quotes": [
+    "My one and only complaint is with the Herblore skill. (apple5)",
+    "Because I can) I found this while I was trying out the new rs3 skill finally. (apple5)"
+   ]
+  },
+  "P-dev": {
+   "n": 9,
+   "of": 270,
+   "longplay_n": 0,
+   "quotes": [
+    "This game is 5 stars across the board, and you can tell that the developers care. (apple5)",
+    "The developer is fantastic as well and actively supports his app in the discord. (apple5)"
+   ]
+  },
+  "P-unlock": {
+   "n": 5,
+   "of": 270,
+   "longplay_n": 0,
+   "quotes": [
+    "Family life and the controversial release of the new skill \u201cNecromancy\u201d made me not want to continue. (apple5)",
+    "I feel like this will be even greater in time so staying up to date and playing everyday is making me excited for new content. (apple5)"
+   ]
+  },
+  "P-collect": {
+   "n": 16,
+   "of": 270,
+   "longplay_n": 0,
+   "quotes": [
+    "[spoiler]i \u2665\u2665\u2665\u2665\u2665\u2665\u2665 cheated idgaf man i just wanted the steam achievements[/spoiler] (steam+, 79h)",
+    "If you are goal oriented and/or a completionist, this is an excellent game and, for the price, an obscenely excellent game. (steam+, 899h)"
+   ]
+  },
+  "P-goals": {
+   "n": 0,
+   "of": 270,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-depth": {
+   "n": 19,
+   "of": 270,
+   "longplay_n": 0,
+   "quotes": [
+    "It\u2019s got way more depth in it than most idle games. (apple5)",
+    "If you don\u2019t like in-depth games don\u2019t waste your time downloading it. (apple5)"
+   ]
+  },
+  "P-fair": {
+   "n": 16,
+   "of": 270,
+   "longplay_n": 0,
+   "quotes": [
+    "Thank you very much to the devs for creating this masterpiece, and thank you oh so much for making the full version a one-time payment! (apple5)",
+    "It\u2019s also not pay to win like most mobile games out there. (apple5)"
+   ]
+  },
+  "P-interlock": {
+   "n": 0,
+   "of": 270,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-prestige": {
+   "n": 0,
+   "of": 270,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-qol": {
+   "n": 12,
+   "of": 270,
+   "longplay_n": 0,
+   "quotes": [
+    "One of the biggest draws, I can maintain quality of life while playing. (apple5)",
+    "Very helpful wiki guide online so very easy to navigate (apple5)"
+   ]
+  },
+  "P-calm": {
+   "n": 3,
+   "of": 270,
+   "longplay_n": 0,
+   "quotes": [
+    "Great game to chill on, tons of easter eggs and new things to find after hundreds of hours in the game. (steam+, 911h)"
+   ]
+  },
+  "P-art": {
+   "n": 13,
+   "of": 270,
+   "longplay_n": 0,
+   "quotes": [
+    "If you\u2019re like me and can\u2019t focus on actual games with 3d graphics then i recommend this - it's basically OSRS without the 3d graphics (steam+, 71h)",
+    "If you love flashy graphics and fast paced combat, you're in the wrong place. (steam+, 899h)"
+   ]
+  },
+  "P-story": {
+   "n": 24,
+   "of": 270,
+   "longplay_n": 0,
+   "quotes": [
+    "The bar fills up as your character gets to the bank and back. (apple5)",
+    "I rarely ever write reviews but I\u2019m writing this in hopes that the creators see a but of advice. (apple5)"
+   ]
+  },
+  "N-ads": {
+   "n": 10,
+   "of": 183,
+   "longplay_n": 0,
+   "quotes": [
+    "On second launch I was shown ugly ads at the top and bottom of the page. (apple1)",
+    "I will happily watch ads and purchase new content packs to support developers, but I will never support (apple2)"
+   ]
+  },
+  "N-wall": {
+   "n": 20,
+   "of": 183,
+   "longplay_n": 0,
+   "quotes": [
+    "However, when I opened it up today I noticed there is now a pay wall to most of the content. (apple2)",
+    "I dislike the amount of times I tried to do an action but was blocked by the pay wall. (apple2)"
+   ]
+  },
+  "N-pay": {
+   "n": 18,
+   "of": 183,
+   "longplay_n": 0,
+   "quotes": [
+    "I understand that this is inspired by RuneScape, where a ton of skills are behind the paywall. (apple2)",
+    "Should be renamed to OSRS RIP-OFF PAYWALL IDLE. (apple1)"
+   ]
+  },
+  "N-dominant": {
+   "n": 0,
+   "of": 183,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-late": {
+   "n": 1,
+   "of": 183,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-offline": {
+   "n": 0,
+   "of": 183,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-mobile": {
+   "n": 1,
+   "of": 183,
+   "longplay_n": 0,
+   "quotes": [
+    "When I\u2019m trying to do things I\u2019ve been spammed with offline notifications every time i gather a single resource. (apple2)"
+   ]
+  },
+  "N-bug": {
+   "n": 20,
+   "of": 183,
+   "longplay_n": 5,
+   "quotes": [
+    "Game worked for a while, but now on startup crashes immediately at loading screen. (steam-, 79h)",
+    "Game worked for a while, but now on startup crashes immediately at loading screen. (steam-, 79h)"
+   ]
+  },
+  "N-energy": {
+   "n": 3,
+   "of": 183,
+   "longplay_n": 2,
+   "quotes": [
+    "I was probably expecting too much, but where is the \"game\" element of the idle gameplay, or story, anything but timers? (steam-, 70h)",
+    "I was probably expecting too much, but where is the \"game\" element of the idle gameplay, or story, anything but timers? (steam-, 70h)"
+   ]
+  },
+  "N-bloat": {
+   "n": 7,
+   "of": 183,
+   "longplay_n": 0,
+   "quotes": [
+    "The interface can be a bit confusing, I had trouble navigating the drop down menus a few times. (apple2)",
+    "The interface is absolutely horrible and confusing. (apple1)"
+   ]
+  },
+  "N-chore": {
+   "n": 0,
+   "of": 183,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-tutorial": {
+   "n": 16,
+   "of": 183,
+   "longplay_n": 0,
+   "quotes": [
+    "Finished the tutorial and it looked pretty good, only to realize a large portion of the game is behind a paywall. (apple1)",
+    "The tutorial shows you some skills that aren\u2019t even available on the free version. (apple3)"
+   ]
+  },
+  "N-shallow": {
+   "n": 5,
+   "of": 183,
+   "longplay_n": 0,
+   "quotes": [
+    "Too expensive for a simple idle game. (apple1)"
+   ]
+  },
+  "N-reset": {
+   "n": 0,
+   "of": 183,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-pace": {
+   "n": 0,
+   "of": 183,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-fast": {
+   "n": 1,
+   "of": 183,
+   "longplay_n": 0,
+   "quotes": [
+    "Too easy to finish the game using mods like Time Skip (apple2)"
+   ]
+  },
+  "N-balance": {
+   "n": 1,
+   "of": 183,
+   "longplay_n": 0,
+   "quotes": []
+  }
+ }
+}

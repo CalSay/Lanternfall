@@ -1,0 +1,273 @@
+{
+ "slug": "idle-miner-tycoon",
+ "n_reviews": 496,
+ "n_pos": 344,
+ "n_neg": 152,
+ "n_longplay_neg": 0,
+ "sources": [
+  "apple"
+ ],
+ "themes": {
+  "P-offline": {
+   "n": 5,
+   "of": 344,
+   "longplay_n": 0,
+   "quotes": [
+    "The game keeps playing when I\u2019m offline so I don\u2019t even have to be in the game to earn profits! (apple5)",
+    "and this has no ads too unless you do the x2 boost when you are offline (apple5)"
+   ]
+  },
+  "P-respect": {
+   "n": 1,
+   "of": 344,
+   "longplay_n": 0,
+   "quotes": [
+    "The game allows you to automate your mining operation, letting it continue even when you\u2019re not playing, which is a nice feature for casual gamers. (apple5)"
+   ]
+  },
+  "P-active": {
+   "n": 5,
+   "of": 344,
+   "longplay_n": 0,
+   "quotes": [
+    "Personally I like to actually play the game, but this game makes an exception. (apple5)",
+    "This doesn\u2019t require much skill but it\u2019s still a cool game! (apple5)"
+   ]
+  },
+  "P-dev": {
+   "n": 1,
+   "of": 344,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-unlock": {
+   "n": 1,
+   "of": 344,
+   "longplay_n": 0,
+   "quotes": [
+    "Unlocking new mines increases the max level. (apple5)"
+   ]
+  },
+  "P-collect": {
+   "n": 18,
+   "of": 344,
+   "longplay_n": 0,
+   "quotes": [
+    "And I thought well I like having rare things that my friends don\u2019t have. (apple5)",
+    "Those are very rare and a pain to get. (apple4)"
+   ]
+  },
+  "P-goals": {
+   "n": 2,
+   "of": 344,
+   "longplay_n": 0,
+   "quotes": [
+    "I have had brain surgery and have short term memory loss as a result, so I. (apple4)",
+    "Now we have something to work toward instead of aimlessly doing the same few mines over and over to get new managers. (apple5)"
+   ]
+  },
+  "P-depth": {
+   "n": 6,
+   "of": 344,
+   "longplay_n": 0,
+   "quotes": [
+    "Analysis of the ratios develops a quick thinking impromptu training for making cost/benefit decisions. (apple5)",
+    "This game is so addictive and I can see why it\u2019s in the top 20 for strategy. (apple5)"
+   ]
+  },
+  "P-fair": {
+   "n": 4,
+   "of": 344,
+   "longplay_n": 0,
+   "quotes": [
+    "and this has no ads too unless you do the x2 boost when you are offline (apple5)",
+    "I highly recommend paying to have no ads) (apple4)"
+   ]
+  },
+  "P-interlock": {
+   "n": 0,
+   "of": 344,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-prestige": {
+   "n": 8,
+   "of": 344,
+   "longplay_n": 0,
+   "quotes": [
+    "It takes so long to get the money to upgrade or prestige the mines. (apple4)",
+    "The game has a prestige system and I\u2019ve done that to a few of my mines on the first two continents. (apple4)"
+   ]
+  },
+  "P-qol": {
+   "n": 3,
+   "of": 344,
+   "longplay_n": 0,
+   "quotes": [
+    "I don\u2019t find it\u2019s very intuitive to navigate to the world map in order to access my worker upgrades. (apple4)",
+    "With its bright, cartoony visuals and easy to understand mechanics, it\u2019s accessible and enjoyable for players of all ages. (apple5)"
+   ]
+  },
+  "P-calm": {
+   "n": 14,
+   "of": 344,
+   "longplay_n": 0,
+   "quotes": [
+    "It\u2019s fun, relaxing, exciting, I love new stuff and event mines and everything else. (apple4)",
+    "All in all a fun game to pop in for 10 minutes or relax for an hour with a movie. (apple5)"
+   ]
+  },
+  "P-art": {
+   "n": 18,
+   "of": 344,
+   "longplay_n": 0,
+   "quotes": [
+    "The number one mistake the made in the game was changing the music. (apple4)",
+    "Getting Gold (Harp music plays and glitter floats about) or even close to silver cost a truckload of real cash. (apple5)"
+   ]
+  },
+  "P-story": {
+   "n": 11,
+   "of": 344,
+   "longplay_n": 0,
+   "quotes": [
+    "I never leave a review for games, so the fact that I'm writing this says something. (apple5)",
+    "PS: I would like there to be an option to customize  your very own character. (apple5)"
+   ]
+  },
+  "N-ads": {
+   "n": 64,
+   "of": 152,
+   "longplay_n": 0,
+   "quotes": [
+    "Too many VERY long ads to progress in game. (apple2)",
+    "2) there\u2019s far too much reliance on watching ads to speed up progress. (apple3)"
+   ]
+  },
+  "N-wall": {
+   "n": 8,
+   "of": 152,
+   "longplay_n": 0,
+   "quotes": [
+    "At this rate it would either take a year or 2 of grinding or lots of money. (apple1)",
+    "The two latest additions (Frontier Mines and Nature Mines) are way too slow to progress that it\u2019s discouraging. (apple1)"
+   ]
+  },
+  "N-pay": {
+   "n": 6,
+   "of": 152,
+   "longplay_n": 0,
+   "quotes": [
+    "but when you first launch the game you will spend 30 seconds closing out of 19 pop-up microtransactions while trying to do anything. (apple2)",
+    "Was fun at first now it\u2019s getting to the point you have to pay to win. (apple1)"
+   ]
+  },
+  "N-dominant": {
+   "n": 1,
+   "of": 152,
+   "longplay_n": 0,
+   "quotes": [
+    "Now the ad boost is for 1 hour, and you can only build up how long they will last to 8 hours long. (apple2)"
+   ]
+  },
+  "N-late": {
+   "n": 3,
+   "of": 152,
+   "longplay_n": 0,
+   "quotes": [
+    "Other than the slowness of late game and the frustration of the character cards, this game heats your phone up dramatically and drains your battery. (apple3)",
+    "But I get it, it\u2019s end game stuff that forces you to spend boosts and currency to win. (apple1)"
+   ]
+  },
+  "N-offline": {
+   "n": 0,
+   "of": 152,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-mobile": {
+   "n": 7,
+   "of": 152,
+   "longplay_n": 0,
+   "quotes": [
+    "1) battery consumption is ridiculous, and sadly this week\u2019s update (1.45.0, which claims awesome performance improvements) did not fix the issue. (apple3)",
+    "I\u2019ve gotten like 3 notifications all of them saying \u201c6 hours until event mike is finished!\u201d \u201cEvent mine is live now\u201d NO IT ISNT. (apple2)"
+   ]
+  },
+  "N-bug": {
+   "n": 34,
+   "of": 152,
+   "longplay_n": 0,
+   "quotes": [
+    "And on top of all of that it now consistently crashes switching islands. (apple1)",
+    "And it crashes every 3 minutes, no matter what I do. (apple3)"
+   ]
+  },
+  "N-energy": {
+   "n": 7,
+   "of": 152,
+   "longplay_n": 0,
+   "quotes": [
+    "It\u2019s simple to play, but you still have to think about strategy to speed up your progress. (apple3)",
+    "Or spend real $$ to \u201cspeed up\u201d progress. (apple2)"
+   ]
+  },
+  "N-bloat": {
+   "n": 3,
+   "of": 152,
+   "longplay_n": 0,
+   "quotes": [
+    "So for me way too many things to track to progress at a good pace. (apple3)",
+    "It is confusing and annoying, and I will never play it again (apple1)"
+   ]
+  },
+  "N-chore": {
+   "n": 0,
+   "of": 152,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-tutorial": {
+   "n": 1,
+   "of": 152,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-shallow": {
+   "n": 5,
+   "of": 152,
+   "longplay_n": 0,
+   "quotes": [
+    "I love the game it a great way to pass time very simple but addictive. (apple3)",
+    "It\u2019s simple to play, but you still have to think about strategy to speed up your progress. (apple3)"
+   ]
+  },
+  "N-reset": {
+   "n": 0,
+   "of": 152,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-pace": {
+   "n": 0,
+   "of": 152,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-fast": {
+   "n": 0,
+   "of": 152,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-balance": {
+   "n": 4,
+   "of": 152,
+   "longplay_n": 0,
+   "quotes": [
+    "There has to be a balance between making money and keeping your customers happy. (apple2)",
+    "Wth?) and many ways to pay for different OP items to speed it (apple2)"
+   ]
+  }
+ }
+}

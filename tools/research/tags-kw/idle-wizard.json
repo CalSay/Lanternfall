@@ -1,0 +1,236 @@
+{
+ "slug": "idle-wizard",
+ "n_reviews": 157,
+ "n_pos": 118,
+ "n_neg": 39,
+ "n_longplay_neg": 1,
+ "sources": [
+  "steam",
+  "apple"
+ ],
+ "themes": {
+  "P-offline": {
+   "n": 1,
+   "of": 118,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-respect": {
+   "n": 8,
+   "of": 118,
+   "longplay_n": 0,
+   "quotes": [
+    "If you want a good time killer to play when you got a few minutes, it\u2019s a good game! (apple5)",
+    "No forced ads, constant feeling of growth, and any ads you do watch bring massive value for your time. (apple5)"
+   ]
+  },
+  "P-active": {
+   "n": 2,
+   "of": 118,
+   "longplay_n": 0,
+   "quotes": [
+    "Simple, engaging, and has enough variety to keep coming back (apple5)"
+   ]
+  },
+  "P-dev": {
+   "n": 3,
+   "of": 118,
+   "longplay_n": 0,
+   "quotes": [
+    "Devs are highly active in their discord, as are a number of veteran players who help maintain community driven guides and resources. (steam+, 27229h)",
+    "Devs are highly active in their discord, as are a number of veteran players who help maintain community driven guides and resources. (steam+, 27229h)"
+   ]
+  },
+  "P-unlock": {
+   "n": 0,
+   "of": 118,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-collect": {
+   "n": 7,
+   "of": 118,
+   "longplay_n": 0,
+   "quotes": [
+    "Friends passing by can touch her and click Like to pet her once. (steam+, 26h)",
+    "Friends passing by can touch her and click Like to pet her once. (steam+, 26h)"
+   ]
+  },
+  "P-goals": {
+   "n": 0,
+   "of": 118,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-depth": {
+   "n": 8,
+   "of": 118,
+   "longplay_n": 0,
+   "quotes": [
+    "A lot more in depth than it may seem at first. (steam+, 1270h)",
+    "A lot more in depth than it may seem at first. (steam+, 1270h)"
+   ]
+  },
+  "P-fair": {
+   "n": 4,
+   "of": 118,
+   "longplay_n": 0,
+   "quotes": [
+    "No pay to win aspects, easy on the ads with no required viewing. (apple5)",
+    "Like a \u201cno ads\u201d cost, that makes us be able to still get the boosts but not have to watch the ads. (apple5)"
+   ]
+  },
+  "P-interlock": {
+   "n": 0,
+   "of": 118,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-prestige": {
+   "n": 0,
+   "of": 118,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-qol": {
+   "n": 2,
+   "of": 118,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-calm": {
+   "n": 2,
+   "of": 118,
+   "longplay_n": 0,
+   "quotes": [
+    "All I really want from idle games is a relaxing and chill experience, and I'm even sick of those cash-grabs. (apple5)",
+    "Relaxing and fun, and no forced ads! (apple5)"
+   ]
+  },
+  "P-art": {
+   "n": 9,
+   "of": 118,
+   "longplay_n": 0,
+   "quotes": [
+    "The gameplay is appealing, the visuals and sound quality are great, and the pacing is excellent. (apple5)",
+    "The game could use some better effects or make the majority of spells have visual effects cause it gets a bit boring after a while. (apple4)"
+   ]
+  },
+  "P-story": {
+   "n": 2,
+   "of": 118,
+   "longplay_n": 0,
+   "quotes": [
+    "I think the best part though is that the ads are tied into the lore, they don\u2019t break the immersion. (apple5)"
+   ]
+  },
+  "N-ads": {
+   "n": 6,
+   "of": 39,
+   "longplay_n": 0,
+   "quotes": [
+    "To progress in this game (to have a chance to get any of the items), you HAVE to watch ads. (apple1)",
+    "There are too many ads, and not enough things to do, the balancing feels off and way too slow if you don\u2019t watch the ads. (apple3)"
+   ]
+  },
+  "N-wall": {
+   "n": 2,
+   "of": 39,
+   "longplay_n": 0,
+   "quotes": [
+    "I hated the ads grind, and game play itself is quite boring. (apple1)",
+    "There are too many ads, and not enough things to do, the balancing feels off and way too slow if you don\u2019t watch the ads. (apple3)"
+   ]
+  },
+  "N-pay": {
+   "n": 0,
+   "of": 39,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-dominant": {
+   "n": 0,
+   "of": 39,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-late": {
+   "n": 0,
+   "of": 39,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-offline": {
+   "n": 0,
+   "of": 39,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-mobile": {
+   "n": 0,
+   "of": 39,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-bug": {
+   "n": 1,
+   "of": 39,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-energy": {
+   "n": 0,
+   "of": 39,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-bloat": {
+   "n": 3,
+   "of": 39,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-chore": {
+   "n": 0,
+   "of": 39,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-tutorial": {
+   "n": 0,
+   "of": 39,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-shallow": {
+   "n": 0,
+   "of": 39,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-reset": {
+   "n": 0,
+   "of": 39,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-pace": {
+   "n": 0,
+   "of": 39,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-fast": {
+   "n": 0,
+   "of": 39,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-balance": {
+   "n": 0,
+   "of": 39,
+   "longplay_n": 0,
+   "quotes": []
+  }
+ }
+}

@@ -14,6 +14,8 @@ T = {
  'P-fair': r"\b(no pay[- ]to[- ]win|not pay[- ]to[- ]win|fair (monetization|monetisation)|no (microtransactions?|ads)|free to play friendly|generous|one[- ]time (purchase|payment)|worth (the )?(money|price))\b",
  'P-interlock': r"\b(feeds? into|synerg(y|ies)|interlock|everything (is )?(connected|ties)|skills? (help|boost|feed)|crafting .* (needs?|uses?) .*(mining|woodcutting|fishing))\b",
  'P-prestige': r"\b(prestige|ascen(d|sion)|rebirth|reset(s)? (is|are)? ?(fun|rewarding|good)|new run|each run)\b",
+ 'P-qol': r"\b(quality of life|qol|auto[- ](battle|collect|upgrade|craft|build|sell)|automation|automate[sd]?|intuitive|easy to (use|navigate|understand)|clean (ui|interface)|well[- ]designed (ui|interface))\b",
+ 'P-calm': r"\b(relax(ing|ed)?|chill|cozy|cosy|zen|unwind|stress[- ]free|peaceful|low[- ]pressure|comfort(ing|able)?)\b",
  'P-art': r"\b(art ?style|graphics|pixel|soundtrack|music|charming|cute|beautiful|visuals?)\b",
  'P-story': r"\b(story|lore|writing|narrative|world[- ]building|characters?|quests?)\b",
  'N-ads': r"\b(ads?|advert(s|isements?)?|video ads?|watch(ing)? (an? )?(ad|video))\b",

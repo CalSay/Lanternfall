@@ -1,0 +1,1080 @@
+{
+ "name": "Exponential Idle",
+ "slug": "exponential-idle",
+ "fetched": "2026-10-05",
+ "ios_meta": {
+  "name": "Exponential Idle",
+  "rating": 4.8939,
+  "count": 4128,
+  "genre": "Games"
+ },
+ "apple": {
+  "n": 152,
+  "reviews": [
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Exponential Idle - A mindless idle game like the others",
+    "text": "This game at first appears to be just a smarter, but more simple design. No cookies to click. Just a mathematical equation. As you continuously progress in the game you get to experience the complex equations that start to happen. Adding more variables using \u201cStars\u201d which unlike most idle games is able to get while having fun. \n\nJust as I started thinking wow, this game really isn\u2019t that fun. I got to the prestige part, I had clicked the first equation about 8,000 times. I reached a point where my f(t) wasn\u2019t going up that much anymore and then I became able to prestige. This changed everything I was then getting higher and higher until I reached around ee100 then I got introduced to Supremacy. Eventually getting auto buyers, then an auto prestiger. I could then AFK for around 4-8 hours come back and supremacy. I am currently sitting at ee730 and waiting to get the achievement for reachi",
+    "votes": 2
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 2,
+    "title": "Not impressed. Ironically simple",
+    "text": "So far I\u2019ve gone through 2 iterations of \u201cprestige\u201d and reached the fourth variable. Compared to other idle games, the growth equation of Exponential Idle seems too basic, which makes the game kinda boring for me. It\u2019s kinda ironic that the equation is so simple, given that the theme of the game is exponential math. Maybe it gets more complex later? But I have little interest in playing to get to that point.\n\nTo explain what I mean - in the game you build up your independent variable X (thereby improving your f(x) function), and you also level up other sub-variables to do it. The function is just X = 0.8*Xlv + 2*(Ylv+Zlv+Slv). Basically the contribution of Y, Z, and S (per level) are exactly the same, so you end just level up whichever one is cheaper... kinda boring. Also the contribution of leveling X is just 40% as much as leveling the others, and it\u2019s free to do so but you can only gi",
+    "votes": 4
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Don\u2019t let the complexity scare you away",
+    "text": "I really enjoyed this game. You can enjoy it on a couple different (intellectual) levels. First, it\u2019s just a very fun idle game that is quite well balanced. Upgrades come and take a bit of time and then the things that become bothersome to manage become automatic. \n\nSecond, it\u2019s a game about math. For most of the equations you don\u2019t need to understand them to progress. At the very end of the game there are some that you will need to understand, but that\u2019s a very small part of the game and some web searching or a helpful soul on discord will get you sorted out.   I\u2019m an electrical engineer and thought the equations were well thought out and straightforward, although there was one that still confuses me to this day, but that wasn\u2019t one I needed to know. \n\nThere is no pay wall, just watch and ad to get a few hours of boosted progress. Or pay a small one time transaction to always be boosted",
+    "votes": 3
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 4,
+    "title": "A simple and interesting game",
+    "text": "This is a really simple game. Basically it allows players to modify the parameters of a function, and the goal is to push the function value as high as possible (and as fast as possible). \nWhat\u2019s interesting about the game is that the player does not need to understand the actual formula. The player can test different parameters to get a feeling of rate of the change; and slowly moving toward the \u201coptimal\u201d parameter.\n\nI rated this game 4 stars because I believe there are many other ways to improve the game. \n\nImagining if we could map the function to another space, which would reflect the overall growth of the original function. It could brings a more intuitive way for players to evaluate the growth of the function by changing certain variables. \n\nOr map the function to a random space, in which it would draw something chaotic. Every time the player opens the game up, he/she could see a f",
+    "votes": 1
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "My life after exponential idle",
+    "text": "Exponential idle is not a game, it\u2019s a lifestyle and a culture. My life has completely changed after downloading this game. I have lost everything I had except for this game. I was fired from my job for exponential idling too competitively. I now live in a homeless shelter and survive off of social security checks. I need food stamps to survive now, I have lost everything from this game. My wife divorced me, and took the kids. Bertha was originally supportive of my idling lifestyle. But then as the debt grew, she became more discriminatory about my idling culture. I decided that she was the issue and needed to be erased from my life. I have given you everything, and in return I have achieved eternal happiness knowing that I am the greatest idler to ever exist.\n\n-Brian Zang Sub",
+    "votes": 3
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "I bet it\u2019s a great game",
+    "text": "I don\u2019t really understand it. I\u2019m taking calculus 2 and I still trying to wrap my head around the various methods of integration and series/sums of convergence and divergence. Im not doing well in the class tbh. I just keep pressing random variables. Is the goal to have the function runaway exponentially? Like x^x? Or something reaching infinity near a vertical asymptote? It keeps leveling out in rocket fashion like a square root function. That\u2019s annoying lol but I still like to see the graph change as I press variables. Too many variables though. I don\u2019t even see all of them, but maybe it\u2019s just because I don\u2019t understand. Or maybe I have to figure out what those variables do? Even though they\u2019re not explicitly written in the function? People are saying it\u2019s a fun game nonetheless",
+    "votes": 5
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Surprisingly good!",
+    "text": "When I first downloaded this game, I was bit expecting much. Just another idle game (which I am admittedly a fan of) that I might drop after a few weeks. However, I was surprised at the depth of this game and how well the gameplay integrates into the story. I especially enjoy the theories, though I do wish they would be better explained. For example, I don\u2019t fully understand \u201cNumerical Methods\u201d and a short explanation of what each variable means would benefit me a lot instead of jumping right in into the symbols and notation.\n\nOverall, though, a very good game. There are some slow parts and some guesswork involved, but I enjoy the grind.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Great game!",
+    "text": "Obviously there is waiting involved (it\u2019s in the name of the game) but after a bit there is a good bit to do and solve. No necessary in game purchases nor ads. Even when you leave the game it continues without you and after a bit you can automate things making leaving easier. I pick up the game for maybe 5 minutes every few hours and the point where I am in the game. I am very satisfied with how simplistic this game is on the surface but I know there was some serious math involved in the creation of this and I give props to the creators for there hard work. 10/10 game amazing!",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "If only there were more games like this",
+    "text": "This is exactly what I wanted when mobile games began to take over the market. It\u2019s simple, fun, there\u2019s zero pressure to pay for anything, and there\u2019s a finish. \n\nWhat I appreciate the most is there is an end to this incremental game. It takes a while to get to obviously and the creator is always adding new features but there\u2019s a end point you want to reach. \n\nThis alone solves so many problems with how mobile games are today with the pay to win model and the GACHA character collection part of most idle games these days. They never want to lose you as a customer so they never put a finish to the game. This feels like you\u2019re progressing through a story which has a goal. No loot boxes or extra currencies. \n\nThis is the perfect idle game. It is what every idle game should strive to be and I really hope that people take notice of how you can be successful without throwing a billion ads in e",
+    "votes": 1
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "The best idle game I\u2019ve ever played",
+    "text": "This game is the most mechanically deep idle game I\u2019ve ever played. Custom automation gets rid of the most monotonous parts of this genre while challenging you to think mathematically. Multiple levels of prestige and the unique mini games help keep the game interesting. \n\nThe pacing is almost perfect. Progress normally happens fairly quickly and, when it doesn\u2019t, using a good automation expressions lets you sit back and wait for the speed to catch up again.\n\nI have no complaints outside of occasional lag on the mini games, which can be annoying if you\u2019re trying to beat your top time.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Incredibly entertaining",
+    "text": "Typical idle games are soulless and mindless games that have no substance. This one is far different. Every stage of the game is new and rewarding. Figuring out the mini game puzzles is gratifying. I did have to look up the arrow ones but even figuring out those algorithms was fun. As soon as a part of the game gets boring, the process gets automated. Fantastic free to play idle game not littered with micro transactions, with some soul put into it. Also, try to do secret achievement 13 without looking it up. You\u2019ll feel like a detective",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 4,
+    "title": "Good game, but progression after theories is insanely slow",
+    "text": "After unlocking recurrence relations, my progress has just stagnated. I\u2019ve tried using 100s of thousands of stars to try and upgrade variables and many different combinations of student upgrades, but at this point every prestige takes more than a day and it\u2019s been a while since a supremacy. I\u2019m positive that I can be doing something better but the game gives you very little instruction. Still, up to this point it\u2019s been a nice game when I\u2019m bored, and I appreciate how there are no ads unless you initiate them.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 4,
+    "title": "Great game, with some performance issues",
+    "text": "The game is really fun and the mechanical complexity is well thought out for an idle game. The various prestige systems have been interesting to discover and experiment with.\nMy largest complaint is that performance can be a bit spotty at times. Turning my graph quality to low seems to have helped, but even letting the game sit without doing anything sees dropped frames. Using the accelerator button, playing the mini games and immediately after prestiging the performance issues seem to worsen. Overall though the game is still playable and this is more an inconvenience than anything else.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Nothing but the math",
+    "text": "Lots of other games have some sort of underlying math that paces out progression, giving a quick jolt of improvement, slowing down, and then jumping ahead to another layer of progression. What if we stripped away everything extra; no graphics aside from graphs and well rendered formulas, no characters outside of text, no controls, not even color! All that\u2019s left is the math, ramped up to ridiculous extremes using notation I didn\u2019t even know existed for absurdly huge numbers.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Beautiful concept beautifully executed",
+    "text": "Firstly, I\u2019m just dipping my toes into math and found this game some time back. Having learned some calculus, I greatly appreciate the effort that went into this game so much more. Most clicker games are cut and paste but this one feels true. As if the internals to all of the others have been laid bare and exposed for my gaming. It\u2019s paced very well and the progression is satisfying. Haven\u2019t finished story mode but I\u2019m enjoying it so far. \n\nIf you\u2019re thinking of getting it, I recommend it.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Sounds design",
+    "text": "The actual gameplay? Totally awesome. The design of the UI? Love it. The sound design though? I can\u2019t describe it. It\u2019s heavenly. Even if you don\u2019t like idle games, get the game JUST so you can experience the awesomeness that is the creamy clicky sounds when you tap stuff. Even if this was just an app with a button for the sound, I swear I would use it constantly while doing other stuff. It makes my brain melt. I wish I could give it six stars.",
+    "votes": 1
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Shut up and take my money!",
+    "text": "Genuinely clever incremental game. The math looks intimidating but you don't actually need to understand it to play and progress \u2014 though it might make you curious enough to learn. Clean design, no predatory monetization, and it respects your time whether you play actively or let it idle.\n\nMy one complaint is that I'd happily give the developer more money than the current IAP options allow. If you ever add a bigger tip jar, I'm in.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Overall, a very solid take on the idle genre!",
+    "text": "This game has a very interesting concept and accompanying storyline to follow a traditional idle experience.\nNo involuntary ads and ads are not necessary to progress at a reasonable rate.\n\nThere are a few bugs including some \"soft crashes\" where the game will stop functioning but will not automatically close, but nothing that a quick restart wont fix :)",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Play to the end!",
+    "text": "This game has more surprises and respect for the user than I would have thought possible in any game, much less an idle game. You do not need to understand any formulas or even like math to get to the end of the game. If you do like math, it helps a little, but mostly you just understand better why you like the game so dang much. Try it! Click all the buttons and play to ee50",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "User Friendly",
+    "text": "This game lets the player actually dive deep into it without being bombarded by ads, given an impossible progression system requiring payment. I feel like I\u2019m back in 2009, when mobile games were build with love and actually designed to entertain, not just make the developer money. \n\nThis is easily in my top 3 mobile games list!",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Great Game",
+    "text": "While intimidating at first, getting into the game and automating the equation is some of the most fun I\u2019ve had with an idle game. Add on the story line and multiple moving parts and this game is near perfect. The only complaint is that starting out is extremely difficult and tedious and I would prefer for the x= section to be able to have infinite exponents added like the y,z,c and all other equations.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Unique and Interesting",
+    "text": "I haven\u2019t seen an idle game with this style of progression yet, so that makes the game pretty interesting as a concept. Using an exponential formula as the points system makes a lot of sense, and it is implemented very well. I like the graph that shows your points over time, particularly how it smooths out when using the accelerate feature. I hope the developer continues to add more interesting features to the game.",
+    "votes": 1
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Confusing",
+    "text": "I have no idea what\u2019s going on. The formulas and numbers don\u2019t make sense to me. I\u2019m just pressing buttons with only a slight idea as to what they do, and then waiting here and there for the numbers to climb before progressing, only to start the process all over again from scratch.\n\nThat being said, this is my favorite idle app and I became addicted almost immediately. Amazing.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Amazing time killer",
+    "text": "The game can be a bit intimidating and confusing at first especially if you aren\u2019t savvy with math but it is one of those games the more you play the more you understand it. It doesn\u2019t force ads whatsoever and the boost they apply never feels like it\u2019s forced to progress past a certain point. The game is continuously updated and you can tell the developer cares about their product.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Hits the niche perfectly",
+    "text": "Really engaging game, I feel that while the game is still easily playable without a deep understanding of all the mathematics involved it still rewards you for it being the case.  Very tight knit community built around the game and a very involved and honest developer.  Game is not going for your wallet.  Haven\u2019t had this much fun on my phone in years, thank you so much!",
+    "votes": 1
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Never get bored",
+    "text": "Honestly, I never got bored of the game, although I\u2019ve only had it for a month now, the story to it is really nice and it keeps the player entertained and to stay when maybe things are getting slow and you do have to start being idle for large amounts of time. I usually play a little bit, check back to see my progress and then sleep, rinse and repeat.",
+    "votes": 1
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "The game for me",
+    "text": "I love idle games, have since I was a kid. I would play them over and over, prestige to the max, then delete the save entirely to truly start again. Maybe this is where I started to fall in love with numbers in a computer. I am now getting a PhD in applied mathematics and I find this idle game. It\u2019s perfect. As they say in asymptotics, 4 is basically infinity, so 5/5 stars is \\infty/5 stars.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 1,
+    "title": "Not forgiving at all",
+    "text": "I have two young kids who frequently get ahold of my phone when I\u2019m not paying attention. Turns out they ended up changing the date to 2 weeks in the future. When I set it back, the game said I could either be locked out for 2 weeks, or reset my game entirely. Devs could have just programmed the game to revert idle progress when a time change happened but instead the lazy devs have it set to ban you from the game. Looks like I can\u2019t play since I have kids. Was a fun game while it lasted but I can\u2019t promote a game with such an unnecessary and harsh function.",
+    "votes": 2
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "One of the best idle games",
+    "text": "I\u2019m a bit of a math nerd so this may be biased, but I really love the idea of exponential growth and being able to upgrade specific variables in the equation to increase growth. I also like how many \u201cauto-clicker\u201d options are available, including auto-prestige. The only thing I\u2019d like is more minigames to play to get stars, because so far I\u2019ve just been doing the easy 15-puzzle.",
+    "votes": 1
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Best Idle Game Ever!",
+    "text": "Exponential Idle is by far one of the best idle games I have ever played. I\u2019m not going to go into detail because there are already multiple reviews which do so. If you just want something you can mess around with while on the metro or bus, maybe when you get home from school or when you first wake up, this is the game for you.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "The most respectful idle game",
+    "text": "You won\u2019t find an idle game more respectful of the player. No forced ads after purchase, no ads whatsoever after purchase. No other purchases available besides removing ads. This game was not built to siphon money towards the dev, it was built to be fun (if you like this sort of thing)",
+    "votes": 1
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Great, but one problem",
+    "text": "This is a very great game! There should be more games like this, but I just have one problem.\n\nWhenever you collect your idle rewards, and go to 15 puzzle, the blocks start glitching out.\n\nEven though that problem exists, I think this is the best game I have seen so far!",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 4,
+    "title": "A small suggestion",
+    "text": "I feel the way the db Graduation Research is handled should be changed because I did the math in Desmos and the highest nember it would let me try as an input resulted in an output of about 56 meanwhile I can just Research the Star one more and multiply everything by over 1.61 million and quickly rising. For reference, for every Research into Stars, I need to do FOUR Research into db, which is NOT economically viable.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "The most user friendly game",
+    "text": "I\u2019ll keep it simple, stupid. In depth descriptions of every part of the game (with the addition of humor). Absolutely no forced ads. The game feels like it was made by a player not a developer (in a good way). Not a long, nor descriptive review but I feel it deserves something.",
+    "votes": 1
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "This game was made really well",
+    "text": "There are no ads with or without Wi-Fi. That makes it the only mobile exclusive game with no forced ads. Also, this game has a real story and actually fun gameplay. You can\u2019t get better than that. But wait! It also has good visuals! Strange notation/10",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "One of the best clickers out there",
+    "text": "i NEVER leave reviews on games, but this one was just too good not to give 5 stars. I\u2019m too lazy to write a paragraph on this, but you should definitely consider getting this game if you\u2019re looking for a calming, quality idle with no ads or anything in your face",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Probably the Best Idle Game On This Planet",
+    "text": "This Game is SO GOOD that I have been playing this for over 6 months, and yet it's still amazing. The only bad thing about this game is the lack of content. Once you get the recurrence theory there isn\u2019t that much to do except getting more theories. But except for that it is the best idle game ever.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Phenomenal",
+    "text": "After 209 days, I have finally finished the game. It\u2019s such a simple concept as an idle game, but it is executed elegantly, with a style like no other game I\u2019ve seen. \n\nAt the very least, it\u2019s worth a download, you won\u2019t disappointed, especially if you\u2019re remotely interested in math.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Amazing Game",
+    "text": "This game is a joy to play, and I am so sad that I finished the game. The concept of having a story to an idle game is unique, and I love the fact that its actually an idle game, theres no point to stay on the app for more than ten minutes to grind. Overall, my only qualm with this game is that its too short (or maybe i love it too much haha)",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Bigger numbers on the App Store",
+    "text": "Wow. I\u2019m still early in my play through, but seeing a double exponent of 200+ is insane. There\u2019s 200 digits in the number that describes the number of digits of the final value. Insanity. Vastly larger than any number that could be physically expressed in this universe. Love it",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Best game ever",
+    "text": "There\u2019s no ads for it despite what it may look like it\u2019s not too complicated. There\u2019s multiple layers of prestige. There\u2019s only one in app purchase and it\u2019s only two dollars. I haven\u2019t gotten it though if I could rate higher, I would",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Best Idle Game Ever",
+    "text": "I love this game, just writing about a bug, but it\u2019s still 5 stars for me. In my second save, I seem to be unable to unlock secret achievement 7. I know what it is and how to do it from the first save I have, and after doing it I still haven\u2019t unlocked it.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Simple yet sweet",
+    "text": "Do not be fooled by it's sophisticated appearance. It is an idle game that holds its special qualities such as a likable story. Its system is also not discombobulated once you get used to it. While there are only two mini-games, they require no RNG to obtain your reward(s). \nThe game is one for those who like ease and simplicity.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 1,
+    "title": "Game just dies out",
+    "text": "After you supremecy for the first two upgrades, it takes 5 days to get the next.\n\nI enjoyed the limited ads and it was fun, but there is just literally no point to opening the game. Theres nothing to be done but wait wait wait. Nothing to click to accelerate it.\n\nJust wait wait wait. Literally just log in once a day and say \"cool, guess I will log in in a couple more days to see if I can do anything.",
+    "votes": 1
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Great game, at this point it plays itself!",
+    "text": "This game is fun, but what i did allows the game to play itself which is ironically very fun because i can come back at any time and play it without stressing about lost time!",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 3,
+    "title": "Late game progress slowdown",
+    "text": "I\u2018ve reached the students benchmark for the second time, and I have not gotten another student since. Even 2 straight weeks of automated prestige, buying, and supremacy, and I haven\u2019t supremacy-ed. With no way to reinvest points in the students, I can only assume that I\u2018m screwed. 4 months of work only to hit a dead end in the game.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Awesome game",
+    "text": "I can say that I was a bit skeptical when I first got it because it did look quite complex, but I\u2019ve found out that it is very simple and is very fun! I would highly recommend it if you like a nice idle game.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "A total nerd-gasm",
+    "text": "There is literally nothing wrong with this game, and nothing I would choose to change.\n\nYa\u2019ll hit it out of the park on this one.\n\nIf you like idle games try it.  If you like math try it.  If, like me, you fall into both of those camps then start enjoying now.",
+    "votes": 1
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Perfect Idle",
+    "text": "Very plain, but I love the idle aspect where you can step away and it keeps rolling. (Many other games seem to peak during your off hours, but this seems to do that less.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 2,
+    "title": "Good game - horrible ads.",
+    "text": "Good game, seems to progress nicely but has many time walls.\n\nBiggest problem I have so far are with the ads - some of the ads block the X in the corner and you have to shut the game completely off to continue anything.\n\nIf you are going to have ads, don\u2019t have ones that make people want to delete the game.",
+    "votes": 2
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "One of the best games I\u2019ve played",
+    "text": "Absolutely genius.  I\u2019ve not had more fun in a mobile game, figuring out the puzzles to make the function grow.  Please expand this game with more content.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Honestly an amazing game",
+    "text": "I was skeptical at first but this is an amazing idle game that doesn\u2019t just sit on your phone for months and you forget about it. It has a story and most importantly no ads. Definitely would recommend it",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Simply fun",
+    "text": "I\u2019ve played tons of idle/clickers and this one is one of my favorites. No random ads to sit through only for the bonus. The acceleration is impactful so you can put the phone down and come back with lots of progress.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Pretty fun",
+    "text": "This is a pretty interesting one. Been looking for an idle game that can keep going while offline, this one does it. There isn\u2019t a lot to the graphics, but there doesn\u2019t need to be. Simple, fun and engaging. The puzzles are also very intriguing.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Something to share",
+    "text": "Lovers of logic and forward thinking will enjoy this game and find themselves returning by the hour. Would recommend to everyone I know.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Cute send-up of idle games",
+    "text": "So many idle games have an exponential structure but hide it behind, idk, buying new equipment or facilities or whatever. This is an adorable deconstruction of the genre which reduces it purely to Number Go Up \ud83d\ude06",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Perfect",
+    "text": "This is quite literally the perfect mobile game. No ads. Not painful to play. Sense of progression that\u2019s kept me playing for close to twenty hours of in-game time, with more to come. It\u2019s perfect.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Awesome game but 1 thing...",
+    "text": "Awesome game but r9 swapping is a huge pain - auto r9 swapping needs to be an unlocking feature. Make it parameterized - % of last max, amount of time, etc. until next prestige or supremacy.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "This is the essence of idle",
+    "text": "Easiest idle game on my battery. Allows you to program your own automation for things like prestige. Super simple graphics and deep upgrades. My favorite idle game since clicker heroes.",
+    "votes": 1
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 4,
+    "title": "Beautiful.",
+    "text": "I love the look of everything. It\u2019s almost ASMR-y to have it running in the background. \nSuggestion, not complaint. Maybe different color palettes, adjustable scales of the different lines of algorithms, exponents, numbers running.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Bug issue",
+    "text": "The game itself was absolutely good. However, I can't get offline progress since the latest App update.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 4,
+    "title": "Great game but....",
+    "text": "This game is great but it keeps crashing and idk why, i had played it for a while but all of a sudden it just started crashing anytime i went to open it, i have tried deleting and reinstalling, however that does not work.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Big numbers",
+    "text": "Been playing this off and on for a number of months. I\u2019m not good at anything beyond basic math, and this game still is fun.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Great game and great dev",
+    "text": "When I lost some save data I contacted the developer and he fixed it for me. Highly recommend the game to anyone who likes idle games and math",
+    "votes": 1
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Cool game",
+    "text": "It breaks down idle games to the bare minimum and makes it cool. The unlocks feel exciting, and even though I\u2019m not a big fan of idle games, this one is rewarding enough to keep me coming back.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "One of the best incremental games ever",
+    "text": "NO required ads, AMAZING gameplay, and SO FUN. Please play this game if you like incremental games or even if you don\u2019t like incremental games. Either way, it\u2019s so fun",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Its Pretty Fun",
+    "text": "I've enjoyed it so far, its a very unique take on an idle game and the community behind it is very strong. Would play again 5/5",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Worth the investment",
+    "text": "Phenomenal game. No unnecessary ads. One purchase for permanent ad block ($2!) and a silky grey atmosphere. Wonderful idle experience overall. Highly recommended.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Love the game",
+    "text": "I really enjoy this game, maybe it\u2019s because it has math in it or something but I keep coming back to it at least three times a day.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "5 stars could be better if it got mor updates",
+    "text": "Really good but needs more updates almost at leaderboard lol",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Good",
+    "text": "Would be nice to see how long until you reach the next chapter",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Great game really immersed",
+    "text": "In this game the graphics are amazing the gameplay is ever evolving and nothing is stagnant.I really feel like a variable increasing the height of a graph when I play this game",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "A good idle game",
+    "text": "Pleasant to look at, nice progression curve with some puzzly stuff sometimes, not totally obvious optimization, some choices, some stuff to do to speed up the early game. A good idle game imo",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Cool game",
+    "text": "Was trying to click fast and somehow reset my save lol\n(I was only 10 mins in though)",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 3,
+    "title": "great but improvement gets slow",
+    "text": "i\u2019m confused like is there something i\u2019m missing? it\u2019s was smooth sailing at the start and i was really invested but the moment i got to students and theories i hit a complete dead-end. months and months of grinding and i still only have 18 students. i don\u2019t know if how insanely difficult it is to gain theories is a fatal flaw in progression or a thought-out game mechanic but at this point i\u2019ve completely lost interest.",
+    "votes": 1
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Yee",
+    "text": "I don\u2019t understand the math in the slightest, but it\u2019s fun, and updates are constantly coming out to fix bugs and add gameplay :)",
+    "votes": 1
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Love the jokes on academic life",
+    "text": "Like the ironic story, lots of ironic jokes on academic life. Can\u2019t help smiling every time reading the lore when a new chapter is unlocked.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Top 3 of my idle games",
+    "text": "This game has actually made me smarter I am about to reach graduation and I am having so much fun this game is PEAK",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Actually an amazing game",
+    "text": "While it may seem like there\u2019s not much too it, it\u2019s very in-depth and fun.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Nice combination of math and gaming",
+    "text": "Its nice to see a new take on idle games where its involes more matha nd its great to have a game that does not flood you with adds! 5/5",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Review",
+    "text": "Very fun game, lots of stuff to do. I am having fun and like that it has offline progress.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "??? Strangely so much fun",
+    "text": "I have no idea what I\u2019m playing but it\u2019s so much fun. It\u2019s mocking both academia and other idle games. Brilliant",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "The best idle game I\u2019ve ever played",
+    "text": "This game is so addicting and is the perfect mix of idle grinding without being boring and repetitive and no microtransactions!",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Cool game",
+    "text": "It\u2019s fun, but a little bit confusing. Looking at the subreddit will help you quite a bit.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Honestly, its really fun",
+    "text": "I love the incorporation of math in an Idle game. I\u2019ve seen something similar before, but never to such a degree. Bravo",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Just one more arrow puzzle",
+    "text": "Just kidding, off to grinding more arrow puzzles for the next variable.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 1,
+    "title": "Having fun all wrong",
+    "text": "Decent game but it locked me out for cheating, I find it preposterous that I be locked out of a single player game for finding enjoyment through non standard means with the penalty of resetting the game back to square one because I was having fun by myself all wrong",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Best incremental game",
+    "text": "The mini games are honestly my favorite, they are so clever. The idle game mechanics of exponential idle are amazing and endless, too.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Boring and Meaningless",
+    "text": "Just like my PhD life. 5 out of 5. Would recommend.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "A Perfectly Wonderful \u2018Game\u2019 for the right kind of person",
+    "text": "For the right kind of person (complex, inquisitive, technical, and a little geeky, like I am, haha), this is a \u2018game\u2019 that will captivate and fascinate you. You don\u2019t really need to know or perform any mathematical calculations or do any programming\u2026.don\u2019t be intimidated by the formulas that are at the core of the game. They work by themselves, and you\u2019ll never need a calculator or even a pencil and paper. BUT, I won\u2019t lie, the more math and programming courses you once took, the more you will enjoy the game, remembering things from your distant past. \n\nExponential idle starts out as a clicker game, but honestly, that doesn\u2019t last very long. Maybe half an hour. Then, it becomes an \u2018idle\u2019 game, but that\u2019s really a misnomer too, because you\u2019ll never be idle in Exponential Idle. With layer-upon-layer of play within the game, an active online support community, and numerous third-part optimi",
+    "votes": 1
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Good \ud83d\ude0c",
+    "text": "One of the only non-micro transaction idle games out there, great if you\u2019re into idle games and stem in general.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 1,
+    "title": "Don\u2019t waste money",
+    "text": "Constantly need to restore purchase, constantly getting hours of offline rewards nerfed due to my purchase not being restored. Very disappointing to have one crucial IAP and it\u2019s barely functional.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 4,
+    "title": "Fun, only slightly mindless",
+    "text": "Makes you think a bit, but the idle part takes care of the monotony.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Fun game",
+    "text": "I don\u2019t think the designer enjoys linear algebra. Play it enough and you will understand.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 1,
+    "title": "Not an idle game",
+    "text": "Puzzle game more like. Why make an idle game if you're going to gate everything behind extremely boring tedious puzzles that have nothing to do with the math. I really want to like this game and give it 5 stars, but the puzzles completely ruin it.",
+    "votes": 1
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Quite rich and fairly interesting",
+    "text": "Good. Recommended.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 4,
+    "title": "Fun game!",
+    "text": "But it seems that there are two spaces in the app title. That\u2019s my only problem with it honestly",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "does the game have a hidden meaning?",
+    "text": "the game starts out slow, it seems like youre going nowhere. you make some sacrifices and it seems like youre back to square one, except youre coming back quicker and quicker..",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Very fun",
+    "text": "It\u2019s an idle\nManagement game. Go in it with that mindset and you will have a blast",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 1,
+    "title": "Crash Bug",
+    "text": "This is now the second time I\u2019ve tried to download this game, and every time I try to open the game, it crashes. I don\u2019t know why this happens, but this game seems fun so fix it please.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Great game!",
+    "text": "Really fun incremental game! TIP: Ignore those who say the math is wrong. It is not. It\u2019s an intended part of the game to keep the exponential growth in check.",
+    "votes": 1
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Very fascinating game",
+    "text": "This game was interesting at first now it is are to put down.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Phenomenal game",
+    "text": "Amazing, tons of content to unpack, and layers upon layers of new features",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Best Idle Game",
+    "text": "The best idle game there is. No ads, no fluff, no messing around. Just numbers going up.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 4,
+    "title": "Math nerds will be happy",
+    "text": "Lots of tweaking potential, especially for math needs.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Fun",
+    "text": "Good scaling and it makes me feel smart",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Worth it",
+    "text": "Don\u2019t let the math scare you. This is a brilliant game.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Great game",
+    "text": "Very well designed, never gets old.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "10/10 Great time waster.",
+    "text": "It Feels like Ive been tricked into mining bitcoin for someone else. Amazing",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Great Idle Game",
+    "text": "So much fun playing this idle/incremental game. Loved the theme of it and the fun little tweaks on the idle format.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Great Game",
+    "text": "This is the last idle game you ever need to play",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Best idle game I\u2019ve played!",
+    "text": "Can\u2019t wait for more content!!",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "It\u2019s fun",
+    "text": "Standard idler game, but interesting enough to keep playing.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "good download",
+    "text": "interesting, very well paced for an idle game (up until the end when the quests run out and such), great ui, no ads unless you want a boost, and a fun 2-3 week long game if you\u2019re into idle games",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Exponent idol",
+    "text": "Still blown away that this game is fundamentally astonishingly fun",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Holding my attention",
+    "text": "Nice pacing, keeping me interested. The slider puzzles are a pleasant side task.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Fun game if you like math",
+    "text": "Just a great idle game if you like math :)",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 2,
+    "title": "I hate how they use e",
+    "text": "1e3 is supposed to be 1 followed by 3 zeroes but this game doesn\u2019t understand that at least initially",
+    "votes": 2
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Greatest Incremental game ever.",
+    "text": "Great balance of idle to active; constant progress; fun minigames.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "It's good",
+    "text": "Number go up",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Fun game!",
+    "text": "Enjoy discovering more about this game.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Hoping this is how I get sa13",
+    "text": "Hoping this is how I get sa13",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Great game!",
+    "text": "Like all idle games, it\u2019s the best with friends",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Good game",
+    "text": "Click variable, money go brrrrrrrrrrrrrrrrrrrrrrrrr\n\nVery satisfied with my experience.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "free to play fr !!!",
+    "text": "if u like see number get big but don\u2019t want to pay to win then play this game",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "just a bug",
+    "text": "the game crashes right after the languages screen",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Good idle game",
+    "text": "This is what I want from an idle game",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "creative",
+    "text": "a very good idea for a game executed very well, really fun and would recommend",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 1,
+    "title": "If you wanna waste your life by all means download",
+    "text": "Awful progression 100% don\u2019t recommend",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "WHAAAT NO WAY",
+    "text": "This guy put in a Godspeed You! Black Emperor Easter egg. That is so awesome. Automatic 5-stars there.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Really Good",
+    "text": "No ads\nGood game mechanics\nNovel math-inspired",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "hehe number go up",
+    "text": "hehe number go up",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "good game",
+    "text": "I love exponents",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 2,
+    "title": "Challenge to me",
+    "text": "Make each puzzle smaller.\nEasy- 2x2\nMedium- 3x3\nHard- 4x4",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Surprisingly good idle game",
+    "text": "Great idle game!!",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 4,
+    "title": "Nerdy tap game",
+    "text": "An elegant take on one of the simplest of game genres.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 3,
+    "title": "?!",
+    "text": "How do you unlock chapters?!?!!",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "good",
+    "text": "its pretty good what can i say lol",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "very good",
+    "text": "closest \u201ctype\u201d of game to cookie clicker",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "i like this game",
+    "text": "i like this game",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 1,
+    "title": "Overrated",
+    "text": "Mid idle game with pacing destroyed due to star shop. \nEdit: my progress got wiped very cool.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Addictive",
+    "text": "No cap",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 1,
+    "title": "an idle game or a phishing tool?",
+    "text": "why does an incremental game need to track my activities across apps? instant uninstall; what a shady practice.",
+    "votes": 1
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Good",
+    "text": "Game",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "A",
+    "text": "Great",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Tggg",
+    "text": "Yhyyy",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "\u5f88\u597d\u73a9\u7684\u6e38\u620f",
+    "text": "\u5267\u60c5\u5f88\u6709\u610f\u601d\uff0c\u800c\u4e14\u53ef\u4ee5\u8fb9\u73a9\u8fb9\u5b66\uff0c\u4e0d\u8fc7\u4f5c\u8005\u80fd\u4e0d\u80fd\u628a\u53cd\u4f5c\u5f0a\u5220\u4e86\u5440(T ^ T)\u4e0d\u7136\u6e38\u620f\u8fdb\u7a0b\u6709\u70b9\u592a\u6162\u4e86qwq",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Funny",
+    "text": "I very like this game!",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Number go up\ud83d\ude01",
+    "text": "Number get BIG! \ud83e\udd2f",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "great game\uff01",
+    "text": "I wish I can custom the bottons. For example, I\u2019m way beyond ee20000 and the achievements has become completely useless. it would be Even better if I can change the theory shown at the Open-Screen summary",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "This game is so good",
+    "text": "NnlllmlmlllmlknkjNnnk",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Helped me solve math",
+    "text": "When you play this game for ee4.20 hours like me, you easily solve the math",
+    "votes": 0
+   }
+  ]
+ }
+}

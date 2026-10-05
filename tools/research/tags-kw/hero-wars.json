@@ -1,0 +1,269 @@
+{
+ "slug": "hero-wars",
+ "n_reviews": 497,
+ "n_pos": 232,
+ "n_neg": 265,
+ "n_longplay_neg": 0,
+ "sources": [
+  "apple"
+ ],
+ "themes": {
+  "P-offline": {
+   "n": 2,
+   "of": 232,
+   "longplay_n": 0,
+   "quotes": [
+    "It\u2019s mostly afk which is also good since I\u2019m lazy. (apple5)",
+    "It's like Cookie Rush but the afk is smoother. (apple5)"
+   ]
+  },
+  "P-respect": {
+   "n": 3,
+   "of": 232,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-active": {
+   "n": 19,
+   "of": 232,
+   "longplay_n": 0,
+   "quotes": [
+    "Luckily there\u2019s many aspects to keep you busy between expeditions (which you don\u2019t actually play), arena(s), the tower, and the campaign. (apple4)",
+    "Can you play a minigame where you do quick math to fight monsters and save scantily clad women? (apple4)"
+   ]
+  },
+  "P-dev": {
+   "n": 5,
+   "of": 232,
+   "longplay_n": 0,
+   "quotes": [
+    "There are tons of events and special rewards and the game developers are constantly trying to make new game content for everyone. (apple4)",
+    "The developers are always doing different events which keeps the game feeling engaging and never ending. (apple5)"
+   ]
+  },
+  "P-unlock": {
+   "n": 8,
+   "of": 232,
+   "longplay_n": 0,
+   "quotes": [
+    "They are always coming out with new content to make you spe (apple5)",
+    "Everything please download please please please please love this game you get a battle you get to unlock new characters and here\u2019s the best part. (apple5)"
+   ]
+  },
+  "P-collect": {
+   "n": 17,
+   "of": 232,
+   "longplay_n": 0,
+   "quotes": [
+    "I love collecting the heroes and the many different ways you can level them up! (apple5)",
+    "The rest of the game is essentialy building up your collection of characters to grind daily tasks in order to slowly make your team stronger. (apple5)"
+   ]
+  },
+  "P-goals": {
+   "n": 2,
+   "of": 232,
+   "longplay_n": 0,
+   "quotes": [
+    "There is always something to do and the rewards drops are frequent enough not to be frustrating. (apple5)",
+    "There is always something to do, a new hero to unlock, a skin(armor) to grind for, team to beat. (apple5)"
+   ]
+  },
+  "P-depth": {
+   "n": 30,
+   "of": 232,
+   "longplay_n": 0,
+   "quotes": [
+    "Having three teams is great, but without being able to see your competitor\u2019s team, it\u2019s hard to make a good strategy for it. (apple5)",
+    "We have some players that don\u2019t pay to play, but it takes strategy. (apple4)"
+   ]
+  },
+  "P-fair": {
+   "n": 6,
+   "of": 232,
+   "longplay_n": 0,
+   "quotes": [
+    "Plenty of variety in game play, hero choices, contests and generous gifts to keep one\u2019s interest. (apple5)",
+    "Very creative, abundance of modes, and generous in free loot, energy, gold, etc. (apple4)"
+   ]
+  },
+  "P-interlock": {
+   "n": 5,
+   "of": 232,
+   "longplay_n": 0,
+   "quotes": [
+    "Team synergy is very important especially in arena areas where it is on auto. (apple4)",
+    "The various character abilities are many and varied and it\u2019s fun to find the synergies between characters. (apple5)"
+   ]
+  },
+  "P-prestige": {
+   "n": 0,
+   "of": 232,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-qol": {
+   "n": 0,
+   "of": 232,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-calm": {
+   "n": 3,
+   "of": 232,
+   "longplay_n": 0,
+   "quotes": [
+    "If you are comfortable with a little spend, Valkyries Favor is a cheap way to get a little bit more out of the game. (apple5)"
+   ]
+  },
+  "P-art": {
+   "n": 15,
+   "of": 232,
+   "longplay_n": 0,
+   "quotes": [
+    "The graphics are pretty and funny. (apple4)",
+    "I like this game for its graphics and cutie heroes. (apple5)"
+   ]
+  },
+  "P-story": {
+   "n": 61,
+   "of": 232,
+   "longplay_n": 0,
+   "quotes": [
+    "The characters are very cartoonishly designed but still nice. (apple4)",
+    "Last note: overall clarity of how guild wars works and maybe a character role indicator on the m (apple5)"
+   ]
+  },
+  "N-ads": {
+   "n": 60,
+   "of": 265,
+   "longplay_n": 0,
+   "quotes": [
+    "I was under the impression that there would be puzzle-solving mini-games (as their social media ads portray), but there are none. (apple3)",
+    "Surprisingly their advertisements aren\u2019t misleading though. (apple1)"
+   ]
+  },
+  "N-wall": {
+   "n": 23,
+   "of": 265,
+   "longplay_n": 0,
+   "quotes": [
+    "Hard work, grinding, and doing all quests won\u2019t get you far. (apple1)",
+    "It\u2019s really disappointing because the game is just an incredibly slow grind if you aren\u2019t spending money. (apple1)"
+   ]
+  },
+  "N-pay": {
+   "n": 24,
+   "of": 265,
+   "longplay_n": 0,
+   "quotes": [
+    "Don\u2019t let the easy on-boarding fool you; this game is 100% pay-to-win, especially once you start getting into the guild/arena stuff. (apple2)",
+    "Extremely for pay to win players!. (apple1)"
+   ]
+  },
+  "N-dominant": {
+   "n": 3,
+   "of": 265,
+   "longplay_n": 0,
+   "quotes": [
+    "Not to mention the meta players that you have absolutely no chance of ever beating in matches. (apple2)"
+   ]
+  },
+  "N-late": {
+   "n": 10,
+   "of": 265,
+   "longplay_n": 0,
+   "quotes": [
+    "Skins are almost required in the late game as they give your character an added stat bonus. (apple2)",
+    "I regret committing thousands of dollars myself with the endgame still so far away. (apple1)"
+   ]
+  },
+  "N-offline": {
+   "n": 0,
+   "of": 265,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-mobile": {
+   "n": 0,
+   "of": 265,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-bug": {
+   "n": 62,
+   "of": 265,
+   "longplay_n": 0,
+   "quotes": [
+    "If that\u2019s a glitch, then the support hasn\u2019t responded to my report from last week and no resolution is in sight. (apple2)",
+    "I\u2019ve put considerable money into this game in order to be a leader, even though there are numerous bugs and glitches. (apple1)"
+   ]
+  },
+  "N-energy": {
+   "n": 24,
+   "of": 265,
+   "longplay_n": 0,
+   "quotes": [
+    "One energy refill takes over 5 hours and is used in 6 battles. (apple1)",
+    "Especially all of the different game modes that require energy to do. (apple2)"
+   ]
+  },
+  "N-bloat": {
+   "n": 3,
+   "of": 265,
+   "longplay_n": 0,
+   "quotes": [
+    "Still takes way too many resources to advance Heroes & Titans to top levels. (apple3)"
+   ]
+  },
+  "N-chore": {
+   "n": 1,
+   "of": 265,
+   "longplay_n": 0,
+   "quotes": [
+    "You can\u2019t even complete daily tasks without spending money. (apple2)"
+   ]
+  },
+  "N-tutorial": {
+   "n": 0,
+   "of": 265,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-shallow": {
+   "n": 3,
+   "of": 265,
+   "longplay_n": 0,
+   "quotes": [
+    "I\u2019m deleting this game because it\u2019s not just a simple game I can play to pass the time. (apple2)",
+    "The gameplay is slow, simple, and boring. (apple1)"
+   ]
+  },
+  "N-reset": {
+   "n": 0,
+   "of": 265,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-pace": {
+   "n": 0,
+   "of": 265,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-fast": {
+   "n": 0,
+   "of": 265,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-balance": {
+   "n": 6,
+   "of": 265,
+   "longplay_n": 0,
+   "quotes": [
+    "There are probably 20 different things to balance in terms of growing character stats. (apple2)",
+    "It needs to become more challenging to where there is more balance between (apple1)"
+   ]
+  }
+ }
+}

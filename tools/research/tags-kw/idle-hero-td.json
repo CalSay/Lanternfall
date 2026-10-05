@@ -1,0 +1,244 @@
+{
+ "slug": "idle-hero-td",
+ "n_reviews": 91,
+ "n_pos": 51,
+ "n_neg": 40,
+ "n_longplay_neg": 17,
+ "sources": [
+  "steam",
+  "apple"
+ ],
+ "themes": {
+  "P-offline": {
+   "n": 4,
+   "of": 51,
+   "longplay_n": 0,
+   "quotes": [
+    "Best tower idle infinite offline rewards. (apple5)",
+    "It does have an offline cap of 8 hours(can be removed with $). (apple5)"
+   ]
+  },
+  "P-respect": {
+   "n": 1,
+   "of": 51,
+   "longplay_n": 0,
+   "quotes": [
+    "Idle Hero TD is one of those rare idle games that actually respects your time. (apple5)"
+   ]
+  },
+  "P-active": {
+   "n": 5,
+   "of": 51,
+   "longplay_n": 0,
+   "quotes": [
+    "Goes by lovely while idle or active play (apple5)"
+   ]
+  },
+  "P-dev": {
+   "n": 5,
+   "of": 51,
+   "longplay_n": 0,
+   "quotes": [
+    "The updates are frequent so it shows that the devs are continusly improving and bringing new content. (steam+, 2506h)",
+    "The updates are frequent so it shows that the devs are continusly improving and bringing new content. (steam+, 2533h)"
+   ]
+  },
+  "P-unlock": {
+   "n": 5,
+   "of": 51,
+   "longplay_n": 0,
+   "quotes": [
+    "The updates are frequent so it shows that the devs are continusly improving and bringing new content. (steam+, 2506h)",
+    "The updates are frequent so it shows that the devs are continusly improving and bringing new content. (steam+, 2533h)"
+   ]
+  },
+  "P-collect": {
+   "n": 3,
+   "of": 51,
+   "longplay_n": 0,
+   "quotes": [
+    "Idle Hero TD is one of those rare idle games that actually respects your time. (apple5)"
+   ]
+  },
+  "P-goals": {
+   "n": 0,
+   "of": 51,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-depth": {
+   "n": 6,
+   "of": 51,
+   "longplay_n": 0,
+   "quotes": [
+    "Beyond that it has a pretty solid strategy setup allowing for some early to late customizations between unit synergies and varying strategies. (steam+, 591h)",
+    "Beyond that it has a pretty solid strategy setup allowing for some early to late customizations between unit synergies and varying strategies. (steam+, 591h)"
+   ]
+  },
+  "P-fair": {
+   "n": 0,
+   "of": 51,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-interlock": {
+   "n": 3,
+   "of": 51,
+   "longplay_n": 0,
+   "quotes": [
+    "Beyond that it has a pretty solid strategy setup allowing for some early to late customizations between unit synergies and varying strategies. (steam+, 591h)",
+    "Beyond that it has a pretty solid strategy setup allowing for some early to late customizations between unit synergies and varying strategies. (steam+, 591h)"
+   ]
+  },
+  "P-prestige": {
+   "n": 1,
+   "of": 51,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-qol": {
+   "n": 3,
+   "of": 51,
+   "longplay_n": 0,
+   "quotes": [
+    "The addition of automation really made the difference for me.. (steam+, 2564h)"
+   ]
+  },
+  "P-calm": {
+   "n": 0,
+   "of": 51,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-art": {
+   "n": 0,
+   "of": 51,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-story": {
+   "n": 4,
+   "of": 51,
+   "longplay_n": 0,
+   "quotes": [
+    "Setting up syngeries and ranking up the characters is fun for me. (steam+, 20h)"
+   ]
+  },
+  "N-ads": {
+   "n": 5,
+   "of": 40,
+   "longplay_n": 5,
+   "quotes": [
+    "It's also extremely pay to win and the ads popping on your face is very annoying. (steam-, 636h)",
+    "It's also extremely pay to win and the ads popping on your face is very annoying. (steam-, 636h)"
+   ]
+  },
+  "N-wall": {
+   "n": 1,
+   "of": 40,
+   "longplay_n": 0,
+   "quotes": [
+    "This is the slowest grind and abusive pay to win game I have seen (apple1)"
+   ]
+  },
+  "N-pay": {
+   "n": 11,
+   "of": 40,
+   "longplay_n": 5,
+   "quotes": [
+    "It's also extremely pay to win and the ads popping on your face is very annoying. (steam-, 636h)",
+    "It's also extremely pay to win and the ads popping on your face is very annoying. (steam-, 636h)"
+   ]
+  },
+  "N-dominant": {
+   "n": 0,
+   "of": 40,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-late": {
+   "n": 7,
+   "of": 40,
+   "longplay_n": 3,
+   "quotes": [
+    "i would need like 6000 hours to get to the endgame, idc if it's an idle game i am not doing that (steam-, 1h)",
+    "i would need like 6000 hours to get to the endgame, idc if it's an idle game i am not doing that (steam-, 1h)"
+   ]
+  },
+  "N-offline": {
+   "n": 0,
+   "of": 40,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-mobile": {
+   "n": 0,
+   "of": 40,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-bug": {
+   "n": 0,
+   "of": 40,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-energy": {
+   "n": 1,
+   "of": 40,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-bloat": {
+   "n": 0,
+   "of": 40,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-chore": {
+   "n": 0,
+   "of": 40,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-tutorial": {
+   "n": 0,
+   "of": 40,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-shallow": {
+   "n": 0,
+   "of": 40,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-reset": {
+   "n": 0,
+   "of": 40,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-pace": {
+   "n": 0,
+   "of": 40,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-fast": {
+   "n": 0,
+   "of": 40,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-balance": {
+   "n": 2,
+   "of": 40,
+   "longplay_n": 2,
+   "quotes": [
+    "Nerfed the premium battlepass, why spend money on things that can then be taken away? (steam-, 2974h)",
+    "Nerfed the premium battlepass, why spend money on things that can then be taken away? (steam-, 2974h)"
+   ]
+  }
+ }
+}
