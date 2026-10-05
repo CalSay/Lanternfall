@@ -105,11 +105,11 @@ export function subsetDiff(sub, sup, p = '') {
 }
 
 // Bounties: a slot saved empty (k null) whose wait is over refills at load with a new bounty, which also
-// counts up seq. That is play, not a lost field, so such a slot only has to keep its reroll timer and seq may
-// grow by one per refill. Every other slot and field must be kept as saved.
+// counts up seq and rolls the recent-kinds list on. That is play, not a lost field, so such a slot only has
+// to keep its reroll timer and seq may grow by one per refill. Every other slot and field must be kept as saved.
 // (Without this, a fixture's empty slot turns into a failure once the real clock passes its wait.)
 function bountiesDiff(sub, sup) {
-  const { slots, seq, ...rest } = sub, got = sup.slots;
+  const { slots, seq, recent, ...rest } = sub, got = sup.slots;
   if (!Array.isArray(got)) return 'bounties.slots: missing list';
   let refills = 0;
   for (let i = 0; i < Math.max(slots.length, got.length); i++) {
@@ -118,6 +118,7 @@ function bountiesDiff(sub, sup) {
     const d = deepDiff(a, b, `bounties.slots.${i}`); if (d) return d;
   }
   if (seq !== undefined && !(sup.seq >= seq && sup.seq <= seq + refills)) return `bounties.seq: ${seq} !== ${sup.seq} (${refills} refilled)`;
+  if (recent !== undefined && !refills) rest.recent = recent;   // a refill also rolls the recent-kinds list on
   for (const k of Object.keys(rest)) { const d = subsetDiff(rest[k], sup[k], `bounties.${k}`); if (d) return d; }
   return null;
 }

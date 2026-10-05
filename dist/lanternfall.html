@@ -13612,6 +13612,7 @@ function savecodeChecksum(str) {
 }
 
 // C5: validate without loading, repairing, normalising or changing the supplied save.
+// Reads game tables (SOLO_HEROES, CAMP_B, BOUNTY_API.kinds, ...), so it runs only after the core files have loaded.
 // Missing feature keys use normal load defaults. Present unsafe shapes are rejected.
 function validateSave(data) {
   const lim = SAVECODE_LIMITS, has = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
