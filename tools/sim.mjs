@@ -111,7 +111,10 @@ const STARS_TYPICAL = `(() => {
   for (const id of pick[1]) if (own(id)) starLight(id, k);
 })()`;
 const TURNS_ON = (() => { const i = process.argv.indexOf('--turns'); return i >= 0 && process.argv[i + 1] !== '0'; })();
-const loadCore = o => loadCoreRaw({ ...(o || {}), extraSource: ((o && o.extraSource) || '') + `\nTURN_TUNE.on = ${TURNS_ON ? 1 : 0};` });
+// f-health: the game files draw random numbers while they load (bounties, the Hands board, the Tavern) before loadCore
+// seeds Math.random, so two runs of the same seed could start from different saves. Seed it for the load too.
+const loadPrelude = seed => seed === undefined || seed === null ? '' : `{ let a = ${(Number(seed) | 0) ^ 0x9e3779b9}; Math.random = () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }`;
+const loadCore = o => loadCoreRaw({ ...(o || {}), prelude: (o && o.prelude) || loadPrelude(o && o.seed), extraSource: ((o && o.extraSource) || '') + `\nTURN_TUNE.on = ${TURNS_ON ? 1 : 0};` });
 import { writeFileSync } from 'node:fs';
 
 const SAVE_KEY = 'lanternfall.save.v5';   // 30-state.js
@@ -189,6 +192,44 @@ const storeOn = args.store !== '0';
 const storeSw = args.storeswitch !== '0';
 if (!storeOn) E('STORE_TUNE.on = 0'); else if (storeSw) E('S.store.spill = 1');
 const storeStats = { lv1: null };
+// --health path (f-health): write telemetry for tools/health.mjs when the run ends. Event times are active seconds
+// (game ticks only), so away gaps and the fight pauses between visits do not count as play.
+if (args.health) {
+  const H = { act: 0, ev: [], samples: [], casts: {}, kills: 0, bossKills: 0, killGold: 0, killEss: 0, harvest: { live: {}, away: {} }, wipes: [], lastL: 1, lastSample: -1e9, lastSec: -1 };
+  const REWARD = ['zoneClear', 'campBuilt', 'deedTier', 'skillUp', 'crafted', 'upgraded', 'trophy', 'scrollDrop', 'starFound', 'starLearned', 'provingPassed', 'handsHire', 'unlock', 'train', 'soloEquip'];
+  const stamp = (k, extra) => H.ev.push(Object.assign({ k, a: Math.round(H.act * 10) / 10 }, extra));
+  fn.onTick(dt => {
+    H.act += dt;
+    const sec = Math.floor(H.act);
+    if (sec === H.lastSec) return;
+    H.lastSec = sec;
+    const L = E('S.L');
+    if (L !== H.lastL) { H.lastL = L; stamp('level', { L }); }
+    if (H.act - H.lastSample >= 300) { H.lastSample = H.act; H.samples.push({ a: sec, maxZone: E('S.maxZone'), L, totalGold: Math.round(E('S.totalGold')) }); }
+  });
+  for (const k of REWARD) fn.on(k, e => {
+    if (k === 'unlock' && (!e || e.id === '*')) return;
+    stamp(k, { id: e && (e.id || e.kind || e.k || (e.zone !== undefined ? e.zone : undefined)) });
+  });
+  fn.on('kill', e => { H.kills++; if (e.mob && e.mob.boss) H.bossKills++; H.killGold += e.gold || 0; H.killEss += e.ess || 0; });
+  fn.on('ability', e => { if (e && e.cls === 'solo') H.casts[e.id] = (H.casts[e.id] || 0) + 1; });
+  fn.on('wipe', w => { if (!w.arena) H.wipes.push({ a: Math.round(H.act), zone: E('S.zone') }); });
+  fn.on('harvest', ({ kind, n, away }) => { const o = H.harvest[away ? 'away' : 'live']; o[kind] = (o[kind] || 0) + n; });
+  process.on('exit', () => {
+    try {
+      const gear = {};
+      for (const pos of ['weapon', 'off', 'helm', 'body', 'charm', 'pick', 'axe', 'sickle']) { const it = fn.equipped(pos); if (it) gear[pos] = { slot: it.slot, t: it.t, r: it.r, plus: it.plus || 0 }; }
+      writeFileSync(String(args.health), JSON.stringify({
+        args: { class: cls, seed, days, hours, active, turns: TURNS_ON, session: args.session || null }, hero: E('soloHero()'), activeSec: Math.round(H.act),
+        end: { maxZone: E('S.maxZone'), L: E('S.L'), gold: Math.round(E('S.gold')), totalGold: Math.round(E('S.totalGold')) },
+        ev: H.ev, samples: H.samples, casts: H.casts, kills: H.kills, bossKills: H.bossKills, killGold: Math.round(H.killGold), killEss: H.killEss,
+        harvest: H.harvest, wipes: H.wipes, gear, stars: E('JSON.parse(JSON.stringify({ set: S.stars.set, lit: S.stars.lit, own: Object.keys(S.stars.own) }))'),
+        econ: E('JSON.parse(JSON.stringify(S.econ))'), mats: E('JSON.parse(JSON.stringify(S.mats))'), solo: E('JSON.parse(JSON.stringify(SOLO_STATS))'),
+        training: E("Object.fromEntries(trainMoves().map(m => [m, trainLv(m)]))"), errors: g.errors.length
+      }));
+    } catch (e) { console.error('health telemetry failed: ' + e.message); }
+  });
+}
 // --hands 0|1 (N1): Hands on (the default) or off. handsSim collects units by source per sim day (cur, then byDay).
 const handsOn = args.hands !== '0';
 if (!handsOn) E('HANDS_TUNE.on = 0');
@@ -715,10 +756,27 @@ function turnPlayer() {
   }
   if (!turnInput.done && s.now >= turnInput.at) {
     turnInput.done = true;
-    if (s.phase === 'hero') E('if (!soloAbility()) soloAttack()');
+    if (s.phase === 'hero') {
+      // f-health: cast the first equipped ability that is off cooldown and usable (resource, Burn, parry), else Attack.
+      // soloAbility() with no slot did nothing in a turn fight, so the bot never cast.
+      const ids = E('soloEquipped()');
+      let cast = false;
+      for (let i = 0; i < 3 && !cast; i++) if (ids[i] && !(s.cooldowns[ids[i]] > 0)) cast = !!E(`soloAbility({ slot: ${i} })`);
+      if (!cast) E('soloAttack()');
+    }
     else E(turnInput.kind === 'parry' ? 'soloParry()' : 'soloDodge()');
   }
   return true;
+}
+// f-health: a player spends the Scrolls the bosses drop and fills the empty ability slots, in the Abilities screen's order
+// (the signature first). Only in turn fights: the real-time models keep their old policies.
+function abilityStep() {
+  if (!E('typeof turnCombatOn === "function" && turnCombatOn() && typeof abilityLearn === "function"')) return;
+  E(`(() => { const k = soloHero(); if (!k || !HERO_ABILITIES[k]) return;
+    for (const id of HERO_ABILITIES[k]) if (!abilityOwned(k, id)) abilityLearn(k, id);
+    const eq = soloEquipped(), own = soloAbilities(k);
+    for (let i = 0; i < 3; i++) if (!eq[i]) { const id = own.find(x => !eq.includes(x)); if (id) soloEquip(i, id); }
+  })()`);
 }
 function soloPlayer() {
   simClock += dt;
@@ -784,6 +842,7 @@ function playSecond(sec) {
     if (b && b !== 'station') { craftStats.blocks[b] = (craftStats.blocks[b] || 0) + 1; craftStats.blockMin++; }
   }
   if (sec < 3 * 3600) { craftStats.sec3h++; if (E('S.activity') === 'gather') craftStats.gatherSec++; }
+  if (active && TURNS_ON && sec % 30 === 0) abilityStep();
   if (sec % 5 === 0 && E('S.activity') === 'fight') { withReserve(E, rosterStep(E), buyBest); if (fn.bossReady() && E('totalDps() > failDps * 1.15 && cbBossReady()')) fn.challenge(); }
   for (let k = 0; k < 10; k++) {
     if (active) soloPlayer();
@@ -828,7 +887,8 @@ if (cls && policy === "mixed") {
 if (handsOn && !days) { const u = handsSim.cur, sum = o => Object.values(o).reduce((a, b) => a + b, 0), hs = sum(u.hands), all = sum(u.live) + sum(u.away) + sum(u.finds) + hs; console.log(`hands: HS11 first hire ${handsSim.firstHire === null ? '-' : (handsSim.firstHire / 60).toFixed(0) + 'm'} | hired ${JSON.stringify(handsSim.hired)} | Bunkhouse Lv ${E('campLevel("bunk")')} (${E('handsBeds()')} beds) | Hands' share of gathered units ${all ? Math.round(100 * hs / all) : 0}% (${Math.round(hs)} of ${Math.round(all)})`); }
 if (storeOn) { const st = E('STORE_STATS'); console.log(`store: HS4 Lv 1 built ${storeStats.lv1 === null ? '-' : (storeStats.lv1 / 60).toFixed(1) + 'm'} | level ${E('storeLevel()')} | HS7 live time at cap ${st.gatherSecs ? Math.round(100 * st.fullSecs / st.gatherSecs) : 0}% of ${Math.round(st.gatherSecs / 60)} gather min | lost ${JSON.stringify(Object.fromEntries(Object.entries(st.lost).map(([k, v]) => [k, Math.round(v)])))}`); }
 console.log(`boss fails: ${bossTries}, kills: ${E('S.totalKills')}, items: ${E('S.items.length')}${g.errors.length ? ', errors: ' + g.errors.length : ''}`);
-// Party combat report (T7, T13, T14, T18) and the forks at 2h (T5, T6, T8).
+// Party combat report (T7, T13, T14, T18) and the forks at 2h (T5, T6, T8). RETIRED (party era): the shipped game is one hero,
+// so partyCombatOn() is false and none of this runs; kept for the history of the numbers.
 if (E('partyCombatOn()')) {
   const st = E('CB_STATS'), ft = Object.values(firstTry), z5 = reached[5];
   const pct = x => (100 * x).toFixed(0) + '%';
@@ -1001,9 +1061,9 @@ function runDays() {
   const campFirst = campStats.first ? { min: (campStats.first.t) / 60, id: campStats.first.id } : null;
   console.log(`camp: first build ${campFirst ? campFirst.min.toFixed(0) + ' min after install (' + campFirst.id + ')' : '-'}, full camp ${campStats.full ? 'day ' + campStats.full : '-'}, levels by day ${rows.filter(r => [1, 3, 7, 14, 21, 30, 45].includes(r.day)).map(r => `d${r.day} ${r.camp}/${r.campMax}`).join(' ')}`);
   // HS7: share of gathering time (live and away) on a full pile, over a range of days (1-based, inclusive).
-  const atCap = (a, b) => { const x = storeDays[Math.min(b, storeDays.length) - 1], w = a > 1 ? storeDays[a - 2] : [0, 0, 0, 0]; if (!x) return null; const g = x[0] - w[0] + x[2] - w[2], f = x[1] - w[1] + x[3] - w[3]; return g > 0 ? f / g : 0; };
+  const atCap = (a, b) => { const x = storeDays[Math.min(b, storeDays.length) - 1], w = a > 1 ? storeDays[a - 2] : [0, 0, 0, 0]; if (!x || !w) return null; const g = x[0] - w[0] + x[2] - w[2], f = x[1] - w[1] + x[3] - w[3]; return g > 0 ? f / g : 0; };
   const store = storeOn ? { lv1: storeStats.lv1 === null ? null : (storeStats.lv1 + 8 * H - (sessions.length ? sessions[0][0] : 0)) / 60, d13: atCap(1, 3), d721: atCap(7, 21), lv: storeDays.map(x => x[4]) } : null;
-  const part = (a, b, i) => { const x = storeDays[Math.min(b, storeDays.length) - 1], w = a > 1 ? storeDays[a - 2] : [0, 0, 0, 0]; if (!x) return '-'; const g = x[i] - w[i], f = x[i + 1] - w[i + 1]; return g > 0 ? Math.round(100 * f / g) + '% of ' + Math.round(g / 60) + ' min' : '-'; };
+  const part = (a, b, i) => { const x = storeDays[Math.min(b, storeDays.length) - 1], w = a > 1 ? storeDays[a - 2] : [0, 0, 0, 0]; if (!x || !w) return '-'; const g = x[i] - w[i], f = x[i + 1] - w[i + 1]; return g > 0 ? Math.round(100 * f / g) + '% of ' + Math.round(g / 60) + ' min' : '-'; };
   if (store) console.log(`store: HS4 Lv 1 built ${store.lv1 === null ? '-' : store.lv1.toFixed(0) + ' min after install'} | HS7 time at cap days 1-3 ${store.d13 == null ? '-' : Math.round(100 * store.d13) + '%'}, days 7-21 ${store.d721 == null ? '-' : Math.round(100 * store.d721) + '%'} | level by day ${store.lv.filter((_, i) => [1, 3, 7, 14, 21, 30, 45].includes(i + 1)).map((l, i) => `d${[1, 3, 7, 14, 21, 30, 45][i]} ${l}`).join(' ')}`);
   if (store) console.log(`store: days 1-3 live ${part(1, 3, 0)}, away ${part(1, 3, 2)}; days 7-21 live ${part(7, 21, 0)}, away ${part(7, 21, 2)}; away trips moved for room ${storeStats.moved || 0}`);
   // The cap table's inputs: per day, the fastest away gather (units an hour before the cap), its away hours,
@@ -1041,6 +1101,17 @@ function runDays() {
 //   E4 active (buttons, some parries and dodges) reaches zone 10 25-35% sooner than idle (mean of the three; SOLO2)
 //   E5 idle: no wipes before zone 10
 //   E6 hero parity: each hero's idle time to zone 10 within 0.8-1.2 of the median
+// f-health: targets that measure a model the shipped game no longer plays are RETIRED, not deleted. Their rows still print
+// (so a number can be compared with the old runs) but they no longer pass or fail anything. The shipped game is one hero in
+// active-only turn fights (C29), where idle play earns nothing from fights; these run on the real-time pacing model
+// (TURN_TUNE.on = 0 unless --turns 1). Current numbers come from docs/DECISIONS.md, docs/design/combat-turn-build.md and
+// `node tools/health.mjs` (the personas and baseline in docs/design/health-baseline.json).
+//   retired, real-time idle pacing: E1-E6 (early report, unless --turns 1), T1, T2, T3, D1, P1, P2, P3, P4, EC9
+//   retired, party era: T5-T8, T10, T11, T12-T14, T16, T17 (their code paths only run with a party; see the notes below)
+function retireRows(rows) {
+  const ids = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'T1', 'T2', 'T3', 'D1', 'P1', 'P2', 'P3', 'P4', 'EC9'];
+  return rows.map(r => ids.some(id => r[1].startsWith(id + ' ')) ? ['RETIRED', r[1], r[2]] : r);
+}
 async function runEarlyReport(inTargets) {
   const { execFile } = await import('node:child_process');
   const run = a => new Promise((res, rej) => execFile(process.execPath, [process.argv[1], ...a], { maxBuffer: 1 << 26 }, (e, out) => e ? rej(e) : res(out)));
@@ -1075,8 +1146,9 @@ async function runEarlyReport(inTargets) {
   res.push([ok(idle.every(r => r.wipes === 0)), 'E5 idle: no wipes before zone 10', idle.map(r => `${r.h} ${r.wipes}`).join(', ')]);
   const med = idle.map(r => r.z10).sort((a, b) => a - b)[1];
   res.push([ok(idle.every(r => inR(r.z10 / med, [0.8, 1.2]))), 'E6 hero parity: idle time to zone 10 within 0.8-1.2 of the median', idle.map(r => `${r.h} ${(r.z10 / med).toFixed(2)}`).join(', ')]);
-  for (const [st, name, v] of res) console.log(`${st}  ${name}: ${v}`);
-  console.log(`${res.filter(r => r[0] === 'PASS').length}/${res.length} early targets pass${inTargets ? '\n(the party-era targets follow: T10, T11, T12-T14, T16 and T17 measure the party and do not apply to one hero)\n' : ''}`);
+  const shown = TURNS_ON ? res : retireRows(res), live = shown.filter(r => r[0] !== 'RETIRED');
+  for (const [st, name, v] of shown) console.log(`${st}  ${name}: ${v}`);
+  console.log(`${live.filter(r => r[0] === 'PASS').length}/${live.length} early targets pass${live.length < res.length ? ' (' + (res.length - live.length) + ' retired: real-time model, see retireRows; --turns 1 re-enables them)' : ''}${inTargets ? '\n(the party-era targets follow: T10, T11, T12-T14, T16 and T17 measure the party and do not apply to one hero)\n' : ''}`);
 }
 
 async function runTargets() {
@@ -1138,8 +1210,9 @@ async function runTargets() {
     res.push([ok(js.every(j => j.store && j.store.d13 != null && j.store.d13 <= 0.2 && (j.store.d721 == null || j.store.d721 <= 0.35))), 'HS7 time at the cap (share of gathering, live and away): days 1-3 <= 20%, days 7-21 <= 35%',
       classes.map((c, i) => `${c} ${pc(js[i].store && js[i].store.d13)} / ${pc(js[i].store && js[i].store.d721)} (Lv d7 ${js[i].store ? js[i].store.lv[6] : '-'}, d21 ${js[i].store ? js[i].store.lv[20] : '-'})`).join(', ')]);
   }
-  for (const [r, name, detail] of res) console.log(`${r}  ${name}\n      ${detail}`);
-  console.log(`${res.filter(r => r[0] === 'PASS').length}/${res.filter(r => r[0] !== 'INFO').length} targets pass`);
+  const shown = retireRows(res), live = shown.filter(r => r[0] !== 'INFO' && r[0] !== 'RETIRED');
+  for (const [r, name, detail] of shown) console.log(`${r}  ${name}\n      ${detail}`);
+  console.log(`${live.filter(r => r[0] === 'PASS').length}/${live.length} targets pass (${shown.filter(r => r[0] === 'RETIRED').length} retired: they measure the real-time model, see retireRows; current numbers: node tools/health.mjs)`);
   for (const [i, c] of classes.entries()) console.log(`curve (${c}): ` + js[i].rows.filter(r => r.day <= 10 || r.day % 5 === 0).map(r => `d${r.day} ${r.zone}`).join(' '));
   if (cont.concat(dys).some(o => /errors: \d+/.test(o))) console.log('WARN  game errors in a run (run it alone to see them)');
 }
