@@ -37,6 +37,8 @@ jobs:
             exit 1
           fi
       - name: Full check (no browser section may be skipped)
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096   # a check shard hit the 2 GB default heap limit on the runner
         run: |
           set -o pipefail
           node tools/check.mjs | tee check.log
