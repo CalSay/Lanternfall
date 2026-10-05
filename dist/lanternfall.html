@@ -24136,7 +24136,7 @@ const TURN_LIVE_IO = {
   foeHp: () => (TURN_LIVE && TURN_LIVE.foe ? Math.max(0, TURN_LIVE.foe.hp) : 0),
   foeX: () => { const f = TURN_LIVE && TURN_LIVE.foe; return f && f.turnX > 0 ? f.turnX : 1; },
   heroHp: () => { const u = cbUnitByKey('hero'); return u ? u.hp : 0; },
-  healFoe: d => { const f = TURN_LIVE.foe; if (f && !f.dead && f.hp > 0) { f.hp = Math.min(f.max, f.hp + d); emit('float', { txt: '+' + fmt(d), color: '#6FCB6A', big: false }); } },
+  healFoe: d => { const f = TURN_LIVE && TURN_LIVE.foe; if (f && !f.dead && f.hp > 0) { f.hp = Math.min(f.max, f.hp + d); emit('float', { txt: '+' + fmt(d), color: '#6FCB6A', big: false }); } },
   slotId: slot => soloEquipped()[slot] || null,
   damageFoe: (d, kind, crit, dt, n) => {
     const f = TURN_LIVE.foe, got = cbTurnDamageFoe(f, d, kind, crit, dt, n), H = TURN_TUNE.hitstop;

@@ -7665,6 +7665,10 @@ if (section('C29 turn fights (core)')) try {
       `C29: zone 1 is five turn fights then its boss; the first win drops a Moss Scroll (${E('__seq.join()')}, Scrolls ${E('JSON.stringify(S.abil.scrolls)')})`);
     assert(E('__tc.length') > 10 && E('__tc.every(x => /^(hero|foe):handoff$/.test(x))') && E('__tc.some(x => x.startsWith("foe"))'),
       `C29: every change of turn pauses (owner) while a banner says whose turn it is (${E('__tc.slice(0, 4).join()')})`); }
+  // a lethal hit from a vampiric elite wipes the hero, which clears the live fight, before the heal lands (found by the health bots)
+  { const { E } = fresh('wren'); E('TURN_LIVE = null');
+    let threw = ''; try { E('TURN_LIVE_IO.healFoe(5)'); } catch (e) { threw = e.message; }
+    assert(!threw, `C29: a vampiric heal that lands after the fight was cleared does not throw (${threw})`); }
   // the Speed gauges: equal Speed alternates; a hero twice as fast acts twice, never three times, in a row
   { const { E } = fresh('wren');
     E('S.zone = 1; spawn()'); E('tick(0.05)');
