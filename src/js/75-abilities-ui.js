@@ -43,9 +43,9 @@
     if (det) { const f = det.querySelector('.ab-x'); if (f) try { f.focus({ preventScroll: true }); } catch (e) {} }
   }
   function closeDet() {
-    const p = panels(), id = selId, wasPush = !!(root && root.querySelector('.ab-list') && getComputedStyle(root.querySelector('.ab-list')).display === 'none');
+    const p = panels(), id = selId;
     selId = ''; armed = ''; redraw();
-    if (p && wasPush && listTop >= 0) p.scrollTop = listTop;
+    if (p && listTop >= 0) p.scrollTop = listTop;
     listTop = -1;
     const row = root && root.querySelector(`.ab-row[data-ab="${id}"]`); if (row) try { row.focus({ preventScroll: true }); } catch (e) {}
   }
