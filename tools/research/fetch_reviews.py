@@ -37,14 +37,16 @@ def steam(appid):
     return out
 
 def apple(appid, country="us"):
-    revs = []
+    revs, empty_first = [], []
     for sort in ("mosthelpful", "mostrecent"):
         for p in range(1, 6):
             d = get("https://itunes.apple.com/%s/rss/customerreviews/page=%d/id=%s/sortby=%s/json" % (country, p, appid, sort))
             if "_error" in d:  # past the end of a feed Apple returns 200 with no entries, so an error is always real
                 raise RuntimeError("apple %s page %d %s feed failed: %s" % (appid, p, sort, d["_error"]))
             ents = d.get("feed", {}).get("entry", []) if isinstance(d, dict) else []
-            if not ents: break
+            if not ents:
+                if p == 1: empty_first.append(sort)
+                break
             for e in ents:
                 if "im:rating" not in e: continue
                 revs.append({"sort": sort, "stars": int(e["im:rating"]["label"]), "title": e["title"]["label"],
@@ -53,7 +55,7 @@ def apple(appid, country="us"):
     for r in revs:
         k = (r["title"], r["text"][:60])
         if k not in seen: seen.add(k); u.append(r)
-    return {"n": len(u), "reviews": u}
+    return {"n": len(u), "reviews": u, "empty_first_page": empty_first}
 
 def itunes_meta(appid):
     d = get("https://itunes.apple.com/lookup?id=%s&country=us" % appid)
@@ -72,8 +74,9 @@ if __name__ == "__main__":
             if g.get("steam"): res["steam"] = steam(g["steam"])
             if g.get("ios"):
                 res["ios_meta"] = itunes_meta(g["ios"]); res["apple"] = apple(g["ios"])
-                if res["apple"]["n"] == 0 and (res["ios_meta"]["count"] or 0) >= 100:  # an established app always has reviews
-                    raise RuntimeError("apple feed returned 0 reviews for %s but the store lists %s ratings" % (g["slug"], res["ios_meta"]["count"]))
+                if res["apple"]["empty_first_page"] and (res["ios_meta"]["count"] or 0) >= 100:  # an established app has reviews in both sorts
+                    raise RuntimeError("apple %s feed returned an empty first page for %s but the store lists %s ratings" % (
+                        "+".join(res["apple"]["empty_first_page"]), g["slug"], res["ios_meta"]["count"]))
         except Exception as e:  # keep the previous file for this game; report and exit non-zero at the end
             failed.append(g["slug"]); print("FAILED", g["slug"], e, file=sys.stderr, flush=True); continue
         json.dump(res, open(os.path.join(outdir, g["slug"] + ".json"), "w"), indent=1)
