@@ -5840,7 +5840,8 @@ if (section('save codec validation (C5)')) try {
     const bad={ 'unknown kind':{k:'nope'}, 'hunt without foe':{k:'hunt',z:3}, 'hunt foe unknown':{k:'hunt',z:3,foe:'dragon'}, 'kill without zone':{k:'kill'},
       'forage bad family':{k:'forage',fam:'moss'}, 'make bad station':{k:'make',st:'oven'}, 'bogus reward':{k:'forge',rew:'bogus',rewT:1,rewN:5},
       'reward tier 9':{k:'forge',rew:'ess',rewT:9,rewN:5}, 'reward amount missing':{k:'boss',rew:'ess',rewT:1}, 'reward amount 0':{k:'boss',have:1,rew:'ess',rewT:1,rewN:0}, 'need 0':{k:'crit',need:0},
-      'have negative':{k:'crit',have:-1}, 'x not a number':{k:'crit',x:'bad'} };
+      'have negative':{k:'crit',have:-1}, 'x not a number':{k:'crit',x:'bad'},
+      'x near zero':{k:'crit',have:1,x:5e-324}, 'x too big':{k:'crit',x:3}, 'need huge':{k:'crit',need:1e9}, 'zone huge':{k:'kill',z:1e9}, 'reward amount huge':{k:'boss',rew:'ess',rewT:1,rewN:1e9} };
     const passed=Object.entries(bad).filter(([,b])=>!slot(b)).map(([n])=>n);
     const good={k:'hunt',z:3,foe:'slime',need:20,have:4,rew:'ess',rewT:1,rewN:12,x:1.1,elite:true};
     assert(!passed.length&&!slot(good)&&!slot({k:'tap',need:100}),'C5: a save code refuses malformed bounty slots ('+Object.keys(bad).length+' cases) and keeps good ones'+(passed.length?'; let through: '+passed.join(', '):slot(good)?'; refused good hunt: '+slot(good):'')); }
