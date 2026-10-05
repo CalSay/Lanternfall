@@ -235,6 +235,24 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   Season 2. (2026-09-28)
 - **The current story lines feel meaningless in context:** story C28 answers this (proposal). (2026-10-01)
 - **Owner-chosen names are never replaced** by a naming pass. (2026-09-28)
+- **The story bible is canon:** `docs/design/story-bible.md` replaces `lore.md` and the C28 spine; story work passes the
+  `docs/review/story.md` depth bar. (Claude, for Cal's story request, 2026-10-05)
+
+### Story: Claude decided (story judge, 2026-10-05; Cal can veto any line)
+
+- **Elders 2 and 3 are the dark wearing a man's shape.** The Fogbound is the sea-fog in Silas Penrow's shape; the Pyre
+  Knight is the held fire in Ser Durand's. Both men are found alive. "Never tied to lanterns or lamps" is read as: no Elder
+  is or fights with a lamp, lens or lantern, and beating one never lights a lantern; the hero does that.
+- **Shadowborn emerge whole, in a copied shape** (bible rule 4), never a corrupted real thing; a line claims a likeness only
+  where the sprite shows it.
+- **Story names for three roster proposals:** the Mile Judge (Mile-Crowned Adjudicator), the Cinderveil (Sable Vesper),
+  Sable of the Mere (Sable, the Deep Listener).
+- **The Voice's two phase-change cards** are the one exception to "nothing during a fight": between turns, at the roster's
+  move-end queue, never changing fight state, always with Skip.
+- **A hero can't be unlocked before their first story scene,** once that scene is in the game; heroes a save owns are kept.
+- **Ada and Pell come home when the Fenmother is beaten,** not after the Coast's Great Lantern.
+- **Story choices are saved as new keys under `story`** (`starter`, `litFor`, `coldhearth`) with defaults; no save-key
+  bump; Opus save review before merge.
 
 ## Art
 

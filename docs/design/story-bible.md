@@ -1,6 +1,6 @@
 # Story bible: Lanternfall, Season 1
 
-Status: **v3**, 2026-10-05 (thread "Story overhaul"). v1 scored 3.2 and v2 3.75 against a 4.3 bar. v3 makes the
+Status: **v3.1**, 2026-10-05 (thread "Story overhaul"). v1 scored 3.2 and v2 3.75 against a 4.3 bar. v3 makes the
 rules airtight (one meaning of "alone"; only the Voice's own hands put a given light out), fixes roster and Hands
 clashes, gives Chapter 5 its people and set pieces, and costs the art. Review rounds are logged in section 15.
 
@@ -32,8 +32,8 @@ replaced. Art is still images and icons, no animation.
 ## 1. The story in one breath
 
 Ten years ago a Voice in the dark sang, and every lamp in the land went out, except the few that were lit for someone
-else. You grew up under one of them. This winter the last of the others went out, and tonight the dark came up through
-the moss for yours. So you took it and ran, to lead the dark away from everyone you love. On the old Lantern Road you
+else. You grew up under one of them. This winter the last lamp you could see from the village went out, and tonight the dark
+came up through the moss for yours. So you took it and ran, to lead the dark away from everyone you love. On the old Lantern Road you
 relight the land region by region, and learn two things: your lamp was lit for you, and a light only goes out when it is
 alone. At the end of the road, in a valley whose sky the Voice shut two hundred years ago, it gets you alone and puts
 your lamp out. Every lamp you lit for someone on the way answers, and you drive it back into the ground.
@@ -84,7 +84,7 @@ Hollow's Rest is the **Deepwell**, a stair cut long ago down toward the **Old Li
 |---|---|---|---|
 | 1 | **Fire is not lantern light, but it is company.** Fire keeps you warm and can't relight a dead lamp. Lantern light, the Old Light from under the land, keeps the dark back. A hearth beside a lantern keeps it from being alone. | Hesketh, opening | His dead lamps that fire won't relight; your lamp steadying by his fire |
 | 2 | **Kept light can be called. Given light cannot.** A light is *given* when it is lit for a person you could name. A light kept for yourself, or for no one, or for anyone at all (a duty to whoever passes, a lighthouse for whichever ship) is *kept*, and the Voice's song can call it out of its lamp. A lamp lit from a given flame, for someone, is given too. | Elowen, end of Ch1 | The Lanternfall night; the Order's road lamps; Maren's lamp; yours |
-| 3 | **A given light goes out only when it is alone, and only by the Voice's own hands.** Shadowborn and Champions can wear a given light down until it gutters. Only the Voice can put it out, and only when its bearer has no other light in sight. A hearth, a candle or a lamp counts. People don't. The Voice can't hear a given light, so it has to be shown where one is. | Maren, without words (Ch1 a4); said plainly by Elowen | Mossy Hollow's ten years (hearths in every window); Hesketh's fire; the Long Night; Ch5; the finale |
+| 3 | **A given light goes out only when it is alone, and only by the Voice's own hands.** Shadowborn and Champions can wear a given light down until it gutters. Only the Voice can put it out, and only when its bearer has no other light in sight. A hearth, a candle or a lamp counts. People don't. The Voice can't hear a given light. It comes only where it's shown one: by a Shadowborn that has seen it in the open, or by a great light or noise. A light behind a shut door, inside a storm, or on Lantern Hill, where no seam opens, can't be shown. | Maren, without words (Ch1 a4); said plainly by Elowen | Mossy Hollow's ten years (hearths in every window); Hesketh's fire; the Long Night; Ch5; the finale |
 | 4 | **The dark has no shape of its own.** What climbs out of it copies shapes it finds: the place, the things in it, and the shapes in people's memory. It copies shapes, never voices. | Anselm (Ch1 a3) | Ossuary Marshal; Emberlea's ash; Rowan's shape |
 | 5 | **The dark has no voice of its own.** It speaks only with voices given to it by people who said yes to one of its offers. A yes costs your voice. The Voice lends held voices to its Elders and to some Champions. When the one holding a voice is beaten, a living person's voice goes home to them; a dead person's voice goes to rest. The first yes was said before the dark could speak, so nobody offered it; nobody knows who said it. | Morwen (hint, Ch1 a5); Silas (Ch2); the cost in full Ch4 a5 | The Oracle; the Fogbound; the Silent Village |
 | 6 | **Held things are held, not destroyed.** On the Lanternfall night every called light flew toward the Lea; a few fell short and were caught on the way (in the marsh, in the lagoon). Freed, a light flies back to the lamp it left. Held a long time, it forgets the way, and has to be given a road. People the dark holds (Silas, Durand, Ada and Pell in the fog) are held the same way: they don't age, eat or remember the years. | Ch1 end (a few), Ch2 a5, Ch3 (thousands) | |
@@ -127,7 +127,7 @@ dark's ranks: the Voice, its Elders, Champions, Captains and Shadowborn.
   so low the song passed over it. Kept, it can be called; that is why she has hidden in the dark chapel for ten years.
 - **After the Fall** the dark hunted the given lights the slow way. Shadowborn found each one and wore it down; when its
   bearer was alone, out of sight of any other light, the Voice's hands came. Most of Elowen's forty went out in the first
-  years, carried by people who fled alone. **The last of them went out this winter.** Yours hung over a door in Mossy
+  years, carried by people who fled alone. **This winter the last one in sight of Mossy Hollow went out.** (Other given lights still burn far off, hidden: Maren's, Hesketh's wife's, Ada's candle, Nan's.) Yours hung over a door in Mossy
   Hollow, among a village of hearths, and it held. Tonight the dark came for it.
 
 ---
@@ -169,12 +169,13 @@ An idle RPG with no dialogue tree still needs decisions that cost something and 
 None of these change power, rewards or progress. They change words, a lamp icon and stills.
 
 **The lamp icon** is the one place the story touches the fight screen: a small lamp by the hero's name, lit, guttering
-(alone, Ch5) or out (the Voice's phase 2). One icon with three states, no animation.
+(alone, Ch5) or out (the Voice's phase 2). One icon with three states, no animation, drawn from the approved icon pack or a vetted Codex set (art freeze); until
+then a text tag.
 
 ### 4.4 Heroes, the lamp and the roster
 
-- **The story hero is the starter you chose at the cold start.** It is stored once and never changes. Hero lines key to
-  it, even while another hero is active. The other two starters are people you meet in Chapter 1 (Tobin in area 1, Wren in
+- **The story hero is the starter you chose at the cold start.** It is stored once and never changes. A hero line plays
+  for the active hero if it is a starter; otherwise for the stored starter. The other two starters are people you meet in Chapter 1 (Tobin in area 1, Wren in
   area 2, Pip in area 3); their scenes play whoever is active.
 - **The lamp passes to whoever you play** (owner decision). Switching hero is handing them the lamp. A lamp handed to a
   friend for their sake is still given (rule 2). The camp line on a switch says so: "Here. Mind it."
@@ -213,7 +214,7 @@ None of these change power, rewards or progress. They change words, a lamp icon 
 | Oriel Vess | Ch4 a3 | Your star |
 | Inga Fallow | Ch4 a3 | Digs the Starscar's shards; finds what the Starved Orbit eats |
 | Solveig Lund | Ch4 a5 | Kept one candle lit in the Silent Village for everyone in it, alone, for ten winters |
-| Brynja Berg | Ch4 a6 | Held the village's last warm doorway three nights; the brazier is still warm |
+| Brynja Berg | Ch4 a6 | Held the village's last warm doorway three nights; carried the brazier down still warm, and keeps it lit |
 | Ragna Vik | Ch4 a6 | The lichen-witch of the Rimewood; talks to the snow |
 | Asta Grey | Ch4 a7 | The guide who turned back once; comes down with you as far as the Stillwood |
 
@@ -252,7 +253,7 @@ Every enemy the player fights has a place in one chain of command and a reason t
 
 **Rules for writers.**
 - **Zone lines** say why *this* monster is *here*: the shape it copied and the light it is after. They name the monster.
-- **Captain lines** name the one harm this Captain does ("It holds the seam open"; "It swallowed the lamp over the well").
+- **Captain lines** name the one harm this Captain does ("It holds the seam open"; "It swallowed the well lamp").
   The area's **fifth Captain** always points at the Champion ("The rest answer to the throne in the green").
 - **Champion scenes** say what it does for its Elder; its **pre** promises the area's turn (what you'll get back); its
   **post** shows the light it was holding come back, and one line of the Elder answering. That line makes the Elder a
@@ -269,11 +270,11 @@ Every enemy the player fights has a place in one chain of command and a reason t
 | Zone | Captain (roster) | Banner line |
 |---|---|---|
 | 1 | Crownthorn Imp | "It cut the bell rope so nobody could call for help." |
-| 2 | Gloomjaw Lightgorged | "It swallowed the lamp over the well. You can see it in its throat." |
+| 2 | Gloomjaw Lightgorged | "It swallowed the well lamp. It glows in its throat." |
 | 3 | Briarbound Headsman | "It nailed the cellar doors shut." |
 | 4 | Thornwing Razorcrown | "It hunts anyone who runs between houses." |
-| 5 | Nightseed Hexarch | "It planted the briars round the green. The rest answer to the throne there." |
-| 6 | Riftwing Moonsunder | "It holds the crack the caves breathe through. The song comes up it." |
+| 5 | Nightseed Hexarch | "It planted the briars. The rest answer to the throne." |
+| 6 | Riftwing Moonsunder | "It holds the crack the song comes up through." |
 | 106 | Whitebite (Frostmaw) | "It sits in the pass and listens for footsteps." |
 | 141 | Backbite (Riftmaw) | "It follows a step behind you. It always has." |
 
@@ -299,7 +300,7 @@ each one once and answers with their own line.
 
 | Ch | What it does | On screen |
 |---|---|---|
-| 1 | Its Shadowborn hunt the last given lamps, and this winter the last but yours went out. It can't hear yours; it sends the Briar Regent to cut it off. Its song sounds in the caves; its offer comes through the Oracle. When the Fenmother falls, it notices you. | "a voice", "the song". Elowen: "It heard you tonight." |
+| 1 | Its Shadowborn hunt the last given lamps, and this winter the last one near yours went out. It can't hear yours; it sends the Briar Regent to cut it off. Its song sounds in the caves; its offer comes through the Oracle. When the Fenmother falls, it notices you. | "a voice", "the song". Elowen: "It heard you tonight." |
 | 2 | Speaks through the Fogbound and the drowned. Says your name for the first time (Ch2 a6). Pulls the tide. | One Voice line at a6; the Elder scene. |
 | 3 | **Strikes at your home.** Veyr's glass shows it where your fire is; the Long Night comes for Hollow's Rest. The camp holds without you. | "I know where your fire is." Caedmon names it "the Voice". |
 | 4 | Sends the storm to shut every door; wears Rowan's shape against Kestrel; shows you what it is made of. | The Silent Village. |
@@ -332,8 +333,8 @@ reading is logged in `docs/DECISIONS.md` as "Claude decided", open to Cal's veto
 |---|---|---|
 | Mossy Hollow | The Briar Regent | Shuts the last lit village into its cellars and puts its hearths out, so your lamp will be alone. |
 | Batwing Caves | The Hollow Cantor | Keeps the song going under the Hollow, low and slow, so called lights stay called. Sings with lent voices. |
-| The Bonefield | The Ossuary Marshal | Wears the shape of the Order's best knight so the living think the dead rose. Fear keeps doors shut. |
-| Beetle Barrows | The Sepulchre Engine | Rams the last lit barrow door every night, waiting for Maren's lamp to be alone. |
+| The Bonefield | The Ossuary Marshal | Carries the lance of the Order's best knight, so the living think the dead rose. Fear keeps doors shut. |
+| Beetle Barrows | The Sepulchre Engine | Rams the barrow door every night to break it open, so Maren's lamp can be seen. |
 | Fungal Deep | The Veiled Oracle | Speaks the offer to anyone still awake. Uses the travellers' lent voices. |
 | Quarry Ruins | The Chained Star | Sits on the seam Grenna's crew broke open. A hole that pulls light in; the quarry folk are trapped below it. |
 | Wraithmarsh | The Drowned Halo | Guards the way to her. Cages any light that flies toward the marsh. |
@@ -356,7 +357,7 @@ reading is logged in `docs/DECISIONS.md` as "Claude decided", open to Cal's veto
 |---|---|---|
 | Cinder Road | Mile-Crowned Adjudicator (story name proposal: **the Mile Judge**; see 14) | Judges every light on the road; turns back anything that would carry one home. |
 | Emberlea Ruins | Choir Without Names | A hundred faces, none of them anyone's. Sings with no sound, so Emberlea's people are afraid to look back, and nobody goes home. |
-| The Ashfall | Sable Vesper (story name proposal: **Sable Cinderveil**; see 14) | Smothers any light that moves in the ashfall. |
+| The Ashfall | Sable Vesper (story name proposal: **the Cinderveil**; see 14) | Smothers any light that moves in the ashfall. |
 | The Glass Flats | Veyr, the Glass Sovereign | Its glass shows every light it has ever seen. It shows the Voice where your fire is. |
 | The Kilns | Furnace Oracle | Tempers the held lights into chains. Shows the past, so Caedmon has to watch his night again. |
 | Wyrmscale Ridge | Azrakh, the Nightfire Sovereign | Holds the ridge where the Wyrm was born; the last door into the Pyre. |
@@ -482,8 +483,8 @@ it, and every recurring person changes. Section 6.4 lists every appearance.
 
 **Asta Grey, the guide** (Ch4, Ch5).
 - Guided traders over every pass in the Reach for forty years. She walked down into the Gloamvale once, turned back, and
-  has been sorry ever since. Ch4 a7 she says she's coming this time. Ch5 a1 and a2 she walks down with you, by her old
-  cairns. At a2 you find the cairn she never finished, and finish it together. Then you send her back up (hero line,
+  has been sorry ever since. Ch4 a7 she says she's coming this time. Ch5 a1 and a2 she meets you at each of her old cairns
+  on the way down. At a2 you find the cairn she never finished, and finish it together. Then you send her back up (hero line,
   4.6): the flaw, and the Voice's opening.
 
 **Silas and Loveday Penrow** (Ch2). Loveday waits on Grey Shingle (a1) for a father who carried the lens down to the
@@ -495,7 +496,7 @@ knowing what it means. After the Fogbound, Silas's first word is "Hallam?" and h
 | Ch | Area | Who | What happens |
 |---|---|---|---|
 | 1 | Mossy Hollow | **Tobin Reed** (if not your starter) | In the cellars in a pot helm, holding your spare sword at the door. "Somebody has to mind the door. I'm good at doors." |
-| 1 | Mossy Hollow | **Hob Tarrow**, ice-cutter | Forty people in his icehouse, again, cold and cross. His door is the first you open. |
+| 1 | Mossy Hollow | **Hob Tarrow**, ice-cutter | Nan's brother. Forty people in his icehouse, again, cold and cross. His door is the first you open. |
 | 1 | Batwing Caves | **Wren Hollowmere** (if not your starter) | Grew up aiming at sounds in these caves; the caves sang her name. Shows you the way to the Cantor. |
 | 1 | The Bonefield | **Pip Cinderly** (if not your starter) | Setting graves on fire to check if anyone gets up. Nobody does. "Good. That's a relief, honestly." |
 | 1 | Quarry Ruins | **Rook**, Nan Tarrow's crew | Has crawled the quarry's cracks for ten years with a candle Nan lit for him. When the Chained Star falls you pull him up, and the rest of the crew behind him. Becomes a Hand (already in the data). |
@@ -520,8 +521,10 @@ knowing what it means. After the Fogbound, Silas's first word is "Hallam?" and h
 Owner decision: two named gatherers per resource job for 1.0. The story uses the Hands already in `21f-data-hands.js` and
 adds none. Each named Hand's first camp line says where they came from: Tam (Mossy Hollow's cellars), Rook (the quarry),
 Ada and Pell (the Fenmother's fog, the next morning; their trigger moves from the Coast's Great Lantern), Ashby
-(Emberlea), Fennel (Elowen's chapel garden). Random applicants arrive with one generated line saying who their lamp is lit
-for ("Lit for her sister"), so by the Long Night every lamp at camp has a "for".
+(Emberlea), Fennel (the chapel garden on the hill). Random applicants arrive with one generated line saying who their lamp is lit
+for ("Lit for her sister"), so by the Long Night every lamp at camp has a "for". Hesketh lights each rack lamp from your
+flame; the Hand names who it's for. From Chapter 2, some applicants plant the land's silent people: "She hasn't spoken
+since the night of the Fall." 
 
 ### 6.4 Every appearance, by area
 
@@ -580,21 +583,22 @@ a family is in it. **Climax:** the Fenmother. **Hook:** a green light at sea.
 **The opening** (before zone 1). Region card, three lines, over a still of the lamp on its hook (Elowen's spiral on its
 base):
 1. Ten years ago every lamp in the land went out. The one over your door never did.
-2. This winter the last of the others went out. Tonight the dark came up through the moss for yours.
+2. This winter the last lamp you could see from the village went out. Tonight the dark came up through the moss
+   for yours.
 3. Your village hid. You took the lamp and ran up the road, so the dark would follow you, not them.
 
 Then on the road, the lamp starts to gutter (the dark is close and you are alone). An old man by a dead fire: Hesketh.
 "Wood first. Then we talk." When the fire catches from your lamp, the lamp steadies: "Every road needs a place to come
-back to." Then the talk (one card, four lines): "Ten years I've walked my road, and not one dead lamp would take my fire." /
+back to." Then the talk (one card, four lines): "Ten years I've lit dead lamps. Not one took my fire." /
 "I could have lit them from hers. I couldn't go up." (He looks at the hill and doesn't explain; Ch1 end does.) / "Those
-things aren't animals. They climb out of the ground." / "Your village is down there with them. Go back and shut the holes." The delivery card fixes the order so this plays before
+things aren't animals. They climb out of the ground." / "Your village is down there. Go back and shut the holes." The delivery card fixes the order so this plays before
 the first fight (audit A1).
 
 | # | Area (zones) | Champion | Stake / person | Turn | Plant |
 |---|---|---|---|---|---|
 | 1 | **Mossy Hollow** (1-5) | Briar Regent | Your village in its cellars; Tam; Tobin | **G**: the waymark at the gate burns again and doors open. Tam is first out; Hob opens his icehouse. But the Regent held the village "for her, out in the fog", and far off the air turns colder. | "Her" |
 | 2 | **Batwing Caves** (6-10) | Hollow Cantor | The miners' road; Wren | **R**: the Cantor sings the song from the Lanternfall night. A choir in its chest. When it breaks, you hear one voice on its own say "thank you", and go quiet. | Voices (rule 5) |
-| 3 | **The Bonefield** (11-15) | Ossuary Marshal | Anselm's graveyard; Pip | **V**: the dead never rose; the Marshal only wore the Order's best knight. Anselm: "The Order said give the flame to no one. Nobody asked what we were keeping it for." He rings Patience once: "Not the last toll." | Rule 4; the Oath; the last toll |
+| 3 | **The Bonefield** (11-15) | Ossuary Marshal | Anselm's graveyard; Pip | **V**: the dead never rose; the Marshal only carried the lance of the Order's best knight. Anselm: "We swore to give the flame to no one." / "Nobody asked what we kept it for." He rings Patience once: "Not the last toll." | Rule 4; the Oath; the last toll |
 | 4 | **Beetle Barrows** (16-20) | Sepulchre Engine | Maren's Barrow Lamp, worn down by ten winters alone | **R (midpoint)**: the door holds. Maren's lamp is down to a bead. She holds it up beside yours, says nothing, and it steadies. There's a small spiral scratched on its base, the same as on yours. | Rule 3; the spiral |
 | 5 | **Fungal Deep** (21-25) | Veiled Oracle | Morwen's garden; your own nerve | **C**: the first offer. A hundred tired voices: "You're tired. Nobody is coming. Rest." Hero line. Morwen: "Those are people. People who sat down." | The offer; rule 5 |
 | 6 | **Quarry Ruins** (26-30) | Chained Star | Grenna's crew and families, trapped under the seam | **G then E**: the Star falls and you pull up Rook, alive after ten years in the cracks with a candle Nan lit for him, and the crew behind him. Up on Lantern Hill, a candle in the dark chapel flares once. Grenna: "It goes down further than our ropes." | Elowen; the Deepwell |
@@ -606,8 +610,8 @@ the first fight (audit A1).
   the air turns colder." 
 - Hollow Cantor. *Pre:* "The singing comes from inside its chest. A whole choir. / It is the song from the night the lights
   went out." *Post:* "The song breaks. One voice, on its own, says thank you. Then nothing."
-- Ossuary Marshal. *Pre:* "A lance as long as a tree, planted among the graves. / It wears the shape of the Order's best
-  knight. It isn't him." *Post:* "The lance cracks. The graves are only graves. / Anselm rings his bell once, softly."
+- Ossuary Marshal. *Pre:* "A lance as long as a tree, planted among the graves. / It carries the lance of the Order's best
+  knight. From the road, the living thought the dead rose." *Post:* "The lance cracks. The graves are only graves. / Anselm rings his bell once, softly."
 - Sepulchre Engine. *Pre:* "It rams the last barrow door. A thin light leaks through. / It has hit that door every night for
   ten years." *Post:* "Its shell splits. The door holds. / The door opens."
 - Veiled Oracle. *Pre:* "Its veil moves. A hundred tired voices speak at once. / 'You're tired. Nobody is coming. Rest.'"
@@ -652,7 +656,7 @@ Silas's letters (four, never sent) are Codex collectibles found from a4 to a7. T
 | # | Area (zones) | Champion | Stake / person | Turn | Plant |
 |---|---|---|---|---|---|
 | 1 | **Grey Shingle** (36-40) | Breakwater Archon | Hallam, a ferryman with no ferry; Loveday, waiting for her father | **R**: Loveday says the Order's Oath to you, the scratched line too, without knowing what it means. The tide comes in twice an hour. "It's not the moon pulling it now." Beat the Archon at the breach and the water drops: the road goes on under the sea to Saltreach. | Something pulls from below |
-| 2 | **Gullcliffs** (41-45) | Crown of Squalls | Hallam's dark cliff beacon; Aldric | **E**: you light the beacon. From it you see the lighthouse, and someone in the lamp room who doesn't move. Hallam: "That's Silas. That's his coat." Aldric reads the names of drowned ships. | Silas is a person; the Oath (second plant) |
+| 2 | **Gullcliffs** (41-45) | Crown of Squalls | Hallam's dark cliff beacon; Aldric | **E**: you light the beacon. From it you see the lighthouse, and someone in the lamp room who doesn't move. Hallam: "That's Silas. That's his coat." (It's the Fogbound wearing it.) Aldric reads the names of drowned ships. | Silas is a person; the Oath (second plant) |
 | 3 | **The Wrecks** (46-50) | Abyssal Bosun | Nell Fairweather on her beached ship | **V**: Nell heard the same voice as every drowned captain, "Steer for me and you'll never be lost," and turned away because her daughter was aboard. A light kept for someone else steers true. | Rule 2 from a stranger |
 | 4 | **Kelp Shallows** (51-55) | Tangle Leviathan | A fishing crew in the weed; Cass | **E (midpoint)**: at dusk the lighthouse lens turns green and the Shallows fill with boats rowing the wrong way. You, Hallam and Cass row out and pull one crew back. Cass looks for her brother's boat among them. It isn't there. The Leviathan held them. The first letter turns up in the weed. | The lure is real |
 | 5 | **Glimmer Lagoon** (56-60) | Mirror Monarch | Ama, and the caught lights | **G**: lights that fell short on the Lanternfall night, caught in the lagoon. When the Monarch falls a handful burst gold and fly home over the cliffs. Ama: "Ten years I've watched those." | Rule 6 |
@@ -661,8 +665,8 @@ Silas's letters (four, never sent) are Codex collectibles found from a4 to a7. T
 
 **The Elder: the Fogbound.** The sea-fog over Saltreach, wearing the shape of Silas Penrow, the lampwarden who kept the light
 alone and said yes to "Forever" when it began to fail. It speaks in Silas's voice, lent back to it. *Offer to you:* "You're the
-only keeper. Only you can hold it. Forever." Hero line. *Post:* the fog comes apart on the stairs. In the lamp room, the real
-Silas, alive, thin, voiceless for ten years, holding the green lens. His voice comes back first as a cough. "Hallam?" Then: "Loveday?" She's at the foot of the stairs. The
+only keeper. Only you can hold it. Forever." Hero line. *Post:* the fog comes apart on the stairs. At the foot of the lighthouse
+stair, by the water, the real Silas, alive, thin, voiceless for ten years, holding the green lens he carried down. His voice comes back first as a cough. "Hallam?" Then: "Loveday?" She's at the foot of the stairs. The
 lens is heavy and there are two hundred steps. Hallam: "Give it here. You've carried enough." He carries it up (hero line;
 the flaw tested). **The Great Lantern of the Coast:** you light the lens gold and choose who it's lit for. *Hook:* from the
 gallery, a red glow far inland. Elowen, at camp: "I broke the Oath. I'd break it again." Vesper: "And the keeper sold his
@@ -679,7 +683,7 @@ contest; he loses.
 |---|---|---|---|---|---|
 | 1 | **Cinder Road** (71-75) | the Mile Judge (roster: Mile-Crowned Adjudicator) | Caedmon; Hallam ferries you over | **R**: the Lea burns red with held light. Caedmon meets you, still burning from ten years ago. "A wyrm came down on Emberlea the night the lamps went. Durand said he could keep the lights safe from it. He could. That was the trouble." He names what sang: the Voice. | The Voice named; Durand |
 | 2 | **Emberlea Ruins** (76-80) | Choir Without Names | Mother Ashby's old house; Davy | **V**: ash walks the streets in a hundred faces that belong to no one. Davy: "Don't look at them. Mum says don't look back." Everyone got out but one: Ashby's husband. She sets a plate for him at camp, every night. | A loss that stays lost |
-| 3 | **The Ashfall** (81-85) | Sable Cinderveil (roster: Sable Vesper) | Beatrix, Isolde, and the torn chapter | **G**: Beatrix wrote Pip's book and tore its last chapter out herself. She gives you its first page (Isolde wants paying): "To put a fire out, you must..." The rest is burnt. Pip (hero or not): "My book's about fire. This isn't fire. But the last page might still work." | The way to win |
+| 3 | **The Ashfall** (81-85) | the Cinderveil (roster: Sable Vesper) | Beatrix, Isolde, and the torn chapter | **G**: Beatrix wrote Pip's book and tore its last chapter out herself. She gives you its first page (Isolde wants paying): "To put a fire out, you must..." The rest is burnt. Pip (hero or not): "My book's about fire. This isn't. The last page might work." | The way to win |
 | 4 | **The Glass Flats** (86-90) | Veyr, the Glass Sovereign | Hollow's Rest | **E (midpoint)**: Grenna and Linnet read the glass: it shows every light it has seen. Then it shows yours, and your camp, and the Voice sees it too: "I know where your fire is." **The Long Night** (a card at camp): the dark comes for Hollow's Rest for the first time, and wears every lamp down to a bead. Hesketh walks the Lamp Rack all night with a taper, building each guttering lamp back up from the next. No lamp is ever out of sight of another, so the Voice's hands never close. The camp holds without you. | Not alone (finale) |
 | 5 | **The Kilns** (91-95) | Furnace Oracle | Caedmon; Ferrin knows the way through | **R**: the Kilns show the past. Caedmon watches his night again: the offer in the fire, his no, Durand's yes. "I walked away. He stayed. I told myself he chose." | Durand's yes |
 | 6 | **Wyrmscale Ridge** (96-100) | Azrakh, the Nightfire Sovereign | Caedmon | **L (low point)**: the Pyre's door opens for you both. Caedmon asks to go first: "He's mine to bring out." You let him (hero line). The door shuts behind him, and doesn't open again. Bram, hunting the ridge, saw the fire take him. You'll have to go round, through the Marshal. Beatrix's second page: "...give it somewhere to go." | A road for the lights |
@@ -711,8 +715,8 @@ for yourselves. They'd take it."
 | 2 | **The Eyries** (111-115) | Velka Sixwing | Granny Hild's candle ropes | **G**: cliff villages pass candles on ropes, each lit for someone. Hild sends one down the line to you. You've never been given a light you could see. The Sixwing was cutting the ropes. | Receiving |
 | 3 | **The Starscar** (116-120) | Orris, the Starved Orbit | Oriel and her star; Inga | **E (midpoint)**: Oriel has watched a small new star since the night you took up the road. It's your lamp, seen from above. "I could always see it. I think the dark just learned to look." Inga shows you the Starved Orbit's trail through the craters: it has been eating its way toward that star. The storm is hunting you. | You are the target |
 | 4 | **The Blue Caves** (121-125) | Istra, the Unseen Face | Kestrel's grief | **V**: at the cave mouth, Rowan's shape: the Whitehush, walking the storm, wearing what Kestrel hopes to see. It never speaks. Kestrel talks to it, and answers for it in Rowan's words: "Kes. It's warm here." She believes Rowan opened the door. | Shape, never voice |
-| 5 | **The Silent Village** (126-130) | Nera, the Hush Regent | Liss; Solveig and her candle | **L (low point)**: in the storm a voice like a neighbour's knocked at every door. One by one, families shut the door and lit their candles for themselves. Kept, the candles were called. Then the cold offered rest, and they said yes, and each family's voice went to knock on the next door. No one has spoken in ten years. Liss writes in the frost: "Mum shut the door." Only Solveig kept a candle lit for them all, at her window, every night; no Shadowborn could put it out, and nobody showed the Voice where it was. | The cost in full: whole villages |
-| 6 | **The Rimewood** (131-135) | Brakka, the White Briar | Brynja, Ragna, Morwen | **G**: Brynja carried the village's last brazier down here three nights after the doors shut; it's still warm. Morwen has brought candles up the mountain, and the Rimewood folk light them for the people in the Silent Village by name. Morwen gives you one: "If you find their hearth, light this." Ragna: "The snow says you're going further." | Morwen's candle |
+| 5 | **The Silent Village** (126-130) | Nera, the Hush Regent | Liss; Solveig and her candle | **L (low point)**: in the storm a voice like a neighbour's knocked at every door. One by one, families shut the door and lit their candles for themselves. Kept, the candles were called. Then the cold offered rest, and they said yes, and each family's voice went to knock on the next door. No one has spoken in ten years. Liss writes in the frost: "Mum shut the door." Only Solveig kept a candle lit for them all, at her window, every night; no Shadowborn could put it out, and the storm hid her window from the Voice. | The cost in full: whole villages |
+| 6 | **The Rimewood** (131-135) | Brakka, the White Briar | Brynja, Ragna, Morwen | **G**: Brynja carried the village's last brazier down here, still warm, after three nights in the last open doorway, and has kept it lit since. Morwen has brought candles up the mountain, and the Rimewood folk light them for the people in the Silent Village by name. Morwen gives you one: "If you find their hearth, light this." Ragna: "The snow says you're going further." | Morwen's candle |
 | 7 | **Frostgate Bastion** (136-140) | Korr, the Closed Horizon | Rowan's last stand | **R**: the gate held. Rowan's spear is still in it, braced. The storm went round by the high pass; the gate was never the weakness. Rowan never opened the door, and Eskil finally knows why he didn't come back. Asta says she's coming with you this time. Caedmon and Durand arrive to keep the gate fire. On the wind, a voice that isn't the storm's: "Further on, it's quiet. Come and see." | Kestrel's answer; the Voice waits |
 
 **The Elder: the Whitehush.** The storm's walker. It knocks in the Silent Village's voices and, for Kestrel, wears Rowan's shape
@@ -733,7 +737,9 @@ kept handing round the light." *Delight:* Kestrel learns to pass a candle on a r
 **Midpoint (a3):** the Voice is a choir, and a voice can leave it. **Low point (a5):** Coldhearth, and your choice.
 **Climax:** the Voice gets you alone. **Ending:** section 9.
 
-The Voice shut the Gloamvale's sky two hundred years ago, and under it no light can see any light outside. That is its
+The Voice shut the Gloamvale's sky two hundred years ago, and under it no light can see any light outside. Under the shut
+sky no wood will catch: nothing burns here that wasn't lit for someone. Coldhearth's hearth takes only because Morwen's
+candle was lit for that family by name. That is its
 last move: get you alone. It speaks to you five times before the gate (a1, a3, a5, a7, and the Offer), always calm, in
 strangers' voices from the choir. At the Reach gate you were given Hesketh's bundle: small lamps from the rack, each lit at
 camp by a Hand for someone, each with a note. You hang one at every waymark on the way down. Each is a person in the area,
@@ -745,7 +751,7 @@ and each answers in the finale.
 | 2 | **The Stillwood** (146-150) | Vorra, the Hunger Between | Asta's unfinished cairn; Tam's lamp ("Lit for my uncle. Hang it high.") | **C**: nothing rustles, and Vorra hunts in the gaps between lights. You and Asta finish the cairn she left half built. Then you send her back up the road (hero line): the flaw, back. She goes. | The flaw returns |
 | 3 | **The Blind Mere** (151-155) | Sable of the Mere (roster: Sable, the Deep Listener) | The choir; Rook's lamp ("Lit for Nan. Mind the cracks.") | **R (midpoint)**: under the still water, thousands of voices, held, from every age of the land. This is the choir. The Voice: "They all said yes. You'd be in good company." As your lamp passes, one voice stops singing to listen: a lullaby you almost know. A voice can leave it. | Phase 3; Season 2 |
 | 4 | **The Long Dusk Fields** (156-160) | Kharos, the Threefold Reaper | Corvin Black; Ada's lamp ("Lit for Bram. The kettle's on.") | **V**: fields planted and never ripened; a farmer's name on a gatepost. The Gloamvale was lit once, so the sky can open. Corvin came looking for the king he served twenty years and never saw: "There was never a king. There was a voice behind a curtain." He stays by Ada's lamp: "Somebody should keep this one company." | The Seam; the first voice |
-| 5 | **Coldhearth** (161-165) | Mora, the Unwelcome | Coldhearth; Ashby's lamp ("Lit for my husband. Set a place."); you | **C (low point)**: the Gloamvale's last town. When the sky shut, every house was cut off from every other, and the hearths went out one by one. The lintels say Tallow. Your lamp gutters; it has nothing in sight. The Voice: "This is what every fire becomes." The choice (4.3): light one cold hearth with Morwen's candle and your flame, or keep it all. | The first to answer |
+| 5 | **Coldhearth** (161-165) | Mora, the Unwelcome | Coldhearth; Ashby's lamp ("Lit for my husband. Set a place."); you | **C (low point)**: the Gloamvale's last town. When the sky shut, every house was cut off from every other, and the hearths went out one by one. The lintels say Tallow. Your lamp gutters; it has nothing in sight. The Voice: "This is what every fire becomes." It could finish you here; it wants your yes first. The choice (4.3): light one cold hearth with Morwen's candle and your flame, or keep it all. | The first to answer |
 | 6 | **The Closed Orchard** (166-170) | Neris, the Crown Without Dawn | Hesketh's own lamp, the last in the bundle ("Come home. H.") | **G then L**: Neris falls and the Seam cracks: real sky, real stars, for a moment. You open Thessaly's note: you, on a dark road, lamp held high, the dark stepping back. Then a hand you can't see shuts the crack. | The finale's opening |
 | 7 | **The Heart of the Gloamvale** (171-175) | Sevrin, the Silent Gate | You, alone, because you chose it | **E**: the gate opens. The Voice: "Come in. You must be tired." It isn't angry. It has one more offer. | The last fight |
 
@@ -759,7 +765,7 @@ exception to "nothing during a fight" (10.2).
 1. **Before the fight, "The Offer":** "You carried it alone all this way. You're tired. Every flame goes out. Let it go now,
    while it's warm." Then the Coldhearth line (4.3). Hero line: the refusal.
 2. **At phase 2, "Smothered":** its hands close. The lamp icon goes out. For the first time since the night you left home,
-   your lamp is dark. One line: "Nothing."
+   your lamp is dark. Two lines: "Nothing." / "You fight on by feel."
 3. **At phase 3, "The Road Answers"** (one card, a line a tap, the road-of-lamps still behind them): far behind you,
    embers catch. First the Coldhearth hearth, or Hesketh's rack if you kept your flame. Then the lamps you hung, by the
    names on their notes, Corvin holding Ada's up. Then the Great Lanterns, by the names you chose. Then Elowen, on the hill,
@@ -767,6 +773,9 @@ exception to "nothing during a fight" (10.2).
    comes down the road and prises the Seam open. Your lamp catches again, from them. "Not alone."
 4. **Phase 3:** the choir starts leaving it as the light pours in. (No text; the fight.)
 5. **Victory** (section 9).
+
+**Finale taps:** the Offer 2, Smothered 1, the Road Answers 6, Victory 3 = **12**. The warm beat (9.2) is its own sequence of
+8 after the reward screen, with Skip.
 
 ---
 
@@ -783,7 +792,7 @@ sinks into the ground at the valley's heart, and goes down.
 
 ### 9.2 The warm beat
 
-One line per card, a tap each, all skippable, never replayed. Text on a plain card with the lamp icon; one still (the hook).
+One line per card, a tap each, all skippable, never replayed. Text on a plain card with the lamp icon; two stills (the empty hook, Maud's Lantern).
 1. The Seam opens wide. The sky over the Gloamvale is ordinary night. Real stars.
 2. Across the land, at dawn, people who haven't spoken in years wake up and speak. Doors open in villages you never saw.
 3. Anselm rings Patience: the last toll. "That's the one I kept."
@@ -792,7 +801,7 @@ One line per card, a tap each, all skippable, never replayed. Text on a plain ca
 5. Vesper finishes the song: "And the dark went down, and the lamps came on. / There. That's the ending. For now."
 6. You walk back into Mossy Hollow. The hook over your door has been empty since the night you left (a still). You light a
    new lamp from yours and hang it there. Tam is waiting. "This one's for whoever comes next."
-7. Hesketh at the fire: "Every road needs a place to come back to."
+7. At the gate fire, Asta has finished another cairn. Hesketh at the fire: "Every road needs a place to come back to."
 8. After the credits card: at the bottom of the Deepwell, Maud's Lantern flickers for the first time (a still).
 
 ### 9.3 Why this satisfies
@@ -820,12 +829,11 @@ P Champion scene, E Elder scene, J Journal page, H camp voice, N NPC scene, I it
 two of them waiting for a tap; never on replays; plain words; reduced motion; landscape). Changes:
 
 - **10.1 New channels.** **V** Voice line (a scene card; Ch2 a6, Ch3 a4, Ch4 a7, five in Ch5, the finale; titled "A
-  voice" until Ch3 a1 names it). **Hero line** under Elder scenes, Great Lantern cards and the offers, keyed to the starter
-  (4.4). **Choice card** for the choices (4.3): two to four named buttons, one tap, plus a default if skipped. **Vesper's
+  voice" until Ch3 a1 names it). **Hero line** under Elder scenes, Great Lantern cards and the offers, keyed per 4.4. **Choice card** for the choices (4.3): two to four named buttons, one tap, plus a default if skipped. **Vesper's
   verse** as a Tavern bubble. **Letters and pages** as Journal collectibles. **Lamp icon** by the hero's name in a fight:
   lit, guttering, out (4.3).
 - **10.2 Sequences have their own cap.** An Elder sequence (pre, fight, post, Great Lantern, follow-ups) may hold up to 12
-  taps (Ch1 uses 8); the finale up to 16. Both always show **Skip**, and everything skipped is filed in the Journal. The
+  taps (Ch1 uses 8); the finale up to 16 (it uses 12; the warm beat is its own sequence of 8). Both always show **Skip**, and everything skipped is filed in the Journal. The
   per-area limit applies everywhere else. **One exception to "nothing during a fight":** the Voice's two phase-change
   cards, which play at the end of a move where the roster already queues its phase change.
 - **10.3 Art.** Art freeze (`CLAUDE.md`): nothing goes in until the owner vets the whole pack, and Codex draws new art.
@@ -878,7 +886,7 @@ for. The Oath is undone, one waymark at a time.
 
 Long-play players quit over an empty endgame (research, `fun-library.md` section 8), so these are concrete threads
 with names on them, not a fog of "more to come". Recurring people each end Season 1 with one open line: Elowen (bait),
-Aldric (the Oath), Grenna (the well cover), Morwen (Maud), Kestrel (where Rowan's voice went), Oriel ("one star is
+Aldric (the Oath), Grenna (the well cover), Morwen (Maud), Kestrel (she means to walk the high pass the storm took), Oriel ("one star is
 moving under the ground").
 
 ### 11.3 Lore that unlocks in pieces
@@ -921,22 +929,7 @@ Never let text run ahead of this table. Every reveal has at least two plants bef
 | Ending | The voice goes down the stair; Maud's Lantern flickers | Grenna's "further than our ropes" (Ch1 a6), the Deep Lore line, Morwen's family name (Ch4 a6, Ch5 a5) | Season 2 |
 | Ending | The lullaby's singer is dead, and once said yes | Ch5 a3 | Season 2 |
 
----|---|---|---|
-| Opening | Lamps went out ten years ago; yours didn't; the dark came for it | | Ch1 end |
-| Opening | A lamp alone gutters; with the fire it steadies | | Ch1 a4, Ch3 a4, finale |
-| Ch1 a2 | There is a song, with voices in it | | Ch1 a5, Ch2, Ch4 a5 |
-| Ch1 a3 | The dark only copies shapes | Bestiary lines (zone 1 on) | Ch4 Elder |
-| Ch1 a4 | **A light in company holds** (rule 3) | Opening (fire), the village's ten years | Ch3 a4, finale |
-| Ch1 end | **Your lamp was lit for you**; kept light is called, given light isn't | Elowen's spiral (opening still, a4, a7); a6 candle; Hesketh's wife's lamp | |
-| Ch2 a3 | A light kept for someone else steers true | Ch1 end | Ch2 a7 |
-| Ch2 a7 | **The Order's Oath is why the road fell** | Ch1 a3 (Anselm), Ch2 a2 (Aldric), road songs (Vesper) | Waymarks as the Oath undone; Season 2 |
-| Ch2 Elder | A yes costs your voice; the Elder was the fog in Silas's shape | Ch1 a2, a5, the Fenmother | Ch3 Elder, Ch4 |
-| Ch3 a4 | **The Voice can reach your home, and your home holds without you** | Ch1 a4, Hesketh's rack (camp, Ch2 on) | Finale |
-| Ch3 end | **The lights can go home; the Voice was never on the Lea** | Ch2 a5, Pip's pages | Ch5 |
-| Ch4 a5 | **The Voice is made of people who said yes** | Ch1 a2, a5; Ch2 Elder; Ch4 a4 | Finale |
-| Ch4 end | It had Rowan's shape, never his voice | Ch1 a3; Ch4 a4 | |
-| Ch5 a4 | The Gloamvale was lit once; the sky can open | Ch5 a1 (old gate hinges), a2 (garden wall), a3 | a6, ending |
-| Finale | **Every lamp you gave answers**; the choir leaves; one small voice is left | Hesketh's rack, the Long Night, your "lit for" choices, Coldhearth | Season 2 |
+| Ch4 Elder | It had Rowan's shape, never his voice | Ch1 a3; Ch4 a4 (it never speaks) | |
 
 ---
 
@@ -984,11 +977,12 @@ reach **4 or more on every criterion and an average of 4.3 or more** from the Op
 | The Climber as the last image | Maud's Lantern flickers | It's in the game; the Climber isn't |
 | No hero choices | Three choices (4.3) | Red team B3 |
 | Fight barks for Elders | None; two Voice phase cards at move end, the one exception | Nothing during a fight |
+| Corvin's bio: "When the King fell"; Brynja's bio: the brazier "finally went out" | Corvin: "When the curtain came down, there was no one behind it" (the Hollow King was hollow). Brynja: "It was still warm when she reached the Rimewood. She keeps it lit." A hero-roster card edits `21-stories.js` and `56-roster.js` | Judge round 3 |
 | Roster: zone monsters "emerged whole, not a copy of anything" | Each emerges whole, in a shape copied from the place or memory, and is never what it copies. Champion jobs that clashed with roster briefs (Choir Without Names, Istra, Nera, Brakka) rewritten to fit them | **Claude decided**, logged in `DECISIONS.md` |
 | Sigrun, a new Rimewood candle-keeper; Cobb, a new quarry boy; Ama as a Hand | Solveig Lund (roster hero, same story) in the Silent Village; Rook (existing Hand) from the quarry; no new Hands | Owner decisions: 32 heroes each with a part; two named gatherers per job |
 | 14 roster heroes with no part | Every hero placed (4.5) | Owner decision: each hero has a part in the story |
 | Coldhearth "a hundred years" vs a sky shut "a thousand years" | Two hundred years, both | Red team round 2 |
-| **Proposal:** rename "Mile-Crowned Adjudicator" (trips the retired word "crowned"), "Sable Vesper" (collides with Vesper Lark) and "Sable, the Deep Listener" (trips the retired "Listener") | Story names "the Mile Judge", "Sable Cinderveil" and "Sable of the Mere" until the roster owner rules | Roster names are proposals, not owner-chosen |
+| **Proposal:** rename "Mile-Crowned Adjudicator" (trips the retired word "crowned"), "Sable Vesper" (collides with Vesper Lark) and "Sable, the Deep Listener" (trips the retired "Listener") | Story names "the Mile Judge", "the Cinderveil" and "Sable of the Mere" until the roster owner rules | Roster names are proposals, not owner-chosen |
 | **Proposal:** the zone 31 monster "Lantern Eater" collides with the world raid's Lantern Eater | Zone lines avoid the name until renamed | C28 open question |
 | **Proposal:** heroes can't be unlocked before their first scene | Gate new unlocks on the scene; owned heroes are kept | Red team rounds 1-2 |
 
@@ -1003,3 +997,4 @@ it fits this bible, uses it.
 |---|---|---|---|
 | 1 (v1) | 3.17 average; 10 of 12 criteria under 4; blockers: rule 3 undefined, Long Night vs smother, hero swap, Elders as lamp-keepers | not run (v1 rebuilt first) | v2 written: rules 2 and 3, hero choices and lines, Oath twist, Elders as shapes, cast in every area, ranks (section 5), ending rebuilt |
 | 2 (v2) | 3.75 average; under 4: Excitement 3, Fit 3, Clarity 3; hard checks: Hands cap, retired words, Elder tap count, mid-fight cards, 14 heroes with no part | not run (fixes were mechanical) | v3: rule 3 airtight (only the Voice's hands, only out of sight of any light), Elowen's kept spark, why tonight, all 32 heroes, no new Hands, Ch5 people via the lamp bundle and a returning flaw, Captain samples, art costed to seven stills, save keys named, ladder rebuilt |
+| 3 (v3) | not run (judge ruled a diff check enough) | Opus high: **4.58 average, every criterion 4+**; failed 13 hard-check items (stray old ladder, line lengths, finale count, "last of the others", Silas's place, Gloamvale campfires, rule 3 "shown", bios, hero keying, Marshal sprite, a name, unlogged rulings); canon rulings a-g all yes | v3.1: all 13 fixed, rulings logged in `DECISIONS.md`, plus the judge's nice-to-haves |

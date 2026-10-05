@@ -13,7 +13,8 @@ an item flavour line) uses `content.md` plus this rubric's hard checks. Coverage
 - **On screen:** every line names only what the player can see or has met at that moment. A zone line names that zone's
   monster; no line plays for content that is not in the game; no companion or party language.
 - **Mystery ladder:** no line reveals something before its row in bible section 12.
-- **Delivery:** nothing during a fight; lengths within the channel limits (bible 10, C28 4.2); never replays.
+- **Delivery:** nothing during a fight (one exception: the Voice's two phase-change cards, played between turns at the
+  roster's move-end queue, bible 10.2); lengths within the channel limits (bible 10, C28 4.2); never replays.
 - **Retired words:** none of `STORY_RETIRED` or `LORE_BANNED` (soaked, corrupted, twisted, crowned elders, the
   Listener, party, "drawn to" the light).
 - `node tools/build.mjs` and `node tools/check.mjs` pass when the work touches `src/`.

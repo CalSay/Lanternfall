@@ -1,5 +1,7 @@
 # C22 final-count proposal — The Pale Reach
 
+> **Story note (2026-10-05, story judge ruling b):** each Shadowborn emerges whole from the dark in a shape copied from the place or from memory, and is never the thing it copies (`story-bible.md` rule 4). A story line may claim a copied likeness only where the sprite shows it.
+
 **Design only, for owner/Claude approval.** Uses the confirmed [world structure](world-structure.md), read at checkpoint 2dea55a (including the named 2a61322 update). The count and hierarchy are settled; names, numerical tuning, status translations, Champion Trophy mapping and boss phase details remain proposals. This document supersedes this region's old pools, variants, gauntlets and I–V cycles. It changes no runtime, art or save state.
 
 ## Structure and shared card rules

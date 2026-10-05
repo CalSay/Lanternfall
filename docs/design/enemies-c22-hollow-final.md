@@ -1,5 +1,7 @@
 # Hollow: final zone roster proposal
 
+> **Story note (2026-10-05, story judge ruling b):** each Shadowborn emerges whole from the dark in a shape copied from the place or from memory, and is never the thing it copies (`story-bible.md` rule 4). A story line may claim a copied likeness only where the sprite shows it.
+
 Structure approved; names and balance proposed. Read [the final contract](enemies-c22-final-contract.md). This region has **35 zone monsters, 35 same-design Shadowborn Captain enhancements, seven Champions of Darkness and the Fenmother as Elder of Darkness: 43 unique designs**. Each area appears once, with five consecutive zones. Each zone has five regular fights then its Captain. Area and region bosses are separate one-time encounters. Runtime is unchanged; the owner-approved Thorn Imp art package is linked below.
 
 ## Shared card rules
