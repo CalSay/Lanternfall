@@ -5,7 +5,7 @@ For copy, lore, item, enemy and quest data, and story. Coverage-map areas 12, 15
 ## Hard checks
 
 - Build and full `node tools/check.mjs` pass (data checks included).
-- Copy is plain: short sentences, active voice, names a player would use.
+- Copy is plain: short sentences, active voice, names a player would use (severity P2 per `AGENTS.md`).
 - Lore and names match canon in `docs/design/lore.md` and `docs/DECISIONS.md`. A canon change is a `judge` card
   and the PR links the ruling.
 - Data fits the schema; no missing ids, stats or art slots; nothing duplicated.
