@@ -23,4 +23,4 @@ For copy, lore, item, enemy and quest data, and story. Coverage-map areas 12, 15
 
 ## Blocking
 
-Any failed hard check; a score of 1 or 2; copy that contradicts canon; data that breaks a load or a check.
+Any failed hard check; a score of 1 or 2 on any criterion except "Clarity and plain copy" (weak copy is `minor`, P2, per `AGENTS.md`); copy that contradicts canon; data that breaks a load or a check.
