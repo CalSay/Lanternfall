@@ -23,6 +23,7 @@ def steam(appid):
     for kind, key in (("positive", "pos"), ("negative", "neg")):
         d = get(base + kind)
         if "_error" in d: raise RuntimeError("steam %s %s feed failed: %s" % (appid, kind, d["_error"]))
+        if d.get("success") != 1: raise RuntimeError("steam %s %s feed: success=%r" % (appid, kind, d.get("success")))
         if not out["summary"]: out["summary"] = d.get("query_summary")
         seen = set()
         for r in d.get("reviews", []):
@@ -31,6 +32,8 @@ def steam(appid):
             out[key].append({"id": r["recommendationid"], "votes_up": r["votes_up"],
                              "hours": round(r["author"].get("playtime_forever", 0) / 60), "text": r["review"][:900]})
         out[key].sort(key=lambda r: -r["votes_up"])
+    if not out["pos"] and not out["neg"]:
+        raise RuntimeError("steam %s returned no reviews in the last 365 days (wrong appid or empty feed)" % appid)
     out["pos"] = out["pos"][:25]
     out["neg_longplay_50h"] = [r for r in out["neg"] if r["hours"] >= 50][:25]
     out["neg"] = out["neg"][:25]
@@ -44,6 +47,7 @@ def apple(appid, country="us"):
             if "_error" in d:  # past the end of a feed Apple returns 200 with no entries, so an error is always real
                 raise RuntimeError("apple %s page %d %s feed failed: %s" % (appid, p, sort, d["_error"]))
             ents = d.get("feed", {}).get("entry", []) if isinstance(d, dict) else []
+            if isinstance(ents, dict): ents = [ents]  # a page with one review comes back as an object, not a list
             if not ents:
                 if p == 1: empty_first.append(sort)
                 break

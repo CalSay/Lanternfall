@@ -108,7 +108,7 @@ Lanternfall: **not applicable**, the game has no prestige or resets. Kept becaus
 progression layer: new options. Measure: longest stretch with no new option (an f-health metric).
 
 **P9. New areas and unlocks at a steady rhythm.**
-107 reviews, strong in 2 games (IdleOn 9, Hero Wars 8, Idle Slayer 8, Shop Titans 8). Low count, medium confidence.
+107 reviews, top games (IdleOn 9, Hero Wars 8, Idle Slayer 8, Shop Titans 8). Low count, medium confidence.
 "Moving onto a new area is always refreshing and ur always making progress towards a new quest." (Legends of IdleOn, App Store 5 stars)
 "And Pablo keeps updating the game with new content almost every other week keeping the game fresh." (Idle Slayer, App Store 5 stars)
 Lanternfall: region pacing (area 7). Measure: hours to each zone; longest stretch with no unlock.

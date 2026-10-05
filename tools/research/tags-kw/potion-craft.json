@@ -5,8 +5,7 @@
  "n_neg": 25,
  "n_longplay_neg": 3,
  "sources": [
-  "steam",
-  "apple"
+  "steam"
  ],
  "themes": {
   "P-offline": {
