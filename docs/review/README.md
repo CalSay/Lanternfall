@@ -9,6 +9,7 @@ reviews are consistent and taste is scored, not guessed.
 | [`balance.md`](balance.md) | Numbers: XP, gold, drops, enemy stats, curves |
 | [`ui.md`](ui.md) | Menus, screens, layout, navigation, icons in the page |
 | [`content.md`](content.md) | Copy, lore, item and enemy data, story |
+| [`story.md`](story.md) | The story bible, chapter scripts, canon changes, scenes and Voice lines (the depth bar) |
 | [`tools.md`](tools.md) | `tools/`, checks, CI, perf budgets, build scripts |
 | [`art.md`](art.md) | New raster or pixel art packs (Claude reviews Codex's work) |
 | [`design-doc.md`](design-doc.md) | Specs, direction picks, proposals, `docs/DECISIONS.md` entries |

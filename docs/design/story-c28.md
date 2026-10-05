@@ -1,5 +1,8 @@
 # Story C28: a story that means something at the moment it plays
 
+> **2026-10-05:** its delivery system (section 4) is adopted by [`story-bible.md`](story-bible.md) section 10 with
+> changes; its spine, cast and Hollow script are superseded by the bible.
+
 Status: design proposal (docs only), 2026-10-01. Answers the owner's note:
 
 > "Think of how we can improve the story because currently the little bits you drop in are

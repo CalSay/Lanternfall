@@ -1,5 +1,8 @@
 # Lore: the story bible of Lanternfall
 
+> **Superseded 2026-10-05 by [`story-bible.md`](story-bible.md).** Kept as history and source material. Where the two
+> disagree, `story-bible.md` wins.
+
 Status: task LORE1, written 2026-09-28 for the owner's ask: "An agent building the lore and story of
 the world. I'd like there to be a reason for us fighting these monsters." Revised the same day as
 task LORE1b for the owner's feedback (2026-09-28): the dark exists to destroy light, not to crave
