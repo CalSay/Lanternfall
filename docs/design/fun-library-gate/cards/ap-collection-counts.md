@@ -9,9 +9,12 @@ Bestiary, uniques and Deeds show how many you have found out of the total for ea
 ## Acceptance (measurable)
 - Views show n of m per region or place at 360px with no overflow; a check asserts no unfound item's name or drop source appears anywhere in the rendered text (counts only, no hunting spoilers).
 
+## Prediction (player effect)
+Baseline: the mid-game playtest run on the integration branch before the card. Expected: the share of runs that have found every beast and unique in a region they have cleared rises by at least 10 points. Metric: that share per region, from the playtest report. Miss: a rise under 5 points after two playtests means the counts come out.
+
 ## Scope
 Owned files: bestiary, uniques and Deeds views
-New save state: none
+New save state: none    Switch off: the counts are computed from existing data and shown in the three views only, so revert the card's commit; nothing is stored in the save.
 
 ## Source
 Fun-library idea gate, 2026-10-05: `docs/design/fun-library-gate/judge-v2.md` (rerun on final evidence) (brief, red team and Opus judge verdict). Coverage-map area 12, 3.

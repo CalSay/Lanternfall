@@ -70,7 +70,10 @@ if __name__ == "__main__":
         try:
             res = {"name": g["name"], "slug": g["slug"], "fetched": time.strftime("%Y-%m-%d")}
             if g.get("steam"): res["steam"] = steam(g["steam"])
-            if g.get("ios"): res["ios_meta"] = itunes_meta(g["ios"]); res["apple"] = apple(g["ios"])
+            if g.get("ios"):
+                res["ios_meta"] = itunes_meta(g["ios"]); res["apple"] = apple(g["ios"])
+                if res["apple"]["n"] == 0 and (res["ios_meta"]["count"] or 0) >= 100:  # an established app always has reviews
+                    raise RuntimeError("apple feed returned 0 reviews for %s but the store lists %s ratings" % (g["slug"], res["ios_meta"]["count"]))
         except Exception as e:  # keep the previous file for this game; report and exit non-zero at the end
             failed.append(g["slug"]); print("FAILED", g["slug"], e, file=sys.stderr, flush=True); continue
         json.dump(res, open(os.path.join(outdir, g["slug"] + ".json"), "w"), indent=1)

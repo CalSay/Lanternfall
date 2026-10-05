@@ -60,7 +60,13 @@ def reviews(d, with_longplay=False):
 
 if __name__ == '__main__':
     root = sys.argv[1]; os.makedirs(root + '/tags-kw', exist_ok=True); allc = {}
-    for f in sorted(glob.glob(root + '/raw/*.json')):
+    corpus = {g['slug'] for g in json.load(open(root + '/corpus.json'))}
+    files = sorted(glob.glob(root + '/raw/*.json'))
+    stray = [f for f in files if os.path.basename(f)[:-5] not in corpus]
+    missing = corpus - {os.path.basename(f)[:-5] for f in files}
+    if stray or missing:
+        sys.exit('raw/ does not match corpus.json: stray %s, missing %s. Delete stray files or fetch the missing games.' % (stray, sorted(missing)))
+    for f in files:
         d = json.load(open(f)); R = reviews(d); LP = [r for r in reviews(d, True) if r[0] == 'steam-lp']
         pos = [r for r in R if r[0] == 'steam+' or r[0] in ('apple4', 'apple5')]
         neg = [r for r in R if r[0] == 'steam-' or r[0] in ('apple1', 'apple2', 'apple3')]
