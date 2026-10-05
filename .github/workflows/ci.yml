@@ -1,0 +1,61 @@
+name: ci
+on:
+  pull_request:
+    branches: [claude/elegant-johnson-m6k00u]
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+  push:
+    branches: [claude/elegant-johnson-m6k00u]
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Cache Playwright browser
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - run: npx playwright install --with-deps chromium
+      - name: Build
+        run: node tools/build.mjs
+      - name: dist is committed rebuilt
+        run: |
+          if ! git diff --exit-code -- dist/lanternfall.html; then
+            echo "::error::node tools/build.mjs changed dist/lanternfall.html. Commit the rebuilt dist."
+            exit 1
+          fi
+      - name: Full check (no browser section may be skipped)
+        run: |
+          set -o pipefail
+          node tools/check.mjs | tee check.log
+          grep -q '^browser sections skipped: 0 ' check.log || { echo "::error::a browser section was skipped"; exit 1; }
+      - name: Offline parity
+        run: node tools/offline-parity.mjs
+      - name: Perf (quick)
+        run: node tools/perf.mjs --quick
+      # SIM-TARGETS: add the sim target step here once f-health lands (tools/health.mjs).
+
+  path-guard:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Protected paths need the cal-approved label
+        env:
+          LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+        run: tools/ci/path-guard.sh "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}" "$LABELS"
