@@ -5839,7 +5839,7 @@ if (section('save codec validation (C5)')) try {
     const slot=b=>E(`(()=>{const s=fresh();s.bounties.slots=[${JSON.stringify(Object.assign({need:1,have:0,rew:'gold',rr:0},b))}];const r=validateSave(s);return r.ok?'':r.error;})()`);
     const bad={ 'unknown kind':{k:'nope'}, 'hunt without foe':{k:'hunt',z:3}, 'hunt foe unknown':{k:'hunt',z:3,foe:'dragon'}, 'kill without zone':{k:'kill'},
       'forage bad family':{k:'forage',fam:'moss'}, 'make bad station':{k:'make',st:'oven'}, 'bogus reward':{k:'forge',rew:'bogus',rewT:1,rewN:5},
-      'reward tier 9':{k:'forge',rew:'ess',rewT:9,rewN:5}, 'reward amount missing':{k:'boss',rew:'ess',rewT:1}, 'need 0':{k:'crit',need:0},
+      'reward tier 9':{k:'forge',rew:'ess',rewT:9,rewN:5}, 'reward amount missing':{k:'boss',rew:'ess',rewT:1}, 'reward amount 0':{k:'boss',have:1,rew:'ess',rewT:1,rewN:0}, 'need 0':{k:'crit',need:0},
       'have negative':{k:'crit',have:-1}, 'x not a number':{k:'crit',x:'bad'} };
     const passed=Object.entries(bad).filter(([,b])=>!slot(b)).map(([n])=>n);
     const good={k:'hunt',z:3,foe:'slime',need:20,have:4,rew:'ess',rewT:1,rewN:12,x:1.1,elite:true};

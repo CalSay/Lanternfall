@@ -11062,7 +11062,7 @@ let OMENS, WEEKLY_GOALS;
     if (b.rew !== 'gold') {
       if (typeof b.rew !== 'string' || !Object.prototype.hasOwnProperty.call(MAT, b.rew)) return 'reward';
       if (!btyInt(b.rewT, 1) || b.rewT > MAT[b.rew].short.length) return 'reward tier';
-      if (typeof b.rewN !== 'number' || !(b.rewN >= 0) || !Number.isFinite(b.rewN)) return 'reward amount';
+      if (!btyInt(b.rewN, 1)) return 'reward amount';   // btyNew always pays at least 1
     }
     return BTY_SHAPE[b.k] ? BTY_SHAPE[b.k](b) : null;
   }
