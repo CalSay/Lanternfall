@@ -49,10 +49,10 @@ const mean = l => l.reduce((a, b) => a + b, 0) / l.length;
 const median = l => { const s = l.slice().sort((a, b) => a - b), n = s.length; return n % 2 ? s[(n - 1) / 2] : (s[n / 2 - 1] + s[n / 2]) / 2; };
 const r2 = x => Math.round(x * 100) / 100;
 
-function simRun(persona, hero, cls, tmp) {
-  const out = path.join(tmp, `${persona}-${hero}.json`);
+function simRun(persona, hero, cls, tmp, offset) {
+  const out = path.join(tmp, `${persona}-${hero}-${offset}.json`);
   const p = PERSONAS[persona];
-  const a = ['tools/sim.mjs', ...p.args, '--class', cls, '--active', '1', '--turns', '1', '--seed', String(p.seed + SEED_OFFSET), '--health', out];
+  const a = ['tools/sim.mjs', ...p.args, '--class', cls, '--active', '1', '--turns', '1', '--seed', String(p.seed + offset), '--health', out];
   return new Promise((res, rej) => execFile(process.execPath, a, { cwd: ROOT, maxBuffer: 1 << 28 }, (e, stdout, stderr) => {
     if (e) return rej(new Error(`${persona}/${hero}: sim failed: ${(stderr || e.message).split('\n').slice(0, 6).join(' | ')}`));
     try { res({ persona, hero, data: JSON.parse(fs.readFileSync(out, 'utf8')) }); } catch (x) { rej(new Error(`${persona}/${hero}: no telemetry (${x.message})`)); }
@@ -170,10 +170,10 @@ function aggregate(runs) {
     } else {
       vals = Object.fromEntries(Object.entries(hs).map(([h, m]) => [h, m[key]]));
       const l = Object.values(vals).filter(num);
-      if (!l.length) { out[`${persona}.${key}`] = { value: null, bad, abs, rel, note, perHero: vals }; continue; }
+      if (!l.length) { out[`${persona}.${key}`] = { key: `${persona}.${key}`, how, value: null, bad, abs, rel, note, perHero: vals }; continue; }
       value = how === 'mean' ? r2(mean(l)) : how === 'max' ? Math.max(...l) : Math.min(...l);
     }
-    out[`${persona}.${key}`] = { value, bad, abs, rel, note, perHero: vals };
+    out[`${persona}.${key}`] = { key: `${persona}.${key}`, how, value, bad, abs, rel, note, perHero: vals };
   }
   return out;
 }
@@ -208,27 +208,38 @@ function printReport(runs, agg, base) {
   }
 }
 
-// allowed move = max(abs, rel * |baseline|)
+// allowed move = max(abs, rel * |baseline|). The aggregate is held to it, and so is each starter on its own against its
+// own baseline value, at twice the band (one hero's number is noisier than the mean of three), so one hero cannot slip.
+// A current metric with no baseline entry fails: it has no accepted value, so nothing would watch it.
 function verdict(cur, b) {
-  if (!b) return { label: 'new', fail: false };
+  if (!b) return { label: 'FAIL (not in the baseline; run --write-baseline)', fail: true };
   if (!num(cur.value) || !num(b.value)) return num(cur.value) === num(b.value) ? { label: 'ok', fail: false } : { label: 'FAIL (value missing)', fail: true };
-  const allow = Math.max(b.abs ?? cur.abs, (b.rel ?? cur.rel) * Math.abs(b.value)), d = cur.value - b.value;
-  const bad = (b.bad || cur.bad), fail = bad === 'up' ? d > allow : bad === 'down' ? d < -allow : Math.abs(d) > allow;
-  return { label: fail ? `FAIL (${d > 0 ? '+' : ''}${r2(d)}, allowed ${r2(allow)}${bad === 'both' ? ' either way' : bad === 'up' ? ' up' : ' down'})` : 'ok', fail };
+  const bad = (b.bad || cur.bad), abs = b.abs ?? cur.abs, rel = b.rel ?? cur.rel;
+  const off = (d, allow) => bad === 'up' ? d > allow : bad === 'down' ? d < -allow : Math.abs(d) > allow;
+  const allow = Math.max(abs, rel * Math.abs(b.value)), d = cur.value - b.value;
+  if (off(d, allow)) return { label: `FAIL (${d > 0 ? '+' : ''}${r2(d)}, allowed ${r2(allow)}${bad === 'both' ? ' either way' : bad === 'up' ? ' up' : ' down'})`, fail: true };
+  if (!/\.heroParity$/.test(cur.key || '')) for (const [h, v] of Object.entries(cur.perHero || {})) {
+    const bv = (b.perHero || {})[h];
+    if (!num(v) || !num(bv)) continue;
+    const a2 = 2 * Math.max(abs, rel * Math.abs(bv));
+    if (off(v - bv, a2)) return { label: `FAIL (${h} ${v} against ${bv}, allowed ${r2(a2)})`, fail: true };
+  }
+  return { label: 'ok', fail: false };
 }
 
 // ---- main ----
 const only = opt('only') ? opt('only').split(',') : Object.keys(PERSONAS);
 for (const p of only) if (!PERSONAS[p]) { console.error('unknown persona ' + p + '; use ' + Object.keys(PERSONAS).join(', ')); process.exit(2); }
 const t0 = Date.now(), tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'lf-health-'));
+async function runOnce(offset) {
+  const jobs = only.flatMap(p => HEROES.map(([h, c]) => () => simRun(p, h, c, tmp, offset)));
+  const rs = (await pool(jobs, Number(opt('jobs', 4)))).map(r => ({ persona: r.persona, hero: r.hero, metrics: analyse(r.persona, r.hero, r.data) }));
+  if (rs.some(r => r.metrics.errors)) throw new Error('the game logged errors during a run: ' + rs.filter(r => r.metrics.errors).map(r => `${r.persona}/${r.hero}`).join(', '));
+  return rs;
+}
 let runs;
-try {
-  const jobs = only.flatMap(p => HEROES.map(([h, c]) => () => simRun(p, h, c, tmp)));
-  runs = (await pool(jobs, Number(opt('jobs', 4)))).map(r => ({ persona: r.persona, hero: r.hero, metrics: analyse(r.persona, r.hero, r.data) }));
-} catch (e) { console.error('health: ' + e.message); process.exit(2); }
-finally { fs.rmSync(tmp, { recursive: true, force: true }); }
-if (runs.some(r => r.metrics.errors)) { console.error('health: the game logged errors during a run: ' + runs.filter(r => r.metrics.errors).map(r => `${r.persona}/${r.hero}`).join(', ')); process.exit(2); }
-
+try { runs = await runOnce(SEED_OFFSET); } catch (e) { console.error('health: ' + e.message); process.exit(2); }
+process.on('exit', () => fs.rmSync(tmp, { recursive: true, force: true }));
 const agg = aggregate(runs);
 const base = flag('compare') && fs.existsSync(BASELINE) ? JSON.parse(fs.readFileSync(BASELINE, 'utf8')) : null;
 if (flag('compare') && !base) { console.error('health: no baseline at docs/design/health-baseline.json; run with --write-baseline first'); process.exit(2); }
@@ -242,10 +253,28 @@ fs.mkdirSync(path.dirname(outPath), { recursive: true });
 fs.writeFileSync(outPath, JSON.stringify(report, null, 2) + '\n');
 console.log(`\nwrote ${path.relative(ROOT, outPath)} (${report.seconds}s)`);
 
+// The baseline is the mean of --baseline-seeds (default 5) seed offsets, so one unlucky seed is not the yardstick.
+async function averaged() {
+  const n = Number(opt('baseline-seeds', 5)), aggs = [agg];
+  console.log(`\nbaseline: averaging ${n} seed offsets (${SEED_OFFSET}..${SEED_OFFSET + n - 1})`);
+  for (let i = 1; i < n; i++) aggs.push(aggregate(await runOnce(SEED_OFFSET + i)));
+  const out = {};
+  for (const k of Object.keys(agg)) {
+    const ph = {};
+    for (const h of Object.keys(agg[k].perHero)) { const l = aggs.map(a => a[k].perHero[h]).filter(num); ph[h] = l.length ? r2(mean(l)) : null; }
+    const l = Object.values(ph).filter(num);
+    let value = agg[k].value;
+    if (agg[k].how === 'parity') { const med = median(l); value = r2(Math.max(...l.map(v => Math.abs(v - med) / Math.max(1, med)))); }
+    else if (l.length) value = r2(mean(l));
+    out[k] = { ...agg[k], value, perHero: ph };
+  }
+  return out;
+}
 if (flag('write-baseline')) {
   const old = fs.existsSync(BASELINE) ? JSON.parse(fs.readFileSync(BASELINE, 'utf8')) : { metrics: {} };
   const metrics = { ...old.metrics };   // --only rewrites just the selected personas' entries
-  for (const [k, a] of Object.entries(agg)) {
+  const accepted = await averaged();
+  for (const [k, a] of Object.entries(accepted)) {
     const o = old.metrics[k] || {};
     metrics[k] = { value: a.value, bad: o.bad || a.bad, abs: o.abs ?? a.abs, rel: o.rel ?? a.rel, note: a.note, perHero: a.perHero };
   }
@@ -260,7 +289,7 @@ if (base) {
   const missing = Object.keys(base.metrics).filter(k => !(k in agg) && only.includes(k.split('.')[0]));
   if (bad.length || missing.length) {
     console.log(`\nHEALTH FAIL: ${bad.length} metric(s) past tolerance${missing.length ? `, ${missing.length} missing` : ''}`);
-    for (const [k, a] of bad) console.log(`  ${k}: ${f2(a.value)} against ${f2(base.metrics[k].value)} (${a.note}); ${verdict(a, base.metrics[k]).label}`);
+    for (const [k, a] of bad) console.log(`  ${k}: ${f2(a.value)} against ${base.metrics[k] ? f2(base.metrics[k].value) : 'no baseline'} (${a.note}); ${verdict(a, base.metrics[k]).label}`);
     process.exit(1);
   }
   console.log('\nhealth ok: every metric is inside its tolerance');

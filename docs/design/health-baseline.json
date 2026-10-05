@@ -8,75 +8,75 @@
   },
   "metrics": {
     "casual.firstGoalSec": {
-      "value": 55.67,
+      "value": 56.27,
       "bad": "up",
       "abs": 10,
       "rel": 0.2,
       "note": "seconds of play to the first zone boss win",
       "perHero": {
-        "wren": 55,
-        "tobin": 63,
-        "pip": 49
+        "wren": 55.4,
+        "tobin": 61.6,
+        "pip": 51.8
       }
     },
     "casual.longestDrySec": {
-      "value": 376.33,
+      "value": 291.87,
       "bad": "up",
       "abs": 140,
       "rel": 0.3,
       "note": "longest active stretch without a reward",
       "perHero": {
-        "wren": 307,
-        "tobin": 319,
-        "pip": 503
+        "wren": 299.6,
+        "tobin": 239.6,
+        "pip": 336.4
       }
     },
     "casual.visitsWithRewardShare": {
-      "value": 0.89,
+      "value": 0.95,
       "bad": "down",
       "abs": 0.12,
       "rel": 0,
       "note": "share of 5-minute visits that gave something",
       "perHero": {
         "wren": 0.89,
-        "tobin": 0.89,
-        "pip": 0.89
+        "tobin": 0.98,
+        "pip": 0.98
       }
     },
     "casual.zoneEnd": {
-      "value": 10.67,
+      "value": 11.07,
       "bad": "both",
       "abs": 2,
       "rel": 0,
       "note": "zone after 3 days of 3 short visits",
       "perHero": {
-        "wren": 12,
-        "tobin": 10,
-        "pip": 10
+        "wren": 12.4,
+        "tobin": 10.4,
+        "pip": 10.4
       }
     },
     "casual.mechanicsPerHour": {
-      "value": 30.22,
+      "value": 30.31,
       "bad": "both",
       "abs": 4,
       "rel": 0.2,
       "note": "new unlocks and camp builds per active hour",
       "perHero": {
-        "wren": 30.67,
-        "tobin": 29.33,
+        "wren": 30.4,
+        "tobin": 29.87,
         "pip": 30.67
       }
     },
     "active.firstGoalSec": {
-      "value": 53,
+      "value": 53.2,
       "bad": "up",
       "abs": 18,
       "rel": 0,
       "note": "seconds to the first zone boss win",
       "perHero": {
-        "wren": 57,
-        "tobin": 52,
-        "pip": 50
+        "wren": 50.2,
+        "tobin": 59.2,
+        "pip": 50.2
       }
     },
     "active.firstRewardSec": {
@@ -92,242 +92,242 @@
       }
     },
     "active.longestDrySec": {
-      "value": 429,
+      "value": 425,
       "bad": "up",
       "abs": 130,
       "rel": 0.3,
       "note": "longest active stretch without a reward",
       "perHero": {
-        "wren": 301,
-        "tobin": 468,
-        "pip": 518
+        "wren": 295.8,
+        "tobin": 485,
+        "pip": 494.2
       }
     },
     "active.zoneEnd": {
-      "value": 11.33,
+      "value": 11.87,
       "bad": "both",
       "abs": 1.8,
       "rel": 0,
       "note": "zone after one 60-minute session",
       "perHero": {
-        "wren": 11,
-        "tobin": 12,
-        "pip": 11
+        "wren": 11.6,
+        "tobin": 11.8,
+        "pip": 12.2
       }
     },
     "active.stallCount": {
-      "value": 2,
+      "value": 1.87,
       "bad": "up",
       "abs": 1.1,
       "rel": 0,
       "note": "stalls (10 active minutes without a new zone)",
       "perHero": {
-        "wren": 3,
-        "tobin": 2,
-        "pip": 1
+        "wren": 2.2,
+        "tobin": 1.8,
+        "pip": 1.6
       }
     },
     "active.longestStallSec": {
-      "value": 1628,
+      "value": 1345.53,
       "bad": "up",
       "abs": 550,
       "rel": 0.3,
       "note": "longest stretch without a new zone",
       "perHero": {
-        "wren": 1117,
-        "tobin": 1379,
-        "pip": 2388
+        "wren": 1272.8,
+        "tobin": 1216.4,
+        "pip": 1547.4
       }
     },
     "active.wipesPerHour": {
-      "value": 34.67,
+      "value": 31.13,
       "bad": "up",
       "abs": 10,
       "rel": 0.35,
       "note": "times the hero fell, per hour",
       "perHero": {
-        "wren": 47,
-        "tobin": 9,
-        "pip": 48
+        "wren": 43,
+        "tobin": 11,
+        "pip": 39.4
       }
     },
     "active.goldSpentShare": {
-      "value": 0.87,
+      "value": 0.82,
       "bad": "down",
       "abs": 0.16,
       "rel": 0,
       "note": "share of gold earned that was spent",
       "perHero": {
-        "wren": 0.88,
-        "tobin": 0.91,
-        "pip": 0.82
+        "wren": 0.86,
+        "tobin": 0.85,
+        "pip": 0.76
       }
     },
     "active.abilityTopShare": {
-      "value": 0.6,
+      "value": 0.59,
       "bad": "up",
       "abs": 0.1,
       "rel": 0,
       "note": "dominance: the most-cast ability, share of casts",
       "perHero": {
-        "wren": 0.59,
-        "tobin": 0.55,
+        "wren": 0.58,
+        "tobin": 0.52,
         "pip": 0.67
       }
     },
     "active.mechanicsPerHour": {
-      "value": 22.67,
+      "value": 23,
       "bad": "both",
       "abs": 6,
       "rel": 0.2,
       "note": "new unlocks and camp builds per active hour",
       "perHero": {
-        "wren": 22,
-        "tobin": 23,
-        "pip": 23
+        "wren": 22.4,
+        "tobin": 22.8,
+        "pip": 23.8
       }
     },
     "active.mechanicsBurst10min": {
-      "value": 13,
+      "value": 13.27,
       "bad": "up",
       "abs": 2,
       "rel": 0,
       "note": "most unlocks and camp builds inside any 10 minutes",
       "perHero": {
-        "wren": 13,
-        "tobin": 11,
-        "pip": 15
+        "wren": 13.6,
+        "tobin": 12,
+        "pip": 14.2
       }
     },
     "active.heroParity": {
-      "value": 0.09,
+      "value": 0.03,
       "bad": "up",
       "abs": 0.15,
       "rel": 0,
       "note": "widest gap of a starter from the median zone (share)",
       "perHero": {
-        "wren": 11,
-        "tobin": 12,
-        "pip": 11
+        "wren": 11.6,
+        "tobin": 11.8,
+        "pip": 12.2
       }
     },
     "optimiser.zoneEnd": {
-      "value": 19,
+      "value": 19.73,
       "bad": "both",
       "abs": 2,
       "rel": 0,
       "note": "zone after 10 hours of best-value play",
       "perHero": {
-        "wren": 17,
-        "tobin": 20,
-        "pip": 20
+        "wren": 20,
+        "tobin": 19.8,
+        "pip": 19.4
       }
     },
     "optimiser.zoneAt1h": {
-      "value": 11,
+      "value": 11.8,
       "bad": "both",
       "abs": 1.8,
       "rel": 0,
       "note": "zone after the first hour",
       "perHero": {
-        "wren": 10,
-        "tobin": 12,
-        "pip": 11
+        "wren": 11.2,
+        "tobin": 12.2,
+        "pip": 12
       }
     },
     "optimiser.zonePerHour": {
-      "value": 1.9,
+      "value": 1.97,
       "bad": "both",
       "abs": 0.2,
       "rel": 0,
       "note": "zones gained per active hour",
       "perHero": {
-        "wren": 1.7,
-        "tobin": 2,
-        "pip": 2
+        "wren": 2,
+        "tobin": 1.98,
+        "pip": 1.94
       }
     },
     "optimiser.longestDrySec": {
-      "value": 881.67,
+      "value": 1163.93,
       "bad": "up",
       "abs": 900,
       "rel": 0.3,
       "note": "longest active stretch without a reward",
       "perHero": {
-        "wren": 742,
-        "tobin": 762,
-        "pip": 1141
+        "wren": 1262.4,
+        "tobin": 925.6,
+        "pip": 1303.8
       }
     },
     "optimiser.stallCount": {
-      "value": 8.33,
+      "value": 8.87,
       "bad": "up",
       "abs": 1.3,
       "rel": 0,
       "note": "stalls (10 active minutes without a new zone)",
       "perHero": {
-        "wren": 6,
-        "tobin": 10,
-        "pip": 9
+        "wren": 9.2,
+        "tobin": 8.8,
+        "pip": 8.6
       }
     },
     "optimiser.longestStallSec": {
-      "value": 12741,
+      "value": 11065.07,
       "bad": "up",
       "abs": 5700,
       "rel": 0.3,
       "note": "longest stretch without a new zone",
       "perHero": {
-        "wren": 19116,
-        "tobin": 10151,
-        "pip": 8956
+        "wren": 13251.6,
+        "tobin": 9476.4,
+        "pip": 10467.2
       }
     },
     "optimiser.wipesPerHour": {
-      "value": 44.97,
+      "value": 45.76,
       "bad": "up",
       "abs": 8,
       "rel": 0,
       "note": "times the hero fell, per hour",
       "perHero": {
-        "wren": 66.8,
-        "tobin": 14.1,
-        "pip": 54
+        "wren": 66.58,
+        "tobin": 15.12,
+        "pip": 55.58
       }
     },
     "optimiser.goldSpentShare": {
-      "value": 0.94,
+      "value": 0.95,
       "bad": "down",
       "abs": 0.1,
       "rel": 0,
       "note": "share of gold earned that was spent (a sink gap if it falls)",
       "perHero": {
-        "wren": 0.99,
+        "wren": 0.95,
         "tobin": 0.97,
-        "pip": 0.86
+        "pip": 0.94
       }
     },
     "optimiser.essHeldShare": {
-      "value": 0.22,
+      "value": 0.28,
       "bad": "up",
       "abs": 0.18,
       "rel": 0,
       "note": "essence made but still unspent at the end",
       "perHero": {
-        "wren": 0.06,
-        "tobin": 0.24,
-        "pip": 0.36
+        "wren": 0.26,
+        "tobin": 0.23,
+        "pip": 0.35
       }
     },
     "optimiser.deadFamilies": {
-      "value": 1,
+      "value": 1.33,
       "bad": "up",
       "abs": 1,
       "rel": 0,
       "note": "dead stock: material families with 90% or more of what was gathered still unspent",
       "perHero": {
-        "wren": 0,
-        "tobin": 1,
+        "wren": 0.8,
+        "tobin": 1.2,
         "pip": 2
       }
     },
@@ -338,9 +338,9 @@
       "rel": 0,
       "note": "dominance: the most-cast ability, share of casts",
       "perHero": {
-        "wren": 0.59,
+        "wren": 0.57,
         "tobin": 0.51,
-        "pip": 0.56
+        "pip": 0.58
       }
     },
     "optimiser.trainTopShare": {
@@ -350,57 +350,57 @@
       "rel": 0,
       "note": "dominance: the most-trained move, share of Training levels",
       "perHero": {
-        "wren": 0.26,
+        "wren": 0.25,
         "tobin": 0.25,
         "pip": 0.25
       }
     },
     "optimiser.gearTierMean": {
-      "value": 2.33,
+      "value": 2.37,
       "bad": "both",
       "abs": 0.75,
       "rel": 0,
       "note": "average tier of worn class gear",
       "perHero": {
-        "wren": 2.2,
+        "wren": 2.24,
         "tobin": 2.4,
-        "pip": 2.4
+        "pip": 2.48
       }
     },
     "optimiser.mechanicsPerHour": {
-      "value": 3.13,
+      "value": 3.12,
       "bad": "both",
       "abs": 2,
       "rel": 0.2,
       "note": "new unlocks and camp builds per active hour",
       "perHero": {
-        "wren": 3.2,
+        "wren": 3.16,
         "tobin": 3,
         "pip": 3.2
       }
     },
     "optimiser.mechanicsBurst10min": {
-      "value": 14,
+      "value": 13.27,
       "bad": "up",
       "abs": 2,
       "rel": 0,
       "note": "most unlocks and camp builds inside any 10 minutes",
       "perHero": {
-        "wren": 15,
-        "tobin": 13,
+        "wren": 13.6,
+        "tobin": 12.2,
         "pip": 14
       }
     },
     "optimiser.heroParity": {
-      "value": 0.15,
+      "value": 0.02,
       "bad": "up",
       "abs": 0.15,
       "rel": 0,
       "note": "widest gap of a starter from the median zone (share)",
       "perHero": {
-        "wren": 17,
-        "tobin": 20,
-        "pip": 20
+        "wren": 20,
+        "tobin": 19.8,
+        "pip": 19.4
       }
     }
   }

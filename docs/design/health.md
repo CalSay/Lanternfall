@@ -6,7 +6,7 @@ with three kinds of player and scores the result against `docs/design/health-bas
 ```text
 node tools/health.mjs                   run (about 40 seconds), print, write tools/.health/latest.json
 node tools/health.mjs --compare         also compare with the baseline; exit 1 when a metric moves past tolerance
-node tools/health.mjs --write-baseline  accept this run as the new baseline (tolerances already in the file are kept)
+node tools/health.mjs --write-baseline  accept the mean of 5 seed offsets as the baseline (about 3 min; tolerances kept)
 --only casual,active,optimiser   --jobs N   --json PATH   --seed-offset N
 ```
 
@@ -40,8 +40,8 @@ starters under the same persona.
 
 ## Tolerances
 
-Each baseline metric has a bad direction (`up`, `down`, or `both` for pacing, where faster is as suspect as slower) and an
-allowed move, `max(abs, rel x |baseline|)`. Runs repeat exactly for a seed, but they are chaotic: a code change that touches
+The baseline is the mean of five seed offsets. Each baseline metric has a bad direction (`up`, `down`, or `both` for pacing, where faster is as suspect as slower) and an
+allowed move, `max(abs, rel x |baseline|)`, held by the mean of the three heroes and (at twice the band) by each hero against their own baseline. A metric missing from the baseline fails. Runs repeat exactly for a seed, but they are chaotic: a code change that touches
 one random draw reshuffles them. So each band is at least three standard deviations of the metric over five seed offsets
 (`--seed-offset 0` to `4`, 2026-10-05), or a design band where that is wider. A regression has to clear the noise.
 
