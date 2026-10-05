@@ -253,13 +253,19 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 
 ## Working process
 
-- **Two agents:** Claude leads and integrates; Codex works in its own worktree. The feature track (abilities, combat,
-  Ascension, the chapel) moved to Codex on 2026-09-30. (2026-09-30; `docs/coord/two-agent-split.md`)
+- **Claude builds, Codex reviews.** Claude does the majority of the work. Codex is a third-party reviewer that is
+  free to slate Claude's work where it needs to; it reviews from PR #1
+  (`docs/handoff/claude-to-codex/reviewer/README.md`). Codex still draws new raster art when a card needs it.
+  (2026-10-05)
+- **Autopilot:** Claude plans, builds and merges into the integration branch on its own from an approved backlog,
+  with a daily digest. Cal approves batches, taps gated items (new systems, economy targets, saves, art packs,
+  story canon) and says "ship it" before anything reaches `main` or the live artifact. (2026-10-05)
 - **Speed and smoothness are checked constantly:** run `node tools/perf.mjs --quick` after each merge wave and fix any
   budget failure before new features. (2026-09-27)
-- **Steady mode:** at most 3 agents at once across each 5-hour window. On "pause", launch nothing new. (2026-09-28)
-- **Model routing:** opus for hard cross-system and balance work; sonnet for well-specified builds, UI, writing and
-  art from an approved guide; haiku for small mechanical jobs. (2026-09-28)
+- **Pace:** steady on weekdays (2 build threads at once), full at weekends (4). On "pause", launch nothing new.
+  (2026-09-28, 2026-10-05)
+- **Model routing:** set per thread by work type: Haiku runs and gathers, Sonnet makes, Opus decides and signs off.
+  The table lives in the project instructions. (2026-10-05)
 - **Deploys:** Netlify deploys only commits with "[deploy]" in the message, at most four times a day. (2026-09-28)
 - **Preview:** after each merge wave the owner gets a private preview artifact with its own save key. Preview builds
   never go to the live artifact. (2026-09-27)
@@ -268,6 +274,9 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 
 Kept only to explain current rules. Each line: the old decision, then what replaced it.
 
+- Two agents, with Codex owning the feature track (2026-09-30) -> Claude builds, Codex reviews (2026-10-05).
+- Steady mode of 3 agents per 5-hour window; opus/sonnet/haiku routing by difficulty (2026-09-28) -> pace by weekday
+  and weekend, routing by work type (2026-10-05).
 - Idle fighting, an Auto toggle with auto parry and dodge odds, offline combat at Auto's rate (2026-09-29, 2026-09-30)
   -> combat is active only (2026-10-01).
 - The party: companions, rarity power, packs of 3, formation, roles, the hero as one of three, Lanternbearer naming
