@@ -8,6 +8,8 @@
 //                                            tolerance in the bad direction (exit 2 if the run itself failed)
 //   node tools/health.mjs --write-baseline   write the run as the new baseline (keeps tolerances already in the file)
 //   --json PATH     where to write the full report      --only casual,active   run some personas
+//   --long          the long run instead: one hero-bot for 50 active hours (about 3 minutes a hero, three in parallel), scored
+//                   against the `long` section of the baseline. Works with --compare and --write-baseline too.
 //   --jobs N        parallel sim processes (default 4)   --seed-offset N       shift every fixed seed (for noise checks)
 //
 // The personas are policies of tools/sim.mjs (it drives the real game core in a vm, turn fights on), run through its
@@ -16,6 +18,8 @@
 //              visits (gathering only; fights earn nothing while away)
 //   active     one 60-minute session, plays turns well (parries and dodges most hits, casts abilities)
 //   optimiser  10 hours of the same bot: always buys the best gain per gold, crafts the next class piece, builds the camp
+//   long       (--long only) 50 hours of that same bot: where the last new zone landed, how much of the run is spent after
+//              it and after the last unlock (progress walls, an empty endgame), and what the finished build looks like
 // Event times are ACTIVE seconds (game ticks the player was there for), so away gaps do not count as play.
 // The balance targets themselves are in docs/DECISIONS.md and docs/design/combat-turn-build.md; this tool only
 // watches that the numbers a change moves stay inside the bands the last accepted baseline had.
@@ -31,7 +35,7 @@ const argv = process.argv.slice(2);
 const flag = n => argv.includes('--' + n);
 const opt = (n, d) => { const i = argv.indexOf('--' + n); return i >= 0 && argv[i + 1] && !argv[i + 1].startsWith('--') ? argv[i + 1] : d; };
 
-{ const known = ['compare', 'write-baseline', 'json', 'only', 'jobs', 'seed-offset', 'baseline-seeds'], bad = argv.filter(a => a.startsWith('--') && !known.includes(a.slice(2)));
+{ const known = ['compare', 'write-baseline', 'json', 'only', 'jobs', 'seed-offset', 'baseline-seeds', 'long'], bad = argv.filter(a => a.startsWith('--') && !known.includes(a.slice(2)));
   if (bad.length) { console.error('health: unknown option ' + bad.join(', ') + '; known: ' + known.map(k => '--' + k).join(' ')); process.exit(2); } }
 if (flag('compare') && flag('write-baseline')) { console.error('health: --compare and --write-baseline do not mix; write the baseline, then compare'); process.exit(2); }
 // sim.mjs class names for the three starters
@@ -40,12 +44,17 @@ const SEED_OFFSET = Number(opt('seed-offset', 0));
 const PERSONAS = {
   casual: { seed: 11, args: ['--days', '3', '--checkins', '8,13,19', '--session', '5', '--first', '5'], visitSec: 300 },
   active: { seed: 21, args: ['--policy', 'mixed', '--hours', '1', '--every', '600'] },
-  optimiser: { seed: 31, args: ['--policy', 'mixed', '--hours', '10', '--every', '3600'] }
+  optimiser: { seed: 31, args: ['--policy', 'mixed', '--hours', '10', '--every', '3600'] },
+  long: { seed: 41, args: ['--policy', 'mixed', '--hours', '50', '--every', '3600'], longOnly: true }
 };
+const DEFAULT_PERSONAS = Object.keys(PERSONAS).filter(p => !PERSONAS[p].longOnly);
 // Events that count as something the player feels. Not 'train' or 'soloEquip': those are the player spending,
 // not being given anything.
 const REWARD = new Set(['zoneClear', 'level', 'campBuilt', 'crafted', 'upgraded', 'trophy', 'scrollDrop', 'starFound', 'starLearned',
   'provingPassed', 'handsHire', 'deedTier', 'skillUp', 'unlock']);
+// What counts as the game opening something new (the long run's endgame clock): a zone, an unlock, a camp building, a
+// Proving, a hire, a Star learned, a trophy. Crafts, upgrades, levels and skill levels keep coming to the end, so they would hide an empty endgame.
+const NEW_THING = new Set(['zoneClear', 'unlock', 'campBuilt', 'provingPassed', 'handsHire', 'starLearned', 'trophy']);
 const STALL_SEC = 600;   // no new zone for 10 active minutes is a stall point
 const sum = o => Object.values(o).reduce((a, b) => a + b, 0);
 const mean = l => l.reduce((a, b) => a + b, 0) / l.length;
@@ -81,6 +90,8 @@ function analyse(persona, hero, d) {
   const stalls = gaps.filter(g => g.gap >= STALL_SEC);
   const longest = gaps.reduce((m, g) => g.gap > m.gap ? g : m, { gap: 0, zone: 1 });
   const atHour = h => { const s = d.samples.filter(x => x.a <= h * 3600 + 1); return act >= h * 3600 - 1 && s.length ? s[s.length - 1].maxZone : null; };
+  const lastZoneAt = clears.length ? clears[clears.length - 1].a : 0;
+  const news = d.ev.filter(e => NEW_THING.has(e.k)), lastNewAt = news.length ? news[news.length - 1].a : 0;
   const earned = sum(d.econ.earned), spent = sum(d.econ.spent);
   const mats = Object.fromEntries(Object.entries(d.mats).map(([k, v]) => [k, v.reduce((a, b) => a + b, 0)]));
   const made = {}; for (const part of Object.values(d.harvest)) for (const [k, n] of Object.entries(part)) made[k] = (made[k] || 0) + n;
@@ -103,6 +114,12 @@ function analyse(persona, hero, d) {
     deadFamilies: fam.filter(k => kept(k) >= 0.9).length, deadFamilyList: fam.filter(k => kept(k) >= 0.9),
     abilityCasts: casts, abilityTopShare: r2(top(d.casts)), abilitiesUsed: Object.keys(d.casts).length, abilityMix: d.casts,
     trainTopShare: r2(top(d.training)), training: d.training, starsSet: ((d.stars.set || {})[d.hero] || []).filter(Boolean).length,
+    zoneAt25h: atHour(25), zoneAt50h: atHour(50), lastNewZoneHour: r2(lastZoneAt / 3600), sinceLastZoneHours: r2((act - lastZoneAt) / 3600),
+    postZoneShare: act ? r2((act - lastZoneAt) / act) : 0, lastNewThingHour: r2(lastNewAt / 3600), postNewThingShare: act ? r2((act - lastNewAt) / act) : 0,
+    stallsOver1h: gaps.filter(g => g.gap >= 3600).length, stallsOver3h: gaps.filter(g => g.gap >= 10800).length,
+    stallList: gaps.filter(g => g.gap >= 3600).map(g => ({ zone: g.zone, hours: r2(g.gap / 3600) })),
+    starSet: ((d.stars.set || {})[d.hero] || []).filter(Boolean), starsLit: Array.isArray(d.stars.lit) ? d.stars.lit.length : Object.keys(d.stars.lit || {}).length,
+    gearWorn: Object.fromEntries(Object.entries(d.gear).map(([pos, g]) => [pos, `t${g.t} r${g.r}${g.plus ? ' +' + g.plus : ''}`])),
     zoneByHour: Array.from({ length: Math.floor(hours) }, (_, i) => atHour(i + 1)),
     mechanicsByHour: Array.from({ length: Math.max(1, Math.ceil(hours)) }, (_, i) => unlocks.filter(e => e.a >= i * 3600 && e.a < (i + 1) * 3600).length),
     gearTierMean: tiers.length ? r2(mean(tiers)) : 0, mechanicsPerHour: r2(unlocks.length / Math.max(hours, 1 / 60)), mechanicsBurst10min: burst,
@@ -155,7 +172,28 @@ const METRICS = [
   ['optimiser', 'gearTierMean', 'mean', 'both', 0.75, 0, 'average tier of worn class gear'],
   ['optimiser', 'mechanicsPerHour', 'mean', 'both', 2, 0.2, 'new unlocks and camp builds per active hour'],
   ['optimiser', 'mechanicsBurst10min', 'mean', 'up', 2, 0, 'most unlocks and camp builds inside any 10 minutes'],
-  ['optimiser', 'heroParity', 'parity', 'up', 0.15, 0, 'widest gap of a starter from the median zone (share)']
+  ['optimiser', 'heroParity', 'parity', 'up', 0.15, 0, 'widest gap of a starter from the median zone (share)'],
+  // The long run (--long). Bands set by an Opus high review of the first 3-seed run (each is 3x the noise or more; the file's copy is the one that counts). lastNewZoneHour and postZoneShare restate sinceLastZoneHours, so they are wide.
+  ['long', 'zoneEnd', 'mean', 'both', 2.5, 0, 'zone after 50 hours of best-value play'],
+  ['long', 'zoneAt10h', 'mean', 'both', 2.5, 0, 'zone after 10 hours'],
+  ['long', 'zoneAt25h', 'mean', 'both', 2, 0, 'zone after 25 hours'],
+  ['long', 'lastNewZoneHour', 'mean', 'down', 10, 0, 'hour of the last new zone (a fall means the world ran out sooner)'],
+  ['long', 'sinceLastZoneHours', 'mean', 'up', 7, 0, 'hours at the end of the run since the last new zone (progress wall)'],
+  ['long', 'postZoneShare', 'mean', 'up', 0.2, 0, 'share of the run spent past the last new zone'],
+  ['long', 'postNewThingShare', 'mean', 'up', 0.07, 0, 'share of the run spent past the last unlock, zone, camp building, Proving, hire, Star or trophy (empty endgame)'],
+  ['long', 'stallsOver1h', 'mean', 'up', 3, 0, 'stretches of an hour or more without a new zone'],
+  ['long', 'stallsOver3h', 'mean', 'up', 1, 0, 'stretches of three hours or more without a new zone (a new long wall)'],
+  ['long', 'longestStallSec', 'mean', 'up', 14400, 0.5, 'longest stretch without a new zone'],
+  ['long', 'wipesPerHour', 'mean', 'up', 8, 0.2, 'times the hero fell, per hour'],
+  ['long', 'goldSpentShare', 'mean', 'down', 0.05, 0, 'share of gold earned that was spent (a sink gap if it falls)'],
+  ['long', 'essHeldShare', 'mean', 'up', 0.2, 0, 'essence made but still unspent at the end'],
+  ['long', 'deadFamilies', 'mean', 'up', 1, 0, 'dead stock: material families with 90% or more of what was gathered still unspent'],
+  ['long', 'abilityTopShare', 'mean', 'up', 0.2, 0, 'dominance (reference): the most-cast ability, share of casts'],
+  ['long', 'trainTopShare', 'mean', 'up', 0.2, 0, 'dominance (reference): the most-trained move, share of Training levels'],
+  ['long', 'starsSet', 'mean', 'down', 1, 0, 'Stars set at the end (reference)'],
+  ['long', 'gearTierMean', 'mean', 'both', 1, 0, 'average tier of worn class gear at the end'],
+  ['long', 'mechanicsPerHour', 'mean', 'down', 0.12, 0, 'new unlocks and camp builds per active hour'],
+  ['long', 'heroParity', 'parity', 'up', 0.15, 0, 'widest gap of a starter from the median zone (share)']
 ];
 const num = x => typeof x === 'number' && Number.isFinite(x);
 
@@ -183,7 +221,8 @@ function aggregate(runs) {
 
 function printReport(runs, agg, base) {
   const f = x => x == null ? 'n/a' : typeof x === 'number' ? String(r2(x)) : String(x);
-  console.log('Lanternfall health: casual (3 days of 3 short visits), active (60 min), optimiser (10 h); Wren, Tobin and Pip on fixed seeds, turn fights on');
+  console.log(LONG ? 'Lanternfall long run: one hero-bot for 50 active hours; Wren, Tobin and Pip on fixed seeds, turn fights on'
+    : 'Lanternfall health: casual (3 days of 3 short visits), active (60 min), optimiser (10 h); Wren, Tobin and Pip on fixed seeds, turn fights on');
   console.log('');
   console.log('metric'.padEnd(34) + 'value'.padStart(9) + '  per hero (wren / tobin / pip)'.padEnd(34) + (base ? 'baseline   verdict' : ''));
   for (const [k, a] of Object.entries(agg)) {
@@ -204,7 +243,14 @@ function printReport(runs, agg, base) {
     console.log(`${persona}: gold earned/spent ` + HEROES.map(([h]) => m[h] ? `${h} ${m[h].goldEarned}/${m[h].goldSpent} ${JSON.stringify(m[h].spendShares)}` : '').join(' | '));
     console.log(`${persona}: dominant choices ` + HEROES.map(([h]) => m[h] ? `${h} casts ${JSON.stringify(m[h].abilityMix)}, training top ${m[h].trainTopShare}, stars set ${m[h].starsSet}, gear tier ${m[h].gearTierMean}` : '').join(' | '));
     console.log(`${persona}: material kept (most hoarded family, dead families) ` + HEROES.map(([h]) => m[h] ? `${h} ${m[h].matsWorstFamily || '-'} ${m[h].matsWorstHeldShare} [${m[h].deadFamilyList.join(' ') || 'none'}]` : '').join(', '));
-    if (persona === 'optimiser') {
+    if (persona === 'long') {
+      console.log(`${persona}: last new zone (hour, zone, hours since) ` + HEROES.map(([h]) => m[h] ? `${h} ${m[h].lastNewZoneHour}h, zone ${m[h].zoneEnd}, ${m[h].sinceLastZoneHours}h` : '').join(' | '));
+      console.log(`${persona}: share of the run past the last new zone / past the last new thing ` + HEROES.map(([h]) => m[h] ? `${h} ${m[h].postZoneShare} / ${m[h].postNewThingShare}` : '').join(' | '));
+      console.log(`${persona}: stalls of an hour or more (zone, hours) ` + HEROES.map(([h]) => m[h] ? `${h} ${m[h].stallList.map(x => x.zone + ':' + x.hours).join(' ') || 'none'}` : '').join(' | '));
+      console.log(`${persona}: Stars set at the end ` + HEROES.map(([h]) => m[h] ? `${h} ${m[h].starSet.join(',') || 'none'} (${m[h].starsLit} lit)` : '').join(' | '));
+      console.log(`${persona}: gear worn at the end ` + HEROES.map(([h]) => m[h] ? `${h} ${Object.entries(m[h].gearWorn).map(([k, v]) => k + ' ' + v).join(', ')}` : '').join(' | '));
+    }
+    if (persona === 'optimiser' || persona === 'long') {
       console.log(`${persona}: zone by hour ` + HEROES.map(([h]) => m[h] ? `${h} ${m[h].zoneByHour.join('/')}` : '').join(' | '));
       console.log(`${persona}: new mechanics by hour ` + HEROES.map(([h]) => m[h] ? `${h} ${m[h].mechanicsByHour.join('/')}` : '').join(' | '));
     }
@@ -232,8 +278,9 @@ function verdict(cur, b) {
 }
 
 // ---- main ----
-const only = opt('only') ? opt('only').split(',') : Object.keys(PERSONAS);
-for (const p of only) if (!PERSONAS[p]) { console.error('unknown persona ' + p + '; use ' + Object.keys(PERSONAS).join(', ')); process.exit(2); }
+const LONG = flag('long');
+const only = LONG ? ['long'] : opt('only') ? opt('only').split(',') : DEFAULT_PERSONAS;
+for (const p of only) if (!PERSONAS[p] || PERSONAS[p].longOnly && !LONG) { console.error('unknown persona ' + p + '; use ' + DEFAULT_PERSONAS.join(', ') + ' (the long run is --long)'); process.exit(2); }
 const t0 = Date.now(), tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'lf-health-'));
 async function runOnce(offset) {
   const jobs = only.flatMap(p => HEROES.map(([h, c]) => () => simRun(p, h, c, tmp, offset)));
@@ -245,8 +292,9 @@ let runs;
 try { runs = await runOnce(SEED_OFFSET); } catch (e) { console.error('health: ' + e.message); process.exit(2); }
 process.on('exit', () => fs.rmSync(tmp, { recursive: true, force: true }));
 const agg = aggregate(runs);
-const base = flag('compare') && fs.existsSync(BASELINE) ? JSON.parse(fs.readFileSync(BASELINE, 'utf8')) : null;
-if (flag('compare') && !base) { console.error('health: no baseline at docs/design/health-baseline.json; run with --write-baseline first'); process.exit(2); }
+const baseFile = flag('compare') && fs.existsSync(BASELINE) ? JSON.parse(fs.readFileSync(BASELINE, 'utf8')) : null;
+const base = baseFile && (LONG ? baseFile.long : baseFile);   // the long run keeps its own section of the file
+if (flag('compare') && !base) { console.error('health: no ' + (LONG ? 'long-run section in ' : 'baseline at ') + 'docs/design/health-baseline.json; run with ' + (LONG ? '--long ' : '') + '--write-baseline first'); process.exit(2); }
 printReport(runs, agg, base);
 
 const report = { version: 1, personas: only, seedOffset: SEED_OFFSET, seconds: Math.round((Date.now() - t0) / 1000),
@@ -259,7 +307,7 @@ console.log(`\nwrote ${path.relative(ROOT, outPath)} (${report.seconds}s)`);
 
 // The baseline is the mean of --baseline-seeds (default 5) seed offsets, so one unlucky seed is not the yardstick.
 async function averaged() {
-  const n = Number(opt('baseline-seeds', 5)), aggs = [agg];
+  const n = Number(opt('baseline-seeds', LONG ? 3 : 5)), aggs = [agg];
   console.log(`\nbaseline: averaging ${n} seed offsets (${SEED_OFFSET}..${SEED_OFFSET + n - 1})`);
   for (let i = 1; i < n; i++) aggs.push(aggregate(await runOnce(SEED_OFFSET + i)));
   const out = {};
@@ -270,20 +318,23 @@ async function averaged() {
     let value = agg[k].value;
     if (agg[k].how === 'parity') { const med = median(l); value = r2(Math.max(...l.map(v => Math.abs(v - med) / Math.max(1, med)))); }
     else if (l.length) value = r2(mean(l));
-    out[k] = { ...agg[k], value, perHero: ph };
+    const means = aggs.map(a => a[k].value).filter(num), mu = means.length ? mean(means) : 0;
+    out[k] = { ...agg[k], value, perHero: ph, sd: r2(Math.sqrt(mean(means.map(v => (v - mu) ** 2)))) };   // spread of the mean over the seed offsets
   }
   return out;
 }
 if (flag('write-baseline')) {
-  const old = fs.existsSync(BASELINE) ? JSON.parse(fs.readFileSync(BASELINE, 'utf8')) : { metrics: {} };
+  const oldFile = fs.existsSync(BASELINE) ? JSON.parse(fs.readFileSync(BASELINE, 'utf8')) : { metrics: {} };
+  const old = LONG ? (oldFile.long || { metrics: {} }) : oldFile;
   const metrics = { ...old.metrics };   // --only rewrites just the selected personas' entries
   const accepted = await averaged();
   for (const [k, a] of Object.entries(accepted)) {
     const o = old.metrics[k] || {};
-    metrics[k] = { value: a.value, bad: o.bad || a.bad, abs: o.abs ?? a.abs, rel: o.rel ?? a.rel, note: a.note, perHero: a.perHero };
+    metrics[k] = { value: a.value, bad: o.bad || a.bad, abs: o.abs ?? a.abs, rel: o.rel ?? a.rel, note: a.note, perHero: a.perHero, ...(LONG ? { sd: a.sd } : {}) };
   }
-  const baseline = { version: 1, about: 'Accepted health numbers. Regenerate with: node tools/health.mjs --write-baseline. node tools/health.mjs --compare exits 1 when a metric moves past max(abs, rel * |value|) in its bad direction (bad: up, down, both). See tools/health.mjs for the personas.',
-    seeds: Object.fromEntries(Object.entries(PERSONAS).map(([p, v]) => [p, v.seed])), metrics };
+  const baseline = LONG ? { ...oldFile, long: { about: 'The 50-hour run (node tools/health.mjs --long). Regenerate with: node tools/health.mjs --long --write-baseline (mean of 3 seed offsets, about 10 min). sd is the spread of the mean over those seeds. node tools/health.mjs --long --compare uses this section.',
+      seed: PERSONAS.long.seed, metrics } } : { version: 1, about: 'Accepted health numbers. Regenerate with: node tools/health.mjs --write-baseline. node tools/health.mjs --compare exits 1 when a metric moves past max(abs, rel * |value|) in its bad direction (bad: up, down, both). See tools/health.mjs for the personas.',
+    seeds: Object.fromEntries(DEFAULT_PERSONAS.map(p => [p, PERSONAS[p].seed])), metrics, ...(oldFile.long ? { long: oldFile.long } : {}) };
   fs.mkdirSync(path.dirname(BASELINE), { recursive: true });
   fs.writeFileSync(BASELINE, JSON.stringify(baseline, null, 2) + '\n');
   console.log('wrote ' + path.relative(ROOT, BASELINE));

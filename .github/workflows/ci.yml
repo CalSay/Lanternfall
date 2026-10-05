@@ -53,7 +53,25 @@ jobs:
         # Tighten it once there is a self-hosted runner or a runner-relative budget.
         continue-on-error: true
         run: node tools/perf.mjs --quick
-      # SIM-TARGETS: add the sim target step here once f-health lands (tools/health.mjs).
+
+  # SIM-TARGETS: the health bots play the real game and are scored against docs/design/health-baseline.json. A balance
+  # change that moves a number past its tolerance fails here; accept it by running --write-baseline in the same PR.
+  # Its own job, so it runs beside the checks and adds nothing to their time.
+  health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Health (casual, active, optimiser)
+        run: node tools/health.mjs --compare
+      - name: Health, 50-hour run (report only until its bands have held for a few merges)
+        continue-on-error: true
+        run: node tools/health.mjs --long --compare
 
   path-guard:
     if: github.event_name == 'pull_request'

@@ -8,6 +8,7 @@ node tools/health.mjs                   run (about 40 seconds), print, write too
 node tools/health.mjs --compare         also compare with the baseline; exit 1 when a metric moves past tolerance
 node tools/health.mjs --write-baseline  accept the mean of 5 seed offsets as the baseline (about 3 min; tolerances kept)
 --only casual,active,optimiser   --jobs N   --json PATH   --seed-offset N
+node tools/health.mjs --long            the 50-hour run (about 3 minutes); add --compare or --write-baseline (about 8 min)
 ```
 
 ## The players
@@ -20,6 +21,7 @@ Time below is active time: game ticks the player was there for. Away gaps do not
 | casual | three 5-minute visits a day (08, 13, 19h) for 3 in-game days; the game's own away gains run between visits | the sim's mixed policy; fights by hand, the morning gap gathers |
 | active | one 60-minute session | parries about 60% of heavy hits and dodges most of the rest, casts every off-cooldown ability, learns Scrolls and fills the ability slots, builds the camp |
 | optimiser | 10 hours | the same bot: always buys the best gain per gold, crafts the next class piece |
+| long (`--long`) | 50 hours, one run per starter, seed 41 | the optimiser's bot, kept going |
 
 The bot learns a Scroll the moment it can and slots abilities in the Abilities screen's order. Hero parity is the three
 starters under the same persona.
@@ -37,6 +39,22 @@ starters under the same persona.
 | Dominant choices | `abilityTopShare` (most-cast ability), `trainTopShare` (most-trained move), Stars set, worn gear tier |
 | Hero parity | `heroParity`: the widest gap of a starter from the median zone |
 | New mechanics unlocked per hour | `mechanicsPerHour`, `mechanicsByHour`, `mechanicsBurst10min` |
+
+## The long run
+
+`--long` plays 50 active hours per starter (about 3 minutes, the three heroes in parallel) and is scored against the `long`
+section of the baseline. It exists to catch what a 10-hour run cannot: a progress wall late in the game, and an empty endgame.
+
+| Metric | Reads as |
+|---|---|
+| `zoneEnd`, `zoneAt10h`, `zoneAt25h` | how far the hero got, and when |
+| `lastNewZoneHour`, `sinceLastZoneHours`, `postZoneShare` | when the last new zone landed, and how much of the run came after it |
+| `postNewThingShare` | share of the run after the last new zone, unlock, camp building, Proving, hire, Star or trophy: an empty endgame |
+| `stallsOver1h`, `longestStallSec` | progress walls: stretches of an hour or more without a new zone (the report lists each, with its zone) |
+| `goldSpentShare`, `essHeldShare`, `deadFamilies` | sinks still working after 50 hours |
+| `abilityTopShare`, `trainTopShare`, `starsSet`, `gearTierMean` | the dominant build, for reference (not ranked); the report also prints the Stars set and the gear worn at the end |
+
+The `long` baseline is the mean of 3 seed offsets and records `sd`, the spread of that mean, so a band can be read against the noise.
 
 ## Tolerances
 
