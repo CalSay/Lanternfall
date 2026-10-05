@@ -155,5 +155,6 @@
   }
   bountyRefresh(true);
   // exported to later files via the shared scope
-  var BOUNTY_API = { refresh: bountyRefresh, claim: claimBounty, reroll: rerollBounty, text: bountyText, reward: bountyReward };
+  // kinds: every k a saved slot may hold (the board's kinds plus the retired 'tap'); the save-code check reads it.
+  var BOUNTY_API = { refresh: bountyRefresh, claim: claimBounty, reroll: rerollBounty, text: bountyText, reward: bountyReward, kinds: Object.keys(BTY_KINDS).concat('tap') };
 }

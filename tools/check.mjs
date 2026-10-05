@@ -5824,6 +5824,9 @@ if (section('save codec validation (C5)')) try {
   for(const key of ['__proto__','constructor','prototype']){const raw=original.slice(0,-1)+',"extra":{'+JSON.stringify(key)+':{"polluted":true}}}';assert(!rawCheck(raw).ok&&!decode(codeForBytes(Buffer.from(raw))).ok,`C5: rejects reserved ${key} at any depth`);}
   assert(!rawCheck(original.replace(/"gold":[0-9.]+/,'"gold":1e309')).ok,'C5: rejects JSON numeric overflow');
   assert(E('(()=>{const s=fresh();s.extra=s;return !validateSave(s).ok;})()')&&E('(()=>{const s=fresh();s.extra=Array(2);return !validateSave(s).ok;})()'),'C5: cycles and sparse non-JSON lists are rejected');
+  { const kinds=JSON.parse(E('JSON.stringify(BOUNTY_API.kinds)')), slot=k=>`(()=>{const s=fresh();s.bounties.slots=[{k:${JSON.stringify(k)},need:1,have:0,rew:"gold",rr:0}];return validateSave(s).ok;})()`;
+    const bad=kinds.filter(k=>!E(slot(k)));
+    assert(kinds.length>=15&&kinds.includes('hunt')&&kinds.includes('tap')&&!bad.length&&!E(slot('nope')),`C5: a save code accepts every bounty kind the board can hold (${kinds.length} kinds${bad.length?'; refused '+bad.join(', '):''}) and refuses an unknown one`); }
   const deep=base();let cursor=deep;for(let i=0;i<66;i++)cursor=cursor.extra={};assert(!validate(deep).ok,'C5: deeply nested data is rejected');
   assert(!E('decodeSave(" ".repeat(SAVECODE_LIMITS.codeChars+1)).ok'),'C5: text-size limit applies before trimming');
   assert(E('(()=>{const s=fresh();s.extra="x".repeat(SAVECODE_LIMITS.jsonBytes);try{encodeSave(s);return false;}catch{return true;}})()'),'C5: oversized exports are refused');
