@@ -7462,13 +7462,13 @@ if (section('stars (browser)')) try {
           for (const id of ['readylamp', 'sparkguard', 'turning', 'huntstep', 'serrated', 'coldsteel']) S.stars.own[id] = 1;
           S.stars.learned.huntstep = 1; S.stars.learned.turning = 1; setTab('stars'); 1`);
         await page.waitForTimeout(400);
-        const r0 = JSON.parse(await X(`JSON.stringify({ stars: document.querySelectorAll('#sec-stars .sr-map .sr-st').length, unk: document.querySelectorAll('#sec-stars .sr-map .sr-st.unk').length,
+        const r0 = JSON.parse(await X(`JSON.stringify({ own: Object.keys(S.stars.own).length, stars: document.querySelectorAll('#sec-stars .sr-map .sr-st').length, unk: document.querySelectorAll('#sec-stars .sr-map .sr-st.unk').length,
           skies: [...document.querySelectorAll('#sec-stars .sr-sky')].map(g => g.dataset.sky).join(), chips: document.querySelectorAll('#sec-stars .sr-top .sr-chip').length,
           set: document.querySelectorAll('#sec-stars .sr-top .sr-chip.set').length, lit: document.querySelectorAll('#sec-stars .sr-top .sr-chip.lit').length,
           pts: (document.querySelector('#sec-stars .sr-pts') || { getAttribute: () => '' }).getAttribute('aria-label') || '',
           visible: !!document.querySelector('#sec-stars') && document.querySelector('#sec-stars').offsetParent !== null })`));
-        assert(r0.visible && r0.stars === 43 && r0.unk === 37 && r0.skies === 'hollow,fen,coast,hunt,deep,provings' && r0.chips === 5 && r0.set === 3 && r0.lit === 2 && r0.pts === 'Star points: 10 free of 10',
-          `stars UI ${w}x${h}: Hero > Stars shows the loadout (3 set, 2 lit, the points) and a map of six constellations with all 43 stars, 37 of them faint (not found) (${JSON.stringify(r0)})`);
+        assert(r0.visible && r0.stars === 43 && r0.own >= 6 && r0.unk === 43 - r0.own && r0.skies === 'hollow,fen,coast,hunt,deep,provings' && r0.chips === 5 && r0.set === 3 && r0.lit === 2 && r0.pts === 'Star points: 10 free of 10',
+          `stars UI ${w}x${h}: Hero > Stars shows the loadout (3 set, 2 lit, the points) and a map of six constellations with all 43 stars, the ones not found faint (${JSON.stringify(r0)})`);
         // a tap on a star opens its card; Slot 1 sets it
         await page.click('#sec-stars .sr-st[data-star="serrated"]'); await page.waitForTimeout(150);
         const c1 = JSON.parse(await X(`JSON.stringify({ id: (document.querySelector('#sec-stars .sr-card') || {}).dataset.star, name: (document.querySelector('#sec-stars .sr-card .sr-t b') || {}).textContent,
