@@ -12,3 +12,21 @@ to `claude/*` branches or `main`, and never publish the artifact.
 
 Before handing off: `node tools/build.mjs`, then `node tools/check.mjs` (sharded, about 2 minutes; see
 "How the checks work" in `docs/ARCHITECTURE.md`).
+
+## Code Review Rules
+
+These apply to every pull request Codex reviews in this repo, whether triggered automatically or by `@codex review`.
+Most PRs come from Claude's Autopilot (`claude/ap-*` branches into `claude/elegant-johnson-m6k00u`). The owner wants a
+tough outside reviewer: report real problems plainly and don't pass work you don't believe in.
+
+- If `docs/review/` exists, use the rubric the PR body names (`Rubric: <type>`) and score each criterion. A score of 1
+  or 2 is a P1 finding.
+- **P0:** an old v5 save that would lose data or fail to load; a renamed or repurposed save field; a change to the
+  online layer (`80-online.js`, `52-raid.js`, `74-ui-raid.js`, the db/room/user shapes in `CLAUDE.md`); a save key change.
+- **P1:** a new save field without a `registerState`/`fresh()` default; different rewards for active and away play, or a
+  reward paid twice; a check weakened, skipped or deleted, or a performance budget relaxed; a shared file edited outside
+  its extension point (`docs/ARCHITECTURE.md`); `dist/lanternfall.html` not rebuilt; a choice that is always best; a
+  menu or layout that breaks at 360px wide or ignores reduced motion; an acceptance line in the PR body that the diff
+  doesn't meet.
+- **P2:** player-facing copy that isn't short, plain and active; names a player wouldn't use; unclear UI; dead code.
+- Don't flag formatting or lint; CI covers those.
