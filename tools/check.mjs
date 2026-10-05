@@ -204,11 +204,15 @@ if (section('smoke')) try {
 // ---- 3. saves: fresh v5 fixtures, and a foreign or broken save starts a new game (W3-C) ----
 // tests/fixtures/save-{early,mid,late}.json are v5 saves written by the game (tools/sim.mjs --snap / --snapday: Wren 20 min,
 // Tobin day 4, Pip on the coast). There is no migration: a save from another key or a broken one is never read.
+// Their empty bounty slots wait until 2100 (edited by hand): load refills an empty slot once the real clock passes its
+// wait, and that refill would read as a lost field here. A re-snapped fixture needs the same edit (checked below).
 if (section('saves')) try {
   const fx = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
   for (const f of ['save-early.json', 'save-mid.json', 'save-late.json']) {
     const raw = fx(f), old = JSON.parse(raw);
     assert(old.v === 5, `${f}: is a v5 save`);
+    const due = ((old.bounties || {}).slots || []).filter(b => b && b.k === null && b.wait < Date.now() + 365 * 864e5);
+    assert(!due.length, `${f}: empty bounty slots wait well past the real clock (else set their wait to 4102444800000)` + (due.length ? ': ' + due.map(b => new Date(b.wait).toISOString()).join(', ') : ''));
     const g = loadCore({ storage: memoryStorage({ [KEY]: raw }), extraSource: "registerState('zz_feature', { n: 0 });\n" });
     const S = JSON.parse(JSON.stringify(g.eval('S')));
     const d = c11SaveSubsetDiff(old, S);
@@ -5824,6 +5828,23 @@ if (section('save codec validation (C5)')) try {
   for(const key of ['__proto__','constructor','prototype']){const raw=original.slice(0,-1)+',"extra":{'+JSON.stringify(key)+':{"polluted":true}}}';assert(!rawCheck(raw).ok&&!decode(codeForBytes(Buffer.from(raw))).ok,`C5: rejects reserved ${key} at any depth`);}
   assert(!rawCheck(original.replace(/"gold":[0-9.]+/,'"gold":1e309')).ok,'C5: rejects JSON numeric overflow');
   assert(E('(()=>{const s=fresh();s.extra=s;return !validateSave(s).ok;})()')&&E('(()=>{const s=fresh();s.extra=Array(2);return !validateSave(s).ok;})()'),'C5: cycles and sparse non-JSON lists are rejected');
+  { // every bounty the board really draws (from each fixture's state) passes; malformed slots of each shape are refused
+    const seen=new Set(), refused=[];
+    for (const f of ['save-early.json','save-mid.json','save-late.json']) {
+      const h=loadCore({seed:77,storage:memoryStorage({[KEY]:fs.readFileSync(path.join(ROOT,'tests','fixtures',f),'utf8')})});
+      const out=JSON.parse(h.eval(`JSON.stringify((()=>{const out=[];for(let i=0;i<80;i++){S.bounties.slots=S.bounties.slots.map(b=>({k:null,wait:0,rr:b&&b.rr||0}));BOUNTY_API.refresh();const r=validateSave(S);out.push([S.bounties.slots.map(b=>b.k),r.ok?'':r.error]);}return out;})())`));
+      for (const [ks,err] of out) { ks.forEach(k=>seen.add(k)); if (err) refused.push(f+': '+ks.join('/')+': '+err); }
+    }
+    assert(seen.size>=10&&!refused.length,`C5: a save code accepts every bounty the board draws (${seen.size} kinds drawn: ${[...seen].sort().join(', ')})`+(refused.length?'; refused '+refused[0]:''));
+    const slot=b=>E(`(()=>{const s=fresh();s.bounties.slots=[${JSON.stringify(Object.assign({need:1,have:0,rew:'gold',rr:0},b))}];const r=validateSave(s);return r.ok?'':r.error;})()`);
+    const bad={ 'unknown kind':{k:'nope'}, 'hunt without foe':{k:'hunt',z:3}, 'hunt foe unknown':{k:'hunt',z:3,foe:'dragon'}, 'kill without zone':{k:'kill'},
+      'forage bad family':{k:'forage',fam:'moss'}, 'make bad station':{k:'make',st:'oven'}, 'bogus reward':{k:'forge',rew:'bogus',rewT:1,rewN:5},
+      'reward tier 9':{k:'forge',rew:'ess',rewT:9,rewN:5}, 'reward amount missing':{k:'boss',rew:'ess',rewT:1}, 'reward amount 0':{k:'boss',have:1,rew:'ess',rewT:1,rewN:0}, 'need 0':{k:'crit',need:0},
+      'have negative':{k:'crit',have:-1}, 'x not a number':{k:'crit',x:'bad'},
+      'x near zero':{k:'crit',have:1,x:5e-324}, 'x too big':{k:'crit',x:3}, 'need huge':{k:'crit',need:1e9}, 'zone huge':{k:'kill',z:1e9}, 'reward amount huge':{k:'boss',rew:'ess',rewT:1,rewN:1e9} };
+    const passed=Object.entries(bad).filter(([,b])=>!slot(b)).map(([n])=>n);
+    const good={k:'hunt',z:3,foe:'slime',need:20,have:4,rew:'ess',rewT:1,rewN:12,x:1.1,elite:true};
+    assert(!passed.length&&!slot(good)&&!slot({k:'tap',need:100}),'C5: a save code refuses malformed bounty slots ('+Object.keys(bad).length+' cases) and keeps good ones'+(passed.length?'; let through: '+passed.join(', '):slot(good)?'; refused good hunt: '+slot(good):'')); }
   const deep=base();let cursor=deep;for(let i=0;i<66;i++)cursor=cursor.extra={};assert(!validate(deep).ok,'C5: deeply nested data is rejected');
   assert(!E('decodeSave(" ".repeat(SAVECODE_LIMITS.codeChars+1)).ok'),'C5: text-size limit applies before trimming');
   assert(E('(()=>{const s=fresh();s.extra="x".repeat(SAVECODE_LIMITS.jsonBytes);try{encodeSave(s);return false;}catch{return true;}})()'),'C5: oversized exports are refused');
@@ -7644,6 +7665,10 @@ if (section('C29 turn fights (core)')) try {
       `C29: zone 1 is five turn fights then its boss; the first win drops a Moss Scroll (${E('__seq.join()')}, Scrolls ${E('JSON.stringify(S.abil.scrolls)')})`);
     assert(E('__tc.length') > 10 && E('__tc.every(x => /^(hero|foe):handoff$/.test(x))') && E('__tc.some(x => x.startsWith("foe"))'),
       `C29: every change of turn pauses (owner) while a banner says whose turn it is (${E('__tc.slice(0, 4).join()')})`); }
+  // a lethal hit from a vampiric elite wipes the hero, which clears the live fight, before the heal lands (found by the health bots)
+  { const { E } = fresh('wren'); E('TURN_LIVE = null');
+    let threw = ''; try { E('TURN_LIVE_IO.healFoe(5)'); } catch (e) { threw = e.message; }
+    assert(!threw, `C29: a vampiric heal that lands after the fight was cleared does not throw (${threw})`); }
   // the Speed gauges: equal Speed alternates; a hero twice as fast acts twice, never three times, in a row
   { const { E } = fresh('wren');
     E('S.zone = 1; spawn()'); E('tick(0.05)');

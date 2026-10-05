@@ -266,7 +266,8 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   (2026-09-28, 2026-10-05)
 - **Model routing:** set per thread by work type: Haiku runs and gathers, Sonnet makes, Opus decides and signs off.
   The table lives in the project instructions. (2026-10-05)
-- **Deploys:** Netlify deploys only commits with "[deploy]" in the message, at most four times a day. (2026-09-28)
+- **Deploys:** one Netlify deploy a week, at 00:00 UK time on Monday, only if something merged that week and the
+  build is green. Netlify still builds only commits with "[deploy]" in the message. (2026-09-28, 2026-10-05)
 - **Preview:** after each merge wave the owner gets a private preview artifact with its own save key. Preview builds
   never go to the live artifact. (2026-09-27)
 
@@ -274,6 +275,7 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 
 Kept only to explain current rules. Each line: the old decision, then what replaced it.
 
+- Netlify deploys up to four times a day (2026-09-28) -> one deploy a week, Monday 00:00 UK (2026-10-05).
 - Two agents, with Codex owning the feature track (2026-09-30) -> Claude builds, Codex reviews (2026-10-05).
 - Steady mode of 3 agents per 5-hour window; opus/sonnet/haiku routing by difficulty (2026-09-28) -> pace by weekday
   and weekend, routing by work type (2026-10-05).

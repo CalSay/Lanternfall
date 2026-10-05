@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git status:*)", "Bash(git diff:*)", "Bash(git log:*)", "Bash(git show:*)",
+      "Bash(git fetch:*)", "Bash(git branch:*)", "Bash(git switch:*)", "Bash(git checkout:*)",
+      "Bash(git worktree:*)", "Bash(git add:*)", "Bash(git commit:*)", "Bash(git merge:*)",
+      "Bash(git merge-base:*)", "Bash(git rev-parse:*)", "Bash(git ls-remote:*)",
+      "Bash(git push origin claude/*)", "Bash(git push -u origin claude/*)",
+      "Bash(git push origin --delete claude/*)", "Bash(git push origin --delete codex/*)",
+      "Bash(node tools/build.mjs:*)", "Bash(node tools/check.mjs:*)",
+      "mcp__github__list_branches", "mcp__github__create_branch",
+      "mcp__github__list_pull_requests", "mcp__github__pull_request_read",
+      "mcp__github__create_pull_request", "mcp__github__update_pull_request",
+      "mcp__github__update_pull_request_branch", "mcp__github__add_issue_comment",
+      "mcp__github__issue_write", "mcp__github__get_commit", "mcp__github__list_commits",
+      "mcp__github__get_file_contents", "mcp__github__actions_get",
+      "mcp__github__actions_list", "mcp__github__get_job_logs",
+      "mcp__claude-code-remote__subscribe_pr_activity",
+      "mcp__claude-code-remote__unsubscribe_pr_activity"
+    ],
+    "deny": [
+      "Bash(git push --force:*)", "Bash(git push -f:*)",
+      "Bash(git push origin main:*)", "Bash(git push -u origin main:*)",
+      "Bash(git push origin HEAD:main:*)", "Bash(git push origin *:main)",
+      "Bash(git push origin --delete main)",
+      "mcp__Netlify__netlify-deploy-services-updater",
+      "mcp__Netlify__netlify-project-services-updater",
+      "mcp__Netlify__netlify-extension-services-updater"
+    ]
+  }
+}

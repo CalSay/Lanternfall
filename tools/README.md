@@ -60,3 +60,13 @@ core-only diagnostic, not a requirement that intentional offline rates equal liv
 nothing while away (combat is active only), so its combat rows are informational. Hero comparisons match the live snapshot to credited away time;
 workers and other scheduled systems retain the full wall-clock comparison. The table shows raw away
 gains and the boost-normalized hero delta, while optional JSON retains every snapshot and report line.
+
+## Health metrics
+
+```text
+node tools/health.mjs --compare
+```
+
+Plays three kinds of player (casual, active, optimiser) on fixed seeds and compares the numbers with
+`docs/design/health-baseline.json`. It exits 1 when a metric moves past its tolerance in the bad direction. Run it before
+and after any balance, economy or pacing change. `--write-baseline` accepts a deliberate shift. See `docs/design/health.md`.

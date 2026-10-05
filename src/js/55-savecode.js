@@ -78,6 +78,7 @@ function savecodeChecksum(str) {
 }
 
 // C5: validate without loading, repairing, normalising or changing the supplied save.
+// Reads game tables (SOLO_HEROES, CAMP_B, BOUNTY_API.kinds, ...), so it runs only after the core files have loaded.
 // Missing feature keys use normal load defaults. Present unsafe shapes are rejected.
 function validateSave(data) {
   const lim = SAVECODE_LIMITS, has = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
@@ -193,7 +194,7 @@ function validateSave(data) {
     rows(data.camp, 'builds', b => { known(CAMP_B, b.id, 'camp.build.id'); int(b.to, 'camp.build.to', 1, CAMP_B[b.id].max); num(b.dur, 'camp.build.dur', 1, 864e13); num(b.start, 'camp.build.start', 0, 864e13); num(b.end, 'camp.build.end', 0, 864e13); record(b.cost, 'camp.build.cost'); num(b.cost.gold, 'camp.build.gold'); pack(b.cost.mats, 'camp.build.mats'); array(b.cost.troph, 'camp.build.troph'); for (const l of b.cost.troph) { array(l, 'camp.build.troph[]'); if (l.length !== 2) fail('camp.build.troph[]'); if (l[0] !== 'any') int(l[0], 'camp.build.troph.kind', 0, CRAFT_TROPHIES.length - 1); num(l[1], 'camp.build.troph.units'); } });
     if (data.camp && data.camp.b) for (const [k, n] of Object.entries(data.camp.b)) { known(CAMP_B, k, 'camp.building'); int(n, 'camp.' + k, 0, CAMP_B[k].max); }
     rows(data.camp, 'news'); rows(data.craft, 'jobs'); rows(data.almanac, 'goals'); rows(data.errors, 'list');
-    rows(data.bounties, 'slots', b => { if (b.k != null && !['kill', 'mine', 'chop', 'forge', 'boss', 'crit', 'tap'].includes(b.k)) fail('bounty.kind'); });
+    rows(data.bounties, 'slots', b => { if (b.k == null) return; if (!BOUNTY_API.kinds.includes(b.k)) fail('bounty.kind'); const bad = BOUNTY_API.shape(b); if (bad) fail('bounty.' + bad); });
     if (data.craft && data.craft.tonic != null) { record(data.craft.tonic, 'craft.tonic'); known(CRAFT_TONICS, data.craft.tonic.k, 'craft.tonic.kind'); tier(data.craft.tonic.t, 'craft.tonic.tier'); num(data.craft.tonic.left, 'craft.tonic.left'); }
     return { ok: true, data };
   } catch (e) { return { ok: false, error: e instanceof Error ? e.message : 'This save has invalid data.' }; }
