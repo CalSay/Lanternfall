@@ -40,8 +40,10 @@ jobs:
         env:
           NODE_OPTIONS: --max-old-space-size=4096   # a check shard hit the 2 GB default heap limit on the runner
         run: |
-          set -o pipefail
-          node tools/check.mjs | tee check.log
+          # Write to a file, not a pipe: the check run dies partway when its stdout is a pipe (seen with tee).
+          rc=0; node tools/check.mjs > check.log 2>&1 || rc=$?
+          cat check.log
+          [ "$rc" -eq 0 ] || { echo "::error::tools/check.mjs exited $rc"; exit "$rc"; }
           grep -q '^browser sections skipped: 0 ' check.log || { echo "::error::a browser section was skipped"; exit 1; }
       - name: Offline parity
         run: node tools/offline-parity.mjs
