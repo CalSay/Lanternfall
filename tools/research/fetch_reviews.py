@@ -57,6 +57,7 @@ def apple(appid, country="us"):
 
 def itunes_meta(appid):
     d = get("https://itunes.apple.com/lookup?id=%s&country=us" % appid)
+    if "_error" in d: raise RuntimeError("itunes lookup %s failed: %s" % (appid, d["_error"]))
     r = (d.get("results") or [{}])[0]
     return {"name": r.get("trackName"), "rating": r.get("averageUserRating"), "count": r.get("userRatingCount"),
             "genre": r.get("primaryGenreName")}

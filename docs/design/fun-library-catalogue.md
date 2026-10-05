@@ -114,7 +114,7 @@ at a time.
 2. **Locked things say what opens them (Q10, area 16 and 4).** Melvor's 16 tutorial complaints are locked-content
    surprise. Every locked tab, building or button should state its unlock in one line ("Opens after the Fenmother").
    Improves existing UI, no new system. Could fold into `ap-first-use-hints`.
-3. **Goals at three ranges has no measure owner (P9, area 3).** No card counts visible goals in minutes, hours and days.
+3. **Goals at three ranges has no measure owner (P14, area 3).** No card counts visible goals in minutes, hours and days.
    Add "visible goals by range" to the playtest lab report format in `f-playtest-bots`, so a gap shows up before
    anyone designs a goal system.
 

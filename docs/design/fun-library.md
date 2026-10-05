@@ -18,16 +18,16 @@ Evidence is committed under `tools/research/`: `raw/` (review text per game), `t
   put the same review in a game's list several times (about 36% of the first Steam sample). The fetcher now reads one page
   and dedupes by review id, and every count below is from the redone data. Earlier numbers (14,465 reviews) are void.
 - **Reddit: blocked.** `www.reddit.com` answers 403 "Blocked" from this container, `old.reddit.com` is denied by the egress
-  proxy. Reddit is **thin**: web-search summaries only, marked weak, in `tags/_thin-sources.json`. No principle rests on
-  Reddit.
+  proxy. No Reddit text was read. A gatherer collected web-search summaries for Reddit and Google Play, but they carried no
+  links or quotes and could not be checked, so they are not kept as evidence and no principle rests on them.
 - **Google Play: thin.** Pages load but have no review feed; search summaries only (weak).
 - **Counts are floors.** A review counts for a theme when a keyword pattern matches (patterns are in `tag_reviews.py`).
   That misses paraphrases and counts some false hits, so use counts to rank themes, not as exact shares. Quotes are verbatim,
   picked by the same match, then read by me.
-- **Adjacent games** (12 of the 56, marked in `corpus.json`: turn-combat RPGs, roguelites, gather and craft games) inflate
+- **Adjacent games** (14 of the 56, marked in `corpus.json`: turn-combat RPGs, roguelites, gather and craft games) inflate
   the story, art and depth counts. Read those three as "this matters", not as a ranking.
-- A first tagging pass by Haiku gatherers was discarded: its quotes did not match its themes. Its files are in `tags/` and
-  are used nowhere.
+- A first tagging pass by Haiku gatherers was discarded: its quotes did not match its themes. Its files are not committed
+  and nothing here uses them.
 - Evidence rank (quality proposal): this is rung 3, counted player reviews. It outranks design lore from training and loses
   to Cal's playtests and to measurements on our game.
 
@@ -163,12 +163,12 @@ reviews), the closest we have to "why committed players leave".
 | Q3 | Ads | 435 | 7 | phones: AdVenture Capitalist 86, Idle Miner Tycoon 49, Tiny Tower 35 |
 | Q4 | Pay-to-win and paywalls | 260 | 29 | RAID 50, Shop Titans 22, Hero Wars 21, AFK Arena 20 |
 | Q5 | Empty or repetitive endgame | 183 | 48 | Forager 10, Idle Slayer 10, RAID 10, Potion Craft 9 |
-| Q6 | Energy, timers, wait gates | 158 | 22 | RAID 41, Hero Wars 23, Shop Titans 9 |
-| Q7 | Shallow, plays itself | 143 | 35 | AdVenture Capitalist 13, RAID 11, Vampire Survivors 8 |
-| Q8 | Confusing start or tutorial | 65 | 6 | Melvor 13, Cassette Beasts 7 |
-| Q9 | Cluttered or bloated menus | 61 | 14 | Melvor 9, Tiny Tower 5, Leaf Blower 4 |
-| Q10 | Chores and forced check-ins | 49 | 12 | RAID 12, Stardew Valley 5 |
-| Q11 | One dominant strategy | 29 | 7 | Gnorp Apologue 6, Rogue Legacy 2 4 |
+| Q6 | Shallow, plays itself | 143 | 35 | AdVenture Capitalist 13, RAID 11, Vampire Survivors 8 |
+| Q7 | Energy, timers, wait gates | 158 | 22 | RAID 41, Hero Wars 23, Shop Titans 9 |
+| Q8 | Cluttered or bloated menus | 61 | 14 | Melvor 9, Tiny Tower 5, Leaf Blower 4 |
+| Q9 | One dominant strategy | 29 | 7 | Gnorp Apologue 6, Rogue Legacy 2 4 |
+| Q10 | Confusing start or tutorial | 65 | 6 | Melvor 13, Cassette Beasts 7 |
+| Q11 | Chores and forced check-ins | 49 | 12 | RAID 12, Stardew Valley 5 |
 
 Reading the long-play column: committed players leave over **walls (99), an empty or repetitive endgame (48), shallow
 loops (35), bugs and lost progress (33), pay gates (29) and energy or timer gates (22)**. Ads and tutorials barely
