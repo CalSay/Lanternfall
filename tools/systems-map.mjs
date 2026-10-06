@@ -95,11 +95,16 @@ const REG = [
     snk: [['Upgrades +8 to +10', '55-crafting.js', 'C\\(\\)\\.troph\\[pickTrophy\\(trophIdx\\)\\] -= c\\.cost\\.troph'], ['Masterwork crafts', '55-crafting.js', 'C\\(\\)\\.troph\\[opts\\.mw\\]--'], ['Star Chart (Wraith Veil)', '55-crafting.js', 'C\\(\\)\\.troph\\[i\\] -= n'], ['Camp and Hearth builds (rows 4 and up)', '57-camp.js', 'tr\\[i\\] -= n']] },
   { id: 'renown', name: 'Renown', field: 'S.party.unlock.renown', what: 'Standing with the road. Opens hero unlock routes.',
     src: [['Claiming a Bounty (1, elite Contract 3)', '56c-unlocks.js', "on\\('bountyDone', b => addRenown"], ['Tavern level 5 (1 per 5 bounties)', '57-camp.js', "addRenown\\(1, 'tavern'\\)"]],
-    snk: [['Hero unlock routes check the balance; none spends it today', '56c-unlocks.js', 'U\\(\\)\\.renown -= r\\.cost\\.renown']], links: ['Raid kills count 5 each toward Caedmon only.'] },
+    snk: [], links: ['Hero unlock routes check the balance and never spend it today (the spend path in 56c-unlocks.js is dormant until a route sets spendRenown). Raid kills count 5 each toward Caedmon only.'] },
   { id: 'tokens', name: 'Boss tokens', field: 'S.party.unlock.tokens', what: 'Stonebreaker\'s Token, Kiln Tally, Lichen Bundle, Dusk Contract. A flag that unlocks one hero.',
     src: [['Boss kills roll a token, with pity', '56c-unlocks.js', 'U\\(\\)\\.tokens\\[id\\]']], snk: [['Winning one unlocks the hero (the flag is kept)', '56c-unlocks.js', 'for \\(const id in T\\.tokens\\)']] },
   { id: 'stars', name: 'Star points', field: 'derived from level, Great Lanterns and constellations (not saved)', what: 'A budget for lighting stars. Not consumed.',
     src: [['One per 3 hero levels (plus 4 a Great Lantern, 1 a constellation)', '57e-stars.js', 'starPoints = \\(\\) =>']], snk: [['Lighting a star (2 lit a hero)', '57e-stars.js', 'starFree = k =>']] },
+  { id: 'talent', name: 'Talent points', field: 'derived from hero level (not saved); choices in S.abil', what: 'A budget for talent choices on abilities, Attack, Parry and Dodge.',
+    src: [['Hero levels', '56e-abilities.js', 'talentPoints = k =>']], snk: [['Setting a talent (a switch between a and b is free)', '56e-abilities.js', 'talentSet = \\(k, id, c\\) =>|talentSet = \\(k, id, c\\)']],
+    links: ['A budget like star points: spent points come back when a talent is cleared.'] },
+  { id: 'deedpts', name: 'Achievement points', field: 'S.deeds.pts (derived from tiers and Feats)', what: 'Deed tiers, Feats and chapters add points. The ladder gives titles, looks and Trophy Wall stages.',
+    src: [['Deed tiers, Feats, secrets and chapters', '58-deeds.js', 'function pointsNow\\(\\)']], snk: [['Ladder milestones unlock at thresholds; never spent', '58-deeds.js', 'd\\.mil\\[m\\.at\\] = 1']] },
   { id: 'oil', name: 'Oil', field: 'S.deep.run.oil', what: 'A Deepwell run\'s clock, in seconds. Gone when the run ends.',
     src: [['Run start', '57d-deepwell.js', 'r\\.oil = Math\\.min\\(oilMax\\(r\\), T\\.oilStart'], ['Floor refunds', '57d-deepwell.js', 'r\\.oil = Math\\.min\\(oilMax\\(\\), r\\.oil \\+ refund\\)']],
     snk: [['Drains with time; zero ends the run', '57d-deepwell.js', 'r\\.oil -= dt \\* drainRate\\(\\)']] },
@@ -118,6 +123,7 @@ const REG = [
 // A currency with no source or no sink must be listed here, with a reason.
 const ALLOW = {
   xp: { snk: 'Hero levels are permanent by design.' },
+  renown: { snk: 'A pure gate: routes check the balance and none sets spendRenown. Keep it a gate or give it a use.' },
   stamps: { snk: 'Only a deed counter and one Feat read Stamps; nothing spends them. Candidate for a sink or a cut.' }
 };
 
@@ -143,6 +149,14 @@ export function audit() {
   // A material the game stores (30-state fresh() mats) must be in the map.
   const fam = /mats: \{([^}]*)\}/.exec(read('30-state.js'));
   if (fam) for (const m of fam[1].matchAll(/(\w+): \[/g)) if (!REG.some(c => c.mat === m[1])) problems.push(`Material family "${m[1]}" is saved in 30-state.js but not in the map`);
+  // Point and token stores are not material families, so find them by name: any `<x>Points = ...` function, `renown`
+  // counter or Scroll/Token/Mark store in src/js must be named by a registry entry (its probes or its field).
+  const known = REG.map(c => [c.field, ...c.src.map(x => x[2]), ...c.snk.map(x => x[2])].join(' ')).join(' ');
+  for (const f of fs.readdirSync(JS).filter(n => n.endsWith('.js'))) {
+    for (const m of strip(read(f)).matchAll(/\b([a-z]\w*Points)\s*=\s*(?:\(|function|\w+\s*=>)/g)) {
+      if (!new RegExp('\\b' + m[1] + '\\b').test(known)) problems.push(`"${m[1]}" in ${f} looks like a currency but no registry entry names it`);
+    }
+  }
   return problems;
 }
 
@@ -186,7 +200,13 @@ function render() {
     const al = ALLOW[c.id] || {};
     L.push(`| ${c.name} | ${c.src.length} | ${c.snk.length} | ${al.snk ? 'No sink: ' + al.snk : al.src ? 'No source: ' + al.src : ''} |`);
   }
-  L.push('', '## Flags for the next cards', '', 'Hoards, gaps and chokes found while mapping. `crafting-levelling-spec` and `xp-gold-pacing-report` should start here.', '');
+  L.push('', '## Why this page exists', '',
+    '- **Problem and evidence.** New cards kept adding currencies with no use and hoarding materials. The 50-hour health run (`node tools/health.mjs --long`) shows wood and Essence piling up while 93% of gold is spent, and the optimiser playtest left 23,000 Iron Ore idle.',
+    '- **Coverage-map area.** 8 Economy ("Does every currency have a sink and a use?"), with 10 Skills and crafting and 4 Overwhelm and unlock pacing. Compass pillar: not set yet (`compass.md` is pending).',
+    '- **Predicted effect.** A new currency or material can no longer merge without a source and a sink or a written exception: 0 unregistered currencies at every merge (the `systems map` check), and no more than 3 allow-listed exceptions without a planner review. Missed if a currency lands unregistered or the allow-list grows past 3.',
+    '- **Alternatives weighed.** A hand-written page with no check (rots within days); scanning code for `S.x +=` patterns (finds writes but not meaning, and misses derived budgets like star and talent points); a registry with verified code probes (chosen: cheap to read, fails when a path is deleted or renamed).',
+    '- **Switch off.** Delete the `systems map` section from `tools/check.mjs`; nothing in the game reads this page or script. No save impact.', '',
+    '## Flags for the next cards', '', 'Hoards, gaps and chokes found while mapping. `crafting-levelling-spec` and `xp-gold-pacing-report` should start here.', '');
   for (const [t, d] of FLAGS) L.push(`- **${t}.** ${d}`);
   L.push('', '## Currencies', '');
   for (const c of REG) {

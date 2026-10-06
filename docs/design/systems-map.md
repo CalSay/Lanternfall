@@ -30,14 +30,24 @@ A source or sink line names the player-facing system and the file that does it. 
 | Relics | 1 | 3 |  |
 | Scrolls | 1 | 1 |  |
 | Trophies | 4 | 4 |  |
-| Renown | 2 | 1 |  |
+| Renown | 2 | 0 | No sink: A pure gate: routes check the balance and none sets spendRenown. Keep it a gate or give it a use. |
 | Boss tokens | 1 | 1 |  |
 | Star points | 1 | 1 |  |
+| Talent points | 1 | 1 |  |
+| Achievement points | 1 | 1 |  |
 | Oil | 2 | 1 |  |
 | Depth Marks | 2 | 1 |  |
 | Lantern Light | 1 | 1 |  |
 | Almanac Stamps | 1 | 0 | No sink: Only a deed counter and one Feat read Stamps; nothing spends them. Candidate for a sink or a cut. |
 | Uniques | 2 | 1 |  |
+
+## Why this page exists
+
+- **Problem and evidence.** New cards kept adding currencies with no use and hoarding materials. The 50-hour health run (`node tools/health.mjs --long`) shows wood and Essence piling up while 93% of gold is spent, and the optimiser playtest left 23,000 Iron Ore idle.
+- **Coverage-map area.** 8 Economy ("Does every currency have a sink and a use?"), with 10 Skills and crafting and 4 Overwhelm and unlock pacing. Compass pillar: not set yet (`compass.md` is pending).
+- **Predicted effect.** A new currency or material can no longer merge without a source and a sink or a written exception: 0 unregistered currencies at every merge (the `systems map` check), and no more than 3 allow-listed exceptions without a planner review. Missed if a currency lands unregistered or the allow-list grows past 3.
+- **Alternatives weighed.** A hand-written page with no check (rots within days); scanning code for `S.x +=` patterns (finds writes but not meaning, and misses derived budgets like star and talent points); a registry with verified code probes (chosen: cheap to read, fails when a path is deleted or renamed).
+- **Switch off.** Delete the `systems map` section from `tools/check.mjs`; nothing in the game reads this page or script. No save impact.
 
 ## Flags for the next cards
 
@@ -313,9 +323,9 @@ Sources:
 - Tavern level 5 (1 per 5 bounties) (`57-camp.js`)
 
 Sinks:
-- Hero unlock routes check the balance; none spends it today (`56c-unlocks.js`)
+- none: A pure gate: routes check the balance and none sets spendRenown. Keep it a gate or give it a use.
 
-Note: Raid kills count 5 each toward Caedmon only.
+Note: Hero unlock routes check the balance and never spend it today (the spend path in 56c-unlocks.js is dormant until a route sets spendRenown). Raid kills count 5 each toward Caedmon only.
 
 ### Boss tokens
 
@@ -340,6 +350,32 @@ Sources:
 
 Sinks:
 - Lighting a star (2 lit a hero) (`57e-stars.js`)
+
+### Talent points
+
+A budget for talent choices on abilities, Attack, Parry and Dodge.
+
+Save: `derived from hero level (not saved); choices in S.abil`
+
+Sources:
+- Hero levels (`56e-abilities.js`)
+
+Sinks:
+- Setting a talent (a switch between a and b is free) (`56e-abilities.js`)
+
+Note: A budget like star points: spent points come back when a talent is cleared.
+
+### Achievement points
+
+Deed tiers, Feats and chapters add points. The ladder gives titles, looks and Trophy Wall stages.
+
+Save: `S.deeds.pts (derived from tiers and Feats)`
+
+Sources:
+- Deed tiers, Feats, secrets and chapters (`58-deeds.js`)
+
+Sinks:
+- Ladder milestones unlock at thresholds; never spent (`58-deeds.js`)
 
 ### Oil
 
