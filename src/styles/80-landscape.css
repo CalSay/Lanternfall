@@ -77,11 +77,24 @@
   .nu-chip .nu-more { grid-column: 4; grid-row: 1; }
   .nu-chip .nu-lbl { grid-column: 1 / -1; grid-row: 2; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; font-size: 13px; line-height: 1.2; }
   .nu-chip .nu-chev { display: none; }
-  .sbar, .game.solo-game > .sbar { grid-column: 4 / -1; grid-row: 4; align-self: end; padding: 6px 6px calc(8px + env(safe-area-inset-bottom, 0px)) 7px; gap: 8px; }
-  .sb-row { width: 100%; max-width: 240px; gap: 8px; justify-self: end; }
-  .sb-ic { width: 36px; height: 36px; margin-top: 0; }
-  .sb-lb { display: none; }
-  .sb-n { margin-top: 0; }
+  /* the dock in the side column: tabs, four tiles in a row (icons only; the names show on tall screens), Parry and Dodge under them */
+  .sbar, .game.solo-game > .sbar { --sb-tile: 58px; --sb-ic: 24px; grid-column: 4 / -1; grid-row: 4; align-self: end; padding: 4px 6px calc(6px + env(safe-area-inset-bottom, 0px)) 7px; gap: 5px; }
+  .sb-tabs, .sb-pane, .sb-row { width: 100%; max-width: none; justify-self: end; }
+  .sb-row { gap: 5px; }
+  .sb-tab { min-height: 44px; font-size: calc(14px * var(--display-k)); }
+  .sb-sub { display: none; }
+  .sb-lb { font-size: calc(9px * var(--display-k)); letter-spacing: 0; }
+  .sbtn { gap: 1px; }
+  .sb-n { top: 4px; height: var(--sb-ic); font-size: calc(20px * var(--display-k)); }
+  .sb-p-foe { gap: 3px; font-size: 12px; }
+  .sb-fk { display: none; }
+  .sb-fname { font-size: calc(14px * var(--display-k)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .sb-fr { flex-wrap: wrap; }
+  .sb-def { min-height: 44px; gap: 6px; }
+  .sb-def .sb-ic { width: 24px; height: 24px; }
+  .sb-def .sb-n { width: 24px; font-size: calc(16px * var(--display-k)); }
+  .sb-def .sb-lb { font-size: calc(13px * var(--display-k)); }
+  .sb-def { padding: 0 5px; }
   .toasts.side-dock { grid-column: 4 / 6; grid-row: 3 / 4; top: auto; bottom: 4px; left: 7px; right: 6px; z-index: 6; }
   .toasts.side-dock .toast { box-shadow: 0 3px 0 #0B0810, 0 6px 14px rgba(0,0,0,.45); }
 
@@ -124,8 +137,16 @@
   .tab img { width: 22px; height: 22px; }
   .portrait { width: 44px; height: 44px; }
   .portrait img { width: 34px; height: 34px; }
-  .sb-ic { width: 48px; height: 48px; margin-top: -12px; }
-  .sb-lb { display: block; }
+  .sbar, .game.solo-game > .sbar { --sb-tile: 100px; --sb-ic: 48px; }
+  .sb-tx { display: grid; }
+  .sb-sub { display: block; }
+  .sb-lb { font-size: calc(12px * var(--display-k)); letter-spacing: 0; }
+  .sb-def { min-height: 52px; padding: 0 8px; }
+  .sb-def .sb-lb { font-size: calc(16px * var(--display-k)); }
+  .sb-def .sb-ic { width: 36px; height: 36px; }
+  .sb-def .sb-n { width: 36px; }
+  .sb-def .sb-sub { display: block; }
+  .sb-n { top: 8px; height: var(--sb-ic); }
   .game .modeseg button { min-height: 38px; }
   .game .ctrl-switch { min-height: 38px; }
 }
