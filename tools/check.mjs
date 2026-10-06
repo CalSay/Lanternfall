@@ -4477,10 +4477,26 @@ if (section('solo hero (browser)')) try {
         return { rows, top: Math.round(r.top), bottom: Math.round(r.bottom), stageBottom: Math.round(s.bottom), navTop: Math.round(nav.top), hidden: b.hidden, order: kids.join('>') };
       });
       const flat = bar.rows.flat();
-      assert(!bar.hidden && bar.rows.length === 2 && bar.rows.map(r => r.map(x => x.act).join()).join('|') === 'ab0,ab1,ab2|parry,dodge,atk', `the action bar: two rows, Ability 1-3 over Parry, Dodge, Attack (${bar.rows.map(r => r.map(x => x.act).join()).join(' | ')})`);
-      assert(flat.every(x => x.w >= 48 && x.h >= 48 && Math.abs(x.w - x.h) <= 1) && bar.rows[0].every((x, i) => x.y < bar.rows[1][i].y) && bar.rows[1][2].x > bar.rows[1][0].x, `six square slots of 48 px or more; Attack bottom right (${flat.map(x => x.w + 'x' + x.h).join(' ')})`);
+      assert(!bar.hidden && bar.rows.length === 2 && bar.rows.map(r => r.map(x => x.act).join()).join('|') === 'atk,ab0,ab1,ab2|parry,dodge', `the dock: Attack and Ability 1-3 in the Act pane, Parry and Dodge under them (${bar.rows.map(r => r.map(x => x.act).join()).join(' | ')})`);
+      assert(flat.every(x => x.w >= 44 && x.h >= 44) && bar.rows[0].every(x => x.y < bar.rows[1][0].y) && bar.rows[0].every((x, i) => i === 0 || x.x > bar.rows[0][i - 1].x) && bar.rows[1][1].x > bar.rows[1][0].x, `six keys of 44 px or more: four tiles over Parry and Dodge (${flat.map(x => x.w + 'x' + x.h).join(' ')})`);
       assert(bar.top >= bar.stageBottom - 1 && bar.top - bar.stageBottom <= 8 && bar.bottom <= bar.navTop && bar.navTop - bar.bottom <= 16 && /stageBox>soloBar$/.test(bar.order), `the bar touches the stage (not over it) and is the lowest thing above the tab bar (${bar.order}; stage ${bar.stageBottom}, bar ${bar.top}-${bar.bottom}, tabs ${bar.navTop})`);
-      assert(/sb-abslot/.test(flat[0].cls) && !/empty/.test(flat[0].cls) && /empty/.test(flat[1].cls) && /empty/.test(flat[2].cls), 'slot 1 holds the hero\'s ability; slots 2 and 3 show empty');
+      assert(/sb-abslot/.test(flat[1].cls) && !/empty/.test(flat[1].cls) && /empty/.test(flat[2].cls) && /empty/.test(flat[3].cls), 'slot 1 holds the hero\'s ability; slots 2 and 3 show empty');
+      // the dock's tabs: Skills lists the three slots, Foe is for turn fights, Parry and Dodge stay on screen, Act comes back
+      {
+        const tabs = await page.$$eval('#soloBar .sb-tab', l => l.map(b => b.dataset.tab + (b.hidden ? ':hidden' : '') + (b.getAttribute('aria-selected') === 'true' ? ':on' : '')).join());
+        assert(/^act:on,sk,foe/.test(tabs), `the dock has Act, Skills and Foe tabs, Act open (${tabs})`);
+        const th = await page.$$eval('#soloBar .sb-tab', l => l.filter(b => !b.hidden).map(b => Math.round(b.getBoundingClientRect().height)));
+        assert(th.length >= 2 && th.every(h => h >= 44), `the dock's tabs are 44 px tall or more (${th.join(', ')})`);
+        await X('globalThis.__os = onboardStep; onboardStep = () => null; true');   // the guide keeps Act open while it points at a button
+        await page.click('#soloBar .sb-tab[data-tab="sk"]'); await page.waitForTimeout(250);
+        const sk = await page.evaluate(() => { const v = e => !!e && e.getClientRects().length > 0, q = s => document.querySelector(s); return { rows: document.querySelectorAll('#soloBar .sb-sk').length, skShown: v(q('#soloBar .sb-p-sk')), actHidden: !v(q('#soloBar .sb-p-act')), parry: v(q('#soloBar .sb-parry')), dodge: v(q('#soloBar .sb-dodge')), first: (q('#soloBar .sb-sk-nm') || {}).textContent }; });
+        const rh = await page.$$eval('#soloBar .sb-sk', l => l.map(b => Math.round(b.getBoundingClientRect().height)));
+        assert(rh.every(h => h >= 44), `the Skills rows are 44 px tall or more (${rh.join(', ')})`);
+        assert(sk.rows === 3 && sk.skShown && sk.actHidden && sk.parry && sk.dodge && sk.first, `Skills tab: a row per slot, and Parry and Dodge stay on screen (${JSON.stringify(sk)})`);
+        await page.click('#soloBar .sb-tab[data-tab="act"]'); await page.waitForTimeout(150);
+        assert(await page.evaluate(() => document.querySelector('#soloBar .sb-p-act').getClientRects().length > 0), 'back on Act, the buttons show again');
+        await X('onboardStep = globalThis.__os; true');
+      }
       const party = await X('[!!document.querySelector("#sec-party-form, #sec-party-bench, #sec-party-roster, #sec-party-field, #sec-party-bonds, #sec-visitor"), document.querySelector(".tab[data-tab=party]").textContent.trim(), stageStats().front.map(a => a[0]).join()].join("|")');
       assert(/^false\|Hero\|hero$/.test(party), `no party UI (formation, bench, roster, Bonds, visitor); the tab is Hero; only the hero on the stage (${party})`);
       // walk the guide: each step's target exists, is visible, and the ring marks it; one hint; the game waits while it shows
@@ -8644,10 +8660,10 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
           const side = Math.min(...L.slots.map(s => s.l));
           const stageOk = L.stage.l >= L.rail.r - 1 && L.stage.r <= side && L.stage.b <= L.H && L.stage.w >= 360 && L.stage.h >= 280 && Number.isInteger(st.ZM) && st.ZM === (w >= 1200 ? 2 : 1) && st.SW >= 360 && st.SH >= 280;
           assert(stageOk, `${at}: the stage fills the middle (${L.stage.w}x${L.stage.h}) at a whole-pixel zoom (x${st.ZM}: ${st.SW}x${st.SH} logical px, the heroes drawn at their ~96 art px)`);
-          const atk = L.slots.find(s => s.act === 'atk'), maxR = Math.max(...L.slots.map(s => s.r)), maxB = Math.max(...L.slots.map(s => s.b));
-          const rows = [L.slots.slice(0, 3).map(s => s.act).join(), L.slots.slice(3).map(s => s.act).join()].join('|');
-          assert(L.slots.length === 6 && rows === 'ab0,ab1,ab2|parry,dodge,atk' && L.slots.every(s => s.l >= 0 && s.t >= 0 && s.r <= L.W && s.b <= L.H && s.w >= 44 && Math.abs(s.w - s.h) <= 1 && s.top) && atk.r === maxR && atk.b === maxB && L.W - atk.r <= 12 && L.H - atk.b <= 16,
-            `${at}: the bar is two rows (${rows}) of square slots of 44 px or more in the bottom-right corner, all on top; Attack is the bottom-right slot (${L.slots.map(s => s.act + ' ' + s.w + '@' + s.l + ',' + s.t).join(' ')})`);
+          const maxR = Math.max(...L.slots.map(s => s.r)), maxB = Math.max(...L.slots.map(s => s.b));
+          const rows = [L.slots.slice(0, 4).map(s => s.act).join(), L.slots.slice(4).map(s => s.act).join()].join('|');
+          assert(L.slots.length === 6 && rows === 'atk,ab0,ab1,ab2|parry,dodge' && L.slots.every(s => s.l >= 0 && s.t >= 0 && s.r <= L.W && s.b <= L.H && s.w >= 44 && s.h >= 44 && s.top) && L.W - maxR <= 12 && L.H - maxB <= 16,
+            `${at}: the dock is Attack and the three abilities over Parry and Dodge, keys of 44 px or more in the bottom-right corner, all on top (${L.slots.map(s => s.act + ' ' + s.w + 'x' + s.h + '@' + s.l + ',' + s.t).join(' ')})`);
           assert(L.nu.l >= L.stage.r - 1 && L.nu.t >= topH - 1 && L.nu.b <= Math.min(...L.slots.map(s => s.t)), `${at}: Next Up sits at the top of the side column, above the bar (${JSON.stringify(L.nu)})`);
           assert(!L.clipped.length && L.scrollX <= 0 && L.appX <= 0, `${at}: no label cut off and no sideways scroll (${L.clipped.join(', ') || 'none'}; page ${L.scrollX}, app ${L.appX})`);
           // notices dock in the side column above the bar, menu or not

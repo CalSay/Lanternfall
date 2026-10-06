@@ -54,6 +54,12 @@ The bell opens Notices, the Journal and Settings. Achievements (Deeds) and the C
 - **Every zone fight is a turn fight** (`59k-turn.js`, UI `75-turn-ui.js`). The full rules are in
   [combat-turn-build.md](design/combat-turn-build.md). In short: one foe, a Speed timeline, Attack or one of three
   abilities on your turn, a parry or a dodge for every enemy hit, statuses, cooldowns in turns, no Auto.
+- **The fight screen is Stage and dock** (Cal, 2026-10-05; `75-solo-ui.js`, `75-turn-ui.js`). The stage shows the hero and
+  foe, a turn banner and the timing bar along its bottom edge while a hit winds up. Under it, the dock has three tabs.
+  **Act**: Attack and the three ability slots as tiles (D, Q, W, E), each with its name and "Ready", turns left or
+  "Passive". **Skills**: each slot's ability and cooldown; tap one to change it. **Foe**: its kind, an elite's trait and
+  the moves you have learned (a boss shows all). Parry and Dodge (A, S) sit under the dock on every tab and glow while a
+  hit winds up. Short landscape keeps the names under small tiles. The turn order shows on the Versus card only.
 - **Abilities** (`24c-data-abilities.js`, `56e-abilities.js`, `75-abilities-ui.js`): 14 a hero; the signature is free
   and the rest cost a Scroll of their tier from zone bosses. **Talents** (`24e-data-talents.js`): two choices for each
   ability and for Attack, Parry and Dodge.
