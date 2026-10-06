@@ -19,6 +19,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Never gate "Boss ready" on the old damage estimate; use the 30-scratch-fight estimate at the player's own parry and dodge record. Why: the old estimate read 0.4 to 0.5 at the Zone 1 boss that all three starters beat, and 0.03 on a late save. (boss-readiness, 2026-10-06)
 - Keep the readiness estimate running while a tip pauses the game, and include Deepwell boons, gear changes made while gathering, and the sim seed. Why: Codex found each of these in rounds 1 to 3 of PR #47. (boss-readiness, 2026-10-06)
 - Run `node tools/health.mjs --compare` before and after any balance or pacing change. Why: it is the only before/after measure and CI gates on it. (f-health, 2026-10-05)
+- Play the persona's whole turn skill (parry, dodge and ability rings) when measuring pacing for a named player type. The sim's own turn player lands 80% of defences and never presses a ring, so every timed ability is a Miss. Why: Codex P1 on PR #52, where one shared 40% defence rate stood in for the casual. (xp-gold-pacing-report, 2026-10-06)
 
 ## Economy and skilling
 
@@ -78,6 +79,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 ## Process and Autopilot
 
 - Add your lesson line in the card's own PR here (`docs/lessons.md`), not in the project folder. Why: the permission check blocked reads and writes in `/mnt/project-files` after merge in several threads, and the line was lost. Never work around the check. (lessons setup, 2026-10-06)
+- A report that recommends a `judge`-gate change (economy targets, pacing curve) runs the red team and the Opus judge itself and records both. Why: Codex P1 on PR #52. (xp-gold-pacing-report, 2026-10-06)
 - Split anything outside the card's files into a new card instead of building it on the spot (pre-leave notice, Boss-ready gate and the `--long` run were each split off). (away-clarity, first-minute-flow, f-health)
 - With no route to the Foreman, send AUTOPILOT DONE to the coordinator. (systems-map and others, 2026-10-06)
 - After a merge, send AUTOPILOT DONE at once: a merge with no follow-up start leaves build slots empty (stalled 01:25 to 05:22 on 2026-10-06). (foreman, 2026-10-06)
