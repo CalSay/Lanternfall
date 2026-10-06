@@ -71,7 +71,7 @@ var classEvoUI;
         if (p && p.open) out.push(provingBox(p));
       }
     }
-    out.push(row('Second path', 'Locked', 'A second path opens in a later season.', 'off'));
+    out.push(row('Second path', 'Locked', 'A second path: coming soon.', 'off'));
     return out;
   }
   const sig = () => {

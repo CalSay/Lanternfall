@@ -253,7 +253,7 @@
         const line = el('div', 'cx-mr ' + r.kind);
         line.append(el('span', 'cx-mk', r.kind === 'qol' ? 'Comfort' : r.kind === 'title' ? 'Title' : 'Look'), el('b', null, r.n.replace(/^Title: /, '')));
         if (r.txt) line.append(el('span', 'cx-mtx', r.txt));
-        if (got && !r.live && r.later) line.append(el('span', 'cx-mlater', r.later));
+        if (!r.live && r.later) line.append(el('span', 'cx-mlater', r.later));
         rw.append(line);
       }
       li.append(at, rw, el('span', 'cx-mchk', got ? '✓' : ''));

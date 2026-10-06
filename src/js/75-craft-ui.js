@@ -670,7 +670,7 @@ let craftUI = null;
     body.append(secBox('What it does', lines));
     const tlb = typeof toolsUI === 'object' && toolsUI ? safe(() => toolsUI.itemBox(it), null) : null;   // tool mastery (75-tools-ui, H2)
     if (tlb) body.append(tlb);
-    if (anyWait) body.append(el('p', 'note', 'Dimmed lines are stored on the item and switch on in a later update.'));
+    if (anyWait) body.append(el('p', 'note', 'Dimmed lines do nothing yet. Coming soon.'));
 
     // ---- compare ----
     if (d && d.pos && heroFitsIt(it) && !(wr && wr.who === 'hero')) {
