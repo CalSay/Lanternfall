@@ -8,7 +8,7 @@ node tools/health.mjs                   run (about 40 seconds), print, write too
 node tools/health.mjs --compare         also compare with the baseline; exit 1 when a metric moves past tolerance
 node tools/health.mjs --write-baseline  accept the mean of 5 seed offsets as the baseline (about 3 min; tolerances kept)
 --only casual,active,optimiser   --jobs N   --json PATH   --seed-offset N
-node tools/health.mjs --long            the 50-hour run (about 3 minutes); add --compare or --write-baseline (about 8 min)
+node tools/health.mjs --long            the 50-hour run (about 2.5 min on 3 free cores, 7 min of CPU in all); add --compare, or --write-baseline (3 seeds, about 8 min on 3 cores)
 ```
 
 ## The players
@@ -42,7 +42,7 @@ starters under the same persona.
 
 ## The long run
 
-`--long` plays 50 active hours per starter (about 3 minutes, the three heroes in parallel) and is scored against the `long`
+`--long` plays 50 active hours per starter (about 2.5 minutes of wall time on three free cores, the heroes in parallel; about 7 minutes of CPU, so allow that on one core; the simulation cost is spread through the game core, with no single hotspot to cut) and is scored against the `long`
 section of the baseline. It exists to catch what a 10-hour run cannot: a progress wall late in the game, and an empty endgame.
 
 | Metric | Reads as |

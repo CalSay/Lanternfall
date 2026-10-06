@@ -8,7 +8,7 @@
 //                                            tolerance in the bad direction (exit 2 if the run itself failed)
 //   node tools/health.mjs --write-baseline   write the run as the new baseline (keeps tolerances already in the file)
 //   --json PATH     where to write the full report      --only casual,active   run some personas
-//   --long          the long run instead: one hero-bot for 50 active hours (about 3 minutes a hero, three in parallel), scored
+//   --long          the long run instead: one hero-bot for 50 active hours (about 2.5 minutes of wall time with three free cores: three heroes in parallel, about 7 minutes of CPU in all, so a 1-core machine takes that long), scored
 //                   against the `long` section of the baseline. Works with --compare and --write-baseline too.
 //   --jobs N        parallel sim processes (default 4)   --seed-offset N       shift every fixed seed (for noise checks)
 //
@@ -332,7 +332,7 @@ if (flag('write-baseline')) {
     const o = old.metrics[k] || {};
     metrics[k] = { value: a.value, bad: o.bad || a.bad, abs: o.abs ?? a.abs, rel: o.rel ?? a.rel, note: a.note, perHero: a.perHero, ...(LONG ? { sd: a.sd } : {}) };
   }
-  const baseline = LONG ? { ...oldFile, long: { about: 'The 50-hour run (node tools/health.mjs --long). Regenerate with: node tools/health.mjs --long --write-baseline (mean of 3 seed offsets, about 10 min). sd is the spread of the mean over those seeds. node tools/health.mjs --long --compare uses this section.',
+  const baseline = LONG ? { ...oldFile, long: { about: 'The 50-hour run (node tools/health.mjs --long). Regenerate with: node tools/health.mjs --long --write-baseline (mean of 3 seed offsets, about 8 min on 3 free cores). sd is the spread of the mean over those seeds. node tools/health.mjs --long --compare uses this section.',
       seed: PERSONAS.long.seed, metrics } } : { version: 1, about: 'Accepted health numbers. Regenerate with: node tools/health.mjs --write-baseline. node tools/health.mjs --compare exits 1 when a metric moves past max(abs, rel * |value|) in its bad direction (bad: up, down, both). See tools/health.mjs for the personas.',
     seeds: Object.fromEntries(DEFAULT_PERSONAS.map(p => [p, PERSONAS[p].seed])), metrics, ...(oldFile.long ? { long: oldFile.long } : {}) };
   fs.mkdirSync(path.dirname(BASELINE), { recursive: true });
