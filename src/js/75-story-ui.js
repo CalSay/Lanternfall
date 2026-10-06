@@ -46,7 +46,8 @@ var storyUI;   // var: 75-codex-ui (earlier in the build) reads it at run time
       }
       now = null; showCaption(sc); return;
     }
-    if (blocked() || !stageBox() || (sc.waited && !storyInGap())) {   // once it has waited behind another overlay, it also waits for the next gap (never mid-fight)
+    if (blocked() || !stageBox() || (sc.waited && !sc.chain && !storyInGap())) {   // once it has waited behind another overlay, it also waits for the next gap (never mid-fight);
+      // the next scene of a stop (chain) only waits for the last sheet to close
       sc.waited = sc.waited || Date.now();
       if (Date.now() - sc.waited > 28000) { now = null; storyClose(sc.id, 'auto'); return; }   // a long wait: file it for the Journal, never play it mid-fight
       waitT = setTimeout(run, 400); return;
@@ -154,25 +155,27 @@ var storyUI;   // var: 75-codex-ui (earlier in the build) reads it at run time
       if (where) card.append(el('span', 'sty-eye', where));
       const h = el('h2', 'sty-title', e.title); h.id = 'styTitle';
       card.append(h);
-      let open = null;   // a choice left open by an unattended scene: offered here until it is made
+      // a choice left open by an unattended scene is offered where it stood; what follows it shows once the choice is made
+      let into = card, rest = null;
       for (const c of e.cards) {
-        if (c.choice) { open = c.choice; continue; }
-        if (c.who) card.append(el('p', 'sty-head', c.who));
-        for (const l of c.lines) card.append(el('p', 'sty-text', l));
-      }
-      const d = open && storyChoiceDef(open);
-      if (d) card.append(el('p', 'sty-head', d.prompt));
-      api.body.append(card);
-      if (d) {
-        const opts = el('div', 'sty-opts');
-        for (const o of d.options) {
-          const b = btn('big forge sty-opt');
-          b.append(el('b', null, o.label)); if (o.line) b.append(el('span', null, o.line));
-          b.addEventListener('click', () => { storyChoose(open, o.id); opts.replaceWith(el('p', 'sty-text sty-chosen', `You chose ${o.label}.`)); });
-          opts.append(b);
+        const d = c.choice && !rest && storyChoiceDef(c.choice);
+        if (d) {
+          const cid = c.choice, opts = el('div', 'sty-opts');
+          rest = el('div', 'sty-rest'); rest.hidden = true;
+          for (const o of d.options) {
+            const b = btn('big forge sty-opt');
+            b.append(el('b', null, o.label)); if (o.line) b.append(el('span', null, o.line));
+            b.addEventListener('click', () => { storyChoose(cid, o.id); opts.replaceWith(el('p', 'sty-text sty-chosen', `You chose ${o.label}.`)); rest.hidden = false; });
+            opts.append(b);
+          }
+          card.append(el('p', 'sty-head', d.prompt), opts, rest);
+          into = rest; continue;
         }
-        api.body.append(opts);
+        if (c.choice) continue;
+        if (c.who) into.append(el('p', 'sty-head', c.who));
+        for (const l of c.lines) into.append(el('p', 'sty-text', l));
       }
+      api.body.append(card);
       const row = el('div', 'sty-actions');
       const next = chain && chain.filter(x => x !== id && storyUnread().includes(x))[0];
       if (next) {

@@ -250,7 +250,8 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
   const queue = [];
   holdGame(() => storyHeld());   // 00-util's pause registry: the frame loop does not tick while a scene is up
   storyInGap = () => inGap();
-  storyHeld = () => !!cur && claimed;   // only a scene the player can see holds the game; one waiting behind another overlay does not
+  storyHeld = () => !!cur && (claimed || (!!cur.chain && Date.now() - heldAt < 3000));   // only a scene the player can see holds the game (and, for 3 s, the next one of
+  // the same stop while the last sheet closes); one waiting behind another overlay does not
   storyClaim = id => { if (cur && cur.id === id) claimed = true; };
   storyClose = (id, how) => {
     if (!cur || cur.id !== id) return;
@@ -265,14 +266,16 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
     const post = auto && /^([pe]:[^:]+):post$/.exec(sc.id); if (post) delete st.read[post[1]];   // its Journal entry (pre and post together) is unread again
     emit('storyEnd', { id, how });
     // the next scene of the same stop plays now, even while the guide holds the game (no tick runs to pump it), once the UI has closed this one
-    if (shown && queue.length && typeof setTimeout === 'function') setTimeout(() => { if (!cur && storyOn() && live() && inGap()) pump(); }, 0);
+    // (not tied to the gap: the shown scene held the game, so this is still the same stop)
+    if (shown && queue.length && typeof setTimeout === 'function') setTimeout(() => { if (!cur && storyOn() && live()) pump(true); }, 0);
   };
   // a caption for a zone the hero has left is dropped (it belonged to that moment)
   const stale = sc => sc.kind === 'caption' && sc.zone && sc.zone !== S.zone;
-  function pump() {
+  function pump(chain) {
     while (!cur && queue.length) {
       const sc = queue.shift();
       if (stale(sc)) continue;
+      if (chain) sc.chain = true;   // follows a shown scene: the UI plays it once the last sheet has closed, gap or not
       cur = sc; claimed = false; heldAt = Date.now();
       emit('storyScene', sc);
     }
@@ -305,6 +308,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
     if (!storyOn()) { queue.length = 0; if (cur && !claimed) storyClose(cur.id, 'skipped'); return; }   // off: nothing plays and nothing is filed or defaulted; the catch-up runs when it is turned back on
     if (mz !== swept) { swept = mz; sweep(mz); }
     if (!has('k:ranks') && storyRanks().length) mark('k:ranks');
+    if (!ST().starter && STARTERS.includes(heroKey())) ST().starter = heroKey();   // bible 4.4: the cold-start hero, stored once (an old save: its hero now)
     if (!live()) { last = ''; return; }
     const z = S.zone || 1, gap = inGap();
     if (gap && spawned && !early) { const sp = spawned; spawned = null; if (sp.zone === z) onSpawn(sp.mob, z); }

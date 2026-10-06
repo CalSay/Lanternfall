@@ -8632,6 +8632,13 @@ if (section('story-hollow-script')) try {
   need('hero refuseRest', real.hero.refuseRest); need('hero hollowLantern', real.hero.hollowLantern);
   need('vesper fenmother', real.vesper.fenmother); need('note thessaly', real.note.thessaly);
   assert(!miss.length, 'story-hollow-script: Chapter 1 is complete (7 areas, 35 zone and Captain lines, 7 Champions, the Fenmother, 14 NPC scenes, the Great Lantern choice)' + (miss.length ? ': missing ' + miss.slice(0, 6).join(', ') : ''));
+  // the cold-start hero is stored once (bible 4.4), and stays when a later hero takes the lead
+  const sh = loadCore({ seed: 104 });
+  sh.eval('S.solo.hero = "pip"; S.activity = "fight"; S.zone = 1; S.maxZone = 1'); ticks(sh, 3);
+  const st0 = sh.eval('soloHero()');
+  sh.eval('S.solo.hero = "corvin"'); ticks(sh, 3);
+  assert(['wren', 'tobin', 'pip'].includes(st0) && sh.eval('S.story.starter') === st0 && sh.eval('storyHeroLine("refuseRest")') === sh.eval(`STORY_BEATS.hero.refuseRest[${JSON.stringify(st0)}]`),
+    `story-hollow-script: the starting hero (${st0}) is stored as the story hero, and its lines still play when a non-starter leads`);
   // hero lines (bible 4.4): the active starter, else the stored starter, else the shared line
   const hl = loadCore({ seed: 101 }), H = x => hl.eval(x);
   H(`STORY_BEATS.hero.h1 = { wren: 'Wren line.', tobin: 'Tobin line.', pip: 'Pip line.', _: 'Shared line.' }`);
@@ -8734,7 +8741,7 @@ if (section('story-hollow-script')) try {
   assert(!wnv.scene.some(sc => sc.ch === 'N') && !wn.eval('S.story.seen["n:tobinMet"]') && !wn.eval('storyList().some(e => e.id === "n:tobinMet")'), 'story-hollow-script: an NPC with `not` is not met by that starter, and is not marked or listed');
   const wn2 = withNpc(100), wn2v = watch(wn2); quiet(wn2, 'S.solo.hero = "wren"; S.zone = 1; S.maxZone = 1; S.story.seen["a:0"] = 1; S.story.seen["z:1"] = 1; spawn()'); ticks(wn2, 5);
   assert(wn2v.scene.some(sc => sc.id === 'n:tobinMet') && wn2.eval('S.story.seen["n:tobinMet"]') > 0, 'story-hollow-script: the same NPC is met by another starter');
-  assert([g, hl, wa, wb, wc, wd, wd2, wt.w, ww.w, wp, wf, wg, wl, ws, wn, wn2].every(x => !x.errors.length), 'story-hollow-script: no handler errors');
+  assert([g, hl, sh, wa, wb, wc, wd, wd2, wt.w, ww.w, wp, wf, wg, wl, ws, wn, wn2].every(x => !x.errors.length), 'story-hollow-script: no handler errors');
 } catch (e) { fail('story-hollow-script crashed: ' + (e.stack || e)); }
 // an unattended card in the browser: it files itself after the idle wait (45 s; 2 s under the test key), and a tap restarts the wait
 if (section('story-hollow-script (browser)')) try {
@@ -8771,9 +8778,13 @@ if (section('story-hollow-script (browser)')) try {
       await XI('storyEncounter("elder", "fenmother"); S.story.seen["e:fenmother:pre"] = Date.now(); S.story.seen["e:fenmother:post"] = -Date.now(); storyUI.open("e:fenmother")');
       await pageI.waitForSelector('.sty-sheet .sty-opt', { timeout: 3000 });
       const names = await pageI.$$eval('.sty-sheet .sty-opt b', l => l.map(x => x.textContent));
+      const hook = await XI('STORY_BEATS.elder.fenmother.after[STORY_BEATS.elder.fenmother.after.length - 1]');
+      const before = await pageI.$eval('.sty-sheet', (n, hook) => ({ rest: !!n.querySelector('.sty-rest[hidden]'), seen: [...n.querySelectorAll('.sty-text')].some(x => x.offsetParent && x.textContent === hook) }), hook);
       await pageI.click('.sty-sheet .sty-opt:nth-child(2)'); await pageI.waitForTimeout(200);
+      const after = await pageI.$eval('.sty-sheet', (n, hook) => [...n.querySelectorAll('.sty-text')].some(x => x.offsetParent && x.textContent === hook), hook);
       assert(names.length === 4 && await XI('S.story.litFor.hollow') === 'tam' && /You chose Tam\./.test(await pageI.$eval('.sty-chosen', n => n.textContent)) && !(await pageI.$('.sty-sheet .sty-opt')),
         `story-hollow-script (browser): an open Great Lantern choice shows its four names in the Journal entry, and a tap saves it (${names.join(', ')})`);
+      assert(before.rest && !before.seen && after, 'story-hollow-script (browser): the lines after the choice (the hero line, the green light) show only once the choice is made, in story order');
       await ctxI.close();
     } finally { await browser.close(); }
   }
