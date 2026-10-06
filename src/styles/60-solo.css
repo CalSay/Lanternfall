@@ -12,7 +12,7 @@
 .sbar[hidden] { display: none; }
 .sb-tabs, .sb-pane, .sb-row { width: min(100%, 352px); justify-self: center; }
 .sb-tabs { display: flex; background: #16111C; border: 2px solid #0B0810; box-shadow: inset 0 0 0 1px #3A3046; }
-.sb-tab { flex: 1; min-height: 34px; padding: 0 4px; background: transparent; border: 0; border-bottom: 3px solid transparent; color: var(--muted); cursor: pointer;
+.sb-tab { flex: 1; min-height: 44px; padding: 0 4px; background: transparent; border: 0; border-bottom: 3px solid transparent; color: var(--muted); cursor: pointer;
   font: 600 calc(16px * var(--display-k, 1))/1 var(--display); letter-spacing: .02em; touch-action: manipulation; }
 .sb-tab[hidden] { display: none; }
 .sb-tab[aria-selected="true"] { color: var(--gold); border-bottom-color: var(--gold); background: #231A30; }
@@ -71,12 +71,12 @@
 @keyframes sb-good { 0% { background: #6B5A20; } 100% { } }
 @keyframes sb-ready { 0% { box-shadow: inset 0 0 0 4px #FFF3C4, 0 0 14px #F2C14E, 0 3px 0 #0B0810; } 100% { } }
 @media (prefers-reduced-motion: reduce) { .sbtn.nope, .sbtn.good, .sbtn.ready-now { animation: none; } .sbtn:active, .sbtn.hit { transform: none; } }
-@media (max-height: 700px) { .sbar { --sb-tile: 90px; --sb-ic: 36px; } .sb-tab { min-height: 30px; } .sb-def { min-height: 46px; } }
+@media (max-height: 700px) { .sbar { --sb-tile: 90px; --sb-ic: 36px; } .sb-tab { min-height: 44px; } .sb-def { min-height: 46px; } }
 @media (max-height: 640px) { .sbar { --sb-tile: 74px; --sb-ic: 36px; } .sb-sub { display: none; } }
 
 /* Skills pane: a row per slot; a tap changes what it holds */
 .sb-p-sk { display: grid; gap: 3px; align-content: start; overflow-y: auto; overscroll-behavior: contain; }
-.sb-sk { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; gap: 8px; align-items: center; width: 100%; min-height: 30px; padding: 0 6px; text-align: left; cursor: pointer; color: var(--bone);
+.sb-sk { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; gap: 8px; align-items: center; width: 100%; min-height: 44px; padding: 0 6px; text-align: left; cursor: pointer; color: var(--bone);
   background: #231A30; border: 2px solid #0B0810; outline: 1px solid #6B5320; outline-offset: -3px; font: inherit; touch-action: manipulation; }
 .sb-sk.passive { background: #1C2430; outline-color: #4E6A8A; }
 .sb-sk.empty { background: #16111C; outline-color: #3A3046; }

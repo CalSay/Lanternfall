@@ -2316,7 +2316,7 @@ span.cf-d { font-weight: 600; }
 .sbar[hidden] { display: none; }
 .sb-tabs, .sb-pane, .sb-row { width: min(100%, 352px); justify-self: center; }
 .sb-tabs { display: flex; background: #16111C; border: 2px solid #0B0810; box-shadow: inset 0 0 0 1px #3A3046; }
-.sb-tab { flex: 1; min-height: 34px; padding: 0 4px; background: transparent; border: 0; border-bottom: 3px solid transparent; color: var(--muted); cursor: pointer;
+.sb-tab { flex: 1; min-height: 44px; padding: 0 4px; background: transparent; border: 0; border-bottom: 3px solid transparent; color: var(--muted); cursor: pointer;
   font: 600 calc(16px * var(--display-k, 1))/1 var(--display); letter-spacing: .02em; touch-action: manipulation; }
 .sb-tab[hidden] { display: none; }
 .sb-tab[aria-selected="true"] { color: var(--gold); border-bottom-color: var(--gold); background: #231A30; }
@@ -2375,12 +2375,12 @@ span.cf-d { font-weight: 600; }
 @keyframes sb-good { 0% { background: #6B5A20; } 100% { } }
 @keyframes sb-ready { 0% { box-shadow: inset 0 0 0 4px #FFF3C4, 0 0 14px #F2C14E, 0 3px 0 #0B0810; } 100% { } }
 @media (prefers-reduced-motion: reduce) { .sbtn.nope, .sbtn.good, .sbtn.ready-now { animation: none; } .sbtn:active, .sbtn.hit { transform: none; } }
-@media (max-height: 700px) { .sbar { --sb-tile: 90px; --sb-ic: 36px; } .sb-tab { min-height: 30px; } .sb-def { min-height: 46px; } }
+@media (max-height: 700px) { .sbar { --sb-tile: 90px; --sb-ic: 36px; } .sb-tab { min-height: 44px; } .sb-def { min-height: 46px; } }
 @media (max-height: 640px) { .sbar { --sb-tile: 74px; --sb-ic: 36px; } .sb-sub { display: none; } }
 
 /* Skills pane: a row per slot; a tap changes what it holds */
 .sb-p-sk { display: grid; gap: 3px; align-content: start; overflow-y: auto; overscroll-behavior: contain; }
-.sb-sk { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; gap: 8px; align-items: center; width: 100%; min-height: 30px; padding: 0 6px; text-align: left; cursor: pointer; color: var(--bone);
+.sb-sk { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; gap: 8px; align-items: center; width: 100%; min-height: 44px; padding: 0 6px; text-align: left; cursor: pointer; color: var(--bone);
   background: #231A30; border: 2px solid #0B0810; outline: 1px solid #6B5320; outline-offset: -3px; font: inherit; touch-action: manipulation; }
 .sb-sk.passive { background: #1C2430; outline-color: #4E6A8A; }
 .sb-sk.empty { background: #16111C; outline-color: #3A3046; }
@@ -2869,7 +2869,7 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
 .tv-turncard.play.calm { animation: tv-fade var(--tc-dur, .9s) linear both; }
 @keyframes tv-tc { 0% { opacity: 0; transform: translate(-24px, -50%); } 18%, 78% { opacity: 1; transform: translate(0, -50%); } 100% { opacity: 0; transform: translate(12px, -50%); } }
 .tv-winding .sty-cap { opacity: .15; transition: opacity .15s; }
-/* Stage and dock (Combat C): the banner is a framed chip; the timing bar and the Next strip sit along the stage's bottom edge */
+/* Stage and dock (Combat C): the banner is a framed chip; the timing bar sits along the stage's bottom edge */
 .tv-n { padding: 3px 12px 2px; font: 600 calc(15px * var(--display-k, 1))/1 var(--display); letter-spacing: .04em; color: #C9BFD6; background: rgba(10, 7, 14, .88);
   border: 1px solid #5E5270; text-shadow: 1px 1px 0 #0B0810; }
 .tv-n:empty { display: none; }
@@ -2878,12 +2878,6 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
 .tv-bot { position: absolute; left: 8px; right: 8px; bottom: 30px; z-index: 5; display: grid; justify-items: center; gap: 4px; pointer-events: none; }
 .tv-bot[hidden] { display: none; }
 .tv-bot .tv-time { width: min(300px, 100%); }
-.tv-next { display: flex; align-items: center; gap: 6px; padding: 2px 6px; background: rgba(10, 7, 14, .78); border: 1px solid #3A3046; }
-.tv-next-lb { font: 600 calc(11px * var(--display-k, 1))/1 var(--display); letter-spacing: .06em; text-transform: uppercase; color: #B8AEC4; }
-.tv-bot .tv-slot { width: 20px; height: 20px; border-width: 1px; }
-.tv-bot .tv-slot.now { width: 24px; height: 24px; }
-.tv-bot .tv-mini { max-width: 16px; max-height: 16px; }
-.tv-bot .tv-slot.now .tv-mini { max-width: 20px; max-height: 20px; }
 /* 60-wall: the Trophy Wall card on the Camp view (63e-scenery-wall.js, AC5). */
 .tw-scene { display: flex; justify-content: center; width: 100%; min-height: 144px; margin: 0; padding: 0; overflow: hidden; background: #0E0B1E; border: 2px solid var(--line); box-shadow: 0 2px 0 #0B0810; cursor: pointer; }
 .tw-scene:hover, .tw-scene:focus-visible { border-color: var(--gold); }
@@ -3053,15 +3047,15 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
   .nu-chip .nu-lbl { grid-column: 1 / -1; grid-row: 2; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; font-size: 13px; line-height: 1.2; }
   .nu-chip .nu-chev { display: none; }
   /* the dock in the side column: tabs, four tiles in a row (icons only; the names show on tall screens), Parry and Dodge under them */
-  .sbar, .game.solo-game > .sbar { --sb-tile: 66px; --sb-ic: 36px; grid-column: 4 / -1; grid-row: 4; align-self: end; padding: 4px 6px calc(6px + env(safe-area-inset-bottom, 0px)) 7px; gap: 5px; }
+  .sbar, .game.solo-game > .sbar { --sb-tile: 58px; --sb-ic: 24px; grid-column: 4 / -1; grid-row: 4; align-self: end; padding: 4px 6px calc(6px + env(safe-area-inset-bottom, 0px)) 7px; gap: 5px; }
   .sb-tabs, .sb-pane, .sb-row { width: 100%; max-width: none; justify-self: end; }
   .sb-row { gap: 5px; }
-  .sb-tab { min-height: 26px; font-size: calc(14px * var(--display-k)); }
-  .sb-tx { display: none; }
-  .sb-n { top: 0; height: var(--sb-tile); font-size: calc(20px * var(--display-k)); }
+  .sb-tab { min-height: 44px; font-size: calc(14px * var(--display-k)); }
+  .sb-sub { display: none; }
+  .sb-lb { font-size: calc(9px * var(--display-k)); letter-spacing: 0; }
+  .sbtn { gap: 1px; }
+  .sb-n { top: 4px; height: var(--sb-ic); font-size: calc(20px * var(--display-k)); }
   .sb-def { min-height: 44px; gap: 6px; }
-  .sb-def .sb-tx { display: grid; }
-  .sb-def .sb-sub { display: none; }
   .sb-def .sb-ic { width: 24px; height: 24px; }
   .sb-def .sb-n { width: 24px; font-size: calc(16px * var(--display-k)); }
   .sb-def .sb-lb { font-size: calc(13px * var(--display-k)); }
@@ -40737,9 +40731,7 @@ var trainCard = null;
 //   Versus card  opens each fight (fightStart): the hero on the left, the foe on the right, both Speeds, and a banner
 //                saying who goes first, and the turn order: the next 6 turns as portraits (the Speed gauges decide
 //                them). It lasts the engine's intro; with reduced motion it only fades.
-//   Timing bar   at the bottom of the stage while the foe winds up a hit (the dodge and parry windows marked), over the Next strip.
-//   Next strip   the next 6 turns as small portraits along the stage's bottom edge (Combat C, Cal 2026-10-05; it replaces the
-//                2026-10-02 rule that showed the order on the Versus card only).
+//   Timing bar   at the bottom of the stage while the foe winds up a hit (the dodge and parry windows marked).
 //   Warnings     a banner when a boss gathers a charged move ("Stun it or hit it hard"), when it is broken, when a boss
 //                turns harder at half HP, and "Your turn" while the fight waits on you.
 //   Hero row     under the bar: the hero's resource as pips (Aim, Grit, Cinders) and their own statuses (Guard, Ward,
@@ -40836,9 +40828,9 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
   on('fightEnd', () => { clearTimeout(tcT); tcard.hidden = true; });
 
   // ---- the turn strip, the timing bar, the hero row ----
-  // the order is drawn twice: on the Versus card (orderBox) and as the Next strip along the stage's bottom edge (nextBox)
+  // the turn order lives on the Versus card only (owner, 2026-10-02)
   const mkStrip = () => { const s = el('div', 'tv-strip'), sl = []; s.setAttribute('aria-label', 'Turn order'); for (let i = 0; i < 6; i++) { const e = el('div', 'tv-slot'); sl.push(e); s.append(e); } return { s, sl }; };
-  const cardStrip = mkStrip(), nextStrip = mkStrip();
+  const cardStrip = mkStrip();
   orderBox.append(orderLb, cardStrip.s);
   let orderSig = '';
   function fillOrder(force) {
@@ -40846,7 +40838,7 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
     const f = foeNow(), sig = order.join() + '|' + (f ? f.name : '');
     if (!force && sig === orderSig) return; orderSig = sig;
     const hf = heroFace(), ff = foeFace(f);
-    for (const { s: strip, sl } of [cardStrip, nextStrip]) {
+    for (const { s: strip, sl } of [cardStrip]) {
       sl.forEach((sl_, i) => {
         const o = order[i]; if (!o) { sl_.hidden = true; return; }
         sl_.hidden = false; sl_.className = 'tv-slot ' + o + (i === 0 ? ' now' : '');
@@ -40875,9 +40867,8 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
   heroRow.append(resBtn, chips);
   const warn = el('div', 'tv-warn'); warn.hidden = true; warn.setAttribute('role', 'status'); warn.setAttribute('aria-live', 'assertive');
   const wrap = el('div', 'tv-top'); wrap.append(turnN, heroRow, resTip, warn);
-  // along the stage's bottom edge: the timing bar (while the foe winds up), then the Next strip
-  const bot = el('div', 'tv-bot'), nextRow = el('div', 'tv-next');
-  nextRow.append(el('small', 'tv-next-lb', 'Next'), nextStrip.s); bot.append(bar, nextRow);
+  // along the stage's bottom edge: the timing bar (while the foe winds up)
+  const bot = el('div', 'tv-bot'); bot.append(bar);
   if (box) box.append(wrap, bot);
   // a timed ability's ring: it closes on the foe; press the ability (or Attack) again as it meets the inner circle
   const ring = el('div', 'tv-ring'), ringO = el('i', 'tv-ring-o'), ringI = el('i', 'tv-ring-i'), ringT = el('b', 'tv-ring-t', 'Now!');
@@ -40947,7 +40938,6 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
     const s = on_ ? turnCombatSnapshot() : null, live = !!(s && s.phase !== 'off');
     if (!card.hidden && (!s || s.phase !== 'intro') && performance.now() - cardAt > 250) { card.hidden = true; card.classList.remove('play'); }
     if (wrap.hidden === live) { wrap.hidden = !live; bot.hidden = !live; }
-    if (live) fillOrder();
     if (!warn.hidden && performance.now() > warnT) warn.hidden = true;
     drawRing(live ? s : null);
     if (!live) { if (!bar.hidden) bar.hidden = true; return; }

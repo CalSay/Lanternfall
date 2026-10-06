@@ -2,9 +2,7 @@
 //   Versus card  opens each fight (fightStart): the hero on the left, the foe on the right, both Speeds, and a banner
 //                saying who goes first, and the turn order: the next 6 turns as portraits (the Speed gauges decide
 //                them). It lasts the engine's intro; with reduced motion it only fades.
-//   Timing bar   at the bottom of the stage while the foe winds up a hit (the dodge and parry windows marked), over the Next strip.
-//   Next strip   the next 6 turns as small portraits along the stage's bottom edge (Combat C, Cal 2026-10-05; it replaces the
-//                2026-10-02 rule that showed the order on the Versus card only).
+//   Timing bar   at the bottom of the stage while the foe winds up a hit (the dodge and parry windows marked).
 //   Warnings     a banner when a boss gathers a charged move ("Stun it or hit it hard"), when it is broken, when a boss
 //                turns harder at half HP, and "Your turn" while the fight waits on you.
 //   Hero row     under the bar: the hero's resource as pips (Aim, Grit, Cinders) and their own statuses (Guard, Ward,
@@ -101,9 +99,9 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
   on('fightEnd', () => { clearTimeout(tcT); tcard.hidden = true; });
 
   // ---- the turn strip, the timing bar, the hero row ----
-  // the order is drawn twice: on the Versus card (orderBox) and as the Next strip along the stage's bottom edge (nextBox)
+  // the turn order lives on the Versus card only (owner, 2026-10-02)
   const mkStrip = () => { const s = el('div', 'tv-strip'), sl = []; s.setAttribute('aria-label', 'Turn order'); for (let i = 0; i < 6; i++) { const e = el('div', 'tv-slot'); sl.push(e); s.append(e); } return { s, sl }; };
-  const cardStrip = mkStrip(), nextStrip = mkStrip();
+  const cardStrip = mkStrip();
   orderBox.append(orderLb, cardStrip.s);
   let orderSig = '';
   function fillOrder(force) {
@@ -111,7 +109,7 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
     const f = foeNow(), sig = order.join() + '|' + (f ? f.name : '');
     if (!force && sig === orderSig) return; orderSig = sig;
     const hf = heroFace(), ff = foeFace(f);
-    for (const { s: strip, sl } of [cardStrip, nextStrip]) {
+    for (const { s: strip, sl } of [cardStrip]) {
       sl.forEach((sl_, i) => {
         const o = order[i]; if (!o) { sl_.hidden = true; return; }
         sl_.hidden = false; sl_.className = 'tv-slot ' + o + (i === 0 ? ' now' : '');
@@ -140,9 +138,8 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
   heroRow.append(resBtn, chips);
   const warn = el('div', 'tv-warn'); warn.hidden = true; warn.setAttribute('role', 'status'); warn.setAttribute('aria-live', 'assertive');
   const wrap = el('div', 'tv-top'); wrap.append(turnN, heroRow, resTip, warn);
-  // along the stage's bottom edge: the timing bar (while the foe winds up), then the Next strip
-  const bot = el('div', 'tv-bot'), nextRow = el('div', 'tv-next');
-  nextRow.append(el('small', 'tv-next-lb', 'Next'), nextStrip.s); bot.append(bar, nextRow);
+  // along the stage's bottom edge: the timing bar (while the foe winds up)
+  const bot = el('div', 'tv-bot'); bot.append(bar);
   if (box) box.append(wrap, bot);
   // a timed ability's ring: it closes on the foe; press the ability (or Attack) again as it meets the inner circle
   const ring = el('div', 'tv-ring'), ringO = el('i', 'tv-ring-o'), ringI = el('i', 'tv-ring-i'), ringT = el('b', 'tv-ring-t', 'Now!');
@@ -212,7 +209,6 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
     const s = on_ ? turnCombatSnapshot() : null, live = !!(s && s.phase !== 'off');
     if (!card.hidden && (!s || s.phase !== 'intro') && performance.now() - cardAt > 250) { card.hidden = true; card.classList.remove('play'); }
     if (wrap.hidden === live) { wrap.hidden = !live; bot.hidden = !live; }
-    if (live) fillOrder();
     if (!warn.hidden && performance.now() > warnT) warn.hidden = true;
     drawRing(live ? s : null);
     if (!live) { if (!bar.hidden) bar.hidden = true; return; }

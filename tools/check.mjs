@@ -4236,9 +4236,13 @@ if (section('solo hero (browser)')) try {
       {
         const tabs = await page.$$eval('#soloBar .sb-tab', l => l.map(b => b.dataset.tab + (b.hidden ? ':hidden' : '') + (b.getAttribute('aria-selected') === 'true' ? ':on' : '')).join());
         assert(/^act:on,sk,foe/.test(tabs), `the dock has Act, Skills and Foe tabs, Act open (${tabs})`);
+        const th = await page.$$eval('#soloBar .sb-tab', l => l.filter(b => !b.hidden).map(b => Math.round(b.getBoundingClientRect().height)));
+        assert(th.length >= 2 && th.every(h => h >= 44), `the dock's tabs are 44 px tall or more (${th.join(', ')})`);
         await X('globalThis.__os = onboardStep; onboardStep = () => null; true');   // the guide keeps Act open while it points at a button
         await page.click('#soloBar .sb-tab[data-tab="sk"]'); await page.waitForTimeout(250);
         const sk = await page.evaluate(() => { const v = e => !!e && e.getClientRects().length > 0, q = s => document.querySelector(s); return { rows: document.querySelectorAll('#soloBar .sb-sk').length, skShown: v(q('#soloBar .sb-p-sk')), actHidden: !v(q('#soloBar .sb-p-act')), parry: v(q('#soloBar .sb-parry')), dodge: v(q('#soloBar .sb-dodge')), first: (q('#soloBar .sb-sk-nm') || {}).textContent }; });
+        const rh = await page.$$eval('#soloBar .sb-sk', l => l.map(b => Math.round(b.getBoundingClientRect().height)));
+        assert(rh.every(h => h >= 44), `the Skills rows are 44 px tall or more (${rh.join(', ')})`);
         assert(sk.rows === 3 && sk.skShown && sk.actHidden && sk.parry && sk.dodge && sk.first, `Skills tab: a row per slot, and Parry and Dodge stay on screen (${JSON.stringify(sk)})`);
         await page.click('#soloBar .sb-tab[data-tab="act"]'); await page.waitForTimeout(150);
         assert(await page.evaluate(() => document.querySelector('#soloBar .sb-p-act').getClientRects().length > 0), 'back on Act, the buttons show again');
@@ -7285,7 +7289,7 @@ if (section('turn UI (browser)')) try {
           await page.waitForTimeout(100);
           const st = JSON.parse(await X(`JSON.stringify({ card: document.querySelector('.tv-card').hidden ? '' : document.querySelector('.tv-card').textContent,
             strip: document.querySelector('.tv-card').hidden ? 0 : [...document.querySelectorAll('.tv-card .tv-strip .tv-slot')].filter(x => !x.hidden && x.querySelector('img')).length,
-            onStage: !!document.querySelector('.tv-bot .tv-strip') && [...document.querySelectorAll('.tv-bot .tv-slot')].filter(x => !x.hidden).length >= 2 && !document.querySelector('.tv-bot').hidden,
+            onStage: !!document.querySelector('.tv-top .tv-strip'),
             bar: !document.querySelector('.tv-time').hidden, q: (document.querySelector('#soloBar .sb-ab0 .sb-n') || {}).textContent || '', cd: turnCombatSnapshot().cooldowns.echo,
             ph: turnCombatSnapshot().phase, badge: !document.getElementById('autoBadge').hidden, mine: document.querySelector('.tv-n').textContent })`));
           if (st.card && !seen.card) seen.card = st.card;
@@ -7370,7 +7374,7 @@ if (section('turn UI (browser)')) try {
       };
       const on = await run(844, 390, true);
       assert(/Wren/.test(on.seen.card) && /VS/.test(on.seen.card) && /Speed \d+/.test(on.seen.card) && /(You go first|goes first)/.test(on.seen.card), `turn UI 844x390: the versus card names both sides, their Speed and who goes first (${JSON.stringify(on.seen.card)})`);
-      assert(on.seen.strip >= 5 && on.seen.onStage && on.seen.bar && on.seen.mine, `turn UI 844x390: the versus card shows the turn order (the next turns), the Next strip sits on the stage during the fight (Combat C), the timing bar shows on the foe's wind-up, and "Your turn" says when the fight waits on you (${JSON.stringify(on.seen)})`);
+      assert(on.seen.strip >= 5 && !on.seen.onStage && on.seen.bar && on.seen.mine, `turn UI 844x390: the versus card shows the turn order (the next turns; owner: not on the stage during the fight), the timing bar shows on the foe's wind-up, and "Your turn" says when the fight waits on you (${JSON.stringify(on.seen)})`);
       assert(on.seen.cdTurns && !on.seen.autoBadge, 'turn UI 844x390: the Echo slot shows its cooldown in turns, and there is no Auto badge (active only)');
       assert(on.cards === 17 && on.groups === 'True Aim,Blood Trail,Night Wings,Attack, Parry and Dodge', `turn UI: Hero tab > Abilities lists Wren's 14 abilities in their three groups, then Attack, Parry and Dodge (${on.cards}: ${on.groups})`);
       assert(on.rowBadge === 'Learn' && on.lockBadge === 'Level 16', `turn UI: each row says whether it can be learned now, or why not (${JSON.stringify([on.rowBadge, on.lockBadge])})`);
@@ -7388,7 +7392,7 @@ if (section('turn UI (browser)')) try {
         `turn UI: Aim explains itself: once on its own, on a tap of the pips, and on Hero > Abilities (${on.resAuto}, ${JSON.stringify(on.resTap)}, ${JSON.stringify(on.resLine)})`);
       assert(!on.errors.length, 'turn UI: no page errors' + (on.errors.length ? ': ' + on.errors[0] : ''));
       const port = await run(360, 740, false);
-      assert(/VS/.test(port.seen.card) && port.seen.strip >= 5 && port.seen.onStage && !port.errors.length, `turn UI 360x740: the versus card and its turn order work in portrait (${JSON.stringify(port.seen)})`);
+      assert(/VS/.test(port.seen.card) && port.seen.strip >= 5 && !port.seen.onStage && !port.errors.length, `turn UI 360x740: the versus card and its turn order work in portrait (${JSON.stringify(port.seen)})`);
       // Hero > Abilities fits a landscape phone (740x360) and a portrait one (360x740): no sideways scroll, 44 px touch
       // targets, the loadout bar stays on top while the list scrolls, and the detail opens in view (portrait: a sheet over
       // the list; the small landscape panel: in the list's place, and Back brings the list back where it was)

@@ -78,15 +78,15 @@
   .nu-chip .nu-lbl { grid-column: 1 / -1; grid-row: 2; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; font-size: 13px; line-height: 1.2; }
   .nu-chip .nu-chev { display: none; }
   /* the dock in the side column: tabs, four tiles in a row (icons only; the names show on tall screens), Parry and Dodge under them */
-  .sbar, .game.solo-game > .sbar { --sb-tile: 66px; --sb-ic: 36px; grid-column: 4 / -1; grid-row: 4; align-self: end; padding: 4px 6px calc(6px + env(safe-area-inset-bottom, 0px)) 7px; gap: 5px; }
+  .sbar, .game.solo-game > .sbar { --sb-tile: 58px; --sb-ic: 24px; grid-column: 4 / -1; grid-row: 4; align-self: end; padding: 4px 6px calc(6px + env(safe-area-inset-bottom, 0px)) 7px; gap: 5px; }
   .sb-tabs, .sb-pane, .sb-row { width: 100%; max-width: none; justify-self: end; }
   .sb-row { gap: 5px; }
-  .sb-tab { min-height: 26px; font-size: calc(14px * var(--display-k)); }
-  .sb-tx { display: none; }
-  .sb-n { top: 0; height: var(--sb-tile); font-size: calc(20px * var(--display-k)); }
+  .sb-tab { min-height: 44px; font-size: calc(14px * var(--display-k)); }
+  .sb-sub { display: none; }
+  .sb-lb { font-size: calc(9px * var(--display-k)); letter-spacing: 0; }
+  .sbtn { gap: 1px; }
+  .sb-n { top: 4px; height: var(--sb-ic); font-size: calc(20px * var(--display-k)); }
   .sb-def { min-height: 44px; gap: 6px; }
-  .sb-def .sb-tx { display: grid; }
-  .sb-def .sb-sub { display: none; }
   .sb-def .sb-ic { width: 24px; height: 24px; }
   .sb-def .sb-n { width: 24px; font-size: calc(16px * var(--display-k)); }
   .sb-def .sb-lb { font-size: calc(13px * var(--display-k)); }
