@@ -49,7 +49,7 @@ let gateRule = null;
 function uiGateRule() {
   // Only where the Gather button is on offer: not before the first boss (onboarding hides it) or in a Deepwell run (the row is hidden).
   const seg = $('modeSeg'), gb = seg.querySelector('button[data-act="gather"]');
-  const on = S.activity === 'fight' && !gb.hidden && seg.style.visibility !== 'hidden' && !$('game').closest('.app').classList.contains('deep-run');
+  const on = S.activity === 'fight' && !gb.hidden && seg.style.visibility !== 'hidden' && !$('game').closest('.app').classList.contains('deep-run') && isUnlocked('awaynote');   // its own beat (55-onboard FEATURES)
   if (!gateRule) {
     if (!on) return;
     gateRule = el('p', 'away-rule gate-rule'); gateRule.append(img(iconURL('glass', '#F2E27A')), el('span', null, AWAY_RULE_TXT));
