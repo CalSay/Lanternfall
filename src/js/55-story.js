@@ -27,12 +27,14 @@
 //                                          (nobody touched the card for 45 s, or it waited behind another overlay for 28 s: 75-story-ui).
 //                                          Files the scene's page, applies unchosen choice defaults, sets S.story.ends[id] ('auto'
 //                                          sets none, so the skip rate of bible 12a stays honest, and files the scene's own key and its
-//                                          page as late so the Journal offers "Catch up on the story").
+//                                          page as late so the Journal offers "Catch up on the story"; a choice in an unattended
+//                                          Champion or Elder scene stays open, and its Journal entry offers it until it is made).
 //   storyChoose(choiceId, optionId) -> bool   saves a choice (once); the default if optionId is missing
+//   storyChosen(choiceId) -> bool          the choice is saved
 //   storyChoiceDef(id) -> { prompt, options: [{ id, label, line }], def } | null   (the choice card reads it)
 //   storyList() -> [{ id, kind, region, zone, title, got, read, late }]   the Journal, in story order (an NPC scene dropped by `not`
 //                                          is never listed; Champion and Elder NPCs read inside their Champion's or Elder's entry)
-//   storyEntry(id) -> { id, kind, region, zone, title, cards: [{ lines, who? }] } | null
+//   storyEntry(id) -> { id, kind, region, zone, title, cards: [{ lines, who?, choice? }] } | null   (a choice card only while it is open)
 //   storyRead(id), storyUnread() -> [ids], storyLate() -> [ids]   (late: filed by the catch-up, unread)
 //   storyJournalOpened()                   counts one Journal open (S.story.journalOpens, bible 12a)
 //   storyRoadLog() -> [{ zone, head, line }]   area titles, and the zone and Captain lines already seen whose monster is in the game
@@ -69,7 +71,7 @@
 
 const STORY_ON = true;   // dev switch (bible 10.4): false plays no story at all; the data files can also be deleted
 
-let storyOn, storyHeld, storyInGap, storyChoiceDef, storyClaim, storyClose, storyChoose, storyList, storyEntry, storyRead, storyUnread, storyLate, storyJournalOpened,
+let storyOn, storyHeld, storyInGap, storyChoiceDef, storyChosen, storyClaim, storyClose, storyChoose, storyList, storyEntry, storyRead, storyUnread, storyLate, storyJournalOpened,
   storyRoadLog, storyFile, storyHeroLine, storyHearthLine, storyVerse, storyItemLine, storyEncounter, storyBestiary, storySync;
 const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_ENC.champ.<id> = true (storyEncounter)
 {
@@ -144,7 +146,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
 
   // ---- the journal: every entry the data can make, in story order ----
   // key: the seen key that files it. cards() builds what a re-read shows (a Champion or Elder entry grows with its post scene).
-  const readable = sc => (sc ? sc.cards.filter(c => !c.choice) : []);   // a re-read shows the words, not the choice buttons
+  const readable = sc => (sc ? sc.cards.filter(c => !c.choice || !storyChosen(c.choice)) : []);   // a re-read shows the words; a choice only while it is still open
   function defs() {
     const out = [];
     const add = (id, kind, key, zone, title, cards, also) => out.push({ id, kind, key, zone, region: regionIdOf(zone || 1), title, cards, keys: [key, ...(also || [])] });   // also: keys whose lateness is this entry's (a post scene)
@@ -169,7 +171,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
     return x ? x.zone : 0;
   }
   storyEntry = id => { const d = defs().find(x => x.id === id); return d && has(d.key) ? { id: d.id, kind: d.kind, region: d.region, zone: d.zone, title: d.title, cards: d.cards() } : null; };
-  storyList = () => defs().filter(d => has(d.key)).map(d => ({ id: d.id, kind: d.kind, region: d.region, zone: d.zone, title: d.title, got: Math.abs(seenAt(d.key)), read: !!ST().read[d.id], late: d.keys.some(k => seenAt(k) < 0) }));
+  storyList = () => defs().filter(d => has(d.key)).map(d => ({ id: d.id, kind: d.kind, region: d.region, zone: d.zone, title: d.title, got: Math.abs(seenAt(d.key)), read: !!ST().read[d.id], late: d.keys.some(k => seenAt(k) < 0) })).map(e => e.read && storyEntry(e.id).cards.some(c => c.choice) ? { ...e, read: false } : e);   // an open choice keeps its entry unread
   storyUnread = () => storyList().filter(e => !e.read).map(e => e.id);
   storyLate = () => storyList().filter(e => e.late && !e.read).map(e => e.id);
   storyRead = id => { if (!storyEntry(id) || ST().read[id]) return; ST().read[id] = 1; emit('storyRead', { id }); };
@@ -208,6 +210,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
   };
 
   // ---- choices ----
+  storyChosen = id => { const c = D('choice')[id], st = ST(); if (!c) return true; return c.store === 'litFor' ? st.litFor[c.key || id] !== undefined : c.store === 'coldhearth' ? !!st.coldhearth : true; };
   storyChoose = (id, opt) => {
     const c = D('choice')[id], st = ST();
     if (!c || !c.options) return false;
@@ -232,7 +235,8 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
     const sc = cur, shown = claimed; cur = null; claimed = false;
     const st = ST();
     const auto = how === 'auto';   // nobody touched it: filed as a page to catch up on, and no `ends` entry (bible 12a)
-    for (const c of sc.cards) if (c.choice) storyChoose(c.choice);   // skipped or left alone: the default
+    // skipped: the default. Left alone in a Champion's or Elder's scene, a choice stays open: its Journal entry offers it to catch up on
+    if (!(auto && /^[pe]:/.test(sc.id))) for (const c of sc.cards) if (c.choice) storyChoose(c.choice);
     if (sc.kind === 'card' && !auto && !st.ends[sc.id]) st.ends[sc.id] = how === 'done' ? 'done' : 'skipped';
     if (sc.page) mark('j:' + sc.page, auto);
     if (auto) for (const k of [sc.id, sc.page && 'j:' + sc.page]) if (k && st.seen[k] > 0) st.seen[k] = -st.seen[k];   // late, unread (a caption's joined id is no key)

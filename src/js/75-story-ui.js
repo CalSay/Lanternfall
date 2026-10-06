@@ -154,11 +154,25 @@ var storyUI;   // var: 75-codex-ui (earlier in the build) reads it at run time
       if (where) card.append(el('span', 'sty-eye', where));
       const h = el('h2', 'sty-title', e.title); h.id = 'styTitle';
       card.append(h);
+      let open = null;   // a choice left open by an unattended scene: offered here until it is made
       for (const c of e.cards) {
+        if (c.choice) { open = c.choice; continue; }
         if (c.who) card.append(el('p', 'sty-head', c.who));
         for (const l of c.lines) card.append(el('p', 'sty-text', l));
       }
+      const d = open && storyChoiceDef(open);
+      if (d) card.append(el('p', 'sty-head', d.prompt));
       api.body.append(card);
+      if (d) {
+        const opts = el('div', 'sty-opts');
+        for (const o of d.options) {
+          const b = btn('big forge sty-opt');
+          b.append(el('b', null, o.label)); if (o.line) b.append(el('span', null, o.line));
+          b.addEventListener('click', () => { storyChoose(open, o.id); opts.replaceWith(el('p', 'sty-text sty-chosen', `You chose ${o.label}.`)); });
+          opts.append(b);
+        }
+        api.body.append(opts);
+      }
       const row = el('div', 'sty-actions');
       const next = chain && chain.filter(x => x !== id && storyUnread().includes(x))[0];
       if (next) {

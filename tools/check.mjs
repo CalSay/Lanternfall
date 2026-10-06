@@ -8694,6 +8694,21 @@ if (section('story-hollow-script')) try {
   play(wg, wgv); wg.eval('storyRead("p:regent")'); wg.eval(`emit('kill', { mob: mob, zone: 5, gold: 0, ess: 0, tier: 1 })`); ticks(wg, 3);
   play(wg, wgv, 'auto'); ticks(wg, 2);
   assert(wg.eval('storyLate().includes("p:regent")') && wg.eval('storyEntry("p:regent").cards.length') > wg.eval('STORY_BEATS.champ.regent.pre.length'), 'story-hollow-script: an unattended post scene puts its Champion\'s Journal entry (pre and post) back under "Catch up on the story", even when the pre was read');
+  // an unattended Fenmother post leaves the Great Lantern choice open: no default, and the Journal entry offers it until it is made
+  const wl = loadCore({ seed: 102 }), wlv = watch(wl);
+  quiet(wl, 'S.zone = 35; S.maxZone = 35; storyEncounter("elder", "fenmother"); fightBoss = true; spawn(); mob.encounter = { kind: "elder", id: "fenmother" }'); ticks(wl, 3);
+  play(wl, wlv); wl.eval(`emit('kill', { mob: mob, zone: 35, gold: 0, ess: 0, tier: 1 })`); ticks(wl, 3);
+  const fpost = wlv.scene[wlv.scene.length - 1];
+  play(wl, wlv, 'auto'); ticks(wl, 2);
+  assert(fpost && fpost.id === 'e:fenmother:post' && wl.eval('S.story.litFor.hollow') === undefined && wl.eval('storyLate().includes("e:fenmother")') && wl.eval('storyEntry("e:fenmother").cards.some(c => c.choice === "hollowLantern")'),
+    'story-hollow-script: an unattended Fenmother post sets no Great Lantern default, and its Journal entry offers the choice to catch up on');
+  wl.eval('storyRead("e:fenmother")');
+  assert(wl.eval('storyUnread().includes("e:fenmother")') && wl.eval('storyChoose("hollowLantern", "tam")') && wl.eval('S.story.litFor.hollow') === 'tam' && !wl.eval('storyEntry("e:fenmother").cards.some(c => c.choice)') && !wl.eval('storyUnread().includes("e:fenmother")'),
+    'story-hollow-script: the entry stays unread while the choice is open; choosing in the Journal saves it and closes the entry');
+  const ws = loadCore({ seed: 103 }), wsv = watch(ws);
+  quiet(ws, 'S.zone = 35; S.maxZone = 35; storyEncounter("elder", "fenmother"); fightBoss = true; spawn(); mob.encounter = { kind: "elder", id: "fenmother" }'); ticks(ws, 3);
+  play(ws, wsv); ws.eval(`emit('kill', { mob: mob, zone: 35, gold: 0, ess: 0, tier: 1 })`); ticks(ws, 3); play(ws, wsv, 'skipped');
+  assert(ws.eval('S.story.litFor.hollow') === 'hesketh', 'story-hollow-script: a skipped Fenmother post takes the default (Hesketh)');
   assert(wg.eval('S.story.ends["p:regent:post"]') === undefined && wg.eval('S.story.seen["p:regent:post"]') < 0 && wg.eval('S.story.seen["j:regent"]') < 0 && wg.eval('storyLate().includes("j:regent")'), 'story-hollow-script: an unattended Champion scene files its page late too');
   // a starter met as a person, at an area door: dropped for his own story, listed and played for the others
   const npcDef = `STORY_BEATS.npc.tobinMet = { at: 'area:0', who: 'Tobin of the Lamps', not: 'tobin', lines: ['You carry a lamp.'] };`;
@@ -8720,7 +8735,7 @@ if (section('story-hollow-script')) try {
   C2('S.mastery.types.wraith = 12; S.mastery.zones[31] = 9; S.maxZone = 40; codexRefresh(true)');
   const allLore = JSON.parse(C2('JSON.stringify(codexPage("bestiary").tiles.map(t => t.lore))')).flat();
   assert(!tile(kNone).lore.length && !allLore.some(l => oldLines.includes(l)) && !/Fenmother/.test(JSON.stringify(allLore)), 'story-hollow-script: a type with no ZONE_FOES monster shows nothing, and no tile shows an old LORE_BESTIARY line');
-  assert([g, hl, cx, wa, wb, wc, wd, wd2, wt.w, ww.w, wp, wf, wg, wn, wn2].every(x => !x.errors.length), 'story-hollow-script: no handler errors');
+  assert([g, hl, cx, wa, wb, wc, wd, wd2, wt.w, ww.w, wp, wf, wg, wl, ws, wn, wn2].every(x => !x.errors.length), 'story-hollow-script: no handler errors');
 } catch (e) { fail('story-hollow-script crashed: ' + (e.stack || e)); }
 // an unattended card in the browser: it files itself after the idle wait (45 s; 2 s under the test key), and a tap restarts the wait
 if (section('story-hollow-script (browser)')) try {
@@ -8753,6 +8768,13 @@ if (section('story-hollow-script (browser)')) try {
         'story-hollow-script (browser): a card nobody touches files itself (no ends entry, late), and the game runs again');
       await XI('storyUI.list(true)'); await pageI.waitForSelector('.sty-catch', { timeout: 3000 });
       assert(/Catch up on the story/.test(await pageI.$eval('.sty-catch', n => n.textContent)), 'story-hollow-script (browser): the Journal offers the unattended card under "Catch up on the story"');
+      // a Great Lantern choice left open by an unattended Fenmother post: the Journal entry shows the names, and a tap saves one
+      await XI('storyEncounter("elder", "fenmother"); S.story.seen["e:fenmother:pre"] = Date.now(); S.story.seen["e:fenmother:post"] = -Date.now(); storyUI.open("e:fenmother")');
+      await pageI.waitForSelector('.sty-sheet .sty-opt', { timeout: 3000 });
+      const names = await pageI.$$eval('.sty-sheet .sty-opt b', l => l.map(x => x.textContent));
+      await pageI.click('.sty-sheet .sty-opt:nth-child(2)'); await pageI.waitForTimeout(200);
+      assert(names.length === 4 && await XI('S.story.litFor.hollow') === 'tam' && /You chose Tam\./.test(await pageI.$eval('.sty-chosen', n => n.textContent)) && !(await pageI.$('.sty-sheet .sty-opt')),
+        `story-hollow-script (browser): an open Great Lantern choice shows its four names in the Journal entry, and a tap saves it (${names.join(', ')})`);
       await ctxI.close();
     } finally { await browser.close(); }
   }
