@@ -6,8 +6,9 @@
 // Exposed names:
 //   OMEN_LINES[omenId] -> one line for each of the 35 OMENS (55-almanac.js), by id.
 //   DARE_LINES[omenId] -> one line for each Omen that has a Dare (7), by the Omen's id.
-//   OMEN_LATE[omenId] -> { zone, line }: a line that names someone met later; it shows once the best zone reached is `zone`.
-//   omenLine(id, dare, maxZone) -> the line to show, or '' (also reads COAST_OMEN_TEXT[id].say for the
+//   OMEN_LATE[omenId] -> { zone, hero, line }: a line that names someone met later; it shows once the best zone reached is `zone`
+//                         and met(hero) is true (the caller says whether the player has met that hero).
+//   omenLine(id, dare, maxZone, met) -> the line to show, or '' (also reads COAST_OMEN_TEXT[id].say for the
 //                         coast Omens, so one reader covers both).
 // Lines are LORE_LIMITS.omen characters or less (lore.md 1: "Omen line under 60 characters").
 // Omens are signs in the sky and the land as the world wakes up: small, warm, a little odd.
@@ -71,7 +72,7 @@ const DARE_LINES = {
 
 // Lines that name a person or place the player meets later. Each waits for the zone given (the best zone reached) and then replaces
 // the Omen's plain line. Oriel is met in Chapter 4, so her lines come after it (bible 7, 12).
-const OMEN_LATE = { luckyStar: { zone: 141, line: 'One star is winking. Oriel says it means you.' } };
+const OMEN_LATE = { luckyStar: { zone: 141, hero: 'oriel', line: 'One star is winking. Oriel says it means you.' } };
 
-const omenLine = (id, dare, maxZone) => (dare && DARE_LINES[id]) || (OMEN_LATE[id] && maxZone >= OMEN_LATE[id].zone && OMEN_LATE[id].line) || OMEN_LINES[id]
+const omenLine = (id, dare, maxZone, met) => (dare && DARE_LINES[id]) || (OMEN_LATE[id] && maxZone >= OMEN_LATE[id].zone && typeof met === 'function' && met(OMEN_LATE[id].hero) && OMEN_LATE[id].line) || OMEN_LINES[id]
   || (typeof COAST_OMEN_TEXT === 'object' && COAST_OMEN_TEXT[id] && COAST_OMEN_TEXT[id].say) || '';

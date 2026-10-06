@@ -8568,8 +8568,9 @@ if (section('story-systems-hollow')) try {
   assert(!bad(omens, unmet).length && !omens.some(l => retired.some(re => re.test(l))), 'systems-hollow: no Omen or Dare line names an unmet person or place or uses a retired word' + (bad(omens, unmet).length ? ': ' + bad(omens, unmet)[0] : ''));
   const late = E('OMEN_LATE');
   assert(Object.keys(late).length === 1 && late.luckyStar.zone === 141 && /Oriel/.test(late.luckyStar.line) && late.luckyStar.line.length <= L.omen + 10
-    && !/Oriel/.test(E('omenLine("luckyStar", false, 140)')) && /Oriel/.test(E('omenLine("luckyStar", false, 141)')) && !/Oriel/.test(E('omenLine("luckyStar", false)')),
-    'systems-hollow: Oriel\'s Omen line waits until Chapter 4 is done (zone 141), and the plain line shows before');
+    && !/Oriel/.test(E('omenLine("luckyStar", false, 140)')) && !/Oriel/.test(E('omenLine("luckyStar", false, 141)')) && /Oriel/.test(E('omenLine("luckyStar", false, 141, h => h === "oriel")'))
+    && !/Oriel/.test(E('omenLine("luckyStar", false, 141, h => false)')) && !/Oriel/.test(E('omenLine("luckyStar", false)')),
+    'systems-hollow: Oriel\'s Omen line waits until Chapter 4 is done (zone 141) and she has been met, and the plain line shows before');
   assert(/Oriel/.test(late.luckyStar.line) && E('omenLine("goldRain", true, 999)') === E('DARE_LINES.goldRain'), 'systems-hollow: a taken Dare still shows its own line');
   // Deep Lore: the Elders page is rule 4, the Rope page carries the Season 2 seed, Maud's Lantern page is untouched
   const pages = E('DEEP_PAGES');

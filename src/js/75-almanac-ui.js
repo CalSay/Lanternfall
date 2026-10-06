@@ -196,7 +196,7 @@
       setTxt(al.eye, `Today · ${almanac.catName(o.cat)} Omen`);
       setTxt(al.nm, o.n);
       setTxt(al.fx, o.fx + '.');
-      setTxt(al.say, typeof omenLine === 'function' ? omenLine(o.id, on, S.maxZone) : '');
+      setTxt(al.say, typeof omenLine === 'function' ? omenLine(o.id, on, S.maxZone, typeof heroUnlocked === 'function' ? heroUnlocked : null) : '');
       al.det.update(force);
 
       const dl = almanac.daysLeft();
