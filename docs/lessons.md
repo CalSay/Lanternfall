@@ -20,6 +20,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Keep the readiness estimate running while a tip pauses the game, and include Deepwell boons, gear changes made while gathering, and the sim seed. Why: Codex found each of these in rounds 1 to 3 of PR #47. (boss-readiness, 2026-10-06)
 - Run `node tools/health.mjs --compare` before and after any balance or pacing change. Why: it is the only before/after measure and CI gates on it. (f-health, 2026-10-05)
 - Play the persona's whole turn skill (parry, dodge and ability rings) when measuring pacing for a named player type. The sim's own turn player lands 80% of defences and never presses a ring, so every timed ability is a Miss. Why: Codex P1 on PR #52, where one shared 40% defence rate stood in for the casual. (xp-gold-pacing-report, 2026-10-06)
+- difficulty-budget: predicted the budget would find bosses near the 70% casual aim with a few outliers; measured 55 of 156 hero cells out of band (zones 5-15 and elites 100%, zones 25-34 Captains 0-1% for Wren and Pip, the Fenmother easier than her Captains). Miss. Also: `turnCombatSample` on one seed correlates long fights (13-32% vs 53-67% independent), so give every boss fight its own hashed seed when measuring win rates. Why: the judge caught it before the baseline. (difficulty-budget, 2026-10-06)
 
 ## Economy and skilling
 
@@ -42,6 +43,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Canon changes after the Opus judge pass go in the digest for Cal's veto. Example: the Coast and Emberwaste bosses are the dark wearing Silas's and Durand's shapes, both men found alive afterwards. (story, 2026-10-05)
 
 - Gate hero unlocks on the zone of the hero's first scene, in one table (`STORY_MEET`, `56c-unlocks.js`), and bump the zone in tests that unlock heroes early. Why: the bible says no hero unlocks before their first scene, and many C9 tests unlocked Bram at zone 10 (his scene is zone 31). (story-opening, 2026-10-06)
+- Anchor a hero's story gate where the scene really plays (a Champion's post plays after that Champion falls: area end + 1), and keep a check that holds `STORY_MEET` equal to the chapter script. Why: the table used area starts, so gates opened up to 4 zones before the scene and the new "at zone N" line would have lied (red team, story-unlock-gates, 2026-10-06).
 - Keep the new-game hero picker free of later-region names: a locked hero shows who you meet, not where or how much. Why: unlock text named "Cinder Road II" and "still being designed" to a first-time player. (story-opening, 2026-10-06)
 - Story browser tests that script their own scenes must expect the real opening scenes first, because they queue on the first walk-in before test data loads. Why: deleting the data after load changed nothing. (story-opening, 2026-10-06)
 - In landscape, put story card buttons beside the card, not sticky over it. Why: at 740x360 the opening card's lines 2 and 3 sat behind Begin and Skip while the size test still passed; check that every line is visible, not only that the sheet fits. (story-opening, 2026-10-06)
@@ -66,8 +68,12 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Build pre-leave UI in the same slot as its sibling and never behind the sibling's element; cap estimates by Storehouse room; update GAME.md. Why: Codex P1s x4 on the away chip (chip hung off a fighter-only notice, no layout slot, ignored the Storehouse cap, no GAME.md). (away-chip, 2026-10-06)
 - Do not repeat card text in the bell notice. Why: Codex P2 on PR #43, still open. (away-clarity, 2026-10-06)
 - Give every new checkbox or button in a sheet a 44px minimum height, and when a control repeats one already on screen, update both from the same state. Why: Codex P1/P2 on the Try again card (Auto toggle was 18px tall and drifted from the Fight tab's). (wall-try-again, 2026-10-06)
+- Space first-hour unlocks with a play-time governor (`ONBOARD_TUNE.gap`), not by moving them to later zones. Why: the sim reaches zone 5 at minute 3 and a cold player at minute 25, and a zone delay on the Hero tab strands the first gold (red team, story-unlock-gates, 2026-10-06).
+- A wait measured on a clock must stop waiting when that clock stops. `O().t` freezes once every tab is open, so the governor skips its gap there, or a late row (Hands) never opens (Opus review, story-unlock-gates, 2026-10-06).
+- A core bot may only do what the screen offers: gate its Training on `isUnlocked("party")` and its gathering on `isUnlocked("gather")`. Why: the cold-hearth bot trained before the Hero tab existed, which hid a 47 s slower first boss and let Next Up jump the unlock queue (story-unlock-gates, 2026-10-06).
 - Delay the Aim hint until the foe's swing lands. Why: it covered the Dodge and Parry cues. Guide tips already show one at a time; leave that. (first-minute-flow, 2026-10-06)
 - Mark any reward, hint or card the game cannot deliver yet as "Coming soon", in the place the player first sees it (not only after claiming). Why: 15 Codex rewards said "Saved for later" only after they were claimed, and Jory's and Ashby's hints promised a hire the game never made. (promises-pass, 2026-10-06)
+- Show icons through `nicSet`/`nicTag` at the size the box shows, never a 48 px URL squeezed into 28-36 px, and give a hero's icons in whole packs only (add the hero to `COMPLETE` in check.mjs). Why: the Abilities list used `soloIconURL` (uneven scaling) and Wren and Tobin still lack 4 icons. (wire-ability-icons, 2026-10-06)
 
 ## Saves and offline parity
 

@@ -137,6 +137,7 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 - **Explain each hero's resource** (Aim, Grit, Cinders) in the game. Pip's resource is called **Cinders**, not Embers,
   so it does not clash with the raid's Embers. (2026-10-02)
 - **The Fenmother may be hard:** about 25-30% casual wins for a hero who keeps up is fine for a region boss. (2026-10-02)
+- **The difficulty budget** (Claude decided, judge 2026-10-06; veto if you disagree): every fight kind has a casual and a good win band for each starter who keeps up with the road (normal 90-100% casual, elite 75-97%, zone bosses 1-3 85-100%, 4-10 70-90%, Captains 60-80%, Champions 40-60%, Elders 20-40%; Tobin +10 on bosses), and `health.mjs --compare` gates on it with owned, dated known gaps. `docs/design/difficulty-budget.md`.
 - **Gear stats must work in turn fights;** Pip's slow late kills come from dead caster lines. (2026-10-02)
 - **Stars:** 3 set and 2 lit is fine; learning in 4 wins is fine; there should be more stars. The Abilities and Stars
   menus need to be much better, and the owner misses the old star map. (2026-10-02)
@@ -277,6 +278,10 @@ Every card that adds a price, a currency, a timer or a gate passes all ten. (202
   bottom-right. (2026-09-29)
 - **Hints stay docked** and never jitter. The game pauses while a tutorial step is open. The early game must not be
   spammed with notifications. Skill levels sit above the resource lists. (2026-09-28 to 2026-09-29)
+- **One new thing a minute:** in the first hour at most one tab, view, bar or strip opens per 60 s of play
+  (`ONBOARD_TUNE.gap`), the first ready one in `FEATURES` order; one the player's own act or a drop opened (walking to
+  gather, the fire, the Workbench, the Tavern, the first star, the first unique) opens at once. Every unlock rule is
+  unchanged. Claude decided (story-unlock-gates, red team and Opus judge, 2026-10-06; `docs/design/unlock-pace.md`).
 - **Fonts:** Handjet (pixel display) with Barlow Semi Condensed (body). (2026-09-28)
 - **Icons:** the approved C26 icon packs (resources, gear, actions, menus, statuses). (2026-10-01)
 
@@ -302,7 +307,11 @@ Every card that adds a price, a currency, a timer or a gate passes all ten. (202
   Sable of the Mere (Sable, the Deep Listener).
 - **The Voice's two phase-change cards** are the one exception to "nothing during a fight": between turns, at the roster's
   move-end queue, never changing fight state, always with Skip.
-- **A hero can't be unlocked before their first story scene,** once that scene is in the game; heroes a save owns are kept.
+- **A hero can't be unlocked before their first story scene;** heroes a save owns are kept. The gate opens from the zone
+  where the scene can have played (a scene on a Champion's post: once that Champion falls), from `STORY_MEET`, which a
+  check holds equal to the chapter script, and it holds whether or not the scene's encounter is built yet. The camp's All
+  heroes sheet says when (the zone in your chapter, else the chapter number); a won hero token is a bell line. Claude
+  decided (story-unlock-gates, red team and Opus judge, 2026-10-06; `docs/design/unlock-pace.md`).
 - **Ada and Pell come home when the Fenmother is beaten,** not after the Coast's Great Lantern.
 - **Story choices are saved as new keys under `story`** (`starter`, `litFor`, `coldhearth`) with defaults; no save-key
   bump; Opus save review before merge.
@@ -361,15 +370,18 @@ Plan and rulings: `/mnt/project-files/early-game/plan.md`, `plan-judge.md`. Beat
   numbers carry the same information. "Next" chips stay dropped. The Bag tab belongs to `bag-slot-and-steady-charges`.
 - **Lantern Caches.** A zone boss's first clear opens a Lantern Cache that reveals that win's drops. Its only new reward
   is a look roll, with its odds and a pity counter printed. Replays give no cache. Caches, keys and pity are never sold.
-  Caches hold no relics and no time skips.
+  Caches hold no relics and no time skips. This narrows the Money line's "boss wins" to a boss's first clear. Its other
+  sources (Contracts with a Dare, Codex milestones) stay, each added later by its own card through the economy gate.
 - **Looks.** Deed looks stay Deed-only. Cache looks are their own catalogue, drawn by Codex and vetted as a set. The
-  first cache a save opens gives a Deepwell lantern colour and relights the stage. The Wardrobe tags each look Deed,
+  first three caches a save opens each give a Deepwell lantern colour the save does not own yet (Ember Red first), print
+  it as a certain look, and relight the stage. This is the cache's look, not an extra reward; a save that owns all six
+  gets none. The Wardrobe tags each look Deed,
   Cache or (later) Store, and counts earned looks only.
 - **Moments.** Big moments (first boss win, a cache with a look or unique, a unique, a new hero, a Great Lantern) and
   medium moments (the first and every 5th level, a new ability, the first Star, a look, a Rare-or-better craft) sit
   outside the pop budget, under their own cap. Big: one card at a time at fight end, holding the game. Medium: at most
   one per fight end, in the notices slot. At most 8 big plus medium in the first 20 minutes. This refines "the early
-  game must not be spammed".
+  game must not be spammed". A cache that holds a look is a big card, even when it opens automatically.
 - **The guide is Old Hesketh, with a face.** Landscape: the side column's notices slot. Portrait: docked above the
   action bar. Never over the fighters or the HP bars.
 - **Bounties.** A finished bounty can be claimed from Next Up and from its ready notice, and the board also shows at
@@ -404,10 +416,13 @@ Plan and rulings: `/mnt/project-files/early-game/plan.md`, `plan-judge.md`. Beat
 
 Kept only to explain current rules. Each line: the old decision, then what replaced it.
 
+- Hero gates at the first zone of the scene's area, only once the scene is in the game (2026-10-06, story-opening) -> from the
+  zone the scene can have played, built or not (2026-10-06, story-unlock-gates).
+- Hesketh's talk plays before the first fight (story bible 8.1, audit A1) -> the talk plays when the camp fire is lit;
+  the first fight comes within 45 s (early game, 2026-10-06).
 - Store launch possible, monetisation undecided (2026-09-27); monetisation waits for launch, with a free and paid battle
   pass, a membership with capped convenience perks and skins (2026-09-28); every cosmetic is earned, never sold
   (2026-09-28) -> the money model (2026-10-06).
-
 - Training: gold levels up each hero's Attack, Parry, Dodge and abilities, with caps (2026-09-29, 2026-10-02) -> no
   Training; level, star points, abilities and attribute points (2026-10-06).
 - No rapid catch-up XP for heroes (2026-09-28) -> a new hero joins at the road's level; benched heroes earn half XP

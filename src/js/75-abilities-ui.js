@@ -10,8 +10,8 @@
 //   - The detail (tap a row): the full text, its numbers, the Perfect text of a timed ability, one action (Learn, two taps;
 //     or Slot Q / W / E) and the two talents as an A / B choice. Where it sits is CSS (60-abilities.css): beside the list on
 //     a wide panel, a bottom sheet in portrait, and in place of the list (with Back) in the small landscape panel.
-// Ability icons: the approved pack has the three starters (Echo Shot, Shield Bash, Fireball); the rest show a lettered
-// tile until their icons are drawn (art freeze, owner 2026-09-30).
+// Ability icons: whole packs per hero (art freeze, owner 2026-09-30). The three starters (Echo Shot, Shield Bash, Fireball)
+// and all of Pip's 14 are drawn (wire-ability-icons); Wren and Tobin keep lettered tiles until their last four icons pass.
 {
   const icon = id => (typeof soloIconURL === 'function' ? soloIconURL(id) : '');
   const KIND = { damage: 'Damage', buff: 'Buff', debuff: 'Debuff', passive: 'Passive', finisher: 'Finisher' };
@@ -24,6 +24,8 @@
   const heroNm = k => (typeof ROSTER === 'object' && ROSTER[k] ? ROSTER[k].name.split(' ')[0] : k);
   const btn = (cls, text) => { const b = el('button', cls, text); b.type = 'button'; return b; };
   function tile(id) {
+    // a drawn icon shows at a native size (nicSet picks it from the box), never a 48 px image squeezed into 28-36 px
+    if (nicHas('act', id)) { const i = el('img', 'ab-ic px'); i.alt = ''; nicSet(i, 'act', id, 32); return i; }
     const u = icon(id);
     if (u) { const i = el('img', 'ab-ic px'); i.alt = ''; i.src = u; return i; }
     const a = SOLO_ABILITIES[id]; return el('span', 'ab-ic ab-mono', ((a && (a.short || a.name)) || '?').slice(0, 2));
