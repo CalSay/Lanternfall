@@ -6,6 +6,22 @@
     "active": 21,
     "optimiser": 31
   },
+  "caps": {
+    "about": "Absolute caps beside the tolerances (self-improving plan F4). Report only: node tools/health.mjs prints runs over a cap and never fails on one. Each cap names a per-run metric and its maximum.",
+    "newThingsPer3min": {
+      "metric": "mechanicsBurst3minFirst30",
+      "max": 2,
+      "note": "new unlocks and camp builds in any 3 minutes of the first 30 active minutes"
+    },
+    "newThingsPer10min": {
+      "metric": "mechanicsBurst10min",
+      "max": 4,
+      "note": "new unlocks and camp builds in any 10 minutes",
+      "personas": [
+        "active"
+      ]
+    }
+  },
   "metrics": {
     "casual.firstGoalSec": {
       "value": 56.27,
