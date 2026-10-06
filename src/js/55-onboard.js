@@ -52,7 +52,7 @@ const ONBOARD_TUNE = { gap: 60 };
 const FEATURES = [
   { id: 'party', tab: 'party', view: 'team', name: 'Hero', why: 'hero level 3', when: () => S.L >= 3 || S.maxZone >= 2 },
   { id: 'gather', tab: 'gat', view: 'mine', name: 'Gather', why: 'after the first boss (zone 2), or once the hero walks to the grove', when: () => S.maxZone >= 2 || S.activity === 'gather', now: () => S.activity === 'gather' },
-  { id: 'nextup', name: 'Next Up', why: 'first Training level, or zone 2', when: () => upBought() || S.maxZone >= 2 },
+  { id: 'nextup', name: 'Next Up', why: 'first attribute point or Training level, or zone 2', when: () => upBought() || S.maxZone >= 2 },
   { id: 'awaynote', name: 'Away note', why: 'Gather is open (the away strip under the Fight / Gather row, 71-ui-fight)', when: () => isUnlocked('gather') },
   { id: 'bounties', tab: 'adv', view: 'bounties', name: 'Bounties', why: 'zone 4', when: () => S.maxZone >= 4 },
   { id: 'camp', tab: 'world', view: 'camp', name: 'Camp', why: 'the camp opens (zone 5; a cold Hearth: the fire is lit)', when: () => (!coldH() && S.maxZone >= 5) || (typeof campOpen === 'function' && campOpen()), now: () => typeof campOpen === 'function' && campOpen() },
@@ -139,8 +139,8 @@ const heroTurnNow = () => { const q = turnSnap(); return !q || q.phase === 'hero
 const hitComing = () => { const q = turnSnap(); return q ? q.canDefend && q.closesAt > q.now : heavyShowing(); };
 const inWindow = k => { const q = turnSnap(); if (!q) return heavyShowing(); const open = k === 'parry' ? q.parryOpensAt : q.dodgeOpensAt; return q.canDefend && q.now >= open && q.closesAt - q.now > 0.02; };
 const GUIDE_STEPS = [
-  { id: 'attack', pause: 1, pauseWhen: () => liveFoe() && heroTurnNow(), when: () => fightingNow(), done: () => (O().atk || 0) >= 1 || S.totalKills >= 12 },
-  { id: 'ability', pause: 1, pauseWhen: () => liveFoe() && heroTurnNow(), when: () => stepDone('attack') && fightingNow() && abilityOk(), done: () => O().casts >= 1 },
+  { id: 'attack', pause: 1, pauseWhen: () => liveFoe() && heroTurnNow(), when: () => fightingNow() && heroTurnNow(), done: () => (O().atk || 0) >= 1 || S.totalKills >= 12 },
+  { id: 'ability', pause: 1, pauseWhen: () => liveFoe() && heroTurnNow(), when: () => stepDone('attack') && fightingNow() && heroTurnNow() && abilityOk(), done: () => O().casts >= 1 },
   { id: 'dodge', pause: 1, pauseWhen: () => liveFoe() && inWindow('dodge'), when: () => stepDone('ability') && fightingNow() && hitComing(), done: () => (O().dodges || 0) >= 1 },
   { id: 'parry', pause: 1, pauseWhen: () => liveFoe() && inWindow('parry'), when: () => stepDone('dodge') && fightingNow() && hitComing(), done: () => (O().parries || 0) >= 1 },
   { id: 'boss', pause: 1, ok: 1, when: () => S.maxZone === 1 && S.zone === 1 && typeof fightBoss !== 'undefined' && !!fightBoss, done: () => S.maxZone >= 2 },
@@ -159,7 +159,7 @@ const GUIDE_STEPS = [
   { id: 'forge', pause: 1, pauseUnless: () => matsOfBuild('forge'), when: () => coldH() && stepDone('tool') && plotOpen('forge'), done: () => !coldH() || campBusy('forge') },
   { id: 'stock:store', needs: () => matsOfBuild('store'), when: () => coldH() && plotOpen('store') && !!needShort(matsOfBuild('store')).length, done: () => !coldH() || !(typeof CAMP_B === 'object' && CAMP_B.store) || campBusy('store') },
   { id: 'store', pause: 1, pauseUnless: () => matsOfBuild('store'), when: () => coldH() && plotOpen('store'), done: () => !coldH() || !(typeof CAMP_B === 'object' && CAMP_B.store) || campBusy('store') },
-  { id: 'tab:party', when: () => isUnlocked('party') && S.maxZone >= 3 && !unlit(), done: () => !!O().seen.party },
+  { id: 'tab:party', when: () => isUnlocked('party') && S.maxZone >= 3 && !unlit() && !fightingNow(), done: () => !!O().seen.party },
   // a Got it note: it never pauses and never blocks (audit-1 3.8); the Next Up chip or Got it ends it
   { id: 'nextup', ok: 1, when: () => isUnlocked('nextup') && stepDone('upgrade') && S.maxZone >= 3, done: () => false }
 ];
@@ -178,8 +178,15 @@ function needShort(mats) {
   return out;
 }
 // The guide teaches Training's Attack: the first level's price, and whether any move has been trained.
-const cheapestUp = () => { const p = typeof trainPlan === 'function' && soloHero() ? trainPlan('atk', '1') : null; return p && p.n > 0 ? p.cost : Infinity; };
-const upBought = () => !!(S.solo && S.solo.tr && Object.values(S.solo.tr).some(r => r && Object.values(r).some(v => v > 0)));
+// hero-progression-rework: with attributes on (HERO_TUNE.training = 0) the step is the first attribute point: it fires when the
+// playing hero has one free (cheapestUp is 0 then, so `gold >= cheapestUp()` reads "a point to spend"; Infinity: none) and it is
+// done when any hero has spent one (attrSpentAny).
+const obAttrOn = () => typeof attrOn === 'function' && attrOn();
+const cheapestUp = () => {
+  if (obAttrOn()) return typeof attrPoints === 'function' && soloHero() && attrPoints(soloHero()).free > 0 ? 0 : Infinity;
+  const p = typeof trainPlan === 'function' && soloHero() ? trainPlan('atk', '1') : null; return p && p.n > 0 ? p.cost : Infinity;
+};
+const upBought = () => obAttrOn() ? attrSpentAny() : !!(S.solo && S.solo.tr && Object.values(S.solo.tr).some(r => r && Object.values(r).some(v => v > 0)));
 const abilityOk = () => { try { const a = typeof abilityInfo === 'function' && abilityInfo(); return !!(a && a.ready); } catch (e) { return false; } };
 // Materials for a first tier-1 recipe the hero can wear (as the Next Up craft goal reads it).
 function craftReady() {

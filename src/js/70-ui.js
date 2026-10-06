@@ -308,7 +308,7 @@ function openNoticeLog() {
     if (hasJournal) {
       for (const [v, label] of views) {
         const b = el('button', null, label); b.type = 'button'; b.dataset.v = v; b.setAttribute('role', 'tab');
-        b.addEventListener('click', () => show(v)); seg.append(b);
+        menuNavIcon(b, v); b.addEventListener('click', () => show(v)); seg.append(b);
       }
       top.append(seg);
     } else top.append(el('h2', 'nlog-h', 'Notices'));
@@ -381,7 +381,7 @@ const TAB_IC = { sword: iconURL('sword', '#A9B1BD'), pick: iconURL('pick', '#D08
   camp: spriteURL('tab:camp', TAB_PX.camp, { 1: '#C9A56A', 2: '#8C6A43', 3: '#2A1E14', 6: '#6B4A2E', 7: '#FF9E3D' }) };
 // C26: the approved menu icons (NAV_ICONS, 60n-nicons) at the size each place shows; TAB_IC stays the fallback.
 const NAV_OF_TAB = { adv: 'fight', party: 'hero', gat: 'gather', forge: 'craft', world: 'camp', deeds: 'deeds' };
-document.querySelectorAll('.tab').forEach(b => { const i = img(TAB_IC[b.dataset.ic]); nicSet(i, 'nav', NAV_OF_TAB[b.dataset.tab], 20); b.prepend(i); });
+document.querySelectorAll('.tab').forEach(b => { const i = img(TAB_IC[b.dataset.ic]); nicSet(i, 'nav', NAV_OF_TAB[b.dataset.tab], 20); b.prepend(i); if (b.dataset.tab === 'adv') b.setAttribute('aria-label', 'Fight menu'); });
 $('goldIc').src = iconURL('coin', '#F2C14E');
 
 // ================= menus: tabs, sub-views, open and close =================
@@ -478,6 +478,7 @@ function buildViewSeg(t) {
   seg.style.setProperty('--n', list.length);
   for (const v of list) {
     const b = el('button', null, v.label); b.type = 'button'; b.dataset.view = v.id;
+    menuNavIcon(b, v.id);
     b.setAttribute('role', 'tab');
     const d = el('span', 'vdot'); d.hidden = true; b.append(d);
     if (typeof onboardIsNew === 'function' && onboardIsNew(v)) b.classList.add('is-new');

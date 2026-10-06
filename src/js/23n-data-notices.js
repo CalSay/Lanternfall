@@ -40,7 +40,7 @@ const NOTICES = [
     merge: ms => `${ms.length} zones cleared. ${ms[ms.length - 1]}` },
   { id: 'zone-won', re: /^Zone .+ won\. On to Zone .+\.$/, ch: 'log', why: 'a replayed zone won: the zone title shows where you are',
     merge: ms => ms[ms.length - 1] },
-  { id: 'level', key: 'level', re: /^Level \d+\. Your hero hits/, ch: m => noteNum(m, /^Level (\d+)/) % 25 === 0 ? 'bell' : 'log',
+  { id: 'level', key: 'level', re: /^Level \d+\. (Your hero hits|\d+ attribute points)/, ch: m => noteNum(m, /^Level (\d+)/) % 25 === 0 ? 'bell' : 'log',
     why: 'the LEVEL UP float says it; every 25th level is a bell line (the Stars may unlock at level 10)',
     merge: ms => `${ms.length} levels gained. Level ${noteNum(ms[ms.length - 1], /^Level (\d+)/)}.` },
   { id: 'skill', key: 'skill', re: /^\S+ level \d+\./, ch: m => /You can now|open to you/.test(m) ? 'bell' : 'none', why: 'only a new tier is news' },
@@ -51,8 +51,8 @@ const NOTICES = [
   { id: 'scroll-more', re: /^(Moss|Hollow|Barrow|Roadlight|Mother) Scroll found\.$/, site: /SCROLLS\[id\]\.name\} found/, ch: 'log', why: 'the stage float shows it, and Next Up offers what it teaches' },
   { id: 'learned', re: /^\w+ learned [A-Z][\w' ]+\.$/, site: /learned \$\{a\.name\}/, ch: 'log', why: 'you just pressed Learn and see the card change' },
   { id: 'pace', key: 'pace', re: /back to Zone \d+ to keep earning\.$/, ch: 'bell', once: 'session', why: 'audit 3.14: one line a session' },
-  { id: 'start', re: /picks up the lamp\. The road is dark\.$/, ch: 'log', why: 'the guide speaks first' },
-  { id: 'hero-swap', re: /takes up the lamp\.$/, ch: 'log' },
+  { id: 'attr-join', key: 'attr-join', ch: 'pop', wait: 30 },   // hero-progression-rework: a hero arrives with points to spend (Go: Build)
+  { id: 'hero-swap', re: /(takes up the lamp\.|joins at Lv .+, the road's level\.)$/, ch: 'log' },
 
   // ---- loot and gear ----
   { id: 'unique', re: /^Unique loot! /, ch: 'log', why: 'the moment layer shows every unique as a card (75-moments-ui); the bell list keeps the line' },
@@ -117,7 +117,9 @@ const NOTICES = [
   { id: 'mastery', key: 'mastery', re: /: mastery star \d of 5\./, ch: 'log', why: 'the zone shows its stars' },
   { id: 'bestiary', key: 'bestiary', re: /^Bestiary: /, ch: 'log', why: 'the Bestiary view marks it' },
   { id: 'weekly', re: /^Weekly goal done: /, ch: 'bell' },
-  { id: 'bounty', re: /^Bounty complete! /, ch: 'bell', merge: ms => `${ms.length} bounties complete.` },
+  { id: 'bounty', re: /^Bounty complete! /, ch: 'pop', reply: true, why: 'you just pressed Claim (the board, Next Up or the ready notice): show what you got', merge: ms => `${ms.length} bounties complete.` },
+  { id: 'bounty-ready', key: 'bounty-ready', ch: 'pop', wait: 20, held: 'log', why: 'tap it to claim; no menu needed (a held one is only a log line: Next Up still says Claim)' },
+  { id: 'bounty-room', key: 'bounty-room', ch: 'pop', reply: true, why: 'a claim that could not fit says what to free or build' },
 
   // ---- the Codex (57c) ----
   { id: 'codex', key: 'codex', re: /^(Codex: the .* page is half full\. The|Page Seal: |\d+ Lantern Light: )/, ch: 'bell' },
