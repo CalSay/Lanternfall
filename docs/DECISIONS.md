@@ -138,6 +138,7 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 - **Explain each hero's resource** (Aim, Grit, Cinders) in the game. Pip's resource is called **Cinders**, not Embers,
   so it does not clash with the raid's Embers. (2026-10-02)
 - **The Fenmother may be hard:** about 25-30% casual wins for a hero who keeps up is fine for a region boss. (2026-10-02)
+- **The difficulty budget** (Claude decided, judge 2026-10-06; veto if you disagree): every fight kind has a casual and a good win band for each starter who keeps up with the road (normal 90-100% casual, elite 75-97%, zone bosses 1-3 85-100%, 4-10 70-90%, Captains 60-80%, Champions 40-60%, Elders 20-40%; Tobin +10 on bosses), and `health.mjs --compare` gates on it with owned, dated known gaps. `docs/design/difficulty-budget.md`.
 - **Gear stats must work in turn fights;** Pip's slow late kills come from dead caster lines. (2026-10-02)
 - **Stars:** 3 set and 2 lit is fine; learning in 4 wins is fine; there should be more stars. The Abilities and Stars
   menus need to be much better, and the owner misses the old star map. (2026-10-02)
