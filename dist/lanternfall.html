@@ -1311,6 +1311,34 @@ span.cf-d { font-weight: 600; }
 .cf-gt small { font-size: 12.5px; color: var(--muted); }
 .cf-ph { margin: 0; font: 600 calc(20px * var(--display-k)) var(--display); }
 .cf-bagnone { grid-column: 1 / -1; margin: 4px 0; }
+
+/* craft-reveal: result card, last-five strip, odds line, grade words */
+.cf-resbox { display: grid; gap: 8px; }
+.cf-resbox:empty { display: none; }
+.cf-res { display: grid; gap: 8px; }
+.cf-grade { font: 600 calc(13px * var(--display-k)) var(--display); }
+.cf-cmpn { margin: 0; }
+.cf-resact { grid-auto-flow: row; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); }
+.cf-recent { display: grid; gap: 4px; }
+.cf-recent-r { display: flex; gap: 6px; }
+.cf-recent .ic.cf-tile { width: 52px; min-height: 52px; flex: none; }
+.ic.cf-tile.sel { outline: 2px solid var(--bone); outline-offset: -1px; }
+.cf-gr { position: absolute; left: 0; right: 0; bottom: 0; padding: 1px 0; text-align: center; font: 600 10px/1.2 var(--display); background: rgba(11,8,16,.82); }
+.cf-odds { grid-column: 1 / -1; font-size: 12px; color: var(--muted); }
+.cf-nofit { margin: 0; }
+.ic.cf-tile.fresh { outline-color: var(--bone); }
+.cf-res .cf-line { padding: 4px 10px; }
+.cf-res .cf-lines { gap: 3px; }
+.cf-res .cf-dl .cf-d { padding: 3px 8px; }
+.cf-res { gap: 6px; }
+.cf-res-l, .cf-res-r { display: grid; gap: 6px; align-content: start; min-width: 0; }
+@media (orientation: landscape) and (max-height: 500px) {
+  /* short screens: the buttons sit right under the name, the stats and the comparison below them */
+  .cf-res-l, .cf-res-r { display: contents; }
+  .cf-res .cf-lines, .cf-res .cf-cmpn, .cf-res .cf-dl { order: 2; }
+  .cf-res .cf-resact { order: 1; }
+  .cf-res .warn { order: 0; }
+}
 /* 60-deeds: the Achievements menu, its sheets, the Feat card (75-deeds-ui.js) and the Journal's stats wall
    (75-stats-ui.js). Display text is Handjet: every display size is calc(Npx * var(--display-k)). */
 
@@ -8983,7 +9011,7 @@ const NOTICES = [
   // ---- loot and gear ----
   { id: 'unique', re: /^Unique loot! /, ch: 'log', why: 'the moment layer shows every unique as a card (75-moments-ui); the bell list keeps the line' },
   { id: 'star-chart', re: /^You drew a Star Chart/, ch: 'pop', wait: 40 },
-  { id: 'forged', re: /^(Forged|Made) an? /, ch: m => /Legendary/i.test(m) ? 'pop' : /Rare|Epic/i.test(m) ? 'log' : 'none', why: 'the sheet shows what you made' },
+  { id: 'forged', re: /^(Forged|Made) an? /, ch: 'none', why: 'the Craft tab shows a result card for what you made; a Rare or better craft is also a medium moment (75-craft-ui)' },
   { id: 'bag-full', re: /^Your bag is full, so /, ch: 'bell' },
   { id: 'gear-reforged', re: /^Your .* reforged into .* gear\.$/, ch: 'bell' },
   { id: 'gear-back', re: /(does not fit your new path|do not fit your new path)/, ch: 'bell' },
@@ -12187,7 +12215,7 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
     const it = newItem(kind, t, r, { role: opts.role, mw: opts.mw });
     addItem(it);
     gainStation(stationOf(kind).skill, CRAFT_XP.craft(t));
-    toast(`Made a ${RAR[r].n} ${itemName(it)}.`, r === 'epic' || r === 'rare' ? 'ember' : 'good', { item: it }, r === 'legendary' ? 'high' : r === 'epic' || r === 'rare' ? 'normal' : 'low');
+    toast(`Made a ${RAR[r].n} ${itemName(it)}.`, 'good', { item: it }, 'low');   // craft-reveal: the result card (75-craft-ui) shows it; no bell line
     emit('crafted', { item: it, kind, t });
     save();
     return it;
@@ -36468,7 +36496,7 @@ let craftUI = null;
   }
 
   // ---------------- UI state (memory only) ----------------
-  const st8 = { st: null, tier: {}, filt: 'you', mw: null, role: {}, sort: 'power', bfilt: 'spare', pick: '', focus: null, fresh: new Set(), tm: { fam: 'ore', t: 1 } };
+  const st8 = { st: null, tier: {}, filt: 'you', mw: null, role: {}, sort: 'power', bfilt: 'spare', pick: '', focus: null, fresh: new Set(), tm: { fam: 'ore', t: 1 }, recent: [], result: null, resArm: false, reveal: false };
   const openTier = st => {
     return skillTopTier(skillOfSt(st));
   };
@@ -36579,6 +36607,109 @@ let craftUI = null;
     if (!d.pos && !d.comp) bits.push('Special');
     return bits.join(' · ');
   }
+  // craft-reveal: the odds a craft rolls on (the same weights craftItem rolls with), one line per recipe
+  const oddsTxt = k => safe(() => {
+    const w = rarityWeights(stationLevel(k)), tot = Object.values(w).reduce((a, b) => a + b, 0);
+    const pc = v => { const p = v / tot * 100; return (p < 10 ? p.toFixed(1) : String(Math.round(p))) + '%'; };
+    return 'Odds: ' + ['common', 'uncommon', 'rare', 'epic'].map(r => `${RAR[r].n} ${pc(w[r])}`).join(' · ');
+  }, '');
+  // short grade word for a bag tile (the full word sits on the item sheet and in the label)
+  const GRADE_SHORT = { common: 'Com', uncommon: 'Unc', rare: 'Rare', epic: 'Epic', legendary: 'Uniq' };
+  // stat changes against what the hero wears in that slot: [{ label, v, txt }]
+  function diffRows(it) {
+    const d = itemKind(it), cur = d && d.pos ? itemById(S.equip[d.pos]) : null;
+    if (!d || !d.pos || !heroFitsIt(it) || !cur || cur.id === it.id) return null;
+    const a = itemStats(it), b = itemStats(cur), rows = [];
+    const pd = itemPower(it) - itemPower(cur);
+    if (Math.abs(pd) >= 0.05) rows.push({ label: 'Power', v: pd, txt: (pd > 0 ? '+' : '-') + fmt(Math.abs(pd)) });
+    for (const k of new Set([...Object.keys(a), ...Object.keys(b)])) {
+      if (!CRAFT_STATS[k]) continue;
+      const v = (a[k] || 0) - (b[k] || 0);
+      if (Math.abs(v) >= 0.05) rows.push({ label: CRAFT_STATS[k].n, v, txt: deltaTxt(k, v) });
+    }
+    return { cur, rows };
+  }
+  function resultCard(it) {
+    const d = itemKind(it), wr = wornBy(it.id), card = el('div', 'cf-res card');
+    card.dataset.itemId = it.id;
+    const head = el('div', 'cf-ih'), tile = icTile(itemIc(it), frameOf(it)); tile.classList.add('s56');
+    const who = el('div', 'cf-ihw');
+    who.append(el('h3', 'cf-in rar-' + it.r, itemName(it)));
+    const grade = el('span', 'cf-grade rar-' + it.r, RAR[it.r].n);
+    const meta = el('div', 'cf-im'); meta.append(grade, ` · Tier ${it.t}${d ? ' · ' + (d.pos ? posName(d.pos) : d.noun) : ''}`);
+    who.append(meta);
+    head.append(tile, who);
+    const left = el('div', 'cf-res-l'), right = el('div', 'cf-res-r'); card.append(left, right);   // landscape: two columns
+    left.append(head);
+    const lines = el('div', 'cf-lines');
+    for (const L of splitLines(it)) {
+      const r = el('div', 'cf-line g-' + L.g);
+      if (L.g === 'uniq') { if (!L.lore) r.append(el('span', 'cf-lt', L.txt)); if (L.lore) continue; lines.append(r); continue; }
+      r.append(el('span', 'cf-lt', lineTxt(L.l)));
+      if (L.g === 'affix') r.append(el('small', 'cf-tag', 'Bonus'));
+      if (L.g === 'mw') r.append(el('small', 'cf-tag', 'Masterwork'));
+      lines.append(r);
+    }
+    if (lines.children.length) left.append(lines);
+    const df = diffRows(it);
+    if (wr) right.append(el('p', 'note cf-cmpn', `You wear it (${posName(wr.pos)}).`));
+    else if (df) {
+      right.append(el('p', 'note cf-cmpn', `Against your ${itemName(df.cur)}:`));
+      const rows = el('div', 'cf-dl');
+      for (const r of df.rows) { const x = el('div', 'cf-d ' + (r.v > 0 ? 'up' : 'dn')); x.append(el('span', null, r.label), el('b', null, (r.v > 0 ? '▲ ' : '▼ ') + r.txt)); rows.append(x); }
+      if (!df.rows.length) rows.append(el('p', 'note', 'Same stats.'));
+      right.append(rows);
+    } else if (d && d.pos && heroFitsIt(it)) right.append(el('p', 'note cf-cmpn', `You wear nothing as ${posName(d.pos)}. This is a gain.`));
+    else if (d && d.pos) right.append(el('p', 'note cf-cmpn', `A ${posName(d.pos)} for a different class.`));
+    const acts = el('div', 'cf-wear cf-resact');
+    if (st8.resArm) {
+      right.append(el('p', 'note warn', `Salvage ${itemName(it)}? It is gone for good.`));
+      const no = el('button', 'big cf-act cf-keep', 'Keep it'); no.type = 'button';
+      const yes = el('button', 'big cf-act', 'Salvage it'); yes.type = 'button';
+      no.addEventListener('click', () => { st8.resArm = false; ui(true); });
+      yes.addEventListener('click', () => { const id = it.id; st8.resArm = false; if (act(() => salvageItem(id))) { st8.fresh.delete(id); st8.recent = st8.recent.filter(x => x !== id); st8.result = null; ui(true); } });
+      acts.append(no, yes);
+    } else {
+      if (d && d.pos && heroFitsIt(it) && !wr) {
+        const eq = el('button', 'big forge cf-act', 'Equip'); eq.type = 'button';
+        eq.addEventListener('click', () => { equipHero(it.id, d.pos); ui(true); });
+        acts.append(eq);
+      }
+      const keep = el('button', 'big cf-act cf-keep', 'Keep'); keep.type = 'button';
+      keep.addEventListener('click', () => { st8.result = null; ui(true); });
+      acts.append(keep);
+      if (!wr) {
+        const sv = el('button', 'big cf-act cf-keep', 'Salvage'); sv.type = 'button';
+        sv.addEventListener('click', () => { st8.resArm = true; ui(true); });
+        acts.append(sv);
+      }
+    }
+    right.append(acts);
+    return card;
+  }
+  // the last five results: tap one to see its card again
+  function recentStrip() {
+    const strip = el('div', 'cf-recent'); strip.setAttribute('aria-label', 'Last crafts');
+    strip.append(el('span', 'cf-lbl', 'Last crafts'));
+    const row = el('div', 'cf-recent-r');
+    for (const id of st8.recent) {
+      const it = itemById(id); if (!it) continue;
+      const b = el('button', 'ic cf-tile f-' + frameOf(it) + (st8.result === id ? ' sel' : '')); b.type = 'button';
+      b.append(img(itemIc(it)), el('span', 'cf-gr rar-' + it.r, GRADE_SHORT[frameOf(it)] || RAR[it.r].n));
+      b.setAttribute('aria-label', `${itemName(it)}, ${RAR[it.r].n}`);
+      b.addEventListener('click', () => { st8.result = id; st8.resArm = false; ui(true); });
+      row.append(b);
+    }
+    strip.append(row);
+    return strip;
+  }
+  on('crafted', e => {
+    const it = e && e.item; if (!it || it.id == null) return;
+    st8.recent = [it.id, ...st8.recent.filter(x => x !== it.id)].slice(0, 5);
+    st8.result = it.id; st8.resArm = false; st8.fresh.add(it.id); st8.reveal = true;
+    if ((it.r === 'rare' || it.r === 'epic' || it.r === 'legendary') && typeof moment === 'function')
+      moment('craft', { title: itemName(it), sub: `${RAR[it.r].n} ${itemKind(it) ? itemKind(it).noun : 'item'}. It is in your bag.`, rarity: it.r, icon: { item: it } });
+  });
   function recipeRow(k, t) {
     const d = CRAFT_KINDS[k], can = canDo(k, t);
     const row = el('div', 'cf-rec' + (can.ok ? ' ok' : '') + (st8.focus === k ? ' focus' : ''));
@@ -36602,6 +36733,7 @@ let craftUI = null;
       c.append(img(troIcon(mw)), el('span', null, `${have}/1 ${CRAFT_TROPHIES[mw].n}`)); costs.append(c);
     }
     row.append(tile, body, btn, costs);
+    const odds = oddsTxt(k); if (odds) row.append(el('div', 'cf-odds', odds));
     if (d.role === 'any') {
       const rs = el('div', 'cf-roles'); rs.append(el('span', 'cf-lbl', 'Bonus lines for'));
       const seg = el('div', 'seg cf-seg');
@@ -36612,7 +36744,7 @@ let craftUI = null;
       }
       rs.append(seg); row.append(rs);
     }
-    if (!can.ok && can.why) row.append(el('div', 'cf-why', can.why));
+    if (!can.ok) row.append(el('div', 'cf-why', can.why || 'Not ready yet.'));
     return row;
   }
   registerSection('forge', {
@@ -36633,19 +36765,34 @@ let craftUI = null;
       }
       const mwRow = el('div', 'cf-mw');
       const list = el('div', 'cf-list');
-      sec.append(filt, tiers, mwRow, list);
-      rec = { filt, tiers, mwRow, list, sig: '', mwSig: null, rows: {} };
+      const resBox = el('div', 'cf-resbox'); resBox.setAttribute('aria-live', 'polite');
+      sec.append(resBox, filt, tiers, mwRow, list);
+      rec = { filt, tiers, mwRow, list, resBox, resSig: null, sig: '', mwSig: null, rows: {} };
     },
     update(force) {
       initState();
       const st = st8.st, t = st8.tier[st] || 1;
-      for (const b of rec.filt.children) putAttr(b, 'aria-pressed', String(b.dataset.f === st8.filt));
+      // D9: "For you" never shows an empty list; it shows All and says why
+      const noFit = st8.filt === 'you' && !listFor(st, 'you').length && listFor(st, 'all').length > 0;
+      const filt = noFit ? 'all' : st8.filt;
+      for (const b of rec.filt.children) putAttr(b, 'aria-pressed', String(b.dataset.f === filt));
       for (const b of rec.tiers.children) {
         const i = +b.dataset.t, req = CRAFT_STATION_REQ[i - 1], open = skillTierOpen(skillOfSt(st), i);
         putAttr(b, 'aria-pressed', String(i === t)); putToggle(b, 'locked', !open);
         putText(b.lastChild, open ? MAT[STATION_TIER_FAM[st]].short[i - 1] : `Lv ${req}`);
       }
       if (!force && busy()) return;   // never swap a row under the player's finger
+      // craft-reveal: the result card and the last-five strip
+      if (st8.result != null && !itemById(st8.result)) st8.result = null;
+      st8.recent = st8.recent.filter(id => itemById(id));
+      const resSig = JSON.stringify([st8.result, st8.resArm, st8.recent, st8.result != null ? (() => { const it = itemById(st8.result); return [it.r, it.plus, wornBy(it.id) && wornBy(it.id).pos, S.equip[CRAFT_KINDS[it.slot] && CRAFT_KINDS[it.slot].pos]]; })() : 0]);
+      if (resSig !== rec.resSig) {
+        rec.resSig = resSig; rec.resBox.textContent = '';
+        const rit = st8.result != null ? itemById(st8.result) : null;
+        if (rit) rec.resBox.append(resultCard(rit));
+        if (st8.recent.length) rec.resBox.append(recentStrip());
+        if (st8.reveal && rit) { st8.reveal = false; try { rec.resBox.scrollIntoView({ block: 'start' }); } catch (e) {} }   // the card appears above the row the player tapped: bring it into view
+      }
       const tr = troph();
       // Masterwork picker: only when the player has a trophy. Rebuilt when the trophies or the pick change.
       if (st8.mw != null && !(tr[st8.mw] > 0)) st8.mw = null;
@@ -36672,16 +36819,14 @@ let craftUI = null;
       }
       // The list is built once per station, tier, filter and recipe set. After that a row is rebuilt
       // only when what it shows changes (materials, can craft, who it beats, ...): see rowSig.
-      let ks = listFor(st, st8.filt);
-      const extra = st8.filt === 'you' && ks.length ? listFor(st, 'all').length - ks.length : 0;
-      const sig = [st, t, st8.filt, ks.join(), extra, typeof craftItem, typeof canCraft].join('|');
+      let ks = listFor(st, filt);
+      const extra = filt === 'you' && ks.length ? listFor(st, 'all').length - ks.length : 0;
+      const sig = [st, t, filt, noFit, ks.join(), extra, typeof craftItem, typeof canCraft].join('|');
       if (sig !== rec.sig) {
         rec.sig = sig; rec.rows = {};
         rec.list.textContent = '';
-        if (!ks.length && st8.filt !== 'all') {
-          rec.list.append(el('p', 'note', `Nothing at the ${CRAFT_STATIONS[st].n} fits your class. See All, or try another station.`));
-          ks = [];
-        }
+        if (noFit) rec.list.append(el('p', 'note cf-nofit', `Nothing at the ${CRAFT_STATIONS[st].n} is made for your class, so this shows everything here.`));
+        else if (!ks.length) rec.list.append(el('p', 'note', `Nothing at the ${CRAFT_STATIONS[st].n} yet.`));
         for (const k of ks) { const row = recipeRow(k, t); rec.rows[k] = { row, sig: rowSig(k, t) }; rec.list.append(row); }
         if (extra > 0) rec.list.append(el('p', 'note', `${extra} more recipe${extra > 1 ? 's' : ''} here for other classes. Tap All to see them.`));
       } else {
@@ -36699,7 +36844,7 @@ let craftUI = null;
   function rowSig(k, t) {
     const can = canDo(k, t), mw = mwFor(k);
     const cost = Object.entries(kindCost(k, t)).map(([f, n]) => { const h = S.mats[f][t - 1]; return fmt(h) + (h < n ? '<' : '/') + fmt(n); }).join();
-    return JSON.stringify([can.ok, can.why || '', st8.focus === k, subFor(k), beats(k, t), cost, mw, mw != null ? troph()[mw] || 0 : 0, CRAFT_KINDS[k].role === 'any' ? roleFor(k) : '']);
+    return JSON.stringify([can.ok, can.why || '', st8.focus === k, subFor(k), beats(k, t), cost, mw, mw != null ? troph()[mw] || 0 : 0, CRAFT_KINDS[k].role === 'any' ? roleFor(k) : '', oddsTxt(k)]);
   }
 
   // ================= Enchanter's Table extras =================
@@ -36951,6 +37096,7 @@ let craftUI = null;
       for (const it of list) {
         const b = el('button', 'ic cf-tile f-' + frameOf(it) + (st8.fresh.has(it.id) ? ' fresh' : '')); b.type = 'button';
         b.append(img(itemIc(it)));
+        b.append(el('span', 'cf-gr rar-' + it.r, GRADE_SHORT[frameOf(it)] || RAR[it.r].n));
         if (it.plus) b.append(el('span', 'cf-plus', '+' + it.plus));
         const wr = w.get(it.id);
         if (wr) { const bd = img(portraitOf(wr.who), 'cf-badge' + (wr.who === 'hero' ? ' hero' : '')); b.append(bd); }
@@ -37891,6 +38037,7 @@ let deedsUI = null;
     if (!f && !ch) { nextCard(); return; }
     const lk = LK[f ? f.look : ch.look];
     if (typeof noticeAsk === 'function') noticeAsk('card:feat', f ? `Feat: ${f.n}.` : `Chapter done: ${ch.n}.`);   // W1-B: the card is the one voice (bell list line)
+    emit('momentShow', { tier: 'big', kind: 'feat' });   // the sting of a big moment (76-audio): a Feat card is one
     const ov = el('div', 'dd-fc-ov' + (reduced ? ' still' : ''));
     ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-label', f ? `Feat: ${f.n}` : `Chapter done: ${ch.n}`);
     const card = el('div', 'dd-fc');
@@ -38906,7 +39053,7 @@ let deedsUI = null;
 //           MOMENT_TUNE.midMax in any MOMENT_TUNE.midWindowS seconds during the first MOMENT_TUNE.midFirstS seconds of play.
 //   small   today's toasts (23n-data-notices).
 // A big or medium moment is never demoted to the bell and never waits behind a guide step or a story card. It queues to
-// the end of the fight (never shown during a turn, so it never covers a parry window) and shows at once outside one. It does
+// the end of the turn (never shown while a turn is in motion, so it never covers a parry window) and shows at once outside one. It does
 // wait for the guide step on screen, the Away and What's-new cards, and the first seconds after boot.
 // Several at fight end fold into one card with a list. Reduced motion: the same card, no burst.
 // API for later cards:  moment(kind, { title, sub, rarity, icon, still, lines, actions })
@@ -38916,7 +39063,7 @@ let deedsUI = null;
 //   lines    [{ txt, ic? }] a short list under the title;  actions  [{ txt, fn }] extra buttons beside Continue
 // momentState() -> { up, banner, queued } for the checks. Nothing here is saved: a moment not yet seen when the game closes
 // is dropped (a unique already sits in the trophy wall).
-const MOMENT_TUNE = { bannerS: 2.6, bannerExtraS: 0.7, settleS: 0.3, tapLockMs: 700, maxLines: 5, maxBanner: 3, bootS: 4, guideWaitS: 6, midMax: 2, midWindowS: 180, midFirstS: 1800 };
+const MOMENT_TUNE = { bannerS: 2.6, bannerExtraS: 0.7, settleS: 0.3, tapLockMs: 700, maxLines: 5, maxBanner: 3, bootS: 4, guideWaitS: 1, midMax: 2, midWindowS: 180, midFirstS: 1800 };
 const MOMENT_KINDS = {
   boss: { tier: 'big', eye: 'Boss down', col: '#F2C14E', snd: 'big' },
   unique: { tier: 'big', eye: 'Unique loot', col: '#FF8A3D', snd: 'big' },
@@ -38945,8 +39092,9 @@ function moment(kind, o) {
 }
 function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner, queued: MOMENT_Q.length }; }
 {
-  // a turn fight is live (the next foe's intro, about 0.5 s after a kill, is not: the boss's card must show before the fight goes on)
-  const fighting = () => { try { return typeof TURN_LIVE !== 'undefined' && !!TURN_LIVE && !TURN_LIVE.ended && TURN_LIVE.phase !== 'intro'; } catch (e) { return false; } };
+  // a turn is in motion (a hit, a windup, a parry window). The waiting phases (the next foe's intro, the hero's turn, the handoff: the game's own
+  // turnWaiting) are not: no parry window is open, so a card there covers nothing, and an idle player at the hero's turn must still see their unique.
+  const fighting = () => { try { return typeof TURN_LIVE !== 'undefined' && !!TURN_LIVE && !TURN_LIVE.ended && !['intro', 'hero', 'handoff'].includes(TURN_LIVE.phase); } catch (e) { return false; } };
   const bootT = performance.now();
   // a card up, the guide's step, the What's-new window or the first seconds after boot hold a moment back
   // (the guide's step gets guideWaitS seconds to finish, then the moment shows over it: a step left on screen must not hide a unique)

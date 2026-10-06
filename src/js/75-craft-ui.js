@@ -97,7 +97,7 @@ let craftUI = null;
   }
 
   // ---------------- UI state (memory only) ----------------
-  const st8 = { st: null, tier: {}, filt: 'you', mw: null, role: {}, sort: 'power', bfilt: 'spare', pick: '', focus: null, fresh: new Set(), tm: { fam: 'ore', t: 1 } };
+  const st8 = { st: null, tier: {}, filt: 'you', mw: null, role: {}, sort: 'power', bfilt: 'spare', pick: '', focus: null, fresh: new Set(), tm: { fam: 'ore', t: 1 }, recent: [], result: null, resArm: false, reveal: false };
   const openTier = st => {
     return skillTopTier(skillOfSt(st));
   };
@@ -208,6 +208,109 @@ let craftUI = null;
     if (!d.pos && !d.comp) bits.push('Special');
     return bits.join(' · ');
   }
+  // craft-reveal: the odds a craft rolls on (the same weights craftItem rolls with), one line per recipe
+  const oddsTxt = k => safe(() => {
+    const w = rarityWeights(stationLevel(k)), tot = Object.values(w).reduce((a, b) => a + b, 0);
+    const pc = v => { const p = v / tot * 100; return (p < 10 ? p.toFixed(1) : String(Math.round(p))) + '%'; };
+    return 'Odds: ' + ['common', 'uncommon', 'rare', 'epic'].map(r => `${RAR[r].n} ${pc(w[r])}`).join(' · ');
+  }, '');
+  // short grade word for a bag tile (the full word sits on the item sheet and in the label)
+  const GRADE_SHORT = { common: 'Com', uncommon: 'Unc', rare: 'Rare', epic: 'Epic', legendary: 'Uniq' };
+  // stat changes against what the hero wears in that slot: [{ label, v, txt }]
+  function diffRows(it) {
+    const d = itemKind(it), cur = d && d.pos ? itemById(S.equip[d.pos]) : null;
+    if (!d || !d.pos || !heroFitsIt(it) || !cur || cur.id === it.id) return null;
+    const a = itemStats(it), b = itemStats(cur), rows = [];
+    const pd = itemPower(it) - itemPower(cur);
+    if (Math.abs(pd) >= 0.05) rows.push({ label: 'Power', v: pd, txt: (pd > 0 ? '+' : '-') + fmt(Math.abs(pd)) });
+    for (const k of new Set([...Object.keys(a), ...Object.keys(b)])) {
+      if (!CRAFT_STATS[k]) continue;
+      const v = (a[k] || 0) - (b[k] || 0);
+      if (Math.abs(v) >= 0.05) rows.push({ label: CRAFT_STATS[k].n, v, txt: deltaTxt(k, v) });
+    }
+    return { cur, rows };
+  }
+  function resultCard(it) {
+    const d = itemKind(it), wr = wornBy(it.id), card = el('div', 'cf-res card');
+    card.dataset.itemId = it.id;
+    const head = el('div', 'cf-ih'), tile = icTile(itemIc(it), frameOf(it)); tile.classList.add('s56');
+    const who = el('div', 'cf-ihw');
+    who.append(el('h3', 'cf-in rar-' + it.r, itemName(it)));
+    const grade = el('span', 'cf-grade rar-' + it.r, RAR[it.r].n);
+    const meta = el('div', 'cf-im'); meta.append(grade, ` · Tier ${it.t}${d ? ' · ' + (d.pos ? posName(d.pos) : d.noun) : ''}`);
+    who.append(meta);
+    head.append(tile, who);
+    const left = el('div', 'cf-res-l'), right = el('div', 'cf-res-r'); card.append(left, right);   // landscape: two columns
+    left.append(head);
+    const lines = el('div', 'cf-lines');
+    for (const L of splitLines(it)) {
+      const r = el('div', 'cf-line g-' + L.g);
+      if (L.g === 'uniq') { if (!L.lore) r.append(el('span', 'cf-lt', L.txt)); if (L.lore) continue; lines.append(r); continue; }
+      r.append(el('span', 'cf-lt', lineTxt(L.l)));
+      if (L.g === 'affix') r.append(el('small', 'cf-tag', 'Bonus'));
+      if (L.g === 'mw') r.append(el('small', 'cf-tag', 'Masterwork'));
+      lines.append(r);
+    }
+    if (lines.children.length) left.append(lines);
+    const df = diffRows(it);
+    if (wr) right.append(el('p', 'note cf-cmpn', `You wear it (${posName(wr.pos)}).`));
+    else if (df) {
+      right.append(el('p', 'note cf-cmpn', `Against your ${itemName(df.cur)}:`));
+      const rows = el('div', 'cf-dl');
+      for (const r of df.rows) { const x = el('div', 'cf-d ' + (r.v > 0 ? 'up' : 'dn')); x.append(el('span', null, r.label), el('b', null, (r.v > 0 ? '▲ ' : '▼ ') + r.txt)); rows.append(x); }
+      if (!df.rows.length) rows.append(el('p', 'note', 'Same stats.'));
+      right.append(rows);
+    } else if (d && d.pos && heroFitsIt(it)) right.append(el('p', 'note cf-cmpn', `You wear nothing as ${posName(d.pos)}. This is a gain.`));
+    else if (d && d.pos) right.append(el('p', 'note cf-cmpn', `A ${posName(d.pos)} for a different class.`));
+    const acts = el('div', 'cf-wear cf-resact');
+    if (st8.resArm) {
+      right.append(el('p', 'note warn', `Salvage ${itemName(it)}? It is gone for good.`));
+      const no = el('button', 'big cf-act cf-keep', 'Keep it'); no.type = 'button';
+      const yes = el('button', 'big cf-act', 'Salvage it'); yes.type = 'button';
+      no.addEventListener('click', () => { st8.resArm = false; ui(true); });
+      yes.addEventListener('click', () => { const id = it.id; st8.resArm = false; if (act(() => salvageItem(id))) { st8.fresh.delete(id); st8.recent = st8.recent.filter(x => x !== id); st8.result = null; ui(true); } });
+      acts.append(no, yes);
+    } else {
+      if (d && d.pos && heroFitsIt(it) && !wr) {
+        const eq = el('button', 'big forge cf-act', 'Equip'); eq.type = 'button';
+        eq.addEventListener('click', () => { equipHero(it.id, d.pos); ui(true); });
+        acts.append(eq);
+      }
+      const keep = el('button', 'big cf-act cf-keep', 'Keep'); keep.type = 'button';
+      keep.addEventListener('click', () => { st8.result = null; ui(true); });
+      acts.append(keep);
+      if (!wr) {
+        const sv = el('button', 'big cf-act cf-keep', 'Salvage'); sv.type = 'button';
+        sv.addEventListener('click', () => { st8.resArm = true; ui(true); });
+        acts.append(sv);
+      }
+    }
+    right.append(acts);
+    return card;
+  }
+  // the last five results: tap one to see its card again
+  function recentStrip() {
+    const strip = el('div', 'cf-recent'); strip.setAttribute('aria-label', 'Last crafts');
+    strip.append(el('span', 'cf-lbl', 'Last crafts'));
+    const row = el('div', 'cf-recent-r');
+    for (const id of st8.recent) {
+      const it = itemById(id); if (!it) continue;
+      const b = el('button', 'ic cf-tile f-' + frameOf(it) + (st8.result === id ? ' sel' : '')); b.type = 'button';
+      b.append(img(itemIc(it)), el('span', 'cf-gr rar-' + it.r, GRADE_SHORT[frameOf(it)] || RAR[it.r].n));
+      b.setAttribute('aria-label', `${itemName(it)}, ${RAR[it.r].n}`);
+      b.addEventListener('click', () => { st8.result = id; st8.resArm = false; ui(true); });
+      row.append(b);
+    }
+    strip.append(row);
+    return strip;
+  }
+  on('crafted', e => {
+    const it = e && e.item; if (!it || it.id == null) return;
+    st8.recent = [it.id, ...st8.recent.filter(x => x !== it.id)].slice(0, 5);
+    st8.result = it.id; st8.resArm = false; st8.fresh.add(it.id); st8.reveal = true;
+    if ((it.r === 'rare' || it.r === 'epic' || it.r === 'legendary') && typeof moment === 'function')
+      moment('craft', { title: itemName(it), sub: `${RAR[it.r].n} ${itemKind(it) ? itemKind(it).noun : 'item'}. It is in your bag.`, rarity: it.r, icon: { item: it } });
+  });
   function recipeRow(k, t) {
     const d = CRAFT_KINDS[k], can = canDo(k, t);
     const row = el('div', 'cf-rec' + (can.ok ? ' ok' : '') + (st8.focus === k ? ' focus' : ''));
@@ -231,6 +334,7 @@ let craftUI = null;
       c.append(img(troIcon(mw)), el('span', null, `${have}/1 ${CRAFT_TROPHIES[mw].n}`)); costs.append(c);
     }
     row.append(tile, body, btn, costs);
+    const odds = oddsTxt(k); if (odds) row.append(el('div', 'cf-odds', odds));
     if (d.role === 'any') {
       const rs = el('div', 'cf-roles'); rs.append(el('span', 'cf-lbl', 'Bonus lines for'));
       const seg = el('div', 'seg cf-seg');
@@ -241,7 +345,7 @@ let craftUI = null;
       }
       rs.append(seg); row.append(rs);
     }
-    if (!can.ok && can.why) row.append(el('div', 'cf-why', can.why));
+    if (!can.ok) row.append(el('div', 'cf-why', can.why || 'Not ready yet.'));
     return row;
   }
   registerSection('forge', {
@@ -262,19 +366,34 @@ let craftUI = null;
       }
       const mwRow = el('div', 'cf-mw');
       const list = el('div', 'cf-list');
-      sec.append(filt, tiers, mwRow, list);
-      rec = { filt, tiers, mwRow, list, sig: '', mwSig: null, rows: {} };
+      const resBox = el('div', 'cf-resbox'); resBox.setAttribute('aria-live', 'polite');
+      sec.append(resBox, filt, tiers, mwRow, list);
+      rec = { filt, tiers, mwRow, list, resBox, resSig: null, sig: '', mwSig: null, rows: {} };
     },
     update(force) {
       initState();
       const st = st8.st, t = st8.tier[st] || 1;
-      for (const b of rec.filt.children) putAttr(b, 'aria-pressed', String(b.dataset.f === st8.filt));
+      // D9: "For you" never shows an empty list; it shows All and says why
+      const noFit = st8.filt === 'you' && !listFor(st, 'you').length && listFor(st, 'all').length > 0;
+      const filt = noFit ? 'all' : st8.filt;
+      for (const b of rec.filt.children) putAttr(b, 'aria-pressed', String(b.dataset.f === filt));
       for (const b of rec.tiers.children) {
         const i = +b.dataset.t, req = CRAFT_STATION_REQ[i - 1], open = skillTierOpen(skillOfSt(st), i);
         putAttr(b, 'aria-pressed', String(i === t)); putToggle(b, 'locked', !open);
         putText(b.lastChild, open ? MAT[STATION_TIER_FAM[st]].short[i - 1] : `Lv ${req}`);
       }
       if (!force && busy()) return;   // never swap a row under the player's finger
+      // craft-reveal: the result card and the last-five strip
+      if (st8.result != null && !itemById(st8.result)) st8.result = null;
+      st8.recent = st8.recent.filter(id => itemById(id));
+      const resSig = JSON.stringify([st8.result, st8.resArm, st8.recent, st8.result != null ? (() => { const it = itemById(st8.result); return [it.r, it.plus, wornBy(it.id) && wornBy(it.id).pos, S.equip[CRAFT_KINDS[it.slot] && CRAFT_KINDS[it.slot].pos]]; })() : 0]);
+      if (resSig !== rec.resSig) {
+        rec.resSig = resSig; rec.resBox.textContent = '';
+        const rit = st8.result != null ? itemById(st8.result) : null;
+        if (rit) rec.resBox.append(resultCard(rit));
+        if (st8.recent.length) rec.resBox.append(recentStrip());
+        if (st8.reveal && rit) { st8.reveal = false; try { rec.resBox.scrollIntoView({ block: 'start' }); } catch (e) {} }   // the card appears above the row the player tapped: bring it into view
+      }
       const tr = troph();
       // Masterwork picker: only when the player has a trophy. Rebuilt when the trophies or the pick change.
       if (st8.mw != null && !(tr[st8.mw] > 0)) st8.mw = null;
@@ -301,16 +420,14 @@ let craftUI = null;
       }
       // The list is built once per station, tier, filter and recipe set. After that a row is rebuilt
       // only when what it shows changes (materials, can craft, who it beats, ...): see rowSig.
-      let ks = listFor(st, st8.filt);
-      const extra = st8.filt === 'you' && ks.length ? listFor(st, 'all').length - ks.length : 0;
-      const sig = [st, t, st8.filt, ks.join(), extra, typeof craftItem, typeof canCraft].join('|');
+      let ks = listFor(st, filt);
+      const extra = filt === 'you' && ks.length ? listFor(st, 'all').length - ks.length : 0;
+      const sig = [st, t, filt, noFit, ks.join(), extra, typeof craftItem, typeof canCraft].join('|');
       if (sig !== rec.sig) {
         rec.sig = sig; rec.rows = {};
         rec.list.textContent = '';
-        if (!ks.length && st8.filt !== 'all') {
-          rec.list.append(el('p', 'note', `Nothing at the ${CRAFT_STATIONS[st].n} fits your class. See All, or try another station.`));
-          ks = [];
-        }
+        if (noFit) rec.list.append(el('p', 'note cf-nofit', `Nothing at the ${CRAFT_STATIONS[st].n} is made for your class, so this shows everything here.`));
+        else if (!ks.length) rec.list.append(el('p', 'note', `Nothing at the ${CRAFT_STATIONS[st].n} yet.`));
         for (const k of ks) { const row = recipeRow(k, t); rec.rows[k] = { row, sig: rowSig(k, t) }; rec.list.append(row); }
         if (extra > 0) rec.list.append(el('p', 'note', `${extra} more recipe${extra > 1 ? 's' : ''} here for other classes. Tap All to see them.`));
       } else {
@@ -328,7 +445,7 @@ let craftUI = null;
   function rowSig(k, t) {
     const can = canDo(k, t), mw = mwFor(k);
     const cost = Object.entries(kindCost(k, t)).map(([f, n]) => { const h = S.mats[f][t - 1]; return fmt(h) + (h < n ? '<' : '/') + fmt(n); }).join();
-    return JSON.stringify([can.ok, can.why || '', st8.focus === k, subFor(k), beats(k, t), cost, mw, mw != null ? troph()[mw] || 0 : 0, CRAFT_KINDS[k].role === 'any' ? roleFor(k) : '']);
+    return JSON.stringify([can.ok, can.why || '', st8.focus === k, subFor(k), beats(k, t), cost, mw, mw != null ? troph()[mw] || 0 : 0, CRAFT_KINDS[k].role === 'any' ? roleFor(k) : '', oddsTxt(k)]);
   }
 
   // ================= Enchanter's Table extras =================
@@ -580,6 +697,7 @@ let craftUI = null;
       for (const it of list) {
         const b = el('button', 'ic cf-tile f-' + frameOf(it) + (st8.fresh.has(it.id) ? ' fresh' : '')); b.type = 'button';
         b.append(img(itemIc(it)));
+        b.append(el('span', 'cf-gr rar-' + it.r, GRADE_SHORT[frameOf(it)] || RAR[it.r].n));
         if (it.plus) b.append(el('span', 'cf-plus', '+' + it.plus));
         const wr = w.get(it.id);
         if (wr) { const bd = img(portraitOf(wr.who), 'cf-badge' + (wr.who === 'hero' ? ' hero' : '')); b.append(bd); }
