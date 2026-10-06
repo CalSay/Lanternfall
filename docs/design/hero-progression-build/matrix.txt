@@ -1,0 +1,36 @@
+n10-lanternmage-good-s41 | z10 0.2h L16 | z20 5.2h L29 | z30 33.0h L36 | z35 - | end z 32 L 38 51.0h | gap20-30 6.97h at z27 (2.5 zones) | wipes 3033 kills 4580
+n10-lanternmage-good-s42 | z10 0.2h L16 | z20 5.0h L28 | z30 36.5h L36 | z35 - | end z 31 L 37 51.0h | gap20-30 7.05h at z27 (2.2 zones) | wipes 2941 kills 4220
+n10-ranger-good-s41 | z10 0.2h L16 | z20 3.8h L29 | z30 34.7h L36 | z35 44.0h L38 | end z 40 L 39 51.0h | gap20-30 6.22h at z26 (2.0 zones) | wipes 3516 kills 4948
+n10-ranger-good-s42 | z10 0.3h L16 | z20 4.4h L29 | z30 33.2h L36 | z35 43.2h L37 | end z 42 L 39 51.0h | gap20-30 5.55h at z27 (1.9 zones) | wipes 3455 kills 5036
+n10-warden-good-s41 | z10 0.3h L16 | z20 4.2h L27 | z30 39.0h L33 | z35 - | end z 31 L 33 51.0h | gap20-30 20.35h at z27 (5.9 zones) | wipes 530 kills 2036
+n10-warden-good-s42 | z10 0.3h L16 | z20 3.7h L27 | z30 - | z35 - | end z 29 L 32 51.0h | gap20-30 15.91h at z26  | wipes 725 kills 1644
+new-lanternmage-casual-s41 | z10 0.2h L16 | z20 3.5h L27 | z30 44.2h L35 | z35 - | end z 30 L 36 45.0h | gap20-30 7.14h at z27 (1.8 zones) | wipes 2748 kills 3244
+new-lanternmage-casual-s42 | z10 0.4h L18 | z20 3.9h L28 | z30 38.7h L35 | z35 - | end z 31 L 36 45.0h | gap20-30 7.03h at z27 (2.0 zones) | wipes 2559 kills 3308
+new-lanternmage-casual-s43 | z10 0.4h L18 | z20 3.2h L28 | z30 - | z35 - | end z 28 L 35 45.0h | gap20-30 7.55h at z27  | wipes 2606 kills 3208
+new-lanternmage-good-s43 | z10 0.2h L16 | z20 5.9h L28 | z30 36.0h L36 | z35 - | end z 34 L 37 51.0h | gap20-30 6.57h at z27 (2.2 zones) | wipes 3007 kills 4115
+new-ranger-casual-s41 | z10 0.4h L16 | z20 3.5h L28 | z30 31.2h L34 | z35 43.6h L36 | end z 35 L 36 45.0h | gap20-30 5.67h at z27 (2.1 zones) | wipes 2724 kills 3526
+new-ranger-casual-s42 | z10 0.4h L16 | z20 3.7h L28 | z30 - | z35 - | end z 29 L 36 45.0h | gap20-30 7.30h at z28  | wipes 2782 kills 3469
+new-ranger-casual-s43 | z10 0.4h L16 | z20 3.6h L28 | z30 24.2h L33 | z35 42.2h L36 | end z 35 L 36 45.0h | gap20-30 5.63h at z27 (2.7 zones) | wipes 2646 kills 3407
+new-ranger-good-s43 | z10 0.3h L16 | z20 4.7h L28 | z30 28.9h L35 | z35 40.5h L37 | end z 45 L 39 51.0h | gap20-30 5.81h at z26 (2.4 zones) | wipes 3509 kills 4637
+new-warden-casual-s41 | z10 0.4h L17 | z20 3.7h L27 | z30 - | z35 - | end z 25 L 30 45.0h | gap20-30 22.66h at z24  | wipes 432 kills 1094
+new-warden-casual-s42 | z10 0.3h L16 | z20 3.2h L27 | z30 - | z35 - | end z 27 L 30 45.0h | gap20-30 18.04h at z24  | wipes 514 kills 1094
+new-warden-casual-s43 | z10 0.5h L17 | z20 3.2h L27 | z30 - | z35 - | end z 27 L 30 45.0h | gap20-30 14.25h at z26  | wipes 477 kills 1060
+new-warden-good-s43 | z10 0.3h L16 | z20 3.2h L26 | z30 37.5h L34 | z35 44.0h L34 | end z 35 L 34 51.0h | gap20-30 20.04h at z27 (5.8 zones) | wipes 625 kills 2654
+old-lanternmage-casual-s41 | z10 0.5h L17 | z20 4.2h L27 | z30 - | z35 - | end z 28 L 34 45.0h | gap20-30 10.77h at z27  | wipes 2521 kills 3212
+old-lanternmage-casual-s42 | z10 0.4h L16 | z20 3.2h L26 | z30 - | z35 - | end z 27 L 34 45.0h | gap20-30 11.28h at z27  | wipes 2588 kills 3152
+old-lanternmage-casual-s43 | z10 0.4h L16 | z20 3.0h L25 | z30 - | z35 - | end z 27 L 34 45.0h | gap20-30 9.98h at z27  | wipes 2508 kills 2993
+old-lanternmage-good-s41 | z10 0.3h L15 | z20 5.8h L27 | z30 37.6h L35 | z35 - | end z 31 L 36 51.0h | gap20-30 7.91h at z27 (2.5 zones) | wipes 3667 kills 4445
+old-lanternmage-good-s42 | z10 0.3h L15 | z20 5.3h L28 | z30 49.2h L36 | z35 - | end z 30 L 36 51.0h | gap20-30 9.82h at z27 (2.2 zones) | wipes 3548 kills 4555
+old-lanternmage-good-s43 | z10 0.4h L16 | z20 6.4h L29 | z30 35.0h L35 | z35 - | end z 33 L 37 51.0h | gap20-30 8.30h at z25 (2.9 zones) | wipes 3377 kills 5087
+old-ranger-casual-s41 | z10 0.4h L15 | z20 2.7h L25 | z30 - | z35 - | end z 28 L 35 45.0h | gap20-30 9.30h at z28  | wipes 2725 kills 3378
+old-ranger-casual-s42 | z10 0.5h L15 | z20 3.7h L26 | z30 - | z35 - | end z 28 L 35 45.0h | gap20-30 9.27h at z28  | wipes 2693 kills 3482
+old-ranger-casual-s43 | z10 0.4h L15 | z20 3.7h L27 | z30 - | z35 - | end z 28 L 35 45.0h | gap20-30 9.38h at z28  | wipes 2671 kills 3415
+old-ranger-good | z10 0.4h L16 | z20 5.8h L28 | z30 46.2h L36 | z35 - | end z 31 L 37 51.0h | gap20-30 9.67h at z26 (2.4 zones) | wipes 3734 kills 5415
+old-ranger-good-s42 | z10 0.4h L16 | z20 4.2h L29 | z30 40.2h L36 | z35 47.2h L37 | end z 35 L 37 51.0h | gap20-30 8.47h at z29 (2.4 zones) | wipes 3863 kills 5626
+old-ranger-good-s43 | z10 0.3h L15 | z20 5.7h L28 | z30 24.7h L35 | z35 28.2h L35 | end z 44 L 38 51.0h | gap20-30 4.81h at z26 (2.5 zones) | wipes 3779 kills 5581
+old-warden-casual-s41 | z10 0.5h L14 | z20 3.5h L26 | z30 - | z35 - | end z 25 L 30 45.0h | gap20-30 20.50h at z24  | wipes 521 kills 1183
+old-warden-casual-s42 | z10 0.5h L14 | z20 2.8h L25 | z30 - | z35 - | end z 26 L 30 45.0h | gap20-30 15.00h at z23  | wipes 534 kills 1341
+old-warden-casual-s43 | z10 0.4h L14 | z20 3.7h L26 | z30 - | z35 - | end z 25 L 30 45.0h | gap20-30 19.26h at z24  | wipes 504 kills 1154
+old-warden-good | z10 0.3h L14 | z20 5.2h L27 | z30 - | z35 - | end z 29 L 32 51.0h | gap20-30 17.81h at z27  | wipes 952 kills 1995
+old-warden-good-s42 | z10 0.3h L14 | z20 4.7h L25 | z30 - | z35 - | end z 29 L 31 51.0h | gap20-30 13.72h at z24  | wipes 758 kills 1471
+old-warden-good-s43 | z10 0.3h L14 | z20 5.2h L26 | z30 - | z35 - | end z 27 L 32 51.0h | gap20-30 15.17h at z26  | wipes 940 kills 1721

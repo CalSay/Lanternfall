@@ -9,7 +9,7 @@
 // the `no-visible-change` label). A route may start with a comment line `# seed: <n>` (default 1).
 import fs from 'node:fs';
 import path from 'node:path';
-import { execFileSync, spawnSync } from 'node:child_process';
+import { execFileSync, spawn } from 'node:child_process';
 
 let [base, head, labelStr = ''] = process.argv.slice(2);
 const gate = base === '--gate';
@@ -39,15 +39,33 @@ if (srcChanged && !routes.length && !labels.includes('no-visible-change')) {
   lines.push(srcChanged ? 'No route changed. Label `no-visible-change` is set.' : 'No `src/` change and no route changed. Nothing to play.', '');
 }
 const VIEWS = [['portrait', []], ['landscape', ['--landscape']]];
-for (const r of routes) {
+// Every (route, view) run is its own browser, so they run side by side (up to 4 at once); the report keeps route order.
+const run = (cmd, args, opts) => new Promise(res => {
+  const c = spawn(cmd, args, { stdio: ['pipe', 'pipe', 'pipe'] }); let out = '', err = '', done = false;
+  const fin = status => { if (!done) { done = true; clearTimeout(t); res({ status, stdout: out, stderr: err }); } };
+  const t = setTimeout(() => { c.kill('SIGKILL'); fin(null); }, opts.timeout);
+  c.stdout.on('data', d => (out += d)); c.stderr.on('data', d => (err += d));
+  c.on('close', code => fin(code)); c.on('error', () => fin(1));
+  c.stdin.on('error', () => {}); c.stdin.end(opts.input || '');
+});
+const POOL = 4; let slots = POOL; const waiting = [];
+const limited = fn => new Promise((ok, no) => { const go = () => { slots--; fn().then(ok, no).finally(() => { slots++; waiting.shift()?.(); }); }; slots > 0 ? go() : waiting.push(go); });
+const jobs = routes.map(r => {
   const card = r.split('/')[2], text = fs.readFileSync(r, 'utf8');
   const seed = (text.match(/^#\s*seed:\s*(\d+)/m) || [])[1] || '1';
-  lines.push(`**${card}** (seed ${seed})`, '', '| View | Step | Result |', '|---|---|---|');
-  for (const [view, extra] of VIEWS) {
+  return { card, seed, views: VIEWS.map(([view, extra]) => {
     const dir = path.join(out, card, view);
     fs.mkdirSync(dir, { recursive: true });
-    const res = spawnSync('node', ['tools/playtest.mjs', 'batch', '--seed', seed, '--session', path.join('.proof-session', card, view), '--shots', dir, '--quiet', ...extra],
-      { input: text, encoding: 'utf8', timeout: 240000 });
+    return { view, dir, run: limited(() => run('node', ['tools/playtest.mjs', 'batch', '--seed', seed, '--session', path.join('.proof-session', card, view), '--shots', dir, '--quiet', ...extra], { input: text, timeout: 240000 })) };
+  }) };
+});
+// qa-player-eyes: the wider read of what a player sees (tools/eyes.mjs --quick, portrait). Report only: it never fails this job.
+const peOut = path.join(out, 'player-eyes', 'latest.md');
+const peRun = srcChanged ? limited(() => run('node', ['tools/eyes.mjs', '--quick', '--out', peOut], { timeout: 240000 })) : null;
+for (const { card, seed, views } of jobs) {
+  lines.push(`**${card}** (seed ${seed})`, '', '| View | Step | Result |', '|---|---|---|');
+  for (const { view, dir, run: p } of views) {
+    const res = await p;
     fs.writeFileSync(path.join(dir, 'output.txt'), (res.stdout || '') + (res.stderr || ''));
     const ex = fs.existsSync(path.join(dir, 'expects.json')) ? JSON.parse(fs.readFileSync(path.join(dir, 'expects.json'), 'utf8')) : [];
     for (const e of ex) { lines.push(`| ${view} | expect "${e.want}" | ${e.ok ? 'pass' : '**FAIL**'} |`); if (!e.ok) failed = true; }
@@ -57,10 +75,8 @@ for (const r of routes) {
   }
   lines.push('');
 }
-// qa-player-eyes: the wider read of what a player sees (tools/eyes.mjs --quick, portrait). Report only: it never fails this job.
 if (srcChanged) {
-  const pe = path.join(out, 'player-eyes', 'latest.md');
-  const res = spawnSync('node', ['tools/eyes.mjs', '--quick', '--out', pe], { encoding: 'utf8', timeout: 240000 });
+  const pe = peOut, res = await peRun;
   lines.push('**Player eyes** (report only; `node tools/eyes.mjs` runs it on your machine)', '');
   try {
     const f = JSON.parse(fs.readFileSync(pe.replace(/\.md$/, '') + '.json', 'utf8')).findings;

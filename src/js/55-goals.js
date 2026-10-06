@@ -107,14 +107,19 @@ var forgeGoalPicks = 0;
   const heroNext = () => {
     const t = typeof trainNext === 'function' && soloHero() ? trainNext() : null; return t ? { u: { id: t.move, name: trainName(t.move), ic: ['sword', '#A9B1BD'] }, cost: t.cost, lv: t.lv, train: 1 } : null;
   };
+  // hero-progression-rework: with attributes on there is no gold Training; the goal says there are points to spend
+  const attrLive = () => typeof attrOn === 'function' && attrOn();
+  const attrFree = () => { const k = typeof soloHero === 'function' ? soloHero() : null; return attrLive() && k ? attrPoints(k).free : 0; };
   registerGoal({
     // menu audit: a level that costs under 1% of your gold is free power, and ranks high (else it waits its turn)
-    id: 'hero-up', sys: 'hero', prio: () => { const b = heroNext(); return b && b.cost <= S.gold * 0.01 ? 3 : -1; },
-    pct: () => { const b = heroNext(); return b ? need(S.gold, b.cost) : null; },
-    label: () => { const b = heroNext(); if (!b) return ''; const lv = b.lv;
+    id: 'hero-up', sys: 'hero', prio: () => { if (attrLive()) return attrFree() > 0 ? 3 : -1; const b = heroNext(); return b && b.cost <= S.gold * 0.01 ? 3 : -1; },
+    pct: () => { if (attrLive()) return attrFree() > 0 ? 1 : null; const b = heroNext(); return b ? need(S.gold, b.cost) : null; },
+    label: () => { if (attrLive()) { const n = attrFree(); return n > 0 ? `Spend ${n} attribute point${n === 1 ? '' : 's'}` : ''; }
+      const b = heroNext(); if (!b) return ''; const lv = b.lv;
       return S.gold >= b.cost ? `Train ${b.u.name} to Lv ${lv}: ready` : `Train ${b.u.name} to Lv ${lv}: ${fmt(Math.ceil(b.cost - S.gold))} more gold`; },
-    icon: () => { const b = heroNext(); return { ic: b ? b.u.ic : ['sword', '#A9B1BD'] }; },
-    go: () => { const b = heroNext(); return b ? { tab: 'party', view: 'training', sel: `#trainRows .tr-row[data-mv="${b.u.id}"]` } : { tab: 'party', view: 'training' }; }
+    icon: () => { const b = attrLive() ? null : heroNext(); return { ic: b ? b.u.ic : ['sword', '#A9B1BD'] }; },
+    go: () => { if (attrLive()) return { tab: 'party', view: 'attributes', sel: '#attrRows' };
+      const b = heroNext(); return b ? { tab: 'party', view: 'training', sel: `#trainRows .tr-row[data-mv="${b.u.id}"]` } : { tab: 'party', view: 'training' }; }
   });
 
   // Next zone boss: foes left at the frontier, or the boss is ready. "Ready" means you would usually win (59m bossOdds: scratch
@@ -127,6 +132,7 @@ var forgeGoalPicks = 0;
     if (!o) return { s: 'next', win: 0 };
     return { s: o.win >= BOSS_ODDS.ready ? 'ready' : o.win >= BOSS_ODDS.close ? 'close' : 'weak', win: o.win };
   };
+  const bossNow = () => S.zone === S.maxZone && bossReady() && !bossHeld() ? bossRead() : null;
   registerGoal({
     id: 'zone-boss', sys: 'boss', prio: 2,
     // after a lost try, "ready" waits until you are 15% stronger than then (what auto-challenge waits for too):
@@ -141,7 +147,10 @@ var forgeGoalPicks = 0;
       return !b || b.s === 'ready' ? `Boss ready in Zone ${z}` : b.s === 'next' ? `The Zone ${z} boss is next`
         : b.s === 'close' ? `Zone ${z} boss: a close fight. Gear up to be safe` : `Zone ${z} boss is too strong. Level up and gear up first`; },
     icon: { ic: ['banner', '#E0524F', { 7: '#FFB347' }] },
-    go: () => ({ tab: 'adv', sel: '#gateBtn', fn: () => { if (S.zone !== S.maxZone) setZone(S.maxZone); } })   // the Fight tab; Training is no longer a way forward
+    go: () => { const b = bossNow();
+      // hero-progression-rework: spare attribute points are the one thing to do first; with none, the Fight tab (Training is no longer a way forward)
+      return b && (b.s === 'close' || b.s === 'weak') && attrLive() && attrFree() > 0 ? { tab: 'party', view: 'attributes', sel: '#attrRows' }
+        : { tab: 'adv', sel: '#gateBtn', fn: () => { if (S.zone !== S.maxZone) setZone(S.maxZone); } }; }
   });
 
   // Bounties: the one closest to done (a finished one is ready to claim).

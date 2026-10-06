@@ -8,7 +8,7 @@
 //
 // encodeSave(obj) -> string                      turn a save object into a code
 // decodeSave(code) -> { ok: true, data } | { ok: false, error }   parse and validate a code
-// validateSave(data) -> { ok: true, data } | { ok: false, error }   pure v5 shape check
+// validateSave(data) -> { ok: true, data } | { ok: false, error }   pure v5 shape check (S.attr: attribute points per hero, hero-progression-rework)
 // summarizeSave(data) -> { name, level, maxZone, region, heroes, savedAt }   short preview
 
 const SAVECODE_HEADER = 'LF1';
@@ -193,6 +193,26 @@ function validateSave(data) {
       for (const [k, lv] of Object.entries(s.lv || {})) { known(SOLO_HEROES, k, 'solo.lv.hero'); record(lv, 'solo.lv.' + k); int(lv.L, 'solo.lv.level', 1, lim.progression); num(lv.xp, 'solo.lv.xp'); }
       for (const z of Object.values(s.zn || {})) int(z, 'solo.zone', 1, lim.progression);
       for (const tr of Object.values(s.tr || {})) { record(tr, 'solo.training'); for (const n of Object.values(tr)) int(n, 'solo.training.level', 0, lim.progression); }
+    }
+    // hero-progression-rework: attribute points spent, per hero, per attribute (55-attributes)
+    if (data.attr !== undefined) {
+      const at = data.attr; record(at, 'attr');
+      if (at.v !== undefined) int(at.v, 'attr.v', 0, 1000);
+      if (at.pts !== undefined) {
+        record(at.pts, 'attr.pts');
+        for (const [k, r] of Object.entries(at.pts)) {
+          known(SOLO_HEROES, k, 'attr.pts.hero'); record(r, 'attr.pts.' + k);
+          let sum = 0;
+          for (const [id, n] of Object.entries(r)) { known(ATTR0(), id, 'attr.pts.attribute'); int(n, 'attr.pts.' + k + '.' + id, 0, lim.progression); sum += n; }
+          // never more points spent than the hero's level gives
+          const s = data.solo || {}, lv = s.hero === k ? data.L : s.lv && s.lv[k] && s.lv[k].L;
+          if (sum > Math.max(0, ((+lv || 1) - 1) * HERO_TUNE.perLevel)) fail('attr.pts.' + k);
+        }
+      }
+      if (at.resets !== undefined) { record(at.resets, 'attr.resets'); for (const [k, n] of Object.entries(at.resets)) { known(SOLO_HEROES, k, 'attr.resets.hero'); int(n, 'attr.resets.' + k, 0, lim.progression); } }
+      if (at.met !== undefined) { record(at.met, 'attr.met'); for (const [k, n] of Object.entries(at.met)) { known(SOLO_HEROES, k, 'attr.met.hero'); int(n, 'attr.met.' + k, 0, 1); } }
+      if (at.live !== undefined) int(at.live, 'attr.live', 0, 1);
+      if (at.xpv !== undefined) int(at.xpv, 'attr.xpv', 0, 1);
     }
     if (data.abil) {   // learned abilities: abilityOwned reads unl[hero] and scrollCount reads scrolls[id] after a load
       for (const [k, ids] of Object.entries(data.abil.unl || {})) { known(SOLO_HEROES, k, 'abil.unl.hero'); array(ids, 'abil.unl.' + k); for (const id of ids) if (typeof id !== 'string' || !ABILITIES[id] || ABILITIES[id].hero !== k) fail('abil.unl.' + k); }

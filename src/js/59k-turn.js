@@ -237,11 +237,12 @@ function turnMakeProfile(f, u) {
   const heroX = (T.heroX[key] || SOLO_TUNE.heroX[key]) / SOLO_TUNE.heroX[key];
   const tap = cls === 'warden' || cls === 'warrior' ? CLASS_ABILITIES.heavy.coef : cls === 'lanternmage' || cls === 'mage' ? CLASS_ABILITIES.ember.coef : CLASS_ABILITIES.focus.coef;
   const k = heroX * SOLO_TUNE.atkX * aps();
-  const A = heroAtk() * tap * k * tapMult();
+  const A = heroAtk() * tap * k * tapMult() * attrRel('atk');   // hero-progression-rework: Might against the even build (1 with Training on)
   // ability power: the hero's Attack power, raised by Ability power Training (the signature's line: +abTrain a level)
   // and ability gear. Tied to Attack so a geared hero's abilities never fall behind their Attack. Not the Attack's own
   // multiplier (tapMult: the Golemfist, the Deepwell's Heavy Hands): "your Attack deals double" means the Attack.
-  const U = heroAtk() * tap * k * (1 + T.abTrain * trainLv(TURN_SIG[key] || 'echo')) * (1 + (g.abil || 0) / 100);
+  // hero-progression-rework: x attrRel('ab') (Focus points against Might; 1 with Training on)
+  const U = heroAtk() * tap * k * (1 + T.abTrain * trainLv(TURN_SIG[key] || 'echo')) * (1 + (g.abil || 0) / 100) * attrRel('ab');
   const ar = Math.max(0, u.armour || 0), armRed = Math.min(COMBAT_TUNE.redMax, ar / (ar + 100));
   const classDr = cls === 'warden' ? (1 - COMBAT_TUNE.wardenDr) * (1 - COMBAT_TUNE.tankDr) : 1;
   const z = f.tz || f.z || S.zone;   // tz: the zone its numbers were set for (a Deepwell floor or a Proving has its own)
@@ -250,7 +251,7 @@ function turnMakeProfile(f, u) {
   // a Proving's foes hit for shares of your own health (59f: the fight stays a fight at any power, as before turns)
   return { heroKey: key, zone: z, lateX: f.deep || f.trial ? 1 : turnLateX(key, z),   // Tobin's late pass: ordinary zone fights only, not the Deepwell or a Proving
     heroMaxHp: u.maxHp, refHp: f.trial ? u.maxHp : turnRefHp(z, !!f.deep), A, U, heroType: heroType(key) || 'phys',
-    counter: heroAtk() * heroX * (T.counterX[key] || 1) * SOLO_TUNE.counterX * aps() * critMult() * trainCounterX() * (1 + (g.counter || 0) / 100) * (1 + (g.threat || 0) / 100) * (1 + (g.echo || 0)),
+    counter: heroAtk() * heroX * (T.counterX[key] || 1) * SOLO_TUNE.counterX * aps() * critMult() * trainCounterX() * (1 + (g.counter || 0) / 100) * (1 + (g.threat || 0) / 100) * (1 + (g.echo || 0)) * attrRel('counter'),
     // the gear pass (above): spell, area, control, pierce, heal, ward, Focus
     spellX: 1 + (g.spell || 0) / 100, dotX: 1 + (g.area || 0) / 100, ctrlX: 1 + (g.control || 0) / 100, pierce: Math.min(1, (g.pierce || 0) / 100),
     healX: turnHealX(), wardOver: Math.min(0.4, (g.ward || 0) / 100), focus: turnFocus(),
@@ -261,20 +262,21 @@ function turnMakeProfile(f, u) {
     foeName: f.name, foeType: f.txRow || f.type, foeArm: f.tk.arm, boss: f.tk.boss, region: f.tk.region, trait: f.tr && TURN_TRAITS[f.tr[0]] ? f.tr[0] : '',
     script: f.tk.script, eq, cds, tal: typeof talentsOf === 'function' ? talentsOf(key) : {},
     stars: typeof starsActive === 'function' ? starsActive(key) : [], starSet: typeof starsSetIds === 'function' ? starsSetIds(key) : [],   // the Stars (57e)
-    parryWindow: Math.min(T.windowCaps.parry, (SOLO_TUNE.turnParryWindow + (g.parryWindow || 0) / 1000 + bonus('turnParryWin')) * turnAssistX()),
+    parryWindow: Math.min(T.windowCaps.parry, (SOLO_TUNE.turnParryWindow + (g.parryWindow || 0) / 1000 + bonus('turnParryWin') + attrParryMs()) * turnAssistX()),
     dodgeWindow: Math.min(T.windowCaps.dodge, (SOLO_TUNE.turnDodgeWindow + (g.dodgeWindow || 0) / 1000 + T.dodgeTrain * trainLv('dodge') + bonus('turnDodgeWin')) * turnAssistX()),
     essChance: essChance(), essExtra: g.essExtra || 0, goldPerKill: f.gold, xpPerKill: f.xp, healOnKill: COMBAT_TUNE.packHealF * turnHealX(),
     respawn: Math.max(0.45, typeof zoneFoeDeathS === 'function' ? zoneFoeDeathS(f) : 0) };
 }
 
-// Attack and ability power now, outside a fight (the Abilities screen's numbers; the fight itself never shows them)
+// Attack and ability power now, outside a fight (the Abilities screen's numbers; the fight itself never shows them). plain: the
+// Deepwell's depth anchor, which leaves out the zone's late lift and the build (hero-progression-rework: depth stays build-neutral)
 function turnPowerNow(plain) {
   const key = soloHero(); if (!key) return null;
   const T = TURN_TUNE, g = gear(), cls = S.party && S.party.cls;
   const heroX = (T.heroX[key] || SOLO_TUNE.heroX[key]) / SOLO_TUNE.heroX[key];
   const tap = cls === 'warden' || cls === 'warrior' ? CLASS_ABILITIES.heavy.coef : cls === 'lanternmage' || cls === 'mage' ? CLASS_ABILITIES.ember.coef : CLASS_ABILITIES.focus.coef;
   const A0 = heroAtk() * tap * heroX * (plain ? 1 : turnLateX(key, S.zone)) * SOLO_TUNE.atkX * aps();
-  return { A: A0 * tapMult(), U: A0 * (1 + T.abTrain * trainLv(TURN_SIG[key] || 'echo')) * (1 + (g.abil || 0) / 100), crit: critMult(),
+  return { A: A0 * tapMult() * (plain ? 1 : attrRel('atk')), U: A0 * (1 + T.abTrain * trainLv(TURN_SIG[key] || 'echo')) * (1 + (g.abil || 0) / 100) * attrRel('ab'), crit: critMult(),
     spell: 1 + (g.spell || 0) / 100, dot: 1 + (g.area || 0) / 100 };
 }
 // One line of numbers for an ability (75-abilities-ui): its hit, and what its Burn, Bleed or spend adds
