@@ -4327,6 +4327,22 @@ if (section('solo hero')) try {
     assert(E('onboardStep().id') === 'parry' && E('soloParry(true)') === 'parry', 'the next heavy hit: "Press Parry" and counter');
     errs.push(...g.errors);
   }
+  // guide-phase-guards: the guide never says Attack or the ability on the foe's turn, and never pops a tab tip mid-fight
+  {
+    const g = T(), E = s => g.eval(s);
+    E('soloPick("wren")'); run(g, 0.5);
+    const when = id => E(`GUIDE_STEPS.find(s => s.id === "${id}").when()`);
+    E('globalThis.__tc0 = turnCombatOn; globalThis.__ts0 = turnCombatSnapshot; turnCombatOn = () => true; turnCombatSnapshot = () => ({ phase: "foe" }); true');
+    assert(when('attack') === false, 'no Attack tip while the foe acts (wind-up or parry window)');
+    E('turnCombatSnapshot = () => ({ phase: "hero" }); true');
+    assert(when('attack') === true, 'Attack tip shows on your turn');
+    E('O().done.attack = 1; turnCombatSnapshot = () => ({ phase: "foe" }); true');
+    assert(when('ability') === false, 'no ability tip while the foe acts');
+    E('S.onboard.got.party = 1; S.maxZone = 3; S.activity = "fight"; true');
+    assert(E('fightingNow()') && when('tab:party') === false, 'no Hero tab tip mid-fight');
+    E('turnCombatOn = globalThis.__tc0; turnCombatSnapshot = globalThis.__ts0; true');
+    errs.push(...g.errors);
+  }
   // W1-D (playtest-2 P0): a combat step never pauses a game that cannot give it what it waits for
   {
     const g = T(), E = s => g.eval(s);
