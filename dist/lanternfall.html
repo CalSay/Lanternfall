@@ -42098,9 +42098,9 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
   });
   on('fightStart', () => { pendClean = null; lampSet(0); });
   const warn = el('div', 'tv-warn'); warn.hidden = true; warn.setAttribute('role', 'status'); warn.setAttribute('aria-live', 'assertive');
-  const wrap = el('div', 'tv-top'); wrap.append(turnN, heroRow, lamps, resTip, warn);
+  const wrap = el('div', 'tv-top'); wrap.append(turnN, heroRow, resTip, warn);
   // along the stage's bottom edge: the timing bar (while the foe winds up)
-  const bot = el('div', 'tv-bot'); bot.append(bar);
+  const bot = el('div', 'tv-bot'); bot.append(lamps, bar);   // hit feel: the lamps sit just above the timing bar, clear of the place caption and the resource row
   if (box) box.append(wrap, bot);
   // a timed ability's ring: it closes on the foe; press the ability (or Attack) again as it meets the inner circle
   const ring = el('div', 'tv-ring'), ringO = el('i', 'tv-ring-o'), ringI = el('i', 'tv-ring-i'), ringT = el('b', 'tv-ring-t', 'Now!');
