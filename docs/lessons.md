@@ -20,6 +20,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Keep the readiness estimate running while a tip pauses the game, and include Deepwell boons, gear changes made while gathering, and the sim seed. Why: Codex found each of these in rounds 1 to 3 of PR #47. (boss-readiness, 2026-10-06)
 - Run `node tools/health.mjs --compare` before and after any balance or pacing change. Why: it is the only before/after measure and CI gates on it. (f-health, 2026-10-05)
 - Play the persona's whole turn skill (parry, dodge and ability rings) when measuring pacing for a named player type. The sim's own turn player lands 80% of defences and never presses a ring, so every timed ability is a Miss. Why: Codex P1 on PR #52, where one shared 40% defence rate stood in for the casual. (xp-gold-pacing-report, 2026-10-06)
+- difficulty-budget: predicted the budget would find bosses near the 70% casual aim with a few outliers; measured 55 of 156 hero cells out of band (zones 5-15 and elites 100%, zones 25-34 Captains 0-1% for Wren and Pip, the Fenmother easier than her Captains). Miss. Also: `turnCombatSample` on one seed correlates long fights (13-32% vs 53-67% independent), so give every boss fight its own hashed seed when measuring win rates. Why: the judge caught it before the baseline. (difficulty-budget, 2026-10-06)
 
 ## Economy and skilling
 
