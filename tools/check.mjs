@@ -8826,7 +8826,7 @@ if (section('story-hollow-script (browser)')) try {
       const XI = s => pageI.evaluate(s => window.__t.x(s), s);
       await pageI.click('#createScreen .ccard[data-hero="wren"]'); await pageI.click('#createScreen .create-go');
       await pageI.waitForSelector('.sty-sheet .sty-title', { timeout: 4000 });
-      await pageI.waitForTimeout(1300); await pageI.click('.sty-sheet .sty-title'); await pageI.waitForTimeout(1300);   // 2.6 s in, but the tap at 1.3 s restarted the wait
+      for (let k = 0; k < 7; k++) { await pageI.waitForTimeout(500); await pageI.click('.sty-sheet .sty-title'); }   // 3.5 s in (past the 2 s wait), but each tap restarted it: no timing margin under 1.5 s
       assert(!!(await pageI.$('.sty-sheet .sty-title')) && await XI('storyHeld()') === true, 'story-hollow-script (browser): a tap on the card restarts its unattended wait');
       await pageI.waitForFunction(() => window.__t.x('storyLate().includes("r:hollow")'), null, { timeout: 5000 });
       await pageI.waitForTimeout(300);
