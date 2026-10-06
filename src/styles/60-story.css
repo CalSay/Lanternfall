@@ -100,3 +100,5 @@
   .sty-sheet.sty-scene .sty-opt { min-height: 44px; padding-top: 4px; padding-bottom: 4px; align-content: center; }
   .sty-sheet.sty-scene .sty-opt span { display: none; }
 }
+
+.tav-verse { margin: 6px 0; font-style: italic; color: #D8CFE3; }

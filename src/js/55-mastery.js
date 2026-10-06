@@ -26,11 +26,11 @@ const PROFILE_BONUS = 0.05;
 // What to watch for, from each foe's real behaviour (59b-enemies)
 const FOE_TELL = {
   slime: 'Plain blows. Its heavy hit comes after a red "!".',
-  bat: 'Dives the most hurt hero for a few seconds, every 10 s.',
+  bat: 'Dives at you for a few seconds, every 10 s.',
   bones: 'Shoots from range through armour. Gets back up once at 20% HP, unless magic or a burn finishes it.',
   beetle: 'Slow, but each hit lands at nearly double strength.',
-  spore: 'Every 6 s a spore cloud hits everyone and poisons.',
-  golem: 'Armoured. Hits very hard and slowly; every third hit slams the front.',
+  spore: 'Every 6 s a spore cloud hits you and poisons.',
+  golem: 'Armoured. Hits very hard and slowly; every third hit slams down.',
   wraith: 'Every 5 s it channels a heal. A stun stops it.'
 };
 

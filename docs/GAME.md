@@ -91,7 +91,7 @@ The bell opens Notices, the Journal and Settings. Achievements (Deeds) and the C
 - **Gatherers (Hands)** (`57f-hands.js`, `21f-data-hands.js`, `74-ui-hands.js`): open at Hearth 2 with a Tavern.
   Applicants appear on the Tavern board with a rarity and traits; named gatherers arrive by their routes. Tents cap the
   crew (2 to start). A send prepays one or two 4-hour shifts. Gatherers stand in the camp scene; tap one to talk and
-  send it.
+  send it. Every random applicant carries one "Lit for ..." line. Named gatherers arrive by story: Tam comes up out of the cellars when Hands open, Rook after the zone 30 boss, Ada and Pell the morning (06:00) after the Hollow's Elder falls, Sister Fennel names Elowen's chapel only once that Elder is down.
 - **Trade runs** (`57k-trade.js`, `74b-ui-trade.js`): from Tavern 2 a gatherer can carry goods away for 2 hours and
   bring back gold.
 - **Tavern perks** (`57g-tavern-perks.js`): Omen forecasts, applicant timing, rumours, bounty bonuses.
@@ -112,17 +112,17 @@ The bell opens Notices, the Journal and Settings. Achievements (Deeds) and the C
   is [combat-turn-build.md](design/combat-turn-build.md) "Gear stats in turn fights"): Spell power is fire, frost and
   holy damage, Damage over time (the old Area) Burn and Bleed, Control boss Stagger, Counter (the old Threat) counter
   damage, Speed (the old Attack speed) how often you act, Focus a steady cooldown refund.
-- **Uniques** (`UNIQ` in `20-data.js`): rare zone-boss drops with a strong effect and modest stats.
+- **Uniques** (`UNIQ` in `20-data.js`): rare zone-boss drops with a strong effect and modest stats. Each Hollow unique carries one flavour line naming the Champion and place it came from (`21ka-story-hollow-items.js`); it shows on the Codex tile and the item card once that area's Champion is in the game.
 - **Economy** (`55-econ.js`, `21w-data-econ.js`): gold per foe steps up by region; every price follows that curve.
   Gold-gain beyond gear became crit damage, capped.
 
 ## Side systems
 
 - **Deepwell** (`57d-deepwell.js`, `59c-deepwell-combat.js`, `75-deepwell-ui.js`): from zone 20 and Hearth 3. Each
-  floor is a turn fight. Runs floor by floor on Oil, with boons, Depth Marks and a weekly Trial. A run never changes main progress.
+  floor is a turn fight. Runs floor by floor on Oil, with boons, Depth Marks and a weekly Trial. A run never changes main progress. Its Deep Lore pages follow the story's rule that the dark copies shapes.
 - **Bounties** (`55-bounties.js`): three short goals that pay gold, materials or Essence, and Renown.
-- **Mastery and the Bestiary** (`55-mastery.js`): zone stars and per-foe perks from kills.
-- **Almanac** (`55-almanac.js`): a daily Omen, optional Dares and a weekly board.
+- **Mastery and the Bestiary** (`55-mastery.js`): zone stars and per-foe perks from kills. The Codex Bestiary also shows one line for each Hollow monster you have reached that is in the game, saying what shape it copied (`LORE_FOES` in `21h-lore-hollow.js`). Foe tells use solo wording.
+- **Almanac** (`55-almanac.js`): a daily Omen, optional Dares and a weekly board. Omen lines name no person or place you have not met; Oriel's line comes after Chapter 4.
 - **Codex** (`57c-codex.js`, `75-codex-ui.js`): the collection book. Lantern Light gives titles, cosmetics and small
   capped perks.
 - **Deeds** (`23-data-deeds.js`, `58-deeds.js`, `75-deeds-ui.js`): tracks, Feats, titles and looks drawn on the hero
@@ -133,7 +133,7 @@ The bell opens Notices, the Journal and Settings. Achievements (Deeds) and the C
   ready" at 70% or better. Under that it says "a close fight" (35% to 70%) or "too strong", and Go opens
   Training. While it works it says "The Zone N boss is next". It only judges; you can still challenge any time
   (`59m-boss-odds.js`, `bossOdds()`).
-- **Story** (`55-story.js`, `75-story-ui.js`, `21k-story-hollow.js`, `21h-lore-hollow.js`, `21b-stories-coast.js`, `21j-lore-omens.js`): one system that plays the region card, area titles, zone and Captain lines, Champion and Elder scenes, NPC and Voice cards and choices from `STORY_BEATS`, once per save, between fights, silent where the game is not ready (no monster or encounter, no data). Skip always works; everything read is in the Journal (Codex). A story card waits for a tap, but files itself to the Journal under "Catch up on the story" after 45 s untouched, and the game runs again; a choice in it waits in the Journal entry until you make it. Codex Bestiary tiles show what each monster copied once you have fought it, and what its Captain copied once you have beaten it. Settings > Story switches it off. A new game opens on the Chapter 1 card, then two Old Hesketh cards (the fire, then what is in the ground), all before the first fight; a save already past zone 1 finds them in the Journal. The hero picker shows bios for the three starters only; every other hero says "Locked" and where you meet them. No new hero can unlock before the zone of their first scene (`STORY_MEET` in `56c-unlocks.js`); heroes a save already owns are kept. The story bible is [story-bible.md](design/story-bible.md); [lore.md](design/lore.md) is the older lore.
+- **Story** (`55-story.js`, `75-story-ui.js`, `21k-story-hollow.js`, `21h-lore-hollow.js`, `21b-stories-coast.js`, `21j-lore-omens.js`): one system that plays the region card, area titles, zone and Captain lines, Champion and Elder scenes, NPC and Voice cards and choices from `STORY_BEATS`, once per save, between fights, silent where the game is not ready (no monster or encounter, no data). Skip always works; everything read is in the Journal (Codex). A story card waits for a tap, but files itself to the Journal under "Catch up on the story" after 45 s untouched, and the game runs again; a choice in it waits in the Journal entry until you make it. Settings > Story switches it off. A new game opens on the Chapter 1 card, then two Old Hesketh cards (the fire, then what is in the ground), all before the first fight; a save already past zone 1 finds them in the Journal. The hero picker shows bios for the three starters only; every other hero says "Locked" and where you meet them. No new hero can unlock before the zone of their first scene (`STORY_MEET` in `56c-unlocks.js`); heroes a save already owns are kept. The story bible is [story-bible.md](design/story-bible.md); [lore.md](design/lore.md) is the older lore. The Journal also holds "Who answers to whom", a page that adds a row the first time you meet each rank (Shadowborn, Captain, Champion, Elder, the Voice). Once an Elder is down, the Tavern shows Vesper's verse for it.
 
 ## Onboarding and notices
 

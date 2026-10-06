@@ -6,11 +6,14 @@
 // Exposed names:
 //   OMEN_LINES[omenId] -> one line for each of the 35 OMENS (55-almanac.js), by id.
 //   DARE_LINES[omenId] -> one line for each Omen that has a Dare (7), by the Omen's id.
-//   omenLine(id, dare) -> the line to show, or '' (also reads COAST_OMEN_TEXT[id].say for the
+//   OMEN_LATE[omenId] -> { zone, hero, line }: a line that names someone met later; it shows once the best zone reached is `zone`
+//                         and met(hero) is true (the caller says whether the player has met that hero).
+//   omenLine(id, dare, maxZone, met) -> the line to show, or '' (also reads COAST_OMEN_TEXT[id].say for the
 //                         coast Omens, so one reader covers both).
 // Lines are LORE_LIMITS.omen characters or less (lore.md 1: "Omen line under 60 characters").
 // Omens are signs in the sky and the land as the world wakes up: small, warm, a little odd.
-// They never run ahead of the mystery ladder (8.5) and never name the Voice.
+// They never run ahead of the mystery ladder (8.5), never name the Voice and never name a person or place the player has not met
+// (story-systems-hollow; OMEN_LATE holds the lines that wait).
 
 LORE_LIMITS.omen = 59;
 
@@ -25,16 +28,16 @@ const OMEN_LINES = {
   apprentice: 'The young ones want to learn everything today.',
   // fight
   goldRain: 'Coins in the mud. The road gives a little back.',
-  wraithTide: 'Marsh mist rolls in thick. The wraiths rise with it.',
+  wraithTide: 'The mist rolls in thick. Things rise with it.',
   huntersMoon: 'A bright moon. Good light for tracking.',
   championsDay: 'The big ones are out today. Walk carefully.',
-  bloodMoon: 'A red moon. The elders feel it.',
-  luckyStar: 'One star is winking. Oriel says it means you.',
+  bloodMoon: 'A red moon. The big ones feel it.',
+  luckyStar: 'One star is winking. It might mean you.',
   keenWinds: 'A sharp wind off the hills. Blades feel lighter.',
   scholarSky: 'Clear skies. Every lesson sticks today.',
   bestiaryDay: 'A good day to watch the road and take notes.',
   masteryDay: 'Walk the same road twice. You\'ll know it better.',
-  bossHunt: 'The crowned ones are restless today.',
+  bossHunt: 'The strongest ones are restless today.',
   // craft
   hotForge: 'The forge runs hot today. Mind your sleeves.',
   steadyHands: 'Steady hands and a quiet anvil.',
@@ -52,7 +55,7 @@ const OMEN_LINES = {
   // rest
   longNight: 'A long night. Everyone sleeps close to the fire.',
   hearthDay: 'Somebody baked. The whole camp smells of bread.',
-  wyrmStirs: 'The sky over the Emberwaste burns brighter tonight.'
+  wyrmStirs: 'Far off, the sky burns brighter tonight.'
 };
 
 OMEN_LINES.huntersFeast = 'A big pot on the fire. Tonight you eat well and hit hard.';   // W1-C: the solo Omen that replaces Company Feast
@@ -60,12 +63,16 @@ OMEN_LINES.huntersFeast = 'A big pot on the fire. Tonight you eat well and hit h
 const DARE_LINES = {
   goldRain: 'Gold in every pack, and every pack fights back.',
   championsDay: 'Hunt the biggest thing on the road. Bring it home.',
-  bloodMoon: 'Red sky at night. The crowned ones stand taller.',
+  bloodMoon: 'Red sky at night. The strong ones stand taller.',
   keenWinds: 'All or nothing. Make every cut count.',
   scholarSky: 'Hard lessons stick the longest.',
-  bossHunt: 'No time to think. Go for the crown first.',
+  bossHunt: 'No time to think. Go for the strongest first.',
   deepTide: 'The water pulls. Go deep, and come back fast.'
 };
 
-const omenLine = (id, dare) => (dare && DARE_LINES[id]) || OMEN_LINES[id]
+// Lines that name a person or place the player meets later. Each waits for the zone given (the best zone reached) and then replaces
+// the Omen's plain line. Oriel is met in Chapter 4, so her lines come after it (bible 7, 12).
+const OMEN_LATE = { luckyStar: { zone: 141, hero: 'oriel', line: 'One star is winking. Oriel says it means you.' } };
+
+const omenLine = (id, dare, maxZone, met) => (dare && DARE_LINES[id]) || (OMEN_LATE[id] && maxZone >= OMEN_LATE[id].zone && typeof met === 'function' && met(OMEN_LATE[id].hero) && OMEN_LATE[id].line) || OMEN_LINES[id]
   || (typeof COAST_OMEN_TEXT === 'object' && COAST_OMEN_TEXT[id] && COAST_OMEN_TEXT[id].say) || '';

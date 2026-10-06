@@ -83,7 +83,11 @@ let craftUI = null;
       out.push({ g: 'affix', idx: ai, l: all.slice(i, i + def.give.length) }); i += def.give.length;
     });
     if (it.mw != null && craftTrophyLine(it.mw, it.slot, 1)) { out.push({ g: 'mw', l: [all[i]] }); i++; }
-    if (it.u && UNIQ[it.u]) out.push({ g: 'uniq', txt: UNIQ[it.u].txt });
+    if (it.u && UNIQ[it.u]) {
+      out.push({ g: 'uniq', txt: UNIQ[it.u].txt });
+      const fl = typeof storyItemLine === 'function' ? storyItemLine(it.u) : '';   // story-systems-hollow: one line naming the Champion it came from
+      if (fl) out.push({ g: 'uniq', txt: fl, lore: 1 });
+    }
     return out;
   }
   function deltaTxt(k, v) {
@@ -651,7 +655,7 @@ let craftUI = null;
     let anyWait = false;
     for (const L of splitLines(it)) {
       const r = el('div', 'cf-line g-' + L.g + (sheet.flash === L.idx && L.g === 'affix' ? ' flash' : ''));
-      if (L.g === 'uniq') { r.append(el('span', 'cf-lt', L.txt)); lines.append(r); continue; }
+      if (L.g === 'uniq') { r.append(el('span', 'cf-lt' + (L.lore ? ' cf-lore' : ''), L.txt)); lines.append(r); continue; }
       const liveNow = lineLive(L.l);
       if (!liveNow) { r.classList.add('wait'); anyWait = true; }
       if (L.g === 'mw') r.append(img(troIcon(it.mw), 'cf-li'));

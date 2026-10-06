@@ -14,7 +14,7 @@ let handsTalkMount, handsTalkOpen, handsTalkUpdate;
   const skIcon = (sk, t = 1) => { try { return matIcon(KIND[sk] || 'wood', t); } catch (e) { return iconURL('coin', '#F2C14E'); } };
   const gold = n => `${fmt(n)} gold`;
   const matTxt = (kind, t) => { try { return matName(kind, t); } catch (e) { return 'goods'; } };
-  const legendAbout = a => { const l = HANDS_LEGENDS.find(x => x.key === a.key); return l ? l.about : ''; };
+  const legendAbout = a => handsAbout(a.key);
 
   let armed = null, armedAt = 0, picking = null, msg = '', msgAt = 0;
   const shiftChoice = Object.create(null), moreOpen = Object.create(null);
@@ -100,7 +100,7 @@ let handsTalkMount, handsTalkOpen, handsTalkUpdate;
       act.append(controls);
     }
     act.append(close);
-    talkBox.append(top, traitChips(x), line, status, act);
+    talkBox.append(top, traitChips(x), ...(info.about ? [el('p', 'note hd-line', info.about)] : []), line, status, act);
     if (tradeReason()) talkBox.append(el('p', 'note hd-trade-lock', tradeReason()));
     if (talkPicking && !busy) talkBox.append(jobPicker(x, info.jobs, () => {
       talkPicking = false; talkLine = handsTalkInfo(x.id).line; renderTalk(true);
@@ -203,7 +203,7 @@ let handsTalkMount, handsTalkOpen, handsTalkUpdate;
     card.append(head, traitChips(a));
     const pv = handsPreview(Object.assign({ lv: (a.ret && a.ret.lv) || 1 }, a), b.kind, b.t);
     card.append(el('p', 'note hd-line', `A shift at the ${handsNodeName(b.kind, b.t)} brings about ${storeNum(pv.haul)} ${matTxt(b.kind, b.t)} in ${dur(pv.secs)}.`));
-    if (named) card.append(el('p', 'note hd-line', a.ret ? 'They remember you. Hiring them again is free.' : legendAbout(a)));
+    card.append(el('p', 'note hd-line', named ? (a.ret ? 'They remember you. Hiring them again is free.' : legendAbout(a)) : handsLitFor(a)));
     const price = b.cost ? `Hire for ${gold(b.cost)}` : 'Hire for free';
     const k = 'hire:' + a.id, act = el('div', 'hd-act');
     const hire = btn('mini go', isArmed(k) ? `Tap again: ${price}` : price);

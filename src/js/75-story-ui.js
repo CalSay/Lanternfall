@@ -23,7 +23,7 @@ var storyUI;   // var: 75-codex-ui (earlier in the build) reads it at run time
   const menuOpen = () => !!S.tab;   // a landscape menu covers most of the stage
   const stageBox = () => document.getElementById('stageBox');
   const chapterOf = r => { const i = REGIONS.findIndex(x => x.id === r); return i >= 0 ? `Chapter ${i + 1}: ${REGIONS[i].n.replace(/^./, c => c.toUpperCase())}` : ''; };
-  const KIND = { region: 'Chapter', champion: 'Champion', elder: 'Elder', page: 'Page', voice: 'A voice', npc: 'Meeting', letter: 'Letter', note: 'Note' };
+  const KIND = { region: 'Chapter', champion: 'Champion', elder: 'Elder', page: 'Page', voice: 'A voice', npc: 'Meeting', letter: 'Letter', note: 'Note', ranks: 'Page' };
 
   // check.mjs sets this in its browser contexts so a new game's opening card never sits over a test's first click; scenes are skipped (and filed)
   const TEST_SKIP = (() => { try { return localStorage.getItem('lanternfall.test.nostory') === '1'; } catch (e) { return false; } })();
@@ -264,6 +264,21 @@ var storyUI;   // var: 75-codex-ui (earlier in the build) reads it at run time
     },
     update() {}
   });
+
+  // Vesper's verse (bible 7): once an Elder is down, the newest verse she has written, as its own Tavern section (story-systems-hollow)
+  if (typeof registerSection === 'function') {
+    let sec = null, vp = null;
+    registerSection('tav', {
+      id: 'story-verse', title: '',
+      mount(node) { sec = node; vp = el('p', 'note tav-verse'); sec.append(vp); },
+      update() {
+        const vs = typeof storyVerseLatest === 'function' ? storyVerseLatest() : null;
+        if (!sec) return;
+        sec.hidden = !vs;
+        { const t = vs ? 'Vesper sings: ' + vs.lines.join(' ') : ''; if (vp.textContent !== t) vp.textContent = t; }
+      }
+    });
+  }
 
   storyUI = { open: id => openEntry(id), list: codex => openList(!!codex), codexRow };
 }

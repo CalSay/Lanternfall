@@ -1218,6 +1218,7 @@ body.cb-left .stage.tall .abil.abil2 { left: 110px; }
 .cf-line.g-mw { border-left-color: var(--gold); color: var(--gold); }
 .cf-line.g-uniq { border-left-color: var(--r-legendary); color: var(--r-legendary); }
 .cf-line.g-uniq .cf-lt { font: 500 14px var(--body); }
+.cf-line.g-uniq .cf-lt.cf-lore { font-style: italic; color: var(--muted); }
 .cf-line.wait .cf-lt { color: var(--muted); }
 .cf-li { width: 18px; height: 18px; image-rendering: pixelated; }
 .cf-tag { margin-left: auto; font: 600 10.5px var(--body); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
@@ -2755,6 +2756,8 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
   .sty-sheet.sty-scene .sty-opt { min-height: 44px; padding-top: 4px; padding-bottom: 4px; align-content: center; }
   .sty-sheet.sty-scene .sty-opt span { display: none; }
 }
+
+.tav-verse { margin: 6px 0; font-style: italic; color: #D8CFE3; }
 /* 60-tools: the Mastery box on a tool's item sheet and the rough tool's sheet (75-tools-ui.js, H2).
    The tool chip on the Gather view's Now card is styled in 60-gathering.css (.gx-tool). */
 .tl-mrow { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 8px; margin-top: 2px; font-size: 12px; }
@@ -7170,7 +7173,7 @@ const COAST_OMEN_TEXT = {
 //   HANDS_CALLINGS    the Legendaries' callings { id, n, txt }
 //   HANDS_LEGENDS     the named Legendary Hands with supported routes { key, n, sk, cl, tr, about }
 //   HANDS_TAM         Tam, the free starter { key, n, r, sk, tr, about }
-//   HANDS_LATER       optional Hands who arrive later (the Hollises, LORE8b): data hook, off (live: 0)
+//   HANDS_LIT         "Lit for ..." lines: each random applicant carries one, picked by its id (handsLitFor, 57f)
 //   HANDS_FIRST       35 first names; HANDS_TRADE: 30 trade names (random Hands: "Cora Thatcher")
 
 const HANDS_TUNE = {
@@ -7236,41 +7239,46 @@ const HANDS_CALLINGS = {
   hearthcook: { n: 'Hearth Cook', txt: 'Counts as a Cook while out too; meals +10%' }
 };
 const HANDS_LEGENDS = [
-  { key: 'nan', n: 'Nan Tarrow', sk: 'mine', cl: 'deep', about: 'Worked the Quarry before the dark. Grenna knows Nan.' },
-  { key: 'bracken', n: 'Old Bracken', sk: 'wood', cl: 'felling', about: "Felled the Hollow woods with Bram's father." },
-  { key: 'fennel', n: 'Sister Fennel', sk: 'forage', cl: 'physic', about: "Kept the herb garden at Elowen's chapel." },
+  { key: 'nan', n: 'Nan Tarrow', sk: 'mine', cl: 'deep', about: 'Worked the Quarry before the dark. The old crew still asks after her.' },
+  { key: 'bracken', n: 'Old Bracken', sk: 'wood', cl: 'felling', about: 'Felled the Hollow woods before the dark. He knows every stump.' },
+  // aboutAfter replaces about once the Hollow's Elder is down and Elowen has come out of her chapel (handsAbout, 57f): before that, nobody
+  // at the Tavern has heard her name.
+  { key: 'fennel', n: 'Sister Fennel', sk: 'forage', cl: 'physic', about: 'Kept the herb garden on the hill.', aboutAfter: "Kept the herb garden at Elowen's chapel." },
   { key: 'jory', n: 'Jory Quickhands', sk: 'any', cl: 'quick', about: 'He lived by his wits in the dark. He will not say how.' },
-  { key: 'ashby', n: 'Mother Ashby', sk: 'forage', cl: 'hearthcook', about: 'She is from Emberlea. She keeps a place at the table for Caedmon.' }
+  { key: 'ashby', n: 'Mother Ashby', sk: 'forage', cl: 'hearthcook', about: 'She is from Emberlea. She keeps a place at the table for someone who is not home yet.' }
 ];
 // C1 routes for the professions the current game can run. Missing story/hero systems may
 // register a primary probe with registerHandsRoute(key, fn); their documented zone fallback works now.
 const HANDS_ROUTES = {
   loy: { fallback: 15, hint: 'Build the Loom to level 2, or reach zone 15.' },
   nan: { fallback: 25, hint: 'Defeat a Quarry Golem elder, or reach zone 25.' },
-  bracken: { fallback: 25, hint: 'Bring Bram to camp, or reach zone 25.' },
-  rook: { fallback: 30, hint: 'Follow the quarry rumour, or reach zone 30.' },
+  bracken: { fallback: 25, hint: 'Reach zone 25.' },
+  rook: { fallback: 31, hint: 'Follow the quarry rumour, or clear the Quarry Ruins.' },   // 31: after the zone 30 boss falls (story-systems-hollow; was 30)
   ashby: { hint: 'Build the Kitchen.' },
-  fennel: { fallback: 30, hint: "Finish Elowen's chapel quest, or reach zone 30." },
+  fennel: { fallback: 30, hint: 'Finish the chapel quest, or reach zone 30.' },
   dorrie: { fallback: 32, hint: 'Hear the pedlar rumour at the Tavern, or reach zone 32.' },
   // Keep old v5 Jory records working. New Hunter recruitment waits for that profession.
-  jory: { live: false, hint: 'The Hunter profession will bring Jory to camp.' }
+  jory: { live: false, hint: 'The Hunter profession will bring Jory to camp.' },
+  // Ada and Pell walk in the morning after the Hollow's Elder falls (bible 6.3, 8.1). `elder: 'hollow'` names the Elder; 57f `later()` waits
+  // for it, then for the next 06:00 (remembered in S.hands.routes.hollowDawn). They used to wait for the Coast's Great Lantern.
+  ada: { elder: 'hollow', hint: 'Clear the last zone of the Hollow. They come in the next morning.' },
+  pell: { elder: 'hollow', hint: 'Clear the last zone of the Hollow. They come in the next morning.' }
 };
 HANDS_LEGENDS.push(
   { key: 'loy', n: 'Gammer Loy', sk: 'forage', cl: null, tr: ['steady'], about: 'Spun in the dark by feel.' },
   { key: 'rook', n: 'Rook', sk: 'mine', cl: null, tr: ['lucky'], about: "Crawled the quarry's cracks for ten years. Came up with his pockets full." },
-  { key: 'dorrie', n: 'Dorrie Fitch', sk: 'forage', cl: null, tr: ['lucky'], about: 'A pedlar who walked the dark roads selling thread.' }
+  { key: 'dorrie', n: 'Dorrie Fitch', sk: 'forage', cl: null, tr: ['lucky'], about: 'A pedlar who walked the dark roads selling thread.' },
+  // Ada and Pell (the Hollises) come out of the Wraithmarsh fog. They keep their own rarities, not Legendary (r: 57f arriveNamed).
+  { key: 'ada', n: 'Ada Hollis', r: 'rare', sk: 'forage', cl: null, tr: ['steady', 'green'], about: 'The fog held her. She does not remember the years, only a candle.' },
+  { key: 'pell', n: 'Pell Hollis', r: 'uncommon', sk: 'wood', cl: null, tr: ['strong'], about: 'Ada\'s boy. The fog held him too, and he does not know for how long.' }
 );
-const HANDS_TAM = { key: 'tam', n: 'Tam', r: 'legendary', sk: 'wood', tr: ['steady'], about: "Hesketh's nephew. He heard about the fire from his uncle." };
-// Later, optional Hands (lore.md 7.2): Bram's family comes home once Bram is recruited and the
-// Coast's Great Lantern is lit. Off until LORE8b sets live: 1 (and writes their lines). when() is a
-// cheap probe the core calls once a second; they arrive free, as applicants, once each.
-// Off: they need Bram unlocked as a hero (W3-B) and the Coast's Great Lantern lit.
-const HANDS_LATER = [
-  { key: 'ada', n: 'Ada Hollis', r: 'rare', sk: 'forage', tr: ['steady', 'green'], live: 0, about: "Bram's wife. She followed his marks home.",
-    when: () => false },
-  { key: 'pell', n: 'Pell Hollis', r: 'uncommon', sk: 'wood', tr: ['strong'], live: 0, about: "Bram's boy, not small any more.",
-    when: () => false }
-];
+const HANDS_TAM = { key: 'tam', n: 'Tam', r: 'legendary', sk: 'wood', tr: ['steady'], about: "Hesketh's nephew. He was the first one out of the cellars." };
+// "Lit for ..." (bible 6.3): every lamp at camp is lit for someone, so each random applicant carries one line saying who. Neutral wording, so
+// it fits any name. handsLitFor(app) picks by the applicant's id, so a Hand keeps the same line from the board to the camp.
+const HANDS_LIT = ['Lit for a sister.', 'Lit for a daughter.', 'Lit for a mother.', 'Lit for a brother.', 'Lit for a husband.', 'Lit for a wife.',
+  'Lit for a son.', 'Lit for a father.', 'Lit for a grandmother.', 'Lit for a best friend.', 'Lit for a neighbour.', 'Lit for a twin.',
+  'Lit for an apprentice.', 'Lit for a teacher.', 'Lit for a cousin.', 'Lit for a little brother.', 'Lit for a grandson.', 'Lit for an old friend.',
+  'Lit for a child at home.', 'Lit for the one who stayed behind.'];
 const HANDS_FIRST = ['Alys', 'Beck', 'Cora', 'Dunstan', 'Edda', 'Finch', 'Gwen', 'Ivo', 'Jessa',
   'Kit', 'Lotte', 'Mabel', 'Perrin', 'Rosa', 'Sim', 'Tilly',
   'Ulric', 'Vi', 'Wat', 'Yara', 'Agnes', 'Bartle', 'Clem', 'Dora', 'Elspeth',
@@ -7514,13 +7522,9 @@ const BOSS_COPY = {
 // STORY_BEATS (21k-story-hollow.js) and stays silent where the game is not ready.
 //
 // Exposed names:
-//   LORE_BESTIARY[key]     -> { name, region, foe, elder, champ }: one line each for the type, its
-//                             Elder and its champion, for the 14 foe types. Keys: the TYPES keys for
-//                             the Hollow (slime bat bones beetle spore golem wraith); for the Sunken
-//                             Coast the keys R2-1 should give its types (crab gull deckhand kelp jelly
-//                             witch coral). `name` is the type's display name, so a reader can match
-//                             TYPES[i].name if the coast keys end up different. region: 'hollow' | 'coast'.
-//                             (Retired and unread since story-hollow-script: storyBestiary() shows the roster lines instead.)
+//   LORE_FOES[zone]        -> { name, line }: one Bestiary line per roster monster of zones 1 to 35 (rule 4: the shape it copied).
+//                             55-story.js storyBestiary shows it in the Codex once the monster is in the game and the hero has reached its zone.
+//                             (story-systems-hollow replaced the old per-type LORE_BESTIARY lines, which broke canon.)
 //   RAID_LORE[bossName]    -> one flavour line per world raid foe, keyed by the BOSSES names
 //                             (20-data.js). Client text only: it never touches world/boss or raiders.
 //   LORE_LIMITS, LORE_BANNED, STORY_LIMITS, STORY_RETIRED: the limits and the banned words tools/check.mjs enforces.
@@ -7550,69 +7554,46 @@ const STORY_RETIRED = [/\bsoak(ed|s)?\b/i, /\bcorrupt/i, /\btwisted\b/i, /\bonly
   /\b(Moss Slime|Cave Bat|Rattlebones|Barrow Beetle|Spore Cap|Quarry Golem|Marsh Wraith)\b/, /\bparty\b/i, /\blisten(er|ing)\b/i,
   /\bcrowned\b/i, /\blanternbearer\b/i, /\bthe heroes\b/i];
 
-// Retired: the old per-type lines below described the TYPES (Moss Slime, Cave Bat ...), not the monsters the Hollow shows (Thorn Imp,
-// Gloomjaw ...). storyBestiary() no longer reads them (story-hollow-script); a Codex tile now shows the roster's own zone and Captain
-// lines for its slot, from STORY_BEATS. story-systems-hollow deletes this data and the const.
-const LORE_BESTIARY_LIVE = false;
-const LORE_BESTIARY = {
-  // the Hollow (TYPES keys)
-  slime: { name: 'Moss Slime', region: 'hollow',
-    foe: 'A shadow poured into the shape of pond moss. It creeps over lamps and smothers them.',
-    elder: 'The oldest copy of Hollow moss. It spreads over every lamp it finds.',
-    champ: 'The biggest moss copy the seams give up. It comes when the small ones fail.' },
-  bat: { name: 'Cave Bat', region: 'hollow',
-    foe: 'A shape copied from the Batwing bats, whole from the dark. It dives at the weakest light.',
-    elder: 'A copy of the Bat Queen the orchard knew. It snuffs the weakest flame first.',
-    champ: 'Wings like a cloak, copied from a bat long gone. It dives at the smallest flame.' },
-  bones: { name: 'Rattlebones', region: 'hollow',
-    foe: 'Bone shapes copied from the Bonefield dead, whole from the dark. They walk at lamps.',
-    elder: 'A captain copied from the old battle. He calls the copies to stand against every lamp.',
-    champ: 'A guard copied from an old king\'s guard. Only fire lays it down.' },
-  beetle: { name: 'Barrow Beetle', region: 'hollow',
-    foe: 'Shapes copied from barrow beetles, built whole in the dark. They bury lamps like the dead.',
-    elder: 'A shell copied from a barrow door. It goes for the one who holds the line.',
-    champ: 'A copy the size of a cart. It shoves barrow dirt over every lamp it finds.' },
-  spore: { name: 'Spore Cap', region: 'hollow',
-    foe: 'A shadow copied from the spore caps of Morwen\'s garden. Its dust chokes any flame.',
-    elder: 'The whole garden, copied and standing. Its spore cloud fills the air.',
-    champ: 'A cap as tall as a door, copied in the dark. Its dust hangs long after it falls.' },
-  golem: { name: 'Quarry Golem', region: 'hollow',
-    foe: 'A copy of the quarry\'s stone, cut in the dark. It walks at your light to crush it.',
-    elder: 'The quarry\'s first cut stone, copied by the dark. Grenna still knows its shape.',
-    champ: 'Copied from the deepest seam. It knows only weight, and this one has plenty.' },
-  wraith: { name: 'Marsh Wraith', region: 'hollow',
-    foe: 'Shapes copied from people who followed green lights. They lure lamps in and drown them.',
-    elder: 'Each Elder Wraith copies a lost keeper. The one at the marsh heart copies the first.',
-    champ: 'A copy of a keeper. It keeps the others going, for the dark now.' },
-  // the Sunken Coast (the keys R2-1 should use; see the header)
-  crab: { name: 'Shinglecrab', region: 'coast',
-    foe: 'Shore crabs with shells grown thick in the dark. They pinch out any lamp on the shingle.',
-    elder: 'It shuts itself in and waits for the tide, like the sea does.',
-    champ: 'Its shell is crusted like an old hull. The tide itself seems to carry it in.' },
-  gull: { name: 'Stormgull', region: 'coast',
-    foe: 'The gulls learned to take more than fish. They dive at anything that shines.',
-    elder: 'It brings the squall with it and strips every shield bare.',
-    champ: 'A gull as wide as a sail. It snatches shields the way the others snatch fish.' },
-  deckhand: { name: 'Drowned Deckhand', region: 'coast',
-    foe: 'Sailors who steered for the green light. They drag lamps down to the wrecks.',
-    elder: 'The Bosun. He rings the ship\'s bell, and his crew still comes.',
-    champ: 'The first mate. He still gives orders, and the drowned still obey.' },
-  kelp: { name: 'Kelp Strangler', region: 'coast',
-    foe: 'An eel as long as a boat, grown in the kelp. It holds the strong one still.',
-    elder: 'It holds two at once now.',
-    champ: 'Old as the reef. It has wrapped round more boats than Hallam can count.' },
-  jelly: { name: 'Lanternjelly', region: 'coast',
-    foe: 'Each one carries a drop of stolen light. Burst it, and the light is free.',
-    elder: 'So full of green light it splits in three.',
-    champ: 'So bright the fish keep clear of it. Burst it, and the lagoon shines gold.' },
-  witch: { name: 'Brine Witch', region: 'coast',
-    foe: 'Saltreach\'s wise women. They asked the water to spare the village. It kept them.',
-    elder: 'She hexes the healers first, then mends herself.',
-    champ: 'The eldest of them. She still counts the drowned houses, one by one.' },
-  coral: { name: 'Coral Warden', region: 'coast',
-    foe: 'The Coral Nave\'s stone guards, grown over with coral. They still guard the pews.',
-    elder: 'It raises a reef wall around itself.',
-    champ: 'The altar\'s own guard. Coral has grown over its eyes, but it keeps its post.' }
+// One Bestiary line for each roster monster of the Hollow (zones 1 to 35), by zone number (bible 5, rule 4; the monsters are in
+// docs/design/enemies-c22-hollow-final.md). Each line says what shape the Shadowborn copied, and names only what its sprite shows.
+// A line shows in the Codex Bestiary only once the monster is in the game (ZONE_FOES[z], 59l) and the hero has reached its zone;
+// the rest wait, written and silent (55-story.js storyBestiary). `name` equals the roster name; a check keeps them in step.
+const LORE_FOES = {
+  1: { name: 'Thorn Imp', line: 'Copied from the briars that shut the village in. Thorn blades grow from both arms.' },
+  2: { name: 'Gloomjaw', line: 'Copied from a night flower, all petals and throat. Its jaws close on any spark.' },
+  3: { name: 'Briarbound Ravager', line: 'A soldier\'s shape copied from memory, in bark armour. One arm is a cleaver.' },
+  4: { name: 'Thornwing', line: 'Copied from a hedge thorn, with two crescent wings. It dives at the quick and the loud.' },
+  5: { name: 'Nightseed Sorcerer', line: 'A small masked caster. A seed shape floats between its root claws. It was never a plant.' },
+  6: { name: 'Riftwing', line: 'Crescent wings copied from the cave bats, set round an empty chest. It has no eyes.' },
+  7: { name: 'Maw Cantor', line: 'A mouth in its chest and three bright teeth. It copied the shape of a singer.' },
+  8: { name: 'Cave Devourer', line: 'Six legs copied from cave crawlers. A second jaw opens in its chest.' },
+  9: { name: 'Glassfang Fiend', line: 'Copied from cave crystal: blades like glass on its arms, four tusks round an empty face.' },
+  10: { name: 'Echoblade', line: 'Copied from an echo in the caves. Its elbow spurs hum before its shadow blades move.' },
+  11: { name: 'Ossuary Knight', line: 'A knight\'s shape copied from the old battle. Its lance folds along its spine.' },
+  12: { name: 'Pall Reaper', line: 'Copied from a grave shroud and a scythe. It walks on its two scythe arms.' },
+  13: { name: 'Gravetyrant', line: 'Copied from a battering ram, with a ram\'s skull grown into its shoulder.' },
+  14: { name: 'Boneweft Seer', line: 'Copied from the masks mourners wear. Horn needles ring its head like a halo.' },
+  15: { name: 'Skullmaw', line: 'Six empty faces copied from the old battle crown one snapping jaw.' },
+  16: { name: 'Cryptmaw', line: 'Copied from a barrow door and its hooks. Shield plates overlap round a sideways mouth.' },
+  17: { name: 'Shroudweaver', line: 'Copied from a barrow web. Two arms weave dark threads while four legs stab.' },
+  18: { name: 'Chitin Lancer', line: 'Copied from barrow beetle shells, whole from the dark. One arm is a spear.' },
+  19: { name: 'Gravespine', line: 'A curled shape copied from a buried spine. A chisel sting arches over its head.' },
+  20: { name: 'Sepulchral Acolyte', line: 'A headless shape copied from mourners at a barrow. Its one eye sits in its throat.' },
+  21: { name: 'Mycelial Oracle', line: 'Copied from Morwen\'s garden: gill crowns on a stem, and a face of teeth.' },
+  22: { name: 'Rot Herald', line: 'Copied from a stag and a rotting log. Spore chambers glow in its chest.' },
+  23: { name: 'Sporefiend', line: 'Three legs and a glowing sail between two horns, copied from the garden\'s big caps.' },
+  24: { name: 'Gillblade Dancer', line: 'Copied from mushroom gills. Its four arms open like fans of blades.' },
+  25: { name: 'Hollow Bloom', line: 'A black flower copied from the garden\'s blooms. A lance stands in its mouth.' },
+  26: { name: 'Riftforged Colossus', line: 'Copied from the quarry\'s own stone, plated round a chained black star.' },
+  27: { name: 'Seamstalker', line: 'Copied from a crack in the rock. It looks like one only when it turns sideways.' },
+  28: { name: 'Shardfiend', line: 'Copied from the seam\'s crystal. Three jaws turn round one dark eye.' },
+  29: { name: 'Ironjaw Sentinel', line: 'A gate guard\'s shape in metal skin. Its jaw folds up into a shield.' },
+  30: { name: 'Obsidian Basilisk', line: 'Copied from riftglass and old sinew. It looks out of one sideways lens.' },
+  31: { name: 'Lantern Eater', line: 'Copied from a keeper who followed a green light. A stolen light sits in its belly.' },
+  32: { name: 'Mire Seraph', line: 'Six wings like black reeds, copied from the marsh. A spear runs through both arms.' },
+  33: { name: 'Veil Stalker', line: 'Copied from the fog. Where its face should be hangs a veil of dark flesh.' },
+  34: { name: 'Blackreed Haruspex', line: 'Copied from the marsh reeds. Its ribs make a bow, and it plucks shadow strings.' },
+  35: { name: 'Fen Abomination', line: 'A headless brute copied from the drowned. A hollow lantern hangs in its chest.' }
 };
 
 const RAID_LORE = {
@@ -7633,11 +7614,14 @@ const RAID_LORE = {
 // Exposed names:
 //   OMEN_LINES[omenId] -> one line for each of the 35 OMENS (55-almanac.js), by id.
 //   DARE_LINES[omenId] -> one line for each Omen that has a Dare (7), by the Omen's id.
-//   omenLine(id, dare) -> the line to show, or '' (also reads COAST_OMEN_TEXT[id].say for the
+//   OMEN_LATE[omenId] -> { zone, hero, line }: a line that names someone met later; it shows once the best zone reached is `zone`
+//                         and met(hero) is true (the caller says whether the player has met that hero).
+//   omenLine(id, dare, maxZone, met) -> the line to show, or '' (also reads COAST_OMEN_TEXT[id].say for the
 //                         coast Omens, so one reader covers both).
 // Lines are LORE_LIMITS.omen characters or less (lore.md 1: "Omen line under 60 characters").
 // Omens are signs in the sky and the land as the world wakes up: small, warm, a little odd.
-// They never run ahead of the mystery ladder (8.5) and never name the Voice.
+// They never run ahead of the mystery ladder (8.5), never name the Voice and never name a person or place the player has not met
+// (story-systems-hollow; OMEN_LATE holds the lines that wait).
 
 LORE_LIMITS.omen = 59;
 
@@ -7652,16 +7636,16 @@ const OMEN_LINES = {
   apprentice: 'The young ones want to learn everything today.',
   // fight
   goldRain: 'Coins in the mud. The road gives a little back.',
-  wraithTide: 'Marsh mist rolls in thick. The wraiths rise with it.',
+  wraithTide: 'The mist rolls in thick. Things rise with it.',
   huntersMoon: 'A bright moon. Good light for tracking.',
   championsDay: 'The big ones are out today. Walk carefully.',
-  bloodMoon: 'A red moon. The elders feel it.',
-  luckyStar: 'One star is winking. Oriel says it means you.',
+  bloodMoon: 'A red moon. The big ones feel it.',
+  luckyStar: 'One star is winking. It might mean you.',
   keenWinds: 'A sharp wind off the hills. Blades feel lighter.',
   scholarSky: 'Clear skies. Every lesson sticks today.',
   bestiaryDay: 'A good day to watch the road and take notes.',
   masteryDay: 'Walk the same road twice. You\'ll know it better.',
-  bossHunt: 'The crowned ones are restless today.',
+  bossHunt: 'The strongest ones are restless today.',
   // craft
   hotForge: 'The forge runs hot today. Mind your sleeves.',
   steadyHands: 'Steady hands and a quiet anvil.',
@@ -7679,7 +7663,7 @@ const OMEN_LINES = {
   // rest
   longNight: 'A long night. Everyone sleeps close to the fire.',
   hearthDay: 'Somebody baked. The whole camp smells of bread.',
-  wyrmStirs: 'The sky over the Emberwaste burns brighter tonight.'
+  wyrmStirs: 'Far off, the sky burns brighter tonight.'
 };
 
 OMEN_LINES.huntersFeast = 'A big pot on the fire. Tonight you eat well and hit hard.';   // W1-C: the solo Omen that replaces Company Feast
@@ -7687,14 +7671,18 @@ OMEN_LINES.huntersFeast = 'A big pot on the fire. Tonight you eat well and hit h
 const DARE_LINES = {
   goldRain: 'Gold in every pack, and every pack fights back.',
   championsDay: 'Hunt the biggest thing on the road. Bring it home.',
-  bloodMoon: 'Red sky at night. The crowned ones stand taller.',
+  bloodMoon: 'Red sky at night. The strong ones stand taller.',
   keenWinds: 'All or nothing. Make every cut count.',
   scholarSky: 'Hard lessons stick the longest.',
-  bossHunt: 'No time to think. Go for the crown first.',
+  bossHunt: 'No time to think. Go for the strongest first.',
   deepTide: 'The water pulls. Go deep, and come back fast.'
 };
 
-const omenLine = (id, dare) => (dare && DARE_LINES[id]) || OMEN_LINES[id]
+// Lines that name a person or place the player meets later. Each waits for the zone given (the best zone reached) and then replaces
+// the Omen's plain line. Oriel is met in Chapter 4, so her lines come after it (bible 7, 12).
+const OMEN_LATE = { luckyStar: { zone: 141, hero: 'oriel', line: 'One star is winking. Oriel says it means you.' } };
+
+const omenLine = (id, dare, maxZone, met) => (dare && DARE_LINES[id]) || (OMEN_LATE[id] && maxZone >= OMEN_LATE[id].zone && typeof met === 'function' && met(OMEN_LATE[id].hero) && OMEN_LATE[id].line) || OMEN_LINES[id]
   || (typeof COAST_OMEN_TEXT === 'object' && COAST_OMEN_TEXT[id] && COAST_OMEN_TEXT[id].say) || '';
 
 // ---- src/js/21k-story-hollow.js ----
@@ -8025,6 +8013,23 @@ STORY_BEATS.vesper.fenmother = [
 // Thessaly's sealed note (O): filed in the Journal at camp, the morning after. What it says is Chapter 5's.
 STORY_BEATS.note.thessaly = { title: "Thessaly's Sealed Note", region: 'hollow',
   text: "Thessaly gave you a folded note at dawn. It is sealed with marsh wax and her thumbprint. She would not say what is in it. She only said: 'Open it when you see real sky.'" };
+
+// ---- src/js/21ka-story-hollow-items.js ----
+// 21ka-story-hollow-items: one flavour line for each Hollow unique, naming the Champion and the place it came from (bible 7,
+// "Uniques"; story-systems-hollow). Core, data only; loads in Node too, after 21k-story-hollow.js, whose STORY_BEATS it fills.
+// An entry is { area, line }: area is the Hollow area (0 to 6, the unique's Champion's area). storyItemLine (55-story.js) returns
+// the line only once that area's Champion is in the game, because the line names it. Each line is under 70 characters (the story check's limit for an item line).
+// Shown on the Codex Uniques tile and the item card, under the unique's effect.
+
+Object.assign(STORY_BEATS.item, {
+  sproutblade: { area: 0, line: 'From the Briar Regent, in Mossy Hollow. It still puts out shoots.' },
+  echocowl: { area: 1, line: 'From the Hollow Cantor, in the Batwing Caves. It hums the song.' },
+  rattlecharm: { area: 2, line: 'From the Ossuary Marshal\'s lance, in the Bonefield. It rattles.' },
+  carapacepick: { area: 3, line: 'From the Sepulchre Engine, in the Beetle Barrows. The door held.' },
+  sporeheart: { area: 4, line: 'From the Veiled Oracle, in the Fungal Deep. It glows like breath.' },
+  golemfist: { area: 5, line: 'From the Chained Star, in the Quarry Ruins. Grenna won\'t touch it.' },
+  wispaxe: { area: 6, line: 'From the Drowned Halo, in the Wraithmarsh. Cold light on the edge.' }
+});
 
 // ---- src/js/21o-data-trade.js ----
 // 21o-data-trade: C4, the first gatherer trade route. Data only.
@@ -13030,11 +13035,11 @@ const PROFILE_BONUS = 0.05;
 // What to watch for, from each foe's real behaviour (59b-enemies)
 const FOE_TELL = {
   slime: 'Plain blows. Its heavy hit comes after a red "!".',
-  bat: 'Dives the most hurt hero for a few seconds, every 10 s.',
+  bat: 'Dives at you for a few seconds, every 10 s.',
   bones: 'Shoots from range through armour. Gets back up once at 20% HP, unless magic or a burn finishes it.',
   beetle: 'Slow, but each hit lands at nearly double strength.',
-  spore: 'Every 6 s a spore cloud hits everyone and poisons.',
-  golem: 'Armoured. Hits very hard and slowly; every third hit slams the front.',
+  spore: 'Every 6 s a spore cloud hits you and poisons.',
+  golem: 'Armoured. Hits very hard and slowly; every third hit slams down.',
   wraith: 'Every 5 s it channels a heal. A stun stops it.'
 };
 
@@ -14618,13 +14623,13 @@ let storeLevel, storeCap, storeCapAt, stashRoom, stashFull, stashOver, stashFits
 //                                          starter's (S.story.starter), else the shared `_` line, else ''
 //   storyHearthLine() -> string            the camp voice: the newest Champion or Elder line the save has earned
 //   storyVerse(elderId) -> [lines] | null  Vesper's verse, once that Elder is down
-//   storyItemLine(uniqueKey) -> string
+//   storyItemLine(uniqueKey) -> string     a Hollow unique's flavour line; '' until its area's Champion is in the game
+//   storyRanks() -> [{ id, who, line }]    the ranks the player has met, in chain order (the Journal's "Who answers to whom" page)
+//   storyVerseLatest() -> { id, lines } | null   the newest Elder's verse Vesper may sing in the Tavern
 //   storyEncounter(kind, id, on = true)    an encounter card says its Champion or Elder is in the game (kind 'champ' | 'elder');
 //                                          its spawn listener also sets mob.encounter = { kind, id }
-//   storyBestiary(typeKey) -> [lines] the Codex tile shows (57c-codex): for each zone whose ZONE_FOES monster fills that type's slot,
-//                                          in zone order, the zone line once the player has fought there (S.mastery.zones[z] > 0),
-//                                          then "Title: line" for the Captain once it is in the game and beaten (maxZone > z).
-//                                          The old per-type lines (LORE_BESTIARY, 21h) are retired and never shown.
+//   storyFoes() -> [{ zone, name, line, type }] the Hollow monsters in the game whose zone the hero has reached (21h LORE_FOES); the
+//                                          Codex Bestiary lists each as its own entry (57c-codex)
 //   storySync() runs on each tick (cheap when nothing moved).
 // Events emitted: storyScene { id, ch, kind: 'caption' | 'card', title, head, lines, cards, zone, region, hold, page },
 //   storyEnd { id, how }, storyChoice { id, option }, storyRead { id }, storyFiled { kind, id }.
@@ -14647,7 +14652,7 @@ let storeLevel, storeCap, storeCapAt, stashRoom, stashFull, stashOver, stashFits
 const STORY_ON = true;   // dev switch (bible 10.4): false plays no story at all; the data files can also be deleted
 
 let storyOn, storyHeld, storyInGap, storyChoiceDef, storyChosen, storyClaim, storyClose, storyChoose, storyList, storyEntry, storyRead, storyUnread, storyLate, storyJournalOpened,
-  storyRoadLog, storyFile, storyHeroLine, storyHearthLine, storyVerse, storyItemLine, storyEncounter, storyBestiary, storySync;
+  storyRoadLog, storyFile, storyHeroLine, storyHearthLine, storyVerse, storyVerseLatest, storyItemLine, storyRanks, storyEncounter, storyFoes, storySync;
 const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_ENC.champ.<id> = true (storyEncounter)
 {
   registerState('story', { v: 1, seen: {}, read: {}, init: 0, off: 0, starter: '', litFor: {}, coldhearth: '', ends: {}, journalOpens: 0 });
@@ -14668,7 +14673,15 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
   storyOn = () => STORY_ON && !ST().off && typeof STORY_BEATS === 'object';
   storyEncounter = (kind, id, on) => { if (STORY_ENC[kind]) STORY_ENC[kind][id] = on !== false; };
   storyHeroLine = id => { const h = D('hero')[id]; return h ? h[storyHero()] || h._ || '' : ''; };
-  storyItemLine = key => D('item')[key] || '';
+  // An item entry is a line, or { area, line }: a line with an area waits until an encounter card has put a Champion of that area in
+  // the game (the line names it, and the player must have met it).
+  storyItemLine = key => {
+    const it = D('item')[key];
+    if (!it) return '';
+    if (typeof it === 'string') return it;
+    const champ = D('champ');
+    return Object.keys(champ).some(id => zoneAreaIdx(champ[id].zone) === it.area && present('champ', id)) ? it.line : '';
+  };
   storyChoiceDef = id => { const c = D('choice')[id]; return c && c.options ? { prompt: c.prompt, options: c.options.map(o => ({ id: o.id, label: o.label, line: o.line || '' })), def: c.def } : null; };
 
   // ---- lines and cards ----
@@ -14719,6 +14732,16 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
   const choiceScene = id => { const c = D('choice')[id]; return c ? mk('ch:' + id, 'K', { title: c.prompt, cards: [{ choice: id, lines: [] }], zone: c.zone || 0, region: c.zone ? regionIdOf(c.zone) : '' }) : null; };
   const caption = (ids, head, lines, zone) => mk(ids.join(' '), ids[0][0].toUpperCase(), { kind: 'caption', head, lines, zone, hold: 3000, region: regionIdOf(zone) });
 
+  // ---- who answers to whom (bible 5): a Journal page that gains a row the first time each rank is met ----
+  const RANKS = [
+    { id: 'voice', who: 'The Voice', line: 'The dark that was here first. Every Elder answers to it.', met: () => Object.keys(ST().seen).some(k => k.startsWith('v:')) },
+    { id: 'elder', who: 'Elders of Darkness', line: 'The dark set over a whole region. Its Champions answer to it.', met: () => Object.keys(ST().seen).some(k => /^e:.+:pre$/.test(k)) },
+    { id: 'champ', who: 'Champions of Darkness', line: 'Dark-born. Each rules one area. Its Captains and Shadowborn answer to it.', met: () => Object.keys(ST().seen).some(k => /^p:.+:pre$/.test(k)) },
+    { id: 'captain', who: 'Shadowborn Captains', line: 'The strongest Shadowborn of a zone. Each holds one seam open.', met: () => Object.keys(ST().seen).some(k => k.startsWith('c:')) },
+    { id: 'shadowborn', who: 'Shadowborn', line: 'What climbs out of the ground. Each one copies a shape it found.', met: () => Object.values((S.mastery && S.mastery.zones) || {}).some(n => n > 0) }
+  ];
+  storyRanks = () => RANKS.filter(r => r.met()).map(r => ({ id: r.id, who: r.who, line: r.line }));
+
   // ---- the journal: every entry the data can make, in story order ----
   // key: the seen key that files it. cards() builds what a re-read shows (a Champion or Elder entry grows with its post scene).
   const readable = sc => (sc ? sc.cards.filter(c => !c.choice || !storyChosen(c.choice)) : []);   // a re-read shows the words; a choice only while it is still open
@@ -14734,6 +14757,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
       if (e.page) add('j:' + id, 'page', 'j:' + id, e.zone, e.page.title, () => [{ lines: [e.page.text] }]); }
     for (const id in D('voice')) add('v:' + id, 'voice', 'v:' + id, D('voice')[id].zone, D('voice')[id].title || 'A voice', () => cardsOf(D('voice')[id].lines));
     for (const id in D('npc')) if (/^area:/.test(D('npc')[id].at) && npcCards(id).length) add('n:' + id, 'npc', 'n:' + id, npcZone(D('npc')[id].at), D('npc')[id].who || id, () => npcCards(id));   // the others read inside their Champion's or Elder's entry
+    add('k:ranks', 'ranks', 'k:ranks', 0, 'Who answers to whom', () => storyRanks().map(r => ({ who: r.who, lines: [r.line] })));
     for (const [slot, pre] of [['letter', 'l'], ['note', 'o']]) for (const id in D(slot)) { const x = D(slot)[id];
       add(`${pre}:${id}`, slot, `${pre}:${id}`, x.zone || 0, x.title, () => [{ lines: [x.text] }]); }
     return out.sort((a, b) => (a.zone || 0) - (b.zone || 0));
@@ -14770,16 +14794,19 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
     return best ? best.hearth : '';
   };
   storyVerse = id => (has(`e:${id}:post`) && D('vesper')[id]) || null;
+  storyVerseLatest = () => {
+    let best = null;
+    for (const id in D('vesper')) { const e = D('elder')[id], v = storyVerse(id); if (v && v.length && (!best || ((e && e.zone) || 0) > best.zone)) best = { id, lines: v, zone: (e && e.zone) || 0 }; }
+    return best ? { id: best.id, lines: best.lines.slice() } : null;
+  };
 
-  // the Codex tile of a type: what the roster's monsters of that slot copied, for those in the game (bible 11.3)
-  storyBestiary = key => {
-    const out = [], Z = D('zone'), C = D('captain');
-    if (typeof ZONE_FOES !== 'object' || typeof TYPES === 'undefined') return out;
-    const fought = (S.mastery && S.mastery.zones) || {};
-    for (const z of Object.keys(ZONE_FOES).map(Number).sort((a, b) => a - b)) {
-      const t = TYPES[zoneType(z)]; if (!t || t.key !== key) continue;
-      if (Z[z] && fought[z] > 0) out.push(Z[z]);
-      if (C[z] && captainIn(z) && S.maxZone > z) out.push(`${C[z].title}: ${C[z].line}`);
+  // The Hollow monsters the hero has reached that are in the game, each with its Bestiary line (21h LORE_FOES): the Codex lists each as its own entry.
+  storyFoes = () => {
+    const out = [], mz = S.maxZone || 1, last = REGIONS[0].z1;   // the Hollow's zones: 1 to 35
+    if (typeof LORE_FOES !== 'object' || typeof zoneType !== 'function') return out;
+    for (let z = 1; z <= last && z <= mz; z++) {
+      const f = LORE_FOES[z];
+      if (f && foeIn(z)) out.push({ zone: z, name: f.name, line: f.line, type: TYPES[zoneType(z)].key });
     }
     return out;
   };
@@ -14857,6 +14884,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
     const mz = S.maxZone || 1;
     if (!storyOn()) { queue.length = 0; if (cur && !claimed) storyClose(cur.id, 'skipped'); return; }   // off: nothing plays and nothing is filed or defaulted; the catch-up runs when it is turned back on
     if (mz !== swept) { swept = mz; sweep(mz); }
+    if (!has('k:ranks') && storyRanks().length) mark('k:ranks');
     if (!live()) { last = ''; return; }
     const z = S.zone || 1, gap = inGap();
     if (gap && spawned && !early) { const sp = spawned; spawned = null; if (sp.zone === z) onSpawn(sp.mob, z); }
@@ -16346,9 +16374,10 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
       else if (!champ) hint = x.exact ? `Beat a champion ${t.name}. Champions show up from zone 20.` : 'A stronger one is out there.';
       return { key: t.key, n: t.name, got: tier + elder + champ, max: 6, pts: tier * 4 + elder * 6 + champ * 4, ptsMax: 26, hint,
         sub: `Tier ${tier} of 4${elder ? ' · Elder' : ''}${champ ? ' · Champion' : ''}`, kills, mob: t.key,
-        // the story lines (55-story storyBestiary) of the zone monsters in this slot: the zone line once fought, the Captain line once beaten (the 2nd argument is ignored)
-        lore: typeof storyBestiary === 'function' ? storyBestiary(t.key, { foe: tier >= 1, elder, champ, listener: i === 6 && S.maxZone > REGION_ZONES }) : [] };
-    })
+        lore: [] };
+    }).concat(typeof storyFoes === 'function' ? storyFoes().map(f => ({ key: 'f' + f.zone, n: f.name, got: 1, max: 1, pts: 0, ptsMax: 0, grp: 'Hollow monsters', mob: f.type,
+      // story-systems-hollow: each roster monster in the game is its own entry, with the shape it copied (21h LORE_FOES)
+      lore: [f.line], sub: `Zone ${f.zone}`, hint: '' })) : [])
   });
   // ---------------- 2. Zones: 35 zones x 5 mastery stars ----------------
   page('zones', {
@@ -16369,9 +16398,9 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
   page('uniques', {
     n: 'Uniques', bless: 'hunt', seal: { key: 'uniqueChance', v: 0.03, txt: 'Uniques drop 3% more often' }, title: 'the Curator', pic: 'item',
     tiles: x => Object.keys(UNIQ).map(k => {
-      const u = UNIQ[k], got = S.found[k] ? 1 : 0;
+      const u = UNIQ[k], got = S.found[k] ? 1 : 0, fl = got && typeof storyItemLine === 'function' ? storyItemLine(k) : '';   // story-systems-hollow: the Champion it came from
       return { key: k, n: u.name, got, max: 1, pts: got * 10, ptsMax: 10, item: { slot: u.slot, t: S.found[k] || 1, u: k },
-        sub: got ? u.txt : '', hint: got ? '' : x.exact ? u.src + '.' : (RAID_UNIQ.includes(k) ? 'The world raid guards it.' : 'A boss guards it.') };
+        sub: got ? u.txt + (fl ? ' ' + fl : '') : '', hint: got ? '' : x.exact ? u.src + '.' : (RAID_UNIQ.includes(k) ? 'The world raid guards it.' : 'A boss guards it.') };
     })
   });
   // ---------------- 4. Armoury: 13 affix stats x 5 tiers seen; 7 Masterwork lines ----------------
@@ -16889,13 +16918,13 @@ const DEEP_SHOP = {};
 }
 // The Deepwell's own story, bought a page at a time (100 Marks each, in order).
 const DEEP_PAGES = [
-  ['The Rope', 'The first rope went down forty fathoms and came back dry. The second went down a hundred and came back warm.'],
+  ['The Rope', 'The first rope went down forty fathoms and came back dry. The second went down a hundred and came back warm. The stair goes further than any rope has measured.'],
   ['The Diggers', "Hollow's Rest was a mining camp before it was a village. The miners dug for silver and found a stair instead."],
   ['The Stair', 'The stair was cut by hands smaller than ours. Every step is worn in the middle, as if something climbed it for a thousand years.'],
   ['The First Lantern', 'The miners carried oil lamps. Below the ninth landing the flames turned blue, and the dark stopped moving away from them.'],
   ['The Quiet Landings', 'Every sixth landing is still. No foe comes there. Someone left benches, and a jar of oil, and a name scratched in the stone: Maud.'],
   ['Maud', 'Maud Tallow kept the camp lamps. When the miners stopped coming back up, she went down after them with the brightest lantern she had.'],
-  ['The Elders', 'The Deep Elders are not beasts that wandered in. They are what the dark makes of things that stay below too long.'],
+  ['The Elders', 'The Deep Elders did not wander in. The dark has no shape of its own, so below the ninth landing it copied what it found: worn steps, bench legs, a miner\'s pick. None of it was ever alive.'],
   ['What Glows', 'The light at the bottom is not fire. It is older than fire. It is what the dark is afraid of, and it is waiting.'],
   ["Maud's Lantern", "Deep down, a lantern hangs from a hook where no hook should be. It still burns. Its oil never runs out. The name on the handle is Maud's."],
   ['Why It Glows', 'Maud never came back up. She did not want to. She stayed to keep the light lit, so that the dark stays down there, and we stay up here.']
@@ -18043,7 +18072,8 @@ function turnStarsMarkOut(m, io) {
 //         handsEmpty(id) -> units thrown away (the UI asks first: "Throw away 120 Oak Log?")
 //         handsStoryHeard(id) -> level of the story told | 0 (N2, when the player hears it)
 //         handsTalk(id) -> saved ordinary talk counter; never consumes an earned story
-//         handsTalkInfo(id) -> { id, name, rar, jobName, lv, line, status, traits, jobs, suggest } | null
+//         handsTalkInfo(id) -> { id, name, rar, jobName, lv, line, about, status, traits, jobs, suggest } | null
+//         handsAbout(key) -> the line under a named Hand (Fennel's changes once Elowen is met); handsLitFor(app) -> a random applicant's "Lit for ..." line
 //         handsCatchUp(now, away) -> [returns]   (tick and away phase; tools)
 //         handsRollApp() -> a new applicant (not placed on the board; pity counts it). Tools only (check.mjs pity).
 //         handsExclude(fn(key) -> mult) -> remove()   a transient speed bonus to leave out of the rate
@@ -18062,7 +18092,8 @@ function turnStarsMarkOut(m, io) {
 //     talk, st (stories heard), hired (ms), hrs (hours worked), got (units delivered), back (ms home) }
 //   job adds fee, secs, kp/lp/physic (snapshot finds), queue:[{fee,seed}], q/qFee (remaining), linked.
 //   start in the future is a paid rest; linked=false starts the overlap window during catch-up.
-//   routes: { nan: true } preserves route milestones; other primary probes register without new save fields.
+//   routes: { nan: true } preserves route milestones; other primary probes register without new save fields. routes.hollowDawn: ms of the
+//     morning Ada and Pell arrive (the next 06:00 after the Hollow's Elder fell; HANDS_ROUTES elder, story-systems-hollow).
 //   job = { kind, t, start, end, rate, seed, bo: [[pct, from, to, tag]] } (bo: Friendly and Felling Song
 //     windows, fixed when a partner is sent), or null.
 //   board.apps[i] = { id, n, r, sk, tr, cl, key, at, free }; board.next: ms of the next arrival (0 = not open yet).
@@ -18073,12 +18104,13 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
   handsHeroRate, handsTraits, handsName, handsRarName, handsSkillName, handsNodeName, handsLevelNeed, handsStoryDue,
   handsCampTrait, handsMealMult, handsMealBonus, campClock, handsStats, handsHire, handsTurnAway, handsLetGo,
   handsSend, handsSendAgain, handsEmpty, handsStoryHeard, handsTalk, handsTalkInfo, handsCatchUp, handsExclude, handsRollApp,
-  handsTents, handsFee, handsUnpaid, handsRandomApps, handsLegendSpots, handsRecall, handsQueueMax, registerHandsRoute, handsSendAgainPreview;
+  handsTents, handsFee, handsUnpaid, handsRandomApps, handsLegendSpots, handsRecall, handsQueueMax, registerHandsRoute, handsSendAgainPreview,
+  handsAbout, handsLitFor;
 
 {
   const T = HANDS_TUNE;
   registerState('hands', { v: 1, seq: 0, list: [], board: { apps: [], next: 0 }, pity: [0, 0, 0], tam: 0, log: [],
-    hired: 0, hrs: 0, got: 0, met: {}, heard: 0, open: 0, rs: 0, routes: {} });
+    hired: 0, hrs: 0, got: 0, met: {}, heard: 0, open: 0, rs: 0, routes: { hollowDawn: 0 } });
   const H = () => S.hands;
   const now = () => Date.now();
   const HOUR = 3600e3;
@@ -18303,8 +18335,18 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
   handsRandomApps = () => randApps();
   handsLegendSpots = () => HANDS_LEGENDS.map(x => {
     const h = H().list.find(o => o.key === x.key), a = H().board.apps.find(o => o.key === x.key), route = HANDS_ROUTES[x.key] || {};
-    return { key: x.key, n: x.n, sk: x.sk, about: x.about, hint: route.hint || '', state: h ? 'hired' : a ? 'board' : route.live === false ? 'later' : 'away', app: a || null };
+    return { key: x.key, n: x.n, sk: x.sk, about: handsAbout(x.key), hint: route.hint || '', state: h ? 'hired' : a ? 'board' : route.live === false ? 'later' : 'away', app: a || null };
   });
+  // The line under a named Hand: Sister Fennel names Elowen's chapel only once Elowen is met (the Hollow's Elder is down).
+  const elowenMet = () => S.maxZone > REGIONS[0].z1;
+  handsAbout = key => { const l = LEG[key] || (key === HANDS_TAM.key ? HANDS_TAM : null); return l ? (l.aboutAfter && elowenMet() ? l.aboutAfter : l.about) : ''; };
+  // Every random applicant is lit for someone: one line, picked by id so the Hand keeps it from the board to the camp (bible 6.3).
+  handsLitFor = a => {
+    if (!a) return '';
+    const k = String(a.id || a.n || ''); let h = 0;
+    for (let i = 0; i < k.length; i++) h = (h * 31 + k.charCodeAt(i)) >>> 0;
+    return HANDS_LIT[h % HANDS_LIT.length];
+  };
   const usedNames = () => new Set(H().list.map(x => x.n).concat(H().board.apps.map(x => x.n)));
   const usedKeys = () => new Set(H().list.map(x => x.key).concat(H().board.apps.map(x => x.key)).filter(Boolean));
   function rollRarity() {
@@ -18609,7 +18651,7 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
     const suggest = suggested && jobs.some(o => o.kind === suggested.kind && o.t === suggested.t) ? suggested
       : jobs.length ? { kind: jobs[0].kind, t: jobs[0].t, why: 'A node for your profession.' } : null;
     return { id: x.id, name: x.n, rar: handsRarName(x), jobName: handsSkillName(x), lv: x.lv,
-      line, about: named && named.about || '', status, traits: handsTraits(x), jobs, suggest };
+      line, about: named ? handsAbout(x.key) : handsLitFor(x), status, traits: handsTraits(x), jobs, suggest };
   };
   handsStats = () => {
     const h = H(), byRar = {};
@@ -18629,8 +18671,8 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
       const tam = newHand({ id: 'tam', n: HANDS_TAM.n, r: HANDS_TAM.r, sk: HANDS_TAM.sk, tr: HANDS_TAM.tr, cl: null, key: HANDS_TAM.key }, t);
       h.list.push(tam); h.hired = (h.hired | 0) + 1;
       emit('handsHire', { id: tam.id, r: tam.r, free: true });
-      toast(quiet ? 'Tam, Hesketh\'s nephew, has a tent at camp. He gathers for the heroes. Hire more gatherers at the Tavern board.'
-        : 'Tam, Hesketh\'s nephew, comes to the fire. "Uncle said the Lanternbearer\'s lamp catches." He takes a tent and gathers for the heroes.', 'good', icon, quiet ? 'normal' : 'high');
+      toast(quiet ? 'Tam, Hesketh\'s nephew, has a tent at camp. He gathers for the camp. Hire more gatherers at the Tavern board.'
+        : 'Tam, Hesketh\'s nephew, comes up out of the cellars to the fire. "Uncle said your lamp catches." He takes a tent and gathers for the camp.', 'good', icon, quiet ? 'normal' : 'high');
     }
     if (!h.board.next) { h.board.next = t + period(); if (randApps().length < T.maxWait) addApp(makeApp(t), quiet); }
     emit('handsOpen', { quiet: !!quiet });
@@ -18640,15 +18682,25 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
   function arriveNamed(x, at, quiet) {
     if (usedKeys().has(x.key)) return false;
     H().seq = (H().seq | 0) + 1;
-    addApp({ id: 'h' + H().seq, n: x.n, r: 'legendary', sk: x.sk, tr: (x.tr || ['steady', 'old']).slice(), cl: x.cl || null, key: x.key, at, free: 0 }, quiet);
+    addApp({ id: 'h' + H().seq, n: x.n, r: x.r || 'legendary', sk: x.sk, tr: (x.tr || ['steady', 'old']).slice(), cl: x.cl || null, key: x.key, at, free: 0 }, quiet);
     H().met[x.key] = at; return true;
   }
+  // A route with `elder` (Ada and Pell): the Elder of that region is down (the best zone is past the region's last zone), and then it is the
+  // next morning. The first look after the Elder falls remembers the next 06:00 in routes.hollowDawn; nobody arrives before it.
+  const morningAfter = r => {
+    if (!r || !r.elder) return false;
+    const reg = r.elder === 'hollow' ? REGIONS[0] : null;
+    if (!reg || !(S.maxZone > reg.z1)) return false;
+    const R = H().routes, t = now();
+    if (!(R.hollowDawn > 0)) { const d = new Date(t); d.setHours(6, 0, 0, 0); if (d.getTime() <= t) d.setDate(d.getDate() + 1); R.hollowDawn = d.getTime(); }
+    return t >= R.hollowDawn;
+  };
   function later(quiet = false) {
     for (const x of HANDS_LEGENDS) {
       const r = HANDS_ROUTES[x.key];
       if (!r || r.live === false || usedKeys().has(x.key)) continue;
       const primary = H().routes[x.key] || safe(() => routeProbes[x.key] && routeProbes[x.key](), false)
-        || (x.key === 'loy' && lvOf('loom') >= 2) || (x.key === 'ashby' && lvOf('kitchen') >= 1);
+        || (x.key === 'loy' && lvOf('loom') >= 2) || (x.key === 'ashby' && lvOf('kitchen') >= 1) || morningAfter(r);
       if (primary || (r.fallback && S.maxZone >= r.fallback) || H().met[x.key]) arriveNamed(x, now(), quiet);
     }
   }
@@ -33143,7 +33195,7 @@ let handsTalkMount, handsTalkOpen, handsTalkUpdate;
   const skIcon = (sk, t = 1) => { try { return matIcon(KIND[sk] || 'wood', t); } catch (e) { return iconURL('coin', '#F2C14E'); } };
   const gold = n => `${fmt(n)} gold`;
   const matTxt = (kind, t) => { try { return matName(kind, t); } catch (e) { return 'goods'; } };
-  const legendAbout = a => { const l = HANDS_LEGENDS.find(x => x.key === a.key); return l ? l.about : ''; };
+  const legendAbout = a => handsAbout(a.key);
 
   let armed = null, armedAt = 0, picking = null, msg = '', msgAt = 0;
   const shiftChoice = Object.create(null), moreOpen = Object.create(null);
@@ -33229,7 +33281,7 @@ let handsTalkMount, handsTalkOpen, handsTalkUpdate;
       act.append(controls);
     }
     act.append(close);
-    talkBox.append(top, traitChips(x), line, status, act);
+    talkBox.append(top, traitChips(x), ...(info.about ? [el('p', 'note hd-line', info.about)] : []), line, status, act);
     if (tradeReason()) talkBox.append(el('p', 'note hd-trade-lock', tradeReason()));
     if (talkPicking && !busy) talkBox.append(jobPicker(x, info.jobs, () => {
       talkPicking = false; talkLine = handsTalkInfo(x.id).line; renderTalk(true);
@@ -33332,7 +33384,7 @@ let handsTalkMount, handsTalkOpen, handsTalkUpdate;
     card.append(head, traitChips(a));
     const pv = handsPreview(Object.assign({ lv: (a.ret && a.ret.lv) || 1 }, a), b.kind, b.t);
     card.append(el('p', 'note hd-line', `A shift at the ${handsNodeName(b.kind, b.t)} brings about ${storeNum(pv.haul)} ${matTxt(b.kind, b.t)} in ${dur(pv.secs)}.`));
-    if (named) card.append(el('p', 'note hd-line', a.ret ? 'They remember you. Hiring them again is free.' : legendAbout(a)));
+    card.append(el('p', 'note hd-line', named ? (a.ret ? 'They remember you. Hiring them again is free.' : legendAbout(a)) : handsLitFor(a)));
     const price = b.cost ? `Hire for ${gold(b.cost)}` : 'Hire for free';
     const k = 'hire:' + a.id, act = el('div', 'hd-act');
     const hire = btn('mini go', isArmed(k) ? `Tap again: ${price}` : price);
@@ -34324,7 +34376,7 @@ var handsTradeOpenPicker;
       setTxt(al.eye, `Today · ${almanac.catName(o.cat)} Omen`);
       setTxt(al.nm, o.n);
       setTxt(al.fx, o.fx + '.');
-      setTxt(al.say, typeof omenLine === 'function' ? omenLine(o.id, on) : '');
+      setTxt(al.say, typeof omenLine === 'function' ? omenLine(o.id, on, S.maxZone, typeof heroUnlocked === 'function' ? heroUnlocked : null) : '');
       al.det.update(force);
 
       const dl = almanac.daysLeft();
@@ -35668,7 +35720,7 @@ var classEvoUI;
     const hd = el('div', 'cx-dh');
     const ic = el('span', 'cx-dic' + (t.got ? '' : ' blank')); ic.append(img(tileImg(t))); hd.append(ic);
     const nm = el('div', 'cx-dn');
-    nm.append(el('b', null, known(p, t) ? t.n : 'Not found yet'), el('span', null, `${lightTxt(t.pts / 2)} of ${lightTxt(t.ptsMax / 2)} Light`));
+    nm.append(el('b', null, known(p, t) ? t.n : 'Not found yet'), el('span', null, t.ptsMax ? `${lightTxt(t.pts / 2)} of ${lightTxt(t.ptsMax / 2)} Light` : ''));
     hd.append(nm, t.max > 1 ? pips(t.got, t.max) : el('span'));
     const x = btn('cx-dx', '×'); x.setAttribute('aria-label', 'Close details');
     x.addEventListener('click', () => { a.foot.textContent = ''; node.classList.remove('sel'); openTile = null; });
@@ -35992,7 +36044,11 @@ let craftUI = null;
       out.push({ g: 'affix', idx: ai, l: all.slice(i, i + def.give.length) }); i += def.give.length;
     });
     if (it.mw != null && craftTrophyLine(it.mw, it.slot, 1)) { out.push({ g: 'mw', l: [all[i]] }); i++; }
-    if (it.u && UNIQ[it.u]) out.push({ g: 'uniq', txt: UNIQ[it.u].txt });
+    if (it.u && UNIQ[it.u]) {
+      out.push({ g: 'uniq', txt: UNIQ[it.u].txt });
+      const fl = typeof storyItemLine === 'function' ? storyItemLine(it.u) : '';   // story-systems-hollow: one line naming the Champion it came from
+      if (fl) out.push({ g: 'uniq', txt: fl, lore: 1 });
+    }
     return out;
   }
   function deltaTxt(k, v) {
@@ -36560,7 +36616,7 @@ let craftUI = null;
     let anyWait = false;
     for (const L of splitLines(it)) {
       const r = el('div', 'cf-line g-' + L.g + (sheet.flash === L.idx && L.g === 'affix' ? ' flash' : ''));
-      if (L.g === 'uniq') { r.append(el('span', 'cf-lt', L.txt)); lines.append(r); continue; }
+      if (L.g === 'uniq') { r.append(el('span', 'cf-lt' + (L.lore ? ' cf-lore' : ''), L.txt)); lines.append(r); continue; }
       const liveNow = lineLive(L.l);
       if (!liveNow) { r.classList.add('wait'); anyWait = true; }
       if (L.g === 'mw') r.append(img(troIcon(it.mw), 'cf-li'));
@@ -40771,7 +40827,7 @@ var storyUI;   // var: 75-codex-ui (earlier in the build) reads it at run time
   const menuOpen = () => !!S.tab;   // a landscape menu covers most of the stage
   const stageBox = () => document.getElementById('stageBox');
   const chapterOf = r => { const i = REGIONS.findIndex(x => x.id === r); return i >= 0 ? `Chapter ${i + 1}: ${REGIONS[i].n.replace(/^./, c => c.toUpperCase())}` : ''; };
-  const KIND = { region: 'Chapter', champion: 'Champion', elder: 'Elder', page: 'Page', voice: 'A voice', npc: 'Meeting', letter: 'Letter', note: 'Note' };
+  const KIND = { region: 'Chapter', champion: 'Champion', elder: 'Elder', page: 'Page', voice: 'A voice', npc: 'Meeting', letter: 'Letter', note: 'Note', ranks: 'Page' };
 
   // check.mjs sets this in its browser contexts so a new game's opening card never sits over a test's first click; scenes are skipped (and filed)
   const TEST_SKIP = (() => { try { return localStorage.getItem('lanternfall.test.nostory') === '1'; } catch (e) { return false; } })();
@@ -41012,6 +41068,21 @@ var storyUI;   // var: 75-codex-ui (earlier in the build) reads it at run time
     },
     update() {}
   });
+
+  // Vesper's verse (bible 7): once an Elder is down, the newest verse she has written, as its own Tavern section (story-systems-hollow)
+  if (typeof registerSection === 'function') {
+    let sec = null, vp = null;
+    registerSection('tav', {
+      id: 'story-verse', title: '',
+      mount(node) { sec = node; vp = el('p', 'note tav-verse'); sec.append(vp); },
+      update() {
+        const vs = typeof storyVerseLatest === 'function' ? storyVerseLatest() : null;
+        if (!sec) return;
+        sec.hidden = !vs;
+        { const t = vs ? 'Vesper sings: ' + vs.lines.join(' ') : ''; if (vp.textContent !== t) vp.textContent = t; }
+      }
+    });
+  }
 
   storyUI = { open: id => openEntry(id), list: codex => openList(!!codex), codexRow };
 }

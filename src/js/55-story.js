@@ -43,13 +43,13 @@
 //                                          starter's (S.story.starter), else the shared `_` line, else ''
 //   storyHearthLine() -> string            the camp voice: the newest Champion or Elder line the save has earned
 //   storyVerse(elderId) -> [lines] | null  Vesper's verse, once that Elder is down
-//   storyItemLine(uniqueKey) -> string
+//   storyItemLine(uniqueKey) -> string     a Hollow unique's flavour line; '' until its area's Champion is in the game
+//   storyRanks() -> [{ id, who, line }]    the ranks the player has met, in chain order (the Journal's "Who answers to whom" page)
+//   storyVerseLatest() -> { id, lines } | null   the newest Elder's verse Vesper may sing in the Tavern
 //   storyEncounter(kind, id, on = true)    an encounter card says its Champion or Elder is in the game (kind 'champ' | 'elder');
 //                                          its spawn listener also sets mob.encounter = { kind, id }
-//   storyBestiary(typeKey) -> [lines] the Codex tile shows (57c-codex): for each zone whose ZONE_FOES monster fills that type's slot,
-//                                          in zone order, the zone line once the player has fought there (S.mastery.zones[z] > 0),
-//                                          then "Title: line" for the Captain once it is in the game and beaten (maxZone > z).
-//                                          The old per-type lines (LORE_BESTIARY, 21h) are retired and never shown.
+//   storyFoes() -> [{ zone, name, line, type }] the Hollow monsters in the game whose zone the hero has reached (21h LORE_FOES); the
+//                                          Codex Bestiary lists each as its own entry (57c-codex)
 //   storySync() runs on each tick (cheap when nothing moved).
 // Events emitted: storyScene { id, ch, kind: 'caption' | 'card', title, head, lines, cards, zone, region, hold, page },
 //   storyEnd { id, how }, storyChoice { id, option }, storyRead { id }, storyFiled { kind, id }.
@@ -72,7 +72,7 @@
 const STORY_ON = true;   // dev switch (bible 10.4): false plays no story at all; the data files can also be deleted
 
 let storyOn, storyHeld, storyInGap, storyChoiceDef, storyChosen, storyClaim, storyClose, storyChoose, storyList, storyEntry, storyRead, storyUnread, storyLate, storyJournalOpened,
-  storyRoadLog, storyFile, storyHeroLine, storyHearthLine, storyVerse, storyItemLine, storyEncounter, storyBestiary, storySync;
+  storyRoadLog, storyFile, storyHeroLine, storyHearthLine, storyVerse, storyVerseLatest, storyItemLine, storyRanks, storyEncounter, storyFoes, storySync;
 const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_ENC.champ.<id> = true (storyEncounter)
 {
   registerState('story', { v: 1, seen: {}, read: {}, init: 0, off: 0, starter: '', litFor: {}, coldhearth: '', ends: {}, journalOpens: 0 });
@@ -93,7 +93,15 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
   storyOn = () => STORY_ON && !ST().off && typeof STORY_BEATS === 'object';
   storyEncounter = (kind, id, on) => { if (STORY_ENC[kind]) STORY_ENC[kind][id] = on !== false; };
   storyHeroLine = id => { const h = D('hero')[id]; return h ? h[storyHero()] || h._ || '' : ''; };
-  storyItemLine = key => D('item')[key] || '';
+  // An item entry is a line, or { area, line }: a line with an area waits until an encounter card has put a Champion of that area in
+  // the game (the line names it, and the player must have met it).
+  storyItemLine = key => {
+    const it = D('item')[key];
+    if (!it) return '';
+    if (typeof it === 'string') return it;
+    const champ = D('champ');
+    return Object.keys(champ).some(id => zoneAreaIdx(champ[id].zone) === it.area && present('champ', id)) ? it.line : '';
+  };
   storyChoiceDef = id => { const c = D('choice')[id]; return c && c.options ? { prompt: c.prompt, options: c.options.map(o => ({ id: o.id, label: o.label, line: o.line || '' })), def: c.def } : null; };
 
   // ---- lines and cards ----
@@ -144,6 +152,16 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
   const choiceScene = id => { const c = D('choice')[id]; return c ? mk('ch:' + id, 'K', { title: c.prompt, cards: [{ choice: id, lines: [] }], zone: c.zone || 0, region: c.zone ? regionIdOf(c.zone) : '' }) : null; };
   const caption = (ids, head, lines, zone) => mk(ids.join(' '), ids[0][0].toUpperCase(), { kind: 'caption', head, lines, zone, hold: 3000, region: regionIdOf(zone) });
 
+  // ---- who answers to whom (bible 5): a Journal page that gains a row the first time each rank is met ----
+  const RANKS = [
+    { id: 'voice', who: 'The Voice', line: 'The dark that was here first. Every Elder answers to it.', met: () => Object.keys(ST().seen).some(k => k.startsWith('v:')) },
+    { id: 'elder', who: 'Elders of Darkness', line: 'The dark set over a whole region. Its Champions answer to it.', met: () => Object.keys(ST().seen).some(k => /^e:.+:pre$/.test(k)) },
+    { id: 'champ', who: 'Champions of Darkness', line: 'Dark-born. Each rules one area. Its Captains and Shadowborn answer to it.', met: () => Object.keys(ST().seen).some(k => /^p:.+:pre$/.test(k)) },
+    { id: 'captain', who: 'Shadowborn Captains', line: 'The strongest Shadowborn of a zone. Each holds one seam open.', met: () => Object.keys(ST().seen).some(k => k.startsWith('c:')) },
+    { id: 'shadowborn', who: 'Shadowborn', line: 'What climbs out of the ground. Each one copies a shape it found.', met: () => Object.values((S.mastery && S.mastery.zones) || {}).some(n => n > 0) }
+  ];
+  storyRanks = () => RANKS.filter(r => r.met()).map(r => ({ id: r.id, who: r.who, line: r.line }));
+
   // ---- the journal: every entry the data can make, in story order ----
   // key: the seen key that files it. cards() builds what a re-read shows (a Champion or Elder entry grows with its post scene).
   const readable = sc => (sc ? sc.cards.filter(c => !c.choice || !storyChosen(c.choice)) : []);   // a re-read shows the words; a choice only while it is still open
@@ -159,6 +177,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
       if (e.page) add('j:' + id, 'page', 'j:' + id, e.zone, e.page.title, () => [{ lines: [e.page.text] }]); }
     for (const id in D('voice')) add('v:' + id, 'voice', 'v:' + id, D('voice')[id].zone, D('voice')[id].title || 'A voice', () => cardsOf(D('voice')[id].lines));
     for (const id in D('npc')) if (/^area:/.test(D('npc')[id].at) && npcCards(id).length) add('n:' + id, 'npc', 'n:' + id, npcZone(D('npc')[id].at), D('npc')[id].who || id, () => npcCards(id));   // the others read inside their Champion's or Elder's entry
+    add('k:ranks', 'ranks', 'k:ranks', 0, 'Who answers to whom', () => storyRanks().map(r => ({ who: r.who, lines: [r.line] })));
     for (const [slot, pre] of [['letter', 'l'], ['note', 'o']]) for (const id in D(slot)) { const x = D(slot)[id];
       add(`${pre}:${id}`, slot, `${pre}:${id}`, x.zone || 0, x.title, () => [{ lines: [x.text] }]); }
     return out.sort((a, b) => (a.zone || 0) - (b.zone || 0));
@@ -195,16 +214,19 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
     return best ? best.hearth : '';
   };
   storyVerse = id => (has(`e:${id}:post`) && D('vesper')[id]) || null;
+  storyVerseLatest = () => {
+    let best = null;
+    for (const id in D('vesper')) { const e = D('elder')[id], v = storyVerse(id); if (v && v.length && (!best || ((e && e.zone) || 0) > best.zone)) best = { id, lines: v, zone: (e && e.zone) || 0 }; }
+    return best ? { id: best.id, lines: best.lines.slice() } : null;
+  };
 
-  // the Codex tile of a type: what the roster's monsters of that slot copied, for those in the game (bible 11.3)
-  storyBestiary = key => {
-    const out = [], Z = D('zone'), C = D('captain');
-    if (typeof ZONE_FOES !== 'object' || typeof TYPES === 'undefined') return out;
-    const fought = (S.mastery && S.mastery.zones) || {};
-    for (const z of Object.keys(ZONE_FOES).map(Number).sort((a, b) => a - b)) {
-      const t = TYPES[zoneType(z)]; if (!t || t.key !== key) continue;
-      if (Z[z] && fought[z] > 0) out.push(Z[z]);
-      if (C[z] && captainIn(z) && S.maxZone > z) out.push(`${C[z].title}: ${C[z].line}`);
+  // The Hollow monsters the hero has reached that are in the game, each with its Bestiary line (21h LORE_FOES): the Codex lists each as its own entry.
+  storyFoes = () => {
+    const out = [], mz = S.maxZone || 1, last = REGIONS[0].z1;   // the Hollow's zones: 1 to 35
+    if (typeof LORE_FOES !== 'object' || typeof zoneType !== 'function') return out;
+    for (let z = 1; z <= last && z <= mz; z++) {
+      const f = LORE_FOES[z];
+      if (f && foeIn(z)) out.push({ zone: z, name: f.name, line: f.line, type: TYPES[zoneType(z)].key });
     }
     return out;
   };
@@ -282,6 +304,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
     const mz = S.maxZone || 1;
     if (!storyOn()) { queue.length = 0; if (cur && !claimed) storyClose(cur.id, 'skipped'); return; }   // off: nothing plays and nothing is filed or defaulted; the catch-up runs when it is turned back on
     if (mz !== swept) { swept = mz; sweep(mz); }
+    if (!has('k:ranks') && storyRanks().length) mark('k:ranks');
     if (!live()) { last = ''; return; }
     const z = S.zone || 1, gap = inGap();
     if (gap && spawned && !early) { const sp = spawned; spawned = null; if (sp.zone === z) onSpawn(sp.mob, z); }

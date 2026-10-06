@@ -112,6 +112,7 @@
 .cf-line.g-mw { border-left-color: var(--gold); color: var(--gold); }
 .cf-line.g-uniq { border-left-color: var(--r-legendary); color: var(--r-legendary); }
 .cf-line.g-uniq .cf-lt { font: 500 14px var(--body); }
+.cf-line.g-uniq .cf-lt.cf-lore { font-style: italic; color: var(--muted); }
 .cf-line.wait .cf-lt { color: var(--muted); }
 .cf-li { width: 18px; height: 18px; image-rendering: pixelated; }
 .cf-tag { margin-left: auto; font: 600 10.5px var(--body); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
