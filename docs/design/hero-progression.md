@@ -70,4 +70,4 @@ personas, Wren, Tobin and Pip.
 
 One lamp level shared by the save (too large a rewrite, removes per-hero builds); shared Training per save (replaced by
 no Training); perks learned by wearing gear, abilities learned from bosses, per-hero camp scenes that unlock skills
-(too many heroes: the roster is 34).
+(too many heroes: the roster is 32 in `DECISIONS.md`, and Cal counted 34 for the full roster on 2026-10-06).
