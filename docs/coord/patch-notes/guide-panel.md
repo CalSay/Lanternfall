@@ -1,0 +1,1 @@
+Tips now come from Old Hesketh, with his face, in a tidy panel that never covers the fight. On a phone it sits above the Act / Skills / Foe bar. Sideways, it sits in the right-hand column. The text no longer squashes into a column, and the Got it button gets its own row.

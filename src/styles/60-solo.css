@@ -130,10 +130,7 @@ body.solo-on .stage .abil, body.solo-on .stage .abil2 { display: none !important
 .sp-clear { min-height: 44px; background: var(--panel-2); color: var(--bone); border: 2px solid #0B0810; font: 600 16px var(--display); cursor: pointer; }
 .sp-clear:disabled { opacity: .5; cursor: default; }
 
-/* the guide's Got it button (75-onboard-ui, a step whose action is reading it) */
-.ob-ok { pointer-events: auto; flex: none; min-height: 36px; padding: 0 12px; background: var(--gold); color: #1A1420; border: 2px solid #0B0810;
-  font: 600 calc(15px * var(--display-k, 1)) var(--display); cursor: pointer; }
-.ob-ok[hidden] { display: none; }
+/* the guide's Got it button: 60-onboard.css */
 
 /* ---- "Choose your hero" (the Camp view) ---- */
 .hs-ov .sp-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 8px; margin-top: 4px; }
@@ -159,10 +156,7 @@ body.solo-on .stage .abil, body.solo-on .stage .abil2 { display: none !important
 .sp-lv { font: 600 14px var(--display); color: var(--gold); }
 .sp-fig { width: 56px; height: 80px; image-rendering: pixelated; }
 
-/* the guide's Got it button (75-onboard-ui, a step whose action is reading it) */
-.ob-ok { pointer-events: auto; flex: none; min-height: 36px; padding: 0 12px; background: var(--gold); color: #1A1420; border: 2px solid #0B0810;
-  font: 600 calc(15px * var(--display-k, 1)) var(--display); cursor: pointer; }
-.ob-ok[hidden] { display: none; }
+/* the guide's Got it button: 60-onboard.css */
 /* party-only UI left in the shell (the Fight tab's Party rows) */
 .solo-off { display: none !important; }
 /* Landscape (UX-L1): the bar sits in the side column, bottom right; see 80-landscape.css. */
