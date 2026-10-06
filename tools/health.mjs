@@ -53,8 +53,8 @@ const DEFAULT_PERSONAS = Object.keys(PERSONAS).filter(p => !PERSONAS[p].longOnly
 const REWARD = new Set(['zoneClear', 'level', 'campBuilt', 'crafted', 'upgraded', 'trophy', 'scrollDrop', 'starFound', 'starLearned',
   'provingPassed', 'handsHire', 'deedTier', 'skillUp', 'unlock']);
 // What counts as the game opening something new (the long run's endgame clock): a zone, an unlock, a camp building, a
-// Proving, a hire, a Star learned. Crafts, upgrades, levels, skill levels and trophies (champions drop repeats of a type they already gave) keep coming to the end, so they would hide an empty endgame.
-const NEW_THING = new Set(['zoneClear', 'unlock', 'campBuilt', 'provingPassed', 'handsHire', 'starLearned']);
+// Proving, a hire, a Star found or learned. Crafts, upgrades, levels, skill levels and trophies (champions drop repeats of a type they already gave) keep coming to the end, so they would hide an empty endgame.
+const NEW_THING = new Set(['zoneClear', 'unlock', 'campBuilt', 'provingPassed', 'handsHire', 'starFound', 'starLearned']);
 const STALL_SEC = 600;   // no new zone for 10 active minutes is a stall point
 const sum = o => Object.values(o).reduce((a, b) => a + b, 0);
 const mean = l => l.reduce((a, b) => a + b, 0) / l.length;
@@ -118,7 +118,7 @@ function analyse(persona, hero, d) {
     postZoneShare: act ? r2((act - lastZoneAt) / act) : 0, lastNewThingHour: r2(lastNewAt / 3600), postNewThingShare: act ? r2((act - lastNewAt) / act) : 0,
     stallsOver1h: gaps.filter(g => g.gap >= 3600).length, stallsOver3h: gaps.filter(g => g.gap >= 10800).length,
     stallList: gaps.filter(g => g.gap >= 3600).map(g => ({ zone: g.zone, hours: r2(g.gap / 3600) })),
-    starSet: ((d.stars.set || {})[d.hero] || []).filter(Boolean), starsLit: Array.isArray(d.stars.lit) ? d.stars.lit.length : Object.keys(d.stars.lit || {}).length,
+    starSet: ((d.stars.set || {})[d.hero] || []).filter(Boolean), starsLit: ((d.stars.lit || {})[d.hero] || []).filter(Boolean).length,   // lit is { hero: [..] }; count the run's hero
     gearWorn: Object.fromEntries(Object.entries(d.gear).map(([pos, g]) => [pos, `t${g.t} r${g.r}${g.plus ? ' +' + g.plus : ''}`])),
     zoneByHour: Array.from({ length: Math.floor(hours) }, (_, i) => atHour(i + 1)),
     mechanicsByHour: Array.from({ length: Math.max(1, Math.ceil(hours)) }, (_, i) => unlocks.filter(e => e.a >= i * 3600 && e.a < (i + 1) * 3600).length),
@@ -180,7 +180,7 @@ const METRICS = [
   ['long', 'lastNewZoneHour', 'mean', 'down', 10, 0, 'hour of the last new zone (a fall means the world ran out sooner)'],
   ['long', 'sinceLastZoneHours', 'mean', 'up', 7, 0, 'hours at the end of the run since the last new zone (progress wall)'],
   ['long', 'postZoneShare', 'mean', 'up', 0.2, 0, 'share of the run spent past the last new zone'],
-  ['long', 'postNewThingShare', 'mean', 'up', 0.1, 0, 'share of the run spent past the last unlock, zone, camp building, Proving, hire, or Star (empty endgame)'],
+  ['long', 'postNewThingShare', 'mean', 'up', 0.1, 0, 'share of the run spent past the last unlock, zone, camp building, Proving, hire, or Star found (empty endgame)'],
   ['long', 'stallsOver1h', 'mean', 'up', 3, 0, 'stretches of an hour or more without a new zone'],
   ['long', 'stallsOver3h', 'mean', 'up', 1, 0, 'stretches of three hours or more without a new zone (a new long wall)'],
   ['long', 'longestStallSec', 'mean', 'up', 14400, 0.5, 'longest stretch without a new zone'],

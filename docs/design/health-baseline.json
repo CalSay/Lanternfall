@@ -405,7 +405,7 @@
     }
   },
   "long": {
-    "about": "The 50-hour run (node tools/health.mjs --long). Regenerate with: node tools/health.mjs --long --write-baseline (mean of 3 seed offsets, about 10 min). sd is the spread of the mean over those seeds. node tools/health.mjs --long --compare uses this section.",
+    "about": "The 50-hour run (node tools/health.mjs --long). Regenerate with: node tools/health.mjs --long --write-baseline (mean of 3 seed offsets, about 8 min on 3 free cores). sd is the spread of the mean over those seeds. node tools/health.mjs --long --compare uses this section.",
     "seed": 41,
     "metrics": {
       "long.zoneEnd": {
@@ -491,7 +491,7 @@
         "bad": "up",
         "abs": 0.1,
         "rel": 0,
-        "note": "share of the run spent past the last unlock, zone, camp building, Proving, hire, or Star (empty endgame)",
+        "note": "share of the run spent past the last unlock, zone, camp building, Proving, hire, or Star found (empty endgame)",
         "perHero": {
           "wren": 0.04,
           "tobin": 0.14,
