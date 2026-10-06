@@ -86,6 +86,7 @@
   .app .game > .ctrl { grid-column: 1; grid-row: 1; flex-wrap: nowrap; justify-content: flex-start; gap: 2px; padding: 4px 0 4px var(--gut); }
   .app .game > .nu-slot { grid-column: 2; grid-row: 1; min-width: 0; padding: 4px var(--gut) 4px 8px; align-self: center; }
   .app .game > .gate-rule { grid-column: 1 / -1; grid-row: 2; margin: 0 var(--gut); }
+  .app .game > .dw-row { grid-column: 1 / -1; grid-row: 2; }
   .app .game > .stagebox { grid-column: 1 / -1; grid-row: 3; }
   .app .game > .sbar { grid-column: 1 / -1; grid-row: 4; }
   .app .game .ctrl-switch { display: none; }
@@ -94,7 +95,8 @@
   .top .zstep { display: contents; }
   .top .zstep[hidden] { display: none; }
   .top .zstep .znum { display: none; }   /* the zone pill says the zone */
-  .top .navbtn { width: 24px; height: 40px; }
+  .top .navbtn { width: 28px; height: 44px; isolation: isolate; }
+  .app.deep-run .top .zstep { display: none; }   /* a Deepwell run has floors, not zones to step */
   .top .navbtn::after { inset: 8px 2px; }
   .top.nav-pill .who { gap: 0; }
   .top.nav-pill .act-pill { padding: 0 6px 0 6px; gap: 5px; }
@@ -109,4 +111,5 @@
   .app .game .nu-chip .nu-more { grid-column: 3; grid-row: 1; }
   .app .game .nu-chip .nu-lbl { grid-column: 1 / -1; grid-row: 2; font-size: 12.5px; }
   .app .game .nu-chip .nu-chev { display: none; }
+  @media (max-width: 340px) { .top.nav-pill .act-pill .ap-ic { display: none; } }
 }
