@@ -24406,7 +24406,8 @@ function zoneFoeCycle(Z) {
 // dodges and timed rings from live fights only; the scratch sampler emits nothing), kept with an exponential memory of about
 // 100 hits, blended with a casual player (the sim's: Parry 25%, Dodge 50% of the rest, rings 10% Perfect 40% Good) worth 12
 // hits and 6 rings. A player with no history is judged as casual; one who parries and dodges well is judged as such.
-// The work is done in chunks of 10 fights, at most one every 0.4 s of game time, and cached by what the fight depends on
+// The work is done in chunks of 10 fights, at most one every 0.4 s (of game time, or of real time while the game is paused
+// by a tip or a sheet, so an open Next Up still finishes its estimate), and cached by what the fight depends on
 // (hero, level, combat numbers, gear, Stars, talents, rounded skill), so a tick never hitches.
 //
 // Exposed names:
@@ -24465,9 +24466,9 @@ function bossOddsFoe(z) {
   return f;
 }
 
-let BO = { sig: '', zone: 0, chunk: 0, k: 0, d: 0, at: -1e9, res: null }, BO_DONE = null, BO_CLOCK = 0;
+let BO = { sig: '', zone: 0, chunk: 0, k: 0, d: 0, at: -1e9, atReal: 0, res: null }, BO_DONE = null, BO_CLOCK = 0;
 onTick(dt => { BO_CLOCK += dt > 0 ? dt : 0; });
-function bossOddsReset() { BO = { sig: '', zone: 0, chunk: 0, k: 0, d: 0, at: -1e9, res: null }; BO_DONE = null; }
+function bossOddsReset() { BO = { sig: '', zone: 0, chunk: 0, k: 0, d: 0, at: -1e9, atReal: 0, res: null }; BO_DONE = null; }
 const bossOddsNum = x => (Number.isFinite(x) ? +x.toPrecision(3) : 0);
 const BOSS_ODDS_KEYS = ['A', 'U', 'counter', 'heroMaxHp', 'heroSpd', 'critChance', 'critMult', 'parryWindow', 'dodgeWindow', 'hitX', 'healX',
   'focus', 'spellX', 'dotX', 'ctrlX', 'pierce', 'wardOver', 'blockP', 'foeMaxHp'];
@@ -24487,11 +24488,11 @@ function bossOdds(o) {
   const B = BOSS_ODDS, chunks = Math.ceil(B.fights / B.chunk);
   if (sig !== BO.sig) {
     if (BO.res) BO_DONE = BO.res;
-    BO = { sig, zone: z, chunk: 0, k: 0, d: 0, at: -1e9, res: null };
+    BO = { sig, zone: z, chunk: 0, k: 0, d: 0, at: -1e9, atReal: 0, res: null };
   }
-  while (BO.chunk < chunks && (BO.at <= -1e8 || o.sync || BO_CLOCK - BO.at >= B.every)) {
+  while (BO.chunk < chunks && (BO.at <= -1e8 || o.sync || BO_CLOCK - BO.at >= B.every || Date.now() - BO.atReal >= 1000 * B.every)) {
     const r = turnCombatSample({ profile: p, seconds: B.chunk * 600, seed: BO.chunk + 1, skill, fights: B.chunk });
-    BO.chunk++; BO.at = BO_CLOCK;
+    BO.chunk++; BO.at = BO_CLOCK; BO.atReal = Date.now();
     if (r) { BO.k += r.kills; BO.d += r.deaths; }
     if (BO.chunk >= chunks) BO.res = { win: BO.k + BO.d > 0 ? BO.k / (BO.k + BO.d) : 0, n: BO.k + BO.d, zone: z };
     if (!o.sync) break;
