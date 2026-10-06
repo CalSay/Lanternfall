@@ -70,7 +70,6 @@ jobs:
   perf:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -88,6 +87,7 @@ jobs:
       # The budgets are wall-clock timings tuned on a fast machine; on a shared runner the same build misses them
       # (first frame ~2.5 s vs 1.5 s), so this reports and does not gate.
       - name: Perf (quick, report only)
+        continue-on-error: true
         run: node tools/perf.mjs --quick
 
   # SIM-TARGETS: the health bots play the real game and are scored against docs/design/health-baseline.json. A balance
@@ -110,7 +110,6 @@ jobs:
   health-long:
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -119,6 +118,7 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Health, 50-hour run (report only)
+        continue-on-error: true
         run: node tools/health.mjs --long --compare
 
   path-guard:
