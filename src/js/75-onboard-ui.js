@@ -42,20 +42,19 @@
 
   // What opened, in one plain sentence. Tabs pop (high); views and smaller things are normal.
   const OPEN_TXT = {
-    party: 'New tab: Hero. Your gear, level and abilities.',
-    gather: 'New tab: Gather. Mine ore and chop wood.',
-    camp: typeof hearthCold === 'function' && hearthCold() ? 'New tab: Camp. Build your first station there.' : 'You made camp. A new tab: Camp.',
-    craft: 'New tab: Craft. Make gear from your materials.',
-    nextup: 'Next Up shows your best next goal.',
+    party: 'New tab: Hero.',
+    gather: 'New tab: Gather.',
+    camp: typeof hearthCold === 'function' && hearthCold() ? 'New tab: Camp.' : 'You made camp. A new tab: Camp.',
+    craft: 'New tab: Craft.',
     bounties: 'New on the Fight tab: Bounties.',
     bestiary: 'New on the Fight tab: Bestiary.',
     forage: 'New on the Gather tab: Foraging.',
-    almanac: "New on the Camp tab: the Almanac. Check today's Omen.",
+    almanac: 'New on the Camp tab: the Almanac.',
     roster: 'New on the Party tab: Roster. See who could join you.',
     synergy: 'Where each one stands matters. Put a tank in Front and a healer in Back for Lifeline.',
     uniques: 'New on the Craft tab: Uniques.',
     tavern: 'New on the Camp tab: the Tavern.',
-    codex: 'The Codex is open. Find it in the Journal (the bell).',
+    codex: 'The Codex is open. It tracks what you have found. Find it in the Journal.',   // = FIRST_USE.codex (55-onboard.js)
     raid: 'The World raid is open on the Camp tab.',
     deep: 'New on the Fight tab: the Deepwell.'
   };
@@ -100,9 +99,10 @@
   bub.append(arrow, txt, okb, x);
   // A waiting step may carry a Go button (spec.go): it takes the hero to the node that yields what the step needs.
   let curGo = null;
-  okb.addEventListener('click', e => { e.stopPropagation(); if (curGo) curGo.fn(); else if (cur) onboardDone(cur.id); tick(); });
+  const finish = s => s.id.startsWith('use:') ? onboardUseDone(s.id) : onboardDone(s.id);   // a first-use line is read, not a guide step
+  okb.addEventListener('click', e => { e.stopPropagation(); if (curGo) curGo.fn(); else if (cur) finish(cur); tick(); });
   let cur = null;   // the step on screen
-  x.addEventListener('click', e => { e.stopPropagation(); if (cur) onboardDone(cur.id); tick(); });
+  x.addEventListener('click', e => { e.stopPropagation(); if (cur) finish(cur); tick(); });
   const chip = $('nuChip');
   if (chip) chip.addEventListener('click', () => onboardDone('nextup'));
 
@@ -163,7 +163,7 @@
       const b = q('#modeSeg button[data-act="gather"]');
       return b && !b.hidden ? { node: b, text: 'The road is cold. Tap Gather and chop Pine Log for a camp fire.' } : null;
     },
-    'tab:party': () => S.tab === 'party' ? null : { node: q('.tab[data-tab="party"]'), text: 'New tab: Hero. See your gear, level and abilities.' }
+    'tab:party': () => S.tab === 'party' ? null : { node: q('.tab[data-tab="party"]'), text: 'New tab: Hero. Tap it.' }
   };
   const STEP_UI = {
     // UX-L1: in landscape a menu leaves the rail and top row in view, so the hint stays and points at the lit tab (close the menu)
@@ -199,12 +199,13 @@
     'tab:gat': () => S.tab === 'gat' ? null : { node: q('.tab[data-tab="gat"]'), text: 'New tab: Gather. Tap it to see what you can mine.' },
     'tab:world': () => S.tab === 'world' ? null : { node: q('.tab[data-tab="world"]'), text: 'You made camp. Tap Camp to build.' },
     'tab:forge': () => S.tab === 'forge' ? null : { node: q('.tab[data-tab="forge"]'), text: 'New tab: Craft. Tap it to make gear.' },
-    nextup: () => onCtrl() ? { node: chip, text: 'Next Up shows your best next goal. Tap it.' } : null
+    nextup: () => onCtrl() ? { node: chip, text: FIRST_USE.nextup.text } : null
   };
 
+  const USE_SHOWN_MS = 7000;   // a first-use line counts as read after this long on screen
   const BLOCK = '.create, .away-ov, .bsheet-ov, .modal, .dw-ov';
-  let lastKey = '';
-  function hide() { if (!layer.hidden) layer.hidden = true; if (!bub.hidden) bub.hidden = true; cur = null; curGo = null; lastKey = ''; lastNode = null; lastRect = null; ONBOARD.paused = false; }
+  let lastKey = '', useT0 = 0;
+  function hide() { useT0 = 0; if (!layer.hidden) layer.hidden = true; if (!bub.hidden) bub.hidden = true; cur = null; curGo = null; lastKey = ''; lastNode = null; lastRect = null; ONBOARD.paused = false; }
   // The hint used to re-read the target's pixel position and re-place itself every 250ms, so it
   // jumped whenever the stage moved under it (camera/zoom, screen shake, a pack spawning) even
   // though nothing about the guide itself had changed. Stage targets keep that cached placement.
@@ -217,11 +218,16 @@
     if (S.tab !== lastTab) { lastTab = S.tab; dirty = true; reveal = true; }
     let step = null;
     try { step = onboardStep(); } catch (e) { console.error('[lanternfall] onboard step', e); }
+    // no guide step: the system on screen may still owe its first-use line (never alongside a guide step)
+    if (!step && S.tab) { try { const cv = curView(S.tab), vw = viewsOf(S.tab).find(v => v.id === cv); step = onboardUse({ tab: S.tab, view: cv, feature: vw && vw.feature }); } catch (e) { step = null; } }
     if (!step || document.hidden || q(BLOCK)) return hide();
+    const use = step.id.startsWith('use:');
     let spec = null;
     const table = SOLO_UI[step.id] ? SOLO_UI : STEP_UI;
-    try { spec = table[step.id] ? table[step.id]() : null; } catch (e) { spec = null; }
+    // a first-use line has no target: it docks over the open menu with no ring, and never pauses the game
+    try { spec = use ? { node: panels, text: step.text, noRing: true } : table[step.id] ? table[step.id]() : null; } catch (e) { spec = null; }
     if (!spec || !vis(spec.node)) return hide();
+    if (use) { if (!useT0) useT0 = Date.now(); else if (Date.now() - useT0 > USE_SHOWN_MS) { onboardUseDone(step.id); return hide(); } }
     cur = step; curGo = spec.go || null;
     place(spec);
     // the game waits only while the step waits for you to read or press something now (playtest-1 note 1, W1-A):
@@ -239,6 +245,7 @@
     const inPanel = !!S.tab && panels.contains(spec.node);
     let r = inPanel ? spec.node.getBoundingClientRect() : null;
     const moved = inPanel && (!lastRect || r.left !== lastRect.left || r.top !== lastRect.top || r.width !== lastRect.width || r.height !== lastRect.height);
+    if (ring.hidden !== !!spec.noRing) ring.hidden = !!spec.noRing;
     const changed = dirty || newTarget || key !== lastKey || (inPanel && panelScrolled) || moved;
     if (layer.hidden) layer.hidden = false;
     if (bub.hidden) bub.hidden = false;
@@ -252,7 +259,7 @@
     // UX-L1: a target inside the menu's scrolling content that is out of sight (a short landscape menu: the Make view's
     // recipes, a camp building further down) is scrolled into view on a new target/view. Ordinary
     // scroll or reflow only moves the ring, so following it never pulls the player back.
-    if (inPanel && (newTarget || reveal)) {
+    if (inPanel && !spec.noRing && (newTarget || reveal)) {
       const pr = panels.getBoundingClientRect();
       if (r.height && (r.top < pr.top || r.bottom > pr.bottom - 56)) {
         scrollMenuTo(spec.node);
@@ -264,12 +271,14 @@
     // shape, so it never covers the node/foe underneath)
     if (!r) r = spec.node.getBoundingClientRect();
     lastRect = inPanel ? r : null;
-    let rx, ry, rw, rh;
-    if (spec.at) { const d = 58; rx = r.left + r.width * spec.at[0] - d / 2; ry = r.top + r.height * spec.at[1] - d / 2; rw = rh = d; }
-    else { rx = r.left - 4; ry = r.top - 4; rw = r.width + 8; rh = r.height + 8; }
-    ring.classList.toggle('dot', !!(spec.at || spec.round));
-    putStyle(ring, 'transform', `translate(${Math.round(rx)}px, ${Math.round(ry)}px)`);
-    putStyle(ring, 'width', Math.round(rw) + 'px'); putStyle(ring, 'height', Math.round(rh) + 'px');
+    if (!spec.noRing) {
+      let rx, ry, rw, rh;
+      if (spec.at) { const d = 58; rx = r.left + r.width * spec.at[0] - d / 2; ry = r.top + r.height * spec.at[1] - d / 2; rw = rh = d; }
+      else { rx = r.left - 4; ry = r.top - 4; rw = r.width + 8; rh = r.height + 8; }
+      ring.classList.toggle('dot', !!(spec.at || spec.round));
+      putStyle(ring, 'transform', `translate(${Math.round(rx)}px, ${Math.round(ry)}px)`);
+      putStyle(ring, 'width', Math.round(rw) + 'px'); putStyle(ring, 'height', Math.round(rh) + 'px');
+    }
     // the sentence: docked exactly where placeToasts docks toasts (70-ui.js) - inside #stageBox on
     // the game view, inside #app over a menu - so it reads as one system with the toast stack and
     // the two never overlap (60-onboard.css .ob-bub, --toast-h). Only the parent and the arrow's
