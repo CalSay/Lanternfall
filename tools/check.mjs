@@ -9185,6 +9185,12 @@ if (section('hero progression rework (attributes, road, join, bench)')) try {
       Y('soloPick("wren"); S.maxZone = 20; S.L = 30; S.attr.xpv = 0; S.solo.lv.pip = { L: 20, xp: 2000 }; soloPick("pip")');
       const want = Y('Math.min(2000 / Math.floor(15 * Math.pow(1.3, 19)) * xpNeed(20), xpNeed(S.L) - 1)');
       assert(Y('S.L') > 20 && Math.abs(Y('S.xp') - want) < 1e-6 && Y('S.attr.xpv') === 1, `a switch on an old save carries the bar over before the lift (Pip Lv 20 at 91% joins at Lv ${Y('S.L')} with ${Math.round(Y('S.xp'))} XP, want ${Math.round(want)})`); }
+    // the switch-off flag carries the bars back to the old curve by share (Codex round 3), and on again the same way
+    { const fg = loadCore({ turns: true, seed: 72 }), F = s => fg.eval(s);
+      F('soloPick("wren"); attrXpMap(); S.L = 40; S.xp = xpNeed() / 2; S.solo.lv.pip = { L: 30, xp: xpNeed(30) / 4 }; HERO_TUNE.training = 1; gainXp(0)');
+      const off = [F('S.xp / xpNeed()'), F('S.solo.lv.pip.xp / xpNeed(30)'), F('S.attr.xpv')];
+      F('HERO_TUNE.training = 0; gainXp(0)'); const on = [F('S.xp / xpNeed()'), F('S.attr.xpv')];
+      assert(near(off[0], 0.5, 1e-6) && near(off[1], 0.25, 1e-6) && off[2] === 0 && near(on[0], 0.5, 1e-6) && on[1] === 1 && F('S.L') === 40, `the switch-off flag keeps each bar's share (Lv 40 at ${(100 * off[0]).toFixed(1)}%, benched Pip at ${(100 * off[1]).toFixed(1)}%; back on ${(100 * on[0]).toFixed(1)}%)`); }
     // XP far past the road is cut (xpAheadX) but never frozen: small gains still add up to the next level
     X('S.L = 28; S.maxZone = 10; S.xp = xpNeed() - 0.5; for (let i = 0; i < 4; i++) gainXp(37, true)');
     assert(X('S.L') === 29, `a hero far past the road still levels from small XP gains (Lv 28 at zone 10 reached Lv ${X('S.L')})`); }
