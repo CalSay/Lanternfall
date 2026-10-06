@@ -17,7 +17,7 @@ let T = 0;
 // edge, camera-free; hx the hero's feet x (camera-free), hy its ground line, hl its lane, hd down, hf the
 // frame drawn last, hX/hY where it was drawn). 63d-scenery-camp: the cold Hearth; 64-looks chains it (auras, critters).
 let stageDeco = null;
-let resize, animate, draw, stageStats, warmScene;
+let resize, animate, draw, stageStats, stageRects, warmScene;
 {
   const A = ANIM;
   // ================= visual state (driven by core events) =================
@@ -2029,5 +2029,10 @@ let resize, animate, draw, stageStats, warmScene;
   addEventListener('scroll', () => { stageRect = null; }, { capture: true, passive: true });
 
   new ResizeObserver(() => { resize(); stageRect = stageEl.getBoundingClientRect(); }).observe(stageEl);
+  // The eyes hook (89-eyes-hook.js, tools/eyes.mjs): where the hero and the foes were last drawn, in stage px (times ZM = CSS px
+  // from the canvas's top-left), the frame canvas each was drawn from and the big floating texts alive. Read only.
+  stageRects = () => ({ ZM, SW, SH, hero: hero._f && !hero.down ? { x: hero._x, y: hero._y, c: hero._f.c } : null,
+    foes: slots.slice(0, packN).filter(s => s.fr && s.dX != null && s.m && !s.m.dead).map(s => ({ key: s.key, boss: !!s.m.boss, x: s.dX, y: s.dY, c: (s.dF || s.fr.idle0).c })),
+    floats: floats.filter(f => f.on).map(f => ({ txt: f.txt, big: f.big, crit: f.crit, left: Math.max(0, f.life) })) });
   stageStats = () => ({ critFloats, critLive: floats.filter(f => f.on && f.crit).map(f => ({ txt: f.txt, color: f.color, life: f.max })), drawMs: Math.round(drawMs * 100) / 100, SW, SH, CW, CH, ZM, DPR, GY, hudB: Math.round(hudB), tall, actors: order.length, foes: slots.slice(0, packN).map(s => s.fr ? [s.key, s.x, s.gy, s.w, s.h, s.fr.idle0.ox, leftEdge(s.fr.idle0)] : null), front: order.map(a => [a.key, a.hx, a.hy]), bake: bakeStats(), idle: ART.idleStats ? ART.idleStats() : null });
 }
