@@ -60,8 +60,8 @@ function frame(now) {
   if (dt > 1) dt = 0;
   dt = Math.min(dt, 0.1);
   T += dt;
-  // SOLO1: the game waits while a guide step waits for its action, or while the hero is being chosen
-  if (!(ONBOARD.paused || soloPickerOpen() || document.getElementById('createScreen'))) tick(dt);
+  // SOLO1: the game waits while a guide step waits for its action, or while the hero is being chosen (or a story card is up)
+  if (!(ONBOARD.paused || soloPickerOpen() || document.getElementById('createScreen') || storyHeld())) tick(dt);   // story-delivery: a story card holds the game
   animate(dt); draw();
   uiTimer -= dt; slowTick -= dt;
   if (uiTimer <= 0) { uiTimer = 0.2; ui(false); }

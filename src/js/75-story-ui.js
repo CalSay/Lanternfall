@@ -1,18 +1,15 @@
-// 75-story-ui: how the story reaches the player (task LORE3; lore.md 9). Browser-only; logic in
-// 55-story.js. Small and skippable; nothing here blocks play.
+// 75-story-ui: how the story reaches the player (story-delivery; docs/design/story-bible.md section 10). Browser-only; the logic
+// is in 55-story.js. Small and skippable; nothing here blocks play for more than a card.
 //
-// On the stage (one caption at a time, in the stage's open sky; a tap dismisses it):
-//   - an arrival banner the first time the party fights in a place: the place name, one line
-//   - an elder line when a boss of a new type appears (intro). W1-B: its fall line no longer shows.
-//   - a story chip when a beat plays: "New story: Wisps. Read" (tap opens the card; it waits in the
-//     Codex if it goes unread). A quiet beat (a save that got past it) goes to the bell list only.
-// Captions wait while a menu covers the stage or a full-screen card is up, and ask the notice policy
-// (70-ui noticeAsk) before they show: arrival and elder lines that could not show in time go to the bell
-// (they belong to the moment), story chips wait.
-// Reduced motion: no slide or fade, the caption just appears and goes.
-// The beat card: a small bottom sheet (title, 2-5 sentences, lines from recruited companions).
-// The Codex home gets a "Story" row (storyUI.codexRow, read by 75-codex-ui): the story so far, and
-// for old saves one "Catch up on the story" entry that reads the missed pages in order.
+// Two shapes, one at a time (55-story queues them and holds the game while one is up):
+//   - a caption (area title, zone line, Captain line): a line or two in the open sky of the stage, held at most 3 s; any tap ends it.
+//     If a menu covers the stage it is dropped (the Road log in the Journal keeps it).
+//   - a card sequence (region card, Champion and Elder scenes, NPC, Voice, a choice): a small bottom sheet, one card a tap,
+//     with Skip always shown. A card waits while another sheet or full-screen card is up, and is filed as skipped after 28 s.
+//     Skipped or closed early, it is filed in the Journal and its page is kept.
+// The Journal (Codex > Journal, storyUI.codexRow): everything read, for re-reading, a "Catch up on the story" entry for
+// scenes the save passed before it could play, and a small Road log of the area titles and zone lines seen.
+// Settings > Story: "Story cards: on / off" (S.story.off). Reduced motion: no slide or fade.
 // API: storyUI { open(id), list(fromCodex), codexRow() }.
 var storyUI;   // var: 75-codex-ui (earlier in the build) reads it at run time
 {
@@ -20,127 +17,144 @@ var storyUI;   // var: 75-codex-ui (earlier in the build) reads it at run time
   const safe = (fn, d) => { try { return fn(); } catch (e) { console.error('[lanternfall] story ui', e); return d; } };
   const PAGE_IC = () => iconURL('charm', '#F2E27A');
   const BLOCK = '.away-ov, #createScreen, .join-ov, .gl-ov, .bsheet-ov, .dd-fc-ov, .dw-ov';
-  const covered = () => !!S.tab || !!document.querySelector(BLOCK);   // UX-L1: a landscape menu covers most of the stage too
-  const REGION_N = { hollow: 'the Hollow', coast: 'the Sunken Coast' };
-  const chapterOf = r => { const i = REGIONS.findIndex(x => x.id === r); return i >= 0 ? `Chapter ${i + 1}: ${REGIONS[i].n}` : ''; };
-
-  // ---------------- the stage caption ----------------
-  const queue = [];
-  let cur = null, pumpT = 0;
+  const blocked = () => !!document.querySelector(BLOCK);
+  const menuOpen = () => !!S.tab;   // a landscape menu covers most of the stage
   const stageBox = () => document.getElementById('stageBox');
-  function push(item) {
-    item.at = playS();
-    // one arrival at a time: a newer place replaces an older one still waiting
-    if (item.kind === 'arrival') for (let i = queue.length - 1; i >= 0; i--) if (queue[i].kind === 'arrival') queue.splice(i, 1);
-    // an elder's line jumps ahead of story chips (it belongs to the fight on screen)
-    if (item.kind !== 'beat') { const i = queue.findIndex(q => q.kind === 'beat'); if (i >= 0) { queue.splice(i, 0, item); pump(); return; } }
-    queue.push(item);
-    pump();
-  }
-  // W1-B: every caption asks the notice policy first (70-ui noticeAsk, 23n-data-notices): the place title
-  // and a new elder's line pop within the pop budget and never while the guide speaks; they wait for a quiet
-  // moment (the title while the hero stays in that zone, up to NOTICE_TUNE.arrivalWait s; an elder's line
-  // NOTICE_TUNE.elderWait s) and then go to the bell. An elder's fall line and a walked-past page never pop.
-  const capKey = q => q.kind === 'arrival' ? 'caption:arrival' : q.kind === 'beat' ? (q.quiet ? 'caption:beat-quiet' : 'caption:beat') : /fall/.test(q.kind) ? 'caption:fall' : 'caption:elder';
-  const capText = q => q.kind === 'beat' ? `New story: ${q.title}.` : `${q.head ? q.head + ': ' : ''}${q.line}`;
-  const playS = () => (typeof notes === 'object' ? notes.clock : Date.now() / 1000);   // seconds of play (70-ui): a paused game waits too
-  const ask = (q, wait) => (typeof noticeAsk === 'function' ? noticeAsk(capKey(q), capText(q), { wait }) : 'pop');
-  function pump() {
-    clearTimeout(pumpT);
-    if (cur || !queue.length) return;
-    const now = playS();
-    for (let i = queue.length - 1; i >= 0; i--) {
-      const q = queue[i], wait = q.kind === 'arrival' ? NOTICE_TUNE.arrivalWait : NOTICE_TUNE.elderWait;
-      if (q.kind !== 'beat' && (now - q.at > wait || (q.zone && q.zone !== S.zone))) {   // the moment has passed
-        queue.splice(i, 1);
-        if (typeof noticeDrop === 'function' && !/fall/.test(q.kind)) noticeDrop(capKey(q), capText(q));
+  const chapterOf = r => { const i = REGIONS.findIndex(x => x.id === r); return i >= 0 ? `Chapter ${i + 1}: ${REGIONS[i].n.replace(/^./, c => c.toUpperCase())}` : ''; };
+  const KIND = { region: 'Chapter', champion: 'Champion', elder: 'Elder', page: 'Page', voice: 'A voice', npc: 'Meeting', letter: 'Letter', note: 'Note' };
+
+  // check.mjs sets this in its browser contexts so a new game's opening card never sits over a test's first click; scenes are skipped (and filed)
+  const TEST_SKIP = (() => { try { return localStorage.getItem('lanternfall.test.nostory') === '1'; } catch (e) { return false; } })();
+  let capNode = null, capT = 0, capOff = null, waitT = 0, now = null, cardApi = null;
+
+  // ---------------- a scene arrives ----------------
+  on('storyScene', sc => { if (TEST_SKIP) { storyClose(sc.id, 'skipped'); return; } now = sc; run(); });
+  function run() {
+    clearTimeout(waitT);
+    const sc = now; if (!sc) return;
+    if (sc.kind === 'caption') {
+      if (menuOpen() || blocked() || !stageBox()) {
+        // a sheet still fading out covers the stage for a moment: wait a little, then drop it (the Road log keeps it)
+        sc.waited = sc.waited || Date.now();
+        if (Date.now() - sc.waited > 1500) { now = null; storyClose(sc.id, 'done'); return; }
+        waitT = setTimeout(run, 150); return;
       }
+      now = null; showCaption(sc); return;
     }
-    if (!queue.length) return;
-    if (covered() || !stageBox()) { pumpT = setTimeout(pump, 500); return; }
-    const r = ask(queue[0], true);
-    if (r === 'wait') { pumpT = setTimeout(pump, 1000); return; }
-    const q = queue.shift();
-    if (r === 'pop') show(q); else pump();
-  }
-  function hide(node, instant) {
-    if (!node || node._gone) return;
-    node._gone = true; clearTimeout(node._t);
-    const done = () => { node.remove(); if (cur === node) cur = null; setTimeout(pump, reduced ? 0 : 250); };
-    if (instant || reduced) done();
-    else { node.classList.add('out'); setTimeout(done, 260); }
-  }
-  function show(item) {
-    const box = stageBox(); if (!box) return;
-    let node;
-    if (item.kind === 'beat') {
-      node = btn('sty-chip' + (item.quiet ? ' quiet' : ''));
-      node.append(img(PAGE_IC(), 'px sty-chip-ic'));
-      const tx = el('span', 'sty-chip-tx');
-      tx.append(el('span', 'sty-chip-eye', 'New story'), el('b', 'sty-chip-t', item.title));
-      if (item.quiet && item.note) tx.append(el('span', 'sty-chip-note', item.note));
-      node.append(tx, el('span', 'sty-chip-go', 'Read'));
-      node.setAttribute('aria-label', `New story: ${item.title}. Read it`);
-      node.addEventListener('click', e => { e.stopPropagation(); hide(node, true); openBeat(item.id); });
-      node._t = setTimeout(() => hide(node), 14000);
-    } else {
-      node = el('div', 'sty-cap ' + item.kind);
-      node.setAttribute('role', 'status');
-      if (item.head) node.append(el('b', 'sty-cap-h', item.head));
-      node.append(el('span', 'sty-cap-l', item.line));
-      node.addEventListener('click', e => { e.stopPropagation(); hide(node); });
-      node._t = setTimeout(() => hide(node), Math.min(7500, 2800 + item.line.length * 45));
-      // an arrival banner goes when the party leaves the place; an elder's intro makes way for its fall
-      node._item = item; node._shown = Date.now();
-      if (item.zone) { const w = setInterval(() => { if (node._gone) clearInterval(w); else if (S.zone !== item.zone) { clearInterval(w); hide(node); } }, 500); }
+    if (blocked() || !stageBox()) {
+      sc.waited = sc.waited || Date.now();
+      if (Date.now() - sc.waited > 28000) { now = null; storyClose(sc.id, 'skipped'); return; }   // a long wait: file it, never play it mid-fight
+      waitT = setTimeout(run, 400); return;
     }
+    now = null; showCard(sc);
+  }
+
+  // ---------------- the caption ----------------
+  function endCaption(sc, how) {
+    if (!capNode) return;
+    const n = capNode; capNode = null; clearTimeout(capT);
+    if (capOff) { document.removeEventListener('pointerdown', capOff, true); capOff = null; }
+    storyClose(sc.id, how);   // the game resumes as the caption fades
+    if (reduced) n.remove(); else { n.classList.add('out'); setTimeout(() => n.remove(), 220); }
+  }
+  function showCaption(sc) {
+    const box = stageBox();
+    // the guide's bubble sits in the same sky for the first zones: a caption there moves down to the open ground
+    const node = el('div', 'sty-cap' + (sc.ch === 'C' ? ' elder' : '') + (S.maxZone < 3 || (typeof ONBOARD === 'object' && ONBOARD.paused) ? ' low' : ''));
+    node.setAttribute('role', 'status');
+    if (sc.head) node.append(el('b', 'sty-cap-h', sc.head));
+    for (const l of sc.lines) node.append(el('span', 'sty-cap-l', l));
     if (!reduced) node.classList.add('in');
-    cur = node;
-    box.append(node);
+    box.append(node); capNode = node;
+    storyClaim(sc.id);
+    capT = setTimeout(() => endCaption(sc, 'done'), sc.hold || 3000);
+    capOff = () => endCaption(sc, 'done');
+    setTimeout(() => { if (capNode === node) document.addEventListener('pointerdown', capOff, true); }, 80);
+    node.addEventListener('click', e => e.stopPropagation());
   }
 
-  on('storyArrival', e => push({ kind: 'arrival', head: e.head, line: e.line, zone: e.zone }));
-  on('storyElder', e => {
-    if (e.kind === 'fall') {
-      // a quick kill: the intro still waiting is dropped, one on screen stays a moment and goes
-      for (let i = queue.length - 1; i >= 0; i--) if (queue[i].key === e.key) queue.splice(i, 1);
-      if (cur && cur._item && cur._item.key === e.key) { const n = cur; clearTimeout(n._t); n._t = setTimeout(() => hide(n), Math.max(0, 1800 - (Date.now() - n._shown))); }
-    }
-    push({ kind: 'elder ' + e.kind, key: e.key, head: e.name, line: e.line });
-  });
-  on('storyBeat', e => { const b = e.beat || {}; push({ kind: 'beat', id: e.id, title: b.title, note: b.note, quiet: !!e.quiet }); });
-  on('storyRead', () => { });
-  // a menu opening covers the stage: let the caption finish where it is, the queue waits
-  on('menuView', () => pump());
+  // ---------------- the card sequence ----------------
+  function showCard(sc) {
+    if (typeof openSheet !== 'function') { storyClose(sc.id, 'skipped'); return; }
+    storyClaim(sc.id);
+    let i = 0, finished = false;
+    const end = how => { if (finished) return; finished = true; storyClose(sc.id, how); if (cardApi) cardApi.close(); };
+    openSheet(api => {
+      cardApi = api;
+      api.sheet.classList.add('sty-sheet', 'sty-scene');
+      const draw = () => {
+        api.body.textContent = ''; api.foot.textContent = '';
+        const c = sc.cards[i], last = i === sc.cards.length - 1;
+        const card = el('article', 'sty-card');
+        if (i === 0) {
+          const where = sc.ch === 'R' ? '' : [chapterOf(sc.region), sc.zone ? `Zone ${sc.zone}` : ''].filter(Boolean).join(' · ');
+          if (where) card.append(el('span', 'sty-eye', where));
+        }
+        if (c.choice) {
+          const d = storyChoiceDef(c.choice) || { prompt: '', options: [] };
+          card.append(el('h2', 'sty-title', d.prompt));
+          api.body.append(card);
+          const opts = el('div', 'sty-opts');
+          for (const o of d.options) {
+            const b = btn('big forge sty-opt');
+            b.append(el('b', null, o.label)); if (o.line) b.append(el('span', null, o.line));
+            b.addEventListener('click', () => { storyChoose(c.choice, o.id); if (last) end('done'); else { i++; draw(); } });
+            opts.append(b);
+          }
+          api.body.append(opts);
+        } else {
+          if (i === 0 && sc.title && sc.ch !== 'K') { const h = el('h2', 'sty-title', sc.title); h.id = 'styTitle'; card.append(h); api.sheet.setAttribute('aria-labelledby', 'styTitle'); }
+          if (c.who && !(i === 0 && c.who === sc.title)) card.append(el('p', 'sty-head', c.who));
+          for (const l of c.lines) card.append(el('p', 'sty-text', l));
+          if (sc.cards.length > 1) card.append(el('span', 'sty-count', `${i + 1} of ${sc.cards.length}`));
+          api.body.append(card);
+        }
+        const row = el('div', 'sty-actions');
+        if (!c.choice) {
+          const go = btn('big forge sty-done', sc.ch === 'R' ? 'Begin' : last ? 'Continue' : 'Next');
+          go.addEventListener('click', () => { if (last) end('done'); else { i++; draw(); } });
+          row.append(go);
+        }
+        const skip = btn('mini sty-skip', 'Skip'); skip.setAttribute('aria-label', 'Skip this story. It stays in the Journal.');
+        skip.addEventListener('click', () => end('skipped'));
+        row.append(skip);
+        api.body.append(row);
+        const go = api.body.querySelector('.sty-done'); if (go) requestAnimationFrame(() => safe(() => go.focus({ preventScroll: true })));
+      };
+      draw();
+    }, { label: sc.title || 'The story', small: true, onClose() { cardApi = null; if (!finished) { finished = true; storyClose(sc.id, 'skipped'); } } });
+  }
 
-  // ---------------- the beat card ----------------
+  // ---------------- one Journal entry, read again ----------------
   let fromCodex = false;
-  function openBeat(id, opts) {
+  function openEntry(id, opts) {
     if (typeof openSheet !== 'function') return;
-    const list = storyList(), b = list.find(x => x.id === id); if (!b) return;
+    const e = storyEntry(id); if (!e) return;
     const chain = opts && opts.chain;   // catch-up: step through these ids
     storyRead(id);
     openSheet(api => {
       api.sheet.classList.add('sty-sheet');
       if (fromCodex || chain) {
-        const back = btn('sty-back', '‹ Story'); back.setAttribute('aria-label', 'Back to the story so far');
+        const back = btn('sty-back', '‹ Journal'); back.setAttribute('aria-label', 'Back to the Journal');
         back.addEventListener('click', () => openList(fromCodex));
         api.body.append(back);
       }
       const card = el('article', 'sty-card');
-      const where = [chapterOf(b.region), b.at ? `Zone ${b.at}` : ''].filter(Boolean).join(' · ');
+      const where = [chapterOf(e.region), e.zone ? `Zone ${e.zone}` : ''].filter(Boolean).join(' · ');
       if (where) card.append(el('span', 'sty-eye', where));
-      const h = el('h2', 'sty-title', b.title); h.id = 'styTitle';
+      const h = el('h2', 'sty-title', e.title); h.id = 'styTitle';
       card.append(h);
-      if (b.head) card.append(el('p', 'sty-head', b.head));
-      card.append(el('p', 'sty-text', b.text));
+      for (const c of e.cards) {
+        if (c.who) card.append(el('p', 'sty-head', c.who));
+        for (const l of c.lines) card.append(el('p', 'sty-text', l));
+      }
       api.body.append(card);
       const row = el('div', 'sty-actions');
       const next = chain && chain.filter(x => x !== id && storyUnread().includes(x))[0];
       if (next) {
-        const n = list.find(x => x.id === next);
+        const n = storyEntry(next);
         const nb = btn('big forge sty-next', `Next: ${n ? n.title : 'more'}`);
-        nb.addEventListener('click', () => openBeat(next, { chain }));
+        nb.addEventListener('click', () => openEntry(next, { chain }));
         row.append(nb);
       }
       const done = btn(next ? 'mini sty-done' : 'big forge sty-done', next ? 'Later' : 'Close');
@@ -148,12 +162,13 @@ var storyUI;   // var: 75-codex-ui (earlier in the build) reads it at run time
       row.append(done);
       api.body.append(row);
       api.sheet.setAttribute('aria-labelledby', 'styTitle');
-    }, { label: b.title, small: true, onClose() { fromCodex = false; } });
+    }, { label: e.title, small: true, onClose() { fromCodex = false; } });
   }
 
-  // ---------------- the story so far (from the Codex) ----------------
+  // ---------------- the Journal (from the Codex) ----------------
   function openList(codex) {
     if (typeof openSheet !== 'function') return;
+    if (codex) storyJournalOpened();
     openSheet(api => {
       fromCodex = !!codex;
       api.sheet.classList.add('sty-sheet');
@@ -162,7 +177,7 @@ var storyUI;   // var: 75-codex-ui (earlier in the build) reads it at run time
         back.addEventListener('click', () => emit('codexOpen', { page: null }));
         api.body.append(back);
       }
-      api.body.append(el('h2', 'sty-ltitle', 'The story so far'));
+      api.body.append(el('h2', 'sty-ltitle', 'Journal'));
       const list = storyList(), late = storyLate();
       if (late.length) {
         const c = btn('sty-catch');
@@ -170,10 +185,10 @@ var storyUI;   // var: 75-codex-ui (earlier in the build) reads it at run time
         const tx = el('span', 'sty-chip-tx');
         tx.append(el('b', null, 'Catch up on the story'), el('span', 'sty-chip-note', `${late.length} ${late.length > 1 ? 'pages' : 'page'} from before you got here. One tap each.`));
         c.append(tx, el('span', 'sty-chip-go', 'Read'));
-        c.addEventListener('click', () => { fromCodex = !!codex; openBeat(late[0], { chain: late }); });
+        c.addEventListener('click', () => { fromCodex = !!codex; openEntry(late[0], { chain: late }); });
         api.body.append(c);
       }
-      if (!list.length) api.body.append(el('p', 'note sty-empty', 'The road has only begun. Pages join here as you walk it.'));
+      if (!list.length) api.body.append(el('p', 'note sty-empty', 'The road has only begun. What you read joins here.'));
       let region = '';
       const box = el('div', 'sty-rows');
       for (const b of list) {
@@ -181,19 +196,22 @@ var storyUI;   // var: 75-codex-ui (earlier in the build) reads it at run time
         const r = btn('sty-row' + (b.read ? '' : ' unread'));
         r.append(img(PAGE_IC(), 'px sty-row-ic'));
         const tx = el('span', 'sty-row-tx');
-        tx.append(el('b', null, b.title), el('span', null, b.note));
+        tx.append(el('b', null, b.title), el('span', null, KIND[b.kind] || ''));
         r.append(tx);
         if (!b.read) r.append(el('span', 'cx-dot'));
-        r.addEventListener('click', () => { fromCodex = !!codex; openBeat(b.id); });
+        r.addEventListener('click', () => { fromCodex = !!codex; openEntry(b.id); });
         box.append(r);
       }
       api.body.append(box);
-      const ahead = STORY_NEXT();
-      if (ahead) api.body.append(el('p', 'note sty-ahead', `The next page waits at zone ${ahead}.`));
-    }, { label: 'The story so far', small: true });
+      const road = storyRoadLog();
+      if (road.length) {
+        api.body.append(el('h3', 'sty-grp', 'Road log'));
+        const lg = el('div', 'sty-road');
+        for (const x of road) { const p = el('p', 'sty-road-l'); p.append(el('b', null, x.head + ' '), document.createTextNode(x.line)); lg.append(p); }
+        api.body.append(lg);
+      }
+    }, { label: 'Journal', small: true });
   }
-  // the next beat with a zone the save has not reached
-  const STORY_NEXT = () => { const b = (typeof HOLLOW_STORY !== 'undefined' ? HOLLOW_STORY : []).find(x => x.at && !storyHas(x.id)); return b ? b.at : 0; };
 
   // ---------------- the Codex row ----------------
   function codexRow() {
@@ -201,13 +219,27 @@ var storyUI;   // var: 75-codex-ui (earlier in the build) reads it at run time
     const r = btn('sty-cx' + (unread ? ' news' : ''));
     r.append(img(PAGE_IC(), 'px sty-cx-ic'));
     const tx = el('span', 'sty-cx-tx');
-    tx.append(el('b', null, 'Story'), el('span', null, late ? 'Catch up on the story' : list.length ? `${list.length} ${list.length > 1 ? 'pages' : 'page'}${unread ? `, ${unread} new` : ''}` : 'Pages join as you walk the road'));
+    tx.append(el('b', null, 'Journal'), el('span', null, late ? 'Catch up on the story' : list.length ? `${list.length} ${list.length > 1 ? 'pages' : 'page'}${unread ? `, ${unread} new` : ''}` : 'What you read joins here'));
     r.append(tx, el('span', 'sty-cx-go', 'Read'));
     if (unread) r.append(el('span', 'cx-dot'));
-    r.setAttribute('aria-label', `The story so far${unread ? `, ${unread} unread` : ''}`);
+    r.setAttribute('aria-label', `The Journal${unread ? `, ${unread} unread` : ''}`);
     r.addEventListener('click', () => openList(true));
     return r;
   }
 
-  storyUI = { open: id => openBeat(id), list: codex => openList(!!codex), codexRow };
+  // ---------------- Settings > Story ----------------
+  if (typeof registerSection === 'function') registerSection('log', {
+    id: 'story-set', title: 'Story',
+    mount(sec) {
+      const b = btn('cb-toggle');
+      const put = () => { const on_ = storyOn(); b.textContent = `Story cards: ${on_ ? 'On' : 'Off'}`; b.setAttribute('aria-pressed', on_ ? 'true' : 'false'); };
+      b.addEventListener('click', () => { S.story.off = S.story.off ? 0 : 1; put(); save(); });
+      put();
+      const w = el('div', 'cb-set'); w.append(b, el('p', 'note', 'Short story cards between fights. Off, nothing plays and the Journal keeps what you read.'));
+      sec.append(w);
+    },
+    update() {}
+  });
+
+  storyUI = { open: id => openEntry(id), list: codex => openList(!!codex), codexRow };
 }
