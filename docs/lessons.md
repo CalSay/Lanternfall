@@ -110,4 +110,6 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Split anything outside the card's files into a new card instead of building it on the spot (pre-leave notice, Boss-ready gate and the `--long` run were each split off). (away-clarity, first-minute-flow, f-health)
 - With no route to the Foreman, send AUTOPILOT DONE to the coordinator. (systems-map and others, 2026-10-06)
 - After a merge, send AUTOPILOT DONE at once: a merge with no follow-up start leaves build slots empty (stalled 01:25 to 05:22 on 2026-10-06). (foreman, 2026-10-06)
+- Check any pick that needs new art against the art freeze in `CLAUDE.md` before costing it: new looks, sparks and effects come as complete Codex art packs, never drawn in code by agents. Why: Codex P1 on PR #61, the money plan costed store looks and the parry spark as cheap code. (monetisation plan, 2026-10-06)
+- Commit a design decision's red-team and judge records into the repo and link them relatively; `/mnt/project-files` paths do not survive for reviewers. Why: Codex P1 on PR #61. (monetisation plan, 2026-10-06)
 - Always ask whether a card needs Cal's gates: ship-it, online layer, Netlify beyond the weekly deploy, money or legal, network settings, outside contact. (playbook)

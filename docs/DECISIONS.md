@@ -221,7 +221,7 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 ## Money
 
 Claude decided after a red team and the Opus judge, on Cal's delegation (2026-10-06, "I don't want to be involved").
-Plan, evidence and rulings: `/mnt/project-files/monetisation/plan.md` and `docs/design/monetisation.md`. Store accounts,
+Plan, evidence and rulings: `docs/design/monetisation.md` and `docs/design/monetisation-records/`. Store accounts,
 payment code, live prices and business and legal set-up stay with Cal.
 
 - **The model:** free to play, Season 1's story free for good, no ads of any kind (rewarded ads included), no premium
@@ -230,7 +230,8 @@ payment code, live prices and business and legal set-up stay with Cal.
 - **What is sold:** looks (the existing slots plus a parry spark and, later, camp pieces), hero outfits (the three
   starters first, then one per new hero), outfits by armour weight, critters, the Lantern Keeper and one supporter pack.
   A free and paid Road Pass (looks only, earned by normal play, never expiring) comes after 1.0. Heroes are never sold.
-  (2026-10-06)
+  Every new look, spark or outfit comes as a complete Codex art pack vetted as a whole set (art freeze); agents never
+  draw them in code. (2026-10-06)
 - **The Lantern Keeper:** one purchase, no membership at launch. Loadout slots past the Armoury's maximum (a late Deed
   gives the same), a look set and credits. It also adds 2 hours to the away cap you have built (gathering only, never
   past 24) only if a free bot run reaches the 24-hour cap within 40 hours of play; otherwise it ships without that.

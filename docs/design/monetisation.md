@@ -1,19 +1,20 @@
 # How Lanternfall earns money
 
-Copy of `/mnt/project-files/monetisation/plan.md` (2026-10-06). The rulings are in `docs/DECISIONS.md` under Money.
+Copy of `/mnt/project-files/monetisation/plan.md` (2026-10-06). The rulings are in `docs/DECISIONS.md` under Money. The
+research, red team and judge records are in [monetisation-records/](monetisation-records/).
 
 2026-10-06. Asked by Cal in the thread "fun, profitable and well reviewed". Design only: no store, no payment code,
 no live prices, no outside contact. Those wait for Cal.
 
 **Status: decided.** Cal delegated the open calls (18:30, "I don't want to be involved"). A red team and the Opus judge
-ruled on all seven (section 10, with [the red team](/mnt/project-files/monetisation/review/decisions-red-team.md) and [the rulings](/mnt/project-files/monetisation/review/decisions-judge.md));
+ruled on all seven (section 10, with [the red team](monetisation-records/decisions-red-team.md) and [the rulings](monetisation-records/decisions-judge.md));
 the rulings are in `docs/DECISIONS.md` under **Money**. Only real-money and legal steps stay with Cal: store accounts,
 payment code, live prices, business and legal set-up.
 
 **Sources.** The fun library's review corpus (56 games, 12,006 review texts in `research/raw/`, re-tagged for money
 themes for this plan), IdleOn's 421 App Store reviews read one by one for money talk, web research on IdleOn, Melvor,
-OSRS, Shop Titans, Path of Exile, Warframe and others ([web-games.md](/mnt/project-files/monetisation/sources/web-games.md)), web research on fair odds,
-loot-box law and store fees ([web-fairness.md](/mnt/project-files/monetisation/sources/web-fairness.md)), `docs/DECISIONS.md`, `docs/lessons.md`, the
+OSRS, Shop Titans, Path of Exile, Warframe and others ([web-games.md](monetisation-records/web-games.md)), web research on fair odds,
+loot-box law and store fees ([web-fairness.md](monetisation-records/web-fairness.md)), `docs/DECISIONS.md`, `docs/lessons.md`, the
 Why review and its answers, and the game's code (the looks in `12g-art-accessories.js`, `64-looks.js`).
 
 Every point below has the same shape: **why** (what is true now, with evidence), **options**, **pick**.
@@ -27,8 +28,10 @@ Every point below has the same shape: **why** (what is true now, with evidence),
    reaches the same ceiling through play (earn or buy, the Soda Dungeon 2 rule).
 2. **Four things to sell, in this order:**
    - **Looks**, bought outright at a shown price: capes, hats, lanterns, flame colours, auras, critters, portrait
-     frames, plus two new slots (the parry spark and camp pieces). The game already draws 33 looks in code across
-     7 slots, so each new look costs code, not commissioned art.
+     frames, plus two new slots (the parry spark and camp pieces). The game already has 7 look slots and
+     bakes looks onto the hero, so a new look needs art, not new code. Under the art freeze every new look comes as a
+     complete pack drawn by Codex in the heroes' style and vetted as a whole before it ships; agents never draw it in
+     code.
    - **The Lantern Keeper**, one purchase, once: loadout slots beyond the Armoury's maximum, a Keeper look set and
      supporter credits, plus a head start on the away cap (+2 hours on whatever you have built, never past the 24 hours
      every player can reach) only if a free bot run reaches the 24-hour cap within 40 hours of play.
@@ -119,7 +122,7 @@ The later game earned the 1-stars, and every one names a specific change:
 They turn when a purchase beats what play can earn, when chance is sold, or when the shop interrupts. IdleOn did not
 start unfair; it drifted. Our rules have to stop drift, not only a bad launch.
 
-**What IdleOn sells (web, partly unverified; see [web-games.md](/mnt/project-files/monetisation/sources/web-games.md)).** Its Steam page says "All
+**What IdleOn sells (web, partly unverified; see [web-games.md](monetisation-records/web-games.md)).** Its Steam page says "All
 classes, maps, skills, bosses, and activities are available without purchase". Gems are the premium currency, sold
 ($1.99 for 200 up to $29.99 for 6,500) and also earned (about 30 a day early, 800 to 1,000 a week later). The gem shop
 is mostly permanent room: card slots, storage, bag space, food slots, a few cosmetic chat rings. Guides rank those as
@@ -175,15 +178,18 @@ a short version shown on the store page and in the game's shop.
 **Why.** Looks are the one thing every fair game in the corpus sells without complaint, and Lanternfall is unusually
 ready for them: `12g-art-accessories.js` already draws 33 looks in 7 slots in code (5 capes, 5 hats, 6 lanterns, 4
 flame colours, 5 auras, 4 critters, 4 portrait frames), baked onto the hero by `64-looks.js`, with reduced motion
-handled. Today all 33 are earned from Deeds. A new look is a pixel map and a palette, not a commission, so art cost
-(Cal's concern) stays low. The flame colour also lights the stage (`lookFlameCol`), so it is on screen the whole time.
+handled. Today all 33 are earned from Deeds. The slots, the baking and reduced motion already work, so a new look is
+art only. The art freeze (`CLAUDE.md`) says agents do not draw art in code and effects such as sparks come from the
+artist's pack, so every store look is a Codex art pack (themed sets of 4 to 6 pieces), vetted as a whole set before it
+ships. Small sets keep art cost (Cal's concern) moderate. The flame colour also lights the stage (`lookFlameCol`), so
+it is on screen the whole time.
 
 **Options.**
 
 | Option | Fit | Cost per item | Risk |
 |---|---|---|---|
-| A. Looks in the existing 7 slots | Every hero, every class | Low (code-drawn) | None; slots exist |
-| B. A parry spark slot: the colour and shape of the flash on a perfect parry or dodge | The most-seen moment in the game, every hit | Low (code) | Must never change timing or readability; same size, same moment |
+| A. Looks in the existing 7 slots | Every hero, every class | A Codex art pack; no new code | None; slots exist |
+| B. A parry spark slot: the colour and shape of the flash on a perfect parry or dodge | The most-seen moment in the game, every hit | The slot is code; every spark, the default included, is a Codex art pack | Must never change timing or readability; same size, same moment |
 | C. Camp pieces: banners, a fire style, Trophy Wall frames | Pillar 2, the camp; shows on the camp card | Low to medium | Wait for the camp layout to settle (camp art is placeholder) |
 | D. Themed sets ("Sunken Coast set": cape, lantern, flame, spark) | Region launches and the Road Pass | Sum of parts | None |
 | E. Per-hero outfits | Strong pull for a favourite hero; DECISIONS already gives each hero art that becomes its first outfit, so the pipeline exists | Medium to high: per-hero art | Art cost scales with heroes; see 3.2 |
@@ -209,7 +215,7 @@ punished thing (AFK Arena's duplicates, RAID's shards).
 | A. Sell heroes | The biggest earner in hero games | Power (Rule 1); breaks the story gate; the most-punished model in the corpus |
 | B. Sell an early unlock of a story-gated hero | A time saver | Spoils the story; still power earlier |
 | C. Sell outfits by armour weight (heavy, medium, light) | One drawing per weight dresses every hero of that weight; the gear art already does this | Less personal than a per-hero skin |
-| D. Sell critter companions | The game has 4 critters (cat, moss, moth, wisp) that follow the hero and sleep at camp; companions are a proven seller and carry no power | Each needs a pose set (code-drawn, small) |
+| D. Sell critter companions | The game has 4 critters (cat, moss, moth, wisp) that follow the hero and sleep at camp; companions are a proven seller and carry no power | Each needs a small pose set in a Codex art pack |
 | E. Guest heroes outside the story, sold | Characters without breaking the gate | Still power; a sidegrade is hard to prove across 34 heroes |
 | F. Per-hero outfits | Attachment to a hero (Cal wants more of it); each hero already gets art and a first outfit (DECISIONS, equipment art) | Per-hero art for every hero |
 
@@ -397,7 +403,7 @@ Each is a real case from the corpus or the web, and each maps to a rule.
 | Purchases lost or stuck on one platform | IdleOn's iOS lag; "charged but no item" | 9, 10 |
 | Energy and waits sold back | RAID energy (40 negatives) | 4 |
 
-Outside the corpus, the same triggers show up at scale ([web-fairness.md](/mnt/project-files/monetisation/sources/web-fairness.md) section 5): power
+Outside the corpus, the same triggers show up at scale ([web-fairness.md](monetisation-records/web-fairness.md) section 5): power
 sold through chance (Diablo Immortal, Metacritic user score 0.2; Star Wars Battlefront II, reversed hours before
 launch), a new money layer on a game that was fair (Marvel Snap), a time saver that looks like it sold the grind back
 (Assassin's Creed Odyssey's XP boost), and a forced account on a game people already owned (Helldivers 2, reversed in
@@ -422,8 +428,8 @@ In order. Nothing here starts a store; items 2, 3, 7 and 9 need Cal.
    review and Cal's sign-off. The 1.0 list already wants save export and import.
 4. **The Wardrobe.** A screen to see, try on and wear looks, with the collection count and silhouettes. Today looks
    live in the Deeds menu. This is also the earned half, so it can come first.
-5. **A look pipeline.** About 30 store looks at launch and 10 to 15 a season after, code-drawn first, with Codex raster
-   art only for sets that need it. Each new slot (the parry spark) needs an art and readability check.
+5. **A look pipeline.** About 30 store looks at launch and 10 to 15 a season after, all drawn by Codex as complete
+   packs and vetted as whole sets (art freeze). Each new slot (the parry spark) needs an art and readability check.
 6. **Heroes that can wear them.** Only 3 heroes carry the lamp today. Outfits by armour weight sell better once more
    heroes are in.
 7. **Business and legal (Cal).** A business set-up, tax (a merchant of record handles VAT and sales tax), a privacy
@@ -441,7 +447,7 @@ second reason for Rule 2, besides reviews.
 ### 7.1 Where to sell
 
 **Why.** The artifact cannot sell, so Lanternfall needs a second home. Fees and figures are from
-[web-fairness.md](/mnt/project-files/monetisation/sources/web-fairness.md) section 3 (search summaries; verify before acting).
+[web-fairness.md](monetisation-records/web-fairness.md) section 3 (search summaries; verify before acting).
 
 | Option | Cut | What it gives us | Against |
 |---|---|---|---|
@@ -486,12 +492,12 @@ shows that some paid comfort is tolerated, though it sells packs our rules would
 ## 9. Order of work
 
 **Now, with the early game (no money involved):** louder drops and a unique announcement; earned Lantern Caches with
-shown odds and pity; the Wardrobe with collection counts; new earned looks as early rewards, including the first flame
-colour from the first boss. These are fun on their own and build the shelves the store will later sit beside.
+shown odds and pity; the Wardrobe with collection counts; earned looks as early rewards, starting with the 33 that exist (for example a
+flame colour from the first boss), and new earned looks only from a vetted Codex art pack. These are fun on their own and build the shelves the store will later sit beside.
 
 **Before a store (design cards, no code that takes money):** the Lantern Rules into `DECISIONS.md` (Cal can veto); the
 platform choice (Cal); accounts and purchase safety (Opus high, saves and online layer, Cal); the store screen behind
-a switch that is off (Sonnet medium); the parry spark slot (Sonnet medium, with a readability check).
+a switch that is off (Sonnet medium); the parry spark slot (Sonnet medium, code only, with a readability check) and its first sparks as a Codex art pack.
 
 **At launch:** the look store, the Lantern Keeper and the supporter packs.
 
