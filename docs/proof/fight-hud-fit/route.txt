@@ -1,0 +1,11 @@
+# seed: 1
+# Proof for card fight-hud-fit: the mid fixture (Tobin, Zone 20) in a fight. The HP plates show the full hero and foe names
+# with their numbers, and the place line is whole. The full overlap check is `node tools/check.mjs --only="fight HUD"`.
+new mid
+wait 8
+expect ".hud.vs .hero-plate"
+expect ".hud.vs .mob"
+expect ".hud.vs .hud-zone"
+shot fight-hud
+wait 6
+shot fight-hud-later
