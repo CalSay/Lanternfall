@@ -1,17 +1,20 @@
 # The first hour: beat map
 
-Version 1, 2026-10-06. Owner: the early-game plan (`/mnt/project-files/early-game/plan.md`). Any card that changes what a
+Version 2, 2026-10-06. Owner: the early-game plan (`/mnt/project-files/early-game/plan.md`). Any card that changes what a
 player sees in minutes 0 to 60 updates this map in the same PR, or names the beat it serves. The nightly walk
 (`tools/walk.mjs`, card `qa-first-hour-walk`) plays a fresh save against it; in week 1 its measured times replace the
 estimated ones, and a beat more than 50% off its time becomes a finding.
 
-**The hook.** You carry the last lamp down a dark road, and every fight is yours to win with a well-timed parry. Every
-boss you beat opens a Lantern Cache, lights the next stretch of road, and gives your hero something new to wear or wield.
+**The hook.** You carry the last lamp down a dark road, and every fight is yours to win with a well-timed parry. The
+first time you beat each boss, a Lantern Cache opens, lights the next stretch of road, and gives your hero something
+new to wear or wield.
 
 **Rules for every beat.**
-- At most one new thing (a tab, a system, a currency, a verb) per beat, and at most 2 in any 3 minutes of the first 30
-  (scorecard F4).
-- A big moment at least every 5 minutes, never a gap over 8 (F3). Moments: see the plan, section 1.
+- At most one new thing (a tab, a system, a currency) per beat, and at most 2 in any 3 minutes of the first 30
+  (scorecard F4). The three fight verbs (Attack with the ability, Dodge, Parry) are taught one per fight and are not
+  counted as new things; a beat's "Learns" column still names one.
+- A big moment at least every 5 minutes, never a gap over 8 (F3). Moments: see the plan, section 1. Every zone
+  Captain's first clear opens a Lantern Cache (`cache-core`), so those wins count as moments too.
 - New things are announced between fights, never during a parry window (F5).
 - Times are for the casual walk (follows Next Up, parries and dodges at a set rate). **est** = estimated, **meas** =
   measured by the walk.
@@ -23,7 +26,9 @@ queued feature per 60 s of un-paused play (`ONBOARD_TUNE.gap`, `55-onboard.js`).
 player's own act or a drop opened it: walking to gather, the fire lit (Camp), the Workbench built (Craft), the Tavern
 built, the first Star, the first unique, the raid. Its seeded cold walk opened, after the first boss: Hero 0:32,
 Gather 1:32, fire 1:54, Next Up 2:55, away strip 3:55, Bounties 4:56, Almanac 7:00, Forage 8:11, Bestiary 9:11, Stars
-10:06, Uniques 12:01. A cold human player was far slower: player B reached zone 5 at minute 25 (`/mnt/project-files/
+10:06, Uniques 12:01. That bot walk breaks F4 (Hero, Gather and the fire inside 1:22): a 60 s gap lets 3 new things
+land in 2 minutes, and F4 needs about 90 s between them, so the times below space new things at least 1:30 apart and
+card `unlock-gap-trial` takes the gap to a judge (the fire's 150 s bound and "a player's act never waits" stand). A cold human player was far slower: player B reached zone 5 at minute 25 (`/mnt/project-files/
 early-game/playtest-coldB.md`). The minutes below are targets for a casual human; the nightly walk replaces them.
 
 | # | Min | On screen | Player does | Learns (one thing) | Earns, and how it lands | Should feel | Story or hero beat | Status |
@@ -37,23 +42,25 @@ early-game/playtest-coldB.md`). The minutes below are targets for a casual human
 | 7 | 2:25 | Fights 4 and 5 | Uses all three verbs | nothing new | | flow | | today |
 | 8 | 2:55 | The zone 1 Captain; Hesketh: "Watch the red rings" | Fights the boss | Boss strings | | tension | | today (line: card `guide-voice`) |
 | 9 | 3:45 | **Big moment: first boss win**, and the **first Lantern Cache** reveals the win's drops plus the Ember Red lantern colour; the stage relights | Taps to open | Caches | the win's drops; Ember Red | surprise | The hero's first line | card `moment-layer`, `cache-core`, `hero-voice` |
-| 10 | 4:15 | The Hero tab (spacing governor), with the first attribute point | Spends the point | Attributes | +1 point | ownership | | `story-unlock-gates`; points from PR #58; moment `moment-layer` |
-| 11 | 5:15 | The Gather tab; Hesketh: "Wood first." | Chops 8 logs | Gathering | logs | | | `story-unlock-gates`; line `unlock-voice` |
-| 12 | 7:00 | **Medium moment: the camp fire lit**; the Camp tab; Hesketh's talk plays here | Lights the fire, listens | Camp | a home | relief | "Every road needs a place to come back to." | today (fire); cards `intro-and-picker` (talk moves here), `moment-layer` |
-| 13 | 8:00 | Next Up in the compact top bar | Reads Next Up | Next Up | | direction | | `story-unlock-gates`; card `top-bar-compact` |
-| 14 | 10:00 | The Workbench and the first tool: the first craft, with a **result card** showing its grade | Crafts the tool | Crafting | a tool, revealed | pride | | today (chain); card `craft-reveal` |
-| 15 | 12:00 | The away chip joins the top bar | | Leaving pays only what you set going | | | | `story-unlock-gates`; card `top-bar-compact` |
-| 16 | 14:00 | Bounties (zone 4); Hesketh's board also at Camp; a ready bounty shows a Claim on Next Up | Claims in place | Bounties | gold or Essence | small win | | today (unlock); card `bounties-anywhere` |
-| 17 | 16:00 | **Big moment: a starter you didn't pick joins** (zone 5, when you meet them) | Can switch | Switching | a hero, at the road's level | company | Their first scene (bible 4.4) | idea; needs a card; PR #58 for the level |
+| 10 | 5:30 | The Hero tab (spacing governor), with the first attribute point | Spends the point | Attributes | +1 point | ownership | | `story-unlock-gates`; points from PR #58; moment `moment-layer` |
+| 11 | 7:15 | The Gather tab; Hesketh: "Wood first." | Chops 8 logs | Gathering | logs | | | `story-unlock-gates`; line `unlock-voice` |
+| 12 | 9:00 | **Medium moment: the camp fire lit**; the Camp tab; Hesketh's talk plays here | Lights the fire, listens | Camp | a home | relief | "Every road needs a place to come back to." | today (fire); cards `intro-and-picker` (talk moves here), `moment-layer` |
+| 12a | 10:00 | **Moment: the second cache**, from the zone 2 Captain's first clear | Taps to open | nothing new | the win's drops | surprise | | card `cache-core`, `moment-layer` |
+| 13 | 10:45 | Next Up in the compact top bar | Reads Next Up | Next Up | | direction | | `story-unlock-gates`; card `top-bar-compact` |
+| 14 | 12:30 | The Workbench and the first tool: the first craft, with a **result card** showing its grade | Crafts the tool | Crafting | a tool, revealed | pride | | today (chain); card `craft-reveal` |
+| 14a | 14:00 | **Medium moment: the zone 3 Captain's cache** (auto-opened from the 3rd) | | nothing new | the win's drops | | | card `cache-core`, `moment-layer` |
+| 15 | 14:15 | The away chip joins the top bar | | Leaving pays only what you set going | | | | `story-unlock-gates`; card `top-bar-compact` |
+| 16 | 16:00 | Bounties (zone 4); Hesketh's board also at Camp; a ready bounty shows a Claim on Next Up | Claims in place | Bounties | gold or Essence | small win | | today (unlock); card `bounties-anywhere` |
+| 17 | 17:45 | **Big moment: a starter you didn't pick joins** (zone 5, when you meet them) | Can switch | Switching | a hero, at the road's level | company | Their first scene (bible 4.4) | card `starters-join-when-met`; PR #58 for the level |
 | 18 | 20:00 | **Medium moment: first Star** (zone 6 Captain); the Stars tab | Equips the Star | Stars | a Star | power | | today; moment `moment-layer` |
 | 19 | 22:00 | The first Forge weapon (where the walk measures the cold chain ending, est. 20 to 25) | Crafts a weapon | | a weapon, revealed | pride | | today; card `craft-reveal` |
 | 20 | 25 to 40 | **Big moment: first unique**, by chance (15% on a first clear, with modifiers; no pity); the Uniques tab | Equips it | Uniques | the unique | delight | The hero's unique line | today (drop); cards `moment-layer`, `cache-core`, `hero-voice` |
 | 21 | 28:00 | The Bestiary | Reads a foe | Foe types; the Foe tab now shows what you've learned | | curiosity | | `story-unlock-gates`; card `foe-weak-resists` |
-| 22 | 30:00 | The Almanac | | | | | | `story-unlock-gates` |
+| 22 | 31:30 | The Almanac | | | | | | `story-unlock-gates` |
 | 23 | 35:00 | The Tavern | Meets the keeper | Hands | | company | | `story-unlock-gates` |
 | 24 | 45:00 | A cache look and the Wardrobe count (only once `cache-art` passes) | Dresses the hero | Looks | a look | ownership | | card `cache-looks` |
-| 25 | 50:00 | **Big moment: the second starter joins** (zone 10); the Codex | | The Codex | a hero | company | Their first scene | `story-unlock-gates` (Codex); join: needs a card |
-| 26 | 60:00 | The third starter joins at zone 15 | | | a hero | company | Their first scene | needs a card |
+| 25 | 50:00 | **Big moment: the second starter joins** (zone 10); the Codex | | The Codex | a hero | company | Their first scene | `story-unlock-gates` (Codex); join: card `starters-join-when-met` |
+| 26 | 60:00 | The third starter joins at zone 15 | | | a hero | company | Their first scene | card `starters-join-when-met` |
 
 ## What this map does not decide
 
