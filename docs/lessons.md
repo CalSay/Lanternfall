@@ -43,6 +43,10 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - When hiding a name from a menu, grep every data string the menus render (Scroll sources, Star sources), not only the row you edited. Why: Codex P1 on PR #54 found the Fenmother still named in the Abilities and Stars tabs. (story-opening, 2026-10-06)
 - Put a card's new checks in its own marked `check.mjs` section before "removed systems (W2-C)"; edit other sections only where an old expectation changed. Why: Codex P1 on PR #54 (two-agent-split.md shared-file rule). (story-opening, 2026-10-06)
 
+- Write a story line for a thing that is not in the game yet as data keyed by what it needs (a zone monster, a Champion encounter), and make the reader silent until it exists. Why: unique lines and Bestiary lines name Champions and monsters the screen does not show yet, and a visible line would contradict the stage. (story-systems-hollow, 2026-10-06)
+- Check a story hook against the systems the review slated to change before you tie to it (Training, Contracts, Hands routes). Stub or skip the hook and list it. Why: Cal's "why first" rule; this card left Ashby's route, Training and the Renown Day omen alone. (story-systems-hollow, 2026-10-06)
+- A named Hand's line or route hint may not name a hero the player has not met. Why: Nan's line named Grenna and Bracken's named Bram, both met later in the chapter. (story-systems-hollow, 2026-10-06)
+
 ## UI and menus
 
 - Away card: lead with "While away, gathering continues and fighting stops", show it even when nothing was earned, put the work-limit bar below results. Why: the same 8 hours felt opposite depending on what the hero was doing; Codex P1 for the missing idle-fighter card. (away-clarity, 2026-10-06)

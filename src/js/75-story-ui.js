@@ -21,7 +21,7 @@ var storyUI;   // var: 75-codex-ui (earlier in the build) reads it at run time
   const menuOpen = () => !!S.tab;   // a landscape menu covers most of the stage
   const stageBox = () => document.getElementById('stageBox');
   const chapterOf = r => { const i = REGIONS.findIndex(x => x.id === r); return i >= 0 ? `Chapter ${i + 1}: ${REGIONS[i].n.replace(/^./, c => c.toUpperCase())}` : ''; };
-  const KIND = { region: 'Chapter', champion: 'Champion', elder: 'Elder', page: 'Page', voice: 'A voice', npc: 'Meeting', letter: 'Letter', note: 'Note' };
+  const KIND = { region: 'Chapter', champion: 'Champion', elder: 'Elder', page: 'Page', voice: 'A voice', npc: 'Meeting', letter: 'Letter', note: 'Note', ranks: 'Page' };
 
   // check.mjs sets this in its browser contexts so a new game's opening card never sits over a test's first click; scenes are skipped (and filed)
   const TEST_SKIP = (() => { try { return localStorage.getItem('lanternfall.test.nostory') === '1'; } catch (e) { return false; } })();

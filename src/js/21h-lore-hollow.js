@@ -9,13 +9,9 @@
 // STORY_BEATS (21k-story-hollow.js) and stays silent where the game is not ready.
 //
 // Exposed names:
-//   LORE_BESTIARY[key]     -> { name, region, foe, elder, champ }: one line each for the type, its
-//                             Elder and its champion, for the 14 foe types. Keys: the TYPES keys for
-//                             the Hollow (slime bat bones beetle spore golem wraith); for the Sunken
-//                             Coast the keys R2-1 should give its types (crab gull deckhand kelp jelly
-//                             witch coral). `name` is the type's display name, so a reader can match
-//                             TYPES[i].name if the coast keys end up different. region: 'hollow' | 'coast'.
-//                             (story-hollow-script rewrites these by roster monster.)
+//   LORE_FOES[zone]        -> { name, line }: one Bestiary line per roster monster of zones 1 to 35 (rule 4: the shape it copied).
+//                             55-story.js storyBestiary shows it in the Codex once the monster is in the game and the hero has reached its zone.
+//                             (story-systems-hollow replaced the old per-type LORE_BESTIARY lines, which broke canon.)
 //   RAID_LORE[bossName]    -> one flavour line per world raid foe, keyed by the BOSSES names
 //                             (20-data.js). Client text only: it never touches world/boss or raiders.
 //   LORE_LIMITS, LORE_BANNED, STORY_LIMITS, STORY_RETIRED: the limits and the banned words tools/check.mjs enforces.
@@ -45,68 +41,46 @@ const STORY_RETIRED = [/\bsoak(ed|s)?\b/i, /\bcorrupt/i, /\btwisted\b/i, /\bonly
   /\b(Moss Slime|Cave Bat|Rattlebones|Barrow Beetle|Spore Cap|Quarry Golem|Marsh Wraith)\b/, /\bparty\b/i, /\blisten(er|ing)\b/i,
   /\bcrowned\b/i, /\blanternbearer\b/i, /\bthe heroes\b/i];
 
-// The Codex tiles are titled by TYPES (Moss Slime, Cave Bat ...), which are not the monsters the Hollow shows (Thorn Imp, Gloomjaw ...).
-// Until story-hollow-script keys these entries to the roster monsters, storyBestiary() shows none of them (21h review, story-delivery).
-const LORE_BESTIARY_LIVE = false;
-const LORE_BESTIARY = {
-  // the Hollow (TYPES keys)
-  slime: { name: 'Moss Slime', region: 'hollow',
-    foe: 'A shadow poured into the shape of pond moss. It creeps over lamps and smothers them.',
-    elder: 'The oldest copy of Hollow moss. It spreads over every lamp it finds.',
-    champ: 'The biggest moss copy the seams give up. It comes when the small ones fail.' },
-  bat: { name: 'Cave Bat', region: 'hollow',
-    foe: 'A shape copied from the Batwing bats, whole from the dark. It dives at the weakest light.',
-    elder: 'A copy of the Bat Queen the orchard knew. It snuffs the weakest flame first.',
-    champ: 'Wings like a cloak, copied from a bat long gone. It dives at the smallest flame.' },
-  bones: { name: 'Rattlebones', region: 'hollow',
-    foe: 'Bone shapes copied from the Bonefield dead, whole from the dark. They walk at lamps.',
-    elder: 'A captain copied from the old battle. He calls the copies to stand against every lamp.',
-    champ: 'A guard copied from an old king\'s guard. Only fire lays it down.' },
-  beetle: { name: 'Barrow Beetle', region: 'hollow',
-    foe: 'Shapes copied from barrow beetles, built whole in the dark. They bury lamps like the dead.',
-    elder: 'A shell copied from a barrow door. It goes for the one who holds the line.',
-    champ: 'A copy the size of a cart. It shoves barrow dirt over every lamp it finds.' },
-  spore: { name: 'Spore Cap', region: 'hollow',
-    foe: 'A shadow copied from the spore caps of Morwen\'s garden. Its dust chokes any flame.',
-    elder: 'The whole garden, copied and standing. Its spore cloud fills the air.',
-    champ: 'A cap as tall as a door, copied in the dark. Its dust hangs long after it falls.' },
-  golem: { name: 'Quarry Golem', region: 'hollow',
-    foe: 'A copy of the quarry\'s stone, cut in the dark. It walks at your light to crush it.',
-    elder: 'The quarry\'s first cut stone, copied by the dark. Grenna still knows its shape.',
-    champ: 'Copied from the deepest seam. It knows only weight, and this one has plenty.' },
-  wraith: { name: 'Marsh Wraith', region: 'hollow',
-    foe: 'Shapes copied from people who followed green lights. They lure lamps in and drown them.',
-    elder: 'Each Elder Wraith copies a lost keeper. The one at the marsh heart copies the first.',
-    champ: 'A copy of a keeper. It keeps the others going, for the dark now.' },
-  // the Sunken Coast (the keys R2-1 should use; see the header)
-  crab: { name: 'Shinglecrab', region: 'coast',
-    foe: 'Shore crabs with shells grown thick in the dark. They pinch out any lamp on the shingle.',
-    elder: 'It shuts itself in and waits for the tide, like the sea does.',
-    champ: 'Its shell is crusted like an old hull. The tide itself seems to carry it in.' },
-  gull: { name: 'Stormgull', region: 'coast',
-    foe: 'The gulls learned to take more than fish. They dive at anything that shines.',
-    elder: 'It brings the squall with it and strips every shield bare.',
-    champ: 'A gull as wide as a sail. It snatches shields the way the others snatch fish.' },
-  deckhand: { name: 'Drowned Deckhand', region: 'coast',
-    foe: 'Sailors who steered for the green light. They drag lamps down to the wrecks.',
-    elder: 'The Bosun. He rings the ship\'s bell, and his crew still comes.',
-    champ: 'The first mate. He still gives orders, and the drowned still obey.' },
-  kelp: { name: 'Kelp Strangler', region: 'coast',
-    foe: 'An eel as long as a boat, grown in the kelp. It holds the strong one still.',
-    elder: 'It holds two at once now.',
-    champ: 'Old as the reef. It has wrapped round more boats than Hallam can count.' },
-  jelly: { name: 'Lanternjelly', region: 'coast',
-    foe: 'Each one carries a drop of stolen light. Burst it, and the light is free.',
-    elder: 'So full of green light it splits in three.',
-    champ: 'So bright the fish keep clear of it. Burst it, and the lagoon shines gold.' },
-  witch: { name: 'Brine Witch', region: 'coast',
-    foe: 'Saltreach\'s wise women. They asked the water to spare the village. It kept them.',
-    elder: 'She hexes the healers first, then mends herself.',
-    champ: 'The eldest of them. She still counts the drowned houses, one by one.' },
-  coral: { name: 'Coral Warden', region: 'coast',
-    foe: 'The Coral Nave\'s stone guards, grown over with coral. They still guard the pews.',
-    elder: 'It raises a reef wall around itself.',
-    champ: 'The altar\'s own guard. Coral has grown over its eyes, but it keeps its post.' }
+// One Bestiary line for each roster monster of the Hollow (zones 1 to 35), by zone number (bible 5, rule 4; the monsters are in
+// docs/design/enemies-c22-hollow-final.md). Each line says what shape the Shadowborn copied, and names only what its sprite shows.
+// A line shows in the Codex Bestiary only once the monster is in the game (ZONE_FOES[z], 59l) and the hero has reached its zone;
+// the rest wait, written and silent (55-story.js storyBestiary). `name` equals the roster name; a check keeps them in step.
+const LORE_FOES = {
+  1: { name: 'Thorn Imp', line: 'Copied from the briars that shut the village in. Thorn blades grow from both arms.' },
+  2: { name: 'Gloomjaw', line: 'Copied from a night flower, all petals and throat. Its jaws close on any spark.' },
+  3: { name: 'Briarbound Ravager', line: 'A soldier\'s shape copied from memory, in bark armour. One arm is a cleaver.' },
+  4: { name: 'Thornwing', line: 'Copied from a hedge thorn, with two crescent wings. It dives at the quick and the loud.' },
+  5: { name: 'Nightseed Sorcerer', line: 'A small masked caster. A seed shape floats between its root claws. It was never a plant.' },
+  6: { name: 'Riftwing', line: 'Crescent wings copied from the cave bats, set round an empty chest. It has no eyes.' },
+  7: { name: 'Maw Cantor', line: 'A mouth in its chest and three bright teeth. It copied the shape of a singer.' },
+  8: { name: 'Cave Devourer', line: 'Six legs copied from cave crawlers. A second jaw opens in its chest.' },
+  9: { name: 'Glassfang Fiend', line: 'Copied from cave crystal: blades like glass on its arms, four tusks round an empty face.' },
+  10: { name: 'Echoblade', line: 'Copied from an echo in the caves. Its elbow spurs hum before its shadow blades move.' },
+  11: { name: 'Ossuary Knight', line: 'A knight\'s shape copied from the old battle. Its lance folds along its spine.' },
+  12: { name: 'Pall Reaper', line: 'Copied from a grave shroud and a scythe. It walks on its two scythe arms.' },
+  13: { name: 'Gravetyrant', line: 'Copied from a battering ram, with a ram\'s skull grown into its shoulder.' },
+  14: { name: 'Boneweft Seer', line: 'Copied from the masks mourners wear. Horn needles ring its head like a halo.' },
+  15: { name: 'Skullmaw', line: 'Six empty faces copied from the old battle crown one snapping jaw.' },
+  16: { name: 'Cryptmaw', line: 'Copied from a barrow door and its hooks. Shield plates overlap round a sideways mouth.' },
+  17: { name: 'Shroudweaver', line: 'Copied from a barrow web. Two arms weave dark threads while four legs stab.' },
+  18: { name: 'Chitin Lancer', line: 'Copied from barrow beetle shells, whole from the dark. One arm is a spear.' },
+  19: { name: 'Gravespine', line: 'A curled shape copied from a buried spine. A chisel sting arches over its head.' },
+  20: { name: 'Sepulchral Acolyte', line: 'A headless shape copied from mourners at a barrow. Its one eye sits in its throat.' },
+  21: { name: 'Mycelial Oracle', line: 'Copied from Morwen\'s garden: gill crowns on a stem, and a face of teeth.' },
+  22: { name: 'Rot Herald', line: 'Copied from a stag and a rotting log. Spore chambers glow in its chest.' },
+  23: { name: 'Sporefiend', line: 'Three legs and a glowing sail between two horns, copied from the garden\'s big caps.' },
+  24: { name: 'Gillblade Dancer', line: 'Copied from mushroom gills. Its four arms open like fans of blades.' },
+  25: { name: 'Hollow Bloom', line: 'A black flower copied from the garden\'s blooms. A lance stands in its mouth.' },
+  26: { name: 'Riftforged Colossus', line: 'Copied from the quarry\'s own stone, plated round a chained black star.' },
+  27: { name: 'Seamstalker', line: 'Copied from a crack in the rock. It looks like one only when it turns sideways.' },
+  28: { name: 'Shardfiend', line: 'Copied from the seam\'s crystal. Three jaws turn round one dark eye.' },
+  29: { name: 'Ironjaw Sentinel', line: 'A gate guard\'s shape in metal skin. Its jaw folds up into a shield.' },
+  30: { name: 'Obsidian Basilisk', line: 'Copied from riftglass and old sinew. It looks out of one sideways lens.' },
+  31: { name: 'Lantern Eater', line: 'Copied from a keeper who followed a green light. A stolen light sits in its belly.' },
+  32: { name: 'Mire Seraph', line: 'Six wings like black reeds, copied from the marsh. A spear runs through both arms.' },
+  33: { name: 'Veil Stalker', line: 'Copied from the fog. Where its face should be hangs a veil of dark flesh.' },
+  34: { name: 'Blackreed Haruspex', line: 'Copied from the marsh reeds. Its ribs make a bow, and it plucks shadow strings.' },
+  35: { name: 'Fen Abomination', line: 'A headless brute copied from the drowned. A hollow lantern hangs in its chest.' }
 };
 
 const RAID_LORE = {

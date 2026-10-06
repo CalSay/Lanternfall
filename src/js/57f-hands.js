@@ -39,7 +39,8 @@
 //         handsEmpty(id) -> units thrown away (the UI asks first: "Throw away 120 Oak Log?")
 //         handsStoryHeard(id) -> level of the story told | 0 (N2, when the player hears it)
 //         handsTalk(id) -> saved ordinary talk counter; never consumes an earned story
-//         handsTalkInfo(id) -> { id, name, rar, jobName, lv, line, status, traits, jobs, suggest } | null
+//         handsTalkInfo(id) -> { id, name, rar, jobName, lv, line, about, status, traits, jobs, suggest } | null
+//         handsAbout(key) -> the line under a named Hand (Fennel's changes once Elowen is met); handsLitFor(app) -> a random applicant's "Lit for ..." line
 //         handsCatchUp(now, away) -> [returns]   (tick and away phase; tools)
 //         handsRollApp() -> a new applicant (not placed on the board; pity counts it). Tools only (check.mjs pity).
 //         handsExclude(fn(key) -> mult) -> remove()   a transient speed bonus to leave out of the rate
@@ -58,7 +59,8 @@
 //     talk, st (stories heard), hired (ms), hrs (hours worked), got (units delivered), back (ms home) }
 //   job adds fee, secs, kp/lp/physic (snapshot finds), queue:[{fee,seed}], q/qFee (remaining), linked.
 //   start in the future is a paid rest; linked=false starts the overlap window during catch-up.
-//   routes: { nan: true } preserves route milestones; other primary probes register without new save fields.
+//   routes: { nan: true } preserves route milestones; other primary probes register without new save fields. routes.hollowDawn: ms of the
+//     morning Ada and Pell arrive (the next 06:00 after the Hollow's Elder fell; HANDS_ROUTES elder, story-systems-hollow).
 //   job = { kind, t, start, end, rate, seed, bo: [[pct, from, to, tag]] } (bo: Friendly and Felling Song
 //     windows, fixed when a partner is sent), or null.
 //   board.apps[i] = { id, n, r, sk, tr, cl, key, at, free }; board.next: ms of the next arrival (0 = not open yet).
@@ -69,7 +71,8 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
   handsHeroRate, handsTraits, handsName, handsRarName, handsSkillName, handsNodeName, handsLevelNeed, handsStoryDue,
   handsCampTrait, handsMealMult, handsMealBonus, campClock, handsStats, handsHire, handsTurnAway, handsLetGo,
   handsSend, handsSendAgain, handsEmpty, handsStoryHeard, handsTalk, handsTalkInfo, handsCatchUp, handsExclude, handsRollApp,
-  handsTents, handsFee, handsUnpaid, handsRandomApps, handsLegendSpots, handsRecall, handsQueueMax, registerHandsRoute, handsSendAgainPreview;
+  handsTents, handsFee, handsUnpaid, handsRandomApps, handsLegendSpots, handsRecall, handsQueueMax, registerHandsRoute, handsSendAgainPreview,
+  handsAbout, handsLitFor;
 
 {
   const T = HANDS_TUNE;
@@ -299,8 +302,18 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
   handsRandomApps = () => randApps();
   handsLegendSpots = () => HANDS_LEGENDS.map(x => {
     const h = H().list.find(o => o.key === x.key), a = H().board.apps.find(o => o.key === x.key), route = HANDS_ROUTES[x.key] || {};
-    return { key: x.key, n: x.n, sk: x.sk, about: x.about, hint: route.hint || '', state: h ? 'hired' : a ? 'board' : route.live === false ? 'later' : 'away', app: a || null };
+    return { key: x.key, n: x.n, sk: x.sk, about: handsAbout(x.key), hint: route.hint || '', state: h ? 'hired' : a ? 'board' : route.live === false ? 'later' : 'away', app: a || null };
   });
+  // The line under a named Hand: Sister Fennel names Elowen's chapel only once Elowen is met (the Hollow's Elder is down).
+  const elowenMet = () => S.maxZone > REGIONS[0].z1;
+  handsAbout = key => { const l = LEG[key] || (key === HANDS_TAM.key ? HANDS_TAM : null); return l ? (l.aboutAfter && elowenMet() ? l.aboutAfter : l.about) : ''; };
+  // Every random applicant is lit for someone: one line, picked by id so the Hand keeps it from the board to the camp (bible 6.3).
+  handsLitFor = a => {
+    if (!a) return '';
+    const k = String(a.id || a.n || ''); let h = 0;
+    for (let i = 0; i < k.length; i++) h = (h * 31 + k.charCodeAt(i)) >>> 0;
+    return HANDS_LIT[h % HANDS_LIT.length];
+  };
   const usedNames = () => new Set(H().list.map(x => x.n).concat(H().board.apps.map(x => x.n)));
   const usedKeys = () => new Set(H().list.map(x => x.key).concat(H().board.apps.map(x => x.key)).filter(Boolean));
   function rollRarity() {
@@ -605,7 +618,7 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
     const suggest = suggested && jobs.some(o => o.kind === suggested.kind && o.t === suggested.t) ? suggested
       : jobs.length ? { kind: jobs[0].kind, t: jobs[0].t, why: 'A node for your profession.' } : null;
     return { id: x.id, name: x.n, rar: handsRarName(x), jobName: handsSkillName(x), lv: x.lv,
-      line, about: named && named.about || '', status, traits: handsTraits(x), jobs, suggest };
+      line, about: named ? handsAbout(x.key) : handsLitFor(x), status, traits: handsTraits(x), jobs, suggest };
   };
   handsStats = () => {
     const h = H(), byRar = {};
@@ -625,8 +638,8 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
       const tam = newHand({ id: 'tam', n: HANDS_TAM.n, r: HANDS_TAM.r, sk: HANDS_TAM.sk, tr: HANDS_TAM.tr, cl: null, key: HANDS_TAM.key }, t);
       h.list.push(tam); h.hired = (h.hired | 0) + 1;
       emit('handsHire', { id: tam.id, r: tam.r, free: true });
-      toast(quiet ? 'Tam, Hesketh\'s nephew, has a tent at camp. He gathers for the heroes. Hire more gatherers at the Tavern board.'
-        : 'Tam, Hesketh\'s nephew, comes to the fire. "Uncle said the Lanternbearer\'s lamp catches." He takes a tent and gathers for the heroes.', 'good', icon, quiet ? 'normal' : 'high');
+      toast(quiet ? 'Tam, Hesketh\'s nephew, has a tent at camp. He gathers for the camp. Hire more gatherers at the Tavern board.'
+        : 'Tam, Hesketh\'s nephew, comes up out of the cellars to the fire. "Uncle said your lamp catches." He takes a tent and gathers for the camp.', 'good', icon, quiet ? 'normal' : 'high');
     }
     if (!h.board.next) { h.board.next = t + period(); if (randApps().length < T.maxWait) addApp(makeApp(t), quiet); }
     emit('handsOpen', { quiet: !!quiet });
@@ -636,15 +649,25 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
   function arriveNamed(x, at, quiet) {
     if (usedKeys().has(x.key)) return false;
     H().seq = (H().seq | 0) + 1;
-    addApp({ id: 'h' + H().seq, n: x.n, r: 'legendary', sk: x.sk, tr: (x.tr || ['steady', 'old']).slice(), cl: x.cl || null, key: x.key, at, free: 0 }, quiet);
+    addApp({ id: 'h' + H().seq, n: x.n, r: x.r || 'legendary', sk: x.sk, tr: (x.tr || ['steady', 'old']).slice(), cl: x.cl || null, key: x.key, at, free: 0 }, quiet);
     H().met[x.key] = at; return true;
   }
+  // A route with `elder` (Ada and Pell): the Elder of that region is down (the best zone is past the region's last zone), and then it is the
+  // next morning. The first look after the Elder falls remembers the next 06:00 in routes.hollowDawn; nobody arrives before it.
+  const morningAfter = r => {
+    if (!r || !r.elder) return false;
+    const reg = r.elder === 'hollow' ? REGIONS[0] : null;
+    if (!reg || !(S.maxZone > reg.z1)) return false;
+    const R = H().routes, t = now();
+    if (!(R.hollowDawn > 0)) { const d = new Date(t); d.setHours(6, 0, 0, 0); if (d.getTime() <= t) d.setDate(d.getDate() + 1); R.hollowDawn = d.getTime(); }
+    return t >= R.hollowDawn;
+  };
   function later(quiet = false) {
     for (const x of HANDS_LEGENDS) {
       const r = HANDS_ROUTES[x.key];
       if (!r || r.live === false || usedKeys().has(x.key)) continue;
       const primary = H().routes[x.key] || safe(() => routeProbes[x.key] && routeProbes[x.key](), false)
-        || (x.key === 'loy' && lvOf('loom') >= 2) || (x.key === 'ashby' && lvOf('kitchen') >= 1);
+        || (x.key === 'loy' && lvOf('loom') >= 2) || (x.key === 'ashby' && lvOf('kitchen') >= 1) || morningAfter(r);
       if (primary || (r.fallback && S.maxZone >= r.fallback) || H().met[x.key]) arriveNamed(x, now(), quiet);
     }
   }
