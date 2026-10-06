@@ -86,14 +86,19 @@ const bossHpMult = z => PACE.bossHp * (isRegionBoss(z) ? PACE.regionBoss : 1);
 const regionHp = z => { let m = 1; const st = [].concat(PACE.regionStep); for (let r = 1; r <= Math.floor(z / PACE.region); r++) m *= st[Math.min(r, st.length) - 1]; return m; };
 
 // ================= formulas =================
-const lvlMult = () => 1 + PACE.heroLv * (S.L - 1);
+// hero-progression-rework: with HERO_TUNE.training off the level bonus is attrNeutral() (55-attributes: half of the old
+// +PACE.heroLv a level, plus the hero's points as if spread evenly, so power outside a turn fight is the same for every
+// build); turn fights apply the build (attrRel). With it on, today's flat bonus, bit for bit.
+const lvlMult = () => HERO_TUNE.training ? 1 + PACE.heroLv * (S.L - 1) : attrNeutral();
 const dmgMult = () => (1 + 0.2 * S.relic.banner) * (1 + gear().might / 100) * mod('dmg');
 // ECON-A (economy-2 6.1): gear is the only gold-gain (capped +30%, gearGold in 55-econ); mod('gold') carries
 // only the Gold Rain Omen. Fortune and the Lucky Coin became crit damage (Precision, the Loaded Die).
 const goldMult = () => (1 + gearGold() / 100) * mod('gold');
 const raidMult = () => (1 + 0.3 * S.relic.heart) * (1 + gear().raid / 100) * (Date.now() < rallyUntil ? 1.25 : 1) * mod('raid');
 // W2-A Training: the Attack level's hit before the hero's level, gear and damage (heroPow).
-const atkSteps = (a, x, x2) => { const n = Math.floor(a / PACE.atkEvery), b = Math.floor(PACE.atkBend / PACE.atkEvery); return Math.pow(x, Math.min(n, b)) * Math.pow(x2, Math.max(0, n - b)); };
+// hero-progression-rework: with attributes live (HERO_TUNE.smooth) the fifth-level step is a smooth power, x^((a - 2) / 5), the
+// same mean over each block of five levels; with the flag on, the staircase.
+const atkSteps = (a, x, x2) => { const n = attrOn() && HERO_TUNE.smooth ? Math.max(0, (a - 2) / PACE.atkEvery) : Math.floor(a / PACE.atkEvery), b = Math.floor(PACE.atkBend / PACE.atkEvery); return Math.pow(x, Math.min(n, b)) * Math.pow(x2, Math.max(0, n - b)); };
 const atkCurve = a => (4 + PACE.atkPer * a) * atkSteps(a, PACE.atkX, PACE.atkX2);
 const heroPow = () => lvlMult() * dmgMult() * (1 + gear().attack / 100);
 const heroAtk = () => atkCurve(trainLv('atk')) * lvlMult() * dmgMult() * (1 + gear().attack / 100);
@@ -119,7 +124,68 @@ const mobGold = z => foeGoldBase(z) * earlyGold(z) * goldMult();
 // (tier 5) began at zone 25 and a tier-5 weapon arrived before the Region 1 boss.
 const zoneTier = z => Math.max(1, PACE.essTier.filter(s => z >= s).length);
 const essChance = () => 0.25 * (1 + gear().ess / 100) * mod('essence');
-const xpNeed = () => Math.floor(15 * Math.pow(1.3, S.L - 1));
+// hero-progression-rework: the road and the level curve (docs/design/hero-progression-build.md 3). roadLv(z) is the level the
+// road expects at zone z (HERO_TUNE.road: a monotone cubic through the points, the last slope on past the end); roadZone(L) is its
+// inverse (fractional, at least 1); roadLevel() the road's level at the furthest zone
+// (+ HERO_TUNE.joinLead, the lead a hero who plays it keeps); roadFoeXp(z) what a normal foe pays
+// (59k turnFoeSetup's sum without its rounding); roadZoneFights(z) the fights a
+// zone of road takes (HERO_TUNE.fights, a steady ratio between points, flat past the ends), roadSlope(z) the road's levels a
+// zone there, roadFights(L) the fights a level takes (the two divided).
+// The road is a monotone cubic through HERO_TUNE.road (Fritsch-Carlson), so its slope, and with it the fights a level takes,
+// changes smoothly between points (judge 3b; Codex: the straight lines made a level cost jump x2 at zone 17).
+const ROAD_M = (() => {
+  const R = HERO_TUNE.road, n = R.length, d = [], m = new Array(n).fill(0);
+  for (let i = 0; i < n - 1; i++) d.push((R[i + 1][1] - R[i][1]) / (R[i + 1][0] - R[i][0]));
+  m[0] = d[0]; m[n - 1] = d[n - 2];
+  for (let i = 1; i < n - 1; i++) m[i] = d[i - 1] * d[i] <= 0 ? 0 : (d[i - 1] + d[i]) / 2;
+  for (let i = 0; i < n - 1; i++) {
+    if (d[i] === 0) { m[i] = m[i + 1] = 0; continue; }
+    const a = m[i] / d[i], b = m[i + 1] / d[i], h = a * a + b * b;
+    if (h > 9) { const t = 3 / Math.sqrt(h); m[i] = t * a * d[i]; m[i + 1] = t * b * d[i]; }
+  }
+  return m;
+})();
+function roadSeg(z) { const R = HERO_TUNE.road; let i = 1; while (i < R.length - 1 && z > R[i][0]) i++; return i; }
+function roadLv(z) {
+  const R = HERO_TUNE.road, n = R.length;
+  if (!(z > 1)) return 1;
+  if (z >= R[n - 1][0]) return R[n - 1][1] + (z - R[n - 1][0]) * ROAD_M[n - 1];
+  const i = roadSeg(z), a = R[i - 1], b = R[i], h = b[0] - a[0], t = (z - a[0]) / h, t2 = t * t, t3 = t2 * t;
+  return (2 * t3 - 3 * t2 + 1) * a[1] + (t3 - 2 * t2 + t) * h * ROAD_M[i - 1] + (-2 * t3 + 3 * t2) * b[1] + (t3 - t2) * h * ROAD_M[i];
+}
+function roadZone(L) {
+  const R = HERO_TUNE.road, n = R.length;
+  if (!(L > 1)) return 1;
+  if (L >= R[n - 1][1]) return R[n - 1][0] + (L - R[n - 1][1]) / ROAD_M[n - 1];
+  let lo = 1, hi = R[n - 1][0];
+  for (let k = 0; k < 50; k++) { const mid = (lo + hi) / 2; if (roadLv(mid) < L) lo = mid; else hi = mid; }
+  return Math.max(1, (lo + hi) / 2);
+}
+const roadLevel = () => Math.max(1, Math.floor(roadLv(S.maxZone || 1) + (HERO_TUNE.joinLead || 0)));   // the join level: where a hero who plays the road stands
+const roadFoeXp = z => 1.5 * z * (typeof TURN_TUNE === 'object' && TURN_TUNE.on ? TURN_TUNE.xpX : 1);   // smooth: no rounding steps between zones
+function roadSlope(z) {
+  const R = HERO_TUNE.road, n = R.length;
+  if (z <= 1) return ROAD_M[0];
+  if (z >= R[n - 1][0]) return ROAD_M[n - 1];
+  const i = roadSeg(z), a = R[i - 1], b = R[i], h = b[0] - a[0], t = (z - a[0]) / h, t2 = t * t;
+  return Math.max(1e-6, (6 * t2 - 6 * t) * a[1] / h + (3 * t2 - 4 * t + 1) * ROAD_M[i - 1] + (-6 * t2 + 6 * t) * b[1] / h + (3 * t2 - 2 * t) * ROAD_M[i]);
+}
+function roadZoneFights(z) {
+  const F = HERO_TUNE.fights;
+  if (z <= F[0][0]) return F[0][1];
+  if (z >= F[F.length - 1][0]) return F[F.length - 1][1];
+  let i = 1;
+  while (z > F[i][0]) i++;
+  const a = F[i - 1], b = F[i];
+  return a[1] * Math.pow(b[1] / a[1], (z - a[0]) / (b[0] - a[0]));   // a steady ratio between the points (judge 3c: no jumps)
+}
+const roadFights = L => { const z = roadZone(L); return roadZoneFights(z) / roadSlope(z); };
+// hero-progression-rework: flag on, today's 15 x 1.3^(L - 1); flag off, the fights a level takes x what a foe pays on the road.
+// hero-progression-rework: XP earned by a hero more than HERO_TUNE.aheadLead levels past the road's level at the furthest
+// zone is x HERO_TUNE.aheadX for each level further (fractional): levels follow the road, and away time cannot run a hero
+// far past the zone they can fight. 1 with the flag on.
+const xpAheadX = (L = S.L) => HERO_TUNE.training ? 1 : Math.pow(HERO_TUNE.aheadX, Math.max(0, L - roadLv(S.maxZone || 1) - HERO_TUNE.aheadLead));
+const xpNeed = (L = S.L) => HERO_TUNE.training ? Math.floor(15 * Math.pow(1.3, L - 1)) : Math.max(1, Math.round(roadFights(L) * roadFoeXp(roadZone(L))));
 // Skill XP and tier gates (GP1, knobs in SKILL_TUNE, 20-data). skillNeed(lv, k): k picks the crafting
 // curve for a station skill; without k it is the gathering curve.
 const skillCurve = k => SKILL_TUNE.craftSkills.includes(k) ? SKILL_TUNE.craftNeed : SKILL_TUNE.gatherNeed;

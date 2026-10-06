@@ -109,6 +109,7 @@ const OBS = `(() => {
   o.toasts = q('#toasts .toast');
   o.cards = q('.mm-ov, .mm-toast, .bsheet-ov, .tv-card, .cb-banner, .tv-banner, .gl-card, .away-ov, .modal, .dd-feat, .feat-card', n => ({ cls: (n.className || '').toString().split(' ')[0], text: tx(n).slice(0, 160) }));
   o.tabs = q('.tabs .tab');
+  o.intro = (n => n && vis(n) ? [n.querySelector('.intro-who'), n.querySelector('.intro-line')].filter(Boolean).map(tx).join(' ') : '')(document.querySelector('#introScreen'));   // the drawn opening: one line a tap
   o.create = !!document.querySelector('#createScreen') && vis(document.querySelector('#createScreen'));
   o.floats = LF_EYES.floats().map(f => f.txt).slice(0, 6);
   let s = {};
@@ -350,7 +351,14 @@ async function run() {
     if (gt - st.phAt >= 30) { st.phAt = gt; for (const p of await page.evaluate(PLACEHOLDERS)) placeholders.add(p); }
     for (const c of checks.values()) if (!c.shotTried) { c.shotTried = true; c.shot = await shot(page, 'finding-' + c.check); }   // every finding gets its shot
     let did = false;
-    if (o.create) did = await pickHero();
+    if (o.intro) {   // the opening's stills and Hesketh's fire: the bot taps through without reading, like the picker
+      const sig = o.intro.trim();
+      if (!st.introSeen) st.introSeen = new Set();
+      if (!st.introSeen.has(sig)) { st.introSeen.add(sig); await note(page, 'card', sig, { extra: { cls: 'intro' }, tag: 'card-intro' }); }
+      did = await click('#introScreen .intro-go', 300);
+      if (did) await advance(300, 16);
+    }
+    if (!did && o.create) did = await pickHero();
     if (!did) did = await dismissCards(o);
     if (!did) did = await followTip(o);
     if (!did && (!o.s.tab || o.s.tab === 'adv')) did = await fight(o);   // a menu that covers the action bar is not a fight the player can press

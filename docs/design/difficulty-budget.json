@@ -166,7 +166,7 @@
       "hero": "wren",
       "player": "casual",
       "side": "above",
-      "limit": 1,
+      "limit": 0.99,
       "owner": "boss-tiers",
       "until": "2026-11-15",
       "why": "this boss is too easy for a hero who keeps up"
@@ -312,11 +312,31 @@
       "why": "Tobin wins far more than Wren and Pip here"
     },
     {
+      "row": "z20-boss",
+      "hero": "wren",
+      "player": "casual",
+      "side": "above",
+      "limit": 0.84,
+      "owner": "boss-tiers",
+      "until": "2026-11-15",
+      "why": "this boss is too easy for a hero who keeps up"
+    },
+    {
+      "row": "z20-boss",
+      "hero": "pip",
+      "player": "casual",
+      "side": "above",
+      "limit": 0.94,
+      "owner": "boss-tiers",
+      "until": "2026-11-15",
+      "why": "this boss is too easy for a hero who keeps up"
+    },
+    {
       "row": "z20-boss-behind",
       "hero": "wren",
       "player": "casual",
       "side": "above",
-      "limit": 0.61,
+      "limit": 0.75,
       "owner": "gear-weight",
       "until": "2026-12-01",
       "why": "a tier behind costs this hero more than 60 points of casual wins (gear is close to a wall)"
@@ -326,7 +346,7 @@
       "hero": "tobin",
       "player": "casual",
       "side": "below",
-      "limit": 0.06,
+      "limit": 0,
       "owner": "gear-weight",
       "until": "2026-12-01",
       "why": "a tier behind barely matters for this hero"
@@ -336,7 +356,7 @@
       "hero": "pip",
       "player": "casual",
       "side": "above",
-      "limit": 0.75,
+      "limit": 0.88,
       "owner": "gear-weight",
       "until": "2026-12-01",
       "why": "a tier behind costs this hero more than 60 points of casual wins (gear is close to a wall)"
@@ -346,7 +366,7 @@
       "hero": "wren",
       "player": "casual",
       "side": "below",
-      "limit": 0,
+      "limit": 0.01,
       "owner": "mid-zone-wall",
       "until": "2026-11-15",
       "why": "at the road's level this boss is a wall"
@@ -356,7 +376,7 @@
       "hero": "tobin",
       "player": "casual",
       "side": "below",
-      "limit": 0.56,
+      "limit": 0.66,
       "owner": "mid-zone-wall",
       "until": "2026-11-15",
       "why": "at the road's level this boss is a wall"
@@ -376,7 +396,7 @@
       "hero": "wren",
       "player": "good",
       "side": "below",
-      "limit": 0.86,
+      "limit": 0.89,
       "owner": "mid-zone-wall",
       "until": "2026-11-15",
       "why": "at the road's level this boss is a wall"
@@ -386,7 +406,7 @@
       "hero": "pip",
       "player": "good",
       "side": "below",
-      "limit": 0.77,
+      "limit": 0.83,
       "owner": "mid-zone-wall",
       "until": "2026-11-15",
       "why": "at the road's level this boss is a wall"
@@ -426,7 +446,7 @@
       "hero": "wren",
       "player": "good",
       "side": "below",
-      "limit": 0.18,
+      "limit": 0.34,
       "owner": "mid-zone-wall",
       "until": "2026-11-15",
       "why": "at the road's level this boss is a wall"
@@ -436,7 +456,7 @@
       "hero": "pip",
       "player": "good",
       "side": "below",
-      "limit": 0.31,
+      "limit": 0.42,
       "owner": "mid-zone-wall",
       "until": "2026-11-15",
       "why": "at the road's level this boss is a wall"
@@ -466,7 +486,7 @@
       "hero": "tobin",
       "player": "casual",
       "side": "above",
-      "limit": 0.94,
+      "limit": 0.9,
       "owner": "boss-tiers",
       "until": "2026-11-15",
       "why": "this boss is too easy for a hero who keeps up"
@@ -505,36 +525,6 @@
       "row": "z34-boss",
       "hero": "tobin",
       "player": "casual",
-      "side": "below",
-      "limit": 0.01,
-      "owner": "mid-zone-wall",
-      "until": "2026-11-15",
-      "why": "at the road's level this boss is a wall"
-    },
-    {
-      "row": "z34-boss",
-      "hero": "pip",
-      "player": "casual",
-      "side": "below",
-      "limit": 0,
-      "owner": "mid-zone-wall",
-      "until": "2026-11-15",
-      "why": "at the road's level this boss is a wall"
-    },
-    {
-      "row": "z34-boss",
-      "hero": "wren",
-      "player": "good",
-      "side": "below",
-      "limit": 0.3,
-      "owner": "mid-zone-wall",
-      "until": "2026-11-15",
-      "why": "at the road's level this boss is a wall"
-    },
-    {
-      "row": "z34-boss",
-      "hero": "pip",
-      "player": "good",
       "side": "below",
       "limit": 0.35,
       "owner": "mid-zone-wall",
@@ -542,11 +532,41 @@
       "why": "at the road's level this boss is a wall"
     },
     {
+      "row": "z34-boss",
+      "hero": "pip",
+      "player": "casual",
+      "side": "below",
+      "limit": 0,
+      "owner": "mid-zone-wall",
+      "until": "2026-11-15",
+      "why": "at the road's level this boss is a wall"
+    },
+    {
+      "row": "z34-boss",
+      "hero": "wren",
+      "player": "good",
+      "side": "below",
+      "limit": 0.55,
+      "owner": "mid-zone-wall",
+      "until": "2026-11-15",
+      "why": "at the road's level this boss is a wall"
+    },
+    {
+      "row": "z34-boss",
+      "hero": "pip",
+      "player": "good",
+      "side": "below",
+      "limit": 0.59,
+      "owner": "mid-zone-wall",
+      "until": "2026-11-15",
+      "why": "at the road's level this boss is a wall"
+    },
+    {
       "row": "z35-elder",
       "hero": "wren",
       "player": "casual",
       "side": "above",
-      "limit": 0.68,
+      "limit": 0.4,
       "owner": "boss-tiers",
       "until": "2026-11-15",
       "why": "the Fenmother is easier than the Captains around her"
@@ -566,7 +586,7 @@
       "hero": "pip",
       "player": "casual",
       "side": "above",
-      "limit": 0.84,
+      "limit": 0.45,
       "owner": "boss-tiers",
       "until": "2026-11-15",
       "why": "the Fenmother is easier than the Captains around her"
@@ -576,7 +596,7 @@
       "hero": "wren",
       "player": "casual",
       "side": "above",
-      "limit": 0.98,
+      "limit": 0.86,
       "owner": "boss-tiers",
       "until": "2026-11-15",
       "why": "this boss is too easy for a hero who keeps up"
@@ -596,7 +616,7 @@
       "hero": "pip",
       "player": "casual",
       "side": "above",
-      "limit": 1,
+      "limit": 0.97,
       "owner": "boss-tiers",
       "until": "2026-11-15",
       "why": "this boss is too easy for a hero who keeps up"
@@ -666,7 +686,7 @@
       "hero": "pip",
       "player": "casual",
       "side": "above",
-      "limit": 0.92,
+      "limit": 0.88,
       "owner": "gear-weight",
       "until": "2026-12-01",
       "why": "a tier behind costs this hero more than 60 points of casual wins (gear is close to a wall)"

@@ -34,10 +34,10 @@ early-game/playtest-coldB.md`). The minutes below are targets for a casual human
 
 | # | Min | On screen | Player does | Learns (one thing) | Earns, and how it lands | Should feel | Story or hero beat | Status |
 |---|---|---|---|---|---|---|---|---|
-| 1 | 0:00 | Three stills, one line each; Skip. Text over the darkened Mossy Hollow background until `first-hour-art` passes | Taps through or skips | Why there is a lamp | nothing | curiosity | The lamp and the spiral; the last lamp goes out; you run with yours | card `intro-and-picker`, `first-hour-art` |
-| 2 | 0:25 | "Who are you?": Wren, Tobin, Pip in second person | Picks a hero | Who they are | their hero | ownership | "You are Tobin Reed. You never run first." | card `intro-and-picker` |
-| 3 | 0:35 | Hesketh's fire over still 3, at most 3 lines; then the guide panel with his face | Reads | A guide exists | nothing | warmth | Hesketh lights his fire from your lamp | panel with his face: done (`guide-panel`); the fire talk: card `intro-and-picker` |
-| 4 | 0:45 | Fight 1 (within 45 s of opening for a player who taps through) | Attack, then the ability | Attack and the ability | gold ticks up | power | | tip panel placement: done (`guide-panel`, never over the stage); phase: cards |
+| 1 | 0:00 | Three stills, one line each; Skip. Text over the darkened Mossy Hollow background until `first-hour-art` passes | Taps through or skips | Why there is a lamp | nothing | curiosity | The lamp and the spiral; the last lamp goes out; you run with yours | built by `intro-and-picker`, `first-hour-art` |
+| 2 | 0:25 | "Who are you?": Wren, Tobin, Pip in second person | Picks a hero | Who they are | their hero | ownership | "You are good at doors." | built by `intro-and-picker` |
+| 3 | 0:35 | Hesketh's fire over still 3, at most 3 lines; then the guide panel with his face | Reads | A guide exists | nothing | warmth | Hesketh lights his fire from your lamp | built by `intro-and-picker`, `guide-panel` |
+| 4 | 0:45 | Fight 1 (within 45 s of opening for a player who taps through) | Attack, then the ability | Attack and the ability | gold ticks up | power | | tip panel placement: done (`guide-panel`, never over the stage); phase: done (`guide-phase-guards`, Attack and ability tips wait for your turn) |
 | 5 | 1:25 | Fight 2 | Dodges a heavy hit | Dodge | | relief | | today (phase guard: `story-unlock-gates` or `guide-phase-guards`) |
 | 6 | 1:55 | Fight 3 | Parries a heavy hit | Parry | PERFECT and hit-stop on a good parry (today); the parry stamp and lamp row (card) | skill | | today; card `hit-feel` |
 | 7 | 2:25 | Fights 4 and 5 | Uses all three verbs | nothing new | | flow | | today |
@@ -51,7 +51,7 @@ early-game/playtest-coldB.md`). The minutes below are targets for a casual human
 | 14 | 12:30 | The Workbench and the first tool: the first craft, with a **result card** showing its grade | Crafts the tool | Crafting | a tool, revealed | pride | | today (chain); result card built by `craft-reveal` (craft-reveal PR) |
 | 14a | 14:00 | **Big moment: the zone 3 Captain's cache**, with a third lantern colour (opens automatically; a big card because it holds a look) | | nothing new | the win's drops plus a colour | delight | | card `cache-core`, `moment-layer` |
 | 15 | 14:15 | The away chip joins the top bar | | Leaving pays only what you set going | | | | today: the always-on away sentence is gone; the away chip shows while gathering (`top-bar-compact`); show rule `story-unlock-gates` |
-| 16 | 16:00 | Bounties (zone 4); Hesketh's board also at Camp; a ready bounty shows a Claim on Next Up | Claims in place | Bounties | gold or Essence | small win | | today (unlock); card `bounties-anywhere` |
+| 16 | 16:00 | Bounties (zone 4); Hesketh's board also at Camp; a ready bounty shows a Claim on Next Up | Claims in place | Bounties | gold or Essence | small win | | today (unlock); `bounties-anywhere` done: Next Up and the "Bounty ready" notice claim in place, board also at Camp |
 | 16a | 16:30 | **Medium moment: the zone 4 Captain's cache** (opens automatically, a banner) | | nothing new | the win's drops | | | card `cache-core`, `moment-layer` |
 | 17 | 17:45 | **Big moment: the zone 5 Champion's first clear**, its post scene in the card; Tobin joins here unless you picked him | Can switch (if Tobin joined) | Switching, unless you picked Tobin | a hero, at the road's level (unless you picked Tobin) | company | Tobin's meet scene (bible 4.4) | cards `champion-moment`, `starters-join-when-met`; PR #58 for the level |
 | 18 | 20:00 | **Big moment: first Star** (zone 6 Captain); the zone 6 cache opens inside the same card; the Stars tab | Equips the Star | Stars | a Star | power | | today (Star); cards `moment-layer` (Star is big), `cache-core` |
