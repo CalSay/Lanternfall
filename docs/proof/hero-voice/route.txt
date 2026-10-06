@@ -1,20 +1,25 @@
 # seed: 1
-# Proof for card hero-voice: the mid fixture (Tobin) crafts for the first time: his line shows in the banner with his portrait (one bark a fight end);
-# the hero sheet keeps an "On the road" record. Replayed at 360x740 and 740x360. The first-boss card line is covered by the check.mjs hero-voice section.
+# Proof for card hero-voice: the mid fixture (Tobin) opens his hero sheet, which keeps an "On the road" record (bosses beaten, uniques found,
+# best parry streak, days on the road). Replayed at 360x740 and 740x360. The barks themselves (the first-boss card line with the portrait, one
+# bark a fight end, silence with no starter) are proved by the check.mjs "hero voice" section, which shoots docs/proof/hero-voice/boss-card-*.png.
+# Sideways, the guide panel hides the notices column, so a bark banner is not a stable thing for a route to expect there (carded: hero-voice-banner-under-guide).
 new mid
 wait 3
-tap-if "Got it"
-tap-if "Dismiss this tip"
 tap-if "Continue"
-wait 1
-tap "Craft"
-wait 1
-tap-if "Got it"
-tap-if "Continue"
-wait 1
-tap "Craft Iron Warblade"
 wait 2
-expect "Crooked, but it holds."
-shot bark-craft
-tap-if "Keep"
-tap-if "Close"
+tap-if "Continue"
+tap "Hero"
+wait 2
+tap-if "Continue"
+wait 1
+tap-if "Continue"
+tap "Tobin, open hero sheet"
+wait 2
+tap-if "Continue"
+wait 1
+tap-if "Tobin, open hero sheet"
+wait 1
+expect "On the road"
+expect "Best parry streak"
+expect "Days on the road"
+shot hero-sheet-record
