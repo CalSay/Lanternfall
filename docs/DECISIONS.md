@@ -351,6 +351,35 @@ Every card that adds a price, a currency, a timer or a gate passes all ten. (202
   reverting their wiring commit; portraits have the Classic art switch. Saves: unaffected (art only; the Classic art
   switch adds one settings flag with a default).
 
+## Early game (Opus judge on the early-game plan, 2026-10-06; Cal can veto any line)
+
+Plan and rulings: `/mnt/project-files/early-game/plan.md`, `plan-judge.md`. Beat map: `docs/design/first-hour.md`.
+
+- **No telegraph stands.** There are no foe intent icons. The Foe tab shows only what you have learned: moves after a
+  kill, weakness at 5 kills, "Watch for" at 15.
+- **The PR #53 dock cuts are final.** The combat log is dropped: on a 360 px screen it is clutter, and the turn strip and
+  numbers carry the same information. "Next" chips stay dropped. The Bag tab belongs to `bag-slot-and-steady-charges`.
+- **Lantern Caches.** A zone boss's first clear opens a Lantern Cache that reveals that win's drops. Its only new reward
+  is a look roll, with its odds and a pity counter printed. Replays give no cache. Caches, keys and pity are never sold.
+  Caches hold no relics and no time skips.
+- **Looks.** Deed looks stay Deed-only. Cache looks are their own catalogue, drawn by Codex and vetted as a set. The
+  first cache a save opens gives a Deepwell lantern colour and relights the stage. The Wardrobe tags each look Deed,
+  Cache or (later) Store, and counts earned looks only.
+- **Moments.** Big moments (first boss win, a cache with a look or unique, a unique, a new hero, a Great Lantern) and
+  medium moments (the first and every 5th level, a new ability, the first Star, a look, a Rare-or-better craft) sit
+  outside the pop budget, under their own cap. Big: one card at a time at fight end, holding the game. Medium: at most
+  one per fight end, in the notices slot. At most 8 big plus medium in the first 20 minutes. This refines "the early
+  game must not be spammed".
+- **The guide is Old Hesketh, with a face.** Landscape: the side column's notices slot. Portrait: docked above the
+  action bar. Never over the fighters or the HP bars.
+- **Bounties.** A finished bounty can be claimed from Next Up and from its ready notice, and the board also shows at
+  Camp. An open menu never pauses foe turns.
+- **The opening.** Three stills, then "Who are you?", then Hesketh's fire. His talk plays when the camp fire is lit. The
+  first fight comes within 45 s for a player who taps through. Hero lines are for starters only, from `STORY_BEATS.hero`
+  (story bible 4.4).
+- **First-hour art.** Two packs, `first-hour-art` and `cache-art`. Star icons are parked. Approved assets (the Mossy
+  Hollow background, roster portraits, Deepwell colours) may be reused as they are.
+
 ## Working process
 
 - **Claude builds, Codex reviews.** Claude does the majority of the work. Codex is a third-party reviewer that is

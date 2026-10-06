@@ -16,34 +16,44 @@ boss you beat opens a Lantern Cache, lights the next stretch of road, and gives 
 - Times are for the casual walk (follows Next Up, parries and dodges at a set rate). **est** = estimated, **meas** =
   measured by the walk.
 
-**Status column.** `today` = the build at `eb7f732` already does this. `card` = the named card builds it.
+**Status column.** `today` = the integration build already does this. `card` = the named card builds it.
+
+**The unlock clock** belongs to `story-unlock-gates`. Every FEATURES rule stays, and `onboardCheck` opens at most one
+queued feature per 60 s of un-paused play (`ONBOARD_TUNE.gap`, `55-onboard.js`). A feature skips the queue when the
+player's own act or a drop opened it: walking to gather, the fire lit (Camp), the Workbench built (Craft), the Tavern
+built, the first Star, the first unique, the raid. Its seeded cold walk opened, after the first boss: Hero 0:32,
+Gather 1:32, fire 1:54, Next Up 2:55, away strip 3:55, Bounties 4:56, Almanac 7:00, Forage 8:11, Bestiary 9:11, Stars
+10:06, Uniques 12:01. A cold human player was far slower: player B reached zone 5 at minute 25 (`/mnt/project-files/
+early-game/playtest-coldB.md`). The minutes below are targets for a casual human; the nightly walk replaces them.
 
 | # | Min | On screen | Player does | Learns (one thing) | Earns, and how it lands | Should feel | Story or hero beat | Status |
 |---|---|---|---|---|---|---|---|---|
-| 1 | 0:00 | Four drawn stills, one line each; Skip | Taps through (or skips) | Why there is a lamp | nothing | curiosity | The village, the last lamp out, the dark, the run | card `intro-and-picker`, `first-hour-art` |
-| 2 | 0:40 | "Who are you?": Wren, Tobin, Pip in second person | Picks a hero | Who they are | their hero | ownership | "You are Tobin Reed. You never run first." | card `intro-and-picker` |
-| 3 | 0:50 | Hesketh's fire; the guide panel with his face | Reads one line | A guide exists | nothing | warmth | Hesketh lights his fire from your lamp | card `guide-panel`, `guide-voice` |
-| 4 | 1:00 | Fight 1 | Attack, then the ability | Attack and the ability | gold ticks up (small) | power | | today (tip placement: card) |
-| 5 | 1:40 | Fight 2 | Dodges a heavy hit | Dodge | | relief | | today (phase gating: card) |
-| 6 | 2:10 | Fight 3 | Parries a heavy hit | Parry | a "PERFECT" stamp on a good parry | skill | | card `hit-feel` |
-| 7 | 2:40 | Fights 4 and 5 | Uses all three verbs | nothing new | | flow | | today |
-| 8 | 3:10 | The zone 1 Captain; Hesketh: "Watch the red rings" | Fights the boss | Boss strings | | tension | | today (line: card) |
-| 9 | 4:00 | **Big moment: first boss win** and the **first Lantern Cache** | Taps to open | Caches | a flame colour; the stage relights in it; Essence | surprise | The hero's first bark | card `moment-layer`, `lantern-cache`, `looks-early`, `hero-voice` |
-| 10 | 4:30 | Zone 2. Hesketh: "Wood first. Then we talk." The Gather tab appears (the only new thing at zone 2) | Chops 10 logs | Gathering | logs | | Hesketh's "wood first" pays off | `story-unlock-gates` (schedule); card `unlock-pace` (10 logs, Hesketh line; today 20 logs) |
-| 11 | 7:00 | **Medium moment: the camp fire lit**; the Camp tab appears | Lights the fire | Camp | a home | relief | "Every road needs a place to come back to." | today (moment: card) |
-| 12 | 9:00 | Zone 3: **medium moment, level up**; the Hero tab appears | Spends the first attribute point | Attributes | +1 point | ownership | | `story-unlock-gates`; points from PR #58 |
-| 13 | 11:00 | Next Up appears in the compact top bar (after the first point, or zone 4) | Reads Next Up | Next Up | | direction | | `story-unlock-gates`; card `unlock-pace` (top bar) |
-| 14 | 13:00 | Zone 4: the away chip (PR #59) joins the top bar. First gold buys the first weapon at the Forge; the Craft tab | Crafts a weapon | Crafting | a weapon, with a **result card** showing its grade | pride | | `story-unlock-gates`; card `first-gold-and-camp-strip`, `craft-reveal` |
-| 15 | 16:00 | **Big moment: a starter you didn't pick joins** (zone 5, when you meet them) | Can switch heroes | Switching | a hero, at the road's level | company | Their first scene (bible 4.4) | idea from `story-unlock-gates`; needs a card; PR #58 for the level |
-| 16 | 18:00 | Hesketh's board at camp; a bounty to claim | Claims from the notice | Bounties | gold or Essence; a small moment | small win | | card `bounties-anywhere` |
-| 17 | 20:00 | **Medium moment: first Star** (zone 6 Captain); the Stars tab | Equips the Star | Stars | a Star | power | | today (moment, menu: cards) |
-| 18 | 25:00 | **Big moment: first unique** (per-boss pity keeps it near here); the Uniques tab and trophy wall | Equips it | Uniques | the unique | delight | The hero's unique bark | `story-unlock-gates`; card `moment-layer`, `lantern-cache` |
-| 19 | 28:00 | Zone 7: the Bestiary | Reads a foe | Foe types | | curiosity | Bestiary lines | `story-unlock-gates` |
-| 20 | 30:00 | Zone 8 or 30 min: the Almanac | | | | | | `story-unlock-gates` |
-| 21 | 35:00 | The Tavern (today 14 min or zone 8, which is too early; target zone 9 to 10 or 35 min) | Meets the keeper | Hands | | company | | open: `story-unlock-gates` or card `unlock-pace` |
-| 22 | 45:00 | A look found in a cache; the Wardrobe count | Dresses the hero | Looks | a look | ownership | | card `looks-early` |
-| 23 | 50:00 | **Big moment: the second starter joins** (zone 10); zone 11: the Codex | | The Codex | a hero | company | Their first scene | `story-unlock-gates` (Codex); join: needs a card |
-| 24 | 60:00 | Zone 12 to 15: the third starter joins at zone 15 | | | a hero | company | Their first scene | needs a card |
+| 1 | 0:00 | Three stills, one line each; Skip. Text over the darkened Mossy Hollow background until `first-hour-art` passes | Taps through or skips | Why there is a lamp | nothing | curiosity | The lamp and the spiral; the last lamp goes out; you run with yours | card `intro-and-picker`, `first-hour-art` |
+| 2 | 0:25 | "Who are you?": Wren, Tobin, Pip in second person | Picks a hero | Who they are | their hero | ownership | "You are Tobin Reed. You never run first." | card `intro-and-picker` |
+| 3 | 0:35 | Hesketh's fire over still 3, at most 3 lines; then the guide panel with his face | Reads | A guide exists | nothing | warmth | Hesketh lights his fire from your lamp | card `intro-and-picker`, `guide-panel` |
+| 4 | 0:45 | Fight 1 (within 45 s of opening for a player who taps through) | Attack, then the ability | Attack and the ability | gold ticks up | power | | today (tip placement and phase: cards) |
+| 5 | 1:25 | Fight 2 | Dodges a heavy hit | Dodge | | relief | | today (phase guard: `story-unlock-gates` or `guide-phase-guards`) |
+| 6 | 1:55 | Fight 3 | Parries a heavy hit | Parry | PERFECT and hit-stop on a good parry (today); the parry stamp and lamp row (card) | skill | | today; card `hit-feel` |
+| 7 | 2:25 | Fights 4 and 5 | Uses all three verbs | nothing new | | flow | | today |
+| 8 | 2:55 | The zone 1 Captain; Hesketh: "Watch the red rings" | Fights the boss | Boss strings | | tension | | today (line: card `guide-voice`) |
+| 9 | 3:45 | **Big moment: first boss win**, and the **first Lantern Cache** reveals the win's drops plus the Ember Red lantern colour; the stage relights | Taps to open | Caches | the win's drops; Ember Red | surprise | The hero's first line | card `moment-layer`, `cache-core`, `hero-voice` |
+| 10 | 4:15 | The Hero tab (spacing governor), with the first attribute point | Spends the point | Attributes | +1 point | ownership | | `story-unlock-gates`; points from PR #58; moment `moment-layer` |
+| 11 | 5:15 | The Gather tab; Hesketh: "Wood first." | Chops 8 logs | Gathering | logs | | | `story-unlock-gates`; line `unlock-voice` |
+| 12 | 7:00 | **Medium moment: the camp fire lit**; the Camp tab; Hesketh's talk plays here | Lights the fire, listens | Camp | a home | relief | "Every road needs a place to come back to." | today (fire); cards `intro-and-picker` (talk moves here), `moment-layer` |
+| 13 | 8:00 | Next Up in the compact top bar | Reads Next Up | Next Up | | direction | | `story-unlock-gates`; card `top-bar-compact` |
+| 14 | 10:00 | The Workbench and the first tool: the first craft, with a **result card** showing its grade | Crafts the tool | Crafting | a tool, revealed | pride | | today (chain); card `craft-reveal` |
+| 15 | 12:00 | The away chip joins the top bar | | Leaving pays only what you set going | | | | `story-unlock-gates`; card `top-bar-compact` |
+| 16 | 14:00 | Bounties (zone 4); Hesketh's board also at Camp; a ready bounty shows a Claim on Next Up | Claims in place | Bounties | gold or Essence | small win | | today (unlock); card `bounties-anywhere` |
+| 17 | 16:00 | **Big moment: a starter you didn't pick joins** (zone 5, when you meet them) | Can switch | Switching | a hero, at the road's level | company | Their first scene (bible 4.4) | idea; needs a card; PR #58 for the level |
+| 18 | 20:00 | **Medium moment: first Star** (zone 6 Captain); the Stars tab | Equips the Star | Stars | a Star | power | | today; moment `moment-layer` |
+| 19 | 22:00 | The first Forge weapon (where the walk measures the cold chain ending, est. 20 to 25) | Crafts a weapon | | a weapon, revealed | pride | | today; card `craft-reveal` |
+| 20 | 25 to 40 | **Big moment: first unique**, by chance (15% on a first clear, with modifiers; no pity); the Uniques tab | Equips it | Uniques | the unique | delight | The hero's unique line | today (drop); cards `moment-layer`, `cache-core`, `hero-voice` |
+| 21 | 28:00 | The Bestiary | Reads a foe | Foe types; the Foe tab now shows what you've learned | | curiosity | | `story-unlock-gates`; card `foe-weak-resists` |
+| 22 | 30:00 | The Almanac | | | | | | `story-unlock-gates` |
+| 23 | 35:00 | The Tavern | Meets the keeper | Hands | | company | | `story-unlock-gates` |
+| 24 | 45:00 | A cache look and the Wardrobe count (only once `cache-art` passes) | Dresses the hero | Looks | a look | ownership | | card `cache-looks` |
+| 25 | 50:00 | **Big moment: the second starter joins** (zone 10); the Codex | | The Codex | a hero | company | Their first scene | `story-unlock-gates` (Codex); join: needs a card |
+| 26 | 60:00 | The third starter joins at zone 15 | | | a hero | company | Their first scene | needs a card |
 
 ## What this map does not decide
 
