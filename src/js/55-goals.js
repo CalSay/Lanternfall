@@ -117,18 +117,33 @@ var forgeGoalPicks = 0;
     go: () => { const b = heroNext(); return b ? { tab: 'party', view: 'training', sel: `#trainRows .tr-row[data-mv="${b.u.id}"]` } : { tab: 'party', view: 'training' }; }
   });
 
-  // Next zone boss: foes left at the frontier, or the boss is ready.
+  // Next zone boss: foes left at the frontier, or the boss is ready. "Ready" means you would usually win (59m bossOdds: scratch
+  // turn fights judged by your own Parry and Dodge record). bossRead() -> null (legacy fights: the old rule), or
+  // { s: 'next' (still working it out) | 'ready' | 'close' | 'weak', win }.
   const bossHeld = () => failDps > 0 && totalDps() <= failDps * 1.15;
+  const bossRead = () => {
+    if (typeof bossOddsOn !== 'function' || !bossOddsOn()) return null;
+    const o = typeof bossOdds === 'function' ? bossOdds() : null;
+    if (!o) return { s: 'next', win: 0 };
+    return { s: o.win >= BOSS_ODDS.ready ? 'ready' : o.win >= BOSS_ODDS.close ? 'close' : 'weak', win: o.win };
+  };
+  const bossNow = () => S.zone === S.maxZone && bossReady() && !bossHeld() ? bossRead() : null;
   registerGoal({
     id: 'zone-boss', sys: 'boss', prio: 2,
     // after a lost try, "ready" waits until you are 15% stronger than then (what auto-challenge waits for too):
     // the bar shows how close you are
-    pct: () => S.zone !== S.maxZone ? 0.5 : !bossReady() ? Math.min(1, S.kills / ZONE_FIGHTS) : bossHeld() ? Math.min(0.99, totalDps() / (failDps * 1.15)) : 1,
-    label: () => S.zone !== S.maxZone ? `Go back to Zone ${S.maxZone} and push on`
-      : !bossReady() ? `${ZONE_FIGHTS - S.kills} more fights to the Zone ${S.maxZone} boss`
-      : bossHeld() ? `The Zone ${S.maxZone} boss beat you. Train, then try again` : `Boss ready in Zone ${S.maxZone}`,
+    pct: () => { if (S.zone !== S.maxZone) return 0.5; if (!bossReady()) return Math.min(1, S.kills / ZONE_FIGHTS); if (bossHeld()) return Math.min(0.99, totalDps() / (failDps * 1.15));
+      const b = bossRead(); return !b || b.s === 'ready' ? 1 : b.s === 'next' ? 0.99 : Math.max(0.01, Math.min(0.99, b.win / BOSS_ODDS.ready)); },
+    label: () => { if (S.zone !== S.maxZone) return `Go back to Zone ${S.maxZone} and push on`;
+      if (!bossReady()) return `${ZONE_FIGHTS - S.kills} more fights to the Zone ${S.maxZone} boss`;
+      if (bossHeld()) return `The Zone ${S.maxZone} boss beat you. Train, then try again`;
+      const b = bossRead(), z = S.maxZone;
+      return !b || b.s === 'ready' ? `Boss ready in Zone ${z}` : b.s === 'next' ? `The Zone ${z} boss is next`
+        : b.s === 'close' ? `Zone ${z} boss: a close fight. Train to be safe` : `Zone ${z} boss is too strong. Train first`; },
     icon: { ic: ['banner', '#E0524F', { 7: '#FFB347' }] },
-    go: { tab: 'adv', sel: '#gateBtn', fn: () => { if (S.zone !== S.maxZone) setZone(S.maxZone); } }
+    go: () => { const b = bossNow();
+      return b && (b.s === 'close' || b.s === 'weak') ? { tab: 'party', view: 'training' }
+        : { tab: 'adv', sel: '#gateBtn', fn: () => { if (S.zone !== S.maxZone) setZone(S.maxZone); } }; }
   });
 
   // Bounties: the one closest to done (a finished one is ready to claim).
