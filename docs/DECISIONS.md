@@ -277,6 +277,17 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   heroes start dressed in a grade 0 starter set. (2026-10-01; `docs/design/equipment-art.md`)
 - **Backgrounds:** the painted Mossy Hollow night background is approved and in the game. (2026-10-02)
 - **Map:** a hybrid (A's map, C's night, light and landmarks): "light in the dark". (2026-09-28; not built)
+- **Who vets art (2026-10-06):** the Opus art judge under the Autopilot gates, after a red team, using the art
+  freeze's own standard (whole packs, every piece matching, no stopgaps, no code-drawn art). Cal may veto from the
+  digest. Character art ships on, with a "Classic art" switch for one release. Icons must fit the live meaning, not the
+  name. (Cal 2026-10-05 gates, 2026-10-06 18:30 and 18:41; `CLAUDE.md` wording still to update.)
+- **Codex art packs, judge verdicts (2026-10-06, art-pack-triage):** ability icons: wire 36 of Codex's drafts for the
+  live 42 abilities (keep the C26 Echo Shot and Fireball; Shield Bash moves to Codex's red-gold one), a hero's icons go
+  in only when all 14 are whole, so Pip first; Power Shot, Barbed Arrow, Pinning Shot and Shield Throw go back to Codex
+  (due Fri 2026-10-09). Resource nodes (c26): re-brief, Codex finishes the scene pack (four gather backgrounds) before
+  they go in. Starting equipment (c27): shelved until heroes can show gear. Hunting drafts (c24): superseded by the live
+  interim. Enemies (c22): already in. Hero concept boards: re-brief as a matched portrait pack. Reasons and red team:
+  `/mnt/project-files/autopilot/reports/art-pack-triage.md`. (built: not yet; cards `wire-ability-icons` and others)
 
 ## Working process
 
@@ -285,8 +296,8 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   (`docs/handoff/claude-to-codex/reviewer/README.md`). Codex still draws new raster art when a card needs it.
   (2026-10-05)
 - **Autopilot:** Claude plans, builds and merges into the integration branch on its own from an approved backlog,
-  with a daily digest. Cal approves batches, taps gated items (new systems, economy targets, saves, art packs,
-  story canon) and says "ship it" before anything reaches `main` or the live artifact. (2026-10-05)
+  with a daily digest. Cal approves batches, taps gated items (new systems, economy targets, saves,
+  story canon; art packs moved to the judge 2026-10-06) and says "ship it" before anything reaches `main` or the live artifact. (2026-10-05)
 - **Speed and smoothness are checked constantly:** run `node tools/perf.mjs --quick` after each merge wave and fix any
   budget failure before new features. (2026-09-27)
 - **Pace:** steady on weekdays (2 build threads at once), full at weekends (4). On "pause", launch nothing new.
@@ -336,4 +347,10 @@ Kept only to explain current rules. Each line: the old decision, then what repla
 - Season 1 ending at the bottom of the Deepwell (2026-09-28) -> the finale is in the Gloamvale, its Region 5, and the
   Voice retreats into the Deepwell (2026-09-28, after the owner's feedback on LORE-R45).
 - Background art paused (2026-09-29) -> the Mossy Hollow background approved (2026-10-02).
+- Art freeze signer: "No art goes into the game until the owner has vetted the whole pack ... The owner still vets the
+  whole set before it ships" (2026-09-30), and art packs as a Cal-tapped Autopilot gate (2026-10-05) -> the Opus art
+  judge vets under the Autopilot gates, same standard (2026-10-06). Why: Cal's 2026-10-05 gates already put art packs
+  with the judge but `CLAUDE.md` was never aligned, and Codex packs (426 icons, 25 nodes) sat unwired for days waiting
+  on a sign-off nobody owned; Cal 2026-10-06 18:30 "I don't want to be involved" and 18:41 any repo rule may change if
+  it serves the goals.
 - Weekday and weekend usage rules (2026-09-28) -> steady mode (2026-09-28 evening).

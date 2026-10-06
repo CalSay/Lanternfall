@@ -112,3 +112,5 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - With no route to the Foreman, send AUTOPILOT DONE to the coordinator. (systems-map and others, 2026-10-06)
 - After a merge, send AUTOPILOT DONE at once: a merge with no follow-up start leaves build slots empty (stalled 01:25 to 05:22 on 2026-10-06). (foreman, 2026-10-06)
 - Always ask whether a card needs Cal's gates: ship-it, online layer, Netlify beyond the weekly deploy, money or legal, network settings, outside contact. (playbook)
+- Judge a Codex art pack against the live game, not the design it was drawn for, and look at icons at 16 and 24 px in grayscale beside the hero's other icons. Why: 426 icons targeted a 34-hero design and only 36 fit the live 42 abilities; the shared Ranger set drew swords for a bow user; the red team found look-alike groups the 64 px sheets hid. (art-pack-triage, 2026-10-06)
+- Editing `CLAUDE.md` (agent instructions) is refused by the session's permission check as self-modification, even with Cal's written go-ahead. Put the exact wording in a file for Cal and carry on with the rest; never work around it. (art-pack-triage, 2026-10-06)
