@@ -15,7 +15,7 @@
 //                             Coast the keys R2-1 should give its types (crab gull deckhand kelp jelly
 //                             witch coral). `name` is the type's display name, so a reader can match
 //                             TYPES[i].name if the coast keys end up different. region: 'hollow' | 'coast'.
-//                             (story-hollow-script rewrites these by roster monster.)
+//                             (Retired and unread since story-hollow-script: storyBestiary() shows the roster lines instead.)
 //   RAID_LORE[bossName]    -> one flavour line per world raid foe, keyed by the BOSSES names
 //                             (20-data.js). Client text only: it never touches world/boss or raiders.
 //   LORE_LIMITS, LORE_BANNED, STORY_LIMITS, STORY_RETIRED: the limits and the banned words tools/check.mjs enforces.
@@ -45,8 +45,9 @@ const STORY_RETIRED = [/\bsoak(ed|s)?\b/i, /\bcorrupt/i, /\btwisted\b/i, /\bonly
   /\b(Moss Slime|Cave Bat|Rattlebones|Barrow Beetle|Spore Cap|Quarry Golem|Marsh Wraith)\b/, /\bparty\b/i, /\blisten(er|ing)\b/i,
   /\bcrowned\b/i, /\blanternbearer\b/i, /\bthe heroes\b/i];
 
-// The Codex tiles are titled by TYPES (Moss Slime, Cave Bat ...), which are not the monsters the Hollow shows (Thorn Imp, Gloomjaw ...).
-// Until story-hollow-script keys these entries to the roster monsters, storyBestiary() shows none of them (21h review, story-delivery).
+// Retired: the old per-type lines below described the TYPES (Moss Slime, Cave Bat ...), not the monsters the Hollow shows (Thorn Imp,
+// Gloomjaw ...). storyBestiary() no longer reads them (story-hollow-script); a Codex tile now shows the roster's own zone and Captain
+// lines for its slot, from STORY_BEATS. story-systems-hollow deletes this data and the const.
 const LORE_BESTIARY_LIVE = false;
 const LORE_BESTIARY = {
   // the Hollow (TYPES keys)

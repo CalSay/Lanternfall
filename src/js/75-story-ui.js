@@ -5,8 +5,10 @@
 //   - a caption (area title, zone line, Captain line): a line or two in the open sky of the stage, held at most 3 s; any tap ends it.
 //     If a menu covers the stage it is dropped (the Road log in the Journal keeps it).
 //   - a card sequence (region card, Champion and Elder scenes, NPC, Voice, a choice): a small bottom sheet, one card a tap,
-//     with Skip always shown. A card waits while another sheet or full-screen card is up, and is filed as skipped after 28 s.
-//     Skipped or closed early, it is filed in the Journal and its page is kept.
+//     with Skip always shown. A card waits while another sheet or full-screen card is up, and is filed as 'auto' after 28 s.
+//     Skipped or closed early, it is filed in the Journal and its page is kept. A card nobody touches (no pointerdown or key in the
+//     page) for 45 s ends as 'auto' too: the game runs again and the scene waits in the Journal under "Catch up on the story". It
+//     counts no skip (storyClose 'auto' sets no ends entry); every tap or key, and every new card, restarts the 45 s.
 // The Journal (Codex > Journal, storyUI.codexRow): everything read, for re-reading, a "Catch up on the story" entry for
 // scenes the save passed before it could play, and a small Road log of the area titles and zone lines seen.
 // Settings > Story: "Story cards: on / off" (S.story.off). Reduced motion: no slide or fade.
@@ -25,6 +27,8 @@ var storyUI;   // var: 75-codex-ui (earlier in the build) reads it at run time
 
   // check.mjs sets this in its browser contexts so a new game's opening card never sits over a test's first click; scenes are skipped (and filed)
   const TEST_SKIP = (() => { try { return localStorage.getItem('lanternfall.test.nostory') === '1'; } catch (e) { return false; } })();
+  // check.mjs shortens the 45 s an untouched card waits (ms) with this key
+  const IDLE_MS = (() => { try { const v = +localStorage.getItem('lanternfall.test.storyIdle'); return v > 0 ? v : 45000; } catch (e) { return 45000; } })();
   let capNode = null, capT = 0, capOff = null, waitT = 0, now = null, cardApi = null;
 
   // ---------------- a scene arrives ----------------
@@ -44,7 +48,7 @@ var storyUI;   // var: 75-codex-ui (earlier in the build) reads it at run time
     }
     if (blocked() || !stageBox() || (sc.waited && !storyInGap())) {   // once it has waited behind another overlay, it also waits for the next gap (never mid-fight)
       sc.waited = sc.waited || Date.now();
-      if (Date.now() - sc.waited > 28000) { now = null; storyClose(sc.id, 'skipped'); return; }   // a long wait: file it, never play it mid-fight
+      if (Date.now() - sc.waited > 28000) { now = null; storyClose(sc.id, 'auto'); return; }   // a long wait: file it for the Journal, never play it mid-fight
       waitT = setTimeout(run, 400); return;
     }
     now = null; showCard(sc);
@@ -78,12 +82,17 @@ var storyUI;   // var: 75-codex-ui (earlier in the build) reads it at run time
   function showCard(sc) {
     if (typeof openSheet !== 'function') { storyClose(sc.id, 'skipped'); return; }
     storyClaim(sc.id);
-    let i = 0, finished = false;
-    const end = how => { if (finished) return; finished = true; storyClose(sc.id, how); if (cardApi) cardApi.close(); };
+    let i = 0, finished = false, idleT = 0;
+    // no pointerdown or key anywhere for IDLE_MS: the card files itself (how 'auto'); any input restarts the wait
+    const wake = () => { clearTimeout(idleT); idleT = setTimeout(() => end('auto'), IDLE_MS); };
+    const stopIdle = () => { clearTimeout(idleT); document.removeEventListener('pointerdown', wake, true); document.removeEventListener('keydown', wake, true); };
+    const end = how => { stopIdle(); if (finished) return; finished = true; storyClose(sc.id, how); if (cardApi) cardApi.close(); };
+    document.addEventListener('pointerdown', wake, true); document.addEventListener('keydown', wake, true); wake();
     openSheet(api => {
       cardApi = api;
       api.sheet.classList.add('sty-sheet', 'sty-scene');
       const draw = () => {
+        wake();
         api.body.textContent = ''; api.foot.textContent = '';
         const c = sc.cards[i], last = i === sc.cards.length - 1;
         const card = el('article', 'sty-card');
@@ -123,7 +132,7 @@ var storyUI;   // var: 75-codex-ui (earlier in the build) reads it at run time
         const go = api.body.querySelector('.sty-done'); if (go) requestAnimationFrame(() => safe(() => go.focus({ preventScroll: true })));
       };
       draw();
-    }, { label: sc.title || 'The story', small: true, onClose() { cardApi = null; if (!finished) { finished = true; storyClose(sc.id, 'skipped'); } } });
+    }, { label: sc.title || 'The story', small: true, onClose() { cardApi = null; stopIdle(); if (!finished) { finished = true; storyClose(sc.id, 'skipped'); } } });
   }
 
   // ---------------- one Journal entry, read again ----------------
