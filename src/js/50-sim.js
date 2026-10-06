@@ -128,9 +128,17 @@ function killPack(m, g) {
 }
 
 // quiet: no float or toast (away gains; the away card reports the levels).
+// hero-progression-rework: with attributes on, XP past the road's level is cut (xpAheadX, 40-rules), level by level, so a lump
+// of away XP is cut more for each level it buys.
 function gainXp(n, quiet) {
-  S.xp += n * mod('xp');
-  while (S.xp >= xpNeed()) {
+  let raw = n * mod('xp');
+  if (HERO_TUNE.training) { S.xp += raw; raw = 0; }
+  for (let i = 0; i < 1000; i++) {
+    if (raw > 0) {
+      const x = xpAheadX(S.L), need = (xpNeed() - S.xp) / x;
+      if (raw < need) { S.xp += raw * x; raw = 0; } else { raw -= need; S.xp = xpNeed(); }
+    }
+    if (!(S.xp >= xpNeed())) break;
     S.xp -= xpNeed(); S.L++; emit('levelup', { L: S.L, quiet: !!quiet });
     if (quiet) continue;
     addFloat('LEVEL UP', '#6FCB6A', true, 0.27, 0.3);

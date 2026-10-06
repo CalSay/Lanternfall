@@ -72,9 +72,11 @@ var soloHero, soloPick, soloLevels, soloBenchXp, soloAttack, soloParry, soloDodg
       if (k === playing || !heroCanPlay(k)) continue;
       if (!s.lv || typeof s.lv !== 'object') s.lv = {};
       const rec = s.lv[k] || (s.lv[k] = { L: 1, xp: 0 });
-      rec.xp = (+rec.xp || 0) + n * HERO_TUNE.bench;
-      for (let i = 0; i < 500 && rec.xp >= xpNeed(rec.L); i++) {
-        rec.xp -= xpNeed(rec.L); rec.L++;
+      let raw = n * HERO_TUNE.bench; rec.xp = +rec.xp || 0;
+      for (let i = 0; i < 500 && raw > 0; i++) {
+        const x = xpAheadX(rec.L), need = (xpNeed(rec.L) - rec.xp) / x;
+        if (raw < need) { rec.xp += raw * x; break; }
+        raw -= need; rec.xp = 0; rec.L++;
         emit('benchLevel', { key: k, L: rec.L });
       }
     }

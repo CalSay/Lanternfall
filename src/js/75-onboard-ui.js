@@ -197,7 +197,7 @@
     // hero-progression-rework: with attributes on, the first point goes into Might.
     upgrade: () => Object.assign(typeof attrOn === 'function' && attrOn()
       ? path('party', 'attributes', '#attrRows .at-row[data-at="might"] .at-add[data-n="1"]',
-        ['You have points to spend. Open Hero.', 'Open Attributes.', 'Add a point to Might. It makes Attack hit harder.'])
+        ['You have points to spend. Open Hero.', 'Open Build.', 'Add a point to Might. It makes Attack hit harder.'])
       : path('party', 'training', '#trainRows .tr-row[data-mv="atk"] .buy',
         ['You have gold. Open Hero to train.', 'Open Training.', 'Train Attack. Each level hits harder.']), { side: S.tab === 'party' ? 'up' : '' }),
     'tab:gat': () => S.tab === 'gat' ? null : { node: q('.tab[data-tab="gat"]'), text: 'New tab: Gather. Tap it to see what you can mine.' },

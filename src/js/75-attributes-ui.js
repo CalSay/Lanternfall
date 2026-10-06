@@ -128,7 +128,7 @@
     }
   }
   {
-    registerView('party', { id: 'attributes', label: 'Attributes', order: 20, feature: 'party',
+    registerView('party', { id: 'attributes', label: 'Build', order: 20, feature: 'party',
       dot: () => attrOn() && !!soloHero() && attrPoints(soloHero()).free > 0,
       show: () => attrOn() });
     registerSection('party', { id: 'attributes', title: 'Attributes', view: 'attributes', feature: 'party', mount: build,

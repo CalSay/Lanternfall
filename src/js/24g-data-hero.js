@@ -13,28 +13,33 @@
 //                       (Guard: the parry window a point, ms; the window cap is TURN_TUNE.windowCaps.parry)
 //   road                [zone, level] points: the level the road expects a hero to have on reaching that zone (straight
 //                       lines between the points, then the last slope on). (tuned)
-//   fights              [level, fights] points: normal fights a level takes at the zone the road expects for it. (tuned)
+//   fights              [zone, fights] points: normal fights one zone of the road takes (its levels' XP over what a foe
+//                       there pays; a steady ratio between points, so no zone is a wall). (tuned)
 //   bench               the share of a won fight's XP every other playable hero earns
 //   smooth              1: Attack's (and abilities') fifth-level step is a smooth power with the same mean over each block
 //   softAt, soft        a hero's points in one attribute past softAt of all they have earned count soft each (judge 1a)
 //   guardMs             the most Guard adds to the parry window, ms (judge 1b)
 //   capHalf             past the class stage's cap, a level adds this much move level (judge 3b): a move's level is
 //                       min(L - 1, cap) + capHalf x max(0, L - 1 - cap)
+//   aheadLead, aheadX   XP is x aheadX for each level a hero is past the road's level at the furthest zone + aheadLead
+//                       (40-rules xpAheadX; away XP too). (tuned)
 //   respec              the second and later resets of a hero's points cost foeGoldBase(furthest zone) x this (the first is free)
 
 const HERO_TUNE = {
   training: 0,
   lvBase: 0.02,
   perLevel: 4,
-  road: [[1, 1], [5, 7], [10, 15], [15, 22], [20, 28], [25, 33], [30, 37], [35, 40], [40, 44], [50, 52], [70, 66]],
-  fights: [[1, 3], [10, 8], [20, 20], [30, 45], [40, 70], [60, 100]],
+  road: [[1, 1], [3, 4.9], [5, 8.5], [7, 11.5], [10, 16], [12, 19], [15, 22.8], [17, 24.8], [20, 27], [25, 31], [30, 35.2], [35, 39.2], [40, 43.2], [50, 51.2], [70, 65.2]],
+  fights: [[1, 3], [5, 5], [10, 13], [15, 38], [20, 110], [25, 300], [30, 430], [35, 500], [40, 560], [50, 650], [70, 800]],
   bench: 0.5,
   smooth: 1,
   softAt: 0.5,
   soft: 0.5,
   guardMs: 60,
   capHalf: 0.5,
-  respec: 30
+  respec: 30,
+  aheadLead: 4,
+  aheadX: 0.6
 };
 // The order is the screen's order. line: one plain line for the Attributes view.
 const ATTRS = [

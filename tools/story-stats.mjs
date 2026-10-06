@@ -13,7 +13,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { loadCore, memoryStorage } from './lib/core.mjs';
 
-const KEY = 'lanternfall.save.v5';
+const KEY = 'lanternfall.save.v6';
 
 // A save from a JSON file, a save code ("LF1:...") or a file that holds one.
 export function readSave(arg) {

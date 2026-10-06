@@ -8,8 +8,11 @@ Coverage-map areas: 7 (progression curve), 14 (heroes and build variety), 5 (mea
 
 ## 1. What a level gives
 
-Each move acts as if trained to the hero's level, so the hero a player has today at the wall (Training at the level cap)
-is what every hero gets for free. The class-stage cap stays: Lv 40 on a base class, Lv 80 after the Proving.
+Each move acts as if trained to one below the hero's level (`L - 1`, so a Lv 1 hero hits for today's untrained 4), so
+the hero a player has today at the wall (Training near the level cap) is what every hero gets for free. The class-stage
+cap stays (Lv 40 on a base class, Lv 80 after the Proving), but past it a level adds half a move level
+(`HERO_TUNE.capHalf`): move level = `min(L - 1, cap) + 0.5 x max(0, L - 1 - cap)`. Passing the Proving then lifts Attack
+about x1.27, not x1.63. Milestones and tiers use the whole part.
 
 | Move | From the hero's level (each level) | Was (Training, per Training level) |
 |---|---|---|
@@ -43,14 +46,24 @@ Points belong to the hero (Cal: "my Wren can play differently from someone else'
 
 - **Shape, not extra power.** Spread evenly (one point a level in each), the four attributes give exactly the old
   +4% a level on Attack, abilities, counters and health (2% base + 2% from the points). Every point put into one is a
-  point not in the others: all 136 points of a Lv 35 hero in Might give Attack x1.86 against an even spread, and
-  abilities, counters and health x0.71. Guard's window is the one thing beyond the old curve, and only a parry build
-  reaches its cap.
+  point not in the others.
+- **Soft cap.** Points in one attribute past half of all the hero has earned count half (`HERO_TUNE.softAt`, `soft`).
+  Survival is all in Vigour while damage is split three ways, so without it "all Vigour" beat every other build. A Lv 30
+  hero with all 116 points in Might gets Attack x1.54 against an even spread; abilities, counters and health x0.73.
+- **Guard's window** is the one thing beyond the old curve: +1 ms a point (after the soft cap), at most +60 ms
+  (`HERO_TUNE.guardMs`).
+- **Power outside a fight does not depend on the build.** Away and raid damage, the farmable zone and the Deepwell's
+  depth read `heroAtk()`, which carries `attrNeutral()`: the level's multiplier as if the points were spread evenly. Turn
+  fights apply the build on top (`attrRel`). So a build changes how fights play, never the online numbers.
 - **Weapons scale with an attribute** (Cal, 12:33). The `craft-attribute-grades` card builds that on these four:
   `attrOf(hero, id)` and `ATTRS` are the read side, so it is built once.
-- **Respec is free, any time.** A fight takes the points as it starts. Free because a build should be tried, not
-  bought, and every new hero arrives with a pile of points (section 4). Gold's sinks are the `gold-without-training`
-  card's.
+- **Respec.** Adding points is free, any time. A hero's first reset is free; later ones cost
+  `foeGoldBase(furthest zone) x 30` gold (`HERO_TUNE.respec`, no gold multipliers), shown on the button with a two-tap
+  confirm. A fight takes the points as it starts, so a reset cannot change a fight in progress. (The judge asked for
+  "reset only at camp"; the game has no at-camp state outside the Camp menu, so the price is the brake.) Gold's main
+  sinks are the `gold-without-training` card's.
+- **Spread evenly.** One tap spreads the free points so the four end as even as they can. The first time a hero takes
+  the lamp with points to spend, a toast offers it (Go: Attributes).
 - **Unspent points do nothing.** Next Up says when there are points to spend; the guide's old "Train Attack" step
   becomes "Add a point to Might".
 
@@ -71,20 +84,23 @@ line with the zone, which always walls (Lv 35 took 7 to 11 active hours).
 ## 4. New heroes join at the road's level; benched heroes earn half
 
 - `roadLevel()`: the road's level at the furthest zone (`S.maxZone`).
-- A hero who takes the lamp (the switch at camp, or a new hero) is lifted to at least `roadLevel()`, with an empty XP
-  bar. A hero above it keeps their own level. Their attribute points come with the levels.
+- A hero who takes the lamp (the switch at camp, or a new hero) is lifted to at least `roadLevel()`. They keep their
+  banked XP, cut to one short of the next level, so a lift never chains level-ups. A hero above it keeps their own
+  level. Their attribute points come with the levels. A joining hero gets no free ability learns: they have their
+  signature move and whatever Scrolls the player holds.
 - Every won fight (not away time) gives each other hero the player can play 50% of its XP, at their own level's price.
   The floor makes this matter only for heroes above the road's level (`hero-progression.md` 5).
 
 ## 5. Switching it off, saves, online
 
-- `HERO_TUNE.training = 1` restores today's game exactly: Training, its prices and caps, `xpNeed` 15 x 1.3^(L - 1), the
-  flat +4% a level, the stepped Attack curve, no attributes, no join floor, no bench XP. The sims run both from one
-  build. The Training code and its save fields stay until the judge signs off the sims after testers play; a later
-  card removes them.
+- `HERO_TUNE.training = 1` restores today's rules: Training, its prices and caps, `xpNeed` 15 x 1.3^(L - 1), the flat
+  +4% a level, the stepped Attack curve, no attributes, no join floor, no bench XP. The sims run both from one build. On
+  a save played with attributes (`S.attr.live`), switching the flag on raises each hero's Training once to the move
+  level their hero level gave them (`S.solo.trSeeded`), so no high-level hero comes back untrained. The Training code
+  and its save fields stay until the judge signs off the sims after testers play; a later card removes them.
 - Save key `lanternfall.save.v5` -> `v6` (S.v 6): old saves start fresh (Cal accepts wipes until 1.0; a key bump needs
-  the `cal-approved` label). New field `S.attr = { v: 1, pts: { hero: { might, focus, guard, vigour } } }`, defaults
-  in `registerState`. `S.solo.tr` stays (zeros) for the flag.
+  the `cal-approved` label). New field `S.attr = { v: 1, pts: { hero: { might, focus, guard, vigour } }, resets,
+  met, live }`, defaults in `registerState`. `S.solo.tr` stays for the flag.
 - Online: the raider doc's `L` and presence `lvl` stay the hero's level. No online file changes.
 
 ## 6. Predictions (from `hero-progression.md`) and how this build measures them
@@ -97,4 +113,17 @@ line with the zone, which always walls (Lv 35 took 7 to 11 active hours).
 
 ## 7. Red team and judge
 
-(Recorded below by the PR.)
+The red team's findings are in `hero-progression-build/red-team.md`, the lead's answers in `lead-response.md` and the
+Opus judge's ruling in `judge.md`. What changed because of them:
+
+| Finding | Ruling | In the build |
+|---|---|---|
+| All Vigour beat every build (x1.32) | soft cap | points past half count half |
+| Guard's window was an easy mode (+136 ms) | cap | +60 ms at most |
+| Might leaked into away, raid and farm power | build-neutral power | `attrNeutral()` in `heroAtk`, the build only in turn fights |
+| Free respec allowed per-fight counter-picks | price it | first reset free, then gold |
+| Lv 1 hit 2.5x today's | move level `L - 1` | first hit 4 |
+| Lv 40 cliff at the Proving | half levels past the cap | x1.27 jump |
+| A lift could chain level-ups | clamp | XP kept short of a level |
+| The flag did not roll saves back | seed once | `S.solo.trSeeded` |
+| Measures were loose | pinned | power margin, dominance arms, pace bands (section 6) |

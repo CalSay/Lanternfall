@@ -127,7 +127,9 @@ const essChance = () => 0.25 * (1 + gear().ess / 100) * mod('essence');
 // hero-progression-rework: the road and the level curve (docs/design/hero-progression-build.md 3). roadLv(z) is the level the
 // road expects at zone z (HERO_TUNE.road: straight lines between points, the last slope on past the end); roadZone(L) is its
 // inverse (fractional, at least 1); roadLevel() the road's level at the furthest zone; roadFoeXp(z) what a normal foe pays
-// (the same sum as 59k turnFoeSetup); roadFights(L) the fights a level takes (HERO_TUNE.fights, flat past the ends).
+// (59k turnFoeSetup's sum without its rounding); roadZoneFights(z) the fights a
+// zone of road takes (HERO_TUNE.fights, a steady ratio between points, flat past the ends), roadSlope(z) the road's levels a
+// zone there, roadFights(L) the fights a level takes (the two divided).
 function roadLv(z) {
   const R = HERO_TUNE.road;
   if (!(z > 1)) return 1;
@@ -145,17 +147,28 @@ function roadZone(L) {
   return Math.max(1, a[0] + (L - a[1]) * (b[0] - a[0]) / (b[1] - a[1]));
 }
 const roadLevel = () => Math.max(1, Math.floor(roadLv(S.maxZone || 1)));
-const roadFoeXp = z => typeof TURN_TUNE === 'object' && TURN_TUNE.on ? Math.ceil(Math.ceil(1.5 * z) * TURN_TUNE.xpX) : Math.ceil(1.5 * z);
-function roadFights(L) {
-  const F = HERO_TUNE.fights;
-  if (L <= F[0][0]) return F[0][1];
-  if (L >= F[F.length - 1][0]) return F[F.length - 1][1];
+const roadFoeXp = z => 1.5 * z * (typeof TURN_TUNE === 'object' && TURN_TUNE.on ? TURN_TUNE.xpX : 1);   // smooth: no rounding steps between zones
+function roadSlope(z) {
+  const R = HERO_TUNE.road;
   let i = 1;
-  while (L > F[i][0]) i++;
-  const a = F[i - 1], b = F[i];
-  return a[1] + (L - a[0]) * (b[1] - a[1]) / (b[0] - a[0]);
+  while (i < R.length - 1 && z >= R[i][0]) i++;
+  return (R[i][1] - R[i - 1][1]) / (R[i][0] - R[i - 1][0]);
 }
+function roadZoneFights(z) {
+  const F = HERO_TUNE.fights;
+  if (z <= F[0][0]) return F[0][1];
+  if (z >= F[F.length - 1][0]) return F[F.length - 1][1];
+  let i = 1;
+  while (z > F[i][0]) i++;
+  const a = F[i - 1], b = F[i];
+  return a[1] * Math.pow(b[1] / a[1], (z - a[0]) / (b[0] - a[0]));   // a steady ratio between the points (judge 3c: no jumps)
+}
+const roadFights = L => { const z = roadZone(L); return roadZoneFights(z) / roadSlope(z); };
 // hero-progression-rework: flag on, today's 15 x 1.3^(L - 1); flag off, the fights a level takes x what a foe pays on the road.
+// hero-progression-rework: XP earned by a hero more than HERO_TUNE.aheadLead levels past the road's level at the furthest
+// zone is x HERO_TUNE.aheadX for each level further (fractional): levels follow the road, and away time cannot run a hero
+// far past the zone they can fight. 1 with the flag on.
+const xpAheadX = (L = S.L) => HERO_TUNE.training ? 1 : Math.pow(HERO_TUNE.aheadX, Math.max(0, L - roadLv(S.maxZone || 1) - HERO_TUNE.aheadLead));
 const xpNeed = (L = S.L) => HERO_TUNE.training ? Math.floor(15 * Math.pow(1.3, L - 1)) : Math.max(1, Math.round(roadFights(L) * roadFoeXp(roadZone(L))));
 // Skill XP and tier gates (GP1, knobs in SKILL_TUNE, 20-data). skillNeed(lv, k): k picks the crafting
 // curve for a station skill; without k it is the gathering curve.

@@ -22,7 +22,7 @@ import path from 'node:path';
 import { findBrowser } from './lib/browser.mjs';
 import { ROOT } from './lib/core.mjs';
 
-const KEY = 'lanternfall.save.v5';
+const KEY = 'lanternfall.save.v6';
 const ORIGIN = 'http://lanternfall.playtest/';
 const raw = process.argv.slice(2);
 const flags = { json: false, landscape: false, quiet: false };

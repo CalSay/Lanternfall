@@ -91,7 +91,7 @@ var trainCard = null;
       const top = el('div', 'tr-c-top'), nm = el('b', 'tr-c-lv'), cap = el('small', 'tr-c-cap');
       top.append(nm, cap);
       const now = el('div', 'tr-c-now');
-      const more = el('button', 'tr-c-more', 'Attributes'); more.type = 'button';
+      const more = el('button', 'tr-c-more', 'Build'); more.type = 'button';
       const row = el('div', 'tr-c-row'); row.append(more);
       box.append(top, now, row);
       more.addEventListener('click', () => { if (typeof box.onLeave === 'function') box.onLeave(); setTab('attributes'); });
