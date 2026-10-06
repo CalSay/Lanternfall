@@ -27,7 +27,7 @@ A source or sink line names the player-facing system and the file that does it. 
 | Herb | 2 | 4 |  |
 | Hide | 2 | 2 |  |
 | Embers | 1 | 1 |  |
-| Relics | 1 | 3 |  |
+| Relics | 1 | 4 |  |
 | Scrolls | 1 | 1 |  |
 | Trophies | 4 | 4 |  |
 | Renown | 2 | 0 | No sink: A pure gate: routes check the balance and none sets spendRenown. Keep it a gate or give it a use. |
@@ -36,6 +36,8 @@ A source or sink line names the player-facing system and the file that does it. 
 | Talent points | 1 | 1 |  |
 | Achievement points | 1 | 1 |  |
 | Mirrors of Embers | 2 | 1 |  |
+| Gatherer XP | 1 | 1 |  |
+| Tool mastery | 1 | 1 |  |
 | Oil | 2 | 1 |  |
 | Depth Marks | 2 | 1 |  |
 | Lantern Light | 1 | 1 |  |
@@ -278,6 +280,7 @@ Sources:
 
 Sinks:
 - Warbanner damage (`40-rules.js`)
+- Ember Heart raid damage (raidMult) (`40-rules.js`)
 - Hourglass away cap (`50-sim.js`)
 - Loaded Die crit damage (`55-econ.js`)
 
@@ -390,6 +393,30 @@ Sources:
 
 Sinks:
 - Class or path change (with Essence) (`55-classes.js`)
+
+### Gatherer XP
+
+Each hired gatherer levels with shift hours. Levels raise their rate and open traits.
+
+Save: `S.hands.list[].xp, .lv`
+
+Sources:
+- Hours worked on a shift (`57f-hands.js`)
+
+Sinks:
+- Gatherer level-ups (a gate on rate and traits; XP resets) (`57f-hands.js`)
+
+### Tool mastery
+
+Seconds of use with a tool kind. Levels add speed and rare-find perks.
+
+Save: `S.tools.m.{pick,axe,sickle,spear} = [level, seconds]`
+
+Sources:
+- Gathering with the tool (seconds) (`55-tools.js`)
+
+Sinks:
+- Level-ups reset the bar; each level unlocks a perk (`55-tools.js`)
 
 ### Oil
 

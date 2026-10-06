@@ -37,7 +37,7 @@ const REG = [
       ['Gatherer shift fees', '57f-hands.js', "econSpend\\('shift', can\\.fee\\)"],
       ['Hero unlock routes (Renown plus gold)', '56c-unlocks.js', 'S\\.gold -= r\\.cost\\.gold']],
     links: ['Embers (raid) buy relics, not gold', 'Gold per foe follows ECON.base per region (21w-data-econ.js)'] },
-  { id: 'xp', name: 'Hero XP', field: 'S.xp, S.L', what: 'Hero level. Raises damage and gates what Training can reach.',
+  { id: 'xp', ids: ['xp'], name: 'Hero XP', field: 'S.xp, S.L', what: 'Hero level. Raises damage and gates what Training can reach.',
     src: [['Killing a foe', '50-sim.js', 'gainXp\\(m\\.xp\\)'], ['Away fighting (dormant)', '50-sim.js', 'gainXp\\(kills \\* Math\\.ceil']],
     snk: [], links: ['Levels are permanent, so there is no sink by design.'] },
   { id: 'skillxp', name: 'Skill XP', field: 'S.skills.{mine,wood,smith,forage,hunt,bench,loom,ench}', what: 'Mining, Woodcutting, Foraging, Hunting, Smithing, Woodcraft, Tailoring, Enchanting levels. They open node and item tiers.',
@@ -82,18 +82,18 @@ const REG = [
   { id: 'hide', name: 'Hide', field: 'S.mats.hide[0..4]', what: 'Hunting nodes (opt-in) and gatherers. Five a swing.', mat: 'hide',
     src: [['Hunting swings', '50-sim.js', "stashAdd\\(kind, t, Math\\.max\\(1, Math\\.floor\\(y\\)"], ['Gatherers (Hands)', '57f-hands.js', "stashAdd\\(f, t, n, 'parcel'\\)"]],
     snk: [['Gear crafts (shield, plate, bow, hood, leathers)', '55-crafting.js', 'payMats\\(c\\.cost\\.mats, t\\)'], ['Camp builds (Loom, tents)', '57-camp.js', 'S\\.mats\\[f\\]\\[t - 1\\] -= n']] },
-  { id: 'embers', name: 'Embers', field: 'S.embers', what: 'Raid currency. Buys relics. Online only.',
+  { id: 'embers', ids: ['embers'], name: 'Embers', field: 'S.embers', what: 'Raid currency. Buys relics. Online only.',
     src: [['A world raid boss falls', '52-raid.js', 'S\\.embers \\+= e'], ], snk: [['Buying relics', '51-actions.js', 'S\\.embers -= cost']] },
-  { id: 'relics', name: 'Relics', field: 'S.relic.{banner,heart,glass,edge}', what: 'Warbanner, Ember Heart, Hourglass (away cap) and Loaded Die (crit damage).',
-    src: [['Bought with Embers', '51-actions.js', 'S\\.relic\\[u\\.id\\]\\+\\+']], snk: [['Warbanner damage', '40-rules.js', 'S\\.relic\\.banner'], ['Hourglass away cap', '50-sim.js', 'S\\.relic\\.glass'], ['Loaded Die crit damage', '55-econ.js', 'S\\.relic\\.edge']],
+  { id: 'relics', ids: ['relic'], name: 'Relics', field: 'S.relic.{banner,heart,glass,edge}', what: 'Warbanner, Ember Heart, Hourglass (away cap) and Loaded Die (crit damage).',
+    src: [['Bought with Embers', '51-actions.js', 'S\\.relic\\[u\\.id\\]\\+\\+']], snk: [['Warbanner damage', '40-rules.js', 'S\\.relic\\.banner'], ['Ember Heart raid damage (raidMult)', '40-rules.js', 'S\\.relic\\.heart'], ['Hourglass away cap', '50-sim.js', 'S\\.relic\\.glass'], ['Loaded Die crit damage', '55-econ.js', 'S\\.relic\\.edge']],
     links: ['Permanent upgrades; "sink" is where the level is read.'] },
-  { id: 'scrolls', name: 'Scrolls', field: 'S.abil.scrolls.{moss,hollow,barrow,roadlight,mother}', what: 'One learns one hero ability of its tier.',
+  { id: 'scrolls', ids: ['scroll'], name: 'Scrolls', field: 'S.abil.scrolls.{moss,hollow,barrow,roadlight,mother}', what: 'One learns one hero ability of its tier.',
     src: [['Zone boss kills (first win always, replays 20% or after 5 dry)', '56e-abilities.js', 's\\.scrolls\\[id\\] = scrollCount\\(id\\) \\+ 1']], snk: [['Learning an ability', '56e-abilities.js', 's\\.scrolls\\[i\\.payWith\\] = scrollCount\\(i\\.payWith\\) - 1']] },
-  { id: 'trophies', name: 'Trophies', field: 'S.craft.troph[0..6]', what: 'Rare drops by zone type. Gate upgrades +8 to +10, Masterwork, tall camp builds and the Star Chart.',
+  { id: 'trophies', ids: ['troph'], name: 'Trophies', field: 'S.craft.troph[0..6]', what: 'Rare drops by zone type. Gate upgrades +8 to +10, Masterwork, tall camp builds and the Star Chart.',
     src: [['First zone boss win from zone 20', '55-gathering.js', "addTrophy\\(bi, roll\\(SRC\\.firstBoss"], ['Champion packs (1 in 150 from zone 20)', '55-gathering.js', "addTrophy\\(i, CH\\.troph"], ['Raid rewards', '55-gathering.js', "addTrophy\\(i, SRC\\.raid, 'raid'\\)"],
       ['Gatherers\' lucky finds', '57f-hands.js', "addTrophy\\(t, n, 'hands'\\)"]],
     snk: [['Upgrades +8 to +10', '55-crafting.js', 'C\\(\\)\\.troph\\[pickTrophy\\(trophIdx\\)\\] -= c\\.cost\\.troph'], ['Masterwork crafts', '55-crafting.js', 'C\\(\\)\\.troph\\[opts\\.mw\\]--'], ['Star Chart (Wraith Veil)', '55-crafting.js', 'C\\(\\)\\.troph\\[i\\] -= n'], ['Camp and Hearth builds (rows 4 and up)', '57-camp.js', 'tr\\[i\\] -= n']] },
-  { id: 'renown', name: 'Renown', field: 'S.party.unlock.renown', what: 'Standing with the road. Opens hero unlock routes.',
+  { id: 'renown', ids: ['renown'], name: 'Renown', field: 'S.party.unlock.renown', what: 'Standing with the road. Opens hero unlock routes.',
     src: [['Claiming a Bounty (1, elite Contract 3)', '56c-unlocks.js', "on\\('bountyDone', b => addRenown"], ['Tavern level 5 (1 per 5 bounties)', '57-camp.js', "addRenown\\(1, 'tavern'\\)"]],
     snk: [], links: ['Hero unlock routes check the balance and never spend it today (the spend path in 56c-unlocks.js is dormant until a route sets spendRenown). Raid kills count 5 each toward Caedmon only.'] },
   { id: 'tokens', name: 'Boss tokens', field: 'S.party.unlock.tokens', what: 'Stonebreaker\'s Token, Kiln Tally, Lichen Bundle, Dusk Contract. A flag that unlocks one hero.',
@@ -105,18 +105,22 @@ const REG = [
     links: ['A budget like star points: spent points come back when a talent is cleared.'] },
   { id: 'deedpts', name: 'Achievement points', field: 'S.deeds.pts (derived from tiers and Feats)', what: 'Deed tiers, Feats and chapters add points. The ladder gives titles, looks and Trophy Wall stages.',
     src: [['Deed tiers, Feats, secrets and chapters', '58-deeds.js', 'function pointsNow\\(\\)']], snk: [['Ladder milestones unlock at thresholds; never spent', '58-deeds.js', 'd\\.mil\\[m\\.at\\] = 1']] },
-  { id: 'mirrors', name: 'Mirrors of Embers', field: 'S.party.mirrors', what: 'Needed with Essence to change class or evolution path.',
+  { id: 'mirrors', ids: ['mirrors'], name: 'Mirrors of Embers', field: 'S.party.mirrors', what: 'Needed with Essence to change class or evolution path.',
     src: [['Zone boss drops (chance per kill)', '55-party.js', 'P\\(\\)\\.mirrors\\+\\+'], ['Great Lantern relit (region boss)', '55-classes.js', 'S\\.party\\.mirrors = \\(S\\.party\\.mirrors \\|\\| 0\\) \\+ add']],
     snk: [['Class or path change (with Essence)', '55-classes.js', 'S\\.party\\.mirrors -= cost\\.mirrors']] },
-  { id: 'oil', name: 'Oil', field: 'S.deep.run.oil', what: 'A Deepwell run\'s clock, in seconds. Gone when the run ends.',
+  { id: 'handxp', name: 'Gatherer XP', field: 'S.hands.list[].xp, .lv', what: 'Each hired gatherer levels with shift hours. Levels raise their rate and open traits.',
+    src: [['Hours worked on a shift', '57f-hands.js', 'x\\.xp \\+= hrs \\* m']], snk: [['Gatherer level-ups (a gate on rate and traits; XP resets)', '57f-hands.js', 'x\\.xp -= handsLevelNeed\\(x\\.lv\\)']] },
+  { id: 'toolxp', name: 'Tool mastery', field: 'S.tools.m.{pick,axe,sickle,spear} = [level, seconds]', what: 'Seconds of use with a tool kind. Levels add speed and rare-find perks.',
+    src: [['Gathering with the tool (seconds)', '55-tools.js', 'r\\[1\\] \\+= secs']], snk: [['Level-ups reset the bar; each level unlocks a perk', '55-tools.js', 'r\\[1\\] -= need\\(r\\[0\\]\\)']] },
+  { id: 'oil', ids: ['oil'], name: 'Oil', field: 'S.deep.run.oil', what: 'A Deepwell run\'s clock, in seconds. Gone when the run ends.',
     src: [['Run start', '57d-deepwell.js', 'r\\.oil = Math\\.min\\(oilMax\\(r\\), T\\.oilStart'], ['Floor refunds', '57d-deepwell.js', 'r\\.oil = Math\\.min\\(oilMax\\(\\), r\\.oil \\+ refund\\)']],
     snk: [['Drains with time; zero ends the run', '57d-deepwell.js', 'r\\.oil -= dt \\* drainRate\\(\\)']] },
-  { id: 'marks', name: 'Depth Marks', field: 'S.deep.marks', what: 'Deepwell shop money: Deep Lore, looks, titles.',
+  { id: 'marks', ids: ['marks', 'markstotal'], name: 'Depth Marks', field: 'S.deep.marks', what: 'Deepwell shop money: Deep Lore, looks, titles.',
     src: [['Floors passed and boss floors, banked at run end', '57d-deepwell.js', 'd\\.marks \\+= marks'], ['Almanac weekly board', '55-almanac.js', 'S\\.deep\\.marks']],
     snk: [['The Deepwell shop', '57d-deepwell.js', 'D\\(\\)\\.marks -= row\\.price']] },
   { id: 'light', name: 'Lantern Light', field: 'S.codex.lightMax', what: 'Codex score. Milestones give titles, looks and small capped bonuses.',
     src: [['Codex pages found (each Unique 10)', '57c-codex.js', 'CX\\(\\)\\.lightMax = light']], snk: [['Milestones unlock at thresholds; never spent', '57c-codex.js', 'CODEX_MILESTONES']] },
-  { id: 'stamps', name: 'Almanac Stamps', field: 'S.almanac.stamps', what: 'Three weekly goals claimed earn a Stamp.',
+  { id: 'stamps', ids: ['stamps'], name: 'Almanac Stamps', field: 'S.almanac.stamps', what: 'Three weekly goals claimed earn a Stamp.',
     src: [['Weekly board claims', '55-almanac.js', 'a\\.stamps\\+\\+']], snk: [] },
   { id: 'uniques', name: 'Uniques', field: 'S.found', what: 'Rare boss gear. Cannot be bought or crafted.',
     src: [['Zone boss (15% first win, 4% replay)', '50-sim.js', 'dropUnique\\(uq, tier\\)'], ['Raid boss', '52-raid.js', 'dropUnique\\(RAID_UNIQ']],
@@ -171,15 +175,15 @@ export function audit() {
   // NOT_CURRENCY with a reason. This catches a new token or store that follows no naming pattern above.
   const WORDS = 'mirror|token|scroll|mark|point|renown|ember|relic|oil|stamp|troph|coin|gem|shard|dust|ticket|favou?r|ingot|crest|seal|key|essence';
   const words = new RegExp('(' + WORDS + ')', 'i');
-  const regText = REG.map(c => [c.name, c.field, c.what, ...c.src.map(x => x[2]), ...c.snk.map(x => x[2])].join(' ')).join(' ').toLowerCase();
+  const covered = new Set(REG.flatMap(c => (c.ids || []).map(x => x.toLowerCase())));
   const seen = new Set();
+  const op = /(?:\+\+|--)\s*(?:[A-Za-z_$][\w$]*(?:\.|\[[^\]]*\]\.?))*([A-Za-z_$][\w$]*)|\b([A-Za-z_$][\w$]*)(?:\[[^\]]*\])? *(?:\+\+|--|\+=|-=)/g;
   for (const f of fs.readdirSync(JS).filter(n => n.endsWith('.js'))) {
-    for (const m of strip(read(f)).matchAll(/\b([A-Za-z_]\w*)(?:\[[^\]]*\])? *(?:\+\+|--|\+=|-=)/g)) {
-      const id = m[1];
-      if (!words.test(id) || seen.has(id.toLowerCase()) || NOT_CURRENCY[id.toLowerCase()]) continue;
-      seen.add(id.toLowerCase());
-      const stem = id.toLowerCase().replace(/(total|now|left|got|count|max|min)$/, '');
-      if (!regText.includes(id.toLowerCase()) && !regText.includes(stem)) problems.push(`"${id}" (${f}) is counted up or down like a currency but no registry entry names it. Register it, or add it to NOT_CURRENCY with a reason.`);
+    for (const m of strip(read(f)).matchAll(op)) {
+      const orig = m[1] || m[2], id = orig.toLowerCase();
+      if (!(words.test(id) || /^xp|Xp|XP/.test(orig)) || seen.has(id) || NOT_CURRENCY[id] || covered.has(id)) continue;
+      seen.add(id);
+      problems.push(`"${m[1] || m[2]}" (${f}) is counted up or down like a currency but is not an exact id of any registry entry. Add it to that entry's ids, or to NOT_CURRENCY with a reason.`);
     }
   }
   return problems;
