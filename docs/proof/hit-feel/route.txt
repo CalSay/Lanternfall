@@ -1,0 +1,170 @@
+# seed: 1
+# Proof for card hit-feel: the mid fixture (Tobin, Zone 20) fights on. The route attacks and presses Parry in 0.05 s steps, so with this seed
+# the presses land close to the hit. Acceptance: the stage shows number tiers (the COUNTER number), the PARRIED! stamp, and a lamp row that lights
+# for each clean defence. Tier sizes, stings and parity (windows, hit-stop, seeded sample) are checked in tools/check.mjs (hit-feel).
+# The `expect "#modeSeg"` after each round is a look at the screen, as a player glances up; it also steps the page a frame.
+new mid
+wait 2
+tap-if "Got it"
+tap-if "Dismiss this tip"
+wait 1
+tap-if "Attack"
+wait 0.05
+tap-if "Parry"
+wait 0.05
+tap-if "Dismiss this tip"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.05
+tap-if "Parry"
+wait 0.05
+tap-if "Dismiss this tip"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.05
+tap-if "Parry"
+wait 0.05
+tap-if "Dismiss this tip"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.05
+tap-if "Parry"
+wait 0.05
+tap-if "Dismiss this tip"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.05
+tap-if "Parry"
+wait 0.05
+tap-if "Dismiss this tip"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.05
+tap-if "Parry"
+wait 0.05
+tap-if "Dismiss this tip"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.05
+tap-if "Parry"
+wait 0.05
+tap-if "Dismiss this tip"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.05
+tap-if "Parry"
+wait 0.05
+tap-if "Dismiss this tip"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.05
+tap-if "Parry"
+wait 0.05
+tap-if "Dismiss this tip"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.05
+tap-if "Parry"
+wait 0.05
+tap-if "Dismiss this tip"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.05
+tap-if "Parry"
+wait 0.05
+tap-if "Dismiss this tip"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.05
+tap-if "Parry"
+wait 0.05
+tap-if "Dismiss this tip"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.05
+tap-if "Parry"
+wait 0.05
+tap-if "Dismiss this tip"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.05
+tap-if "Parry"
+wait 0.05
+tap-if "Dismiss this tip"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.05
+tap-if "Parry"
+wait 0.05
+tap-if "Dismiss this tip"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.05
+tap-if "Parry"
+wait 0.05
+tap-if "Dismiss this tip"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.05
+tap-if "Parry"
+wait 0.05
+tap-if "Dismiss this tip"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.05
+tap-if "Parry"
+wait 0.05
+tap-if "Dismiss this tip"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.05
+tap-if "Parry"
+wait 0.05
+tap-if "Dismiss this tip"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.05
+tap-if "Parry"
+wait 0.05
+tap-if "Dismiss this tip"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.05
+tap-if "Parry"
+wait 0.05
+tap-if "Dismiss this tip"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.05
+tap-if "Parry"
+wait 0.05
+tap-if "Dismiss this tip"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.05
+tap-if "Parry"
+wait 0.05
+tap-if "Dismiss this tip"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.05
+tap-if "Parry"
+wait 0.05
+tap-if "Dismiss this tip"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.05
+tap-if "Parry"
+wait 0.05
+tap-if "Dismiss this tip"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.05
+tap-if "Parry"
+wait 0.05
+tap-if "Dismiss this tip"
+expect "#modeSeg"
+expect ".tv-lamp.on"
+expect "COUNTER"
+shot hit-feel-lamps
+burst hit-feel-burst

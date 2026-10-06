@@ -39,7 +39,7 @@ early-game/playtest-coldB.md`). The minutes below are targets for a casual human
 | 3 | 0:35 | Hesketh's fire over still 3, at most 3 lines; then the guide panel with his face | Reads | A guide exists | nothing | warmth | Hesketh lights his fire from your lamp | card `intro-and-picker`, `guide-panel` |
 | 4 | 0:45 | Fight 1 (within 45 s of opening for a player who taps through) | Attack, then the ability | Attack and the ability | gold ticks up | power | | today (tip placement and phase: cards) |
 | 5 | 1:25 | Fight 2 | Dodges a heavy hit | Dodge | | relief | | today (phase guard: `story-unlock-gates` or `guide-phase-guards`) |
-| 6 | 1:55 | Fight 3 | Parries a heavy hit | Parry | PERFECT and hit-stop on a good parry (today); the parry stamp and lamp row (card) | skill | | today; card `hit-feel` |
+| 6 | 1:55 | Fight 3 | Parries a heavy hit | Parry | Hit-stop on a good parry; PARRIED! stamp, sized numbers and a lamp row for clean parries (hit-feel, built) | skill | | built; card `hit-feel` |
 | 7 | 2:25 | Fights 4 and 5 | Uses all three verbs | nothing new | | flow | | today |
 | 8 | 2:55 | The zone 1 Captain; Hesketh: "Watch the red rings" | Fights the boss | Boss strings | | tension | | today (line: card `guide-voice`) |
 | 9 | 3:45 | **Big moment: first boss win**, and the **first Lantern Cache** reveals the win's drops plus the Ember Red lantern colour; the stage relights | Taps to open | Caches | the win's drops; Ember Red | surprise | The hero's first line | card `moment-layer`, `cache-core`, `hero-voice` |

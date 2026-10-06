@@ -405,6 +405,12 @@ Plan and rulings: `/mnt/project-files/early-game/plan.md`, `plan-judge.md`. Beat
   (story bible 4.4).
 - **First-hour art.** Two packs, `first-hour-art` and `cache-art`. Star icons are parked. Approved assets (the Mossy
   Hollow background, roster portraits, Deepwell colours) may be reused as they are.
+- **Hit feel (card hit-feel, Opus judge 2026-10-06).** Number tiers by priority counter, crit, big (a hit of a fifth of the
+  foe's HP, the hit-stop's own test), normal; each has its size and sting. A *clean* parry or dodge is one pressed in the
+  last `min(half the window, 0.10 s)` before the hit; it stamps PARRIED! or DODGED! in gold. Never "Perfect" on a defence:
+  that word means a real bonus on timed abilities. Five lamps count clean defences in a row and go out on a landed hit, a
+  failed press or a loose defence. All of it is display only: no window, hit-stop, pace or save change, and no telegraph
+  of the foe's next move.
 
 ## Working process
 
