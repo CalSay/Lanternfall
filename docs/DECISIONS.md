@@ -65,6 +65,33 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 - **Hero fatigue:** yes, but rotating heroes must never slow progression. (2026-09-28)
 - **Tactics:** yes ("tower defense vibes"), once combat is substantial. (2026-09-28)
 
+### Hero progression: judge rulings (2026-10-06)
+
+- **A switch is judged by the joining hero's own budget.** The new hero spends the lamp's Scrolls first, as a player
+  would. Normal fights stay within 10 points of the hero who left. Played well, the zone boss is won 60% or more.
+  Heroes differ on purpose, so the new hero is not held to the old one's rate. (2026-10-06)
+- **The boss gap after a switch is gear, not level.** The lamp's gear follows the hero who earned it. The `gear-weight`
+  and `tobin-safety-margin` cards close the gap, and `switch-row` checks it for every hero. No catch-up. (2026-10-06)
+- **Level gaps: at most 3 zones' play with no level-up in zones 20 to 30** (good play). 2 zones is the target. Tobin's
+  longer gaps are walls at zones 27 and 29, so `mid-zone-wall` owns them; the XP curve stays. (2026-10-06)
+- **Pace bands count only where the old game did not wall.** Casual Tobin reaching zone 25 sooner than before is a
+  wall removed, not levels given away. (2026-10-06)
+- **A farm build is allowed.** Focus kills normal foes faster and wins fewer bosses. A reset costs gold after the
+  first, so farming and bossing builds are a real choice, not a free swap each fight. (2026-10-06)
+- **Might waits for weapons that scale with attributes.** A weapon that scales with Might lifts all of its damage.
+  The `craft-attribute-grades` card must put Might in a winning build. (2026-10-06)
+- **The early road is not sped up to fill an unlock gap.** A faster road makes the first hour's dry stretch longer.
+  Until `story-unlock-gates` spaces the early unlocks, something new comes at least every 4 minutes in the first 10,
+  not every 3.5. (2026-10-06)
+- **A boss off its band is fixed at the boss, not by weakening heroes.** Attack and health now rise smoothly, so a
+  Lv 29 hero is 15% stronger than on the old step and a Lv 27 hero 10% weaker. The zone 20 Captain is too easy for the
+  hero who keeps up; `boss-tiers` fixes it. Heroes are not cut to fit one checkpoint while zones 25 to 34 are walls.
+  (2026-10-06)
+- **The unlock governor sets the warm early pace.** A warm hero now reaches the camp, the first star and the Tavern
+  sooner. Those open at once and restart the one-a-minute clock, so Gather and Bounties wait their turn. The warm check
+  asks for Gather by 5:30, Bounties by 7:30, and no wait longer than the gap. It asked for 4:00 and 5:00 before. New games
+  are cold and still open Gather by about 2 minutes. Review by 2026-11-15. (2026-10-06)
+
 ## Abilities
 
 - **14 abilities a hero: 6 shared (by play style) + 8 signature.** Equip 3; a 4th slot comes later with a bag button

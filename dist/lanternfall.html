@@ -681,6 +681,38 @@ img[src*="#nic:"] { image-rendering: auto; }   /* a gear icon set by code that d
 .om-goal .row-desc { display: none; margin-top: 5px; }
 .om-goal.open .row-desc { display: block; }
 .om-goal .buy { min-width: 64px; padding: 4px 8px; }
+/* 60-attributes: Hero tab > Attributes (75-attributes-ui.js; docs/design/hero-progression-build.md section 2).
+   A head line, four rows (the points in each, its line, what it gives, +1 and +5), Spread evenly and Reset points, a note, and what the level gives. */
+.at-head { margin: 0; font: 600 calc(15px * var(--display-k, 1))/1.25 var(--display); color: var(--gold); }
+.at-list { display: grid; gap: 8px; }
+.at-row { gap: 10px; }
+.at-pts { width: 44px; min-height: 44px; display: grid; place-content: center; justify-items: center; gap: 1px; padding: 2px; background: #120D18; box-shadow: inset 0 0 0 1px #6B5320; }
+.at-pts b { font: 700 calc(21px * var(--display-k, 1))/1 var(--display); color: var(--gold); font-variant-numeric: tabular-nums; }
+.at-pts small { font-size: 10px; line-height: 1; color: var(--muted); }
+.at-body { min-width: 0; }
+.at-fx { margin-top: 2px; font-size: 12.5px; color: var(--gold); }
+.at-btns { display: flex; gap: 6px; }
+.at-add { min-width: 44px; min-height: 44px; padding: 0 8px; border: 2px solid #0B0810; cursor: pointer; background: var(--ember); color: #1A1420;
+  font: 700 calc(16px * var(--display-k, 1)) var(--display); box-shadow: inset 0 2px 0 rgba(255,255,255,.3), inset 0 -3px 0 var(--ember-deep); }
+.at-add:active:not(:disabled) { transform: translateY(2px); box-shadow: inset 0 -1px 0 var(--ember-deep); }
+.at-add:disabled { background: var(--panel-2); color: var(--muted); box-shadow: inset 0 -3px 0 #1a1420; cursor: default; }
+.at-pts.at-ok { animation: at-ok .45s steps(3); }
+@keyframes at-ok { 0% { box-shadow: inset 0 0 0 1px #6B5320, 0 0 0 0 var(--gold); } 50% { box-shadow: inset 0 0 0 1px #6B5320, 0 0 0 3px var(--gold); } 100% { box-shadow: inset 0 0 0 1px #6B5320, 0 0 0 0 transparent; } }
+.at-acts { display: flex; flex-wrap: wrap; gap: 8px; }
+.at-acts > button { flex: 1 1 140px; }
+.at-spread { min-height: 44px; padding: 0 12px; border: 2px solid #0B0810; cursor: pointer; background: var(--ember); color: #1A1420;
+  font: 700 calc(15px * var(--display-k, 1)) var(--display); box-shadow: inset 0 2px 0 rgba(255,255,255,.3), inset 0 -3px 0 var(--ember-deep); }
+.at-spread:disabled { background: var(--panel-2); color: var(--muted); box-shadow: inset 0 -3px 0 #1a1420; cursor: default; }
+.at-reset { min-height: 44px; padding: 0 12px; border: 2px solid #0B0810; cursor: pointer; background: var(--panel-2); color: var(--bone);
+  font: 600 calc(15px * var(--display-k, 1)) var(--display); box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 2px 0 #0B0810; }
+.at-reset:disabled { opacity: .45; cursor: default; }
+.at-reset.armed { background: #5A2A30; color: #FFD9C2; box-shadow: inset 0 0 0 2px #E0524F, 0 2px 0 #0B0810; }
+.at-moves { display: grid; gap: 4px; padding: 8px 10px; background: #1B1424; border: 2px solid #0B0810; outline: 2px solid #3A2F47; outline-offset: -4px; }
+.at-mh { margin: 0 0 2px; font: 600 12px var(--body); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.at-mv { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; font-size: 14px; }
+.at-mv b { font: 600 calc(14px * var(--display-k, 1)) var(--display); color: var(--bone); }
+.at-mn { color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { .at-pts.at-ok { animation: none; } }
 /* 60-away: the "While you were away" card (75-away.js) and the Journal (75-stats-ui.js). */
 
 /* ---- away report ---- */
@@ -2980,6 +3012,8 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
 .tr-c-row { display: flex; gap: 8px; align-items: stretch; margin-top: 4px; }
 .tr-c-row .buy { flex: 1 1 auto; min-height: 44px; }
 .tr-c-more { flex: 0 0 auto; min-height: 44px; padding: 0 12px; background: var(--panel-2); color: var(--bone); border: 2px solid #0B0810; font: 600 15px var(--display); cursor: pointer; }
+/* attributes on: the block's one button (Attributes) takes the row */
+.tr-c-row .tr-c-more:only-child { flex: 1 1 auto; }
 @media (prefers-reduced-motion: reduce) { .tr-go.tr-ok { animation: none; } }
 /* 75-turn-ui: the turn fight's versus card, turn strip, timing bar, hero row and warnings. The strip sits under the
    foe's name and HP bar at the top of the stage. */
@@ -9074,7 +9108,7 @@ const NOTICES = [
     merge: ms => `${ms.length} zones cleared. ${ms[ms.length - 1]}` },
   { id: 'zone-won', re: /^Zone .+ won\. On to Zone .+\.$/, ch: 'log', why: 'a replayed zone won: the zone title shows where you are',
     merge: ms => ms[ms.length - 1] },
-  { id: 'level', key: 'level', re: /^Level \d+\. Your hero hits/, ch: m => noteNum(m, /^Level (\d+)/) % 25 === 0 ? 'bell' : 'log',
+  { id: 'level', key: 'level', re: /^Level \d+\. (Your hero hits|\d+ attribute points)/, ch: m => noteNum(m, /^Level (\d+)/) % 25 === 0 ? 'bell' : 'log',
     why: 'the LEVEL UP float says it; every 25th level is a bell line (the Stars may unlock at level 10)',
     merge: ms => `${ms.length} levels gained. Level ${noteNum(ms[ms.length - 1], /^Level (\d+)/)}.` },
   { id: 'skill', key: 'skill', re: /^\S+ level \d+\./, ch: m => /You can now|open to you/.test(m) ? 'bell' : 'none', why: 'only a new tier is news' },
@@ -9085,7 +9119,8 @@ const NOTICES = [
   { id: 'scroll-more', re: /^(Moss|Hollow|Barrow|Roadlight|Mother) Scroll found\.$/, site: /SCROLLS\[id\]\.name\} found/, ch: 'log', why: 'the stage float shows it, and Next Up offers what it teaches' },
   { id: 'learned', re: /^\w+ learned [A-Z][\w' ]+\.$/, site: /learned \$\{a\.name\}/, ch: 'log', why: 'you just pressed Learn and see the card change' },
   { id: 'pace', key: 'pace', re: /back to Zone \d+ to keep earning\.$/, ch: 'bell', once: 'session', why: 'audit 3.14: one line a session' },
-  { id: 'hero-swap', re: /takes up the lamp\.$/, ch: 'log' },
+  { id: 'attr-join', key: 'attr-join', ch: 'pop', wait: 30 },   // hero-progression-rework: a hero arrives with points to spend (Go: Build)
+  { id: 'hero-swap', re: /(takes up the lamp\.|joins at Lv .+, the road's level\.)$/, ch: 'log' },
 
   // ---- loot and gear ----
   { id: 'unique', re: /^Unique loot! /, ch: 'log', why: 'the moment layer shows every unique as a card (75-moments-ui); the bell list keeps the line' },
@@ -10117,6 +10152,64 @@ const starFromText = s => {
   return '';
 };
 
+// ---- src/js/24g-data-hero.js ----
+// 24g-data-hero: hero progression knobs (card hero-progression-rework; docs/design/hero-progression.md and
+// hero-progression-build.md). Data and knobs only. Runtime: 55-attributes.js (attribute points), 40-rules.js (the road
+// and the level curve), 55-training.js (a move's level from the hero's level), 59j-solo.js (the join level, bench XP).
+// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
+//
+//   HERO_TUNE.training  1 restores today's game exactly (gold Training, xpNeed 15 x 1.3^(L-1), +4% a level, the stepped
+//                       Attack curve, no attributes, no join floor, no bench XP). The switch-off flag: kept until the judge
+//                       signs off the sims after testers play (hero-progression.md "Switching it off").
+//   lvBase              the share of the old +4% a level (PACE.heroLv) a level gives an attribute with no `base` of its own;
+//                       attribute points give the rest in the player's own split
+//   perLevel            attribute points a level after Lv 1
+//   ATTRS               the four attributes: base (what each level gives it), per (a point's share; base + per = PACE.heroLv,
+//                       so an even spread is the old +4% a level on each), kind (what it raises: atk | ab | counter | hp), parryMs
+//                       (Guard: the parry window a point, ms; the window cap is TURN_TUNE.windowCaps.parry)
+//   road                [zone, level] points: the level the road expects a hero to have on reaching that zone (straight
+//                       lines between the points, then the last slope on). (tuned)
+//   fights              [zone, fights] points: normal fights one zone of the road takes (its levels' XP over what a foe
+//                       there pays; a steady ratio between points, so no zone is a wall). (tuned)
+//   bench               the share of a won fight's XP every other playable hero earns
+//   smooth              1: Attack's (and abilities') fifth-level step is a smooth power with the same mean over each block
+//   softAt, soft        a hero's points in one attribute past softAt of all they have earned count soft each (judge 1a)
+//   guardMs             the most Guard adds to the parry window, ms (judge 1b)
+//   capHalf             past the class stage's cap, a level adds this much move level (judge 3b): a move's level is
+//                       min(L - 1, cap) + capHalf x max(0, L - 1 - cap)
+//   aheadLead, aheadX   XP is x aheadX for each level a hero is past the road's level at the furthest zone + aheadLead
+//                       (40-rules xpAheadX; away XP too). (tuned)
+//   joinLead            a joining hero is lifted to floor(roadLv(furthest zone) + joinLead): heroes who play the road sit
+//                       about this far above the table (sims), and the one who joins should fight like them. (tuned)
+//   respec              the second and later resets of a hero's points cost foeGoldBase(furthest zone) x this (the first is free)
+
+const HERO_TUNE = {
+  training: 0,
+  lvBase: 0.02,
+  perLevel: 4,
+  road: [[1, 1], [3, 4.6], [5, 7.8], [7, 10.8], [10, 15], [12, 18], [15, 22.3], [17, 24.4], [20, 27], [25, 31], [30, 35.2], [35, 39.2], [40, 43.2], [50, 51.2], [70, 65.2]],
+  fights: [[1, 3], [5, 6], [10, 17], [15, 45], [20, 132], [25, 390], [30, 560], [35, 650], [40, 720], [50, 830], [70, 1000]],
+  bench: 0.5,
+  smooth: 1,
+  softAt: 0.5,
+  soft: 0.5,
+  guardMs: 60,
+  capHalf: 0.5,
+  respec: 30,
+  aheadLead: 4,
+  aheadX: 0.6,
+  joinLead: 2
+};
+// The order is the screen's order. line: one plain line for the Attributes view.
+const ATTRS = [
+  { id: 'might', name: 'Might', kind: 'atk', base: 0.01, per: 0.03, line: 'Attack hits harder.' },
+  { id: 'focus', name: 'Focus', kind: 'ab', base: 0.03, per: 0.01, line: 'Abilities hit harder.' },
+  { id: 'guard', name: 'Guard', kind: 'counter', base: 0.01, per: 0.03, parryMs: 1, line: 'Counters hit harder, and the parry window is wider.' },
+  { id: 'vigour', name: 'Vigour', kind: 'hp', base: 0.025, per: 0.015, line: 'More health.' }
+];
+const ATTR_IDS = ATTRS.map(a => a.id);
+const ATTR0 = () => { const o = {}; for (const id of ATTR_IDS) o[id] = 0; return o; };
+
 // ---- src/js/30-state.js ----
 // 30-state: the save (S), load, save(), registered feature fields, and
 // runtime (non-saved) shared-world state.
@@ -10278,14 +10371,19 @@ const bossHpMult = z => PACE.bossHp * (isRegionBoss(z) ? PACE.regionBoss : 1);
 const regionHp = z => { let m = 1; const st = [].concat(PACE.regionStep); for (let r = 1; r <= Math.floor(z / PACE.region); r++) m *= st[Math.min(r, st.length) - 1]; return m; };
 
 // ================= formulas =================
-const lvlMult = () => 1 + PACE.heroLv * (S.L - 1);
+// hero-progression-rework: with HERO_TUNE.training off the level bonus is attrNeutral() (55-attributes: half of the old
+// +PACE.heroLv a level, plus the hero's points as if spread evenly, so power outside a turn fight is the same for every
+// build); turn fights apply the build (attrRel). With it on, today's flat bonus, bit for bit.
+const lvlMult = () => HERO_TUNE.training ? 1 + PACE.heroLv * (S.L - 1) : attrNeutral();
 const dmgMult = () => (1 + 0.2 * S.relic.banner) * (1 + gear().might / 100) * mod('dmg');
 // ECON-A (economy-2 6.1): gear is the only gold-gain (capped +30%, gearGold in 55-econ); mod('gold') carries
 // only the Gold Rain Omen. Fortune and the Lucky Coin became crit damage (Precision, the Loaded Die).
 const goldMult = () => (1 + gearGold() / 100) * mod('gold');
 const raidMult = () => (1 + 0.3 * S.relic.heart) * (1 + gear().raid / 100) * (Date.now() < rallyUntil ? 1.25 : 1) * mod('raid');
 // W2-A Training: the Attack level's hit before the hero's level, gear and damage (heroPow).
-const atkSteps = (a, x, x2) => { const n = Math.floor(a / PACE.atkEvery), b = Math.floor(PACE.atkBend / PACE.atkEvery); return Math.pow(x, Math.min(n, b)) * Math.pow(x2, Math.max(0, n - b)); };
+// hero-progression-rework: with attributes live (HERO_TUNE.smooth) the fifth-level step is a smooth power, x^((a - 2) / 5), the
+// same mean over each block of five levels; with the flag on, the staircase.
+const atkSteps = (a, x, x2) => { const n = attrOn() && HERO_TUNE.smooth ? Math.max(0, (a - 2) / PACE.atkEvery) : Math.floor(a / PACE.atkEvery), b = Math.floor(PACE.atkBend / PACE.atkEvery); return Math.pow(x, Math.min(n, b)) * Math.pow(x2, Math.max(0, n - b)); };
 const atkCurve = a => (4 + PACE.atkPer * a) * atkSteps(a, PACE.atkX, PACE.atkX2);
 const heroPow = () => lvlMult() * dmgMult() * (1 + gear().attack / 100);
 const heroAtk = () => atkCurve(trainLv('atk')) * lvlMult() * dmgMult() * (1 + gear().attack / 100);
@@ -10311,7 +10409,68 @@ const mobGold = z => foeGoldBase(z) * earlyGold(z) * goldMult();
 // (tier 5) began at zone 25 and a tier-5 weapon arrived before the Region 1 boss.
 const zoneTier = z => Math.max(1, PACE.essTier.filter(s => z >= s).length);
 const essChance = () => 0.25 * (1 + gear().ess / 100) * mod('essence');
-const xpNeed = () => Math.floor(15 * Math.pow(1.3, S.L - 1));
+// hero-progression-rework: the road and the level curve (docs/design/hero-progression-build.md 3). roadLv(z) is the level the
+// road expects at zone z (HERO_TUNE.road: a monotone cubic through the points, the last slope on past the end); roadZone(L) is its
+// inverse (fractional, at least 1); roadLevel() the road's level at the furthest zone
+// (+ HERO_TUNE.joinLead, the lead a hero who plays it keeps); roadFoeXp(z) what a normal foe pays
+// (59k turnFoeSetup's sum without its rounding); roadZoneFights(z) the fights a
+// zone of road takes (HERO_TUNE.fights, a steady ratio between points, flat past the ends), roadSlope(z) the road's levels a
+// zone there, roadFights(L) the fights a level takes (the two divided).
+// The road is a monotone cubic through HERO_TUNE.road (Fritsch-Carlson), so its slope, and with it the fights a level takes,
+// changes smoothly between points (judge 3b; Codex: the straight lines made a level cost jump x2 at zone 17).
+const ROAD_M = (() => {
+  const R = HERO_TUNE.road, n = R.length, d = [], m = new Array(n).fill(0);
+  for (let i = 0; i < n - 1; i++) d.push((R[i + 1][1] - R[i][1]) / (R[i + 1][0] - R[i][0]));
+  m[0] = d[0]; m[n - 1] = d[n - 2];
+  for (let i = 1; i < n - 1; i++) m[i] = d[i - 1] * d[i] <= 0 ? 0 : (d[i - 1] + d[i]) / 2;
+  for (let i = 0; i < n - 1; i++) {
+    if (d[i] === 0) { m[i] = m[i + 1] = 0; continue; }
+    const a = m[i] / d[i], b = m[i + 1] / d[i], h = a * a + b * b;
+    if (h > 9) { const t = 3 / Math.sqrt(h); m[i] = t * a * d[i]; m[i + 1] = t * b * d[i]; }
+  }
+  return m;
+})();
+function roadSeg(z) { const R = HERO_TUNE.road; let i = 1; while (i < R.length - 1 && z > R[i][0]) i++; return i; }
+function roadLv(z) {
+  const R = HERO_TUNE.road, n = R.length;
+  if (!(z > 1)) return 1;
+  if (z >= R[n - 1][0]) return R[n - 1][1] + (z - R[n - 1][0]) * ROAD_M[n - 1];
+  const i = roadSeg(z), a = R[i - 1], b = R[i], h = b[0] - a[0], t = (z - a[0]) / h, t2 = t * t, t3 = t2 * t;
+  return (2 * t3 - 3 * t2 + 1) * a[1] + (t3 - 2 * t2 + t) * h * ROAD_M[i - 1] + (-2 * t3 + 3 * t2) * b[1] + (t3 - t2) * h * ROAD_M[i];
+}
+function roadZone(L) {
+  const R = HERO_TUNE.road, n = R.length;
+  if (!(L > 1)) return 1;
+  if (L >= R[n - 1][1]) return R[n - 1][0] + (L - R[n - 1][1]) / ROAD_M[n - 1];
+  let lo = 1, hi = R[n - 1][0];
+  for (let k = 0; k < 50; k++) { const mid = (lo + hi) / 2; if (roadLv(mid) < L) lo = mid; else hi = mid; }
+  return Math.max(1, (lo + hi) / 2);
+}
+const roadLevel = () => Math.max(1, Math.floor(roadLv(S.maxZone || 1) + (HERO_TUNE.joinLead || 0)));   // the join level: where a hero who plays the road stands
+const roadFoeXp = z => 1.5 * z * (typeof TURN_TUNE === 'object' && TURN_TUNE.on ? TURN_TUNE.xpX : 1);   // smooth: no rounding steps between zones
+function roadSlope(z) {
+  const R = HERO_TUNE.road, n = R.length;
+  if (z <= 1) return ROAD_M[0];
+  if (z >= R[n - 1][0]) return ROAD_M[n - 1];
+  const i = roadSeg(z), a = R[i - 1], b = R[i], h = b[0] - a[0], t = (z - a[0]) / h, t2 = t * t;
+  return Math.max(1e-6, (6 * t2 - 6 * t) * a[1] / h + (3 * t2 - 4 * t + 1) * ROAD_M[i - 1] + (-6 * t2 + 6 * t) * b[1] / h + (3 * t2 - 2 * t) * ROAD_M[i]);
+}
+function roadZoneFights(z) {
+  const F = HERO_TUNE.fights;
+  if (z <= F[0][0]) return F[0][1];
+  if (z >= F[F.length - 1][0]) return F[F.length - 1][1];
+  let i = 1;
+  while (z > F[i][0]) i++;
+  const a = F[i - 1], b = F[i];
+  return a[1] * Math.pow(b[1] / a[1], (z - a[0]) / (b[0] - a[0]));   // a steady ratio between the points (judge 3c: no jumps)
+}
+const roadFights = L => { const z = roadZone(L); return roadZoneFights(z) / roadSlope(z); };
+// hero-progression-rework: flag on, today's 15 x 1.3^(L - 1); flag off, the fights a level takes x what a foe pays on the road.
+// hero-progression-rework: XP earned by a hero more than HERO_TUNE.aheadLead levels past the road's level at the furthest
+// zone is x HERO_TUNE.aheadX for each level further (fractional): levels follow the road, and away time cannot run a hero
+// far past the zone they can fight. 1 with the flag on.
+const xpAheadX = (L = S.L) => HERO_TUNE.training ? 1 : Math.pow(HERO_TUNE.aheadX, Math.max(0, L - roadLv(S.maxZone || 1) - HERO_TUNE.aheadLead));
+const xpNeed = (L = S.L) => HERO_TUNE.training ? Math.floor(15 * Math.pow(1.3, L - 1)) : Math.max(1, Math.round(roadFights(L) * roadFoeXp(roadZone(L))));
 // Skill XP and tier gates (GP1, knobs in SKILL_TUNE, 20-data). skillNeed(lv, k): k picks the crafting
 // curve for a station skill; without k it is the gathering curve.
 const skillCurve = k => SKILL_TUNE.craftSkills.includes(k) ? SKILL_TUNE.craftNeed : SKILL_TUNE.gatherNeed;
@@ -10714,6 +10873,7 @@ function kill() {
 function killPack(m, g) {
   const z = S.zone, tier = zoneTier(z);
   gainXp(m.xp);
+  if (typeof soloBenchXp === 'function') soloBenchXp(m.xp * mod('xp'));   // hero-progression-rework: benched heroes earn a share
   let ess = m.boss ? 3 : 0;
   const ch = essChance(); ess += Math.floor(ch) + (Math.random() < ch % 1 ? 1 : 0);
   if (Math.random() < gear().essExtra) ess++;
@@ -10737,13 +10897,24 @@ function killPack(m, g) {
 }
 
 // quiet: no float or toast (away gains; the away card reports the levels).
+// hero-progression-rework: with attributes on, XP past the road's level is cut (xpAheadX, 40-rules), level by level, so a lump
+// of away XP is cut more for each level it buys.
 function gainXp(n, quiet) {
-  S.xp += n * mod('xp');
-  while (S.xp >= xpNeed()) {
+  let raw = n * mod('xp');
+  // a save from before attributes (or played with them, under the switch-off flag): its bars carry over once as the same share
+  // of this curve's levels, under the next level (55-attributes attrXpMap), so it never chains level-ups
+  attrXpMap();
+  if (HERO_TUNE.training) { S.xp += raw; raw = 0; }
+  for (let i = 0; i < 1000; i++) {
+    if (raw > 0) {
+      const x = xpAheadX(S.L), need = (xpNeed() - S.xp) / x;
+      if (raw < need) { S.xp += raw * x; raw = 0; } else { raw -= need; S.xp = xpNeed(); }
+    }
+    if (!(S.xp >= xpNeed())) break;
     S.xp -= xpNeed(); S.L++; emit('levelup', { L: S.L, quiet: !!quiet });
     if (quiet) continue;
     addFloat('LEVEL UP', '#6FCB6A', true, 0.27, 0.3);
-    emit('toast', { key: 'level', msg: `Level ${S.L}. Your hero hits ${Math.round(PACE.heroLv * 100)}% harder.`, kind: 'good', prio: 'high', L: S.L });   // W1-B: every 10th level pops
+    emit('toast', { key: 'level', msg: attrOn() ? `Level ${S.L}. ${HERO_TUNE.perLevel} attribute points to spend.` : `Level ${S.L}. Your hero hits ${Math.round(PACE.heroLv * 100)}% harder.`, kind: 'good', prio: 'high', L: S.L });   // W1-B: every 10th level pops
   }
 }
 function gainSkill(k, n, quiet) {
@@ -11546,6 +11717,170 @@ let OMENS, WEEKLY_GOALS;
     force: id => { forced = id; actCache.k = ''; },
     needs: AL_NEEDS
   });
+}
+
+// ---- src/js/55-attributes.js ----
+// 55-attributes: attribute points (card hero-progression-rework; docs/design/hero-progression-build.md section 2).
+// Each hero earns HERO_TUNE.perLevel points a level after Lv 1 and spends them on the four ATTRS (24g). A point raises one
+// thing by its `per`: Might Attack, Focus ability power, Guard counters (and the parry window), Vigour health. Every level
+// also gives each of the four HERO_TUNE.lvBase. Points in one attribute past HERO_TUNE.softAt of the hero's total count
+// HERO_TUNE.soft each. Adding points is free; the first reset per hero is free, later ones cost gold (attrResetCost). A
+// fight takes the points as it starts.
+// Power outside a fight (heroAtk: the away and raid dps, farmableZone, the Deepwell's depth) uses the build-neutral
+// multiplier attrNeutral(): the same for every split of the same points. Turn fights apply the split on top (attrRel).
+// HERO_TUNE.training (the switch-off flag) turns all of this off: no points, and every multiplier is the old flat
+// +PACE.heroLv a level.
+// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
+//
+// API (function declarations: 40-rules, 59-combat, 59j and 59k call them at run time):
+//   attrOn() -> bool (attributes are live: the flag is off)
+//   heroLvOf(k?) -> the hero's level (the one playing reads S.L; others their saved record; default: the one playing)
+//   attrOf(k, id) -> points in one attribute; attrEff(k, id) -> those points after the soft cap
+//   attrPoints(k?) -> { total, spent, free }
+//   attrAdd(id, n = 1, k?) -> points added (never past the free points; emits attrSet { hero, id, n })
+//   attrSpread(k?) -> points added: the free points spread so the four end as even as they can (emits attrSet a point)
+//   attrResetCost(k?) -> gold (0 for a hero's first reset); attrReset(k?) -> bool (pays; every point back to free;
+//                      emits attrReset { hero, cost })
+//   attrNeutral(k?) -> the build-neutral level multiplier: 1 + the mean base x (L - 1) + the mean per x spent / 4
+//   attrX(kind, k?) -> the level-and-points multiplier on kind 'atk' | 'ab' | 'counter' | 'hp'
+//   attrRel(kind, k?) -> attrX(kind) / attrNeutral(): heroAtk() carries attrNeutral() (40-rules lvlMult), so a turn fight's
+//                       Attack, abilities, counters and health multiply by this on top of it
+//   attrParryMs(k?) -> Guard's extra parry window, in seconds (at most HERO_TUNE.guardMs)
+//   attrSpentAny() -> bool (any hero has spent a point: the guide's step)
+// Save: registerState('attr', { v: 1, pts: { hero: { might, focus, guard, vigour } }, resets: { hero: n }, met: { hero: 1 }, live }).
+// live: 1 once the save has run with attributes on; with the flag back on, 55-attributes seeds Training from levels once
+// (S.solo.trSeeded). Points spent
+// are stored; the total is derived from the level, never stored.
+
+function attrOn() { return !HERO_TUNE.training; }
+function heroLvOf(k) {
+  const s = S.solo;
+  if (!k || !s || k === s.hero) return S.L || 1;
+  const r = s.lv && s.lv[k];
+  return r && r.L > 0 ? r.L | 0 : 1;
+}
+const attrHero = k => k || (typeof soloHero === 'function' ? soloHero() : null) || (S.solo && S.solo.hero) || 'wren';
+function attrRec(k) {
+  k = attrHero(k);
+  const a = S.attr || (S.attr = { v: 1, pts: {} });
+  if (!a.pts || typeof a.pts !== 'object') a.pts = {};
+  let r = a.pts[k];
+  if (!r || typeof r !== 'object') r = a.pts[k] = ATTR0();
+  return r;
+}
+function attrOf(k, id) { const v = attrRec(k)[id]; return v > 0 ? Math.floor(v) : 0; }
+function attrTotal(k) { return attrOn() ? Math.max(0, (heroLvOf(k) - 1) * HERO_TUNE.perLevel) : 0; }
+function attrEff(k, id) {
+  const t = attrTotal(attrHero(k)), p = Math.min(attrOf(k, id), t), h = HERO_TUNE.softAt * t;   // never past the level's points
+  return p <= h ? p : h + HERO_TUNE.soft * (p - h);
+}
+function attrPoints(k) {
+  k = attrHero(k);
+  const total = attrTotal(k);
+  let spent = 0; for (const id of ATTR_IDS) spent += attrOf(k, id);
+  return { total, spent, free: Math.max(0, total - spent) };
+}
+function attrAdd(id, n, k) {
+  k = attrHero(k);
+  if (!attrOn() || !ATTR_IDS.includes(id)) return 0;
+  const add = Math.min(Math.max(0, Math.floor(n === undefined ? 1 : n)), attrPoints(k).free);
+  if (!(add > 0)) return 0;
+  const r = attrRec(k); r[id] = attrOf(k, id) + add;
+  emit('attrSet', { hero: k, id, n: add });
+  if (typeof gearDirty === 'function') gearDirty();
+  return add;
+}
+// Spread the free points so the four attributes end as even as they can (the lowest first; ties in screen order).
+function attrSpread(k) {
+  k = attrHero(k);
+  if (!attrOn()) return 0;
+  const r = attrRec(k); let n = attrPoints(k).free, add = 0;
+  for (; n > 0; n--) {
+    let best = ATTR_IDS[0]; for (const id of ATTR_IDS) if (attrOf(k, id) < attrOf(k, best)) best = id;
+    r[best] = attrOf(k, best) + 1; add++;
+  }
+  if (add) { emit('attrSet', { hero: k, id: 'spread', n: add }); if (typeof gearDirty === 'function') gearDirty(); }
+  return add;
+}
+function attrResets() { const a = S.attr || (S.attr = { v: 1, pts: {} }); if (!a.resets || typeof a.resets !== 'object') a.resets = {}; return a.resets; }
+function attrResetCost(k) {
+  k = attrHero(k);
+  return (attrResets()[k] | 0) >= 1 && typeof foeGoldBase === 'function' ? Math.ceil(foeGoldBase(Math.max(1, S.maxZone || 1)) * HERO_TUNE.respec) : 0;
+}
+function attrReset(k) {
+  k = attrHero(k);
+  const r = attrRec(k); let any = false;
+  for (const id of ATTR_IDS) if (r[id]) any = true;
+  if (!any) return false;
+  const cost = attrResetCost(k);
+  if (cost > 0) { if (!(S.gold >= cost)) return false; S.gold -= cost; if (typeof econSpend === 'function') econSpend('up', cost); }
+  for (const id of ATTR_IDS) r[id] = 0;
+  const rs = attrResets(); rs[k] = (rs[k] | 0) + 1;
+  emit('attrReset', { hero: k, cost });
+  if (typeof gearDirty === 'function') gearDirty();
+  return true;
+}
+const ATTR_BY_KIND = {}; for (const a of ATTRS) ATTR_BY_KIND[a.kind] = a;
+const ATTR_PER = ATTRS.reduce((t, a) => t + a.per, 0) / ATTRS.length;
+const attrBase = a => a && a.base !== undefined ? a.base : HERO_TUNE.lvBase;
+const ATTR_BASE = ATTRS.reduce((t, a) => t + attrBase(a), 0) / ATTRS.length;
+function attrNeutral(k) {
+  const L = heroLvOf(k);
+  if (!attrOn()) return 1 + PACE.heroLv * (L - 1);
+  const p = attrPoints(k);
+  return 1 + ATTR_BASE * (L - 1) + ATTR_PER * Math.min(p.spent, p.total) / ATTRS.length;
+}
+function attrX(kind, k) {
+  const L = heroLvOf(k);
+  if (!attrOn()) return 1 + PACE.heroLv * (L - 1);
+  const a = ATTR_BY_KIND[kind];
+  return 1 + attrBase(a) * (L - 1) + (a ? a.per * attrEff(k, a.id) : 0);
+}
+function attrRel(kind, k) { return attrOn() ? attrX(kind, k) / attrNeutral(k) : 1; }
+function attrParryMs(k) { const a = ATTR_BY_KIND.counter; return attrOn() && a && a.parryMs ? Math.min(HERO_TUNE.guardMs, a.parryMs * attrEff(k, a.id)) / 1000 : 0; }
+function attrSpentAny() {
+  const p = S.attr && S.attr.pts; if (!p || typeof p !== 'object') return false;
+  for (const k in p) { const r = p[k]; if (r && typeof r === 'object') for (const id of ATTR_IDS) if (r[id] > 0) return true; }
+  return false;
+}
+
+// The first time a hero takes the lamp with points to spend, one line points at Attributes (judge 1d).
+on('heroJoin', ({ key } = {}) => {
+  if (!attrOn() || !key) return;
+  const a = S.attr || (S.attr = { v: 1, pts: {} }); if (!a.met || typeof a.met !== 'object') a.met = {};
+  const free = attrPoints(key).free; if (a.met[key] || !(free > 0)) return;
+  a.met[key] = 1;
+  const nm = typeof ROSTER === 'object' && ROSTER[key] ? ROSTER[key].name.split(' ')[0] : 'Your hero';
+  emit('toast', { key: 'attr-join', msg: `${nm} has ${free} attribute point${free === 1 ? '' : 's'}. Spread them evenly in one tap, or build your own.`, kind: 'good', prio: 'normal', go: { view: 'attributes' } });
+});
+
+registerState('attr', { v: 1, pts: {}, resets: {}, met: {}, live: 0, xpv: 0 });
+// A save from before attributes holds XP on the old curve (15 x 1.3^(L - 1) a level). The first XP it earns with attributes
+// on carries each hero's bar over as the same share of this curve's level, so no progress is lost and none is gained.
+// S.attr.xpv says which curve the bars are on (1: the road's); the switch-off flag carries them back the same way.
+function attrXpMap() {
+  const a = S.attr, on = attrOn(); if (!a || !!a.xpv === on) return;
+  const old = L => Math.floor(15 * Math.pow(1.3, L - 1)), road = L => Math.max(1, Math.round(roadFights(L) * roadFoeXp(roadZone(L))));
+  const from = on ? old : road, to = on ? road : old;
+  const map = (L, xp) => { L = Math.max(1, L | 0); return Math.min(0.999, Math.max(0, (+xp || 0) / from(L))) * to(L); };
+  S.xp = map(S.L, S.xp);
+  const lv = S.solo && S.solo.lv;
+  if (lv && typeof lv === 'object') for (const k in lv) { const r = lv[k]; if (r && typeof r === 'object' && r.L >= 1) r.xp = map(r.L, r.xp); }
+  a.xpv = on ? 1 : 0;
+}
+if (!S.attr || typeof S.attr !== 'object') S.attr = { v: 1, pts: {}, resets: {}, met: {}, live: 0, xpv: 0 };   // a broken save (attr: null) starts the points clean
+// The switch-off flag on a save played with attributes (judge 6): once, each hero's Training is raised to the move level their
+// hero level gave them (55-training trainLv's L - 1, to the stage cap), so no high-level hero comes back untrained.
+if (attrOn()) S.attr.live = 1;
+else if (S.attr.live && S.solo && typeof S.solo === 'object' && !S.solo.trSeeded) {
+  const T = SOLO_TUNE.train;
+  for (const k of SOLO_ORDER) {
+    const L = heroLvOf(k), stage = S.solo.asc && S.solo.asc[k] ? 1 : 0, lv = Math.max(0, Math.min(L - 1, T.cap[Math.min(stage, T.cap.length - 1)]));
+    if (!(lv > 0)) continue;
+    const r = trainRec(k);
+    for (const mv of trainMoves(k)) if (!(r[mv] >= lv)) r[mv] = lv;
+  }
+  S.solo.trSeeded = 1;
 }
 
 // ---- src/js/55-boss-try.js ----
@@ -12954,14 +13289,19 @@ var forgeGoalPicks = 0;
   const heroNext = () => {
     const t = typeof trainNext === 'function' && soloHero() ? trainNext() : null; return t ? { u: { id: t.move, name: trainName(t.move), ic: ['sword', '#A9B1BD'] }, cost: t.cost, lv: t.lv, train: 1 } : null;
   };
+  // hero-progression-rework: with attributes on there is no gold Training; the goal says there are points to spend
+  const attrLive = () => typeof attrOn === 'function' && attrOn();
+  const attrFree = () => { const k = typeof soloHero === 'function' ? soloHero() : null; return attrLive() && k ? attrPoints(k).free : 0; };
   registerGoal({
     // menu audit: a level that costs under 1% of your gold is free power, and ranks high (else it waits its turn)
-    id: 'hero-up', sys: 'hero', prio: () => { const b = heroNext(); return b && b.cost <= S.gold * 0.01 ? 3 : -1; },
-    pct: () => { const b = heroNext(); return b ? need(S.gold, b.cost) : null; },
-    label: () => { const b = heroNext(); if (!b) return ''; const lv = b.lv;
+    id: 'hero-up', sys: 'hero', prio: () => { if (attrLive()) return attrFree() > 0 ? 3 : -1; const b = heroNext(); return b && b.cost <= S.gold * 0.01 ? 3 : -1; },
+    pct: () => { if (attrLive()) return attrFree() > 0 ? 1 : null; const b = heroNext(); return b ? need(S.gold, b.cost) : null; },
+    label: () => { if (attrLive()) { const n = attrFree(); return n > 0 ? `Spend ${n} attribute point${n === 1 ? '' : 's'}` : ''; }
+      const b = heroNext(); if (!b) return ''; const lv = b.lv;
       return S.gold >= b.cost ? `Train ${b.u.name} to Lv ${lv}: ready` : `Train ${b.u.name} to Lv ${lv}: ${fmt(Math.ceil(b.cost - S.gold))} more gold`; },
-    icon: () => { const b = heroNext(); return { ic: b ? b.u.ic : ['sword', '#A9B1BD'] }; },
-    go: () => { const b = heroNext(); return b ? { tab: 'party', view: 'training', sel: `#trainRows .tr-row[data-mv="${b.u.id}"]` } : { tab: 'party', view: 'training' }; }
+    icon: () => { const b = attrLive() ? null : heroNext(); return { ic: b ? b.u.ic : ['sword', '#A9B1BD'] }; },
+    go: () => { if (attrLive()) return { tab: 'party', view: 'attributes', sel: '#attrRows' };
+      const b = heroNext(); return b ? { tab: 'party', view: 'training', sel: `#trainRows .tr-row[data-mv="${b.u.id}"]` } : { tab: 'party', view: 'training' }; }
   });
 
   // Next zone boss: foes left at the frontier, or the boss is ready. "Ready" means you would usually win (59m bossOdds: scratch
@@ -12974,6 +13314,7 @@ var forgeGoalPicks = 0;
     if (!o) return { s: 'next', win: 0 };
     return { s: o.win >= BOSS_ODDS.ready ? 'ready' : o.win >= BOSS_ODDS.close ? 'close' : 'weak', win: o.win };
   };
+  const bossNow = () => S.zone === S.maxZone && bossReady() && !bossHeld() ? bossRead() : null;
   registerGoal({
     id: 'zone-boss', sys: 'boss', prio: 2,
     // after a lost try, "ready" waits until you are 15% stronger than then (what auto-challenge waits for too):
@@ -12988,7 +13329,10 @@ var forgeGoalPicks = 0;
       return !b || b.s === 'ready' ? `Boss ready in Zone ${z}` : b.s === 'next' ? `The Zone ${z} boss is next`
         : b.s === 'close' ? `Zone ${z} boss: a close fight. Gear up to be safe` : `Zone ${z} boss is too strong. Level up and gear up first`; },
     icon: { ic: ['banner', '#E0524F', { 7: '#FFB347' }] },
-    go: () => ({ tab: 'adv', sel: '#gateBtn', fn: () => { if (S.zone !== S.maxZone) setZone(S.maxZone); } })   // the Fight tab; Training is no longer a way forward
+    go: () => { const b = bossNow();
+      // hero-progression-rework: spare attribute points are the one thing to do first; with none, the Fight tab (Training is no longer a way forward)
+      return b && (b.s === 'close' || b.s === 'weak') && attrLive() && attrFree() > 0 ? { tab: 'party', view: 'attributes', sel: '#attrRows' }
+        : { tab: 'adv', sel: '#gateBtn', fn: () => { if (S.zone !== S.maxZone) setZone(S.maxZone); } }; }
   });
 
   // Bounties: the one closest to done (a finished one is ready to claim).
@@ -13710,7 +14054,7 @@ const ONBOARD_TUNE = { gap: 60 };
 const FEATURES = [
   { id: 'party', tab: 'party', view: 'team', name: 'Hero', why: 'hero level 3', when: () => S.L >= 3 || S.maxZone >= 2 },
   { id: 'gather', tab: 'gat', view: 'mine', name: 'Gather', why: 'after the first boss (zone 2), or once the hero walks to the grove', when: () => S.maxZone >= 2 || S.activity === 'gather', now: () => S.activity === 'gather' },
-  { id: 'nextup', name: 'Next Up', why: 'first Training level, or zone 2', when: () => upBought() || S.maxZone >= 2 },
+  { id: 'nextup', name: 'Next Up', why: 'first attribute point or Training level, or zone 2', when: () => upBought() || S.maxZone >= 2 },
   { id: 'awaynote', name: 'Away note', why: 'Gather is open (the away strip under the Fight / Gather row, 71-ui-fight)', when: () => isUnlocked('gather') },
   { id: 'bounties', tab: 'adv', view: 'bounties', name: 'Bounties', why: 'zone 4', when: () => S.maxZone >= 4 },
   { id: 'camp', tab: 'world', view: 'camp', name: 'Camp', why: 'the camp opens (zone 5; a cold Hearth: the fire is lit)', when: () => (!coldH() && S.maxZone >= 5) || (typeof campOpen === 'function' && campOpen()), now: () => typeof campOpen === 'function' && campOpen() },
@@ -13836,8 +14180,15 @@ function needShort(mats) {
   return out;
 }
 // The guide teaches Training's Attack: the first level's price, and whether any move has been trained.
-const cheapestUp = () => { const p = typeof trainPlan === 'function' && soloHero() ? trainPlan('atk', '1') : null; return p && p.n > 0 ? p.cost : Infinity; };
-const upBought = () => !!(S.solo && S.solo.tr && Object.values(S.solo.tr).some(r => r && Object.values(r).some(v => v > 0)));
+// hero-progression-rework: with attributes on (HERO_TUNE.training = 0) the step is the first attribute point: it fires when the
+// playing hero has one free (cheapestUp is 0 then, so `gold >= cheapestUp()` reads "a point to spend"; Infinity: none) and it is
+// done when any hero has spent one (attrSpentAny).
+const obAttrOn = () => typeof attrOn === 'function' && attrOn();
+const cheapestUp = () => {
+  if (obAttrOn()) return typeof attrPoints === 'function' && soloHero() && attrPoints(soloHero()).free > 0 ? 0 : Infinity;
+  const p = typeof trainPlan === 'function' && soloHero() ? trainPlan('atk', '1') : null; return p && p.n > 0 ? p.cost : Infinity;
+};
+const upBought = () => obAttrOn() ? attrSpentAny() : !!(S.solo && S.solo.tr && Object.values(S.solo.tr).some(r => r && Object.values(r).some(v => v > 0)));
 const abilityOk = () => { try { const a = typeof abilityInfo === 'function' && abilityInfo(); return !!(a && a.ready); } catch (e) { return false; } };
 // Materials for a first tier-1 recipe the hero can wear (as the Next Up craft goal reads it).
 function craftReady() {
@@ -14352,7 +14703,7 @@ let wellRested, restParty, restNote;
 //
 // encodeSave(obj) -> string                      turn a save object into a code
 // decodeSave(code) -> { ok: true, data } | { ok: false, error }   parse and validate a code
-// validateSave(data) -> { ok: true, data } | { ok: false, error }   pure v5 shape check
+// validateSave(data) -> { ok: true, data } | { ok: false, error }   pure v5 shape check (S.attr: attribute points per hero, hero-progression-rework)
 // summarizeSave(data) -> { name, level, maxZone, region, heroes, savedAt }   short preview
 
 const SAVECODE_HEADER = 'LF1';
@@ -14537,6 +14888,26 @@ function validateSave(data) {
       for (const [k, lv] of Object.entries(s.lv || {})) { known(SOLO_HEROES, k, 'solo.lv.hero'); record(lv, 'solo.lv.' + k); int(lv.L, 'solo.lv.level', 1, lim.progression); num(lv.xp, 'solo.lv.xp'); }
       for (const z of Object.values(s.zn || {})) int(z, 'solo.zone', 1, lim.progression);
       for (const tr of Object.values(s.tr || {})) { record(tr, 'solo.training'); for (const n of Object.values(tr)) int(n, 'solo.training.level', 0, lim.progression); }
+    }
+    // hero-progression-rework: attribute points spent, per hero, per attribute (55-attributes)
+    if (data.attr !== undefined) {
+      const at = data.attr; record(at, 'attr');
+      if (at.v !== undefined) int(at.v, 'attr.v', 0, 1000);
+      if (at.pts !== undefined) {
+        record(at.pts, 'attr.pts');
+        for (const [k, r] of Object.entries(at.pts)) {
+          known(SOLO_HEROES, k, 'attr.pts.hero'); record(r, 'attr.pts.' + k);
+          let sum = 0;
+          for (const [id, n] of Object.entries(r)) { known(ATTR0(), id, 'attr.pts.attribute'); int(n, 'attr.pts.' + k + '.' + id, 0, lim.progression); sum += n; }
+          // never more points spent than the hero's level gives
+          const s = data.solo || {}, lv = s.hero === k ? data.L : s.lv && s.lv[k] && s.lv[k].L;
+          if (sum > Math.max(0, ((+lv || 1) - 1) * HERO_TUNE.perLevel)) fail('attr.pts.' + k);
+        }
+      }
+      if (at.resets !== undefined) { record(at.resets, 'attr.resets'); for (const [k, n] of Object.entries(at.resets)) { known(SOLO_HEROES, k, 'attr.resets.hero'); int(n, 'attr.resets.' + k, 0, lim.progression); } }
+      if (at.met !== undefined) { record(at.met, 'attr.met'); for (const [k, n] of Object.entries(at.met)) { known(SOLO_HEROES, k, 'attr.met.hero'); int(n, 'attr.met.' + k, 0, 1); } }
+      if (at.live !== undefined) int(at.live, 'attr.live', 0, 1);
+      if (at.xpv !== undefined) int(at.xpv, 'attr.xpv', 0, 1);
     }
     if (data.abil) {   // learned abilities: abilityOwned reads unl[hero] and scrollCount reads scrolls[id] after a load
       for (const [k, ids] of Object.entries(data.abil.unl || {})) { known(SOLO_HEROES, k, 'abil.unl.hero'); array(ids, 'abil.unl.' + k); for (const id of ids) if (typeof id !== 'string' || !ABILITIES[id] || ABILITIES[id].hero !== k) fail('abil.unl.' + k); }
@@ -15598,6 +15969,10 @@ function toolRight(skill, t) {
 // Precision in the solo game (the dormant party game keeps them: HERO_UPS, buyHero).
 // CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
 //
+// hero-progression-rework: with HERO_TUNE.training off (attrOn(), 55-attributes) gold Training is switched off: each move acts as
+// if trained to the hero's level, capped by the class stage (trainLv); train() buys nothing, trainPlan has no price, trainNext
+// has no step. trainInfo still reports the level-derived facts. HERO_TUNE.training = 1 restores everything below, bit for bit.
+//
 // Rules (knobs: SOLO_TUNE.train in 24b; Attack's curve: PACE.atkPer / atkX / atkEvery in 40-rules; prices: ECON.train):
 //   - Levels belong to the hero (S.solo.tr[hero][move]); a new move starts at 0.
 //   - Cap: a move never passes the hero's level, nor the class stage's cap (SOLO_TUNE.train.cap: base class, then
@@ -15640,7 +16015,18 @@ function trainMoves(k) {
 }
 const trainTurns = () => typeof TURN_TUNE === 'object' && !!TURN_TUNE.on;
 function trainName(mv) { return mv === 'atk' ? 'Attack' : mv === 'parry' ? 'Parry' : mv === 'dodge' ? 'Dodge' : trainTurns() ? 'Ability power' : (SOLO_ABILITIES[mv] ? SOLO_ABILITIES[mv].name : mv); }
-function trainLv(mv, k) { if (!S || !S.solo) return 0; const v = trainRec(k)[mv]; return v > 0 ? Math.floor(v) : 0; }
+function trainLv(mv, k) {
+  if (!S || !S.solo) return 0;
+  if (attrOn()) {
+    // hero-progression-rework: a move's level follows the hero's: L - 1 (Lv 1 hits as today's untrained hero) up to the class
+    // stage's cap, then HERO_TUNE.capHalf a level past it (judge 3b). Can be fractional; milestones floor it. No allocation: called often.
+    const h = trainHero(k), H = SOLO_HEROES[h];
+    if (!(mv === 'atk' || mv === 'parry' || mv === 'dodge' || (H && H.abs.includes(mv)))) return 0;
+    const T = SOLO_TUNE.train, lv = heroLvOf(h) - 1, cap = T.cap[Math.min(trainStage(h), T.cap.length - 1)];
+    return lv <= cap ? Math.max(0, lv) : cap + HERO_TUNE.capHalf * (lv - cap);
+  }
+  const v = trainRec(k)[mv]; return v > 0 ? Math.floor(v) : 0;
+}
 function trainStage(k) {
   k = trainHero(k);
   const s = S.solo || {};
@@ -15650,7 +16036,7 @@ function trainStage(k) {
 function trainCap(k) {
   k = trainHero(k);
   const T = SOLO_TUNE.train, stage = trainStage(k), stageCap = T.cap[Math.min(stage, T.cap.length - 1)];
-  const lv = typeof soloLevels === 'function' ? soloLevels()[k].L : S.L;
+  const lv = attrOn() ? heroLvOf(k) : typeof soloLevels === 'function' ? soloLevels()[k].L : S.L;
   return { cap: Math.min(lv, stageCap), by: lv < stageCap ? 'level' : 'stage', lv, stage, stageCap };
 }
 // The price of level n + 1 (n = the level now); mod('trainCost') is a hook for discounts (none yet).
@@ -15662,6 +16048,7 @@ function trainCost(mv, n) {
 // plan() for Training: amt '1' | '10' | 'max' (default: the player's x1 / x10 / Max). 'max' is what the gold buys (at
 // least 1, so the button shows the next price). Never past the cap. { n: 0, cost: Infinity } at the cap.
 function trainPlan(mv, amt, k) {
+  if (attrOn()) return { n: 0, cost: Infinity };   // hero-progression-rework: no gold Training
   const lv = trainLv(mv, k), c = trainCap(k).cap;
   if (lv >= c) return { n: 0, cost: Infinity };
   amt = amt === undefined ? S.amt : amt;
@@ -15675,6 +16062,7 @@ function trainPlan(mv, amt, k) {
   return { n, cost };
 }
 function train(mv, amt) {
+  if (attrOn()) return 0;   // hero-progression-rework: no gold Training
   const k = typeof soloHero === 'function' ? soloHero() : null;
   if (!k || !trainMoves(k).includes(mv)) return 0;
   const p = trainPlan(mv, amt, k);
@@ -15755,6 +16143,7 @@ function trainInfo(mv, k) {
 // The next level to train (Next Up, 55-goals): the cheapest of Attack and the equipped abilities (Attack on a tie); Parry
 // and Dodge only once those are at their cap (they pay off only by hand). null when every move is at its cap.
 function trainNext(k) {
+  if (attrOn()) return null;   // hero-progression-rework: no gold Training
   k = trainHero(k);
   const eq = k === (typeof soloHero === 'function' && soloHero()) && typeof soloEquipped === 'function' ? soloEquipped() : [];
   const pick = list => { let best = null; for (const mv of list) { const p = trainPlan(mv, '1', k); if (p.n > 0 && (!best || p.cost < best.cost)) best = { move: mv, cost: p.cost, lv: trainLv(mv, k) + 1 }; } return best; };
@@ -20557,6 +20946,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     let maxHp = (ev ? ev.hp * ev.hpX : T.heroHp[cls]) * u.hpP * (1 + g.hp / 100);
     maxHp *= SOLO_TUNE.hpX * ((typeof soloHero === 'function' && SOLO_TUNE.heroHp[soloHero()]) || 1);   // the hero takes every hit
     if (SOLO_TUNE.turnHpX && typeof soloHero === 'function') maxHp *= SOLO_TUNE.turnHpX(soloHero());   // turn fights (59k TURN_TUNE.heroHpX)
+    maxHp *= attrRel('hp');   // hero-progression-rework: the hero's Vigour against the rest (1 with Training on)
     u.armour = (ev ? ev.armour : T.heroArmour[cls]) + g.armour + 0.1 * (equipped('helm') ? itemPower(equipped('helm')) : 0);
     // Unbroken: each guard stack also gives 2 armour. Slow Burn / Everburn: Embers burn their foe.
     if (cls === 'warden' && ks('unbroken') && typeof heroGuardN === 'function') u.armour += 2 * heroGuardN();
@@ -23900,7 +24290,9 @@ var eliteRoll, eliteRollDeep, eliteTraits, eliteHit, eliteDealt, eliteTick, elit
 // Exposed names:
 //   state    soloHero() -> 'wren' | 'tobin' | 'pip' | null; soloPick(key, { now }) -> bool (the first choice, or
 //            the free switch at camp: gold, gear and camp are shared, each hero keeps its own level and XP);
-//            soloLevels() -> { key: { L, xp } } (each hero's level; the one playing reads S.L live)
+//            soloLevels() -> { key: { L, xp } } (each hero's level; the one playing reads S.L live);
+//            soloBenchXp(n) (hero-progression-rework: n fight XP x HERO_TUNE.bench to every other playable hero's record, with
+//            level-ups; 50-sim killPack calls it; a switch lifts the arriving hero to roadLevel(), event heroJoin { key, L, lifted })
 //   buttons  soloAttack() -> '' | 'hit' | 'finisher' | 'interrupt' | 'cd'; soloParry(forgive) -> 'parry' | 'miss' | 'locked';
 //            soloDodge(forgive) -> 'dodge' | 'perfect' | 'early' | 'miss' | 'cd'; soloAbility({ slot, auto }) -> bool
 //   slots    soloAbilities(hero) -> unlocked ids; soloEquipped() -> [id | null] x 3 (the playing hero's, saved in S.solo.eq);
@@ -23914,7 +24306,7 @@ var eliteRoll, eliteRollDeep, eliteTraits, eliteHit, eliteDealt, eliteTick, elit
 //            Auto while the page is hidden, soloWake() ends that; neither changes the toggle. Opening the picker or a
 //            long press does not count as a press.
 //   stats    SOLO_STATS { attacks, parries, misses, dodges, early, counters, casts, auto, heavies, trash, hand }
-// Events: soloActive { on } (active <-> idle), soloHero { key, from }, soloAttack { kind }, soloParry { res }, soloDodge { res }, soloCounter { foe, dmg },
+// Events: heroJoin { key, L, lifted }, benchLevel { key, L }, soloActive { on } (active <-> idle), soloHero { key, from }, soloAttack { kind }, soloParry { res }, soloDodge { res }, soloCounter { foe, dmg },
 //   ability { cls: 'solo', id, name, auto } (the 55-party event every reader already listens to).
 // Save: registerState('solo', { v, hero, lv: { key: { L, xp } }, eq: { key: [id | null] x 3 }, zn: { key: zone }, auto }).
 //   zn: the zone each hero was fighting in when you switched away (W1-D): switching back returns you there.
@@ -23925,7 +24317,7 @@ var eliteRoll, eliteRollDeep, eliteTraits, eliteHit, eliteDealt, eliteTick, elit
 var soloPickerOpen = () => false;   // 75-solo-ui: the ability picker is open (90-boot waits)
 var turnPaused = () => false;   // 59k: the page is hidden, so a turn fight waits
 var soloActive = () => false, soloTouch = () => {}, soloGoIdle = () => {}, soloWake = () => {}, soloSetAuto = () => true, soloAuto = () => true;
-var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbility, soloAbilityInfo, soloButtons, soloAbilities, soloEquipped, soloEquip,
+var soloHero, soloPick, soloLevels, soloBenchXp, soloAttack, soloParry, soloDodge, soloAbility, soloAbilityInfo, soloButtons, soloAbilities, soloEquipped, soloEquip,
   soloTakenX, soloCounter, SOLO_STATS;
 
 {
@@ -23955,16 +24347,45 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
     return out;
   };
 
+  // hero-progression-rework: a won fight gives every other playable hero HERO_TUNE.bench of its XP (50-sim killPack; not away
+  // time), at that hero's own level's price. The benched hero's record is s.lv[k]; no toast, an event a level.
+  soloBenchXp = n => {
+    if (!attrOn() || !(n > 0) || typeof heroCanPlay !== 'function') return;
+    if (typeof attrXpMap === 'function') attrXpMap();   // a save from before attributes: bars carry over first
+    const s = Sx(), playing = soloHero();
+    for (const k of SOLO_ORDER) {
+      if (k === playing || !heroCanPlay(k)) continue;
+      if (!s.lv || typeof s.lv !== 'object') s.lv = {};
+      const rec = s.lv[k] || (s.lv[k] = { L: 1, xp: 0 });
+      let raw = n * HERO_TUNE.bench; rec.xp = +rec.xp || 0;
+      for (let i = 0; i < 500 && raw > 0; i++) {
+        const x = xpAheadX(rec.L), need = (xpNeed(rec.L) - rec.xp) / x;
+        if (raw < need) { rec.xp += raw * x; break; }
+        raw -= need; rec.xp = 0; rec.L++;
+        emit('benchLevel', { key: k, L: rec.L });
+      }
+    }
+  };
+
   // ---- choosing and switching ----
   soloPick = (key, opts) => {
     const h = SOLO_HEROES[key], o = opts || {};
     if (!h || typeof chooseClass !== 'function' || !heroCanPlay(key)) return false;
     const s = Sx(), from = s.hero, chosen = !!(S.party && S.party.chosen);
     if (from === key && chosen) return true;
+    if (typeof attrXpMap === 'function') attrXpMap();   // a save from before attributes: bars carry over before any lift changes a level
     // each hero keeps its own level and XP; the lamp (gold, gear, camp, the road) is shared
     if (from && SOLO_HEROES[from]) s.lv[from] = { L: S.L, xp: S.xp };
+    let lifted = false;
     if (from && from !== key) {
       const r = s.lv[key]; S.L = r ? Math.max(1, r.L | 0) : 1; S.xp = r ? Math.max(0, +r.xp || 0) : 0;
+      // hero-progression-rework: a hero who takes the lamp joins at the road's level at least, keeping their XP short of a level (a lift never
+      // chains level-ups); a hero above it keeps theirs. The join lead never lifts a joiner past the hero who leaves.
+      if (attrOn()) {
+        const leaving = SOLO_HEROES[from] && s.lv[from] ? s.lv[from].L | 0 : roadLevel();
+        const floor = Math.max(1, Math.floor(roadLv(S.maxZone)), Math.min(roadLevel(), leaving));
+        if (S.L < floor) { S.L = floor; S.xp = Math.min(S.xp, xpNeed(floor) - 1); lifted = true; }
+      }
       // W1-D (playtest-2 P2-7): the road belongs to the lamp, but each hero remembers where they stood. Leaving hero A saves A's
       // zone; arriving as B goes back to B's own zone (never past the furthest zone cleared). A hero with no zone kept
       // (never played) stays where you are. Pace (55-pace) then walks a weaker hero down to a zone they can farm and
@@ -23983,7 +24404,8 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
     atkT = 0; dodgeT = 0; parryT = 0; openT = 0; for (const id in cds) cds[id] = 0; readyFor.fill(0);
     if (typeof gearDirty === 'function') gearDirty();
     emit('soloHero', { key, from: from || null });
-    if (from && from !== key) toast(`${nm} takes up the lamp.`, 'good', null, 'normal');
+    if (from && from !== key && attrOn()) emit('heroJoin', { key, L: S.L, lifted });
+    if (from && from !== key) toast(attrOn() && lifted ? `${nm} joins at Lv ${S.L}, the road's level.` : `${nm} takes up the lamp.`, 'good', null, 'normal');
     return true;
   };
   // A tool or an old path that picks a class (chooseBase, chooseClass) plays that class's starter.
@@ -24070,7 +24492,7 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
         c.done = true;
         if (alive(c.f)) {
           // owner (SOLO2): the counter always crits: the crit multiplier, the crit event, the gear's echo, the crit number
-          const P = heroAtk() * trainCounterX(), cm = critMult();   // W2-A: Parry training: counter damage
+          const P = heroAtk() * trainCounterX() * attrRel('counter'), cm = critMult();   // W2-A: Parry training: counter damage
           let cx = 1 + (gear().counter || 0) / 100;   // W1-C: the Lantern Eater's Fang: counters deal double
           try { const dr = typeof deepActive === 'function' && deepActive() && DW.run(); if (dr && dr.boons && dr.boons.taunt) cx *= 1 + DEEP_BOONS.taunt.v * dr.boons.taunt; } catch (e) {}   // the Deepwell's Parry Drill
           const dmg = cbDamageFoe(c.f, P * T.counterX * aps() * cm * cx, 0, 'phys', unitType('hero'), ST_HEAVY | ST_CRIT);
@@ -24136,7 +24558,7 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
     const a = abAt(slot);
     if (!a || !p || !fighting() || !heroUp() || cdOf(a) > 0 || !anyFoe()) return false;
     // W2-A: an ability hits with its own Training level (trainAbPow), not the Attack's
-    const P = trainAbPow(a.id) * (auto ? 1 : T.abHandX) * (1 + (gear().abil || 0) / 100), ty = unitType('hero');   // W1-C: the Rattlebone Charm's +% ability damage   // by hand it hits harder (SOLO2)
+    const P = trainAbPow(a.id) * attrRel('ab') * (auto ? 1 : T.abHandX) * (1 + (gear().abil || 0) / 100), ty = unitType('hero');   // W1-C: the Rattlebone Charm's +% ability damage   // by hand it hits harder (SOLO2)
     const tags = ST_AB, TT = T.train, ms = trainMs(a.id);
     if (a.id === 'echo') {
       // a piercing arrow down the lane: every foe, front to back, and a Mark on each
@@ -24511,11 +24933,12 @@ function turnMakeProfile(f, u) {
   const heroX = (T.heroX[key] || SOLO_TUNE.heroX[key]) / SOLO_TUNE.heroX[key];
   const tap = cls === 'warden' || cls === 'warrior' ? CLASS_ABILITIES.heavy.coef : cls === 'lanternmage' || cls === 'mage' ? CLASS_ABILITIES.ember.coef : CLASS_ABILITIES.focus.coef;
   const k = heroX * SOLO_TUNE.atkX * aps();
-  const A = heroAtk() * tap * k * tapMult();
+  const A = heroAtk() * tap * k * tapMult() * attrRel('atk');   // hero-progression-rework: Might against the even build (1 with Training on)
   // ability power: the hero's Attack power, raised by Ability power Training (the signature's line: +abTrain a level)
   // and ability gear. Tied to Attack so a geared hero's abilities never fall behind their Attack. Not the Attack's own
   // multiplier (tapMult: the Golemfist, the Deepwell's Heavy Hands): "your Attack deals double" means the Attack.
-  const U = heroAtk() * tap * k * (1 + T.abTrain * trainLv(TURN_SIG[key] || 'echo')) * (1 + (g.abil || 0) / 100);
+  // hero-progression-rework: x attrRel('ab') (Focus points against Might; 1 with Training on)
+  const U = heroAtk() * tap * k * (1 + T.abTrain * trainLv(TURN_SIG[key] || 'echo')) * (1 + (g.abil || 0) / 100) * attrRel('ab');
   const ar = Math.max(0, u.armour || 0), armRed = Math.min(COMBAT_TUNE.redMax, ar / (ar + 100));
   const classDr = cls === 'warden' ? (1 - COMBAT_TUNE.wardenDr) * (1 - COMBAT_TUNE.tankDr) : 1;
   const z = f.tz || f.z || S.zone;   // tz: the zone its numbers were set for (a Deepwell floor or a Proving has its own)
@@ -24524,7 +24947,7 @@ function turnMakeProfile(f, u) {
   // a Proving's foes hit for shares of your own health (59f: the fight stays a fight at any power, as before turns)
   return { heroKey: key, zone: z, lateX: f.deep || f.trial ? 1 : turnLateX(key, z),   // Tobin's late pass: ordinary zone fights only, not the Deepwell or a Proving
     heroMaxHp: u.maxHp, refHp: f.trial ? u.maxHp : turnRefHp(z, !!f.deep), A, U, heroType: heroType(key) || 'phys',
-    counter: heroAtk() * heroX * (T.counterX[key] || 1) * SOLO_TUNE.counterX * aps() * critMult() * trainCounterX() * (1 + (g.counter || 0) / 100) * (1 + (g.threat || 0) / 100) * (1 + (g.echo || 0)),
+    counter: heroAtk() * heroX * (T.counterX[key] || 1) * SOLO_TUNE.counterX * aps() * critMult() * trainCounterX() * (1 + (g.counter || 0) / 100) * (1 + (g.threat || 0) / 100) * (1 + (g.echo || 0)) * attrRel('counter'),
     // the gear pass (above): spell, area, control, pierce, heal, ward, Focus
     spellX: 1 + (g.spell || 0) / 100, dotX: 1 + (g.area || 0) / 100, ctrlX: 1 + (g.control || 0) / 100, pierce: Math.min(1, (g.pierce || 0) / 100),
     healX: turnHealX(), wardOver: Math.min(0.4, (g.ward || 0) / 100), focus: turnFocus(),
@@ -24535,20 +24958,21 @@ function turnMakeProfile(f, u) {
     foeName: f.name, foeType: f.txRow || f.type, foeArm: f.tk.arm, boss: f.tk.boss, region: f.tk.region, trait: f.tr && TURN_TRAITS[f.tr[0]] ? f.tr[0] : '',
     script: f.tk.script, eq, cds, tal: typeof talentsOf === 'function' ? talentsOf(key) : {},
     stars: typeof starsActive === 'function' ? starsActive(key) : [], starSet: typeof starsSetIds === 'function' ? starsSetIds(key) : [],   // the Stars (57e)
-    parryWindow: Math.min(T.windowCaps.parry, (SOLO_TUNE.turnParryWindow + (g.parryWindow || 0) / 1000 + bonus('turnParryWin')) * turnAssistX()),
+    parryWindow: Math.min(T.windowCaps.parry, (SOLO_TUNE.turnParryWindow + (g.parryWindow || 0) / 1000 + bonus('turnParryWin') + attrParryMs()) * turnAssistX()),
     dodgeWindow: Math.min(T.windowCaps.dodge, (SOLO_TUNE.turnDodgeWindow + (g.dodgeWindow || 0) / 1000 + T.dodgeTrain * trainLv('dodge') + bonus('turnDodgeWin')) * turnAssistX()),
     essChance: essChance(), essExtra: g.essExtra || 0, goldPerKill: f.gold, xpPerKill: f.xp, healOnKill: COMBAT_TUNE.packHealF * turnHealX(),
     respawn: Math.max(0.45, typeof zoneFoeDeathS === 'function' ? zoneFoeDeathS(f) : 0) };
 }
 
-// Attack and ability power now, outside a fight (the Abilities screen's numbers; the fight itself never shows them)
+// Attack and ability power now, outside a fight (the Abilities screen's numbers; the fight itself never shows them). plain: the
+// Deepwell's depth anchor, which leaves out the zone's late lift and the build (hero-progression-rework: depth stays build-neutral)
 function turnPowerNow(plain) {
   const key = soloHero(); if (!key) return null;
   const T = TURN_TUNE, g = gear(), cls = S.party && S.party.cls;
   const heroX = (T.heroX[key] || SOLO_TUNE.heroX[key]) / SOLO_TUNE.heroX[key];
   const tap = cls === 'warden' || cls === 'warrior' ? CLASS_ABILITIES.heavy.coef : cls === 'lanternmage' || cls === 'mage' ? CLASS_ABILITIES.ember.coef : CLASS_ABILITIES.focus.coef;
   const A0 = heroAtk() * tap * heroX * (plain ? 1 : turnLateX(key, S.zone)) * SOLO_TUNE.atkX * aps();
-  return { A: A0 * tapMult(), U: A0 * (1 + T.abTrain * trainLv(TURN_SIG[key] || 'echo')) * (1 + (g.abil || 0) / 100), crit: critMult(),
+  return { A: A0 * tapMult() * (plain ? 1 : attrRel('atk')), U: A0 * (1 + T.abTrain * trainLv(TURN_SIG[key] || 'echo')) * (1 + (g.abil || 0) / 100) * attrRel('ab'), crit: critMult(),
     spell: 1 + (g.spell || 0) / 100, dot: 1 + (g.area || 0) / 100 };
 }
 // One line of numbers for an ability (75-abilities-ui): its hit, and what its Burn, Bleed or spend adds
@@ -34917,6 +35341,145 @@ var handsTradeOpenPicker;
   });
 }
 
+// ---- src/js/75-attributes-ui.js ----
+// 75-attributes-ui: Hero tab > Attributes (card hero-progression-rework; docs/design/hero-progression-build.md section 2). Browser file.
+// Core: 55-attributes.js (attrOn, ATTRS, attrOf, attrEff, attrPoints, attrAdd, attrSpread, attrReset, attrResetCost), 55-training.js (trainMoves,
+// trainName, trainInfo: what the hero's level gives each move). Shown only with the flag off (HERO_TUNE.training = 0).
+//   - the head line: who, the level, and how many points are free (a dot on the Hero tab while some are)
+//   - #attrRows: one .at-row[data-at] a attribute: the points in it, its line, what a point and the points give, +1 / +5
+//   - Spread evenly (.at-spread): the free points in one tap, so the four end as even as they can
+//   - Reset points (.at-reset): the first per hero free, later ones for gold (the price on the button), with a two-tap
+//     confirm in the page (alert and confirm do nothing in the viewer)
+//   - .at-moves: "From your level", the numbers each move has from the hero's level alone
+// A fight takes the points as it starts. Reduced motion: no flash (60-attributes.css).
+{
+  const heroName = () => { const k = typeof soloHero === 'function' ? soloHero() : null; return k && typeof ROSTER === 'object' && ROSTER[k] ? ROSTER[k].name.split(' ')[0] : 'Your hero'; };
+  const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
+  const pct = x => `+${Math.round(x * 100)}%`;
+  const msTxt = s => `+${Math.round(s * 1000)} ms`;
+  const CONFIRM_MS = 3000;
+
+  let rows = [], head = null, resetBtn = null, spreadBtn = null, movesBox = null, movesFor = '', armed = false, armTimer = 0;
+
+  // what one point gives, and what the points in it give now (Guard also widens the parry window)
+  // (past HERO_TUNE.softAt of the hero's points, a point counts HERO_TUNE.soft: the line says so once it does)
+  function fxTxt(a, n, e, k) {
+    const per = a.parryMs ? `${pct(a.per)}, +${a.parryMs} ms` : pct(a.per);
+    const now = a.parryMs ? `${pct(a.per * e)}, ${msTxt(attrParryMs(k))}` : pct(a.per * e);
+    return !n ? `${per} a point.` : e < n ? `${per} a point. Now ${now}. Past half your points, a point counts half.` : `${per} a point. Now ${now}.`;
+  }
+  function disarm() { armed = false; if (armTimer) { clearTimeout(armTimer); armTimer = 0; } }
+
+  function flash(node) {
+    node.classList.remove('at-ok'); void node.offsetWidth; node.classList.add('at-ok');
+  }
+  function done() { try { save(); } catch (e) {} ui(true); }
+
+  function add(a, n, row) {
+    const k = soloHero(); if (!k) return;
+    if (attrAdd(a.id, n, k) > 0) { disarm(); flash(row.pts); done(); }
+  }
+  function spread() {
+    const k = soloHero(); if (!k) return;
+    if (attrSpread(k) > 0) { disarm(); for (const r of rows) flash(r.pts); done(); }
+  }
+  function reset() {
+    const k = soloHero(); if (!k || !attrPoints(k).spent || S.gold < attrResetCost(k)) return;
+    if (!armed) {
+      armed = true; armTimer = setTimeout(() => { armed = false; armTimer = 0; try { refresh(); } catch (e) {} }, CONFIRM_MS);
+      refresh(); return;
+    }
+    disarm();
+    if (attrReset(k)) done(); else refresh();
+  }
+
+  function build(sec) {
+    sec.classList.add('at-sec');
+    head = el('p', 'at-head');
+    const list = el('div', 'sec dz-list at-list'); list.id = 'attrRows';
+    rows = ATTRS.map(a => {
+      const row = el('div', 'row has-ic at-row'); row.dataset.at = a.id;
+      const pts = el('div', 'at-pts'), num = el('b', null, '0');
+      pts.append(num, el('small', null, 'points'));
+      const body = el('div', 'at-body');
+      const nm = el('div', 'row-name'); nm.append(el('span', 'nm', a.name));
+      const desc = el('div', 'row-desc', a.line), fx = el('div', 'at-fx');
+      body.append(nm, desc, fx);
+      const btns = el('div', 'at-btns'), r = { a, row, pts, num, fx, adds: [] };
+      for (const n of [1, 5]) {
+        const b = el('button', 'at-add', `+${n}`); b.type = 'button'; b.dataset.n = String(n);
+        b.addEventListener('click', () => add(a, n, r));
+        btns.append(b); r.adds.push(b);
+      }
+      row.append(pts, body, btns);
+      list.append(row);
+      return r;
+    });
+    const acts = el('div', 'at-acts');
+    spreadBtn = el('button', 'at-spread', 'Spread evenly'); spreadBtn.type = 'button';
+    spreadBtn.addEventListener('click', spread);
+    resetBtn = el('button', 'at-reset', 'Reset points'); resetBtn.type = 'button';
+    resetBtn.addEventListener('click', reset);
+    acts.append(spreadBtn, resetBtn);
+    const note = el('p', 'note at-note', 'Adding points is free. Your first reset is free, then a reset costs gold. A fight takes your points as it starts. Each hero has their own.');
+    movesBox = el('div', 'at-moves');
+    sec.append(head, list, acts, note, movesBox);
+  }
+
+  // "From your level": each move's number, once. The abilities share one line when they share one name.
+  function buildMoves(k) {
+    movesBox.textContent = '';
+    movesBox.append(el('h3', 'at-mh', 'From your level'));
+    const seen = {};
+    for (const mv of trainMoves(k)) {
+      const nm = trainName(mv); if (seen[nm]) continue; seen[nm] = 1;
+      const r = el('div', 'at-mv'); r.dataset.mv = mv;
+      r.append(el('b', null, nm), el('span', 'at-mn'));
+      movesBox.append(r);
+    }
+  }
+  function refresh() {
+    if (!head || typeof soloHero !== 'function') return;
+    const k = soloHero();
+    if (!k) { putText(head, 'Pick a hero to spend points.'); return; }
+    const P = attrPoints(k), name = heroName(), L = heroLvOf(k);
+    putText(head, !P.total ? `${name}, Lv ${L}. You earn ${plural(HERO_TUNE.perLevel, 'point')} a level.`
+      : P.free ? `${name}, Lv ${L}. ${plural(P.free, 'point')} to spend.` : `${name}, Lv ${L}. All points spent.`);
+    for (const r of rows) {
+      const n = attrOf(k, r.a.id);
+      putText(r.num, n);
+      putText(r.fx, fxTxt(r.a, n, attrEff(k, r.a.id), k));
+      for (const b of r.adds) {
+        putDisabled(b, !P.free);
+        putAttr(b, 'aria-label', `Add ${b.dataset.n === '1' ? '1 point' : Math.min(+b.dataset.n, P.free) + ' points'} to ${r.a.name}`);
+      }
+    }
+    putDisabled(spreadBtn, !P.free);
+    const cost = attrResetCost(k), short = S.gold < cost;
+    putDisabled(resetBtn, !P.spent || short);
+    if ((!P.spent || short) && armed) disarm();
+    const label = armed ? (cost ? `Tap again to pay ${fmt(cost)} gold and reset.` : 'Tap again to reset all points.') : cost ? `Reset points: ${fmt(cost)} gold` : 'Reset points (free)';
+    putText(resetBtn, label);
+    putToggle(resetBtn, 'armed', armed);
+    putAttr(resetBtn, 'aria-label', label);
+    // what the level gives each move (rows rebuilt when the hero changes)
+    const key = k + '|' + trainMoves(k).join(',');
+    if (key !== movesFor) { movesFor = key; buildMoves(k); }
+    for (const r of movesBox.querySelectorAll('.at-mv')) {
+      const mv = r.dataset.mv; let t = '';
+      try { const i = trainInfo(mv, k); t = i.now || ''; } catch (e) {}
+      putText(r.querySelector('.at-mn'), t);
+    }
+  }
+  {
+    registerView('party', { id: 'attributes', label: 'Build', order: 20, feature: 'party',
+      dot: () => attrOn() && !!soloHero() && attrPoints(soloHero()).free > 0,
+      show: () => attrOn() });
+    registerSection('party', { id: 'attributes', title: 'Attributes', view: 'attributes', feature: 'party', mount: build,
+      update: () => { try { refresh(); } catch (e) { console.error('[lanternfall] attributes', e); } } });
+  }
+}
+
 // ---- src/js/75-away.js ----
 // 75-away: the "While you were away" report card. Browser-only.
 // showAwayReport(r) takes the report built by awayGains() + 55-stats.js (see there for its
@@ -39545,7 +40108,7 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
 function menuNavIcon(button, view) {
   const icons = {
     upgrades: 'boss', bounties: 'bounties', bestiary: 'bestiary', deep: 'deepwell',
-    team: 'hero', abilities: 'hero', training: 'training', stars: 'stars',
+    team: 'hero', abilities: 'hero', training: 'training', attributes: 'training', stars: 'stars',   // hero-progression-rework: Build took Training's place
     mine: 'mining', wood: 'woodcutting', forage: 'foraging', hunt: 'hunting', pack: 'storehouse',
     make: 'craft', gear: 'gear', uniques: 'uniques', camp: 'camp', tav: 'tavern', almanac: 'almanac', raid: 'raid',
     'ach-deeds': 'deeds', 'ach-tracks': 'tracks', 'ach-feats': 'feats', 'ach-looks': 'looks',
@@ -39999,7 +40562,11 @@ let navUI = null;
     forge: () => campPath('forge', ['Open Camp to build the Forge.', 'Open Camp.', 'Build the Forge for your weapon.']),
     store: () => campPath('store', ['Your packs are nearly full. Open Camp.', 'Open Camp.', 'Your packs are nearly full. Build a Storehouse.']),
     // Training: Hero tab, Training view, Train on Attack.
-    upgrade: () => Object.assign(path('party', 'training', '#trainRows .tr-row[data-mv="atk"] .buy',
+    // hero-progression-rework: with attributes on, the first point goes into Might.
+    upgrade: () => Object.assign(typeof attrOn === 'function' && attrOn()
+      ? path('party', 'attributes', '#attrRows .at-row[data-at="might"] .at-add[data-n="1"]',
+        ['You have points to spend. Open Hero.', 'Open Build.', 'Add a point to Might. It makes Attack hit harder.'])
+      : path('party', 'training', '#trainRows .tr-row[data-mv="atk"] .buy',
         ['You have gold. Open Hero to train.', 'Open Training.', 'Train Attack. Each level hits harder.']), { side: S.tab === 'party' ? 'up' : '' }),
     'tab:gat': () => S.tab === 'gat' ? null : { node: q('.tab[data-tab="gat"]'), text: 'New tab: Gather. Tap it to see what you can mine.' },
     'tab:world': () => S.tab === 'world' ? null : { node: q('.tab[data-tab="world"]'), text: 'You made camp. Tap Camp to build.' },
@@ -40750,7 +41317,7 @@ let openSheet, partySheet;
 //       under it    Parry, Dodge                              (keys A, S; Space = Dodge, SOLO2)
 //       Skills      what each slot does and its cooldown; a tap changes the slot.  Foe  (turn fights) its kind, trait, moves.
 //     Cooldowns sweep dark clockwise with the seconds in the middle and flash when ready; Parry and Dodge glow while a
-//     telegraphed hit is coming. A long press on Attack, Parry or Dodge opens a sheet: what it does and its Training; on an ability slot it opens
+//     telegraphed hit is coming. A long press on Attack, Parry or Dodge opens a sheet: what it does and its Training (or, with attributes on, its number from your level and an Attributes button); on an ability slot it opens
 //     the picker (an empty slot opens it on a tap): that hero's unlocked abilities (icon, name, one line, cooldown),
 //     pick one to place it (swapping if it sits in another slot) or clear the slot.
 //   - the Auto badge (SOLO2): a small chip at the stage's bottom left, over the DPS line, lit while auto-play fights
@@ -40760,7 +41327,9 @@ let openSheet, partySheet;
 // Core: 59j-solo.js (soloAttack, soloParry, soloDodge, soloAbility, soloEquip, soloButtons, soloPick, soloLevels).
 // Reduced motion: no flashes or pulses (60-solo.css).
 // W2-A Training: a long press on Attack, Parry or Dodge opens a small sheet (what it does, its Training level and a Train
-// button); on an ability slot the picker shows the slot's ability level and a Train button too. soloIconURL(move) gives
+// button); on an ability slot the picker shows the slot's ability level and a Train button too. hero-progression-rework: with
+// attributes on (attrOn()) there is no Train button or Training level: the block reads "from your level" and opens the
+// Attributes view (75-training-ui trainCard). soloIconURL(move) gives
 // the bar's icon for a move (the Training list uses it: 'atk' is the hero's weapon).
 var soloIconURL = () => '';
 {
@@ -40871,7 +41440,7 @@ var soloIconURL = () => '';
     ab0: () => castSlot(0), ab1: () => castSlot(1), ab2: () => castSlot(2)
   };
 
-  // ---- long press on Attack, Parry, Dodge: what it does, and its Training (W2-A) ----
+  // ---- long press on Attack, Parry, Dodge: what it does, and its Training or level (W2-A) ----
   // A small sheet like the picker (the game waits while it is open; soloPickerOpen covers both).
   const MOVE = { atk: 'atk', parry: 'parry', dodge: 'dodge' };
   function showTip(b) {
@@ -40896,7 +41465,7 @@ var soloIconURL = () => '';
   // ---- the ability picker (a small sheet over the fight; the game waits while it is open) ----
   let pick = null;
   function closePicker() { if (!pick) return; pick.remove(); pick = null; update(); }
-  // the open sheet's Training block stays live (gold comes in; the game is paused, so a timer)
+  // the open sheet's Training block stays live (gold comes in, points move; the game is paused, so a timer)
   setInterval(() => { try { if (pick && pick._card) pick._card._up(); } catch (e) {} }, 400);
   function openPicker(slot) {
     closePicker();
@@ -40908,7 +41477,7 @@ var soloIconURL = () => '';
     head.append(x);
     sh.append(head);
     const eq = soloEquipped();
-    // W2-A: the slot's ability, its Training level and a Train button
+    // W2-A: the slot's ability, its Training level and a Train button (attributes on: its level-based power and Attributes)
     const sig = SOLO_HEROES[k] && SOLO_HEROES[k].abs[0];   // its Training is the hero's ability power (59k)
     if (eq[slot] && eq[slot] === sig && typeof trainCard === 'function') { const c = trainCard(eq[slot]); c.onLeave = closePicker; sh.append(c); ov._card = c; }
     for (const id of soloAbilities(k)) {
@@ -42320,6 +42889,8 @@ let toolsUI = null;
 //     action bar, the name, Lv n / cap, what the next level gives, and Train with its price. x1 / x10 / Max (S.amt, the
 //     same choice the old upgrades used). A note says what caps the moves (the hero's level, or the class stage).
 //   - trainCard(move) -> el: the Training block the action bar's long press shows (75-solo-ui), with its own Train button.
+// hero-progression-rework: with attributes on (HERO_TUNE.training = 0) Training is switched off: the view and its section stay
+// hidden, and trainCard shows the move's name, "from your level" and the number, with one Attributes button (75-attributes-ui).
 // Core: 55-training.js (train, trainInfo, trainPlan, trainMoves). Icons: soloIconURL (75-solo-ui).
 var trainCard = null;
 {
@@ -42392,7 +42963,8 @@ var trainCard = null;
     }
   }
   {
-    registerView('party', { id: 'training', label: 'Training', order: 20, feature: 'party' });
+    const trainingOn = () => typeof attrOn === 'function' ? !attrOn() : true;
+    registerView('party', { id: 'training', label: 'Training', order: 20, feature: 'party', show: trainingOn });
     registerSection('party', { id: 'training', title: 'Training', view: 'training', feature: 'party', mount: build, update: () => { try { refresh(); } catch (e) { console.error('[lanternfall] training', e); } } });
   }
 
@@ -42400,6 +42972,23 @@ var trainCard = null;
   // x1 always (a quick press); the Training view has x10 and Max.
   trainCard = mv => {
     const box = el('div', 'tr-card'); box.dataset.mv = mv;
+    // attributes on: no Training. The level gives the number; the points are on the Attributes view.
+    if (typeof attrOn === 'function' && attrOn()) {
+      const top = el('div', 'tr-c-top'), nm = el('b', 'tr-c-lv'), cap = el('small', 'tr-c-cap');
+      top.append(nm, cap);
+      const now = el('div', 'tr-c-now');
+      const more = el('button', 'tr-c-more', 'Build'); more.type = 'button';
+      const row = el('div', 'tr-c-row'); row.append(more);
+      box.append(top, now, row);
+      more.addEventListener('click', () => { if (typeof box.onLeave === 'function') box.onLeave(); setTab('attributes'); });
+      box._up = () => {
+        const i = trainInfo(mv);
+        putText(nm, i.name); putText(cap, `from your level (Lv ${i.heroLv})`);
+        putText(now, i.now ? `${i.now}.` : '');
+      };
+      box._up();
+      return box;
+    }
     const top = el('div', 'tr-c-top'), lv = el('b', 'tr-c-lv'), cap = el('small', 'tr-c-cap');
     top.append(lv, cap);
     const now = el('div', 'tr-c-now'), ms = el('div', 'tr-ms');
