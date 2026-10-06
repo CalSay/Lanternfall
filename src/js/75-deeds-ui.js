@@ -663,6 +663,7 @@ let deedsUI = null;
     if (!f && !ch) { nextCard(); return; }
     const lk = LK[f ? f.look : ch.look];
     if (typeof noticeAsk === 'function') noticeAsk('card:feat', f ? `Feat: ${f.n}.` : `Chapter done: ${ch.n}.`);   // W1-B: the card is the one voice (bell list line)
+    emit('momentShow', { tier: 'big', kind: 'feat' });   // the sting of a big moment (76-audio): a Feat card is one
     const ov = el('div', 'dd-fc-ov' + (reduced ? ' still' : ''));
     ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-label', f ? `Feat: ${f.n}` : `Chapter done: ${ch.n}`);
     const card = el('div', 'dd-fc');
