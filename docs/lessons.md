@@ -84,6 +84,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - A playtest `--shots` dir is wiped by every `new` in a batch and by each run, so split a route per session and copy shots out; send one `--shots` per part. Why: the first part's shots vanished when the second `new` ran. Also, a notice raised inside the first 2.5 s of a loaded save folds into What's new, so time a notice proof after that. (bounties-anywhere, 2026-10-06)
 - Open the Craft menu in a route with `tap Craft` then `tap`/`expect` in one batch, and use a selector `expect` for anything below the fold in landscape (a text `expect` only sees the screen). Why: each playtest call reopens the game and closes the menu, and the landscape craft menu is about 340px wide. (craft-reveal, 2026-10-06)
 - Bring a new card that appears above the tapped row into view (`scrollIntoView({ block: 'start' })`) and put its buttons under the title in short landscape. Why: the result card pushed the recipe list down, so the first test run showed no card and the Equip button sat below the fold. (craft-reveal, 2026-10-06)
+- Put a new stage element where it overlaps nothing in both views before the first push: check it in a 360x740 and a 740x360 shot next to the place caption and the resource row. Why: the hit-feel lamps first sat under the Grit row and overlapped the zone caption; the coordinator caught it. (hit-feel, 2026-10-06)
 
 ## Saves and offline parity
 
@@ -106,6 +107,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Run the `--long` health run only on 3 or more cores (about 2.5 min, 7 min CPU). It ignores `--only`, known P2. (f-health-long, 2026-10-06)
 
 - Story cards stack in the first minute (three before the first fight on a fresh save) and their count varies by timing: a proof route uses `tap-if "Skip"`, never a fixed number of taps. Predicted: routes replay stable; measured: one fixed-skip route failed 1 run in 3 locally, `tap-if` passed 5 of 5. (sys-proof-ci, 2026-10-06)
+- A proof route must not depend on one lucky frame or on the fight still running: have the UI keep a marker of what has shown (hit-feel sets `body[data-hit-seen]`), step in small waits, and clear any new card (`tap-if "Continue"`) each round. Why: the first hit-feel route passed locally and failed CI after the integration merge added a new-hero card, and in landscape the hero died before the expect. (hit-feel, 2026-10-06)
 ## Reviews and Codex
 
 - "@codex review" must be commented by hand after opening the PR; auto review does not fire. Why: seen on fix-bounty-kind. Codex drips one P1 per round, so close the whole class of a finding at once. (fix-bounty-kind, 2026-10-05)
