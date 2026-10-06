@@ -49,7 +49,7 @@ function attrRec(k) {
 function attrOf(k, id) { const v = attrRec(k)[id]; return v > 0 ? Math.floor(v) : 0; }
 function attrTotal(k) { return attrOn() ? Math.max(0, (heroLvOf(k) - 1) * HERO_TUNE.perLevel) : 0; }
 function attrEff(k, id) {
-  const p = attrOf(k, id), h = HERO_TUNE.softAt * attrTotal(attrHero(k));
+  const t = attrTotal(attrHero(k)), p = Math.min(attrOf(k, id), t), h = HERO_TUNE.softAt * t;   // never past the level's points
   return p <= h ? p : h + HERO_TUNE.soft * (p - h);
 }
 function attrPoints(k) {
@@ -105,7 +105,8 @@ const ATTR_BASE = ATTRS.reduce((t, a) => t + attrBase(a), 0) / ATTRS.length;
 function attrNeutral(k) {
   const L = heroLvOf(k);
   if (!attrOn()) return 1 + PACE.heroLv * (L - 1);
-  return 1 + ATTR_BASE * (L - 1) + ATTR_PER * attrPoints(k).spent / ATTRS.length;
+  const p = attrPoints(k);
+  return 1 + ATTR_BASE * (L - 1) + ATTR_PER * Math.min(p.spent, p.total) / ATTRS.length;
 }
 function attrX(kind, k) {
   const L = heroLvOf(k);
@@ -132,6 +133,7 @@ on('heroJoin', ({ key } = {}) => {
 });
 
 registerState('attr', { v: 1, pts: {}, resets: {}, met: {}, live: 0 });
+if (!S.attr || typeof S.attr !== 'object') S.attr = { v: 1, pts: {}, resets: {}, met: {}, live: 0 };   // a broken save (attr: null) starts the points clean
 // The switch-off flag on a save played with attributes (judge 6): once, each hero's Training is raised to the move level their
 // hero level gave them (55-training trainLv's L - 1, to the stage cap), so no high-level hero comes back untrained.
 if (attrOn()) S.attr.live = 1;

@@ -8200,7 +8200,7 @@ if (section('C29 mid-game HP and Wren (core)')) try {
   // a hero who keeps up (as sim --report heroes): their class set and a Charm at the zone's tier, rare +5, the shared HP
   // affix line only, Training at their level, and Attack and HP scaled together so their Attack is the zone's reference
   const kept = (k, z, L, fx, d) => { const g = loadCore({ seed: 7, turns: true, storage: memoryStorage({ [KEY]: FX(fx) }) }), E = s => g.eval(s), J = JSON.stringify;
-    E(`loadSave(); soloPick(${J(k)}, {now:true}); S.L = ${L}; S.solo.tr[${J(k)}].atk = ${L}; S.solo.tr[${J(k)}][${J({ wren: 'echo', tobin: 'bash', pip: 'fire' }[k])}] = ${L}; S.solo.asc[${J(k)}] = 0;
+    E(`loadSave(); soloPick(${J(k)}, {now:true}); S.L = ${L}; S.solo.tr[${J(k)}].atk = ${L}; S.solo.tr[${J(k)}][${J({ wren: 'echo', tobin: 'bash', pip: 'fire' }[k])}] = ${L}; S.solo.asc[${J(k)}] = 0; attrSpread();
       S.maxZone = Math.max(S.maxZone, ${z}); setZone(${z});
       (() => { let sd = 7919; const rnd = () => (sd = sd * 16807 % 2147483647) / 2147483647, t = zoneTier(${z}) + (${d || 0});
         ${J(KINDS[k])}.concat(['charm']).forEach((kind, i) => { const it = newItem(kind, t, 'rare', { rnd }); it.plus = 5; if (it.a) it.a = it.a.filter(l => l[0] === 'hp'); S.items.push(it); S.equip[['weapon', 'off', 'helm', 'body', 'charm'][i]] = it.id; }); })();
@@ -8727,6 +8727,7 @@ if (section('hero progression rework (attributes, road, join, bench)')) try {
   E('S.attr.pts.wren = ATTR0()');
   assert(E('attrAdd("nope", 3)') === 0 && E('attrAdd("might", -5)') === 0 && E('attrAdd("might", 0)') === 0 && E('attrAdd("might", 2.9)') === 2 && E('attrOf(null, "might")') === 2 && E('attrAdd("guard", 5, "tobin")') === 0, 'attrAdd: an unknown attribute, a negative or zero count adds nothing, a fraction rounds down, a hero at Lv 1 has no points');
   E('S.attr.pts.wren = ATTR0(); S.attr.pts.wren.might = 5; S.L = 2'); assert(E('attrPoints().free') === 0 && E('attrPoints().spent') === 5 && E('attrAdd("focus", 1)') === 0, 'points over the total (a level lost) leave 0 free and add nothing');
+  E('S.attr.pts.wren.might = 1000; S.L = 2'); assert(E('attrNeutral()') <= 1 + 0.04 + 1e-9 && E('attrEff("wren", "might")') <= 4, `points over the total count no more than the level's points (attrNeutral ${E('attrNeutral()')})`);
   // flag on: no points, the old flat bonus
   const on = loadCore({ turns: true, training: true, seed: 61 }), O = s => on.eval(s);
   O('soloPick("wren"); S.L = 25; S.attr.pts.wren = ATTR0()');
@@ -8748,7 +8749,7 @@ if (section('hero progression rework (attributes, road, join, bench)')) try {
   assert(cProv / cBase <= 1.3 && cProv > cBase, `the Proving's Attack jump at Lv 44 is x${(cProv / cBase).toFixed(3)} (at most x1.3)`);
   // h. the join lift
   const lift = loadCore({ turns: true, seed: 62 }), Li = s => lift.eval(s);
-  Li('soloPick("wren"); S.maxZone = 30; S.zone = 30; S.L = 3; S.xp = 0; S.solo.lv.tobin = { L: 3, xp: 1e12 }; globalThis.__toasts = []; on("toast", t => __toasts.push(t.msg))');
+  Li('soloPick("wren"); S.maxZone = 30; S.zone = 30; S.L = 50; S.xp = 0; S.solo.lv.tobin = { L: 3, xp: 1e12 }; globalThis.__toasts = []; on("toast", t => __toasts.push(t.msg))');
   const rl = Li('roadLevel()');
   assert(rl > 3 && Li('soloPick("tobin")') && Li('S.L') === rl && Li('S.xp') < Li('xpNeed(S.L)') && Li('S.xp') === Li('xpNeed(S.L) - 1'), `lift: a Lv 3 hero with a pile of banked XP takes the lamp at the road's level (Lv ${rl} at zone 30), the XP held a point under a level (${Li('S.xp')} of ${Li('xpNeed(S.L)')})`);
   assert(Li('__toasts').some(m => m === `Tobin joins at Lv ${rl}, the road's level.`), `lift: the toast says "${Li('__toasts').join(' | ')}"`);
@@ -8757,6 +8758,13 @@ if (section('hero progression rework (attributes, road, join, bench)')) try {
   Li(`S.solo.lv.wren = { L: ${rl + 12}, xp: 5 }`); Li('globalThis.__toasts.length = 0');
   Li('soloPick("wren")');
   assert(Li('S.L') === rl + 12 && Li('S.xp') === 5 && !Li('__toasts').some(m => /road's level/.test(m)), 'lift: a hero above the road\'s level keeps their own level and XP (no join line)');
+  // the join lead never lifts a joiner past the hero who leaves; the road's own level is still the floor (judge's amend)
+  const jl = loadCore({ turns: true, seed: 63 }), Jl = s => jl.eval(s);
+  Jl('soloPick("wren"); S.maxZone = 30; S.zone = 30; S.L = 3; S.xp = 0');
+  const road30 = Jl('Math.floor(roadLv(30))');
+  assert(Jl('soloPick("tobin")') && Jl('S.L') === road30 && road30 < Jl('roadLevel()'), `lift: from a Lv 3 hero the joiner stops at the road's own level (Lv ${road30}), not the join lead's Lv ${Jl('roadLevel()')}`);
+  Jl(`S.L = ${road30 + 1}`); Jl('soloPick("pip")');
+  assert(Jl('S.L') === road30 + 1 && road30 + 1 < Jl('roadLevel()'), 'lift: a joiner matches a leaving hero who stands between the road and the join lead');
   const lf = loadCore({ turns: true, training: true, seed: 62 }), Lf = s => lf.eval(s);
   Lf('soloPick("wren"); S.maxZone = 30; S.L = 3; soloPick("tobin")');
   assert(Lf('S.L') === 1, 'lift: with the flag on a hero who has not played starts at Lv 1');
@@ -8820,7 +8828,8 @@ if (section('hero progression rework (attributes, road, join, bench)')) try {
   const badAttr = {
     'an unknown hero': c => { c.attr.pts.zorro = { might: 1 }; }, 'an unknown attribute': c => { c.attr.pts.wren.speed = 1; },
     'a negative value': c => { c.attr.pts.wren.might = -3; }, 'a huge value': c => { c.attr.pts.wren.might = 1e9; }, 'a fraction': c => { c.attr.pts.wren.might = 1.5; },
-    'a text value': c => { c.attr.pts.wren.might = 'many'; }, 'pts that is not a record': c => { c.attr.pts = 7; }, 'attr that is not a record': c => { c.attr = [1, 2]; }
+    'a text value': c => { c.attr.pts.wren.might = 'many'; }, 'pts that is not a record': c => { c.attr.pts = 7; }, 'attr that is not a record': c => { c.attr = [1, 2]; },
+    'more points than the level gives': c => { c.attr.pts.wren.might = 70; }, 'a negative reset count': c => { c.attr.resets.wren = -1; }, 'a live flag of 2': c => { c.attr.live = 2; }
   };
   const accepted = Object.entries(badAttr).filter(([, m]) => vs(m).ok).map(([k]) => k);
   assert(!accepted.length && vs(c => { delete c.attr; }).ok, `save code: S.attr with ${Object.keys(badAttr).join(', ')} is refused` + (accepted.length ? '; ACCEPTED: ' + accepted.join(', ') : '') + '; a save with no S.attr is still accepted');
@@ -8886,7 +8895,7 @@ if (section('hero attributes (browser)')) try {
         assert(await X('attrPoints().spent === 0 && S.gold === 3 && S.attr.resets.wren === 2'), `${at}: paid, a reset takes the ${cost} gold and gives every point back`);
         assert(await X('document.documentElement.scrollWidth <= innerWidth + 1'), `${at}: no sideways scroll`);
         // the Hero tab's dot shows while points are free; a switch to a new hero lifts them (the toast says so)
-        await X('S.gold = 0; S.maxZone = 30; S.zone = 30; true');
+        await X('S.gold = 0; S.maxZone = 30; S.zone = 30; S.L = 50; true');
         await X('soloPick("pip")'); await page.waitForTimeout(300);
         const lvl = await X('S.L'), rl = await X('roadLevel()');
         assert(lvl === rl && lvl > 10 && /points to spend/.test(await X('document.querySelector(".at-head") ? document.querySelector(".at-head").textContent : ""')), `${at}: switching to Pip lifts her to the road's level (Lv ${lvl}) with her own points to spend`);

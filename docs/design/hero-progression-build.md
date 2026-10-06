@@ -67,7 +67,7 @@ normal foes (2 to 3x the kills an hour) and Might was a trap. Base + per is alwa
   "reset only at camp"; the game has no at-camp state outside the Camp menu, so the price is the brake.) Gold's main
   sinks are the `gold-without-training` card's.
 - **Spread evenly.** One tap spreads the free points so the four end as even as they can. The first time a hero takes
-  the lamp with points to spend, a toast offers it (Go: Attributes).
+  the lamp with points to spend, a toast offers it (Go: Build).
 - **Unspent points do nothing.** Next Up says when there are points to spend; the guide's old "Train Attack" step
   becomes "Add a point to Might".
 
