@@ -20,6 +20,7 @@ function disclose(row, trigger, onToggle, extra) {
 
 // ================= Fight panel =================
 // Boss gate: the title and the button; the odds and rules open on a tap.
+let gateAutoLb = null;
 {
   const g = $('gateTitle').parentElement, row = g.parentElement;
   row.classList.add('gate-row');
@@ -27,10 +28,10 @@ function disclose(row, trigger, onToggle, extra) {
   t.textContent = ''; t.append(tx, d.chev);
   g.setAttribute('aria-label', 'Boss gate: show details');
   // One line for the auto-challenge switch (the shell's copy wrapped to two at 360 px).
-  const lb = $('autoBoss').parentElement, tn = [...lb.childNodes].find(n => n.nodeType === 3 && n.textContent.trim());
-  if (tn) tn.textContent = ' Fight frontier bosses when ready';
+  const lb = gateAutoLb = $('autoBoss').parentElement, tn = [...lb.childNodes].find(n => n.nodeType === 3 && n.textContent.trim());
+  if (tn) tn.textContent = ' Try the boss again on my own when I am stronger';   // shown only while a boss waits for Try again (55-boss-try)
   lb.classList.add('gate-auto');
-  lb.style.display = 'none';   // owner (2026-10-01): the boss always comes after the zone's fights, so the switch has nothing to do
+  lb.style.display = 'none';   // owner (2026-10-01): the boss always comes after the zone's fights; since a lost boss waits (55-boss-try) the switch shows only then
 }
 $('autoBoss').checked = S.auto;
 $('autoBoss').addEventListener('change', e => { S.auto = e.target.checked; });
@@ -97,8 +98,10 @@ function uiFight() {
     putText(G.desc, `Beat it to move on to Zone ${S.zone + 1}. Take your time: there is no timer.`);
     putText(gq, 'Boss'); putText(gp, 'Fighting'); putDisabled(gb, true);
   } else {
-    putText(G.title, bossReady() ? 'The zone boss is next' : `Fight ${S.kills + 1} of ${ZONE_FIGHTS}, then the zone boss`);
-    putText(G.desc, `Beat the boss to move on to Zone ${S.zone + 1}. ${Math.round((S.zone < S.maxZone ? UNIQ_TUNE.again : UNIQ_TUNE.first) * 100)}% chance of the unique ${uq}.`);
-    putText(gq, 'Boss'); putText(gp, 'Fight'); putDisabled(gb, !bossReady());
+    const held = bossReady() && bossTryHeld();   // a lost boss waits for Try again (55-boss-try)
+    putText(G.title, held ? 'The zone boss is waiting' : bossReady() ? 'The zone boss is next' : `Fight ${S.kills + 1} of ${ZONE_FIGHTS}, then the zone boss`);
+    putText(G.desc, held ? 'It beat you. Try again when you are ready. Fights here keep paying while you wait.' : `Beat the boss to move on to Zone ${S.zone + 1}. ${Math.round((S.zone < S.maxZone ? UNIQ_TUNE.again : UNIQ_TUNE.first) * 100)}% chance of the unique ${uq}.`);
+    putText(gq, held ? 'Try' : 'Boss'); putText(gp, held ? 'Again' : 'Fight'); putDisabled(gb, !bossReady());
   }
+  if (gateAutoLb) { const d = S.activity === 'fight' && !fightBoss && bossReady() && bossTryHeld() ? '' : 'none'; if (gateAutoLb.style.display !== d) gateAutoLb.style.display = d; }
 }

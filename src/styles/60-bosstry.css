@@ -1,0 +1,12 @@
+/* 60-bosstry: the Try again card after a zone boss beats you (75-boss-try-ui.js). */
+.bt-eye { font: 600 11px var(--body); letter-spacing: .18em; text-transform: uppercase; color: #E0524F; }
+.bt-head { margin: 2px 0 4px; font-size: 20px; line-height: 1.2; }
+.bt-why { margin: 0 0 6px; font-weight: 600; }
+.bt-line, .bt-weak { margin: 0 0 6px; color: var(--muted); font-size: 13.5px; line-height: 1.3; }
+.bt-weak { color: var(--bone); }
+.bt-ways-h { margin: 10px 0 4px; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.bt-chips { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.bt-more { color: var(--muted); font-size: 12.5px; }
+.bt-ways { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 13.5px; line-height: 1.3; }
+.bt-auto { display: flex; gap: 8px; align-items: center; margin-top: 10px; cursor: pointer; }
+.bt-stay { background: transparent; }
