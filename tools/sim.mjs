@@ -696,7 +696,7 @@ const line = t => console.log(row([`${Math.floor(t / 3600)}h${String(Math.floor(
 let bossTries = 0, casts = 0; fn.on('bossFail', () => bossTries++); fn.on('ability', () => casts++);
 // A lost boss waits for Try again (55-boss-try). The sim player presses it after one paying fight, as the zone flow always did
 // (a held boss comes back when a zone fight is won), so retry economics match the old flow.
-let paidSinceFail = 1; fn.on('bossFail', () => { paidSinceFail = 0; }); fn.on('kill', ({ mob }) => { if (mob && !mob.boss) paidSinceFail++; });
+let paidSinceFail = 1; fn.on('bossFail', () => { paidSinceFail = 0; }); fn.on('kill', ({ mob, zone }) => { if (mob && !mob.boss && zone === E('S.bossTry.hold')) paidSinceFail++; });   // a fight in the held zone
 // Party combat (Stage C): wipes (and those before zone 5, T18), the first attempt at each zone boss (T7).
 const wipeAt = [], firstTry = {};
 fn.on('wipe', w => { if (!w.arena) wipeAt.push(t); });

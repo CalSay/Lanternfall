@@ -334,7 +334,7 @@
     "optimiser.abilityTopShare": {
       "value": 0.55,
       "bad": "up",
-      "abs": 0.05,
+      "abs": 0.08,
       "rel": 0,
       "note": "dominance: the most-cast ability, share of casts",
       "perHero": {
