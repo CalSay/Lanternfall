@@ -14,6 +14,7 @@ For menus, screens, layout, navigation and in-page icons. Coverage-map areas 1, 
 - No `alert`, `confirm` or `prompt`; confirmations are in-page.
 - Online layer untouched.
 - Menu matches the draft or ruling it was built from.
+- Game doc current: a player-visible change updates `docs/GAME.md` in the same PR.
 
 ## Scored criteria
 

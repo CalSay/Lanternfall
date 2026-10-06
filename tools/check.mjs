@@ -8097,6 +8097,16 @@ if (section('playtest driver (browser)')) try {
   }
 } catch (e) { fail('playtest driver (browser) crashed: ' + (e.stack || e)); }
 
+// ==== Systems map (f-systems-map): every currency has a source and a sink (or an ALLOW reason), every listed code path still
+// exists, and docs/design/systems-map.md is the current output of tools/systems-map.mjs.
+if (section('systems map')) try {
+  const sm = await import('./systems-map.mjs');
+  const problems = sm.audit();
+  assert(!problems.length, 'systems map: every currency has a source and a sink' + (problems.length ? ': ' + problems.join('; ') : ''));
+  const docPath = path.join(ROOT, 'docs', 'design', 'systems-map.md');
+  assert(fs.existsSync(docPath) && fs.readFileSync(docPath, 'utf8') === sm.render(), 'docs/design/systems-map.md is out of date: run node tools/systems-map.mjs --write');
+} catch (e) { fail('systems map crashed: ' + (e.stack || e)); }
+
 if (section('removed systems (W2-C)')) try {
   const strip = t => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/([^:'"`\\])\/\/[^\n'"`]*$/gm, '$1');
   const files = [];

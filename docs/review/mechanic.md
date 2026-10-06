@@ -13,6 +13,7 @@ For new or changed mechanics, systems, hero kits and combat rules. Coverage-map 
 - Online layer untouched (`world/boss`, `raiders`, room, `80-online`).
 - Rules in `CLAUDE.md` and `docs/DECISIONS.md` hold (combat active only, solo hero, no prestige).
 - Shared files edited only at the extension points in `docs/ARCHITECTURE.md`.
+- Game doc current: a player-visible change updates `docs/GAME.md` in the same PR. A new or changed currency also updates `docs/design/systems-map.md` (run `node tools/systems-map.mjs --write`).
 
 ## Scored criteria
 

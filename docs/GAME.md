@@ -1,6 +1,6 @@
 # Lanternfall: the game as it is now
 
-A short map of what is in the game on 2026-10-02, with the files that hold each system. The code is the truth: when
+A short map of what is in the game on 2026-10-06, with the files that hold each system. The code is the truth: when
 this page and a file disagree, the file wins and this page needs a fix. Owner decisions are in
 [DECISIONS.md](DECISIONS.md); file-level details are in [ARCHITECTURE.md](ARCHITECTURE.md).
 
@@ -66,9 +66,11 @@ The bell opens Notices, the Journal and Settings. Achievements (Deeds) and the C
 - **Regions in code** (`22-data-regions.js`): the Hollow (zones 1-35, the Fenmother) and the Sunken Coast (36-70). The
   Coast reuses the Hollow's foes and scenery until its content lands. The first kill of a region boss relights a
   Great Lantern (`55-lantern.js`).
-- **Real-time fights** remain for the Deepwell, the Provings and the world raid (`59-combat.js`, `59g-active.js`,
-  `59h-bosses.js`, `59i-elites.js`).
-- **Away:** fights earn nothing while you are away (`50-sim.js` `awayGains`). The away cap is 4 hours, raised by the
+- **Turn fights everywhere but the raid.** The Deepwell (`59c-deepwell-combat.js`) and the Provings (`59f-trials.js`,
+  `TRIAL_TUNE.turn`) are turn fights too: one foe at a time, limits counted in turns, no clock
+  ([combat-turn-build.md](design/combat-turn-build.md) "The Deepwell and the Provings"). Only the world raid keeps its
+  real-time fight (`59-combat.js`, `59g-active.js`, `59h-bosses.js`, `59i-elites.js`).
+- **Away:** gathering (and a raid hit) keeps earning; fights stop and earn nothing (`50-sim.js` `awayGains`). The away cap is 4 hours, raised by the
   Hourglass and the Watchtower, up to 24 hours.
 
 ## Gathering and gatherers
@@ -110,8 +112,8 @@ The bell opens Notices, the Journal and Settings. Achievements (Deeds) and the C
 
 ## Side systems
 
-- **Deepwell** (`57d-deepwell.js`, `59c-deepwell-combat.js`, `75-deepwell-ui.js`): from zone 20 and Hearth 3. Runs
-  floor by floor on Oil, with boons, Depth Marks and a weekly Trial. A run never changes main progress.
+- **Deepwell** (`57d-deepwell.js`, `59c-deepwell-combat.js`, `75-deepwell-ui.js`): from zone 20 and Hearth 3. Each
+  floor is a turn fight. Runs floor by floor on Oil, with boons, Depth Marks and a weekly Trial. A run never changes main progress.
 - **Bounties** (`55-bounties.js`): three short goals that pay gold, materials or Essence, and Renown.
 - **Mastery and the Bestiary** (`55-mastery.js`): zone stars and per-foe perks from kills.
 - **Almanac** (`55-almanac.js`): a daily Omen, optional Dares and a weekly board.
@@ -121,18 +123,23 @@ The bell opens Notices, the Journal and Settings. Achievements (Deeds) and the C
   (`12g-art-accessories.js`, `64-looks.js`), and the Trophy Wall at camp (`63e-scenery-wall.js`).
 - **Next Up** (`55-goals.js`): the goals closest to done, with Go buttons.
 - **Story** (`55-story.js`, `21h-lore-hollow.js`, `21b-stories-coast.js`, `21j-lore-omens.js`): arrival lines, story
-  beats, elder lines and bestiary lines, once per save. The bible is [lore.md](design/lore.md).
+  beats, elder lines and bestiary lines, once per save. The story bible is [story-bible.md](design/story-bible.md); [lore.md](design/lore.md) is the older lore.
 
 ## Onboarding and notices
 
 - **Unlocks** (`FEATURES` in `55-onboard.js`): a new game shows the Fight tab only. Tabs and views open as the player
   reaches them: Hero at hero level 3, Gather after the first boss, Bounties at zone 4, Camp at zone 5, Craft and the
   Bestiary around zone 6, the Almanac at 7 minutes, Uniques, the Tavern, the Codex (zone 10), the Raid (zone 12),
-  Stars (hero level 10), the Deepwell (zone 18) and Hands (Hearth 2 and a Tavern). Once open, a feature stays open.
+  Stars (hero level 10), the Deepwell (zone 20 and Hearth 3) and Hands (Hearth 2 and a Tavern). Once open, a feature stays open.
 - **The guide** (`GUIDE_STEPS` in `55-onboard.js`, UI `75-onboard-ui.js`): one hint at a time, docked in the toast band.
   A step pauses the game only while it waits for a press; a step that needs game time shows live progress instead.
 - **Notices** (`23n-data-notices.js`, `notify()`): every message goes to a channel (card, pop, bell, log or none),
   with a quiet start and a cap on pops a minute.
+
+## Currencies
+
+Every currency, material and token, with its sources and sinks, is in [design/systems-map.md](design/systems-map.md)
+(made by `node tools/systems-map.mjs --write`; `check.mjs` fails on a currency with no source or no sink).
 
 ## Saves and tools for players
 
