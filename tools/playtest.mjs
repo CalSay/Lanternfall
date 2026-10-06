@@ -4,14 +4,20 @@
 //
 //   node tools/playtest.mjs look                  what is on screen: visible text, tappable buttons, notices, a screenshot path
 //   node tools/playtest.mjs tap "<label>"         tap the button with that label (exact, then partial match; scrolls it into view)
+//   node tools/playtest.mjs tap-if "<label>"      tap it when it is on screen; carry on without failing when it is not
 //   node tools/playtest.mjs wait <seconds>        let the game run that many seconds of game time (fast-forwards the clock)
 //   node tools/playtest.mjs away <hours>          close the game for that long, then open it again (the away report appears)
 //   node tools/playtest.mjs state                 short save summary: hero, level, zone, gold, skills, play time
 //   node tools/playtest.mjs new [fresh|early|mid|late]   start a session: a fresh save, or a fixture from tests/fixtures
+//   node tools/playtest.mjs expect "<text|css>"   exit 1 if that text (or CSS selector) is not visible on screen right now
+//   node tools/playtest.mjs shot <name>           screenshot named <name>.png in the shots folder
+//   node tools/playtest.mjs burst <name>          6 frames over 1.5 s of game time: <name>-1.png .. <name>-6.png
 //   node tools/playtest.mjs batch                 read one command per line from stdin and run them in one browser launch
+//                                                 (a route file is a batch: `new fresh` may open it, and `expect` keeps going after a miss)
 //
 // options: --session <dir> (default .playtest: the save, the game clock and the screenshots live there, so one
 //          command per call carries on where the last one stopped)   --landscape (740x360 instead of 360x740 portrait)
+//          --seed <n> (seed the game's random numbers for the whole run)   --shots <dir> (where shots go; default <session>/shots)
 //          --json (machine-readable output)   --html <file> (play another build)   --quiet (tap and wait print one line, not a look)
 //
 // Runs dist/lanternfall.html as built: node tools/build.mjs first. Game time is a fake clock: `wait` and `away` cost
@@ -26,7 +32,7 @@ const KEY = 'lanternfall.save.v5';
 const ORIGIN = 'http://lanternfall.playtest/';
 const raw = process.argv.slice(2);
 const flags = { json: false, landscape: false, quiet: false };
-let sessionDir = '.playtest', htmlFile = null, ranSecs = 0;   // ranSecs: game seconds this call has run (away hours are not play)
+let sessionDir = '.playtest', htmlFile = null, shotsOpt = null, seed = null, ranSecs = 0;   // ranSecs: game seconds this call has run (away hours are not play)
 const pos = [];
 for (let i = 0; i < raw.length; i++) {
   const a = raw[i];
@@ -35,14 +41,16 @@ for (let i = 0; i < raw.length; i++) {
   else if (a === '--quiet') flags.quiet = true;
   else if (a === '--session') sessionDir = raw[++i];
   else if (a === '--html') htmlFile = raw[++i];
+  else if (a === '--seed') seed = num(raw[++i], '--seed');
+  else if (a === '--shots') shotsOpt = raw[++i];
   else pos.push(a);
 }
 sessionDir = path.resolve(sessionDir);
 const sessionFile = path.join(sessionDir, 'session.json');
-const shotDir = path.join(sessionDir, 'shots');
+const shotDir = shotsOpt ? path.resolve(shotsOpt) : path.join(sessionDir, 'shots');
 
 const die = msg => { console.error('playtest: ' + msg); process.exit(1); };
-const num = (v, name) => { const n = Number(v); if (!Number.isFinite(n) || n < 0) die(`${name} needs a number of zero or more (got "${v}")`); return n; };
+function num(v, name) { const n = Number(v); if (!Number.isFinite(n) || n < 0) die(`${name} needs a number of zero or more (got "${v}")`); return n; }
 
 // ---------------- session ----------------
 function fixture(name) {
@@ -52,7 +60,7 @@ function fixture(name) {
   return JSON.parse(fs.readFileSync(f, 'utf8'));
 }
 function newSession(name) {
-  fs.mkdirSync(shotDir, { recursive: true });
+  fs.mkdirSync(shotDir, { recursive: true }); fs.mkdirSync(sessionDir, { recursive: true });
   for (const f of fs.readdirSync(shotDir)) fs.rmSync(path.join(shotDir, f));
   const save = fixture(name);
   // The save's own clock is virtual: it starts "now", so a fixture's `last` stamp never reads as a long absence.
@@ -90,7 +98,8 @@ function pageHtml() {
 
 // Frames: the game caps one frame at 0.1 s of game time, so fast-forwarding steps the frame loop every 100 ms
 // instead of every 16 ms. That keeps game time exact and cuts the drawing work six times over.
-const INIT = ([key, rawSave]) => {
+const INIT = ([key, rawSave, seedN]) => {
+  if (seedN !== null) { let a = (seedN >>> 0) || 1; Math.random = () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }   // mulberry32
   try { if (rawSave) localStorage.setItem(key, rawSave); else localStorage.removeItem(key); } catch (e) {}
   window.__ptErrors = [];
   addEventListener('error', e => window.__ptErrors.push(String(e.message || e)));
@@ -108,7 +117,7 @@ async function openPage(browser, session, afterAway = false) {
   page.on('pageerror', e => errors.push(String(e)));
   page.on('console', m => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(m.text()); });
   await page.clock.install({ time: session.time });
-  await page.addInitScript(INIT, [KEY, session.save]);
+  await page.addInitScript(INIT, [KEY, session.save, seed]);
   // The page is served from a fake origin (so localStorage works); every other request is refused, so nothing leaves the machine.
   const html = pageHtml();
   await page.route('**/*', r => (r.request().url() === ORIGIN ? r.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: html }) : r.abort()));
@@ -198,6 +207,14 @@ const SCREEN = () => {
   };
 };
 
+const expects = [];
+async function namedShot(page, name) {
+  fs.mkdirSync(shotDir, { recursive: true });
+  const f = path.join(shotDir, name.replace(/[^a-z0-9_-]+/gi, '-').slice(0, 60) + '.png');
+  await page.screenshot({ path: f });
+  return f;
+}
+
 async function shot(session, page, tag) {
   fs.mkdirSync(shotDir, { recursive: true });
   const f = path.join(shotDir, `${String(++session.shots).padStart(3, '0')}-${tag.replace(/[^a-z0-9]+/gi, '-').slice(0, 30)}.png`);
@@ -285,6 +302,12 @@ async function exec(cmd, args, ctx) {
       if (flags.quiet || !r.ok) return { text: r.msg, data: r };
       const l = await look(session, page, 'tap'); return { text: r.msg + '\n' + l.text, data: { ...r, look: l.data } };
     }
+    case 'tap-if': {   // tap it when it is there, carry on when it is not (story cards come and go with timing)
+      if (!args.length) die('tap-if needs a button label: tap-if "Skip"');
+      const r = await tap(page, args.join(' '));
+      if (r.ok) await run(page, 0.5);
+      return { text: r.ok ? r.msg : `tap-if: no [${args.join(' ')}] on screen, carried on`, data: r };
+    }
     case 'wait': {
       const secs = num(args[0], 'wait'); await run(page, secs);
       session.time = await page.evaluate(() => Date.now());
@@ -297,7 +320,32 @@ async function exec(cmd, args, ctx) {
       const o = summary(session, await readSave(page));
       return { text: fmtState(o), data: o };
     }
-    default: die(`unknown command "${cmd}". Commands: look, tap, wait, away, state, new, batch`);
+    case 'expect': {
+      if (!args.length) die('expect needs text or a CSS selector: expect "Attack"');
+      const want = args.join(' ');
+      const ok = await page.evaluate(([w, scr]) => {
+        const s = (new Function('return ' + scr))()();
+        const sel = /^[#.\[]|^[a-z][a-z0-9-]*[#.\[>]/i.test(w) && !/\s{2}/.test(w);
+        if (sel) { try { return [...document.querySelectorAll(w)].some(e => { const r = e.getBoundingClientRect(), cs = getComputedStyle(e); return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && cs.display !== 'none' && +cs.opacity !== 0; }); } catch (e) { /* not a selector: fall through to text */ } }
+        const hay = (s.lines.join(' ') + ' ' + s.buttons.map(b => b.label).join(' ')).replace(/\s+/g, ' ').toLowerCase();
+        return hay.includes(w.replace(/\s+/g, ' ').toLowerCase());
+      }, [want, '(' + SCREEN.toString() + ')']);
+      if (!ok) process.exitCode = 1;
+      expects.push({ want, ok, viewport: page.viewportSize().width + 'x' + page.viewportSize().height });
+      return { text: `EXPECT ${ok ? 'PASS' : 'FAIL'} "${want}"`, data: { expect: want, ok } };
+    }
+    case 'shot': {
+      if (!args.length) die('shot needs a name: shot first-fight');
+      const f = await namedShot(page, args[0]);
+      return { text: `shot ${f}`, data: { shot: f } };
+    }
+    case 'burst': {
+      if (!args.length) die('burst needs a name: burst parry');
+      const fs6 = [];
+      for (let i = 1; i <= 6; i++) { fs6.push(await namedShot(page, `${args[0]}-${i}`)); if (i < 6) await run(page, 0.3); }
+      return { text: `burst ${fs6.length} frames: ${fs6[0]} .. ${fs6[5]}`, data: { burst: fs6 } };
+    }
+    default: die(`unknown command "${cmd}". Commands: look, tap, tap-if, wait, away, state, new, expect, shot, burst, batch`);
   }
 }
 
@@ -316,6 +364,13 @@ async function main() {
     let ctx = { session, ...(await openPage(browser, session)) }; const allErrors = [];
     const results = [];
     const step = async (c, a) => {
+      if (c === 'new') {
+        const s = newSession(a[0] || 'fresh'); Object.assign(session, s);
+        allErrors.push(...ctx.errors);
+        await ctx.ctx.close();
+        ctx = { session, ...(await openPage(browser, session)) };
+        return { text: `new session (${s.fixture})`, data: { fixture: s.fixture } };
+      }
       if (c === 'away') {
         const hours = num(a[0], 'away');
         session.save = await readSave(ctx.page) ?? session.save;
@@ -343,6 +398,8 @@ async function main() {
     session.save = await readSave(ctx.page) ?? session.save;
     session.time = await ctx.page.evaluate(() => Date.now());
     allErrors.push(...ctx.errors);
+    if (expects.length) console.log(`EXPECTS: ${expects.filter(e => e.ok).length} pass, ${expects.filter(e => !e.ok).length} fail`);
+    if (shotsOpt && expects.length) fs.writeFileSync(path.join(shotDir, 'expects.json'), JSON.stringify(expects, null, 1));
     if (allErrors.length) { console.log(`PAGE ERRORS (${allErrors.length}): ${allErrors.slice(0, 3).join(' | ')}`); process.exitCode = 1; }
     session.played = (session.played || 0) + ranSecs;
     fs.writeFileSync(sessionFile, JSON.stringify(session));
