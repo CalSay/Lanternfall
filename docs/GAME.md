@@ -133,8 +133,7 @@ The bell opens Notices, the Journal and Settings. Achievements (Deeds) and the C
   ready" at 70% or better. Under that it says "a close fight" (35% to 70%) or "too strong", and Go opens
   Training. While it works it says "The Zone N boss is next". It only judges; you can still challenge any time
   (`59m-boss-odds.js`, `bossOdds()`).
-- **Story** (`55-story.js`, `21h-lore-hollow.js`, `21b-stories-coast.js`, `21j-lore-omens.js`): arrival lines, story
-  beats, elder lines and bestiary lines, once per save. The story bible is [story-bible.md](design/story-bible.md); [lore.md](design/lore.md) is the older lore.
+- **Story** (`55-story.js`, `75-story-ui.js`, `21k-story-hollow.js`, `21h-lore-hollow.js`, `21b-stories-coast.js`, `21j-lore-omens.js`): one system that plays the region card, area titles, zone and Captain lines, Champion and Elder scenes, NPC and Voice cards and choices from `STORY_BEATS`, once per save, between fights, silent where the game is not ready (no monster or encounter, no data). Skip always works; everything read is in the Journal (Codex). Settings > Story switches it off. The story bible is [story-bible.md](design/story-bible.md); [lore.md](design/lore.md) is the older lore.
 
 ## Onboarding and notices
 

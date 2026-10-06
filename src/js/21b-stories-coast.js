@@ -21,6 +21,11 @@
 // ferry and is Silas's friend; the letters are to him. The voice under the water is the
 // Lurelight (pinnacles.md 4.2): hinted at, never named here.
 
+// OFF (story-delivery): the Coast is a placeholder of Hollow foes with sea names (22-data-regions.js), so none of the writing
+// below plays as story: no arrival lines, no Great Lantern text (55-lantern falls back to a plain line), no Journal page.
+// The data stays for the Coast's own cards. Flip this on when the Coast is built (story-scripts-2-5 replaces the text).
+const COAST_STORY_ON = false;
+
 const COAST_ARRIVAL = [
   'Grey Shingle. The road runs out onto wet stones and a grey sea.',
   'Gullcliffs. The gulls here have learned to take more than fish.',

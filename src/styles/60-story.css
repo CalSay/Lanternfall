@@ -1,6 +1,6 @@
 /* 60-story: the story on the stage and in its sheet (75-story-ui.js, LORE3). */
 
-/* ---- the stage caption: arrival banner and elder lines, in the open sky mid-stage ---- */
+/* ---- the stage caption: area title, zone line and Captain line, in the open sky mid-stage ---- */
 .sty-cap { position: absolute; z-index: 5; left: 50%; top: 42%; transform: translate(-50%, -50%); width: min(320px, calc(100% - 20px));
   display: grid; justify-items: center; gap: 2px; padding: 8px 18px 9px; text-align: center; cursor: pointer;
   background: linear-gradient(90deg, rgba(11,8,16,0), rgba(11,8,16,.9) 14%, rgba(11,8,16,.9) 86%, rgba(11,8,16,0));
@@ -14,25 +14,18 @@
 .sty-cap.elder.fall { border-image: linear-gradient(90deg, transparent, rgba(239,230,214,.5), transparent) 1; }
 .sty-cap.elder.fall .sty-cap-h { color: #CFC3DC; text-shadow: 0 2px 0 #0B0810; }
 .sty-cap.elder .sty-cap-l { font-style: italic; }
+.sty-cap.low { top: 66%; }
 .sty-cap.in { animation: sty-in .35s ease-out; }
 .sty-cap.out { opacity: 0; transform: translate(-50%, calc(-50% - 6px)); }
 @keyframes sty-in { from { opacity: 0; transform: translate(-50%, calc(-50% + 8px)); } }
 
-/* ---- the story chip: "New story: Wisps. Read" ---- */
-.sty-chip { position: absolute; z-index: 5; left: 50%; top: 42%; transform: translate(-50%, -50%); width: min(300px, calc(100% - 20px));
-  display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; gap: 8px; align-items: center; min-height: 44px; padding: 6px 8px;
-  text-align: left; cursor: pointer; color: var(--bone); background: #16101DF0; border: 2px solid #6B5320;
-  box-shadow: 0 3px 0 #0B0810, 0 0 16px rgba(242,193,78,.25); transition: opacity .25s ease-out, transform .25s ease-out; }
-.sty-chip.in { animation: sty-in .35s ease-out; }
-.sty-chip.out { opacity: 0; transform: translate(-50%, calc(-50% - 6px)); }
+/* ---- the catch-up row (shares the chip's pieces) ---- */
 .sty-chip-ic { width: 24px; height: 24px; image-rendering: pixelated; }
 .sty-chip-tx { display: grid; gap: 1px; min-width: 0; }
-.sty-chip-eye { font: 600 10px/1.1 var(--body); letter-spacing: .14em; text-transform: uppercase; color: var(--gold); }
-.sty-chip-t { font: 700 calc(15px * var(--display-k))/1.1 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sty-chip-note { font: 500 12px/1.25 var(--body); color: var(--muted); }
 .sty-chip-go { font: 600 calc(12px * var(--display-k))/1 var(--display); padding: 7px 9px; background: var(--gold); color: #2A1E07; box-shadow: inset 0 -2px 0 #A77B1E; }
 
-/* ---- the beat card (bottom sheet) ---- */
+/* ---- the story card (bottom sheet) ---- */
 .sty-sheet .bsheet-body { gap: 12px; }
 .sty-back { justify-self: start; min-height: 36px; padding: 4px 10px; background: var(--panel-2); border: 1px solid var(--line-hi); color: var(--bone); font: 600 calc(13px * var(--display-k)) var(--display); cursor: pointer; }
 .sty-card { display: grid; gap: 8px; padding: 12px 14px 14px; background: radial-gradient(120% 80% at 50% 0%, rgba(242,193,78,.10), rgba(242,193,78,0) 60%), var(--well); border: 2px solid #5A4A2A; box-shadow: inset 0 0 0 2px #0B0810; }
@@ -43,6 +36,14 @@
 .sty-actions { display: flex; gap: 8px; align-items: center; }
 .sty-actions .big { flex: 1; }
 .sty-actions .mini { min-height: 44px; padding: 0 14px; }
+.sty-count { font: 500 11px/1 var(--body); color: var(--muted); justify-self: end; }
+.sty-skip { background: transparent; color: var(--muted); }
+.sty-opts { display: grid; gap: 8px; }
+.sty-opt { display: grid; gap: 2px; text-align: left; min-height: 48px; }
+.sty-opt span { font: 400 12.5px/1.3 var(--body); opacity: .85; }
+.sty-road { display: grid; gap: 6px; }
+.sty-road-l { margin: 0; font: 400 12.5px/1.35 var(--body); color: var(--muted); }
+.sty-road-l b { color: var(--bone); font-weight: 600; }
 
 /* ---- the story so far ---- */
 .sty-ltitle { margin: 0; font: 700 calc(20px * var(--display-k))/1.1 var(--display); }
@@ -74,6 +75,13 @@
 .cx-dlore { margin: 0; font: italic 400 13px/1.4 var(--body); color: #D8CFE3; }
 
 @media (prefers-reduced-motion: reduce) {
-  .sty-cap, .sty-chip { transition: none; animation: none; }
-  .sty-cap.in, .sty-chip.in { animation: none; }
+  .sty-cap { transition: none; animation: none; }
+  .sty-cap.in { animation: none; }
+}
+
+/* landscape phones: a story card is a bottom sheet no taller than 60% of the screen (story-c28.md 4.7); long cards scroll */
+@media (min-aspect-ratio: 1/1) and (min-width: 600px) and (max-height: 500px) {
+  .bsheet.small.sty-sheet { max-height: 60%; }
+  .sty-sheet .bsheet-body { overflow-y: auto; gap: 8px; }
+  .sty-sheet .sty-actions { position: sticky; bottom: 0; background: var(--panel); padding-top: 4px; }
 }

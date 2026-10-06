@@ -84,7 +84,7 @@
     openSheet(api => {
       api.sheet.classList.add('gl-sheet');
       api.body.append(el('h2', 'gl-sh-title', 'The Lantern Road'),
-        el('p', 'note', 'Each region ends in a Great Lantern. Beat its last boss to light it again.'));
+        el('p', 'note', 'Each region ends in a Great Lantern. Beat the region\'s Elder. Then light it with your flame.'));
       const list = el('div', 'gl-sh-list');
       for (const x of lanternRoad()) {
         const row = el('div', 'gl-sh-row' + (x.lit ? ' lit' : '') + (x.here ? ' here' : ''));

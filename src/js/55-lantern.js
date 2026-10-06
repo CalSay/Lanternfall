@@ -4,7 +4,7 @@
 // The first kill of a region boss (REGIONS[i].z1, 22-data-regions.js) relights that region's Great
 // Lantern, once per save:
 //   emit('greatLantern', { n, region, zone, name, head, text, note, quiet, rewards, say })
-//     n: 1 for the Hollow, 2 for the Coast. head/text/note: COAST_STORY[region.beat] (21b-stories-coast).
+//     n: 1 for the Hollow, 2 for the Coast. head/text/note: COAST_STORY[region.beat] (21b-stories-coast) while COAST_STORY_ON, else a plain line.
 //     quiet: true for a save that was already past the boss before this system existed (it gets one
 //       bell line through emit('whatsNew') instead of the card).
 //     rewards: listeners push { txt, ic } lines while the event runs (57e-stars: the star
@@ -23,7 +23,7 @@ let lanternSync, lanternRoad;
   const L = () => S.lantern || (S.lantern = { v: 1, lit: {}, seen: 0 });
 
   function fire(r, i, quiet) {
-    const beat = (typeof COAST_STORY !== 'undefined' && COAST_STORY[r.beat]) || null;
+    const beat = (typeof COAST_STORY_ON !== 'undefined' && COAST_STORY_ON && typeof COAST_STORY !== 'undefined' && COAST_STORY[r.beat]) || null;   // the Coast's writing is switched off until the Coast is built (21b)
     const e = {
       n: i + 1, region: r.id, zone: r.z1, name: r.lantern,
       head: (beat && beat.head) || `${r.lantern} burns again.`,

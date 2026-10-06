@@ -249,7 +249,7 @@ on('whatsNew', w => {
 // registerSection('log', ...) in 75-stats-ui.js). The last view is remembered.
 const logPanel = el('section', 'panel'); logPanel.id = 'p-log'; logPanel.hidden = true; $('app').append(logPanel);
 let logView = '';
-const SETTINGS_SECS = ['set-num', 'onboard-tips', 'cb2set', 'savecode', 'feedback', 'turn-test'];
+const SETTINGS_SECS = ['set-num', 'onboard-tips', 'cb2set', 'story-set', 'savecode', 'feedback', 'turn-test'];
 function markSettings() {
   mountTab('log');   // every Journal section (they mount lazily; the Numbers row lives in the stats section)
   let num = $('sec-set-num');

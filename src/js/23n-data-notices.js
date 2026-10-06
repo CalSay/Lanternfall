@@ -23,16 +23,11 @@
 // A message that matches no rule falls back on its priority: high pops, normal goes to the bell,
 // low to the log. tools/check.mjs holds that every toast source in src/js matches a rule.
 // quiet: the first quiet.secs of play (a session) allow at most quiet.pops pops; the rest go where the rule holds them.
-const NOTICE_TUNE = { gap: 20, perMin: 3, arrivalWait: 60, elderWait: 12, quiet: { secs: 600, pops: 6 } };
+const NOTICE_TUNE = { gap: 20, perMin: 3, quiet: { secs: 600, pops: 6 } };
 const NOTICE_CH = ['card', 'pop', 'bell', 'log', 'none'];
 const noteNum = (m, re) => { const x = re.exec(m); return x ? +x[1] : 0; };
 const NOTICES = [
-  // ---- the story on the stage (75-story-ui) and full-screen cards ----
-  { id: 'caption:arrival', key: 'caption:arrival', ch: 'pop', gap: 40, held: 'log', why: 'the place name, first time only (it waits for a quiet moment)' },
-  { id: 'caption:elder', key: 'caption:elder', ch: 'pop', gap: 40, held: 'log', why: 'a new kind of boss appears; dropped if it cannot show within a few seconds' },
-  { id: 'caption:fall', key: 'caption:fall', ch: 'none', why: 'the boss falling is on screen; its line lives in the Bestiary' },
-  { id: 'caption:beat', key: 'caption:beat', ch: 'pop', held: 'bell', why: 'a story page (the chip waits; the Codex keeps it)' },
-  { id: 'caption:beat-quiet', key: 'caption:beat-quiet', ch: 'log', why: 'a page the player walked past' },
+  // ---- full-screen cards (the story's own captions and cards hold the game and bypass this policy: 75-story-ui) ----
   { id: 'card:lantern', key: 'card:lantern', ch: 'card', why: 'a Great Lantern relit' },
   { id: 'card:feat', key: 'card:feat', ch: 'card', why: 'a Feat or a Chapter' },
   { id: 'news', key: 'news', ch: 'pop', why: "an old save's What's new (never on a new game)" },
