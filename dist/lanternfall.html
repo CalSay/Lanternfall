@@ -7436,6 +7436,9 @@ const LORE_BANNED = [
   /\blov(e|es|ed|ing) (the |your )?(light|lamp|flame)/i, /\blike a moth\b/i
 ];
 
+// OFF (story-area-names): the lines below describe places the screen does not show (zones 1-7 all use the Mossy Hollow
+// scenery, and areas now span 5 zones). The story-hollow-script card writes the new arrival lines; flip this on then.
+const HOLLOW_ARRIVAL_ON = false;
 const HOLLOW_ARRIVAL = [
   'Mossy Hollow. Home is dark behind you. The moss is moving.',
   'Batwing Caves. Something big hangs from the roof, listening.',
@@ -8125,6 +8128,22 @@ const REGIONS = (() => {
 })();
 const ROAD_BEYOND = { id: 'ember', n: 'the Emberwaste', col: '#E0524F' };
 
+// The area names (docs/design/story-bible.md section 8; docs/DECISIONS.md "World structure"): 5 regions x 7 areas x 5 zones.
+// Zone z is area ceil(z / 5) of the road. Names only: foes, scenery, uniques and rewards still follow the 7-zone cycle.
+const AREA_ZONES = 5;
+const AREA_NAMES = [
+  ['Mossy Hollow', 'Batwing Caves', 'The Bonefield', 'Beetle Barrows', 'Fungal Deep', 'Quarry Ruins', 'Wraithmarsh'],
+  ['Grey Shingle', 'Gullcliffs', 'The Wrecks', 'Kelp Shallows', 'Glimmer Lagoon', 'Drowned Saltreach', 'The Coral Nave'],
+  ['Cinder Road', 'Emberlea Ruins', 'The Ashfall', 'The Glass Flats', 'The Kilns', 'Wyrmscale Ridge', 'The Pyre'],
+  ['Frostgate Pass', 'The Eyries', 'The Starscar', 'The Blue Caves', 'The Silent Village', 'The Rimewood', 'Frostgate Bastion'],
+  ['The Last Descent', 'The Stillwood', 'The Blind Mere', 'The Long Dusk Fields', 'Coldhearth', 'The Closed Orchard', 'The Heart of the Gloamvale']
+];
+const ROAD_ZONES = AREA_ZONES * 7 * AREA_NAMES.length;   // 175
+const zoneAreaIdx = z => Math.floor((Math.max(1, z) - 1) / AREA_ZONES);   // 0-34 for zones 1-175
+// Past zone 175 the last area repeats, numbered: "The Heart of the Gloamvale II".
+const zoneAreaName = z => { const i = Math.min(zoneAreaIdx(z), AREA_NAMES.length * 7 - 1), n = AREA_NAMES[Math.floor(i / 7)][i % 7];
+  return z > ROAD_ZONES ? n + ' ' + roman(Math.floor((z - ROAD_ZONES - 1) / AREA_ZONES) + 2) : n; };
+
 const regionIdx = z => { for (let i = REGIONS.length - 1; i > 0; i--) if (z >= REGIONS[i].z0) return i; return 0; };
 const regionOf = z => REGIONS[regionIdx(z)];
 const regionById = id => REGIONS.find(r => r.id === id) || null;
@@ -8470,7 +8489,7 @@ const NOTICES = [
   // ---- progress ----
   { id: 'move', key: 'move', re: /^(You return to |Your party returns to |You head to the |You move to the |You march to the raid|Your party marches to the raid)/,
     ch: m => /raid/.test(m) ? 'log' : 'none', why: 'the activity pill shows it' },
-  { id: 'zone-clear', re: /is cleared\. .* lies ahead\.$/, ch: 'log', why: 'the next place gets its title caption',
+  { id: 'zone-clear', re: /is cleared\. (.* lies ahead|On to Zone .+)\.$/, ch: 'log', why: 'the next place gets its title caption',
     merge: ms => `${ms.length} zones cleared. ${ms[ms.length - 1]}` },
   { id: 'zone-won', re: /^Zone .+ won\. On to Zone .+\.$/, ch: 'log', why: 'a replayed zone won: the zone title shows where you are',
     merge: ms => ms[ms.length - 1] },
@@ -9764,7 +9783,7 @@ const target = () => S.activity === 'raid' && online.ready ? 'world' : S.activit
 const zonePlace = z => { const r = regionOf(z); return (((z - r.z0) % 7) + 7) % 7; };     // 0-6: place in the region's cycle
 const zoneCycle = z => Math.max(0, Math.floor((z - regionOf(z).z0) / 7));                 // cycle within the region
 const zoneType = z => regionOf(z).types[zonePlace(z)];                                    // GLOBAL index into TYPES
-const zoneName = z => { const r = regionOf(z), c = zoneCycle(z); return z === r.z1 && r.boss.place ? r.boss.place : r.names[zonePlace(z)] + (c ? ' ' + roman(c + 1) : ''); };
+const zoneName = z => zoneAreaName(z);   // the area's name (22-data-regions): zones 1-5 Mossy Hollow, 6-10 Batwing Caves ...
 // Owner (2026-10-01): every zone is ZONE_FIGHTS fights, then its boss (the Shadowborn Captain to come); beating the boss
 // moves you on to the next zone. S.kills counts this visit's wins; entering a zone (setZone) starts again at fight 1.
 const ZONE_FIGHTS = 5;
@@ -10126,7 +10145,7 @@ function killPack(m, g) {
     // a won zone moves you on, the first time and on every replay (owner, 2026-10-01)
     if (first) S.maxZone++;
     S.zone = z + 1; S.kills = 0; emit('sceneReset');
-    toast(first ? `${zoneName(z)} is cleared. ${zoneName(z + 1)} lies ahead.` : `Zone ${z} won. On to Zone ${z + 1}.`, 'good', null, first ? 'high' : 'normal');
+    toast(first ? (zoneName(z) === zoneName(z + 1) ? `Zone ${z} is cleared. On to Zone ${z + 1}.` : `${zoneName(z)} is cleared. ${zoneName(z + 1)} lies ahead.`) : `Zone ${z} won. On to Zone ${z + 1}.`, 'good', null, first ? 'high' : 'normal');
     if (first) emit('zoneClear', { zone: z });
   } else {
     S.kills = Math.min(ZONE_FIGHTS, S.kills + 1);
@@ -14241,7 +14260,7 @@ let storyBeat, storyBeatDef, storyHas, storyList, storyRead, storyUnread, storyL
 
   // Region story data: arrival lines per place, the boss arrival. Coast only once it has its own foes.
   const regionText = r => {
-    if (r.id === 'hollow') return { arr: typeof HOLLOW_ARRIVAL !== 'undefined' ? HOLLOW_ARRIVAL : null, boss: typeof HOLLOW_ARRIVAL_BOSS !== 'undefined' ? HOLLOW_ARRIVAL_BOSS : '' };
+    if (r.id === 'hollow') return typeof HOLLOW_ARRIVAL_ON !== 'undefined' && !HOLLOW_ARRIVAL_ON ? null : { arr: typeof HOLLOW_ARRIVAL !== 'undefined' ? HOLLOW_ARRIVAL : null, boss: typeof HOLLOW_ARRIVAL_BOSS !== 'undefined' ? HOLLOW_ARRIVAL_BOSS : '' };
     if (r.id === 'coast' && r.plugged) return { arr: typeof COAST_ARRIVAL !== 'undefined' ? COAST_ARRIVAL : null, boss: typeof COAST_ARRIVAL_BOSS !== 'undefined' ? COAST_ARRIVAL_BOSS : '' };
     return null;
   };
@@ -15784,8 +15803,8 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
       let hint = '';
       if (tier < 4) {
         const need = Math.ceil(BESTIARY_TIERS[tier] - kills);
-        hint = x.exact ? `Defeat ${fmt(need)} more ${t.name}s (${ZONES[i]}, zones ${zonesOf(i).join(', ')}...).` : `Defeat more ${t.name}s.`;
-      } else if (!elder) hint = x.exact ? `Beat the ${ZONES[i]} boss (zone ${i + 1}).` : 'A boss guards this page.';
+        hint = x.exact ? `Defeat ${fmt(need)} more ${t.name}s (zones ${zonesOf(i).join(', ')}...).` : `Defeat more ${t.name}s.`;
+      } else if (!elder) hint = x.exact ? `Beat the zone ${i + 1} boss.` : 'A boss guards this page.';
       else if (!champ) hint = x.exact ? `Beat a champion ${t.name}. Champions show up from zone 20.` : 'A stronger one is out there.';
       return { key: t.key, n: t.name, got: tier + elder + champ, max: 6, pts: tier * 4 + elder * 6 + champ * 4, ptsMax: 26, hint,
         sub: `Tier ${tier} of 4${elder ? ' · Elder' : ''}${champ ? ' · Champion' : ''}`, kills, mob: t.key,
@@ -15801,7 +15820,7 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
       for (let z = 1; z <= REGION_ZONES; z++) {
         const k = (S.mastery && S.mastery.zones[z]) || 0, st = Math.min(5, masteryApi.starsFor(k));
         const need = st < 5 ? Math.ceil(MASTERY_STARS[st] - k) : 0;
-        out.push({ key: 'z' + z, n: `${z}. ${zoneName(z)}`, got: st, max: 5, pts: st * 2, ptsMax: 10, zone: z, mob: TYPES[zoneType(z)].key, grp: 'Band ' + roman(Math.ceil(z / 7)),
+        out.push({ key: 'z' + z, n: `${z}. ${zoneName(z)}`, got: st, max: 5, pts: st * 2, ptsMax: 10, zone: z, mob: TYPES[zoneType(z)].key, grp: zoneName(z),
           sub: `${fmt(k)} kills here`,
           hint: st >= 5 ? '' : z > S.maxZone ? (x.exact ? `Reach zone ${z}.` : 'Further down the road.') : x.exact ? `${fmt(need)} more kills here for star ${st + 1}. A boss counts 5.` : 'Fight here more.' });
       }
