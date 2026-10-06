@@ -1,0 +1,12 @@
+# seed: 1
+# Proof for card away-card-claim-button: chopping finishes a bounty, you leave, and the away card's Next up button says Claim.
+# The Next up block sits low on the card, so the route taps by label (tap fails if no button says Claim) and checks the claim.
+new bty-gather
+wait 12
+expect "Bounty ready"
+away 1
+shot away-card
+tap "Claim"
+wait 2
+expect "Bounty complete"
+shot claimed-from-away

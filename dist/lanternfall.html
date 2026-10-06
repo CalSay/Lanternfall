@@ -35110,7 +35110,8 @@ let showAwayReport;
         if (l.sub) tx.append(el('div', 'away-lsub', l.sub));
         row.append(tx);
         if (typeof l.go === 'function') {
-          const gb = el('button', 'mini go away-lgo', 'Go');
+          const gb = el('button', 'mini go away-lgo', l.goLabel || 'Go');
+          if (l.goLabel) gb.setAttribute('aria-label', l.goLabel + ': ' + (l.txt || ''));
           gb.addEventListener('click', () => { close(); try { l.go(); } catch (e) { console.error('[lanternfall] away line go failed', e); } });
           row.append(gb);
         }
@@ -38938,7 +38939,7 @@ let deedsUI = null;
     const busy = r.kills || r.gold >= 1 || r.xp >= 1 || (r.zones && r.zones.to > r.zones.from) || r.bosses || r.raidDmg >= 1 ||
       r.embers || (r.mats && r.mats.length) || (r.items && r.items.length) || (r.skills && r.skills.length) || (r.extra && r.extra.length);
     if (!busy) return null;
-    return topGoals(3).map(g => ({ icon: goalIcon(g.icon), txt: g.label, sub: g.ready ? 'Ready now' : pctTxt(g) + ' done', group: 'Next up', go: () => goTo(g) }));
+    return topGoals(3).map(g => ({ icon: goalIcon(g.icon), txt: g.label, sub: g.ready ? 'Ready now' : pctTxt(g) + ' done', group: 'Next up', goLabel: g.goLabel, go: () => goTo(g) }));
   });
 }
 
