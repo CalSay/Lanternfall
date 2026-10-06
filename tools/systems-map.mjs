@@ -49,39 +49,75 @@ const REG = [
     snk: [['Gate: node tier opens at a gathering level', '40-rules.js', 'NODE_REQ'], ['Gate: item tier opens at a crafting level', '40-rules.js', 'SMITH_REQ|stationReq']],
     links: ['Levels are permanent. The sink column is the gate they open.'] },
   { id: 'ore', name: 'Ore', field: 'S.mats.ore[0..4]', what: 'Copper, Iron, Silver, Cobalt, Mithril. Mining.', mat: 'ore',
-    src: [['Mining swings', '50-sim.js', "stashAdd\\(kind, t, Math\\.max\\(1, Math\\.floor\\(y\\)"], ['Away mining', '55-store.js', "stashAdd\\(kind, tier, got, 'flow', true\\)"],
+    src: [
+      ['Transmute (Enchanting): 4 of a grade make 1 of the next', '55-crafting.js', 'stashAdd\\(fam, c\\.toT, c\\.give'],
+      ['Mining swings', '50-sim.js', "stashAdd\\(kind, t, Math\\.max\\(1, Math\\.floor\\(y\\)"], ['Away mining', '55-store.js', "stashAdd\\(kind, tier, got, 'flow', true\\)"],
       ['Glint taps', '55-gathering.js', 'stashAdd\\(kind, t, Math\\.max\\(1, roll\\(CRAFT_GLINT'], ['Gatherers (Hands)', '57f-hands.js', "stashAdd\\(f, t, n, 'parcel'\\)"],
       ['Bounty parcels', '55-bounties.js', "stashAdd\\(r\\.kind, r\\.t, r\\.n, 'parcel'\\)"], ['Almanac board crates', '55-almanac.js', 'stashAdd\\(m\\.k, m\\.t, m\\.n'],
       ['Salvaging gear (about 40% back)', '51-actions.js', 'CRAFT_KINDS\\[it\\.slot\\]\\.rec'], ['Tool rare finds (one grade up)', '55-tools.js', 'credit\\(kind, up, finds']],
-    snk: [['Gear crafts and upgrades', '55-crafting.js', 'payMats\\(c\\.cost\\.mats, t\\)'], ['Camp builds (Hearth, Forge, Storehouse, tents)', '57-camp.js', 'S\\.mats\\[f\\]\\[t - 1\\] -= n'],
+    snk: [
+      ['Transmute (Enchanting): spends 4 to go up a grade, 1 to go down', '55-crafting.js', 'S\\.mats\\[fam\\]\\[fromT - 1\\] -= c\\.take'],
+      ['Gear crafts and upgrades', '55-crafting.js', 'payMats\\(c\\.cost\\.mats, t\\)'], ['Camp builds (Hearth, Forge, Storehouse, tents)', '57-camp.js', 'S\\.mats\\[f\\]\\[t - 1\\] -= n'],
       ['Trade runs', '57k-trade.js', 'job\\.cargo'], ['Hero unlock routes', '56c-unlocks.js', 'S\\.mats\\[k\\]\\[i\\] -= take'], ['Light the fire (wood only)', '55-hearth.js', 'S\\.mats\\[f\\]\\[t - 1\\] -= n']] },
   { id: 'wood', name: 'Wood', field: 'S.mats.wood[0..4]', what: 'Pine, Birch, Oak, Mangrove, Tideash. Woodcutting.', mat: 'wood',
-    src: [['Woodcutting swings', '50-sim.js', "stashAdd\\(kind, t, Math\\.max\\(1, Math\\.floor\\(y\\)"], ['Away woodcutting', '55-store.js', "stashAdd\\(kind, tier, got, 'flow', true\\)"],
+    src: [
+      ['Tool rare finds (one grade up)', '55-tools.js', 'credit\\(kind, up, finds'],
+      
+      ['Transmute (Enchanting): 4 of a grade make 1 of the next', '55-crafting.js', 'stashAdd\\(fam, c\\.toT, c\\.give'],
+      ['Woodcutting swings', '50-sim.js', "stashAdd\\(kind, t, Math\\.max\\(1, Math\\.floor\\(y\\)"], ['Away woodcutting', '55-store.js', "stashAdd\\(kind, tier, got, 'flow', true\\)"],
       ['Glint taps', '55-gathering.js', 'stashAdd\\(kind, t, Math\\.max\\(1, roll\\(CRAFT_GLINT'], ['Gatherers (Hands)', '57f-hands.js', "stashAdd\\(f, t, n, 'parcel'\\)"],
       ['Bounty parcels', '55-bounties.js', "stashAdd\\(r\\.kind, r\\.t, r\\.n, 'parcel'\\)"], ['Salvaging gear (about 40% back)', '51-actions.js', 'CRAFT_KINDS\\[it\\.slot\\]\\.rec']],
-    snk: [['Gear crafts and upgrades (staff, bow, warblade, tools)', '55-crafting.js', 'payMats\\(c\\.cost\\.mats, t\\)'], ['Camp builds: Hearth rows are the big one', '57-camp.js', 'S\\.mats\\[f\\]\\[t - 1\\] -= n'],
+    snk: [
+      ['Transmute (Enchanting): spends 4 to go up a grade, 1 to go down', '55-crafting.js', 'S\\.mats\\[fam\\]\\[fromT - 1\\] -= c\\.take'],
+      ['Gear crafts and upgrades (staff, bow, warblade, tools)', '55-crafting.js', 'payMats\\(c\\.cost\\.mats, t\\)'], ['Camp builds: Hearth rows are the big one', '57-camp.js', 'S\\.mats\\[f\\]\\[t - 1\\] -= n'],
       ['Light the fire', '55-hearth.js', 'S\\.mats\\[f\\]\\[t - 1\\] -= n'], ['Trade runs', '57k-trade.js', 'job\\.cargo'], ['Hero unlock route (Bram, 80 Pine)', '56c-unlocks.js', 'S\\.mats\\[k\\]\\[i\\] -= take']] },
   { id: 'ess', name: 'Essence', field: 'S.mats.ess[0..4]', what: 'Dim, Glowing, Radiant, Tidelit, Stormlit. Fight drops; grade is set by zone.', mat: 'ess',
     src: [['Fight drops (0.25 a foe, +3 a boss)', '50-sim.js', "stashAdd\\('ess', tier, ess, 'flow', true\\)"], ['Away fighting (dormant)', '50-sim.js', "stashAdd\\('ess', tier, Math\\.floor\\(kills"],
       ['Bounty parcels', '55-bounties.js', "stashAdd\\(r\\.kind, r\\.t, r\\.n, 'parcel'\\)"], ['Almanac board crates', '55-almanac.js', 'stashAdd\\(m\\.k, m\\.t, m\\.n'],
       ['Salvaging a Unique (+10)', '51-actions.js', "if \\(it\\.u\\) stashAdd\\('ess', it\\.t, 10"], ['Salvaging affixed gear (+1 sometimes)', '55-crafting.js', "stashAdd\\('ess', it\\.t, 1, 'preview'\\)"],
-      ['Transmute (Enchanting)', '55-crafting.js', 'stashAdd\\(fam, c\\.toT, c\\.give']],
-    snk: [['Gear crafts (1 to 2 an item, charm 5)', '55-crafting.js', 'payMats\\(c\\.cost\\.mats, t\\)'], ['Reforging (rises 50% a reroll)', '55-crafting.js', 'payMats\\(c\\.cost\\.mats, it\\.t\\)'],
+      ['Transmute (Enchanting): down a grade gives 2 for 1', '55-crafting.js', 'stashAdd\\(fam, c\\.toT, c\\.give']],
+    snk: [
+      ['Transmute (Enchanting): spends 4 to go up a grade, 1 to go down', '55-crafting.js', 'S\\.mats\\[fam\\]\\[fromT - 1\\] -= c\\.take'],
+      ['Gear crafts (1 to 2 an item, charm 5)', '55-crafting.js', 'payMats\\(c\\.cost\\.mats, t\\)'], ['Reforging (rises 50% a reroll)', '55-crafting.js', 'payMats\\(c\\.cost\\.mats, it\\.t\\)'],
       ['Star Chart', '55-crafting.js', 'payMats\\(STAR\\.mats, STAR\\.t\\)'], ['Camp builds (Hearth, Enchanter, Library, Shrine)', '57-camp.js', 'S\\.mats\\[f\\]\\[t - 1\\] -= n'],
       ['Class change (Mirror of Embers)', '55-classes.js', 'S\\.mats\\.ess\\[cost\\.ess\\.t - 1\\] -= cost\\.ess\\.n'], ['Hero unlock routes', '56c-unlocks.js', 'S\\.mats\\[k\\]\\[i\\] -= take'],
       ['Tonics', '55-crafting.js', 'payMats\\(m, t\\)']] },
   { id: 'crystal', name: 'Crystal', field: 'S.mats.crystal[0..4]', what: 'Gems from Mining nodes.', mat: 'crystal',
-    src: [['Mining swings', '50-sim.js', "stashAdd\\(kind, t, Math\\.max\\(1, Math\\.floor\\(y\\)"], ['Gatherers (Hands)', '57f-hands.js', "stashAdd\\(f, t, n, 'parcel'\\)"], ['Bounty parcels', '55-bounties.js', "stashAdd\\(r\\.kind, r\\.t, r\\.n, 'parcel'\\)"]],
-    snk: [['Gear crafts (staff, lantern, circlet, trinket)', '55-crafting.js', 'payMats\\(c\\.cost\\.mats, t\\)'], ['Star Chart (40)', '55-crafting.js', 'payMats\\(STAR\\.mats, STAR\\.t\\)'], ['Camp builds', '57-camp.js', 'S\\.mats\\[f\\]\\[t - 1\\] -= n'], ['Trade runs', '57k-trade.js', 'job\\.cargo']] },
+    src: [
+      ['Tool rare finds (one grade up)', '55-tools.js', 'credit\\(kind, up, finds'],
+      
+      ['Transmute (Enchanting): 4 of a grade make 1 of the next', '55-crafting.js', 'stashAdd\\(fam, c\\.toT, c\\.give'],
+      ['Mining swings', '50-sim.js', "stashAdd\\(kind, t, Math\\.max\\(1, Math\\.floor\\(y\\)"], ['Gatherers (Hands)', '57f-hands.js', "stashAdd\\(f, t, n, 'parcel'\\)"], ['Bounty parcels', '55-bounties.js', "stashAdd\\(r\\.kind, r\\.t, r\\.n, 'parcel'\\)"]],
+    snk: [
+      ['Transmute (Enchanting): spends 4 to go up a grade, 1 to go down', '55-crafting.js', 'S\\.mats\\[fam\\]\\[fromT - 1\\] -= c\\.take'],
+      ['Gear crafts (staff, lantern, circlet, trinket)', '55-crafting.js', 'payMats\\(c\\.cost\\.mats, t\\)'], ['Star Chart (40)', '55-crafting.js', 'payMats\\(STAR\\.mats, STAR\\.t\\)'], ['Camp builds', '57-camp.js', 'S\\.mats\\[f\\]\\[t - 1\\] -= n'], ['Trade runs', '57k-trade.js', 'job\\.cargo']] },
   { id: 'fibre', name: 'Fibre', field: 'S.mats.fibre[0..4]', what: 'Foraging.', mat: 'fibre',
-    src: [['Foraging swings', '50-sim.js', "stashAdd\\(kind, t, Math\\.max\\(1, Math\\.floor\\(y\\)"], ['Gatherers (Hands)', '57f-hands.js', "stashAdd\\(f, t, n, 'parcel'\\)"]],
-    snk: [['Gear crafts (robes, leathers, vestments)', '55-crafting.js', 'payMats\\(c\\.cost\\.mats, t\\)'], ['Camp builds (Loom, Library, tents)', '57-camp.js', 'S\\.mats\\[f\\]\\[t - 1\\] -= n'], ['Trade runs', '57k-trade.js', 'job\\.cargo']] },
+    src: [
+      ['Tool rare finds (one grade up)', '55-tools.js', 'credit\\(kind, up, finds'],
+      
+      ['Transmute (Enchanting): 4 of a grade make 1 of the next', '55-crafting.js', 'stashAdd\\(fam, c\\.toT, c\\.give'],
+      ['Foraging swings', '50-sim.js', "stashAdd\\(kind, t, Math\\.max\\(1, Math\\.floor\\(y\\)"], ['Gatherers (Hands)', '57f-hands.js', "stashAdd\\(f, t, n, 'parcel'\\)"]],
+    snk: [
+      ['Transmute (Enchanting): spends 4 to go up a grade, 1 to go down', '55-crafting.js', 'S\\.mats\\[fam\\]\\[fromT - 1\\] -= c\\.take'],
+      ['Gear crafts (robes, leathers, vestments)', '55-crafting.js', 'payMats\\(c\\.cost\\.mats, t\\)'], ['Camp builds (Loom, Library, tents)', '57-camp.js', 'S\\.mats\\[f\\]\\[t - 1\\] -= n'], ['Trade runs', '57k-trade.js', 'job\\.cargo']] },
   { id: 'herb', name: 'Herb', field: 'S.mats.herb[0..4]', what: 'Foraging.', mat: 'herb',
-    src: [['Foraging swings', '50-sim.js', "stashAdd\\(kind, t, Math\\.max\\(1, Math\\.floor\\(y\\)"], ['Gatherers (Hands)', '57f-hands.js', "stashAdd\\(f, t, n, 'parcel'\\)"]],
-    snk: [['Gear crafts (censer, tome, vestments)', '55-crafting.js', 'payMats\\(c\\.cost\\.mats, t\\)'], ['Tonics (3 each)', '55-crafting.js', 'payMats\\(m, t\\)'], ['Camp builds (Tavern)', '57-camp.js', 'S\\.mats\\[f\\]\\[t - 1\\] -= n'], ['Trade runs', '57k-trade.js', 'job\\.cargo']] },
+    src: [
+      ['Tool rare finds (one grade up)', '55-tools.js', 'credit\\(kind, up, finds'],
+      
+      ['Transmute (Enchanting): 4 of a grade make 1 of the next', '55-crafting.js', 'stashAdd\\(fam, c\\.toT, c\\.give'],
+      ['Foraging swings', '50-sim.js', "stashAdd\\(kind, t, Math\\.max\\(1, Math\\.floor\\(y\\)"], ['Gatherers (Hands)', '57f-hands.js', "stashAdd\\(f, t, n, 'parcel'\\)"]],
+    snk: [
+      ['Transmute (Enchanting): spends 4 to go up a grade, 1 to go down', '55-crafting.js', 'S\\.mats\\[fam\\]\\[fromT - 1\\] -= c\\.take'],
+      ['Gear crafts (censer, tome, vestments)', '55-crafting.js', 'payMats\\(c\\.cost\\.mats, t\\)'], ['Tonics (3 each)', '55-crafting.js', 'payMats\\(m, t\\)'], ['Camp builds (Tavern)', '57-camp.js', 'S\\.mats\\[f\\]\\[t - 1\\] -= n'], ['Trade runs', '57k-trade.js', 'job\\.cargo']] },
   { id: 'hide', name: 'Hide', field: 'S.mats.hide[0..4]', what: 'Hunting nodes (opt-in) and gatherers. Five a swing.', mat: 'hide',
-    src: [['Hunting swings', '50-sim.js', "stashAdd\\(kind, t, Math\\.max\\(1, Math\\.floor\\(y\\)"], ['Gatherers (Hands)', '57f-hands.js', "stashAdd\\(f, t, n, 'parcel'\\)"]],
-    snk: [['Gear crafts (shield, plate, bow, hood, leathers)', '55-crafting.js', 'payMats\\(c\\.cost\\.mats, t\\)'], ['Camp builds (Loom, tents)', '57-camp.js', 'S\\.mats\\[f\\]\\[t - 1\\] -= n']] },
+    src: [
+      ['Tool rare finds (one grade up)', '55-tools.js', 'credit\\(kind, up, finds'],
+      
+      ['Transmute (Enchanting): 4 of a grade make 1 of the next', '55-crafting.js', 'stashAdd\\(fam, c\\.toT, c\\.give'],
+      ['Hunting swings', '50-sim.js', "stashAdd\\(kind, t, Math\\.max\\(1, Math\\.floor\\(y\\)"], ['Gatherers (Hands)', '57f-hands.js', "stashAdd\\(f, t, n, 'parcel'\\)"]],
+    snk: [
+      ['Transmute (Enchanting): spends 4 to go up a grade, 1 to go down', '55-crafting.js', 'S\\.mats\\[fam\\]\\[fromT - 1\\] -= c\\.take'],
+      ['Gear crafts (shield, plate, bow, hood, leathers)', '55-crafting.js', 'payMats\\(c\\.cost\\.mats, t\\)'], ['Camp builds (Loom, tents)', '57-camp.js', 'S\\.mats\\[f\\]\\[t - 1\\] -= n']] },
   { id: 'embers', ids: ['embers'], name: 'Embers', field: 'S.embers', what: 'Raid currency. Buys relics. Online only.',
     src: [['A world raid boss falls', '52-raid.js', 'S\\.embers \\+= e'], ], snk: [['Buying relics', '51-actions.js', 'S\\.embers -= cost']] },
   { id: 'relics', ids: ['relic'], name: 'Relics', field: 'S.relic.{banner,heart,glass,edge}', what: 'Warbanner, Ember Heart, Hourglass (away cap) and Loaded Die (crit damage).',
@@ -131,7 +167,7 @@ const REG = [
 const ALLOW = {
   xp: { snk: 'Hero levels are permanent by design.' },
   renown: { snk: 'A pure gate: routes check the balance and none sets spendRenown. Keep it a gate or give it a use.' },
-  stamps: { snk: 'Only a deed counter and one Feat read Stamps; nothing spends them. Candidate for a sink or a cut.' }
+  stamps: { snk: 'Only a deed counter, one Feat and Lantern Light (2 points each) read Stamps; nothing spends them. Candidate for a sink or a cut.' }
 };
 
 // Counters whose names look like currency but are not, each with the reason.
@@ -202,11 +238,11 @@ function facts() {
 
 const FLAGS = [
   ['Wood piles up', 'Wood has the most sinks of any material (Hearth rows, crafts, tools, tents), yet the 50-hour health run ends with wood hoarded. Sinks are lumpy: camp rows are rare big buys, crafts are small. A steady wood sink is missing. Sinks for crafting-levelling-spec to add: smelting and plank fuel, upgrade and tool repair costs.'],
-  ['Essence piles up', 'Fights drop Essence (about 0.25 a foe) and nothing in the game spends it steadily except reforging. Grade is set by zone, so low grades sit unused while crafts want grade 3 and up. Transmute only goes 4 to 1 upward. Reforge is the one open-ended sink.'],
+  ['Essence piles up', 'Fights drop Essence (about 0.25 a foe) and little spends it steadily. Grade is set by zone, so low grades sit unused while crafts want grade 3 and up. Transmute trades 4 of a grade for 1 of the next, or 1 for 2 one grade down, so low grades can be melted up slowly. Vigor Tonics and reforging are the only other steady sinks, and reforge is the one open-ended sink.'],
   ['Gold is the mid-game choke', 'Gold has the most sinks and is spent as it comes in (93% in the 50-hour run). Training at about 29,000 gold against about 75 a kill is the wall in the optimiser playtest. Handoff for xp-gold-pacing-report: gold sources are fights, Bounties and trade only; nothing converts a hoard (ore, wood, Essence) into gold except trade runs, which carry ore, wood, crystal, fibre and herb.'],
-  ['Iron Ore sits idle', 'Mining fills the Iron pile from Mining 14 but gear needs Smithing too. The playtest left 23,000 Iron Ore unspent. Nothing turns ore into a better material (no smelting), so every ore sink is a craft or a camp row. Candidate: the Smithing processing step in crafting-levelling-spec.'],
+  ['Iron Ore sits idle', 'Mining fills the Iron pile from Mining 14 but gear needs Smithing too. The playtest left 23,000 Iron Ore unspent. The only way to turn ore into a better material is Transmute (4 Iron make 1 Silver), which is lossy and gated by Enchanting; there is no smelting step, so every other ore sink is a craft or a camp row. Candidate: the Smithing processing step in crafting-levelling-spec.'],
   ['Cobalt has no hint', 'Cobalt Ore needs Mining 64 (nodeReq). The Gather screen gives no "where do I get this" hint for a grade the player cannot reach yet. Candidate for a hint in the skilling cards.'],
-  ['Smithing 96 is unused', 'Smithing opens item tiers at levels 1, 10, 22, 36, 54 (stationReq). A hero past 54 gains nothing from more Smithing, because grades 6 to 15 are not built. Levels past the last tier gate need a use (processing, Masterwork, a repair or refine step).'],
+  ['Smithing past level 54 is unused', 'Smithing opens item tiers at levels 1, 10, 22, 36, 54 (stationReq). A hero past 54 gains nothing from more Smithing, because grades 6 to 15 are not built. Levels past the last tier gate need a use (processing, Masterwork, a repair or refine step).'],
   ['Stamps and renown have no sink', 'Almanac Stamps are only counted. Renown only gates hero routes and is never spent. Boss tokens and Lantern Light are flags and scores, not money. These are fine as gates; do not add more of them.'],
   ['Embers need the online raid', 'Embers come only from the world raid, so an offline player has no relic income. Online layer is out of scope here; noted for the planner.'],
   ['Dead or unplugged values', 'The Renown Day omen sets a renown modifier that nothing reads (55-almanac.js). Several Codex milestone rewards are stored but not wired (57c-codex.js "later:" lines). Plank, cloth and leather are named in tent costs (21w-data-econ.js) but no source exists, so tents 6 to 10 cannot be built. The Coin relic is always 0.']

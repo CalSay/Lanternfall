@@ -19,13 +19,13 @@ A source or sink line names the player-facing system and the file that does it. 
 | Gold | 6 | 6 |  |
 | Hero XP | 2 | 0 | No sink: Hero levels are permanent by design. |
 | Skill XP | 4 | 2 |  |
-| Ore | 8 | 5 |  |
-| Wood | 6 | 5 |  |
-| Essence | 7 | 7 |  |
-| Crystal | 3 | 4 |  |
-| Fibre | 2 | 3 |  |
-| Herb | 2 | 4 |  |
-| Hide | 2 | 2 |  |
+| Ore | 9 | 6 |  |
+| Wood | 8 | 6 |  |
+| Essence | 7 | 8 |  |
+| Crystal | 5 | 5 |  |
+| Fibre | 4 | 4 |  |
+| Herb | 4 | 5 |  |
+| Hide | 4 | 3 |  |
 | Embers | 1 | 1 |  |
 | Relics | 1 | 4 |  |
 | Scrolls | 1 | 1 |  |
@@ -41,7 +41,7 @@ A source or sink line names the player-facing system and the file that does it. 
 | Oil | 2 | 1 |  |
 | Depth Marks | 2 | 1 |  |
 | Lantern Light | 1 | 1 |  |
-| Almanac Stamps | 1 | 0 | No sink: Only a deed counter and one Feat read Stamps; nothing spends them. Candidate for a sink or a cut. |
+| Almanac Stamps | 1 | 0 | No sink: Only a deed counter, one Feat and Lantern Light (2 points each) read Stamps; nothing spends them. Candidate for a sink or a cut. |
 | Uniques | 2 | 1 |  |
 
 ## Why this page exists
@@ -57,11 +57,11 @@ A source or sink line names the player-facing system and the file that does it. 
 Hoards, gaps and chokes found while mapping. `crafting-levelling-spec` and `xp-gold-pacing-report` should start here.
 
 - **Wood piles up.** Wood has the most sinks of any material (Hearth rows, crafts, tools, tents), yet the 50-hour health run ends with wood hoarded. Sinks are lumpy: camp rows are rare big buys, crafts are small. A steady wood sink is missing. Sinks for crafting-levelling-spec to add: smelting and plank fuel, upgrade and tool repair costs.
-- **Essence piles up.** Fights drop Essence (about 0.25 a foe) and nothing in the game spends it steadily except reforging. Grade is set by zone, so low grades sit unused while crafts want grade 3 and up. Transmute only goes 4 to 1 upward. Reforge is the one open-ended sink.
+- **Essence piles up.** Fights drop Essence (about 0.25 a foe) and little spends it steadily. Grade is set by zone, so low grades sit unused while crafts want grade 3 and up. Transmute trades 4 of a grade for 1 of the next, or 1 for 2 one grade down, so low grades can be melted up slowly. Vigor Tonics and reforging are the only other steady sinks, and reforge is the one open-ended sink.
 - **Gold is the mid-game choke.** Gold has the most sinks and is spent as it comes in (93% in the 50-hour run). Training at about 29,000 gold against about 75 a kill is the wall in the optimiser playtest. Handoff for xp-gold-pacing-report: gold sources are fights, Bounties and trade only; nothing converts a hoard (ore, wood, Essence) into gold except trade runs, which carry ore, wood, crystal, fibre and herb.
-- **Iron Ore sits idle.** Mining fills the Iron pile from Mining 14 but gear needs Smithing too. The playtest left 23,000 Iron Ore unspent. Nothing turns ore into a better material (no smelting), so every ore sink is a craft or a camp row. Candidate: the Smithing processing step in crafting-levelling-spec.
+- **Iron Ore sits idle.** Mining fills the Iron pile from Mining 14 but gear needs Smithing too. The playtest left 23,000 Iron Ore unspent. The only way to turn ore into a better material is Transmute (4 Iron make 1 Silver), which is lossy and gated by Enchanting; there is no smelting step, so every other ore sink is a craft or a camp row. Candidate: the Smithing processing step in crafting-levelling-spec.
 - **Cobalt has no hint.** Cobalt Ore needs Mining 64 (nodeReq). The Gather screen gives no "where do I get this" hint for a grade the player cannot reach yet. Candidate for a hint in the skilling cards.
-- **Smithing 96 is unused.** Smithing opens item tiers at levels 1, 10, 22, 36, 54 (stationReq). A hero past 54 gains nothing from more Smithing, because grades 6 to 15 are not built. Levels past the last tier gate need a use (processing, Masterwork, a repair or refine step).
+- **Smithing past level 54 is unused.** Smithing opens item tiers at levels 1, 10, 22, 36, 54 (stationReq). A hero past 54 gains nothing from more Smithing, because grades 6 to 15 are not built. Levels past the last tier gate need a use (processing, Masterwork, a repair or refine step).
 - **Stamps and renown have no sink.** Almanac Stamps are only counted. Renown only gates hero routes and is never spent. Boss tokens and Lantern Light are flags and scores, not money. These are fine as gates; do not add more of them.
 - **Embers need the online raid.** Embers come only from the world raid, so an offline player has no relic income. Online layer is out of scope here; noted for the planner.
 - **Dead or unplugged values.** The Renown Day omen sets a renown modifier that nothing reads (55-almanac.js). Several Codex milestone rewards are stored but not wired (57c-codex.js "later:" lines). Plank, cloth and leather are named in tent costs (21w-data-econ.js) but no source exists, so tents 6 to 10 cannot be built. The Coin relic is always 0.
@@ -134,6 +134,7 @@ Copper, Iron, Silver, Cobalt, Mithril. Mining.
 Save: `S.mats.ore[0..4]`
 
 Sources:
+- Transmute (Enchanting): 4 of a grade make 1 of the next (`55-crafting.js`)
 - Mining swings (`50-sim.js`)
 - Away mining (`55-store.js`)
 - Glint taps (`55-gathering.js`)
@@ -144,6 +145,7 @@ Sources:
 - Tool rare finds (one grade up) (`55-tools.js`)
 
 Sinks:
+- Transmute (Enchanting): spends 4 to go up a grade, 1 to go down (`55-crafting.js`)
 - Gear crafts and upgrades (`55-crafting.js`)
 - Camp builds (Hearth, Forge, Storehouse, tents) (`57-camp.js`)
 - Trade runs (`57k-trade.js`)
@@ -157,6 +159,8 @@ Pine, Birch, Oak, Mangrove, Tideash. Woodcutting.
 Save: `S.mats.wood[0..4]`
 
 Sources:
+- Tool rare finds (one grade up) (`55-tools.js`)
+- Transmute (Enchanting): 4 of a grade make 1 of the next (`55-crafting.js`)
 - Woodcutting swings (`50-sim.js`)
 - Away woodcutting (`55-store.js`)
 - Glint taps (`55-gathering.js`)
@@ -165,6 +169,7 @@ Sources:
 - Salvaging gear (about 40% back) (`51-actions.js`)
 
 Sinks:
+- Transmute (Enchanting): spends 4 to go up a grade, 1 to go down (`55-crafting.js`)
 - Gear crafts and upgrades (staff, bow, warblade, tools) (`55-crafting.js`)
 - Camp builds: Hearth rows are the big one (`57-camp.js`)
 - Light the fire (`55-hearth.js`)
@@ -184,9 +189,10 @@ Sources:
 - Almanac board crates (`55-almanac.js`)
 - Salvaging a Unique (+10) (`51-actions.js`)
 - Salvaging affixed gear (+1 sometimes) (`55-crafting.js`)
-- Transmute (Enchanting) (`55-crafting.js`)
+- Transmute (Enchanting): down a grade gives 2 for 1 (`55-crafting.js`)
 
 Sinks:
+- Transmute (Enchanting): spends 4 to go up a grade, 1 to go down (`55-crafting.js`)
 - Gear crafts (1 to 2 an item, charm 5) (`55-crafting.js`)
 - Reforging (rises 50% a reroll) (`55-crafting.js`)
 - Star Chart (`55-crafting.js`)
@@ -202,11 +208,14 @@ Gems from Mining nodes.
 Save: `S.mats.crystal[0..4]`
 
 Sources:
+- Tool rare finds (one grade up) (`55-tools.js`)
+- Transmute (Enchanting): 4 of a grade make 1 of the next (`55-crafting.js`)
 - Mining swings (`50-sim.js`)
 - Gatherers (Hands) (`57f-hands.js`)
 - Bounty parcels (`55-bounties.js`)
 
 Sinks:
+- Transmute (Enchanting): spends 4 to go up a grade, 1 to go down (`55-crafting.js`)
 - Gear crafts (staff, lantern, circlet, trinket) (`55-crafting.js`)
 - Star Chart (40) (`55-crafting.js`)
 - Camp builds (`57-camp.js`)
@@ -219,10 +228,13 @@ Foraging.
 Save: `S.mats.fibre[0..4]`
 
 Sources:
+- Tool rare finds (one grade up) (`55-tools.js`)
+- Transmute (Enchanting): 4 of a grade make 1 of the next (`55-crafting.js`)
 - Foraging swings (`50-sim.js`)
 - Gatherers (Hands) (`57f-hands.js`)
 
 Sinks:
+- Transmute (Enchanting): spends 4 to go up a grade, 1 to go down (`55-crafting.js`)
 - Gear crafts (robes, leathers, vestments) (`55-crafting.js`)
 - Camp builds (Loom, Library, tents) (`57-camp.js`)
 - Trade runs (`57k-trade.js`)
@@ -234,10 +246,13 @@ Foraging.
 Save: `S.mats.herb[0..4]`
 
 Sources:
+- Tool rare finds (one grade up) (`55-tools.js`)
+- Transmute (Enchanting): 4 of a grade make 1 of the next (`55-crafting.js`)
 - Foraging swings (`50-sim.js`)
 - Gatherers (Hands) (`57f-hands.js`)
 
 Sinks:
+- Transmute (Enchanting): spends 4 to go up a grade, 1 to go down (`55-crafting.js`)
 - Gear crafts (censer, tome, vestments) (`55-crafting.js`)
 - Tonics (3 each) (`55-crafting.js`)
 - Camp builds (Tavern) (`57-camp.js`)
@@ -250,10 +265,13 @@ Hunting nodes (opt-in) and gatherers. Five a swing.
 Save: `S.mats.hide[0..4]`
 
 Sources:
+- Tool rare finds (one grade up) (`55-tools.js`)
+- Transmute (Enchanting): 4 of a grade make 1 of the next (`55-crafting.js`)
 - Hunting swings (`50-sim.js`)
 - Gatherers (Hands) (`57f-hands.js`)
 
 Sinks:
+- Transmute (Enchanting): spends 4 to go up a grade, 1 to go down (`55-crafting.js`)
 - Gear crafts (shield, plate, bow, hood, leathers) (`55-crafting.js`)
 - Camp builds (Loom, tents) (`57-camp.js`)
 
@@ -466,7 +484,7 @@ Sources:
 - Weekly board claims (`55-almanac.js`)
 
 Sinks:
-- none: Only a deed counter and one Feat read Stamps; nothing spends them. Candidate for a sink or a cut.
+- none: Only a deed counter, one Feat and Lantern Light (2 points each) read Stamps; nothing spends them. Candidate for a sink or a cut.
 
 ### Uniques
 
