@@ -9095,6 +9095,61 @@ if (section('story-unlock-gates')) try {
   assert(!g.errors.length && !og.errors.length && !og2.errors.length && !og3.errors.length && !cw.errors.length, 'story-unlock-gates: no errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
 } catch (e) { fail('story-unlock-gates crashed: ' + (e.stack || e)); }
 
+// ==== craft-reveal: this card's own checks (result card, odds line, last-five strip, grade words) ====
+if (section('craft reveal')) try {
+  const rd = f => fs.readFileSync(path.join(ROOT, 'src', 'js', f), 'utf8');
+  const notices = rd('23n-data-notices.js'), cui = rd('75-craft-ui.js');
+  assert(/id: 'forged', re: \/\^\(Forged\|Made\) an\? \/, ch: 'none'/.test(notices) && (notices.match(/id: 'forged'/g) || []).length === 1, 'craft reveal: one `forged` notice rule, and it keeps craft lines out of the bell (the card shows them)');
+  assert(!/Fine\b/.test(cui.replace(/Fine-tune/g, '')) && /\['common', 'uncommon', 'rare', 'epic'\]\.map\(r => `\$\{RAR\[r\]\.n\}/.test(cui), 'craft reveal: the odds line uses the real grade names from RAR');
+  assert(!/Craft 5|craft5/i.test(cui), 'craft reveal: no "Craft 5" control');
+  await (async () => {
+    const { pw, exe } = browserTools;
+    if (!pw || !exe || !fs.existsSync(distFile)) { skipBrowser('craft reveal (browser): Playwright or Chromium not here, skipped'); return; }
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const rawOf = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h, motion] of [[360, 740, 'no-preference'], [740, 360, 'reduce']]) {
+        const at = `craft reveal ${w}x${h}${motion === 'reduce' ? ' reduced motion' : ''}`;
+        const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: true, hasTouch: true, reducedMotion: motion });
+        await ctx.addInitScript(([key, raw]) => {
+          try { localStorage.setItem('lanternfall.test.nostory', '1'); } catch (e) {}
+          if (sessionStorage.getItem('cr-seeded')) return; sessionStorage.setItem('cr-seeded', '1');
+          const o = JSON.parse(raw); o.last = Date.now(); localStorage.setItem(key, JSON.stringify(o));
+        }, [KEY, rawOf('save-mid.json')]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(700);
+        for (let i = 0; i < 4; i++) { const b = await page.$('#createScreen .create-go'); if (!b) break; await b.click(); await page.waitForTimeout(300); }
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X(`S.onboard.tips = false; true`);
+        await page.click('.tab[data-tab="forge"]'); await page.waitForTimeout(500);
+        const odds = await X(`(() => { const t = document.querySelector('.cf-odds'); const w = rarityWeights(stationLevel(document.querySelector('.cf-rec').dataset.kind)), tot = Object.values(w).reduce((a, b) => a + b, 0);
+          return { text: t ? t.textContent : '', common: Math.round(w.common / tot * 100) }; })()`);
+        assert(/^Odds: Common [\d.]+% · Uncommon [\d.]+% · Rare [\d.]+% · Epic [\d.]+%$/.test(odds.text) && Math.abs(parseFloat(/Common ([\d.]+)%/.exec(odds.text)[1]) - odds.common) <= 0.6, `${at}: each recipe shows one odds line computed from the rarity weights (${odds.text})`);
+        const made = [];
+        for (let i = 0; i < 6; i++) {
+          const ok = await X(`(() => { const b = [...document.querySelectorAll('.cf-rec .cf-go')].find(x => !x.disabled); if (!b) return false; b.click(); return true; })()`);
+          if (!ok) break;
+          await page.waitForTimeout(150);
+          made.push(await X(`(() => { const c = document.querySelector('.cf-res'); return c ? { grade: c.querySelector('.cf-grade').textContent, btns: [...c.querySelectorAll('.cf-resact button')].map(b => b.textContent), arrows: c.querySelectorAll('.cf-d').length, strip: document.querySelectorAll('.cf-recent .cf-tile').length } : null; })()`));
+        }
+        assert(made.length >= 2 && made.every(m => m && ['Common', 'Uncommon', 'Rare', 'Epic', 'Unique'].includes(m.grade)), `${at}: every craft opens a result card with a real grade name (${JSON.stringify(made.map(m => m && m.grade))})`);
+        assert(made.every(m => m && m.btns.includes('Keep') && m.btns.includes('Salvage')), `${at}: the card offers Keep and Salvage (and Equip when it fits)`);
+        assert(made[made.length - 1].strip === Math.min(5, made.length), `${at}: the strip keeps the last five results (${made[made.length - 1].strip})`);
+        assert(await X(`document.querySelectorAll('.cf-recent').length === 1 && !/Craft 5/.test(document.body.textContent)`), `${at}: one strip, no Craft 5 button`);
+        assert(await X(`(() => { const r = document.querySelector('.cf-resbox').getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; })()`) , `${at}: the new card is on screen after a craft`);
+        await page.click('button:text-is("Gear")'); await page.waitForTimeout(400);
+        assert(await X(`(() => { const b = document.querySelector('.cf-bag .cf-tile .cf-gr'); return !!b && /^(Com|Unc|Rare|Epic|Uniq)$/.test(b.textContent); })()`), `${at}: a bag tile names its grade in text`);
+        assert(!errs.length, `${at}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  })();
+} catch (e) { fail('craft reveal crashed: ' + (e.stack || e)); }
+
 if (section('removed systems (W2-C)')) try {
   const strip = t => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/([^:'"`\\])\/\/[^\n'"`]*$/gm, '$1');
   const files = [];
