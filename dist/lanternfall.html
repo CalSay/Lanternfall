@@ -13664,7 +13664,7 @@ function craftReady() {
   // Check every rule now; returns the ids that unlocked. The tick hook calls it about once a second.
   onboardCheck = () => {
     const out = [], last = Math.max(-Infinity, ...Object.values(O().got).filter(v => typeof v === 'number' && Number.isFinite(v) && v <= O().t));
-    const gap = ONBOARD_TUNE.gap; let wait = gap > 0 && O().t - last < gap;   // the spacing governor (ONBOARD_TUNE)
+    const gap = ONBOARD_TUNE.gap; let wait = gap > 0 && !O().all && O().t - last < gap;   // the spacing governor (ONBOARD_TUNE); O().t stops once all is set
     for (const f of FEATURES) {
       if (O().all && !f.late) continue;
       if (O().got[f.id] != null) continue;

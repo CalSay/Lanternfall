@@ -9051,6 +9051,9 @@ if (section('story-unlock-gates')) try {
   assert(O3('isUnlocked("party") && isUnlocked("gather") && isUnlocked("nextup")') && JSON.parse(O3('JSON.stringify(onboardCheck())')).includes('awaynote'), 'story-unlock-gates: a saved unlock stays open, and a got value that is not a number or lies ahead does not block the next row');
   O3('S.onboard.got = {}; S.onboard.all = true');
   assert(O3('isUnlocked("awaynote")'), 'story-unlock-gates: a save past the guide ("Show every tab") shows the away strip at once');
+  // the play clock stops once every tab is open, so a late row (Hands) must not wait on the gap there (Opus review B1)
+  O3('S.onboard.got = { party: Math.round(S.onboard.t) - 5 }; handsOpen = () => true');
+  assert(JSON.parse(O3('JSON.stringify(onboardCheck())')).includes('hands') && O3('isUnlocked("hands")'), 'story-unlock-gates: after "Show every tab", Hands opens when its rule holds, even within a minute of the last unlock');
   const obUi = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-onboard-ui.js'), 'utf8');
   assert(!/^\s*awaynote:/m.test(obUi.slice(obUi.indexOf('const OPEN_TXT = {'), obUi.indexOf('const TAB_FEATURE'))) && /isUnlocked\('awaynote'\)/.test(fs.readFileSync(path.join(ROOT, 'src', 'js', '71-ui-fight.js'), 'utf8')), 'story-unlock-gates: the away strip arrives silently (no unlock notice) and waits for its row');
   // a cold new game, played as the guide asks: the game waits while a step pauses (no play clock), the player does the step
