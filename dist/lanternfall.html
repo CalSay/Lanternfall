@@ -159,6 +159,16 @@ img[src*="#nic:"] { image-rendering: auto; }   /* a gear icon set by code that d
 .hud-btn.off { opacity: .6; }
 .hud-btn canvas { width: 14px; height: 14px; image-rendering: pixelated; }
 .stage.tall .hud-btn { right: 6px; bottom: 38px; }
+
+/* fight-hud-fit: names never cut to "T... 10.7M". When "name  current / max" does not fit one row, the numbers drop under the
+   name (readHud re-reads the plate height, so the place line and chips follow). The place may take two lines. */
+.stagebox .hud.vs .mob-line { flex-wrap: wrap; row-gap: 0; }
+.stagebox .hud.vs .mob-name { flex: 1 0 auto; max-width: 100%; white-space: normal; overflow: visible; line-height: 1.1; }   /* a long foe name takes a second line */
+.stagebox .hud.vs .hud-zone { max-width: 40%; }
+.stagebox .hud.vs .hud-zone .zname { white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.1; overflow-wrap: anywhere; }
+/* the turn banner owns the middle of the stage while it shows; toasts and the strip wait out its short pause */
+.stagebox.tc-on .toasts { opacity: 0; transition: opacity .1s; }
+.stagebox.vs-on .toasts:not(.over-menu) { top: calc(var(--vs-b, 54px) + 22px); }   /* under the bars and the place line, not over them */
 /* tab bar: fixed to the bottom of the app, in thumb reach; the lit edge marks the open tab */
 .tabs { grid-area: tabs; display: grid; grid-template-columns: repeat(5, 1fr); padding: 0 6px env(safe-area-inset-bottom, 0px); background: #17111E; border-top: 2px solid var(--line); box-shadow: 0 -3px 0 #0B0810; position: relative; z-index: 6; }
 .tab { min-height: 54px; background: none; border: 0; padding: 7px 2px 6px; cursor: pointer; font: 600 calc(12.5px * var(--display-k))/1.1 var(--display); color: var(--muted); border-top: 3px solid transparent; margin-top: -2px; display: grid; justify-items: center; align-content: center; gap: 3px; position: relative; }
@@ -41651,6 +41661,7 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
   tcard.append(tcFace, tcTxt);
   if (box) box.append(tcard);
   let tcT = null;
+  const tcHide = () => { tcard.hidden = true; if (box) box.classList.remove('tc-on'); };   // tc-on: toasts wait while the banner shows (20-stage.css)
   on('turnCard', p => {
     if (!box || !p) return;
     const f = foeNow(), mine = p.who === 'hero', name = mine ? heroName() : (f && f.name) || 'The foe';
@@ -41658,11 +41669,11 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
     putText(tcTxt, mine ? (p.again ? 'Your turn again' : 'Your turn') : p.again ? `${name} goes again` : `${name}'s turn`);
     tcard.className = 'tv-turncard ' + (mine ? 'hero' : 'foe') + (reduced() ? ' calm' : '');
     tcard.style.setProperty('--tc-dur', (p.secs || 0.9) + 's');
-    tcard.hidden = false; void tcard.offsetWidth; tcard.classList.add('play');
-    clearTimeout(tcT); tcT = setTimeout(() => { tcard.hidden = true; }, (p.secs || 0.9) * 1000 + 150);
+    tcard.hidden = false; box.classList.add('tc-on'); void tcard.offsetWidth; tcard.classList.add('play');
+    clearTimeout(tcT); tcT = setTimeout(tcHide, (p.secs || 0.9) * 1000 + 150);
   });
-  on('turn', () => { clearTimeout(tcT); tcard.hidden = true; });
-  on('fightEnd', () => { clearTimeout(tcT); tcard.hidden = true; });
+  on('turn', () => { clearTimeout(tcT); tcHide(); });
+  on('fightEnd', () => { clearTimeout(tcT); tcHide(); });
 
   // ---- the turn strip, the timing bar, the hero row ----
   // the turn order lives on the Versus card only (owner, 2026-10-02)
