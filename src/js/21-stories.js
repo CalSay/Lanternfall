@@ -38,7 +38,7 @@ const BIOS = {
 // The picker speaks to the player: whoever is picked is "you" (bible 4.1). BIOS stay third person for the hero sheet and the camp.
 const PICK_LINES = {
   wren: 'You learned to shoot in the caves, by sound. You talk to your arrows. Most of them answer.',
-  tobin: 'You are good at doors. You hold them shut while the others get away.',
+  tobin: 'You are good at doors. You hold them shut while everyone gets away.',
   pip: 'You taught yourself fire from a book with the last chapter torn out. You are still looking for it. Nothing near you stays whole for long.'
 };
 

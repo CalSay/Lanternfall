@@ -6958,7 +6958,7 @@ const BIOS = {
 // The picker speaks to the player: whoever is picked is "you" (bible 4.1). BIOS stay third person for the hero sheet and the camp.
 const PICK_LINES = {
   wren: 'You learned to shoot in the caves, by sound. You talk to your arrows. Most of them answer.',
-  tobin: 'You are good at doors. You hold them shut while the others get away.',
+  tobin: 'You are good at doors. You hold them shut while everyone gets away.',
   pip: 'You taught yourself fire from a book with the last chapter torn out. You are still looking for it. Nothing near you stays whole for long.'
 };
 
@@ -8942,7 +8942,6 @@ const NOTICES = [
   { id: 'scroll-more', re: /^(Moss|Hollow|Barrow|Roadlight|Mother) Scroll found\.$/, site: /SCROLLS\[id\]\.name\} found/, ch: 'log', why: 'the stage float shows it, and Next Up offers what it teaches' },
   { id: 'learned', re: /^\w+ learned [A-Z][\w' ]+\.$/, site: /learned \$\{a\.name\}/, ch: 'log', why: 'you just pressed Learn and see the card change' },
   { id: 'pace', key: 'pace', re: /back to Zone \d+ to keep earning\.$/, ch: 'bell', once: 'session', why: 'audit 3.14: one line a session' },
-  { id: 'start', re: /picks up the lamp\. The road is dark\.$/, ch: 'log', why: 'the guide speaks first' },
   { id: 'hero-swap', re: /takes up the lamp\.$/, ch: 'log' },
 
   // ---- loot and gear ----
