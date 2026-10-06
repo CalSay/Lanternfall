@@ -34,6 +34,14 @@ acceptance line is met; no forbidden file touched; at 360px wide, with reduced m
 Claude's shepherd leaves at most two `@codex` fix rounds. After that Claude finishes the work on its own
 `claude/ap-<card id>-codexfix` branch from yours and closes your PR as superseded.
 
+## Getting the PR onto GitHub (what worked, 2026-10-06)
+Your cloud sandbox cannot push with plain `git` (HTTP 403, direct GitHub connections blocked). Two things made the first PR land (#96):
+- The environment has to be a legacy GitHub environment, and its clone must be fresh: refresh the repo from `claude/elegant-johnson-m6k00u` before you build.
+  A stale checkout (no integration branch, no current code) produced an unusable build on issue #91.
+- Publish through your connected GitHub tools (the push and PR happen outside the sandbox), not with `git push`. If you cannot publish at all, post the
+  full unified diff as comments on the issue; Claude applies it on `claude/ap-<card id>-codexfix`.
+The base moves fast (about 7 merges an hour): merge the base into your branch right before you publish and run build and the full check on that result.
+
 ## Why this exists, and how to switch it off
 Why: builds queue behind Claude's usage, while clear-spec UI, copy and data cards need no design judgement (Cal,
 2026-10-06). The first card (`codex-pilot`) measures the lane: PR opened unaided, time to PR, rounds needed, first-check
