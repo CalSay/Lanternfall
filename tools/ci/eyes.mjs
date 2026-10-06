@@ -57,6 +57,20 @@ for (const r of routes) {
   }
   lines.push('');
 }
+// qa-player-eyes: the wider read of what a player sees (tools/eyes.mjs --quick, portrait). Report only: it never fails this job.
+if (srcChanged) {
+  const pe = path.join(out, 'player-eyes', 'latest.md');
+  const res = spawnSync('node', ['tools/eyes.mjs', '--quick', '--out', pe], { encoding: 'utf8', timeout: 240000 });
+  lines.push('**Player eyes** (report only; `node tools/eyes.mjs` runs it on your machine)', '');
+  try {
+    const f = JSON.parse(fs.readFileSync(pe.replace(/\.md$/, '') + '.json', 'utf8')).findings;
+    const by = {}; for (const x of f) by[x.check] = (by[x.check] || 0) + 1;
+    lines.push(f.length ? `${f.length} finding(s): ${Object.entries(by).map(([k, n]) => `${k} ${n}`).join(', ')}.` : 'Nothing found.', '');
+    for (const x of f.slice(0, 8)) lines.push(`- ${x.scenario}: ${x.what}`);
+    if (f.length > 8) lines.push(`- ... ${f.length - 8} more in \`player-eyes/latest.md\` in the \`eyes-out\` artifact`);
+    lines.push('');
+  } catch (e) { lines.push(`Did not run (${((res.stderr || res.stdout || '').trim().split('\n').pop() || 'no output').slice(0, 120)}).`, ''); }
+}
 lines.push(failed ? '**Result: FAIL.**' : '**Result: pass.**', '', 'Shots, bursts and output are in the `eyes-out` workflow artifact on this run.');
 fs.writeFileSync(path.join(out, 'summary.md'), lines.join('\n') + '\n');
 console.log(lines.join('\n'));

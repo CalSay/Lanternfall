@@ -75,7 +75,7 @@
   .nu-chip .nu-eye { grid-column: 2; grid-row: 1; align-self: center; }
   .nu-chip .nu-cst { grid-column: 3; grid-row: 1; }
   .nu-chip .nu-more { grid-column: 4; grid-row: 1; }
-  .nu-chip .nu-lbl { grid-column: 1 / -1; grid-row: 2; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; font-size: 13px; line-height: 1.2; }
+  .nu-chip .nu-lbl { grid-column: 1 / -1; grid-row: 2; white-space: normal; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; font-size: 13px; line-height: 1.2; }
   .nu-chip .nu-chev { display: none; }
   /* the dock in the side column: tabs, four tiles in a row (icons only; the names show on tall screens), Parry and Dodge under them */
   .sbar, .game.solo-game > .sbar { --sb-tile: 58px; --sb-ic: 24px; grid-column: 4 / -1; grid-row: 4; align-self: end; padding: 4px 6px calc(6px + env(safe-area-inset-bottom, 0px)) 7px; gap: 5px; }
