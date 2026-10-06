@@ -103,11 +103,12 @@
     if (u) face.src = u; else face.removeAttribute('src');
     putToggle(faceBox, 'blank', !u);
   };
+  const nm = el('b', 'ob-name', 'Old Hesketh');
   const txt = el('span', 'ob-txt');
   const x = el('button', 'ob-x'); x.type = 'button'; x.setAttribute('aria-label', 'Dismiss this tip'); x.textContent = '×';
   // SOLO1: a step whose action is reading it (the first boss) has a Got it button
   const okb = el('button', 'ob-ok'); okb.type = 'button'; okb.textContent = 'Got it'; okb.hidden = true;
-  bub.append(faceBox, txt, x, okb);
+  bub.append(faceBox, nm, txt, x, okb);
   // A waiting step may carry a Go button (spec.go): it takes the hero to the node that yields what the step needs.
   let curGo = null;
   const finish = s => s.id.startsWith('use:') ? onboardUseDone(s.id) : onboardDone(s.id);   // a first-use line is read, not a guide step
@@ -216,7 +217,7 @@
   const USE_SHOWN_MS = 7000;   // a first-use line counts as read after this long on screen
   const BLOCK = '.create, .away-ov, .bsheet-ov, .modal, .dw-ov';
   let lastKey = '', useT0 = 0;
-  function hide() { useT0 = 0; if (!layer.hidden) layer.hidden = true; if (!bub.hidden) bub.hidden = true; cur = null; curGo = null; lastKey = ''; lastNode = null; lastRect = null; ONBOARD.paused = false; const ap = $('app'); ap.classList.remove('guide-side', 'guide-nu'); }
+  function hide() { useT0 = 0; if (!layer.hidden) layer.hidden = true; if (!bub.hidden) bub.hidden = true; cur = null; curGo = null; lastKey = ''; lastNode = null; lastRect = null; ONBOARD.paused = false; const ap = $('app'); if (ap.classList.contains('guide-side')) ap.classList.remove('guide-side', 'guide-nu', 'guide-btn'); }
   // The hint used to re-read the target's pixel position and re-place itself every 250ms, so it
   // jumped whenever the stage moved under it (camera/zoom, screen shake, a pack spawning) even
   // though nothing about the guide itself had changed. Stage targets keep that cached placement.
@@ -240,12 +241,12 @@
     if (!spec || !vis(spec.node)) return hide();
     if (use) { if (!useT0) useT0 = Date.now(); else if (Date.now() - useT0 > USE_SHOWN_MS) { onboardUseDone(step.id); return hide(); } }
     cur = step; curGo = spec.go || null;
+    putHidden(okb, !(step.ok || curGo));
+    putText(okb, curGo ? curGo.label : 'Got it');
     place(spec);
     // the game waits only while the step waits for you to read or press something now (playtest-1 note 1, W1-A):
     // never for a step that needs materials or time, and never while a press step is still short of what it costs
     ONBOARD.paused = onboardPaused(step);
-    putHidden(okb, !(step.ok || curGo));
-    putText(okb, curGo ? curGo.label : 'Got it');
   }
   soloGuideWants = () => (cur && !layer.hidden ? cur.id : '');
   // The guide's steps and their targets, for tools/check.mjs (the browser check walks the first session).
@@ -267,6 +268,21 @@
     }
     if (!changed) return;   // no real layout change and the same target/text: leave it exactly where it is
     dirty = false; panelScrolled = false; lastNode = spec.node;
+    // the panel docks where notices dock and never over the stage: landscape, the side column (its notices slot;
+    // it stands in for Next Up while it speaks, except for the Next Up step itself, which points at the chip);
+    // portrait, a slot in the game view just above the Act / Skills / Foe bar (the stage gives up the height);
+    // over a menu, the bottom of the menu panel. Only the parent and a mode class ever change.
+    const wide = isWide(), mode = wide ? 'side' : S.tab ? 'over-menu' : 'dock';
+    const home = mode === 'dock' ? $('game') : $('app');
+    if (bub.parentNode !== home) home.append(bub);
+    for (const m of ['side', 'over-menu', 'dock']) bub.classList.toggle(m, m === mode);
+    bub.classList.toggle('nu', mode === 'side' && spec.node === chip);
+    // landscape, a step with a button (read it, or Go) takes the dock's room too: the column is short and the button must not clip
+    const btn = mode === 'side' && !okb.hidden;
+    bub.classList.toggle('btn', btn);
+    putToggle($('app'), 'guide-side', mode === 'side'); putToggle($('app'), 'guide-nu', mode === 'side' && spec.node === chip); putToggle($('app'), 'guide-btn', btn);
+    faceUp();
+    if (!inPanel) r = null;   // the dock may have moved the stage (portrait: the panel takes a slot): read the target after it
     // UX-L1: a target inside the menu's scrolling content that is out of sight (a short landscape menu: the Make view's
     // recipes, a camp building further down) is scrolled into view on a new target/view. Ordinary
     // scroll or reflow only moves the ring, so following it never pulls the player back.
@@ -290,18 +306,8 @@
       putStyle(ring, 'transform', `translate(${Math.round(rx)}px, ${Math.round(ry)}px)`);
       putStyle(ring, 'width', Math.round(rw) + 'px'); putStyle(ring, 'height', Math.round(rh) + 'px');
     }
-    // the panel docks where notices dock and never over the stage: landscape, the side column (its notices slot;
-    // it stands in for Next Up while it speaks, except for the Next Up step itself, which points at the chip);
-    // portrait, a slot in the game view just above the Act / Skills / Foe bar (the stage gives up the height);
-    // over a menu, the bottom of the menu panel. Only the parent and a mode class ever change.
-    const wide = isWide(), mode = wide ? 'side' : S.tab ? 'over-menu' : 'dock';
-    const home = mode === 'dock' ? $('game') : $('app');
-    if (bub.parentNode !== home) home.append(bub);
-    for (const m of ['side', 'over-menu', 'dock']) bub.classList.toggle(m, m === mode);
-    bub.classList.toggle('nu', mode === 'side' && spec.node === chip);
-    putToggle($('app'), 'guide-side', mode === 'side'); putToggle($('app'), 'guide-nu', mode === 'side' && spec.node === chip);
-    faceUp();
   }
+  try { new ResizeObserver(invalidate).observe($('stageBox')); } catch (e) {}   // the stage gives up height when the panel docks: re-place the ring
   setInterval(tick, 250);
   panels.addEventListener('scroll', () => { panelScrolled = true; tick(); }, { passive: true });
   addEventListener('resize', () => { invalidate(); tick(); });

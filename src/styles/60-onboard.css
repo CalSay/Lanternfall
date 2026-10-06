@@ -12,8 +12,8 @@
    .over-menu portrait with a menu open: the bottom of the menu panel, above the tab bar (and above any toast)
    .side      landscape: the side column's notices slot (80-landscape.css) */
 .ob-bub { position: relative; pointer-events: none; order: 2; flex: none; margin: 4px var(--gut) 0; z-index: 8;
-  display: grid; grid-template-columns: 48px minmax(0, 1fr) 36px; grid-template-rows: auto auto; column-gap: 8px; align-items: start;
-  padding: 8px 2px 8px 8px; background: #1A1422; border: 2px solid var(--gold); box-shadow: 0 3px 0 #0B0810;
+  display: grid; grid-template-columns: 48px minmax(0, 1fr) 44px; grid-template-rows: auto auto; column-gap: 8px; align-items: start;
+  padding: 8px 0 8px 8px; background: #1A1422; border: 2px solid var(--gold); box-shadow: 0 3px 0 #0B0810;
   font: 600 14px/1.3 var(--body); color: var(--bone); }
 .ob-bub[hidden] { display: none; }
 .ob-bub.over-menu { position: absolute; left: var(--gut); right: var(--gut); margin: 0; bottom: calc(var(--tabs-h) + env(safe-area-inset-bottom, 0px) + 8px + var(--toast-h, 0px)); box-shadow: 0 3px 0 #0B0810, 0 8px 22px rgba(0,0,0,.55); }
@@ -26,7 +26,8 @@
 .ob-txt { grid-column: 2; grid-row: 1; min-width: 0; align-self: center; overflow-wrap: break-word; }
 .ob-ok { grid-column: 2; grid-row: 2; justify-self: start; margin-top: 6px; min-height: 44px; padding: 0 16px; pointer-events: auto; cursor: pointer; background: var(--gold); border: 2px solid #0B0810; color: #1A1420; font: 600 calc(15px * var(--display-k)) var(--display); }
 .ob-ok[hidden] { display: none; }
-.ob-x { pointer-events: auto; grid-column: 3; grid-row: 1; align-self: start; width: 36px; height: 36px; background: none; border: 0; color: var(--muted); font: 600 calc(20px * var(--display-k))/1 var(--display); cursor: pointer; }
+.ob-name { display: none; }
+.ob-x { pointer-events: auto; grid-column: 3; grid-row: 1; align-self: start; width: 44px; height: 44px; margin-top: -8px; background: none; border: 0; color: var(--muted); font: 600 calc(20px * var(--display-k))/1 var(--display); cursor: pointer; }
 .ob-x:hover, .ob-x:focus-visible { color: var(--bone); }
 /* locked sections (registerSection feature) */
 .sec.f-off { display: none !important; }

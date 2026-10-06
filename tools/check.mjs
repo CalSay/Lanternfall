@@ -4529,66 +4529,6 @@ if (section('solo guide: gathering never freezes (browser)')) try {
   }
 } catch (e) { fail('solo guide (browser) crashed: ' + (e.stack || e)); }
 
-// ---- guide-panel: the guide's panel never covers the fight (early-game plan R3, issues A1, A3, A4) ----
-// Real DOM rects at 740x360, 844x390 and 360x740: while the first session's steps show, the panel overlaps neither HP bar, the
-// foe plate, the boss timer, the hero plate nor the stage itself, and its text never squashes into a column (issue A4).
-if (section('guide panel rects (browser, guide-panel)')) try {
-  const { pw, exe } = browserTools;
-  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('guide panel (browser): Playwright or Chromium not here, skipped');
-  else {
-    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
-    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
-    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
-    try {
-      for (const [vw, vh] of [[740, 360], [844, 390], [360, 740]]) {
-        const at = `${vw}x${vh}`;
-        const ctx = await browser.newContext({ viewport: { width: vw, height: vh }, isMobile: true, hasTouch: true });
-        const page = await ctx.newPage(); const errs = [];
-        page.on('pageerror', e => errs.push(String(e)));
-        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
-        await page.goto('http://lf.test/'); await page.waitForTimeout(700);
-        const X = s => page.evaluate(s => window.__t.x(s), s);
-        await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go'); await page.waitForTimeout(600);
-        await X('globalThis.__spo = soloPickerOpen; soloPickerOpen = () => true; true');
-        const rects = () => page.evaluate(() => {
-          const R = e => { if (!e || !e.getClientRects().length) return null; const r = e.getBoundingClientRect(); return r.width && r.height ? [r.left, r.top, r.right, r.bottom] : null; };
-          const q = s => document.querySelector(s), b = q('.ob-bub');
-          if (!b || b.hidden) return null;
-          const panel = R(b), things = { 'hero HP bar': R(q('#hPlate .hpbar')), 'foe HP bar': R(q('.mob .hpbar')), 'foe plate': R(q('.mob')), 'boss timer': R(q('#tWrap')), 'hero plate': R(q('#hPlate')), 'stage': R(q('#stageBox')) };
-          const hit = Object.entries(things).filter(([, r]) => r && panel[0] < r[2] - .5 && panel[2] > r[0] + .5 && panel[1] < r[3] - .5 && panel[3] > r[1] + .5).map(([k]) => k);
-          const t = q('.ob-txt'), tr = t.getBoundingClientRect(), face = q('.ob-face'), ok = q('.ob-ok'), okr = ok && !ok.hidden ? ok.getBoundingClientRect() : null;
-          const lh = parseFloat(getComputedStyle(t).lineHeight) || 18, lines = Math.round(tr.height / lh), cw = t.textContent.length ? tr.width / (parseFloat(getComputedStyle(t).fontSize) * .62) : 99;
-          return { hit, panel: panel.map(Math.round), inView: panel[0] >= 0 && panel[2] <= innerWidth && panel[1] >= 0 && panel[3] <= innerHeight, mode: ['side', 'dock', 'over-menu'].find(m => b.classList.contains(m)), textChars: Math.round(cw), lines,
-            faceOk: !!face && (face.getAttribute('src') || '').startsWith('data:'), btnBelow: okr ? okr.top >= tr.bottom - 1 : null, btnH: okr ? Math.round(okr.height) : null, scrollX: document.documentElement.scrollWidth > innerWidth };
-        });
-        const seen = [];
-        for (let i = 0; i < 70 && seen.length < 5; i++) {
-          const st = await X('(s => s ? s.id : "")(onboardStep())');
-          if (!st) { await X('for (let k = 0; k < 20; k++) tick(0.1); true'); await page.waitForTimeout(300); continue; }
-          await page.waitForTimeout(450);
-          const m = await rects();
-          if (m && !seen.includes(st)) {
-            seen.push(st);
-            assert(!m.hit.length && m.inView && !m.scrollX, `guide panel ${at} "${st}": in view and clear of ${m.hit.length ? m.hit.join(', ') : 'both HP bars, the foe plate, the boss timer, the hero plate and the stage'} (${m.mode}, ${m.panel.join(',')})`);
-            assert(m.textChars >= 12 && m.faceOk && (m.btnBelow === null || (m.btnBelow && m.btnH >= 44)), `guide panel ${at} "${st}": text at least 12 characters wide (${m.textChars}), Hesketh's face shows, the button sits on its own row at 44 px or more (${JSON.stringify([m.faceOk, m.btnBelow, m.btnH])})`);
-          }
-          if (['attack', 'ability', 'dodge', 'parry'].includes(st)) { const b = await page.$(`#soloBar .sb-${st === 'attack' ? 'atk' : st === 'ability' ? 'ab0' : st}`); const r = await b.boundingBox(); await page.mouse.move(r.x + r.width / 2, r.y + r.height / 2); await page.mouse.down(); await page.mouse.up(); }
-          else if (st === 'boss') await page.click('.ob-ok');
-          else await X(`(sp => { if (sp && sp.node) sp.node.click(); return true; })(onboardSpec(${JSON.stringify(st)}))`);
-          await page.waitForTimeout(300);
-          if (!(await X('ONBOARD.paused'))) await X('for (let k = 0; k < 10; k++) tick(0.1); true');
-          await X('(S.onboard.done.ability && !S.onboard.done.parry && !actWarning() && combatFoes().some(f => f && !f.dead && f.hp > 0)) && actWarn({ kind: "heavy", id: "t", foe: combatFoes().find(f => f && !f.dead && f.hp > 0), unit: 0, dur: 2, land: () => {} }); true');
-        }
-        assert(seen.includes('attack') && seen.length >= 3, `guide panel ${at}: the check saw the first steps (${seen.join(', ')})`);
-        // a paused tip that is not a step (a first-use line) docks too; and a step shown over an open menu sits at the menu's bottom
-        const over = await X('(() => { onboardTips(true); S.onboard.done = {}; S.onboard.all = false; return true; })()');
-        assert(!errs.length, `guide panel ${at}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
-        await ctx.close();
-      }
-    } finally { await browser.close(); }
-  }
-} catch (e) { fail('guide panel rects crashed: ' + (e.stack || e)); }
-
 // ---- SOLO1 in Chromium at 360 x 740: the picker, the buttons, no party UI, and every guide target of the first session ----
 if (section('solo hero (browser)')) try {
   const { pw, exe } = browserTools;
@@ -9053,6 +8993,67 @@ if (section('story-systems-hollow')) try {
   const wrote = [...fs.readFileSync(path.join(ROOT, 'src', 'js', '74-ui-hands.js'), 'utf8').matchAll(/handsLitFor/g)].length;
   assert(wrote >= 1, 'systems-hollow: the Tavern applicant card shows the line');
 } catch (e) { fail('story-systems-hollow crashed: ' + (e.stack || e)); }
+
+// ---- guide-panel: the guide's panel never covers the fight (early-game plan R3, issues A1, A3, A4) ----
+// Real DOM rects at 740x360, 844x390 and 360x740: while the first session's steps show, the panel overlaps neither HP bar, the
+// foe plate, the boss timer, the hero plate nor the stage itself, and its text never squashes into a column (issue A4).
+if (section('guide panel rects (browser, guide-panel)')) try {
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('guide panel (browser): Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [vw, vh] of [[740, 360], [844, 390], [360, 740]]) {
+        const at = `${vw}x${vh}`;
+        const ctx = await browser.newContext({ viewport: { width: vw, height: vh }, isMobile: true, hasTouch: true, turns: true });   // the shipped turn fight: its copy is the longer one
+        const page = await ctx.newPage(); const errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(700);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go'); await page.waitForTimeout(600);
+        await X('globalThis.__spo = soloPickerOpen; soloPickerOpen = () => true; true');
+        const rects = () => page.evaluate(() => {
+          const R = e => { if (!e || !e.getClientRects().length) return null; const r = e.getBoundingClientRect(); return r.width && r.height ? [r.left, r.top, r.right, r.bottom] : null; };
+          const q = s => document.querySelector(s), b = q('.ob-bub');
+          if (!b || b.hidden) return null;
+          const panel = R(b), things = { 'hero HP bar': R(q('#hPlate .hpbar')), 'foe HP bar': R(q('.mob .hpbar')), 'foe plate': R(q('.mob')), 'boss timer': R(q('#tWrap')), 'hero plate': R(q('#hPlate')), 'stage': R(q('#stageBox')) };
+          const hit = Object.entries(things).filter(([, r]) => r && panel[0] < r[2] - .5 && panel[2] > r[0] + .5 && panel[1] < r[3] - .5 && panel[3] > r[1] + .5).map(([k]) => k);
+          const t = q('.ob-txt'), tr = t.getBoundingClientRect(), face = q('.ob-face'), ok = q('.ob-ok'), okr = ok && !ok.hidden ? ok.getBoundingClientRect() : null;
+          const lh = parseFloat(getComputedStyle(t).lineHeight) || 18, lines = Math.round(tr.height / lh), cw = t.textContent.length ? tr.width / (parseFloat(getComputedStyle(t).fontSize) * .62) : 99;
+          return { hit, panel: panel.map(Math.round), inView: panel[0] >= 0 && panel[2] <= innerWidth && panel[1] >= 0 && panel[3] <= innerHeight, mode: ['side', 'dock', 'over-menu'].find(m => b.classList.contains(m)), textChars: Math.round(cw), lines,
+            faceOk: !!face && (face.getAttribute('src') || '').startsWith('data:'), btnBelow: okr ? okr.top >= tr.bottom - 1 : null, btnH: okr ? Math.round(okr.height) : null,
+            btnIn: okr ? okr.top >= panel[1] - .5 && okr.bottom <= panel[3] + .5 && okr.left >= panel[0] - .5 && okr.right <= panel[2] + .5 && (d => d === ok || ok.contains(d))(document.elementFromPoint(okr.left + okr.width / 2, okr.top + okr.height / 2)) : null, clipped: t.scrollHeight > t.clientHeight + 1, scrollX: document.documentElement.scrollWidth > innerWidth };
+        });
+        // each step in turn: the guide is told to show it (the real wind-ups for Dodge and Parry are down to chance, so the check
+        // does not wait for them), so every step's copy is measured, including the long boss and Parry lines of the turn fight
+        const seen = [];
+        await X('globalThis.__os = onboardStep; globalThis.__boss = mob ? !!mob.boss : false; true');
+        for (const st of ['attack', 'ability', 'dodge', 'parry', 'boss']) {
+          await X(`globalThis.__fs = ${JSON.stringify(st)}; onboardStep = () => GUIDE_STEPS.find(g => g.id === __fs); if (__fs === 'boss' && mob) mob.boss = true; ONBOARD.paused = false; true`);
+          await page.waitForTimeout(700);
+          const m = await rects();
+          if (!m) { assert(false, `guide panel ${at} "${st}": the panel shows`); continue; }
+          seen.push(st);
+          assert(!m.hit.length && m.inView && !m.scrollX, `guide panel ${at} "${st}": in view and clear of ${m.hit.length ? m.hit.join(', ') : 'both HP bars, the foe plate, the boss timer, the hero plate and the stage'} (${m.mode}, ${m.panel.join(',')})`);
+          assert(m.textChars >= 12 && m.faceOk && !m.clipped && (m.btnBelow === null || (m.btnBelow && m.btnH >= 44 && m.btnIn)), `guide panel ${at} "${st}": text at least 12 characters wide (${m.textChars}) and not clipped, Hesketh's face shows, the button sits on its own row at 44 px or more, inside the panel and tappable (${JSON.stringify([m.faceOk, m.clipped, m.btnBelow, m.btnH, m.btnIn])})`);
+        }
+        await X('onboardStep = globalThis.__os; if (mob) mob.boss = globalThis.__boss; true');
+        assert(seen.length === 5, `guide panel ${at}: the check measured all five steps (${seen.join(', ')})`);
+        // a paused tip that is not a step (a first-use line) docks too; and a step shown over an open menu sits at the menu's bottom
+        if (vw < vh) {   // portrait with a menu open: the panel moves to the bottom of the menu, above the tab bar
+          await X('onboardTips(true); S.onboard.all = false; onboardReveal("gather"); setTab("gat"); true'); await page.waitForTimeout(900);
+          const mm = await rects();
+          if (mm) assert(mm.mode === 'over-menu' && !mm.clipped && mm.inView, `guide panel ${at}: over a menu it sits at the bottom of the menu panel (${mm.mode}, ${mm.panel.join(',')})`);
+        }
+        assert(!errs.length, `guide panel ${at}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('guide panel rects crashed: ' + (e.stack || e)); }
 
 // ---- story-unlock-gates: a held hero's line says when they join; a won token says so (docs/design/unlock-pace.md) ----
 if (section('story-unlock-gates')) try {

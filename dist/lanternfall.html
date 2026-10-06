@@ -2125,8 +2125,8 @@ span.cf-d { font-weight: 600; }
    .over-menu portrait with a menu open: the bottom of the menu panel, above the tab bar (and above any toast)
    .side      landscape: the side column's notices slot (80-landscape.css) */
 .ob-bub { position: relative; pointer-events: none; order: 2; flex: none; margin: 4px var(--gut) 0; z-index: 8;
-  display: grid; grid-template-columns: 48px minmax(0, 1fr) 36px; grid-template-rows: auto auto; column-gap: 8px; align-items: start;
-  padding: 8px 2px 8px 8px; background: #1A1422; border: 2px solid var(--gold); box-shadow: 0 3px 0 #0B0810;
+  display: grid; grid-template-columns: 48px minmax(0, 1fr) 44px; grid-template-rows: auto auto; column-gap: 8px; align-items: start;
+  padding: 8px 0 8px 8px; background: #1A1422; border: 2px solid var(--gold); box-shadow: 0 3px 0 #0B0810;
   font: 600 14px/1.3 var(--body); color: var(--bone); }
 .ob-bub[hidden] { display: none; }
 .ob-bub.over-menu { position: absolute; left: var(--gut); right: var(--gut); margin: 0; bottom: calc(var(--tabs-h) + env(safe-area-inset-bottom, 0px) + 8px + var(--toast-h, 0px)); box-shadow: 0 3px 0 #0B0810, 0 8px 22px rgba(0,0,0,.55); }
@@ -2139,7 +2139,8 @@ span.cf-d { font-weight: 600; }
 .ob-txt { grid-column: 2; grid-row: 1; min-width: 0; align-self: center; overflow-wrap: break-word; }
 .ob-ok { grid-column: 2; grid-row: 2; justify-self: start; margin-top: 6px; min-height: 44px; padding: 0 16px; pointer-events: auto; cursor: pointer; background: var(--gold); border: 2px solid #0B0810; color: #1A1420; font: 600 calc(15px * var(--display-k)) var(--display); }
 .ob-ok[hidden] { display: none; }
-.ob-x { pointer-events: auto; grid-column: 3; grid-row: 1; align-self: start; width: 36px; height: 36px; background: none; border: 0; color: var(--muted); font: 600 calc(20px * var(--display-k))/1 var(--display); cursor: pointer; }
+.ob-name { display: none; }
+.ob-x { pointer-events: auto; grid-column: 3; grid-row: 1; align-self: start; width: 44px; height: 44px; margin-top: -8px; background: none; border: 0; color: var(--muted); font: 600 calc(20px * var(--display-k))/1 var(--display); cursor: pointer; }
 .ob-x:hover, .ob-x:focus-visible { color: var(--bone); }
 /* locked sections (registerSection feature) */
 .sec.f-off { display: none !important; }
@@ -3134,11 +3135,18 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
   /* the guide panel: in the side column's notices slot, under the top row. It stands in for Next Up while it speaks (the chip
      keeps its place, hidden), except for the Next Up step, where it takes the notices row under the chip it points at. */
   .ob-bub.side { grid-column: 4 / -1; grid-row: 2 / 4; align-self: start; margin: 6px 6px 0 7px; z-index: 7; max-height: calc(100% - 6px); overflow: hidden;
-    grid-template-columns: 40px minmax(0, 1fr) 30px; column-gap: 6px; padding: 6px 0 6px 6px; font-size: 13px; line-height: 1.25; }
+    grid-template-columns: 36px minmax(0, 1fr) 44px; grid-template-rows: auto minmax(0, auto) auto; column-gap: 6px; row-gap: 2px; padding: 6px 0 6px 6px; font-size: 12.5px; line-height: 1.22; }
   .ob-bub.side.nu { grid-row: 3; align-self: end; margin-bottom: 4px; }
-  .ob-bub.side .ob-facebox, .ob-bub.side .ob-face { width: 40px; height: 40px; }
-  .ob-bub.side .ob-x { width: 30px; height: 30px; }
-  .ob-bub.side .ob-ok { margin-top: 4px; }
+  /* a short column: the face and name share the first line with the dismiss, the tip runs the full width under them, the button has the last row */
+  .ob-bub.side .ob-facebox, .ob-bub.side .ob-face { width: 36px; height: 36px; }
+  .ob-bub.side .ob-name { display: block; grid-column: 2; grid-row: 1; align-self: center; font: 600 calc(11px * var(--display-k)) var(--display); color: var(--gold); white-space: nowrap; }
+  .ob-bub.side .ob-facebox { grid-row: 1; }
+  .ob-bub.side .ob-x { margin-top: -4px; margin-bottom: -4px; }
+  .ob-bub.side .ob-txt { grid-column: 1 / 3; grid-row: 2; align-self: start; padding-right: 6px; min-height: 0; overflow-y: auto; }
+  .ob-bub.side .ob-ok { grid-column: 1 / 3; grid-row: 3; margin-top: 4px; justify-self: start; max-width: calc(100% - 6px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ob-bub.side.btn { grid-row: 2 / -1; max-height: calc(100% - 10px); }
+  .ob-bub.side.nu.btn { grid-row: 3 / -1; align-self: start; margin-bottom: 0; }
+  .app.guide-btn .sbar { visibility: hidden; }
   .app.guide-side:not(.guide-nu) .nu-slot, .app.guide-side .toasts.side-dock, .app.guide-side .gate-rule { visibility: hidden; }
 
   /* ---- sheets fit a short screen ---- */
@@ -39093,11 +39101,12 @@ let navUI = null;
     if (u) face.src = u; else face.removeAttribute('src');
     putToggle(faceBox, 'blank', !u);
   };
+  const nm = el('b', 'ob-name', 'Old Hesketh');
   const txt = el('span', 'ob-txt');
   const x = el('button', 'ob-x'); x.type = 'button'; x.setAttribute('aria-label', 'Dismiss this tip'); x.textContent = '×';
   // SOLO1: a step whose action is reading it (the first boss) has a Got it button
   const okb = el('button', 'ob-ok'); okb.type = 'button'; okb.textContent = 'Got it'; okb.hidden = true;
-  bub.append(faceBox, txt, x, okb);
+  bub.append(faceBox, nm, txt, x, okb);
   // A waiting step may carry a Go button (spec.go): it takes the hero to the node that yields what the step needs.
   let curGo = null;
   const finish = s => s.id.startsWith('use:') ? onboardUseDone(s.id) : onboardDone(s.id);   // a first-use line is read, not a guide step
@@ -39206,7 +39215,7 @@ let navUI = null;
   const USE_SHOWN_MS = 7000;   // a first-use line counts as read after this long on screen
   const BLOCK = '.create, .away-ov, .bsheet-ov, .modal, .dw-ov';
   let lastKey = '', useT0 = 0;
-  function hide() { useT0 = 0; if (!layer.hidden) layer.hidden = true; if (!bub.hidden) bub.hidden = true; cur = null; curGo = null; lastKey = ''; lastNode = null; lastRect = null; ONBOARD.paused = false; const ap = $('app'); ap.classList.remove('guide-side', 'guide-nu'); }
+  function hide() { useT0 = 0; if (!layer.hidden) layer.hidden = true; if (!bub.hidden) bub.hidden = true; cur = null; curGo = null; lastKey = ''; lastNode = null; lastRect = null; ONBOARD.paused = false; const ap = $('app'); if (ap.classList.contains('guide-side')) ap.classList.remove('guide-side', 'guide-nu', 'guide-btn'); }
   // The hint used to re-read the target's pixel position and re-place itself every 250ms, so it
   // jumped whenever the stage moved under it (camera/zoom, screen shake, a pack spawning) even
   // though nothing about the guide itself had changed. Stage targets keep that cached placement.
@@ -39230,12 +39239,12 @@ let navUI = null;
     if (!spec || !vis(spec.node)) return hide();
     if (use) { if (!useT0) useT0 = Date.now(); else if (Date.now() - useT0 > USE_SHOWN_MS) { onboardUseDone(step.id); return hide(); } }
     cur = step; curGo = spec.go || null;
+    putHidden(okb, !(step.ok || curGo));
+    putText(okb, curGo ? curGo.label : 'Got it');
     place(spec);
     // the game waits only while the step waits for you to read or press something now (playtest-1 note 1, W1-A):
     // never for a step that needs materials or time, and never while a press step is still short of what it costs
     ONBOARD.paused = onboardPaused(step);
-    putHidden(okb, !(step.ok || curGo));
-    putText(okb, curGo ? curGo.label : 'Got it');
   }
   soloGuideWants = () => (cur && !layer.hidden ? cur.id : '');
   // The guide's steps and their targets, for tools/check.mjs (the browser check walks the first session).
@@ -39257,6 +39266,21 @@ let navUI = null;
     }
     if (!changed) return;   // no real layout change and the same target/text: leave it exactly where it is
     dirty = false; panelScrolled = false; lastNode = spec.node;
+    // the panel docks where notices dock and never over the stage: landscape, the side column (its notices slot;
+    // it stands in for Next Up while it speaks, except for the Next Up step itself, which points at the chip);
+    // portrait, a slot in the game view just above the Act / Skills / Foe bar (the stage gives up the height);
+    // over a menu, the bottom of the menu panel. Only the parent and a mode class ever change.
+    const wide = isWide(), mode = wide ? 'side' : S.tab ? 'over-menu' : 'dock';
+    const home = mode === 'dock' ? $('game') : $('app');
+    if (bub.parentNode !== home) home.append(bub);
+    for (const m of ['side', 'over-menu', 'dock']) bub.classList.toggle(m, m === mode);
+    bub.classList.toggle('nu', mode === 'side' && spec.node === chip);
+    // landscape, a step with a button (read it, or Go) takes the dock's room too: the column is short and the button must not clip
+    const btn = mode === 'side' && !okb.hidden;
+    bub.classList.toggle('btn', btn);
+    putToggle($('app'), 'guide-side', mode === 'side'); putToggle($('app'), 'guide-nu', mode === 'side' && spec.node === chip); putToggle($('app'), 'guide-btn', btn);
+    faceUp();
+    if (!inPanel) r = null;   // the dock may have moved the stage (portrait: the panel takes a slot): read the target after it
     // UX-L1: a target inside the menu's scrolling content that is out of sight (a short landscape menu: the Make view's
     // recipes, a camp building further down) is scrolled into view on a new target/view. Ordinary
     // scroll or reflow only moves the ring, so following it never pulls the player back.
@@ -39280,18 +39304,8 @@ let navUI = null;
       putStyle(ring, 'transform', `translate(${Math.round(rx)}px, ${Math.round(ry)}px)`);
       putStyle(ring, 'width', Math.round(rw) + 'px'); putStyle(ring, 'height', Math.round(rh) + 'px');
     }
-    // the panel docks where notices dock and never over the stage: landscape, the side column (its notices slot;
-    // it stands in for Next Up while it speaks, except for the Next Up step itself, which points at the chip);
-    // portrait, a slot in the game view just above the Act / Skills / Foe bar (the stage gives up the height);
-    // over a menu, the bottom of the menu panel. Only the parent and a mode class ever change.
-    const wide = isWide(), mode = wide ? 'side' : S.tab ? 'over-menu' : 'dock';
-    const home = mode === 'dock' ? $('game') : $('app');
-    if (bub.parentNode !== home) home.append(bub);
-    for (const m of ['side', 'over-menu', 'dock']) bub.classList.toggle(m, m === mode);
-    bub.classList.toggle('nu', mode === 'side' && spec.node === chip);
-    putToggle($('app'), 'guide-side', mode === 'side'); putToggle($('app'), 'guide-nu', mode === 'side' && spec.node === chip);
-    faceUp();
   }
+  try { new ResizeObserver(invalidate).observe($('stageBox')); } catch (e) {}   // the stage gives up height when the panel docks: re-place the ring
   setInterval(tick, 250);
   panels.addEventListener('scroll', () => { panelScrolled = true; tick(); }, { passive: true });
   addEventListener('resize', () => { invalidate(); tick(); });
