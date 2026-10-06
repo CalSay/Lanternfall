@@ -60,6 +60,10 @@ const TURN_TUNE = {
   // Tobin pass (owner, 2026-10-02: the tank survives best and kills a little slower, not boringly): his counters
   // hit harder, Grit pays more (Attack, Hammerfall), Shield Bash gives Grit, and his Attack takes the opening it leaves
   counterX: { wren: 1, tobin: 1.5, pip: 1 },      // per-hero counter damage (on top of heroX); the gear pass: Tobin 1.2 -> 1.5
+  // Tobin's late pass (autopilot, 2026-10-06; DECISIONS.md band 15-30% slower than Wren and Pip): from zone 30 the refAtk
+  // fall left his kills x1.4-1.7 slower, so his Attack, abilities and counters hit x this by zone. His HP, Speed and Guard stay as were.
+  lateX: { tobin: [[1, 1], [25, 1], [30, 1.25], [34, 1.6], [35, 1.2], [38, 1.35], [42, 1.4]] },
+  lateBoss: 0.6,   // a boss gets this share of the late pass (its fight keeps its length; the pass is for the foes between)
   foeAtkX: 1,
   goldX: 3, xpX: 2.5, essenceX: 1.6,              // fewer, longer fights pay more each (balance: docs/design/combat-turn-build.md)
   consec: 2, consecBoss: 3,                        // the most turns in a row
@@ -149,6 +153,7 @@ const turnZoneLine = (P, z) => {
   for (let i = 1; i < P.length; i++) if (z <= P[i][0]) { const [z0, a] = P[i - 1], [z1, c] = P[i]; return a + (c - a) * (z - z0) / (z1 - z0); }
   return P[P.length - 1][1];
 };
+const turnLateX = (k, z) => { const L = TURN_TUNE.lateX[k]; return L ? turnZoneLine(L, z) : 1; };   // a hero's late-zone power (TURN_TUNE.lateX)
 const turnRefAtkX = z => turnZoneLine(TURN_TUNE.refAtk, z);
 const turnRefAtk = z => turnRefAtkX(z) * mobHp(z) * mod('foeHp');
 const turnRefHp = (z, deep) => turnZoneLine(deep ? TURN_TUNE.deep.refHpX : TURN_TUNE.refHpX, z) * mobHp(z);   // deep: a Deepwell floor
@@ -267,7 +272,7 @@ function turnPowerNow() {
   const T = TURN_TUNE, g = gear(), cls = S.party && S.party.cls;
   const heroX = (T.heroX[key] || SOLO_TUNE.heroX[key]) / SOLO_TUNE.heroX[key];
   const tap = cls === 'warden' || cls === 'warrior' ? CLASS_ABILITIES.heavy.coef : cls === 'lanternmage' || cls === 'mage' ? CLASS_ABILITIES.ember.coef : CLASS_ABILITIES.focus.coef;
-  const A0 = heroAtk() * tap * heroX * SOLO_TUNE.atkX * aps();
+  const A0 = heroAtk() * tap * heroX * turnLateX(key, S.zone) * SOLO_TUNE.atkX * aps();
   return { A: A0 * tapMult(), U: A0 * (1 + T.abTrain * trainLv(TURN_SIG[key] || 'echo')) * (1 + (g.abil || 0) / 100), crit: critMult(),
     spell: 1 + (g.spell || 0) / 100, dot: 1 + (g.area || 0) / 100 };
 }
@@ -377,6 +382,7 @@ function turnHitFoe(m, io, pow, o) {
   if (m.sf) d *= turnStarsX(m, io, o, crit);
   d *= turnTX(m, o.dt || 'phys');
   if (p.heroKey === 'pip' && h.embers > 0 && (o.dt || 'phys') === 'fire' && !o.stored) d *= 1 + T.cinderX * h.embers;   // Cinders held: hotter fire
+  if (!o.stored && !o.dot) { const lx = turnLateX(p.heroKey, p.zone); d *= p.boss ? 1 + (lx - 1) * T.lateBoss : lx; }   // Tobin's late pass (TURN_TUNE.lateX): the hero's own hits, not Bleed or Burn ticks
   // the gear pass: Spell power on fire, frost and holy hits; damage over time (Area) on ticks and Ignite. A Curse's burst
   // stores hits that already had them.
   if (!o.stored) {
@@ -592,7 +598,7 @@ function turnHeroAct(m, io, id, slot, grades) {
         h.grit = Math.min(10, keep + back); if (t('hammerfall') === 'a') turnBleedAdd(m, 2); break; }
       case 'shieldthrow': { hit(U * a.pow, { dt, perfect: () => { m.cdCut = 2; } }); if (sundered) { turnControl(m, io, 'stun'); e.exposed = 2; }
         if (t('shieldthrow') === 'a') { e.pin = 1; e.pinSlow = Math.max(e.pinSlow, 2); } else if (t('shieldthrow') === 'b') turnWard(m, 0.05); break; }
-      case 'laststand': h.last = 2; h.lastUsed = 1; break;
+      case 'laststand': hit(U * a.pow, { dt, payoff: true }); h.last = 2; h.lastUsed = 1; break;
       // Pip
       case 'spark':
         if (t('spark') === 'b') { hit(U * a.pow, { dt: 'frost' }); turnChillAdd(m, io, 1); }
