@@ -403,6 +403,7 @@ if (LF_PROF && s && s.phase === 'timing' && s.timing) {
 }
 // at a foe's windup: parry, else dodge, else no press; a tried defence is pressed mid-window and lands
 turnInput.kind = LF_PROF ? (rnd() < LF_PROF.parry ? 'parry' : rnd() < LF_PROF.dodge ? 'dodge' : 'none') : rnd() < 0.6 ? 'parry' : 'dodge';
+const opens = turnInput.kind === 'parry' ? s.parryOpensAt : s.dodgeOpensAt;   // the original line, kept
 if (turnInput.kind === 'none') turnInput.done = true;
 else turnInput.at = LF_PROF || rnd() < 0.8 ? opens + (s.closesAt - opens) * 0.5 : Math.max(s.now, opens - 0.1);
 ```
