@@ -89,7 +89,7 @@ let showAwayReport;
     if (note && !r.turnCombat) { const n = el('p', 'away-note'); n.append(img(actIc), el('span', null, note)); body.append(n); }
     if (r.activity === 'fight') {
       const rule = el('p', 'away-rule');
-      rule.append(img(IC.glass()), el('span', null, 'While away, gathering continues and fighting stops. Set your hero to gather before you go.'));
+      rule.append(img(IC.glass()), el('span', null, AWAY_RULE_TXT));
       body.append(rule);
     }
 
