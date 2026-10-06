@@ -268,7 +268,7 @@ var soloIconURL = () => '';
   function setTab(id) {
     if (!tabBtn[id] || tabBtn[id].hidden) id = 'act';
     dockTab = id;
-    for (const [k, , p] of TABS) { tabBtn[k].setAttribute('aria-selected', String(k === id)); tabBtn[k].tabIndex = k === id ? 0 : -1; p.hidden = k !== id; }
+    for (const [k, , p] of TABS) { tabBtn[k].setAttribute('aria-selected', String(k === id)); p.hidden = k !== id; }
     skSig = foeSig = ''; if (!bar.hidden) { try { fillSkills(); fillFoe(); } catch (e) {} }
   }
   // Skills: one row per slot (tap one to change what it holds, as a long press does)

@@ -2479,6 +2479,8 @@ body.solo-on .stage .abil, body.solo-on .stage .abil2 { display: none !important
 .sb-abslot.blocked .sb-ic, .sb-abslot.blocked::before { opacity: .45; }
 .sp-ab .sp-mono { width: 36px; height: 36px; margin-left: 6px; display: grid; place-items: center; background: #33283E; color: #FFE7A8;
   font: 700 calc(16px * var(--display-k, 1))/1 var(--display); box-shadow: inset 0 0 0 1px #6B5320; }
+/* Skills and Foe scroll inside the pane: the bottom edge fades to say there is more */
+.sb-p-sk, .sb-p-foe { -webkit-mask-image: linear-gradient(#000 calc(100% - 16px), transparent); mask-image: linear-gradient(#000 calc(100% - 16px), transparent); padding-bottom: 12px; box-sizing: border-box; }
 /* 60-stars: Hero tab > Stars, the star map (75-stars-ui.js; docs/design/combat-turn-build.md "Stars").
    Portrait: the loadout strip (sticky), the map, the open star's card, then filters and the list.
    Landscape: the menu takes the whole stage while Stars is open; under the strip the map sits left and the card right.
@@ -3055,6 +3057,10 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
   .sb-lb { font-size: calc(9px * var(--display-k)); letter-spacing: 0; }
   .sbtn { gap: 1px; }
   .sb-n { top: 4px; height: var(--sb-ic); font-size: calc(20px * var(--display-k)); }
+  .sb-p-foe { gap: 3px; font-size: 12px; }
+  .sb-fk { display: none; }
+  .sb-fname { font-size: calc(14px * var(--display-k)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .sb-fr { flex-wrap: wrap; }
   .sb-def { min-height: 44px; gap: 6px; }
   .sb-def .sb-ic { width: 24px; height: 24px; }
   .sb-def .sb-n { width: 24px; font-size: calc(16px * var(--display-k)); }
@@ -39390,7 +39396,7 @@ var soloIconURL = () => '';
   function setTab(id) {
     if (!tabBtn[id] || tabBtn[id].hidden) id = 'act';
     dockTab = id;
-    for (const [k, , p] of TABS) { tabBtn[k].setAttribute('aria-selected', String(k === id)); tabBtn[k].tabIndex = k === id ? 0 : -1; p.hidden = k !== id; }
+    for (const [k, , p] of TABS) { tabBtn[k].setAttribute('aria-selected', String(k === id)); p.hidden = k !== id; }
     skSig = foeSig = ''; if (!bar.hidden) { try { fillSkills(); fillFoe(); } catch (e) {} }
   }
   // Skills: one row per slot (tap one to change what it holds, as a long press does)

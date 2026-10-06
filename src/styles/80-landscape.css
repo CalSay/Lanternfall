@@ -86,6 +86,10 @@
   .sb-lb { font-size: calc(9px * var(--display-k)); letter-spacing: 0; }
   .sbtn { gap: 1px; }
   .sb-n { top: 4px; height: var(--sb-ic); font-size: calc(20px * var(--display-k)); }
+  .sb-p-foe { gap: 3px; font-size: 12px; }
+  .sb-fk { display: none; }
+  .sb-fname { font-size: calc(14px * var(--display-k)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .sb-fr { flex-wrap: wrap; }
   .sb-def { min-height: 44px; gap: 6px; }
   .sb-def .sb-ic { width: 24px; height: 24px; }
   .sb-def .sb-n { width: 24px; font-size: calc(16px * var(--display-k)); }
