@@ -6252,6 +6252,19 @@ if (section('save codec validation (C5)')) try {
       }
     }
     assert(!lost.length,'C5: every learned ability exports while equipped and stays equipped after a cold LF1 load'+(lost.length?'; '+lost.slice(0,3).join('; '):''));
+    { // C5: the learned-abilities record must keep its shape, or abilityOwned throws after a load
+      const probe=(label,edit,ok)=>{const d=base();d.abil=d.abil||{};edit(d.abil);assert(validate(d).ok===ok,`C5: abil ${label} is ${ok?'accepted':'refused'}`);};
+      probe('unl:null',a=>{a.unl=null;},false);
+      probe('unl.wren not a list',a=>{a.unl={wren:'spark',tobin:[],pip:[]};},false);
+      probe('unl holding another hero\'s ability',a=>{a.unl={wren:['spark'],tobin:[],pip:[]};},false);
+      probe('unl holding an unknown id',a=>{a.unl={wren:['nope'],tobin:[],pip:[]};},false);
+      probe('unl with an unknown hero',a=>{a.unl={ghost:[]};},false);
+      probe('scrolls with a fractional count',a=>{a.scrolls={moss:1.5};},false);
+      probe('scrolls with a negative count',a=>{a.scrolls={moss:-1};},false);
+      probe('scrolls with an unknown id',a=>{a.scrolls={nope:1};},false);
+      probe('scrolls with a whole count',a=>{a.scrolls={moss:2};},true);
+      probe('missing entirely',a=>{for(const k of Object.keys(a))delete a[k];},true);
+    }
     const other=base();other.solo.eq.wren=['echo','spark',null];
     assert(!validate(other).ok,'C5: a slot holding another hero\'s learned ability is still refused');
   }
