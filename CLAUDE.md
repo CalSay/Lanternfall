@@ -63,6 +63,8 @@ Single-player depth. Do not change the online layer (world raid, tavern, leaderb
   Touch shared files only at the extension points described in `docs/ARCHITECTURE.md`,
   and keep those edits small so the coordinator can merge them.
 - Run `node tools/build.mjs` then `node tools/check.mjs` before finishing. Both must pass.
+- Lessons: read the sections of `docs/lessons.md` for your card's work areas before starting. After any correction
+  (Cal, a reviewer, CI, a blocked tool), add a rule line to the right section in the same PR.
 - Commit on your branch with a clear message. Do not push, publish the artifact, or merge
   into `main`; the coordinator does that.
 - Write player-facing copy plainly: short sentences, active voice, name things the way a
