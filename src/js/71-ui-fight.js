@@ -46,7 +46,9 @@ const gateEl = { title: $('gateTitle').querySelector('.gt-t'), desc: $('gateDesc
 const AWAY_RULE_TXT = 'While away, gathering continues and fighting stops. Set your hero to gather before you go.';
 let gateRule = null;
 function uiGateRule() {
-  const on = S.activity === 'fight';
+  // Only where the Gather button is on offer: not before the first boss (onboarding hides it) or in a Deepwell run (the row is hidden).
+  const seg = $('modeSeg'), gb = seg.querySelector('button[data-act="gather"]');
+  const on = S.activity === 'fight' && !gb.hidden && seg.style.visibility !== 'hidden' && !$('game').closest('.app').classList.contains('deep-run');
   if (!gateRule) {
     if (!on) return;
     gateRule = el('p', 'away-rule gate-rule'); gateRule.append(img(iconURL('glass', '#F2E27A')), el('span', null, AWAY_RULE_TXT));
