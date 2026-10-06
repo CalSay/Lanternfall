@@ -57,27 +57,25 @@ function uiGateRule() {
   putToggle(gateRule, 'hide', !on);
 }
 uiHooks.push(uiGateRule);
-// Away chip: what leaving now would earn, told before you go. Estimate from the same rates awayBase uses
-// (50-sim.js): gathering earns the node's units for the hours the away cap allows; fighting earns nothing.
+// Away chip: what leaving now would earn, told while you gather (the notice above covers a fighter).
+// Estimate from the same rates awayBase uses (50-sim.js), held to the Storehouse room unless Spillover moves on.
 let awayChip = null, awayChipTxt = '';
 function awayChipText() {
-  if (S.activity === 'gather') {
-    const { kind, t: tier } = S.node;
-    const boost = (1 + gear().offline / 100) * mod('offline');
-    const hrs = 4 + 2 * S.relic.glass + bonus('awayHours');
-    const n = Math.floor(3600 / nodeTime(kind, tier) * boost * nodeYieldAvg(kind) * mod('yield:' + kind) * hrs);
-    return n > 0 ? `Leave now: about ${fmt(n)} ${matName(kind, tier)} in ${hrs} hours.` : '';
-  }
-  return S.activity === 'fight' ? 'Leave now: you earn nothing. Gather first.' : '';
+  if (S.activity !== 'gather') return '';
+  const { kind, t: tier } = S.node;
+  const boost = (1 + gear().offline / 100) * mod('offline');
+  const hrs = 4 + 2 * S.relic.glass + bonus('awayHours');
+  let n = Math.floor(3600 / nodeTime(kind, tier) * boost * nodeYieldAvg(kind) * mod('yield:' + kind) * hrs);
+  if (!storeSpillOn()) n = Math.min(n, stashRoom(kind, tier));
+  return n > 0 ? `Leave now: about ${fmt(n)} ${matName(kind, tier)} in ${hrs} hours.` : `Leave now: ${matName(kind, tier)} is full, you earn nothing. Spend it or pick another node.`;
 }
 function uiAwayChip() {
-  if (!gateRule) return;   // same visibility rule as the notice above: only where Gather is on offer
   const seg = $('modeSeg'), gb = seg.querySelector('button[data-act="gather"]');
   const txt = gb.hidden || seg.style.visibility === 'hidden' || $('game').closest('.app').classList.contains('deep-run') ? '' : awayChipText();
   if (!awayChip) {
     if (!txt) return;
-    awayChip = el('p', 'away-rule away-chip'); awayChip.append(img(iconURL('coin', '#F2C14E')), el('span'));
-    gateRule.after(awayChip);
+    awayChip = el('p', 'away-rule gate-rule away-chip'); awayChip.append(img(iconURL('coin', '#F2C14E')), el('span'));
+    $('modeSeg').parentElement.after(awayChip);   // the notice's own slot: it hides while gathering, so they never show together
   }
   if (txt !== awayChipTxt) { awayChipTxt = txt; awayChip.lastChild.textContent = txt; }
   putToggle(awayChip, 'hide', !txt);

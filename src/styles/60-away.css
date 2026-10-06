@@ -86,4 +86,4 @@
 .away-rule img { width: 20px; height: 20px; flex: none; image-rendering: pixelated; }
 .gate-rule { order: 1; margin: 4px 8px 0; padding: 4px 8px; font-size: 11.5px; gap: 6px; }
 .gate-rule img { width: 16px; height: 16px; }
-.gate-rule.hide, .away-chip.hide { display: none; }
+.gate-rule.hide { display: none; }
