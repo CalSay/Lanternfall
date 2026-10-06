@@ -75,7 +75,7 @@
     const gq = el('span', 'nu-st'), gl = el('span', 'nu-gol', 'Go');
     go.append(gq, gl);
     r.append(ic, body, go);
-    const x = { r, im, lbl, fill, go, gq, goal: null, url: '' };
+    const x = { r, im, lbl, fill, go, gq, gol: gl, goal: null, url: '' };
     go.addEventListener('click', () => { const g = x.goal; if (!g) return; api.close(true); goTo(g); });
     return x;
   }
@@ -90,7 +90,7 @@
       let sig = '';
       const render = () => {
         const goals = topGoals(3);
-        const s = goals.map(g => g.id + '|' + g.label + '|' + Math.floor(g.pct * 100)).join('~');
+        const s = goals.map(g => g.id + '|' + g.label + '|' + Math.floor(g.pct * 100) + '|' + g.goLabel).join('~');
         if (s === sig) return; sig = s;
         empty.hidden = goals.length > 0;
         while (rows.length < goals.length) { const x = mkRow(api); rows.push(x); list.append(x.r); }
@@ -104,7 +104,8 @@
           x.lbl.textContent = g.label;
           x.fill.style.width = (g.pct * 100).toFixed(1) + '%';
           x.gq.textContent = pctTxt(g);
-          x.go.setAttribute('aria-label', 'Go: ' + g.label);
+          x.gol.textContent = g.goLabel || 'Go';
+          x.go.setAttribute('aria-label', (g.goLabel || 'Go') + ': ' + g.label);
         });
       };
       render();

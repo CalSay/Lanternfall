@@ -1343,6 +1343,34 @@ span.cf-d { font-weight: 600; }
 .cf-gt small { font-size: 12.5px; color: var(--muted); }
 .cf-ph { margin: 0; font: 600 calc(20px * var(--display-k)) var(--display); }
 .cf-bagnone { grid-column: 1 / -1; margin: 4px 0; }
+
+/* craft-reveal: result card, last-five strip, odds line, grade words */
+.cf-resbox { display: grid; gap: 8px; }
+.cf-resbox:empty { display: none; }
+.cf-res { display: grid; gap: 8px; }
+.cf-grade { font: 600 calc(13px * var(--display-k)) var(--display); }
+.cf-cmpn { margin: 0; }
+.cf-resact { grid-auto-flow: row; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); }
+.cf-recent { display: grid; gap: 4px; }
+.cf-recent-r { display: flex; gap: 6px; }
+.cf-recent .ic.cf-tile { width: 52px; min-height: 52px; flex: none; }
+.ic.cf-tile.sel { outline: 2px solid var(--bone); outline-offset: -1px; }
+.cf-gr { position: absolute; left: 0; right: 0; bottom: 0; padding: 1px 0; text-align: center; font: 600 10px/1.2 var(--display); background: rgba(11,8,16,.82); }
+.cf-odds { grid-column: 1 / -1; font-size: 12px; color: var(--muted); }
+.cf-nofit { margin: 0; }
+.ic.cf-tile.fresh { outline-color: var(--bone); }
+.cf-res .cf-line { padding: 4px 10px; }
+.cf-res .cf-lines { gap: 3px; }
+.cf-res .cf-dl .cf-d { padding: 3px 8px; }
+.cf-res { gap: 6px; }
+.cf-res-l, .cf-res-r { display: grid; gap: 6px; align-content: start; min-width: 0; }
+@media (orientation: landscape) and (max-height: 500px) {
+  /* short screens: the buttons sit right under the name, the stats and the comparison below them */
+  .cf-res-l, .cf-res-r { display: contents; }
+  .cf-res .cf-lines, .cf-res .cf-cmpn, .cf-res .cf-dl { order: 2; }
+  .cf-res .cf-resact { order: 1; }
+  .cf-res .warn { order: 0; }
+}
 /* 60-deeds: the Achievements menu, its sheets, the Feat card (75-deeds-ui.js) and the Journal's stats wall
    (75-stats-ui.js). Display text is Handjet: every display size is calc(Npx * var(--display-k)). */
 
@@ -9018,7 +9046,7 @@ const NOTICES = [
   // ---- loot and gear ----
   { id: 'unique', re: /^Unique loot! /, ch: 'log', why: 'the moment layer shows every unique as a card (75-moments-ui); the bell list keeps the line' },
   { id: 'star-chart', re: /^You drew a Star Chart/, ch: 'pop', wait: 40 },
-  { id: 'forged', re: /^(Forged|Made) an? /, ch: m => /Legendary/i.test(m) ? 'pop' : /Rare|Epic/i.test(m) ? 'log' : 'none', why: 'the sheet shows what you made' },
+  { id: 'forged', re: /^(Forged|Made) an? /, ch: 'none', why: 'the Craft tab shows a result card for what you made; a Rare or better craft is also a medium moment (75-craft-ui)' },
   { id: 'bag-full', re: /^Your bag is full, so /, ch: 'bell' },
   { id: 'gear-reforged', re: /^Your .* reforged into .* gear\.$/, ch: 'bell' },
   { id: 'gear-back', re: /(does not fit your new path|do not fit your new path)/, ch: 'bell' },
@@ -9078,7 +9106,9 @@ const NOTICES = [
   { id: 'mastery', key: 'mastery', re: /: mastery star \d of 5\./, ch: 'log', why: 'the zone shows its stars' },
   { id: 'bestiary', key: 'bestiary', re: /^Bestiary: /, ch: 'log', why: 'the Bestiary view marks it' },
   { id: 'weekly', re: /^Weekly goal done: /, ch: 'bell' },
-  { id: 'bounty', re: /^Bounty complete! /, ch: 'bell', merge: ms => `${ms.length} bounties complete.` },
+  { id: 'bounty', re: /^Bounty complete! /, ch: 'pop', reply: true, why: 'you just pressed Claim (the board, Next Up or the ready notice): show what you got', merge: ms => `${ms.length} bounties complete.` },
+  { id: 'bounty-ready', key: 'bounty-ready', ch: 'pop', wait: 20, held: 'log', why: 'tap it to claim; no menu needed (a held one is only a log line: Next Up still says Claim)' },
+  { id: 'bounty-room', key: 'bounty-room', ch: 'pop', reply: true, why: 'a claim that could not fit says what to free or build' },
 
   // ---- the Codex (57c) ----
   { id: 'codex', key: 'codex', re: /^(Codex: the .* page is half full\. The|Page Seal: |\d+ Lantern Light: )/, ch: 'bell' },
@@ -12014,18 +12044,27 @@ function bossTryWays(L) {
     while (sl.length < BTY_SLOTS) sl.push({ k: null, wait: 0 });
     for (let i = 0; i < BTY_SLOTS; i++) if (!sl[i] || (!sl[i].k && (now >= (sl[i].wait || 0) || (!atLoad && bonus('bountyNoWait') > 0)))) { const rr = sl[i] ? sl[i].rr || 0 : 0; sl[i] = btyNew(); sl[i].rr = rr; }
   }
-  function btyAdd(k, n, test) {
-    for (const b of S.bounties.slots) if (b && b.k === k && b.have < b.need && (!test || test(b))) b.have = Math.min(b.need, b.have + n);
+  // bountyReady: a bounty just reached its goal (E1: the player claims it where they stand, not in the fight menu).
+  function btyAdd(k, n, test, away) {
+    S.bounties.slots.forEach((b, i) => {
+      if (!(b && b.k === k && b.have < b.need && (!test || test(b)))) return;
+      b.have = Math.min(b.need, b.have + n);
+      if (b.have >= b.need) emit('bountyReady', { i, k: b.k, away: !!away });
+    });
   }
+  on('bountyReady', ({ i, away }) => {
+    const b = S.bounties.slots[i]; if (away || !b || !b.k) return;   // away catch-up: the away card tells it
+    emit('toast', { key: 'bounty-ready', msg: "Bounty ready. Tap to claim.", kind: 'good', icon: { ic: ['banner', '#F2C14E'] }, prio: 'normal', go: { fn: () => { const j = S.bounties.slots.findIndex(x => x && x.k && x.have >= x.need); if (j >= 0) claimBounty(j); } } });   // the first finished one: a merged or stale notice never claims a wrong slot
+  });
   on('kill', ({ mob, zone }) => {
     btyAdd('kill', 1, b => zone >= b.z); if (mob && mob.boss) btyAdd('boss', 1);
     const key = mob && (mob.type || String(mob.key || '').replace(/\d+$/, '')); if (key) btyAdd('hunt', 1, b => b.foe === key);
   });
   // Any tier counts (owner bug report: mining a lower node than your best never moved the bounty),
   // and so does gathering while away (awayBase emits harvest with away: true).
-  on('harvest', ({ kind, n }) => {
-    if (kind === 'ore') btyAdd('mine', n); else if (kind === 'wood') btyAdd('chop', n);
-    else if (kind === 'crystal') btyAdd('gems', n); else if (kind === 'fibre' || kind === 'herb') btyAdd('forage', n, b => b.fam === kind);
+  on('harvest', ({ kind, n, away }) => {
+    if (kind === 'ore') btyAdd('mine', n, null, away); else if (kind === 'wood') btyAdd('chop', n, null, away);
+    else if (kind === 'crystal') btyAdd('gems', n, null, away); else if (kind === 'fibre' || kind === 'herb') btyAdd('forage', n, b => b.fam === kind, away);
   });
   on('itemAdded', ({ item }) => { if (!item.u) btyAdd('forge', 1); });
   on('crafted', ({ kind }) => { const d = typeof CRAFT_KINDS === 'object' && CRAFT_KINDS[kind]; if (d) btyAdd('make', 1, b => b.st === d.st); });
@@ -12043,7 +12082,7 @@ function bossTryWays(L) {
   function claimBounty(i) {
     const b = S.bounties.slots[i]; if (!b || !b.k || b.have < b.need) return null;
     const r = bountyReward(b);
-    if (r.kind !== 'gold' && !stashFits([[r.kind, r.t, r.n]])) { toast(stashNeed([[r.kind, r.t, r.n]]), 'raid', { mat: [r.kind, r.t] }, 'normal'); return null; }   // H3: a parcel waits
+    if (r.kind !== 'gold' && !stashFits([[r.kind, r.t, r.n]])) { emit('toast', { key: 'bounty-room', msg: stashNeed([[r.kind, r.t, r.n]]), kind: 'raid', icon: { mat: [r.kind, r.t] }, prio: 'normal' }); return null; }   // H3: a parcel waits
     if (r.kind === 'gold') { S.gold += r.n; S.totalGold += r.n; econEarn('bounty', r.n); }
     else stashAdd(r.kind, r.t, r.n, 'parcel');
     S.bounties.claimed++;
@@ -12511,7 +12550,7 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
     const it = newItem(kind, t, r, { role: opts.role, mw: opts.mw });
     addItem(it);
     gainStation(stationOf(kind).skill, CRAFT_XP.craft(t));
-    toast(`Made a ${RAR[r].n} ${itemName(it)}.`, r === 'epic' || r === 'rare' ? 'ember' : 'good', { item: it }, r === 'legendary' ? 'high' : r === 'epic' || r === 'rare' ? 'normal' : 'low');
+    toast(`Made a ${RAR[r].n} ${itemName(it)}.`, 'good', { item: it }, 'low');   // craft-reveal: the result card (75-craft-ui) shows it; no bell line
     emit('crafted', { item: it, kind, t });
     save();
     return it;
@@ -13116,7 +13155,7 @@ var forgeGoalPicks = 0;
     try { label = String(val(g.label) || ''); icon = val(g.icon) || null; } catch (e) { return null; }
     if (!label) return null;
     const ready = p >= 1;
-    return { id: g.id, sys: g.sys, label, pct: Math.min(1, p), ready, go: g.go || null, icon, prio: +(typeof g.prio === 'function' ? g.prio() : g.prio) || 0, cap: +g.cap || 0, reserve: +g.reserve || 0 };
+    return { id: g.id, sys: g.sys, label, pct: Math.min(1, p), ready, go: g.go || null, goLabel: typeof g.goLabel === 'function' ? g.goLabel() : g.goLabel || '', icon, prio: +(typeof g.prio === 'function' ? g.prio() : g.prio) || 0, cap: +g.cap || 0, reserve: +g.reserve || 0 };
   }
 
   topGoals = function (n = 3, opts) {
@@ -13220,10 +13259,12 @@ var forgeGoalPicks = 0;
   // Bounties: the one closest to done (a finished one is ready to claim).
   const btyNext = () => {
     let best = null;
-    for (const b of (S.bounties && S.bounties.slots) || []) {
-      if (!b || !b.k) continue;
-      const p = need(b.have, b.need);
-      if (!best || p > best.p) best = { b, p };
+    const sl = (S.bounties && S.bounties.slots) || [];
+    for (let i = 0; i < sl.length; i++) {
+      const b = sl[i]; if (!b || !b.k) continue;
+      let p = need(b.have, b.need);
+      if (p >= 1 && typeof stashNeed === 'function') { const r = BOUNTY_API.reward(b); if (r.kind !== 'gold' && stashNeed([[r.kind, r.t, r.n]])) p = 0.999; }   // a reward that does not fit waits behind one that does
+      if (!best || p > best.p) best = { b, p, i };
     }
     return best;
   };
@@ -13232,9 +13273,11 @@ var forgeGoalPicks = 0;
     id: 'bounty', sys: 'bounty', prio: 1,
     pct: () => { const x = btyNext(); return x ? x.p : null; },
     label: () => { const x = btyNext(); if (!x) return '';
-      return x.p >= 1 ? 'Bounty done: claim your reward' : `${BOUNTY_API.text(x.b)} (${fmt(x.b.have)}/${fmt(x.b.need)})`; },
+      return x.p >= 1 ? `Bounty done: ${BOUNTY_API.text(x.b)}` : `${BOUNTY_API.text(x.b)} (${fmt(x.b.have)}/${fmt(x.b.need)})`; },
     icon: () => { const x = btyNext(); return { ic: BTY_IC[x ? x.b.k : 'kill'] || BTY_IC.kill }; },
-    go: { tab: 'adv', sel: '#sec-bounties' }
+    // E1: a finished bounty is claimed in place (no menu); an unfinished one opens the board
+    goLabel: () => { const x = btyNext(); return x && x.p >= 1 ? 'Claim' : ''; },
+    go: () => { const x = btyNext(); return x && x.p >= 1 ? { fn: () => { BOUNTY_API.claim(x.i); } } : { tab: 'adv', sel: '#sec-bounties' }; }
   });
 
   // Bestiary: the page (tier) closest to done among monsters met.
@@ -14786,6 +14829,10 @@ function validateSave(data) {
       if (at.met !== undefined) { record(at.met, 'attr.met'); for (const [k, n] of Object.entries(at.met)) { known(SOLO_HEROES, k, 'attr.met.hero'); int(n, 'attr.met.' + k, 0, 1); } }
       if (at.live !== undefined) int(at.live, 'attr.live', 0, 1);
       if (at.xpv !== undefined) int(at.xpv, 'attr.xpv', 0, 1);
+    }
+    if (data.abil) {   // learned abilities: abilityOwned reads unl[hero] and scrollCount reads scrolls[id] after a load
+      for (const [k, ids] of Object.entries(data.abil.unl || {})) { known(SOLO_HEROES, k, 'abil.unl.hero'); array(ids, 'abil.unl.' + k); for (const id of ids) if (typeof id !== 'string' || !ABILITIES[id] || ABILITIES[id].hero !== k) fail('abil.unl.' + k); }
+      for (const [id, n] of Object.entries(data.abil.scrolls || {})) { known(SCROLLS, id, 'abil.scrolls.id'); int(n, 'abil.scrolls.' + id); }
     }
     rows(data.camp, 'builds', b => { known(CAMP_B, b.id, 'camp.build.id'); int(b.to, 'camp.build.to', 1, CAMP_B[b.id].max); num(b.dur, 'camp.build.dur', 1, 864e13); num(b.start, 'camp.build.start', 0, 864e13); num(b.end, 'camp.build.end', 0, 864e13); record(b.cost, 'camp.build.cost'); num(b.cost.gold, 'camp.build.gold'); pack(b.cost.mats, 'camp.build.mats'); array(b.cost.troph, 'camp.build.troph'); for (const l of b.cost.troph) { array(l, 'camp.build.troph[]'); if (l.length !== 2) fail('camp.build.troph[]'); if (l[0] !== 'any') int(l[0], 'camp.build.troph.kind', 0, CRAFT_TROPHIES.length - 1); num(l[1], 'camp.build.troph.units'); } });
     if (data.camp && data.camp.b) for (const [k, n] of Object.entries(data.camp.b)) { known(CAMP_B, k, 'camp.building'); int(n, 'camp.' + k, 0, CAMP_B[k].max); }
@@ -35604,7 +35651,6 @@ let showAwayReport;
     ability: () => iconURL('flame', '#7FB2FF', { 5: '#CFE3FF', 7: '#FFFFFF' }), hands: () => iconURL('mug', '#8C6A43', { 1: '#6B4A2E', 7: '#F2C14E', 5: '#EFE6D6' }),
     deep: () => iconURL('flame', '#9A8FB8', { 5: '#CFC3DC', 7: '#FFFFFF' })
   };
-  const btyRows = [];
   // Go: where each kind's work happens
   const GO = { mine: ['gat', 'mine'], gems: ['gat', 'mine'], chop: ['gat', 'wood'], forage: ['gat', 'forage'],
     make: ['forge', 'make'], forge: ['forge', 'make'], upgrade: ['forge', 'gear'], reforge: ['forge', 'gear'],
@@ -35618,50 +35664,61 @@ let showAwayReport;
     if (typeof closeMenu === 'function') closeMenu();
     ui(true);
   };
+  const mountBoard = (sec, rows) => {
+    for (let i = 0; i < 3; i++) {
+      const r = makeRow(sec, '', false, BTY_IC.kill());
+      r.row.classList.add('bty');
+      const bar = el('div', 'bar bty-bar'); bar.append(el('i')); r.desc.after(bar); r.bar = bar.firstChild;
+      const rr = el('button', 'bty-rr', 'Swap'); r.desc.parentNode.append(rr); r.rr = rr;
+      // done: Claim; not done: Go, to where the work is (menu audit: the old "BOUNTY 16%" box looked like a button)
+      r.btn.addEventListener('click', () => { const b = S.bounties.slots[i]; if (!b || !b.k) return; if (b.have >= b.need) { if (BOUNTY_API.claim(i)) ui(true); } else goTo(b); });
+      rr.addEventListener('click', () => { if (BOUNTY_API.reroll(i)) ui(true); });
+      rows.push(r);
+    }
+  };
+  const updateBoard = rows => {
+    const now = Date.now();
+    S.bounties.slots.forEach((b, i) => {
+      const r = rows[i]; if (!r) return;
+      if (!b || !b.k) {
+        r.row.classList.add('locked'); r.row.classList.remove('active');
+        r.nm.textContent = 'New bounty soon'; r.own.textContent = '';
+        r.desc.textContent = `A new bounty is posted in ${fmtTime(Math.max(0, (b ? b.wait : 0) - now) / 1000)}.`;
+        r.bar.style.width = '0%'; r.rr.hidden = true;
+        r.btn.disabled = true; r.qty.textContent = 'Posting'; r.btn.querySelector('.price').textContent = '...';
+        return;
+      }
+      const done = b.have >= b.need, rew = BOUNTY_API.reward(b);
+      r.row.classList.remove('locked'); r.row.classList.toggle('active', done);
+      r.nm.textContent = BOUNTY_API.text(b); r.own.textContent = `${fmt(b.have)}/${fmt(b.need)}`;
+      const room = done && rew.kind !== 'gold' ? stashNeed([[rew.kind, rew.t, rew.n]]) : '';   // H3: a reward waits until it fits
+      r.desc.textContent = room || 'Reward: ' + rew.txt;
+      r.bar.style.width = Math.min(100, b.have / b.need * 100) + '%';
+      const url = (BTY_IC[b.k] || BTY_IC.kill)(b); setIc(r.ic, url, b.elite ? 'legendary' : null);
+      r.row.classList.toggle('bty-elite', !!b.elite);
+      const rrLeft = (b.rr || 0) - now;
+      r.rr.hidden = done; r.rr.disabled = rrLeft > 0;
+      r.rr.textContent = rrLeft > 0 ? `Swap in ${fmtTime(rrLeft / 1000)}` : 'Swap (free)';
+      r.btn.disabled = done && !!room; r.qty.textContent = done ? 'Done' : '';
+      r.btn.querySelector('.price').textContent = done ? 'Claim' : 'Go';
+      putToggle(r.btn, 'bty-go', !done);
+    });
+  };
+  const fightRows = [], campRows = []; let campSec = null;
   registerSection('adv', {
     id: 'bounties', title: 'Bounties', view: 'bounties',
     mount(sec) {
       // sit right under the Boss gate
       const panel = sec.parentNode; if (panel.children.length > 1) panel.insertBefore(sec, panel.children[1]);
-      for (let i = 0; i < 3; i++) {
-        const r = makeRow(sec, '', false, BTY_IC.kill());
-        r.row.classList.add('bty');
-        const bar = el('div', 'bar bty-bar'); bar.append(el('i')); r.desc.after(bar); r.bar = bar.firstChild;
-        const rr = el('button', 'bty-rr', 'Swap'); r.desc.parentNode.append(rr); r.rr = rr;
-        // done: Claim; not done: Go, to where the work is (menu audit: the old "BOUNTY 16%" box looked like a button)
-        r.btn.addEventListener('click', () => { const b = S.bounties.slots[i]; if (!b || !b.k) return; if (b.have >= b.need) { if (BOUNTY_API.claim(i)) ui(true); } else goTo(b); });
-        rr.addEventListener('click', () => { if (BOUNTY_API.reroll(i)) ui(true); });
-        btyRows.push(r);
-      }
+      mountBoard(sec, fightRows);
     },
-    update() {
-      const now = Date.now();
-      S.bounties.slots.forEach((b, i) => {
-        const r = btyRows[i]; if (!r) return;
-        if (!b || !b.k) {
-          r.row.classList.add('locked'); r.row.classList.remove('active');
-          r.nm.textContent = 'New bounty soon'; r.own.textContent = '';
-          r.desc.textContent = `A new bounty is posted in ${fmtTime(Math.max(0, (b ? b.wait : 0) - now) / 1000)}.`;
-          r.bar.style.width = '0%'; r.rr.hidden = true;
-          r.btn.disabled = true; r.qty.textContent = 'Posting'; r.btn.querySelector('.price').textContent = '...';
-          return;
-        }
-        const done = b.have >= b.need, rew = BOUNTY_API.reward(b);
-        r.row.classList.remove('locked'); r.row.classList.toggle('active', done);
-        r.nm.textContent = BOUNTY_API.text(b); r.own.textContent = `${fmt(b.have)}/${fmt(b.need)}`;
-        const room = done && rew.kind !== 'gold' ? stashNeed([[rew.kind, rew.t, rew.n]]) : '';   // H3: a reward waits until it fits
-        r.desc.textContent = room || 'Reward: ' + rew.txt;
-        r.bar.style.width = Math.min(100, b.have / b.need * 100) + '%';
-        const url = (BTY_IC[b.k] || BTY_IC.kill)(b); setIc(r.ic, url, b.elite ? 'legendary' : null);
-        r.row.classList.toggle('bty-elite', !!b.elite);
-        const rrLeft = (b.rr || 0) - now;
-        r.rr.hidden = done; r.rr.disabled = rrLeft > 0;
-        r.rr.textContent = rrLeft > 0 ? `Swap in ${fmtTime(rrLeft / 1000)}` : 'Swap (free)';
-        r.btn.disabled = done && !!room; r.qty.textContent = done ? 'Done' : '';
-        r.btn.querySelector('.price').textContent = done ? 'Claim' : 'Go';
-        putToggle(r.btn, 'bty-go', !done);
-      });
-    }
+    update() { updateBoard(fightRows); }
+  });
+  // E1: the same board at Camp, so a finished bounty is claimed without the Fight menu (Next Up and the ready notice claim in place too)
+  registerSection('camp', {
+    id: 'bounties-camp', title: "Hesketh's board", feature: 'bounties',
+    mount(sec) { campSec = sec; mountBoard(sec, campRows); },
+    update() { if (campSec) campSec.hidden = !(S.camp && S.camp.open); updateBoard(campRows); }   // no camp yet: the board waits for the fire
   });
   // The Classic achievements grid moved to the Achievements menu (75-deeds-ui.js, Tracks > Classic).
 }
@@ -37006,7 +37063,7 @@ let craftUI = null;
   }
 
   // ---------------- UI state (memory only) ----------------
-  const st8 = { st: null, tier: {}, filt: 'you', mw: null, role: {}, sort: 'power', bfilt: 'spare', pick: '', focus: null, fresh: new Set(), tm: { fam: 'ore', t: 1 } };
+  const st8 = { st: null, tier: {}, filt: 'you', mw: null, role: {}, sort: 'power', bfilt: 'spare', pick: '', focus: null, fresh: new Set(), tm: { fam: 'ore', t: 1 }, recent: [], result: null, resArm: false, reveal: false };
   const openTier = st => {
     return skillTopTier(skillOfSt(st));
   };
@@ -37117,6 +37174,109 @@ let craftUI = null;
     if (!d.pos && !d.comp) bits.push('Special');
     return bits.join(' · ');
   }
+  // craft-reveal: the odds a craft rolls on (the same weights craftItem rolls with), one line per recipe
+  const oddsTxt = k => safe(() => {
+    const w = rarityWeights(stationLevel(k)), tot = Object.values(w).reduce((a, b) => a + b, 0);
+    const pc = v => { const p = v / tot * 100; return (p < 10 ? p.toFixed(1) : String(Math.round(p))) + '%'; };
+    return 'Odds: ' + ['common', 'uncommon', 'rare', 'epic'].map(r => `${RAR[r].n} ${pc(w[r])}`).join(' · ');
+  }, '');
+  // short grade word for a bag tile (the full word sits on the item sheet and in the label)
+  const GRADE_SHORT = { common: 'Com', uncommon: 'Unc', rare: 'Rare', epic: 'Epic', legendary: 'Uniq' };
+  // stat changes against what the hero wears in that slot: [{ label, v, txt }]
+  function diffRows(it) {
+    const d = itemKind(it), cur = d && d.pos ? itemById(S.equip[d.pos]) : null;
+    if (!d || !d.pos || !heroFitsIt(it) || !cur || cur.id === it.id) return null;
+    const a = itemStats(it), b = itemStats(cur), rows = [];
+    const pd = itemPower(it) - itemPower(cur);
+    if (Math.abs(pd) >= 0.05) rows.push({ label: 'Power', v: pd, txt: (pd > 0 ? '+' : '-') + fmt(Math.abs(pd)) });
+    for (const k of new Set([...Object.keys(a), ...Object.keys(b)])) {
+      if (!CRAFT_STATS[k]) continue;
+      const v = (a[k] || 0) - (b[k] || 0);
+      if (Math.abs(v) >= 0.05) rows.push({ label: CRAFT_STATS[k].n, v, txt: deltaTxt(k, v) });
+    }
+    return { cur, rows };
+  }
+  function resultCard(it) {
+    const d = itemKind(it), wr = wornBy(it.id), card = el('div', 'cf-res card');
+    card.dataset.itemId = it.id;
+    const head = el('div', 'cf-ih'), tile = icTile(itemIc(it), frameOf(it)); tile.classList.add('s56');
+    const who = el('div', 'cf-ihw');
+    who.append(el('h3', 'cf-in rar-' + it.r, itemName(it)));
+    const grade = el('span', 'cf-grade rar-' + it.r, RAR[it.r].n);
+    const meta = el('div', 'cf-im'); meta.append(grade, ` · Tier ${it.t}${d ? ' · ' + (d.pos ? posName(d.pos) : d.noun) : ''}`);
+    who.append(meta);
+    head.append(tile, who);
+    const left = el('div', 'cf-res-l'), right = el('div', 'cf-res-r'); card.append(left, right);   // landscape: two columns
+    left.append(head);
+    const lines = el('div', 'cf-lines');
+    for (const L of splitLines(it)) {
+      const r = el('div', 'cf-line g-' + L.g);
+      if (L.g === 'uniq') { if (!L.lore) r.append(el('span', 'cf-lt', L.txt)); if (L.lore) continue; lines.append(r); continue; }
+      r.append(el('span', 'cf-lt', lineTxt(L.l)));
+      if (L.g === 'affix') r.append(el('small', 'cf-tag', 'Bonus'));
+      if (L.g === 'mw') r.append(el('small', 'cf-tag', 'Masterwork'));
+      lines.append(r);
+    }
+    if (lines.children.length) left.append(lines);
+    const df = diffRows(it);
+    if (wr) right.append(el('p', 'note cf-cmpn', `You wear it (${posName(wr.pos)}).`));
+    else if (df) {
+      right.append(el('p', 'note cf-cmpn', `Against your ${itemName(df.cur)}:`));
+      const rows = el('div', 'cf-dl');
+      for (const r of df.rows) { const x = el('div', 'cf-d ' + (r.v > 0 ? 'up' : 'dn')); x.append(el('span', null, r.label), el('b', null, (r.v > 0 ? '▲ ' : '▼ ') + r.txt)); rows.append(x); }
+      if (!df.rows.length) rows.append(el('p', 'note', 'Same stats.'));
+      right.append(rows);
+    } else if (d && d.pos && heroFitsIt(it)) right.append(el('p', 'note cf-cmpn', `You wear nothing as ${posName(d.pos)}. This is a gain.`));
+    else if (d && d.pos) right.append(el('p', 'note cf-cmpn', `A ${posName(d.pos)} for a different class.`));
+    const acts = el('div', 'cf-wear cf-resact');
+    if (st8.resArm) {
+      right.append(el('p', 'note warn', `Salvage ${itemName(it)}? It is gone for good.`));
+      const no = el('button', 'big cf-act cf-keep', 'Keep it'); no.type = 'button';
+      const yes = el('button', 'big cf-act', 'Salvage it'); yes.type = 'button';
+      no.addEventListener('click', () => { st8.resArm = false; ui(true); });
+      yes.addEventListener('click', () => { const id = it.id; st8.resArm = false; if (act(() => salvageItem(id))) { st8.fresh.delete(id); st8.recent = st8.recent.filter(x => x !== id); st8.result = null; ui(true); } });
+      acts.append(no, yes);
+    } else {
+      if (d && d.pos && heroFitsIt(it) && !wr) {
+        const eq = el('button', 'big forge cf-act', 'Equip'); eq.type = 'button';
+        eq.addEventListener('click', () => { equipHero(it.id, d.pos); ui(true); });
+        acts.append(eq);
+      }
+      const keep = el('button', 'big cf-act cf-keep', 'Keep'); keep.type = 'button';
+      keep.addEventListener('click', () => { st8.result = null; ui(true); });
+      acts.append(keep);
+      if (!wr) {
+        const sv = el('button', 'big cf-act cf-keep', 'Salvage'); sv.type = 'button';
+        sv.addEventListener('click', () => { st8.resArm = true; ui(true); });
+        acts.append(sv);
+      }
+    }
+    right.append(acts);
+    return card;
+  }
+  // the last five results: tap one to see its card again
+  function recentStrip() {
+    const strip = el('div', 'cf-recent'); strip.setAttribute('aria-label', 'Last crafts');
+    strip.append(el('span', 'cf-lbl', 'Last crafts'));
+    const row = el('div', 'cf-recent-r');
+    for (const id of st8.recent) {
+      const it = itemById(id); if (!it) continue;
+      const b = el('button', 'ic cf-tile f-' + frameOf(it) + (st8.result === id ? ' sel' : '')); b.type = 'button';
+      b.append(img(itemIc(it)), el('span', 'cf-gr rar-' + it.r, GRADE_SHORT[frameOf(it)] || RAR[it.r].n));
+      b.setAttribute('aria-label', `${itemName(it)}, ${RAR[it.r].n}`);
+      b.addEventListener('click', () => { st8.result = id; st8.resArm = false; ui(true); });
+      row.append(b);
+    }
+    strip.append(row);
+    return strip;
+  }
+  on('crafted', e => {
+    const it = e && e.item; if (!it || it.id == null) return;
+    st8.recent = [it.id, ...st8.recent.filter(x => x !== it.id)].slice(0, 5);
+    st8.result = it.id; st8.resArm = false; st8.fresh.add(it.id); st8.reveal = true;
+    if ((it.r === 'rare' || it.r === 'epic' || it.r === 'legendary') && typeof moment === 'function')
+      moment('craft', { title: itemName(it), sub: `${RAR[it.r].n} ${itemKind(it) ? itemKind(it).noun : 'item'}. It is in your bag.`, rarity: it.r, icon: { item: it } });
+  });
   function recipeRow(k, t) {
     const d = CRAFT_KINDS[k], can = canDo(k, t);
     const row = el('div', 'cf-rec' + (can.ok ? ' ok' : '') + (st8.focus === k ? ' focus' : ''));
@@ -37140,6 +37300,7 @@ let craftUI = null;
       c.append(img(troIcon(mw)), el('span', null, `${have}/1 ${CRAFT_TROPHIES[mw].n}`)); costs.append(c);
     }
     row.append(tile, body, btn, costs);
+    const odds = oddsTxt(k); if (odds) row.append(el('div', 'cf-odds', odds));
     if (d.role === 'any') {
       const rs = el('div', 'cf-roles'); rs.append(el('span', 'cf-lbl', 'Bonus lines for'));
       const seg = el('div', 'seg cf-seg');
@@ -37150,7 +37311,7 @@ let craftUI = null;
       }
       rs.append(seg); row.append(rs);
     }
-    if (!can.ok && can.why) row.append(el('div', 'cf-why', can.why));
+    if (!can.ok) row.append(el('div', 'cf-why', can.why || 'Not ready yet.'));
     return row;
   }
   registerSection('forge', {
@@ -37171,19 +37332,34 @@ let craftUI = null;
       }
       const mwRow = el('div', 'cf-mw');
       const list = el('div', 'cf-list');
-      sec.append(filt, tiers, mwRow, list);
-      rec = { filt, tiers, mwRow, list, sig: '', mwSig: null, rows: {} };
+      const resBox = el('div', 'cf-resbox'); resBox.setAttribute('aria-live', 'polite');
+      sec.append(resBox, filt, tiers, mwRow, list);
+      rec = { filt, tiers, mwRow, list, resBox, resSig: null, sig: '', mwSig: null, rows: {} };
     },
     update(force) {
       initState();
       const st = st8.st, t = st8.tier[st] || 1;
-      for (const b of rec.filt.children) putAttr(b, 'aria-pressed', String(b.dataset.f === st8.filt));
+      // D9: "For you" never shows an empty list; it shows All and says why
+      const noFit = st8.filt === 'you' && !listFor(st, 'you').length && listFor(st, 'all').length > 0;
+      const filt = noFit ? 'all' : st8.filt;
+      for (const b of rec.filt.children) putAttr(b, 'aria-pressed', String(b.dataset.f === filt));
       for (const b of rec.tiers.children) {
         const i = +b.dataset.t, req = CRAFT_STATION_REQ[i - 1], open = skillTierOpen(skillOfSt(st), i);
         putAttr(b, 'aria-pressed', String(i === t)); putToggle(b, 'locked', !open);
         putText(b.lastChild, open ? MAT[STATION_TIER_FAM[st]].short[i - 1] : `Lv ${req}`);
       }
       if (!force && busy()) return;   // never swap a row under the player's finger
+      // craft-reveal: the result card and the last-five strip
+      if (st8.result != null && !itemById(st8.result)) st8.result = null;
+      st8.recent = st8.recent.filter(id => itemById(id));
+      const resSig = JSON.stringify([st8.result, st8.resArm, st8.recent, st8.result != null ? (() => { const it = itemById(st8.result); return [it.r, it.plus, wornBy(it.id) && wornBy(it.id).pos, S.equip[CRAFT_KINDS[it.slot] && CRAFT_KINDS[it.slot].pos]]; })() : 0]);
+      if (resSig !== rec.resSig) {
+        rec.resSig = resSig; rec.resBox.textContent = '';
+        const rit = st8.result != null ? itemById(st8.result) : null;
+        if (rit) rec.resBox.append(resultCard(rit));
+        if (st8.recent.length) rec.resBox.append(recentStrip());
+        if (st8.reveal && rit) { st8.reveal = false; try { rec.resBox.scrollIntoView({ block: 'start' }); } catch (e) {} }   // the card appears above the row the player tapped: bring it into view
+      }
       const tr = troph();
       // Masterwork picker: only when the player has a trophy. Rebuilt when the trophies or the pick change.
       if (st8.mw != null && !(tr[st8.mw] > 0)) st8.mw = null;
@@ -37210,16 +37386,14 @@ let craftUI = null;
       }
       // The list is built once per station, tier, filter and recipe set. After that a row is rebuilt
       // only when what it shows changes (materials, can craft, who it beats, ...): see rowSig.
-      let ks = listFor(st, st8.filt);
-      const extra = st8.filt === 'you' && ks.length ? listFor(st, 'all').length - ks.length : 0;
-      const sig = [st, t, st8.filt, ks.join(), extra, typeof craftItem, typeof canCraft].join('|');
+      let ks = listFor(st, filt);
+      const extra = filt === 'you' && ks.length ? listFor(st, 'all').length - ks.length : 0;
+      const sig = [st, t, filt, noFit, ks.join(), extra, typeof craftItem, typeof canCraft].join('|');
       if (sig !== rec.sig) {
         rec.sig = sig; rec.rows = {};
         rec.list.textContent = '';
-        if (!ks.length && st8.filt !== 'all') {
-          rec.list.append(el('p', 'note', `Nothing at the ${CRAFT_STATIONS[st].n} fits your class. See All, or try another station.`));
-          ks = [];
-        }
+        if (noFit) rec.list.append(el('p', 'note cf-nofit', `Nothing at the ${CRAFT_STATIONS[st].n} is made for your class, so this shows everything here.`));
+        else if (!ks.length) rec.list.append(el('p', 'note', `Nothing at the ${CRAFT_STATIONS[st].n} yet.`));
         for (const k of ks) { const row = recipeRow(k, t); rec.rows[k] = { row, sig: rowSig(k, t) }; rec.list.append(row); }
         if (extra > 0) rec.list.append(el('p', 'note', `${extra} more recipe${extra > 1 ? 's' : ''} here for other classes. Tap All to see them.`));
       } else {
@@ -37237,7 +37411,7 @@ let craftUI = null;
   function rowSig(k, t) {
     const can = canDo(k, t), mw = mwFor(k);
     const cost = Object.entries(kindCost(k, t)).map(([f, n]) => { const h = S.mats[f][t - 1]; return fmt(h) + (h < n ? '<' : '/') + fmt(n); }).join();
-    return JSON.stringify([can.ok, can.why || '', st8.focus === k, subFor(k), beats(k, t), cost, mw, mw != null ? troph()[mw] || 0 : 0, CRAFT_KINDS[k].role === 'any' ? roleFor(k) : '']);
+    return JSON.stringify([can.ok, can.why || '', st8.focus === k, subFor(k), beats(k, t), cost, mw, mw != null ? troph()[mw] || 0 : 0, CRAFT_KINDS[k].role === 'any' ? roleFor(k) : '', oddsTxt(k)]);
   }
 
   // ================= Enchanter's Table extras =================
@@ -37489,6 +37663,7 @@ let craftUI = null;
       for (const it of list) {
         const b = el('button', 'ic cf-tile f-' + frameOf(it) + (st8.fresh.has(it.id) ? ' fresh' : '')); b.type = 'button';
         b.append(img(itemIc(it)));
+        b.append(el('span', 'cf-gr rar-' + it.r, GRADE_SHORT[frameOf(it)] || RAR[it.r].n));
         if (it.plus) b.append(el('span', 'cf-plus', '+' + it.plus));
         const wr = w.get(it.id);
         if (wr) { const bd = img(portraitOf(wr.who), 'cf-badge' + (wr.who === 'hero' ? ' hero' : '')); b.append(bd); }
@@ -38429,6 +38604,7 @@ let deedsUI = null;
     if (!f && !ch) { nextCard(); return; }
     const lk = LK[f ? f.look : ch.look];
     if (typeof noticeAsk === 'function') noticeAsk('card:feat', f ? `Feat: ${f.n}.` : `Chapter done: ${ch.n}.`);   // W1-B: the card is the one voice (bell list line)
+    emit('momentShow', { tier: 'big', kind: 'feat' });   // the sting of a big moment (76-audio): a Feat card is one
     const ov = el('div', 'dd-fc-ov' + (reduced ? ' still' : ''));
     ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-label', f ? `Feat: ${f.n}` : `Chapter done: ${ch.n}`);
     const card = el('div', 'dd-fc');
@@ -39163,7 +39339,7 @@ let deedsUI = null;
     const gq = el('span', 'nu-st'), gl = el('span', 'nu-gol', 'Go');
     go.append(gq, gl);
     r.append(ic, body, go);
-    const x = { r, im, lbl, fill, go, gq, goal: null, url: '' };
+    const x = { r, im, lbl, fill, go, gq, gol: gl, goal: null, url: '' };
     go.addEventListener('click', () => { const g = x.goal; if (!g) return; api.close(true); goTo(g); });
     return x;
   }
@@ -39178,7 +39354,7 @@ let deedsUI = null;
       let sig = '';
       const render = () => {
         const goals = topGoals(3);
-        const s = goals.map(g => g.id + '|' + g.label + '|' + Math.floor(g.pct * 100)).join('~');
+        const s = goals.map(g => g.id + '|' + g.label + '|' + Math.floor(g.pct * 100) + '|' + g.goLabel).join('~');
         if (s === sig) return; sig = s;
         empty.hidden = goals.length > 0;
         while (rows.length < goals.length) { const x = mkRow(api); rows.push(x); list.append(x.r); }
@@ -39192,7 +39368,8 @@ let deedsUI = null;
           x.lbl.textContent = g.label;
           x.fill.style.width = (g.pct * 100).toFixed(1) + '%';
           x.gq.textContent = pctTxt(g);
-          x.go.setAttribute('aria-label', 'Go: ' + g.label);
+          x.gol.textContent = g.goLabel || 'Go';
+          x.go.setAttribute('aria-label', (g.goLabel || 'Go') + ': ' + g.label);
         });
       };
       render();
@@ -39443,7 +39620,7 @@ let deedsUI = null;
 //           MOMENT_TUNE.midMax in any MOMENT_TUNE.midWindowS seconds during the first MOMENT_TUNE.midFirstS seconds of play.
 //   small   today's toasts (23n-data-notices).
 // A big or medium moment is never demoted to the bell and never waits behind a guide step or a story card. It queues to
-// the end of the fight (never shown during a turn, so it never covers a parry window) and shows at once outside one. It does
+// the end of the turn (never shown while a turn is in motion, so it never covers a parry window) and shows at once outside one. It does
 // wait for the guide step on screen, the Away and What's-new cards, and the first seconds after boot.
 // Several at fight end fold into one card with a list. Reduced motion: the same card, no burst.
 // API for later cards:  moment(kind, { title, sub, rarity, icon, still, lines, actions })
@@ -39453,7 +39630,7 @@ let deedsUI = null;
 //   lines    [{ txt, ic? }] a short list under the title;  actions  [{ txt, fn }] extra buttons beside Continue
 // momentState() -> { up, banner, queued } for the checks. Nothing here is saved: a moment not yet seen when the game closes
 // is dropped (a unique already sits in the trophy wall).
-const MOMENT_TUNE = { bannerS: 2.6, bannerExtraS: 0.7, settleS: 0.3, tapLockMs: 700, maxLines: 5, maxBanner: 3, bootS: 4, guideWaitS: 6, midMax: 2, midWindowS: 180, midFirstS: 1800 };
+const MOMENT_TUNE = { bannerS: 2.6, bannerExtraS: 0.7, settleS: 0.3, tapLockMs: 700, maxLines: 5, maxBanner: 3, bootS: 4, guideWaitS: 1, midMax: 2, midWindowS: 180, midFirstS: 1800 };
 const MOMENT_KINDS = {
   boss: { tier: 'big', eye: 'Boss down', col: '#F2C14E', snd: 'big' },
   unique: { tier: 'big', eye: 'Unique loot', col: '#FF8A3D', snd: 'big' },
@@ -39482,8 +39659,9 @@ function moment(kind, o) {
 }
 function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner, queued: MOMENT_Q.length }; }
 {
-  // a turn fight is live (the next foe's intro, about 0.5 s after a kill, is not: the boss's card must show before the fight goes on)
-  const fighting = () => { try { return typeof TURN_LIVE !== 'undefined' && !!TURN_LIVE && !TURN_LIVE.ended && TURN_LIVE.phase !== 'intro'; } catch (e) { return false; } };
+  // a turn is in motion (a hit, a windup, a parry window). The waiting phases (the next foe's intro, the hero's turn, the handoff: the game's own
+  // turnWaiting) are not: no parry window is open, so a card there covers nothing, and an idle player at the hero's turn must still see their unique.
+  const fighting = () => { try { return typeof TURN_LIVE !== 'undefined' && !!TURN_LIVE && !TURN_LIVE.ended && !['intro', 'hero', 'handoff'].includes(TURN_LIVE.phase); } catch (e) { return false; } };
   const bootT = performance.now();
   // a card up, the guide's step, the What's-new window or the first seconds after boot hold a moment back
   // (the guide's step gets guideWaitS seconds to finish, then the moment shows over it: a step left on screen must not hide a unique)
