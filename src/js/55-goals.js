@@ -150,7 +150,8 @@ var forgeGoalPicks = 0;
     const sl = (S.bounties && S.bounties.slots) || [];
     for (let i = 0; i < sl.length; i++) {
       const b = sl[i]; if (!b || !b.k) continue;
-      const p = need(b.have, b.need);
+      let p = need(b.have, b.need);
+      if (p >= 1 && typeof stashNeed === 'function') { const r = BOUNTY_API.reward(b); if (r.kind !== 'gold' && stashNeed([[r.kind, r.t, r.n]])) p = 0.999; }   // a reward that does not fit waits behind one that does
       if (!best || p > best.p) best = { b, p, i };
     }
     return best;

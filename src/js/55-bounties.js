@@ -129,16 +129,16 @@
     for (let i = 0; i < BTY_SLOTS; i++) if (!sl[i] || (!sl[i].k && (now >= (sl[i].wait || 0) || (!atLoad && bonus('bountyNoWait') > 0)))) { const rr = sl[i] ? sl[i].rr || 0 : 0; sl[i] = btyNew(); sl[i].rr = rr; }
   }
   // bountyReady: a bounty just reached its goal (E1: the player claims it where they stand, not in the fight menu).
-  function btyAdd(k, n, test) {
+  function btyAdd(k, n, test, away) {
     S.bounties.slots.forEach((b, i) => {
       if (!(b && b.k === k && b.have < b.need && (!test || test(b)))) return;
       b.have = Math.min(b.need, b.have + n);
-      if (b.have >= b.need) emit('bountyReady', { i, k: b.k });
+      if (b.have >= b.need) emit('bountyReady', { i, k: b.k, away: !!away });
     });
   }
-  on('bountyReady', ({ i }) => {
-    const b = S.bounties.slots[i]; if (!b || !b.k) return;
-    emit('toast', { key: 'bounty-ready', msg: "Bounty ready. Tap to claim.", kind: 'good', icon: { ic: ['banner', '#F2C14E'] }, prio: 'normal', go: { fn: () => { claimBounty(i); } } });
+  on('bountyReady', ({ i, away }) => {
+    const b = S.bounties.slots[i]; if (away || !b || !b.k) return;   // away catch-up: the away card tells it
+    emit('toast', { key: 'bounty-ready', msg: "Bounty ready. Tap to claim.", kind: 'good', icon: { ic: ['banner', '#F2C14E'] }, prio: 'normal', go: { fn: () => { const j = S.bounties.slots.findIndex(x => x && x.k && x.have >= x.need); if (j >= 0) claimBounty(j); } } });   // the first finished one: a merged or stale notice never claims a wrong slot
   });
   on('kill', ({ mob, zone }) => {
     btyAdd('kill', 1, b => zone >= b.z); if (mob && mob.boss) btyAdd('boss', 1);
@@ -146,9 +146,9 @@
   });
   // Any tier counts (owner bug report: mining a lower node than your best never moved the bounty),
   // and so does gathering while away (awayBase emits harvest with away: true).
-  on('harvest', ({ kind, n }) => {
-    if (kind === 'ore') btyAdd('mine', n); else if (kind === 'wood') btyAdd('chop', n);
-    else if (kind === 'crystal') btyAdd('gems', n); else if (kind === 'fibre' || kind === 'herb') btyAdd('forage', n, b => b.fam === kind);
+  on('harvest', ({ kind, n, away }) => {
+    if (kind === 'ore') btyAdd('mine', n, null, away); else if (kind === 'wood') btyAdd('chop', n, null, away);
+    else if (kind === 'crystal') btyAdd('gems', n, null, away); else if (kind === 'fibre' || kind === 'herb') btyAdd('forage', n, b => b.fam === kind, away);
   });
   on('itemAdded', ({ item }) => { if (!item.u) btyAdd('forge', 1); });
   on('crafted', ({ kind }) => { const d = typeof CRAFT_KINDS === 'object' && CRAFT_KINDS[kind]; if (d) btyAdd('make', 1, b => b.st === d.st); });

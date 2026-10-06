@@ -9044,7 +9044,7 @@ const NOTICES = [
   { id: 'bestiary', key: 'bestiary', re: /^Bestiary: /, ch: 'log', why: 'the Bestiary view marks it' },
   { id: 'weekly', re: /^Weekly goal done: /, ch: 'bell' },
   { id: 'bounty', re: /^Bounty complete! /, ch: 'pop', reply: true, why: 'you just pressed Claim (the board, Next Up or the ready notice): show what you got', merge: ms => `${ms.length} bounties complete.` },
-  { id: 'bounty-ready', key: 'bounty-ready', ch: 'pop', wait: 20, held: 'bell', why: 'tap it to claim; no menu needed' },
+  { id: 'bounty-ready', key: 'bounty-ready', ch: 'pop', wait: 20, held: 'log', why: 'tap it to claim; no menu needed (a held one is only a log line: Next Up still says Claim)' },
   { id: 'bounty-room', key: 'bounty-room', ch: 'pop', reply: true, why: 'a claim that could not fit says what to free or build' },
 
   // ---- the Codex (57c) ----
@@ -11682,16 +11682,16 @@ function bossTryWays(L) {
     for (let i = 0; i < BTY_SLOTS; i++) if (!sl[i] || (!sl[i].k && (now >= (sl[i].wait || 0) || (!atLoad && bonus('bountyNoWait') > 0)))) { const rr = sl[i] ? sl[i].rr || 0 : 0; sl[i] = btyNew(); sl[i].rr = rr; }
   }
   // bountyReady: a bounty just reached its goal (E1: the player claims it where they stand, not in the fight menu).
-  function btyAdd(k, n, test) {
+  function btyAdd(k, n, test, away) {
     S.bounties.slots.forEach((b, i) => {
       if (!(b && b.k === k && b.have < b.need && (!test || test(b)))) return;
       b.have = Math.min(b.need, b.have + n);
-      if (b.have >= b.need) emit('bountyReady', { i, k: b.k });
+      if (b.have >= b.need) emit('bountyReady', { i, k: b.k, away: !!away });
     });
   }
-  on('bountyReady', ({ i }) => {
-    const b = S.bounties.slots[i]; if (!b || !b.k) return;
-    emit('toast', { key: 'bounty-ready', msg: "Bounty ready. Tap to claim.", kind: 'good', icon: { ic: ['banner', '#F2C14E'] }, prio: 'normal', go: { fn: () => { claimBounty(i); } } });
+  on('bountyReady', ({ i, away }) => {
+    const b = S.bounties.slots[i]; if (away || !b || !b.k) return;   // away catch-up: the away card tells it
+    emit('toast', { key: 'bounty-ready', msg: "Bounty ready. Tap to claim.", kind: 'good', icon: { ic: ['banner', '#F2C14E'] }, prio: 'normal', go: { fn: () => { const j = S.bounties.slots.findIndex(x => x && x.k && x.have >= x.need); if (j >= 0) claimBounty(j); } } });   // the first finished one: a merged or stale notice never claims a wrong slot
   });
   on('kill', ({ mob, zone }) => {
     btyAdd('kill', 1, b => zone >= b.z); if (mob && mob.boss) btyAdd('boss', 1);
@@ -11699,9 +11699,9 @@ function bossTryWays(L) {
   });
   // Any tier counts (owner bug report: mining a lower node than your best never moved the bounty),
   // and so does gathering while away (awayBase emits harvest with away: true).
-  on('harvest', ({ kind, n }) => {
-    if (kind === 'ore') btyAdd('mine', n); else if (kind === 'wood') btyAdd('chop', n);
-    else if (kind === 'crystal') btyAdd('gems', n); else if (kind === 'fibre' || kind === 'herb') btyAdd('forage', n, b => b.fam === kind);
+  on('harvest', ({ kind, n, away }) => {
+    if (kind === 'ore') btyAdd('mine', n, null, away); else if (kind === 'wood') btyAdd('chop', n, null, away);
+    else if (kind === 'crystal') btyAdd('gems', n, null, away); else if (kind === 'fibre' || kind === 'herb') btyAdd('forage', n, b => b.fam === kind, away);
   });
   on('itemAdded', ({ item }) => { if (!item.u) btyAdd('forge', 1); });
   on('crafted', ({ kind }) => { const d = typeof CRAFT_KINDS === 'object' && CRAFT_KINDS[kind]; if (d) btyAdd('make', 1, b => b.st === d.st); });
@@ -12890,7 +12890,8 @@ var forgeGoalPicks = 0;
     const sl = (S.bounties && S.bounties.slots) || [];
     for (let i = 0; i < sl.length; i++) {
       const b = sl[i]; if (!b || !b.k) continue;
-      const p = need(b.have, b.need);
+      let p = need(b.have, b.need);
+      if (p >= 1 && typeof stashNeed === 'function') { const r = BOUNTY_API.reward(b); if (r.kind !== 'gold' && stashNeed([[r.kind, r.t, r.n]])) p = 0.999; }   // a reward that does not fit waits behind one that does
       if (!best || p > best.p) best = { b, p, i };
     }
     return best;
@@ -35108,7 +35109,7 @@ let showAwayReport;
       putToggle(r.btn, 'bty-go', !done);
     });
   };
-  const fightRows = [], campRows = [];
+  const fightRows = [], campRows = []; let campSec = null;
   registerSection('adv', {
     id: 'bounties', title: 'Bounties', view: 'bounties',
     mount(sec) {
@@ -35121,8 +35122,8 @@ let showAwayReport;
   // E1: the same board at Camp, so a finished bounty is claimed without the Fight menu (Next Up and the ready notice claim in place too)
   registerSection('camp', {
     id: 'bounties-camp', title: "Hesketh's board", feature: 'bounties',
-    mount(sec) { mountBoard(sec, campRows); },
-    update() { updateBoard(campRows); }
+    mount(sec) { campSec = sec; mountBoard(sec, campRows); },
+    update() { if (campSec) campSec.hidden = !(S.camp && S.camp.open); updateBoard(campRows); }   // no camp yet: the board waits for the fire
   });
   // The Classic achievements grid moved to the Achievements menu (75-deeds-ui.js, Tracks > Classic).
 }

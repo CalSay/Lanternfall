@@ -64,7 +64,7 @@
       putToggle(r.btn, 'bty-go', !done);
     });
   };
-  const fightRows = [], campRows = [];
+  const fightRows = [], campRows = []; let campSec = null;
   registerSection('adv', {
     id: 'bounties', title: 'Bounties', view: 'bounties',
     mount(sec) {
@@ -77,8 +77,8 @@
   // E1: the same board at Camp, so a finished bounty is claimed without the Fight menu (Next Up and the ready notice claim in place too)
   registerSection('camp', {
     id: 'bounties-camp', title: "Hesketh's board", feature: 'bounties',
-    mount(sec) { mountBoard(sec, campRows); },
-    update() { updateBoard(campRows); }
+    mount(sec) { campSec = sec; mountBoard(sec, campRows); },
+    update() { if (campSec) campSec.hidden = !(S.camp && S.camp.open); updateBoard(campRows); }   // no camp yet: the board waits for the fire
   });
   // The Classic achievements grid moved to the Achievements menu (75-deeds-ui.js, Tracks > Classic).
 }
