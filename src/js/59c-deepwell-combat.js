@@ -78,7 +78,7 @@ let deepCombatOn, dcLifeline, DWC;
     const share = m.max > 0 ? Math.max(0.01, Math.min(1, m.hp / m.max)) : 1;
     const kind = m.boss ? 'boss' : m.champ ? 'elite' : 'normal', b = typeof FOE_BEH === 'object' ? FOE_BEH[m.type] : null;
     if (!(r.tz0 > 0)) {   // the anchor: your power as the run began (without Deep Edge, which should take you deeper)
-      const P = turnPowerNow(), k = !r.trial ? S.deep.lore.edge || 0 : 0;
+      const P = turnPowerNow(true), k = !r.trial ? S.deep.lore.edge || 0 : 0;
       r.tz0 = P ? turnPowerZone(P.A / (1 + T.edge * k)) : Math.max(1, S.maxZone || 1);
     }
     m.ranged = !!(b && b.ranged); m.armoured = !!(b && b.armoured);

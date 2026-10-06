@@ -42,6 +42,21 @@ document.querySelectorAll('#modeSeg button').forEach(b => b.addEventListener('cl
 // Static nodes, looked up once. Every write goes through the put* guards (70-ui.js): 5 calls a
 // second, and an unchanged value must not make the browser lay the page out again.
 const gateEl = { title: $('gateTitle').querySelector('.gt-t'), desc: $('gateDesc'), btn: $('gateBtn'), q: $('gateBtn').querySelector('.qty'), p: $('gateBtn').querySelector('.price') };
+// The away card says the same line (75-away.js): the trade-off is told before you leave, not after.
+const AWAY_RULE_TXT = 'While away, gathering continues and fighting stops. Set your hero to gather before you go.';
+let gateRule = null;
+function uiGateRule() {
+  // Only where the Gather button is on offer: not before the first boss (onboarding hides it) or in a Deepwell run (the row is hidden).
+  const seg = $('modeSeg'), gb = seg.querySelector('button[data-act="gather"]');
+  const on = S.activity === 'fight' && !gb.hidden && seg.style.visibility !== 'hidden' && !$('game').closest('.app').classList.contains('deep-run');
+  if (!gateRule) {
+    if (!on) return;
+    gateRule = el('p', 'away-rule gate-rule'); gateRule.append(img(iconURL('glass', '#F2E27A')), el('span', null, AWAY_RULE_TXT));
+    $('modeSeg').parentElement.after(gateRule);   // under the Fight / Gather row, where the player picks what the hero does
+  }
+  putToggle(gateRule, 'hide', !on);
+}
+uiHooks.push(uiGateRule);   // the notice sits on the game view, so it updates every pass (extension point, 70-ui)
 function uiFight() {
   const G = gateEl, gb = G.btn, gq = G.q, gp = G.p;
   const uq = UNIQ[zoneUnique(S.zone)].name;
