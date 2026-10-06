@@ -373,15 +373,21 @@ Plan and rulings: `/mnt/project-files/early-game/plan.md`, `plan-judge.md`. Beat
   Caches hold no relics and no time skips. This narrows the Money line's "boss wins" to a boss's first clear. Its other
   sources (Contracts with a Dare, Codex milestones) stay, each added later by its own card through the economy gate.
 - **Looks.** Deed looks stay Deed-only. Cache looks are their own catalogue, drawn by Codex and vetted as a set. The
-  first three caches a save opens each give a Deepwell lantern colour the save does not own yet (Ember Red first), print
-  it as a certain look, and relight the stage. This is the cache's look, not an extra reward; a save that owns all six
-  gets none. The Wardrobe tags each look Deed,
-  Cache or (later) Store, and counts earned looks only.
-- **Moments.** Big moments (first boss win, a cache with a look or unique, a unique, a new hero, a Great Lantern) and
-  medium moments (the first and every 5th level, a new ability, the first Star, a look, a Rare-or-better craft) sit
+  first-clear caches of zones 1 to 3 and 7 to 9 each give a Deepwell lantern colour the save does not own yet (Ember Red
+  first), print it as a certain look, and relight the stage. This is the cache's look, not an extra reward; a save that
+  owns all six gets none. The Wardrobe tags each look Deed, Cache or (later) Store, and counts earned looks only.
+- **Moments.** Big moments (first boss win, a cache with a look or unique, a unique, a new hero, the first Star, a Great
+  Lantern) and medium moments (the first and every 5th level, a new ability, a look, a Rare-or-better craft) sit
   outside the pop budget, under their own cap. Big: one card at a time at fight end, holding the game. Medium: at most
   one per fight end, in the notices slot. At most 8 big plus medium in the first 20 minutes. This refines "the early
   game must not be spammed". A cache that holds a look is a big card, even when it opens automatically.
+- **Starters join on the road.** The two starters you didn't pick join in the order Tobin, Wren, Pip: the first at the
+  zone 5 Champion, the second at the zone 10 Champion. The zone 15 Champion keeps its scene with no join. Each
+  starter's meet scene works at either post.
+- **F3, the big-moment pace** (amends the self-improving plan's scorecard). Minutes 0 to 20: a big moment at least every
+  5 minutes, no gap over 8. From minute 20 to the zone 10 Champion (or minute 60, if that comes first): a big moment at
+  every zone's first clear from 5 to 10, no gap over 8 on the casual walk. The 2026-11-02 review sets the pace after
+  zone 10. Why: big moments are tied to bosses, so their minutes follow play speed, and zone 10 closes the first hour.
 - **The guide is Old Hesketh, with a face.** Landscape: the side column's notices slot. Portrait: docked above the
   action bar. Never over the fighters or the HP bars.
 - **Bounties.** A finished bounty can be claimed from Next Up and from its ready notice, and the board also shows at
