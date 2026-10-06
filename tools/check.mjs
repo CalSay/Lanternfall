@@ -7532,7 +7532,17 @@ if (section('action and menu icons (C26)')) try {
   const g = loadCore({ seed: 27 });
   const d = JSON.parse(g.eval(`JSON.stringify({ act: typeof ACTION_ICONS === 'object' ? Object.entries(ACTION_ICONS).map(([k, v]) => [k, Object.keys(v)]) : null,
     nav: typeof NAV_ICONS === 'object' ? Object.entries(NAV_ICONS).map(([k, v]) => [k, Object.keys(v)]) : null })`));
-  assert(d.act && d.act.length === 16 && d.act.every(([, ks]) => ks.join() === '16,24,36,48'), `C26: 16 action icons at 16, 24, 36 and 48 px (${d.act ? d.act.length : 'none'})`);
+  const base = d.act ? d.act.filter(([k]) => !g.eval(`ABILITIES[${JSON.stringify(k)}] && ${JSON.stringify(k)} !== 'echo' && ${JSON.stringify(k)} !== 'bash' && ${JSON.stringify(k)} !== 'fire'`)) : [];
+  assert(base.length === 16 && base.every(([, ks]) => ks.join() === '16,24,36,48'), `C26: 16 action icons at 16, 24, 36 and 48 px (${base.length})`);
+  // wire-ability-icons: art freeze = whole packs. Every live ability of a complete hero has an icon at 24, 36 and 48 px;
+  // an incomplete hero shows none of Codex's (no half-drawn lists). Add a hero here only when all its abilities are drawn.
+  const COMPLETE = ['pip'], ownIcon = new Set(['echo', 'bash', 'fire']);
+  const ab = JSON.parse(g.eval(`JSON.stringify(Object.fromEntries(Object.keys(HERO_ABILITIES).map(h => [h, HERO_ABILITIES[h].map(id => [id, ACTION_ICONS[id] ? Object.keys(ACTION_ICONS[id]).join() : '']) ])))`));
+  for (const [h, rows] of Object.entries(ab)) {
+    const missing = rows.filter(([, ks]) => !ks).map(([id]) => id);
+    if (COMPLETE.includes(h)) assert(!missing.length && rows.every(([, ks]) => ks.endsWith('24,36,48') || ks === '16,24,36,48'), `abilities: every ${h} ability has an icon at 24, 36 and 48 px (missing: ${missing.join(', ') || 'none'})`);
+    else assert(rows.every(([id, ks]) => !ks || ownIcon.has(id)), `abilities: ${h} is not complete, so none of its ability icons are embedded yet except the starter`);
+  }
   assert(d.nav && d.nav.length === 32 && d.nav.every(([, ks]) => ks.join() === '12,16,18,20,22'), `C26: 32 menu icons at 12-22 px (${d.nav ? d.nav.length : 'none'})`);
   const need = ['attack-wren', 'attack-tobin', 'attack-pip', 'echo', 'bash', 'fire', 'parry', 'dodge', 'empty', 'fight', 'hero', 'gather', 'craft', 'camp', 'deeds', 'notices', 'mining', 'woodcutting', 'foraging', 'raid', 'deepwell'];
   const have = new Set([...(d.act || []), ...(d.nav || [])].map(([k]) => k));
