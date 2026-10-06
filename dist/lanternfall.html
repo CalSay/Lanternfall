@@ -42589,7 +42589,7 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
   };
   const lampSet = n => { streak = n; lampDraw(); };
   // what has shown since the page opened (data-seen: 'clean', and each number tier). Display only: the proof route reads it
-  const seen = new Set(), seenAdd = k => { if (!seen.has(k)) { seen.add(k); lamps.dataset.seen = [...seen].join(' '); } };
+  const seen = new Set(), seenAdd = k => { if (!seen.has(k)) { seen.add(k); lamps.dataset.seen = document.body.dataset.hitSeen = [...seen].join(' '); } };   // on body too, so a route can read it after the fight has ended
   on('float', f => { if (f && f.tier) seenAdd(f.tier); });
   // grade at the press, from the snapshot (the windows in force, how far from the hit); the stamp shows when the hit meets or misses
   const defPress = kind => {
