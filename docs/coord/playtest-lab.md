@@ -52,6 +52,37 @@ format below. Do not give it the repo, the docs or card text, except the optimis
 Each persona logs a one-line note after each stretch of play, not only at the end: the timestamp (game time), what
 was on screen, what it tried, what happened, how it felt.
 
+## The cold panel and Cal's Eyes
+
+The three personas above find systems problems. The panel finds what a stranger feels. It is five workers with vision, each with
+only the driver and the screen (no repo, no docs, no card text). Plan: self-improving plan part 5.
+
+| Persona | Plays like | Asked |
+|---|---|---|
+| Phone dipper | 5-minute sessions, impatient, skips text | Keep playing? What's next? |
+| Gacha regular | Plays AFK Arena and Genshin, wants pulls and reveals | Best moment so far? Anything you wanted to open? |
+| Idle optimiser | Melvor and IdleOn player, min-maxes | What's the best choice now, and why? Any wall? |
+| Story and RPG fan | Loved Expedition 33, wants characters | What is this about? Which hero do you care about? |
+| Cal's Eyes | Plays like Cal (`docs/taste/cal-eyes.md`) | What would Cal write down? |
+
+**Two legs, 20 to 30 minutes each.**
+- Cold leg: minute 0 to 25, `new fresh`.
+- Second leg: starts from the walk's seeded minute-25 save and plays as a returning player, up to minute 60.
+
+**Three fixed questions** every player answers at the end of each leg, in its own words:
+1. What is this game about?
+2. Which hero do you care about, and why?
+3. Name one moment that felt great.
+
+**R1 pick.** After its second leg each player gets this week's build and last week's, plays 5 minutes of each, and says which it
+would keep playing and why (one line). The R1 pick is the weekly headline in the panel index.
+
+**When it runs.** Saturday on the release candidate: all five, both legs. Weekdays, only when first-hour screens changed: phone
+dipper and Cal's Eyes, cold leg. Reports go to `autopilot/reports/panel-<date>/` with a one-screen index. Cal's Eyes also saves its
+"still rough" list (at most 7) with a timestamp before Cal plays, to be scored against his next notes (`docs/taste/README.md`).
+
+Each panel player uses the report format below, plus the three answers and (Cal's Eyes only) the 7-item "still rough" list.
+
 ## What to note
 
 - **Confusion:** a screen it could not read, a button whose result surprised it, a term it never learned.
