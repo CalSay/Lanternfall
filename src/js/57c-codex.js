@@ -51,23 +51,23 @@ const CODEX_CAP = { dmg: 0.05, critDmg: 0.05, uniqueChance: 0.05, skillXp: 0.05,
 // when its system arrives (the UI says so plainly).
 const CODEX_MILESTONES = [
   { at: 25, rw: [{ id: 't_lamplighter', kind: 'title', n: 'Title: Lamplighter', live: true }] },
-  { at: 50, rw: [{ id: 'salvage1', kind: 'qol', n: 'Auto-salvage, basic', txt: 'Commons below the tier you wear in that spot are salvaged when they drop.', later: 'Saved for later: all gear is made by you today, so this switches on when foes drop gear.' }] },
-  { at: 75, rw: [{ id: 'd_string', kind: 'cosmetic', n: 'Camp decoration: Lantern String', later: 'Saved: it hangs in camp once the camp scene shows decorations.' }] },
+  { at: 50, rw: [{ id: 'salvage1', kind: 'qol', n: 'Auto-salvage, basic', txt: 'Commons below the tier you wear in that spot are salvaged when they drop.', later: 'Coming soon: foes do not drop gear yet, so there is nothing to salvage.' }] },
+  { at: 75, rw: [{ id: 'd_string', kind: 'cosmetic', n: 'Camp decoration: Lantern String', later: 'Coming soon: it will hang in camp.' }] },
   { at: 100, rw: [{ id: 'hints', kind: 'qol', n: 'Exact Codex hints', txt: 'Every blank entry says exactly where to find it, at any Library level.', live: true }] },
-  { at: 150, rw: [{ id: 'c_amber', kind: 'cosmetic', n: 'Lantern colour: Hearth Amber', later: 'Saved: hero lantern colours arrive with hero cosmetics.' }] },
+  { at: 150, rw: [{ id: 'c_amber', kind: 'cosmetic', n: 'Lantern colour: Hearth Amber', later: 'Coming soon: hero lantern colours.' }] },
   { at: 200, rw: [{ id: 't_wayfinder', kind: 'title', n: 'Title: the Wayfinder', live: true }] },   // W1-C: no expeditions in solo: a title
-  { at: 250, rw: [{ id: 'salvage2', kind: 'qol', n: 'Auto-salvage, full', txt: 'Rules per kind by rarity and tier, with a switch to keep Masterwork gear.', later: 'Saved for later, like the basic filter.' }] },
-  { at: 300, rw: [{ id: 't_relighter', kind: 'title', n: 'Title: Relighter', live: true }, { id: 'd_moth', kind: 'cosmetic', n: 'Camp decoration: Moth Lanterns', later: 'Saved: shows once the camp scene shows decorations.' }] },
-  { at: 350, rw: [{ id: 'bag10', kind: 'qol', n: 'Bag +10', txt: 'Ten more spare items fit in your bag.', later: 'Saved: the bag grows when it learns to read this bonus.' }] },
-  { at: 400, rw: [{ id: 'queue1', kind: 'qol', n: '+1 queued build', txt: 'Line up one more build per builder.', later: 'Saved: the camp builders take it once they read this bonus.' }] },
-  { at: 450, rw: [{ id: 'c_motes', kind: 'cosmetic', n: 'Hero trail: Lantern Motes', later: 'Saved: arrives with hero cosmetics.' }] },
-  { at: 500, rw: [{ id: 't_keeper', kind: 'title', n: 'Title: the Chronicler', live: true }, { id: 'd_lectern', kind: 'cosmetic', n: 'Camp decoration: Codex Lectern', later: 'Saved: shows once the camp scene shows decorations.' }] },
-  { at: 600, rw: [{ id: 'forecast', kind: 'qol', n: 'Almanac forecast: 3 days ahead', later: 'Saved: the Almanac will show it in a later update.' }] },
-  { at: 700, rw: [{ id: 'c_star', kind: 'cosmetic', n: 'Lantern colour: Starlight', later: 'Saved: arrives with hero cosmetics.' }] },
-  { at: 800, rw: [{ id: 't_lightbringer', kind: 'title', n: 'Title: Lightbringer', live: true }, { id: 'd_flame', kind: 'cosmetic', n: "The Hearth's flame burns white-gold", later: 'Saved: shows once the camp scene shows decorations.' }] },
-  { at: 900, rw: [{ id: 'deepreroll', kind: 'qol', n: 'Deepwell: +1 reroll per run', later: 'Saved: works when the Deepwell opens.' }] },
-  { at: 1000, rw: [{ id: 't_lanternfall', kind: 'title', n: 'Title: the Everlit', live: true }, { id: 'c_crown', kind: 'cosmetic', n: 'Hero cosmetic: the Lantern Crown', later: 'Saved: arrives with hero cosmetics.' }] },
-  { at: 1100, rw: [{ id: 'd_lantern', kind: 'cosmetic', n: 'A replica Great Lantern above camp', later: 'Saved: shows once the camp scene shows decorations.' }] }
+  { at: 250, rw: [{ id: 'salvage2', kind: 'qol', n: 'Auto-salvage, full', txt: 'Rules per kind by rarity and tier, with a switch to keep Masterwork gear.', later: 'Coming soon, with the basic filter.' }] },
+  { at: 300, rw: [{ id: 't_relighter', kind: 'title', n: 'Title: Relighter', live: true }, { id: 'd_moth', kind: 'cosmetic', n: 'Camp decoration: Moth Lanterns', later: 'Coming soon: it will show in camp.' }] },
+  { at: 350, rw: [{ id: 'bag10', kind: 'qol', n: 'Bag +10', txt: 'Ten more spare items fit in your bag.', later: 'Coming soon: your bag does not grow yet.' }] },
+  { at: 400, rw: [{ id: 'queue1', kind: 'qol', n: '+1 queued build', txt: 'Line up one more build per builder.', later: 'Coming soon: builders do not use it yet.' }] },
+  { at: 450, rw: [{ id: 'c_motes', kind: 'cosmetic', n: 'Hero trail: Lantern Motes', later: 'Coming soon: hero looks.' }] },
+  { at: 500, rw: [{ id: 't_keeper', kind: 'title', n: 'Title: the Chronicler', live: true }, { id: 'd_lectern', kind: 'cosmetic', n: 'Camp decoration: Codex Lectern', later: 'Coming soon: it will show in camp.' }] },
+  { at: 600, rw: [{ id: 'forecast', kind: 'qol', n: 'Almanac forecast: 3 days ahead', later: 'Coming soon: the Almanac does not show it yet.' }] },
+  { at: 700, rw: [{ id: 'c_star', kind: 'cosmetic', n: 'Lantern colour: Starlight', later: 'Coming soon: hero looks.' }] },
+  { at: 800, rw: [{ id: 't_lightbringer', kind: 'title', n: 'Title: Lightbringer', live: true }, { id: 'd_flame', kind: 'cosmetic', n: "The Hearth's flame burns white-gold", later: 'Coming soon: it will show in camp.' }] },
+  { at: 900, rw: [{ id: 'deepreroll', kind: 'qol', n: 'Deepwell: +1 reroll per run', live: true }] },
+  { at: 1000, rw: [{ id: 't_lanternfall', kind: 'title', n: 'Title: the Everlit', live: true }, { id: 'c_crown', kind: 'cosmetic', n: 'Hero cosmetic: the Lantern Crown', later: 'Coming soon: hero looks.' }] },
+  { at: 1100, rw: [{ id: 'd_lantern', kind: 'cosmetic', n: 'A replica Great Lantern above camp', later: 'Coming soon: it will show in camp.' }] }
 ];
 
 // Page defs. bless: CAMP_BLESS id opened at 50%. seal: { key, v, txt } bonus at 100% (key null =
