@@ -25,6 +25,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 
 - Read `docs/design/systems-map.md` flags before touching an economy card. Open flags: wood and essence pile up, iron ore is idle (Transmute is lossy), cobalt needs Mining 64 with no hint, Smithing is dead past 54, gold is the only mid-game choke, Renown/Stamps/boss tokens have no spend, tents 6 to 10 are unbuildable, the Renown Day omen does nothing. (systems-map, 2026-10-06)
 - Register any new currency-like counter in the systems map with a source and a sink. Why: the check fails on a currency with no source or sink, and on an unregistered counter. (systems-map, 2026-10-06)
+- Check any reward or shop design against the standing reward lines in `DECISIONS.md` (enemies never drop crafting materials; gold is the flat camp budget; the Armoury owns bag room and loadouts) before proposing what it pays. Why: the monetisation red team found caches paying materials and a paid Armoury room that the Armoury building already sells. (monetisation plan, 2026-10-06)
 - No hard progress walls. Why: walls are the top long-play quit reason in the research set (99 mentions); the 50h run shows 9 to 10 stalls of an hour or more per hero and a 12h wall near zones 24 to 25. (f-fun-library, f-health-long)
 
 ## Story and lore
@@ -66,6 +67,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Do not repeat card text in the bell notice. Why: Codex P2 on PR #43, still open. (away-clarity, 2026-10-06)
 - Give every new checkbox or button in a sheet a 44px minimum height, and when a control repeats one already on screen, update both from the same state. Why: Codex P1/P2 on the Try again card (Auto toggle was 18px tall and drifted from the Fight tab's). (wall-try-again, 2026-10-06)
 - Delay the Aim hint until the foe's swing lands. Why: it covered the Dodge and Parry cues. Guide tips already show one at a time; leave that. (first-minute-flow, 2026-10-06)
+- Mark any reward, hint or card the game cannot deliver yet as "Coming soon", in the place the player first sees it (not only after claiming). Why: 15 Codex rewards said "Saved for later" only after they were claimed, and Jory's and Ashby's hints promised a hire the game never made. (promises-pass, 2026-10-06)
 
 ## Saves and offline parity
 
@@ -83,8 +85,10 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Re-run CI once if the runner dies mid-check (PR #40 did). Never push an empty commit to kick it. (story, 2026-10-05)
 - If the integration branch moved, merge it in, re-check, and wait for CI on the merge commit before merging the PR. (f-ci and later cards)
 - Path guard: PRs touching online files, the save-key line or `netlify.toml` need the `cal-approved` label, which only Cal applies. (f-ci)
+- Close story sheets in any scripted browser run before clicking game UI, and test "a tap restarts a wait" by tapping repeatedly past the original deadline, not at one timed moment. Why: the opening card blocked perf's clicks and the single-tap timing flaked on a loaded runner. (perf-story-click-fix, 2026-10-06)
 - Run the `--long` health run only on 3 or more cores (about 2.5 min, 7 min CPU). It ignores `--only`, known P2. (f-health-long, 2026-10-06)
 
+- Story cards stack in the first minute (three before the first fight on a fresh save) and their count varies by timing: a proof route uses `tap-if "Skip"`, never a fixed number of taps. Predicted: routes replay stable; measured: one fixed-skip route failed 1 run in 3 locally, `tap-if` passed 5 of 5. (sys-proof-ci, 2026-10-06)
 ## Reviews and Codex
 
 - "@codex review" must be commented by hand after opening the PR; auto review does not fire. Why: seen on fix-bounty-kind. Codex drips one P1 per round, so close the whole class of a finding at once. (fix-bounty-kind, 2026-10-05)
@@ -111,4 +115,6 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Split anything outside the card's files into a new card instead of building it on the spot (pre-leave notice, Boss-ready gate and the `--long` run were each split off). (away-clarity, first-minute-flow, f-health)
 - With no route to the Foreman, send AUTOPILOT DONE to the coordinator. (systems-map and others, 2026-10-06)
 - After a merge, send AUTOPILOT DONE at once: a merge with no follow-up start leaves build slots empty (stalled 01:25 to 05:22 on 2026-10-06). (foreman, 2026-10-06)
+- Check any pick that needs new art against the art freeze in `CLAUDE.md` before costing it: new looks, sparks and effects come as complete Codex art packs, never drawn in code by agents. Why: Codex P1 on PR #61, the money plan costed store looks and the parry spark as cheap code. (monetisation plan, 2026-10-06)
+- Commit a design decision's red-team and judge records into the repo and link them relatively; `/mnt/project-files` paths do not survive for reviewers. Why: Codex P1 on PR #61. (monetisation plan, 2026-10-06)
 - Always ask whether a card needs Cal's gates: ship-it, online layer, Netlify beyond the weekly deploy, money or legal, network settings, outside contact. (playbook)
