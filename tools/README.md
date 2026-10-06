@@ -107,7 +107,7 @@ tries a tuning change first. See `docs/design/difficulty-budget.md`.
 ## First-hour walk
 
 `node tools/walk.mjs --seed 1` plays 60 game minutes of the built game as a casual player (reads `LF_EYES`, follows each
-guide tip and Next Up, parries and dodges at set rates) on a fake clock, and writes `tools/.walk/walk-<date>.md` and `.json`
+guide tip and Next Up, presses moment cards and spends gold on Training every 45 s, parries and dodges at set rates) on a fake clock, and writes `tools/.walk/walk-<date>.md` and `.json`
 plus shots: the scorecard values F1 to F6, F10 and P4, each beat of `docs/design/first-hour.md` against the minute it
 happened (over 50% off is listed), the stretches with nothing new, and every eyes finding (tip over the fighters, off-phase
 tip, clipped text, a covered button, a marker that leads nowhere, a stall). It never sets game state. Options: `--size p|l`,

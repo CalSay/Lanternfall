@@ -19,7 +19,7 @@
 // The player: reads LF_EYES (src/js/89-eyes-hook.js) and presses what a person presses. It reads each guide tip for 1.2 s and then
 // presses what it names; it parries and dodges at the set rates when the foe winds up; it presses the timed ring at the right
 // moment at the parry rate; it taps Next Up's Go and presses the one button the panel then offers (Craft, Claim, Equip, Spend, Build,
-// Light, Start); it dismisses story cards and the picker. It never forces the game's state: nothing is set through `eval`, only read.
+// Light, Start); it dismisses story cards, moment cards (Continue) and the picker, and every 45 s opens Hero and presses the lit Train buttons. It never forces the game's state: nothing is set through `eval`, only read.
 // Game time is a fake clock stepped in 100 ms frames (33 ms while a foe winds up), so a run is repeatable for a seed.
 //
 // What it logs, with game time and a shot: every tip, toast, card and banner, every unlock (S.onboard.got), each zone first clear,
@@ -107,7 +107,7 @@ const OBS = `(() => {
   const q = (sel, f) => [...document.querySelectorAll(sel)].filter(vis).map(f || tx);
   const o = { phase: LF_EYES.phase(), tip: LF_EYES.tip(), sfx: LF_EYES.sfx() };
   o.toasts = q('#toasts .toast');
-  o.cards = q('.bsheet-ov, .tv-card, .cb-banner, .tv-banner, .gl-card, .away-ov, .modal, .dd-feat, .feat-card', n => ({ cls: (n.className || '').toString().split(' ')[0], text: tx(n).slice(0, 160) }));
+  o.cards = q('.mm-ov, .mm-toast, .bsheet-ov, .tv-card, .cb-banner, .tv-banner, .gl-card, .away-ov, .modal, .dd-feat, .feat-card', n => ({ cls: (n.className || '').toString().split(' ')[0], text: tx(n).slice(0, 160) }));
   o.tabs = q('.tabs .tab');
   o.create = !!document.querySelector('#createScreen') && vis(document.querySelector('#createScreen'));
   o.floats = LF_EYES.floats().map(f => f.txt).slice(0, 6);
@@ -122,7 +122,7 @@ const OBS = `(() => {
 
 // ---------------- driving ----------------
 let browser, ctx, page;
-const X = s => page.evaluate(s => window.__t.x(s), s);
+const X = async s => { for (let i = 0; i < 50; i++) { const r = await page.evaluate(s => window.__t ? { v: window.__t.x(s) } : null, s); if (r) return r.v; await new Promise(r => setTimeout(r, 100)); } throw new Error('the game never started (window.__t is missing)'); };
 async function advance(ms, step) {
   await page.evaluate(c => { window.__ptStep = c; }, step);
   let left = ms; while (left > 0) { const d = Math.min(left, 1000); await page.clock.runFor(d); left -= d; }
@@ -156,7 +156,7 @@ async function click(sel, _to) {
   if (firstTapAt === null) firstTapAt = gt;
   return true;
 }
-const DISMISS = '.bsheet-ov .sty-done, .bsheet-ov .sty-skip, .bsheet-ov .big, .bsheet-ov button.ok, .away-ov button, .tv-card button, .gl-card button, .modal .ok, .modal .big';
+const DISMISS = '.mm-ov .mm-go, .bsheet-ov .sty-done, .bsheet-ov .sty-skip, .bsheet-ov .big, .bsheet-ov button.ok, .away-ov button, .tv-card button, .gl-card button, .modal .ok, .modal .big';
 
 // ---------------- the player ----------------
 const st = { tipKey: '', tipSince: 0, defKey: '', defDo: '', defDone: false, ringKey: '', stuckSince: 0, lastAct: 0, nuAt: -99, panelAt: -99, cardSeen: new Map(), toastSeen: new Set(), got: {}, prev: null, calls: {} };
@@ -251,7 +251,7 @@ async function dismissCards(o) {
   if (oldest && gt - oldest.first >= 2.4 && gt - st.lastCard >= 0.6) { st.lastCard = gt; if (await click(DISMISS, 300)) return true; }
   return false;
 }
-st.lastCard = -9; st.tabAt = -9; st.phAt = 0;
+st.lastCard = -9; st.tabAt = -9; st.phAt = 0; st.trainAt = 30;
 
 // Next Up: when the chip says Ready, open the list, press Go on the first ready goal and press the one button the panel offers.
 const GO_WORDS = /^(craft|claim|equip|spend|build|light|start|collect|learn|use|buy|train|upgrade|promote|open|forge|brew|set|wear|cook|hire|send|accept|ok|got it|continue)\b/i;
@@ -271,6 +271,18 @@ async function followNextUp(o) {
   await page.evaluate(() => document.querySelectorAll('[data-walk]').forEach(n => n.removeAttribute('data-walk')));
   await note(page, 'nextup', `${chipReady}${did ? ' -> pressed "' + did + '"' : ' -> nothing to press'}`, { extra: { goal: chipReady, pressed: did } });
   await advance(500, 16);
+  await click('.tabs .tab:text(Fight)', 300);
+  return true;
+}
+
+// A casual player spends gold on Training now and then: Hero, Training, press every Train button that is lit, back to the fight.
+async function train(o) {
+  if (!(await click('.tabs .tab:text(Hero)', 300))) return false;
+  await advance(300, 16);
+  await click('[role=tab]:text(^Training)', 300); await advance(250, 16);
+  let n = 0;
+  while (n < 10 && await click('button[aria-label^="Train "]', 300)) { n++; await advance(120, 16); }
+  if (n) await note(page, 'train', `spent gold on ${n} Training level${n === 1 ? '' : 's'}`, { shot: false });
   await click('.tabs .tab:text(Fight)', 300);
   return true;
 }
@@ -345,6 +357,7 @@ async function run() {
     // back to the fight once a tip or Next Up has been served: a menu that stays open leaves the foe waiting
     if (!did && o.s.tab && o.s.tab !== 'adv' && !o.tip && o.cards.length === 0 && gt - st.tabAt > 2.5) { st.tabAt = gt; did = await click('.tabs .tab[data-tab="adv"]', 300); }
     if (!did && (o.phase === 'idle') && gt - st.nuAt >= 6 && o.cards.length === 0) { st.nuAt = gt; did = await followNextUp(o); }
+    if (!did && o.phase === 'idle' && o.cards.length === 0 && !o.tip && o.s.gold >= 8 && gt - st.trainAt >= 45) { st.trainAt = gt; did = await train(o); }
     const fine = o.phase === 'foe wind-up' || o.phase === 'parry or dodge window' || false;   // the 33 ms step is for the foe's wind-up and the parry window only
     await advance(fine ? 33 : 100, fine ? 16 : 100);
   }
