@@ -173,7 +173,7 @@ let clsEvo, clsProven, clsStrength, clsGate, provingInfo, provingStart, evoChoic
     const prove = !!(c.evo && !C().proven[c.evo]);   // a granted path proves itself (3.7)
     const need = prove || (!c.evo && !anyWon());
     return { id: tr.id, trial: tr, n: rec.n || 0, won: !!rec.won, best: rec.best || 0, prove, gate: g, open: g.open && need, choice: evoChoice(),
-      why: !need ? '' : !g.bossOk ? 'Beat the Fenmother first.' : !g.lvOk ? `Reach level ${g.lv} first.` : '' };
+      why: !need ? '' : !g.bossOk ? 'Beat the Hollow’s Elder first.' : !g.lvOk ? `Reach level ${g.lv} first.` : '' };
   };
   provingStart = opts => {
     const p = provingInfo();

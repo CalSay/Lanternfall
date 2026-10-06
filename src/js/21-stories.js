@@ -31,7 +31,7 @@ const BIOS = {
   vesper: 'Vesper sings in taverns for a coin and a bed, and fights for free when the song is good. She knows every road song in Lanternfall. She wrote half of them, and changed the endings.',
   elowen: 'The land is called Lanternfall because of what Elowen did the night the lights went out. She will not talk about it. She keeps her flame low.',
   caedmon: 'Caedmon walked into the Ashen Wyrm\'s fire to buy a village one hour. He walked out three days later, still burning. He does not sleep, and he does not talk about what he saw in the flame.',
-  corvin: 'Corvin killed for the Hollow King for twenty years and never once saw his face. When the King fell, Corvin was the only one who did not kneel. He fights for you because you asked, and nobody ever had.'
+  corvin: 'Corvin killed for the Hollow King for twenty years and never once saw his face. When the curtain came down, there was no one behind it. Corvin was the only one who did not kneel. He fights for you because you asked, and nobody ever had.'
 };
 
 const JOIN_LINES = {

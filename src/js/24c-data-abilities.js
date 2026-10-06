@@ -25,7 +25,7 @@ const SCROLLS = {
   hollow: { id: 'hollow', name: 'Hollow Scroll', tier: 2, col: '#B58CFF', from: 'zone bosses 5 to 12' },
   barrow: { id: 'barrow', name: 'Barrow Scroll', tier: 3, col: '#FFB36B', from: 'zone bosses 13 to 20' },
   roadlight: { id: 'roadlight', name: 'Roadlight Scroll', tier: 4, col: '#F2C14E', from: 'zone bosses 21 and on' },
-  mother: { id: 'mother', name: 'Mother Scroll', tier: 5, col: '#BFF7E8', from: 'the Fenmother and other region bosses' }
+  mother: { id: 'mother', name: 'Mother Scroll', tier: 5, col: '#BFF7E8', from: 'the Hollow\u2019s Elder and other region bosses' }
 };
 const SCROLL_ORDER = ['moss', 'hollow', 'barrow', 'roadlight', 'mother'];
 // a zone boss's Scroll by zone; a region boss (the Fenmother, zone 35) always drops the Mother Scroll

@@ -1,6 +1,8 @@
 // 56c-unlocks (C9): permanent hero routes, boss-token pity and bounty Renown.
 // CORE FILE: no DOM or storage. Pickers call heroRouteInfo/heroUnlock; only complete solo kits can carry the lamp.
 // Reads never spend resources or add progress. Free routes are filed once a second; paid routes require one claim.
+// Story gate (story-opening, bible 4.4 and 4.5): a hero cannot unlock before the zone where their first scene plays (STORY_MEET).
+// A hero the save already owns (S.party.unlock.heroes) is kept. The gate only holds back new unlocks.
 // Save defaults under S.party.unlock: renown (existing), heroes {id:1}, quests {id:1}, tokens {id:{miss,won}},
 // milestones {id:timestamp}. No save-key change: missing maps default empty; starters stay unlocked.
 // API: heroHasKit/heroBio (56-roster), heroRouteInfo -> {state,unlocked,playable,ready,how,bio,cost},
@@ -59,6 +61,16 @@ const UNLOCK_TUNE = {
 
 };
 
+// Where each hero first appears: the first zone of the area in the bible 4.5 table (areas are 5 zones, 7 to a chapter), or zone 36
+// for "Ch1 end" (after the Fenmother). `ch` is the chapter, which the locked line uses without naming a place.
+const STORY_MEET = {
+  hesketh: [1, 1], hob: [1, 1], anselm: [11, 1], maren: [16, 1], morwen: [21, 1], grenna: [26, 1], bram: [31, 1], thessaly: [31, 1],
+  elowen: [36, 1], vesper: [36, 1],
+  loveday: [36, 2], aldric: [41, 2], cass: [51, 2],
+  caedmon: [71, 3], davy: [76, 3], isolde: [81, 3], beatrix: [81, 3], linnet: [86, 3], ferrin: [91, 3], oswin: [101, 3],
+  kestrel: [106, 4], eskil: [106, 4], oriel: [116, 4], inga: [116, 4], solveig: [126, 4], brynja: [131, 4], ragna: [131, 4], asta: [136, 4],
+  corvin: [156, 5]
+};
 let addRenown, renown, caedmonRenown, heroRouteInfo, heroUnlocked, heroCanPlay, heroUnlock, heroPick,
   tokenChance, unlockTokenRoll, heroProbe;
 {
@@ -81,7 +93,7 @@ let addRenown, renown, caedmonRenown, heroRouteInfo, heroUnlocked, heroCanPlay, 
     const gold = goldOf(q), rn = q.spendRenown ? (q.renown || 0) : 0;
     const price = [gold ? `${fmt(gold)} gold` : '', ...mats.map(l => matText(...l)), rn ? `${rn} Renown` : ''].filter(Boolean).join(' and ');
     return { pending: !!q.pendingFee, gated: !!open, ready: !q.pendingFee && !!open && S.gold >= gold && mats.every(([k, t, n]) => have(k, t) >= n) && renown() >= rn,
-      how: how + (q.pendingFee ? ` The ${q.pendingFee} fee is still being designed.` : price ? ` Bring ${price}.` : ''), cost: { gold, mats, renown: rn }, paid: !!(gold || mats.length || rn) };
+      how: how + (q.pendingFee ? ' They are not ready to join yet.' : price ? ` Bring ${price}.` : ''), cost: { gold, mats, renown: rn }, paid: !!(gold || mats.length || rn) };
   };
   const free = (ready, how) => ({ ready: !!ready, how, cost: { gold: 0, mats: [], renown: 0 }, paid: false });
   const fallback = q => (q.fallback && S.maxZone >= q.fallback) || (q.fallbackBoss && S.maxZone > q.fallbackBoss);
@@ -103,7 +115,9 @@ let addRenown, renown, caedmonRenown, heroRouteInfo, heroUnlocked, heroCanPlay, 
     if (id === 'asta') return claim(got(q.freeWith) ? { ...q, pendingFee: null } : q, `Reach the Last Descent (zone ${q.from}). Free if Solveig is at camp.`);
     return free(false, ROSTER[id].how || 'More of this route comes later.');
   };
-  const route = id => {
+  const metScene = id => !STORY_MEET[id] || (S.maxZone || 1) >= STORY_MEET[id][0];
+  const meetLine = id => { const m = STORY_MEET[id]; return id === 'hesketh' ? 'You meet him on the road.' : m && m[1] === 1 && m[0] < 36 ? 'You meet them in the Hollow.' : 'You meet them further down the road.'; };
+  const route0 = id => {
     const r = heroKnown(id) && ROSTER[id]; if (!r) return free(false, 'Unknown hero.');
     if (r.route.type === 'starter') return free(true, 'Unlocked. Pick up the lamp.');
     if (T.designed[id]) return designed(id);
@@ -113,12 +127,18 @@ let addRenown, renown, caedmonRenown, heroRouteInfo, heroUnlocked, heroCanPlay, 
     if (id === 'aldric') return claim(T.aldric, `Earn ${T.aldric.renown} Renown on the bounty board and reach zone ${T.aldric.zone}.`, renown() >= T.aldric.renown && S.maxZone >= T.aldric.zone);
     if (id === 'vesper') return free(renown() >= T.vesperRenown, `Earn ${T.vesperRenown} Renown on the bounty board.`);
     if (id === 'caedmon') return free(caedmonRenown() >= T.caedmon.renown && S.maxZone > T.caedmon.zone, `Beat the zone ${T.caedmon.zone} boss and earn ${T.caedmon.renown} Renown. Each world boss kill counts as ${T.wyrmRenown} Renown.`);
-    if (id === 'anselm') return { ...free(false, 'Anselm’s route was a Tavern visit. His solo unlock route is still being designed.'), pending: true, gated: S.maxZone >= T.visitors.anselm.from };
+    if (id === 'anselm') return { ...free(false, 'Anselm is not ready to join yet.'), pending: true, gated: S.maxZone >= T.visitors.anselm.from };
     if (T.tokens[id]) { const q = T.tokens[id]; return free(token(id).won, `Win a ${q.name} from ${q.zoneType != null ? ZONES[q.zoneType] + ' bosses' : 'zone bosses'} from zone ${q.from}. You will find one within ${q.pity} eligible wins.`); }
     if (id === 'thessaly') return free(bestiary(T.thessaly.type, T.thessaly.tier), `Fill the Marsh Wraith bestiary page to tier ${T.thessaly.tier}.`);
     if (id === 'corvin') return free((S.stats.bosses || 0) >= T.corvin.bosses && TYPES.every(t => bestiary(t.key, T.corvin.tier)), `Kingslayer: beat ${T.corvin.bosses} zone bosses and fill every bestiary page to tier ${T.corvin.tier}.`);
     if (id === 'oriel') return free((S.craft.starChart || 0) > 0, 'Craft a Star Chart at the Enchanter’s Table.');
     return free(false, r.how);
+  };
+  // A hero whose first scene has not played cannot unlock yet (a hero the save owns is not asked).
+  const route = id => {
+    const r = route0(id);
+    if (got(id) || metScene(id)) return r;
+    return { ...r, ready: false, paid: false, pending: false, gated: false, how: meetLine(id), story: true };
   };
 
   renown = () => U().renown;
@@ -133,7 +153,7 @@ let addRenown, renown, caedmonRenown, heroRouteInfo, heroUnlocked, heroCanPlay, 
   heroRouteInfo = id => {
     if (!heroKnown(id)) return null;
     const r = route(id), unlocked = heroUnlocked(id), kit = heroHasKit(id);
-    return { id, ...r, unlocked, playable: unlocked && kit, state: unlocked ? (kit ? 'unlocked' : 'coming-soon') : r.pending && r.gated ? 'coming-soon' : 'locked', bio: heroBio(id) };
+    return { id, ...r, unlocked, playable: unlocked && kit, state: unlocked ? (kit ? 'unlocked' : 'coming-soon') : r.pending && r.gated ? 'coming-soon' : 'locked', bio: unlocked ? heroBio(id) : '', meet: ROSTER[id].route.type === 'starter' ? '' : meetLine(id) };
   };
   heroUnlock = id => {
     if (!heroKnown(id)) return false;
