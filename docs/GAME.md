@@ -139,7 +139,7 @@ The bell opens Notices, the Journal and Settings. Achievements (Deeds) and the C
 - **Save:** `localStorage` key `lanternfall.save.v5` (`30-state.js`, `05-platform.js`).
 - **Save codes** (`55-savecode.js`, `75-savecode-ui.js`): export and import, with a strict check and an in-page confirm.
 - **Feedback** (`55-errors.js`, `75-feedback-ui.js`): local error capture and a Send feedback button.
-- **Away report** (`75-away.js`) and the stats wall (`55-stats.js`, `75-stats-ui.js`).
+- **Away report** (`75-away.js`) and the stats wall (`55-stats.js`, `75-stats-ui.js`). The report leads with what happened; a fighter sees "gathering continues, fighting stops" first, and the work-limit bar sits after the results.
 
 ## Online (do not change without a task that says so)
 
