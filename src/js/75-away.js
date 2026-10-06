@@ -81,24 +81,17 @@ let showAwayReport;
     const top = el('div', 'away-top');
     const eyebrow = el('div', 'away-eye', 'While you were away'); eyebrow.id = 'awayTitle';
     top.append(eyebrow, el('div', 'away-time', hm(r.secs)));
-    if (r.cap) {
-      const lim = el('div', 'away-lim'), bar = el('div', 'bar'), fill = el('i');
-      fill.style.width = Math.min(100, r.t / r.cap * 100) + '%';
-      bar.append(fill);
-      lim.append(bar, el('span', null, r.capped ? 'Hero work limit reached' : `Your hero worked ${hm(r.t)} of ${hm(r.cap)}`));
-      top.append(lim);
-    }
-    if (r.capped) {
-      const cap = el('div', 'away-cap');
-      cap.append(img(IC.glass()), el('span', null, `Your hero works for up to ${hm(r.cap)} away. Gatherer jobs, trade runs and camp builds finish on their own schedules. Hourglass relics and the Watchtower raise the hero's limit, up to 24 hours.`));
-      top.append(cap);
-    }
     body.append(top);
 
     // ---- what the hero did ----
     const actIc = r.activity === 'gather' ? (SKILL_IC[skillOf(S.node.kind)] || SKILL_IC.mine)() : r.activity === 'raid' ? IC.flame() : IC.sword();
     const note = String(r.note || '').replace(/ \w+ is now level \d+\.$/, '');
-    if (note) { const n = el('p', 'away-note'); n.append(img(actIc), el('span', null, note)); body.append(n); }
+    if (note && !r.turnCombat) { const n = el('p', 'away-note'); n.append(img(actIc), el('span', null, note)); body.append(n); }
+    if (r.activity === 'fight') {
+      const rule = el('p', 'away-rule');
+      rule.append(img(IC.glass()), el('span', null, 'While away, gathering continues and fighting stops. Set your hero to gather before you go.'));
+      body.append(rule);
+    }
 
     // ---- headline numbers ----
     const tiles = el('div', 'away-tiles');
@@ -160,6 +153,24 @@ let showAwayReport;
       }
       body.append(b);
     }
+
+    // ---- the hero's work limit, after the results ----
+    const lim0 = el('div', 'away-limwrap');
+    if (!r.turnCombat) {
+    if (r.cap) {
+      const lim = el('div', 'away-lim'), bar = el('div', 'bar'), fill = el('i');
+      fill.style.width = Math.min(100, r.t / r.cap * 100) + '%';
+      bar.append(fill);
+      lim.append(bar, el('span', null, r.capped ? 'Hero work limit reached' : `Your hero worked ${hm(r.t)} of ${hm(r.cap)}`));
+      lim0.append(lim);
+    }
+    if (r.capped) {
+      const cap = el('div', 'away-cap');
+      cap.append(img(IC.glass()), el('span', null, `Your hero works for up to ${hm(r.cap)} away. Gatherer jobs, trade runs and camp builds finish on their own schedules. Hourglass relics and the Watchtower raise the hero's limit, up to 24 hours.`));
+      lim0.append(cap);
+    }
+    }
+    if (lim0.children.length) body.append(lim0);
 
     // ---- lines from other systems (registerAwayLine) ----
     // A line may name its own block (group, e.g. 'Next up') and carry a Go button (go()).
