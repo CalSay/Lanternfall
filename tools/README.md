@@ -22,6 +22,13 @@ A zero exit status with skipped browser sections does not establish that the bro
 the default runs independent sections in parallel. `node tools/perf.mjs --quick` runs the existing
 performance budgets without changing their thresholds. Build first so both commands test current code.
 
+## Playtest driver
+
+`node tools/playtest.mjs look | tap "<label>" | wait <seconds> | away <hours> | state | new [fresh|early|mid|late]` plays the
+built game in Chromium the way a player does (portrait 360x740, `--landscape` for 740x360) and keeps its save, clock and
+screenshots in `--session <dir>` (default `.playtest/`). Build first. How an agent runs a persona session and what to
+report: `docs/coord/playtest-lab.md`.
+
 ## Browser discovery and overrides
 
 The shared browser finder supports the project Playwright installation, its managed Chromium, installed
