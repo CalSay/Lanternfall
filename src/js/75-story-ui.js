@@ -242,5 +242,20 @@ var storyUI;   // var: 75-codex-ui (earlier in the build) reads it at run time
     update() {}
   });
 
+  // Vesper's verse (bible 7): once an Elder is down, the newest verse she has written, as its own Tavern section (story-systems-hollow)
+  if (typeof registerSection === 'function') {
+    let sec = null, vp = null;
+    registerSection('tav', {
+      id: 'story-verse', title: '',
+      mount(node) { sec = node; vp = el('p', 'note tav-verse'); sec.append(vp); },
+      update() {
+        const vs = typeof storyVerseLatest === 'function' ? storyVerseLatest() : null;
+        if (!sec) return;
+        sec.hidden = !vs;
+        { const t = vs ? 'Vesper sings: ' + vs.lines.join(' ') : ''; if (vp.textContent !== t) vp.textContent = t; }
+      }
+    });
+  }
+
   storyUI = { open: id => openEntry(id), list: codex => openList(!!codex), codexRow };
 }

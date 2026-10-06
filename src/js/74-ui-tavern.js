@@ -5,11 +5,6 @@ async function uiTavern() {
   if (document.activeElement !== $('nameInput') && !$('nameInput').value) $('nameInput').value = S.name;
 
   const box = $('online');
-  // Vesper's verse (bible 7): once an Elder is down, the newest verse she has written, as a bubble above who is here (story-systems-hollow).
-  const vs = typeof storyVerseLatest === 'function' ? storyVerseLatest() : null;
-  let vb = $('tavVerse');
-  if (!vb && box.parentNode) { vb = el('p', 'note tav-verse'); vb.id = 'tavVerse'; vb.hidden = true; box.parentNode.insertBefore(vb, box); }
-  if (vb) { const txt = vs ? 'Vesper sings: ' + vs.lines.join(' ') : ''; if (vb.textContent !== txt) vb.textContent = txt; vb.hidden = !vs; }
   const seen = new Set(), list = [];
   for (const p of online.peers) {
     if (p.kind !== 'viewer' || !p.presence || !p.presence.hero || seen.has(p.peer)) continue;

@@ -8603,6 +8603,8 @@ if (section('story-systems-hollow')) try {
   assert(V('storyVerseLatest()') === null, 'systems-hollow: Vesper sings nothing before the Elder is down');
   V('S.story.seen["e:fen:post"] = 1');
   assert(V('storyVerseLatest().id') === 'fen' && V('storyVerseLatest().lines[0]').startsWith('The marsh'), 'systems-hollow: Vesper\'s verse shows once the Elder is down');
+  assert(!/tavVerse/.test(fs.readFileSync(path.join(ROOT, 'src', 'js', '74-ui-tavern.js'), 'utf8')), 'systems-hollow: the shared Tavern UI is untouched');
+  assert(/registerSection\('tav', \{\s*id: 'story-verse'/.test(fs.readFileSync(path.join(ROOT, 'src', 'js', '75-story-ui.js'), 'utf8')), 'systems-hollow: Vesper\'s verse is a Tavern section');
   // Hands: Tam's words, Rook after the zone 30 boss, Ada and Pell the morning after the Hollow's Elder, Fennel's chapel after Elowen
   const HOUR = 3600e3, T0 = new Date(2026, 8, 28, 12).getTime();
   const pulse = (h, n = 12) => { for (let i = 0; i < n; i++) h.fn.tick(0.1); };

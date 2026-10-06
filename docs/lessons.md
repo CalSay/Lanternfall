@@ -49,6 +49,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 
 - Give every persistent key a default in its `registerState` block, even one inside a free-form object, and list each roster item as its own Codex entry instead of folding it into a legacy type tile. Why: Codex P1s on PR #56 (routes.hollowDawn, Bestiary lines under "Moss Slime"). (story-systems-hollow, 2026-10-06)
 - Reuse one `loadCore` per new check section. Why: the full check hit Node's default heap limit in Codex's environment once the section made a dozen cores. (story-systems-hollow, 2026-10-06)
+- New UI for a story beat goes in its own `registerSection` in a feature file, never as an edit to a shared menu file such as `74-ui-tavern.js` (Codex P1, story-systems-hollow).
 
 ## UI and menus
 
