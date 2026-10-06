@@ -10,11 +10,12 @@ its compact-stage-on-scroll is gone, because a menu no longer shares the screen 
 
 **Portrait (phones; any viewport taller than wide, or narrower than 600 px).** Max width 560 px, centred.
 
-1. **Header, 48 px.** Portrait with level, name and XP bar, gold and embers, the bell. Always visible.
-2. **Game view.** The stage box fills the space (`flex: 1`, at least 180 px), then the control row
-   (Fight / Gather / Raid, zone stepper), then the **Next Up chip**: the top goal with its progress along
-   the bottom edge, "Ready" or a percent, and "+N" for the other goals (orange when more than one is ready).
-   Tap the chip for the full list in a sheet; each row has a Go button.
+1. **Header, 48 px.** Portrait with level, name and XP bar, the zone pill with the zone arrows beside it (portrait only),
+   gold and embers, the bell. Always visible.
+2. **Game view.** One line under the header holds Fight / Gather (left) and the **Next Up chip** (right): the top goal in
+   full, on as many lines as it takes, with "Ready" or a percent and "+N" for the other goals (orange when more than one is
+   ready). Tap the chip for the full list in a sheet; each row has a Go button. The stage box fills the rest (`flex: 1`, at
+   least 180 px). While gathering, the away chip ("Leave now: ...") shows as a slim line under that row. Switch is in the pill.
 3. **Tab bar, 54 px, at the bottom.**
 
 Tapping a tab opens its **menu** over the game view (same grid cell, so the header and the tab bar stay):

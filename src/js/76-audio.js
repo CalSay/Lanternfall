@@ -61,7 +61,9 @@ const SFX = (() => {
     forge: () => { noise(0.12, 3000, 0.4); tone(1200, 900, 0.18, 'triangle', 0.3); tone(600, 600, 0.25, 'sine', 0.15, 0.03); },
     fail: () => { tone(392, 370, 0.18, 'square', 0.2); tone(311, 294, 0.18, 'square', 0.2, 0.18); tone(233, 150, 0.4, 'square', 0.2, 0.36); },
     zone: () => arp([392, 523, 659, 784, 1047], 0.08, 'square', 0.22),
-    buy: () => tone(880, 1320, 0.05, 'square', 0.15)
+    buy: () => tone(880, 1320, 0.05, 'square', 0.15),
+    momentBig: () => { arp([392, 523, 659, 784, 1047], 0.08, 'square', 0.22); tone(1568, 1568, 0.7, 'triangle', 0.22, 0.45); noise(0.3, 3200, 0.18, 0.4); },
+    momentMid: () => { tone(784, 784, 0.1, 'square', 0.18); tone(1175, 1175, 0.22, 'triangle', 0.22, 0.09); }
   };
   function play(name, prio) { if (allow(prio)) { try { sounds[name](); } catch (e) { /* audio is best-effort */ } } }
   return { start, play };
@@ -84,6 +86,7 @@ on('loot', () => SFX.play('loot', true));
 on('itemAdded', ({ item }) => { if (!item.u) SFX.play('forge', true); });
 on('bossFail', () => SFX.play('fail', true));
 on('zoneClear', () => SFX.play('zone', true));
+on('momentShow', ({ tier }) => SFX.play(tier === 'big' ? 'momentBig' : 'momentMid', true));   // 75-moments-ui
 // Button taps in the panels (buy, hire, upgrade...). The stage has its own sounds.
 document.addEventListener('click', e => {
   const b = e.target.closest && e.target.closest('button');

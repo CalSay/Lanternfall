@@ -103,7 +103,7 @@ function bossOdds(o) {
     BO = { sig, zone: z, chunk: 0, k: 0, d: 0, at: -1e9, atReal: 0, res: null };
   }
   while (BO.chunk < chunks && (BO.at <= -1e8 || o.sync || BO_CLOCK - BO.at >= B.every || Date.now() - BO.atReal >= 1000 * B.every)) {
-    const r = turnCombatSample({ profile: p, seconds: B.chunk * 600, seed: BO.chunk + 1, skill, fights: B.chunk });
+    const r = turnCombatSample({ profile: p, seconds: B.chunk * 600, seed: 1 + BO.chunk * 7919 + z * 104729, skill, fights: B.chunk });
     BO.chunk++; BO.at = BO_CLOCK; BO.atReal = Date.now();
     if (r) { BO.k += r.kills; BO.d += r.deaths; }
     if (BO.chunk >= chunks) BO.res = { win: BO.k + BO.d > 0 ? BO.k / (BO.k + BO.d) : 0, n: BO.k + BO.d, zone: z };

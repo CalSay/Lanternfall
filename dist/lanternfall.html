@@ -169,6 +169,43 @@ img[src*="#nic:"] { image-rendering: auto; }   /* a gear icon set by code that d
 /* the turn banner owns the middle of the stage while it shows; toasts and the strip wait out its short pause */
 .stagebox.tc-on .toasts { opacity: 0; transition: opacity .1s; }
 .stagebox.vs-on .toasts:not(.over-menu) { top: calc(var(--vs-b, 54px) + 22px); }   /* under the bars and the place line, not over them */
+
+/* Portrait top band (top-bar-compact): under the header zone bar, ONE line holds the activity switch (Fight / Gather, the zone arrows)
+   and Next Up side by side, instead of three stacked rows. The permanent "While away" sentence is gone (the away card and the
+   away chip say it); Switch lives in the header pill, so it leaves this row. The stage keeps the space. Landscape has its own grid. */
+@media not ((min-aspect-ratio: 1/1) and (min-width: 600px)) {
+  .app .game { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr) auto auto; }   /* row 4: the guide panel (60-onboard.css), empty most of the time */
+  .app .game > .ctrl { grid-column: 1; grid-row: 1; flex-wrap: nowrap; justify-content: flex-start; gap: 2px; padding: 4px 0 4px var(--gut); }
+  .app .game > .nu-slot { grid-column: 2; grid-row: 1; min-width: 0; padding: 4px var(--gut) 4px 8px; align-self: center; }
+  .app .game > .gate-rule { grid-column: 1 / -1; grid-row: 2; margin: 0 var(--gut); }
+  .app .game > .dw-row { grid-column: 1 / -1; grid-row: 2; }
+  .app .game > .stagebox { grid-column: 1 / -1; grid-row: 3; }
+  .app .game > .sbar { grid-column: 1 / -1; grid-row: 5; }
+  .app .game > .ob-bub.dock { grid-column: 1 / -1; grid-row: 4; }
+  .app .game .ctrl-switch { display: none; }
+  .app .game .modeseg button { min-width: 0; padding: 0 7px; min-height: 36px; font-size: calc(12px * var(--display-k)); }
+  .app .game .modeseg .mode-ic { display: none; }
+  .top .zstep { display: contents; }
+  .top .zstep[hidden] { display: none; }
+  .top .zstep .znum { display: none; }   /* the zone pill says the zone */
+  .top .navbtn { width: 28px; height: 44px; isolation: isolate; }
+  .app.deep-run .top .zstep { display: none; }   /* a Deepwell run has floors, not zones to step */
+  .top .navbtn::after { inset: 8px 2px; }
+  .top.nav-pill .who { gap: 0; }
+  .top.nav-pill .act-pill { padding: 0 6px 0 6px; gap: 5px; }
+  .top.nav-pill .act-pill .ap-chev { display: none; }
+  .top #zPrev { order: -1; }
+  .top #zNext { order: 2; }
+  .app .game .nu-chip { min-height: 44px; grid-template-columns: minmax(0, 1fr) auto auto; grid-template-rows: auto auto; gap: 2px 6px; padding: 4px 6px 6px 6px; }
+  .app .game .nu-chip .nu-ic { display: none; }   /* the width goes to the goal's words */
+  .app .game .nu-chip .nu-cbody { display: contents; }
+  .app .game .nu-chip .nu-eye { grid-column: 1; grid-row: 1; align-self: center; white-space: nowrap; min-width: 0; overflow: hidden; font-size: 9px; letter-spacing: .08em; }
+  .app .game .nu-chip .nu-cst { grid-column: 2; grid-row: 1; }
+  .app .game .nu-chip .nu-more { grid-column: 3; grid-row: 1; }
+  .app .game .nu-chip .nu-lbl { grid-column: 1 / -1; grid-row: 2; font-size: 12.5px; }
+  .app .game .nu-chip .nu-chev { display: none; }
+  @media (max-width: 340px) { .top.nav-pill .act-pill .ap-ic { display: none; } }
+}
 /* tab bar: fixed to the bottom of the app, in thumb reach; the lit edge marks the open tab */
 .tabs { grid-area: tabs; display: grid; grid-template-columns: repeat(5, 1fr); padding: 0 6px env(safe-area-inset-bottom, 0px); background: #17111E; border-top: 2px solid var(--line); box-shadow: 0 -3px 0 #0B0810; position: relative; z-index: 6; }
 .tab { min-height: 54px; background: none; border: 0; padding: 7px 2px 6px; cursor: pointer; font: 600 calc(12.5px * var(--display-k))/1.1 var(--display); color: var(--muted); border-top: 3px solid transparent; margin-top: -2px; display: grid; justify-items: center; align-content: center; gap: 3px; position: relative; }
@@ -1842,7 +1879,7 @@ span.cf-d { font-weight: 600; }
 .nu-chip .nu-ic img { width: 20px; height: 20px; }
 .nu-cbody { min-width: 0; display: grid; gap: 1px; }
 .nu-eye { font: 600 10px/1.1 var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
-.nu-chip .nu-lbl { font: 500 13.5px/1.2 var(--body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+.nu-chip .nu-lbl { font: 500 13.5px/1.2 var(--body); white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; display: block; }   /* the whole goal, on as many lines as it takes (top-bar-compact) */
 .nu-cst { font: 600 calc(13px * var(--display-k))/1 var(--display); color: var(--gold); font-variant-numeric: tabular-nums; }
 .nu-more { font: 600 calc(11px * var(--display-k))/1 var(--display); padding: 3px 5px; background: var(--panel-2); border: 1px solid var(--line-hi); color: var(--muted); }
 .nu-more:empty { display: none; }
@@ -2020,6 +2057,45 @@ span.cf-d { font-weight: 600; }
 .ms-pips { display: inline-flex; gap: 3px; align-self: center; }
 .ms-pips i { width: 8px; height: 8px; background: var(--well); border: 2px solid var(--line-hi); box-shadow: inset 0 0 0 1px #0B0810; }
 .ms-pips i.on { background: var(--gold); border-color: #8A6A1E; box-shadow: 0 0 4px rgba(242,193,78,.5); }
+/* 60-moments: the moment layer (75-moments-ui.js). Big moments are a card over the stage; medium moments a banner across its top. */
+
+/* ---- the big card ---- */
+.mm-ov { --mc: var(--gold); position: fixed; inset: 0; z-index: 38; display: grid; place-items: center; padding: 16px; background: radial-gradient(90% 60% at 50% 32%, color-mix(in srgb, var(--mc) 18%, transparent), transparent 70%), rgba(8,6,12,.9); cursor: pointer; animation: mm-fade .3s ease-out; }
+.mm-card { width: min(340px, 100%); max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); overflow-y: auto; display: grid; justify-items: center; gap: 8px; padding: 16px 14px 14px; text-align: center; box-sizing: border-box; background: radial-gradient(120% 60% at 50% 0%, color-mix(in srgb, var(--mc) 22%, transparent), transparent 70%), var(--panel); border: 2px solid var(--mc); box-shadow: 0 4px 0 #0B0810, 0 0 44px color-mix(in srgb, var(--mc) 30%, transparent); animation: mm-rise .4s cubic-bezier(.2,.9,.3,1.2); }
+.mm-eye { font: 600 11px var(--body); letter-spacing: .18em; text-transform: uppercase; color: var(--mc); }
+.mm-art { position: relative; width: 108px; height: 96px; display: grid; place-items: center; }
+.mm-art:empty { display: none; }
+.mm-img { grid-area: 1 / 1; position: relative; z-index: 1; width: 64px; height: 64px; object-fit: contain; image-rendering: pixelated; filter: drop-shadow(0 0 10px color-mix(in srgb, var(--mc) 75%, transparent)); animation: mm-pop .5s cubic-bezier(.2,.9,.3,1.4); }
+.mm-burst { position: absolute; inset: -22px; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--mc) 60%, transparent) 0, color-mix(in srgb, var(--mc) 18%, transparent) 38%, transparent 66%), repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--mc) 26%, transparent) 0 6deg, transparent 6deg 30deg); -webkit-mask: radial-gradient(circle, #000 30%, transparent 70%); mask: radial-gradient(circle, #000 30%, transparent 70%); animation: mm-burst .9s cubic-bezier(.2,.9,.3,1.1) both, mm-turn 24s linear 1s infinite; }
+.mm-head { margin: 0; font: 700 calc(24px * var(--display-k))/1.1 var(--display); color: var(--bone); text-shadow: 0 2px 0 #0B0810, 0 0 14px color-mix(in srgb, var(--mc) 45%, transparent); overflow-wrap: anywhere; }
+.mm-sub { margin: 0; font-size: 14px; line-height: 1.4; color: var(--bone); }
+.mm-list { list-style: none; margin: 2px 0 0; padding: 8px 10px; width: 100%; box-sizing: border-box; display: grid; gap: 6px; background: var(--well); border: 1px solid var(--line); text-align: left; }
+.mm-list li { display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: #F2E6B0; overflow-wrap: anywhere; }
+.mm-list img { width: 20px; height: 20px; image-rendering: pixelated; flex: none; }
+.mm-more { color: var(--muted); }
+.mm-acts { display: grid; gap: 6px; width: 100%; margin-top: 4px; }
+
+/* ---- the medium banner: a toast in the notices slot (the toast dock) ---- */
+.toast.mm-toast { --mc: var(--gold); align-items: flex-start; border-color: var(--mc); border-left: 3px solid var(--mc); background: linear-gradient(90deg, color-mix(in srgb, var(--mc) 24%, #0E0B12), #0E0B12E8 85%); box-shadow: 0 2px 0 #0B0810, 0 0 14px color-mix(in srgb, var(--mc) 35%, transparent); padding: 5px 8px 5px 6px; }
+.toast.mm-toast img { width: 24px; height: 24px; object-fit: contain; }
+.mm-t-tx { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.mm-t-eye { font: 600 10px var(--body); letter-spacing: .16em; text-transform: uppercase; color: var(--mc); }
+.mm-t-title { font: 700 calc(17px * var(--display-k))/1.1 var(--display); color: var(--bone); overflow-wrap: anywhere; }
+.mm-t-sub, .mm-t-line { font-size: 12px; line-height: 1.3; color: var(--muted); overflow-wrap: anywhere; }
+
+@keyframes mm-fade { from { opacity: 0; } }
+@keyframes mm-rise { from { transform: translateY(12px) scale(.97); opacity: 0; } }
+@keyframes mm-pop { from { transform: scale(.3); opacity: 0; } }
+@keyframes mm-burst { from { opacity: 0; transform: scale(.3); } }
+@keyframes mm-turn { to { transform: rotate(360deg); } }
+.mm-ov.still, .mm-ov.still .mm-card, .mm-ov.still .mm-img { animation: none; }
+.mm-ov.still .mm-burst { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .mm-ov, .mm-card, .mm-img { animation: none; }
+  .mm-burst { display: none; }
+}
+/* 740x360: the card is short, so the art shrinks */
+@media (max-height: 420px) { .mm-art { width: 72px; height: 64px; } .mm-img { width: 44px; height: 44px; } .mm-card { gap: 5px; padding: 10px 12px; } }
 /* 60-nav: global navigation (UX-A, 75-nav-ui.js; docs/design/ux-overhaul.md 4): the activity pill
    in the header (two variants, NAV_TUNE.pillReplacesName), the Switch button on the control row,
    the quick switcher sheet, and the fade when a swipe changes the view. */
@@ -2119,26 +2195,29 @@ span.cf-d { font-weight: 600; }
 .ob-ring.dot { border-radius: 50%; border-width: 3px; }
 .ob-ring.still { animation: none; }
 @keyframes obPulse { 50% { box-shadow: 0 0 0 2px #0B0810, 0 0 22px rgba(242,193,78,.9); border-color: #FFF3C4; } }
-/* HINT1: the hint bubble docks to a fixed band (never tracks the target pixel by pixel), so it
-   cannot cover the node/foe it points at and never jumps as the stage or a menu animates. It is
-   parented and positioned exactly like the toasts it sits beside (placeToasts, 70-ui.js): inside
-   #stageBox, just under the HUD, on the game view; inside #app, just above the tab bar, over a
-   menu. --toast-h (70-ui.js) pushes it clear of however many toasts are currently stacked there. */
-.ob-bub { position: absolute; left: 6px; right: 6px; max-width: 480px; margin: 0 auto;
-  top: calc(62px + var(--toast-h, 0px)); z-index: 8; pointer-events: none;
-  display: flex; align-items: center; gap: 6px; padding: 8px 4px 8px 12px; min-height: 44px;
-  background: #1A1422F2; border: 2px solid var(--gold); box-shadow: 0 3px 0 #0B0810, 0 8px 22px rgba(0,0,0,.55);
-  font: 600 14px/1.3 var(--body); color: var(--bone); transition: transform .18s ease, opacity .18s ease; }
+/* The guide panel (75-onboard-ui.js place()): Old Hesketh's face, the tip, the button on its own row. It is a notice, so it
+   docks where notices dock and never sits over the stage. Three homes, one per mode class:
+   .dock      portrait game view: a slot in .game just above the Act / Skills / Foe bar (the stage gives up the height)
+   .over-menu portrait with a menu open: the bottom of the menu panel, above the tab bar (and above any toast)
+   .side      landscape: the side column's notices slot (80-landscape.css) */
+.ob-bub { position: relative; pointer-events: none; order: 2; flex: none; margin: 4px var(--gut) 0; z-index: 8;
+  display: grid; grid-template-columns: 48px minmax(0, 1fr) 44px; grid-template-rows: auto auto; column-gap: 8px; align-items: start;
+  padding: 8px 0 8px 8px; background: #1A1422; border: 2px solid var(--gold); box-shadow: 0 3px 0 #0B0810;
+  font: 600 14px/1.3 var(--body); color: var(--bone); }
 .ob-bub[hidden] { display: none; }
-.ob-bub.over-menu { left: var(--gut); right: var(--gut); top: auto; bottom: calc(var(--tabs-h) + env(safe-area-inset-bottom, 0px) + 8px + var(--toast-h, 0px)); }
+.ob-bub.over-menu { position: absolute; left: var(--gut); right: var(--gut); margin: 0; bottom: calc(var(--tabs-h) + env(safe-area-inset-bottom, 0px) + 8px + var(--toast-h, 0px)); box-shadow: 0 3px 0 #0B0810, 0 8px 22px rgba(0,0,0,.55); }
 .ob-bub.pop { animation: obIn .22s ease-out; }
-@keyframes obIn { from { opacity: 0; margin-top: 6px; } }
-.ob-txt { flex: 1; min-width: 0; }
-.ob-x { pointer-events: auto; flex: none; width: 36px; height: 36px; background: none; border: 0; color: var(--muted); font: 600 calc(20px * var(--display-k))/1 var(--display); cursor: pointer; }
+@keyframes obIn { from { opacity: 0; transform: translateY(6px); } }
+.ob-facebox { grid-column: 1; grid-row: 1 / span 2; width: 48px; height: 48px; display: grid; place-items: center; background: #0E0B12; border: 2px solid #0B0810; outline: 1px solid var(--line-hi); }
+.ob-face { width: 48px; height: 48px; display: block; image-rendering: pixelated; }
+.ob-facebox.blank .ob-face { display: none; }
+.ob-facebox.blank::after { content: 'H'; font: 600 20px/1 var(--display); color: var(--gold); }
+.ob-txt { grid-column: 2; grid-row: 1; min-width: 0; align-self: center; overflow-wrap: break-word; }
+.ob-ok { grid-column: 2; grid-row: 2; justify-self: start; margin-top: 6px; min-height: 44px; padding: 0 16px; pointer-events: auto; cursor: pointer; background: var(--gold); border: 2px solid #0B0810; color: #1A1420; font: 600 calc(15px * var(--display-k)) var(--display); }
+.ob-ok[hidden] { display: none; }
+.ob-name { display: none; }
+.ob-x { pointer-events: auto; grid-column: 3; grid-row: 1; align-self: start; width: 44px; height: 44px; margin-top: -8px; background: none; border: 0; color: var(--muted); font: 600 calc(20px * var(--display-k))/1 var(--display); cursor: pointer; }
 .ob-x:hover, .ob-x:focus-visible { color: var(--bone); }
-/* the arrow: a small up/down pointer toward the target, not a precise line to it */
-.ob-arrow { position: absolute; left: 50%; top: -8px; width: 12px; height: 12px; margin-left: -6px; background: #1A1422; border-left: 2px solid var(--gold); border-top: 2px solid var(--gold); transform: rotate(45deg); }
-.ob-bub.up .ob-arrow { top: auto; bottom: -8px; transform: rotate(225deg); }
 /* locked sections (registerSection feature) */
 .sec.f-off { display: none !important; }
 /* new tab / new view: a gold mark until first opened */
@@ -2149,7 +2228,7 @@ span.cf-d { font-weight: 600; }
 .ob-trow { display: flex; align-items: center; gap: 10px; justify-content: space-between; }
 .ob-trow .note { margin: 6px 0; }
 .ob-tbtn { flex: none; min-height: 44px; padding: 0 12px; background: var(--panel-2); border: 2px solid #0B0810; color: var(--bone); font: 600 calc(13px * var(--display-k)) var(--display); cursor: pointer; }
-@media (prefers-reduced-motion: reduce) { .ob-ring { animation: none; transition: none; } .ob-bub { transition: none; } .ob-bub.pop { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .ob-ring { animation: none; transition: none; } .ob-bub.pop { animation: none; } }
 /* 60-party: Party tab, World tab headings, and the class creation screen (75-party.js, 76-create.js). */
 :root { --tank: #5F8BE8; --striker: #5FC46E; --caster: #A070E0; --support: #F2C14E; }
 
@@ -2457,10 +2536,7 @@ body.solo-on .stage .abil, body.solo-on .stage .abil2 { display: none !important
 .sp-clear { min-height: 44px; background: var(--panel-2); color: var(--bone); border: 2px solid #0B0810; font: 600 16px var(--display); cursor: pointer; }
 .sp-clear:disabled { opacity: .5; cursor: default; }
 
-/* the guide's Got it button (75-onboard-ui, a step whose action is reading it) */
-.ob-ok { pointer-events: auto; flex: none; min-height: 36px; padding: 0 12px; background: var(--gold); color: #1A1420; border: 2px solid #0B0810;
-  font: 600 calc(15px * var(--display-k, 1)) var(--display); cursor: pointer; }
-.ob-ok[hidden] { display: none; }
+/* the guide's Got it button: 60-onboard.css */
 
 /* ---- "Choose your hero" (the Camp view) ---- */
 .hs-ov .sp-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 8px; margin-top: 4px; }
@@ -2486,10 +2562,7 @@ body.solo-on .stage .abil, body.solo-on .stage .abil2 { display: none !important
 .sp-lv { font: 600 14px var(--display); color: var(--gold); }
 .sp-fig { width: 56px; height: 80px; image-rendering: pixelated; }
 
-/* the guide's Got it button (75-onboard-ui, a step whose action is reading it) */
-.ob-ok { pointer-events: auto; flex: none; min-height: 36px; padding: 0 12px; background: var(--gold); color: #1A1420; border: 2px solid #0B0810;
-  font: 600 calc(15px * var(--display-k, 1)) var(--display); cursor: pointer; }
-.ob-ok[hidden] { display: none; }
+/* the guide's Got it button: 60-onboard.css */
 /* party-only UI left in the shell (the Fight tab's Party rows) */
 .solo-off { display: none !important; }
 /* Landscape (UX-L1): the bar sits in the side column, bottom right; see 80-landscape.css. */
@@ -3094,7 +3167,7 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
   .nu-chip .nu-eye { grid-column: 2; grid-row: 1; align-self: center; }
   .nu-chip .nu-cst { grid-column: 3; grid-row: 1; }
   .nu-chip .nu-more { grid-column: 4; grid-row: 1; }
-  .nu-chip .nu-lbl { grid-column: 1 / -1; grid-row: 2; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; font-size: 13px; line-height: 1.2; }
+  .nu-chip .nu-lbl { grid-column: 1 / -1; grid-row: 2; white-space: normal; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; font-size: 13px; line-height: 1.2; }
   .nu-chip .nu-chev { display: none; }
   /* the dock in the side column: tabs, four tiles in a row (icons only; the names show on tall screens), Parry and Dodge under them */
   .sbar, .game.solo-game > .sbar { --sb-tile: 58px; --sb-ic: 24px; grid-column: 4 / -1; grid-row: 4; align-self: end; padding: 4px 6px calc(6px + env(safe-area-inset-bottom, 0px)) 7px; gap: 5px; }
@@ -3135,9 +3208,22 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
   .menu-head:has(.vseg:not([hidden])) .menu-title { display: none; }
   .menu-head:has(.vseg[hidden]) .menu-bar { flex: 1; padding-left: var(--gut); }
   .panels { padding: 10px 10px 20px; }
-  .ob-bub.over-menu { position: absolute; grid-column: 2 / 4; grid-row: 2 / 5; left: auto; right: 8px; top: auto; bottom: 8px;
-    width: calc(min(560px, max(320px, 100% - 120px)) - 18px); }
-  .ob-bub:not(.over-menu) { top: 56px; }
+  /* the guide panel: in the side column's notices slot, under the top row. It stands in for Next Up while it speaks (the chip
+     keeps its place, hidden), except for the Next Up step, where it takes the notices row under the chip it points at. */
+  .ob-bub.side { grid-column: 4 / -1; grid-row: 2 / 4; align-self: start; margin: 6px 6px 0 7px; z-index: 7; max-height: calc(100% - 6px); overflow: hidden;
+    grid-template-columns: 36px minmax(0, 1fr) 44px; grid-template-rows: auto minmax(0, auto) auto; column-gap: 6px; row-gap: 2px; padding: 6px 0 6px 6px; font-size: 12.5px; line-height: 1.22; }
+  .ob-bub.side.nu { grid-row: 3; align-self: end; margin-bottom: 4px; }
+  /* a short column: the face and name share the first line with the dismiss, the tip runs the full width under them, the button has the last row */
+  .ob-bub.side .ob-facebox, .ob-bub.side .ob-face { width: 36px; height: 36px; }
+  .ob-bub.side .ob-name { display: block; grid-column: 2; grid-row: 1; align-self: center; font: 600 calc(11px * var(--display-k)) var(--display); color: var(--gold); white-space: nowrap; }
+  .ob-bub.side .ob-facebox { grid-row: 1; }
+  .ob-bub.side .ob-x { margin-top: -4px; margin-bottom: -4px; }
+  .ob-bub.side .ob-txt { grid-column: 1 / 3; grid-row: 2; align-self: start; padding-right: 6px; min-height: 0; overflow-y: auto; }
+  .ob-bub.side .ob-ok { grid-column: 1 / 3; grid-row: 3; margin-top: 4px; justify-self: start; max-width: calc(100% - 6px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ob-bub.side.btn { grid-row: 2 / -1; max-height: calc(100% - 10px); }
+  .ob-bub.side.nu.btn { grid-row: 3 / -1; align-self: start; margin-bottom: 0; }
+  .app.guide-btn .sbar { visibility: hidden; }
+  .app.guide-side:not(.guide-nu) .nu-slot, .app.guide-side .toasts.side-dock, .app.guide-side .gate-rule { visibility: hidden; }
 
   /* ---- sheets fit a short screen ---- */
   .sp-ov { align-items: center; }
@@ -8870,6 +8956,7 @@ const NOTICES = [
   // ---- full-screen cards (the story's own captions and cards hold the game and bypass this policy: 75-story-ui) ----
   { id: 'card:lantern', key: 'card:lantern', ch: 'card', why: 'a Great Lantern relit' },
   { id: 'card:feat', key: 'card:feat', ch: 'card', why: 'a Feat or a Chapter' },
+  { id: 'card:moment', key: 'card:moment', ch: 'card', why: 'a big moment: first boss, a unique, a new hero (75-moments-ui)' },
   { id: 'news', key: 'news', ch: 'pop', why: "an old save's What's new (never on a new game)" },
 
   // ---- progress ----
@@ -8894,7 +8981,7 @@ const NOTICES = [
   { id: 'hero-swap', re: /takes up the lamp\.$/, ch: 'log' },
 
   // ---- loot and gear ----
-  { id: 'unique', re: /^Unique loot! /, ch: m => /joins your trophy wall/.test(m) ? 'pop' : 'bell', wait: 40, why: 'a new unique pops; a better copy of one you have goes to the bell' },
+  { id: 'unique', re: /^Unique loot! /, ch: 'log', why: 'the moment layer shows every unique as a card (75-moments-ui); the bell list keeps the line' },
   { id: 'star-chart', re: /^You drew a Star Chart/, ch: 'pop', wait: 40 },
   { id: 'forged', re: /^(Forged|Made) an? /, ch: m => /Legendary/i.test(m) ? 'pop' : /Rare|Epic/i.test(m) ? 'log' : 'none', why: 'the sheet shows what you made' },
   { id: 'bag-full', re: /^Your bag is full, so /, ch: 'bell' },
@@ -8932,7 +9019,7 @@ const NOTICES = [
   { id: 'training-cap', key: 'training-cap', re: /^Training: .* is at Lv \d+, the most /, ch: 'bell', why: 'a move reached its class-stage cap (the Proving lifts it)' },
   { id: 'star-point', re: /^\+1 star point\. /, ch: 'log', merge: ms => `+${ms.length} star points. ${ms[ms.length - 1].replace(/^\+1 star point\. /, '')}` },
   // the Stars (57e-stars): a found star is news (rare: a zone boss's first win, an elite, a Proving); learning one is a bell line
-  { id: 'stars:found', key: 'stars:found', ch: 'pop', wait: 40, held: 'log', why: 'a new star, and whether it is set for the next fight (held: the Stars tab dot and Next Up keep it)' },
+  { id: 'stars:found', key: 'stars:found', ch: 'log', why: 'a new star is a medium moment (75-moments-ui); the bell list keeps whether it is set for the next fight' },
   { id: 'stars:learned', key: 'stars:learned', ch: 'log', why: 'any hero can light it now; the star card and Next Up show it' },
   { id: 'stars:catchup', key: 'stars:catchup', ch: 'bell', why: 'an old save: the stars of the zone bosses and Provings behind it' },
   { id: 'stars:new', key: 'stars:new', ch: 'bell', why: 'an old save that had lit stars on the old star map: the points are free again' },
@@ -14321,7 +14408,10 @@ function validateSave(data) {
     }
     if (data.solo) {
       const s = data.solo; if (s.hero != null) known(SOLO_HEROES, s.hero, 'solo.hero');
-      for (const [k, eq] of Object.entries(s.eq || {})) { known(SOLO_HEROES, k, 'solo.eq.hero'); array(eq, 'solo.eq.' + k); if (eq.length !== 3) fail('solo.eq.' + k); for (const id of eq) if (id !== null && (typeof id !== 'string' || !SOLO_HEROES[k].abs.includes(id))) fail('solo.eq.' + k); }
+      // a slot may hold any ability of that hero: the signature (abs) or one learned with a Scroll (HERO_ABILITIES, 24c).
+      // Whether it is learned is not checked here: a slot the save has not learned is cleared on load (59j soloEquipped).
+      const heroAb = (k, id) => SOLO_HEROES[k].abs.includes(id) || (typeof HERO_ABILITIES === 'object' && Array.isArray(HERO_ABILITIES[k]) && HERO_ABILITIES[k].includes(id));
+      for (const [k, eq] of Object.entries(s.eq || {})) { known(SOLO_HEROES, k, 'solo.eq.hero'); array(eq, 'solo.eq.' + k); if (eq.length !== 3) fail('solo.eq.' + k); for (const id of eq) if (id !== null && (typeof id !== 'string' || !heroAb(k, id))) fail('solo.eq.' + k); }
       for (const [k, lv] of Object.entries(s.lv || {})) { known(SOLO_HEROES, k, 'solo.lv.hero'); record(lv, 'solo.lv.' + k); int(lv.L, 'solo.lv.level', 1, lim.progression); num(lv.xp, 'solo.lv.xp'); }
       for (const z of Object.values(s.zn || {})) int(z, 'solo.zone', 1, lim.progression);
       for (const tr of Object.values(s.tr || {})) { record(tr, 'solo.training'); for (const n of Object.values(tr)) int(n, 'solo.training.level', 0, lim.progression); }
@@ -25074,7 +25164,11 @@ function turnChoose(m) {
 }
 function turnCombatSample({ profile: p, seconds, seed = 1, skill = { parry: 0.5, dodge: 0.7, perfect: 0.35, good: 0.5 }, fights = 0 }) {
   if (!p || !(seconds > 0)) return null;
-  let x = (seed | 0) || 1;
+  // each fight draws from its own stream, seeded from (seed, fight index) through murmur3's finaliser: one LCG stream run
+  // across a long fight chain correlates the fights (judge 2026-10-06: one seed read 13-32% where independent fights read 53-67%)
+  let x = 1, fightN = 0;
+  // the first fight keeps the caller's seed as is, so a one-fight call (the budget's boss fights, each on its own hashed seed) is unchanged
+  const reseed = () => { if (!fightN++) { x = (seed | 0) || 1; return; } let h = Math.imul((seed | 0) ^ Math.imul(fightN, 0x9E3779B1), 0x85EBCA6B); h ^= h >>> 13; h = Math.imul(h, 0xC2B2AE35); h ^= h >>> 16; x = h | 0 || 1; };
   const roll = () => ((x = (Math.imul(x, 1664525) + 1013904223) | 0) >>> 0) / 4294967296;
   const out = { seconds, kills: 0, deaths: 0, generatedEss: 0, damageDone: 0, damageTaken: 0, foeHits: 0, parries: 0, dodges: 0,
     completedFights: 0, totalHeroTurns: 0, totalFightSeconds: 0 };
@@ -25084,7 +25178,7 @@ function turnCombatSample({ profile: p, seconds, seed = 1, skill = { parry: 0.5,
     damageFoe: d => { foeHp -= d; out.damageDone += d; return d; },
     damageHero: d => { heroHp -= d; out.damageTaken += d; if (d > 0) out.foeHits++; return d; },
     healHero: d => { heroHp = Math.min(p.heroMaxHp, heroHp + d); }, healFoe: d => { foeHp = Math.min(p.foeMaxHp, foeHp + d); }, defense: (k, ok) => { if (ok) out[k === 'parry' ? 'parries' : 'dodges']++; } };
-  const start = () => { foeHp = p.foeMaxHp; if (p.fullHp) heroHp = p.heroMaxHp; m = turnNew(p, io); plan = ''; };   // a zone boss is met at full health, as in play
+  const start = () => { reseed(); tplan = null; foeHp = p.foeMaxHp; if (p.fullHp) heroHp = p.heroMaxHp; m = turnNew(p, io); plan = ''; };   // a zone boss is met at full health, as in play
   start();
   const step = 0.05;
   for (let t = 0; t < seconds; t += step) {
@@ -25306,7 +25400,7 @@ function bossOdds(o) {
     BO = { sig, zone: z, chunk: 0, k: 0, d: 0, at: -1e9, atReal: 0, res: null };
   }
   while (BO.chunk < chunks && (BO.at <= -1e8 || o.sync || BO_CLOCK - BO.at >= B.every || Date.now() - BO.atReal >= 1000 * B.every)) {
-    const r = turnCombatSample({ profile: p, seconds: B.chunk * 600, seed: BO.chunk + 1, skill, fights: B.chunk });
+    const r = turnCombatSample({ profile: p, seconds: B.chunk * 600, seed: 1 + BO.chunk * 7919 + z * 104729, skill, fights: B.chunk });
     BO.chunk++; BO.at = BO_CLOCK; BO.atReal = Date.now();
     if (r) { BO.k += r.kills; BO.d += r.deaths; }
     if (BO.chunk >= chunks) BO.res = { win: BO.k + BO.d > 0 ? BO.k / (BO.k + BO.d) : 0, n: BO.k + BO.d, zone: z };
@@ -32119,7 +32213,7 @@ try { new ResizeObserver(es => { for (const e of es) document.documentElement.st
 // (A step that pauses the game counts from the moment it is due, before the hint's next 250 ms draw.)
 const guideBusy = () => { try { if (soloGuideWants()) return true; const s = onboardStep(); return !!(s && onboardPaused(s)); } catch (e) { return false; } };
 const guideRuns = () => { try { return !!(S.onboard && S.onboard.tips && GUIDE_STEPS.some(s => !S.onboard.done[s.id])); } catch (e) { return false; } };
-const cardUp = () => !!document.querySelector('.gl-ov, .dd-fc-ov, .away-ov, .join-ov, #createScreen');
+const cardUp = () => !!document.querySelector('.gl-ov, .mm-ov, .dd-fc-ov, .away-ov, .join-ov, #createScreen');
 // The pop budget (seconds of play): one per NOTICE_TUNE.gap, NOTICE_TUNE.perMin a minute.
 // A rule may ask for a longer quiet before it (`gap`: the stage captions).
 function popRoom(rule) {
@@ -32204,7 +32298,9 @@ function popToast(msg, kind, url, p, go) {
   if (same) { same._more++; fillToast(same, msg, url); armToast(same); return; }
   // Two toasts fit under the HUD on a full stage (or over an open menu); a short stage takes one.
   const room = box.classList.contains('over-menu') || box.classList.contains('side-dock') || (stageBoxH || $('stageBox').offsetHeight) >= 200 ? 2 : 1;
-  for (let i = 0; i <= live.length - room; i++) { const out = live[i]; out._gone = true; clearTimeout(out._timer); out.remove(); }
+  const old = live.filter(t => !(t._hold > Date.now()));   // a moment banner stays its minimum time (75-moments-ui)
+  const heldN = live.length - old.length;
+  for (let i = 0; i <= old.length - Math.max(1, room - heldN); i++) { const out = old[i]; if (!out) break; out._gone = true; clearTimeout(out._timer); out.remove(); }
   const t = makeToast(msg, kind, url, p, go);
   box.appendChild(t);
   armToast(t);
@@ -32257,8 +32353,8 @@ function newsToast() {
   for (const t of [...box.children]) if (t._news) { t._gone = true; clearTimeout(t._timer); t.remove(); }
   // Room as for a high notice: retire the oldest normal toasts first.
   const live = [...box.children].filter(t => !t._gone), room = box.classList.contains('over-menu') || box.classList.contains('side-dock') || (stageBoxH || $('stageBox').offsetHeight) >= 200 ? 2 : 1;
-  const order = live.filter(t => t._p < 2).concat(live.filter(t => t._p === 2));
-  for (let i = 0; i <= live.length - room; i++) { const o = order[i]; o._gone = true; clearTimeout(o._timer); o.remove(); }
+  const order = live.filter(t => t._p < 2 && !(t._hold > Date.now())).concat(live.filter(t => t._p === 2 && !(t._hold > Date.now())));
+  for (let i = 0; i <= live.length - room; i++) { const o = order[i]; if (!o) break; o._gone = true; clearTimeout(o._timer); o.remove(); }
   const t = makeToast(msg, 'good', NEWS.entry.url, 2);
   t._news = true; t._tap = openNoticeLog;
   box.appendChild(t); armToast(t);
@@ -32989,24 +33085,25 @@ $('zPrev').addEventListener('click', () => { if (S.zone > 1) { setZone(S.zone - 
 $('zNext').addEventListener('click', () => { if (S.zone < S.maxZone) { setZone(S.zone + 1); ui(true); } });
 document.querySelectorAll('#modeSeg button').forEach(b => b.addEventListener('click', () => { if (b.dataset.act === 'fight') goFight(); else setActivity(b.dataset.act); }));   // Fight: straight to the live fight (70-ui goFight)
 
+// Portrait: the zone arrows move up beside the header's zone pill (the zone bar), so the line under the header can hold the
+// Fight / Gather switch and Next Up together (top-bar-compact). Landscape keeps them in its top row (80-landscape).
+{
+  const step = $('zStep'), home = step.parentElement;
+  const placeStepper = () => {
+    const to = isWide() ? home : document.querySelector('.top .who') || home;
+    if (step.parentElement !== to) to.append(step);
+  };
+  placeStepper();
+  wideMQ.addEventListener('change', placeStepper);
+}
+
 // Static nodes, looked up once. Every write goes through the put* guards (70-ui.js): 5 calls a
 // second, and an unchanged value must not make the browser lay the page out again.
 const gateEl = { title: $('gateTitle').querySelector('.gt-t'), desc: $('gateDesc'), btn: $('gateBtn'), q: $('gateBtn').querySelector('.qty'), p: $('gateBtn').querySelector('.price') };
 // The away card says the same line (75-away.js): the trade-off is told before you leave, not after.
 const AWAY_RULE_TXT = 'While away, gathering continues and fighting stops. Set your hero to gather before you go.';
-let gateRule = null;
-function uiGateRule() {
-  // Only where the Gather button is on offer: not before the first boss (onboarding hides it) or in a Deepwell run (the row is hidden).
-  const seg = $('modeSeg'), gb = seg.querySelector('button[data-act="gather"]');
-  const on = S.activity === 'fight' && !gb.hidden && seg.style.visibility !== 'hidden' && !$('game').closest('.app').classList.contains('deep-run') && isUnlocked('awaynote');   // its own beat (55-onboard FEATURES)
-  if (!gateRule) {
-    if (!on) return;
-    gateRule = el('p', 'away-rule gate-rule'); gateRule.append(img(iconURL('glass', '#F2E27A')), el('span', null, AWAY_RULE_TXT));
-    $('modeSeg').parentElement.after(gateRule);   // under the Fight / Gather row, where the player picks what the hero does
-  }
-  putToggle(gateRule, 'hide', !on);
-}
-uiHooks.push(uiGateRule);
+// The permanent "While away" strip on the Fight view is gone (top-bar-compact): the away chip below speaks while gathering, on the away note's beat, and the away card says the rule.
+
 // Away chip: what leaving now would earn, told while you gather (the notice above covers a fighter).
 // Estimate from the same rates awayBase uses (50-sim.js), held to the Storehouse room unless Spillover moves on.
 let awayChip = null, awayChipTxt = '';
@@ -33024,7 +33121,7 @@ function awayChipText() {
 }
 function uiAwayChip() {
   const seg = $('modeSeg'), gb = seg.querySelector('button[data-act="gather"]');
-  const txt = gb.hidden || seg.style.visibility === 'hidden' || $('game').closest('.app').classList.contains('deep-run') ? '' : awayChipText();
+  const txt = gb.hidden || seg.style.visibility === 'hidden' || $('game').closest('.app').classList.contains('deep-run') || !isUnlocked('awaynote') ? '' : awayChipText();   // the away note's own beat (55-onboard FEATURES)
   if (!awayChip) {
     if (!txt) return;
     awayChip = el('p', 'away-rule gate-rule away-chip'); awayChip.append(img(iconURL('coin', '#F2C14E')), el('span'));
@@ -34892,7 +34989,7 @@ let showAwayReport;
 {
   let open = null;
   holdGame(() => !!open && !open.closed);   // 00-util's pause registry: the hero is not hit while the card is up
-  const blocked = () => !!document.querySelector('.away-ov, #createScreen, .join-ov, .gl-ov');
+  const blocked = () => !!document.querySelector('.away-ov, #createScreen, .join-ov, .gl-ov, .mm-ov');
   function show() {
     const L = S.bossTry && S.bossTry.last;
     if (!L || !bossTryHeld() || typeof openSheet !== 'function') return;
@@ -38574,7 +38671,7 @@ let deedsUI = null;
   // ---------------- the card ----------------
   const queue = [];
   let ov = null, lastFocus = null;
-  const blocked = () => !!document.querySelector('.away-ov, #createScreen, .join-ov');
+  const blocked = () => !!document.querySelector('.away-ov, #createScreen, .join-ov, .mm-ov');
   function closeCard() {
     if (!ov) return;
     ov.remove(); ov = null;
@@ -38770,6 +38867,229 @@ let deedsUI = null;
       }
     }
   });
+}
+
+// ---- src/js/75-moments-ui.js ----
+// 75-moments-ui: the moment layer (card moment-layer; early-game plan section 1). Browser-only.
+// Big moments always show, with a reveal. Three tiers:
+//   big     a card over the stage, tap to continue: first boss win, any unique, a cache opened, a new hero.
+//           (The Great Lantern keeps its own card in 75-lantern-ui; only one big card is ever up.)
+//   medium  a banner in the notices slot (the toast dock: the side column in landscape, under the HUD in portrait; never a new
+//           control) for at least MOMENT_TUNE.bannerS seconds: the first level up and every 5th, new ability, new Star, a look
+//           found, a rare-or-better craft. At most one a fight end (the rest fold in as lines) and at most
+//           MOMENT_TUNE.midMax in any MOMENT_TUNE.midWindowS seconds during the first MOMENT_TUNE.midFirstS seconds of play.
+//   small   today's toasts (23n-data-notices).
+// A big or medium moment is never demoted to the bell and never waits behind a guide step or a story card. It queues to
+// the end of the fight (never shown during a turn, so it never covers a parry window) and shows at once outside one. It does
+// wait for the guide step on screen, the Away and What's-new cards, and the first seconds after boot.
+// Several at fight end fold into one card with a list. Reduced motion: the same card, no burst.
+// API for later cards:  moment(kind, { title, sub, rarity, icon, still, lines, actions })
+//   kind     'boss' | 'unique' | 'cache' | 'hero' | 'starFirst' (big; a cache with a look is big too); 'level' | 'ability' | 'star' | 'look' | 'craft' (medium)
+//   title    the name, one line;  sub  one short line;  rarity  common..legendary (the colour; else the kind's own)
+//   icon     an icon spec for iconOf() ({ item }, { mat }, { ic });  still  a data URL (a bigger picture)
+//   lines    [{ txt, ic? }] a short list under the title;  actions  [{ txt, fn }] extra buttons beside Continue
+// momentState() -> { up, banner, queued } for the checks. Nothing here is saved: a moment not yet seen when the game closes
+// is dropped (a unique already sits in the trophy wall).
+const MOMENT_TUNE = { bannerS: 2.6, bannerExtraS: 0.7, settleS: 0.3, tapLockMs: 700, maxLines: 5, maxBanner: 3, bootS: 4, guideWaitS: 6, midMax: 2, midWindowS: 180, midFirstS: 1800 };
+const MOMENT_KINDS = {
+  boss: { tier: 'big', eye: 'Boss down', col: '#F2C14E', snd: 'big' },
+  unique: { tier: 'big', eye: 'Unique loot', col: '#FF8A3D', snd: 'big' },
+  cache: { tier: 'big', eye: 'Lantern Cache', col: '#F2C14E', snd: 'big' },
+  hero: { tier: 'big', eye: 'New hero', col: '#B58CFF', snd: 'big' },
+  starFirst: { tier: 'big', eye: 'Your first Star', col: '#F2C14E', snd: 'big' },
+  level: { tier: 'medium', eye: 'Level up', col: '#6FCB6A', snd: 'mid' },
+  ability: { tier: 'medium', eye: 'New ability', col: '#5FA8FF', snd: 'mid' },
+  star: { tier: 'medium', eye: 'New Star', col: '#F2C14E', snd: 'mid' },
+  look: { tier: 'medium', eye: 'Look found', col: '#B58CFF', snd: 'mid' },
+  craft: { tier: 'medium', eye: 'Well made', col: '#5FA8FF', snd: 'mid' }
+};
+const MOMENT_RARITY = { common: '#CFC6D8', uncommon: '#6FCB6A', rare: '#5FA8FF', epic: '#B58CFF', legendary: '#FF8A3D' };
+const MOMENT_Q = [];
+const MOMENT_UI = { ov: null, banner: null, bannerT: 0, wait: 0, lastFocus: null, shownAt: 0, midAt: [], guideT: 0 };
+// check.mjs sets lanternfall.test.nostory in its browser contexts so a card never sits over a test's first click; the moment layer's
+// own checks set lanternfall.test.moments to keep it on
+const MOMENT_OFF = (() => { try { return localStorage.getItem('lanternfall.test.nostory') === '1' && localStorage.getItem('lanternfall.test.moments') !== '1'; } catch (e) { return false; } })();
+function moment(kind, o) {
+  if (MOMENT_OFF) return false;
+  o = o || {};
+  const k = MOMENT_KINDS[kind] || { tier: 'medium', eye: '', col: '#F2C14E', snd: 'mid' };
+  MOMENT_Q.push(Object.assign({}, o, { kind, tier: k.tier, eye: o.eye || k.eye, col: (o.rarity && MOMENT_RARITY[o.rarity]) || o.col || k.col, snd: k.snd }));
+  MOMENT_UI.wait = 0;
+  return true;
+}
+function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner, queued: MOMENT_Q.length }; }
+{
+  // a turn fight is live (the next foe's intro, about 0.5 s after a kill, is not: the boss's card must show before the fight goes on)
+  const fighting = () => { try { return typeof TURN_LIVE !== 'undefined' && !!TURN_LIVE && !TURN_LIVE.ended && TURN_LIVE.phase !== 'intro'; } catch (e) { return false; } };
+  const bootT = performance.now();
+  // a card up, the guide's step, the What's-new window or the first seconds after boot hold a moment back
+  // (the guide's step gets guideWaitS seconds to finish, then the moment shows over it: a step left on screen must not hide a unique)
+  const blocked = () => !!document.querySelector('.away-ov, #createScreen, .join-ov, .gl-ov, .dd-fc-ov') || document.hidden || NEWS.open || performance.now() - bootT < MOMENT_TUNE.bootS * 1000
+    || (guideBusy() && MOMENT_UI.guideT < MOMENT_TUNE.guideWaitS);
+  // medium moments in the first half hour: at most midMax in any midWindowS seconds
+  const midRoom = () => {
+    const u = MOMENT_UI, now = Date.now();
+    u.midAt = u.midAt.filter(t => now - t < MOMENT_TUNE.midWindowS * 1000);
+    return notes.clock >= MOMENT_TUNE.midFirstS || u.midAt.length < MOMENT_TUNE.midMax;
+  };
+  holdGame(() => !!MOMENT_UI.ov);   // the hero is not hit while a card is up
+  function closeCard() {
+    const u = MOMENT_UI; if (!u.ov) return;
+    u.ov.remove(); u.ov = null;
+    if (u.lastFocus && u.lastFocus.focus && document.contains(u.lastFocus)) try { u.lastFocus.focus({ preventScroll: true }); } catch (e) {}
+    u.wait = 0;
+    try { ui(true); } catch (e) {}
+  }
+  function lineRow(l) {
+    const li = el('li');
+    if (l.ic) { try { li.append(img(iconURL(...l.ic))); } catch (e) {} }
+    else if (l.icon) { try { const u = iconOf(l.icon); if (u) li.append(img(u)); } catch (e) {} }
+    li.append(el('span', null, l.txt));
+    return li;
+  }
+  function showCard(list) {
+    const u = MOMENT_UI, first = list[0];
+    u.lastFocus = document.activeElement;
+    try { noticeAsk('card:moment', first.title || first.eye); } catch (e) {}   // the card channel (23n-data-notices)
+    const ov = el('div', 'mm-ov' + (reduced ? ' still' : ''));
+    ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-labelledby', 'mmHead');
+    ov.style.setProperty('--mc', first.col);
+    const card = el('div', 'mm-card');
+    card.append(el('div', 'mm-eye', first.eye));
+    const art = el('div', 'mm-art'), burst = el('div', 'mm-burst');
+    art.append(burst);
+    let pic = null; try { pic = first.still || (first.icon && iconOf(first.icon)); } catch (e) {}
+    if (pic) { const im = img(pic, 'mm-img'); art.append(im); }
+    card.append(art);
+    const h = el('h2', 'mm-head', first.title || first.eye); h.id = 'mmHead';
+    card.append(h);
+    if (first.sub) card.append(el('p', 'mm-sub', first.sub));
+    // the rest of the queue (and any lines of the first) fold into one list
+    const rows = (first.lines || []).slice();
+    for (const x of list.slice(1)) rows.push({ txt: [x.eye, x.title].filter(Boolean).join(': '), icon: x.icon });
+    if (rows.length) {
+      const ul = el('ul', 'mm-list');
+      for (const l of rows.slice(0, MOMENT_TUNE.maxLines)) ul.append(lineRow(l));
+      if (rows.length > MOMENT_TUNE.maxLines) ul.append(el('li', 'mm-more', `And ${rows.length - MOMENT_TUNE.maxLines} more.`));
+      card.append(ul);
+    }
+    const acts = el('div', 'mm-acts');
+    for (const a of (first.actions || [])) {
+      const b = el('button', 'big mm-act', a.txt); b.type = 'button';
+      b.addEventListener('click', e => { e.stopPropagation(); closeCard(); try { a.fn && a.fn(); } catch (err) { console.error('[lanternfall] moment action', err); } });
+      acts.append(b);
+    }
+    const go = el('button', 'big forge mm-go', 'Continue'); go.type = 'button';
+    acts.append(go); card.append(acts);
+    ov.append(card);
+    u.shownAt = Date.now();
+    const tryClose = () => { if (Date.now() - u.shownAt >= MOMENT_TUNE.tapLockMs) closeCard(); };   // a fight tap must not skip the card
+    ov.addEventListener('click', tryClose);
+    ov.addEventListener('keydown', ev => { if (ev.key === 'Escape') tryClose(); if (ev.key === 'Tab') { ev.preventDefault(); go.focus(); } });
+    document.body.append(ov); u.ov = ov;
+    go.focus({ preventScroll: true });
+    emit('momentShow', { tier: 'big', kind: first.kind, n: list.length });
+  }
+  // The medium banner is a toast in the notices slot, held for bannerS seconds: a later toast cannot retire it (70-ui popToast).
+  function showBanner(list) {
+    const u = MOMENT_UI, box = $('toasts'); if (!box) return;
+    if (u.banner) { dropToast(u.banner); u.banner = null; }
+    const shown = list.slice(0, MOMENT_TUNE.maxBanner), first = shown[0];
+    let pic = null; try { pic = first.icon && iconOf(first.icon); } catch (e) {}
+    // built here, not by makeToast: a moment sits outside the pop budget and the toast counters (tools/check.mjs counts makeToast calls)
+    const t = el('div', 'toast good hi mm-toast');
+    t._p = 2; t._kind = 'good'; t._more = 0;
+    t.setAttribute('role', 'status'); t.style.setProperty('--mc', first.col);
+    t.addEventListener('pointerdown', e => e.stopPropagation());
+    t.addEventListener('click', () => { dropToast(t, 'gone'); if (u.banner === t) u.banner = null; });
+    if (pic) t.append(img(pic));
+    const tx = el('div', 'mm-t-tx');
+    tx.append(el('div', 'mm-t-eye', first.eye), el('div', 'mm-t-title', first.title || ''));
+    if (first.sub && shown.length === 1) tx.append(el('div', 'mm-t-sub', first.sub));
+    for (const x of shown.slice(1)) tx.append(el('div', 'mm-t-line', [x.eye, x.title].filter(Boolean).join(': ')));
+    if (list.length > shown.length) tx.append(el('div', 'mm-t-line', `And ${list.length - shown.length} more.`));
+    t.append(tx);
+    const ms = (MOMENT_TUNE.bannerS + MOMENT_TUNE.bannerExtraS * (shown.length - 1)) * 1000;
+    t._hold = Date.now() + ms;
+    const live = [...box.children].filter(x => !x._gone && !(x._hold > Date.now()));
+    const room = box.classList.contains('over-menu') || box.classList.contains('side-dock') || (stageBoxH || $('stageBox').offsetHeight) >= 200 ? 2 : 1;
+    const held = [...box.children].filter(x => !x._gone && x._hold > Date.now()).length;
+    for (let i = 0; i <= live.length - Math.max(1, room - held); i++) { const o = live[i]; if (!o) break; o._gone = true; clearTimeout(o._timer); o.remove(); }
+    box.append(t); u.banner = t;
+    t._timer = setTimeout(() => { dropToast(t); if (u.banner === t) u.banner = null; }, ms);
+    u.midAt.push(Date.now());
+    emit('momentShow', { tier: 'medium', kind: first.kind, n: list.length });
+  }
+  // Level-ups in a row fold into one ("Level 6", up 3 levels).
+  function fold(list) {
+    const lv = list.filter(x => x.kind === 'level');
+    if (lv.length < 2) return list;
+    const last = lv[lv.length - 1];
+    return [last].concat(list.filter(x => x.kind !== 'level'));
+  }
+  function flush() {
+    const u = MOMENT_UI;
+    const big = MOMENT_Q.filter(x => x.tier === 'big'), mid = MOMENT_Q.filter(x => x.tier !== 'big');
+    if (big.length && !u.ov) {
+      const all = big.concat(fold(mid)); MOMENT_Q.length = 0;   // mediums ride on the big card as lines
+      for (const x of mid) MOMENT_UI.midAt.push(Date.now());   // each folded medium counts against the cap
+      showCard(all); return;
+    }
+    if (big.length) return;   // a big card is up: wait for it
+    if (u.ov || (u.banner && u.banner._hold > Date.now())) return;   // a banner keeps its minimum time; a banner under a big card would play unseen
+    if (mid.length && midRoom()) { const all = fold(mid); MOMENT_Q.length = 0; showBanner(all); }
+  }
+  // a timer, not onTick: a guide step or a card that holds the game must not hold a moment back
+  setInterval(() => {
+    const dt = 0.1, u = MOMENT_UI;
+    if (!MOMENT_Q.length) { u.wait = 0; u.guideT = 0; return; }
+    if (fighting()) { u.wait = 0; return; }
+    if (guideBusy() && !fighting()) u.guideT += dt;   // time a guide step has held the queue at fight end
+    if (blocked()) { u.wait = 0; return; }
+    if ((u.wait += dt) < MOMENT_TUNE.settleS) return;   // the win animation plays out first
+    if (u.ov && MOMENT_Q.some(x => x.tier === 'big')) return;
+    flush();
+  }, 100);
+  // checks drive time by hand: a forced flush
+  window.__momentFlush = () => { MOMENT_UI.wait = 99; flush(); };
+
+  // ---- the moments ----
+  const heroName = id => (typeof ROSTER === 'object' && ROSTER[id] && ROSTER[id].name) || id;
+  on('loot', e => {
+    const it = e && e.item; if (!it || !it.u || !UNIQ[it.u]) return;
+    const u = UNIQ[it.u];
+    moment('unique', { title: u.name, sub: e.first ? 'A new unique. It joins your trophy wall.' : 'Another copy of a unique you have.',
+      rarity: 'legendary', icon: { item: it },
+      lines: e.kept ? [] : [{ txt: 'Your bag was full, so it was salvaged.' }] });
+  });
+  on('zoneClear', e => {
+    if (!e || e.zone !== 1) return;   // the first boss: later zone bosses have their own toast, scroll and (every region) Great Lantern
+    moment('boss', { title: 'The first boss falls', sub: `${zoneName(e.zone)} is cleared. The road goes on.`, icon: { ic: ['banner', '#F2C14E'] } });
+  });
+  on('heroUnlocked', e => { if (e && e.id) moment('hero', { title: heroName(e.id), sub: 'A new hero will take up the lamp.', icon: { ic: ['banner', '#B58CFF'] } }); });
+  // level up is medium only on the first level and every 5th (a banner a level would be a flood); otherwise the toast rules decide
+  const MOMENT_LEVEL = L => L === 2 || L % 5 === 0;
+  on('levelup', e => { if (e && !e.quiet && MOMENT_LEVEL(e.L)) moment('level', { title: `Level ${e.L}`, sub: `Your hero hits ${Math.round(PACE.heroLv * 100)}% harder.`, L: e.L, icon: { ic: ['banner', '#6FCB6A'] } }); });
+  on('abilityLearned', e => {
+    const a = e && typeof ABILITIES === 'object' && ABILITIES[e.id]; if (!a) return;
+    moment('ability', { title: a.name, sub: heroName(e.hero) + ' learns a new ability.' });
+  });
+  on('starFound', e => {
+    if (!e || e.quiet || typeof STARS !== 'object' || !STARS[e.id]) return;
+    const first = Object.keys((S.stars && S.stars.own) || {}).length <= 1;   // the first Star is a big card (DECISIONS, Early game); later ones are a banner
+    moment(first ? 'starFirst' : 'star', { title: STARS[e.id].name, sub: STARS[e.id].text });
+  });
+  // a look found: the Deeds grant looks with a Feat, a Group level or a Chapter; compare what is owned
+  let ownedLooks = null;
+  const lookSet = () => { try { return new Set(deeds.looks().filter(l => l.got).map(l => l.id)); } catch (e) { return null; } };
+  const lookCheck = quiet => {
+    const now = lookSet(); if (!now) return;
+    if (ownedLooks && !quiet) for (const l of deeds.looks()) if (l.got && !ownedLooks.has(l.id)) moment('look', { title: l.n, sub: 'A new look. Wear it from Achievements.', icon: { ic: ['banner', '#B58CFF'] } });
+    ownedLooks = now;
+  };
+  for (const ev of ['deedGroup', 'deedMilestone'])   // a Feat or Chapter card shows its own look on(ev, e => setTimeout(() => lookCheck(!!(e && e.quiet)), 0));
+  on('deedsInit', () => { ownedLooks = lookSet(); });
+  setTimeout(() => { if (!ownedLooks) ownedLooks = lookSet(); }, 3000);
 }
 
 // ---- src/js/75-nav-ui.js ----
@@ -39083,13 +39403,25 @@ let navUI = null;
   layer.append(ring);
   layer.hidden = true;
   document.body.append(layer);
+  // The guide panel: Old Hesketh's face on the left, the tip beside it, the Got it / Go button on its own row
+  // under the text, a small dismiss in the corner. It is a notice, not a control (docs/design/layout.md), so
+  // it docks where notices dock and never sits over the stage (place()).
   const bub = el('div', 'ob-bub'); bub.setAttribute('role', 'note'); bub.hidden = true;
-  const arrow = el('i', 'ob-arrow');
+  const face = el('img', 'ob-face px'); face.alt = ''; face.width = 48; face.height = 48;
+  const faceBox = el('span', 'ob-facebox'); faceBox.setAttribute('aria-hidden', 'true'); faceBox.append(face);
+  let faceKey = '';
+  const faceUp = () => {   // Hesketh's roster portrait; a plain slot with his initial until it bakes
+    let u = ''; try { u = typeof portraitURL === 'function' ? portraitURL('hesketh') : ''; } catch (e) { u = ''; }
+    if (u === faceKey) return; faceKey = u;
+    if (u) face.src = u; else face.removeAttribute('src');
+    putToggle(faceBox, 'blank', !u);
+  };
+  const nm = el('b', 'ob-name', 'Old Hesketh');
   const txt = el('span', 'ob-txt');
   const x = el('button', 'ob-x'); x.type = 'button'; x.setAttribute('aria-label', 'Dismiss this tip'); x.textContent = '×';
   // SOLO1: a step whose action is reading it (the first boss) has a Got it button
   const okb = el('button', 'ob-ok'); okb.type = 'button'; okb.textContent = 'Got it'; okb.hidden = true;
-  bub.append(arrow, txt, okb, x);
+  bub.append(faceBox, nm, txt, x, okb);
   // A waiting step may carry a Go button (spec.go): it takes the hero to the node that yields what the step needs.
   let curGo = null;
   const finish = s => s.id.startsWith('use:') ? onboardUseDone(s.id) : onboardDone(s.id);   // a first-use line is read, not a guide step
@@ -39196,9 +39528,9 @@ let navUI = null;
   };
 
   const USE_SHOWN_MS = 7000;   // a first-use line counts as read after this long on screen
-  const BLOCK = '.create, .away-ov, .bsheet-ov, .modal, .dw-ov';
+  const BLOCK = '.create, .away-ov, .bsheet-ov, .modal, .dw-ov, .mm-ov';
   let lastKey = '', useT0 = 0;
-  function hide() { useT0 = 0; if (!layer.hidden) layer.hidden = true; if (!bub.hidden) bub.hidden = true; cur = null; curGo = null; lastKey = ''; lastNode = null; lastRect = null; ONBOARD.paused = false; }
+  function hide() { useT0 = 0; if (!layer.hidden) layer.hidden = true; if (!bub.hidden) bub.hidden = true; cur = null; curGo = null; lastKey = ''; lastNode = null; lastRect = null; ONBOARD.paused = false; const ap = $('app'); if (ap.classList.contains('guide-side')) ap.classList.remove('guide-side', 'guide-nu', 'guide-btn'); }
   // The hint used to re-read the target's pixel position and re-place itself every 250ms, so it
   // jumped whenever the stage moved under it (camera/zoom, screen shake, a pack spawning) even
   // though nothing about the guide itself had changed. Stage targets keep that cached placement.
@@ -39222,12 +39554,12 @@ let navUI = null;
     if (!spec || !vis(spec.node)) return hide();
     if (use) { if (!useT0) useT0 = Date.now(); else if (Date.now() - useT0 > USE_SHOWN_MS) { onboardUseDone(step.id); return hide(); } }
     cur = step; curGo = spec.go || null;
+    putHidden(okb, !(step.ok || curGo));
+    putText(okb, curGo ? curGo.label : 'Got it');
     place(spec);
     // the game waits only while the step waits for you to read or press something now (playtest-1 note 1, W1-A):
     // never for a step that needs materials or time, and never while a press step is still short of what it costs
     ONBOARD.paused = onboardPaused(step);
-    putHidden(okb, !(step.ok || curGo));
-    putText(okb, curGo ? curGo.label : 'Got it');
   }
   soloGuideWants = () => (cur && !layer.hidden ? cur.id : '');
   // The guide's steps and their targets, for tools/check.mjs (the browser check walks the first session).
@@ -39249,12 +39581,27 @@ let navUI = null;
     }
     if (!changed) return;   // no real layout change and the same target/text: leave it exactly where it is
     dirty = false; panelScrolled = false; lastNode = spec.node;
+    // the panel docks where notices dock and never over the stage: landscape, the side column (its notices slot;
+    // it stands in for Next Up while it speaks, except for the Next Up step itself, which points at the chip);
+    // portrait, a slot in the game view just above the Act / Skills / Foe bar (the stage gives up the height);
+    // over a menu, the bottom of the menu panel. Only the parent and a mode class ever change.
+    const wide = isWide(), mode = wide ? 'side' : S.tab ? 'over-menu' : 'dock';
+    const home = mode === 'dock' ? $('game') : $('app');
+    if (bub.parentNode !== home) home.append(bub);
+    for (const m of ['side', 'over-menu', 'dock']) bub.classList.toggle(m, m === mode);
+    bub.classList.toggle('nu', mode === 'side' && spec.node === chip);
+    // landscape, a step with a button (read it, or Go) takes the dock's room too: the column is short and the button must not clip
+    const btn = mode === 'side' && !okb.hidden;
+    bub.classList.toggle('btn', btn);
+    putToggle($('app'), 'guide-side', mode === 'side'); putToggle($('app'), 'guide-nu', mode === 'side' && spec.node === chip); putToggle($('app'), 'guide-btn', btn);
+    faceUp();
+    if (!inPanel) r = null;   // the dock may have moved the stage (portrait: the panel takes a slot): read the target after it
     // UX-L1: a target inside the menu's scrolling content that is out of sight (a short landscape menu: the Make view's
     // recipes, a camp building further down) is scrolled into view on a new target/view. Ordinary
     // scroll or reflow only moves the ring, so following it never pulls the player back.
     if (inPanel && !spec.noRing && (newTarget || reveal)) {
       const pr = panels.getBoundingClientRect();
-      if (r.height && (r.top < pr.top || r.bottom > pr.bottom - 56)) {
+      if (r.height && (r.top < pr.top || r.bottom > pr.bottom - (bub.classList.contains('over-menu') ? bub.offsetHeight + 12 : 56))) {
         scrollMenuTo(spec.node);
         r = spec.node.getBoundingClientRect();
       }
@@ -39272,16 +39619,8 @@ let navUI = null;
       putStyle(ring, 'transform', `translate(${Math.round(rx)}px, ${Math.round(ry)}px)`);
       putStyle(ring, 'width', Math.round(rw) + 'px'); putStyle(ring, 'height', Math.round(rh) + 'px');
     }
-    // the sentence: docked exactly where placeToasts docks toasts (70-ui.js) - inside #stageBox on
-    // the game view, inside #app over a menu - so it reads as one system with the toast stack and
-    // the two never overlap (60-onboard.css .ob-bub, --toast-h). Only the parent and the arrow's
-    // up/down direction ever change; the CSS position within that parent is fixed.
-    const over = !!S.tab;   // UX-L1: in landscape it docks at the bottom of the menu panel (80-landscape.css)
-    const home = over ? $('app') : $('stageBox');
-    if (bub.parentNode !== home) home.append(bub);
-    bub.classList.toggle('over-menu', over);
-    bub.classList.toggle('up', !!spec.node.closest('.tabs'));   // the tab bar sits below the band
   }
+  try { new ResizeObserver(invalidate).observe($('stageBox')); } catch (e) {}   // the stage gives up height when the panel docks: re-place the ring
   setInterval(tick, 250);
   panels.addEventListener('scroll', () => { panelScrolled = true; tick(); }, { passive: true });
   addEventListener('resize', () => { invalidate(); tick(); });
@@ -41120,7 +41459,7 @@ var storyUI;   // var: 75-codex-ui (earlier in the build) reads it at run time
   const btn = (cls, txt) => { const b = el('button', cls, txt); b.type = 'button'; return b; };
   const safe = (fn, d) => { try { return fn(); } catch (e) { console.error('[lanternfall] story ui', e); return d; } };
   const PAGE_IC = () => iconURL('charm', '#F2E27A');
-  const BLOCK = '.away-ov, #createScreen, .join-ov, .gl-ov, .bsheet-ov, .dd-fc-ov, .dw-ov';
+  const BLOCK = '.away-ov, #createScreen, .join-ov, .gl-ov, .mm-ov, .bsheet-ov, .dd-fc-ov, .dw-ov';
   const blocked = () => !!document.querySelector(BLOCK);
   const menuOpen = () => !!S.tab;   // a landscape menu covers most of the stage
   const stageBox = () => document.getElementById('stageBox');
@@ -41930,7 +42269,9 @@ const SFX = (() => {
     forge: () => { noise(0.12, 3000, 0.4); tone(1200, 900, 0.18, 'triangle', 0.3); tone(600, 600, 0.25, 'sine', 0.15, 0.03); },
     fail: () => { tone(392, 370, 0.18, 'square', 0.2); tone(311, 294, 0.18, 'square', 0.2, 0.18); tone(233, 150, 0.4, 'square', 0.2, 0.36); },
     zone: () => arp([392, 523, 659, 784, 1047], 0.08, 'square', 0.22),
-    buy: () => tone(880, 1320, 0.05, 'square', 0.15)
+    buy: () => tone(880, 1320, 0.05, 'square', 0.15),
+    momentBig: () => { arp([392, 523, 659, 784, 1047], 0.08, 'square', 0.22); tone(1568, 1568, 0.7, 'triangle', 0.22, 0.45); noise(0.3, 3200, 0.18, 0.4); },
+    momentMid: () => { tone(784, 784, 0.1, 'square', 0.18); tone(1175, 1175, 0.22, 'triangle', 0.22, 0.09); }
   };
   function play(name, prio) { if (allow(prio)) { try { sounds[name](); } catch (e) { /* audio is best-effort */ } } }
   return { start, play };
@@ -41953,6 +42294,7 @@ on('loot', () => SFX.play('loot', true));
 on('itemAdded', ({ item }) => { if (!item.u) SFX.play('forge', true); });
 on('bossFail', () => SFX.play('fail', true));
 on('zoneClear', () => SFX.play('zone', true));
+on('momentShow', ({ tier }) => SFX.play(tier === 'big' ? 'momentBig' : 'momentMid', true));   // 75-moments-ui
 // Button taps in the panels (buy, hire, upgrade...). The stage has its own sounds.
 document.addEventListener('click', e => {
   const b = e.target.closest && e.target.closest('button');

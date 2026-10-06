@@ -376,18 +376,26 @@ Plan and rulings: `/mnt/project-files/early-game/plan.md`, `plan-judge.md`. Beat
   first-clear caches of zones 1 to 3 and 7 to 9 each give a Deepwell lantern colour the save does not own yet (Ember Red
   first), print it as a certain look, and relight the stage. This is the cache's look, not an extra reward; a save that
   owns all six gets none. The Wardrobe tags each look Deed, Cache or (later) Store, and counts earned looks only.
-- **Moments.** Big moments (first boss win, a cache with a look or unique, a unique, a new hero, the first Star, a Great
+- **Moments.** Big moments (the first boss win, a Champion's first clear with its post scene in the card and the join
+  when an unpicked starter is met there, a cache with a look or unique, a unique, a new hero, the first Star, a Great
   Lantern) and medium moments (the first and every 5th level, a new ability, a look, a Rare-or-better craft) sit
   outside the pop budget, under their own cap. Big: one card at a time at fight end, holding the game. Medium: at most
   one per fight end, in the notices slot. At most 8 big plus medium in the first 20 minutes. This refines "the early
-  game must not be spammed". A cache that holds a look is a big card, even when it opens automatically.
-- **Starters join on the road.** The two starters you didn't pick join in the order Tobin, Wren, Pip: the first at the
-  zone 5 Champion, the second at the zone 10 Champion. The zone 15 Champion keeps its scene with no join. Each
-  starter's meet scene works at either post.
+  game must not be spammed". A cache that holds a look is a big card, even when it opens automatically. `STORY_TUNE.champMoment = false` (card `champion-moment`)
+  switches the Champion card off: the post scene plays as a story card and the cache opens on its own, as before.
+- **Starters join on the road.** You start with the hero you picked. The other two join where the story puts them: Tobin
+  at the zone 5 Champion (the cellars), Wren at the zone 10 Champion (the Cantor's cave), Pip at the zone 15 Champion
+  (the Marshal's graves), per story bible 4.4. Each join is a scene, never a bare toast. Old saves keep every starter
+  they own (an all-met default). `STORY_TUNE.joinOnMeet = false` switches back to all three at the start. A join counts as a new thing for the
+  spacing governor, so the next queued unlock (the Codex at zone 10) waits at least 1:30. Coverage
+  areas 1, 4, 14 and 15.
 - **F3, the big-moment pace** (amends the self-improving plan's scorecard). Minutes 0 to 20: a big moment at least every
   5 minutes, no gap over 8. From minute 20 to the zone 10 Champion (or minute 60, if that comes first): a big moment at
   every zone's first clear from 5 to 10, no gap over 8 on the casual walk. The 2026-11-02 review sets the pace after
   zone 10. Why: big moments are tied to bosses, so their minutes follow play speed, and zone 10 closes the first hour.
+  Prediction: the nightly walk shows no gap over 8 minutes between big moments up to the zone 10 Champion, for every
+  starter pick; missed if any seed shows one. Coverage areas 2 and 3. No save change; the colour grants switch off
+  with `CACHE_TUNE.on` (card `cache-core`).
 - **The guide is Old Hesketh, with a face.** Landscape: the side column's notices slot. Portrait: docked above the
   action bar. Never over the fighters or the HP bars.
 - **Bounties.** A finished bounty can be claimed from Next Up and from its ready notice, and the board also shows at
