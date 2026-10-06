@@ -8,7 +8,7 @@
 .nu-chip .nu-ic img { width: 20px; height: 20px; }
 .nu-cbody { min-width: 0; display: grid; gap: 1px; }
 .nu-eye { font: 600 10px/1.1 var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
-.nu-chip .nu-lbl { font: 500 13.5px/1.2 var(--body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+.nu-chip .nu-lbl { font: 500 13.5px/1.2 var(--body); white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; display: block; }   /* the whole goal, on as many lines as it takes (top-bar-compact) */
 .nu-cst { font: 600 calc(13px * var(--display-k))/1 var(--display); color: var(--gold); font-variant-numeric: tabular-nums; }
 .nu-more { font: 600 calc(11px * var(--display-k))/1 var(--display); padding: 3px 5px; background: var(--panel-2); border: 1px solid var(--line-hi); color: var(--muted); }
 .nu-more:empty { display: none; }

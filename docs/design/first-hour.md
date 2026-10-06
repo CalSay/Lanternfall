@@ -40,9 +40,9 @@ early-game/playtest-coldB.md`). The minutes below are targets for a casual human
 | 10 | 4:15 | The Hero tab (spacing governor), with the first attribute point | Spends the point | Attributes | +1 point | ownership | | `story-unlock-gates`; points from PR #58; moment `moment-layer` |
 | 11 | 5:15 | The Gather tab; Hesketh: "Wood first." | Chops 8 logs | Gathering | logs | | | `story-unlock-gates`; line `unlock-voice` |
 | 12 | 7:00 | **Medium moment: the camp fire lit**; the Camp tab; Hesketh's talk plays here | Lights the fire, listens | Camp | a home | relief | "Every road needs a place to come back to." | today (fire); cards `intro-and-picker` (talk moves here), `moment-layer` |
-| 13 | 8:00 | Next Up in the compact top bar | Reads Next Up | Next Up | | direction | | `story-unlock-gates`; card `top-bar-compact` |
+| 13 | 8:00 | Next Up in the compact top bar | Reads Next Up | Next Up | | direction | | today: Next Up shares one line with Fight / Gather, zone arrows in the header (`top-bar-compact`); unlock time `story-unlock-gates` |
 | 14 | 10:00 | The Workbench and the first tool: the first craft, with a **result card** showing its grade | Crafts the tool | Crafting | a tool, revealed | pride | | today (chain); card `craft-reveal` |
-| 15 | 12:00 | The away chip joins the top bar | | Leaving pays only what you set going | | | | `story-unlock-gates`; card `top-bar-compact` |
+| 15 | 12:00 | The away chip joins the top bar | | Leaving pays only what you set going | | | | today: the always-on away sentence is gone; the away chip shows while gathering (`top-bar-compact`); show rule `story-unlock-gates` |
 | 16 | 14:00 | Bounties (zone 4); Hesketh's board also at Camp; a ready bounty shows a Claim on Next Up | Claims in place | Bounties | gold or Essence | small win | | today (unlock); card `bounties-anywhere` |
 | 17 | 16:00 | **Big moment: a starter you didn't pick joins** (zone 5, when you meet them) | Can switch | Switching | a hero, at the road's level | company | Their first scene (bible 4.4) | idea; needs a card; PR #58 for the level |
 | 18 | 20:00 | **Medium moment: first Star** (zone 6 Captain); the Stars tab | Equips the Star | Stars | a Star | power | | today; moment `moment-layer` |
