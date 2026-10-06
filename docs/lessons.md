@@ -66,6 +66,9 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Reuse one `loadCore` per new check section. Why: the full check hit Node's default heap limit in Codex's environment once the section made a dozen cores. (story-systems-hollow, 2026-10-06)
 - New UI for a story beat goes in its own `registerSection` in a feature file, never as an edit to a shared menu file such as `74-ui-tavern.js` (Codex P1, story-systems-hollow).
 - A line that names a hero waits on the hero being unlocked (`heroUnlocked`), not on zone progress alone; a Codex tile with no Light (`ptsMax` 0) hides the "0 of 0 Light" tally (Codex round 3, story-systems-hollow).
+- Keep a scene a screen owns out of the engine's queue: the opening is shown by `75-intro-ui.js`, which claims it (`storyIntroClaim`), and nothing walks in (`live()`) until the fire scene ends. Why: with the picker and the stills up, the area caption showed behind them and the first tap closed it. (intro-and-picker, 2026-10-06)
+- A screen that opens filed-as-seen must not be replayed on reload; the playtest driver reopens the game on every call, so a route that wants the opening again starts with `new fresh`. Why: a replayed opening held the game under every later call. (intro-and-picker, 2026-10-06)
+- After a screen that held the game closes, call `storySync()` yourself: the guide can pause the ticks that would have played what waited. Why: the area caption never came when the guide's tip was up. (intro-and-picker, 2026-10-06)
 - Before a ruling moves who is met where, check `STORY_BEATS` (`21k-story-hollow.js`) and bible 4.4: meet scenes are written for their place (Wren's cave, Pip's graves). Why: a judge ruling put Wren and Pip at the wrong Champions; Codex P1 on PR #83. (early-game lead, 2026-10-06)
 
 ## UI and menus

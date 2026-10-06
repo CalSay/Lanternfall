@@ -1,7 +1,8 @@
 // 21-stories: companion writing and rarity frame colours. Core, data only (no DOM); loads in Node too.
-// Exposed names: STORIES, BIOS, JOIN_LINES, QUOTES, RARITY_FRAME.
+// Exposed names: STORIES, BIOS, PICK_LINES, JOIN_LINES, QUOTES, RARITY_FRAME.
 //   STORIES[key]    -> [{ title, text }] x3, camp stories unlocked at L5 / L15 / L25 (party-and-classes.md 3.4)
 //   BIOS[key]       -> the bio from 3.2
+//   PICK_LINES[key] -> the new-game hero picker's blurb for a starter, in second person (you ARE the one you pick: bible 4.1)
 //   JOIN_LINES[key] -> the joining moment shown on recruit, as lines; a line starting with " is speech
 //   QUOTES[key]     -> 3 short barks (under 60 chars) for the stage or the camp
 //   RARITY_FRAME[r] -> { name, col } for r = common | rare | epic | legendary
@@ -14,7 +15,7 @@ const RARITY_FRAME = {
 };
 
 const BIOS = {
-  tobin: 'Tobin carried your spare sword out of Mossy Hollow and never gave it back. He is not brave, exactly. He just refuses to be the one who runs first.',
+  tobin: 'Tobin carried a spare sword out of Mossy Hollow and never gave it back. He is not brave, exactly. He just refuses to be the one who runs first.',
   wren: 'Wren learned to shoot in the caves, where you aim at sounds. She talks to her arrows. Most of them come back.',
   hesketh: 'Hesketh lit the road lamps for forty years before the dark came in. He still walks the route every evening. Now he brings you along.',
   pip: 'Pip taught herself fire from a book with the last chapter torn out. She is still looking for it. Nothing near her stays unburnt for long.',
@@ -32,6 +33,13 @@ const BIOS = {
   elowen: 'The land is called Lanternfall because of what Elowen did the night the lights went out. She will not talk about it. She keeps her flame low.',
   caedmon: 'Caedmon walked into the Ashen Wyrm\'s fire to buy a village one hour. He walked out three days later, still burning. He does not sleep, and he does not talk about what he saw in the flame.',
   corvin: 'Corvin killed for the Hollow King for twenty years and never once saw his face. When the curtain came down, there was no one behind it. Corvin was the only one who did not kneel. He fights for you because you asked, and nobody ever had.'
+};
+
+// The picker speaks to the player: whoever is picked is "you" (bible 4.1). BIOS stay third person for the hero sheet and the camp.
+const PICK_LINES = {
+  wren: 'You learned to shoot in the caves, by sound. You talk to your arrows. Most of them answer.',
+  tobin: 'You are good at doors. You hold them shut while everyone gets away.',
+  pip: 'You taught yourself fire from a book with the last chapter torn out. You are still looking for it. Nothing near you stays whole for long.'
 };
 
 const JOIN_LINES = {

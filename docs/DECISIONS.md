@@ -325,6 +325,16 @@ Every card that adds a price, a currency, a timer or a gate passes all ten. (202
 
 ### Story: Claude decided (story judge, 2026-10-05; Cal can veto any line)
 
+- **The opening is three pictures, then "Who are you?", then Hesketh's fire (intro-and-picker, story judge, 2026-10-06).** Delivery
+  change to bible 8.1; the words stay. The region card's three lines show over two stills (line 1 over the lamp on its hook,
+  lines 2 and 3 over the dark coming up through the moss), one line a tap, before the hero picker. Hesketh's roadside fire
+  (3 lines, was 4, ending "Wood first. Then we talk.") plays after the pick over a third still, the road at night. His talk (the four lines, after a one-line card, "Every road needs a place to come back to.") moves from the Hollow's
+  door to the moment the player lights their own camp fire (8 Pine Log), which pays off "Wood first. Then we talk."
+  The fire's first line now says "a ring of cold ash" so the roadside fire is not the camp fire. The picker speaks in second
+  person (bible 4.1: you are the one you pick) and `BIOS.tobin` no longer says "your spare sword". Stills 2 and 3 are not in
+  bible 10.3's seven; until the first-hour-art pack is vetted they show the approved Mossy Hollow night background, darkened,
+  with the lamp icon, which 10.3 allows. Drawing them makes the pack nine stills: Cal's call.
+
 - **Elders 2 and 3 are the dark wearing a man's shape.** The Fogbound is the sea-fog in Silas Penrow's shape; the Pyre
   Knight is the held fire in Ser Durand's. Both men are found alive. "Never tied to lanterns or lamps" is read as: no Elder
   is or fights with a lamp, lens or lantern, and beating one never lights a lantern; the hero does that.

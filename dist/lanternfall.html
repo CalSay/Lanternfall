@@ -2047,6 +2047,51 @@ span.cf-d { font-weight: 600; }
 .hearth-fire.ready .hf-tag { color: #0B0810; background: #FFB347; }
 @keyframes hf-pulse { 50% { box-shadow: 0 0 20px rgba(255,179,71,.85); } }
 @media (prefers-reduced-motion: reduce) { .hearth-fire.ready::before { animation: none; } }
+/* 60-intro: the drawn opening, full screen (75-intro-ui.js; intro-and-picker). Three stills, one line a tap, Skip always on screen. */
+.intro { position: fixed; inset: 0; z-index: 45; background: #07050B; color: var(--bone); overflow: hidden; display: grid; grid-template-rows: minmax(0, 1fr) auto; }
+.intro-stage { position: absolute; inset: 0; }
+.intro-still { position: absolute; inset: 0; overflow: hidden; background: #07050B; }
+.intro-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 72%; }
+/* the placeholder look: the approved Mossy Hollow night background, darkened, the lamp icon over it (bible 10.3) */
+.s-lamp .intro-img { filter: brightness(.38) saturate(.85); }
+.s-dark .intro-img { filter: brightness(.24) saturate(.7); }
+.s-road .intro-img { filter: brightness(.42) saturate(.85); }
+.intro-shade { position: absolute; inset: 0; pointer-events: none; }
+.s-lamp .intro-shade { background: radial-gradient(60% 45% at 50% 38%, rgba(255,179,71,.26), rgba(255,179,71,0) 70%), linear-gradient(to top, rgba(7,5,11,.75), rgba(7,5,11,0) 55%); }
+.s-dark .intro-shade { background: linear-gradient(to top, #07050B 0%, rgba(7,5,11,.88) 32%, rgba(7,5,11,0) 72%), radial-gradient(40% 30% at 50% 46%, rgba(255,179,71,.14), rgba(255,179,71,0) 70%); }
+.s-road .intro-shade { background: radial-gradient(34% 26% at 34% 66%, rgba(255,179,71,.2), rgba(255,179,71,0) 70%), linear-gradient(to top, rgba(7,5,11,.7), rgba(7,5,11,0) 50%); }
+.intro-lamp { position: absolute; image-rendering: pixelated; filter: drop-shadow(0 0 14px rgba(255,179,71,.55)); }
+.intro-lamp.lp-big { width: 88px; height: 88px; left: calc(50% - 44px); top: 26%; animation: intro-flick 2.4s ease-in-out infinite; }
+.intro-lamp.lp-small { width: 44px; height: 44px; left: calc(50% - 22px); top: 44%; animation: intro-flick 1.6s ease-in-out infinite; }
+.intro-lamp.lp-mine { width: 52px; height: 52px; left: calc(34% - 26px); top: 58%; animation: intro-flick 2s ease-in-out infinite; }
+.intro-lamp.lp-dead { width: 52px; height: 52px; left: calc(66% - 26px); top: 58%; filter: none; opacity: .75; }
+@keyframes intro-flick { 0%, 100% { opacity: 1; } 45% { opacity: .82; } 60% { opacity: 1; } }
+.intro-foot { position: relative; align-self: end; display: grid; gap: 10px; padding: 48px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(to top, rgba(7,5,11,.94) 40%, rgba(7,5,11,0)); }
+.intro-tx { display: grid; gap: 8px; width: min(560px, 100%); margin: 0 auto; }
+.intro-who { margin: 0; font: 600 calc(13px * var(--display-k))/1.1 var(--display); letter-spacing: .08em; text-transform: uppercase; color: var(--gold); }
+.intro-line { margin: 0; min-height: 3.1em; font: 500 clamp(17px, 4.8vw, 21px)/1.45 var(--body); text-shadow: 0 2px 0 #000, 0 0 12px rgba(0,0,0,.8); }
+.intro-line.in { animation: intro-in .35s ease-out; }
+@keyframes intro-in { from { opacity: 0; transform: translateY(4px); } }
+.intro-dots { display: flex; gap: 6px; }
+.intro-dots span { width: 8px; height: 8px; background: rgba(239,230,214,.3); }
+.intro-dots span.on { background: var(--gold); }
+.intro-go { width: min(560px, 100%); margin: 0 auto; min-height: 48px; }
+.intro-skip { position: absolute; top: calc(10px + env(safe-area-inset-top, 0px)); right: 12px; min-height: 44px; min-width: 64px; padding: 0 14px; background: rgba(11,8,16,.62); border: 1px solid var(--line-hi); color: var(--bone); }
+.intro button:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
+@media (min-width: 560px) and (max-height: 520px) {
+  .intro-foot { grid-template-columns: minmax(0, 1fr) 160px; align-items: end; padding-top: 30px; }
+  .intro-tx { margin: 0; width: auto; }
+  .intro-go { width: 100%; margin: 0; }
+  .intro-line { min-height: 2.9em; }
+  .intro-lamp.lp-big { top: 18%; width: 72px; height: 72px; left: calc(50% - 36px); }
+  .intro-lamp.lp-small { top: 34%; }
+  .intro-lamp.lp-mine, .intro-lamp.lp-dead { top: 44%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .intro-lamp, .intro-line.in { animation: none; }
+}
+.intro-img.art { image-rendering: pixelated; }
 /* 60-lantern: the Great Lantern card and the Lantern Road strip (75-lantern-ui.js). */
 
 /* ---- the Great Lantern card ---- */
@@ -7049,9 +7094,10 @@ const CRAFT_BAG_MAX = 50;
 
 // ---- src/js/21-stories.js ----
 // 21-stories: companion writing and rarity frame colours. Core, data only (no DOM); loads in Node too.
-// Exposed names: STORIES, BIOS, JOIN_LINES, QUOTES, RARITY_FRAME.
+// Exposed names: STORIES, BIOS, PICK_LINES, JOIN_LINES, QUOTES, RARITY_FRAME.
 //   STORIES[key]    -> [{ title, text }] x3, camp stories unlocked at L5 / L15 / L25 (party-and-classes.md 3.4)
 //   BIOS[key]       -> the bio from 3.2
+//   PICK_LINES[key] -> the new-game hero picker's blurb for a starter, in second person (you ARE the one you pick: bible 4.1)
 //   JOIN_LINES[key] -> the joining moment shown on recruit, as lines; a line starting with " is speech
 //   QUOTES[key]     -> 3 short barks (under 60 chars) for the stage or the camp
 //   RARITY_FRAME[r] -> { name, col } for r = common | rare | epic | legendary
@@ -7064,7 +7110,7 @@ const RARITY_FRAME = {
 };
 
 const BIOS = {
-  tobin: 'Tobin carried your spare sword out of Mossy Hollow and never gave it back. He is not brave, exactly. He just refuses to be the one who runs first.',
+  tobin: 'Tobin carried a spare sword out of Mossy Hollow and never gave it back. He is not brave, exactly. He just refuses to be the one who runs first.',
   wren: 'Wren learned to shoot in the caves, where you aim at sounds. She talks to her arrows. Most of them come back.',
   hesketh: 'Hesketh lit the road lamps for forty years before the dark came in. He still walks the route every evening. Now he brings you along.',
   pip: 'Pip taught herself fire from a book with the last chapter torn out. She is still looking for it. Nothing near her stays unburnt for long.',
@@ -7082,6 +7128,13 @@ const BIOS = {
   elowen: 'The land is called Lanternfall because of what Elowen did the night the lights went out. She will not talk about it. She keeps her flame low.',
   caedmon: 'Caedmon walked into the Ashen Wyrm\'s fire to buy a village one hour. He walked out three days later, still burning. He does not sleep, and he does not talk about what he saw in the flame.',
   corvin: 'Corvin killed for the Hollow King for twenty years and never once saw his face. When the curtain came down, there was no one behind it. Corvin was the only one who did not kneel. He fights for you because you asked, and nobody ever had.'
+};
+
+// The picker speaks to the player: whoever is picked is "you" (bible 4.1). BIOS stay third person for the hero sheet and the camp.
+const PICK_LINES = {
+  wren: 'You learned to shoot in the caves, by sound. You talk to your arrows. Most of them answer.',
+  tobin: 'You are good at doors. You hold them shut while everyone gets away.',
+  pip: 'You taught yourself fire from a book with the last chapter torn out. You are still looking for it. Nothing near you stays whole for long.'
 };
 
 const JOIN_LINES = {
@@ -7905,23 +7958,33 @@ const omenLine = (id, dare, maxZone, met) => (dare && DARE_LINES[id]) || (OMEN_L
 const STORY_BEATS = { region: {}, area: {}, zone: {}, captain: {}, champ: {}, elder: {}, npc: {}, voice: {}, hero: {}, choice: {},
   vesper: {}, letter: {}, note: {}, item: {} };
 
-// The opening (bible 8.1): the region card before zone 1, over the lamp on its hook. Text only until the owner vets the stills pack
-// (bible 10.3).
+// The opening (bible 8.1): the region card, three lines. 75-intro-ui.js shows it over two drawn stills BEFORE the hero picker: line 1 over
+// the lamp on its hook, lines 2 and 3 over the dark coming up through the moss (STORY_BEATS.intro). The same lines are the Journal's Chapter 1 page.
 STORY_BEATS.region.hollow = { title: 'Chapter 1: The Hollow', lines: [
   'Ten years ago every lamp went out. The one over your door never did.',
   'This winter the last lamp in sight went out. Tonight the dark came for yours.',
   'Your village hid. You took the lamp and ran, so the dark would follow you.'
 ] };
 
-// Old Hesketh, before the first fight (bible 8.1, story-opening). Two NPC scenes at the Hollow's door (area 0), played right after the
-// region card: the fire, then the talk. The camp fire later in the Pine Grove is a bigger one, so the guide's toast just asks for wood.
-STORY_BEATS.npc.heskethFire = { at: 'area:0', who: 'Old Hesketh', lines: [
-  'On the road your lamp gutters. The dark is close.',
-  '"Wood first. Then we talk." You kindle his dead fire.',
-  'It catches from your lamp. Yours burns steady.',
-  '"Every road needs a place to come back to."'
+// The drawn opening (intro-and-picker; first-hour.md beats 1 to 3). `open`: one beat a tap, each a still id and the region card line shown over it.
+// `fire`: the NPC scene shown over still `fireStill` after the pick. Stills: INTRO_STILLS (below); until the first-hour-art pack is vetted each
+// shows the approved Mossy Hollow night background, darkened, with the lamp icon (bible 10.3).
+STORY_BEATS.intro = { region: 'hollow', fire: 'heskethFire', fireStill: 'road',
+  open: [{ still: 'lamp', line: 0 }, { still: 'dark', line: 1 }, { still: 'dark', line: 2 }] };
+// Still art: '' shows the placeholder; the vetted Codex still goes in here as a data URI (WebP or PNG), one change per still.
+//   lamp: the lamp on its hook over a hedge-village door, a small spiral on its base. dark: the dark coming up through the moss as you take the lamp
+//   and run. road: the road at night, a dead fire and an old man. All 3 at 960x540 (landscape); the page covers the screen, so keep the middle clear.
+const INTRO_STILLS = { lamp: '', dark: '', road: '' };
+
+// Old Hesketh. Two NPC scenes. The fire is the dead roadside fire, shown over still 3 right after the hero is picked, before the first fight. The talk
+// plays later, when the player lights their own camp fire (8 Pine Log), which pays off "Wood first. Then we talk." (55-story.js, hearthLit).
+STORY_BEATS.npc.heskethFire = { at: 'intro', who: 'Old Hesketh', lines: [
+  'Your lamp gutters. An old man kneels by a ring of cold ash.',
+  'You light his sticks from your lamp. The lamp steadies.',
+  '"Wood first. Then we talk."'
 ] };
-STORY_BEATS.npc.heskethTalk = { at: 'area:0', who: 'What Hesketh knows', lines: [
+STORY_BEATS.npc.heskethHearth = { at: 'hearth', who: 'Old Hesketh', lines: ['"Every road needs a place to come back to."'] };
+STORY_BEATS.npc.heskethTalk = { at: 'hearth', who: 'Old Hesketh', lines: [
   '"Ten years I\'ve lit dead lamps. Not one took my fire."',
   '"I could have lit them from hers. I couldn\'t go up."',
   '"Those things aren\'t animals. They climb out of the ground."',
@@ -9056,7 +9119,6 @@ const NOTICES = [
   { id: 'scroll-more', re: /^(Moss|Hollow|Barrow|Roadlight|Mother) Scroll found\.$/, site: /SCROLLS\[id\]\.name\} found/, ch: 'log', why: 'the stage float shows it, and Next Up offers what it teaches' },
   { id: 'learned', re: /^\w+ learned [A-Z][\w' ]+\.$/, site: /learned \$\{a\.name\}/, ch: 'log', why: 'you just pressed Learn and see the card change' },
   { id: 'pace', key: 'pace', re: /back to Zone \d+ to keep earning\.$/, ch: 'bell', once: 'session', why: 'audit 3.14: one line a session' },
-  { id: 'start', re: /picks up the lamp\. The road is dark\.$/, ch: 'log', why: 'the guide speaks first' },
   { id: 'attr-join', key: 'attr-join', ch: 'pop', wait: 30 },   // hero-progression-rework: a hero arrives with points to spend (Go: Build)
   { id: 'hero-swap', re: /(takes up the lamp\.|joins at Lv .+, the road's level\.)$/, ch: 'log' },
 
@@ -15334,6 +15396,10 @@ let storeLevel, storeCap, storeCapAt, stashRoom, stashFull, stashOver, stashFits
 //                                          its spawn listener also sets mob.encounter = { kind, id }
 //   storyFoes() -> [{ zone, name, line, type }] the Hollow monsters in the game whose zone the hero has reached (21h LORE_FOES); the
 //                                          Codex Bestiary lists each as its own entry (57c-codex)
+//   storyIntroClaim()                      75-intro-ui.js plays the drawn opening itself: the engine leaves the Chapter 1 card to it
+//   storyIntro(part) -> { part, beats | who, lines, still } | null   what the opening still owes: part 'open' (the lamp stills, before the
+//                                          hero picker; a new game only) or 'fire' (Hesketh's roadside fire over still 3, after the pick)
+//   storyIntroDone(part, how)              part 'open' | 'fire' | 'release' (the picker closed with no fire due); how: opened ('shown') or closed ('done' | 'skipped'); files the Chapter 1 card or the fire scene in the Journal
 //   storySync() runs on each tick (cheap when nothing moved).
 // Events emitted: storyScene { id, ch, kind: 'caption' | 'card', title, head, lines, cards, zone, region, hold, page },
 //   storyEnd { id, how }, storyChoice { id, option }, storyRead { id }, storyFiled { kind, id }.
@@ -15348,6 +15414,7 @@ let storeLevel, storeCap, storeCapAt, stashRoom, stashFull, stashOver, stashFits
 //   keys ('a:<region>:<place>', 'b:', 'ei:', 'ef:') are kept and ignored. `read`: Journal entry id -> 1.
 //   off: 1 = Story cards off. ends: scene key -> 'done' | 'skipped' (12a; never 'auto'). journalOpens: Journal opens (12a).
 //   starter, litFor (Great Lantern -> name), coldhearth: for story-opening and story-choices.
+//   'i:open' (the drawn opening was shown or skipped), 'n:<id>' for the opening's NPC scenes (heskethFire, over the stills; heskethTalk, at the camp fire).
 // A save that is past a slot when it loads, or reaches it with the story off, files it quietly: captions are marked seen,
 // cards go in the Journal unread (late), where the Codex offers them as "Catch up on the story". Nothing pops. Only slots the game
 // can show are filed (a zone line with its monster, a Captain line with its Captain, a Champion or Elder with its encounter, an
@@ -15356,7 +15423,8 @@ let storeLevel, storeCap, storeCapAt, stashRoom, stashFull, stashOver, stashFits
 const STORY_ON = true;   // dev switch (bible 10.4): false plays no story at all; the data files can also be deleted
 
 let storyOn, storyHeld, storyInGap, storyChoiceDef, storyChosen, storyClaim, storyClose, storyChoose, storyList, storyEntry, storyRead, storyUnread, storyLate, storyJournalOpened,
-  storyRoadLog, storyFile, storyHeroLine, storyHearthLine, storyVerse, storyVerseLatest, storyItemLine, storyRanks, storyEncounter, storyFoes, storySync;
+  storyRoadLog, storyFile, storyHeroLine, storyHearthLine, storyVerse, storyVerseLatest, storyItemLine, storyRanks, storyEncounter, storyFoes, storySync,
+  storyIntroClaim, storyIntro, storyIntroDone;
 const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_ENC.champ.<id> = true (storyEncounter)
 {
   registerState('story', { v: 1, seen: {}, read: {}, init: 0, off: 0, starter: '', litFor: {}, coldhearth: '', ends: {}, journalOpens: 0 });
@@ -15375,6 +15443,32 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
   const regionIdOf = z => { const r = typeof regionOf === 'function' ? regionOf(z) : null; return r ? r.id : 'hollow'; };
 
   storyOn = () => STORY_ON && !ST().off && typeof STORY_BEATS === 'object';
+  // ---- the drawn opening (intro-and-picker) ----
+  // The opening is the Hollow's region card, shown by 75-intro-ui.js over two stills BEFORE the hero picker, then Hesketh's roadside fire over a
+  // third still AFTER the pick (STORY_BEATS.intro names the stills and which lines show over each). The UI claims it at load; a core with no UI
+  // (Node tools) keeps the old flow, the region card at the first walk-in. Only a new game plays it: a save past zone 1, or one that already read
+  // the card, files nothing new.
+  let introOn = false, introUp = false;   // introUp: an opening screen is on top, so nothing walks in under it
+  const introData = () => D('intro');
+  storyIntroClaim = () => { introOn = true; };
+  storyIntro = part => {
+    const I = introData(), R = I.region && D('region')[I.region];
+    if (!introOn || !storyOn() || !R || !I.open) return null;
+    if (part === 'open') {
+      if (has('i:open') || has('r:' + I.region) || (S.maxZone || 1) > 1 || S.totalKills > 0) return null;
+      return { part, region: I.region, beats: I.open.map(b => ({ still: b.still, line: R.lines[b.line] || '' })).filter(b => b.line) };
+    }
+    const n = part === 'fire' && D('npc')[I.fire];
+    if (!n || !has('i:open') || has('n:' + I.fire)) return null;
+    return { part, id: I.fire, who: n.who || '', still: I.fireStill || '', lines: n.lines.map(lineText).filter(Boolean) };
+  };
+  storyIntroDone = (part, how) => {
+    if (how === 'shown') introUp = true;   // the opening stays up through the picker, until the fire scene ends (or the picker closes with none due: part 'release')
+    const I = introData(), end = k => { if (how !== 'shown') ST().ends[k] = how === 'skipped' ? 'skipped' : 'done'; };   // 'shown': the screen just opened (filed now, like every scene, so a reload does not replay it)
+    if (part === 'open' && I.region) { mark('i:open'); mark('r:' + I.region); end('r:' + I.region); }
+    else if (part === 'fire' && I.fire) { mark('n:' + I.fire); end('n:' + I.fire); }
+    if (how !== 'shown' && part !== 'open') { introUp = false; storySync(); }   // what waited under the screens (the area caption) is due now, even if the guide holds the ticks
+  };
   storyEncounter = (kind, id, on) => { if (STORY_ENC[kind]) STORY_ENC[kind][id] = on !== false; };
   storyHeroLine = id => { const h = D('hero')[id]; return h ? h[storyHero()] || h._ || '' : ''; };
   // An item entry is a line, or { area, line }: a line with an area waits until an encounter card has put a Champion of that area in
@@ -15460,7 +15554,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
       add('e:' + id, 'elder', `e:${id}:pre`, e.zone, e.name || (e.page && e.page.title) || id, () => [...readable(elderScene(id, 'pre')), ...(has(`e:${id}:post`) ? readable(elderScene(id, 'post')) : [])], [`e:${id}:post`]);
       if (e.page) add('j:' + id, 'page', 'j:' + id, e.zone, e.page.title, () => [{ lines: [e.page.text] }]); }
     for (const id in D('voice')) add('v:' + id, 'voice', 'v:' + id, D('voice')[id].zone, D('voice')[id].title || 'A voice', () => cardsOf(D('voice')[id].lines));
-    for (const id in D('npc')) if (/^area:/.test(D('npc')[id].at) && npcCards(id).length) add('n:' + id, 'npc', 'n:' + id, npcZone(D('npc')[id].at), D('npc')[id].who || id, () => npcCards(id));   // the others read inside their Champion's or Elder's entry
+    for (const id in D('npc')) if (/^(area:|intro|hearth)/.test(D('npc')[id].at) && npcCards(id).length) add('n:' + id, 'npc', 'n:' + id, npcZone(D('npc')[id].at), D('npc')[id].who || id, () => npcCards(id));   // the others read inside their Champion's or Elder's entry
     add('k:ranks', 'ranks', 'k:ranks', 0, 'Who answers to whom', () => storyRanks().map(r => ({ who: r.who, lines: [r.line] })));
     for (const [slot, pre] of [['letter', 'l'], ['note', 'o']]) for (const id in D(slot)) { const x = D(slot)[id];
       add(`${pre}:${id}`, slot, `${pre}:${id}`, x.zone || 0, x.title, () => [{ lines: [x.text] }]); }
@@ -15469,6 +15563,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
   // the zone an NPC scene belongs to (its area's first zone, or its Champion's or Elder's zone)
   function npcZone(at) {
     const [k, v] = String(at).split(':');
+    if (k === 'intro' || k === 'hearth') return 1;   // the opening's own scenes (the roadside fire, the camp fire talk)
     if (k === 'area') return (+v) * (typeof AREA_ZONES === 'number' ? AREA_ZONES : 5) + 1;
     const x = (k === 'champPost' ? D('champ') : D('elder'))[v];
     return x ? x.zone : 0;
@@ -15568,7 +15663,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
 
   // ---- time and gaps ----
   let clock = 0, spawnT = -99, gapNow = true, inAway = false, swept = 0, last = '', spawned = null;
-  const live = () => storyOn() && !inAway && S.activity === 'fight' && !(typeof arena !== 'undefined' && arena);
+  const live = () => storyOn() && !inAway && !introUp && S.activity === 'fight' && !(typeof arena !== 'undefined' && arena);
   const inGap = () => gapNow || clock - spawnT < 1;
 
   // ---- the catch-up: a save past a slot (or one that played it with the story off) files it quietly ----
@@ -15602,7 +15697,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
   };
   function walkIn(z) {
     const n = typeof AREA_ZONES === 'number' ? AREA_ZONES : 5, rid = regionIdOf(z), r = regionById(rid), ai = zoneAreaIdx(z);
-    if (r && z === r.z0 && !has('r:' + rid) && D('region')[rid]) { mark('r:' + rid); push(regionScene(rid)); }
+    if (r && z === r.z0 && !has('r:' + rid) && D('region')[rid] && !storyIntro('open')) { mark('r:' + rid); push(regionScene(rid)); }   // a new game's card is the drawn opening's
     const ids = [], lines = [];
     if (z === ai * n + 1 && D('area')[ai] && !has('a:' + ai)) { mark('a:' + ai); ids.push('a:' + ai); lines.push(D('area')[ai]); }
     if (D('zone')[z] && foeIn(z) && !has('z:' + z)) { mark('z:' + z); ids.push('z:' + z); lines.push(D('zone')[z]); }
@@ -15647,6 +15742,11 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
   on('awayBegin', () => { inAway = true; });
   on('awayEnd', () => { inAway = false; last = ''; });
   on('zoneClear', () => { last = ''; });
+  // Hesketh's talk plays when the camp fire is lit (the 8 Pine Log fire), which pays off "Wood first. Then we talk." It waits for a gap like any scene.
+  on('hearthLit', () => {
+    if (!storyOn()) return;
+    for (const id of Object.keys(D('npc')).filter(k => D('npc')[k].at === 'hearth')) if (!has('n:' + id) && npcCards(id).length) { mark('n:' + id); push(npcScene(id)); }
+  });
   onTick(dt => { clock += dt; storySync(); });
 }
 
@@ -39405,6 +39505,138 @@ let deedsUI = null;
   });
 }
 
+// ---- src/js/75-intro-ui.js ----
+// 75-intro-ui: the drawn opening (intro-and-picker; docs/design/first-hour.md beats 1 to 3). Browser-only; the logic is 55-story.js
+// (storyIntro, storyIntroDone) and the words are 21k-story-hollow.js (STORY_BEATS.intro and the Chapter 1 region card).
+//
+// A new game plays two full screens, one line a tap, with Skip always on screen:
+//   open  three lines over two stills (the lamp on its hook; the dark coming up through the moss), BEFORE the hero picker. It opens the picker
+//         when it ends: 76-create asks introUI.gate() before it opens, and gate() starts this screen when it is due.
+//   fire  Hesketh's roadside fire over the third still (the road at night), right AFTER the pick (the picker's `createDone`), then the game runs.
+// The game is held while a screen is up (holdGame), so nothing fights behind it. Reduced motion: no fade, no flicker.
+// Stills: INTRO_STILLS[id] (21k) is '' until the first-hour-art pack is vetted; each still then shows the approved Mossy Hollow night background
+// (BG_ART.forest, 21zb), darkened, with the lamp icon (bible 10.3). A vetted still goes in the data as a URI and replaces all of that.
+// Test pages (check.mjs's nostory key) skip it, like every story scene. API: introUI { gate() -> bool, open() }.
+var introUI;   // var: 76-create (loaded after this file) reads it at run time
+{
+  const TEST_SKIP = (() => { try { return localStorage.getItem('lanternfall.test.nostory') === '1'; } catch (e) { return false; } })();
+  if (!TEST_SKIP && typeof storyIntroClaim === 'function') storyIntroClaim();   // the engine leaves a new game's Chapter 1 card to this screen
+
+  let root = null, part = '', data = null, i = 0, shownAt = 0, lastFocus = null, img = null;
+  holdGame(() => !!root);
+
+  const bgSrc = () => {
+    const B = typeof BG_ART === 'object' && BG_ART.forest; if (!B) return '';
+    const E = window.innerHeight > window.innerWidth ? B.port : B.land;
+    return E && E.src ? 'data:image/webp;base64,' + E.src : '';
+  };
+  const stillArt = id => (typeof INTRO_STILLS === 'object' && INTRO_STILLS[id]) || '';
+  const lamp = (cls, dead) => {
+    const im = el('img', 'intro-lamp ' + cls); im.alt = '';
+    im.src = dead ? iconURL('flame', '#6A6470', { 5: '#554F5E', 7: '#7B7586' }) : iconURL('flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' });
+    return im;
+  };
+  // one still: the vetted art, or the placeholder (the approved background, darkened, with the lamp icon)
+  function still(id) {
+    const d = el('div', 'intro-still s-' + id);
+    const art = stillArt(id);
+    if (art) { const im = el('img', 'intro-img art'); im.alt = ''; im.src = art; d.append(im); return d; }
+    const im = el('img', 'intro-img'); im.alt = ''; im.src = bgSrc(); d.append(im);
+    d.append(el('div', 'intro-shade'));
+    if (id === 'lamp') d.append(lamp('lp-big'));
+    else if (id === 'dark') d.append(lamp('lp-small'));
+    else { d.append(lamp('lp-mine'), lamp('lp-dead', true)); }
+    return d;
+  }
+
+  function build() {
+    const n = data.beats ? data.beats.length : data.lines.length;
+    root = el('div', 'intro'); root.id = 'introScreen';
+    root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-label', part === 'fire' ? 'Old Hesketh' : 'How the lamp came to you');
+    const stage = el('div', 'intro-stage'); root.append(stage);
+    const foot = el('div', 'intro-foot');
+    const tx = el('div', 'intro-tx');
+    const who = data.who ? el('p', 'intro-who', data.who) : null;
+    const line = el('p', 'intro-line'); line.setAttribute('aria-live', 'polite');
+    const dots = el('div', 'intro-dots'); dots.setAttribute('aria-hidden', 'true');
+    for (let k = 0; k < n; k++) dots.append(el('span'));
+    if (who) tx.append(who);
+    tx.append(line, dots);
+    const go = el('button', 'big forge intro-go', 'Next'); go.type = 'button';
+    foot.append(tx, go); root.append(foot);
+    const skip = el('button', 'mini intro-skip', 'Skip'); skip.type = 'button';
+    skip.setAttribute('aria-label', 'Skip this. It stays in the Journal.');
+    root.append(skip);
+
+    let cur = '';
+    const draw = () => {
+      const b = data.beats ? data.beats[i] : { still: data.still, line: data.lines[i] };
+      if (b.still !== cur) { cur = b.still; stage.textContent = ''; stage.append(still(b.still)); }
+      line.textContent = b.line;
+      line.classList.remove('in'); if (!reduced) { void line.offsetWidth; line.classList.add('in'); }
+      [...dots.children].forEach((d, k) => d.classList.toggle('on', k === i));
+      go.textContent = i === n - 1 ? 'Continue' : 'Next';
+      shownAt = Date.now();
+    };
+    const advance = () => {
+      if (Date.now() - shownAt < 250) return;   // a tap that opened this screen (or a double tap) does not skip a line
+      if (i >= n - 1) end('done'); else { i++; draw(); }
+    };
+    go.addEventListener('click', e => { e.stopPropagation(); advance(); });
+    skip.addEventListener('click', e => { e.stopPropagation(); end('skipped'); });
+    root.addEventListener('click', advance);
+    root.addEventListener('keydown', e => {
+      if (e.key === 'Escape') { e.preventDefault(); end('skipped'); return; }
+      if (e.key === 'ArrowRight' || e.key === ' ' && e.target === root) { e.preventDefault(); advance(); return; }
+      if (e.key !== 'Tab') return;
+      const f = [skip, go], at = f.indexOf(document.activeElement);
+      if (e.shiftKey && at <= 0) { e.preventDefault(); go.focus(); } else if (!e.shiftKey && at === 1) { e.preventDefault(); skip.focus(); }
+    });
+    draw();
+    shownAt = Date.now() - 200;   // the first line takes a tap after a moment, so the tap that closed the picker does not skip it
+    return go;
+  }
+
+  function show(p, d) {
+    if (root) return;
+    part = p; data = d; i = 0; lastFocus = document.activeElement;
+    try { storyIntroDone(p, 'shown'); save(); } catch (e) { console.error('[lanternfall] intro', e); }   // filed as it opens: a reload goes on to the picker, not back to the stills
+    const go = build();
+    document.body.append(root);
+    try { go.focus({ preventScroll: true }); } catch (e) {}
+  }
+  function end(how) {
+    if (!root) return;
+    const p = part, r = root;
+    root = null; part = ''; data = null;
+    r.remove();
+    try { storyIntroDone(p, how); save(); } catch (e) { console.error('[lanternfall] intro', e); }
+    if (lastFocus && lastFocus.focus) try { lastFocus.focus({ preventScroll: true }); } catch (e) {}
+    ui(true);
+    if (p === 'open' && typeof classUI === 'object' && classUI) classUI.open();   // then "Who are you?"
+  }
+
+  // The hero picker asks before it opens: true while the opening is on screen (it starts it when it is due).
+  function gate() {
+    if (root) return true;
+    if (TEST_SKIP || typeof storyIntro !== 'function') return false;
+    const d = storyIntro('open');
+    if (!d || !d.beats.length) return false;
+    show('open', d);
+    return true;
+  }
+  // The pick is made: Hesketh's fire plays before the first fight.
+  on('createDone', () => {
+    if (TEST_SKIP || root || typeof storyIntro !== 'function') return;
+    const d = storyIntro('fire');
+    if (d && d.lines.length) show('fire', d);
+    else storyIntroDone('release', 'done');   // nothing more to show: what waited under the opening may play
+  });
+  window.addEventListener('resize', () => { if (!root) return; const im = root.querySelector('.intro-still:not(.s-art) .intro-img'); if (im && !stillArt(im.parentNode.className.replace(/.*s-/, ''))) im.src = bgSrc(); });
+
+  introUI = { gate, open: () => gate(), state: () => root ? { part, i, n: data.beats ? data.beats.length : data.lines.length } : null };
+}
+
 // ---- src/js/75-lantern-ui.js ----
 // 75-lantern-ui: the Great Lantern card and the Lantern Road strip (region-2.md 8.1-8.3, task R0).
 // Browser-only. Logic: 55-lantern.js (emit('greatLantern')), data: 22-data-regions.js.
@@ -43184,9 +43416,9 @@ var classUI;
     root = el('div', 'create create-solo'); root.id = 'createScreen';
     root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-labelledby', 'createTitle');
     const inner = el('div', 'create-in');
-    const h = el('h1', null, 'Who carries the lantern?'); h.id = 'createTitle';
-    const lede = el('p', 'create-lede', 'One hero walks the Lantern Road. Pick who picks the lamp up.');
-    const warn = el('p', 'create-warn', 'You can switch heroes at camp later, for free. Gold, gear and camp are shared.');
+    const h = el('h1', null, 'Who are you?'); h.id = 'createTitle';
+    const lede = el('p', 'create-lede', 'You carry the lamp. Pick who you are.');
+    const warn = el('p', 'create-warn', 'At camp you can hand the lamp to a friend, for free. Gold, gear and camp are shared.');
     const cards = el('div', 'ccards'); cards.setAttribute('role', 'radiogroup'); cards.setAttribute('aria-label', 'Hero');
     const keys = HERO_ORDER;
     if (!keys.includes(pick) || !heroCanPlay(pick)) pick = keys.find(heroCanPlay);
@@ -43205,7 +43437,7 @@ var classUI;
       const bio = el('div', 'how'); txt.append(bio);   // starters and unlocked heroes only: a locked hero shows who you meet them as, not their story
       const state = el('b', 'sp-lv'), route = el('div', 'how'); txt.append(state, route);
       b._state = state; b._route = route; b._bio = bio;
-      if (H && H.ab) { const ab = el('div', 'ab'); ab.append(el('em', null, H.ab.name + ': '), document.createTextNode(H.ab.desc)); txt.append(ab); }
+      if (H && H.ab) { const ab = el('div', 'ab'); ab.append(el('em', null, H.ab.name + ': '), document.createTextNode(H.ab.line || H.ab.desc)); txt.append(ab); }   // the turn-fight line (C9): the old desc counted seconds
       b.append(fig, txt);
       b.addEventListener('click', () => select(k));
       b.addEventListener('keydown', e => {
@@ -43236,9 +43468,12 @@ var classUI;
         const on_ = b.dataset.cls === k, state = heroRouteInfo(b.dataset.hero);
         b.dataset.state = state.state;
         // Cards can be inspected; the Begin/Unlock button enforces whether this hero can be chosen.
-        putText(b._bio, state.bio); b._bio.hidden = !state.bio;
+        // a starter speaks to you (bible 4.1: you are the one you pick); anyone else is described as a person you meet or own
+        const bio = (state.unlocked && typeof PICK_LINES === 'object' && PICK_LINES[b.dataset.hero]) || state.bio;
+        putText(b._bio, bio); b._bio.hidden = !bio;
         putText(b._state, state.state === 'coming-soon' ? 'Coming soon' : state.unlocked ? 'Unlocked' : 'Locked');
         putText(b._route, state.unlocked ? (state.playable ? 'Ready to carry the lamp.' : 'Route complete. This hero’s art and solo kit come later.') : state.ready ? state.how : state.meet);   // a new game spoils nothing: who, not where or how much
+        b._state.hidden = b._route.hidden = state.playable;   // an unlocked hero needs no "Unlocked" and "Ready" lines
         b.setAttribute('aria-checked', String(on_)); b.setAttribute('aria-pressed', String(on_)); b.tabIndex = on_ ? 0 : -1;
       }
     }
@@ -43251,8 +43486,7 @@ var classUI;
       if (!okd) return;
       try { save(); } catch (e) {}
       if (typeof updatePortrait === 'function') updatePortrait();
-      close();
-      toast(`${first(pick)} picks up the lamp. The road is dark.`, 'good');
+      close();   // the opening's fire scene follows (75-intro-ui.js); no toast: it spoke of the hero as someone else
     });
     // Keep Begin within reach while the full registry scrolls.
     begin.style.position = 'sticky'; begin.style.top = '0'; begin.style.zIndex = '1';
@@ -43276,6 +43510,7 @@ var classUI;
     if (root) return;
     // one screen for a new game (and any save that has no hero yet); switching is at camp
     if (want === 'switch' || !needsChoice()) return;
+    if (typeof introUI === 'object' && introUI && introUI.gate()) return;   // a new game's drawn opening plays first (75-intro-ui.js); it opens this screen when it ends
       mode = 'new'; pick = (typeof soloHero === 'function' && soloHero()) || SOLO_ORDER[0];
       lastFocus = document.activeElement;
       document.body.append(buildSolo());
