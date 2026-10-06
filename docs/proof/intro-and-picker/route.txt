@@ -31,7 +31,7 @@ expect "You light his sticks from your lamp. The lamp steadies."
 shot fire2
 tap "Next"
 wait 1
-expect "Every road needs a place to come back to. Wood first."
+expect "Wood first. Then we talk."
 shot fire3
 tap "Continue"
 wait 2

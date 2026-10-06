@@ -8679,7 +8679,7 @@ if (section('systems map')) try {
 if (section('story-opening')) try {
   const g = loadCore(), E = x => g.eval(x), rd = f => fs.readFileSync(path.join(ROOT, 'src', f), 'utf8');
   const real = JSON.parse(E('JSON.stringify(STORY_BEATS)')), hk = [real.npc.heskethFire, real.npc.heskethTalk];   // intro-and-picker: the fire plays over the opening stills, the talk at the camp fire
-  assert(hk[0] && hk[0].at === 'intro' && hk[0].who && hk[0].lines.length <= 3 && hk[0].lines[2].includes('Every road needs a place to come back to') && hk[1] && hk[1].at === 'hearth' && hk[1].lines.length === 4 && hk[1].lines[3].includes('shut the holes'), 'story-opening: Hesketh\'s fire (3 lines, over the opening stills) and talk (at the camp fire) keep bible 8.1\'s words');
+  assert(hk[0] && hk[0].at === 'intro' && hk[0].who && hk[0].lines.length <= 3 && hk[0].lines[2].includes('Wood first. Then we talk.') && hk[1] && hk[1].at === 'hearth' && hk[1].lines.length === 4 && real.npc.heskethHearth.lines[0].includes('Every road needs a place to come back to') && hk[1].lines[3].includes('shut the holes'), 'story-opening: Hesketh\'s fire (3 lines, over the opening stills) and talk (at the camp fire) keep bible 8.1\'s words');
   const rr = real.hero.refuseRest;
   assert(rr && /Not yet\./.test(rr.wren) && /I'll rest when the (village|Hollow) is lit/.test(rr.tobin) && /No\./.test(rr.pip), 'story-opening: the refusal of "Rest" (bible 4.6) has a line for each starter (played at the Veiled Oracle, story-hollow-script)');
   // story gate (story-opening, bible 4.4): no new unlock before the hero's first scene; heroes a save owns are kept
@@ -8722,13 +8722,16 @@ if (section('story-opening (browser)')) try {
         await page.waitForSelector('#introScreen', { timeout: 4000 }); await page.waitForTimeout(500);
         const fire = [];
         for (let k = 0; k < 3; k++) { const f = await fits(); fire.push(f); assert(f.ok, `story-opening ${tag}: Hesketh's fire line ${k + 1} is on screen and clear of Next and Skip`); await page.click('#introScreen .intro-go'); await page.waitForTimeout(450); }
-        assert(fire.map(f => f.text).join('|') === await X('STORY_BEATS.npc.heskethFire.lines.join("|")') && /Every road needs a place to come back to/.test(fire[2].text), `story-opening ${tag}: Hesketh's fire reads word for word (bible 8.1)`);
+        assert(fire.map(f => f.text).join('|') === await X('STORY_BEATS.npc.heskethFire.lines.join("|")') && /Wood first\. Then we talk\./.test(fire[2].text), `story-opening ${tag}: Hesketh's fire reads word for word (bible 8.1)`);
         // the talk waits for the camp fire (8 Pine Log), which pays off "Wood first. Then we talk."
         assert(await X('S.story.ends["n:heskethFire"]') === 'done' && await X('S.story.seen["n:heskethTalk"]') === undefined, `story-opening ${tag}: the fire scene is done and the talk has not played`);
         await X('onboardTips(false); S.mats.wood[0] = 20; hearthLight()');
         await page.waitForSelector('.sty-sheet .sty-title', { timeout: 15000 }); await page.waitForTimeout(400);
+        const q = await page.$eval('.sty-sheet', n => [...n.querySelectorAll('.sty-text')].map(x => x.textContent));
+        assert(q.length === 1 && q[0].includes('Every road needs a place to come back to'), `story-opening ${tag}: the camp fire opens with "Every road needs a place to come back to."`);
+        await page.click('.sty-sheet .sty-done'); await page.waitForFunction(() => [...document.querySelectorAll('.sty-sheet .sty-text')].some(x => x.textContent.includes('Ten years')), null, { timeout: 8000 }); await page.waitForTimeout(500);
         const h = await page.$eval('.sty-sheet', n => ({ title: n.querySelector('.sty-title').textContent, lines: [...n.querySelectorAll('.sty-text')].map(x => x.textContent), bottom: Math.max(...[...n.querySelectorAll('button')].map(x => x.getBoundingClientRect().bottom)), vh: innerHeight, overflowX: n.scrollWidth > n.clientWidth + 1 }));
-        assert(h.title === 'Hesketh: "Wood\'s in. Now we talk."' && h.lines.length === 4 && h.lines[0].includes('Ten years I\'ve lit dead lamps.') && h.lines[3].includes('shut the holes') && h.bottom <= h.vh && !h.overflowX, `story-opening ${tag}: Hesketh's talk plays when the camp fire is lit, shows its four lines and fits the screen`);
+        assert(h.title === 'Old Hesketh' && h.lines.length === 4 && h.lines[0].includes('Ten years I\'ve lit dead lamps.') && h.lines[3].includes('shut the holes') && h.bottom <= h.vh && !h.overflowX, `story-opening ${tag}: Hesketh's talk plays when the camp fire is lit, shows its four lines and fits the screen`);
         await page.click('.sty-sheet .sty-done'); await page.waitForTimeout(400);
         assert(await X('S.story.ends["n:heskethTalk"]') === 'done', `story-opening ${tag}: the talk is recorded as done`);
         assert(!errs.length, `story-opening ${tag}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
