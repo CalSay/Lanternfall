@@ -60,6 +60,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Reuse one `loadCore` per new check section. Why: the full check hit Node's default heap limit in Codex's environment once the section made a dozen cores. (story-systems-hollow, 2026-10-06)
 - New UI for a story beat goes in its own `registerSection` in a feature file, never as an edit to a shared menu file such as `74-ui-tavern.js` (Codex P1, story-systems-hollow).
 - A line that names a hero waits on the hero being unlocked (`heroUnlocked`), not on zone progress alone; a Codex tile with no Light (`ptsMax` 0) hides the "0 of 0 Light" tally (Codex round 3, story-systems-hollow).
+- Before a ruling moves who is met where, check `STORY_BEATS` (`21k-story-hollow.js`) and bible 4.4: meet scenes are written for their place (Wren's cave, Pip's graves). Why: a judge ruling put Wren and Pip at the wrong Champions; Codex P1 on PR #83. (early-game lead, 2026-10-06)
 
 ## UI and menus
 
@@ -115,6 +116,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 ## Process and Autopilot
 
 - A design-doc PR (decisions or a spec) runs the `docs/review/design-doc.md` hard checks before opening: coverage-map area, a numeric prediction with its measure and miss threshold, how to switch it off, and a check of each new rule against standing lines in `DECISIONS.md`. Why: Codex P1s on PR #55 (no area, no prediction, no rollback, bench XP clashed with the hero fatigue rule). (hero-progression review, 2026-10-06)
+- A beat map is a contract: before opening it, check each rule it states (one new thing per 3 minutes, big-moment gaps) against every row, for every hero pick. Why: Codex found four rule breaks across PRs #73 to #83 that a row-by-row pass would have caught. (early-game lead, 2026-10-06)
 - Before tuning a system (a curve, a price, a cap), say what it is for and check it still does that job; if not, it becomes a design card. Why: the pacing report tuned the hero XP curve without asking what hero level was for, and level turned out to be mostly a cap on Training (Cal, 2026-10-06). (hero-progression review, 2026-10-06)
 - Add your lesson line in the card's own PR here (`docs/lessons.md`), not in the project folder. Why: the permission check blocked reads and writes in `/mnt/project-files` after merge in several threads, and the line was lost. Never work around the check. (lessons setup, 2026-10-06)
 - A report that recommends a `judge`-gate change (economy targets, pacing curve) runs the red team and the Opus judge itself and records both. Why: Codex P1 on PR #52. (xp-gold-pacing-report, 2026-10-06)
