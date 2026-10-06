@@ -2623,7 +2623,7 @@ if (section('story')) try {
   // UI wiring (browser-only files): the pieces are there
   const ui = rd('js/75-story-ui.js'), css = rd('styles/60-story.css'), codexUi = rd('js/75-codex-ui.js'), glUi = rd('js/75-lantern-ui.js'), boot = rd('js/90-boot.js'), ui70 = rd('js/70-ui.js');
   assert(ui.includes("on('storyScene'") && ui.includes('storyClaim') && ui.includes('storyClose') && ui.includes('Skip') && ui.includes('Story cards:') && codexUi.includes('storyUI.codexRow') && codexUi.includes('t.lore')
-    && /prefers-reduced-motion/.test(css) && /calc\(\d+px \* var\(--display-k\)\)/.test(css) && boot.includes('storyHeld()') && ui70.includes("'story-set'"),
+    && /prefers-reduced-motion/.test(css) && /calc\(\d+px \* var\(--display-k\)\)/.test(css) && boot.includes('gameHeld()') && /holdGame\(\(\) => storyHeld\(\)\)/.test(rd('js/55-story.js')) && ui70.includes("'story-set'"),
     'story: the UI plays scenes with Skip, the game holds for a card (90-boot), Settings has Story cards on/off, the Codex has the Journal row, reduced motion handled');
   assert(!/Beat its last boss/.test(glUi) && /Beat the region.{1,2}s Elder\. Then light it with your flame\./.test(glUi), 'story: the Great Lantern panel says the Elder, then your flame (not "Beat its last boss")');
   assert(!/You carry the last lantern\./.test(rd('js/76-create.js')), 'story: the class screen says "one of the last lanterns" (lore.md 11.1)');

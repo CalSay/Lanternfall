@@ -202,6 +202,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
   // ---- the queue: scenes wait for a gap, one at a time ----
   let cur = null, claimed = false, heldAt = 0;
   const queue = [];
+  holdGame(() => storyHeld());   // 00-util's pause registry: the frame loop does not tick while a scene is up
   storyInGap = () => inGap();
   storyHeld = () => !!cur && claimed;   // only a scene the player can see holds the game; one waiting behind another overlay does not
   storyClaim = id => { if (cur && cur.id === id) claimed = true; };
@@ -247,13 +248,13 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
   }
 
   // ---- each tick: what is due where the hero stands ----
-  storySync = () => {
+  storySync = early => {
     const mz = S.maxZone || 1;
     if (mz !== swept) { swept = mz; sweep(mz); }
-    if (!storyOn()) queue.length = 0;
+    if (!storyOn()) { queue.length = 0; if (cur && !claimed) storyClose(cur.id, 'skipped'); }   // turned off while a scene waited: drop it
     if (!live()) { last = ''; return; }
     const z = S.zone || 1, gap = inGap();
-    if (gap && spawned) { const sp = spawned; spawned = null; if (sp.zone === z) onSpawn(sp.mob, z); }
+    if (gap && spawned && !early) { const sp = spawned; spawned = null; if (sp.zone === z) onSpawn(sp.mob, z); }
     const sig = z + '|' + (gap ? 1 : 0);
     if (gap && sig !== last) { last = sig; walkIn(z); }
     if (gap) pump();
@@ -289,6 +290,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
     const r = regionOf(zone);
     if (mob.boss && zone === r.z1 && r.boss && r.boss.name) mob.name = r.boss.name;
     spawned = { mob, zone };   // read next tick: an encounter card may set mob.encounter after this listener
+    storySync(true);   // the walk-in scenes are due now: they open (and hold the game) before the first tick can fight
   });
   on('kill', ({ mob, zone }) => {
     gapNow = true;

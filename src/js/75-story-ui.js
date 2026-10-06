@@ -29,6 +29,7 @@ var storyUI;   // var: 75-codex-ui (earlier in the build) reads it at run time
 
   // ---------------- a scene arrives ----------------
   on('storyScene', sc => { if (TEST_SKIP) { storyClose(sc.id, 'skipped'); return; } now = sc; run(); });
+  on('storyEnd', ({ id }) => { if (now && now.id === id) { now = null; clearTimeout(waitT); } });   // closed from the engine (Story cards turned off) while it waited
   function run() {
     clearTimeout(waitT);
     const sc = now; if (!sc) return;

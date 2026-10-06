@@ -125,6 +125,7 @@ extension points, in small edits. Feature-owned files: your own `55-<feature>.js
 ```js
 on(evt, fn) -> off()        // subscribe; handler errors are caught and logged
 emit(evt, payload)
+holdGame(fn) -> off()       // pause: the browser frame loop skips tick() while any fn() is true
 ```
 ```js
 on('kill', ({ zone, gold }) => { S.bounty.count++; });
