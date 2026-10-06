@@ -2734,11 +2734,21 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
   .sty-cap.in { animation: none; }
 }
 
-/* landscape phones: a story card is a bottom sheet no taller than 60% of the screen (story-c28.md 4.7); long cards scroll */
+/* landscape phones: a story card is a bottom sheet no taller than 80% of the screen (story-c28.md 4.7 said 60%; the game is held
+   while a card is up, and at 360 px tall 60% hid the last lines of a four-line card under its buttons: story-hollow-script) */
 @media (min-aspect-ratio: 1/1) and (min-width: 600px) and (max-height: 500px) {
-  .bsheet.small.sty-sheet { max-height: 60%; }
+  .bsheet.small.sty-sheet { max-height: 80%; }
   .sty-sheet .bsheet-body { overflow-y: auto; gap: 8px; }
   .sty-sheet .sty-actions { position: sticky; bottom: 0; background: var(--panel); padding-top: 4px; }
+  /* a four-line NPC card fits without scrolling under the sticky buttons (story-hollow-script) */
+  .sty-sheet .bsheet-body { gap: 6px; }
+  .sty-sheet .sty-card { gap: 2px; padding: 6px 12px; }
+  .sty-sheet .sty-text { line-height: 1.3; }
+  .sty-sheet .sty-title { font-size: calc(18px * var(--display-k)); }
+  /* the Great Lantern's four names sit two by two, so all four show above Skip */
+  .sty-opts { grid-template-columns: 1fr 1fr; gap: 6px; }
+  .sty-opt { min-height: 44px; }
+  .sty-opt span { display: none; }
 }
 /* 60-tools: the Mastery box on a tool's item sheet and the rough tool's sheet (75-tools-ui.js, H2).
    The tool chip on the Gather view's Now card is styled in 60-gathering.css (.gx-tool). */
@@ -7735,28 +7745,28 @@ STORY_BEATS.area[2] = 'Doors stay shut around these graves. The living say the d
 STORY_BEATS.area[3] = 'One barrow door still holds. Something hits it every night.';
 STORY_BEATS.area[4] = 'Stay awake in the Deep. It talks to anyone who is tired.';
 STORY_BEATS.area[5] = 'The quarry cut into a seam, and people went under. Nobody came up.';
-STORY_BEATS.area[6] = 'The fog takes the road here. Somebody is lost in it.';
+STORY_BEATS.area[6] = 'The fog takes the road here. A family walked in and never came out.';
 
 // Zone lines (Z): the roster monster, the shape it copied, the light it hunts
 Object.assign(STORY_BEATS.zone, {
   // Mossy Hollow, toward the Briar Regent
-  1: "A Thorn Imp climbs from the ground in the hedge's thorns. It came for your lamp.",
-  2: 'A Gloomjaw opens like a flower and swallows lamps. Its throat still glows.',
+  1: "A Thorn Imp copied the hedge's thorns for blades. It came for your lamp.",
+  2: "A Gloomjaw copied a flower's petals for jaws. It swallows lamps whole.",
   3: 'A Briarbound Ravager grows bark armour and hunts every hearth it can find.',
   4: 'A Thornwing beats its thorn wings and dives at any light that moves.',
   5: 'A Nightseed Sorcerer holds a seed in root claws and sows briars over hearths.',
   // Batwing Caves, toward the Hollow Cantor
   6: 'A Riftwing hangs on crescent wings, with no eyes, and dives at the first glow.',
-  7: "A Maw Cantor gapes with a chest mouth. It makes no sound. The song isn't its.",
+  7: 'A Maw Cantor gapes with a mouth in its chest. The song is not its own.',
   8: "A Cave Devourer crawls the mine tunnels on six legs. Its second jaw eats lamps.",
   9: 'A Glassfang Fiend has glass-clear blades and an empty face. It cuts lamps down.',
   10: "An Echoblade's spurs shiver, then stop, then it cuts. It guards the song below.",
   // The Bonefield, toward the Ossuary Marshal
-  11: 'An Ossuary Knight wears a skull mask. No grave gave it up. It marches at lamps.',
+  11: 'An Ossuary Knight marches at lamps in a skull mask. The living say it rose.',
   12: 'A Pall Reaper trails a burial shroud with nothing inside. It reaps lamps.',
   13: "A Gravetyrant wears a ram's skull on its shoulder. It charges any glow.",
   14: 'A Boneweft Seer threads horn needles through its shadow, aimed at your lamp.',
-  15: "A Skullmaw wears six empty faces round one jaw. The dead don't watch. It does.",
+  15: 'A Skullmaw wears six empty faces round one jaw. The jaw bites at lamps.',
   // Beetle Barrows, toward the Sepulchre Engine
   16: 'A Cryptmaw, plated like a barrow vault, crawls on hooked legs. It crushes lamps.',
   17: 'A Shroudweaver pulls a fan of shadow threads over lamps to smother them.',
@@ -7767,7 +7777,7 @@ Object.assign(STORY_BEATS.zone, {
   21: "A Mycelial Oracle copies the Deep's toadstools. Its spores choke any flame.",
   22: 'A Rot Herald carries spore lights in its chest. Where it walks, flames choke.',
   23: 'A Sporefiend prowls on three legs with a glowing sail. It spits spores at lamps.',
-  24: 'A Gillblade Dancer spreads gill fans on its forearms and cuts lamps down.',
+  24: 'A Gillblade Dancer spreads gill fans on its forearms and slashes at flames.',
   25: 'A Hollow Bloom opens black petals around a lance and stabs at the nearest light.',
   // Quarry Ruins, toward the Chained Star
   26: 'A Riftforged Colossus wears quarry stone round a chained star. It hammers lamps.',
@@ -7799,7 +7809,7 @@ Object.assign(STORY_BEATS.captain, {
   12: { title: 'Pall Reaper Crownless', line: 'It cuts down any lamp carried across the field.' },
   13: { title: 'Gravetyrant Ivory Doom', line: 'It batters doors at night, so no one dares open them.' },
   14: { title: 'Boneweft Seer Last Omen', line: 'It pins bone masks to gateposts. People shut their doors.' },
-  15: { title: 'Skullmaw Sixfold', line: 'It watches the doors. The rest answer to the lance.' },
+  15: { title: 'Skullmaw Sixfold', line: 'It stares every door shut. The rest answer to the lance.' },
   16: { title: 'Cryptmaw Ironseal', line: 'It crushed every barrow door but one.' },
   17: { title: 'Shroudweaver Nightmantle', line: 'It strung threads across the road. Lamps snag and go out.' },
   18: { title: 'Chitin Lancer Blackbanner', line: 'It marks each barrow it breaks with a black banner.' },
@@ -7837,30 +7847,30 @@ Object.assign(STORY_BEATS.champ, {
     page: { title: 'The Song', text: "A choir sang in the Cantor's chest. It was the song from the night the lights went out, kept going under the Hollow, low and slow. When the Cantor broke, the song broke too. One voice came free of the rest and said thank you. Whose voice it was, nobody here can say." },
     hearth: "A voice said thank you. I'll tip my cap to that one." },
   marshal: { zone: 15, name: 'The Ossuary Marshal',
-    pre: ['A lance as long as a tree stands planted among the graves.', "It carries an old knight's lance. The living thought the dead rose."],
-    post: ['The lance cracks. The graves are only graves.', 'Down the road, shutters open and lamps come back on. Far off, the air turns colder.'],
-    page: { title: 'Copies', text: "The dead never rose. The Marshal carried an old knight's lance, and the lance made the field look haunted. The dark has no shape of its own. What climbs out of it copies a shape it finds, in a place or in someone's memory. Fear did the rest, and kept the doors shut." },
+    pre: ['A lance as long as a tree stands planted among the graves.', "Its lance looks like an old knight's. The living say the dead rose behind it."],
+    post: ['The lance cracks. The graves are only graves. The dark only copied what it found.', 'Down the road, shutters open and lamps come back on. Far off, the air turns colder.'],
+    page: { title: 'Copies', text: "The dead never rose. The Marshal's lance copied an old knight's, and it made the field look haunted. The dark has no shape of its own. What climbs out of it copies a shape it finds, in a place or in someone's memory. Fear did the rest, and kept the doors shut." },
     hearth: 'Anselm rang once, softly. Even the fire went quiet.' },
   engine: { zone: 20, name: 'The Sepulchre Engine',
     pre: ['It rams the last barrow door. A thin light leaks through.', 'It has hit that door every night for ten years.'],
-    post: ['Its shell splits, and the barrow door holds.', 'The door opens. A thin light spills out. Far off, the air turns colder.'],
+    post: ['Its shell splits, and the barrow door holds.', 'The door opens from the inside. A thin light spills out. Far off, the air turns colder.'],
     page: { title: 'The Barrow Lamp', text: 'Maren kept a lamp in the barrow for ten winters, alone. It wore down to a bead. When she held it up beside yours, it steadied. A light in company holds, and a light alone wears thin. The same small spiral is scratched on both lamps, and neither of you knows why.' },
     hearth: "Lamps like company. Fire's the same, only louder." },
   oracle: { zone: 25, name: 'The Veiled Oracle',
     pre: ["Its veil moves. A hundred tired voices say: 'You're tired. Nobody is coming. Rest.'", { hero: 'oracleRest' }],
-    post: ['The veil tears. No face under it. The voices go quiet, one by one.',
+    post: ['The veil tears. Only a ring of teeth under it. The voices go quiet, one by one.',
       'Down the path, a row of candles catches again. Far off, the air turns colder.'],
     page: { title: 'The Offer', text: "The Oracle spoke to anyone still awake. A hundred tired voices said it together: you're tired, nobody is coming, rest. Morwen knew them for what they were: people who sat down and did not get up. You said no, and the voices went quiet, one by one. That is the dark's offer, and it comes when you are tired." },
-    hearth: "Morwen sent candles. Don't light them all at once, lad." },
+    hearth: "Morwen sent candles. Don't light them all at once." },
   star: { zone: 30, name: 'The Chained Star',
     pre: ['A black star hangs in chains over the cut. Light bends into it.', 'Somewhere under it, people are calling.'],
-    post: ['The chains snap. It goes out like a blown match, and the light it swallowed pours back.',
-      'High on Lantern Hill, a candle flares in the dark chapel. Far off, the air turns colder.'],
-    page: { title: 'The Seam', text: 'The Chained Star sat on the seam the quarry crew cut open. It pulled light in, and the people below could not climb out. When it fell, Rook came up from the cracks with his candle still lit, and his crew came up behind him. Grenna says the shaft goes down further than any rope. Up on Lantern Hill, a candle flared.' },
+    post: ['The chains snap. The star sinks down the shaft, and the light it swallowed pours back.',
+      "In a dark window on the hill above Hesketh's fire, a candle flares. Far off, the air turns colder."],
+    page: { title: 'The Seam', text: 'The Chained Star sat on the seam the quarry crew cut open. It pulled light in, and the people below could not climb out. When it sank, Rook came up from the cracks with his candle still lit, and his crew came up behind him. Grenna says the shaft goes down further than any rope. On the hill above Hesketh\'s fire, a candle flared.' },
     hearth: "A candle flickers up the hill tonight. I'm not looking." },
   halo: { zone: 35, name: 'The Drowned Halo',
-    pre: ['Six wings rise from the black water. A small candle hangs caged in its halo.', 'It keeps the road to her.'],
-    post: ['The cage breaks. The small candle flies off into the fog. It knows the way.', 'Far off, the air turns colder.'],
+    pre: ['Six wings rise from the black water. A small candle hangs caged in its halo.', "It keeps the road to her. A woodcutter's axe marks lead into the fog and stop."],
+    post: ['The cage breaks. The small candle flies off into the fog. It knows the way.', 'The air turns colder, and it is not far off now.'],
     page: { title: 'The Fog', text: 'The fog thickened until the road was gone. The Halo kept a small candle caged in its crown, and it could not put it out. When the Halo fell, the candle flew off into the fog, sure of its way. Bram knew it. Ada lit it for him, and it still burns.' },
     hearth: "Bram sits at the fire's edge, watching the fog. Leave him." }
 });
@@ -7869,10 +7879,10 @@ Object.assign(STORY_BEATS.champ, {
 STORY_BEATS.elder.fenmother = { zone: 35, name: 'The Fenmother',
   pre: ['The fog is thickest here. Under the water lie hundreds of small lights. She drowned them.',
     'They fell short the night they were called. Now the water stands up. It has hands and many voices.',
-    "Thessaly goes white: one is her mother's. 'You're tired,' they say. 'Nobody is coming. Rest.'"],
+    "Thessaly goes white: one is her mother's. 'Sit down, love,' it says. 'Nobody is coming. Rest.'"],
   post: ['She sinks. The voices go up out of the water like breath.',
     'Under the water, the drowned lights rise and fly home over the Hollow.',
-    'The fog thins. For the first time in ten years, morning comes.'],
+    'The fog thins and the cold lifts. For the first time in ten years, morning comes.'],
   after: [{ choice: 'hollowLantern' }, { hero: 'hollowLantern' }, 'Far out at sea, a green light blinks wrong.'],
   page: { title: 'Why Your Lamp Burns', text: 'Elowen lit your lamp for you, ten years ago, when you were very small. The spiral scratched on its base is her mark. A light lit for someone can\'t be called, so yours stayed lit when the others went out. A light on its own can be put out. The dark knows where you are now.' },
   hearth: "Ada and Pell walked in at dawn. Bram won't let go of them." };
@@ -7881,7 +7891,7 @@ STORY_BEATS.elder.fenmother = { zone: 35, name: 'The Fenmother',
 // Mossy Hollow
 STORY_BEATS.npc.tam = { at: 'champPost:regent', who: "Tam, Hesketh's nephew", lines: [
   'Tam climbs out of the first cellar, blinking at the light.',
-  'Hob opened his icehouse. Forty of us, cold and cross.',
+  'Hob hid forty of us in his icehouse. Cold and cross.',
   "I'm going to my uncle Hesketh. He'll have a fire.",
   "Thank you. I'll tell the others you came."
 ] };
@@ -7940,9 +7950,9 @@ STORY_BEATS.npc.rook = { at: 'champPost:star', who: 'Rook, up from the cracks', 
 // Wraithmarsh
 STORY_BEATS.npc.bram = { at: 'champPost:halo', who: 'Bram, the woodcutter', lines: [
   "That's Ada's. She kept it lit for me.",
-  "She and Pell are out there, alive. I know that flame.",
+  'My wife. She and our boy Pell are alive. I know that flame.',
   'They know the marsh better than the marsh does.',
-  'There is a spiral on its holder. Same as on your lamp.'
+  "Ada's holder has a spiral on it. Yours has one too."
 ] };
 STORY_BEATS.npc.thessaly = { at: 'champPost:halo', who: 'Thessaly, the marsh seer', lines: [
   'A woman steps out of the reeds, mud to her knees.',
@@ -7957,37 +7967,38 @@ STORY_BEATS.npc.thessalyFen = { at: 'elderPost:fenmother', who: 'Thessaly, at th
   "Hers isn't coming back. She's finished. Good."
 ] };
 STORY_BEATS.npc.hesketh = { at: 'elderPost:fenmother', who: 'Hesketh, the lamplighter', lines: [
-  'Hesketh climbs the hill beside you, first time in ten years.',
-  'That lamp up there. I lit it for her, the night she died.',
-  "It's the only one that stayed.",
+  'Back at camp, Hesketh climbs the hill with you.',
+  "Ten years I couldn't go up. That lamp is my wife's.",
+  'I lit it the night she died. Only one of mine that stayed.',
   "He lights his walking lamp from yours. 'That's two.'"
 ] };
 STORY_BEATS.npc.elowen = { at: 'elderPost:fenmother', who: 'Elowen, from the dark chapel', lines: [
-  'I lit that for you. You were very small.',
+  'I lit that lamp for you. You were very small.',
   "A light lit for someone can't be called.",
   'A light on its own can be put out.',
-  'It knows where you are now.'
+  'The dark knows where you are now.'
 ] };
 
 // The choice at the Great Lantern (K): who it is lit for; the name goes on the Great Lantern's card
-STORY_BEATS.choice.hollowLantern = { prompt: 'Who do you light the Great Lantern for?', options: [
-  { id: 'hesketh', label: 'Hesketh', line: 'The old lamplighter who lit your first fire.' },
+STORY_BEATS.choice.hollowLantern = { prompt: "The Hollow's Great Lantern stands dark on the hill. Who do you light it for?", options: [
+  { id: 'hesketh', label: 'Hesketh', line: 'The lamplighter whose fire steadied your lamp.' },
   { id: 'tam', label: 'Tam', line: 'The first one out of the cellars.' },
   { id: 'bram', label: 'Bram', line: 'The woodcutter who knew his wife\'s candle.' },
   { id: 'thessaly', label: 'Thessaly', line: 'The seer who lost her mother to the fog.' }
 ], def: 'hesketh', store: 'litFor', key: 'hollow' };
 
 // Hero lines (bible 4.6): the story hero's own words; the shared line `_` is for any other hero
-STORY_BEATS.hero.oracleRest = { wren: 'Not yet.', tobin: "I'll rest when the village is lit.", pip: 'Lovely offer. No.', _: "No. I'm not stopping here." };
-STORY_BEATS.hero.hollowLantern = { wren: 'There. Now it knows where I am.', tobin: 'Keep it lit for them. Please.',
-  pip: "There. Now it's everyone's problem.", _: 'There. It is lit. Keep it burning.' };
+STORY_BEATS.hero.oracleRest = { wren: "You say, 'Not yet.'", tobin: "You say, 'I'll rest when the Hollow is lit.'", pip: "You say, 'Lovely offer. No.'",
+  _: "You say, 'No. I'm not stopping here.'" };
+STORY_BEATS.hero.hollowLantern = { wren: "You say, 'There. Let it look. It'll find more than me.'", tobin: "You say, 'Keep it lit for them. Please.'",
+  pip: "You say, 'There. Now it's everyone's problem.'", _: "You say, 'There. It's not just mine now.'" };
 
 // Vesper's verse, once the Fenmother is down (V): the road song's Hollow verse, told true
 STORY_BEATS.vesper.fenmother = [
   "The Hollow's lamps went out, I sang.",
   'No. They were called, and some fell short.',
   'The marsh gave every one back up.',
-  'One lamp, lit for someone, never went out.',
+  'The lamps lit for someone held.',
   "I'll need a better rhyme for 'fog'."
 ];
 

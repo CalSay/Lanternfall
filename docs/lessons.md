@@ -33,6 +33,8 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Read any text built from area names aloud for repeats. Why: the zone-clear toast said "Mossy Hollow is cleared. Mossy Hollow lies ahead" and Codex flagged it. (story-area-names, 2026-10-06)
 - Hero unlock copy may name old areas (Hob's text says "Cinder Road II", Eskil's says "Frostgate Pass II"; both in `src/js/56c-unlocks.js`). Fixing the displayed text is copy-only. Changing the gate fields (`place`, `cycle`, `from`) changes when the hero unlocks and needs a design card. Why: the text and the gate are separate fields. (story-area-names, 2026-10-06)
 - The old Hollow arrival lines are switched off, not rewritten; story-hollow-script turns them back on. (story-area-names, 2026-10-06)
+- Write a story slot against what the screen shows today, not what the bible imagines: the zone boss is still "Elder <type>", so Captain lines wait for `ZONE_FOES[z].captain`, and people ride Champion posts until Champion encounters exist. Why: the first script named off-screen places (Lantern Hill) and the judge failed 3 hard checks; the engine already filed silent lines into the Road log. (story-hollow-script, 2026-10-06)
+- Count C28's per-area budget in beats, not lines, and keep an Elder sequence to 12 taps (Elder lines play one a tap). Why: a line count made the bible's NPC scenes impossible. (story-hollow-script, 2026-10-06)
 - Canon changes after the Opus judge pass go in the digest for Cal's veto. Example: the Coast and Emberwaste bosses are the dark wearing Silas's and Durand's shapes, both men found alive afterwards. (story, 2026-10-05)
 
 ## UI and menus
