@@ -41,7 +41,7 @@ var storyUI;   // var: 75-codex-ui (earlier in the build) reads it at run time
       }
       now = null; showCaption(sc); return;
     }
-    if (blocked() || !stageBox()) {
+    if (blocked() || !stageBox() || (sc.waited && !storyInGap())) {   // once it has waited behind another overlay, it also waits for the next gap (never mid-fight)
       sc.waited = sc.waited || Date.now();
       if (Date.now() - sc.waited > 28000) { now = null; storyClose(sc.id, 'skipped'); return; }   // a long wait: file it, never play it mid-fight
       waitT = setTimeout(run, 400); return;

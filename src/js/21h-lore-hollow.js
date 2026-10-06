@@ -48,8 +48,8 @@ const STORY_RETIRED = [/\bsoak(ed|s)?\b/i, /\bcorrupt/i, /\btwisted\b/i, /\bonly
 const LORE_BESTIARY = {
   // the Hollow (TYPES keys)
   slime: { name: 'Moss Slime', region: 'hollow',
-    foe: 'Pond moss the dark soaked through. It creeps over lamps and smothers them.',
-    elder: 'The oldest moss in the Hollow, crowned. Beaten, it is only moss again.',
+    foe: 'Pond moss the dark buried in shadow. It creeps over lamps and smothers them.',
+    elder: 'The oldest moss in the Hollow, grown vast. It smothers the lamps nearest it.',
     champ: 'The biggest slime the moss can make. The dark sends it when the small ones fail.' },
   bat: { name: 'Cave Bat', region: 'hollow',
     foe: 'The Batwing bats ate fruit once. Now the dark sends them to snuff the weakest light.',

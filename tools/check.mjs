@@ -1786,6 +1786,8 @@ if (section('hollow writing')) try {
   const lines = [];
   const walk = v => { if (typeof v === 'string') lines.push(v); else if (v && typeof v === 'object') Object.values(v).forEach(walk); };
   ['LORE_BESTIARY', 'RAID_LORE'].forEach(n => walk(E(n)));
+  const retired = E('STORY_RETIRED'), bLines = Object.values(E('LORE_BESTIARY')).flatMap(b => [b.foe, b.elder, b.champ]), rHits = bLines.filter(s => retired.some(re => re.test(s)));
+  assert(bLines.length === 42 && !rHits.length, 'hollow: no Bestiary line uses a retired story word' + (rHits.length ? ': ' + rHits[0] : ''));
   const banned = E('LORE_BANNED'), hits = lines.filter(s => banned.some(re => re.test(s)));
   const probe = ['It is drawn to your lamp.', 'It aches for light.', 'It wants the light.', 'Hungry for flame.'].every(s => banned.some(re => re.test(s)));
   assert(lines.length > 30 && probe && !hits.length, `hollow: none of ${lines.length} lines uses a banned verb of the dark` + (hits.length ? ': ' + hits[0] : ''));
@@ -2485,8 +2487,8 @@ if (section('story')) try {
   assert(st0.v === 1 && st0.init === 0 && st0.off === 0 && st0.journalOpens === 0 && typeof st0.ends === 'object' && typeof st0.litFor === 'object' && st0.starter === '' && st0.coldhearth === '',
     'story: S.story keeps its old fields (v 1, seen, read, init) and gains off, ends, journalOpens, starter, litFor, coldhearth');
   E('S.activity = "fight"; S.zone = 1; S.maxZone = 1; spawn()'); ticks(g, 3);
-  assert(ev.scene.length === 1 && ev.scene[0].id === 'r:hollow' && ev.scene[0].ch === 'R' && ev.scene[0].cards.length === 1 && ev.scene[0].cards[0].lines.length === 3 && E('storyHeld()') === true,
-    'story: a new game opens on the Chapter 1 card before the first fight, and the game is held from that moment');
+  assert(ev.scene.length === 1 && ev.scene[0].id === 'r:hollow' && ev.scene[0].ch === 'R' && ev.scene[0].cards.length === 1 && ev.scene[0].cards[0].lines.length === 3 && E('storyHeld()') === false,
+    'story: a new game opens on the Chapter 1 card before the first fight; a scene nobody has claimed yet does not hold the game');
   E('storyClaim("r:hollow")'); ticks(g, 5);
   assert(E('storyHeld()') === true && ev.scene.length === 1, 'story: while the card is up the game is held and nothing else plays');
   play(g, ev); ticks(g, 3);
@@ -2649,9 +2651,9 @@ if (section('story UI (browser)')) try {
         await X(DATA);
         await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go');
         await page.waitForSelector('.sty-sheet .sty-title', { timeout: 4000 }); await page.waitForTimeout(700);
-        const card = await page.$eval('.sty-sheet', n => { const r = n.getBoundingClientRect(), b = [...n.querySelectorAll('button')].filter(x => /Begin|Skip/.test(x.textContent)).map(x => { const q = x.getBoundingClientRect(); return { t: x.textContent, h: Math.round(q.height), bottom: Math.round(q.bottom) }; });
-          return { title: n.querySelector('.sty-title').textContent, lines: [...n.querySelectorAll('.sty-text')].map(x => x.textContent), b, vh: innerHeight, overflowX: n.scrollWidth > n.clientWidth + 1 }; });
-        assert(card.title === 'Chapter 1: The Hollow' && card.lines.length === 3 && card.b.length === 2 && card.b.every(x => x.h >= 44 && x.bottom <= card.vh) && !card.overflowX, `story UI ${tag}: the opening card shows its three lines with Begin and Skip (44 px or taller, on screen)`);
+        const card = await page.$eval('.sty-sheet', n => { const r = n.getBoundingClientRect(), tall = r.height / innerHeight, b = [...n.querySelectorAll('button')].filter(x => /Begin|Skip/.test(x.textContent)).map(x => { const q = x.getBoundingClientRect(); return { t: x.textContent, h: Math.round(q.height), bottom: Math.round(q.bottom) }; });
+          return { title: n.querySelector('.sty-title').textContent, lines: [...n.querySelectorAll('.sty-text')].map(x => x.textContent), b, vh: innerHeight, tall, overflowX: n.scrollWidth > n.clientWidth + 1 }; });
+        assert(card.title === 'Chapter 1: The Hollow' && card.lines.length === 3 && card.b.length === 2 && card.b.every(x => x.h >= 44 && x.bottom <= card.vh) && !card.overflowX && (viewport.width > viewport.height ? card.tall <= 0.605 : true), `story UI ${tag}: the opening card shows its three lines with Begin and Skip (44 px or taller, on screen), and in landscape the sheet is at most 60% of the screen (${card.tall.toFixed(2)})`);
         const clock0 = await X('notes.clock'); await page.waitForTimeout(1200);
         assert(await X('storyHeld()') === true && Math.abs((await X('notes.clock')) - clock0) < 0.05, `story UI ${tag}: the game waits while the card is up`);
         await page.click('.sty-sheet .sty-done'); await page.waitForTimeout(500);

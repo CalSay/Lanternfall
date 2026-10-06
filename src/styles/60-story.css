@@ -78,3 +78,10 @@
   .sty-cap { transition: none; animation: none; }
   .sty-cap.in { animation: none; }
 }
+
+/* landscape phones: a story card is a bottom sheet no taller than 60% of the screen (story-c28.md 4.7); long cards scroll */
+@media (min-aspect-ratio: 1/1) and (min-width: 600px) and (max-height: 500px) {
+  .bsheet.small.sty-sheet { max-height: 60%; }
+  .sty-sheet .bsheet-body { overflow-y: auto; gap: 8px; }
+  .sty-sheet .sty-actions { position: sticky; bottom: 0; background: var(--panel); padding-top: 4px; }
+}

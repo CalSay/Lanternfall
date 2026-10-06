@@ -2683,6 +2683,13 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
   .sty-cap { transition: none; animation: none; }
   .sty-cap.in { animation: none; }
 }
+
+/* landscape phones: a story card is a bottom sheet no taller than 60% of the screen (story-c28.md 4.7); long cards scroll */
+@media (min-aspect-ratio: 1/1) and (min-width: 600px) and (max-height: 500px) {
+  .bsheet.small.sty-sheet { max-height: 60%; }
+  .sty-sheet .bsheet-body { overflow-y: auto; gap: 8px; }
+  .sty-sheet .sty-actions { position: sticky; bottom: 0; background: var(--panel); padding-top: 4px; }
+}
 /* 60-tools: the Mastery box on a tool's item sheet and the rough tool's sheet (75-tools-ui.js, H2).
    The tool chip on the Gather view's Now card is styled in 60-gathering.css (.gx-tool). */
 .tl-mrow { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 8px; margin-top: 2px; font-size: 12px; }
@@ -7446,8 +7453,8 @@ const STORY_RETIRED = [/\bsoak(ed|s)?\b/i, /\bcorrupt/i, /\btwisted\b/i, /\bonly
 const LORE_BESTIARY = {
   // the Hollow (TYPES keys)
   slime: { name: 'Moss Slime', region: 'hollow',
-    foe: 'Pond moss the dark soaked through. It creeps over lamps and smothers them.',
-    elder: 'The oldest moss in the Hollow, crowned. Beaten, it is only moss again.',
+    foe: 'Pond moss the dark buried in shadow. It creeps over lamps and smothers them.',
+    elder: 'The oldest moss in the Hollow, grown vast. It smothers the lamps nearest it.',
     champ: 'The biggest slime the moss can make. The dark sends it when the small ones fail.' },
   bat: { name: 'Cave Bat', region: 'hollow',
     foe: 'The Batwing bats ate fruit once. Now the dark sends them to snuff the weakest light.',
@@ -14215,7 +14222,7 @@ let storeLevel, storeCap, storeCapAt, stashRoom, stashFull, stashOver, stashFits
 
 const STORY_ON = true;   // dev switch (bible 10.4): false plays no story at all; the data files can also be deleted
 
-let storyOn, storyHeld, storyChoiceDef, storyClaim, storyClose, storyChoose, storyList, storyEntry, storyRead, storyUnread, storyLate, storyJournalOpened,
+let storyOn, storyHeld, storyInGap, storyChoiceDef, storyClaim, storyClose, storyChoose, storyList, storyEntry, storyRead, storyUnread, storyLate, storyJournalOpened,
   storyRoadLog, storyFile, storyHeroLine, storyHearthLine, storyVerse, storyItemLine, storyEncounter, storyBestiary, storySync;
 const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_ENC.champ.<id> = true (storyEncounter)
 {
@@ -14362,7 +14369,8 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
   // ---- the queue: scenes wait for a gap, one at a time ----
   let cur = null, claimed = false, heldAt = 0;
   const queue = [];
-  storyHeld = () => !!cur && (claimed || Date.now() - heldAt < 30000);
+  storyInGap = () => inGap();
+  storyHeld = () => !!cur && claimed;   // only a scene the player can see holds the game; one waiting behind another overlay does not
   storyClaim = id => { if (cur && cur.id === id) claimed = true; };
   storyClose = (id, how) => {
     if (!cur || cur.id !== id) return;
@@ -14446,7 +14454,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
     spawnT = clock; gapNow = false;
     // the region boss's display name (REGIONS[i].boss.name; the Hollow: "The Fenmother")
     const r = regionOf(zone);
-    if (zone === r.z1 && r.boss && r.boss.name) mob.name = r.boss.name;
+    if (mob.boss && zone === r.z1 && r.boss && r.boss.name) mob.name = r.boss.name;
     spawned = { mob, zone };   // read next tick: an encounter card may set mob.encounter after this listener
   });
   on('kill', ({ mob, zone }) => {
@@ -40095,7 +40103,7 @@ var storyUI;   // var: 75-codex-ui (earlier in the build) reads it at run time
       }
       now = null; showCaption(sc); return;
     }
-    if (blocked() || !stageBox()) {
+    if (blocked() || !stageBox() || (sc.waited && !storyInGap())) {   // once it has waited behind another overlay, it also waits for the next gap (never mid-fight)
       sc.waited = sc.waited || Date.now();
       if (Date.now() - sc.waited > 28000) { now = null; storyClose(sc.id, 'skipped'); return; }   // a long wait: file it, never play it mid-fight
       waitT = setTimeout(run, 400); return;

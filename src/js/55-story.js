@@ -55,7 +55,7 @@
 
 const STORY_ON = true;   // dev switch (bible 10.4): false plays no story at all; the data files can also be deleted
 
-let storyOn, storyHeld, storyChoiceDef, storyClaim, storyClose, storyChoose, storyList, storyEntry, storyRead, storyUnread, storyLate, storyJournalOpened,
+let storyOn, storyHeld, storyInGap, storyChoiceDef, storyClaim, storyClose, storyChoose, storyList, storyEntry, storyRead, storyUnread, storyLate, storyJournalOpened,
   storyRoadLog, storyFile, storyHeroLine, storyHearthLine, storyVerse, storyItemLine, storyEncounter, storyBestiary, storySync;
 const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_ENC.champ.<id> = true (storyEncounter)
 {
@@ -202,7 +202,8 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
   // ---- the queue: scenes wait for a gap, one at a time ----
   let cur = null, claimed = false, heldAt = 0;
   const queue = [];
-  storyHeld = () => !!cur && (claimed || Date.now() - heldAt < 30000);
+  storyInGap = () => inGap();
+  storyHeld = () => !!cur && claimed;   // only a scene the player can see holds the game; one waiting behind another overlay does not
   storyClaim = id => { if (cur && cur.id === id) claimed = true; };
   storyClose = (id, how) => {
     if (!cur || cur.id !== id) return;
@@ -286,7 +287,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
     spawnT = clock; gapNow = false;
     // the region boss's display name (REGIONS[i].boss.name; the Hollow: "The Fenmother")
     const r = regionOf(zone);
-    if (zone === r.z1 && r.boss && r.boss.name) mob.name = r.boss.name;
+    if (mob.boss && zone === r.z1 && r.boss && r.boss.name) mob.name = r.boss.name;
     spawned = { mob, zone };   // read next tick: an encounter card may set mob.encounter after this listener
   });
   on('kill', ({ mob, zone }) => {
