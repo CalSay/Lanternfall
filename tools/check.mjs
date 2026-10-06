@@ -8565,6 +8565,10 @@ if (section('wall-try-again (boss loss, Try again)')) try {
   assert(at >= 0 && !E('bossTryHeld()'), `try again: with Auto on, a held boss restarts once you are stronger (at ${at.toFixed(0)} s)`);
   E('S.auto = false; S.bossTry.hold = 2; fightBoss = false; failDps = 0; spawn()'); run(60);
   assert(!E('fightBoss') && E('bossTryHeld()'), 'try again: with Auto off, the held boss waits for the button');
+  // a reload keeps the strength you failed at, so Auto does not retry an unchanged hero
+  E('S.auto = true; S.bossTry.hold = 2; S.bossTry.fail = 1e9; failDps = 1e9; save()');
+  const g3 = loadCore({ seed: 5, storage: memoryStorage({ [KEY]: E('JSON.stringify(S)') }) });
+  assert(g3.eval('failDps') === 1e9 && g3.eval('bossTryHeld() || S.bossTry.hold === 2'), 'try again: a reload keeps the failed-at strength with the hold');
   // an old save with no bossTry loads with the defaults
   const old = JSON.parse(E('JSON.stringify(S)')); delete old.bossTry;
   const g2 = loadCore({ seed: 4, storage: memoryStorage({ [KEY]: JSON.stringify(old) }) });

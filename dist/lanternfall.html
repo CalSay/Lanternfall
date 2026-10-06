@@ -733,7 +733,7 @@ img[src*="#nic:"] { image-rendering: auto; }   /* a gear icon set by code that d
 .bt-chips { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
 .bt-more { color: var(--muted); font-size: 12.5px; }
 .bt-ways { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 13.5px; line-height: 1.3; }
-.bt-auto { display: flex; gap: 8px; align-items: center; margin-top: 10px; cursor: pointer; }
+.bt-auto { min-height: 44px; display: flex; gap: 8px; align-items: center; margin-top: 10px; cursor: pointer; }
 .bt-stay { background: transparent; }
 /* 60-bounties: bounty board rows and the achievements grid */
 .row.bty .bty-bar { margin-top: 5px; height: 5px; }
@@ -11351,15 +11351,17 @@ let OMENS, WEEKLY_GOALS;
 //                the move that beat you, else the next one in the boss's order); a beaten boss shows all its moves.
 //   Why          `bossTryWhy(last)` names the hit that won and the reason; `bossTryWays(ctx)` lists the ways forward that
 //                exist now. Add a way (a new lever such as the bag slot or Resolve) with `bossWay(id, fn)`; no edits here.
-// Save: registerState('bossTry', { hold: 0, tries: {}, rev: {}, last: null }). All defaults, so old saves merge in.
-registerState('bossTry', { hold: 0, tries: {}, rev: {}, last: null });
+// Save: registerState('bossTry', { hold: 0, fail: 0 (the failed-at strength), tries: {}, rev: {}, last: null }). All defaults, so old saves merge in.
+registerState('bossTry', { hold: 0, fail: 0, tries: {}, rev: {}, last: null });
+// failDps (50-sim) is runtime only: a reload restores the strength you failed at, so "once you are stronger" survives it
+if (S.bossTry.hold > 0 && S.bossTry.fail > 0 && !(failDps > 0)) failDps = S.bossTry.fail;
 
 const BOSS_TRY = { leftClose: 0.25 };   // the boss had this share of its health left or less: "so close"
 
 const bossTryKey = (hero, zone) => (hero || 'hero') + ':' + zone;
 // the hold: this zone's boss waits for you (hoisted function: 50-sim reads it before this file runs)
 function bossTryHeld() { const b = S.bossTry; return !!(b && b.hold > 0 && b.hold === S.zone); }
-function bossTryRelease() { if (S.bossTry && S.bossTry.hold) S.bossTry.hold = 0; }
+function bossTryRelease() { if (S.bossTry && S.bossTry.hold) { S.bossTry.hold = 0; S.bossTry.fail = 0; } }
 
 // the foe's moves in the order they are told, one row per move id: { id, name, hits, charged }
 function bossTryMoves(script) {
@@ -11381,7 +11383,7 @@ function bossTryShown(script, zone) {
 on('bossFail', ({ zone }) => {
   const b = S.bossTry, hero = typeof soloHero === 'function' ? soloHero() : '', key = bossTryKey(hero, zone);
   b.tries[key] = (b.tries[key] || 0) + 1;
-  b.hold = zone;
+  b.hold = zone; b.fail = typeof failDps === 'number' ? failDps : 0;
   if (typeof ZONE_FIGHTS === 'number') S.kills = ZONE_FIGHTS;   // the boss is ready to try again at once; the zone pays meanwhile
   b.last = { zone, hero, n: b.tries[key], boss: (typeof mob === 'object' && mob && mob.boss && mob.name) || '', move: '', hit: 0, hits: 0,
     charged: false, defended: false, dot: false, left: -1, weak: '', res: [], moves: [], hidden: 0, shown: 0 };
@@ -32967,7 +32969,7 @@ function uiFight() {
     putText(G.desc, held ? 'It beat you. Try again when you are ready. Fights here keep paying while you wait.' : `Beat the boss to move on to Zone ${S.zone + 1}. ${Math.round((S.zone < S.maxZone ? UNIQ_TUNE.again : UNIQ_TUNE.first) * 100)}% chance of the unique ${uq}.`);
     putText(gq, held ? 'Try' : 'Boss'); putText(gp, held ? 'Again' : 'Fight'); putDisabled(gb, !bossReady());
   }
-  if (gateAutoLb) { const d = S.activity === 'fight' && !fightBoss && bossReady() && bossTryHeld() ? '' : 'none'; if (gateAutoLb.style.display !== d) gateAutoLb.style.display = d; }
+  if (gateAutoLb) { const ab = $('autoBoss'); if (ab.checked !== !!S.auto) ab.checked = !!S.auto; const d = S.activity === 'fight' && !fightBoss && bossReady() && bossTryHeld() ? '' : 'none'; if (gateAutoLb.style.display !== d) gateAutoLb.style.display = d; }
 }
 
 // ---- src/js/72-ui-gather.js ----
@@ -34829,7 +34831,7 @@ let showAwayReport;
       for (const w of ways) ul.append(el('li', null, w.txt));
       api.body.append(ul);
       const lb = el('label', 'note bt-auto'), cb = el('input'); cb.type = 'checkbox'; cb.checked = !!S.auto;
-      cb.addEventListener('change', () => { S.auto = cb.checked; });
+      cb.addEventListener('change', () => { S.auto = cb.checked; const g = $('autoBoss'); if (g) g.checked = S.auto; });
       lb.append(cb, ' Try again on my own when I am stronger');
       api.body.append(lb);
       const go = el('button', 'big forge bt-go', 'Try again'); go.type = 'button';

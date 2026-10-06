@@ -7,15 +7,17 @@
 //                the move that beat you, else the next one in the boss's order); a beaten boss shows all its moves.
 //   Why          `bossTryWhy(last)` names the hit that won and the reason; `bossTryWays(ctx)` lists the ways forward that
 //                exist now. Add a way (a new lever such as the bag slot or Resolve) with `bossWay(id, fn)`; no edits here.
-// Save: registerState('bossTry', { hold: 0, tries: {}, rev: {}, last: null }). All defaults, so old saves merge in.
-registerState('bossTry', { hold: 0, tries: {}, rev: {}, last: null });
+// Save: registerState('bossTry', { hold: 0, fail: 0 (the failed-at strength), tries: {}, rev: {}, last: null }). All defaults, so old saves merge in.
+registerState('bossTry', { hold: 0, fail: 0, tries: {}, rev: {}, last: null });
+// failDps (50-sim) is runtime only: a reload restores the strength you failed at, so "once you are stronger" survives it
+if (S.bossTry.hold > 0 && S.bossTry.fail > 0 && !(failDps > 0)) failDps = S.bossTry.fail;
 
 const BOSS_TRY = { leftClose: 0.25 };   // the boss had this share of its health left or less: "so close"
 
 const bossTryKey = (hero, zone) => (hero || 'hero') + ':' + zone;
 // the hold: this zone's boss waits for you (hoisted function: 50-sim reads it before this file runs)
 function bossTryHeld() { const b = S.bossTry; return !!(b && b.hold > 0 && b.hold === S.zone); }
-function bossTryRelease() { if (S.bossTry && S.bossTry.hold) S.bossTry.hold = 0; }
+function bossTryRelease() { if (S.bossTry && S.bossTry.hold) { S.bossTry.hold = 0; S.bossTry.fail = 0; } }
 
 // the foe's moves in the order they are told, one row per move id: { id, name, hits, charged }
 function bossTryMoves(script) {
@@ -37,7 +39,7 @@ function bossTryShown(script, zone) {
 on('bossFail', ({ zone }) => {
   const b = S.bossTry, hero = typeof soloHero === 'function' ? soloHero() : '', key = bossTryKey(hero, zone);
   b.tries[key] = (b.tries[key] || 0) + 1;
-  b.hold = zone;
+  b.hold = zone; b.fail = typeof failDps === 'number' ? failDps : 0;
   if (typeof ZONE_FIGHTS === 'number') S.kills = ZONE_FIGHTS;   // the boss is ready to try again at once; the zone pays meanwhile
   b.last = { zone, hero, n: b.tries[key], boss: (typeof mob === 'object' && mob && mob.boss && mob.name) || '', move: '', hit: 0, hits: 0,
     charged: false, defended: false, dot: false, left: -1, weak: '', res: [], moves: [], hidden: 0, shown: 0 };

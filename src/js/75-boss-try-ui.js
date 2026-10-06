@@ -29,7 +29,7 @@
       for (const w of ways) ul.append(el('li', null, w.txt));
       api.body.append(ul);
       const lb = el('label', 'note bt-auto'), cb = el('input'); cb.type = 'checkbox'; cb.checked = !!S.auto;
-      cb.addEventListener('change', () => { S.auto = cb.checked; });
+      cb.addEventListener('change', () => { S.auto = cb.checked; const g = $('autoBoss'); if (g) g.checked = S.auto; });
       lb.append(cb, ' Try again on my own when I am stronger');
       api.body.append(lb);
       const go = el('button', 'big forge bt-go', 'Try again'); go.type = 'button';

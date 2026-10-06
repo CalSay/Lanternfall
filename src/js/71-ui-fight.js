@@ -103,5 +103,5 @@ function uiFight() {
     putText(G.desc, held ? 'It beat you. Try again when you are ready. Fights here keep paying while you wait.' : `Beat the boss to move on to Zone ${S.zone + 1}. ${Math.round((S.zone < S.maxZone ? UNIQ_TUNE.again : UNIQ_TUNE.first) * 100)}% chance of the unique ${uq}.`);
     putText(gq, held ? 'Try' : 'Boss'); putText(gp, held ? 'Again' : 'Fight'); putDisabled(gb, !bossReady());
   }
-  if (gateAutoLb) { const d = S.activity === 'fight' && !fightBoss && bossReady() && bossTryHeld() ? '' : 'none'; if (gateAutoLb.style.display !== d) gateAutoLb.style.display = d; }
+  if (gateAutoLb) { const ab = $('autoBoss'); if (ab.checked !== !!S.auto) ab.checked = !!S.auto; const d = S.activity === 'fight' && !fightBoss && bossReady() && bossTryHeld() ? '' : 'none'; if (gateAutoLb.style.display !== d) gateAutoLb.style.display = d; }
 }
