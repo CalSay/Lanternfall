@@ -9,8 +9,8 @@ through `tools/sim.mjs` (turn fights on). Coverage-map areas 7 (progression curv
 
 - **Every hero stalls between zone 20 and zone 30 (Fungal Deep and Quarry Ruins).** A good player on 3 hours a day
   reaches zone 20 in about 6 hours, then needs 23 to 37 more hours to reach zone 30 (Wren and Pip). Tobin does not
-  reach zone 30 in 51 hours. A casual player (45 minutes a day) reaches zone 20 in about a week, zone 25 in about three
-  weeks, and then about two zones a month. No hero passes zone 28 in 60 days.
+  reach zone 30 in 51 hours. A casual player (45 minutes a day) reaches zone 20 on day 5 and zone 25 on day 15 to 27,
+  then gains one or two zones a month. No hero passes zone 28 in 60 days.
 - **The first wall is hero XP.** Foe HP grows x1.42 a zone from zone 15 to 27. Training cannot pass the hero's level,
   so the hero needs about two levels a zone. A level costs x1.3 more XP each time: Lv 30 takes 1 to 3 active hours,
   Lv 34 and 35 take 7 to 11. At the wall, Training sits at the hero's level and gold piles up unspent (Wren holds up to
@@ -23,7 +23,7 @@ through `tools/sim.mjs` (turn fights on). Coverage-map areas 7 (progression curv
   in about 2 hours. Grey Shingle (zones 36 to 41) then takes about an hour.
 - **Best fix:** ease the XP curve and Training prices together, then spread the Attack milestones. Measured together on
   two seeds, the good player reaches zone 30 in 19 to 23 hours (now 29 to 43), and Wren's and Pip's longest stall before
-  zone 35 falls from up to 19 hours to 3 to 10 hours. The casual Wren and Pip reach zone 30 on day 30 and 35 (now never
+  zone 35 falls from up to 19 hours to 3 to 10 hours. The casual Wren and Pip reach zone 30 on day 26 and 40 (now never
   in 60 days). Tobin needs his own look (section 6).
 
 ## 1. How it was measured
@@ -34,13 +34,21 @@ Hours are active hours: time the player is in the game. Fights earn nothing whil
 |---|---|---|---|
 | Good | 3 hours a day (three 60-minute sessions, 08, 13, 19h) for 17 days: 51 hours | lands 80% of parries and dodges (the sim's own player) | `--days 17 --checkins 8,13,19 --session 60 --first 60` |
 | Marathon | 50 hours in one go, nothing away (the health tool's `--long` run) | 80% | `--policy mixed --hours 50 --every 3600` |
-| Casual | 45 minutes a day (three 15-minute visits) for 60 days: 45 hours | lands 40% (the turn report's casual sits at 25% parry, 50% dodge) | `--days 60 --checkins 8,13,19 --session 15 --first 15` |
+| Casual | 45 minutes a day (three 15-minute visits) for 60 days: 45 hours | the turn report's casual: parries 25% of swings, dodges half the rest, takes the others; ability rings 10% Perfect, 40% Good, 50% missed | `--days 60 --checkins 8,13,19 --session 15 --first 15` |
 
 Every run: `--class ranger|warden|lanternmage --active 1 --turns 1 --seed 41` (Wren, Tobin, Pip), and the good player
 again on `--seed 42`. All runs use the sim's mixed policy: fight 10 minutes, gather 5, craft the next class piece, build
-the camp, train the best value per gold, challenge the zone boss when it is ready. The casual's 40% timing came from a
-scratch copy of `tools/sim.mjs` with one number changed (line 756, `rnd() < 0.8`), not committed. A 15-minute probe
-(`--evalfile`) logged zone, level, gold, Training, gear and wipes. 66 runs in all.
+the camp, train the best value per gold, challenge the zone boss when it is ready. The casual's skill is the
+`casual` player of `node tools/sim.mjs --report turns` (parry 0.25, dodge 0.5, Perfect 0.1, Good 0.4), played the way
+`turnCombatSample` plays it, through a scratch copy of `tools/sim.mjs` (`LF_PROFILE=casual`, a patch to `turnPlayer`,
+not committed; section 8). A 15-minute probe (`--evalfile`) logged zone, level, gold, Training, gear and wipes.
+78 runs in all (the first 9 casual runs used a cruder skill model and are replaced). Tobin's late pass (PR #49)
+merged after them, so his rows predate it.
+
+The sim's own turn player never presses an ability's timing ring, so every timed ability lands as a Miss (70%) for
+the good and marathon players. They keep it, because the build card re-measures with the unchanged tool. One check with
+the turn report's `good` player instead (rings 40% Perfect, 45% Good; seed 41) moved nothing that matters: zone 30 at
+35.7 hours for Wren and 37.7 for Pip (sim player: 30.2 and 42.5), Tobin still stops at zone 27.
 
 ## 2. Today's numbers
 
@@ -54,12 +62,14 @@ Hours to reach each zone, with the hero's level then. Good player: seed 41 / see
 | Marathon | Wren | 0.4 h (Lv 16) | 7.2 h (Lv 27) | not reached | not reached | not reached | zone 29, Lv 36 |
 | Marathon | Tobin | 0.4 h (Lv 14) | 7.2 h (Lv 26) | not reached | not reached | not reached | zone 27, Lv 34 |
 | Marathon | Pip | 0.3 h (Lv 15) | 9.2 h (Lv 29) | not reached | not reached | not reached | zone 27, Lv 36 |
-| Casual | Wren | 0.4 h (Lv 14, day 1) | 4.4 h (Lv 27, day 6) | not reached | not reached | not reached | zone 28, Lv 35 |
-| Casual | Tobin | 0.4 h (Lv 14, day 1) | 3.5 h (Lv 25, day 5) | not reached | not reached | not reached | zone 24, Lv 29 |
-| Casual | Pip | 0.5 h (Lv 16, day 1) | 4.9 h (Lv 27, day 7) | not reached | not reached | not reached | zone 27, Lv 34 |
+| Casual | Wren | 0.4 h (Lv 15, day 1) | 3.0 h (Lv 26, day 5) | not reached | not reached | not reached | zone 28, Lv 35 |
+| Casual | Tobin | 0.5 h (Lv 14, day 1) | 3.6 h (Lv 26, day 5) | not reached | not reached | not reached | zone 25, Lv 29 |
+| Casual | Pip | 0.5 h (Lv 17, day 1) | 3.7 h (Lv 27, day 5) | not reached | not reached | not reached | zone 27, Lv 34 |
 
-Casual calendar: zone 25 on day 21 (Wren) and 23 (Pip); Tobin never. After that: Wren zone 26 on day 29, zone 27 on
-day 56; Pip zone 27 on day 39; Tobin sits on zone 24 from day 25 to day 60.
+Casual calendar: zone 25 on day 15 (Wren), 27 (Pip) and 52 (Tobin). After that: Wren zone 26 on day 16, zone 27 on
+day 42, zone 28 on day 55; Pip zone 26 on day 31, zone 27 on day 37; Tobin sits on zone 24 from day 16 to day 52.
+Longest stall: Wren 19 active hours at zone 26, Pip 18 hours at zone 27 (still there at the end), Tobin 27 hours at
+zone 24.
 
 The casual reaches zone 20 sooner than the good player in active hours: away gathering crafts their gear. The marathon
 player gathers only while playing, so their gear falls a tier behind (mining 32 to 37 after 50 hours; tier 4 nodes need
@@ -112,8 +122,8 @@ on the climb; no stall in these runs waits on them.
 
 ### Stall 1: hero levels stop in Fungal Deep and Quarry Ruins (zones 20 to 29)
 
-- **Measured:** good player, zone 20 to zone 30 takes 23 to 37 hours (Wren, Pip); Tobin never gets there. Casual: about two
-  zones a month from zone 25. At the wall Training equals the hero's level and gold piles up (Wren: 22,000 to 52,000
+- **Measured:** good player, zone 20 to zone 30 takes 23 to 37 hours (Wren, Pip); Tobin never gets there. Casual: from zone 25,
+  Wren needs 40 days for three more zones and Pip 10 days for two; Tobin needs 36 days for one. At the wall Training equals the hero's level and gold piles up (Wren: 22,000 to 52,000
   unspent from hour 19 to hour 27 of the marathon).
 - **Cause:** foe HP x1.42 a zone needs about two hero levels a zone; each level costs x1.3 more XP than the last.
 - **Fix:** past level 25, each level costs x1.15 more XP instead of x1.3. Lv 35 then needs 33,000 XP, not 112,000; Lv 40
@@ -176,9 +186,9 @@ Casual player (45 minutes a day, seed 41), zone 30 and zone 35 by active hours a
 
 | Change | Wren | Pip | Tobin |
 |---|---|---|---|
-| Today | zone 30 not reached; zone 28 on day 58 | zone 30 not reached; zone 27 on day 39 | zone 30 not reached; stuck on zone 24 from day 25 |
-| Fixes 1 + 2 + 3 | zone 30 at 22.0 h (day 30); zone 35 at 37.9 h (day 51) | zone 30 at 26.0 h (day 35); zone 34 by day 60 | zone 27 by day 60 |
-| + even foe HP (option) | zone 30 at 9.5 h (day 13); zone 35 at 21.5 h (day 29) | zone 30 at 13.9 h (day 19); zone 35 at 43.9 h (day 59) | zone 30 at 36.7 h (day 49) |
+| Today | zone 30 not reached; zone 28 on day 55 | zone 30 not reached; zone 27 on day 37 | zone 30 not reached; stuck on zone 24 from day 16 to 52 |
+| Fixes 1 + 2 + 3 | zone 30 at 19.4 h (day 26); zone 35 at 30.8 h (day 42); zone 42 by day 60 | zone 30 at 29.4 h (day 40); zone 33 by day 60 | zone 27 by day 60 |
+| + even foe HP (option) | zone 30 at 10.4 h (day 14); zone 35 at 24.2 h (day 33); zone 45 at 42.1 h (day 57) | zone 30 at 13.3 h (day 18); zone 35 at 38.7 h (day 52) | zone 30 at 31.4 h (day 42) |
 
 Marathon player (50 hours in one go, seed 41), zone reached and when:
 
@@ -215,7 +225,7 @@ What the combined runs leave:
   set), so zones past 35 are slower here than for a player who Ascends.
 - **"Even foe HP"** (`TURN_TUNE.refAtk` in `src/js/59k-turn.js` re-pointed so foe HP grows x1.31 a zone from 15 to
   34, the same HP at 15 and at 34) helps the players fixes 1 to 3 leave behind: Tobin (zone 30 at 37 hours on both
-  seeds, today never), the casual (zone 30 on day 13 and 19, not 30 and 35) and the marathon player (above). It adds
+  seeds, today never), the casual (zone 30 on day 14 and 18, not 26 and 40) and the marathon player (above). It adds
   little for a good Wren or Pip, makes zones 20 to 27 quick (Pip reaches zone 25 in 8 to 10 hours, today 20 to 31) and
   piles the wait onto the Wraithmarsh bosses (Pip, marathon: 19 hours at zone 31). So it is the second card, measured
   after the first lands, and it goes with a look at the Wraithmarsh boss HP. Save impact: none.
@@ -247,7 +257,7 @@ after card 1 is measured: even foe HP from zone 15 to 34 with the Wraithmarsh bo
 - **Health tool:** `node tools/health.mjs --long --compare` will move `zoneEnd`, `lastNewZoneHour` and `stallsOver1h`
   outside their bands (the point of the change); the build card accepts the new baseline with `--write-baseline` and
   says so in the PR.
-- **Predicted (casual, seed 41):** zone 30 within 40 days of 45 minutes for Wren and Pip (today: not in 60 days).
+- **Predicted (casual, seed 41):** zone 30 within 45 days of 45 minutes for Wren and Pip (measured: day 26 and 40; today: not in 60 days).
 - **Missed if:** Pip's zone 30 is still over 30 hours on both seeds, or Wren or Pip has a stall over 12 hours before
   zone 35, or zone 10 moves by more than 15 minutes. Zone 20 comes about an hour sooner (cheaper Training from Lv 20);
   that is expected.
@@ -262,7 +272,7 @@ after card 1 is measured: even foe HP from zone 15 to 34 with the Wraithmarsh bo
 # today, good player (also --seed 42), one hero
 node tools/sim.mjs --days 17 --checkins 8,13,19 --session 60 --first 60 --class ranger --active 1 --turns 1 --seed 41 --health out.json
 # marathon: node tools/health.mjs --long (or the same sim line with --policy mixed --hours 50 --every 3600)
-# casual: --days 60 --checkins 8,13,19 --session 15 --first 15, with the defence timing at 0.4 (tools/sim.mjs line 756)
+# casual: --days 60 --checkins 8,13,19 --session 15 --first 15, run with LF_PROFILE=casual through the turnPlayer patch below
 # a change: add --eval "<code>" with one of the snippets below
 ```
 
@@ -273,3 +283,23 @@ node tools/sim.mjs --days 17 --checkins 8,13,19 --session 60 --first 60 --class 
 | Milestones spread | `PACE.atkEvery = 1; PACE.atkX = Math.pow(1.7, 0.2); PACE.atkX2 = Math.pow(2, 0.2); SOLO_TUNE.train.abX = Math.pow(1.55, 0.2); SOLO_TUNE.train.abX2 = Math.pow(1.8, 0.2)` |
 | Even foe HP, zones 15 to 34 | `TURN_TUNE.refAtk = (() => { const old = TURN_TUNE.refAtk.map(p => p.slice()), H = z => turnZoneLine(old, z) * mobHp(z), g = Math.pow(H(34) / H(15), 1 / 19), pts = old.filter(p => p[0] < 15); for (let z = 15; z <= 34; z++) pts.push([z, H(15) * Math.pow(g, z - 15) / mobHp(z)]); return pts.concat(old.filter(p => p[0] > 34)); })()` |
 | Double XP / gold x1.5 | `TURN_TUNE.xpX = 5` / `TURN_TUNE.goldX = 4.5` |
+
+The casual player's patch to `turnPlayer` in a copy of `tools/sim.mjs` (put the copy in `tools/` so its imports resolve):
+
+```js
+const LF_PROF = { good: { parry: 0.6, dodge: 0.9, perfect: 0.4, good: 0.45 }, casual: { parry: 0.25, dodge: 0.5, perfect: 0.1, good: 0.4 } }[process.env.LF_PROFILE] || null;
+// first in turnPlayer, after the snapshot: a timing ring is pressed 0.05 s (Perfect) or 0.15 s (Good) before it closes, or not at all
+if (LF_PROF && s && s.phase === 'timing' && s.timing) {
+  const key = 'ring:' + s.n + ':' + s.timing.i + ':' + s.timing.closesAt;
+  if (!turnInput || turnInput.key !== key) { const r = rnd(); turnInput = { key, done: false, lead: r < LF_PROF.perfect ? 0.05 : r < LF_PROF.perfect + LF_PROF.good ? 0.15 : -1 }; }
+  if (!turnInput.done && turnInput.lead >= 0 && s.now >= s.timing.closesAt - turnInput.lead) { turnInput.done = true; E('turnCombatAction("time")'); }
+  return true;
+}
+// at a foe's windup: parry, else dodge, else no press; a tried defence is pressed mid-window and lands
+turnInput.kind = LF_PROF ? (rnd() < LF_PROF.parry ? 'parry' : rnd() < LF_PROF.dodge ? 'dodge' : 'none') : rnd() < 0.6 ? 'parry' : 'dodge';
+if (turnInput.kind === 'none') turnInput.done = true;
+else turnInput.at = LF_PROF || rnd() < 0.8 ? opens + (s.closesAt - opens) * 0.5 : Math.max(s.now, opens - 0.1);
+```
+
+Checked over two days of play (Wren, seed 41): the casual graded 13% Perfect, 38% Good, 50% Miss; the good profile
+44%, 41%, 15%; the sim's own player 0%, 0%, 100%.
