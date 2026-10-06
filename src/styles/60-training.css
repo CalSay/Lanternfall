@@ -19,4 +19,6 @@
 .tr-c-row { display: flex; gap: 8px; align-items: stretch; margin-top: 4px; }
 .tr-c-row .buy { flex: 1 1 auto; min-height: 44px; }
 .tr-c-more { flex: 0 0 auto; min-height: 44px; padding: 0 12px; background: var(--panel-2); color: var(--bone); border: 2px solid #0B0810; font: 600 15px var(--display); cursor: pointer; }
+/* attributes on: the block's one button (Attributes) takes the row */
+.tr-c-row .tr-c-more:only-child { flex: 1 1 auto; }
 @media (prefers-reduced-motion: reduce) { .tr-go.tr-ok { animation: none; } }

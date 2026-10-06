@@ -230,7 +230,7 @@ if (args.health) {
         ev: H.ev, samples: H.samples, casts: H.casts, kills: H.kills, bossKills: H.bossKills, killGold: Math.round(H.killGold), killEss: H.killEss,
         harvest: H.harvest, wipes: H.wipes, gear, stars: E('JSON.parse(JSON.stringify({ set: S.stars.set, lit: S.stars.lit, own: Object.keys(S.stars.own) }))'),
         econ: E('JSON.parse(JSON.stringify(S.econ))'), mats: E('JSON.parse(JSON.stringify(S.mats))'), solo: E('JSON.parse(JSON.stringify(SOLO_STATS))'),
-        training: E("Object.fromEntries(trainMoves().map(m => [m, trainLv(m)]))"), errors: g.errors.length
+        training: E("Object.fromEntries(trainMoves().map(m => [m, trainLv(m)]))"), attrs: E('typeof attrOn === "function" && attrOn() ? JSON.parse(JSON.stringify(S.attr.pts)) : null'), errors: g.errors.length
       }));
     } catch (e) { console.error('health telemetry failed: ' + e.message); }
   });
@@ -361,6 +361,21 @@ function buyBest() {
     if (!(opts[0].v > 0)) return;
     opts[0].apply();
   }
+}
+
+// hero-progression-rework: attribute points (55-attributes). --attrs even (the default: one point at a time into the
+// attribute with the fewest, which is exactly the old flat +4% a level) | might | focus | guard | vigour (every point
+// into one) | w/x/y/z (weights in ATTR_IDS order, e.g. 2/1/1/0). Spent whenever points are free (the flag off).
+const ATTR_POLICY = String(args.attrs || 'even');
+function attrStep() {
+  if (!E('typeof attrOn === "function" && attrOn() && !!soloHero()')) return;
+  E(`(() => { const k = soloHero(), pol = ${JSON.stringify(ATTR_POLICY)}, P = attrPoints(k); if (!(P.free > 0)) return;
+    const w = ATTR_IDS.includes(pol) ? ATTR_IDS.map(id => id === pol ? 1 : 0) : pol === 'even' ? ATTR_IDS.map(() => 1) : pol.split('/').map(Number);
+    for (let left = P.free; left > 0; left--) {
+      let best = null, bv = Infinity;
+      ATTR_IDS.forEach((id, i) => { if (!(w[i] > 0)) return; const v = attrOf(k, id) / w[i]; if (v < bv) { bv = v; best = id; } });
+      if (!best || !attrAdd(best, 1, k)) break;
+    } })()`);
 }
 
 // The gold reserve a player keeps: claim finished bounties, then hold gold for the next Camp build whose
@@ -749,14 +764,28 @@ fn.on('telegraphStart', e => {
 // C20: one planned input per actor turn; a missed defence never retries.
 let turnInput = null;
 fn.on('fightStart', () => { turnInput = null; });
+// --skill good|casual (hero-progression-rework): play the turn report's player profiles (--report turns) instead of the
+// bot's own 60/40 defence: good parries 60% of hits and dodges 90% of the rest, casual 25% and 50%; the rest land. Ability
+// rings: good 40% Perfect, 45% Good; casual 10% / 40%; else a Miss. Without --skill the bot plays as before (no rings).
+const SKILL = { good: { parry: 0.6, dodge: 0.9, perfect: 0.4, good: 0.45 }, casual: { parry: 0.25, dodge: 0.5, perfect: 0.1, good: 0.4 } }[args.skill] || null;
 function turnPlayer() {
   if (!E('typeof turnCombatOn === "function" && turnCombatOn()')) return false;
   const s = E('turnCombatSnapshot()');
+  if (SKILL && s && s.phase === 'timing' && s.timing) {
+    const key = 'timing:' + s.n + ':' + s.timing.i;
+    if (!turnInput || turnInput.key !== key) { const r = rnd(); turnInput = { key, done: false, off: r < SKILL.perfect ? 0.02 : r < SKILL.perfect + SKILL.good ? 0.1 : -1 }; }
+    if (!turnInput.done && turnInput.off >= 0 && s.now >= s.timing.closesAt - turnInput.off) { turnInput.done = true; E("turnCombatAction('time')"); }
+    return true;
+  }
   if (!s || !['hero', 'foeWindup'].includes(s.phase)) { turnInput = null; return true; }
   const key = s.phase + ':' + s.n;
   if (!turnInput || turnInput.key !== key) {
     turnInput = { key, done: false, at: s.now + 0.15 + rnd() * 0.15, kind: 'attack' };
-    if (s.phase === 'foeWindup') {
+    if (s.phase === 'foeWindup' && SKILL) {
+      turnInput.kind = rnd() < SKILL.parry ? 'parry' : rnd() < SKILL.dodge ? 'dodge' : 'none';
+      const opens = turnInput.kind === 'parry' ? s.parryOpensAt : s.dodgeOpensAt;
+      turnInput.at = turnInput.kind === 'none' ? Infinity : opens + (s.closesAt - opens) * 0.5;
+    } else if (s.phase === 'foeWindup') {
       turnInput.kind = rnd() < 0.6 ? 'parry' : 'dodge';
       const opens = turnInput.kind === 'parry' ? s.parryOpensAt : s.dodgeOpensAt;
       turnInput.at = rnd() < 0.8 ? opens + (s.closesAt - opens) * 0.5 : Math.max(s.now, opens - 0.1);
@@ -851,7 +880,7 @@ function playSecond(sec) {
   }
   if (sec < 3 * 3600) { craftStats.sec3h++; if (E('S.activity') === 'gather') craftStats.gatherSec++; }
   if (active && TURNS_ON && sec % 30 === 0) abilityStep();
-  if (sec % 5 === 0 && E('S.activity') === 'fight') { withReserve(E, rosterStep(E), buyBest); if (fn.bossReady() && (E('bossTryHeld()') ? paidSinceFail >= 1 : E('totalDps() > failDps * 1.15 && cbBossReady()'))) fn.challenge(); }
+  if (sec % 5 === 0 && E('S.activity') === 'fight') { withReserve(E, rosterStep(E), buyBest); attrStep(); if (fn.bossReady() && (E('bossTryHeld()') ? paidSinceFail >= 1 : E('totalDps() > failDps * 1.15 && cbBossReady()'))) fn.challenge(); }
   for (let k = 0; k < 10; k++) {
     if (active) soloPlayer();
     else if (active) {
