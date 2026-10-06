@@ -84,7 +84,7 @@ const rnd = () => { botSeed = (botSeed + 0x6D2B79F5) | 0; let t = Math.imul(botS
 const log = [];                  // { t, kind, text, shot, extra }
 let gt = 0;                      // game seconds since the page opened
 let firstTapAt = null;
-let shotN = 0, shotsLeft = 70;
+let shotN = 0, shotsLeft = 90;
 const fmtT = t => { const m = Math.floor(t / 60), s = Math.floor(t % 60); return m + ':' + String(s).padStart(2, '0'); };
 async function shot(page, tag) {
   if (shotsLeft <= 0) return '';
@@ -336,6 +336,7 @@ async function run() {
       if (sig !== st.sig) { st.sig = sig; st.sigAt = gt; st.stallNoted = false; }
       else if (gt - st.sigAt >= 90 && !st.stallNoted) { st.stallNoted = true; const why = `phase "${o.phase}", tip ${o.tip ? '"' + o.tip.text.slice(0, 60) + '"' : 'none'}, ${o.cards.length} card(s) up, tab "${o.s.tab}"`; await note(page, 'stall', 'nothing moved for 90 s: ' + why, { tag: 'stall' }); addCheck('stall', 'the walk stalled for 90 s', why); } }
     if (gt - st.phAt >= 30) { st.phAt = gt; for (const p of await page.evaluate(PLACEHOLDERS)) placeholders.add(p); }
+    for (const c of checks.values()) if (!c.shotTried) { c.shotTried = true; c.shot = await shot(page, 'finding-' + c.check); }   // every finding gets its shot
     let did = false;
     if (o.create) did = await pickHero();
     if (!did) did = await dismissCards(o);
@@ -424,7 +425,7 @@ function scorecard(reached) {
   sc.F6 = { value: bad.length ? bad.length + ' of ' + moments.filter(m => m.big || m.id === 'craft' || m.id === 'look').length + ' not shown right: ' + bad.slice(0, 4).join('; ') + (bad.length > 4 ? '; ...' : '') : 'all shown', pass: bad.length === 0, bad, target: 'every moment a card or banner for 2 s with its sound' };
   sc.F10 = { value: placeholders.size + ' placeholder tile' + (placeholders.size === 1 ? '' : 's') + (placeholders.size ? ': ' + [...placeholders].slice(0, 4).join('; ') : ''), pass: placeholders.size === 0, target: 'no placeholder letters in the first hour' };
   const looks = st.prev ? st.prev.looks : 0;
-  sc.P4 = { value: looks + ' look' + (looks === 1 ? '' : 's') + ' found; Wardrobe count not read (the walk opens no Wardrobe yet)', pass: looks >= 3, target: 'at least 3 looks by minute 60, with a Wardrobe count' };
+  sc.P4 = { value: looks + ' look' + (looks === 1 ? '' : 's') + ' found; Wardrobe count not read (the walk opens no Wardrobe yet), so P4 is not measured', pass: false, unmeasured: true, found3: looks >= 3, target: 'at least 3 looks by minute 60, with a Wardrobe count' };
   return sc;
 }
 const placeholders = new Set();
@@ -441,7 +442,7 @@ function report(res) {
   if (st.beaten) out.push(`The bot was beaten ${st.beaten} time${st.beaten === 1 ? '' : 's'} by bosses (the "try again" card).`, '');
   out.push(`End state: zone ${z.maxZone}, level ${z.L}, ${z.gold} gold, ${z.kills} kills, ${Object.keys(z.got || {}).length} things unlocked, ${z.found} uniques, ${z.stars} Stars, ${z.heroes} extra heroes, ${z.looks} looks.`, '');
   out.push('## Scorecard', '', '| Id | Result | Target | Value |', '|---|---|---|---|');
-  for (const [k, v] of Object.entries(sc)) out.push(`| ${k} | ${v.pass ? 'met' : 'missed'} | ${v.target} | ${v.value} |`);
+  for (const [k, v] of Object.entries(sc)) out.push(`| ${k} | ${v.unmeasured ? 'not measured' : v.pass ? 'met' : 'missed'} | ${v.target} | ${v.value} |`);
   out.push('');
   // beats
   out.push('## Beats against the map', '', 'The estimates in `docs/design/first-hour.md` are for a casual human. The walk is a bot that never hesitates, so times that are over 50% off in either direction are worth a look, not proof of a fault.', '',
@@ -479,7 +480,7 @@ function report(res) {
 function writeScorecard(file, sc, reached) {
   const cols = ['F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F10', 'P4'];
   const head = '| Date | Build | Seed | Hero | Size | Game min | ' + cols.join(' | ') + ' |\n|---|---|---|---|---|---|' + cols.map(() => '---').join('|') + '|';
-  const row = `| ${DATE} | ${sha()} | ${SEED} | ${HERO} | ${SIZE.w}x${SIZE.h} | ${(reached / 60).toFixed(0)} | ` + cols.map(c => (sc[c].pass ? 'met' : 'MISSED') + ' (' + sc[c].value.replace(/\|/g, '/').split(';')[0].slice(0, 60) + ')').join(' | ') + ' |';
+  const row = `| ${DATE} | ${sha()} | ${SEED} | ${HERO} | ${SIZE.w}x${SIZE.h} | ${(reached / 60).toFixed(0)} | ` + cols.map(c => (sc[c].unmeasured ? 'not measured' : sc[c].pass ? 'met' : 'MISSED') + ' (' + sc[c].value.replace(/\|/g, '/').split(';')[0].slice(0, 60) + ')').join(' | ') + ' |';
   let txt = ''; try { txt = fs.readFileSync(file, 'utf8'); } catch (e) { /* new file */ }
   if (!txt.includes('Walk (nightly, `tools/walk.mjs`)')) txt += `${txt && !txt.endsWith('\n') ? '\n' : ''}\n## Walk (nightly, \`tools/walk.mjs\`)\n\nOne row per run. F1 to F6, F10 and P4 are measured by the walk; the rest of the scorecard is written by other checks. Report only until milestone M0 closes.\n\n${head}\n`;
   const lines = txt.split('\n'), key = `| ${DATE} | `;
@@ -510,5 +511,5 @@ if (opt('reports', '')) {
 }
 console.log(rep.md.split('\n').slice(0, rep.md.split('\n').indexOf('## Beats against the map')).join('\n'));
 console.log(`walk: wrote ${path.relative(ROOT, base)}.md`);
-const missed = Object.entries(rep.sc).filter(([, v]) => !v.pass).map(([k]) => k);
+const missed = Object.entries(rep.sc).filter(([, v]) => !v.pass && !v.unmeasured).map(([k]) => k);
 process.exit(flag('strict') && missed.length ? 1 : 0);
