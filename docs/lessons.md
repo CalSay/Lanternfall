@@ -30,7 +30,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 
 - Keep zone names equal to the story bible's area table (zones 1-5 Mossy Hollow, 6-10 Batwing Caves, and so on); never use "Mossy Hollow II" style names. Why: a check fails on any mismatch. (story-area-names, 2026-10-06)
 - Read any text built from area names aloud for repeats. Why: the zone-clear toast said "Mossy Hollow is cleared. Mossy Hollow lies ahead" and Codex flagged it. (story-area-names, 2026-10-06)
-- Do not edit hero unlock route text (Davy and Hob still say "Cinder Road II" and "Frostgate Pass II") without a design card. Why: it changes when two heroes unlock. (story-area-names, 2026-10-06)
+- Do not edit hero unlock route text (Hob's text says "Cinder Road II" and Eskil's says "Frostgate Pass II"; both live in `src/js/56c-unlocks.js`) without a design card. Why: it changes when two heroes unlock. (story-area-names, 2026-10-06)
 - The old Hollow arrival lines are switched off, not rewritten; story-hollow-script turns them back on. (story-area-names, 2026-10-06)
 - Canon changes after the Opus judge pass go in the digest for Cal's veto. Example: the Coast and Emberwaste bosses are the dark wearing Silas's and Durand's shapes, both men found alive afterwards. (story, 2026-10-05)
 
@@ -65,7 +65,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Expect P1s every round: budget 3 Codex rounds, then Opus high reviews. Fix-bounty took 6; f-health, playtest-bots, f-health-long and systems-map took 3. (several)
 - Put cross-file P2s in the done report as follow-ups, and decline design-changing findings with a reason. (area-names, away-clarity)
 - Any inventory-style card (systems map, coverage): run a mutation test early. Why: Codex found 4 coverage-gap P1s per round for 3 rounds on systems-map. (f-systems-map, 2026-10-06)
-- Reviewer canary: Codex and Opus each caught 4 of 4 planted problems, but Codex does not run checks and missed 2 failing ones. Do not treat a Codex pass as a green check. (f-canary, 2026-10-05)
+- Reviewer canary: Codex and Opus each caught 4 of 4 planted problems, but the Codex canary review did not run or report the rubric's hard checks and missed 2 failing ones. Run the checks yourself; do not treat a Codex pass as a green check. (f-canary, 2026-10-05)
 
 ## Research and playtests
 
