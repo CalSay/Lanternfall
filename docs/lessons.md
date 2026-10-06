@@ -23,6 +23,11 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Play the persona's whole turn skill (parry, dodge and ability rings) when measuring pacing for a named player type. The sim's own turn player lands 80% of defences and never presses a ring, so every timed ability is a Miss. Why: Codex P1 on PR #52, where one shared 40% defence rate stood in for the casual. (xp-gold-pacing-report, 2026-10-06)
 - difficulty-budget: predicted the budget would find bosses near the 70% casual aim with a few outliers; measured 55 of 156 hero cells out of band (zones 5-15 and elites 100%, zones 25-34 Captains 0-1% for Wren and Pip, the Fenmother easier than her Captains). Miss. Also: `turnCombatSample` on one seed correlates long fights (13-32% vs 53-67% independent), so give every boss fight its own hashed seed when measuring win rates. Why: the judge caught it before the baseline. (difficulty-budget, 2026-10-06)
 
+- Tune a level curve against the old game on the same seeds (3 seeds, each starter), never one run. Why: one seed moved Tobin's hours to zone 30 from 19 to 41 with no change that touched him, and the old game itself ranged 25 to 46 h for Wren. (hero-progression-rework, 2026-10-06)
+- Most hero XP comes from away time. A level curve with no exponential wall needs a brake past the road, or heroes run 20+ levels ahead; brake only far past it, or levels stop at walls, where they help most. (hero-progression-rework, 2026-10-06)
+- Cap any level lift for a joining hero at the level of the hero who leaves, with the road's own level as the floor. Why: the judge found a join lead could put a joiner above the hero they replace, rewarding switching for its own sake. (hero-progression-rework, 2026-10-06)
+- When a build or other per-player choice must stay out of a system, list every caller of the shared power function in the neutrality test. Why: PR #58 kept away, raid and farm build-neutral, but the Deepwell's depth anchor read turnPowerNow, which carried the Might multiplier (Opus review). (hero-progression-rework, 2026-10-06)
+
 ## Economy and skilling
 
 - Read `docs/design/systems-map.md` flags before touching an economy card. Open flags: wood and essence pile up, iron ore is idle (Transmute is lossy), cobalt needs Mining 64 with no hint, Smithing is dead past 54, gold is the only mid-game choke, Renown/Stamps/boss tokens have no spend, tents 6 to 10 are unbuildable, the Renown Day omen does nothing. (systems-map, 2026-10-06)
@@ -87,6 +92,9 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 
 ## Saves and offline parity
 
+- Before bumping the save key, load real old saves (fixtures and a sim save) on the branch; add state with registerState defaults and a load-time clamp when that works. Why: PR #58 bumped to v6 for new attribute state, but the old saves loaded fine with one XP clamp, and a bump needs Cal's label. (hero-progression-rework, 2026-10-06)
+- Fix an old save's values once, in a one-time step with a version flag, never in a clamp that runs on every gain, run that step before any code that changes the values it reads (a level lift, a switch), and make it run back the other way when a switch-off flag exists. Why: PR #58 held XP a point under the next level on every gainXp, so a hero whose fights gave under 1 XP never levelled again (Opus review), and a switch lifted a level before the XP was mapped (Codex round 2), and the Training flag left bars on the new curve (Codex round 3). (hero-progression-rework, 2026-10-06)
+- Validate every new save field in save codes against what the game can produce (points against the level, counts at 0 or more, flags 0 or 1), and clamp at use as well. Why: the risk review found a save code with Lv 1 and 1000 points gave 22x power. (hero-progression-rework, 2026-10-06)
 - Cover every bounty kind (16) in save-code validation and check each kind's own fields; refuse zero or out-of-range rewards and numbers the board cannot generate. Why: save codes knew 7 of 16 kinds and a 0-reward bounty loaded. (fix-bounty-kind, 2026-10-05)
 - When test saves fail on timers, pin fixture timestamps far in the future (2100) with a guard; never loosen the save-loss check. Why: the first fix relaxed the check and was reverted; expired fixture slots refill and fail as "slot kind". (fix-bounty-kind, f-ci)
 - Save any runtime value a saved hold compares against (like `failDps` for a held boss) next to the hold and restore it at load. Why: after a reload the baseline was 0, so Auto retried an unchanged hero. (wall-try-again, 2026-10-06)
@@ -102,10 +110,14 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Re-run CI once if the runner dies mid-check (PR #40 did). Never push an empty commit to kick it. (story, 2026-10-05)
 - If the integration branch moved, merge it in, re-check, and wait for CI on the merge commit before merging the PR. (f-ci and later cards)
 - Path guard: PRs touching online files, the save-key line or `netlify.toml` need the `cal-approved` label, which only Cal applies. (f-ci)
+- Run `node tools/build.mjs` after the last src edit and commit `dist/` with it. Why: the dist-rebuilt check failed on PR #58 after small copy edits went in without a rebuild. (hero-progression-rework, 2026-10-06)
+- Write guide-walk and pacing checks to wait until every expected step has come, not to stop at the first late step. Why: faster early levels on PR #58 reached the Next Up note before the Workbench, and the walk stopped early only under a loaded full run. (hero-progression-rework, 2026-10-06)
 - Close story sheets in any scripted browser run before clicking game UI, and test "a tap restarts a wait" by tapping repeatedly past the original deadline, not at one timed moment. Why: the opening card blocked perf's clicks and the single-tap timing flaked on a loaded runner. (perf-story-click-fix, 2026-10-06)
 - Run the `--long` health run only on 3 or more cores (about 2.5 min, 7 min CPU). It ignores `--only`, known P2. (f-health-long, 2026-10-06)
 
 - Story cards stack in the first minute (three before the first fight on a fresh save) and their count varies by timing: a proof route uses `tap-if "Skip"`, never a fixed number of taps. Predicted: routes replay stable; measured: one fixed-skip route failed 1 run in 3 locally, `tap-if` passed 5 of 5. (sys-proof-ci, 2026-10-06)
+- A pacing check written before the unlock governor (story-unlock-gates) asserts the governor's spacing, not fixed minute marks. Why: PR #58's faster warm game opened earned rows first, which queued Gather and Bounties past the old 4/5-minute marks (judge ruling). (hero-progression-rework, 2026-10-06)
+- A proof route closes cards that arrive on a timer (moment cards, tips) with `wait` plus `tap-if`, never a bare `tap`, and is replayed a few times in both views before pushing. Why: after the moment layer merged, the mid save's new-hero card covered PR #58's switch at a varying moment, so eyes failed with no error shown (playtest exits 1 on a covered tap). (hero-progression-rework, 2026-10-06)
 ## Reviews and Codex
 
 - "@codex review" must be commented by hand after opening the PR; auto review does not fire. Why: seen on fix-bounty-kind. Codex drips one P1 per round, so close the whole class of a finding at once. (fix-bounty-kind, 2026-10-05)
