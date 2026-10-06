@@ -2309,27 +2309,42 @@ span.cf-d { font-weight: 600; }
 .game.solo-game > .ctrl { order: 1; padding: 4px var(--gut) 4px; }
 .game.solo-game > .stagebox { order: 2; }
 .game.solo-game > .sbar { order: 3; }
-/* The action bar: two rows of framed square slots. Top: Ability 1-3. Bottom: Parry, Dodge, Attack (Attack bottom right). */
-/* the slots fill the width, square; capped by the screen height so the stage keeps its room (owner, 2026-09-29) */
-.sbar { flex: none; display: grid; justify-content: stretch; gap: 8px; padding: 6px var(--gut) 8px; }
+/* The dock (Combat C, "Stage and dock"): tabs, one pane, then Parry and Dodge. The pane holds Attack and the three ability
+   slots as tiles (icon, name, a line under it: Ready, 2 turns, Passive). The tiles grow to the pane; the pane is a fixed
+   height so the stage does not jump when you switch tabs. */
+.sbar { --sb-tile: 100px; --sb-ic: 48px; flex: none; display: grid; justify-content: stretch; gap: 6px; padding: 4px var(--gut) 8px; }
 .sbar[hidden] { display: none; }
-.sb-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; width: min(100%, calc(45dvh + 16px), 352px); justify-self: center; }
-.sbtn { position: relative; width: 100%; height: auto; aspect-ratio: 1; padding: 0; display: flex; align-items: center; justify-content: center;
+.sb-tabs, .sb-pane, .sb-row { width: min(100%, 352px); justify-self: center; }
+.sb-tabs { display: flex; background: #16111C; border: 2px solid #0B0810; box-shadow: inset 0 0 0 1px #3A3046; }
+.sb-tab { flex: 1; min-height: 34px; padding: 0 4px; background: transparent; border: 0; border-bottom: 3px solid transparent; color: var(--muted); cursor: pointer;
+  font: 600 calc(16px * var(--display-k, 1))/1 var(--display); letter-spacing: .02em; touch-action: manipulation; }
+.sb-tab[hidden] { display: none; }
+.sb-tab[aria-selected="true"] { color: var(--gold); border-bottom-color: var(--gold); background: #231A30; }
+.sb-tab:focus-visible { outline: 2px solid var(--gold); outline-offset: -3px; }
+.sb-pane { height: var(--sb-tile); overflow: hidden; }
+.sb-p { height: 100%; }
+.sb-p[hidden] { display: none; }
+.sb-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.sb-row-ab { height: 100%; }
+.sb-row-act { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.sbtn { position: relative; width: 100%; min-width: 0; padding: 0; display: grid; justify-items: center; align-content: center; gap: 3px;
   background: #1C1624; border: 2px solid #0B0810; outline: 2px solid #4E4060; outline-offset: -4px;
   box-shadow: inset 0 0 0 4px #2A2233, 0 3px 0 #0B0810;
   color: var(--bone); cursor: pointer; overflow: hidden; -webkit-user-select: none; user-select: none; touch-action: manipulation; -webkit-touch-callout: none; }
 .sbtn:focus-visible { outline-color: var(--gold); }
 .sbtn:active, .sbtn.hit { transform: translateY(2px); box-shadow: inset 0 0 0 4px #2A2233, 0 1px 0 #0B0810; }
-.sb-ic { position: relative; z-index: 1; width: 48px; height: 48px; margin-top: -12px; image-rendering: pixelated; }
-.sb-lb { position: absolute; z-index: 1; left: 2px; right: 2px; bottom: 8px; font: 600 calc(13px * var(--display-k, 1))/1 var(--display); letter-spacing: .01em; text-align: center; white-space: nowrap; overflow: hidden; color: var(--muted); }
+.sb-ic { position: relative; z-index: 1; width: var(--sb-ic); height: var(--sb-ic); image-rendering: pixelated; }
+.sb-tx { position: relative; z-index: 1; display: grid; justify-items: center; gap: 1px; max-width: 100%; padding: 0 3px; }
+.sb-lb { max-width: 100%; font: 600 calc(14px * var(--display-k, 1))/1 var(--display); letter-spacing: .01em; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--muted); }
+.sb-sub { max-width: 100%; min-height: 1em; font: calc(11px * var(--display-k, 1))/1 var(--body, inherit); color: #8A8195; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sb-key { position: absolute; z-index: 3; top: 5px; left: 6px; font: 600 10px/1 var(--display); color: #8E80A0; }
 @media (hover: none) and (pointer: coarse) { .sb-key { display: none; } }
-/* the cooldown: a dark sweep, clockwise from the top, that leaves the icon as the slot comes back (--cd 1 -> 0) */
+/* the cooldown: a dark sweep, clockwise from the top, that leaves the tile as the slot comes back (--cd 1 -> 0) */
 .sb-ring { position: absolute; inset: 4px; z-index: 2; pointer-events: none;
   background: conic-gradient(from 0deg, transparent calc((1 - var(--cd, 0)) * 360deg), rgba(8, 5, 12, .78) 0); }
-.sb-n { position: absolute; z-index: 3; inset: 0; display: flex; align-items: center; justify-content: center; margin-top: -6px; pointer-events: none;
-  font: 700 calc(28px * var(--display-k, 1))/1 var(--display); color: #FFF3C4; text-shadow: 0 1px 0 #0B0810, 1px 0 0 #0B0810, -1px 0 0 #0B0810, 0 -1px 0 #0B0810; }
-/* the basic three are plain; the ability slots wear a gold frame so they read as special */
+.sb-n { position: absolute; z-index: 3; left: 0; right: 0; top: 8px; height: var(--sb-ic); display: flex; align-items: center; justify-content: center; pointer-events: none;
+  font: 700 calc(26px * var(--display-k, 1))/1 var(--display); color: #FFF3C4; text-shadow: 0 1px 0 #0B0810, 1px 0 0 #0B0810, -1px 0 0 #0B0810, 0 -1px 0 #0B0810; }
+/* Attack is plain, the ability slots wear a gold frame so they read as special */
 .sb-atk { background: #2A1C1C; }
 .sb-atk .sb-lb { color: #FFD9B0; }
 .sb-parry .sb-lb { color: var(--gold); }
@@ -2339,6 +2354,14 @@ span.cf-d { font-weight: 600; }
 .sb-abslot.ready { outline-color: var(--gold); }
 .sb-abslot.empty { background: #16111C; outline-color: #3A3046; box-shadow: inset 0 0 0 4px #1E1826, 0 3px 0 #0B0810; }
 .sb-abslot.empty .sb-lb { color: #6B6275; }
+/* Parry and Dodge: wide keys under the pane, icon left, name and window right */
+.sb-def { grid-auto-flow: column; grid-template-columns: auto minmax(0, 1fr); justify-items: start; align-content: center; gap: 8px; min-height: 52px; padding: 0 8px; }
+.sb-def .sb-ic { width: 36px; height: 36px; }
+.sb-def .sb-tx { justify-items: start; padding: 0; }
+.sb-def .sb-lb { font-size: calc(18px * var(--display-k, 1)); text-align: left; }
+.sb-def .sb-sub { white-space: normal; line-height: 1.1; }
+.sb-def .sb-n { right: auto; left: 8px; top: 0; bottom: 0; height: auto; width: 36px; font-size: calc(20px * var(--display-k, 1)); }
+.sb-def .sb-key { top: 3px; left: auto; right: 6px; }
 /* disabled: nothing to hit right now */
 .sbtn.off .sb-ic { opacity: .45; }
 /* a telegraphed hit is coming: Parry and Dodge glow */
@@ -2352,8 +2375,30 @@ span.cf-d { font-weight: 600; }
 @keyframes sb-good { 0% { background: #6B5A20; } 100% { } }
 @keyframes sb-ready { 0% { box-shadow: inset 0 0 0 4px #FFF3C4, 0 0 14px #F2C14E, 0 3px 0 #0B0810; } 100% { } }
 @media (prefers-reduced-motion: reduce) { .sbtn.nope, .sbtn.good, .sbtn.ready-now { animation: none; } .sbtn:active, .sbtn.hit { transform: none; } }
-@media (max-height: 640px) { .sb-ic { width: 36px; height: 36px; margin-top: -10px; } .sb-lb { font-size: calc(11px * var(--display-k, 1)); } }
-@media (max-height: 520px) { .sb-ic { width: 24px; height: 24px; } .sb-lb { display: none; } .sb-ic { margin-top: 0; } .sb-n { margin-top: 0; } }
+@media (max-height: 700px) { .sbar { --sb-tile: 90px; --sb-ic: 36px; } .sb-tab { min-height: 30px; } .sb-def { min-height: 46px; } }
+@media (max-height: 640px) { .sbar { --sb-tile: 74px; --sb-ic: 36px; } .sb-sub { display: none; } }
+
+/* Skills pane: a row per slot; a tap changes what it holds */
+.sb-p-sk { display: grid; gap: 3px; align-content: start; overflow-y: auto; overscroll-behavior: contain; }
+.sb-sk { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; gap: 8px; align-items: center; width: 100%; min-height: 30px; padding: 0 6px; text-align: left; cursor: pointer; color: var(--bone);
+  background: #231A30; border: 2px solid #0B0810; outline: 1px solid #6B5320; outline-offset: -3px; font: inherit; touch-action: manipulation; }
+.sb-sk.passive { background: #1C2430; outline-color: #4E6A8A; }
+.sb-sk.empty { background: #16111C; outline-color: #3A3046; }
+.sb-sk-ic { width: 24px; height: 24px; image-rendering: pixelated; }
+.sb-sk-tx { display: grid; min-width: 0; }
+.sb-sk-nm { font: 600 calc(15px * var(--display-k, 1))/1.05 var(--display); color: var(--gold); }
+.sb-sk.passive .sb-sk-nm { color: #8FB8FF; }
+.sb-sk-ds { font-size: 11.5px; line-height: 1.15; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sb-sk-chip, .sb-chip { font: 600 calc(12px * var(--display-k, 1))/1 var(--display); color: #C9BFD6; background: #16111C; border: 1px solid #3A3046; padding: 3px 6px; white-space: nowrap; }
+/* Foe pane: kind, trait, moves */
+.sb-p-foe { display: grid; gap: 5px; align-content: start; overflow-y: auto; overscroll-behavior: contain; font-size: 13px; }
+.sb-fr { display: flex; gap: 8px; align-items: baseline; min-width: 0; }
+.sb-fk { flex: none; width: 46px; font: 600 calc(12px * var(--display-k, 1))/1 var(--display); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.sb-fv { flex: 1; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; min-width: 0; }
+.sb-fname { font: 600 calc(17px * var(--display-k, 1))/1 var(--display); color: var(--bone); }
+.sb-ftxt, .sb-fnote { color: var(--muted); font-size: 12.5px; line-height: 1.25; margin: 0; }
+.sb-sk-chip:empty { display: none; }
+.sb-chip.charged { color: #FFB0A8; border-color: #6A2A30; }
 /* the Auto button: bottom left of the stage, over the DPS line; a toggle, lit while Auto fights, dim while you fight */
 .auto-badge { position: absolute; left: 8px; bottom: 26px; z-index: 2; display: flex; align-items: center; gap: 4px; padding: 2px 6px 2px 4px;
   background: #16111C; border: 2px solid #0B0810; box-shadow: inset 0 0 0 1px #3A3046; pointer-events: auto; cursor: pointer; min-height: 22px; margin: 0;
@@ -2427,7 +2472,7 @@ body.solo-on .stage .abil, body.solo-on .stage .abil2 { display: none !important
 /* Landscape (UX-L1): the bar sits in the side column, bottom right; see 80-landscape.css. */
 /* turn fights (75-solo-ui, 59k): an ability with no approved icon yet shows its short name as a lettered tile; a
    passive slot is always on (no cooldown, no press); a slot that needs something first (a Burn, Grit) dims */
-.sbtn.mono::before { content: attr(data-mono); position: absolute; z-index: 1; inset: 0 0 18px; display: flex; align-items: center; justify-content: center;
+.sbtn.mono::before { content: attr(data-mono); position: absolute; z-index: 1; left: 0; right: 0; top: 8px; height: var(--sb-ic); display: flex; align-items: center; justify-content: center;
   font: 700 calc(22px * var(--display-k, 1))/1 var(--display); color: #FFE7A8; text-shadow: 2px 2px 0 #0B0810; letter-spacing: .02em; }
 .sb-abslot.passive { background: #1C2430; box-shadow: inset 0 0 0 4px #26303E, inset 0 0 0 5px #4E6A8A, 0 3px 0 #0B0810; }
 .sb-abslot.passive .sb-lb { color: #8FB8FF; }
@@ -2824,6 +2869,21 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
 .tv-turncard.play.calm { animation: tv-fade var(--tc-dur, .9s) linear both; }
 @keyframes tv-tc { 0% { opacity: 0; transform: translate(-24px, -50%); } 18%, 78% { opacity: 1; transform: translate(0, -50%); } 100% { opacity: 0; transform: translate(12px, -50%); } }
 .tv-winding .sty-cap { opacity: .15; transition: opacity .15s; }
+/* Stage and dock (Combat C): the banner is a framed chip; the timing bar and the Next strip sit along the stage's bottom edge */
+.tv-n { padding: 3px 12px 2px; font: 600 calc(15px * var(--display-k, 1))/1 var(--display); letter-spacing: .04em; color: #C9BFD6; background: rgba(10, 7, 14, .88);
+  border: 1px solid #5E5270; text-shadow: 1px 1px 0 #0B0810; }
+.tv-n:empty { display: none; }
+.tv-n.mine { color: var(--gold, #F2C14E); border-color: var(--gold, #F2C14E); }
+.tv-n.foe { color: #FF9B8A; border-color: #A8323A; }
+.tv-bot { position: absolute; left: 8px; right: 8px; bottom: 30px; z-index: 5; display: grid; justify-items: center; gap: 4px; pointer-events: none; }
+.tv-bot[hidden] { display: none; }
+.tv-bot .tv-time { width: min(300px, 100%); }
+.tv-next { display: flex; align-items: center; gap: 6px; padding: 2px 6px; background: rgba(10, 7, 14, .78); border: 1px solid #3A3046; }
+.tv-next-lb { font: 600 calc(11px * var(--display-k, 1))/1 var(--display); letter-spacing: .06em; text-transform: uppercase; color: #B8AEC4; }
+.tv-bot .tv-slot { width: 20px; height: 20px; border-width: 1px; }
+.tv-bot .tv-slot.now { width: 24px; height: 24px; }
+.tv-bot .tv-mini { max-width: 16px; max-height: 16px; }
+.tv-bot .tv-slot.now .tv-mini { max-width: 20px; max-height: 20px; }
 /* 60-wall: the Trophy Wall card on the Camp view (63e-scenery-wall.js, AC5). */
 .tw-scene { display: flex; justify-content: center; width: 100%; min-height: 144px; margin: 0; padding: 0; overflow: hidden; background: #0E0B1E; border: 2px solid var(--line); box-shadow: 0 2px 0 #0B0810; cursor: pointer; }
 .tw-scene:hover, .tw-scene:focus-visible { border-color: var(--gold); }
@@ -2992,11 +3052,20 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
   .nu-chip .nu-more { grid-column: 4; grid-row: 1; }
   .nu-chip .nu-lbl { grid-column: 1 / -1; grid-row: 2; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; font-size: 13px; line-height: 1.2; }
   .nu-chip .nu-chev { display: none; }
-  .sbar, .game.solo-game > .sbar { grid-column: 4 / -1; grid-row: 4; align-self: end; padding: 6px 6px calc(8px + env(safe-area-inset-bottom, 0px)) 7px; gap: 8px; }
-  .sb-row { width: 100%; max-width: 240px; gap: 8px; justify-self: end; }
-  .sb-ic { width: 36px; height: 36px; margin-top: 0; }
-  .sb-lb { display: none; }
-  .sb-n { margin-top: 0; }
+  /* the dock in the side column: tabs, four tiles in a row (icons only; the names show on tall screens), Parry and Dodge under them */
+  .sbar, .game.solo-game > .sbar { --sb-tile: 66px; --sb-ic: 36px; grid-column: 4 / -1; grid-row: 4; align-self: end; padding: 4px 6px calc(6px + env(safe-area-inset-bottom, 0px)) 7px; gap: 5px; }
+  .sb-tabs, .sb-pane, .sb-row { width: 100%; max-width: none; justify-self: end; }
+  .sb-row { gap: 5px; }
+  .sb-tab { min-height: 26px; font-size: calc(14px * var(--display-k)); }
+  .sb-tx { display: none; }
+  .sb-n { top: 0; height: var(--sb-tile); font-size: calc(20px * var(--display-k)); }
+  .sb-def { min-height: 44px; gap: 6px; }
+  .sb-def .sb-tx { display: grid; }
+  .sb-def .sb-sub { display: none; }
+  .sb-def .sb-ic { width: 24px; height: 24px; }
+  .sb-def .sb-n { width: 24px; font-size: calc(16px * var(--display-k)); }
+  .sb-def .sb-lb { font-size: calc(13px * var(--display-k)); }
+  .sb-def { padding: 0 5px; }
   .toasts.side-dock { grid-column: 4 / 6; grid-row: 3 / 4; top: auto; bottom: 4px; left: 7px; right: 6px; z-index: 6; }
   .toasts.side-dock .toast { box-shadow: 0 3px 0 #0B0810, 0 6px 14px rgba(0,0,0,.45); }
 
@@ -3039,8 +3108,16 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
   .tab img { width: 22px; height: 22px; }
   .portrait { width: 44px; height: 44px; }
   .portrait img { width: 34px; height: 34px; }
-  .sb-ic { width: 48px; height: 48px; margin-top: -12px; }
-  .sb-lb { display: block; }
+  .sbar, .game.solo-game > .sbar { --sb-tile: 100px; --sb-ic: 48px; }
+  .sb-tx { display: grid; }
+  .sb-sub { display: block; }
+  .sb-lb { font-size: calc(12px * var(--display-k)); letter-spacing: 0; }
+  .sb-def { min-height: 52px; padding: 0 8px; }
+  .sb-def .sb-lb { font-size: calc(16px * var(--display-k)); }
+  .sb-def .sb-ic { width: 36px; height: 36px; }
+  .sb-def .sb-n { width: 36px; }
+  .sb-def .sb-sub { display: block; }
+  .sb-n { top: 8px; height: var(--sb-ic); }
   .game .modeseg button { min-height: 38px; }
   .game .ctrl-switch { min-height: 38px; }
 }
@@ -39043,10 +39120,12 @@ let openSheet, partySheet;
 
 // ---- src/js/75-solo-ui.js ----
 // 75-solo-ui: the solo hero on screen (task SOLO1, docs/design/solo-hero.md). Browser file.
-//   - the action bar (owner: like a MOBA ability bar, never over the fight; the lowest thing on the Fight view, right
-//     above the tab bar, for the thumbs): two rows of framed square slots.
-//       top row     Ability 1, Ability 2, Ability 3   (keys Q, W, E)  the player picks what goes in each slot
-//       bottom row  Parry, Dodge, Attack              (keys A, S, D; Space = Dodge, SOLO2)  Attack bottom right
+//   - the action bar, now the dock under the stage (Combat C "Stage and dock", Cal 2026-10-05; the lowest thing on the
+//     Fight view, right above the tab bar, for the thumbs): tabs Act / Skills / Foe, one pane, and Parry and Dodge under
+//     it on every tab.
+//       Act pane    Attack, Ability 1, Ability 2, Ability 3   (keys D, Q, W, E)  the player picks what goes in each slot
+//       under it    Parry, Dodge                              (keys A, S; Space = Dodge, SOLO2)
+//       Skills      what each slot does and its cooldown; a tap changes the slot.  Foe  (turn fights) its kind, trait, moves.
 //     Cooldowns sweep dark clockwise with the seconds in the middle and flash when ready; Parry and Dodge glow while a
 //     telegraphed hit is coming. A long press on Attack, Parry or Dodge opens a sheet: what it does and its Training; on an ability slot it opens
 //     the picker (an empty slot opens it on a tap): that hero's unlocked abilities (icon, name, one line, cooldown),
@@ -39066,8 +39145,14 @@ var soloIconURL = () => '';
   document.body.classList.add('solo-on');   // 60-solo.css: the old floating ability circles stay hidden
   const bar = el('div', 'sbar'); bar.id = 'soloBar'; bar.setAttribute('role', 'toolbar'); bar.setAttribute('aria-label', 'Combat');
   bar.hidden = true;
+  // Stage and dock (Combat C, Cal 2026-10-05): tabs (Act, Skills, Foe), one pane under them, and Parry and Dodge below,
+  // on screen whichever tab is open so a heavy hit can still be answered while you read the foe.
+  const tabRow = el('div', 'sb-tabs'), pane = el('div', 'sb-pane');
   const rowAb = el('div', 'sb-row sb-row-ab'), rowAct = el('div', 'sb-row sb-row-act');
-  bar.append(rowAb, rowAct);
+  const paneAct = el('div', 'sb-p sb-p-act'), paneSk = el('div', 'sb-p sb-p-sk'), paneFoe = el('div', 'sb-p sb-p-foe');
+  paneAct.append(rowAb); pane.append(paneAct, paneSk, paneFoe);
+  tabRow.setAttribute('role', 'tablist'); tabRow.setAttribute('aria-label', 'Fight panels');
+  bar.append(tabRow, pane, rowAct);
   const INFO = {
     atk: { name: 'Attack', desc: 'Strike the foe in front. A short cooldown, so time it rather than mash it. While you fight by hand, your hero stops attacking alone.', key: 'D' },
     parry: { name: 'Parry', desc: 'Press it just before a heavy hit lands (as the red ring closes). No damage, the foe staggers and you counter. Too early leaves you open for a moment.', key: 'A' },
@@ -39076,15 +39161,20 @@ var soloIconURL = () => '';
   const KEY_LB = { atk: 'D', parry: 'A', dodge: 'S', ab0: 'Q', ab1: 'W', ab2: 'E' };   // Space dodges too (the Dodge help says so)
   function mkSlot(row, id, label) {
     const b = el('button', 'sbtn sb-' + id); b.type = 'button'; b.dataset.act = id;
-    const ic = el('canvas', 'sb-ic px'), sweep = el('span', 'sb-ring'), n = el('span', 'sb-n'), k = el('span', 'sb-key', KEY_LB[id]), lb = el('span', 'sb-lb', label);
+    const ic = el('canvas', 'sb-ic px'), sweep = el('span', 'sb-ring'), n = el('span', 'sb-n'), k = el('span', 'sb-key', KEY_LB[id]), lb = el('span', 'sb-lb', label), sub = el('span', 'sb-sub');
     ic.width = 12; ic.height = 12;
-    b.append(ic, sweep, n, k, lb);
-    b._ring = sweep; b._n = n; b._ic = ic; b._lb = lb;
+    const tx = el('span', 'sb-tx'); tx.append(lb, sub);
+    b.append(ic, sweep, n, k, tx);
+    b._ring = sweep; b._n = n; b._ic = ic; b._lb = lb; b._sub = sub;
     row.append(b);
     return b;
   }
+  // the dock's Act pane: Attack, then the three ability slots (keys D, Q, W, E); Parry and Dodge sit under it
+  const bAtk = mkSlot(rowAb, 'atk', 'Attack');
   const bAbs = [0, 1, 2].map(i => { const b = mkSlot(rowAb, 'ab' + i, ''); b.classList.add('sb-abslot'); b.dataset.slot = i; return b; });
-  const bParry = mkSlot(rowAct, 'parry', 'Parry'), bDodge = mkSlot(rowAct, 'dodge', 'Dodge'), bAtk = mkSlot(rowAct, 'atk', 'Attack');
+  const bParry = mkSlot(rowAct, 'parry', 'Parry'), bDodge = mkSlot(rowAct, 'dodge', 'Dodge');
+  bParry.classList.add('sb-def'); bDodge.classList.add('sb-def');
+  putText(bParry._sub, 'Hard · counters'); putText(bDodge._sub, 'Easy · evades');
   if (game) game.append(bar);   // the last thing on the Fight view: right above the tab bar
   // Owner (SOLO1 layout): what is not combat sits above the stage (Next Up, then Fight / Gather, Switch and the zone
   // arrows); the stage and the bar touch; the bar is the lowest thing above the tab bar. Next Up opens a sheet, so
@@ -39285,6 +39375,66 @@ var soloIconURL = () => '';
   addEventListener('pagehide', () => { try { soloGoIdle(); } catch (e) {} });
   addEventListener('pageshow', () => { try { if (!document.hidden) soloWake(); } catch (e) {} });
 
+
+  // ---- the dock's tabs: Act (the buttons), Skills (what each slot does), Foe (what you face; turn fights only) ----
+  const TABS = [['act', 'Act', paneAct], ['sk', 'Skills', paneSk], ['foe', 'Foe', paneFoe]];
+  let dockTab = 'act';
+  const tabBtn = {};
+  for (const [id, label] of TABS) {
+    const b = el('button', 'sb-tab', label); b.type = 'button'; b.dataset.tab = id; b.setAttribute('role', 'tab');
+    ['pointerdown', 'pointerup'].forEach(ev => b.addEventListener(ev, e => e.stopPropagation()));
+    b.addEventListener('click', () => setTab(id));
+    tabBtn[id] = b; tabRow.append(b);
+  }
+  function setTab(id) {
+    if (!tabBtn[id] || tabBtn[id].hidden) id = 'act';
+    dockTab = id;
+    for (const [k, , p] of TABS) { tabBtn[k].setAttribute('aria-selected', String(k === id)); tabBtn[k].tabIndex = k === id ? 0 : -1; p.hidden = k !== id; }
+    skSig = foeSig = ''; if (!bar.hidden) { try { fillSkills(); fillFoe(); } catch (e) {} }
+  }
+  // Skills: one row per slot (tap one to change what it holds, as a long press does)
+  const skRows = [0, 1, 2].map(i => {
+    const r = el('button', 'sb-sk'); r.type = 'button'; r.dataset.slot = i;
+    const ic = el('canvas', 'sb-sk-ic px'); ic.width = 12; ic.height = 12;
+    const nm = el('b', 'sb-sk-nm'), ds = el('span', 'sb-sk-ds'), chip = el('span', 'sb-sk-chip'), tx = el('span', 'sb-sk-tx');
+    tx.append(nm, ds); r.append(ic, tx, chip); r._ic = ic; r._nm = nm; r._ds = ds; r._chip = chip;
+    ['pointerdown', 'pointerup'].forEach(ev => r.addEventListener(ev, e => e.stopPropagation()));
+    r.addEventListener('click', () => openPicker(i));
+    paneSk.append(r);
+    return r;
+  });
+  let skSig = '', foeSig = '';
+  const turnsTxt = n => `${n} turn${n > 1 ? 's' : ''}`;
+  function fillSkills() {
+    if (dockTab !== 'sk') return;
+    const s = soloButtons(), tb = typeof turnBarInfo === 'function' ? turnBarInfo() : null;
+    const sig = s.abs.map((o, i) => o.id + ':' + (tb ? (tb.cds[o.id] || 0) + tb.why(o.id) : o.left > 0 ? 'c' : '')).join('|') + heroK;
+    if (sig === skSig) return; skSig = sig;
+    skRows.forEach((r, i) => {
+      const o = s.abs[i], a = o.id ? SOLO_ABILITIES[o.id] : null, pa = o.id && typeof ABILITIES === 'object' ? ABILITIES[o.id] : null;
+      r.classList.toggle('empty', !a); r.classList.toggle('passive', !!(pa && pa.kind === 'passive'));
+      if (!a) { putText(r._nm, 'Empty slot ' + (i + 1)); putText(r._ds, 'Tap to choose an ability.'); putText(r._chip, ''); setIc(r._ic, 'empty', 24); return; }
+      setIc(r._ic, o.id, 24);
+      putText(r._nm, a.name); putText(r._ds, a.turnDesc || a.line || a.desc || '');
+      const cd = tb ? tb.cds[o.id] || 0 : 0;
+      putText(r._chip, pa && pa.kind === 'passive' ? 'Passive' : tb ? (cd ? turnsTxt(cd) : 'Ready') : o.left > 0 ? secs(o.left) + ' s' : 'Ready');
+    });
+  }
+  // Foe: its name and kind, its trait when it has one, and the moves you have learned (75-turn-ui turnFoeInfo)
+  const foeRow = (k, ...kids) => { const r = el('div', 'sb-fr'); r.append(el('span', 'sb-fk', k)); const v = el('span', 'sb-fv'); v.append(...kids); r.append(v); return r; };
+  function fillFoe() {
+    if (dockTab !== 'foe') return;
+    const f = typeof turnFoeInfo === 'function' ? turnFoeInfo() : null;
+    const sig = f ? JSON.stringify(f) : '';
+    if (sig === foeSig) return; foeSig = sig;
+    if (!f) { paneFoe.replaceChildren(el('p', 'sb-fnote', 'Foes show here in a turn fight.')); return; }
+    const rows = [foeRow('Foe', el('b', 'sb-fname', f.name), ...f.tags.map(x => el('span', 'sb-chip', x)))];
+    if (f.trait) rows.push(foeRow('Trait', el('span', 'sb-ftxt', f.trait)));
+    rows.push(foeRow('Moves', ...(f.known ? f.moves.map(m => el('span', 'sb-chip' + (m.charged ? ' charged' : ''), `${m.name} · ${m.hits} hit${m.hits > 1 ? 's' : ''}${m.charged ? ' · charged' : ''}`)) : [el('span', 'sb-ftxt', 'Beat one of these to learn its moves.')])));
+    paneFoe.replaceChildren(...rows);
+  }
+  setTab('act');
+
   let t = 0;
   function update() {
     const show = !!soloHero() && target() === 'mob' && !!(S.party && S.party.chosen);
@@ -39294,6 +39444,10 @@ var soloIconURL = () => '';
     if (!show) return;
     setBadge();
     const s = soloButtons(), k = soloHero();
+    const turnOn = typeof turnBarInfo === 'function' && !!turnBarInfo();
+    if (tabBtn.foe.hidden === turnOn) { tabBtn.foe.hidden = !turnOn; if (!turnOn && dockTab === 'foe') setTab('act'); }
+    // the guide points at Act's buttons: keep that pane open until it is done
+    if (dockTab !== 'act' && typeof onboardStep === 'function' && onboardStep()) setTab('act');
     if (k !== heroK) { heroK = k; setIc(bAtk._ic, 'atk', 48); }
     for (let i = 0; i < 3; i++) {
       const o = s.abs[i], b = bAbs[i];
@@ -39306,7 +39460,9 @@ var soloIconURL = () => '';
       }
       setCd(b, o.left, o.max); setN(b, secs(o.left));
       b.classList.toggle('ready', !!o.id && o.ready);
+      putText(b._sub, !o.id ? 'Tap to add' : o.left > 0 ? '' : 'Ready');
     }
+    putText(bAtk._sub, '');
     setCd(bAtk, s.atk.left, s.atk.max);
     setCd(bParry, s.parry.left, s.parry.max);
     setCd(bDodge, s.dodge.left, s.dodge.max);
@@ -39330,13 +39486,17 @@ var soloIconURL = () => '';
         putAttr(b, 'title', why.startsWith('need:') ? 'Needs ' + why.slice(5) : why === 'gate' ? 'A finisher: from your third turn' : why === 'once' ? 'Once a fight' : '');
         b.classList.toggle('ready', !why && tb.heroTurn);
         b.classList.toggle('blocked', !!why && why !== 'cd' && !pas);
+        putText(b._sub, pas ? 'Passive' : cd ? turnsTxt(cd) : why === 'gate' ? 'Turn 3' : why === 'once' ? 'Used' : why.startsWith('need:') ? 'Needs ' + why.slice(5) : 'Ready');
       }
+      const acd = tb.cds.attack || 0, res = typeof HERO_RESOURCE === 'object' && HERO_RESOURCE[k];
+      putText(bAtk._sub, acd ? turnsTxt(acd) : res ? '+1 ' + res.name : '');
       setCd(bAtk, tb.cds.attack || 0, tb.max('attack'));
       for (const b of [bAtk, ...bAbs]) b.classList.toggle('off', !tb.heroTurn && !b.classList.contains('passive') && !(tb.timing && (b === bAtk || abIds[+b.dataset.slot] === tb.timing)));
       for (let i = 0; i < 3; i++) bAbs[i].classList.toggle('live', !!tb.timing && abIds[i] === tb.timing);   // the ring: press it again
       for (const b of [bParry, bDodge]) { b.classList.toggle('off', !tb.windup); b.classList.toggle('live', tb.windup); }
       setN(bDodge, ''); setN(bParry, '');
     }
+    fillSkills(); fillFoe();
   }
   bAtk.setAttribute('aria-label', 'Attack (D). ' + INFO.atk.desc);
   bParry.setAttribute('aria-label', 'Parry (A). ' + INFO.parry.desc);
@@ -40569,15 +40729,17 @@ var trainCard = null;
 // 75-turn-ui: the turn fight on screen (engine 59k-turn.js; docs/design/combat-turns.md, combat-turn-build.md).
 //   Versus card  opens each fight (fightStart): the hero on the left, the foe on the right, both Speeds, and a banner
 //                saying who goes first, and the turn order: the next 6 turns as portraits (the Speed gauges decide
-//                them). It lasts the engine's intro; with reduced motion it only fades. The order shows only here
-//                (owner, 2026-10-02: not on the stage during the fight).
-//   Timing bar   at the top of the stage while the foe winds up a hit (the dodge and parry windows marked).
+//                them). It lasts the engine's intro; with reduced motion it only fades.
+//   Timing bar   at the bottom of the stage while the foe winds up a hit (the dodge and parry windows marked), over the Next strip.
+//   Next strip   the next 6 turns as small portraits along the stage's bottom edge (Combat C, Cal 2026-10-05; it replaces the
+//                2026-10-02 rule that showed the order on the Versus card only).
 //   Warnings     a banner when a boss gathers a charged move ("Stun it or hit it hard"), when it is broken, when a boss
 //                turns harder at half HP, and "Your turn" while the fight waits on you.
 //   Hero row     under the bar: the hero's resource as pips (Aim, Grit, Cinders) and their own statuses (Guard, Ward,
 //                Keen, and what a boss put on them), with the approved status icons (21v).
 //   Action bar   75-solo-ui reads turnBarInfo(): cooldowns in turns, and why a slot cannot be used now.
 var turnBarInfo = () => null;
+var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: { name, tags, trait, known, moves }
 
 {
   // checks only (tools/check.mjs): a browser test of the real-time fight sets this key before the game loads. Never in the
@@ -40635,7 +40797,7 @@ var turnBarInfo = () => null;
     const known = !(f && typeof masteryApi === 'object' && masteryApi.typeKills) || masteryApi.typeKills(f.type) >= 1 || f.boss;
     putText(R.h, known ? `Speed ${Math.round(p.foeHaste)}` : 'Speed ?');
     putText(banner, heroFirst ? 'You go first' : `${fname} goes first`);
-    fillOrder();
+    fillOrder(true);
     card.classList.toggle('foe-first', !heroFirst);
     card.classList.toggle('boss', !!(f && f.boss));
     card.classList.toggle('calm', reduced());
@@ -40667,21 +40829,27 @@ var turnBarInfo = () => null;
   on('fightEnd', () => { clearTimeout(tcT); tcard.hidden = true; });
 
   // ---- the turn strip, the timing bar, the hero row ----
-  const strip = el('div', 'tv-strip'); strip.setAttribute('aria-label', 'Turn order');
-  const slots = []; for (let i = 0; i < 6; i++) { const s = el('div', 'tv-slot'); slots.push(s); strip.append(s); }
-  orderBox.append(orderLb, strip);
-  function fillOrder() {
+  // the order is drawn twice: on the Versus card (orderBox) and as the Next strip along the stage's bottom edge (nextBox)
+  const mkStrip = () => { const s = el('div', 'tv-strip'), sl = []; s.setAttribute('aria-label', 'Turn order'); for (let i = 0; i < 6; i++) { const e = el('div', 'tv-slot'); sl.push(e); s.append(e); } return { s, sl }; };
+  const cardStrip = mkStrip(), nextStrip = mkStrip();
+  orderBox.append(orderLb, cardStrip.s);
+  let orderSig = '';
+  function fillOrder(force) {
     const s = typeof turnCombatSnapshot === 'function' ? turnCombatSnapshot() : null, order = s && s.order && s.order.length ? s.order : ['hero'];
-    const f = foeNow(), hf = heroFace(), ff = foeFace(f);
-    slots.forEach((sl, i) => {
-      const o = order[i]; if (!o) { sl.hidden = true; return; }
-      sl.hidden = false; sl.className = 'tv-slot ' + o + (i === 0 ? ' now' : '');
-      sl.replaceChildren(img('tv-mini', o === 'hero' ? hf : ff, o === 'hero' ? heroName() : ((f && f.name) || 'Foe')));
-    });
-    strip.setAttribute('aria-label', `Turn order: ${order.map(o => o === 'hero' ? 'you' : ((f && f.name) || 'the foe')).join(', then ')}`);
+    const f = foeNow(), sig = order.join() + '|' + (f ? f.name : '');
+    if (!force && sig === orderSig) return; orderSig = sig;
+    const hf = heroFace(), ff = foeFace(f);
+    for (const { s: strip, sl } of [cardStrip, nextStrip]) {
+      sl.forEach((sl_, i) => {
+        const o = order[i]; if (!o) { sl_.hidden = true; return; }
+        sl_.hidden = false; sl_.className = 'tv-slot ' + o + (i === 0 ? ' now' : '');
+        sl_.replaceChildren(img('tv-mini', o === 'hero' ? hf : ff, o === 'hero' ? heroName() : ((f && f.name) || 'Foe')));
+      });
+      strip.setAttribute('aria-label', `Turn order: ${order.map(o => o === 'hero' ? 'you' : ((f && f.name) || 'the foe')).join(', then ')}`);
+    }
   }
   const turnN = el('span', 'tv-n');
-  // the timing bar (owner, 2026-10-02: bigger): the track fills to the hit; the dodge (blue) and parry (gold) windows sit
+  // the timing bar (owner, 2026-10-02: bigger; Combat C, 2026-10-05: along the stage's bottom edge): the track fills to the hit; the dodge (blue) and parry (gold) windows sit
   // at its end, labelled; the whole bar lights up in the colour of the window you are in now
   const bar = el('div', 'tv-time'), track = el('div', 'tv-track'), fill = el('i', 'tv-fill'), dz = el('i', 'tv-dodge'), pz = el('i', 'tv-parry'), head = el('i', 'tv-head');
   const legend = el('div', 'tv-legend'); legend.append(el('span', 'tv-lg-d', 'Dodge'), el('span', 'tv-lg-p', 'Parry'));
@@ -40699,8 +40867,11 @@ var turnBarInfo = () => null;
   resBtn.addEventListener('click', e => { e.stopPropagation(); if (!resTip.hidden) { resTip.hidden = true; return; } showRes(5); });
   heroRow.append(resBtn, chips);
   const warn = el('div', 'tv-warn'); warn.hidden = true; warn.setAttribute('role', 'status'); warn.setAttribute('aria-live', 'assertive');
-  const wrap = el('div', 'tv-top'); wrap.append(turnN, bar, heroRow, resTip, warn);
-  if (box) box.append(wrap);
+  const wrap = el('div', 'tv-top'); wrap.append(turnN, heroRow, resTip, warn);
+  // along the stage's bottom edge: the timing bar (while the foe winds up), then the Next strip
+  const bot = el('div', 'tv-bot'), nextRow = el('div', 'tv-next');
+  nextRow.append(el('small', 'tv-next-lb', 'Next'), nextStrip.s); bot.append(bar, nextRow);
+  if (box) box.append(wrap, bot);
   // a timed ability's ring: it closes on the foe; press the ability (or Attack) again as it meets the inner circle
   const ring = el('div', 'tv-ring'), ringO = el('i', 'tv-ring-o'), ringI = el('i', 'tv-ring-i'), ringT = el('b', 'tv-ring-t', 'Now!');
   ring.append(ringI, ringO, ringT); ring.hidden = true; ring.setAttribute('aria-hidden', 'true');
@@ -40768,15 +40939,18 @@ var turnBarInfo = () => null;
     const on_ = typeof turnCombatOn === 'function' && turnCombatOn() && typeof turnCombatSnapshot === 'function';
     const s = on_ ? turnCombatSnapshot() : null, live = !!(s && s.phase !== 'off');
     if (!card.hidden && (!s || s.phase !== 'intro') && performance.now() - cardAt > 250) { card.hidden = true; card.classList.remove('play'); }
-    if (wrap.hidden === live) wrap.hidden = !live;
+    if (wrap.hidden === live) { wrap.hidden = !live; bot.hidden = !live; }
+    if (live) fillOrder();
     if (!warn.hidden && performance.now() > warnT) warn.hidden = true;
     drawRing(live ? s : null);
     if (!live) { if (!bar.hidden) bar.hidden = true; return; }
-    putText(turnN, s.phase === 'hero' ? 'Your turn' : s.timing ? 'Press again as the ring closes' : s.charge ? `${s.charge} is coming` : s.n ? `Turn ${s.n}` : '');
+    putText(turnN, s.phase === 'hero' ? 'Your turn' : s.timing ? 'Press again as the ring closes' : s.charge ? `${s.charge} is coming` : s.phase === 'foeWindup' && s.foe ? `${s.foe.name}'s turn` : s.n ? `Turn ${s.n}` : '');
     turnN.classList.toggle('mine', s.phase === 'hero' || !!s.timing);
+    turnN.classList.toggle('foe', s.phase === 'foeWindup');
     // the foe winds up: the bar fills to the hit; the dodge and parry windows sit at its end
     const winding = s.phase === 'foeWindup' && s.closesAt > s.now;
     if (bar.hidden === winding) bar.hidden = !winding;
+    if (winding && !resTip.hidden) resTip.hidden = true;   // the timing bar owns the stage while a hit winds up
     if (box && box.classList.contains('tv-winding') !== winding) box.classList.toggle('tv-winding', winding);   // a place caption fades under the bar
     if (winding) {
       if (!winT0 || winT0 > s.now) winT0 = s.now;
@@ -40792,6 +40966,18 @@ var turnBarInfo = () => null;
   (function loop() { try { draw(); } catch (e) {} requestAnimationFrame(loop); })();
 
   // ---- the action bar in a turn fight (75-solo-ui asks) ----
+  // the dock's Foe tab: its name, its kind, the trait an elite carries, and the moves you have learned (a boss shows all of
+  // them; a normal foe once you have beaten its kind, as its Speed on the Versus card)
+  turnFoeInfo = () => {
+    if (!(typeof turnCombatOn === 'function' && turnCombatOn())) return null;
+    const f = foeNow(); if (!f || !f.tk) return null;
+    const tags = []; if (f.boss) tags.push(f.tk.region ? 'Region boss' : 'Boss'); if (f.elite) tags.push('Elite'); if (f.ranged) tags.push('Ranged');
+    const tr = f.tr && f.tr[0], trait = tr && typeof TURN_TRAITS === 'object' && TURN_TRAITS[tr] ? TURN_TRAITS[tr].first : '';
+    const known = !(typeof masteryApi === 'object' && masteryApi.typeKills) || masteryApi.typeKills(f.type) >= 1 || !!f.boss;
+    const seen = new Set(), moves = [];
+    for (const m of f.tk.script || []) { if (!m || seen.has(m.id)) continue; seen.add(m.id); moves.push({ name: m.name, hits: m.hits.length, charged: !!m.charge }); }
+    return { name: f.name, tags, trait, known, moves: known ? moves : [] };
+  };
   turnBarInfo = () => {
     if (!(typeof turnCombatOn === 'function' && turnCombatOn())) return null;
     const s = turnCombatSnapshot(); if (!s || s.phase === 'off') return null;
