@@ -23,11 +23,15 @@
 // Event times are ACTIVE seconds (game ticks the player was there for), so away gaps do not count as play.
 // The balance targets themselves are in docs/DECISIONS.md and docs/design/combat-turn-build.md; this tool only
 // watches that the numbers a change moves stay inside the bands the last accepted baseline had.
+//   budget     (with the personas, or --only budget) the difficulty budget (tools/budget.mjs, docs/design/difficulty-budget.md):
+//              each fight kind's win rate for each starter, casual and good, against its band. --compare fails a hero who
+//              leaves their band, a known gap that grows past its limit or expires, and a three-hero mean that drifts.
 import { execFile } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { HEROES as BUDGET_HEROES, loadTargets, BUDGET_FILE, cells as budgetCells, cellKey, binomialSd, verdict as budgetVerdict } from './lib/budget-score.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const BASELINE = path.join(ROOT, 'docs', 'design', 'health-baseline.json');
@@ -101,6 +105,8 @@ function analyse(persona, hero, d) {
   const tiers = Object.values(d.gear).filter(g => !['pick', 'axe', 'sickle'].includes(g.slot)).map(g => g.t);
   const unlocks = d.ev.filter(e => e.k === 'unlock' || e.k === 'campBuilt');
   let burst = 0; for (const u of unlocks) burst = Math.max(burst, unlocks.filter(v => v.a >= u.a && v.a < u.a + 600).length);
+  // F4 cap (qa-player-eyes): the most new things in any 3 minutes of the first 30 active minutes
+  const first30 = unlocks.filter(e => e.a < 1800); let burst3 = 0; for (const u of first30) burst3 = Math.max(burst3, first30.filter(v => v.a >= u.a && v.a < u.a + 180).length);
   const m = {
     activeMin: r2(act / 60), zoneEnd: d.end.maxZone, zoneAt1h: atHour(1), zoneAt10h: atHour(10), zonePerHour: r2(d.end.maxZone / Math.max(hours, 1 / 60)),
     levelEnd: d.end.L, firstGoalSec: clears.length ? Math.round(clears[0].a) : null, firstRewardSec: rewards.length ? Math.round(rewards[0].a) : null,
@@ -122,7 +128,7 @@ function analyse(persona, hero, d) {
     gearWorn: Object.fromEntries(Object.entries(d.gear).map(([pos, g]) => [pos, `t${g.t} r${g.r}${g.plus ? ' +' + g.plus : ''}`])),
     zoneByHour: Array.from({ length: Math.floor(hours) }, (_, i) => atHour(i + 1)),
     mechanicsByHour: Array.from({ length: Math.max(1, Math.ceil(hours)) }, (_, i) => unlocks.filter(e => e.a >= i * 3600 && e.a < (i + 1) * 3600).length),
-    gearTierMean: tiers.length ? r2(mean(tiers)) : 0, mechanicsPerHour: r2(unlocks.length / Math.max(hours, 1 / 60)), mechanicsBurst10min: burst,
+    gearTierMean: tiers.length ? r2(mean(tiers)) : 0, mechanicsPerHour: r2(unlocks.length / Math.max(hours, 1 / 60)), mechanicsBurst10min: burst, mechanicsBurst3minFirst30: burst3,
     parries: d.solo.parries, dodges: d.solo.dodges, counters: d.solo.counters, errors: d.errors
   };
   if (PERSONAS[persona].visitSec) {
@@ -219,6 +225,19 @@ function aggregate(runs) {
   return out;
 }
 
+// Absolute caps beside the tolerances (docs/design/health-baseline.json "caps", F4): how many new things a player meets at once.
+// Report only: a run over a cap is printed, never failed. A cap names a per-run metric and its maximum for a persona.
+function printCaps(runs, caps) {
+  if (!caps) return;
+  const over = [];
+  for (const [id, c] of Object.entries(caps)) {
+    if (!c || typeof c !== 'object' || !c.metric) continue;
+    for (const r of runs) { if (c.personas && !c.personas.includes(r.persona)) continue; const v = r.metrics[c.metric]; if (typeof v === 'number' && v > c.max) over.push(`${id}: ${r.persona} ${r.hero} ${v} (cap ${c.max})`); }
+  }
+  console.log('');
+  console.log(over.length ? `caps (report only): ${over.length} run(s) over a cap` : 'caps (report only): every run is inside its caps');
+  for (const o of over) console.log('  over ' + o);
+}
 function printReport(runs, agg, base) {
   const f = x => x == null ? 'n/a' : typeof x === 'number' ? String(r2(x)) : String(x);
   console.log(LONG ? 'Lanternfall long run: one hero-bot for 50 active hours; Wren, Tobin and Pip on fixed seeds, turn fights on'
@@ -279,8 +298,9 @@ function verdict(cur, b) {
 
 // ---- main ----
 const LONG = flag('long');
-const only = LONG ? ['long'] : opt('only') ? opt('only').split(',') : DEFAULT_PERSONAS;
-for (const p of only) if (!PERSONAS[p] || PERSONAS[p].longOnly && !LONG) { console.error('unknown persona ' + p + '; use ' + DEFAULT_PERSONAS.join(', ') + ' (the long run is --long)'); process.exit(2); }
+const onlyAll = LONG ? ['long'] : opt('only') ? opt('only').split(',') : DEFAULT_PERSONAS.concat(['budget']);
+const BUDGET = onlyAll.includes('budget'), only = onlyAll.filter(p => p !== 'budget');
+for (const p of only) if (!PERSONAS[p] || PERSONAS[p].longOnly && !LONG) { console.error('unknown persona ' + p + '; use ' + DEFAULT_PERSONAS.concat(['budget']).join(', ') + ' (the long run is --long)'); process.exit(2); }
 const t0 = Date.now(), tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'lf-health-'));
 async function runOnce(offset) {
   const jobs = only.flatMap(p => HEROES.map(([h, c]) => () => simRun(p, h, c, tmp, offset)));
@@ -288,18 +308,54 @@ async function runOnce(offset) {
   if (rs.some(r => r.metrics.errors)) throw new Error('the game logged errors during a run: ' + rs.filter(r => r.metrics.errors).map(r => `${r.persona}/${r.hero}`).join(', '));
   return rs;
 }
-let runs;
-try { runs = await runOnce(SEED_OFFSET); } catch (e) { console.error('health: ' + e.message); process.exit(2); }
+// ---- the difficulty budget (tools/budget.mjs, scored by tools/lib/budget-score.mjs) ----
+// One budget.mjs process a hero, in parallel with the personas; the rows are merged. Seed offset n uses budget.mjs's
+// --seed-offset n (every fight's seed is hashed from it).
+function budgetRun(offset) {
+  const one = hero => new Promise((res, rej) => {
+    const out = path.join(tmp, `budget-${offset}-${hero}.json`);
+    execFile(process.execPath, ['tools/budget.mjs', '--heroes', hero, '--seed-offset', String(offset), '--json', out], { cwd: ROOT, maxBuffer: 1 << 26 }, (e, stdout, stderr) => {
+      if (e) return rej(new Error(`budget (${hero}) failed: ${(stderr || e.message).split('\n').slice(0, 6).join(' | ')}`));
+      try { res(JSON.parse(fs.readFileSync(out, 'utf8'))); } catch (x) { rej(new Error(`budget (${hero}): no output (${x.message})`)); }
+    });
+  });
+  return Promise.all(BUDGET_HEROES.map(one)).then(parts => ({ ...parts[0], heroes: BUDGET_HEROES,
+    rows: parts[0].rows.map(r => ({ ...r, perHero: Object.fromEntries(parts.map(p => { const x = p.rows.find(y => y.id === r.id); return [p.heroes[0], x.perHero[p.heroes[0]]]; })) })) }));
+}
+const today = () => new Date().toISOString().slice(0, 10);
+function budgetVerdicts(rep, bb) {
+  const T = loadTargets(), cs = budgetCells(T, rep), d = today();
+  const out = cs.map(c => { const b = bb && bb.cells ? bb.cells[cellKey(c)] : null; return { ...c, baseline: b ? b.value : null, ...budgetVerdict(T, c, bb ? b : null, d) }; });
+  if (bb && bb.cells) for (const k of Object.keys(bb.cells)) if (!cs.some(c => cellKey(c) === k)) { const [id, hero, pl] = k.split('|'); out.push({ id, hero, pl, label: 'FAIL (missing from the run)', fail: true }); }
+  return out;
+}
+function printBudget(rep, bb) {
+  const pc = x => num(x) ? (100 * x).toFixed(0) : 'n/a', vs = budgetVerdicts(rep, bb);
+  console.log(`\ndifficulty budget (tools/budget.mjs: ${rep.fights} fights a row, hero and player; docs/design/difficulty-budget.md). A behind row's casual value is its drop against its ref row.`);
+  const n = l => vs.filter(l).length;
+  console.log(`budget cells: ${n(v => v.label === 'ok')} in band, ${n(v => /^gap/.test(v.label))} in known gaps, ${n(v => /edge|closed/.test(v.label))} at an edge or a closed gap, ${n(v => /^report/.test(v.label))} report-only, ${n(v => v.fail)} failing (the full table: node tools/budget.mjs)`);
+  const show = vs.filter(v => v.fail || /edge|closed/.test(v.label) || /^report: out/.test(v.label));
+  if (show.length) console.log('row / player'.padEnd(26) + 'hero'.padEnd(6) + 'value'.padStart(6) + '  band     ' + (bb ? 'baseline  ' : '') + 'verdict');
+  for (const v of show) {
+    console.log(`${v.id} ${v.pl}`.padEnd(26) + String(v.hero).padEnd(6) + pc(v.value).padStart(6) + '  ' + (v.band ? `${pc(v.band[0])}-${pc(v.band[1])}` : '').padEnd(9) + (bb ? pc(v.baseline).padStart(8) + '  ' : '') + v.label);
+  }
+  return vs;
+}
+
+let runs, budget = null;
+try { [runs, budget] = await Promise.all([runOnce(SEED_OFFSET), BUDGET ? budgetRun(SEED_OFFSET) : null]); } catch (e) { console.error('health: ' + e.message); process.exit(2); }
 process.on('exit', () => fs.rmSync(tmp, { recursive: true, force: true }));
 const agg = aggregate(runs);
 const baseFile = flag('compare') && fs.existsSync(BASELINE) ? JSON.parse(fs.readFileSync(BASELINE, 'utf8')) : null;
 const base = baseFile && (LONG ? baseFile.long : baseFile);   // the long run keeps its own section of the file
 if (flag('compare') && !base) { console.error('health: no ' + (LONG ? 'long-run section in ' : 'baseline at ') + 'docs/design/health-baseline.json; run with ' + (LONG ? '--long ' : '') + '--write-baseline first'); process.exit(2); }
-printReport(runs, agg, base);
+if (only.length) printReport(runs, agg, base);
+printCaps(runs, (base && base.caps) || (fs.existsSync(BASELINE) ? JSON.parse(fs.readFileSync(BASELINE, 'utf8')).caps : null));
+const budgetVs = budget ? printBudget(budget, base && base.budget) : [];
 
 const report = { version: 1, personas: only, seedOffset: SEED_OFFSET, seconds: Math.round((Date.now() - t0) / 1000),
   metrics: Object.fromEntries(Object.entries(agg).map(([k, a]) => [k, { value: a.value, bad: a.bad, abs: a.abs, rel: a.rel, note: a.note, perHero: a.perHero }])),
-  runs: runs.map(r => ({ persona: r.persona, hero: r.hero, ...r.metrics })) };
+  runs: runs.map(r => ({ persona: r.persona, hero: r.hero, ...r.metrics })), ...(budget ? { budget } : {}) };
 const outPath = path.resolve(ROOT, opt('json', 'tools/.health/latest.json'));
 fs.mkdirSync(path.dirname(outPath), { recursive: true });
 fs.writeFileSync(outPath, JSON.stringify(report, null, 2) + '\n');
@@ -323,18 +379,48 @@ async function averaged() {
   }
   return out;
 }
+// the budget's baseline: each cell's mean and sd over --baseline-seeds offsets (default 5); then each gap's limit ratchets
+// toward its band (never away: loosening a gap is a judge's call, docs/design/difficulty-budget.md)
+async function budgetAveraged() {
+  const n = Number(opt('baseline-seeds', 5)), reps = [budget], T = loadTargets();
+  console.log(`\nbudget baseline: averaging ${n} seed offsets (${SEED_OFFSET}..${SEED_OFFSET + n - 1})`);
+  for (let i = 1; i < n; i++) reps.push(await budgetRun(SEED_OFFSET + i));
+  const per = reps.map(r => Object.fromEntries(budgetCells(T, r).map(c => [cellKey(c), c.value]))), cellsOut = {};
+  const rows0 = Object.fromEntries(budget.rows.map(r => [r.id, r])), cs0 = Object.fromEntries(budgetCells(T, budget).map(c => [cellKey(c), c]));
+  for (const k of Object.keys(per[0])) {
+    // the sample sd over the offsets (n - 1), never under one run's binomial noise (the mean's: a hero's over 3)
+    const l = per.map(p => p[k]).filter(num), mu = l.length ? mean(l) : null, [id, hero, pl] = k.split('|');
+    const sample = l.length > 1 ? Math.sqrt(l.reduce((a, v) => a + (v - mu) ** 2, 0) / (l.length - 1)) : 0;
+    const bin = hero === 'mean' ? Math.sqrt(BUDGET_HEROES.reduce((a, h) => a + binomialSd(T, rows0, id, h, pl, budget.fights) ** 2, 0)) / BUDGET_HEROES.length : binomialSd(T, rows0, id, hero, pl, budget.fights);
+    cellsOut[k] = { value: mu == null ? null : r2(mu), sd: l.length ? Math.round(1000 * Math.max(sample, bin)) / 1000 : null };
+  }
+  // ratchet: each gap's limit moves to its least-in-band hero's value (a "*" gap covers several), never past the band edge
+  let moved = 0;
+  for (const g of T.gaps || []) {
+    const hit = Object.entries(cellsOut).filter(([k, c]) => { const [id, hero, pl] = k.split('|'); return id === g.row && pl === g.player && hero !== 'mean' && (g.hero === hero || g.hero === '*') && num(c.value); });
+    if (!hit.length) continue;
+    const vals = hit.map(([, c]) => c.value), band = cs0[hit[0][0]] && cs0[hit[0][0]].band;
+    let nl = g.side === 'below' ? Math.max(g.limit, Math.min(...vals)) : Math.min(g.limit, Math.max(...vals));
+    if (band) nl = g.side === 'below' ? Math.min(nl, band[0]) : Math.max(nl, band[1]);
+    if (r2(nl) !== g.limit) { g.limit = r2(nl); moved++; }
+  }
+  if (moved) { fs.writeFileSync(BUDGET_FILE, JSON.stringify(T, null, 2) + '\n'); console.log(`ratcheted ${moved} gap limit(s) toward their bands in ${path.relative(ROOT, BUDGET_FILE)}`); }
+  return { about: 'The accepted difficulty budget (tools/budget.mjs): each cell "row|hero|player" is the mean and sd of ' + n + ' seed offsets. Bands, gaps and tolerances: docs/design/difficulty-budget.json. Regenerate with: node tools/health.mjs --write-baseline (or --only budget --write-baseline).',
+    fights: budget.fights, offsets: n, cells: cellsOut };
+}
 if (flag('write-baseline')) {
   const oldFile = fs.existsSync(BASELINE) ? JSON.parse(fs.readFileSync(BASELINE, 'utf8')) : { metrics: {} };
   const old = LONG ? (oldFile.long || { metrics: {} }) : oldFile;
   const metrics = { ...old.metrics };   // --only rewrites just the selected personas' entries
-  const accepted = await averaged();
+  const accepted = only.length ? await averaged() : {};
+  const budgetBase = budget ? await budgetAveraged() : oldFile.budget;
   for (const [k, a] of Object.entries(accepted)) {
     const o = old.metrics[k] || {};
     metrics[k] = { value: a.value, bad: o.bad || a.bad, abs: o.abs ?? a.abs, rel: o.rel ?? a.rel, note: a.note, perHero: a.perHero, ...(LONG ? { sd: a.sd } : {}) };
   }
   const baseline = LONG ? { ...oldFile, long: { about: 'The 50-hour run (node tools/health.mjs --long). Regenerate with: node tools/health.mjs --long --write-baseline (mean of 3 seed offsets, about 8 min on 3 free cores). sd is the spread of the mean over those seeds. node tools/health.mjs --long --compare uses this section.',
       seed: PERSONAS.long.seed, metrics } } : { version: 1, about: 'Accepted health numbers. Regenerate with: node tools/health.mjs --write-baseline. node tools/health.mjs --compare exits 1 when a metric moves past max(abs, rel * |value|) in its bad direction (bad: up, down, both). See tools/health.mjs for the personas.',
-    seeds: Object.fromEntries(DEFAULT_PERSONAS.map(p => [p, PERSONAS[p].seed])), metrics, ...(oldFile.long ? { long: oldFile.long } : {}) };
+    seeds: Object.fromEntries(DEFAULT_PERSONAS.map(p => [p, PERSONAS[p].seed])), metrics, ...(oldFile.caps ? { caps: oldFile.caps } : {}), ...(budgetBase ? { budget: budgetBase } : {}), ...(oldFile.long ? { long: oldFile.long } : {}) };
   fs.mkdirSync(path.dirname(BASELINE), { recursive: true });
   fs.writeFileSync(BASELINE, JSON.stringify(baseline, null, 2) + '\n');
   console.log('wrote ' + path.relative(ROOT, BASELINE));
@@ -342,9 +428,12 @@ if (flag('write-baseline')) {
 if (base) {
   const bad = Object.entries(agg).filter(([k, a]) => verdict(a, base.metrics[k]).fail);
   const missing = Object.keys(base.metrics).filter(k => !(k in agg) && only.includes(k.split('.')[0]));
-  if (bad.length || missing.length) {
-    console.log(`\nHEALTH FAIL: ${bad.length} metric(s) past tolerance${missing.length ? `, ${missing.length} missing` : ''}`);
+  const budgetBad = budgetVs.filter(v => v.fail);
+  if (budget && !base.budget) { console.error('health: no budget section in docs/design/health-baseline.json; run --write-baseline first'); process.exit(2); }
+  if (bad.length || missing.length || budgetBad.length) {
+    console.log(`\nHEALTH FAIL: ${bad.length} metric(s) past tolerance${missing.length ? `, ${missing.length} missing` : ''}${budgetBad.length ? `, ${budgetBad.length} difficulty budget cell(s)` : ''}`);
     for (const [k, a] of bad) console.log(`  ${k}: ${f2(a.value)} against ${base.metrics[k] ? f2(base.metrics[k].value) : 'no baseline'} (${a.note}); ${verdict(a, base.metrics[k]).label}`);
+    for (const v of budgetBad) console.log(`  budget ${v.id} ${v.hero} ${v.pl}: ${num(v.value) ? f2(v.value) : 'n/a'} (band ${v.band ? v.band.join('-') : '-'}, baseline ${num(v.baseline) ? f2(v.baseline) : 'n/a'}); ${v.label}`);
     process.exit(1);
   }
   console.log('\nhealth ok: every metric is inside its tolerance');

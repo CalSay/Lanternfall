@@ -137,6 +137,7 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 - **Explain each hero's resource** (Aim, Grit, Cinders) in the game. Pip's resource is called **Cinders**, not Embers,
   so it does not clash with the raid's Embers. (2026-10-02)
 - **The Fenmother may be hard:** about 25-30% casual wins for a hero who keeps up is fine for a region boss. (2026-10-02)
+- **The difficulty budget** (Claude decided, judge 2026-10-06; veto if you disagree): every fight kind has a casual and a good win band for each starter who keeps up with the road (normal 90-100% casual, elite 75-97%, zone bosses 1-3 85-100%, 4-10 70-90%, Captains 60-80%, Champions 40-60%, Elders 20-40%; Tobin +10 on bosses), and `health.mjs --compare` gates on it with owned, dated known gaps. `docs/design/difficulty-budget.md`.
 - **Gear stats must work in turn fights;** Pip's slow late kills come from dead caster lines. (2026-10-02)
 - **Stars:** 3 set and 2 lit is fine; learning in 4 wins is fine; there should be more stars. The Abilities and Stars
   menus need to be much better, and the owner misses the old star map. (2026-10-02)
@@ -277,6 +278,10 @@ Every card that adds a price, a currency, a timer or a gate passes all ten. (202
   bottom-right. (2026-09-29)
 - **Hints stay docked** and never jitter. The game pauses while a tutorial step is open. The early game must not be
   spammed with notifications. Skill levels sit above the resource lists. (2026-09-28 to 2026-09-29)
+- **One new thing a minute:** in the first hour at most one tab, view, bar or strip opens per 60 s of play
+  (`ONBOARD_TUNE.gap`), the first ready one in `FEATURES` order; one the player's own act or a drop opened (walking to
+  gather, the fire, the Workbench, the Tavern, the first star, the first unique) opens at once. Every unlock rule is
+  unchanged. Claude decided (story-unlock-gates, red team and Opus judge, 2026-10-06; `docs/design/unlock-pace.md`).
 - **Fonts:** Handjet (pixel display) with Barlow Semi Condensed (body). (2026-09-28)
 - **Icons:** the approved C26 icon packs (resources, gear, actions, menus, statuses). (2026-10-01)
 
@@ -312,7 +317,11 @@ Every card that adds a price, a currency, a timer or a gate passes all ten. (202
   Sable of the Mere (Sable, the Deep Listener).
 - **The Voice's two phase-change cards** are the one exception to "nothing during a fight": between turns, at the roster's
   move-end queue, never changing fight state, always with Skip.
-- **A hero can't be unlocked before their first story scene,** once that scene is in the game; heroes a save owns are kept.
+- **A hero can't be unlocked before their first story scene;** heroes a save owns are kept. The gate opens from the zone
+  where the scene can have played (a scene on a Champion's post: once that Champion falls), from `STORY_MEET`, which a
+  check holds equal to the chapter script, and it holds whether or not the scene's encounter is built yet. The camp's All
+  heroes sheet says when (the zone in your chapter, else the chapter number); a won hero token is a bell line. Claude
+  decided (story-unlock-gates, red team and Opus judge, 2026-10-06; `docs/design/unlock-pace.md`).
 - **Ada and Pell come home when the Fenmother is beaten,** not after the Coast's Great Lantern.
 - **Story choices are saved as new keys under `story`** (`starter`, `litFor`, `coldhearth`) with defaults; no save-key
   bump; Opus save review before merge.
@@ -338,6 +347,72 @@ Every card that adds a price, a currency, a timer or a gate passes all ten. (202
   heroes start dressed in a grade 0 starter set. (2026-10-01; `docs/design/equipment-art.md`)
 - **Backgrounds:** the painted Mossy Hollow night background is approved and in the game. (2026-10-02)
 - **Map:** a hybrid (A's map, C's night, light and landmarks): "light in the dark". (2026-09-28; not built)
+- **Who vets art (2026-10-06):** the Opus art judge under the Autopilot gates, after a red team, using the art
+  freeze's own standard (whole packs, every piece matching, no stopgaps, no code-drawn art). Cal may veto from the
+  digest. Character art ships on, with a "Classic art" switch for one release. Icons must fit the live meaning, not the
+  name. Only Codex makes art; Claude vets it and answers for anything broken or ugly in a Monday build; anything
+  doubtful stays out. (Cal 2026-10-05 gates; 2026-10-06 18:30, 18:41 and 19:35: "Art should only be made by Codex.
+  ... If it gets into a Monday build and it's broken or looks bad, you will be held responsible".)
+- **Codex art packs, judge verdicts (2026-10-06, art-pack-triage):** ability icons: wire 36 of Codex's drafts for the
+  live 42 abilities (keep the C26 Echo Shot and Fireball; Shield Bash moves to Codex's red-gold one), a hero's icons go
+  in only when all 14 are whole, so Pip first; Power Shot, Barbed Arrow, Pinning Shot and Shield Throw go back to Codex
+  (due Fri 2026-10-09). Resource nodes (c26): re-brief, Codex finishes the scene pack (four gather backgrounds) before
+  they go in. Starting equipment (c27): shelved until heroes can show gear. Hunting drafts (c24): superseded by the live
+  interim. Enemies (c22): already in. Hero concept boards: re-brief as a matched portrait pack. Reasons and red team:
+  `/mnt/project-files/autopilot/reports/art-pack-triage.md`. (built: not yet; cards `wire-ability-icons` and others)
+  Coverage areas: 6 Combat feel and 1 First 10 minutes (icons), 10 Skills and crafting (nodes), 14 Heroes (portraits).
+  Prediction: lettered ability tiles across the three heroes fall from 39 of 42 to 26 when `wire-ability-icons` merges
+  (Pip 13 to 0) and to 0 of 42 in the 2026-10-19 build; measured by counting lettered tiles (`.ab-list .ab-mono`)
+  on each hero's Hero > Abilities screen in `wire-ability-icons`' proof route (an `expect` line CI replays); missed if
+  any tile stays lettered for a hero whose icons are wired, or if Cal's note "ability icons missing" is not "fixed" in
+  that week's Sunday review. Switch off: removing a hero's ids from the generated `act` icon
+  pack brings back the lettered tiles (the existing `noIcon` path); gather scenes go back to the code-drawn ones by
+  reverting their wiring commit; portraits have the Classic art switch. Saves: unaffected (art only; the Classic art
+  switch adds one settings flag with a default).
+
+## Early game (Opus judge on the early-game plan, 2026-10-06; Cal can veto any line)
+
+Plan and rulings: `/mnt/project-files/early-game/plan.md`, `plan-judge.md`. Beat map: `docs/design/first-hour.md`.
+
+- **No telegraph stands.** There are no foe intent icons. The Foe tab shows only what you have learned: moves after a
+  kill, weakness at 5 kills, "Watch for" at 15.
+- **The PR #53 dock cuts are final.** The combat log is dropped: on a 360 px screen it is clutter, and the turn strip and
+  numbers carry the same information. "Next" chips stay dropped. The Bag tab belongs to `bag-slot-and-steady-charges`.
+- **Lantern Caches.** A zone boss's first clear opens a Lantern Cache that reveals that win's drops. Its only new reward
+  is a look roll, with its odds and a pity counter printed. Replays give no cache. Caches, keys and pity are never sold.
+  Caches hold no relics and no time skips. This narrows the Money line's "boss wins" to a boss's first clear. Its other
+  sources (Contracts with a Dare, Codex milestones) stay, each added later by its own card through the economy gate.
+- **Looks.** Deed looks stay Deed-only. Cache looks are their own catalogue, drawn by Codex and vetted as a set. The
+  first-clear caches of zones 1 to 3 and 7 to 9 each give a Deepwell lantern colour the save does not own yet (Ember Red
+  first), print it as a certain look, and relight the stage. This is the cache's look, not an extra reward; a save that
+  owns all six gets none. The Wardrobe tags each look Deed, Cache or (later) Store, and counts earned looks only.
+- **Moments.** Big moments (the first boss win, a Champion's first clear with its post scene in the card and the join
+  when an unpicked starter is met there, a cache with a look or unique, a unique, a new hero, the first Star, a Great
+  Lantern) and medium moments (the first and every 5th level, a new ability, a look, a Rare-or-better craft) sit
+  outside the pop budget, under their own cap. Big: one card at a time at fight end, holding the game. Medium: at most
+  one per fight end, in the notices slot. At most 8 big plus medium in the first 20 minutes. This refines "the early
+  game must not be spammed". A cache that holds a look is a big card, even when it opens automatically.
+- **Starters join on the road.** You start with the hero you picked. The other two join where the story puts them: Tobin
+  at the zone 5 Champion (the cellars), Wren at the zone 10 Champion (the Cantor's cave), Pip at the zone 15 Champion
+  (the Marshal's graves), per story bible 4.4. Each join is a scene, never a bare toast. Old saves keep every starter
+  they own (an all-met default). `STORY_TUNE.joinOnMeet = false` switches back to all three at the start. Coverage
+  areas 1, 4, 14 and 15.
+- **F3, the big-moment pace** (amends the self-improving plan's scorecard). Minutes 0 to 20: a big moment at least every
+  5 minutes, no gap over 8. From minute 20 to the zone 10 Champion (or minute 60, if that comes first): a big moment at
+  every zone's first clear from 5 to 10, no gap over 8 on the casual walk. The 2026-11-02 review sets the pace after
+  zone 10. Why: big moments are tied to bosses, so their minutes follow play speed, and zone 10 closes the first hour.
+  Prediction: the nightly walk shows no gap over 8 minutes between big moments up to the zone 10 Champion, for every
+  starter pick; missed if any seed shows one. Coverage areas 2 and 3. No save change; the colour grants switch off
+  with `CACHE_TUNE.on` (card `cache-core`).
+- **The guide is Old Hesketh, with a face.** Landscape: the side column's notices slot. Portrait: docked above the
+  action bar. Never over the fighters or the HP bars.
+- **Bounties.** A finished bounty can be claimed from Next Up and from its ready notice, and the board also shows at
+  Camp. An open menu never pauses foe turns.
+- **The opening.** Three stills, then "Who are you?", then Hesketh's fire. His talk plays when the camp fire is lit. The
+  first fight comes within 45 s for a player who taps through. Hero lines are for starters only, from `STORY_BEATS.hero`
+  (story bible 4.4).
+- **First-hour art.** Two packs, `first-hour-art` and `cache-art`. Star icons are parked. Approved assets (the Mossy
+  Hollow background, roster portraits, Deepwell colours) may be reused as they are.
 
 ## Working process
 
@@ -346,8 +421,8 @@ Every card that adds a price, a currency, a timer or a gate passes all ten. (202
   (`docs/handoff/claude-to-codex/reviewer/README.md`). Codex still draws new raster art when a card needs it.
   (2026-10-05)
 - **Autopilot:** Claude plans, builds and merges into the integration branch on its own from an approved backlog,
-  with a daily digest. Cal approves batches, taps gated items (new systems, economy targets, saves, art packs,
-  story canon) and says "ship it" before anything reaches `main` or the live artifact. (2026-10-05)
+  with a daily digest. Cal approves batches, taps gated items (new systems, economy targets, saves,
+  story canon; art packs moved to the judge 2026-10-06) and says "ship it" before anything reaches `main` or the live artifact. (2026-10-05)
 - **Speed and smoothness are checked constantly:** run `node tools/perf.mjs --quick` after each merge wave and fix any
   budget failure before new features. (2026-09-27)
 - **Pace:** steady on weekdays (2 build threads at once), full at weekends (4). On "pause", launch nothing new.
@@ -363,10 +438,13 @@ Every card that adds a price, a currency, a timer or a gate passes all ten. (202
 
 Kept only to explain current rules. Each line: the old decision, then what replaced it.
 
+- Hero gates at the first zone of the scene's area, only once the scene is in the game (2026-10-06, story-opening) -> from the
+  zone the scene can have played, built or not (2026-10-06, story-unlock-gates).
+- Hesketh's talk plays before the first fight (story bible 8.1, audit A1) -> the talk plays when the camp fire is lit;
+  the first fight comes within 45 s (early game, 2026-10-06).
 - Store launch possible, monetisation undecided (2026-09-27); monetisation waits for launch, with a free and paid battle
   pass, a membership with capped convenience perks and skins (2026-09-28); every cosmetic is earned, never sold
   (2026-09-28) -> the money model (2026-10-06).
-
 - Training: gold levels up each hero's Attack, Parry, Dodge and abilities, with caps (2026-09-29, 2026-10-02) -> no
   Training; level, star points, abilities and attribute points (2026-10-06).
 - No rapid catch-up XP for heroes (2026-09-28) -> a new hero joins at the road's level; benched heroes earn half XP
@@ -401,4 +479,10 @@ Kept only to explain current rules. Each line: the old decision, then what repla
 - Season 1 ending at the bottom of the Deepwell (2026-09-28) -> the finale is in the Gloamvale, its Region 5, and the
   Voice retreats into the Deepwell (2026-09-28, after the owner's feedback on LORE-R45).
 - Background art paused (2026-09-29) -> the Mossy Hollow background approved (2026-10-02).
+- Art freeze signer: "No art goes into the game until the owner has vetted the whole pack ... The owner still vets the
+  whole set before it ships" (2026-09-30), and art packs as a Cal-tapped Autopilot gate (2026-10-05) -> the Opus art
+  judge vets under the Autopilot gates, same standard (2026-10-06, Cal 19:35). Why: Cal's 2026-10-05 gates already put art packs
+  with the judge but `CLAUDE.md` was never aligned, and Codex packs (426 icons, 25 nodes) sat unwired for days waiting
+  on a sign-off nobody owned; Cal 2026-10-06 18:30 "I don't want to be involved" and 18:41 any repo rule may change if
+  it serves the goals.
 - Weekday and weekend usage rules (2026-09-28) -> steady mode (2026-09-28 evening).

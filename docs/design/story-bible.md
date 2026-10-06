@@ -581,18 +581,23 @@ section 5. Chapter 1 is written closer to final text because Milestone 1 is "The
 **Midpoint (a4):** a lamp alone nearly goes out; beside yours, it steadies. **Low point (a7):** the fog takes the road, and
 a family is in it. **Climax:** the Fenmother. **Hook:** a green light at sea.
 
-**The opening** (before zone 1). Region card, three lines, over a still of the lamp on its hook (Elowen's spiral on its
+**The opening** (before zone 1). Three stills, one line each; the first is the lamp on its hook (Elowen's spiral on its
 base):
 1. Ten years ago every lamp went out. The one over your door never did.
 2. This winter the last lamp in sight went out. Tonight the dark came for yours.
 3. Your village hid. You took the lamp and ran, so the dark would follow you.
 
-Then on the road, the lamp starts to gutter (the dark is close and you are alone). An old man by a dead fire: Hesketh.
-"Wood first. Then we talk." When the fire catches from your lamp, the lamp steadies: "Every road needs a place to come
+Then "Who are you?" (the hero pick). Then on the road, the lamp starts to gutter (the dark is close and you are
+alone). An old man by a dead roadside fire: Hesketh. Over the third still, in three lines at most, his fire catches from
+your lamp and the lamp steadies. "Wood first. Then we talk." Then the first fight.
+
+The talk waits for the camp fire, which the player builds from 8 logs. When it is lit: "Every road needs a place to come
 back to." Then the talk (one card, four lines): "Ten years I've lit dead lamps. Not one took my fire." /
 "I could have lit them from hers. I couldn't go up." (He looks at the hill and doesn't explain; Ch1 end does.) / "Those
-things aren't animals. They climb out of the ground." / "Your village is down there. Go back and shut the holes." The delivery card fixes the order so this plays before
-the first fight (audit A1).
+things aren't animals. They climb out of the ground." / "Your village is down there. Go back and shut the holes." The
+roadside fire and the camp fire stay two different fires. This order is the Opus judge's ruling on the early-game plan
+(2026-10-06, DECISIONS "The opening"). It replaces the old order, where the talk played before the first fight (audit
+A1), so the first fight comes within 45 s.
 
 | # | Area (zones) | Champion | Stake / person | Turn | Plant |
 |---|---|---|---|---|---|

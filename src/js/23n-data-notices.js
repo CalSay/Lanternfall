@@ -144,7 +144,8 @@ const NOTICES = [
   // C11: a milestone feat is a small permanent reward, recorded without a celebration card.
   { id: 'deed-milestone', key: 'deed-milestone', ch: 'log' },
   // ---- C14: the merged away report owns its source summaries ----
-  { id: 'away-report', key: 'away-report', ch: 'card' }
+  { id: 'away-report', key: 'away-report', ch: 'card' },
+  { id: 'hero-token', key: 'heroToken', ch: 'bell', why: 'a hero token won (56c, story-unlock-gates): when that hero joins; no kit yet, so no pop' }
 ];
 const NOTICE_BY_KEY = Object.fromEntries(NOTICES.filter(r => r.key).map(r => [r.key, r]));
 // The rule for a message (or its key), or null.
