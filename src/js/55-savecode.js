@@ -194,6 +194,10 @@ function validateSave(data) {
       for (const z of Object.values(s.zn || {})) int(z, 'solo.zone', 1, lim.progression);
       for (const tr of Object.values(s.tr || {})) { record(tr, 'solo.training'); for (const n of Object.values(tr)) int(n, 'solo.training.level', 0, lim.progression); }
     }
+    if (data.abil) {   // learned abilities: abilityOwned reads unl[hero] and scrollCount reads scrolls[id] after a load
+      for (const [k, ids] of Object.entries(data.abil.unl || {})) { known(SOLO_HEROES, k, 'abil.unl.hero'); array(ids, 'abil.unl.' + k); for (const id of ids) if (typeof id !== 'string' || !ABILITIES[id] || ABILITIES[id].hero !== k) fail('abil.unl.' + k); }
+      for (const [id, n] of Object.entries(data.abil.scrolls || {})) { known(SCROLLS, id, 'abil.scrolls.id'); int(n, 'abil.scrolls.' + id); }
+    }
     rows(data.camp, 'builds', b => { known(CAMP_B, b.id, 'camp.build.id'); int(b.to, 'camp.build.to', 1, CAMP_B[b.id].max); num(b.dur, 'camp.build.dur', 1, 864e13); num(b.start, 'camp.build.start', 0, 864e13); num(b.end, 'camp.build.end', 0, 864e13); record(b.cost, 'camp.build.cost'); num(b.cost.gold, 'camp.build.gold'); pack(b.cost.mats, 'camp.build.mats'); array(b.cost.troph, 'camp.build.troph'); for (const l of b.cost.troph) { array(l, 'camp.build.troph[]'); if (l.length !== 2) fail('camp.build.troph[]'); if (l[0] !== 'any') int(l[0], 'camp.build.troph.kind', 0, CRAFT_TROPHIES.length - 1); num(l[1], 'camp.build.troph.units'); } });
     if (data.camp && data.camp.b) for (const [k, n] of Object.entries(data.camp.b)) { known(CAMP_B, k, 'camp.building'); int(n, 'camp.' + k, 0, CAMP_B[k].max); }
     rows(data.camp, 'news'); rows(data.craft, 'jobs'); rows(data.almanac, 'goals'); rows(data.errors, 'list');
