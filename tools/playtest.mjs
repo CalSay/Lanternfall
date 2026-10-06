@@ -56,7 +56,7 @@ function num(v, name) { const n = Number(v); if (!Number.isFinite(n) || n < 0) d
 function fixture(name) {
   if (name === 'fresh') return null;
   let f = path.join(ROOT, 'tests', 'fixtures', `save-${name}.json`);
-  if (!fs.existsSync(f)) f = path.join(ROOT, 'docs', 'proof', 'fixtures', `save-${name}.json`);   // a card's own start state (not run through the save checks)
+  if (!fs.existsSync(f)) f = path.join(ROOT, 'tests', 'proof-fixtures', `save-${name}.json`);   // route-only saves the save-code checks must not read
   if (!fs.existsSync(f)) die(`no fixture "${name}": use fresh, early, mid or late`);
   return JSON.parse(fs.readFileSync(f, 'utf8'));
 }

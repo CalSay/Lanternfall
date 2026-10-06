@@ -17,10 +17,14 @@
 // goalGate(goal) -> bool       Next Up filter: false while the goal's system is still hidden.
 //                              Only active once the UI turns it on (ONBOARD.gate), so the Node
 //                              tools see every goal.
+// onboardUse({ tab, view, feature }) -> { id, text } | null   the first-use line for the system on screen (FIRST_USE below):
+//                              each system that opens after the first fight explains itself once, in one line. The UI
+//                              asks only while no guide step shows; it never pauses the game.
+// onboardUseDone(id)           the line was read (x, or about 7 s on screen). No event, so guide walks never see it.
 // Events: unlock { id, tab, view, quiet } (a feature appeared), onboardStep { id } (a step completed).
 // State S.onboard: { v, all, got: { id: seconds played }, done: { stepId: 1 }, seen: { tabOrView: 1 },
 //   tips, t (seconds played while the guide runs), taps, casts }.
-let isUnlocked, onboardReveal, onboardUnlockAll, onboardStep, onboardDone, onboardTips, onboardCheck, onboardNeed, onboardPaused;
+let isUnlocked, onboardReveal, onboardUnlockAll, onboardStep, onboardDone, onboardUse, onboardUseDone, onboardTips, onboardCheck, onboardNeed, onboardPaused;
 let onboardIsNew = null;   // set by 75-onboard-ui.js; 70-ui.js marks new views with it
 let onboardSpec = null;    // set by 75-onboard-ui.js: step id -> { node, text } | null (the browser check)
 let soloGuideWants = () => '';   // set by 75-onboard-ui.js: the step on screen ('dodge' / 'parry': the first press counts, 59j forgive)
@@ -42,21 +46,25 @@ const unlit = () => coldH() && typeof hearthLit === 'function' && !hearthLit();
 // FEATURES: one row per thing that unlocks. tab/view say where it lives (for the UI's toast and
 // "new" marks); when() is checked about once a second; `why` is the rule in words (docs and checks).
 // A tab shows while any of its views is unlocked (Fight's Upgrades view is always there).
+// story-unlock-gates (judge): at most one new row per ONBOARD_TUNE.gap seconds of play, the first ready row in table order; a row's
+// now() skips the wait when the player's own act or a drop opened it (raid: the online layer's timing stays as it was). 0: off.
+const ONBOARD_TUNE = { gap: 60 };
 const FEATURES = [
   { id: 'party', tab: 'party', view: 'team', name: 'Hero', why: 'hero level 3', when: () => S.L >= 3 || S.maxZone >= 2 },
+  { id: 'gather', tab: 'gat', view: 'mine', name: 'Gather', why: 'after the first boss (zone 2), or once the hero walks to the grove', when: () => S.maxZone >= 2 || S.activity === 'gather', now: () => S.activity === 'gather' },
   { id: 'nextup', name: 'Next Up', why: 'first Training level, or zone 2', when: () => upBought() || S.maxZone >= 2 },
-  { id: 'gather', tab: 'gat', view: 'mine', name: 'Gather', why: 'after the first boss (zone 2), or once the hero walks to the grove', when: () => S.maxZone >= 2 || S.activity === 'gather' },
+  { id: 'awaynote', name: 'Away note', why: 'Gather is open (the away strip under the Fight / Gather row, 71-ui-fight)', when: () => isUnlocked('gather') },
   { id: 'bounties', tab: 'adv', view: 'bounties', name: 'Bounties', why: 'zone 4', when: () => S.maxZone >= 4 },
-  { id: 'camp', tab: 'world', view: 'camp', name: 'Camp', why: 'the camp opens (zone 5; a cold Hearth: the fire is lit)', when: () => (!coldH() && S.maxZone >= 5) || (typeof campOpen === 'function' && campOpen()) },
+  { id: 'camp', tab: 'world', view: 'camp', name: 'Camp', why: 'the camp opens (zone 5; a cold Hearth: the fire is lit)', when: () => (!coldH() && S.maxZone >= 5) || (typeof campOpen === 'function' && campOpen()), now: () => typeof campOpen === 'function' && campOpen() },
   { id: 'forage', tab: 'gat', view: 'forage', name: 'Foraging', why: 'zone 5', when: () => S.maxZone >= 5 || S.skills.forage.lv > 1 },
-  { id: 'craft', tab: 'forge', view: 'make', name: 'Craft', why: 'materials for a first recipe, any gear, or zone 6; a cold Hearth: the Workbench is built', when: () => coldH() ? campLv('bench') >= 1 : S.maxZone >= 6 || S.items.length > 0 || craftReady() },
+  { id: 'craft', tab: 'forge', view: 'make', name: 'Craft', why: 'materials for a first recipe, any gear, or zone 6; a cold Hearth: the Workbench is built', when: () => coldH() ? campLv('bench') >= 1 : S.maxZone >= 6 || S.items.length > 0 || craftReady(), now: () => campLv('bench') >= 1 },
   { id: 'bestiary', tab: 'adv', view: 'bestiary', name: 'Bestiary', why: 'zone 6 or 60 kills', when: () => S.maxZone >= 6 || S.totalKills >= 60 },
   { id: 'almanac', tab: 'world', view: 'almanac', name: 'Almanac', why: '7 minutes played or zone 7', when: () => O().t >= 420 || S.maxZone >= 7 },   // BAL3: was 8 / 8 (the cheaper Blade front-loads the first 5 minutes)
-  { id: 'uniques', tab: 'forge', view: 'uniques', name: 'Uniques', why: 'first unique loot, 12 minutes played, or zone 10', when: () => O().t >= 720 || S.maxZone >= 10 || Object.keys(S.found || {}).length > 0 },
-  { id: 'tavern', tab: 'world', view: 'tav', name: 'Tavern', why: '14 minutes played, or zone 8; a cold Hearth: the Tavern is built', when: () => coldH() ? campLv('tavern') >= 1 : O().t >= 840 || S.maxZone >= 8 },
+  { id: 'uniques', tab: 'forge', view: 'uniques', name: 'Uniques', why: 'first unique loot, 12 minutes played, or zone 10', when: () => O().t >= 720 || S.maxZone >= 10 || Object.keys(S.found || {}).length > 0, now: () => Object.keys(S.found || {}).length > 0 },
+  { id: 'tavern', tab: 'world', view: 'tav', name: 'Tavern', why: '14 minutes played, or zone 8; a cold Hearth: the Tavern is built', when: () => coldH() ? campLv('tavern') >= 1 : O().t >= 840 || S.maxZone >= 8, now: () => campLv('tavern') >= 1 },
   { id: 'codex', name: 'Codex', why: 'zone 10', when: () => S.maxZone >= 10 },
-  { id: 'raid', tab: 'world', view: 'raid', name: 'World raid', why: 'zone 12', when: () => S.maxZone >= 12 || S.raid.dmg > 0 },
-  { id: 'stars', tab: 'party', view: 'stars', name: 'Stars', why: 'the first star found (the zone 6 boss), or hero level 10', when: () => S.L >= 10 || !!(S.stars && S.stars.own && Object.keys(S.stars.own).length) },
+  { id: 'raid', tab: 'world', view: 'raid', name: 'World raid', why: 'zone 12', when: () => S.maxZone >= 12 || S.raid.dmg > 0, now: () => true },
+  { id: 'stars', tab: 'party', view: 'stars', name: 'Stars', why: 'the first star found (the zone 6 boss), or hero level 10', when: () => S.L >= 10 || !!(S.stars && S.stars.own && Object.keys(S.stars.own).length), now: () => !!(S.stars && S.stars.own && Object.keys(S.stars.own).length) },
   { id: 'deep', tab: 'adv', view: 'deep', name: 'Deepwell', why: 'zone 18 (it opens at zone 20 and Hearth 3)', when: () => S.maxZone >= 18 || !!(S.deep && S.deep.runs) },
   // late: a system that arrives after the guide. It stays gated after
   // "Show every tab" until its own rule holds, so nobody sees an empty view.
@@ -65,6 +73,32 @@ const FEATURES = [
     when: () => { try { return handsOpen(); } catch (e) { return false; } } }
 ];
 const FEATURE_OF = Object.fromEntries(FEATURES.map(f => [f.id, f]));
+
+// FIRST_USE (ap-first-use-hints): every FEATURES row has exactly one line saying what that system is, plain words.
+// via (default 'hint'): where the line shows. 'hint': the docked hint, once, the first time the player opens the view
+// (onboardUse). 'guide': the guide's own step carries it (Next Up). 'notice': the unlock notice carries it (the Codex,
+// Stars: they open as a sheet or a toast, not a view). The unlock notice of a 'hint' system only says where it is
+// (75-onboard-ui OPEN_TXT), so one unlock gives one notice and one line. The guide NPC can voice these later.
+const FIRST_USE_FOR = 7200;   // seconds of play after the unlock (the same window as a view's "new" mark)
+const FIRST_USE = {
+  party: { text: 'Your Hero: gear, level and abilities.' },
+  nextup: { text: 'Next Up shows your best next goal. Tap it.', via: 'guide' },
+  awaynote: { text: 'While away, gathering continues and fighting stops.', via: 'strip' },   // the strip is its own line (71-ui-fight)
+  gather: { text: 'Pick a node and your hero mines or chops it, even while you are away.' },
+  bounties: { text: 'Bounties are three short goals. They pay gold, materials and Renown.' },
+  camp: { text: 'Build stations here. Each one opens a new way to make things.' },
+  forage: { text: 'Foraging finds fibre and herbs.' },
+  craft: { text: 'Craft turns materials into gear. Pick a station, then a recipe.' },
+  bestiary: { text: 'The Bestiary lists the foes you have met. Kills earn perks against them.' },
+  almanac: { text: "The Almanac shows today's Omen, plus Dares and a weekly board." },
+  uniques: { text: 'Uniques are rare gear that bosses drop. Each has a strong effect.' },
+  tavern: { text: 'The Tavern shows who is online and the hall of heroes.' },
+  codex: { text: 'The Codex is open. It tracks what you have found. Find it in the Journal.', via: 'notice' },
+  raid: { text: 'One boss, shared by every player. Your hits add to the same total.' },
+  stars: { text: 'Each star changes how your fights play.', via: 'notice' },
+  deep: { text: 'The Deepwell is a run of fight floors. Pick a boon between floors and earn Marks.' },
+  hands: { text: 'Hire gatherers on the Tavern board. They work shifts while you are away.' }
+};
 
 // GUIDE_STEPS: in order of priority; the first step not done whose when() holds is shown.
 // done() completes a step by doing the thing. Targets and sentences live in 75-onboard-ui.js.
@@ -180,12 +214,13 @@ function craftReady() {
   };
   // Check every rule now; returns the ids that unlocked. The tick hook calls it about once a second.
   onboardCheck = () => {
-    const out = [];
+    const out = [], last = Math.max(-Infinity, ...Object.values(O().got).filter(v => typeof v === 'number' && Number.isFinite(v) && v <= O().t));
+    const gap = ONBOARD_TUNE.gap; let wait = gap > 0 && !O().all && O().t - last < gap;   // the spacing governor (ONBOARD_TUNE); O().t stops once all is set
     for (const f of FEATURES) {
       if (O().all && !f.late) continue;
       if (O().got[f.id] != null) continue;
-      let ok = false; try { ok = !!f.when(); } catch (e) {}
-      if (ok && unlock(f.id)) out.push(f.id);
+      let ok = false; try { ok = !!f.when() && (!wait || (!!f.now && !!f.now())); } catch (e) {}
+      if (ok && unlock(f.id)) { out.push(f.id); wait = gap > 0; }
     }
     if (!O().all && FEATURES.every(f => f.late || O().got[f.id] != null)) O().all = true;
     return out;
@@ -211,6 +246,20 @@ function craftReady() {
     }
     return null;
   };
+
+  // ---- first-use lines (FIRST_USE) ----
+  // A hint line shows only to a player who just got the system (2 hours of play, as the "new" mark), on a view of its own (the view's `feature`, or
+  // the FEATURES tab and view), and while tips are on. Once read it is kept as S.onboard.done['use:<id>'] (the same map as the guide steps, no new field).
+  onboardUse = ctx => {
+    if (!O().tips || !ctx || !ctx.tab) return null;
+    for (const f of FEATURES) {
+      const u = FIRST_USE[f.id], got = O().got[f.id];
+      if (!u || u.via || !f.tab || got == null || O().done['use:' + f.id] || O().t - got >= FIRST_USE_FOR) continue;
+      if (ctx.feature === f.id || (f.tab === ctx.tab && f.view === ctx.view)) return { id: 'use:' + f.id, text: u.text };
+    }
+    return null;
+  };
+  onboardUseDone = id => { O().done[id] = 1; };
 
   // ---- Next Up: hide goals whose system is still hidden (only while ONBOARD.gate is on) ----
   const GOAL_FEATURE = { bounty: 'bounties', bestiary: 'bestiary', skill: 'gather', forge: 'craft', camp: 'camp', codex: 'codex', deep: 'deep' };

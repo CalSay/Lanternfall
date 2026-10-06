@@ -67,3 +67,13 @@
 .hud-btn.off { opacity: .6; }
 .hud-btn canvas { width: 14px; height: 14px; image-rendering: pixelated; }
 .stage.tall .hud-btn { right: 6px; bottom: 38px; }
+
+/* fight-hud-fit: names never cut to "T... 10.7M". When "name  current / max" does not fit one row, the numbers drop under the
+   name (readHud re-reads the plate height, so the place line and chips follow). The place may take two lines. */
+.stagebox .hud.vs .mob-line { flex-wrap: wrap; row-gap: 0; }
+.stagebox .hud.vs .mob-name { flex: 1 0 auto; max-width: 100%; white-space: normal; overflow: visible; line-height: 1.1; }   /* a long foe name takes a second line */
+.stagebox .hud.vs .hud-zone { max-width: 40%; }
+.stagebox .hud.vs .hud-zone .zname { white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.1; overflow-wrap: anywhere; }
+/* the turn banner owns the middle of the stage while it shows; toasts and the strip wait out its short pause */
+.stagebox.tc-on .toasts { opacity: 0; transition: opacity .1s; }
+.stagebox.vs-on .toasts:not(.over-menu) { top: calc(var(--vs-b, 54px) + 22px); }   /* under the bars and the place line, not over them */
