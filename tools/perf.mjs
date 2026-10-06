@@ -8,6 +8,8 @@
 //   S6: scenarios swarm10 (a swarm of 10 with Burns and an Explosive elite, vs packs of 3 at the same zone) and bossKit
 //   (a kit boss through its phases, a summon, a Stagger and its Finisher); the quick run measures them on the late save
 //   options: --json out.json (write raw results)  --only phone|desktop  --save new|late
+//            --compare base.html [--runs 3]  judge this dist against another build run on the SAME machine: both builds run --runs times
+//            (alternating), per-metric medians; a metric fails only when over budget AND over 1.25x the base build's median (+5% of budget)
 //            --html file (benchmark another build, e.g. an older commit's dist, for before/after)
 //            --trace dir (write a Chrome trace of each steady-fight window, open in DevTools Performance)
 //
@@ -25,7 +27,7 @@ import { ROOT } from './lib/core.mjs';
 const args = process.argv.slice(2);
 const QUICK = args.includes('--quick');
 const argVal = k => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : null; };
-const ONLY = argVal('--only'), ONLY_SAVE = argVal('--save'), JSON_OUT = argVal('--json'), TRACE = argVal('--trace'), HTML = argVal('--html');
+const ONLY = argVal('--only'), ONLY_SAVE = argVal('--save'), JSON_OUT = argVal('--json'), TRACE = argVal('--trace'), HTML = argVal('--html'), COMPARE = argVal('--compare'), RUNS = Math.max(1, +(argVal('--runs') || 3));
 const KEY = 'lanternfall.save.v5';   // W3-A
 
 // ---------------- budget (keep in sync with docs/design/perf.md) ----------------
@@ -77,8 +79,8 @@ const HOOK = `
   };
 }
 `;
-function instrumented() {
-  const file = HTML ? path.resolve(HTML) : path.join(ROOT, 'dist', 'lanternfall.html');
+function instrumented(over) {
+  const file = over ? path.resolve(over) : HTML ? path.resolve(HTML) : path.join(ROOT, 'dist', 'lanternfall.html');
   if (!fs.existsSync(file)) throw new Error(file + ' missing: run node tools/build.mjs');
   let html = fs.readFileSync(file, 'utf8');
   const end = html.lastIndexOf('})();\n</script>');
@@ -165,8 +167,9 @@ async function runScenario(browser, base, { dev, save }) {
   // A new game plays story cards (the opening, a companion's line). A player taps them away, so do the same
   // before a measured window: the sheet covers the game UI and would intercept the click. Not part of the measure.
   const closeStory = async () => {
-    for (let k = 0; k < 12 && await page.$('.sty-sheet .sty-done, .bsheet-ov .sty-done'); k++) {
-      await page.click('.sty-sheet .sty-done, .bsheet-ov .sty-done', { timeout: 3000 }).catch(() => {}); await page.waitForTimeout(400);
+    for (let k = 0; k < 12 && await page.$('.sty-sheet .sty-done, .bsheet-ov .sty-done, .mm-ov'); k++) {
+      // A moment card (.mm-ov, 23n) ignores taps for its first moment (tapLockMs); the retry loop covers that.
+      await page.click('.sty-sheet .sty-done, .bsheet-ov .sty-done, .mm-ov', { timeout: 3000, position: { x: 5, y: 5 } }).catch(() => {}); await page.waitForTimeout(400);
     }
   };
   const window_ = async (ms, fn) => {
@@ -265,10 +268,13 @@ async function runScenario(browser, base, { dev, save }) {
     }, true);
   });
   const btn = page.locator('.sbtn.sb-atk').first();
-  for (let i = 0; i < W.taps; i++) {
+  // The Attack button greys out between packs, so a tap can land on the panel behind it: count only taps that hit the button and try again.
+  const hits = () => page.evaluate(() => window.__tap.list.filter(t => t.onBtn).length);
+  for (let i = 0, tries = 0; await hits() < W.taps && tries < W.taps * 4; i++, tries++) {
     await page.evaluate(() => window.__lf.x("S.activity === 'fight' || setActivity('fight'); soloPick && !soloHero() && soloPick('wren')"));
     await page.evaluate(() => { const t = document.querySelector('.tab[data-tab=adv]'); if (t) t.click(); });
     await page.waitForTimeout(1200); // let the Attack cooldown end
+    await page.waitForSelector('.sbtn.sb-atk:not(.off)', { timeout: 6000 }).catch(() => {});   // a new game's cooldown is longer: a tap on a greyed button measures nothing
     // Close story pop-ups (a companion joins, ...): one tap anywhere continues. Not part of the measure.
     await closeStory();
     for (let k = 0; k < 5 && await page.$('.join-ov'); k++) { await page.click('.join-ov', { position: { x: 5, y: 5 } }).catch(() => {}); await page.waitForTimeout(300); }
@@ -395,6 +401,7 @@ const { pw, exe, reason } = browserTools;
 if (!pw || !exe) { console.error(reason); process.exit(2); }
 const srv = await serve(instrumented());
 const base = `http://127.0.0.1:${srv.address().port}/`;
+const srvBase = COMPARE ? await serve(instrumented(COMPARE)) : null;
 const browser = await pw.chromium.launch({ executablePath: exe, args: ['--enable-precise-memory-info', '--no-sandbox'] });
 const scenarios = [];
 for (const dev of QUICK ? ['phone'] : ['phone', 'desktop']) for (const save of ['new', 'late']) {
@@ -403,9 +410,47 @@ for (const dev of QUICK ? ['phone'] : ['phone', 'desktop']) for (const save of [
 }
 const all = [];
 const t0 = Date.now();
+const med = a => { const v = a.filter(x => typeof x === 'number').sort((x, y) => x - y); return v.length ? v[v.length >> 1] : a[0]; };
+// Same-machine comparison: judge() values per run, medians per metric, candidate vs base build.
+function compare(cand, ref) {
+  const key = o => `${o.dev}/${o.save}`;
+  let fails = 0;
+  for (const s of scenarios) {
+    const k = `${s.dev}/${s.save}`, B = BUDGET[s.dev];
+    const runsOf = set => set.filter(o => key(o) === k).map(judge);
+    const cr = runsOf(cand), br = runsOf(ref);
+    console.log(`\n${k} (medians of ${cr.length} runs each; base build vs this build)`);
+    const rows = [], bad = [];
+    cr[0].forEach((c, i) => {
+      const cv = med(cr.map(r => r[i].val)), bv = med(br.map(r => r[i].val));
+      if (typeof cv !== 'number') { if (!cr.every(r => r[i].ok)) bad.push(`${c.name}: ${cv} (budget ${c.lim})`); return; }
+      const slack = typeof c.lim === 'number' ? c.lim * 0.05 : 0;
+      const over = cv > c.lim, worse = cv > bv * 1.25 + slack;
+      rows.push([c.name, bv, cv, c.lim, over ? (worse ? 'FAIL' : 'noise') : 'ok']);
+      if (over && worse) bad.push(`${c.name}: ${cv}${c.unit} vs base ${bv}${c.unit} (budget ${c.lim}${c.unit})`);
+    });
+    console.log(table(rows.filter(r => r[4] !== 'ok'), ['metric', 'base', 'this', 'budget', 'verdict']) || '(all within budget)');
+    console.log(`${k}: ${bad.length ? 'FAIL' : 'PASS'} (${rows.length - bad.length}/${rows.length} ok; ${rows.filter(r => r[4] === 'noise').length} over budget on both builds)`);
+    for (const x of bad) console.log('  FAIL ' + x);
+    fails += bad.length;
+  }
+  console.log(`\n${fails ? 'FAIL' : 'PASS'}: ${fails} metric(s) slower than the base build${QUICK ? ' (quick run)' : ''}`);
+  return fails;
+}
 try {
+  if (COMPARE) {
+    const refBase = `http://127.0.0.1:${srvBase.address().port}/`, refAll = [];
+    for (let r = 0; r < RUNS; r++) for (const s of scenarios) {
+      process.stdout.write(`run ${r + 1}/${RUNS} ${s.dev}/${s.save}: base ... `); refAll.push(await runScenario(browser, refBase, s));
+      process.stdout.write('this ... '); all.push(await runScenario(browser, base, s)); console.log('done');
+    }
+    if (JSON_OUT) fs.writeFileSync(JSON_OUT, JSON.stringify({ this: all, base: refAll }, null, 1));
+    console.log(`(${Math.round((Date.now() - t0) / 1000)} s, Chromium ${exe.replace(/.*pw-browsers\//, '')}, ${os.cpus().length} CPUs)`);
+    await browser.close(); srv.close(); srvBase.close();
+    process.exit(compare(all, refAll) ? 1 : 0);
+  }
   for (const s of scenarios) { process.stdout.write(`running ${s.dev}/${s.save} ... `); const o = await runScenario(browser, base, s); all.push(o); console.log('done'); }
-} finally { await browser.close(); srv.close(); }
+} finally { await browser.close().catch(() => {}); srv.close(); }
 if (JSON_OUT) fs.writeFileSync(JSON_OUT, JSON.stringify(all, null, 1));
 console.log(`(${Math.round((Date.now() - t0) / 1000)} s, Chromium ${exe.replace(/.*pw-browsers\//, '')}, ${os.cpus().length} CPUs)`);
 process.exit(report(all) ? 1 : 0);
