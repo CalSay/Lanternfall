@@ -49,7 +49,7 @@ section of the baseline. It exists to catch what a 10-hour run cannot: a progres
 |---|---|
 | `zoneEnd`, `zoneAt10h`, `zoneAt25h` | how far the hero got, and when |
 | `lastNewZoneHour`, `sinceLastZoneHours`, `postZoneShare` | when the last new zone landed, and how much of the run came after it |
-| `postNewThingShare` | share of the run after the last new zone, unlock, camp building, Proving, hire, Star or trophy: an empty endgame |
+| `postNewThingShare` | share of the run after the last new zone, unlock, camp building, Proving, hire, or Star (repeat drops do not count): an empty endgame |
 | `stallsOver1h`, `longestStallSec` | progress walls: stretches of an hour or more without a new zone (the report lists each, with its zone) |
 | `goldSpentShare`, `essHeldShare`, `deadFamilies` | sinks still working after 50 hours |
 | `abilityTopShare`, `trainTopShare`, `starsSet`, `gearTierMean` | the dominant build, for reference (not ranked); the report also prints the Stars set and the gear worn at the end |

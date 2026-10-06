@@ -53,8 +53,8 @@ const DEFAULT_PERSONAS = Object.keys(PERSONAS).filter(p => !PERSONAS[p].longOnly
 const REWARD = new Set(['zoneClear', 'level', 'campBuilt', 'crafted', 'upgraded', 'trophy', 'scrollDrop', 'starFound', 'starLearned',
   'provingPassed', 'handsHire', 'deedTier', 'skillUp', 'unlock']);
 // What counts as the game opening something new (the long run's endgame clock): a zone, an unlock, a camp building, a
-// Proving, a hire, a Star learned, a trophy. Crafts, upgrades, levels and skill levels keep coming to the end, so they would hide an empty endgame.
-const NEW_THING = new Set(['zoneClear', 'unlock', 'campBuilt', 'provingPassed', 'handsHire', 'starLearned', 'trophy']);
+// Proving, a hire, a Star learned. Crafts, upgrades, levels, skill levels and trophies (champions drop repeats of a type they already gave) keep coming to the end, so they would hide an empty endgame.
+const NEW_THING = new Set(['zoneClear', 'unlock', 'campBuilt', 'provingPassed', 'handsHire', 'starLearned']);
 const STALL_SEC = 600;   // no new zone for 10 active minutes is a stall point
 const sum = o => Object.values(o).reduce((a, b) => a + b, 0);
 const mean = l => l.reduce((a, b) => a + b, 0) / l.length;
@@ -180,7 +180,7 @@ const METRICS = [
   ['long', 'lastNewZoneHour', 'mean', 'down', 10, 0, 'hour of the last new zone (a fall means the world ran out sooner)'],
   ['long', 'sinceLastZoneHours', 'mean', 'up', 7, 0, 'hours at the end of the run since the last new zone (progress wall)'],
   ['long', 'postZoneShare', 'mean', 'up', 0.2, 0, 'share of the run spent past the last new zone'],
-  ['long', 'postNewThingShare', 'mean', 'up', 0.07, 0, 'share of the run spent past the last unlock, zone, camp building, Proving, hire, Star or trophy (empty endgame)'],
+  ['long', 'postNewThingShare', 'mean', 'up', 0.1, 0, 'share of the run spent past the last unlock, zone, camp building, Proving, hire, or Star (empty endgame)'],
   ['long', 'stallsOver1h', 'mean', 'up', 3, 0, 'stretches of an hour or more without a new zone'],
   ['long', 'stallsOver3h', 'mean', 'up', 1, 0, 'stretches of three hours or more without a new zone (a new long wall)'],
   ['long', 'longestStallSec', 'mean', 'up', 14400, 0.5, 'longest stretch without a new zone'],

@@ -487,17 +487,17 @@
         "sd": 0.06
       },
       "long.postNewThingShare": {
-        "value": 0.02,
+        "value": 0.07,
         "bad": "up",
-        "abs": 0.07,
+        "abs": 0.1,
         "rel": 0,
-        "note": "share of the run spent past the last unlock, zone, camp building, Proving, hire, Star or trophy (empty endgame)",
+        "note": "share of the run spent past the last unlock, zone, camp building, Proving, hire, or Star (empty endgame)",
         "perHero": {
-          "wren": 0.01,
-          "tobin": 0.04,
-          "pip": 0.01
+          "wren": 0.04,
+          "tobin": 0.14,
+          "pip": 0.04
         },
-        "sd": 0.01
+        "sd": 0.02
       },
       "long.stallsOver1h": {
         "value": 9.78,
