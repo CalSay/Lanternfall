@@ -2,9 +2,11 @@
 // card or caption is due, once per save, and never during a fight. CORE FILE: no DOM. UI: 75-story-ui.js.
 // Words: 21k-story-hollow.js (STORY_BEATS, one file per chapter). Limits and banned words: 21h-lore-hollow.js.
 //
-// One system, silent where the game is not ready: a slot with no data plays nothing. A zone or Captain line needs its zone's
-// monster in ZONE_FOES; a Champion or Elder scene needs its encounter (STORY_ENC + mob.encounter, below). Nothing plays on a
-// replay (every key is kept in S.story.seen), during a fight, or while the hero gathers, raids or dives.
+// One system, silent where the game is not ready: a slot with no data plays nothing. A zone line needs its zone's monster in
+// ZONE_FOES; a Captain line needs the Captain itself on screen (ZONE_FOES[z].captain, set by a Captain card; none yet, the zone
+// boss is still "Elder <type>"); a Champion or Elder scene needs its encounter (STORY_ENC + mob.encounter, below). Silent is silent
+// everywhere: the catch-up files nothing for them, the Road log lists nothing for them, the Bestiary shows nothing for them.
+// Nothing plays on a replay (every key is kept in S.story.seen), during a fight, or while the hero gathers, raids or dives.
 //
 // Channels (STORY_BEATS slots, 21k-story-hollow.js):
 //   R region card, A area title, Z zone line, C Captain line, P Champion scene, E Elder sequence, N NPC scene, V Voice line,
@@ -21,17 +23,24 @@
 //   storyOn() -> bool                      scenes may play
 //   storyHeld() -> bool                    a scene is on screen: the frame loop does not tick (90-boot)
 //   storyClaim(id)                         the UI shows scene `id` (so the hold lasts until it ends; without a claim it lapses in 30 s)
-//   storyClose(id, how)                    how: 'done' (the last card closed) | 'skipped' (Skip or Close ended it early). Files
-//                                          the scene's page, applies unchosen choice defaults, sets S.story.ends[id].
+//   storyClose(id, how)                    how: 'done' (the last card closed) | 'skipped' (Skip or Close ended it early) | 'auto'
+//                                          (nobody touched the card for 45 s, or it waited behind another overlay for 28 s: 75-story-ui).
+//                                          Files the scene's page, applies unchosen choice defaults, sets S.story.ends[id] ('auto'
+//                                          sets none, so the skip rate of bible 12a stays honest, and files the scene's own key and its
+//                                          page as late so the Journal offers "Catch up on the story"; a choice in an unattended
+//                                          Champion or Elder scene stays open, and its Journal entry offers it until it is made).
 //   storyChoose(choiceId, optionId) -> bool   saves a choice (once); the default if optionId is missing
+//   storyChosen(choiceId) -> bool          the choice is saved
 //   storyChoiceDef(id) -> { prompt, options: [{ id, label, line }], def } | null   (the choice card reads it)
-//   storyList() -> [{ id, kind, region, zone, title, got, read, late }]   the Journal, in story order
-//   storyEntry(id) -> { id, kind, region, zone, title, cards: [{ lines, who? }] } | null
+//   storyList() -> [{ id, kind, region, zone, title, got, read, late }]   the Journal, in story order (an NPC scene dropped by `not`
+//                                          is never listed; Champion and Elder NPCs read inside their Champion's or Elder's entry)
+//   storyEntry(id) -> { id, kind, region, zone, title, cards: [{ lines, who?, choice? }] } | null   (a choice card only while it is open)
 //   storyRead(id), storyUnread() -> [ids], storyLate() -> [ids]   (late: filed by the catch-up, unread)
 //   storyJournalOpened()                   counts one Journal open (S.story.journalOpens, bible 12a)
-//   storyRoadLog() -> [{ zone, head, line }]   area titles, zone lines and Captain lines already seen
+//   storyRoadLog() -> [{ zone, head, line }]   area titles, and the zone and Captain lines already seen whose monster is in the game
 //   storyFile(kind, id) -> bool            files a letter or note (kind 'letter' | 'note') in the Journal, once
-//   storyHeroLine(id) -> string            the active hero's line (wren/tobin/pip), else the shared `_` line, else ''
+//   storyHeroLine(id) -> string            bible 4.4: the active hero's line if it is a starter (wren/tobin/pip), else the stored
+//                                          starter's (S.story.starter), else the shared `_` line, else ''
 //   storyHearthLine() -> string            the camp voice: the newest Champion or Elder line the save has earned
 //   storyVerse(elderId) -> [lines] | null  Vesper's verse, once that Elder is down
 //   storyItemLine(uniqueKey) -> string     a Hollow unique's flavour line; '' until its area's Champion is in the game
@@ -45,20 +54,24 @@
 // Events emitted: storyScene { id, ch, kind: 'caption' | 'card', title, head, lines, cards, zone, region, hold, page },
 //   storyEnd { id, how }, storyChoice { id, option }, storyRead { id }, storyFiled { kind, id }.
 // Listens: spawn (the region boss's display name; Captains and Champions), kill (post scenes), awayBegin / awayEnd.
+// Data keys: an npc entry may carry `not: 'wren' | 'tobin' | 'pip'` (a starter met as a person): the scene is dropped when that
+// starter is the story hero (the active hero if it is a starter, else S.story.starter).
 //
 // Save: registerState('story', { v: 1, seen: {}, read: {}, init: 0, off: 0, starter: '', litFor: {}, coldhearth: '', ends: {},
 //   journalOpens: 0 }). v, seen, read, init are the old fields, kept. `seen` keys: 'r:<region>' (R), 'a:<areaIdx>' and 'z:<zone>'
 //   (A, Z), 'c:<zone>' (C), 'p:<id>:pre|post' (P), 'e:<id>:pre|post' (E), 'n:<id>' (N), 'v:<id>' (V), 'ch:<id>' (choice),
 //   'j:<id>' (page), 'l:<id>' and 'o:<id>' (letter, note); value = ms played (negative = filed by the catch-up). The old
 //   keys ('a:<region>:<place>', 'b:', 'ei:', 'ef:') are kept and ignored. `read`: Journal entry id -> 1.
-//   off: 1 = Story cards off. ends: scene key -> 'done' | 'skipped' (12a). journalOpens: Journal opens (12a).
+//   off: 1 = Story cards off. ends: scene key -> 'done' | 'skipped' (12a; never 'auto'). journalOpens: Journal opens (12a).
 //   starter, litFor (Great Lantern -> name), coldhearth: for story-opening and story-choices.
 // A save that is past a slot when it loads, or reaches it with the story off, files it quietly: captions are marked seen,
-// cards go in the Journal unread (late), where the Codex offers them as "Catch up on the story". Nothing pops.
+// cards go in the Journal unread (late), where the Codex offers them as "Catch up on the story". Nothing pops. Only slots the game
+// can show are filed (a zone line with its monster, a Captain line with its Captain, a Champion or Elder with its encounter, an
+// NPC scene at an area's door); a Champion's or Elder's NPCs ride that scene and are not filed on their own.
 
 const STORY_ON = true;   // dev switch (bible 10.4): false plays no story at all; the data files can also be deleted
 
-let storyOn, storyHeld, storyInGap, storyChoiceDef, storyClaim, storyClose, storyChoose, storyList, storyEntry, storyRead, storyUnread, storyLate, storyJournalOpened,
+let storyOn, storyHeld, storyInGap, storyChoiceDef, storyChosen, storyClaim, storyClose, storyChoose, storyList, storyEntry, storyRead, storyUnread, storyLate, storyJournalOpened,
   storyRoadLog, storyFile, storyHeroLine, storyHearthLine, storyVerse, storyVerseLatest, storyItemLine, storyRanks, storyEncounter, storyFoes, storySync;
 const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_ENC.champ.<id> = true (storyEncounter)
 {
@@ -66,7 +79,11 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
   const ST = () => S.story;
   const D = k => (typeof STORY_BEATS === 'object' && STORY_BEATS && STORY_BEATS[k]) || {};
   const foeIn = z => typeof ZONE_FOES === 'object' && !!ZONE_FOES[z];
+  const captainIn = z => foeIn(z) && !!ZONE_FOES[z].captain;   // the Captain itself is on screen (a Captain card sets ZONE_FOES[z].captain)
   const heroKey = () => (typeof soloHero === 'function' && soloHero()) || '';
+  // the story hero (bible 4.4): the active hero if it is a starter, else the starter the save began with, else ''
+  const STARTERS = ['wren', 'tobin', 'pip'];
+  const storyHero = () => { const h = heroKey(), s = ST().starter; return STARTERS.includes(h) ? h : STARTERS.includes(s) ? s : ''; };
   const present = (kind, id) => !!(STORY_ENC[kind] && STORY_ENC[kind][id]);
   const seenAt = k => ST().seen[k];
   const has = k => !!seenAt(k);
@@ -75,7 +92,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
 
   storyOn = () => STORY_ON && !ST().off && typeof STORY_BEATS === 'object';
   storyEncounter = (kind, id, on) => { if (STORY_ENC[kind]) STORY_ENC[kind][id] = on !== false; };
-  storyHeroLine = id => { const h = D('hero')[id]; return h ? h[heroKey()] || h._ || '' : ''; };
+  storyHeroLine = id => { const h = D('hero')[id]; return h ? h[storyHero()] || h._ || '' : ''; };
   // An item entry is a line, or { area, line }: a line with an area waits until an encounter card has put a Champion of that area in
   // the game (the line names it, and the player must have met it).
   storyItemLine = key => {
@@ -101,7 +118,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
     flush();
     return out;
   }
-  const npcCards = id => { const n = D('npc')[id]; return n ? cardsOf(n.lines, false, n.who || '') : []; };
+  const npcCards = id => { const n = D('npc')[id]; return n && !(n.not && n.not === storyHero()) ? cardsOf(n.lines, false, n.who || '') : []; };   // `not`: a starter met as a person is not in his own story
   const npcAt = at => Object.keys(D('npc')).filter(id => D('npc')[id].at === at);
 
   // ---- scenes: what a trigger builds ----
@@ -147,19 +164,19 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
 
   // ---- the journal: every entry the data can make, in story order ----
   // key: the seen key that files it. cards() builds what a re-read shows (a Champion or Elder entry grows with its post scene).
-  const readable = sc => (sc ? sc.cards.filter(c => !c.choice) : []);   // a re-read shows the words, not the choice buttons
+  const readable = sc => (sc ? sc.cards.filter(c => !c.choice || !storyChosen(c.choice)) : []);   // a re-read shows the words; a choice only while it is still open
   function defs() {
     const out = [];
-    const add = (id, kind, key, zone, title, cards) => out.push({ id, kind, key, zone, region: regionIdOf(zone || 1), title, cards });
+    const add = (id, kind, key, zone, title, cards, also) => out.push({ id, kind, key, zone, region: regionIdOf(zone || 1), title, cards, keys: [key, ...(also || [])] });   // also: keys whose lateness is this entry's (a post scene)
     for (const id in D('region')) { const r = regionById(id); if (r) add('r:' + id, 'region', 'r:' + id, r.z0, D('region')[id].title, () => [{ lines: D('region')[id].lines.slice() }]); }
     for (const id in D('champ')) { const c = D('champ')[id];
-      add('p:' + id, 'champion', `p:${id}:pre`, c.zone, c.name || (c.page && c.page.title) || id, () => [...readable(champScene(id, 'pre')), ...(has(`p:${id}:post`) ? readable(champScene(id, 'post')) : [])]);
+      add('p:' + id, 'champion', `p:${id}:pre`, c.zone, c.name || (c.page && c.page.title) || id, () => [...readable(champScene(id, 'pre')), ...(has(`p:${id}:post`) ? readable(champScene(id, 'post')) : [])], [`p:${id}:post`]);
       if (c.page) add('j:' + id, 'page', 'j:' + id, c.zone, c.page.title, () => [{ lines: [c.page.text] }]); }
     for (const id in D('elder')) { const e = D('elder')[id];
-      add('e:' + id, 'elder', `e:${id}:pre`, e.zone, e.name || (e.page && e.page.title) || id, () => [...readable(elderScene(id, 'pre')), ...(has(`e:${id}:post`) ? readable(elderScene(id, 'post')) : [])]);
+      add('e:' + id, 'elder', `e:${id}:pre`, e.zone, e.name || (e.page && e.page.title) || id, () => [...readable(elderScene(id, 'pre')), ...(has(`e:${id}:post`) ? readable(elderScene(id, 'post')) : [])], [`e:${id}:post`]);
       if (e.page) add('j:' + id, 'page', 'j:' + id, e.zone, e.page.title, () => [{ lines: [e.page.text] }]); }
     for (const id in D('voice')) add('v:' + id, 'voice', 'v:' + id, D('voice')[id].zone, D('voice')[id].title || 'A voice', () => cardsOf(D('voice')[id].lines));
-    for (const id in D('npc')) add('n:' + id, 'npc', 'n:' + id, npcZone(D('npc')[id].at), D('npc')[id].who || id, () => npcCards(id));
+    for (const id in D('npc')) if (/^area:/.test(D('npc')[id].at) && npcCards(id).length) add('n:' + id, 'npc', 'n:' + id, npcZone(D('npc')[id].at), D('npc')[id].who || id, () => npcCards(id));   // the others read inside their Champion's or Elder's entry
     add('k:ranks', 'ranks', 'k:ranks', 0, 'Who answers to whom', () => storyRanks().map(r => ({ who: r.who, lines: [r.line] })));
     for (const [slot, pre] of [['letter', 'l'], ['note', 'o']]) for (const id in D(slot)) { const x = D(slot)[id];
       add(`${pre}:${id}`, slot, `${pre}:${id}`, x.zone || 0, x.title, () => [{ lines: [x.text] }]); }
@@ -173,7 +190,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
     return x ? x.zone : 0;
   }
   storyEntry = id => { const d = defs().find(x => x.id === id); return d && has(d.key) ? { id: d.id, kind: d.kind, region: d.region, zone: d.zone, title: d.title, cards: d.cards() } : null; };
-  storyList = () => defs().filter(d => has(d.key)).map(d => ({ id: d.id, kind: d.kind, region: d.region, zone: d.zone, title: d.title, got: Math.abs(seenAt(d.key)), read: !!ST().read[d.id], late: seenAt(d.key) < 0 }));
+  storyList = () => defs().filter(d => has(d.key)).map(d => ({ id: d.id, kind: d.kind, region: d.region, zone: d.zone, title: d.title, got: Math.abs(seenAt(d.key)), read: !!ST().read[d.id], late: d.keys.some(k => seenAt(k) < 0) })).map(e => e.read && storyEntry(e.id).cards.some(c => c.choice) ? { ...e, read: false } : e);   // an open choice keeps its entry unread
   storyUnread = () => storyList().filter(e => !e.read).map(e => e.id);
   storyLate = () => storyList().filter(e => e.late && !e.read).map(e => e.id);
   storyRead = id => { if (!storyEntry(id) || ST().read[id]) return; ST().read[id] = 1; emit('storyRead', { id }); };
@@ -181,8 +198,8 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
   storyRoadLog = () => {
     const out = [], st = ST().seen, A = D('area'), Z = D('zone'), C = D('captain'), n = typeof AREA_ZONES === 'number' ? AREA_ZONES : 5;
     for (const i in A) if (st['a:' + i] > 0) out.push({ zone: i * n + 1, head: zoneAreaName(i * n + 1), line: A[i] });
-    for (const z in Z) if (st['z:' + z] > 0) out.push({ zone: +z, head: zoneName(+z), line: Z[z] });
-    for (const z in C) if (st['c:' + z] > 0) out.push({ zone: +z, head: C[z].title, line: C[z].line });
+    for (const z in Z) if (st['z:' + z] > 0 && foeIn(+z)) out.push({ zone: +z, head: zoneName(+z), line: Z[z] });
+    for (const z in C) if (st['c:' + z] > 0 && captainIn(+z)) out.push({ zone: +z, head: C[z].title, line: C[z].line });
     return out.sort((a, b) => a.zone - b.zone);
   };
   storyFile = (kind, id) => {
@@ -215,6 +232,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
   };
 
   // ---- choices ----
+  storyChosen = id => { const c = D('choice')[id], st = ST(); if (!c) return true; return c.store === 'litFor' ? st.litFor[c.key || id] !== undefined : c.store === 'coldhearth' ? !!st.coldhearth : true; };
   storyChoose = (id, opt) => {
     const c = D('choice')[id], st = ST();
     if (!c || !c.options) return false;
@@ -232,23 +250,32 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
   const queue = [];
   holdGame(() => storyHeld());   // 00-util's pause registry: the frame loop does not tick while a scene is up
   storyInGap = () => inGap();
-  storyHeld = () => !!cur && claimed;   // only a scene the player can see holds the game; one waiting behind another overlay does not
+  storyHeld = () => !!cur && (claimed || (!!cur.chain && Date.now() - heldAt < 3000));   // only a scene the player can see holds the game (and, for 3 s, the next one of
+  // the same stop while the last sheet closes); one waiting behind another overlay does not
   storyClaim = id => { if (cur && cur.id === id) claimed = true; };
   storyClose = (id, how) => {
     if (!cur || cur.id !== id) return;
-    const sc = cur; cur = null; claimed = false;
+    const sc = cur, shown = claimed; cur = null; claimed = false;
     const st = ST();
-    for (const c of sc.cards) if (c.choice) storyChoose(c.choice);   // skipped: the default
-    if (sc.kind === 'card' && !st.ends[sc.id]) st.ends[sc.id] = how === 'done' ? 'done' : 'skipped';
-    if (sc.page) mark('j:' + sc.page);
+    const auto = how === 'auto';   // nobody touched it: filed as a page to catch up on, and no `ends` entry (bible 12a)
+    // skipped: the default. Left alone in a Champion's or Elder's scene, a choice stays open: its Journal entry offers it to catch up on
+    if (!(auto && /^[pe]:/.test(sc.id))) for (const c of sc.cards) if (c.choice) storyChoose(c.choice);
+    if (sc.kind === 'card' && !auto && !st.ends[sc.id]) st.ends[sc.id] = how === 'done' ? 'done' : 'skipped';
+    if (sc.page) mark('j:' + sc.page, auto);
+    if (auto) for (const k of [sc.id, sc.page && 'j:' + sc.page]) if (k && st.seen[k] > 0) st.seen[k] = -st.seen[k];   // late, unread (a caption's joined id is no key)
+    const post = auto && /^([pe]:[^:]+):post$/.exec(sc.id); if (post) delete st.read[post[1]];   // its Journal entry (pre and post together) is unread again
     emit('storyEnd', { id, how });
+    // the next scene of the same stop plays now, even while the guide holds the game (no tick runs to pump it), once the UI has closed this one
+    // (not tied to the gap: the shown scene held the game, so this is still the same stop)
+    if (shown && queue.length && typeof setTimeout === 'function') setTimeout(() => { if (!cur && storyOn() && live()) pump(true); }, 0);
   };
   // a caption for a zone the hero has left is dropped (it belonged to that moment)
   const stale = sc => sc.kind === 'caption' && sc.zone && sc.zone !== S.zone;
-  function pump() {
+  function pump(chain) {
     while (!cur && queue.length) {
       const sc = queue.shift();
       if (stale(sc)) continue;
+      if (chain) sc.chain = true;   // follows a shown scene: the UI plays it once the last sheet has closed, gap or not
       cur = sc; claimed = false; heldAt = Date.now();
       emit('storyScene', sc);
     }
@@ -266,12 +293,12 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
     const n = typeof AREA_ZONES === 'number' ? AREA_ZONES : 5;
     for (const id in D('region')) { const r = regionById(id); if (r && r.z0 < mz) mark('r:' + id, true); }
     for (const i in D('area')) if (i * n + 1 < mz) mark('a:' + i);
-    for (const z in D('zone')) if (+z < mz) mark('z:' + z);
-    for (const z in D('captain')) if (+z < mz) mark('c:' + z);
+    for (const z in D('zone')) if (+z < mz && foeIn(+z)) mark('z:' + z);   // silent is silent: no line for a monster that is not in the game
+    for (const z in D('captain')) if (+z < mz && captainIn(+z)) mark('c:' + z);
     for (const id in D('champ')) if (present('champ', id) && D('champ')[id].zone < mz) { mark(`p:${id}:pre`, true); mark(`p:${id}:post`, true); if (D('champ')[id].page) mark('j:' + id, true); }
     for (const id in D('elder')) if (present('elder', id) && D('elder')[id].zone < mz) { mark(`e:${id}:pre`, true); mark(`e:${id}:post`, true); if (D('elder')[id].page) mark('j:' + id, true); }
     for (const id in D('voice')) if (D('voice')[id].zone < mz) mark('v:' + id, true);
-    for (const id in D('npc')) if (npcZone(D('npc')[id].at) < mz) mark('n:' + id, true);
+    for (const id in D('npc')) if (/^area:/.test(D('npc')[id].at) && npcZone(D('npc')[id].at) < mz && npcCards(id).length) mark('n:' + id, true);   // a Champion's or Elder's NPCs ride its scene
     for (const id in D('choice')) { const c = D('choice')[id]; if (c.zone && c.zone < mz && !has('ch:' + id)) { mark('ch:' + id, true); storyChoose(id); } }
   }
 
@@ -281,6 +308,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
     if (!storyOn()) { queue.length = 0; if (cur && !claimed) storyClose(cur.id, 'skipped'); return; }   // off: nothing plays and nothing is filed or defaulted; the catch-up runs when it is turned back on
     if (mz !== swept) { swept = mz; sweep(mz); }
     if (!has('k:ranks') && storyRanks().length) mark('k:ranks');
+    if (!ST().starter && STARTERS.includes(heroKey())) ST().starter = heroKey();   // bible 4.4: the cold-start hero, stored once (an old save: its hero now)
     if (!live()) { last = ''; return; }
     const z = S.zone || 1, gap = inGap();
     if (gap && spawned && !early) { const sp = spawned; spawned = null; if (sp.zone === z) onSpawn(sp.mob, z); }
@@ -294,12 +322,13 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
     const ids = [], lines = [];
     if (z === ai * n + 1 && D('area')[ai] && !has('a:' + ai)) { mark('a:' + ai); ids.push('a:' + ai); lines.push(D('area')[ai]); }
     if (D('zone')[z] && foeIn(z) && !has('z:' + z)) { mark('z:' + z); ids.push('z:' + z); lines.push(D('zone')[z]); }
+    // an area's people talk first; the caption names the place and its monster just before the fight
+    if (z === ai * n + 1) for (const id of npcAt('area:' + ai)) if (!has('n:' + id) && npcCards(id).length) { mark('n:' + id); push(npcScene(id)); }
     if (ids.length) push(caption(ids, zoneName(z), lines, z));
     for (const id in D('voice')) if (D('voice')[id].zone === z && !has('v:' + id)) { mark('v:' + id); push(voiceScene(id)); }
-    if (z === ai * n + 1) for (const id of npcAt('area:' + ai)) if (!has('n:' + id)) { mark('n:' + id); push(npcScene(id)); }
     for (const id in D('choice')) if (D('choice')[id].zone === z && !has('ch:' + id)) { mark('ch:' + id); push(choiceScene(id)); }
   }
-  // the lead foe has spawned: a Captain's line, or the pre scene of a Champion or Elder
+  // the lead foe has spawned: a Captain's line (its Captain on screen), or the pre scene of a Champion or Elder
   function onSpawn(mob, z) {
     if (!mob || !mob.boss) return;
     const enc = mob.encounter;
@@ -309,7 +338,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
       return;
     }
     const c = D('captain')[z];
-    if (c && foeIn(z) && !has('c:' + z)) { mark('c:' + z); push(caption(['c:' + z], c.title, [c.line], z)); }
+    if (c && captainIn(z) && !has('c:' + z)) { mark('c:' + z); push(caption(['c:' + z], c.title, [c.line], z)); }
   }
 
   on('spawn', ({ mob, zone }) => {
