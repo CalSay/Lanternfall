@@ -134,8 +134,14 @@ Fixes 1 and 2 are card 1. Fix 3 is card 2's, re-derived, after the red team and 
   1.55 million. (First proposed for every level past 25; the judge limited it to the base-class levels, section 8.)
 - **Code:** `xpNeed` in `src/js/40-rules.js` (one line; the 1.15 and the bend at 40 go in `PACE`). Anything that prints
   the XP bar reads `xpNeed`.
-- **Save impact:** none. `S.L` and `S.xp` keep their meaning; only future levels get cheaper. No catch-up lump: a hero
-  keeps the XP they hold.
+- **Save impact:** no save field changes, and `S.L` and `S.xp` keep their meaning, but banked XP gives a one-time lump.
+  A save holds up to one old level's worth of XP; against the cheaper levels, `gainXp` (`src/js/50-sim.js`) spends that
+  bank on the hero's next XP gain. With a full bank, a hero at Lv 26 to 31 gains 1 level at once, Lv 32 to 35 up to 2,
+  Lv 36 to 39 up to 3, Lv 40 and up up to 4 (computed from both curves). Choice: accept the lump, with no migration.
+  The only saves are Cal's and the testers' (DECISIONS, 2026-09-28), the judge ruled the same ("XP a hero already holds
+  may turn into a level on the next gain"), and normalising `S.xp` would need a new save flag. The build card adds a
+  check: an old save at Lv 35 and at Lv 40 with a full bank loads, takes one kill, and gains no more levels than this
+  table says.
 - **Must ship with fix 2.** Alone it moves the wall to gold: in all three XP-only runs Wren and Pip reached Lv 39 to 50
   with Training stuck at 34 to 36 and gold near zero, and Pip and Tobin still stalled at zones 24 to 27 in two of them.
 
@@ -284,7 +290,9 @@ HP, and a milestone spread that keeps today's average power if one is still need
   casual Wren or Pip does not reach zone 30 in 60 days; in the Ascending run, Lv 41 takes more than twice as long as
   Lv 40, or Grey Shingle (zones 36 to 41) takes under an hour.
 - **Switch off:** put the old numbers back (x1.3 XP at every level, `r2` 1.28). No save field changes, so undoing it is
-  free. XP a hero already holds may become a level on their next gain; that is fine.
+  free. Levels gained under the new curve stay (no level loss).
+- **Old saves:** banked XP turns into 1 to 4 levels on the next XP gain (section 4, fix 1). Accepted; the build card's
+  check loads a full-bank save at Lv 35 and Lv 40.
 - **Gate:** economy targets and the pacing curve are `judge` calls under the playbook (the card said gate-cal, written
   before Autopilot's rules). This report ran the red team and the judge (section 8); the build card carries the ruling
   and its Opus balance sign-off. Not in the "Cal only" column.
