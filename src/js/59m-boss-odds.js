@@ -12,7 +12,8 @@
 // hits and 6 rings. A player with no history is judged as casual; one who parries and dodges well is judged as such.
 // The work is done in chunks of 10 fights, at most one every 0.4 s (of game time, or of real time while the game is paused
 // by a tip or a sheet, so an open Next Up still finishes its estimate), and cached by what the fight depends on
-// (hero, level, combat numbers, gear, Stars, talents, rounded skill), so a tick never hitches.
+// (hero, level, combat numbers, gear, Stars, talents, rounded skill), so a tick never hitches. Not during a Deepwell run:
+// its boons would count, so the last estimate made outside the run stands.
 //
 // Exposed names:
 //   BOSS_ODDS (the tune table), bossOddsOn(), bossOddsSkill(), bossOdds(o) -> { win, n, zone } | null,
@@ -81,6 +82,11 @@ const BOSS_ODDS_KEYS = ['A', 'U', 'counter', 'heroMaxHp', 'heroSpd', 'critChance
 function bossOdds(o) {
   o = o || {};
   if (!bossOddsOn()) return null;
+  // a Deepwell run's boons (damage, crits, cooldowns, HP) end when you climb out: judge the road boss without them. During a
+  // run, keep the last estimate made outside it (or none yet), and start nothing new.
+  if (typeof deepActive === 'function' && deepActive()) {
+    const z = S.maxZone; return BO.res && BO.zone === z ? BO.res : BO_DONE && BO_DONE.zone === z ? BO_DONE : null;
+  }
   // the hero as they stand now (cbEstHero: a scratch unit from the current gear and Training; the live unit is only
   // refreshed while fighting, so after a change made while gathering it would be stale)
   const z = S.maxZone, u = typeof cbEstHero === 'function' ? cbEstHero() : typeof cbUnitByKey === 'function' ? cbUnitByKey('hero') : null;

@@ -8182,6 +8182,15 @@ if (section('boss odds (core, Next Up "Boss ready")')) try {
     E(`S.rested.left = 0; S.activity = 'fight'; arena = null; fightBoss = true; spawn();`); for (let i = 0; i < 3; i++) g.fn.tick(0.1);
     const live = E('turnCombatProfile().heroMaxHp');
     assert(est > stale && Math.abs(p / live - 1) < 1e-6 && !g.errors.length, `boss odds: gear raised while gathering counts before the next fight (stale ${Math.round(stale)}, estimate ${Math.round(p)}, the fight's ${Math.round(live)})`); }
+  // a Deepwell run's boons vanish when you climb out: during a run the estimate keeps the one made outside it (Codex P1 on PR #47)
+  { const { g, E } = boot('', 'late'), before = E('bossOdds({ sync: true })');
+    E('S.camp && S.camp.b && (S.camp.b.hearth = Math.max(S.camp.b.hearth || 0, 3)); DW.start(false)');
+    E('{ const r = DW.run(); if (r) { r.boons = r.boons || {}; for (const k of Object.keys(DEEP_BOONS)) r.boons[k] = 5; } }');
+    const live = E('deepActive()'), during = E('bossOdds({ sync: true })');
+    const fresh = boot('', 'late'); fresh.E('S.camp && S.camp.b && (S.camp.b.hearth = Math.max(S.camp.b.hearth || 0, 3)); DW.start(false)');
+    const none = fresh.E('deepActive() ? bossOdds({ sync: true }) : "not live"');
+    assert(live && J(during) === J(before) && none === null && !g.errors.length && !fresh.g.errors.length,
+      `boss odds: a Deepwell run's boons do not count; the estimate made outside the run stands (${J(before)} -> ${J(during)}; none yet: ${J(none)})`); }
   // the sampler's new fights option stops after that many fights, and the old call still runs its seconds
   { const { g, E } = boot('wren'), r = JSON.parse(E('JSON.stringify(turnCombatSample({ profile: turnCombatProfile(), seconds: 3600, seed: 2, fights: 5 }))')), r0 = JSON.parse(E('JSON.stringify(turnCombatSample({ profile: turnCombatProfile(), seconds: 600, seed: 2 }))'));
     assert(r.kills + r.deaths === 5 && r0.kills + r0.deaths > 5, `boss odds: turnCombatSample({ fights }) stops at that many fights (${r.kills + r.deaths}); without it the seconds run out (${r0.kills + r0.deaths} fights)`); }
