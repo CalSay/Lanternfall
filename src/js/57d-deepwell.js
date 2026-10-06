@@ -795,6 +795,18 @@ let DEEP_ARENA = null;
   }
   const favChoices = () => { const lv = D().lore.fav || 0; if (!lv) return []; return DEEP_BOON_IDS.filter(id => { const b = DEEP_BOONS[id]; return !b.c && (b.r === 'c' || (lv >= 2 && b.r === 'r')) && (!b.cls || b.cls === 'any' || b.cls === cls()); }); };
   const setFav = id => { if (id !== null && !favChoices().includes(id)) return false; D().fav = id; save(); return true; };
+  // cache-core: a first-clear cache gives the first lantern colour this save does not own, in the shop's order (Ember Red first).
+  // It is a gift, not a buy: no Marks, no `deepBuy`. It wears the colour only when no lantern is worn yet.
+  const LANTERN_GIFTS = ['l_ember', 'l_blue', 'l_ghost', 'l_moon', 'l_violet', 'l_gold'];
+  function grantLantern() {
+    const id = LANTERN_GIFTS.find(x => DEEP_SHOP[x] && !D().cos[x]);
+    if (!id) return null;
+    D().cos[id] = 1;
+    const worn = !D().eq.lantern;
+    if (worn) D().eq.lantern = id;
+    if (typeof codexRefresh === 'function') codexRefresh(true);
+    return { id, n: DEEP_SHOP[id].n, col: DEEP_SHOP[id].col, worn };
+  }
   const equip = (slot, id) => { if (id !== null && (!D().cos[id] || DEEP_SHOP[id].kind !== slot)) return false; D().eq[slot] = id; save(); return true; };
 
   // ---------------- the Codex: Deepwell, Seals and Wardrobe pages, bought titles ----------------
@@ -866,7 +878,7 @@ let DEEP_ARENA = null;
     run: R, live: deepActive, unlockInfo: () => ({ open: deepUnlocked(), zone: T.unlockZone, hearth: hearthLv() === null ? 0 : T.hearth, hearthNow: hearthLv(), maxZone: S.maxZone }),
     floorKind: (f, r) => floorKind(f, r), oilMax: r => oilMax(r), oil: () => { const r = R(); return r ? r.oil : 0; }, drainRate, refundFor: k => refundFor(k), marksNow,
     offerView, card, owned, setProgress, trialRule, trialInfo, shop, shopRow, nextLore, favChoices,
-    start, resume, pick, reroll, banish, skip, landing, climbOut, abandon, buy, setFav, equip,
+    start, resume, pick, reroll, banish, skip, landing, climbOut, abandon, buy, setFav, equip, grantLantern,
     fall: () => deepActive() && R().phase === 'fight' ? end('wipe') : null,   // the party wiped (59c-deepwell-combat)
     foeHp: (f, mul) => R() ? foeHp(R(), f, mul || 1) : 0, floorFoes: f => R() ? floorFoes(R(), f) : [],
     _init: () => { initFor = null; ensureInit(); }

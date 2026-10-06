@@ -9986,6 +9986,62 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
   }
 } catch (e) { fail(`landscape ${w}x${h} (browser, UX-L1) crashed: ` + (e.stack || e)); }
 
+// ---- Lantern Caches (card cache-core; 55-caches.js, 75-caches-ui.js) ----
+if (section('lantern caches')) try {
+  const clear = (g, z, extra = '') => g.eval(`S.zone = S.maxZone = ${z}; killPack({ boss: true, xp: 1, hp: 0 }, 40); ${extra}`);
+  const mk = opts => { const g = loadCore(Object.assign({ seed: 7 }, opts)); const seen = []; g.fn.on('cacheOpen', v => seen.push(v)); return { g, seen, E: s => g.eval(s) }; };
+  {
+    const { g, seen, E } = mk();
+    E('soloPick("wren")');
+    assert(E('S.cache.opened === 0 && S.cache.lookPity === 0 && S.cache.auto === null && S.cache.first === 0'), 'caches: a fresh save starts with no caches');
+    clear(g, 1); g.fn.tick(0.1);
+    const v = seen[0];
+    assert(seen.length === 1 && v.n === 1 && v.zone === 1 && v.gold > 0 && v.look && v.look.id === 'l_ember' && v.look.worn,
+      `caches: the first boss clear opens a cache that holds the win's gold and Ember Red (${JSON.stringify(v && { n: v.n, gold: v.gold, look: v.look })})`);
+    assert(E('S.deep.cos.l_ember === 1 && S.deep.eq.lantern === "l_ember"'), 'caches: Ember Red is owned and worn');
+    assert(E('S.cache.opened === 1 && S.cache.first === 1'), 'caches: the count and the first zone are saved');
+    assert(v.chance !== null && v.chance > 0 && !v.unique, 'caches: the card prints the unique chance when nothing dropped');
+    E('S.maxZone = 5; S.zone = 3'); const before = seen.length;
+    E('killPack({ boss: true, xp: 1, hp: 0 }, 40)'); g.fn.tick(0.1);
+    assert(seen.length === before && E('S.cache.opened === 1'), 'caches: a replay (not the frontier) opens no cache');
+    for (const z of [2, 3]) { clear(g, z); g.fn.tick(0.1); }
+    assert(seen.length === 3 && seen[1].look.id === 'l_blue' && seen[2].look.id === 'l_ghost' && !seen[1].look.worn && E('S.deep.eq.lantern === "l_ember"'),
+      'caches: zones 2 and 3 give the next colours and leave the worn lantern alone');
+    for (const z of [4, 5, 6]) { clear(g, z); g.fn.tick(0.1); }
+    assert(seen.slice(3).every(x => !x.look), 'caches: zones 4 to 6 give no lantern colour');
+    for (const z of [7, 8, 9]) { clear(g, z); g.fn.tick(0.1); }
+    assert(seen.slice(6).map(x => x.look && x.look.id).join() === 'l_moon,l_violet,l_gold', 'caches: zones 7 to 9 give the last three colours');
+    clear(g, 10); g.fn.tick(0.1);
+    assert(!seen[9].look && E('Object.keys(S.deep.cos).filter(k => k.startsWith("l_")).length === 6'), 'caches: nothing more to give after six colours');
+    assert(seen[2].auto === true && seen[0].auto === false && seen[1].auto === false, 'caches: auto-open is on from the third cache');
+    E('cacheSetAuto(false)'); clear(g, 11); g.fn.tick(0.1);
+    assert(seen[10].auto === false && E('S.cache.auto === false'), 'caches: the player can turn auto-open off');
+  }
+  {   // all six owned: a zone 1 clear gives no colour (the Deepwell shop's colours were bought)
+    const { g, seen, E } = mk();
+    E('for (const id of ["l_ember","l_blue","l_ghost","l_moon","l_violet","l_gold"]) S.deep.cos[id] = 1'); clear(g, 1); g.fn.tick(0.1);
+    assert(seen.length === 1 && seen[0].look === null, 'caches: a save that owns all six lantern colours gets none');
+  }
+  {   // a unique that drops on the win is listed (and no chance line); CACHE_TUNE.on = false switches it all off
+    const { g, seen, E } = mk();
+    E('UNIQ_TUNE.first = 1'); clear(g, 1); g.fn.tick(0.1);
+    assert(seen.length === 1 && seen[0].unique && seen[0].unique.name && seen[0].chance === null, 'caches: a unique dropped by the win is in the cache');
+    const off = mk(); off.E('CACHE_TUNE.on = false'); clear(off.g, 1); off.g.fn.tick(0.1);
+    assert(off.seen.length === 0 && off.E('S.cache.opened === 0 && !S.deep.cos.l_ember'), 'caches: CACHE_TUNE.on = false opens no cache and grants no colour');
+  }
+  {   // an old save (no S.cache) loads with nothing lost, gets no retroactive cache, and its next first clear opens one
+    const a = mk(); a.E('soloPick("wren"); S.maxZone = 12; S.zone = 12; S.gold = 777');
+    const raw = JSON.parse(a.E('JSON.stringify(S)')); delete raw.cache;
+    const b = mk({ storage: memoryStorage({ [KEY]: JSON.stringify(raw) }) });
+    assert(b.E('S.gold === 777 && S.maxZone === 12 && S.cache.opened === 0 && S.cache.first === 0 && S.cache.auto === null'), 'caches: an old save loads with defaults and its progress intact');
+    b.g.fn.tick(0.1); assert(b.seen.length === 0, 'caches: an old save gets no retroactive cache');
+    clear(b.g, 12); b.g.fn.tick(0.1);
+    assert(b.seen.length === 1 && b.seen[0].look === null && b.E('S.cache.opened === 1'), 'caches: an old save gets its first cache at its next first clear');
+  }
+  const ui = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-caches-ui.js'), 'utf8');
+  assert(/on\('cacheOpen'/.test(ui) && /moment\(big \? 'cache' : 'cacheAuto'/.test(ui), 'caches: the card goes through the moment layer');
+} catch (e) { fail('lantern caches: ' + e.message); }
+
 // ---- moment layer (card moment-layer; 75-moments-ui.js; docs/design/first-hour.md; scorecard F6) ----
 // Each big and medium moment is forced while the guide, a level-up and the toast flood compete, and must be on screen for at
 // least 2 s, not only in the bell. At 740x360 first (the main target), then 360x740, then with reduced motion.
