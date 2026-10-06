@@ -1629,10 +1629,10 @@ async function runTurnReport() {
 // fixtures at their frontier, the late fixture made a hero who keeps up) at the frontier boss: the estimate with no history
 // (the casual prior), at casual and at good skill, whether the Next Up label says "Boss ready" (no history; good), the ms one
 // cold estimate takes (30 fights), and the measured win rate of turnCombatSample over --hours x --seeds of boss fights.
-// Usage: --report bossodds [--hours 0.5] [--seeds 3]
+// Usage: --report bossodds [--hours 0.5] [--seeds 3] [--seed S] (seeds S..S+n-1 for the cores and the sampler; default 1)
 async function runBossOddsReport() {
-  const seconds = Number(args.hours || 0.5) * 3600, count = Number(args.seeds || 3);
-  if (!(seconds > 0) || !Number.isInteger(count) || count < 1) throw new Error('Positive hours and integer seeds required');
+  const seconds = Number(args.hours || 0.5) * 3600, count = Number(args.seeds || 3), base = args.seed != null && args.seed !== true ? Number(args.seed) : 1;
+  if (!(seconds > 0) || !Number.isInteger(count) || count < 1 || !Number.isInteger(base)) throw new Error('Positive hours, integer seeds and an integer seed required');
   const want = ['fresh-wren', 'fresh-tobin', 'fresh-pip', 'early', 'mid', 'late', 'late-kept-35', 'late-kept-38', 'late-kept-38-tier-1'];
   const all = await turnReportProfiles(), profiles = want.map(n => all.find(x => x[0] === n));
   const players = { good: { parry: 0.6, dodge: 0.9, perfect: 0.4, good: 0.45 }, casual: { parry: 0.25, dodge: 0.5, perfect: 0.1, good: 0.4 } };
@@ -1649,7 +1649,7 @@ async function runBossOddsReport() {
       for (let i = 0; i < 5; i++) core.fn.tick(0.1);   // the hero's unit exists, as in play
       return { core, e };
     };
-    const { core, e } = mk(1);
+    const { core, e } = mk(base);
     const label = () => e('(() => { const x = GOALS.find(q => q.id === "zone-boss"); return x.label(); })()');
     const t0 = performance.now(); const prior = e('bossOdds({ sync: true })'); const ms = performance.now() - t0;
     const shownPrior = /^Boss ready/.test(label());
@@ -1662,8 +1662,8 @@ async function runBossOddsReport() {
     for (const [pl, sk] of Object.entries(players)) {
       let K = 0, D = 0;
       for (let i = 0; i < count; i++) {
-        const { core: c2, e: e2 } = mk(1 + i);
-        const r = e2(`(() => { fightBoss = true; spawn(); return turnCombatSample({ profile: turnCombatProfile(), seconds: ${seconds}, seed: ${i + 1}, skill: ${J(sk)} }); })()`);
+        const { core: c2, e: e2 } = mk(base + i);
+        const r = e2(`(() => { fightBoss = true; spawn(); return turnCombatSample({ profile: turnCombatProfile(), seconds: ${seconds}, seed: ${base + i}, skill: ${J(sk)} }); })()`);
         K += r.kills; D += r.deaths;
         if (c2.errors.length) throw new Error(`${name}: ${c2.errors.join('; ')}`);
       }

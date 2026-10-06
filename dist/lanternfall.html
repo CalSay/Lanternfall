@@ -19346,7 +19346,8 @@ let deeds, deedBonus, wearGet;
 //           cbDamageFoe(f, amount, src, kind), cbUnitByKey(key), cbTaunt(u, foes, secs),
 //           cbStun(f, secs), cbDebug()
 //   offline partyHoldEstimate(zMax, opts) -> { zone, holds, dps, packSecs, packsPerSec, goldPerSec,
-//           tgt, inc, sus, margin, heroHp }; partyHolds(z) -> bool
+//           tgt, inc, sus, margin, heroHp }; partyHolds(z) -> bool; cbEstHero() -> a scratch hero unit with stats from
+//           the current state (59m boss odds: the live unit is only refreshed while fighting)
 //
 // Model (short): each unit keeps HP, shield and a damage-reduction stack. The hero keeps its own swings
 // (50-sim heroSwing), routed here by cbStrike. Foes pick the highest-threat unit they can reach.
@@ -19378,7 +19379,7 @@ function partyCombatOn() { return !(COMBAT_TUNE && !COMBAT_TUNE.on) && !(S && S.
 var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrike, cbHeroUp, cbPush,
   cbUnitHp, cbHitUnit, cbHealUnit, cbShield, cbDamageFoe, cbTurnDamageFoe, cbTurnHitHero, cbUnitByKey, cbTaunt, cbStun, cbDebug,
   partyHoldEstimate, partyHolds, cbClock, cbArena, cbBossUp, cbBossReady, cbRestore,
-  cbPack, cbFoeAtk, bossTimer;
+  cbPack, cbFoeAtk, bossTimer, cbEstHero;
 
 {
   const T = {
@@ -20244,6 +20245,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   // damage and sustain; the highest z that holds (and can be farmed) wins. Also drives auto-push.
   const EST_OUT = { zone: 1, holds: false, dps: 0, packSecs: 0, packsPerSec: 0, goldPerSec: 0, tgt: '', inc: 0, sus: 0, margin: 0, heroHp: 0 };
   function estHero() { const u = EST[0]; statUnit(u, 'hero', false); u.down = false; for (let i = 1; i < 4; i++) EST[i].live = false; return u; }
+  cbEstHero = estHero;
   // Behaviour table per zone type (4.11), from FOE_BEH: dmg (attack x speed vs a plain foe, plus the
   // Golem's slam), ranged (hits any row by threat), arm (armoured: physical damage x armourX), aoe
   // (party-wide damage per foe per second, as a share of its attack: spore clouds), heal (enemy
@@ -24477,7 +24479,9 @@ const BOSS_ODDS_KEYS = ['A', 'U', 'counter', 'heroMaxHp', 'heroSpd', 'critChance
 function bossOdds(o) {
   o = o || {};
   if (!bossOddsOn()) return null;
-  const z = S.maxZone, u = typeof cbUnitByKey === 'function' ? cbUnitByKey('hero') : null;
+  // the hero as they stand now (cbEstHero: a scratch unit from the current gear and Training; the live unit is only
+  // refreshed while fighting, so after a change made while gathering it would be stale)
+  const z = S.maxZone, u = typeof cbEstHero === 'function' ? cbEstHero() : typeof cbUnitByKey === 'function' ? cbUnitByKey('hero') : null;
   if (!u) return null;
   let p;
   try { p = turnMakeProfile(bossOddsFoe(z), u); } catch (e) { p = null; }

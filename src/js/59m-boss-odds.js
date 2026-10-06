@@ -81,7 +81,9 @@ const BOSS_ODDS_KEYS = ['A', 'U', 'counter', 'heroMaxHp', 'heroSpd', 'critChance
 function bossOdds(o) {
   o = o || {};
   if (!bossOddsOn()) return null;
-  const z = S.maxZone, u = typeof cbUnitByKey === 'function' ? cbUnitByKey('hero') : null;
+  // the hero as they stand now (cbEstHero: a scratch unit from the current gear and Training; the live unit is only
+  // refreshed while fighting, so after a change made while gathering it would be stale)
+  const z = S.maxZone, u = typeof cbEstHero === 'function' ? cbEstHero() : typeof cbUnitByKey === 'function' ? cbUnitByKey('hero') : null;
   if (!u) return null;
   let p;
   try { p = turnMakeProfile(bossOddsFoe(z), u); } catch (e) { p = null; }

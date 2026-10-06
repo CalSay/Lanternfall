@@ -8424,6 +8424,16 @@ if (section('boss odds (core, Next Up "Boss ready")')) try {
     const raw = JSON.parse(FX(f)), g = loadCore({ turns: true, storage: memoryStorage({ [KEY]: FX(f) }) });
     assert(!('bossOdds' in raw) && g.eval('JSON.stringify(S.bossOdds)') === J({ hits: 0, parry: 0, dodge: 0, rings: 0, perfect: 0, good: 0 }), `boss odds: the ${f} fixture loads with the record's defaults`);
   }
+  // gear changed while gathering counts at once: the estimate reads a scratch hero from the current state (cbEstHero), not the
+  // live unit, which only refreshes while fighting (Codex P1 on PR #47)
+  { const { g, E } = boot('', 'early');
+    E(`S.activity = 'gather'; S.rested.left = 0; for (const sl of Object.keys(S.equip)) { const it = itemById(S.equip[sl]); if (it && !['pick', 'axe', 'sickle', 'spear'].includes(it.slot)) it.plus = (it.plus || 0) + 6; } gearDirty();`);
+    for (let i = 0; i < 5; i++) g.fn.tick(0.1);
+    const stale = E('cbUnitByKey("hero").maxHp'), est = E('cbEstHero().maxHp'), p = E('turnMakeProfile(bossOddsFoe(S.maxZone), cbEstHero()).heroMaxHp');
+    // the fight's own unit, with the rest banked while gathering set aside (Rested: +10% damage for a few minutes, so HP too)
+    E(`S.rested.left = 0; S.activity = 'fight'; arena = null; fightBoss = true; spawn();`); for (let i = 0; i < 3; i++) g.fn.tick(0.1);
+    const live = E('turnCombatProfile().heroMaxHp');
+    assert(est > stale && Math.abs(p / live - 1) < 1e-6 && !g.errors.length, `boss odds: gear raised while gathering counts before the next fight (stale ${Math.round(stale)}, estimate ${Math.round(p)}, the fight's ${Math.round(live)})`); }
   // the sampler's new fights option stops after that many fights, and the old call still runs its seconds
   { const { g, E } = boot('wren'), r = JSON.parse(E('JSON.stringify(turnCombatSample({ profile: turnCombatProfile(), seconds: 3600, seed: 2, fights: 5 }))')), r0 = JSON.parse(E('JSON.stringify(turnCombatSample({ profile: turnCombatProfile(), seconds: 600, seed: 2 }))'));
     assert(r.kills + r.deaths === 5 && r0.kills + r0.deaths > 5, `boss odds: turnCombatSample({ fights }) stops at that many fights (${r.kills + r.deaths}); without it the seconds run out (${r0.kills + r0.deaths} fights)`); }
