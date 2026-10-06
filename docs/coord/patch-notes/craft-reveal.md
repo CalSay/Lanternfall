@@ -1,0 +1,1 @@
+Every craft now shows what you made: its grade in words and colour, how it compares to what you wear, and Equip, Keep or Salvage, with the odds shown before you craft. (Best shot: craft-card-360x740.)

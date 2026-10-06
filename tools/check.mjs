@@ -56,7 +56,7 @@ const ONLY = (process.argv.find(a => a.startsWith('--only=')) || '').slice(7);
 const SHARD = (m => (m ? [+m[1], +m[2]] : null))(/--shard=(\d+)\/(\d+)/.exec(process.argv.join(' ')));
 const JOBS = SHARD ? 1 : +((process.argv.find(a => a.startsWith('--jobs=')) || '').slice(7)) || (ONLY ? 1 : Math.min(4, os.cpus().length));
 // Seconds a section takes (measured, W2-B): the shards are balanced by these; a section not listed counts 2.
-const WEIGHT = { 'LF_EYES hook (browser, qa-player-eyes)': 12, 'landscape 740x360 (browser, UX-L1)': 42, 'landscape 844x390 (browser, UX-L1)': 38, 'landscape 1280x720 (browser, UX-L1)': 38, 'solo copy (browser, W1-C)': 60, 'W1-D (browser)': 100, 'training (W2-A, browser)': 18, 'cb2': 40, 'notices (browser, W1-B)': 34, 'solo guide: gathering never freezes (browser)': 31, 'solo hero (browser)': 21, 'types and statuses (S1)': 14, 'save codes': 13, 'combat': 8, 'gatherers UI (browser)': 7, 'gathering': 6, 'nav': 6, 'retool': 6, 'onboarding hint placement (HINT1)': 5, 'camp trade and import (C4, browser)': 15 };
+const WEIGHT = { 'first-hour walk (browser, qa-first-hour-walk)': 25, 'LF_EYES hook (browser, qa-player-eyes)': 12, 'landscape 740x360 (browser, UX-L1)': 42, 'landscape 844x390 (browser, UX-L1)': 38, 'landscape 1280x720 (browser, UX-L1)': 38, 'solo copy (browser, W1-C)': 60, 'W1-D (browser)': 100, 'training (W2-A, browser)': 18, 'cb2': 40, 'notices (browser, W1-B)': 34, 'solo guide: gathering never freezes (browser)': 31, 'solo hero (browser)': 21, 'types and statuses (S1)': 14, 'save codes': 13, 'combat': 8, 'gatherers UI (browser)': 7, 'gathering': 6, 'nav': 6, 'retool': 6, 'onboarding hint placement (HINT1)': 5, 'camp trade and import (C4, browser)': 15 };
 const shardLoad = SHARD ? Array(SHARD[1]).fill(0) : null;
 function section(name) {
   if ((ONLY && !new RegExp(ONLY, 'i').test(name))) return false;
@@ -9242,6 +9242,61 @@ if (section('wire-menu-icons (browser)')) try {
   }
 } catch (e) { fail('wire-menu-icons browser crashed: ' + (e.stack || e)); }
 
+// ==== craft-reveal: this card's own checks (result card, odds line, last-five strip, grade words) ====
+if (section('craft reveal')) try {
+  const rd = f => fs.readFileSync(path.join(ROOT, 'src', 'js', f), 'utf8');
+  const notices = rd('23n-data-notices.js'), cui = rd('75-craft-ui.js');
+  assert(/id: 'forged', re: \/\^\(Forged\|Made\) an\? \/, ch: 'none'/.test(notices) && (notices.match(/id: 'forged'/g) || []).length === 1, 'craft reveal: one `forged` notice rule, and it keeps craft lines out of the bell (the card shows them)');
+  assert(!/Fine\b/.test(cui.replace(/Fine-tune/g, '')) && /\['common', 'uncommon', 'rare', 'epic'\]\.map\(r => `\$\{RAR\[r\]\.n\}/.test(cui), 'craft reveal: the odds line uses the real grade names from RAR');
+  assert(!/Craft 5|craft5/i.test(cui), 'craft reveal: no "Craft 5" control');
+  await (async () => {
+    const { pw, exe } = browserTools;
+    if (!pw || !exe || !fs.existsSync(distFile)) { skipBrowser('craft reveal (browser): Playwright or Chromium not here, skipped'); return; }
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const rawOf = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h, motion] of [[360, 740, 'no-preference'], [740, 360, 'reduce']]) {
+        const at = `craft reveal ${w}x${h}${motion === 'reduce' ? ' reduced motion' : ''}`;
+        const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: true, hasTouch: true, reducedMotion: motion });
+        await ctx.addInitScript(([key, raw]) => {
+          try { localStorage.setItem('lanternfall.test.nostory', '1'); } catch (e) {}
+          if (sessionStorage.getItem('cr-seeded')) return; sessionStorage.setItem('cr-seeded', '1');
+          const o = JSON.parse(raw); o.last = Date.now(); localStorage.setItem(key, JSON.stringify(o));
+        }, [KEY, rawOf('save-mid.json')]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(700);
+        for (let i = 0; i < 4; i++) { const b = await page.$('#createScreen .create-go'); if (!b) break; await b.click(); await page.waitForTimeout(300); }
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X(`S.onboard.tips = false; true`);
+        await page.click('.tab[data-tab="forge"]'); await page.waitForTimeout(500);
+        const odds = await X(`(() => { const t = document.querySelector('.cf-odds'); const w = rarityWeights(stationLevel(document.querySelector('.cf-rec').dataset.kind)), tot = Object.values(w).reduce((a, b) => a + b, 0);
+          return { text: t ? t.textContent : '', common: Math.round(w.common / tot * 100) }; })()`);
+        assert(/^Odds: Common [\d.]+% · Uncommon [\d.]+% · Rare [\d.]+% · Epic [\d.]+%$/.test(odds.text) && Math.abs(parseFloat(/Common ([\d.]+)%/.exec(odds.text)[1]) - odds.common) <= 0.6, `${at}: each recipe shows one odds line computed from the rarity weights (${odds.text})`);
+        const made = [];
+        for (let i = 0; i < 6; i++) {
+          const ok = await X(`(() => { const b = [...document.querySelectorAll('.cf-rec .cf-go')].find(x => !x.disabled); if (!b) return false; b.click(); return true; })()`);
+          if (!ok) break;
+          await page.waitForTimeout(150);
+          made.push(await X(`(() => { const c = document.querySelector('.cf-res'); return c ? { grade: c.querySelector('.cf-grade').textContent, btns: [...c.querySelectorAll('.cf-resact button')].map(b => b.textContent), arrows: c.querySelectorAll('.cf-d').length, strip: document.querySelectorAll('.cf-recent .cf-tile').length } : null; })()`));
+        }
+        assert(made.length >= 2 && made.every(m => m && ['Common', 'Uncommon', 'Rare', 'Epic', 'Unique'].includes(m.grade)), `${at}: every craft opens a result card with a real grade name (${JSON.stringify(made.map(m => m && m.grade))})`);
+        assert(made.every(m => m && m.btns.includes('Keep') && m.btns.includes('Salvage')), `${at}: the card offers Keep and Salvage (and Equip when it fits)`);
+        assert(made[made.length - 1].strip === Math.min(5, made.length), `${at}: the strip keeps the last five results (${made[made.length - 1].strip})`);
+        assert(await X(`document.querySelectorAll('.cf-recent').length === 1 && !/Craft 5/.test(document.body.textContent)`), `${at}: one strip, no Craft 5 button`);
+        assert(await X(`(() => { const r = document.querySelector('.cf-resbox').getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; })()`) , `${at}: the new card is on screen after a craft`);
+        await page.click('button:text-is("Gear")'); await page.waitForTimeout(400);
+        assert(await X(`(() => { const b = document.querySelector('.cf-bag .cf-tile .cf-gr'); return !!b && /^(Com|Unc|Rare|Epic|Uniq)$/.test(b.textContent); })()`), `${at}: a bag tile names its grade in text`);
+        assert(!errs.length, `${at}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  })();
+} catch (e) { fail('craft reveal crashed: ' + (e.stack || e)); }
+
 if (section('removed systems (W2-C)')) try {
   const strip = t => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/([^:'"`\\])\/\/[^\n'"`]*$/gm, '$1');
   const files = [];
@@ -9530,6 +9585,8 @@ if (section('moment layer')) try {
           const until = async (expr, ms = 6000) => { try { await page.waitForFunction(e => window.__t.x(e), expr, { timeout: ms, polling: 100 }); } catch (e) { /* the assert below says what is missing */ } };
           await page.waitForTimeout(4600);   // no moment opens at boot (MOMENT_TUNE.bootS)
           await X(`S.activity = 'gather'; S.tab = ''; S.onboard.tips = false; emit('sceneReset'); true`);   // no turn fight: a moment may show
+          await page.waitForTimeout(600);
+          await X(`MOMENT_Q.length = 0; if (MOMENT_UI.ov) { MOMENT_UI.shownAt = 0; document.querySelector('.mm-go').click(); } true`);   // a catch-up (a hero who joined as the save loaded) is not this check's moment
           await X(`S.found.sproutblade = 0; dropUnique('sproutblade', 1)`);
           // a level-up and a flood of toasts compete with it
           await X(`emit('levelup', { L: 5 }); for (let i = 0; i < 4; i++) toast('Check notice ' + i, 'good', null, 'high'); true`);
@@ -9538,7 +9595,7 @@ if (section('moment layer')) try {
             return { up: !!o, text: o ? o.textContent : '', fits: !!r && r.top >= 0 && r.bottom <= innerHeight + 1 && r.left >= 0 && r.right <= innerWidth + 1 && g.bottom <= innerHeight + 1,
               burst: o && getComputedStyle(o.querySelector('.mm-burst')).display, held: GAME_HOLDS.some(f => f()), bell: notes.log.some(n => n.ch === 'bell' && /Unique loot/.test(n.msg)), st: momentState() }; })()`);
           assert(big.up && /Sproutblade/.test(big.text) && /Unique loot/i.test(big.text) && big.fits && big.held && !big.bell,
-            `${at}: a unique shows a big card (name, label, Continue in view) and holds the game; it is not a bell line (${JSON.stringify({ up: big.up, fits: big.fits, held: big.held, bell: big.bell })})`);
+            `${at}: a unique shows a big card (name, label, Continue in view) and holds the game; it is not a bell line (${JSON.stringify({ up: big.up, fits: big.fits, held: big.held, bell: big.bell, text: String(big.text).slice(0, 120) })})`);
           assert(motion === 'reduce' ? big.burst === 'none' : big.burst !== 'none', `${at}: the burst ${motion === 'reduce' ? 'is off for reduced motion' : 'plays'}`);
           assert(/Level 5/.test(big.text), `${at}: a level-up that competes folds into the card as a line`);
           await page.mouse.click(Math.round(w / 2), 8); await page.waitForTimeout(150);   // a stray tap inside the lock must not skip it
@@ -9575,15 +9632,16 @@ if (section('moment layer')) try {
           // it never shows during a turn: a live fight (past its intro) holds it, the fight's end lets it through
           await page.waitForTimeout(3200);
           await X(`MOMENT_UI.midAt.length = 0; S.activity = 'fight'; emit('sceneReset'); true`);
-          await until(`typeof TURN_LIVE !== 'undefined' && !!TURN_LIVE && !TURN_LIVE.ended && TURN_LIVE.phase !== 'intro'`, 9000);
-          const live = await X(`(() => { const f = typeof TURN_LIVE !== 'undefined' && !!TURN_LIVE && !TURN_LIVE.ended && TURN_LIVE.phase !== 'intro'; if (f) emit('levelup', { L: 25 }); return f; })()`);
+          await until(`typeof TURN_LIVE !== 'undefined' && !!TURN_LIVE && !TURN_LIVE.ended`, 9000);
+          // pin the turn in motion (a hit landing: phase 'timing'), then raise the moment
+          const live = await X(`(() => { const f = typeof TURN_LIVE !== 'undefined' && !!TURN_LIVE && !TURN_LIVE.ended; if (f) { window.__pin = setInterval(() => { if (TURN_LIVE) TURN_LIVE.phase = 'timing'; }, 10); emit('levelup', { L: 25 }); } return f; })()`);
           assert(live, `${at}: a turn fight is live for the during-a-turn check`);
           await page.waitForTimeout(1200);
           const during = await X(`!!document.querySelector('.mm-toast') + ':' + momentState().queued`);
-          assert(during === 'false:1', `${at}: a moment does not show during a turn (${during})`);
-          await X(`TURN_LIVE.ended = true; true`);
+          assert(during === 'false:1', `${at}: a moment does not show while a turn is in motion (${during})`);
+          await X(`clearInterval(window.__pin); TURN_LIVE.phase = 'hero'; true`);   // the turn ends: the hero's turn waits for the player
           await until(`!!document.querySelector('.mm-toast')`, 6000);
-          assert(await X(`!!document.querySelector('.mm-toast')`), `${at}: ...and shows as the fight ends, before the next fight's first turn`);
+          assert(await X(`!!document.querySelector('.mm-toast')`), `${at}: ...and shows when the turn ends, even if the player then waits`);
           assert(/const fighting = \(\) => [\s\S]{0,160}TURN_LIVE/.test(src), `${at}: the flush waits while a turn fight is live`);
           assert(!errs.length, `${at}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
           await ctx.close();
@@ -9653,6 +9711,32 @@ if (section('LF_EYES hook (browser, qa-player-eyes)')) try {
   }
 } catch (e) { fail('LF_EYES hook (browser) crashed: ' + (e.stack || e)); }
 // ==== end qa-player-eyes ====
+// ==== qa-first-hour-walk: tools/walk.mjs plays the first minutes, writes its report and one scorecard row ====
+if (section('first-hour walk (browser, qa-first-hour-walk)')) try {
+  const { spawnSync } = await import('node:child_process'), walk = path.join(ROOT, 'tools', 'walk.mjs');
+  const bad = spawnSync(process.execPath, [walk, '--bogus'], { encoding: 'utf8' });
+  assert(bad.status === 2 && /unknown option/.test(bad.stderr), 'walk.mjs refuses an option it does not know (exit 2)');
+  const src = fs.readFileSync(walk, 'utf8').replace(/^\s*\/\/.*$/gm, '');
+  assert(!/\bS(\.\w+|\[[^\]]+\])+\s*(=(?![=>])|\+=|-=|\+\+|--)/.test(src), 'the walk never assigns to game state (S.x = ...)');
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('first-hour walk (browser): Playwright or Chromium not here, skipped');
+  else {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lf-walk-')), sc = path.join(dir, 'scorecard.md');
+    const run = () => spawnSync(process.execPath, [walk, '--minutes', '0.3', '--out', dir, '--date', '2000-01-01', '--scorecard', sc, '--quiet'], { encoding: 'utf8', timeout: 120000 });
+    let r = run();
+    assert(r.status === 0, 'a short walk exits 0 (report only)' + (r.status ? ': ' + (r.stderr || r.stdout).slice(0, 200) : ''));
+    const md = fs.existsSync(path.join(dir, 'walk-2000-01-01.md')) ? fs.readFileSync(path.join(dir, 'walk-2000-01-01.md'), 'utf8') : '';
+    assert(/## Scorecard/.test(md) && /## Beats against the map/.test(md) && /## Timeline/.test(md), 'the report has its scorecard, beats and timeline');
+    const js = fs.existsSync(path.join(dir, 'walk-2000-01-01.json')) ? JSON.parse(fs.readFileSync(path.join(dir, 'walk-2000-01-01.json'), 'utf8')) : {};
+    assert(['F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F10', 'P4'].every(k => js.scorecard && js.scorecard[k] && typeof js.scorecard[k].pass === 'boolean'), 'the json carries F1-F6, F10 and P4');
+    assert(js.log && js.log.some(e => e.kind === 'tip' || e.kind === 'card'), 'the walk logged what appeared on screen');
+    run();
+    const rows = fs.readFileSync(sc, 'utf8').split('\n').filter(l => l.startsWith('| 2000-01-01 |'));
+    assert(rows.length === 1, 'the same run twice keeps one scorecard row (' + rows.length + ')');
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+} catch (e) { fail('first-hour walk crashed: ' + (e.stack || e)); }
+// ==== end qa-first-hour-walk ====
 // ---- fight HUD fit (fight-hud-fit): names whole, banner and toasts never on top of each other ----
 if (section('fight HUD fit')) try {
   const { pw, exe } = browserTools;
