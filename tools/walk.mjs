@@ -19,7 +19,7 @@
 // The player: reads LF_EYES (src/js/89-eyes-hook.js) and presses what a person presses. It reads each guide tip for 1.2 s and then
 // presses what it names; it parries and dodges at the set rates when the foe winds up; it presses the timed ring at the right
 // moment at the parry rate; it taps Next Up's Go and presses the one button the panel then offers (Craft, Claim, Equip, Spend, Build,
-// Light, Start); it dismisses story cards, moment cards (Continue) and the picker, and every 45 s opens Hero and presses the lit Train buttons. It never forces the game's state: nothing is set through `eval`, only read.
+// Light, Start); it dismisses story cards, moment cards (Continue) and the picker. It never forces the game's state: nothing is set through `eval`, only read.
 // Game time is a fake clock stepped in 100 ms frames (33 ms while a foe winds up), so a run is repeatable for a seed.
 //
 // What it logs, with game time and a shot: every tip, toast, card and banner, every unlock (S.onboard.got), each zone first clear,
@@ -277,16 +277,6 @@ async function followNextUp(o) {
 }
 
 // A casual player spends gold on Training now and then: Hero, Training, press every Train button that is lit, back to the fight.
-async function train(o) {
-  if (!(await click('.tabs .tab:text(Hero)', 300))) return false;
-  await advance(300, 16);
-  await click('[role=tab]:text(^Training)', 300); await advance(250, 16);
-  let n = 0;
-  while (n < 10 && await click('button[aria-label^="Train "]', 300)) { n++; await advance(120, 16); }
-  if (n) await note(page, 'train', `spent gold on ${n} Training level${n === 1 ? '' : 's'}`, { shot: false });
-  await click('.tabs .tab:text(Fight)', 300);
-  return true;
-}
 
 // ---------------- watching ----------------
 const SOUNDS = new Set(['kill', 'loot', 'level', 'skill', 'zone', 'forge']);
@@ -365,7 +355,6 @@ async function run() {
     // back to the fight once a tip or Next Up has been served: a menu that stays open leaves the foe waiting
     if (!did && o.s.tab && o.s.tab !== 'adv' && !o.tip && o.cards.length === 0 && gt - st.tabAt > 2.5) { st.tabAt = gt; did = await click('.tabs .tab[data-tab="adv"]', 300); }
     if (!did && (o.phase === 'idle') && gt - st.nuAt >= 6 && o.cards.length === 0) { st.nuAt = gt; did = await followNextUp(o); }
-    if (!did && o.phase === 'idle' && o.cards.length === 0 && !o.tip && o.s.gold >= 8 && gt - st.trainAt >= 45) { st.trainAt = gt; did = await train(o); }
     const fine = o.phase === 'foe wind-up' || o.phase === 'parry or dodge window' || false;   // the 33 ms step is for the foe's wind-up and the parry window only
     await advance(fine ? 33 : 100, fine ? 16 : 100);
   }
