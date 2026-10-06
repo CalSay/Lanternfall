@@ -77,7 +77,7 @@ The bell opens Notices, the Journal and Settings. Achievements (Deeds) and the C
   ([combat-turn-build.md](design/combat-turn-build.md) "The Deepwell and the Provings"). Only the world raid keeps its
   real-time fight (`59-combat.js`, `59g-active.js`, `59h-bosses.js`, `59i-elites.js`).
 - **Away:** gathering (and a raid hit) keeps earning; fights stop and earn nothing (`50-sim.js` `awayGains`). The away cap is 4 hours, raised by the
-  Hourglass and the Watchtower, up to 24 hours.
+  Hourglass and the Watchtower, up to 24 hours. While you gather, a chip under the Fight / Gather row says "Leave now: about N <material> in 4 hours" (a floor: it ignores level-ups, and it caps at the Storehouse room and says so when it fills and Spillover moves on). A fighter sees the notice instead.
 
 ## Gathering and gatherers
 
