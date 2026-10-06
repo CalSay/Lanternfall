@@ -13,7 +13,7 @@
 //   HANDS_CALLINGS    the Legendaries' callings { id, n, txt }
 //   HANDS_LEGENDS     the named Legendary Hands with supported routes { key, n, sk, cl, tr, about }
 //   HANDS_TAM         Tam, the free starter { key, n, r, sk, tr, about }
-//   HANDS_LATER       optional Hands who arrive later (the Hollises, LORE8b): data hook, off (live: 0)
+//   HANDS_LIT         "Lit for ..." lines: each random applicant carries one, picked by its id (handsLitFor, 57f)
 //   HANDS_FIRST       35 first names; HANDS_TRADE: 30 trade names (random Hands: "Cora Thatcher")
 
 const HANDS_TUNE = {
@@ -79,41 +79,46 @@ const HANDS_CALLINGS = {
   hearthcook: { n: 'Hearth Cook', txt: 'Counts as a Cook while out too; meals +10%' }
 };
 const HANDS_LEGENDS = [
-  { key: 'nan', n: 'Nan Tarrow', sk: 'mine', cl: 'deep', about: 'Worked the Quarry before the dark. Grenna knows Nan.' },
-  { key: 'bracken', n: 'Old Bracken', sk: 'wood', cl: 'felling', about: "Felled the Hollow woods with Bram's father." },
-  { key: 'fennel', n: 'Sister Fennel', sk: 'forage', cl: 'physic', about: "Kept the herb garden at Elowen's chapel." },
+  { key: 'nan', n: 'Nan Tarrow', sk: 'mine', cl: 'deep', about: 'Worked the Quarry before the dark. The old crew still asks after her.' },
+  { key: 'bracken', n: 'Old Bracken', sk: 'wood', cl: 'felling', about: 'Felled the Hollow woods before the dark. He knows every stump.' },
+  // aboutAfter replaces about once the Hollow's Elder is down and Elowen has come out of her chapel (handsAbout, 57f): before that, nobody
+  // at the Tavern has heard her name.
+  { key: 'fennel', n: 'Sister Fennel', sk: 'forage', cl: 'physic', about: 'Kept the herb garden on the hill.', aboutAfter: "Kept the herb garden at Elowen's chapel." },
   { key: 'jory', n: 'Jory Quickhands', sk: 'any', cl: 'quick', about: 'He lived by his wits in the dark. He will not say how.' },
-  { key: 'ashby', n: 'Mother Ashby', sk: 'forage', cl: 'hearthcook', about: 'She is from Emberlea. She keeps a place at the table for Caedmon.' }
+  { key: 'ashby', n: 'Mother Ashby', sk: 'forage', cl: 'hearthcook', about: 'She is from Emberlea. She keeps a place at the table for someone who is not home yet.' }
 ];
 // C1 routes for the professions the current game can run. Missing story/hero systems may
 // register a primary probe with registerHandsRoute(key, fn); their documented zone fallback works now.
 const HANDS_ROUTES = {
   loy: { fallback: 15, hint: 'Build the Loom to level 2, or reach zone 15.' },
   nan: { fallback: 25, hint: 'Defeat a Quarry Golem elder, or reach zone 25.' },
-  bracken: { fallback: 25, hint: 'Bring Bram to camp, or reach zone 25.' },
-  rook: { fallback: 30, hint: 'Follow the quarry rumour, or reach zone 30.' },
+  bracken: { fallback: 25, hint: 'Reach zone 25.' },
+  rook: { fallback: 31, hint: 'Follow the quarry rumour, or clear the Quarry Ruins.' },   // 31: after the zone 30 boss falls (story-systems-hollow; was 30)
   ashby: { hint: 'Build the Kitchen.' },
-  fennel: { fallback: 30, hint: "Finish Elowen's chapel quest, or reach zone 30." },
+  fennel: { fallback: 30, hint: 'Finish the chapel quest, or reach zone 30.' },
   dorrie: { fallback: 32, hint: 'Hear the pedlar rumour at the Tavern, or reach zone 32.' },
   // Keep old v5 Jory records working. New Hunter recruitment waits for that profession.
-  jory: { live: false, hint: 'The Hunter profession will bring Jory to camp.' }
+  jory: { live: false, hint: 'The Hunter profession will bring Jory to camp.' },
+  // Ada and Pell walk in the morning after the Hollow's Elder falls (bible 6.3, 8.1). `elder: 'hollow'` names the Elder; 57f `later()` waits
+  // for it, then for the next 06:00 (remembered in S.hands.routes.hollowDawn). They used to wait for the Coast's Great Lantern.
+  ada: { elder: 'hollow', hint: 'Clear the last zone of the Hollow. They come in the next morning.' },
+  pell: { elder: 'hollow', hint: 'Clear the last zone of the Hollow. They come in the next morning.' }
 };
 HANDS_LEGENDS.push(
   { key: 'loy', n: 'Gammer Loy', sk: 'forage', cl: null, tr: ['steady'], about: 'Spun in the dark by feel.' },
   { key: 'rook', n: 'Rook', sk: 'mine', cl: null, tr: ['lucky'], about: "Crawled the quarry's cracks for ten years. Came up with his pockets full." },
-  { key: 'dorrie', n: 'Dorrie Fitch', sk: 'forage', cl: null, tr: ['lucky'], about: 'A pedlar who walked the dark roads selling thread.' }
+  { key: 'dorrie', n: 'Dorrie Fitch', sk: 'forage', cl: null, tr: ['lucky'], about: 'A pedlar who walked the dark roads selling thread.' },
+  // Ada and Pell (the Hollises) come out of the Wraithmarsh fog. They keep their own rarities, not Legendary (r: 57f arriveNamed).
+  { key: 'ada', n: 'Ada Hollis', r: 'rare', sk: 'forage', cl: null, tr: ['steady', 'green'], about: 'The fog held her. She does not remember the years, only a candle.' },
+  { key: 'pell', n: 'Pell Hollis', r: 'uncommon', sk: 'wood', cl: null, tr: ['strong'], about: 'Ada\'s boy. The fog held him too, and he does not know for how long.' }
 );
-const HANDS_TAM = { key: 'tam', n: 'Tam', r: 'legendary', sk: 'wood', tr: ['steady'], about: "Hesketh's nephew. He heard about the fire from his uncle." };
-// Later, optional Hands (lore.md 7.2): Bram's family comes home once Bram is recruited and the
-// Coast's Great Lantern is lit. Off until LORE8b sets live: 1 (and writes their lines). when() is a
-// cheap probe the core calls once a second; they arrive free, as applicants, once each.
-// Off: they need Bram unlocked as a hero (W3-B) and the Coast's Great Lantern lit.
-const HANDS_LATER = [
-  { key: 'ada', n: 'Ada Hollis', r: 'rare', sk: 'forage', tr: ['steady', 'green'], live: 0, about: "Bram's wife. She followed his marks home.",
-    when: () => false },
-  { key: 'pell', n: 'Pell Hollis', r: 'uncommon', sk: 'wood', tr: ['strong'], live: 0, about: "Bram's boy, not small any more.",
-    when: () => false }
-];
+const HANDS_TAM = { key: 'tam', n: 'Tam', r: 'legendary', sk: 'wood', tr: ['steady'], about: "Hesketh's nephew. He was the first one out of the cellars." };
+// "Lit for ..." (bible 6.3): every lamp at camp is lit for someone, so each random applicant carries one line saying who. Neutral wording, so
+// it fits any name. handsLitFor(app) picks by the applicant's id, so a Hand keeps the same line from the board to the camp.
+const HANDS_LIT = ['Lit for a sister.', 'Lit for a daughter.', 'Lit for a mother.', 'Lit for a brother.', 'Lit for a husband.', 'Lit for a wife.',
+  'Lit for a son.', 'Lit for a father.', 'Lit for a grandmother.', 'Lit for a best friend.', 'Lit for a neighbour.', 'Lit for a twin.',
+  'Lit for an apprentice.', 'Lit for a teacher.', 'Lit for a cousin.', 'Lit for a little brother.', 'Lit for a grandson.', 'Lit for an old friend.',
+  'Lit for a child at home.', 'Lit for the one who stayed behind.'];
 const HANDS_FIRST = ['Alys', 'Beck', 'Cora', 'Dunstan', 'Edda', 'Finch', 'Gwen', 'Ivo', 'Jessa',
   'Kit', 'Lotte', 'Mabel', 'Perrin', 'Rosa', 'Sim', 'Tilly',
   'Ulric', 'Vi', 'Wat', 'Yara', 'Agnes', 'Bartle', 'Clem', 'Dora', 'Elspeth',

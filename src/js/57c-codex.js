@@ -114,9 +114,10 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
       else if (!champ) hint = x.exact ? `Beat a champion ${t.name}. Champions show up from zone 20.` : 'A stronger one is out there.';
       return { key: t.key, n: t.name, got: tier + elder + champ, max: 6, pts: tier * 4 + elder * 6 + champ * 4, ptsMax: 26, hint,
         sub: `Tier ${tier} of 4${elder ? ' · Elder' : ''}${champ ? ' · Champion' : ''}`, kills, mob: t.key,
-        // LORE3: the bestiary lines (21h LORE_BESTIARY) for what is found: the foe at tier 1, its Elder, its champion, the Fenmother
-        lore: typeof storyBestiary === 'function' ? storyBestiary(t.key, { foe: tier >= 1, elder, champ, listener: i === 6 && S.maxZone > REGION_ZONES }) : [] };
-    })
+        lore: [] };
+    }).concat(typeof storyFoes === 'function' ? storyFoes().map(f => ({ key: 'f' + f.zone, n: f.name, got: 1, max: 1, pts: 0, ptsMax: 0, grp: 'Hollow monsters', mob: f.type,
+      // story-systems-hollow: each roster monster in the game is its own entry, with the shape it copied (21h LORE_FOES)
+      lore: [f.line], sub: `Zone ${f.zone}`, hint: '' })) : [])
   });
   // ---------------- 2. Zones: 35 zones x 5 mastery stars ----------------
   page('zones', {
@@ -137,9 +138,9 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
   page('uniques', {
     n: 'Uniques', bless: 'hunt', seal: { key: 'uniqueChance', v: 0.03, txt: 'Uniques drop 3% more often' }, title: 'the Curator', pic: 'item',
     tiles: x => Object.keys(UNIQ).map(k => {
-      const u = UNIQ[k], got = S.found[k] ? 1 : 0;
+      const u = UNIQ[k], got = S.found[k] ? 1 : 0, fl = got && typeof storyItemLine === 'function' ? storyItemLine(k) : '';   // story-systems-hollow: the Champion it came from
       return { key: k, n: u.name, got, max: 1, pts: got * 10, ptsMax: 10, item: { slot: u.slot, t: S.found[k] || 1, u: k },
-        sub: got ? u.txt : '', hint: got ? '' : x.exact ? u.src + '.' : (RAID_UNIQ.includes(k) ? 'The world raid guards it.' : 'A boss guards it.') };
+        sub: got ? u.txt + (fl ? ' ' + fl : '') : '', hint: got ? '' : x.exact ? u.src + '.' : (RAID_UNIQ.includes(k) ? 'The world raid guards it.' : 'A boss guards it.') };
     })
   });
   // ---------------- 4. Armoury: 13 affix stats x 5 tiers seen; 7 Masterwork lines ----------------

@@ -213,7 +213,7 @@
     const hd = el('div', 'cx-dh');
     const ic = el('span', 'cx-dic' + (t.got ? '' : ' blank')); ic.append(img(tileImg(t))); hd.append(ic);
     const nm = el('div', 'cx-dn');
-    nm.append(el('b', null, known(p, t) ? t.n : 'Not found yet'), el('span', null, `${lightTxt(t.pts / 2)} of ${lightTxt(t.ptsMax / 2)} Light`));
+    nm.append(el('b', null, known(p, t) ? t.n : 'Not found yet'), el('span', null, t.ptsMax ? `${lightTxt(t.pts / 2)} of ${lightTxt(t.ptsMax / 2)} Light` : ''));
     hd.append(nm, t.max > 1 ? pips(t.got, t.max) : el('span'));
     const x = btn('cx-dx', '×'); x.setAttribute('aria-label', 'Close details');
     x.addEventListener('click', () => { a.foot.textContent = ''; node.classList.remove('sel'); openTile = null; });

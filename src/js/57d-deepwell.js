@@ -176,13 +176,13 @@ const DEEP_SHOP = {};
 }
 // The Deepwell's own story, bought a page at a time (100 Marks each, in order).
 const DEEP_PAGES = [
-  ['The Rope', 'The first rope went down forty fathoms and came back dry. The second went down a hundred and came back warm.'],
+  ['The Rope', 'The first rope went down forty fathoms and came back dry. The second went down a hundred and came back warm. The stair goes further than any rope has measured.'],
   ['The Diggers', "Hollow's Rest was a mining camp before it was a village. The miners dug for silver and found a stair instead."],
   ['The Stair', 'The stair was cut by hands smaller than ours. Every step is worn in the middle, as if something climbed it for a thousand years.'],
   ['The First Lantern', 'The miners carried oil lamps. Below the ninth landing the flames turned blue, and the dark stopped moving away from them.'],
   ['The Quiet Landings', 'Every sixth landing is still. No foe comes there. Someone left benches, and a jar of oil, and a name scratched in the stone: Maud.'],
   ['Maud', 'Maud Tallow kept the camp lamps. When the miners stopped coming back up, she went down after them with the brightest lantern she had.'],
-  ['The Elders', 'The Deep Elders are not beasts that wandered in. They are what the dark makes of things that stay below too long.'],
+  ['The Elders', 'The Deep Elders did not wander in. The dark has no shape of its own, so below the ninth landing it copied what it found: worn steps, bench legs, a miner\'s pick. None of it was ever alive.'],
   ['What Glows', 'The light at the bottom is not fire. It is older than fire. It is what the dark is afraid of, and it is waiting.'],
   ["Maud's Lantern", "Deep down, a lantern hangs from a hook where no hook should be. It still burns. Its oil never runs out. The name on the handle is Maud's."],
   ['Why It Glows', 'Maud never came back up. She did not want to. She stayed to keep the light lit, so that the dark stays down there, and we stay up here.']
