@@ -8082,6 +8082,111 @@ if (section('playtest driver (browser)')) try {
   }
 } catch (e) { fail('playtest driver (browser) crashed: ' + (e.stack || e)); }
 
+// task turn-combat-aware-boss-readiness (PR #47)
+if (section('boss odds (core, Next Up "Boss ready")')) try {
+  // The Next Up zone-boss goal says "Boss ready" only when the hero would usually win (59m bossOdds: 30 scratch turn fights of the
+  // frontier boss, judged by the player's own Parry and Dodge record), not just because the zone's fights are won.
+  const FX = n => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-' + n + '.json'), 'utf8');
+  const J = JSON.stringify;
+  // a hero at its frontier boss: the zone's fights won, the boss next (as Next Up sees it)
+  const boot = (hero, fx, seed) => {
+    const g = loadCore({ seed: seed || 7, turns: true, ...(fx ? { storage: memoryStorage({ [KEY]: FX(fx) }) } : {}) }), E = s => g.eval(s);
+    if (fx) E('loadSave()');
+    E(`S.onboard && (S.onboard.tips = false, S.onboard.all = true); ${hero ? `soloPick(${J(hero)}, {now:true});` : ''} setZone(Math.max(1, S.maxZone)); S.activity = 'fight'; arena = null; gearDirty();
+      S.kills = ZONE_FIGHTS; fightBoss = false; spawn();`);
+    for (let i = 0; i < 5; i++) g.fn.tick(0.1);   // the hero's unit exists, as in play
+    return { g, E, goal: () => E('(() => { const x = GOALS.find(q => q.id === "zone-boss"); return { label: x.label(), pct: +x.pct(), go: x.go() }; })()') };
+  };
+  const good = 'S.bossOdds = { hits: 300, parry: 180, dodge: 108, rings: 300, perfect: 120, good: 135 }';   // parry 60%, dodge 90% of the rest, rings 40% / 45%
+  // a new hero is ready for the Zone 1 boss
+  for (const hero of ['wren', 'tobin', 'pip']) {
+    const { g, E, goal } = boot(hero), o = E('bossOdds({ sync: true })'), l = goal();
+    assert(o && o.zone === 1 && o.n === 30 && o.win >= 0.7 && l.label === 'Boss ready in Zone 1' && l.pct === 1 && l.go.sel === '#gateBtn' && !g.errors.length,
+      `boss odds: a fresh ${hero} is ready for the Zone 1 boss (${J(o)}, "${l.label}")`);
+  }
+  // the early fixture (Wren, Zone 8) with no history: not ready, and Go takes the player to Training
+  { const { g, E, goal } = boot('', 'early'), o = E('bossOdds({ sync: true })'), l = goal();
+    assert(o && o.zone === E('S.maxZone') && o.win < 0.7 && /^Zone \d+ boss: a close fight\. Train to be safe$|^Zone \d+ boss is too strong\. Train first$/.test(l.label) && l.pct < 1 && l.pct >= 0.01
+      && l.go.tab === 'party' && l.go.view === 'training' && !g.errors.length, `boss odds: the early fixture (Zone 8) is not ready with no record, and Go opens Training (${J(o)}, "${l.label}", ${l.pct.toFixed(2)})`); }
+  // the late fixture: too strong with no history; ready with a good record
+  { const { g, E, goal } = boot('', 'late'), o = E('bossOdds({ sync: true })'), l = goal();
+    assert(o && o.win < 0.35 && /^Zone \d+ boss is too strong\. Train first$/.test(l.label) && l.go.view === 'training' && l.pct >= 0.01 && l.pct < 0.5, `boss odds: the late fixture is too strong with no record (${J(o)}, "${l.label}")`);
+    E(good); const o2 = E('bossOdds({ sync: true })'), l2 = goal();
+    assert(o2 && o2.win >= 0.7 && l2.label === `Boss ready in Zone ${o2.zone}` && l2.pct === 1 && l2.go.sel === '#gateBtn' && !g.errors.length,
+      `boss odds: the late fixture is ready for a player who parries 60%, dodges 90% of the rest and times rings well (${J(o2)}, "${l2.label}")`); }
+  // the label while the estimate is pending (chunks, one every 0.4 s of game time), then done; the same answer as the sync run
+  { const { g, E, goal } = boot('', 'early'), a = E('bossOdds()'), l1 = goal();
+    assert(a === null && l1.label === `The Zone ${E('S.maxZone')} boss is next` && l1.pct === 0.99 && l1.go.sel === '#gateBtn', `boss odds: pending shows "The Zone N boss is next" at 99% (${l1.label})`);
+    assert(E('bossOdds()') === null, 'boss odds: a second call in the same instant runs no more fights');
+    for (let k = 0; k < 2; k++) { for (let i = 0; i < 10; i++) g.fn.tick(0.05); E('bossOdds()'); }
+    const r = E('bossOdds()'), s = boot('', 'early').E('bossOdds({ sync: true })');
+    assert(r && J(r) === J(s), `boss odds: three chunks of 10 fights give the finished estimate, the same as a synchronous run (${J(r)})`);
+    // a new estimate after a change keeps showing the last finished one for the same zone
+    E('S.bossOdds = { hits: 300, parry: 180, dodge: 108, rings: 300, perfect: 120, good: 135 }'); const kept = E('bossOdds()');
+    assert(kept && J(kept) === J(r), 'boss odds: while a new estimate runs, the last finished one for the zone still shows');
+    assert(!g.errors.length, 'boss odds: no core errors'); }
+  // legacy (real-time) fights keep the old "Boss ready"
+  { const { g, E, goal } = boot('', 'early'); E('TURN_TUNE.on = 0'); const l = goal();
+    assert(E('bossOdds()') === null && l.label === `Boss ready in Zone ${E('S.maxZone')}` && l.pct === 1, `boss odds: with turn fights off the old rule stays (${l.label})`); }
+  // the scratch boss is the boss a real fight spawns (the live one has +-5% HP jitter)
+  { const { g, E } = boot('', 'early'); const bad = [];
+    for (const z of [1, 2, 8, 20, 34, 35]) {
+      E(`S.maxZone = Math.max(S.maxZone, ${z}); setZone(${z}); S.activity = 'fight'; arena = null; fightBoss = true; spawn();`);
+      const live = JSON.parse(E('J = JSON.stringify; JSON.stringify((p => ({ s: p.foeSpd, a: p.foeArm, t: p.foeType, b: p.boss, r: p.region, h: p.bossHitX, c: p.bossChargeX, m: p.script.map(m => m.id), hp: p.foeMaxHp, n: p.foeName, full: p.fullHp }))(turnCombatProfile()))'));
+      const mine = JSON.parse(E(`JSON.stringify((p => ({ s: p.foeSpd, a: p.foeArm, t: p.foeType, b: p.boss, r: p.region, h: p.bossHitX, c: p.bossChargeX, m: p.script.map(m => m.id), hp: p.foeMaxHp, n: p.foeName, full: p.fullHp }))(turnMakeProfile(bossOddsFoe(${z}), cbUnitByKey('hero'))))`));
+      const { hp: h1, ...a } = live, { hp: h2, ...b } = mine;
+      if (J(a) !== J(b) || Math.abs(h1 / h2 - 1) > 0.06) bad.push(`z${z}: ${J(a)} vs ${J(b)}, HP ${h1.toFixed(0)} / ${h2.toFixed(0)}`);
+    }
+    assert(!bad.length && E('isRegionBoss(35)') && !g.errors.length, `boss odds: the scratch boss matches a real spawned boss at Zones 1, 2, 8, 20, 34 and 35 (the region boss) (${bad.join('; ') || 'ok'})`); }
+  // it draws nothing from the game's random numbers and changes nothing in the save
+  { const A = boot('', 'early', 11), B = boot('', 'early', 11), snap = A.E('JSON.stringify(S)');
+    A.E('bossOdds({ sync: true }); bossOddsFoe(S.maxZone)');
+    const ra = A.E('[Math.random(), Math.random(), Math.random(), Math.random()]'), rb = B.E('[Math.random(), Math.random(), Math.random(), Math.random()]');
+    assert(J(ra) === J(rb), `boss odds: calling it does not move the game's random numbers (${ra[0].toFixed(6)} / ${rb[0].toFixed(6)})`);
+    assert(A.E('JSON.stringify(S)') === snap && !A.g.errors.length, 'boss odds: calling it changes nothing in S'); }
+  // the record: live events only, an exponential memory
+  { const { g, E } = boot('wren'), sk = () => E('bossOddsSkill(true)'), tally = () => E('JSON.stringify(S.bossOdds)');
+    const s0 = sk();
+    assert(Math.abs(s0.parry - 0.25) < 1e-9 && Math.abs(s0.dodge - 0.5) < 1e-9 && Math.abs(s0.perfect - 0.1) < 1e-9 && Math.abs(s0.good - 0.4) < 1e-9, `boss odds: with no record the player is the casual one (${J(s0)})`);
+    E('bossOdds({ sync: true })'); const t0 = tally();
+    assert(t0 === J({ hits: 0, parry: 0, dodge: 0, rings: 0, perfect: 0, good: 0 }), 'boss odds: the scratch fights add nothing to the record (' + t0 + ')');
+    E('turnCombatSample({ profile: turnCombatProfile(), seconds: 120, seed: 4 })'); assert(tally() === t0, 'boss odds: neither does a scratch sample');
+    E('emit("foeContact", { id: "x", hit: 0, hits: 1, res: "parry" })'); const s1 = sk();
+    assert(s1.parry > s0.parry && E('S.bossOdds.hits') === 1 && E('S.bossOdds.parry') === 1, `boss odds: a parry raises the parry share (${s0.parry.toFixed(3)} to ${s1.parry.toFixed(3)})`);
+    E('emit("foeContact", { id: "x", hit: 0, hits: 1, res: "miss" })'); assert(E('S.bossOdds.hits') === 1, 'boss odds: a Blind miss is nobody\'s doing');
+    E('emit("foeContact", { id: "x", hit: 0, hits: 1, res: "dodge" })'); E('emit("foeContact", { id: "x", hit: 0, hits: 1, res: "hit" })');
+    assert(Math.abs(E('S.bossOdds.hits') - 2.9701) < 1e-9, `boss odds: each sample fades the old ones by 1% (hits ${E('S.bossOdds.hits').toFixed(4)})`);
+    E('emit("timingGrade", { id: "x", i: 0, grade: "perfect" })'); E('emit("timingGrade", { id: "x", i: 1, grade: "miss" })');
+    assert(E('S.bossOdds.rings') > 1.9 && E('S.bossOdds.perfect') > 0.98 && E('S.bossOdds.good') === 0, 'boss odds: rings count Perfect, Good and missed');
+    // many parries make a parrying player, and the skill is clamped
+    for (let i = 0; i < 400; i++) E('emit("foeContact", { id: "x", hit: 0, hits: 1, res: "parry" })');
+    const s2 = sk(); assert(s2.parry > 0.9 && s2.dodge >= 0 && s2.dodge <= 1 && E('Object.values(S.bossOdds).every(Number.isFinite)') && E('Object.values(bossOddsSkill()).every(v => Math.abs(v / 0.05 - Math.round(v / 0.05)) < 1e-9)'), `boss odds: a long run of parries gives a parrying player; the skill stays in range and rounds to 0.05 (${J(s2)})`);
+    // a player who improves counts as improved: 300 hits of dodging only, then parrying only
+    E('S.bossOdds = { hits: 0, parry: 0, dodge: 0, rings: 0, perfect: 0, good: 0 }');
+    for (let i = 0; i < 300; i++) E('emit("foeContact", { id: "x", hit: 0, hits: 1, res: "hit" })');
+    const s3 = sk(); for (let i = 0; i < 300; i++) E('emit("foeContact", { id: "x", hit: 0, hits: 1, res: "parry" })');
+    assert(s3.parry < 0.1 && sk().parry > 0.8, `boss odds: the record fades (parry share ${s3.parry.toFixed(2)} after 300 plain hits, ${sk().parry.toFixed(2)} after 300 parries)`);
+    assert(!g.errors.length, 'boss odds: no core errors in the record'); }
+  // old saves load with the record's defaults
+  for (const f of ['early', 'mid', 'late']) {
+    const raw = JSON.parse(FX(f)), g = loadCore({ turns: true, storage: memoryStorage({ [KEY]: FX(f) }) });
+    assert(!('bossOdds' in raw) && g.eval('JSON.stringify(S.bossOdds)') === J({ hits: 0, parry: 0, dodge: 0, rings: 0, perfect: 0, good: 0 }), `boss odds: the ${f} fixture loads with the record's defaults`);
+  }
+  // gear changed while gathering counts at once: the estimate reads a scratch hero from the current state (cbEstHero), not the
+  // live unit, which only refreshes while fighting (Codex P1 on PR #47)
+  { const { g, E } = boot('', 'early');
+    E(`S.activity = 'gather'; S.rested.left = 0; for (const sl of Object.keys(S.equip)) { const it = itemById(S.equip[sl]); if (it && !['pick', 'axe', 'sickle', 'spear'].includes(it.slot)) it.plus = (it.plus || 0) + 6; } gearDirty();`);
+    for (let i = 0; i < 5; i++) g.fn.tick(0.1);
+    const stale = E('cbUnitByKey("hero").maxHp'), est = E('cbEstHero().maxHp'), p = E('turnMakeProfile(bossOddsFoe(S.maxZone), cbEstHero()).heroMaxHp');
+    // the fight's own unit, with the rest banked while gathering set aside (Rested: +10% damage for a few minutes, so HP too)
+    E(`S.rested.left = 0; S.activity = 'fight'; arena = null; fightBoss = true; spawn();`); for (let i = 0; i < 3; i++) g.fn.tick(0.1);
+    const live = E('turnCombatProfile().heroMaxHp');
+    assert(est > stale && Math.abs(p / live - 1) < 1e-6 && !g.errors.length, `boss odds: gear raised while gathering counts before the next fight (stale ${Math.round(stale)}, estimate ${Math.round(p)}, the fight's ${Math.round(live)})`); }
+  // the sampler's new fights option stops after that many fights, and the old call still runs its seconds
+  { const { g, E } = boot('wren'), r = JSON.parse(E('JSON.stringify(turnCombatSample({ profile: turnCombatProfile(), seconds: 3600, seed: 2, fights: 5 }))')), r0 = JSON.parse(E('JSON.stringify(turnCombatSample({ profile: turnCombatProfile(), seconds: 600, seed: 2 }))'));
+    assert(r.kills + r.deaths === 5 && r0.kills + r0.deaths > 5, `boss odds: turnCombatSample({ fights }) stops at that many fights (${r.kills + r.deaths}); without it the seconds run out (${r0.kills + r0.deaths} fights)`); }
+} catch (e) { fail('boss odds crashed: ' + (e.stack || e)); }
+
 if (section('removed systems (W2-C)')) try {
   const strip = t => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/([^:'"`\\])\/\/[^\n'"`]*$/gm, '$1');
   const files = [];
@@ -8334,110 +8439,6 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
     } finally { await browser.close(); }
   }
 } catch (e) { fail(`landscape ${w}x${h} (browser, UX-L1) crashed: ` + (e.stack || e)); }
-
-if (section('boss odds (core, Next Up "Boss ready")')) try {
-  // The Next Up zone-boss goal says "Boss ready" only when the hero would usually win (59m bossOdds: 30 scratch turn fights of the
-  // frontier boss, judged by the player's own Parry and Dodge record), not just because the zone's fights are won.
-  const FX = n => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-' + n + '.json'), 'utf8');
-  const J = JSON.stringify;
-  // a hero at its frontier boss: the zone's fights won, the boss next (as Next Up sees it)
-  const boot = (hero, fx, seed) => {
-    const g = loadCore({ seed: seed || 7, turns: true, ...(fx ? { storage: memoryStorage({ [KEY]: FX(fx) }) } : {}) }), E = s => g.eval(s);
-    if (fx) E('loadSave()');
-    E(`S.onboard && (S.onboard.tips = false, S.onboard.all = true); ${hero ? `soloPick(${J(hero)}, {now:true});` : ''} setZone(Math.max(1, S.maxZone)); S.activity = 'fight'; arena = null; gearDirty();
-      S.kills = ZONE_FIGHTS; fightBoss = false; spawn();`);
-    for (let i = 0; i < 5; i++) g.fn.tick(0.1);   // the hero's unit exists, as in play
-    return { g, E, goal: () => E('(() => { const x = GOALS.find(q => q.id === "zone-boss"); return { label: x.label(), pct: +x.pct(), go: x.go() }; })()') };
-  };
-  const good = 'S.bossOdds = { hits: 300, parry: 180, dodge: 108, rings: 300, perfect: 120, good: 135 }';   // parry 60%, dodge 90% of the rest, rings 40% / 45%
-  // a new hero is ready for the Zone 1 boss
-  for (const hero of ['wren', 'tobin', 'pip']) {
-    const { g, E, goal } = boot(hero), o = E('bossOdds({ sync: true })'), l = goal();
-    assert(o && o.zone === 1 && o.n === 30 && o.win >= 0.7 && l.label === 'Boss ready in Zone 1' && l.pct === 1 && l.go.sel === '#gateBtn' && !g.errors.length,
-      `boss odds: a fresh ${hero} is ready for the Zone 1 boss (${J(o)}, "${l.label}")`);
-  }
-  // the early fixture (Wren, Zone 8) with no history: not ready, and Go takes the player to Training
-  { const { g, E, goal } = boot('', 'early'), o = E('bossOdds({ sync: true })'), l = goal();
-    assert(o && o.zone === E('S.maxZone') && o.win < 0.7 && /^Zone \d+ boss: a close fight\. Train to be safe$|^Zone \d+ boss is too strong\. Train first$/.test(l.label) && l.pct < 1 && l.pct >= 0.01
-      && l.go.tab === 'party' && l.go.view === 'training' && !g.errors.length, `boss odds: the early fixture (Zone 8) is not ready with no record, and Go opens Training (${J(o)}, "${l.label}", ${l.pct.toFixed(2)})`); }
-  // the late fixture: too strong with no history; ready with a good record
-  { const { g, E, goal } = boot('', 'late'), o = E('bossOdds({ sync: true })'), l = goal();
-    assert(o && o.win < 0.35 && /^Zone \d+ boss is too strong\. Train first$/.test(l.label) && l.go.view === 'training' && l.pct >= 0.01 && l.pct < 0.5, `boss odds: the late fixture is too strong with no record (${J(o)}, "${l.label}")`);
-    E(good); const o2 = E('bossOdds({ sync: true })'), l2 = goal();
-    assert(o2 && o2.win >= 0.7 && l2.label === `Boss ready in Zone ${o2.zone}` && l2.pct === 1 && l2.go.sel === '#gateBtn' && !g.errors.length,
-      `boss odds: the late fixture is ready for a player who parries 60%, dodges 90% of the rest and times rings well (${J(o2)}, "${l2.label}")`); }
-  // the label while the estimate is pending (chunks, one every 0.4 s of game time), then done; the same answer as the sync run
-  { const { g, E, goal } = boot('', 'early'), a = E('bossOdds()'), l1 = goal();
-    assert(a === null && l1.label === `The Zone ${E('S.maxZone')} boss is next` && l1.pct === 0.99 && l1.go.sel === '#gateBtn', `boss odds: pending shows "The Zone N boss is next" at 99% (${l1.label})`);
-    assert(E('bossOdds()') === null, 'boss odds: a second call in the same instant runs no more fights');
-    for (let k = 0; k < 2; k++) { for (let i = 0; i < 10; i++) g.fn.tick(0.05); E('bossOdds()'); }
-    const r = E('bossOdds()'), s = boot('', 'early').E('bossOdds({ sync: true })');
-    assert(r && J(r) === J(s), `boss odds: three chunks of 10 fights give the finished estimate, the same as a synchronous run (${J(r)})`);
-    // a new estimate after a change keeps showing the last finished one for the same zone
-    E('S.bossOdds = { hits: 300, parry: 180, dodge: 108, rings: 300, perfect: 120, good: 135 }'); const kept = E('bossOdds()');
-    assert(kept && J(kept) === J(r), 'boss odds: while a new estimate runs, the last finished one for the zone still shows');
-    assert(!g.errors.length, 'boss odds: no core errors'); }
-  // legacy (real-time) fights keep the old "Boss ready"
-  { const { g, E, goal } = boot('', 'early'); E('TURN_TUNE.on = 0'); const l = goal();
-    assert(E('bossOdds()') === null && l.label === `Boss ready in Zone ${E('S.maxZone')}` && l.pct === 1, `boss odds: with turn fights off the old rule stays (${l.label})`); }
-  // the scratch boss is the boss a real fight spawns (the live one has +-5% HP jitter)
-  { const { g, E } = boot('', 'early'); const bad = [];
-    for (const z of [1, 2, 8, 20, 34, 35]) {
-      E(`S.maxZone = Math.max(S.maxZone, ${z}); setZone(${z}); S.activity = 'fight'; arena = null; fightBoss = true; spawn();`);
-      const live = JSON.parse(E('J = JSON.stringify; JSON.stringify((p => ({ s: p.foeSpd, a: p.foeArm, t: p.foeType, b: p.boss, r: p.region, h: p.bossHitX, c: p.bossChargeX, m: p.script.map(m => m.id), hp: p.foeMaxHp, n: p.foeName, full: p.fullHp }))(turnCombatProfile()))'));
-      const mine = JSON.parse(E(`JSON.stringify((p => ({ s: p.foeSpd, a: p.foeArm, t: p.foeType, b: p.boss, r: p.region, h: p.bossHitX, c: p.bossChargeX, m: p.script.map(m => m.id), hp: p.foeMaxHp, n: p.foeName, full: p.fullHp }))(turnMakeProfile(bossOddsFoe(${z}), cbUnitByKey('hero'))))`));
-      const { hp: h1, ...a } = live, { hp: h2, ...b } = mine;
-      if (J(a) !== J(b) || Math.abs(h1 / h2 - 1) > 0.06) bad.push(`z${z}: ${J(a)} vs ${J(b)}, HP ${h1.toFixed(0)} / ${h2.toFixed(0)}`);
-    }
-    assert(!bad.length && E('isRegionBoss(35)') && !g.errors.length, `boss odds: the scratch boss matches a real spawned boss at Zones 1, 2, 8, 20, 34 and 35 (the region boss) (${bad.join('; ') || 'ok'})`); }
-  // it draws nothing from the game's random numbers and changes nothing in the save
-  { const A = boot('', 'early', 11), B = boot('', 'early', 11), snap = A.E('JSON.stringify(S)');
-    A.E('bossOdds({ sync: true }); bossOddsFoe(S.maxZone)');
-    const ra = A.E('[Math.random(), Math.random(), Math.random(), Math.random()]'), rb = B.E('[Math.random(), Math.random(), Math.random(), Math.random()]');
-    assert(J(ra) === J(rb), `boss odds: calling it does not move the game's random numbers (${ra[0].toFixed(6)} / ${rb[0].toFixed(6)})`);
-    assert(A.E('JSON.stringify(S)') === snap && !A.g.errors.length, 'boss odds: calling it changes nothing in S'); }
-  // the record: live events only, an exponential memory
-  { const { g, E } = boot('wren'), sk = () => E('bossOddsSkill(true)'), tally = () => E('JSON.stringify(S.bossOdds)');
-    const s0 = sk();
-    assert(Math.abs(s0.parry - 0.25) < 1e-9 && Math.abs(s0.dodge - 0.5) < 1e-9 && Math.abs(s0.perfect - 0.1) < 1e-9 && Math.abs(s0.good - 0.4) < 1e-9, `boss odds: with no record the player is the casual one (${J(s0)})`);
-    E('bossOdds({ sync: true })'); const t0 = tally();
-    assert(t0 === J({ hits: 0, parry: 0, dodge: 0, rings: 0, perfect: 0, good: 0 }), 'boss odds: the scratch fights add nothing to the record (' + t0 + ')');
-    E('turnCombatSample({ profile: turnCombatProfile(), seconds: 120, seed: 4 })'); assert(tally() === t0, 'boss odds: neither does a scratch sample');
-    E('emit("foeContact", { id: "x", hit: 0, hits: 1, res: "parry" })'); const s1 = sk();
-    assert(s1.parry > s0.parry && E('S.bossOdds.hits') === 1 && E('S.bossOdds.parry') === 1, `boss odds: a parry raises the parry share (${s0.parry.toFixed(3)} to ${s1.parry.toFixed(3)})`);
-    E('emit("foeContact", { id: "x", hit: 0, hits: 1, res: "miss" })'); assert(E('S.bossOdds.hits') === 1, 'boss odds: a Blind miss is nobody\'s doing');
-    E('emit("foeContact", { id: "x", hit: 0, hits: 1, res: "dodge" })'); E('emit("foeContact", { id: "x", hit: 0, hits: 1, res: "hit" })');
-    assert(Math.abs(E('S.bossOdds.hits') - 2.9701) < 1e-9, `boss odds: each sample fades the old ones by 1% (hits ${E('S.bossOdds.hits').toFixed(4)})`);
-    E('emit("timingGrade", { id: "x", i: 0, grade: "perfect" })'); E('emit("timingGrade", { id: "x", i: 1, grade: "miss" })');
-    assert(E('S.bossOdds.rings') > 1.9 && E('S.bossOdds.perfect') > 0.98 && E('S.bossOdds.good') === 0, 'boss odds: rings count Perfect, Good and missed');
-    // many parries make a parrying player, and the skill is clamped
-    for (let i = 0; i < 400; i++) E('emit("foeContact", { id: "x", hit: 0, hits: 1, res: "parry" })');
-    const s2 = sk(); assert(s2.parry > 0.9 && s2.dodge >= 0 && s2.dodge <= 1 && E('Object.values(S.bossOdds).every(Number.isFinite)') && E('Object.values(bossOddsSkill()).every(v => Math.abs(v / 0.05 - Math.round(v / 0.05)) < 1e-9)'), `boss odds: a long run of parries gives a parrying player; the skill stays in range and rounds to 0.05 (${J(s2)})`);
-    // a player who improves counts as improved: 300 hits of dodging only, then parrying only
-    E('S.bossOdds = { hits: 0, parry: 0, dodge: 0, rings: 0, perfect: 0, good: 0 }');
-    for (let i = 0; i < 300; i++) E('emit("foeContact", { id: "x", hit: 0, hits: 1, res: "hit" })');
-    const s3 = sk(); for (let i = 0; i < 300; i++) E('emit("foeContact", { id: "x", hit: 0, hits: 1, res: "parry" })');
-    assert(s3.parry < 0.1 && sk().parry > 0.8, `boss odds: the record fades (parry share ${s3.parry.toFixed(2)} after 300 plain hits, ${sk().parry.toFixed(2)} after 300 parries)`);
-    assert(!g.errors.length, 'boss odds: no core errors in the record'); }
-  // old saves load with the record's defaults
-  for (const f of ['early', 'mid', 'late']) {
-    const raw = JSON.parse(FX(f)), g = loadCore({ turns: true, storage: memoryStorage({ [KEY]: FX(f) }) });
-    assert(!('bossOdds' in raw) && g.eval('JSON.stringify(S.bossOdds)') === J({ hits: 0, parry: 0, dodge: 0, rings: 0, perfect: 0, good: 0 }), `boss odds: the ${f} fixture loads with the record's defaults`);
-  }
-  // gear changed while gathering counts at once: the estimate reads a scratch hero from the current state (cbEstHero), not the
-  // live unit, which only refreshes while fighting (Codex P1 on PR #47)
-  { const { g, E } = boot('', 'early');
-    E(`S.activity = 'gather'; S.rested.left = 0; for (const sl of Object.keys(S.equip)) { const it = itemById(S.equip[sl]); if (it && !['pick', 'axe', 'sickle', 'spear'].includes(it.slot)) it.plus = (it.plus || 0) + 6; } gearDirty();`);
-    for (let i = 0; i < 5; i++) g.fn.tick(0.1);
-    const stale = E('cbUnitByKey("hero").maxHp'), est = E('cbEstHero().maxHp'), p = E('turnMakeProfile(bossOddsFoe(S.maxZone), cbEstHero()).heroMaxHp');
-    // the fight's own unit, with the rest banked while gathering set aside (Rested: +10% damage for a few minutes, so HP too)
-    E(`S.rested.left = 0; S.activity = 'fight'; arena = null; fightBoss = true; spawn();`); for (let i = 0; i < 3; i++) g.fn.tick(0.1);
-    const live = E('turnCombatProfile().heroMaxHp');
-    assert(est > stale && Math.abs(p / live - 1) < 1e-6 && !g.errors.length, `boss odds: gear raised while gathering counts before the next fight (stale ${Math.round(stale)}, estimate ${Math.round(p)}, the fight's ${Math.round(live)})`); }
-  // the sampler's new fights option stops after that many fights, and the old call still runs its seconds
-  { const { g, E } = boot('wren'), r = JSON.parse(E('JSON.stringify(turnCombatSample({ profile: turnCombatProfile(), seconds: 3600, seed: 2, fights: 5 }))')), r0 = JSON.parse(E('JSON.stringify(turnCombatSample({ profile: turnCombatProfile(), seconds: 600, seed: 2 }))'));
-    assert(r.kills + r.deaths === 5 && r0.kills + r0.deaths > 5, `boss odds: turnCombatSample({ fights }) stops at that many fights (${r.kills + r.deaths}); without it the seconds run out (${r0.kills + r0.deaths} fights)`); }
-} catch (e) { fail('boss odds crashed: ' + (e.stack || e)); }
 
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 console.log(browserSummary(browserSkipped, browserSkipReasons));
