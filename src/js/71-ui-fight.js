@@ -68,7 +68,7 @@ function awayChipText() {
   let n = Math.floor(3600 / nodeTime(kind, tier) * boost * nodeYieldAvg(kind) * mod('yield:' + kind) * hrs);
   // Spillover moves on to the next node only while it has room; a full pile with nowhere to go earns nothing.
   const nx = storeSpillOn() ? storeNextNode(kind) : null;
-  if (!(nx && stashRoom(nx.kind, nx.t) > 0)) n = Math.min(n, stashRoom(kind, tier));
+  if (!(nx && (nx.kind !== kind || nx.t !== tier) && stashRoom(nx.kind, nx.t) > 0)) n = Math.min(n, stashRoom(kind, tier));
   return n > 0 ? `Leave now: about ${fmt(n)} ${matName(kind, tier)} in ${hrs} hours.` : `Leave now: ${matName(kind, tier)} is full, you earn nothing. Spend it or pick another node.`;
 }
 function uiAwayChip() {
