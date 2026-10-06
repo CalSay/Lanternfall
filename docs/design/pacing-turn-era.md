@@ -22,8 +22,9 @@ through `tools/sim.mjs` (turn fights on). Coverage-map areas 7 (progression curv
   moves in between. Wren waits about 11 hours at zones 27 to 29, then clears zones 29 to 35, the Region 1 boss included,
   in about 2 hours. Grey Shingle (zones 36 to 41) then takes about an hour.
 - **Best fix (judge ruling, section 8):** ease the XP curve from Lv 26 to 40 and Training prices from Lv 20 to 40,
-  together. Measured on two seeds, the good Wren and Pip reach zone 30 in 15 to 31 hours (now 29 to 43), and their
-  longest stall before zone 35 falls from up to 19 hours to 5 to 10 hours. The casual Wren and Pip reach zone 30 on day
+  together. Measured on two seeds and two good-player profiles, the good Wren and Pip reach zone 30 in 15 to 33 hours
+  (now 27 to 43), and their longest stall before zone 35 falls from up to 19 hours to 5 to 10 hours in seven of eight
+  runs (the eighth: 18 hours at zone 27, where the same run stalls 14 hours today). The casual Wren and Pip reach zone 30 on day
   30 and 34 (now never in 60 days). Spreading the Attack milestones, first proposed with them, is dropped: it was a
   hidden power buff. Tobin needs his own look (section 6).
 
@@ -43,13 +44,13 @@ the camp, train the best value per gold, challenge the zone boss when it is read
 `casual` player of `node tools/sim.mjs --report turns` (parry 0.25, dodge 0.5, Perfect 0.1, Good 0.4), played the way
 `turnCombatSample` plays it, through a scratch copy of `tools/sim.mjs` (`LF_PROFILE=casual`, a patch to `turnPlayer`,
 not committed; section 9). A 15-minute probe (`--evalfile`) logged zone, level, gold, Training, gear and wipes.
-87 runs in all (the first 9 casual runs used a cruder skill model and are replaced). Tobin's late pass (PR #49)
+99 runs in all (the first 9 casual runs used a cruder skill model and are replaced). Tobin's late pass (PR #49)
 merged after all but the 9 card 1 runs of section 5, so his other rows predate it.
 
 The sim's own turn player never presses an ability's timing ring, so every timed ability lands as a Miss (70%) for
-the good and marathon players. They keep it, because the build card re-measures with the unchanged tool. One check with
-the turn report's `good` player instead (rings 40% Perfect, 45% Good; seed 41) moved nothing that matters: zone 30 at
-35.7 hours for Wren and 37.7 for Pip (sim player: 30.2 and 42.5), Tobin still stops at zone 27.
+the good and marathon players. So the good player is also measured with the turn report's `good` profile (parry 0.6,
+then dodge 0.9; rings 40% Perfect, 45% Good), today and with card 1, on both seeds (section 5). The two give the same
+picture today: no Wren or Pip reaches zone 30 before 27 hours, and Tobin stops at zone 27.
 
 ## 2. Today's numbers
 
@@ -202,6 +203,22 @@ The card 1 rows ran with the XP change limited to Lv 26 to 40 (the ruling), on t
 pass (PR #49). XP eased past every level from 25 gave the same hours to zone 35 on both seeds (no hero passed Lv 42 by
 then), and Tobin's early zones did not change with PR #49.
 
+Good player with the turn report's full `good` profile (rings pressed; section 1), seeds 41 / 42, on the integration
+branch after PR #49:
+
+| Change | Hero | Zone 30 | Zone 35 | Longest stall before 35 | Stalls of 3 h+ before 35 | After 51 h |
+|---|---|---|---|---|---|---|
+| Today | Wren | 35.7 / 27.5 h | not reached / 35.5 h | 15.6 / 5.2 h | 4 / 5 | zone 33 / 35 |
+| Today | Pip | 37.7 / 31.7 h | not reached | 14.6 / 14.3 h | 4 / 3 | zone 31 / 31 |
+| Today | Tobin | not reached | not reached | 16.5 / 12.4 h | 3 / 5 | zone 27 / 27 |
+| **Card 1: fixes 1 + 2** | Wren | 25.2 / 23.3 h | 27.9 / 27.0 h | 7.0 / 5.0 h | 3 / 3 | zone 45 / 43 |
+| **Card 1: fixes 1 + 2** | Pip | 24.2 / 33.2 h | 40.4 / 38.4 h | 8.0 / 17.8 h | 5 / 1 | zone 43 / 41 |
+| **Card 1: fixes 1 + 2** | Tobin | 42.2 h / not reached | not reached | 14.5 / 10.8 h | 4 / 5 | zone 34 / 29 |
+
+Across the eight card 1 runs of Wren and Pip (two players, two seeds), zone 30 comes at 15 to 33 hours (today 27 to
+43) and zone 35 at 26 to 47 (today 31 to 36 hours for Wren, never for Pip). One run still stalls for over 12 hours: Pip, seed 42, 17.8
+hours at zone 27.
+
 Casual player (45 minutes a day, seed 41), zone 30 and zone 35 by active hours and calendar day:
 
 | Change | Wren | Pip | Tobin |
@@ -275,20 +292,25 @@ level from Lv 26 to 40 and x1.3 again past 40 (`xpNeed`, with the 1.15 and the b
 Attack milestones unchanged. Card 2, after card 1 is measured: even foe HP from zone 15 to 34 with the Wraithmarsh boss
 HP, and a milestone spread that keeps today's average power if one is still needed (section 5).
 
-- **Predicted (good player, `--days 17 --checkins 8,13,19 --session 60 --first 60`):** zone 30 in 15 to 31 active hours
-  for Wren and Pip (now 29 to 43); zone 35 for both in under 47 hours (Pip today: never); the longest stretch without a
-  new zone before zone 35 under 11 hours for Wren and Pip (now up to 19). Tobin unchanged (zone 27).
+- **Predicted (good player, `--days 17 --checkins 8,13,19 --session 60 --first 60`):** zone 30 in 15 to 33 active hours
+  for Wren and Pip (now 27 to 43); zone 35 for both in under 47 hours (Pip today: never); the longest stretch without a
+  new zone before zone 35 under 11 hours in most Wren and Pip runs (now up to 19). Tobin about the same (zone 27 to 34).
 - **Predicted (casual):** zone 30 within 45 days of 45 minutes for Wren and Pip (measured: day 30 and 34; today: not in
   60 days).
-- **Measure:** the good player on seeds 41, 42, 43 and 44, all three heroes, before and after; the casual on seeds 41 and
-  42, all three heroes, with the casual profile first committed to `tools/sim.mjs` as a flag (section 9 has the patch);
+- **Measure:** the good player on seeds 41, 42, 43 and 44, all three heroes, before and after, with both profiles: the
+  turn report's full `good` profile is the headline, the sim's own player keeps the comparison with these runs; the casual on seeds 41 and
+  42, all three heroes, with both profiles first committed to `tools/sim.mjs` as a flag (section 9 has the patch);
   `node tools/health.mjs --long --compare`, accepting the new baseline with `--write-baseline` and saying so in the PR
   (`zoneEnd`, `lastNewZoneHour` and `stallsOver1h` will leave their bands; that is the point); and an Ascending run,
   Wren `--evo venomstalker` and Pip `--evo warlock`, seed 41, before and after, for Lv 40 to 50 and zones 36 to 45.
-- **Missed if:** Wren's or Pip's median hours to zone 30 over the four seeds is above 28; Wren or Pip has a stall over
-  12 hours before zone 35 on any seed; zone 10 moves by more than 15 minutes; Tobin ends below zone 27 on any seed; the
+- **Missed if:** Wren's or Pip's median hours to zone 30 over the four seeds is above 28 (each profile on its own);
+  before zone 35, more than one of the eight Wren and Pip runs of a profile stalls over 12 hours, or any run stalls
+  over 18 hours, or any run's longest stall is more than 5 hours worse than today's run on the same seed and profile;
+  zone 10 moves by more than 15 minutes; Tobin ends below zone 27 on any seed; the
   casual Wren or Pip does not reach zone 30 in 60 days; in the Ascending run, Lv 41 takes more than twice as long as
   Lv 40, or Grey Shingle (zones 36 to 41) takes under an hour.
+- **If Pip stalls at zones 26 to 28 on two or more seeds,** bring card 2 (even foe HP from zone 15 to 34) forward
+  rather than tuning card 1 further.
 - **Switch off:** put the old numbers back (x1.3 XP at every level, `r2` 1.28). No save field changes, so undoing it is
   free. Levels gained under the new curve stay (no level loss).
 - **Old saves:** banked XP turns into 1 to 4 levels on the next XP gain (section 4, fix 1). Accepted; the build card's
@@ -337,6 +359,14 @@ ruled. Section 7 follows the ruling.
   largest wall on every hero). Rejected: the level gates going vestigial (the Proving opens on beating the Fenmother,
   and the cap of 40 stays); the DECISIONS line on catch-up XP (it is about boosts for new heroes, not the base curve).
 
+**Judge addendum (Opus high, after Codex asked for the full good profile):** option B stands. With the full good
+profile card 1 is faster than today in three of four runs; Pip on seed 42 reaches zone 30 1.5 hours later than today,
+inside the noise line, and reaches zone 35 on both seeds (today never). Its 17.8-hour stall at zone 27 is not card 1's:
+the same seed stalls 14.3 hours there today, and zone 27 is the last zone where foe HP grows x1.42, card 2's ground.
+The "missed if" lines in section 7 follow the addendum: both profiles on four seeds with the full profile as the
+headline, the median per profile, a three-part stall line, and card 2 brought forward if Pip stalls at zones 26 to 28
+on two or more seeds.
+
 ## 9. Reproduce
 
 ```text
@@ -344,6 +374,7 @@ ruled. Section 7 follows the ruling.
 node tools/sim.mjs --days 17 --checkins 8,13,19 --session 60 --first 60 --class ranger --active 1 --turns 1 --seed 41 --health out.json
 # marathon: node tools/health.mjs --long (or the same sim line with --policy mixed --hours 50 --every 3600)
 # casual: --days 60 --checkins 8,13,19 --session 15 --first 15, run with LF_PROFILE=casual through the turnPlayer patch below
+# full good profile: the good line, run with LF_PROFILE=good through the same patch
 # a change: add --eval "<code>" with one of the snippets below
 ```
 
@@ -359,7 +390,7 @@ level, XP and events are the same).
 | Even foe HP, zones 15 to 34 | `TURN_TUNE.refAtk = (() => { const old = TURN_TUNE.refAtk.map(p => p.slice()), H = z => turnZoneLine(old, z) * mobHp(z), g = Math.pow(H(34) / H(15), 1 / 19), pts = old.filter(p => p[0] < 15); for (let z = 15; z <= 34; z++) pts.push([z, H(15) * Math.pow(g, z - 15) / mobHp(z)]); return pts.concat(old.filter(p => p[0] > 34)); })()` |
 | Double XP / gold x1.5 | `TURN_TUNE.xpX = 5` / `TURN_TUNE.goldX = 4.5` |
 
-The casual player's patch to `turnPlayer` in a copy of `tools/sim.mjs` (put the copy in `tools/` so its imports resolve):
+The casual and full good players' patch to `turnPlayer` in a copy of `tools/sim.mjs` (put the copy in `tools/` so its imports resolve):
 
 ```js
 const LF_PROF = { good: { parry: 0.6, dodge: 0.9, perfect: 0.4, good: 0.45 }, casual: { parry: 0.25, dodge: 0.5, perfect: 0.1, good: 0.4 } }[process.env.LF_PROFILE] || null;
