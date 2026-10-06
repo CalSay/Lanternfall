@@ -47,6 +47,23 @@ but I can't remember them all." So the 13 are a floor, not the list.
 
 Also in that message: "I feel like we've done so much auditing but missed so much" and the early game "decides whether someone keeps playing or ditches it for something else."
 
+## Direction from Cal, 2026-10-06 12:01 to 19:36 (taste-relevant, not play notes)
+
+Messages from the project chat. They set what "good" means for the judge, so Cal's Eyes reads them with the notes above.
+
+| Time | Message id (tail) | What Cal said | What it means for judging |
+|---|---|---|---|
+| 12:01 | `...PiB76L5M` | "we're doing a lot of 'What' and not 'Why' ... is what currently exists the best way we could be doing things." Asked if a hero changing means starting the story over. | Judge whether a system is the right one, not only whether it is tuned. |
+| 12:02 | `...YB8Nn9up` | "Every aspect of the game should have this level of scrutiny. We don't want to lose the core of the game but we want the feel of playing it to be as good as it can be." | Feel of play is the test. Keep the core. |
+| 18:20 | `...VuF7LzjU` | Common goal: "fun and profitable and a game that gets good reviews." No ads, no pay to win. People may pay for "visuals, characters or time savers." | Every screen gets three questions: fun, would I pay for this fairly, would a review praise it. |
+| 18:30 | `...RCq7NjoX` | "I don't want to be involved. I want to read your monday patch notes, play the game and be in awe." | Cal sees the Monday build once a week. Anything rough in it counts against us. |
+| 18:31 | `...KRxJQdu9` | The coordinator is held responsible for issues or builds that miss the mark. | Escapes get a new catch. |
+| 18:38 | `...91WKhHzu` | "I'm on your side." Codex may build, not only review. | Not a judging rule. |
+| 18:41 | `...Ntn6ivyZ` | Any rule in the repo "is absolutely available to be overwritten if it benefits the game." | Judge by the three goals, not by old rules. |
+| 19:16 | `...296XDu8WCd` | If Codex's first build meets expectation, "expand its use and responsibilities in building." | Not a judging rule. |
+| 19:19 | `...9T18PXiUW` | "Don't take anything I say as gospel in terms of correct way of doing things." | Challenge Cal's process ideas when something works better. His play notes still stand as taste. |
+| 19:35 | `...937FDVnNU` | "I don't want to have to check all the art ... Art should only be made by Codex. If it gets into a Monday build and it's broken or looks bad, you will be held responsible." | Art in the build is judged without Cal. Broken or ugly art is a miss. Cal's Eyes checks art on screen. |
+
 ## What Cal values (read this before judging a screen)
 
 1. A reward he can feel: a pop, a name, a reveal. Counting is not enough, it has to be shown.

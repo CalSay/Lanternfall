@@ -13,7 +13,8 @@ new to wear or wield.
 - At most one new thing (a tab, a system, a currency) per beat, and at most 2 in any 3 minutes of the first 30
   (scorecard F4). The three fight verbs (Attack with the ability, Dodge, Parry) are taught one per fight and are not
   counted as new things; a beat's "Learns" column still names one.
-- A big moment at least every 5 minutes, never a gap over 8 (F3). Moments: see the plan, section 1. Every zone
+- A big moment at least every 5 minutes in the first 20, never a gap over 8; then one at every zone first clear from 5
+  to 10 (F3, as amended in DECISIONS "Early game"). Moments: see the plan, section 1. Every zone
   Captain's first clear opens a Lantern Cache (`cache-core`), so those wins count as moments too.
 - New things are announced between fights, never during a parry window (F5).
 - Times are for the casual walk (follows Next Up, parries and dodges at a set rate). **est** = estimated, **meas** =
@@ -45,24 +46,28 @@ early-game/playtest-coldB.md`). The minutes below are targets for a casual human
 | 10 | 5:30 | The Hero tab (spacing governor), with the first attribute point | Spends the point | Attributes | +1 point | ownership | | `story-unlock-gates`; points from PR #58; moment `moment-layer` |
 | 11 | 7:15 | The Gather tab; Hesketh: "Wood first." | Chops 8 logs | Gathering | logs | | | `story-unlock-gates`; line `unlock-voice` |
 | 12 | 9:00 | **Medium moment: the camp fire lit**; the Camp tab; Hesketh's talk plays here | Lights the fire, listens | Camp | a home | relief | "Every road needs a place to come back to." | today (fire); cards `intro-and-picker` (talk moves here), `moment-layer` |
-| 12a | 10:00 | **Moment: the second cache**, from the zone 2 Captain's first clear | Taps to open | nothing new | the win's drops | surprise | | card `cache-core`, `moment-layer` |
+| 12a | 10:00 | **Big moment: the second cache**, from the zone 2 Captain's first clear, with a second lantern colour; the stage relights | Taps to open | nothing new | the win's drops plus a colour | surprise | | card `cache-core`, `moment-layer` |
 | 13 | 10:45 | Next Up in the compact top bar | Reads Next Up | Next Up | | direction | | `story-unlock-gates`; card `top-bar-compact` |
 | 14 | 12:30 | The Workbench and the first tool: the first craft, with a **result card** showing its grade | Crafts the tool | Crafting | a tool, revealed | pride | | today (chain); card `craft-reveal` |
-| 14a | 14:00 | **Medium moment: the zone 3 Captain's cache** (auto-opened from the 3rd) | | nothing new | the win's drops | | | card `cache-core`, `moment-layer` |
+| 14a | 14:00 | **Big moment: the zone 3 Captain's cache**, with a third lantern colour (opens automatically; a big card because it holds a look) | | nothing new | the win's drops plus a colour | delight | | card `cache-core`, `moment-layer` |
 | 15 | 14:15 | The away chip joins the top bar | | Leaving pays only what you set going | | | | `story-unlock-gates`; card `top-bar-compact` |
 | 16 | 16:00 | Bounties (zone 4); Hesketh's board also at Camp; a ready bounty shows a Claim on Next Up | Claims in place | Bounties | gold or Essence | small win | | today (unlock); card `bounties-anywhere` |
-| 17 | 17:45 | **Big moment: a starter you didn't pick joins** (zone 5, when you meet them) | Can switch | Switching | a hero, at the road's level | company | Their first scene (bible 4.4) | card `starters-join-when-met`; PR #58 for the level |
-| 18 | 20:00 | **Medium moment: first Star** (zone 6 Captain); the Stars tab | Equips the Star | Stars | a Star | power | | today; moment `moment-layer` |
+| 16a | 16:30 | **Medium moment: the zone 4 Captain's cache** (opens automatically, a banner) | | nothing new | the win's drops | | | card `cache-core`, `moment-layer` |
+| 17 | 17:45 | **Big moment: the zone 5 Champion's first clear**, its post scene in the card; Tobin joins here unless you picked him | Can switch (if Tobin joined) | Switching | a hero, at the road's level (unless you picked Tobin) | company | Tobin's meet scene (bible 4.4) | card `starters-join-when-met`, `moment-layer`; PR #58 for the level |
+| 18 | 20:00 | **Big moment: first Star** (zone 6 Captain); the zone 6 cache opens inside the same card; the Stars tab | Equips the Star | Stars | a Star | power | | today (Star); cards `moment-layer` (Star is big), `cache-core` |
 | 19 | 22:00 | The first Forge weapon (where the walk measures the cold chain ending, est. 20 to 25) | Crafts a weapon | | a weapon, revealed | pride | | today; card `craft-reveal` |
 | 20 | 25 to 40 | **Big moment: first unique**, by chance (15% on a first clear, with modifiers; no pity); the Uniques tab | Equips it | Uniques | the unique | delight | The hero's unique line | today (drop); cards `moment-layer`, `cache-core`, `hero-voice` |
+| 20a | 27:30 | **Big moment: the zone 7 Captain's cache**, with lantern colour 4 | | nothing new | the win's drops plus a colour | delight | | card `cache-core` |
 | 21 | 28:00 | The Bestiary | Reads a foe | Foe types; the Foe tab now shows what you've learned | | curiosity | | `story-unlock-gates`; card `foe-weak-resists` |
 | 22 | 31:30 | The Almanac | | | | | | `story-unlock-gates` |
+| 22a | 35:00 | **Big moment: the zone 8 Captain's cache**, with colour 5 | | nothing new | the win's drops plus a colour | delight | | card `cache-core` |
 | 23 | 35:00 | The Tavern | Meets the keeper | Hands | | company | | `story-unlock-gates` |
+| 23a | 42:30 | **Big moment: the zone 9 Captain's cache**, with colour 6 | | nothing new | the win's drops plus a colour | delight | | card `cache-core` |
 | 24 | 45:00 | A cache look and the Wardrobe count (only once `cache-art` passes) | Dresses the hero | Looks | a look | ownership | | card `cache-looks` |
-| 25 | 50:00 | **Big moment: the second starter joins** (zone 10); the Codex | | The Codex | a hero | company | Their first scene | `story-unlock-gates` (Codex); join: card `starters-join-when-met` |
-| 26 | 60:00 | The third starter joins at zone 15 | | | a hero | company | Their first scene | card `starters-join-when-met` |
+| 25 | 50:00 | **Big moment: the zone 10 Champion's first clear**; Wren joins here unless you picked her; the Codex | | The Codex | a hero (unless you picked Wren) | company | Wren's cave scene | card `starters-join-when-met`, `moment-layer`; `story-unlock-gates` (Codex) |
 
 ## What this map does not decide
 
+- Pip joins at the zone 15 Champion (past the first hour) unless you picked Pip.
 - Numbers: gold, XP, Essence per cache, pity lengths. Those go through the economy and difficulty-budget gates.
 - The World Raid (zone 12): the online layer is out of scope.

@@ -83,6 +83,16 @@ Plays three kinds of player (casual, active, optimiser) on fixed seeds and compa
 `docs/design/health-baseline.json`. It exits 1 when a metric moves past its tolerance in the bad direction. Run it before
 and after any balance, economy or pacing change. `--write-baseline` accepts a deliberate shift. See `docs/design/health.md`.
 
+## Branch ledger
+
+```text
+node tools/branch-ledger.mjs [--json] [--base REF] [--stale DAYS] [--no-prs]
+```
+
+Lists every remote branch ahead of the integration branch: ahead/behind, last commit date, author and subject, open PR
+number (needs a signed-in `gh`; otherwise `?`) and a status guess (merged, open PR, review-only art, stale, active).
+Markdown on stdout, JSON with `--json`. Run `git fetch` first. It reads git only and touches no game files.
+
 ## Difficulty budget
 
 ```text
