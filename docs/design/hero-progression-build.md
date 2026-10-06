@@ -114,13 +114,67 @@ always walls (Lv 35 took 7 to 11 active hours).
   met, live }`, defaults in `registerState`. `S.solo.tr` stays for the flag.
 - Online: the raider doc's `L` and presence `lvl` stay the hero's level. No online file changes.
 
-## 6. Predictions (from `hero-progression.md`) and how this build measures them
+## 6. Predictions and results
 
-| Prediction | Measure | Missed if |
-|---|---|---|
-| A hero who takes the lamp on a zone-20 save wins zone-20 fights within 10 points of the hero they replace | the good persona's save at zone 20 (seed named in the PR), each starter switching to the other two; 30 scratch fights each (`turnCombatSample`) | below 80% for the good persona |
-| Hours to zone 30 (casual, each starter) no slower than baseline | `tools/sim.mjs --days 60` with the casual turn skill (`--skill casual`), seeds 41 | more than 10% slower |
-| Longest stretch with no level-up, zones 20 to 30 (good persona) at most 2 zones' play | the good persona's level events | longer than 3 zones' play |
+All runs: `tools/sim.mjs --turns 1 --active 1`, good persona 17 days x 3 h (`--skill good`), casual 60 days x 45 min
+(`--skill casual`), seeds 41, 42 and 43, each starter, the old game (this branch's parent, `HERO_TUNE` absent) and this
+build. Scripts: `hero-progression-build/run.sh`, `an.mjs` (per-run lines in `matrix.txt`), `arms.mjs` (`arms-150.txt`).
+Attribute policy in the pace runs: even (the sim's default `--attrs even`).
+
+**Pace (judge: hours to zone 30 at 0.75 to 1.10 x the old game, each starter, both personas).**
+
+| Starter | Good, new | Good, old | Ratio | Casual, new | Casual, old |
+|---|---|---|---|---|---|
+| Wren | 34.7, 33.2, 28.9 h | 46.2, 40.2, 24.7 h | 0.87 | z30 at 31.2, 24.2 h; one seed ends z29 | ends z28 every seed |
+| Pip | 33.0, 36.5, 36.0 h | 37.6, 49.2, 35.0 h | 0.87 | z30 at 44.2, 38.7 h; one seed ends z28 | ends z27-28 |
+| Tobin | 39.0 h, never (z29), 37.5 h | never (z29, z29, z27) | faster | ends z25-27 | ends z25-26 |
+
+- Good: Wren and Pip are in the band. Tobin reaches zone 30 in two seeds of three where the old game never did; he
+  stays 10-16% slower than Wren and Pip (the DECISIONS band is 15-30%).
+- Casual: the old game walls every starter at zone 27-28 (gaps of 9-11 h). Hours to zone 28 (the furthest the old game
+  reaches): Wren 26.2 h against 27.2 h (0.96), Pip 34.6 h against 42.7 h or never. Casual Tobin reaches zone 25 in
+  25 h against 40 h (0.63): faster than the band.
+
+**Level gaps (judge: at most 2 zones' play with no level-up in zones 20-30, good persona).** Wren 1.9-2.4 zones, Pip
+2.2-2.5, Tobin 5.8-5.9 (15-20 h at zone 26-27; the old Tobin had 14-18 h gaps and never reached 30). Old game: Wren
+2.4-2.5, Pip 2.2-2.9. Missed for Tobin, at the edge for Wren and Pip. A level is worth about one zone of power (the
+Attack curve x2 every 5 levels past 25), so the road holds about 0.85 levels a zone, and the gap falls under 2 zones
+only if levels come at a steady rate. The tighter brakes tried (lead 0 to 2) made the gaps longer.
+
+**Power margin (judge: 0.8 to 1.25, zones 1-50).** A road-level hero's Attack against the old game's hero at that
+zone (old levels from the old runs, 3-zone mean, both curves smooth): 0.79-1.19 in zones 3-31; zones 32-50 have no
+old-game data (no old run passed zone 35 with levels to compare).
+
+**Fights to hold the road (judge: at most 25% change between neighbouring zones, zones 1-50).** 9-21% from zone 3 on.
+
+**Switch (prediction 1: within 10 points, good persona; judge: 80% or better).** Zone-20 saves (seed 41), 150 fights
+an arm, the joining hero lifted and spread evenly with their signature kit:
+
+| From | To | Normal | Boss |
+|---|---|---|---|
+| Wren (100%, 90%) | Tobin | 100% | 100% |
+| | Pip | 100% | 83% (-7) |
+| Tobin (100%, 100%) | Wren | 100% | 41% (-59) |
+| | Pip | 100% | 53% (-47) |
+| Pip (100%, 60%) | Wren | 95% | 31% (-29) |
+| | Tobin | 100% | 98% |
+
+Normal fights hold. Bosses miss whenever the hero who leaves had more kit: the profiles show the gap is not the level
+(the joiner is at Lv 29 against 28-30) but abilities, Stars and gear affixes (Pip from Tobin's save has the same Attack
+and more health, but one ability and no Stars against her own save's three abilities and three Stars). Before the
+join lead the levels were 1-3 short as well. The judge's ruling sends this to Cal: no free ability learns.
+
+**Dominance (judge: no build best for every starter on both foe types; each attribute in a winning build; the best
+beats even by 5+ points somewhere).** Even, four pure builds and six pairs, normal foes (casual skill: win rate and
+kills an hour) and the zone boss (good and casual skill), zone 20 and zone 30 saves. With the per-attribute split
+(section 2): no build is best everywhere (Focus wins normal foes for most; Vigour, Focus/Vigour, Guard/Vigour, even and
+Might/Guard win bosses); Might wins only one, small; the best beats even by 17 points (Pip, pure Focus, normal foes at
+zone 20). Wren with any extra Focus kills normal foes in one ability, so pure Focus farms 2.3-3.5x faster than even
+for her and loses on bosses (82-92% against Vigour's 95-98%).
+
+**Gold (judge: spent / earned at zone 20 at least 0.5 with the flag off).** Zone 20: 0.66 (Wren), 0.86 (Pip), 0.91
+(Tobin); zone 30: 0.96-1.0. Old game: 0.95-1.0, with Training 26-33% of all gold spent. The gold goes to camp, crafting
+and shifts.
 
 ## 7. Red team and judge
 
