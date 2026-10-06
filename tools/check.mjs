@@ -56,7 +56,7 @@ const ONLY = (process.argv.find(a => a.startsWith('--only=')) || '').slice(7);
 const SHARD = (m => (m ? [+m[1], +m[2]] : null))(/--shard=(\d+)\/(\d+)/.exec(process.argv.join(' ')));
 const JOBS = SHARD ? 1 : +((process.argv.find(a => a.startsWith('--jobs=')) || '').slice(7)) || (ONLY ? 1 : Math.min(4, os.cpus().length));
 // Seconds a section takes (measured, W2-B): the shards are balanced by these; a section not listed counts 2.
-const WEIGHT = { 'LF_EYES hook (browser, qa-player-eyes)': 12, 'landscape 740x360 (browser, UX-L1)': 42, 'landscape 844x390 (browser, UX-L1)': 38, 'landscape 1280x720 (browser, UX-L1)': 38, 'solo copy (browser, W1-C)': 60, 'W1-D (browser)': 100, 'training (W2-A, browser)': 18, 'cb2': 40, 'notices (browser, W1-B)': 34, 'solo guide: gathering never freezes (browser)': 31, 'solo hero (browser)': 21, 'types and statuses (S1)': 14, 'save codes': 13, 'combat': 8, 'gatherers UI (browser)': 7, 'gathering': 6, 'nav': 6, 'retool': 6, 'onboarding hint placement (HINT1)': 5, 'camp trade and import (C4, browser)': 15 };
+const WEIGHT = { 'first-hour walk (browser, qa-first-hour-walk)': 25, 'LF_EYES hook (browser, qa-player-eyes)': 12, 'landscape 740x360 (browser, UX-L1)': 42, 'landscape 844x390 (browser, UX-L1)': 38, 'landscape 1280x720 (browser, UX-L1)': 38, 'solo copy (browser, W1-C)': 60, 'W1-D (browser)': 100, 'training (W2-A, browser)': 18, 'cb2': 40, 'notices (browser, W1-B)': 34, 'solo guide: gathering never freezes (browser)': 31, 'solo hero (browser)': 21, 'types and statuses (S1)': 14, 'save codes': 13, 'combat': 8, 'gatherers UI (browser)': 7, 'gathering': 6, 'nav': 6, 'retool': 6, 'onboarding hint placement (HINT1)': 5, 'camp trade and import (C4, browser)': 15 };
 const shardLoad = SHARD ? Array(SHARD[1]).fill(0) : null;
 function section(name) {
   if ((ONLY && !new RegExp(ONLY, 'i').test(name))) return false;
@@ -1445,7 +1445,7 @@ if (section('onboarding hint placement (HINT1)')) try {
   assert(/if \(!changed\) return;/.test(src), 'place() skips the reposition when nothing real changed (no per-frame follow)');
   assert(!/setInterval\(place/.test(src), 'place() itself is never put on its own interval');
   const css = fs.readFileSync(path.join(ROOT, 'src', 'styles', '60-onboard.css'), 'utf8');
-  assert(/\.ob-bub\s*\{[^}]*position:\s*absolute/.test(css), 'the hint bubble is docked (a fixed offset within its parent), not translated to the target every tick');
+  assert(/\.ob-bub\.over-menu\s*\{[^}]*position:\s*absolute/.test(css) && /\.ob-bub\s*\{[^}]*position:\s*relative/.test(css), 'the guide panel is docked (a slot in its parent, or a fixed offset over a menu), not translated to the target every tick');
   assert(/--toast-h/.test(css) && /--toast-h/.test(fs.readFileSync(path.join(ROOT, 'src', 'js', '70-ui.js'), 'utf8')), 'the hint band and placeToasts share --toast-h so they cannot collide');
   ok('source: tick only recomputes on a real change, the bubble is CSS-docked, toasts and hints share one band variable');
   // in Chromium: the band does not move while the game runs (ticks, an ability firing) under it
@@ -1479,21 +1479,18 @@ if (section('onboarding hint placement (HINT1)')) try {
         if (th === th0) assert(r && r.x === r0.x && r.y === r0.y, `browser: the hint band does not move while the stage animates under it (${JSON.stringify(r0)} -> ${JSON.stringify(r)}, --toast-h unchanged)`);
         r0 = r; th0 = th;
       }
-      // it stays in its band: fixed, near the stage HUD, not floating out at the target
-      const box = await page.$eval('.ob-bub', b => { const s = getComputedStyle(b); return { position: s.position, top: s.top === 'auto' ? null : parseFloat(s.top) }; });
-      assert(box.position === 'absolute' && box.top !== null && box.top < 120, `browser: docked near the stage HUD, not floating at the target (${JSON.stringify(box)})`);
-      // the over-menu band (used once a menu covers the stage) sits just above the tab bar, the
-      // same slot placeToasts uses for toasts (50-overlays.css .toasts.over-menu), so the hint
-      // and the toast stack are in the same corner but never overlap
+      // it docks in a slot of the game view (portrait), above the dock bar and clear of the stage; over a menu it sits above the tab bar
+      const dock = await page.$eval('.ob-bub', b => { const r = b.getBoundingClientRect(), sb = document.getElementById('soloBar').getBoundingClientRect(), st = document.getElementById('stageBox').getBoundingClientRect(); return { dock: b.classList.contains('dock'), gapAboveBar: Math.round(sb.top - r.bottom), belowStage: Math.round(r.top - st.bottom) }; });
+      assert(dock.dock && dock.gapAboveBar >= 0 && dock.gapAboveBar <= 12 && dock.belowStage >= 0, `browser: the guide panel docks just above the Act / Skills / Foe bar, never over the stage (${JSON.stringify(dock)})`);
       const tabsH = await page.$eval('.tabs', t => t.getBoundingClientRect().height);
       const boxes = await page.$eval('.ob-bub', b => {
-        const before = getComputedStyle(b).bottom;
+        const before = getComputedStyle(b).position;
         b.classList.add('over-menu');
-        const after = getComputedStyle(b).bottom;
+        const cs = getComputedStyle(b), after = { position: cs.position, bottom: parseFloat(cs.bottom) };
         b.classList.remove('over-menu');
-        return { before, after: parseFloat(after) };
+        return { before, after };
       });
-      assert(boxes.before !== boxes.after && boxes.after >= tabsH, `browser: the over-menu band sits above the tab bar (bottom ${boxes.after}px, tabs ${tabsH}px; was ${boxes.before})`);
+      assert(boxes.after.position === 'absolute' && boxes.after.bottom >= tabsH, `browser: the over-menu panel sits above the tab bar (bottom ${boxes.after.bottom}px, tabs ${tabsH}px)`);
       // menu audit #19: "New" lasts 2 hours of play after an unlock, so an old save's long-past unlocks never show it
       const nb = await X(`(() => { const o = S.onboard, v = { id: 'zz-test', feature: 'party' }, was = o.got.party;
         o.got.party = Math.round(o.t); const a = onboardIsNew(v); o.got.party = Math.round(o.t) - 7300; const b = onboardIsNew(v);
@@ -2431,8 +2428,8 @@ function storyProblems(B, ctx) {
   }
   for (const [id, n] of Object.entries(B.npc)) {
     const m = /^(area|champPost|elderPre|elderPost):(.+)$/.exec(n.at || '');
-    const okAt = m && (m[1] === 'area' ? +m[2] >= 0 && +m[2] <= 34 : m[1] === 'champPost' ? !!B.champ[m[2]] : !!B.elder[m[2]]);
-    if (!okAt) P.push(`npc ${id}: "at" must be area:N, champPost:id, elderPre:id or elderPost:id for a real area, Champion or Elder`);
+    const okAt = n.at === 'intro' || n.at === 'hearth' || (m && (m[1] === 'area' ? +m[2] >= 0 && +m[2] <= 34 : m[1] === 'champPost' ? !!B.champ[m[2]] : !!B.elder[m[2]]));   // 'intro': over the opening stills; 'hearth': when the camp fire is lit (intro-and-picker)
+    if (!okAt) P.push(`npc ${id}: "at" must be area:N, champPost:id, elderPre:id, elderPost:id, intro or hearth for a real area, Champion or Elder`);
     if (!str(n.who, L.title)) P.push(`npc ${id}: who`);
     lines(`npc ${id}`, n.lines, 1, 4, L.speech);
   }
@@ -2729,26 +2726,27 @@ if (section('story UI (browser)')) try {
         await page.goto('http://lf.test/'); await page.waitForTimeout(700);
         const X = s => page.evaluate(s => window.__t.x(s), s);
         await X(DATA);
-        await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go');
-         await page.waitForSelector('.sty-sheet .sty-title', { timeout: 4000 }); await page.waitForTimeout(700);
-        const card = await page.$eval('.sty-sheet', n => { const r = n.getBoundingClientRect(), tall = r.height / innerHeight, b = [...n.querySelectorAll('button')].filter(x => /Begin|Skip/.test(x.textContent)).map(x => { const q = x.getBoundingClientRect(); return { t: x.textContent, h: Math.round(q.height), bottom: Math.round(q.bottom) }; });
-          return { title: n.querySelector('.sty-title').textContent, lines: [...n.querySelectorAll('.sty-text')].map(x => x.textContent), b, vh: innerHeight, tall, overflowX: n.scrollWidth > n.clientWidth + 1 }; });
-        assert(card.title === 'Chapter 1: The Hollow' && card.lines.length === 3 && card.b.length === 2 && card.b.every(x => x.h >= 44 && x.bottom <= card.vh) && !card.overflowX && (viewport.width > viewport.height ? card.tall <= 0.605 : true), `story UI ${tag}: the opening card shows its three lines with Begin and Skip (44 px or taller, on screen), and in landscape the sheet is at most 60% of the screen (${card.tall.toFixed(2)})`);
+        // intro-and-picker: a new game opens on the drawn opening (three beats over two stills, Skip always there), then "Who are you?", then Hesketh's fire
+        await page.waitForSelector('#introScreen', { timeout: 4000 }); await page.waitForTimeout(500);
+        const ib = await page.$eval('#introScreen', n => { const q = x => n.querySelector(x).getBoundingClientRect(), g = q('.intro-go'), sk = q('.intro-skip'), ln = q('.intro-line'); return { line: n.querySelector('.intro-line').textContent, go: [Math.round(g.height), Math.round(g.bottom)], sk: [Math.round(sk.height), Math.round(sk.top), Math.round(sk.right)], ln: [Math.round(ln.top), Math.round(ln.bottom)], vh: innerHeight, vw: innerWidth, overflowX: n.scrollWidth > n.clientWidth + 1, noPicker: !document.getElementById('createScreen') }; });
+        assert(ib.noPicker && ib.line === await X('STORY_BEATS.region.hollow.lines[0]') && ib.go[0] >= 44 && ib.go[1] <= ib.vh && ib.sk[0] >= 44 && ib.sk[1] >= 0 && ib.sk[2] <= ib.vw && ib.ln[1] <= ib.vh && !ib.overflowX, `story UI ${tag}: the opening shows line 1 with Next and Skip on screen (44 px or taller) and no picker yet`);
         const clock0 = await X('notes.clock'); await page.waitForTimeout(1200);
-        assert(await X('storyHeld()') === true && Math.abs((await X('notes.clock')) - clock0) < 0.05, `story UI ${tag}: the game waits while the card is up`);
-        await page.click('.sty-sheet .sty-done'); await page.waitForTimeout(500);
-        assert(!(await page.$('.sty-sheet .sty-title')) || (await page.$eval('.sty-sheet', n => n.querySelector('.sty-title') ? /Chapter 1/.test(n.querySelector('.sty-title').textContent) === false : true)), `story UI ${tag}: Begin closes the opening card`);
-        assert(await X('S.story.ends["r:hollow"]') === 'done', `story UI ${tag}: Begin is recorded as done`);
-        // Hesketh, before the first fight (story-opening): the fire card, then the talk; each fits the screen and reads word for word
-        for (const [title, first, last] of [['Old Hesketh', 'On the road your lamp gutters.', 'Every road needs a place to come back to'], ['What Hesketh knows', 'Ten years I\'ve lit dead lamps.', 'shut the holes']]) {
-          await page.waitForSelector('.sty-sheet .sty-title', { timeout: 4000 }); await page.waitForTimeout(400);
-          const hk = await page.$eval('.sty-sheet', n => ({ title: n.querySelector('.sty-title').textContent, lines: [...n.querySelectorAll('.sty-text')].map(x => x.textContent), bottom: Math.max(...[...n.querySelectorAll('button')].map(x => x.getBoundingClientRect().bottom)), vh: innerHeight, overflowX: n.scrollWidth > n.clientWidth + 1 }));
-          await page.click('.sty-sheet .sty-done'); await page.waitForTimeout(400);
-        }
+        assert(Math.abs((await X('notes.clock')) - clock0) < 0.05, `story UI ${tag}: the game waits while the opening is up`);
+        for (const k of [1, 2]) { await page.click('#introScreen .intro-go'); await page.waitForTimeout(450); assert(await page.$eval('#introScreen .intro-line', n => n.textContent) === await X(`STORY_BEATS.region.hollow.lines[${k}]`), `story UI ${tag}: tap ${k} shows line ${k + 1}`); }
+        assert(await page.$eval('#introScreen .intro-go', n => n.textContent) === 'Continue', `story UI ${tag}: the last beat ends with Continue`);
+        await page.click('#introScreen .intro-go'); await page.waitForTimeout(500);
+        assert(!(await page.$('#introScreen')) && await X('S.story.ends["r:hollow"]') === 'done' && await X('S.story.seen["i:open"] > 0'), `story UI ${tag}: the opening ends in the hero picker and is recorded as done`);
+        assert(await page.$eval('#createTitle', n => n.textContent) === 'Who are you?', `story UI ${tag}: the picker asks "Who are you?"`);
+        await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go');
+        await page.waitForSelector('#introScreen', { timeout: 4000 }); await page.waitForTimeout(500);
+        const hk = await page.$eval('#introScreen', n => ({ who: n.querySelector('.intro-who').textContent, line: n.querySelector('.intro-line').textContent, n: n.querySelectorAll('.intro-dots span').length, bottom: n.querySelector('.intro-go').getBoundingClientRect().bottom, vh: innerHeight }));
+        assert(hk.who === 'Old Hesketh' && hk.n <= 3 && hk.line === await X('STORY_BEATS.npc.heskethFire.lines[0]') && hk.bottom <= hk.vh, `story UI ${tag}: Hesketh's fire plays after the pick, in three lines or fewer`);
+        for (let k = 0; k < hk.n; k++) { await page.click('#introScreen .intro-go'); await page.waitForTimeout(450); }
+        assert(!(await page.$('#introScreen')) && await X('S.story.ends["n:heskethFire"]') === 'done' && await X('S.story.ends["n:heskethTalk"]') === undefined, `story UI ${tag}: the fire scene ends and the talk waits for the camp fire`);
         // the caption: the area's name and two lines, held about 3 s, then the next scene
         await page.waitForSelector('.sty-cap', { timeout: 3000 }).catch(() => null);   // after the talk card's sheet has closed
         const cap = await page.$eval('.sty-cap', n => ({ h: n.querySelector('.sty-cap-h').textContent, l: [...n.querySelectorAll('.sty-cap-l')].map(x => x.textContent), w: Math.round(n.getBoundingClientRect().width), vw: innerWidth })).catch(() => null);
-         assert(cap && cap.h === 'Mossy Hollow' && cap.l.length === 2 && cap.l.join('|') === (await X('STORY_BEATS.area[0] + "|" + STORY_BEATS.zone[1]')) && cap.w <= cap.vw, `story UI ${tag}: the area title and the zone line show as one caption that fits the screen`);
+         assert(cap && cap.h === 'Mossy Hollow' && cap.l.length === 2 && cap.l.join('|') === (await X('STORY_BEATS.area[0] + "|" + STORY_BEATS.zone[1]')) && cap.w <= cap.vw, `story UI ${tag}: the area title and the zone line show as one caption that fits the screen ${JSON.stringify(cap)}`);
         await X('onboardTips(false); onboardUnlockAll()');   // the guide pauses fights; cards play in the gap after a kill
         await page.waitForTimeout(300);
         await page.waitForSelector('.sty-sheet .sty-title', { timeout: 12000 });
@@ -2762,7 +2760,7 @@ if (section('story UI (browser)')) try {
         // the Journal keeps all of it for re-reading
         await X('storyUI.list(false)'); await page.waitForSelector('.sty-row', { timeout: 3000 });
         const rows = await page.$$eval('.sty-row b', l => l.map(x => x.textContent));
-        assert(rows.join('|') === 'Who answers to whom|Chapter 1: The Hollow|A voice|Old Hesketh|What Hesketh knows', `story UI ${tag}: the Journal lists what was read (${rows.join(' | ')})`);
+        assert(rows.join('|') === 'Who answers to whom|Chapter 1: The Hollow|A voice|Old Hesketh', `story UI ${tag}: the Journal lists what was read (${rows.join(' | ')})`);
         assert(!errs.length, `story UI ${tag}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
         await ctx.close();
       }
@@ -2773,8 +2771,9 @@ if (section('story UI (browser)')) try {
       await page.goto('http://lf.test/'); await page.waitForTimeout(700);
       const X = s => page.evaluate(s => window.__t.x(s), s);
       await X('S.story.off = 1');
+      await page.click('#introScreen .intro-skip'); await page.waitForTimeout(300);   // the opening was already up when the option went off
       await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go'); await page.waitForTimeout(1500);
-      assert(!(await page.$('.sty-sheet')) && await X('storyOn()') === false && await X('storyHeld()') === false, 'story UI: with Story cards off a new game plays no card');
+      assert(!(await page.$('.sty-sheet')) && !(await page.$('#introScreen')) && await X('storyOn()') === false && await X('storyHeld()') === false, 'story UI: with Story cards off a new game plays no card and no fire scene');
       await ctx.close();
     } finally { await browser.close(); }
   }
@@ -4330,6 +4329,22 @@ if (section('solo hero')) try {
     assert(E('onboardStep().id') === 'parry' && E('soloParry(true)') === 'parry', 'the next heavy hit: "Press Parry" and counter');
     errs.push(...g.errors);
   }
+  // guide-phase-guards: the guide never says Attack or the ability on the foe's turn, and never pops a tab tip mid-fight
+  {
+    const g = T(), E = s => g.eval(s);
+    E('soloPick("wren")'); run(g, 0.5);
+    const when = id => E(`GUIDE_STEPS.find(s => s.id === "${id}").when()`);
+    E('globalThis.__tc0 = turnCombatOn; globalThis.__ts0 = turnCombatSnapshot; turnCombatOn = () => true; turnCombatSnapshot = () => ({ phase: "foe" }); true');
+    assert(when('attack') === false, 'no Attack tip while the foe acts (wind-up or parry window)');
+    E('turnCombatSnapshot = () => ({ phase: "hero" }); true');
+    assert(when('attack') === true, 'Attack tip shows on your turn');
+    E('O().done.attack = 1; turnCombatSnapshot = () => ({ phase: "foe" }); true');
+    assert(when('ability') === false, 'no ability tip while the foe acts');
+    E('S.onboard.got.party = 1; S.maxZone = 3; S.activity = "fight"; true');
+    assert(E('fightingNow()') && when('tab:party') === false, 'no Hero tab tip mid-fight');
+    E('turnCombatOn = globalThis.__tc0; turnCombatSnapshot = globalThis.__ts0; true');
+    errs.push(...g.errors);
+  }
   // W1-D (playtest-2 P0): a combat step never pauses a game that cannot give it what it waits for
   {
     const g = T(), E = s => g.eval(s);
@@ -4554,15 +4569,15 @@ if (section('solo hero (browser)')) try {
       await page.click('#createScreen .ccard[data-hero="pip"]'); await page.click('#createScreen .create-go'); await page.waitForTimeout(600);
       assert(await X('soloHero() === "pip" && heroSpec().comp === "pip"'), 'Pip is the hero on the stage (her own art)');
       const bar = await page.$eval('#soloBar', b => {
-        const r = b.getBoundingClientRect(), s = document.getElementById('stageBox').getBoundingClientRect(), nav = document.querySelector('.tabs').getBoundingClientRect();
+        const r = b.getBoundingClientRect(), s = document.getElementById('stageBox').getBoundingClientRect(), pb = document.querySelector('.ob-bub:not([hidden])'), nav = document.querySelector('.tabs').getBoundingClientRect();
         const rows = [...b.querySelectorAll('.sb-row')].map(row => [...row.querySelectorAll('.sbtn')].map(x => { const q = x.getBoundingClientRect(); return { act: x.dataset.act, x: Math.round(q.left), y: Math.round(q.top), w: Math.round(q.width), h: Math.round(q.height), cls: x.className }; }));
         const game = document.getElementById('game'), kids = [...game.children].filter(k => !k.hidden && k.getClientRects().length).map(k => k.id || k.className.split(' ')[0]);
-        return { rows, top: Math.round(r.top), bottom: Math.round(r.bottom), stageBottom: Math.round(s.bottom), navTop: Math.round(nav.top), hidden: b.hidden, order: kids.join('>') };
+        return { rows, top: Math.round(r.top), bottom: Math.round(r.bottom), stageBottom: Math.round(pb && pb.classList.contains('dock') ? pb.getBoundingClientRect().bottom : s.bottom), navTop: Math.round(nav.top), hidden: b.hidden, order: kids.join('>') };
       });
       const flat = bar.rows.flat();
       assert(!bar.hidden && bar.rows.length === 2 && bar.rows.map(r => r.map(x => x.act).join()).join('|') === 'atk,ab0,ab1,ab2|parry,dodge', `the dock: Attack and Ability 1-3 in the Act pane, Parry and Dodge under them (${bar.rows.map(r => r.map(x => x.act).join()).join(' | ')})`);
       assert(flat.every(x => x.w >= 44 && x.h >= 44) && bar.rows[0].every(x => x.y < bar.rows[1][0].y) && bar.rows[0].every((x, i) => i === 0 || x.x > bar.rows[0][i - 1].x) && bar.rows[1][1].x > bar.rows[1][0].x, `six keys of 44 px or more: four tiles over Parry and Dodge (${flat.map(x => x.w + 'x' + x.h).join(' ')})`);
-      assert(bar.top >= bar.stageBottom - 1 && bar.top - bar.stageBottom <= 8 && bar.bottom <= bar.navTop && bar.navTop - bar.bottom <= 16 && /stageBox>soloBar$/.test(bar.order), `the bar touches the stage (not over it) and is the lowest thing above the tab bar (${bar.order}; stage ${bar.stageBottom}, bar ${bar.top}-${bar.bottom}, tabs ${bar.navTop})`);
+      assert(bar.top >= bar.stageBottom - 1 && bar.top - bar.stageBottom <= 8 && bar.bottom <= bar.navTop && bar.navTop - bar.bottom <= 16 && /stageBox>soloBar(>ob-bub)?$/.test(bar.order), `the bar touches the stage (not over it) and is the lowest thing above the tab bar (${bar.order}; stage ${bar.stageBottom}, bar ${bar.top}-${bar.bottom}, tabs ${bar.navTop})`);
       assert(/sb-abslot/.test(flat[1].cls) && !/empty/.test(flat[1].cls) && /empty/.test(flat[2].cls) && /empty/.test(flat[3].cls), 'slot 1 holds the hero\'s ability; slots 2 and 3 show empty');
       // the dock's tabs: Skills lists the three slots, Foe is for turn fights, Parry and Dodge stay on screen, Act comes back
       {
@@ -6255,6 +6270,19 @@ if (section('save codec validation (C5)')) try {
       }
     }
     assert(!lost.length,'C5: every learned ability exports while equipped and stays equipped after a cold LF1 load'+(lost.length?'; '+lost.slice(0,3).join('; '):''));
+    { // C5: the learned-abilities record must keep its shape, or abilityOwned throws after a load
+      const probe=(label,edit,ok)=>{const d=base();d.abil=d.abil||{};edit(d.abil);assert(validate(d).ok===ok,`C5: abil ${label} is ${ok?'accepted':'refused'}`);};
+      probe('unl:null',a=>{a.unl=null;},false);
+      probe('unl.wren not a list',a=>{a.unl={wren:'spark',tobin:[],pip:[]};},false);
+      probe('unl holding another hero\'s ability',a=>{a.unl={wren:['spark'],tobin:[],pip:[]};},false);
+      probe('unl holding an unknown id',a=>{a.unl={wren:['nope'],tobin:[],pip:[]};},false);
+      probe('unl with an unknown hero',a=>{a.unl={ghost:[]};},false);
+      probe('scrolls with a fractional count',a=>{a.scrolls={moss:1.5};},false);
+      probe('scrolls with a negative count',a=>{a.scrolls={moss:-1};},false);
+      probe('scrolls with an unknown id',a=>{a.scrolls={nope:1};},false);
+      probe('scrolls with a whole count',a=>{a.scrolls={moss:2};},true);
+      probe('missing entirely',a=>{for(const k of Object.keys(a))delete a[k];},true);
+    }
     const other=base();other.solo.eq.wren=['echo','spark',null];
     assert(!validate(other).ok,'C5: a slot holding another hero\'s learned ability is still refused');
   }
@@ -7056,8 +7084,8 @@ if (section('C9 hero registry (browser)')) try {
           await X('soloPickerOpen=()=>true; S.onboard.tips=false; onboardUnlockAll(); true');
           const initial = await page.$$eval('#createScreen .ccard', rows => rows.map(b => [b.dataset.hero,b.dataset.state,b.getAttribute('aria-disabled'),b.textContent]));
           assert(initial.length===32 && initial.filter(r => r[1]==='unlocked').map(r=>r[0]).join()==='wren,tobin,pip' && initial.filter(r=>r[1]==='locked').length===29, `C9 ${tag}: new game shows all 32 heroes and exactly three unlocked starters`);
-          const bios = await X('JSON.stringify(Object.fromEntries(ROSTER_KEYS.map(k => [k, heroBio(k).slice(0, 40)])))').then(JSON.parse);
-          assert(initial.filter(r=>r[1]==='unlocked').every(r=>r[3].includes(bios[r[0]])) && initial.filter(r=>r[1]==='locked').every(r=>r[3].includes('Locked') && /You meet (him|them) /.test(r[3]) && !r[3].includes(bios[r[0]]) && !/still being designed|Fenmother/.test(r[3])), `C9 ${tag}: starters show their bios; every other hero is plainly Locked, says where you meet them, and spoils nothing`);
+          const bios = await X('JSON.stringify(Object.fromEntries(ROSTER_KEYS.map(k => [k, (PICK_LINES[k] || heroBio(k)).slice(0, 40)])))').then(JSON.parse);   // intro-and-picker: a starter's blurb is second person (PICK_LINES)
+          assert(initial.filter(r=>r[1]==='unlocked').every(r=>r[3].includes(bios[r[0]])) && initial.filter(r=>r[1]==='locked').every(r=>r[3].includes('Locked') && /You meet (him|them) /.test(r[3]) && !r[3].includes(bios[r[0]]) && !/still being designed|Fenmother/.test(r[3])), `C9 ${tag}: starters show their second-person blurbs; every other hero is plainly Locked, says where you meet them, and spoils nothing`);
           await page.click('#createScreen .ccard[data-hero="bram"]');
           assert(await page.$eval('#createScreen .create-go', b=>b.disabled) && !(await X('soloHero()')), `C9 ${tag}: selecting a locked hero cannot begin the game`);
           await X('S.party.unlock.heroes.bram=1; true');
@@ -8470,7 +8498,8 @@ if (section('playtest driver (browser)')) try {
     try {
       pt('new', 'fresh');
       const out = pt('look');
-      assert(/BUTTONS/.test(out) && /\[Begin as Wren\]/.test(out) && /screenshot: .*\.png/.test(out) && fs.existsSync(out.match(/screenshot: (\S+\.png)/)[1]), 'playtest driver: look on a new game lists the hero picker, its buttons and a screenshot that exists');
+      assert(/BUTTONS/.test(out) && /\[Next\]/.test(out) && /Ten years ago every lamp went out/.test(out) && /screenshot: .*\.png/.test(out) && fs.existsSync(out.match(/screenshot: (\S+\.png)/)[1]), 'playtest driver: look on a new game lists the opening, its buttons and a screenshot that exists');
+      assert(/Begin as Wren/.test(pt('look')), 'playtest driver: reopening the game after the opening was shown goes on to the hero picker');
       const tapped = pt('tap', 'Begin as Wren', '--quiet');
       assert(/tapped \[Begin as Wren\]/.test(tapped), 'playtest driver: tap finds a button by its label');
       let miss = '', missCode = 0;
@@ -8684,8 +8713,8 @@ if (section('systems map')) try {
 // ---- story-opening: Hesketh's cards before the first fight, the hero story gate, the picker's copy (bible 8.1, 4.4, 4.5, 14) ----
 if (section('story-opening')) try {
   const g = loadCore(), E = x => g.eval(x), rd = f => fs.readFileSync(path.join(ROOT, 'src', f), 'utf8');
-  const real = JSON.parse(E('JSON.stringify(STORY_BEATS)')), hk = [real.npc.heskethFire, real.npc.heskethTalk];
-  assert(hk.every(n => n && n.at === 'area:0' && n.who) && hk[0].lines[3].includes('Every road needs a place to come back to') && hk[1].lines.length === 4 && hk[1].lines[3].includes('shut the holes'), 'story-opening: Hesketh\'s fire and talk (bible 8.1) play at the Hollow\'s door, right after the opening card');
+  const real = JSON.parse(E('JSON.stringify(STORY_BEATS)')), hk = [real.npc.heskethFire, real.npc.heskethTalk];   // intro-and-picker: the fire plays over the opening stills, the talk at the camp fire
+  assert(hk[0] && hk[0].at === 'intro' && hk[0].who && hk[0].lines.length <= 3 && hk[0].lines[2].includes('Wood first. Then we talk.') && hk[1] && hk[1].at === 'hearth' && hk[1].lines.length === 4 && real.npc.heskethHearth.lines[0].includes('Every road needs a place to come back to') && hk[1].lines[3].includes('shut the holes'), 'story-opening: Hesketh\'s fire (3 lines, over the opening stills) and talk (at the camp fire) keep bible 8.1\'s words');
   const rr = real.hero.refuseRest;
   assert(rr && /Not yet\./.test(rr.wren) && /I'll rest when the (village|Hollow) is lit/.test(rr.tobin) && /No\./.test(rr.pip), 'story-opening: the refusal of "Rest" (bible 4.6) has a line for each starter (played at the Veiled Oracle, story-hollow-script)');
   // story gate (story-opening, bible 4.4): no new unlock before the hero's first scene; heroes a save owns are kept
@@ -8717,20 +8746,29 @@ if (section('story-opening (browser)')) try {
         await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
         await page.goto('http://lf.test/'); await page.waitForTimeout(700);
         const X = s => page.evaluate(s => window.__t.x(s), s);
+        // intro-and-picker: the opening's lines are all on screen and clear of the buttons, beat by beat (landscape: the button sits beside the text)
+        const fits = () => page.$eval('#introScreen', n => { const q = x => n.querySelector(x).getBoundingClientRect(), ln = q('.intro-line'), g = q('.intro-go'), sk = q('.intro-skip'), hit = (a, b) => a.left < b.right - 1 && a.right > b.left + 1 && a.top < b.bottom - 1 && a.bottom > b.top + 1;
+          return { ok: !hit(ln, g) && !hit(ln, sk) && ln.bottom <= innerHeight && ln.right <= innerWidth + 1 && ln.left >= 0, text: n.querySelector('.intro-line').textContent }; });
+        await page.waitForSelector('#introScreen', { timeout: 4000 }); await page.waitForTimeout(500);
+        const seen = [];
+        for (let k = 0; k < 3; k++) { const f = await fits(); seen.push(f); assert(f.ok, `story-opening ${tag}: opening line ${k + 1} is on screen and clear of Next and Skip`); await page.click('#introScreen .intro-go'); await page.waitForTimeout(450); }
+        assert(seen.map(f => f.text).join('|') === await X('STORY_BEATS.region.hollow.lines.join("|")'), `story-opening ${tag}: the opening reads the Chapter 1 card's three lines in order`);
         await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go');
-        // the opening card: every line is on screen, not behind the buttons (landscape fix)
-        await page.waitForSelector('.sty-sheet .sty-title', { timeout: 4000 }); await page.waitForTimeout(500);
-        const vis = await page.$eval('.sty-sheet', n => { const b = [...n.querySelectorAll('button')].filter(x => /Begin|Skip/.test(x.textContent)).map(x => x.getBoundingClientRect()), card = n.querySelector('.sty-card').getBoundingClientRect(), ls = [...n.querySelectorAll('.sty-text')].map(x => x.getBoundingClientRect());
-          return { overlap: b.some(r => r.left < card.right - 1 && r.right > card.left + 1 && r.top < card.bottom && r.bottom > card.top), hidden: ls.filter(r => r.bottom > card.bottom + 1).length, lines: ls.length }; });
-        assert(vis.lines === 3 && !vis.overlap && vis.hidden === 0, `story-opening ${tag}: the opening card shows all three lines and the buttons do not cover them (${JSON.stringify(vis)})`);
+        await page.waitForSelector('#introScreen', { timeout: 4000 }); await page.waitForTimeout(500);
+        const fire = [];
+        for (let k = 0; k < 3; k++) { const f = await fits(); fire.push(f); assert(f.ok, `story-opening ${tag}: Hesketh's fire line ${k + 1} is on screen and clear of Next and Skip`); await page.click('#introScreen .intro-go'); await page.waitForTimeout(450); }
+        assert(fire.map(f => f.text).join('|') === await X('STORY_BEATS.npc.heskethFire.lines.join("|")') && /Wood first\. Then we talk\./.test(fire[2].text), `story-opening ${tag}: Hesketh's fire reads word for word (bible 8.1)`);
+        // the talk waits for the camp fire (8 Pine Log), which pays off "Wood first. Then we talk."
+        assert(await X('S.story.ends["n:heskethFire"]') === 'done' && await X('S.story.seen["n:heskethTalk"]') === undefined, `story-opening ${tag}: the fire scene is done and the talk has not played`);
+        await X('onboardTips(false); S.mats.wood[0] = 20; hearthLight()');
+        await page.waitForSelector('.sty-sheet .sty-title', { timeout: 15000 }); await page.waitForTimeout(400);
+        const q = await page.$eval('.sty-sheet', n => [...n.querySelectorAll('.sty-text')].map(x => x.textContent));
+        assert(q.length === 1 && q[0].includes('Every road needs a place to come back to'), `story-opening ${tag}: the camp fire opens with "Every road needs a place to come back to."`);
+        await page.click('.sty-sheet .sty-done'); await page.waitForFunction(() => [...document.querySelectorAll('.sty-sheet .sty-text')].some(x => x.textContent.includes('Ten years')), null, { timeout: 8000 }); await page.waitForTimeout(500);
+        const h = await page.$eval('.sty-sheet', n => ({ title: n.querySelector('.sty-title').textContent, lines: [...n.querySelectorAll('.sty-text')].map(x => x.textContent), bottom: Math.max(...[...n.querySelectorAll('button')].map(x => x.getBoundingClientRect().bottom)), vh: innerHeight, overflowX: n.scrollWidth > n.clientWidth + 1 }));
+        assert(h.title === 'Old Hesketh' && h.lines.length === 4 && h.lines[0].includes('Ten years I\'ve lit dead lamps.') && h.lines[3].includes('shut the holes') && h.bottom <= h.vh && !h.overflowX, `story-opening ${tag}: Hesketh's talk plays when the camp fire is lit, shows its four lines and fits the screen`);
         await page.click('.sty-sheet .sty-done'); await page.waitForTimeout(400);
-        for (const [title, first, last] of [['Old Hesketh', 'On the road your lamp gutters.', 'Every road needs a place to come back to'], ['What Hesketh knows', 'Ten years I\'ve lit dead lamps.', 'shut the holes']]) {
-          await page.waitForSelector('.sty-sheet .sty-title', { timeout: 4000 }); await page.waitForTimeout(400);
-          const h = await page.$eval('.sty-sheet', n => ({ title: n.querySelector('.sty-title').textContent, lines: [...n.querySelectorAll('.sty-text')].map(x => x.textContent), bottom: Math.max(...[...n.querySelectorAll('button')].map(x => x.getBoundingClientRect().bottom)), vh: innerHeight, overflowX: n.scrollWidth > n.clientWidth + 1 }));
-          assert(h.title === title && h.lines.length === 4 && h.lines[0].includes(first) && h.lines[3].includes(last) && h.bottom <= h.vh && !h.overflowX, `story-opening ${tag}: Hesketh's "${title}" card shows its four lines, fits the screen and keeps its buttons on it`);
-          await page.click('.sty-sheet .sty-done'); await page.waitForTimeout(400);
-        }
-        assert(await X('S.story.ends["n:heskethFire"]') === 'done' && await X('S.story.ends["n:heskethTalk"]') === 'done', `story-opening ${tag}: both Hesketh cards are recorded as done`);
+        assert(await X('S.story.ends["n:heskethTalk"]') === 'done', `story-opening ${tag}: the talk is recorded as done`);
         assert(!errs.length, `story-opening ${tag}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
         await ctx.close();
       }
@@ -8913,18 +8951,21 @@ if (section('story-hollow-script (browser)')) try {
       await pageI.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
       await pageI.goto('http://lf.test/'); await pageI.waitForTimeout(700);
       const XI = s => pageI.evaluate(s => window.__t.x(s), s);
+      // intro-and-picker: the opening is its own screen (it never files itself), so the unattended card is Hesketh's talk at the camp fire
+      await pageI.waitForSelector('#introScreen', { timeout: 4000 }); await pageI.waitForTimeout(400); await pageI.click('#introScreen .intro-skip'); await pageI.waitForTimeout(300);
       await pageI.click('#createScreen .ccard[data-hero="wren"]'); await pageI.click('#createScreen .create-go');
-      await pageI.waitForSelector('.sty-sheet .sty-title', { timeout: 4000 });
+      await pageI.waitForSelector('#introScreen', { timeout: 4000 }); await pageI.waitForTimeout(400); await pageI.click('#introScreen .intro-skip'); await pageI.waitForTimeout(300);
+      assert(await XI('S.story.ends["r:hollow"]') === 'skipped' && await XI('S.story.ends["n:heskethFire"]') === 'skipped', 'story-hollow-script (browser): Skip on the opening and on the fire scene is recorded as skipped');
+      await XI('onboardTips(false); onboardUnlockAll()');   // the guide pauses fights
+      await pageI.waitForSelector('.sty-cap', { timeout: 12000 });   // the area caption holds the game for 3 s
+      await pageI.waitForFunction(() => !document.querySelector('.sty-cap') && window.__t.x('!storyHeld()'), null, { timeout: 6000 });
+      await XI('S.mats.wood[0] = 20; hearthLight()');
+      await pageI.waitForSelector('.sty-sheet .sty-title', { timeout: 15000 });
       for (let k = 0; k < 7; k++) { await pageI.waitForTimeout(500); await pageI.click('.sty-sheet .sty-title'); }   // 3.5 s in (past the 2 s wait), but each tap restarted it: no timing margin under 1.5 s
       assert(!!(await pageI.$('.sty-sheet .sty-title')) && await XI('storyHeld()') === true, 'story-hollow-script (browser): a tap on the card restarts its unattended wait');
-      await pageI.waitForFunction(() => window.__t.x('storyLate().includes("r:hollow")'), null, { timeout: 5000 });
-      await pageI.waitForTimeout(300);
-      await XI('onboardTips(false); onboardUnlockAll()');   // the guide pauses fights
-      // Hesketh's two cards file themselves too (2 s each), then the area caption holds the game for 3 s
-      await pageI.waitForSelector('.sty-cap', { timeout: 12000 });
-      await pageI.waitForFunction(() => window.__t.x('storyLate().includes("n:heskethTalk") && !storyHeld()') && !document.querySelector('.sty-cap') && !document.querySelector('.sty-sheet .sty-title'), null, { timeout: 6000 });
+      await pageI.waitForFunction(() => window.__t.x('storyLate().includes("n:heskethTalk") && !storyHeld()'), null, { timeout: 6000 });
       const c2 = await XI('notes.clock'); await pageI.waitForTimeout(700);
-      assert(await XI('S.story.ends["r:hollow"]') === undefined && (await XI('storyLate()')).includes('r:hollow') && await XI('storyHeld()') === false && (await XI('notes.clock')) > c2 + 0.2,
+      assert(await XI('S.story.ends["n:heskethTalk"]') === undefined && (await XI('storyLate()')).includes('n:heskethTalk') && await XI('storyHeld()') === false && (await XI('notes.clock')) > c2 + 0.2,
         'story-hollow-script (browser): a card nobody touches files itself (no ends entry, late), and the game runs again');
       await XI('storyUI.list(true)'); await pageI.waitForSelector('.sty-catch', { timeout: 3000 });
       assert(/Catch up on the story/.test(await pageI.$eval('.sty-catch', n => n.textContent)), 'story-hollow-script (browser): the Journal offers the unattended card under "Catch up on the story"');
@@ -9031,6 +9072,148 @@ if (section('story-systems-hollow')) try {
   assert(wrote >= 1, 'systems-hollow: the Tavern applicant card shows the line');
 } catch (e) { fail('story-systems-hollow crashed: ' + (e.stack || e)); }
 
+// ==== intro-and-picker: this card's own checks (the drawn opening, the picker's words, the first fight inside 45 s) ====
+if (section('intro-and-picker')) try {
+  const rd = f => fs.readFileSync(path.join(ROOT, 'src', f), 'utf8');
+  const g = loadCore({ seed: 5 }), E = x => g.eval(x);
+  const real = JSON.parse(E('JSON.stringify(STORY_BEATS)')), I = real.intro, R = I && real.region[I.region];
+  assert(I && R && I.open.length === 3 && I.open.every(b => b.line >= 0 && b.line < 3 && ['lamp', 'dark', 'road'].includes(b.still)) && new Set(I.open.map(b => b.still)).size === 2, 'intro: three beats over two stills, one region card line each');
+  assert(real.npc[I.fire].lines.length <= 3 && real.npc[I.fire].at === 'intro' && I.fireStill === 'road' && E('Object.keys(INTRO_STILLS).join()') === 'lamp,dark,road', 'intro: Hesketh\'s fire is 3 lines or fewer over the third still, and each still has an art slot');
+  assert(!/\b(document|window|localStorage)\./.test(rd('js/55-story.js').replace(/\/\/.*$/gm, '')) && /storyIntroClaim\(\)/.test(rd('js/75-intro-ui.js')), 'intro: the engine stays core; the screen claims the opening');
+  // the picker (C1, C9): second person, no real-time ability text, no third person for a starter
+  const pick = JSON.parse(E('JSON.stringify(PICK_LINES)'));
+  assert(Object.keys(pick).join() === 'wren,tobin,pip' && Object.values(pick).every(t => /\byou\b/i.test(t) && !/\b(he|she|his|her|him)\b/i.test(t)), 'picker: each starter\'s blurb speaks to you (C1)');
+  const c = rd('js/76-create.js');
+  assert(/'Who are you\?'/.test(c) && !/Who carries the lantern/.test(c) && /H\.ab\.line/.test(c), 'picker: it asks "Who are you?" and shows the turn-fight ability line, not the real-time description (C9)');
+  assert(E('["wren", "tobin", "pip"].every(k => !/for \\d+ seconds|every foe in its path|your spare sword/i.test(SOLO_HEROES[k].ab.line + PICK_LINES[k] + BIOS[k]))'), 'picker: no "for 4 seconds", "every foe in its path" or "your spare sword" in a starter\'s words');
+  // an old save never sees the opening: it is a new game's, once
+  const old = loadCore({ seed: 5, storage: memoryStorage({ [KEY]: rd2('save-mid.json') }) });
+  old.eval('loadSave(); storyIntroClaim()');
+  assert(old.eval('storyIntro("open")') === null && old.eval('storyIntro("fire")') === null, 'intro: a save past zone 1 never sees the opening or the fire scene');
+  const nw = loadCore({ seed: 5 }); nw.eval('storyIntroClaim()');
+  assert(nw.eval('storyIntro("open").beats.length') === 3 && nw.eval('storyIntro("fire")') === null, 'intro: a new game is owed the opening, and the fire only after it');
+  nw.eval('storyIntroDone("open", "shown"); storyIntroDone("open", "done")');
+  assert(nw.eval('storyIntro("open")') === null && nw.eval('storyIntro("fire").lines.length') <= 3 && nw.eval('S.story.ends["r:hollow"]') === 'done', 'intro: once shown it is not owed again, and the fire scene is next');
+  nw.eval('storyIntroDone("fire", "skipped")');
+  assert(nw.eval('storyIntro("fire")') === null && nw.eval('storyList().map(e => e.id).includes("n:heskethFire") && storyList().map(e => e.id).includes("r:hollow")'), 'intro: Skip is filed and both scenes stay in the Journal');
+  // Hesketh's talk waits for the camp fire (hearthLit), once
+  const hw = loadCore({ seed: 5, cold: true }); hw.eval('S.activity = "fight"; S.mats.wood[0] = 20');
+  const sc = []; hw.fn.on('storyScene', e => sc.push(e.id));
+  const run = () => { for (let i = 0; i < 40; i++) { hw.fn.tick(0.1); hw.eval('emit("kill", { mob: { name: "x" }, zone: 1 })');   // a kill opens the gap a scene waits for
+       const id = sc[sc.length - 1]; if (id && hw.eval(`(storyClaim(${JSON.stringify(id)}), storyHeld())`)) hw.eval(`storyClose(${JSON.stringify(id)}, "done")`); } };   // the check plays the UI: each scene is shown, then closed
+  run();
+  assert(!sc.includes('n:heskethTalk'), 'intro: Hesketh\'s talk does not play before the camp fire');
+  hw.eval('hearthLight()'); run();
+  assert(sc.filter(x => x === 'n:heskethTalk').length === 1, 'intro: Hesketh\'s talk plays once, when the camp fire is lit');
+  function rd2(n) { return fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', n), 'utf8'); }
+
+  // firstFightSec: from the first tap to the first Attack, tapping straight through (a beat takes a moment to read, so 0.4 s a tap)
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('intro-and-picker (browser): Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [tag, viewport] of [['360x740', { width: 360, height: 740 }], ['740x360', { width: 740, height: 360 }]]) {
+        const ctx = await browser.newContext({ viewport, isMobile: true, hasTouch: true, story: true });
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForSelector('#introScreen', { timeout: 5000 }); await page.waitForTimeout(400);
+        const t0 = Date.now(); let taps = 0;
+        const tap = async sel => { await page.click(sel); taps++; await page.waitForTimeout(400); };
+        for (let k = 0; k < 3; k++) await tap('#introScreen .intro-go');
+        await page.waitForSelector('#createScreen .ccard[data-hero="wren"]'); await tap('#createScreen .ccard[data-hero="wren"]'); await tap('#createScreen .create-go');
+        await page.waitForSelector('#introScreen'); await page.waitForTimeout(300);
+        for (let k = 0; k < 3; k++) await tap('#introScreen .intro-go');
+        await page.waitForSelector('button[aria-label^="Attack"]', { state: 'visible', timeout: 5000 });
+        const blocked = await page.evaluate(() => !!document.querySelector('#introScreen, #createScreen, .sty-sheet'));
+        const sec = (Date.now() - t0) / 1000;
+        assert(!blocked && sec <= 45 && taps <= 12, `firstFightSec ${tag}: ${sec.toFixed(1)} s and ${taps} taps from the first tap to the first Attack through the opening, the picker and Hesketh's fire (limit 45 s)`);
+        assert(!errs.length, `intro ${tag}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('intro-and-picker crashed: ' + (e.stack || e)); }
+
+if (section('bounties-anywhere')) try {
+  const g = loadCore({ seed: 9301 }), E = x => g.eval(x);
+  E('S.maxZone = 8; S.bounties.slots[1] = { k: "crit", need: 99, have: 0, rew: "gold", rewN: 30, wait: 0, rr: 0 }; S.bounties.slots[2] = { k: "crit", need: 99, have: 0, rew: "gold", rewN: 30, wait: 0, rr: 0 }; S.bounties.slots[0] = { k: "forge", need: 2, have: 1, t: 1, z: 1, rew: "gold", rewN: 30, wait: 0, rr: 0 }; globalThis.__ready = []; on("bountyReady", p => __ready.push(p))');
+  E('emit("itemAdded", { item: { id: 9001, slot: "weapon", t: 1, r: "common", plus: 0 } })');
+  assert(E('__ready.length') === 1 && E('__ready[0].i') === 0 && E('S.bounties.slots[0].have') === 2, 'bounties-anywhere: bountyReady fires once, when a bounty reaches its goal');
+  E('emit("itemAdded", { item: { id: 9002, slot: "weapon", t: 1, r: "common", plus: 0 } })');
+  assert(E('__ready.length') === 1, 'bounties-anywhere: a bounty that is already done does not fire bountyReady again');
+  const goal = E('(() => { const x = topGoals(3, { sticky: false }).find(t => t.id === "bounty"); return x ? { ready: x.ready, label: x.goLabel, go: typeof x.go } : null; })()');
+  assert(goal && goal.ready && goal.label === 'Claim' && goal.go === 'function', 'bounties-anywhere: the Next Up bounty goal says Claim and claims in place');
+  E('(typeof topGoals(3, { sticky: false })[0] === "object") && (() => { const x = topGoals(3, { sticky: false }).find(t => t.id === "bounty"); const sp = x.go(); sp.fn(); })()');
+  assert(E('S.bounties.claimed') === 1 && !E('S.bounties.slots[0].k'), 'bounties-anywhere: the Claim runs BOUNTY_API.claim (no menu), pays and frees the slot');
+  const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-bounties-ui.js'), 'utf8');
+  assert(/registerSection\('camp', \{\s*id: 'bounties-camp', title: "Hesketh's board"/.test(src), "bounties-anywhere: the board is also registered at Camp as Hesketh's board");
+} catch (e) { fail('bounties-anywhere crashed: ' + (e.stack || e)); }
+
+// ---- guide-panel: the guide's panel never covers the fight (early-game plan R3, issues A1, A3, A4) ----
+// Real DOM rects at 740x360, 844x390 and 360x740: while the first session's steps show, the panel overlaps neither HP bar, the
+// foe plate, the boss timer, the hero plate nor the stage itself, and its text never squashes into a column (issue A4).
+if (section('guide panel rects (browser, guide-panel)')) try {
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('guide panel (browser): Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [vw, vh] of [[740, 360], [844, 390], [360, 740]]) {
+        const at = `${vw}x${vh}`;
+        const ctx = await browser.newContext({ viewport: { width: vw, height: vh }, isMobile: true, hasTouch: true, turns: true });   // the shipped turn fight: its copy is the longer one
+        const page = await ctx.newPage(); const errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(700);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go'); await page.waitForTimeout(600);
+        await X('globalThis.__spo = soloPickerOpen; soloPickerOpen = () => true; true');
+        const rects = () => page.evaluate(() => {
+          const R = e => { if (!e || !e.getClientRects().length) return null; const r = e.getBoundingClientRect(); return r.width && r.height ? [r.left, r.top, r.right, r.bottom] : null; };
+          const q = s => document.querySelector(s), b = q('.ob-bub');
+          if (!b || b.hidden) return null;
+          const panel = R(b), things = { 'hero HP bar': R(q('#hPlate .hpbar')), 'foe HP bar': R(q('.mob .hpbar')), 'foe plate': R(q('.mob')), 'boss timer': R(q('#tWrap')), 'hero plate': R(q('#hPlate')), 'stage': R(q('#stageBox')) };
+          const hit = Object.entries(things).filter(([, r]) => r && panel[0] < r[2] - .5 && panel[2] > r[0] + .5 && panel[1] < r[3] - .5 && panel[3] > r[1] + .5).map(([k]) => k);
+          const t = q('.ob-txt'), tr = t.getBoundingClientRect(), face = q('.ob-face'), ok = q('.ob-ok'), okr = ok && !ok.hidden ? ok.getBoundingClientRect() : null;
+          const lh = parseFloat(getComputedStyle(t).lineHeight) || 18, lines = Math.round(tr.height / lh), cw = t.textContent.length ? tr.width / (parseFloat(getComputedStyle(t).fontSize) * .62) : 99;
+          return { hit, panel: panel.map(Math.round), inView: panel[0] >= 0 && panel[2] <= innerWidth && panel[1] >= 0 && panel[3] <= innerHeight, mode: ['side', 'dock', 'over-menu'].find(m => b.classList.contains(m)), textChars: Math.round(cw), lines,
+            faceOk: !!face && (face.getAttribute('src') || '').startsWith('data:'), btnBelow: okr ? okr.top >= tr.bottom - 1 : null, btnH: okr ? Math.round(okr.height) : null,
+            btnIn: okr ? okr.top >= panel[1] - .5 && okr.bottom <= panel[3] + .5 && okr.left >= panel[0] - .5 && okr.right <= panel[2] + .5 && (d => d === ok || ok.contains(d))(document.elementFromPoint(okr.left + okr.width / 2, okr.top + okr.height / 2)) : null, clipped: t.scrollHeight > t.clientHeight + 1, scrollX: document.documentElement.scrollWidth > innerWidth };
+        });
+        // each step in turn: the guide is told to show it (the real wind-ups for Dodge and Parry are down to chance, so the check
+        // does not wait for them), so every step's copy is measured, including the long boss and Parry lines of the turn fight
+        const seen = [];
+        await X('globalThis.__os = onboardStep; globalThis.__boss = mob ? !!mob.boss : false; true');
+        for (const st of ['attack', 'ability', 'dodge', 'parry', 'boss']) {
+          await X(`globalThis.__fs = ${JSON.stringify(st)}; onboardStep = () => GUIDE_STEPS.find(g => g.id === __fs); if (__fs === 'boss' && mob) mob.boss = true; ONBOARD.paused = false; true`);
+          await page.waitForTimeout(700);
+          const m = await rects();
+          if (!m) { assert(false, `guide panel ${at} "${st}": the panel shows`); continue; }
+          seen.push(st);
+          assert(!m.hit.length && m.inView && !m.scrollX, `guide panel ${at} "${st}": in view and clear of ${m.hit.length ? m.hit.join(', ') : 'both HP bars, the foe plate, the boss timer, the hero plate and the stage'} (${m.mode}, ${m.panel.join(',')})`);
+          assert(m.textChars >= 12 && m.faceOk && !m.clipped && (m.btnBelow === null || (m.btnBelow && m.btnH >= 44 && m.btnIn)), `guide panel ${at} "${st}": text at least 12 characters wide (${m.textChars}) and not clipped, Hesketh's face shows, the button sits on its own row at 44 px or more, inside the panel and tappable (${JSON.stringify([m.faceOk, m.clipped, m.btnBelow, m.btnH, m.btnIn])})`);
+        }
+        await X('onboardStep = globalThis.__os; if (mob) mob.boss = globalThis.__boss; true');
+        assert(seen.length === 5, `guide panel ${at}: the check measured all five steps (${seen.join(', ')})`);
+        // a paused tip that is not a step (a first-use line) docks too; and a step shown over an open menu sits at the menu's bottom
+        if (vw < vh) {   // portrait with a menu open: the panel moves to the bottom of the menu, above the tab bar
+          await X('onboardTips(true); S.onboard.all = false; onboardReveal("gather"); setTab("gat"); true'); await page.waitForTimeout(900);
+          const mm = await rects();
+          if (mm) assert(mm.mode === 'over-menu' && !mm.clipped && mm.inView, `guide panel ${at}: over a menu it sits at the bottom of the menu panel (${mm.mode}, ${mm.panel.join(',')})`);
+        }
+        assert(!errs.length, `guide panel ${at}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('guide panel rects crashed: ' + (e.stack || e)); }
+
 // ---- story-unlock-gates: a held hero's line says when they join; a won token says so (docs/design/unlock-pace.md) ----
 if (section('story-unlock-gates')) try {
   const g = loadCore({ seed: 917 }), E = s => g.eval(s);
@@ -9059,7 +9242,7 @@ if (section('story-unlock-gates')) try {
   assert(bell.length === 1 && bell[0] === "You won the Stonebreaker's Token. Grenna joins your camp. The solo kit comes later." && E('noticeChannel(noticeRule("", "heroToken"), "")') === 'bell', 'story-unlock-gates: a token win is one bell line, never a pop (' + bell.join(' | ') + ')');
   // STORY_MEET holds the chapter script: the zone after each Chapter 1 hero's first scene can have played (Hob: no scene of his own)
   const meet = JSON.parse(E(`JSON.stringify((() => {
-    const B = STORY_BEATS, z = at => { const [k, v] = at.split(':'); return k === 'area' ? +v * AREA_ZONES + 1 : k === 'champPost' ? B.champ[v].zone + 1 : k === 'elderPre' ? B.elder[v].zone : B.elder[v].zone + 1; }, out = {};
+    const B = STORY_BEATS, z = at => { const [k, v] = at.split(':'); return k === 'intro' || k === 'hearth' ? 1 : k === 'area' ? +v * AREA_ZONES + 1 : k === 'champPost' ? B.champ[v].zone + 1 : k === 'elderPre' ? B.elder[v].zone : B.elder[v].zone + 1; }, out = {};
     for (const [id, n] of Object.entries(B.npc)) { const k = ROSTER_KEYS.find(h => id === h || (id.startsWith(h) && /^[A-Z]/.test(id.slice(h.length)))); if (k && STORY_MEET[k]) out[k] = Math.min(out[k] || Infinity, z(n.at)); }
     return Object.keys(STORY_MEET).filter(k => STORY_MEET[k][1] === 1 && k !== 'hob').map(k => [k, STORY_MEET[k][0], out[k] || null]);
   })())`));
@@ -9124,6 +9307,129 @@ if (section('story-unlock-gates')) try {
   assert(['attack', 'ability', 'boss', 'upgrade', 'gather', 'light', 'bench', 'tool', 'forge'].every(id => doneSteps.has(id)), 'story-unlock-gates: every guide step of the cold walk still completes (' + [...doneSteps].join(',') + ')');
   assert(!g.errors.length && !og.errors.length && !og2.errors.length && !og3.errors.length && !cw.errors.length, 'story-unlock-gates: no errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
 } catch (e) { fail('story-unlock-gates crashed: ' + (e.stack || e)); }
+
+// wire-menu-icons: detect orphaned pack entries, and check the real controls at phone widths.
+if (section('wire-menu-icons')) try {
+  const g = loadCore(), navSrc = fs.readFileSync(path.join(ROOT, 'src/js/75-nav-ui.js'), 'utf8');
+  const uiSrc = fs.readFileSync(path.join(ROOT, 'src/js/70-ui.js'), 'utf8');
+  const map = name => vm.runInNewContext('(' + (name === 'icons' ? navSrc : uiSrc).match(new RegExp('const ' + name + ' = (\\{[^;]+\\});'))[1] + ')');
+  const views = map('icons'), tabs = map('NAV_OF_TAB');
+  const activity = vm.runInNewContext('(' + navSrc.match(/const NAV_OF = (\{[^;]+\});/)[1] + ')');
+  const navConsumers = new Set([...Object.values(views), ...Object.values(tabs), ...Object.values(activity), 'notices']);
+  const ids = JSON.parse(g.eval('JSON.stringify({nav:Object.keys(NAV_ICONS), act:Object.keys(ACTION_ICONS), abilities:Object.keys(ABILITIES)})'));
+  const orphanNav = ids.nav.filter(id => !navConsumers.has(id));
+  assert(!orphanNav.length, 'wire-menu-icons: every embedded menu icon has a consumer' + (orphanNav.length ? ': ' + orphanNav.join(', ') : ''));
+  // The bar consumes the three attacks, defence, empty slot, signatures and Auto; the ability view consumes named abilities.
+  const solo = fs.readFileSync(path.join(ROOT, 'src/js/75-solo-ui.js'), 'utf8');
+  const badges = [...navSrc.matchAll(/return '(locked|cooldown|ready|unavailable)'/g)].map(m => m[1]);
+  if (/\? 'selected' : ''/.test(navSrc)) badges.push('selected');
+  const actConsumers = new Set([...badges, ...ids.abilities]);
+  if (solo.includes("'attack-' + (soloHero()")) for (const hero of ['wren', 'tobin', 'pip']) actConsumers.add('attack-' + hero);
+  for (const id of ['parry', 'dodge', 'empty', 'echo', 'bash', 'fire', 'auto-on', 'auto-off']) if (solo.includes("'" + id + "'") || new RegExp('\\b' + id + ':').test(solo)) actConsumers.add(id);
+  const orphanAct = ids.act.filter(id => !actConsumers.has(id));
+  assert(!orphanAct.length, 'wire-menu-icons: every embedded action icon has a consumer' + (orphanAct.length ? ': ' + orphanAct.join(', ') : ''));
+  assert(uiSrc.includes('menuNavIcon(b, v.id)') && uiSrc.includes('menuNavIcon(b, v)'), 'wire-menu-icons: menu and Journal renderers use the icon map');
+  assert(navSrc.includes("nicSet(im, 'nav', id, 16)") && navSrc.includes("nicSet(im, 'act', id, 16)"), 'wire-menu-icons: controls use the native-size renderer');
+} catch (e) { fail('wire-menu-icons crashed: ' + (e.stack || e)); }
+
+if (section('wire-menu-icons (browser)')) try {
+  const { pw, exe } = browserTools, file = path.join(ROOT, 'dist/lanternfall.html');
+  if (!pw || !exe || !fs.existsSync(file)) skipBrowser('wire-menu-icons: Playwright, Chromium or dist unavailable');
+  else {
+    const raw = fs.readFileSync(file, 'utf8'), end = raw.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1">' + raw.slice(0, end) + '\nwindow.__menuTest = s => eval(s);\n' + raw.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe });
+    try {
+      for (const [width, height, reducedMotion] of [[360, 740, 'no-preference'], [740, 360, 'no-preference'], [360, 740, 'reduce']]) {
+        const ctx = await browser.newContext({ viewport: { width, height }, reducedMotion, turns: true }), page = await ctx.newPage(), errors = [];
+        page.on('pageerror', e => errors.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://menu.test/' ? r.fulfill({ status: 200, body: html, contentType: 'text/html; charset=utf-8' }) : r.abort());
+        await page.goto('http://menu.test/');
+        await page.evaluate(() => window.__menuTest("soloPick('pip'); onboardUnlockAll(); ui(true); document.getElementById('createScreen').hidden = true;"));
+        for (const tab of ['adv', 'party', 'gat', 'forge', 'world', 'deeds']) {
+          await page.evaluate(t => window.__menuTest(`setTab('${t}'); ui(true);`), tab);
+          await page.waitForTimeout(300);
+          const r = await page.evaluate(() => {
+            const buttons = [...document.querySelectorAll('#viewSeg button')];
+            return { bad: buttons.filter(b => {
+              const i = b.querySelector('.menu-nav-ic'), rect = b.getBoundingClientRect();
+              const text = [...b.childNodes].find(n => n.nodeType === 3), range = document.createRange();
+              if (text) range.selectNodeContents(text);
+              const tr = text ? range.getBoundingClientRect() : rect;
+              return !i || !i.complete || i.naturalWidth !== 16 || i.getBoundingClientRect().width !== 16 || rect.height < 44 || tr.width > rect.width + 1 || b.scrollWidth > b.clientWidth + 1;
+            }).map(b => b.textContent), overflow: document.documentElement.scrollWidth > innerWidth + 1, count: buttons.length };
+          });
+          assert(r.count > 0 && !r.bad.length && !r.overflow, `wire-menu-icons ${width}x${height} ${reducedMotion} ${tab}: icons native, labels fit, targets >=44px (${r.bad.join(', ')})`);
+        }
+        const badgeStates = await page.evaluate(() => window.__menuTest(`(() => {
+          const b = el('button', 'sbtn'), out = [];
+          for (const [cls, nv] of [['', ''], ['cool', '2'], ['blocked', 'T3'], ['off', ''], ['sp-ab on', '']]) {
+            b.className = cls; b._nv = nv; out.push(menuActionBadge(b));
+          }
+          return out;
+        })()`));
+        assert(badgeStates.join() === 'ready,cooldown,locked,unavailable,selected', `wire-menu-icons ${width}: five badges follow action and picker states`);
+        assert(!errors.length, `wire-menu-icons ${width}: no page errors` + (errors.length ? ': ' + errors[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('wire-menu-icons browser crashed: ' + (e.stack || e)); }
+
+// ==== craft-reveal: this card's own checks (result card, odds line, last-five strip, grade words) ====
+if (section('craft reveal')) try {
+  const rd = f => fs.readFileSync(path.join(ROOT, 'src', 'js', f), 'utf8');
+  const notices = rd('23n-data-notices.js'), cui = rd('75-craft-ui.js');
+  assert(/id: 'forged', re: \/\^\(Forged\|Made\) an\? \/, ch: 'none'/.test(notices) && (notices.match(/id: 'forged'/g) || []).length === 1, 'craft reveal: one `forged` notice rule, and it keeps craft lines out of the bell (the card shows them)');
+  assert(!/Fine\b/.test(cui.replace(/Fine-tune/g, '')) && /\['common', 'uncommon', 'rare', 'epic'\]\.map\(r => `\$\{RAR\[r\]\.n\}/.test(cui), 'craft reveal: the odds line uses the real grade names from RAR');
+  assert(!/Craft 5|craft5/i.test(cui), 'craft reveal: no "Craft 5" control');
+  await (async () => {
+    const { pw, exe } = browserTools;
+    if (!pw || !exe || !fs.existsSync(distFile)) { skipBrowser('craft reveal (browser): Playwright or Chromium not here, skipped'); return; }
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const rawOf = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h, motion] of [[360, 740, 'no-preference'], [740, 360, 'reduce']]) {
+        const at = `craft reveal ${w}x${h}${motion === 'reduce' ? ' reduced motion' : ''}`;
+        const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: true, hasTouch: true, reducedMotion: motion });
+        await ctx.addInitScript(([key, raw]) => {
+          try { localStorage.setItem('lanternfall.test.nostory', '1'); } catch (e) {}
+          if (sessionStorage.getItem('cr-seeded')) return; sessionStorage.setItem('cr-seeded', '1');
+          const o = JSON.parse(raw); o.last = Date.now(); localStorage.setItem(key, JSON.stringify(o));
+        }, [KEY, rawOf('save-mid.json')]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(700);
+        for (let i = 0; i < 4; i++) { const b = await page.$('#createScreen .create-go'); if (!b) break; await b.click(); await page.waitForTimeout(300); }
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X(`S.onboard.tips = false; true`);
+        await page.click('.tab[data-tab="forge"]'); await page.waitForTimeout(500);
+        const odds = await X(`(() => { const t = document.querySelector('.cf-odds'); const w = rarityWeights(stationLevel(document.querySelector('.cf-rec').dataset.kind)), tot = Object.values(w).reduce((a, b) => a + b, 0);
+          return { text: t ? t.textContent : '', common: Math.round(w.common / tot * 100) }; })()`);
+        assert(/^Odds: Common [\d.]+% · Uncommon [\d.]+% · Rare [\d.]+% · Epic [\d.]+%$/.test(odds.text) && Math.abs(parseFloat(/Common ([\d.]+)%/.exec(odds.text)[1]) - odds.common) <= 0.6, `${at}: each recipe shows one odds line computed from the rarity weights (${odds.text})`);
+        const made = [];
+        for (let i = 0; i < 6; i++) {
+          const ok = await X(`(() => { const b = [...document.querySelectorAll('.cf-rec .cf-go')].find(x => !x.disabled); if (!b) return false; b.click(); return true; })()`);
+          if (!ok) break;
+          await page.waitForTimeout(150);
+          made.push(await X(`(() => { const c = document.querySelector('.cf-res'); return c ? { grade: c.querySelector('.cf-grade').textContent, btns: [...c.querySelectorAll('.cf-resact button')].map(b => b.textContent), arrows: c.querySelectorAll('.cf-d').length, strip: document.querySelectorAll('.cf-recent .cf-tile').length } : null; })()`));
+        }
+        assert(made.length >= 2 && made.every(m => m && ['Common', 'Uncommon', 'Rare', 'Epic', 'Unique'].includes(m.grade)), `${at}: every craft opens a result card with a real grade name (${JSON.stringify(made.map(m => m && m.grade))})`);
+        assert(made.every(m => m && m.btns.includes('Keep') && m.btns.includes('Salvage')), `${at}: the card offers Keep and Salvage (and Equip when it fits)`);
+        assert(made[made.length - 1].strip === Math.min(5, made.length), `${at}: the strip keeps the last five results (${made[made.length - 1].strip})`);
+        assert(await X(`document.querySelectorAll('.cf-recent').length === 1 && !/Craft 5/.test(document.body.textContent)`), `${at}: one strip, no Craft 5 button`);
+        assert(await X(`(() => { const r = document.querySelector('.cf-resbox').getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; })()`) , `${at}: the new card is on screen after a craft`);
+        await page.click('button:text-is("Gear")'); await page.waitForTimeout(400);
+        assert(await X(`(() => { const b = document.querySelector('.cf-bag .cf-tile .cf-gr'); return !!b && /^(Com|Unc|Rare|Epic|Uniq)$/.test(b.textContent); })()`), `${at}: a bag tile names its grade in text`);
+        assert(!errs.length, `${at}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  })();
+} catch (e) { fail('craft reveal crashed: ' + (e.stack || e)); }
 
 if (section('removed systems (W2-C)')) try {
   const strip = t => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/([^:'"`\\])\/\/[^\n'"`]*$/gm, '$1');
@@ -9413,6 +9719,8 @@ if (section('moment layer')) try {
           const until = async (expr, ms = 6000) => { try { await page.waitForFunction(e => window.__t.x(e), expr, { timeout: ms, polling: 100 }); } catch (e) { /* the assert below says what is missing */ } };
           await page.waitForTimeout(4600);   // no moment opens at boot (MOMENT_TUNE.bootS)
           await X(`S.activity = 'gather'; S.tab = ''; S.onboard.tips = false; emit('sceneReset'); true`);   // no turn fight: a moment may show
+          await page.waitForTimeout(600);
+          await X(`MOMENT_Q.length = 0; if (MOMENT_UI.ov) { MOMENT_UI.shownAt = 0; document.querySelector('.mm-go').click(); } true`);   // a catch-up (a hero who joined as the save loaded) is not this check's moment
           await X(`S.found.sproutblade = 0; dropUnique('sproutblade', 1)`);
           // a level-up and a flood of toasts compete with it
           await X(`emit('levelup', { L: 5 }); for (let i = 0; i < 4; i++) toast('Check notice ' + i, 'good', null, 'high'); true`);
@@ -9421,7 +9729,7 @@ if (section('moment layer')) try {
             return { up: !!o, text: o ? o.textContent : '', fits: !!r && r.top >= 0 && r.bottom <= innerHeight + 1 && r.left >= 0 && r.right <= innerWidth + 1 && g.bottom <= innerHeight + 1,
               burst: o && getComputedStyle(o.querySelector('.mm-burst')).display, held: GAME_HOLDS.some(f => f()), bell: notes.log.some(n => n.ch === 'bell' && /Unique loot/.test(n.msg)), st: momentState() }; })()`);
           assert(big.up && /Sproutblade/.test(big.text) && /Unique loot/i.test(big.text) && big.fits && big.held && !big.bell,
-            `${at}: a unique shows a big card (name, label, Continue in view) and holds the game; it is not a bell line (${JSON.stringify({ up: big.up, fits: big.fits, held: big.held, bell: big.bell })})`);
+            `${at}: a unique shows a big card (name, label, Continue in view) and holds the game; it is not a bell line (${JSON.stringify({ up: big.up, fits: big.fits, held: big.held, bell: big.bell, text: String(big.text).slice(0, 120) })})`);
           assert(motion === 'reduce' ? big.burst === 'none' : big.burst !== 'none', `${at}: the burst ${motion === 'reduce' ? 'is off for reduced motion' : 'plays'}`);
           assert(/Level 5/.test(big.text), `${at}: a level-up that competes folds into the card as a line`);
           await page.mouse.click(Math.round(w / 2), 8); await page.waitForTimeout(150);   // a stray tap inside the lock must not skip it
@@ -9458,15 +9766,16 @@ if (section('moment layer')) try {
           // it never shows during a turn: a live fight (past its intro) holds it, the fight's end lets it through
           await page.waitForTimeout(3200);
           await X(`MOMENT_UI.midAt.length = 0; S.activity = 'fight'; emit('sceneReset'); true`);
-          await until(`typeof TURN_LIVE !== 'undefined' && !!TURN_LIVE && !TURN_LIVE.ended && TURN_LIVE.phase !== 'intro'`, 9000);
-          const live = await X(`(() => { const f = typeof TURN_LIVE !== 'undefined' && !!TURN_LIVE && !TURN_LIVE.ended && TURN_LIVE.phase !== 'intro'; if (f) emit('levelup', { L: 25 }); return f; })()`);
+          await until(`typeof TURN_LIVE !== 'undefined' && !!TURN_LIVE && !TURN_LIVE.ended`, 9000);
+          // pin the turn in motion (a hit landing: phase 'timing'), then raise the moment
+          const live = await X(`(() => { const f = typeof TURN_LIVE !== 'undefined' && !!TURN_LIVE && !TURN_LIVE.ended; if (f) { window.__pin = setInterval(() => { if (TURN_LIVE) TURN_LIVE.phase = 'timing'; }, 10); emit('levelup', { L: 25 }); } return f; })()`);
           assert(live, `${at}: a turn fight is live for the during-a-turn check`);
           await page.waitForTimeout(1200);
           const during = await X(`!!document.querySelector('.mm-toast') + ':' + momentState().queued`);
-          assert(during === 'false:1', `${at}: a moment does not show during a turn (${during})`);
-          await X(`TURN_LIVE.ended = true; true`);
+          assert(during === 'false:1', `${at}: a moment does not show while a turn is in motion (${during})`);
+          await X(`clearInterval(window.__pin); TURN_LIVE.phase = 'hero'; true`);   // the turn ends: the hero's turn waits for the player
           await until(`!!document.querySelector('.mm-toast')`, 6000);
-          assert(await X(`!!document.querySelector('.mm-toast')`), `${at}: ...and shows as the fight ends, before the next fight's first turn`);
+          assert(await X(`!!document.querySelector('.mm-toast')`), `${at}: ...and shows when the turn ends, even if the player then waits`);
           assert(/const fighting = \(\) => [\s\S]{0,160}TURN_LIVE/.test(src), `${at}: the flush waits while a turn fight is live`);
           assert(!errs.length, `${at}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
           await ctx.close();
@@ -9536,6 +9845,32 @@ if (section('LF_EYES hook (browser, qa-player-eyes)')) try {
   }
 } catch (e) { fail('LF_EYES hook (browser) crashed: ' + (e.stack || e)); }
 // ==== end qa-player-eyes ====
+// ==== qa-first-hour-walk: tools/walk.mjs plays the first minutes, writes its report and one scorecard row ====
+if (section('first-hour walk (browser, qa-first-hour-walk)')) try {
+  const { spawnSync } = await import('node:child_process'), walk = path.join(ROOT, 'tools', 'walk.mjs');
+  const bad = spawnSync(process.execPath, [walk, '--bogus'], { encoding: 'utf8' });
+  assert(bad.status === 2 && /unknown option/.test(bad.stderr), 'walk.mjs refuses an option it does not know (exit 2)');
+  const src = fs.readFileSync(walk, 'utf8').replace(/^\s*\/\/.*$/gm, '');
+  assert(!/\bS(\.\w+|\[[^\]]+\])+\s*(=(?![=>])|\+=|-=|\+\+|--)/.test(src), 'the walk never assigns to game state (S.x = ...)');
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('first-hour walk (browser): Playwright or Chromium not here, skipped');
+  else {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lf-walk-')), sc = path.join(dir, 'scorecard.md');
+    const run = () => spawnSync(process.execPath, [walk, '--minutes', '0.3', '--out', dir, '--date', '2000-01-01', '--scorecard', sc, '--quiet'], { encoding: 'utf8', timeout: 120000 });
+    let r = run();
+    assert(r.status === 0, 'a short walk exits 0 (report only)' + (r.status ? ': ' + (r.stderr || r.stdout).slice(0, 200) : ''));
+    const md = fs.existsSync(path.join(dir, 'walk-2000-01-01.md')) ? fs.readFileSync(path.join(dir, 'walk-2000-01-01.md'), 'utf8') : '';
+    assert(/## Scorecard/.test(md) && /## Beats against the map/.test(md) && /## Timeline/.test(md), 'the report has its scorecard, beats and timeline');
+    const js = fs.existsSync(path.join(dir, 'walk-2000-01-01.json')) ? JSON.parse(fs.readFileSync(path.join(dir, 'walk-2000-01-01.json'), 'utf8')) : {};
+    assert(['F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F10', 'P4'].every(k => js.scorecard && js.scorecard[k] && typeof js.scorecard[k].pass === 'boolean'), 'the json carries F1-F6, F10 and P4');
+    assert(js.log && js.log.some(e => e.kind === 'tip' || e.kind === 'card'), 'the walk logged what appeared on screen');
+    run();
+    const rows = fs.readFileSync(sc, 'utf8').split('\n').filter(l => l.startsWith('| 2000-01-01 |'));
+    assert(rows.length === 1, 'the same run twice keeps one scorecard row (' + rows.length + ')');
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+} catch (e) { fail('first-hour walk crashed: ' + (e.stack || e)); }
+// ==== end qa-first-hour-walk ====
 // ---- fight HUD fit (fight-hud-fit): names whole, banner and toasts never on top of each other ----
 if (section('fight HUD fit')) try {
   const { pw, exe } = browserTools;

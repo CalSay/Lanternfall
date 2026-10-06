@@ -21,9 +21,9 @@ var classUI;
     root = el('div', 'create create-solo'); root.id = 'createScreen';
     root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-labelledby', 'createTitle');
     const inner = el('div', 'create-in');
-    const h = el('h1', null, 'Who carries the lantern?'); h.id = 'createTitle';
-    const lede = el('p', 'create-lede', 'One hero walks the Lantern Road. Pick who picks the lamp up.');
-    const warn = el('p', 'create-warn', 'You can switch heroes at camp later, for free. Gold, gear and camp are shared.');
+    const h = el('h1', null, 'Who are you?'); h.id = 'createTitle';
+    const lede = el('p', 'create-lede', 'You carry the lamp. Pick who you are.');
+    const warn = el('p', 'create-warn', 'At camp you can hand the lamp to a friend, for free. Gold, gear and camp are shared.');
     const cards = el('div', 'ccards'); cards.setAttribute('role', 'radiogroup'); cards.setAttribute('aria-label', 'Hero');
     const keys = HERO_ORDER;
     if (!keys.includes(pick) || !heroCanPlay(pick)) pick = keys.find(heroCanPlay);
@@ -42,7 +42,7 @@ var classUI;
       const bio = el('div', 'how'); txt.append(bio);   // starters and unlocked heroes only: a locked hero shows who you meet them as, not their story
       const state = el('b', 'sp-lv'), route = el('div', 'how'); txt.append(state, route);
       b._state = state; b._route = route; b._bio = bio;
-      if (H && H.ab) { const ab = el('div', 'ab'); ab.append(el('em', null, H.ab.name + ': '), document.createTextNode(H.ab.desc)); txt.append(ab); }
+      if (H && H.ab) { const ab = el('div', 'ab'); ab.append(el('em', null, H.ab.name + ': '), document.createTextNode(H.ab.line || H.ab.desc)); txt.append(ab); }   // the turn-fight line (C9): the old desc counted seconds
       b.append(fig, txt);
       b.addEventListener('click', () => select(k));
       b.addEventListener('keydown', e => {
@@ -73,9 +73,12 @@ var classUI;
         const on_ = b.dataset.cls === k, state = heroRouteInfo(b.dataset.hero);
         b.dataset.state = state.state;
         // Cards can be inspected; the Begin/Unlock button enforces whether this hero can be chosen.
-        putText(b._bio, state.bio); b._bio.hidden = !state.bio;
+        // a starter speaks to you (bible 4.1: you are the one you pick); anyone else is described as a person you meet or own
+        const bio = (state.unlocked && typeof PICK_LINES === 'object' && PICK_LINES[b.dataset.hero]) || state.bio;
+        putText(b._bio, bio); b._bio.hidden = !bio;
         putText(b._state, state.state === 'coming-soon' ? 'Coming soon' : state.unlocked ? 'Unlocked' : 'Locked');
         putText(b._route, state.unlocked ? (state.playable ? 'Ready to carry the lamp.' : 'Route complete. This hero’s art and solo kit come later.') : state.ready ? state.how : state.meet);   // a new game spoils nothing: who, not where or how much
+        b._state.hidden = b._route.hidden = state.playable;   // an unlocked hero needs no "Unlocked" and "Ready" lines
         b.setAttribute('aria-checked', String(on_)); b.setAttribute('aria-pressed', String(on_)); b.tabIndex = on_ ? 0 : -1;
       }
     }
@@ -88,8 +91,7 @@ var classUI;
       if (!okd) return;
       try { save(); } catch (e) {}
       if (typeof updatePortrait === 'function') updatePortrait();
-      close();
-      toast(`${first(pick)} picks up the lamp. The road is dark.`, 'good');
+      close();   // the opening's fire scene follows (75-intro-ui.js); no toast: it spoke of the hero as someone else
     });
     // Keep Begin within reach while the full registry scrolls.
     begin.style.position = 'sticky'; begin.style.top = '0'; begin.style.zIndex = '1';
@@ -113,6 +115,7 @@ var classUI;
     if (root) return;
     // one screen for a new game (and any save that has no hero yet); switching is at camp
     if (want === 'switch' || !needsChoice()) return;
+    if (typeof introUI === 'object' && introUI && introUI.gate()) return;   // a new game's drawn opening plays first (75-intro-ui.js); it opens this screen when it ends
       mode = 'new'; pick = (typeof soloHero === 'function' && soloHero()) || SOLO_ORDER[0];
       lastFocus = document.activeElement;
       document.body.append(buildSolo());

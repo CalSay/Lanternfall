@@ -7,3 +7,5 @@ tools/.health/
 .playtest/
 .proof-session/
 eyes-out/
+tools/.walk/
+walk-out/

@@ -174,13 +174,14 @@ img[src*="#nic:"] { image-rendering: auto; }   /* a gear icon set by code that d
    and Next Up side by side, instead of three stacked rows. The permanent "While away" sentence is gone (the away card and the
    away chip say it); Switch lives in the header pill, so it leaves this row. The stage keeps the space. Landscape has its own grid. */
 @media not ((min-aspect-ratio: 1/1) and (min-width: 600px)) {
-  .app .game { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr) auto; }
+  .app .game { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr) auto auto; }   /* row 4: the guide panel (60-onboard.css), empty most of the time */
   .app .game > .ctrl { grid-column: 1; grid-row: 1; flex-wrap: nowrap; justify-content: flex-start; gap: 2px; padding: 4px 0 4px var(--gut); }
   .app .game > .nu-slot { grid-column: 2; grid-row: 1; min-width: 0; padding: 4px var(--gut) 4px 8px; align-self: center; }
   .app .game > .gate-rule { grid-column: 1 / -1; grid-row: 2; margin: 0 var(--gut); }
   .app .game > .dw-row { grid-column: 1 / -1; grid-row: 2; }
   .app .game > .stagebox { grid-column: 1 / -1; grid-row: 3; }
-  .app .game > .sbar { grid-column: 1 / -1; grid-row: 4; }
+  .app .game > .sbar { grid-column: 1 / -1; grid-row: 5; }
+  .app .game > .ob-bub.dock { grid-column: 1 / -1; grid-row: 4; }
   .app .game .ctrl-switch { display: none; }
   .app .game .modeseg button { min-width: 0; padding: 0 7px; min-height: 36px; font-size: calc(12px * var(--display-k)); }
   .app .game .modeseg .mode-ic { display: none; }
@@ -1310,6 +1311,34 @@ span.cf-d { font-weight: 600; }
 .cf-gt small { font-size: 12.5px; color: var(--muted); }
 .cf-ph { margin: 0; font: 600 calc(20px * var(--display-k)) var(--display); }
 .cf-bagnone { grid-column: 1 / -1; margin: 4px 0; }
+
+/* craft-reveal: result card, last-five strip, odds line, grade words */
+.cf-resbox { display: grid; gap: 8px; }
+.cf-resbox:empty { display: none; }
+.cf-res { display: grid; gap: 8px; }
+.cf-grade { font: 600 calc(13px * var(--display-k)) var(--display); }
+.cf-cmpn { margin: 0; }
+.cf-resact { grid-auto-flow: row; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); }
+.cf-recent { display: grid; gap: 4px; }
+.cf-recent-r { display: flex; gap: 6px; }
+.cf-recent .ic.cf-tile { width: 52px; min-height: 52px; flex: none; }
+.ic.cf-tile.sel { outline: 2px solid var(--bone); outline-offset: -1px; }
+.cf-gr { position: absolute; left: 0; right: 0; bottom: 0; padding: 1px 0; text-align: center; font: 600 10px/1.2 var(--display); background: rgba(11,8,16,.82); }
+.cf-odds { grid-column: 1 / -1; font-size: 12px; color: var(--muted); }
+.cf-nofit { margin: 0; }
+.ic.cf-tile.fresh { outline-color: var(--bone); }
+.cf-res .cf-line { padding: 4px 10px; }
+.cf-res .cf-lines { gap: 3px; }
+.cf-res .cf-dl .cf-d { padding: 3px 8px; }
+.cf-res { gap: 6px; }
+.cf-res-l, .cf-res-r { display: grid; gap: 6px; align-content: start; min-width: 0; }
+@media (orientation: landscape) and (max-height: 500px) {
+  /* short screens: the buttons sit right under the name, the stats and the comparison below them */
+  .cf-res-l, .cf-res-r { display: contents; }
+  .cf-res .cf-lines, .cf-res .cf-cmpn, .cf-res .cf-dl { order: 2; }
+  .cf-res .cf-resact { order: 1; }
+  .cf-res .warn { order: 0; }
+}
 /* 60-deeds: the Achievements menu, its sheets, the Feat card (75-deeds-ui.js) and the Journal's stats wall
    (75-stats-ui.js). Display text is Handjet: every display size is calc(Npx * var(--display-k)). */
 
@@ -1986,6 +2015,51 @@ span.cf-d { font-weight: 600; }
 .hearth-fire.ready .hf-tag { color: #0B0810; background: #FFB347; }
 @keyframes hf-pulse { 50% { box-shadow: 0 0 20px rgba(255,179,71,.85); } }
 @media (prefers-reduced-motion: reduce) { .hearth-fire.ready::before { animation: none; } }
+/* 60-intro: the drawn opening, full screen (75-intro-ui.js; intro-and-picker). Three stills, one line a tap, Skip always on screen. */
+.intro { position: fixed; inset: 0; z-index: 45; background: #07050B; color: var(--bone); overflow: hidden; display: grid; grid-template-rows: minmax(0, 1fr) auto; }
+.intro-stage { position: absolute; inset: 0; }
+.intro-still { position: absolute; inset: 0; overflow: hidden; background: #07050B; }
+.intro-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 72%; }
+/* the placeholder look: the approved Mossy Hollow night background, darkened, the lamp icon over it (bible 10.3) */
+.s-lamp .intro-img { filter: brightness(.38) saturate(.85); }
+.s-dark .intro-img { filter: brightness(.24) saturate(.7); }
+.s-road .intro-img { filter: brightness(.42) saturate(.85); }
+.intro-shade { position: absolute; inset: 0; pointer-events: none; }
+.s-lamp .intro-shade { background: radial-gradient(60% 45% at 50% 38%, rgba(255,179,71,.26), rgba(255,179,71,0) 70%), linear-gradient(to top, rgba(7,5,11,.75), rgba(7,5,11,0) 55%); }
+.s-dark .intro-shade { background: linear-gradient(to top, #07050B 0%, rgba(7,5,11,.88) 32%, rgba(7,5,11,0) 72%), radial-gradient(40% 30% at 50% 46%, rgba(255,179,71,.14), rgba(255,179,71,0) 70%); }
+.s-road .intro-shade { background: radial-gradient(34% 26% at 34% 66%, rgba(255,179,71,.2), rgba(255,179,71,0) 70%), linear-gradient(to top, rgba(7,5,11,.7), rgba(7,5,11,0) 50%); }
+.intro-lamp { position: absolute; image-rendering: pixelated; filter: drop-shadow(0 0 14px rgba(255,179,71,.55)); }
+.intro-lamp.lp-big { width: 88px; height: 88px; left: calc(50% - 44px); top: 26%; animation: intro-flick 2.4s ease-in-out infinite; }
+.intro-lamp.lp-small { width: 44px; height: 44px; left: calc(50% - 22px); top: 44%; animation: intro-flick 1.6s ease-in-out infinite; }
+.intro-lamp.lp-mine { width: 52px; height: 52px; left: calc(34% - 26px); top: 58%; animation: intro-flick 2s ease-in-out infinite; }
+.intro-lamp.lp-dead { width: 52px; height: 52px; left: calc(66% - 26px); top: 58%; filter: none; opacity: .75; }
+@keyframes intro-flick { 0%, 100% { opacity: 1; } 45% { opacity: .82; } 60% { opacity: 1; } }
+.intro-foot { position: relative; align-self: end; display: grid; gap: 10px; padding: 48px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(to top, rgba(7,5,11,.94) 40%, rgba(7,5,11,0)); }
+.intro-tx { display: grid; gap: 8px; width: min(560px, 100%); margin: 0 auto; }
+.intro-who { margin: 0; font: 600 calc(13px * var(--display-k))/1.1 var(--display); letter-spacing: .08em; text-transform: uppercase; color: var(--gold); }
+.intro-line { margin: 0; min-height: 3.1em; font: 500 clamp(17px, 4.8vw, 21px)/1.45 var(--body); text-shadow: 0 2px 0 #000, 0 0 12px rgba(0,0,0,.8); }
+.intro-line.in { animation: intro-in .35s ease-out; }
+@keyframes intro-in { from { opacity: 0; transform: translateY(4px); } }
+.intro-dots { display: flex; gap: 6px; }
+.intro-dots span { width: 8px; height: 8px; background: rgba(239,230,214,.3); }
+.intro-dots span.on { background: var(--gold); }
+.intro-go { width: min(560px, 100%); margin: 0 auto; min-height: 48px; }
+.intro-skip { position: absolute; top: calc(10px + env(safe-area-inset-top, 0px)); right: 12px; min-height: 44px; min-width: 64px; padding: 0 14px; background: rgba(11,8,16,.62); border: 1px solid var(--line-hi); color: var(--bone); }
+.intro button:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
+@media (min-width: 560px) and (max-height: 520px) {
+  .intro-foot { grid-template-columns: minmax(0, 1fr) 160px; align-items: end; padding-top: 30px; }
+  .intro-tx { margin: 0; width: auto; }
+  .intro-go { width: 100%; margin: 0; }
+  .intro-line { min-height: 2.9em; }
+  .intro-lamp.lp-big { top: 18%; width: 72px; height: 72px; left: calc(50% - 36px); }
+  .intro-lamp.lp-small { top: 34%; }
+  .intro-lamp.lp-mine, .intro-lamp.lp-dead { top: 44%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .intro-lamp, .intro-line.in { animation: none; }
+}
+.intro-img.art { image-rendering: pixelated; }
 /* 60-lantern: the Great Lantern card and the Lantern Road strip (75-lantern-ui.js). */
 
 /* ---- the Great Lantern card ---- */
@@ -2186,6 +2260,22 @@ span.cf-d { font-weight: 600; }
   .game .navbtn { width: 30px; }
   .game .znum { min-width: 0; padding: 0 2px; font-size: calc(12px * var(--display-k, 1)); }
 }
+
+/* wire-menu-icons: five Gather labels fit at 360px with the icon above the text. */
+.vseg button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 52px; overflow: visible; white-space: normal; text-overflow: clip; }
+.menu-head .vseg button { min-height: 52px; }
+.menu-nav-ic { width: 16px; height: 16px; flex: 0 0 16px; image-rendering: pixelated; }
+.vseg button.has-xp { padding-bottom: 10px; }
+.vseg button .vxp { bottom: 3px; }
+#menuX .menu-nav-ic { margin: auto; position: relative; z-index: 1; }
+#menuX { font-size: 0; }
+#menuX > span { display: none; }
+.ctrl-switch .menu-nav-ic, .sb-tab .menu-nav-ic, .cx-backbtn .menu-nav-ic { display: inline-block; vertical-align: middle; margin-right: 4px; }
+.nu-eye .menu-nav-ic { display: inline-block; vertical-align: middle; margin-right: 4px; }
+.menu-action-badge { position: absolute; right: 2px; top: 2px; width: 16px; height: 16px; pointer-events: none; image-rendering: pixelated; }
+.sp-ab { position: relative; }
+.sb-def .menu-action-badge { top: 2px; bottom: auto; right: 4px; }   /* top corner: the bottom corner covered the end of "Hard · counters" */
+.sp-ab .menu-action-badge { top: auto; bottom: 2px; }
 /* 60-onboard: the guide's hint (75-onboard-ui.js) and "new" marks on tabs and views.
    The layer never takes taps except the small dismiss button: play goes on under it. */
 .ob-layer { position: fixed; inset: 0; z-index: 20; pointer-events: none; }
@@ -2194,26 +2284,29 @@ span.cf-d { font-weight: 600; }
 .ob-ring.dot { border-radius: 50%; border-width: 3px; }
 .ob-ring.still { animation: none; }
 @keyframes obPulse { 50% { box-shadow: 0 0 0 2px #0B0810, 0 0 22px rgba(242,193,78,.9); border-color: #FFF3C4; } }
-/* HINT1: the hint bubble docks to a fixed band (never tracks the target pixel by pixel), so it
-   cannot cover the node/foe it points at and never jumps as the stage or a menu animates. It is
-   parented and positioned exactly like the toasts it sits beside (placeToasts, 70-ui.js): inside
-   #stageBox, just under the HUD, on the game view; inside #app, just above the tab bar, over a
-   menu. --toast-h (70-ui.js) pushes it clear of however many toasts are currently stacked there. */
-.ob-bub { position: absolute; left: 6px; right: 6px; max-width: 480px; margin: 0 auto;
-  top: calc(62px + var(--toast-h, 0px)); z-index: 8; pointer-events: none;
-  display: flex; align-items: center; gap: 6px; padding: 8px 4px 8px 12px; min-height: 44px;
-  background: #1A1422F2; border: 2px solid var(--gold); box-shadow: 0 3px 0 #0B0810, 0 8px 22px rgba(0,0,0,.55);
-  font: 600 14px/1.3 var(--body); color: var(--bone); transition: transform .18s ease, opacity .18s ease; }
+/* The guide panel (75-onboard-ui.js place()): Old Hesketh's face, the tip, the button on its own row. It is a notice, so it
+   docks where notices dock and never sits over the stage. Three homes, one per mode class:
+   .dock      portrait game view: a slot in .game just above the Act / Skills / Foe bar (the stage gives up the height)
+   .over-menu portrait with a menu open: the bottom of the menu panel, above the tab bar (and above any toast)
+   .side      landscape: the side column's notices slot (80-landscape.css) */
+.ob-bub { position: relative; pointer-events: none; order: 2; flex: none; margin: 4px var(--gut) 0; z-index: 8;
+  display: grid; grid-template-columns: 48px minmax(0, 1fr) 44px; grid-template-rows: auto auto; column-gap: 8px; align-items: start;
+  padding: 8px 0 8px 8px; background: #1A1422; border: 2px solid var(--gold); box-shadow: 0 3px 0 #0B0810;
+  font: 600 14px/1.3 var(--body); color: var(--bone); }
 .ob-bub[hidden] { display: none; }
-.ob-bub.over-menu { left: var(--gut); right: var(--gut); top: auto; bottom: calc(var(--tabs-h) + env(safe-area-inset-bottom, 0px) + 8px + var(--toast-h, 0px)); }
+.ob-bub.over-menu { position: absolute; left: var(--gut); right: var(--gut); margin: 0; bottom: calc(var(--tabs-h) + env(safe-area-inset-bottom, 0px) + 8px + var(--toast-h, 0px)); box-shadow: 0 3px 0 #0B0810, 0 8px 22px rgba(0,0,0,.55); }
 .ob-bub.pop { animation: obIn .22s ease-out; }
-@keyframes obIn { from { opacity: 0; margin-top: 6px; } }
-.ob-txt { flex: 1; min-width: 0; }
-.ob-x { pointer-events: auto; flex: none; width: 36px; height: 36px; background: none; border: 0; color: var(--muted); font: 600 calc(20px * var(--display-k))/1 var(--display); cursor: pointer; }
+@keyframes obIn { from { opacity: 0; transform: translateY(6px); } }
+.ob-facebox { grid-column: 1; grid-row: 1 / span 2; width: 48px; height: 48px; display: grid; place-items: center; background: #0E0B12; border: 2px solid #0B0810; outline: 1px solid var(--line-hi); }
+.ob-face { width: 48px; height: 48px; display: block; image-rendering: pixelated; }
+.ob-facebox.blank .ob-face { display: none; }
+.ob-facebox.blank::after { content: 'H'; font: 600 20px/1 var(--display); color: var(--gold); }
+.ob-txt { grid-column: 2; grid-row: 1; min-width: 0; align-self: center; overflow-wrap: break-word; }
+.ob-ok { grid-column: 2; grid-row: 2; justify-self: start; margin-top: 6px; min-height: 44px; padding: 0 16px; pointer-events: auto; cursor: pointer; background: var(--gold); border: 2px solid #0B0810; color: #1A1420; font: 600 calc(15px * var(--display-k)) var(--display); }
+.ob-ok[hidden] { display: none; }
+.ob-name { display: none; }
+.ob-x { pointer-events: auto; grid-column: 3; grid-row: 1; align-self: start; width: 44px; height: 44px; margin-top: -8px; background: none; border: 0; color: var(--muted); font: 600 calc(20px * var(--display-k))/1 var(--display); cursor: pointer; }
 .ob-x:hover, .ob-x:focus-visible { color: var(--bone); }
-/* the arrow: a small up/down pointer toward the target, not a precise line to it */
-.ob-arrow { position: absolute; left: 50%; top: -8px; width: 12px; height: 12px; margin-left: -6px; background: #1A1422; border-left: 2px solid var(--gold); border-top: 2px solid var(--gold); transform: rotate(45deg); }
-.ob-bub.up .ob-arrow { top: auto; bottom: -8px; transform: rotate(225deg); }
 /* locked sections (registerSection feature) */
 .sec.f-off { display: none !important; }
 /* new tab / new view: a gold mark until first opened */
@@ -2224,7 +2317,7 @@ span.cf-d { font-weight: 600; }
 .ob-trow { display: flex; align-items: center; gap: 10px; justify-content: space-between; }
 .ob-trow .note { margin: 6px 0; }
 .ob-tbtn { flex: none; min-height: 44px; padding: 0 12px; background: var(--panel-2); border: 2px solid #0B0810; color: var(--bone); font: 600 calc(13px * var(--display-k)) var(--display); cursor: pointer; }
-@media (prefers-reduced-motion: reduce) { .ob-ring { animation: none; transition: none; } .ob-bub { transition: none; } .ob-bub.pop { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .ob-ring { animation: none; transition: none; } .ob-bub.pop { animation: none; } }
 /* 60-party: Party tab, World tab headings, and the class creation screen (75-party.js, 76-create.js). */
 :root { --tank: #5F8BE8; --striker: #5FC46E; --caster: #A070E0; --support: #F2C14E; }
 
@@ -2532,10 +2625,7 @@ body.solo-on .stage .abil, body.solo-on .stage .abil2 { display: none !important
 .sp-clear { min-height: 44px; background: var(--panel-2); color: var(--bone); border: 2px solid #0B0810; font: 600 16px var(--display); cursor: pointer; }
 .sp-clear:disabled { opacity: .5; cursor: default; }
 
-/* the guide's Got it button (75-onboard-ui, a step whose action is reading it) */
-.ob-ok { pointer-events: auto; flex: none; min-height: 36px; padding: 0 12px; background: var(--gold); color: #1A1420; border: 2px solid #0B0810;
-  font: 600 calc(15px * var(--display-k, 1)) var(--display); cursor: pointer; }
-.ob-ok[hidden] { display: none; }
+/* the guide's Got it button: 60-onboard.css */
 
 /* ---- "Choose your hero" (the Camp view) ---- */
 .hs-ov .sp-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 8px; margin-top: 4px; }
@@ -2561,10 +2651,7 @@ body.solo-on .stage .abil, body.solo-on .stage .abil2 { display: none !important
 .sp-lv { font: 600 14px var(--display); color: var(--gold); }
 .sp-fig { width: 56px; height: 80px; image-rendering: pixelated; }
 
-/* the guide's Got it button (75-onboard-ui, a step whose action is reading it) */
-.ob-ok { pointer-events: auto; flex: none; min-height: 36px; padding: 0 12px; background: var(--gold); color: #1A1420; border: 2px solid #0B0810;
-  font: 600 calc(15px * var(--display-k, 1)) var(--display); cursor: pointer; }
-.ob-ok[hidden] { display: none; }
+/* the guide's Got it button: 60-onboard.css */
 /* party-only UI left in the shell (the Fight tab's Party rows) */
 .solo-off { display: none !important; }
 /* Landscape (UX-L1): the bar sits in the side column, bottom right; see 80-landscape.css. */
@@ -3210,15 +3297,29 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
   .menu-title { font-size: calc(17px * var(--display-k)); }
   .vseg { flex: 1; min-width: 0; margin: 4px 0 4px 8px; }
   .vseg button { min-height: 36px; padding: 0 1px; font-size: calc(12px * var(--display-k)); }   /* 1 px: Bounties, Bestiary, Deepwell fit */
+  .menu-head .vseg button { min-height: 44px; font-size: calc(11px * var(--display-k)); }   /* icon above label: 44 px is the target floor; 11 px so Abilities (4 views share the header) fits */
   /* menu audit: an X closes (the old right chevron read as "more tabs") */
   .menu-x span { width: 14px; height: 14px; border: 0; transform: none; background: linear-gradient(45deg, transparent 43%, currentColor 43%, currentColor 57%, transparent 57%), linear-gradient(-45deg, transparent 43%, currentColor 43%, currentColor 57%, transparent 57%); }
   /* with a switcher the lit tab names the menu; with none (one view) the title shows */
   .menu-head:has(.vseg:not([hidden])) .menu-title { display: none; }
   .menu-head:has(.vseg[hidden]) .menu-bar { flex: 1; padding-left: var(--gut); }
   .panels { padding: 10px 10px 20px; }
-  .ob-bub.over-menu { position: absolute; grid-column: 2 / 4; grid-row: 2 / 5; left: auto; right: 8px; top: auto; bottom: 8px;
-    width: calc(min(560px, max(320px, 100% - 120px)) - 18px); }
-  .ob-bub:not(.over-menu) { top: 56px; }
+  /* the guide panel: in the side column's notices slot, under the top row. It stands in for Next Up while it speaks (the chip
+     keeps its place, hidden), except for the Next Up step, where it takes the notices row under the chip it points at. */
+  .ob-bub.side { grid-column: 4 / -1; grid-row: 2 / 4; align-self: start; margin: 6px 6px 0 7px; z-index: 7; max-height: calc(100% - 6px); overflow: hidden;
+    grid-template-columns: 36px minmax(0, 1fr) 44px; grid-template-rows: auto minmax(0, auto) auto; column-gap: 6px; row-gap: 2px; padding: 6px 0 6px 6px; font-size: 12.5px; line-height: 1.22; }
+  .ob-bub.side.nu { grid-row: 3; align-self: end; margin-bottom: 4px; }
+  /* a short column: the face and name share the first line with the dismiss, the tip runs the full width under them, the button has the last row */
+  .ob-bub.side .ob-facebox, .ob-bub.side .ob-face { width: 36px; height: 36px; }
+  .ob-bub.side .ob-name { display: block; grid-column: 2; grid-row: 1; align-self: center; font: 600 calc(11px * var(--display-k)) var(--display); color: var(--gold); white-space: nowrap; }
+  .ob-bub.side .ob-facebox { grid-row: 1; }
+  .ob-bub.side .ob-x { margin-top: -4px; margin-bottom: -4px; }
+  .ob-bub.side .ob-txt { grid-column: 1 / 3; grid-row: 2; align-self: start; padding-right: 6px; min-height: 0; overflow-y: auto; }
+  .ob-bub.side .ob-ok { grid-column: 1 / 3; grid-row: 3; margin-top: 4px; justify-self: start; max-width: calc(100% - 6px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ob-bub.side.btn { grid-row: 2 / -1; max-height: calc(100% - 10px); }
+  .ob-bub.side.nu.btn { grid-row: 3 / -1; align-self: start; margin-bottom: 0; }
+  .app.guide-btn .sbar { visibility: hidden; }
+  .app.guide-side:not(.guide-nu) .nu-slot, .app.guide-side .toasts.side-dock, .app.guide-side .gate-rule { visibility: hidden; }
 
   /* ---- sheets fit a short screen ---- */
   .sp-ov { align-items: center; }
@@ -6965,9 +7066,10 @@ const CRAFT_BAG_MAX = 50;
 
 // ---- src/js/21-stories.js ----
 // 21-stories: companion writing and rarity frame colours. Core, data only (no DOM); loads in Node too.
-// Exposed names: STORIES, BIOS, JOIN_LINES, QUOTES, RARITY_FRAME.
+// Exposed names: STORIES, BIOS, PICK_LINES, JOIN_LINES, QUOTES, RARITY_FRAME.
 //   STORIES[key]    -> [{ title, text }] x3, camp stories unlocked at L5 / L15 / L25 (party-and-classes.md 3.4)
 //   BIOS[key]       -> the bio from 3.2
+//   PICK_LINES[key] -> the new-game hero picker's blurb for a starter, in second person (you ARE the one you pick: bible 4.1)
 //   JOIN_LINES[key] -> the joining moment shown on recruit, as lines; a line starting with " is speech
 //   QUOTES[key]     -> 3 short barks (under 60 chars) for the stage or the camp
 //   RARITY_FRAME[r] -> { name, col } for r = common | rare | epic | legendary
@@ -6980,7 +7082,7 @@ const RARITY_FRAME = {
 };
 
 const BIOS = {
-  tobin: 'Tobin carried your spare sword out of Mossy Hollow and never gave it back. He is not brave, exactly. He just refuses to be the one who runs first.',
+  tobin: 'Tobin carried a spare sword out of Mossy Hollow and never gave it back. He is not brave, exactly. He just refuses to be the one who runs first.',
   wren: 'Wren learned to shoot in the caves, where you aim at sounds. She talks to her arrows. Most of them come back.',
   hesketh: 'Hesketh lit the road lamps for forty years before the dark came in. He still walks the route every evening. Now he brings you along.',
   pip: 'Pip taught herself fire from a book with the last chapter torn out. She is still looking for it. Nothing near her stays unburnt for long.',
@@ -6998,6 +7100,13 @@ const BIOS = {
   elowen: 'The land is called Lanternfall because of what Elowen did the night the lights went out. She will not talk about it. She keeps her flame low.',
   caedmon: 'Caedmon walked into the Ashen Wyrm\'s fire to buy a village one hour. He walked out three days later, still burning. He does not sleep, and he does not talk about what he saw in the flame.',
   corvin: 'Corvin killed for the Hollow King for twenty years and never once saw his face. When the curtain came down, there was no one behind it. Corvin was the only one who did not kneel. He fights for you because you asked, and nobody ever had.'
+};
+
+// The picker speaks to the player: whoever is picked is "you" (bible 4.1). BIOS stay third person for the hero sheet and the camp.
+const PICK_LINES = {
+  wren: 'You learned to shoot in the caves, by sound. You talk to your arrows. Most of them answer.',
+  tobin: 'You are good at doors. You hold them shut while everyone gets away.',
+  pip: 'You taught yourself fire from a book with the last chapter torn out. You are still looking for it. Nothing near you stays whole for long.'
 };
 
 const JOIN_LINES = {
@@ -7821,23 +7930,33 @@ const omenLine = (id, dare, maxZone, met) => (dare && DARE_LINES[id]) || (OMEN_L
 const STORY_BEATS = { region: {}, area: {}, zone: {}, captain: {}, champ: {}, elder: {}, npc: {}, voice: {}, hero: {}, choice: {},
   vesper: {}, letter: {}, note: {}, item: {} };
 
-// The opening (bible 8.1): the region card before zone 1, over the lamp on its hook. Text only until the owner vets the stills pack
-// (bible 10.3).
+// The opening (bible 8.1): the region card, three lines. 75-intro-ui.js shows it over two drawn stills BEFORE the hero picker: line 1 over
+// the lamp on its hook, lines 2 and 3 over the dark coming up through the moss (STORY_BEATS.intro). The same lines are the Journal's Chapter 1 page.
 STORY_BEATS.region.hollow = { title: 'Chapter 1: The Hollow', lines: [
   'Ten years ago every lamp went out. The one over your door never did.',
   'This winter the last lamp in sight went out. Tonight the dark came for yours.',
   'Your village hid. You took the lamp and ran, so the dark would follow you.'
 ] };
 
-// Old Hesketh, before the first fight (bible 8.1, story-opening). Two NPC scenes at the Hollow's door (area 0), played right after the
-// region card: the fire, then the talk. The camp fire later in the Pine Grove is a bigger one, so the guide's toast just asks for wood.
-STORY_BEATS.npc.heskethFire = { at: 'area:0', who: 'Old Hesketh', lines: [
-  'On the road your lamp gutters. The dark is close.',
-  '"Wood first. Then we talk." You kindle his dead fire.',
-  'It catches from your lamp. Yours burns steady.',
-  '"Every road needs a place to come back to."'
+// The drawn opening (intro-and-picker; first-hour.md beats 1 to 3). `open`: one beat a tap, each a still id and the region card line shown over it.
+// `fire`: the NPC scene shown over still `fireStill` after the pick. Stills: INTRO_STILLS (below); until the first-hour-art pack is vetted each
+// shows the approved Mossy Hollow night background, darkened, with the lamp icon (bible 10.3).
+STORY_BEATS.intro = { region: 'hollow', fire: 'heskethFire', fireStill: 'road',
+  open: [{ still: 'lamp', line: 0 }, { still: 'dark', line: 1 }, { still: 'dark', line: 2 }] };
+// Still art: '' shows the placeholder; the vetted Codex still goes in here as a data URI (WebP or PNG), one change per still.
+//   lamp: the lamp on its hook over a hedge-village door, a small spiral on its base. dark: the dark coming up through the moss as you take the lamp
+//   and run. road: the road at night, a dead fire and an old man. All 3 at 960x540 (landscape); the page covers the screen, so keep the middle clear.
+const INTRO_STILLS = { lamp: '', dark: '', road: '' };
+
+// Old Hesketh. Two NPC scenes. The fire is the dead roadside fire, shown over still 3 right after the hero is picked, before the first fight. The talk
+// plays later, when the player lights their own camp fire (8 Pine Log), which pays off "Wood first. Then we talk." (55-story.js, hearthLit).
+STORY_BEATS.npc.heskethFire = { at: 'intro', who: 'Old Hesketh', lines: [
+  'Your lamp gutters. An old man kneels by a ring of cold ash.',
+  'You light his sticks from your lamp. The lamp steadies.',
+  '"Wood first. Then we talk."'
 ] };
-STORY_BEATS.npc.heskethTalk = { at: 'area:0', who: 'What Hesketh knows', lines: [
+STORY_BEATS.npc.heskethHearth = { at: 'hearth', who: 'Old Hesketh', lines: ['"Every road needs a place to come back to."'] };
+STORY_BEATS.npc.heskethTalk = { at: 'hearth', who: 'Old Hesketh', lines: [
   '"Ten years I\'ve lit dead lamps. Not one took my fire."',
   '"I could have lit them from hers. I couldn\'t go up."',
   '"Those things aren\'t animals. They climb out of the ground."',
@@ -8972,13 +9091,12 @@ const NOTICES = [
   { id: 'scroll-more', re: /^(Moss|Hollow|Barrow|Roadlight|Mother) Scroll found\.$/, site: /SCROLLS\[id\]\.name\} found/, ch: 'log', why: 'the stage float shows it, and Next Up offers what it teaches' },
   { id: 'learned', re: /^\w+ learned [A-Z][\w' ]+\.$/, site: /learned \$\{a\.name\}/, ch: 'log', why: 'you just pressed Learn and see the card change' },
   { id: 'pace', key: 'pace', re: /back to Zone \d+ to keep earning\.$/, ch: 'bell', once: 'session', why: 'audit 3.14: one line a session' },
-  { id: 'start', re: /picks up the lamp\. The road is dark\.$/, ch: 'log', why: 'the guide speaks first' },
   { id: 'hero-swap', re: /takes up the lamp\.$/, ch: 'log' },
 
   // ---- loot and gear ----
   { id: 'unique', re: /^Unique loot! /, ch: 'log', why: 'the moment layer shows every unique as a card (75-moments-ui); the bell list keeps the line' },
   { id: 'star-chart', re: /^You drew a Star Chart/, ch: 'pop', wait: 40 },
-  { id: 'forged', re: /^(Forged|Made) an? /, ch: m => /Legendary/i.test(m) ? 'pop' : /Rare|Epic/i.test(m) ? 'log' : 'none', why: 'the sheet shows what you made' },
+  { id: 'forged', re: /^(Forged|Made) an? /, ch: 'none', why: 'the Craft tab shows a result card for what you made; a Rare or better craft is also a medium moment (75-craft-ui)' },
   { id: 'bag-full', re: /^Your bag is full, so /, ch: 'bell' },
   { id: 'gear-reforged', re: /^Your .* reforged into .* gear\.$/, ch: 'bell' },
   { id: 'gear-back', re: /(does not fit your new path|do not fit your new path)/, ch: 'bell' },
@@ -9038,7 +9156,9 @@ const NOTICES = [
   { id: 'mastery', key: 'mastery', re: /: mastery star \d of 5\./, ch: 'log', why: 'the zone shows its stars' },
   { id: 'bestiary', key: 'bestiary', re: /^Bestiary: /, ch: 'log', why: 'the Bestiary view marks it' },
   { id: 'weekly', re: /^Weekly goal done: /, ch: 'bell' },
-  { id: 'bounty', re: /^Bounty complete! /, ch: 'bell', merge: ms => `${ms.length} bounties complete.` },
+  { id: 'bounty', re: /^Bounty complete! /, ch: 'pop', reply: true, why: 'you just pressed Claim (the board, Next Up or the ready notice): show what you got', merge: ms => `${ms.length} bounties complete.` },
+  { id: 'bounty-ready', key: 'bounty-ready', ch: 'pop', wait: 20, held: 'log', why: 'tap it to claim; no menu needed (a held one is only a log line: Next Up still says Claim)' },
+  { id: 'bounty-room', key: 'bounty-room', ch: 'pop', reply: true, why: 'a claim that could not fit says what to free or build' },
 
   // ---- the Codex (57c) ----
   { id: 'codex', key: 'codex', re: /^(Codex: the .* page is half full\. The|Page Seal: |\d+ Lantern Light: )/, ch: 'bell' },
@@ -11674,18 +11794,27 @@ function bossTryWays(L) {
     while (sl.length < BTY_SLOTS) sl.push({ k: null, wait: 0 });
     for (let i = 0; i < BTY_SLOTS; i++) if (!sl[i] || (!sl[i].k && (now >= (sl[i].wait || 0) || (!atLoad && bonus('bountyNoWait') > 0)))) { const rr = sl[i] ? sl[i].rr || 0 : 0; sl[i] = btyNew(); sl[i].rr = rr; }
   }
-  function btyAdd(k, n, test) {
-    for (const b of S.bounties.slots) if (b && b.k === k && b.have < b.need && (!test || test(b))) b.have = Math.min(b.need, b.have + n);
+  // bountyReady: a bounty just reached its goal (E1: the player claims it where they stand, not in the fight menu).
+  function btyAdd(k, n, test, away) {
+    S.bounties.slots.forEach((b, i) => {
+      if (!(b && b.k === k && b.have < b.need && (!test || test(b)))) return;
+      b.have = Math.min(b.need, b.have + n);
+      if (b.have >= b.need) emit('bountyReady', { i, k: b.k, away: !!away });
+    });
   }
+  on('bountyReady', ({ i, away }) => {
+    const b = S.bounties.slots[i]; if (away || !b || !b.k) return;   // away catch-up: the away card tells it
+    emit('toast', { key: 'bounty-ready', msg: "Bounty ready. Tap to claim.", kind: 'good', icon: { ic: ['banner', '#F2C14E'] }, prio: 'normal', go: { fn: () => { const j = S.bounties.slots.findIndex(x => x && x.k && x.have >= x.need); if (j >= 0) claimBounty(j); } } });   // the first finished one: a merged or stale notice never claims a wrong slot
+  });
   on('kill', ({ mob, zone }) => {
     btyAdd('kill', 1, b => zone >= b.z); if (mob && mob.boss) btyAdd('boss', 1);
     const key = mob && (mob.type || String(mob.key || '').replace(/\d+$/, '')); if (key) btyAdd('hunt', 1, b => b.foe === key);
   });
   // Any tier counts (owner bug report: mining a lower node than your best never moved the bounty),
   // and so does gathering while away (awayBase emits harvest with away: true).
-  on('harvest', ({ kind, n }) => {
-    if (kind === 'ore') btyAdd('mine', n); else if (kind === 'wood') btyAdd('chop', n);
-    else if (kind === 'crystal') btyAdd('gems', n); else if (kind === 'fibre' || kind === 'herb') btyAdd('forage', n, b => b.fam === kind);
+  on('harvest', ({ kind, n, away }) => {
+    if (kind === 'ore') btyAdd('mine', n, null, away); else if (kind === 'wood') btyAdd('chop', n, null, away);
+    else if (kind === 'crystal') btyAdd('gems', n, null, away); else if (kind === 'fibre' || kind === 'herb') btyAdd('forage', n, b => b.fam === kind, away);
   });
   on('itemAdded', ({ item }) => { if (!item.u) btyAdd('forge', 1); });
   on('crafted', ({ kind }) => { const d = typeof CRAFT_KINDS === 'object' && CRAFT_KINDS[kind]; if (d) btyAdd('make', 1, b => b.st === d.st); });
@@ -11703,7 +11832,7 @@ function bossTryWays(L) {
   function claimBounty(i) {
     const b = S.bounties.slots[i]; if (!b || !b.k || b.have < b.need) return null;
     const r = bountyReward(b);
-    if (r.kind !== 'gold' && !stashFits([[r.kind, r.t, r.n]])) { toast(stashNeed([[r.kind, r.t, r.n]]), 'raid', { mat: [r.kind, r.t] }, 'normal'); return null; }   // H3: a parcel waits
+    if (r.kind !== 'gold' && !stashFits([[r.kind, r.t, r.n]])) { emit('toast', { key: 'bounty-room', msg: stashNeed([[r.kind, r.t, r.n]]), kind: 'raid', icon: { mat: [r.kind, r.t] }, prio: 'normal' }); return null; }   // H3: a parcel waits
     if (r.kind === 'gold') { S.gold += r.n; S.totalGold += r.n; econEarn('bounty', r.n); }
     else stashAdd(r.kind, r.t, r.n, 'parcel');
     S.bounties.claimed++;
@@ -12171,7 +12300,7 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
     const it = newItem(kind, t, r, { role: opts.role, mw: opts.mw });
     addItem(it);
     gainStation(stationOf(kind).skill, CRAFT_XP.craft(t));
-    toast(`Made a ${RAR[r].n} ${itemName(it)}.`, r === 'epic' || r === 'rare' ? 'ember' : 'good', { item: it }, r === 'legendary' ? 'high' : r === 'epic' || r === 'rare' ? 'normal' : 'low');
+    toast(`Made a ${RAR[r].n} ${itemName(it)}.`, 'good', { item: it }, 'low');   // craft-reveal: the result card (75-craft-ui) shows it; no bell line
     emit('crafted', { item: it, kind, t });
     save();
     return it;
@@ -12776,7 +12905,7 @@ var forgeGoalPicks = 0;
     try { label = String(val(g.label) || ''); icon = val(g.icon) || null; } catch (e) { return null; }
     if (!label) return null;
     const ready = p >= 1;
-    return { id: g.id, sys: g.sys, label, pct: Math.min(1, p), ready, go: g.go || null, icon, prio: +(typeof g.prio === 'function' ? g.prio() : g.prio) || 0, cap: +g.cap || 0, reserve: +g.reserve || 0 };
+    return { id: g.id, sys: g.sys, label, pct: Math.min(1, p), ready, go: g.go || null, goLabel: typeof g.goLabel === 'function' ? g.goLabel() : g.goLabel || '', icon, prio: +(typeof g.prio === 'function' ? g.prio() : g.prio) || 0, cap: +g.cap || 0, reserve: +g.reserve || 0 };
   }
 
   topGoals = function (n = 3, opts) {
@@ -12871,10 +13000,12 @@ var forgeGoalPicks = 0;
   // Bounties: the one closest to done (a finished one is ready to claim).
   const btyNext = () => {
     let best = null;
-    for (const b of (S.bounties && S.bounties.slots) || []) {
-      if (!b || !b.k) continue;
-      const p = need(b.have, b.need);
-      if (!best || p > best.p) best = { b, p };
+    const sl = (S.bounties && S.bounties.slots) || [];
+    for (let i = 0; i < sl.length; i++) {
+      const b = sl[i]; if (!b || !b.k) continue;
+      let p = need(b.have, b.need);
+      if (p >= 1 && typeof stashNeed === 'function') { const r = BOUNTY_API.reward(b); if (r.kind !== 'gold' && stashNeed([[r.kind, r.t, r.n]])) p = 0.999; }   // a reward that does not fit waits behind one that does
+      if (!best || p > best.p) best = { b, p, i };
     }
     return best;
   };
@@ -12883,9 +13014,11 @@ var forgeGoalPicks = 0;
     id: 'bounty', sys: 'bounty', prio: 1,
     pct: () => { const x = btyNext(); return x ? x.p : null; },
     label: () => { const x = btyNext(); if (!x) return '';
-      return x.p >= 1 ? 'Bounty done: claim your reward' : `${BOUNTY_API.text(x.b)} (${fmt(x.b.have)}/${fmt(x.b.need)})`; },
+      return x.p >= 1 ? `Bounty done: ${BOUNTY_API.text(x.b)}` : `${BOUNTY_API.text(x.b)} (${fmt(x.b.have)}/${fmt(x.b.need)})`; },
     icon: () => { const x = btyNext(); return { ic: BTY_IC[x ? x.b.k : 'kill'] || BTY_IC.kill }; },
-    go: { tab: 'adv', sel: '#sec-bounties' }
+    // E1: a finished bounty is claimed in place (no menu); an unfinished one opens the board
+    goLabel: () => { const x = btyNext(); return x && x.p >= 1 ? 'Claim' : ''; },
+    go: () => { const x = btyNext(); return x && x.p >= 1 ? { fn: () => { BOUNTY_API.claim(x.i); } } : { tab: 'adv', sel: '#sec-bounties' }; }
   });
 
   // Bestiary: the page (tier) closest to done among monsters met.
@@ -13670,8 +13803,8 @@ const heroTurnNow = () => { const q = turnSnap(); return !q || q.phase === 'hero
 const hitComing = () => { const q = turnSnap(); return q ? q.canDefend && q.closesAt > q.now : heavyShowing(); };
 const inWindow = k => { const q = turnSnap(); if (!q) return heavyShowing(); const open = k === 'parry' ? q.parryOpensAt : q.dodgeOpensAt; return q.canDefend && q.now >= open && q.closesAt - q.now > 0.02; };
 const GUIDE_STEPS = [
-  { id: 'attack', pause: 1, pauseWhen: () => liveFoe() && heroTurnNow(), when: () => fightingNow(), done: () => (O().atk || 0) >= 1 || S.totalKills >= 12 },
-  { id: 'ability', pause: 1, pauseWhen: () => liveFoe() && heroTurnNow(), when: () => stepDone('attack') && fightingNow() && abilityOk(), done: () => O().casts >= 1 },
+  { id: 'attack', pause: 1, pauseWhen: () => liveFoe() && heroTurnNow(), when: () => fightingNow() && heroTurnNow(), done: () => (O().atk || 0) >= 1 || S.totalKills >= 12 },
+  { id: 'ability', pause: 1, pauseWhen: () => liveFoe() && heroTurnNow(), when: () => stepDone('attack') && fightingNow() && heroTurnNow() && abilityOk(), done: () => O().casts >= 1 },
   { id: 'dodge', pause: 1, pauseWhen: () => liveFoe() && inWindow('dodge'), when: () => stepDone('ability') && fightingNow() && hitComing(), done: () => (O().dodges || 0) >= 1 },
   { id: 'parry', pause: 1, pauseWhen: () => liveFoe() && inWindow('parry'), when: () => stepDone('dodge') && fightingNow() && hitComing(), done: () => (O().parries || 0) >= 1 },
   { id: 'boss', pause: 1, ok: 1, when: () => S.maxZone === 1 && S.zone === 1 && typeof fightBoss !== 'undefined' && !!fightBoss, done: () => S.maxZone >= 2 },
@@ -13690,7 +13823,7 @@ const GUIDE_STEPS = [
   { id: 'forge', pause: 1, pauseUnless: () => matsOfBuild('forge'), when: () => coldH() && stepDone('tool') && plotOpen('forge'), done: () => !coldH() || campBusy('forge') },
   { id: 'stock:store', needs: () => matsOfBuild('store'), when: () => coldH() && plotOpen('store') && !!needShort(matsOfBuild('store')).length, done: () => !coldH() || !(typeof CAMP_B === 'object' && CAMP_B.store) || campBusy('store') },
   { id: 'store', pause: 1, pauseUnless: () => matsOfBuild('store'), when: () => coldH() && plotOpen('store'), done: () => !coldH() || !(typeof CAMP_B === 'object' && CAMP_B.store) || campBusy('store') },
-  { id: 'tab:party', when: () => isUnlocked('party') && S.maxZone >= 3 && !unlit(), done: () => !!O().seen.party },
+  { id: 'tab:party', when: () => isUnlocked('party') && S.maxZone >= 3 && !unlit() && !fightingNow(), done: () => !!O().seen.party },
   // a Got it note: it never pauses and never blocks (audit-1 3.8); the Next Up chip or Got it ends it
   { id: 'nextup', ok: 1, when: () => isUnlocked('nextup') && stepDone('upgrade') && S.maxZone >= 3, done: () => false }
 ];
@@ -14411,6 +14544,10 @@ function validateSave(data) {
       for (const z of Object.values(s.zn || {})) int(z, 'solo.zone', 1, lim.progression);
       for (const tr of Object.values(s.tr || {})) { record(tr, 'solo.training'); for (const n of Object.values(tr)) int(n, 'solo.training.level', 0, lim.progression); }
     }
+    if (data.abil) {   // learned abilities: abilityOwned reads unl[hero] and scrollCount reads scrolls[id] after a load
+      for (const [k, ids] of Object.entries(data.abil.unl || {})) { known(SOLO_HEROES, k, 'abil.unl.hero'); array(ids, 'abil.unl.' + k); for (const id of ids) if (typeof id !== 'string' || !ABILITIES[id] || ABILITIES[id].hero !== k) fail('abil.unl.' + k); }
+      for (const [id, n] of Object.entries(data.abil.scrolls || {})) { known(SCROLLS, id, 'abil.scrolls.id'); int(n, 'abil.scrolls.' + id); }
+    }
     rows(data.camp, 'builds', b => { known(CAMP_B, b.id, 'camp.build.id'); int(b.to, 'camp.build.to', 1, CAMP_B[b.id].max); num(b.dur, 'camp.build.dur', 1, 864e13); num(b.start, 'camp.build.start', 0, 864e13); num(b.end, 'camp.build.end', 0, 864e13); record(b.cost, 'camp.build.cost'); num(b.cost.gold, 'camp.build.gold'); pack(b.cost.mats, 'camp.build.mats'); array(b.cost.troph, 'camp.build.troph'); for (const l of b.cost.troph) { array(l, 'camp.build.troph[]'); if (l.length !== 2) fail('camp.build.troph[]'); if (l[0] !== 'any') int(l[0], 'camp.build.troph.kind', 0, CRAFT_TROPHIES.length - 1); num(l[1], 'camp.build.troph.units'); } });
     if (data.camp && data.camp.b) for (const [k, n] of Object.entries(data.camp.b)) { known(CAMP_B, k, 'camp.building'); int(n, 'camp.' + k, 0, CAMP_B[k].max); }
     rows(data.camp, 'news'); rows(data.craft, 'jobs'); rows(data.almanac, 'goals'); rows(data.errors, 'list');
@@ -14894,6 +15031,10 @@ let storeLevel, storeCap, storeCapAt, stashRoom, stashFull, stashOver, stashFits
 //                                          its spawn listener also sets mob.encounter = { kind, id }
 //   storyFoes() -> [{ zone, name, line, type }] the Hollow monsters in the game whose zone the hero has reached (21h LORE_FOES); the
 //                                          Codex Bestiary lists each as its own entry (57c-codex)
+//   storyIntroClaim()                      75-intro-ui.js plays the drawn opening itself: the engine leaves the Chapter 1 card to it
+//   storyIntro(part) -> { part, beats | who, lines, still } | null   what the opening still owes: part 'open' (the lamp stills, before the
+//                                          hero picker; a new game only) or 'fire' (Hesketh's roadside fire over still 3, after the pick)
+//   storyIntroDone(part, how)              part 'open' | 'fire' | 'release' (the picker closed with no fire due); how: opened ('shown') or closed ('done' | 'skipped'); files the Chapter 1 card or the fire scene in the Journal
 //   storySync() runs on each tick (cheap when nothing moved).
 // Events emitted: storyScene { id, ch, kind: 'caption' | 'card', title, head, lines, cards, zone, region, hold, page },
 //   storyEnd { id, how }, storyChoice { id, option }, storyRead { id }, storyFiled { kind, id }.
@@ -14908,6 +15049,7 @@ let storeLevel, storeCap, storeCapAt, stashRoom, stashFull, stashOver, stashFits
 //   keys ('a:<region>:<place>', 'b:', 'ei:', 'ef:') are kept and ignored. `read`: Journal entry id -> 1.
 //   off: 1 = Story cards off. ends: scene key -> 'done' | 'skipped' (12a; never 'auto'). journalOpens: Journal opens (12a).
 //   starter, litFor (Great Lantern -> name), coldhearth: for story-opening and story-choices.
+//   'i:open' (the drawn opening was shown or skipped), 'n:<id>' for the opening's NPC scenes (heskethFire, over the stills; heskethTalk, at the camp fire).
 // A save that is past a slot when it loads, or reaches it with the story off, files it quietly: captions are marked seen,
 // cards go in the Journal unread (late), where the Codex offers them as "Catch up on the story". Nothing pops. Only slots the game
 // can show are filed (a zone line with its monster, a Captain line with its Captain, a Champion or Elder with its encounter, an
@@ -14916,7 +15058,8 @@ let storeLevel, storeCap, storeCapAt, stashRoom, stashFull, stashOver, stashFits
 const STORY_ON = true;   // dev switch (bible 10.4): false plays no story at all; the data files can also be deleted
 
 let storyOn, storyHeld, storyInGap, storyChoiceDef, storyChosen, storyClaim, storyClose, storyChoose, storyList, storyEntry, storyRead, storyUnread, storyLate, storyJournalOpened,
-  storyRoadLog, storyFile, storyHeroLine, storyHearthLine, storyVerse, storyVerseLatest, storyItemLine, storyRanks, storyEncounter, storyFoes, storySync;
+  storyRoadLog, storyFile, storyHeroLine, storyHearthLine, storyVerse, storyVerseLatest, storyItemLine, storyRanks, storyEncounter, storyFoes, storySync,
+  storyIntroClaim, storyIntro, storyIntroDone;
 const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_ENC.champ.<id> = true (storyEncounter)
 {
   registerState('story', { v: 1, seen: {}, read: {}, init: 0, off: 0, starter: '', litFor: {}, coldhearth: '', ends: {}, journalOpens: 0 });
@@ -14935,6 +15078,32 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
   const regionIdOf = z => { const r = typeof regionOf === 'function' ? regionOf(z) : null; return r ? r.id : 'hollow'; };
 
   storyOn = () => STORY_ON && !ST().off && typeof STORY_BEATS === 'object';
+  // ---- the drawn opening (intro-and-picker) ----
+  // The opening is the Hollow's region card, shown by 75-intro-ui.js over two stills BEFORE the hero picker, then Hesketh's roadside fire over a
+  // third still AFTER the pick (STORY_BEATS.intro names the stills and which lines show over each). The UI claims it at load; a core with no UI
+  // (Node tools) keeps the old flow, the region card at the first walk-in. Only a new game plays it: a save past zone 1, or one that already read
+  // the card, files nothing new.
+  let introOn = false, introUp = false;   // introUp: an opening screen is on top, so nothing walks in under it
+  const introData = () => D('intro');
+  storyIntroClaim = () => { introOn = true; };
+  storyIntro = part => {
+    const I = introData(), R = I.region && D('region')[I.region];
+    if (!introOn || !storyOn() || !R || !I.open) return null;
+    if (part === 'open') {
+      if (has('i:open') || has('r:' + I.region) || (S.maxZone || 1) > 1 || S.totalKills > 0) return null;
+      return { part, region: I.region, beats: I.open.map(b => ({ still: b.still, line: R.lines[b.line] || '' })).filter(b => b.line) };
+    }
+    const n = part === 'fire' && D('npc')[I.fire];
+    if (!n || !has('i:open') || has('n:' + I.fire)) return null;
+    return { part, id: I.fire, who: n.who || '', still: I.fireStill || '', lines: n.lines.map(lineText).filter(Boolean) };
+  };
+  storyIntroDone = (part, how) => {
+    if (how === 'shown') introUp = true;   // the opening stays up through the picker, until the fire scene ends (or the picker closes with none due: part 'release')
+    const I = introData(), end = k => { if (how !== 'shown') ST().ends[k] = how === 'skipped' ? 'skipped' : 'done'; };   // 'shown': the screen just opened (filed now, like every scene, so a reload does not replay it)
+    if (part === 'open' && I.region) { mark('i:open'); mark('r:' + I.region); end('r:' + I.region); }
+    else if (part === 'fire' && I.fire) { mark('n:' + I.fire); end('n:' + I.fire); }
+    if (how !== 'shown' && part !== 'open') { introUp = false; storySync(); }   // what waited under the screens (the area caption) is due now, even if the guide holds the ticks
+  };
   storyEncounter = (kind, id, on) => { if (STORY_ENC[kind]) STORY_ENC[kind][id] = on !== false; };
   storyHeroLine = id => { const h = D('hero')[id]; return h ? h[storyHero()] || h._ || '' : ''; };
   // An item entry is a line, or { area, line }: a line with an area waits until an encounter card has put a Champion of that area in
@@ -15020,7 +15189,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
       add('e:' + id, 'elder', `e:${id}:pre`, e.zone, e.name || (e.page && e.page.title) || id, () => [...readable(elderScene(id, 'pre')), ...(has(`e:${id}:post`) ? readable(elderScene(id, 'post')) : [])], [`e:${id}:post`]);
       if (e.page) add('j:' + id, 'page', 'j:' + id, e.zone, e.page.title, () => [{ lines: [e.page.text] }]); }
     for (const id in D('voice')) add('v:' + id, 'voice', 'v:' + id, D('voice')[id].zone, D('voice')[id].title || 'A voice', () => cardsOf(D('voice')[id].lines));
-    for (const id in D('npc')) if (/^area:/.test(D('npc')[id].at) && npcCards(id).length) add('n:' + id, 'npc', 'n:' + id, npcZone(D('npc')[id].at), D('npc')[id].who || id, () => npcCards(id));   // the others read inside their Champion's or Elder's entry
+    for (const id in D('npc')) if (/^(area:|intro|hearth)/.test(D('npc')[id].at) && npcCards(id).length) add('n:' + id, 'npc', 'n:' + id, npcZone(D('npc')[id].at), D('npc')[id].who || id, () => npcCards(id));   // the others read inside their Champion's or Elder's entry
     add('k:ranks', 'ranks', 'k:ranks', 0, 'Who answers to whom', () => storyRanks().map(r => ({ who: r.who, lines: [r.line] })));
     for (const [slot, pre] of [['letter', 'l'], ['note', 'o']]) for (const id in D(slot)) { const x = D(slot)[id];
       add(`${pre}:${id}`, slot, `${pre}:${id}`, x.zone || 0, x.title, () => [{ lines: [x.text] }]); }
@@ -15029,6 +15198,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
   // the zone an NPC scene belongs to (its area's first zone, or its Champion's or Elder's zone)
   function npcZone(at) {
     const [k, v] = String(at).split(':');
+    if (k === 'intro' || k === 'hearth') return 1;   // the opening's own scenes (the roadside fire, the camp fire talk)
     if (k === 'area') return (+v) * (typeof AREA_ZONES === 'number' ? AREA_ZONES : 5) + 1;
     const x = (k === 'champPost' ? D('champ') : D('elder'))[v];
     return x ? x.zone : 0;
@@ -15128,7 +15298,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
 
   // ---- time and gaps ----
   let clock = 0, spawnT = -99, gapNow = true, inAway = false, swept = 0, last = '', spawned = null;
-  const live = () => storyOn() && !inAway && S.activity === 'fight' && !(typeof arena !== 'undefined' && arena);
+  const live = () => storyOn() && !inAway && !introUp && S.activity === 'fight' && !(typeof arena !== 'undefined' && arena);
   const inGap = () => gapNow || clock - spawnT < 1;
 
   // ---- the catch-up: a save past a slot (or one that played it with the story off) files it quietly ----
@@ -15162,7 +15332,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
   };
   function walkIn(z) {
     const n = typeof AREA_ZONES === 'number' ? AREA_ZONES : 5, rid = regionIdOf(z), r = regionById(rid), ai = zoneAreaIdx(z);
-    if (r && z === r.z0 && !has('r:' + rid) && D('region')[rid]) { mark('r:' + rid); push(regionScene(rid)); }
+    if (r && z === r.z0 && !has('r:' + rid) && D('region')[rid] && !storyIntro('open')) { mark('r:' + rid); push(regionScene(rid)); }   // a new game's card is the drawn opening's
     const ids = [], lines = [];
     if (z === ai * n + 1 && D('area')[ai] && !has('a:' + ai)) { mark('a:' + ai); ids.push('a:' + ai); lines.push(D('area')[ai]); }
     if (D('zone')[z] && foeIn(z) && !has('z:' + z)) { mark('z:' + z); ids.push('z:' + z); lines.push(D('zone')[z]); }
@@ -15207,6 +15377,11 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
   on('awayBegin', () => { inAway = true; });
   on('awayEnd', () => { inAway = false; last = ''; });
   on('zoneClear', () => { last = ''; });
+  // Hesketh's talk plays when the camp fire is lit (the 8 Pine Log fire), which pays off "Wood first. Then we talk." It waits for a gap like any scene.
+  on('hearthLit', () => {
+    if (!storyOn()) return;
+    for (const id of Object.keys(D('npc')).filter(k => D('npc')[k].at === 'hearth')) if (!has('n:' + id) && npcCards(id).length) { mark('n:' + id); push(npcScene(id)); }
+  });
   onTick(dt => { clock += dt; storySync(); });
 }
 
@@ -32436,7 +32611,7 @@ function openNoticeLog() {
     if (hasJournal) {
       for (const [v, label] of views) {
         const b = el('button', null, label); b.type = 'button'; b.dataset.v = v; b.setAttribute('role', 'tab');
-        b.addEventListener('click', () => show(v)); seg.append(b);
+        menuNavIcon(b, v); b.addEventListener('click', () => show(v)); seg.append(b);
       }
       top.append(seg);
     } else top.append(el('h2', 'nlog-h', 'Notices'));
@@ -32509,7 +32684,7 @@ const TAB_IC = { sword: iconURL('sword', '#A9B1BD'), pick: iconURL('pick', '#D08
   camp: spriteURL('tab:camp', TAB_PX.camp, { 1: '#C9A56A', 2: '#8C6A43', 3: '#2A1E14', 6: '#6B4A2E', 7: '#FF9E3D' }) };
 // C26: the approved menu icons (NAV_ICONS, 60n-nicons) at the size each place shows; TAB_IC stays the fallback.
 const NAV_OF_TAB = { adv: 'fight', party: 'hero', gat: 'gather', forge: 'craft', world: 'camp', deeds: 'deeds' };
-document.querySelectorAll('.tab').forEach(b => { const i = img(TAB_IC[b.dataset.ic]); nicSet(i, 'nav', NAV_OF_TAB[b.dataset.tab], 20); b.prepend(i); });
+document.querySelectorAll('.tab').forEach(b => { const i = img(TAB_IC[b.dataset.ic]); nicSet(i, 'nav', NAV_OF_TAB[b.dataset.tab], 20); b.prepend(i); if (b.dataset.tab === 'adv') b.setAttribute('aria-label', 'Fight menu'); });
 $('goldIc').src = iconURL('coin', '#F2C14E');
 
 // ================= menus: tabs, sub-views, open and close =================
@@ -32606,6 +32781,7 @@ function buildViewSeg(t) {
   seg.style.setProperty('--n', list.length);
   for (const v of list) {
     const b = el('button', null, v.label); b.type = 'button'; b.dataset.view = v.id;
+    menuNavIcon(b, v.id);
     b.setAttribute('role', 'tab');
     const d = el('span', 'vdot'); d.hidden = true; b.append(d);
     if (typeof onboardIsNew === 'function' && onboardIsNew(v)) b.classList.add('is-new');
@@ -35042,7 +35218,6 @@ let showAwayReport;
     ability: () => iconURL('flame', '#7FB2FF', { 5: '#CFE3FF', 7: '#FFFFFF' }), hands: () => iconURL('mug', '#8C6A43', { 1: '#6B4A2E', 7: '#F2C14E', 5: '#EFE6D6' }),
     deep: () => iconURL('flame', '#9A8FB8', { 5: '#CFC3DC', 7: '#FFFFFF' })
   };
-  const btyRows = [];
   // Go: where each kind's work happens
   const GO = { mine: ['gat', 'mine'], gems: ['gat', 'mine'], chop: ['gat', 'wood'], forage: ['gat', 'forage'],
     make: ['forge', 'make'], forge: ['forge', 'make'], upgrade: ['forge', 'gear'], reforge: ['forge', 'gear'],
@@ -35056,50 +35231,61 @@ let showAwayReport;
     if (typeof closeMenu === 'function') closeMenu();
     ui(true);
   };
+  const mountBoard = (sec, rows) => {
+    for (let i = 0; i < 3; i++) {
+      const r = makeRow(sec, '', false, BTY_IC.kill());
+      r.row.classList.add('bty');
+      const bar = el('div', 'bar bty-bar'); bar.append(el('i')); r.desc.after(bar); r.bar = bar.firstChild;
+      const rr = el('button', 'bty-rr', 'Swap'); r.desc.parentNode.append(rr); r.rr = rr;
+      // done: Claim; not done: Go, to where the work is (menu audit: the old "BOUNTY 16%" box looked like a button)
+      r.btn.addEventListener('click', () => { const b = S.bounties.slots[i]; if (!b || !b.k) return; if (b.have >= b.need) { if (BOUNTY_API.claim(i)) ui(true); } else goTo(b); });
+      rr.addEventListener('click', () => { if (BOUNTY_API.reroll(i)) ui(true); });
+      rows.push(r);
+    }
+  };
+  const updateBoard = rows => {
+    const now = Date.now();
+    S.bounties.slots.forEach((b, i) => {
+      const r = rows[i]; if (!r) return;
+      if (!b || !b.k) {
+        r.row.classList.add('locked'); r.row.classList.remove('active');
+        r.nm.textContent = 'New bounty soon'; r.own.textContent = '';
+        r.desc.textContent = `A new bounty is posted in ${fmtTime(Math.max(0, (b ? b.wait : 0) - now) / 1000)}.`;
+        r.bar.style.width = '0%'; r.rr.hidden = true;
+        r.btn.disabled = true; r.qty.textContent = 'Posting'; r.btn.querySelector('.price').textContent = '...';
+        return;
+      }
+      const done = b.have >= b.need, rew = BOUNTY_API.reward(b);
+      r.row.classList.remove('locked'); r.row.classList.toggle('active', done);
+      r.nm.textContent = BOUNTY_API.text(b); r.own.textContent = `${fmt(b.have)}/${fmt(b.need)}`;
+      const room = done && rew.kind !== 'gold' ? stashNeed([[rew.kind, rew.t, rew.n]]) : '';   // H3: a reward waits until it fits
+      r.desc.textContent = room || 'Reward: ' + rew.txt;
+      r.bar.style.width = Math.min(100, b.have / b.need * 100) + '%';
+      const url = (BTY_IC[b.k] || BTY_IC.kill)(b); setIc(r.ic, url, b.elite ? 'legendary' : null);
+      r.row.classList.toggle('bty-elite', !!b.elite);
+      const rrLeft = (b.rr || 0) - now;
+      r.rr.hidden = done; r.rr.disabled = rrLeft > 0;
+      r.rr.textContent = rrLeft > 0 ? `Swap in ${fmtTime(rrLeft / 1000)}` : 'Swap (free)';
+      r.btn.disabled = done && !!room; r.qty.textContent = done ? 'Done' : '';
+      r.btn.querySelector('.price').textContent = done ? 'Claim' : 'Go';
+      putToggle(r.btn, 'bty-go', !done);
+    });
+  };
+  const fightRows = [], campRows = []; let campSec = null;
   registerSection('adv', {
     id: 'bounties', title: 'Bounties', view: 'bounties',
     mount(sec) {
       // sit right under the Boss gate
       const panel = sec.parentNode; if (panel.children.length > 1) panel.insertBefore(sec, panel.children[1]);
-      for (let i = 0; i < 3; i++) {
-        const r = makeRow(sec, '', false, BTY_IC.kill());
-        r.row.classList.add('bty');
-        const bar = el('div', 'bar bty-bar'); bar.append(el('i')); r.desc.after(bar); r.bar = bar.firstChild;
-        const rr = el('button', 'bty-rr', 'Swap'); r.desc.parentNode.append(rr); r.rr = rr;
-        // done: Claim; not done: Go, to where the work is (menu audit: the old "BOUNTY 16%" box looked like a button)
-        r.btn.addEventListener('click', () => { const b = S.bounties.slots[i]; if (!b || !b.k) return; if (b.have >= b.need) { if (BOUNTY_API.claim(i)) ui(true); } else goTo(b); });
-        rr.addEventListener('click', () => { if (BOUNTY_API.reroll(i)) ui(true); });
-        btyRows.push(r);
-      }
+      mountBoard(sec, fightRows);
     },
-    update() {
-      const now = Date.now();
-      S.bounties.slots.forEach((b, i) => {
-        const r = btyRows[i]; if (!r) return;
-        if (!b || !b.k) {
-          r.row.classList.add('locked'); r.row.classList.remove('active');
-          r.nm.textContent = 'New bounty soon'; r.own.textContent = '';
-          r.desc.textContent = `A new bounty is posted in ${fmtTime(Math.max(0, (b ? b.wait : 0) - now) / 1000)}.`;
-          r.bar.style.width = '0%'; r.rr.hidden = true;
-          r.btn.disabled = true; r.qty.textContent = 'Posting'; r.btn.querySelector('.price').textContent = '...';
-          return;
-        }
-        const done = b.have >= b.need, rew = BOUNTY_API.reward(b);
-        r.row.classList.remove('locked'); r.row.classList.toggle('active', done);
-        r.nm.textContent = BOUNTY_API.text(b); r.own.textContent = `${fmt(b.have)}/${fmt(b.need)}`;
-        const room = done && rew.kind !== 'gold' ? stashNeed([[rew.kind, rew.t, rew.n]]) : '';   // H3: a reward waits until it fits
-        r.desc.textContent = room || 'Reward: ' + rew.txt;
-        r.bar.style.width = Math.min(100, b.have / b.need * 100) + '%';
-        const url = (BTY_IC[b.k] || BTY_IC.kill)(b); setIc(r.ic, url, b.elite ? 'legendary' : null);
-        r.row.classList.toggle('bty-elite', !!b.elite);
-        const rrLeft = (b.rr || 0) - now;
-        r.rr.hidden = done; r.rr.disabled = rrLeft > 0;
-        r.rr.textContent = rrLeft > 0 ? `Swap in ${fmtTime(rrLeft / 1000)}` : 'Swap (free)';
-        r.btn.disabled = done && !!room; r.qty.textContent = done ? 'Done' : '';
-        r.btn.querySelector('.price').textContent = done ? 'Claim' : 'Go';
-        putToggle(r.btn, 'bty-go', !done);
-      });
-    }
+    update() { updateBoard(fightRows); }
+  });
+  // E1: the same board at Camp, so a finished bounty is claimed without the Fight menu (Next Up and the ready notice claim in place too)
+  registerSection('camp', {
+    id: 'bounties-camp', title: "Hesketh's board", feature: 'bounties',
+    mount(sec) { campSec = sec; mountBoard(sec, campRows); },
+    update() { if (campSec) campSec.hidden = !(S.camp && S.camp.open); updateBoard(campRows); }   // no camp yet: the board waits for the fire
   });
   // The Classic achievements grid moved to the Achievements menu (75-deeds-ui.js, Tracks > Classic).
 }
@@ -36444,7 +36630,7 @@ let craftUI = null;
   }
 
   // ---------------- UI state (memory only) ----------------
-  const st8 = { st: null, tier: {}, filt: 'you', mw: null, role: {}, sort: 'power', bfilt: 'spare', pick: '', focus: null, fresh: new Set(), tm: { fam: 'ore', t: 1 } };
+  const st8 = { st: null, tier: {}, filt: 'you', mw: null, role: {}, sort: 'power', bfilt: 'spare', pick: '', focus: null, fresh: new Set(), tm: { fam: 'ore', t: 1 }, recent: [], result: null, resArm: false, reveal: false };
   const openTier = st => {
     return skillTopTier(skillOfSt(st));
   };
@@ -36555,6 +36741,109 @@ let craftUI = null;
     if (!d.pos && !d.comp) bits.push('Special');
     return bits.join(' · ');
   }
+  // craft-reveal: the odds a craft rolls on (the same weights craftItem rolls with), one line per recipe
+  const oddsTxt = k => safe(() => {
+    const w = rarityWeights(stationLevel(k)), tot = Object.values(w).reduce((a, b) => a + b, 0);
+    const pc = v => { const p = v / tot * 100; return (p < 10 ? p.toFixed(1) : String(Math.round(p))) + '%'; };
+    return 'Odds: ' + ['common', 'uncommon', 'rare', 'epic'].map(r => `${RAR[r].n} ${pc(w[r])}`).join(' · ');
+  }, '');
+  // short grade word for a bag tile (the full word sits on the item sheet and in the label)
+  const GRADE_SHORT = { common: 'Com', uncommon: 'Unc', rare: 'Rare', epic: 'Epic', legendary: 'Uniq' };
+  // stat changes against what the hero wears in that slot: [{ label, v, txt }]
+  function diffRows(it) {
+    const d = itemKind(it), cur = d && d.pos ? itemById(S.equip[d.pos]) : null;
+    if (!d || !d.pos || !heroFitsIt(it) || !cur || cur.id === it.id) return null;
+    const a = itemStats(it), b = itemStats(cur), rows = [];
+    const pd = itemPower(it) - itemPower(cur);
+    if (Math.abs(pd) >= 0.05) rows.push({ label: 'Power', v: pd, txt: (pd > 0 ? '+' : '-') + fmt(Math.abs(pd)) });
+    for (const k of new Set([...Object.keys(a), ...Object.keys(b)])) {
+      if (!CRAFT_STATS[k]) continue;
+      const v = (a[k] || 0) - (b[k] || 0);
+      if (Math.abs(v) >= 0.05) rows.push({ label: CRAFT_STATS[k].n, v, txt: deltaTxt(k, v) });
+    }
+    return { cur, rows };
+  }
+  function resultCard(it) {
+    const d = itemKind(it), wr = wornBy(it.id), card = el('div', 'cf-res card');
+    card.dataset.itemId = it.id;
+    const head = el('div', 'cf-ih'), tile = icTile(itemIc(it), frameOf(it)); tile.classList.add('s56');
+    const who = el('div', 'cf-ihw');
+    who.append(el('h3', 'cf-in rar-' + it.r, itemName(it)));
+    const grade = el('span', 'cf-grade rar-' + it.r, RAR[it.r].n);
+    const meta = el('div', 'cf-im'); meta.append(grade, ` · Tier ${it.t}${d ? ' · ' + (d.pos ? posName(d.pos) : d.noun) : ''}`);
+    who.append(meta);
+    head.append(tile, who);
+    const left = el('div', 'cf-res-l'), right = el('div', 'cf-res-r'); card.append(left, right);   // landscape: two columns
+    left.append(head);
+    const lines = el('div', 'cf-lines');
+    for (const L of splitLines(it)) {
+      const r = el('div', 'cf-line g-' + L.g);
+      if (L.g === 'uniq') { if (!L.lore) r.append(el('span', 'cf-lt', L.txt)); if (L.lore) continue; lines.append(r); continue; }
+      r.append(el('span', 'cf-lt', lineTxt(L.l)));
+      if (L.g === 'affix') r.append(el('small', 'cf-tag', 'Bonus'));
+      if (L.g === 'mw') r.append(el('small', 'cf-tag', 'Masterwork'));
+      lines.append(r);
+    }
+    if (lines.children.length) left.append(lines);
+    const df = diffRows(it);
+    if (wr) right.append(el('p', 'note cf-cmpn', `You wear it (${posName(wr.pos)}).`));
+    else if (df) {
+      right.append(el('p', 'note cf-cmpn', `Against your ${itemName(df.cur)}:`));
+      const rows = el('div', 'cf-dl');
+      for (const r of df.rows) { const x = el('div', 'cf-d ' + (r.v > 0 ? 'up' : 'dn')); x.append(el('span', null, r.label), el('b', null, (r.v > 0 ? '▲ ' : '▼ ') + r.txt)); rows.append(x); }
+      if (!df.rows.length) rows.append(el('p', 'note', 'Same stats.'));
+      right.append(rows);
+    } else if (d && d.pos && heroFitsIt(it)) right.append(el('p', 'note cf-cmpn', `You wear nothing as ${posName(d.pos)}. This is a gain.`));
+    else if (d && d.pos) right.append(el('p', 'note cf-cmpn', `A ${posName(d.pos)} for a different class.`));
+    const acts = el('div', 'cf-wear cf-resact');
+    if (st8.resArm) {
+      right.append(el('p', 'note warn', `Salvage ${itemName(it)}? It is gone for good.`));
+      const no = el('button', 'big cf-act cf-keep', 'Keep it'); no.type = 'button';
+      const yes = el('button', 'big cf-act', 'Salvage it'); yes.type = 'button';
+      no.addEventListener('click', () => { st8.resArm = false; ui(true); });
+      yes.addEventListener('click', () => { const id = it.id; st8.resArm = false; if (act(() => salvageItem(id))) { st8.fresh.delete(id); st8.recent = st8.recent.filter(x => x !== id); st8.result = null; ui(true); } });
+      acts.append(no, yes);
+    } else {
+      if (d && d.pos && heroFitsIt(it) && !wr) {
+        const eq = el('button', 'big forge cf-act', 'Equip'); eq.type = 'button';
+        eq.addEventListener('click', () => { equipHero(it.id, d.pos); ui(true); });
+        acts.append(eq);
+      }
+      const keep = el('button', 'big cf-act cf-keep', 'Keep'); keep.type = 'button';
+      keep.addEventListener('click', () => { st8.result = null; ui(true); });
+      acts.append(keep);
+      if (!wr) {
+        const sv = el('button', 'big cf-act cf-keep', 'Salvage'); sv.type = 'button';
+        sv.addEventListener('click', () => { st8.resArm = true; ui(true); });
+        acts.append(sv);
+      }
+    }
+    right.append(acts);
+    return card;
+  }
+  // the last five results: tap one to see its card again
+  function recentStrip() {
+    const strip = el('div', 'cf-recent'); strip.setAttribute('aria-label', 'Last crafts');
+    strip.append(el('span', 'cf-lbl', 'Last crafts'));
+    const row = el('div', 'cf-recent-r');
+    for (const id of st8.recent) {
+      const it = itemById(id); if (!it) continue;
+      const b = el('button', 'ic cf-tile f-' + frameOf(it) + (st8.result === id ? ' sel' : '')); b.type = 'button';
+      b.append(img(itemIc(it)), el('span', 'cf-gr rar-' + it.r, GRADE_SHORT[frameOf(it)] || RAR[it.r].n));
+      b.setAttribute('aria-label', `${itemName(it)}, ${RAR[it.r].n}`);
+      b.addEventListener('click', () => { st8.result = id; st8.resArm = false; ui(true); });
+      row.append(b);
+    }
+    strip.append(row);
+    return strip;
+  }
+  on('crafted', e => {
+    const it = e && e.item; if (!it || it.id == null) return;
+    st8.recent = [it.id, ...st8.recent.filter(x => x !== it.id)].slice(0, 5);
+    st8.result = it.id; st8.resArm = false; st8.fresh.add(it.id); st8.reveal = true;
+    if ((it.r === 'rare' || it.r === 'epic' || it.r === 'legendary') && typeof moment === 'function')
+      moment('craft', { title: itemName(it), sub: `${RAR[it.r].n} ${itemKind(it) ? itemKind(it).noun : 'item'}. It is in your bag.`, rarity: it.r, icon: { item: it } });
+  });
   function recipeRow(k, t) {
     const d = CRAFT_KINDS[k], can = canDo(k, t);
     const row = el('div', 'cf-rec' + (can.ok ? ' ok' : '') + (st8.focus === k ? ' focus' : ''));
@@ -36578,6 +36867,7 @@ let craftUI = null;
       c.append(img(troIcon(mw)), el('span', null, `${have}/1 ${CRAFT_TROPHIES[mw].n}`)); costs.append(c);
     }
     row.append(tile, body, btn, costs);
+    const odds = oddsTxt(k); if (odds) row.append(el('div', 'cf-odds', odds));
     if (d.role === 'any') {
       const rs = el('div', 'cf-roles'); rs.append(el('span', 'cf-lbl', 'Bonus lines for'));
       const seg = el('div', 'seg cf-seg');
@@ -36588,7 +36878,7 @@ let craftUI = null;
       }
       rs.append(seg); row.append(rs);
     }
-    if (!can.ok && can.why) row.append(el('div', 'cf-why', can.why));
+    if (!can.ok) row.append(el('div', 'cf-why', can.why || 'Not ready yet.'));
     return row;
   }
   registerSection('forge', {
@@ -36609,19 +36899,34 @@ let craftUI = null;
       }
       const mwRow = el('div', 'cf-mw');
       const list = el('div', 'cf-list');
-      sec.append(filt, tiers, mwRow, list);
-      rec = { filt, tiers, mwRow, list, sig: '', mwSig: null, rows: {} };
+      const resBox = el('div', 'cf-resbox'); resBox.setAttribute('aria-live', 'polite');
+      sec.append(resBox, filt, tiers, mwRow, list);
+      rec = { filt, tiers, mwRow, list, resBox, resSig: null, sig: '', mwSig: null, rows: {} };
     },
     update(force) {
       initState();
       const st = st8.st, t = st8.tier[st] || 1;
-      for (const b of rec.filt.children) putAttr(b, 'aria-pressed', String(b.dataset.f === st8.filt));
+      // D9: "For you" never shows an empty list; it shows All and says why
+      const noFit = st8.filt === 'you' && !listFor(st, 'you').length && listFor(st, 'all').length > 0;
+      const filt = noFit ? 'all' : st8.filt;
+      for (const b of rec.filt.children) putAttr(b, 'aria-pressed', String(b.dataset.f === filt));
       for (const b of rec.tiers.children) {
         const i = +b.dataset.t, req = CRAFT_STATION_REQ[i - 1], open = skillTierOpen(skillOfSt(st), i);
         putAttr(b, 'aria-pressed', String(i === t)); putToggle(b, 'locked', !open);
         putText(b.lastChild, open ? MAT[STATION_TIER_FAM[st]].short[i - 1] : `Lv ${req}`);
       }
       if (!force && busy()) return;   // never swap a row under the player's finger
+      // craft-reveal: the result card and the last-five strip
+      if (st8.result != null && !itemById(st8.result)) st8.result = null;
+      st8.recent = st8.recent.filter(id => itemById(id));
+      const resSig = JSON.stringify([st8.result, st8.resArm, st8.recent, st8.result != null ? (() => { const it = itemById(st8.result); return [it.r, it.plus, wornBy(it.id) && wornBy(it.id).pos, S.equip[CRAFT_KINDS[it.slot] && CRAFT_KINDS[it.slot].pos]]; })() : 0]);
+      if (resSig !== rec.resSig) {
+        rec.resSig = resSig; rec.resBox.textContent = '';
+        const rit = st8.result != null ? itemById(st8.result) : null;
+        if (rit) rec.resBox.append(resultCard(rit));
+        if (st8.recent.length) rec.resBox.append(recentStrip());
+        if (st8.reveal && rit) { st8.reveal = false; try { rec.resBox.scrollIntoView({ block: 'start' }); } catch (e) {} }   // the card appears above the row the player tapped: bring it into view
+      }
       const tr = troph();
       // Masterwork picker: only when the player has a trophy. Rebuilt when the trophies or the pick change.
       if (st8.mw != null && !(tr[st8.mw] > 0)) st8.mw = null;
@@ -36648,16 +36953,14 @@ let craftUI = null;
       }
       // The list is built once per station, tier, filter and recipe set. After that a row is rebuilt
       // only when what it shows changes (materials, can craft, who it beats, ...): see rowSig.
-      let ks = listFor(st, st8.filt);
-      const extra = st8.filt === 'you' && ks.length ? listFor(st, 'all').length - ks.length : 0;
-      const sig = [st, t, st8.filt, ks.join(), extra, typeof craftItem, typeof canCraft].join('|');
+      let ks = listFor(st, filt);
+      const extra = filt === 'you' && ks.length ? listFor(st, 'all').length - ks.length : 0;
+      const sig = [st, t, filt, noFit, ks.join(), extra, typeof craftItem, typeof canCraft].join('|');
       if (sig !== rec.sig) {
         rec.sig = sig; rec.rows = {};
         rec.list.textContent = '';
-        if (!ks.length && st8.filt !== 'all') {
-          rec.list.append(el('p', 'note', `Nothing at the ${CRAFT_STATIONS[st].n} fits your class. See All, or try another station.`));
-          ks = [];
-        }
+        if (noFit) rec.list.append(el('p', 'note cf-nofit', `Nothing at the ${CRAFT_STATIONS[st].n} is made for your class, so this shows everything here.`));
+        else if (!ks.length) rec.list.append(el('p', 'note', `Nothing at the ${CRAFT_STATIONS[st].n} yet.`));
         for (const k of ks) { const row = recipeRow(k, t); rec.rows[k] = { row, sig: rowSig(k, t) }; rec.list.append(row); }
         if (extra > 0) rec.list.append(el('p', 'note', `${extra} more recipe${extra > 1 ? 's' : ''} here for other classes. Tap All to see them.`));
       } else {
@@ -36675,7 +36978,7 @@ let craftUI = null;
   function rowSig(k, t) {
     const can = canDo(k, t), mw = mwFor(k);
     const cost = Object.entries(kindCost(k, t)).map(([f, n]) => { const h = S.mats[f][t - 1]; return fmt(h) + (h < n ? '<' : '/') + fmt(n); }).join();
-    return JSON.stringify([can.ok, can.why || '', st8.focus === k, subFor(k), beats(k, t), cost, mw, mw != null ? troph()[mw] || 0 : 0, CRAFT_KINDS[k].role === 'any' ? roleFor(k) : '']);
+    return JSON.stringify([can.ok, can.why || '', st8.focus === k, subFor(k), beats(k, t), cost, mw, mw != null ? troph()[mw] || 0 : 0, CRAFT_KINDS[k].role === 'any' ? roleFor(k) : '', oddsTxt(k)]);
   }
 
   // ================= Enchanter's Table extras =================
@@ -36927,6 +37230,7 @@ let craftUI = null;
       for (const it of list) {
         const b = el('button', 'ic cf-tile f-' + frameOf(it) + (st8.fresh.has(it.id) ? ' fresh' : '')); b.type = 'button';
         b.append(img(itemIc(it)));
+        b.append(el('span', 'cf-gr rar-' + it.r, GRADE_SHORT[frameOf(it)] || RAR[it.r].n));
         if (it.plus) b.append(el('span', 'cf-plus', '+' + it.plus));
         const wr = w.get(it.id);
         if (wr) { const bd = img(portraitOf(wr.who), 'cf-badge' + (wr.who === 'hero' ? ' hero' : '')); b.append(bd); }
@@ -37867,6 +38171,7 @@ let deedsUI = null;
     if (!f && !ch) { nextCard(); return; }
     const lk = LK[f ? f.look : ch.look];
     if (typeof noticeAsk === 'function') noticeAsk('card:feat', f ? `Feat: ${f.n}.` : `Chapter done: ${ch.n}.`);   // W1-B: the card is the one voice (bell list line)
+    emit('momentShow', { tier: 'big', kind: 'feat' });   // the sting of a big moment (76-audio): a Feat card is one
     const ov = el('div', 'dd-fc-ov' + (reduced ? ' still' : ''));
     ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-label', f ? `Feat: ${f.n}` : `Chapter done: ${ch.n}`);
     const card = el('div', 'dd-fc');
@@ -38601,7 +38906,7 @@ let deedsUI = null;
     const gq = el('span', 'nu-st'), gl = el('span', 'nu-gol', 'Go');
     go.append(gq, gl);
     r.append(ic, body, go);
-    const x = { r, im, lbl, fill, go, gq, goal: null, url: '' };
+    const x = { r, im, lbl, fill, go, gq, gol: gl, goal: null, url: '' };
     go.addEventListener('click', () => { const g = x.goal; if (!g) return; api.close(true); goTo(g); });
     return x;
   }
@@ -38616,7 +38921,7 @@ let deedsUI = null;
       let sig = '';
       const render = () => {
         const goals = topGoals(3);
-        const s = goals.map(g => g.id + '|' + g.label + '|' + Math.floor(g.pct * 100)).join('~');
+        const s = goals.map(g => g.id + '|' + g.label + '|' + Math.floor(g.pct * 100) + '|' + g.goLabel).join('~');
         if (s === sig) return; sig = s;
         empty.hidden = goals.length > 0;
         while (rows.length < goals.length) { const x = mkRow(api); rows.push(x); list.append(x.r); }
@@ -38630,7 +38935,8 @@ let deedsUI = null;
           x.lbl.textContent = g.label;
           x.fill.style.width = (g.pct * 100).toFixed(1) + '%';
           x.gq.textContent = pctTxt(g);
-          x.go.setAttribute('aria-label', 'Go: ' + g.label);
+          x.gol.textContent = g.goLabel || 'Go';
+          x.go.setAttribute('aria-label', (g.goLabel || 'Go') + ': ' + g.label);
         });
       };
       render();
@@ -38646,6 +38952,138 @@ let deedsUI = null;
     if (!busy) return null;
     return topGoals(3).map(g => ({ icon: goalIcon(g.icon), txt: g.label, sub: g.ready ? 'Ready now' : pctTxt(g) + ' done', group: 'Next up', go: () => goTo(g) }));
   });
+}
+
+// ---- src/js/75-intro-ui.js ----
+// 75-intro-ui: the drawn opening (intro-and-picker; docs/design/first-hour.md beats 1 to 3). Browser-only; the logic is 55-story.js
+// (storyIntro, storyIntroDone) and the words are 21k-story-hollow.js (STORY_BEATS.intro and the Chapter 1 region card).
+//
+// A new game plays two full screens, one line a tap, with Skip always on screen:
+//   open  three lines over two stills (the lamp on its hook; the dark coming up through the moss), BEFORE the hero picker. It opens the picker
+//         when it ends: 76-create asks introUI.gate() before it opens, and gate() starts this screen when it is due.
+//   fire  Hesketh's roadside fire over the third still (the road at night), right AFTER the pick (the picker's `createDone`), then the game runs.
+// The game is held while a screen is up (holdGame), so nothing fights behind it. Reduced motion: no fade, no flicker.
+// Stills: INTRO_STILLS[id] (21k) is '' until the first-hour-art pack is vetted; each still then shows the approved Mossy Hollow night background
+// (BG_ART.forest, 21zb), darkened, with the lamp icon (bible 10.3). A vetted still goes in the data as a URI and replaces all of that.
+// Test pages (check.mjs's nostory key) skip it, like every story scene. API: introUI { gate() -> bool, open() }.
+var introUI;   // var: 76-create (loaded after this file) reads it at run time
+{
+  const TEST_SKIP = (() => { try { return localStorage.getItem('lanternfall.test.nostory') === '1'; } catch (e) { return false; } })();
+  if (!TEST_SKIP && typeof storyIntroClaim === 'function') storyIntroClaim();   // the engine leaves a new game's Chapter 1 card to this screen
+
+  let root = null, part = '', data = null, i = 0, shownAt = 0, lastFocus = null, img = null;
+  holdGame(() => !!root);
+
+  const bgSrc = () => {
+    const B = typeof BG_ART === 'object' && BG_ART.forest; if (!B) return '';
+    const E = window.innerHeight > window.innerWidth ? B.port : B.land;
+    return E && E.src ? 'data:image/webp;base64,' + E.src : '';
+  };
+  const stillArt = id => (typeof INTRO_STILLS === 'object' && INTRO_STILLS[id]) || '';
+  const lamp = (cls, dead) => {
+    const im = el('img', 'intro-lamp ' + cls); im.alt = '';
+    im.src = dead ? iconURL('flame', '#6A6470', { 5: '#554F5E', 7: '#7B7586' }) : iconURL('flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' });
+    return im;
+  };
+  // one still: the vetted art, or the placeholder (the approved background, darkened, with the lamp icon)
+  function still(id) {
+    const d = el('div', 'intro-still s-' + id);
+    const art = stillArt(id);
+    if (art) { const im = el('img', 'intro-img art'); im.alt = ''; im.src = art; d.append(im); return d; }
+    const im = el('img', 'intro-img'); im.alt = ''; im.src = bgSrc(); d.append(im);
+    d.append(el('div', 'intro-shade'));
+    if (id === 'lamp') d.append(lamp('lp-big'));
+    else if (id === 'dark') d.append(lamp('lp-small'));
+    else { d.append(lamp('lp-mine'), lamp('lp-dead', true)); }
+    return d;
+  }
+
+  function build() {
+    const n = data.beats ? data.beats.length : data.lines.length;
+    root = el('div', 'intro'); root.id = 'introScreen';
+    root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-label', part === 'fire' ? 'Old Hesketh' : 'How the lamp came to you');
+    const stage = el('div', 'intro-stage'); root.append(stage);
+    const foot = el('div', 'intro-foot');
+    const tx = el('div', 'intro-tx');
+    const who = data.who ? el('p', 'intro-who', data.who) : null;
+    const line = el('p', 'intro-line'); line.setAttribute('aria-live', 'polite');
+    const dots = el('div', 'intro-dots'); dots.setAttribute('aria-hidden', 'true');
+    for (let k = 0; k < n; k++) dots.append(el('span'));
+    if (who) tx.append(who);
+    tx.append(line, dots);
+    const go = el('button', 'big forge intro-go', 'Next'); go.type = 'button';
+    foot.append(tx, go); root.append(foot);
+    const skip = el('button', 'mini intro-skip', 'Skip'); skip.type = 'button';
+    skip.setAttribute('aria-label', 'Skip this. It stays in the Journal.');
+    root.append(skip);
+
+    let cur = '';
+    const draw = () => {
+      const b = data.beats ? data.beats[i] : { still: data.still, line: data.lines[i] };
+      if (b.still !== cur) { cur = b.still; stage.textContent = ''; stage.append(still(b.still)); }
+      line.textContent = b.line;
+      line.classList.remove('in'); if (!reduced) { void line.offsetWidth; line.classList.add('in'); }
+      [...dots.children].forEach((d, k) => d.classList.toggle('on', k === i));
+      go.textContent = i === n - 1 ? 'Continue' : 'Next';
+      shownAt = Date.now();
+    };
+    const advance = () => {
+      if (Date.now() - shownAt < 250) return;   // a tap that opened this screen (or a double tap) does not skip a line
+      if (i >= n - 1) end('done'); else { i++; draw(); }
+    };
+    go.addEventListener('click', e => { e.stopPropagation(); advance(); });
+    skip.addEventListener('click', e => { e.stopPropagation(); end('skipped'); });
+    root.addEventListener('click', advance);
+    root.addEventListener('keydown', e => {
+      if (e.key === 'Escape') { e.preventDefault(); end('skipped'); return; }
+      if (e.key === 'ArrowRight' || e.key === ' ' && e.target === root) { e.preventDefault(); advance(); return; }
+      if (e.key !== 'Tab') return;
+      const f = [skip, go], at = f.indexOf(document.activeElement);
+      if (e.shiftKey && at <= 0) { e.preventDefault(); go.focus(); } else if (!e.shiftKey && at === 1) { e.preventDefault(); skip.focus(); }
+    });
+    draw();
+    shownAt = Date.now() - 200;   // the first line takes a tap after a moment, so the tap that closed the picker does not skip it
+    return go;
+  }
+
+  function show(p, d) {
+    if (root) return;
+    part = p; data = d; i = 0; lastFocus = document.activeElement;
+    try { storyIntroDone(p, 'shown'); save(); } catch (e) { console.error('[lanternfall] intro', e); }   // filed as it opens: a reload goes on to the picker, not back to the stills
+    const go = build();
+    document.body.append(root);
+    try { go.focus({ preventScroll: true }); } catch (e) {}
+  }
+  function end(how) {
+    if (!root) return;
+    const p = part, r = root;
+    root = null; part = ''; data = null;
+    r.remove();
+    try { storyIntroDone(p, how); save(); } catch (e) { console.error('[lanternfall] intro', e); }
+    if (lastFocus && lastFocus.focus) try { lastFocus.focus({ preventScroll: true }); } catch (e) {}
+    ui(true);
+    if (p === 'open' && typeof classUI === 'object' && classUI) classUI.open();   // then "Who are you?"
+  }
+
+  // The hero picker asks before it opens: true while the opening is on screen (it starts it when it is due).
+  function gate() {
+    if (root) return true;
+    if (TEST_SKIP || typeof storyIntro !== 'function') return false;
+    const d = storyIntro('open');
+    if (!d || !d.beats.length) return false;
+    show('open', d);
+    return true;
+  }
+  // The pick is made: Hesketh's fire plays before the first fight.
+  on('createDone', () => {
+    if (TEST_SKIP || root || typeof storyIntro !== 'function') return;
+    const d = storyIntro('fire');
+    if (d && d.lines.length) show('fire', d);
+    else storyIntroDone('release', 'done');   // nothing more to show: what waited under the opening may play
+  });
+  window.addEventListener('resize', () => { if (!root) return; const im = root.querySelector('.intro-still:not(.s-art) .intro-img'); if (im && !stillArt(im.parentNode.className.replace(/.*s-/, ''))) im.src = bgSrc(); });
+
+  introUI = { gate, open: () => gate(), state: () => root ? { part, i, n: data.beats ? data.beats.length : data.lines.length } : null };
 }
 
 // ---- src/js/75-lantern-ui.js ----
@@ -38881,7 +39319,7 @@ let deedsUI = null;
 //           MOMENT_TUNE.midMax in any MOMENT_TUNE.midWindowS seconds during the first MOMENT_TUNE.midFirstS seconds of play.
 //   small   today's toasts (23n-data-notices).
 // A big or medium moment is never demoted to the bell and never waits behind a guide step or a story card. It queues to
-// the end of the fight (never shown during a turn, so it never covers a parry window) and shows at once outside one. It does
+// the end of the turn (never shown while a turn is in motion, so it never covers a parry window) and shows at once outside one. It does
 // wait for the guide step on screen, the Away and What's-new cards, and the first seconds after boot.
 // Several at fight end fold into one card with a list. Reduced motion: the same card, no burst.
 // API for later cards:  moment(kind, { title, sub, rarity, icon, still, lines, actions })
@@ -38891,7 +39329,7 @@ let deedsUI = null;
 //   lines    [{ txt, ic? }] a short list under the title;  actions  [{ txt, fn }] extra buttons beside Continue
 // momentState() -> { up, banner, queued } for the checks. Nothing here is saved: a moment not yet seen when the game closes
 // is dropped (a unique already sits in the trophy wall).
-const MOMENT_TUNE = { bannerS: 2.6, bannerExtraS: 0.7, settleS: 0.3, tapLockMs: 700, maxLines: 5, maxBanner: 3, bootS: 4, guideWaitS: 6, midMax: 2, midWindowS: 180, midFirstS: 1800 };
+const MOMENT_TUNE = { bannerS: 2.6, bannerExtraS: 0.7, settleS: 0.3, tapLockMs: 700, maxLines: 5, maxBanner: 3, bootS: 4, guideWaitS: 1, midMax: 2, midWindowS: 180, midFirstS: 1800 };
 const MOMENT_KINDS = {
   boss: { tier: 'big', eye: 'Boss down', col: '#F2C14E', snd: 'big' },
   unique: { tier: 'big', eye: 'Unique loot', col: '#FF8A3D', snd: 'big' },
@@ -38920,8 +39358,9 @@ function moment(kind, o) {
 }
 function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner, queued: MOMENT_Q.length }; }
 {
-  // a turn fight is live (the next foe's intro, about 0.5 s after a kill, is not: the boss's card must show before the fight goes on)
-  const fighting = () => { try { return typeof TURN_LIVE !== 'undefined' && !!TURN_LIVE && !TURN_LIVE.ended && TURN_LIVE.phase !== 'intro'; } catch (e) { return false; } };
+  // a turn is in motion (a hit, a windup, a parry window). The waiting phases (the next foe's intro, the hero's turn, the handoff: the game's own
+  // turnWaiting) are not: no parry window is open, so a card there covers nothing, and an idle player at the hero's turn must still see their unique.
+  const fighting = () => { try { return typeof TURN_LIVE !== 'undefined' && !!TURN_LIVE && !TURN_LIVE.ended && !['intro', 'hero', 'handoff'].includes(TURN_LIVE.phase); } catch (e) { return false; } };
   const bootT = performance.now();
   // a card up, the guide's step, the What's-new window or the first seconds after boot hold a moment back
   // (the guide's step gets guideWaitS seconds to finish, then the moment shows over it: a step left on screen must not hide a unique)
@@ -39112,6 +39551,58 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
 //     over 0.4 px/ms; never from [data-noswipe], sliders, the star map, drag slots or sideways scrollers).
 //   - navGo { close: true } (55-nav) closes sheets and menus here.
 // Exposed: navUI { openSwitcher(), pill }
+
+// wire-menu-icons: labels keep their meaning; the approved pack supplies decorative art.
+// A function declaration lets the earlier menu renderer use this even during registration.
+function menuNavIcon(button, view) {
+  const icons = {
+    upgrades: 'boss', bounties: 'bounties', bestiary: 'bestiary', deep: 'deepwell',
+    team: 'hero', abilities: 'hero', training: 'training', stars: 'stars',
+    mine: 'mining', wood: 'woodcutting', forage: 'foraging', hunt: 'hunting', pack: 'storehouse',
+    make: 'craft', gear: 'gear', uniques: 'uniques', camp: 'camp', tav: 'tavern', almanac: 'almanac', raid: 'raid',
+    'ach-deeds': 'deeds', 'ach-tracks': 'tracks', 'ach-feats': 'feats', 'ach-looks': 'looks',
+    notes: 'notices', journal: 'journal', act: 'adventure', next: 'next-up', switch: 'switch-view', codex: 'codex', close: 'close'
+  };
+  const id = icons[view]; if (!id || button.querySelector('.menu-nav-ic')) return;
+  const im = el('img', 'menu-nav-ic px'); im.alt = ''; im.setAttribute('aria-hidden', 'true');
+  nicSet(im, 'nav', id, 16); button.prepend(im);
+}
+
+// Separate status art from the ability tiles (75-solo-ui is a hot file).
+function menuActionBadge(button) {
+  if (button.matches('.sp-ab')) return button.classList.contains('on') ? 'selected' : '';
+  if (button._nv === 'T3') return 'locked';
+  if (button.classList.contains('cool')) return 'cooldown';
+  if (button.classList.contains('off') || button.classList.contains('blocked') || button.classList.contains('empty') || button.classList.contains('passive')) return 'unavailable';
+  return 'ready';
+}
+{
+  const decorate = () => {
+    for (const [selector, view] of [['#menuX', 'close'], ['#switchBtn', 'switch'], ['#nuChip .nu-eye', 'next'],
+      ['.sb-tab[data-tab="act"]', 'act'], ['.cx-backbtn', 'codex']]) {
+      for (const b of document.querySelectorAll(selector)) menuNavIcon(b, view);
+    }
+    // The Codex's Journal entry is mounted lazily along with other Journal sections.
+    for (const b of document.querySelectorAll('#sec-codex-card button')) {
+      if (b.textContent.includes('Open')) menuNavIcon(b, 'codex');
+    }
+  };
+  uiHooks.push(decorate);
+  const updateBadges = () => {
+    for (const b of document.querySelectorAll('#soloBar .sbtn, #abPicker .sp-ab')) {
+      const id = menuActionBadge(b);
+      let im = b.querySelector('.menu-action-badge');
+      if (!id) { if (im) im.hidden = true; continue; }
+      if (!im) { im = el('img', 'menu-action-badge px'); im.alt = ''; im.setAttribute('aria-hidden', 'true'); b.append(im); }
+      im.hidden = false;
+      if (!im._nic || im._nic.id !== id) nicSet(im, 'act', id, 16);
+    }
+  };
+  // Existing UI state is authoritative, including cooldowns and paused pickers; no save writes.
+  let elapsed = 0;
+  onTick(dt => { elapsed += dt; if (elapsed >= 0.1) { elapsed = 0; updateBadges(); } });
+  setInterval(() => { decorate(); updateBadges(); }, 250);
+}
 
 let navUI = null;
 {
@@ -39404,13 +39895,25 @@ let navUI = null;
   layer.append(ring);
   layer.hidden = true;
   document.body.append(layer);
+  // The guide panel: Old Hesketh's face on the left, the tip beside it, the Got it / Go button on its own row
+  // under the text, a small dismiss in the corner. It is a notice, not a control (docs/design/layout.md), so
+  // it docks where notices dock and never sits over the stage (place()).
   const bub = el('div', 'ob-bub'); bub.setAttribute('role', 'note'); bub.hidden = true;
-  const arrow = el('i', 'ob-arrow');
+  const face = el('img', 'ob-face px'); face.alt = ''; face.width = 48; face.height = 48;
+  const faceBox = el('span', 'ob-facebox'); faceBox.setAttribute('aria-hidden', 'true'); faceBox.append(face);
+  let faceKey = '';
+  const faceUp = () => {   // Hesketh's roster portrait; a plain slot with his initial until it bakes
+    let u = ''; try { u = typeof portraitURL === 'function' ? portraitURL('hesketh') : ''; } catch (e) { u = ''; }
+    if (u === faceKey) return; faceKey = u;
+    if (u) face.src = u; else face.removeAttribute('src');
+    putToggle(faceBox, 'blank', !u);
+  };
+  const nm = el('b', 'ob-name', 'Old Hesketh');
   const txt = el('span', 'ob-txt');
   const x = el('button', 'ob-x'); x.type = 'button'; x.setAttribute('aria-label', 'Dismiss this tip'); x.textContent = '×';
   // SOLO1: a step whose action is reading it (the first boss) has a Got it button
   const okb = el('button', 'ob-ok'); okb.type = 'button'; okb.textContent = 'Got it'; okb.hidden = true;
-  bub.append(arrow, txt, okb, x);
+  bub.append(faceBox, nm, txt, x, okb);
   // A waiting step may carry a Go button (spec.go): it takes the hero to the node that yields what the step needs.
   let curGo = null;
   const finish = s => s.id.startsWith('use:') ? onboardUseDone(s.id) : onboardDone(s.id);   // a first-use line is read, not a guide step
@@ -39519,7 +40022,7 @@ let navUI = null;
   const USE_SHOWN_MS = 7000;   // a first-use line counts as read after this long on screen
   const BLOCK = '.create, .away-ov, .bsheet-ov, .modal, .dw-ov, .mm-ov';
   let lastKey = '', useT0 = 0;
-  function hide() { useT0 = 0; if (!layer.hidden) layer.hidden = true; if (!bub.hidden) bub.hidden = true; cur = null; curGo = null; lastKey = ''; lastNode = null; lastRect = null; ONBOARD.paused = false; }
+  function hide() { useT0 = 0; if (!layer.hidden) layer.hidden = true; if (!bub.hidden) bub.hidden = true; cur = null; curGo = null; lastKey = ''; lastNode = null; lastRect = null; ONBOARD.paused = false; const ap = $('app'); if (ap.classList.contains('guide-side')) ap.classList.remove('guide-side', 'guide-nu', 'guide-btn'); }
   // The hint used to re-read the target's pixel position and re-place itself every 250ms, so it
   // jumped whenever the stage moved under it (camera/zoom, screen shake, a pack spawning) even
   // though nothing about the guide itself had changed. Stage targets keep that cached placement.
@@ -39543,12 +40046,12 @@ let navUI = null;
     if (!spec || !vis(spec.node)) return hide();
     if (use) { if (!useT0) useT0 = Date.now(); else if (Date.now() - useT0 > USE_SHOWN_MS) { onboardUseDone(step.id); return hide(); } }
     cur = step; curGo = spec.go || null;
+    putHidden(okb, !(step.ok || curGo));
+    putText(okb, curGo ? curGo.label : 'Got it');
     place(spec);
     // the game waits only while the step waits for you to read or press something now (playtest-1 note 1, W1-A):
     // never for a step that needs materials or time, and never while a press step is still short of what it costs
     ONBOARD.paused = onboardPaused(step);
-    putHidden(okb, !(step.ok || curGo));
-    putText(okb, curGo ? curGo.label : 'Got it');
   }
   soloGuideWants = () => (cur && !layer.hidden ? cur.id : '');
   // The guide's steps and their targets, for tools/check.mjs (the browser check walks the first session).
@@ -39570,12 +40073,27 @@ let navUI = null;
     }
     if (!changed) return;   // no real layout change and the same target/text: leave it exactly where it is
     dirty = false; panelScrolled = false; lastNode = spec.node;
+    // the panel docks where notices dock and never over the stage: landscape, the side column (its notices slot;
+    // it stands in for Next Up while it speaks, except for the Next Up step itself, which points at the chip);
+    // portrait, a slot in the game view just above the Act / Skills / Foe bar (the stage gives up the height);
+    // over a menu, the bottom of the menu panel. Only the parent and a mode class ever change.
+    const wide = isWide(), mode = wide ? 'side' : S.tab ? 'over-menu' : 'dock';
+    const home = mode === 'dock' ? $('game') : $('app');
+    if (bub.parentNode !== home) home.append(bub);
+    for (const m of ['side', 'over-menu', 'dock']) bub.classList.toggle(m, m === mode);
+    bub.classList.toggle('nu', mode === 'side' && spec.node === chip);
+    // landscape, a step with a button (read it, or Go) takes the dock's room too: the column is short and the button must not clip
+    const btn = mode === 'side' && !okb.hidden;
+    bub.classList.toggle('btn', btn);
+    putToggle($('app'), 'guide-side', mode === 'side'); putToggle($('app'), 'guide-nu', mode === 'side' && spec.node === chip); putToggle($('app'), 'guide-btn', btn);
+    faceUp();
+    if (!inPanel) r = null;   // the dock may have moved the stage (portrait: the panel takes a slot): read the target after it
     // UX-L1: a target inside the menu's scrolling content that is out of sight (a short landscape menu: the Make view's
     // recipes, a camp building further down) is scrolled into view on a new target/view. Ordinary
     // scroll or reflow only moves the ring, so following it never pulls the player back.
     if (inPanel && !spec.noRing && (newTarget || reveal)) {
       const pr = panels.getBoundingClientRect();
-      if (r.height && (r.top < pr.top || r.bottom > pr.bottom - 56)) {
+      if (r.height && (r.top < pr.top || r.bottom > pr.bottom - (bub.classList.contains('over-menu') ? bub.offsetHeight + 12 : 56))) {
         scrollMenuTo(spec.node);
         r = spec.node.getBoundingClientRect();
       }
@@ -39593,16 +40111,8 @@ let navUI = null;
       putStyle(ring, 'transform', `translate(${Math.round(rx)}px, ${Math.round(ry)}px)`);
       putStyle(ring, 'width', Math.round(rw) + 'px'); putStyle(ring, 'height', Math.round(rh) + 'px');
     }
-    // the sentence: docked exactly where placeToasts docks toasts (70-ui.js) - inside #stageBox on
-    // the game view, inside #app over a menu - so it reads as one system with the toast stack and
-    // the two never overlap (60-onboard.css .ob-bub, --toast-h). Only the parent and the arrow's
-    // up/down direction ever change; the CSS position within that parent is fixed.
-    const over = !!S.tab;   // UX-L1: in landscape it docks at the bottom of the menu panel (80-landscape.css)
-    const home = over ? $('app') : $('stageBox');
-    if (bub.parentNode !== home) home.append(bub);
-    bub.classList.toggle('over-menu', over);
-    bub.classList.toggle('up', !!spec.node.closest('.tabs'));   // the tab bar sits below the band
   }
+  try { new ResizeObserver(invalidate).observe($('stageBox')); } catch (e) {}   // the stage gives up height when the panel docks: re-place the ring
   setInterval(tick, 250);
   panels.addEventListener('scroll', () => { panelScrolled = true; tick(); }, { passive: true });
   addEventListener('resize', () => { invalidate(); tick(); });
@@ -42369,9 +42879,9 @@ var classUI;
     root = el('div', 'create create-solo'); root.id = 'createScreen';
     root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-labelledby', 'createTitle');
     const inner = el('div', 'create-in');
-    const h = el('h1', null, 'Who carries the lantern?'); h.id = 'createTitle';
-    const lede = el('p', 'create-lede', 'One hero walks the Lantern Road. Pick who picks the lamp up.');
-    const warn = el('p', 'create-warn', 'You can switch heroes at camp later, for free. Gold, gear and camp are shared.');
+    const h = el('h1', null, 'Who are you?'); h.id = 'createTitle';
+    const lede = el('p', 'create-lede', 'You carry the lamp. Pick who you are.');
+    const warn = el('p', 'create-warn', 'At camp you can hand the lamp to a friend, for free. Gold, gear and camp are shared.');
     const cards = el('div', 'ccards'); cards.setAttribute('role', 'radiogroup'); cards.setAttribute('aria-label', 'Hero');
     const keys = HERO_ORDER;
     if (!keys.includes(pick) || !heroCanPlay(pick)) pick = keys.find(heroCanPlay);
@@ -42390,7 +42900,7 @@ var classUI;
       const bio = el('div', 'how'); txt.append(bio);   // starters and unlocked heroes only: a locked hero shows who you meet them as, not their story
       const state = el('b', 'sp-lv'), route = el('div', 'how'); txt.append(state, route);
       b._state = state; b._route = route; b._bio = bio;
-      if (H && H.ab) { const ab = el('div', 'ab'); ab.append(el('em', null, H.ab.name + ': '), document.createTextNode(H.ab.desc)); txt.append(ab); }
+      if (H && H.ab) { const ab = el('div', 'ab'); ab.append(el('em', null, H.ab.name + ': '), document.createTextNode(H.ab.line || H.ab.desc)); txt.append(ab); }   // the turn-fight line (C9): the old desc counted seconds
       b.append(fig, txt);
       b.addEventListener('click', () => select(k));
       b.addEventListener('keydown', e => {
@@ -42421,9 +42931,12 @@ var classUI;
         const on_ = b.dataset.cls === k, state = heroRouteInfo(b.dataset.hero);
         b.dataset.state = state.state;
         // Cards can be inspected; the Begin/Unlock button enforces whether this hero can be chosen.
-        putText(b._bio, state.bio); b._bio.hidden = !state.bio;
+        // a starter speaks to you (bible 4.1: you are the one you pick); anyone else is described as a person you meet or own
+        const bio = (state.unlocked && typeof PICK_LINES === 'object' && PICK_LINES[b.dataset.hero]) || state.bio;
+        putText(b._bio, bio); b._bio.hidden = !bio;
         putText(b._state, state.state === 'coming-soon' ? 'Coming soon' : state.unlocked ? 'Unlocked' : 'Locked');
         putText(b._route, state.unlocked ? (state.playable ? 'Ready to carry the lamp.' : 'Route complete. This hero’s art and solo kit come later.') : state.ready ? state.how : state.meet);   // a new game spoils nothing: who, not where or how much
+        b._state.hidden = b._route.hidden = state.playable;   // an unlocked hero needs no "Unlocked" and "Ready" lines
         b.setAttribute('aria-checked', String(on_)); b.setAttribute('aria-pressed', String(on_)); b.tabIndex = on_ ? 0 : -1;
       }
     }
@@ -42436,8 +42949,7 @@ var classUI;
       if (!okd) return;
       try { save(); } catch (e) {}
       if (typeof updatePortrait === 'function') updatePortrait();
-      close();
-      toast(`${first(pick)} picks up the lamp. The road is dark.`, 'good');
+      close();   // the opening's fire scene follows (75-intro-ui.js); no toast: it spoke of the hero as someone else
     });
     // Keep Begin within reach while the full registry scrolls.
     begin.style.position = 'sticky'; begin.style.top = '0'; begin.style.zIndex = '1';
@@ -42461,6 +42973,7 @@ var classUI;
     if (root) return;
     // one screen for a new game (and any save that has no hero yet); switching is at camp
     if (want === 'switch' || !needsChoice()) return;
+    if (typeof introUI === 'object' && introUI && introUI.gate()) return;   // a new game's drawn opening plays first (75-intro-ui.js); it opens this screen when it ends
       mode = 'new'; pick = (typeof soloHero === 'function' && soloHero()) || SOLO_ORDER[0];
       lastFocus = document.activeElement;
       document.body.append(buildSolo());

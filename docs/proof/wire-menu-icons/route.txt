@@ -1,0 +1,68 @@
+# seed: 1
+# wire-menu-icons: replay at 360x740 and 740x360; no new art, hot files or save fields.
+# The checker audits every pack id and the five badge states; this route shows player controls.
+new menu-icons
+wait 3
+tap-if "Skip"
+expect "Attack"
+expect "#soloBar .menu-action-badge"
+shot action-badges
+tap "Skills"
+tap "Fireball"
+wait 1
+expect "#abPicker .sp-ab.on .menu-action-badge"
+shot selected-action
+tap "Clear this slot"
+tap "Fight menu"
+wait 1
+expect "#viewSeg .menu-nav-ic"
+expect "Bounties"
+expect "Bestiary"
+shot menu-fight-icons
+tap "Hero"
+wait 1
+expect "Training"
+expect "Stars"
+shot menu-hero-icons
+tap "Gather"
+wait 1
+expect "Mining"
+expect "Wood"
+expect "Forage"
+expect "Store"
+expect "Hunting"
+expect "#viewSeg .menu-nav-ic"
+shot menu-gather-icons
+tap "Craft"
+wait 1
+expect "Make"
+expect "Gear"
+expect "Uniques"
+shot menu-craft-icons
+tap "Camp"
+wait 1
+expect "Tavern"
+expect "Almanac"
+shot menu-camp-icons
+# Acceptance 2: full labels remain, including the five-column Gather view (checker measures width and native pixels).
+# Acceptance 3: orphan detection runs in tools/check.mjs; selectors prove the consumer is mounted.
+# Acceptance 4: unchanged generated art and hot files are verified by the PR diff, with no state writes in these hooks.
+expect "#menuX .menu-nav-ic"
+tap "Close"
+tap "Act"
+expect "Attack"
+shot back-to-fight
+tap "Notices"
+tap "Journal"
+wait 1
+expect ".nlog-seg .menu-nav-ic"
+expect ".cx-jopen .menu-nav-ic"
+shot menu-journal-icons
+tap "Achievements"
+wait 1
+expect "Deeds"
+expect "Tracks"
+expect "Feats"
+expect "Looks"
+expect "#viewSeg .menu-nav-ic"
+shot menu-deeds-icons

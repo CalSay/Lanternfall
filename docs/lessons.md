@@ -61,9 +61,14 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Reuse one `loadCore` per new check section. Why: the full check hit Node's default heap limit in Codex's environment once the section made a dozen cores. (story-systems-hollow, 2026-10-06)
 - New UI for a story beat goes in its own `registerSection` in a feature file, never as an edit to a shared menu file such as `74-ui-tavern.js` (Codex P1, story-systems-hollow).
 - A line that names a hero waits on the hero being unlocked (`heroUnlocked`), not on zone progress alone; a Codex tile with no Light (`ptsMax` 0) hides the "0 of 0 Light" tally (Codex round 3, story-systems-hollow).
+- Keep a scene a screen owns out of the engine's queue: the opening is shown by `75-intro-ui.js`, which claims it (`storyIntroClaim`), and nothing walks in (`live()`) until the fire scene ends. Why: with the picker and the stills up, the area caption showed behind them and the first tap closed it. (intro-and-picker, 2026-10-06)
+- A screen that opens filed-as-seen must not be replayed on reload; the playtest driver reopens the game on every call, so a route that wants the opening again starts with `new fresh`. Why: a replayed opening held the game under every later call. (intro-and-picker, 2026-10-06)
+- After a screen that held the game closes, call `storySync()` yourself: the guide can pause the ticks that would have played what waited. Why: the area caption never came when the guide's tip was up. (intro-and-picker, 2026-10-06)
 - Before a ruling moves who is met where, check `STORY_BEATS` (`21k-story-hollow.js`) and bible 4.4: meet scenes are written for their place (Wren's cave, Pip's graves). Why: a judge ruling put Wren and Pip at the wrong Champions; Codex P1 on PR #83. (early-game lead, 2026-10-06)
 
 ## UI and menus
+
+- Fit every sub-tab label with all views unlocked at 360px, using native-size icons above the text when a row has five views. Keep status badges outside ability art and hot files. (wire-menu-icons, 2026-10-06)
 
 - Away card: lead with "While away, gathering continues and fighting stops", show it even when nothing was earned, put the work-limit bar below results. Why: the same 8 hours felt opposite depending on what the hero was doing; Codex P1 for the missing idle-fighter card. (away-clarity, 2026-10-06)
 - Show the pre-leave notice only while fighting; hide it when gathering, before the first boss and in Deepwell runs. Hook it through `uiHooks`. Why: Codex found order, gating and hook issues over 3 rounds. (away-pre-leave-notice, 2026-10-06)
@@ -76,6 +81,9 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Delay the Aim hint until the foe's swing lands. Why: it covered the Dodge and Parry cues. Guide tips already show one at a time; leave that. (first-minute-flow, 2026-10-06)
 - Mark any reward, hint or card the game cannot deliver yet as "Coming soon", in the place the player first sees it (not only after claiming). Why: 15 Codex rewards said "Saved for later" only after they were claimed, and Jory's and Ashby's hints promised a hire the game never made. (promises-pass, 2026-10-06)
 - Show icons through `nicSet`/`nicTag` at the size the box shows, never a 48 px URL squeezed into 28-36 px, and give a hero's icons in whole packs only (add the hero to `COMPLETE` in check.mjs). Why: the Abilities list used `soloIconURL` (uneven scaling) and Wren and Tobin still lack 4 icons. (wire-ability-icons, 2026-10-06)
+- A playtest `--shots` dir is wiped by every `new` in a batch and by each run, so split a route per session and copy shots out; send one `--shots` per part. Why: the first part's shots vanished when the second `new` ran. Also, a notice raised inside the first 2.5 s of a loaded save folds into What's new, so time a notice proof after that. (bounties-anywhere, 2026-10-06)
+- Open the Craft menu in a route with `tap Craft` then `tap`/`expect` in one batch, and use a selector `expect` for anything below the fold in landscape (a text `expect` only sees the screen). Why: each playtest call reopens the game and closes the menu, and the landscape craft menu is about 340px wide. (craft-reveal, 2026-10-06)
+- Bring a new card that appears above the tapped row into view (`scrollIntoView({ block: 'start' })`) and put its buttons under the title in short landscape. Why: the result card pushed the recipe list down, so the first test run showed no card and the Equip button sat below the fold. (craft-reveal, 2026-10-06)
 
 ## Saves and offline parity
 

@@ -146,3 +146,31 @@ span.cf-d { font-weight: 600; }
 .cf-gt small { font-size: 12.5px; color: var(--muted); }
 .cf-ph { margin: 0; font: 600 calc(20px * var(--display-k)) var(--display); }
 .cf-bagnone { grid-column: 1 / -1; margin: 4px 0; }
+
+/* craft-reveal: result card, last-five strip, odds line, grade words */
+.cf-resbox { display: grid; gap: 8px; }
+.cf-resbox:empty { display: none; }
+.cf-res { display: grid; gap: 8px; }
+.cf-grade { font: 600 calc(13px * var(--display-k)) var(--display); }
+.cf-cmpn { margin: 0; }
+.cf-resact { grid-auto-flow: row; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); }
+.cf-recent { display: grid; gap: 4px; }
+.cf-recent-r { display: flex; gap: 6px; }
+.cf-recent .ic.cf-tile { width: 52px; min-height: 52px; flex: none; }
+.ic.cf-tile.sel { outline: 2px solid var(--bone); outline-offset: -1px; }
+.cf-gr { position: absolute; left: 0; right: 0; bottom: 0; padding: 1px 0; text-align: center; font: 600 10px/1.2 var(--display); background: rgba(11,8,16,.82); }
+.cf-odds { grid-column: 1 / -1; font-size: 12px; color: var(--muted); }
+.cf-nofit { margin: 0; }
+.ic.cf-tile.fresh { outline-color: var(--bone); }
+.cf-res .cf-line { padding: 4px 10px; }
+.cf-res .cf-lines { gap: 3px; }
+.cf-res .cf-dl .cf-d { padding: 3px 8px; }
+.cf-res { gap: 6px; }
+.cf-res-l, .cf-res-r { display: grid; gap: 6px; align-content: start; min-width: 0; }
+@media (orientation: landscape) and (max-height: 500px) {
+  /* short screens: the buttons sit right under the name, the stats and the comparison below them */
+  .cf-res-l, .cf-res-r { display: contents; }
+  .cf-res .cf-lines, .cf-res .cf-cmpn, .cf-res .cf-dl { order: 2; }
+  .cf-res .cf-resact { order: 1; }
+  .cf-res .warn { order: 0; }
+}
