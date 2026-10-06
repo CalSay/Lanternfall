@@ -157,10 +157,15 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   boss Hero comes first, then Gather, Next Up and the away strip (row `awaynote`), a minute apart. A row the player's own act
   or a drop opened skips the queue: walking to gather, the fire lit (Camp), the Workbench (Craft), the Tavern built, the first
   star (Stars), the first unique (Uniques); the raid opens as before.
-- **The guide** (`GUIDE_STEPS` in `55-onboard.js`, UI `75-onboard-ui.js`): one hint at a time, docked in the toast band.
+- **The guide** (`GUIDE_STEPS` in `55-onboard.js`, UI `75-onboard-ui.js`): one hint at a time, spoken by Old Hesketh (his face on the left) from a panel that never covers the stage: in landscape the side column's notices slot (it stands in for Next Up while it speaks), in portrait a slot above the Act / Skills / Foe bar, and over an open menu the bottom of the menu panel. The Got it / Go button has its own row.
   A step pauses the game only while it waits for a press; a step that needs game time shows live progress instead.
 - **Notices** (`23n-data-notices.js`, `notify()`): every message goes to a channel (card, pop, bell, log or none),
   with a quiet start and a cap on pops a minute.
+- **Moments** (`75-moments-ui.js`): big moments (the first boss, any unique, a new hero; the cache hook is ready for
+  `lantern-cache`) show as a card that holds the game until the player taps Continue, with a burst and a sting. Medium
+  moments (the first level up and every 5th level, a new ability, a new Star, a look found) show as one banner in the
+  notices slot, at least 2.6 s, at most 2 in any 3 minutes of the first 30. All wait for the end of the fight, never show
+  in a turn, and are never only a bell line. Several at one fight end fold into one card or banner.
 
 ## Currencies
 

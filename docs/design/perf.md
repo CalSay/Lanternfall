@@ -111,3 +111,9 @@ Still worth knowing:
 - A section's `mount` runs when its tab first opens, not at load (70-ui.js `mountTab`): keep boot free
   of panel building, and never rely on nodes a mount builds before then.
 - Run `node tools/perf.mjs --quick` before handing a branch in.
+
+## Slow machines (found 2026-10-06, perf-quick-baseline)
+
+The absolute budgets were set on a fast machine. On the cloud build containers (4 CPUs, software canvas, CPU x4) `--quick` misses 44 to 53 metrics on the integration branch, and on builds from before today too (c1af26c and 56335c5 gave 49 and 53): first frame about 3.7 s, gather about 25 fps, tap to paint 240 to 380 ms. The art data (about 7 MB of the page) has not grown since 2 Oct, so this is the machine, not a slowdown. Run to run the same build varies by 2x on tab and gather timings and by 3x on long-task counts, so a single base-vs-head comparison also false-alarms (tried: 3 to 4 "regressions" comparing a build with itself).
+
+So on these containers read `--quick` as report only (CI already does). To judge a change, run `--html <base dist>` and the new dist back to back, three times each, and compare medians. Do not raise the budgets: they stay the target for a real phone.
