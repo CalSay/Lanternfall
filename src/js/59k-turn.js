@@ -248,7 +248,8 @@ function turnMakeProfile(f, u) {
   const eq = soloEquipped().filter(Boolean);
   const cds = { attack: 1 }; for (const id of eq) cds[id] = turnCdFor(id);
   // a Proving's foes hit for shares of your own health (59f: the fight stays a fight at any power, as before turns)
-  return { heroKey: key, zone: z, heroMaxHp: u.maxHp, refHp: f.trial ? u.maxHp : turnRefHp(z, !!f.deep), A, U, heroType: heroType(key) || 'phys',
+  return { heroKey: key, zone: z, lateX: f.deep || f.trial ? 1 : turnLateX(key, z),   // Tobin's late pass: ordinary zone fights only, not the Deepwell or a Proving
+    heroMaxHp: u.maxHp, refHp: f.trial ? u.maxHp : turnRefHp(z, !!f.deep), A, U, heroType: heroType(key) || 'phys',
     counter: heroAtk() * heroX * (T.counterX[key] || 1) * SOLO_TUNE.counterX * aps() * critMult() * trainCounterX() * (1 + (g.counter || 0) / 100) * (1 + (g.threat || 0) / 100) * (1 + (g.echo || 0)),
     // the gear pass (above): spell, area, control, pierce, heal, ward, Focus
     spellX: 1 + (g.spell || 0) / 100, dotX: 1 + (g.area || 0) / 100, ctrlX: 1 + (g.control || 0) / 100, pierce: Math.min(1, (g.pierce || 0) / 100),
@@ -267,12 +268,12 @@ function turnMakeProfile(f, u) {
 }
 
 // Attack and ability power now, outside a fight (the Abilities screen's numbers; the fight itself never shows them)
-function turnPowerNow() {
+function turnPowerNow(plain) {
   const key = soloHero(); if (!key) return null;
   const T = TURN_TUNE, g = gear(), cls = S.party && S.party.cls;
   const heroX = (T.heroX[key] || SOLO_TUNE.heroX[key]) / SOLO_TUNE.heroX[key];
   const tap = cls === 'warden' || cls === 'warrior' ? CLASS_ABILITIES.heavy.coef : cls === 'lanternmage' || cls === 'mage' ? CLASS_ABILITIES.ember.coef : CLASS_ABILITIES.focus.coef;
-  const A0 = heroAtk() * tap * heroX * turnLateX(key, S.zone) * SOLO_TUNE.atkX * aps();
+  const A0 = heroAtk() * tap * heroX * (plain ? 1 : turnLateX(key, S.zone)) * SOLO_TUNE.atkX * aps();
   return { A: A0 * tapMult(), U: A0 * (1 + T.abTrain * trainLv(TURN_SIG[key] || 'echo')) * (1 + (g.abil || 0) / 100), crit: critMult(),
     spell: 1 + (g.spell || 0) / 100, dot: 1 + (g.area || 0) / 100 };
 }
@@ -382,7 +383,7 @@ function turnHitFoe(m, io, pow, o) {
   if (m.sf) d *= turnStarsX(m, io, o, crit);
   d *= turnTX(m, o.dt || 'phys');
   if (p.heroKey === 'pip' && h.embers > 0 && (o.dt || 'phys') === 'fire' && !o.stored) d *= 1 + T.cinderX * h.embers;   // Cinders held: hotter fire
-  if (!o.stored && !o.dot) { const lx = turnLateX(p.heroKey, p.zone); d *= p.boss ? 1 + (lx - 1) * T.lateBoss : lx; }   // Tobin's late pass (TURN_TUNE.lateX): the hero's own hits, not Bleed or Burn ticks
+  if (!o.stored && !o.dot) { const lx = p.lateX || 1; d *= p.boss ? 1 + (lx - 1) * T.lateBoss : lx; }   // Tobin's late pass (TURN_TUNE.lateX): the hero's own hits, not Bleed or Burn ticks
   // the gear pass: Spell power on fire, frost and holy hits; damage over time (Area) on ticks and Ignite. A Curse's burst
   // stores hits that already had them.
   if (!o.stored) {
