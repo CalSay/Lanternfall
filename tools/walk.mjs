@@ -64,6 +64,7 @@ function pageHtml() {
   let h = fs.readFileSync(htmlFile, 'utf8');
   if (!h.includes('LF_EYES')) { console.error('walk: this build has no LF_EYES (src/js/89-eyes-hook.js)'); process.exit(2); }
   const end = h.lastIndexOf('})();\n</script>');
+  if (end < 0) { console.error('walk: the build has no closing script marker to hook'); process.exit(2); }
   return '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + h.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + h.slice(end);
 }
 const INIT = ([key, seedN]) => {
@@ -263,9 +264,11 @@ async function followNextUp(o) {
   await advance(300, 16);
   if (!(await click('.nu-row.ready .nu-go', 300))) { await click('.bsheet-ov .sheet-x, .sheet-close, .bsheet-ov [aria-label="Close"]', 200); return false; }
   await advance(400, 16);
-  const did = await page.evaluate(`(() => { const hit = document.querySelector('.nu-flash'); const root = hit || document.querySelector('#panels') || document.body;
-    const bs = [...root.querySelectorAll('button, [role=button], .btn, .big')].filter(b => !b.disabled && b.getClientRects().length && !b.classList.contains('off')); const b = bs.find(b => ${GO_WORDS}.test((b.textContent || '').trim())) || bs[0];
-    if (!b) return ''; const t = (b.textContent || b.getAttribute('aria-label') || '').trim().slice(0, 40); b.click(); return t; })()`);
+  // the flash lasts 1.6 s; find the panel's one button and press it with a real tap (a covered button is then a finding)
+  const pick = await page.evaluate(`(() => { const hit = document.querySelector('.nu-flash'); if (!hit) return ''; const bs = [...hit.querySelectorAll('button, [role=button], .btn, .big')].filter(b => !b.disabled && b.getClientRects().length && !b.classList.contains('off'));
+    const b = bs.find(b => ${GO_WORDS}.test((b.textContent || '').trim())) || bs[0]; if (!b) return ''; b.setAttribute('data-walk', '1'); return (b.textContent || b.getAttribute('aria-label') || '').trim().slice(0, 40) || 'button'; })()`);
+  const did = pick && (await click('[data-walk="1"]', 300)) ? pick : '';
+  await page.evaluate(() => document.querySelectorAll('[data-walk]').forEach(n => n.removeAttribute('data-walk')));
   await note(page, 'nextup', `${chipReady}${did ? ' -> pressed "' + did + '"' : ' -> nothing to press'}`, { extra: { goal: chipReady, pressed: did } });
   await advance(500, 16);
   await click('.tabs .tab:text(Fight)', 300);
@@ -273,7 +276,7 @@ async function followNextUp(o) {
 }
 
 // ---------------- watching ----------------
-const SOUNDS = new Set(['loot', 'level', 'skill', 'zone', 'forge']);
+const SOUNDS = new Set(['kill', 'loot', 'level', 'skill', 'zone', 'forge']);
 const sfxLog = [];     // { t, name }
 async function watch(o) {
   for (const s of o.sfx) sfxLog.push({ t: gt, name: s.name });
@@ -341,7 +344,7 @@ async function run() {
     // back to the fight once a tip or Next Up has been served: a menu that stays open leaves the foe waiting
     if (!did && o.s.tab && o.s.tab !== 'adv' && !o.tip && o.cards.length === 0 && gt - st.tabAt > 2.5) { st.tabAt = gt; did = await click('.tabs .tab[data-tab="adv"]', 300); }
     if (!did && (o.phase === 'idle') && gt - st.nuAt >= 6 && o.cards.length === 0) { st.nuAt = gt; did = await followNextUp(o); }
-    const fine = o.phase === 'foe wind-up' || o.phase === 'parry or dodge window' || (o.phase === 'player turn' && o.sfx);
+    const fine = o.phase === 'foe wind-up' || o.phase === 'parry or dodge window' || false;   // the 33 ms step is for the foe's wind-up and the parry window only
     await advance(fine ? 33 : 100, fine ? 16 : 100);
   }
   if (!stop && gt < END) stop = 'ended early';
@@ -385,7 +388,7 @@ function measureBeats() {
 function scorecard(reached) {
   const sc = {};
   const rewardAt = (() => { const r = log.find(e => (e.kind === 'toast' && /gold|loot|xp|\+\d/i.test(e.text)) || e.kind === 'reward'); return r ? r.t : null; })();
-  const sound = sfxLog.find(s => SOUNDS.has(s.name));
+  const sound = rewardAt !== null && sfxLog.find(s => SOUNDS.has(s.name) && Math.abs(s.t - rewardAt) <= 1.5);   // its sound, at the reward
   const first = rewardAt !== null ? rewardAt - (firstTapAt ?? 0) : null;
   sc.F1 = { value: first === null ? 'no reward seen' : first.toFixed(1) + ' s' + (sound ? '' : ', no sound'), pass: first !== null && first <= 10 && !!sound, target: 'a reward on screen within 10 s of the first tap, with its sound' };
   const z1 = moments.find(m => m.id === 'zone');
@@ -393,12 +396,15 @@ function scorecard(reached) {
   const big = moments.filter(m => m.big).map(m => m.t);
   const gaps = []; let prev = 0;
   for (const t of [...big, reached]) { gaps.push({ from: prev, to: t, gap: t - prev }); prev = t; }
-  const early = gaps.filter(g => g.from < 1200).map(g => ({ ...g, gap: Math.min(g.to, Math.max(g.to, 1200)) - g.from }));
-  const worst = gaps.reduce((a, g) => (g.gap > a.gap ? g : a), { gap: 0 });
-  const worstEarly = early.reduce((a, g) => (g.gap > a.gap ? g : a), { gap: 0 });
+  const zc10 = moments.find(m => m.id === 'zone' && m.zone === 10);
+  const lateEnd = zc10 ? Math.min(zc10.t, 3600) : reached;   // the pace after the zone 10 Champion is not set yet (DECISIONS, F3)
+  const early = gaps.filter(g => g.from < 1200).map(g => ({ ...g, gap: Math.min(g.to, 1200) - g.from }));
+  const late = gaps.filter(g => g.to > 1200 && g.from < lateEnd).map(g => ({ ...g, gap: Math.min(g.to, lateEnd) - Math.max(g.from, 1200) }));
+  const mx = l => l.reduce((a, g) => (g.gap > a.gap ? g : a), { gap: 0 });
+  const worstEarly = mx(early), worstLate = mx(late), worst = mx([...early, ...late]);
   const z510 = [5, 6, 7, 8, 9, 10].filter(z => reached > 1200 && !moments.some(m => m.id === 'zone' && m.zone === z));
-  sc.F3 = { value: `${big.length} big moments; longest gap ${fmtT(worst.gap || 0)} (${fmtT(worst.from || 0)} to ${fmtT(worst.to || 0)}); in the first 20 min ${fmtT(worstEarly.gap || 0)}` + (z510.length ? `; no clear seen for zones ${z510.join(', ')}` : ''),
-    pass: worst.gap <= 480 && worstEarly.gap <= 480, meets5: worstEarly.gap <= 300, target: 'a big moment every 5 min to minute 20, no gap over 8; then every zone first clear 5 to 10' };
+  sc.F3 = { value: `${big.length} big moments; in the first 20 min the longest gap is ${fmtT(worstEarly.gap || 0)}, after it ${fmtT(worstLate.gap || 0)} to ${fmtT(lateEnd)}` + (z510.length ? `; no first clear seen for zones ${z510.join(', ')}` : ''),
+    pass: worstEarly.gap <= 300 && worstLate.gap <= 480 && z510.length === 0, target: 'a big moment every 5 min to minute 20; then every zone first clear 5 to 10, no gap over 8 (the 8-minute cap holds in the first 20 too)' };
   // F4: new things = unlocks (S.onboard.got) by the time they landed
   const un = log.filter(e => e.kind === 'unlock').map(e => e.t);
   const win = (len, from, to) => { let best = 0, at = 0; for (const t of un.filter(t => t >= from && t < to)) { const n = un.filter(u => u >= t && u < t + len).length; if (n > best) { best = n; at = t; } } return { best, at }; };
@@ -409,8 +415,9 @@ function scorecard(reached) {
   // F6: each big or medium moment shows a card, banner or sheet for 2 s with a sound near it
   const bad = [];
   for (const m of moments.filter(m => m.big || m.id === 'craft' || m.id === 'look')) {
-    const near = [...st.cardSeen.values()].filter(c => c.first >= m.t - 1.5 && c.first <= m.t + 3 && !/^tv-(card|banner)$/.test(c.cls) || (c.first >= m.t - 1.5 && c.first <= m.t + 3 && /bsheet|gl-card|dd-feat|feat-card|cb-banner/.test(c.cls)));
-    const snd = sfxLog.some(s => SOUNDS.has(s.name) && s.t >= m.t - 1 && s.t <= m.t + 3);
+    const near = [...st.cardSeen.values()].filter(c => c.first >= m.t - 1.5 && c.first <= m.t + 3 && !/^tv-(card|banner)$/.test(c.cls));   // a turn-order banner is not the moment's card
+    const want = { zone: ['zone', 'kill'], unique: ['loot'], craft: ['forge'], star: ['skill', 'loot'], hero: ['skill', 'zone'], look: ['loot', 'skill'] }[m.id] || [...SOUNDS];
+    const snd = sfxLog.some(s => want.includes(s.name) && s.t >= m.t - 1 && s.t <= m.t + 3);
     const card = near.find(c => (c.dwell ?? (reached - c.first)) >= 2);
     if (!card || !snd) bad.push(`${m.id} at ${fmtT(m.t)}: ${!near.length ? 'no card or banner' : !card ? 'card up under 2 s' : 'a card'}${snd ? '' : ', no sound'}`);
   }
@@ -477,7 +484,11 @@ function writeScorecard(file, sc, reached) {
   if (!txt.includes('Walk (nightly, `tools/walk.mjs`)')) txt += `${txt && !txt.endsWith('\n') ? '\n' : ''}\n## Walk (nightly, \`tools/walk.mjs\`)\n\nOne row per run. F1 to F6, F10 and P4 are measured by the walk; the rest of the scorecard is written by other checks. Report only until milestone M0 closes.\n\n${head}\n`;
   const lines = txt.split('\n'), key = `| ${DATE} | `;
   const i = lines.findIndex(l => l.startsWith(key) && l.includes(`| ${SEED} | ${HERO} | ${SIZE.w}x${SIZE.h} |`));
-  if (i >= 0) lines[i] = row; else { let j = lines.length - 1; while (j > 0 && !lines[j].startsWith('|')) j--; lines.splice(j + 1, 0, row); }
+  if (i >= 0) lines[i] = row; else {
+    const h = lines.findIndex(l => l.startsWith('## Walk (nightly')); let j = h + 1, last = -1;
+    for (; j < lines.length && !lines[j].startsWith('## '); j++) if (lines[j].startsWith('|')) last = j;
+    lines.splice(last >= 0 ? last + 1 : j, 0, row);
+  }
   fs.mkdirSync(path.dirname(path.resolve(file)), { recursive: true });
   fs.writeFileSync(file, lines.join('\n').replace(/\n*$/, '\n'));
 }

@@ -6,7 +6,7 @@ name: walk
 on:
   schedule:
     - cron: '0 2 * * *'   # 03:00 in British Summer Time
-    - cron: '0 3 * * *'   # 03:00 in GMT; the plan job lets only the one that is 03:00 in London through
+    - cron: '0 3 * * *'   # 03:00 in GMT; the plan job lets only the one that is 03:00 in London through (by London's UTC offset, so a late start does not matter)
   workflow_dispatch:
     inputs:
       ref:
@@ -37,17 +37,20 @@ jobs:
       - id: p
         env:
           EVENT: ${{ github.event_name }}
+          CRON: ${{ github.event.schedule }}
           IN_REF: ${{ inputs.ref }}
           IN_SEEDS: ${{ inputs.seeds }}
           IN_SIZES: ${{ inputs.sizes }}
         run: |
           ref=claude/elegant-johnson-m6k00u; seeds=1; sizes=p,l; go=true
           if [ "$EVENT" = schedule ]; then
-            [ "$(TZ=Europe/London date +%H)" = 03 ] || go=false
+            # Decide from the cron that fired and London's offset, not the clock: GitHub starts scheduled runs late.
+            off=$(TZ=Europe/London date +%z)
+            if [ "$CRON" = '0 2 * * *' ]; then [ "$off" = +0100 ] || go=false; else [ "$off" = +0000 ] || go=false; fi
           else
             ref="${IN_REF:-$ref}"; seeds="${IN_SEEDS:-1}"; sizes="${IN_SIZES:-p,l}"
           fi
-          list=$(echo "$seeds" | tr -d ' ' | awk -F, '{ printf "["; for (i = 1; i <= NF; i++) if ($i ~ /^[0-9]+$/) printf "%s%s", (n++ ? "," : ""), $i; printf "]" }')
+          list=$(echo "$seeds" | tr -d ' ' | awk -F, '{ printf "["; for (i = 1; i <= NF; i++) if ($i ~ /^[0-9]+$/) printf "%s%s", (n++ ? "," : ""), $i + 0; printf "]" }')
           sz=$(echo "$sizes" | tr -d ' ' | awk -F, '{ printf "["; for (i = 1; i <= NF; i++) if ($i == "p" || $i == "l") printf "%s\"%s\"", (n++ ? "," : ""), $i; printf "]" }')
           echo "sizes=$sz" >> "$GITHUB_OUTPUT"; echo "go=$go" >> "$GITHUB_OUTPUT"; echo "seeds=$list" >> "$GITHUB_OUTPUT"; echo "ref=$ref" >> "$GITHUB_OUTPUT"
 

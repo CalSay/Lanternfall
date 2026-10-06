@@ -9408,8 +9408,8 @@ if (section('first-hour walk (browser, qa-first-hour-walk)')) try {
   const { spawnSync } = await import('node:child_process'), walk = path.join(ROOT, 'tools', 'walk.mjs');
   const bad = spawnSync(process.execPath, [walk, '--bogus'], { encoding: 'utf8' });
   assert(bad.status === 2 && /unknown option/.test(bad.stderr), 'walk.mjs refuses an option it does not know (exit 2)');
-  const src = fs.readFileSync(walk, 'utf8').replace(/\/\/.*$/gm, '');
-  assert(!/\bS\s*(\.|\[)[^=;]*[^=!<>]=[^=]/.test(src.replace(/`[^`]*`/g, '')) && !/__t\.x\(`[^`]*=\s*[^=]/.test(src), 'the walk only reads game state through eval (no assignments)');
+  const src = fs.readFileSync(walk, 'utf8').replace(/^\s*\/\/.*$/gm, '');
+  assert(!/\bS(\.\w+|\[[^\]]+\])+\s*(=(?![=>])|\+=|-=|\+\+|--)/.test(src), 'the walk never assigns to game state (S.x = ...)');
   const { pw, exe } = browserTools;
   if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('first-hour walk (browser): Playwright or Chromium not here, skipped');
   else {
