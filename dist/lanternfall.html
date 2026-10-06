@@ -10145,7 +10145,7 @@ function killPack(m, g) {
     // a won zone moves you on, the first time and on every replay (owner, 2026-10-01)
     if (first) S.maxZone++;
     S.zone = z + 1; S.kills = 0; emit('sceneReset');
-    toast(first ? `${zoneName(z)} is cleared. ${zoneName(z + 1)} lies ahead.` : `Zone ${z} won. On to Zone ${z + 1}.`, 'good', null, first ? 'high' : 'normal');
+    toast(first ? (zoneName(z) === zoneName(z + 1) ? `Zone ${z} is cleared. On to Zone ${z + 1}.` : `${zoneName(z)} is cleared. ${zoneName(z + 1)} lies ahead.`) : `Zone ${z} won. On to Zone ${z + 1}.`, 'good', null, first ? 'high' : 'normal');
     if (first) emit('zoneClear', { zone: z });
   } else {
     S.kills = Math.min(ZONE_FIGHTS, S.kills + 1);
