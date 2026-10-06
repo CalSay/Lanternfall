@@ -242,9 +242,11 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
     const tags = []; if (f.boss) tags.push(f.tk.region ? 'Region boss' : 'Boss'); if (f.elite) tags.push('Elite'); if (f.ranged) tags.push('Ranged');
     const tr = f.tr && f.tr[0], trait = tr && typeof TURN_TRAITS === 'object' && TURN_TRAITS[tr] ? TURN_TRAITS[tr].first : '';
     const known = !(typeof masteryApi === 'object' && masteryApi.typeKills) || masteryApi.typeKills(f.type) >= 1 || !!f.boss;
-    const seen = new Set(), moves = [];
-    for (const m of f.tk.script || []) { if (!m || seen.has(m.id)) continue; seen.add(m.id); moves.push({ name: m.name, hits: m.hits.length, charged: !!m.charge }); }
-    return { name: f.name, tags, trait, known, moves: known ? moves : [] };
+    // a zone boss shows the moves your lost tries taught you (55-boss-try: a loss shows one more); every other foe as before
+    const zb = f.boss && !f.deep && !f.trial && typeof bossTryShown === 'function';
+    const sh = zb ? bossTryShown(f.tk.script, f.tz || S.zone) : null;
+    const moves = (sh ? sh.moves : bossTryMoves(f.tk.script)).map(m => ({ name: m.name, hits: m.hits, charged: m.charged }));
+    return { name: f.name, tags, trait, known: sh ? true : known, moves: known || sh ? moves : [], hidden: sh ? sh.hidden : 0 };
   };
   turnBarInfo = () => {
     if (!(typeof turnCombatOn === 'function' && turnCombatOn())) return null;

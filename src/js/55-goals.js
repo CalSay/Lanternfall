@@ -127,7 +127,6 @@ var forgeGoalPicks = 0;
     if (!o) return { s: 'next', win: 0 };
     return { s: o.win >= BOSS_ODDS.ready ? 'ready' : o.win >= BOSS_ODDS.close ? 'close' : 'weak', win: o.win };
   };
-  const bossNow = () => S.zone === S.maxZone && bossReady() && !bossHeld() ? bossRead() : null;
   registerGoal({
     id: 'zone-boss', sys: 'boss', prio: 2,
     // after a lost try, "ready" waits until you are 15% stronger than then (what auto-challenge waits for too):
@@ -136,14 +135,13 @@ var forgeGoalPicks = 0;
       const b = bossRead(); return !b || b.s === 'ready' ? 1 : b.s === 'next' ? 0.99 : Math.max(0.01, Math.min(0.99, b.win / BOSS_ODDS.ready)); },
     label: () => { if (S.zone !== S.maxZone) return `Go back to Zone ${S.maxZone} and push on`;
       if (!bossReady()) return `${ZONE_FIGHTS - S.kills} more fights to the Zone ${S.maxZone} boss`;
-      if (bossHeld()) return `The Zone ${S.maxZone} boss beat you. Train, then try again`;
+      if (bossHeld()) return `The Zone ${S.maxZone} boss beat you. Level up or gear up, then try again`;
       const b = bossRead(), z = S.maxZone;
+      if (bossTryHeld()) return `You are stronger. Try the Zone ${z} boss again when you are ready`;
       return !b || b.s === 'ready' ? `Boss ready in Zone ${z}` : b.s === 'next' ? `The Zone ${z} boss is next`
-        : b.s === 'close' ? `Zone ${z} boss: a close fight. Train to be safe` : `Zone ${z} boss is too strong. Train first`; },
+        : b.s === 'close' ? `Zone ${z} boss: a close fight. Gear up to be safe` : `Zone ${z} boss is too strong. Level up and gear up first`; },
     icon: { ic: ['banner', '#E0524F', { 7: '#FFB347' }] },
-    go: () => { const b = bossNow();
-      return b && (b.s === 'close' || b.s === 'weak') ? { tab: 'party', view: 'training' }
-        : { tab: 'adv', sel: '#gateBtn', fn: () => { if (S.zone !== S.maxZone) setZone(S.maxZone); } }; }
+    go: () => ({ tab: 'adv', sel: '#gateBtn', fn: () => { if (S.zone !== S.maxZone) setZone(S.maxZone); } })   // the Fight tab; Training is no longer a way forward
   });
 
   // Bounties: the one closest to done (a finished one is ready to claim).
