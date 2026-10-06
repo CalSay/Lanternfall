@@ -783,9 +783,8 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (inArena) { WIPE_EV.to = z; emit('wipe', WIPE_EV); return; }   // 59c-deepwell-combat ends the run
     if (fightBoss) {
       fightBoss = false; failDps = totalDps();
-      // one paying fight before each retry, so a hero who can't win yet still earns (the boss is back after it)
-      if (typeof ZONE_FIGHTS === 'number') S.kills = Math.min(S.kills, ZONE_FIGHTS - 1);
-      toast('The zone boss beat you. Win one more fight and it comes back.', 'raid');
+      // the boss waits behind Try again and the zone keeps paying (55-boss-try holds it on bossFail)
+      toast('The zone boss beat you. Try again when you are ready.', 'raid');
       emit('bossFail', { zone: z, dps: failDps });
       WIPE_EV.to = z;
     } else {

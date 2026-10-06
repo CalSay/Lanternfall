@@ -68,6 +68,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Show the pre-leave notice only while fighting; hide it when gathering, before the first boss and in Deepwell runs. Hook it through `uiHooks`. Why: Codex found order, gating and hook issues over 3 rounds. (away-pre-leave-notice, 2026-10-06)
 - Build pre-leave UI in the same slot as its sibling and never behind the sibling's element; cap estimates by Storehouse room; update GAME.md. Why: Codex P1s x4 on the away chip (chip hung off a fighter-only notice, no layout slot, ignored the Storehouse cap, no GAME.md). (away-chip, 2026-10-06)
 - Do not repeat card text in the bell notice. Why: Codex P2 on PR #43, still open. (away-clarity, 2026-10-06)
+- Give every new checkbox or button in a sheet a 44px minimum height, and when a control repeats one already on screen, update both from the same state. Why: Codex P1/P2 on the Try again card (Auto toggle was 18px tall and drifted from the Fight tab's). (wall-try-again, 2026-10-06)
 - Delay the Aim hint until the foe's swing lands. Why: it covered the Dodge and Parry cues. Guide tips already show one at a time; leave that. (first-minute-flow, 2026-10-06)
 
 ## Saves and offline parity
@@ -75,6 +76,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Validate every new save field in save codes against what the game can produce (points against the level, counts at 0 or more, flags 0 or 1), and clamp at use as well. Why: the risk review found a save code with Lv 1 and 1000 points gave 22x power. (hero-progression-rework, 2026-10-06)
 - Cover every bounty kind (16) in save-code validation and check each kind's own fields; refuse zero or out-of-range rewards and numbers the board cannot generate. Why: save codes knew 7 of 16 kinds and a 0-reward bounty loaded. (fix-bounty-kind, 2026-10-05)
 - When test saves fail on timers, pin fixture timestamps far in the future (2100) with a guard; never loosen the save-loss check. Why: the first fix relaxed the check and was reverted; expired fixture slots refill and fail as "slot kind". (fix-bounty-kind, f-ci)
+- Save any runtime value a saved hold compares against (like `failDps` for a held boss) next to the hold and restore it at load. Why: after a reload the baseline was 0, so Auto retried an unchanged hero. (wall-try-again, 2026-10-06)
 - Update `docs/GAME.md` in every PR that changes what a player sees. Why: the rubrics require it and GAME.md had gone stale. (systems-map, 2026-10-06)
 
 ## CI and tooling

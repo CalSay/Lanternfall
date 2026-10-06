@@ -73,7 +73,7 @@ The bell opens Notices, the Journal and Settings. Achievements (Deeds) and the C
   foe, a turn banner and the timing bar along its bottom edge while a hit winds up. Under it, the dock has three tabs.
   **Act**: Attack and the three ability slots as tiles (D, Q, W, E), each with its name and "Ready", turns left or
   "Passive". **Skills**: each slot's ability and cooldown; tap one to change it. **Foe**: its kind, an elite's trait and
-  the moves you have learned (a boss shows all). Parry and Dodge (A, S) sit under the dock on every tab and glow while a
+  the moves you have learned (a zone boss shows the ones your lost tries taught you, one more a try; a beaten boss shows all). Parry and Dodge (A, S) sit under the dock on every tab and glow while a
   hit winds up. Short landscape keeps the names under small tiles. The turn order shows on the Versus card only.
 - **Abilities** (`24c-data-abilities.js`, `56e-abilities.js`, `75-abilities-ui.js`): 14 a hero; the signature is free
   and the rest cost a Scroll of their tier from zone bosses. **Talents** (`24e-data-talents.js`): two choices for each
@@ -81,6 +81,13 @@ The bell opens Notices, the Journal and Settings. Achievements (Deeds) and the C
 - **Stars** change the rules of a fight on top: up to 3 set and 2 lit a hero (see The hero).
 - **Zones:** 5 won fights, then the zone boss, then the next zone (`ZONE_FIGHTS` in `40-rules.js`). Losing never moves
   you. Bosses have no timer.
+- **After a boss beats you** (`55-boss-try.js`, `75-boss-try-ui.js`): the game stops on a Try again card. It names the hit
+  that won and why (a charged move, a hit you did not parry or dodge, a try with bad timing, damage over time, or "so
+  close"), the boss's weakness and resists, the moves you now know, and the ways forward that exist today. **Try again**
+  starts the boss; closing the card keeps you fighting in the zone. The boss then waits behind the Fight tab's gate
+  ("The zone boss is waiting") and does not start by itself, while the zone's fights keep paying as normal. The Auto switch
+  (Fight tab, shown only while a boss waits) lets it come back on its own once you are stronger. Each lost try shows one
+  more of the boss's moves in the Foe tab. State: `S.bossTry` (`hold`, `tries`, `rev`, `last`). Adds no power.
 - **Foes:** zone 1 is the Thorn Imp and zone 2 Gloomjaw, from the C22 roster with approved art (`59l-zone-foes.js`,
   `64j-foe-art.js`). Other zones still use the old foe types with turn move sets (`24d-data-turnfoes.js`). From zone
   15 about one fight in five is an elite with one trait.
@@ -145,7 +152,7 @@ The bell opens Notices, the Journal and Settings. Achievements (Deeds) and the C
 - **Next Up** (`55-goals.js`): the goals closest to done, with Go buttons.
   **"Boss ready"** means you would usually win the zone boss. The game tries 30 scratch fights of that boss with your
   hero as they stand now, judged from your own Parry and Dodge record (a new player counts as casual), and says "Boss
-  ready" at 70% or better. Under that it says "a close fight" (35% to 70%) or "too strong for now", and Go opens
+  ready" at 70% or better. Under that it says "a close fight" (35% to 70%) or "too strong", and Go opens
   Build when you have points to spend, else the fight. While it works it says "The Zone N boss is next". It only judges; you can still challenge any time
   (`59m-boss-odds.js`, `bossOdds()`).
 - **Story** (`55-story.js`, `75-story-ui.js`, `21k-story-hollow.js`, `21h-lore-hollow.js`, `21b-stories-coast.js`, `21j-lore-omens.js`): one system that plays the region card, area titles, zone and Captain lines, Champion and Elder scenes, NPC and Voice cards and choices from `STORY_BEATS`, once per save, between fights, silent where the game is not ready (no monster or encounter, no data). Skip always works; everything read is in the Journal (Codex). A story card waits for a tap, but files itself to the Journal under "Catch up on the story" after 45 s untouched, and the game runs again; a choice in it waits in the Journal entry until you make it. Settings > Story switches it off. A new game opens on the Chapter 1 card, then two Old Hesketh cards (the fire, then what is in the ground), all before the first fight; a save already past zone 1 finds them in the Journal. The hero picker shows bios for the three starters only; every other hero says "Locked" and where you meet them. No new hero can unlock before the zone of their first scene (`STORY_MEET` in `56c-unlocks.js`); heroes a save already owns are kept. The story bible is [story-bible.md](design/story-bible.md); [lore.md](design/lore.md) is the older lore. The Journal also holds "Who answers to whom", a page that adds a row the first time you meet each rank (Shadowborn, Captain, Champion, Elder, the Voice). Once an Elder is down, the Tavern shows Vesper's verse for it.

@@ -7479,7 +7479,7 @@ if (section('auto-challenge (boss switch)')) try {
       const lab = () => E('(() => { const x = GOALS.find(q => q.id === "zone-boss"); return x.label() + "|" + (+x.pct()).toFixed(2); })()');
       E('fightBoss = false; failDps = totalDps() * 2; S.zone = S.maxZone; S.kills = 10');
       const held = lab(); E('failDps = 0'); const ready = lab();
-      assert(/boss beat you\. Fight on to level up, then try again\|0\.[0-9]/.test(held) && /^Boss ready in Zone \d+\|1\.00$/.test(ready), `Next Up says when a ready boss held you off, with the way back as its bar (${held} / ${ready})`);
+      assert(/boss beat you\. Level up or gear up, then try again\|0\.[0-9]/.test(held) && /^Boss ready in Zone \d+\|1\.00$/.test(ready), `Next Up says when a ready boss held you off, with the way back as its bar (${held} / ${ready})`);
     }
     // owner (2026-10-01): a zone is ZONE_FIGHTS fights and then its boss, switch or not
     const off = loadCore({ seed: 3 }), O = s => off.eval(s);
@@ -7889,9 +7889,10 @@ if (section('zones stay where you put them')) try {
     assert(E('__w') >= 1 && E('S.zone') === 25 && !msgs.some(m => /fell back/.test(m)) && msgs.some(m => /Catch your breath and go again/.test(m)),
       `a beaten hero gets up in the zone it chose (${E('__w')} defeats, zone ${E('S.zone')})`); }
   { const g = loadCore({ seed: 5 }), E = s => g.eval(s);
-    E('soloPick("wren"); S.onboard && (S.onboard.tips = false, S.onboard.all = true); S.kills = ZONE_FIGHTS; addModifier("bossHp", () => 1e6); globalThis.__k = []; on("bossFail", () => __k.push("F")); on("kill", x => __k.push(x.mob.boss ? "B" : "k"))');
-    for (let t = 0; t < 1200 && E('__k.filter(x => x === "F").length') < 2; t += 0.1) g.fn.tick(0.1);   // hero-progression-rework: a Lv 1 hero's +2% a level (not +4%) makes the second loss take ~345 s, not under 600
-    assert(/^F,k,F/.test(E('__k.join()')) && E('S.zone') === 1, `after a lost boss you win one regular fight, then the boss is back (${E('__k.join()')})`); }
+    E('soloPick("wren"); S.auto = false; S.onboard && (S.onboard.tips = false, S.onboard.all = true); S.kills = ZONE_FIGHTS; addModifier("bossHp", () => 1e6); globalThis.__k = []; on("bossFail", () => __k.push("F")); on("kill", x => __k.push(x.mob.boss ? "B" : "k"))');
+    for (let t = 0; t < 600 && E('__k.filter(x => x === "F").length') < 2; t += 0.1) g.fn.tick(0.1);
+    // wall-try-again: a lost boss waits for Try again (55-boss-try): the zone keeps paying and the boss does not come back by itself
+    assert(/^F(,k)+$/.test(E('__k.join()')) && E('__k.length') > 6 && E('S.zone') === 1 && E('bossTryHeld()') && E('S.kills') === E('ZONE_FIGHTS'), `after a lost boss the zone keeps paying and the boss waits for Try again (${E('__k.join()')})`); }
 } catch (e) { fail('zones stay crashed: ' + (e.stack || e)); }
 
 if (section('fixed battle backgrounds')) try {
@@ -8430,8 +8431,8 @@ if (section('boss odds (core, Next Up "Boss ready")')) try {
   const FX = n => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-' + n + '.json'), 'utf8');
   const J = JSON.stringify;
   // a hero at its frontier boss: the zone's fights won, the boss next (as Next Up sees it)
-  // hero-progression-rework: these expectations were measured with gold Training (the fixtures hold trained heroes) and Training's
-  // "Train first" copy, so they run with HERO_TUNE.training = 1; the default game's copy and Go target are asserted at the end.
+  // hero-progression-rework: these expectations were measured with gold Training (the fixtures hold trained heroes), so they run
+  // with HERO_TUNE.training = 1; the default game's Go target (Build while points are free) is asserted at the end.
   const boot = (hero, fx, seed, flagOff) => {
     const g = loadCore({ seed: seed || 7, turns: true, ...(flagOff ? {} : { training: true }), ...(fx ? { storage: memoryStorage({ [KEY]: FX(fx) }) } : {}) }), E = s => g.eval(s);
     if (fx) E('loadSave()');
@@ -8447,13 +8448,13 @@ if (section('boss odds (core, Next Up "Boss ready")')) try {
     assert(o && o.zone === 1 && o.n === 30 && o.win >= 0.7 && l.label === 'Boss ready in Zone 1' && l.pct === 1 && l.go.sel === '#gateBtn' && !g.errors.length,
       `boss odds: a fresh ${hero} is ready for the Zone 1 boss (${J(o)}, "${l.label}")`);
   }
-  // the early fixture (Wren, Zone 8) with no history: not ready, and Go takes the player to Training
+  // the early fixture (Wren, Zone 8) with no history: not ready, and Go takes the player to the Fight tab
   { const { g, E, goal } = boot('', 'early'), o = E('bossOdds({ sync: true })'), l = goal();
-    assert(o && o.zone === E('S.maxZone') && o.win < 0.7 && /^Zone \d+ boss: a close fight\. Train to be safe$|^Zone \d+ boss is too strong\. Train first$/.test(l.label) && l.pct < 1 && l.pct >= 0.01
-      && l.go.tab === 'party' && l.go.view === 'training' && !g.errors.length, `boss odds: the early fixture (Zone 8) is not ready with no record, and Go opens Training (${J(o)}, "${l.label}", ${l.pct.toFixed(2)})`); }
+    assert(o && o.zone === E('S.maxZone') && o.win < 0.7 && /^Zone \d+ boss: a close fight\. Gear up to be safe$|^Zone \d+ boss is too strong\. Level up and gear up first$/.test(l.label) && l.pct < 1 && l.pct >= 0.01
+      && l.go.tab === 'adv' && l.go.sel === '#gateBtn' && !g.errors.length, `boss odds: the early fixture (Zone 8) is not ready with no record, and Go opens the Fight tab (${J(o)}, "${l.label}", ${l.pct.toFixed(2)})`); }
   // the late fixture: too strong with no history; ready with a good record
   { const { g, E, goal } = boot('', 'late'), o = E('bossOdds({ sync: true })'), l = goal();
-    assert(o && o.win < 0.35 && /^Zone \d+ boss is too strong\. Train first$/.test(l.label) && l.go.view === 'training' && l.pct >= 0.01 && l.pct < 0.5, `boss odds: the late fixture is too strong with no record (${J(o)}, "${l.label}")`);
+    assert(o && o.win < 0.35 && /^Zone \d+ boss is too strong\. Level up and gear up first$/.test(l.label) && l.go.sel === '#gateBtn' && l.pct >= 0.01 && l.pct < 0.5, `boss odds: the late fixture is too strong with no record (${J(o)}, "${l.label}")`);
     E(good); const o2 = E('bossOdds({ sync: true })'), l2 = goal();
     assert(o2 && o2.win >= 0.7 && l2.label === `Boss ready in Zone ${o2.zone}` && l2.pct === 1 && l2.go.sel === '#gateBtn' && !g.errors.length,
       `boss odds: the late fixture is ready for a player who parries 60%, dodges 90% of the rest and times rings well (${J(o2)}, "${l2.label}")`); }
@@ -8470,7 +8471,7 @@ if (section('boss odds (core, Next Up "Boss ready")')) try {
     assert(!g.errors.length, 'boss odds: no core errors'); }
   // the default game (attributes, no Training): the copy never says Train, and with points to spend Go opens Attributes first
   for (const fx of ['early', 'late']) { const { g, E, goal } = boot('', fx, 7, true), o = E('bossOdds({ sync: true })'), l = goal(), free = E('attrPoints().free');
-    const copy = /^(Boss ready in Zone \d+|Zone \d+ boss: a close fight|Zone \d+ boss is too strong for now\. Fight on to level up)$/.test(l.label), ready = l.label.startsWith('Boss ready');
+    const copy = /^(Boss ready in Zone \d+|Zone \d+ boss: a close fight\. Gear up to be safe|Zone \d+ boss is too strong\. Level up and gear up first)$/.test(l.label), ready = l.label.startsWith('Boss ready');
     assert(o && copy && free > 0 && (ready ? l.go.sel === '#gateBtn' : l.go.view === 'attributes') && !g.errors.length, `boss odds: the ${fx} fixture with attributes says "${l.label}" and Go ${ready ? 'opens the gate' : 'opens Attributes'} with ${free} points free (${J(o)})`);
     if (!ready) { E('attrSpread()'); const l2 = goal(); assert(E('attrPoints().free') === 0 && l2.go.sel === '#gateBtn' && !/Train/.test(l2.label), `boss odds: the ${fx} fixture with every point spent sends Go to the fight, not Attributes ("${l2.label}")`); } }
   // legacy (real-time) fights keep the old "Boss ready"
@@ -8543,6 +8544,70 @@ if (section('boss odds (core, Next Up "Boss ready")')) try {
   { const { g, E } = boot('wren'), r = JSON.parse(E('JSON.stringify(turnCombatSample({ profile: turnCombatProfile(), seconds: 3600, seed: 2, fights: 5 }))')), r0 = JSON.parse(E('JSON.stringify(turnCombatSample({ profile: turnCombatProfile(), seconds: 600, seed: 2 }))'));
     assert(r.kills + r.deaths === 5 && r0.kills + r0.deaths > 5, `boss odds: turnCombatSample({ fights }) stops at that many fights (${r.kills + r.deaths}); without it the seconds run out (${r0.kills + r0.deaths} fights)`); }
 } catch (e) { fail('boss odds crashed: ' + (e.stack || e)); }
+
+// ==== wall-try-again: after a zone boss beats you, the boss waits behind Try again, the zone keeps paying, the defeat card
+// names the hit that won and the boss's weakness, and each lost try shows one more boss move (55-boss-try.js).
+if (section('wall-try-again (boss loss, Try again)')) try {
+  const g = loadCore({ seed: 3, turns: true }), E = s => g.eval(s);
+  E(`soloPick("tobin"); S.auto = false; S.onboard && (S.onboard.tips = false, S.onboard.all = true); S.maxZone = 1; S.zone = 1; S.kills = ZONE_FIGHTS; S.activity = 'fight'; arena = null;`);
+  const run = sec => { for (let t = 0; t < sec; t += 0.1) g.fn.tick(0.1); };
+  let fails = 0; g.fn.on('bossFail', () => fails++);
+  const shown = [];
+  for (let i = 1; i <= 4; i++) {
+    E('challenge(); mob.tk.hx = 30');   // a boss this hard beats the hero at once
+    run(40);
+    const L = JSON.parse(E('JSON.stringify(S.bossTry.last)'));
+    assert(fails === i && E('S.bossTry.hold') === 1 && !E('fightBoss') && E('S.kills') === E('ZONE_FIGHTS'), `try again: loss ${i} holds the boss, no auto-retry, the zone stays at "boss ready" (fails ${fails}, hold ${E('S.bossTry.hold')})`);
+    assert(L.move && L.boss && L.weak && L.n === i && L.moves.length === i && L.moves.length + L.hidden === 4, `try again: the defeat card has the hit that won, the boss and its weakness, and ${i} move${i > 1 ? 's' : ''} learned (${JSON.stringify(L)})`);
+    shown.push(L.moves.length);
+    run(60);
+    assert(!E('fightBoss') && E('bossTryHeld()') && !E('mob && mob.boss'), `try again: 60 s after loss ${i} the boss has not come back by itself`);
+  }
+  assert(shown.join() === '1,2,3,4', 'try again: each lost try shows one more move: ' + shown.join());
+  // the Foe tab: a zone boss shows only learned moves until it is beaten (a zone below the frontier shows all)
+  const script = '[{ id: "engulf", name: "E", hits: [1] }, { id: "lash", name: "L", hits: [1, 2] }]';
+  E('S.bossTry.rev["tobin:1"] = ["engulf"]; S.maxZone = 1');
+  const sh1 = JSON.parse(E(`JSON.stringify(bossTryShown(${script}, 1))`));
+  E('S.maxZone = 2');
+  const sh2 = JSON.parse(E(`JSON.stringify(bossTryShown(${script}, 1))`));
+  assert(sh1.moves.length === 1 && sh1.hidden === 1 && sh2.moves.length === 2 && sh2.hidden === 0, 'try again: a boss shows the moves you learned; a beaten one shows all');
+  E('S.maxZone = 1');
+  // why: the reason follows the hit, and no way forward mentions Training
+  const [w1, w2, w3, w4] = JSON.parse(E('JSON.stringify([bossTryWhy({ left: 0.1, move: "Slam", hit: 1, hits: 1, charged: false, defended: false }), bossTryWhy({ left: 0.6, move: "Slam", hit: 1, hits: 1, charged: true, defended: false }), bossTryWhy({ left: 0.6, move: "Slam", hit: 2, hits: 3, charged: false, defended: true }), bossTryWhy({ left: 0.6, dot: true })])'));
+  assert(/So close/.test(w1.head) && /did not parry or dodge/.test(w1.lines.join(' ')) && /charged move/.test(w2.lines.join(' ')) && /timing was off/.test(w3.lines.join(' ')) && /hit 2 of 3/.test(w3.lines[0]) && /Damage over time/.test(w4.lines[0]), 'try again: the defeat reason follows the hit that won');
+  const ways = E('JSON.stringify(bossTryWays(S.bossTry.last).map(x => x.txt).concat(GOALS.find(q => q.id === "zone-boss").label()))');
+  assert(!/train/i.test(ways) && JSON.parse(ways).length >= 4, 'try again: the ways forward and Next Up do not send you to Training: ' + ways);
+  // the zone keeps paying: fights in the held zone are normal fights, and winning one leaves the hold alone
+  E('fightBoss = false; spawn()'); run(1);
+  const gold0 = E('S.gold'); E('kill()');
+  assert(!E('mob.boss') && E('S.gold') > gold0 && E('bossTryHeld()') && !E('fightBoss') && E('S.kills') === E('ZONE_FIGHTS'), 'try again: a zone fight during the hold pays gold and leaves the boss waiting');
+  // Try again starts the boss and clears the hold; beating it clears it for good
+  E('challenge()');
+  assert(E('fightBoss') && E('mob.boss') && !E('bossTryHeld()'), 'try again: challenge() starts the boss and clears the hold');
+  E('kill()');
+  assert(!E('S.bossTry.hold') && E('S.maxZone') === 2, 'try again: beating the boss clears the hold');
+  // beating another zone's boss leaves the frontier's hold alone
+  E('S.bossTry.hold = 5; S.bossTry.fail = 7; failDps = 7; S.zone = 1; S.maxZone = 5; S.kills = ZONE_FIGHTS; fightBoss = false; challenge(); kill()');
+  assert(E('S.bossTry.hold') === 5 && E('S.bossTry.fail') === 7 && E('failDps') === 7, 'try again: winning an earlier zone\'s boss does not release the frontier boss');
+  E('S.zone = 2; S.maxZone = 2');
+  // Auto: the boss restarts on its own once you are stronger (the Auto switch the card shows)
+  E('S.bossTry.hold = 2; S.zone = 2; S.maxZone = 2; S.kills = ZONE_FIGHTS; S.auto = true; fightBoss = false; failDps = 0; spawn()');
+  let at = -1; for (let t = 0; t < 300 && at < 0; t += 0.1) { g.fn.tick(0.1); if (E("fightBoss")) at = t; }
+  assert(at >= 0 && !E('bossTryHeld()'), `try again: with Auto on, a held boss restarts once you are stronger (at ${at.toFixed(0)} s)`);
+  E('S.auto = false; S.bossTry.hold = 2; fightBoss = false; failDps = 0; spawn()'); run(60);
+  assert(!E('fightBoss') && E('bossTryHeld()'), 'try again: with Auto off, the held boss waits for the button');
+  // a reload keeps the strength you failed at, so Auto does not retry an unchanged hero
+  E('S.auto = true; S.bossTry.hold = 2; S.bossTry.fail = 1e9; failDps = 1e9; save()');
+  const g3 = loadCore({ seed: 5, storage: memoryStorage({ [KEY]: E('JSON.stringify(S)') }) });
+    assert(g3.eval('failDps') === 1e9 && g3.eval('bossTryHeld() || S.bossTry.hold === 2'), 'try again: a reload keeps the failed-at strength with the hold');
+  // coming back from away resets the baseline on purpose (BAL3: an idle player is not walled at the cap), in the save too
+  g3.eval('awayGains(600)'); assert(g3.eval('failDps === 0 && S.bossTry.fail === 0'), 'try again: coming back from away clears the failed-at strength, as BAL3 intends');
+  // an old save with no bossTry loads with the defaults
+  const old = JSON.parse(E('JSON.stringify(S)')); delete old.bossTry;
+  const g2 = loadCore({ seed: 4, storage: memoryStorage({ [KEY]: JSON.stringify(old) }) });
+  assert(g2.eval('S.bossTry && S.bossTry.hold === 0 && typeof S.bossTry.tries === "object" && S.bossTry.last === null'), 'try again: an old save without bossTry loads with its defaults');
+  assert(!g.errors.length && !g2.errors.length, 'try again: no core errors');
+} catch (e) { fail('wall-try-again crashed: ' + (e.stack || e)); }
 
 // ==== Systems map (f-systems-map): every currency has a source and a sink (or an ALLOW reason), every listed code path still
 // exists, and docs/design/systems-map.md is the current output of tools/systems-map.mjs.

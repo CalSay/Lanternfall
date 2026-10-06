@@ -43,7 +43,7 @@ const NOTICES = [
     why: 'the LEVEL UP float says it; every 25th level is a bell line (the Stars may unlock at level 10)',
     merge: ms => `${ms.length} levels gained. Level ${noteNum(ms[ms.length - 1], /^Level (\d+)/)}.` },
   { id: 'skill', key: 'skill', re: /^\S+ level \d+\./, ch: m => /You can now|open to you/.test(m) ? 'bell' : 'none', why: 'only a new tier is news' },
-  { id: 'boss-fail', re: /^(The zone boss held its ground|The zone boss beat you|Your party fell to the zone boss)/, ch: 'pop', wait: 10, why: 'tells you to grow stronger' },
+  { id: 'boss-fail', re: /^(The zone boss held its ground|The zone boss beat you|Your party fell to the zone boss)/, ch: 'pop', wait: 10, why: 'the Try again card follows and says why you lost' },
   { id: 'fell-back', re: /(fell back a zone|fell back to regroup|couldn't finish the pack)/, ch: 'bell' },
   { id: 'beaten', re: /Catch your breath and go again/, ch: 'log', why: 'you stay in the zone and the fight starts again on screen' },
   { id: 'scroll', re: /^(Moss|Hollow|Barrow|Roadlight|Mother) Scroll! Spend it/, site: /SCROLLS\[id\]\.name\}! Spend it/, ch: 'log', why: 'the stage float shows it and Next Up says what it can teach (the bell stays calm)' },

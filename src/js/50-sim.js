@@ -35,7 +35,7 @@ let arena = null;
 
 function spawn() {
   if (arena) { const m = arena.spawn(); if (m) { mob = m; if (partyCombatOn()) cbArena(m); } return; }
-  if (!fightBoss && S.activity === 'fight' && bossReady()) fightBoss = true;   // the zone's fights are won: its boss comes next (again after a loss)
+  if (!fightBoss && S.activity === 'fight' && bossReady() && !bossTryHeld()) fightBoss = true;   // the zone's fights are won: its boss comes next (after a loss it waits for Try again: 55-boss-try)
   // Party combat (59-combat.js): a pack of foes; mob is the one the stage shows.
   if (partyCombatOn()) { cbSpawn(fightBoss); return; }   // owner (2026-10-01): no boss timer and no Enrage: a boss fight ends when one side falls
   const z = S.zone, cyc = zoneCycle(z);
@@ -111,7 +111,7 @@ function killPack(m, g) {
   if (ess) { const got = stashAdd('ess', tier, ess, 'flow', true); addFloat(got ? `+${got} ${MAT.ess.short[tier - 1]} Essence` : 'Full', MAT.ess.col[tier - 1], false, 0.68, 0.2); }   // H3: capped by the Storehouse
   if (m.boss) {
     const first = z === S.maxZone;
-    fightBoss = false; failDps = 0;
+    fightBoss = false; if (!S.bossTry.hold || S.bossTry.hold === z) failDps = 0; bossTryRelease(z);   // an earlier zone's boss leaves the held frontier boss's baseline alone
     emit('shake', 0.3);
     const uq = zoneUnique(z), owned = (S.found[uq] || 0) >= tier ? UNIQ_TUNE.owned : 1;
     if (Math.random() < (first ? UNIQ_TUNE.first : UNIQ_TUNE.again) * owned * mod('uniqueChance')) dropUnique(uq, tier);
@@ -170,7 +170,7 @@ function gainSkill(k, n, quiet) {
 function challenge() {
   if (fightBoss || target() !== 'mob') return false;
   if (!bossReady()) return false;
-  fightBoss = true; spawn(); respawn = 0;
+  bossTryRelease(S.zone); fightBoss = true; spawn(); respawn = 0;
   return true;
 }
 
@@ -243,7 +243,7 @@ function harvest() {
 function awayGains(secs) {
   secs = Math.max(0, +secs || 0);   // a save stamped in the future (clock set back) gives nothing, never negative gains
   const r = { t: Math.min(secs, (4 + 2 * S.relic.glass + bonus('awayHours')) * 3600), secs, lines: [] };
-  failDps = 0;   // BAL3: back from away, auto-challenge may retry a boss it failed (a reload did this; a kept tab walled idle play at the cap)
+  failDps = 0; if (S.bossTry) S.bossTry.fail = 0;   // (55-boss-try keeps the same baseline in the save) BAL3: back from away, auto-challenge may retry a boss it failed (a reload did this; a kept tab walled idle play at the cap)
   emit('awayBegin', r);
   awayBase(r);
   emit('away', r);

@@ -709,6 +709,9 @@ const line = t => console.log(row([`${Math.floor(t / 3600)}h${String(Math.floor(
   fmt(E('S.gold')), fmt(fn.totalDps()), Math.round(gs()), `${E('S.skills.mine.lv')}/${E('S.skills.wood.lv')}/${E('S.skills.smith.lv')}`]));
 
 let bossTries = 0, casts = 0; fn.on('bossFail', () => bossTries++); fn.on('ability', () => casts++);
+// A lost boss waits for Try again (55-boss-try). The sim player presses it after one paying fight, as the zone flow always did
+// (a held boss comes back when a zone fight is won), so retry economics match the old flow.
+let paidSinceFail = 1; fn.on('bossFail', () => { paidSinceFail = 0; }); fn.on('kill', ({ mob, zone }) => { if (mob && !mob.boss && zone === E('S.bossTry.hold')) paidSinceFail++; });   // a fight in the held zone
 // Party combat (Stage C): wipes (and those before zone 5, T18), the first attempt at each zone boss (T7).
 const wipeAt = [], firstTry = {};
 fn.on('wipe', w => { if (!w.arena) wipeAt.push(t); });
@@ -877,7 +880,7 @@ function playSecond(sec) {
   }
   if (sec < 3 * 3600) { craftStats.sec3h++; if (E('S.activity') === 'gather') craftStats.gatherSec++; }
   if (active && TURNS_ON && sec % 30 === 0) abilityStep();
-  if (sec % 5 === 0 && E('S.activity') === 'fight') { withReserve(E, rosterStep(E), buyBest); attrStep(); if (fn.bossReady() && E('totalDps() > failDps * 1.15 && cbBossReady()')) fn.challenge(); }
+  if (sec % 5 === 0 && E('S.activity') === 'fight') { withReserve(E, rosterStep(E), buyBest); attrStep(); if (fn.bossReady() && (E('bossTryHeld()') ? paidSinceFail >= 1 : E('totalDps() > failDps * 1.15 && cbBossReady()'))) fn.challenge(); }
   for (let k = 0; k < 10; k++) {
     if (active) soloPlayer();
     else if (active) {

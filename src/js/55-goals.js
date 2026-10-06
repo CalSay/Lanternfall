@@ -132,7 +132,6 @@ var forgeGoalPicks = 0;
     if (!o) return { s: 'next', win: 0 };
     return { s: o.win >= BOSS_ODDS.ready ? 'ready' : o.win >= BOSS_ODDS.close ? 'close' : 'weak', win: o.win };
   };
-  const bossNow = () => S.zone === S.maxZone && bossReady() && !bossHeld() ? bossRead() : null;
   registerGoal({
     id: 'zone-boss', sys: 'boss', prio: 2,
     // after a lost try, "ready" waits until you are 15% stronger than then (what auto-challenge waits for too):
@@ -141,15 +140,15 @@ var forgeGoalPicks = 0;
       const b = bossRead(); return !b || b.s === 'ready' ? 1 : b.s === 'next' ? 0.99 : Math.max(0.01, Math.min(0.99, b.win / BOSS_ODDS.ready)); },
     label: () => { if (S.zone !== S.maxZone) return `Go back to Zone ${S.maxZone} and push on`;
       if (!bossReady()) return `${ZONE_FIGHTS - S.kills} more fights to the Zone ${S.maxZone} boss`;
-      if (bossHeld()) return attrLive() ? `The Zone ${S.maxZone} boss beat you. Fight on to level up, then try again` : `The Zone ${S.maxZone} boss beat you. Train, then try again`;
+      if (bossHeld()) return `The Zone ${S.maxZone} boss beat you. Level up or gear up, then try again`;
       const b = bossRead(), z = S.maxZone;
+      if (bossTryHeld()) return `You are stronger. Try the Zone ${z} boss again when you are ready`;
       return !b || b.s === 'ready' ? `Boss ready in Zone ${z}` : b.s === 'next' ? `The Zone ${z} boss is next`
-        : b.s === 'close' ? (attrLive() ? `Zone ${z} boss: a close fight` : `Zone ${z} boss: a close fight. Train to be safe`)
-        : attrLive() ? `Zone ${z} boss is too strong for now. Fight on to level up` : `Zone ${z} boss is too strong. Train first`; },
+        : b.s === 'close' ? `Zone ${z} boss: a close fight. Gear up to be safe` : `Zone ${z} boss is too strong. Level up and gear up first`; },
     icon: { ic: ['banner', '#E0524F', { 7: '#FFB347' }] },
     go: () => { const b = bossNow();
-      // attributes on: spare points are the one thing to do first; with none, go to the fight
-      return b && (b.s === 'close' || b.s === 'weak') && (!attrLive() || attrFree() > 0) ? (attrLive() ? { tab: 'party', view: 'attributes', sel: '#attrRows' } : { tab: 'party', view: 'training' })
+      // hero-progression-rework: spare attribute points are the one thing to do first; with none, the Fight tab (Training is no longer a way forward)
+      return b && (b.s === 'close' || b.s === 'weak') && attrLive() && attrFree() > 0 ? { tab: 'party', view: 'attributes', sel: '#attrRows' }
         : { tab: 'adv', sel: '#gateBtn', fn: () => { if (S.zone !== S.maxZone) setZone(S.maxZone); } }; }
   });
 

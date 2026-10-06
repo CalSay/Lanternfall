@@ -679,7 +679,7 @@ function turnBegin(m, who, io) {
     if (h.lunge > 0) h.lunge--;
     if (h.glow > 0) h.glow--;   // Afterglow: the next two hero turns
     // the boss riders on the hero tick at its turn start
-    for (const k of ['bleed', 'burn', 'venom']) if (h.dot[k] > 0) { h.dot[k]--; io.damageHero(T.heroDot[k] * m.p.refHp, false, 'dot'); }
+    for (const k of ['bleed', 'burn', 'venom']) if (h.dot[k] > 0) { h.dot[k]--; m.fin = { dot: true }; io.damageHero(T.heroDot[k] * m.p.refHp, false, 'dot'); }
     if (h.chillT > 0 && --h.chillT === 0) h.chill = 0;
     if (!io.alive().hero) { turnEnd(m, 'defeat', io); return; }
     m.phase = 'hero';
@@ -791,7 +791,11 @@ function turnContact(m, io) {
     if (m.sf) turnStarsDef(m, io, 'dodge');
     if (m.shadowUsed) { m.shadowUsed = 0; h.shadow = 0; h.keen = 1; if (turnTal(m, 'shadowstep') === 'b') turnGain(h, 'aim', 1); }
   } else if (e.blind > 0 && io.random() < (m.p.boss ? T.blindBossP : T.blindP)) res = 'miss';
-  else { turnLand(m, io, hit); m.landed++; }
+  else {
+    // what would finish the hero, kept before the hit lands: the wipe ends the fight inside it (55-boss-try, the defeat card)
+    m.fin = { id: m.move.id, name: m.move.name, hit: m.hitI, hits: m.move.hits.length, charged: !!m.move.charge, defended: !!m.usedDefense };
+    turnLand(m, io, hit); m.landed++;
+  }
   io.emit('foeContact', { id: m.move.id, hit: m.hitI, hits: m.move.hits.length, res });
   if (!io.alive().hero) { turnEnd(m, 'defeat', io); return; }
   if (!io.alive().foe) { turnEnd(m, 'victory', io); return; }   // a parried hit can strike back (the Stars' Holy Sparks)
@@ -955,7 +959,7 @@ const TURN_LIVE_IO = {
     if (kind === 'parry') { if (ok) SOLO_STATS.parries++; else SOLO_STATS.misses++; emit('soloParry', { res: ok ? 'parry' : 'miss', auto: false }); }
     else { if (ok) SOLO_STATS.dodges++; else SOLO_STATS.early++; emit('soloDodge', { res: ok ? 'dodge' : 'miss', auto: false }); }
   },
-  endFight: () => {}
+  endFight: (m, reason) => { if (reason === 'defeat' && typeof bossTryLost === 'function') bossTryLost(m); }
 };
 on('ability', p => { if (p && p.cls === 'solo' && TURN_LIVE && !TURN_LIVE.ended) SOLO_STATS.casts++, SOLO_STATS.hand++; });
 // hit feel: the clock stops for a beat (turnCombatTick waits it out), with a shake and a flash on the big moments
