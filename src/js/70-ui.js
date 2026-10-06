@@ -760,7 +760,6 @@ function ui(force) {
   for (const f of uiHooks) f(force);   // UX-A
 
   // Built-in panels update only while their view shows (setTab and setView call ui(true) on a switch).
-  uiGateRule();   // the pre-leave notice sits on the game view, so it updates every pass
   if (viewOpen('adv', 'upgrades')) uiFight();
   if (S.tab === 'gat') uiGather();
   if (viewOpen('forge', 'uniques') && (force || slowTick <= 0)) uiForge();

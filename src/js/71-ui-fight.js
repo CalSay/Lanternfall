@@ -56,8 +56,8 @@ function uiGateRule() {
   }
   putToggle(gateRule, 'hide', !on);
 }
+uiHooks.push(uiGateRule);   // the notice sits on the game view, so it updates every pass (extension point, 70-ui)
 function uiFight() {
-  uiGateRule();
   const G = gateEl, gb = G.btn, gq = G.q, gp = G.p;
   const uq = UNIQ[zoneUnique(S.zone)].name;
   if (S.activity !== 'fight') {
