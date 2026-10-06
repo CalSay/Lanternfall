@@ -87,6 +87,10 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   Lv 29 hero is 15% stronger than on the old step and a Lv 27 hero 10% weaker. The zone 20 Captain is too easy for the
   hero who keeps up; `boss-tiers` fixes it. Heroes are not cut to fit one checkpoint while zones 25 to 34 are walls.
   (2026-10-06)
+- **The unlock governor sets the warm early pace.** A warm hero now reaches the camp, the first star and the Tavern
+  sooner. Those open at once and restart the one-a-minute clock, so Gather and Bounties wait their turn. The warm check
+  asks for Gather by 5:30, Bounties by 7:30, and no wait longer than the gap. It asked for 4:00 and 5:00 before. New games
+  are cold and still open Gather by about 2 minutes. Review by 2026-11-15. (2026-10-06)
 
 ## Abilities
 

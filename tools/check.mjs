@@ -1391,7 +1391,12 @@ if (section('onboarding')) try {
   console.log('       timeline: ' + Object.entries(got).map(([k, t]) => `${k} ${mmss(t)}`).join(', '));
   assert(firstUp !== null && firstUp < 60, `first upgrade affordable in under a minute (${firstUp}s)`);
   assert(at('party') < 120 && at('nextup') < 120, `Party and Next Up open in the first 2 minutes (${mmss(at('party'))}, ${mmss(at('nextup'))})`);
-  assert(at('gather') < 240 && at('bounties') < 300, `Gather and Bounties open by 4-5 minutes (${mmss(at('gather'))}, ${mmss(at('bounties'))})`);
+  // hero-progression-rework (judge, 2026-10-06): a warm hero reaches the camp, first star and Tavern sooner; those open at once
+  // (now()) and restart the story-unlock-gates clock (ONBOARD_TUNE.gap), so Gather and Bounties queue behind them. Was 240/300 s
+  // (base 2:03, 4:56). Owner: coordinator; expiry 2026-11-15, re-measure then or when onboarding or the early road changes.
+  const beforeB = Object.values(got).filter(t => t <= at('bounties')).sort((a, b) => a - b);
+  const stall = beforeB.slice(1).reduce((m, t, i) => Math.max(m, t - beforeB[i]), beforeB[0] || 0);
+  assert(at('gather') < 330 && at('bounties') < 450 && stall <= E('ONBOARD_TUNE.gap') + 3, `Gather and Bounties open by 5:30 and 7:30, and nothing waits longer than the unlock gap until then (${mmss(at('gather'))}, ${mmss(at('bounties'))}, longest wait ${stall}s)`);
   assert(['camp', 'forage', 'craft', 'bestiary', 'almanac'].every(k => at(k) <= 660) && at('roster') === Infinity, 'Camp, Foraging, Craft, Bestiary and Almanac open by 11 minutes; the Roster never opens (solo)');
   const early = Object.values(got).filter(t => t <= 600).sort((a, b) => a - b);
   let gap = early[0] || 0; for (let i = 1; i < early.length; i++) gap = Math.max(gap, early[i] - early[i - 1]);
@@ -9350,7 +9355,7 @@ if (section('story-unlock-gates')) try {
   cw.fn.on('unlock', e => got.push([e.id, C('Math.round(S.onboard.t)'), C('S.maxZone'), byNow(C, e.id)]));
   const act = {
     attack: 'soloAttack()', ability: 'soloAbility()', dodge: 'soloDodge()', parry: 'soloParry()', boss: 'onboardDone("boss")', nextup: 'onboardDone("nextup")',
-    upgrade: '{ for (let k = 0; k < 50; k++) { const t = trainNext(); if (!t || S.gold < t.cost) break; train(t.move, "1"); } }',
+    upgrade: '{ if (attrOn()) attrSpread(); else for (let k = 0; k < 50; k++) { const t = trainNext(); if (!t || S.gold < t.cost) break; train(t.move, "1"); } }',   // hero-progression-rework: points, not Training
     gather: 'setNode("wood", 1); setActivity("gather")', light: 'hearthLight(); setActivity("fight")', bench: 'campBuild("bench")', forge: 'campBuild("forge")', store: 'campBuild("store")',
     tool: '{ const it = craftItem("pick", 1); if (it) equipItem(it.id); }'
   };
