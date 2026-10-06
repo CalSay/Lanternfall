@@ -28,7 +28,7 @@ built, the first Star, the first unique, the raid. Its seeded cold walk opened, 
 Gather 1:32, fire 1:54, Next Up 2:55, away strip 3:55, Bounties 4:56, Almanac 7:00, Forage 8:11, Bestiary 9:11, Stars
 10:06, Uniques 12:01. That bot walk breaks F4 (Hero, Gather and the fire inside 1:22): a 60 s gap lets 3 new things
 land in 2 minutes, and F4 needs about 90 s between them, so the times below space new things at least 1:30 apart and
-`story-unlock-gates` is asked to raise the gap to 90 s. A cold human player was far slower: player B reached zone 5 at minute 25 (`/mnt/project-files/
+card `unlock-gap-trial` takes the gap to a judge (the fire's 150 s bound and "a player's act never waits" stand). A cold human player was far slower: player B reached zone 5 at minute 25 (`/mnt/project-files/
 early-game/playtest-coldB.md`). The minutes below are targets for a casual human; the nightly walk replaces them.
 
 | # | Min | On screen | Player does | Learns (one thing) | Earns, and how it lands | Should feel | Story or hero beat | Status |
@@ -51,7 +51,7 @@ early-game/playtest-coldB.md`). The minutes below are targets for a casual human
 | 14a | 14:00 | **Medium moment: the zone 3 Captain's cache** (auto-opened from the 3rd) | | nothing new | the win's drops | | | card `cache-core`, `moment-layer` |
 | 15 | 14:15 | The away chip joins the top bar | | Leaving pays only what you set going | | | | `story-unlock-gates`; card `top-bar-compact` |
 | 16 | 16:00 | Bounties (zone 4); Hesketh's board also at Camp; a ready bounty shows a Claim on Next Up | Claims in place | Bounties | gold or Essence | small win | | today (unlock); card `bounties-anywhere` |
-| 17 | 17:45 | **Big moment: a starter you didn't pick joins** (zone 5, when you meet them) | Can switch | Switching | a hero, at the road's level | company | Their first scene (bible 4.4) | idea; needs a card; PR #58 for the level |
+| 17 | 17:45 | **Big moment: a starter you didn't pick joins** (zone 5, when you meet them) | Can switch | Switching | a hero, at the road's level | company | Their first scene (bible 4.4) | card `starters-join-when-met`; PR #58 for the level |
 | 18 | 20:00 | **Medium moment: first Star** (zone 6 Captain); the Stars tab | Equips the Star | Stars | a Star | power | | today; moment `moment-layer` |
 | 19 | 22:00 | The first Forge weapon (where the walk measures the cold chain ending, est. 20 to 25) | Crafts a weapon | | a weapon, revealed | pride | | today; card `craft-reveal` |
 | 20 | 25 to 40 | **Big moment: first unique**, by chance (15% on a first clear, with modifiers; no pity); the Uniques tab | Equips it | Uniques | the unique | delight | The hero's unique line | today (drop); cards `moment-layer`, `cache-core`, `hero-voice` |
@@ -59,8 +59,8 @@ early-game/playtest-coldB.md`). The minutes below are targets for a casual human
 | 22 | 31:30 | The Almanac | | | | | | `story-unlock-gates` |
 | 23 | 35:00 | The Tavern | Meets the keeper | Hands | | company | | `story-unlock-gates` |
 | 24 | 45:00 | A cache look and the Wardrobe count (only once `cache-art` passes) | Dresses the hero | Looks | a look | ownership | | card `cache-looks` |
-| 25 | 50:00 | **Big moment: the second starter joins** (zone 10); the Codex | | The Codex | a hero | company | Their first scene | `story-unlock-gates` (Codex); join: needs a card |
-| 26 | 60:00 | The third starter joins at zone 15 | | | a hero | company | Their first scene | needs a card |
+| 25 | 50:00 | **Big moment: the second starter joins** (zone 10); the Codex | | The Codex | a hero | company | Their first scene | `story-unlock-gates` (Codex); join: card `starters-join-when-met` |
+| 26 | 60:00 | The third starter joins at zone 15 | | | a hero | company | Their first scene | card `starters-join-when-met` |
 
 ## What this map does not decide
 
