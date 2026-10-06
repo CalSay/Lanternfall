@@ -6,19 +6,22 @@
 new mid
 wait 3
 tap-if "Continue"
-wait 2
+wait 3
+tap-if "Continue"
+wait 3
 tap-if "Continue"
 tap "Hero"
-wait 2
+wait 3
 tap-if "Continue"
-wait 1
+wait 3
 tap-if "Continue"
-tap "Tobin, open hero sheet"
-wait 2
-tap-if "Continue"
-wait 1
 tap-if "Tobin, open hero sheet"
-wait 1
+wait 3
+tap-if "Continue"
+wait 2
+tap-if "Tobin, open hero sheet"
+wait 2
+tap-if "Continue"
 expect "On the road"
 expect "Best parry streak"
 expect "Days on the road"
