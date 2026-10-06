@@ -180,6 +180,10 @@ var turnBarInfo = () => null;
     if (c.ward > 0) list.push(['ward', 0]);
     if (c.keen) list.push(['keen', 0]);
     for (const x of c.riders) list.push([x === 'venom' ? 'bleed' : x, 0]);
+    const k = soloHero();
+    // first-minute-flow: never during a foe wind-up (Dodge and Parry cues); it waits for the swing to land
+    const q = typeof turnCombatSnapshot === 'function' ? turnCombatSnapshot() : null;
+    if (r.n > 0 && k && S.abil && !(q && q.phase === 'foeWindup') && !(S.abil.resTip || (S.abil.resTip = {}))[k]) { S.abil.resTip[k] = 1; showRes(7); }
     const sig = r.name + r.n + '/' + r.max + '|' + list.map(x => x.join(':')).join(',') + '|' + c.last + c.shadow + c.sear;
     if (sig === chipSig) return;
     chipSig = sig;
@@ -188,8 +192,6 @@ var turnBarInfo = () => null;
     pips.setAttribute('aria-label', `${r.name} ${r.n} of ${r.max}`);
     resBtn.setAttribute('aria-label', `${r.name} ${r.n} of ${r.max}. Tap for what it does.`);
     // the first time this hero gains its resource, the line shows on its own (once a hero: S.abil.resTip)
-    const k = soloHero();
-    if (r.n > 0 && k && S.abil && !(S.abil.resTip || (S.abil.resTip = {}))[k]) { S.abil.resTip[k] = 1; showRes(7); }
     chips.replaceChildren(...list.map(([id, n]) => { const s = el('span', 'tv-chip'); const u = stIcon(id); if (u) s.append(img('tv-chip-ic', u, id)); else s.append(el('b', null, id)); if (n) s.append(el('small', null, String(n))); return s; }),
       ...(c.last > 0 ? [el('span', 'tv-tag', 'Last Stand')] : []), ...(c.shadow > 0 ? [el('span', 'tv-tag', 'Shadow Step')] : []), ...(c.sear ? [el('span', 'tv-tag', 'Searing')] : []));
   }

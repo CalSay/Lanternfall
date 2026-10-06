@@ -7402,7 +7402,7 @@ if (section('turn UI (browser)')) try {
           return ok || [!!document.querySelector('#sec-abilities .ab-det'), document.getElementById('panels').scrollTop, ${before}].join(); })()`);
         await page.click('#sec-abilities .ab-infob'); await page.waitForTimeout(150);
         r.info = await X(`(() => { const t = (document.querySelector('#sec-abilities .ab-info .ab-tp') || {}).textContent || '';
-          return document.querySelectorAll('#sec-abilities .ab-info .ab-scroll').length === 5 && /Talent points: \\d+ free of 29/.test(t) || t || 'no drawer'; })()`);
+          return document.querySelectorAll('#sec-abilities .ab-info .ab-scroll').length === 5 && /Talents: \\d+ of 29 points free/.test(t) || t || 'no drawer'; })()`);
         r.infoFit = await X(fit);
         const port = h > w;
         assert(!r.list.length && !r.detFit.length && !r.infoFit.length, `abilities UI ${w}x${h}: no sideways scroll, every button at least 44 px (${JSON.stringify([r.list, r.detFit, r.infoFit])})`);
