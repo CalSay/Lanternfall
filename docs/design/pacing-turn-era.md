@@ -21,10 +21,11 @@ through `tools/sim.mjs` (turn fights on). Coverage-map areas 7 (progression curv
 - **Training milestones turn the climb into walls and cliffs.** Attack doubles every fifth level past 25 and barely
   moves in between. Wren waits about 11 hours at zones 27 to 29, then clears zones 29 to 35, the Region 1 boss included,
   in about 2 hours. Grey Shingle (zones 36 to 41) then takes about an hour.
-- **Best fix:** ease the XP curve and Training prices together, then spread the Attack milestones. Measured together on
-  two seeds, the good player reaches zone 30 in 19 to 23 hours (now 29 to 43), and Wren's and Pip's longest stall before
-  zone 35 falls from up to 19 hours to 3 to 10 hours. The casual Wren and Pip reach zone 30 on day 26 and 40 (now never
-  in 60 days). Tobin needs his own look (section 6).
+- **Best fix (judge ruling, section 8):** ease the XP curve from Lv 26 to 40 and Training prices from Lv 20 to 40,
+  together. Measured on two seeds, the good Wren and Pip reach zone 30 in 15 to 31 hours (now 29 to 43), and their
+  longest stall before zone 35 falls from up to 19 hours to 5 to 10 hours. The casual Wren and Pip reach zone 30 on day
+  30 and 34 (now never in 60 days). Spreading the Attack milestones, first proposed with them, is dropped: it was a
+  hidden power buff. Tobin needs his own look (section 6).
 
 ## 1. How it was measured
 
@@ -41,9 +42,9 @@ again on `--seed 42`. All runs use the sim's mixed policy: fight 10 minutes, gat
 the camp, train the best value per gold, challenge the zone boss when it is ready. The casual's skill is the
 `casual` player of `node tools/sim.mjs --report turns` (parry 0.25, dodge 0.5, Perfect 0.1, Good 0.4), played the way
 `turnCombatSample` plays it, through a scratch copy of `tools/sim.mjs` (`LF_PROFILE=casual`, a patch to `turnPlayer`,
-not committed; section 8). A 15-minute probe (`--evalfile`) logged zone, level, gold, Training, gear and wipes.
-78 runs in all (the first 9 casual runs used a cruder skill model and are replaced). Tobin's late pass (PR #49)
-merged after them, so his rows predate it.
+not committed; section 9). A 15-minute probe (`--evalfile`) logged zone, level, gold, Training, gear and wipes.
+87 runs in all (the first 9 casual runs used a cruder skill model and are replaced). Tobin's late pass (PR #49)
+merged after all but the 9 card 1 runs of section 5, so his other rows predate it.
 
 The sim's own turn player never presses an ability's timing ring, so every timed ability lands as a Miss (70%) for
 the good and marathon players. They keep it, because the build card re-measures with the unchanged tool. One check with
@@ -120,15 +121,19 @@ on the climb; no stall in these runs waits on them.
 
 ## 4. The top three stalls, and one fix each
 
+Fixes 1 and 2 are card 1. Fix 3 is card 2's, re-derived, after the red team and judge (section 8).
+
 ### Stall 1: hero levels stop in Fungal Deep and Quarry Ruins (zones 20 to 29)
 
 - **Measured:** good player, zone 20 to zone 30 takes 23 to 37 hours (Wren, Pip); Tobin never gets there. Casual: from zone 25,
   Wren needs 40 days for three more zones and Pip 10 days for two; Tobin needs 36 days for one. At the wall Training equals the hero's level and gold piles up (Wren: 22,000 to 52,000
   unspent from hour 19 to hour 27 of the marathon).
 - **Cause:** foe HP x1.42 a zone needs about two hero levels a zone; each level costs x1.3 more XP than the last.
-- **Fix:** past level 25, each level costs x1.15 more XP instead of x1.3. Lv 35 then needs 33,000 XP, not 112,000; Lv 40
-  needs 66,000, not 417,000.
-- **Code:** `xpNeed` in `src/js/40-rules.js` (one line). Anything that prints the XP bar reads `xpNeed`.
+- **Fix:** from Lv 26 to 40, each level costs x1.15 more XP instead of x1.3; past 40 it is x1.3 again, from the lower
+  Lv 40 price. Lv 35 then needs 33,000 XP, not 112,000; Lv 40 needs 66,000, not 417,000; Lv 45 needs 246,000, not
+  1.55 million. (First proposed for every level past 25; the judge limited it to the base-class levels, section 8.)
+- **Code:** `xpNeed` in `src/js/40-rules.js` (one line; the 1.15 and the bend at 40 go in `PACE`). Anything that prints
+  the XP bar reads `xpNeed`.
 - **Save impact:** none. `S.L` and `S.xp` keep their meaning; only future levels get cheaper. No catch-up lump: a hero
   keeps the XP they hold.
 - **Must ship with fix 2.** Alone it moves the wall to gold: in all three XP-only runs Wren and Pip reached Lv 39 to 50
@@ -144,8 +149,9 @@ on the climb; no stall in these runs waits on them.
 - **Fix:** Training prices rise x1.18 a level from Lv 20 to 40 instead of x1.28. One level of all four moves then costs
   14,700 at Lv 35 (now 49,800) and 33,600 at Lv 40 (now 171,000): about 2 to 5 hours of gold.
 - **Code:** `ECON.train.r2` in `src/js/21w-data-econ.js` (one number). Side effect: Lv 41+ prices compound from the Lv 40
-  price, so Ascended Training gets about 5x cheaper too. No run reached the Proving, so that part is unmeasured. Default
-  for the build: accept it, and let the Training overhaul (DECISIONS, 2026-10-02) set the Ascended prices.
+  price (`trainCost`, `r3` 1.15), so Ascended Training gets 5.09x cheaper at every level. No run reached the Proving, so
+  that part is unmeasured. The ruling: accept it, keep `r3`, measure it with an Ascending run, and let the Training
+  overhaul (DECISIONS, 2026-10-02) set the Ascended prices.
 - **Save impact:** none (prices only).
 
 ### Stall 3: Attack milestones make walls, then cliffs
@@ -155,13 +161,17 @@ on the climb; no stall in these runs waits on them.
   1.0 hours (seeds 41, 42). The region boss should be a big moment (DECISIONS); here it is a speed bump at the end of a
   long wait.
 - **Cause:** past Lv 25, Attack is x2 at each fifth level and about x1.07 between, while foe HP grows evenly.
-- **Fix:** spread each milestone over its five levels: x2^(1/5), about x1.15, every level past 25, and x1.7^(1/5) before.
-  Power at every fifth level stays exactly as today; it only rises sooner in between.
+- **Fix (card 2, not card 1):** spread each milestone over its five levels with steps re-derived so that average Attack
+  over each five levels stays as today. The first proposal here (x2^(1/5), about x1.15, every level past 25, and
+  x1.7^(1/5) before) kept power equal only at the fifth levels and raised it up to x1.74 between them (x1.53 before 25).
+  Foe HP does not read the Attack curve, so that was a power buff against every tuned combat band; the judge dropped it
+  (section 8). Measure the re-derived spread with card 2, after card 1 lands.
 - **Code:** `PACE.atkEvery`, `atkX`, `atkX2` in `src/js/40-rules.js`, `SOLO_TUNE.train.abX`, `abX2` in
-  `src/js/24b-data-solo.js`, and the Training card's "Lv 35: hits x2 harder" line in `src/js/55-training.js` (it should
-  say "+15% a level"). The ability milestones (cooldown, Stun and so on, `SOLO_TUNE.train.every`) stay every fifth level.
+  `src/js/24b-data-solo.js`, and the Training card's "Lv 35: hits x2 harder" line in `src/js/55-training.js`. The
+  ability milestones (cooldown, Stun and so on, `SOLO_TUNE.train.every`) stay every fifth level.
 - **Save impact:** none.
-- **Alone it does nothing** (one seed: Wren slower, Pip faster, Tobin the same). It pays only once levels and gold flow.
+- **The first proposal alone** moved Wren's zone 30 from 30.2 to 46.2 hours and Pip's from 42.5 to 29.3 (one seed): far
+  more than the noise line, in both directions.
 
 ## 5. The fixes measured together
 
@@ -172,34 +182,39 @@ Good player, two seeds (41 / 42). Same seeds and policy as section 2.
 | Today | Wren | 30.2 / 29.3 h | 30.5 / 30.9 h | 6.5 / 12.0 h | 3 / 1 | zone 44 / 43 |
 | Today | Pip | 42.5 / 42.7 h | not reached | 19.1 / 8.3 h | 4 / 8 | zone 30 / 30 |
 | Today | Tobin | not reached | not reached | 16.7 / 11.8 h | 4 / 5 | zone 27 / 27 |
-| Fixes 1 + 2 | Wren | 23.2 / 14.7 h | 37.9 / 26.0 h | 10.8 / 9.2 h | 3 / 1 | zone 42 / 45 |
-| Fixes 1 + 2 | Pip | 30.7 / 21.2 h | 46.5 / 30.4 h | 7.8 / 5.1 h | 7 / 3 | zone 41 / 43 |
-| Fixes 1 + 2 | Tobin | not reached | not reached | 14.8 / 17.5 h | 5 / 4 | zone 27 / 27 |
-| **Fixes 1 + 2 + 3** | Wren | 19.5 / 19.0 h | 21.5 / 30.2 h | 3.2 / 5.1 h | 1 / 2 | zone 47 / 44 |
-| **Fixes 1 + 2 + 3** | Pip | 23.4 / 20.3 h | 41.2 / 30.9 h | 9.5 / 4.9 h | 3 / 2 | zone 41 / 44 |
-| **Fixes 1 + 2 + 3** | Tobin | 47.5 h / not reached | not reached | 11.5 / 15.5 h | 7 / 4 | zone 31 / 27 |
-| + even foe HP (option) | Wren | 16.5 / 17.8 h | 24.2 / 31.2 h | 3.6 / 6.2 h | 1 / 3 | zone 45 / 47 |
-| + even foe HP (option) | Pip | 16.5 / 12.5 h | 33.7 / 26.1 h | 8.3 / 5.3 h | 3 / 2 | zone 39 / 45 |
-| + even foe HP (option) | Tobin | 37.0 / 37.0 h | not reached | 11.3 / 13.6 h | 5 / 5 | zone 33 / 31 |
+| **Card 1: fixes 1 + 2** | Wren | 23.2 / 14.7 h | 37.7 / 26.0 h | 10.1 / 9.2 h | 3 / 1 | zone 42 / 45 |
+| **Card 1: fixes 1 + 2** | Pip | 30.7 / 21.2 h | 46.5 / 30.4 h | 7.8 / 5.1 h | 7 / 3 | zone 38 / 43 |
+| **Card 1: fixes 1 + 2** | Tobin | not reached | not reached | 15.8 / 18.8 h | 5 / 4 | zone 27 / 27 |
+| Fixes 1 + 2 + 3 (first proposal) | Wren | 19.5 / 19.0 h | 21.5 / 30.2 h | 3.2 / 5.1 h | 1 / 2 | zone 47 / 44 |
+| Fixes 1 + 2 + 3 (first proposal) | Pip | 23.4 / 20.3 h | 41.2 / 30.9 h | 9.5 / 4.9 h | 3 / 2 | zone 41 / 44 |
+| Fixes 1 + 2 + 3 (first proposal) | Tobin | 47.5 h / not reached | not reached | 11.5 / 15.5 h | 7 / 4 | zone 31 / 27 |
+| 1 + 2 + 3 + even foe HP | Wren | 16.5 / 17.8 h | 24.2 / 31.2 h | 3.6 / 6.2 h | 1 / 3 | zone 45 / 47 |
+| 1 + 2 + 3 + even foe HP | Pip | 16.5 / 12.5 h | 33.7 / 26.1 h | 8.3 / 5.3 h | 3 / 2 | zone 39 / 45 |
+| 1 + 2 + 3 + even foe HP | Tobin | 37.0 / 37.0 h | not reached | 11.3 / 13.6 h | 5 / 5 | zone 33 / 31 |
+
+The card 1 rows ran with the XP change limited to Lv 26 to 40 (the ruling), on the integration branch after Tobin's late
+pass (PR #49). XP eased past every level from 25 gave the same hours to zone 35 on both seeds (no hero passed Lv 42 by
+then), and Tobin's early zones did not change with PR #49.
 
 Casual player (45 minutes a day, seed 41), zone 30 and zone 35 by active hours and calendar day:
 
 | Change | Wren | Pip | Tobin |
 |---|---|---|---|
 | Today | zone 30 not reached; zone 28 on day 55 | zone 30 not reached; zone 27 on day 37 | zone 30 not reached; stuck on zone 24 from day 16 to 52 |
-| Fixes 1 + 2 + 3 | zone 30 at 19.4 h (day 26); zone 35 at 30.8 h (day 42); zone 42 by day 60 | zone 30 at 29.4 h (day 40); zone 33 by day 60 | zone 27 by day 60 |
-| + even foe HP (option) | zone 30 at 10.4 h (day 14); zone 35 at 24.2 h (day 33); zone 45 at 42.1 h (day 57) | zone 30 at 13.3 h (day 18); zone 35 at 38.7 h (day 52) | zone 30 at 31.4 h (day 42) |
+| **Card 1: fixes 1 + 2** | zone 30 at 22.4 h (day 30); zone 35 at 30.6 h (day 41) | zone 30 at 25.4 h (day 34); zone 31 by day 60 | zone 27 by day 60 |
+| Fixes 1 + 2 + 3 (first proposal) | zone 30 at 19.4 h (day 26); zone 35 at 30.8 h (day 42); zone 42 by day 60 | zone 30 at 29.4 h (day 40); zone 33 by day 60 | zone 27 by day 60 |
+| 1 + 2 + 3 + even foe HP | zone 30 at 10.4 h (day 14); zone 35 at 24.2 h (day 33); zone 45 at 42.1 h (day 57) | zone 30 at 13.3 h (day 18); zone 35 at 38.7 h (day 52) | zone 30 at 31.4 h (day 42) |
 
 Marathon player (50 hours in one go, seed 41), zone reached and when:
 
 | Change | Wren | Pip | Tobin |
 |---|---|---|---|
 | Today | zone 29 (zone 25 at 27.2 h) | zone 27 | zone 27 |
-| Fixes 1 + 2 + 3 | zone 35 at 47.2 h (zone 30 at 39.9 h) | zone 28 | zone 27 |
-| + even foe HP (option) | zone 45 at 49.9 h (zone 30 at 18.5 h) | zone 31 (zone 30 at 27.4 h) | zone 34 (zone 30 at 34.0 h) |
+| Fixes 1 + 2 + 3 (first proposal) | zone 35 at 47.2 h (zone 30 at 39.9 h) | zone 28 | zone 27 |
+| 1 + 2 + 3 + even foe HP | zone 45 at 49.9 h (zone 30 at 18.5 h) | zone 31 (zone 30 at 27.4 h) | zone 34 (zone 30 at 34.0 h) |
 
 The marathon player's gear lags a tier (no away gathering), so fixes 1 to 3 help Wren only; even foe HP is what moves
-Pip and Tobin there.
+Pip and Tobin there. Card 1 alone was not run as a marathon; the build card's `health.mjs --long --compare` does that.
 
 Single changes, good player, seed 41 (zone 30 hours for Wren / Pip / Tobin, then zone after 51 h):
 
@@ -218,13 +233,14 @@ changes ran on one seed; the combined ones on two.
 
 What the combined runs leave:
 
-- **Wraithmarsh bosses (zones 30 to 34) become the next wall:** a stall of 3 hours or more there in 10 of 12 combined
-  runs, the longest 9.5 hours for Wren and Pip and 11 to 14 hours for Tobin. The boss pass sets their HP at x3.6 there
-  (`TURN_TUNE.boss.hpX`, x2.6 at zone 25). Measure again after fixes 1 to 3 land before touching it.
+- **Wraithmarsh bosses (zones 30 to 34) become the next wall:** a stall of 5 to 10 hours there in all four card 1 runs
+  of Wren and Pip, and a stall of 3 hours or more in 10 of 12 runs with fix 3 or even foe HP added (11 to 14 hours for
+  Tobin). The boss pass sets their HP at x3.6 there (`TURN_TUNE.boss.hpX`, x2.6 at zone 25). Measure again after card 1
+  lands before touching it.
 - **Training reaches its base-class cap of 40** in the combined runs. The sim never takes the Proving (`--evo` was not
   set), so zones past 35 are slower here than for a player who Ascends.
 - **"Even foe HP"** (`TURN_TUNE.refAtk` in `src/js/59k-turn.js` re-pointed so foe HP grows x1.31 a zone from 15 to
-  34, the same HP at 15 and at 34) helps the players fixes 1 to 3 leave behind: Tobin (zone 30 at 37 hours on both
+  34, the same HP at 15 and at 34) helps the players the other fixes leave behind: Tobin (zone 30 at 37 hours on both
   seeds, today never), the casual (zone 30 on day 14 and 18, not 26 and 40) and the marathon player (above). It adds
   little for a good Wren or Pip, makes zones 20 to 27 quick (Pip reaches zone 25 in 8 to 10 hours, today 20 to 31) and
   piles the wait onto the Wraithmarsh bosses (Pip, marathon: 19 hours at zone 31). So it is the second card, measured
@@ -248,25 +264,72 @@ What the combined runs leave:
 
 ## 7. Targets for the build card
 
-Card 1: three changes (fixes 1, 2 and 3 together, since 1 alone moves the wall and 3 alone does nothing). Card 2,
-after card 1 is measured: even foe HP from zone 15 to 34 with the Wraithmarsh boss HP (section 5).
+Card 1, per the judge ruling (section 8): fixes 1 and 2 together, since fix 1 alone moves the wall to gold. XP x1.15 a
+level from Lv 26 to 40 and x1.3 again past 40 (`xpNeed`, with the 1.15 and the bend in `PACE`); `ECON.train.r2` 1.18.
+Attack milestones unchanged. Card 2, after card 1 is measured: even foe HP from zone 15 to 34 with the Wraithmarsh boss
+HP, and a milestone spread that keeps today's average power if one is still needed (section 5).
 
-- **Predicted (good player, `--days 17 --checkins 8,13,19 --session 60 --first 60`, seeds 41 and 42):** zone 30 in
-  18 to 25 active hours for Wren and Pip (now 29 to 43); zone 35 for both in under 45 hours (Pip today: never); the
-  longest stretch without a new zone before zone 35 under 10 hours for Wren and Pip (now up to 19).
-- **Health tool:** `node tools/health.mjs --long --compare` will move `zoneEnd`, `lastNewZoneHour` and `stallsOver1h`
-  outside their bands (the point of the change); the build card accepts the new baseline with `--write-baseline` and
-  says so in the PR.
-- **Predicted (casual, seed 41):** zone 30 within 45 days of 45 minutes for Wren and Pip (measured: day 26 and 40; today: not in 60 days).
-- **Missed if:** Pip's zone 30 is still over 30 hours on both seeds, or Wren or Pip has a stall over 12 hours before
-  zone 35, or zone 10 moves by more than 15 minutes. Zone 20 comes about an hour sooner (cheaper Training from Lv 20);
-  that is expected.
-- **Switch off:** each change is one constant; put the old numbers back (x1.3 XP, `r2` 1.28, `atkEvery` 5 with `atkX`
-  1.7, `atkX2` 2, `abX` 1.55, `abX2` 1.8). No save field changes, so undoing it is free.
+- **Predicted (good player, `--days 17 --checkins 8,13,19 --session 60 --first 60`):** zone 30 in 15 to 31 active hours
+  for Wren and Pip (now 29 to 43); zone 35 for both in under 47 hours (Pip today: never); the longest stretch without a
+  new zone before zone 35 under 11 hours for Wren and Pip (now up to 19). Tobin unchanged (zone 27).
+- **Predicted (casual):** zone 30 within 45 days of 45 minutes for Wren and Pip (measured: day 30 and 34; today: not in
+  60 days).
+- **Measure:** the good player on seeds 41, 42, 43 and 44, all three heroes, before and after; the casual on seeds 41 and
+  42, all three heroes, with the casual profile first committed to `tools/sim.mjs` as a flag (section 9 has the patch);
+  `node tools/health.mjs --long --compare`, accepting the new baseline with `--write-baseline` and saying so in the PR
+  (`zoneEnd`, `lastNewZoneHour` and `stallsOver1h` will leave their bands; that is the point); and an Ascending run,
+  Wren `--evo venomstalker` and Pip `--evo warlock`, seed 41, before and after, for Lv 40 to 50 and zones 36 to 45.
+- **Missed if:** Wren's or Pip's median hours to zone 30 over the four seeds is above 28; Wren or Pip has a stall over
+  12 hours before zone 35 on any seed; zone 10 moves by more than 15 minutes; Tobin ends below zone 27 on any seed; the
+  casual Wren or Pip does not reach zone 30 in 60 days; in the Ascending run, Lv 41 takes more than twice as long as
+  Lv 40, or Grey Shingle (zones 36 to 41) takes under an hour.
+- **Switch off:** put the old numbers back (x1.3 XP at every level, `r2` 1.28). No save field changes, so undoing it is
+  free. XP a hero already holds may become a level on their next gain; that is fine.
 - **Gate:** economy targets and the pacing curve are `judge` calls under the playbook (the card said gate-cal, written
-  before Autopilot's rules). Not in the "Cal only" column.
+  before Autopilot's rules). This report ran the red team and the judge (section 8); the build card carries the ruling
+  and its Opus balance sign-off. Not in the "Cal only" column.
 
-## 8. Reproduce
+## 8. Red team and judge
+
+The fix choice is a `judge` call (economy targets and the pacing curve). A red-team worker (Sonnet medium) argued
+against sections 4 to 7 as first written; an Opus high judge worker checked its code claims, recomputed the curves and
+ruled. Section 7 follows the ruling.
+
+**Red team, in short** (serious first):
+
+- Fix 3 is a power buff, not a reshape: Attack is x1.15 to x1.74 higher on four of every five levels past 25 (and up
+  to x1.53 before 25) against `atkSteps` (`40-rules.js`), and foe HP does not read the Attack curve, so it lifts every
+  tuned combat band. Alone it moved Wren's zone 30 by 16 hours on one seed.
+- Fix 2 reprices Ascended Training unmeasured: `trainCost` compounds `r3` from the Lv 40 price (`55-training.js`), so
+  every price from Lv 40 on falls 5.09x. DECISIONS keeps Training as it is until its overhaul.
+- Fix 1 as written also makes Ascended levels far cheaper (Lv 45: 133,000 XP, today 1.55 million), so both brakes on
+  Ascended Training drop at once, in a part of the game the bot never plays.
+- The wall moves to the Wraithmarsh bosses rather than going away, and Tobin barely moves.
+- The evidence is thin: casual on one seed, the casual skill in a scratch patch, fix 1 run as a `gainXp` patch (the
+  real `xpNeed` is a `const`, so `--eval` cannot replace it), no Ascending run.
+- Minor: the Lv 35 "hits x2 harder" moment is lost; single levers ran on one seed.
+
+**Judge ruling (Opus high): option B.** Ship fixes 1 and 2 with fix 1 limited to the base-class levels; drop fix 3.
+
+- XP: x1.3 a level to Lv 25, x1.15 from Lv 26 to 40, x1.3 again past 40, growing from the lower Lv 40 price, so the
+  curve has no jump. `Math.floor(15 * Math.pow(1.3, Math.min(S.L, 25) - 1 + Math.max(0, S.L - 40)) *
+  Math.pow(1.15, Math.max(0, Math.min(S.L, 40) - 25)))`, with the 1.15 and the bend at 40 in `PACE`. Lv 35: 32,938 XP;
+  Lv 40: 66,252; Lv 45: 245,989 (today 1.55 million).
+- Training: `ECON.train.r2` 1.28 to 1.18; `bend2` 40 and `r3` 1.15 stay, so Ascended prices keep today's growth from a
+  lower start (about 5x lower). Keeping the old Lv 41+ prices instead would put a 5x jump at Lv 41. Above 40 the x1.3
+  XP still holds Training back (Training cannot pass the hero's level). The Training overhaul sets Ascended prices later.
+- Attack milestones: unchanged. The Lv 30 and Lv 35 "hits x2 harder" moments stay. A re-derived spread that keeps
+  today's average power can go with card 2 if it is still needed.
+- Scores: Compass fit 4 (Q2 progress walls, P9 a steady rhythm, keeps the milestone moments); evidence confidence 3;
+  impact on walls 3; cost 5; risk 4.
+- Not A: fix 3 buffs power under a tuned combat model. Not C (even foe HP first): alone it left Pip at 39 hours and
+  Tobin short of zone 30, and it moves the wait onto the Wraithmarsh bosses; it stays card 2.
+- Red-team points accepted: the fix 3 buff, the Ascended XP, thin evidence, other levers as input for card 2. Partly
+  accepted: the Ascended prices (real, but keep the growth rate and measure it), the wall moving (card 1 still cuts the
+  largest wall on every hero). Rejected: the level gates going vestigial (the Proving opens on beating the Fenmother,
+  and the cap of 40 stays); the DECISIONS line on catch-up XP (it is about boosts for new heroes, not the base curve).
+
+## 9. Reproduce
 
 ```text
 # today, good player (also --seed 42), one hero
@@ -276,8 +339,12 @@ node tools/sim.mjs --days 17 --checkins 8,13,19 --session 60 --first 60 --class 
 # a change: add --eval "<code>" with one of the snippets below
 ```
 
+`xpNeed` is a `const`, so the XP snippets replace `gainXp` with the same formula (the level-up toast is skipped; the
+level, XP and events are the same).
+
 | Change | `--eval` snippet |
 |---|---|
+| Card 1 XP (x1.15 from Lv 26 to 40) | `gainXp = function (n, quiet) { S.xp += n * mod("xp"); const need = () => Math.floor(15 * Math.pow(1.3, Math.min(S.L, 25) - 1 + Math.max(0, S.L - 40)) * Math.pow(1.15, Math.max(0, Math.min(S.L, 40) - 25))); while (S.xp >= need()) { S.xp -= need(); S.L++; emit("levelup", { L: S.L, quiet: !!quiet }); } }` |
 | XP x1.15 a level past 25 | `gainXp = function (n, quiet) { S.xp += n * mod("xp"); const need = () => Math.floor(15 * Math.pow(1.3, Math.min(S.L, 25) - 1) * Math.pow(1.15, Math.max(0, S.L - 25))); while (S.xp >= need()) { S.xp -= need(); S.L++; emit("levelup", { L: S.L, quiet: !!quiet }); } }` |
 | Training prices x1.18 | `ECON.train.r2 = 1.18` |
 | Milestones spread | `PACE.atkEvery = 1; PACE.atkX = Math.pow(1.7, 0.2); PACE.atkX2 = Math.pow(2, 0.2); SOLO_TUNE.train.abX = Math.pow(1.55, 0.2); SOLO_TUNE.train.abX2 = Math.pow(1.8, 0.2)` |
