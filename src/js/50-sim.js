@@ -104,6 +104,7 @@ function kill() {
 function killPack(m, g) {
   const z = S.zone, tier = zoneTier(z);
   gainXp(m.xp);
+  if (typeof soloBenchXp === 'function') soloBenchXp(m.xp * mod('xp'));   // hero-progression-rework: benched heroes earn a share
   let ess = m.boss ? 3 : 0;
   const ch = essChance(); ess += Math.floor(ch) + (Math.random() < ch % 1 ? 1 : 0);
   if (Math.random() < gear().essExtra) ess++;
@@ -133,7 +134,7 @@ function gainXp(n, quiet) {
     S.xp -= xpNeed(); S.L++; emit('levelup', { L: S.L, quiet: !!quiet });
     if (quiet) continue;
     addFloat('LEVEL UP', '#6FCB6A', true, 0.27, 0.3);
-    emit('toast', { key: 'level', msg: `Level ${S.L}. Your hero hits ${Math.round(PACE.heroLv * 100)}% harder.`, kind: 'good', prio: 'high', L: S.L });   // W1-B: every 10th level pops
+    emit('toast', { key: 'level', msg: attrOn() ? `Level ${S.L}. ${HERO_TUNE.perLevel} attribute points to spend.` : `Level ${S.L}. Your hero hits ${Math.round(PACE.heroLv * 100)}% harder.`, kind: 'good', prio: 'high', L: S.L });   // W1-B: every 10th level pops
   }
 }
 function gainSkill(k, n, quiet) {

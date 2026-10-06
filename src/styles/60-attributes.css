@@ -1,0 +1,27 @@
+/* 60-attributes: Hero tab > Attributes (75-attributes-ui.js; docs/design/hero-progression-build.md section 2).
+   A head line, four rows (the points in each, its line, what it gives, +1 and +5), Reset points, a note, and what the level gives. */
+.at-head { margin: 0; font: 600 calc(15px * var(--display-k, 1))/1.25 var(--display); color: var(--gold); }
+.at-list { display: grid; gap: 8px; }
+.at-row { gap: 10px; }
+.at-pts { width: 44px; min-height: 44px; display: grid; place-content: center; justify-items: center; gap: 1px; padding: 2px; background: #120D18; box-shadow: inset 0 0 0 1px #6B5320; }
+.at-pts b { font: 700 calc(21px * var(--display-k, 1))/1 var(--display); color: var(--gold); font-variant-numeric: tabular-nums; }
+.at-pts small { font-size: 10px; line-height: 1; color: var(--muted); }
+.at-body { min-width: 0; }
+.at-fx { margin-top: 2px; font-size: 12.5px; color: var(--gold); }
+.at-btns { display: flex; gap: 6px; }
+.at-add { min-width: 44px; min-height: 44px; padding: 0 8px; border: 2px solid #0B0810; cursor: pointer; background: var(--ember); color: #1A1420;
+  font: 700 calc(16px * var(--display-k, 1)) var(--display); box-shadow: inset 0 2px 0 rgba(255,255,255,.3), inset 0 -3px 0 var(--ember-deep); }
+.at-add:active:not(:disabled) { transform: translateY(2px); box-shadow: inset 0 -1px 0 var(--ember-deep); }
+.at-add:disabled { background: var(--panel-2); color: var(--muted); box-shadow: inset 0 -3px 0 #1a1420; cursor: default; }
+.at-pts.at-ok { animation: at-ok .45s steps(3); }
+@keyframes at-ok { 0% { box-shadow: inset 0 0 0 1px #6B5320, 0 0 0 0 var(--gold); } 50% { box-shadow: inset 0 0 0 1px #6B5320, 0 0 0 3px var(--gold); } 100% { box-shadow: inset 0 0 0 1px #6B5320, 0 0 0 0 transparent; } }
+.at-reset { min-height: 44px; padding: 0 12px; border: 2px solid #0B0810; cursor: pointer; background: var(--panel-2); color: var(--bone);
+  font: 600 calc(15px * var(--display-k, 1)) var(--display); box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 2px 0 #0B0810; }
+.at-reset:disabled { opacity: .45; cursor: default; }
+.at-reset.armed { background: #5A2A30; color: #FFD9C2; box-shadow: inset 0 0 0 2px #E0524F, 0 2px 0 #0B0810; }
+.at-moves { display: grid; gap: 4px; padding: 8px 10px; background: #1B1424; border: 2px solid #0B0810; outline: 2px solid #3A2F47; outline-offset: -4px; }
+.at-mh { margin: 0 0 2px; font: 600 12px var(--body); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.at-mv { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; font-size: 14px; }
+.at-mv b { font: 600 calc(14px * var(--display-k, 1)) var(--display); color: var(--bone); }
+.at-mn { color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { .at-pts.at-ok { animation: none; } }

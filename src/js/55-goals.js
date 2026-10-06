@@ -107,14 +107,19 @@ var forgeGoalPicks = 0;
   const heroNext = () => {
     const t = typeof trainNext === 'function' && soloHero() ? trainNext() : null; return t ? { u: { id: t.move, name: trainName(t.move), ic: ['sword', '#A9B1BD'] }, cost: t.cost, lv: t.lv, train: 1 } : null;
   };
+  // hero-progression-rework: with attributes on there is no gold Training; the goal says there are points to spend
+  const attrLive = () => typeof attrOn === 'function' && attrOn();
+  const attrFree = () => { const k = typeof soloHero === 'function' ? soloHero() : null; return attrLive() && k ? attrPoints(k).free : 0; };
   registerGoal({
     // menu audit: a level that costs under 1% of your gold is free power, and ranks high (else it waits its turn)
-    id: 'hero-up', sys: 'hero', prio: () => { const b = heroNext(); return b && b.cost <= S.gold * 0.01 ? 3 : -1; },
-    pct: () => { const b = heroNext(); return b ? need(S.gold, b.cost) : null; },
-    label: () => { const b = heroNext(); if (!b) return ''; const lv = b.lv;
+    id: 'hero-up', sys: 'hero', prio: () => { if (attrLive()) return attrFree() > 0 ? 3 : -1; const b = heroNext(); return b && b.cost <= S.gold * 0.01 ? 3 : -1; },
+    pct: () => { if (attrLive()) return attrFree() > 0 ? 1 : null; const b = heroNext(); return b ? need(S.gold, b.cost) : null; },
+    label: () => { if (attrLive()) { const n = attrFree(); return n > 0 ? `Spend ${n} attribute point${n === 1 ? '' : 's'}` : ''; }
+      const b = heroNext(); if (!b) return ''; const lv = b.lv;
       return S.gold >= b.cost ? `Train ${b.u.name} to Lv ${lv}: ready` : `Train ${b.u.name} to Lv ${lv}: ${fmt(Math.ceil(b.cost - S.gold))} more gold`; },
-    icon: () => { const b = heroNext(); return { ic: b ? b.u.ic : ['sword', '#A9B1BD'] }; },
-    go: () => { const b = heroNext(); return b ? { tab: 'party', view: 'training', sel: `#trainRows .tr-row[data-mv="${b.u.id}"]` } : { tab: 'party', view: 'training' }; }
+    icon: () => { const b = attrLive() ? null : heroNext(); return { ic: b ? b.u.ic : ['sword', '#A9B1BD'] }; },
+    go: () => { if (attrLive()) return { tab: 'party', view: 'attributes', sel: '#attrRows' };
+      const b = heroNext(); return b ? { tab: 'party', view: 'training', sel: `#trainRows .tr-row[data-mv="${b.u.id}"]` } : { tab: 'party', view: 'training' }; }
   });
 
   // Next zone boss: foes left at the frontier, or the boss is ready. "Ready" means you would usually win (59m bossOdds: scratch
@@ -136,13 +141,15 @@ var forgeGoalPicks = 0;
       const b = bossRead(); return !b || b.s === 'ready' ? 1 : b.s === 'next' ? 0.99 : Math.max(0.01, Math.min(0.99, b.win / BOSS_ODDS.ready)); },
     label: () => { if (S.zone !== S.maxZone) return `Go back to Zone ${S.maxZone} and push on`;
       if (!bossReady()) return `${ZONE_FIGHTS - S.kills} more fights to the Zone ${S.maxZone} boss`;
-      if (bossHeld()) return `The Zone ${S.maxZone} boss beat you. Train, then try again`;
+      if (bossHeld()) return attrLive() ? `The Zone ${S.maxZone} boss beat you. Fight on to level up, then try again` : `The Zone ${S.maxZone} boss beat you. Train, then try again`;
       const b = bossRead(), z = S.maxZone;
       return !b || b.s === 'ready' ? `Boss ready in Zone ${z}` : b.s === 'next' ? `The Zone ${z} boss is next`
-        : b.s === 'close' ? `Zone ${z} boss: a close fight. Train to be safe` : `Zone ${z} boss is too strong. Train first`; },
+        : b.s === 'close' ? (attrLive() ? `Zone ${z} boss: a close fight` : `Zone ${z} boss: a close fight. Train to be safe`)
+        : attrLive() ? `Zone ${z} boss is too strong for now. Fight on to level up` : `Zone ${z} boss is too strong. Train first`; },
     icon: { ic: ['banner', '#E0524F', { 7: '#FFB347' }] },
     go: () => { const b = bossNow();
-      return b && (b.s === 'close' || b.s === 'weak') ? { tab: 'party', view: 'training' }
+      // attributes on: spare points are the one thing to do first; with none, go to the fight
+      return b && (b.s === 'close' || b.s === 'weak') && (!attrLive() || attrFree() > 0) ? (attrLive() ? { tab: 'party', view: 'attributes', sel: '#attrRows' } : { tab: 'party', view: 'training' })
         : { tab: 'adv', sel: '#gateBtn', fn: () => { if (S.zone !== S.maxZone) setZone(S.maxZone); } }; }
   });
 

@@ -6,7 +6,9 @@
 // Exposed names:
 //   state    soloHero() -> 'wren' | 'tobin' | 'pip' | null; soloPick(key, { now }) -> bool (the first choice, or
 //            the free switch at camp: gold, gear and camp are shared, each hero keeps its own level and XP);
-//            soloLevels() -> { key: { L, xp } } (each hero's level; the one playing reads S.L live)
+//            soloLevels() -> { key: { L, xp } } (each hero's level; the one playing reads S.L live);
+//            soloBenchXp(n) (hero-progression-rework: n fight XP x HERO_TUNE.bench to every other playable hero's record, with
+//            level-ups; 50-sim killPack calls it; a switch lifts the arriving hero to roadLevel(), event heroJoin { key, L, lifted })
 //   buttons  soloAttack() -> '' | 'hit' | 'finisher' | 'interrupt' | 'cd'; soloParry(forgive) -> 'parry' | 'miss' | 'locked';
 //            soloDodge(forgive) -> 'dodge' | 'perfect' | 'early' | 'miss' | 'cd'; soloAbility({ slot, auto }) -> bool
 //   slots    soloAbilities(hero) -> unlocked ids; soloEquipped() -> [id | null] x 3 (the playing hero's, saved in S.solo.eq);
@@ -20,7 +22,7 @@
 //            Auto while the page is hidden, soloWake() ends that; neither changes the toggle. Opening the picker or a
 //            long press does not count as a press.
 //   stats    SOLO_STATS { attacks, parries, misses, dodges, early, counters, casts, auto, heavies, trash, hand }
-// Events: soloActive { on } (active <-> idle), soloHero { key, from }, soloAttack { kind }, soloParry { res }, soloDodge { res }, soloCounter { foe, dmg },
+// Events: heroJoin { key, L, lifted }, benchLevel { key, L }, soloActive { on } (active <-> idle), soloHero { key, from }, soloAttack { kind }, soloParry { res }, soloDodge { res }, soloCounter { foe, dmg },
 //   ability { cls: 'solo', id, name, auto } (the 55-party event every reader already listens to).
 // Save: registerState('solo', { v, hero, lv: { key: { L, xp } }, eq: { key: [id | null] x 3 }, zn: { key: zone }, auto }).
 //   zn: the zone each hero was fighting in when you switched away (W1-D): switching back returns you there.
@@ -31,7 +33,7 @@
 var soloPickerOpen = () => false;   // 75-solo-ui: the ability picker is open (90-boot waits)
 var turnPaused = () => false;   // 59k: the page is hidden, so a turn fight waits
 var soloActive = () => false, soloTouch = () => {}, soloGoIdle = () => {}, soloWake = () => {}, soloSetAuto = () => true, soloAuto = () => true;
-var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbility, soloAbilityInfo, soloButtons, soloAbilities, soloEquipped, soloEquip,
+var soloHero, soloPick, soloLevels, soloBenchXp, soloAttack, soloParry, soloDodge, soloAbility, soloAbilityInfo, soloButtons, soloAbilities, soloEquipped, soloEquip,
   soloTakenX, soloCounter, SOLO_STATS;
 
 {
@@ -61,6 +63,23 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
     return out;
   };
 
+  // hero-progression-rework: a won fight gives every other playable hero HERO_TUNE.bench of its XP (50-sim killPack; not away
+  // time), at that hero's own level's price. The benched hero's record is s.lv[k]; no toast, an event a level.
+  soloBenchXp = n => {
+    if (!attrOn() || !(n > 0) || typeof heroCanPlay !== 'function') return;
+    const s = Sx(), playing = soloHero();
+    for (const k of SOLO_ORDER) {
+      if (k === playing || !heroCanPlay(k)) continue;
+      if (!s.lv || typeof s.lv !== 'object') s.lv = {};
+      const rec = s.lv[k] || (s.lv[k] = { L: 1, xp: 0 });
+      rec.xp = (+rec.xp || 0) + n * HERO_TUNE.bench;
+      for (let i = 0; i < 500 && rec.xp >= xpNeed(rec.L); i++) {
+        rec.xp -= xpNeed(rec.L); rec.L++;
+        emit('benchLevel', { key: k, L: rec.L });
+      }
+    }
+  };
+
   // ---- choosing and switching ----
   soloPick = (key, opts) => {
     const h = SOLO_HEROES[key], o = opts || {};
@@ -69,8 +88,11 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
     if (from === key && chosen) return true;
     // each hero keeps its own level and XP; the lamp (gold, gear, camp, the road) is shared
     if (from && SOLO_HEROES[from]) s.lv[from] = { L: S.L, xp: S.xp };
+    let lifted = false;
     if (from && from !== key) {
       const r = s.lv[key]; S.L = r ? Math.max(1, r.L | 0) : 1; S.xp = r ? Math.max(0, +r.xp || 0) : 0;
+      // hero-progression-rework: a hero who takes the lamp joins at the road's level at least, with an empty XP bar (a hero above it keeps theirs)
+      if (attrOn()) { const floor = roadLevel(); if (S.L < floor) { S.L = floor; S.xp = 0; lifted = true; } }
       // W1-D (playtest-2 P2-7): the road belongs to the lamp, but each hero remembers where they stood. Leaving hero A saves A's
       // zone; arriving as B goes back to B's own zone (never past the furthest zone cleared). A hero with no zone kept
       // (never played) stays where you are. Pace (55-pace) then walks a weaker hero down to a zone they can farm and
@@ -89,7 +111,8 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
     atkT = 0; dodgeT = 0; parryT = 0; openT = 0; for (const id in cds) cds[id] = 0; readyFor.fill(0);
     if (typeof gearDirty === 'function') gearDirty();
     emit('soloHero', { key, from: from || null });
-    if (from && from !== key) toast(`${nm} takes up the lamp.`, 'good', null, 'normal');
+    if (from && from !== key && attrOn()) emit('heroJoin', { key, L: S.L, lifted });
+    if (from && from !== key) toast(attrOn() && lifted ? `${nm} joins at Lv ${S.L}, the road's level.` : `${nm} takes up the lamp.`, 'good', null, 'normal');
     return true;
   };
   // A tool or an old path that picks a class (chooseBase, chooseClass) plays that class's starter.
@@ -176,7 +199,7 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
         c.done = true;
         if (alive(c.f)) {
           // owner (SOLO2): the counter always crits: the crit multiplier, the crit event, the gear's echo, the crit number
-          const P = heroAtk() * trainCounterX(), cm = critMult();   // W2-A: Parry training: counter damage
+          const P = heroAtk() * trainCounterX() * attrRel('counter'), cm = critMult();   // W2-A: Parry training: counter damage
           let cx = 1 + (gear().counter || 0) / 100;   // W1-C: the Lantern Eater's Fang: counters deal double
           try { const dr = typeof deepActive === 'function' && deepActive() && DW.run(); if (dr && dr.boons && dr.boons.taunt) cx *= 1 + DEEP_BOONS.taunt.v * dr.boons.taunt; } catch (e) {}   // the Deepwell's Parry Drill
           const dmg = cbDamageFoe(c.f, P * T.counterX * aps() * cm * cx, 0, 'phys', unitType('hero'), ST_HEAVY | ST_CRIT);
@@ -242,7 +265,7 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
     const a = abAt(slot);
     if (!a || !p || !fighting() || !heroUp() || cdOf(a) > 0 || !anyFoe()) return false;
     // W2-A: an ability hits with its own Training level (trainAbPow), not the Attack's
-    const P = trainAbPow(a.id) * (auto ? 1 : T.abHandX) * (1 + (gear().abil || 0) / 100), ty = unitType('hero');   // W1-C: the Rattlebone Charm's +% ability damage   // by hand it hits harder (SOLO2)
+    const P = trainAbPow(a.id) * attrRel('ab') * (auto ? 1 : T.abHandX) * (1 + (gear().abil || 0) / 100), ty = unitType('hero');   // W1-C: the Rattlebone Charm's +% ability damage   // by hand it hits harder (SOLO2)
     const tags = ST_AB, TT = T.train, ms = trainMs(a.id);
     if (a.id === 'echo') {
       // a piercing arrow down the lane: every foe, front to back, and a Mark on each

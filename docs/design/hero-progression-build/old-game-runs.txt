@@ -1,0 +1,4 @@
+old-ranger-casual | z10 0.4h L15 | z20 2.7h L25 | z30 - | z35 - | end z 28 L 35 45.0h | gap20-30 9.30h at z28  | wipes 2725 kills 3378
+old-ranger-good | z10 0.4h L16 | z20 5.8h L28 | z30 46.2h L36 | z35 - | end z 31 L 37 51.0h | gap20-30 9.67h at z26 (2.4 zones) | wipes 3734 kills 5415
+old-warden-casual | z10 0.5h L14 | z20 3.5h L26 | z30 - | z35 - | end z 25 L 30 45.0h | gap20-30 20.50h at z24  | wipes 521 kills 1183
+old-warden-good | z10 0.3h L14 | z20 5.2h L27 | z30 - | z35 - | end z 29 L 32 51.0h | gap20-30 17.81h at z27  | wipes 952 kills 1995

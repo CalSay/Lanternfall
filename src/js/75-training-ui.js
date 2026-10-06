@@ -3,6 +3,8 @@
 //     action bar, the name, Lv n / cap, what the next level gives, and Train with its price. x1 / x10 / Max (S.amt, the
 //     same choice the old upgrades used). A note says what caps the moves (the hero's level, or the class stage).
 //   - trainCard(move) -> el: the Training block the action bar's long press shows (75-solo-ui), with its own Train button.
+// hero-progression-rework: with attributes on (HERO_TUNE.training = 0) Training is switched off: the view and its section stay
+// hidden, and trainCard shows the move's name, "from your level" and the number, with one Attributes button (75-attributes-ui).
 // Core: 55-training.js (train, trainInfo, trainPlan, trainMoves). Icons: soloIconURL (75-solo-ui).
 var trainCard = null;
 {
@@ -75,7 +77,8 @@ var trainCard = null;
     }
   }
   {
-    registerView('party', { id: 'training', label: 'Training', order: 20, feature: 'party' });
+    const trainingOn = () => typeof attrOn === 'function' ? !attrOn() : true;
+    registerView('party', { id: 'training', label: 'Training', order: 20, feature: 'party', show: trainingOn });
     registerSection('party', { id: 'training', title: 'Training', view: 'training', feature: 'party', mount: build, update: () => { try { refresh(); } catch (e) { console.error('[lanternfall] training', e); } } });
   }
 
@@ -83,6 +86,23 @@ var trainCard = null;
   // x1 always (a quick press); the Training view has x10 and Max.
   trainCard = mv => {
     const box = el('div', 'tr-card'); box.dataset.mv = mv;
+    // attributes on: no Training. The level gives the number; the points are on the Attributes view.
+    if (typeof attrOn === 'function' && attrOn()) {
+      const top = el('div', 'tr-c-top'), nm = el('b', 'tr-c-lv'), cap = el('small', 'tr-c-cap');
+      top.append(nm, cap);
+      const now = el('div', 'tr-c-now');
+      const more = el('button', 'tr-c-more', 'Attributes'); more.type = 'button';
+      const row = el('div', 'tr-c-row'); row.append(more);
+      box.append(top, now, row);
+      more.addEventListener('click', () => { if (typeof box.onLeave === 'function') box.onLeave(); setTab('attributes'); });
+      box._up = () => {
+        const i = trainInfo(mv);
+        putText(nm, i.name); putText(cap, `from your level (Lv ${i.lv})`);
+        putText(now, i.now ? `${i.now}.` : '');
+      };
+      box._up();
+      return box;
+    }
     const top = el('div', 'tr-c-top'), lv = el('b', 'tr-c-lv'), cap = el('small', 'tr-c-cap');
     top.append(lv, cap);
     const now = el('div', 'tr-c-now'), ms = el('div', 'tr-ms');

@@ -8,7 +8,7 @@
 //
 // encodeSave(obj) -> string                      turn a save object into a code
 // decodeSave(code) -> { ok: true, data } | { ok: false, error }   parse and validate a code
-// validateSave(data) -> { ok: true, data } | { ok: false, error }   pure v5 shape check
+// validateSave(data) -> { ok: true, data } | { ok: false, error }   pure v6 shape check (S.attr: attribute points per hero)
 // summarizeSave(data) -> { name, level, maxZone, region, heroes, savedAt }   short preview
 
 const SAVECODE_HEADER = 'LF1';
@@ -112,7 +112,7 @@ function validateSave(data) {
       seen.delete(v);
     };
     walk(data, 'save', 0);
-    if (data.v !== 5) return { ok: false, error: 'This code is from a different save version. This game accepts v5 saves.' };
+    if (data.v !== 6) return { ok: false, error: 'This code is from a different save version. This game accepts v6 saves.' };
     for (const k of ['L', 'zone', 'maxZone']) int(data[k], k, 1, lim.progression);
     if (data.zone > data.maxZone) fail('zone', 'is beyond the saved frontier');
     num(data.gold, 'gold');
@@ -190,6 +190,18 @@ function validateSave(data) {
       for (const [k, lv] of Object.entries(s.lv || {})) { known(SOLO_HEROES, k, 'solo.lv.hero'); record(lv, 'solo.lv.' + k); int(lv.L, 'solo.lv.level', 1, lim.progression); num(lv.xp, 'solo.lv.xp'); }
       for (const z of Object.values(s.zn || {})) int(z, 'solo.zone', 1, lim.progression);
       for (const tr of Object.values(s.tr || {})) { record(tr, 'solo.training'); for (const n of Object.values(tr)) int(n, 'solo.training.level', 0, lim.progression); }
+    }
+    // hero-progression-rework: attribute points spent, per hero, per attribute (55-attributes)
+    if (data.attr !== undefined) {
+      const at = data.attr; record(at, 'attr');
+      if (at.v !== undefined) int(at.v, 'attr.v', 0, 1000);
+      if (at.pts !== undefined) {
+        record(at.pts, 'attr.pts');
+        for (const [k, r] of Object.entries(at.pts)) {
+          known(SOLO_HEROES, k, 'attr.pts.hero'); record(r, 'attr.pts.' + k);
+          for (const [id, n] of Object.entries(r)) { known(ATTR0(), id, 'attr.pts.attribute'); int(n, 'attr.pts.' + k + '.' + id, 0, lim.progression); }
+        }
+      }
     }
     rows(data.camp, 'builds', b => { known(CAMP_B, b.id, 'camp.build.id'); int(b.to, 'camp.build.to', 1, CAMP_B[b.id].max); num(b.dur, 'camp.build.dur', 1, 864e13); num(b.start, 'camp.build.start', 0, 864e13); num(b.end, 'camp.build.end', 0, 864e13); record(b.cost, 'camp.build.cost'); num(b.cost.gold, 'camp.build.gold'); pack(b.cost.mats, 'camp.build.mats'); array(b.cost.troph, 'camp.build.troph'); for (const l of b.cost.troph) { array(l, 'camp.build.troph[]'); if (l.length !== 2) fail('camp.build.troph[]'); if (l[0] !== 'any') int(l[0], 'camp.build.troph.kind', 0, CRAFT_TROPHIES.length - 1); num(l[1], 'camp.build.troph.units'); } });
     if (data.camp && data.camp.b) for (const [k, n] of Object.entries(data.camp.b)) { known(CAMP_B, k, 'camp.building'); int(n, 'camp.' + k, 0, CAMP_B[k].max); }

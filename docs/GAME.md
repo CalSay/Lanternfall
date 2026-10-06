@@ -17,7 +17,7 @@ Five tabs, each a full-screen menu over the stage ([layout.md](design/layout.md)
 | Tab | Views |
 |---|---|
 | Fight (`adv`) | Boss, Bounties, Bestiary, Deepwell |
-| Hero (`party`) | Hero, Abilities, Training, Stars |
+| Hero (`party`) | Hero, Abilities, Attributes (Training while `HERO_TUNE.training` is 1), Stars |
 | Gather (`gat`) | Mining, Wood, Forage, Hunting, Store |
 | Craft (`forge`) | Make, Gear, Uniques |
 | Camp (`world`) | Camp, Tavern, Almanac, Raid |
@@ -34,8 +34,17 @@ The bell opens Notices, the Journal and Settings. Achievements (Deeds) and the C
   own level and remembers its own zone (`S.solo.zn`).
 - **The roster** holds 32 heroes (`56-roster.js`); only the three with complete kits can carry the lamp. Unlock routes,
   Renown and boss tokens: `56c-unlocks.js`.
-- **Training** (Hero > Training, `55-training.js`): gold levels up Attack, Parry, Dodge and ability power. A move never
-  passes the hero's level, nor 40 before the Proving and 80 after it.
+- **Levels and attributes** (`24g-data-hero.js`, `55-attributes.js`, `75-attributes-ui.js`; [hero-progression-build.md](design/hero-progression-build.md)):
+  Attack, Parry, Dodge and ability power come from the hero's level. A move never passes the hero's level, nor 40 before
+  the Proving and 80 after it. Each level after Lv 1 also gives 4 attribute points, and the hero spends them on Hero >
+  Attributes: Might (Attack), Focus (abilities), Guard (counters and a wider parry window) and Vigour (health). Each
+  point adds 2%. Points belong to the hero, are free to move (Reset points, with a second tap to confirm), and a fight
+  takes them as it starts. Unspent points do nothing, so Next Up says when there are some. A level takes the same
+  number of fights at any point of the road (`xpNeed` follows the road). A hero who takes the lamp joins at the road's
+  level at least, with an empty XP bar (a hero above it keeps theirs), and every other hero earns half the XP of each
+  won fight. Away time earns no bench XP.
+- **Training** (Hero > Training, `55-training.js`): off by default. With `HERO_TUNE.training = 1` gold levels up Attack,
+  Parry, Dodge and ability power again (the game as it was: no attributes, no join level, no bench XP).
 - **Classes and the Proving** (`55-classes.js`, `59e-class-combat.js`, `59f-trials.js`, `75-class-ui.js`): after the
   Fenmother (zone 35) and hero level 35 the hero can take the Proving and choose an evolution path. Changing class uses
   the Mirror of Embers. In turn fights an evolution gives its stats and its damage line; its own powers were built for the
@@ -130,8 +139,8 @@ The bell opens Notices, the Journal and Settings. Achievements (Deeds) and the C
 - **Next Up** (`55-goals.js`): the goals closest to done, with Go buttons.
   **"Boss ready"** means you would usually win the zone boss. The game tries 30 scratch fights of that boss with your
   hero as they stand now, judged from your own Parry and Dodge record (a new player counts as casual), and says "Boss
-  ready" at 70% or better. Under that it says "a close fight" (35% to 70%) or "too strong", and Go opens
-  Training. While it works it says "The Zone N boss is next". It only judges; you can still challenge any time
+  ready" at 70% or better. Under that it says "a close fight" (35% to 70%) or "too strong for now", and Go opens
+  Attributes when you have points to spend, else the fight. While it works it says "The Zone N boss is next". It only judges; you can still challenge any time
   (`59m-boss-odds.js`, `bossOdds()`).
 - **Story** (`55-story.js`, `75-story-ui.js`, `21k-story-hollow.js`, `21h-lore-hollow.js`, `21b-stories-coast.js`, `21j-lore-omens.js`): one system that plays the region card, area titles, zone and Captain lines, Champion and Elder scenes, NPC and Voice cards and choices from `STORY_BEATS`, once per save, between fights, silent where the game is not ready (no monster or encounter, no data). Skip always works; everything read is in the Journal (Codex). Settings > Story switches it off. A new game opens on the Chapter 1 card, then two Old Hesketh cards (the fire, then what is in the ground), all before the first fight; a save already past zone 1 finds them in the Journal. The hero picker shows bios for the three starters only; every other hero says "Locked" and where you meet them. No new hero can unlock before the zone of their first scene (`STORY_MEET` in `56c-unlocks.js`); heroes a save already owns are kept. The story bible is [story-bible.md](design/story-bible.md); [lore.md](design/lore.md) is the older lore. The Journal also holds "Who answers to whom", a page that adds a row the first time you meet each rank (Shadowborn, Captain, Champion, Elder, the Voice). Once an Elder is down, the Tavern shows Vesper's verse for it.
 
@@ -142,6 +151,7 @@ The bell opens Notices, the Journal and Settings. Achievements (Deeds) and the C
   Bestiary around zone 6, the Almanac at 7 minutes, Uniques, the Tavern, the Codex (zone 10), the Raid (zone 12),
   Stars (hero level 10), the Deepwell (zone 20 and Hearth 3) and Hands (Hearth 2 and a Tavern). Once open, a feature stays open.
 - **The guide** (`GUIDE_STEPS` in `55-onboard.js`, UI `75-onboard-ui.js`): one hint at a time, docked in the toast band.
+  After the first ability the guide asks you to add a point to Might on Hero > Attributes.
   A step pauses the game only while it waits for a press; a step that needs game time shows live progress instead.
 - **Notices** (`23n-data-notices.js`, `notify()`): every message goes to a channel (card, pop, bell, log or none),
   with a quiet start and a cap on pops a minute.

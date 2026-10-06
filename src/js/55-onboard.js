@@ -44,7 +44,7 @@ const unlit = () => coldH() && typeof hearthLit === 'function' && !hearthLit();
 // A tab shows while any of its views is unlocked (Fight's Upgrades view is always there).
 const FEATURES = [
   { id: 'party', tab: 'party', view: 'team', name: 'Hero', why: 'hero level 3', when: () => S.L >= 3 || S.maxZone >= 2 },
-  { id: 'nextup', name: 'Next Up', why: 'first Training level, or zone 2', when: () => upBought() || S.maxZone >= 2 },
+  { id: 'nextup', name: 'Next Up', why: 'first attribute point or Training level, or zone 2', when: () => upBought() || S.maxZone >= 2 },
   { id: 'gather', tab: 'gat', view: 'mine', name: 'Gather', why: 'after the first boss (zone 2), or once the hero walks to the grove', when: () => S.maxZone >= 2 || S.activity === 'gather' },
   { id: 'bounties', tab: 'adv', view: 'bounties', name: 'Bounties', why: 'zone 4', when: () => S.maxZone >= 4 },
   { id: 'camp', tab: 'world', view: 'camp', name: 'Camp', why: 'the camp opens (zone 5; a cold Hearth: the fire is lit)', when: () => (!coldH() && S.maxZone >= 5) || (typeof campOpen === 'function' && campOpen()) },
@@ -144,8 +144,15 @@ function needShort(mats) {
   return out;
 }
 // The guide teaches Training's Attack: the first level's price, and whether any move has been trained.
-const cheapestUp = () => { const p = typeof trainPlan === 'function' && soloHero() ? trainPlan('atk', '1') : null; return p && p.n > 0 ? p.cost : Infinity; };
-const upBought = () => !!(S.solo && S.solo.tr && Object.values(S.solo.tr).some(r => r && Object.values(r).some(v => v > 0)));
+// hero-progression-rework: with attributes on (HERO_TUNE.training = 0) the step is the first attribute point: it fires when the
+// playing hero has one free (cheapestUp is 0 then, so `gold >= cheapestUp()` reads "a point to spend"; Infinity: none) and it is
+// done when any hero has spent one (attrSpentAny).
+const obAttrOn = () => typeof attrOn === 'function' && attrOn();
+const cheapestUp = () => {
+  if (obAttrOn()) return typeof attrPoints === 'function' && soloHero() && attrPoints(soloHero()).free > 0 ? 0 : Infinity;
+  const p = typeof trainPlan === 'function' && soloHero() ? trainPlan('atk', '1') : null; return p && p.n > 0 ? p.cost : Infinity;
+};
+const upBought = () => obAttrOn() ? attrSpentAny() : !!(S.solo && S.solo.tr && Object.values(S.solo.tr).some(r => r && Object.values(r).some(v => v > 0)));
 const abilityOk = () => { try { const a = typeof abilityInfo === 'function' && abilityInfo(); return !!(a && a.ready); } catch (e) { return false; } };
 // Materials for a first tier-1 recipe the hero can wear (as the Next Up craft goal reads it).
 function craftReady() {

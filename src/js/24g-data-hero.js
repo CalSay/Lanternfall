@@ -1,0 +1,37 @@
+// 24g-data-hero: hero progression knobs (card hero-progression-rework; docs/design/hero-progression.md and
+// hero-progression-build.md). Data and knobs only. Runtime: 55-attributes.js (attribute points), 40-rules.js (the road
+// and the level curve), 55-training.js (a move's level from the hero's level), 59j-solo.js (the join level, bench XP).
+// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
+//
+//   HERO_TUNE.training  1 restores today's game exactly (gold Training, xpNeed 15 x 1.3^(L-1), +4% a level, the stepped
+//                       Attack curve, no attributes, no join floor, no bench XP). The switch-off flag: kept until the judge
+//                       signs off the sims after testers play (hero-progression.md "Switching it off").
+//   lvBase              the share of the old +4% a level (PACE.heroLv) every level still gives Attack, abilities, counters
+//                       and health; attribute points give the rest in the player's own split
+//   perLevel            attribute points a level after Lv 1
+//   ATTRS               the four attributes: per (a point's share), kind (what it raises: atk | ab | counter | hp), parryMs
+//                       (Guard: the parry window a point, ms; the window cap is TURN_TUNE.windowCaps.parry)
+//   road                [zone, level] points: the level the road expects a hero to have on reaching that zone (straight
+//                       lines between the points, then the last slope on). (tuned)
+//   fights              [level, fights] points: normal fights a level takes at the zone the road expects for it. (tuned)
+//   bench               the share of a won fight's XP every other playable hero earns
+//   smooth              1: Attack's (and abilities') fifth-level step is a smooth power with the same mean over each block
+
+const HERO_TUNE = {
+  training: 0,
+  lvBase: 0.02,
+  perLevel: 4,
+  road: [[1, 1], [5, 7], [10, 15], [15, 22], [20, 28], [25, 33], [30, 37], [35, 40], [40, 44], [50, 52], [70, 66]],
+  fights: [[1, 3], [10, 8], [20, 20], [30, 45], [40, 70], [60, 100]],
+  bench: 0.5,
+  smooth: 1
+};
+// The order is the screen's order. line: one plain line for the Attributes view.
+const ATTRS = [
+  { id: 'might', name: 'Might', kind: 'atk', per: 0.02, line: 'Attack hits harder.' },
+  { id: 'focus', name: 'Focus', kind: 'ab', per: 0.02, line: 'Abilities hit harder.' },
+  { id: 'guard', name: 'Guard', kind: 'counter', per: 0.02, parryMs: 1, line: 'Counters hit harder, and the parry window is wider.' },
+  { id: 'vigour', name: 'Vigour', kind: 'hp', per: 0.02, line: 'More health.' }
+];
+const ATTR_IDS = ATTRS.map(a => a.id);
+const ATTR0 = () => { const o = {}; for (const id of ATTR_IDS) o[id] = 0; return o; };
