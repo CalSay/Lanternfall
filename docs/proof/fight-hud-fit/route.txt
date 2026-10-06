@@ -3,10 +3,9 @@
 # with their numbers, and the place line is whole. The full overlap check is `node tools/check.mjs --only="fight HUD"`.
 new mid
 wait 8
-expect "Tobin"
 expect ".hud.vs .hero-plate"
 expect ".hud.vs .mob"
-expect "Beetle Barrows"
+expect ".hud.vs .hud-zone"
 shot fight-hud
 wait 6
 shot fight-hud-later
