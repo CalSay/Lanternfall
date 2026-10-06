@@ -38,13 +38,15 @@ The bell opens Notices, the Journal and Settings. Achievements (Deeds) and the C
   Attack, Parry, Dodge and ability power come from the hero's level: a move acts as trained to one below it (so a Lv 1
   hero hits for 4), up to 40 before the Proving and 80 after it, then half a level a level past that. Each level after
   Lv 1 also gives 4 attribute points, and the hero spends them on Hero > Build: Might (Attack), Focus (abilities),
-  Guard (counters and up to 60 ms more parry window) and Vigour (health). Each point adds 2%; points in one attribute
-  past half of all the hero has count half. Spread evenly, the points give the old +4% a level. Points belong to the
+  Guard (counters and up to 60 ms more parry window) and Vigour (health). A point adds 3% (Might, Guard), 1% (Focus) or
+  1.5% (Vigour), and each level gives the rest of the old 4%; points in one attribute past half of all the hero has
+  count half. Spread evenly, the points give the old +4% a level. Points belong to the
   hero. Adding them is free; Spread evenly places the free ones in one tap; the first Reset points is free and later
   ones cost gold (two taps). A fight takes them as it starts. The build only changes turn fights: away, raid and
   farm power read the level as if spread evenly. Unspent points do nothing, so Next Up says when there are some. A
-  level takes about the same number of fights at any point of the road (`xpNeed` follows the road). A hero who takes the
-  lamp joins at the road's level at least (keeping their XP short of a level; a hero above it keeps theirs), and every
+  level costs what the road expects (`xpNeed` follows the road, fights a zone rise by a steady ratio), and a hero more
+  than 4 levels past the road's level at the furthest zone earns 0.6x XP a level further. A hero who takes the
+  lamp joins at the road's level (2 above the road table, where players stand) at least (keeping their XP short of a level; a hero above it keeps theirs), and every
   other hero earns half the XP of each won fight. Away time earns no bench XP.
 - **Training** (Hero > Training, `55-training.js`): off by default. With `HERO_TUNE.training = 1` gold levels up Attack,
   Parry, Dodge and ability power again (the game as it was: no attributes, no join level, no bench XP). On a save

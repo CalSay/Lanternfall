@@ -37,19 +37,23 @@ card's.
 Each hero earns `HERO_TUNE.perLevel` (4) attribute points for every level after Lv 1 and spends them on four attributes.
 Points belong to the hero (Cal: "my Wren can play differently from someone else's").
 
-| Attribute | A point gives | Who it suits |
-|---|---|---|
-| Might | Attack +2% | a hero who wins on Attack (Wren's Aim crits) |
-| Focus | ability power +2% | a caster (Pip's Fireball, Burn) |
-| Guard | counter damage +2%, parry window +1 ms (cap 350 ms) | a parry build (Tobin's counters hit x1.5) |
-| Vigour | health +2% | a player who takes hits, or a long boss fight |
+| Attribute | A point gives | Each level gives | Who it suits |
+|---|---|---|---|
+| Might | Attack +3% | +1% | a hero who wins on Attack (Wren's Aim crits) |
+| Focus | ability power +1% | +3% | a caster (Pip's Fireball, Burn) |
+| Guard | counter damage +3%, parry window +1 ms | +1% | a parry build (Tobin's counters hit x1.5) |
+| Vigour | health +1.5% | +2.5% | a player who takes hits, or a long boss fight |
+
+The split between "a point" and "each level" is each attribute's own (`ATTRS[].base`, `.per`), set by the dominance arms
+(section 6): abilities carry most of a turn fight's damage, so at +2% a point Focus was the best build for every hero on
+normal foes (2 to 3x the kills an hour) and Might was a trap. Base + per is always 4%, so the even spread is unchanged.
 
 - **Shape, not extra power.** Spread evenly (one point a level in each), the four attributes give exactly the old
-  +4% a level on Attack, abilities, counters and health (2% base + 2% from the points). Every point put into one is a
+  +4% a level on Attack, abilities, counters and health (the level's share plus the points' share). Every point put into one is a
   point not in the others.
 - **Soft cap.** Points in one attribute past half of all the hero has earned count half (`HERO_TUNE.softAt`, `soft`).
   Survival is all in Vigour while damage is split three ways, so without it "all Vigour" beat every other build. A Lv 30
-  hero with all 116 points in Might gets Attack x1.54 against an even spread; abilities, counters and health x0.73.
+  hero with all 116 points in Might gets Attack x1.81 against an even spread, and health x0.80.
 - **Guard's window** is the one thing beyond the old curve: +1 ms a point (after the soft cap), at most +60 ms
   (`HERO_TUNE.guardMs`).
 - **Power outside a fight does not depend on the build.** Away and raid damage, the farmable zone and the Deepwell's
@@ -72,18 +76,25 @@ Points belong to the hero (Cal: "my Wren can play differently from someone else'
 `xpNeed(L) = fights(L) x foeXp(roadZone(L))`:
 
 - `roadZone(L)`: the zone where the road expects a hero to be Lv L (the inverse of `HERO_TUNE.road`, a zone -> level
-  table, tuned).
-- `foeXp(z)`: what a normal foe pays at zone z (the turn fight's `ceil(1.5 z) x 2.5`).
-- `fights(L)`: normal fights a level takes (`HERO_TUNE.fights`, a level table, tuned).
+  table, tuned to the old game's levels a zone plus one, since moves now use `L - 1`).
+- `foeXp(z)`: what a normal foe pays at zone z (the turn fight's `1.5 z x 2.5`, without its rounding).
+- `fights(L)`: `HERO_TUNE.fights` is the fights one zone of road takes, by zone, with a steady ratio between its
+  points; a level takes that over the road's levels a zone there. So the fights a zone takes rise smoothly (at most
+  21% from one zone to the next, the judge's limit is 25%) and no level is a wall on its own.
 
-So a hero fighting at the zone the road expects for their level gains a level every `fights(L)` fights, at any level:
-no level is a wall on its own. A hero behind the road levels faster (their zone pays more than their level needs), a
-hero ahead of it slower. Before: 15 x 1.3^(L - 1), a cost that grows x1.3 a level against XP that grows in a straight
-line with the zone, which always walls (Lv 35 took 7 to 11 active hours).
+**The brake.** Most XP comes from away time, and away XP has no wall. Without a brake, heroes ran 20+ levels past the
+road (zone 54 to 69 in 51 hours, against 29 to 31 in the old game). So a hero more than `aheadLead` (4) levels past the
+road's level at the furthest zone earns `aheadX` (0.6) of the XP for each level further (`xpAheadX`, in `gainXp` and
+bench XP). A tighter brake (lead 0 to 2) stopped levels while a hero was stuck at a wall, which is when a level helps
+most, and made the gaps between levels longer.
+
+Before: 15 x 1.3^(L - 1), a cost that grows x1.3 a level against XP that grows in a straight line with the zone, which
+always walls (Lv 35 took 7 to 11 active hours).
 
 ## 4. New heroes join at the road's level; benched heroes earn half
 
-- `roadLevel()`: the road's level at the furthest zone (`S.maxZone`).
+- `roadLevel()`: the road's level at the furthest zone (`S.maxZone`), plus `joinLead` (2): heroes who play the road
+  stand about that far above the table, and a joining hero should fight like them (the switch test, section 6).
 - A hero who takes the lamp (the switch at camp, or a new hero) is lifted to at least `roadLevel()`. They keep their
   banked XP, cut to one short of the next level, so a lift never chains level-ups. A hero above it keeps their own
   level. Their attribute points come with the levels. A joining hero gets no free ability learns: they have their

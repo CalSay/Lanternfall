@@ -21,6 +21,9 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Run `node tools/health.mjs --compare` before and after any balance or pacing change. Why: it is the only before/after measure and CI gates on it. (f-health, 2026-10-05)
 - Play the persona's whole turn skill (parry, dodge and ability rings) when measuring pacing for a named player type. The sim's own turn player lands 80% of defences and never presses a ring, so every timed ability is a Miss. Why: Codex P1 on PR #52, where one shared 40% defence rate stood in for the casual. (xp-gold-pacing-report, 2026-10-06)
 
+- Tune a level curve against the old game on the same seeds (3 seeds, each starter), never one run. Why: one seed moved Tobin's hours to zone 30 from 19 to 41 with no change that touched him, and the old game itself ranged 25 to 46 h for Wren. (hero-progression-rework, 2026-10-06)
+- Most hero XP comes from away time. A level curve with no exponential wall needs a brake past the road, or heroes run 20+ levels ahead; brake only far past it, or levels stop at walls, where they help most. (hero-progression-rework, 2026-10-06)
+
 ## Economy and skilling
 
 - Read `docs/design/systems-map.md` flags before touching an economy card. Open flags: wood and essence pile up, iron ore is idle (Transmute is lossy), cobalt needs Mining 64 with no hint, Smithing is dead past 54, gold is the only mid-game choke, Renown/Stamps/boss tokens have no spend, tents 6 to 10 are unbuildable, the Renown Day omen does nothing. (systems-map, 2026-10-06)
@@ -74,6 +77,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Re-run CI once if the runner dies mid-check (PR #40 did). Never push an empty commit to kick it. (story, 2026-10-05)
 - If the integration branch moved, merge it in, re-check, and wait for CI on the merge commit before merging the PR. (f-ci and later cards)
 - Path guard: PRs touching online files, the save-key line or `netlify.toml` need the `cal-approved` label, which only Cal applies. (f-ci)
+- Run `node tools/build.mjs` after the last src edit and commit `dist/` with it. Why: the dist-rebuilt check failed on PR #58 after small copy edits went in without a rebuild. (hero-progression-rework, 2026-10-06)
 - Run the `--long` health run only on 3 or more cores (about 2.5 min, 7 min CPU). It ignores `--only`, known P2. (f-health-long, 2026-10-06)
 
 ## Reviews and Codex
