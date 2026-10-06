@@ -10012,7 +10012,7 @@ const ATTR0 = () => { const o = {}; for (const id of ATTR_IDS) o[id] = 0; return
 // ================= save =================
 // ECON-A (economy-2 9): the save key moved to v2 (S.v 3) with the gold economy. An old v1 save is never
 // read (a new game starts) and never touched: its key stays in storage as it was.
-const KEY = 'lanternfall.save.v6';   // hero-progression-rework: Training is off and heroes spend attribute points (S.attr; S.solo.tr stays for the flag), so v5 saves are never read (W3-A made it v5, W2-A v4, SOLO1 v3)
+const KEY = 'lanternfall.save.v5';   // W3-A: the party (S.party.field, S.comp, the roster records) is gone, so v4 saves are never read (W2-A made it v4, SOLO1 v3)
 // Feature save fields added with registerState(key, defaults). Kept in registration order.
 const STATE_DEFAULTS = {};
 const cloneJSON = v => v === undefined ? v : JSON.parse(JSON.stringify(v));
@@ -10025,7 +10025,7 @@ function fillDefaults(target, defs) {
   return target;
 }
 const fresh = () => Object.assign({
-  v: 6, name: 'Wanderer', L: 1, xp: 0, gold: 0, embers: 0, zone: 1, maxZone: 1, kills: 0,
+  v: 5, name: 'Wanderer', L: 1, xp: 0, gold: 0, embers: 0, zone: 1, maxZone: 1, kills: 0,
   relic: { banner: 0, coin: 0, heart: 0, glass: 0, edge: 0 },
   auto: true, activity: 'fight', raid: { gen: 0, dmg: 0, maxHp: 0, name: '' }, wyrms: 0,
   totalKills: 0, totalGold: 0, amt: '1', tab: 'adv', last: Date.now(), hintDone: false,
@@ -10680,6 +10680,8 @@ function killPack(m, g) {
 function gainXp(n, quiet) {
   let raw = n * mod('xp');
   if (HERO_TUNE.training) { S.xp += raw; raw = 0; }
+  // XP banked past this curve's next level (a save from before attributes, on the old curve) is held a point under it: no level-up cascade
+  else if (S.xp > xpNeed() - 1) S.xp = Math.max(0, xpNeed() - 1);
   for (let i = 0; i < 1000; i++) {
     if (raw > 0) {
       const x = xpAheadX(S.L), need = (xpNeed() - S.xp) / x;
@@ -14403,7 +14405,7 @@ let wellRested, restParty, restNote;
 //
 // encodeSave(obj) -> string                      turn a save object into a code
 // decodeSave(code) -> { ok: true, data } | { ok: false, error }   parse and validate a code
-// validateSave(data) -> { ok: true, data } | { ok: false, error }   pure v6 shape check (S.attr: attribute points per hero)
+// validateSave(data) -> { ok: true, data } | { ok: false, error }   pure v5 shape check (S.attr: attribute points per hero, hero-progression-rework)
 // summarizeSave(data) -> { name, level, maxZone, region, heroes, savedAt }   short preview
 
 const SAVECODE_HEADER = 'LF1';
@@ -14507,7 +14509,7 @@ function validateSave(data) {
       seen.delete(v);
     };
     walk(data, 'save', 0);
-    if (data.v !== 6) return { ok: false, error: 'This code is from a different save version. This game accepts v6 saves.' };
+    if (data.v !== 5) return { ok: false, error: 'This code is from a different save version. This game accepts v5 saves.' };
     for (const k of ['L', 'zone', 'maxZone']) int(data[k], k, 1, lim.progression);
     if (data.zone > data.maxZone) fail('zone', 'is beyond the saved frontier');
     num(data.gold, 'gold');
@@ -23992,7 +23994,7 @@ var soloHero, soloPick, soloLevels, soloBenchXp, soloAttack, soloParry, soloDodg
       if (k === playing || !heroCanPlay(k)) continue;
       if (!s.lv || typeof s.lv !== 'object') s.lv = {};
       const rec = s.lv[k] || (s.lv[k] = { L: 1, xp: 0 });
-      let raw = n * HERO_TUNE.bench; rec.xp = +rec.xp || 0;
+      let raw = n * HERO_TUNE.bench; rec.xp = Math.min(+rec.xp || 0, Math.max(0, xpNeed(rec.L) - 1));   // old-curve XP held under the next level
       for (let i = 0; i < 500 && raw > 0; i++) {
         const x = xpAheadX(rec.L), need = (xpNeed(rec.L) - rec.xp) / x;
         if (raw < need) { rec.xp += raw * x; break; }

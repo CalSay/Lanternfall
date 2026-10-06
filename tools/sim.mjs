@@ -119,7 +119,7 @@ const loadPrelude = seed => seed === undefined || seed === null ? '' : `{ let a 
 const loadCore = o => loadCoreRaw({ ...(o || {}), prelude: (o && o.prelude) || loadPrelude(o && o.seed), extraSource: ((o && o.extraSource) || '') + `\nTURN_TUNE.on = ${TURNS_ON ? 1 : 0};` });
 import { writeFileSync } from 'node:fs';
 
-const SAVE_KEY = 'lanternfall.save.v6';   // 30-state.js (hero-progression-rework: v6)
+const SAVE_KEY = 'lanternfall.save.v5';   // 30-state.js
 const args = Object.fromEntries(process.argv.slice(2).reduce((a, x, i, arr) => {
   if (x.startsWith('--')) a.push([x.slice(2), arr[i + 1] && !arr[i + 1].startsWith('--') ? arr[i + 1] : true]);
   return a;

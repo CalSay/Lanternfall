@@ -10,7 +10,7 @@ import { loadCore, memoryStorage } from '../../../tools/lib/core.mjs';
 import fs from 'node:fs';
 
 const dir = process.argv[2], N = +(process.argv[3] || 150);
-const KEY = 'lanternfall.save.v6';
+const KEY = 'lanternfall.save.v5';
 const CLS = { ranger: 'wren', warden: 'tobin', lanternmage: 'pip' };
 const SKILL = { good: { parry: 0.6, dodge: 0.9, perfect: 0.4, good: 0.45 }, casual: { parry: 0.25, dodge: 0.5, perfect: 0.1, good: 0.4 } };
 const ATTR = ['might', 'focus', 'guard', 'vigour'];

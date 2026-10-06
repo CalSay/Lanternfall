@@ -8,7 +8,7 @@
 //
 // encodeSave(obj) -> string                      turn a save object into a code
 // decodeSave(code) -> { ok: true, data } | { ok: false, error }   parse and validate a code
-// validateSave(data) -> { ok: true, data } | { ok: false, error }   pure v6 shape check (S.attr: attribute points per hero)
+// validateSave(data) -> { ok: true, data } | { ok: false, error }   pure v5 shape check (S.attr: attribute points per hero, hero-progression-rework)
 // summarizeSave(data) -> { name, level, maxZone, region, heroes, savedAt }   short preview
 
 const SAVECODE_HEADER = 'LF1';
@@ -112,7 +112,7 @@ function validateSave(data) {
       seen.delete(v);
     };
     walk(data, 'save', 0);
-    if (data.v !== 6) return { ok: false, error: 'This code is from a different save version. This game accepts v6 saves.' };
+    if (data.v !== 5) return { ok: false, error: 'This code is from a different save version. This game accepts v5 saves.' };
     for (const k of ['L', 'zone', 'maxZone']) int(data[k], k, 1, lim.progression);
     if (data.zone > data.maxZone) fail('zone', 'is beyond the saved frontier');
     num(data.gold, 'gold');

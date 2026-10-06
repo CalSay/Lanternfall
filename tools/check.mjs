@@ -117,7 +117,7 @@ const assert = (cond, msg) => (cond ? ok(msg) : fail(msg));
 const E2 = (g, src) => g.eval(src);
 // ECON-A: the save key moved to v2 (S.v 3). The fixtures in tests/fixtures are loaded under the new key so the
 // load paths they exercise keep their checks; section 'econ' checks that a v1 save is never read.
-const KEY = 'lanternfall.save.v6';   // hero-progression-rework (W3-A made it v5)
+const KEY = 'lanternfall.save.v5';   // W3-A
 
 // C11: fixture comparisons prove the retired record's conversion before checking every other field.
 function c11SaveSubsetDiff(saved, loaded) {
@@ -218,18 +218,18 @@ if (section('smoke')) try {
   assert(!g4.errors.length, 'no party handler errors' + (g4.errors.length ? ': ' + g4.errors[0] : ''));
 } catch (e) { fail('smoke crashed: ' + (e.stack || e)); }
 
-// ---- 3. saves: v6 fixtures, and a foreign or broken save starts a new game (W3-C) ----
-// tests/fixtures/save-{early,mid,late}.json are saves written by the game (tools/sim.mjs --snap / --snapday: Wren 20 min,
+// ---- 3. saves: fresh v5 fixtures, and a foreign or broken save starts a new game (W3-C) ----
+// tests/fixtures/save-{early,mid,late}.json are v5 saves written by the game (tools/sim.mjs --snap / --snapday: Wren 20 min,
 // Tobin day 4, Pip on the coast). There is no migration: a save from another key or a broken one is never read.
-// hero-progression-rework: the three files are the v5 snapshots with only "v" bumped to 6 (no S.attr: the load adds its defaults; the balance
-// checks that read them keep their numbers). A re-snap with tools/sim.mjs writes v6 saves with S.attr.
+// hero-progression-rework: the files predate S.attr; the load adds its defaults (the key stays v5: old saves load, see section
+// 'hero progression rework', l).
 // Their empty bounty slots wait until 2100 (edited by hand): load refills an empty slot once the real clock passes its
 // wait, and that refill would read as a lost field here. A re-snapped fixture needs the same edit (checked below).
 if (section('saves')) try {
   const fx = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
   for (const f of ['save-early.json', 'save-mid.json', 'save-late.json']) {
     const raw = fx(f), old = JSON.parse(raw);
-    assert(old.v === 6, `${f}: is a v6 save`);
+    assert(old.v === 5, `${f}: is a v5 save`);
     const due = ((old.bounties || {}).slots || []).filter(b => b && b.k === null && b.wait < Date.now() + 365 * 864e5);
     assert(!due.length, `${f}: empty bounty slots wait well past the real clock (else set their wait to 4102444800000)` + (due.length ? ': ' + due.map(b => new Date(b.wait).toISOString()).join(', ') : ''));
     const g = loadCore({ storage: memoryStorage({ [KEY]: raw }), extraSource: "registerState('zz_feature', { n: 0 });\n" });
@@ -255,7 +255,7 @@ if (section('saves')) try {
   for (const [what, store] of Object.entries(cases)) {
     const g = loadCore({ storage: memoryStorage(store) });
     for (let i = 0; i < 50; i++) g.fn.tick(0.1);
-    assert(g.eval('S.L') === 1 && g.eval('S.maxZone') === 1 && g.eval('S.v') === 6 && !g.errors.length, `${what}: starts a fresh game with no error` + (g.errors[0] ? ': ' + g.errors[0] : ''));
+    assert(g.eval('S.L') === 1 && g.eval('S.maxZone') === 1 && g.eval('S.v') === 5 && !g.errors.length, `${what}: starts a fresh game with no error` + (g.errors[0] ? ': ' + g.errors[0] : ''));
   }
 } catch (e) { fail('saves crashed: ' + (e.stack || e)); }
 
@@ -3896,13 +3896,13 @@ if (section('econ (ECON-A)')) try {
   const V1 = ['lanternfall', 'save', 'v1'].join('.');   // the old key (spelled so the tools scan below finds no v1 key here)
   const st = memoryStorage({ [V1]: v1raw });
   const h = loadCore({ seed: 42, storage: st }), H = s => h.eval(s);
-  assert(H('KEY') === 'lanternfall.save.v6' && H('S.v') === 6 && H('S.maxZone') === 1 && H('S.gold') === 0 && H('S.relic.edge') === 0 && H('S.econ.v') === 1, 'save key v6, S.v 6: with a v1 save present the game starts fresh (zone 1, no gold, the new fields at their defaults)');
+  assert(H('KEY') === 'lanternfall.save.v5' && H('S.v') === 5 && H('S.maxZone') === 1 && H('S.gold') === 0 && H('S.relic.edge') === 0 && H('S.econ.v') === 1, 'save key v5 (W3-A), S.v 5: with a v1 save present the game starts fresh (zone 1, no gold, the new fields at their defaults)');
   for (let i = 0; i < 600; i++) h.fn.tick(0.1);
   H('save()');
-  assert(st.get(V1) === v1raw && JSON.parse(st.get('lanternfall.save.v6')).v === 6 && !h.errors.length, 'a minute of play and a save: no errors, the v1 save is untouched, the game saves under v6');
-  const junk = memoryStorage({ [V1]: '{"v":2,"gold":"x"', 'lanternfall.save.v6': 'not json' });
+  assert(st.get(V1) === v1raw && JSON.parse(st.get('lanternfall.save.v5')).v === 5 && !h.errors.length, 'a minute of play and a save: no errors, the v1 save is untouched, the game saves under v4');
+  const junk = memoryStorage({ [V1]: '{"v":2,"gold":"x"', 'lanternfall.save.v5': 'not json' });
   const j = loadCore({ seed: 43, storage: junk });
-  assert(j.eval('S.v') === 6 && Number.isFinite(j.fn.totalDps()) && !j.errors.length, 'a broken v1 and v2 save in storage: a new game, no crash');
+  assert(j.eval('S.v') === 5 && Number.isFinite(j.fn.totalDps()) && !j.errors.length, 'a broken v1 and v2 save in storage: a new game, no crash');
   for (const t of ['check.mjs', 'sim.mjs', 'savecode.mjs', 'perf.mjs']) {
     const src = fs.readFileSync(path.join(ROOT, 'tools', t), 'utf8').replace(/\/\/.*$/gm, '');
     assert(!/lanternfall\.save\.v1/.test(src), `tools/${t} reads the v2 key`);
@@ -5390,7 +5390,7 @@ if (section('training (W2-A)')) try {
   const g = loadCore({ training: true, solo: true, seed: 21 }), E = s => g.eval(s), near = (a, b, t = 1e-9) => Math.abs(a - b) <= t * Math.max(1, Math.abs(b));
   const T = JSON.parse(E('JSON.stringify(SOLO_TUNE.train)')), PR = JSON.parse(E('JSON.stringify(ECON.train)'));
   // save defaults and the key
-  assert(E('KEY') === 'lanternfall.save.v6' && E('S.v') === 6 && E('fresh().v') === 6, 'save key lanternfall.save.v6 (S.v 6): v5 and older saves are never read');
+  assert(E('KEY') === 'lanternfall.save.v5' && E('S.v') === 5 && E('fresh().v') === 5, 'save key lanternfall.save.v5 (S.v 5): v4 saves are never read');
   const tr0 = JSON.parse(E('JSON.stringify(fresh().solo.tr)'));
   assert(Object.keys(tr0).join() === 'wren,tobin,pip' && tr0.wren.echo === 0 && tr0.tobin.bash === 0 && tr0.pip.fire === 0 && Object.values(tr0).every(r => r.atk === 0 && r.parry === 0 && r.dodge === 0),
     `fresh(): every hero's moves start at Lv 0 (${JSON.stringify(tr0)})`);
@@ -7643,7 +7643,7 @@ if (section('turn UI (browser)')) try {
           const free0 = await X(pts);
           await page.click(tal('a')); await page.waitForTimeout(150);
           out.talA = await X(`talentsOf('wren').powershot === 'a' && ${pts} === ${free0} - TALENT_TUNE.cost && document.querySelector('${tal('a')}').getAttribute('aria-pressed') === 'true'
-            && JSON.parse(localStorage.getItem('lanternfall.save.v6')).abil.tal.wren.powershot === 'a' && /Talent A/.test(document.querySelector('#sec-abilities .ab-row[data-ab="powershot"]').textContent)`);
+            && JSON.parse(localStorage.getItem('lanternfall.save.v5')).abil.tal.wren.powershot === 'a' && /Talent A/.test(document.querySelector('#sec-abilities .ab-row[data-ab="powershot"]').textContent)`);
           await page.click(tal('b')); await page.waitForTimeout(150);
           out.talB = await X(`talentsOf('wren').powershot === 'b' && ${pts} === ${free0} - TALENT_TUNE.cost && document.querySelector('${tal('a')}').getAttribute('aria-pressed') === 'false' && document.querySelector('${tal('b')}').classList.contains('on')`);
           await page.click(tal('b')); await page.waitForTimeout(150);
@@ -7676,7 +7676,7 @@ if (section('turn UI (browser)')) try {
           out.assist0 = await btn.textContent();
           await btn.click(); await page.waitForTimeout(100);
           out.assist1 = await btn.textContent();
-          out.assistOn = await X(`S.turn.assist === 1 && JSON.parse(localStorage.getItem('lanternfall.save.v6')).turn.assist === 1 && Math.abs(turnMakeProfile(combatFoes()[0], cbUnitByKey('hero')).parryWindow - 0.27) < 1e-9`);
+          out.assistOn = await X(`S.turn.assist === 1 && JSON.parse(localStorage.getItem('lanternfall.save.v5')).turn.assist === 1 && Math.abs(turnMakeProfile(combatFoes()[0], cbUnitByKey('hero')).parryWindow - 0.27) < 1e-9`);
           out.assistNote = await X(`(document.querySelector('#sec-cb2set .cb-set:last-child .note') || {}).textContent || ''`);
         }
         await ctx.close(); return out;
@@ -7736,7 +7736,7 @@ if (section('turn UI (browser)')) try {
             onW: !!d.querySelector('.ab-slotb[data-slot="1"].on'), talOn: !!d.querySelector('.ab-talb') }; })()`);
         r.detFit = await X(fit);
         await page.click('#sec-abilities .ab-det .ab-slotb[data-slot="2"]'); await page.waitForTimeout(150);
-        r.moved = await X(`soloEquipped()[2] === 'huntmark' && soloEquipped()[1] === null && JSON.parse(localStorage.getItem('lanternfall.save.v6')).solo.eq.wren[2] === 'huntmark'`);
+        r.moved = await X(`soloEquipped()[2] === 'huntmark' && soloEquipped()[1] === null && JSON.parse(localStorage.getItem('lanternfall.save.v5')).solo.eq.wren[2] === 'huntmark'`);
         await page.click('#sec-abilities .ab-det .ab-x'); await page.waitForTimeout(200);
         r.back = await X(`(() => { const ok = !document.querySelector('#sec-abilities .ab-det') && document.querySelector('#sec-abilities .ab-list').offsetParent !== null && Math.abs(document.getElementById('panels').scrollTop - ${before}) < 4;
           return ok || [!!document.querySelector('#sec-abilities .ab-det'), document.getElementById('panels').scrollTop, ${before}].join(); })()`);
@@ -7824,7 +7824,7 @@ if (section('stars (browser)')) try {
           mapLit: !!document.querySelector('#sec-stars .sr-st.lit[data-star="huntstep"] .sr-ray'), chip: (document.querySelector('#sec-stars .sr-top .sr-chip.set .sr-chip-t') || {}).textContent,
           pts: document.querySelector('#sec-stars .sr-pts').getAttribute('aria-label'), unk: (document.querySelector('#sec-stars .sr-card.locked .sr-from') || {}).textContent || '',
           anim: getComputedStyle(document.querySelector('#sec-stars .sr-st.lit .sr-ray')).animationName,
-          saved: JSON.parse(localStorage.getItem('lanternfall.save.v6')).stars.set.wren[0] })`));
+          saved: JSON.parse(localStorage.getItem('lanternfall.save.v5')).stars.set.wren[0] })`));
         assert(r1.set === 'serrated' && r1.mapSet && r1.chip === 'Serrated' && r1.lit === 'huntstep' && r1.mapLit && r1.saved === 'serrated' && r1.pts === 'Star points: 9 free of 10' && /^The Hollow’s Elder \(zone 35\)$/.test(r1.unk),
           `stars UI ${w}x${h}: Slot 1 sets Serrated (it glows on the map and shows in the strip), Light lights Hunter's Step for 1 point (it shines), both saved; a star not found yet shows where it is found (${JSON.stringify(r1)})`);
         assert(r1.anim === (wide ? 'sr-twinkle' : 'none'), `stars UI ${w}x${h}: a lit star twinkles, and holds still under reduced motion (${rm}: ${r1.anim})`);
@@ -8976,7 +8976,7 @@ if (section('hero progression rework (attributes, road, join, bench)')) try {
   const near = (a, b, t = 1e-9) => Math.abs(a - b) <= t * Math.max(1, Math.abs(b));
   const mk = o => { const c = loadCore({ turns: true, seed: 61, ...o }); c.eval('soloPick("wren")'); return c; };
   const g = mk(), E = s => g.eval(s), HT = JSON.parse(E('JSON.stringify(HERO_TUNE)')), PH = E('PACE.heroLv');
-  assert(HT.training === 0 && E('attrOn()') === true && E('KEY') === 'lanternfall.save.v6' && E('Object.values(S.attr.pts).every(r => Object.values(r).every(v => v === 0))') && E('S.attr.v') === 1 && E('fresh().attr.v') === 1, 'hero progression: Training is off by default, the save is v6 and a new game has S.attr with no points spent');
+  assert(HT.training === 0 && E('attrOn()') === true && E('KEY') === 'lanternfall.save.v5' && E('Object.values(S.attr.pts).every(r => Object.values(r).every(v => v === 0))') && E('S.attr.v') === 1 && E('fresh().attr.v') === 1, 'hero progression: Training is off by default, the save is v6 and a new game has S.attr with no points spent');
   // a. Lv 1 opening hit
   E('S.L = 1; gearDirty()');
   assert(E('trainLv("atk")') === 0 && E('atkCurve(trainLv("atk"))') === 4, `Lv 1 opening hit: atkCurve(trainLv("atk")) is ${E('atkCurve(trainLv("atk"))')} (4)`);
@@ -9113,13 +9113,18 @@ if (section('hero progression rework (attributes, road, join, bench)')) try {
   assert(fresh1.eval('Object.values(S.solo.tr).every(r => Object.values(r).every(v => v === 0))') && !fresh1.eval('S.solo.trSeeded') && fresh1.eval('S.attr.live') === 0, 'flag-on seed: a new flag-on game is unchanged (every Training level 0, not seeded, not live)');
   const old1 = loadCore({ turns: true, training: true, seed: 68, storage: memoryStorage({ [KEY]: JSON.stringify({ ...JSON.parse(JSON.stringify(played.eval('S'))), attr: { v: 1, pts: {}, resets: {}, met: {}, live: 0 } }) }) });
   assert(old1.eval('S.L') === 30 && old1.eval('S.solo.tr.wren.atk') === 0 && !old1.eval('S.solo.trSeeded'), 'flag-on seed: a save never played with attributes (live 0) is not seeded');
-  // l. old saves are never read
-  const v5 = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-late.json'), 'utf8')); v5.v = 5;
-  const v5st = memoryStorage({ 'lanternfall.save.v5': JSON.stringify(v5) }), v5g = loadCore({ turns: true, seed: 69, storage: v5st });
-  for (let i = 0; i < 50; i++) v5g.fn.tick(0.1);
-  assert(v5g.eval('S.v') === 6 && v5g.eval('S.L') === 1 && v5g.eval('S.maxZone') === 1 && v5g.eval('S.attr.v') === 1 && !v5g.errors.length, 'a v5 save under lanternfall.save.v5 is never read: the game starts fresh with no error' + (v5g.errors[0] ? ': ' + v5g.errors[0] : ''));
-  v5g.eval('save()');
-  assert(v5st.get('lanternfall.save.v5') === JSON.stringify(v5) && JSON.parse(v5st.get('lanternfall.save.v6')).v === 6, 'a v5 save is left as it was; the new game saves under v6');
+  // l. an old save (played with Training, before S.attr) loads under the same key: no error, points to spend, its XP kept short of a
+  // level on the new curve (no level-up cascade on the next kill), benched heroes too; Training records stay for the flag
+  const v5 = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-late.json'), 'utf8'));
+  v5.xp = 4.3e6; v5.solo = v5.solo || {}; v5.solo.lv = { ...(v5.solo.lv || {}), wren: { L: 45, xp: 9e9 } };
+  const v5st = memoryStorage({ [KEY]: JSON.stringify(v5) }), v5g = loadCore({ turns: true, seed: 69, storage: v5st }), V = s => v5g.eval(s);
+  const L0 = V('S.L');
+  assert(L0 === v5.L && V('attrPoints().free') === (L0 - 1) * HT.perLevel && V('S.attr.live') === 1 && !v5g.errors.length,
+    `an old save loads under the same key: Lv ${L0} kept, ${V('attrPoints().free')} points to spend` + (v5g.errors[0] ? ': ' + v5g.errors[0] : ''));
+  V('gainXp(1)'); V('soloBenchXp(1)');
+  assert(V('S.L') <= L0 + 1 && V('S.solo.lv.wren.L') <= 46 && !v5g.errors.length, `an old save's banked XP gives at most one level on the next kill (Lv ${L0} to ${V('S.L')}; benched Wren 45 to ${V('S.solo.lv.wren.L')})`);
+  for (let i = 0; i < 300; i++) v5g.fn.tick(0.1);
+  assert(!v5g.errors.length, 'an old save plays 30 s with no errors');
   // m. save codes carry S.attr
   E('S.L = 20; S.maxZone = 3; S.attr.pts.wren = ATTR0(); attrAdd("might", 30); attrAdd("guard", 10); attrAdd("vigour", 5); S.attr.resets.wren = 1');
   const sc = JSON.parse(E('JSON.stringify(S)')), dec = E('decodeSave(encodeSave(S))');
@@ -9133,7 +9138,7 @@ if (section('hero progression rework (attributes, road, join, bench)')) try {
   };
   const accepted = Object.entries(badAttr).filter(([, m]) => vs(m).ok).map(([k]) => k);
   assert(!accepted.length && vs(c => { delete c.attr; }).ok, `save code: S.attr with ${Object.keys(badAttr).join(', ')} is refused` + (accepted.length ? '; ACCEPTED: ' + accepted.join(', ') : '') + '; a save with no S.attr is still accepted');
-  const herr = [g, on, lift, bn, br, bf, seed1, seed2, fresh1, old1, v5g].flatMap(c => c.errors);
+  const herr = [g, on, lift, bn, br, bf, seed1, seed2, fresh1, old1, v5g, jl].flatMap(c => c.errors);
   assert(!herr.length, 'hero progression: no handler errors' + (herr[0] ? ': ' + herr[0] : ''));
 } catch (e) { fail('hero progression rework crashed: ' + (e.stack || e)); }
 

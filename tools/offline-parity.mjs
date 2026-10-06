@@ -7,7 +7,7 @@ import { loadCore, memoryStorage } from './lib/core.mjs';
 
 export const AUDIT_START = Date.UTC(2026, 8, 28, 12);
 export const AUDIT_SPANS = [1800, 7200, 14400, 28800, 86400];
-const KEY = 'lanternfall.save.v6';
+const KEY = 'lanternfall.save.v5';
 export function offlineGame(raw) {
   const g = loadCore({ seed: 1414, prelude: `Date.__t=${AUDIT_START};Date.now=()=>Date.__t`, storage: memoryStorage(raw ? { [KEY]: raw } : {}) });
   g.eval("almanac.force('none');globalThis.__auditUnits=0;on('harvest',e=>__auditUnits+=e.n)");

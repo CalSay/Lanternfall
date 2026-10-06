@@ -109,8 +109,9 @@ always walls (Lv 35 took 7 to 11 active hours).
   a save played with attributes (`S.attr.live`), switching the flag on raises each hero's Training once to the move
   level their hero level gave them (`S.solo.trSeeded`), so no high-level hero comes back untrained. The Training code
   and its save fields stay until the judge signs off the sims after testers play; a later card removes them.
-- Save key `lanternfall.save.v5` -> `v6` (S.v 6): old saves start fresh (Cal accepts wipes until 1.0; a key bump needs
-  the `cal-approved` label). New field `S.attr = { v: 1, pts: { hero: { might, focus, guard, vigour } }, resets,
+- The save key stays `lanternfall.save.v5`: old saves load (an Opus save review loaded the fixtures and two mid-game sim
+  saves with no errors). XP banked past the next level on the new curve is held a point under it at the next gain
+  (`gainXp`, `soloBenchXp`), so it never chains level-ups; heroes keep their level and get its points to spend. New field `S.attr = { v: 1, pts: { hero: { might, focus, guard, vigour } }, resets,
   met, live }`, defaults in `registerState`. `S.solo.tr` stays for the flag.
 - Online: the raider doc's `L` and presence `lvl` stay the hero's level. No online file changes.
 
