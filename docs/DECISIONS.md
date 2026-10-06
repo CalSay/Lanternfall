@@ -226,6 +226,10 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   bottom-right. (2026-09-29)
 - **Hints stay docked** and never jitter. The game pauses while a tutorial step is open. The early game must not be
   spammed with notifications. Skill levels sit above the resource lists. (2026-09-28 to 2026-09-29)
+- **One new thing a minute:** in the first hour at most one tab, view, bar or strip opens per 60 s of play
+  (`ONBOARD_TUNE.gap`), the first ready one in `FEATURES` order; one the player's own act or a drop opened (walking to
+  gather, the fire, the Workbench, the Tavern, the first star, the first unique) opens at once. Every unlock rule is
+  unchanged. Claude decided (story-unlock-gates, red team and Opus judge, 2026-10-06; `docs/design/unlock-pace.md`).
 - **Fonts:** Handjet (pixel display) with Barlow Semi Condensed (body). (2026-09-28)
 - **Icons:** the approved C26 icon packs (resources, gear, actions, menus, statuses). (2026-10-01)
 
@@ -251,7 +255,11 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   Sable of the Mere (Sable, the Deep Listener).
 - **The Voice's two phase-change cards** are the one exception to "nothing during a fight": between turns, at the roster's
   move-end queue, never changing fight state, always with Skip.
-- **A hero can't be unlocked before their first story scene,** once that scene is in the game; heroes a save owns are kept.
+- **A hero can't be unlocked before their first story scene;** heroes a save owns are kept. The gate opens from the zone
+  where the scene can have played (a scene on a Champion's post: once that Champion falls), from `STORY_MEET`, which a
+  check holds equal to the chapter script, and it holds whether or not the scene's encounter is built yet. The camp's All
+  heroes sheet says when (the zone in your chapter, else the chapter number); a won hero token is a bell line. Claude
+  decided (story-unlock-gates, red team and Opus judge, 2026-10-06; `docs/design/unlock-pace.md`).
 - **Ada and Pell come home when the Fenmother is beaten,** not after the Coast's Great Lantern.
 - **Story choices are saved as new keys under `story`** (`starter`, `litFor`, `coldhearth`) with defaults; no save-key
   bump; Opus save review before merge.
@@ -302,6 +310,8 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 
 Kept only to explain current rules. Each line: the old decision, then what replaced it.
 
+- Hero gates at the first zone of the scene's area, only once the scene is in the game (2026-10-06, story-opening) -> from the
+  zone the scene can have played, built or not (2026-10-06, story-unlock-gates).
 - Training: gold levels up each hero's Attack, Parry, Dodge and abilities, with caps (2026-09-29, 2026-10-02) -> no
   Training; level, star points, abilities and attribute points (2026-10-06).
 - No rapid catch-up XP for heroes (2026-09-28) -> a new hero joins at the road's level; benched heroes earn half XP
