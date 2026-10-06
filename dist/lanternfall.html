@@ -24092,6 +24092,7 @@ var soloHero, soloPick, soloLevels, soloBenchXp, soloAttack, soloParry, soloDodg
     if (!h || typeof chooseClass !== 'function' || !heroCanPlay(key)) return false;
     const s = Sx(), from = s.hero, chosen = !!(S.party && S.party.chosen);
     if (from === key && chosen) return true;
+    if (typeof attrXpMap === 'function') attrXpMap();   // a save from before attributes: bars carry over before any lift changes a level
     // each hero keeps its own level and XP; the lamp (gold, gear, camp, the road) is shared
     if (from && SOLO_HEROES[from]) s.lv[from] = { L: S.L, xp: S.xp };
     let lifted = false;

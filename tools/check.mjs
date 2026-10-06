@@ -9180,6 +9180,11 @@ if (section('hero progression rework (attributes, road, join, bench)')) try {
   { const raw = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-early.json'), 'utf8')), xg = loadCore({ turns: true, seed: 70, storage: memoryStorage({ [KEY]: JSON.stringify(raw) }) }), X = s => xg.eval(s);
     const share = raw.xp / Math.floor(15 * Math.pow(1.3, raw.L - 1)); X('attrXpMap()'); const xp1 = X('S.xp');
     assert(X('S.L') === raw.L && Math.abs(X('S.xp / xpNeed(S.L)') - share) < 1e-9 && X('attrXpMap(), S.attr.xpv') === 1 && X('S.xp') === xp1, `an old save keeps its bar: ${(100 * share).toFixed(1)}% of Lv ${raw.L} on the old curve is ${(100 * X('S.xp / xpNeed(S.L)')).toFixed(1)}% on the new one, once`);
+    // an old save's first act is a switch: the benched hero's bar carries over at its own level before the join lift (Codex round 2)
+    { const sg = loadCore({ turns: true, seed: 71 }), Y = s => sg.eval(s);
+      Y('soloPick("wren"); S.maxZone = 20; S.L = 30; S.attr.xpv = 0; S.solo.lv.pip = { L: 20, xp: 2000 }; soloPick("pip")');
+      const want = Y('Math.min(2000 / Math.floor(15 * Math.pow(1.3, 19)) * xpNeed(20), xpNeed(S.L) - 1)');
+      assert(Y('S.L') > 20 && Math.abs(Y('S.xp') - want) < 1e-6 && Y('S.attr.xpv') === 1, `a switch on an old save carries the bar over before the lift (Pip Lv 20 at 91% joins at Lv ${Y('S.L')} with ${Math.round(Y('S.xp'))} XP, want ${Math.round(want)})`); }
     // XP far past the road is cut (xpAheadX) but never frozen: small gains still add up to the next level
     X('S.L = 28; S.maxZone = 10; S.xp = xpNeed() - 0.5; for (let i = 0; i < 4; i++) gainXp(37, true)');
     assert(X('S.L') === 29, `a hero far past the road still levels from small XP gains (Lv 28 at zone 10 reached Lv ${X('S.L')})`); }
