@@ -4,7 +4,7 @@
 # The layout findings themselves are counted by `node tools/eyes.mjs --only layout`.
 new mid
 wait 4
-tap "Continue"
+tap-if "Continue"
 wait 2
 tap-if "Continue"
 wait 4
