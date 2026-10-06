@@ -280,7 +280,9 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 - **Who vets art (2026-10-06):** the Opus art judge under the Autopilot gates, after a red team, using the art
   freeze's own standard (whole packs, every piece matching, no stopgaps, no code-drawn art). Cal may veto from the
   digest. Character art ships on, with a "Classic art" switch for one release. Icons must fit the live meaning, not the
-  name. (Cal 2026-10-05 gates, 2026-10-06 18:30 and 18:41; `CLAUDE.md` wording still to update.)
+  name. (Cal 2026-10-05 gates, 2026-10-06 18:30 and 18:41.) Not in force for wiring yet: `CLAUDE.md`'s art freeze
+  still names the owner, and the session permission check refused the edit, so every wiring card waits until that
+  wording changes (proposed text: `/mnt/project-files/autopilot/reports/art-pack-triage/claude-md-art-freeze.md`).
 - **Codex art packs, judge verdicts (2026-10-06, art-pack-triage):** ability icons: wire 36 of Codex's drafts for the
   live 42 abilities (keep the C26 Echo Shot and Fireball; Shield Bash moves to Codex's red-gold one), a hero's icons go
   in only when all 14 are whole, so Pip first; Power Shot, Barbed Arrow, Pinning Shot and Shield Throw go back to Codex
@@ -288,6 +290,14 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   they go in. Starting equipment (c27): shelved until heroes can show gear. Hunting drafts (c24): superseded by the live
   interim. Enemies (c22): already in. Hero concept boards: re-brief as a matched portrait pack. Reasons and red team:
   `/mnt/project-files/autopilot/reports/art-pack-triage.md`. (built: not yet; cards `wire-ability-icons` and others)
+  Coverage areas: 6 Combat feel and 1 First 10 minutes (icons), 10 Skills and crafting (nodes), 14 Heroes (portraits).
+  Prediction: lettered ability tiles fall from 39 of 42 to 0 for Pip when `wire-ability-icons` merges and to 0 for all
+  three heroes in the 2026-10-19 build; measured by counting lettered (`.mono`) tiles on the Hero > Abilities
+  screen in `wire-ability-icons`' proof route (an `expect` line CI replays); missed if any tile stays lettered for a hero whose icons are wired, or if Cal's note "ability icons
+  missing" is not "fixed" in that week's Sunday review. Switch off: removing a hero's ids from the generated `act` icon
+  pack brings back the lettered tiles (the existing `noIcon` path); gather scenes go back to the code-drawn ones by
+  reverting their wiring commit; portraits have the Classic art switch. Saves: unaffected (art only; the Classic art
+  switch adds one settings flag with a default).
 
 ## Working process
 
