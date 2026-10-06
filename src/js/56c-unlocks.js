@@ -3,11 +3,12 @@
 // Reads never spend resources or add progress. Free routes are filed once a second; paid routes require one claim.
 // Story gate (story-opening, bible 4.4 and 4.5): a hero cannot unlock before the zone where their first scene plays (STORY_MEET).
 // A hero the save already owns (S.party.unlock.heroes) is kept. The gate only holds back new unlocks.
+// story-unlock-gates: the locked line says when (whenLine): the zone in the chapter the player is in, else the chapter number.
 // Save defaults under S.party.unlock: renown (existing), heroes {id:1}, quests {id:1}, tokens {id:{miss,won}},
 // milestones {id:timestamp}. No save-key change: missing maps default empty; starters stay unlocked.
 // API: heroHasKit/heroBio (56-roster), heroRouteInfo -> {state,unlocked,playable,ready,how,bio,cost},
 // heroUnlocked, heroCanPlay, heroUnlock -> bool, heroPick -> bool; tokenChance/unlockTokenRoll for tools.
-// Events: heroUnlocked {id}, heroToken {id,won,chance}, renown {n,total,source}. No new toast source.
+// Events: heroUnlocked {id}, heroToken {id,won,chance}, renown {n,total,source}. Toast: heroToken (a bell line, 23n).
 
 const UNLOCK_TUNE = {
   renownBounty: 1, renownElite: 3,
@@ -63,8 +64,10 @@ const UNLOCK_TUNE = {
 
 // Where each hero first appears: the first zone of the area in the bible 4.5 table (areas are 5 zones, 7 to a chapter), or zone 36
 // for "Ch1 end" (after the Fenmother). `ch` is the chapter, which the locked line uses without naming a place.
+// story-unlock-gates (judge): where the chapter script places the scene, the zone is the one after it can have played: a scene on
+// a Champion's post plays when that Champion falls (area end + 1). tools/check.mjs holds Chapter 1 equal to 21k-story-hollow.js.
 const STORY_MEET = {
-  hesketh: [1, 1], hob: [1, 1], anselm: [11, 1], maren: [16, 1], morwen: [21, 1], grenna: [26, 1], bram: [31, 1], thessaly: [31, 1],
+  hesketh: [1, 1], hob: [1, 1], anselm: [16, 1], maren: [21, 1], morwen: [26, 1], grenna: [31, 1], bram: [36, 1], thessaly: [36, 1],
   elowen: [36, 1], vesper: [36, 1],
   loveday: [36, 2], aldric: [41, 2], cass: [51, 2],
   caedmon: [71, 3], davy: [76, 3], isolde: [81, 3], beatrix: [81, 3], linnet: [86, 3], ferrin: [91, 3], oswin: [101, 3],
@@ -117,6 +120,18 @@ let addRenown, renown, caedmonRenown, heroRouteInfo, heroUnlocked, heroCanPlay, 
   };
   const metScene = id => !STORY_MEET[id] || (S.maxZone || 1) >= STORY_MEET[id][0];
   const meetLine = id => { const m = STORY_MEET[id]; return id === 'hesketh' ? 'You meet him on the road.' : m && m[1] === 1 && m[0] < 36 ? 'You meet them in the Hollow.' : 'You meet them further down the road.'; };
+  // story-unlock-gates: the camp's All heroes sheet says when a held hero joins. In the chapter the player is in: the zone (the
+  // chapter's name is already on screen); a later chapter: its number only, never a place the player has not reached (lessons).
+  // A token already won says so, so a win before the first scene is not lost.
+  const shortName = id => ROSTER[id].name.replace(/^(Old|Brother|Ser|Saint) /, '').split(' ')[0];
+  const whenLine = id => {
+    // chapters are 35 zones (bible 8); only the first two are regions in the game so far, so a later chapter goes by its number
+    const [z, ch] = STORY_MEET[id], nm = shortName(id), here = Math.min(5, Math.ceil(Math.max(1, S.maxZone || 1) / 35)), R = REGIONS[ch - 1];
+    const place = R ? (/Coast/.test(R.n) ? 'on ' : 'in ') + R.n : `Chapter ${ch}`;
+    const at = ch !== here ? `in Chapter ${ch}` : R && z > R.z1 ? `when ${R.n} is won, at zone ${z}` : `later ${R ? place : 'in ' + place}, at zone ${z}`;
+    const q = T.tokens[id];
+    return q && token(id).won ? `You won the ${q.name}. ${nm} joins you ${ch !== here ? at : 'at zone ' + z}.` : `You meet ${nm} ${at}.`;
+  };
   const route0 = id => {
     const r = heroKnown(id) && ROSTER[id]; if (!r) return free(false, 'Unknown hero.');
     if (r.route.type === 'starter') return free(true, 'Unlocked. Pick up the lamp.');
@@ -138,7 +153,7 @@ let addRenown, renown, caedmonRenown, heroRouteInfo, heroUnlocked, heroCanPlay, 
   const route = id => {
     const r = route0(id);
     if (got(id) || metScene(id)) return r;
-    return { ...r, ready: false, paid: false, pending: false, gated: false, how: meetLine(id), story: true };
+    return { ...r, ready: false, paid: false, pending: false, gated: false, how: whenLine(id), story: true };
   };
 
   renown = () => U().renown;
@@ -184,7 +199,10 @@ let addRenown, renown, caedmonRenown, heroRouteInfo, heroUnlocked, heroCanPlay, 
     const r = roll === undefined ? Math.random() : roll; if (!Number.isFinite(r) || r < 0 || r >= 1) return null;
     const s = U().tokens[id] || (U().tokens[id] = { miss: 0, won: false });
     const won = r < chance; if (won) s.won = true; else s.miss++;
-    emit('heroToken', { id, won, chance }); if (won && !route(id).paid) heroUnlock(id); return won;
+    emit('heroToken', { id, won, chance }); if (won && !route(id).paid) heroUnlock(id);
+    // story-unlock-gates: a win is a bell line (23n 'heroToken'), never silent: when they join, or that they joined
+    if (won) emit('toast', { key: 'heroToken', msg: route(id).story ? whenLine(id) : `You won the ${q.name}. ${shortName(id)} joins your camp.${heroHasKit(id) ? '' : ' The solo kit comes later.'}`, kind: 'good' });
+    return won;
   };
   const rollBoss = z => {
     for (const id in T.tokens) { const q = T.tokens[id]; if (z >= q.from && (q.zoneType == null || zoneType(z) === q.zoneType) && (q.placeIndex == null || zonePlace(z) === q.placeIndex) && (!q.regionFrom || regionOf(z).z0 === q.regionFrom) && (!q.place || regionOf(z).names[zonePlace(z)].includes(q.place))) unlockTokenRoll(id); }

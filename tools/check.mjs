@@ -2142,7 +2142,7 @@ if (section('cold hearth')) try {
     for (let sec = 0; sec < 10 * 60; sec++) {
       // taps go through the stage as the browser sends them: the 'tap' event, then the strike or the chop
       if (!P('hearthLit()')) {
-        if (P('S.maxZone >= 2 && S.activity !== "gather" && !hearthCan().ok')) { P('setNode("wood", 1); setActivity("gather")'); mark('chop'); }
+        if (P('S.maxZone >= 2 && isUnlocked("gather") && S.activity !== "gather" && !hearthCan().ok')) { P('setNode("wood", 1); setActivity("gather")'); mark('chop'); }   // the Gather row shows first (story-unlock-gates)
         if (P('hearthCan().ok') && P('hearthLight()')) mark('lit');
       }
       else {
@@ -2161,7 +2161,7 @@ if (section('cold hearth')) try {
       const st = P('(s => s && s.id)(onboardStep())');
       if (st && st.startsWith('tab:')) P(`S.onboard.seen[${JSON.stringify(st.slice(4))}] = 1`);
       if (st === 'nextup') P('onboardDone("nextup")');
-      if (sec % 5 === 0) buy();
+      if (sec % 5 === 0 && P("isUnlocked(\"party\")")) buy();   // Training lives on the Hero tab (story-unlock-gates: the bot waits for it, as a player must)
       tickS(p, 1);
     }
     const at = k => marks[k] ?? got[k] ?? Infinity;
@@ -2169,12 +2169,15 @@ if (section('cold hearth')) try {
     const tl = Object.entries(Object.assign({}, got, marks)).sort((a, b) => a[1] - b[1]);
     console.log('       timeline: ' + tl.map(([k, t]) => `${k} ${mmss(t)}`).join(', '));
     console.log('       guide: ' + steps.map(([k, t]) => `${k} ${mmss(t)}`).join(', ') + ` | zone ${P('S.maxZone')} at 10:00`);
-    assert(at('lit') <= 90, `the fire lit under 1:30: the first boss falls, the hero chops 8 Pine Log (${mmss(at('lit'))}; solo, W2-B)`);
+    // story-unlock-gates: unlocks come one a minute (ONBOARD_TUNE.gap) and the bot trains only once the Hero tab is open, so the
+    // first-ten-minute bounds count from the first boss (was: lit by 1:30, Next Up by 2:30, Gather with the boss, tool by 5:00, Workbench by 4:00)
+    const z2 = at('zone2');
+    assert(at('lit') - z2 <= 150, `the fire lit within 2:30 of the first boss: Gather opens, the hero chops 8 Pine Log (${mmss(at('lit'))}, boss at ${mmss(z2)}; solo, W2-B)`);
     assert(firstUp !== null && firstUp < 90, `first upgrade affordable under 1:30 (${mmss(firstUp)})`);
-    assert(at('nextup') <= 150, `Next Up by 2:30 (${mmss(at('nextup'))})`);
-    assert(at('gather') - at('zone2') <= 2 && at('camp') - at('lit') <= 1 && at('craft') >= at('bench1') && at('craft') <= at('bench1') + 1, `Gather with the first boss, Camp with the fire, Craft with the Workbench (${mmss(at('gather'))}, ${mmss(at('camp'))}, ${mmss(at('craft'))})`);
-    assert(at('tool') <= 300, `a tool by 5:00 (${mmss(at('tool'))})`);
-    assert(at('bench1') <= 240 && at('forge1') <= 600, `Workbench by 4:00, Forge by 10:00 (${mmss(at('bench1'))}, ${mmss(at('forge1'))})`);
+    assert(at('nextup') - z2 <= 180, `Next Up within 3:00 of the first boss (${mmss(at('nextup'))})`);
+    assert(at('gather') - at('zone2') <= 64 && at('party') <= at('gather') && at('camp') - at('lit') <= 1 && at('craft') >= at('bench1') && at('craft') <= at('bench1') + 1, `Gather within a minute of the first boss and after Hero, Camp with the fire, Craft with the Workbench (${mmss(at('gather'))}, ${mmss(at('camp'))}, ${mmss(at('craft'))})`);
+    assert(at('tool') - z2 <= 240, `a tool within 4:00 of the first boss (${mmss(at('tool'))})`);
+    assert(at('bench1') - z2 <= 180 && at('forge1') <= 600, `Workbench within 3:00 of the first boss, Forge by 10:00 (${mmss(at('bench1'))}, ${mmss(at('forge1'))})`);
     const early = tl.map(x => x[1]).filter(t => t <= 600);
     let gap = early[0] || 0; for (let i = 1; i < early.length; i++) gap = Math.max(gap, early[i] - early[i - 1]);
     assert(early.length >= 8 && gap <= 180, `something new at least every 3 minutes in the first 10 (${early.length} events, longest gap ${gap}s)`);
@@ -3432,7 +3435,7 @@ if (section('nav')) try {
   // 3. a new game (cold Hearth): only Woodcutting until the fire is lit; the switcher hides locked skills
   {
     const g = loadCore({ seed: 8, cold: true }), E = s => g.eval(s);
-    E('soloPick("wren"); S.maxZone = 2'); secs(g, 2);   // W2-B: solo, Gather opens with the first boss
+    E('soloPick("wren"); S.maxZone = 2'); secs(g, 64);   // W2-B: solo, Gather opens a minute after the first boss (Hero first; story-unlock-gates)
     assert(E('hearthCold() && !hearthLit()') && E('navSkills().join()') === 'wood' && E('navSkillOpen("mine")') === false && E('navSkillOpen("forage")') === false,
       `cold Hearth: the switcher and Gather show only Woodcutting (${E('navSkills().join()')}), Gather opens on the Oak Grove`);
     E('S.mats.wood[0] = 50; hearthLight()'); secs(g, 2);
@@ -6966,7 +6969,7 @@ if (section('C9 hero registry (core)')) try {
   E('for (let i=0;i<10;i++) for (const k of HERO_ORDER) { heroRouteInfo(k); heroUnlocked(k); heroCanPlay(k); tokenChance(k); }');
   assert(E('JSON.stringify(S)') === before, 'C9: picker and token-chance reads do not mutate state or consume resources');
   assert(E('["missing","toString","__proto__",null].every(k => !heroUnlocked(k) && !heroCanPlay(k) && !heroUnlock(k) && !heroPick(k) && heroRouteInfo(k) === null)'), 'C9: unknown and inherited IDs cannot unlock or pick heroes');
-  E('S.maxZone=31; S.mats.wood=[79,0,0,0,0]');   // Bram's first scene is at zone 31 (STORY_MEET)
+  E('S.maxZone=36; S.mats.wood=[79,0,0,0,0]');   // Bram's first scene can play from zone 36 (STORY_MEET; story-unlock-gates)
   const short = E('JSON.stringify([S.gold,S.mats,S.party.unlock])');
   assert(!E('heroUnlock("bram")') && E('JSON.stringify([S.gold,S.mats,S.party.unlock])') === short, 'C9: an incomplete quest cannot charge or unlock');
   E('S.mats.wood[1]=1');
@@ -6996,7 +6999,7 @@ if (section('C9 hero registry (core)')) try {
   assert(K('!S.party.unlock.tokens.grenna'), 'C9: Grenna token does not roll below its zone gate');
   K('emit("kill",{mob:{boss:true,key:"coral"},zone:41,tier:4});');
   assert(K('!S.party.unlock.tokens.grenna'), 'C9: a Coast place cannot masquerade as the Hollow’s Quarry boss');
-  K('emit("kill",{mob:{boss:true,key:"golem"},zone:27,tier:4});');
+  K('S.maxZone=31; emit("kill",{mob:{boss:true,key:"golem"},zone:27,tier:4});');   // Grenna's first scene can play from zone 31 (story-unlock-gates)
   assert(K('heroUnlocked("grenna") && heroRouteInfo("grenna").state === "coming-soon"'), 'C9: an eligible Quarry boss unlocks Grenna’s route, but cannot supply her kit');
   K('S.maxZone=156; emit("kill",{mob:{boss:true,key:"spore"},zone:UNLOCK_TUNE.quests.morwen.zone,tier:5}); heroProbe(); S.craft.starChart=1; S.mastery.types.wraith=BESTIARY_TIERS[UNLOCK_TUNE.thessaly.tier-1]; S.stats.bosses=UNLOCK_TUNE.corvin.bosses; for (const t of TYPES) S.mastery.types[t.key]=Math.max(S.mastery.types[t.key]||0,BESTIARY_TIERS[UNLOCK_TUNE.corvin.tier-1]); heroProbe();');
   assert(K('["morwen","oriel","thessaly","corvin"].every(heroUnlocked)'), 'C9: solo boss quest, Star Chart, bestiary and Kingslayer conditions complete their routes');
@@ -7061,7 +7064,7 @@ if (section('C9 hero registry (browser)')) try {
           await page.click('#createScreen .ccard[data-hero="wren"]');
           await page.click('#createScreen .create-go');
           await page.waitForSelector('#createScreen',{state:'detached'});
-          await X('delete S.party.unlock.heroes.bram; S.maxZone=31; S.zone=1; S.L=7; S.xp=3; S.mats.wood=[80,0,0,0,0]; S.gold=42; S.camp.open=true; S.camp.b.hearth=2; setTab("party"); setView("party","team"); ui(true); true');
+          await X('delete S.party.unlock.heroes.bram; S.maxZone=36; S.zone=1; S.L=7; S.xp=3; S.mats.wood=[80,0,0,0,0]; S.gold=42; S.camp.open=true; S.camp.b.hearth=2; setTab("party"); setView("party","team"); ui(true); true');
           // owner 2026-10-01: the Camp view shows chips for the heroes you can play or unlock; All heroes opens the full roster
           await page.waitForSelector('#sec-solo-hero .sp-all');
           const chipHeroes = await page.$$eval('#sec-solo-hero .sp-chip', cs => cs.map(c => c.dataset.hero));
@@ -8674,9 +8677,9 @@ if (section('story-opening')) try {
   assert(rr && /Not yet\./.test(rr.wren) && /I'll rest when the (village|Hollow) is lit/.test(rr.tobin) && /No\./.test(rr.pip), 'story-opening: the refusal of "Rest" (bible 4.6) has a line for each starter (played at the Veiled Oracle, story-hollow-script)');
   // story gate (story-opening, bible 4.4): no new unlock before the hero's first scene; heroes a save owns are kept
   const gate = loadCore({ seed: 916 }), G = s => gate.eval(s);
-  G('S.maxZone=30; S.mats.wood=[80,0,0,0,0]');
-  assert(G('!heroUnlock("bram") && !heroUnlocked("bram") && heroRouteInfo("bram").story === true && heroRouteInfo("bram").how === "You meet them in the Hollow." && heroRouteInfo("bram").bio === ""') && G('S.mats.wood[0]') === 80, 'story gate: a hero cannot unlock before their first scene (Bram, zone 31), nothing is spent, and a locked hero shows no bio');
-  G('S.maxZone=31');
+  G('S.maxZone=35; S.mats.wood=[80,0,0,0,0]');
+  assert(G('!heroUnlock("bram") && !heroUnlocked("bram") && heroRouteInfo("bram").story === true && heroRouteInfo("bram").how === "You meet Bram when the Hollow is won, at zone 36." && heroRouteInfo("bram").bio === ""') && G('S.mats.wood[0]') === 80, 'story gate: a hero cannot unlock before their first scene (Bram, zone 36), nothing is spent, and a locked hero shows no bio');
+  G('S.maxZone=36');
   assert(G('heroRouteInfo("bram").story !== true && heroUnlock("bram") && heroRouteInfo("bram").bio.length > 20'), 'story gate: at the first scene the hero\'s real route opens, and the bio shows once unlocked');
   G('S.party.unlock.heroes.caedmon=1; S.maxZone=1');
   assert(G('heroUnlocked("caedmon") && heroRouteInfo("caedmon").bio.length > 20 && STORY_MEET.corvin[0] === 156 && !heroUnlocked("corvin")'), 'story gate: a hero an existing save already owns is kept, and the gate only holds back new unlocks');
@@ -9014,6 +9017,100 @@ if (section('story-systems-hollow')) try {
   const wrote = [...fs.readFileSync(path.join(ROOT, 'src', 'js', '74-ui-hands.js'), 'utf8').matchAll(/handsLitFor/g)].length;
   assert(wrote >= 1, 'systems-hollow: the Tavern applicant card shows the line');
 } catch (e) { fail('story-systems-hollow crashed: ' + (e.stack || e)); }
+
+// ---- story-unlock-gates: a held hero's line says when they join; a won token says so (docs/design/unlock-pace.md) ----
+if (section('story-unlock-gates')) try {
+  const g = loadCore({ seed: 917 }), E = s => g.eval(s);
+  const held = () => JSON.parse(E('JSON.stringify(HERO_ORDER.map(k => [k, heroRouteInfo(k)]).filter(([k, i]) => i.story).map(([k, i]) => [k, i.how, i.meet]))'));
+  const later = z => JSON.parse(E(`JSON.stringify([...new Set(Array.from({ length: 175 - ${z} }, (_, i) => zoneAreaName(${z} + 1 + i)).concat(REGIONS.filter(r => r.z0 > ${z}).map(r => r.n.replace(/^the /, ''))))])`));
+  for (const z of [1, 12, 30, 40, 75]) {
+    E(`S.maxZone = ${z}`);
+    const h = held(), names = later(Math.max(35, Math.ceil(z / 35) * 35));
+    assert(h.length >= 3 && h.every(([k, how]) => /at zone \d+\.$|in Chapter [2-5]\.$/.test(how)), `story-unlock-gates: at zone ${z} every held hero says when they join (a zone, or a later chapter's number)` + h.filter(([k, how]) => !/at zone \d+\.$|in Chapter [2-5]\.$/.test(how)).map(x => ': ' + x.join(' = ')).join('; '));
+    assert(h.every(([k, how]) => !names.some(n => n && how.includes(n))), `story-unlock-gates: at zone ${z} no held hero's line names a place beyond the chapter the player is in`);
+    assert(h.every(([k, how, meet]) => !/\d/.test(meet)), 'story-unlock-gates: the new-game picker keeps the short line (who, not where or when)');
+  }
+  E('S.maxZone = 12');
+  assert(E('heroRouteInfo("bram").how') === 'You meet Bram when the Hollow is won, at zone 36.' && E('heroRouteInfo("kestrel").how') === 'You meet Kestrel in Chapter 4.' && E('heroRouteInfo("elowen").how') === 'You meet Elowen when the Hollow is won, at zone 36.', 'story-unlock-gates: the lines read plainly (Bram, Kestrel, Elowen)');
+  E('S.maxZone = 40');
+  assert(E('heroRouteInfo("aldric").how') === 'You meet Aldric later on the Sunken Coast, at zone 41.', 'story-unlock-gates: on the Coast the line names the Coast');
+  // a token won before the first scene is kept and said; the hero joins at the scene
+  E('S.maxZone = 35; unlockTokenRoll("isolde", 0)');
+  assert(E('S.party.unlock.tokens.isolde.won === true && !heroUnlocked("isolde") && heroRouteInfo("isolde").how') === 'You won the Dusk Contract. Isolde joins you in Chapter 3.', 'story-unlock-gates: a Dusk Contract won at zone 35 says so, and Isolde waits for Chapter 3');
+  E('S.maxZone = 81; heroProbe()');
+  assert(E('heroUnlocked("isolde") && heroRouteInfo("isolde").story !== true'), 'story-unlock-gates: Isolde joins at her first scene (zone 81) with the token she already holds');
+  // the bell says a won token; after the scene it says the hero joined
+  const bell = [];
+  g.fn.on('toast', t => { if (t && t.key === 'heroToken') bell.push(t.msg); });
+  E('S.maxZone = 40; unlockTokenRoll("grenna", 0)');
+  assert(bell.length === 1 && bell[0] === "You won the Stonebreaker's Token. Grenna joins your camp. The solo kit comes later." && E('noticeChannel(noticeRule("", "heroToken"), "")') === 'bell', 'story-unlock-gates: a token win is one bell line, never a pop (' + bell.join(' | ') + ')');
+  // STORY_MEET holds the chapter script: the zone after each Chapter 1 hero's first scene can have played (Hob: no scene of his own)
+  const meet = JSON.parse(E(`JSON.stringify((() => {
+    const B = STORY_BEATS, z = at => { const [k, v] = at.split(':'); return k === 'area' ? +v * AREA_ZONES + 1 : k === 'champPost' ? B.champ[v].zone + 1 : k === 'elderPre' ? B.elder[v].zone : B.elder[v].zone + 1; }, out = {};
+    for (const [id, n] of Object.entries(B.npc)) { const k = ROSTER_KEYS.find(h => id === h || (id.startsWith(h) && /^[A-Z]/.test(id.slice(h.length)))); if (k && STORY_MEET[k]) out[k] = Math.min(out[k] || Infinity, z(n.at)); }
+    return Object.keys(STORY_MEET).filter(k => STORY_MEET[k][1] === 1 && k !== 'hob').map(k => [k, STORY_MEET[k][0], out[k] || null]);
+  })())`));
+  const off = meet.filter(([k, t, sc]) => sc !== null && t !== sc), none = meet.filter(([k, t, sc]) => sc === null);
+  assert(!off.length && meet.find(m => m[0] === 'hesketh')[1] === 1 && meet.find(m => m[0] === 'bram')[1] === 36, 'story-unlock-gates: every Chapter 1 hero unlocks from the zone their scene in 21k-story-hollow.js can have played (Hesketh 1, Bram 36)' + off.map(x => '; ' + x.join(' ')).join('') + (none.length ? ' (no scene yet: ' + none.map(x => x[0]).join(', ') + ')' : ''));
+  // ---- the spacing governor (55-onboard ONBOARD_TUNE): one new thing a minute of play; a player's own act or a drop opens at once ----
+  const og = loadCore({ seed: 918 }), O = s => og.eval(s);
+  O('soloPick("tobin"); ONBOARD_TUNE.gap = 0; S.maxZone = 12; S.L = 12');
+  const all0 = JSON.parse(O('JSON.stringify(onboardCheck())'));
+  assert(['party', 'gather', 'nextup', 'awaynote', 'bounties', 'bestiary', 'codex', 'raid'].every(id => all0.includes(id)), 'story-unlock-gates: with gap 0 every ready row opens in one pass, as before (' + all0.join(',') + ')');
+  const og2 = loadCore({ seed: 919 }), O2 = s => og2.eval(s), arr = [];
+  const byNow = (G, id) => G(`(f => !!(f && f.now && f.now()))(FEATURE_OF[${JSON.stringify(id)}])`);   // opened by the player's act or a drop
+  og2.fn.on('unlock', e => arr.push([e.id, O2('Math.round(S.onboard.t)'), byNow(O2, e.id)]));
+  O2('soloPick("tobin"); S.maxZone = 12; S.L = 12; onboardCheck()');
+  const first = arr.map(x => x[0]);
+  assert(first[0] === 'party' && arr.slice(1).every(x => x[2]) && O2('!isUnlocked("gather") && !isUnlocked("awaynote")'), 'story-unlock-gates: with gap 60 one queued row opens (Hero first); only rows the player or a drop opened join it (' + first.join(',') + ')');
+  for (let i = 0; i < 600 * 10; i++) og2.fn.tick(0.1);
+  const q = arr.filter(x => !x[2]);
+  assert(q.length >= 6 && q.every((x, i) => i === 0 || x[1] - q[i - 1][1] >= 60) && q.map(x => x[0]).slice(0, 4).join() === 'party,gather,nextup,awaynote', 'story-unlock-gates: queued rows open a minute of play apart, in table order (' + q.map(x => x[0] + ' ' + x[1]).join(', ') + ')');
+  // an old save never re-locks, and a stray got value cannot stall the queue
+  const og3 = loadCore({ seed: 920 }), O3 = s => og3.eval(s);
+  O3('soloPick("tobin"); S.onboard.t = 100; S.onboard.got = { party: 30, gather: "x", nextup: 99999 }; S.maxZone = 12');
+  assert(O3('isUnlocked("party") && isUnlocked("gather") && isUnlocked("nextup")') && JSON.parse(O3('JSON.stringify(onboardCheck())')).includes('awaynote'), 'story-unlock-gates: a saved unlock stays open, and a got value that is not a number or lies ahead does not block the next row');
+  O3('S.onboard.got = {}; S.onboard.all = true');
+  assert(O3('isUnlocked("awaynote")'), 'story-unlock-gates: a save past the guide ("Show every tab") shows the away strip at once');
+  // the play clock stops once every tab is open, so a late row (Hands) must not wait on the gap there (Opus review B1)
+  O3('S.onboard.got = { party: Math.round(S.onboard.t) - 5 }; handsOpen = () => true');
+  assert(JSON.parse(O3('JSON.stringify(onboardCheck())')).includes('hands') && O3('isUnlocked("hands")'), 'story-unlock-gates: after "Show every tab", Hands opens when its rule holds, even within a minute of the last unlock');
+  const obUi = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-onboard-ui.js'), 'utf8');
+  assert(!/^\s*awaynote:/m.test(obUi.slice(obUi.indexOf('const OPEN_TXT = {'), obUi.indexOf('const TAB_FEATURE'))) && /isUnlocked\('awaynote'\)/.test(fs.readFileSync(path.join(ROOT, 'src', 'js', '71-ui-fight.js'), 'utf8')), 'story-unlock-gates: the away strip arrives silently (no unlock notice) and waits for its row');
+  // a cold new game, played as the guide asks: the game waits while a step pauses (no play clock), the player does the step
+  const cw = loadCore({ seed: 921, cold: true }), C = s => cw.eval(s), got = [];
+  C('Date.__t = Date.now(); Date.now = () => Date.__t; soloPick("tobin")');
+  cw.fn.on('unlock', e => got.push([e.id, C('Math.round(S.onboard.t)'), C('S.maxZone'), byNow(C, e.id)]));
+  const act = {
+    attack: 'soloAttack()', ability: 'soloAbility()', dodge: 'soloDodge()', parry: 'soloParry()', boss: 'onboardDone("boss")', nextup: 'onboardDone("nextup")',
+    upgrade: '{ for (let k = 0; k < 50; k++) { const t = trainNext(); if (!t || S.gold < t.cost) break; train(t.move, "1"); } }',
+    gather: 'setNode("wood", 1); setActivity("gather")', light: 'hearthLight(); setActivity("fight")', bench: 'campBuild("bench")', forge: 'campBuild("forge")', store: 'campBuild("store")',
+    tool: '{ const it = craftItem("pick", 1); if (it) equipItem(it.id); }'
+  };
+  const doneSteps = new Set(); cw.fn.on('onboardStep', e => doneSteps.add(e.id));
+  let lit = null, trip = 0;
+  for (let n = 0; n < 30 * 60 && C('S.onboard.t') < 30 * 60; n++) {
+    const st = C('(s => s ? [s.id, onboardPaused(s)] : null)(onboardStep())');
+    if (st && st[1] && act[st[0]]) { C(act[st[0]]); if (C('(s => s && s.id)(onboardStep())') === st[0]) cw.fn.tick(0.1); continue; }
+    if (st && st[0].startsWith('tab:')) C(`S.onboard.seen[${JSON.stringify(st[0].slice(4))}] = 1`);
+    if (st && st[0] === 'nextup') C('onboardDone("nextup")');
+    // a stock step waits on materials: gather the first one short, then go back to the fight
+    const need = st && /^stock:/.test(st[0]) ? JSON.parse(C(`JSON.stringify(onboardNeed(${JSON.stringify(st[0])}))`)) : [];
+    if (need.length && C('S.activity') === 'fight' && trip <= 0) { C(`setNode(${JSON.stringify(need[0].fam)}, ${need[0].t}); setActivity("gather")`); trip = 90; }
+    else if (C('S.activity') === 'gather' && C('hearthLit()') && --trip <= 0) C('setActivity("fight")');
+    if (lit === null && C('hearthLit()')) lit = C('Math.round(S.onboard.t)');
+    C('if (S.activity === "fight") { try { soloAttack(); } catch (e) {} }');
+    for (let i = 0; i < 10; i++) cw.fn.tick(0.1);
+    C('Date.__t += 1000');
+  }
+  const ga = got.find(x => x[0] === 'gather'), pa = got.find(x => x[0] === 'party'), z2 = got.find(x => x[2] >= 2) || [0, Infinity];
+  const close = got.filter((x, i) => i > 0 && !x[3] && got.slice(0, i).some(y => y[1] > x[1] - 60));
+  console.log('       cold walk: ' + got.map(x => `${x[0]} ${Math.floor(x[1] / 60)}:${String(x[1] % 60).padStart(2, '0')} (z${x[2]})`).join(', ') + ` | fire lit ${lit}s | zone ${C('S.maxZone')} at 30:00`);
+  assert(!close.length, 'story-unlock-gates: a cold walk with guide pauses never gets a queued arrival within a minute of another' + (close.length ? ': ' + close.map(x => x[0]).join(',') : ''));
+  assert(pa && ga && pa[1] <= ga[1] && lit !== null && ga[1] <= z2[1] + 64 && lit - ga[1] <= 150, `story-unlock-gates: Hero opens before Gather, Gather within a minute of the first boss, the fire within 2:30 of Gather (Hero ${pa && pa[1]}s, Gather ${ga && ga[1]}s, fire ${lit}s)`);
+  assert(['attack', 'ability', 'boss', 'upgrade', 'gather', 'light', 'bench', 'tool', 'forge'].every(id => doneSteps.has(id)), 'story-unlock-gates: every guide step of the cold walk still completes (' + [...doneSteps].join(',') + ')');
+  assert(!g.errors.length && !og.errors.length && !og2.errors.length && !og3.errors.length && !cw.errors.length, 'story-unlock-gates: no errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
+} catch (e) { fail('story-unlock-gates crashed: ' + (e.stack || e)); }
 
 if (section('removed systems (W2-C)')) try {
   const strip = t => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/([^:'"`\\])\/\/[^\n'"`]*$/gm, '$1');
