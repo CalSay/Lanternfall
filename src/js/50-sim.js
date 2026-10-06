@@ -282,7 +282,6 @@ function awayBase(r) {
   if (typeof turnCombatScope === 'function' && turnCombatScope()) {
     r.turnCombat = { kills: 0, zone: S.zone };
     r.note = 'Fights only happen while you play. Set your hero to gather before you go, and they keep working.';
-    if (r.secs >= 300) toast('Fights wait for you while you are away. Gather before you go to keep earning.', 'raid', null, 'normal');
     return r;
   }
   // Kills are capped by the respawn gap, same as live play; away play earns 75% of the live rate.

@@ -720,6 +720,9 @@ img[src*="#nic:"] { image-rendering: auto; }   /* a gear icon set by code that d
 .away-limwrap { display: grid; justify-items: center; }
 .away-rule { margin: 6px 0 0; display: flex; align-items: center; gap: 8px; text-align: left; padding: 6px 9px; background: rgba(242,226,122,.07); border: 1px solid rgba(242,226,122,.35); font-size: 12.5px; line-height: 1.3; color: #F2E6B0; }
 .away-rule img { width: 20px; height: 20px; flex: none; image-rendering: pixelated; }
+.gate-rule { margin: 4px 8px 0; padding: 4px 8px; font-size: 11.5px; gap: 6px; }
+.gate-rule img { width: 16px; height: 16px; }
+.gate-rule.hide { display: none; }
 /* 60-bounties: bounty board rows and the achievements grid */
 .row.bty .bty-bar { margin-top: 5px; height: 5px; }
 .row.bty .bty-bar > i { background: var(--gold); }
@@ -2977,6 +2980,7 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
   .mob { position: absolute; top: 6px; right: 8px; width: min(46%, 320px); padding: 4px 6px 5px; background: rgba(14,11,18,.72); border: 1px solid var(--line-hi); box-shadow: 0 2px 0 #0B0810; }
 
   /* ---- the side column: Next Up at the top, notices under it, the action bar in the bottom-right corner ---- */
+  .game > .gate-rule { grid-column: 4 / -1; grid-row: 3; align-self: start; margin: 6px 6px 0 7px; z-index: 2; }
   .nu-slot, .game.solo-game > .nu-slot { grid-column: 4 / -1; grid-row: 2; padding: 6px 6px 0 7px; min-width: 0; }
   /* Next Up: the eyebrow, status and "+N" on one line, the goal under it at the column's full width */
   .nu-chip { min-height: 44px; grid-template-columns: 22px minmax(0, 1fr) auto auto; grid-template-rows: auto auto; gap: 2px 6px; padding: 4px 6px 6px 6px; }
@@ -8481,7 +8485,6 @@ const NOTICES = [
   { id: 'boss-fail', re: /^(The zone boss held its ground|The zone boss beat you|Your party fell to the zone boss)/, ch: 'pop', wait: 10, why: 'tells you to grow stronger' },
   { id: 'fell-back', re: /(fell back a zone|fell back to regroup|couldn't finish the pack)/, ch: 'bell' },
   { id: 'beaten', re: /Catch your breath and go again/, ch: 'log', why: 'you stay in the zone and the fight starts again on screen' },
-  { id: 'away-fights', re: /^Fights wait for you while you are away\./, ch: 'bell', once: 'session', why: 'turn fights are active only (C29): say once why a fight earned nothing away' },
   { id: 'scroll', re: /^(Moss|Hollow|Barrow|Roadlight|Mother) Scroll! Spend it/, site: /SCROLLS\[id\]\.name\}! Spend it/, ch: 'log', why: 'the stage float shows it and Next Up says what it can teach (the bell stays calm)' },
   { id: 'scroll-more', re: /^(Moss|Hollow|Barrow|Roadlight|Mother) Scroll found\.$/, site: /SCROLLS\[id\]\.name\} found/, ch: 'log', why: 'the stage float shows it, and Next Up offers what it teaches' },
   { id: 'learned', re: /^\w+ learned [A-Z][\w' ]+\.$/, site: /learned \$\{a\.name\}/, ch: 'log', why: 'you just pressed Learn and see the card change' },
@@ -10291,7 +10294,6 @@ function awayBase(r) {
   if (typeof turnCombatScope === 'function' && turnCombatScope()) {
     r.turnCombat = { kills: 0, zone: S.zone };
     r.note = 'Fights only happen while you play. Set your hero to gather before you go, and they keep working.';
-    if (r.secs >= 300) toast('Fights wait for you while you are away. Gather before you go to keep earning.', 'raid', null, 'normal');
     return r;
   }
   // Kills are capped by the respawn gap, same as live play; away play earns 75% of the live rate.
@@ -31849,6 +31851,7 @@ function ui(force) {
   for (const f of uiHooks) f(force);   // UX-A
 
   // Built-in panels update only while their view shows (setTab and setView call ui(true) on a switch).
+  uiGateRule();   // the pre-leave notice sits on the game view, so it updates every pass
   if (viewOpen('adv', 'upgrades')) uiFight();
   if (S.tab === 'gat') uiGather();
   if (viewOpen('forge', 'uniques') && (force || slowTick <= 0)) uiForge();
@@ -32047,7 +32050,20 @@ document.querySelectorAll('#modeSeg button').forEach(b => b.addEventListener('cl
 // Static nodes, looked up once. Every write goes through the put* guards (70-ui.js): 5 calls a
 // second, and an unchanged value must not make the browser lay the page out again.
 const gateEl = { title: $('gateTitle').querySelector('.gt-t'), desc: $('gateDesc'), btn: $('gateBtn'), q: $('gateBtn').querySelector('.qty'), p: $('gateBtn').querySelector('.price') };
+// The away card says the same line (75-away.js): the trade-off is told before you leave, not after.
+const AWAY_RULE_TXT = 'While away, gathering continues and fighting stops. Set your hero to gather before you go.';
+let gateRule = null;
+function uiGateRule() {
+  const on = S.activity === 'fight';
+  if (!gateRule) {
+    if (!on) return;
+    gateRule = el('p', 'away-rule gate-rule'); gateRule.append(img(iconURL('glass', '#F2E27A')), el('span', null, AWAY_RULE_TXT));
+    $('modeSeg').parentElement.after(gateRule);   // under the Fight / Gather row, where the player picks what the hero does
+  }
+  putToggle(gateRule, 'hide', !on);
+}
 function uiFight() {
+  uiGateRule();
   const G = gateEl, gb = G.btn, gq = G.q, gp = G.p;
   const uq = UNIQ[zoneUnique(S.zone)].name;
   if (S.activity !== 'fight') {
@@ -33755,7 +33771,7 @@ let showAwayReport;
     if (note && !r.turnCombat) { const n = el('p', 'away-note'); n.append(img(actIc), el('span', null, note)); body.append(n); }
     if (r.activity === 'fight') {
       const rule = el('p', 'away-rule');
-      rule.append(img(IC.glass()), el('span', null, 'While away, gathering continues and fighting stops. Set your hero to gather before you go.'));
+      rule.append(img(IC.glass()), el('span', null, AWAY_RULE_TXT));
       body.append(rule);
     }
 
