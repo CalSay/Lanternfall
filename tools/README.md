@@ -103,3 +103,14 @@ Plays scratch turn fights for Wren, Tobin and Pip as heroes who keep up with the
 elites, every boss tier, a tier behind on gear), casually and well, and prints each hero's win rate against its band in
 `docs/design/difficulty-budget.json`. `health.mjs --compare` gates on it. `--sweep` shows a level either side, `--eval`
 tries a tuning change first. See `docs/design/difficulty-budget.md`.
+
+## First-hour walk
+
+`node tools/walk.mjs --seed 1` plays 60 game minutes of the built game as a casual player (reads `LF_EYES`, follows each
+guide tip and Next Up, parries and dodges at set rates) on a fake clock, and writes `tools/.walk/walk-<date>.md` and `.json`
+plus shots: the scorecard values F1 to F6, F10 and P4, each beat of `docs/design/first-hour.md` against the minute it
+happened (over 50% off is listed), the stretches with nothing new, and every eyes finding (tip over the fighters, off-phase
+tip, clipped text, a covered button, a marker that leads nowhere, a stall). It never sets game state. Options: `--size p|l`,
+`--hero`, `--minutes`, `--clock-budget <min>` (default 30; the walk stops there and saves a snapshot), `--parry`, `--dodge`,
+`--scorecard <file>` (adds one row), `--reports <dir>`, `--snapshot`. Report only. The nightly run is `.github/workflows/walk.yml`
+(03:00 UK on the integration head; a manual run takes `seeds` and `sizes`). About 15 clock minutes for 60 game minutes.
