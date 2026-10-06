@@ -723,6 +723,18 @@ img[src*="#nic:"] { image-rendering: auto; }   /* a gear icon set by code that d
 .gate-rule { order: 1; margin: 4px 8px 0; padding: 4px 8px; font-size: 11.5px; gap: 6px; }
 .gate-rule img { width: 16px; height: 16px; }
 .gate-rule.hide { display: none; }
+/* 60-bosstry: the Try again card after a zone boss beats you (75-boss-try-ui.js). */
+.bt-eye { font: 600 11px var(--body); letter-spacing: .18em; text-transform: uppercase; color: #E0524F; }
+.bt-head { margin: 2px 0 4px; font-size: 20px; line-height: 1.2; }
+.bt-why { margin: 0 0 6px; font-weight: 600; }
+.bt-line, .bt-weak { margin: 0 0 6px; color: var(--muted); font-size: 13.5px; line-height: 1.3; }
+.bt-weak { color: var(--bone); }
+.bt-ways-h { margin: 10px 0 4px; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.bt-chips { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.bt-more { color: var(--muted); font-size: 12.5px; }
+.bt-ways { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 13.5px; line-height: 1.3; }
+.bt-auto { min-height: 44px; display: flex; gap: 8px; align-items: center; margin-top: 10px; cursor: pointer; }
+.bt-stay { background: transparent; }
 /* 60-bounties: bounty board rows and the achievements grid */
 .row.bty .bty-bar { margin-top: 5px; height: 5px; }
 .row.bty .bty-bar > i { background: var(--gold); }
@@ -8861,7 +8873,7 @@ const NOTICES = [
     why: 'the LEVEL UP float says it; every 25th level is a bell line (the Stars may unlock at level 10)',
     merge: ms => `${ms.length} levels gained. Level ${noteNum(ms[ms.length - 1], /^Level (\d+)/)}.` },
   { id: 'skill', key: 'skill', re: /^\S+ level \d+\./, ch: m => /You can now|open to you/.test(m) ? 'bell' : 'none', why: 'only a new tier is news' },
-  { id: 'boss-fail', re: /^(The zone boss held its ground|The zone boss beat you|Your party fell to the zone boss)/, ch: 'pop', wait: 10, why: 'tells you to grow stronger' },
+  { id: 'boss-fail', re: /^(The zone boss held its ground|The zone boss beat you|Your party fell to the zone boss)/, ch: 'pop', wait: 10, why: 'the Try again card follows and says why you lost' },
   { id: 'fell-back', re: /(fell back a zone|fell back to regroup|couldn't finish the pack)/, ch: 'bell' },
   { id: 'beaten', re: /Catch your breath and go again/, ch: 'log', why: 'you stay in the zone and the fight starts again on screen' },
   { id: 'scroll', re: /^(Moss|Hollow|Barrow|Roadlight|Mother) Scroll! Spend it/, site: /SCROLLS\[id\]\.name\}! Spend it/, ch: 'log', why: 'the stage float shows it and Next Up says what it can teach (the bell stays calm)' },
@@ -10426,7 +10438,7 @@ let arena = null;
 
 function spawn() {
   if (arena) { const m = arena.spawn(); if (m) { mob = m; if (partyCombatOn()) cbArena(m); } return; }
-  if (!fightBoss && S.activity === 'fight' && bossReady()) fightBoss = true;   // the zone's fights are won: its boss comes next (again after a loss)
+  if (!fightBoss && S.activity === 'fight' && bossReady() && !bossTryHeld()) fightBoss = true;   // the zone's fights are won: its boss comes next (after a loss it waits for Try again: 55-boss-try)
   // Party combat (59-combat.js): a pack of foes; mob is the one the stage shows.
   if (partyCombatOn()) { cbSpawn(fightBoss); return; }   // owner (2026-10-01): no boss timer and no Enrage: a boss fight ends when one side falls
   const z = S.zone, cyc = zoneCycle(z);
@@ -10501,7 +10513,7 @@ function killPack(m, g) {
   if (ess) { const got = stashAdd('ess', tier, ess, 'flow', true); addFloat(got ? `+${got} ${MAT.ess.short[tier - 1]} Essence` : 'Full', MAT.ess.col[tier - 1], false, 0.68, 0.2); }   // H3: capped by the Storehouse
   if (m.boss) {
     const first = z === S.maxZone;
-    fightBoss = false; failDps = 0;
+    fightBoss = false; if (!S.bossTry.hold || S.bossTry.hold === z) failDps = 0; bossTryRelease(z);   // an earlier zone's boss leaves the held frontier boss's baseline alone
     emit('shake', 0.3);
     const uq = zoneUnique(z), owned = (S.found[uq] || 0) >= tier ? UNIQ_TUNE.owned : 1;
     if (Math.random() < (first ? UNIQ_TUNE.first : UNIQ_TUNE.again) * owned * mod('uniqueChance')) dropUnique(uq, tier);
@@ -10552,7 +10564,7 @@ function gainSkill(k, n, quiet) {
 function challenge() {
   if (fightBoss || target() !== 'mob') return false;
   if (!bossReady()) return false;
-  fightBoss = true; spawn(); respawn = 0;
+  bossTryRelease(S.zone); fightBoss = true; spawn(); respawn = 0;
   return true;
 }
 
@@ -10625,7 +10637,7 @@ function harvest() {
 function awayGains(secs) {
   secs = Math.max(0, +secs || 0);   // a save stamped in the future (clock set back) gives nothing, never negative gains
   const r = { t: Math.min(secs, (4 + 2 * S.relic.glass + bonus('awayHours')) * 3600), secs, lines: [] };
-  failDps = 0;   // BAL3: back from away, auto-challenge may retry a boss it failed (a reload did this; a kept tab walled idle play at the cap)
+  failDps = 0; if (S.bossTry) S.bossTry.fail = 0;   // (55-boss-try keeps the same baseline in the save) BAL3: back from away, auto-challenge may retry a boss it failed (a reload did this; a kept tab walled idle play at the cap)
   emit('awayBegin', r);
   awayBase(r);
   emit('away', r);
@@ -11327,6 +11339,115 @@ let OMENS, WEEKLY_GOALS;
     force: id => { forced = id; actCache.k = ''; },
     needs: AL_NEEDS
   });
+}
+
+// ---- src/js/55-boss-try.js ----
+// 55-boss-try: after a zone boss beats you, you choose when to try again (card wall-try-again; why-review point 2).
+// Core, no DOM. The Try again card is 75-boss-try-ui.js.
+//   Hold         a loss sets `S.bossTry.hold` to the zone. While it is set, 50-sim spawn() does not start that zone's boss
+//                by itself: the zone keeps paying (normal fights), and the boss comes back when you press Try again
+//                (`challenge()` clears the hold) or, with Auto on, when you are stronger (the tick's auto-challenge).
+//   Tries        `tries[hero:zone]` counts lost tries; `rev[hero:zone]` lists the move ids the Foe tab now shows (a loss shows
+//                the move that beat you, else the next one in the boss's order); a beaten boss shows all its moves.
+//   Why          `bossTryWhy(last)` names the hit that won and the reason; `bossTryWays(ctx)` lists the ways forward that
+//                exist now. Add a way (a new lever such as the bag slot or Resolve) with `bossWay(id, fn)`; no edits here.
+// Save: registerState('bossTry', { hold: 0, fail: 0 (the failed-at strength), tries: {}, rev: {}, last: null }). All defaults, so old saves merge in.
+registerState('bossTry', { hold: 0, fail: 0, tries: {}, rev: {}, last: null });
+// failDps (50-sim) is runtime only: a reload restores the strength you failed at, so "once you are stronger" survives it
+if (S.bossTry.hold > 0 && S.bossTry.fail > 0 && !(failDps > 0)) failDps = S.bossTry.fail;
+
+const BOSS_TRY = { leftClose: 0.25 };   // the boss had this share of its health left or less: "so close"
+
+const bossTryKey = (hero, zone) => (hero || 'hero') + ':' + zone;
+// the hold: this zone's boss waits for you (hoisted function: 50-sim reads it before this file runs)
+function bossTryHeld() { const b = S.bossTry; return !!(b && b.hold > 0 && b.hold === S.zone); }
+function bossTryRelease(zone) { const b = S.bossTry; if (b && b.hold && b.hold === zone) { b.hold = 0; b.fail = 0; } }   // only the held zone's boss releases it
+
+// the foe's moves in the order they are told, one row per move id: { id, name, hits, charged }
+function bossTryMoves(script) {
+  const seen = new Set(), out = [];
+  for (const m of script || []) { if (!m || seen.has(m.id)) continue; seen.add(m.id); out.push({ id: m.id, name: m.name, hits: m.hits.length, charged: !!m.charge }); }
+  return out;
+}
+// what the Foe tab shows of a boss: { moves: [shown], hidden: how many are still unknown }
+function bossTryShown(script, zone) {
+  const all = bossTryMoves(script);
+  if (zone < S.maxZone) return { moves: all, hidden: 0 };   // a boss you have beaten holds no secrets
+  const have = (S.bossTry.rev[bossTryKey(typeof soloHero === 'function' ? soloHero() : '', zone)]) || [];
+  const moves = all.filter(m => have.includes(m.id));
+  return { moves, hidden: all.length - moves.length };
+}
+
+// A loss in a zone boss fight (59-combat wipe emits bossFail). The details of the last hit come from 59k endFight
+// right after (bossTryLost), so this only holds the boss, counts the try and opens `last`.
+on('bossFail', ({ zone }) => {
+  const b = S.bossTry, hero = typeof soloHero === 'function' ? soloHero() : '', key = bossTryKey(hero, zone);
+  b.tries[key] = (b.tries[key] || 0) + 1;
+  b.hold = zone; b.fail = typeof failDps === 'number' ? failDps : 0;
+  if (typeof ZONE_FIGHTS === 'number') S.kills = ZONE_FIGHTS;   // the boss is ready to try again at once; the zone pays meanwhile
+  b.last = { zone, hero, n: b.tries[key], boss: (typeof mob === 'object' && mob && mob.boss && mob.name) || '', move: '', hit: 0, hits: 0,
+    charged: false, defended: false, dot: false, left: -1, weak: '', res: [], moves: [], hidden: 0, shown: 0 };
+});
+
+// The turn fight ended in a defeat (59k endFight). m.fin is what finished the hero (turnContact sets it).
+function bossTryLost(m) {
+  const b = S.bossTry, L = b && b.last, f = m && m.foe;
+  if (!L || !f || !f.boss || f.deep || f.trial || L.zone !== (f.tz || S.zone) || L.move || L.dot) return;
+  const fin = m.fin || {}, key = bossTryKey(L.hero, L.zone);
+  L.boss = f.name || L.boss;
+  L.left = f.max > 0 ? Math.max(0, f.hp) / f.max : -1;
+  if (fin.dot) L.dot = true;
+  else if (fin.id) { L.move = fin.name; L.hit = fin.hit + 1; L.hits = fin.hits; L.charged = !!fin.charged; L.defended = !!fin.defended; }
+  const ft = typeof FOE_TYPE === 'object' ? FOE_TYPE[f.txRow || f.type] : null;
+  if (ft) { L.weak = ft.weak || ''; L.res = (ft.res || []).slice(); }
+  // reveal one more move: the one that beat you, else the next unknown one in its order
+  const all = bossTryMoves(f.tk && f.tk.script), have = b.rev[key] || (b.rev[key] = []);
+  const pick = (fin.id && all.find(x => x.id === fin.id && !have.includes(x.id))) || all.find(x => !have.includes(x.id));
+  if (pick) have.push(pick.id);
+  L.moves = all.filter(x => have.includes(x.id)); L.shown = have.length; L.hidden = Math.max(0, all.length - have.length);   // the card reads these, not the live foe
+}
+
+// Why you lost, in the player's words: { head, lines[] }. Pure on `last`.
+function bossTryWhy(L) {
+  if (!L) return { head: 'The boss beat you.', lines: [] };
+  const lines = [];
+  const pct = L.left >= 0 ? Math.max(1, Math.round(L.left * 100)) : 0;
+  const head = L.left < 0 ? 'The boss beat you.' : L.left <= BOSS_TRY.leftClose ? `So close. It had ${pct}% of its health left.`
+    : pct >= 99 ? 'It was still at full health.' : `You took ${100 - pct}% of its health.`;
+  if (L.dot) lines.push('Damage over time finished you. Heal or clear it before the next hit.');
+  else if (L.move) {
+    const part = L.hits > 1 ? `, hit ${L.hit} of ${L.hits}` : '';
+    lines.push(`${L.move} finished you${part}.`);
+    if (L.charged) lines.push('It was a charged move. Stun it, or hit it hard while it gathers, to break it.');
+    else if (!L.defended) lines.push('You did not parry or dodge it. Press as the ring closes.');
+    else lines.push('You tried to defend it, but the timing was off. Press later, as the ring closes.');
+  }
+  return { head, lines };
+}
+const bossTryDt = id => (typeof DT_INFO === 'object' && DT_INFO[id] && DT_INFO[id].name) || id;
+// what the boss is weak and strong against: a fact, not a build
+function bossTryWeak(L) {
+  if (!L || (!L.weak && !(L.res && L.res.length))) return '';
+  const parts = [];
+  if (L.weak) parts.push(`Weak to ${bossTryDt(L.weak).toLowerCase()}.`);
+  if (L.res && L.res.length) parts.push(`Resists ${L.res.map(x => bossTryDt(x).toLowerCase()).join(' and ')}.`);
+  return parts.join(' ');
+}
+
+// Ways forward. Each is fn(ctx) -> a line, or '' when it does not apply now. ctx: { last, zone, heroL }.
+// Keep each line a fact about something the player can do today (no Training: the hero rework removes it).
+const BOSS_WAYS = [];
+function bossWay(id, fn) { BOSS_WAYS.push({ id, fn }); }
+bossWay('skill', c => c.last && c.last.hidden > 0
+  ? `Learn its moves: ${c.last.hidden} still unknown. Each try shows one more in the Foe tab.`
+  : 'You know all its moves. Parry or dodge each hit as its ring closes.');
+bossWay('build', c => c.last && c.last.weak ? `Use its weakness: ${bossTryDt(c.last.weak).toLowerCase()} damage does ${Math.round((TYPE_X.weak - 1) * 100)}% more. Check your abilities and gear.` : '');
+bossWay('power', c => `Get stronger: level up and forge better gear. Every fight here pays XP and gold.`);
+bossWay('time', c => 'Take your time. Fights in this zone keep paying while the boss waits.');
+function bossTryWays(L) {
+  const ctx = { last: L, zone: L ? L.zone : S.zone, heroL: S.L }, out = [];
+  for (const w of BOSS_WAYS) { let t = ''; try { t = w.fn(ctx); } catch (e) { t = ''; } if (t) out.push({ id: w.id, txt: t }); }
+  return out;
 }
 
 // ---- src/js/55-bounties.js ----
@@ -12637,7 +12758,6 @@ var forgeGoalPicks = 0;
     if (!o) return { s: 'next', win: 0 };
     return { s: o.win >= BOSS_ODDS.ready ? 'ready' : o.win >= BOSS_ODDS.close ? 'close' : 'weak', win: o.win };
   };
-  const bossNow = () => S.zone === S.maxZone && bossReady() && !bossHeld() ? bossRead() : null;
   registerGoal({
     id: 'zone-boss', sys: 'boss', prio: 2,
     // after a lost try, "ready" waits until you are 15% stronger than then (what auto-challenge waits for too):
@@ -12646,14 +12766,13 @@ var forgeGoalPicks = 0;
       const b = bossRead(); return !b || b.s === 'ready' ? 1 : b.s === 'next' ? 0.99 : Math.max(0.01, Math.min(0.99, b.win / BOSS_ODDS.ready)); },
     label: () => { if (S.zone !== S.maxZone) return `Go back to Zone ${S.maxZone} and push on`;
       if (!bossReady()) return `${ZONE_FIGHTS - S.kills} more fights to the Zone ${S.maxZone} boss`;
-      if (bossHeld()) return `The Zone ${S.maxZone} boss beat you. Train, then try again`;
+      if (bossHeld()) return `The Zone ${S.maxZone} boss beat you. Level up or gear up, then try again`;
       const b = bossRead(), z = S.maxZone;
+      if (bossTryHeld()) return `You are stronger. Try the Zone ${z} boss again when you are ready`;
       return !b || b.s === 'ready' ? `Boss ready in Zone ${z}` : b.s === 'next' ? `The Zone ${z} boss is next`
-        : b.s === 'close' ? `Zone ${z} boss: a close fight. Train to be safe` : `Zone ${z} boss is too strong. Train first`; },
+        : b.s === 'close' ? `Zone ${z} boss: a close fight. Gear up to be safe` : `Zone ${z} boss is too strong. Level up and gear up first`; },
     icon: { ic: ['banner', '#E0524F', { 7: '#FFB347' }] },
-    go: () => { const b = bossNow();
-      return b && (b.s === 'close' || b.s === 'weak') ? { tab: 'party', view: 'training' }
-        : { tab: 'adv', sel: '#gateBtn', fn: () => { if (S.zone !== S.maxZone) setZone(S.maxZone); } }; }
+    go: () => ({ tab: 'adv', sel: '#gateBtn', fn: () => { if (S.zone !== S.maxZone) setZone(S.maxZone); } })   // the Fight tab; Training is no longer a way forward
   });
 
   // Bounties: the one closest to done (a finished one is ready to claim).
@@ -20707,9 +20826,8 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (inArena) { WIPE_EV.to = z; emit('wipe', WIPE_EV); return; }   // 59c-deepwell-combat ends the run
     if (fightBoss) {
       fightBoss = false; failDps = totalDps();
-      // one paying fight before each retry, so a hero who can't win yet still earns (the boss is back after it)
-      if (typeof ZONE_FIGHTS === 'number') S.kills = Math.min(S.kills, ZONE_FIGHTS - 1);
-      toast('The zone boss beat you. Win one more fight and it comes back.', 'raid');
+      // the boss waits behind Try again and the zone keeps paying (55-boss-try holds it on bossFail)
+      toast('The zone boss beat you. Try again when you are ready.', 'raid');
       emit('bossFail', { zone: z, dps: failDps });
       WIPE_EV.to = z;
     } else {
@@ -24502,7 +24620,7 @@ function turnBegin(m, who, io) {
     if (h.lunge > 0) h.lunge--;
     if (h.glow > 0) h.glow--;   // Afterglow: the next two hero turns
     // the boss riders on the hero tick at its turn start
-    for (const k of ['bleed', 'burn', 'venom']) if (h.dot[k] > 0) { h.dot[k]--; io.damageHero(T.heroDot[k] * m.p.refHp, false, 'dot'); }
+    for (const k of ['bleed', 'burn', 'venom']) if (h.dot[k] > 0) { h.dot[k]--; m.fin = { dot: true }; io.damageHero(T.heroDot[k] * m.p.refHp, false, 'dot'); }
     if (h.chillT > 0 && --h.chillT === 0) h.chill = 0;
     if (!io.alive().hero) { turnEnd(m, 'defeat', io); return; }
     m.phase = 'hero';
@@ -24614,7 +24732,11 @@ function turnContact(m, io) {
     if (m.sf) turnStarsDef(m, io, 'dodge');
     if (m.shadowUsed) { m.shadowUsed = 0; h.shadow = 0; h.keen = 1; if (turnTal(m, 'shadowstep') === 'b') turnGain(h, 'aim', 1); }
   } else if (e.blind > 0 && io.random() < (m.p.boss ? T.blindBossP : T.blindP)) res = 'miss';
-  else { turnLand(m, io, hit); m.landed++; }
+  else {
+    // what would finish the hero, kept before the hit lands: the wipe ends the fight inside it (55-boss-try, the defeat card)
+    m.fin = { id: m.move.id, name: m.move.name, hit: m.hitI, hits: m.move.hits.length, charged: !!m.move.charge, defended: !!m.usedDefense };
+    turnLand(m, io, hit); m.landed++;
+  }
   io.emit('foeContact', { id: m.move.id, hit: m.hitI, hits: m.move.hits.length, res });
   if (!io.alive().hero) { turnEnd(m, 'defeat', io); return; }
   if (!io.alive().foe) { turnEnd(m, 'victory', io); return; }   // a parried hit can strike back (the Stars' Holy Sparks)
@@ -24778,7 +24900,7 @@ const TURN_LIVE_IO = {
     if (kind === 'parry') { if (ok) SOLO_STATS.parries++; else SOLO_STATS.misses++; emit('soloParry', { res: ok ? 'parry' : 'miss', auto: false }); }
     else { if (ok) SOLO_STATS.dodges++; else SOLO_STATS.early++; emit('soloDodge', { res: ok ? 'dodge' : 'miss', auto: false }); }
   },
-  endFight: () => {}
+  endFight: (m, reason) => { if (reason === 'defeat' && typeof bossTryLost === 'function') bossTryLost(m); }
 };
 on('ability', p => { if (p && p.cls === 'solo' && TURN_LIVE && !TURN_LIVE.ended) SOLO_STATS.casts++, SOLO_STATS.hand++; });
 // hit feel: the clock stops for a beat (turnCombatTick waits it out), with a shake and a flash on the big moments
@@ -32764,6 +32886,7 @@ function disclose(row, trigger, onToggle, extra) {
 
 // ================= Fight panel =================
 // Boss gate: the title and the button; the odds and rules open on a tap.
+let gateAutoLb = null;
 {
   const g = $('gateTitle').parentElement, row = g.parentElement;
   row.classList.add('gate-row');
@@ -32771,10 +32894,10 @@ function disclose(row, trigger, onToggle, extra) {
   t.textContent = ''; t.append(tx, d.chev);
   g.setAttribute('aria-label', 'Boss gate: show details');
   // One line for the auto-challenge switch (the shell's copy wrapped to two at 360 px).
-  const lb = $('autoBoss').parentElement, tn = [...lb.childNodes].find(n => n.nodeType === 3 && n.textContent.trim());
-  if (tn) tn.textContent = ' Fight frontier bosses when ready';
+  const lb = gateAutoLb = $('autoBoss').parentElement, tn = [...lb.childNodes].find(n => n.nodeType === 3 && n.textContent.trim());
+  if (tn) tn.textContent = ' Try the boss again on my own when I am stronger';   // shown only while a boss waits for Try again (55-boss-try)
   lb.classList.add('gate-auto');
-  lb.style.display = 'none';   // owner (2026-10-01): the boss always comes after the zone's fights, so the switch has nothing to do
+  lb.style.display = 'none';   // owner (2026-10-01): the boss always comes after the zone's fights; since a lost boss waits (55-boss-try) the switch shows only then
 }
 $('autoBoss').checked = S.auto;
 $('autoBoss').addEventListener('change', e => { S.auto = e.target.checked; });
@@ -32841,10 +32964,12 @@ function uiFight() {
     putText(G.desc, `Beat it to move on to Zone ${S.zone + 1}. Take your time: there is no timer.`);
     putText(gq, 'Boss'); putText(gp, 'Fighting'); putDisabled(gb, true);
   } else {
-    putText(G.title, bossReady() ? 'The zone boss is next' : `Fight ${S.kills + 1} of ${ZONE_FIGHTS}, then the zone boss`);
-    putText(G.desc, `Beat the boss to move on to Zone ${S.zone + 1}. ${Math.round((S.zone < S.maxZone ? UNIQ_TUNE.again : UNIQ_TUNE.first) * 100)}% chance of the unique ${uq}.`);
-    putText(gq, 'Boss'); putText(gp, 'Fight'); putDisabled(gb, !bossReady());
+    const held = bossReady() && bossTryHeld();   // a lost boss waits for Try again (55-boss-try)
+    putText(G.title, held ? 'The zone boss is waiting' : bossReady() ? 'The zone boss is next' : `Fight ${S.kills + 1} of ${ZONE_FIGHTS}, then the zone boss`);
+    putText(G.desc, held ? 'It beat you. Try again when you are ready. Fights here keep paying while you wait.' : `Beat the boss to move on to Zone ${S.zone + 1}. ${Math.round((S.zone < S.maxZone ? UNIQ_TUNE.again : UNIQ_TUNE.first) * 100)}% chance of the unique ${uq}.`);
+    putText(gq, held ? 'Try' : 'Boss'); putText(gp, held ? 'Again' : 'Fight'); putDisabled(gb, !bossReady());
   }
+  if (gateAutoLb) { const ab = $('autoBoss'); if (ab.checked !== !!S.auto) ab.checked = !!S.auto; const d = S.activity === 'fight' && !fightBoss && bossReady() && bossTryHeld() ? '' : 'none'; if (gateAutoLb.style.display !== d) gateAutoLb.style.display = d; }
 }
 
 // ---- src/js/72-ui-gather.js ----
@@ -34672,6 +34797,52 @@ let showAwayReport;
     runCounters();
     try { go.focus({ preventScroll: true }); } catch (e) {}
   };
+}
+
+// ---- src/js/75-boss-try-ui.js ----
+// 75-boss-try-ui: the Try again card after a zone boss beats you (logic: 55-boss-try.js; card wall-try-again).
+// A bottom sheet that holds the game while it is open: why you lost (the hit that won, the boss's weakness), the moves
+// you have learned, the ways forward, and two buttons. Try again starts the boss; closing the sheet keeps you fighting in the
+// zone, where the boss waits behind the Fight tab's gate. Browser-only.
+{
+  let open = null;
+  holdGame(() => !!open && !open.closed);   // 00-util's pause registry: the hero is not hit while the card is up
+  const blocked = () => !!document.querySelector('.away-ov, #createScreen, .join-ov, .gl-ov');
+  function show() {
+    const L = S.bossTry && S.bossTry.last;
+    if (!L || !bossTryHeld() || typeof openSheet !== 'function') return;
+    if (blocked()) { setTimeout(show, 600); return; }
+    const why = bossTryWhy(L), weak = bossTryWeak(L), ways = bossTryWays(L);
+    openSheet(api => {
+      open = api;
+      api.sheet.classList.add('bt-sheet');
+      api.body.append(el('div', 'bt-eye', `Zone ${L.zone} boss · try ${L.n}`), el('h2', 'bt-head', `${L.boss || 'The boss'} beat you`), el('p', 'bt-why', why.head));
+      for (const x of why.lines) api.body.append(el('p', 'bt-line', x));
+      if (weak) api.body.append(el('p', 'bt-weak', weak));
+      if (L.shown > 0 || L.hidden > 0) {
+        api.body.append(el('h3', 'bt-ways-h', 'Moves you know'));
+        const chips = el('div', 'bt-chips');
+        for (const m of L.moves) chips.append(el('span', 'sb-chip' + (m.charged ? ' charged' : ''), `${m.name} · ${m.hits} hit${m.hits > 1 ? 's' : ''}${m.charged ? ' · charged' : ''}`));
+        if (L.hidden > 0) chips.append(el('span', 'bt-more', `${L.hidden} unknown. Each try shows one more.`));
+        api.body.append(chips);
+      }
+      api.body.append(el('h3', 'bt-ways-h', 'Ways forward'));
+      const ul = el('ul', 'bt-ways');
+      for (const w of ways) ul.append(el('li', null, w.txt));
+      api.body.append(ul);
+      const lb = el('label', 'note bt-auto'), cb = el('input'); cb.type = 'checkbox'; cb.checked = !!S.auto;
+      cb.addEventListener('change', () => { S.auto = cb.checked; const g = $('autoBoss'); if (g) g.checked = S.auto; });
+      lb.append(cb, ' Try again on my own when I am stronger');
+      api.body.append(lb);
+      const go = el('button', 'big forge bt-go', 'Try again'); go.type = 'button';
+      go.addEventListener('click', () => { api.close(); if (S.activity !== 'fight') setActivity('fight'); if (challenge()) ui(true); });
+      const stay = el('button', 'big bt-stay', 'Keep fighting here'); stay.type = 'button';
+      stay.addEventListener('click', () => api.close());
+      api.foot.append(go, stay);
+      go.focus({ preventScroll: true });
+    }, { label: 'The boss beat you', onClose: () => { open = null; ui(true); } });
+  }
+  on('wipe', e => { if (e && e.boss && !e.arena) setTimeout(show, 0); });
 }
 
 // ---- src/js/75-bounties-ui.js ----
@@ -39969,7 +40140,8 @@ var soloIconURL = () => '';
     if (!f) { paneFoe.replaceChildren(el('p', 'sb-fnote', 'Foes show here in a turn fight.')); return; }
     const rows = [foeRow('Foe', el('b', 'sb-fname', f.name), ...f.tags.map(x => el('span', 'sb-chip', x)))];
     if (f.trait) rows.push(foeRow('Trait', el('span', 'sb-ftxt', f.trait)));
-    rows.push(foeRow('Moves', ...(f.known ? f.moves.map(m => el('span', 'sb-chip' + (m.charged ? ' charged' : ''), `${m.name} · ${m.hits} hit${m.hits > 1 ? 's' : ''}${m.charged ? ' · charged' : ''}`)) : [el('span', 'sb-ftxt', 'Beat one of these to learn its moves.')])));
+    rows.push(foeRow('Moves', ...(f.known ? f.moves.map(m => el('span', 'sb-chip' + (m.charged ? ' charged' : ''), `${m.name} · ${m.hits} hit${m.hits > 1 ? 's' : ''}${m.charged ? ' · charged' : ''}`)) : [el('span', 'sb-ftxt', 'Beat one of these to learn its moves.')]),
+      ...(f.hidden > 0 ? [el('span', 'sb-ftxt', `${f.hidden} unknown. Each try you lose shows one more.`)] : [])));
     paneFoe.replaceChildren(...rows);
   }
   setTab('act');
@@ -41584,9 +41756,11 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
     const tags = []; if (f.boss) tags.push(f.tk.region ? 'Region boss' : 'Boss'); if (f.elite) tags.push('Elite'); if (f.ranged) tags.push('Ranged');
     const tr = f.tr && f.tr[0], trait = tr && typeof TURN_TRAITS === 'object' && TURN_TRAITS[tr] ? TURN_TRAITS[tr].first : '';
     const known = !(typeof masteryApi === 'object' && masteryApi.typeKills) || masteryApi.typeKills(f.type) >= 1 || !!f.boss;
-    const seen = new Set(), moves = [];
-    for (const m of f.tk.script || []) { if (!m || seen.has(m.id)) continue; seen.add(m.id); moves.push({ name: m.name, hits: m.hits.length, charged: !!m.charge }); }
-    return { name: f.name, tags, trait, known, moves: known ? moves : [] };
+    // a zone boss shows the moves your lost tries taught you (55-boss-try: a loss shows one more); every other foe as before
+    const zb = f.boss && !f.deep && !f.trial && typeof bossTryShown === 'function';
+    const sh = zb ? bossTryShown(f.tk.script, f.tz || S.zone) : null;
+    const moves = (sh ? sh.moves : bossTryMoves(f.tk.script)).map(m => ({ name: m.name, hits: m.hits, charged: m.charged }));
+    return { name: f.name, tags, trait, known: sh ? true : known, moves: known || sh ? moves : [], hidden: sh ? sh.hidden : 0 };
   };
   turnBarInfo = () => {
     if (!(typeof turnCombatOn === 'function' && turnCombatOn())) return null;
