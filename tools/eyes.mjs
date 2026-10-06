@@ -89,7 +89,11 @@ async function openGame(size, { save } = {}) {
   if (save) { const raw = JSON.stringify({ ...save, last: Date.now() }); await page.addInitScript(([k, v]) => { try { localStorage.setItem(k, v); } catch (e) {} }, [KEY, raw]); }
   await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: HTML, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
   await page.goto('http://lf.test/'); await page.waitForTimeout(700);
-  if (!save) { await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go'); await page.waitForTimeout(500); }
+  if (!save) {   // the drawn opening comes first (Skip), then the picker, then Hesketh's fire (Skip)
+    if (await page.$('#introScreen .intro-skip')) { await page.click('#introScreen .intro-skip'); await page.waitForSelector('#createScreen .ccard[data-hero="wren"]'); }
+    await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go'); await page.waitForTimeout(500);
+    if (await page.$('#introScreen .intro-skip')) { await page.click('#introScreen .intro-skip'); await page.waitForTimeout(300); }
+  }
   const X = s => page.evaluate(s => window.__t.x(s), s);
   return { ctx, page, errs, X };
 }
