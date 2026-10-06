@@ -1,0 +1,17 @@
+# seed: 1
+# Proof for card guide-panel: Old Hesketh's panel gives each first-fight tip. In landscape it sits in the side column
+# (standing in for Next Up while it speaks); in portrait it sits in a slot above the Act / Skills / Foe bar. It never covers
+# the stage, the HP bars or the foe plate. The rect overlap check is `node tools/check.mjs --only="guide panel"`.
+new fresh
+tap "Begin as Wren"
+tap-if "Skip"
+tap-if "Continue"
+wait 3
+tap-if "Skip"
+wait 4
+expect ".ob-bub .ob-face"
+expect ".ob-bub .ob-txt"
+shot guide-first-tip
+tap "Attack"
+wait 2
+shot guide-second-tip

@@ -82,13 +82,14 @@
    and Next Up side by side, instead of three stacked rows. The permanent "While away" sentence is gone (the away card and the
    away chip say it); Switch lives in the header pill, so it leaves this row. The stage keeps the space. Landscape has its own grid. */
 @media not ((min-aspect-ratio: 1/1) and (min-width: 600px)) {
-  .app .game { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr) auto; }
+  .app .game { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr) auto auto; }   /* row 4: the guide panel (60-onboard.css), empty most of the time */
   .app .game > .ctrl { grid-column: 1; grid-row: 1; flex-wrap: nowrap; justify-content: flex-start; gap: 2px; padding: 4px 0 4px var(--gut); }
   .app .game > .nu-slot { grid-column: 2; grid-row: 1; min-width: 0; padding: 4px var(--gut) 4px 8px; align-self: center; }
   .app .game > .gate-rule { grid-column: 1 / -1; grid-row: 2; margin: 0 var(--gut); }
   .app .game > .dw-row { grid-column: 1 / -1; grid-row: 2; }
   .app .game > .stagebox { grid-column: 1 / -1; grid-row: 3; }
-  .app .game > .sbar { grid-column: 1 / -1; grid-row: 4; }
+  .app .game > .sbar { grid-column: 1 / -1; grid-row: 5; }
+  .app .game > .ob-bub.dock { grid-column: 1 / -1; grid-row: 4; }
   .app .game .ctrl-switch { display: none; }
   .app .game .modeseg button { min-width: 0; padding: 0 7px; min-height: 36px; font-size: calc(12px * var(--display-k)); }
   .app .game .modeseg .mode-ic { display: none; }

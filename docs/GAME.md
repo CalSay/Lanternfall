@@ -170,8 +170,7 @@ The bell opens Notices, the Journal and Settings. Achievements (Deeds) and the C
   boss Hero comes first, then Gather, Next Up and the away strip (row `awaynote`), a minute apart. A row the player's own act
   or a drop opened skips the queue: walking to gather, the fire lit (Camp), the Workbench (Craft), the Tavern built, the first
   star (Stars), the first unique (Uniques); the raid opens as before.
-- **The guide** (`GUIDE_STEPS` in `55-onboard.js`, UI `75-onboard-ui.js`): one hint at a time, docked in the toast band.
-  After the first ability the guide asks you to add a point to Might on Hero > Build.
+- **The guide** (`GUIDE_STEPS` in `55-onboard.js`, UI `75-onboard-ui.js`): one hint at a time, spoken by Old Hesketh (his face on the left) from a panel that never covers the stage: in landscape the side column's notices slot (it stands in for Next Up while it speaks), in portrait a slot above the Act / Skills / Foe bar, and over an open menu the bottom of the menu panel. The Got it / Go button has its own row. After the first ability the guide asks you to add a point to Might on Hero > Build.
   A step pauses the game only while it waits for a press; a step that needs game time shows live progress instead.
 - **Notices** (`23n-data-notices.js`, `notify()`): every message goes to a channel (card, pop, bell, log or none),
   with a quiet start and a cap on pops a minute.
