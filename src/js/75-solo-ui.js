@@ -6,7 +6,7 @@
 //       under it    Parry, Dodge                              (keys A, S; Space = Dodge, SOLO2)
 //       Skills      what each slot does and its cooldown; a tap changes the slot.  Foe  (turn fights) its kind, trait, moves.
 //     Cooldowns sweep dark clockwise with the seconds in the middle and flash when ready; Parry and Dodge glow while a
-//     telegraphed hit is coming. A long press on Attack, Parry or Dodge opens a sheet: what it does and its Training; on an ability slot it opens
+//     telegraphed hit is coming. A long press on Attack, Parry or Dodge opens a sheet: what it does and its Training (or, with attributes on, its number from your level and an Attributes button); on an ability slot it opens
 //     the picker (an empty slot opens it on a tap): that hero's unlocked abilities (icon, name, one line, cooldown),
 //     pick one to place it (swapping if it sits in another slot) or clear the slot.
 //   - the Auto badge (SOLO2): a small chip at the stage's bottom left, over the DPS line, lit while auto-play fights
@@ -16,7 +16,9 @@
 // Core: 59j-solo.js (soloAttack, soloParry, soloDodge, soloAbility, soloEquip, soloButtons, soloPick, soloLevels).
 // Reduced motion: no flashes or pulses (60-solo.css).
 // W2-A Training: a long press on Attack, Parry or Dodge opens a small sheet (what it does, its Training level and a Train
-// button); on an ability slot the picker shows the slot's ability level and a Train button too. soloIconURL(move) gives
+// button); on an ability slot the picker shows the slot's ability level and a Train button too. hero-progression-rework: with
+// attributes on (attrOn()) there is no Train button or Training level: the block reads "from your level" and opens the
+// Attributes view (75-training-ui trainCard). soloIconURL(move) gives
 // the bar's icon for a move (the Training list uses it: 'atk' is the hero's weapon).
 var soloIconURL = () => '';
 {
@@ -127,7 +129,7 @@ var soloIconURL = () => '';
     ab0: () => castSlot(0), ab1: () => castSlot(1), ab2: () => castSlot(2)
   };
 
-  // ---- long press on Attack, Parry, Dodge: what it does, and its Training (W2-A) ----
+  // ---- long press on Attack, Parry, Dodge: what it does, and its Training or level (W2-A) ----
   // A small sheet like the picker (the game waits while it is open; soloPickerOpen covers both).
   const MOVE = { atk: 'atk', parry: 'parry', dodge: 'dodge' };
   function showTip(b) {
@@ -152,7 +154,7 @@ var soloIconURL = () => '';
   // ---- the ability picker (a small sheet over the fight; the game waits while it is open) ----
   let pick = null;
   function closePicker() { if (!pick) return; pick.remove(); pick = null; update(); }
-  // the open sheet's Training block stays live (gold comes in; the game is paused, so a timer)
+  // the open sheet's Training block stays live (gold comes in, points move; the game is paused, so a timer)
   setInterval(() => { try { if (pick && pick._card) pick._card._up(); } catch (e) {} }, 400);
   function openPicker(slot) {
     closePicker();
@@ -164,7 +166,7 @@ var soloIconURL = () => '';
     head.append(x);
     sh.append(head);
     const eq = soloEquipped();
-    // W2-A: the slot's ability, its Training level and a Train button
+    // W2-A: the slot's ability, its Training level and a Train button (attributes on: its level-based power and Attributes)
     const sig = SOLO_HEROES[k] && SOLO_HEROES[k].abs[0];   // its Training is the hero's ability power (59k)
     if (eq[slot] && eq[slot] === sig && typeof trainCard === 'function') { const c = trainCard(eq[slot]); c.onLeave = closePicker; sh.append(c); ov._card = c; }
     for (const id of soloAbilities(k)) {
