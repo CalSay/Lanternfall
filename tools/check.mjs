@@ -8071,7 +8071,9 @@ if (section('playtest driver (browser)')) try {
       assert(/BUTTONS/.test(out) && /\[Begin as Wren\]/.test(out) && /screenshot: .*\.png/.test(out) && fs.existsSync(out.match(/screenshot: (\S+\.png)/)[1]), 'playtest driver: look on a new game lists the hero picker, its buttons and a screenshot that exists');
       const tapped = pt('tap', 'Begin as Wren', '--quiet');
       assert(/tapped \[Begin as Wren\]/.test(tapped), 'playtest driver: tap finds a button by its label');
-      assert(/no button labelled/.test(pt('tap', 'No Such Button', '--quiet')), 'playtest driver: tap with an unknown label says so and lists what is on screen');
+      let miss = '', missCode = 0;
+      try { pt('tap', 'No Such Button', '--quiet'); } catch (e) { missCode = e.status; miss = String(e.stdout); }
+      assert(/no button labelled/.test(miss) && missCode === 1, 'playtest driver: tap with an unknown label says so, lists what is on screen and exits 1');
       assert(/waited 10 s/.test(pt('wait', '10', '--quiet')), 'playtest driver: wait runs game time');
       const st = JSON.parse(pt('state', '--json'));
       assert(st.hero === 'Wren' && st.level >= 1 && /s|min/.test(st.playedGameTime), `playtest driver: state reads the save (${JSON.stringify(st)})`);

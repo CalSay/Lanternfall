@@ -27,6 +27,8 @@ Each call reopens the game from the saved state, so an open menu, sheet or dialo
 
 If the stage looks black right after the game opens, the art is still baking: `wait 3` and `look` again. Ability buttons stay greyed for the first seconds of a fight and a tap on a greyed button does nothing, as for a player.
 
+Exit status: a command exits 1 when a tap cannot be made (no such label, or something covers it) or when the page throws an error (`PAGE ERRORS` is printed); otherwise 0.
+
 Cost: `wait` runs the real game frames on a fake clock, about 15 real seconds per game minute. Use `away` to skip hours.
 A tap lands where a finger would, so a button covered by a dialog is not tappable until the dialog is closed.
 Fights are turn fights: nothing happens until you press Attack or an ability. A fixture save may start with guide

@@ -281,7 +281,7 @@ async function exec(cmd, args, ctx) {
     case 'tap': {
       if (!args.length) die('tap needs a button label: tap "Begin as Wren"');
       const r = await tap(page, args.join(' '));
-      if (r.ok) await run(page, 0.5);
+      if (r.ok) await run(page, 0.5); else process.exitCode = 1;   // a tap that could not be made is a failed command
       if (flags.quiet || !r.ok) return { text: r.msg, data: r };
       const l = await look(session, page, 'tap'); return { text: r.msg + '\n' + l.text, data: { ...r, look: l.data } };
     }
@@ -340,10 +340,10 @@ async function main() {
       const r = await step(cmd, args); results.push(r);
       console.log(flags.json ? JSON.stringify(r.data) : r.text);
     }
-    allErrors.push(...ctx.errors);
-    if (allErrors.length) { console.log(`PAGE ERRORS (${allErrors.length}): ${allErrors.slice(0, 3).join(' | ')}`); process.exitCode = 1; }
     session.save = await readSave(ctx.page) ?? session.save;
     session.time = await ctx.page.evaluate(() => Date.now());
+    allErrors.push(...ctx.errors);
+    if (allErrors.length) { console.log(`PAGE ERRORS (${allErrors.length}): ${allErrors.slice(0, 3).join(' | ')}`); process.exitCode = 1; }
     session.played = (session.played || 0) + ranSecs;
     fs.writeFileSync(sessionFile, JSON.stringify(session));
   } finally { await browser.close(); }
