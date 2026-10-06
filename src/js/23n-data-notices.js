@@ -73,7 +73,7 @@ const NOTICES = [
 
   // ---- the camp, gathering and Hands ----
   { id: 'fire-lit', re: /^The fire catches\./, ch: 'log', why: 'the fire lights on the stage and the guide goes on' },
-  { id: 'hesketh', re: /^Old Hesketh's lamp has gone out\./, ch: 'pop', held: 'log', why: 'meeting Hesketh (the bell list while the guide speaks)' },
+  { id: 'hesketh', re: /^Old Hesketh's fire is cold\./, ch: 'pop', held: 'log', why: 'meeting Hesketh (the bell list while the guide speaks)' },
   { id: 'camp-open', re: /^Old Hesketh (has made camp|sets down his lamp)/, ch: 'bell' },
   { id: 'hands', re: /^Tam, Hesketh's nephew/, ch: 'bell' },
   { id: 'hands-small', re: /(applicants? (are|is) waiting at the Tavern|is back from the .*|The pack waits by the Storehouse\.$)/, site: /backText\(e\)/, ch: 'log' },

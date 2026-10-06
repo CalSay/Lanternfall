@@ -34,6 +34,10 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - The old Hollow arrival lines are switched off, not rewritten; story-hollow-script turns them back on. (story-area-names, 2026-10-06)
 - Canon changes after the Opus judge pass go in the digest for Cal's veto. Example: the Coast and Emberwaste bosses are the dark wearing Silas's and Durand's shapes, both men found alive afterwards. (story, 2026-10-05)
 
+- Gate hero unlocks on the zone of the hero's first scene, in one table (`STORY_MEET`, `56c-unlocks.js`), and bump the zone in tests that unlock heroes early. Why: the bible says no hero unlocks before their first scene, and many C9 tests unlocked Bram at zone 10 (his scene is zone 31). (story-opening, 2026-10-06)
+- Keep the new-game hero picker free of later-region names: a locked hero shows who you meet, not where or how much. Why: unlock text named "Cinder Road II" and "still being designed" to a first-time player. (story-opening, 2026-10-06)
+- Story browser tests that script their own scenes must expect the real opening scenes first, because they queue on the first walk-in before test data loads. Why: deleting the data after load changed nothing. (story-opening, 2026-10-06)
+
 ## UI and menus
 
 - Away card: lead with "While away, gathering continues and fighting stops", show it even when nothing was earned, put the work-limit bar below results. Why: the same 8 hours felt opposite depending on what the hero was doing; Codex P1 for the missing idle-fighter card. (away-clarity, 2026-10-06)

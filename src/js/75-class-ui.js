@@ -63,9 +63,9 @@ var classEvoUI;
         r.append(btn('mini go cl-go', 'Choose your path', () => { closeSheet(); openChoice(); }));
         out.push(r);
       } else {
-        const r = row('Evolution', 'Locked', `Two paths open after the Fenmother: ${names}. The choice is for good.`, 'cl-evo off');
+        const r = row('Evolution', 'Locked', `Two paths open after the Hollow’s Elder: ${names}. The choice is for good.`, 'cl-evo off');
         const chips = el('div', 'cl-chips');
-        chips.append(chip('Beat the Fenmother', info.gate.bossOk), chip(`Level ${info.gate.lv}`, info.gate.lvOk));
+        chips.append(chip('Beat the Hollow’s Elder', info.gate.bossOk), chip(`Level ${info.gate.lv}`, info.gate.lvOk));
         r.append(chips);
         out.push(r);
         if (p && p.open) out.push(provingBox(p));

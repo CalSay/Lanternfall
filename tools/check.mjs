@@ -2423,14 +2423,18 @@ if (section('story data')) try {
   const bad = storyProblems(real, ctx());
   assert(!bad.length, 'story data: every slot is inside its limits and gates (' + Object.keys(real.region).length + ' region card, ' + Object.keys(real.zone).length + ' zone lines, ' + Object.keys(real.champ).length + ' Champions, ' + Object.keys(real.elder).length + ' Elders)' + (bad.length ? ': ' + bad[0] : ''));
   const r1 = real.region.hollow;
-  assert(r1 && r1.title === 'Chapter 1: The Hollow' && r1.lines.length === 3 && !real.area[0] && !Object.keys(real.zone).length, 'story data: Chapter 1 carries the opening card and nothing else yet (the other slots are empty)');
+  const hk = [real.npc.heskethFire, real.npc.heskethTalk];
+  assert(r1 && r1.title === 'Chapter 1: The Hollow' && r1.lines.length === 3 && !real.area[0] && !Object.keys(real.zone).length, 'story data: Chapter 1 carries the opening card (the area and zone slots are still empty)');
+  assert(hk.every(n => n && n.at === 'area:0' && n.who) && hk[0].lines[3].includes('Every road needs a place to come back to') && hk[1].lines.length === 4 && hk[1].lines[3].includes('shut the holes'), 'story data: Hesketh\'s fire and talk (bible 8.1) play at the Hollow\'s door, right after the opening card');
+  const rr = real.hero.refuseRest;
+  assert(rr && rr.wren === 'Not yet.' && /village is lit/.test(rr.tobin) && /No\.$/.test(rr.pip), 'story data: the opening refusal (bible 4.6) has a line for each starter');
   // retired and banned words: the probes the real check relies on
   const re = ctx(), hit = t => [...re.retired, ...re.banned].some(x => x.test(t));
   assert(['The ground was soaked with it.', 'A corrupted beast.', 'Twisted roots.', 'Your party waits.', 'The crowned elder.', 'The Listener.', 'It is drawn to your lamp.', 'The Moss Slime.', 'The Lanternbearer.'].every(hit) && !hit('The dark came for your lamp.'), 'story data: the retired and banned word lists catch the old canon and pass plain lines');
   // the check itself: each fault is named
   const sample = () => JSON.parse(JSON.stringify(real));
   const ok = { foes: { 1: 'Thorn Imp' }, enc: { champ: { regent: 1 }, elder: { fen: 1 } } };
-  const fix = () => { const b = sample(); b.hero.h1 = { wren: 'a', tobin: 'b', pip: 'c', _: 'd' };
+  const fix = () => { const b = sample(); delete b.npc.heskethFire; delete b.npc.heskethTalk; b.hero.h1 = { wren: 'a', tobin: 'b', pip: 'c', _: 'd' };
     b.zone[1] = 'A Thorn Imp guards the gate.'; b.captain[1] = { title: 'The Gate Imp', line: 'It guards the gate.' }; b.area[0] = 'Home is behind you.';
     b.champ.regent = { zone: 5, name: 'Regent', pre: ['One.', 'Two.'], post: ['Three.'], page: { title: 'Why they came', text: 'They came for light. They took it.' }, hearth: 'Hush.' };
     b.elder.fen = { zone: 35, pre: ['a', 'b', 'c'], post: ['d', 'e', 'f'], hero: 'h1', page: { title: 'The Fen', text: 'It fell. The fog stayed.' } };
@@ -2471,7 +2475,8 @@ if (section('story')) try {
   const rd = f => fs.readFileSync(path.join(ROOT, 'src', f), 'utf8');
   const src = rd('js/55-story.js');
   assert(!/\b(document|window|localStorage)\./.test(src.replace(/\/\/.*$/gm, '')), 'story: 55-story.js is core (no DOM)');
-  const DATA = `STORY_BEATS.zone[1] = 'A Thorn Imp sits on the gatepost.'; STORY_BEATS.zone[3] = 'A Thorn Imp waits here.';
+  const DATA = `delete STORY_BEATS.npc.heskethFire; delete STORY_BEATS.npc.heskethTalk;
+    STORY_BEATS.zone[1] = 'A Thorn Imp sits on the gatepost.'; STORY_BEATS.zone[3] = 'A Thorn Imp waits here.';
     STORY_BEATS.area[0] = 'Home is behind you.'; STORY_BEATS.captain[1] = { title: 'The Gate Imp', line: 'It guards the gate for her.' };
     STORY_BEATS.hero.h1 = { wren: 'Wren line.', tobin: 'Tobin line.', pip: 'Pip line.', _: 'Shared line.' };
     STORY_BEATS.champ.regent = { zone: 5, name: 'Briar Regent', pre: ['The hedges part.', 'It holds the village.'], post: ['Its throne comes apart.'], page: { title: 'Why they came', text: 'They came for light. They took it.' }, hearth: 'The air turns cold.' };
@@ -2664,13 +2669,22 @@ if (section('story UI (browser)')) try {
         await page.click('.sty-sheet .sty-done'); await page.waitForTimeout(500);
         assert(!(await page.$('.sty-sheet .sty-title')) || (await page.$eval('.sty-sheet', n => n.querySelector('.sty-title') ? /Chapter 1/.test(n.querySelector('.sty-title').textContent) === false : true)), `story UI ${tag}: Begin closes the opening card`);
         assert(await X('S.story.ends["r:hollow"]') === 'done', `story UI ${tag}: Begin is recorded as done`);
+        // Hesketh, before the first fight (story-opening): the fire card, then the talk; each fits the screen and reads word for word
+        for (const [title, first, last] of [['Old Hesketh', 'On the road your lamp gutters.', 'Every road needs a place to come back to'], ['What Hesketh knows', 'Ten years I\'ve lit dead lamps.', 'shut the holes']]) {
+          await page.waitForSelector('.sty-sheet .sty-title', { timeout: 4000 }); await page.waitForTimeout(400);
+          const hk = await page.$eval('.sty-sheet', n => ({ title: n.querySelector('.sty-title').textContent, lines: [...n.querySelectorAll('.sty-text')].map(x => x.textContent), bottom: Math.max(...[...n.querySelectorAll('button')].map(x => x.getBoundingClientRect().bottom)), vh: innerHeight, overflowX: n.scrollWidth > n.clientWidth + 1 }));
+          assert(hk.title === title && hk.lines.length === 4 && hk.lines[0].includes(first) && hk.lines[3].includes(last) && hk.bottom <= hk.vh && !hk.overflowX, `story UI ${tag}: Hesketh's "${title}" card shows its four lines, fits the screen and keeps its buttons on it`);
+          await page.click('.sty-sheet .sty-done'); await page.waitForTimeout(400);
+        }
+        assert(await X('S.story.ends["n:heskethFire"]') === 'done' && await X('S.story.ends["n:heskethTalk"]') === 'done', `story UI ${tag}: both Hesketh cards are recorded as done`);
         // the caption: the area's name and two lines, held about 3 s, then the next scene
         const cap = await page.$eval('.sty-cap', n => ({ h: n.querySelector('.sty-cap-h').textContent, l: [...n.querySelectorAll('.sty-cap-l')].map(x => x.textContent), w: Math.round(n.getBoundingClientRect().width), vw: innerWidth })).catch(() => null);
         assert(cap && cap.h === 'Mossy Hollow' && cap.l.join('|') === 'The lamp gutters. A fire waits ahead.|A Thorn Imp sits on the gatepost.' && cap.w <= cap.vw, `story UI ${tag}: the area title and the zone line show as one caption that fits the screen`);
         await X('onboardTips(false); onboardUnlockAll()');   // the guide pauses fights; cards play in the gap after a kill
-        await page.waitForSelector('.sty-sheet .sty-title', { timeout: 6000 });
+        await page.waitForTimeout(300);
+        await page.waitForSelector('.sty-sheet .sty-title', { timeout: 12000 });
         assert(await page.$eval('.sty-sheet .sty-title', n => n.textContent) === 'A voice' && await X('notes.clock') >= 0, `story UI ${tag}: the Voice card follows the caption`);
-        await page.click('.sty-sheet .sty-skip'); await page.waitForSelector('.sty-sheet .sty-opt', { timeout: 3000 });
+        await page.click('.sty-sheet .sty-skip'); await page.waitForSelector('.sty-sheet .sty-opt', { timeout: 9000 });
         assert(await X('S.story.ends["v:v1"]') === 'skipped', `story UI ${tag}: Skip is recorded as skipped`);
         await page.click('.sty-sheet .sty-skip'); await page.waitForTimeout(600);
         assert(await X('S.story.litFor.hollow') === 'hesketh' && await X('storyHeld()') === false && !(await page.$('.sty-sheet .sty-opt')), `story UI ${tag}: skipping the choice takes its default, closes the card and lets the game run`);
@@ -2679,7 +2693,7 @@ if (section('story UI (browser)')) try {
         // the Journal keeps all of it for re-reading
         await X('storyUI.list(false)'); await page.waitForSelector('.sty-row', { timeout: 3000 });
         const rows = await page.$$eval('.sty-row b', l => l.map(x => x.textContent));
-        assert(rows.join('|') === 'Chapter 1: The Hollow|A voice', `story UI ${tag}: the Journal lists what was read (${rows.join(' | ')})`);
+        assert(rows.join('|') === 'Chapter 1: The Hollow|A voice|Old Hesketh|What Hesketh knows', `story UI ${tag}: the Journal lists what was read (${rows.join(' | ')})`);
         assert(!errs.length, `story UI ${tag}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
         await ctx.close();
       }
@@ -4937,7 +4951,7 @@ if (section('notices (W1-B)')) try {
   const pol = JSON.parse(E(`JSON.stringify({
     lv: [5, 10, 25].map(L => noticeChannel(noticeRule('', 'level'), 'Level ' + L + '. Your hero hits 4% harder.')),
     tab: [true, false].map(gd => noticeChannel(noticeRule('New tab: Gather. Mine ore and chop wood.'), 'New tab: Gather. Mine ore and chop wood.', {}, { guide: gd })),
-    go: ['You head to the Pine Grove.', 'You return to Batwing Caves.', 'Work starts on the Workbench, Lv 1. Ready in 10s.', 'The fire catches. Hesketh: "Every road needs a place to come back to." See the Camp tab.'].map(m => noticeChannel(noticeRule(m), m)),
+    go: ['You head to the Pine Grove.', 'You return to Batwing Caves.', 'Work starts on the Workbench, Lv 1. Ready in 10s.', 'The fire catches. Camp is open. See the Camp tab.'].map(m => noticeChannel(noticeRule(m), m)),
     deeds: [1, 2, 3, 4].map(t => noticeChannel(noticeRule('', 'deed-tier'), 'x', { tier: t })) })`));
   assert(pol.lv.join() === 'log,log,bell' && pol.tab.join() === 'log,pop' && pol.go.join() === 'none,none,none,log' && pol.deeds.join() === 'log,log,bell,pop',
     `policy: level ups go to the bell list (every 25th counts); "New tab" lines are quiet while the guide runs; "You head to", "Work starts" say nothing; the fire goes to the bell list; Deeds Bronze/Silver quiet, Gold bell, Everflame pops (${JSON.stringify(pol)})`);
@@ -6863,14 +6877,14 @@ if (section('C9 hero registry (core)')) try {
   E('for (let i=0;i<10;i++) for (const k of HERO_ORDER) { heroRouteInfo(k); heroUnlocked(k); heroCanPlay(k); tokenChance(k); }');
   assert(E('JSON.stringify(S)') === before, 'C9: picker and token-chance reads do not mutate state or consume resources');
   assert(E('["missing","toString","__proto__",null].every(k => !heroUnlocked(k) && !heroCanPlay(k) && !heroUnlock(k) && !heroPick(k) && heroRouteInfo(k) === null)'), 'C9: unknown and inherited IDs cannot unlock or pick heroes');
-  E('S.maxZone=10; S.mats.wood=[79,0,0,0,0]');
+  E('S.maxZone=31; S.mats.wood=[79,0,0,0,0]');   // Bram's first scene is at zone 31 (STORY_MEET)
   const short = E('JSON.stringify([S.gold,S.mats,S.party.unlock])');
   assert(!E('heroUnlock("bram")') && E('JSON.stringify([S.gold,S.mats,S.party.unlock])') === short, 'C9: an incomplete quest cannot charge or unlock');
   E('S.mats.wood[1]=1');
   assert(E('heroUnlock("bram") && S.mats.wood[0] === 0 && S.mats.wood[1] === 0 && heroRouteInfo("bram").state === "coming-soon" && !heroCanPlay("bram")'), 'C9: quest hand-in spends the named grade first, persists completion and shows Coming soon without a kit');
   E('S.mats.wood[0]=10');
   assert(E('heroUnlock("bram") && S.mats.wood[0]===10'), 'C9: repeating a quest claim never spends again');
-  E('S.maxZone=16; S.gold=1e9; addRenown(UNLOCK_TUNE.aldric.renown,"check")');
+  E('S.maxZone=41; S.gold=1e9; addRenown(UNLOCK_TUNE.aldric.renown,"check")');
   const rn = E('renown()'), gold = E('S.gold'), cost = E('heroRouteInfo("aldric").cost.gold');
   assert(E('heroUnlock("aldric")') && E('renown()') === rn && E('S.gold') === gold-cost, 'C9: Aldric checks the tuned Renown balance and charges his gold once');
   E('heroProbe()');
@@ -6878,7 +6892,7 @@ if (section('C9 hero registry (core)')) try {
   E('heroUnlock("aldric"); heroProbe(); heroProbe()');
   assert(E('JSON.stringify([S.gold,S.party.unlock])') === paid, 'C9: repeated claims and route probes do not duplicate unlocks or charges');
   const spending = loadCore({ seed: 910 }), F = s => spending.eval(s);
-  F('UNLOCK_TUNE.aldric.spendRenown=true; S.maxZone=16; S.gold=1e9; addRenown(UNLOCK_TUNE.aldric.renown)');
+  F('UNLOCK_TUNE.aldric.spendRenown=true; S.maxZone=41; S.gold=1e9; addRenown(UNLOCK_TUNE.aldric.renown)');
   assert(F('heroUnlock("aldric") && renown() === 0 && heroUnlock("aldric") && renown() === 0'), 'C9: a route configured to spend Renown pays once, atomically with the unlock');
   E('addRenown(UNLOCK_TUNE.vesperRenown); heroProbe(); S.party.unlock.renown=0; heroProbe()');
   assert(E('heroUnlocked("vesper") && heroRouteInfo("vesper").state === "coming-soon"'), 'C9: a completed free Renown route remains unlocked after the balance changes');
@@ -6889,18 +6903,30 @@ if (section('C9 hero registry (core)')) try {
     assert(T(`tokenChance(${JSON.stringify(id)}) === 1 && unlockTokenRoll(${JSON.stringify(id)},0.999999) === true && tokenChance(${JSON.stringify(id)}) === 0 && unlockTokenRoll(${JSON.stringify(id)},0) === null`), `C9: ${id} token is guaranteed by its tuned pity and cannot be won twice`);
   }
   const eligibility = loadCore({seed: 912}), K = s => eligibility.eval(s);
-  K('Math.random=()=>0; emit("kill",{mob:{boss:true,key:"golem"},zone:26,tier:4});');
+  K('S.maxZone=26; Math.random=()=>0; emit("kill",{mob:{boss:true,key:"golem"},zone:26,tier:4});');
   assert(K('!S.party.unlock.tokens.grenna'), 'C9: Grenna token does not roll below its zone gate');
   K('emit("kill",{mob:{boss:true,key:"coral"},zone:41,tier:4});');
   assert(K('!S.party.unlock.tokens.grenna'), 'C9: a Coast place cannot masquerade as the Hollow’s Quarry boss');
   K('emit("kill",{mob:{boss:true,key:"golem"},zone:27,tier:4});');
   assert(K('heroUnlocked("grenna") && heroRouteInfo("grenna").state === "coming-soon"'), 'C9: an eligible Quarry boss unlocks Grenna’s route, but cannot supply her kit');
-  K('emit("kill",{mob:{boss:true,key:"spore"},zone:UNLOCK_TUNE.quests.morwen.zone,tier:5}); heroProbe(); S.craft.starChart=1; S.mastery.types.wraith=BESTIARY_TIERS[UNLOCK_TUNE.thessaly.tier-1]; S.stats.bosses=UNLOCK_TUNE.corvin.bosses; for (const t of TYPES) S.mastery.types[t.key]=Math.max(S.mastery.types[t.key]||0,BESTIARY_TIERS[UNLOCK_TUNE.corvin.tier-1]); heroProbe();');
+  K('S.maxZone=156; emit("kill",{mob:{boss:true,key:"spore"},zone:UNLOCK_TUNE.quests.morwen.zone,tier:5}); heroProbe(); S.craft.starChart=1; S.mastery.types.wraith=BESTIARY_TIERS[UNLOCK_TUNE.thessaly.tier-1]; S.stats.bosses=UNLOCK_TUNE.corvin.bosses; for (const t of TYPES) S.mastery.types[t.key]=Math.max(S.mastery.types[t.key]||0,BESTIARY_TIERS[UNLOCK_TUNE.corvin.tier-1]); heroProbe();');
   assert(K('["morwen","oriel","thessaly","corvin"].every(heroUnlocked)'), 'C9: solo boss quest, Star Chart, bestiary and Kingslayer conditions complete their routes');
   E('S.maxZone=70; S.gold=1e9; S.mats.crystal[4]=30; S.story.seen["b:letters"]=1');
   assert(E('heroUnlock("loveday") && S.mats.crystal[4]===0 && heroRouteInfo("loveday").state === "coming-soon"'), 'C9: Loveday’s designed letters and gem hand-in route is available without a solo kit');
-  E('S.maxZone=50; S.party.unlock.quests.cass=1');
-  assert(E('!heroUnlock("cass") && !heroRouteInfo("cass").ready && heroRouteInfo("cass").how.includes("still being designed")'), 'C9: unspecified future unlock prices stay unclaimable with honest copy');
+  E('S.maxZone=51; S.party.unlock.quests.cass=1');
+  assert(E('!heroUnlock("cass") && !heroRouteInfo("cass").ready && heroRouteInfo("cass").how.includes("not ready to join yet")'), 'C9: unspecified future unlock prices stay unclaimable with honest copy');
+  // story gate (story-opening, bible 4.4): no new unlock before the hero's first scene; heroes a save owns are kept
+  const gate = loadCore({ seed: 916 }), G = s => gate.eval(s), rd = f => fs.readFileSync(path.join(ROOT, 'src', f), 'utf8');
+  G('S.maxZone=30; S.mats.wood=[80,0,0,0,0]');
+  assert(G('!heroUnlock("bram") && !heroUnlocked("bram") && heroRouteInfo("bram").story === true && heroRouteInfo("bram").how === "You meet them in the Hollow." && heroRouteInfo("bram").bio === ""') && G('S.mats.wood[0]') === 80, 'story gate: a hero cannot unlock before their first scene (Bram, zone 31), nothing is spent, and a locked hero shows no bio');
+  G('S.maxZone=31');
+  assert(G('heroRouteInfo("bram").story !== true && heroUnlock("bram") && heroRouteInfo("bram").bio.length > 20'), 'story gate: at the first scene the hero\'s real route opens, and the bio shows once unlocked');
+  G('S.party.unlock.heroes.caedmon=1; S.maxZone=1');
+  assert(G('heroUnlocked("caedmon") && heroRouteInfo("caedmon").bio.length > 20 && STORY_MEET.corvin[0] === 156 && !heroUnlocked("corvin")'), 'story gate: a hero an existing save already owns is kept, and the gate only holds back new unlocks');
+  assert(G('Object.keys(STORY_MEET).every(k => ROSTER[k] && ROSTER[k].route.type !== "starter") && ROSTER_KEYS.filter(k => ROSTER[k].route.type !== "starter" && !STORY_MEET[k]).length === 0'), 'story gate: every non-starter hero has a first scene in the table (bible 4.5)');
+  assert(!/Fenmother/.test(rd('js/75-class-ui.js') + rd('js/76-create.js')) && /Two paths open after the Hollow’s Elder/.test(rd('js/76-create.js')) && /Two paths open after the Hollow’s Elder/.test(rd('js/75-class-ui.js')), 'story: the Hero tab does not name the Fenmother before she is met');
+  assert(!/(Corvin[^'"]*When the King fell)/.test(rd('js/21-stories.js')) && /When the curtain came down, there was no one behind it/.test(rd('js/21-stories.js')) && /still warm when she reached the Rimewood\. She keeps it lit/.test(rd('js/56-roster.js')), 'story: Corvin\'s and Brynja\'s bios match the bible (14)');
+  assert(!/still being designed/.test(rd('js/56c-unlocks.js')), 'story gate: no unlock text says "still being designed"');
   const persisted = E('JSON.stringify(S.party.unlock)'); g.fn.save();
   const reloaded = loadCore({ storage: memoryStorage(g.storage.dump()), seed: 913 }), R = s => reloaded.eval(s);
   assert(R('JSON.stringify(S.party.unlock)') === persisted && R('heroUnlocked("bram") && heroUnlocked("aldric") && heroUnlocked("loveday")'), 'C9: completed paid and free routes survive save/reload unchanged');
@@ -6946,7 +6972,8 @@ if (section('C9 hero registry (browser)')) try {
           await X('soloPickerOpen=()=>true; S.onboard.tips=false; onboardUnlockAll(); true');
           const initial = await page.$$eval('#createScreen .ccard', rows => rows.map(b => [b.dataset.hero,b.dataset.state,b.getAttribute('aria-disabled'),b.textContent]));
           assert(initial.length===32 && initial.filter(r => r[1]==='unlocked').map(r=>r[0]).join()==='wren,tobin,pip' && initial.filter(r=>r[1]==='locked').length===29, `C9 ${tag}: new game shows all 32 heroes and exactly three unlocked starters`);
-          assert(initial.every(r=>r[3].length>70) && initial.find(r=>r[0]==='aldric')[3].includes('Renown on the bounty board'), `C9 ${tag}: locked cards keep their bios and explain the route in plain words`);
+          const bios = await X('JSON.stringify(Object.fromEntries(ROSTER_KEYS.map(k => [k, heroBio(k).slice(0, 40)])))').then(JSON.parse);
+          assert(initial.filter(r=>r[1]==='unlocked').every(r=>r[3].includes(bios[r[0]])) && initial.filter(r=>r[1]==='locked').every(r=>r[3].includes('Locked') && /You meet (him|them) /.test(r[3]) && !r[3].includes(bios[r[0]]) && !/still being designed|Fenmother/.test(r[3])), `C9 ${tag}: starters show their bios; every other hero is plainly Locked, says where you meet them, and spoils nothing`);
           await page.click('#createScreen .ccard[data-hero="bram"]');
           assert(await page.$eval('#createScreen .create-go', b=>b.disabled) && !(await X('soloHero()')), `C9 ${tag}: selecting a locked hero cannot begin the game`);
           await X('S.party.unlock.heroes.bram=1; true');
@@ -6957,7 +6984,7 @@ if (section('C9 hero registry (browser)')) try {
           await page.click('#createScreen .ccard[data-hero="wren"]');
           await page.click('#createScreen .create-go');
           await page.waitForSelector('#createScreen',{state:'detached'});
-          await X('delete S.party.unlock.heroes.bram; S.maxZone=10; S.zone=1; S.L=7; S.xp=3; S.mats.wood=[80,0,0,0,0]; S.gold=42; S.camp.open=true; S.camp.b.hearth=2; setTab("party"); setView("party","team"); ui(true); true');
+          await X('delete S.party.unlock.heroes.bram; S.maxZone=31; S.zone=1; S.L=7; S.xp=3; S.mats.wood=[80,0,0,0,0]; S.gold=42; S.camp.open=true; S.camp.b.hearth=2; setTab("party"); setView("party","team"); ui(true); true');
           // owner 2026-10-01: the Camp view shows chips for the heroes you can play or unlock; All heroes opens the full roster
           await page.waitForSelector('#sec-solo-hero .sp-all');
           const chipHeroes = await page.$$eval('#sec-solo-hero .sp-chip', cs => cs.map(c => c.dataset.hero));
