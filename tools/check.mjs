@@ -2423,11 +2423,7 @@ if (section('story data')) try {
   const bad = storyProblems(real, ctx());
   assert(!bad.length, 'story data: every slot is inside its limits and gates (' + Object.keys(real.region).length + ' region card, ' + Object.keys(real.zone).length + ' zone lines, ' + Object.keys(real.champ).length + ' Champions, ' + Object.keys(real.elder).length + ' Elders)' + (bad.length ? ': ' + bad[0] : ''));
   const r1 = real.region.hollow;
-  const hk = [real.npc.heskethFire, real.npc.heskethTalk];
   assert(r1 && r1.title === 'Chapter 1: The Hollow' && r1.lines.length === 3 && !real.area[0] && !Object.keys(real.zone).length, 'story data: Chapter 1 carries the opening card (the area and zone slots are still empty)');
-  assert(hk.every(n => n && n.at === 'area:0' && n.who) && hk[0].lines[3].includes('Every road needs a place to come back to') && hk[1].lines.length === 4 && hk[1].lines[3].includes('shut the holes'), 'story data: Hesketh\'s fire and talk (bible 8.1) play at the Hollow\'s door, right after the opening card');
-  const rr = real.hero.refuseRest;
-  assert(rr && rr.wren === 'Not yet.' && /village is lit/.test(rr.tobin) && /No\.$/.test(rr.pip), 'story data: the opening refusal (bible 4.6) has a line for each starter');
   // retired and banned words: the probes the real check relies on
   const re = ctx(), hit = t => [...re.retired, ...re.banned].some(x => x.test(t));
   assert(['The ground was soaked with it.', 'A corrupted beast.', 'Twisted roots.', 'Your party waits.', 'The crowned elder.', 'The Listener.', 'It is drawn to your lamp.', 'The Moss Slime.', 'The Lanternbearer.'].every(hit) && !hit('The dark came for your lamp.'), 'story data: the retired and banned word lists catch the old canon and pass plain lines');
@@ -2673,10 +2669,8 @@ if (section('story UI (browser)')) try {
         for (const [title, first, last] of [['Old Hesketh', 'On the road your lamp gutters.', 'Every road needs a place to come back to'], ['What Hesketh knows', 'Ten years I\'ve lit dead lamps.', 'shut the holes']]) {
           await page.waitForSelector('.sty-sheet .sty-title', { timeout: 4000 }); await page.waitForTimeout(400);
           const hk = await page.$eval('.sty-sheet', n => ({ title: n.querySelector('.sty-title').textContent, lines: [...n.querySelectorAll('.sty-text')].map(x => x.textContent), bottom: Math.max(...[...n.querySelectorAll('button')].map(x => x.getBoundingClientRect().bottom)), vh: innerHeight, overflowX: n.scrollWidth > n.clientWidth + 1 }));
-          assert(hk.title === title && hk.lines.length === 4 && hk.lines[0].includes(first) && hk.lines[3].includes(last) && hk.bottom <= hk.vh && !hk.overflowX, `story UI ${tag}: Hesketh's "${title}" card shows its four lines, fits the screen and keeps its buttons on it`);
           await page.click('.sty-sheet .sty-done'); await page.waitForTimeout(400);
         }
-        assert(await X('S.story.ends["n:heskethFire"]') === 'done' && await X('S.story.ends["n:heskethTalk"]') === 'done', `story UI ${tag}: both Hesketh cards are recorded as done`);
         // the caption: the area's name and two lines, held about 3 s, then the next scene
         const cap = await page.$eval('.sty-cap', n => ({ h: n.querySelector('.sty-cap-h').textContent, l: [...n.querySelectorAll('.sty-cap-l')].map(x => x.textContent), w: Math.round(n.getBoundingClientRect().width), vw: innerWidth })).catch(() => null);
         assert(cap && cap.h === 'Mossy Hollow' && cap.l.join('|') === 'The lamp gutters. A fire waits ahead.|A Thorn Imp sits on the gatepost.' && cap.w <= cap.vw, `story UI ${tag}: the area title and the zone line show as one caption that fits the screen`);
@@ -6915,18 +6909,6 @@ if (section('C9 hero registry (core)')) try {
   assert(E('heroUnlock("loveday") && S.mats.crystal[4]===0 && heroRouteInfo("loveday").state === "coming-soon"'), 'C9: Loveday’s designed letters and gem hand-in route is available without a solo kit');
   E('S.maxZone=51; S.party.unlock.quests.cass=1');
   assert(E('!heroUnlock("cass") && !heroRouteInfo("cass").ready && heroRouteInfo("cass").how.includes("not ready to join yet")'), 'C9: unspecified future unlock prices stay unclaimable with honest copy');
-  // story gate (story-opening, bible 4.4): no new unlock before the hero's first scene; heroes a save owns are kept
-  const gate = loadCore({ seed: 916 }), G = s => gate.eval(s), rd = f => fs.readFileSync(path.join(ROOT, 'src', f), 'utf8');
-  G('S.maxZone=30; S.mats.wood=[80,0,0,0,0]');
-  assert(G('!heroUnlock("bram") && !heroUnlocked("bram") && heroRouteInfo("bram").story === true && heroRouteInfo("bram").how === "You meet them in the Hollow." && heroRouteInfo("bram").bio === ""') && G('S.mats.wood[0]') === 80, 'story gate: a hero cannot unlock before their first scene (Bram, zone 31), nothing is spent, and a locked hero shows no bio');
-  G('S.maxZone=31');
-  assert(G('heroRouteInfo("bram").story !== true && heroUnlock("bram") && heroRouteInfo("bram").bio.length > 20'), 'story gate: at the first scene the hero\'s real route opens, and the bio shows once unlocked');
-  G('S.party.unlock.heroes.caedmon=1; S.maxZone=1');
-  assert(G('heroUnlocked("caedmon") && heroRouteInfo("caedmon").bio.length > 20 && STORY_MEET.corvin[0] === 156 && !heroUnlocked("corvin")'), 'story gate: a hero an existing save already owns is kept, and the gate only holds back new unlocks');
-  assert(G('Object.keys(STORY_MEET).every(k => ROSTER[k] && ROSTER[k].route.type !== "starter") && ROSTER_KEYS.filter(k => ROSTER[k].route.type !== "starter" && !STORY_MEET[k]).length === 0'), 'story gate: every non-starter hero has a first scene in the table (bible 4.5)');
-  assert(!/Fenmother/.test(rd('js/75-class-ui.js') + rd('js/76-create.js')) && /Two paths open after the Hollow’s Elder/.test(rd('js/76-create.js')) && /Two paths open after the Hollow’s Elder/.test(rd('js/75-class-ui.js')), 'story: the Hero tab does not name the Fenmother before she is met');
-  assert(!/(Corvin[^'"]*When the King fell)/.test(rd('js/21-stories.js')) && /When the curtain came down, there was no one behind it/.test(rd('js/21-stories.js')) && /still warm when she reached the Rimewood\. She keeps it lit/.test(rd('js/56-roster.js')), 'story: Corvin\'s and Brynja\'s bios match the bible (14)');
-  assert(!/still being designed/.test(rd('js/56c-unlocks.js')), 'story gate: no unlock text says "still being designed"');
   const persisted = E('JSON.stringify(S.party.unlock)'); g.fn.save();
   const reloaded = loadCore({ storage: memoryStorage(g.storage.dump()), seed: 913 }), R = s => reloaded.eval(s);
   assert(R('JSON.stringify(S.party.unlock)') === persisted && R('heroUnlocked("bram") && heroUnlocked("aldric") && heroUnlocked("loveday")'), 'C9: completed paid and free routes survive save/reload unchanged');
@@ -8512,6 +8494,63 @@ if (section('systems map')) try {
   const docPath = path.join(ROOT, 'docs', 'design', 'systems-map.md');
   assert(fs.existsSync(docPath) && fs.readFileSync(docPath, 'utf8') === sm.render(), 'docs/design/systems-map.md is out of date: run node tools/systems-map.mjs --write');
 } catch (e) { fail('systems map crashed: ' + (e.stack || e)); }
+
+// ---- story-opening: Hesketh's cards before the first fight, the hero story gate, the picker's copy (bible 8.1, 4.4, 4.5, 14) ----
+if (section('story-opening')) try {
+  const g = loadCore(), E = x => g.eval(x), rd = f => fs.readFileSync(path.join(ROOT, 'src', f), 'utf8');
+  const real = JSON.parse(E('JSON.stringify(STORY_BEATS)')), hk = [real.npc.heskethFire, real.npc.heskethTalk];
+  assert(hk.every(n => n && n.at === 'area:0' && n.who) && hk[0].lines[3].includes('Every road needs a place to come back to') && hk[1].lines.length === 4 && hk[1].lines[3].includes('shut the holes'), 'story-opening: Hesketh\'s fire and talk (bible 8.1) play at the Hollow\'s door, right after the opening card');
+  const rr = real.hero.refuseRest;
+  assert(rr && rr.wren === 'Not yet.' && /village is lit/.test(rr.tobin) && /No\.$/.test(rr.pip), 'story-opening: the opening refusal (bible 4.6) has a line for each starter');
+  // story gate (story-opening, bible 4.4): no new unlock before the hero's first scene; heroes a save owns are kept
+  const gate = loadCore({ seed: 916 }), G = s => gate.eval(s);
+  G('S.maxZone=30; S.mats.wood=[80,0,0,0,0]');
+  assert(G('!heroUnlock("bram") && !heroUnlocked("bram") && heroRouteInfo("bram").story === true && heroRouteInfo("bram").how === "You meet them in the Hollow." && heroRouteInfo("bram").bio === ""') && G('S.mats.wood[0]') === 80, 'story gate: a hero cannot unlock before their first scene (Bram, zone 31), nothing is spent, and a locked hero shows no bio');
+  G('S.maxZone=31');
+  assert(G('heroRouteInfo("bram").story !== true && heroUnlock("bram") && heroRouteInfo("bram").bio.length > 20'), 'story gate: at the first scene the hero\'s real route opens, and the bio shows once unlocked');
+  G('S.party.unlock.heroes.caedmon=1; S.maxZone=1');
+  assert(G('heroUnlocked("caedmon") && heroRouteInfo("caedmon").bio.length > 20 && STORY_MEET.corvin[0] === 156 && !heroUnlocked("corvin")'), 'story gate: a hero an existing save already owns is kept, and the gate only holds back new unlocks');
+  assert(G('Object.keys(STORY_MEET).every(k => ROSTER[k] && ROSTER[k].route.type !== "starter") && ROSTER_KEYS.filter(k => ROSTER[k].route.type !== "starter" && !STORY_MEET[k]).length === 0'), 'story gate: every non-starter hero has a first scene in the table (bible 4.5)');
+  assert(!/Fenmother/.test(rd('js/75-class-ui.js') + rd('js/76-create.js')) && /Two paths open after the Hollow’s Elder/.test(rd('js/76-create.js')) && /Two paths open after the Hollow’s Elder/.test(rd('js/75-class-ui.js')), 'story: the Hero tab does not name the Fenmother before she is met');
+  assert(!/(Corvin[^'"]*When the King fell)/.test(rd('js/21-stories.js')) && /When the curtain came down, there was no one behind it/.test(rd('js/21-stories.js')) && /still warm when she reached the Rimewood\. She keeps it lit/.test(rd('js/56-roster.js')), 'story: Corvin\'s and Brynja\'s bios match the bible (14)');
+  assert(!/still being designed/.test(rd('js/56c-unlocks.js')), 'story gate: no unlock text says "still being designed"');
+} catch (e) { fail('story-opening crashed: ' + (e.stack || e)); }
+
+if (section('story-opening (browser)')) try {
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('story-opening (browser): Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [tag, viewport, rm] of [['360x740', { width: 360, height: 740 }, 'no-preference'], ['740x360 reduced motion', { width: 740, height: 360 }, 'reduce']]) {
+        const ctx = await browser.newContext({ viewport, isMobile: true, hasTouch: true, reducedMotion: rm, story: true });
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(700);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go');
+        // the opening card: every line is on screen, not behind the buttons (landscape fix)
+        await page.waitForSelector('.sty-sheet .sty-title', { timeout: 4000 }); await page.waitForTimeout(500);
+        const vis = await page.$eval('.sty-sheet', n => { const b = [...n.querySelectorAll('button')].filter(x => /Begin|Skip/.test(x.textContent)).map(x => x.getBoundingClientRect()), card = n.querySelector('.sty-card').getBoundingClientRect(), ls = [...n.querySelectorAll('.sty-text')].map(x => x.getBoundingClientRect());
+          return { overlap: b.some(r => r.left < card.right - 1 && r.right > card.left + 1 && r.top < card.bottom && r.bottom > card.top), hidden: ls.filter(r => r.bottom > card.bottom + 1).length, lines: ls.length }; });
+        assert(vis.lines === 3 && !vis.overlap && vis.hidden === 0, `story-opening ${tag}: the opening card shows all three lines and the buttons do not cover them (${JSON.stringify(vis)})`);
+        await page.click('.sty-sheet .sty-done'); await page.waitForTimeout(400);
+        for (const [title, first, last] of [['Old Hesketh', 'On the road your lamp gutters.', 'Every road needs a place to come back to'], ['What Hesketh knows', 'Ten years I\'ve lit dead lamps.', 'shut the holes']]) {
+          await page.waitForSelector('.sty-sheet .sty-title', { timeout: 4000 }); await page.waitForTimeout(400);
+          const h = await page.$eval('.sty-sheet', n => ({ title: n.querySelector('.sty-title').textContent, lines: [...n.querySelectorAll('.sty-text')].map(x => x.textContent), bottom: Math.max(...[...n.querySelectorAll('button')].map(x => x.getBoundingClientRect().bottom)), vh: innerHeight, overflowX: n.scrollWidth > n.clientWidth + 1 }));
+          assert(h.title === title && h.lines.length === 4 && h.lines[0].includes(first) && h.lines[3].includes(last) && h.bottom <= h.vh && !h.overflowX, `story-opening ${tag}: Hesketh's "${title}" card shows its four lines, fits the screen and keeps its buttons on it`);
+          await page.click('.sty-sheet .sty-done'); await page.waitForTimeout(400);
+        }
+        assert(await X('S.story.ends["n:heskethFire"]') === 'done' && await X('S.story.ends["n:heskethTalk"]') === 'done', `story-opening ${tag}: both Hesketh cards are recorded as done`);
+        assert(!errs.length, `story-opening ${tag}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('story-opening (browser) crashed: ' + (e.stack || e)); }
 
 if (section('removed systems (W2-C)')) try {
   const strip = t => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/([^:'"`\\])\/\/[^\n'"`]*$/gm, '$1');

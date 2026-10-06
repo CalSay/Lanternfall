@@ -40,6 +40,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - In landscape, put story card buttons beside the card, not sticky over it. Why: at 740x360 the opening card's lines 2 and 3 sat behind Begin and Skip while the size test still passed; check that every line is visible, not only that the sheet fits. (story-opening, 2026-10-06)
 - Scope a story layout change to `.sty-scene` cards; the Journal and Codex reuse `.sty-sheet`. Why: Codex P1 on PR #54, the side-by-side layout would have clipped long Journals. (story-opening, 2026-10-06)
 - When hiding a name from a menu, grep every data string the menus render (Scroll sources, Star sources), not only the row you edited. Why: Codex P1 on PR #54 found the Fenmother still named in the Abilities and Stars tabs. (story-opening, 2026-10-06)
+- Put a card's new checks in its own marked `check.mjs` section before "removed systems (W2-C)"; edit other sections only where an old expectation changed. Why: Codex P1 on PR #54 (two-agent-split.md shared-file rule). (story-opening, 2026-10-06)
 
 ## UI and menus
 
