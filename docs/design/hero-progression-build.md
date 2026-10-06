@@ -136,9 +136,9 @@ Attribute policy in the pace runs: even (the sim's default `--attrs even`).
   reaches): Wren 26.2 h against 27.2 h (0.96), Pip 34.6 h against 42.7 h or never. Casual Tobin reaches zone 25 in
   25 h against 40 h (0.63): faster than the band.
 
-**Level gaps (judge: at most 2 zones' play with no level-up in zones 20-30, good persona).** Wren 1.9-2.4 zones, Pip
+**Level gaps (judge ruling 2: at most 3 zones' play with no level-up in zones 20-30, good persona; 2 is the target).** Wren 1.9-2.4 zones, Pip
 2.2-2.5, Tobin 5.8-5.9 (15-20 h at zone 26-27; the old Tobin had 14-18 h gaps and never reached 30). Old game: Wren
-2.4-2.5, Pip 2.2-2.9. Missed for Tobin, at the edge for Wren and Pip. A level is worth about one zone of power (the
+2.4-2.5, Pip 2.2-2.9. Wren and Pip pass; Tobin is a gap owned by card `mid-zone-wall` (his gaps are walls: 10 h at zone 27, 13 h at zone 29). A level is worth about one zone of power (the
 Attack curve x2 every 5 levels past 25), so the road holds about 0.85 levels a zone, and the gap falls under 2 zones
 only if levels come at a steady rate. The tighter brakes tried (lead 0 to 2) made the gaps longer.
 
@@ -204,3 +204,13 @@ Build tab. Before testers: smooth the road's slopes (a monotone curve through `H
 whole-level fights change by at most 25% between neighbouring zones 1-50. For Cal: the switch's boss miss (kit, not
 level), Tobin's level gaps, casual Tobin's pace, Wren's Focus farming, and Might as the weakest attribute until weapons
 scale with attributes.
+
+**Rulings on the open calls (Opus judge, 2026-10-06; `hero-progression-build/judge-rulings-2026-10-06.md`, in
+`docs/DECISIONS.md`).** (1) A switch is judged by the joining hero's own budget: it spends the lamp's stock Scrolls
+first; normal fights within 10 points, the zone boss 60%+ with good play. `arms.mjs` now spends the Scrolls and samples
+each fight on its own hashed seed; the remaining misses are gear (card `switch-row`, after `gear-weight`). (2) The level
+gap gate is 3 zones; Tobin's walls go to `mid-zone-wall`. (3) Wren's Focus farm build is allowed min-maxing. (4) Might
+waits for weapons that scale with attributes (`craft-attribute-grades`). (5) The onboarding check keeps 240 s until
+`story-unlock-gates` (expiry 2026-11-15). After Codex round 1 the road is a monotone cubic through its points (zone 17 at
+24.4), which removes the x2 level-cost jump at Lv 25, and an old save's XP bar carries over as the same share of the
+new curve's level.

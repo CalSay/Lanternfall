@@ -67,6 +67,7 @@ var soloHero, soloPick, soloLevels, soloBenchXp, soloAttack, soloParry, soloDodg
   // time), at that hero's own level's price. The benched hero's record is s.lv[k]; no toast, an event a level.
   soloBenchXp = n => {
     if (!attrOn() || !(n > 0) || typeof heroCanPlay !== 'function') return;
+    if (typeof attrXpMap === 'function') attrXpMap();   // a save from before attributes: bars carry over first
     const s = Sx(), playing = soloHero();
     for (const k of SOLO_ORDER) {
       if (k === playing || !heroCanPlay(k)) continue;

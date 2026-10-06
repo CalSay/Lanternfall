@@ -3,13 +3,15 @@
 //   <snapDir>/<class>-d2.json  (the good persona's save near zone 20)
 //   <snapDir>/<class>-d12.json (near zone 30)
 // Switch: on each starter's zone-20 save, the hero playing and each other starter (lifted to the road's level, points
-// spread evenly, signature kit) fight the save's furthest zone; win rates in points.
+// spread evenly, the lamp's stock Scrolls spent on its abilities, signature plus the first two learned equipped) fight the
+// save's furthest zone; win rates in points, and the joining hero on its own zone-20 save for comparison.
+// Each fight is its own sample with a hashed seed (judge 2026-10-06: one LCG stream correlates long fights).
 // Arms: on each starter's own saves, even, the four pure builds and the six half/half pairs fight normal foes and the
 // zone boss; win rate (good and casual skill) and, for normal foes, kills an hour.
 import { loadCore, memoryStorage } from '../../../tools/lib/core.mjs';
 import fs from 'node:fs';
 
-const dir = process.argv[2], N = +(process.argv[3] || 150);
+const dir = process.argv[2], N = +(process.argv[3] || 300);
 const KEY = 'lanternfall.save.v5';
 const CLS = { ranger: 'wren', warden: 'tobin', lanternmage: 'pip' };
 const SKILL = { good: { parry: 0.6, dodge: 0.9, perfect: 0.4, good: 0.45 }, casual: { parry: 0.25, dodge: 0.5, perfect: 0.1, good: 0.4 } };
@@ -31,10 +33,20 @@ function build(E, split) {
   const ids = Object.keys(split);
   E(`(() => { const ids = ${JSON.stringify(ids)}, free = attrPoints().free; let i = 0; for (let n = 0; n < free; n++) attrAdd(ids[n % ids.length], 1); gearDirty(); return 0; })()`);
 }
+// a well-mixed 32-bit seed from (arm, fight): never small adjacent integers
+const hseed = (a, b) => { let x = (Math.imul(a + 1, 0x9e3779b1) ^ Math.imul(b + 1, 0x85ebca6b)) >>> 0; x ^= x >>> 16; x = Math.imul(x, 0x7feb352d) >>> 0; x ^= x >>> 15; x = Math.imul(x, 0x846ca68b) >>> 0; x ^= x >>> 16; return (x | 0) || 1; };
 function sample(E, z, boss, skill, seed) {
   return JSON.parse(E(`(() => { setZone(${z}); S.activity = 'fight'; arena = null; fightBoss = ${boss}; spawn();
-    const r = turnCombatSample({ profile: turnCombatProfile(), seconds: 36000, seed: ${seed}, skill: ${JSON.stringify(skill)}, fights: ${N} });
-    return JSON.stringify({ win: r.kills / Math.max(1, r.kills + r.deaths), kph: r.kills / Math.max(1, r.totalFightSeconds) * 3600, turns: r.totalHeroTurns / Math.max(1, r.completedFights) }); })()`));
+    const p = turnCombatProfile(), seeds = ${JSON.stringify(Array.from({ length: N }, (_, i) => hseed(seed, i)))};
+    let kills = 0, deaths = 0, secs = 0;
+    for (const sd of seeds) { const r = turnCombatSample({ profile: p, seconds: 3600, seed: sd, skill: ${JSON.stringify(skill)}, fights: 1 }); kills += r.kills; deaths += r.deaths; secs += r.totalFightSeconds; }
+    return JSON.stringify({ win: kills / Math.max(1, kills + deaths), kph: kills / Math.max(1, secs) * 3600 }); })()`));
+}
+// the lamp's stock Scrolls go on the joining hero's abilities, as a player would; then the signature and the first two learned
+function kit(E) {
+  E(`(() => { const k = soloHero(); for (const id of HERO_ABILITIES[k]) if (!abilityOwned(k, id) && !abLearnInfo(k, id).why) abilityLearn(k, id);
+    const sig = SOLO_HEROES[k].eq[0], rest = soloAbilities(k).filter(id => id !== sig).slice(0, 2);
+    soloEquip(0, sig); rest.forEach((id, i) => soloEquip(i + 1, id)); gearDirty(); return 0; })()`);
 }
 const pct = x => (100 * x).toFixed(0);
 
@@ -49,10 +61,13 @@ for (const cls of Object.keys(CLS)) {
     if (to === from) continue;
     const s = boot(f);
     s.E(`soloPick('${to}', { now: true }); ${process.env.SAMELV ? 'S.L = ' + L + '; S.xp = 0;' : ''} 0`);
-    build(s.E, null);
+    kit(s.E); build(s.E, null);
     const n = sample(s.E, z, false, SKILL.good, 11), b = sample(s.E, z, true, SKILL.good, 12);
-    const d = Math.min((n.win - base.n.win) * 100, (b.win - base.b.win) * 100);
-    console.log(`  -> ${to} joins at Lv ${s.E('S.L')}: normal ${pct(n.win)}%, boss ${pct(b.win)}% (worst gap ${d.toFixed(0)} points) ${d >= -10 ? 'ok' : 'MISS'}`);
+    const own = Object.keys(CLS).find(c => CLS[c] === to), of = `${dir}/${own}-d2.json`;
+    let ownTxt = '';
+    if (fs.existsSync(of)) { const o = boot(of); build(o.E, null); const oz = o.E('S.maxZone'), ob = sample(o.E, oz, true, SKILL.good, 12); ownTxt = ` | own save Lv ${o.E('S.L')} zone ${oz}: boss ${pct(ob.win)}%`; }
+    const dn = (n.win - base.n.win) * 100;
+    console.log(`  -> ${to} joins at Lv ${s.E('S.L')}: normal ${pct(n.win)}% (${dn.toFixed(0)} points), boss ${pct(b.win)}%${ownTxt} | normal ${dn >= -10 ? 'ok' : 'MISS'}, boss ${b.win >= 0.6 ? 'ok' : 'MISS'} (judge: normal within 10 points, boss 60%+)`);
   }
 }
 

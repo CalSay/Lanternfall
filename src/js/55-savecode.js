@@ -209,6 +209,7 @@ function validateSave(data) {
       if (at.resets !== undefined) { record(at.resets, 'attr.resets'); for (const [k, n] of Object.entries(at.resets)) { known(SOLO_HEROES, k, 'attr.resets.hero'); int(n, 'attr.resets.' + k, 0, lim.progression); } }
       if (at.met !== undefined) { record(at.met, 'attr.met'); for (const [k, n] of Object.entries(at.met)) { known(SOLO_HEROES, k, 'attr.met.hero'); int(n, 'attr.met.' + k, 0, 1); } }
       if (at.live !== undefined) int(at.live, 'attr.live', 0, 1);
+      if (at.xpv !== undefined) int(at.xpv, 'attr.xpv', 0, 1);
     }
     rows(data.camp, 'builds', b => { known(CAMP_B, b.id, 'camp.build.id'); int(b.to, 'camp.build.to', 1, CAMP_B[b.id].max); num(b.dur, 'camp.build.dur', 1, 864e13); num(b.start, 'camp.build.start', 0, 864e13); num(b.end, 'camp.build.end', 0, 864e13); record(b.cost, 'camp.build.cost'); num(b.cost.gold, 'camp.build.gold'); pack(b.cost.mats, 'camp.build.mats'); array(b.cost.troph, 'camp.build.troph'); for (const l of b.cost.troph) { array(l, 'camp.build.troph[]'); if (l.length !== 2) fail('camp.build.troph[]'); if (l[0] !== 'any') int(l[0], 'camp.build.troph.kind', 0, CRAFT_TROPHIES.length - 1); num(l[1], 'camp.build.troph.units'); } });
     if (data.camp && data.camp.b) for (const [k, n] of Object.entries(data.camp.b)) { known(CAMP_B, k, 'camp.building'); int(n, 'camp.' + k, 0, CAMP_B[k].max); }

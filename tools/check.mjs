@@ -1396,8 +1396,9 @@ if (section('onboarding')) try {
   const early = Object.values(got).filter(t => t <= 600).sort((a, b) => a - b);
   let gap = early[0] || 0; for (let i = 1; i < early.length; i++) gap = Math.max(gap, early[i] - early[i - 1]);
   // W2-B: solo has no Roster unlock, so the 5-8 minute stretch is quiet (the old target was 180 s): a pacing note for the coordinator
-  // hero-progression-rework: the early road is eased so the optimiser's zone at 1 hour stays in its health band (13 against the old 11.8);
-  // this player reaches zone 10 (the Codex) about 4 minutes after the Tavern. A faster road fails health's dry-stretch and wipe bands.
+  // hero-progression-rework (judge ruling 5, 2026-10-06): 240 s until card story-unlock-gates spaces the early unlocks by story beat
+  // (expiry 2026-11-15; then 210 s again). The Codex unlocks at zone 10, about 4 minutes after the Tavern; a faster early road
+  // closes that gap but lengthens the first hour's dry stretch (health active.longestDrySec 560-625 against 432).
   assert(early.length >= 8 && gap <= 240, `something new at least every 4 minutes in the first 10 (${early.length} unlocks, longest gap ${gap}s)`);
   // the guide ends; skip and "show every tab" work
   assert(E('onboardTips(false) === false && onboardStep() === null'), 'Skip tips: no hint shows');
@@ -9121,8 +9122,12 @@ if (section('hero progression rework (attributes, road, join, bench)')) try {
   const L0 = V('S.L');
   assert(L0 === v5.L && V('attrPoints().free') === (L0 - 1) * HT.perLevel && V('S.attr.live') === 1 && !v5g.errors.length,
     `an old save loads under the same key: Lv ${L0} kept, ${V('attrPoints().free')} points to spend` + (v5g.errors[0] ? ': ' + v5g.errors[0] : ''));
+  // the bar carries over as a share: the late fixture's real XP (v5.xp set to 4.3e6 above is past the old bar: held under a level)
   V('gainXp(1)'); V('soloBenchXp(1)');
-  assert(V('S.L') <= L0 + 1 && V('S.solo.lv.wren.L') <= 46 && !v5g.errors.length, `an old save's banked XP gives at most one level on the next kill (Lv ${L0} to ${V('S.L')}; benched Wren 45 to ${V('S.solo.lv.wren.L')})`);
+  assert(V('S.L') <= L0 + 1 && V('S.solo.lv.wren.L') <= 46 && V('S.attr.xpv') === 1 && !v5g.errors.length, `an old save's banked XP gives at most one level on the next kill (Lv ${L0} to ${V('S.L')}; benched Wren 45 to ${V('S.solo.lv.wren.L')})`);
+  { const raw = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-early.json'), 'utf8')), xg = loadCore({ turns: true, seed: 70, storage: memoryStorage({ [KEY]: JSON.stringify(raw) }) }), X = s => xg.eval(s);
+    const share = raw.xp / Math.floor(15 * Math.pow(1.3, raw.L - 1)); X('attrXpMap()');
+    assert(X('S.L') === raw.L && Math.abs(X('S.xp / xpNeed(S.L)') - share) < 1e-9 && X('attrXpMap(), S.attr.xpv') === 1, `an old save keeps its bar: ${(100 * share).toFixed(1)}% of Lv ${raw.L} on the old curve is ${(100 * X('S.xp / xpNeed(S.L)')).toFixed(1)}% on the new one, once`); }
   for (let i = 0; i < 300; i++) v5g.fn.tick(0.1);
   assert(!v5g.errors.length, 'an old save plays 30 s with no errors');
   // m. save codes carry S.attr

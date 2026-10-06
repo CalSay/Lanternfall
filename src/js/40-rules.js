@@ -125,35 +125,50 @@ const mobGold = z => foeGoldBase(z) * earlyGold(z) * goldMult();
 const zoneTier = z => Math.max(1, PACE.essTier.filter(s => z >= s).length);
 const essChance = () => 0.25 * (1 + gear().ess / 100) * mod('essence');
 // hero-progression-rework: the road and the level curve (docs/design/hero-progression-build.md 3). roadLv(z) is the level the
-// road expects at zone z (HERO_TUNE.road: straight lines between points, the last slope on past the end); roadZone(L) is its
+// road expects at zone z (HERO_TUNE.road: a monotone cubic through the points, the last slope on past the end); roadZone(L) is its
 // inverse (fractional, at least 1); roadLevel() the road's level at the furthest zone
 // (+ HERO_TUNE.joinLead, the lead a hero who plays it keeps); roadFoeXp(z) what a normal foe pays
 // (59k turnFoeSetup's sum without its rounding); roadZoneFights(z) the fights a
 // zone of road takes (HERO_TUNE.fights, a steady ratio between points, flat past the ends), roadSlope(z) the road's levels a
 // zone there, roadFights(L) the fights a level takes (the two divided).
+// The road is a monotone cubic through HERO_TUNE.road (Fritsch-Carlson), so its slope, and with it the fights a level takes,
+// changes smoothly between points (judge 3b; Codex: the straight lines made a level cost jump x2 at zone 17).
+const ROAD_M = (() => {
+  const R = HERO_TUNE.road, n = R.length, d = [], m = new Array(n).fill(0);
+  for (let i = 0; i < n - 1; i++) d.push((R[i + 1][1] - R[i][1]) / (R[i + 1][0] - R[i][0]));
+  m[0] = d[0]; m[n - 1] = d[n - 2];
+  for (let i = 1; i < n - 1; i++) m[i] = d[i - 1] * d[i] <= 0 ? 0 : (d[i - 1] + d[i]) / 2;
+  for (let i = 0; i < n - 1; i++) {
+    if (d[i] === 0) { m[i] = m[i + 1] = 0; continue; }
+    const a = m[i] / d[i], b = m[i + 1] / d[i], h = a * a + b * b;
+    if (h > 9) { const t = 3 / Math.sqrt(h); m[i] = t * a * d[i]; m[i + 1] = t * b * d[i]; }
+  }
+  return m;
+})();
+function roadSeg(z) { const R = HERO_TUNE.road; let i = 1; while (i < R.length - 1 && z > R[i][0]) i++; return i; }
 function roadLv(z) {
-  const R = HERO_TUNE.road;
+  const R = HERO_TUNE.road, n = R.length;
   if (!(z > 1)) return 1;
-  let i = 1;
-  while (i < R.length - 1 && z > R[i][0]) i++;
-  const a = R[i - 1], b = R[i];
-  return a[1] + (z - a[0]) * (b[1] - a[1]) / (b[0] - a[0]);
+  if (z >= R[n - 1][0]) return R[n - 1][1] + (z - R[n - 1][0]) * ROAD_M[n - 1];
+  const i = roadSeg(z), a = R[i - 1], b = R[i], h = b[0] - a[0], t = (z - a[0]) / h, t2 = t * t, t3 = t2 * t;
+  return (2 * t3 - 3 * t2 + 1) * a[1] + (t3 - 2 * t2 + t) * h * ROAD_M[i - 1] + (-2 * t3 + 3 * t2) * b[1] + (t3 - t2) * h * ROAD_M[i];
 }
 function roadZone(L) {
-  const R = HERO_TUNE.road;
+  const R = HERO_TUNE.road, n = R.length;
   if (!(L > 1)) return 1;
-  let i = 1;
-  while (i < R.length - 1 && L > R[i][1]) i++;
-  const a = R[i - 1], b = R[i];
-  return Math.max(1, a[0] + (L - a[1]) * (b[0] - a[0]) / (b[1] - a[1]));
+  if (L >= R[n - 1][1]) return R[n - 1][0] + (L - R[n - 1][1]) / ROAD_M[n - 1];
+  let lo = 1, hi = R[n - 1][0];
+  for (let k = 0; k < 50; k++) { const mid = (lo + hi) / 2; if (roadLv(mid) < L) lo = mid; else hi = mid; }
+  return Math.max(1, (lo + hi) / 2);
 }
 const roadLevel = () => Math.max(1, Math.floor(roadLv(S.maxZone || 1) + (HERO_TUNE.joinLead || 0)));   // the join level: where a hero who plays the road stands
 const roadFoeXp = z => 1.5 * z * (typeof TURN_TUNE === 'object' && TURN_TUNE.on ? TURN_TUNE.xpX : 1);   // smooth: no rounding steps between zones
 function roadSlope(z) {
-  const R = HERO_TUNE.road;
-  let i = 1;
-  while (i < R.length - 1 && z >= R[i][0]) i++;
-  return (R[i][1] - R[i - 1][1]) / (R[i][0] - R[i - 1][0]);
+  const R = HERO_TUNE.road, n = R.length;
+  if (z <= 1) return ROAD_M[0];
+  if (z >= R[n - 1][0]) return ROAD_M[n - 1];
+  const i = roadSeg(z), a = R[i - 1], b = R[i], h = b[0] - a[0], t = (z - a[0]) / h, t2 = t * t;
+  return Math.max(1e-6, (6 * t2 - 6 * t) * a[1] / h + (3 * t2 - 4 * t + 1) * ROAD_M[i - 1] + (-6 * t2 + 6 * t) * b[1] / h + (3 * t2 - 2 * t) * ROAD_M[i]);
 }
 function roadZoneFights(z) {
   const F = HERO_TUNE.fights;

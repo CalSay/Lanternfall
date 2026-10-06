@@ -132,8 +132,19 @@ on('heroJoin', ({ key } = {}) => {
   emit('toast', { key: 'attr-join', msg: `${nm} has ${free} attribute points. Spread them evenly in one tap, or build your own.`, kind: 'good', prio: 'normal', go: { view: 'attributes' } });
 });
 
-registerState('attr', { v: 1, pts: {}, resets: {}, met: {}, live: 0 });
-if (!S.attr || typeof S.attr !== 'object') S.attr = { v: 1, pts: {}, resets: {}, met: {}, live: 0 };   // a broken save (attr: null) starts the points clean
+registerState('attr', { v: 1, pts: {}, resets: {}, met: {}, live: 0, xpv: 0 });
+// A save from before attributes holds XP on the old curve (15 x 1.3^(L - 1) a level). The first XP it earns with attributes
+// on carries each hero's bar over as the same share of this curve's level, so no progress is lost and none is gained.
+function attrXpMap() {
+  const a = S.attr; if (!attrOn() || !a || a.xpv) return;
+  const old = L => Math.floor(15 * Math.pow(1.3, Math.max(1, L | 0) - 1));
+  const map = (L, xp) => Math.min(0.999, Math.max(0, (+xp || 0) / old(L))) * xpNeed(Math.max(1, L | 0));
+  S.xp = map(S.L, S.xp);
+  const lv = S.solo && S.solo.lv;
+  if (lv && typeof lv === 'object') for (const k in lv) { const r = lv[k]; if (r && typeof r === 'object' && r.L >= 1) r.xp = map(r.L, r.xp); }
+  a.xpv = 1;
+}
+if (!S.attr || typeof S.attr !== 'object') S.attr = { v: 1, pts: {}, resets: {}, met: {}, live: 0, xpv: 0 };   // a broken save (attr: null) starts the points clean
 // The switch-off flag on a save played with attributes (judge 6): once, each hero's Training is raised to the move level their
 // hero level gave them (55-training trainLv's L - 1, to the stage cap), so no high-level hero comes back untrained.
 if (attrOn()) S.attr.live = 1;
