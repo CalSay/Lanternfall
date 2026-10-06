@@ -56,7 +56,7 @@ const ONLY = (process.argv.find(a => a.startsWith('--only=')) || '').slice(7);
 const SHARD = (m => (m ? [+m[1], +m[2]] : null))(/--shard=(\d+)\/(\d+)/.exec(process.argv.join(' ')));
 const JOBS = SHARD ? 1 : +((process.argv.find(a => a.startsWith('--jobs=')) || '').slice(7)) || (ONLY ? 1 : Math.min(4, os.cpus().length));
 // Seconds a section takes (measured, W2-B): the shards are balanced by these; a section not listed counts 2.
-const WEIGHT = { 'LF_EYES hook (browser, qa-player-eyes)': 12, 'landscape 740x360 (browser, UX-L1)': 42, 'landscape 844x390 (browser, UX-L1)': 38, 'landscape 1280x720 (browser, UX-L1)': 38, 'solo copy (browser, W1-C)': 60, 'W1-D (browser)': 100, 'training (W2-A, browser)': 18, 'cb2': 40, 'notices (browser, W1-B)': 34, 'solo guide: gathering never freezes (browser)': 31, 'solo hero (browser)': 21, 'types and statuses (S1)': 14, 'save codes': 13, 'combat': 8, 'gatherers UI (browser)': 7, 'gathering': 6, 'nav': 6, 'retool': 6, 'onboarding hint placement (HINT1)': 5, 'camp trade and import (C4, browser)': 15 };
+const WEIGHT = { 'first-hour walk (browser, qa-first-hour-walk)': 25, 'LF_EYES hook (browser, qa-player-eyes)': 12, 'landscape 740x360 (browser, UX-L1)': 42, 'landscape 844x390 (browser, UX-L1)': 38, 'landscape 1280x720 (browser, UX-L1)': 38, 'solo copy (browser, W1-C)': 60, 'W1-D (browser)': 100, 'training (W2-A, browser)': 18, 'cb2': 40, 'notices (browser, W1-B)': 34, 'solo guide: gathering never freezes (browser)': 31, 'solo hero (browser)': 21, 'types and statuses (S1)': 14, 'save codes': 13, 'combat': 8, 'gatherers UI (browser)': 7, 'gathering': 6, 'nav': 6, 'retool': 6, 'onboarding hint placement (HINT1)': 5, 'camp trade and import (C4, browser)': 15 };
 const shardLoad = SHARD ? Array(SHARD[1]).fill(0) : null;
 function section(name) {
   if ((ONLY && !new RegExp(ONLY, 'i').test(name))) return false;
@@ -1445,7 +1445,7 @@ if (section('onboarding hint placement (HINT1)')) try {
   assert(/if \(!changed\) return;/.test(src), 'place() skips the reposition when nothing real changed (no per-frame follow)');
   assert(!/setInterval\(place/.test(src), 'place() itself is never put on its own interval');
   const css = fs.readFileSync(path.join(ROOT, 'src', 'styles', '60-onboard.css'), 'utf8');
-  assert(/\.ob-bub\s*\{[^}]*position:\s*absolute/.test(css), 'the hint bubble is docked (a fixed offset within its parent), not translated to the target every tick');
+  assert(/\.ob-bub\.over-menu\s*\{[^}]*position:\s*absolute/.test(css) && /\.ob-bub\s*\{[^}]*position:\s*relative/.test(css), 'the guide panel is docked (a slot in its parent, or a fixed offset over a menu), not translated to the target every tick');
   assert(/--toast-h/.test(css) && /--toast-h/.test(fs.readFileSync(path.join(ROOT, 'src', 'js', '70-ui.js'), 'utf8')), 'the hint band and placeToasts share --toast-h so they cannot collide');
   ok('source: tick only recomputes on a real change, the bubble is CSS-docked, toasts and hints share one band variable');
   // in Chromium: the band does not move while the game runs (ticks, an ability firing) under it
@@ -1479,21 +1479,18 @@ if (section('onboarding hint placement (HINT1)')) try {
         if (th === th0) assert(r && r.x === r0.x && r.y === r0.y, `browser: the hint band does not move while the stage animates under it (${JSON.stringify(r0)} -> ${JSON.stringify(r)}, --toast-h unchanged)`);
         r0 = r; th0 = th;
       }
-      // it stays in its band: fixed, near the stage HUD, not floating out at the target
-      const box = await page.$eval('.ob-bub', b => { const s = getComputedStyle(b); return { position: s.position, top: s.top === 'auto' ? null : parseFloat(s.top) }; });
-      assert(box.position === 'absolute' && box.top !== null && box.top < 120, `browser: docked near the stage HUD, not floating at the target (${JSON.stringify(box)})`);
-      // the over-menu band (used once a menu covers the stage) sits just above the tab bar, the
-      // same slot placeToasts uses for toasts (50-overlays.css .toasts.over-menu), so the hint
-      // and the toast stack are in the same corner but never overlap
+      // it docks in a slot of the game view (portrait), above the dock bar and clear of the stage; over a menu it sits above the tab bar
+      const dock = await page.$eval('.ob-bub', b => { const r = b.getBoundingClientRect(), sb = document.getElementById('soloBar').getBoundingClientRect(), st = document.getElementById('stageBox').getBoundingClientRect(); return { dock: b.classList.contains('dock'), gapAboveBar: Math.round(sb.top - r.bottom), belowStage: Math.round(r.top - st.bottom) }; });
+      assert(dock.dock && dock.gapAboveBar >= 0 && dock.gapAboveBar <= 12 && dock.belowStage >= 0, `browser: the guide panel docks just above the Act / Skills / Foe bar, never over the stage (${JSON.stringify(dock)})`);
       const tabsH = await page.$eval('.tabs', t => t.getBoundingClientRect().height);
       const boxes = await page.$eval('.ob-bub', b => {
-        const before = getComputedStyle(b).bottom;
+        const before = getComputedStyle(b).position;
         b.classList.add('over-menu');
-        const after = getComputedStyle(b).bottom;
+        const cs = getComputedStyle(b), after = { position: cs.position, bottom: parseFloat(cs.bottom) };
         b.classList.remove('over-menu');
-        return { before, after: parseFloat(after) };
+        return { before, after };
       });
-      assert(boxes.before !== boxes.after && boxes.after >= tabsH, `browser: the over-menu band sits above the tab bar (bottom ${boxes.after}px, tabs ${tabsH}px; was ${boxes.before})`);
+      assert(boxes.after.position === 'absolute' && boxes.after.bottom >= tabsH, `browser: the over-menu panel sits above the tab bar (bottom ${boxes.after.bottom}px, tabs ${tabsH}px)`);
       // menu audit #19: "New" lasts 2 hours of play after an unlock, so an old save's long-past unlocks never show it
       const nb = await X(`(() => { const o = S.onboard, v = { id: 'zz-test', feature: 'party' }, was = o.got.party;
         o.got.party = Math.round(o.t); const a = onboardIsNew(v); o.got.party = Math.round(o.t) - 7300; const b = onboardIsNew(v);
@@ -4556,15 +4553,15 @@ if (section('solo hero (browser)')) try {
       await page.click('#createScreen .ccard[data-hero="pip"]'); await page.click('#createScreen .create-go'); await page.waitForTimeout(600);
       assert(await X('soloHero() === "pip" && heroSpec().comp === "pip"'), 'Pip is the hero on the stage (her own art)');
       const bar = await page.$eval('#soloBar', b => {
-        const r = b.getBoundingClientRect(), s = document.getElementById('stageBox').getBoundingClientRect(), nav = document.querySelector('.tabs').getBoundingClientRect();
+        const r = b.getBoundingClientRect(), s = document.getElementById('stageBox').getBoundingClientRect(), pb = document.querySelector('.ob-bub:not([hidden])'), nav = document.querySelector('.tabs').getBoundingClientRect();
         const rows = [...b.querySelectorAll('.sb-row')].map(row => [...row.querySelectorAll('.sbtn')].map(x => { const q = x.getBoundingClientRect(); return { act: x.dataset.act, x: Math.round(q.left), y: Math.round(q.top), w: Math.round(q.width), h: Math.round(q.height), cls: x.className }; }));
         const game = document.getElementById('game'), kids = [...game.children].filter(k => !k.hidden && k.getClientRects().length).map(k => k.id || k.className.split(' ')[0]);
-        return { rows, top: Math.round(r.top), bottom: Math.round(r.bottom), stageBottom: Math.round(s.bottom), navTop: Math.round(nav.top), hidden: b.hidden, order: kids.join('>') };
+        return { rows, top: Math.round(r.top), bottom: Math.round(r.bottom), stageBottom: Math.round(pb && pb.classList.contains('dock') ? pb.getBoundingClientRect().bottom : s.bottom), navTop: Math.round(nav.top), hidden: b.hidden, order: kids.join('>') };
       });
       const flat = bar.rows.flat();
       assert(!bar.hidden && bar.rows.length === 2 && bar.rows.map(r => r.map(x => x.act).join()).join('|') === 'atk,ab0,ab1,ab2|parry,dodge', `the dock: Attack and Ability 1-3 in the Act pane, Parry and Dodge under them (${bar.rows.map(r => r.map(x => x.act).join()).join(' | ')})`);
       assert(flat.every(x => x.w >= 44 && x.h >= 44) && bar.rows[0].every(x => x.y < bar.rows[1][0].y) && bar.rows[0].every((x, i) => i === 0 || x.x > bar.rows[0][i - 1].x) && bar.rows[1][1].x > bar.rows[1][0].x, `six keys of 44 px or more: four tiles over Parry and Dodge (${flat.map(x => x.w + 'x' + x.h).join(' ')})`);
-      assert(bar.top >= bar.stageBottom - 1 && bar.top - bar.stageBottom <= 8 && bar.bottom <= bar.navTop && bar.navTop - bar.bottom <= 16 && /stageBox>soloBar$/.test(bar.order), `the bar touches the stage (not over it) and is the lowest thing above the tab bar (${bar.order}; stage ${bar.stageBottom}, bar ${bar.top}-${bar.bottom}, tabs ${bar.navTop})`);
+      assert(bar.top >= bar.stageBottom - 1 && bar.top - bar.stageBottom <= 8 && bar.bottom <= bar.navTop && bar.navTop - bar.bottom <= 16 && /stageBox>soloBar(>ob-bub)?$/.test(bar.order), `the bar touches the stage (not over it) and is the lowest thing above the tab bar (${bar.order}; stage ${bar.stageBottom}, bar ${bar.top}-${bar.bottom}, tabs ${bar.navTop})`);
       assert(/sb-abslot/.test(flat[1].cls) && !/empty/.test(flat[1].cls) && /empty/.test(flat[2].cls) && /empty/.test(flat[3].cls), 'slot 1 holds the hero\'s ability; slots 2 and 3 show empty');
       // the dock's tabs: Skills lists the three slots, Foe is for turn fights, Parry and Dodge stay on screen, Act comes back
       {
@@ -9102,6 +9099,68 @@ if (section('intro-and-picker')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('intro-and-picker crashed: ' + (e.stack || e)); }
+
+// ---- guide-panel: the guide's panel never covers the fight (early-game plan R3, issues A1, A3, A4) ----
+// Real DOM rects at 740x360, 844x390 and 360x740: while the first session's steps show, the panel overlaps neither HP bar, the
+// foe plate, the boss timer, the hero plate nor the stage itself, and its text never squashes into a column (issue A4).
+if (section('guide panel rects (browser, guide-panel)')) try {
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('guide panel (browser): Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [vw, vh] of [[740, 360], [844, 390], [360, 740]]) {
+        const at = `${vw}x${vh}`;
+        const ctx = await browser.newContext({ viewport: { width: vw, height: vh }, isMobile: true, hasTouch: true, turns: true });   // the shipped turn fight: its copy is the longer one
+        const page = await ctx.newPage(); const errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(700);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go'); await page.waitForTimeout(600);
+        await X('globalThis.__spo = soloPickerOpen; soloPickerOpen = () => true; true');
+        const rects = () => page.evaluate(() => {
+          const R = e => { if (!e || !e.getClientRects().length) return null; const r = e.getBoundingClientRect(); return r.width && r.height ? [r.left, r.top, r.right, r.bottom] : null; };
+          const q = s => document.querySelector(s), b = q('.ob-bub');
+          if (!b || b.hidden) return null;
+          const panel = R(b), things = { 'hero HP bar': R(q('#hPlate .hpbar')), 'foe HP bar': R(q('.mob .hpbar')), 'foe plate': R(q('.mob')), 'boss timer': R(q('#tWrap')), 'hero plate': R(q('#hPlate')), 'stage': R(q('#stageBox')) };
+          const hit = Object.entries(things).filter(([, r]) => r && panel[0] < r[2] - .5 && panel[2] > r[0] + .5 && panel[1] < r[3] - .5 && panel[3] > r[1] + .5).map(([k]) => k);
+          const t = q('.ob-txt'), tr = t.getBoundingClientRect(), face = q('.ob-face'), ok = q('.ob-ok'), okr = ok && !ok.hidden ? ok.getBoundingClientRect() : null;
+          const lh = parseFloat(getComputedStyle(t).lineHeight) || 18, lines = Math.round(tr.height / lh), cw = t.textContent.length ? tr.width / (parseFloat(getComputedStyle(t).fontSize) * .62) : 99;
+          return { hit, panel: panel.map(Math.round), inView: panel[0] >= 0 && panel[2] <= innerWidth && panel[1] >= 0 && panel[3] <= innerHeight, mode: ['side', 'dock', 'over-menu'].find(m => b.classList.contains(m)), textChars: Math.round(cw), lines,
+            faceOk: !!face && (face.getAttribute('src') || '').startsWith('data:'), btnBelow: okr ? okr.top >= tr.bottom - 1 : null, btnH: okr ? Math.round(okr.height) : null,
+            btnIn: okr ? okr.top >= panel[1] - .5 && okr.bottom <= panel[3] + .5 && okr.left >= panel[0] - .5 && okr.right <= panel[2] + .5 && (d => d === ok || ok.contains(d))(document.elementFromPoint(okr.left + okr.width / 2, okr.top + okr.height / 2)) : null, clipped: t.scrollHeight > t.clientHeight + 1, scrollX: document.documentElement.scrollWidth > innerWidth };
+        });
+        // each step in turn: the guide is told to show it (the real wind-ups for Dodge and Parry are down to chance, so the check
+        // does not wait for them), so every step's copy is measured, including the long boss and Parry lines of the turn fight
+        const seen = [];
+        await X('globalThis.__os = onboardStep; globalThis.__boss = mob ? !!mob.boss : false; true');
+        for (const st of ['attack', 'ability', 'dodge', 'parry', 'boss']) {
+          await X(`globalThis.__fs = ${JSON.stringify(st)}; onboardStep = () => GUIDE_STEPS.find(g => g.id === __fs); if (__fs === 'boss' && mob) mob.boss = true; ONBOARD.paused = false; true`);
+          await page.waitForTimeout(700);
+          const m = await rects();
+          if (!m) { assert(false, `guide panel ${at} "${st}": the panel shows`); continue; }
+          seen.push(st);
+          assert(!m.hit.length && m.inView && !m.scrollX, `guide panel ${at} "${st}": in view and clear of ${m.hit.length ? m.hit.join(', ') : 'both HP bars, the foe plate, the boss timer, the hero plate and the stage'} (${m.mode}, ${m.panel.join(',')})`);
+          assert(m.textChars >= 12 && m.faceOk && !m.clipped && (m.btnBelow === null || (m.btnBelow && m.btnH >= 44 && m.btnIn)), `guide panel ${at} "${st}": text at least 12 characters wide (${m.textChars}) and not clipped, Hesketh's face shows, the button sits on its own row at 44 px or more, inside the panel and tappable (${JSON.stringify([m.faceOk, m.clipped, m.btnBelow, m.btnH, m.btnIn])})`);
+        }
+        await X('onboardStep = globalThis.__os; if (mob) mob.boss = globalThis.__boss; true');
+        assert(seen.length === 5, `guide panel ${at}: the check measured all five steps (${seen.join(', ')})`);
+        // a paused tip that is not a step (a first-use line) docks too; and a step shown over an open menu sits at the menu's bottom
+        if (vw < vh) {   // portrait with a menu open: the panel moves to the bottom of the menu, above the tab bar
+          await X('onboardTips(true); S.onboard.all = false; onboardReveal("gather"); setTab("gat"); true'); await page.waitForTimeout(900);
+          const mm = await rects();
+          if (mm) assert(mm.mode === 'over-menu' && !mm.clipped && mm.inView, `guide panel ${at}: over a menu it sits at the bottom of the menu panel (${mm.mode}, ${mm.panel.join(',')})`);
+        }
+        assert(!errs.length, `guide panel ${at}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('guide panel rects crashed: ' + (e.stack || e)); }
+
 // ---- story-unlock-gates: a held hero's line says when they join; a won token says so (docs/design/unlock-pace.md) ----
 if (section('story-unlock-gates')) try {
   const g = loadCore({ seed: 917 }), E = s => g.eval(s);
@@ -9607,6 +9666,32 @@ if (section('LF_EYES hook (browser, qa-player-eyes)')) try {
   }
 } catch (e) { fail('LF_EYES hook (browser) crashed: ' + (e.stack || e)); }
 // ==== end qa-player-eyes ====
+// ==== qa-first-hour-walk: tools/walk.mjs plays the first minutes, writes its report and one scorecard row ====
+if (section('first-hour walk (browser, qa-first-hour-walk)')) try {
+  const { spawnSync } = await import('node:child_process'), walk = path.join(ROOT, 'tools', 'walk.mjs');
+  const bad = spawnSync(process.execPath, [walk, '--bogus'], { encoding: 'utf8' });
+  assert(bad.status === 2 && /unknown option/.test(bad.stderr), 'walk.mjs refuses an option it does not know (exit 2)');
+  const src = fs.readFileSync(walk, 'utf8').replace(/^\s*\/\/.*$/gm, '');
+  assert(!/\bS(\.\w+|\[[^\]]+\])+\s*(=(?![=>])|\+=|-=|\+\+|--)/.test(src), 'the walk never assigns to game state (S.x = ...)');
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('first-hour walk (browser): Playwright or Chromium not here, skipped');
+  else {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lf-walk-')), sc = path.join(dir, 'scorecard.md');
+    const run = () => spawnSync(process.execPath, [walk, '--minutes', '0.3', '--out', dir, '--date', '2000-01-01', '--scorecard', sc, '--quiet'], { encoding: 'utf8', timeout: 120000 });
+    let r = run();
+    assert(r.status === 0, 'a short walk exits 0 (report only)' + (r.status ? ': ' + (r.stderr || r.stdout).slice(0, 200) : ''));
+    const md = fs.existsSync(path.join(dir, 'walk-2000-01-01.md')) ? fs.readFileSync(path.join(dir, 'walk-2000-01-01.md'), 'utf8') : '';
+    assert(/## Scorecard/.test(md) && /## Beats against the map/.test(md) && /## Timeline/.test(md), 'the report has its scorecard, beats and timeline');
+    const js = fs.existsSync(path.join(dir, 'walk-2000-01-01.json')) ? JSON.parse(fs.readFileSync(path.join(dir, 'walk-2000-01-01.json'), 'utf8')) : {};
+    assert(['F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F10', 'P4'].every(k => js.scorecard && js.scorecard[k] && typeof js.scorecard[k].pass === 'boolean'), 'the json carries F1-F6, F10 and P4');
+    assert(js.log && js.log.some(e => e.kind === 'tip' || e.kind === 'card'), 'the walk logged what appeared on screen');
+    run();
+    const rows = fs.readFileSync(sc, 'utf8').split('\n').filter(l => l.startsWith('| 2000-01-01 |'));
+    assert(rows.length === 1, 'the same run twice keeps one scorecard row (' + rows.length + ')');
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+} catch (e) { fail('first-hour walk crashed: ' + (e.stack || e)); }
+// ==== end qa-first-hour-walk ====
 // ---- fight HUD fit (fight-hud-fit): names whole, banner and toasts never on top of each other ----
 if (section('fight HUD fit')) try {
   const { pw, exe } = browserTools;

@@ -37,7 +37,7 @@ early-game/playtest-coldB.md`). The minutes below are targets for a casual human
 | 1 | 0:00 | Three stills, one line each; Skip. Text over the darkened Mossy Hollow background until `first-hour-art` passes | Taps through or skips | Why there is a lamp | nothing | curiosity | The lamp and the spiral; the last lamp goes out; you run with yours | built by `intro-and-picker`, `first-hour-art` |
 | 2 | 0:25 | "Who are you?": Wren, Tobin, Pip in second person | Picks a hero | Who they are | their hero | ownership | "You are good at doors." | built by `intro-and-picker` |
 | 3 | 0:35 | Hesketh's fire over still 3, at most 3 lines; then the guide panel with his face | Reads | A guide exists | nothing | warmth | Hesketh lights his fire from your lamp | built by `intro-and-picker`, `guide-panel` |
-| 4 | 0:45 | Fight 1 (within 45 s of opening for a player who taps through) | Attack, then the ability | Attack and the ability | gold ticks up | power | | today (tip placement and phase: cards) |
+| 4 | 0:45 | Fight 1 (within 45 s of opening for a player who taps through) | Attack, then the ability | Attack and the ability | gold ticks up | power | | tip panel placement: done (`guide-panel`, never over the stage); phase: cards |
 | 5 | 1:25 | Fight 2 | Dodges a heavy hit | Dodge | | relief | | today (phase guard: `story-unlock-gates` or `guide-phase-guards`) |
 | 6 | 1:55 | Fight 3 | Parries a heavy hit | Parry | PERFECT and hit-stop on a good parry (today); the parry stamp and lamp row (card) | skill | | today; card `hit-feel` |
 | 7 | 2:25 | Fights 4 and 5 | Uses all three verbs | nothing new | | flow | | today |
