@@ -20,9 +20,9 @@ boss you beat opens a Lantern Cache, lights the next stretch of road, and gives 
 
 | # | Min | On screen | Player does | Learns (one thing) | Earns, and how it lands | Should feel | Story or hero beat | Status |
 |---|---|---|---|---|---|---|---|---|
-| 1 | 0:00 | Four drawn stills, one line each; Skip | Taps through (or skips) | Why there is a lamp | nothing | curiosity | The village, the last lamp out, the dark, the run | card `intro-and-picker`, `first-hour-art` |
-| 2 | 0:40 | "Who are you?": Wren, Tobin, Pip in second person | Picks a hero | Who they are | their hero | ownership | "You are Tobin Reed. You never run first." | card `intro-and-picker` |
-| 3 | 0:50 | Hesketh's fire; the guide panel with his face | Reads one line | A guide exists | nothing | warmth | Hesketh lights his fire from your lamp | card `guide-panel`, `guide-voice` |
+| 1 | 0:00 | Three drawn lines over two stills (the lamp on its hook; the dark through the moss); Skip | Taps through (or skips) | Why there is a lamp | nothing | curiosity | The village, the last lamp out, the dark, the run | built by `intro-and-picker` (stills are placeholders over the Mossy Hollow night background until `first-hour-art`) |
+| 2 | 0:15 | "Who are you?": Wren, Tobin, Pip in second person | Picks a hero | Who they are | their hero | ownership | "You are good at doors." | built by `intro-and-picker` |
+| 3 | 0:25 | Hesketh's fire over a third still (3 lines); his talk comes later, at the camp fire | Taps through | A guide exists | nothing | warmth | Hesketh lights his fire from your lamp | fire built by `intro-and-picker`; guide panel: card `guide-panel`, `guide-voice`; talk plays when the camp fire is lit |
 | 4 | 1:00 | Fight 1 | Attack, then the ability | Attack and the ability | gold ticks up (small) | power | | today (tip placement: card) |
 | 5 | 1:40 | Fight 2 | Dodges a heavy hit | Dodge | | relief | | today (phase gating: card) |
 | 6 | 2:10 | Fight 3 | Parries a heavy hit | Parry | a "PERFECT" stamp on a good parry | skill | | card `hit-feel` |

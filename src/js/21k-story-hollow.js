@@ -30,23 +30,32 @@
 const STORY_BEATS = { region: {}, area: {}, zone: {}, captain: {}, champ: {}, elder: {}, npc: {}, voice: {}, hero: {}, choice: {},
   vesper: {}, letter: {}, note: {}, item: {} };
 
-// The opening (bible 8.1): the region card before zone 1, over the lamp on its hook. Text only until the owner vets the stills pack
-// (bible 10.3).
+// The opening (bible 8.1): the region card, three lines. 75-intro-ui.js shows it over two drawn stills BEFORE the hero picker: line 1 over
+// the lamp on its hook, lines 2 and 3 over the dark coming up through the moss (STORY_BEATS.intro). The same lines are the Journal's Chapter 1 page.
 STORY_BEATS.region.hollow = { title: 'Chapter 1: The Hollow', lines: [
   'Ten years ago every lamp went out. The one over your door never did.',
   'This winter the last lamp in sight went out. Tonight the dark came for yours.',
   'Your village hid. You took the lamp and ran, so the dark would follow you.'
 ] };
 
-// Old Hesketh, before the first fight (bible 8.1, story-opening). Two NPC scenes at the Hollow's door (area 0), played right after the
-// region card: the fire, then the talk. The camp fire later in the Pine Grove is a bigger one, so the guide's toast just asks for wood.
-STORY_BEATS.npc.heskethFire = { at: 'area:0', who: 'Old Hesketh', lines: [
-  'On the road your lamp gutters. The dark is close.',
-  '"Wood first. Then we talk." You kindle his dead fire.',
-  'It catches from your lamp. Yours burns steady.',
-  '"Every road needs a place to come back to."'
+// The drawn opening (intro-and-picker; first-hour.md beats 1 to 3). `open`: one beat a tap, each a still id and the region card line shown over it.
+// `fire`: the NPC scene shown over still `fireStill` after the pick. Stills: INTRO_STILLS (below); until the first-hour-art pack is vetted each
+// shows the approved Mossy Hollow night background, darkened, with the lamp icon (bible 10.3).
+STORY_BEATS.intro = { region: 'hollow', fire: 'heskethFire', fireStill: 'road',
+  open: [{ still: 'lamp', line: 0 }, { still: 'dark', line: 1 }, { still: 'dark', line: 2 }] };
+// Still art: '' shows the placeholder; the vetted Codex still goes in here as a data URI (WebP or PNG), one change per still.
+//   lamp: the lamp on its hook over a hedge-village door, a small spiral on its base. dark: the dark coming up through the moss as you take the lamp
+//   and run. road: the road at night, a dead fire and an old man. All 3 at 960x540 (landscape); the page covers the screen, so keep the middle clear.
+const INTRO_STILLS = { lamp: '', dark: '', road: '' };
+
+// Old Hesketh. Two NPC scenes. The fire is the dead roadside fire, shown over still 3 right after the hero is picked, before the first fight. The talk
+// plays later, when the player lights their own camp fire (8 Pine Log), which pays off "Wood first. Then we talk." (55-story.js, hearthLit).
+STORY_BEATS.npc.heskethFire = { at: 'intro', who: 'Old Hesketh', lines: [
+  'Your lamp gutters. An old man kneels by a ring of cold ash.',
+  'You light his sticks from your lamp. The lamp steadies.',
+  '"Every road needs a place to come back to. Wood first."'
 ] };
-STORY_BEATS.npc.heskethTalk = { at: 'area:0', who: 'What Hesketh knows', lines: [
+STORY_BEATS.npc.heskethTalk = { at: 'hearth', who: 'Hesketh: "Wood\'s in. Now we talk."', lines: [
   '"Ten years I\'ve lit dead lamps. Not one took my fire."',
   '"I could have lit them from hers. I couldn\'t go up."',
   '"Those things aren\'t animals. They climb out of the ground."',

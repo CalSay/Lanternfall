@@ -50,6 +50,10 @@
 //                                          its spawn listener also sets mob.encounter = { kind, id }
 //   storyFoes() -> [{ zone, name, line, type }] the Hollow monsters in the game whose zone the hero has reached (21h LORE_FOES); the
 //                                          Codex Bestiary lists each as its own entry (57c-codex)
+//   storyIntroClaim()                      75-intro-ui.js plays the drawn opening itself: the engine leaves the Chapter 1 card to it
+//   storyIntro(part) -> { part, beats | who, lines, still } | null   what the opening still owes: part 'open' (the lamp stills, before the
+//                                          hero picker; a new game only) or 'fire' (Hesketh's roadside fire over still 3, after the pick)
+//   storyIntroDone(part, how)              part 'open' | 'fire' | 'release' (the picker closed with no fire due); how: opened ('shown') or closed ('done' | 'skipped'); files the Chapter 1 card or the fire scene in the Journal
 //   storySync() runs on each tick (cheap when nothing moved).
 // Events emitted: storyScene { id, ch, kind: 'caption' | 'card', title, head, lines, cards, zone, region, hold, page },
 //   storyEnd { id, how }, storyChoice { id, option }, storyRead { id }, storyFiled { kind, id }.
@@ -64,6 +68,7 @@
 //   keys ('a:<region>:<place>', 'b:', 'ei:', 'ef:') are kept and ignored. `read`: Journal entry id -> 1.
 //   off: 1 = Story cards off. ends: scene key -> 'done' | 'skipped' (12a; never 'auto'). journalOpens: Journal opens (12a).
 //   starter, litFor (Great Lantern -> name), coldhearth: for story-opening and story-choices.
+//   'i:open' (the drawn opening was shown or skipped), 'n:<id>' for the opening's NPC scenes (heskethFire, over the stills; heskethTalk, at the camp fire).
 // A save that is past a slot when it loads, or reaches it with the story off, files it quietly: captions are marked seen,
 // cards go in the Journal unread (late), where the Codex offers them as "Catch up on the story". Nothing pops. Only slots the game
 // can show are filed (a zone line with its monster, a Captain line with its Captain, a Champion or Elder with its encounter, an
@@ -72,7 +77,8 @@
 const STORY_ON = true;   // dev switch (bible 10.4): false plays no story at all; the data files can also be deleted
 
 let storyOn, storyHeld, storyInGap, storyChoiceDef, storyChosen, storyClaim, storyClose, storyChoose, storyList, storyEntry, storyRead, storyUnread, storyLate, storyJournalOpened,
-  storyRoadLog, storyFile, storyHeroLine, storyHearthLine, storyVerse, storyVerseLatest, storyItemLine, storyRanks, storyEncounter, storyFoes, storySync;
+  storyRoadLog, storyFile, storyHeroLine, storyHearthLine, storyVerse, storyVerseLatest, storyItemLine, storyRanks, storyEncounter, storyFoes, storySync,
+  storyIntroClaim, storyIntro, storyIntroDone;
 const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_ENC.champ.<id> = true (storyEncounter)
 {
   registerState('story', { v: 1, seen: {}, read: {}, init: 0, off: 0, starter: '', litFor: {}, coldhearth: '', ends: {}, journalOpens: 0 });
@@ -91,6 +97,32 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
   const regionIdOf = z => { const r = typeof regionOf === 'function' ? regionOf(z) : null; return r ? r.id : 'hollow'; };
 
   storyOn = () => STORY_ON && !ST().off && typeof STORY_BEATS === 'object';
+  // ---- the drawn opening (intro-and-picker) ----
+  // The opening is the Hollow's region card, shown by 75-intro-ui.js over two stills BEFORE the hero picker, then Hesketh's roadside fire over a
+  // third still AFTER the pick (STORY_BEATS.intro names the stills and which lines show over each). The UI claims it at load; a core with no UI
+  // (Node tools) keeps the old flow, the region card at the first walk-in. Only a new game plays it: a save past zone 1, or one that already read
+  // the card, files nothing new.
+  let introOn = false, introUp = false;   // introUp: an opening screen is on top, so nothing walks in under it
+  const introData = () => D('intro');
+  storyIntroClaim = () => { introOn = true; };
+  storyIntro = part => {
+    const I = introData(), R = I.region && D('region')[I.region];
+    if (!introOn || !storyOn() || !R || !I.open) return null;
+    if (part === 'open') {
+      if (has('i:open') || has('r:' + I.region) || (S.maxZone || 1) > 1 || S.totalKills > 0) return null;
+      return { part, region: I.region, beats: I.open.map(b => ({ still: b.still, line: R.lines[b.line] || '' })).filter(b => b.line) };
+    }
+    const n = part === 'fire' && D('npc')[I.fire];
+    if (!n || !has('i:open') || has('n:' + I.fire)) return null;
+    return { part, id: I.fire, who: n.who || '', still: I.fireStill || '', lines: n.lines.map(lineText).filter(Boolean) };
+  };
+  storyIntroDone = (part, how) => {
+    if (how === 'shown') introUp = true;   // the opening stays up through the picker, until the fire scene ends (or the picker closes with none due: part 'release')
+    const I = introData(), end = k => { if (how !== 'shown') ST().ends[k] = how === 'skipped' ? 'skipped' : 'done'; };   // 'shown': the screen just opened (filed now, like every scene, so a reload does not replay it)
+    if (part === 'open' && I.region) { mark('i:open'); mark('r:' + I.region); end('r:' + I.region); }
+    else if (part === 'fire' && I.fire) { mark('n:' + I.fire); end('n:' + I.fire); }
+    if (how !== 'shown' && part !== 'open') { introUp = false; storySync(); }   // what waited under the screens (the area caption) is due now, even if the guide holds the ticks
+  };
   storyEncounter = (kind, id, on) => { if (STORY_ENC[kind]) STORY_ENC[kind][id] = on !== false; };
   storyHeroLine = id => { const h = D('hero')[id]; return h ? h[storyHero()] || h._ || '' : ''; };
   // An item entry is a line, or { area, line }: a line with an area waits until an encounter card has put a Champion of that area in
@@ -176,7 +208,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
       add('e:' + id, 'elder', `e:${id}:pre`, e.zone, e.name || (e.page && e.page.title) || id, () => [...readable(elderScene(id, 'pre')), ...(has(`e:${id}:post`) ? readable(elderScene(id, 'post')) : [])], [`e:${id}:post`]);
       if (e.page) add('j:' + id, 'page', 'j:' + id, e.zone, e.page.title, () => [{ lines: [e.page.text] }]); }
     for (const id in D('voice')) add('v:' + id, 'voice', 'v:' + id, D('voice')[id].zone, D('voice')[id].title || 'A voice', () => cardsOf(D('voice')[id].lines));
-    for (const id in D('npc')) if (/^area:/.test(D('npc')[id].at) && npcCards(id).length) add('n:' + id, 'npc', 'n:' + id, npcZone(D('npc')[id].at), D('npc')[id].who || id, () => npcCards(id));   // the others read inside their Champion's or Elder's entry
+    for (const id in D('npc')) if (/^(area:|intro|hearth)/.test(D('npc')[id].at) && npcCards(id).length) add('n:' + id, 'npc', 'n:' + id, npcZone(D('npc')[id].at), D('npc')[id].who || id, () => npcCards(id));   // the others read inside their Champion's or Elder's entry
     add('k:ranks', 'ranks', 'k:ranks', 0, 'Who answers to whom', () => storyRanks().map(r => ({ who: r.who, lines: [r.line] })));
     for (const [slot, pre] of [['letter', 'l'], ['note', 'o']]) for (const id in D(slot)) { const x = D(slot)[id];
       add(`${pre}:${id}`, slot, `${pre}:${id}`, x.zone || 0, x.title, () => [{ lines: [x.text] }]); }
@@ -185,6 +217,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
   // the zone an NPC scene belongs to (its area's first zone, or its Champion's or Elder's zone)
   function npcZone(at) {
     const [k, v] = String(at).split(':');
+    if (k === 'intro' || k === 'hearth') return 1;   // the opening's own scenes (the roadside fire, the camp fire talk)
     if (k === 'area') return (+v) * (typeof AREA_ZONES === 'number' ? AREA_ZONES : 5) + 1;
     const x = (k === 'champPost' ? D('champ') : D('elder'))[v];
     return x ? x.zone : 0;
@@ -284,7 +317,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
 
   // ---- time and gaps ----
   let clock = 0, spawnT = -99, gapNow = true, inAway = false, swept = 0, last = '', spawned = null;
-  const live = () => storyOn() && !inAway && S.activity === 'fight' && !(typeof arena !== 'undefined' && arena);
+  const live = () => storyOn() && !inAway && !introUp && S.activity === 'fight' && !(typeof arena !== 'undefined' && arena);
   const inGap = () => gapNow || clock - spawnT < 1;
 
   // ---- the catch-up: a save past a slot (or one that played it with the story off) files it quietly ----
@@ -318,7 +351,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
   };
   function walkIn(z) {
     const n = typeof AREA_ZONES === 'number' ? AREA_ZONES : 5, rid = regionIdOf(z), r = regionById(rid), ai = zoneAreaIdx(z);
-    if (r && z === r.z0 && !has('r:' + rid) && D('region')[rid]) { mark('r:' + rid); push(regionScene(rid)); }
+    if (r && z === r.z0 && !has('r:' + rid) && D('region')[rid] && !storyIntro('open')) { mark('r:' + rid); push(regionScene(rid)); }   // a new game's card is the drawn opening's
     const ids = [], lines = [];
     if (z === ai * n + 1 && D('area')[ai] && !has('a:' + ai)) { mark('a:' + ai); ids.push('a:' + ai); lines.push(D('area')[ai]); }
     if (D('zone')[z] && foeIn(z) && !has('z:' + z)) { mark('z:' + z); ids.push('z:' + z); lines.push(D('zone')[z]); }
@@ -363,5 +396,10 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
   on('awayBegin', () => { inAway = true; });
   on('awayEnd', () => { inAway = false; last = ''; });
   on('zoneClear', () => { last = ''; });
+  // Hesketh's talk plays when the camp fire is lit (the 8 Pine Log fire), which pays off "Wood first. Then we talk." It waits for a gap like any scene.
+  on('hearthLit', () => {
+    if (!storyOn()) return;
+    for (const id of Object.keys(D('npc')).filter(k => D('npc')[k].at === 'hearth')) if (!has('n:' + id) && npcCards(id).length) { mark('n:' + id); push(npcScene(id)); }
+  });
   onTick(dt => { clock += dt; storySync(); });
 }

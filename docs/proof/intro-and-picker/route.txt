@@ -1,0 +1,39 @@
+# seed: 1
+# Proof for card intro-and-picker: a fresh save opens on three pictures, asks "Who are you?", plays Hesketh's fire, then the first fight.
+# Acceptance: three stills, one line a tap, Skip always there; "Who are you?" in second person; Hesketh's fire in 3 lines; the first Attack comes fast.
+new fresh
+expect "Ten years ago every lamp went out. The one over your door never did."
+expect "Skip"
+shot i1
+tap "Next"
+wait 1
+expect "This winter the last lamp in sight went out. Tonight the dark came for yours."
+shot i2
+tap "Next"
+wait 1
+expect "Your village hid. You took the lamp and ran, so the dark would follow you."
+shot i3
+tap "Continue"
+wait 1
+expect "Who are you?"
+expect "You carry the lamp. Pick who you are."
+expect "You learned to shoot in the caves, by sound."
+expect "Echo Shot: Marks the foe."
+shot picker
+tap "Begin as Wren"
+wait 1
+expect "Old Hesketh"
+expect "Your lamp gutters. An old man kneels by a ring of cold ash."
+shot fire1
+tap "Next"
+wait 1
+expect "You light his sticks from your lamp. The lamp steadies."
+shot fire2
+tap "Next"
+wait 1
+expect "Every road needs a place to come back to. Wood first."
+shot fire3
+tap "Continue"
+wait 2
+expect "Attack"
+shot first-fight

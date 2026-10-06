@@ -2428,8 +2428,8 @@ function storyProblems(B, ctx) {
   }
   for (const [id, n] of Object.entries(B.npc)) {
     const m = /^(area|champPost|elderPre|elderPost):(.+)$/.exec(n.at || '');
-    const okAt = m && (m[1] === 'area' ? +m[2] >= 0 && +m[2] <= 34 : m[1] === 'champPost' ? !!B.champ[m[2]] : !!B.elder[m[2]]);
-    if (!okAt) P.push(`npc ${id}: "at" must be area:N, champPost:id, elderPre:id or elderPost:id for a real area, Champion or Elder`);
+    const okAt = n.at === 'intro' || n.at === 'hearth' || (m && (m[1] === 'area' ? +m[2] >= 0 && +m[2] <= 34 : m[1] === 'champPost' ? !!B.champ[m[2]] : !!B.elder[m[2]]));   // 'intro': over the opening stills; 'hearth': when the camp fire is lit (intro-and-picker)
+    if (!okAt) P.push(`npc ${id}: "at" must be area:N, champPost:id, elderPre:id, elderPost:id, intro or hearth for a real area, Champion or Elder`);
     if (!str(n.who, L.title)) P.push(`npc ${id}: who`);
     lines(`npc ${id}`, n.lines, 1, 4, L.speech);
   }
@@ -2726,26 +2726,27 @@ if (section('story UI (browser)')) try {
         await page.goto('http://lf.test/'); await page.waitForTimeout(700);
         const X = s => page.evaluate(s => window.__t.x(s), s);
         await X(DATA);
-        await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go');
-         await page.waitForSelector('.sty-sheet .sty-title', { timeout: 4000 }); await page.waitForTimeout(700);
-        const card = await page.$eval('.sty-sheet', n => { const r = n.getBoundingClientRect(), tall = r.height / innerHeight, b = [...n.querySelectorAll('button')].filter(x => /Begin|Skip/.test(x.textContent)).map(x => { const q = x.getBoundingClientRect(); return { t: x.textContent, h: Math.round(q.height), bottom: Math.round(q.bottom) }; });
-          return { title: n.querySelector('.sty-title').textContent, lines: [...n.querySelectorAll('.sty-text')].map(x => x.textContent), b, vh: innerHeight, tall, overflowX: n.scrollWidth > n.clientWidth + 1 }; });
-        assert(card.title === 'Chapter 1: The Hollow' && card.lines.length === 3 && card.b.length === 2 && card.b.every(x => x.h >= 44 && x.bottom <= card.vh) && !card.overflowX && (viewport.width > viewport.height ? card.tall <= 0.605 : true), `story UI ${tag}: the opening card shows its three lines with Begin and Skip (44 px or taller, on screen), and in landscape the sheet is at most 60% of the screen (${card.tall.toFixed(2)})`);
+        // intro-and-picker: a new game opens on the drawn opening (three beats over two stills, Skip always there), then "Who are you?", then Hesketh's fire
+        await page.waitForSelector('#introScreen', { timeout: 4000 }); await page.waitForTimeout(500);
+        const ib = await page.$eval('#introScreen', n => { const q = x => n.querySelector(x).getBoundingClientRect(), g = q('.intro-go'), sk = q('.intro-skip'), ln = q('.intro-line'); return { line: n.querySelector('.intro-line').textContent, go: [Math.round(g.height), Math.round(g.bottom)], sk: [Math.round(sk.height), Math.round(sk.top), Math.round(sk.right)], ln: [Math.round(ln.top), Math.round(ln.bottom)], vh: innerHeight, vw: innerWidth, overflowX: n.scrollWidth > n.clientWidth + 1, noPicker: !document.getElementById('createScreen') }; });
+        assert(ib.noPicker && ib.line === await X('STORY_BEATS.region.hollow.lines[0]') && ib.go[0] >= 44 && ib.go[1] <= ib.vh && ib.sk[0] >= 44 && ib.sk[1] >= 0 && ib.sk[2] <= ib.vw && ib.ln[1] <= ib.vh && !ib.overflowX, `story UI ${tag}: the opening shows line 1 with Next and Skip on screen (44 px or taller) and no picker yet`);
         const clock0 = await X('notes.clock'); await page.waitForTimeout(1200);
-        assert(await X('storyHeld()') === true && Math.abs((await X('notes.clock')) - clock0) < 0.05, `story UI ${tag}: the game waits while the card is up`);
-        await page.click('.sty-sheet .sty-done'); await page.waitForTimeout(500);
-        assert(!(await page.$('.sty-sheet .sty-title')) || (await page.$eval('.sty-sheet', n => n.querySelector('.sty-title') ? /Chapter 1/.test(n.querySelector('.sty-title').textContent) === false : true)), `story UI ${tag}: Begin closes the opening card`);
-        assert(await X('S.story.ends["r:hollow"]') === 'done', `story UI ${tag}: Begin is recorded as done`);
-        // Hesketh, before the first fight (story-opening): the fire card, then the talk; each fits the screen and reads word for word
-        for (const [title, first, last] of [['Old Hesketh', 'On the road your lamp gutters.', 'Every road needs a place to come back to'], ['What Hesketh knows', 'Ten years I\'ve lit dead lamps.', 'shut the holes']]) {
-          await page.waitForSelector('.sty-sheet .sty-title', { timeout: 4000 }); await page.waitForTimeout(400);
-          const hk = await page.$eval('.sty-sheet', n => ({ title: n.querySelector('.sty-title').textContent, lines: [...n.querySelectorAll('.sty-text')].map(x => x.textContent), bottom: Math.max(...[...n.querySelectorAll('button')].map(x => x.getBoundingClientRect().bottom)), vh: innerHeight, overflowX: n.scrollWidth > n.clientWidth + 1 }));
-          await page.click('.sty-sheet .sty-done'); await page.waitForTimeout(400);
-        }
+        assert(Math.abs((await X('notes.clock')) - clock0) < 0.05, `story UI ${tag}: the game waits while the opening is up`);
+        for (const k of [1, 2]) { await page.click('#introScreen .intro-go'); await page.waitForTimeout(450); assert(await page.$eval('#introScreen .intro-line', n => n.textContent) === await X(`STORY_BEATS.region.hollow.lines[${k}]`), `story UI ${tag}: tap ${k} shows line ${k + 1}`); }
+        assert(await page.$eval('#introScreen .intro-go', n => n.textContent) === 'Continue', `story UI ${tag}: the last beat ends with Continue`);
+        await page.click('#introScreen .intro-go'); await page.waitForTimeout(500);
+        assert(!(await page.$('#introScreen')) && await X('S.story.ends["r:hollow"]') === 'done' && await X('S.story.seen["i:open"] > 0'), `story UI ${tag}: the opening ends in the hero picker and is recorded as done`);
+        assert(await page.$eval('#createTitle', n => n.textContent) === 'Who are you?', `story UI ${tag}: the picker asks "Who are you?"`);
+        await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go');
+        await page.waitForSelector('#introScreen', { timeout: 4000 }); await page.waitForTimeout(500);
+        const hk = await page.$eval('#introScreen', n => ({ who: n.querySelector('.intro-who').textContent, line: n.querySelector('.intro-line').textContent, n: n.querySelectorAll('.intro-dots span').length, bottom: n.querySelector('.intro-go').getBoundingClientRect().bottom, vh: innerHeight }));
+        assert(hk.who === 'Old Hesketh' && hk.n <= 3 && hk.line === await X('STORY_BEATS.npc.heskethFire.lines[0]') && hk.bottom <= hk.vh, `story UI ${tag}: Hesketh's fire plays after the pick, in three lines or fewer`);
+        for (let k = 0; k < hk.n; k++) { await page.click('#introScreen .intro-go'); await page.waitForTimeout(450); }
+        assert(!(await page.$('#introScreen')) && await X('S.story.ends["n:heskethFire"]') === 'done' && await X('S.story.ends["n:heskethTalk"]') === undefined, `story UI ${tag}: the fire scene ends and the talk waits for the camp fire`);
         // the caption: the area's name and two lines, held about 3 s, then the next scene
         await page.waitForSelector('.sty-cap', { timeout: 3000 }).catch(() => null);   // after the talk card's sheet has closed
         const cap = await page.$eval('.sty-cap', n => ({ h: n.querySelector('.sty-cap-h').textContent, l: [...n.querySelectorAll('.sty-cap-l')].map(x => x.textContent), w: Math.round(n.getBoundingClientRect().width), vw: innerWidth })).catch(() => null);
-         assert(cap && cap.h === 'Mossy Hollow' && cap.l.length === 2 && cap.l.join('|') === (await X('STORY_BEATS.area[0] + "|" + STORY_BEATS.zone[1]')) && cap.w <= cap.vw, `story UI ${tag}: the area title and the zone line show as one caption that fits the screen`);
+         assert(cap && cap.h === 'Mossy Hollow' && cap.l.length === 2 && cap.l.join('|') === (await X('STORY_BEATS.area[0] + "|" + STORY_BEATS.zone[1]')) && cap.w <= cap.vw, `story UI ${tag}: the area title and the zone line show as one caption that fits the screen ${JSON.stringify(cap)}`);
         await X('onboardTips(false); onboardUnlockAll()');   // the guide pauses fights; cards play in the gap after a kill
         await page.waitForTimeout(300);
         await page.waitForSelector('.sty-sheet .sty-title', { timeout: 12000 });
@@ -2759,7 +2760,7 @@ if (section('story UI (browser)')) try {
         // the Journal keeps all of it for re-reading
         await X('storyUI.list(false)'); await page.waitForSelector('.sty-row', { timeout: 3000 });
         const rows = await page.$$eval('.sty-row b', l => l.map(x => x.textContent));
-        assert(rows.join('|') === 'Who answers to whom|Chapter 1: The Hollow|A voice|Old Hesketh|What Hesketh knows', `story UI ${tag}: the Journal lists what was read (${rows.join(' | ')})`);
+        assert(rows.join('|') === 'Who answers to whom|Chapter 1: The Hollow|A voice|Old Hesketh', `story UI ${tag}: the Journal lists what was read (${rows.join(' | ')})`);
         assert(!errs.length, `story UI ${tag}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
         await ctx.close();
       }
@@ -2770,8 +2771,9 @@ if (section('story UI (browser)')) try {
       await page.goto('http://lf.test/'); await page.waitForTimeout(700);
       const X = s => page.evaluate(s => window.__t.x(s), s);
       await X('S.story.off = 1');
+      await page.click('#introScreen .intro-skip'); await page.waitForTimeout(300);   // the opening was already up when the option went off
       await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go'); await page.waitForTimeout(1500);
-      assert(!(await page.$('.sty-sheet')) && await X('storyOn()') === false && await X('storyHeld()') === false, 'story UI: with Story cards off a new game plays no card');
+      assert(!(await page.$('.sty-sheet')) && !(await page.$('#introScreen')) && await X('storyOn()') === false && await X('storyHeld()') === false, 'story UI: with Story cards off a new game plays no card and no fire scene');
       await ctx.close();
     } finally { await browser.close(); }
   }
@@ -7028,8 +7030,8 @@ if (section('C9 hero registry (browser)')) try {
           await X('soloPickerOpen=()=>true; S.onboard.tips=false; onboardUnlockAll(); true');
           const initial = await page.$$eval('#createScreen .ccard', rows => rows.map(b => [b.dataset.hero,b.dataset.state,b.getAttribute('aria-disabled'),b.textContent]));
           assert(initial.length===32 && initial.filter(r => r[1]==='unlocked').map(r=>r[0]).join()==='wren,tobin,pip' && initial.filter(r=>r[1]==='locked').length===29, `C9 ${tag}: new game shows all 32 heroes and exactly three unlocked starters`);
-          const bios = await X('JSON.stringify(Object.fromEntries(ROSTER_KEYS.map(k => [k, heroBio(k).slice(0, 40)])))').then(JSON.parse);
-          assert(initial.filter(r=>r[1]==='unlocked').every(r=>r[3].includes(bios[r[0]])) && initial.filter(r=>r[1]==='locked').every(r=>r[3].includes('Locked') && /You meet (him|them) /.test(r[3]) && !r[3].includes(bios[r[0]]) && !/still being designed|Fenmother/.test(r[3])), `C9 ${tag}: starters show their bios; every other hero is plainly Locked, says where you meet them, and spoils nothing`);
+          const bios = await X('JSON.stringify(Object.fromEntries(ROSTER_KEYS.map(k => [k, (PICK_LINES[k] || heroBio(k)).slice(0, 40)])))').then(JSON.parse);   // intro-and-picker: a starter's blurb is second person (PICK_LINES)
+          assert(initial.filter(r=>r[1]==='unlocked').every(r=>r[3].includes(bios[r[0]])) && initial.filter(r=>r[1]==='locked').every(r=>r[3].includes('Locked') && /You meet (him|them) /.test(r[3]) && !r[3].includes(bios[r[0]]) && !/still being designed|Fenmother/.test(r[3])), `C9 ${tag}: starters show their second-person blurbs; every other hero is plainly Locked, says where you meet them, and spoils nothing`);
           await page.click('#createScreen .ccard[data-hero="bram"]');
           assert(await page.$eval('#createScreen .create-go', b=>b.disabled) && !(await X('soloHero()')), `C9 ${tag}: selecting a locked hero cannot begin the game`);
           await X('S.party.unlock.heroes.bram=1; true');
@@ -8432,7 +8434,8 @@ if (section('playtest driver (browser)')) try {
     try {
       pt('new', 'fresh');
       const out = pt('look');
-      assert(/BUTTONS/.test(out) && /\[Begin as Wren\]/.test(out) && /screenshot: .*\.png/.test(out) && fs.existsSync(out.match(/screenshot: (\S+\.png)/)[1]), 'playtest driver: look on a new game lists the hero picker, its buttons and a screenshot that exists');
+      assert(/BUTTONS/.test(out) && /\[Next\]/.test(out) && /Ten years ago every lamp went out/.test(out) && /screenshot: .*\.png/.test(out) && fs.existsSync(out.match(/screenshot: (\S+\.png)/)[1]), 'playtest driver: look on a new game lists the opening, its buttons and a screenshot that exists');
+      assert(/Begin as Wren/.test(pt('look')), 'playtest driver: reopening the game after the opening was shown goes on to the hero picker');
       const tapped = pt('tap', 'Begin as Wren', '--quiet');
       assert(/tapped \[Begin as Wren\]/.test(tapped), 'playtest driver: tap finds a button by its label');
       let miss = '', missCode = 0;
@@ -8637,8 +8640,8 @@ if (section('systems map')) try {
 // ---- story-opening: Hesketh's cards before the first fight, the hero story gate, the picker's copy (bible 8.1, 4.4, 4.5, 14) ----
 if (section('story-opening')) try {
   const g = loadCore(), E = x => g.eval(x), rd = f => fs.readFileSync(path.join(ROOT, 'src', f), 'utf8');
-  const real = JSON.parse(E('JSON.stringify(STORY_BEATS)')), hk = [real.npc.heskethFire, real.npc.heskethTalk];
-  assert(hk.every(n => n && n.at === 'area:0' && n.who) && hk[0].lines[3].includes('Every road needs a place to come back to') && hk[1].lines.length === 4 && hk[1].lines[3].includes('shut the holes'), 'story-opening: Hesketh\'s fire and talk (bible 8.1) play at the Hollow\'s door, right after the opening card');
+  const real = JSON.parse(E('JSON.stringify(STORY_BEATS)')), hk = [real.npc.heskethFire, real.npc.heskethTalk];   // intro-and-picker: the fire plays over the opening stills, the talk at the camp fire
+  assert(hk[0] && hk[0].at === 'intro' && hk[0].who && hk[0].lines.length <= 3 && hk[0].lines[2].includes('Every road needs a place to come back to') && hk[1] && hk[1].at === 'hearth' && hk[1].lines.length === 4 && hk[1].lines[3].includes('shut the holes'), 'story-opening: Hesketh\'s fire (3 lines, over the opening stills) and talk (at the camp fire) keep bible 8.1\'s words');
   const rr = real.hero.refuseRest;
   assert(rr && /Not yet\./.test(rr.wren) && /I'll rest when the (village|Hollow) is lit/.test(rr.tobin) && /No\./.test(rr.pip), 'story-opening: the refusal of "Rest" (bible 4.6) has a line for each starter (played at the Veiled Oracle, story-hollow-script)');
   // story gate (story-opening, bible 4.4): no new unlock before the hero's first scene; heroes a save owns are kept
@@ -8670,20 +8673,26 @@ if (section('story-opening (browser)')) try {
         await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
         await page.goto('http://lf.test/'); await page.waitForTimeout(700);
         const X = s => page.evaluate(s => window.__t.x(s), s);
+        // intro-and-picker: the opening's lines are all on screen and clear of the buttons, beat by beat (landscape: the button sits beside the text)
+        const fits = () => page.$eval('#introScreen', n => { const q = x => n.querySelector(x).getBoundingClientRect(), ln = q('.intro-line'), g = q('.intro-go'), sk = q('.intro-skip'), hit = (a, b) => a.left < b.right - 1 && a.right > b.left + 1 && a.top < b.bottom - 1 && a.bottom > b.top + 1;
+          return { ok: !hit(ln, g) && !hit(ln, sk) && ln.bottom <= innerHeight && ln.right <= innerWidth + 1 && ln.left >= 0, text: n.querySelector('.intro-line').textContent }; });
+        await page.waitForSelector('#introScreen', { timeout: 4000 }); await page.waitForTimeout(500);
+        const seen = [];
+        for (let k = 0; k < 3; k++) { const f = await fits(); seen.push(f); assert(f.ok, `story-opening ${tag}: opening line ${k + 1} is on screen and clear of Next and Skip`); await page.click('#introScreen .intro-go'); await page.waitForTimeout(450); }
+        assert(seen.map(f => f.text).join('|') === await X('STORY_BEATS.region.hollow.lines.join("|")'), `story-opening ${tag}: the opening reads the Chapter 1 card's three lines in order`);
         await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go');
-        // the opening card: every line is on screen, not behind the buttons (landscape fix)
-        await page.waitForSelector('.sty-sheet .sty-title', { timeout: 4000 }); await page.waitForTimeout(500);
-        const vis = await page.$eval('.sty-sheet', n => { const b = [...n.querySelectorAll('button')].filter(x => /Begin|Skip/.test(x.textContent)).map(x => x.getBoundingClientRect()), card = n.querySelector('.sty-card').getBoundingClientRect(), ls = [...n.querySelectorAll('.sty-text')].map(x => x.getBoundingClientRect());
-          return { overlap: b.some(r => r.left < card.right - 1 && r.right > card.left + 1 && r.top < card.bottom && r.bottom > card.top), hidden: ls.filter(r => r.bottom > card.bottom + 1).length, lines: ls.length }; });
-        assert(vis.lines === 3 && !vis.overlap && vis.hidden === 0, `story-opening ${tag}: the opening card shows all three lines and the buttons do not cover them (${JSON.stringify(vis)})`);
+        await page.waitForSelector('#introScreen', { timeout: 4000 }); await page.waitForTimeout(500);
+        const fire = [];
+        for (let k = 0; k < 3; k++) { const f = await fits(); fire.push(f); assert(f.ok, `story-opening ${tag}: Hesketh's fire line ${k + 1} is on screen and clear of Next and Skip`); await page.click('#introScreen .intro-go'); await page.waitForTimeout(450); }
+        assert(fire.map(f => f.text).join('|') === await X('STORY_BEATS.npc.heskethFire.lines.join("|")') && /Every road needs a place to come back to/.test(fire[2].text), `story-opening ${tag}: Hesketh's fire reads word for word (bible 8.1)`);
+        // the talk waits for the camp fire (8 Pine Log), which pays off "Wood first. Then we talk."
+        assert(await X('S.story.ends["n:heskethFire"]') === 'done' && await X('S.story.seen["n:heskethTalk"]') === undefined, `story-opening ${tag}: the fire scene is done and the talk has not played`);
+        await X('onboardTips(false); S.mats.wood[0] = 20; hearthLight()');
+        await page.waitForSelector('.sty-sheet .sty-title', { timeout: 15000 }); await page.waitForTimeout(400);
+        const h = await page.$eval('.sty-sheet', n => ({ title: n.querySelector('.sty-title').textContent, lines: [...n.querySelectorAll('.sty-text')].map(x => x.textContent), bottom: Math.max(...[...n.querySelectorAll('button')].map(x => x.getBoundingClientRect().bottom)), vh: innerHeight, overflowX: n.scrollWidth > n.clientWidth + 1 }));
+        assert(h.title === 'Hesketh: "Wood\'s in. Now we talk."' && h.lines.length === 4 && h.lines[0].includes('Ten years I\'ve lit dead lamps.') && h.lines[3].includes('shut the holes') && h.bottom <= h.vh && !h.overflowX, `story-opening ${tag}: Hesketh's talk plays when the camp fire is lit, shows its four lines and fits the screen`);
         await page.click('.sty-sheet .sty-done'); await page.waitForTimeout(400);
-        for (const [title, first, last] of [['Old Hesketh', 'On the road your lamp gutters.', 'Every road needs a place to come back to'], ['What Hesketh knows', 'Ten years I\'ve lit dead lamps.', 'shut the holes']]) {
-          await page.waitForSelector('.sty-sheet .sty-title', { timeout: 4000 }); await page.waitForTimeout(400);
-          const h = await page.$eval('.sty-sheet', n => ({ title: n.querySelector('.sty-title').textContent, lines: [...n.querySelectorAll('.sty-text')].map(x => x.textContent), bottom: Math.max(...[...n.querySelectorAll('button')].map(x => x.getBoundingClientRect().bottom)), vh: innerHeight, overflowX: n.scrollWidth > n.clientWidth + 1 }));
-          assert(h.title === title && h.lines.length === 4 && h.lines[0].includes(first) && h.lines[3].includes(last) && h.bottom <= h.vh && !h.overflowX, `story-opening ${tag}: Hesketh's "${title}" card shows its four lines, fits the screen and keeps its buttons on it`);
-          await page.click('.sty-sheet .sty-done'); await page.waitForTimeout(400);
-        }
-        assert(await X('S.story.ends["n:heskethFire"]') === 'done' && await X('S.story.ends["n:heskethTalk"]') === 'done', `story-opening ${tag}: both Hesketh cards are recorded as done`);
+        assert(await X('S.story.ends["n:heskethTalk"]') === 'done', `story-opening ${tag}: the talk is recorded as done`);
         assert(!errs.length, `story-opening ${tag}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
         await ctx.close();
       }
@@ -8866,18 +8875,21 @@ if (section('story-hollow-script (browser)')) try {
       await pageI.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
       await pageI.goto('http://lf.test/'); await pageI.waitForTimeout(700);
       const XI = s => pageI.evaluate(s => window.__t.x(s), s);
+      // intro-and-picker: the opening is its own screen (it never files itself), so the unattended card is Hesketh's talk at the camp fire
+      await pageI.waitForSelector('#introScreen', { timeout: 4000 }); await pageI.waitForTimeout(400); await pageI.click('#introScreen .intro-skip'); await pageI.waitForTimeout(300);
       await pageI.click('#createScreen .ccard[data-hero="wren"]'); await pageI.click('#createScreen .create-go');
-      await pageI.waitForSelector('.sty-sheet .sty-title', { timeout: 4000 });
+      await pageI.waitForSelector('#introScreen', { timeout: 4000 }); await pageI.waitForTimeout(400); await pageI.click('#introScreen .intro-skip'); await pageI.waitForTimeout(300);
+      assert(await XI('S.story.ends["r:hollow"]') === 'skipped' && await XI('S.story.ends["n:heskethFire"]') === 'skipped', 'story-hollow-script (browser): Skip on the opening and on the fire scene is recorded as skipped');
+      await XI('onboardTips(false); onboardUnlockAll()');   // the guide pauses fights
+      await pageI.waitForSelector('.sty-cap', { timeout: 12000 });   // the area caption holds the game for 3 s
+      await pageI.waitForFunction(() => !document.querySelector('.sty-cap') && window.__t.x('!storyHeld()'), null, { timeout: 6000 });
+      await XI('S.mats.wood[0] = 20; hearthLight()');
+      await pageI.waitForSelector('.sty-sheet .sty-title', { timeout: 15000 });
       for (let k = 0; k < 7; k++) { await pageI.waitForTimeout(500); await pageI.click('.sty-sheet .sty-title'); }   // 3.5 s in (past the 2 s wait), but each tap restarted it: no timing margin under 1.5 s
       assert(!!(await pageI.$('.sty-sheet .sty-title')) && await XI('storyHeld()') === true, 'story-hollow-script (browser): a tap on the card restarts its unattended wait');
-      await pageI.waitForFunction(() => window.__t.x('storyLate().includes("r:hollow")'), null, { timeout: 5000 });
-      await pageI.waitForTimeout(300);
-      await XI('onboardTips(false); onboardUnlockAll()');   // the guide pauses fights
-      // Hesketh's two cards file themselves too (2 s each), then the area caption holds the game for 3 s
-      await pageI.waitForSelector('.sty-cap', { timeout: 12000 });
-      await pageI.waitForFunction(() => window.__t.x('storyLate().includes("n:heskethTalk") && !storyHeld()') && !document.querySelector('.sty-cap') && !document.querySelector('.sty-sheet .sty-title'), null, { timeout: 6000 });
+      await pageI.waitForFunction(() => window.__t.x('storyLate().includes("n:heskethTalk") && !storyHeld()'), null, { timeout: 6000 });
       const c2 = await XI('notes.clock'); await pageI.waitForTimeout(700);
-      assert(await XI('S.story.ends["r:hollow"]') === undefined && (await XI('storyLate()')).includes('r:hollow') && await XI('storyHeld()') === false && (await XI('notes.clock')) > c2 + 0.2,
+      assert(await XI('S.story.ends["n:heskethTalk"]') === undefined && (await XI('storyLate()')).includes('n:heskethTalk') && await XI('storyHeld()') === false && (await XI('notes.clock')) > c2 + 0.2,
         'story-hollow-script (browser): a card nobody touches files itself (no ends entry, late), and the game runs again');
       await XI('storyUI.list(true)'); await pageI.waitForSelector('.sty-catch', { timeout: 3000 });
       assert(/Catch up on the story/.test(await pageI.$eval('.sty-catch', n => n.textContent)), 'story-hollow-script (browser): the Journal offers the unattended card under "Catch up on the story"');
@@ -8983,6 +8995,72 @@ if (section('story-systems-hollow')) try {
   const wrote = [...fs.readFileSync(path.join(ROOT, 'src', 'js', '74-ui-hands.js'), 'utf8').matchAll(/handsLitFor/g)].length;
   assert(wrote >= 1, 'systems-hollow: the Tavern applicant card shows the line');
 } catch (e) { fail('story-systems-hollow crashed: ' + (e.stack || e)); }
+
+// ==== intro-and-picker: this card's own checks (the drawn opening, the picker's words, the first fight inside 45 s) ====
+if (section('intro-and-picker')) try {
+  const rd = f => fs.readFileSync(path.join(ROOT, 'src', f), 'utf8');
+  const g = loadCore({ seed: 5 }), E = x => g.eval(x);
+  const real = JSON.parse(E('JSON.stringify(STORY_BEATS)')), I = real.intro, R = I && real.region[I.region];
+  assert(I && R && I.open.length === 3 && I.open.every(b => b.line >= 0 && b.line < 3 && ['lamp', 'dark', 'road'].includes(b.still)) && new Set(I.open.map(b => b.still)).size === 2, 'intro: three beats over two stills, one region card line each');
+  assert(real.npc[I.fire].lines.length <= 3 && real.npc[I.fire].at === 'intro' && I.fireStill === 'road' && E('Object.keys(INTRO_STILLS).join()') === 'lamp,dark,road', 'intro: Hesketh\'s fire is 3 lines or fewer over the third still, and each still has an art slot');
+  assert(!/\b(document|window|localStorage)\./.test(rd('js/55-story.js').replace(/\/\/.*$/gm, '')) && /storyIntroClaim\(\)/.test(rd('js/75-intro-ui.js')), 'intro: the engine stays core; the screen claims the opening');
+  // the picker (C1, C9): second person, no real-time ability text, no third person for a starter
+  const pick = JSON.parse(E('JSON.stringify(PICK_LINES)'));
+  assert(Object.keys(pick).join() === 'wren,tobin,pip' && Object.values(pick).every(t => /\byou\b/i.test(t) && !/\b(he|she|his|her|him)\b/i.test(t)), 'picker: each starter\'s blurb speaks to you (C1)');
+  const c = rd('js/76-create.js');
+  assert(/'Who are you\?'/.test(c) && !/Who carries the lantern/.test(c) && /H\.ab\.line/.test(c), 'picker: it asks "Who are you?" and shows the turn-fight ability line, not the real-time description (C9)');
+  assert(E('["wren", "tobin", "pip"].every(k => !/for \\d+ seconds|every foe in its path|your spare sword/i.test(SOLO_HEROES[k].ab.line + PICK_LINES[k] + BIOS[k]))'), 'picker: no "for 4 seconds", "every foe in its path" or "your spare sword" in a starter\'s words');
+  // an old save never sees the opening: it is a new game's, once
+  const old = loadCore({ seed: 5, storage: memoryStorage({ [KEY]: rd2('save-mid.json') }) });
+  old.eval('loadSave(); storyIntroClaim()');
+  assert(old.eval('storyIntro("open")') === null && old.eval('storyIntro("fire")') === null, 'intro: a save past zone 1 never sees the opening or the fire scene');
+  const nw = loadCore({ seed: 5 }); nw.eval('storyIntroClaim()');
+  assert(nw.eval('storyIntro("open").beats.length') === 3 && nw.eval('storyIntro("fire")') === null, 'intro: a new game is owed the opening, and the fire only after it');
+  nw.eval('storyIntroDone("open", "shown"); storyIntroDone("open", "done")');
+  assert(nw.eval('storyIntro("open")') === null && nw.eval('storyIntro("fire").lines.length') <= 3 && nw.eval('S.story.ends["r:hollow"]') === 'done', 'intro: once shown it is not owed again, and the fire scene is next');
+  nw.eval('storyIntroDone("fire", "skipped")');
+  assert(nw.eval('storyIntro("fire")') === null && nw.eval('storyList().map(e => e.id).includes("n:heskethFire") && storyList().map(e => e.id).includes("r:hollow")'), 'intro: Skip is filed and both scenes stay in the Journal');
+  // Hesketh's talk waits for the camp fire (hearthLit), once
+  const hw = loadCore({ seed: 5, cold: true }); hw.eval('S.activity = "fight"; S.mats.wood[0] = 20');
+  const sc = []; hw.fn.on('storyScene', e => sc.push(e.id));
+  const run = () => { for (let i = 0; i < 40; i++) { hw.fn.tick(0.1); hw.eval('emit("kill", { mob: { name: "x" }, zone: 1 })');   // a kill opens the gap a scene waits for
+       const id = sc[sc.length - 1]; if (id && hw.eval(`(storyClaim(${JSON.stringify(id)}), storyHeld())`)) hw.eval(`storyClose(${JSON.stringify(id)}, "done")`); } };   // the check plays the UI: each scene is shown, then closed
+  run();
+  assert(!sc.includes('n:heskethTalk'), 'intro: Hesketh\'s talk does not play before the camp fire');
+  hw.eval('hearthLight()'); run();
+  assert(sc.filter(x => x === 'n:heskethTalk').length === 1, 'intro: Hesketh\'s talk plays once, when the camp fire is lit');
+  function rd2(n) { return fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', n), 'utf8'); }
+
+  // firstFightSec: from the first tap to the first Attack, tapping straight through (a beat takes a moment to read, so 0.4 s a tap)
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('intro-and-picker (browser): Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [tag, viewport] of [['360x740', { width: 360, height: 740 }], ['740x360', { width: 740, height: 360 }]]) {
+        const ctx = await browser.newContext({ viewport, isMobile: true, hasTouch: true, story: true });
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForSelector('#introScreen', { timeout: 5000 }); await page.waitForTimeout(400);
+        const t0 = Date.now(); let taps = 0;
+        const tap = async sel => { await page.click(sel); taps++; await page.waitForTimeout(400); };
+        for (let k = 0; k < 3; k++) await tap('#introScreen .intro-go');
+        await page.waitForSelector('#createScreen .ccard[data-hero="wren"]'); await tap('#createScreen .ccard[data-hero="wren"]'); await tap('#createScreen .create-go');
+        await page.waitForSelector('#introScreen'); await page.waitForTimeout(300);
+        for (let k = 0; k < 3; k++) await tap('#introScreen .intro-go');
+        await page.waitForSelector('button[aria-label^="Attack"]', { state: 'visible', timeout: 5000 });
+        const blocked = await page.evaluate(() => !!document.querySelector('#introScreen, #createScreen, .sty-sheet'));
+        const sec = (Date.now() - t0) / 1000;
+        assert(!blocked && sec <= 45 && taps <= 12, `firstFightSec ${tag}: ${sec.toFixed(1)} s and ${taps} taps from the first tap to the first Attack through the opening, the picker and Hesketh's fire (limit 45 s)`);
+        assert(!errs.length, `intro ${tag}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('intro-and-picker crashed: ' + (e.stack || e)); }
 
 if (section('removed systems (W2-C)')) try {
   const strip = t => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/([^:'"`\\])\/\/[^\n'"`]*$/gm, '$1');
