@@ -60,8 +60,12 @@ function newSession(name) {
   if (save) {
     // A fixture is a snapshot from another day: move every timestamp in it (live job timers, cooldowns, rest stamps) by the
     // same amount as `last`, so the game is in the state it was saved in, as of "now".
-    const delta = t - save.last;
-    const shift = o => { for (const k in o) { const v = o[k]; if (typeof v === 'number') { if (v > 1.5e12 && v < 2.2e12) o[k] = v + delta; } else if (v && typeof v === 'object') shift(v); } };
+    // Calendar counters (Almanac week and day, trial week) move by the same whole days and weeks, or the game would think a week had passed.
+    const delta = t - save.last, dayOf = ms => { const d = new Date(ms); return Math.round((Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) - Date.UTC(2026, 0, 1)) / 864e5); };
+    const days = dayOf(t) - dayOf(save.last), weeks = Math.floor((dayOf(t) + 3) / 7) - Math.floor((dayOf(save.last) + 3) / 7);
+    const shift = o => { for (const k in o) { const v = o[k];
+      if (typeof v === 'number') { if (v > 1.5e12 && v < 2.2e12) o[k] = v + delta; else if (k === 'week' && v >= 0) o[k] = v + weeks; else if (k === 'day' && v >= 0) o[k] = v + days; }
+      else if (v && typeof v === 'object') shift(v); } };
     shift(save);
   }
   const s = { fixture: name, time: t, start: t, save: save ? JSON.stringify(save) : null, shots: 0, log: [] };
@@ -220,7 +224,8 @@ async function look(session, page, tag = 'look') {
 
 // ---------------- state ----------------
 async function readSave(page) {
-  await page.evaluate(() => dispatchEvent(new Event('pagehide')));   // the game saves on pagehide
+  // The game saves on pagehide. It also pauses the turn fight there, so pageshow follows to leave the page as it was.
+  await page.evaluate(() => { dispatchEvent(new Event('pagehide')); dispatchEvent(new Event('pageshow')); });
   return page.evaluate(k => localStorage.getItem(k), KEY);
 }
 function summary(session, saveRaw) {
@@ -308,13 +313,14 @@ async function main() {
   const session = loadSession();
   const browser = await bt.pw.chromium.launch({ executablePath: bt.exe, args: ['--no-sandbox'] });
   try {
-    let ctx = { session, ...(await openPage(browser, session)) };
+    let ctx = { session, ...(await openPage(browser, session)) }; const allErrors = [];
     const results = [];
     const step = async (c, a) => {
       if (c === 'away') {
         const hours = num(a[0], 'away');
         session.save = await readSave(ctx.page) ?? session.save;
         session.time = await ctx.page.evaluate(() => Date.now()) + hours * 3600e3;
+        allErrors.push(...ctx.errors);   // errors from the page being closed still count
         await ctx.ctx.close();
         ctx = { session, ...(await openPage(browser, session, true)) };   // the game opens again `hours` later and works out the away gains
         const l = await look(session, ctx.page, 'away');
@@ -334,7 +340,8 @@ async function main() {
       const r = await step(cmd, args); results.push(r);
       console.log(flags.json ? JSON.stringify(r.data) : r.text);
     }
-    if (ctx.errors.length) { console.log(`PAGE ERRORS (${ctx.errors.length}): ${ctx.errors.slice(0, 3).join(' | ')}`); process.exitCode = 1; }
+    allErrors.push(...ctx.errors);
+    if (allErrors.length) { console.log(`PAGE ERRORS (${allErrors.length}): ${allErrors.slice(0, 3).join(' | ')}`); process.exitCode = 1; }
     session.save = await readSave(ctx.page) ?? session.save;
     session.time = await ctx.page.evaluate(() => Date.now());
     session.played = (session.played || 0) + ranSecs;
