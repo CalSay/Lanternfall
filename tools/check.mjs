@@ -8559,6 +8559,10 @@ if (section('wall-try-again (boss loss, Try again)')) try {
   assert(E('fightBoss') && E('mob.boss') && !E('bossTryHeld()'), 'try again: challenge() starts the boss and clears the hold');
   E('kill()');
   assert(!E('S.bossTry.hold') && E('S.maxZone') === 2, 'try again: beating the boss clears the hold');
+  // beating another zone's boss leaves the frontier's hold alone
+  E('S.bossTry.hold = 5; S.bossTry.fail = 7; S.zone = 1; S.maxZone = 5; S.kills = ZONE_FIGHTS; fightBoss = false; challenge(); kill()');
+  assert(E('S.bossTry.hold') === 5 && E('S.bossTry.fail') === 7, 'try again: winning an earlier zone\'s boss does not release the frontier boss');
+  E('S.zone = 2; S.maxZone = 2');
   // Auto: the boss restarts on its own once you are stronger (the Auto switch the card shows)
   E('S.bossTry.hold = 2; S.zone = 2; S.maxZone = 2; S.kills = ZONE_FIGHTS; S.auto = true; fightBoss = false; failDps = 0; spawn()');
   let at = -1; for (let t = 0; t < 300 && at < 0; t += 0.1) { g.fn.tick(0.1); if (E("fightBoss")) at = t; }

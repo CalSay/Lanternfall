@@ -17,7 +17,7 @@ const BOSS_TRY = { leftClose: 0.25 };   // the boss had this share of its health
 const bossTryKey = (hero, zone) => (hero || 'hero') + ':' + zone;
 // the hold: this zone's boss waits for you (hoisted function: 50-sim reads it before this file runs)
 function bossTryHeld() { const b = S.bossTry; return !!(b && b.hold > 0 && b.hold === S.zone); }
-function bossTryRelease() { if (S.bossTry && S.bossTry.hold) { S.bossTry.hold = 0; S.bossTry.fail = 0; } }
+function bossTryRelease(zone) { const b = S.bossTry; if (b && b.hold && b.hold === zone) { b.hold = 0; b.fail = 0; } }   // only the held zone's boss releases it
 
 // the foe's moves in the order they are told, one row per move id: { id, name, hits, charged }
 function bossTryMoves(script) {
