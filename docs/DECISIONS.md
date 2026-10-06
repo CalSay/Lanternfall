@@ -292,9 +292,10 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   `/mnt/project-files/autopilot/reports/art-pack-triage.md`. (built: not yet; cards `wire-ability-icons` and others)
   Coverage areas: 6 Combat feel and 1 First 10 minutes (icons), 10 Skills and crafting (nodes), 14 Heroes (portraits).
   Prediction: lettered ability tiles across the three heroes fall from 39 of 42 to 26 when `wire-ability-icons` merges
-  (Pip 13 to 0) and to 0 of 42 in the 2026-10-19 build; measured by counting lettered (`.mono`) tiles on the Hero > Abilities
-  screen in `wire-ability-icons`' proof route (an `expect` line CI replays); missed if any tile stays lettered for a hero whose icons are wired, or if Cal's note "ability icons
-  missing" is not "fixed" in that week's Sunday review. Switch off: removing a hero's ids from the generated `act` icon
+  (Pip 13 to 0) and to 0 of 42 in the 2026-10-19 build; measured by counting lettered tiles (`.ab-list .ab-mono`)
+  on each hero's Hero > Abilities screen in `wire-ability-icons`' proof route (an `expect` line CI replays); missed if
+  any tile stays lettered for a hero whose icons are wired, or if Cal's note "ability icons missing" is not "fixed" in
+  that week's Sunday review. Switch off: removing a hero's ids from the generated `act` icon
   pack brings back the lettered tiles (the existing `noIcon` path); gather scenes go back to the code-drawn ones by
   reverting their wiring commit; portraits have the Classic art switch. Saves: unaffected (art only; the Classic art
   switch adds one settings flag with a default).
