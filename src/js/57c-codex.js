@@ -109,8 +109,8 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
       let hint = '';
       if (tier < 4) {
         const need = Math.ceil(BESTIARY_TIERS[tier] - kills);
-        hint = x.exact ? `Defeat ${fmt(need)} more ${t.name}s (${ZONES[i]}, zones ${zonesOf(i).join(', ')}...).` : `Defeat more ${t.name}s.`;
-      } else if (!elder) hint = x.exact ? `Beat the ${ZONES[i]} boss (zone ${i + 1}).` : 'A boss guards this page.';
+        hint = x.exact ? `Defeat ${fmt(need)} more ${t.name}s (zones ${zonesOf(i).join(', ')}...).` : `Defeat more ${t.name}s.`;
+      } else if (!elder) hint = x.exact ? `Beat the zone ${i + 1} boss.` : 'A boss guards this page.';
       else if (!champ) hint = x.exact ? `Beat a champion ${t.name}. Champions show up from zone 20.` : 'A stronger one is out there.';
       return { key: t.key, n: t.name, got: tier + elder + champ, max: 6, pts: tier * 4 + elder * 6 + champ * 4, ptsMax: 26, hint,
         sub: `Tier ${tier} of 4${elder ? ' · Elder' : ''}${champ ? ' · Champion' : ''}`, kills, mob: t.key,
@@ -126,7 +126,7 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
       for (let z = 1; z <= REGION_ZONES; z++) {
         const k = (S.mastery && S.mastery.zones[z]) || 0, st = Math.min(5, masteryApi.starsFor(k));
         const need = st < 5 ? Math.ceil(MASTERY_STARS[st] - k) : 0;
-        out.push({ key: 'z' + z, n: `${z}. ${zoneName(z)}`, got: st, max: 5, pts: st * 2, ptsMax: 10, zone: z, mob: TYPES[zoneType(z)].key, grp: 'Band ' + roman(Math.ceil(z / 7)),
+        out.push({ key: 'z' + z, n: `${z}. ${zoneName(z)}`, got: st, max: 5, pts: st * 2, ptsMax: 10, zone: z, mob: TYPES[zoneType(z)].key, grp: zoneName(z),
           sub: `${fmt(k)} kills here`,
           hint: st >= 5 ? '' : z > S.maxZone ? (x.exact ? `Reach zone ${z}.` : 'Further down the road.') : x.exact ? `${fmt(need)} more kills here for star ${st + 1}. A boss counts 5.` : 'Fight here more.' });
       }

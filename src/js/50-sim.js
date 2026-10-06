@@ -117,7 +117,7 @@ function killPack(m, g) {
     // a won zone moves you on, the first time and on every replay (owner, 2026-10-01)
     if (first) S.maxZone++;
     S.zone = z + 1; S.kills = 0; emit('sceneReset');
-    toast(first ? `${zoneName(z)} is cleared. ${zoneName(z + 1)} lies ahead.` : `Zone ${z} won. On to Zone ${z + 1}.`, 'good', null, first ? 'high' : 'normal');
+    toast(first ? (zoneName(z) === zoneName(z + 1) ? `Zone ${z} is cleared. On to Zone ${z + 1}.` : `${zoneName(z)} is cleared. ${zoneName(z + 1)} lies ahead.`) : `Zone ${z} won. On to Zone ${z + 1}.`, 'good', null, first ? 'high' : 'normal');
     if (first) emit('zoneClear', { zone: z });
   } else {
     S.kills = Math.min(ZONE_FIGHTS, S.kills + 1);
@@ -282,7 +282,6 @@ function awayBase(r) {
   if (typeof turnCombatScope === 'function' && turnCombatScope()) {
     r.turnCombat = { kills: 0, zone: S.zone };
     r.note = 'Fights only happen while you play. Set your hero to gather before you go, and they keep working.';
-    if (r.secs >= 300) toast('Fights wait for you while you are away. Gather before you go to keep earning.', 'raid', null, 'normal');
     return r;
   }
   // Kills are capped by the respawn gap, same as live play; away play earns 75% of the live rate.

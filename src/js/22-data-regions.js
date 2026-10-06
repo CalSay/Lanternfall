@@ -55,6 +55,22 @@ const REGIONS = (() => {
 })();
 const ROAD_BEYOND = { id: 'ember', n: 'the Emberwaste', col: '#E0524F' };
 
+// The area names (docs/design/story-bible.md section 8; docs/DECISIONS.md "World structure"): 5 regions x 7 areas x 5 zones.
+// Zone z is area ceil(z / 5) of the road. Names only: foes, scenery, uniques and rewards still follow the 7-zone cycle.
+const AREA_ZONES = 5;
+const AREA_NAMES = [
+  ['Mossy Hollow', 'Batwing Caves', 'The Bonefield', 'Beetle Barrows', 'Fungal Deep', 'Quarry Ruins', 'Wraithmarsh'],
+  ['Grey Shingle', 'Gullcliffs', 'The Wrecks', 'Kelp Shallows', 'Glimmer Lagoon', 'Drowned Saltreach', 'The Coral Nave'],
+  ['Cinder Road', 'Emberlea Ruins', 'The Ashfall', 'The Glass Flats', 'The Kilns', 'Wyrmscale Ridge', 'The Pyre'],
+  ['Frostgate Pass', 'The Eyries', 'The Starscar', 'The Blue Caves', 'The Silent Village', 'The Rimewood', 'Frostgate Bastion'],
+  ['The Last Descent', 'The Stillwood', 'The Blind Mere', 'The Long Dusk Fields', 'Coldhearth', 'The Closed Orchard', 'The Heart of the Gloamvale']
+];
+const ROAD_ZONES = AREA_ZONES * 7 * AREA_NAMES.length;   // 175
+const zoneAreaIdx = z => Math.floor((Math.max(1, z) - 1) / AREA_ZONES);   // 0-34 for zones 1-175
+// Past zone 175 the last area repeats, numbered: "The Heart of the Gloamvale II".
+const zoneAreaName = z => { const i = Math.min(zoneAreaIdx(z), AREA_NAMES.length * 7 - 1), n = AREA_NAMES[Math.floor(i / 7)][i % 7];
+  return z > ROAD_ZONES ? n + ' ' + roman(Math.floor((z - ROAD_ZONES - 1) / AREA_ZONES) + 2) : n; };
+
 const regionIdx = z => { for (let i = REGIONS.length - 1; i > 0; i--) if (z >= REGIONS[i].z0) return i; return 0; };
 const regionOf = z => REGIONS[regionIdx(z)];
 const regionById = id => REGIONS.find(r => r.id === id) || null;

@@ -57,7 +57,7 @@ let storyBeat, storyBeatDef, storyHas, storyList, storyRead, storyUnread, storyL
 
   // Region story data: arrival lines per place, the boss arrival. Coast only once it has its own foes.
   const regionText = r => {
-    if (r.id === 'hollow') return { arr: typeof HOLLOW_ARRIVAL !== 'undefined' ? HOLLOW_ARRIVAL : null, boss: typeof HOLLOW_ARRIVAL_BOSS !== 'undefined' ? HOLLOW_ARRIVAL_BOSS : '' };
+    if (r.id === 'hollow') return typeof HOLLOW_ARRIVAL_ON !== 'undefined' && !HOLLOW_ARRIVAL_ON ? null : { arr: typeof HOLLOW_ARRIVAL !== 'undefined' ? HOLLOW_ARRIVAL : null, boss: typeof HOLLOW_ARRIVAL_BOSS !== 'undefined' ? HOLLOW_ARRIVAL_BOSS : '' };
     if (r.id === 'coast' && r.plugged) return { arr: typeof COAST_ARRIVAL !== 'undefined' ? COAST_ARRIVAL : null, boss: typeof COAST_ARRIVAL_BOSS !== 'undefined' ? COAST_ARRIVAL_BOSS : '' };
     return null;
   };

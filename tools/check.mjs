@@ -1824,6 +1824,25 @@ if (section('omen writing')) try {
     && E('omenLine("calmSea")') === E('COAST_OMEN_TEXT.calmSea.say') && E('omenLine("nope")') === '', 'lore: omenLine picks the Dare line while it is taken, falls back to the Omen and the coast lines');
 } catch (e) { fail('omen writing crashed: ' + (e.stack || e)); }
 
+// ---- area names: every zone carries its area's name (story-area-names; story-bible.md section 8) ----
+if (section('zone area names')) try {
+  // The bible's chapter tables are the source: "| 3 | **The Bonefield** (11-15) | ..." gives zones 11-15 their name.
+  const bible = fs.readFileSync(path.join(ROOT, 'docs', 'design', 'story-bible.md'), 'utf8');
+  const want = {};
+  for (const m of bible.matchAll(/^\| \d \| \*\*([^*]+)\*\* \((\d+)-(\d+)\)/gm)) for (let z = +m[2]; z <= +m[3]; z++) want[z] = m[1];
+  assert(Object.keys(want).length === 175, `area names: the bible names all 175 zones (found ${Object.keys(want).length})`);
+  const g = loadCore({ seed: 63 }), E = s => g.eval(s);
+  const got = E('(() => { const o = []; for (let z = 1; z <= 175; z++) o.push(zoneName(z)); return o; })()');
+  const bad = got.map((n, i) => n === want[i + 1] ? 0 : `${i + 1}: "${n}" should be "${want[i + 1]}"`).filter(Boolean);
+  assert(!bad.length, `area names: zones 1-175 carry the bible's area name${bad.length ? ' (' + bad.slice(0, 5).join('; ') + ')' : ''}`);
+  assert(!got.slice(0, 35).some(n => / (II|III|IV|V|VI|VII)$/.test(n)) && E('zoneName(8)') === 'Batwing Caves' && E('zoneName(36)') === 'Grey Shingle',
+    'area names: no zone in the Hollow is named "... II" any more (zone 8 is Batwing Caves)');
+  assert(E('zoneName(176)') === 'The Heart of the Gloamvale II' && E('zoneName(0)') === 'Mossy Hollow', 'area names: past zone 175 the last area repeats, numbered; zone 0 reads as zone 1');
+  // names only: the 7-zone cycle still drives foes, scenery and rewards
+  assert(E('zoneType(8)') === 0 && E('zonePlace(8)') === 0 && E('zoneCycle(8)') === 1 && E('zoneTheme(8)') === 'forest' && E('zoneType(35)') === 6,
+    'area names: foe type, place and cycle for a zone are unchanged');
+} catch (e) { fail('area names crashed: ' + (e.stack || e)); }
+
 // ---- regions and the Great Lantern (22-data-regions.js, 40-rules.js, 55-lantern.js; plan-2 task R0) ----
 if (section('regions and the Great Lantern')) try {
   const FIX = ['save-early.json', 'save-mid.json', 'save-late.json'];
@@ -1833,8 +1852,7 @@ if (section('regions and the Great Lantern')) try {
   // zone functions: zones 1-35 read exactly as the old 7-zone cycle, with every fixture loaded
   const OLD = `(() => { const out = []; const T = z => (z - 1) % 7, C = z => Math.floor((z - 1) / 7);
     for (let z = 1; z <= 35; z++) {
-      const nm = ZONES[T(z)] + (C(z) ? ' ' + roman(C(z) + 1) : '');
-      if (zoneType(z) !== T(z) || zonePlace(z) !== T(z) || zoneCycle(z) !== C(z) || zoneName(z) !== nm || zoneNextType(z) !== (T(z) + 1) % 7
+      if (zoneType(z) !== T(z) || zonePlace(z) !== T(z) || zoneCycle(z) !== C(z) || zoneNextType(z) !== (T(z) + 1) % 7
         || zoneTheme(z) !== (z <= MOSSY_ZONES ? 'forest' : ZONE_THEME[T(z)]) || zoneHue(z) !== (C(z) * 70) % 360 || zoneUnique(z) !== ZONE_UNIQ[T(z)] || zoneHome(z) !== CRAFT_HOME[T(z)]) out.push(z);
     }
     return out; })()`;
@@ -1844,7 +1862,7 @@ if (section('regions and the Great Lantern')) try {
     const bad = g.eval(OLD);
     assert(!bad.length && g.eval('S.maxZone') === raw.maxZone && g.eval('S.zone') === raw.zone && g.eval('JSON.stringify(S.found)') === JSON.stringify(raw.found || {})
       && g.eval('JSON.stringify(S.mastery && S.mastery.zones || {})') === JSON.stringify(raw.mastery && raw.mastery.zones || {}),
-      `${f}: zone type, place, cycle, name, next type, theme, hue, unique and home ground for zones 1-35 are the old ones${bad.length ? ' (differs at ' + bad.join(', ') + ')' : ''}; zone, max zone, uniques and mastery kept`);
+      `${f}: zone type, place, cycle, next type, theme, hue, unique and home ground for zones 1-35 are the old ones${bad.length ? ' (differs at ' + bad.join(', ') + ')' : ''}; zone, max zone, uniques and mastery kept`);
   }
   const g = loadCore({ seed: 62 }), E = s => g.eval(s);
   // region lookup at the seams
@@ -1856,9 +1874,6 @@ if (section('regions and the Great Lantern')) try {
   if (!plugged) {
     assert(E('(() => { for (let z = 36; z <= 90; z++) if (zoneType(z) !== (z - 1) % 7 || zoneNextType(z) !== z % 7 || zoneUnique(z) !== ZONE_UNIQ[(z - 1) % 7]) return false; return true; })()'),
       'coast placeholder: zones 36-90 keep the Hollow foe types, packs and uniques they had');
-    const names = E('[36, 37, 43, 70, 71].map(zoneName)');
-    assert(names.every(n => n && !/undefined/.test(n) && !E('ZONES').some(h => n.startsWith(h))) && names[0] !== names[1] && /II$/.test(names[2]) && /V$/.test(names[3]) && /VI$/.test(names[4]),
-      `coast placeholder names read as their own places: ${names.join(', ')}`);
   } else {
     assert(E('TYPES.length') >= 14 && E('zoneType(36)') >= 7, 'the coast is plugged in (22-data-coast.js): its own types');
   }
@@ -2362,8 +2377,8 @@ if (section('story')) try {
   const n0 = ev.arr.length + ev.beat.length + ev.elder.length;
   for (const z of [3, 7, 14, 1]) { E(`S.zone = ${z}`); ticks(g, 2); E('fightBoss = true; spawn()'); E(`emit('kill', { mob: mob, zone: ${z}, gold: 0, ess: 0, tier: 1 }); fightBoss = false`); }
   const arrHeads = ev.arr.map(a => a.head), zones = E('ZONES');
-  assert(ev.arr.length === 8 && zones.every((n, i) => arrHeads[i] === n && ev.arr[i].zone === i + 1) && ev.arr[7].zone === 35 && ev.arr.every(a => a.line && a.line.length <= 80),
-    `story: 8 arrival lines, once each (the 7 Hollow places, then zone 35): ${arrHeads.join(', ')}`);
+  assert(E('HOLLOW_ARRIVAL_ON') === false && ev.arr.length === 0 && zones.length === 7,
+    'story: the Hollow arrival lines are switched off (they named places the screen does not show) until story-hollow-script rewrites them');
   const H = E('HOLLOW_STORY');
   assert(ev.beat.length === 4 && H.every((b, i) => ev.beat[i].id === b.id && !ev.beat[i].quiet && beatsAt[b.at] === i + 1 && beatsAt[b.at - 1] === i),
     'story: the 4 Hollow beats play once each, as cards, on arriving at their zones (' + H.map(b => `${b.id} @${b.at}`).join(', ') + ')');
@@ -8195,6 +8210,16 @@ if (section('boss odds (core, Next Up "Boss ready")')) try {
   { const { g, E } = boot('wren'), r = JSON.parse(E('JSON.stringify(turnCombatSample({ profile: turnCombatProfile(), seconds: 3600, seed: 2, fights: 5 }))')), r0 = JSON.parse(E('JSON.stringify(turnCombatSample({ profile: turnCombatProfile(), seconds: 600, seed: 2 }))'));
     assert(r.kills + r.deaths === 5 && r0.kills + r0.deaths > 5, `boss odds: turnCombatSample({ fights }) stops at that many fights (${r.kills + r.deaths}); without it the seconds run out (${r0.kills + r0.deaths} fights)`); }
 } catch (e) { fail('boss odds crashed: ' + (e.stack || e)); }
+
+// ==== Systems map (f-systems-map): every currency has a source and a sink (or an ALLOW reason), every listed code path still
+// exists, and docs/design/systems-map.md is the current output of tools/systems-map.mjs.
+if (section('systems map')) try {
+  const sm = await import('./systems-map.mjs');
+  const problems = sm.audit();
+  assert(!problems.length, 'systems map: every currency has a source and a sink' + (problems.length ? ': ' + problems.join('; ') : ''));
+  const docPath = path.join(ROOT, 'docs', 'design', 'systems-map.md');
+  assert(fs.existsSync(docPath) && fs.readFileSync(docPath, 'utf8') === sm.render(), 'docs/design/systems-map.md is out of date: run node tools/systems-map.mjs --write');
+} catch (e) { fail('systems map crashed: ' + (e.stack || e)); }
 
 if (section('removed systems (W2-C)')) try {
   const strip = t => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/([^:'"`\\])\/\/[^\n'"`]*$/gm, '$1');

@@ -44,6 +44,9 @@ const LORE_BANNED = [
   /\blov(e|es|ed|ing) (the |your )?(light|lamp|flame)/i, /\blike a moth\b/i
 ];
 
+// OFF (story-area-names): the lines below describe places the screen does not show (zones 1-7 all use the Mossy Hollow
+// scenery, and areas now span 5 zones). The story-hollow-script card writes the new arrival lines; flip this on then.
+const HOLLOW_ARRIVAL_ON = false;
 const HOLLOW_ARRIVAL = [
   'Mossy Hollow. Home is dark behind you. The moss is moving.',
   'Batwing Caves. Something big hangs from the roof, listening.',

@@ -11,6 +11,7 @@ For copy, lore, item, enemy and quest data, and story. Story scenes, chapter scr
 - Data fits the schema; no missing ids, stats or art slots; nothing duplicated.
 - New items and enemies have a place in the economy (a source and a use).
 - No save field changed; no existing id renamed or removed.
+- Game doc current: a player-visible change updates `docs/GAME.md` in the same PR. A new currency or material also gets an entry in `docs/design/systems-map.md`.
 
 ## Scored criteria
 
