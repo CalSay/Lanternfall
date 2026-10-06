@@ -405,6 +405,8 @@ Plan and rulings: `/mnt/project-files/early-game/plan.md`, `plan-judge.md`. Beat
 
 Kept only to explain current rules. Each line: the old decision, then what replaced it.
 
+- Hesketh's talk plays before the first fight (story bible 8.1, audit A1) -> the talk plays when the camp fire is lit;
+  the first fight comes within 45 s (early game, 2026-10-06).
 - Store launch possible, monetisation undecided (2026-09-27); monetisation waits for launch, with a free and paid battle
   pass, a membership with capped convenience perks and skins (2026-09-28); every cosmetic is earned, never sold
   (2026-09-28) -> the money model (2026-10-06).
