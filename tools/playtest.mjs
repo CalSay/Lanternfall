@@ -26,7 +26,7 @@ const KEY = 'lanternfall.save.v5';
 const ORIGIN = 'http://lanternfall.playtest/';
 const raw = process.argv.slice(2);
 const flags = { json: false, landscape: false, quiet: false };
-let sessionDir = '.playtest', htmlFile = null;
+let sessionDir = '.playtest', htmlFile = null, ranSecs = 0;   // ranSecs: game seconds this call has run (away hours are not play)
 const pos = [];
 for (let i = 0; i < raw.length; i++) {
   const a = raw[i];
@@ -57,7 +57,13 @@ function newSession(name) {
   const save = fixture(name);
   // The save's own clock is virtual: it starts "now", so a fixture's `last` stamp never reads as a long absence.
   const t = Date.now();
-  if (save) save.last = t;
+  if (save) {
+    // A fixture is a snapshot from another day: move every timestamp in it (live job timers, cooldowns, rest stamps) by the
+    // same amount as `last`, so the game is in the state it was saved in, as of "now".
+    const delta = t - save.last;
+    const shift = o => { for (const k in o) { const v = o[k]; if (typeof v === 'number') { if (v > 1.5e12 && v < 2.2e12) o[k] = v + delta; } else if (v && typeof v === 'object') shift(v); } };
+    shift(save);
+  }
   const s = { fixture: name, time: t, start: t, save: save ? JSON.stringify(save) : null, shots: 0, log: [] };
   fs.writeFileSync(sessionFile, JSON.stringify(s));
   return s;
@@ -115,6 +121,7 @@ async function openPage(browser, session, afterAway = false) {
 // Advance game time. Short waits use real 60 fps frames; long ones step 100 ms frames (see INIT).
 async function run(page, secs) {
   if (secs <= 0) return;
+  ranSecs += secs;
   let left = secs * 1000;
   const chunk = secs <= 20 ? 16 : 100;
   await page.evaluate(c => { window.__ptStep = c; }, chunk);
@@ -223,7 +230,7 @@ function summary(session, saveRaw) {
   return {
     hero: S.name, level: S.L, zone: S.zone, bestZone: S.maxZone, activity: S.activity,
     gold: Math.floor(S.gold), embers: Math.floor(S.embers || 0), kills: S.totalKills, skills,
-    playedGameTime: fmtDur((session.time - session.start) / 1000)
+    playedGameTime: fmtDur((session.played || 0) + ranSecs)
   };
 }
 const fmtDur = s => s >= 3600 ? `${(s / 3600).toFixed(1)} h` : s >= 60 ? `${(s / 60).toFixed(1)} min` : `${Math.round(s)} s`;
@@ -327,9 +334,10 @@ async function main() {
       const r = await step(cmd, args); results.push(r);
       console.log(flags.json ? JSON.stringify(r.data) : r.text);
     }
-    if (ctx.errors.length) console.log(`PAGE ERRORS (${ctx.errors.length}): ${ctx.errors.slice(0, 3).join(' | ')}`);
+    if (ctx.errors.length) { console.log(`PAGE ERRORS (${ctx.errors.length}): ${ctx.errors.slice(0, 3).join(' | ')}`); process.exitCode = 1; }
     session.save = await readSave(ctx.page) ?? session.save;
     session.time = await ctx.page.evaluate(() => Date.now());
+    session.played = (session.played || 0) + ranSecs;
     fs.writeFileSync(sessionFile, JSON.stringify(session));
   } finally { await browser.close(); }
 }
