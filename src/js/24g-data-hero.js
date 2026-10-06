@@ -23,6 +23,8 @@
 //                       min(L - 1, cap) + capHalf x max(0, L - 1 - cap)
 //   aheadLead, aheadX   XP is x aheadX for each level a hero is past the road's level at the furthest zone + aheadLead
 //                       (40-rules xpAheadX; away XP too). (tuned)
+//   joinLead            a joining hero is lifted to floor(roadLv(furthest zone) + joinLead): heroes who play the road sit
+//                       about this far above the table (sims), and the one who joins should fight like them. (tuned)
 //   respec              the second and later resets of a hero's points cost foeGoldBase(furthest zone) x this (the first is free)
 
 const HERO_TUNE = {
@@ -39,7 +41,8 @@ const HERO_TUNE = {
   capHalf: 0.5,
   respec: 30,
   aheadLead: 4,
-  aheadX: 0.6
+  aheadX: 0.6,
+  joinLead: 2
 };
 // The order is the screen's order. line: one plain line for the Attributes view.
 const ATTRS = [

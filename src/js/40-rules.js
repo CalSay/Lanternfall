@@ -126,7 +126,8 @@ const zoneTier = z => Math.max(1, PACE.essTier.filter(s => z >= s).length);
 const essChance = () => 0.25 * (1 + gear().ess / 100) * mod('essence');
 // hero-progression-rework: the road and the level curve (docs/design/hero-progression-build.md 3). roadLv(z) is the level the
 // road expects at zone z (HERO_TUNE.road: straight lines between points, the last slope on past the end); roadZone(L) is its
-// inverse (fractional, at least 1); roadLevel() the road's level at the furthest zone; roadFoeXp(z) what a normal foe pays
+// inverse (fractional, at least 1); roadLevel() the road's level at the furthest zone
+// (+ HERO_TUNE.joinLead, the lead a hero who plays it keeps); roadFoeXp(z) what a normal foe pays
 // (59k turnFoeSetup's sum without its rounding); roadZoneFights(z) the fights a
 // zone of road takes (HERO_TUNE.fights, a steady ratio between points, flat past the ends), roadSlope(z) the road's levels a
 // zone there, roadFights(L) the fights a level takes (the two divided).
@@ -146,7 +147,7 @@ function roadZone(L) {
   const a = R[i - 1], b = R[i];
   return Math.max(1, a[0] + (L - a[1]) * (b[0] - a[0]) / (b[1] - a[1]));
 }
-const roadLevel = () => Math.max(1, Math.floor(roadLv(S.maxZone || 1)));
+const roadLevel = () => Math.max(1, Math.floor(roadLv(S.maxZone || 1) + (HERO_TUNE.joinLead || 0)));   // the join level: where a hero who plays the road stands
 const roadFoeXp = z => 1.5 * z * (typeof TURN_TUNE === 'object' && TURN_TUNE.on ? TURN_TUNE.xpX : 1);   // smooth: no rounding steps between zones
 function roadSlope(z) {
   const R = HERO_TUNE.road;
