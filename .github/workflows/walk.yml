@@ -1,0 +1,92 @@
+name: walk
+# The first-hour walk (card qa-first-hour-walk): a robot plays 60 game minutes of the real build and writes what a new player
+# would hit. Nightly at 03:00 UK on the integration head, plus a manual run (seeds 1,2,3 for the release candidate's rc- tag).
+# Never per pull request. Report only: the job never fails on a missed target, so a red run means the walk itself broke.
+# GitHub reads `schedule` and `workflow_dispatch` from the default branch, so this file takes effect when it reaches `main`.
+on:
+  schedule:
+    - cron: '0 2 * * *'   # 03:00 in British Summer Time
+    - cron: '0 3 * * *'   # 03:00 in GMT; the plan job lets only the one that is 03:00 in London through
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Branch, tag or commit to walk (an rc- tag for the release candidate)
+        default: claude/elegant-johnson-m6k00u
+      seeds:
+        description: Seeds to walk, comma separated (the release candidate uses 1,2,3)
+        default: '1'
+      sizes:
+        description: p = 360x740 portrait, l = 740x360 landscape, comma separated
+        default: 'p,l'
+permissions:
+  contents: read
+concurrency:
+  group: walk
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      go: ${{ steps.p.outputs.go }}
+      seeds: ${{ steps.p.outputs.seeds }}
+      sizes: ${{ steps.p.outputs.sizes }}
+      ref: ${{ steps.p.outputs.ref }}
+    steps:
+      - id: p
+        env:
+          EVENT: ${{ github.event_name }}
+          IN_REF: ${{ inputs.ref }}
+          IN_SEEDS: ${{ inputs.seeds }}
+          IN_SIZES: ${{ inputs.sizes }}
+        run: |
+          ref=claude/elegant-johnson-m6k00u; seeds=1; sizes=p,l; go=true
+          if [ "$EVENT" = schedule ]; then
+            [ "$(TZ=Europe/London date +%H)" = 03 ] || go=false
+          else
+            ref="${IN_REF:-$ref}"; seeds="${IN_SEEDS:-1}"; sizes="${IN_SIZES:-p,l}"
+          fi
+          list=$(echo "$seeds" | tr -d ' ' | awk -F, '{ printf "["; for (i = 1; i <= NF; i++) if ($i ~ /^[0-9]+$/) printf "%s%s", (n++ ? "," : ""), $i; printf "]" }')
+          sz=$(echo "$sizes" | tr -d ' ' | awk -F, '{ printf "["; for (i = 1; i <= NF; i++) if ($i == "p" || $i == "l") printf "%s\"%s\"", (n++ ? "," : ""), $i; printf "]" }')
+          echo "sizes=$sz" >> "$GITHUB_OUTPUT"; echo "go=$go" >> "$GITHUB_OUTPUT"; echo "seeds=$list" >> "$GITHUB_OUTPUT"; echo "ref=$ref" >> "$GITHUB_OUTPUT"
+
+  walk:
+    needs: plan
+    if: needs.plan.outputs.go == 'true' && needs.plan.outputs.seeds != '[]' && needs.plan.outputs.sizes != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        seed: ${{ fromJSON(needs.plan.outputs.seeds) }}
+        size: ${{ fromJSON(needs.plan.outputs.sizes) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.plan.outputs.ref }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Cache Playwright browser
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - run: npx playwright install --with-deps chromium
+      - run: node tools/build.mjs
+      # The report, the shots and a minute-N save snapshot (for the panel's second leg) go in the artifact.
+      - name: Walk the first hour
+        run: node tools/walk.mjs --seed "${{ matrix.seed }}" --size "${{ matrix.size }}" --minutes 60 --clock-budget 30 --out walk-out --snapshot
+      - name: Summary
+        if: always()
+        run: |
+          for f in walk-out/walk-*.md; do [ -f "$f" ] && sed -n '1,/^## Beats against the map/p' "$f" | sed '$d' >> "$GITHUB_STEP_SUMMARY"; done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: walk-seed-${{ matrix.seed }}-${{ matrix.size }}
+          path: walk-out/
+          retention-days: 30

@@ -56,7 +56,7 @@ const ONLY = (process.argv.find(a => a.startsWith('--only=')) || '').slice(7);
 const SHARD = (m => (m ? [+m[1], +m[2]] : null))(/--shard=(\d+)\/(\d+)/.exec(process.argv.join(' ')));
 const JOBS = SHARD ? 1 : +((process.argv.find(a => a.startsWith('--jobs=')) || '').slice(7)) || (ONLY ? 1 : Math.min(4, os.cpus().length));
 // Seconds a section takes (measured, W2-B): the shards are balanced by these; a section not listed counts 2.
-const WEIGHT = { 'LF_EYES hook (browser, qa-player-eyes)': 12, 'landscape 740x360 (browser, UX-L1)': 42, 'landscape 844x390 (browser, UX-L1)': 38, 'landscape 1280x720 (browser, UX-L1)': 38, 'solo copy (browser, W1-C)': 60, 'W1-D (browser)': 100, 'training (W2-A, browser)': 18, 'cb2': 40, 'notices (browser, W1-B)': 34, 'solo guide: gathering never freezes (browser)': 31, 'solo hero (browser)': 21, 'types and statuses (S1)': 14, 'save codes': 13, 'combat': 8, 'gatherers UI (browser)': 7, 'gathering': 6, 'nav': 6, 'retool': 6, 'onboarding hint placement (HINT1)': 5, 'camp trade and import (C4, browser)': 15 };
+const WEIGHT = { 'first-hour walk (browser, qa-first-hour-walk)': 25, 'LF_EYES hook (browser, qa-player-eyes)': 12, 'landscape 740x360 (browser, UX-L1)': 42, 'landscape 844x390 (browser, UX-L1)': 38, 'landscape 1280x720 (browser, UX-L1)': 38, 'solo copy (browser, W1-C)': 60, 'W1-D (browser)': 100, 'training (W2-A, browser)': 18, 'cb2': 40, 'notices (browser, W1-B)': 34, 'solo guide: gathering never freezes (browser)': 31, 'solo hero (browser)': 21, 'types and statuses (S1)': 14, 'save codes': 13, 'combat': 8, 'gatherers UI (browser)': 7, 'gathering': 6, 'nav': 6, 'retool': 6, 'onboarding hint placement (HINT1)': 5, 'camp trade and import (C4, browser)': 15 };
 const shardLoad = SHARD ? Array(SHARD[1]).fill(0) : null;
 function section(name) {
   if ((ONLY && !new RegExp(ONLY, 'i').test(name))) return false;
@@ -9403,6 +9403,32 @@ if (section('LF_EYES hook (browser, qa-player-eyes)')) try {
   }
 } catch (e) { fail('LF_EYES hook (browser) crashed: ' + (e.stack || e)); }
 // ==== end qa-player-eyes ====
+// ==== qa-first-hour-walk: tools/walk.mjs plays the first minutes, writes its report and one scorecard row ====
+if (section('first-hour walk (browser, qa-first-hour-walk)')) try {
+  const { spawnSync } = await import('node:child_process'), walk = path.join(ROOT, 'tools', 'walk.mjs');
+  const bad = spawnSync(process.execPath, [walk, '--bogus'], { encoding: 'utf8' });
+  assert(bad.status === 2 && /unknown option/.test(bad.stderr), 'walk.mjs refuses an option it does not know (exit 2)');
+  const src = fs.readFileSync(walk, 'utf8').replace(/\/\/.*$/gm, '');
+  assert(!/\bS\s*(\.|\[)[^=;]*[^=!<>]=[^=]/.test(src.replace(/`[^`]*`/g, '')) && !/__t\.x\(`[^`]*=\s*[^=]/.test(src), 'the walk only reads game state through eval (no assignments)');
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('first-hour walk (browser): Playwright or Chromium not here, skipped');
+  else {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lf-walk-')), sc = path.join(dir, 'scorecard.md');
+    const run = () => spawnSync(process.execPath, [walk, '--minutes', '0.3', '--out', dir, '--date', '2000-01-01', '--scorecard', sc, '--quiet'], { encoding: 'utf8', timeout: 120000 });
+    let r = run();
+    assert(r.status === 0, 'a short walk exits 0 (report only)' + (r.status ? ': ' + (r.stderr || r.stdout).slice(0, 200) : ''));
+    const md = fs.existsSync(path.join(dir, 'walk-2000-01-01.md')) ? fs.readFileSync(path.join(dir, 'walk-2000-01-01.md'), 'utf8') : '';
+    assert(/## Scorecard/.test(md) && /## Beats against the map/.test(md) && /## Timeline/.test(md), 'the report has its scorecard, beats and timeline');
+    const js = fs.existsSync(path.join(dir, 'walk-2000-01-01.json')) ? JSON.parse(fs.readFileSync(path.join(dir, 'walk-2000-01-01.json'), 'utf8')) : {};
+    assert(['F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F10', 'P4'].every(k => js.scorecard && js.scorecard[k] && typeof js.scorecard[k].pass === 'boolean'), 'the json carries F1-F6, F10 and P4');
+    assert(js.log && js.log.some(e => e.kind === 'tip' || e.kind === 'card'), 'the walk logged what appeared on screen');
+    run();
+    const rows = fs.readFileSync(sc, 'utf8').split('\n').filter(l => l.startsWith('| 2000-01-01 |'));
+    assert(rows.length === 1, 'the same run twice keeps one scorecard row (' + rows.length + ')');
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+} catch (e) { fail('first-hour walk crashed: ' + (e.stack || e)); }
+// ==== end qa-first-hour-walk ====
 // ---- fight HUD fit (fight-hud-fit): names whole, banner and toasts never on top of each other ----
 if (section('fight HUD fit')) try {
   const { pw, exe } = browserTools;
