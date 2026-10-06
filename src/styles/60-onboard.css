@@ -6,26 +6,28 @@
 .ob-ring.dot { border-radius: 50%; border-width: 3px; }
 .ob-ring.still { animation: none; }
 @keyframes obPulse { 50% { box-shadow: 0 0 0 2px #0B0810, 0 0 22px rgba(242,193,78,.9); border-color: #FFF3C4; } }
-/* HINT1: the hint bubble docks to a fixed band (never tracks the target pixel by pixel), so it
-   cannot cover the node/foe it points at and never jumps as the stage or a menu animates. It is
-   parented and positioned exactly like the toasts it sits beside (placeToasts, 70-ui.js): inside
-   #stageBox, just under the HUD, on the game view; inside #app, just above the tab bar, over a
-   menu. --toast-h (70-ui.js) pushes it clear of however many toasts are currently stacked there. */
-.ob-bub { position: absolute; left: 6px; right: 6px; max-width: 480px; margin: 0 auto;
-  top: calc(62px + var(--toast-h, 0px)); z-index: 8; pointer-events: none;
-  display: flex; align-items: center; gap: 6px; padding: 8px 4px 8px 12px; min-height: 44px;
-  background: #1A1422F2; border: 2px solid var(--gold); box-shadow: 0 3px 0 #0B0810, 0 8px 22px rgba(0,0,0,.55);
-  font: 600 14px/1.3 var(--body); color: var(--bone); transition: transform .18s ease, opacity .18s ease; }
+/* The guide panel (75-onboard-ui.js place()): Old Hesketh's face, the tip, the button on its own row. It is a notice, so it
+   docks where notices dock and never sits over the stage. Three homes, one per mode class:
+   .dock      portrait game view: a slot in .game just above the Act / Skills / Foe bar (the stage gives up the height)
+   .over-menu portrait with a menu open: the bottom of the menu panel, above the tab bar (and above any toast)
+   .side      landscape: the side column's notices slot (80-landscape.css) */
+.ob-bub { position: relative; order: 2; flex: none; margin: 4px var(--gut) 0; z-index: 8;
+  display: grid; grid-template-columns: 48px minmax(0, 1fr) 36px; grid-template-rows: auto auto; column-gap: 8px; align-items: start;
+  padding: 8px 2px 8px 8px; background: #1A1422; border: 2px solid var(--gold); box-shadow: 0 3px 0 #0B0810;
+  font: 600 14px/1.3 var(--body); color: var(--bone); }
 .ob-bub[hidden] { display: none; }
-.ob-bub.over-menu { left: var(--gut); right: var(--gut); top: auto; bottom: calc(var(--tabs-h) + env(safe-area-inset-bottom, 0px) + 8px + var(--toast-h, 0px)); }
+.ob-bub.over-menu { position: absolute; left: var(--gut); right: var(--gut); margin: 0; bottom: calc(var(--tabs-h) + env(safe-area-inset-bottom, 0px) + 8px + var(--toast-h, 0px)); box-shadow: 0 3px 0 #0B0810, 0 8px 22px rgba(0,0,0,.55); }
 .ob-bub.pop { animation: obIn .22s ease-out; }
-@keyframes obIn { from { opacity: 0; margin-top: 6px; } }
-.ob-txt { flex: 1; min-width: 0; }
-.ob-x { pointer-events: auto; flex: none; width: 36px; height: 36px; background: none; border: 0; color: var(--muted); font: 600 calc(20px * var(--display-k))/1 var(--display); cursor: pointer; }
+@keyframes obIn { from { opacity: 0; transform: translateY(6px); } }
+.ob-facebox { grid-column: 1; grid-row: 1 / span 2; width: 48px; height: 48px; display: grid; place-items: center; background: #0E0B12; border: 2px solid #0B0810; outline: 1px solid var(--line-hi); }
+.ob-face { width: 48px; height: 48px; display: block; image-rendering: pixelated; }
+.ob-facebox.blank .ob-face { display: none; }
+.ob-facebox.blank::after { content: 'H'; font: 600 20px/1 var(--display); color: var(--gold); }
+.ob-txt { grid-column: 2; grid-row: 1; min-width: 0; align-self: center; overflow-wrap: break-word; }
+.ob-ok { grid-column: 2; grid-row: 2; justify-self: start; margin-top: 6px; min-height: 44px; padding: 0 16px; pointer-events: auto; cursor: pointer; background: var(--gold); border: 2px solid #0B0810; color: #1A1420; font: 600 calc(15px * var(--display-k)) var(--display); }
+.ob-ok[hidden] { display: none; }
+.ob-x { pointer-events: auto; grid-column: 3; grid-row: 1; align-self: start; width: 36px; height: 36px; background: none; border: 0; color: var(--muted); font: 600 calc(20px * var(--display-k))/1 var(--display); cursor: pointer; }
 .ob-x:hover, .ob-x:focus-visible { color: var(--bone); }
-/* the arrow: a small up/down pointer toward the target, not a precise line to it */
-.ob-arrow { position: absolute; left: 50%; top: -8px; width: 12px; height: 12px; margin-left: -6px; background: #1A1422; border-left: 2px solid var(--gold); border-top: 2px solid var(--gold); transform: rotate(45deg); }
-.ob-bub.up .ob-arrow { top: auto; bottom: -8px; transform: rotate(225deg); }
 /* locked sections (registerSection feature) */
 .sec.f-off { display: none !important; }
 /* new tab / new view: a gold mark until first opened */
@@ -36,4 +38,4 @@
 .ob-trow { display: flex; align-items: center; gap: 10px; justify-content: space-between; }
 .ob-trow .note { margin: 6px 0; }
 .ob-tbtn { flex: none; min-height: 44px; padding: 0 12px; background: var(--panel-2); border: 2px solid #0B0810; color: var(--bone); font: 600 calc(13px * var(--display-k)) var(--display); cursor: pointer; }
-@media (prefers-reduced-motion: reduce) { .ob-ring { animation: none; transition: none; } .ob-bub { transition: none; } .ob-bub.pop { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .ob-ring { animation: none; transition: none; } .ob-bub.pop { animation: none; } }

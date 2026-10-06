@@ -90,13 +90,24 @@
   layer.append(ring);
   layer.hidden = true;
   document.body.append(layer);
+  // The guide panel: Old Hesketh's face on the left, the tip beside it, the Got it / Go button on its own row
+  // under the text, a small dismiss in the corner. It is a notice, not a control (docs/design/layout.md), so
+  // it docks where notices dock and never sits over the stage (place()).
   const bub = el('div', 'ob-bub'); bub.setAttribute('role', 'note'); bub.hidden = true;
-  const arrow = el('i', 'ob-arrow');
+  const face = el('img', 'ob-face px'); face.alt = ''; face.width = 48; face.height = 48;
+  const faceBox = el('span', 'ob-facebox'); faceBox.setAttribute('aria-hidden', 'true'); faceBox.append(face);
+  let faceKey = '';
+  const faceUp = () => {   // Hesketh's roster portrait; a plain slot with his initial until it bakes
+    let u = ''; try { u = typeof portraitURL === 'function' ? portraitURL('hesketh') : ''; } catch (e) { u = ''; }
+    if (u === faceKey) return; faceKey = u;
+    if (u) face.src = u; else face.removeAttribute('src');
+    putToggle(faceBox, 'blank', !u);
+  };
   const txt = el('span', 'ob-txt');
   const x = el('button', 'ob-x'); x.type = 'button'; x.setAttribute('aria-label', 'Dismiss this tip'); x.textContent = '×';
   // SOLO1: a step whose action is reading it (the first boss) has a Got it button
   const okb = el('button', 'ob-ok'); okb.type = 'button'; okb.textContent = 'Got it'; okb.hidden = true;
-  bub.append(arrow, txt, okb, x);
+  bub.append(faceBox, txt, x, okb);
   // A waiting step may carry a Go button (spec.go): it takes the hero to the node that yields what the step needs.
   let curGo = null;
   const finish = s => s.id.startsWith('use:') ? onboardUseDone(s.id) : onboardDone(s.id);   // a first-use line is read, not a guide step
@@ -205,7 +216,7 @@
   const USE_SHOWN_MS = 7000;   // a first-use line counts as read after this long on screen
   const BLOCK = '.create, .away-ov, .bsheet-ov, .modal, .dw-ov';
   let lastKey = '', useT0 = 0;
-  function hide() { useT0 = 0; if (!layer.hidden) layer.hidden = true; if (!bub.hidden) bub.hidden = true; cur = null; curGo = null; lastKey = ''; lastNode = null; lastRect = null; ONBOARD.paused = false; }
+  function hide() { useT0 = 0; if (!layer.hidden) layer.hidden = true; if (!bub.hidden) bub.hidden = true; cur = null; curGo = null; lastKey = ''; lastNode = null; lastRect = null; ONBOARD.paused = false; const ap = $('app'); ap.classList.remove('guide-side', 'guide-nu'); }
   // The hint used to re-read the target's pixel position and re-place itself every 250ms, so it
   // jumped whenever the stage moved under it (camera/zoom, screen shake, a pack spawning) even
   // though nothing about the guide itself had changed. Stage targets keep that cached placement.
@@ -261,7 +272,7 @@
     // scroll or reflow only moves the ring, so following it never pulls the player back.
     if (inPanel && !spec.noRing && (newTarget || reveal)) {
       const pr = panels.getBoundingClientRect();
-      if (r.height && (r.top < pr.top || r.bottom > pr.bottom - 56)) {
+      if (r.height && (r.top < pr.top || r.bottom > pr.bottom - (bub.classList.contains('over-menu') ? bub.offsetHeight + 12 : 56))) {
         scrollMenuTo(spec.node);
         r = spec.node.getBoundingClientRect();
       }
@@ -279,15 +290,17 @@
       putStyle(ring, 'transform', `translate(${Math.round(rx)}px, ${Math.round(ry)}px)`);
       putStyle(ring, 'width', Math.round(rw) + 'px'); putStyle(ring, 'height', Math.round(rh) + 'px');
     }
-    // the sentence: docked exactly where placeToasts docks toasts (70-ui.js) - inside #stageBox on
-    // the game view, inside #app over a menu - so it reads as one system with the toast stack and
-    // the two never overlap (60-onboard.css .ob-bub, --toast-h). Only the parent and the arrow's
-    // up/down direction ever change; the CSS position within that parent is fixed.
-    const over = !!S.tab;   // UX-L1: in landscape it docks at the bottom of the menu panel (80-landscape.css)
-    const home = over ? $('app') : $('stageBox');
+    // the panel docks where notices dock and never over the stage: landscape, the side column (its notices slot;
+    // it stands in for Next Up while it speaks, except for the Next Up step itself, which points at the chip);
+    // portrait, a slot in the game view just above the Act / Skills / Foe bar (the stage gives up the height);
+    // over a menu, the bottom of the menu panel. Only the parent and a mode class ever change.
+    const wide = isWide(), mode = wide ? 'side' : S.tab ? 'over-menu' : 'dock';
+    const home = mode === 'dock' ? $('game') : $('app');
     if (bub.parentNode !== home) home.append(bub);
-    bub.classList.toggle('over-menu', over);
-    bub.classList.toggle('up', !!spec.node.closest('.tabs'));   // the tab bar sits below the band
+    for (const m of ['side', 'over-menu', 'dock']) bub.classList.toggle(m, m === mode);
+    bub.classList.toggle('nu', mode === 'side' && spec.node === chip);
+    putToggle($('app'), 'guide-side', mode === 'side'); putToggle($('app'), 'guide-nu', mode === 'side' && spec.node === chip);
+    faceUp();
   }
   setInterval(tick, 250);
   panels.addEventListener('scroll', () => { panelScrolled = true; tick(); }, { passive: true });

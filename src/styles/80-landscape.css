@@ -116,9 +116,15 @@
   .menu-head:has(.vseg:not([hidden])) .menu-title { display: none; }
   .menu-head:has(.vseg[hidden]) .menu-bar { flex: 1; padding-left: var(--gut); }
   .panels { padding: 10px 10px 20px; }
-  .ob-bub.over-menu { position: absolute; grid-column: 2 / 4; grid-row: 2 / 5; left: auto; right: 8px; top: auto; bottom: 8px;
-    width: calc(min(560px, max(320px, 100% - 120px)) - 18px); }
-  .ob-bub:not(.over-menu) { top: 56px; }
+  /* the guide panel: in the side column's notices slot, under the top row. It stands in for Next Up while it speaks (the chip
+     keeps its place, hidden), except for the Next Up step, where it takes the notices row under the chip it points at. */
+  .ob-bub.side { grid-column: 4 / -1; grid-row: 2 / 4; align-self: start; margin: 6px 6px 0 7px; z-index: 7; max-height: calc(100% - 6px); overflow: hidden;
+    grid-template-columns: 40px minmax(0, 1fr) 30px; column-gap: 6px; padding: 6px 0 6px 6px; font-size: 13px; line-height: 1.25; }
+  .ob-bub.side.nu { grid-row: 3; align-self: end; margin-bottom: 4px; }
+  .ob-bub.side .ob-facebox, .ob-bub.side .ob-face { width: 40px; height: 40px; }
+  .ob-bub.side .ob-x { width: 30px; height: 30px; }
+  .ob-bub.side .ob-ok { margin-top: 4px; }
+  .app.guide-side:not(.guide-nu) .nu-slot, .app.guide-side .toasts.side-dock { visibility: hidden; }
 
   /* ---- sheets fit a short screen ---- */
   .sp-ov { align-items: center; }
