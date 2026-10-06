@@ -169,6 +169,42 @@ img[src*="#nic:"] { image-rendering: auto; }   /* a gear icon set by code that d
 /* the turn banner owns the middle of the stage while it shows; toasts and the strip wait out its short pause */
 .stagebox.tc-on .toasts { opacity: 0; transition: opacity .1s; }
 .stagebox.vs-on .toasts:not(.over-menu) { top: calc(var(--vs-b, 54px) + 22px); }   /* under the bars and the place line, not over them */
+
+/* Portrait top band (top-bar-compact): under the header zone bar, ONE line holds the activity switch (Fight / Gather, the zone arrows)
+   and Next Up side by side, instead of three stacked rows. The permanent "While away" sentence is gone (the away card and the
+   away chip say it); Switch lives in the header pill, so it leaves this row. The stage keeps the space. Landscape has its own grid. */
+@media not ((min-aspect-ratio: 1/1) and (min-width: 600px)) {
+  .app .game { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr) auto; }
+  .app .game > .ctrl { grid-column: 1; grid-row: 1; flex-wrap: nowrap; justify-content: flex-start; gap: 2px; padding: 4px 0 4px var(--gut); }
+  .app .game > .nu-slot { grid-column: 2; grid-row: 1; min-width: 0; padding: 4px var(--gut) 4px 8px; align-self: center; }
+  .app .game > .gate-rule { grid-column: 1 / -1; grid-row: 2; margin: 0 var(--gut); }
+  .app .game > .dw-row { grid-column: 1 / -1; grid-row: 2; }
+  .app .game > .stagebox { grid-column: 1 / -1; grid-row: 3; }
+  .app .game > .sbar { grid-column: 1 / -1; grid-row: 4; }
+  .app .game .ctrl-switch { display: none; }
+  .app .game .modeseg button { min-width: 0; padding: 0 7px; min-height: 36px; font-size: calc(12px * var(--display-k)); }
+  .app .game .modeseg .mode-ic { display: none; }
+  .top .zstep { display: contents; }
+  .top .zstep[hidden] { display: none; }
+  .top .zstep .znum { display: none; }   /* the zone pill says the zone */
+  .top .navbtn { width: 28px; height: 44px; isolation: isolate; }
+  .app.deep-run .top .zstep { display: none; }   /* a Deepwell run has floors, not zones to step */
+  .top .navbtn::after { inset: 8px 2px; }
+  .top.nav-pill .who { gap: 0; }
+  .top.nav-pill .act-pill { padding: 0 6px 0 6px; gap: 5px; }
+  .top.nav-pill .act-pill .ap-chev { display: none; }
+  .top #zPrev { order: -1; }
+  .top #zNext { order: 2; }
+  .app .game .nu-chip { min-height: 44px; grid-template-columns: minmax(0, 1fr) auto auto; grid-template-rows: auto auto; gap: 2px 6px; padding: 4px 6px 6px 6px; }
+  .app .game .nu-chip .nu-ic { display: none; }   /* the width goes to the goal's words */
+  .app .game .nu-chip .nu-cbody { display: contents; }
+  .app .game .nu-chip .nu-eye { grid-column: 1; grid-row: 1; align-self: center; white-space: nowrap; min-width: 0; overflow: hidden; font-size: 9px; letter-spacing: .08em; }
+  .app .game .nu-chip .nu-cst { grid-column: 2; grid-row: 1; }
+  .app .game .nu-chip .nu-more { grid-column: 3; grid-row: 1; }
+  .app .game .nu-chip .nu-lbl { grid-column: 1 / -1; grid-row: 2; font-size: 12.5px; }
+  .app .game .nu-chip .nu-chev { display: none; }
+  @media (max-width: 340px) { .top.nav-pill .act-pill .ap-ic { display: none; } }
+}
 /* tab bar: fixed to the bottom of the app, in thumb reach; the lit edge marks the open tab */
 .tabs { grid-area: tabs; display: grid; grid-template-columns: repeat(5, 1fr); padding: 0 6px env(safe-area-inset-bottom, 0px); background: #17111E; border-top: 2px solid var(--line); box-shadow: 0 -3px 0 #0B0810; position: relative; z-index: 6; }
 .tab { min-height: 54px; background: none; border: 0; padding: 7px 2px 6px; cursor: pointer; font: 600 calc(12.5px * var(--display-k))/1.1 var(--display); color: var(--muted); border-top: 3px solid transparent; margin-top: -2px; display: grid; justify-items: center; align-content: center; gap: 3px; position: relative; }
@@ -1842,7 +1878,7 @@ span.cf-d { font-weight: 600; }
 .nu-chip .nu-ic img { width: 20px; height: 20px; }
 .nu-cbody { min-width: 0; display: grid; gap: 1px; }
 .nu-eye { font: 600 10px/1.1 var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
-.nu-chip .nu-lbl { font: 500 13.5px/1.2 var(--body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+.nu-chip .nu-lbl { font: 500 13.5px/1.2 var(--body); white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; display: block; }   /* the whole goal, on as many lines as it takes (top-bar-compact) */
 .nu-cst { font: 600 calc(13px * var(--display-k))/1 var(--display); color: var(--gold); font-variant-numeric: tabular-nums; }
 .nu-more { font: 600 calc(11px * var(--display-k))/1 var(--display); padding: 3px 5px; background: var(--panel-2); border: 1px solid var(--line-hi); color: var(--muted); }
 .nu-more:empty { display: none; }
@@ -3133,7 +3169,7 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
   .nu-chip .nu-eye { grid-column: 2; grid-row: 1; align-self: center; }
   .nu-chip .nu-cst { grid-column: 3; grid-row: 1; }
   .nu-chip .nu-more { grid-column: 4; grid-row: 1; }
-  .nu-chip .nu-lbl { grid-column: 1 / -1; grid-row: 2; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; font-size: 13px; line-height: 1.2; }
+  .nu-chip .nu-lbl { grid-column: 1 / -1; grid-row: 2; white-space: normal; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; font-size: 13px; line-height: 1.2; }
   .nu-chip .nu-chev { display: none; }
   /* the dock in the side column: tabs, four tiles in a row (icons only; the names show on tall screens), Parry and Dodge under them */
   .sbar, .game.solo-game > .sbar { --sb-tile: 58px; --sb-ic: 24px; grid-column: 4 / -1; grid-row: 4; align-self: end; padding: 4px 6px calc(6px + env(safe-area-inset-bottom, 0px)) 7px; gap: 5px; }
@@ -25114,7 +25150,11 @@ function turnChoose(m) {
 }
 function turnCombatSample({ profile: p, seconds, seed = 1, skill = { parry: 0.5, dodge: 0.7, perfect: 0.35, good: 0.5 }, fights = 0 }) {
   if (!p || !(seconds > 0)) return null;
-  let x = (seed | 0) || 1;
+  // each fight draws from its own stream, seeded from (seed, fight index) through murmur3's finaliser: one LCG stream run
+  // across a long fight chain correlates the fights (judge 2026-10-06: one seed read 13-32% where independent fights read 53-67%)
+  let x = 1, fightN = 0;
+  // the first fight keeps the caller's seed as is, so a one-fight call (the budget's boss fights, each on its own hashed seed) is unchanged
+  const reseed = () => { if (!fightN++) { x = (seed | 0) || 1; return; } let h = Math.imul((seed | 0) ^ Math.imul(fightN, 0x9E3779B1), 0x85EBCA6B); h ^= h >>> 13; h = Math.imul(h, 0xC2B2AE35); h ^= h >>> 16; x = h | 0 || 1; };
   const roll = () => ((x = (Math.imul(x, 1664525) + 1013904223) | 0) >>> 0) / 4294967296;
   const out = { seconds, kills: 0, deaths: 0, generatedEss: 0, damageDone: 0, damageTaken: 0, foeHits: 0, parries: 0, dodges: 0,
     completedFights: 0, totalHeroTurns: 0, totalFightSeconds: 0 };
@@ -25124,7 +25164,7 @@ function turnCombatSample({ profile: p, seconds, seed = 1, skill = { parry: 0.5,
     damageFoe: d => { foeHp -= d; out.damageDone += d; return d; },
     damageHero: d => { heroHp -= d; out.damageTaken += d; if (d > 0) out.foeHits++; return d; },
     healHero: d => { heroHp = Math.min(p.heroMaxHp, heroHp + d); }, healFoe: d => { foeHp = Math.min(p.foeMaxHp, foeHp + d); }, defense: (k, ok) => { if (ok) out[k === 'parry' ? 'parries' : 'dodges']++; } };
-  const start = () => { foeHp = p.foeMaxHp; if (p.fullHp) heroHp = p.heroMaxHp; m = turnNew(p, io); plan = ''; };   // a zone boss is met at full health, as in play
+  const start = () => { reseed(); tplan = null; foeHp = p.foeMaxHp; if (p.fullHp) heroHp = p.heroMaxHp; m = turnNew(p, io); plan = ''; };   // a zone boss is met at full health, as in play
   start();
   const step = 0.05;
   for (let t = 0; t < seconds; t += step) {
@@ -26326,7 +26366,7 @@ let T = 0;
 // edge, camera-free; hx the hero's feet x (camera-free), hy its ground line, hl its lane, hd down, hf the
 // frame drawn last, hX/hY where it was drawn). 63d-scenery-camp: the cold Hearth; 64-looks chains it (auras, critters).
 let stageDeco = null;
-let resize, animate, draw, stageStats, warmScene;
+let resize, animate, draw, stageStats, stageRects, warmScene;
 {
   const A = ANIM;
   // ================= visual state (driven by core events) =================
@@ -28338,6 +28378,11 @@ let resize, animate, draw, stageStats, warmScene;
   addEventListener('scroll', () => { stageRect = null; }, { capture: true, passive: true });
 
   new ResizeObserver(() => { resize(); stageRect = stageEl.getBoundingClientRect(); }).observe(stageEl);
+  // The eyes hook (89-eyes-hook.js, tools/eyes.mjs): where the hero and the foes were last drawn, in stage px (times ZM = CSS px
+  // from the canvas's top-left), the frame canvas each was drawn from and the big floating texts alive. Read only.
+  stageRects = () => ({ ZM, SW, SH, hero: hero._f && !hero.down ? { x: hero._x, y: hero._y, c: hero._f.c } : null,
+    foes: slots.slice(0, packN).filter(s => s.fr && s.dX != null && s.m && !s.m.dead).map(s => ({ key: s.key, boss: !!s.m.boss, x: s.dX, y: s.dY, c: (s.dF || s.fr.idle0).c })),
+    floats: floats.filter(f => f.on).map(f => ({ txt: f.txt, big: f.big, crit: f.crit, left: Math.max(0, f.life) })) });
   stageStats = () => ({ critFloats, critLive: floats.filter(f => f.on && f.crit).map(f => ({ txt: f.txt, color: f.color, life: f.max })), drawMs: Math.round(drawMs * 100) / 100, SW, SH, CW, CH, ZM, DPR, GY, hudB: Math.round(hudB), tall, actors: order.length, foes: slots.slice(0, packN).map(s => s.fr ? [s.key, s.x, s.gy, s.w, s.h, s.fr.idle0.ox, leftEdge(s.fr.idle0)] : null), front: order.map(a => [a.key, a.hx, a.hy]), bake: bakeStats(), idle: ART.idleStats ? ART.idleStats() : null });
 }
 
@@ -33026,24 +33071,25 @@ $('zPrev').addEventListener('click', () => { if (S.zone > 1) { setZone(S.zone - 
 $('zNext').addEventListener('click', () => { if (S.zone < S.maxZone) { setZone(S.zone + 1); ui(true); } });
 document.querySelectorAll('#modeSeg button').forEach(b => b.addEventListener('click', () => { if (b.dataset.act === 'fight') goFight(); else setActivity(b.dataset.act); }));   // Fight: straight to the live fight (70-ui goFight)
 
+// Portrait: the zone arrows move up beside the header's zone pill (the zone bar), so the line under the header can hold the
+// Fight / Gather switch and Next Up together (top-bar-compact). Landscape keeps them in its top row (80-landscape).
+{
+  const step = $('zStep'), home = step.parentElement;
+  const placeStepper = () => {
+    const to = isWide() ? home : document.querySelector('.top .who') || home;
+    if (step.parentElement !== to) to.append(step);
+  };
+  placeStepper();
+  wideMQ.addEventListener('change', placeStepper);
+}
+
 // Static nodes, looked up once. Every write goes through the put* guards (70-ui.js): 5 calls a
 // second, and an unchanged value must not make the browser lay the page out again.
 const gateEl = { title: $('gateTitle').querySelector('.gt-t'), desc: $('gateDesc'), btn: $('gateBtn'), q: $('gateBtn').querySelector('.qty'), p: $('gateBtn').querySelector('.price') };
 // The away card says the same line (75-away.js): the trade-off is told before you leave, not after.
 const AWAY_RULE_TXT = 'While away, gathering continues and fighting stops. Set your hero to gather before you go.';
-let gateRule = null;
-function uiGateRule() {
-  // Only where the Gather button is on offer: not before the first boss (onboarding hides it) or in a Deepwell run (the row is hidden).
-  const seg = $('modeSeg'), gb = seg.querySelector('button[data-act="gather"]');
-  const on = S.activity === 'fight' && !gb.hidden && seg.style.visibility !== 'hidden' && !$('game').closest('.app').classList.contains('deep-run') && isUnlocked('awaynote');   // its own beat (55-onboard FEATURES)
-  if (!gateRule) {
-    if (!on) return;
-    gateRule = el('p', 'away-rule gate-rule'); gateRule.append(img(iconURL('glass', '#F2E27A')), el('span', null, AWAY_RULE_TXT));
-    $('modeSeg').parentElement.after(gateRule);   // under the Fight / Gather row, where the player picks what the hero does
-  }
-  putToggle(gateRule, 'hide', !on);
-}
-uiHooks.push(uiGateRule);
+// The permanent "While away" strip on the Fight view is gone (top-bar-compact): the away chip below speaks while gathering, on the away note's beat, and the away card says the rule.
+
 // Away chip: what leaving now would earn, told while you gather (the notice above covers a fighter).
 // Estimate from the same rates awayBase uses (50-sim.js), held to the Storehouse room unless Spillover moves on.
 let awayChip = null, awayChipTxt = '';
@@ -33061,7 +33107,7 @@ function awayChipText() {
 }
 function uiAwayChip() {
   const seg = $('modeSeg'), gb = seg.querySelector('button[data-act="gather"]');
-  const txt = gb.hidden || seg.style.visibility === 'hidden' || $('game').closest('.app').classList.contains('deep-run') ? '' : awayChipText();
+  const txt = gb.hidden || seg.style.visibility === 'hidden' || $('game').closest('.app').classList.contains('deep-run') || !isUnlocked('awaynote') ? '' : awayChipText();   // the away note's own beat (55-onboard FEATURES)
   if (!awayChip) {
     if (!txt) return;
     awayChip = el('p', 'away-rule gate-rule away-chip'); awayChip.append(img(iconURL('coin', '#F2C14E')), el('span'));
@@ -42528,6 +42574,100 @@ async function connect() {
 }
 
 on('activity', () => pushPresence());
+
+// ---- src/js/89-eyes-hook.js ----
+// 89-eyes-hook: LF_EYES, what a player sees, for tools/eyes.mjs (qa-player-eyes). BROWSER FILE, read only.
+// It changes no state, adds no timers and keeps no save field. The one thing it touches is SFX.play (76-audio): it is
+// wrapped to log the name of each sound the game asks for, then calls the original unchanged.
+//
+//   LF_EYES.rects()  -> { stage, hero, foe, boss, foes, heroHp, foeHp, tip, ring }  boxes { x, y, w, h } in CSS px of the page
+//                       (null when not on screen). hero / foe / boss are the drawn sprite's opaque bounds on the stage canvas,
+//                       heroHp / foeHp the two HP plates, tip the guide's sentence band, ring its marker.
+//   LF_EYES.phase()  -> 'idle' | 'player turn' | 'foe wind-up' | 'parry or dodge window'
+//   LF_EYES.tip()    -> { action, text, target, button } | null   the guide hint on screen: its step id, sentence, marker box,
+//                       and the action bar button it names ({ sel, hidden, greyed }, null for a step that names none)
+//   LF_EYES.sfx()    -> [{ name, prio }]   sounds asked for since the last call (the list is then cleared)
+//   LF_EYES.floats() -> [{ txt, big, crit, left }]   the stage's floating texts still alive
+//   LF_EYES.info()   -> { v, zoom, w, h }   page size and the stage zoom
+{
+  const box = (x, y, w, h) => ({ x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10, w: Math.round(w * 10) / 10, h: Math.round(h * 10) / 10 });
+  const shown = n => !!(n && !n.hidden && n.getClientRects().length);
+  const domBox = n => { if (!shown(n)) return null; const r = n.getBoundingClientRect(); return r.width > 0 && r.height > 0 ? box(r.left, r.top, r.width, r.height) : null; };
+  const one = sel => domBox(document.querySelector(sel));
+
+  // The opaque part of a frame canvas (alpha > 40, as 62-stage measures edges): left, top, right, bottom in canvas px.
+  const bounds = new WeakMap();
+  function opaque(c) {
+    let b = bounds.get(c);
+    if (b !== undefined) return b;
+    b = { l: 0, t: 0, r: c.width, b: c.height };
+    try {
+      const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data, W = c.width, H = c.height;
+      let l = W, t = H, r = -1, bt = -1;
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (d[(y * W + x) * 4 + 3] > 40) { if (x < l) l = x; if (x > r) r = x; if (y < t) t = y; bt = y; }
+      if (r >= 0) b = { l, t, r: r + 1, b: bt + 1 };
+    } catch (e) { /* a tainted or pending canvas: the whole frame */ }
+    if (!c._pend) bounds.set(c, b);
+    return b;
+  }
+
+  const sfxLog = [];
+  if (typeof SFX === 'object' && SFX && typeof SFX.play === 'function') {
+    const play = SFX.play;
+    SFX.play = function (name, prio) { sfxLog.push({ name, prio: !!prio }); if (sfxLog.length > 200) sfxLog.shift(); return play.apply(this, arguments); };
+  }
+
+  // The action bar buttons a guide step names (75-onboard-ui SOLO_UI).
+  const BTN = { attack: '#soloBar .sb-atk', ability: '#soloBar .sb-ab0', dodge: '#soloBar .sb-dodge', parry: '#soloBar .sb-parry' };
+  const greyedBtn = n => !n || n.hidden || n.disabled || n.getAttribute('aria-disabled') === 'true' || n.classList.contains('off') || n.classList.contains('cd');
+
+  function rects() {
+    const out = { stage: null, hero: null, foe: null, boss: null, foes: [], heroHp: one('.hero-plate'), foeHp: one('.mob'), tip: one('.ob-bub'), ring: null };
+    const ring = document.querySelector('.ob-ring'), lay = document.querySelector('.ob-layer');
+    if (out.tip && ring && lay && !lay.hidden) out.ring = domBox(ring);
+    const st = document.getElementById('stage');
+    if (!st || typeof stageRects !== 'function') return out;
+    const sr = st.getBoundingClientRect(); out.stage = box(sr.left, sr.top, sr.width, sr.height);
+    let R; try { R = stageRects(); } catch (e) { return out; }
+    if (!R) return out;
+    const put = s => {
+      const o = opaque(s.c), z = R.ZM || 1;
+      return box(sr.left + (s.x + o.l) * z, sr.top + (s.y + o.t) * z, (o.r - o.l) * z, (o.b - o.t) * z);
+    };
+    if (R.hero) out.hero = put(R.hero);
+    for (const f of R.foes) { const b = Object.assign({ key: f.key, boss: f.boss }, put(f)); out.foes.push(b); if (f.boss) { if (!out.boss) out.boss = b; } else if (!out.foe) out.foe = b; }
+    return out;
+  }
+
+  function phase() {
+    let q = null;
+    try { q = typeof turnCombatOn === 'function' && turnCombatOn() ? turnCombatSnapshot() : null; } catch (e) { q = null; }
+    if (!q || q.phase === 'off') return 'idle';
+    if (q.phase === 'hero' || q.phase === 'timing') return 'player turn';
+    if (q.phase === 'foeWindup') {
+      if (!q.canDefend) return 'foe wind-up';
+      const open = Math.min(q.parryOpensAt || 1e9, q.dodgeOpensAt || 1e9);
+      return q.now >= open ? 'parry or dodge window' : 'foe wind-up';
+    }
+    return 'idle';   // intro, handoff, recovery
+  }
+
+  function tip() {
+    const bub = document.querySelector('.ob-bub'), lay = document.querySelector('.ob-layer');
+    if (!shown(bub) || !lay || lay.hidden) return null;
+    const txt = bub.querySelector('.ob-txt');
+    let action = ''; try { action = typeof soloGuideWants === 'function' ? soloGuideWants() : ''; } catch (e) { action = ''; }
+    const sel = BTN[action] || '', n = sel ? document.querySelector(sel) : null;
+    const r = rects();
+    return { action, text: txt ? txt.textContent.trim() : '', target: r.ring, button: sel ? { sel, hidden: !shown(n), greyed: greyedBtn(n) } : null };
+  }
+
+  function sfx() { return sfxLog.splice(0, sfxLog.length); }
+  function floats() { try { return typeof stageRects === 'function' ? stageRects().floats : []; } catch (e) { return []; } }
+  function info() { let z = 1; try { z = stageRects().ZM; } catch (e) { /* no stage yet */ } return { v: 1, zoom: z, w: innerWidth, h: innerHeight }; }
+
+  window.LF_EYES = Object.freeze({ rects, phase, tip, sfx, floats, info });
+}
 
 // ---- src/js/90-boot.js ----
 // 90-boot: page lifecycle, boot sequence, timers and the frame loop. Browser-only.

@@ -114,6 +114,7 @@ All JS files share one scope: top-level `const`/`function` in one file is visibl
 | 74b-ui-trade.js | browser | C4: gatherer trade cargo inputs, price review and departure; profession and stock feedback, Tavern gate and gold-only return quote |
 | **75-*.js** | browser | **feature UI** |
 | 80-online.js | browser | db/room/user capabilities (do not change without sign-off) |
+| 89-eyes-hook.js | browser | `window.LF_EYES` (read only): `rects()`, `phase()`, `tip()`, `sfx()` (wraps `SFX.play`), `floats()`, `info()`, what `tools/eyes.mjs` reads (docs/review/eyes.md). Reads `stageRects()` (62-stage) |
 | 90-boot.js | browser | boot, timers, frame loop |
 
 Core files (< 60, except 05) must not touch `document`, `window`, canvas or `localStorage`:

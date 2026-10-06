@@ -105,6 +105,8 @@ function analyse(persona, hero, d) {
   const tiers = Object.values(d.gear).filter(g => !['pick', 'axe', 'sickle'].includes(g.slot)).map(g => g.t);
   const unlocks = d.ev.filter(e => e.k === 'unlock' || e.k === 'campBuilt');
   let burst = 0; for (const u of unlocks) burst = Math.max(burst, unlocks.filter(v => v.a >= u.a && v.a < u.a + 600).length);
+  // F4 cap (qa-player-eyes): the most new things in any 3 minutes of the first 30 active minutes
+  const first30 = unlocks.filter(e => e.a < 1800); let burst3 = 0; for (const u of first30) burst3 = Math.max(burst3, first30.filter(v => v.a >= u.a && v.a < u.a + 180).length);
   const m = {
     activeMin: r2(act / 60), zoneEnd: d.end.maxZone, zoneAt1h: atHour(1), zoneAt10h: atHour(10), zonePerHour: r2(d.end.maxZone / Math.max(hours, 1 / 60)),
     levelEnd: d.end.L, firstGoalSec: clears.length ? Math.round(clears[0].a) : null, firstRewardSec: rewards.length ? Math.round(rewards[0].a) : null,
@@ -126,7 +128,7 @@ function analyse(persona, hero, d) {
     gearWorn: Object.fromEntries(Object.entries(d.gear).map(([pos, g]) => [pos, `t${g.t} r${g.r}${g.plus ? ' +' + g.plus : ''}`])),
     zoneByHour: Array.from({ length: Math.floor(hours) }, (_, i) => atHour(i + 1)),
     mechanicsByHour: Array.from({ length: Math.max(1, Math.ceil(hours)) }, (_, i) => unlocks.filter(e => e.a >= i * 3600 && e.a < (i + 1) * 3600).length),
-    gearTierMean: tiers.length ? r2(mean(tiers)) : 0, mechanicsPerHour: r2(unlocks.length / Math.max(hours, 1 / 60)), mechanicsBurst10min: burst,
+    gearTierMean: tiers.length ? r2(mean(tiers)) : 0, mechanicsPerHour: r2(unlocks.length / Math.max(hours, 1 / 60)), mechanicsBurst10min: burst, mechanicsBurst3minFirst30: burst3,
     parries: d.solo.parries, dodges: d.solo.dodges, counters: d.solo.counters, errors: d.errors
   };
   if (PERSONAS[persona].visitSec) {
@@ -223,6 +225,19 @@ function aggregate(runs) {
   return out;
 }
 
+// Absolute caps beside the tolerances (docs/design/health-baseline.json "caps", F4): how many new things a player meets at once.
+// Report only: a run over a cap is printed, never failed. A cap names a per-run metric and its maximum for a persona.
+function printCaps(runs, caps) {
+  if (!caps) return;
+  const over = [];
+  for (const [id, c] of Object.entries(caps)) {
+    if (!c || typeof c !== 'object' || !c.metric) continue;
+    for (const r of runs) { if (c.personas && !c.personas.includes(r.persona)) continue; const v = r.metrics[c.metric]; if (typeof v === 'number' && v > c.max) over.push(`${id}: ${r.persona} ${r.hero} ${v} (cap ${c.max})`); }
+  }
+  console.log('');
+  console.log(over.length ? `caps (report only): ${over.length} run(s) over a cap` : 'caps (report only): every run is inside its caps');
+  for (const o of over) console.log('  over ' + o);
+}
 function printReport(runs, agg, base) {
   const f = x => x == null ? 'n/a' : typeof x === 'number' ? String(r2(x)) : String(x);
   console.log(LONG ? 'Lanternfall long run: one hero-bot for 50 active hours; Wren, Tobin and Pip on fixed seeds, turn fights on'
@@ -335,6 +350,7 @@ const baseFile = flag('compare') && fs.existsSync(BASELINE) ? JSON.parse(fs.read
 const base = baseFile && (LONG ? baseFile.long : baseFile);   // the long run keeps its own section of the file
 if (flag('compare') && !base) { console.error('health: no ' + (LONG ? 'long-run section in ' : 'baseline at ') + 'docs/design/health-baseline.json; run with ' + (LONG ? '--long ' : '') + '--write-baseline first'); process.exit(2); }
 if (only.length) printReport(runs, agg, base);
+printCaps(runs, (base && base.caps) || (fs.existsSync(BASELINE) ? JSON.parse(fs.readFileSync(BASELINE, 'utf8')).caps : null));
 const budgetVs = budget ? printBudget(budget, base && base.budget) : [];
 
 const report = { version: 1, personas: only, seedOffset: SEED_OFFSET, seconds: Math.round((Date.now() - t0) / 1000),
@@ -404,7 +420,7 @@ if (flag('write-baseline')) {
   }
   const baseline = LONG ? { ...oldFile, long: { about: 'The 50-hour run (node tools/health.mjs --long). Regenerate with: node tools/health.mjs --long --write-baseline (mean of 3 seed offsets, about 8 min on 3 free cores). sd is the spread of the mean over those seeds. node tools/health.mjs --long --compare uses this section.',
       seed: PERSONAS.long.seed, metrics } } : { version: 1, about: 'Accepted health numbers. Regenerate with: node tools/health.mjs --write-baseline. node tools/health.mjs --compare exits 1 when a metric moves past max(abs, rel * |value|) in its bad direction (bad: up, down, both). See tools/health.mjs for the personas.',
-    seeds: Object.fromEntries(DEFAULT_PERSONAS.map(p => [p, PERSONAS[p].seed])), metrics, ...(budgetBase ? { budget: budgetBase } : {}), ...(oldFile.long ? { long: oldFile.long } : {}) };
+    seeds: Object.fromEntries(DEFAULT_PERSONAS.map(p => [p, PERSONAS[p].seed])), metrics, ...(oldFile.caps ? { caps: oldFile.caps } : {}), ...(budgetBase ? { budget: budgetBase } : {}), ...(oldFile.long ? { long: oldFile.long } : {}) };
   fs.mkdirSync(path.dirname(BASELINE), { recursive: true });
   fs.writeFileSync(BASELINE, JSON.stringify(baseline, null, 2) + '\n');
   console.log('wrote ' + path.relative(ROOT, BASELINE));
