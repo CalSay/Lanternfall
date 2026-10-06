@@ -39949,7 +39949,7 @@ var introUI;   // var: 76-create (loaded after this file) reads it at run time
 //            flush (the strongest, VOICE_PRIO). kind 'bark' is a banner of just the line, dropped after 20 s if the banner budget has no room.
 // momentState() -> { up, banner, queued } for the checks. Nothing here is saved: a moment not yet seen when the game closes
 // is dropped (a unique already sits in the trophy wall).
-const MOMENT_TUNE = { bannerS: 2.6, bannerExtraS: 0.7, settleS: 0.3, tapLockMs: 700, maxLines: 5, maxBanner: 3, bootS: 4, guideWaitS: 1, midMax: 2, midWindowS: 180, midFirstS: 1800 };
+const MOMENT_TUNE = { bannerS: 2.6, bannerExtraS: 0.7, sayExtraS: 1.4, settleS: 0.3, tapLockMs: 700, maxLines: 5, maxBanner: 3, bootS: 4, guideWaitS: 1, midMax: 2, midWindowS: 180, midFirstS: 1800 };
 const MOMENT_KINDS = {
   boss: { tier: 'big', eye: 'Boss down', col: '#F2C14E', snd: 'big' },
   unique: { tier: 'big', eye: 'Unique loot', col: '#FF8A3D', snd: 'big' },
@@ -40091,7 +40091,7 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
     for (const x of shown.slice(1)) tx.append(el('div', 'mm-t-line', [x.eye, x.title].filter(Boolean).join(': ')));
     if (list.length > shown.length) tx.append(el('div', 'mm-t-line', `And ${list.length - shown.length} more.`));
     t.append(tx);
-    const ms = (MOMENT_TUNE.bannerS + MOMENT_TUNE.bannerExtraS * (shown.length - 1)) * 1000;
+    const ms = (MOMENT_TUNE.bannerS + MOMENT_TUNE.bannerExtraS * (shown.length - 1) + (first.say || first.kind === 'bark' ? MOMENT_TUNE.sayExtraS : 0)) * 1000;   // a spoken line needs time to read
     t._hold = Date.now() + ms;
     const live = [...box.children].filter(x => !x._gone && !(x._hold > Date.now()));
     const room = box.classList.contains('over-menu') || box.classList.contains('side-dock') || (stageBoxH || $('stageBox').offsetHeight) >= 200 ? 2 : 1;
