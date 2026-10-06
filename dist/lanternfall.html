@@ -8489,7 +8489,7 @@ const NOTICES = [
   // ---- progress ----
   { id: 'move', key: 'move', re: /^(You return to |Your party returns to |You head to the |You move to the |You march to the raid|Your party marches to the raid)/,
     ch: m => /raid/.test(m) ? 'log' : 'none', why: 'the activity pill shows it' },
-  { id: 'zone-clear', re: /is cleared\. .* lies ahead\.$/, ch: 'log', why: 'the next place gets its title caption',
+  { id: 'zone-clear', re: /is cleared\. (.* lies ahead|On to Zone .+)\.$/, ch: 'log', why: 'the next place gets its title caption',
     merge: ms => `${ms.length} zones cleared. ${ms[ms.length - 1]}` },
   { id: 'zone-won', re: /^Zone .+ won\. On to Zone .+\.$/, ch: 'log', why: 'a replayed zone won: the zone title shows where you are',
     merge: ms => ms[ms.length - 1] },
