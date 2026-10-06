@@ -60,8 +60,8 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 - **The evolution choice is permanent,** with a costly respec, and one free switch within 10 minutes of choosing.
   (2026-09-28)
 - **Playing a tank or support must not be weaker** than a damage class. (2026-09-28)
-- **A new hero joins at the road's level** (the level the road expects where you are), and benched heroes earn half XP.
-  No other catch-up. (2026-10-06)
+- **A new hero joins at the road's level** (the level the road expects where you are). The same floor applies whenever
+  a hero takes the lamp, so rotating never slows progression. Benched heroes earn half XP. No other catch-up. (2026-10-06)
 - **Region 2 expects a trained-up, stronger hero,** with a hint when the hero hits its limit. (2026-09-28)
 - **Hero fatigue:** yes, but rotating heroes must never slow progression. (2026-09-28)
 - **Tactics:** yes ("tower defense vibes"), once combat is substantial. (2026-09-28)
