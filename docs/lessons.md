@@ -25,6 +25,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Tune a level curve against the old game on the same seeds (3 seeds, each starter), never one run. Why: one seed moved Tobin's hours to zone 30 from 19 to 41 with no change that touched him, and the old game itself ranged 25 to 46 h for Wren. (hero-progression-rework, 2026-10-06)
 - Most hero XP comes from away time. A level curve with no exponential wall needs a brake past the road, or heroes run 20+ levels ahead; brake only far past it, or levels stop at walls, where they help most. (hero-progression-rework, 2026-10-06)
 - Cap any level lift for a joining hero at the level of the hero who leaves, with the road's own level as the floor. Why: the judge found a join lead could put a joiner above the hero they replace, rewarding switching for its own sake. (hero-progression-rework, 2026-10-06)
+- When a build or other per-player choice must stay out of a system, list every caller of the shared power function in the neutrality test. Why: PR #58 kept away, raid and farm build-neutral, but the Deepwell's depth anchor read turnPowerNow, which carried the Might multiplier (Opus review). (hero-progression-rework, 2026-10-06)
 
 ## Economy and skilling
 
@@ -78,6 +79,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 ## Saves and offline parity
 
 - Before bumping the save key, load real old saves (fixtures and a sim save) on the branch; add state with registerState defaults and a load-time clamp when that works. Why: PR #58 bumped to v6 for new attribute state, but the old saves loaded fine with one XP clamp, and a bump needs Cal's label. (hero-progression-rework, 2026-10-06)
+- Fix an old save's values once, in a one-time step with a version flag, never in a clamp that runs on every gain. Why: PR #58 held XP a point under the next level on every gainXp, so a hero whose fights gave under 1 XP never levelled again (Opus review). (hero-progression-rework, 2026-10-06)
 - Validate every new save field in save codes against what the game can produce (points against the level, counts at 0 or more, flags 0 or 1), and clamp at use as well. Why: the risk review found a save code with Lv 1 and 1000 points gave 22x power. (hero-progression-rework, 2026-10-06)
 - Cover every bounty kind (16) in save-code validation and check each kind's own fields; refuse zero or out-of-range rewards and numbers the board cannot generate. Why: save codes knew 7 of 16 kinds and a 0-reward bounty loaded. (fix-bounty-kind, 2026-10-05)
 - When test saves fail on timers, pin fixture timestamps far in the future (2100) with a guard; never loosen the save-loss check. Why: the first fix relaxed the check and was reverted; expired fixture slots refill and fail as "slot kind". (fix-bounty-kind, f-ci)

@@ -73,7 +73,7 @@ var soloHero, soloPick, soloLevels, soloBenchXp, soloAttack, soloParry, soloDodg
       if (k === playing || !heroCanPlay(k)) continue;
       if (!s.lv || typeof s.lv !== 'object') s.lv = {};
       const rec = s.lv[k] || (s.lv[k] = { L: 1, xp: 0 });
-      let raw = n * HERO_TUNE.bench; rec.xp = Math.min(+rec.xp || 0, Math.max(0, xpNeed(rec.L) - 1));   // old-curve XP held under the next level
+      let raw = n * HERO_TUNE.bench; rec.xp = +rec.xp || 0;
       for (let i = 0; i < 500 && raw > 0; i++) {
         const x = xpAheadX(rec.L), need = (xpNeed(rec.L) - rec.xp) / x;
         if (raw < need) { rec.xp += raw * x; break; }

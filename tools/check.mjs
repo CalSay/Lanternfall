@@ -1379,7 +1379,7 @@ if (section('onboarding')) try {
   const got = {}, log = [];
   g.fn.on('unlock', e => { got[e.id] = E('Math.round(S.onboard.t)'); log.push(e.id); });
   let firstUp = null;
-  const buy = () => E(`{ if (attrOn()) { attrSpread(); } else for (let k = 0; k < 50; k++) { const t = trainNext(); if (!t || S.gold < t.cost) break; train(t.move, '1'); } }`);   // W2-A: Training; hero-progression-rework: a new player puts the free points into Might (the guide's upgrade step)
+  const buy = () => E(`{ if (attrOn()) { attrSpread(); } else for (let k = 0; k < 50; k++) { const t = trainNext(); if (!t || S.gold < t.cost) break; train(t.move, '1'); } }`);   // W2-A: Training; hero-progression-rework: a new player spreads the free points evenly (the guide's upgrade step)
   for (let sec = 0; sec < 12 * 60; sec++) {
     for (let i = 0; i < 10; i++) g.fn.tick(0.1);
     if (firstUp === null && E('S.gold >= 10')) firstUp = sec;
@@ -9029,7 +9029,7 @@ if (section('hero progression rework (attributes, road, join, bench)')) try {
   const near = (a, b, t = 1e-9) => Math.abs(a - b) <= t * Math.max(1, Math.abs(b));
   const mk = o => { const c = loadCore({ turns: true, seed: 61, ...o }); c.eval('soloPick("wren")'); return c; };
   const g = mk(), E = s => g.eval(s), HT = JSON.parse(E('JSON.stringify(HERO_TUNE)')), PH = E('PACE.heroLv');
-  assert(HT.training === 0 && E('attrOn()') === true && E('KEY') === 'lanternfall.save.v5' && E('Object.values(S.attr.pts).every(r => Object.values(r).every(v => v === 0))') && E('S.attr.v') === 1 && E('fresh().attr.v') === 1, 'hero progression: Training is off by default, the save is v6 and a new game has S.attr with no points spent');
+  assert(HT.training === 0 && E('attrOn()') === true && E('KEY') === 'lanternfall.save.v5' && E('Object.values(S.attr.pts).every(r => Object.values(r).every(v => v === 0))') && E('S.attr.v') === 1 && E('fresh().attr.v') === 1, 'hero progression: Training is off by default, the save is v5 and a new game has S.attr with no points spent');
   // a. Lv 1 opening hit
   E('S.L = 1; gearDirty()');
   assert(E('trainLv("atk")') === 0 && E('atkCurve(trainLv("atk"))') === 4, `Lv 1 opening hit: atkCurve(trainLv("atk")) is ${E('atkCurve(trainLv("atk"))')} (4)`);
@@ -9046,12 +9046,12 @@ if (section('hero progression rework (attributes, road, join, bench)')) try {
   // c. power outside a turn fight is build-neutral
   const split = (L, parts) => { E(`S.L = ${L}; S.attr.pts.wren = ATTR0()`); const free = E('attrPoints().free'); let left = free; parts.forEach(([id, share], i) => { const n = i === parts.length - 1 ? left : Math.floor(free * share); left -= E(`attrAdd("${id}", ${n})`); }); E('gearDirty()'); return left; };
   const splits = { might: [['might', 1]], focus: [['focus', 1]], guard: [['guard', 1]], vigour: [['vigour', 1]], 'might+focus': [['might', 0.5], ['focus', 0.5]], 'guard+vigour': [['guard', 0.5], ['vigour', 0.5]], 'seven to three': [['might', 0.7], ['vigour', 0.3]] };
-  const pw = () => [E('heroAtk()'), E('heroDps()'), E('farmableZone(40, heroDps())'), E('attrNeutral()')], power = {};
+  const pw = () => [E('heroAtk()'), E('heroDps()'), E('farmableZone(40, heroDps())'), E('attrNeutral()'), E('turnPowerNow(true).A')], power = {};
   let unspent = 0;
   for (const [name, parts] of Object.entries(splits)) { unspent += split(30, parts); power[name] = pw(); }
   E('S.attr.pts.wren = ATTR0(); attrSpread(); gearDirty()'); power.even = pw();
   const ref = power.even, pbad = Object.entries(power).filter(([, v]) => v.some((x, i) => !near(x, ref[i], 1e-9)));
-  assert(Object.keys(power).length >= 7 && unspent === 0 && ref[0] > 0 && ref[1] > 0 && !pbad.length, `heroAtk, heroDps, farmableZone and attrNeutral are the same for ${Object.keys(power).length} splits of the same points (${pbad.map(b => b[0]).join(', ') || 'none differ'})`);
+  assert(Object.keys(power).length >= 7 && unspent === 0 && ref[0] > 0 && ref[1] > 0 && !pbad.length, `heroAtk, heroDps, farmableZone, attrNeutral and the Deepwell's depth anchor are the same for ${Object.keys(power).length} splits of the same points (${pbad.map(b => b[0]).join(', ') || 'none differ'})`);
   E('S.attr.pts.wren = ATTR0(); attrAdd("might", 1e9); gearDirty()'); const relM = E('attrRel("atk")'), relF = E('attrRel("ab")');
   E('S.attr.pts.wren = ATTR0(); attrAdd("focus", 1e9); gearDirty()');
   assert(relM > 1 && relF < 1 && E('attrRel("ab")') > 1 && E('attrRel("atk")') < 1, 'turn fights do feel the build: all Might hits above even on Attack and below on abilities; all Focus the other way');
@@ -9178,8 +9178,11 @@ if (section('hero progression rework (attributes, road, join, bench)')) try {
   V('gainXp(1)'); V('soloBenchXp(1)');
   assert(V('S.L') <= L0 + 1 && V('S.solo.lv.wren.L') <= 46 && V('S.attr.xpv') === 1 && !v5g.errors.length, `an old save's banked XP gives at most one level on the next kill (Lv ${L0} to ${V('S.L')}; benched Wren 45 to ${V('S.solo.lv.wren.L')})`);
   { const raw = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-early.json'), 'utf8')), xg = loadCore({ turns: true, seed: 70, storage: memoryStorage({ [KEY]: JSON.stringify(raw) }) }), X = s => xg.eval(s);
-    const share = raw.xp / Math.floor(15 * Math.pow(1.3, raw.L - 1)); X('attrXpMap()');
-    assert(X('S.L') === raw.L && Math.abs(X('S.xp / xpNeed(S.L)') - share) < 1e-9 && X('attrXpMap(), S.attr.xpv') === 1, `an old save keeps its bar: ${(100 * share).toFixed(1)}% of Lv ${raw.L} on the old curve is ${(100 * X('S.xp / xpNeed(S.L)')).toFixed(1)}% on the new one, once`); }
+    const share = raw.xp / Math.floor(15 * Math.pow(1.3, raw.L - 1)); X('attrXpMap()'); const xp1 = X('S.xp');
+    assert(X('S.L') === raw.L && Math.abs(X('S.xp / xpNeed(S.L)') - share) < 1e-9 && X('attrXpMap(), S.attr.xpv') === 1 && X('S.xp') === xp1, `an old save keeps its bar: ${(100 * share).toFixed(1)}% of Lv ${raw.L} on the old curve is ${(100 * X('S.xp / xpNeed(S.L)')).toFixed(1)}% on the new one, once`);
+    // XP far past the road is cut (xpAheadX) but never frozen: small gains still add up to the next level
+    X('S.L = 28; S.maxZone = 10; S.xp = xpNeed() - 0.5; for (let i = 0; i < 4; i++) gainXp(37, true)');
+    assert(X('S.L') === 29, `a hero far past the road still levels from small XP gains (Lv 28 at zone 10 reached Lv ${X('S.L')})`); }
   for (let i = 0; i < 300; i++) v5g.fn.tick(0.1);
   assert(!v5g.errors.length, 'an old save plays 30 s with no errors');
   // m. save codes carry S.attr

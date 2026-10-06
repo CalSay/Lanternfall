@@ -97,7 +97,7 @@ var trainCard = null;
       more.addEventListener('click', () => { if (typeof box.onLeave === 'function') box.onLeave(); setTab('attributes'); });
       box._up = () => {
         const i = trainInfo(mv);
-        putText(nm, i.name); putText(cap, `from your level (Lv ${i.lv})`);
+        putText(nm, i.name); putText(cap, `from your level (Lv ${i.heroLv})`);
         putText(now, i.now ? `${i.now}.` : '');
       };
       box._up();

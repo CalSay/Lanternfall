@@ -10705,9 +10705,9 @@ function killPack(m, g) {
 function gainXp(n, quiet) {
   let raw = n * mod('xp');
   if (HERO_TUNE.training) { S.xp += raw; raw = 0; }
-  // a save from before attributes: its bars carry over as the same share of this curve's levels (55-attributes attrXpMap); XP still
-  // past the next level after that is held a point under it, so it never chains level-ups
-  else { attrXpMap(); if (S.xp > xpNeed() - 1) S.xp = Math.max(0, xpNeed() - 1); }
+  // a save from before attributes: its bars carry over once as the same share of this curve's levels, under the next level
+  // (55-attributes attrXpMap), so it never chains level-ups
+  else attrXpMap();
   for (let i = 0; i < 1000; i++) {
     if (raw > 0) {
       const x = xpAheadX(S.L), need = (xpNeed() - S.xp) / x;
@@ -11654,7 +11654,7 @@ on('heroJoin', ({ key } = {}) => {
   const free = attrPoints(key).free; if (a.met[key] || !(free > 0)) return;
   a.met[key] = 1;
   const nm = typeof ROSTER === 'object' && ROSTER[key] ? ROSTER[key].name.split(' ')[0] : 'Your hero';
-  emit('toast', { key: 'attr-join', msg: `${nm} has ${free} attribute points. Spread them evenly in one tap, or build your own.`, kind: 'good', prio: 'normal', go: { view: 'attributes' } });
+  emit('toast', { key: 'attr-join', msg: `${nm} has ${free} attribute point${free === 1 ? '' : 's'}. Spread them evenly in one tap, or build your own.`, kind: 'good', prio: 'normal', go: { view: 'attributes' } });
 });
 
 registerState('attr', { v: 1, pts: {}, resets: {}, met: {}, live: 0, xpv: 0 });
@@ -24076,7 +24076,7 @@ var soloHero, soloPick, soloLevels, soloBenchXp, soloAttack, soloParry, soloDodg
       if (k === playing || !heroCanPlay(k)) continue;
       if (!s.lv || typeof s.lv !== 'object') s.lv = {};
       const rec = s.lv[k] || (s.lv[k] = { L: 1, xp: 0 });
-      let raw = n * HERO_TUNE.bench; rec.xp = Math.min(+rec.xp || 0, Math.max(0, xpNeed(rec.L) - 1));   // old-curve XP held under the next level
+      let raw = n * HERO_TUNE.bench; rec.xp = +rec.xp || 0;
       for (let i = 0; i < 500 && raw > 0; i++) {
         const x = xpAheadX(rec.L), need = (xpNeed(rec.L) - rec.xp) / x;
         if (raw < need) { rec.xp += raw * x; break; }
@@ -24682,14 +24682,15 @@ function turnMakeProfile(f, u) {
     respawn: Math.max(0.45, typeof zoneFoeDeathS === 'function' ? zoneFoeDeathS(f) : 0) };
 }
 
-// Attack and ability power now, outside a fight (the Abilities screen's numbers; the fight itself never shows them)
+// Attack and ability power now, outside a fight (the Abilities screen's numbers; the fight itself never shows them). plain: the
+// Deepwell's depth anchor, which leaves out the zone's late lift and the build (hero-progression-rework: depth stays build-neutral)
 function turnPowerNow(plain) {
   const key = soloHero(); if (!key) return null;
   const T = TURN_TUNE, g = gear(), cls = S.party && S.party.cls;
   const heroX = (T.heroX[key] || SOLO_TUNE.heroX[key]) / SOLO_TUNE.heroX[key];
   const tap = cls === 'warden' || cls === 'warrior' ? CLASS_ABILITIES.heavy.coef : cls === 'lanternmage' || cls === 'mage' ? CLASS_ABILITIES.ember.coef : CLASS_ABILITIES.focus.coef;
   const A0 = heroAtk() * tap * heroX * (plain ? 1 : turnLateX(key, S.zone)) * SOLO_TUNE.atkX * aps();
-  return { A: A0 * tapMult() * attrRel('atk'), U: A0 * (1 + T.abTrain * trainLv(TURN_SIG[key] || 'echo')) * (1 + (g.abil || 0) / 100) * attrRel('ab'), crit: critMult(),
+  return { A: A0 * tapMult() * (plain ? 1 : attrRel('atk')), U: A0 * (1 + T.abTrain * trainLv(TURN_SIG[key] || 'echo')) * (1 + (g.abil || 0) / 100) * attrRel('ab'), crit: critMult(),
     spell: 1 + (g.spell || 0) / 100, dot: 1 + (g.area || 0) / 100 };
 }
 // One line of numbers for an ability (75-abilities-ui): its hit, and what its Burn, Bleed or spend adds
@@ -42130,7 +42131,7 @@ var trainCard = null;
       more.addEventListener('click', () => { if (typeof box.onLeave === 'function') box.onLeave(); setTab('attributes'); });
       box._up = () => {
         const i = trainInfo(mv);
-        putText(nm, i.name); putText(cap, `from your level (Lv ${i.lv})`);
+        putText(nm, i.name); putText(cap, `from your level (Lv ${i.heroLv})`);
         putText(now, i.now ? `${i.now}.` : '');
       };
       box._up();

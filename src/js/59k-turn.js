@@ -268,14 +268,15 @@ function turnMakeProfile(f, u) {
     respawn: Math.max(0.45, typeof zoneFoeDeathS === 'function' ? zoneFoeDeathS(f) : 0) };
 }
 
-// Attack and ability power now, outside a fight (the Abilities screen's numbers; the fight itself never shows them)
+// Attack and ability power now, outside a fight (the Abilities screen's numbers; the fight itself never shows them). plain: the
+// Deepwell's depth anchor, which leaves out the zone's late lift and the build (hero-progression-rework: depth stays build-neutral)
 function turnPowerNow(plain) {
   const key = soloHero(); if (!key) return null;
   const T = TURN_TUNE, g = gear(), cls = S.party && S.party.cls;
   const heroX = (T.heroX[key] || SOLO_TUNE.heroX[key]) / SOLO_TUNE.heroX[key];
   const tap = cls === 'warden' || cls === 'warrior' ? CLASS_ABILITIES.heavy.coef : cls === 'lanternmage' || cls === 'mage' ? CLASS_ABILITIES.ember.coef : CLASS_ABILITIES.focus.coef;
   const A0 = heroAtk() * tap * heroX * (plain ? 1 : turnLateX(key, S.zone)) * SOLO_TUNE.atkX * aps();
-  return { A: A0 * tapMult() * attrRel('atk'), U: A0 * (1 + T.abTrain * trainLv(TURN_SIG[key] || 'echo')) * (1 + (g.abil || 0) / 100) * attrRel('ab'), crit: critMult(),
+  return { A: A0 * tapMult() * (plain ? 1 : attrRel('atk')), U: A0 * (1 + T.abTrain * trainLv(TURN_SIG[key] || 'echo')) * (1 + (g.abil || 0) / 100) * attrRel('ab'), crit: critMult(),
     spell: 1 + (g.spell || 0) / 100, dot: 1 + (g.area || 0) / 100 };
 }
 // One line of numbers for an ability (75-abilities-ui): its hit, and what its Burn, Bleed or spend adds

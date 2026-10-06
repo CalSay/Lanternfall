@@ -133,9 +133,9 @@ function killPack(m, g) {
 function gainXp(n, quiet) {
   let raw = n * mod('xp');
   if (HERO_TUNE.training) { S.xp += raw; raw = 0; }
-  // a save from before attributes: its bars carry over as the same share of this curve's levels (55-attributes attrXpMap); XP still
-  // past the next level after that is held a point under it, so it never chains level-ups
-  else { attrXpMap(); if (S.xp > xpNeed() - 1) S.xp = Math.max(0, xpNeed() - 1); }
+  // a save from before attributes: its bars carry over once as the same share of this curve's levels, under the next level
+  // (55-attributes attrXpMap), so it never chains level-ups
+  else attrXpMap();
   for (let i = 0; i < 1000; i++) {
     if (raw > 0) {
       const x = xpAheadX(S.L), need = (xpNeed() - S.xp) / x;
