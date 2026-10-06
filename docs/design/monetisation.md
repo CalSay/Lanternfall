@@ -11,7 +11,7 @@ ruled on all seven (section 10, with [the red team](monetisation-records/decisio
 the rulings are in `docs/DECISIONS.md` under **Money**. Only real-money and legal steps stay with Cal: store accounts,
 payment code, live prices, business and legal set-up.
 
-**Sources.** The fun library's review corpus (56 games, 12,006 review texts in `research/raw/`, re-tagged for money
+**Sources.** The fun library's review corpus (56 games, 12,006 review texts in `tools/research/raw/`, re-tagged for money
 themes for this plan), IdleOn's 421 App Store reviews read one by one for money talk, web research on IdleOn, Melvor,
 OSRS, Shop Titans, Path of Exile, Warframe and others ([web-games.md](monetisation-records/web-games.md)), web research on fair odds,
 loot-box law and store fees ([web-fairness.md](monetisation-records/web-fairness.md)), `docs/DECISIONS.md`, `docs/lessons.md`, the
@@ -324,6 +324,26 @@ for Cal.
 
 ---
 
+### 3.9 Real prices or a premium currency
+
+**Why.** Most free-to-play games sell a premium currency (IdleOn's gems, Shop Titans' gems) and price the shop in it.
+It lets a store sell packs of currency, absorbs per-sale fees and regional pricing, and can be dripped in play. But it
+also hides what a thing costs, strands leftovers (Rule 8), and adds a currency to a game that the Why review already
+caps at 8. EU consumer authorities' principles on in-game virtual currencies (March 2025) ask that prices be shown in
+real money too, which removes most of the currency's convenience while keeping its cost.
+
+**Options.**
+
+| Option | Why for | Why against |
+|---|---|---|
+| A. Real prices, no premium currency | Clearest for players; nothing stranded; no new currency; matches the EU principles | Flat per-sale fees bite on small items; regional prices set per item |
+| B. A sold premium currency (gems) | Industry norm; one price list; packs absorb fees | Hides costs; leftovers push extra buys; the corpus punishes it when it buys power; a 9th currency |
+| C. An earned mark that part-pays store looks | Drip-earned currencies review well (NGU, Warframe); rewards play | Blurs earned and bought looks (Rule 7); a 9th currency; tempts selling the mark later |
+| D. Hold the call until a store is chosen | Keeps options open | Leaves the shop design unsettled while looks and the Keeper are designed |
+
+**Pick: A.** Show real prices on every item. Where a store charges a flat fee per sale, sell looks in themed sets
+(3.1 option D) rather than add a currency. Live and regional prices stay with Cal (section 10, ruling 3).
+
 ## 4. How it fits the core loop and Cal's standing decisions
 
 | Standing line | What the plan does |
@@ -511,7 +531,7 @@ a switch that is off (Sonnet medium); the parry spark slot (Sonnet medium, code 
 |---|---|---|---|
 | 1 | Store looks next to earned looks | **Yes, narrowed.** No store look copies or recolours an earned look; the Wardrobe marks each look Earned or Store; the count counts earned looks only. Replaces "Every cosmetic is earned, never sold" | Nothing |
 | 2 | The Lantern Keeper | **One purchase, no membership at launch.** The +2 h away head start ships only if a free bot reaches the 24 h cap within 40 hours of play | The price; any recurring billing |
-| 3 | Premium currency | **None.** Real prices; where a store charges a flat fee per sale, sell looks in sets | Live and regional prices |
+| 3 | Premium currency (3.9) | **None.** Real prices; where a store charges a flat fee per sale, sell looks in sets | Live and regional prices |
 | 4 | Ads | **None, including rewarded ads** | Nothing |
 | 5 | Where to sell | **Steam first (single-player), then phones; no itch or Ko-fi pack.** A landscape mouse-and-keyboard playtest must pass first | Store accounts and fees, identity and tax, payment code, phone store timing |
 | 6 | Supporter packs | **One tier at launch;** two more once 30+ store looks and the soundtrack exist | The price; the Tavern mark (online sign-off) |
