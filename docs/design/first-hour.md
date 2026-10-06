@@ -43,7 +43,7 @@ early-game/playtest-coldB.md`). The minutes below are targets for a casual human
 | 13 | 8:00 | Next Up in the compact top bar | Reads Next Up | Next Up | | direction | | `story-unlock-gates`; card `top-bar-compact` |
 | 14 | 10:00 | The Workbench and the first tool: the first craft, with a **result card** showing its grade | Crafts the tool | Crafting | a tool, revealed | pride | | today (chain); card `craft-reveal` |
 | 15 | 12:00 | The away chip joins the top bar | | Leaving pays only what you set going | | | | `story-unlock-gates`; card `top-bar-compact` |
-| 16 | 14:00 | Bounties (zone 4); Hesketh's board also at Camp; a ready bounty shows a Claim on Next Up | Claims in place | Bounties | gold or Essence | small win | | today (unlock); card `bounties-anywhere` |
+| 16 | 14:00 | Bounties (zone 4); Hesketh's board also at Camp; a ready bounty shows a Claim on Next Up | Claims in place | Bounties | gold or Essence | small win | | today (unlock); `bounties-anywhere` done: Next Up and the "Bounty ready" notice claim in place, board also at Camp |
 | 17 | 16:00 | **Big moment: a starter you didn't pick joins** (zone 5, when you meet them) | Can switch | Switching | a hero, at the road's level | company | Their first scene (bible 4.4) | idea; needs a card; PR #58 for the level |
 | 18 | 20:00 | **Medium moment: first Star** (zone 6 Captain); the Stars tab | Equips the Star | Stars | a Star | power | | today; moment `moment-layer` |
 | 19 | 22:00 | The first Forge weapon (where the walk measures the cold chain ending, est. 20 to 25) | Crafts a weapon | | a weapon, revealed | pride | | today; card `craft-reveal` |

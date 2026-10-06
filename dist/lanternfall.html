@@ -8956,7 +8956,9 @@ const NOTICES = [
   { id: 'mastery', key: 'mastery', re: /: mastery star \d of 5\./, ch: 'log', why: 'the zone shows its stars' },
   { id: 'bestiary', key: 'bestiary', re: /^Bestiary: /, ch: 'log', why: 'the Bestiary view marks it' },
   { id: 'weekly', re: /^Weekly goal done: /, ch: 'bell' },
-  { id: 'bounty', re: /^Bounty complete! /, ch: 'bell', merge: ms => `${ms.length} bounties complete.` },
+  { id: 'bounty', re: /^Bounty complete! /, ch: 'pop', reply: true, why: 'you just pressed Claim (the board, Next Up or the ready notice): show what you got', merge: ms => `${ms.length} bounties complete.` },
+  { id: 'bounty-ready', key: 'bounty-ready', ch: 'pop', wait: 20, held: 'bell', why: 'tap it to claim; no menu needed' },
+  { id: 'bounty-room', key: 'bounty-room', ch: 'pop', reply: true, why: 'a claim that could not fit says what to free or build' },
 
   // ---- the Codex (57c) ----
   { id: 'codex', key: 'codex', re: /^(Codex: the .* page is half full\. The|Page Seal: |\d+ Lantern Light: )/, ch: 'bell' },
@@ -11591,9 +11593,18 @@ function bossTryWays(L) {
     while (sl.length < BTY_SLOTS) sl.push({ k: null, wait: 0 });
     for (let i = 0; i < BTY_SLOTS; i++) if (!sl[i] || (!sl[i].k && (now >= (sl[i].wait || 0) || (!atLoad && bonus('bountyNoWait') > 0)))) { const rr = sl[i] ? sl[i].rr || 0 : 0; sl[i] = btyNew(); sl[i].rr = rr; }
   }
+  // bountyReady: a bounty just reached its goal (E1: the player claims it where they stand, not in the fight menu).
   function btyAdd(k, n, test) {
-    for (const b of S.bounties.slots) if (b && b.k === k && b.have < b.need && (!test || test(b))) b.have = Math.min(b.need, b.have + n);
+    S.bounties.slots.forEach((b, i) => {
+      if (!(b && b.k === k && b.have < b.need && (!test || test(b)))) return;
+      b.have = Math.min(b.need, b.have + n);
+      if (b.have >= b.need) emit('bountyReady', { i, k: b.k });
+    });
   }
+  on('bountyReady', ({ i }) => {
+    const b = S.bounties.slots[i]; if (!b || !b.k) return;
+    emit('toast', { key: 'bounty-ready', msg: "Bounty ready. Tap to claim.", kind: 'good', icon: { ic: ['banner', '#F2C14E'] }, prio: 'normal', go: { fn: () => { claimBounty(i); } } });
+  });
   on('kill', ({ mob, zone }) => {
     btyAdd('kill', 1, b => zone >= b.z); if (mob && mob.boss) btyAdd('boss', 1);
     const key = mob && (mob.type || String(mob.key || '').replace(/\d+$/, '')); if (key) btyAdd('hunt', 1, b => b.foe === key);
@@ -11620,7 +11631,7 @@ function bossTryWays(L) {
   function claimBounty(i) {
     const b = S.bounties.slots[i]; if (!b || !b.k || b.have < b.need) return null;
     const r = bountyReward(b);
-    if (r.kind !== 'gold' && !stashFits([[r.kind, r.t, r.n]])) { toast(stashNeed([[r.kind, r.t, r.n]]), 'raid', { mat: [r.kind, r.t] }, 'normal'); return null; }   // H3: a parcel waits
+    if (r.kind !== 'gold' && !stashFits([[r.kind, r.t, r.n]])) { emit('toast', { key: 'bounty-room', msg: stashNeed([[r.kind, r.t, r.n]]), kind: 'raid', icon: { mat: [r.kind, r.t] }, prio: 'normal' }); return null; }   // H3: a parcel waits
     if (r.kind === 'gold') { S.gold += r.n; S.totalGold += r.n; econEarn('bounty', r.n); }
     else stashAdd(r.kind, r.t, r.n, 'parcel');
     S.bounties.claimed++;
@@ -12693,7 +12704,7 @@ var forgeGoalPicks = 0;
     try { label = String(val(g.label) || ''); icon = val(g.icon) || null; } catch (e) { return null; }
     if (!label) return null;
     const ready = p >= 1;
-    return { id: g.id, sys: g.sys, label, pct: Math.min(1, p), ready, go: g.go || null, icon, prio: +(typeof g.prio === 'function' ? g.prio() : g.prio) || 0, cap: +g.cap || 0, reserve: +g.reserve || 0 };
+    return { id: g.id, sys: g.sys, label, pct: Math.min(1, p), ready, go: g.go || null, goLabel: typeof g.goLabel === 'function' ? g.goLabel() : g.goLabel || '', icon, prio: +(typeof g.prio === 'function' ? g.prio() : g.prio) || 0, cap: +g.cap || 0, reserve: +g.reserve || 0 };
   }
 
   topGoals = function (n = 3, opts) {
@@ -12788,10 +12799,11 @@ var forgeGoalPicks = 0;
   // Bounties: the one closest to done (a finished one is ready to claim).
   const btyNext = () => {
     let best = null;
-    for (const b of (S.bounties && S.bounties.slots) || []) {
-      if (!b || !b.k) continue;
+    const sl = (S.bounties && S.bounties.slots) || [];
+    for (let i = 0; i < sl.length; i++) {
+      const b = sl[i]; if (!b || !b.k) continue;
       const p = need(b.have, b.need);
-      if (!best || p > best.p) best = { b, p };
+      if (!best || p > best.p) best = { b, p, i };
     }
     return best;
   };
@@ -12800,9 +12812,11 @@ var forgeGoalPicks = 0;
     id: 'bounty', sys: 'bounty', prio: 1,
     pct: () => { const x = btyNext(); return x ? x.p : null; },
     label: () => { const x = btyNext(); if (!x) return '';
-      return x.p >= 1 ? 'Bounty done: claim your reward' : `${BOUNTY_API.text(x.b)} (${fmt(x.b.have)}/${fmt(x.b.need)})`; },
+      return x.p >= 1 ? `Bounty done: ${BOUNTY_API.text(x.b)}` : `${BOUNTY_API.text(x.b)} (${fmt(x.b.have)}/${fmt(x.b.need)})`; },
     icon: () => { const x = btyNext(); return { ic: BTY_IC[x ? x.b.k : 'kill'] || BTY_IC.kill }; },
-    go: { tab: 'adv', sel: '#sec-bounties' }
+    // E1: a finished bounty is claimed in place (no menu); an unfinished one opens the board
+    goLabel: () => { const x = btyNext(); return x && x.p >= 1 ? 'Claim' : ''; },
+    go: () => { const x = btyNext(); return x && x.p >= 1 ? { fn: () => { BOUNTY_API.claim(x.i); } } : { tab: 'adv', sel: '#sec-bounties' }; }
   });
 
   // Bestiary: the page (tier) closest to done among monsters met.
@@ -34914,7 +34928,6 @@ let showAwayReport;
     ability: () => iconURL('flame', '#7FB2FF', { 5: '#CFE3FF', 7: '#FFFFFF' }), hands: () => iconURL('mug', '#8C6A43', { 1: '#6B4A2E', 7: '#F2C14E', 5: '#EFE6D6' }),
     deep: () => iconURL('flame', '#9A8FB8', { 5: '#CFC3DC', 7: '#FFFFFF' })
   };
-  const btyRows = [];
   // Go: where each kind's work happens
   const GO = { mine: ['gat', 'mine'], gems: ['gat', 'mine'], chop: ['gat', 'wood'], forage: ['gat', 'forage'],
     make: ['forge', 'make'], forge: ['forge', 'make'], upgrade: ['forge', 'gear'], reforge: ['forge', 'gear'],
@@ -34928,50 +34941,61 @@ let showAwayReport;
     if (typeof closeMenu === 'function') closeMenu();
     ui(true);
   };
+  const mountBoard = (sec, rows) => {
+    for (let i = 0; i < 3; i++) {
+      const r = makeRow(sec, '', false, BTY_IC.kill());
+      r.row.classList.add('bty');
+      const bar = el('div', 'bar bty-bar'); bar.append(el('i')); r.desc.after(bar); r.bar = bar.firstChild;
+      const rr = el('button', 'bty-rr', 'Swap'); r.desc.parentNode.append(rr); r.rr = rr;
+      // done: Claim; not done: Go, to where the work is (menu audit: the old "BOUNTY 16%" box looked like a button)
+      r.btn.addEventListener('click', () => { const b = S.bounties.slots[i]; if (!b || !b.k) return; if (b.have >= b.need) { if (BOUNTY_API.claim(i)) ui(true); } else goTo(b); });
+      rr.addEventListener('click', () => { if (BOUNTY_API.reroll(i)) ui(true); });
+      rows.push(r);
+    }
+  };
+  const updateBoard = rows => {
+    const now = Date.now();
+    S.bounties.slots.forEach((b, i) => {
+      const r = rows[i]; if (!r) return;
+      if (!b || !b.k) {
+        r.row.classList.add('locked'); r.row.classList.remove('active');
+        r.nm.textContent = 'New bounty soon'; r.own.textContent = '';
+        r.desc.textContent = `A new bounty is posted in ${fmtTime(Math.max(0, (b ? b.wait : 0) - now) / 1000)}.`;
+        r.bar.style.width = '0%'; r.rr.hidden = true;
+        r.btn.disabled = true; r.qty.textContent = 'Posting'; r.btn.querySelector('.price').textContent = '...';
+        return;
+      }
+      const done = b.have >= b.need, rew = BOUNTY_API.reward(b);
+      r.row.classList.remove('locked'); r.row.classList.toggle('active', done);
+      r.nm.textContent = BOUNTY_API.text(b); r.own.textContent = `${fmt(b.have)}/${fmt(b.need)}`;
+      const room = done && rew.kind !== 'gold' ? stashNeed([[rew.kind, rew.t, rew.n]]) : '';   // H3: a reward waits until it fits
+      r.desc.textContent = room || 'Reward: ' + rew.txt;
+      r.bar.style.width = Math.min(100, b.have / b.need * 100) + '%';
+      const url = (BTY_IC[b.k] || BTY_IC.kill)(b); setIc(r.ic, url, b.elite ? 'legendary' : null);
+      r.row.classList.toggle('bty-elite', !!b.elite);
+      const rrLeft = (b.rr || 0) - now;
+      r.rr.hidden = done; r.rr.disabled = rrLeft > 0;
+      r.rr.textContent = rrLeft > 0 ? `Swap in ${fmtTime(rrLeft / 1000)}` : 'Swap (free)';
+      r.btn.disabled = done && !!room; r.qty.textContent = done ? 'Done' : '';
+      r.btn.querySelector('.price').textContent = done ? 'Claim' : 'Go';
+      putToggle(r.btn, 'bty-go', !done);
+    });
+  };
+  const fightRows = [], campRows = [];
   registerSection('adv', {
     id: 'bounties', title: 'Bounties', view: 'bounties',
     mount(sec) {
       // sit right under the Boss gate
       const panel = sec.parentNode; if (panel.children.length > 1) panel.insertBefore(sec, panel.children[1]);
-      for (let i = 0; i < 3; i++) {
-        const r = makeRow(sec, '', false, BTY_IC.kill());
-        r.row.classList.add('bty');
-        const bar = el('div', 'bar bty-bar'); bar.append(el('i')); r.desc.after(bar); r.bar = bar.firstChild;
-        const rr = el('button', 'bty-rr', 'Swap'); r.desc.parentNode.append(rr); r.rr = rr;
-        // done: Claim; not done: Go, to where the work is (menu audit: the old "BOUNTY 16%" box looked like a button)
-        r.btn.addEventListener('click', () => { const b = S.bounties.slots[i]; if (!b || !b.k) return; if (b.have >= b.need) { if (BOUNTY_API.claim(i)) ui(true); } else goTo(b); });
-        rr.addEventListener('click', () => { if (BOUNTY_API.reroll(i)) ui(true); });
-        btyRows.push(r);
-      }
+      mountBoard(sec, fightRows);
     },
-    update() {
-      const now = Date.now();
-      S.bounties.slots.forEach((b, i) => {
-        const r = btyRows[i]; if (!r) return;
-        if (!b || !b.k) {
-          r.row.classList.add('locked'); r.row.classList.remove('active');
-          r.nm.textContent = 'New bounty soon'; r.own.textContent = '';
-          r.desc.textContent = `A new bounty is posted in ${fmtTime(Math.max(0, (b ? b.wait : 0) - now) / 1000)}.`;
-          r.bar.style.width = '0%'; r.rr.hidden = true;
-          r.btn.disabled = true; r.qty.textContent = 'Posting'; r.btn.querySelector('.price').textContent = '...';
-          return;
-        }
-        const done = b.have >= b.need, rew = BOUNTY_API.reward(b);
-        r.row.classList.remove('locked'); r.row.classList.toggle('active', done);
-        r.nm.textContent = BOUNTY_API.text(b); r.own.textContent = `${fmt(b.have)}/${fmt(b.need)}`;
-        const room = done && rew.kind !== 'gold' ? stashNeed([[rew.kind, rew.t, rew.n]]) : '';   // H3: a reward waits until it fits
-        r.desc.textContent = room || 'Reward: ' + rew.txt;
-        r.bar.style.width = Math.min(100, b.have / b.need * 100) + '%';
-        const url = (BTY_IC[b.k] || BTY_IC.kill)(b); setIc(r.ic, url, b.elite ? 'legendary' : null);
-        r.row.classList.toggle('bty-elite', !!b.elite);
-        const rrLeft = (b.rr || 0) - now;
-        r.rr.hidden = done; r.rr.disabled = rrLeft > 0;
-        r.rr.textContent = rrLeft > 0 ? `Swap in ${fmtTime(rrLeft / 1000)}` : 'Swap (free)';
-        r.btn.disabled = done && !!room; r.qty.textContent = done ? 'Done' : '';
-        r.btn.querySelector('.price').textContent = done ? 'Claim' : 'Go';
-        putToggle(r.btn, 'bty-go', !done);
-      });
-    }
+    update() { updateBoard(fightRows); }
+  });
+  // E1: the same board at Camp, so a finished bounty is claimed without the Fight menu (Next Up and the ready notice claim in place too)
+  registerSection('camp', {
+    id: 'bounties-camp', title: "Hesketh's board", feature: 'bounties',
+    mount(sec) { mountBoard(sec, campRows); },
+    update() { updateBoard(campRows); }
   });
   // The Classic achievements grid moved to the Achievements menu (75-deeds-ui.js, Tracks > Classic).
 }
@@ -38473,7 +38497,7 @@ let deedsUI = null;
     const gq = el('span', 'nu-st'), gl = el('span', 'nu-gol', 'Go');
     go.append(gq, gl);
     r.append(ic, body, go);
-    const x = { r, im, lbl, fill, go, gq, goal: null, url: '' };
+    const x = { r, im, lbl, fill, go, gq, gol: gl, goal: null, url: '' };
     go.addEventListener('click', () => { const g = x.goal; if (!g) return; api.close(true); goTo(g); });
     return x;
   }
@@ -38488,7 +38512,7 @@ let deedsUI = null;
       let sig = '';
       const render = () => {
         const goals = topGoals(3);
-        const s = goals.map(g => g.id + '|' + g.label + '|' + Math.floor(g.pct * 100)).join('~');
+        const s = goals.map(g => g.id + '|' + g.label + '|' + Math.floor(g.pct * 100) + '|' + g.goLabel).join('~');
         if (s === sig) return; sig = s;
         empty.hidden = goals.length > 0;
         while (rows.length < goals.length) { const x = mkRow(api); rows.push(x); list.append(x.r); }
@@ -38502,7 +38526,8 @@ let deedsUI = null;
           x.lbl.textContent = g.label;
           x.fill.style.width = (g.pct * 100).toFixed(1) + '%';
           x.gq.textContent = pctTxt(g);
-          x.go.setAttribute('aria-label', 'Go: ' + g.label);
+          x.gol.textContent = g.goLabel || 'Go';
+          x.go.setAttribute('aria-label', (g.goLabel || 'Go') + ': ' + g.label);
         });
       };
       render();

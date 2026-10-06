@@ -70,6 +70,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Delay the Aim hint until the foe's swing lands. Why: it covered the Dodge and Parry cues. Guide tips already show one at a time; leave that. (first-minute-flow, 2026-10-06)
 - Mark any reward, hint or card the game cannot deliver yet as "Coming soon", in the place the player first sees it (not only after claiming). Why: 15 Codex rewards said "Saved for later" only after they were claimed, and Jory's and Ashby's hints promised a hire the game never made. (promises-pass, 2026-10-06)
 - Show icons through `nicSet`/`nicTag` at the size the box shows, never a 48 px URL squeezed into 28-36 px, and give a hero's icons in whole packs only (add the hero to `COMPLETE` in check.mjs). Why: the Abilities list used `soloIconURL` (uneven scaling) and Wren and Tobin still lack 4 icons. (wire-ability-icons, 2026-10-06)
+- A playtest `--shots` dir is wiped by every `new` in a batch and by each run, so split a route per session and copy shots out; send one `--shots` per part. Why: the first part's shots vanished when the second `new` ran. Also, a notice raised inside the first 2.5 s of a loaded save folds into What's new, so time a notice proof after that. (bounties-anywhere, 2026-10-06)
 
 ## Saves and offline parity
 

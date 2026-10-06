@@ -116,7 +116,9 @@ const NOTICES = [
   { id: 'mastery', key: 'mastery', re: /: mastery star \d of 5\./, ch: 'log', why: 'the zone shows its stars' },
   { id: 'bestiary', key: 'bestiary', re: /^Bestiary: /, ch: 'log', why: 'the Bestiary view marks it' },
   { id: 'weekly', re: /^Weekly goal done: /, ch: 'bell' },
-  { id: 'bounty', re: /^Bounty complete! /, ch: 'bell', merge: ms => `${ms.length} bounties complete.` },
+  { id: 'bounty', re: /^Bounty complete! /, ch: 'pop', reply: true, why: 'you just pressed Claim (the board, Next Up or the ready notice): show what you got', merge: ms => `${ms.length} bounties complete.` },
+  { id: 'bounty-ready', key: 'bounty-ready', ch: 'pop', wait: 20, held: 'bell', why: 'tap it to claim; no menu needed' },
+  { id: 'bounty-room', key: 'bounty-room', ch: 'pop', reply: true, why: 'a claim that could not fit says what to free or build' },
 
   // ---- the Codex (57c) ----
   { id: 'codex', key: 'codex', re: /^(Codex: the .* page is half full\. The|Page Seal: |\d+ Lantern Light: )/, ch: 'bell' },

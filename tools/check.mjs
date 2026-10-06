@@ -8994,6 +8994,21 @@ if (section('story-systems-hollow')) try {
   assert(wrote >= 1, 'systems-hollow: the Tavern applicant card shows the line');
 } catch (e) { fail('story-systems-hollow crashed: ' + (e.stack || e)); }
 
+if (section('bounties-anywhere')) try {
+  const g = loadCore({ seed: 9301 }), E = x => g.eval(x);
+  E('S.maxZone = 8; S.bounties.slots[0] = { k: "forge", need: 2, have: 1, t: 1, z: 1, rew: "gold", rewN: 30, wait: 0, rr: 0 }; globalThis.__ready = []; on("bountyReady", p => __ready.push(p))');
+  E('emit("itemAdded", { item: { id: 9001, slot: "weapon", t: 1, r: "common", plus: 0 } })');
+  assert(E('__ready.length') === 1 && E('__ready[0].i') === 0 && E('S.bounties.slots[0].have') === 2, 'bounties-anywhere: bountyReady fires once, when a bounty reaches its goal');
+  E('emit("itemAdded", { item: { id: 9002, slot: "weapon", t: 1, r: "common", plus: 0 } })');
+  assert(E('__ready.length') === 1, 'bounties-anywhere: a bounty that is already done does not fire bountyReady again');
+  const goal = E('(() => { const x = topGoals(3, { sticky: false }).find(t => t.id === "bounty"); return x ? { ready: x.ready, label: x.goLabel, go: typeof x.go } : null; })()');
+  assert(goal && goal.ready && goal.label === 'Claim' && goal.go === 'function', 'bounties-anywhere: the Next Up bounty goal says Claim and claims in place');
+  E('(typeof topGoals(3, { sticky: false })[0] === "object") && (() => { const x = topGoals(3, { sticky: false }).find(t => t.id === "bounty"); const sp = x.go(); sp.fn(); })()');
+  assert(E('S.bounties.claimed') === 1 && !E('S.bounties.slots[0].k'), 'bounties-anywhere: the Claim runs BOUNTY_API.claim (no menu), pays and frees the slot');
+  const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-bounties-ui.js'), 'utf8');
+  assert(/registerSection\('camp', \{\s*id: 'bounties-camp', title: "Hesketh's board"/.test(src), "bounties-anywhere: the board is also registered at Camp as Hesketh's board");
+} catch (e) { fail('bounties-anywhere crashed: ' + (e.stack || e)); }
+
 if (section('removed systems (W2-C)')) try {
   const strip = t => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/([^:'"`\\])\/\/[^\n'"`]*$/gm, '$1');
   const files = [];

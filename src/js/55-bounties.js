@@ -128,9 +128,18 @@
     while (sl.length < BTY_SLOTS) sl.push({ k: null, wait: 0 });
     for (let i = 0; i < BTY_SLOTS; i++) if (!sl[i] || (!sl[i].k && (now >= (sl[i].wait || 0) || (!atLoad && bonus('bountyNoWait') > 0)))) { const rr = sl[i] ? sl[i].rr || 0 : 0; sl[i] = btyNew(); sl[i].rr = rr; }
   }
+  // bountyReady: a bounty just reached its goal (E1: the player claims it where they stand, not in the fight menu).
   function btyAdd(k, n, test) {
-    for (const b of S.bounties.slots) if (b && b.k === k && b.have < b.need && (!test || test(b))) b.have = Math.min(b.need, b.have + n);
+    S.bounties.slots.forEach((b, i) => {
+      if (!(b && b.k === k && b.have < b.need && (!test || test(b)))) return;
+      b.have = Math.min(b.need, b.have + n);
+      if (b.have >= b.need) emit('bountyReady', { i, k: b.k });
+    });
   }
+  on('bountyReady', ({ i }) => {
+    const b = S.bounties.slots[i]; if (!b || !b.k) return;
+    emit('toast', { key: 'bounty-ready', msg: "Bounty ready. Tap to claim.", kind: 'good', icon: { ic: ['banner', '#F2C14E'] }, prio: 'normal', go: { fn: () => { claimBounty(i); } } });
+  });
   on('kill', ({ mob, zone }) => {
     btyAdd('kill', 1, b => zone >= b.z); if (mob && mob.boss) btyAdd('boss', 1);
     const key = mob && (mob.type || String(mob.key || '').replace(/\d+$/, '')); if (key) btyAdd('hunt', 1, b => b.foe === key);
@@ -157,7 +166,7 @@
   function claimBounty(i) {
     const b = S.bounties.slots[i]; if (!b || !b.k || b.have < b.need) return null;
     const r = bountyReward(b);
-    if (r.kind !== 'gold' && !stashFits([[r.kind, r.t, r.n]])) { toast(stashNeed([[r.kind, r.t, r.n]]), 'raid', { mat: [r.kind, r.t] }, 'normal'); return null; }   // H3: a parcel waits
+    if (r.kind !== 'gold' && !stashFits([[r.kind, r.t, r.n]])) { emit('toast', { key: 'bounty-room', msg: stashNeed([[r.kind, r.t, r.n]]), kind: 'raid', icon: { mat: [r.kind, r.t] }, prio: 'normal' }); return null; }   // H3: a parcel waits
     if (r.kind === 'gold') { S.gold += r.n; S.totalGold += r.n; econEarn('bounty', r.n); }
     else stashAdd(r.kind, r.t, r.n, 'parcel');
     S.bounties.claimed++;
