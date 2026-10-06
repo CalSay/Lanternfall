@@ -181,6 +181,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     let maxHp = (ev ? ev.hp * ev.hpX : T.heroHp[cls]) * u.hpP * (1 + g.hp / 100);
     maxHp *= SOLO_TUNE.hpX * ((typeof soloHero === 'function' && SOLO_TUNE.heroHp[soloHero()]) || 1);   // the hero takes every hit
     if (SOLO_TUNE.turnHpX && typeof soloHero === 'function') maxHp *= SOLO_TUNE.turnHpX(soloHero());   // turn fights (59k TURN_TUNE.heroHpX)
+    maxHp *= attrRel('hp');   // hero-progression-rework: the hero's Vigour against the rest (1 with Training on)
     u.armour = (ev ? ev.armour : T.heroArmour[cls]) + g.armour + 0.1 * (equipped('helm') ? itemPower(equipped('helm')) : 0);
     // Unbroken: each guard stack also gives 2 armour. Slow Burn / Everburn: Embers burn their foe.
     if (cls === 'warden' && ks('unbroken') && typeof heroGuardN === 'function') u.armour += 2 * heroGuardN();

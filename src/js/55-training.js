@@ -3,6 +3,10 @@
 // Precision in the solo game (the dormant party game keeps them: HERO_UPS, buyHero).
 // CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
 //
+// hero-progression-rework: with HERO_TUNE.training off (attrOn(), 55-attributes) gold Training is switched off: each move acts as
+// if trained to the hero's level, capped by the class stage (trainLv); train() buys nothing, trainPlan has no price, trainNext
+// has no step. trainInfo still reports the level-derived facts. HERO_TUNE.training = 1 restores everything below, bit for bit.
+//
 // Rules (knobs: SOLO_TUNE.train in 24b; Attack's curve: PACE.atkPer / atkX / atkEvery in 40-rules; prices: ECON.train):
 //   - Levels belong to the hero (S.solo.tr[hero][move]); a new move starts at 0.
 //   - Cap: a move never passes the hero's level, nor the class stage's cap (SOLO_TUNE.train.cap: base class, then
@@ -45,7 +49,18 @@ function trainMoves(k) {
 }
 const trainTurns = () => typeof TURN_TUNE === 'object' && !!TURN_TUNE.on;
 function trainName(mv) { return mv === 'atk' ? 'Attack' : mv === 'parry' ? 'Parry' : mv === 'dodge' ? 'Dodge' : trainTurns() ? 'Ability power' : (SOLO_ABILITIES[mv] ? SOLO_ABILITIES[mv].name : mv); }
-function trainLv(mv, k) { if (!S || !S.solo) return 0; const v = trainRec(k)[mv]; return v > 0 ? Math.floor(v) : 0; }
+function trainLv(mv, k) {
+  if (!S || !S.solo) return 0;
+  if (attrOn()) {
+    // hero-progression-rework: a move's level follows the hero's: L - 1 (Lv 1 hits as today's untrained hero) up to the class
+    // stage's cap, then HERO_TUNE.capHalf a level past it (judge 3b). Can be fractional; milestones floor it. No allocation: called often.
+    const h = trainHero(k), H = SOLO_HEROES[h];
+    if (!(mv === 'atk' || mv === 'parry' || mv === 'dodge' || (H && H.abs.includes(mv)))) return 0;
+    const T = SOLO_TUNE.train, lv = heroLvOf(h) - 1, cap = T.cap[Math.min(trainStage(h), T.cap.length - 1)];
+    return lv <= cap ? Math.max(0, lv) : cap + HERO_TUNE.capHalf * (lv - cap);
+  }
+  const v = trainRec(k)[mv]; return v > 0 ? Math.floor(v) : 0;
+}
 function trainStage(k) {
   k = trainHero(k);
   const s = S.solo || {};
@@ -55,7 +70,7 @@ function trainStage(k) {
 function trainCap(k) {
   k = trainHero(k);
   const T = SOLO_TUNE.train, stage = trainStage(k), stageCap = T.cap[Math.min(stage, T.cap.length - 1)];
-  const lv = typeof soloLevels === 'function' ? soloLevels()[k].L : S.L;
+  const lv = attrOn() ? heroLvOf(k) : typeof soloLevels === 'function' ? soloLevels()[k].L : S.L;
   return { cap: Math.min(lv, stageCap), by: lv < stageCap ? 'level' : 'stage', lv, stage, stageCap };
 }
 // The price of level n + 1 (n = the level now); mod('trainCost') is a hook for discounts (none yet).
@@ -67,6 +82,7 @@ function trainCost(mv, n) {
 // plan() for Training: amt '1' | '10' | 'max' (default: the player's x1 / x10 / Max). 'max' is what the gold buys (at
 // least 1, so the button shows the next price). Never past the cap. { n: 0, cost: Infinity } at the cap.
 function trainPlan(mv, amt, k) {
+  if (attrOn()) return { n: 0, cost: Infinity };   // hero-progression-rework: no gold Training
   const lv = trainLv(mv, k), c = trainCap(k).cap;
   if (lv >= c) return { n: 0, cost: Infinity };
   amt = amt === undefined ? S.amt : amt;
@@ -80,6 +96,7 @@ function trainPlan(mv, amt, k) {
   return { n, cost };
 }
 function train(mv, amt) {
+  if (attrOn()) return 0;   // hero-progression-rework: no gold Training
   const k = typeof soloHero === 'function' ? soloHero() : null;
   if (!k || !trainMoves(k).includes(mv)) return 0;
   const p = trainPlan(mv, amt, k);
@@ -160,6 +177,7 @@ function trainInfo(mv, k) {
 // The next level to train (Next Up, 55-goals): the cheapest of Attack and the equipped abilities (Attack on a tie); Parry
 // and Dodge only once those are at their cap (they pay off only by hand). null when every move is at its cap.
 function trainNext(k) {
+  if (attrOn()) return null;   // hero-progression-rework: no gold Training
   k = trainHero(k);
   const eq = k === (typeof soloHero === 'function' && soloHero()) && typeof soloEquipped === 'function' ? soloEquipped() : [];
   const pick = list => { let best = null; for (const mv of list) { const p = trainPlan(mv, '1', k); if (p.n > 0 && (!best || p.cost < best.cost)) best = { move: mv, cost: p.cost, lv: trainLv(mv, k) + 1 }; } return best; };

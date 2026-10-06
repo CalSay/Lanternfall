@@ -8,7 +8,7 @@ import os from 'node:os';
 import { spawn, execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { findBrowser } from './lib/browser.mjs';
-import { ROOT, loadCore as loadCoreRaw, memoryStorage, badNumbers, deepDiff, subsetDiff } from './lib/core.mjs';
+import { ROOT, coreFiles as coreFilesRaw, loadCore as loadCoreRaw, memoryStorage, badNumbers, deepDiff, subsetDiff } from './lib/core.mjs';
 
 // Every game this run loads has no Omen (almanac.force('none')), so a new real-world day never
 // changes prices, drops or odds under a check. The Almanac checks restore the calendar with
@@ -20,9 +20,23 @@ import { ROOT, loadCore as loadCoreRaw, memoryStorage, badNumbers, deepDiff, sub
 // C29: zone fights are turn fights and active only (59k): a core left to tick earns nothing from fights. Sections written for
 // the real-time fight run with TURN_TUNE.on = 0 (it still runs the Deepwell and Trials); pass { turns: true } for the game's
 // default turn fights (the C29 sections).
+// hero-progression-rework: { training: true } loads the game with HERO_TUNE.training = 1 from the first line (a patched copy of
+// 24g-data-hero.js), so gold Training, the old xpNeed and the flag-on save seed all run exactly as the game does with the flag on.
+let trainingFiles = null;
+function trainingCoreFiles() {
+  if (!trainingFiles) {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lanternfall-hero-')), f = '24g-data-hero.js', src = fs.readFileSync(path.join(ROOT, 'src', 'js', f), 'utf8');
+    if (!/training: 0,/.test(src)) throw new Error('24g-data-hero.js: HERO_TUNE.training default changed; update trainingCoreFiles');
+    fs.writeFileSync(path.join(dir, f), src.replace('training: 0,', 'training: 1,'));
+    process.on('exit', () => { try { fs.rmSync(dir, { recursive: true, force: true }); } catch (e) {} });
+    const rel = path.relative(path.join(ROOT, 'src', 'js'), path.join(dir, f));
+    trainingFiles = coreFilesRaw().map(n => (n === f ? rel : n));
+  }
+  return trainingFiles;
+}
 function loadCore(opts) {
   const o = opts || {};
-  const g = loadCoreRaw(o);
+  const g = loadCoreRaw(o.training ? { ...o, files: o.files || trainingCoreFiles() } : o);
   if (!o.turns) try { g.eval("TURN_TUNE.on = 0"); } catch (e) {}
   try { g.eval("typeof almanac === 'object' && almanac.force && almanac.force('none')"); } catch (e) {}
   if (!(opts && opts.cold)) try { g.eval("typeof hearthWarm === 'function' && hearthWarm()"); } catch (e) {}
@@ -207,6 +221,8 @@ if (section('smoke')) try {
 // ---- 3. saves: fresh v5 fixtures, and a foreign or broken save starts a new game (W3-C) ----
 // tests/fixtures/save-{early,mid,late}.json are v5 saves written by the game (tools/sim.mjs --snap / --snapday: Wren 20 min,
 // Tobin day 4, Pip on the coast). There is no migration: a save from another key or a broken one is never read.
+// hero-progression-rework: the files predate S.attr; the load adds its defaults (the key stays v5: old saves load, see section
+// 'hero progression rework', l).
 // Their empty bounty slots wait until 2100 (edited by hand): load refills an empty slot once the real clock passes its
 // wait, and that refill would read as a lost field here. A re-snapped fixture needs the same edit (checked below).
 if (section('saves')) try {
@@ -1363,7 +1379,7 @@ if (section('onboarding')) try {
   const got = {}, log = [];
   g.fn.on('unlock', e => { got[e.id] = E('Math.round(S.onboard.t)'); log.push(e.id); });
   let firstUp = null;
-  const buy = () => E(`{ for (let k = 0; k < 50; k++) { const t = trainNext(); if (!t || S.gold < t.cost) break; train(t.move, '1'); } }`);   // W2-A: Training
+  const buy = () => E(`{ if (attrOn()) { attrSpread(); } else for (let k = 0; k < 50; k++) { const t = trainNext(); if (!t || S.gold < t.cost) break; train(t.move, '1'); } }`);   // W2-A: Training; hero-progression-rework: a new player spreads the free points evenly (the guide's upgrade step)
   for (let sec = 0; sec < 12 * 60; sec++) {
     for (let i = 0; i < 10; i++) g.fn.tick(0.1);
     if (firstUp === null && E('S.gold >= 10')) firstUp = sec;
@@ -1375,12 +1391,20 @@ if (section('onboarding')) try {
   console.log('       timeline: ' + Object.entries(got).map(([k, t]) => `${k} ${mmss(t)}`).join(', '));
   assert(firstUp !== null && firstUp < 60, `first upgrade affordable in under a minute (${firstUp}s)`);
   assert(at('party') < 120 && at('nextup') < 120, `Party and Next Up open in the first 2 minutes (${mmss(at('party'))}, ${mmss(at('nextup'))})`);
-  assert(at('gather') < 240 && at('bounties') < 300, `Gather and Bounties open by 4-5 minutes (${mmss(at('gather'))}, ${mmss(at('bounties'))})`);
+  // hero-progression-rework (judge, 2026-10-06): a warm hero reaches the camp, first star and Tavern sooner; those open at once
+  // (now()) and restart the story-unlock-gates clock (ONBOARD_TUNE.gap), so Gather and Bounties queue behind them. Was 240/300 s
+  // (base 2:03, 4:56). Owner: coordinator; expiry 2026-11-15, re-measure then or when onboarding or the early road changes.
+  const beforeB = Object.values(got).filter(t => t <= at('bounties')).sort((a, b) => a - b);
+  const stall = beforeB.slice(1).reduce((m, t, i) => Math.max(m, t - beforeB[i]), beforeB[0] || 0);
+  assert(at('gather') < 330 && at('bounties') < 450 && stall <= E('ONBOARD_TUNE.gap') + 3, `Gather and Bounties open by 5:30 and 7:30, and nothing waits longer than the unlock gap until then (${mmss(at('gather'))}, ${mmss(at('bounties'))}, longest wait ${stall}s)`);
   assert(['camp', 'forage', 'craft', 'bestiary', 'almanac'].every(k => at(k) <= 660) && at('roster') === Infinity, 'Camp, Foraging, Craft, Bestiary and Almanac open by 11 minutes; the Roster never opens (solo)');
   const early = Object.values(got).filter(t => t <= 600).sort((a, b) => a - b);
   let gap = early[0] || 0; for (let i = 1; i < early.length; i++) gap = Math.max(gap, early[i] - early[i - 1]);
   // W2-B: solo has no Roster unlock, so the 5-8 minute stretch is quiet (the old target was 180 s): a pacing note for the coordinator
-  assert(early.length >= 8 && gap <= 210, `something new at least every 3.5 minutes in the first 10 (${early.length} unlocks, longest gap ${gap}s)`);
+  // hero-progression-rework (judge ruling 5, 2026-10-06): 240 s until card story-unlock-gates spaces the early unlocks by story beat
+  // (expiry 2026-11-15; then 210 s again). The Codex unlocks at zone 10, about 4 minutes after the Tavern; a faster early road
+  // closes that gap but lengthens the first hour's dry stretch (health active.longestDrySec 560-625 against 432).
+  assert(early.length >= 8 && gap <= 240, `something new at least every 4 minutes in the first 10 (${early.length} unlocks, longest gap ${gap}s)`);
   // the guide ends; skip and "show every tab" work
   assert(E('onboardTips(false) === false && onboardStep() === null'), 'Skip tips: no hint shows');
   E('onboardTips(true); onboardUnlockAll()');
@@ -1504,8 +1528,8 @@ if (section('onboarding hint placement (HINT1)')) try {
 // ---- the Stars: small rule changes for turn fights (57e-stars.js, 24f-data-stars.js; owner 2026-10-02, "like pictos from E33") ----
 if (section('stars')) try {
   const rawOf = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
-  const errs = [];
-  const g = loadCore({ seed: 41, turns: true }), E = s => g.eval(s);
+  const errs = [];   // hero-progression-rework: these star checks play an untrained hero at Lv 20 (a boss that lasts more than 2 turns), so they run with HERO_TUNE.training = 1
+  const g = loadCore({ seed: 41, turns: true, training: true }), E = s => g.eval(s);
   assert(E('JSON.stringify(S.stars)') === '{"v":3,"own":{},"wins":{},"learned":{},"set":{},"lit":{},"dry":0,"seenN":0,"pw":{}}', 'new game: S.stars defaults');
   // star points: a point every 3 hero levels, 4 for each Great Lantern (unchanged from the old map)
   const pts = (L, z) => E(`S.L = ${L}; S.maxZone = ${z}; starPoints()`);
@@ -1590,7 +1614,7 @@ if (section('stars')) try {
   assert(E('JSON.stringify(turnMakeProfile(combatFoes()[0], cbUnitByKey("hero")).stars)') === JSON.stringify(['serrated', 'brand', 'encore', 'huntstep', 'turning']), 'a turn fight takes the hero\'s stars as it starts (the profile)');
   // save round trip
   E('save()');
-  const g2 = loadCore({ seed: 42, storage: memoryStorage({ [KEY]: g.storage.get(KEY) }), turns: true });
+  const g2 = loadCore({ seed: 42, storage: memoryStorage({ [KEY]: g.storage.get(KEY) }), turns: true, training: true });
   assert(g2.eval('JSON.stringify(S.stars)') === E('JSON.stringify(S.stars)') && g2.eval('starSlots("wren").join()') === 'serrated,brand,encore', 'found, learned, set and lit stars survive save and load');
   errs.push(...g2.errors);
 
@@ -1700,7 +1724,7 @@ if (section('stars')) try {
   assert(!bad.length && runs.worst <= 2 && runs.n > 50, `every star at once (far past the limit): no bad numbers, bosses still take 2+ hero turns, and the hero never gets more than 2 turns in a row (${runs.worst} in ${runs.n} turns)` + (bad.length ? ': ' + bad.join('; ') : ''));
   // a won fight in a live turn fight carries the set stars, and counts toward learning them
   {
-    const h = loadCore({ seed: 45, turns: true }), H = s => h.eval(s);
+    const h = loadCore({ seed: 45, turns: true, training: true }), H = s => h.eval(s);
     H('soloPick("pip", { now: true }); S.L = 20; S.maxZone = 3; setZone(1); S.activity = "fight"; S.stars.own.brand = 1; S.stars.set.pip = ["brand", null, null]; spawn()');
     H('globalThis.__ends = []; on("fightEnd", e => globalThis.__ends.push(e)); 1');
     for (let i = 0; i < 3000 && !H('__ends.some(e => e.reason === "victory")'); i++) { H('turnCombatSnapshot().phase === "hero" && turnCombatAction("attack")'); h.fn.tick(0.1); }
@@ -2124,7 +2148,7 @@ if (section('cold hearth')) try {
     p.fn.on('zoneClear', e => mark('zone' + (e.zone + 1)));
     p.fn.on('crafted', e => { const d = P(`CRAFT_KINDS[${JSON.stringify(e.kind)}] || {}`); if (d.tool) mark('tool'); if (d.pos === 'weapon') mark('weapon'); });
     const steps = []; p.fn.on('onboardStep', e => steps.push([e.id, now()]));
-    const buy = () => P(`{ for (let k = 0; k < 50; k++) { const t = trainNext(); if (!t || S.gold < t.cost) break; train(t.move, '1'); } }`);   // W2-A: Training
+    const buy = () => P(`{ if (attrOn()) { attrAdd('might', attrPoints().free); } else for (let k = 0; k < 50; k++) { const t = trainNext(); if (!t || S.gold < t.cost) break; train(t.move, '1'); } }`);   // W2-A: Training; hero-progression-rework: the free points go into Might
     const weapon = P('Object.keys(CRAFT_KINDS).find(k => CRAFT_KINDS[k].pos === "weapon" && !CRAFT_KINDS[k].legacy && fits(k, "weapon", "hero"))');
     // what the player gathers for: the next station, then the pickaxe, then the class weapon
     const want = () => P(`(() => {
@@ -3911,8 +3935,9 @@ if (section('econ (ECON-A)')) try {
   E('S.precision = 0; S.relic.edge = 0; S.camp.bless = []; S.mastery.zones = {}; S.mastery.types = {}; for (const f of DEED_FEATS.filter(f => f.legacy)) delete S.deeds.feat[f.id]; deeds._rebuild()'); for (let i = 0; i < 5; i++) g.fn.tick(0.1);
   assert(E('RELICS[1].desc()') === '+2% crit damage per level.', 'player-facing text says "crit damage" (no "Keen")');
   // The ledger
-  E('soloPick("wren"); S.gold = 1e6; S.econ.spent.up = 0'); const g0 = E('S.gold'); E('train(trainNext().move, "1")');
-  assert(E('S.econ.spent.up') === g0 - E('S.gold') && E('S.econ.spent.up') > 0, 'the ledger counts a Training level under "up"');
+  // hero-progression-rework: gold Training is off; a paid attribute reset (the second of a hero) is the "up" spender (Training's own ledger check is in 'training (W2-A)')
+  E('soloPick("wren"); S.gold = 1e6; S.L = 10; S.maxZone = 10; S.attr.resets = {}; attrSpread(); attrReset(); attrSpread(); S.econ.spent.up = 0'); const g0 = E('S.gold'); E('attrReset()');
+  assert(E('S.econ.spent.up') === g0 - E('S.gold') && E('S.econ.spent.up') > 0, 'the ledger counts a paid attribute reset under "up"');
   E('setZone(1); S.econ.earned.fight = 0'); for (let i = 0; i < 300; i++) g.fn.tick(0.1);
   assert(E('S.econ.earned.fight') > 0, `the ledger counts fighting gold (${E('fmt(S.econ.earned.fight)')} in 30 s)`);
   assert(!g.errors.length, 'econ: no errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
@@ -4176,7 +4201,7 @@ if (section('solo hero')) try {
   {
     const g = loadCore({ solo: true, seed: 102 }), E = s => g.eval(s);
     E('soloPick("wren"); S.L = 7; S.xp = 3; S.gold = 500');
-    assert(E('soloPick("tobin") && S.L === 1 && S.xp === 0 && S.gold === 500 && S.party.cls === "warden"'), 'switching to Tobin: his own level (1), the same gold');
+    assert(E('soloPick("tobin") && S.L === roadLevel() && S.L < 7 && S.xp === 0 && S.gold === 500 && S.party.cls === "warden"'), 'switching to Tobin: he joins at the road\'s level (below Wren\'s 7), the same gold');
     E('S.L = 4');
     assert(E('soloPick("wren") && S.L === 7 && S.xp === 3 && soloLevels().tobin.L === 4 && soloLevels().pip.L === 1'), 'back to Wren: her level 7 again; Tobin keeps his 4');
     errs.push(...g.errors);
@@ -4373,7 +4398,7 @@ if (section('solo hero')) try {
     const g = T(), E = s => g.eval(s);
     E('soloPick("wren"); S.maxZone = 12; setZone(12); S.L = 30;');
     E('soloPick("tobin")');
-    assert(E('S.zone') === 12 && E('S.maxZone') === 12 && E('S.L') === 1, 'W1-D: switching to a hero who has not played keeps the road (zone 12); their level is their own');
+    assert(E('S.zone') === 12 && E('S.maxZone') === 12 && E('S.L') === E('roadLevel()') && E('S.L') > 1, 'W1-D: switching to a hero who has not played keeps the road (zone 12); they join at the road\'s level (hero-progression-rework)');
     E('setZone(2); S.pace.fell = 12;');   // pace walks the level 1 hero down to a zone they can farm
     E('soloPick("wren")');
     assert(E('S.zone') === 12 && E('S.L') === 30 && E('S.pace.fell') === 0, 'W1-D: switching back returns Wren to zone 12 at level 30 (not the zone the weak hero fell to)');
@@ -5432,7 +5457,7 @@ if (section('solo copy (browser, W1-C)')) try {
 // Attack, Parry, Dodge and abilities, capped by the hero's level and the class stage. It replaced Blade, Swiftness and
 // Precision in the solo game (the dormant party game keeps them). Solo build throughout.
 if (section('training (W2-A)')) try {
-  const g = loadCore({ solo: true, seed: 21 }), E = s => g.eval(s), near = (a, b, t = 1e-9) => Math.abs(a - b) <= t * Math.max(1, Math.abs(b));
+  const g = loadCore({ training: true, solo: true, seed: 21 }), E = s => g.eval(s), near = (a, b, t = 1e-9) => Math.abs(a - b) <= t * Math.max(1, Math.abs(b));
   const T = JSON.parse(E('JSON.stringify(SOLO_TUNE.train)')), PR = JSON.parse(E('JSON.stringify(ECON.train)'));
   // save defaults and the key
   assert(E('KEY') === 'lanternfall.save.v5' && E('S.v') === 5 && E('fresh().v') === 5, 'save key lanternfall.save.v5 (S.v 5): v4 saves are never read');
@@ -5442,7 +5467,7 @@ if (section('training (W2-A)')) try {
   assert(E('JSON.stringify(fresh().solo.asc)') === '{}', 'fresh(): no hero has passed the Proving (asc {})');
   // an old v4 save without tr / asc (a tool's save) gets them back
   const st = memoryStorage({ [KEY]: JSON.stringify(Object.assign(JSON.parse(E('JSON.stringify(S)')), { solo: { v: 1, hero: 'tobin', lv: {}, eq: {}, zn: {} } })) });
-  const h0 = loadCore({ solo: true, seed: 3, storage: st });
+  const h0 = loadCore({ training: true, solo: true, seed: 3, storage: st });
   assert(h0.eval('S.solo.tr && S.solo.tr.tobin.atk === 0 && S.solo.tr.tobin.bash === 0 && typeof S.solo.asc === "object"') && !h0.errors.length, 'a save without Training fields loads with them at 0 (defaults merge)');
 
   E('soloPick("wren", { now: 1 }); S.gold = 0; S.L = 1');
@@ -5514,7 +5539,7 @@ if (section('training (W2-A)')) try {
   E('soloPick("wren")');
   assert(tAtk === 3 && E('trainLv("atk")') === 12 && E('trainLv("atk", "tobin")') === 3 && wAtk > 0, 'Training levels belong to each hero (Wren 12, Tobin 3) and survive a switch');
   // save round trip
-  E('save()'); const h1 = loadCore({ solo: true, seed: 4, storage: g.storage });
+  E('save()'); const h1 = loadCore({ training: true, solo: true, seed: 4, storage: g.storage });
   assert(h1.eval('S.solo.tr.wren.atk') === 12 && h1.eval('S.solo.tr.tobin.atk') === 3 && h1.eval('S.solo.tr.wren.echo') === E('S.solo.tr.wren.echo'), 'Training levels survive save and load');
 
   // Next Up: the hero-up goal trains (Attack or an equipped ability first)
@@ -5540,12 +5565,12 @@ if (section('training (W2-A)')) try {
   assert(!g.errors.length, 'training: no errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
 } catch (e) { fail('training (W2-A) crashed: ' + (e.stack || e)); }
 
-// ---- W2-A in Chromium: the Training list, a Train press, the long-press sheet, the old rows gone ----
+// ---- W2-A in Chromium (HERO_TUNE.training = 1, the old Training): the Training list, a Train press, the long-press sheet, the old rows gone ----
 if (section('training (W2-A, browser)')) try {
   const { pw, exe } = browserTools;
   if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('training (browser): Playwright or Chromium not here, skipped');
   else {
-    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html0 = fs.readFileSync(distFile, 'utf8').replace('training: 0,', 'training: 1,'), end = html0.lastIndexOf('})();\n</script>');
     const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
     const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
     try {
@@ -6240,8 +6265,8 @@ if (section('save codec validation (C5)')) try {
   for(const b64 of [canonical.replace(/=+$/,''),canonical+'=',noncanonical])assert(!decode(`LF1:${b64}:${E(`savecodeChecksum(${JSON.stringify(b64)})`)}`).ok,'C5: a new checksum cannot legitimise malformed Base64 padding or bits');
   assert(E('JSON.stringify(S)')===original,'C5: failed validations leave the live game untouched');
   const live=loadCore({seed:505,prelude:'Date.__t=1790596800000;Date.now=()=>Date.__t'}),L=s=>live.eval(s);
-  L(`S.maxZone=32;S.camp.open=true;S.camp.b.hearth=4;S.camp.b.tavern=2;S.camp.b.store=8;S.gold=1e9;for(const a of Object.values(S.mats))a.fill(1e5);S.craft.troph.fill(100);for(const s of Object.values(S.skills))s.lv=30;soloPick('pip');S.L=10;train('atk','1');soloEquip(0,null);soloEquip(1,'fire');craftItem('robe',1,{mw:0});forgeItem('pick',1);dropUnique(Object.keys(UNIQ)[0],1);brewTonic('vigor',1);drinkTonic('vigor',1);campBuild('watch');campBuild('forge');for(let i=0;i<12;i++)tick(.1);S.mats.wood[0]=0;handsSend('tam','wood',1,{shifts:2});`);
-  assert(L('S.camp.builds.length===2&&S.camp.builds[1].start===0&&S.items.some(i=>i.a&&i.mw===0)&&S.items.some(i=>i.u)&&S.items.some(i=>i.slot==="pick")&&S.craft.tonic&&handsGet("tam").job.q===1&&trainLv("atk")===1'),'C5: real runtime creates active/queued builds, affixes, unique/masterwork/tool, tonic, queued shift and training');
+  L(`S.maxZone=32;S.camp.open=true;S.camp.b.hearth=4;S.camp.b.tavern=2;S.camp.b.store=8;S.gold=1e9;for(const a of Object.values(S.mats))a.fill(1e5);S.craft.troph.fill(100);for(const s of Object.values(S.skills))s.lv=30;soloPick('pip');S.L=10;attrAdd('might',5);attrAdd('guard',3);soloEquip(0,null);soloEquip(1,'fire');craftItem('robe',1,{mw:0});forgeItem('pick',1);dropUnique(Object.keys(UNIQ)[0],1);brewTonic('vigor',1);drinkTonic('vigor',1);campBuild('watch');campBuild('forge');for(let i=0;i<12;i++)tick(.1);S.mats.wood[0]=0;handsSend('tam','wood',1,{shifts:2});`);
+  assert(L('S.camp.builds.length===2&&S.camp.builds[1].start===0&&S.items.some(i=>i.a&&i.mw===0)&&S.items.some(i=>i.u)&&S.items.some(i=>i.slot==="pick")&&S.craft.tonic&&handsGet("tam").job.q===1&&attrOf(null,"might")===5&&attrOf(null,"guard")===3'),'C5: real runtime creates active/queued builds, affixes, unique/masterwork/tool, tonic, queued shift and attribute points');
   round(live,'real active feature state');assert(L('summarizeSave(S).hero')==='Pip','C5: preview names the selected solo hero');
   L('Date.__t=handsGet("tam").job.end;handsCatchUp(Date.now())');
   assert(L('handsStatus(handsGet("tam")).st')==='rest','C5: runtime return creates rest');round(live,'real gatherer rest');
@@ -7096,7 +7121,7 @@ if (section('C9 hero registry (browser)')) try {
           await page.click('#createScreen .ccard[data-hero="wren"]');
           await page.click('#createScreen .create-go');
           await page.waitForSelector('#createScreen',{state:'detached'});
-          await X('delete S.party.unlock.heroes.bram; S.maxZone=36; S.zone=1; S.L=7; S.xp=3; S.mats.wood=[80,0,0,0,0]; S.gold=42; S.camp.open=true; S.camp.b.hearth=2; setTab("party"); setView("party","team"); ui(true); true');
+          await X('delete S.party.unlock.heroes.bram; S.maxZone=36; S.zone=1; S.L=60; S.xp=3; S.mats.wood=[80,0,0,0,0]; S.gold=42; S.camp.open=true; S.camp.b.hearth=2; setTab("party"); setView("party","team"); ui(true); true');
           // owner 2026-10-01: the Camp view shows chips for the heroes you can play or unlock; All heroes opens the full roster
           await page.waitForSelector('#sec-solo-hero .sp-all');
           const chipHeroes = await page.$$eval('#sec-solo-hero .sp-chip', cs => cs.map(c => c.dataset.hero));
@@ -7110,10 +7135,10 @@ if (section('C9 hero registry (browser)')) try {
           assert(await X('S.mats.wood[0]===0 && heroUnlocked("bram") && soloHero()==="wren"') && await page.$eval('#heroSheet .sp-card[data-hero="bram"]', b=>b.dataset.state==='coming-soon' && b.disabled && b.textContent.includes('Coming soon')), `C9 ${tag}: confirming pays once and shows Coming soon without switching`);
           await page.click('#heroSheet .sp-card[data-hero="tobin"]');
           await page.click('#heroSheet .sp-card[data-hero="tobin"]');
-          assert(await X('soloHero()==="tobin" && S.L===1 && S.gold===42 && soloLevels().wren.L===7'), `C9 ${tag}: an unlocked starter still switches freely and keeps each hero’s level`);
+          assert(await X('soloHero()==="tobin" && S.L===roadLevel() && S.L<60 && S.gold===42 && soloLevels().wren.L===60'), `C9 ${tag}: an unlocked starter still switches freely, joins at the road's level and Wren keeps hers`);   // hero-progression-rework: a hero who has not played joins at roadLevel()
           await page.click('#heroSheet .sp-card[data-hero="wren"]');
           await page.click('#heroSheet .sp-card[data-hero="wren"]');
-          assert(await X('soloHero()==="wren" && S.L===7 && S.xp===3 && S.gold===42'), `C9 ${tag}: switching back restores the playing hero’s level and XP`);
+          assert(await X('soloHero()==="wren" && S.L===60 && S.xp===3 && S.gold===42'), `C9 ${tag}: switching back restores the playing hero’s level and XP (above the road's level, so no lift)`);
           const saved = await X('JSON.stringify(S.party.unlock)');
           await X('save(); true'); await page.reload(); await page.waitForFunction(()=>!!window.__t);
           assert(await X('JSON.stringify(S.party.unlock)')===saved && await X('heroRouteInfo("bram").state==="coming-soon"'), `C9 ${tag}: the browser reload keeps route completion without charging again`);
@@ -8093,8 +8118,9 @@ if (section('C29 turn fights (core)')) try {
     for (let t = 0; t < 600 && E('S.zone') === 1; t += 0.05) { E('__bot("parry")'); g.fn.tick(0.05); }
     assert(E('__seq.join()') === 'k,k,k,k,k,B' && E('S.zone') === 2 && E('scrollCount("moss")') === 1 && !g.errors.length,
       `C29: zone 1 is five turn fights then its boss; the first win drops a Moss Scroll (${E('__seq.join()')}, Scrolls ${E('JSON.stringify(S.abil.scrolls)')})`);
-    assert(E('__tc.length') > 10 && E('__tc.every(x => /^(hero|foe):handoff$/.test(x))') && E('__tc.some(x => x.startsWith("foe"))'),
-      `C29: every change of turn pauses (owner) while a banner says whose turn it is (${E('__tc.slice(0, 4).join()')})`); }
+    assert(E('__tc.length') > 4 && E('__tc.every(x => /^(hero|foe):handoff$/.test(x))') && E('__tc.some(x => x.startsWith("foe"))'),
+      // hero-progression-rework: each level now lifts the hero's moves (no gold Training to buy), so zone 1's fights are short: 6 cards, was over 10
+      `C29: every change of turn pauses (owner) while a banner says whose turn it is (${E('__tc.slice(0, 4).join()')}; ${E('__tc.length')} cards)`); }
   // a lethal hit from a vampiric elite wipes the hero, which clears the live fight, before the heal lands (found by the health bots)
   { const { E } = fresh('wren'); E('TURN_LIVE = null');
     let threw = ''; try { E('TURN_LIVE_IO.healFoe(5)'); } catch (e) { threw = e.message; }
@@ -8238,7 +8264,7 @@ if (section('C29 late zones and Wider timing windows (core)')) try {
   // The gear pass (2026-10-02): her caster affix lines work now, so, like every "keeps up" hero (sim --report heroes, the
   // mid-game HP checks), she keeps only the shared HP line; her Lantern's own line counts
   { const g = loadCore({ seed: 3, turns: true, storage: memoryStorage({ [KEY]: FX('late') }) }), E = s => g.eval(s);
-    E(`loadSave(); S.L = 41; S.solo.asc.pip = 1; S.solo.tr.pip.atk = 41;
+    E(`loadSave(); S.L = 41; S.solo.asc.pip = 1; S.solo.tr.pip.atk = 41; attrSpread();
       for (const sl of Object.keys(S.equip)) { const it = itemById(S.equip[sl]); if (it && !['pick', 'axe', 'sickle', 'spear'].includes(it.slot)) { it.r = 'epic'; it.plus = 10; if (it.a) it.a = it.a.filter(l => l[0] === 'hp'); } }
       S.abil.unl.pip = ['spark', 'nova']; S.solo.eq.pip = ['fire', 'spark', 'nova']; S.maxZone = 38; setZone(38); S.activity = 'fight'; arena = null; gearDirty()`);
     const run = (boss, skill) => E(`fightBoss = ${boss}; spawn(); (r => ({ win: r.kills / Math.max(1, r.kills + r.deaths), turns: r.totalHeroTurns / Math.max(1, r.completedFights) }))(turnCombatSample({ profile: turnCombatProfile(), seconds: 1800, seed: 3, skill: ${JSON.stringify(skill)} }))`);
@@ -8295,7 +8321,7 @@ if (section('C29 boss pass (core)')) try {
     assert(!g.errors.length, 'boss pass: no errors: ' + g.errors.slice(0, 2).join(' | ')); }
   // the late fixture made a hero who keeps up (sim late-kept-38): what a landed hit costs, and a gear tier behind or ahead
   { const kept = d => { const g = loadCore({ seed: 3, turns: true, storage: memoryStorage({ [KEY]: FX('late') }) }), E = s => g.eval(s);
-      E(`loadSave(); S.L = 41; S.solo.asc.pip = 1; S.solo.tr.pip.atk = 41;
+      E(`loadSave(); S.L = 41; S.solo.asc.pip = 1; S.solo.tr.pip.atk = 41; attrSpread();
         for (const sl of Object.keys(S.equip)) { const it = itemById(S.equip[sl]); if (it && !['pick', 'axe', 'sickle', 'spear'].includes(it.slot)) { it.r = 'epic'; it.plus = 10; it.t += ${d}; if (it.a) it.a = it.a.filter(l => l[0] === 'hp'); } }
         S.abil.unl.pip = ['spark', 'nova']; S.solo.eq.pip = ['fire', 'spark', 'nova']; S.maxZone = 38; setZone(38); S.activity = 'fight'; arena = null; gearDirty()`);
       const hit = boss => E(`(() => { fightBoss = ${boss}; spawn(); const p = turnCombatProfile(), k = p.refHp * p.hitX * p.bossHitX / p.heroMaxHp, ch = p.script.find(m => m.charge);
@@ -8318,7 +8344,7 @@ if (section('C29 mid-game HP and Wren (core)')) try {
   // a hero who keeps up (as sim --report heroes): their class set and a Charm at the zone's tier, rare +5, the shared HP
   // affix line only, Training at their level, and Attack and HP scaled together so their Attack is the zone's reference
   const kept = (k, z, L, fx, d) => { const g = loadCore({ seed: 7, turns: true, storage: memoryStorage({ [KEY]: FX(fx) }) }), E = s => g.eval(s), J = JSON.stringify;
-    E(`loadSave(); soloPick(${J(k)}, {now:true}); S.L = ${L}; S.solo.tr[${J(k)}].atk = ${L}; S.solo.tr[${J(k)}][${J({ wren: 'echo', tobin: 'bash', pip: 'fire' }[k])}] = ${L}; S.solo.asc[${J(k)}] = 0;
+    E(`loadSave(); soloPick(${J(k)}, {now:true}); S.L = ${L}; S.solo.tr[${J(k)}].atk = ${L}; S.solo.tr[${J(k)}][${J({ wren: 'echo', tobin: 'bash', pip: 'fire' }[k])}] = ${L}; S.solo.asc[${J(k)}] = 0; attrSpread();
       S.maxZone = Math.max(S.maxZone, ${z}); setZone(${z});
       (() => { let sd = 7919; const rnd = () => (sd = sd * 16807 % 2147483647) / 2147483647, t = zoneTier(${z}) + (${d || 0});
         ${J(KINDS[k])}.concat(['charm']).forEach((kind, i) => { const it = newItem(kind, t, 'rare', { rnd }); it.plus = 5; if (it.a) it.a = it.a.filter(l => l[0] === 'hp'); S.items.push(it); S.equip[['weapon', 'off', 'helm', 'body', 'charm'][i]] = it.id; }); })();
@@ -8520,8 +8546,10 @@ if (section('boss odds (core, Next Up "Boss ready")')) try {
   const FX = n => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-' + n + '.json'), 'utf8');
   const J = JSON.stringify;
   // a hero at its frontier boss: the zone's fights won, the boss next (as Next Up sees it)
-  const boot = (hero, fx, seed) => {
-    const g = loadCore({ seed: seed || 7, turns: true, ...(fx ? { storage: memoryStorage({ [KEY]: FX(fx) }) } : {}) }), E = s => g.eval(s);
+  // hero-progression-rework: these expectations were measured with gold Training (the fixtures hold trained heroes), so they run
+  // with HERO_TUNE.training = 1; the default game's Go target (Build while points are free) is asserted at the end.
+  const boot = (hero, fx, seed, flagOff) => {
+    const g = loadCore({ seed: seed || 7, turns: true, ...(flagOff ? {} : { training: true }), ...(fx ? { storage: memoryStorage({ [KEY]: FX(fx) }) } : {}) }), E = s => g.eval(s);
     if (fx) E('loadSave()');
     E(`S.onboard && (S.onboard.tips = false, S.onboard.all = true); ${hero ? `soloPick(${J(hero)}, {now:true});` : ''} setZone(Math.max(1, S.maxZone)); S.activity = 'fight'; arena = null; gearDirty();
       S.kills = ZONE_FIGHTS; fightBoss = false; spawn();`);
@@ -8556,6 +8584,11 @@ if (section('boss odds (core, Next Up "Boss ready")')) try {
     E('S.bossOdds = { hits: 300, parry: 180, dodge: 108, rings: 300, perfect: 120, good: 135 }'); const kept = E('bossOdds()');
     assert(kept && J(kept) === J(r), 'boss odds: while a new estimate runs, the last finished one for the zone still shows');
     assert(!g.errors.length, 'boss odds: no core errors'); }
+  // the default game (attributes, no Training): the copy never says Train, and with points to spend Go opens Attributes first
+  for (const fx of ['early', 'late']) { const { g, E, goal } = boot('', fx, 7, true), o = E('bossOdds({ sync: true })'), l = goal(), free = E('attrPoints().free');
+    const copy = /^(Boss ready in Zone \d+|Zone \d+ boss: a close fight\. Gear up to be safe|Zone \d+ boss is too strong\. Level up and gear up first)$/.test(l.label), ready = l.label.startsWith('Boss ready');
+    assert(o && copy && free > 0 && (ready ? l.go.sel === '#gateBtn' : l.go.view === 'attributes') && !g.errors.length, `boss odds: the ${fx} fixture with attributes says "${l.label}" and Go ${ready ? 'opens the gate' : 'opens Attributes'} with ${free} points free (${J(o)})`);
+    if (!ready) { E('attrSpread()'); const l2 = goal(); assert(E('attrPoints().free') === 0 && l2.go.sel === '#gateBtn' && !/Train/.test(l2.label), `boss odds: the ${fx} fixture with every point spent sends Go to the fight, not Attributes ("${l2.label}")`); } }
   // legacy (real-time) fights keep the old "Boss ready"
   { const { g, E, goal } = boot('', 'early'); E('TURN_TUNE.on = 0'); const l = goal();
     assert(E('bossOdds()') === null && l.label === `Boss ready in Zone ${E('S.maxZone')}` && l.pct === 1, `boss odds: with turn fights off the old rule stays (${l.label})`); }
@@ -9063,6 +9096,266 @@ if (section('story-systems-hollow')) try {
   assert(wrote >= 1, 'systems-hollow: the Tavern applicant card shows the line');
 } catch (e) { fail('story-systems-hollow crashed: ' + (e.stack || e)); }
 
+// ---- hero-progression-rework: attributes, the road, the join lift, bench XP, the switch-off flag, the save (docs/design/hero-progression-build.md) ----
+// HERO_TUNE.training = 0 is the shipped game; { training: true } loads the old game. The road and fights tables are tuned by the sims, so
+// every number here comes from HERO_TUNE (and the game's own functions), never a copy.
+if (section('hero progression rework (attributes, road, join, bench)')) try {
+  const near = (a, b, t = 1e-9) => Math.abs(a - b) <= t * Math.max(1, Math.abs(b));
+  const mk = o => { const c = loadCore({ turns: true, seed: 61, ...o }); c.eval('soloPick("wren")'); return c; };
+  const g = mk(), E = s => g.eval(s), HT = JSON.parse(E('JSON.stringify(HERO_TUNE)')), PH = E('PACE.heroLv');
+  assert(HT.training === 0 && E('attrOn()') === true && E('KEY') === 'lanternfall.save.v5' && E('Object.values(S.attr.pts).every(r => Object.values(r).every(v => v === 0))') && E('S.attr.v') === 1 && E('fresh().attr.v') === 1, 'hero progression: Training is off by default, the save is v5 and a new game has S.attr with no points spent');
+  // a. Lv 1 opening hit
+  E('S.L = 1; gearDirty()');
+  assert(E('trainLv("atk")') === 0 && E('atkCurve(trainLv("atk"))') === 4, `Lv 1 opening hit: atkCurve(trainLv("atk")) is ${E('atkCurve(trainLv("atk"))')} (4)`);
+  // b. even spend = the old flat +4% a level at Lv 10, 20 and 35
+  const evenBad = [];
+  for (const L of [10, 20, 35]) {
+    E(`S.L = ${L}; S.attr.pts.wren = ATTR0(); attrSpread(); gearDirty()`);
+    const want = 1 + PH * (L - 1), got = ['atk', 'ab', 'counter', 'hp'].map(k => E(`attrX("${k}")`)).concat(E('attrNeutral()'));
+    if (E('attrPoints().free') !== 0 || E('ATTR_IDS.map(id => attrOf(null, id)).join()') !== Array(4).fill(L - 1).join()) evenBad.push(`Lv ${L}: spread left ${E('attrPoints().free')} free`);
+    for (const v of got) if (Math.abs(v / want - 1) > 0.001) evenBad.push(`Lv ${L}: ${v} vs ${want}`);
+    if (Math.abs(E('lvlMult()') / want - 1) > 0.001) evenBad.push(`Lv ${L}: lvlMult ${E('lvlMult()')}`);
+  }
+  assert(!evenBad.length, `even spend: Attack, abilities, counters, health and the neutral multiplier equal 1 + ${PH} x (L - 1) at Lv 10, 20, 35 (within 0.1%)` + (evenBad.length ? ': ' + evenBad.join('; ') : ''));
+  // c. power outside a turn fight is build-neutral
+  const split = (L, parts) => { E(`S.L = ${L}; S.attr.pts.wren = ATTR0()`); const free = E('attrPoints().free'); let left = free; parts.forEach(([id, share], i) => { const n = i === parts.length - 1 ? left : Math.floor(free * share); left -= E(`attrAdd("${id}", ${n})`); }); E('gearDirty()'); return left; };
+  const splits = { might: [['might', 1]], focus: [['focus', 1]], guard: [['guard', 1]], vigour: [['vigour', 1]], 'might+focus': [['might', 0.5], ['focus', 0.5]], 'guard+vigour': [['guard', 0.5], ['vigour', 0.5]], 'seven to three': [['might', 0.7], ['vigour', 0.3]] };
+  const pw = () => [E('heroAtk()'), E('heroDps()'), E('farmableZone(40, heroDps())'), E('attrNeutral()'), E('turnPowerNow(true).A')], power = {};
+  let unspent = 0;
+  for (const [name, parts] of Object.entries(splits)) { unspent += split(30, parts); power[name] = pw(); }
+  E('S.attr.pts.wren = ATTR0(); attrSpread(); gearDirty()'); power.even = pw();
+  const ref = power.even, pbad = Object.entries(power).filter(([, v]) => v.some((x, i) => !near(x, ref[i], 1e-9)));
+  assert(Object.keys(power).length >= 7 && unspent === 0 && ref[0] > 0 && ref[1] > 0 && !pbad.length, `heroAtk, heroDps, farmableZone, attrNeutral and the Deepwell's depth anchor are the same for ${Object.keys(power).length} splits of the same points (${pbad.map(b => b[0]).join(', ') || 'none differ'})`);
+  E('S.attr.pts.wren = ATTR0(); attrAdd("might", 1e9); gearDirty()'); const relM = E('attrRel("atk")'), relF = E('attrRel("ab")');
+  E('S.attr.pts.wren = ATTR0(); attrAdd("focus", 1e9); gearDirty()');
+  assert(relM > 1 && relF < 1 && E('attrRel("ab")') > 1 && E('attrRel("atk")') < 1, 'turn fights do feel the build: all Might hits above even on Attack and below on abilities; all Focus the other way');
+  // d. soft cap and the Guard window
+  E('S.L = 21; S.attr.pts.wren = ATTR0()');
+  const total21 = E('attrPoints().total'), half = HT.softAt * total21, pMight = Math.min(total21, Math.ceil(half) + 20);
+  E(`attrAdd("might", ${pMight})`);
+  assert(pMight > half && near(E('attrEff(null, "might")'), half + HT.soft * (pMight - half)) && E('attrEff(null, "might")') < pMight, `soft cap: ${pMight} of ${total21} points in Might count ${E('attrEff(null, "might")')} (points past ${HT.softAt * 100}% of the total count x${HT.soft})`);
+  E('S.attr.pts.wren = ATTR0(); attrAdd("might", 1); attrAdd("focus", 1)');
+  assert(E('attrEff(null, "might")') === 1 && E('attrEff(null, "focus")') === 1, 'soft cap: points under the line count in full');
+  const gInfo = JSON.parse(E('JSON.stringify(ATTRS.find(a => a.id === "guard"))')), gBad = [];
+  for (const L of [2, 10, 21, 40, 60, 90]) {
+    E(`S.L = ${L}; S.attr.pts.wren = ATTR0(); attrAdd("guard", 1e9)`);
+    const w = E('attrParryMs()'), want = Math.min(HT.guardMs, gInfo.parryMs * E('attrEff(null, "guard")')) / 1000;
+    if (!(w <= HT.guardMs / 1000 + 1e-12) || !near(w, want)) gBad.push(`Lv ${L}: ${w} vs ${want}`);
+  }
+  E('S.L = 90; S.attr.pts.wren = ATTR0(); attrAdd("guard", 1e9)');
+  assert(!gBad.length && E('attrParryMs()') <= HT.guardMs / 1000 && E('attrParryMs()') > 0, `Guard's parry window is never above HERO_TUNE.guardMs (${HT.guardMs} ms): ${E('attrParryMs()')} s at Lv 90, all Guard` + (gBad.length ? ': ' + gBad.join('; ') : ''));
+  E('S.attr.pts.wren = ATTR0()'); assert(E('attrParryMs()') === 0, 'no Guard points, no extra parry window');
+  // e. points: never more than earned
+  E('S.L = 10; S.attr.pts.wren = ATTR0()');
+  const tot10 = E('attrPoints().total');
+  assert(tot10 === 9 * HT.perLevel && E('attrPoints(null).free') === tot10, `points: a Lv 10 hero has (L - 1) x ${HT.perLevel} = ${tot10}`);
+  const a1 = E('attrAdd("might", 1e9)');
+  assert(a1 === tot10 && E('attrAdd("focus", 1)') === 0 && E('attrPoints().free') === 0 && E('attrPoints().spent') === tot10 && E('attrSpread()') === 0, 'attrAdd never spends more than the free points (and Spread has nothing to spread)');
+  E('S.attr.pts.wren = ATTR0()');
+  assert(E('attrAdd("nope", 3)') === 0 && E('attrAdd("might", -5)') === 0 && E('attrAdd("might", 0)') === 0 && E('attrAdd("might", 2.9)') === 2 && E('attrOf(null, "might")') === 2 && E('attrAdd("guard", 5, "tobin")') === 0, 'attrAdd: an unknown attribute, a negative or zero count adds nothing, a fraction rounds down, a hero at Lv 1 has no points');
+  E('S.attr.pts.wren = ATTR0(); S.attr.pts.wren.might = 5; S.L = 2'); assert(E('attrPoints().free') === 0 && E('attrPoints().spent') === 5 && E('attrAdd("focus", 1)') === 0, 'points over the total (a level lost) leave 0 free and add nothing');
+  E('S.attr.pts.wren.might = 1000; S.L = 2'); assert(E('attrNeutral()') <= 1 + 0.04 + 1e-9 && E('attrEff("wren", "might")') <= 4, `points over the total count no more than the level's points (attrNeutral ${E('attrNeutral()')})`);
+  // flag on: no points, the old flat bonus
+  const on = loadCore({ turns: true, training: true, seed: 61 }), O = s => on.eval(s);
+  O('soloPick("wren"); S.L = 25; S.attr.pts.wren = ATTR0()');
+  assert(O('HERO_TUNE.training') === 1 && O('attrOn()') === false && O('attrPoints().total') === 0 && O('attrAdd("might", 5)') === 0 && O('attrSpread()') === 0 && O('attrParryMs()') === 0
+    && O('["atk", "ab", "counter", "hp"].every(k => attrX(k) === 1 + PACE.heroLv * 24)') && O('attrNeutral() === 1 + PACE.heroLv * 24 && attrRel("atk") === 1 && lvlMult() === 1 + PACE.heroLv * 24'), 'flag on: no attribute points and every multiplier is the old 1 + PACE.heroLv x (L - 1)');
+  // f. reset: the first is free, later ones cost gold
+  E('S.L = 10; S.maxZone = 20; S.gold = 0; S.attr.pts.wren = ATTR0(); S.attr.resets = {}; attrSpread()');
+  assert(E('attrResetCost()') === 0 && E('attrReset()') === true && E('attrPoints().spent') === 0 && E('attrPoints().free') === tot10 && E('S.attr.resets.wren') === 1, 'reset: the first reset of a hero is free and gives every point back');
+  E('attrSpread()');
+  const cost = E('attrResetCost()'), wantCost = Math.ceil(E('foeGoldBase(20)') * HT.respec);
+  assert(cost > 0 && cost === wantCost && E('attrResetCost("tobin")') === 0, `reset: the second costs ${cost} gold (foeGoldBase(furthest zone) x ${HT.respec}); another hero's first is still free`);
+  E(`S.gold = ${cost - 1}`);
+  assert(E('attrReset()') === false && E('attrPoints().free') === 0 && E('S.gold') === cost - 1 && E('S.attr.resets.wren') === 1, 'reset: without the gold it fails and nothing changes');
+  E(`S.gold = ${cost + 7}; S.econ.spent.up = 0`);
+  assert(E('attrReset()') === true && E('S.gold') === 7 && E('attrPoints().free') === tot10 && E('S.econ.spent.up') === cost && E('S.attr.resets.wren') === 2, 'reset: paid, it takes the gold (ledger "up"), returns every point and counts the reset');
+  assert(E('attrReset()') === false && E('S.gold') === 7, 'reset: with nothing spent there is nothing to reset and nothing is charged');
+  // g. the Proving's jump
+  E('S.L = 44; S.solo.asc = {}'); const cBase = E('atkCurve(trainLv("atk"))'); E('S.solo.asc.wren = 1'); const cProv = E('atkCurve(trainLv("atk"))'); E('S.solo.asc = {}');
+  assert(cProv / cBase <= 1.3 && cProv > cBase, `the Proving's Attack jump at Lv 44 is x${(cProv / cBase).toFixed(3)} (at most x1.3)`);
+  // h. the join lift
+  const lift = loadCore({ turns: true, seed: 62 }), Li = s => lift.eval(s);
+  Li('soloPick("wren"); S.maxZone = 30; S.zone = 30; S.L = 50; S.xp = 0; S.solo.lv.tobin = { L: 3, xp: 1e12 }; globalThis.__toasts = []; on("toast", t => __toasts.push(t.msg))');
+  const rl = Li('roadLevel()');
+  assert(rl > 3 && Li('soloPick("tobin")') && Li('S.L') === rl && Li('S.xp') < Li('xpNeed(S.L)') && Li('S.xp') === Li('xpNeed(S.L) - 1'), `lift: a Lv 3 hero with a pile of banked XP takes the lamp at the road's level (Lv ${rl} at zone 30), the XP held a point under a level (${Li('S.xp')} of ${Li('xpNeed(S.L)')})`);
+  assert(Li('__toasts').some(m => m === `Tobin joins at Lv ${rl}, the road's level.`), `lift: the toast says "${Li('__toasts').join(' | ')}"`);
+  Li('soloPick("pip")');
+  assert(Li('S.L') === rl && Li('S.xp') === 0 && Li('attrPoints().total') === (rl - 1) * HT.perLevel, 'lift: a never-played hero arrives at the road\'s level with an empty bar and the points those levels give');
+  Li(`S.solo.lv.wren = { L: ${rl + 12}, xp: 5 }`); Li('globalThis.__toasts.length = 0');
+  Li('soloPick("wren")');
+  assert(Li('S.L') === rl + 12 && Li('S.xp') === 5 && !Li('__toasts').some(m => /road's level/.test(m)), 'lift: a hero above the road\'s level keeps their own level and XP (no join line)');
+  // the join lead never lifts a joiner past the hero who leaves; the road's own level is still the floor (judge's amend)
+  const jl = loadCore({ turns: true, seed: 63 }), Jl = s => jl.eval(s);
+  Jl('soloPick("wren"); S.maxZone = 30; S.zone = 30; S.L = 3; S.xp = 0');
+  const road30 = Jl('Math.floor(roadLv(30))');
+  assert(Jl('soloPick("tobin")') && Jl('S.L') === road30 && road30 < Jl('roadLevel()'), `lift: from a Lv 3 hero the joiner stops at the road's own level (Lv ${road30}), not the join lead's Lv ${Jl('roadLevel()')}`);
+  Jl(`S.L = ${road30 + 1}`); Jl('soloPick("pip")');
+  assert(Jl('S.L') === road30 + 1 && road30 + 1 < Jl('roadLevel()'), 'lift: a joiner matches a leaving hero who stands between the road and the join lead');
+  const lf = loadCore({ turns: true, training: true, seed: 62 }), Lf = s => lf.eval(s);
+  Lf('soloPick("wren"); S.maxZone = 30; S.L = 3; soloPick("tobin")');
+  assert(Lf('S.L') === 1, 'lift: with the flag on a hero who has not played starts at Lv 1');
+  // i. bench XP
+  const bn = loadCore({ turns: true, seed: 63 }), B = s => bn.eval(s);
+  B('soloPick("wren"); S.maxZone = 60; S.L = 5; S.xp = 0; S.solo.lv = {}');
+  const need1 = B('xpNeed(1)'), n1 = need1 * 0.4 / HT.bench;
+  B(`soloBenchXp(${n1})`);
+  assert(near(B('S.solo.lv.tobin.xp'), n1 * HT.bench) && near(B('S.solo.lv.pip.xp'), n1 * HT.bench) && B('S.solo.lv.tobin.L') === 1 && B('S.xp') === 0 && B('S.L') === 5, `bench XP: a fight worth ${n1} XP gives each other hero ${n1 * HT.bench} (HERO_TUNE.bench ${HT.bench}); the hero playing gets none from it`);
+  B('S.solo.lv = {}'); const nLv = (B('xpNeed(1)') + 0.5 * B('xpNeed(2)')) / HT.bench; B(`soloBenchXp(${nLv})`);
+  assert(B('S.solo.lv.tobin.L') === 2 && near(B('S.solo.lv.tobin.xp'), 0.5 * B('xpNeed(2)')) && B('S.solo.lv.pip.L') === 2, 'bench XP: enough of it levels the benched hero and keeps the rest');
+  B('S.solo.lv = {}; soloBenchXp(0); soloBenchXp(-4)'); assert(!B('S.solo.lv.tobin') || B('S.solo.lv.tobin.xp') === 0, 'bench XP: nothing for a fight worth nothing');
+  const bo = loadCore({ turns: true, training: true, seed: 63 }), Bo = s => bo.eval(s);
+  Bo('soloPick("wren"); S.solo.lv = {}; soloBenchXp(1e6)'); assert(!Bo('S.solo.lv.tobin') && !Bo('S.solo.lv.pip'), 'bench XP: nothing with the flag on');
+  // the XP brake: a hero past the road's level earns less for each level past it
+  const br = loadCore({ turns: true, seed: 64 }), K = s => br.eval(s);
+  K('soloPick("wren"); S.maxZone = 10; S.xp = 0');
+  const base = K('roadLv(S.maxZone) + HERO_TUNE.aheadLead'), Lb = Math.ceil(base), ex = Lb + 3 - base;
+  K(`S.L = ${Math.floor(base)}`); const mx = K('mod("xp")'); K('S.xp = 0; gainXp(1)'); const xIn = K('S.xp');
+  K(`S.L = ${Lb + 3}; S.xp = 0; gainXp(1)`); const xAhead = K('S.xp');
+  assert(near(xIn, mx, 1e-9) && near(xAhead / mx, Math.pow(HT.aheadX, ex), 0.01) && xAhead < xIn, `XP brake: at the road's level + ${HT.aheadLead} a fight pays full XP (${xIn}); 3 levels past that it pays x aheadX^${ex.toFixed(2)} = ${xAhead.toFixed(4)} (x${HT.aheadX} a level)`);
+  const bf = loadCore({ turns: true, training: true, seed: 64 }), Kf = s => bf.eval(s);
+  Kf('soloPick("wren"); S.maxZone = 1; S.L = 19; S.xp = 0; gainXp(1)');
+  assert(near(Kf('S.xp'), Kf('mod("xp")')) && Kf('xpAheadX(40) === 1'), 'XP brake: with the flag on gainXp is unchanged (no cut at any level)');
+  // j. xpNeed follows the road with the flag off, the old 15 x 1.3^(L-1) with it on
+  const xbad = [], fbad = []; let prev = 0;
+  for (const L of [1, 2, 5, 9, 10, 17, 20, 33, 40, 50, 65, 70, 90]) {
+    const want = Math.max(1, Math.round(E(`roadFights(${L})`) * E(`roadFoeXp(roadZone(${L}))`)));
+    if (E(`xpNeed(${L})`) !== want || !(want >= prev)) xbad.push(`Lv ${L}: ${E(`xpNeed(${L})`)} vs ${want}`);
+    prev = want;
+    if (O(`xpNeed(${L})`) !== Math.floor(15 * Math.pow(1.3, L - 1))) fbad.push(`Lv ${L}: ${O(`xpNeed(${L})`)}`);
+  }
+  assert(!xbad.length && E('xpNeed()') === E('xpNeed(S.L)'), 'xpNeed(L) = max(1, round(roadFights(L) x roadFoeXp(roadZone(L)))), and never falls as L rises' + (xbad.length ? ': ' + xbad.join('; ') : ''));
+  assert(!fbad.length, 'flag on: xpNeed(L) is the old floor(15 x 1.3^(L - 1))' + (fbad.length ? ': ' + fbad.join('; ') : ''));
+  // k. the switch-off flag on a save played with attributes: Training is seeded once from the levels
+  const played = loadCore({ turns: true, seed: 65 }), Pl = s => played.eval(s);
+  Pl('soloPick("wren"); S.maxZone = 30; S.L = 30; S.solo.lv.tobin = { L: 12, xp: 0 }; save()');
+  assert(Pl('S.attr.live') === 1 && !Pl('S.solo.trSeeded'), 'flag-on seed: a save played with the flag off is marked live (S.attr.live 1) and not yet seeded');
+  const seed1 = loadCore({ turns: true, training: true, seed: 66, storage: played.storage }), Sd = s => seed1.eval(s);
+  const stage = Sd('SOLO_TUNE.train.cap[0]');
+  assert(Sd('S.solo.tr.wren.atk') === Math.min(29, stage) && Sd('S.solo.tr.wren.parry') === Math.min(29, stage) && Sd('S.solo.tr.wren.dodge') === Math.min(29, stage) && Sd('S.solo.tr.wren.echo') === Math.min(29, stage) && Sd('S.solo.tr.tobin.atk') === Math.min(11, stage) && Sd('S.solo.tr.pip.atk') === 0 && Sd('S.solo.trSeeded') === 1 && Sd('S.L') === 30,
+    `flag-on seed: a Lv 30 hero comes back with every move at Training Lv ${Sd('S.solo.tr.wren.atk')} (Lv - 1, to the stage cap), a Lv 12 bench hero at ${Sd('S.solo.tr.tobin.atk')}, a Lv 1 hero at 0, S.solo.trSeeded 1`);
+  Sd('S.solo.tr.wren.atk = 5; save()'); const seed2 = loadCore({ turns: true, training: true, seed: 66, storage: seed1.storage });
+  assert(seed2.eval('S.solo.tr.wren.atk') === 5 && seed2.eval('S.solo.trSeeded') === 1, 'flag-on seed: it runs once (a second load keeps what the player did after it)');
+  const fresh1 = loadCore({ turns: true, training: true, seed: 67 });
+  assert(fresh1.eval('Object.values(S.solo.tr).every(r => Object.values(r).every(v => v === 0))') && !fresh1.eval('S.solo.trSeeded') && fresh1.eval('S.attr.live') === 0, 'flag-on seed: a new flag-on game is unchanged (every Training level 0, not seeded, not live)');
+  const old1 = loadCore({ turns: true, training: true, seed: 68, storage: memoryStorage({ [KEY]: JSON.stringify({ ...JSON.parse(JSON.stringify(played.eval('S'))), attr: { v: 1, pts: {}, resets: {}, met: {}, live: 0 } }) }) });
+  assert(old1.eval('S.L') === 30 && old1.eval('S.solo.tr.wren.atk') === 0 && !old1.eval('S.solo.trSeeded'), 'flag-on seed: a save never played with attributes (live 0) is not seeded');
+  // l. an old save (played with Training, before S.attr) loads under the same key: no error, points to spend, its XP kept short of a
+  // level on the new curve (no level-up cascade on the next kill), benched heroes too; Training records stay for the flag
+  const v5 = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-late.json'), 'utf8'));
+  v5.xp = 4.3e6; v5.solo = v5.solo || {}; v5.solo.lv = { ...(v5.solo.lv || {}), wren: { L: 45, xp: 9e9 } };
+  const v5st = memoryStorage({ [KEY]: JSON.stringify(v5) }), v5g = loadCore({ turns: true, seed: 69, storage: v5st }), V = s => v5g.eval(s);
+  const L0 = V('S.L');
+  assert(L0 === v5.L && V('attrPoints().free') === (L0 - 1) * HT.perLevel && V('S.attr.live') === 1 && !v5g.errors.length,
+    `an old save loads under the same key: Lv ${L0} kept, ${V('attrPoints().free')} points to spend` + (v5g.errors[0] ? ': ' + v5g.errors[0] : ''));
+  // the bar carries over as a share: the late fixture's real XP (v5.xp set to 4.3e6 above is past the old bar: held under a level)
+  V('gainXp(1)'); V('soloBenchXp(1)');
+  assert(V('S.L') <= L0 + 1 && V('S.solo.lv.wren.L') <= 46 && V('S.attr.xpv') === 1 && !v5g.errors.length, `an old save's banked XP gives at most one level on the next kill (Lv ${L0} to ${V('S.L')}; benched Wren 45 to ${V('S.solo.lv.wren.L')})`);
+  { const raw = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-early.json'), 'utf8')), xg = loadCore({ turns: true, seed: 70, storage: memoryStorage({ [KEY]: JSON.stringify(raw) }) }), X = s => xg.eval(s);
+    const share = raw.xp / Math.floor(15 * Math.pow(1.3, raw.L - 1)); X('attrXpMap()'); const xp1 = X('S.xp');
+    assert(X('S.L') === raw.L && Math.abs(X('S.xp / xpNeed(S.L)') - share) < 1e-9 && X('attrXpMap(), S.attr.xpv') === 1 && X('S.xp') === xp1, `an old save keeps its bar: ${(100 * share).toFixed(1)}% of Lv ${raw.L} on the old curve is ${(100 * X('S.xp / xpNeed(S.L)')).toFixed(1)}% on the new one, once`);
+    // an old save's first act is a switch: the benched hero's bar carries over at its own level before the join lift (Codex round 2)
+    { const sg = loadCore({ turns: true, seed: 71 }), Y = s => sg.eval(s);
+      Y('soloPick("wren"); S.maxZone = 20; S.L = 30; S.attr.xpv = 0; S.solo.lv.pip = { L: 20, xp: 2000 }; soloPick("pip")');
+      const want = Y('Math.min(2000 / Math.floor(15 * Math.pow(1.3, 19)) * xpNeed(20), xpNeed(S.L) - 1)');
+      assert(Y('S.L') > 20 && Math.abs(Y('S.xp') - want) < 1e-6 && Y('S.attr.xpv') === 1, `a switch on an old save carries the bar over before the lift (Pip Lv 20 at 91% joins at Lv ${Y('S.L')} with ${Math.round(Y('S.xp'))} XP, want ${Math.round(want)})`); }
+    // the switch-off flag carries the bars back to the old curve by share (Codex round 3), and on again the same way
+    { const fg = loadCore({ turns: true, seed: 72 }), F = s => fg.eval(s);
+      F('soloPick("wren"); attrXpMap(); S.L = 40; S.xp = xpNeed() / 2; S.solo.lv.pip = { L: 30, xp: xpNeed(30) / 4 }; HERO_TUNE.training = 1; gainXp(0)');
+      const off = [F('S.xp / xpNeed()'), F('S.solo.lv.pip.xp / xpNeed(30)'), F('S.attr.xpv')];
+      F('HERO_TUNE.training = 0; gainXp(0)'); const on = [F('S.xp / xpNeed()'), F('S.attr.xpv')];
+      assert(near(off[0], 0.5, 1e-6) && near(off[1], 0.25, 1e-6) && off[2] === 0 && near(on[0], 0.5, 1e-6) && on[1] === 1 && F('S.L') === 40, `the switch-off flag keeps each bar's share (Lv 40 at ${(100 * off[0]).toFixed(1)}%, benched Pip at ${(100 * off[1]).toFixed(1)}%; back on ${(100 * on[0]).toFixed(1)}%)`); }
+    // XP far past the road is cut (xpAheadX) but never frozen: small gains still add up to the next level
+    X('S.L = 28; S.maxZone = 10; S.xp = xpNeed() - 0.5; for (let i = 0; i < 4; i++) gainXp(37, true)');
+    assert(X('S.L') === 29, `a hero far past the road still levels from small XP gains (Lv 28 at zone 10 reached Lv ${X('S.L')})`); }
+  for (let i = 0; i < 300; i++) v5g.fn.tick(0.1);
+  assert(!v5g.errors.length, 'an old save plays 30 s with no errors');
+  // m. save codes carry S.attr
+  E('S.L = 20; S.maxZone = 3; S.attr.pts.wren = ATTR0(); attrAdd("might", 30); attrAdd("guard", 10); attrAdd("vigour", 5); S.attr.resets.wren = 1');
+  const sc = JSON.parse(E('JSON.stringify(S)')), dec = E('decodeSave(encodeSave(S))');
+  assert(dec.ok && deepDiff(dec.data.attr, sc.attr) === null && dec.data.attr.pts.wren.might === 30 && dec.data.attr.resets.wren === 1, 'save code: decodeSave(encodeSave(S)) round-trips S.attr' + (dec.ok ? '' : ': ' + dec.error));
+  const vs = mut => { const c = JSON.parse(JSON.stringify(sc)); mut(c); return g.eval(`validateSave(${JSON.stringify(c)})`); };
+  const badAttr = {
+    'an unknown hero': c => { c.attr.pts.zorro = { might: 1 }; }, 'an unknown attribute': c => { c.attr.pts.wren.speed = 1; },
+    'a negative value': c => { c.attr.pts.wren.might = -3; }, 'a huge value': c => { c.attr.pts.wren.might = 1e9; }, 'a fraction': c => { c.attr.pts.wren.might = 1.5; },
+    'a text value': c => { c.attr.pts.wren.might = 'many'; }, 'pts that is not a record': c => { c.attr.pts = 7; }, 'attr that is not a record': c => { c.attr = [1, 2]; },
+    'more points than the level gives': c => { c.attr.pts.wren.might = 70; }, 'a negative reset count': c => { c.attr.resets.wren = -1; }, 'a live flag of 2': c => { c.attr.live = 2; }
+  };
+  const accepted = Object.entries(badAttr).filter(([, m]) => vs(m).ok).map(([k]) => k);
+  assert(!accepted.length && vs(c => { delete c.attr; }).ok, `save code: S.attr with ${Object.keys(badAttr).join(', ')} is refused` + (accepted.length ? '; ACCEPTED: ' + accepted.join(', ') : '') + '; a save with no S.attr is still accepted');
+  const herr = [g, on, lift, bn, br, bf, seed1, seed2, fresh1, old1, v5g, jl].flatMap(c => c.errors);
+  assert(!herr.length, 'hero progression: no handler errors' + (herr[0] ? ': ' + herr[0] : ''));
+} catch (e) { fail('hero progression rework crashed: ' + (e.stack || e)); }
+
+// ---- hero-progression-rework in Chromium: the Attributes view, the guide's step and Next Up (default game, flag off) ----
+if (section('hero attributes (browser)')) try {
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('hero attributes (browser): Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h] of [[360, 740], [740, 360]]) {
+        const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: true, hasTouch: true });
+        const page = await ctx.newPage(); const errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(700);
+        const X = s => page.evaluate(s => window.__t.x(s), s), at = `${w}x${h}`;
+        await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go'); await page.waitForTimeout(600);
+        const per = await X('HERO_TUNE.perLevel');
+        if (w === 360) {
+          // the guide's upgrade step points at Attributes, then at Might +1 (a point to spend, no gold needed)
+          await X('for (const id of ["attack", "ability", "dodge", "parry", "boss"]) onboardDone(id); S.maxZone = 2; S.zone = 2; S.L = 3; S.gold = 0; true');
+          await page.waitForTimeout(1500);
+          const step = await X('(s => s ? s.id : "")(onboardStep())');
+          await X('setTab("attributes"); true'); await page.waitForTimeout(1200);
+          const bub = await X('(b => b && !b.hidden ? b.textContent : "")(document.querySelector(".ob-bub"))');
+          assert(step === 'upgrade' && /Might/.test(bub) && !/Train/.test(bub), `${at}: the guide's upgrade step says "${bub.slice(0, 70)}" on Hero > Attributes`);
+          const goal = await X('(g => g ? g.label() : "")(GOALS.find(x => x.id === "hero-up"))');
+          assert(goal === `Spend ${2 * per} attribute points`, `${at}: Next Up says "${goal}" (Lv 3, ${2 * per} points)`);
+        }
+        await X('for (const s of GUIDE_STEPS) onboardDone(s.id); S.maxZone = 9; S.zone = 9; S.L = 10; S.gold = 0; S.attr.pts = {}; S.attr.resets = {}; ui(true); true');
+        await X('setTab("attributes"); true'); await page.waitForTimeout(700);
+        const free0 = 9 * per;
+        const rows = JSON.parse(await X('JSON.stringify([...document.querySelectorAll("#attrRows .at-row")].map(r => ({ at: r.dataset.at, vis: !!r.offsetParent, adds: [...r.querySelectorAll(".at-add")].map(b => b.dataset.n).join("") })))'));
+        const head = await X('document.querySelector(".at-head").textContent');
+        assert(rows.map(r => r.at).join() === 'might,focus,guard,vigour' && rows.every(r => r.vis && r.adds === '15') && head.includes(`${free0} points to spend`), `${at}: Hero > Attributes lists Might, Focus, Guard and Vigour with +1 and +5 ("${head}")`);
+        assert(!(await X('(e => !!e && !!e.offsetParent)(document.getElementById("trainRows"))')) && !(await X('[...document.querySelectorAll("#viewSeg button")].some(b => /Training/.test(b.textContent))')), `${at}: the Training view is hidden on the Hero tab (no button, no rows on screen)`);
+        await page.click('#attrRows .at-row[data-at="might"] .at-add[data-n="1"]'); await page.waitForTimeout(150);
+        await page.click('#attrRows .at-row[data-at="guard"] .at-add[data-n="5"]'); await page.waitForTimeout(150);
+        assert(await X('attrOf(null, "might") === 1 && attrOf(null, "guard") === 5 && attrPoints().free === ' + (free0 - 6)) && await X('!!S.onboard.done.upgrade'), `${at}: +1 and +5 add points (Might 1, Guard 5, ${free0 - 6} free) and the first point ends the guide's step`);
+        assert((await X('document.querySelector("#attrRows .at-row[data-at=\\"guard\\"] .at-pts b").textContent')) === '5', `${at}: the row shows its points`);
+        await page.click('.at-spread'); await page.waitForTimeout(150);
+        assert(await X('attrPoints().free === 0 && ATTR_IDS.every(id => attrOf(null, id) >= 5) && Math.max(...ATTR_IDS.map(id => attrOf(null, id))) - Math.min(...ATTR_IDS.map(id => attrOf(null, id))) <= 4') && await X('document.querySelector(".at-spread").disabled && [...document.querySelectorAll(".at-add")].every(b => b.disabled)'), `${at}: Spread evenly spends every free point across the four (the buttons go grey)`);
+        // the first reset is free and needs a second tap
+        const rl0 = await X('document.querySelector(".at-reset").textContent');
+        await page.click('.at-reset'); await page.waitForTimeout(150);
+        const armed = await X('document.querySelector(".at-reset").textContent');
+        assert(/free/.test(rl0) && /^Tap again/.test(armed) && await X('attrPoints().spent === ' + free0), `${at}: the first reset is free ("${rl0}") and asks for a second tap ("${armed}") without resetting`);
+        await page.click('.at-reset'); await page.waitForTimeout(200);
+        assert(await X('attrPoints().spent === 0 && attrPoints().free === ' + free0 + ' && S.attr.resets.wren === 1'), `${at}: the second tap resets every point`);
+        // later resets cost gold: the price is on the button, and it stays grey without the gold
+        await page.click('.at-spread'); await page.waitForTimeout(150);
+        const cost = await X('attrResetCost()'), rl1 = await X('document.querySelector(".at-reset").textContent');
+        assert(cost > 0 && /gold/.test(rl1) && await X('document.querySelector(".at-reset").disabled'), `${at}: the next reset shows its price ("${rl1}") and is disabled with no gold`);
+        await X(`S.gold = ${cost + 3}; ui(true); true`); await page.waitForTimeout(200);
+        await page.click('.at-reset'); await page.waitForTimeout(150); await page.click('.at-reset'); await page.waitForTimeout(200);
+        assert(await X('attrPoints().spent === 0 && S.gold === 3 && S.attr.resets.wren === 2'), `${at}: paid, a reset takes the ${cost} gold and gives every point back`);
+        assert(await X('document.documentElement.scrollWidth <= innerWidth + 1'), `${at}: no sideways scroll`);
+        // the Hero tab's dot shows while points are free; a switch to a new hero lifts them (the toast says so)
+        await X('S.gold = 0; S.maxZone = 30; S.zone = 30; S.L = 50; true');
+        await X('soloPick("pip")'); await page.waitForTimeout(300);
+        const lvl = await X('S.L'), rl = await X('roadLevel()');
+        assert(lvl === rl && lvl > 10 && /points to spend/.test(await X('document.querySelector(".at-head") ? document.querySelector(".at-head").textContent : ""')), `${at}: switching to Pip lifts her to the road's level (Lv ${lvl}) with her own points to spend`);
+        assert(!errs.length, `${at}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('hero attributes (browser) crashed: ' + (e.stack || e)); }
+
 // ==== intro-and-picker: this card's own checks (the drawn opening, the picker's words, the first fight inside 45 s) ====
 if (section('intro-and-picker')) try {
   const rd = f => fs.readFileSync(path.join(ROOT, 'src', f), 'utf8');
@@ -9270,7 +9563,7 @@ if (section('story-unlock-gates')) try {
   cw.fn.on('unlock', e => got.push([e.id, C('Math.round(S.onboard.t)'), C('S.maxZone'), byNow(C, e.id)]));
   const act = {
     attack: 'soloAttack()', ability: 'soloAbility()', dodge: 'soloDodge()', parry: 'soloParry()', boss: 'onboardDone("boss")', nextup: 'onboardDone("nextup")',
-    upgrade: '{ for (let k = 0; k < 50; k++) { const t = trainNext(); if (!t || S.gold < t.cost) break; train(t.move, "1"); } }',
+    upgrade: '{ if (attrOn()) attrSpread(); else for (let k = 0; k < 50; k++) { const t = trainNext(); if (!t || S.gold < t.cost) break; train(t.move, "1"); } }',   // hero-progression-rework: points, not Training
     gather: 'setNode("wood", 1); setActivity("gather")', light: 'hearthLight(); setActivity("fight")', bench: 'campBuild("bench")', forge: 'campBuild("forge")', store: 'campBuild("store")',
     tool: '{ const it = craftItem("pick", 1); if (it) equipItem(it.id); }'
   };
@@ -9529,7 +9822,10 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
           const { ctx, page, errs, X } = await open(w, h);
           const trail = [], bad = [], seen = new Set();
           let stuck = '', lastKey = '', same = 0, idle = 0, iters = 0; const passes = [];
-          for (let i = 0; i < 220 && !trail.includes('nextup'); i++) {
+          const want = ['attack', 'ability', 'dodge', 'parry', 'upgrade', 'gather', 'chop', 'light', 'bench', 'tool', 'forge', 'store', 'nextup'];   // (tab:party: done by the Training step's visit)
+          // hero-progression-rework: a hero who levels fast reaches zone 3 (the Next Up note) before the Workbench is done; the walk
+          // goes on past the note until every step has come
+          for (let i = 0; i < 220 && !want.every(x => trail.includes(x)); i++) {
             iters = i + 1;
             const st = await X('(s => s ? s.id : "")(onboardStep())');
             if (!st) {
@@ -9569,7 +9865,6 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
             await X('(S.onboard.done.ability && !S.onboard.done.parry && !actWarning() && combatFoes().some(f => f && !f.dead && f.hp > 0)) && actWarn({ kind: "heavy", id: "l" + Math.random(), foe: combatFoes().find(f => f && !f.dead && f.hp > 0), unit: 0, dur: 2, land: () => {} }); true');
             if (st === 'nextup') await X('document.querySelectorAll(".bsheet-ov .bsheet-x").forEach(x => x.click()); true');
           }
-          const want = ['attack', 'ability', 'dodge', 'parry', 'upgrade', 'gather', 'chop', 'light', 'bench', 'tool', 'forge', 'store', 'nextup'];   // (tab:party: done by the Training step's visit)
           const why = want.every(x => trail.includes(x)) ? '' : '; ' + await X('JSON.stringify({ step: (s => s && s.id)(onboardStep()), done: Object.keys(S.onboard.done).join(","), zone: S.maxZone, gold: Math.round(S.gold), builds: (S.camp && S.camp.builds || []).map(b => b.id + ">" + b.to).join(","), tab: S.tab, view: S.tab ? curView(S.tab) : "", recipes: [...document.querySelectorAll("#sec-craft-recipes .cf-rec")].map(r => r.dataset.kind + (r.querySelector(".cf-go") ? (r.querySelector(".cf-go").disabled ? "-off" : "-go") : "")).join(","), tiers: [...document.querySelectorAll("#sec-craft-recipes [aria-pressed=true]")].map(b => b.textContent.trim()).join("/"), mats: JSON.stringify(S.mats && { ore: S.mats.ore, wood: S.mats.wood }) })') + ' target ' + JSON.stringify(await X(TARGET('tool'))) + ' last passes ' + passes.slice(-8).join(' ; ') 
           assert(!stuck && want.every(x => trail.includes(x)), `${at}: the guide walks the first session by pressing what it points at (${trail.join(' > ')}${stuck ? '; stuck on ' + stuck : ''}${why}; ${iters} of 220 passes, ${idle} idle)`);
           assert(!bad.length && seen.size >= 20, `${at}: every guide step's target is on screen and on top (a click at its centre reaches it), the ring marks it and the hint is on screen (${seen.size} states${bad.length ? '; ' + bad.slice(0, 3).join(' / ') : ''})`);
@@ -9645,20 +9940,27 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
               e.scrollIntoView({ block: 'nearest' });
               const r = e.getBoundingClientRect(); return { ok: r.left >= m.left - 1 && r.right <= m.right + 1 && r.top < innerHeight && p.scrollWidth <= p.clientWidth, l: Math.round(r.left), r: Math.round(r.right), t: Math.round(r.top), ml: Math.round(m.left), mr: Math.round(m.right) }; }, sel);
           };
-          const tr = await fit('training', '#trainRows'), hb = await fit('tav', '#sec-hands');
-          assert(tr.ok && hb.ok, `${at}: Hero > Training and the Tavern's gatherer board show inside the panel with no sideways scroll (${JSON.stringify({ tr, hb })})`);
+          // hero-progression-rework: the default game has Hero > Attributes in place of Training (the Training layout runs below with the flag on)
+          const tr = await fit('attributes', '#attrRows'), hb = await fit('tav', '#sec-hands');
+          assert(tr.ok && hb.ok, `${at}: Hero > Attributes and the Tavern's gatherer board show inside the panel with no sideways scroll (${JSON.stringify({ tr, hb })})`);
           await page.click('#menuX'); await page.waitForTimeout(260);
           // the picker (a long press on an ability slot) and the Attack sheet (its Training) fit the screen, the Train button in reach
-          const sheet = async (slot, id) => {
+          const sheet = async (slot, id, btn = '.tr-c-more') => {
             const b = await page.$(`#soloBar .sb-${slot}`), r = await b.boundingBox();
             await page.mouse.move(r.x + r.width / 2, r.y + r.height / 2); await page.mouse.down(); await page.waitForTimeout(700); await page.mouse.up(); await page.waitForTimeout(200);
-            const out = await page.evaluate(id => { const o = document.getElementById(id); if (!o) return { ok: false, why: 'not open' }; const s = o.querySelector('.sp-sheet').getBoundingClientRect(), g = o.querySelector('.tr-go'), gr = g && g.getBoundingClientRect();
-              return { ok: s.top >= 0 && s.bottom <= innerHeight + 1 && s.left >= 0 && s.right <= innerWidth && !!gr && gr.bottom <= innerHeight && gr.top >= 0, top: Math.round(s.top), bottom: Math.round(s.bottom), go: gr ? Math.round(gr.bottom) : null }; }, id);
+            const out = await page.evaluate(({ id, btn }) => { const o = document.getElementById(id); if (!o) return { ok: false, why: 'not open' }; const s = o.querySelector('.sp-sheet').getBoundingClientRect(), g = o.querySelector(btn), gr = g && g.getBoundingClientRect();
+              return { ok: s.top >= 0 && s.bottom <= innerHeight + 1 && s.left >= 0 && s.right <= innerWidth && !!gr && gr.bottom <= innerHeight && gr.top >= 0, top: Math.round(s.top), bottom: Math.round(s.bottom), go: gr ? Math.round(gr.bottom) : null }; }, { id, btn });
             await page.keyboard.press('Escape'); await page.waitForTimeout(150);
             return out;
           };
           const pk = await sheet('ab0', 'abPicker'), ms = await sheet('atk', 'moveSheet');
-          assert(pk.ok && ms.ok && !(await X('!!document.querySelector("#abPicker, #moveSheet")')), `${at}: the ability picker and the Attack sheet (with Training) fit the screen with their Train button in view, and close with Escape (${JSON.stringify({ pk, ms })})`);
+          assert(pk.ok && ms.ok && !(await X('!!document.querySelector("#abPicker, #moveSheet")')), `${at}: the ability picker and the Attack sheet fit the screen with their Attributes button in view, and close with Escape (${JSON.stringify({ pk, ms })})`);
+          // the old Training layout, with HERO_TUNE.training = 1 switched on in the page
+          await X('HERO_TUNE.training = 1; ui(true); true');
+          const tr1 = await fit('training', '#trainRows'); await page.click('#menuX'); await page.waitForTimeout(260);
+          const pk1 = await sheet('ab0', 'abPicker', '.tr-go'), ms1 = await sheet('atk', 'moveSheet', '.tr-go');
+          await X('HERO_TUNE.training = 0; ui(true); true');
+          assert(tr1.ok && pk1.ok && ms1.ok && !(await X('!!document.querySelector("#abPicker, #moveSheet")')), `${at}: with Training on, Hero > Training, the ability picker and the Attack sheet (with Training) fit the screen with their Train button in view (${JSON.stringify({ tr1, pk1, ms1 })})`);
           assert(!errs.length, `${at}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
           await ctx.close();
         } catch (e) { fail(`${at} layout checks crashed: ` + (e.stack || e)); }

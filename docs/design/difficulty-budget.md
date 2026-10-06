@@ -96,7 +96,7 @@ the card that asks for it and a line in the change log below. A routine re-basel
 `node tools/health.mjs --compare`. If a cell you meant to move lands in band, re-baseline; the ratchet tightens its gap.
 If a cell leaves its band and you think the band is wrong, that is a judge decision, not a re-baseline.
 
-## Where the game stands (2026-10-06, 55 known gaps)
+## Where the game stands (2026-10-06, 57 known gaps)
 
 - **Zones 1-15 and the elites are too easy** (boss-tiers, foe-moves-by-type). Every hero wins 100% of bosses at zones
   5-15 casually, in 2-6 turns; elites never threaten. The first bosses (zones 1-3) are in band.
@@ -107,8 +107,8 @@ If a cell leaves its band and you think the band is wrong, that is a judge decis
   is 98-100%.
 - **Gear a tier behind costs Wren and Pip 61-92 points of casual wins and Tobin 6-10** (gear-weight).
 - **Tobin** wins every zone 20 boss casually where Wren wins 63% (tobin-safety-margin).
-- On PR #58's branch, the zone 20 Captain rises to 80-93% casual (Pip above her band by 13 points): that PR will need a
-  judged gap or a retune there.
+- The zone 20 Captain is too easy for a hero who keeps up (84/100/94 casual): the smooth Attack curve puts Lv 29 15% over
+  the old step (boss-tiers).
 - **A hero who just took the lamp** loses most bosses a hero who stayed wins (report-only rows): the gap is abilities, Stars
   and gear, not level.
 
@@ -118,3 +118,4 @@ If a cell leaves its band and you think the band is wrong, that is a judge decis
 |---|---|---|---|
 | 2026-10-06 | difficulty-budget | Bands, gate and 55 gaps set; the per-fight seed | judge ruling 2026-10-06 (`autopilot/reports/difficulty-budget/judge.md`), after a red team |
 | 2026-10-06 | difficulty-budget | Report-only joined and build rows with proposed bands (coordinator relay of PR #58's findings); sd floored at binomial noise (Opus review) | not gated until a judge sets the bands |
+| 2026-10-06 | hero-progression-rework | Gaps z20-boss Wren and Pip casual (boss-tiers); z20-boss-behind limits Wren 0.75, Pip 0.88, Tobin 0 (gear-weight); re-baseline | judge ruling 2026-10-06 (`design-reviews/hero-progression-budget-ruling-2026-10-06.md`) |
