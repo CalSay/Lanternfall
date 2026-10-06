@@ -1,7 +1,8 @@
 # Lanternfall: notes for Codex
 
-**Your role from 2026-10-05:** outside reviewer of Claude's work, plus new raster art when asked. Start with
+**Your roles from 2026-10-05:** builder of self-contained low-risk cards (rules: `docs/handoff/codex-build/README.md`), outside reviewer of Claude's work, plus new raster art when asked. Start with
 `docs/handoff/claude-to-codex/reviewer/README.md`; it overrides the build queue described below.
+When Claude hands you a `codex-build: <card id>` issue, follow `docs/handoff/codex-build/README.md` for that task.
 
 Read `CLAUDE.md` first: it holds the project rules (single-file artifact, save key, online layer, copy style).
 Then read `docs/coord/two-agent-split.md`: you work side by side with Claude, who is lead developer and

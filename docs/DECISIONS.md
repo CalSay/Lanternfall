@@ -11,11 +11,12 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 - **No prestige or resets.** Progress is permanent. Freshness comes from mastery, collections, build variety and new
   regions. (2026-09-27)
 - **Single-player first.** The world raid and Tavern stay optional, light extras. (2026-09-27)
-- **Store launch possible, monetisation undecided.** Original art only, no restrictive third-party assets, nothing
-  pay-to-win. (2026-09-27)
+- **Store launch possible; the money model is set** (see [Money](#money)). Original art only, no restrictive
+  third-party assets, nothing pay-to-win. (2026-10-06)
 - **Owner role: player.** The coordinator drives the roadmap and brings playable builds and decisions at milestones.
-  Decisions that belong to the owner (art direction, monetisation, anything irreversible) are asked, not guessed.
-  (2026-09-27)
+  Decisions that belong to the owner (art direction; anything that takes real money: store accounts, payment code,
+  live prices, business and legal set-up; anything irreversible) are asked, not guessed. Money design is Claude's,
+  within the Lantern Rules. (2026-09-27, narrowed 2026-10-06)
 - **Combat is active only.** No Auto, no idle fighting, no away combat earnings. Gathering stays idle. (2026-10-01)
 - **Version 1.0 is a complete Season 1:** five regions, the story to the first fight with the Voice, 32 heroes, two
   named gatherers per resource job. The story continues in Season 2. (2026-09-28)
@@ -25,9 +26,7 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   launch. (2026-09-28)
 - **Length:** depends on how fun and replayable the loop is; players must stay committed. (2026-09-28)
 - **After 1.0:** the Lantern Festival, titles visible to other players, a second evolution tier. (2026-09-28)
-- **Art commissions and monetisation wait** until the game is ready for launch. Monetisation direction for later: a
-  free and paid battle pass, a membership with capped convenience perks, skins; never exclusive power, nothing taken
-  back when it lapses. (2026-09-28)
+- **Art commissions wait** until the game is ready for launch. (2026-09-28)
 - **Rejected:** the lantern network. **Maybe:** factions and reputation, once the world map has real places.
   (2026-09-28)
 
@@ -212,11 +211,63 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 
 ## Achievements
 
-- **Really hard achievements with cool rewards:** titles and accessories drawn on the hero. Every cosmetic is earned,
-  never sold, and never gives power. (2026-09-28)
+- **Really hard achievements with cool rewards:** titles and accessories drawn on the hero. (2026-09-28)
+- **Earned looks stay earned.** A look from a Deed, a Feat, a boss or a secret is never sold. Store looks are a separate
+  catalogue and never copy or recolour an earned look. The Wardrobe marks each look Earned or Store, and its collection
+  count counts earned looks only. No look gives power. (2026-10-06)
 - **The top tier is Everflame** (Bronze, Silver, Gold, Everflame). **Titles are short epithets** a person would be
   known by: one or two words, at most 14 characters. (2026-09-28)
 - **Online titles:** yes, but not for 1.0. (2026-09-28)
+
+## Money
+
+Claude decided after a red team and the Opus judge, on Cal's delegation (2026-10-06, "I don't want to be involved").
+Plan, evidence and rulings: `docs/design/monetisation.md` and `docs/design/monetisation-records/`. Store accounts,
+payment code, live prices and business and legal set-up stay with Cal.
+
+- **The model:** free to play, Season 1's story free for good, no ads of any kind (rewarded ads included), no premium
+  currency (real prices; where a store charges a flat fee per sale, looks sell in sets). Later seasons may be paid
+  expansions, and the store page says so from day one. (2026-10-06)
+- **What is sold:** looks (the existing slots plus a parry spark and, later, camp pieces), hero outfits (the three
+  starters first, then one per new hero), outfits by armour weight, critters, the Lantern Keeper and one supporter pack.
+  A free and paid Road Pass (looks only, earned by normal play, never expiring) comes after 1.0. Heroes are never sold.
+  Every new look, spark or outfit comes as a complete Codex art pack vetted as a whole set (art freeze); agents never
+  draw them in code. (2026-10-06)
+- **The Lantern Keeper:** one purchase, no membership at launch. Loadout slots past the Armoury's maximum (a late Deed
+  gives the same), a look set and credits. It also adds 2 hours to the away cap you have built (gathering only, never
+  past 24) only if a free bot run reaches the 24-hour cap within 40 hours of play; otherwise it ships without that.
+  Armoury room, order queues, time skips, boosts, Hands and Tents are never sold. (2026-10-06)
+- **Supporter packs:** one tier at launch. Two more tiers and the soundtrack only once 30 or more store looks exist and
+  the music ships. A supporter mark shown in the Tavern changes room presence and needs online sign-off. (2026-10-06)
+- **Lantern Caches:** the gacha feeling comes only from caches earned in play (boss wins, Contracts with a Dare, first
+  clears, Codex milestones). Odds are printed on the cache from the same table the code rolls; a visible pity counter;
+  no duplicate looks; no crafting materials. Caches and keys are never sold, and nothing bought is random. (2026-10-06)
+- **Where to sell:** Steam first, as a single-player build (the online layer runs only on the claude.ai page), after a
+  landscape mouse-and-keyboard playtest of parry and dodge timing passes. Phones second. No itch or Ko-fi pack.
+  (2026-10-06)
+- **When:** no store code is switched on before the early-game milestone is called done. Then Cal is asked once, with a
+  one-page checklist (business, merchant of record, privacy, terms, refunds, age rating). All store code sits behind
+  one switch that ships off; the Keeper's away bonus has its own setting, default 0 hours. (2026-10-06)
+- **Prediction:** at least 75% of Steam reviews that mention money are positive in the first 90 days after the store
+  opens, tagged the way the plan tagged IdleOn's (IdleOn: 53 of 86, about 62%). Missed below 65%; a miss reopens the
+  Keeper's away bonus and the supporter tiers first. (2026-10-06)
+
+### The Lantern Rules
+
+Every card that adds a price, a currency, a timer or a gate passes all ten. (2026-10-06)
+
+1. Never sell power or chance. Time may be sold only up to a ceiling every player reaches in play, and must also be
+   earnable in play.
+2. Never sell anything random. Random rewards come only from play.
+3. Never take back: nothing free becomes paid, nothing earned is locked, nothing bought expires or lapses.
+4. Never build friction to sell its removal: no energy, no starved bag, no timer added so a purchase can skip it.
+5. Never interrupt: the shop lives in one place; no pop-ups, no offer on opening the game, no sale dots.
+6. Never sell a core convenience: Repeat, auto-salvage, sorting, Assist timing and every accessibility option stay free.
+7. Earned prestige stays earned.
+8. Show real prices; no bundles priced to strand a leftover.
+9. Same game on every paid build: a purchase shows on every build that sells, and no paying platform gets an item late.
+10. Purchases are never lost, and the game never needs an account: purchases live with the platform (or an optional
+    account on the web), never only in the save.
 
 ## Screen and menus
 
@@ -302,6 +353,10 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 ## Replaced decisions
 
 Kept only to explain current rules. Each line: the old decision, then what replaced it.
+
+- Store launch possible, monetisation undecided (2026-09-27); monetisation waits for launch, with a free and paid battle
+  pass, a membership with capped convenience perks and skins (2026-09-28); every cosmetic is earned, never sold
+  (2026-09-28) -> the money model (2026-10-06).
 
 - Training: gold levels up each hero's Attack, Parry, Dodge and abilities, with caps (2026-09-29, 2026-10-02) -> no
   Training; level, star points, abilities and attribute points (2026-10-06).

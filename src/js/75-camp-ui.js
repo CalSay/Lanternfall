@@ -404,7 +404,7 @@
         // The row's one line: what is happening now, or what stops the next level.
         const line = pend ? `Building ${bname(id, pend.to)} · ${pend.start ? dur(left(pend)) : 'queued'}`
           : c.max ? 'Fully built'
-          : !supported ? 'More tents open in later regions.'
+          : !supported ? 'More tents: coming soon.'
           : c.need ? `${id === 'tent' ? 'Tent' : 'Lv'} ${c.to} needs ${c.need.hearth ? 'Hearth ' + c.need.hearth : 'zone ' + c.need.zone}`
           : c.ok ? (c.queue ? 'Ready to queue' : 'Ready to build')
           : c.miss ? `${id === 'tent' ? 'Tent' : 'Lv'} ${c.to}: ${(o => `${o.have} of ${o.all} costs ready`)(costCount(c.cost))}` : c.why;

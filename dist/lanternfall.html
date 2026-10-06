@@ -7266,11 +7266,11 @@ const HANDS_ROUTES = {
   nan: { fallback: 25, hint: 'Defeat a Quarry Golem elder, or reach zone 25.' },
   bracken: { fallback: 25, hint: 'Reach zone 25.' },
   rook: { fallback: 31, hint: 'Follow the quarry rumour, or clear the Quarry Ruins.' },   // 31: after the zone 30 boss falls (story-systems-hollow; was 30)
-  ashby: { hint: 'Build the Kitchen.' },
+  ashby: { hint: 'Coming soon. The Kitchen is not built yet.' },
   fennel: { fallback: 30, hint: 'Finish the chapel quest, or reach zone 30.' },
   dorrie: { fallback: 32, hint: 'Hear the pedlar rumour at the Tavern, or reach zone 32.' },
   // Keep old v5 Jory records working. New Hunter recruitment waits for that profession.
-  jory: { live: false, hint: 'The Hunter profession will bring Jory to camp.' },
+  jory: { live: false, hint: 'Coming soon.' },
   // Ada and Pell walk in the morning after the Hollow's Elder falls (bible 6.3, 8.1). `elder: 'hollow'` names the Elder; 57f `later()` waits
   // for it, then for the next 06:00 (remembered in S.hands.routes.hollowDawn). They used to wait for the Coast's Great Lantern.
   ada: { elder: 'hollow', hint: 'Clear the last zone of the Hollow. They come in the next morning.' },
@@ -13455,10 +13455,14 @@ let navSkillOpen, navSkills, navLast, navNow, navRate, navFullIn, navRecent, bes
 // goalGate(goal) -> bool       Next Up filter: false while the goal's system is still hidden.
 //                              Only active once the UI turns it on (ONBOARD.gate), so the Node
 //                              tools see every goal.
+// onboardUse({ tab, view, feature }) -> { id, text } | null   the first-use line for the system on screen (FIRST_USE below):
+//                              each system that opens after the first fight explains itself once, in one line. The UI
+//                              asks only while no guide step shows; it never pauses the game.
+// onboardUseDone(id)           the line was read (x, or about 7 s on screen). No event, so guide walks never see it.
 // Events: unlock { id, tab, view, quiet } (a feature appeared), onboardStep { id } (a step completed).
 // State S.onboard: { v, all, got: { id: seconds played }, done: { stepId: 1 }, seen: { tabOrView: 1 },
 //   tips, t (seconds played while the guide runs), taps, casts }.
-let isUnlocked, onboardReveal, onboardUnlockAll, onboardStep, onboardDone, onboardTips, onboardCheck, onboardNeed, onboardPaused;
+let isUnlocked, onboardReveal, onboardUnlockAll, onboardStep, onboardDone, onboardUse, onboardUseDone, onboardTips, onboardCheck, onboardNeed, onboardPaused;
 let onboardIsNew = null;   // set by 75-onboard-ui.js; 70-ui.js marks new views with it
 let onboardSpec = null;    // set by 75-onboard-ui.js: step id -> { node, text } | null (the browser check)
 let soloGuideWants = () => '';   // set by 75-onboard-ui.js: the step on screen ('dodge' / 'parry': the first press counts, 59j forgive)
@@ -13503,6 +13507,31 @@ const FEATURES = [
     when: () => { try { return handsOpen(); } catch (e) { return false; } } }
 ];
 const FEATURE_OF = Object.fromEntries(FEATURES.map(f => [f.id, f]));
+
+// FIRST_USE (ap-first-use-hints): every FEATURES row has exactly one line saying what that system is, plain words.
+// via (default 'hint'): where the line shows. 'hint': the docked hint, once, the first time the player opens the view
+// (onboardUse). 'guide': the guide's own step carries it (Next Up). 'notice': the unlock notice carries it (the Codex,
+// Stars: they open as a sheet or a toast, not a view). The unlock notice of a 'hint' system only says where it is
+// (75-onboard-ui OPEN_TXT), so one unlock gives one notice and one line. The guide NPC can voice these later.
+const FIRST_USE_FOR = 7200;   // seconds of play after the unlock (the same window as a view's "new" mark)
+const FIRST_USE = {
+  party: { text: 'Your Hero: gear, level and abilities.' },
+  nextup: { text: 'Next Up shows your best next goal. Tap it.', via: 'guide' },
+  gather: { text: 'Pick a node and your hero mines or chops it, even while you are away.' },
+  bounties: { text: 'Bounties are three short goals. They pay gold, materials and Renown.' },
+  camp: { text: 'Build stations here. Each one opens a new way to make things.' },
+  forage: { text: 'Foraging finds fibre and herbs.' },
+  craft: { text: 'Craft turns materials into gear. Pick a station, then a recipe.' },
+  bestiary: { text: 'The Bestiary lists the foes you have met. Kills earn perks against them.' },
+  almanac: { text: "The Almanac shows today's Omen, plus Dares and a weekly board." },
+  uniques: { text: 'Uniques are rare gear that bosses drop. Each has a strong effect.' },
+  tavern: { text: 'The Tavern shows who is online and the hall of heroes.' },
+  codex: { text: 'The Codex is open. It tracks what you have found. Find it in the Journal.', via: 'notice' },
+  raid: { text: 'One boss, shared by every player. Your hits add to the same total.' },
+  stars: { text: 'Each star changes how your fights play.', via: 'notice' },
+  deep: { text: 'The Deepwell is a run of fight floors. Pick a boon between floors and earn Marks.' },
+  hands: { text: 'Hire gatherers on the Tavern board. They work shifts while you are away.' }
+};
 
 // GUIDE_STEPS: in order of priority; the first step not done whose when() holds is shown.
 // done() completes a step by doing the thing. Targets and sentences live in 75-onboard-ui.js.
@@ -13649,6 +13678,20 @@ function craftReady() {
     }
     return null;
   };
+
+  // ---- first-use lines (FIRST_USE) ----
+  // A hint line shows only to a player who just got the system (2 hours of play, as the "new" mark), on a view of its own (the view's `feature`, or
+  // the FEATURES tab and view), and while tips are on. Once read it is kept as S.onboard.done['use:<id>'] (the same map as the guide steps, no new field).
+  onboardUse = ctx => {
+    if (!O().tips || !ctx || !ctx.tab) return null;
+    for (const f of FEATURES) {
+      const u = FIRST_USE[f.id], got = O().got[f.id];
+      if (!u || u.via || !f.tab || got == null || O().done['use:' + f.id] || O().t - got >= FIRST_USE_FOR) continue;
+      if (ctx.feature === f.id || (f.tab === ctx.tab && f.view === ctx.view)) return { id: 'use:' + f.id, text: u.text };
+    }
+    return null;
+  };
+  onboardUseDone = id => { O().done[id] = 1; };
 
   // ---- Next Up: hide goals whose system is still hidden (only while ONBOARD.gate is on) ----
   const GOAL_FEATURE = { bounty: 'bounties', bestiary: 'bestiary', skill: 'gather', forge: 'craft', camp: 'camp', codex: 'codex', deep: 'deep' };
@@ -16434,23 +16477,23 @@ const CODEX_CAP = { dmg: 0.05, critDmg: 0.05, uniqueChance: 0.05, skillXp: 0.05,
 // when its system arrives (the UI says so plainly).
 const CODEX_MILESTONES = [
   { at: 25, rw: [{ id: 't_lamplighter', kind: 'title', n: 'Title: Lamplighter', live: true }] },
-  { at: 50, rw: [{ id: 'salvage1', kind: 'qol', n: 'Auto-salvage, basic', txt: 'Commons below the tier you wear in that spot are salvaged when they drop.', later: 'Saved for later: all gear is made by you today, so this switches on when foes drop gear.' }] },
-  { at: 75, rw: [{ id: 'd_string', kind: 'cosmetic', n: 'Camp decoration: Lantern String', later: 'Saved: it hangs in camp once the camp scene shows decorations.' }] },
+  { at: 50, rw: [{ id: 'salvage1', kind: 'qol', n: 'Auto-salvage, basic', txt: 'Commons below the tier you wear in that spot are salvaged when they drop.', later: 'Coming soon: foes do not drop gear yet, so there is nothing to salvage.' }] },
+  { at: 75, rw: [{ id: 'd_string', kind: 'cosmetic', n: 'Camp decoration: Lantern String', later: 'Coming soon: it will hang in camp.' }] },
   { at: 100, rw: [{ id: 'hints', kind: 'qol', n: 'Exact Codex hints', txt: 'Every blank entry says exactly where to find it, at any Library level.', live: true }] },
-  { at: 150, rw: [{ id: 'c_amber', kind: 'cosmetic', n: 'Lantern colour: Hearth Amber', later: 'Saved: hero lantern colours arrive with hero cosmetics.' }] },
+  { at: 150, rw: [{ id: 'c_amber', kind: 'cosmetic', n: 'Lantern colour: Hearth Amber', later: 'Coming soon: hero lantern colours.' }] },
   { at: 200, rw: [{ id: 't_wayfinder', kind: 'title', n: 'Title: the Wayfinder', live: true }] },   // W1-C: no expeditions in solo: a title
-  { at: 250, rw: [{ id: 'salvage2', kind: 'qol', n: 'Auto-salvage, full', txt: 'Rules per kind by rarity and tier, with a switch to keep Masterwork gear.', later: 'Saved for later, like the basic filter.' }] },
-  { at: 300, rw: [{ id: 't_relighter', kind: 'title', n: 'Title: Relighter', live: true }, { id: 'd_moth', kind: 'cosmetic', n: 'Camp decoration: Moth Lanterns', later: 'Saved: shows once the camp scene shows decorations.' }] },
-  { at: 350, rw: [{ id: 'bag10', kind: 'qol', n: 'Bag +10', txt: 'Ten more spare items fit in your bag.', later: 'Saved: the bag grows when it learns to read this bonus.' }] },
-  { at: 400, rw: [{ id: 'queue1', kind: 'qol', n: '+1 queued build', txt: 'Line up one more build per builder.', later: 'Saved: the camp builders take it once they read this bonus.' }] },
-  { at: 450, rw: [{ id: 'c_motes', kind: 'cosmetic', n: 'Hero trail: Lantern Motes', later: 'Saved: arrives with hero cosmetics.' }] },
-  { at: 500, rw: [{ id: 't_keeper', kind: 'title', n: 'Title: the Chronicler', live: true }, { id: 'd_lectern', kind: 'cosmetic', n: 'Camp decoration: Codex Lectern', later: 'Saved: shows once the camp scene shows decorations.' }] },
-  { at: 600, rw: [{ id: 'forecast', kind: 'qol', n: 'Almanac forecast: 3 days ahead', later: 'Saved: the Almanac will show it in a later update.' }] },
-  { at: 700, rw: [{ id: 'c_star', kind: 'cosmetic', n: 'Lantern colour: Starlight', later: 'Saved: arrives with hero cosmetics.' }] },
-  { at: 800, rw: [{ id: 't_lightbringer', kind: 'title', n: 'Title: Lightbringer', live: true }, { id: 'd_flame', kind: 'cosmetic', n: "The Hearth's flame burns white-gold", later: 'Saved: shows once the camp scene shows decorations.' }] },
-  { at: 900, rw: [{ id: 'deepreroll', kind: 'qol', n: 'Deepwell: +1 reroll per run', later: 'Saved: works when the Deepwell opens.' }] },
-  { at: 1000, rw: [{ id: 't_lanternfall', kind: 'title', n: 'Title: the Everlit', live: true }, { id: 'c_crown', kind: 'cosmetic', n: 'Hero cosmetic: the Lantern Crown', later: 'Saved: arrives with hero cosmetics.' }] },
-  { at: 1100, rw: [{ id: 'd_lantern', kind: 'cosmetic', n: 'A replica Great Lantern above camp', later: 'Saved: shows once the camp scene shows decorations.' }] }
+  { at: 250, rw: [{ id: 'salvage2', kind: 'qol', n: 'Auto-salvage, full', txt: 'Rules per kind by rarity and tier, with a switch to keep Masterwork gear.', later: 'Coming soon, with the basic filter.' }] },
+  { at: 300, rw: [{ id: 't_relighter', kind: 'title', n: 'Title: Relighter', live: true }, { id: 'd_moth', kind: 'cosmetic', n: 'Camp decoration: Moth Lanterns', later: 'Coming soon: it will show in camp.' }] },
+  { at: 350, rw: [{ id: 'bag10', kind: 'qol', n: 'Bag +10', txt: 'Ten more spare items fit in your bag.', later: 'Coming soon: your bag does not grow yet.' }] },
+  { at: 400, rw: [{ id: 'queue1', kind: 'qol', n: '+1 queued build', txt: 'Line up one more build per builder.', later: 'Coming soon: builders do not use it yet.' }] },
+  { at: 450, rw: [{ id: 'c_motes', kind: 'cosmetic', n: 'Hero trail: Lantern Motes', later: 'Coming soon: hero looks.' }] },
+  { at: 500, rw: [{ id: 't_keeper', kind: 'title', n: 'Title: the Chronicler', live: true }, { id: 'd_lectern', kind: 'cosmetic', n: 'Camp decoration: Codex Lectern', later: 'Coming soon: it will show in camp.' }] },
+  { at: 600, rw: [{ id: 'forecast', kind: 'qol', n: 'Almanac forecast: 3 days ahead', later: 'Coming soon: the Almanac does not show it yet.' }] },
+  { at: 700, rw: [{ id: 'c_star', kind: 'cosmetic', n: 'Lantern colour: Starlight', later: 'Coming soon: hero looks.' }] },
+  { at: 800, rw: [{ id: 't_lightbringer', kind: 'title', n: 'Title: Lightbringer', live: true }, { id: 'd_flame', kind: 'cosmetic', n: "The Hearth's flame burns white-gold", later: 'Coming soon: it will show in camp.' }] },
+  { at: 900, rw: [{ id: 'deepreroll', kind: 'qol', n: 'Deepwell: +1 reroll per run', live: true }] },
+  { at: 1000, rw: [{ id: 't_lanternfall', kind: 'title', n: 'Title: the Everlit', live: true }, { id: 'c_crown', kind: 'cosmetic', n: 'Hero cosmetic: the Lantern Crown', later: 'Coming soon: hero looks.' }] },
+  { at: 1100, rw: [{ id: 'd_lantern', kind: 'cosmetic', n: 'A replica Great Lantern above camp', later: 'Coming soon: it will show in camp.' }] }
 ];
 
 // Page defs. bless: CAMP_BLESS id opened at 50%. seal: { key, v, txt } bonus at 100% (key null =
@@ -35328,7 +35371,7 @@ let showAwayReport;
         // The row's one line: what is happening now, or what stops the next level.
         const line = pend ? `Building ${bname(id, pend.to)} · ${pend.start ? dur(left(pend)) : 'queued'}`
           : c.max ? 'Fully built'
-          : !supported ? 'More tents open in later regions.'
+          : !supported ? 'More tents: coming soon.'
           : c.need ? `${id === 'tent' ? 'Tent' : 'Lv'} ${c.to} needs ${c.need.hearth ? 'Hearth ' + c.need.hearth : 'zone ' + c.need.zone}`
           : c.ok ? (c.queue ? 'Ready to queue' : 'Ready to build')
           : c.miss ? `${id === 'tent' ? 'Tent' : 'Lv'} ${c.to}: ${(o => `${o.have} of ${o.all} costs ready`)(costCount(c.cost))}` : c.why;
@@ -35477,7 +35520,7 @@ var classEvoUI;
         if (p && p.open) out.push(provingBox(p));
       }
     }
-    out.push(row('Second path', 'Locked', 'A second path opens in a later season.', 'off'));
+    out.push(row('Second path', 'Locked', 'A second path: coming soon.', 'off'));
     return out;
   }
   const sig = () => {
@@ -35963,7 +36006,7 @@ var classEvoUI;
         const line = el('div', 'cx-mr ' + r.kind);
         line.append(el('span', 'cx-mk', r.kind === 'qol' ? 'Comfort' : r.kind === 'title' ? 'Title' : 'Look'), el('b', null, r.n.replace(/^Title: /, '')));
         if (r.txt) line.append(el('span', 'cx-mtx', r.txt));
-        if (got && !r.live && r.later) line.append(el('span', 'cx-mlater', r.later));
+        if (!r.live && r.later) line.append(el('span', 'cx-mlater', r.later));
         rw.append(line);
       }
       li.append(at, rw, el('span', 'cx-mchk', got ? '✓' : ''));
@@ -36834,7 +36877,7 @@ let craftUI = null;
     body.append(secBox('What it does', lines));
     const tlb = typeof toolsUI === 'object' && toolsUI ? safe(() => toolsUI.itemBox(it), null) : null;   // tool mastery (75-tools-ui, H2)
     if (tlb) body.append(tlb);
-    if (anyWait) body.append(el('p', 'note', 'Dimmed lines are stored on the item and switch on in a later update.'));
+    if (anyWait) body.append(el('p', 'note', 'Dimmed lines do nothing yet. Coming soon.'));
 
     // ---- compare ----
     if (d && d.pos && heroFitsIt(it) && !(wr && wr.who === 'hero')) {
@@ -38950,20 +38993,19 @@ let navUI = null;
 
   // What opened, in one plain sentence. Tabs pop (high); views and smaller things are normal.
   const OPEN_TXT = {
-    party: 'New tab: Hero. Your gear, level and abilities.',
-    gather: 'New tab: Gather. Mine ore and chop wood.',
-    camp: typeof hearthCold === 'function' && hearthCold() ? 'New tab: Camp. Build your first station there.' : 'You made camp. A new tab: Camp.',
-    craft: 'New tab: Craft. Make gear from your materials.',
-    nextup: 'Next Up shows your best next goal.',
+    party: 'New tab: Hero.',
+    gather: 'New tab: Gather.',
+    camp: typeof hearthCold === 'function' && hearthCold() ? 'New tab: Camp.' : 'You made camp. A new tab: Camp.',
+    craft: 'New tab: Craft.',
     bounties: 'New on the Fight tab: Bounties.',
     bestiary: 'New on the Fight tab: Bestiary.',
     forage: 'New on the Gather tab: Foraging.',
-    almanac: "New on the Camp tab: the Almanac. Check today's Omen.",
+    almanac: 'New on the Camp tab: the Almanac.',
     roster: 'New on the Party tab: Roster. See who could join you.',
     synergy: 'Where each one stands matters. Put a tank in Front and a healer in Back for Lifeline.',
     uniques: 'New on the Craft tab: Uniques.',
     tavern: 'New on the Camp tab: the Tavern.',
-    codex: 'The Codex is open. Find it in the Journal (the bell).',
+    codex: 'The Codex is open. It tracks what you have found. Find it in the Journal.',   // = FIRST_USE.codex (55-onboard.js)
     raid: 'The World raid is open on the Camp tab.',
     deep: 'New on the Fight tab: the Deepwell.'
   };
@@ -39008,9 +39050,10 @@ let navUI = null;
   bub.append(arrow, txt, okb, x);
   // A waiting step may carry a Go button (spec.go): it takes the hero to the node that yields what the step needs.
   let curGo = null;
-  okb.addEventListener('click', e => { e.stopPropagation(); if (curGo) curGo.fn(); else if (cur) onboardDone(cur.id); tick(); });
+  const finish = s => s.id.startsWith('use:') ? onboardUseDone(s.id) : onboardDone(s.id);   // a first-use line is read, not a guide step
+  okb.addEventListener('click', e => { e.stopPropagation(); if (curGo) curGo.fn(); else if (cur) finish(cur); tick(); });
   let cur = null;   // the step on screen
-  x.addEventListener('click', e => { e.stopPropagation(); if (cur) onboardDone(cur.id); tick(); });
+  x.addEventListener('click', e => { e.stopPropagation(); if (cur) finish(cur); tick(); });
   const chip = $('nuChip');
   if (chip) chip.addEventListener('click', () => onboardDone('nextup'));
 
@@ -39071,7 +39114,7 @@ let navUI = null;
       const b = q('#modeSeg button[data-act="gather"]');
       return b && !b.hidden ? { node: b, text: 'The road is cold. Tap Gather and chop Pine Log for a camp fire.' } : null;
     },
-    'tab:party': () => S.tab === 'party' ? null : { node: q('.tab[data-tab="party"]'), text: 'New tab: Hero. See your gear, level and abilities.' }
+    'tab:party': () => S.tab === 'party' ? null : { node: q('.tab[data-tab="party"]'), text: 'New tab: Hero. Tap it.' }
   };
   const STEP_UI = {
     // UX-L1: in landscape a menu leaves the rail and top row in view, so the hint stays and points at the lit tab (close the menu)
@@ -39107,12 +39150,13 @@ let navUI = null;
     'tab:gat': () => S.tab === 'gat' ? null : { node: q('.tab[data-tab="gat"]'), text: 'New tab: Gather. Tap it to see what you can mine.' },
     'tab:world': () => S.tab === 'world' ? null : { node: q('.tab[data-tab="world"]'), text: 'You made camp. Tap Camp to build.' },
     'tab:forge': () => S.tab === 'forge' ? null : { node: q('.tab[data-tab="forge"]'), text: 'New tab: Craft. Tap it to make gear.' },
-    nextup: () => onCtrl() ? { node: chip, text: 'Next Up shows your best next goal. Tap it.' } : null
+    nextup: () => onCtrl() ? { node: chip, text: FIRST_USE.nextup.text } : null
   };
 
+  const USE_SHOWN_MS = 7000;   // a first-use line counts as read after this long on screen
   const BLOCK = '.create, .away-ov, .bsheet-ov, .modal, .dw-ov';
-  let lastKey = '';
-  function hide() { if (!layer.hidden) layer.hidden = true; if (!bub.hidden) bub.hidden = true; cur = null; curGo = null; lastKey = ''; lastNode = null; lastRect = null; ONBOARD.paused = false; }
+  let lastKey = '', useT0 = 0;
+  function hide() { useT0 = 0; if (!layer.hidden) layer.hidden = true; if (!bub.hidden) bub.hidden = true; cur = null; curGo = null; lastKey = ''; lastNode = null; lastRect = null; ONBOARD.paused = false; }
   // The hint used to re-read the target's pixel position and re-place itself every 250ms, so it
   // jumped whenever the stage moved under it (camera/zoom, screen shake, a pack spawning) even
   // though nothing about the guide itself had changed. Stage targets keep that cached placement.
@@ -39125,11 +39169,16 @@ let navUI = null;
     if (S.tab !== lastTab) { lastTab = S.tab; dirty = true; reveal = true; }
     let step = null;
     try { step = onboardStep(); } catch (e) { console.error('[lanternfall] onboard step', e); }
+    // no guide step: the system on screen may still owe its first-use line (never alongside a guide step)
+    if (!step && S.tab) { try { const cv = curView(S.tab), vw = viewsOf(S.tab).find(v => v.id === cv); step = onboardUse({ tab: S.tab, view: cv, feature: vw && vw.feature }); } catch (e) { step = null; } }
     if (!step || document.hidden || q(BLOCK)) return hide();
+    const use = step.id.startsWith('use:');
     let spec = null;
     const table = SOLO_UI[step.id] ? SOLO_UI : STEP_UI;
-    try { spec = table[step.id] ? table[step.id]() : null; } catch (e) { spec = null; }
+    // a first-use line has no target: it docks over the open menu with no ring, and never pauses the game
+    try { spec = use ? { node: panels, text: step.text, noRing: true } : table[step.id] ? table[step.id]() : null; } catch (e) { spec = null; }
     if (!spec || !vis(spec.node)) return hide();
+    if (use) { if (!useT0) useT0 = Date.now(); else if (Date.now() - useT0 > USE_SHOWN_MS) { onboardUseDone(step.id); return hide(); } }
     cur = step; curGo = spec.go || null;
     place(spec);
     // the game waits only while the step waits for you to read or press something now (playtest-1 note 1, W1-A):
@@ -39147,6 +39196,7 @@ let navUI = null;
     const inPanel = !!S.tab && panels.contains(spec.node);
     let r = inPanel ? spec.node.getBoundingClientRect() : null;
     const moved = inPanel && (!lastRect || r.left !== lastRect.left || r.top !== lastRect.top || r.width !== lastRect.width || r.height !== lastRect.height);
+    if (ring.hidden !== !!spec.noRing) ring.hidden = !!spec.noRing;
     const changed = dirty || newTarget || key !== lastKey || (inPanel && panelScrolled) || moved;
     if (layer.hidden) layer.hidden = false;
     if (bub.hidden) bub.hidden = false;
@@ -39160,7 +39210,7 @@ let navUI = null;
     // UX-L1: a target inside the menu's scrolling content that is out of sight (a short landscape menu: the Make view's
     // recipes, a camp building further down) is scrolled into view on a new target/view. Ordinary
     // scroll or reflow only moves the ring, so following it never pulls the player back.
-    if (inPanel && (newTarget || reveal)) {
+    if (inPanel && !spec.noRing && (newTarget || reveal)) {
       const pr = panels.getBoundingClientRect();
       if (r.height && (r.top < pr.top || r.bottom > pr.bottom - 56)) {
         scrollMenuTo(spec.node);
@@ -39172,12 +39222,14 @@ let navUI = null;
     // shape, so it never covers the node/foe underneath)
     if (!r) r = spec.node.getBoundingClientRect();
     lastRect = inPanel ? r : null;
-    let rx, ry, rw, rh;
-    if (spec.at) { const d = 58; rx = r.left + r.width * spec.at[0] - d / 2; ry = r.top + r.height * spec.at[1] - d / 2; rw = rh = d; }
-    else { rx = r.left - 4; ry = r.top - 4; rw = r.width + 8; rh = r.height + 8; }
-    ring.classList.toggle('dot', !!(spec.at || spec.round));
-    putStyle(ring, 'transform', `translate(${Math.round(rx)}px, ${Math.round(ry)}px)`);
-    putStyle(ring, 'width', Math.round(rw) + 'px'); putStyle(ring, 'height', Math.round(rh) + 'px');
+    if (!spec.noRing) {
+      let rx, ry, rw, rh;
+      if (spec.at) { const d = 58; rx = r.left + r.width * spec.at[0] - d / 2; ry = r.top + r.height * spec.at[1] - d / 2; rw = rh = d; }
+      else { rx = r.left - 4; ry = r.top - 4; rw = r.width + 8; rh = r.height + 8; }
+      ring.classList.toggle('dot', !!(spec.at || spec.round));
+      putStyle(ring, 'transform', `translate(${Math.round(rx)}px, ${Math.round(ry)}px)`);
+      putStyle(ring, 'width', Math.round(rw) + 'px'); putStyle(ring, 'height', Math.round(rh) + 'px');
+    }
     // the sentence: docked exactly where placeToasts docks toasts (70-ui.js) - inside #stageBox on
     // the game view, inside #app over a menu - so it reads as one system with the toast stack and
     // the two never overlap (60-onboard.css .ob-bub, --toast-h). Only the parent and the arrow's
@@ -42036,8 +42088,8 @@ var classUI;
       // The evolution: granted or the two paths and their gate.
       else if (info.evo) {
         const txt = info.evo === 'priest'
-          ? 'You keep your Blessing and Rally Hymn. New Lightkeeper powers come in a later update.'
-          : `You play the ${d.name}'s kit for now. The ${info.evoName}'s own powers come in a later update.`;
+          ? 'You keep your Blessing and Rally Hymn. New Lightkeeper powers: coming soon.'
+          : `You play the ${d.name}'s kit for now. The ${info.evoName}'s own powers: coming soon.`;
         const r = row(`Path: ${info.evoName}`, info.proven ? info.evoTitle : 'Granted', txt, 'cl-evo');
         if (!info.proven) r.append(el('p', 'cl-note', `The title ${info.evoTitle} waits for your Proving, after the Hollow’s Elder.`));
         out.push(r);
@@ -42047,10 +42099,10 @@ var classUI;
         const chips = el('div', 'cl-chips');
         chips.append(chip('Beat the Hollow’s Elder', info.gate.bossOk), chip(`Level ${info.gate.lv}`, info.gate.lvOk));
         r.append(chips);
-        if (info.gate.open) r.append(el('p', 'cl-note', 'The Proving comes in a later update.'));
+        if (info.gate.open) r.append(el('p', 'cl-note', 'The Proving: coming soon.'));
         out.push(r);
       }
-      if (!(typeof classEvoUI === 'object' && classEvoUI)) out.push(row('Second path', 'Locked', 'A second path opens in a later season.', 'off'));
+      if (!(typeof classEvoUI === 'object' && classEvoUI)) out.push(row('Second path', 'Locked', 'A second path: coming soon.', 'off'));
       return out;
     },
     head() {
