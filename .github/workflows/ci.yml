@@ -12,9 +12,15 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # The full check runs as four shards on four runners (the same --shard=i/4 split check.mjs uses locally), so it costs
+  # a quarter of the time. Each shard builds, then runs its slice; shard 0 also checks that dist is committed rebuilt.
   checks:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -31,27 +37,57 @@ jobs:
       - name: Build
         run: node tools/build.mjs
       - name: dist is committed rebuilt
+        if: matrix.shard == 0
         run: |
           if ! git diff --exit-code -- dist/lanternfall.html; then
             echo "::error::node tools/build.mjs changed dist/lanternfall.html. Commit the rebuilt dist."
             exit 1
           fi
-      - name: Full check (no browser section may be skipped)
+      - name: Check shard ${{ matrix.shard }}/4 (no browser section may be skipped)
         env:
           NODE_OPTIONS: --max-old-space-size=4096   # a check shard hit the 2 GB default heap limit on the runner
         run: |
           # Write to a file, not a pipe: the check run dies partway when its stdout is a pipe (seen with tee).
-          rc=0; node tools/check.mjs > check.log 2>&1 || rc=$?
+          rc=0; node tools/check.mjs --shard=${{ matrix.shard }}/4 > check.log 2>&1 || rc=$?
           cat check.log
           [ "$rc" -eq 0 ] || { echo "::error::tools/check.mjs exited $rc"; exit "$rc"; }
           grep -q '^browser sections skipped: 0 ' check.log || { echo "::error::a browser section was skipped"; exit 1; }
-      - name: Offline parity
-        run: node tools/offline-parity.mjs
+
+  # Offline parity needs no browser, so it runs beside the checks.
+  offline-parity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: node tools/offline-parity.mjs
+
+  # Report only (it never gated), so it gets its own runner and stays off the critical path.
+  perf:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Cache Playwright browser
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - run: npx playwright install --with-deps chromium
+      - run: node tools/build.mjs
+      # The budgets are wall-clock timings tuned on a fast machine; on a shared runner the same build misses them
+      # (first frame ~2.5 s vs 1.5 s), so this reports and does not gate.
       - name: Perf (quick, report only)
-        # The budgets are wall-clock timings tuned on a fast machine. On a shared runner (and on a plain dev container)
-        # the same build misses them (first frame ~2.5 s vs 1.5 s), so this step reports and does not gate.
-        # Tighten it once there is a self-hosted runner or a runner-relative budget.
-        continue-on-error: true
         run: node tools/perf.mjs --quick
 
   # SIM-TARGETS: the health bots play the real game and are scored against docs/design/health-baseline.json. A balance
@@ -69,8 +105,20 @@ jobs:
       - run: npm ci
       - name: Health (casual, active, optimiser)
         run: node tools/health.mjs --compare
-      - name: Health, 50-hour run (report only until its bands have held for a few merges)
-        continue-on-error: true
+
+  # Report only until its bands have held for a few merges; its own job so the 150 s run is off the critical path.
+  health-long:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Health, 50-hour run (report only)
         run: node tools/health.mjs --long --compare
 
   path-guard:
