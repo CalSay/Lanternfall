@@ -56,7 +56,7 @@ const ONLY = (process.argv.find(a => a.startsWith('--only=')) || '').slice(7);
 const SHARD = (m => (m ? [+m[1], +m[2]] : null))(/--shard=(\d+)\/(\d+)/.exec(process.argv.join(' ')));
 const JOBS = SHARD ? 1 : +((process.argv.find(a => a.startsWith('--jobs=')) || '').slice(7)) || (ONLY ? 1 : Math.min(4, os.cpus().length));
 // Seconds a section takes (measured, W2-B): the shards are balanced by these; a section not listed counts 2.
-const WEIGHT = { 'landscape 740x360 (browser, UX-L1)': 42, 'landscape 844x390 (browser, UX-L1)': 38, 'landscape 1280x720 (browser, UX-L1)': 38, 'solo copy (browser, W1-C)': 60, 'W1-D (browser)': 100, 'training (W2-A, browser)': 18, 'cb2': 40, 'notices (browser, W1-B)': 34, 'solo guide: gathering never freezes (browser)': 31, 'solo hero (browser)': 21, 'types and statuses (S1)': 14, 'save codes': 13, 'combat': 8, 'gatherers UI (browser)': 7, 'gathering': 6, 'nav': 6, 'retool': 6, 'onboarding hint placement (HINT1)': 5, 'camp trade and import (C4, browser)': 15 };
+const WEIGHT = { 'LF_EYES hook (browser, qa-player-eyes)': 12, 'landscape 740x360 (browser, UX-L1)': 42, 'landscape 844x390 (browser, UX-L1)': 38, 'landscape 1280x720 (browser, UX-L1)': 38, 'solo copy (browser, W1-C)': 60, 'W1-D (browser)': 100, 'training (W2-A, browser)': 18, 'cb2': 40, 'notices (browser, W1-B)': 34, 'solo guide: gathering never freezes (browser)': 31, 'solo hero (browser)': 21, 'types and statuses (S1)': 14, 'save codes': 13, 'combat': 8, 'gatherers UI (browser)': 7, 'gathering': 6, 'nav': 6, 'retool': 6, 'onboarding hint placement (HINT1)': 5, 'camp trade and import (C4, browser)': 15 };
 const shardLoad = SHARD ? Array(SHARD[1]).fill(0) : null;
 function section(name) {
   if ((ONLY && !new RegExp(ONLY, 'i').test(name))) return false;
@@ -1445,7 +1445,7 @@ if (section('onboarding hint placement (HINT1)')) try {
   assert(/if \(!changed\) return;/.test(src), 'place() skips the reposition when nothing real changed (no per-frame follow)');
   assert(!/setInterval\(place/.test(src), 'place() itself is never put on its own interval');
   const css = fs.readFileSync(path.join(ROOT, 'src', 'styles', '60-onboard.css'), 'utf8');
-  assert(/\.ob-bub\s*\{[^}]*position:\s*absolute/.test(css), 'the hint bubble is docked (a fixed offset within its parent), not translated to the target every tick');
+  assert(/\.ob-bub\.over-menu\s*\{[^}]*position:\s*absolute/.test(css) && /\.ob-bub\s*\{[^}]*position:\s*relative/.test(css), 'the guide panel is docked (a slot in its parent, or a fixed offset over a menu), not translated to the target every tick');
   assert(/--toast-h/.test(css) && /--toast-h/.test(fs.readFileSync(path.join(ROOT, 'src', 'js', '70-ui.js'), 'utf8')), 'the hint band and placeToasts share --toast-h so they cannot collide');
   ok('source: tick only recomputes on a real change, the bubble is CSS-docked, toasts and hints share one band variable');
   // in Chromium: the band does not move while the game runs (ticks, an ability firing) under it
@@ -1479,21 +1479,18 @@ if (section('onboarding hint placement (HINT1)')) try {
         if (th === th0) assert(r && r.x === r0.x && r.y === r0.y, `browser: the hint band does not move while the stage animates under it (${JSON.stringify(r0)} -> ${JSON.stringify(r)}, --toast-h unchanged)`);
         r0 = r; th0 = th;
       }
-      // it stays in its band: fixed, near the stage HUD, not floating out at the target
-      const box = await page.$eval('.ob-bub', b => { const s = getComputedStyle(b); return { position: s.position, top: s.top === 'auto' ? null : parseFloat(s.top) }; });
-      assert(box.position === 'absolute' && box.top !== null && box.top < 120, `browser: docked near the stage HUD, not floating at the target (${JSON.stringify(box)})`);
-      // the over-menu band (used once a menu covers the stage) sits just above the tab bar, the
-      // same slot placeToasts uses for toasts (50-overlays.css .toasts.over-menu), so the hint
-      // and the toast stack are in the same corner but never overlap
+      // it docks in a slot of the game view (portrait), above the dock bar and clear of the stage; over a menu it sits above the tab bar
+      const dock = await page.$eval('.ob-bub', b => { const r = b.getBoundingClientRect(), sb = document.getElementById('soloBar').getBoundingClientRect(), st = document.getElementById('stageBox').getBoundingClientRect(); return { dock: b.classList.contains('dock'), gapAboveBar: Math.round(sb.top - r.bottom), belowStage: Math.round(r.top - st.bottom) }; });
+      assert(dock.dock && dock.gapAboveBar >= 0 && dock.gapAboveBar <= 12 && dock.belowStage >= 0, `browser: the guide panel docks just above the Act / Skills / Foe bar, never over the stage (${JSON.stringify(dock)})`);
       const tabsH = await page.$eval('.tabs', t => t.getBoundingClientRect().height);
       const boxes = await page.$eval('.ob-bub', b => {
-        const before = getComputedStyle(b).bottom;
+        const before = getComputedStyle(b).position;
         b.classList.add('over-menu');
-        const after = getComputedStyle(b).bottom;
+        const cs = getComputedStyle(b), after = { position: cs.position, bottom: parseFloat(cs.bottom) };
         b.classList.remove('over-menu');
-        return { before, after: parseFloat(after) };
+        return { before, after };
       });
-      assert(boxes.before !== boxes.after && boxes.after >= tabsH, `browser: the over-menu band sits above the tab bar (bottom ${boxes.after}px, tabs ${tabsH}px; was ${boxes.before})`);
+      assert(boxes.after.position === 'absolute' && boxes.after.bottom >= tabsH, `browser: the over-menu panel sits above the tab bar (bottom ${boxes.after.bottom}px, tabs ${tabsH}px)`);
       // menu audit #19: "New" lasts 2 hours of play after an unlock, so an old save's long-past unlocks never show it
       const nb = await X(`(() => { const o = S.onboard, v = { id: 'zz-test', feature: 'party' }, was = o.got.party;
         o.got.party = Math.round(o.t); const a = onboardIsNew(v); o.got.party = Math.round(o.t) - 7300; const b = onboardIsNew(v);
@@ -2142,7 +2139,7 @@ if (section('cold hearth')) try {
     for (let sec = 0; sec < 10 * 60; sec++) {
       // taps go through the stage as the browser sends them: the 'tap' event, then the strike or the chop
       if (!P('hearthLit()')) {
-        if (P('S.maxZone >= 2 && S.activity !== "gather" && !hearthCan().ok')) { P('setNode("wood", 1); setActivity("gather")'); mark('chop'); }
+        if (P('S.maxZone >= 2 && isUnlocked("gather") && S.activity !== "gather" && !hearthCan().ok')) { P('setNode("wood", 1); setActivity("gather")'); mark('chop'); }   // the Gather row shows first (story-unlock-gates)
         if (P('hearthCan().ok') && P('hearthLight()')) mark('lit');
       }
       else {
@@ -2161,7 +2158,7 @@ if (section('cold hearth')) try {
       const st = P('(s => s && s.id)(onboardStep())');
       if (st && st.startsWith('tab:')) P(`S.onboard.seen[${JSON.stringify(st.slice(4))}] = 1`);
       if (st === 'nextup') P('onboardDone("nextup")');
-      if (sec % 5 === 0) buy();
+      if (sec % 5 === 0 && P("isUnlocked(\"party\")")) buy();   // Training lives on the Hero tab (story-unlock-gates: the bot waits for it, as a player must)
       tickS(p, 1);
     }
     const at = k => marks[k] ?? got[k] ?? Infinity;
@@ -2169,12 +2166,15 @@ if (section('cold hearth')) try {
     const tl = Object.entries(Object.assign({}, got, marks)).sort((a, b) => a[1] - b[1]);
     console.log('       timeline: ' + tl.map(([k, t]) => `${k} ${mmss(t)}`).join(', '));
     console.log('       guide: ' + steps.map(([k, t]) => `${k} ${mmss(t)}`).join(', ') + ` | zone ${P('S.maxZone')} at 10:00`);
-    assert(at('lit') <= 90, `the fire lit under 1:30: the first boss falls, the hero chops 8 Pine Log (${mmss(at('lit'))}; solo, W2-B)`);
+    // story-unlock-gates: unlocks come one a minute (ONBOARD_TUNE.gap) and the bot trains only once the Hero tab is open, so the
+    // first-ten-minute bounds count from the first boss (was: lit by 1:30, Next Up by 2:30, Gather with the boss, tool by 5:00, Workbench by 4:00)
+    const z2 = at('zone2');
+    assert(at('lit') - z2 <= 150, `the fire lit within 2:30 of the first boss: Gather opens, the hero chops 8 Pine Log (${mmss(at('lit'))}, boss at ${mmss(z2)}; solo, W2-B)`);
     assert(firstUp !== null && firstUp < 90, `first upgrade affordable under 1:30 (${mmss(firstUp)})`);
-    assert(at('nextup') <= 150, `Next Up by 2:30 (${mmss(at('nextup'))})`);
-    assert(at('gather') - at('zone2') <= 2 && at('camp') - at('lit') <= 1 && at('craft') >= at('bench1') && at('craft') <= at('bench1') + 1, `Gather with the first boss, Camp with the fire, Craft with the Workbench (${mmss(at('gather'))}, ${mmss(at('camp'))}, ${mmss(at('craft'))})`);
-    assert(at('tool') <= 300, `a tool by 5:00 (${mmss(at('tool'))})`);
-    assert(at('bench1') <= 240 && at('forge1') <= 600, `Workbench by 4:00, Forge by 10:00 (${mmss(at('bench1'))}, ${mmss(at('forge1'))})`);
+    assert(at('nextup') - z2 <= 180, `Next Up within 3:00 of the first boss (${mmss(at('nextup'))})`);
+    assert(at('gather') - at('zone2') <= 64 && at('party') <= at('gather') && at('camp') - at('lit') <= 1 && at('craft') >= at('bench1') && at('craft') <= at('bench1') + 1, `Gather within a minute of the first boss and after Hero, Camp with the fire, Craft with the Workbench (${mmss(at('gather'))}, ${mmss(at('camp'))}, ${mmss(at('craft'))})`);
+    assert(at('tool') - z2 <= 240, `a tool within 4:00 of the first boss (${mmss(at('tool'))})`);
+    assert(at('bench1') - z2 <= 180 && at('forge1') <= 600, `Workbench within 3:00 of the first boss, Forge by 10:00 (${mmss(at('bench1'))}, ${mmss(at('forge1'))})`);
     const early = tl.map(x => x[1]).filter(t => t <= 600);
     let gap = early[0] || 0; for (let i = 1; i < early.length; i++) gap = Math.max(gap, early[i] - early[i - 1]);
     assert(early.length >= 8 && gap <= 180, `something new at least every 3 minutes in the first 10 (${early.length} events, longest gap ${gap}s)`);
@@ -3432,7 +3432,7 @@ if (section('nav')) try {
   // 3. a new game (cold Hearth): only Woodcutting until the fire is lit; the switcher hides locked skills
   {
     const g = loadCore({ seed: 8, cold: true }), E = s => g.eval(s);
-    E('soloPick("wren"); S.maxZone = 2'); secs(g, 2);   // W2-B: solo, Gather opens with the first boss
+    E('soloPick("wren"); S.maxZone = 2'); secs(g, 64);   // W2-B: solo, Gather opens a minute after the first boss (Hero first; story-unlock-gates)
     assert(E('hearthCold() && !hearthLit()') && E('navSkills().join()') === 'wood' && E('navSkillOpen("mine")') === false && E('navSkillOpen("forage")') === false,
       `cold Hearth: the switcher and Gather show only Woodcutting (${E('navSkills().join()')}), Gather opens on the Oak Grove`);
     E('S.mats.wood[0] = 50; hearthLight()'); secs(g, 2);
@@ -4551,15 +4551,15 @@ if (section('solo hero (browser)')) try {
       await page.click('#createScreen .ccard[data-hero="pip"]'); await page.click('#createScreen .create-go'); await page.waitForTimeout(600);
       assert(await X('soloHero() === "pip" && heroSpec().comp === "pip"'), 'Pip is the hero on the stage (her own art)');
       const bar = await page.$eval('#soloBar', b => {
-        const r = b.getBoundingClientRect(), s = document.getElementById('stageBox').getBoundingClientRect(), nav = document.querySelector('.tabs').getBoundingClientRect();
+        const r = b.getBoundingClientRect(), s = document.getElementById('stageBox').getBoundingClientRect(), pb = document.querySelector('.ob-bub:not([hidden])'), nav = document.querySelector('.tabs').getBoundingClientRect();
         const rows = [...b.querySelectorAll('.sb-row')].map(row => [...row.querySelectorAll('.sbtn')].map(x => { const q = x.getBoundingClientRect(); return { act: x.dataset.act, x: Math.round(q.left), y: Math.round(q.top), w: Math.round(q.width), h: Math.round(q.height), cls: x.className }; }));
         const game = document.getElementById('game'), kids = [...game.children].filter(k => !k.hidden && k.getClientRects().length).map(k => k.id || k.className.split(' ')[0]);
-        return { rows, top: Math.round(r.top), bottom: Math.round(r.bottom), stageBottom: Math.round(s.bottom), navTop: Math.round(nav.top), hidden: b.hidden, order: kids.join('>') };
+        return { rows, top: Math.round(r.top), bottom: Math.round(r.bottom), stageBottom: Math.round(pb && pb.classList.contains('dock') ? pb.getBoundingClientRect().bottom : s.bottom), navTop: Math.round(nav.top), hidden: b.hidden, order: kids.join('>') };
       });
       const flat = bar.rows.flat();
       assert(!bar.hidden && bar.rows.length === 2 && bar.rows.map(r => r.map(x => x.act).join()).join('|') === 'atk,ab0,ab1,ab2|parry,dodge', `the dock: Attack and Ability 1-3 in the Act pane, Parry and Dodge under them (${bar.rows.map(r => r.map(x => x.act).join()).join(' | ')})`);
       assert(flat.every(x => x.w >= 44 && x.h >= 44) && bar.rows[0].every(x => x.y < bar.rows[1][0].y) && bar.rows[0].every((x, i) => i === 0 || x.x > bar.rows[0][i - 1].x) && bar.rows[1][1].x > bar.rows[1][0].x, `six keys of 44 px or more: four tiles over Parry and Dodge (${flat.map(x => x.w + 'x' + x.h).join(' ')})`);
-      assert(bar.top >= bar.stageBottom - 1 && bar.top - bar.stageBottom <= 8 && bar.bottom <= bar.navTop && bar.navTop - bar.bottom <= 16 && /stageBox>soloBar$/.test(bar.order), `the bar touches the stage (not over it) and is the lowest thing above the tab bar (${bar.order}; stage ${bar.stageBottom}, bar ${bar.top}-${bar.bottom}, tabs ${bar.navTop})`);
+      assert(bar.top >= bar.stageBottom - 1 && bar.top - bar.stageBottom <= 8 && bar.bottom <= bar.navTop && bar.navTop - bar.bottom <= 16 && /stageBox>soloBar(>ob-bub)?$/.test(bar.order), `the bar touches the stage (not over it) and is the lowest thing above the tab bar (${bar.order}; stage ${bar.stageBottom}, bar ${bar.top}-${bar.bottom}, tabs ${bar.navTop})`);
       assert(/sb-abslot/.test(flat[1].cls) && !/empty/.test(flat[1].cls) && /empty/.test(flat[2].cls) && /empty/.test(flat[3].cls), 'slot 1 holds the hero\'s ability; slots 2 and 3 show empty');
       // the dock's tabs: Skills lists the three slots, Foe is for turn fights, Parry and Dodge stay on screen, Act comes back
       {
@@ -5035,6 +5035,7 @@ if (section('notices (browser, W1-B)')) try {
     const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
     try {
       const ctx = await browser.newContext({ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true });
+      await ctx.addInitScript(() => { try { localStorage.setItem('lanternfall.test.moments', '1'); } catch (e) {} });   // moment layer: counted in this walk
       const page = await ctx.newPage(); const errs = [];
       page.on('pageerror', e => errs.push(String(e)));
       await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
@@ -5052,8 +5053,10 @@ if (section('notices (browser, W1-B)')) try {
         // ...and Math.random is seeded, so the same drops and rolls fall on every run (LF_NOTICE_SEED tries another seed)
         (a => { Math.random = () => (a = (Math.imul(a, 1664525) + 1013904223) >>> 0) / 4294967296; })(${+process.env.LF_NOTICE_SEED || 7});
         const mk = makeToast; makeToast = function () { R.toasts++; return mk.apply(this, arguments); };
+        on('momentShow', e => { R.moments = (R.moments || 0) + 1; (R.mlist = R.mlist || []).push(Math.round(notes.clock) + 's ' + e.tier + ' ' + e.kind); });   // moment layer: counted, outside the pop budget
         let last = '', same = 0;
         globalThis.__nbStep = () => {
+          { const g = document.querySelector('.mm-go'); if (g) { MOMENT_UI.shownAt = 0; g.click(); } }   // a moment card is the player's tap
           const st = soloGuideWants(), step = onboardStep();
           same = st && st === last ? same + 1 : 0; last = st;
           if (same > 12 && /^(attack|ability|dodge|parry|boss|upgrade|gather|light)$/.test(st) && document.querySelector('.ob-x')) { R.stall++; document.querySelector('.ob-x').click(); same = 0; }
@@ -5082,7 +5085,8 @@ if (section('notices (browser, W1-B)')) try {
       const inGuide = pops.filter(s => s.g);
       const list = pops.map(s => `${Math.round(s.t)}s ${s.id}`).join(', ');
       assert(r.t >= 590 && r.zone >= 5, `the bot played 10 minutes of a fresh solo game (${Math.round(r.t)} s, zone ${r.zone}, level ${r.L}, ${r.st.length} notices)`);
-      assert(pops.length <= 8 && pops.length >= 2, `a fresh game's first 10 minutes pop at most 8 notices (toasts and captions): ${pops.length} (${list})`);
+      assert(pops.length <= 8 && pops.length >= 1, `a fresh game's first 10 minutes pop at most 8 notices (toasts and captions): ${pops.length} (${list})`);
+      assert((r.nb.moments || 0) <= 8, `moment layer: big and medium moments in a fresh game's first 10 minutes: ${r.nb.moments || 0} (${(r.nb.mlist || []).join(', ')}); at most 8 (about one a minute)`);
       assert(!close, 'never two pops within 20 s' + (close ? `: ${JSON.stringify(close)}` : ''));
       assert(!inGuide.length, 'nothing pops while a guide step shows' + (inGuide.length ? ': ' + inGuide.map(s => s.id).join(', ') : ''));
       assert(r.nb.toasts <= pops.length + r.st.filter(s => s.ch === 'pop' && s.id === 'reply').length, `every toast on screen went through the policy (${r.nb.toasts} drawn, ${pops.length} pops)`);
@@ -6230,6 +6234,27 @@ if (section('save codec validation (C5)')) try {
   const {saveCodeFor}=await import('./savecode.mjs');
   for(const raw of ['null','{}','{',JSON.stringify({...base(),v:4}),JSON.stringify({...base(),items:[null]})]){let refused=false;try{saveCodeFor(raw);}catch{refused=true;}assert(refused,'C5: CLI rejects bad data before loading it');}
   for(const f of fs.readdirSync(path.join(ROOT,'tests','fixtures')).filter(f=>f.endsWith('.json')))assert(decode(saveCodeFor(fs.readFileSync(path.join(ROOT,'tests','fixtures',f),'utf8'))).ok,`C5: CLI accepts ${f}`);
+  { // every ability a hero learns with Scrolls (Spark, Kindle, ...) exports while equipped, and stays equipped after a cold load of the code
+    const lost=[];
+    for(const k of JSON.parse(E('JSON.stringify(SOLO_ORDER)'))){
+      const h=loadCore({seed:506}),H=s=>h.eval(s),K=JSON.stringify(k);
+      const ids=JSON.parse(H(`soloPick(${K});S.L=60;for(const id of SCROLL_ORDER)S.abil.scrolls[id]=99;JSON.stringify(HERO_ABILITIES[${K}].filter(id=>abilityLearn(${K},id)||abilityOwned(${K},id)))`));
+      if(ids.length!==JSON.parse(H(`HERO_ABILITIES[${K}].length`)))lost.push(k+': could not learn every ability');
+      for(let i=0;i<ids.length;i+=3){
+        const row=[0,1,2].map(j=>ids[(i+j)%ids.length]);
+        H(`[0,1,2].forEach(j=>soloEquip(j,null));${JSON.stringify(row)}.forEach((id,j)=>soloEquip(j,id))`);
+        const want=H('JSON.stringify(soloEquipped())');
+        if(want!==JSON.stringify(row)){lost.push(`${k}: equipping ${JSON.stringify(row)} gave ${want}`);continue;}
+        let code='';try{code=H('encodeSave(S)');}catch(e){lost.push(`${k} ${want}: export threw ${e.message}`);continue;}
+        const r=decode(code);if(!r.ok){lost.push(`${k} ${want}: ${r.error}`);continue;}
+        const cold=loadCore({seed:507,storage:memoryStorage({[KEY]:JSON.stringify(r.data)})}),C=s=>cold.eval(s);
+        if(C('soloHero()')!==k||C('JSON.stringify(soloEquipped())')!==want||C(`JSON.stringify(S.abil.unl[${K}])`)!==H(`JSON.stringify(S.abil.unl[${K}])`)||cold.errors.length)lost.push(`${k} ${want}: cold load gave ${C('JSON.stringify(soloEquipped())')}`);
+      }
+    }
+    assert(!lost.length,'C5: every learned ability exports while equipped and stays equipped after a cold LF1 load'+(lost.length?'; '+lost.slice(0,3).join('; '):''));
+    const other=base();other.solo.eq.wren=['echo','spark',null];
+    assert(!validate(other).ok,'C5: a slot holding another hero\'s learned ability is still refused');
+  }
   assert(!g.errors.length&&!live.errors.length,'C5: positive gameplay states have no handler errors');
 } catch(e){fail('C5 codec validation crashed: '+(e.stack||e));}
 
@@ -6945,7 +6970,7 @@ if (section('C9 hero registry (core)')) try {
   E('for (let i=0;i<10;i++) for (const k of HERO_ORDER) { heroRouteInfo(k); heroUnlocked(k); heroCanPlay(k); tokenChance(k); }');
   assert(E('JSON.stringify(S)') === before, 'C9: picker and token-chance reads do not mutate state or consume resources');
   assert(E('["missing","toString","__proto__",null].every(k => !heroUnlocked(k) && !heroCanPlay(k) && !heroUnlock(k) && !heroPick(k) && heroRouteInfo(k) === null)'), 'C9: unknown and inherited IDs cannot unlock or pick heroes');
-  E('S.maxZone=31; S.mats.wood=[79,0,0,0,0]');   // Bram's first scene is at zone 31 (STORY_MEET)
+  E('S.maxZone=36; S.mats.wood=[79,0,0,0,0]');   // Bram's first scene can play from zone 36 (STORY_MEET; story-unlock-gates)
   const short = E('JSON.stringify([S.gold,S.mats,S.party.unlock])');
   assert(!E('heroUnlock("bram")') && E('JSON.stringify([S.gold,S.mats,S.party.unlock])') === short, 'C9: an incomplete quest cannot charge or unlock');
   E('S.mats.wood[1]=1');
@@ -6975,7 +7000,7 @@ if (section('C9 hero registry (core)')) try {
   assert(K('!S.party.unlock.tokens.grenna'), 'C9: Grenna token does not roll below its zone gate');
   K('emit("kill",{mob:{boss:true,key:"coral"},zone:41,tier:4});');
   assert(K('!S.party.unlock.tokens.grenna'), 'C9: a Coast place cannot masquerade as the Hollow’s Quarry boss');
-  K('emit("kill",{mob:{boss:true,key:"golem"},zone:27,tier:4});');
+  K('S.maxZone=31; emit("kill",{mob:{boss:true,key:"golem"},zone:27,tier:4});');   // Grenna's first scene can play from zone 31 (story-unlock-gates)
   assert(K('heroUnlocked("grenna") && heroRouteInfo("grenna").state === "coming-soon"'), 'C9: an eligible Quarry boss unlocks Grenna’s route, but cannot supply her kit');
   K('S.maxZone=156; emit("kill",{mob:{boss:true,key:"spore"},zone:UNLOCK_TUNE.quests.morwen.zone,tier:5}); heroProbe(); S.craft.starChart=1; S.mastery.types.wraith=BESTIARY_TIERS[UNLOCK_TUNE.thessaly.tier-1]; S.stats.bosses=UNLOCK_TUNE.corvin.bosses; for (const t of TYPES) S.mastery.types[t.key]=Math.max(S.mastery.types[t.key]||0,BESTIARY_TIERS[UNLOCK_TUNE.corvin.tier-1]); heroProbe();');
   assert(K('["morwen","oriel","thessaly","corvin"].every(heroUnlocked)'), 'C9: solo boss quest, Star Chart, bestiary and Kingslayer conditions complete their routes');
@@ -7040,7 +7065,7 @@ if (section('C9 hero registry (browser)')) try {
           await page.click('#createScreen .ccard[data-hero="wren"]');
           await page.click('#createScreen .create-go');
           await page.waitForSelector('#createScreen',{state:'detached'});
-          await X('delete S.party.unlock.heroes.bram; S.maxZone=31; S.zone=1; S.L=7; S.xp=3; S.mats.wood=[80,0,0,0,0]; S.gold=42; S.camp.open=true; S.camp.b.hearth=2; setTab("party"); setView("party","team"); ui(true); true');
+          await X('delete S.party.unlock.heroes.bram; S.maxZone=36; S.zone=1; S.L=7; S.xp=3; S.mats.wood=[80,0,0,0,0]; S.gold=42; S.camp.open=true; S.camp.b.hearth=2; setTab("party"); setView("party","team"); ui(true); true');
           // owner 2026-10-01: the Camp view shows chips for the heroes you can play or unlock; All heroes opens the full roster
           await page.waitForSelector('#sec-solo-hero .sp-all');
           const chipHeroes = await page.$$eval('#sec-solo-hero .sp-chip', cs => cs.map(c => c.dataset.hero));
@@ -8653,9 +8678,9 @@ if (section('story-opening')) try {
   assert(rr && /Not yet\./.test(rr.wren) && /I'll rest when the (village|Hollow) is lit/.test(rr.tobin) && /No\./.test(rr.pip), 'story-opening: the refusal of "Rest" (bible 4.6) has a line for each starter (played at the Veiled Oracle, story-hollow-script)');
   // story gate (story-opening, bible 4.4): no new unlock before the hero's first scene; heroes a save owns are kept
   const gate = loadCore({ seed: 916 }), G = s => gate.eval(s);
-  G('S.maxZone=30; S.mats.wood=[80,0,0,0,0]');
-  assert(G('!heroUnlock("bram") && !heroUnlocked("bram") && heroRouteInfo("bram").story === true && heroRouteInfo("bram").how === "You meet them in the Hollow." && heroRouteInfo("bram").bio === ""') && G('S.mats.wood[0]') === 80, 'story gate: a hero cannot unlock before their first scene (Bram, zone 31), nothing is spent, and a locked hero shows no bio');
-  G('S.maxZone=31');
+  G('S.maxZone=35; S.mats.wood=[80,0,0,0,0]');
+  assert(G('!heroUnlock("bram") && !heroUnlocked("bram") && heroRouteInfo("bram").story === true && heroRouteInfo("bram").how === "You meet Bram when the Hollow is won, at zone 36." && heroRouteInfo("bram").bio === ""') && G('S.mats.wood[0]') === 80, 'story gate: a hero cannot unlock before their first scene (Bram, zone 36), nothing is spent, and a locked hero shows no bio');
+  G('S.maxZone=36');
   assert(G('heroRouteInfo("bram").story !== true && heroUnlock("bram") && heroRouteInfo("bram").bio.length > 20'), 'story gate: at the first scene the hero\'s real route opens, and the bio shows once unlocked');
   G('S.party.unlock.heroes.caedmon=1; S.maxZone=1');
   assert(G('heroUnlocked("caedmon") && heroRouteInfo("caedmon").bio.length > 20 && STORY_MEET.corvin[0] === 156 && !heroUnlocked("corvin")'), 'story gate: a hero an existing save already owns is kept, and the gate only holds back new unlocks');
@@ -9009,6 +9034,161 @@ if (section('bounties-anywhere')) try {
   assert(/registerSection\('camp', \{\s*id: 'bounties-camp', title: "Hesketh's board"/.test(src), "bounties-anywhere: the board is also registered at Camp as Hesketh's board");
 } catch (e) { fail('bounties-anywhere crashed: ' + (e.stack || e)); }
 
+// ---- guide-panel: the guide's panel never covers the fight (early-game plan R3, issues A1, A3, A4) ----
+// Real DOM rects at 740x360, 844x390 and 360x740: while the first session's steps show, the panel overlaps neither HP bar, the
+// foe plate, the boss timer, the hero plate nor the stage itself, and its text never squashes into a column (issue A4).
+if (section('guide panel rects (browser, guide-panel)')) try {
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('guide panel (browser): Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [vw, vh] of [[740, 360], [844, 390], [360, 740]]) {
+        const at = `${vw}x${vh}`;
+        const ctx = await browser.newContext({ viewport: { width: vw, height: vh }, isMobile: true, hasTouch: true, turns: true });   // the shipped turn fight: its copy is the longer one
+        const page = await ctx.newPage(); const errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(700);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go'); await page.waitForTimeout(600);
+        await X('globalThis.__spo = soloPickerOpen; soloPickerOpen = () => true; true');
+        const rects = () => page.evaluate(() => {
+          const R = e => { if (!e || !e.getClientRects().length) return null; const r = e.getBoundingClientRect(); return r.width && r.height ? [r.left, r.top, r.right, r.bottom] : null; };
+          const q = s => document.querySelector(s), b = q('.ob-bub');
+          if (!b || b.hidden) return null;
+          const panel = R(b), things = { 'hero HP bar': R(q('#hPlate .hpbar')), 'foe HP bar': R(q('.mob .hpbar')), 'foe plate': R(q('.mob')), 'boss timer': R(q('#tWrap')), 'hero plate': R(q('#hPlate')), 'stage': R(q('#stageBox')) };
+          const hit = Object.entries(things).filter(([, r]) => r && panel[0] < r[2] - .5 && panel[2] > r[0] + .5 && panel[1] < r[3] - .5 && panel[3] > r[1] + .5).map(([k]) => k);
+          const t = q('.ob-txt'), tr = t.getBoundingClientRect(), face = q('.ob-face'), ok = q('.ob-ok'), okr = ok && !ok.hidden ? ok.getBoundingClientRect() : null;
+          const lh = parseFloat(getComputedStyle(t).lineHeight) || 18, lines = Math.round(tr.height / lh), cw = t.textContent.length ? tr.width / (parseFloat(getComputedStyle(t).fontSize) * .62) : 99;
+          return { hit, panel: panel.map(Math.round), inView: panel[0] >= 0 && panel[2] <= innerWidth && panel[1] >= 0 && panel[3] <= innerHeight, mode: ['side', 'dock', 'over-menu'].find(m => b.classList.contains(m)), textChars: Math.round(cw), lines,
+            faceOk: !!face && (face.getAttribute('src') || '').startsWith('data:'), btnBelow: okr ? okr.top >= tr.bottom - 1 : null, btnH: okr ? Math.round(okr.height) : null,
+            btnIn: okr ? okr.top >= panel[1] - .5 && okr.bottom <= panel[3] + .5 && okr.left >= panel[0] - .5 && okr.right <= panel[2] + .5 && (d => d === ok || ok.contains(d))(document.elementFromPoint(okr.left + okr.width / 2, okr.top + okr.height / 2)) : null, clipped: t.scrollHeight > t.clientHeight + 1, scrollX: document.documentElement.scrollWidth > innerWidth };
+        });
+        // each step in turn: the guide is told to show it (the real wind-ups for Dodge and Parry are down to chance, so the check
+        // does not wait for them), so every step's copy is measured, including the long boss and Parry lines of the turn fight
+        const seen = [];
+        await X('globalThis.__os = onboardStep; globalThis.__boss = mob ? !!mob.boss : false; true');
+        for (const st of ['attack', 'ability', 'dodge', 'parry', 'boss']) {
+          await X(`globalThis.__fs = ${JSON.stringify(st)}; onboardStep = () => GUIDE_STEPS.find(g => g.id === __fs); if (__fs === 'boss' && mob) mob.boss = true; ONBOARD.paused = false; true`);
+          await page.waitForTimeout(700);
+          const m = await rects();
+          if (!m) { assert(false, `guide panel ${at} "${st}": the panel shows`); continue; }
+          seen.push(st);
+          assert(!m.hit.length && m.inView && !m.scrollX, `guide panel ${at} "${st}": in view and clear of ${m.hit.length ? m.hit.join(', ') : 'both HP bars, the foe plate, the boss timer, the hero plate and the stage'} (${m.mode}, ${m.panel.join(',')})`);
+          assert(m.textChars >= 12 && m.faceOk && !m.clipped && (m.btnBelow === null || (m.btnBelow && m.btnH >= 44 && m.btnIn)), `guide panel ${at} "${st}": text at least 12 characters wide (${m.textChars}) and not clipped, Hesketh's face shows, the button sits on its own row at 44 px or more, inside the panel and tappable (${JSON.stringify([m.faceOk, m.clipped, m.btnBelow, m.btnH, m.btnIn])})`);
+        }
+        await X('onboardStep = globalThis.__os; if (mob) mob.boss = globalThis.__boss; true');
+        assert(seen.length === 5, `guide panel ${at}: the check measured all five steps (${seen.join(', ')})`);
+        // a paused tip that is not a step (a first-use line) docks too; and a step shown over an open menu sits at the menu's bottom
+        if (vw < vh) {   // portrait with a menu open: the panel moves to the bottom of the menu, above the tab bar
+          await X('onboardTips(true); S.onboard.all = false; onboardReveal("gather"); setTab("gat"); true'); await page.waitForTimeout(900);
+          const mm = await rects();
+          if (mm) assert(mm.mode === 'over-menu' && !mm.clipped && mm.inView, `guide panel ${at}: over a menu it sits at the bottom of the menu panel (${mm.mode}, ${mm.panel.join(',')})`);
+        }
+        assert(!errs.length, `guide panel ${at}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('guide panel rects crashed: ' + (e.stack || e)); }
+
+// ---- story-unlock-gates: a held hero's line says when they join; a won token says so (docs/design/unlock-pace.md) ----
+if (section('story-unlock-gates')) try {
+  const g = loadCore({ seed: 917 }), E = s => g.eval(s);
+  const held = () => JSON.parse(E('JSON.stringify(HERO_ORDER.map(k => [k, heroRouteInfo(k)]).filter(([k, i]) => i.story).map(([k, i]) => [k, i.how, i.meet]))'));
+  const later = z => JSON.parse(E(`JSON.stringify([...new Set(Array.from({ length: 175 - ${z} }, (_, i) => zoneAreaName(${z} + 1 + i)).concat(REGIONS.filter(r => r.z0 > ${z}).map(r => r.n.replace(/^the /, ''))))])`));
+  for (const z of [1, 12, 30, 40, 75]) {
+    E(`S.maxZone = ${z}`);
+    const h = held(), names = later(Math.max(35, Math.ceil(z / 35) * 35));
+    assert(h.length >= 3 && h.every(([k, how]) => /at zone \d+\.$|in Chapter [2-5]\.$/.test(how)), `story-unlock-gates: at zone ${z} every held hero says when they join (a zone, or a later chapter's number)` + h.filter(([k, how]) => !/at zone \d+\.$|in Chapter [2-5]\.$/.test(how)).map(x => ': ' + x.join(' = ')).join('; '));
+    assert(h.every(([k, how]) => !names.some(n => n && how.includes(n))), `story-unlock-gates: at zone ${z} no held hero's line names a place beyond the chapter the player is in`);
+    assert(h.every(([k, how, meet]) => !/\d/.test(meet)), 'story-unlock-gates: the new-game picker keeps the short line (who, not where or when)');
+  }
+  E('S.maxZone = 12');
+  assert(E('heroRouteInfo("bram").how') === 'You meet Bram when the Hollow is won, at zone 36.' && E('heroRouteInfo("kestrel").how') === 'You meet Kestrel in Chapter 4.' && E('heroRouteInfo("elowen").how') === 'You meet Elowen when the Hollow is won, at zone 36.', 'story-unlock-gates: the lines read plainly (Bram, Kestrel, Elowen)');
+  E('S.maxZone = 40');
+  assert(E('heroRouteInfo("aldric").how') === 'You meet Aldric later on the Sunken Coast, at zone 41.', 'story-unlock-gates: on the Coast the line names the Coast');
+  // a token won before the first scene is kept and said; the hero joins at the scene
+  E('S.maxZone = 35; unlockTokenRoll("isolde", 0)');
+  assert(E('S.party.unlock.tokens.isolde.won === true && !heroUnlocked("isolde") && heroRouteInfo("isolde").how') === 'You won the Dusk Contract. Isolde joins you in Chapter 3.', 'story-unlock-gates: a Dusk Contract won at zone 35 says so, and Isolde waits for Chapter 3');
+  E('S.maxZone = 81; heroProbe()');
+  assert(E('heroUnlocked("isolde") && heroRouteInfo("isolde").story !== true'), 'story-unlock-gates: Isolde joins at her first scene (zone 81) with the token she already holds');
+  // the bell says a won token; after the scene it says the hero joined
+  const bell = [];
+  g.fn.on('toast', t => { if (t && t.key === 'heroToken') bell.push(t.msg); });
+  E('S.maxZone = 40; unlockTokenRoll("grenna", 0)');
+  assert(bell.length === 1 && bell[0] === "You won the Stonebreaker's Token. Grenna joins your camp. The solo kit comes later." && E('noticeChannel(noticeRule("", "heroToken"), "")') === 'bell', 'story-unlock-gates: a token win is one bell line, never a pop (' + bell.join(' | ') + ')');
+  // STORY_MEET holds the chapter script: the zone after each Chapter 1 hero's first scene can have played (Hob: no scene of his own)
+  const meet = JSON.parse(E(`JSON.stringify((() => {
+    const B = STORY_BEATS, z = at => { const [k, v] = at.split(':'); return k === 'area' ? +v * AREA_ZONES + 1 : k === 'champPost' ? B.champ[v].zone + 1 : k === 'elderPre' ? B.elder[v].zone : B.elder[v].zone + 1; }, out = {};
+    for (const [id, n] of Object.entries(B.npc)) { const k = ROSTER_KEYS.find(h => id === h || (id.startsWith(h) && /^[A-Z]/.test(id.slice(h.length)))); if (k && STORY_MEET[k]) out[k] = Math.min(out[k] || Infinity, z(n.at)); }
+    return Object.keys(STORY_MEET).filter(k => STORY_MEET[k][1] === 1 && k !== 'hob').map(k => [k, STORY_MEET[k][0], out[k] || null]);
+  })())`));
+  const off = meet.filter(([k, t, sc]) => sc !== null && t !== sc), none = meet.filter(([k, t, sc]) => sc === null);
+  assert(!off.length && meet.find(m => m[0] === 'hesketh')[1] === 1 && meet.find(m => m[0] === 'bram')[1] === 36, 'story-unlock-gates: every Chapter 1 hero unlocks from the zone their scene in 21k-story-hollow.js can have played (Hesketh 1, Bram 36)' + off.map(x => '; ' + x.join(' ')).join('') + (none.length ? ' (no scene yet: ' + none.map(x => x[0]).join(', ') + ')' : ''));
+  // ---- the spacing governor (55-onboard ONBOARD_TUNE): one new thing a minute of play; a player's own act or a drop opens at once ----
+  const og = loadCore({ seed: 918 }), O = s => og.eval(s);
+  O('soloPick("tobin"); ONBOARD_TUNE.gap = 0; S.maxZone = 12; S.L = 12');
+  const all0 = JSON.parse(O('JSON.stringify(onboardCheck())'));
+  assert(['party', 'gather', 'nextup', 'awaynote', 'bounties', 'bestiary', 'codex', 'raid'].every(id => all0.includes(id)), 'story-unlock-gates: with gap 0 every ready row opens in one pass, as before (' + all0.join(',') + ')');
+  const og2 = loadCore({ seed: 919 }), O2 = s => og2.eval(s), arr = [];
+  const byNow = (G, id) => G(`(f => !!(f && f.now && f.now()))(FEATURE_OF[${JSON.stringify(id)}])`);   // opened by the player's act or a drop
+  og2.fn.on('unlock', e => arr.push([e.id, O2('Math.round(S.onboard.t)'), byNow(O2, e.id)]));
+  O2('soloPick("tobin"); S.maxZone = 12; S.L = 12; onboardCheck()');
+  const first = arr.map(x => x[0]);
+  assert(first[0] === 'party' && arr.slice(1).every(x => x[2]) && O2('!isUnlocked("gather") && !isUnlocked("awaynote")'), 'story-unlock-gates: with gap 60 one queued row opens (Hero first); only rows the player or a drop opened join it (' + first.join(',') + ')');
+  for (let i = 0; i < 600 * 10; i++) og2.fn.tick(0.1);
+  const q = arr.filter(x => !x[2]);
+  assert(q.length >= 6 && q.every((x, i) => i === 0 || x[1] - q[i - 1][1] >= 60) && q.map(x => x[0]).slice(0, 4).join() === 'party,gather,nextup,awaynote', 'story-unlock-gates: queued rows open a minute of play apart, in table order (' + q.map(x => x[0] + ' ' + x[1]).join(', ') + ')');
+  // an old save never re-locks, and a stray got value cannot stall the queue
+  const og3 = loadCore({ seed: 920 }), O3 = s => og3.eval(s);
+  O3('soloPick("tobin"); S.onboard.t = 100; S.onboard.got = { party: 30, gather: "x", nextup: 99999 }; S.maxZone = 12');
+  assert(O3('isUnlocked("party") && isUnlocked("gather") && isUnlocked("nextup")') && JSON.parse(O3('JSON.stringify(onboardCheck())')).includes('awaynote'), 'story-unlock-gates: a saved unlock stays open, and a got value that is not a number or lies ahead does not block the next row');
+  O3('S.onboard.got = {}; S.onboard.all = true');
+  assert(O3('isUnlocked("awaynote")'), 'story-unlock-gates: a save past the guide ("Show every tab") shows the away strip at once');
+  // the play clock stops once every tab is open, so a late row (Hands) must not wait on the gap there (Opus review B1)
+  O3('S.onboard.got = { party: Math.round(S.onboard.t) - 5 }; handsOpen = () => true');
+  assert(JSON.parse(O3('JSON.stringify(onboardCheck())')).includes('hands') && O3('isUnlocked("hands")'), 'story-unlock-gates: after "Show every tab", Hands opens when its rule holds, even within a minute of the last unlock');
+  const obUi = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-onboard-ui.js'), 'utf8');
+  assert(!/^\s*awaynote:/m.test(obUi.slice(obUi.indexOf('const OPEN_TXT = {'), obUi.indexOf('const TAB_FEATURE'))) && /isUnlocked\('awaynote'\)/.test(fs.readFileSync(path.join(ROOT, 'src', 'js', '71-ui-fight.js'), 'utf8')), 'story-unlock-gates: the away strip arrives silently (no unlock notice) and waits for its row');
+  // a cold new game, played as the guide asks: the game waits while a step pauses (no play clock), the player does the step
+  const cw = loadCore({ seed: 921, cold: true }), C = s => cw.eval(s), got = [];
+  C('Date.__t = Date.now(); Date.now = () => Date.__t; soloPick("tobin")');
+  cw.fn.on('unlock', e => got.push([e.id, C('Math.round(S.onboard.t)'), C('S.maxZone'), byNow(C, e.id)]));
+  const act = {
+    attack: 'soloAttack()', ability: 'soloAbility()', dodge: 'soloDodge()', parry: 'soloParry()', boss: 'onboardDone("boss")', nextup: 'onboardDone("nextup")',
+    upgrade: '{ for (let k = 0; k < 50; k++) { const t = trainNext(); if (!t || S.gold < t.cost) break; train(t.move, "1"); } }',
+    gather: 'setNode("wood", 1); setActivity("gather")', light: 'hearthLight(); setActivity("fight")', bench: 'campBuild("bench")', forge: 'campBuild("forge")', store: 'campBuild("store")',
+    tool: '{ const it = craftItem("pick", 1); if (it) equipItem(it.id); }'
+  };
+  const doneSteps = new Set(); cw.fn.on('onboardStep', e => doneSteps.add(e.id));
+  let lit = null, trip = 0;
+  for (let n = 0; n < 30 * 60 && C('S.onboard.t') < 30 * 60; n++) {
+    const st = C('(s => s ? [s.id, onboardPaused(s)] : null)(onboardStep())');
+    if (st && st[1] && act[st[0]]) { C(act[st[0]]); if (C('(s => s && s.id)(onboardStep())') === st[0]) cw.fn.tick(0.1); continue; }
+    if (st && st[0].startsWith('tab:')) C(`S.onboard.seen[${JSON.stringify(st[0].slice(4))}] = 1`);
+    if (st && st[0] === 'nextup') C('onboardDone("nextup")');
+    // a stock step waits on materials: gather the first one short, then go back to the fight
+    const need = st && /^stock:/.test(st[0]) ? JSON.parse(C(`JSON.stringify(onboardNeed(${JSON.stringify(st[0])}))`)) : [];
+    if (need.length && C('S.activity') === 'fight' && trip <= 0) { C(`setNode(${JSON.stringify(need[0].fam)}, ${need[0].t}); setActivity("gather")`); trip = 90; }
+    else if (C('S.activity') === 'gather' && C('hearthLit()') && --trip <= 0) C('setActivity("fight")');
+    if (lit === null && C('hearthLit()')) lit = C('Math.round(S.onboard.t)');
+    C('if (S.activity === "fight") { try { soloAttack(); } catch (e) {} }');
+    for (let i = 0; i < 10; i++) cw.fn.tick(0.1);
+    C('Date.__t += 1000');
+  }
+  const ga = got.find(x => x[0] === 'gather'), pa = got.find(x => x[0] === 'party'), z2 = got.find(x => x[2] >= 2) || [0, Infinity];
+  const close = got.filter((x, i) => i > 0 && !x[3] && got.slice(0, i).some(y => y[1] > x[1] - 60));
+  console.log('       cold walk: ' + got.map(x => `${x[0]} ${Math.floor(x[1] / 60)}:${String(x[1] % 60).padStart(2, '0')} (z${x[2]})`).join(', ') + ` | fire lit ${lit}s | zone ${C('S.maxZone')} at 30:00`);
+  assert(!close.length, 'story-unlock-gates: a cold walk with guide pauses never gets a queued arrival within a minute of another' + (close.length ? ': ' + close.map(x => x[0]).join(',') : ''));
+  assert(pa && ga && pa[1] <= ga[1] && lit !== null && ga[1] <= z2[1] + 64 && lit - ga[1] <= 150, `story-unlock-gates: Hero opens before Gather, Gather within a minute of the first boss, the fire within 2:30 of Gather (Hero ${pa && pa[1]}s, Gather ${ga && ga[1]}s, fire ${lit}s)`);
+  assert(['attack', 'ability', 'boss', 'upgrade', 'gather', 'light', 'bench', 'tool', 'forge'].every(id => doneSteps.has(id)), 'story-unlock-gates: every guide step of the cold walk still completes (' + [...doneSteps].join(',') + ')');
+  assert(!g.errors.length && !og.errors.length && !og2.errors.length && !og3.errors.length && !cw.errors.length, 'story-unlock-gates: no errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
+} catch (e) { fail('story-unlock-gates crashed: ' + (e.stack || e)); }
+
 if (section('removed systems (W2-C)')) try {
   const strip = t => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/([^:'"`\\])\/\/[^\n'"`]*$/gm, '$1');
   const files = [];
@@ -9262,6 +9442,164 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
   }
 } catch (e) { fail(`landscape ${w}x${h} (browser, UX-L1) crashed: ` + (e.stack || e)); }
 
+// ---- moment layer (card moment-layer; 75-moments-ui.js; docs/design/first-hour.md; scorecard F6) ----
+// Each big and medium moment is forced while the guide, a level-up and the toast flood compete, and must be on screen for at
+// least 2 s, not only in the bell. At 740x360 first (the main target), then 360x740, then with reduced motion.
+if (section('moment layer')) try {
+  const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-moments-ui.js'), 'utf8'), notices = fs.readFileSync(path.join(ROOT, 'src', 'js', '23n-data-notices.js'), 'utf8');
+  assert(/function moment\(kind, o\)/.test(src) && /momentState/.test(src) && /holdGame\(\(\) => !!MOMENT_UI\.ov\)/.test(src) && /noticeAsk\('card:moment'/.test(src),
+    'moment layer: moment(kind, opts) and momentState() exist, a big card holds the game and asks the card channel');
+  assert(/id: 'unique', re: \/\^Unique loot! \/, ch: 'log'/.test(notices) && /id: 'card:moment'/.test(notices) && !/ch: m => \/joins your trophy wall\//.test(notices),
+    'moment layer: the unique rule no longer sends a first unique to the bell (23n-data-notices)');
+  await (async () => {
+    const { pw, exe } = browserTools;
+    if (!pw || !exe || !fs.existsSync(distFile)) { skipBrowser('moment layer (browser): Playwright or Chromium not here, skipped'); return; }
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const rawOf = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h, motion] of [[740, 360, 'no-preference'], [360, 740, 'no-preference'], [740, 360, 'reduce']]) {
+        const at = `moment layer ${w}x${h}${motion === 'reduce' ? ' reduced motion' : ''}`;
+        try {
+          const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: true, hasTouch: true, reducedMotion: motion, turns: true });
+          await ctx.addInitScript(([key, raw]) => {
+            try { localStorage.setItem('lanternfall.test.nostory', '1'); localStorage.setItem('lanternfall.test.moments', '1'); } catch (e) {}
+            if (sessionStorage.getItem('mm-seeded')) return; sessionStorage.setItem('mm-seeded', '1');
+            const o = JSON.parse(raw); o.last = Date.now(); localStorage.setItem(key, JSON.stringify(o));
+          }, [KEY, rawOf('save-mid.json')]);
+          const page = await ctx.newPage(); const errs = [];
+          page.on('pageerror', e => errs.push(String(e)));
+          await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+          await page.goto('http://lf.test/'); await page.waitForTimeout(700);
+          for (let i = 0; i < 4; i++) { const b = await page.$('#createScreen .create-go'); if (!b) break; await b.click(); await page.waitForTimeout(300); }
+          const X = s => page.evaluate(s => window.__t.x(s), s);
+          const until = async (expr, ms = 6000) => { try { await page.waitForFunction(e => window.__t.x(e), expr, { timeout: ms, polling: 100 }); } catch (e) { /* the assert below says what is missing */ } };
+          await page.waitForTimeout(4600);   // no moment opens at boot (MOMENT_TUNE.bootS)
+          await X(`S.activity = 'gather'; S.tab = ''; S.onboard.tips = false; emit('sceneReset'); true`);   // no turn fight: a moment may show
+          await X(`S.found.sproutblade = 0; dropUnique('sproutblade', 1)`);
+          // a level-up and a flood of toasts compete with it
+          await X(`emit('levelup', { L: 5 }); for (let i = 0; i < 4; i++) toast('Check notice ' + i, 'good', null, 'high'); true`);
+          await until(`!!document.querySelector('.mm-ov')`);
+          const big = await X(`(() => { const o = document.querySelector('.mm-ov'), c = o && o.querySelector('.mm-card'), r = c && c.getBoundingClientRect(), g = c && c.querySelector('.mm-go').getBoundingClientRect();
+            return { up: !!o, text: o ? o.textContent : '', fits: !!r && r.top >= 0 && r.bottom <= innerHeight + 1 && r.left >= 0 && r.right <= innerWidth + 1 && g.bottom <= innerHeight + 1,
+              burst: o && getComputedStyle(o.querySelector('.mm-burst')).display, held: GAME_HOLDS.some(f => f()), bell: notes.log.some(n => n.ch === 'bell' && /Unique loot/.test(n.msg)), st: momentState() }; })()`);
+          assert(big.up && /Sproutblade/.test(big.text) && /Unique loot/i.test(big.text) && big.fits && big.held && !big.bell,
+            `${at}: a unique shows a big card (name, label, Continue in view) and holds the game; it is not a bell line (${JSON.stringify({ up: big.up, fits: big.fits, held: big.held, bell: big.bell })})`);
+          assert(motion === 'reduce' ? big.burst === 'none' : big.burst !== 'none', `${at}: the burst ${motion === 'reduce' ? 'is off for reduced motion' : 'plays'}`);
+          assert(/Level 5/.test(big.text), `${at}: a level-up that competes folds into the card as a line`);
+          await page.mouse.click(Math.round(w / 2), 8); await page.waitForTimeout(150);   // a stray tap inside the lock must not skip it
+          const still = await X(`!!document.querySelector('.mm-ov')`);
+          await page.waitForTimeout(2100);
+          const after2 = await X(`!!document.querySelector('.mm-ov')`);
+          assert(still && after2, `${at}: the big card stays up for 2 s and a stray tap does not skip it`);
+          if (motion !== 'reduce') await page.screenshot({ path: path.join(ROOT, 'docs', 'proof', 'moment-layer', `unique-card-${w}x${h}.png`) });
+          await page.click('.mm-go'); await page.waitForTimeout(250);
+          assert(!(await X(`!!document.querySelector('.mm-ov')`)) && !(await X('GAME_HOLDS.some(f => f())')), `${at}: Continue closes the card and lets the game run`);
+          // medium: level 3 is small (no banner); level 5 is a banner of its own, in the notices slot, held 2 s against a toast flood
+          await X(`MOMENT_UI.midAt.length = 0; emit('levelup', { L: 3 }); true`); await page.waitForTimeout(1500);
+          assert(!(await X(`!!document.querySelector('.mm-toast')`)), `${at}: level 3 is a small notice, no banner`);
+          await X(`emit('levelup', { L: 10 }); true`); await until(`!!document.querySelector('.mm-toast')`);
+          const t0 = Date.now();
+          const med = await X(`(() => { const t = document.querySelector('.mm-toast'); return { up: !!t, text: t ? t.textContent : '', slot: t ? t.parentNode.id : '', dock: document.getElementById('toasts').className }; })()`);
+          assert(med.up && /Level 10/.test(med.text) && med.slot === 'toasts', `${at}: a 10th level is a banner in the notices slot (${med.dock})`);
+          if (motion !== 'reduce') await page.screenshot({ path: path.join(ROOT, 'docs', 'proof', 'moment-layer', `level-banner-${w}x${h}.png`) });
+          await X(`for (let i = 0; i < 4; i++) toast('Later notice ' + i, 'good', null, 'high'); true`);
+          await page.waitForTimeout(Math.max(0, 1500 - (Date.now() - t0)));
+          assert(await X(`!!document.querySelector('.mm-toast')`), `${at}: the banner is held for its 2 s minimum while later toasts arrive`);
+          // a unique-rare ability and a Star in one fight end make one banner with lines, not two
+          await page.waitForTimeout(2500);
+          await X(`MOMENT_UI.midAt.length = 0; emit('levelup', { L: 15 }); emit('abilityLearned', { hero: S.solo.hero, id: HERO_ABILITIES[S.solo.hero][2] }); true`); await until(`!!document.querySelector('.mm-toast')`);
+          const fold = await X(`document.querySelectorAll('.mm-toast').length + ':' + (document.querySelector('.mm-toast') || { textContent: '' }).textContent`);
+          assert(/^1:/.test(fold) && /Level 15/.test(fold) && /New ability/.test(fold), `${at}: two medium moments at one fight end fold into one banner (${fold.slice(0, 80)})`);
+          // at most 2 medium moments in any 3 minutes of the first 30: a third waits (it is not dropped)
+          await page.waitForTimeout(3200);
+          await X(`MOMENT_UI.midAt = [Date.now() - 60000, Date.now() - 30000]; notes.clock = 100; emit('levelup', { L: 20 }); true`); await page.waitForTimeout(1800);
+          const cap = await X(`momentState().queued + ':' + !!document.querySelector('.mm-toast')`);
+          assert(cap === '1:false', `${at}: a third medium moment inside 3 minutes waits in the queue (${cap})`);
+          await X(`MOMENT_UI.midAt.length = 0; true`); await until(`!!document.querySelector('.mm-toast')`);
+          assert(await X(`!!document.querySelector('.mm-toast')`), `${at}: ...and shows when the window frees`);
+          // it never shows during a turn: a live fight (past its intro) holds it, the fight's end lets it through
+          await page.waitForTimeout(3200);
+          await X(`MOMENT_UI.midAt.length = 0; S.activity = 'fight'; emit('sceneReset'); true`);
+          await until(`typeof TURN_LIVE !== 'undefined' && !!TURN_LIVE && !TURN_LIVE.ended && TURN_LIVE.phase !== 'intro'`, 9000);
+          const live = await X(`(() => { const f = typeof TURN_LIVE !== 'undefined' && !!TURN_LIVE && !TURN_LIVE.ended && TURN_LIVE.phase !== 'intro'; if (f) emit('levelup', { L: 25 }); return f; })()`);
+          assert(live, `${at}: a turn fight is live for the during-a-turn check`);
+          await page.waitForTimeout(1200);
+          const during = await X(`!!document.querySelector('.mm-toast') + ':' + momentState().queued`);
+          assert(during === 'false:1', `${at}: a moment does not show during a turn (${during})`);
+          await X(`TURN_LIVE.ended = true; true`);
+          await until(`!!document.querySelector('.mm-toast')`, 6000);
+          assert(await X(`!!document.querySelector('.mm-toast')`), `${at}: ...and shows as the fight ends, before the next fight's first turn`);
+          assert(/const fighting = \(\) => [\s\S]{0,160}TURN_LIVE/.test(src), `${at}: the flush waits while a turn fight is live`);
+          assert(!errs.length, `${at}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+          await ctx.close();
+        } catch (e) { fail(`${at} crashed: ` + (e.stack || e)); }
+      }
+    } finally { await browser.close(); }
+  })();
+} catch (e) { fail('moment layer crashed: ' + (e.stack || e)); }
+
+
+// ==== qa-player-eyes: LF_EYES (src/js/89-eyes-hook.js), what tools/eyes.mjs reads. Read only: it changes no state and starts no timer.
+if (section('LF_EYES hook (browser, qa-player-eyes)')) try {
+  const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '89-eyes-hook.js'), 'utf8').replace(/\/\/.*$/gm, '');
+  assert(!/\bS\s*(\.|\[)[^=;]*[^=!<>]=[^=]/.test(src) && !/\b(emit|save|toast|setInterval|setTimeout|requestAnimationFrame|holdGame|on)\s*\(/.test(src), 'the hook writes no state, emits nothing, saves nothing and starts no timer or listener');
+  assert((src.match(/\bwindow\.[A-Za-z_]+\s*=/g) || []).join() === 'window.LF_EYES =' && (src.match(/\bSFX\.play\s*=(?!=)/g) || []).length === 1, 'the hook sets window.LF_EYES and wraps SFX.play, nothing else');
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('LF_EYES (browser): Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      const ctx = await browser.newContext({ turns: true, viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true }), page = await ctx.newPage(), errs = [];   // turns: the shipped fight
+      page.on('pageerror', e => errs.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForTimeout(600);
+      await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go'); await page.waitForTimeout(500);
+      const X = s => page.evaluate(s => window.__t.x(s), s), E = s => page.evaluate(s => JSON.stringify(window.LF_EYES ? eval(s) : null), s).then(JSON.parse);
+      // the player reads the story cards and presses Continue; the first fight waits behind them
+      for (let i = 0; i < 60 && (await X('LF_EYES.phase()')) !== 'player turn'; i++) { const b = await page.$('.bsheet-ov .sty-done'); if (b) { await b.click(); await page.waitForTimeout(300); } else await page.waitForTimeout(150); }
+      const api = await X('Object.keys(LF_EYES).sort().join() + "|" + Object.isFrozen(LF_EYES)');
+      assert(api === 'floats,info,phase,rects,sfx,tip|true', `LF_EYES offers rects, phase, tip, sfx, floats and info, and is frozen (${api})`);
+      const R = await E('LF_EYES.rects()'), fin = b => b && [b.x, b.y, b.w, b.h].every(Number.isFinite) && b.w > 0 && b.h > 0, within = (a, b) => a && b && a.x >= b.x - 2 && a.y >= b.y - 2 && a.x + a.w <= b.x + b.w + 2 && a.y + a.h <= b.y + b.h + 2;
+      assert(fin(R.stage) && fin(R.hero) && fin(R.foe) && fin(R.heroHp) && fin(R.foeHp), `rects(): stage, hero, foe and both HP boxes are real boxes (${JSON.stringify(Object.fromEntries(Object.entries(R).map(([k, v]) => [k, v && v.x != null ? 1 : v && v.length != null ? v.length : 0])))})`);
+      assert(within(R.hero, R.stage) && within(R.foe, R.stage), `rects(): the hero and the foe lie on the stage (hero ${JSON.stringify(R.hero)}, foe ${JSON.stringify(R.foe)}, stage ${JSON.stringify(R.stage)})`);
+      assert(R.hero.x < R.foe.x && R.boss === null && R.foes.length >= 1 && R.foes.every(f => typeof f.boss === 'boolean'), 'rects(): the hero stands left of the foe, no boss in the first fight, foes lists each foe');
+      assert(fin(R.tip) && fin(R.ring), 'rects(): the guide tip and its marker are on screen with the first tip');
+      const T = await E('LF_EYES.tip()');
+      assert(T && T.action === 'attack' && /Attack/.test(T.text) && fin(T.target) && T.button && T.button.sel === '#soloBar .sb-atk' && typeof T.button.greyed === 'boolean' && typeof T.button.hidden === 'boolean', `tip(): the first tip is the Attack step, with its sentence, marker and button (${JSON.stringify(T)})`);
+      const PH = new Set(['idle', 'player turn', 'foe wind-up', 'parry or dodge window']), ph = await X('LF_EYES.phase()');
+      assert(PH.has(ph) && ph === 'player turn', `phase(): "${ph}" while the hero waits to act on the Attack tip`);
+      // phase() follows the fight: wind-up, then the window, for each of the three turn phases the core can be in
+      const seen = await X(`(() => { const out = {}, snap = turnCombatSnapshot, m = TURN_LIVE; const set = (ph, extra) => { m.phase = ph; Object.assign(m, extra || {}); return LF_EYES.phase(); };
+        const keep = { phase: m.phase, until: m.until, now: m.now, usedDefense: m.usedDefense };
+        out.idle = set('recovery'); out.turn = set('hero'); out.timing = set('timing', { tm: m.tm || { id: 'x', i: 0, n: 1 } });
+        out.wind = set('foeWindup', { usedDefense: false, until: m.now + 5 }); out.win = set('foeWindup', { until: m.now + 0.05 });
+        Object.assign(m, keep); return out; })()`);
+      assert(seen.idle === 'idle' && seen.turn === 'player turn' && seen.timing === 'player turn' && seen.wind === 'foe wind-up' && seen.win === 'parry or dodge window', `phase(): recovery is idle, hero and timing are the player's turn, a far wind-up is "foe wind-up", a near one the window (${JSON.stringify(seen)})`);
+      // read only: a hundred reads change nothing in the save state
+      const same = await X(`(() => { const a = JSON.stringify(S); for (let i = 0; i < 100; i++) { LF_EYES.rects(); LF_EYES.phase(); LF_EYES.tip(); LF_EYES.floats(); LF_EYES.info(); } return a === JSON.stringify(S); })()`);
+      assert(same, 'reading rects(), phase(), tip(), floats() and info() a hundred times leaves the save state as it was');
+      // sfx(): the sounds the game asked for since the last read, cleared by the read
+      await X('LF_EYES.sfx(); true');
+      await page.click('#soloBar .sb-atk'); await page.waitForTimeout(900);
+      const a1 = await E('LF_EYES.sfx()'), a2 = await E('LF_EYES.sfx()');
+      assert(Array.isArray(a1) && a1.length > 0 && a1.every(x => typeof x.name === 'string' && typeof x.prio === 'boolean') && a2.length === 0, `sfx(): pressing Attack asked for sounds (${a1.map(x => x.name).join(',')}) and a second read is empty`);
+      await X(`SFX.play('loot', true); true`);
+      assert((await E('LF_EYES.sfx()')).some(x => x.name === 'loot' && x.prio), 'sfx(): a sound asked for by name shows up with its priority');
+      const fl = await E('LF_EYES.floats()'), inf = await E('LF_EYES.info()');
+      assert(Array.isArray(fl) && fl.every(f => typeof f.txt === 'string' && Number.isFinite(f.left)) && inf.v === 1 && inf.w === 360 && inf.h === 740 && inf.zoom >= 1, `floats() is a list of texts and info() reports the page (${JSON.stringify(inf)})`);
+      await page.waitForTimeout(400);
+      const T2 = await E('LF_EYES.tip()');
+      assert(T2 === null || T2.action !== 'attack', `tip(): once Attack is pressed its tip is gone (${T2 ? T2.action : 'none'})`);
+      assert(!errs.length, 'no page errors' + (errs.length ? ': ' + errs[0] : ''));
+      await ctx.close();
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('LF_EYES hook (browser) crashed: ' + (e.stack || e)); }
+// ==== end qa-player-eyes ====
 // ---- fight HUD fit (fight-hud-fit): names whole, banner and toasts never on top of each other ----
 if (section('fight HUD fit')) try {
   const { pw, exe } = browserTools;
@@ -9286,6 +9624,21 @@ if (section('fight HUD fit')) try {
         const cut = await page.evaluate(() => [...document.querySelectorAll('.hud.vs .hero-plate .mob-name, .hud.vs .mob .mob-name, .hud.vs .hud-zone .zname, .hud.vs .mob-hp')]
           .filter(e => e.offsetParent && e.scrollWidth > e.clientWidth + 1).map(e => e.className + ':' + e.textContent));
         assert(!cut.length, `${w}x${h}: hero and foe names, numbers and the place line are not cut (${cut.join(' | ')})`);
+        // top-bar-compact: at phone width the top of the fight is two rows (the header's zone bar, then one line with Fight / Gather
+        // and Next Up side by side), the "While away" sentence is gone and the Next Up goal is whole
+        if (w < h) {
+          const T = await page.evaluate(() => {
+            const r = s => { const e = document.querySelector(s); if (!e || e.hidden || !e.offsetParent) return null; const b = e.getBoundingClientRect(); return { t: b.top, b: b.bottom, l: b.left, r: b.right }; };
+            const lbl = document.querySelector('.nu-lbl');
+            return { top: r('.top'), seg: r('#modeSeg'), nu: r('#nuChip'), stage: r('#stageBox'), prev: r('#zPrev'), pill: r('.act-pill'), rule: !![...document.querySelectorAll('.gate-rule:not(.away-chip)')].some(e => e.offsetParent),
+              lbl: lbl && { cut: getComputedStyle(lbl).textOverflow === 'ellipsis' || lbl.scrollHeight > lbl.clientHeight + 1, txt: lbl.textContent } };
+          });
+          const sameLine = T.seg && T.nu && Math.abs((T.seg.t + T.seg.b) / 2 - (T.nu.t + T.nu.b) / 2) < 20 && T.seg.r <= T.nu.l + 1;
+          assert(sameLine && T.stage.t - T.top.b <= 66, `${w}x${h}: under the header, one line holds Fight / Gather and Next Up, and the stage starts within 66 px of the header (${JSON.stringify({ seg: T.seg, nu: T.nu, stageT: T.stage && T.stage.t, topB: T.top && T.top.b })})`);
+          assert(!T.rule, `${w}x${h}: the permanent "While away" sentence is not on the fight screen`);
+          assert(T.lbl && !T.lbl.cut, `${w}x${h}: the Next Up goal shows whole, with no ellipsis (${T.lbl && T.lbl.txt})`);
+          assert(T.prev && T.pill && T.prev.r <= T.pill.l + 1 && T.prev.t >= T.top.t - 1 && T.prev.b <= T.top.b + 1, `${w}x${h}: the zone arrows sit in the header beside the zone pill`);
+        }
         // the banner and the toasts take turns: while the turn banner shows, the toast stack is hidden
         await X('notify({ msg: "Test notice for the HUD fit check", kind: "hi" }, "now"); emit("turnCard", { who: "foe", secs: 0.9 }); true').catch(() => {});
         await page.waitForTimeout(150);

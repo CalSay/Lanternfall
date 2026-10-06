@@ -30,6 +30,7 @@ const NOTICES = [
   // ---- full-screen cards (the story's own captions and cards hold the game and bypass this policy: 75-story-ui) ----
   { id: 'card:lantern', key: 'card:lantern', ch: 'card', why: 'a Great Lantern relit' },
   { id: 'card:feat', key: 'card:feat', ch: 'card', why: 'a Feat or a Chapter' },
+  { id: 'card:moment', key: 'card:moment', ch: 'card', why: 'a big moment: first boss, a unique, a new hero (75-moments-ui)' },
   { id: 'news', key: 'news', ch: 'pop', why: "an old save's What's new (never on a new game)" },
 
   // ---- progress ----
@@ -54,7 +55,7 @@ const NOTICES = [
   { id: 'hero-swap', re: /takes up the lamp\.$/, ch: 'log' },
 
   // ---- loot and gear ----
-  { id: 'unique', re: /^Unique loot! /, ch: m => /joins your trophy wall/.test(m) ? 'pop' : 'bell', wait: 40, why: 'a new unique pops; a better copy of one you have goes to the bell' },
+  { id: 'unique', re: /^Unique loot! /, ch: 'log', why: 'the moment layer shows every unique as a card (75-moments-ui); the bell list keeps the line' },
   { id: 'star-chart', re: /^You drew a Star Chart/, ch: 'pop', wait: 40 },
   { id: 'forged', re: /^(Forged|Made) an? /, ch: m => /Legendary/i.test(m) ? 'pop' : /Rare|Epic/i.test(m) ? 'log' : 'none', why: 'the sheet shows what you made' },
   { id: 'bag-full', re: /^Your bag is full, so /, ch: 'bell' },
@@ -92,7 +93,7 @@ const NOTICES = [
   { id: 'training-cap', key: 'training-cap', re: /^Training: .* is at Lv \d+, the most /, ch: 'bell', why: 'a move reached its class-stage cap (the Proving lifts it)' },
   { id: 'star-point', re: /^\+1 star point\. /, ch: 'log', merge: ms => `+${ms.length} star points. ${ms[ms.length - 1].replace(/^\+1 star point\. /, '')}` },
   // the Stars (57e-stars): a found star is news (rare: a zone boss's first win, an elite, a Proving); learning one is a bell line
-  { id: 'stars:found', key: 'stars:found', ch: 'pop', wait: 40, held: 'log', why: 'a new star, and whether it is set for the next fight (held: the Stars tab dot and Next Up keep it)' },
+  { id: 'stars:found', key: 'stars:found', ch: 'log', why: 'a new star is a medium moment (75-moments-ui); the bell list keeps whether it is set for the next fight' },
   { id: 'stars:learned', key: 'stars:learned', ch: 'log', why: 'any hero can light it now; the star card and Next Up show it' },
   { id: 'stars:catchup', key: 'stars:catchup', ch: 'bell', why: 'an old save: the stars of the zone bosses and Provings behind it' },
   { id: 'stars:new', key: 'stars:new', ch: 'bell', why: 'an old save that had lit stars on the old star map: the points are free again' },
@@ -147,7 +148,8 @@ const NOTICES = [
   // C11: a milestone feat is a small permanent reward, recorded without a celebration card.
   { id: 'deed-milestone', key: 'deed-milestone', ch: 'log' },
   // ---- C14: the merged away report owns its source summaries ----
-  { id: 'away-report', key: 'away-report', ch: 'card' }
+  { id: 'away-report', key: 'away-report', ch: 'card' },
+  { id: 'hero-token', key: 'heroToken', ch: 'bell', why: 'a hero token won (56c, story-unlock-gates): when that hero joins; no kit yet, so no pop' }
 ];
 const NOTICE_BY_KEY = Object.fromEntries(NOTICES.filter(r => r.key).map(r => [r.key, r]));
 // The rule for a message (or its key), or null.

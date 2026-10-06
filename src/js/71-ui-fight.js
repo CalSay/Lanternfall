@@ -40,24 +40,25 @@ $('zPrev').addEventListener('click', () => { if (S.zone > 1) { setZone(S.zone - 
 $('zNext').addEventListener('click', () => { if (S.zone < S.maxZone) { setZone(S.zone + 1); ui(true); } });
 document.querySelectorAll('#modeSeg button').forEach(b => b.addEventListener('click', () => { if (b.dataset.act === 'fight') goFight(); else setActivity(b.dataset.act); }));   // Fight: straight to the live fight (70-ui goFight)
 
+// Portrait: the zone arrows move up beside the header's zone pill (the zone bar), so the line under the header can hold the
+// Fight / Gather switch and Next Up together (top-bar-compact). Landscape keeps them in its top row (80-landscape).
+{
+  const step = $('zStep'), home = step.parentElement;
+  const placeStepper = () => {
+    const to = isWide() ? home : document.querySelector('.top .who') || home;
+    if (step.parentElement !== to) to.append(step);
+  };
+  placeStepper();
+  wideMQ.addEventListener('change', placeStepper);
+}
+
 // Static nodes, looked up once. Every write goes through the put* guards (70-ui.js): 5 calls a
 // second, and an unchanged value must not make the browser lay the page out again.
 const gateEl = { title: $('gateTitle').querySelector('.gt-t'), desc: $('gateDesc'), btn: $('gateBtn'), q: $('gateBtn').querySelector('.qty'), p: $('gateBtn').querySelector('.price') };
 // The away card says the same line (75-away.js): the trade-off is told before you leave, not after.
 const AWAY_RULE_TXT = 'While away, gathering continues and fighting stops. Set your hero to gather before you go.';
-let gateRule = null;
-function uiGateRule() {
-  // Only where the Gather button is on offer: not before the first boss (onboarding hides it) or in a Deepwell run (the row is hidden).
-  const seg = $('modeSeg'), gb = seg.querySelector('button[data-act="gather"]');
-  const on = S.activity === 'fight' && !gb.hidden && seg.style.visibility !== 'hidden' && !$('game').closest('.app').classList.contains('deep-run');
-  if (!gateRule) {
-    if (!on) return;
-    gateRule = el('p', 'away-rule gate-rule'); gateRule.append(img(iconURL('glass', '#F2E27A')), el('span', null, AWAY_RULE_TXT));
-    $('modeSeg').parentElement.after(gateRule);   // under the Fight / Gather row, where the player picks what the hero does
-  }
-  putToggle(gateRule, 'hide', !on);
-}
-uiHooks.push(uiGateRule);
+// The permanent "While away" strip on the Fight view is gone (top-bar-compact): the away chip below speaks while gathering, on the away note's beat, and the away card says the rule.
+
 // Away chip: what leaving now would earn, told while you gather (the notice above covers a fighter).
 // Estimate from the same rates awayBase uses (50-sim.js), held to the Storehouse room unless Spillover moves on.
 let awayChip = null, awayChipTxt = '';
@@ -75,7 +76,7 @@ function awayChipText() {
 }
 function uiAwayChip() {
   const seg = $('modeSeg'), gb = seg.querySelector('button[data-act="gather"]');
-  const txt = gb.hidden || seg.style.visibility === 'hidden' || $('game').closest('.app').classList.contains('deep-run') ? '' : awayChipText();
+  const txt = gb.hidden || seg.style.visibility === 'hidden' || $('game').closest('.app').classList.contains('deep-run') || !isUnlocked('awaynote') ? '' : awayChipText();   // the away note's own beat (55-onboard FEATURES)
   if (!awayChip) {
     if (!txt) return;
     awayChip = el('p', 'away-rule gate-rule away-chip'); awayChip.append(img(iconURL('coin', '#F2C14E')), el('span'));
