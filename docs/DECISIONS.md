@@ -11,11 +11,12 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 - **No prestige or resets.** Progress is permanent. Freshness comes from mastery, collections, build variety and new
   regions. (2026-09-27)
 - **Single-player first.** The world raid and Tavern stay optional, light extras. (2026-09-27)
-- **Store launch possible, monetisation undecided.** Original art only, no restrictive third-party assets, nothing
-  pay-to-win. (2026-09-27)
+- **Store launch possible; the money model is set** (see [Money](#money)). Original art only, no restrictive
+  third-party assets, nothing pay-to-win. (2026-10-06)
 - **Owner role: player.** The coordinator drives the roadmap and brings playable builds and decisions at milestones.
-  Decisions that belong to the owner (art direction, monetisation, anything irreversible) are asked, not guessed.
-  (2026-09-27)
+  Decisions that belong to the owner (art direction; anything that takes real money: store accounts, payment code,
+  live prices, business and legal set-up; anything irreversible) are asked, not guessed. Money design is Claude's,
+  within the Lantern Rules. (2026-09-27, narrowed 2026-10-06)
 - **Combat is active only.** No Auto, no idle fighting, no away combat earnings. Gathering stays idle. (2026-10-01)
 - **Version 1.0 is a complete Season 1:** five regions, the story to the first fight with the Voice, 32 heroes, two
   named gatherers per resource job. The story continues in Season 2. (2026-09-28)
@@ -25,9 +26,7 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   launch. (2026-09-28)
 - **Length:** depends on how fun and replayable the loop is; players must stay committed. (2026-09-28)
 - **After 1.0:** the Lantern Festival, titles visible to other players, a second evolution tier. (2026-09-28)
-- **Art commissions and monetisation wait** until the game is ready for launch. Monetisation direction for later: a
-  free and paid battle pass, a membership with capped convenience perks, skins; never exclusive power, nothing taken
-  back when it lapses. (2026-09-28)
+- **Art commissions wait** until the game is ready for launch. (2026-09-28)
 - **Rejected:** the lantern network. **Maybe:** factions and reputation, once the world map has real places.
   (2026-09-28)
 
@@ -138,6 +137,7 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 - **Explain each hero's resource** (Aim, Grit, Cinders) in the game. Pip's resource is called **Cinders**, not Embers,
   so it does not clash with the raid's Embers. (2026-10-02)
 - **The Fenmother may be hard:** about 25-30% casual wins for a hero who keeps up is fine for a region boss. (2026-10-02)
+- **The difficulty budget** (Claude decided, judge 2026-10-06; veto if you disagree): every fight kind has a casual and a good win band for each starter who keeps up with the road (normal 90-100% casual, elite 75-97%, zone bosses 1-3 85-100%, 4-10 70-90%, Captains 60-80%, Champions 40-60%, Elders 20-40%; Tobin +10 on bosses), and `health.mjs --compare` gates on it with owned, dated known gaps. `docs/design/difficulty-budget.md`.
 - **Gear stats must work in turn fights;** Pip's slow late kills come from dead caster lines. (2026-10-02)
 - **Stars:** 3 set and 2 lit is fine; learning in 4 wins is fine; there should be more stars. The Abilities and Stars
   menus need to be much better, and the owner misses the old star map. (2026-10-02)
@@ -211,11 +211,63 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 
 ## Achievements
 
-- **Really hard achievements with cool rewards:** titles and accessories drawn on the hero. Every cosmetic is earned,
-  never sold, and never gives power. (2026-09-28)
+- **Really hard achievements with cool rewards:** titles and accessories drawn on the hero. (2026-09-28)
+- **Earned looks stay earned.** A look from a Deed, a Feat, a boss or a secret is never sold. Store looks are a separate
+  catalogue and never copy or recolour an earned look. The Wardrobe marks each look Earned or Store, and its collection
+  count counts earned looks only. No look gives power. (2026-10-06)
 - **The top tier is Everflame** (Bronze, Silver, Gold, Everflame). **Titles are short epithets** a person would be
   known by: one or two words, at most 14 characters. (2026-09-28)
 - **Online titles:** yes, but not for 1.0. (2026-09-28)
+
+## Money
+
+Claude decided after a red team and the Opus judge, on Cal's delegation (2026-10-06, "I don't want to be involved").
+Plan, evidence and rulings: `docs/design/monetisation.md` and `docs/design/monetisation-records/`. Store accounts,
+payment code, live prices and business and legal set-up stay with Cal.
+
+- **The model:** free to play, Season 1's story free for good, no ads of any kind (rewarded ads included), no premium
+  currency (real prices; where a store charges a flat fee per sale, looks sell in sets). Later seasons may be paid
+  expansions, and the store page says so from day one. (2026-10-06)
+- **What is sold:** looks (the existing slots plus a parry spark and, later, camp pieces), hero outfits (the three
+  starters first, then one per new hero), outfits by armour weight, critters, the Lantern Keeper and one supporter pack.
+  A free and paid Road Pass (looks only, earned by normal play, never expiring) comes after 1.0. Heroes are never sold.
+  Every new look, spark or outfit comes as a complete Codex art pack vetted as a whole set (art freeze); agents never
+  draw them in code. (2026-10-06)
+- **The Lantern Keeper:** one purchase, no membership at launch. Loadout slots past the Armoury's maximum (a late Deed
+  gives the same), a look set and credits. It also adds 2 hours to the away cap you have built (gathering only, never
+  past 24) only if a free bot run reaches the 24-hour cap within 40 hours of play; otherwise it ships without that.
+  Armoury room, order queues, time skips, boosts, Hands and Tents are never sold. (2026-10-06)
+- **Supporter packs:** one tier at launch. Two more tiers and the soundtrack only once 30 or more store looks exist and
+  the music ships. A supporter mark shown in the Tavern changes room presence and needs online sign-off. (2026-10-06)
+- **Lantern Caches:** the gacha feeling comes only from caches earned in play (boss wins, Contracts with a Dare, first
+  clears, Codex milestones). Odds are printed on the cache from the same table the code rolls; a visible pity counter;
+  no duplicate looks; no crafting materials. Caches and keys are never sold, and nothing bought is random. (2026-10-06)
+- **Where to sell:** Steam first, as a single-player build (the online layer runs only on the claude.ai page), after a
+  landscape mouse-and-keyboard playtest of parry and dodge timing passes. Phones second. No itch or Ko-fi pack.
+  (2026-10-06)
+- **When:** no store code is switched on before the early-game milestone is called done. Then Cal is asked once, with a
+  one-page checklist (business, merchant of record, privacy, terms, refunds, age rating). All store code sits behind
+  one switch that ships off; the Keeper's away bonus has its own setting, default 0 hours. (2026-10-06)
+- **Prediction:** at least 75% of Steam reviews that mention money are positive in the first 90 days after the store
+  opens, tagged the way the plan tagged IdleOn's (IdleOn: 53 of 86, about 62%). Missed below 65%; a miss reopens the
+  Keeper's away bonus and the supporter tiers first. (2026-10-06)
+
+### The Lantern Rules
+
+Every card that adds a price, a currency, a timer or a gate passes all ten. (2026-10-06)
+
+1. Never sell power or chance. Time may be sold only up to a ceiling every player reaches in play, and must also be
+   earnable in play.
+2. Never sell anything random. Random rewards come only from play.
+3. Never take back: nothing free becomes paid, nothing earned is locked, nothing bought expires or lapses.
+4. Never build friction to sell its removal: no energy, no starved bag, no timer added so a purchase can skip it.
+5. Never interrupt: the shop lives in one place; no pop-ups, no offer on opening the game, no sale dots.
+6. Never sell a core convenience: Repeat, auto-salvage, sorting, Assist timing and every accessibility option stay free.
+7. Earned prestige stays earned.
+8. Show real prices; no bundles priced to strand a leftover.
+9. Same game on every paid build: a purchase shows on every build that sells, and no paying platform gets an item late.
+10. Purchases are never lost, and the game never needs an account: purchases live with the platform (or an optional
+    account on the web), never only in the save.
 
 ## Screen and menus
 
@@ -285,6 +337,57 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   heroes start dressed in a grade 0 starter set. (2026-10-01; `docs/design/equipment-art.md`)
 - **Backgrounds:** the painted Mossy Hollow night background is approved and in the game. (2026-10-02)
 - **Map:** a hybrid (A's map, C's night, light and landmarks): "light in the dark". (2026-09-28; not built)
+- **Who vets art (2026-10-06):** the Opus art judge under the Autopilot gates, after a red team, using the art
+  freeze's own standard (whole packs, every piece matching, no stopgaps, no code-drawn art). Cal may veto from the
+  digest. Character art ships on, with a "Classic art" switch for one release. Icons must fit the live meaning, not the
+  name. Only Codex makes art; Claude vets it and answers for anything broken or ugly in a Monday build; anything
+  doubtful stays out. (Cal 2026-10-05 gates; 2026-10-06 18:30, 18:41 and 19:35: "Art should only be made by Codex.
+  ... If it gets into a Monday build and it's broken or looks bad, you will be held responsible".)
+- **Codex art packs, judge verdicts (2026-10-06, art-pack-triage):** ability icons: wire 36 of Codex's drafts for the
+  live 42 abilities (keep the C26 Echo Shot and Fireball; Shield Bash moves to Codex's red-gold one), a hero's icons go
+  in only when all 14 are whole, so Pip first; Power Shot, Barbed Arrow, Pinning Shot and Shield Throw go back to Codex
+  (due Fri 2026-10-09). Resource nodes (c26): re-brief, Codex finishes the scene pack (four gather backgrounds) before
+  they go in. Starting equipment (c27): shelved until heroes can show gear. Hunting drafts (c24): superseded by the live
+  interim. Enemies (c22): already in. Hero concept boards: re-brief as a matched portrait pack. Reasons and red team:
+  `/mnt/project-files/autopilot/reports/art-pack-triage.md`. (built: not yet; cards `wire-ability-icons` and others)
+  Coverage areas: 6 Combat feel and 1 First 10 minutes (icons), 10 Skills and crafting (nodes), 14 Heroes (portraits).
+  Prediction: lettered ability tiles across the three heroes fall from 39 of 42 to 26 when `wire-ability-icons` merges
+  (Pip 13 to 0) and to 0 of 42 in the 2026-10-19 build; measured by counting lettered tiles (`.ab-list .ab-mono`)
+  on each hero's Hero > Abilities screen in `wire-ability-icons`' proof route (an `expect` line CI replays); missed if
+  any tile stays lettered for a hero whose icons are wired, or if Cal's note "ability icons missing" is not "fixed" in
+  that week's Sunday review. Switch off: removing a hero's ids from the generated `act` icon
+  pack brings back the lettered tiles (the existing `noIcon` path); gather scenes go back to the code-drawn ones by
+  reverting their wiring commit; portraits have the Classic art switch. Saves: unaffected (art only; the Classic art
+  switch adds one settings flag with a default).
+
+## Early game (Opus judge on the early-game plan, 2026-10-06; Cal can veto any line)
+
+Plan and rulings: `/mnt/project-files/early-game/plan.md`, `plan-judge.md`. Beat map: `docs/design/first-hour.md`.
+
+- **No telegraph stands.** There are no foe intent icons. The Foe tab shows only what you have learned: moves after a
+  kill, weakness at 5 kills, "Watch for" at 15.
+- **The PR #53 dock cuts are final.** The combat log is dropped: on a 360 px screen it is clutter, and the turn strip and
+  numbers carry the same information. "Next" chips stay dropped. The Bag tab belongs to `bag-slot-and-steady-charges`.
+- **Lantern Caches.** A zone boss's first clear opens a Lantern Cache that reveals that win's drops. Its only new reward
+  is a look roll, with its odds and a pity counter printed. Replays give no cache. Caches, keys and pity are never sold.
+  Caches hold no relics and no time skips.
+- **Looks.** Deed looks stay Deed-only. Cache looks are their own catalogue, drawn by Codex and vetted as a set. The
+  first cache a save opens gives a Deepwell lantern colour and relights the stage. The Wardrobe tags each look Deed,
+  Cache or (later) Store, and counts earned looks only.
+- **Moments.** Big moments (first boss win, a cache with a look or unique, a unique, a new hero, a Great Lantern) and
+  medium moments (the first and every 5th level, a new ability, the first Star, a look, a Rare-or-better craft) sit
+  outside the pop budget, under their own cap. Big: one card at a time at fight end, holding the game. Medium: at most
+  one per fight end, in the notices slot. At most 8 big plus medium in the first 20 minutes. This refines "the early
+  game must not be spammed".
+- **The guide is Old Hesketh, with a face.** Landscape: the side column's notices slot. Portrait: docked above the
+  action bar. Never over the fighters or the HP bars.
+- **Bounties.** A finished bounty can be claimed from Next Up and from its ready notice, and the board also shows at
+  Camp. An open menu never pauses foe turns.
+- **The opening.** Three stills, then "Who are you?", then Hesketh's fire. His talk plays when the camp fire is lit. The
+  first fight comes within 45 s for a player who taps through. Hero lines are for starters only, from `STORY_BEATS.hero`
+  (story bible 4.4).
+- **First-hour art.** Two packs, `first-hour-art` and `cache-art`. Star icons are parked. Approved assets (the Mossy
+  Hollow background, roster portraits, Deepwell colours) may be reused as they are.
 
 ## Working process
 
@@ -293,8 +396,8 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   (`docs/handoff/claude-to-codex/reviewer/README.md`). Codex still draws new raster art when a card needs it.
   (2026-10-05)
 - **Autopilot:** Claude plans, builds and merges into the integration branch on its own from an approved backlog,
-  with a daily digest. Cal approves batches, taps gated items (new systems, economy targets, saves, art packs,
-  story canon) and says "ship it" before anything reaches `main` or the live artifact. (2026-10-05)
+  with a daily digest. Cal approves batches, taps gated items (new systems, economy targets, saves,
+  story canon; art packs moved to the judge 2026-10-06) and says "ship it" before anything reaches `main` or the live artifact. (2026-10-05)
 - **Speed and smoothness are checked constantly:** run `node tools/perf.mjs --quick` after each merge wave and fix any
   budget failure before new features. (2026-09-27)
 - **Pace:** steady on weekdays (2 build threads at once), full at weekends (4). On "pause", launch nothing new.
@@ -312,6 +415,9 @@ Kept only to explain current rules. Each line: the old decision, then what repla
 
 - Hero gates at the first zone of the scene's area, only once the scene is in the game (2026-10-06, story-opening) -> from the
   zone the scene can have played, built or not (2026-10-06, story-unlock-gates).
+- Store launch possible, monetisation undecided (2026-09-27); monetisation waits for launch, with a free and paid battle
+  pass, a membership with capped convenience perks and skins (2026-09-28); every cosmetic is earned, never sold
+  (2026-09-28) -> the money model (2026-10-06).
 - Training: gold levels up each hero's Attack, Parry, Dodge and abilities, with caps (2026-09-29, 2026-10-02) -> no
   Training; level, star points, abilities and attribute points (2026-10-06).
 - No rapid catch-up XP for heroes (2026-09-28) -> a new hero joins at the road's level; benched heroes earn half XP
@@ -346,4 +452,10 @@ Kept only to explain current rules. Each line: the old decision, then what repla
 - Season 1 ending at the bottom of the Deepwell (2026-09-28) -> the finale is in the Gloamvale, its Region 5, and the
   Voice retreats into the Deepwell (2026-09-28, after the owner's feedback on LORE-R45).
 - Background art paused (2026-09-29) -> the Mossy Hollow background approved (2026-10-02).
+- Art freeze signer: "No art goes into the game until the owner has vetted the whole pack ... The owner still vets the
+  whole set before it ships" (2026-09-30), and art packs as a Cal-tapped Autopilot gate (2026-10-05) -> the Opus art
+  judge vets under the Autopilot gates, same standard (2026-10-06, Cal 19:35). Why: Cal's 2026-10-05 gates already put art packs
+  with the judge but `CLAUDE.md` was never aligned, and Codex packs (426 icons, 25 nodes) sat unwired for days waiting
+  on a sign-off nobody owned; Cal 2026-10-06 18:30 "I don't want to be involved" and 18:41 any repo rule may change if
+  it serves the goals.
 - Weekday and weekend usage rules (2026-09-28) -> steady mode (2026-09-28 evening).

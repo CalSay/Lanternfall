@@ -20,11 +20,13 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Keep the readiness estimate running while a tip pauses the game, and include Deepwell boons, gear changes made while gathering, and the sim seed. Why: Codex found each of these in rounds 1 to 3 of PR #47. (boss-readiness, 2026-10-06)
 - Run `node tools/health.mjs --compare` before and after any balance or pacing change. Why: it is the only before/after measure and CI gates on it. (f-health, 2026-10-05)
 - Play the persona's whole turn skill (parry, dodge and ability rings) when measuring pacing for a named player type. The sim's own turn player lands 80% of defences and never presses a ring, so every timed ability is a Miss. Why: Codex P1 on PR #52, where one shared 40% defence rate stood in for the casual. (xp-gold-pacing-report, 2026-10-06)
+- difficulty-budget: predicted the budget would find bosses near the 70% casual aim with a few outliers; measured 55 of 156 hero cells out of band (zones 5-15 and elites 100%, zones 25-34 Captains 0-1% for Wren and Pip, the Fenmother easier than her Captains). Miss. Also: `turnCombatSample` on one seed correlates long fights (13-32% vs 53-67% independent), so give every boss fight its own hashed seed when measuring win rates. Why: the judge caught it before the baseline. (difficulty-budget, 2026-10-06)
 
 ## Economy and skilling
 
 - Read `docs/design/systems-map.md` flags before touching an economy card. Open flags: wood and essence pile up, iron ore is idle (Transmute is lossy), cobalt needs Mining 64 with no hint, Smithing is dead past 54, gold is the only mid-game choke, Renown/Stamps/boss tokens have no spend, tents 6 to 10 are unbuildable, the Renown Day omen does nothing. (systems-map, 2026-10-06)
 - Register any new currency-like counter in the systems map with a source and a sink. Why: the check fails on a currency with no source or sink, and on an unregistered counter. (systems-map, 2026-10-06)
+- Check any reward or shop design against the standing reward lines in `DECISIONS.md` (enemies never drop crafting materials; gold is the flat camp budget; the Armoury owns bag room and loadouts) before proposing what it pays. Why: the monetisation red team found caches paying materials and a paid Armoury room that the Armoury building already sells. (monetisation plan, 2026-10-06)
 - No hard progress walls. Why: walls are the top long-play quit reason in the research set (99 mentions); the 50h run shows 9 to 10 stalls of an hour or more per hero and a 12h wall near zones 24 to 25. (f-fun-library, f-health-long)
 
 ## Story and lore
@@ -70,6 +72,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - A core bot may only do what the screen offers: gate its Training on `isUnlocked("party")` and its gathering on `isUnlocked("gather")`. Why: the cold-hearth bot trained before the Hero tab existed, which hid a 47 s slower first boss and let Next Up jump the unlock queue (story-unlock-gates, 2026-10-06).
 - Delay the Aim hint until the foe's swing lands. Why: it covered the Dodge and Parry cues. Guide tips already show one at a time; leave that. (first-minute-flow, 2026-10-06)
 - Mark any reward, hint or card the game cannot deliver yet as "Coming soon", in the place the player first sees it (not only after claiming). Why: 15 Codex rewards said "Saved for later" only after they were claimed, and Jory's and Ashby's hints promised a hire the game never made. (promises-pass, 2026-10-06)
+- Show icons through `nicSet`/`nicTag` at the size the box shows, never a 48 px URL squeezed into 28-36 px, and give a hero's icons in whole packs only (add the hero to `COMPLETE` in check.mjs). Why: the Abilities list used `soloIconURL` (uneven scaling) and Wren and Tobin still lack 4 icons. (wire-ability-icons, 2026-10-06)
 
 ## Saves and offline parity
 
@@ -117,4 +120,8 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Split anything outside the card's files into a new card instead of building it on the spot (pre-leave notice, Boss-ready gate and the `--long` run were each split off). (away-clarity, first-minute-flow, f-health)
 - With no route to the Foreman, send AUTOPILOT DONE to the coordinator. (systems-map and others, 2026-10-06)
 - After a merge, send AUTOPILOT DONE at once: a merge with no follow-up start leaves build slots empty (stalled 01:25 to 05:22 on 2026-10-06). (foreman, 2026-10-06)
+- Check any pick that needs new art against the art freeze in `CLAUDE.md` before costing it: new looks, sparks and effects come as complete Codex art packs, never drawn in code by agents. Why: Codex P1 on PR #61, the money plan costed store looks and the parry spark as cheap code. (monetisation plan, 2026-10-06)
+- Commit a design decision's red-team and judge records into the repo and link them relatively; `/mnt/project-files` paths do not survive for reviewers. Why: Codex P1 on PR #61. (monetisation plan, 2026-10-06)
 - Always ask whether a card needs Cal's gates: ship-it, online layer, Netlify beyond the weekly deploy, money or legal, network settings, outside contact. (playbook)
+- Judge a Codex art pack against the live game, not the design it was drawn for, and look at icons at 16 and 24 px in grayscale beside the hero's other icons. Why: 426 icons targeted a 34-hero design and only 36 fit the live 42 abilities; the shared Ranger set drew swords for a bow user; the red team found look-alike groups the 64 px sheets hid. (art-pack-triage, 2026-10-06)
+- Editing `CLAUDE.md` (agent instructions) is refused by the session's permission check as self-modification unless Cal's own message names that change; a general "rules can change" was not enough. Ask the coordinator for Cal's words on the specific rule, park the wording in a file meanwhile, and never work around the check. (art-pack-triage, 2026-10-06)

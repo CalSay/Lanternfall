@@ -85,6 +85,7 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
   tcard.append(tcFace, tcTxt);
   if (box) box.append(tcard);
   let tcT = null;
+  const tcHide = () => { tcard.hidden = true; if (box) box.classList.remove('tc-on'); };   // tc-on: toasts wait while the banner shows (20-stage.css)
   on('turnCard', p => {
     if (!box || !p) return;
     const f = foeNow(), mine = p.who === 'hero', name = mine ? heroName() : (f && f.name) || 'The foe';
@@ -92,11 +93,11 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
     putText(tcTxt, mine ? (p.again ? 'Your turn again' : 'Your turn') : p.again ? `${name} goes again` : `${name}'s turn`);
     tcard.className = 'tv-turncard ' + (mine ? 'hero' : 'foe') + (reduced() ? ' calm' : '');
     tcard.style.setProperty('--tc-dur', (p.secs || 0.9) + 's');
-    tcard.hidden = false; void tcard.offsetWidth; tcard.classList.add('play');
-    clearTimeout(tcT); tcT = setTimeout(() => { tcard.hidden = true; }, (p.secs || 0.9) * 1000 + 150);
+    tcard.hidden = false; box.classList.add('tc-on'); void tcard.offsetWidth; tcard.classList.add('play');
+    clearTimeout(tcT); tcT = setTimeout(tcHide, (p.secs || 0.9) * 1000 + 150);
   });
-  on('turn', () => { clearTimeout(tcT); tcard.hidden = true; });
-  on('fightEnd', () => { clearTimeout(tcT); tcard.hidden = true; });
+  on('turn', () => { clearTimeout(tcT); tcHide(); });
+  on('fightEnd', () => { clearTimeout(tcT); tcHide(); });
 
   // ---- the turn strip, the timing bar, the hero row ----
   // the turn order lives on the Versus card only (owner, 2026-10-02)

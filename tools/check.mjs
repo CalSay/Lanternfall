@@ -7535,7 +7535,17 @@ if (section('action and menu icons (C26)')) try {
   const g = loadCore({ seed: 27 });
   const d = JSON.parse(g.eval(`JSON.stringify({ act: typeof ACTION_ICONS === 'object' ? Object.entries(ACTION_ICONS).map(([k, v]) => [k, Object.keys(v)]) : null,
     nav: typeof NAV_ICONS === 'object' ? Object.entries(NAV_ICONS).map(([k, v]) => [k, Object.keys(v)]) : null })`));
-  assert(d.act && d.act.length === 16 && d.act.every(([, ks]) => ks.join() === '16,24,36,48'), `C26: 16 action icons at 16, 24, 36 and 48 px (${d.act ? d.act.length : 'none'})`);
+  const base = d.act ? d.act.filter(([k]) => !g.eval(`ABILITIES[${JSON.stringify(k)}] && ${JSON.stringify(k)} !== 'echo' && ${JSON.stringify(k)} !== 'bash' && ${JSON.stringify(k)} !== 'fire'`)) : [];
+  assert(base.length === 16 && base.every(([, ks]) => ks.join() === '16,24,36,48'), `C26: 16 action icons at 16, 24, 36 and 48 px (${base.length})`);
+  // wire-ability-icons: art freeze = whole packs. Every live ability of a complete hero has an icon at 24, 36 and 48 px;
+  // an incomplete hero shows none of Codex's (no half-drawn lists). Add a hero here only when all its abilities are drawn.
+  const COMPLETE = ['pip'], ownIcon = new Set(['echo', 'bash', 'fire']);
+  const ab = JSON.parse(g.eval(`JSON.stringify(Object.fromEntries(Object.keys(HERO_ABILITIES).map(h => [h, HERO_ABILITIES[h].map(id => [id, ACTION_ICONS[id] ? Object.keys(ACTION_ICONS[id]).join() : '']) ])))`));
+  for (const [h, rows] of Object.entries(ab)) {
+    const missing = rows.filter(([, ks]) => !ks).map(([id]) => id);
+    if (COMPLETE.includes(h)) assert(!missing.length && rows.every(([, ks]) => ks.endsWith('24,36,48') || ks === '16,24,36,48'), `abilities: every ${h} ability has an icon at 24, 36 and 48 px (missing: ${missing.join(', ') || 'none'})`);
+    else assert(rows.every(([id, ks]) => !ks || ownIcon.has(id)), `abilities: ${h} is not complete, so none of its ability icons are embedded yet except the starter`);
+  }
   assert(d.nav && d.nav.length === 32 && d.nav.every(([, ks]) => ks.join() === '12,16,18,20,22'), `C26: 32 menu icons at 12-22 px (${d.nav ? d.nav.length : 'none'})`);
   const need = ['attack-wren', 'attack-tobin', 'attack-pip', 'echo', 'bash', 'fire', 'parry', 'dodge', 'empty', 'fight', 'hero', 'gather', 'craft', 'camp', 'deeds', 'notices', 'mining', 'woodcutting', 'foraging', 'raid', 'deepwell'];
   const have = new Set([...(d.act || []), ...(d.nav || [])].map(([k]) => k));
@@ -9330,6 +9340,48 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
     } finally { await browser.close(); }
   }
 } catch (e) { fail(`landscape ${w}x${h} (browser, UX-L1) crashed: ` + (e.stack || e)); }
+
+// ---- fight HUD fit (fight-hud-fit): names whole, banner and toasts never on top of each other ----
+if (section('fight HUD fit')) try {
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) { skipBrowser('fight HUD fit (browser): Playwright or Chromium not here, skipped'); }
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const mid = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-mid.json'), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h] of [[360, 740], [740, 360]]) {
+        const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: true, hasTouch: true });
+        await ctx.addInitScript(([k, v]) => { try { localStorage.setItem(k, v); } catch (e) {} }, [KEY, mid]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        const X = src => page.evaluate(src => window.__t.x(src), src);
+        await X('S.onboard && (S.onboard.tips = false); true');
+        await page.waitForTimeout(1200);
+        // names whole: nothing in the plates is cut with an ellipsis, and the place line shows in full
+        const cut = await page.evaluate(() => [...document.querySelectorAll('.hud.vs .hero-plate .mob-name, .hud.vs .mob .mob-name, .hud.vs .hud-zone .zname, .hud.vs .mob-hp')]
+          .filter(e => e.offsetParent && e.scrollWidth > e.clientWidth + 1).map(e => e.className + ':' + e.textContent));
+        assert(!cut.length, `${w}x${h}: hero and foe names, numbers and the place line are not cut (${cut.join(' | ')})`);
+        // the banner and the toasts take turns: while the turn banner shows, the toast stack is hidden
+        await X('notify({ msg: "Test notice for the HUD fit check", kind: "hi" }, "now"); emit("turnCard", { who: "foe", secs: 0.9 }); true').catch(() => {});
+        await page.waitForTimeout(150);
+        const o = await page.evaluate(() => {
+          const r = s => { const e = document.querySelector(s); if (!e || e.hidden) return null; const b = e.getBoundingClientRect(); return { l: b.left, r: b.right, t: b.top, b: b.bottom, op: +getComputedStyle(e).opacity }; };
+          const tc = r('.tv-turncard'), to = r('.toasts'), bars = [r('.hud.vs .hero-plate'), r('.hud.vs .mob')].filter(Boolean);
+          const hit = (a, b) => a && b && a.l < b.r && b.l < a.r && a.t < b.b && b.t < a.b;
+          return { tc: !!tc, tcOverToasts: hit(tc, to) && to.op > 0.05, toastsOverBars: bars.some(b => hit(to, b)) };
+        });
+        assert(!o.tcOverToasts, `${w}x${h}: the turn banner and the toasts are never both on screen on the same spot`);
+        assert(!o.toastsOverBars, `${w}x${h}: toasts sit under the hero and foe plates, not over them`);
+        assert(!errs.length, `${w}x${h}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('fight HUD fit crashed: ' + (e.stack || e)); }
 
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 console.log(browserSummary(browserSkipped, browserSkipReasons));
