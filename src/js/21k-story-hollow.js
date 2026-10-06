@@ -31,11 +31,26 @@ const STORY_BEATS = { region: {}, area: {}, zone: {}, captain: {}, champ: {}, el
   vesper: {}, letter: {}, note: {}, item: {} };
 
 // The opening (bible 8.1): the region card before zone 1, over the lamp on its hook. Text only until the owner vets the stills pack
-// (bible 10.3). Hesketh's talk and the hero lines come with story-opening.
+// (bible 10.3).
 STORY_BEATS.region.hollow = { title: 'Chapter 1: The Hollow', lines: [
   'Ten years ago every lamp went out. The one over your door never did.',
   'This winter the last lamp in sight went out. Tonight the dark came for yours.',
   'Your village hid. You took the lamp and ran, so the dark would follow you.'
+] };
+
+// Old Hesketh, before the first fight (bible 8.1, story-opening). Two NPC scenes at the Hollow's door (area 0), played right after the
+// region card: the fire, then the talk. The camp fire later in the Pine Grove is a bigger one, so the guide's toast just asks for wood.
+STORY_BEATS.npc.heskethFire = { at: 'area:0', who: 'Old Hesketh', lines: [
+  'On the road your lamp gutters. The dark is close.',
+  '"Wood first. Then we talk." You kindle his dead fire.',
+  'It catches from your lamp. Yours burns steady.',
+  '"Every road needs a place to come back to."'
+] };
+STORY_BEATS.npc.heskethTalk = { at: 'area:0', who: 'What Hesketh knows', lines: [
+  '"Ten years I\'ve lit dead lamps. Not one took my fire."',
+  '"I could have lit them from hers. I couldn\'t go up."',
+  '"Those things aren\'t animals. They climb out of the ground."',
+  '"Your village is down there. Go back and shut the holes."'
 ] };
 
 // ---- Chapter 1 (bible 8.1 and 5): 7 areas of 5 zones, a Champion at each area's end, the Fenmother at zone 35 ----
@@ -162,7 +177,7 @@ Object.assign(STORY_BEATS.champ, {
     page: { title: 'The Barrow Lamp', text: 'Maren kept a lamp in the barrow for ten winters, alone. It wore down to a bead. When she held it up beside yours, it steadied. A light in company holds, and a light alone wears thin. The same small spiral is scratched on both lamps, and neither of you knows why.' },
     hearth: "Lamps like company. Fire's the same, only louder." },
   oracle: { zone: 25, name: 'The Veiled Oracle',
-    pre: ["Its veil moves. A hundred tired voices say: 'You're tired. Nobody is coming. Rest.'", { hero: 'oracleRest' }],
+    pre: ["Its veil moves. A hundred tired voices say: 'You're tired. Nobody is coming. Rest.'", { hero: 'refuseRest' }],
     post: ['The veil tears. Only a ring of teeth under it. The voices go quiet, one by one.',
       'Down the path, a row of candles catches again. Far off, the air turns colder.'],
     page: { title: 'The Offer', text: "The Oracle spoke to anyone still awake. A hundred tired voices said it together: you're tired, nobody is coming, rest. Morwen knew them for what they were: people who sat down and did not get up. You said no, and the voices went quiet, one by one. That is the dark's offer, and it comes when you are tired." },
@@ -293,7 +308,7 @@ STORY_BEATS.choice.hollowLantern = { prompt: "The Hollow's Great Lantern stands 
 ], def: 'hesketh', store: 'litFor', key: 'hollow' };
 
 // Hero lines (bible 4.6): the story hero's own words; the shared line `_` is for any other hero
-STORY_BEATS.hero.oracleRest = { wren: "You say, 'Not yet.'", tobin: "You say, 'I'll rest when the Hollow is lit.'", pip: "You say, 'Lovely offer. No.'",
+STORY_BEATS.hero.refuseRest = { wren: "You say, 'Not yet.'", tobin: "You say, 'I'll rest when the Hollow is lit.'", pip: "You say, 'Lovely offer. No.'",
   _: "You say, 'No. I'm not stopping here.'" };
 STORY_BEATS.hero.hollowLantern = { wren: "You say, 'There. Let it look. It'll find more than me.'", tobin: "You say, 'Keep it lit for them. Please.'",
   pip: "You say, 'There. Now it's everyone's problem.'", _: "You say, 'There. It's not just mine now.'" };

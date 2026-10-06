@@ -113,7 +113,7 @@ let hearthCold, hearthLit, hearthScene, hearthCan, hearthLight, hearthPlotOpen, 
     S.camp.open = true;
     emit('campOpen', { quiet: false });
     emit('hearthLit', { quiet: false });
-    toast('The fire catches. Hesketh: "Every road needs a place to come back to." See the Camp tab.', 'good', { ic: ['flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }] }, 'high');
+    toast('The fire catches. Camp is open. See the Camp tab.', 'good', { ic: ['flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }] }, 'high');
     if (S.activity !== 'fight') setActivity('fight');
     save();
     return true;

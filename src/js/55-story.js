@@ -229,7 +229,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
   storyClaim = id => { if (cur && cur.id === id) claimed = true; };
   storyClose = (id, how) => {
     if (!cur || cur.id !== id) return;
-    const sc = cur; cur = null; claimed = false;
+    const sc = cur, shown = claimed; cur = null; claimed = false;
     const st = ST();
     const auto = how === 'auto';   // nobody touched it: filed as a page to catch up on, and no `ends` entry (bible 12a)
     for (const c of sc.cards) if (c.choice) storyChoose(c.choice);   // skipped or left alone: the default
@@ -237,6 +237,8 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
     if (sc.page) mark('j:' + sc.page, auto);
     if (auto) for (const k of [sc.id, sc.page && 'j:' + sc.page]) if (k && st.seen[k] > 0) st.seen[k] = -st.seen[k];   // late, unread (a caption's joined id is no key)
     emit('storyEnd', { id, how });
+    // the next scene of the same stop plays now, even while the guide holds the game (no tick runs to pump it), once the UI has closed this one
+    if (shown && queue.length && typeof setTimeout === 'function') setTimeout(() => { if (!cur && storyOn() && live() && inGap()) pump(); }, 0);
   };
   // a caption for a zone the hero has left is dropped (it belonged to that moment)
   const stale = sc => sc.kind === 'caption' && sc.zone && sc.zone !== S.zone;
@@ -288,9 +290,10 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
     const ids = [], lines = [];
     if (z === ai * n + 1 && D('area')[ai] && !has('a:' + ai)) { mark('a:' + ai); ids.push('a:' + ai); lines.push(D('area')[ai]); }
     if (D('zone')[z] && foeIn(z) && !has('z:' + z)) { mark('z:' + z); ids.push('z:' + z); lines.push(D('zone')[z]); }
+    // an area's people talk first; the caption names the place and its monster just before the fight
+    if (z === ai * n + 1) for (const id of npcAt('area:' + ai)) if (!has('n:' + id) && npcCards(id).length) { mark('n:' + id); push(npcScene(id)); }
     if (ids.length) push(caption(ids, zoneName(z), lines, z));
     for (const id in D('voice')) if (D('voice')[id].zone === z && !has('v:' + id)) { mark('v:' + id); push(voiceScene(id)); }
-    if (z === ai * n + 1) for (const id of npcAt('area:' + ai)) if (!has('n:' + id) && npcCards(id).length) { mark('n:' + id); push(npcScene(id)); }
     for (const id in D('choice')) if (D('choice')[id].zone === z && !has('ch:' + id)) { mark('ch:' + id); push(choiceScene(id)); }
   }
   // the lead foe has spawned: a Captain's line (its Captain on screen), or the pre scene of a Champion or Elder

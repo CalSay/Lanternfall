@@ -39,9 +39,9 @@ var classUI;
       top.append(el('span', 'pip r-' + (R.role || 'striker'), H ? H.role : ROLE_STATS[R.role].n));
       txt.append(top);
       txt.append(el('div', 'cl-wt', R.title.replace(/^the /, 'The ') + (H ? ` · ${H.range} · ${H.weapon}` : '')));
-      if (info.bio) txt.append(el('div', 'how', info.bio));
+      const bio = el('div', 'how'); txt.append(bio);   // starters and unlocked heroes only: a locked hero shows who you meet them as, not their story
       const state = el('b', 'sp-lv'), route = el('div', 'how'); txt.append(state, route);
-      b._state = state; b._route = route;
+      b._state = state; b._route = route; b._bio = bio;
       if (H && H.ab) { const ab = el('div', 'ab'); ab.append(el('em', null, H.ab.name + ': '), document.createTextNode(H.ab.desc)); txt.append(ab); }
       b.append(fig, txt);
       b.addEventListener('click', () => select(k));
@@ -73,8 +73,9 @@ var classUI;
         const on_ = b.dataset.cls === k, state = heroRouteInfo(b.dataset.hero);
         b.dataset.state = state.state;
         // Cards can be inspected; the Begin/Unlock button enforces whether this hero can be chosen.
+        putText(b._bio, state.bio); b._bio.hidden = !state.bio;
         putText(b._state, state.state === 'coming-soon' ? 'Coming soon' : state.unlocked ? 'Unlocked' : 'Locked');
-        putText(b._route, state.unlocked ? (state.playable ? 'Ready to carry the lamp.' : 'Route complete. This hero’s art and solo kit come later.') : state.how);
+        putText(b._route, state.unlocked ? (state.playable ? 'Ready to carry the lamp.' : 'Route complete. This hero’s art and solo kit come later.') : state.ready ? state.how : state.meet);   // a new game spoils nothing: who, not where or how much
         b.setAttribute('aria-checked', String(on_)); b.setAttribute('aria-pressed', String(on_)); b.tabIndex = on_ ? 0 : -1;
       }
     }
@@ -149,13 +150,13 @@ var classUI;
           ? 'You keep your Blessing and Rally Hymn. New Lightkeeper powers come in a later update.'
           : `You play the ${d.name}'s kit for now. The ${info.evoName}'s own powers come in a later update.`;
         const r = row(`Path: ${info.evoName}`, info.proven ? info.evoTitle : 'Granted', txt, 'cl-evo');
-        if (!info.proven) r.append(el('p', 'cl-note', `The title ${info.evoTitle} waits for your Proving, after the Fenmother.`));
+        if (!info.proven) r.append(el('p', 'cl-note', `The title ${info.evoTitle} waits for your Proving, after the Hollow’s Elder.`));
         out.push(r);
       } else {
         const names = info.paths.map(x => `${x.name} (${x.kind})`).join(' or ');
-        const r = row('Evolution', 'Locked', `Two paths open after the Fenmother: ${names}. The choice is for good.`, 'cl-evo off');
+        const r = row('Evolution', 'Locked', `Two paths open after the Hollow’s Elder: ${names}. The choice is for good.`, 'cl-evo off');
         const chips = el('div', 'cl-chips');
-        chips.append(chip('Beat the Fenmother', info.gate.bossOk), chip(`Level ${info.gate.lv}`, info.gate.lvOk));
+        chips.append(chip('Beat the Hollow’s Elder', info.gate.bossOk), chip(`Level ${info.gate.lv}`, info.gate.lvOk));
         r.append(chips);
         if (info.gate.open) r.append(el('p', 'cl-note', 'The Proving comes in a later update.'));
         out.push(r);

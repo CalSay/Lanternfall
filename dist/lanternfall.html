@@ -2734,21 +2734,26 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
   .sty-cap.in { animation: none; }
 }
 
-/* landscape phones: a story card is a bottom sheet no taller than 80% of the screen (story-c28.md 4.7 said 60%; the game is held
-   while a card is up, and at 360 px tall 60% hid the last lines of a four-line card under its buttons: story-hollow-script) */
+/* landscape phones: a story card is a bottom sheet no taller than 60% of the screen (story-c28.md 4.7); long cards scroll */
 @media (min-aspect-ratio: 1/1) and (min-width: 600px) and (max-height: 500px) {
-  .bsheet.small.sty-sheet { max-height: 80%; }
+  .bsheet.small.sty-sheet { max-height: 60%; }
   .sty-sheet .bsheet-body { overflow-y: auto; gap: 8px; }
-  .sty-sheet .sty-actions { position: sticky; bottom: 0; background: var(--panel); padding-top: 4px; }
-  /* a four-line NPC card fits without scrolling under the sticky buttons (story-hollow-script) */
-  .sty-sheet .bsheet-body { gap: 6px; }
-  .sty-sheet .sty-card { gap: 2px; padding: 6px 12px; }
-  .sty-sheet .sty-text { line-height: 1.3; }
-  .sty-sheet .sty-title { font-size: calc(18px * var(--display-k)); }
-  /* the Great Lantern's four names sit two by two, so all four show above Skip */
-  .sty-opts { grid-template-columns: 1fr 1fr; gap: 6px; }
-  .sty-opt { min-height: 44px; }
-  .sty-opt span { display: none; }
+  .sty-sheet:not(.sty-scene) .sty-actions { position: sticky; bottom: 0; background: var(--panel); padding-top: 4px; }
+  /* the buttons sit beside the card, not over its last lines (a wide screen has room; a short one does not) */
+  .sty-sheet.sty-scene .bsheet-body { display: flex; flex-direction: row; align-items: stretch; overflow: hidden; }
+  .sty-sheet.sty-scene .sty-card { flex: 1 1 auto; min-width: 0; overflow-y: auto; }
+  .sty-sheet.sty-scene .sty-card { padding: 8px 12px; gap: 4px; }
+  .sty-sheet.sty-scene .sty-title { font-size: 17px; line-height: 1.15; }
+  .sty-sheet.sty-scene .sty-text { font-size: 14px; line-height: 1.3; margin: 0; }
+  .sty-sheet.sty-scene .sty-actions { flex: 0 0 150px; flex-direction: column; justify-content: center; position: static; }
+  .sty-sheet.sty-scene .sty-actions .big, .sty-sheet.sty-scene .sty-actions .mini { flex: 0 0 auto; width: 100%; }
+  /* a choice: the prompt on top, the four names two by two under it, Skip beside them; all show at once (names only) */
+  .sty-sheet.sty-scene .bsheet-body:has(> .sty-opts) { display: grid; grid-template-columns: 1fr 1fr 150px; grid-template-rows: auto auto; gap: 6px; }
+  .sty-sheet.sty-scene .bsheet-body:has(> .sty-opts) > .sty-card { grid-column: 1 / 3; overflow: visible; padding: 6px 12px; }
+  .sty-sheet.sty-scene .sty-opts { grid-column: 1 / 3; grid-row: 2; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .sty-sheet.sty-scene .bsheet-body:has(> .sty-opts) > .sty-actions { grid-column: 3; grid-row: 1 / 3; }
+  .sty-sheet.sty-scene .sty-opt { min-height: 44px; padding-top: 4px; padding-bottom: 4px; align-content: center; }
+  .sty-sheet.sty-scene .sty-opt span { display: none; }
 }
 /* 60-tools: the Mastery box on a tool's item sheet and the rough tool's sheet (75-tools-ui.js, H2).
    The tool chip on the Gather view's Now card is styled in 60-gathering.css (.gx-tool). */
@@ -6886,7 +6891,7 @@ const BIOS = {
   vesper: 'Vesper sings in taverns for a coin and a bed, and fights for free when the song is good. She knows every road song in Lanternfall. She wrote half of them, and changed the endings.',
   elowen: 'The land is called Lanternfall because of what Elowen did the night the lights went out. She will not talk about it. She keeps her flame low.',
   caedmon: 'Caedmon walked into the Ashen Wyrm\'s fire to buy a village one hour. He walked out three days later, still burning. He does not sleep, and he does not talk about what he saw in the flame.',
-  corvin: 'Corvin killed for the Hollow King for twenty years and never once saw his face. When the King fell, Corvin was the only one who did not kneel. He fights for you because you asked, and nobody ever had.'
+  corvin: 'Corvin killed for the Hollow King for twenty years and never once saw his face. When the curtain came down, there was no one behind it. Corvin was the only one who did not kneel. He fights for you because you asked, and nobody ever had.'
 };
 
 const JOIN_LINES = {
@@ -7726,11 +7731,26 @@ const STORY_BEATS = { region: {}, area: {}, zone: {}, captain: {}, champ: {}, el
   vesper: {}, letter: {}, note: {}, item: {} };
 
 // The opening (bible 8.1): the region card before zone 1, over the lamp on its hook. Text only until the owner vets the stills pack
-// (bible 10.3). Hesketh's talk and the hero lines come with story-opening.
+// (bible 10.3).
 STORY_BEATS.region.hollow = { title: 'Chapter 1: The Hollow', lines: [
   'Ten years ago every lamp went out. The one over your door never did.',
   'This winter the last lamp in sight went out. Tonight the dark came for yours.',
   'Your village hid. You took the lamp and ran, so the dark would follow you.'
+] };
+
+// Old Hesketh, before the first fight (bible 8.1, story-opening). Two NPC scenes at the Hollow's door (area 0), played right after the
+// region card: the fire, then the talk. The camp fire later in the Pine Grove is a bigger one, so the guide's toast just asks for wood.
+STORY_BEATS.npc.heskethFire = { at: 'area:0', who: 'Old Hesketh', lines: [
+  'On the road your lamp gutters. The dark is close.',
+  '"Wood first. Then we talk." You kindle his dead fire.',
+  'It catches from your lamp. Yours burns steady.',
+  '"Every road needs a place to come back to."'
+] };
+STORY_BEATS.npc.heskethTalk = { at: 'area:0', who: 'What Hesketh knows', lines: [
+  '"Ten years I\'ve lit dead lamps. Not one took my fire."',
+  '"I could have lit them from hers. I couldn\'t go up."',
+  '"Those things aren\'t animals. They climb out of the ground."',
+  '"Your village is down there. Go back and shut the holes."'
 ] };
 
 // ---- Chapter 1 (bible 8.1 and 5): 7 areas of 5 zones, a Champion at each area's end, the Fenmother at zone 35 ----
@@ -7857,7 +7877,7 @@ Object.assign(STORY_BEATS.champ, {
     page: { title: 'The Barrow Lamp', text: 'Maren kept a lamp in the barrow for ten winters, alone. It wore down to a bead. When she held it up beside yours, it steadied. A light in company holds, and a light alone wears thin. The same small spiral is scratched on both lamps, and neither of you knows why.' },
     hearth: "Lamps like company. Fire's the same, only louder." },
   oracle: { zone: 25, name: 'The Veiled Oracle',
-    pre: ["Its veil moves. A hundred tired voices say: 'You're tired. Nobody is coming. Rest.'", { hero: 'oracleRest' }],
+    pre: ["Its veil moves. A hundred tired voices say: 'You're tired. Nobody is coming. Rest.'", { hero: 'refuseRest' }],
     post: ['The veil tears. Only a ring of teeth under it. The voices go quiet, one by one.',
       'Down the path, a row of candles catches again. Far off, the air turns colder.'],
     page: { title: 'The Offer', text: "The Oracle spoke to anyone still awake. A hundred tired voices said it together: you're tired, nobody is coming, rest. Morwen knew them for what they were: people who sat down and did not get up. You said no, and the voices went quiet, one by one. That is the dark's offer, and it comes when you are tired." },
@@ -7988,7 +8008,7 @@ STORY_BEATS.choice.hollowLantern = { prompt: "The Hollow's Great Lantern stands 
 ], def: 'hesketh', store: 'litFor', key: 'hollow' };
 
 // Hero lines (bible 4.6): the story hero's own words; the shared line `_` is for any other hero
-STORY_BEATS.hero.oracleRest = { wren: "You say, 'Not yet.'", tobin: "You say, 'I'll rest when the Hollow is lit.'", pip: "You say, 'Lovely offer. No.'",
+STORY_BEATS.hero.refuseRest = { wren: "You say, 'Not yet.'", tobin: "You say, 'I'll rest when the Hollow is lit.'", pip: "You say, 'Lovely offer. No.'",
   _: "You say, 'No. I'm not stopping here.'" };
 STORY_BEATS.hero.hollowLantern = { wren: "You say, 'There. Let it look. It'll find more than me.'", tobin: "You say, 'Keep it lit for them. Please.'",
   pip: "You say, 'There. Now it's everyone's problem.'", _: "You say, 'There. It's not just mine now.'" };
@@ -8866,7 +8886,7 @@ const NOTICES = [
 
   // ---- the camp, gathering and Hands ----
   { id: 'fire-lit', re: /^The fire catches\./, ch: 'log', why: 'the fire lights on the stage and the guide goes on' },
-  { id: 'hesketh', re: /^Old Hesketh's lamp has gone out\./, ch: 'pop', held: 'log', why: 'meeting Hesketh (the bell list while the guide speaks)' },
+  { id: 'hesketh', re: /^Old Hesketh's fire is cold\./, ch: 'pop', held: 'log', why: 'meeting Hesketh (the bell list while the guide speaks)' },
   { id: 'camp-open', re: /^Old Hesketh (has made camp|sets down his lamp)/, ch: 'bell' },
   { id: 'hands', re: /^Tam, Hesketh's nephew/, ch: 'bell' },
   { id: 'hands-small', re: /(applicants? (are|is) waiting at the Tavern|is back from the .*|The pack waits by the Storehouse\.$)/, site: /backText\(e\)/, ch: 'log' },
@@ -9481,7 +9501,7 @@ const SCROLLS = {
   hollow: { id: 'hollow', name: 'Hollow Scroll', tier: 2, col: '#B58CFF', from: 'zone bosses 5 to 12' },
   barrow: { id: 'barrow', name: 'Barrow Scroll', tier: 3, col: '#FFB36B', from: 'zone bosses 13 to 20' },
   roadlight: { id: 'roadlight', name: 'Roadlight Scroll', tier: 4, col: '#F2C14E', from: 'zone bosses 21 and on' },
-  mother: { id: 'mother', name: 'Mother Scroll', tier: 5, col: '#BFF7E8', from: 'the Fenmother and other region bosses' }
+  mother: { id: 'mother', name: 'Mother Scroll', tier: 5, col: '#BFF7E8', from: 'the Hollow\u2019s Elder and other region bosses' }
 };
 const SCROLL_ORDER = ['moss', 'hollow', 'barrow', 'roadlight', 'mother'];
 // a zone boss's Scroll by zone; a region boss (the Fenmother, zone 35) always drops the Mother Scroll
@@ -9866,7 +9886,7 @@ const starSkyOf = id => (STARS[id] ? STAR_SKY.find(c => c.id === STARS[id].sky) 
 const starFromText = s => {
   if (!s) return '';
   const f = s.from, cls = b => `${typeof CLASS_DEFS === 'object' && CLASS_DEFS[b] ? CLASS_DEFS[b].name : b}'s Proving`;
-  if (f.zone) return f.zone === 35 ? 'The Fenmother (zone 35)' : `The zone ${f.zone} boss`;
+  if (f.zone) return f.zone === 35 ? 'The Hollow\u2019s Elder (zone 35)' : `The zone ${f.zone} boss`;
   if (f.elite) return `Elites, from zone ${f.elite}`;
   if (f.deep) return `Deepwell floor ${f.deep}`;
   if (f.proving) return f.pass > 1 ? `A second win in the ${cls(f.proving)}` : `The ${cls(f.proving)}`;
@@ -11665,7 +11685,7 @@ let clsEvo, clsProven, clsStrength, clsGate, provingInfo, provingStart, evoChoic
     const prove = !!(c.evo && !C().proven[c.evo]);   // a granted path proves itself (3.7)
     const need = prove || (!c.evo && !anyWon());
     return { id: tr.id, trial: tr, n: rec.n || 0, won: !!rec.won, best: rec.best || 0, prove, gate: g, open: g.open && need, choice: evoChoice(),
-      why: !need ? '' : !g.bossOk ? 'Beat the Fenmother first.' : !g.lvOk ? `Reach level ${g.lv} first.` : '' };
+      why: !need ? '' : !g.bossOk ? 'Beat the Hollow’s Elder first.' : !g.lvOk ? `Reach level ${g.lv} first.` : '' };
   };
   provingStart = opts => {
     const p = provingInfo();
@@ -12848,7 +12868,7 @@ let hearthCold, hearthLit, hearthScene, hearthCan, hearthLight, hearthPlotOpen, 
     S.camp.open = true;
     emit('campOpen', { quiet: false });
     emit('hearthLit', { quiet: false });
-    toast('The fire catches. Hesketh: "Every road needs a place to come back to." See the Camp tab.', 'good', { ic: ['flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }] }, 'high');
+    toast('The fire catches. Camp is open. See the Camp tab.', 'good', { ic: ['flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }] }, 'high');
     if (S.activity !== 'fight') setActivity('fight');
     save();
     return true;
@@ -14784,7 +14804,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
   storyClaim = id => { if (cur && cur.id === id) claimed = true; };
   storyClose = (id, how) => {
     if (!cur || cur.id !== id) return;
-    const sc = cur; cur = null; claimed = false;
+    const sc = cur, shown = claimed; cur = null; claimed = false;
     const st = ST();
     const auto = how === 'auto';   // nobody touched it: filed as a page to catch up on, and no `ends` entry (bible 12a)
     for (const c of sc.cards) if (c.choice) storyChoose(c.choice);   // skipped or left alone: the default
@@ -14792,6 +14812,8 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
     if (sc.page) mark('j:' + sc.page, auto);
     if (auto) for (const k of [sc.id, sc.page && 'j:' + sc.page]) if (k && st.seen[k] > 0) st.seen[k] = -st.seen[k];   // late, unread (a caption's joined id is no key)
     emit('storyEnd', { id, how });
+    // the next scene of the same stop plays now, even while the guide holds the game (no tick runs to pump it), once the UI has closed this one
+    if (shown && queue.length && typeof setTimeout === 'function') setTimeout(() => { if (!cur && storyOn() && live() && inGap()) pump(); }, 0);
   };
   // a caption for a zone the hero has left is dropped (it belonged to that moment)
   const stale = sc => sc.kind === 'caption' && sc.zone && sc.zone !== S.zone;
@@ -14843,9 +14865,10 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
     const ids = [], lines = [];
     if (z === ai * n + 1 && D('area')[ai] && !has('a:' + ai)) { mark('a:' + ai); ids.push('a:' + ai); lines.push(D('area')[ai]); }
     if (D('zone')[z] && foeIn(z) && !has('z:' + z)) { mark('z:' + z); ids.push('z:' + z); lines.push(D('zone')[z]); }
+    // an area's people talk first; the caption names the place and its monster just before the fight
+    if (z === ai * n + 1) for (const id of npcAt('area:' + ai)) if (!has('n:' + id) && npcCards(id).length) { mark('n:' + id); push(npcScene(id)); }
     if (ids.length) push(caption(ids, zoneName(z), lines, z));
     for (const id in D('voice')) if (D('voice')[id].zone === z && !has('v:' + id)) { mark('v:' + id); push(voiceScene(id)); }
-    if (z === ai * n + 1) for (const id of npcAt('area:' + ai)) if (!has('n:' + id) && npcCards(id).length) { mark('n:' + id); push(npcScene(id)); }
     for (const id in D('choice')) if (D('choice')[id].zone === z && !has('ch:' + id)) { mark('ch:' + id); push(choiceScene(id)); }
   }
   // the lead foe has spawned: a Captain's line (its Captain on screen), or the pre scene of a Champion or Elder
@@ -15337,7 +15360,7 @@ const ROSTER = {
   hob: {"name": "Hob Tarrow", "title": "the Icehouse Man", "rarity": "rare", "role": "tank", "circle": "hedgefolk", "route": {"type": "quest"}, "dt": "frost", "sst": "chill", "bio": "Hob cut ice in the Hollow and sold it east to Emberlea. On the night of the Fall he hid forty people in his icehouse. They came out cold, cross and alive."},
   beatrix: {"name": "Beatrix Fairweather", "title": "the Wandering Scholar", "rarity": "legendary", "role": "support", "circle": "hedgefolk", "route": {"type": "quest"}, "dt": "holy", "sst": "regen", "bio": "Beatrix wrote the book Pip taught herself fire from, then went east to learn if its last chapter was true. She tore that chapter out herself. It was true, and she has carried it through the ash ever since."},
   eskil: {"name": "Eskil Hauk", "title": "the Pass Scout", "rarity": "rare", "role": "striker", "circle": "dusk", "route": {"type": "progress"}, "dt": "poison", "sst": "venom", "bio": "Eskil scouted the pass with Rowan and Kestrel for the Dusk Company. He came down the mountain the winter Rowan didn’t, and he has waited by the cairn every storm since, to learn why.", "ranged": true},
-  brynja: {"name": "Brynja Berg", "title": "the Doorward", "rarity": "epic", "role": "tank", "circle": "reachfolk", "route": {"type": "quest"}, "dt": "fire", "sst": "burn", "bio": "Brynja stood in the Silent Village’s last warm doorway for three nights with a brazier and a door-bar. When the brazier finally went out, she carried it down the mountain. It was still warm."},
+  brynja: {"name": "Brynja Berg", "title": "the Doorward", "rarity": "epic", "role": "tank", "circle": "reachfolk", "route": {"type": "quest"}, "dt": "fire", "sst": "burn", "bio": "Brynja stood in the Silent Village’s last warm doorway for three nights with a brazier and a door-bar. The brazier was still warm when she reached the Rimewood. She keeps it lit."},
   inga: {"name": "Inga Fallow", "title": "the Stardigger", "rarity": "epic", "role": "caster", "circle": "dusk", "route": {"type": "quest"}, "dt": "frost", "sst": "chill", "bio": "Inga reads the Starscar’s craters the way Oriel reads the sky, from underneath. The Dusk Company paid her to find the shards before the dark did. She kept finding them."},
   ragna: {"name": "Ragna Vik", "title": "the Lichen-Witch", "rarity": "epic", "role": "caster", "circle": "reachfolk", "route": {"type": "token"}, "dt": "poison", "sst": "venom", "bio": "Ragna scrapes lichen off the Rimewood’s glass branches and boils it into things wolves hate. She talks to the snow. The snow, she says, listens better than people."},
   solveig: {"name": "Solveig Lund", "title": "the Sill-Candle", "rarity": "legendary", "role": "support", "circle": "reachfolk", "route": {"type": "quest"}, "dt": "fire", "sst": "regen", "bio": "For ten winters Solveig kept one candle lit in the Silent Village, for everyone in it, alone. She is quiet, practical and very hard to impress."},
@@ -15367,6 +15390,8 @@ function heroHasKit(id) {
 // 56c-unlocks (C9): permanent hero routes, boss-token pity and bounty Renown.
 // CORE FILE: no DOM or storage. Pickers call heroRouteInfo/heroUnlock; only complete solo kits can carry the lamp.
 // Reads never spend resources or add progress. Free routes are filed once a second; paid routes require one claim.
+// Story gate (story-opening, bible 4.4 and 4.5): a hero cannot unlock before the zone where their first scene plays (STORY_MEET).
+// A hero the save already owns (S.party.unlock.heroes) is kept. The gate only holds back new unlocks.
 // Save defaults under S.party.unlock: renown (existing), heroes {id:1}, quests {id:1}, tokens {id:{miss,won}},
 // milestones {id:timestamp}. No save-key change: missing maps default empty; starters stay unlocked.
 // API: heroHasKit/heroBio (56-roster), heroRouteInfo -> {state,unlocked,playable,ready,how,bio,cost},
@@ -15425,6 +15450,16 @@ const UNLOCK_TUNE = {
 
 };
 
+// Where each hero first appears: the first zone of the area in the bible 4.5 table (areas are 5 zones, 7 to a chapter), or zone 36
+// for "Ch1 end" (after the Fenmother). `ch` is the chapter, which the locked line uses without naming a place.
+const STORY_MEET = {
+  hesketh: [1, 1], hob: [1, 1], anselm: [11, 1], maren: [16, 1], morwen: [21, 1], grenna: [26, 1], bram: [31, 1], thessaly: [31, 1],
+  elowen: [36, 1], vesper: [36, 1],
+  loveday: [36, 2], aldric: [41, 2], cass: [51, 2],
+  caedmon: [71, 3], davy: [76, 3], isolde: [81, 3], beatrix: [81, 3], linnet: [86, 3], ferrin: [91, 3], oswin: [101, 3],
+  kestrel: [106, 4], eskil: [106, 4], oriel: [116, 4], inga: [116, 4], solveig: [126, 4], brynja: [131, 4], ragna: [131, 4], asta: [136, 4],
+  corvin: [156, 5]
+};
 let addRenown, renown, caedmonRenown, heroRouteInfo, heroUnlocked, heroCanPlay, heroUnlock, heroPick,
   tokenChance, unlockTokenRoll, heroProbe;
 {
@@ -15447,7 +15482,7 @@ let addRenown, renown, caedmonRenown, heroRouteInfo, heroUnlocked, heroCanPlay, 
     const gold = goldOf(q), rn = q.spendRenown ? (q.renown || 0) : 0;
     const price = [gold ? `${fmt(gold)} gold` : '', ...mats.map(l => matText(...l)), rn ? `${rn} Renown` : ''].filter(Boolean).join(' and ');
     return { pending: !!q.pendingFee, gated: !!open, ready: !q.pendingFee && !!open && S.gold >= gold && mats.every(([k, t, n]) => have(k, t) >= n) && renown() >= rn,
-      how: how + (q.pendingFee ? ` The ${q.pendingFee} fee is still being designed.` : price ? ` Bring ${price}.` : ''), cost: { gold, mats, renown: rn }, paid: !!(gold || mats.length || rn) };
+      how: how + (q.pendingFee ? ' They are not ready to join yet.' : price ? ` Bring ${price}.` : ''), cost: { gold, mats, renown: rn }, paid: !!(gold || mats.length || rn) };
   };
   const free = (ready, how) => ({ ready: !!ready, how, cost: { gold: 0, mats: [], renown: 0 }, paid: false });
   const fallback = q => (q.fallback && S.maxZone >= q.fallback) || (q.fallbackBoss && S.maxZone > q.fallbackBoss);
@@ -15469,7 +15504,9 @@ let addRenown, renown, caedmonRenown, heroRouteInfo, heroUnlocked, heroCanPlay, 
     if (id === 'asta') return claim(got(q.freeWith) ? { ...q, pendingFee: null } : q, `Reach the Last Descent (zone ${q.from}). Free if Solveig is at camp.`);
     return free(false, ROSTER[id].how || 'More of this route comes later.');
   };
-  const route = id => {
+  const metScene = id => !STORY_MEET[id] || (S.maxZone || 1) >= STORY_MEET[id][0];
+  const meetLine = id => { const m = STORY_MEET[id]; return id === 'hesketh' ? 'You meet him on the road.' : m && m[1] === 1 && m[0] < 36 ? 'You meet them in the Hollow.' : 'You meet them further down the road.'; };
+  const route0 = id => {
     const r = heroKnown(id) && ROSTER[id]; if (!r) return free(false, 'Unknown hero.');
     if (r.route.type === 'starter') return free(true, 'Unlocked. Pick up the lamp.');
     if (T.designed[id]) return designed(id);
@@ -15479,12 +15516,18 @@ let addRenown, renown, caedmonRenown, heroRouteInfo, heroUnlocked, heroCanPlay, 
     if (id === 'aldric') return claim(T.aldric, `Earn ${T.aldric.renown} Renown on the bounty board and reach zone ${T.aldric.zone}.`, renown() >= T.aldric.renown && S.maxZone >= T.aldric.zone);
     if (id === 'vesper') return free(renown() >= T.vesperRenown, `Earn ${T.vesperRenown} Renown on the bounty board.`);
     if (id === 'caedmon') return free(caedmonRenown() >= T.caedmon.renown && S.maxZone > T.caedmon.zone, `Beat the zone ${T.caedmon.zone} boss and earn ${T.caedmon.renown} Renown. Each world boss kill counts as ${T.wyrmRenown} Renown.`);
-    if (id === 'anselm') return { ...free(false, 'Anselm’s route was a Tavern visit. His solo unlock route is still being designed.'), pending: true, gated: S.maxZone >= T.visitors.anselm.from };
+    if (id === 'anselm') return { ...free(false, 'Anselm is not ready to join yet.'), pending: true, gated: S.maxZone >= T.visitors.anselm.from };
     if (T.tokens[id]) { const q = T.tokens[id]; return free(token(id).won, `Win a ${q.name} from ${q.zoneType != null ? ZONES[q.zoneType] + ' bosses' : 'zone bosses'} from zone ${q.from}. You will find one within ${q.pity} eligible wins.`); }
     if (id === 'thessaly') return free(bestiary(T.thessaly.type, T.thessaly.tier), `Fill the Marsh Wraith bestiary page to tier ${T.thessaly.tier}.`);
     if (id === 'corvin') return free((S.stats.bosses || 0) >= T.corvin.bosses && TYPES.every(t => bestiary(t.key, T.corvin.tier)), `Kingslayer: beat ${T.corvin.bosses} zone bosses and fill every bestiary page to tier ${T.corvin.tier}.`);
     if (id === 'oriel') return free((S.craft.starChart || 0) > 0, 'Craft a Star Chart at the Enchanter’s Table.');
     return free(false, r.how);
+  };
+  // A hero whose first scene has not played cannot unlock yet (a hero the save owns is not asked).
+  const route = id => {
+    const r = route0(id);
+    if (got(id) || metScene(id)) return r;
+    return { ...r, ready: false, paid: false, pending: false, gated: false, how: meetLine(id), story: true };
   };
 
   renown = () => U().renown;
@@ -15499,7 +15542,7 @@ let addRenown, renown, caedmonRenown, heroRouteInfo, heroUnlocked, heroCanPlay, 
   heroRouteInfo = id => {
     if (!heroKnown(id)) return null;
     const r = route(id), unlocked = heroUnlocked(id), kit = heroHasKit(id);
-    return { id, ...r, unlocked, playable: unlocked && kit, state: unlocked ? (kit ? 'unlocked' : 'coming-soon') : r.pending && r.gated ? 'coming-soon' : 'locked', bio: heroBio(id) };
+    return { id, ...r, unlocked, playable: unlocked && kit, state: unlocked ? (kit ? 'unlocked' : 'coming-soon') : r.pending && r.gated ? 'coming-soon' : 'locked', bio: unlocked ? heroBio(id) : '', meet: ROSTER[id].route.type === 'starter' ? '' : meetLine(id) };
   };
   heroUnlock = id => {
     if (!heroKnown(id)) return false;
@@ -30205,7 +30248,7 @@ let campPaintFire = null;
   // ---- words: the opening card (the stage hint is 70-ui's: 'Tap to work faster') ----
   const opening = () => {
     if (!cold() || lit()) return;
-    toast('Old Hesketh\'s lamp has gone out. "Wood first. Then we talk."', 'good', { mat: ['wood', 1] }, 'high');
+    toast('Old Hesketh\'s fire is cold. Bring 8 pine logs and light it.', 'good', { mat: ['wood', 1] }, 'high');
   };
   // The hero starts on the road; Hesketh speaks when it first walks to the grove (after the first boss)
   on('activity', ({ activity } = {}) => { if (activity === 'gather') opening(); });
@@ -35166,9 +35209,9 @@ var classEvoUI;
         r.append(btn('mini go cl-go', 'Choose your path', () => { closeSheet(); openChoice(); }));
         out.push(r);
       } else {
-        const r = row('Evolution', 'Locked', `Two paths open after the Fenmother: ${names}. The choice is for good.`, 'cl-evo off');
+        const r = row('Evolution', 'Locked', `Two paths open after the Hollow’s Elder: ${names}. The choice is for good.`, 'cl-evo off');
         const chips = el('div', 'cl-chips');
-        chips.append(chip('Beat the Fenmother', info.gate.bossOk), chip(`Level ${info.gate.lv}`, info.gate.lvOk));
+        chips.append(chip('Beat the Hollow’s Elder', info.gate.bossOk), chip(`Level ${info.gate.lv}`, info.gate.lvOk));
         r.append(chips);
         out.push(r);
         if (p && p.open) out.push(provingBox(p));
@@ -39961,9 +40004,9 @@ var soloIconURL = () => '';
         const b = el('button', 'sp-card'); b.type = 'button'; b.dataset.hero = k;
         const cv = el('canvas', 'sp-fig px'); cv.width = 56; cv.height = 80;
         const nm = el('b', null, R.name), sub = el('small', null, h ? `${h.role} · ${h.weapon}` : R.title);
-        const lv = el('span', 'sp-lv'), route = el('small'), bio = el('small', null, heroBio(k));
+        const lv = el('span', 'sp-lv'), route = el('small'), bio = el('small');
         b.append(cv, nm, sub, lv, route, bio);
-        b._lv = lv; b._cv = cv; b._route = route;
+        b._lv = lv; b._cv = cv; b._route = route; b._bio = bio;
         b.addEventListener('click', () => press(k));
         row.append(b);
         return b;
@@ -40003,6 +40046,7 @@ var soloIconURL = () => '';
           b.dataset.armed = armedK === k ? '1' : '';
           putText(b._route, info.unlocked ? (info.playable ? 'Unlocked' : 'Route complete. The solo kit comes later.') : info.how);
           putText(b._lv, lvText(k, info, lv, on_));
+          putText(b._bio, info.bio); b._bio.hidden = !info.bio;
         }
       };
       sec._up();
@@ -41585,9 +41629,9 @@ var classUI;
       top.append(el('span', 'pip r-' + (R.role || 'striker'), H ? H.role : ROLE_STATS[R.role].n));
       txt.append(top);
       txt.append(el('div', 'cl-wt', R.title.replace(/^the /, 'The ') + (H ? ` · ${H.range} · ${H.weapon}` : '')));
-      if (info.bio) txt.append(el('div', 'how', info.bio));
+      const bio = el('div', 'how'); txt.append(bio);   // starters and unlocked heroes only: a locked hero shows who you meet them as, not their story
       const state = el('b', 'sp-lv'), route = el('div', 'how'); txt.append(state, route);
-      b._state = state; b._route = route;
+      b._state = state; b._route = route; b._bio = bio;
       if (H && H.ab) { const ab = el('div', 'ab'); ab.append(el('em', null, H.ab.name + ': '), document.createTextNode(H.ab.desc)); txt.append(ab); }
       b.append(fig, txt);
       b.addEventListener('click', () => select(k));
@@ -41619,8 +41663,9 @@ var classUI;
         const on_ = b.dataset.cls === k, state = heroRouteInfo(b.dataset.hero);
         b.dataset.state = state.state;
         // Cards can be inspected; the Begin/Unlock button enforces whether this hero can be chosen.
+        putText(b._bio, state.bio); b._bio.hidden = !state.bio;
         putText(b._state, state.state === 'coming-soon' ? 'Coming soon' : state.unlocked ? 'Unlocked' : 'Locked');
-        putText(b._route, state.unlocked ? (state.playable ? 'Ready to carry the lamp.' : 'Route complete. This hero’s art and solo kit come later.') : state.how);
+        putText(b._route, state.unlocked ? (state.playable ? 'Ready to carry the lamp.' : 'Route complete. This hero’s art and solo kit come later.') : state.ready ? state.how : state.meet);   // a new game spoils nothing: who, not where or how much
         b.setAttribute('aria-checked', String(on_)); b.setAttribute('aria-pressed', String(on_)); b.tabIndex = on_ ? 0 : -1;
       }
     }
@@ -41695,13 +41740,13 @@ var classUI;
           ? 'You keep your Blessing and Rally Hymn. New Lightkeeper powers come in a later update.'
           : `You play the ${d.name}'s kit for now. The ${info.evoName}'s own powers come in a later update.`;
         const r = row(`Path: ${info.evoName}`, info.proven ? info.evoTitle : 'Granted', txt, 'cl-evo');
-        if (!info.proven) r.append(el('p', 'cl-note', `The title ${info.evoTitle} waits for your Proving, after the Fenmother.`));
+        if (!info.proven) r.append(el('p', 'cl-note', `The title ${info.evoTitle} waits for your Proving, after the Hollow’s Elder.`));
         out.push(r);
       } else {
         const names = info.paths.map(x => `${x.name} (${x.kind})`).join(' or ');
-        const r = row('Evolution', 'Locked', `Two paths open after the Fenmother: ${names}. The choice is for good.`, 'cl-evo off');
+        const r = row('Evolution', 'Locked', `Two paths open after the Hollow’s Elder: ${names}. The choice is for good.`, 'cl-evo off');
         const chips = el('div', 'cl-chips');
-        chips.append(chip('Beat the Fenmother', info.gate.bossOk), chip(`Level ${info.gate.lv}`, info.gate.lvOk));
+        chips.append(chip('Beat the Hollow’s Elder', info.gate.bossOk), chip(`Level ${info.gate.lv}`, info.gate.lvOk));
         r.append(chips);
         if (info.gate.open) r.append(el('p', 'cl-note', 'The Proving comes in a later update.'));
         out.push(r);
