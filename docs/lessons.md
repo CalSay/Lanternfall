@@ -78,6 +78,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 
 ## Process and Autopilot
 
+- Before tuning a system (a curve, a price, a cap), say what it is for and check it still does that job; if not, it becomes a design card. Why: the pacing report tuned the hero XP curve without asking what hero level was for, and level turned out to be mostly a cap on Training (Cal, 2026-10-06). (hero-progression review, 2026-10-06)
 - Add your lesson line in the card's own PR here (`docs/lessons.md`), not in the project folder. Why: the permission check blocked reads and writes in `/mnt/project-files` after merge in several threads, and the line was lost. Never work around the check. (lessons setup, 2026-10-06)
 - A report that recommends a `judge`-gate change (economy targets, pacing curve) runs the red team and the Opus judge itself and records both. Why: Codex P1 on PR #52. (xp-gold-pacing-report, 2026-10-06)
 - Split anything outside the card's files into a new card instead of building it on the spot (pre-leave notice, Boss-ready gate and the `--long` run were each split off). (away-clarity, first-minute-flow, f-health)
