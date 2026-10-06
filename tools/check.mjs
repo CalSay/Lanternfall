@@ -9021,7 +9021,7 @@ if (section('story-systems-hollow')) try {
 
 if (section('bounties-anywhere')) try {
   const g = loadCore({ seed: 9301 }), E = x => g.eval(x);
-  E('S.maxZone = 8; S.bounties.slots[0] = { k: "forge", need: 2, have: 1, t: 1, z: 1, rew: "gold", rewN: 30, wait: 0, rr: 0 }; globalThis.__ready = []; on("bountyReady", p => __ready.push(p))');
+  E('S.maxZone = 8; S.bounties.slots[1] = { k: "crit", need: 99, have: 0, rew: "gold", rewN: 30, wait: 0, rr: 0 }; S.bounties.slots[2] = { k: "crit", need: 99, have: 0, rew: "gold", rewN: 30, wait: 0, rr: 0 }; S.bounties.slots[0] = { k: "forge", need: 2, have: 1, t: 1, z: 1, rew: "gold", rewN: 30, wait: 0, rr: 0 }; globalThis.__ready = []; on("bountyReady", p => __ready.push(p))');
   E('emit("itemAdded", { item: { id: 9001, slot: "weapon", t: 1, r: "common", plus: 0 } })');
   assert(E('__ready.length') === 1 && E('__ready[0].i') === 0 && E('S.bounties.slots[0].have') === 2, 'bounties-anywhere: bountyReady fires once, when a bounty reaches its goal');
   E('emit("itemAdded", { item: { id: 9002, slot: "weapon", t: 1, r: "common", plus: 0 } })');
