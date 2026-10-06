@@ -85,6 +85,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Path guard: PRs touching online files, the save-key line or `netlify.toml` need the `cal-approved` label, which only Cal applies. (f-ci)
 - Run the `--long` health run only on 3 or more cores (about 2.5 min, 7 min CPU). It ignores `--only`, known P2. (f-health-long, 2026-10-06)
 
+- Story cards stack in the first minute (three before the first fight on a fresh save) and their count varies by timing: a proof route uses `tap-if "Skip"`, never a fixed number of taps. Predicted: routes replay stable; measured: one fixed-skip route failed 1 run in 3 locally, `tap-if` passed 5 of 5. (sys-proof-ci, 2026-10-06)
 ## Reviews and Codex
 
 - "@codex review" must be commented by hand after opening the PR; auto review does not fire. Why: seen on fix-bounty-kind. Codex drips one P1 per round, so close the whole class of a finding at once. (fix-bounty-kind, 2026-10-05)

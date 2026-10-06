@@ -19,8 +19,12 @@ session folder (`--session <dir>`, default `.playtest/`, ignored by git), so eac
 | `away <hours>` | Close the game, come back that many hours later. The away report and the "welcome back" state appear. |
 | `state` | A short save summary: hero, level, zone, gold, skill levels, game time played. |
 | `batch` | Reads one command per line from stdin and runs them in one browser launch (quicker). |
+| `tap-if "<label>"` | Tap it when it is on screen, carry on when it is not. For things that come and go, such as story cards. |
+| `expect "<text or css>"` | Exit 1 if that text (or a CSS selector such as `#stage`) is not visible on screen now. Prints `EXPECT PASS` or `EXPECT FAIL`. In `batch` the run carries on after a miss, so one run reports every miss. |
+| `shot <name>` | Screenshot named `<name>.png` in the shots folder. |
+| `burst <name>` | Six frames over 1.5 s of game time: `<name>-1.png` to `<name>-6.png`. For motion, parry rings and flashes. |
 
-Options: `--landscape` (740x360; default is portrait 360x740), `--quiet` (tap and wait print one line, not a screen),
+Options: `--seed <n>` (seeds the game's random numbers for the whole run, so a route plays the same each time), `--shots <dir>` (where shots go; default `<session>/shots`), `--landscape` (740x360; default is portrait 360x740), `--quiet` (tap and wait print one line, not a screen),
 `--json`, `--html <file>` (another build).
 
 Each call reopens the game from the saved state, so an open menu, sheet or dialog is closed again between calls (the save, the tab and the game clock carry over). To tap through a menu, use `batch` (several commands in one launch), e.g. `printf 'tap "Gather"\ntap "Mine at the Copper Vein"\nstate\n' | node tools/playtest.mjs batch`.
@@ -33,6 +37,29 @@ Cost: `wait` runs the real game frames on a fake clock, about 15 real seconds pe
 A tap lands where a finger would, so a button covered by a dialog is not tappable until the dialog is closed.
 Fights are turn fights: nothing happens until you press Attack or an ability. A fixture save may start with guide
 tips on screen; they pause the game until you act on them, as they would for a player.
+
+## Proof routes (the Bar, replayed by CI)
+
+A card that changes `src/` commits `docs/proof/<card-id>/route.txt`: a `batch` script, one command per line, `#` for
+comments. Start it with `new fresh` (or a fixture), take `shot`s, and put an `expect` after each thing the card promises.
+An optional first line `# seed: <n>` sets the seed (default 1). Never commit images.
+
+```
+# seed: 1
+new fresh
+tap "Begin as Wren"
+wait 3
+expect "Chapter 1"
+shot chapter-card
+```
+
+One command on your own branch, no CI needed: `node tools/build.mjs && node tools/ci/eyes.mjs --local` (add the PR labels as the next argument, e.g. `no-visible-change`); it writes `eyes-out/summary.md` for the PR comment. Single route: `grep -v '^#' docs/proof/<card-id>/route.txt | node tools/playtest.mjs batch --seed 1 --shots /tmp/shots`.
+Beware the first minute: story cards open before the first fight; use `tap-if "Skip"` to get past them (it does not fail when a card did not come up).
+
+On every PR, CI's `eyes` job (`tools/ci/eyes.mjs`) replays each changed `route.txt` on the merge build at 360x740 and
+740x360, uploads the shots as the `eyes-out` artifact, and posts or updates one PR comment listing each `expect` as
+pass or fail. A failed `expect` fails the job. A PR that changes `src/` with no changed `route.txt` fails, unless it has
+the `no-visible-change` label (pure refactors only). The reviewer and Codex open the artifact and score Feel.
 
 ## Personas
 
