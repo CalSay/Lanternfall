@@ -1392,6 +1392,48 @@ if (section('onboarding')) try {
   assert(!errs.length, 'no onboarding errors' + (errs.length ? ': ' + errs[0] : ''));
 } catch (e) { fail('onboarding crashed: ' + (e.stack || e)); }
 
+// ---- first-use lines (ap-first-use-hints): each system that opens after the first fight explains itself once ----
+if (section('first-use lines (ap-first-use-hints)')) try {
+  const g = loadCore({ seed: 7 }), E = s => g.eval(s);
+  const jsd = path.join(ROOT, 'src', 'js'), rd = f => fs.readFileSync(path.join(jsd, f), 'utf8');
+  const ids = JSON.parse(E('JSON.stringify(FEATURES.map(f => f.id))')), lines = JSON.parse(E('JSON.stringify(FIRST_USE)'));
+  const zero = ids.filter(id => !lines[id] || !String(lines[id].text || '').trim());
+  const stray = Object.keys(lines).filter(id => !ids.includes(id));
+  const long = Object.entries(lines).filter(([, u]) => u.text.length > 90 || /\n/.test(u.text) || (u.text.match(/[.!?](\s|$)/g) || []).length > 3).map(([id]) => id);
+  assert(!zero.length && !stray.length && !long.length, `every system that opens after the first fight has exactly one first-use line (one table row each; short, plain)${zero.length ? '; 0 lines: ' + zero.join(', ') : ''}${stray.length ? '; for no system: ' + stray.join(', ') : ''}${long.length ? '; too long: ' + long.join(', ') : ''}`);
+  // 'notice' and 'guide' lines live in their own source; the unlock notice of a 'hint' system only says where it is (never repeats the line)
+  const ob = rd('75-onboard-ui.js'), src = { notice: { codex: ob, stars: rd('75-stars-ui.js') } };
+  const dup = [], twice = [];
+  for (const id of ids) {
+    const u = lines[id], via = u && u.via || 'hint';
+    if (via === 'notice' && !(src.notice[id] || '').includes(u.text)) dup.push(`${id}: its notice does not carry the line`);
+    if (via === 'guide' && !/text: FIRST_USE\.nextup\.text/.test(ob)) dup.push(`${id}: the guide step does not read the line`);
+    if (via === 'hint') { const m = new RegExp(`^\\s*${id}:\\s*(.*)$`, 'm').exec(ob.slice(ob.indexOf('const OPEN_TXT = {'), ob.indexOf('const TAB_FEATURE'))); if (m && m[1].includes(u.text)) twice.push(id); }
+  }
+  const nextupToast = /OPEN_TXT = \{[^}]*\n\s*nextup:/.test(ob);
+  assert(!dup.length && !twice.length && !nextupToast, `one unlock gives one notice and one line: toasts say where, lines say what${dup.length ? '; ' + dup.join('; ') : ''}${twice.length ? '; the toast repeats the line for ' + twice.join(', ') : ''}${nextupToast ? '; Next Up still has a toast on top of its guide step' : ''}`);
+  // behaviour: a hint line shows once, on its own view, while tips are on, and never as a guide step
+  E('soloPick("tobin")');
+  const use = (tab, view, feature) => JSON.parse(E(`JSON.stringify(onboardUse({ tab: ${JSON.stringify(tab)}, view: ${JSON.stringify(view)}, feature: ${JSON.stringify(feature)} }))`));
+  assert(use('adv', 'bounties') === null, 'no line for a system not yet open');
+  E('onboardReveal("bounties"); onboardReveal("gather"); onboardReveal("party")');
+  const u1 = use('adv', 'bounties');
+  assert(u1 && u1.id === 'use:bounties' && u1.text === lines.bounties.text, 'opening the Bounties view gives its line');
+  assert(use('adv', 'bestiary') === null && use('', '') === null && use('party', 'training') === null, 'only on its own view, never on the game view or another view');
+  assert((u => u && u.id === 'use:gather')(use('gat', 'wood', 'gather')), 'any view of the system gives its line (Wood opens Gather)');
+  let steps = 0; g.fn.on('onboardStep', () => steps++);
+  E('onboardUseDone("use:bounties")');
+  assert(use('adv', 'bounties') === null && steps === 0, 'read once: it does not show again, and no guide-step event fires');
+  assert(E('onboardStep().id') === 'attack' && E('!GUIDE_STEPS.some(s => /^use:/.test(s.id))'), 'the guide steps are unchanged: a line is never one of them');
+  E('onboardTips(false)');
+  assert(use('gather', 'mine') === null, 'Skip tips silences the lines');
+  E('onboardTips(true); S.onboard.got.party = Math.round(S.onboard.t) - 7300');
+  assert(use('party', 'team') === null, 'a system unlocked over 2 hours of play ago stays quiet (old saves)');
+  const kept = JSON.parse(E('JSON.stringify(Object.keys(S.onboard.done))'));
+  assert(kept.includes('use:bounties') && E('typeof S.onboard.done === "object"'), 'the line is remembered in the existing onboard.done map (no new save field)');
+  assert(!g.errors.length, 'no first-use errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
+} catch (e) { fail('first-use lines crashed: ' + (e.stack || e)); }
+
 // ---- HINT1: the guide's hint stays put (docs/design/onboarding.md, "one hint at a time") ----
 // The hint used to re-read its target's pixel position and re-place itself every 250ms, so it
 // jumped around whenever the stage moved under it. It must now (a) never recompute a placement on
