@@ -2373,22 +2373,25 @@ function storyProblems(B, ctx) {
   if (P.length) return P;
   for (const [id, r] of Object.entries(B.region)) { if (!ctx.regions.includes(id)) P.push(`region ${id}: not a region`); if (!str(r.title, L.title)) P.push(`region ${id}: title`); lines(`region ${id}`, r.lines, 3, 3, L.caption); }
   for (const [i, t] of Object.entries(B.area)) if (!(+i >= 0 && +i <= 34) || !str(t, L.caption)) P.push(`area ${i}: an index 0 to 34 and a line under ${L.caption} characters`);
+  // A zone line or Captain line is written ahead of its monster (it stays silent until ZONE_FOES has the zone, and the Captain until
+  // ZONE_FOES[z].captain), so the roster (docs/design/enemies-c22-hollow-final.md) is what it must match. Zone 31's Lantern Eater shares
+  // the world raid's name (bible 14): its line describes it without the name and its Captain title is "Lightbane".
+  const rost = ctx.roster || {};
   for (const [z, t] of Object.entries(B.zone)) {
-    const f = ctx.foes[z];
-    if (!f) P.push(`zone ${z}: no monster in the game (ZONE_FOES), so no line yet`);
+    const f = ctx.foes[z] || (rost[z] && rost[z].foe);
+    if (!f) P.push(`zone ${z}: no monster in the roster or the game, so no line`);
+    else if (+z === 31) { if (!str(t, L.caption) || /Lantern Eater/i.test(t)) P.push(`zone 31: a line under ${L.caption} characters that does not use the name Lantern Eater (bible 14)`); }
     else if (!str(t, L.caption) || !t.includes(f)) P.push(`zone ${z}: a line under ${L.caption} characters that names ${f}`);
   }
-  for (const [z, c] of Object.entries(B.captain)) { if (!ctx.foes[z]) P.push(`captain ${z}: no monster in the game (ZONE_FOES), so no line yet`); if (!str(c.title, L.title) || !str(c.line, L.captain)) P.push(`captain ${z}: a title and a line under ${L.captain} characters`); }
+  for (const [z, c] of Object.entries(B.captain)) { if (!ctx.foes[z] && !rost[z]) P.push(`captain ${z}: no monster in the roster or the game, so no line`); if (!str(c.title, L.title) || !str(c.line, L.captain)) P.push(`captain ${z}: a title and a line under ${L.captain} characters`); }
   const heroOk = id => !id || !!B.hero[id];
   for (const [id, c] of Object.entries(B.champ)) {
     if (!(c.zone >= 1 && c.zone <= 175)) P.push(`champion ${id}: a zone`);
-    if (!ctx.enc.champ[id]) P.push(`champion ${id}: its encounter is not in the game (storyEncounter), so no scene yet`);
     lines(`champion ${id} pre`, c.pre, 1, L.champLines, L.line); lines(`champion ${id} post`, c.post, 1, L.champLines, L.line);
     page(`champion ${id}`, c.page); if (!str(c.hearth, L.speech)) P.push(`champion ${id}: a camp line under ${L.speech} characters`);
   }
   for (const [id, e] of Object.entries(B.elder)) {
     if (!(e.zone >= 1 && e.zone <= 175)) P.push(`elder ${id}: a zone`);
-    if (!ctx.enc.elder[id]) P.push(`elder ${id}: its encounter is not in the game (storyEncounter), so no scene yet`);
     lines(`elder ${id} pre`, e.pre, 3, L.elderPre, L.line); lines(`elder ${id} post`, e.post, L.elderPost, L.elderPost, L.line);
     if (e.after) lines(`elder ${id} after`, e.after, 0, 8, L.line);
     if (!heroOk(e.hero)) P.push(`elder ${id}: hero line ${e.hero} is not defined`);
@@ -2415,16 +2418,29 @@ function storyProblems(B, ctx) {
   for (const [id, v] of Object.entries(B.vesper)) if (!B.elder[id] || !Array.isArray(v) || !v.length || !v.every(l => str(l, L.speech))) P.push(`vesper ${id}: lines under ${L.speech} characters for a real Elder`);
   for (const slot of ['letter', 'note']) for (const [id, x] of Object.entries(B[slot])) page(`${slot} ${id}`, x);
   for (const [id, t] of Object.entries(B.item)) if (!str(typeof t === 'string' ? t : t && t.line, 70) || (typeof t === 'object' && !(t.area >= 0 && t.area <= 34))) P.push(`item ${id}: one line under 70 characters (an object entry also names its area)`);
-  // the budget of an area: at most areaLines short lines, at most areaTaps cards that wait for a tap (Champion pre and post, an NPC at the area's door)
+  // C28 4.2's budget of an area counts beats, not lines: the area title, each zone line, each Captain line, the Champion pre, the Champion
+  // post and each NPC scene (at the area's door or on its Champion's post). At most areaLines (15) beats, at most 2 NPC scenes, and at most
+  // areaTaps (2) pauses, where a pause is a scene that waits for a tap before play goes on: the Champion pre, the Champion post and each
+  // `area:` NPC scene (a champPost NPC rides the Champion's post, so it adds a beat but no pause).
   const per = {};
-  const bump = (i, n, tap) => { const a = per[i] || (per[i] = { n: 0, tap: 0 }); a.n += n; a.tap += tap; };
+  const bump = (i, beats, npcs, pauses) => { const a = per[i] || (per[i] = { beats: 0, npcs: 0, pauses: 0 }); a.beats += beats; a.npcs += npcs; a.pauses += pauses; };
   const ai = z => Math.floor((z - 1) / 5);
-  for (const i in B.area) bump(i, 1, 0);
-  for (const z in B.zone) bump(ai(z), 1, 0);
-  for (const z in B.captain) bump(ai(z), 1, 0);
-  for (const c of Object.values(B.champ)) { bump(ai(c.zone), (c.pre || []).length + (c.post || []).length, 2); }
-  for (const n of Object.values(B.npc)) { const m = /^area:(\d+)$/.exec(n.at || ''); if (m) bump(m[1], (n.lines || []).length, 1); else if (/^champPost:/.test(n.at || '')) bump(ai((B.champ[n.at.split(':')[1]] || { zone: 1 }).zone), (n.lines || []).length, 0); }
-  for (const [i, a] of Object.entries(per)) if (a.n > L.areaLines || a.tap > L.areaTaps) P.push(`area ${i}: ${a.n} lines and ${a.tap} taps; the limits are ${L.areaLines} lines and ${L.areaTaps} taps`);
+  for (const i in B.area) bump(i, 1, 0, 0);
+  for (const z in B.zone) bump(ai(z), 1, 0, 0);
+  for (const z in B.captain) bump(ai(z), 1, 0, 0);
+  for (const c of Object.values(B.champ)) bump(ai(c.zone), 2, 0, 2);
+  // a region's opening (bible 8.1): NPC scenes at the door of a region's first area play with its region card, before the first
+  // fight, and count with the card, not the area (at most 2, e.g. Hesketh's fire and talk)
+  const opening = {};
+  for (const n of Object.values(B.npc)) { const m = /^(area|champPost):(.+)$/.exec(n.at || ''); if (!m) continue;
+    if (m[1] === 'area' && +m[2] % 7 === 0) opening[m[2]] = (opening[m[2]] || 0) + 1;
+    else if (m[1] === 'area') bump(m[2], 1, 1, 1); else bump(ai((B.champ[m[2]] || { zone: 1 }).zone), 1, 1, 0); }
+  for (const [i, n] of Object.entries(opening)) if (n > 2) P.push(`area ${i}: ${n} opening NPC scenes with the region card; the opening allows 2`);
+  for (const [i, a] of Object.entries(per)) {
+    if (a.beats > L.areaLines) P.push(`area ${i}: ${a.beats} beats; C28 4.2 allows ${L.areaLines}`);
+    if (a.npcs > 2) P.push(`area ${i}: ${a.npcs} NPC scenes; C28 4.2 allows 2`);
+    if (a.pauses > L.areaTaps) P.push(`area ${i}: ${a.pauses} pauses; C28 4.2 allows ${L.areaTaps}`);
+  }
   // no companion or party, no retired or banned words
   walk(B, (t, k) => { for (const re of ban) if (re.test(t)) P.push(`"${t.slice(0, 50)}": uses a retired or banned word (${re})`); });
   const keys = new Set(); const kw = v => { if (v && typeof v === 'object') for (const [k, x] of Object.entries(v)) { keys.add(k); kw(x); } }; kw(B);
@@ -2436,32 +2452,34 @@ if (section('story data')) try {
   assert(!/\b(document|window|localStorage)\.|\bS\.[a-z]|registerState\(/.test(src.replace(/\/\/.*$/gm, '')), 'story data: 21k-story-hollow.js is data only (no DOM, no state)');
   const g = loadCore(), E = x => g.eval(x);
   const ctx = () => ({ limits: E('STORY_LIMITS'), retired: E('STORY_RETIRED'), banned: E('LORE_BANNED'), regions: E('REGIONS.map(r => r.id)'),
-    foes: E('Object.fromEntries(Object.entries(ZONE_FOES).map(([z, f]) => [z, f.name]))'), enc: E('STORY_ENC') });
+    foes: E('Object.fromEntries(Object.entries(ZONE_FOES).map(([z, f]) => [z, f.name]))'), roster: hollowRoster() });
   const real = JSON.parse(E('JSON.stringify(STORY_BEATS)'));
   const bad = storyProblems(real, ctx());
   assert(!bad.length, 'story data: every slot is inside its limits and gates (' + Object.keys(real.region).length + ' region card, ' + Object.keys(real.zone).length + ' zone lines, ' + Object.keys(real.champ).length + ' Champions, ' + Object.keys(real.elder).length + ' Elders)' + (bad.length ? ': ' + bad[0] : ''));
   const r1 = real.region.hollow;
-  assert(r1 && r1.title === 'Chapter 1: The Hollow' && r1.lines.length === 3 && !real.area[0] && !Object.keys(real.zone).length, 'story data: Chapter 1 carries the opening card (the area and zone slots are still empty)');
+  assert(r1 && r1.title === 'Chapter 1: The Hollow' && r1.lines.length === 3, 'story data: Chapter 1 opens with its region card (three lines)');
   // retired and banned words: the probes the real check relies on
   const re = ctx(), hit = t => [...re.retired, ...re.banned].some(x => x.test(t));
   assert(['The ground was soaked with it.', 'A corrupted beast.', 'Twisted roots.', 'Your party waits.', 'The crowned elder.', 'The Listener.', 'It is drawn to your lamp.', 'The Moss Slime.', 'The Lanternbearer.'].every(hit) && !hit('The dark came for your lamp.'), 'story data: the retired and banned word lists catch the old canon and pass plain lines');
-  // the check itself: each fault is named
-  const sample = () => JSON.parse(JSON.stringify(real));
-  const ok = { foes: { 1: 'Thorn Imp' }, enc: { champ: { regent: 1 }, elder: { fen: 1 } } };
-  const fix = () => { const b = sample(); delete b.npc.heskethFire; delete b.npc.heskethTalk; b.hero.h1 = { wren: 'a', tobin: 'b', pip: 'c', _: 'd' };
-    b.zone[1] = 'A Thorn Imp guards the gate.'; b.captain[1] = { title: 'The Gate Imp', line: 'It guards the gate.' }; b.area[0] = 'Home is behind you.';
+  // the check itself: each fault is named. The fixture starts empty (only the region card is the real one), so it does not depend on the written words.
+  const sample = () => { const b = JSON.parse(JSON.stringify(real)); for (const k of STORY_SLOTS) if (k !== 'region') b[k] = {}; return b; };
+  const fix = () => { const b = sample(); b.hero.h1 = { wren: 'a', tobin: 'b', pip: 'c', _: 'd' };
+    b.zone[1] = 'A Thorn Imp guards the gate.'; b.captain[1] = { title: 'Crownthorn Imp', line: 'It guards the gate.' }; b.area[0] = 'Home is behind you.';
+    b.zone[3] = 'A Briarbound Ravager waits.'; b.zone[31] = 'A caged shape counts every lamp.'; b.captain[31] = { title: 'Lightbane', line: 'It cages the light.' };
     b.champ.regent = { zone: 5, name: 'Regent', pre: ['One.', 'Two.'], post: ['Three.'], page: { title: 'Why they came', text: 'They came for light. They took it.' }, hearth: 'Hush.' };
     b.elder.fen = { zone: 35, pre: ['a', 'b', 'c'], post: ['d', 'e', 'f'], hero: 'h1', page: { title: 'The Fen', text: 'It fell. The fog stayed.' } };
     b.npc.maren = { at: 'champPost:regent', who: 'Maren', lines: ['Hello.'] };
+    b.npc.tobinMet = { at: 'champPost:regent', who: 'Tobin', not: 'tobin', lines: ['Hello.'] };
     b.choice.lit1 = { zone: 35, prompt: 'Who is it lit for?', options: [{ id: 'a', label: 'Hesketh' }, { id: 'b', label: 'Tam' }], def: 'a', store: 'litFor' };
     return b; };
-  const good = storyProblems(fix(), { ...ctx(), ...ok });
-  assert(!good.length, 'story data: a complete sample (zone, Captain, Champion, Elder, NPC, hero line, choice) passes' + (good.length ? ': ' + good[0] : ''));
-  const probe = (name, edit, want) => { const b = fix(); edit(b); const p = storyProblems(b, { ...ctx(), ...ok }); assert(p.some(x => want.test(x)), `story data: the check catches ${name}` + (p.length ? '' : ' (nothing reported)')); };
+  const good = storyProblems(fix(), ctx());
+  assert(!good.length, 'story data: a complete sample (zone, Captain, Champion, Elder, NPC, hero line, choice) passes; lines for monsters, Captains and encounters not in the game are allowed (they stay silent)' + (good.length ? ': ' + good[0] : ''));
+  const probe = (name, edit, want) => { const b = fix(); edit(b); const p = storyProblems(b, ctx()); assert(p.some(x => want.test(x)), `story data: the check catches ${name}` + (p.length ? '' : ' (nothing reported)')); };
   probe('a zone line that does not name its monster', b => { b.zone[1] = 'Something stirs.'; }, /zone 1: .*names Thorn Imp/);
-  probe('a zone line with no monster in the game', b => { b.zone[3] = 'A Thorn Imp waits.'; }, /zone 3: no monster/);
-  probe('a Captain line for a zone with no monster', b => { b.captain[9] = { title: 'X', line: 'Y' }; }, /captain 9: no monster/);
-  probe('a Champion with no encounter', b => { b.champ.ghost = { ...b.champ.regent }; }, /champion ghost: its encounter/);
+  probe('a zone line that does not name its roster monster', b => { b.zone[3] = 'Something stirs.'; }, /zone 3: .*names Briarbound Ravager/);
+  probe('a zone line for a zone with no roster monster', b => { b.zone[36] = 'A Thorn Imp waits.'; }, /zone 36: no monster/);
+  probe('zone 31 naming Lantern Eater', b => { b.zone[31] = 'The Lantern Eater cages the light.'; }, /zone 31: .*Lantern Eater/);
+  probe('a Captain line for a zone with no roster monster', b => { b.captain[36] = { title: 'X', line: 'Y' }; }, /captain 36: no monster/);
   probe('a long Captain line', b => { b.captain[1].line = 'x'.repeat(61); }, /captain 1/);
   probe('a short region card', b => { b.region.hollow.lines.pop(); }, /region hollow/);
   probe('a retired word', b => { b.champ.regent.pre[0] = 'The corrupted regent.'; }, /retired or banned/);
@@ -2470,7 +2488,11 @@ if (section('story data')) try {
   probe('a choice with no default', b => { b.choice.lit1.def = 'zz'; }, /choice lit1: it needs a default/);
   probe('an NPC at a missing Champion', b => { b.npc.maren.at = 'champPost:nobody'; }, /npc maren/);
   probe('an Elder over 12 taps', b => { b.elder.fen.pre = ['1', '2', '3', '4', '5']; b.elder.fen.after = ['1', '2', '3', '4']; }, /elder fen: \d+ taps/);
-  probe('an area over its line budget', b => { for (let z = 1; z <= 5; z++) { b.zone[z] = 'A Thorn Imp.'; b.captain[z] = { title: 'X', line: 'Y' }; } b.npc.big = { at: 'area:0', who: 'Maren', lines: ['a', 'b', 'c', 'd'] }; }, /area 0/);
+  // C28 4.2: beats (title, zone and Captain lines, Champion pre and post, NPC scenes), at most 2 NPC scenes and 2 pauses an area
+  probe('an area over its 15 beats', b => { for (let z = 1; z <= 5; z++) { b.zone[z] = 'A Thorn Imp.'; b.captain[z] = { title: 'X', line: 'Y' }; } b.npc.big = { at: 'champPost:regent', who: 'Maren', lines: ['a'] }; }, /area 0: \d+ beats/);
+  probe('an area over 2 NPC scenes', b => { b.npc.big = { at: 'champPost:regent', who: 'Maren', lines: ['a'] }; }, /area 0: 3 NPC scenes/);
+  probe('an area over 2 pauses', b => { for (const k of ['a', 'b', 'c']) b.npc[k] = { at: 'area:1', who: 'Maren', lines: ['a'] }; }, /area 1: 3 pauses/);
+  probe('an opening over 2 scenes', b => { for (const k of ['a', 'b', 'c']) b.npc[k] = { at: 'area:0', who: 'Hesketh', lines: ['a'] }; }, /area 0: 3 opening NPC scenes/);
   assert(!g.errors.length, 'story data: no errors loading the data');
 } catch (e) { fail('story data crashed: ' + (e.stack || e)); }
 
@@ -2489,7 +2511,8 @@ if (section('story')) try {
   const rd = f => fs.readFileSync(path.join(ROOT, 'src', f), 'utf8');
   const src = rd('js/55-story.js');
   assert(!/\b(document|window|localStorage)\./.test(src.replace(/\/\/.*$/gm, '')), 'story: 55-story.js is core (no DOM)');
-  const DATA = `delete STORY_BEATS.npc.heskethFire; delete STORY_BEATS.npc.heskethTalk;
+  // the fixture words replace Chapter 1's real ones (only the region card stays), so the behaviour tests do not depend on the written text
+  const DATA = `{ const R = STORY_BEATS.region; for (const k in STORY_BEATS) STORY_BEATS[k] = {}; STORY_BEATS.region = R; }
     STORY_BEATS.zone[1] = 'A Thorn Imp sits on the gatepost.'; STORY_BEATS.zone[3] = 'A Thorn Imp waits here.';
     STORY_BEATS.area[0] = 'Home is behind you.'; STORY_BEATS.captain[1] = { title: 'The Gate Imp', line: 'It guards the gate for her.' };
     STORY_BEATS.hero.h1 = { wren: 'Wren line.', tobin: 'Tobin line.', pip: 'Pip line.', _: 'Shared line.' };
@@ -2516,8 +2539,10 @@ if (section('story')) try {
     'story: then the area title and the zone line, one caption held at most 3 s, under the zone\'s area name');
   play(g, ev); ticks(g, 2);
   assert(E('S.story.ends["r:hollow"]') === 'done' && E('S.story.ends["a:0 z:1"]') === undefined, 'story: the closed card is recorded as done (ends)');
-  // Captain: the zone's boss, once
+  // Captain: the zone's boss, once, and only with the Captain itself on screen (ZONE_FOES[1].captain; none is yet)
   E('fightBoss = true; spawn()'); ticks(g, 3);
+  assert(ev.scene.length === 2 && !E('ZONE_FOES[1].captain'), 'story: the zone boss plays no Captain line while the Captain is not in the game');
+  E('ZONE_FOES[1].captain = true; spawn()'); ticks(g, 3);
   assert(ev.scene.length === 3 && ev.scene[2].ch === 'C' && ev.scene[2].head === 'The Gate Imp' && ev.scene[2].lines[0] === 'It guards the gate for her.', 'story: a Captain line shows as a caption when the zone boss spawns');
   play(g, ev);
   E(`emit('kill', { mob: mob, zone: 1, gold: 0, ess: 0, tier: 1 }); fightBoss = false`); ticks(g, 3);
@@ -2652,7 +2677,7 @@ if (section('story')) try {
     'story: the UI plays scenes with Skip, the game holds for a card (90-boot), Settings has Story cards on/off, the Codex has the Journal row, reduced motion handled');
   assert(!/Beat its last boss/.test(glUi) && /Beat the region.{1,2}s Elder\. Then light it with your flame\./.test(glUi), 'story: the Great Lantern panel says the Elder, then your flame (not "Beat its last boss")');
   assert(!/You carry the last lantern\./.test(rd('js/76-create.js')), 'story: the class screen says "one of the last lanterns" (lore.md 11.1)');
-  assert(!g.errors.length && !q.errors.length && !o.errors.length && !f.errors.length && !cx.errors.length, 'story: no handler errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
+  assert([g, q, o, f, cx].every(x => !x.errors.length), 'story: no handler errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
 } catch (e) { fail('story crashed: ' + (e.stack || e)); }
 // ---- story UI in the browser: the opening card holds the game, Skip works, captions and cards fit at 360px and landscape ----
 if (section('story UI (browser)')) try {
@@ -2661,8 +2686,9 @@ if (section('story UI (browser)')) try {
   else {
     const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
     const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
-    const DATA = `STORY_BEATS.area[0] = 'The lamp gutters. A fire waits ahead.'; STORY_BEATS.zone[1] = 'A Thorn Imp sits on the gatepost.';
-      STORY_BEATS.voice.v1 = { zone: 1, title: 'A voice', lines: ['You are tired.', 'Nobody is coming. Rest.'] };
+    // The game has queued Chapter 1's real area title and zone line before the test's words go in (a scene is built at the first walk-in), so
+    // the caption is checked against the real words; the test adds only a Voice and a choice.
+    const DATA = `STORY_BEATS.voice.v1 = { zone: 1, title: 'A voice', lines: ['You are tired.', 'Nobody is coming. Rest.'] };
       STORY_BEATS.choice.lit1 = { zone: 1, prompt: 'Who is the lamp lit for?', options: [{ id: 'hesketh', label: 'Hesketh' }, { id: 'tam', label: 'Tam' }], def: 'hesketh', store: 'litFor', key: 'hollow' };`;
     const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
     try {
@@ -2675,7 +2701,7 @@ if (section('story UI (browser)')) try {
         const X = s => page.evaluate(s => window.__t.x(s), s);
         await X(DATA);
         await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go');
-        await page.waitForSelector('.sty-sheet .sty-title', { timeout: 4000 }); await page.waitForTimeout(700);
+         await page.waitForSelector('.sty-sheet .sty-title', { timeout: 4000 }); await page.waitForTimeout(700);
         const card = await page.$eval('.sty-sheet', n => { const r = n.getBoundingClientRect(), tall = r.height / innerHeight, b = [...n.querySelectorAll('button')].filter(x => /Begin|Skip/.test(x.textContent)).map(x => { const q = x.getBoundingClientRect(); return { t: x.textContent, h: Math.round(q.height), bottom: Math.round(q.bottom) }; });
           return { title: n.querySelector('.sty-title').textContent, lines: [...n.querySelectorAll('.sty-text')].map(x => x.textContent), b, vh: innerHeight, tall, overflowX: n.scrollWidth > n.clientWidth + 1 }; });
         assert(card.title === 'Chapter 1: The Hollow' && card.lines.length === 3 && card.b.length === 2 && card.b.every(x => x.h >= 44 && x.bottom <= card.vh) && !card.overflowX && (viewport.width > viewport.height ? card.tall <= 0.605 : true), `story UI ${tag}: the opening card shows its three lines with Begin and Skip (44 px or taller, on screen), and in landscape the sheet is at most 60% of the screen (${card.tall.toFixed(2)})`);
@@ -2691,8 +2717,9 @@ if (section('story UI (browser)')) try {
           await page.click('.sty-sheet .sty-done'); await page.waitForTimeout(400);
         }
         // the caption: the area's name and two lines, held about 3 s, then the next scene
+        await page.waitForSelector('.sty-cap', { timeout: 3000 }).catch(() => null);   // after the talk card's sheet has closed
         const cap = await page.$eval('.sty-cap', n => ({ h: n.querySelector('.sty-cap-h').textContent, l: [...n.querySelectorAll('.sty-cap-l')].map(x => x.textContent), w: Math.round(n.getBoundingClientRect().width), vw: innerWidth })).catch(() => null);
-        assert(cap && cap.h === 'Mossy Hollow' && cap.l.join('|') === 'The lamp gutters. A fire waits ahead.|A Thorn Imp sits on the gatepost.' && cap.w <= cap.vw, `story UI ${tag}: the area title and the zone line show as one caption that fits the screen`);
+         assert(cap && cap.h === 'Mossy Hollow' && cap.l.length === 2 && cap.l.join('|') === (await X('STORY_BEATS.area[0] + "|" + STORY_BEATS.zone[1]')) && cap.w <= cap.vw, `story UI ${tag}: the area title and the zone line show as one caption that fits the screen`);
         await X('onboardTips(false); onboardUnlockAll()');   // the guide pauses fights; cards play in the gap after a kill
         await page.waitForTimeout(300);
         await page.waitForSelector('.sty-sheet .sty-title', { timeout: 12000 });
@@ -8531,7 +8558,7 @@ if (section('story-opening')) try {
   const real = JSON.parse(E('JSON.stringify(STORY_BEATS)')), hk = [real.npc.heskethFire, real.npc.heskethTalk];
   assert(hk.every(n => n && n.at === 'area:0' && n.who) && hk[0].lines[3].includes('Every road needs a place to come back to') && hk[1].lines.length === 4 && hk[1].lines[3].includes('shut the holes'), 'story-opening: Hesketh\'s fire and talk (bible 8.1) play at the Hollow\'s door, right after the opening card');
   const rr = real.hero.refuseRest;
-  assert(rr && rr.wren === 'Not yet.' && /village is lit/.test(rr.tobin) && /No\.$/.test(rr.pip), 'story-opening: the opening refusal (bible 4.6) has a line for each starter');
+  assert(rr && /Not yet\./.test(rr.wren) && /I'll rest when the (village|Hollow) is lit/.test(rr.tobin) && /No\./.test(rr.pip), 'story-opening: the refusal of "Rest" (bible 4.6) has a line for each starter (played at the Veiled Oracle, story-hollow-script)');
   // story gate (story-opening, bible 4.4): no new unlock before the hero's first scene; heroes a save owns are kept
   const gate = loadCore({ seed: 916 }), G = s => gate.eval(s);
   G('S.maxZone=30; S.mats.wood=[80,0,0,0,0]');
@@ -8581,6 +8608,212 @@ if (section('story-opening (browser)')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('story-opening (browser) crashed: ' + (e.stack || e)); }
+
+// ==== story-hollow-script (Chapter 1, "The Last Lamp"): this card's own checks ====
+// The Hollow roster (docs/design/enemies-c22-hollow-final.md): `### Zone N: <Monster>`, then `Shadowborn Captain — <Name>:` -> { [z]: { foe, captain } }.
+// storyProblems (story data) reads it, so a zone or Captain line may be written ahead of its monster when the roster has the monster.
+function hollowRoster() {
+  const roster = {}; let z = 0;
+  for (const ln of fs.readFileSync(path.join(ROOT, 'docs', 'design', 'enemies-c22-hollow-final.md'), 'utf8').split('\n')) {
+    let m = /^### Zone (\d+): (.+?)\s*$/.exec(ln); if (m) { z = +m[1]; roster[z] = { foe: m[2], captain: '' }; continue; }
+    m = /Shadowborn Captain — ([^:*]+):/.exec(ln); if (m && z && roster[z] && !roster[z].captain) roster[z].captain = m[1].trim();
+  }
+  return roster;
+}
+// Chapter 1's own rules on the words: a Captain's title is its roster name (zone 31's is "Lightbane": the Lantern Eater shares the
+// world raid's name, bible 14), and an NPC's `not` names the starter who does not meet that person
+function hollowProblems(B, roster) {
+  const P = [];
+  for (const [z, c] of Object.entries(B.captain || {})) { const r = roster[z], want = r && (+z === 31 ? 'Lightbane' : r.captain); if (want && c.title !== want) P.push(`captain ${z}: the title is the roster name "${want}"`); }
+  for (const [id, n] of Object.entries(B.npc || {})) if (n.not !== undefined && !['wren', 'tobin', 'pip'].includes(n.not)) P.push(`npc ${id}: not is wren, tobin or pip (the starter who does not meet this person)`);
+  return P;
+}
+if (section('story-hollow-script')) try {
+  const ticks = (g, n) => { for (let i = 0; i < n; i++) g.fn.tick(0.1); };
+  const watch = g => { const ev = { scene: [], end: [] }; g.fn.on('storyScene', e => ev.scene.push(e)); g.fn.on('storyEnd', e => ev.end.push(e)); return ev; };
+  const play = (g, ev, how = 'done') => { const id = ev.scene.length ? ev.scene[ev.scene.length - 1].id : null; if (!id) return null; g.eval(`storyClaim(${JSON.stringify(id)}); storyClose(${JSON.stringify(id)}, ${JSON.stringify(how)})`); return id; };
+  const roster = hollowRoster();
+  assert(Object.keys(roster).length === 35 && Object.values(roster).every(r => r.foe && r.captain), 'story-hollow-script: the Hollow roster file gives 35 zone monsters, each with a Shadowborn Captain');
+  const g = loadCore(), E = x => g.eval(x);
+  const real = JSON.parse(E('JSON.stringify(STORY_BEATS)'));
+  const hp = hollowProblems(real, roster);
+  assert(!hp.length, 'story-hollow-script: every Captain title is its roster name (zone 31: Lightbane) and every `not` names a starter' + (hp.length ? ': ' + hp[0] : ''));
+  const probe = (name, edit, want) => { const b = JSON.parse(JSON.stringify(real)); edit(b); const p = hollowProblems(b, roster); assert(p.some(x => want.test(x)), `story-hollow-script: the check catches ${name}` + (p.length ? '' : ' (nothing reported)')); };
+  probe('a Captain title that is not the roster name', b => { b.captain[1].title = 'The Gate Imp'; }, new RegExp('captain 1: .*' + roster[1].captain));
+  probe('a zone 31 Captain not titled Lightbane', b => { b.captain[31].title = 'Lantern Eater Lightbane'; }, /captain 31: .*Lightbane/);
+  probe('a bad NPC `not` value', b => { b.npc.tam.not = 'hob'; }, /npc tam: not is/);
+  // Chapter 1 is complete: every slot the lead's spec names is written, silent until the game has the monster or encounter
+  const miss = [], need = (what, okay) => { if (!okay) miss.push(what); };
+  for (let i = 0; i <= 6; i++) need('area ' + i, real.area[i]);
+  for (let z = 1; z <= 35; z++) { need('zone ' + z, real.zone[z]); need('captain ' + z, real.captain[z]); }
+  ['regent', 'cantor', 'marshal', 'engine', 'oracle', 'star', 'halo'].forEach((id, k) => { const c = real.champ[id]; need('champion ' + id, c && c.zone === 5 * (k + 1) && c.page && c.hearth && c.pre && c.post); });
+  { const e = real.elder.fenmother; need('elder fenmother', e && e.zone === 35 && e.page && e.pre && e.post && !('hero' in e));
+    need('elder fenmother after (choice, hero line, closing line)', e && Array.isArray(e.after) && e.after.some(x => x && x.choice === 'hollowLantern') && e.after.some(x => x && x.hero === 'hollowLantern')); }
+  const AT = { tam: 'regent', tobin: 'regent', wren: 'cantor', anselm: 'marshal', pip: 'marshal', maren: 'engine', morwen: 'oracle', grenna: 'star', rook: 'star', bram: 'halo', thessaly: 'halo' };
+  for (const id in AT) need('npc ' + id, real.npc[id] && real.npc[id].at === 'champPost:' + AT[id]);
+  for (const id of ['thessalyFen', 'hesketh', 'elowen']) need('npc ' + id, real.npc[id] && real.npc[id].at === 'elderPost:fenmother');
+  for (const id of ['tobin', 'wren', 'pip']) need(`npc ${id} not ${id}`, real.npc[id] && real.npc[id].not === id);
+  { const c = real.choice.hollowLantern; need('choice hollowLantern', c && c.store === 'litFor' && c.key === 'hollow' && c.def === 'hesketh' && !c.zone && ['hesketh', 'tam', 'bram', 'thessaly'].every(o => (c.options || []).some(x => x.id === o))); }
+  need('hero refuseRest', real.hero.refuseRest); need('hero hollowLantern', real.hero.hollowLantern);
+  need('vesper fenmother', real.vesper.fenmother); need('note thessaly', real.note.thessaly);
+  assert(!miss.length, 'story-hollow-script: Chapter 1 is complete (7 areas, 35 zone and Captain lines, 7 Champions, the Fenmother, 14 NPC scenes, the Great Lantern choice)' + (miss.length ? ': missing ' + miss.slice(0, 6).join(', ') : ''));
+  // the cold-start hero is stored once (bible 4.4), and stays when a later hero takes the lead
+  const sh = loadCore({ seed: 104 });
+  sh.eval('S.solo.hero = "pip"; S.activity = "fight"; S.zone = 1; S.maxZone = 1'); ticks(sh, 3);
+  const st0 = sh.eval('soloHero()');
+  sh.eval('S.solo.hero = "corvin"'); ticks(sh, 3);
+  assert(['wren', 'tobin', 'pip'].includes(st0) && sh.eval('S.story.starter') === st0 && sh.eval('storyHeroLine("refuseRest")') === sh.eval(`STORY_BEATS.hero.refuseRest[${JSON.stringify(st0)}]`),
+    `story-hollow-script: the starting hero (${st0}) is stored as the story hero, and its lines still play when a non-starter leads`);
+  // hero lines (bible 4.4): the active starter, else the stored starter, else the shared line
+  const hl = loadCore({ seed: 101 }), H = x => hl.eval(x);
+  H(`STORY_BEATS.hero.h1 = { wren: 'Wren line.', tobin: 'Tobin line.', pip: 'Pip line.', _: 'Shared line.' }`);
+  H('S.solo.hero = "corvin"; S.story.starter = "pip"');
+  assert(H('storyHeroLine("h1")') === 'Pip line.', 'story-hollow-script: a hero line follows the stored starter when the active hero is not a starter (bible 4.4)');
+  H('S.solo.hero = "tobin"');
+  assert(H('storyHeroLine("h1")') === 'Tobin line.', 'story-hollow-script: a hero line follows the active hero when it is a starter');
+  H('S.solo.hero = "corvin"; S.story.starter = ""');
+  assert(H('storyHeroLine("h1")') === 'Shared line.', 'story-hollow-script: with no starter a hero line is the shared one');
+  // ---- the real Chapter 1 words, with today's game (ZONE_FOES in zones 1 and 2 only, no Captain on screen, no encounter) ----
+  const RB = JSON.parse(loadCore({ seed: 1 }).eval('JSON.stringify(STORY_BEATS)'));
+  // the opening's NPC scenes (Hesketh's fire and talk, area 0's door: story-opening) are the opening's, not Chapter 1's people
+  const OPEN = Object.keys(RB.npc).filter(id => RB.npc[id].at === 'area:0').map(id => 'n:' + id), OPENJ = JSON.stringify(OPEN);
+  const quiet = (g0, extra = '') => g0.eval('S.activity = "fight"; S.story.seen["r:hollow"] = 1; for (const k of ' + OPENJ + ') S.story.seen[k] = 1;' + extra);
+  // (a) zones 3 to 6: no zone line (no monster in ZONE_FOES there), and area 1's title at zone 6
+  const wa = loadCore({ seed: 90 }), wav = watch(wa);
+  quiet(wa, 'S.zone = 3; S.maxZone = 3');
+  for (const z of [3, 4, 5]) { wa.eval(`S.zone = ${z}; S.maxZone = ${z}; spawn()`); ticks(wa, 5); }
+  assert(!wav.scene.some(sc => sc.ch === 'Z' || sc.lines.some(l => Object.values(RB.zone).includes(l))) && !wa.eval('ZONE_FOES[3] || ZONE_FOES[4] || ZONE_FOES[5]'), 'story-hollow-script: walking zones 3 to 5 plays no zone line (their monsters are not in ZONE_FOES)');
+  wa.eval('S.zone = 6; S.maxZone = 6; spawn()'); ticks(wa, 5);
+  const t6 = wav.scene[wav.scene.length - 1];
+  assert(RB.area[1] && t6 && t6.kind === 'caption' && t6.id === 'a:1' && t6.lines.join('|') === RB.area[1] && t6.head === wa.eval('zoneAreaName(6)'), 'story-hollow-script: zone 6 plays area 1\'s title with the area name as its head, and no zone line');
+  // (b) the zone 1 boss plays no Captain line until its Captain is on screen
+  const wb = loadCore({ seed: 91 }), wbv = watch(wb);
+  quiet(wb, 'S.zone = 1; S.maxZone = 1; S.story.seen["a:0"] = 1; S.story.seen["z:1"] = 1; fightBoss = true; spawn()'); ticks(wb, 5);
+  assert(RB.captain[1] && !wbv.scene.some(sc => sc.ch === 'C') && !wb.eval('ZONE_FOES[1].captain') && !wb.eval('S.story.seen["c:1"]'), 'story-hollow-script: the zone 1 boss plays no Captain line while ZONE_FOES[1].captain is unset');
+  wb.eval('ZONE_FOES[1].captain = true; spawn()'); ticks(wb, 5);
+  const cs = wbv.scene.find(sc => sc.ch === 'C');
+  assert(cs && cs.head === RB.captain[1].title && cs.lines[0] === RB.captain[1].line, 'story-hollow-script: with the Captain on screen the zone 1 boss plays its real Captain line');
+  // (c) no encounters registered: a zone 5 boss kill plays no Champion scene, and the zone 35 boss no Elder scene
+  const wc = loadCore({ seed: 92 }), wcv = watch(wc);
+  quiet(wc, 'S.zone = 5; S.maxZone = 5; fightBoss = true; spawn(); mob.encounter = { kind: "champ", id: "regent" }'); ticks(wc, 5);
+  wc.eval(`emit('kill', { mob: mob, zone: 5, gold: 0, ess: 0, tier: 1 })`); ticks(wc, 5);
+  wc.eval('S.zone = 35; S.maxZone = 35; fightBoss = true; spawn(); mob.encounter = { kind: "elder", id: "fenmother" }'); ticks(wc, 5);
+  wc.eval(`emit('kill', { mob: mob, zone: 35, gold: 0, ess: 0, tier: 1 })`); ticks(wc, 5);
+  assert(!wcv.scene.some(sc => sc.ch === 'P' || sc.ch === 'E' || sc.ch === 'N') && !wc.eval('Object.keys(S.story.seen).some(k => /^(p|e):/.test(k) || (/^n:/.test(k) && !' + OPENJ + '.includes(k)))'), 'story-hollow-script: with no encounters in the game a zone 5 boss kill plays no Champion scene and the zone 35 boss no Elder scene');
+  // (d) a save at zone 40: the catch-up and the Road log hold only what the game can show
+  const wd = loadCore({ seed: 93 });
+  wd.eval('S.activity = "fight"; S.zone = 1; S.maxZone = 40'); ticks(wd, 5);
+  const road = JSON.parse(wd.eval('JSON.stringify(storyRoadLog())')), zl = Object.values(RB.zone), cl = Object.values(RB.captain).map(c => c.line);
+  assert(road.filter(x => zl.includes(x.line)).map(x => x.zone).join() === '1,2' && !road.some(x => cl.includes(x.line)) && road.every(x => zl.includes(x.line) || Object.values(RB.area).includes(x.line)),
+    'story-hollow-script: a save at zone 40 lists only the zone 1 and 2 lines and the area titles in the Road log (no Captain, no zone line for a monster that is not in the game)');
+  assert(wd.eval('storyList().every(e => e.kind === "region" || ' + OPENJ + '.includes(e.id))') && !wd.eval('Object.keys(S.story.seen).some(k => /^(p|e|c|j):/.test(k) || (/^n:/.test(k) && !' + OPENJ + '.includes(k)) || (/^z:/.test(k) && k !== "z:1" && k !== "z:2"))'),
+    'story-hollow-script: that save files no Champion, Elder, NPC, Captain or page, and no zone line past zone 2');
+  // with the encounters in the game, a Champion's NPCs are filed with it, not as their own late entries
+  const wd2 = loadCore({ seed: 94 });
+  wd2.eval('storyEncounter("champ", "regent"); S.activity = "fight"; S.zone = 1; S.maxZone = 40'); ticks(wd2, 5);
+  assert(wd2.eval('storyList().some(e => e.id === "p:regent")') && !wd2.eval('Object.keys(S.story.seen).some(k => /^n:/.test(k) && !' + OPENJ + '.includes(k))') && !wd2.eval('storyList().some(e => e.kind === "npc" && !' + OPENJ + '.includes(e.id))') && wd2.eval('storyEntry("p:regent").cards.some(c => c.who === STORY_BEATS.npc.tam.who)'),
+    'story-hollow-script: a Champion past the save files its Journal entry with its NPC cards inside it, and no NPC entry of its own');
+  // (e) `not`: a starter does not meet himself. With Tobin, Tam speaks and Tobin does not; with Wren, Tobin does too
+  const postCards = hero => {
+    const w = loadCore({ seed: 95 }), v = watch(w);
+    quiet(w, `S.solo.hero = ${JSON.stringify(hero)}; storyEncounter("champ", "regent"); S.zone = 5; S.maxZone = 5; fightBoss = true; spawn(); mob.encounter = { kind: "champ", id: "regent" }`); ticks(w, 5);
+    play(w, v); w.eval(`emit('kill', { mob: mob, zone: 5, gold: 0, ess: 0, tier: 1 })`); ticks(w, 5);
+    const post = v.scene.find(sc => sc.id === 'p:regent:post'); return { who: post ? post.cards.map(c => c.who) : [], w };
+  };
+  const tamW = RB.npc.tam && RB.npc.tam.who, tobW = RB.npc.tobin && RB.npc.tobin.who;
+  const wt = postCards('tobin'), ww = postCards('wren');
+  assert(tamW && tobW && tamW !== tobW && wt.who.includes(tamW) && !wt.who.includes(tobW), 'story-hollow-script: with Tobin as the story hero, the Regent\'s post scene has Tam\'s card and no Tobin card');
+  assert(ww.who.includes(tamW) && ww.who.includes(tobW), 'story-hollow-script: with Wren as the story hero, the Regent\'s post scene has both Tam\'s and Tobin\'s cards');
+  const wp = loadCore({ seed: 96 });
+  wp.eval('S.solo.hero = "corvin"; S.story.starter = "tobin"; storyEncounter("champ", "regent")');
+  assert(wp.eval('storyEntry("p:regent")') === null && wp.eval('(() => { S.story.seen["p:regent:pre"] = 1; S.story.seen["p:regent:post"] = 1; return storyEntry("p:regent").cards.map(c => c.who); })()').every(x => x !== tobW), 'story-hollow-script: the stored starter is the story hero when the active hero is not a starter');
+  // (f) an unattended card: 'auto' records no `ends` entry, files the scene late and lets the game run
+  const wf = loadCore({ seed: 97 }), wfv = watch(wf);
+  wf.eval('S.activity = "fight"; S.zone = 1; S.maxZone = 1; spawn()'); ticks(wf, 3);
+  assert(wfv.scene[0] && wfv.scene[0].id === 'r:hollow', 'story-hollow-script: a new game opens on the Chapter 1 card');
+  wf.eval('storyClaim("r:hollow")'); ticks(wf, 2);
+  assert(wf.eval('storyHeld()') === true, 'story-hollow-script: the card holds the game');
+  play(wf, wfv, 'auto'); ticks(wf, 3);
+  assert(wf.eval('S.story.ends["r:hollow"]') === undefined && wf.eval('storyLate().includes("r:hollow")') && wf.eval('S.story.seen["r:hollow"]') < 0 && wf.eval('storyHeld()') === false,
+    'story-hollow-script: an unattended card (auto) records no ends entry, is filed late for "Catch up on the story", and the game is no longer held');
+  const cap0 = wfv.scene.find(sc => sc.kind === 'caption');
+  if (cap0) { play(wf, wfv, 'auto'); assert(!wf.eval('storyLate().some(id => /^[az]:/.test(id))') && wf.eval('Object.keys(S.story.seen).some(k => /^[az]:\\d+$/.test(k) && S.story.seen[k] > 0)'), 'story-hollow-script: an auto close leaves a caption\'s joined id alone (nothing late, its keys stay seen)'); }
+  const wg = loadCore({ seed: 98 }), wgv = watch(wg);
+  quiet(wg, 'S.zone = 5; S.maxZone = 5; storyEncounter("champ", "regent"); fightBoss = true; spawn(); mob.encounter = { kind: "champ", id: "regent" }'); ticks(wg, 3);
+  play(wg, wgv); wg.eval('storyRead("p:regent")'); wg.eval(`emit('kill', { mob: mob, zone: 5, gold: 0, ess: 0, tier: 1 })`); ticks(wg, 3);
+  play(wg, wgv, 'auto'); ticks(wg, 2);
+  assert(wg.eval('storyLate().includes("p:regent")') && wg.eval('storyEntry("p:regent").cards.length') > wg.eval('STORY_BEATS.champ.regent.pre.length'), 'story-hollow-script: an unattended post scene puts its Champion\'s Journal entry (pre and post) back under "Catch up on the story", even when the pre was read');
+  // an unattended Fenmother post leaves the Great Lantern choice open: no default, and the Journal entry offers it until it is made
+  const wl = loadCore({ seed: 102 }), wlv = watch(wl);
+  quiet(wl, 'S.zone = 35; S.maxZone = 35; storyEncounter("elder", "fenmother"); fightBoss = true; spawn(); mob.encounter = { kind: "elder", id: "fenmother" }'); ticks(wl, 3);
+  play(wl, wlv); wl.eval(`emit('kill', { mob: mob, zone: 35, gold: 0, ess: 0, tier: 1 })`); ticks(wl, 3);
+  const fpost = wlv.scene[wlv.scene.length - 1];
+  play(wl, wlv, 'auto'); ticks(wl, 2);
+  assert(fpost && fpost.id === 'e:fenmother:post' && wl.eval('S.story.litFor.hollow') === undefined && wl.eval('storyLate().includes("e:fenmother")') && wl.eval('storyEntry("e:fenmother").cards.some(c => c.choice === "hollowLantern")'),
+    'story-hollow-script: an unattended Fenmother post sets no Great Lantern default, and its Journal entry offers the choice to catch up on');
+  wl.eval('storyRead("e:fenmother")');
+  assert(wl.eval('storyUnread().includes("e:fenmother")') && wl.eval('storyChoose("hollowLantern", "tam")') && wl.eval('S.story.litFor.hollow') === 'tam' && !wl.eval('storyEntry("e:fenmother").cards.some(c => c.choice)') && !wl.eval('storyUnread().includes("e:fenmother")'),
+    'story-hollow-script: the entry stays unread while the choice is open; choosing in the Journal saves it and closes the entry');
+  const ws = loadCore({ seed: 103 }), wsv = watch(ws);
+  quiet(ws, 'S.zone = 35; S.maxZone = 35; storyEncounter("elder", "fenmother"); fightBoss = true; spawn(); mob.encounter = { kind: "elder", id: "fenmother" }'); ticks(ws, 3);
+  play(ws, wsv); ws.eval(`emit('kill', { mob: mob, zone: 35, gold: 0, ess: 0, tier: 1 })`); ticks(ws, 3); play(ws, wsv, 'skipped');
+  assert(ws.eval('S.story.litFor.hollow') === 'hesketh', 'story-hollow-script: a skipped Fenmother post takes the default (Hesketh)');
+  assert(wg.eval('S.story.ends["p:regent:post"]') === undefined && wg.eval('S.story.seen["p:regent:post"]') < 0 && wg.eval('S.story.seen["j:regent"]') < 0 && wg.eval('storyLate().includes("j:regent")'), 'story-hollow-script: an unattended Champion scene files its page late too');
+  // a starter met as a person, at an area door: dropped for his own story, listed and played for the others
+  const npcDef = `STORY_BEATS.npc.tobinMet = { at: 'area:0', who: 'Tobin of the Lamps', not: 'tobin', lines: ['You carry a lamp.'] };`;
+  const withNpc = seed => { const x = loadCore({ seed }); x.eval(npcDef); return x; };
+  const wn = withNpc(99), wnv = watch(wn); quiet(wn, 'S.solo.hero = "tobin"; S.zone = 1; S.maxZone = 1; S.story.seen["a:0"] = 1; S.story.seen["z:1"] = 1; spawn()'); ticks(wn, 5);
+  assert(!wnv.scene.some(sc => sc.ch === 'N') && !wn.eval('S.story.seen["n:tobinMet"]') && !wn.eval('storyList().some(e => e.id === "n:tobinMet")'), 'story-hollow-script: an NPC with `not` is not met by that starter, and is not marked or listed');
+  const wn2 = withNpc(100), wn2v = watch(wn2); quiet(wn2, 'S.solo.hero = "wren"; S.zone = 1; S.maxZone = 1; S.story.seen["a:0"] = 1; S.story.seen["z:1"] = 1; spawn()'); ticks(wn2, 5);
+  assert(wn2v.scene.some(sc => sc.id === 'n:tobinMet') && wn2.eval('S.story.seen["n:tobinMet"]') > 0, 'story-hollow-script: the same NPC is met by another starter');
+  assert([g, hl, sh, wa, wb, wc, wd, wd2, wt.w, ww.w, wp, wf, wg, wl, ws, wn, wn2].every(x => !x.errors.length), 'story-hollow-script: no handler errors');
+} catch (e) { fail('story-hollow-script crashed: ' + (e.stack || e)); }
+// an unattended card in the browser: it files itself after the idle wait (45 s; 2 s under the test key), and a tap restarts the wait
+if (section('story-hollow-script (browser)')) try {
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('story-hollow-script (browser): Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      // an unattended card files itself: the wait is shortened to 2 s by the test key (45 s in the game); input restarts it
+      const ctxI = await browser.newContext({ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true, story: true });
+      await ctxI.addInitScript(() => { try { localStorage.setItem('lanternfall.test.storyIdle', '2000'); } catch (e) {} });
+      const pageI = await ctxI.newPage();
+      await pageI.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await pageI.goto('http://lf.test/'); await pageI.waitForTimeout(700);
+      const XI = s => pageI.evaluate(s => window.__t.x(s), s);
+      await pageI.click('#createScreen .ccard[data-hero="wren"]'); await pageI.click('#createScreen .create-go');
+      await pageI.waitForSelector('.sty-sheet .sty-title', { timeout: 4000 });
+      await pageI.waitForTimeout(1300); await pageI.click('.sty-sheet .sty-title'); await pageI.waitForTimeout(1300);   // 2.6 s in, but the tap at 1.3 s restarted the wait
+      assert(!!(await pageI.$('.sty-sheet .sty-title')) && await XI('storyHeld()') === true, 'story-hollow-script (browser): a tap on the card restarts its unattended wait');
+      await pageI.waitForFunction(() => window.__t.x('storyLate().includes("r:hollow")'), null, { timeout: 5000 });
+      await pageI.waitForTimeout(300);
+      await XI('onboardTips(false); onboardUnlockAll()');   // the guide pauses fights
+      // Hesketh's two cards file themselves too (2 s each), then the area caption holds the game for 3 s
+      await pageI.waitForSelector('.sty-cap', { timeout: 12000 });
+      await pageI.waitForFunction(() => window.__t.x('storyLate().includes("n:heskethTalk") && !storyHeld()') && !document.querySelector('.sty-cap') && !document.querySelector('.sty-sheet .sty-title'), null, { timeout: 6000 });
+      const c2 = await XI('notes.clock'); await pageI.waitForTimeout(700);
+      assert(await XI('S.story.ends["r:hollow"]') === undefined && (await XI('storyLate()')).includes('r:hollow') && await XI('storyHeld()') === false && (await XI('notes.clock')) > c2 + 0.2,
+        'story-hollow-script (browser): a card nobody touches files itself (no ends entry, late), and the game runs again');
+      await XI('storyUI.list(true)'); await pageI.waitForSelector('.sty-catch', { timeout: 3000 });
+      assert(/Catch up on the story/.test(await pageI.$eval('.sty-catch', n => n.textContent)), 'story-hollow-script (browser): the Journal offers the unattended card under "Catch up on the story"');
+      // a Great Lantern choice left open by an unattended Fenmother post: the Journal entry shows the names, and a tap saves one
+      await XI('storyEncounter("elder", "fenmother"); S.story.seen["e:fenmother:pre"] = Date.now(); S.story.seen["e:fenmother:post"] = -Date.now(); storyUI.open("e:fenmother")');
+      await pageI.waitForSelector('.sty-sheet .sty-opt', { timeout: 3000 });
+      const names = await pageI.$$eval('.sty-sheet .sty-opt b', l => l.map(x => x.textContent));
+      const hook = await XI('STORY_BEATS.elder.fenmother.after[STORY_BEATS.elder.fenmother.after.length - 1]');
+      const before = await pageI.$eval('.sty-sheet', (n, hook) => ({ rest: !!n.querySelector('.sty-rest[hidden]'), seen: [...n.querySelectorAll('.sty-text')].some(x => x.offsetParent && x.textContent === hook) }), hook);
+      await pageI.click('.sty-sheet .sty-opt:nth-child(2)'); await pageI.waitForTimeout(200);
+      const after = await pageI.$eval('.sty-sheet', (n, hook) => [...n.querySelectorAll('.sty-text')].some(x => x.offsetParent && x.textContent === hook), hook);
+      assert(names.length === 4 && await XI('S.story.litFor.hollow') === 'tam' && /You chose Tam\./.test(await pageI.$eval('.sty-chosen', n => n.textContent)) && !(await pageI.$('.sty-sheet .sty-opt')),
+        `story-hollow-script (browser): an open Great Lantern choice shows its four names in the Journal entry, and a tap saves it (${names.join(', ')})`);
+      assert(before.rest && !before.seen && after, 'story-hollow-script (browser): the lines after the choice (the hero line, the green light) show only once the choice is made, in story order');
+      await ctxI.close();
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('story-hollow-script (browser) crashed: ' + (e.stack || e)); }
 
 // ---- story-systems-hollow: the Hollow's systems tell the story (Hands, Omens, Deep Lore, uniques, the ranks page, Vesper's bubble) ----
 if (section('story-systems-hollow')) try {

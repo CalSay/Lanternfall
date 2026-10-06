@@ -255,6 +255,13 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 - **Ada and Pell come home when the Fenmother is beaten,** not after the Coast's Great Lantern.
 - **Story choices are saved as new keys under `story`** (`starter`, `litFor`, `coldhearth`) with defaults; no save-key
   bump; Opus save review before merge.
+- **Chapter 1 delivery readings** (story-hollow-script, 2026-10-06): C28's per-area budget counts beats (area title, zone
+  and Captain lines, Champion pre and post, each NPC scene: at most 15, at most 2 NPC scenes, at most 2 pauses), so every
+  Chapter 1 person speaks on a Champion's or the Fenmother's post. A Captain line waits for the Captain itself on screen
+  (`ZONE_FOES[z].captain`). A story card nobody touches for 45 s files itself to the Journal to catch up on, and counts
+  no skip; a choice in it (the Great Lantern) takes no default and waits in its Journal entry until the player makes it. The Chained Star sinks rather than goes out (bible 11.2 over 8.1's sample). At one stop, the area's people
+  talk first and the caption (area title and zone line) plays last, just before the fight; the scenes of one stop play
+  back to back, even while the guide holds the game.
 
 ## Art
 
