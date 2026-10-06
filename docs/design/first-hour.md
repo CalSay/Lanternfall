@@ -29,21 +29,21 @@ boss you beat opens a Lantern Cache, lights the next stretch of road, and gives 
 | 7 | 2:40 | Fights 4 and 5 | Uses all three verbs | nothing new | | flow | | today |
 | 8 | 3:10 | The zone 1 Captain; Hesketh: "Watch the red rings" | Fights the boss | Boss strings | | tension | | today (line: card) |
 | 9 | 4:00 | **Big moment: first boss win** and the **first Lantern Cache** | Taps to open | Caches | a flame colour; the stage relights in it; Essence | surprise | The hero's first bark | card `moment-layer`, `lantern-cache`, `looks-early`, `hero-voice` |
-| 10 | 4:20 | **Medium moment: level up**; the Hero tab appears | Spends the first attribute point | Attributes | +1 point | ownership | | card `unlock-pace`; points from PR #58 |
-| 11 | 6:00 | Zone 2; the Next Up line appears in the compact top bar | Reads Next Up | Next Up | | direction | Zone 2 line | card `unlock-pace` |
-| 12 | 8:00 | Hesketh: "Wood first. Then we talk." The Gather tab appears | Chops 10 logs | Gathering | logs | | Hesketh's "wood first" pays off | card `unlock-pace` (today: 20 logs at zone 2) |
-| 13 | 10:30 | **Medium moment: the camp fire lit**; the Camp tab appears | Lights the fire | Camp | a home | relief | "Every road needs a place to come back to." | today (moment: card) |
-| 14 | 13:00 | First gold buys the first weapon at the Forge; the Craft tab | Crafts a weapon | Crafting | a weapon, with a **result card** showing its grade | pride | | card `first-gold-and-camp-strip`, `craft-reveal` |
-| 15 | 16:00 | Hesketh's board at camp; a bounty to claim | Claims from the notice | Bounties | gold or Essence; a small moment | small win | | card `bounties-anywhere` |
-| 16 | 18:00 | Zone 4 to 5 Captains, each a cache | Fights | nothing new | caches | anticipation | | card `lantern-cache` |
+| 10 | 4:30 | Zone 2. Hesketh: "Wood first. Then we talk." The Gather tab appears (the only new thing at zone 2) | Chops 10 logs | Gathering | logs | | Hesketh's "wood first" pays off | `story-unlock-gates` (schedule); card `unlock-pace` (10 logs, Hesketh line; today 20 logs) |
+| 11 | 7:00 | **Medium moment: the camp fire lit**; the Camp tab appears | Lights the fire | Camp | a home | relief | "Every road needs a place to come back to." | today (moment: card) |
+| 12 | 9:00 | Zone 3: **medium moment, level up**; the Hero tab appears | Spends the first attribute point | Attributes | +1 point | ownership | | `story-unlock-gates`; points from PR #58 |
+| 13 | 11:00 | Next Up appears in the compact top bar (after the first point, or zone 4) | Reads Next Up | Next Up | | direction | | `story-unlock-gates`; card `unlock-pace` (top bar) |
+| 14 | 13:00 | Zone 4: the away chip (PR #59) joins the top bar. First gold buys the first weapon at the Forge; the Craft tab | Crafts a weapon | Crafting | a weapon, with a **result card** showing its grade | pride | | `story-unlock-gates`; card `first-gold-and-camp-strip`, `craft-reveal` |
+| 15 | 16:00 | **Big moment: a starter you didn't pick joins** (zone 5, when you meet them) | Can switch heroes | Switching | a hero, at the road's level | company | Their first scene (bible 4.4) | idea from `story-unlock-gates`; needs a card; PR #58 for the level |
+| 16 | 18:00 | Hesketh's board at camp; a bounty to claim | Claims from the notice | Bounties | gold or Essence; a small moment | small win | | card `bounties-anywhere` |
 | 17 | 20:00 | **Medium moment: first Star** (zone 6 Captain); the Stars tab | Equips the Star | Stars | a Star | power | | today (moment, menu: cards) |
-| 18 | 25:00 | **Big moment: first unique** (per-boss pity keeps it near here) | Equips it | Uniques and the trophy wall | the unique | delight | The hero's unique bark | card `moment-layer`, `lantern-cache` |
-| 19 | 30:00 | The Bestiary | Reads a foe | Foe types | | curiosity | Bestiary lines | card `unlock-pace` (today: zone 6) |
-| 20 | 35:00 | The Almanac | | | | | | card `unlock-pace` (today: 7 min or zone 7) |
-| 21 | 40:00 | The Tavern | Meets the keeper | Hands | | company | | card `unlock-pace` (today: 14 min or zone 8) |
+| 18 | 25:00 | **Big moment: first unique** (per-boss pity keeps it near here); the Uniques tab and trophy wall | Equips it | Uniques | the unique | delight | The hero's unique bark | `story-unlock-gates`; card `moment-layer`, `lantern-cache` |
+| 19 | 28:00 | Zone 7: the Bestiary | Reads a foe | Foe types | | curiosity | Bestiary lines | `story-unlock-gates` |
+| 20 | 30:00 | Zone 8 or 30 min: the Almanac | | | | | | `story-unlock-gates` |
+| 21 | 35:00 | The Tavern (today 14 min or zone 8, which is too early; target zone 9 to 10 or 35 min) | Meets the keeper | Hands | | company | | open: `story-unlock-gates` or card `unlock-pace` |
 | 22 | 45:00 | A look found in a cache; the Wardrobe count | Dresses the hero | Looks | a look | ownership | | card `looks-early` |
-| 23 | 50:00 | Zone 10 Captain; the Codex | | The Codex | a cache | | | today (zone 10) |
-| 24 | 60:00 | A second hero met on the road (Chapter 1 area 1 to 2) | Can switch | Switching heroes | a hero, joining at the road's level | company | Tobin or Wren's first scene | PR #58, story canon 4.4 |
+| 23 | 50:00 | **Big moment: the second starter joins** (zone 10); zone 11: the Codex | | The Codex | a hero | company | Their first scene | `story-unlock-gates` (Codex); join: needs a card |
+| 24 | 60:00 | Zone 12 to 15: the third starter joins at zone 15 | | | a hero | company | Their first scene | needs a card |
 
 ## What this map does not decide
 
