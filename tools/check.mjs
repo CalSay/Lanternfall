@@ -10104,7 +10104,9 @@ if (section('LF_EYES hook (browser, qa-player-eyes)')) try {
       page.on('pageerror', e => errs.push(String(e)));
       await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
       await page.goto('http://lf.test/'); await page.waitForTimeout(600);
+      if (await page.$('#introScreen .intro-skip')) { await page.click('#introScreen .intro-skip'); await page.waitForSelector('#createScreen .ccard[data-hero="wren"]'); }   // the drawn opening, then "Who are you?"
       await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go'); await page.waitForTimeout(500);
+      if (await page.$('#introScreen .intro-skip')) { await page.click('#introScreen .intro-skip'); await page.waitForTimeout(300); }   // Hesketh's fire
       const X = s => page.evaluate(s => window.__t.x(s), s), E = s => page.evaluate(s => JSON.stringify(window.LF_EYES ? eval(s) : null), s).then(JSON.parse);
       // the player reads the story cards and presses Continue; the first fight waits behind them
       for (let i = 0; i < 60 && (await X('LF_EYES.phase()')) !== 'player turn'; i++) { const b = await page.$('.bsheet-ov .sty-done'); if (b) { await b.click(); await page.waitForTimeout(300); } else await page.waitForTimeout(150); }
