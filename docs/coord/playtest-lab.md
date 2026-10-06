@@ -47,14 +47,16 @@ An optional first line `# seed: <n>` sets the seed (default 1). Never commit ima
 ```
 # seed: 1
 new fresh
+tap-if "Skip"
+wait 1
 tap "Begin as Wren"
-wait 3
-expect "Chapter 1"
-shot chapter-card
+wait 1
+expect "Old Hesketh"
+shot hesketh-fire
 ```
 
 One command on your own branch, no CI needed: `node tools/build.mjs && node tools/ci/eyes.mjs --local` (add the PR labels as the next argument, e.g. `no-visible-change`); it writes `eyes-out/summary.md` for the PR comment. Single route: `grep -v '^#' docs/proof/<card-id>/route.txt | node tools/playtest.mjs batch --seed 1 --shots /tmp/shots`.
-Beware the first minute: story cards open before the first fight; use `tap-if "Skip"` to get past them (it does not fail when a card did not come up).
+Beware the first minute: a new game opens on three pictures (Skip is always there), then the hero picker, then Hesketh's fire before the first fight; use `tap-if "Skip"` to get past them (it does not fail when one did not come up). Each playtest call reopens the game, and an opening already shown is not shown again.
 
 On every PR, CI's `eyes` job (`tools/ci/eyes.mjs`) replays each changed `route.txt` on the merge build at 360x740 and
 740x360, uploads the shots as the `eyes-out` artifact, and posts or updates one PR comment listing each `expect` as
