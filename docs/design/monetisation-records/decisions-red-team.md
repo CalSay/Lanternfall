@@ -1,0 +1,13 @@
+# Red team: the 7 open monetisation decisions (2026-10-06, Sonnet 5.5 medium)
+
+Cal delegated these decisions (2026-10-06 18:30, "I don't want to be involved"). Strongest case against each pick.
+
+1. Store looks beside earned looks (plan: yes, separate catalogue). Against: dilutes Deed prestige; store and Deed capes look alike. Alternative: sell only looks that cannot be mistaken for earned ones (new slots: parry spark, camp pieces, critters) and stamp every look "Earned" or "Store". Evidence: Wardrobe playtest; Leaf Blower and Warframe tolerate separate catalogues. Not a money or legal call.
+2. Lantern Keeper with a +2h away-cap head start (plan: yes, replaces membership). Against: the head start is output sold; a buyer out-earns an equal-hours free player until the Hourglass and Watchtower are built, which is what Rule 1 forbids. Alternative: comforts-only Keeper, or a capped membership with perks kept for good (2026-09-28). Evidence: time to reach the 24h cap; closed-test reviews. Pricing and recurring billing stay with Cal.
+3. No premium currency (plan: yes). Against: fixed per-transaction fees on £1 looks; Steam Wallet and regional pricing are easier with a currency; drip-earned currencies review well (NGU, Warframe). Alternative: an earned mark that part-pays store looks, or hold (EU virtual-currency principles, March 2025, and the 8-currency ceiling favour real prices). Live prices stay with Cal.
+4. No ads, including rewarded (plan: confirm). Weakest challenge; Cal already said no ads; a rewarded ad pays progress. Closed.
+5. Where to sell first (plan: Steam single-player, then phones). Against: riskiest pick; the game is mobile-first and landscape-only on mobile; Steam ships without raid and Tavern and needs a wrapper. Alternative: phones first at 15%, or an itch/Ko-fi supporter pack first to test willingness to pay. Evidence: landscape-desktop playtest; first-hour retention; tester device split. Store accounts, fees, tax, identity, payment code, pricing all stay with Cal.
+6. Supporter packs in three tiers (plan: yes). Against: a £50 look-only tier before 30 looks and a soundtrack exist invites "greedy" reviews; upgrade ladders resemble bundle creep. Alternative: one tier (about £5 to £10) at launch, more once the shelf is full. Live prices and the Tavern mark stay with Cal.
+7. When to start business and legal set-up (plan: when a store is close). Against: weeks of lead time; could delay launch. Alternative: start in parallel with first-hour work. Legal and business set-up cannot be delegated.
+
+Net: keep 1, 3, 4; change 5 and 6; reconsider 2; start 7 early.
