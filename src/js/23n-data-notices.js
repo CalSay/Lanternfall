@@ -51,6 +51,7 @@ const NOTICES = [
   { id: 'learned', re: /^\w+ learned [A-Z][\w' ]+\.$/, site: /learned \$\{a\.name\}/, ch: 'log', why: 'you just pressed Learn and see the card change' },
   { id: 'pace', key: 'pace', re: /back to Zone \d+ to keep earning\.$/, ch: 'bell', once: 'session', why: 'audit 3.14: one line a session' },
   { id: 'start', re: /picks up the lamp\. The road is dark\.$/, ch: 'log', why: 'the guide speaks first' },
+  { id: 'attr-join', key: 'attr-join', ch: 'pop', wait: 30 },   // hero-progression-rework: a hero arrives with points to spend (Go: Attributes)
   { id: 'hero-swap', re: /(takes up the lamp\.|joins at Lv \d+, the road's level\.)$/, ch: 'log' },
 
   // ---- loot and gear ----

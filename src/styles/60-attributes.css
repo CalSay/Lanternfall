@@ -1,5 +1,5 @@
 /* 60-attributes: Hero tab > Attributes (75-attributes-ui.js; docs/design/hero-progression-build.md section 2).
-   A head line, four rows (the points in each, its line, what it gives, +1 and +5), Reset points, a note, and what the level gives. */
+   A head line, four rows (the points in each, its line, what it gives, +1 and +5), Spread evenly and Reset points, a note, and what the level gives. */
 .at-head { margin: 0; font: 600 calc(15px * var(--display-k, 1))/1.25 var(--display); color: var(--gold); }
 .at-list { display: grid; gap: 8px; }
 .at-row { gap: 10px; }
@@ -15,6 +15,11 @@
 .at-add:disabled { background: var(--panel-2); color: var(--muted); box-shadow: inset 0 -3px 0 #1a1420; cursor: default; }
 .at-pts.at-ok { animation: at-ok .45s steps(3); }
 @keyframes at-ok { 0% { box-shadow: inset 0 0 0 1px #6B5320, 0 0 0 0 var(--gold); } 50% { box-shadow: inset 0 0 0 1px #6B5320, 0 0 0 3px var(--gold); } 100% { box-shadow: inset 0 0 0 1px #6B5320, 0 0 0 0 transparent; } }
+.at-acts { display: flex; flex-wrap: wrap; gap: 8px; }
+.at-acts > button { flex: 1 1 140px; }
+.at-spread { min-height: 44px; padding: 0 12px; border: 2px solid #0B0810; cursor: pointer; background: var(--ember); color: #1A1420;
+  font: 700 calc(15px * var(--display-k, 1)) var(--display); box-shadow: inset 0 2px 0 rgba(255,255,255,.3), inset 0 -3px 0 var(--ember-deep); }
+.at-spread:disabled { background: var(--panel-2); color: var(--muted); box-shadow: inset 0 -3px 0 #1a1420; cursor: default; }
 .at-reset { min-height: 44px; padding: 0 12px; border: 2px solid #0B0810; cursor: pointer; background: var(--panel-2); color: var(--bone);
   font: 600 calc(15px * var(--display-k, 1)) var(--display); box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 2px 0 #0B0810; }
 .at-reset:disabled { opacity: .45; cursor: default; }

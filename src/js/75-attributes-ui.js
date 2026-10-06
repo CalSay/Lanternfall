@@ -1,11 +1,13 @@
 // 75-attributes-ui: Hero tab > Attributes (card hero-progression-rework; docs/design/hero-progression-build.md section 2). Browser file.
-// Core: 55-attributes.js (attrOn, ATTRS, attrOf, attrPoints, attrAdd, attrReset, attrParryMs), 55-training.js (trainMoves,
+// Core: 55-attributes.js (attrOn, ATTRS, attrOf, attrEff, attrPoints, attrAdd, attrSpread, attrReset, attrResetCost), 55-training.js (trainMoves,
 // trainName, trainInfo: what the hero's level gives each move). Shown only with the flag off (HERO_TUNE.training = 0).
 //   - the head line: who, the level, and how many points are free (a dot on the Hero tab while some are)
 //   - #attrRows: one .at-row[data-at] a attribute: the points in it, its line, what a point and the points give, +1 / +5
-//   - Reset points (.at-reset): free, with a two-tap confirm in the page (alert and confirm do nothing in the viewer)
+//   - Spread evenly (.at-spread): the free points in one tap, so the four end as even as they can
+//   - Reset points (.at-reset): the first per hero free, later ones for gold (the price on the button), with a two-tap
+//     confirm in the page (alert and confirm do nothing in the viewer)
 //   - .at-moves: "From your level", the numbers each move has from the hero's level alone
-// Points are free to move; a fight takes them as it starts. Reduced motion: no flash (60-attributes.css).
+// A fight takes the points as it starts. Reduced motion: no flash (60-attributes.css).
 {
   const heroName = () => { const k = typeof soloHero === 'function' ? soloHero() : null; return k && typeof ROSTER === 'object' && ROSTER[k] ? ROSTER[k].name.split(' ')[0] : 'Your hero'; };
   const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
@@ -13,13 +15,14 @@
   const msTxt = s => `+${Math.round(s * 1000)} ms`;
   const CONFIRM_MS = 3000;
 
-  let rows = [], head = null, resetBtn = null, movesBox = null, movesFor = '', armed = false, armTimer = 0;
+  let rows = [], head = null, resetBtn = null, spreadBtn = null, movesBox = null, movesFor = '', armed = false, armTimer = 0;
 
   // what one point gives, and what the points in it give now (Guard also widens the parry window)
-  function fxTxt(a, n) {
+  // (past HERO_TUNE.softAt of the hero's points, a point counts HERO_TUNE.soft: the line says so once it does)
+  function fxTxt(a, n, e, k) {
     const per = a.parryMs ? `${pct(a.per)}, +${a.parryMs} ms` : pct(a.per);
-    const now = a.parryMs ? `${pct(a.per * n)}, ${msTxt(a.parryMs * n / 1000)}` : pct(a.per * n);
-    return n ? `${per} a point. Now ${now}.` : `${per} a point.`;
+    const now = a.parryMs ? `${pct(a.per * e)}, ${msTxt(attrParryMs(k))}` : pct(a.per * e);
+    return !n ? `${per} a point.` : e < n ? `${per} a point. Now ${now}. Past half your points, a point counts half.` : `${per} a point. Now ${now}.`;
   }
   function disarm() { armed = false; if (armTimer) { clearTimeout(armTimer); armTimer = 0; } }
 
@@ -32,8 +35,12 @@
     const k = soloHero(); if (!k) return;
     if (attrAdd(a.id, n, k) > 0) { disarm(); flash(row.pts); done(); }
   }
+  function spread() {
+    const k = soloHero(); if (!k) return;
+    if (attrSpread(k) > 0) { disarm(); for (const r of rows) flash(r.pts); done(); }
+  }
   function reset() {
-    const k = soloHero(); if (!k || !attrPoints(k).spent) return;
+    const k = soloHero(); if (!k || !attrPoints(k).spent || S.gold < attrResetCost(k)) return;
     if (!armed) {
       armed = true; armTimer = setTimeout(() => { armed = false; armTimer = 0; try { refresh(); } catch (e) {} }, CONFIRM_MS);
       refresh(); return;
@@ -64,11 +71,15 @@
       list.append(row);
       return r;
     });
+    const acts = el('div', 'at-acts');
+    spreadBtn = el('button', 'at-spread', 'Spread evenly'); spreadBtn.type = 'button';
+    spreadBtn.addEventListener('click', spread);
     resetBtn = el('button', 'at-reset', 'Reset points'); resetBtn.type = 'button';
     resetBtn.addEventListener('click', reset);
-    const note = el('p', 'note at-note', 'Points are free to move. A fight takes them as it starts. Each hero has their own.');
+    acts.append(spreadBtn, resetBtn);
+    const note = el('p', 'note at-note', 'Adding points is free. Your first reset is free, then a reset costs gold. A fight takes your points as it starts. Each hero has their own.');
     movesBox = el('div', 'at-moves');
-    sec.append(head, list, resetBtn, note, movesBox);
+    sec.append(head, list, acts, note, movesBox);
   }
 
   // "From your level": each move's number, once. The abilities share one line when they share one name.
@@ -93,17 +104,20 @@
     for (const r of rows) {
       const n = attrOf(k, r.a.id);
       putText(r.num, n);
-      putText(r.fx, fxTxt(r.a, n));
+      putText(r.fx, fxTxt(r.a, n, attrEff(k, r.a.id), k));
       for (const b of r.adds) {
         putDisabled(b, !P.free);
         putAttr(b, 'aria-label', `Add ${b.dataset.n === '1' ? '1 point' : Math.min(+b.dataset.n, P.free) + ' points'} to ${r.a.name}`);
       }
     }
-    putDisabled(resetBtn, !P.spent);
-    if (!P.spent && armed) disarm();
-    putText(resetBtn, armed ? 'Tap again to reset all points.' : 'Reset points');
+    putDisabled(spreadBtn, !P.free);
+    const cost = attrResetCost(k), short = S.gold < cost;
+    putDisabled(resetBtn, !P.spent || short);
+    if ((!P.spent || short) && armed) disarm();
+    const label = armed ? (cost ? `Tap again to pay ${fmt(cost)} gold and reset.` : 'Tap again to reset all points.') : cost ? `Reset points: ${fmt(cost)} gold` : 'Reset points (free)';
+    putText(resetBtn, label);
     putToggle(resetBtn, 'armed', armed);
-    putAttr(resetBtn, 'aria-label', armed ? 'Tap again to reset all points' : 'Reset points');
+    putAttr(resetBtn, 'aria-label', label);
     // what the level gives each move (rows rebuilt when the hero changes)
     const key = k + '|' + trainMoves(k).join(',');
     if (key !== movesFor) { movesFor = key; buildMoves(k); }

@@ -52,11 +52,12 @@ function trainName(mv) { return mv === 'atk' ? 'Attack' : mv === 'parry' ? 'Parr
 function trainLv(mv, k) {
   if (!S || !S.solo) return 0;
   if (attrOn()) {
-    // hero-progression-rework: a move is as trained as the hero's level, up to the class stage's cap (no allocation: called often)
+    // hero-progression-rework: a move's level follows the hero's: L - 1 (Lv 1 hits as today's untrained hero) up to the class
+    // stage's cap, then HERO_TUNE.capHalf a level past it (judge 3b). Can be fractional; milestones floor it. No allocation: called often.
     const h = trainHero(k), H = SOLO_HEROES[h];
     if (!(mv === 'atk' || mv === 'parry' || mv === 'dodge' || (H && H.abs.includes(mv)))) return 0;
-    const T = SOLO_TUNE.train, lv = heroLvOf(h);
-    return Math.min(lv, T.cap[Math.min(trainStage(h), T.cap.length - 1)]);
+    const T = SOLO_TUNE.train, lv = heroLvOf(h) - 1, cap = T.cap[Math.min(trainStage(h), T.cap.length - 1)];
+    return lv <= cap ? Math.max(0, lv) : cap + HERO_TUNE.capHalf * (lv - cap);
   }
   const v = trainRec(k)[mv]; return v > 0 ? Math.floor(v) : 0;
 }

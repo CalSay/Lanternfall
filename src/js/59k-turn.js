@@ -237,7 +237,7 @@ function turnMakeProfile(f, u) {
   const heroX = (T.heroX[key] || SOLO_TUNE.heroX[key]) / SOLO_TUNE.heroX[key];
   const tap = cls === 'warden' || cls === 'warrior' ? CLASS_ABILITIES.heavy.coef : cls === 'lanternmage' || cls === 'mage' ? CLASS_ABILITIES.ember.coef : CLASS_ABILITIES.focus.coef;
   const k = heroX * SOLO_TUNE.atkX * aps();
-  const A = heroAtk() * tap * k * tapMult();
+  const A = heroAtk() * tap * k * tapMult() * attrRel('atk');   // hero-progression-rework: Might against the even build (1 with Training on)
   // ability power: the hero's Attack power, raised by Ability power Training (the signature's line: +abTrain a level)
   // and ability gear. Tied to Attack so a geared hero's abilities never fall behind their Attack. Not the Attack's own
   // multiplier (tapMult: the Golemfist, the Deepwell's Heavy Hands): "your Attack deals double" means the Attack.
@@ -275,7 +275,7 @@ function turnPowerNow(plain) {
   const heroX = (T.heroX[key] || SOLO_TUNE.heroX[key]) / SOLO_TUNE.heroX[key];
   const tap = cls === 'warden' || cls === 'warrior' ? CLASS_ABILITIES.heavy.coef : cls === 'lanternmage' || cls === 'mage' ? CLASS_ABILITIES.ember.coef : CLASS_ABILITIES.focus.coef;
   const A0 = heroAtk() * tap * heroX * (plain ? 1 : turnLateX(key, S.zone)) * SOLO_TUNE.atkX * aps();
-  return { A: A0 * tapMult(), U: A0 * (1 + T.abTrain * trainLv(TURN_SIG[key] || 'echo')) * (1 + (g.abil || 0) / 100) * attrRel('ab'), crit: critMult(),
+  return { A: A0 * tapMult() * attrRel('atk'), U: A0 * (1 + T.abTrain * trainLv(TURN_SIG[key] || 'echo')) * (1 + (g.abil || 0) / 100) * attrRel('ab'), crit: critMult(),
     spell: 1 + (g.spell || 0) / 100, dot: 1 + (g.area || 0) / 100 };
 }
 // One line of numbers for an ability (75-abilities-ui): its hit, and what its Burn, Bleed or spend adds

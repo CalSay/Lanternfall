@@ -86,9 +86,10 @@ const bossHpMult = z => PACE.bossHp * (isRegionBoss(z) ? PACE.regionBoss : 1);
 const regionHp = z => { let m = 1; const st = [].concat(PACE.regionStep); for (let r = 1; r <= Math.floor(z / PACE.region); r++) m *= st[Math.min(r, st.length) - 1]; return m; };
 
 // ================= formulas =================
-// hero-progression-rework: with HERO_TUNE.training off the level bonus is attrX('atk') (55-attributes: half of the old
-// +PACE.heroLv a level, plus the hero's Might points); with it on, today's flat bonus, bit for bit.
-const lvlMult = () => HERO_TUNE.training ? 1 + PACE.heroLv * (S.L - 1) : attrX('atk');
+// hero-progression-rework: with HERO_TUNE.training off the level bonus is attrNeutral() (55-attributes: half of the old
+// +PACE.heroLv a level, plus the hero's points as if spread evenly, so power outside a turn fight is the same for every
+// build); turn fights apply the build (attrRel). With it on, today's flat bonus, bit for bit.
+const lvlMult = () => HERO_TUNE.training ? 1 + PACE.heroLv * (S.L - 1) : attrNeutral();
 const dmgMult = () => (1 + 0.2 * S.relic.banner) * (1 + gear().might / 100) * mod('dmg');
 // ECON-A (economy-2 6.1): gear is the only gold-gain (capped +30%, gearGold in 55-econ); mod('gold') carries
 // only the Gold Rain Omen. Fortune and the Lucky Coin became crit damage (Precision, the Loaded Die).

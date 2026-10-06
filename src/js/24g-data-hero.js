@@ -16,6 +16,11 @@
 //   fights              [level, fights] points: normal fights a level takes at the zone the road expects for it. (tuned)
 //   bench               the share of a won fight's XP every other playable hero earns
 //   smooth              1: Attack's (and abilities') fifth-level step is a smooth power with the same mean over each block
+//   softAt, soft        a hero's points in one attribute past softAt of all they have earned count soft each (judge 1a)
+//   guardMs             the most Guard adds to the parry window, ms (judge 1b)
+//   capHalf             past the class stage's cap, a level adds this much move level (judge 3b): a move's level is
+//                       min(L - 1, cap) + capHalf x max(0, L - 1 - cap)
+//   respec              the second and later resets of a hero's points cost foeGoldBase(furthest zone) x this (the first is free)
 
 const HERO_TUNE = {
   training: 0,
@@ -24,7 +29,12 @@ const HERO_TUNE = {
   road: [[1, 1], [5, 7], [10, 15], [15, 22], [20, 28], [25, 33], [30, 37], [35, 40], [40, 44], [50, 52], [70, 66]],
   fights: [[1, 3], [10, 8], [20, 20], [30, 45], [40, 70], [60, 100]],
   bench: 0.5,
-  smooth: 1
+  smooth: 1,
+  softAt: 0.5,
+  soft: 0.5,
+  guardMs: 60,
+  capHalf: 0.5,
+  respec: 30
 };
 // The order is the screen's order. line: one plain line for the Attributes view.
 const ATTRS = [

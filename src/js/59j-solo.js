@@ -91,8 +91,9 @@ var soloHero, soloPick, soloLevels, soloBenchXp, soloAttack, soloParry, soloDodg
     let lifted = false;
     if (from && from !== key) {
       const r = s.lv[key]; S.L = r ? Math.max(1, r.L | 0) : 1; S.xp = r ? Math.max(0, +r.xp || 0) : 0;
-      // hero-progression-rework: a hero who takes the lamp joins at the road's level at least, with an empty XP bar (a hero above it keeps theirs)
-      if (attrOn()) { const floor = roadLevel(); if (S.L < floor) { S.L = floor; S.xp = 0; lifted = true; } }
+      // hero-progression-rework: a hero who takes the lamp joins at the road's level at least, keeping their XP short of a level (a lift never
+      // chains level-ups); a hero above it keeps theirs
+      if (attrOn()) { const floor = roadLevel(); if (S.L < floor) { S.L = floor; S.xp = Math.min(S.xp, xpNeed(floor) - 1); lifted = true; } }
       // W1-D (playtest-2 P2-7): the road belongs to the lamp, but each hero remembers where they stood. Leaving hero A saves A's
       // zone; arriving as B goes back to B's own zone (never past the furthest zone cleared). A hero with no zone kept
       // (never played) stays where you are. Pace (55-pace) then walks a weaker hero down to a zone they can farm and
