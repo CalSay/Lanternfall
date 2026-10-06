@@ -56,7 +56,7 @@ const ONLY = (process.argv.find(a => a.startsWith('--only=')) || '').slice(7);
 const SHARD = (m => (m ? [+m[1], +m[2]] : null))(/--shard=(\d+)\/(\d+)/.exec(process.argv.join(' ')));
 const JOBS = SHARD ? 1 : +((process.argv.find(a => a.startsWith('--jobs=')) || '').slice(7)) || (ONLY ? 1 : Math.min(4, os.cpus().length));
 // Seconds a section takes (measured, W2-B): the shards are balanced by these; a section not listed counts 2.
-const WEIGHT = { 'landscape 740x360 (browser, UX-L1)': 42, 'landscape 844x390 (browser, UX-L1)': 38, 'landscape 1280x720 (browser, UX-L1)': 38, 'solo copy (browser, W1-C)': 60, 'W1-D (browser)': 100, 'training (W2-A, browser)': 18, 'cb2': 40, 'notices (browser, W1-B)': 34, 'solo guide: gathering never freezes (browser)': 31, 'solo hero (browser)': 21, 'types and statuses (S1)': 14, 'save codes': 13, 'combat': 8, 'gatherers UI (browser)': 7, 'gathering': 6, 'nav': 6, 'retool': 6, 'onboarding hint placement (HINT1)': 5, 'camp trade and import (C4, browser)': 15 };
+const WEIGHT = { 'LF_EYES hook (browser, qa-player-eyes)': 12, 'landscape 740x360 (browser, UX-L1)': 42, 'landscape 844x390 (browser, UX-L1)': 38, 'landscape 1280x720 (browser, UX-L1)': 38, 'solo copy (browser, W1-C)': 60, 'W1-D (browser)': 100, 'training (W2-A, browser)': 18, 'cb2': 40, 'notices (browser, W1-B)': 34, 'solo guide: gathering never freezes (browser)': 31, 'solo hero (browser)': 21, 'types and statuses (S1)': 14, 'save codes': 13, 'combat': 8, 'gatherers UI (browser)': 7, 'gathering': 6, 'nav': 6, 'retool': 6, 'onboarding hint placement (HINT1)': 5, 'camp trade and import (C4, browser)': 15 };
 const shardLoad = SHARD ? Array(SHARD[1]).fill(0) : null;
 function section(name) {
   if ((ONLY && !new RegExp(ONLY, 'i').test(name))) return false;
@@ -9344,6 +9344,65 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
   }
 } catch (e) { fail(`landscape ${w}x${h} (browser, UX-L1) crashed: ` + (e.stack || e)); }
 
+// ==== qa-player-eyes: LF_EYES (src/js/89-eyes-hook.js), what tools/eyes.mjs reads. Read only: it changes no state and starts no timer.
+if (section('LF_EYES hook (browser, qa-player-eyes)')) try {
+  const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '89-eyes-hook.js'), 'utf8').replace(/\/\/.*$/gm, '');
+  assert(!/\bS\s*(\.|\[)[^=;]*[^=!<>]=[^=]/.test(src) && !/\b(emit|save|toast|setInterval|setTimeout|requestAnimationFrame|holdGame|on)\s*\(/.test(src), 'the hook writes no state, emits nothing, saves nothing and starts no timer or listener');
+  assert((src.match(/\bwindow\.[A-Za-z_]+\s*=/g) || []).join() === 'window.LF_EYES =' && (src.match(/\bSFX\.play\s*=(?!=)/g) || []).length === 1, 'the hook sets window.LF_EYES and wraps SFX.play, nothing else');
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('LF_EYES (browser): Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      const ctx = await browser.newContext({ turns: true, viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true }), page = await ctx.newPage(), errs = [];   // turns: the shipped fight
+      page.on('pageerror', e => errs.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForTimeout(600);
+      await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go'); await page.waitForTimeout(500);
+      const X = s => page.evaluate(s => window.__t.x(s), s), E = s => page.evaluate(s => JSON.stringify(window.LF_EYES ? eval(s) : null), s).then(JSON.parse);
+      // the player reads the story cards and presses Continue; the first fight waits behind them
+      for (let i = 0; i < 60 && (await X('LF_EYES.phase()')) !== 'player turn'; i++) { const b = await page.$('.bsheet-ov .sty-done'); if (b) { await b.click(); await page.waitForTimeout(300); } else await page.waitForTimeout(150); }
+      const api = await X('Object.keys(LF_EYES).sort().join() + "|" + Object.isFrozen(LF_EYES)');
+      assert(api === 'floats,info,phase,rects,sfx,tip|true', `LF_EYES offers rects, phase, tip, sfx, floats and info, and is frozen (${api})`);
+      const R = await E('LF_EYES.rects()'), fin = b => b && [b.x, b.y, b.w, b.h].every(Number.isFinite) && b.w > 0 && b.h > 0, within = (a, b) => a && b && a.x >= b.x - 2 && a.y >= b.y - 2 && a.x + a.w <= b.x + b.w + 2 && a.y + a.h <= b.y + b.h + 2;
+      assert(fin(R.stage) && fin(R.hero) && fin(R.foe) && fin(R.heroHp) && fin(R.foeHp), `rects(): stage, hero, foe and both HP boxes are real boxes (${JSON.stringify(Object.fromEntries(Object.entries(R).map(([k, v]) => [k, v && v.x != null ? 1 : v && v.length != null ? v.length : 0])))})`);
+      assert(within(R.hero, R.stage) && within(R.foe, R.stage), `rects(): the hero and the foe lie on the stage (hero ${JSON.stringify(R.hero)}, foe ${JSON.stringify(R.foe)}, stage ${JSON.stringify(R.stage)})`);
+      assert(R.hero.x < R.foe.x && R.boss === null && R.foes.length >= 1 && R.foes.every(f => typeof f.boss === 'boolean'), 'rects(): the hero stands left of the foe, no boss in the first fight, foes lists each foe');
+      assert(fin(R.tip) && fin(R.ring), 'rects(): the guide tip and its marker are on screen with the first tip');
+      const T = await E('LF_EYES.tip()');
+      assert(T && T.action === 'attack' && /Attack/.test(T.text) && fin(T.target) && T.button && T.button.sel === '#soloBar .sb-atk' && typeof T.button.greyed === 'boolean' && typeof T.button.hidden === 'boolean', `tip(): the first tip is the Attack step, with its sentence, marker and button (${JSON.stringify(T)})`);
+      const PH = new Set(['idle', 'player turn', 'foe wind-up', 'parry or dodge window']), ph = await X('LF_EYES.phase()');
+      assert(PH.has(ph) && ph === 'player turn', `phase(): "${ph}" while the hero waits to act on the Attack tip`);
+      // phase() follows the fight: wind-up, then the window, for each of the three turn phases the core can be in
+      const seen = await X(`(() => { const out = {}, snap = turnCombatSnapshot, m = TURN_LIVE; const set = (ph, extra) => { m.phase = ph; Object.assign(m, extra || {}); return LF_EYES.phase(); };
+        const keep = { phase: m.phase, until: m.until, now: m.now, usedDefense: m.usedDefense };
+        out.idle = set('recovery'); out.turn = set('hero'); out.timing = set('timing', { tm: m.tm || { id: 'x', i: 0, n: 1 } });
+        out.wind = set('foeWindup', { usedDefense: false, until: m.now + 5 }); out.win = set('foeWindup', { until: m.now + 0.05 });
+        Object.assign(m, keep); return out; })()`);
+      assert(seen.idle === 'idle' && seen.turn === 'player turn' && seen.timing === 'player turn' && seen.wind === 'foe wind-up' && seen.win === 'parry or dodge window', `phase(): recovery is idle, hero and timing are the player's turn, a far wind-up is "foe wind-up", a near one the window (${JSON.stringify(seen)})`);
+      // read only: a hundred reads change nothing in the save state
+      const same = await X(`(() => { const a = JSON.stringify(S); for (let i = 0; i < 100; i++) { LF_EYES.rects(); LF_EYES.phase(); LF_EYES.tip(); LF_EYES.floats(); LF_EYES.info(); } return a === JSON.stringify(S); })()`);
+      assert(same, 'reading rects(), phase(), tip(), floats() and info() a hundred times leaves the save state as it was');
+      // sfx(): the sounds the game asked for since the last read, cleared by the read
+      await X('LF_EYES.sfx(); true');
+      await page.click('#soloBar .sb-atk'); await page.waitForTimeout(900);
+      const a1 = await E('LF_EYES.sfx()'), a2 = await E('LF_EYES.sfx()');
+      assert(Array.isArray(a1) && a1.length > 0 && a1.every(x => typeof x.name === 'string' && typeof x.prio === 'boolean') && a2.length === 0, `sfx(): pressing Attack asked for sounds (${a1.map(x => x.name).join(',')}) and a second read is empty`);
+      await X(`SFX.play('loot', true); true`);
+      assert((await E('LF_EYES.sfx()')).some(x => x.name === 'loot' && x.prio), 'sfx(): a sound asked for by name shows up with its priority');
+      const fl = await E('LF_EYES.floats()'), inf = await E('LF_EYES.info()');
+      assert(Array.isArray(fl) && fl.every(f => typeof f.txt === 'string' && Number.isFinite(f.left)) && inf.v === 1 && inf.w === 360 && inf.h === 740 && inf.zoom >= 1, `floats() is a list of texts and info() reports the page (${JSON.stringify(inf)})`);
+      await page.waitForTimeout(400);
+      const T2 = await E('LF_EYES.tip()');
+      assert(T2 === null || T2.action !== 'attack', `tip(): once Attack is pressed its tip is gone (${T2 ? T2.action : 'none'})`);
+      assert(!errs.length, 'no page errors' + (errs.length ? ': ' + errs[0] : ''));
+      await ctx.close();
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('LF_EYES hook (browser) crashed: ' + (e.stack || e)); }
+// ==== end qa-player-eyes ====
 // ---- fight HUD fit (fight-hud-fit): names whole, banner and toasts never on top of each other ----
 if (section('fight HUD fit')) try {
   const { pw, exe } = browserTools;
