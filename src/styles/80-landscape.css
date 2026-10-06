@@ -124,7 +124,7 @@
   .ob-bub.side .ob-facebox, .ob-bub.side .ob-face { width: 40px; height: 40px; }
   .ob-bub.side .ob-x { width: 30px; height: 30px; }
   .ob-bub.side .ob-ok { margin-top: 4px; }
-  .app.guide-side:not(.guide-nu) .nu-slot, .app.guide-side .toasts.side-dock { visibility: hidden; }
+  .app.guide-side:not(.guide-nu) .nu-slot, .app.guide-side .toasts.side-dock, .app.guide-side .gate-rule { visibility: hidden; }
 
   /* ---- sheets fit a short screen ---- */
   .sp-ov { align-items: center; }

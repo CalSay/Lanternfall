@@ -1445,7 +1445,7 @@ if (section('onboarding hint placement (HINT1)')) try {
   assert(/if \(!changed\) return;/.test(src), 'place() skips the reposition when nothing real changed (no per-frame follow)');
   assert(!/setInterval\(place/.test(src), 'place() itself is never put on its own interval');
   const css = fs.readFileSync(path.join(ROOT, 'src', 'styles', '60-onboard.css'), 'utf8');
-  assert(/\.ob-bub\s*\{[^}]*position:\s*absolute/.test(css), 'the hint bubble is docked (a fixed offset within its parent), not translated to the target every tick');
+  assert(/\.ob-bub\.over-menu\s*\{[^}]*position:\s*absolute/.test(css) && /\.ob-bub\s*\{[^}]*position:\s*relative/.test(css), 'the guide panel is docked (a slot in its parent, or a fixed offset over a menu), not translated to the target every tick');
   assert(/--toast-h/.test(css) && /--toast-h/.test(fs.readFileSync(path.join(ROOT, 'src', 'js', '70-ui.js'), 'utf8')), 'the hint band and placeToasts share --toast-h so they cannot collide');
   ok('source: tick only recomputes on a real change, the bubble is CSS-docked, toasts and hints share one band variable');
   // in Chromium: the band does not move while the game runs (ticks, an ability firing) under it
@@ -1479,21 +1479,18 @@ if (section('onboarding hint placement (HINT1)')) try {
         if (th === th0) assert(r && r.x === r0.x && r.y === r0.y, `browser: the hint band does not move while the stage animates under it (${JSON.stringify(r0)} -> ${JSON.stringify(r)}, --toast-h unchanged)`);
         r0 = r; th0 = th;
       }
-      // it stays in its band: fixed, near the stage HUD, not floating out at the target
-      const box = await page.$eval('.ob-bub', b => { const s = getComputedStyle(b); return { position: s.position, top: s.top === 'auto' ? null : parseFloat(s.top) }; });
-      assert(box.position === 'absolute' && box.top !== null && box.top < 120, `browser: docked near the stage HUD, not floating at the target (${JSON.stringify(box)})`);
-      // the over-menu band (used once a menu covers the stage) sits just above the tab bar, the
-      // same slot placeToasts uses for toasts (50-overlays.css .toasts.over-menu), so the hint
-      // and the toast stack are in the same corner but never overlap
+      // it docks in a slot of the game view (portrait), above the dock bar and clear of the stage; over a menu it sits above the tab bar
+      const dock = await page.$eval('.ob-bub', b => { const r = b.getBoundingClientRect(), sb = document.getElementById('soloBar').getBoundingClientRect(), st = document.getElementById('stageBox').getBoundingClientRect(); return { dock: b.classList.contains('dock'), gapAboveBar: Math.round(sb.top - r.bottom), belowStage: Math.round(r.top - st.bottom) }; });
+      assert(dock.dock && dock.gapAboveBar >= 0 && dock.gapAboveBar <= 12 && dock.belowStage >= 0, `browser: the guide panel docks just above the Act / Skills / Foe bar, never over the stage (${JSON.stringify(dock)})`);
       const tabsH = await page.$eval('.tabs', t => t.getBoundingClientRect().height);
       const boxes = await page.$eval('.ob-bub', b => {
-        const before = getComputedStyle(b).bottom;
+        const before = getComputedStyle(b).position;
         b.classList.add('over-menu');
-        const after = getComputedStyle(b).bottom;
+        const cs = getComputedStyle(b), after = { position: cs.position, bottom: parseFloat(cs.bottom) };
         b.classList.remove('over-menu');
-        return { before, after: parseFloat(after) };
+        return { before, after };
       });
-      assert(boxes.before !== boxes.after && boxes.after >= tabsH, `browser: the over-menu band sits above the tab bar (bottom ${boxes.after}px, tabs ${tabsH}px; was ${boxes.before})`);
+      assert(boxes.after.position === 'absolute' && boxes.after.bottom >= tabsH, `browser: the over-menu panel sits above the tab bar (bottom ${boxes.after.bottom}px, tabs ${tabsH}px)`);
       // menu audit #19: "New" lasts 2 hours of play after an unlock, so an old save's long-past unlocks never show it
       const nb = await X(`(() => { const o = S.onboard, v = { id: 'zz-test', feature: 'party' }, was = o.got.party;
         o.got.party = Math.round(o.t); const a = onboardIsNew(v); o.got.party = Math.round(o.t) - 7300; const b = onboardIsNew(v);
@@ -4611,15 +4608,15 @@ if (section('solo hero (browser)')) try {
       await page.click('#createScreen .ccard[data-hero="pip"]'); await page.click('#createScreen .create-go'); await page.waitForTimeout(600);
       assert(await X('soloHero() === "pip" && heroSpec().comp === "pip"'), 'Pip is the hero on the stage (her own art)');
       const bar = await page.$eval('#soloBar', b => {
-        const r = b.getBoundingClientRect(), s = document.getElementById('stageBox').getBoundingClientRect(), nav = document.querySelector('.tabs').getBoundingClientRect();
+        const r = b.getBoundingClientRect(), s = document.getElementById('stageBox').getBoundingClientRect(), pb = document.querySelector('.ob-bub:not([hidden])'), nav = document.querySelector('.tabs').getBoundingClientRect();
         const rows = [...b.querySelectorAll('.sb-row')].map(row => [...row.querySelectorAll('.sbtn')].map(x => { const q = x.getBoundingClientRect(); return { act: x.dataset.act, x: Math.round(q.left), y: Math.round(q.top), w: Math.round(q.width), h: Math.round(q.height), cls: x.className }; }));
         const game = document.getElementById('game'), kids = [...game.children].filter(k => !k.hidden && k.getClientRects().length).map(k => k.id || k.className.split(' ')[0]);
-        return { rows, top: Math.round(r.top), bottom: Math.round(r.bottom), stageBottom: Math.round(s.bottom), navTop: Math.round(nav.top), hidden: b.hidden, order: kids.join('>') };
+        return { rows, top: Math.round(r.top), bottom: Math.round(r.bottom), stageBottom: Math.round(pb && pb.classList.contains('dock') ? pb.getBoundingClientRect().bottom : s.bottom), navTop: Math.round(nav.top), hidden: b.hidden, order: kids.join('>') };
       });
       const flat = bar.rows.flat();
       assert(!bar.hidden && bar.rows.length === 2 && bar.rows.map(r => r.map(x => x.act).join()).join('|') === 'atk,ab0,ab1,ab2|parry,dodge', `the dock: Attack and Ability 1-3 in the Act pane, Parry and Dodge under them (${bar.rows.map(r => r.map(x => x.act).join()).join(' | ')})`);
       assert(flat.every(x => x.w >= 44 && x.h >= 44) && bar.rows[0].every(x => x.y < bar.rows[1][0].y) && bar.rows[0].every((x, i) => i === 0 || x.x > bar.rows[0][i - 1].x) && bar.rows[1][1].x > bar.rows[1][0].x, `six keys of 44 px or more: four tiles over Parry and Dodge (${flat.map(x => x.w + 'x' + x.h).join(' ')})`);
-      assert(bar.top >= bar.stageBottom - 1 && bar.top - bar.stageBottom <= 8 && bar.bottom <= bar.navTop && bar.navTop - bar.bottom <= 16 && /stageBox>soloBar$/.test(bar.order), `the bar touches the stage (not over it) and is the lowest thing above the tab bar (${bar.order}; stage ${bar.stageBottom}, bar ${bar.top}-${bar.bottom}, tabs ${bar.navTop})`);
+      assert(bar.top >= bar.stageBottom - 1 && bar.top - bar.stageBottom <= 8 && bar.bottom <= bar.navTop && bar.navTop - bar.bottom <= 16 && /stageBox>soloBar(>ob-bub)?$/.test(bar.order), `the bar touches the stage (not over it) and is the lowest thing above the tab bar (${bar.order}; stage ${bar.stageBottom}, bar ${bar.top}-${bar.bottom}, tabs ${bar.navTop})`);
       assert(/sb-abslot/.test(flat[1].cls) && !/empty/.test(flat[1].cls) && /empty/.test(flat[2].cls) && /empty/.test(flat[3].cls), 'slot 1 holds the hero\'s ability; slots 2 and 3 show empty');
       // the dock's tabs: Skills lists the three slots, Foe is for turn fights, Parry and Dodge stay on screen, Act comes back
       {
