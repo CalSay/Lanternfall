@@ -818,8 +818,8 @@ charges did not change: a landed boss hit 27-34%, a charge 62-81%, a normal hit 
 
 ## Art
 
-No new art. The three starters keep their approved icons; the other 39 abilities show a lettered tile on the bar and
-the Abilities view until their icons are drawn. Hero poses reuse what the hero already has (their attack and ability
+No new art. The three starters keep their approved icons, and all 14 of Pip's abilities are drawn (wire-ability-icons, done); the other
+26 show a lettered tile on the bar and the Abilities view until Wren's and Tobin's packs are whole. Hero poses reuse what the hero already has (their attack and ability
 poses). The boss and normal foe moves reuse the foe's current art. Status chips use Codex's approved status icons. The
 ability art brief (`ability-art-brief.md`) is the list of what is still needed. The 25 Stars show a two-letter tile (the art freeze); they
 need an icon each when their pack is drawn.

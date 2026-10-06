@@ -20,6 +20,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Keep the readiness estimate running while a tip pauses the game, and include Deepwell boons, gear changes made while gathering, and the sim seed. Why: Codex found each of these in rounds 1 to 3 of PR #47. (boss-readiness, 2026-10-06)
 - Run `node tools/health.mjs --compare` before and after any balance or pacing change. Why: it is the only before/after measure and CI gates on it. (f-health, 2026-10-05)
 - Play the persona's whole turn skill (parry, dodge and ability rings) when measuring pacing for a named player type. The sim's own turn player lands 80% of defences and never presses a ring, so every timed ability is a Miss. Why: Codex P1 on PR #52, where one shared 40% defence rate stood in for the casual. (xp-gold-pacing-report, 2026-10-06)
+- difficulty-budget: predicted the budget would find bosses near the 70% casual aim with a few outliers; measured 55 of 156 hero cells out of band (zones 5-15 and elites 100%, zones 25-34 Captains 0-1% for Wren and Pip, the Fenmother easier than her Captains). Miss. Also: `turnCombatSample` on one seed correlates long fights (13-32% vs 53-67% independent), so give every boss fight its own hashed seed when measuring win rates. Why: the judge caught it before the baseline. (difficulty-budget, 2026-10-06)
 
 ## Economy and skilling
 
@@ -68,6 +69,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Give every new checkbox or button in a sheet a 44px minimum height, and when a control repeats one already on screen, update both from the same state. Why: Codex P1/P2 on the Try again card (Auto toggle was 18px tall and drifted from the Fight tab's). (wall-try-again, 2026-10-06)
 - Delay the Aim hint until the foe's swing lands. Why: it covered the Dodge and Parry cues. Guide tips already show one at a time; leave that. (first-minute-flow, 2026-10-06)
 - Mark any reward, hint or card the game cannot deliver yet as "Coming soon", in the place the player first sees it (not only after claiming). Why: 15 Codex rewards said "Saved for later" only after they were claimed, and Jory's and Ashby's hints promised a hire the game never made. (promises-pass, 2026-10-06)
+- Show icons through `nicSet`/`nicTag` at the size the box shows, never a 48 px URL squeezed into 28-36 px, and give a hero's icons in whole packs only (add the hero to `COMPLETE` in check.mjs). Why: the Abilities list used `soloIconURL` (uneven scaling) and Wren and Tobin still lack 4 icons. (wire-ability-icons, 2026-10-06)
 
 ## Saves and offline parity
 

@@ -7,9 +7,12 @@ with three kinds of player and scores the result against `docs/design/health-bas
 node tools/health.mjs                   run (about 40 seconds), print, write tools/.health/latest.json
 node tools/health.mjs --compare         also compare with the baseline; exit 1 when a metric moves past tolerance
 node tools/health.mjs --write-baseline  accept the mean of 5 seed offsets as the baseline (about 3 min; tolerances kept)
---only casual,active,optimiser   --jobs N   --json PATH   --seed-offset N
+--only casual,active,optimiser,budget   --jobs N   --json PATH   --seed-offset N
 node tools/health.mjs --long            the 50-hour run (about 2.5 min on 3 free cores, 7 min of CPU in all); add --compare, or --write-baseline (3 seeds, about 8 min on 3 cores)
 ```
+
+The run also scores the **difficulty budget** (`tools/budget.mjs`, one process a hero beside the personas): each fight
+kind's win rate for each starter against its band, with known gaps. See `difficulty-budget.md`.
 
 ## The players
 
