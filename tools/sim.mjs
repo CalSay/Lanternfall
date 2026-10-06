@@ -30,6 +30,8 @@
 //   --report turns --hours 1 --seeds 3 --json rates.json: the turn fight's win rates, fight length and income (C29).
 //     --stars typical: each profile carries a typical Stars loadout (24f, 57e): the stars its zone has found (zone bosses
 //     behind it, and the hero's own Proving past zone 35), learned, with a set of 3 and up to 2 lit (STARS_TYPICAL below).
+//   --report bossodds [--hours 0.5] [--seeds 3]: the Next Up boss estimate (59m bossOdds: 30 scratch fights) with no history, at casual and at
+//             good skill, whether "Boss ready" shows, its cost in ms, against the long-run boss win rate of turnCombatSample.
 //   --report heroes --hours 1 --seeds 3: the three heroes on the same footing (the Tobin pass, combat-turn-build.md).
 //   --report stars --hours 0.5 --seeds 2 [--pairs 0] [--only <star id>]: the Stars' second pass (combat-turn-build.md
 //             "Stars"): each star of the second pass on a build that uses it (a kept-up hero at zone 38), alone and
@@ -141,6 +143,7 @@ if (args.profile && !profile) { console.error('--profile must be idle, normal or
 if (profile) for (const k of ['checkins', 'session', 'first']) if (args[k] === undefined) args[k] = String(profile[k]);
 
 if (args.report === 'turns') { await runTurnReport(); process.exit(0); }
+if (args.report === 'bossodds') { await runBossOddsReport(); process.exit(0); }
 if (args.report === 'heroes') { await runHeroReport(); process.exit(0); }
 if (args.report === 'stars') { await runStarsReport(); process.exit(0); }
 if (args.report === 'early') { await runEarlyReport(); process.exit(0); }
@@ -1540,18 +1543,11 @@ async function runEconReport() {
   for (const p of profs) console.log(`  ${p.padEnd(6)} day ${nDays}: zone ${D[p][D[p].length - 1].zone}, bosses ${Object.entries(J[p].bossAt).map(([z, t]) => `${z} d${(t / 24).toFixed(1)}`).join(' ') || '-'}, gold a day ${D[p].filter(d => [1, 3, 8, 15, 30, 45].includes(d.day)).map(d => `d${d.day} ${f0(d.earn)}`).join(' ')}`);
 }
 
-// C29: the turn fight's numbers (59k turnCombatSample, the live rules in a scratch fight). For each profile (a fresh
-// hero at zone 1, and the early, mid and late fixtures at their frontier) it fights normal foes and the zone boss with two
-// players (and the late fixture made a hero who keeps up, at zones 35 and 38: see late-kept below): 'good' (parries 60% of hits and dodges 90% of the rest; timed rings 40% Perfect, 45% Good) and 'casual' (25% and
-// 50%; 10% Perfect, 40% Good). It reports the win rate,
-// hero turns and seconds a fight, kills, gold and Essence an hour of play, and (the boss pass) what one landed hit, one
-// landed charge and a fight cost as shares of max HP. A zone boss is met at full health (59k fullHp), as in play.
-// Usage: --report turns [--hours 1] [--seeds 3] [--json path]
-async function runTurnReport() {
+// The profiles --report turns and --report bossodds fight: [name, hero, save json, setup js] (a fresh hero, the fixtures at their
+// frontier, and the late fixture made a hero who keeps up).
+async function turnReportProfiles() {
   const fs = await import('node:fs'), path = await import('node:path');
   const { ROOT } = await import('./lib/core.mjs');
-  const seconds = Number(args.hours || 1) * 3600, count = Number(args.seeds || 3);
-  if (!(seconds > 0) || !Number.isInteger(count) || count < 1) throw new Error('Positive hours and integer seeds required');
   const fx = n => fs.readFileSync(path.join(ROOT, 'tests/fixtures/save-' + n + '.json'), 'utf8');
   // late-kept-35 / late-kept-38: the late fixture's Pip as a hero who keeps up (the late-zone balance pass): level 40 at
   // zone 35 (the Fenmother) and 41 at zone 38 (turn fights give a level every 2,000-8,000 kills there), Attack Training
@@ -1570,6 +1566,22 @@ async function runTurnReport() {
     ['mid-tier-1', '', fx('mid'), tier(-1)], ['mid-tier+1', '', fx('mid'), tier(1)], ['late', '', fx('late')],
     ['late-kept-35', '', fx('late'), kept(35, 40)], ['late-kept-38', '', fx('late'), kept(38, 41)],
     ['late-kept-38-tier-1', '', fx('late'), kept(38, 41) + tier(-1)], ['late-kept-38-tier+1', '', fx('late'), kept(38, 41) + tier(1)]];
+  return profiles;
+}
+
+// C29: the turn fight's numbers (59k turnCombatSample, the live rules in a scratch fight). For each profile (a fresh
+// hero at zone 1, and the early, mid and late fixtures at their frontier) it fights normal foes and the zone boss with two
+// players (and the late fixture made a hero who keeps up, at zones 35 and 38: see late-kept below): 'good' (parries 60% of hits and dodges 90% of the rest; timed rings 40% Perfect, 45% Good) and 'casual' (25% and
+// 50%; 10% Perfect, 40% Good). It reports the win rate,
+// hero turns and seconds a fight, kills, gold and Essence an hour of play, and (the boss pass) what one landed hit, one
+// landed charge and a fight cost as shares of max HP. A zone boss is met at full health (59k fullHp), as in play.
+// Usage: --report turns [--hours 1] [--seeds 3] [--json path]
+async function runTurnReport() {
+  const fs = await import('node:fs'), path = await import('node:path');
+  const { ROOT } = await import('./lib/core.mjs');
+  const seconds = Number(args.hours || 1) * 3600, count = Number(args.seeds || 3);
+  if (!(seconds > 0) || !Number.isInteger(count) || count < 1) throw new Error('Positive hours and integer seeds required');
+  const profiles = await turnReportProfiles();
   // perfect / good: the share of timed-ability rings pressed Perfect / Good (the rest are missed)
   const players = { good: { parry: 0.6, dodge: 0.9, perfect: 0.4, good: 0.45 }, casual: { parry: 0.25, dodge: 0.5, perfect: 0.1, good: 0.4 } };
   const rows = [];
@@ -1611,6 +1623,54 @@ async function runTurnReport() {
   const report = { seconds, seeds: count, players, rows };
   if (args.json && args.json !== '1') fs.writeFileSync(String(args.json), JSON.stringify(report, null, 2) + '\n');
   return report;
+}
+
+// The Next Up boss estimate (59m bossOdds) against the truth. For each profile (as --report turns: a fresh hero at zone 1, the
+// fixtures at their frontier, the late fixture made a hero who keeps up) at the frontier boss: the estimate with no history
+// (the casual prior), at casual and at good skill, whether the Next Up label says "Boss ready" (no history; good), the ms one
+// cold estimate takes (30 fights), and the measured win rate of turnCombatSample over --hours x --seeds of boss fights.
+// Usage: --report bossodds [--hours 0.5] [--seeds 3]
+async function runBossOddsReport() {
+  const seconds = Number(args.hours || 0.5) * 3600, count = Number(args.seeds || 3);
+  if (!(seconds > 0) || !Number.isInteger(count) || count < 1) throw new Error('Positive hours and integer seeds required');
+  const want = ['fresh-wren', 'fresh-tobin', 'fresh-pip', 'early', 'mid', 'late', 'late-kept-35', 'late-kept-38', 'late-kept-38-tier-1'];
+  const all = await turnReportProfiles(), profiles = want.map(n => all.find(x => x[0] === n));
+  const players = { good: { parry: 0.6, dodge: 0.9, perfect: 0.4, good: 0.45 }, casual: { parry: 0.25, dodge: 0.5, perfect: 0.1, good: 0.4 } };
+  const J = JSON.stringify, pc = x => x == null ? 'n/a' : (100 * x).toFixed(0) + '%';
+  console.log(`Next Up boss estimate (30 scratch fights) vs measured boss win rate (${seconds / 3600} h x ${count} seed(s)). prior = no history (a casual player); good: parry 60%, dodge 90% of the rest, rings 40% / 45%.`);
+  console.log('profile / zone / estimate: prior, casual, good / "Boss ready" shows: prior, good / estimate ms (cold) / measured win: casual, good');
+  for (const [name, hero, save, setup] of profiles) {
+    const mk = sd => {
+      const core = loadCoreRaw({ seed: sd, prelude: 'Date.now = () => 1791187200000;' }), e = s => core.eval(s);
+      if (save) { core.storage.set(SAVE_KEY, save); e('loadSave()'); }
+      if (setup) e(setup);
+      e(`TURN_TUNE.on = 1; ${hero ? `soloPick(${J(hero)}, {now:true});` : ''} setZone(Math.max(1, S.maxZone)); S.activity='fight'; arena=null; gearDirty();
+        S.kills = ZONE_FIGHTS; fightBoss = false; spawn();`);
+      for (let i = 0; i < 5; i++) core.fn.tick(0.1);   // the hero's unit exists, as in play
+      return { core, e };
+    };
+    const { core, e } = mk(1);
+    const label = () => e('(() => { const x = GOALS.find(q => q.id === "zone-boss"); return x.label(); })()');
+    const t0 = performance.now(); const prior = e('bossOdds({ sync: true })'); const ms = performance.now() - t0;
+    const shownPrior = /^Boss ready/.test(label());
+    const est = {}; for (const [pl, sk] of Object.entries(players)) est[pl] = e(`bossOdds({ sync: true, skill: ${J(sk)} })`);
+    // the label at good skill: a tally that blends to a good player (about 300 hits, as check.mjs does)
+    e(`S.bossOdds = { hits: 300, parry: 180, dodge: 108, rings: 300, perfect: 120, good: 135 }; bossOdds({ sync: true })`);
+    const shownGood = /^Boss ready/.test(label());
+    if (core.errors.length) throw new Error(`${name}: ${core.errors.join('; ')}`);
+    const meas = {};
+    for (const [pl, sk] of Object.entries(players)) {
+      let K = 0, D = 0;
+      for (let i = 0; i < count; i++) {
+        const { core: c2, e: e2 } = mk(1 + i);
+        const r = e2(`(() => { fightBoss = true; spawn(); return turnCombatSample({ profile: turnCombatProfile(), seconds: ${seconds}, seed: ${i + 1}, skill: ${J(sk)} }); })()`);
+        K += r.kills; D += r.deaths;
+        if (c2.errors.length) throw new Error(`${name}: ${c2.errors.join('; ')}`);
+      }
+      meas[pl] = K + D ? K / (K + D) : null;
+    }
+    console.log(`${name} / ${prior ? prior.zone : 'n/a'} / ${pc(prior && prior.win)}, ${pc(est.casual && est.casual.win)}, ${pc(est.good && est.good.win)} / ${shownPrior ? 'yes' : 'no'}, ${shownGood ? 'yes' : 'no'} / ${ms.toFixed(0)} / ${pc(meas.casual)}, ${pc(meas.good)}`);
+  }
 }
 
 // The Tobin pass (owner, 2026-10-02): Wren, Tobin and Pip on the same footing. Each stage puts every hero on the same save
