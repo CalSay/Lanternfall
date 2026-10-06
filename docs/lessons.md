@@ -47,6 +47,9 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Check a story hook against the systems the review slated to change before you tie to it (Training, Contracts, Hands routes). Stub or skip the hook and list it. Why: Cal's "why first" rule; this card left Ashby's route, Training and the Renown Day omen alone. (story-systems-hollow, 2026-10-06)
 - A named Hand's line or route hint may not name a hero the player has not met. Why: Nan's line named Grenna and Bracken's named Bram, both met later in the chapter. (story-systems-hollow, 2026-10-06)
 
+- Give every persistent key a default in its `registerState` block, even one inside a free-form object, and list each roster item as its own Codex entry instead of folding it into a legacy type tile. Why: Codex P1s on PR #56 (routes.hollowDawn, Bestiary lines under "Moss Slime"). (story-systems-hollow, 2026-10-06)
+- Reuse one `loadCore` per new check section. Why: the full check hit Node's default heap limit in Codex's environment once the section made a dozen cores. (story-systems-hollow, 2026-10-06)
+
 ## UI and menus
 
 - Away card: lead with "While away, gathering continues and fighting stops", show it even when nothing was earned, put the work-limit bar below results. Why: the same 8 hours felt opposite depending on what the hero was doing; Codex P1 for the missing idle-fighter card. (away-clarity, 2026-10-06)

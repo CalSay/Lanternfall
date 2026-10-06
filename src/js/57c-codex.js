@@ -114,9 +114,10 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
       else if (!champ) hint = x.exact ? `Beat a champion ${t.name}. Champions show up from zone 20.` : 'A stronger one is out there.';
       return { key: t.key, n: t.name, got: tier + elder + champ, max: 6, pts: tier * 4 + elder * 6 + champ * 4, ptsMax: 26, hint,
         sub: `Tier ${tier} of 4${elder ? ' · Elder' : ''}${champ ? ' · Champion' : ''}`, kills, mob: t.key,
-        // LORE3: the bestiary lines (21h LORE_BESTIARY) for what is found: the foe at tier 1, its Elder, its champion, the Fenmother
-        lore: typeof storyBestiary === 'function' ? storyBestiary(t.key, { foe: tier >= 1, elder, champ, listener: i === 6 && S.maxZone > REGION_ZONES }) : [] };
-    })
+        lore: [] };
+    }).concat(typeof storyFoes === 'function' ? storyFoes().map(f => ({ key: 'f' + f.zone, n: f.name, got: 1, max: 1, pts: 0, ptsMax: 0, grp: 'Hollow monsters', mob: f.type,
+      // story-systems-hollow: each roster monster in the game is its own entry, with the shape it copied (21h LORE_FOES)
+      lore: [f.line], sub: `Zone ${f.zone}`, hint: '' })) : [])
   });
   // ---------------- 2. Zones: 35 zones x 5 mastery stars ----------------
   page('zones', {

@@ -77,7 +77,7 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
 {
   const T = HANDS_TUNE;
   registerState('hands', { v: 1, seq: 0, list: [], board: { apps: [], next: 0 }, pity: [0, 0, 0], tam: 0, log: [],
-    hired: 0, hrs: 0, got: 0, met: {}, heard: 0, open: 0, rs: 0, routes: {} });
+    hired: 0, hrs: 0, got: 0, met: {}, heard: 0, open: 0, rs: 0, routes: { hollowDawn: 0 } });
   const H = () => S.hands;
   const now = () => Date.now();
   const HOUR = 3600e3;

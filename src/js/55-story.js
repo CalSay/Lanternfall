@@ -39,8 +39,8 @@
 //   storyVerseLatest() -> { id, lines } | null   the newest Elder's verse Vesper may sing in the Tavern
 //   storyEncounter(kind, id, on = true)    an encounter card says its Champion or Elder is in the game (kind 'champ' | 'elder');
 //                                          its spawn listener also sets mob.encounter = { kind, id }
-//   storyBestiary(typeKey, { foe, elder, champ }) -> [lines] the Codex tile shows (57c-codex): one line per Hollow monster of that
-//                                          type that is in the game and whose zone the hero has reached (21h LORE_FOES)
+//   storyFoes() -> [{ zone, name, line, type }] the Hollow monsters in the game whose zone the hero has reached (21h LORE_FOES); the
+//                                          Codex Bestiary lists each as its own entry (57c-codex)
 //   storySync() runs on each tick (cheap when nothing moved).
 // Events emitted: storyScene { id, ch, kind: 'caption' | 'card', title, head, lines, cards, zone, region, hold, page },
 //   storyEnd { id, how }, storyChoice { id, option }, storyRead { id }, storyFiled { kind, id }.
@@ -59,7 +59,7 @@
 const STORY_ON = true;   // dev switch (bible 10.4): false plays no story at all; the data files can also be deleted
 
 let storyOn, storyHeld, storyInGap, storyChoiceDef, storyClaim, storyClose, storyChoose, storyList, storyEntry, storyRead, storyUnread, storyLate, storyJournalOpened,
-  storyRoadLog, storyFile, storyHeroLine, storyHearthLine, storyVerse, storyVerseLatest, storyItemLine, storyRanks, storyEncounter, storyBestiary, storySync;
+  storyRoadLog, storyFile, storyHeroLine, storyHearthLine, storyVerse, storyVerseLatest, storyItemLine, storyRanks, storyEncounter, storyFoes, storySync;
 const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_ENC.champ.<id> = true (storyEncounter)
 {
   registerState('story', { v: 1, seen: {}, read: {}, init: 0, off: 0, starter: '', litFor: {}, coldhearth: '', ends: {}, journalOpens: 0 });
@@ -203,14 +203,15 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
     return best ? { id: best.id, lines: best.lines.slice() } : null;
   };
 
-  storyBestiary = (key, got) => {
-    if (!got || !got.foe || typeof LORE_FOES !== 'object' || typeof zoneType !== 'function') return [];
+  // The Hollow monsters the hero has reached that are in the game, each with its Bestiary line (21h LORE_FOES): the Codex lists each as its own entry.
+  storyFoes = () => {
     const out = [], mz = S.maxZone || 1, last = REGIONS[0].z1;   // the Hollow's zones: 1 to 35
+    if (typeof LORE_FOES !== 'object' || typeof zoneType !== 'function') return out;
     for (let z = 1; z <= last && z <= mz; z++) {
-      const f = LORE_FOES[z], t = TYPES[zoneType(z)];
-      if (f && foeIn(z) && t && t.key === key) out.push(`${f.name}: ${f.line}`);
+      const f = LORE_FOES[z];
+      if (f && foeIn(z)) out.push({ zone: z, name: f.name, line: f.line, type: TYPES[zoneType(z)].key });
     }
-    return out.slice(-3);
+    return out;
   };
 
   // ---- choices ----

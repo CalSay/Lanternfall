@@ -2613,20 +2613,17 @@ if (section('story')) try {
   F('storyJournalOpened(); storyJournalOpened()'); assert(F('S.story.journalOpens') === 2, 'story: each Journal open is counted (bible 12a)');
   // the Codex bestiary shows the lines for what is found (tier 1, the Elder, the champion)
   const cx = loadCore({ seed: 80 }), C2 = s => cx.eval(s);
-  // story-systems-hollow: a tile shows one line for each roster monster that is in the game (ZONE_FOES) and whose zone the hero has reached
-  const typeIdx = z => C2(`zoneType(${z})`);
-  C2('for (const t of TYPES) S.mastery.types[t.key] = 20; S.maxZone = 1; codexRefresh(true)');
-  const t1 = C2('codexPage("bestiary").tiles')[typeIdx(1)];
-  assert(t1.lore.length === 1 && /^Thorn Imp: Copied from the briars/.test(t1.lore[0]), 'story: the Codex Bestiary shows the Thorn Imp\'s rule-4 line once its zone is reached');
-  C2('S.maxZone = 3; codexRefresh(true)');
-  const tiles = C2('codexPage("bestiary").tiles');
-  assert(tiles.every(t => Array.isArray(t.lore)) && tiles.flatMap(t => t.lore).length === 2 && tiles.flatMap(t => t.lore).some(l => /^Gloomjaw: /.test(l)),
-    'story: zones 3 and up have no monster in the game yet, so their written lines stay silent');
+  // story-systems-hollow: each roster monster that is in the game (ZONE_FOES) and whose zone the hero has reached is its own Bestiary entry
+  const foeTiles = () => C2('codexPage("bestiary").tiles').filter(t => /^f\d+$/.test(t.key));
   C2('S.maxZone = 1; codexRefresh(true)');
-  assert(!C2('codexPage("bestiary").tiles').flatMap(t => t.lore).some(l => /^Gloomjaw/.test(l)), 'story: a line waits for the hero to reach its zone');
+  assert(foeTiles().length === 1 && foeTiles()[0].n === 'Thorn Imp' && /^Copied from the briars/.test(foeTiles()[0].lore[0]) && C2('codexPage("bestiary").tiles.every(t => !/^f/.test(t.key) ? t.lore.length === 0 : true)'),
+    'story: the Codex Bestiary lists the Thorn Imp as its own entry with its rule-4 line once its zone is reached');
+  C2('S.maxZone = 3; codexRefresh(true)');
+  assert(foeTiles().map(t => t.n).join() === 'Thorn Imp,Gloomjaw', 'story: zones with no monster in the game yet stay silent');
+  assert(C2('codexPage("bestiary").ptsMax') === 7 * 26, 'story: the monster entries add no Light to the Bestiary page');
   C2('S.mastery.types.wraith = 12; S.maxZone = 40; codexRefresh(true)');
   const w = C2('codexPage("bestiary").tiles[6]');
-  assert(w.lore.length === 0 && !/Fenmother/.test(JSON.stringify(w.lore)), 'story: the Marsh Wraith tile carries no retired Fenmother line');
+  assert(w.lore.length === 0 && !/Fenmother/.test(JSON.stringify(C2('codexPage("bestiary").tiles'))), 'story: the Marsh Wraith tile carries no retired Fenmother line');
   const co = loadCore({ seed: 81 });
   co.eval('S.story.off = 1; S.activity = "fight"; S.zone = 1; S.maxZone = 40; storySync()');
   assert(co.eval('storyLate().length === 0 && !S.story.seen["r:hollow"] && storyHeld() === false'), 'story: with Story cards off, clearing zones files nothing late and defaults no choice');
@@ -8590,7 +8587,7 @@ if (section('story-systems-hollow')) try {
   E('S.found.sproutblade = 1');
   assert(E('codexPage("uniques").tiles.find(t => t.key === "sproutblade").sub').includes(items.sproutblade.line), 'systems-hollow: the Codex Uniques tile shows the line');
   // the ranks page: a row each the first time the rank is met, in chain order
-  const r = loadCore({ seed: 9202 }), R = x => r.eval(x);
+  const R = E;   // one core for the whole section: a full check run keeps every VM alive, and Codex saw it hit the heap limit
   assert(R('storyRanks().length') === 0 && !R('storyList().some(e => e.id === "k:ranks")'), 'systems-hollow: the ranks page waits until a rank is met');
   R('S.mastery.zones[1] = 3; S.story.off = 0; storySync()');
   assert(R('storyRanks().map(x => x.id).join()') === 'shadowborn' && R('storyList().some(e => e.id === "k:ranks")') && R('storyEntry("k:ranks").title') === 'Who answers to whom', 'systems-hollow: the first fight files the page with one row, Shadowborn');
@@ -8601,7 +8598,7 @@ if (section('story-systems-hollow')) try {
   assert(R('storyRanks()[0].id') === 'voice' && /Every Elder answers to it/.test(R('storyRanks()[0].line')), 'systems-hollow: the Voice row appears at the first Voice scene');
   assert(R('storyEntry("k:ranks").cards.length') === 5, 'systems-hollow: the Journal page reads back one card a row');
   // Vesper's bubble: the newest verse, once its Elder is down
-  const v = loadCore({ seed: 9203 }), V = x => v.eval(x);
+  const V = E;
   V('STORY_BEATS.elder.fen = { zone: 35, name: "x", pre: ["a"], post: ["b"] }; STORY_BEATS.vesper.fen = ["The marsh gave all its lights back up."]');
   assert(V('storyVerseLatest()') === null, 'systems-hollow: Vesper sings nothing before the Elder is down');
   V('S.story.seen["e:fen:post"] = 1');
@@ -8616,27 +8613,26 @@ if (section('story-systems-hollow')) try {
   };
   const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '57f-hands.js'), 'utf8');
   assert(!/Lanternbearer|gathers for the heroes/i.test(src) && E('HANDS_TAM.about').includes('first one out of the cellars'), 'systems-hollow: Tam\'s arrival and about lines use no retired term (no Lanternbearer, no heroes)');
-  const h30 = mk(30), h31 = mk(31), H = (h, x) => h.eval(x);
-  assert(H(h30, 'S.hands.board.apps.some(a => a.key === "fennel") && !S.hands.board.apps.some(a => a.key === "rook")') && H(h31, 'S.hands.board.apps.some(a => a.key === "rook")'), 'systems-hollow: Rook arrives after the zone 30 boss, not on reaching zone 30');
+  const a = mk(30), H = (h, x) => h.eval(x);
+  assert(H(a, 'S.hands.board.apps.some(x => x.key === "fennel") && !S.hands.board.apps.some(x => x.key === "rook")'), 'systems-hollow: reaching zone 30 brings Fennel, not Rook');
   const named = E('HANDS_LEGENDS.map(l => l.about + " " + (HANDS_ROUTES[l.key] ? HANDS_ROUTES[l.key].hint : ""))').join(' | ');
   assert(!/Grenna|Bram|Caedmon|Elowen|Kestrel|Oriel|Wren|Tobin|Pip/.test(named.replace("Elowen's chapel.", '')), 'systems-hollow: no named Hand\'s line or route hint names an unmet hero' + (/Grenna|Bram|Caedmon/.test(named) ? ': ' + named.match(/.{20}(Grenna|Bram|Caedmon).{10}/) : ''));
-  assert(!/Elowen/.test(H(h30, 'handsAbout("fennel")')) && /Elowen's chapel/.test(H(mk(36), 'handsAbout("fennel")')), 'systems-hollow: Fennel names Elowen\'s chapel only after the Hollow\'s Elder is down');
-  const a35 = mk(35); pulse(a35, 30);
-  assert(H(a35, '!S.hands.board.apps.some(a => ["ada","pell"].includes(a.key))'), 'systems-hollow: Ada and Pell do not come while the Fenmother stands');
-  H(a35, 'S.maxZone = 36'); pulse(a35, 30);
-  assert(H(a35, '!S.hands.board.apps.some(a => ["ada","pell"].includes(a.key))') && H(a35, 'S.hands.routes.hollowDawn') > T0, 'systems-hollow: Ada and Pell wait for the morning after the Elder falls (the next 06:00 is remembered)');
-  const dawn = H(a35, 'S.hands.routes.hollowDawn');
-  a35.eval(`Date.__t = ${dawn - 1000}`); pulse(a35, 30);
-  assert(H(a35, '!S.hands.board.apps.some(a => ["ada","pell"].includes(a.key))'), 'systems-hollow: Ada and Pell are not in before 06:00');
-  a35.eval(`Date.__t = ${dawn + 1000}`); pulse(a35, 30);
-  assert(H(a35, '["ada","pell"].every(k => S.hands.board.apps.some(a => a.key === k))') && H(a35, 'S.hands.board.apps.find(a => a.key === "ada").r') === 'rare' && H(a35, 'S.hands.board.apps.find(a => a.key === "pell").r') === 'uncommon',
+  assert(!/Elowen/.test(H(a, 'handsAbout("fennel")')), 'systems-hollow: Fennel does not name Elowen\'s chapel before the Hollow\'s Elder is down');
+  H(a, 'S.maxZone = 31'); pulse(a);
+  assert(H(a, 'S.hands.board.apps.some(x => x.key === "rook")'), 'systems-hollow: Rook arrives after the zone 30 boss');
+  H(a, 'S.maxZone = 35'); pulse(a, 30);
+  assert(H(a, '!S.hands.board.apps.some(x => ["ada","pell"].includes(x.key))') && H(a, 'S.hands.routes.hollowDawn') === 0, 'systems-hollow: Ada and Pell do not come while the Fenmother stands');
+  H(a, 'S.maxZone = 36'); pulse(a, 30);
+  assert(H(a, '!S.hands.board.apps.some(x => ["ada","pell"].includes(x.key))') && H(a, 'S.hands.routes.hollowDawn') > T0 && /Elowen's chapel/.test(H(a, 'handsAbout("fennel")')),
+    'systems-hollow: Ada and Pell wait for the morning after the Elder falls (the next 06:00 is remembered), and Fennel now names the chapel');
+  const dawn = H(a, 'S.hands.routes.hollowDawn');
+  a.eval(`Date.__t = ${dawn - 1000}`); pulse(a, 30);
+  assert(H(a, '!S.hands.board.apps.some(x => ["ada","pell"].includes(x.key))'), 'systems-hollow: Ada and Pell are not in before 06:00');
+  a.eval(`Date.__t = ${dawn + 1000}`); pulse(a, 30);
+  assert(H(a, '["ada","pell"].every(k => S.hands.board.apps.some(x => x.key === k))') && H(a, 'S.hands.board.apps.find(x => x.key === "ada").r') === 'rare' && H(a, 'S.hands.board.apps.find(x => x.key === "pell").r') === 'uncommon',
     'systems-hollow: Ada (Rare) and Pell (Uncommon) walk in at 06:00 after the Elder fell');
-  pulse(a35, 30);
-  assert(H(a35, 'S.hands.board.apps.filter(a => a.key === "ada").length') === 1, 'systems-hollow: Ada comes once');
-  // an old save past the Coast: the same trigger adds the pair quietly and loses nothing
-  const old = mk(60); old.eval(`Date.__t = ${T0 + 30 * HOUR}`); pulse(old, 30);
-  const before = old.eval('JSON.stringify([S.hands.list.map(x => x.id), S.gold])');
-  assert(old.eval('S.hands.board.apps.length') >= 1 && JSON.parse(before)[0].includes('tam') && old.eval('S.hands.list.length') === 1, 'systems-hollow: an old save past the Hollow keeps Tam and its Hands and gains the pair on the board');
+  pulse(a, 30);
+  assert(H(a, 'S.hands.board.apps.filter(x => x.key === "ada").length') === 1 && H(a, 'S.hands.list.length') === 1 && H(a, 'S.hands.list[0].id') === 'tam', 'systems-hollow: Ada comes once and Tam and the crew are untouched');
   // every random applicant is lit for someone
   const lit = E('handsLitFor({ id: "h7", n: "Cora Thatcher" })');
   assert(/^Lit for /.test(lit) && lit === E('handsLitFor({ id: "h7", n: "Other Name" })') && E('HANDS_LIT.every(l => /^Lit for /.test(l) && l.length <= 40)')

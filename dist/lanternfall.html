@@ -14339,8 +14339,8 @@ let storeLevel, storeCap, storeCapAt, stashRoom, stashFull, stashOver, stashFits
 //   storyVerseLatest() -> { id, lines } | null   the newest Elder's verse Vesper may sing in the Tavern
 //   storyEncounter(kind, id, on = true)    an encounter card says its Champion or Elder is in the game (kind 'champ' | 'elder');
 //                                          its spawn listener also sets mob.encounter = { kind, id }
-//   storyBestiary(typeKey, { foe, elder, champ }) -> [lines] the Codex tile shows (57c-codex): one line per Hollow monster of that
-//                                          type that is in the game and whose zone the hero has reached (21h LORE_FOES)
+//   storyFoes() -> [{ zone, name, line, type }] the Hollow monsters in the game whose zone the hero has reached (21h LORE_FOES); the
+//                                          Codex Bestiary lists each as its own entry (57c-codex)
 //   storySync() runs on each tick (cheap when nothing moved).
 // Events emitted: storyScene { id, ch, kind: 'caption' | 'card', title, head, lines, cards, zone, region, hold, page },
 //   storyEnd { id, how }, storyChoice { id, option }, storyRead { id }, storyFiled { kind, id }.
@@ -14359,7 +14359,7 @@ let storeLevel, storeCap, storeCapAt, stashRoom, stashFull, stashOver, stashFits
 const STORY_ON = true;   // dev switch (bible 10.4): false plays no story at all; the data files can also be deleted
 
 let storyOn, storyHeld, storyInGap, storyChoiceDef, storyClaim, storyClose, storyChoose, storyList, storyEntry, storyRead, storyUnread, storyLate, storyJournalOpened,
-  storyRoadLog, storyFile, storyHeroLine, storyHearthLine, storyVerse, storyVerseLatest, storyItemLine, storyRanks, storyEncounter, storyBestiary, storySync;
+  storyRoadLog, storyFile, storyHeroLine, storyHearthLine, storyVerse, storyVerseLatest, storyItemLine, storyRanks, storyEncounter, storyFoes, storySync;
 const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_ENC.champ.<id> = true (storyEncounter)
 {
   registerState('story', { v: 1, seen: {}, read: {}, init: 0, off: 0, starter: '', litFor: {}, coldhearth: '', ends: {}, journalOpens: 0 });
@@ -14503,14 +14503,15 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
     return best ? { id: best.id, lines: best.lines.slice() } : null;
   };
 
-  storyBestiary = (key, got) => {
-    if (!got || !got.foe || typeof LORE_FOES !== 'object' || typeof zoneType !== 'function') return [];
+  // The Hollow monsters the hero has reached that are in the game, each with its Bestiary line (21h LORE_FOES): the Codex lists each as its own entry.
+  storyFoes = () => {
     const out = [], mz = S.maxZone || 1, last = REGIONS[0].z1;   // the Hollow's zones: 1 to 35
+    if (typeof LORE_FOES !== 'object' || typeof zoneType !== 'function') return out;
     for (let z = 1; z <= last && z <= mz; z++) {
-      const f = LORE_FOES[z], t = TYPES[zoneType(z)];
-      if (f && foeIn(z) && t && t.key === key) out.push(`${f.name}: ${f.line}`);
+      const f = LORE_FOES[z];
+      if (f && foeIn(z)) out.push({ zone: z, name: f.name, line: f.line, type: TYPES[zoneType(z)].key });
     }
-    return out.slice(-3);
+    return out;
   };
 
   // ---- choices ----
@@ -16068,9 +16069,10 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
       else if (!champ) hint = x.exact ? `Beat a champion ${t.name}. Champions show up from zone 20.` : 'A stronger one is out there.';
       return { key: t.key, n: t.name, got: tier + elder + champ, max: 6, pts: tier * 4 + elder * 6 + champ * 4, ptsMax: 26, hint,
         sub: `Tier ${tier} of 4${elder ? ' · Elder' : ''}${champ ? ' · Champion' : ''}`, kills, mob: t.key,
-        // LORE3: the bestiary lines (21h LORE_BESTIARY) for what is found: the foe at tier 1, its Elder, its champion, the Fenmother
-        lore: typeof storyBestiary === 'function' ? storyBestiary(t.key, { foe: tier >= 1, elder, champ, listener: i === 6 && S.maxZone > REGION_ZONES }) : [] };
-    })
+        lore: [] };
+    }).concat(typeof storyFoes === 'function' ? storyFoes().map(f => ({ key: 'f' + f.zone, n: f.name, got: 1, max: 1, pts: 0, ptsMax: 0, grp: 'Hollow monsters', mob: f.type,
+      // story-systems-hollow: each roster monster in the game is its own entry, with the shape it copied (21h LORE_FOES)
+      lore: [f.line], sub: `Zone ${f.zone}`, hint: '' })) : [])
   });
   // ---------------- 2. Zones: 35 zones x 5 mastery stars ----------------
   page('zones', {
@@ -17803,7 +17805,7 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
 {
   const T = HANDS_TUNE;
   registerState('hands', { v: 1, seq: 0, list: [], board: { apps: [], next: 0 }, pity: [0, 0, 0], tam: 0, log: [],
-    hired: 0, hrs: 0, got: 0, met: {}, heard: 0, open: 0, rs: 0, routes: {} });
+    hired: 0, hrs: 0, got: 0, met: {}, heard: 0, open: 0, rs: 0, routes: { hollowDawn: 0 } });
   const H = () => S.hands;
   const now = () => Date.now();
   const HOUR = 3600e3;
