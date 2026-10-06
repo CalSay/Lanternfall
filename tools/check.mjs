@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 import os from 'node:os';
-import { spawn } from 'node:child_process';
+import { spawn, execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { findBrowser } from './lib/browser.mjs';
 import { ROOT, loadCore as loadCoreRaw, memoryStorage, badNumbers, deepDiff, subsetDiff } from './lib/core.mjs';
@@ -8309,6 +8309,29 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
     } finally { await browser.close(); }
   }
 } catch (e) { fail(`landscape ${w}x${h} (browser, UX-L1) crashed: ` + (e.stack || e)); }
+
+// The playtest driver (tools/playtest.mjs): a fresh game shows the hero picker, tapping by label begins the game, wait moves
+// the game clock, state reads the save, away reopens the game later. Same driver an agent plays with (docs/coord/playtest-lab.md).
+if (section('playtest driver (browser)')) try {
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('playtest driver: Playwright or Chromium not here, skipped');
+  else {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lf-playtest-'));
+    const pt = (...a) => execFileSync(process.execPath, [path.join(ROOT, 'tools', 'playtest.mjs'), '--session', dir, ...a], { encoding: 'utf8', timeout: 120000 });
+    try {
+      pt('new', 'fresh');
+      const out = pt('look');
+      assert(/BUTTONS/.test(out) && /\[Begin as Wren\]/.test(out) && /screenshot: .*\.png/.test(out) && fs.existsSync(out.match(/screenshot: (\S+\.png)/)[1]), 'playtest driver: look on a new game lists the hero picker, its buttons and a screenshot that exists');
+      const tapped = pt('tap', 'Begin as Wren', '--quiet');
+      assert(/tapped \[Begin as Wren\]/.test(tapped), 'playtest driver: tap finds a button by its label');
+      assert(/no button labelled/.test(pt('tap', 'No Such Button', '--quiet')), 'playtest driver: tap with an unknown label says so and lists what is on screen');
+      assert(/waited 10 s/.test(pt('wait', '10', '--quiet')), 'playtest driver: wait runs game time');
+      const st = JSON.parse(pt('state', '--json'));
+      assert(st.hero === 'Wren' && st.level >= 1 && /s|min/.test(st.playedGameTime), `playtest driver: state reads the save (${JSON.stringify(st)})`);
+      assert(/away 1 h/.test(pt('away', '1', '--quiet')) && !/PAGE ERRORS/.test(pt('state')), 'playtest driver: away reopens the game with no page errors');
+    } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+  }
+} catch (e) { fail('playtest driver (browser) crashed: ' + (e.stack || e)); }
 
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 console.log(browserSummary(browserSkipped, browserSkipReasons));
