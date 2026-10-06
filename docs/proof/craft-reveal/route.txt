@@ -1,13 +1,18 @@
 # seed: 1
 # Proof for card craft-reveal: the mid fixture (Tobin, Zone 20) crafts at the Forge. Each recipe shows a computed odds line; each craft opens a
 # result card (icon, grade in words and colour, stats, arrows against what Tobin wears, Equip / Keep / Salvage); the last five show as a strip.
+# A new-hero or other moment card can open over the menu on this fixture, so the route closes any card with Continue first.
 # The bag tile names its grade in text. Replayed at 360x740 and 740x360. The "For you" fallback is in route-for-you.txt.
 new mid
-wait 3
+wait 6
+tap-if "Continue"
+wait 1
+tap-if "Continue"
 tap-if "Got it"
 tap-if "Dismiss this tip"
 tap "Craft"
 wait 1
+tap-if "Continue"
 tap-if "Got it"
 expect ".cf-odds"
 shot craft-odds
