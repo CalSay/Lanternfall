@@ -57,7 +57,7 @@ document.querySelectorAll('#modeSeg button').forEach(b => b.addEventListener('cl
 const gateEl = { title: $('gateTitle').querySelector('.gt-t'), desc: $('gateDesc'), btn: $('gateBtn'), q: $('gateBtn').querySelector('.qty'), p: $('gateBtn').querySelector('.price') };
 // The away card says the same line (75-away.js): the trade-off is told before you leave, not after.
 const AWAY_RULE_TXT = 'While away, gathering continues and fighting stops. Set your hero to gather before you go.';
-// The permanent "While away" strip on the Fight view is gone (top-bar-compact): the away chip below speaks while gathering, and the away card says the rule.
+// The permanent "While away" strip on the Fight view is gone (top-bar-compact): the away chip below speaks while gathering, on the away note's beat, and the away card says the rule.
 
 // Away chip: what leaving now would earn, told while you gather (the notice above covers a fighter).
 // Estimate from the same rates awayBase uses (50-sim.js), held to the Storehouse room unless Spillover moves on.
@@ -76,7 +76,7 @@ function awayChipText() {
 }
 function uiAwayChip() {
   const seg = $('modeSeg'), gb = seg.querySelector('button[data-act="gather"]');
-  const txt = gb.hidden || seg.style.visibility === 'hidden' || $('game').closest('.app').classList.contains('deep-run') ? '' : awayChipText();
+  const txt = gb.hidden || seg.style.visibility === 'hidden' || $('game').closest('.app').classList.contains('deep-run') || !isUnlocked('awaynote') ? '' : awayChipText();   // the away note's own beat (55-onboard FEATURES)
   if (!awayChip) {
     if (!txt) return;
     awayChip = el('p', 'away-rule gate-rule away-chip'); awayChip.append(img(iconURL('coin', '#F2C14E')), el('span'));
