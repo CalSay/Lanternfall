@@ -30,7 +30,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 
 - Keep zone names equal to the story bible's area table (zones 1-5 Mossy Hollow, 6-10 Batwing Caves, and so on); never use "Mossy Hollow II" style names. Why: a check fails on any mismatch. (story-area-names, 2026-10-06)
 - Read any text built from area names aloud for repeats. Why: the zone-clear toast said "Mossy Hollow is cleared. Mossy Hollow lies ahead" and Codex flagged it. (story-area-names, 2026-10-06)
-- Do not edit hero unlock route text (Hob's text says "Cinder Road II" and Eskil's says "Frostgate Pass II"; both live in `src/js/56c-unlocks.js`) without a design card. Why: it changes when two heroes unlock. (story-area-names, 2026-10-06)
+- Hero unlock copy may name old areas (Hob's text says "Cinder Road II", Eskil's says "Frostgate Pass II"; both in `src/js/56c-unlocks.js`). Fixing the displayed text is copy-only. Changing the gate fields (`place`, `cycle`, `from`) changes when the hero unlocks and needs a design card. Why: the text and the gate are separate fields. (story-area-names, 2026-10-06)
 - The old Hollow arrival lines are switched off, not rewritten; story-hollow-script turns them back on. (story-area-names, 2026-10-06)
 - Canon changes after the Opus judge pass go in the digest for Cal's veto. Example: the Coast and Emberwaste bosses are the dark wearing Silas's and Durand's shapes, both men found alive afterwards. (story, 2026-10-05)
 
