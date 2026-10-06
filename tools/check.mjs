@@ -8141,6 +8141,16 @@ if (section('removed systems (W2-C)')) try {
   }
 } catch (e) { fail('removed systems crashed: ' + (e.stack || e)); }
 
+// ==== Systems map (f-systems-map): every currency has a source and a sink (or an ALLOW reason), every listed code path still
+// exists, and docs/design/systems-map.md is the current output of tools/systems-map.mjs.
+if (section('systems map')) try {
+  const sm = await import('./systems-map.mjs');
+  const problems = sm.audit();
+  assert(!problems.length, 'systems map: ' + problems.join('; '));
+  const docPath = path.join(ROOT, 'docs', 'design', 'systems-map.md');
+  assert(fs.existsSync(docPath) && fs.readFileSync(docPath, 'utf8') === sm.render(), 'docs/design/systems-map.md is out of date: run node tools/systems-map.mjs --write');
+} catch (e) { fail('systems map crashed: ' + (e.stack || e)); }
+
 // ==== UX-L1: the landscape layout (80-landscape.css, docs/design/layout.md "Landscape") at 740x360, 844x390 and 1280x720.
 // Portrait (360x740) keeps its own checks above. Per size: a fresh game walks the whole first session (the combat steps, the
 // first boss, Training, the cold Hearth, the Workbench, the tool, the Forge, the Storehouse, Next Up) and every step's target is
