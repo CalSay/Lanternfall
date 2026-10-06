@@ -70,6 +70,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Do not repeat card text in the bell notice. Why: Codex P2 on PR #43, still open. (away-clarity, 2026-10-06)
 - Give every new checkbox or button in a sheet a 44px minimum height, and when a control repeats one already on screen, update both from the same state. Why: Codex P1/P2 on the Try again card (Auto toggle was 18px tall and drifted from the Fight tab's). (wall-try-again, 2026-10-06)
 - Delay the Aim hint until the foe's swing lands. Why: it covered the Dodge and Parry cues. Guide tips already show one at a time; leave that. (first-minute-flow, 2026-10-06)
+- Mark any reward, hint or card the game cannot deliver yet as "Coming soon", in the place the player first sees it (not only after claiming). Why: 15 Codex rewards said "Saved for later" only after they were claimed, and Jory's and Ashby's hints promised a hire the game never made. (promises-pass, 2026-10-06)
 
 ## Saves and offline parity
 
@@ -91,6 +92,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Path guard: PRs touching online files, the save-key line or `netlify.toml` need the `cal-approved` label, which only Cal applies. (f-ci)
 - Run `node tools/build.mjs` after the last src edit and commit `dist/` with it. Why: the dist-rebuilt check failed on PR #58 after small copy edits went in without a rebuild. (hero-progression-rework, 2026-10-06)
 - Write guide-walk and pacing checks to wait until every expected step has come, not to stop at the first late step. Why: faster early levels on PR #58 reached the Next Up note before the Workbench, and the walk stopped early only under a loaded full run. (hero-progression-rework, 2026-10-06)
+- Close story sheets in any scripted browser run before clicking game UI, and test "a tap restarts a wait" by tapping repeatedly past the original deadline, not at one timed moment. Why: the opening card blocked perf's clicks and the single-tap timing flaked on a loaded runner. (perf-story-click-fix, 2026-10-06)
 - Run the `--long` health run only on 3 or more cores (about 2.5 min, 7 min CPU). It ignores `--only`, known P2. (f-health-long, 2026-10-06)
 
 ## Reviews and Codex

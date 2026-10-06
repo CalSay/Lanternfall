@@ -94,11 +94,11 @@ const HANDS_ROUTES = {
   nan: { fallback: 25, hint: 'Defeat a Quarry Golem elder, or reach zone 25.' },
   bracken: { fallback: 25, hint: 'Reach zone 25.' },
   rook: { fallback: 31, hint: 'Follow the quarry rumour, or clear the Quarry Ruins.' },   // 31: after the zone 30 boss falls (story-systems-hollow; was 30)
-  ashby: { hint: 'Build the Kitchen.' },
+  ashby: { hint: 'Coming soon. The Kitchen is not built yet.' },
   fennel: { fallback: 30, hint: 'Finish the chapel quest, or reach zone 30.' },
   dorrie: { fallback: 32, hint: 'Hear the pedlar rumour at the Tavern, or reach zone 32.' },
   // Keep old v5 Jory records working. New Hunter recruitment waits for that profession.
-  jory: { live: false, hint: 'The Hunter profession will bring Jory to camp.' },
+  jory: { live: false, hint: 'Coming soon.' },
   // Ada and Pell walk in the morning after the Hollow's Elder falls (bible 6.3, 8.1). `elder: 'hollow'` names the Elder; 57f `later()` waits
   // for it, then for the next 06:00 (remembered in S.hands.routes.hollowDawn). They used to wait for the Coast's Great Lantern.
   ada: { elder: 'hollow', hint: 'Clear the last zone of the Hollow. They come in the next morning.' },
