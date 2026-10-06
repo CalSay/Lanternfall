@@ -105,6 +105,9 @@ const REG = [
     links: ['A budget like star points: spent points come back when a talent is cleared.'] },
   { id: 'deedpts', name: 'Achievement points', field: 'S.deeds.pts (derived from tiers and Feats)', what: 'Deed tiers, Feats and chapters add points. The ladder gives titles, looks and Trophy Wall stages.',
     src: [['Deed tiers, Feats, secrets and chapters', '58-deeds.js', 'function pointsNow\\(\\)']], snk: [['Ladder milestones unlock at thresholds; never spent', '58-deeds.js', 'd\\.mil\\[m\\.at\\] = 1']] },
+  { id: 'mirrors', name: 'Mirrors of Embers', field: 'S.party.mirrors', what: 'Needed with Essence to change class or evolution path.',
+    src: [['Zone boss drops (chance per kill)', '55-party.js', 'P\\(\\)\\.mirrors\\+\\+'], ['Great Lantern relit (region boss)', '55-classes.js', 'S\\.party\\.mirrors = \\(S\\.party\\.mirrors \\|\\| 0\\) \\+ add']],
+    snk: [['Class or path change (with Essence)', '55-classes.js', 'S\\.party\\.mirrors -= cost\\.mirrors']] },
   { id: 'oil', name: 'Oil', field: 'S.deep.run.oil', what: 'A Deepwell run\'s clock, in seconds. Gone when the run ends.',
     src: [['Run start', '57d-deepwell.js', 'r\\.oil = Math\\.min\\(oilMax\\(r\\), T\\.oilStart'], ['Floor refunds', '57d-deepwell.js', 'r\\.oil = Math\\.min\\(oilMax\\(\\), r\\.oil \\+ refund\\)']],
     snk: [['Drains with time; zero ends the run', '57d-deepwell.js', 'r\\.oil -= dt \\* drainRate\\(\\)']] },
@@ -125,6 +128,13 @@ const ALLOW = {
   xp: { snk: 'Hero levels are permanent by design.' },
   renown: { snk: 'A pure gate: routes check the balance and none sets spendRenown. Keep it a gate or give it a use.' },
   stamps: { snk: 'Only a deed counter and one Feat read Stamps; nothing spends them. Candidate for a sink or a cut.' }
+};
+
+// Counters whose names look like currency but are not, each with the reason.
+const NOT_CURRENCY = {
+  markleft: 'Charges left on a Mark status in a fight.', markt: 'A Mark status timer in a fight.', oilgot: 'A per-floor tally of Oil refunds (a cap counter).',
+  nscroll: 'A UI scroll position counter.', scrolltop: 'The browser scroll offset.',
+  totalgold: 'Lifetime gold, a stat.', totalkills: 'Lifetime kills, a stat.', key: 'A generic loop key.', keys: 'A generic loop key.'
 };
 
 function strip(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:'"`\\])\/\/.*$/gm, '$1'); }
@@ -155,6 +165,21 @@ export function audit() {
   for (const f of fs.readdirSync(JS).filter(n => n.endsWith('.js'))) {
     for (const m of strip(read(f)).matchAll(/\b([a-z]\w*Points)\s*=\s*(?:\(|function|\w+\s*=>)/g)) {
       if (!new RegExp('\\b' + m[1] + '\\b').test(known)) problems.push(`"${m[1]}" in ${f} looks like a currency but no registry entry names it`);
+    }
+  }
+  // Any counter written with ++, --, += or -= whose name carries a currency word must be named by the registry, or be in
+  // NOT_CURRENCY with a reason. This catches a new token or store that follows no naming pattern above.
+  const WORDS = 'mirror|token|scroll|mark|point|renown|ember|relic|oil|stamp|troph|coin|gem|shard|dust|ticket|favou?r|ingot|crest|seal|key|essence';
+  const words = new RegExp('(' + WORDS + ')', 'i');
+  const regText = REG.map(c => [c.name, c.field, c.what, ...c.src.map(x => x[2]), ...c.snk.map(x => x[2])].join(' ')).join(' ').toLowerCase();
+  const seen = new Set();
+  for (const f of fs.readdirSync(JS).filter(n => n.endsWith('.js'))) {
+    for (const m of strip(read(f)).matchAll(/\b([A-Za-z_]\w*)(?:\[[^\]]*\])? *(?:\+\+|--|\+=|-=)/g)) {
+      const id = m[1];
+      if (!words.test(id) || seen.has(id.toLowerCase()) || NOT_CURRENCY[id.toLowerCase()]) continue;
+      seen.add(id.toLowerCase());
+      const stem = id.toLowerCase().replace(/(total|now|left|got|count|max|min)$/, '');
+      if (!regText.includes(id.toLowerCase()) && !regText.includes(stem)) problems.push(`"${id}" (${f}) is counted up or down like a currency but no registry entry names it. Register it, or add it to NOT_CURRENCY with a reason.`);
     }
   }
   return problems;

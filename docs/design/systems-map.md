@@ -35,6 +35,7 @@ A source or sink line names the player-facing system and the file that does it. 
 | Star points | 1 | 1 |  |
 | Talent points | 1 | 1 |  |
 | Achievement points | 1 | 1 |  |
+| Mirrors of Embers | 2 | 1 |  |
 | Oil | 2 | 1 |  |
 | Depth Marks | 2 | 1 |  |
 | Lantern Light | 1 | 1 |  |
@@ -376,6 +377,19 @@ Sources:
 
 Sinks:
 - Ladder milestones unlock at thresholds; never spent (`58-deeds.js`)
+
+### Mirrors of Embers
+
+Needed with Essence to change class or evolution path.
+
+Save: `S.party.mirrors`
+
+Sources:
+- Zone boss drops (chance per kill) (`55-party.js`)
+- Great Lantern relit (region boss) (`55-classes.js`)
+
+Sinks:
+- Class or path change (with Essence) (`55-classes.js`)
 
 ### Oil
 
