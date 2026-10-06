@@ -52,7 +52,7 @@ var forgeGoalPicks = 0;
     try { label = String(val(g.label) || ''); icon = val(g.icon) || null; } catch (e) { return null; }
     if (!label) return null;
     const ready = p >= 1;
-    return { id: g.id, sys: g.sys, label, pct: Math.min(1, p), ready, go: g.go || null, icon, prio: +(typeof g.prio === 'function' ? g.prio() : g.prio) || 0, cap: +g.cap || 0, reserve: +g.reserve || 0 };
+    return { id: g.id, sys: g.sys, label, pct: Math.min(1, p), ready, go: g.go || null, goLabel: typeof g.goLabel === 'function' ? g.goLabel() : g.goLabel || '', icon, prio: +(typeof g.prio === 'function' ? g.prio() : g.prio) || 0, cap: +g.cap || 0, reserve: +g.reserve || 0 };
   }
 
   topGoals = function (n = 3, opts) {
@@ -147,10 +147,12 @@ var forgeGoalPicks = 0;
   // Bounties: the one closest to done (a finished one is ready to claim).
   const btyNext = () => {
     let best = null;
-    for (const b of (S.bounties && S.bounties.slots) || []) {
-      if (!b || !b.k) continue;
-      const p = need(b.have, b.need);
-      if (!best || p > best.p) best = { b, p };
+    const sl = (S.bounties && S.bounties.slots) || [];
+    for (let i = 0; i < sl.length; i++) {
+      const b = sl[i]; if (!b || !b.k) continue;
+      let p = need(b.have, b.need);
+      if (p >= 1 && typeof stashNeed === 'function') { const r = BOUNTY_API.reward(b); if (r.kind !== 'gold' && stashNeed([[r.kind, r.t, r.n]])) p = 0.999; }   // a reward that does not fit waits behind one that does
+      if (!best || p > best.p) best = { b, p, i };
     }
     return best;
   };
@@ -159,9 +161,11 @@ var forgeGoalPicks = 0;
     id: 'bounty', sys: 'bounty', prio: 1,
     pct: () => { const x = btyNext(); return x ? x.p : null; },
     label: () => { const x = btyNext(); if (!x) return '';
-      return x.p >= 1 ? 'Bounty done: claim your reward' : `${BOUNTY_API.text(x.b)} (${fmt(x.b.have)}/${fmt(x.b.need)})`; },
+      return x.p >= 1 ? `Bounty done: ${BOUNTY_API.text(x.b)}` : `${BOUNTY_API.text(x.b)} (${fmt(x.b.have)}/${fmt(x.b.need)})`; },
     icon: () => { const x = btyNext(); return { ic: BTY_IC[x ? x.b.k : 'kill'] || BTY_IC.kill }; },
-    go: { tab: 'adv', sel: '#sec-bounties' }
+    // E1: a finished bounty is claimed in place (no menu); an unfinished one opens the board
+    goLabel: () => { const x = btyNext(); return x && x.p >= 1 ? 'Claim' : ''; },
+    go: () => { const x = btyNext(); return x && x.p >= 1 ? { fn: () => { BOUNTY_API.claim(x.i); } } : { tab: 'adv', sel: '#sec-bounties' }; }
   });
 
   // Bestiary: the page (tier) closest to done among monsters met.
