@@ -32810,9 +32810,10 @@ function awayChipText() {
   const boost = (1 + gear().offline / 100) * mod('offline');
   const hrs = 4 + 2 * S.relic.glass + bonus('awayHours');
   let n = Math.floor(3600 / nodeTime(kind, tier) * boost * nodeYieldAvg(kind) * mod('yield:' + kind) * hrs);
-  // Spillover moves on to the next node only while it has room; a full pile with nowhere to go earns nothing.
-  const nx = storeSpillOn() ? storeNextNode(kind) : null;
-  if (!(nx && (nx.kind !== kind || nx.t !== tier) && stashRoom(nx.kind, nx.t) > 0)) n = Math.min(n, stashRoom(kind, tier));
+  // A pile that fills mid-away: Spillover moves on to the next node (amounts then differ), otherwise the rest is lost.
+  const room = stashRoom(kind, tier);
+  if (n > room && storeSpillOn()) return `Leave now: ${matName(kind, tier)} fills up, then Spillover moves your hero on.`;
+  n = Math.min(n, room);
   return n > 0 ? `Leave now: about ${fmt(n)} ${matName(kind, tier)} in ${hrs} hours.` : `Leave now: ${matName(kind, tier)} is full, you earn nothing. Spend it or pick another node.`;
 }
 function uiAwayChip() {
