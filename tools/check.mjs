@@ -9690,7 +9690,12 @@ if (section('craft reveal')) try {
         for (let i = 0; i < 4; i++) { const b = await page.$('#createScreen .create-go'); if (!b) break; await b.click(); await page.waitForTimeout(300); }
         const X = s => page.evaluate(s => window.__t.x(s), s);
         await X(`S.onboard.tips = false; true`);
-        await page.click('.tab[data-tab="forge"]'); await page.waitForTimeout(500);
+        for (let i = 0; i < 3; i++) {   // a card or the opening can sit over the tabs on a slow runner: close it, then open Craft
+          for (const sel of ['.mm-ov .mm-go', '.sty-sheet .sty-done']) { const b = await page.$(sel); if (b) { await b.click({ timeout: 2000 }).catch(() => {}); await page.waitForTimeout(300); } }
+          await page.click('.tab[data-tab="forge"]', { timeout: 5000 }).catch(() => {});
+          try { await page.waitForSelector('.cf-rec', { timeout: 4000 }); break; } catch (e) { /* try again */ }
+        }
+        assert(!!(await page.$('.cf-rec')), `${at}: the Craft menu opens with recipes`);
         const odds = await X(`(() => { const t = document.querySelector('.cf-odds'); const w = rarityWeights(stationLevel(document.querySelector('.cf-rec').dataset.kind)), tot = Object.values(w).reduce((a, b) => a + b, 0);
           return { text: t ? t.textContent : '', common: Math.round(w.common / tot * 100) }; })()`);
         assert(/^Odds: Common [\d.]+% · Uncommon [\d.]+% · Rare [\d.]+% · Epic [\d.]+%$/.test(odds.text) && Math.abs(parseFloat(/Common ([\d.]+)%/.exec(odds.text)[1]) - odds.common) <= 0.6, `${at}: each recipe shows one odds line computed from the rarity weights (${odds.text})`);
