@@ -162,7 +162,15 @@ async function runScenario(browser, base, { dev, save }) {
   await page.evaluate(() => window.__lf.setTab('adv'));
 
   const now = () => page.evaluate(() => performance.now());
+  // A new game plays story cards (the opening, a companion's line). A player taps them away, so do the same
+  // before a measured window: the sheet covers the game UI and would intercept the click. Not part of the measure.
+  const closeStory = async () => {
+    for (let k = 0; k < 12 && await page.$('.sty-sheet .sty-done, .bsheet-ov .sty-done'); k++) {
+      await page.click('.sty-sheet .sty-done, .bsheet-ov .sty-done', { timeout: 3000 }).catch(() => {}); await page.waitForTimeout(400);
+    }
+  };
   const window_ = async (ms, fn) => {
+    await closeStory();
     const t0 = await now(); if (fn) await fn(); await page.waitForTimeout(ms); const t1 = await now();
     return page.evaluate(([a, b]) => ({ frames: window.__lfp.frames.filter(f => f[0] >= a && f[0] < b), ui: [], lt: window.__lt.filter(l => l[0] >= a && l[0] < b), t0: a, t1: b }), [t0, t1]);
   };
@@ -262,6 +270,7 @@ async function runScenario(browser, base, { dev, save }) {
     await page.evaluate(() => { const t = document.querySelector('.tab[data-tab=adv]'); if (t) t.click(); });
     await page.waitForTimeout(1200); // let the Attack cooldown end
     // Close story pop-ups (a companion joins, ...): one tap anywhere continues. Not part of the measure.
+    await closeStory();
     for (let k = 0; k < 5 && await page.$('.join-ov'); k++) { await page.click('.join-ov', { position: { x: 5, y: 5 } }).catch(() => {}); await page.waitForTimeout(300); }
     await btn.scrollIntoViewIfNeeded();
     await page.waitForTimeout(300); // scrolling can shrink the stage (compact mode, 0.22 s): let the button settle
