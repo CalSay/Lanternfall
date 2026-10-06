@@ -946,7 +946,10 @@ const TURN_LIVE_IO = {
   healFoe: d => { const f = TURN_LIVE && TURN_LIVE.foe; if (f && !f.dead && f.hp > 0) { f.hp = Math.min(f.max, f.hp + d); emit('float', { txt: '+' + fmt(d), color: '#6FCB6A', big: false }); } },
   slotId: slot => soloEquipped()[slot] || null,
   damageFoe: (d, kind, crit, dt, n) => {
-    const f = TURN_LIVE.foe, got = cbTurnDamageFoe(f, d, kind, crit, dt, n), H = TURN_TUNE.hitstop;
+    const f = TURN_LIVE.foe, H = TURN_TUNE.hitstop, dot = /^(burn|bleed|swarm|curse)$/.test(kind);
+    // hit feel: the number's tier, for its size and sting (display only: nothing below reads it)
+    const bigHit = !dot && !!f && d >= 0.2 * f.max, tier = kind === 'counter' ? 'counter' : crit ? 'crit' : bigHit ? 'big' : '';
+    const got = cbTurnDamageFoe(f, d, kind, crit, dt, n, tier);
     // hit feel: a crit or a hit for a fifth of the foe's HP stops the clock for a beat and shakes the stage
     if (got > 0 && kind !== 'counter' && !/^(burn|bleed|swarm|curse)$/.test(kind)) {
       const big = f && got >= 0.2 * f.max;

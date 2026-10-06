@@ -51,6 +51,10 @@ const SFX = (() => {
     hit: () => { noise(0.05, 1800, 0.25); tone(220, 110, 0.06, 'square', 0.12); },
     party: () => tone(330 + Math.random() * 60, 200, 0.04, 'triangle', 0.08),
     crit: () => { noise(0.09, 2600, 0.4); tone(660, 180, 0.12, 'square', 0.25); },
+    // hit feel (card hit-feel): one sting per number tier beyond hit and crit, and a chime for a clean parry or dodge
+    big: () => { noise(0.07, 1400, 0.4); tone(180, 70, 0.16, 'square', 0.28); tone(90, 60, 0.2, 'sine', 0.3, 0.02); },
+    counter: () => { noise(0.1, 2200, 0.4); tone(523, 523, 0.07, 'square', 0.22); tone(784, 392, 0.2, 'square', 0.26, 0.06); },
+    cleanDef: () => { tone(1568, 1568, 0.05, 'triangle', 0.22); tone(2093, 2093, 0.14, 'triangle', 0.2, 0.05); },
     kill: () => { tone(988, 988, 0.05, 'square', 0.18); tone(1319, 1319, 0.1, 'square', 0.18, 0.05); },
     ore: () => { tone(1800, 1500, 0.07, 'triangle', 0.35); tone(2700, 2400, 0.05, 'sine', 0.15, 0.01); },
     wood: () => { noise(0.08, 400, 0.5); tone(140, 70, 0.1, 'sine', 0.4); },
@@ -72,8 +76,9 @@ const SFX = (() => {
 window.addEventListener('pointerdown', SFX.start, true);
 
 // ================= event wiring =================
-on('float', ({ color }) => {
-  if (color === '#FFFFFF') SFX.play('hit');
+on('float', ({ color, tier }) => {
+  if (tier === 'big' || tier === 'counter') SFX.play(tier);
+  else if (color === '#FFFFFF') SFX.play('hit');
   else if (color === '#FF9E3D') SFX.play('crit');
   else if (color === '#B58CFF' && Math.random() < 0.35) SFX.play('party');
 });
@@ -114,3 +119,4 @@ document.addEventListener('click', e => {
   b.addEventListener('click', e => { e.stopPropagation(); S.settings.sound = !S.settings.sound; draw(); save(); SFX.play('buy'); });
   draw(); st.append(b);
 })();
+on('defGrade', p => { if (p && p.clean) SFX.play('cleanDef'); });
