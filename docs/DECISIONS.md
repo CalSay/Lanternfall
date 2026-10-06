@@ -50,8 +50,9 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   "party damage" bonuses, Tavern recruiting. (2026-09-29)
 - **Rework for solo:** recruit routes become hero unlock routes; party-damage uniques get solo effects; pinnacle bosses
   and legendary circle sets need solo versions; expeditions become trade runs by gatherers. (2026-09-29)
-- **Training:** gold levels up each hero's Attack, Parry, Dodge and abilities, with level caps. It replaced the gold
-  upgrades. (2026-09-29) Training will be overhauled later; its caps (40/80) stay as they are until then. (2026-10-02)
+- **No Training for Attack, Parry and Dodge.** They come from hero level, star points and abilities. Hero level carries
+  the power curve, and the XP for a level follows the road. Each level gives attribute points to spend, with a respec.
+  Weapons scale with the attributes you chose. (2026-10-06; `docs/design/hero-progression.md`)
 - **Classes:** three base classes by armour weight: Warrior (heavy), Ranger (medium), Mage (light). Evolutions: Warrior
   to Reaver (damage) or Warden (utility); Ranger to Venomstalker or Trapper; Mage to Warlock or Priest. Each evolution
   must feel special and clearly stronger. The Warlock's title is the Shadowbinder. (2026-09-28) The support class is
@@ -59,7 +60,8 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 - **The evolution choice is permanent,** with a costly respec, and one free switch within 10 minutes of choosing.
   (2026-09-28)
 - **Playing a tank or support must not be weaker** than a damage class. (2026-09-28)
-- **No rapid catch-up XP** for heroes: levelling a new hero is an investment. (2026-09-28)
+- **A new hero joins at the road's level** (the level the road expects where you are). The same floor applies whenever
+  a hero takes the lamp, so rotating never slows progression. Benched heroes earn half XP. No other catch-up. (2026-10-06)
 - **Region 2 expects a trained-up, stronger hero,** with a hint when the hero hits its limit. (2026-09-28)
 - **Hero fatigue:** yes, but rotating heroes must never slow progression. (2026-09-28)
 - **Tactics:** yes ("tower defense vibes"), once combat is substantial. (2026-09-28)
@@ -300,6 +302,10 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 
 Kept only to explain current rules. Each line: the old decision, then what replaced it.
 
+- Training: gold levels up each hero's Attack, Parry, Dodge and abilities, with caps (2026-09-29, 2026-10-02) -> no
+  Training; level, star points, abilities and attribute points (2026-10-06).
+- No rapid catch-up XP for heroes (2026-09-28) -> a new hero joins at the road's level; benched heroes earn half XP
+  (2026-10-06).
 - Netlify deploys up to four times a day (2026-09-28) -> one deploy a week, Monday 00:00 UK (2026-10-05).
 - Two agents, with Codex owning the feature track (2026-09-30) -> Claude builds, Codex reviews (2026-10-05).
 - Steady mode of 3 agents per 5-hour window; opus/sonnet/haiku routing by difficulty (2026-09-28) -> pace by weekday
