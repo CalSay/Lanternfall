@@ -14314,7 +14314,10 @@ function validateSave(data) {
     }
     if (data.solo) {
       const s = data.solo; if (s.hero != null) known(SOLO_HEROES, s.hero, 'solo.hero');
-      for (const [k, eq] of Object.entries(s.eq || {})) { known(SOLO_HEROES, k, 'solo.eq.hero'); array(eq, 'solo.eq.' + k); if (eq.length !== 3) fail('solo.eq.' + k); for (const id of eq) if (id !== null && (typeof id !== 'string' || !SOLO_HEROES[k].abs.includes(id))) fail('solo.eq.' + k); }
+      // a slot may hold any ability of that hero: the signature (abs) or one learned with a Scroll (HERO_ABILITIES, 24c).
+      // Whether it is learned is not checked here: a slot the save has not learned is cleared on load (59j soloEquipped).
+      const heroAb = (k, id) => SOLO_HEROES[k].abs.includes(id) || (typeof HERO_ABILITIES === 'object' && Array.isArray(HERO_ABILITIES[k]) && HERO_ABILITIES[k].includes(id));
+      for (const [k, eq] of Object.entries(s.eq || {})) { known(SOLO_HEROES, k, 'solo.eq.hero'); array(eq, 'solo.eq.' + k); if (eq.length !== 3) fail('solo.eq.' + k); for (const id of eq) if (id !== null && (typeof id !== 'string' || !heroAb(k, id))) fail('solo.eq.' + k); }
       for (const [k, lv] of Object.entries(s.lv || {})) { known(SOLO_HEROES, k, 'solo.lv.hero'); record(lv, 'solo.lv.' + k); int(lv.L, 'solo.lv.level', 1, lim.progression); num(lv.xp, 'solo.lv.xp'); }
       for (const z of Object.values(s.zn || {})) int(z, 'solo.zone', 1, lim.progression);
       for (const tr of Object.values(s.tr || {})) { record(tr, 'solo.training'); for (const n of Object.values(tr)) int(n, 'solo.training.level', 0, lim.progression); }

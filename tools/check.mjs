@@ -6230,6 +6230,27 @@ if (section('save codec validation (C5)')) try {
   const {saveCodeFor}=await import('./savecode.mjs');
   for(const raw of ['null','{}','{',JSON.stringify({...base(),v:4}),JSON.stringify({...base(),items:[null]})]){let refused=false;try{saveCodeFor(raw);}catch{refused=true;}assert(refused,'C5: CLI rejects bad data before loading it');}
   for(const f of fs.readdirSync(path.join(ROOT,'tests','fixtures')).filter(f=>f.endsWith('.json')))assert(decode(saveCodeFor(fs.readFileSync(path.join(ROOT,'tests','fixtures',f),'utf8'))).ok,`C5: CLI accepts ${f}`);
+  { // every ability a hero learns with Scrolls (Spark, Kindle, ...) exports while equipped, and stays equipped after a cold load of the code
+    const lost=[];
+    for(const k of JSON.parse(E('JSON.stringify(SOLO_ORDER)'))){
+      const h=loadCore({seed:506}),H=s=>h.eval(s),K=JSON.stringify(k);
+      const ids=JSON.parse(H(`soloPick(${K});S.L=60;for(const id of SCROLL_ORDER)S.abil.scrolls[id]=99;JSON.stringify(HERO_ABILITIES[${K}].filter(id=>abilityLearn(${K},id)||abilityOwned(${K},id)))`));
+      if(ids.length!==JSON.parse(H(`HERO_ABILITIES[${K}].length`)))lost.push(k+': could not learn every ability');
+      for(let i=0;i<ids.length;i+=3){
+        const row=[0,1,2].map(j=>ids[(i+j)%ids.length]);
+        H(`[0,1,2].forEach(j=>soloEquip(j,null));${JSON.stringify(row)}.forEach((id,j)=>soloEquip(j,id))`);
+        const want=H('JSON.stringify(soloEquipped())');
+        if(want!==JSON.stringify(row)){lost.push(`${k}: equipping ${JSON.stringify(row)} gave ${want}`);continue;}
+        let code='';try{code=H('encodeSave(S)');}catch(e){lost.push(`${k} ${want}: export threw ${e.message}`);continue;}
+        const r=decode(code);if(!r.ok){lost.push(`${k} ${want}: ${r.error}`);continue;}
+        const cold=loadCore({seed:507,storage:memoryStorage({[KEY]:JSON.stringify(r.data)})}),C=s=>cold.eval(s);
+        if(C('soloHero()')!==k||C('JSON.stringify(soloEquipped())')!==want||C(`JSON.stringify(S.abil.unl[${K}])`)!==H(`JSON.stringify(S.abil.unl[${K}])`)||cold.errors.length)lost.push(`${k} ${want}: cold load gave ${C('JSON.stringify(soloEquipped())')}`);
+      }
+    }
+    assert(!lost.length,'C5: every learned ability exports while equipped and stays equipped after a cold LF1 load'+(lost.length?'; '+lost.slice(0,3).join('; '):''));
+    const other=base();other.solo.eq.wren=['echo','spark',null];
+    assert(!validate(other).ok,'C5: a slot holding another hero\'s learned ability is still refused');
+  }
   assert(!g.errors.length&&!live.errors.length,'C5: positive gameplay states have no handler errors');
 } catch(e){fail('C5 codec validation crashed: '+(e.stack||e));}
 
