@@ -6252,6 +6252,19 @@ if (section('save codec validation (C5)')) try {
       }
     }
     assert(!lost.length,'C5: every learned ability exports while equipped and stays equipped after a cold LF1 load'+(lost.length?'; '+lost.slice(0,3).join('; '):''));
+    { // C5: the learned-abilities record must keep its shape, or abilityOwned throws after a load
+      const probe=(label,edit,ok)=>{const d=base();d.abil=d.abil||{};edit(d.abil);assert(validate(d).ok===ok,`C5: abil ${label} is ${ok?'accepted':'refused'}`);};
+      probe('unl:null',a=>{a.unl=null;},false);
+      probe('unl.wren not a list',a=>{a.unl={wren:'spark',tobin:[],pip:[]};},false);
+      probe('unl holding another hero\'s ability',a=>{a.unl={wren:['spark'],tobin:[],pip:[]};},false);
+      probe('unl holding an unknown id',a=>{a.unl={wren:['nope'],tobin:[],pip:[]};},false);
+      probe('unl with an unknown hero',a=>{a.unl={ghost:[]};},false);
+      probe('scrolls with a fractional count',a=>{a.scrolls={moss:1.5};},false);
+      probe('scrolls with a negative count',a=>{a.scrolls={moss:-1};},false);
+      probe('scrolls with an unknown id',a=>{a.scrolls={nope:1};},false);
+      probe('scrolls with a whole count',a=>{a.scrolls={moss:2};},true);
+      probe('missing entirely',a=>{for(const k of Object.keys(a))delete a[k];},true);
+    }
     const other=base();other.solo.eq.wren=['echo','spark',null];
     assert(!validate(other).ok,'C5: a slot holding another hero\'s learned ability is still refused');
   }
@@ -9018,6 +9031,21 @@ if (section('story-systems-hollow')) try {
   const wrote = [...fs.readFileSync(path.join(ROOT, 'src', 'js', '74-ui-hands.js'), 'utf8').matchAll(/handsLitFor/g)].length;
   assert(wrote >= 1, 'systems-hollow: the Tavern applicant card shows the line');
 } catch (e) { fail('story-systems-hollow crashed: ' + (e.stack || e)); }
+
+if (section('bounties-anywhere')) try {
+  const g = loadCore({ seed: 9301 }), E = x => g.eval(x);
+  E('S.maxZone = 8; S.bounties.slots[1] = { k: "crit", need: 99, have: 0, rew: "gold", rewN: 30, wait: 0, rr: 0 }; S.bounties.slots[2] = { k: "crit", need: 99, have: 0, rew: "gold", rewN: 30, wait: 0, rr: 0 }; S.bounties.slots[0] = { k: "forge", need: 2, have: 1, t: 1, z: 1, rew: "gold", rewN: 30, wait: 0, rr: 0 }; globalThis.__ready = []; on("bountyReady", p => __ready.push(p))');
+  E('emit("itemAdded", { item: { id: 9001, slot: "weapon", t: 1, r: "common", plus: 0 } })');
+  assert(E('__ready.length') === 1 && E('__ready[0].i') === 0 && E('S.bounties.slots[0].have') === 2, 'bounties-anywhere: bountyReady fires once, when a bounty reaches its goal');
+  E('emit("itemAdded", { item: { id: 9002, slot: "weapon", t: 1, r: "common", plus: 0 } })');
+  assert(E('__ready.length') === 1, 'bounties-anywhere: a bounty that is already done does not fire bountyReady again');
+  const goal = E('(() => { const x = topGoals(3, { sticky: false }).find(t => t.id === "bounty"); return x ? { ready: x.ready, label: x.goLabel, go: typeof x.go } : null; })()');
+  assert(goal && goal.ready && goal.label === 'Claim' && goal.go === 'function', 'bounties-anywhere: the Next Up bounty goal says Claim and claims in place');
+  E('(typeof topGoals(3, { sticky: false })[0] === "object") && (() => { const x = topGoals(3, { sticky: false }).find(t => t.id === "bounty"); const sp = x.go(); sp.fn(); })()');
+  assert(E('S.bounties.claimed') === 1 && !E('S.bounties.slots[0].k'), 'bounties-anywhere: the Claim runs BOUNTY_API.claim (no menu), pays and frees the slot');
+  const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-bounties-ui.js'), 'utf8');
+  assert(/registerSection\('camp', \{\s*id: 'bounties-camp', title: "Hesketh's board"/.test(src), "bounties-anywhere: the board is also registered at Camp as Hesketh's board");
+} catch (e) { fail('bounties-anywhere crashed: ' + (e.stack || e)); }
 
 // ---- guide-panel: the guide's panel never covers the fight (early-game plan R3, issues A1, A3, A4) ----
 // Real DOM rects at 740x360, 844x390 and 360x740: while the first session's steps show, the panel overlaps neither HP bar, the
