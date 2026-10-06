@@ -25110,7 +25110,11 @@ function turnChoose(m) {
 }
 function turnCombatSample({ profile: p, seconds, seed = 1, skill = { parry: 0.5, dodge: 0.7, perfect: 0.35, good: 0.5 }, fights = 0 }) {
   if (!p || !(seconds > 0)) return null;
-  let x = (seed | 0) || 1;
+  // each fight draws from its own stream, seeded from (seed, fight index) through murmur3's finaliser: one LCG stream run
+  // across a long fight chain correlates the fights (judge 2026-10-06: one seed read 13-32% where independent fights read 53-67%)
+  let x = 1, fightN = 0;
+  // the first fight keeps the caller's seed as is, so a one-fight call (the budget's boss fights, each on its own hashed seed) is unchanged
+  const reseed = () => { if (!fightN++) { x = (seed | 0) || 1; return; } let h = Math.imul((seed | 0) ^ Math.imul(fightN, 0x9E3779B1), 0x85EBCA6B); h ^= h >>> 13; h = Math.imul(h, 0xC2B2AE35); h ^= h >>> 16; x = h | 0 || 1; };
   const roll = () => ((x = (Math.imul(x, 1664525) + 1013904223) | 0) >>> 0) / 4294967296;
   const out = { seconds, kills: 0, deaths: 0, generatedEss: 0, damageDone: 0, damageTaken: 0, foeHits: 0, parries: 0, dodges: 0,
     completedFights: 0, totalHeroTurns: 0, totalFightSeconds: 0 };
@@ -25120,7 +25124,7 @@ function turnCombatSample({ profile: p, seconds, seed = 1, skill = { parry: 0.5,
     damageFoe: d => { foeHp -= d; out.damageDone += d; return d; },
     damageHero: d => { heroHp -= d; out.damageTaken += d; if (d > 0) out.foeHits++; return d; },
     healHero: d => { heroHp = Math.min(p.heroMaxHp, heroHp + d); }, healFoe: d => { foeHp = Math.min(p.foeMaxHp, foeHp + d); }, defense: (k, ok) => { if (ok) out[k === 'parry' ? 'parries' : 'dodges']++; } };
-  const start = () => { foeHp = p.foeMaxHp; if (p.fullHp) heroHp = p.heroMaxHp; m = turnNew(p, io); plan = ''; };   // a zone boss is met at full health, as in play
+  const start = () => { reseed(); tplan = null; foeHp = p.foeMaxHp; if (p.fullHp) heroHp = p.heroMaxHp; m = turnNew(p, io); plan = ''; };   // a zone boss is met at full health, as in play
   start();
   const step = 0.05;
   for (let t = 0; t < seconds; t += step) {
