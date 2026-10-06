@@ -9102,7 +9102,7 @@ if (section('story-unlock-gates')) try {
   assert(bell.length === 1 && bell[0] === "You won the Stonebreaker's Token. Grenna joins your camp. The solo kit comes later." && E('noticeChannel(noticeRule("", "heroToken"), "")') === 'bell', 'story-unlock-gates: a token win is one bell line, never a pop (' + bell.join(' | ') + ')');
   // STORY_MEET holds the chapter script: the zone after each Chapter 1 hero's first scene can have played (Hob: no scene of his own)
   const meet = JSON.parse(E(`JSON.stringify((() => {
-    const B = STORY_BEATS, z = at => { const [k, v] = at.split(':'); return k === 'area' ? +v * AREA_ZONES + 1 : k === 'champPost' ? B.champ[v].zone + 1 : k === 'elderPre' ? B.elder[v].zone : B.elder[v].zone + 1; }, out = {};
+    const B = STORY_BEATS, z = at => { const [k, v] = at.split(':'); return k === 'intro' || k === 'hearth' ? 1 : k === 'area' ? +v * AREA_ZONES + 1 : k === 'champPost' ? B.champ[v].zone + 1 : k === 'elderPre' ? B.elder[v].zone : B.elder[v].zone + 1; }, out = {};
     for (const [id, n] of Object.entries(B.npc)) { const k = ROSTER_KEYS.find(h => id === h || (id.startsWith(h) && /^[A-Z]/.test(id.slice(h.length)))); if (k && STORY_MEET[k]) out[k] = Math.min(out[k] || Infinity, z(n.at)); }
     return Object.keys(STORY_MEET).filter(k => STORY_MEET[k][1] === 1 && k !== 'hob').map(k => [k, STORY_MEET[k][0], out[k] || null]);
   })())`));
