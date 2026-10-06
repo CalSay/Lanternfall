@@ -83,6 +83,10 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 - **The early road is not sped up to fill an unlock gap.** A faster road makes the first hour's dry stretch longer.
   Until `story-unlock-gates` spaces the early unlocks, something new comes at least every 4 minutes in the first 10,
   not every 3.5. (2026-10-06)
+- **A boss off its band is fixed at the boss, not by weakening heroes.** Attack and health now rise smoothly, so a
+  Lv 29 hero is 15% stronger than on the old step and a Lv 27 hero 10% weaker. The zone 20 Captain is too easy for the
+  hero who keeps up; `boss-tiers` fixes it. Heroes are not cut to fit one checkpoint while zones 25 to 34 are walls.
+  (2026-10-06)
 
 ## Abilities
 

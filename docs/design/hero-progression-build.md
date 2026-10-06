@@ -148,32 +148,30 @@ old-game data (no old run passed zone 35 with levels to compare).
 
 **Fights to hold the road (judge: at most 25% change between neighbouring zones, zones 1-50).** 9-21% from zone 3 on.
 
-**Switch (prediction 1: within 10 points, good persona; judge: 80% or better).** Zone-20 saves (seed 41), 150 fights
-an arm, the joining hero lifted and spread evenly with their signature kit:
+**Switch (prediction 1, as re-stated by judge ruling 1: the joining hero spends the lamp's stock Scrolls; normal fights
+within 10 points of the hero who leaves; the zone boss 60%+ with good play).** Zone-20 saves (seed 41), 300 fights an arm,
+each on its own hashed seed (`arms.mjs`, `arms-split.txt`):
 
-| From | To | Normal | Boss |
-|---|---|---|---|
-| Wren (100%, 90%) | Tobin | 100% | 100% |
-| | Pip | 100% | 83% (-7) |
-| Tobin (100%, 100%) | Wren | 99% | 35% (-65) |
-| | Pip | 100% | 34% (-66) |
-| Pip (100%, 60%) | Wren | 95% | 31% (-29) |
-| | Tobin | 100% | 98% |
+| From | To | Normal | Boss | The joiner on its own save |
+|---|---|---|---|---|
+| Wren (100%, 94%) | Tobin | 100% | 100% | 100% |
+| | Pip | 100% | 85% | 73% |
+| Tobin (100%, 100%) | Wren | 99% | 53% (miss) | 94% |
+| | Pip | 100% | 41% (miss) | 73% |
+| Pip (100%, 72%) | Wren | 100% | 45% (miss) | 94% |
+| | Tobin | 100% | 99% | 100% |
 
-Normal fights hold. Bosses miss whenever the hero who leaves had more kit: the profiles show the gap is not the level
-(the joiner is at Lv 28-29 against 28-30; after the judge's amend a joiner never outranks the hero who leaves, so from Tobin's Lv 28 save they join at 28, not 29) but abilities, Stars and gear affixes (Pip from Tobin's save has the same Attack
-and more health, but one ability and no Stars against her own save's three abilities and three Stars). Before the
-join lead the levels were 1-3 short as well. The judge's ruling sends this to Cal: no free ability learns.
+Normal fights hold everywhere. The three boss misses are gear: Tobin's and Pip's lamps carry about half the gear power of
+Wren's (judge ruling 1). They stay open, owned by card `switch-row` (after `gear-weight` and `tobin-safety-margin`).
 
 **Dominance (judge: no build best for every starter on both foe types; each attribute in a winning build; the best
 beats even by 5+ points somewhere).** Even, four pure builds and six pairs, normal foes (casual skill: win rate and
-kills an hour) and the zone boss (good and casual skill), zone 20 and zone 30 saves, 150 fights an arm
-(`arms-split.txt`). No build is best everywhere: Focus wins normal foes for most saves, Focus/Vigour wins bosses for
-most, and Focus/Guard and even win some. The best beats even by 13 points (Pip, pure Focus, normal foes at zone 20).
-Might is in no winning build in this run (in the earlier post-split run it won one boss row by a single fight): it is
-the weakest attribute, so the rule's "each attribute wins somewhere" is not met for Might. Its job comes with weapons
-that scale with attributes (card craft-attribute-grades). Wren with any extra Focus kills normal foes in one ability,
-so pure Focus farms 2.1-3.2x faster than even for her and loses on bosses (81-91% against Vigour's 96-97%).
+kills an hour) and the zone boss (good and casual skill), zone 20 and zone 30 saves, 300 fights an arm on hashed seeds
+(`arms-split.txt`). No build is best everywhere: Focus or Focus/Guard wins normal foes for most saves, Focus/Vigour,
+Vigour and Guard/Vigour win bosses. The best beats even by 13 points (Pip, pure Vigour, normal foes at zone 20). Might
+is in no winning build: judge ruling 4 leaves it for weapons that scale with attributes (`craft-attribute-grades`). Wren
+with pure Focus kills normal foes 1.6x (zone 21) to 2.4x (zone 31) as fast as even and loses on bosses (80-89% against
+92-94%); judge ruling 3 allows it as a farm build.
 
 **Gold (judge: spent / earned at zone 20 at least 0.5 with the flag off).** Zone 20: 0.66 (Wren), 0.86 (Pip), 0.91
 (Tobin); zone 30: 0.96-1.0. Old game: 0.95-1.0, with Training 26-33% of all gold spent. The gold goes to camp, crafting
@@ -214,3 +212,9 @@ waits for weapons that scale with attributes (`craft-attribute-grades`). (5) The
 `story-unlock-gates` (expiry 2026-11-15). After Codex round 1 the road is a monotone cubic through its points (zone 17 at
 24.4), which removes the x2 level-cost jump at Lv 25, and an old save's XP bar carries over as the same share of the
 new curve's level.
+
+**Budget ruling (Opus judge, 2026-10-06, after difficulty-budget merged).** On the smooth Attack curve the zone 20 Captain
+is too easy for a hero who keeps up (casual 84/100/94 at Lv 29) and a gear tier behind costs Wren and Pip less than
+before. These are recorded as gaps in `difficulty-budget.json` (z20-boss Wren and Pip casual, owner `boss-tiers`, until
+2026-11-15; z20-boss-behind limits moved, owner `gear-weight`) and the budget baseline is rewritten. A boss off its band
+is fixed at the boss, not by weakening heroes.
