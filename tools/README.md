@@ -82,3 +82,14 @@ node tools/health.mjs --compare
 Plays three kinds of player (casual, active, optimiser) on fixed seeds and compares the numbers with
 `docs/design/health-baseline.json`. It exits 1 when a metric moves past its tolerance in the bad direction. Run it before
 and after any balance, economy or pacing change. `--write-baseline` accepts a deliberate shift. See `docs/design/health.md`.
+
+## Difficulty budget
+
+```text
+node tools/budget.mjs
+```
+
+Plays scratch turn fights for Wren, Tobin and Pip as heroes who keep up with the road at 26 checkpoints (normal foes,
+elites, every boss tier, a tier behind on gear), casually and well, and prints each hero's win rate against its band in
+`docs/design/difficulty-budget.json`. `health.mjs --compare` gates on it. `--sweep` shows a level either side, `--eval`
+tries a tuning change first. See `docs/design/difficulty-budget.md`.

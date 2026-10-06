@@ -1,0 +1,1 @@
+Hero and foe names now show in full on the fight screen. Long names take a second line instead of turning into "T... 10.7M". Notices wait while the "goes first" banner shows, and sit under the health bars.

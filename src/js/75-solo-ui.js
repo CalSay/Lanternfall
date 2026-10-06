@@ -89,7 +89,7 @@ var soloIconURL = () => '';
   // C26: the approved action icons (ACTION_ICONS, 60n-nicons) at the size the bar shows; the pixel maps above stay
   // as the fallback for a move the pack has no icon for. Attack is the hero's own ('attack-wren', ...).
   const packId = mv => mv === 'atk' ? 'attack-' + (soloHero() || 'tobin') : mv;
-  // an ability learned for turn fights (24c) has no approved icon yet: its slot shows a plain lettered tile (no art)
+  // an ability learned for turn fights (24c) has no icon in the pack (Wren and Tobin until their packs are whole): its slot shows a plain lettered tile
   const noIcon = mv => mv !== 'atk' && !ICON[mv] && !nicHas('act', packId(mv));
   const setIc = (cv, mv, px) => {
     const b = cv.parentElement, mono = noIcon(mv);

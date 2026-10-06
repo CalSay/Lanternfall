@@ -1,0 +1,1 @@
+Each new tab now tells you what it is, once, in one line, the first time you open it. Best shot: first-use-gather-360 (Gather: "Pick a node and your hero mines or chops it, even while you are away.").

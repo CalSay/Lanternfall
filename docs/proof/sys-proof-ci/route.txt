@@ -1,0 +1,21 @@
+# seed: 1
+# Proof for card sys-proof-ci: a fresh save, pick the first hero, reach the first fight.
+# Replayed by CI (`eyes` job) at 360x740 and 740x360 with the same seed.
+new fresh
+expect "Who carries the lantern?"
+shot hero-pick
+tap "Begin as Wren"
+wait 3
+expect "Chapter 1"
+shot chapter-card
+tap-if "Skip"
+wait 1
+tap-if "Skip"
+wait 1
+tap-if "Skip"
+wait 1
+tap-if "Skip"
+wait 3
+expect "Attack"
+shot first-fight
+burst first-fight-burst

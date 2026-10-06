@@ -85,3 +85,68 @@ jobs:
         env:
           LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
         run: tools/ci/path-guard.sh "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}" "$LABELS"
+
+  # EYES: the robot plays the change like a player. Replays every docs/proof/<card>/route.txt this PR changed on the built
+  # game (portrait and landscape), uploads shots and bursts, posts one PR comment. A failed `expect` fails the job. A PR
+  # that changes src/ with no changed route.txt fails unless it has the `no-visible-change` label.
+  eyes:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      # Lean on minutes: nothing below runs unless this PR touches src/ or a proof route.
+      - name: Does this PR need eyes?
+        id: gate
+        run: node tools/ci/eyes.mjs --gate "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-node@v4
+        if: steps.gate.outputs.go == 'true'
+        with:
+          node-version: 22
+          cache: npm
+      - if: steps.gate.outputs.go == 'true'
+        run: npm ci
+      - name: Cache Playwright browser
+        if: steps.gate.outputs.go == 'true'
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - if: steps.gate.outputs.go == 'true'
+        run: npx playwright install --with-deps chromium
+      - name: Build the merge result
+        if: steps.gate.outputs.go == 'true'
+        run: node tools/build.mjs
+      - name: Play the routes
+        if: steps.gate.outputs.go == 'true'
+        env:
+          LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+        run: node tools/ci/eyes.mjs "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}" "$LABELS"
+      - name: Upload shots
+        if: always() && steps.gate.outputs.go == 'true'
+        id: up
+        uses: actions/upload-artifact@v4
+        with:
+          name: eyes-out
+          path: eyes-out/
+          retention-days: 14
+      - name: Comment on the PR
+        if: always() && steps.gate.outputs.go == 'true' && hashFiles('eyes-out/summary.md') != ''
+        uses: actions/github-script@v7
+        env:
+          ART_URL: ${{ steps.up.outputs.artifact-url }}
+        with:
+          script: |
+            const fs = require('fs');
+            let body = fs.readFileSync('eyes-out/summary.md', 'utf8');
+            if (process.env.ART_URL) body += `\n[Open the shots](${process.env.ART_URL})\n`;
+            const { owner, repo } = context.repo, issue_number = context.issue.number;
+            const all = await github.paginate(github.rest.issues.listComments, { owner, repo, issue_number });
+            const mine = all.find(c => c.body && c.body.includes('<!-- lanternfall-eyes -->'));
+            if (mine) await github.rest.issues.updateComment({ owner, repo, comment_id: mine.id, body });
+            else await github.rest.issues.createComment({ owner, repo, issue_number, body });

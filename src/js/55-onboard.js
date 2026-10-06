@@ -17,10 +17,14 @@
 // goalGate(goal) -> bool       Next Up filter: false while the goal's system is still hidden.
 //                              Only active once the UI turns it on (ONBOARD.gate), so the Node
 //                              tools see every goal.
+// onboardUse({ tab, view, feature }) -> { id, text } | null   the first-use line for the system on screen (FIRST_USE below):
+//                              each system that opens after the first fight explains itself once, in one line. The UI
+//                              asks only while no guide step shows; it never pauses the game.
+// onboardUseDone(id)           the line was read (x, or about 7 s on screen). No event, so guide walks never see it.
 // Events: unlock { id, tab, view, quiet } (a feature appeared), onboardStep { id } (a step completed).
 // State S.onboard: { v, all, got: { id: seconds played }, done: { stepId: 1 }, seen: { tabOrView: 1 },
 //   tips, t (seconds played while the guide runs), taps, casts }.
-let isUnlocked, onboardReveal, onboardUnlockAll, onboardStep, onboardDone, onboardTips, onboardCheck, onboardNeed, onboardPaused;
+let isUnlocked, onboardReveal, onboardUnlockAll, onboardStep, onboardDone, onboardUse, onboardUseDone, onboardTips, onboardCheck, onboardNeed, onboardPaused;
 let onboardIsNew = null;   // set by 75-onboard-ui.js; 70-ui.js marks new views with it
 let onboardSpec = null;    // set by 75-onboard-ui.js: step id -> { node, text } | null (the browser check)
 let soloGuideWants = () => '';   // set by 75-onboard-ui.js: the step on screen ('dodge' / 'parry': the first press counts, 59j forgive)
@@ -65,6 +69,31 @@ const FEATURES = [
     when: () => { try { return handsOpen(); } catch (e) { return false; } } }
 ];
 const FEATURE_OF = Object.fromEntries(FEATURES.map(f => [f.id, f]));
+
+// FIRST_USE (ap-first-use-hints): every FEATURES row has exactly one line saying what that system is, plain words.
+// via (default 'hint'): where the line shows. 'hint': the docked hint, once, the first time the player opens the view
+// (onboardUse). 'guide': the guide's own step carries it (Next Up). 'notice': the unlock notice carries it (the Codex,
+// Stars: they open as a sheet or a toast, not a view). The unlock notice of a 'hint' system only says where it is
+// (75-onboard-ui OPEN_TXT), so one unlock gives one notice and one line. The guide NPC can voice these later.
+const FIRST_USE_FOR = 7200;   // seconds of play after the unlock (the same window as a view's "new" mark)
+const FIRST_USE = {
+  party: { text: 'Your Hero: gear, level and abilities.' },
+  nextup: { text: 'Next Up shows your best next goal. Tap it.', via: 'guide' },
+  gather: { text: 'Pick a node and your hero mines or chops it, even while you are away.' },
+  bounties: { text: 'Bounties are three short goals. They pay gold, materials and Renown.' },
+  camp: { text: 'Build stations here. Each one opens a new way to make things.' },
+  forage: { text: 'Foraging finds fibre and herbs.' },
+  craft: { text: 'Craft turns materials into gear. Pick a station, then a recipe.' },
+  bestiary: { text: 'The Bestiary lists the foes you have met. Kills earn perks against them.' },
+  almanac: { text: "The Almanac shows today's Omen, plus Dares and a weekly board." },
+  uniques: { text: 'Uniques are rare gear that bosses drop. Each has a strong effect.' },
+  tavern: { text: 'The Tavern shows who is online and the hall of heroes.' },
+  codex: { text: 'The Codex is open. It tracks what you have found. Find it in the Journal.', via: 'notice' },
+  raid: { text: 'One boss, shared by every player. Your hits add to the same total.' },
+  stars: { text: 'Each star changes how your fights play.', via: 'notice' },
+  deep: { text: 'The Deepwell is a run of fight floors. Pick a boon between floors and earn Marks.' },
+  hands: { text: 'Hire gatherers on the Tavern board. They work shifts while you are away.' }
+};
 
 // GUIDE_STEPS: in order of priority; the first step not done whose when() holds is shown.
 // done() completes a step by doing the thing. Targets and sentences live in 75-onboard-ui.js.
@@ -218,6 +247,20 @@ function craftReady() {
     }
     return null;
   };
+
+  // ---- first-use lines (FIRST_USE) ----
+  // A hint line shows only to a player who just got the system (2 hours of play, as the "new" mark), on a view of its own (the view's `feature`, or
+  // the FEATURES tab and view), and while tips are on. Once read it is kept as S.onboard.done['use:<id>'] (the same map as the guide steps, no new field).
+  onboardUse = ctx => {
+    if (!O().tips || !ctx || !ctx.tab) return null;
+    for (const f of FEATURES) {
+      const u = FIRST_USE[f.id], got = O().got[f.id];
+      if (!u || u.via || !f.tab || got == null || O().done['use:' + f.id] || O().t - got >= FIRST_USE_FOR) continue;
+      if (ctx.feature === f.id || (f.tab === ctx.tab && f.view === ctx.view)) return { id: 'use:' + f.id, text: u.text };
+    }
+    return null;
+  };
+  onboardUseDone = id => { O().done[id] = 1; };
 
   // ---- Next Up: hide goals whose system is still hidden (only while ONBOARD.gate is on) ----
   const GOAL_FEATURE = { bounty: 'bounties', bestiary: 'bestiary', skill: 'gather', forge: 'craft', camp: 'camp', codex: 'codex', deep: 'deep' };

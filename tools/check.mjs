@@ -1411,6 +1411,48 @@ if (section('onboarding')) try {
   assert(!errs.length, 'no onboarding errors' + (errs.length ? ': ' + errs[0] : ''));
 } catch (e) { fail('onboarding crashed: ' + (e.stack || e)); }
 
+// ---- first-use lines (ap-first-use-hints): each system that opens after the first fight explains itself once ----
+if (section('first-use lines (ap-first-use-hints)')) try {
+  const g = loadCore({ seed: 7 }), E = s => g.eval(s);
+  const jsd = path.join(ROOT, 'src', 'js'), rd = f => fs.readFileSync(path.join(jsd, f), 'utf8');
+  const ids = JSON.parse(E('JSON.stringify(FEATURES.map(f => f.id))')), lines = JSON.parse(E('JSON.stringify(FIRST_USE)'));
+  const zero = ids.filter(id => !lines[id] || !String(lines[id].text || '').trim());
+  const stray = Object.keys(lines).filter(id => !ids.includes(id));
+  const long = Object.entries(lines).filter(([, u]) => u.text.length > 90 || /\n/.test(u.text) || (u.text.match(/[.!?](\s|$)/g) || []).length > 3).map(([id]) => id);
+  assert(!zero.length && !stray.length && !long.length, `every system that opens after the first fight has exactly one first-use line (one table row each; short, plain)${zero.length ? '; 0 lines: ' + zero.join(', ') : ''}${stray.length ? '; for no system: ' + stray.join(', ') : ''}${long.length ? '; too long: ' + long.join(', ') : ''}`);
+  // 'notice' and 'guide' lines live in their own source; the unlock notice of a 'hint' system only says where it is (never repeats the line)
+  const ob = rd('75-onboard-ui.js'), src = { notice: { codex: ob, stars: rd('75-stars-ui.js') } };
+  const dup = [], twice = [];
+  for (const id of ids) {
+    const u = lines[id], via = u && u.via || 'hint';
+    if (via === 'notice' && !(src.notice[id] || '').includes(u.text)) dup.push(`${id}: its notice does not carry the line`);
+    if (via === 'guide' && !/text: FIRST_USE\.nextup\.text/.test(ob)) dup.push(`${id}: the guide step does not read the line`);
+    if (via === 'hint') { const m = new RegExp(`^\\s*${id}:\\s*(.*)$`, 'm').exec(ob.slice(ob.indexOf('const OPEN_TXT = {'), ob.indexOf('const TAB_FEATURE'))); if (m && m[1].includes(u.text)) twice.push(id); }
+  }
+  const nextupToast = /OPEN_TXT = \{[^}]*\n\s*nextup:/.test(ob);
+  assert(!dup.length && !twice.length && !nextupToast, `one unlock gives one notice and one line: toasts say where, lines say what${dup.length ? '; ' + dup.join('; ') : ''}${twice.length ? '; the toast repeats the line for ' + twice.join(', ') : ''}${nextupToast ? '; Next Up still has a toast on top of its guide step' : ''}`);
+  // behaviour: a hint line shows once, on its own view, while tips are on, and never as a guide step
+  E('soloPick("tobin")');
+  const use = (tab, view, feature) => JSON.parse(E(`JSON.stringify(onboardUse({ tab: ${JSON.stringify(tab)}, view: ${JSON.stringify(view)}, feature: ${JSON.stringify(feature)} }))`));
+  assert(use('adv', 'bounties') === null, 'no line for a system not yet open');
+  E('onboardReveal("bounties"); onboardReveal("gather"); onboardReveal("party")');
+  const u1 = use('adv', 'bounties');
+  assert(u1 && u1.id === 'use:bounties' && u1.text === lines.bounties.text, 'opening the Bounties view gives its line');
+  assert(use('adv', 'bestiary') === null && use('', '') === null && use('party', 'training') === null, 'only on its own view, never on the game view or another view');
+  assert((u => u && u.id === 'use:gather')(use('gat', 'wood', 'gather')), 'any view of the system gives its line (Wood opens Gather)');
+  let steps = 0; g.fn.on('onboardStep', () => steps++);
+  E('onboardUseDone("use:bounties")');
+  assert(use('adv', 'bounties') === null && steps === 0, 'read once: it does not show again, and no guide-step event fires');
+  assert(E('onboardStep().id') === 'attack' && E('!GUIDE_STEPS.some(s => /^use:/.test(s.id))'), 'the guide steps are unchanged: a line is never one of them');
+  E('onboardTips(false)');
+  assert(use('gather', 'mine') === null, 'Skip tips silences the lines');
+  E('onboardTips(true); S.onboard.got.party = Math.round(S.onboard.t) - 7300');
+  assert(use('party', 'team') === null, 'a system unlocked over 2 hours of play ago stays quiet (old saves)');
+  const kept = JSON.parse(E('JSON.stringify(Object.keys(S.onboard.done))'));
+  assert(kept.includes('use:bounties') && E('typeof S.onboard.done === "object"'), 'the line is remembered in the existing onboard.done map (no new save field)');
+  assert(!g.errors.length, 'no first-use errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
+} catch (e) { fail('first-use lines crashed: ' + (e.stack || e)); }
+
 // ---- HINT1: the guide's hint stays put (docs/design/onboarding.md, "one hint at a time") ----
 // The hint used to re-read its target's pixel position and re-place itself every 250ms, so it
 // jumped around whenever the stage moved under it. It must now (a) never recompute a placement on
@@ -7510,7 +7552,17 @@ if (section('action and menu icons (C26)')) try {
   const g = loadCore({ seed: 27 });
   const d = JSON.parse(g.eval(`JSON.stringify({ act: typeof ACTION_ICONS === 'object' ? Object.entries(ACTION_ICONS).map(([k, v]) => [k, Object.keys(v)]) : null,
     nav: typeof NAV_ICONS === 'object' ? Object.entries(NAV_ICONS).map(([k, v]) => [k, Object.keys(v)]) : null })`));
-  assert(d.act && d.act.length === 16 && d.act.every(([, ks]) => ks.join() === '16,24,36,48'), `C26: 16 action icons at 16, 24, 36 and 48 px (${d.act ? d.act.length : 'none'})`);
+  const base = d.act ? d.act.filter(([k]) => !g.eval(`ABILITIES[${JSON.stringify(k)}] && ${JSON.stringify(k)} !== 'echo' && ${JSON.stringify(k)} !== 'bash' && ${JSON.stringify(k)} !== 'fire'`)) : [];
+  assert(base.length === 16 && base.every(([, ks]) => ks.join() === '16,24,36,48'), `C26: 16 action icons at 16, 24, 36 and 48 px (${base.length})`);
+  // wire-ability-icons: art freeze = whole packs. Every live ability of a complete hero has an icon at 24, 36 and 48 px;
+  // an incomplete hero shows none of Codex's (no half-drawn lists). Add a hero here only when all its abilities are drawn.
+  const COMPLETE = ['pip'], ownIcon = new Set(['echo', 'bash', 'fire']);
+  const ab = JSON.parse(g.eval(`JSON.stringify(Object.fromEntries(Object.keys(HERO_ABILITIES).map(h => [h, HERO_ABILITIES[h].map(id => [id, ACTION_ICONS[id] ? Object.keys(ACTION_ICONS[id]).join() : '']) ])))`));
+  for (const [h, rows] of Object.entries(ab)) {
+    const missing = rows.filter(([, ks]) => !ks).map(([id]) => id);
+    if (COMPLETE.includes(h)) assert(!missing.length && rows.every(([, ks]) => ks.endsWith('24,36,48') || ks === '16,24,36,48'), `abilities: every ${h} ability has an icon at 24, 36 and 48 px (missing: ${missing.join(', ') || 'none'})`);
+    else assert(rows.every(([id, ks]) => !ks || ownIcon.has(id)), `abilities: ${h} is not complete, so none of its ability icons are embedded yet except the starter`);
+  }
   assert(d.nav && d.nav.length === 32 && d.nav.every(([, ks]) => ks.join() === '12,16,18,20,22'), `C26: 32 menu icons at 12-22 px (${d.nav ? d.nav.length : 'none'})`);
   const need = ['attack-wren', 'attack-tobin', 'attack-pip', 'echo', 'bash', 'fire', 'parry', 'dodge', 'empty', 'fight', 'hero', 'gather', 'craft', 'camp', 'deeds', 'notices', 'mining', 'woodcutting', 'foraging', 'raid', 'deepwell'];
   const have = new Set([...(d.act || []), ...(d.nav || [])].map(([k]) => k));
@@ -9477,6 +9529,48 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
     } finally { await browser.close(); }
   }
 } catch (e) { fail(`landscape ${w}x${h} (browser, UX-L1) crashed: ` + (e.stack || e)); }
+
+// ---- fight HUD fit (fight-hud-fit): names whole, banner and toasts never on top of each other ----
+if (section('fight HUD fit')) try {
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) { skipBrowser('fight HUD fit (browser): Playwright or Chromium not here, skipped'); }
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const mid = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-mid.json'), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h] of [[360, 740], [740, 360]]) {
+        const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: true, hasTouch: true });
+        await ctx.addInitScript(([k, v]) => { try { localStorage.setItem(k, v); } catch (e) {} }, [KEY, mid]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        const X = src => page.evaluate(src => window.__t.x(src), src);
+        await X('S.onboard && (S.onboard.tips = false); true');
+        await page.waitForTimeout(1200);
+        // names whole: nothing in the plates is cut with an ellipsis, and the place line shows in full
+        const cut = await page.evaluate(() => [...document.querySelectorAll('.hud.vs .hero-plate .mob-name, .hud.vs .mob .mob-name, .hud.vs .hud-zone .zname, .hud.vs .mob-hp')]
+          .filter(e => e.offsetParent && e.scrollWidth > e.clientWidth + 1).map(e => e.className + ':' + e.textContent));
+        assert(!cut.length, `${w}x${h}: hero and foe names, numbers and the place line are not cut (${cut.join(' | ')})`);
+        // the banner and the toasts take turns: while the turn banner shows, the toast stack is hidden
+        await X('notify({ msg: "Test notice for the HUD fit check", kind: "hi" }, "now"); emit("turnCard", { who: "foe", secs: 0.9 }); true').catch(() => {});
+        await page.waitForTimeout(150);
+        const o = await page.evaluate(() => {
+          const r = s => { const e = document.querySelector(s); if (!e || e.hidden) return null; const b = e.getBoundingClientRect(); return { l: b.left, r: b.right, t: b.top, b: b.bottom, op: +getComputedStyle(e).opacity }; };
+          const tc = r('.tv-turncard'), to = r('.toasts'), bars = [r('.hud.vs .hero-plate'), r('.hud.vs .mob')].filter(Boolean);
+          const hit = (a, b) => a && b && a.l < b.r && b.l < a.r && a.t < b.b && b.t < a.b;
+          return { tc: !!tc, tcOverToasts: hit(tc, to) && to.op > 0.05, toastsOverBars: bars.some(b => hit(to, b)) };
+        });
+        assert(!o.tcOverToasts, `${w}x${h}: the turn banner and the toasts are never both on screen on the same spot`);
+        assert(!o.toastsOverBars, `${w}x${h}: toasts sit under the hero and foe plates, not over them`);
+        assert(!errs.length, `${w}x${h}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('fight HUD fit crashed: ' + (e.stack || e)); }
 
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 console.log(browserSummary(browserSkipped, browserSkipReasons));
