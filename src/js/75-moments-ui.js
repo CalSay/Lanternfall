@@ -18,7 +18,7 @@
 //   lines    [{ txt, ic? }] a short list under the title;  actions  [{ txt, fn }] extra buttons beside Continue
 // momentState() -> { up, banner, queued } for the checks. Nothing here is saved: a moment not yet seen when the game closes
 // is dropped (a unique already sits in the trophy wall).
-const MOMENT_TUNE = { bannerS: 2.6, bannerExtraS: 0.7, settleS: 0.6, tapLockMs: 700, maxLines: 5, maxBanner: 3, bootS: 4, guideWaitS: 6, midMax: 2, midWindowS: 180, midFirstS: 1800 };
+const MOMENT_TUNE = { bannerS: 2.6, bannerExtraS: 0.7, settleS: 0.3, tapLockMs: 700, maxLines: 5, maxBanner: 3, bootS: 4, guideWaitS: 6, midMax: 2, midWindowS: 180, midFirstS: 1800 };
 const MOMENT_KINDS = {
   boss: { tier: 'big', eye: 'Boss down', col: '#F2C14E', snd: 'big' },
   unique: { tier: 'big', eye: 'Unique loot', col: '#FF8A3D', snd: 'big' },
@@ -47,11 +47,12 @@ function moment(kind, o) {
 }
 function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner, queued: MOMENT_Q.length }; }
 {
-  const fighting = () => { try { return typeof TURN_LIVE !== 'undefined' && !!TURN_LIVE && !TURN_LIVE.ended; } catch (e) { return false; } };
+  // a turn fight is live (the next foe's intro, about 0.5 s after a kill, is not: the boss's card must show before the fight goes on)
+  const fighting = () => { try { return typeof TURN_LIVE !== 'undefined' && !!TURN_LIVE && !TURN_LIVE.ended && TURN_LIVE.phase !== 'intro'; } catch (e) { return false; } };
   const bootT = performance.now();
   // a card up, the guide's step, the What's-new window or the first seconds after boot hold a moment back
   // (the guide's step gets guideWaitS seconds to finish, then the moment shows over it: a step left on screen must not hide a unique)
-  const blocked = () => !!document.querySelector('.away-ov, #createScreen, .join-ov, .gl-ov, .dd-fc-ov') || NEWS.open || performance.now() - bootT < MOMENT_TUNE.bootS * 1000
+  const blocked = () => !!document.querySelector('.away-ov, #createScreen, .join-ov, .gl-ov, .dd-fc-ov') || document.hidden || NEWS.open || performance.now() - bootT < MOMENT_TUNE.bootS * 1000
     || (guideBusy() && MOMENT_UI.guideT < MOMENT_TUNE.guideWaitS);
   // medium moments in the first half hour: at most midMax in any midWindowS seconds
   const midRoom = () => {
@@ -140,7 +141,8 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
     t._hold = Date.now() + ms;
     const live = [...box.children].filter(x => !x._gone && !(x._hold > Date.now()));
     const room = box.classList.contains('over-menu') || box.classList.contains('side-dock') || (stageBoxH || $('stageBox').offsetHeight) >= 200 ? 2 : 1;
-    for (let i = 0; i <= live.length - room; i++) { const o = live[i]; o._gone = true; clearTimeout(o._timer); o.remove(); }
+    const held = [...box.children].filter(x => !x._gone && x._hold > Date.now()).length;
+    for (let i = 0; i <= live.length - Math.max(1, room - held); i++) { const o = live[i]; if (!o) break; o._gone = true; clearTimeout(o._timer); o.remove(); }
     box.append(t); u.banner = t;
     t._timer = setTimeout(() => { dropToast(t); if (u.banner === t) u.banner = null; }, ms);
     u.midAt.push(Date.now());
@@ -151,22 +153,23 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
     const lv = list.filter(x => x.kind === 'level');
     if (lv.length < 2) return list;
     const last = lv[lv.length - 1];
-    return [Object.assign({}, last, { sub: `Up ${lv.length} levels. Your hero hits ${Math.round(PACE.heroLv * 100)}% harder each time.` })].concat(list.filter(x => x.kind !== 'level'));
+    return [last].concat(list.filter(x => x.kind !== 'level'));
   }
   function flush() {
     const u = MOMENT_UI;
     const big = MOMENT_Q.filter(x => x.tier === 'big'), mid = MOMENT_Q.filter(x => x.tier !== 'big');
     if (big.length && !u.ov) {
       const all = big.concat(fold(mid)); MOMENT_Q.length = 0;   // mediums ride on the big card as lines
-      if (mid.length) MOMENT_UI.midAt.push(Date.now());
+      for (const x of mid) MOMENT_UI.midAt.push(Date.now());   // each folded medium counts against the cap
       showCard(all); return;
     }
     if (big.length) return;   // a big card is up: wait for it
+    if (u.ov || (u.banner && u.banner._hold > Date.now())) return;   // a banner keeps its minimum time; a banner under a big card would play unseen
     if (mid.length && midRoom()) { const all = fold(mid); MOMENT_Q.length = 0; showBanner(all); }
   }
   // a timer, not onTick: a guide step or a card that holds the game must not hold a moment back
   setInterval(() => {
-    const dt = 0.2, u = MOMENT_UI;
+    const dt = 0.1, u = MOMENT_UI;
     if (!MOMENT_Q.length) { u.wait = 0; u.guideT = 0; return; }
     if (fighting()) { u.wait = 0; return; }
     if (guideBusy() && !fighting()) u.guideT += dt;   // time a guide step has held the queue at fight end
@@ -174,7 +177,7 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
     if ((u.wait += dt) < MOMENT_TUNE.settleS) return;   // the win animation plays out first
     if (u.ov && MOMENT_Q.some(x => x.tier === 'big')) return;
     flush();
-  }, 200);
+  }, 100);
   // checks drive time by hand: a forced flush
   window.__momentFlush = () => { MOMENT_UI.wait = 99; flush(); };
 
@@ -212,7 +215,7 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
     if (ownedLooks && !quiet) for (const l of deeds.looks()) if (l.got && !ownedLooks.has(l.id)) moment('look', { title: l.n, sub: 'A new look. Wear it from Achievements.', icon: { ic: ['banner', '#B58CFF'] } });
     ownedLooks = now;
   };
-  for (const ev of ['deedFeat', 'deedGroup', 'deedChapter', 'deedMilestone']) on(ev, e => setTimeout(() => lookCheck(!!(e && e.quiet)), 0));
+  for (const ev of ['deedGroup', 'deedMilestone'])   // a Feat or Chapter card shows its own look on(ev, e => setTimeout(() => lookCheck(!!(e && e.quiet)), 0));
   on('deedsInit', () => { ownedLooks = lookSet(); });
   setTimeout(() => { if (!ownedLooks) ownedLooks = lookSet(); }, 3000);
 }

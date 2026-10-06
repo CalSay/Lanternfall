@@ -5038,6 +5038,7 @@ if (section('notices (browser, W1-B)')) try {
     const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
     try {
       const ctx = await browser.newContext({ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true });
+      await ctx.addInitScript(() => { try { localStorage.setItem('lanternfall.test.moments', '1'); } catch (e) {} });   // moment layer: counted in this walk
       const page = await ctx.newPage(); const errs = [];
       page.on('pageerror', e => errs.push(String(e)));
       await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
@@ -5058,6 +5059,7 @@ if (section('notices (browser, W1-B)')) try {
         on('momentShow', e => { R.moments = (R.moments || 0) + 1; (R.mlist = R.mlist || []).push(Math.round(notes.clock) + 's ' + e.tier + ' ' + e.kind); });   // moment layer: counted, outside the pop budget
         let last = '', same = 0;
         globalThis.__nbStep = () => {
+          { const g = document.querySelector('.mm-go'); if (g) { MOMENT_UI.shownAt = 0; g.click(); } }   // a moment card is the player's tap
           const st = soloGuideWants(), step = onboardStep();
           same = st && st === last ? same + 1 : 0; last = st;
           if (same > 12 && /^(attack|ability|dodge|parry|boss|upgrade|gather|light)$/.test(st) && document.querySelector('.ob-x')) { R.stall++; document.querySelector('.ob-x').click(); same = 0; }
@@ -9366,7 +9368,7 @@ if (section('moment layer')) try {
       for (const [w, h, motion] of [[740, 360, 'no-preference'], [360, 740, 'no-preference'], [740, 360, 'reduce']]) {
         const at = `moment layer ${w}x${h}${motion === 'reduce' ? ' reduced motion' : ''}`;
         try {
-          const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: true, hasTouch: true, reducedMotion: motion });
+          const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: true, hasTouch: true, reducedMotion: motion, turns: true });
           await ctx.addInitScript(([key, raw]) => {
             try { localStorage.setItem('lanternfall.test.nostory', '1'); localStorage.setItem('lanternfall.test.moments', '1'); } catch (e) {}
             if (sessionStorage.getItem('mm-seeded')) return; sessionStorage.setItem('mm-seeded', '1');
@@ -9423,15 +9425,18 @@ if (section('moment layer')) try {
           assert(cap === '1:false', `${at}: a third medium moment inside 3 minutes waits in the queue (${cap})`);
           await X(`MOMENT_UI.midAt.length = 0; true`); await until(`!!document.querySelector('.mm-toast')`);
           assert(await X(`!!document.querySelector('.mm-toast')`), `${at}: ...and shows when the window frees`);
-          // it never shows during a turn: a live fight holds it, the fight's end lets it through
+          // it never shows during a turn: a live fight (past its intro) holds it, the fight's end lets it through
           await page.waitForTimeout(3200);
-          await X(`MOMENT_UI.midAt.length = 0; S.activity = 'fight'; emit('sceneReset'); true`); await page.waitForTimeout(1500);
-          const live = await X(`(() => { const f = typeof TURN_LIVE !== 'undefined' && !!TURN_LIVE && !TURN_LIVE.ended; if (!f) return 'nofight'; emit('levelup', { L: 25 }); return 'fight'; })()`);
-          if (live === 'fight') {
-            await page.waitForTimeout(900);
-            const during = await X(`!!document.querySelector('.mm-toast') && TURN_LIVE && !TURN_LIVE.ended`);
-            assert(!during || (await X('momentState().queued')) === 0, `${at}: a moment does not show during a turn`);
-          } else ok(`${at}: no live turn fight on this fixture (the during-a-turn hold is covered by the source check)`);
+          await X(`MOMENT_UI.midAt.length = 0; S.activity = 'fight'; emit('sceneReset'); true`);
+          await until(`typeof TURN_LIVE !== 'undefined' && !!TURN_LIVE && !TURN_LIVE.ended && TURN_LIVE.phase !== 'intro'`, 9000);
+          const live = await X(`(() => { const f = typeof TURN_LIVE !== 'undefined' && !!TURN_LIVE && !TURN_LIVE.ended && TURN_LIVE.phase !== 'intro'; if (f) emit('levelup', { L: 25 }); return f; })()`);
+          assert(live, `${at}: a turn fight is live for the during-a-turn check`);
+          await page.waitForTimeout(1200);
+          const during = await X(`!!document.querySelector('.mm-toast') + ':' + momentState().queued`);
+          assert(during === 'false:1', `${at}: a moment does not show during a turn (${during})`);
+          await X(`TURN_LIVE.ended = true; true`);
+          await until(`!!document.querySelector('.mm-toast')`, 6000);
+          assert(await X(`!!document.querySelector('.mm-toast')`), `${at}: ...and shows as the fight ends, before the next fight's first turn`);
           assert(/const fighting = \(\) => [\s\S]{0,160}TURN_LIVE/.test(src), `${at}: the flush waits while a turn fight is live`);
           assert(!errs.length, `${at}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
           await ctx.close();

@@ -172,7 +172,8 @@ function popToast(msg, kind, url, p, go) {
   // Two toasts fit under the HUD on a full stage (or over an open menu); a short stage takes one.
   const room = box.classList.contains('over-menu') || box.classList.contains('side-dock') || (stageBoxH || $('stageBox').offsetHeight) >= 200 ? 2 : 1;
   const old = live.filter(t => !(t._hold > Date.now()));   // a moment banner stays its minimum time (75-moments-ui)
-  for (let i = 0; i <= old.length - room; i++) { const out = old[i]; out._gone = true; clearTimeout(out._timer); out.remove(); }
+  const heldN = live.length - old.length;
+  for (let i = 0; i <= old.length - Math.max(1, room - heldN); i++) { const out = old[i]; if (!out) break; out._gone = true; clearTimeout(out._timer); out.remove(); }
   const t = makeToast(msg, kind, url, p, go);
   box.appendChild(t);
   armToast(t);
@@ -225,8 +226,8 @@ function newsToast() {
   for (const t of [...box.children]) if (t._news) { t._gone = true; clearTimeout(t._timer); t.remove(); }
   // Room as for a high notice: retire the oldest normal toasts first.
   const live = [...box.children].filter(t => !t._gone), room = box.classList.contains('over-menu') || box.classList.contains('side-dock') || (stageBoxH || $('stageBox').offsetHeight) >= 200 ? 2 : 1;
-  const order = live.filter(t => t._p < 2).concat(live.filter(t => t._p === 2));
-  for (let i = 0; i <= live.length - room; i++) { const o = order[i]; o._gone = true; clearTimeout(o._timer); o.remove(); }
+  const order = live.filter(t => t._p < 2 && !(t._hold > Date.now())).concat(live.filter(t => t._p === 2 && !(t._hold > Date.now())));
+  for (let i = 0; i <= live.length - room; i++) { const o = order[i]; if (!o) break; o._gone = true; clearTimeout(o._timer); o.remove(); }
   const t = makeToast(msg, 'good', NEWS.entry.url, 2);
   t._news = true; t._tap = openNoticeLog;
   box.appendChild(t); armToast(t);
