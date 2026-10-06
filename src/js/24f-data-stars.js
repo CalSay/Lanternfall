@@ -124,7 +124,7 @@ const starSkyOf = id => (STARS[id] ? STAR_SKY.find(c => c.id === STARS[id].sky) 
 const starFromText = s => {
   if (!s) return '';
   const f = s.from, cls = b => `${typeof CLASS_DEFS === 'object' && CLASS_DEFS[b] ? CLASS_DEFS[b].name : b}'s Proving`;
-  if (f.zone) return f.zone === 35 ? 'The Fenmother (zone 35)' : `The zone ${f.zone} boss`;
+  if (f.zone) return f.zone === 35 ? 'The Hollow\u2019s Elder (zone 35)' : `The zone ${f.zone} boss`;
   if (f.elite) return `Elites, from zone ${f.elite}`;
   if (f.deep) return `Deepwell floor ${f.deep}`;
   if (f.proving) return f.pass > 1 ? `A second win in the ${cls(f.proving)}` : `The ${cls(f.proving)}`;

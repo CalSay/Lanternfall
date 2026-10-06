@@ -7792,7 +7792,7 @@ if (section('stars (browser)')) try {
           pts: document.querySelector('#sec-stars .sr-pts').getAttribute('aria-label'), unk: (document.querySelector('#sec-stars .sr-card.locked .sr-from') || {}).textContent || '',
           anim: getComputedStyle(document.querySelector('#sec-stars .sr-st.lit .sr-ray')).animationName,
           saved: JSON.parse(localStorage.getItem('lanternfall.save.v5')).stars.set.wren[0] })`));
-        assert(r1.set === 'serrated' && r1.mapSet && r1.chip === 'Serrated' && r1.lit === 'huntstep' && r1.mapLit && r1.saved === 'serrated' && r1.pts === 'Star points: 9 free of 10' && /^The Fenmother \(zone 35\)$/.test(r1.unk),
+        assert(r1.set === 'serrated' && r1.mapSet && r1.chip === 'Serrated' && r1.lit === 'huntstep' && r1.mapLit && r1.saved === 'serrated' && r1.pts === 'Star points: 9 free of 10' && /^The Hollow’s Elder \(zone 35\)$/.test(r1.unk),
           `stars UI ${w}x${h}: Slot 1 sets Serrated (it glows on the map and shows in the strip), Light lights Hunter's Step for 1 point (it shines), both saved; a star not found yet shows where it is found (${JSON.stringify(r1)})`);
         assert(r1.anim === (wide ? 'sr-twinkle' : 'none'), `stars UI ${w}x${h}: a lit star twinkles, and holds still under reduced motion (${rm}: ${r1.anim})`);
         // filters: Pip's kit, then learned only

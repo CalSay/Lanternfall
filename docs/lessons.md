@@ -38,6 +38,8 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Keep the new-game hero picker free of later-region names: a locked hero shows who you meet, not where or how much. Why: unlock text named "Cinder Road II" and "still being designed" to a first-time player. (story-opening, 2026-10-06)
 - Story browser tests that script their own scenes must expect the real opening scenes first, because they queue on the first walk-in before test data loads. Why: deleting the data after load changed nothing. (story-opening, 2026-10-06)
 - In landscape, put story card buttons beside the card, not sticky over it. Why: at 740x360 the opening card's lines 2 and 3 sat behind Begin and Skip while the size test still passed; check that every line is visible, not only that the sheet fits. (story-opening, 2026-10-06)
+- Scope a story layout change to `.sty-scene` cards; the Journal and Codex reuse `.sty-sheet`. Why: Codex P1 on PR #54, the side-by-side layout would have clipped long Journals. (story-opening, 2026-10-06)
+- When hiding a name from a menu, grep every data string the menus render (Scroll sources, Star sources), not only the row you edited. Why: Codex P1 on PR #54 found the Fenmother still named in the Abilities and Stars tabs. (story-opening, 2026-10-06)
 
 ## UI and menus
 
