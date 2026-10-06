@@ -29,6 +29,11 @@ built game in Chromium the way a player does (portrait 360x740, `--landscape` fo
 screenshots in `--session <dir>` (default `.playtest/`). Build first. How an agent runs a persona session and what to
 report: `docs/coord/playtest-lab.md`.
 
+## Story stats
+
+`node tools/story-stats.mjs <save.json | save code | file with a code> [more ...]` prints the Chapter 1 Champion skip rate and
+the Journal opens (story-bible.md 12a) from `S.story.ends` and `S.story.journalOpens`. With several saves it adds them up.
+
 ## Browser discovery and overrides
 
 The shared browser finder supports the project Playwright installation, its managed Chromium, installed

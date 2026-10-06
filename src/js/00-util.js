@@ -68,6 +68,10 @@ function mod(key) {
 // onTick(fn): fn(dt) runs at the end of every core tick (in the browser and in the Node tools).
 const TICK_HOOKS = [];
 const onTick = fn => { TICK_HOOKS.push(fn); return () => { const i = TICK_HOOKS.indexOf(fn); if (i >= 0) TICK_HOOKS.splice(i, 1); }; };
+// Pause registry: a feature that must stop the game while its screen is up calls holdGame(() => bool). The browser frame loop (90-boot) skips tick() while any predicate is true. Never used by the core sim or the away gain.
+const GAME_HOLDS = [];
+const holdGame = fn => { GAME_HOLDS.push(fn); return () => { const i = GAME_HOLDS.indexOf(fn); if (i >= 0) GAME_HOLDS.splice(i, 1); }; };
+const gameHeld = () => { for (const f of GAME_HOLDS) { try { if (f()) return true; } catch (e) {} } return false; };
 
 // ================= additive bonuses =================
 // bonus(key) is the SUM of every registered value for that key (0 when none). Use it for

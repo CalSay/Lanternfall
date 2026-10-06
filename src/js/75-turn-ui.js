@@ -1,15 +1,15 @@
 // 75-turn-ui: the turn fight on screen (engine 59k-turn.js; docs/design/combat-turns.md, combat-turn-build.md).
 //   Versus card  opens each fight (fightStart): the hero on the left, the foe on the right, both Speeds, and a banner
 //                saying who goes first, and the turn order: the next 6 turns as portraits (the Speed gauges decide
-//                them). It lasts the engine's intro; with reduced motion it only fades. The order shows only here
-//                (owner, 2026-10-02: not on the stage during the fight).
-//   Timing bar   at the top of the stage while the foe winds up a hit (the dodge and parry windows marked).
+//                them). It lasts the engine's intro; with reduced motion it only fades.
+//   Timing bar   at the bottom of the stage while the foe winds up a hit (the dodge and parry windows marked).
 //   Warnings     a banner when a boss gathers a charged move ("Stun it or hit it hard"), when it is broken, when a boss
 //                turns harder at half HP, and "Your turn" while the fight waits on you.
 //   Hero row     under the bar: the hero's resource as pips (Aim, Grit, Cinders) and their own statuses (Guard, Ward,
 //                Keen, and what a boss put on them), with the approved status icons (21v).
 //   Action bar   75-solo-ui reads turnBarInfo(): cooldowns in turns, and why a slot cannot be used now.
 var turnBarInfo = () => null;
+var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: { name, tags, trait, known, moves }
 
 {
   // checks only (tools/check.mjs): a browser test of the real-time fight sets this key before the game loads. Never in the
@@ -67,7 +67,7 @@ var turnBarInfo = () => null;
     const known = !(f && typeof masteryApi === 'object' && masteryApi.typeKills) || masteryApi.typeKills(f.type) >= 1 || f.boss;
     putText(R.h, known ? `Speed ${Math.round(p.foeHaste)}` : 'Speed ?');
     putText(banner, heroFirst ? 'You go first' : `${fname} goes first`);
-    fillOrder();
+    fillOrder(true);
     card.classList.toggle('foe-first', !heroFirst);
     card.classList.toggle('boss', !!(f && f.boss));
     card.classList.toggle('calm', reduced());
@@ -99,21 +99,27 @@ var turnBarInfo = () => null;
   on('fightEnd', () => { clearTimeout(tcT); tcard.hidden = true; });
 
   // ---- the turn strip, the timing bar, the hero row ----
-  const strip = el('div', 'tv-strip'); strip.setAttribute('aria-label', 'Turn order');
-  const slots = []; for (let i = 0; i < 6; i++) { const s = el('div', 'tv-slot'); slots.push(s); strip.append(s); }
-  orderBox.append(orderLb, strip);
-  function fillOrder() {
+  // the turn order lives on the Versus card only (owner, 2026-10-02)
+  const mkStrip = () => { const s = el('div', 'tv-strip'), sl = []; s.setAttribute('aria-label', 'Turn order'); for (let i = 0; i < 6; i++) { const e = el('div', 'tv-slot'); sl.push(e); s.append(e); } return { s, sl }; };
+  const cardStrip = mkStrip();
+  orderBox.append(orderLb, cardStrip.s);
+  let orderSig = '';
+  function fillOrder(force) {
     const s = typeof turnCombatSnapshot === 'function' ? turnCombatSnapshot() : null, order = s && s.order && s.order.length ? s.order : ['hero'];
-    const f = foeNow(), hf = heroFace(), ff = foeFace(f);
-    slots.forEach((sl, i) => {
-      const o = order[i]; if (!o) { sl.hidden = true; return; }
-      sl.hidden = false; sl.className = 'tv-slot ' + o + (i === 0 ? ' now' : '');
-      sl.replaceChildren(img('tv-mini', o === 'hero' ? hf : ff, o === 'hero' ? heroName() : ((f && f.name) || 'Foe')));
-    });
-    strip.setAttribute('aria-label', `Turn order: ${order.map(o => o === 'hero' ? 'you' : ((f && f.name) || 'the foe')).join(', then ')}`);
+    const f = foeNow(), sig = order.join() + '|' + (f ? f.name : '');
+    if (!force && sig === orderSig) return; orderSig = sig;
+    const hf = heroFace(), ff = foeFace(f);
+    for (const { s: strip, sl } of [cardStrip]) {
+      sl.forEach((sl_, i) => {
+        const o = order[i]; if (!o) { sl_.hidden = true; return; }
+        sl_.hidden = false; sl_.className = 'tv-slot ' + o + (i === 0 ? ' now' : '');
+        sl_.replaceChildren(img('tv-mini', o === 'hero' ? hf : ff, o === 'hero' ? heroName() : ((f && f.name) || 'Foe')));
+      });
+      strip.setAttribute('aria-label', `Turn order: ${order.map(o => o === 'hero' ? 'you' : ((f && f.name) || 'the foe')).join(', then ')}`);
+    }
   }
   const turnN = el('span', 'tv-n');
-  // the timing bar (owner, 2026-10-02: bigger): the track fills to the hit; the dodge (blue) and parry (gold) windows sit
+  // the timing bar (owner, 2026-10-02: bigger; Combat C, 2026-10-05: along the stage's bottom edge): the track fills to the hit; the dodge (blue) and parry (gold) windows sit
   // at its end, labelled; the whole bar lights up in the colour of the window you are in now
   const bar = el('div', 'tv-time'), track = el('div', 'tv-track'), fill = el('i', 'tv-fill'), dz = el('i', 'tv-dodge'), pz = el('i', 'tv-parry'), head = el('i', 'tv-head');
   const legend = el('div', 'tv-legend'); legend.append(el('span', 'tv-lg-d', 'Dodge'), el('span', 'tv-lg-p', 'Parry'));
@@ -131,8 +137,10 @@ var turnBarInfo = () => null;
   resBtn.addEventListener('click', e => { e.stopPropagation(); if (!resTip.hidden) { resTip.hidden = true; return; } showRes(5); });
   heroRow.append(resBtn, chips);
   const warn = el('div', 'tv-warn'); warn.hidden = true; warn.setAttribute('role', 'status'); warn.setAttribute('aria-live', 'assertive');
-  const wrap = el('div', 'tv-top'); wrap.append(turnN, bar, heroRow, resTip, warn);
-  if (box) box.append(wrap);
+  const wrap = el('div', 'tv-top'); wrap.append(turnN, heroRow, resTip, warn);
+  // along the stage's bottom edge: the timing bar (while the foe winds up)
+  const bot = el('div', 'tv-bot'); bot.append(bar);
+  if (box) box.append(wrap, bot);
   // a timed ability's ring: it closes on the foe; press the ability (or Attack) again as it meets the inner circle
   const ring = el('div', 'tv-ring'), ringO = el('i', 'tv-ring-o'), ringI = el('i', 'tv-ring-i'), ringT = el('b', 'tv-ring-t', 'Now!');
   ring.append(ringI, ringO, ringT); ring.hidden = true; ring.setAttribute('aria-hidden', 'true');
@@ -200,15 +208,17 @@ var turnBarInfo = () => null;
     const on_ = typeof turnCombatOn === 'function' && turnCombatOn() && typeof turnCombatSnapshot === 'function';
     const s = on_ ? turnCombatSnapshot() : null, live = !!(s && s.phase !== 'off');
     if (!card.hidden && (!s || s.phase !== 'intro') && performance.now() - cardAt > 250) { card.hidden = true; card.classList.remove('play'); }
-    if (wrap.hidden === live) wrap.hidden = !live;
+    if (wrap.hidden === live) { wrap.hidden = !live; bot.hidden = !live; }
     if (!warn.hidden && performance.now() > warnT) warn.hidden = true;
     drawRing(live ? s : null);
     if (!live) { if (!bar.hidden) bar.hidden = true; return; }
-    putText(turnN, s.phase === 'hero' ? 'Your turn' : s.timing ? 'Press again as the ring closes' : s.charge ? `${s.charge} is coming` : s.n ? `Turn ${s.n}` : '');
+    putText(turnN, s.phase === 'hero' ? 'Your turn' : s.timing ? 'Press again as the ring closes' : s.charge ? `${s.charge} is coming` : s.phase === 'foeWindup' && s.foe ? `${s.foe.name}'s turn` : s.n ? `Turn ${s.n}` : '');
     turnN.classList.toggle('mine', s.phase === 'hero' || !!s.timing);
+    turnN.classList.toggle('foe', s.phase === 'foeWindup');
     // the foe winds up: the bar fills to the hit; the dodge and parry windows sit at its end
     const winding = s.phase === 'foeWindup' && s.closesAt > s.now;
     if (bar.hidden === winding) bar.hidden = !winding;
+    if (winding && !resTip.hidden) resTip.hidden = true;   // the timing bar owns the stage while a hit winds up
     if (box && box.classList.contains('tv-winding') !== winding) box.classList.toggle('tv-winding', winding);   // a place caption fades under the bar
     if (winding) {
       if (!winT0 || winT0 > s.now) winT0 = s.now;
@@ -224,6 +234,18 @@ var turnBarInfo = () => null;
   (function loop() { try { draw(); } catch (e) {} requestAnimationFrame(loop); })();
 
   // ---- the action bar in a turn fight (75-solo-ui asks) ----
+  // the dock's Foe tab: its name, its kind, the trait an elite carries, and the moves you have learned (a boss shows all of
+  // them; a normal foe once you have beaten its kind, as its Speed on the Versus card)
+  turnFoeInfo = () => {
+    if (!(typeof turnCombatOn === 'function' && turnCombatOn())) return null;
+    const f = foeNow(); if (!f || !f.tk) return null;
+    const tags = []; if (f.boss) tags.push(f.tk.region ? 'Region boss' : 'Boss'); if (f.elite) tags.push('Elite'); if (f.ranged) tags.push('Ranged');
+    const tr = f.tr && f.tr[0], trait = tr && typeof TURN_TRAITS === 'object' && TURN_TRAITS[tr] ? TURN_TRAITS[tr].first : '';
+    const known = !(typeof masteryApi === 'object' && masteryApi.typeKills) || masteryApi.typeKills(f.type) >= 1 || !!f.boss;
+    const seen = new Set(), moves = [];
+    for (const m of f.tk.script || []) { if (!m || seen.has(m.id)) continue; seen.add(m.id); moves.push({ name: m.name, hits: m.hits.length, charged: !!m.charge }); }
+    return { name: f.name, tags, trait, known, moves: known ? moves : [] };
+  };
   turnBarInfo = () => {
     if (!(typeof turnCombatOn === 'function' && turnCombatOn())) return null;
     const s = turnCombatSnapshot(); if (!s || s.phase === 'off') return null;

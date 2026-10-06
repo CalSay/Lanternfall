@@ -1,8 +1,10 @@
 // 75-solo-ui: the solo hero on screen (task SOLO1, docs/design/solo-hero.md). Browser file.
-//   - the action bar (owner: like a MOBA ability bar, never over the fight; the lowest thing on the Fight view, right
-//     above the tab bar, for the thumbs): two rows of framed square slots.
-//       top row     Ability 1, Ability 2, Ability 3   (keys Q, W, E)  the player picks what goes in each slot
-//       bottom row  Parry, Dodge, Attack              (keys A, S, D; Space = Dodge, SOLO2)  Attack bottom right
+//   - the action bar, now the dock under the stage (Combat C "Stage and dock", Cal 2026-10-05; the lowest thing on the
+//     Fight view, right above the tab bar, for the thumbs): tabs Act / Skills / Foe, one pane, and Parry and Dodge under
+//     it on every tab.
+//       Act pane    Attack, Ability 1, Ability 2, Ability 3   (keys D, Q, W, E)  the player picks what goes in each slot
+//       under it    Parry, Dodge                              (keys A, S; Space = Dodge, SOLO2)
+//       Skills      what each slot does and its cooldown; a tap changes the slot.  Foe  (turn fights) its kind, trait, moves.
 //     Cooldowns sweep dark clockwise with the seconds in the middle and flash when ready; Parry and Dodge glow while a
 //     telegraphed hit is coming. A long press on Attack, Parry or Dodge opens a sheet: what it does and its Training; on an ability slot it opens
 //     the picker (an empty slot opens it on a tap): that hero's unlocked abilities (icon, name, one line, cooldown),
@@ -22,8 +24,14 @@ var soloIconURL = () => '';
   document.body.classList.add('solo-on');   // 60-solo.css: the old floating ability circles stay hidden
   const bar = el('div', 'sbar'); bar.id = 'soloBar'; bar.setAttribute('role', 'toolbar'); bar.setAttribute('aria-label', 'Combat');
   bar.hidden = true;
+  // Stage and dock (Combat C, Cal 2026-10-05): tabs (Act, Skills, Foe), one pane under them, and Parry and Dodge below,
+  // on screen whichever tab is open so a heavy hit can still be answered while you read the foe.
+  const tabRow = el('div', 'sb-tabs'), pane = el('div', 'sb-pane');
   const rowAb = el('div', 'sb-row sb-row-ab'), rowAct = el('div', 'sb-row sb-row-act');
-  bar.append(rowAb, rowAct);
+  const paneAct = el('div', 'sb-p sb-p-act'), paneSk = el('div', 'sb-p sb-p-sk'), paneFoe = el('div', 'sb-p sb-p-foe');
+  paneAct.append(rowAb); pane.append(paneAct, paneSk, paneFoe);
+  tabRow.setAttribute('role', 'tablist'); tabRow.setAttribute('aria-label', 'Fight panels');
+  bar.append(tabRow, pane, rowAct);
   const INFO = {
     atk: { name: 'Attack', desc: 'Strike the foe in front. A short cooldown, so time it rather than mash it. While you fight by hand, your hero stops attacking alone.', key: 'D' },
     parry: { name: 'Parry', desc: 'Press it just before a heavy hit lands (as the red ring closes). No damage, the foe staggers and you counter. Too early leaves you open for a moment.', key: 'A' },
@@ -32,15 +40,20 @@ var soloIconURL = () => '';
   const KEY_LB = { atk: 'D', parry: 'A', dodge: 'S', ab0: 'Q', ab1: 'W', ab2: 'E' };   // Space dodges too (the Dodge help says so)
   function mkSlot(row, id, label) {
     const b = el('button', 'sbtn sb-' + id); b.type = 'button'; b.dataset.act = id;
-    const ic = el('canvas', 'sb-ic px'), sweep = el('span', 'sb-ring'), n = el('span', 'sb-n'), k = el('span', 'sb-key', KEY_LB[id]), lb = el('span', 'sb-lb', label);
+    const ic = el('canvas', 'sb-ic px'), sweep = el('span', 'sb-ring'), n = el('span', 'sb-n'), k = el('span', 'sb-key', KEY_LB[id]), lb = el('span', 'sb-lb', label), sub = el('span', 'sb-sub');
     ic.width = 12; ic.height = 12;
-    b.append(ic, sweep, n, k, lb);
-    b._ring = sweep; b._n = n; b._ic = ic; b._lb = lb;
+    const tx = el('span', 'sb-tx'); tx.append(lb, sub);
+    b.append(ic, sweep, n, k, tx);
+    b._ring = sweep; b._n = n; b._ic = ic; b._lb = lb; b._sub = sub;
     row.append(b);
     return b;
   }
+  // the dock's Act pane: Attack, then the three ability slots (keys D, Q, W, E); Parry and Dodge sit under it
+  const bAtk = mkSlot(rowAb, 'atk', 'Attack');
   const bAbs = [0, 1, 2].map(i => { const b = mkSlot(rowAb, 'ab' + i, ''); b.classList.add('sb-abslot'); b.dataset.slot = i; return b; });
-  const bParry = mkSlot(rowAct, 'parry', 'Parry'), bDodge = mkSlot(rowAct, 'dodge', 'Dodge'), bAtk = mkSlot(rowAct, 'atk', 'Attack');
+  const bParry = mkSlot(rowAct, 'parry', 'Parry'), bDodge = mkSlot(rowAct, 'dodge', 'Dodge');
+  bParry.classList.add('sb-def'); bDodge.classList.add('sb-def');
+  putText(bParry._sub, 'Hard · counters'); putText(bDodge._sub, 'Easy · evades');
   if (game) game.append(bar);   // the last thing on the Fight view: right above the tab bar
   // Owner (SOLO1 layout): what is not combat sits above the stage (Next Up, then Fight / Gather, Switch and the zone
   // arrows); the stage and the bar touch; the bar is the lowest thing above the tab bar. Next Up opens a sheet, so
@@ -195,7 +208,7 @@ var soloIconURL = () => '';
   }
   const KEYS = { q: 'ab0', w: 'ab1', e: 'ab2', a: 'parry', s: 'dodge', d: 'atk', ' ': 'dodge' };   // SOLO2: Space dodges
   addEventListener('keydown', e => {
-    if (bar.hidden || pick || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (bar.hidden || pick || gameHeld() || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
     const t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable || (t.tagName === 'BUTTON' && (e.key === ' ' || e.key === 'Enter')))) return;
     if (S.tab && !isWide()) return;   // a menu covers the fight (UX-L1: in landscape the bar stays live beside the menu)
     if (e.key.toLowerCase() === 'f') { if (typeof turnCombatOn === 'function' && turnCombatOn()) return; e.preventDefault(); flipAuto(); return; }   // F: the Auto toggle (no Auto in turn fights)
@@ -241,6 +254,66 @@ var soloIconURL = () => '';
   addEventListener('pagehide', () => { try { soloGoIdle(); } catch (e) {} });
   addEventListener('pageshow', () => { try { if (!document.hidden) soloWake(); } catch (e) {} });
 
+
+  // ---- the dock's tabs: Act (the buttons), Skills (what each slot does), Foe (what you face; turn fights only) ----
+  const TABS = [['act', 'Act', paneAct], ['sk', 'Skills', paneSk], ['foe', 'Foe', paneFoe]];
+  let dockTab = 'act';
+  const tabBtn = {};
+  for (const [id, label] of TABS) {
+    const b = el('button', 'sb-tab', label); b.type = 'button'; b.dataset.tab = id; b.setAttribute('role', 'tab');
+    ['pointerdown', 'pointerup'].forEach(ev => b.addEventListener(ev, e => e.stopPropagation()));
+    b.addEventListener('click', () => setTab(id));
+    tabBtn[id] = b; tabRow.append(b);
+  }
+  function setTab(id) {
+    if (!tabBtn[id] || tabBtn[id].hidden) id = 'act';
+    dockTab = id;
+    for (const [k, , p] of TABS) { tabBtn[k].setAttribute('aria-selected', String(k === id)); p.hidden = k !== id; }
+    skSig = foeSig = ''; if (!bar.hidden) { try { fillSkills(); fillFoe(); } catch (e) {} }
+  }
+  // Skills: one row per slot (tap one to change what it holds, as a long press does)
+  const skRows = [0, 1, 2].map(i => {
+    const r = el('button', 'sb-sk'); r.type = 'button'; r.dataset.slot = i;
+    const ic = el('canvas', 'sb-sk-ic px'); ic.width = 12; ic.height = 12;
+    const nm = el('b', 'sb-sk-nm'), ds = el('span', 'sb-sk-ds'), chip = el('span', 'sb-sk-chip'), tx = el('span', 'sb-sk-tx');
+    tx.append(nm, ds); r.append(ic, tx, chip); r._ic = ic; r._nm = nm; r._ds = ds; r._chip = chip;
+    ['pointerdown', 'pointerup'].forEach(ev => r.addEventListener(ev, e => e.stopPropagation()));
+    r.addEventListener('click', () => openPicker(i));
+    paneSk.append(r);
+    return r;
+  });
+  let skSig = '', foeSig = '';
+  const turnsTxt = n => `${n} turn${n > 1 ? 's' : ''}`;
+  function fillSkills() {
+    if (dockTab !== 'sk') return;
+    const s = soloButtons(), tb = typeof turnBarInfo === 'function' ? turnBarInfo() : null;
+    const sig = s.abs.map((o, i) => o.id + ':' + (tb ? (tb.cds[o.id] || 0) + tb.why(o.id) : o.left > 0 ? 'c' : '')).join('|') + heroK;
+    if (sig === skSig) return; skSig = sig;
+    skRows.forEach((r, i) => {
+      const o = s.abs[i], a = o.id ? SOLO_ABILITIES[o.id] : null, pa = o.id && typeof ABILITIES === 'object' ? ABILITIES[o.id] : null;
+      r.classList.toggle('empty', !a); r.classList.toggle('passive', !!(pa && pa.kind === 'passive'));
+      if (!a) { putText(r._nm, 'Empty slot ' + (i + 1)); putText(r._ds, 'Tap to choose an ability.'); putText(r._chip, ''); setIc(r._ic, 'empty', 24); return; }
+      setIc(r._ic, o.id, 24);
+      putText(r._nm, a.name); putText(r._ds, a.turnDesc || a.line || a.desc || '');
+      const cd = tb ? tb.cds[o.id] || 0 : 0;
+      putText(r._chip, pa && pa.kind === 'passive' ? 'Passive' : tb ? (cd ? turnsTxt(cd) : 'Ready') : o.left > 0 ? secs(o.left) + ' s' : 'Ready');
+    });
+  }
+  // Foe: its name and kind, its trait when it has one, and the moves you have learned (75-turn-ui turnFoeInfo)
+  const foeRow = (k, ...kids) => { const r = el('div', 'sb-fr'); r.append(el('span', 'sb-fk', k)); const v = el('span', 'sb-fv'); v.append(...kids); r.append(v); return r; };
+  function fillFoe() {
+    if (dockTab !== 'foe') return;
+    const f = typeof turnFoeInfo === 'function' ? turnFoeInfo() : null;
+    const sig = f ? JSON.stringify(f) : '';
+    if (sig === foeSig) return; foeSig = sig;
+    if (!f) { paneFoe.replaceChildren(el('p', 'sb-fnote', 'Foes show here in a turn fight.')); return; }
+    const rows = [foeRow('Foe', el('b', 'sb-fname', f.name), ...f.tags.map(x => el('span', 'sb-chip', x)))];
+    if (f.trait) rows.push(foeRow('Trait', el('span', 'sb-ftxt', f.trait)));
+    rows.push(foeRow('Moves', ...(f.known ? f.moves.map(m => el('span', 'sb-chip' + (m.charged ? ' charged' : ''), `${m.name} · ${m.hits} hit${m.hits > 1 ? 's' : ''}${m.charged ? ' · charged' : ''}`)) : [el('span', 'sb-ftxt', 'Beat one of these to learn its moves.')])));
+    paneFoe.replaceChildren(...rows);
+  }
+  setTab('act');
+
   let t = 0;
   function update() {
     const show = !!soloHero() && target() === 'mob' && !!(S.party && S.party.chosen);
@@ -250,6 +323,10 @@ var soloIconURL = () => '';
     if (!show) return;
     setBadge();
     const s = soloButtons(), k = soloHero();
+    const turnOn = typeof turnBarInfo === 'function' && !!turnBarInfo();
+    if (tabBtn.foe.hidden === turnOn) { tabBtn.foe.hidden = !turnOn; if (!turnOn && dockTab === 'foe') setTab('act'); }
+    // the guide points at Act's buttons: keep that pane open until it is done
+    if (dockTab !== 'act' && typeof onboardStep === 'function' && onboardStep()) setTab('act');
     if (k !== heroK) { heroK = k; setIc(bAtk._ic, 'atk', 48); }
     for (let i = 0; i < 3; i++) {
       const o = s.abs[i], b = bAbs[i];
@@ -262,7 +339,9 @@ var soloIconURL = () => '';
       }
       setCd(b, o.left, o.max); setN(b, secs(o.left));
       b.classList.toggle('ready', !!o.id && o.ready);
+      putText(b._sub, !o.id ? 'Tap to add' : o.left > 0 ? '' : 'Ready');
     }
+    putText(bAtk._sub, '');
     setCd(bAtk, s.atk.left, s.atk.max);
     setCd(bParry, s.parry.left, s.parry.max);
     setCd(bDodge, s.dodge.left, s.dodge.max);
@@ -286,13 +365,17 @@ var soloIconURL = () => '';
         putAttr(b, 'title', why.startsWith('need:') ? 'Needs ' + why.slice(5) : why === 'gate' ? 'A finisher: from your third turn' : why === 'once' ? 'Once a fight' : '');
         b.classList.toggle('ready', !why && tb.heroTurn);
         b.classList.toggle('blocked', !!why && why !== 'cd' && !pas);
+        putText(b._sub, pas ? 'Passive' : cd ? turnsTxt(cd) : why === 'gate' ? 'Turn 3' : why === 'once' ? 'Used' : why.startsWith('need:') ? 'Needs ' + why.slice(5) : 'Ready');
       }
+      const acd = tb.cds.attack || 0, res = typeof HERO_RESOURCE === 'object' && HERO_RESOURCE[k];
+      putText(bAtk._sub, acd ? turnsTxt(acd) : res ? '+1 ' + res.name : '');
       setCd(bAtk, tb.cds.attack || 0, tb.max('attack'));
       for (const b of [bAtk, ...bAbs]) b.classList.toggle('off', !tb.heroTurn && !b.classList.contains('passive') && !(tb.timing && (b === bAtk || abIds[+b.dataset.slot] === tb.timing)));
       for (let i = 0; i < 3; i++) bAbs[i].classList.toggle('live', !!tb.timing && abIds[i] === tb.timing);   // the ring: press it again
       for (const b of [bParry, bDodge]) { b.classList.toggle('off', !tb.windup); b.classList.toggle('live', tb.windup); }
       setN(bDodge, ''); setN(bParry, '');
     }
+    fillSkills(); fillFoe();
   }
   bAtk.setAttribute('aria-label', 'Attack (D). ' + INFO.atk.desc);
   bParry.setAttribute('aria-label', 'Parry (A). ' + INFO.parry.desc);
