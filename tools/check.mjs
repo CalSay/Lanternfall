@@ -6254,6 +6254,19 @@ if (section('save codec validation (C5)')) try {
       }
     }
     assert(!lost.length,'C5: every learned ability exports while equipped and stays equipped after a cold LF1 load'+(lost.length?'; '+lost.slice(0,3).join('; '):''));
+    { // C5: the learned-abilities record must keep its shape, or abilityOwned throws after a load
+      const probe=(label,edit,ok)=>{const d=base();d.abil=d.abil||{};edit(d.abil);assert(validate(d).ok===ok,`C5: abil ${label} is ${ok?'accepted':'refused'}`);};
+      probe('unl:null',a=>{a.unl=null;},false);
+      probe('unl.wren not a list',a=>{a.unl={wren:'spark',tobin:[],pip:[]};},false);
+      probe('unl holding another hero\'s ability',a=>{a.unl={wren:['spark'],tobin:[],pip:[]};},false);
+      probe('unl holding an unknown id',a=>{a.unl={wren:['nope'],tobin:[],pip:[]};},false);
+      probe('unl with an unknown hero',a=>{a.unl={ghost:[]};},false);
+      probe('scrolls with a fractional count',a=>{a.scrolls={moss:1.5};},false);
+      probe('scrolls with a negative count',a=>{a.scrolls={moss:-1};},false);
+      probe('scrolls with an unknown id',a=>{a.scrolls={nope:1};},false);
+      probe('scrolls with a whole count',a=>{a.scrolls={moss:2};},true);
+      probe('missing entirely',a=>{for(const k of Object.keys(a))delete a[k];},true);
+    }
     const other=base();other.solo.eq.wren=['echo','spark',null];
     assert(!validate(other).ok,'C5: a slot holding another hero\'s learned ability is still refused');
   }
@@ -9100,6 +9113,21 @@ if (section('intro-and-picker')) try {
   }
 } catch (e) { fail('intro-and-picker crashed: ' + (e.stack || e)); }
 
+if (section('bounties-anywhere')) try {
+  const g = loadCore({ seed: 9301 }), E = x => g.eval(x);
+  E('S.maxZone = 8; S.bounties.slots[1] = { k: "crit", need: 99, have: 0, rew: "gold", rewN: 30, wait: 0, rr: 0 }; S.bounties.slots[2] = { k: "crit", need: 99, have: 0, rew: "gold", rewN: 30, wait: 0, rr: 0 }; S.bounties.slots[0] = { k: "forge", need: 2, have: 1, t: 1, z: 1, rew: "gold", rewN: 30, wait: 0, rr: 0 }; globalThis.__ready = []; on("bountyReady", p => __ready.push(p))');
+  E('emit("itemAdded", { item: { id: 9001, slot: "weapon", t: 1, r: "common", plus: 0 } })');
+  assert(E('__ready.length') === 1 && E('__ready[0].i') === 0 && E('S.bounties.slots[0].have') === 2, 'bounties-anywhere: bountyReady fires once, when a bounty reaches its goal');
+  E('emit("itemAdded", { item: { id: 9002, slot: "weapon", t: 1, r: "common", plus: 0 } })');
+  assert(E('__ready.length') === 1, 'bounties-anywhere: a bounty that is already done does not fire bountyReady again');
+  const goal = E('(() => { const x = topGoals(3, { sticky: false }).find(t => t.id === "bounty"); return x ? { ready: x.ready, label: x.goLabel, go: typeof x.go } : null; })()');
+  assert(goal && goal.ready && goal.label === 'Claim' && goal.go === 'function', 'bounties-anywhere: the Next Up bounty goal says Claim and claims in place');
+  E('(typeof topGoals(3, { sticky: false })[0] === "object") && (() => { const x = topGoals(3, { sticky: false }).find(t => t.id === "bounty"); const sp = x.go(); sp.fn(); })()');
+  assert(E('S.bounties.claimed') === 1 && !E('S.bounties.slots[0].k'), 'bounties-anywhere: the Claim runs BOUNTY_API.claim (no menu), pays and frees the slot');
+  const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-bounties-ui.js'), 'utf8');
+  assert(/registerSection\('camp', \{\s*id: 'bounties-camp', title: "Hesketh's board"/.test(src), "bounties-anywhere: the board is also registered at Camp as Hesketh's board");
+} catch (e) { fail('bounties-anywhere crashed: ' + (e.stack || e)); }
+
 // ---- guide-panel: the guide's panel never covers the fight (early-game plan R3, issues A1, A3, A4) ----
 // Real DOM rects at 740x360, 844x390 and 360x740: while the first session's steps show, the panel overlaps neither HP bar, the
 // foe plate, the boss timer, the hero plate nor the stage itself, and its text never squashes into a column (issue A4).
@@ -9254,6 +9282,61 @@ if (section('story-unlock-gates')) try {
   assert(['attack', 'ability', 'boss', 'upgrade', 'gather', 'light', 'bench', 'tool', 'forge'].every(id => doneSteps.has(id)), 'story-unlock-gates: every guide step of the cold walk still completes (' + [...doneSteps].join(',') + ')');
   assert(!g.errors.length && !og.errors.length && !og2.errors.length && !og3.errors.length && !cw.errors.length, 'story-unlock-gates: no errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
 } catch (e) { fail('story-unlock-gates crashed: ' + (e.stack || e)); }
+
+// ==== craft-reveal: this card's own checks (result card, odds line, last-five strip, grade words) ====
+if (section('craft reveal')) try {
+  const rd = f => fs.readFileSync(path.join(ROOT, 'src', 'js', f), 'utf8');
+  const notices = rd('23n-data-notices.js'), cui = rd('75-craft-ui.js');
+  assert(/id: 'forged', re: \/\^\(Forged\|Made\) an\? \/, ch: 'none'/.test(notices) && (notices.match(/id: 'forged'/g) || []).length === 1, 'craft reveal: one `forged` notice rule, and it keeps craft lines out of the bell (the card shows them)');
+  assert(!/Fine\b/.test(cui.replace(/Fine-tune/g, '')) && /\['common', 'uncommon', 'rare', 'epic'\]\.map\(r => `\$\{RAR\[r\]\.n\}/.test(cui), 'craft reveal: the odds line uses the real grade names from RAR');
+  assert(!/Craft 5|craft5/i.test(cui), 'craft reveal: no "Craft 5" control');
+  await (async () => {
+    const { pw, exe } = browserTools;
+    if (!pw || !exe || !fs.existsSync(distFile)) { skipBrowser('craft reveal (browser): Playwright or Chromium not here, skipped'); return; }
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const rawOf = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h, motion] of [[360, 740, 'no-preference'], [740, 360, 'reduce']]) {
+        const at = `craft reveal ${w}x${h}${motion === 'reduce' ? ' reduced motion' : ''}`;
+        const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: true, hasTouch: true, reducedMotion: motion });
+        await ctx.addInitScript(([key, raw]) => {
+          try { localStorage.setItem('lanternfall.test.nostory', '1'); } catch (e) {}
+          if (sessionStorage.getItem('cr-seeded')) return; sessionStorage.setItem('cr-seeded', '1');
+          const o = JSON.parse(raw); o.last = Date.now(); localStorage.setItem(key, JSON.stringify(o));
+        }, [KEY, rawOf('save-mid.json')]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(700);
+        for (let i = 0; i < 4; i++) { const b = await page.$('#createScreen .create-go'); if (!b) break; await b.click(); await page.waitForTimeout(300); }
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X(`S.onboard.tips = false; true`);
+        await page.click('.tab[data-tab="forge"]'); await page.waitForTimeout(500);
+        const odds = await X(`(() => { const t = document.querySelector('.cf-odds'); const w = rarityWeights(stationLevel(document.querySelector('.cf-rec').dataset.kind)), tot = Object.values(w).reduce((a, b) => a + b, 0);
+          return { text: t ? t.textContent : '', common: Math.round(w.common / tot * 100) }; })()`);
+        assert(/^Odds: Common [\d.]+% · Uncommon [\d.]+% · Rare [\d.]+% · Epic [\d.]+%$/.test(odds.text) && Math.abs(parseFloat(/Common ([\d.]+)%/.exec(odds.text)[1]) - odds.common) <= 0.6, `${at}: each recipe shows one odds line computed from the rarity weights (${odds.text})`);
+        const made = [];
+        for (let i = 0; i < 6; i++) {
+          const ok = await X(`(() => { const b = [...document.querySelectorAll('.cf-rec .cf-go')].find(x => !x.disabled); if (!b) return false; b.click(); return true; })()`);
+          if (!ok) break;
+          await page.waitForTimeout(150);
+          made.push(await X(`(() => { const c = document.querySelector('.cf-res'); return c ? { grade: c.querySelector('.cf-grade').textContent, btns: [...c.querySelectorAll('.cf-resact button')].map(b => b.textContent), arrows: c.querySelectorAll('.cf-d').length, strip: document.querySelectorAll('.cf-recent .cf-tile').length } : null; })()`));
+        }
+        assert(made.length >= 2 && made.every(m => m && ['Common', 'Uncommon', 'Rare', 'Epic', 'Unique'].includes(m.grade)), `${at}: every craft opens a result card with a real grade name (${JSON.stringify(made.map(m => m && m.grade))})`);
+        assert(made.every(m => m && m.btns.includes('Keep') && m.btns.includes('Salvage')), `${at}: the card offers Keep and Salvage (and Equip when it fits)`);
+        assert(made[made.length - 1].strip === Math.min(5, made.length), `${at}: the strip keeps the last five results (${made[made.length - 1].strip})`);
+        assert(await X(`document.querySelectorAll('.cf-recent').length === 1 && !/Craft 5/.test(document.body.textContent)`), `${at}: one strip, no Craft 5 button`);
+        assert(await X(`(() => { const r = document.querySelector('.cf-resbox').getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; })()`) , `${at}: the new card is on screen after a craft`);
+        await page.click('button:text-is("Gear")'); await page.waitForTimeout(400);
+        assert(await X(`(() => { const b = document.querySelector('.cf-bag .cf-tile .cf-gr'); return !!b && /^(Com|Unc|Rare|Epic|Uniq)$/.test(b.textContent); })()`), `${at}: a bag tile names its grade in text`);
+        assert(!errs.length, `${at}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  })();
+} catch (e) { fail('craft reveal crashed: ' + (e.stack || e)); }
 
 if (section('removed systems (W2-C)')) try {
   const strip = t => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/([^:'"`\\])\/\/[^\n'"`]*$/gm, '$1');
@@ -9543,6 +9626,8 @@ if (section('moment layer')) try {
           const until = async (expr, ms = 6000) => { try { await page.waitForFunction(e => window.__t.x(e), expr, { timeout: ms, polling: 100 }); } catch (e) { /* the assert below says what is missing */ } };
           await page.waitForTimeout(4600);   // no moment opens at boot (MOMENT_TUNE.bootS)
           await X(`S.activity = 'gather'; S.tab = ''; S.onboard.tips = false; emit('sceneReset'); true`);   // no turn fight: a moment may show
+          await page.waitForTimeout(600);
+          await X(`MOMENT_Q.length = 0; if (MOMENT_UI.ov) { MOMENT_UI.shownAt = 0; document.querySelector('.mm-go').click(); } true`);   // a catch-up (a hero who joined as the save loaded) is not this check's moment
           await X(`S.found.sproutblade = 0; dropUnique('sproutblade', 1)`);
           // a level-up and a flood of toasts compete with it
           await X(`emit('levelup', { L: 5 }); for (let i = 0; i < 4; i++) toast('Check notice ' + i, 'good', null, 'high'); true`);
@@ -9551,7 +9636,7 @@ if (section('moment layer')) try {
             return { up: !!o, text: o ? o.textContent : '', fits: !!r && r.top >= 0 && r.bottom <= innerHeight + 1 && r.left >= 0 && r.right <= innerWidth + 1 && g.bottom <= innerHeight + 1,
               burst: o && getComputedStyle(o.querySelector('.mm-burst')).display, held: GAME_HOLDS.some(f => f()), bell: notes.log.some(n => n.ch === 'bell' && /Unique loot/.test(n.msg)), st: momentState() }; })()`);
           assert(big.up && /Sproutblade/.test(big.text) && /Unique loot/i.test(big.text) && big.fits && big.held && !big.bell,
-            `${at}: a unique shows a big card (name, label, Continue in view) and holds the game; it is not a bell line (${JSON.stringify({ up: big.up, fits: big.fits, held: big.held, bell: big.bell })})`);
+            `${at}: a unique shows a big card (name, label, Continue in view) and holds the game; it is not a bell line (${JSON.stringify({ up: big.up, fits: big.fits, held: big.held, bell: big.bell, text: String(big.text).slice(0, 120) })})`);
           assert(motion === 'reduce' ? big.burst === 'none' : big.burst !== 'none', `${at}: the burst ${motion === 'reduce' ? 'is off for reduced motion' : 'plays'}`);
           assert(/Level 5/.test(big.text), `${at}: a level-up that competes folds into the card as a line`);
           await page.mouse.click(Math.round(w / 2), 8); await page.waitForTimeout(150);   // a stray tap inside the lock must not skip it
@@ -9588,15 +9673,16 @@ if (section('moment layer')) try {
           // it never shows during a turn: a live fight (past its intro) holds it, the fight's end lets it through
           await page.waitForTimeout(3200);
           await X(`MOMENT_UI.midAt.length = 0; S.activity = 'fight'; emit('sceneReset'); true`);
-          await until(`typeof TURN_LIVE !== 'undefined' && !!TURN_LIVE && !TURN_LIVE.ended && TURN_LIVE.phase !== 'intro'`, 9000);
-          const live = await X(`(() => { const f = typeof TURN_LIVE !== 'undefined' && !!TURN_LIVE && !TURN_LIVE.ended && TURN_LIVE.phase !== 'intro'; if (f) emit('levelup', { L: 25 }); return f; })()`);
+          await until(`typeof TURN_LIVE !== 'undefined' && !!TURN_LIVE && !TURN_LIVE.ended`, 9000);
+          // pin the turn in motion (a hit landing: phase 'timing'), then raise the moment
+          const live = await X(`(() => { const f = typeof TURN_LIVE !== 'undefined' && !!TURN_LIVE && !TURN_LIVE.ended; if (f) { window.__pin = setInterval(() => { if (TURN_LIVE) TURN_LIVE.phase = 'timing'; }, 10); emit('levelup', { L: 25 }); } return f; })()`);
           assert(live, `${at}: a turn fight is live for the during-a-turn check`);
           await page.waitForTimeout(1200);
           const during = await X(`!!document.querySelector('.mm-toast') + ':' + momentState().queued`);
-          assert(during === 'false:1', `${at}: a moment does not show during a turn (${during})`);
-          await X(`TURN_LIVE.ended = true; true`);
+          assert(during === 'false:1', `${at}: a moment does not show while a turn is in motion (${during})`);
+          await X(`clearInterval(window.__pin); TURN_LIVE.phase = 'hero'; true`);   // the turn ends: the hero's turn waits for the player
           await until(`!!document.querySelector('.mm-toast')`, 6000);
-          assert(await X(`!!document.querySelector('.mm-toast')`), `${at}: ...and shows as the fight ends, before the next fight's first turn`);
+          assert(await X(`!!document.querySelector('.mm-toast')`), `${at}: ...and shows when the turn ends, even if the player then waits`);
           assert(/const fighting = \(\) => [\s\S]{0,160}TURN_LIVE/.test(src), `${at}: the flush waits while a turn fight is live`);
           assert(!errs.length, `${at}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
           await ctx.close();

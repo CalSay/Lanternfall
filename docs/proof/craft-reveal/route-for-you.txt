@@ -1,0 +1,15 @@
+# seed: 1
+# Proof for card craft-reveal (D9): the early fixture (a Ranger) opens the Forge, where nothing fits her class. "For you" shows All with a line why.
+new early
+wait 2
+tap-if "Skip"
+wait 1
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap "Craft"
+wait 1
+tap "Forge"
+wait 1
+expect "so this shows everything here"
+expect "Odds: Common"
+shot craft-for-you-fallback

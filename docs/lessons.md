@@ -79,6 +79,9 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Delay the Aim hint until the foe's swing lands. Why: it covered the Dodge and Parry cues. Guide tips already show one at a time; leave that. (first-minute-flow, 2026-10-06)
 - Mark any reward, hint or card the game cannot deliver yet as "Coming soon", in the place the player first sees it (not only after claiming). Why: 15 Codex rewards said "Saved for later" only after they were claimed, and Jory's and Ashby's hints promised a hire the game never made. (promises-pass, 2026-10-06)
 - Show icons through `nicSet`/`nicTag` at the size the box shows, never a 48 px URL squeezed into 28-36 px, and give a hero's icons in whole packs only (add the hero to `COMPLETE` in check.mjs). Why: the Abilities list used `soloIconURL` (uneven scaling) and Wren and Tobin still lack 4 icons. (wire-ability-icons, 2026-10-06)
+- A playtest `--shots` dir is wiped by every `new` in a batch and by each run, so split a route per session and copy shots out; send one `--shots` per part. Why: the first part's shots vanished when the second `new` ran. Also, a notice raised inside the first 2.5 s of a loaded save folds into What's new, so time a notice proof after that. (bounties-anywhere, 2026-10-06)
+- Open the Craft menu in a route with `tap Craft` then `tap`/`expect` in one batch, and use a selector `expect` for anything below the fold in landscape (a text `expect` only sees the screen). Why: each playtest call reopens the game and closes the menu, and the landscape craft menu is about 340px wide. (craft-reveal, 2026-10-06)
+- Bring a new card that appears above the tapped row into view (`scrollIntoView({ block: 'start' })`) and put its buttons under the title in short landscape. Why: the result card pushed the recipe list down, so the first test run showed no card and the Equip button sat below the fold. (craft-reveal, 2026-10-06)
 
 ## Saves and offline parity
 
