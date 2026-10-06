@@ -210,7 +210,9 @@ let showAwayReport;
   }
 
   showAwayReport = function (r) {
-    if (!r || r.secs < 30 || r.empty || r.empty === undefined && !(r.lines && r.lines.length)) return;
+    // A fighter who earned nothing still gets the card: it says fighting stops and gathering continues.
+    const quiet = r && r.turnCombat;
+    if (!r || r.secs < 30 || (r.empty && !quiet) || r.empty === undefined && !quiet && !(r.lines && r.lines.length)) return;
     // C14: the report is one card through the notice policy, never a second set of pops.
     notify({ key: 'away-report', msg: `While you were away: ${hm(r.secs)}.`, kind: 'good' });
     if (root) close();
