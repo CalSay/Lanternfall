@@ -10110,6 +10110,7 @@ if (section('LF_EYES hook (browser, qa-player-eyes)')) try {
       const X = s => page.evaluate(s => window.__t.x(s), s), E = s => page.evaluate(s => JSON.stringify(window.LF_EYES ? eval(s) : null), s).then(JSON.parse);
       // the player reads the story cards and presses Continue; the first fight waits behind them
       for (let i = 0; i < 60 && (await X('LF_EYES.phase()')) !== 'player turn'; i++) { const b = await page.$('.bsheet-ov .sty-done'); if (b) { await b.click(); await page.waitForTimeout(300); } else await page.waitForTimeout(150); }
+      for (let i = 0; i < 20 && (await E('LF_EYES.tip()')) === null; i++) await page.waitForTimeout(150);   // the first tip arrives a beat after the player's turn starts
       const api = await X('Object.keys(LF_EYES).sort().join() + "|" + Object.isFrozen(LF_EYES)');
       assert(api === 'floats,info,phase,rects,sfx,tip|true', `LF_EYES offers rects, phase, tip, sfx, floats and info, and is frozen (${api})`);
       const R = await E('LF_EYES.rects()'), fin = b => b && [b.x, b.y, b.w, b.h].every(Number.isFinite) && b.w > 0 && b.h > 0, within = (a, b) => a && b && a.x >= b.x - 2 && a.y >= b.y - 2 && a.x + a.w <= b.x + b.w + 2 && a.y + a.h <= b.y + b.h + 2;
