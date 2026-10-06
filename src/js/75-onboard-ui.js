@@ -215,7 +215,7 @@
   };
 
   const USE_SHOWN_MS = 7000;   // a first-use line counts as read after this long on screen
-  const BLOCK = '.create, .away-ov, .bsheet-ov, .modal, .dw-ov';
+  const BLOCK = '.create, .away-ov, .bsheet-ov, .modal, .dw-ov, .mm-ov';
   let lastKey = '', useT0 = 0;
   function hide() { useT0 = 0; if (!layer.hidden) layer.hidden = true; if (!bub.hidden) bub.hidden = true; cur = null; curGo = null; lastKey = ''; lastNode = null; lastRect = null; ONBOARD.paused = false; const ap = $('app'); if (ap.classList.contains('guide-side')) ap.classList.remove('guide-side', 'guide-nu', 'guide-btn'); }
   // The hint used to re-read the target's pixel position and re-place itself every 250ms, so it
