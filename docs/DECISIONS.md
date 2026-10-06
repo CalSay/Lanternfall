@@ -391,11 +391,13 @@ Plan and rulings: `/mnt/project-files/early-game/plan.md`, `plan-judge.md`. Beat
   Lantern) and medium moments (the first and every 5th level, a new ability, a look, a Rare-or-better craft) sit
   outside the pop budget, under their own cap. Big: one card at a time at fight end, holding the game. Medium: at most
   one per fight end, in the notices slot. At most 8 big plus medium in the first 20 minutes. This refines "the early
-  game must not be spammed". A cache that holds a look is a big card, even when it opens automatically.
+  game must not be spammed". A cache that holds a look is a big card, even when it opens automatically. `STORY_TUNE.champMoment = false` (card `champion-moment`)
+  switches the Champion card off: the post scene plays as a story card and the cache opens on its own, as before.
 - **Starters join on the road.** You start with the hero you picked. The other two join where the story puts them: Tobin
   at the zone 5 Champion (the cellars), Wren at the zone 10 Champion (the Cantor's cave), Pip at the zone 15 Champion
   (the Marshal's graves), per story bible 4.4. Each join is a scene, never a bare toast. Old saves keep every starter
-  they own (an all-met default). `STORY_TUNE.joinOnMeet = false` switches back to all three at the start. Coverage
+  they own (an all-met default). `STORY_TUNE.joinOnMeet = false` switches back to all three at the start. A join counts as a new thing for the
+  spacing governor, so the next queued unlock (the Codex at zone 10) waits at least 1:30. Coverage
   areas 1, 4, 14 and 15.
 - **F3, the big-moment pace** (amends the self-improving plan's scorecard). Minutes 0 to 20: a big moment at least every
   5 minutes, no gap over 8. From minute 20 to the zone 10 Champion (or minute 60, if that comes first): a big moment at
