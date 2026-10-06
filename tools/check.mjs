@@ -8601,7 +8601,10 @@ if (section('boss odds (core, Next Up "Boss ready")')) try {
     assert(E('JSON.stringify(TURN_TUNE.hitstop)') === '{"crit":0.06,"counter":0.14,"perfect":0.1,"broken":0.18,"big":0.08}' && E('JSON.stringify(TURN_TUNE.windowCaps)') === '{"parry":0.35,"dodge":0.5}', 'hit-feel: hit-stop values and window caps are unchanged');
     const s1 = E('JSON.stringify(turnCombatSample({ profile: turnCombatProfile(), seconds: 300, seed: 3 }))'), s2 = E('JSON.stringify(turnCombatSample({ profile: turnCombatProfile(), seconds: 300, seed: 3 }))');
     assert(s1 === s2, 'hit-feel: a seeded sample is the same twice (display code draws no random numbers in it)');
-    assert(E('cbTurnDamageFoe.length') === 7, 'hit-feel: the turn damage adapter takes a tier'); }
+    const tiers = JSON.parse(E(`(() => { spawn(); const f = combatFoes()[0], got = []; on('float', p => got.push(p.tier || '')); f.hp = f.max = 1e9;
+      cbTurnDamageFoe(f, 10, 'counter', false, 'phys', 1, 'counter'); cbTurnDamageFoe(f, 10, 'attack', true, 'phys', 1, 'crit'); cbTurnDamageFoe(f, 10, 'attack', false, 'phys', 1, 'big'); cbTurnDamageFoe(f, 10, 'attack', false, 'phys', 1);
+      return JSON.stringify(got); })()`));
+    assert(tiers.join() === 'counter,crit,big,', 'hit-feel: a turn hit\'s tier rides its float, and none leaks to the next (' + tiers.join() + ')'); }
 } catch (e) { fail('boss odds crashed: ' + (e.stack || e)); }
 
 // ==== wall-try-again: after a zone boss beats you, the boss waits behind Try again, the zone keeps paying, the defeat card

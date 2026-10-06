@@ -42078,6 +42078,9 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
     lamps.replaceChildren(...Array.from({ length: LAMPS }, (_, i) => img('tv-lamp' + (i < streak ? ' on' : ''), i < streak ? lampLit : lampOff)));
   };
   const lampSet = n => { streak = n; lampDraw(); };
+  // what has shown since the page opened (data-seen: 'clean', and each number tier). Display only: the proof route reads it
+  const seen = new Set(), seenAdd = k => { if (!seen.has(k)) { seen.add(k); lamps.dataset.seen = [...seen].join(' '); } };
+  on('float', f => { if (f && f.tier) seenAdd(f.tier); });
   // grade at the press, from the snapshot (the windows in force, how far from the hit); the stamp shows when the hit meets or misses
   const defPress = kind => {
     const q = typeof turnCombatSnapshot === 'function' ? turnCombatSnapshot() : null; if (!q || !q.closesAt) { pendClean = null; return; }
@@ -42092,7 +42095,7 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
     if (p.res !== 'parry' && p.res !== 'dodge') return;   // a blind miss holds the streak
     const clean = pendClean === p.res; pendClean = null;
     if (!clean) { lampSet(0); return; }
-    lampSet(Math.min(LAMPS, streak + 1));
+    lampSet(Math.min(LAMPS, streak + 1)); seenAdd('clean');
     emit('float', { txt: p.res === 'parry' ? 'PARRIED!' : 'DODGED!', color: '#F2C14E', big: true, x: 0.27, y: 0.34 });
     emit('defGrade', { kind: p.res, clean: true, streak });
   });
