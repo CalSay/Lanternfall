@@ -2169,6 +2169,16 @@ span.cf-d { font-weight: 600; }
 }
 /* 740x360: the card is short, so the art shrinks */
 @media (max-height: 420px) { .mm-art { width: 72px; height: 64px; } .mm-img { width: 44px; height: 44px; } .mm-card { gap: 5px; padding: 10px 12px; } }
+
+/* ---- hero-voice: the hero's line on a card or banner, the hero sheet record ---- */
+.mm-say { display: flex; align-items: center; gap: 8px; width: 100%; box-sizing: border-box; padding: 6px 8px; text-align: left; background: var(--well); border: 1px solid var(--line); }
+.mm-say-pt { width: 36px; height: 36px; flex: none; image-rendering: pixelated; }
+.mm-say-tx p { margin: 0; font-size: 14px; line-height: 1.3; font-style: italic; color: var(--bone); }
+.mm-say-tx small { font-size: 11px; color: var(--muted); }
+.mm-t-say { font-size: 12.5px; font-style: italic; color: var(--bone); }
+.gl-say { margin: 0; font-size: 13.5px; font-style: italic; color: var(--bone); }
+.cs-rec { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; font-size: 13.5px; color: var(--bone); }
+@media (max-height: 420px) { .mm-say { padding: 4px 8px; } .mm-say-pt { width: 28px; height: 28px; } .mm-say-tx p { font-size: 12.5px; } .mm-say-tx small { display: none; } }
 /* 60-nav: global navigation (UX-A, 75-nav-ui.js; docs/design/ux-overhaul.md 4): the activity pill
    in the header (two variants, NAV_TUNE.pillReplacesName), the Switch button on the control row,
    the quick switcher sheet, and the fade when a swipe changes the view. */
@@ -7956,6 +7966,18 @@ STORY_BEATS.npc.heskethTalk = { at: 'hearth', who: 'Old Hesketh', lines: [
   '"Those things aren\'t animals. They climb out of the ground."',
   '"Your village is down there. Go back and shut the holes."'
 ] };
+
+// Hero barks (card hero-voice; bible 4.4 and 4.6; judged in DECISIONS.md). The starting hero speaks at the big moments: a line each for Wren, Tobin and Pip,
+// shown by 75-moments-ui.js and the Great Lantern card (55-voice.js picks one a fight end). No `_`: a story hero who is not a starter stays silent. Under 60 characters.
+STORY_BEATS.hero.v_boss1 = { wren: "One down. The lamp's still lit.", tobin: 'One down. Rest of you, form a queue.', pip: 'First one! Somebody write that down.' };
+STORY_BEATS.hero.v_boss = { wren: 'Down. Keep moving.', tobin: "That one's not getting up.", pip: "Ha! I'll remember that one." };
+STORY_BEATS.hero.v_loss = { wren: 'Again. Slower this time.', tobin: 'Fine. Round two.', pip: 'Right. So that was the wrong plan.' };
+STORY_BEATS.hero.v_unique = { wren: 'Found you. Come on, then.', tobin: 'Heavy. Good heavy.', pip: "Oh! I've read about these!" };
+STORY_BEATS.hero.v_level = { wren: 'Steadier.', tobin: 'Getting the hang of it. Slowly.', pip: 'Stronger. I checked.' };
+STORY_BEATS.hero.v_ability = { wren: 'I know that one now.', tobin: "That's new. I'll try not to break it.", pip: "So that's how it works!" };
+STORY_BEATS.hero.v_star1 = { wren: "A star. Let's see what it does.", tobin: 'A star. Fits in a pocket, too.', pip: "Stars! I'm not going to be calm about this." };
+STORY_BEATS.hero.v_craft1 = { wren: "First try. It'll do.", tobin: 'Crooked, but it holds.', pip: 'Not in any book. Still works.' };
+STORY_BEATS.hero.v_lantern = { wren: 'There. Now it knows where I am.', tobin: 'Keep it lit for them. Please.', pip: "There. Now it's everyone's problem." };
 
 // ---- Chapter 1 (bible 8.1 and 5): 7 areas of 5 zones, a Champion at each area's end, the Fenmother at zone 35 ----
 // Area titles: the area's stake in player words. Zone lines name the roster monster and say what it copied and what light it hunts.
@@ -15053,7 +15075,7 @@ const STORY_ON = true;   // dev switch (bible 10.4): false plays no story at all
 
 let storyOn, storyHeld, storyInGap, storyChoiceDef, storyChosen, storyClaim, storyClose, storyChoose, storyList, storyEntry, storyRead, storyUnread, storyLate, storyJournalOpened,
   storyRoadLog, storyFile, storyHeroLine, storyHearthLine, storyVerse, storyVerseLatest, storyItemLine, storyRanks, storyEncounter, storyFoes, storySync,
-  storyIntroClaim, storyIntro, storyIntroDone;
+  storyIntroClaim, storyIntro, storyIntroDone, storyHeroKey;
 const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_ENC.champ.<id> = true (storyEncounter)
 {
   registerState('story', { v: 1, seen: {}, read: {}, init: 0, off: 0, starter: '', litFor: {}, coldhearth: '', ends: {}, journalOpens: 0 });
@@ -15099,6 +15121,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
     if (how !== 'shown' && part !== 'open') { introUp = false; storySync(); }   // what waited under the screens (the area caption) is due now, even if the guide holds the ticks
   };
   storyEncounter = (kind, id, on) => { if (STORY_ENC[kind]) STORY_ENC[kind][id] = on !== false; };
+  storyHeroKey = storyHero;   // hero-voice: whose lines play ('' when no starter is the story hero)
   storyHeroLine = id => { const h = D('hero')[id]; return h ? h[storyHero()] || h._ || '' : ''; };
   // An item entry is a line, or { area, line }: a line with an area waits until an encounter card has put a Champion of that area in
   // the game (the line names it, and the player must have met it).
@@ -15779,6 +15802,48 @@ function trainEst(active) {
 {
   // the Proving passed while this hero plays: its cap rises for good (W5-A moves this onto Ascension)
   on('evoProven', () => { const k = typeof soloHero === 'function' && soloHero(); if (k && S.solo) { if (!S.solo.asc || typeof S.solo.asc !== 'object') S.solo.asc = {}; S.solo.asc[k] = 1; } });
+}
+
+// ---- src/js/55-voice.js ----
+// 55-voice: the starting hero speaks at the big moments (card hero-voice; bible 4.4 and 4.6). CORE: no DOM; the moment layer
+// (75-moments-ui.js), the Great Lantern card (75-lantern-ui.js) and the hero sheet (75-party-sheet.js) read it.
+// Barks are STORY_BEATS.hero lines named 'v_<moment>' (21k-story-hollow.js), one per starter (wren, tobin, pip). A hero with no line stays silent.
+//   voiceSay(id) -> { line, who, key } | null   the story hero's bark for a moment, or null (no starter, or no line)
+//   voicePick(ids) -> id | ''                    the strongest of several moments (VOICE_PRIO): one bark a fight end
+//   voiceOnce(id) -> bool                        true the first time for a first-only moment ('craft1'), and files it
+//   voiceLoss(zone) -> bool                      true the first time a boss at a new furthest zone beats you
+//   voiceRecord() -> [{ k, txt }]                the "On the road" rows on the hero sheet: bosses, uniques, best parry streak, days
+// Save: registerState('voice', { v: 1, best: 0, lossZ: 0, said: {} }). best: the longest run of parries with no miss; lossZ: the last zone whose
+// boss loss had a bark; said: first-only barks. All defaults, so old saves merge in; nothing is granted back.
+const VOICE_PRIO = ['boss1', 'lantern', 'star1', 'unique', 'ability', 'boss', 'craft1', 'level', 'loss'];
+let voiceSay, voicePick, voiceOnce, voiceLoss, voiceRecord;
+{
+  registerState('voice', { v: 1, best: 0, lossZ: 0, said: {} });
+  const V = () => S.voice;
+  let run = 0;   // the parry run now (not saved: a reload starts a new run)
+  voiceSay = id => {
+    const key = typeof storyHeroKey === 'function' ? storyHeroKey() : '';
+    const line = key && typeof storyHeroLine === 'function' ? storyHeroLine('v_' + id) : '';
+    if (!line) return null;
+    const r = typeof ROSTER === 'object' && ROSTER[key];
+    return { line, who: (r && r.name) || key, key };
+  };
+  voicePick = ids => VOICE_PRIO.find(id => ids.includes(id)) || '';
+  voiceOnce = id => { const d = V().said; if (d[id]) return false; d[id] = 1; return true; };
+  voiceLoss = zone => { if (!(zone > V().lossZ)) return false; V().lossZ = zone; return true; };
+  on('soloParry', e => {
+    if (!e) return;
+    if (e.res === 'parry') { run++; if (run > V().best) V().best = run; } else if (e.res === 'miss') run = 0;
+  });
+  voiceRecord = () => {
+    const st = S.stats || {}, since = +st.since || 0, days = since ? Math.max(1, Math.floor((Date.now() - since) / 864e5) + 1) : 1;
+    return [
+      { k: 'bosses', txt: `Bosses beaten: ${fmt(st.bosses || 0)}` },
+      { k: 'uniques', txt: `Uniques found: ${fmt(st.uniques || 0)}` },
+      { k: 'parry', txt: `Best parry streak: ${fmt(V().best || 0)}` },
+      { k: 'days', txt: `Days on the road: ${fmt(days)}` }
+    ];
+  };
 }
 
 // ---- src/js/56-roster.js ----
@@ -39123,6 +39188,8 @@ var introUI;   // var: 76-create (loaded after this file) reads it at run time
     const h = el('h2', 'gl-head', e.head); h.id = 'glHead';
     card.append(h);
     if (e.text) card.append(el('p', 'gl-text', e.text));
+    const say = e.n === 1 && typeof voiceSay === 'function' ? voiceSay('lantern') : null;   // hero-voice: the Hollow's lantern, one line
+    if (say) card.append(el('p', 'gl-say', '\u201C' + say.line + '\u201D \u2014 ' + say.who));
     if (e.rewards && e.rewards.length) {
       const list = el('ul', 'gl-rw');
       for (const x of e.rewards) {
@@ -39315,6 +39382,8 @@ var introUI;   // var: 76-create (loaded after this file) reads it at run time
 //   title    the name, one line;  sub  one short line;  rarity  common..legendary (the colour; else the kind's own)
 //   icon     an icon spec for iconOf() ({ item }, { mat }, { ic });  still  a data URL (a bigger picture)
 //   lines    [{ txt, ic? }] a short list under the title;  actions  [{ txt, fn }] extra buttons beside Continue
+//   bark     a hero-voice moment id (55-voice.js): the story hero's line shows on the card or banner with their portrait. At most one bark a
+//            flush (the strongest, VOICE_PRIO). kind 'bark' is a banner of just the line, dropped after 20 s if the banner budget has no room.
 // momentState() -> { up, banner, queued } for the checks. Nothing here is saved: a moment not yet seen when the game closes
 // is dropped (a unique already sits in the trophy wall).
 const MOMENT_TUNE = { bannerS: 2.6, bannerExtraS: 0.7, settleS: 0.3, tapLockMs: 700, maxLines: 5, maxBanner: 3, bootS: 4, guideWaitS: 1, midMax: 2, midWindowS: 180, midFirstS: 1800 };
@@ -39328,7 +39397,8 @@ const MOMENT_KINDS = {
   ability: { tier: 'medium', eye: 'New ability', col: '#5FA8FF', snd: 'mid' },
   star: { tier: 'medium', eye: 'New Star', col: '#F2C14E', snd: 'mid' },
   look: { tier: 'medium', eye: 'Look found', col: '#B58CFF', snd: 'mid' },
-  craft: { tier: 'medium', eye: 'Well made', col: '#5FA8FF', snd: 'mid' }
+  craft: { tier: 'medium', eye: 'Well made', col: '#5FA8FF', snd: 'mid' },
+  bark: { tier: 'medium', eye: '', col: '#F2C14E', snd: 'mid' }
 };
 const MOMENT_RARITY = { common: '#CFC6D8', uncommon: '#6FCB6A', rare: '#5FA8FF', epic: '#B58CFF', legendary: '#FF8A3D' };
 const MOMENT_Q = [];
@@ -39339,8 +39409,10 @@ const MOMENT_OFF = (() => { try { return localStorage.getItem('lanternfall.test.
 function moment(kind, o) {
   if (MOMENT_OFF) return false;
   o = o || {};
+  const say = o.bark && typeof voiceSay === 'function' ? voiceSay(o.bark) : null;
+  if (kind === 'bark' && !say) return false;   // a hero with no line stays silent
   const k = MOMENT_KINDS[kind] || { tier: 'medium', eye: '', col: '#F2C14E', snd: 'mid' };
-  MOMENT_Q.push(Object.assign({}, o, { kind, tier: k.tier, eye: o.eye || k.eye, col: (o.rarity && MOMENT_RARITY[o.rarity]) || o.col || k.col, snd: k.snd }));
+  MOMENT_Q.push(Object.assign({}, o, { kind, tier: k.tier, eye: o.eye || k.eye, col: (o.rarity && MOMENT_RARITY[o.rarity]) || o.col || k.col, snd: k.snd, say, at: Date.now() }));
   MOMENT_UI.wait = 0;
   return true;
 }
@@ -39375,6 +39447,23 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
     li.append(el('span', null, l.txt));
     return li;
   }
+  // hero-voice: the story hero's line and portrait
+  const portraitOf = key => { try { return portraitURL(key === (typeof soloHero === 'function' && soloHero()) ? 'hero' : key) || ''; } catch (e) { return ''; } };
+  function sayBox(say) {
+    const b = el('div', 'mm-say'), u = portraitOf(say.key);
+    if (u) b.append(img(u, 'mm-say-pt'));
+    const t = el('div', 'mm-say-tx'); t.append(el('p', null, '\u201C' + say.line + '\u201D'), el('small', null, say.who));
+    b.append(t);
+    return b;
+  }
+  // one bark a flush: the strongest says it, on the first item; a bark-only moment is dropped when something else carries the line
+  function withSay(list) {
+    const src = list.find(x => x.say && x.bark === voicePick(list.filter(y => y.say).map(y => y.bark)));
+    const rest = list.filter(x => x.kind !== 'bark').map(x => (x.say ? Object.assign({}, x, { say: null }) : x));
+    if (!src) return rest.length ? rest : list;
+    if (rest.length) { rest[0] = Object.assign({}, rest[0], { say: src.say }); return rest; }
+    return [Object.assign({}, src, { eye: src.say.who, title: '\u201C' + src.say.line + '\u201D', say: null, pic: portraitOf(src.say.key) })];
+  }
   function showCard(list) {
     const u = MOMENT_UI, first = list[0];
     u.lastFocus = document.activeElement;
@@ -39386,12 +39475,13 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
     card.append(el('div', 'mm-eye', first.eye));
     const art = el('div', 'mm-art'), burst = el('div', 'mm-burst');
     art.append(burst);
-    let pic = null; try { pic = first.still || (first.icon && iconOf(first.icon)); } catch (e) {}
+    let pic = null; try { pic = first.still || first.pic || (first.icon && iconOf(first.icon)); } catch (e) {}
     if (pic) { const im = img(pic, 'mm-img'); art.append(im); }
     card.append(art);
     const h = el('h2', 'mm-head', first.title || first.eye); h.id = 'mmHead';
     card.append(h);
     if (first.sub) card.append(el('p', 'mm-sub', first.sub));
+    if (first.say) card.append(sayBox(first.say));
     // the rest of the queue (and any lines of the first) fold into one list
     const rows = (first.lines || []).slice();
     for (const x of list.slice(1)) rows.push({ txt: [x.eye, x.title].filter(Boolean).join(': '), icon: x.icon });
@@ -39423,7 +39513,7 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
     const u = MOMENT_UI, box = $('toasts'); if (!box) return;
     if (u.banner) { dropToast(u.banner); u.banner = null; }
     const shown = list.slice(0, MOMENT_TUNE.maxBanner), first = shown[0];
-    let pic = null; try { pic = first.icon && iconOf(first.icon); } catch (e) {}
+    let pic = null; try { pic = first.pic || (first.icon && iconOf(first.icon)); } catch (e) {}
     // built here, not by makeToast: a moment sits outside the pop budget and the toast counters (tools/check.mjs counts makeToast calls)
     const t = el('div', 'toast good hi mm-toast');
     t._p = 2; t._kind = 'good'; t._more = 0;
@@ -39434,6 +39524,7 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
     const tx = el('div', 'mm-t-tx');
     tx.append(el('div', 'mm-t-eye', first.eye), el('div', 'mm-t-title', first.title || ''));
     if (first.sub && shown.length === 1) tx.append(el('div', 'mm-t-sub', first.sub));
+    if (first.say) tx.append(el('div', 'mm-t-say', '\u201C' + first.say.line + '\u201D'));
     for (const x of shown.slice(1)) tx.append(el('div', 'mm-t-line', [x.eye, x.title].filter(Boolean).join(': ')));
     if (list.length > shown.length) tx.append(el('div', 'mm-t-line', `And ${list.length - shown.length} more.`));
     t.append(tx);
@@ -39456,16 +39547,17 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
     return [last].concat(list.filter(x => x.kind !== 'level'));
   }
   function flush() {
-    const u = MOMENT_UI;
+    const u = MOMENT_UI, now = Date.now();
+    for (let i = MOMENT_Q.length - 1; i >= 0; i--) if (MOMENT_Q[i].kind === 'bark' && now - MOMENT_Q[i].at > 20000) MOMENT_Q.splice(i, 1);   // a bark that missed its moment
     const big = MOMENT_Q.filter(x => x.tier === 'big'), mid = MOMENT_Q.filter(x => x.tier !== 'big');
     if (big.length && !u.ov) {
-      const all = big.concat(fold(mid)); MOMENT_Q.length = 0;   // mediums ride on the big card as lines
+      const all = withSay(big.concat(fold(mid))); MOMENT_Q.length = 0;   // mediums ride on the big card as lines
       for (const x of mid) MOMENT_UI.midAt.push(Date.now());   // each folded medium counts against the cap
       showCard(all); return;
     }
     if (big.length) return;   // a big card is up: wait for it
     if (u.ov || (u.banner && u.banner._hold > Date.now())) return;   // a banner keeps its minimum time; a banner under a big card would play unseen
-    if (mid.length && midRoom()) { const all = fold(mid); MOMENT_Q.length = 0; showBanner(all); }
+    if (mid.length && midRoom()) { const all = withSay(fold(mid)); MOMENT_Q.length = 0; showBanner(all); }
   }
   // a timer, not onTick: a guide step or a card that holds the game must not hold a moment back
   setInterval(() => {
@@ -39487,26 +39579,31 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
     const it = e && e.item; if (!it || !it.u || !UNIQ[it.u]) return;
     const u = UNIQ[it.u];
     moment('unique', { title: u.name, sub: e.first ? 'A new unique. It joins your trophy wall.' : 'Another copy of a unique you have.',
-      rarity: 'legendary', icon: { item: it },
+      rarity: 'legendary', icon: { item: it }, bark: 'unique',
       lines: e.kept ? [] : [{ txt: 'Your bag was full, so it was salvaged.' }] });
   });
   on('zoneClear', e => {
-    if (!e || e.zone !== 1) return;   // the first boss: later zone bosses have their own toast, scroll and (every region) Great Lantern
-    moment('boss', { title: 'The first boss falls', sub: `${zoneName(e.zone)} is cleared. The road goes on.`, icon: { ic: ['banner', '#F2C14E'] } });
+    if (!e) return;
+    // later zone bosses have their own toast and scroll; a region's last boss has the Great Lantern card, which carries the hero's line
+    if (e.zone !== 1) { if (typeof REGIONS === 'object' && !REGIONS.some(r => r.z1 === e.zone)) moment('bark', { bark: 'boss' }); return; }
+    moment('boss', { title: 'The first boss falls', sub: `${zoneName(e.zone)} is cleared. The road goes on.`, icon: { ic: ['banner', '#F2C14E'] }, bark: 'boss1' });
   });
   on('heroUnlocked', e => { if (e && e.id) moment('hero', { title: heroName(e.id), sub: 'A new hero will take up the lamp.', icon: { ic: ['banner', '#B58CFF'] } }); });
   // level up is medium only on the first level and every 5th (a banner a level would be a flood); otherwise the toast rules decide
   const MOMENT_LEVEL = L => L === 2 || L % 5 === 0;
-  on('levelup', e => { if (e && !e.quiet && MOMENT_LEVEL(e.L)) moment('level', { title: `Level ${e.L}`, sub: `Your hero hits ${Math.round(PACE.heroLv * 100)}% harder.`, L: e.L, icon: { ic: ['banner', '#6FCB6A'] } }); });
+  on('levelup', e => { if (e && !e.quiet && MOMENT_LEVEL(e.L)) moment('level', { title: `Level ${e.L}`, sub: `Your hero hits ${Math.round(PACE.heroLv * 100)}% harder.`, L: e.L, bark: 'level', icon: { ic: ['banner', '#6FCB6A'] } }); });
   on('abilityLearned', e => {
     const a = e && typeof ABILITIES === 'object' && ABILITIES[e.id]; if (!a) return;
-    moment('ability', { title: a.name, sub: heroName(e.hero) + ' learns a new ability.' });
+    moment('ability', { title: a.name, sub: heroName(e.hero) + ' learns a new ability.', bark: 'ability' });
   });
   on('starFound', e => {
     if (!e || e.quiet || typeof STARS !== 'object' || !STARS[e.id]) return;
     const first = Object.keys((S.stars && S.stars.own) || {}).length <= 1;   // the first Star is a big card (DECISIONS, Early game); later ones are a banner
-    moment(first ? 'starFirst' : 'star', { title: STARS[e.id].name, sub: STARS[e.id].text });
+    moment(first ? 'starFirst' : 'star', { title: STARS[e.id].name, sub: STARS[e.id].text, bark: first ? 'star1' : '' });
   });
+  // hero-voice: a boss that beats you (once for each new furthest zone) and the first thing you craft
+  on('bossFail', e => { if (e && e.zone >= 1 && typeof voiceLoss === 'function' && voiceSay('loss') && voiceLoss(e.zone)) moment('bark', { bark: 'loss' }); });
+  on('crafted', e => { if (e && e.item && typeof voiceOnce === 'function' && voiceSay('craft1') && voiceOnce('craft1')) moment('bark', { bark: 'craft1' }); });
   // a look found: the Deeds grant looks with a Feat, a Group level or a Chapter; compare what is owned
   let ownedLooks = null;
   const lookSet = () => { try { return new Set(deeds.looks().filter(l => l.got).map(l => l.id)); } catch (e) { return null; } };
@@ -40302,6 +40399,7 @@ let openSheet, partySheet;
     refs.heroXp = fill; refs.heroXpTxt = hn;
     if (typeof deedsUI === 'object' && deedsUI) body.append(safe(() => deedsUI.heroRow(), ''));   // Achievements · 2,140 points › (75-deeds-ui)
     hn.textContent = `${Math.floor(Math.min(1, S.xp / xpNeed()) * 100)}% to Lv ${S.L + 1}`;
+    if (typeof voiceRecord === 'function') { const ul = el('ul', 'cs-rec'); for (const r of safe(() => voiceRecord(), [])) ul.append(el('li', null, r.txt)); body.append(section('On the road', ul)); }   // hero-voice: what we have done together
     if (c) {
       body.append(el('p', 'cs-bio pitch', '"' + c.pitch + '"'));
       const cu = typeof classUI === 'object' && classUI ? safe(() => classUI.rows(), []) : [];   // S2: passives, the evolution rows (76-create)
@@ -40337,7 +40435,7 @@ let openSheet, partySheet;
     sheet.foot.textContent = '';
   }
 
-  const sigOf = () => 'hero|' + S.party.cls + '|' + (typeof classUI === 'object' && classUI ? classUI.sig() : '') + '|' + JSON.stringify(S.equip) + '|' + S.party.mirrors + '|' + S.L + '|' + heroTitle();
+  const sigOf = () => 'hero|' + S.party.cls + '|' + (typeof classUI === 'object' && classUI ? classUI.sig() : '') + '|' + JSON.stringify(S.equip) + '|' + S.party.mirrors + '|' + S.L + '|' + heroTitle() + '|' + (typeof voiceRecord === 'function' ? voiceRecord().map(r => r.txt).join() : '');
   function render(force) {
     if (!sheet) return;
     const s = sigOf();

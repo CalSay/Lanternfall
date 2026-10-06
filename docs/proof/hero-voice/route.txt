@@ -1,0 +1,20 @@
+# seed: 1
+# Proof for card hero-voice: the mid fixture (Tobin) crafts for the first time: his line shows in the banner with his portrait (one bark a fight end);
+# the hero sheet keeps an "On the road" record. Replayed at 360x740 and 740x360. The first-boss card line is covered by the check.mjs hero-voice section.
+new mid
+wait 3
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Continue"
+wait 1
+tap "Craft"
+wait 1
+tap-if "Got it"
+tap-if "Continue"
+wait 1
+tap "Craft Iron Warblade"
+wait 2
+expect "Crooked, but it holds."
+shot bark-craft
+tap-if "Keep"
+tap-if "Close"
