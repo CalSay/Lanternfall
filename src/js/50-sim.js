@@ -110,7 +110,7 @@ function killPack(m, g) {
   if (ess) { const got = stashAdd('ess', tier, ess, 'flow', true); addFloat(got ? `+${got} ${MAT.ess.short[tier - 1]} Essence` : 'Full', MAT.ess.col[tier - 1], false, 0.68, 0.2); }   // H3: capped by the Storehouse
   if (m.boss) {
     const first = z === S.maxZone;
-    fightBoss = false; failDps = 0; bossTryRelease(z);
+    fightBoss = false; if (!S.bossTry.hold || S.bossTry.hold === z) failDps = 0; bossTryRelease(z);   // an earlier zone's boss leaves the held frontier boss's baseline alone
     emit('shake', 0.3);
     const uq = zoneUnique(z), owned = (S.found[uq] || 0) >= tier ? UNIQ_TUNE.owned : 1;
     if (Math.random() < (first ? UNIQ_TUNE.first : UNIQ_TUNE.again) * owned * mod('uniqueChance')) dropUnique(uq, tier);
