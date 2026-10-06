@@ -88,9 +88,9 @@
         c.append(el('i', 'ab-gem'), el('b', null, s.name), el('span', 'ab-sn', '× ' + n), el('small', null, `Tier ${ROMAN[s.tier]}, level ${ABILITY_TIERS[s.tier].lv}. From ${s.from}.`));
         scrolls.append(c);
       }
-      info.append(scrolls, el('p', 'note ab-src', 'The first win over each zone boss drops a Scroll. A replay drops one now and then. A higher Scroll can stand in for a lower one.'));
-      info.append(el('p', 'note ab-note', `${heroNm(k)} takes three abilities into a fight, in the slots Q, W and E.`));
-      if (tp) info.append(el('p', 'note ab-tp', `Talent points: ${tp.free} free of ${tp.total}. Each learned ability, and your Attack, Parry and Dodge, has two talents: pick one for ${TALENT_TUNE.cost} points. You earn ${TALENT_TUNE.perLevel === 1 ? 'one' : TALENT_TUNE.perLevel} a level. Change them any time between fights.`));
+      info.append(scrolls, el('p', 'note ab-src', 'Zone bosses drop Scrolls. Use one to learn an ability.'));
+      info.append(el('p', 'note ab-note', `${heroNm(k)} takes three abilities into a fight (Q, W, E).`));
+      if (tp) info.append(el('p', 'note ab-tp', `Talents: ${tp.free} of ${tp.total} points free. Pick one of two for ${TALENT_TUNE.cost} points. Change them between fights.`));
       root.append(info);
     }
     // ---- the resource line ----
