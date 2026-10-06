@@ -1,0 +1,21 @@
+# seed: 1
+# Proof for card hero-progression-rework: the mid fixture (Tobin, Lv 33, Zone 20). Hero > Build shows the points his levels
+# gave him; Spread evenly places them; switching to Wren lifts her to the road's level (Lv 29 at Zone 20).
+new mid
+# the mid save unlocks Old Hesketh a few seconds in: let his "new hero" card show, then close it
+wait 6
+tap-if Continue
+wait 2
+tap-if Continue
+tap-if "Dismiss this tip"
+tap Hero
+tap Build
+expect ".at-spread"
+shot build-points
+tap "Spread evenly"
+shot build-spread
+tap Hero
+tap Wren
+tap Wren
+wait 2
+shot wren-joins

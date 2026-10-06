@@ -149,10 +149,12 @@ async function runScenario(browser, base, { dev, save }) {
   out.load = { boot: Math.round(ld.boot), firstFrame: Math.round(ld.first), longTasks: ld.lt.length, longest: Math.round(Math.max(0, ...ld.lt.map(l => l[1]))) };
 
   // Character creation (new game) or "Choose your path" (old save): click through like a player.
-  for (let i = 0; i < 4; i++) {
-    const go = await page.$('#createScreen .create-go');
+  // A new game opens on the drawn opening first (intro-and-picker) and plays Hesketh's fire after the pick: tap through those too.
+  await page.waitForTimeout(300);
+  for (let i = 0; i < 14; i++) {
+    const intro = await page.$('#introScreen .intro-go'), go = intro || await page.$('#createScreen .create-go');
     if (!go) break;
-    await go.click(); await page.waitForTimeout(150);
+    await go.click(); await page.waitForTimeout(intro ? 400 : 150);
   }
   // A new game starts with no gold; give it some so the upgrade button can be tapped.
   if (save === 'new') await page.evaluate(() => { const S = window.__lf.S(); S.gold = Math.max(S.gold, 1e6); });
@@ -160,7 +162,7 @@ async function runScenario(browser, base, { dev, save }) {
   if (save === 'new') await page.evaluate(() => { try { window.__lf.x('onboardUnlockAll()'); } catch (e) {} });
   // A new game starts at a cold Hearth (H1): light the fire as a player does in the first half minute,
   // so the measured fight is the zone-1 fight it walks out to (the grove scene is left behind).
-  if (save === 'new') await page.evaluate(() => { try { window.__lf.x('typeof hearthCold === "function" && hearthCold() && !hearthLit() && (S.mats.wood[0] += 8, hearthLight())'); } catch (e) {} });
+  if (save === 'new') await page.evaluate(() => { try { window.__lf.x('typeof hearthCold === "function" && hearthCold() && !hearthLit() && (S.story.seen["n:heskethTalk"] = Date.now(), S.mats.wood[0] += 8, hearthLight())'); } catch (e) {} });   // Hesketh\'s talk plays at the fire and would pop up mid-window: file it as seen
   await page.evaluate(() => window.__lf.setTab('adv'));
 
   const now = () => page.evaluate(() => performance.now());

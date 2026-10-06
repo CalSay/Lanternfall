@@ -17,6 +17,58 @@
 //   - navGo { close: true } (55-nav) closes sheets and menus here.
 // Exposed: navUI { openSwitcher(), pill }
 
+// wire-menu-icons: labels keep their meaning; the approved pack supplies decorative art.
+// A function declaration lets the earlier menu renderer use this even during registration.
+function menuNavIcon(button, view) {
+  const icons = {
+    upgrades: 'boss', bounties: 'bounties', bestiary: 'bestiary', deep: 'deepwell',
+    team: 'hero', abilities: 'hero', training: 'training', attributes: 'training', stars: 'stars',   // hero-progression-rework: Build took Training's place
+    mine: 'mining', wood: 'woodcutting', forage: 'foraging', hunt: 'hunting', pack: 'storehouse',
+    make: 'craft', gear: 'gear', uniques: 'uniques', camp: 'camp', tav: 'tavern', almanac: 'almanac', raid: 'raid',
+    'ach-deeds': 'deeds', 'ach-tracks': 'tracks', 'ach-feats': 'feats', 'ach-looks': 'looks',
+    notes: 'notices', journal: 'journal', act: 'adventure', next: 'next-up', switch: 'switch-view', codex: 'codex', close: 'close'
+  };
+  const id = icons[view]; if (!id || button.querySelector('.menu-nav-ic')) return;
+  const im = el('img', 'menu-nav-ic px'); im.alt = ''; im.setAttribute('aria-hidden', 'true');
+  nicSet(im, 'nav', id, 16); button.prepend(im);
+}
+
+// Separate status art from the ability tiles (75-solo-ui is a hot file).
+function menuActionBadge(button) {
+  if (button.matches('.sp-ab')) return button.classList.contains('on') ? 'selected' : '';
+  if (button._nv === 'T3') return 'locked';
+  if (button.classList.contains('cool')) return 'cooldown';
+  if (button.classList.contains('off') || button.classList.contains('blocked') || button.classList.contains('empty') || button.classList.contains('passive')) return 'unavailable';
+  return 'ready';
+}
+{
+  const decorate = () => {
+    for (const [selector, view] of [['#menuX', 'close'], ['#switchBtn', 'switch'], ['#nuChip .nu-eye', 'next'],
+      ['.sb-tab[data-tab="act"]', 'act'], ['.cx-backbtn', 'codex']]) {
+      for (const b of document.querySelectorAll(selector)) menuNavIcon(b, view);
+    }
+    // The Codex's Journal entry is mounted lazily along with other Journal sections.
+    for (const b of document.querySelectorAll('#sec-codex-card button')) {
+      if (b.textContent.includes('Open')) menuNavIcon(b, 'codex');
+    }
+  };
+  uiHooks.push(decorate);
+  const updateBadges = () => {
+    for (const b of document.querySelectorAll('#soloBar .sbtn, #abPicker .sp-ab')) {
+      const id = menuActionBadge(b);
+      let im = b.querySelector('.menu-action-badge');
+      if (!id) { if (im) im.hidden = true; continue; }
+      if (!im) { im = el('img', 'menu-action-badge px'); im.alt = ''; im.setAttribute('aria-hidden', 'true'); b.append(im); }
+      im.hidden = false;
+      if (!im._nic || im._nic.id !== id) nicSet(im, 'act', id, 16);
+    }
+  };
+  // Existing UI state is authoritative, including cooldowns and paused pickers; no save writes.
+  let elapsed = 0;
+  onTick(dt => { elapsed += dt; if (elapsed >= 0.1) { elapsed = 0; updateBadges(); } });
+  setInterval(() => { decorate(); updateBadges(); }, 250);
+}
+
 let navUI = null;
 {
   const ICON_OF = {
