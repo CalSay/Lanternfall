@@ -19,7 +19,7 @@
 //   attrSpread(k?) -> points added: the free points spread so the four end as even as they can (emits attrSet a point)
 //   attrResetCost(k?) -> gold (0 for a hero's first reset); attrReset(k?) -> bool (pays; every point back to free;
 //                      emits attrReset { hero, cost })
-//   attrNeutral(k?) -> the build-neutral level multiplier: 1 + lvBase x (L - 1) + the mean per x spent / 4
+//   attrNeutral(k?) -> the build-neutral level multiplier: 1 + the mean base x (L - 1) + the mean per x spent / 4
 //   attrX(kind, k?) -> the level-and-points multiplier on kind 'atk' | 'ab' | 'counter' | 'hp'
 //   attrRel(kind, k?) -> attrX(kind) / attrNeutral(): heroAtk() carries attrNeutral() (40-rules lvlMult), so a turn fight's
 //                       Attack, abilities, counters and health multiply by this on top of it
@@ -100,16 +100,18 @@ function attrReset(k) {
 }
 const ATTR_BY_KIND = {}; for (const a of ATTRS) ATTR_BY_KIND[a.kind] = a;
 const ATTR_PER = ATTRS.reduce((t, a) => t + a.per, 0) / ATTRS.length;
+const attrBase = a => a && a.base !== undefined ? a.base : HERO_TUNE.lvBase;
+const ATTR_BASE = ATTRS.reduce((t, a) => t + attrBase(a), 0) / ATTRS.length;
 function attrNeutral(k) {
   const L = heroLvOf(k);
   if (!attrOn()) return 1 + PACE.heroLv * (L - 1);
-  return 1 + HERO_TUNE.lvBase * (L - 1) + ATTR_PER * attrPoints(k).spent / ATTRS.length;
+  return 1 + ATTR_BASE * (L - 1) + ATTR_PER * attrPoints(k).spent / ATTRS.length;
 }
 function attrX(kind, k) {
   const L = heroLvOf(k);
   if (!attrOn()) return 1 + PACE.heroLv * (L - 1);
   const a = ATTR_BY_KIND[kind];
-  return 1 + HERO_TUNE.lvBase * (L - 1) + (a ? a.per * attrEff(k, a.id) : 0);
+  return 1 + attrBase(a) * (L - 1) + (a ? a.per * attrEff(k, a.id) : 0);
 }
 function attrRel(kind, k) { return attrOn() ? attrX(kind, k) / attrNeutral(k) : 1; }
 function attrParryMs(k) { const a = ATTR_BY_KIND.counter; return attrOn() && a && a.parryMs ? Math.min(HERO_TUNE.guardMs, a.parryMs * attrEff(k, a.id)) / 1000 : 0; }

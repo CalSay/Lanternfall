@@ -6,10 +6,11 @@
 //   HERO_TUNE.training  1 restores today's game exactly (gold Training, xpNeed 15 x 1.3^(L-1), +4% a level, the stepped
 //                       Attack curve, no attributes, no join floor, no bench XP). The switch-off flag: kept until the judge
 //                       signs off the sims after testers play (hero-progression.md "Switching it off").
-//   lvBase              the share of the old +4% a level (PACE.heroLv) every level still gives Attack, abilities, counters
-//                       and health; attribute points give the rest in the player's own split
+//   lvBase              the share of the old +4% a level (PACE.heroLv) a level gives an attribute with no `base` of its own;
+//                       attribute points give the rest in the player's own split
 //   perLevel            attribute points a level after Lv 1
-//   ATTRS               the four attributes: per (a point's share), kind (what it raises: atk | ab | counter | hp), parryMs
+//   ATTRS               the four attributes: base (what each level gives it), per (a point's share; base + per = PACE.heroLv,
+//                       so an even spread is the old +4% a level on each), kind (what it raises: atk | ab | counter | hp), parryMs
 //                       (Guard: the parry window a point, ms; the window cap is TURN_TUNE.windowCaps.parry)
 //   road                [zone, level] points: the level the road expects a hero to have on reaching that zone (straight
 //                       lines between the points, then the last slope on). (tuned)
@@ -46,10 +47,10 @@ const HERO_TUNE = {
 };
 // The order is the screen's order. line: one plain line for the Attributes view.
 const ATTRS = [
-  { id: 'might', name: 'Might', kind: 'atk', per: 0.02, line: 'Attack hits harder.' },
-  { id: 'focus', name: 'Focus', kind: 'ab', per: 0.02, line: 'Abilities hit harder.' },
-  { id: 'guard', name: 'Guard', kind: 'counter', per: 0.02, parryMs: 1, line: 'Counters hit harder, and the parry window is wider.' },
-  { id: 'vigour', name: 'Vigour', kind: 'hp', per: 0.02, line: 'More health.' }
+  { id: 'might', name: 'Might', kind: 'atk', base: 0.01, per: 0.03, line: 'Attack hits harder.' },
+  { id: 'focus', name: 'Focus', kind: 'ab', base: 0.03, per: 0.01, line: 'Abilities hit harder.' },
+  { id: 'guard', name: 'Guard', kind: 'counter', base: 0.01, per: 0.03, parryMs: 1, line: 'Counters hit harder, and the parry window is wider.' },
+  { id: 'vigour', name: 'Vigour', kind: 'hp', base: 0.025, per: 0.015, line: 'More health.' }
 ];
 const ATTR_IDS = ATTRS.map(a => a.id);
 const ATTR0 = () => { const o = {}; for (const id of ATTR_IDS) o[id] = 0; return o; };
