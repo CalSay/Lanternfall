@@ -75,7 +75,10 @@ const LV_SHIFT = Number(opt('lv', 0));
 //   st   'fresh' (a new hero's starter kit at the road's level), 'kept' (their class set at the zone's tier, rare +5,
 //        gear 'common': tier 1 common +0, a new player's first crafts), 'late' (the late fixture's gear made epic +10)
 //   fx   the fixture save the hero is built on (its unlocks, Scrolls and items)
+//        'joined' (a hero who just took the lamp: the road's level, the fixture's gear as it is, their signature ability
+//        only, no Stars of their own)
 //   asc  the hero has passed the Proving (ascended)       tier: every worn piece that many tiers off (-1: behind)
+//   build every attribute point in one attribute (once the game has attributes; before that the row is the plain hero)
 //   kind a fixed kind ('behind'); ref: the row a behind row's drop is measured against
 export const CHECKPOINTS = [
   ['z1-normal', 1, 'normal', { st: 'fresh', zone1: true }],
@@ -103,7 +106,15 @@ export const CHECKPOINTS = [
   ['z38-normal', 38, 'normal', { st: 'late', asc: 1 }],
   ['z38-elite', 38, 'elite', { st: 'late', asc: 1 }],
   ['z38-boss', 38, 'boss', { st: 'late', asc: 1 }],
-  ['z38-boss-behind', 38, 'boss', { st: 'late', asc: 1, tier: -1, kind: 'behind', ref: 'z38-boss' }]
+  ['z38-boss-behind', 38, 'boss', { st: 'late', asc: 1, tier: -1, kind: 'behind', ref: 'z38-boss' }],
+  // report only (kinds with "report": true): a hero who just took the lamp, and single-attribute builds (PR #58's
+  // findings, 2026-10-06: a switched-in hero won 31-35% of zone 20 bosses; all-Focus Wren cleared trash 2-3x faster)
+  ['z20-boss-joined', 20, 'boss', { st: 'joined', fx: 'mid', kind: 'joined', ref: 'z20-boss' }],
+  ['z38-boss-joined', 38, 'boss', { st: 'joined', fx: 'late', kind: 'joined', ref: 'z38-boss' }],
+  ['z20-normal-focus', 20, 'normal', { st: 'kept', fx: 'mid', build: 'focus', kind: 'build', ref: 'z20-normal' }],
+  ['z20-boss-focus', 20, 'boss', { st: 'kept', fx: 'mid', build: 'focus', kind: 'build', ref: 'z20-boss' }],
+  ['z20-boss-might', 20, 'boss', { st: 'kept', fx: 'mid', build: 'might', kind: 'build', ref: 'z20-boss' }],
+  ['z20-boss-vigour', 20, 'boss', { st: 'kept', fx: 'mid', build: 'vigour', kind: 'build', ref: 'z20-boss' }]
 ];
 const setFor = (z, k) => SETS[[38, 30, 20, 10, 1].find(s => z >= s)][k];
 // a boss's kind: the game's own boss tier once it has one (boss-tiers: bossTierOf(z) -> 'captain' | 'champion' | 'elder'),
@@ -123,8 +134,10 @@ function setup(c, k, lvShift) {
       ${J(KINDS[k])}.concat(['charm']).forEach((kind, i) => { const it = newItem(kind, t, ${J(o.gear === 'common' ? 'common' : 'rare')}, { rnd }); it.plus = ${o.gear === 'common' ? 0 : 5}; if (it.a) it.a = it.a.filter(l => l[0] === 'hp');
         S.items.push(it); S.equip[['weapon', 'off', 'helm', 'body', 'charm'][i]] = it.id; }); })();`;
   if (o.tier) s += `for (const sl of Object.keys(S.equip)) { const it = itemById(S.equip[sl]); if (it && !['pick', 'axe', 'sickle', 'spear'].includes(it.slot)) it.t = Math.max(1, Math.min(5, it.t + (${o.tier}))); }`;
-  // hero-progression-rework: attribute points spread evenly (the plain build; no-op before attributes exist)
-  s += `if (typeof attrSpread === 'function' && attrOn()) attrSpread(${J(k)});`;
+  // hero-progression-rework: attribute points spread evenly (the plain build), or all in one (a build row); no-op before
+  // attributes exist
+  s += o.build ? `if (typeof attrAdd === 'function' && attrOn()) { S.attr.pts[${J(k)}] = ATTR0(); attrAdd(${J(o.build)}, 1e9, ${J(k)}); }`
+    : `if (typeof attrSpread === 'function' && attrOn()) attrSpread(${J(k)});`;
   s += `gearDirty(); S.maxZone = Math.max(S.maxZone, ${z}); setZone(${z});`;
   return s;
 }
@@ -159,7 +172,7 @@ function measure(c, k, lvShift = LV_SHIFT, players = RUN_PLAYERS) {
   const save = o.st === 'fresh' ? null : o.st === 'late' ? 'late' : o.fx;
   if (save) { core.storage.set(e('KEY'), fx(save)); e('loadSave()'); }
   e(setup(c, k, lvShift));
-  if (STARS && !o.zone1) e(starsTypical(z));
+  if (STARS && !o.zone1 && o.st !== 'joined') e(starsTypical(z));
   e(`TURN_TUNE.on = 1; S.activity = 'fight'; arena = null; gearDirty(); fightBoss = ${foe === 'boss'}; spawn();`);
   if (foe === 'elite') e(`(() => { const f = combatFoes().find(x => x && !x.dead); turnFoeSetup(f, S.zone, { elite: true }); })()`);
   if (opt('eval')) e(String(opt('eval')));
@@ -169,11 +182,12 @@ function measure(c, k, lvShift = LV_SHIFT, players = RUN_PLAYERS) {
   const chain = foe === 'boss' ? 1 : 5, n = Math.ceil(FIGHTS / chain);
   for (const [pl, skill] of Object.entries(players)) {
     const seeds = Array.from({ length: n }, (_, i) => seedOf(OFFSET, id, k, pl, i));
-    const r = e(`(() => { const p = turnCombatProfile(); p.eq = ${J(setFor(z, k))}; p.cds = { attack: 1 }; for (const id of p.eq) p.cds[id] = turnCdFor(id);
+    const r = e(`(() => { const p = turnCombatProfile(); p.eq = ${J(o.st === 'joined' ? [SIG[k]] : setFor(z, k))}; p.cds = { attack: 1 }; for (const id of p.eq) p.cds[id] = turnCdFor(id);
       let K = 0, D = 0, T = 0, F = 0;
       for (const sd of ${J(seeds)}) { const r = turnCombatSample({ profile: p, seconds: 36000, fights: ${chain}, seed: sd, skill: ${J(skill)} });
         K += r.kills; D += r.deaths; T += r.totalHeroTurns; F += r.completedFights; }
       return { K, D, T, F }; })()`);
+    if (r.K + r.D < n * chain) throw new Error(`${id} ${k} ${pl}: ${n * chain - r.K - r.D} fight(s) never ended (a stalemate the win rate would hide)`);
     const win = r.K / Math.max(1, r.K + r.D);
     out[pl] = { win: Math.round(win * 1000) / 1000, turns: r.F ? Math.round(10 * r.T / r.F) / 10 : null, fights: r.K + r.D, attempts: win > 0 ? Math.min(20, Math.round(10 / win) / 10) : 20 };
   }
@@ -199,13 +213,18 @@ export function printBudget(rep) {
   console.log(`Difficulty budget: ${rep.fights} scratch turn fights a row, hero and player (each boss fight on its own seed; trash in chains of 5);`);
   console.log(`a hero who keeps up (road level, gear at the zone's tier${rep.stars ? ', typical Stars' : ''}). Bands: docs/design/difficulty-budget.json (Tobin's casual boss band +${T.tobinBoss}).`);
   console.log('A "behind" row\'s casual number is the drop in casual wins against its ref row.');
-  console.log('row'.padEnd(17) + 'kind'.padEnd(13) + 'casual w/t/p'.padEnd(14) + 'band'.padEnd(9) + 'good w/t/p'.padEnd(13) + 'band'.padEnd(9) + 'tries w/t/p'.padEnd(16) + 'turns w/t/p'.padEnd(17) + 'level  out of band');
+  console.log('row'.padEnd(17) + 'kind'.padEnd(13) + 'casual w/t/p'.padEnd(14) + 'mean sprd'.padEnd(10) + 'band'.padEnd(16) + 'good w/t/p'.padEnd(13) + 'band'.padEnd(9) + 'tries w/t/p'.padEnd(16) + 'turns w/t/p'.padEnd(17) + 'level  out of band');
   for (const r of rep.rows) {
     const hs = rep.heroes, cs = pl => hs.map(h => all.find(c => c.id === r.id && c.hero === h && c.pl === pl));
-    const show = pl => cs(pl).map(c => c ? pc(c.value) : '-').join('/'), band = pl => { const c = cs(pl)[0]; return c ? `${pc(c.band[0])}-${pc(c.band[1])}` : ''; };
+    const show = pl => cs(pl).map(c => c ? pc(c.value) : '-').join('/');
+    // the band, and Tobin's where it differs (his boss band sits higher)
+    const band = pl => { const l = cs(pl).filter(Boolean), b = c => `${pc(c.band[0])}-${pc(c.band[1])}`, t = l.find(c => c.hero === 'tobin'); return l.length ? b(l[0]) + (t && b(t) !== b(l[0]) ? ` t${b(t)}` : '') : ''; };
+    const vals = cs('casual').filter(c => c && c.value != null).map(c => c.value), ms = vals.length ? `${pc(vals.reduce((a, b) => a + b, 0) / vals.length)} ${pc(Math.max(...vals) - Math.min(...vals))}` : '';
     const out = GATED.flatMap(pl => cs(pl).filter(c => c && c.value != null && offBand(c.value, c.band)).map(c => `${c.hero} ${pl} ${offBand(c.value, c.band) > 0 ? '+' : ''}${pc(offBand(c.value, c.band))}`)).join(', ');
-    console.log(r.id.padEnd(17) + r.kind.padEnd(13) + show('casual').padEnd(14) + band('casual').padEnd(9) + show('good').padEnd(13) + band('good').padEnd(9)
+    console.log(r.id.padEnd(17) + r.kind.padEnd(13) + show('casual').padEnd(14) + ms.padEnd(10) + band('casual').padEnd(16) + show('good').padEnd(13) + band('good').padEnd(9)
       + hs.map(h => r.perHero[h].casual.attempts).join('/').padEnd(16) + hs.map(h => r.perHero[h].good.turns ?? '-').join('/').padEnd(17) + String(r.perHero[hs[0]].L).padStart(5) + '  ' + (out || 'in band'));
+    const ref = r.kind === 'build' && rep.rows.find(x => x.id === r.ref);   // a build row: its turns against the even spread
+    if (ref) console.log('  turns played well against the even spread (w/t/p): ' + hs.map(h => r.perHero[h].good.turns && ref.perHero[h].good.turns ? 'x' + (r.perHero[h].good.turns / ref.perHero[h].good.turns).toFixed(2) : '-').join('/'));
     for (const pl of Object.keys(WIDE)) if (r.perHero[hs[0]][pl]) console.log('  ' + pl.padEnd(28) + hs.map(h => pc(r.perHero[h][pl].win)).join('/'));
   }
   const tob = rep.rows.filter(r => r.foe === 'boss' && r.perHero.tobin && r.perHero.wren && r.perHero.pip && r.perHero.tobin.good.turns);

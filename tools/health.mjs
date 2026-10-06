@@ -31,7 +31,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { HEROES as BUDGET_HEROES, loadTargets, BUDGET_FILE, cells as budgetCells, cellKey, verdict as budgetVerdict } from './lib/budget-score.mjs';
+import { HEROES as BUDGET_HEROES, loadTargets, BUDGET_FILE, cells as budgetCells, cellKey, binomialSd, verdict as budgetVerdict } from './lib/budget-score.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const BASELINE = path.join(ROOT, 'docs', 'design', 'health-baseline.json');
@@ -317,9 +317,11 @@ function budgetVerdicts(rep, bb) {
 function printBudget(rep, bb) {
   const pc = x => num(x) ? (100 * x).toFixed(0) : 'n/a', vs = budgetVerdicts(rep, bb);
   console.log(`\ndifficulty budget (tools/budget.mjs: ${rep.fights} fights a row, hero and player; docs/design/difficulty-budget.md). A behind row's casual value is its drop against its ref row.`);
-  console.log('row / player'.padEnd(26) + 'hero'.padEnd(6) + 'value'.padStart(6) + '  band     ' + (bb ? 'baseline  ' : '') + 'verdict');
-  for (const v of vs) {
-    if (!v.fail && v.label === 'ok' && v.hero !== 'mean') continue;   // in band: only the means and anything to look at are listed
+  const n = l => vs.filter(l).length;
+  console.log(`budget cells: ${n(v => v.label === 'ok')} in band, ${n(v => /^gap/.test(v.label))} in known gaps, ${n(v => /edge|closed/.test(v.label))} at an edge or a closed gap, ${n(v => /^report/.test(v.label))} report-only, ${n(v => v.fail)} failing (the full table: node tools/budget.mjs)`);
+  const show = vs.filter(v => v.fail || /edge|closed/.test(v.label) || /^report: out/.test(v.label));
+  if (show.length) console.log('row / player'.padEnd(26) + 'hero'.padEnd(6) + 'value'.padStart(6) + '  band     ' + (bb ? 'baseline  ' : '') + 'verdict');
+  for (const v of show) {
     console.log(`${v.id} ${v.pl}`.padEnd(26) + String(v.hero).padEnd(6) + pc(v.value).padStart(6) + '  ' + (v.band ? `${pc(v.band[0])}-${pc(v.band[1])}` : '').padEnd(9) + (bb ? pc(v.baseline).padStart(8) + '  ' : '') + v.label);
   }
   return vs;
@@ -368,16 +370,23 @@ async function budgetAveraged() {
   console.log(`\nbudget baseline: averaging ${n} seed offsets (${SEED_OFFSET}..${SEED_OFFSET + n - 1})`);
   for (let i = 1; i < n; i++) reps.push(await budgetRun(SEED_OFFSET + i));
   const per = reps.map(r => Object.fromEntries(budgetCells(T, r).map(c => [cellKey(c), c.value]))), cellsOut = {};
+  const rows0 = Object.fromEntries(budget.rows.map(r => [r.id, r])), cs0 = Object.fromEntries(budgetCells(T, budget).map(c => [cellKey(c), c]));
   for (const k of Object.keys(per[0])) {
-    const l = per.map(p => p[k]).filter(num), mu = l.length ? mean(l) : null;
-    cellsOut[k] = { value: mu == null ? null : r2(mu), sd: l.length ? Math.round(1000 * Math.sqrt(mean(l.map(v => (v - mu) ** 2)))) / 1000 : null };
+    // the sample sd over the offsets (n - 1), never under one run's binomial noise (the mean's: a hero's over 3)
+    const l = per.map(p => p[k]).filter(num), mu = l.length ? mean(l) : null, [id, hero, pl] = k.split('|');
+    const sample = l.length > 1 ? Math.sqrt(l.reduce((a, v) => a + (v - mu) ** 2, 0) / (l.length - 1)) : 0;
+    const bin = hero === 'mean' ? Math.sqrt(BUDGET_HEROES.reduce((a, h) => a + binomialSd(T, rows0, id, h, pl, budget.fights) ** 2, 0)) / BUDGET_HEROES.length : binomialSd(T, rows0, id, hero, pl, budget.fights);
+    cellsOut[k] = { value: mu == null ? null : r2(mu), sd: l.length ? Math.round(1000 * Math.max(sample, bin)) / 1000 : null };
   }
+  // ratchet: each gap's limit moves to its least-in-band hero's value (a "*" gap covers several), never past the band edge
   let moved = 0;
-  for (const g of T.gaps || []) for (const [k, c] of Object.entries(cellsOut)) {
-    const [id, hero, pl] = k.split('|');
-    if (id !== g.row || pl !== g.player || hero === 'mean' || !(g.hero === hero || g.hero === '*') || !num(c.value)) continue;
-    const nl = g.side === 'below' ? Math.max(g.limit, c.value) : Math.min(g.limit, c.value);
-    if (nl !== g.limit) { g.limit = r2(nl); moved++; }
+  for (const g of T.gaps || []) {
+    const hit = Object.entries(cellsOut).filter(([k, c]) => { const [id, hero, pl] = k.split('|'); return id === g.row && pl === g.player && hero !== 'mean' && (g.hero === hero || g.hero === '*') && num(c.value); });
+    if (!hit.length) continue;
+    const vals = hit.map(([, c]) => c.value), band = cs0[hit[0][0]] && cs0[hit[0][0]].band;
+    let nl = g.side === 'below' ? Math.max(g.limit, Math.min(...vals)) : Math.min(g.limit, Math.max(...vals));
+    if (band) nl = g.side === 'below' ? Math.min(nl, band[0]) : Math.max(nl, band[1]);
+    if (r2(nl) !== g.limit) { g.limit = r2(nl); moved++; }
   }
   if (moved) { fs.writeFileSync(BUDGET_FILE, JSON.stringify(T, null, 2) + '\n'); console.log(`ratcheted ${moved} gap limit(s) toward their bands in ${path.relative(ROOT, BUDGET_FILE)}`); }
   return { about: 'The accepted difficulty budget (tools/budget.mjs): each cell "row|hero|player" is the mean and sd of ' + n + ' seed offsets. Bands, gaps and tolerances: docs/design/difficulty-budget.json. Regenerate with: node tools/health.mjs --write-baseline (or --only budget --write-baseline).',
@@ -404,7 +413,7 @@ if (base) {
   const bad = Object.entries(agg).filter(([k, a]) => verdict(a, base.metrics[k]).fail);
   const missing = Object.keys(base.metrics).filter(k => !(k in agg) && only.includes(k.split('.')[0]));
   const budgetBad = budgetVs.filter(v => v.fail);
-  if (budget && !base.budget) budgetBad.push({ id: 'budget', hero: '-', pl: '-', label: 'no budget section in docs/design/health-baseline.json; run --write-baseline' });
+  if (budget && !base.budget) { console.error('health: no budget section in docs/design/health-baseline.json; run --write-baseline first'); process.exit(2); }
   if (bad.length || missing.length || budgetBad.length) {
     console.log(`\nHEALTH FAIL: ${bad.length} metric(s) past tolerance${missing.length ? `, ${missing.length} missing` : ''}${budgetBad.length ? `, ${budgetBad.length} difficulty budget cell(s)` : ''}`);
     for (const [k, a] of bad) console.log(`  ${k}: ${f2(a.value)} against ${base.metrics[k] ? f2(base.metrics[k].value) : 'no baseline'} (${a.note}); ${verdict(a, base.metrics[k]).label}`);

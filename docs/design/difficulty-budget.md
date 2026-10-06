@@ -21,7 +21,7 @@ judge ruling, first runs) are in the project folder `autopilot/reports/difficult
 ## What is measured
 
 Scratch turn fights (59k `turnCombatSample`, the live rules) for **each starter** (Wren, Tobin, Pip), built as **a hero
-who keeps up with the road** at 26 checkpoints from zone 1 to zone 38:
+who keeps up with the road** at 26 gated checkpoints from zone 1 to zone 38, plus 6 report-only rows (below):
 
 | Part | The footing |
 |---|---|
@@ -60,6 +60,14 @@ Win shares for each hero (Tobin's casual band on a boss sits 10 points higher, c
 A boss's kind comes from the game's own boss tier once it has one (`bossTierOf(z)`, the boss-tiers card); until then
 from its zone. Row ids stay fixed; boss-tiers re-keys kinds and re-baselines in its own PR.
 
+**Report-only rows** (kinds marked `"report": true`: printed against a proposed band, never failing until a judge
+sets the band):
+
+| Kind | Rows | Proposed band | What it watches |
+|---|---|---|---|
+| joined | z20, z38 boss | casual wins drop at most 30 points against the hero who kept the lamp; good 90%+ | a hero who just took the lamp (road level, the lamp's gear as it is, their signature only, no Stars of their own). 2026-10-06: they drop 63-95 points (PR #58 found the same: 31-35% at zone 20) |
+| build | z20 normal and boss | within 15 points of the even spread either way | every attribute point in one attribute (once the game has attributes; before that the rows equal the plain hero). budget.mjs also prints turns against the even spread. On PR #58: all-Focus clears trash in x0.79-1.00 of the turns, all-Might and all-Vigour bosses take x1.14-1.27 |
+
 Report-only columns (not gated): the three-hero mean, casual attempts per win for each hero (1 / win rate, capped at
 20), turns a fight played well, and Tobin's boss turns against the Wren and Pip mean (aim x1.15-1.30).
 
@@ -75,8 +83,9 @@ For each row, hero and player (the "cell"):
 - **An expired gap** (today past its `until`): fails, naming its owner.
 - **The three-hero mean** may not move further from its band than `max(0.04, 2.5 x its sd)` against the baseline.
 
-A hero cell's tolerance is `max(0.06, 2.5 x its sd)` over the baseline's 5 seed offsets (the noisiest cell's sd was 0.04
-on 2026-10-06). Moving toward a band is always ok.
+A hero cell's tolerance is `max(0.06, 2.5 x its sd)`, where sd is the sample sd over the baseline's 5 seed offsets and
+never less than one run's binomial noise (`sqrt(p(1-p)/240)`; a drop adds its ref row's). Four fresh seed offsets
+compared against the baseline gave no failures (2026-10-06). Moving toward a band is always ok.
 
 **Known gaps** are `{ row, hero, player, side, limit, owner, until, why }`. The owner is the card that will close it.
 `--write-baseline` ratchets each limit toward the band and never away. A gap whose cell is back in band prints "gap
@@ -100,9 +109,12 @@ If a cell leaves its band and you think the band is wrong, that is a judge decis
 - **Tobin** wins every zone 20 boss casually where Wren wins 63% (tobin-safety-margin).
 - On PR #58's branch, the zone 20 Captain rises to 80-93% casual (Pip above her band by 13 points): that PR will need a
   judged gap or a retune there.
+- **A hero who just took the lamp** loses most bosses a hero who stayed wins (report-only rows): the gap is abilities, Stars
+  and gear, not level.
 
 ## Change log
 
 | Date | Card | Change | Judge |
 |---|---|---|---|
 | 2026-10-06 | difficulty-budget | Bands, gate and 55 gaps set; the per-fight seed | judge ruling 2026-10-06 (`autopilot/reports/difficulty-budget/judge.md`), after a red team |
+| 2026-10-06 | difficulty-budget | Report-only joined and build rows with proposed bands (coordinator relay of PR #58's findings); sd floored at binomial noise (Opus review) | not gated until a judge sets the bands |

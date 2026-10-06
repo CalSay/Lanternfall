@@ -94,6 +94,30 @@
         1
       ],
       "note": "its ref boss with every worn piece a gear tier behind: casual wins drop 10-60 points against the ref row (gear matters), and a good player still wins 60%+ (skill carries, no hard walls)"
+    },
+    "joined": {
+      "casualDrop": [
+        0,
+        0.3
+      ],
+      "good": [
+        0.9,
+        1
+      ],
+      "report": true,
+      "note": "report only (proposed band, gate once a judge sets it): a hero who just took the lamp (road level, the lamp's gear, signature only, no Stars) against the hero who kept it, at the same boss: casual wins drop at most 30 points, and a good player still wins 90%+ (rotating never stalls the road)"
+    },
+    "build": {
+      "casualDrop": [
+        -0.15,
+        0.15
+      ],
+      "good": [
+        0.9,
+        1
+      ],
+      "report": true,
+      "note": "report only (proposed band): every attribute point in one attribute against the even spread, at the same fight: within 15 points of casual wins either way (shape, not power); budget.mjs also prints the turns ratio"
     }
   },
   "gaps": [

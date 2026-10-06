@@ -41,19 +41,28 @@ export function gatedValue(T, rows, id, hero, pl) {
 export function cells(T, rep) {
   const rows = Object.fromEntries(rep.rows.map(r => [r.id, r])), out = [];
   for (const r of rep.rows) for (const pl of GATED_PLAYERS) {
-    const hs = HEROES.map(h => ({ id: r.id, kind: r.kind, hero: h, pl, value: gatedValue(T, rows, r.id, h, pl), band: bandFor(T, r.kind, h, pl) }));
+    const rp = !!T.kinds[r.kind].report;   // a report-only kind: printed against its band, never fails
+    const hs = HEROES.map(h => ({ id: r.id, kind: r.kind, hero: h, pl, value: gatedValue(T, rows, r.id, h, pl), band: bandFor(T, r.kind, h, pl), ...(rp ? { report: true } : {}) }));
     out.push(...hs);
     const ok = hs.filter(c => num(c.value));
     if (ok.length === HEROES.length) out.push({ id: r.id, kind: r.kind, hero: 'mean', pl, value: r2(mean(ok.map(c => c.value))),
-      band: [r2(mean(hs.map(c => c.band[0]))), r2(mean(hs.map(c => c.band[1])))] });
+      band: [r2(mean(hs.map(c => c.band[0]))), r2(mean(hs.map(c => c.band[1])))], ...(rp ? { report: true } : {}) });
   }
   return out;
+}
+// the binomial noise of one run of a cell (fights a row, hero and player): sqrt(p(1-p)/n); a drop adds its ref row's
+export function binomialSd(T, rows, id, hero, pl, fights) {
+  const r = rows[id]; if (!r || !r.perHero[hero]) return 0;
+  const v = p => p * (1 - p) / fights, w = r.perHero[hero][pl].win;
+  if (pl === 'casual' && T.kinds[r.kind] && T.kinds[r.kind].casualDrop && rows[r.ref]) return Math.sqrt(v(w) + v(rows[r.ref].perHero[hero].casual.win));
+  return Math.sqrt(v(w));
 }
 export const cellKey = c => `${c.id}|${c.hero}|${c.pl}`;
 export function gapFor(T, c) {
   return (T.gaps || []).find(g => g.row === c.id && g.player === c.pl && (g.hero === c.hero || (g.hero === '*' && c.hero !== 'mean')));
 }
 
+// Report-only kinds ("report": true in the JSON) print against their band and never fail.
 // The --compare verdict of one cell against the accepted baseline cell ({ value, sd }) (judge ruling 2026-10-06):
 //   heroes: inside the band ok; a gap entry covers it while it stays on the gap's side no further out than limit + tol;
 //     no gap: out of band by more than tol fails; a boss kind with casual wins under 0.05 (a wall) fails unless a gap
@@ -61,6 +70,7 @@ export function gapFor(T, c) {
 //   mean: its distance from its band must not grow by more than max(meanTol, 2.5 x sd) against the baseline.
 export function verdict(T, c, b, today) {
   const tol = c.hero === 'mean' ? Math.max(T.meanTol, 2.5 * ((b && b.sd) || 0)) : Math.max(T.tolerance, 2.5 * ((b && b.sd) || 0));
+  if (c.report) { const o = num(c.value) ? offBand(c.value, c.band) : 0; return { label: o ? `report: out of band by ${r2(Math.abs(o))}` : 'report: in band', fail: false }; }
   if (!num(c.value)) return { label: 'FAIL (no value)', fail: true };
   const off = offBand(c.value, c.band);
   if (c.hero === 'mean') {
@@ -71,7 +81,7 @@ export function verdict(T, c, b, today) {
   }
   const g = gapFor(T, c);
   if (g && today && g.until && today > g.until) return { label: `FAIL (gap expired ${g.until}; owner ${g.owner})`, fail: true };
-  if (!off) return { label: g ? 'ok (gap closed: remove its entry)' : 'ok', fail: false };
+  if (!off) return { label: g && b && num(b.value) && !offBand(b.value, c.band) ? 'ok (gap closed in the baseline: remove its entry)' : 'ok', fail: false };
   const wall = c.pl === 'casual' && BOSS_KINDS.includes(c.kind) && c.value < 0.05;
   if (g) {
     const onSide = g.side === 'below' ? off < 0 : off > 0;
