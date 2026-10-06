@@ -169,6 +169,42 @@ img[src*="#nic:"] { image-rendering: auto; }   /* a gear icon set by code that d
 /* the turn banner owns the middle of the stage while it shows; toasts and the strip wait out its short pause */
 .stagebox.tc-on .toasts { opacity: 0; transition: opacity .1s; }
 .stagebox.vs-on .toasts:not(.over-menu) { top: calc(var(--vs-b, 54px) + 22px); }   /* under the bars and the place line, not over them */
+
+/* Portrait top band (top-bar-compact): under the header zone bar, ONE line holds the activity switch (Fight / Gather, the zone arrows)
+   and Next Up side by side, instead of three stacked rows. The permanent "While away" sentence is gone (the away card and the
+   away chip say it); Switch lives in the header pill, so it leaves this row. The stage keeps the space. Landscape has its own grid. */
+@media not ((min-aspect-ratio: 1/1) and (min-width: 600px)) {
+  .app .game { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr) auto; }
+  .app .game > .ctrl { grid-column: 1; grid-row: 1; flex-wrap: nowrap; justify-content: flex-start; gap: 2px; padding: 4px 0 4px var(--gut); }
+  .app .game > .nu-slot { grid-column: 2; grid-row: 1; min-width: 0; padding: 4px var(--gut) 4px 8px; align-self: center; }
+  .app .game > .gate-rule { grid-column: 1 / -1; grid-row: 2; margin: 0 var(--gut); }
+  .app .game > .dw-row { grid-column: 1 / -1; grid-row: 2; }
+  .app .game > .stagebox { grid-column: 1 / -1; grid-row: 3; }
+  .app .game > .sbar { grid-column: 1 / -1; grid-row: 4; }
+  .app .game .ctrl-switch { display: none; }
+  .app .game .modeseg button { min-width: 0; padding: 0 7px; min-height: 36px; font-size: calc(12px * var(--display-k)); }
+  .app .game .modeseg .mode-ic { display: none; }
+  .top .zstep { display: contents; }
+  .top .zstep[hidden] { display: none; }
+  .top .zstep .znum { display: none; }   /* the zone pill says the zone */
+  .top .navbtn { width: 28px; height: 44px; isolation: isolate; }
+  .app.deep-run .top .zstep { display: none; }   /* a Deepwell run has floors, not zones to step */
+  .top .navbtn::after { inset: 8px 2px; }
+  .top.nav-pill .who { gap: 0; }
+  .top.nav-pill .act-pill { padding: 0 6px 0 6px; gap: 5px; }
+  .top.nav-pill .act-pill .ap-chev { display: none; }
+  .top #zPrev { order: -1; }
+  .top #zNext { order: 2; }
+  .app .game .nu-chip { min-height: 44px; grid-template-columns: minmax(0, 1fr) auto auto; grid-template-rows: auto auto; gap: 2px 6px; padding: 4px 6px 6px 6px; }
+  .app .game .nu-chip .nu-ic { display: none; }   /* the width goes to the goal's words */
+  .app .game .nu-chip .nu-cbody { display: contents; }
+  .app .game .nu-chip .nu-eye { grid-column: 1; grid-row: 1; align-self: center; white-space: nowrap; min-width: 0; overflow: hidden; font-size: 9px; letter-spacing: .08em; }
+  .app .game .nu-chip .nu-cst { grid-column: 2; grid-row: 1; }
+  .app .game .nu-chip .nu-more { grid-column: 3; grid-row: 1; }
+  .app .game .nu-chip .nu-lbl { grid-column: 1 / -1; grid-row: 2; font-size: 12.5px; }
+  .app .game .nu-chip .nu-chev { display: none; }
+  @media (max-width: 340px) { .top.nav-pill .act-pill .ap-ic { display: none; } }
+}
 /* tab bar: fixed to the bottom of the app, in thumb reach; the lit edge marks the open tab */
 .tabs { grid-area: tabs; display: grid; grid-template-columns: repeat(5, 1fr); padding: 0 6px env(safe-area-inset-bottom, 0px); background: #17111E; border-top: 2px solid var(--line); box-shadow: 0 -3px 0 #0B0810; position: relative; z-index: 6; }
 .tab { min-height: 54px; background: none; border: 0; padding: 7px 2px 6px; cursor: pointer; font: 600 calc(12.5px * var(--display-k))/1.1 var(--display); color: var(--muted); border-top: 3px solid transparent; margin-top: -2px; display: grid; justify-items: center; align-content: center; gap: 3px; position: relative; }
@@ -1842,7 +1878,7 @@ span.cf-d { font-weight: 600; }
 .nu-chip .nu-ic img { width: 20px; height: 20px; }
 .nu-cbody { min-width: 0; display: grid; gap: 1px; }
 .nu-eye { font: 600 10px/1.1 var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
-.nu-chip .nu-lbl { font: 500 13.5px/1.2 var(--body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+.nu-chip .nu-lbl { font: 500 13.5px/1.2 var(--body); white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; display: block; }   /* the whole goal, on as many lines as it takes (top-bar-compact) */
 .nu-cst { font: 600 calc(13px * var(--display-k))/1 var(--display); color: var(--gold); font-variant-numeric: tabular-nums; }
 .nu-more { font: 600 calc(11px * var(--display-k))/1 var(--display); padding: 3px 5px; background: var(--panel-2); border: 1px solid var(--line-hi); color: var(--muted); }
 .nu-more:empty { display: none; }
@@ -3094,7 +3130,7 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
   .nu-chip .nu-eye { grid-column: 2; grid-row: 1; align-self: center; }
   .nu-chip .nu-cst { grid-column: 3; grid-row: 1; }
   .nu-chip .nu-more { grid-column: 4; grid-row: 1; }
-  .nu-chip .nu-lbl { grid-column: 1 / -1; grid-row: 2; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; font-size: 13px; line-height: 1.2; }
+  .nu-chip .nu-lbl { grid-column: 1 / -1; grid-row: 2; white-space: normal; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; font-size: 13px; line-height: 1.2; }
   .nu-chip .nu-chev { display: none; }
   /* the dock in the side column: tabs, four tiles in a row (icons only; the names show on tall screens), Parry and Dodge under them */
   .sbar, .game.solo-game > .sbar { --sb-tile: 58px; --sb-ic: 24px; grid-column: 4 / -1; grid-row: 4; align-self: end; padding: 4px 6px calc(6px + env(safe-area-inset-bottom, 0px)) 7px; gap: 5px; }
@@ -32989,24 +33025,25 @@ $('zPrev').addEventListener('click', () => { if (S.zone > 1) { setZone(S.zone - 
 $('zNext').addEventListener('click', () => { if (S.zone < S.maxZone) { setZone(S.zone + 1); ui(true); } });
 document.querySelectorAll('#modeSeg button').forEach(b => b.addEventListener('click', () => { if (b.dataset.act === 'fight') goFight(); else setActivity(b.dataset.act); }));   // Fight: straight to the live fight (70-ui goFight)
 
+// Portrait: the zone arrows move up beside the header's zone pill (the zone bar), so the line under the header can hold the
+// Fight / Gather switch and Next Up together (top-bar-compact). Landscape keeps them in its top row (80-landscape).
+{
+  const step = $('zStep'), home = step.parentElement;
+  const placeStepper = () => {
+    const to = isWide() ? home : document.querySelector('.top .who') || home;
+    if (step.parentElement !== to) to.append(step);
+  };
+  placeStepper();
+  wideMQ.addEventListener('change', placeStepper);
+}
+
 // Static nodes, looked up once. Every write goes through the put* guards (70-ui.js): 5 calls a
 // second, and an unchanged value must not make the browser lay the page out again.
 const gateEl = { title: $('gateTitle').querySelector('.gt-t'), desc: $('gateDesc'), btn: $('gateBtn'), q: $('gateBtn').querySelector('.qty'), p: $('gateBtn').querySelector('.price') };
 // The away card says the same line (75-away.js): the trade-off is told before you leave, not after.
 const AWAY_RULE_TXT = 'While away, gathering continues and fighting stops. Set your hero to gather before you go.';
-let gateRule = null;
-function uiGateRule() {
-  // Only where the Gather button is on offer: not before the first boss (onboarding hides it) or in a Deepwell run (the row is hidden).
-  const seg = $('modeSeg'), gb = seg.querySelector('button[data-act="gather"]');
-  const on = S.activity === 'fight' && !gb.hidden && seg.style.visibility !== 'hidden' && !$('game').closest('.app').classList.contains('deep-run') && isUnlocked('awaynote');   // its own beat (55-onboard FEATURES)
-  if (!gateRule) {
-    if (!on) return;
-    gateRule = el('p', 'away-rule gate-rule'); gateRule.append(img(iconURL('glass', '#F2E27A')), el('span', null, AWAY_RULE_TXT));
-    $('modeSeg').parentElement.after(gateRule);   // under the Fight / Gather row, where the player picks what the hero does
-  }
-  putToggle(gateRule, 'hide', !on);
-}
-uiHooks.push(uiGateRule);
+// The permanent "While away" strip on the Fight view is gone (top-bar-compact): the away chip below speaks while gathering, on the away note's beat, and the away card says the rule.
+
 // Away chip: what leaving now would earn, told while you gather (the notice above covers a fighter).
 // Estimate from the same rates awayBase uses (50-sim.js), held to the Storehouse room unless Spillover moves on.
 let awayChip = null, awayChipTxt = '';
@@ -33024,7 +33061,7 @@ function awayChipText() {
 }
 function uiAwayChip() {
   const seg = $('modeSeg'), gb = seg.querySelector('button[data-act="gather"]');
-  const txt = gb.hidden || seg.style.visibility === 'hidden' || $('game').closest('.app').classList.contains('deep-run') ? '' : awayChipText();
+  const txt = gb.hidden || seg.style.visibility === 'hidden' || $('game').closest('.app').classList.contains('deep-run') || !isUnlocked('awaynote') ? '' : awayChipText();   // the away note's own beat (55-onboard FEATURES)
   if (!awayChip) {
     if (!txt) return;
     awayChip = el('p', 'away-rule gate-rule away-chip'); awayChip.append(img(iconURL('coin', '#F2C14E')), el('span'));

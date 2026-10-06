@@ -9427,6 +9427,21 @@ if (section('fight HUD fit')) try {
         const cut = await page.evaluate(() => [...document.querySelectorAll('.hud.vs .hero-plate .mob-name, .hud.vs .mob .mob-name, .hud.vs .hud-zone .zname, .hud.vs .mob-hp')]
           .filter(e => e.offsetParent && e.scrollWidth > e.clientWidth + 1).map(e => e.className + ':' + e.textContent));
         assert(!cut.length, `${w}x${h}: hero and foe names, numbers and the place line are not cut (${cut.join(' | ')})`);
+        // top-bar-compact: at phone width the top of the fight is two rows (the header's zone bar, then one line with Fight / Gather
+        // and Next Up side by side), the "While away" sentence is gone and the Next Up goal is whole
+        if (w < h) {
+          const T = await page.evaluate(() => {
+            const r = s => { const e = document.querySelector(s); if (!e || e.hidden || !e.offsetParent) return null; const b = e.getBoundingClientRect(); return { t: b.top, b: b.bottom, l: b.left, r: b.right }; };
+            const lbl = document.querySelector('.nu-lbl');
+            return { top: r('.top'), seg: r('#modeSeg'), nu: r('#nuChip'), stage: r('#stageBox'), prev: r('#zPrev'), pill: r('.act-pill'), rule: !![...document.querySelectorAll('.gate-rule:not(.away-chip)')].some(e => e.offsetParent),
+              lbl: lbl && { cut: getComputedStyle(lbl).textOverflow === 'ellipsis' || lbl.scrollHeight > lbl.clientHeight + 1, txt: lbl.textContent } };
+          });
+          const sameLine = T.seg && T.nu && Math.abs((T.seg.t + T.seg.b) / 2 - (T.nu.t + T.nu.b) / 2) < 20 && T.seg.r <= T.nu.l + 1;
+          assert(sameLine && T.stage.t - T.top.b <= 66, `${w}x${h}: under the header, one line holds Fight / Gather and Next Up, and the stage starts within 66 px of the header (${JSON.stringify({ seg: T.seg, nu: T.nu, stageT: T.stage && T.stage.t, topB: T.top && T.top.b })})`);
+          assert(!T.rule, `${w}x${h}: the permanent "While away" sentence is not on the fight screen`);
+          assert(T.lbl && !T.lbl.cut, `${w}x${h}: the Next Up goal shows whole, with no ellipsis (${T.lbl && T.lbl.txt})`);
+          assert(T.prev && T.pill && T.prev.r <= T.pill.l + 1 && T.prev.t >= T.top.t - 1 && T.prev.b <= T.top.b + 1, `${w}x${h}: the zone arrows sit in the header beside the zone pill`);
+        }
         // the banner and the toasts take turns: while the turn banner shows, the toast stack is hidden
         await X('notify({ msg: "Test notice for the HUD fit check", kind: "hi" }, "now"); emit("turnCard", { who: "foe", secs: 0.9 }); true').catch(() => {});
         await page.waitForTimeout(150);
