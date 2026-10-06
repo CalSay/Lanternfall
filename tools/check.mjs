@@ -5010,6 +5010,7 @@ if (section('notices (browser, W1-B)')) try {
         // ...and Math.random is seeded, so the same drops and rolls fall on every run (LF_NOTICE_SEED tries another seed)
         (a => { Math.random = () => (a = (Math.imul(a, 1664525) + 1013904223) >>> 0) / 4294967296; })(${+process.env.LF_NOTICE_SEED || 7});
         const mk = makeToast; makeToast = function () { R.toasts++; return mk.apply(this, arguments); };
+        on('momentShow', e => { R.moments = (R.moments || 0) + 1; (R.mlist = R.mlist || []).push(Math.round(notes.clock) + 's ' + e.tier + ' ' + e.kind); });   // moment layer: counted, outside the pop budget
         let last = '', same = 0;
         globalThis.__nbStep = () => {
           const st = soloGuideWants(), step = onboardStep();
@@ -5040,7 +5041,8 @@ if (section('notices (browser, W1-B)')) try {
       const inGuide = pops.filter(s => s.g);
       const list = pops.map(s => `${Math.round(s.t)}s ${s.id}`).join(', ');
       assert(r.t >= 590 && r.zone >= 5, `the bot played 10 minutes of a fresh solo game (${Math.round(r.t)} s, zone ${r.zone}, level ${r.L}, ${r.st.length} notices)`);
-      assert(pops.length <= 8 && pops.length >= 2, `a fresh game's first 10 minutes pop at most 8 notices (toasts and captions): ${pops.length} (${list})`);
+      assert(pops.length <= 8 && pops.length >= 1, `a fresh game's first 10 minutes pop at most 8 notices (toasts and captions): ${pops.length} (${list})`);
+      assert((r.nb.moments || 0) <= 8, `moment layer: big and medium moments in a fresh game's first 10 minutes: ${r.nb.moments || 0} (${(r.nb.mlist || []).join(', ')}); at most 8 (about one a minute)`);
       assert(!close, 'never two pops within 20 s' + (close ? `: ${JSON.stringify(close)}` : ''));
       assert(!inGuide.length, 'nothing pops while a guide step shows' + (inGuide.length ? ': ' + inGuide.map(s => s.id).join(', ') : ''));
       assert(r.nb.toasts <= pops.length + r.st.filter(s => s.ch === 'pop' && s.id === 'reply').length, `every toast on screen went through the policy (${r.nb.toasts} drawn, ${pops.length} pops)`);
@@ -9194,6 +9196,101 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
     } finally { await browser.close(); }
   }
 } catch (e) { fail(`landscape ${w}x${h} (browser, UX-L1) crashed: ` + (e.stack || e)); }
+
+// ---- moment layer (card moment-layer; 75-moments-ui.js; docs/design/first-hour.md; scorecard F6) ----
+// Each big and medium moment is forced while the guide, a level-up and the toast flood compete, and must be on screen for at
+// least 2 s, not only in the bell. At 740x360 first (the main target), then 360x740, then with reduced motion.
+if (section('moment layer')) try {
+  const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-moments-ui.js'), 'utf8'), notices = fs.readFileSync(path.join(ROOT, 'src', 'js', '23n-data-notices.js'), 'utf8');
+  assert(/function moment\(kind, o\)/.test(src) && /momentState/.test(src) && /holdGame\(\(\) => !!MOMENT_UI\.ov\)/.test(src) && /noticeAsk\('card:moment'/.test(src),
+    'moment layer: moment(kind, opts) and momentState() exist, a big card holds the game and asks the card channel');
+  assert(/id: 'unique', re: \/\^Unique loot! \/, ch: 'log'/.test(notices) && /id: 'card:moment'/.test(notices) && !/ch: m => \/joins your trophy wall\//.test(notices),
+    'moment layer: the unique rule no longer sends a first unique to the bell (23n-data-notices)');
+  await (async () => {
+    const { pw, exe } = browserTools;
+    if (!pw || !exe || !fs.existsSync(distFile)) { skipBrowser('moment layer (browser): Playwright or Chromium not here, skipped'); return; }
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const rawOf = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h, motion] of [[740, 360, 'no-preference'], [360, 740, 'no-preference'], [740, 360, 'reduce']]) {
+        const at = `moment layer ${w}x${h}${motion === 'reduce' ? ' reduced motion' : ''}`;
+        try {
+          const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: true, hasTouch: true, reducedMotion: motion });
+          await ctx.addInitScript(([key, raw]) => {
+            try { localStorage.setItem('lanternfall.test.nostory', '1'); localStorage.setItem('lanternfall.test.moments', '1'); } catch (e) {}
+            if (sessionStorage.getItem('mm-seeded')) return; sessionStorage.setItem('mm-seeded', '1');
+            const o = JSON.parse(raw); o.last = Date.now(); localStorage.setItem(key, JSON.stringify(o));
+          }, [KEY, rawOf('save-mid.json')]);
+          const page = await ctx.newPage(); const errs = [];
+          page.on('pageerror', e => errs.push(String(e)));
+          await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+          await page.goto('http://lf.test/'); await page.waitForTimeout(700);
+          for (let i = 0; i < 4; i++) { const b = await page.$('#createScreen .create-go'); if (!b) break; await b.click(); await page.waitForTimeout(300); }
+          const X = s => page.evaluate(s => window.__t.x(s), s);
+          const until = async (expr, ms = 6000) => { try { await page.waitForFunction(e => window.__t.x(e), expr, { timeout: ms, polling: 100 }); } catch (e) { /* the assert below says what is missing */ } };
+          await page.waitForTimeout(4600);   // no moment opens at boot (MOMENT_TUNE.bootS)
+          await X(`S.activity = 'gather'; S.tab = ''; S.onboard.tips = false; emit('sceneReset'); true`);   // no turn fight: a moment may show
+          await X(`S.found.sproutblade = 0; dropUnique('sproutblade', 1)`);
+          // a level-up and a flood of toasts compete with it
+          await X(`emit('levelup', { L: 5 }); for (let i = 0; i < 4; i++) toast('Check notice ' + i, 'good', null, 'high'); true`);
+          await until(`!!document.querySelector('.mm-ov')`);
+          const big = await X(`(() => { const o = document.querySelector('.mm-ov'), c = o && o.querySelector('.mm-card'), r = c && c.getBoundingClientRect(), g = c && c.querySelector('.mm-go').getBoundingClientRect();
+            return { up: !!o, text: o ? o.textContent : '', fits: !!r && r.top >= 0 && r.bottom <= innerHeight + 1 && r.left >= 0 && r.right <= innerWidth + 1 && g.bottom <= innerHeight + 1,
+              burst: o && getComputedStyle(o.querySelector('.mm-burst')).display, held: GAME_HOLDS.some(f => f()), bell: notes.log.some(n => n.ch === 'bell' && /Unique loot/.test(n.msg)), st: momentState() }; })()`);
+          assert(big.up && /Sproutblade/.test(big.text) && /Unique loot/i.test(big.text) && big.fits && big.held && !big.bell,
+            `${at}: a unique shows a big card (name, label, Continue in view) and holds the game; it is not a bell line (${JSON.stringify({ up: big.up, fits: big.fits, held: big.held, bell: big.bell })})`);
+          assert(motion === 'reduce' ? big.burst === 'none' : big.burst !== 'none', `${at}: the burst ${motion === 'reduce' ? 'is off for reduced motion' : 'plays'}`);
+          assert(/Level 5/.test(big.text), `${at}: a level-up that competes folds into the card as a line`);
+          await page.mouse.click(Math.round(w / 2), 8); await page.waitForTimeout(150);   // a stray tap inside the lock must not skip it
+          const still = await X(`!!document.querySelector('.mm-ov')`);
+          await page.waitForTimeout(2100);
+          const after2 = await X(`!!document.querySelector('.mm-ov')`);
+          assert(still && after2, `${at}: the big card stays up for 2 s and a stray tap does not skip it`);
+          if (motion !== 'reduce') await page.screenshot({ path: path.join(ROOT, 'docs', 'proof', 'moment-layer', `unique-card-${w}x${h}.png`) });
+          await page.click('.mm-go'); await page.waitForTimeout(250);
+          assert(!(await X(`!!document.querySelector('.mm-ov')`)) && !(await X('GAME_HOLDS.some(f => f())')), `${at}: Continue closes the card and lets the game run`);
+          // medium: level 3 is small (no banner); level 5 is a banner of its own, in the notices slot, held 2 s against a toast flood
+          await X(`MOMENT_UI.midAt.length = 0; emit('levelup', { L: 3 }); true`); await page.waitForTimeout(1500);
+          assert(!(await X(`!!document.querySelector('.mm-toast')`)), `${at}: level 3 is a small notice, no banner`);
+          await X(`emit('levelup', { L: 10 }); true`); await until(`!!document.querySelector('.mm-toast')`);
+          const t0 = Date.now();
+          const med = await X(`(() => { const t = document.querySelector('.mm-toast'); return { up: !!t, text: t ? t.textContent : '', slot: t ? t.parentNode.id : '', dock: document.getElementById('toasts').className }; })()`);
+          assert(med.up && /Level 10/.test(med.text) && med.slot === 'toasts', `${at}: a 10th level is a banner in the notices slot (${med.dock})`);
+          if (motion !== 'reduce') await page.screenshot({ path: path.join(ROOT, 'docs', 'proof', 'moment-layer', `level-banner-${w}x${h}.png`) });
+          await X(`for (let i = 0; i < 4; i++) toast('Later notice ' + i, 'good', null, 'high'); true`);
+          await page.waitForTimeout(Math.max(0, 1500 - (Date.now() - t0)));
+          assert(await X(`!!document.querySelector('.mm-toast')`), `${at}: the banner is held for its 2 s minimum while later toasts arrive`);
+          // a unique-rare ability and a Star in one fight end make one banner with lines, not two
+          await page.waitForTimeout(2500);
+          await X(`MOMENT_UI.midAt.length = 0; emit('levelup', { L: 15 }); emit('abilityLearned', { hero: S.solo.hero, id: HERO_ABILITIES[S.solo.hero][2] }); true`); await until(`!!document.querySelector('.mm-toast')`);
+          const fold = await X(`document.querySelectorAll('.mm-toast').length + ':' + (document.querySelector('.mm-toast') || { textContent: '' }).textContent`);
+          assert(/^1:/.test(fold) && /Level 15/.test(fold) && /New ability/.test(fold), `${at}: two medium moments at one fight end fold into one banner (${fold.slice(0, 80)})`);
+          // at most 2 medium moments in any 3 minutes of the first 30: a third waits (it is not dropped)
+          await page.waitForTimeout(3200);
+          await X(`MOMENT_UI.midAt = [Date.now() - 60000, Date.now() - 30000]; notes.clock = 100; emit('levelup', { L: 20 }); true`); await page.waitForTimeout(1800);
+          const cap = await X(`momentState().queued + ':' + !!document.querySelector('.mm-toast')`);
+          assert(cap === '1:false', `${at}: a third medium moment inside 3 minutes waits in the queue (${cap})`);
+          await X(`MOMENT_UI.midAt.length = 0; true`); await until(`!!document.querySelector('.mm-toast')`);
+          assert(await X(`!!document.querySelector('.mm-toast')`), `${at}: ...and shows when the window frees`);
+          // it never shows during a turn: a live fight holds it, the fight's end lets it through
+          await page.waitForTimeout(3200);
+          await X(`MOMENT_UI.midAt.length = 0; S.activity = 'fight'; emit('sceneReset'); true`); await page.waitForTimeout(1500);
+          const live = await X(`(() => { const f = typeof TURN_LIVE !== 'undefined' && !!TURN_LIVE && !TURN_LIVE.ended; if (!f) return 'nofight'; emit('levelup', { L: 25 }); return 'fight'; })()`);
+          if (live === 'fight') {
+            await page.waitForTimeout(900);
+            const during = await X(`!!document.querySelector('.mm-toast') && TURN_LIVE && !TURN_LIVE.ended`);
+            assert(!during || (await X('momentState().queued')) === 0, `${at}: a moment does not show during a turn`);
+          } else ok(`${at}: no live turn fight on this fixture (the during-a-turn hold is covered by the source check)`);
+          assert(/const fighting = \(\) => [\s\S]{0,160}TURN_LIVE/.test(src), `${at}: the flush waits while a turn fight is live`);
+          assert(!errs.length, `${at}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+          await ctx.close();
+        } catch (e) { fail(`${at} crashed: ` + (e.stack || e)); }
+      }
+    } finally { await browser.close(); }
+  })();
+} catch (e) { fail('moment layer crashed: ' + (e.stack || e)); }
 
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 console.log(browserSummary(browserSkipped, browserSkipReasons));

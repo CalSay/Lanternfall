@@ -5,7 +5,7 @@
 {
   let open = null;
   holdGame(() => !!open && !open.closed);   // 00-util's pause registry: the hero is not hit while the card is up
-  const blocked = () => !!document.querySelector('.away-ov, #createScreen, .join-ov, .gl-ov');
+  const blocked = () => !!document.querySelector('.away-ov, #createScreen, .join-ov, .gl-ov, .mm-ov');
   function show() {
     const L = S.bossTry && S.bossTry.last;
     if (!L || !bossTryHeld() || typeof openSheet !== 'function') return;

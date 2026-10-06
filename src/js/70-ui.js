@@ -86,7 +86,7 @@ try { new ResizeObserver(es => { for (const e of es) document.documentElement.st
 // (A step that pauses the game counts from the moment it is due, before the hint's next 250 ms draw.)
 const guideBusy = () => { try { if (soloGuideWants()) return true; const s = onboardStep(); return !!(s && onboardPaused(s)); } catch (e) { return false; } };
 const guideRuns = () => { try { return !!(S.onboard && S.onboard.tips && GUIDE_STEPS.some(s => !S.onboard.done[s.id])); } catch (e) { return false; } };
-const cardUp = () => !!document.querySelector('.gl-ov, .dd-fc-ov, .away-ov, .join-ov, #createScreen');
+const cardUp = () => !!document.querySelector('.gl-ov, .mm-ov, .dd-fc-ov, .away-ov, .join-ov, #createScreen');
 // The pop budget (seconds of play): one per NOTICE_TUNE.gap, NOTICE_TUNE.perMin a minute.
 // A rule may ask for a longer quiet before it (`gap`: the stage captions).
 function popRoom(rule) {
@@ -171,7 +171,8 @@ function popToast(msg, kind, url, p, go) {
   if (same) { same._more++; fillToast(same, msg, url); armToast(same); return; }
   // Two toasts fit under the HUD on a full stage (or over an open menu); a short stage takes one.
   const room = box.classList.contains('over-menu') || box.classList.contains('side-dock') || (stageBoxH || $('stageBox').offsetHeight) >= 200 ? 2 : 1;
-  for (let i = 0; i <= live.length - room; i++) { const out = live[i]; out._gone = true; clearTimeout(out._timer); out.remove(); }
+  const old = live.filter(t => !(t._hold > Date.now()));   // a moment banner stays its minimum time (75-moments-ui)
+  for (let i = 0; i <= old.length - room; i++) { const out = old[i]; out._gone = true; clearTimeout(out._timer); out.remove(); }
   const t = makeToast(msg, kind, url, p, go);
   box.appendChild(t);
   armToast(t);
