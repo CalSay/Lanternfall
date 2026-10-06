@@ -9517,6 +9517,8 @@ if (section('moment layer')) try {
           const until = async (expr, ms = 6000) => { try { await page.waitForFunction(e => window.__t.x(e), expr, { timeout: ms, polling: 100 }); } catch (e) { /* the assert below says what is missing */ } };
           await page.waitForTimeout(4600);   // no moment opens at boot (MOMENT_TUNE.bootS)
           await X(`S.activity = 'gather'; S.tab = ''; S.onboard.tips = false; emit('sceneReset'); true`);   // no turn fight: a moment may show
+          await page.waitForTimeout(600);
+          await X(`MOMENT_Q.length = 0; if (MOMENT_UI.ov) { MOMENT_UI.shownAt = 0; document.querySelector('.mm-go').click(); } true`);   // a catch-up (a hero who joined as the save loaded) is not this check's moment
           await X(`S.found.sproutblade = 0; dropUnique('sproutblade', 1)`);
           // a level-up and a flood of toasts compete with it
           await X(`emit('levelup', { L: 5 }); for (let i = 0; i < 4; i++) toast('Check notice ' + i, 'good', null, 'high'); true`);
@@ -9525,7 +9527,7 @@ if (section('moment layer')) try {
             return { up: !!o, text: o ? o.textContent : '', fits: !!r && r.top >= 0 && r.bottom <= innerHeight + 1 && r.left >= 0 && r.right <= innerWidth + 1 && g.bottom <= innerHeight + 1,
               burst: o && getComputedStyle(o.querySelector('.mm-burst')).display, held: GAME_HOLDS.some(f => f()), bell: notes.log.some(n => n.ch === 'bell' && /Unique loot/.test(n.msg)), st: momentState() }; })()`);
           assert(big.up && /Sproutblade/.test(big.text) && /Unique loot/i.test(big.text) && big.fits && big.held && !big.bell,
-            `${at}: a unique shows a big card (name, label, Continue in view) and holds the game; it is not a bell line (${JSON.stringify({ up: big.up, fits: big.fits, held: big.held, bell: big.bell })})`);
+            `${at}: a unique shows a big card (name, label, Continue in view) and holds the game; it is not a bell line (${JSON.stringify({ up: big.up, fits: big.fits, held: big.held, bell: big.bell, text: String(big.text).slice(0, 120) })})`);
           assert(motion === 'reduce' ? big.burst === 'none' : big.burst !== 'none', `${at}: the burst ${motion === 'reduce' ? 'is off for reduced motion' : 'plays'}`);
           assert(/Level 5/.test(big.text), `${at}: a level-up that competes folds into the card as a line`);
           await page.mouse.click(Math.round(w / 2), 8); await page.waitForTimeout(150);   // a stray tap inside the lock must not skip it
@@ -9562,15 +9564,16 @@ if (section('moment layer')) try {
           // it never shows during a turn: a live fight (past its intro) holds it, the fight's end lets it through
           await page.waitForTimeout(3200);
           await X(`MOMENT_UI.midAt.length = 0; S.activity = 'fight'; emit('sceneReset'); true`);
-          await until(`typeof TURN_LIVE !== 'undefined' && !!TURN_LIVE && !TURN_LIVE.ended && TURN_LIVE.phase !== 'intro'`, 9000);
-          const live = await X(`(() => { const f = typeof TURN_LIVE !== 'undefined' && !!TURN_LIVE && !TURN_LIVE.ended && TURN_LIVE.phase !== 'intro'; if (f) emit('levelup', { L: 25 }); return f; })()`);
+          await until(`typeof TURN_LIVE !== 'undefined' && !!TURN_LIVE && !TURN_LIVE.ended`, 9000);
+          // pin the turn in motion (a hit landing: phase 'timing'), then raise the moment
+          const live = await X(`(() => { const f = typeof TURN_LIVE !== 'undefined' && !!TURN_LIVE && !TURN_LIVE.ended; if (f) { window.__pin = setInterval(() => { if (TURN_LIVE) TURN_LIVE.phase = 'timing'; }, 10); emit('levelup', { L: 25 }); } return f; })()`);
           assert(live, `${at}: a turn fight is live for the during-a-turn check`);
           await page.waitForTimeout(1200);
           const during = await X(`!!document.querySelector('.mm-toast') + ':' + momentState().queued`);
-          assert(during === 'false:1', `${at}: a moment does not show during a turn (${during})`);
-          await X(`TURN_LIVE.ended = true; true`);
+          assert(during === 'false:1', `${at}: a moment does not show while a turn is in motion (${during})`);
+          await X(`clearInterval(window.__pin); TURN_LIVE.phase = 'hero'; true`);   // the turn ends: the hero's turn waits for the player
           await until(`!!document.querySelector('.mm-toast')`, 6000);
-          assert(await X(`!!document.querySelector('.mm-toast')`), `${at}: ...and shows as the fight ends, before the next fight's first turn`);
+          assert(await X(`!!document.querySelector('.mm-toast')`), `${at}: ...and shows when the turn ends, even if the player then waits`);
           assert(/const fighting = \(\) => [\s\S]{0,160}TURN_LIVE/.test(src), `${at}: the flush waits while a turn fight is live`);
           assert(!errs.length, `${at}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
           await ctx.close();

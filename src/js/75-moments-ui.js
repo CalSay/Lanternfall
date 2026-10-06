@@ -8,7 +8,7 @@
 //           MOMENT_TUNE.midMax in any MOMENT_TUNE.midWindowS seconds during the first MOMENT_TUNE.midFirstS seconds of play.
 //   small   today's toasts (23n-data-notices).
 // A big or medium moment is never demoted to the bell and never waits behind a guide step or a story card. It queues to
-// the end of the fight (never shown during a turn, so it never covers a parry window) and shows at once outside one. It does
+// the end of the turn (never shown while a turn is in motion, so it never covers a parry window) and shows at once outside one. It does
 // wait for the guide step on screen, the Away and What's-new cards, and the first seconds after boot.
 // Several at fight end fold into one card with a list. Reduced motion: the same card, no burst.
 // API for later cards:  moment(kind, { title, sub, rarity, icon, still, lines, actions })
@@ -18,7 +18,7 @@
 //   lines    [{ txt, ic? }] a short list under the title;  actions  [{ txt, fn }] extra buttons beside Continue
 // momentState() -> { up, banner, queued } for the checks. Nothing here is saved: a moment not yet seen when the game closes
 // is dropped (a unique already sits in the trophy wall).
-const MOMENT_TUNE = { bannerS: 2.6, bannerExtraS: 0.7, settleS: 0.3, tapLockMs: 700, maxLines: 5, maxBanner: 3, bootS: 4, guideWaitS: 6, midMax: 2, midWindowS: 180, midFirstS: 1800 };
+const MOMENT_TUNE = { bannerS: 2.6, bannerExtraS: 0.7, settleS: 0.3, tapLockMs: 700, maxLines: 5, maxBanner: 3, bootS: 4, guideWaitS: 1, midMax: 2, midWindowS: 180, midFirstS: 1800 };
 const MOMENT_KINDS = {
   boss: { tier: 'big', eye: 'Boss down', col: '#F2C14E', snd: 'big' },
   unique: { tier: 'big', eye: 'Unique loot', col: '#FF8A3D', snd: 'big' },
@@ -47,8 +47,9 @@ function moment(kind, o) {
 }
 function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner, queued: MOMENT_Q.length }; }
 {
-  // a turn fight is live (the next foe's intro, about 0.5 s after a kill, is not: the boss's card must show before the fight goes on)
-  const fighting = () => { try { return typeof TURN_LIVE !== 'undefined' && !!TURN_LIVE && !TURN_LIVE.ended && TURN_LIVE.phase !== 'intro'; } catch (e) { return false; } };
+  // a turn is in motion (a hit, a windup, a parry window). The waiting phases (the next foe's intro, the hero's turn, the handoff: the game's own
+  // turnWaiting) are not: no parry window is open, so a card there covers nothing, and an idle player at the hero's turn must still see their unique.
+  const fighting = () => { try { return typeof TURN_LIVE !== 'undefined' && !!TURN_LIVE && !TURN_LIVE.ended && !['intro', 'hero', 'handoff'].includes(TURN_LIVE.phase); } catch (e) { return false; } };
   const bootT = performance.now();
   // a card up, the guide's step, the What's-new window or the first seconds after boot hold a moment back
   // (the guide's step gets guideWaitS seconds to finish, then the moment shows over it: a step left on screen must not hide a unique)

@@ -192,11 +192,11 @@ async function firstCraft(size) {
 const MOMENTS = [
   // a control: a toast drawn straight on screen (past the notice policy) must be seen for 2 s, or the reader is broken
   { id: 'control (a plain toast)', control: true, noRival: true, force: `(() => { S.onboard.tips = false; popToast('Eyes control toast', 'good', null, 2); return { name: 'Eyes control toast' }; })()` },
-  { id: 'first boss win', rarity: null, force: `(() => { S.zone = S.maxZone; killPack({ boss: true, xp: 1, gold: 0, name: 'Elder', pal: [] }, 0); return { name: '(cleared|lies ahead|won)' }; })()` },
+  { id: 'first boss win', rarity: null, force: `(() => { S.zone = 1; S.maxZone = 1; killPack({ boss: true, xp: 1, gold: 0, name: 'Elder', pal: [] }, 0); return { name: 'first boss falls' }; })()` },
   { id: 'unique drop', force: `(() => { const k = zoneUnique(S.zone); dropUnique(k, 1); return { name: UNIQ[k].name, rarity: 'unique|legendary' }; })()` },
   { id: 'rare craft', force: `(() => { const k = Object.keys(CRAFT_KINDS).find(k => canCraft(k, 1).ok); const mr = Math.random; let it = null; for (const v of [0.0001, 0.5, 0.9999]) { Math.random = () => v; it = craftItem(k, 1); if (it && /rare|epic|legendary/.test(it.r)) break; } Math.random = mr; return it ? { name: itemName(it), rarity: 'rare|epic|legendary' } : { name: 'NOCRAFT' }; })()` },
   { id: 'craft grade (a plain craft)', force: `(() => { const k = Object.keys(CRAFT_KINDS).find(k => canCraft(k, 1).ok); const mr = Math.random; Math.random = () => 0.9999; const it = craftItem(k, 1); Math.random = mr; return it ? { name: itemName(it), rarity: RAR[it.r].n } : { name: 'NOCRAFT' }; })()` },
-  { id: 'level up', force: `(() => { const L = S.L; gainXp(xpNeed() * 1.01); return { name: 'Level ' + S.L + '|level up' }; })()`, noRival: true },
+  { id: 'level up', force: `(() => { S.L = 9; S.xp = 0; gainXp(xpNeed() * 1.01); return { name: 'Level ' + S.L + '|level up' }; })()`, noRival: true },
   { id: 'new ability', force: `(() => { const h = S.solo.hero; const id = HERO_ABILITIES[h].find(i => ABILITIES[i].tier && !abilityOwned(h, i)); if (!id) return { name: 'NOABILITY' }; for (const s of SCROLL_ORDER) S.abil.scrolls[s] = 3; const lv = soloLevels()[h]; if (lv) lv.L = Math.max(lv.L, 99); const ok = abilityLearn(h, id); return { name: ABILITIES[id].name, ok }; })()` },
   { id: 'new Star', force: `(() => { const id = STAR_ORDER.find(i => !S.stars.own[i]); starGrant(id); return { name: STARS[id].name }; })()` },
   { id: 'new hero', force: `(() => { const id = ROSTER_KEYS.find(k => ROSTER[k].route.type !== 'starter' && !heroUnlocked(k)); if (!id) return { name: 'NOHERO' }; S.party.unlock.heroes[id] = 1; emit('heroUnlocked', { id }); return { name: ROSTER[id].name }; })()` },
@@ -206,7 +206,7 @@ const MOMENTS = [
 const WATCH = (name, rarity) => `(() => {
   const nm = new RegExp(${JSON.stringify(name)}, 'i'), ra = ${rarity ? `new RegExp(${JSON.stringify(rarity)}, 'i')` : 'null'};
   const vis = n => { for (let e = n; e && e !== document.body; e = e.parentElement) { if (e.hidden) return false; const s = getComputedStyle(e); if (s.display === 'none' || s.visibility === 'hidden' || +s.opacity < 0.1) return false; } const r = n.getBoundingClientRect(); return r.width > 0 && r.height > 0 && r.bottom > 0 && r.right > 0 && r.top < innerHeight && r.left < innerWidth; };
-  const SURF = '.toast, .gl-card, .cb-banner, .tv-banner, .bsheet-ov, .modal, .away-ov, .dw-ov, [role=status], [role=dialog], .dd-feat, .feat-card';
+  const SURF = '.toast, .gl-card, .cb-banner, .tv-banner, .bsheet-ov, .modal, .away-ov, .dw-ov, [role=status], [role=dialog], .dd-feat, .feat-card, .mm-card';
   let named = '', both = '', surf = '';
   const tw = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
   for (let t; (t = tw.nextNode());) { const s = t.textContent; if (!nm.test(s) || !t.parentElement || !vis(t.parentElement)) continue;
@@ -216,7 +216,7 @@ const WATCH = (name, rarity) => `(() => {
   for (const f of LF_EYES.floats()) if (nm.test(f.txt) && f.left > 0.1) { named = named || f.txt; surf = surf || 'stage text'; if (!ra || ra.test(f.txt)) both = both || f.txt; }
   return { named, both, surf };
 })()`;
-const SOUNDS = new Set(['loot', 'level', 'skill', 'zone', 'forge']);
+const SOUNDS = new Set(['loot', 'level', 'skill', 'zone', 'forge', 'momentBig', 'momentMid']);   // the moment layer's stings
 
 async function moments(size) {
   for (const m of MOMENTS) {
@@ -230,11 +230,12 @@ async function moments(size) {
       let r;
       if (!m.noRival) await X('gainXp(xpNeed() * 1.01); true');   // a level up competes (a level up moment forces its own)
       await sleep(300); await page.evaluate('LF_EYES.sfx()');   // the rival's sound is not the moment's
+      await X(`try { if (typeof TURN_LIVE !== 'undefined' && TURN_LIVE && !TURN_LIVE.ended) TURN_LIVE.ended = true; } catch (e) {} true`);   // the fight is over, as it is when a player's win lands (moments wait for the fight's end)
       r = await X(m.force);
       if (!r || /^NO/.test(r.name)) { await note(page, { check: 'moments', scenario: m.id, size: size.id, what: 'could not force this moment', detail: JSON.stringify(r) }); continue; }
       let first = 0, last = 0, aboth = 0, lastBoth = 0, surf = '', named = '';
       const t0 = Date.now();
-      while (Date.now() - t0 < 5200) {
+      while (Date.now() - t0 < 7500) {   // a moment may wait for the boot, a guide step and the fight end first
         const w = await page.evaluate(WATCH(r.name, r.rarity));
         const t = Date.now() - t0;
         if (w.named) { if (!first) first = t; last = t; named = w.named; surf = w.surf; }
