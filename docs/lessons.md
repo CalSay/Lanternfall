@@ -37,6 +37,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Gate hero unlocks on the zone of the hero's first scene, in one table (`STORY_MEET`, `56c-unlocks.js`), and bump the zone in tests that unlock heroes early. Why: the bible says no hero unlocks before their first scene, and many C9 tests unlocked Bram at zone 10 (his scene is zone 31). (story-opening, 2026-10-06)
 - Keep the new-game hero picker free of later-region names: a locked hero shows who you meet, not where or how much. Why: unlock text named "Cinder Road II" and "still being designed" to a first-time player. (story-opening, 2026-10-06)
 - Story browser tests that script their own scenes must expect the real opening scenes first, because they queue on the first walk-in before test data loads. Why: deleting the data after load changed nothing. (story-opening, 2026-10-06)
+- In landscape, put story card buttons beside the card, not sticky over it. Why: at 740x360 the opening card's lines 2 and 3 sat behind Begin and Skip while the size test still passed; check that every line is visible, not only that the sheet fits. (story-opening, 2026-10-06)
 
 ## UI and menus
 
