@@ -118,7 +118,7 @@ always walls (Lv 35 took 7 to 11 active hours).
 
 All runs: `tools/sim.mjs --turns 1 --active 1`, good persona 17 days x 3 h (`--skill good`), casual 60 days x 45 min
 (`--skill casual`), seeds 41, 42 and 43, each starter, the old game (this branch's parent, `HERO_TUNE` absent) and this
-build. Scripts: `hero-progression-build/run.sh`, `an.mjs` (per-run lines in `matrix.txt`), `arms.mjs` (`arms-150.txt`).
+build. Scripts: `hero-progression-build/run.sh`, `an.mjs` (per-run lines in `matrix.txt`), `arms.mjs` (`arms-150.txt` before the per-attribute split, `arms-split.txt` after it and after the judge's join amend).
 Attribute policy in the pace runs: even (the sim's default `--attrs even`).
 
 **Pace (judge: hours to zone 30 at 0.75 to 1.10 x the old game, each starter, both personas).**
@@ -154,23 +154,25 @@ an arm, the joining hero lifted and spread evenly with their signature kit:
 |---|---|---|---|
 | Wren (100%, 90%) | Tobin | 100% | 100% |
 | | Pip | 100% | 83% (-7) |
-| Tobin (100%, 100%) | Wren | 100% | 41% (-59) |
-| | Pip | 100% | 53% (-47) |
+| Tobin (100%, 100%) | Wren | 99% | 35% (-65) |
+| | Pip | 100% | 34% (-66) |
 | Pip (100%, 60%) | Wren | 95% | 31% (-29) |
 | | Tobin | 100% | 98% |
 
 Normal fights hold. Bosses miss whenever the hero who leaves had more kit: the profiles show the gap is not the level
-(the joiner is at Lv 29 against 28-30) but abilities, Stars and gear affixes (Pip from Tobin's save has the same Attack
+(the joiner is at Lv 28-29 against 28-30; after the judge's amend a joiner never outranks the hero who leaves, so from Tobin's Lv 28 save they join at 28, not 29) but abilities, Stars and gear affixes (Pip from Tobin's save has the same Attack
 and more health, but one ability and no Stars against her own save's three abilities and three Stars). Before the
 join lead the levels were 1-3 short as well. The judge's ruling sends this to Cal: no free ability learns.
 
 **Dominance (judge: no build best for every starter on both foe types; each attribute in a winning build; the best
 beats even by 5+ points somewhere).** Even, four pure builds and six pairs, normal foes (casual skill: win rate and
-kills an hour) and the zone boss (good and casual skill), zone 20 and zone 30 saves. With the per-attribute split
-(section 2): no build is best everywhere (Focus wins normal foes for most; Vigour, Focus/Vigour, Guard/Vigour, even and
-Might/Guard win bosses); Might wins only one, small; the best beats even by 17 points (Pip, pure Focus, normal foes at
-zone 20). Wren with any extra Focus kills normal foes in one ability, so pure Focus farms 2.3-3.5x faster than even
-for her and loses on bosses (82-92% against Vigour's 95-98%).
+kills an hour) and the zone boss (good and casual skill), zone 20 and zone 30 saves, 150 fights an arm
+(`arms-split.txt`). No build is best everywhere: Focus wins normal foes for most saves, Focus/Vigour wins bosses for
+most, and Focus/Guard and even win some. The best beats even by 13 points (Pip, pure Focus, normal foes at zone 20).
+Might is in no winning build in this run (in the earlier post-split run it won one boss row by a single fight): it is
+the weakest attribute, so the rule's "each attribute wins somewhere" is not met for Might. Its job comes with weapons
+that scale with attributes (card craft-attribute-grades). Wren with any extra Focus kills normal foes in one ability,
+so pure Focus farms 2.1-3.2x faster than even for her and loses on bosses (81-91% against Vigour's 96-97%).
 
 **Gold (judge: spent / earned at zone 20 at least 0.5 with the flag off).** Zone 20: 0.66 (Wren), 0.86 (Pip), 0.91
 (Tobin); zone 30: 0.96-1.0. Old game: 0.95-1.0, with Training 26-33% of all gold spent. The gold goes to camp, crafting
@@ -192,3 +194,12 @@ Opus judge's ruling in `judge.md`. What changed because of them:
 | A lift could chain level-ups | clamp | XP kept short of a level |
 | The flag did not roll saves back | seed once | `S.solo.trSeeded` |
 | Measures were loose | pinned | power margin, dominance arms, pace bands (section 6) |
+| The join lead could lift a joiner past the hero who leaves | amend | the lift stops at the leaving hero's level; the road's own level stays the floor |
+| A save code could carry more points than the level gives | validate | save codes refuse it; points past the total count nothing |
+
+**Sign-off (Opus judge, after the results above).** The attribute set and the level curve are signed off for the
+integration branch, not yet for testers. Accepted: the XP brake, the per-attribute split, no camp-only reset, the
+Build tab. Before testers: smooth the road's slopes (a monotone curve through `HERO_TUNE.road`) and add a check that
+whole-level fights change by at most 25% between neighbouring zones 1-50. For Cal: the switch's boss miss (kit, not
+level), Tobin's level gaps, casual Tobin's pace, Wren's Focus farming, and Might as the weakest attribute until weapons
+scale with attributes.

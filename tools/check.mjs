@@ -1379,7 +1379,7 @@ if (section('onboarding')) try {
   const got = {}, log = [];
   g.fn.on('unlock', e => { got[e.id] = E('Math.round(S.onboard.t)'); log.push(e.id); });
   let firstUp = null;
-  const buy = () => E(`{ if (attrOn()) { attrAdd('might', attrPoints().free); } else for (let k = 0; k < 50; k++) { const t = trainNext(); if (!t || S.gold < t.cost) break; train(t.move, '1'); } }`);   // W2-A: Training; hero-progression-rework: a new player puts the free points into Might (the guide's upgrade step)
+  const buy = () => E(`{ if (attrOn()) { attrSpread(); } else for (let k = 0; k < 50; k++) { const t = trainNext(); if (!t || S.gold < t.cost) break; train(t.move, '1'); } }`);   // W2-A: Training; hero-progression-rework: a new player puts the free points into Might (the guide's upgrade step)
   for (let sec = 0; sec < 12 * 60; sec++) {
     for (let i = 0; i < 10; i++) g.fn.tick(0.1);
     if (firstUp === null && E('S.gold >= 10')) firstUp = sec;
@@ -1396,7 +1396,9 @@ if (section('onboarding')) try {
   const early = Object.values(got).filter(t => t <= 600).sort((a, b) => a - b);
   let gap = early[0] || 0; for (let i = 1; i < early.length; i++) gap = Math.max(gap, early[i] - early[i - 1]);
   // W2-B: solo has no Roster unlock, so the 5-8 minute stretch is quiet (the old target was 180 s): a pacing note for the coordinator
-  assert(early.length >= 8 && gap <= 210, `something new at least every 3.5 minutes in the first 10 (${early.length} unlocks, longest gap ${gap}s)`);
+  // hero-progression-rework: the early road is eased so the optimiser's zone at 1 hour stays in its health band (13 against the old 11.8);
+  // this player reaches zone 10 (the Codex) about 4 minutes after the Tavern. A faster road fails health's dry-stretch and wipe bands.
+  assert(early.length >= 8 && gap <= 240, `something new at least every 4 minutes in the first 10 (${early.length} unlocks, longest gap ${gap}s)`);
   // the guide ends; skip and "show every tab" work
   assert(E('onboardTips(false) === false && onboardStep() === null'), 'Skip tips: no hint shows');
   E('onboardTips(true); onboardUnlockAll()');
@@ -4149,7 +4151,7 @@ if (section('solo hero')) try {
   {
     const g = loadCore({ solo: true, seed: 102 }), E = s => g.eval(s);
     E('soloPick("wren"); S.L = 7; S.xp = 3; S.gold = 500');
-    assert(E('soloPick("tobin") && S.L === 1 && S.xp === 0 && S.gold === 500 && S.party.cls === "warden"'), 'switching to Tobin: his own level (1), the same gold');
+    assert(E('soloPick("tobin") && S.L === roadLevel() && S.L < 7 && S.xp === 0 && S.gold === 500 && S.party.cls === "warden"'), 'switching to Tobin: he joins at the road\'s level (below Wren\'s 7), the same gold');
     E('S.L = 4');
     assert(E('soloPick("wren") && S.L === 7 && S.xp === 3 && soloLevels().tobin.L === 4 && soloLevels().pip.L === 1'), 'back to Wren: her level 7 again; Tobin keeps his 4');
     errs.push(...g.errors);

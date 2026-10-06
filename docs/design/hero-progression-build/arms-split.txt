@@ -1,0 +1,102 @@
+# Switch (prediction 1): zone-20 saves, 150 fights an arm, good skill
+wren Lv 30 at zone 21: normal 100%, boss 90%
+  -> tobin joins at Lv 29: normal 100%, boss 100% (worst gap 0 points) ok
+  -> pip joins at Lv 29: normal 100%, boss 83% (worst gap -7 points) ok
+tobin Lv 28 at zone 20: normal 100%, boss 100%
+  -> wren joins at Lv 28: normal 99%, boss 35% (worst gap -65 points) MISS
+  -> pip joins at Lv 28: normal 100%, boss 34% (worst gap -66 points) MISS
+pip Lv 29 at zone 20: normal 100%, boss 60%
+  -> wren joins at Lv 29: normal 95%, boss 31% (worst gap -29 points) MISS
+  -> tobin joins at Lv 29: normal 100%, boss 98% (worst gap 0 points) ok
+
+# Dominance arms: 150 fights an arm
+wren Lv 30 zone 21
+  even           normal(casual)  91%   534/h | boss good  90% | boss casual   4%
+  might          normal(casual)  83%   460/h | boss good  77% | boss casual   1%
+  focus          normal(casual)  99%  1112/h | boss good  81% | boss casual   1%
+  guard          normal(casual)  81%   473/h | boss good  85% | boss casual   1%
+  vigour         normal(casual)  97%   527/h | boss good  96% | boss casual   5%
+  might/focus    normal(casual)  88%   483/h | boss good  81% | boss casual   1%
+  might/guard    normal(casual)  83%   485/h | boss good  82% | boss casual   1%
+  might/vigour   normal(casual)  92%   458/h | boss good  93% | boss casual   3%
+  focus/guard    normal(casual)  99%  1121/h | boss good  83% | boss casual   2%
+  focus/vigour   normal(casual)  87%   399/h | boss good  97% | boss casual   7%
+  guard/vigour   normal(casual)  91%   432/h | boss good  95% | boss casual   3%
+  best on n: focus/guard (99% vs even 91%)
+  best on bg: focus/vigour (97% vs even 90%)
+  best on bc: focus/vigour (7% vs even 4%)
+wren Lv 36 zone 31
+  even           normal(casual)  99%   576/h | boss good  92% | boss casual   3%
+  might          normal(casual)  95%   543/h | boss good  82% | boss casual   0%
+  focus          normal(casual) 100%  1834/h | boss good  91% | boss casual   2%
+  guard          normal(casual)  97%   574/h | boss good  91% | boss casual   3%
+  vigour         normal(casual) 100%   586/h | boss good  97% | boss casual   2%
+  might/focus    normal(casual)  93%   525/h | boss good  91% | boss casual   2%
+  might/guard    normal(casual)  95%   553/h | boss good  89% | boss casual   3%
+  might/vigour   normal(casual) 100%   571/h | boss good  97% | boss casual   1%
+  focus/guard    normal(casual)  96%   646/h | boss good  91% | boss casual   4%
+  focus/vigour   normal(casual)  99%   492/h | boss good  98% | boss casual   3%
+  guard/vigour   normal(casual)  99%   554/h | boss good  98% | boss casual   3%
+  best on n: focus (100% vs even 99%)
+  best on bg: focus/vigour (98% vs even 92%)
+  best on bc: focus/guard (4% vs even 3%)
+tobin Lv 28 zone 20
+  even           normal(casual) 100%   194/h | boss good  99% | boss casual   1%
+  might          normal(casual) 100%   172/h | boss good  99% | boss casual   0%
+  focus          normal(casual) 100%   256/h | boss good 100% | boss casual   0%
+  guard          normal(casual) 100%   190/h | boss good  99% | boss casual   1%
+  vigour         normal(casual) 100%   184/h | boss good 100% | boss casual   1%
+  might/focus    normal(casual)  97%   109/h | boss good 100% | boss casual   0%
+  might/guard    normal(casual) 100%   190/h | boss good  99% | boss casual   0%
+  might/vigour   normal(casual) 100%   174/h | boss good 100% | boss casual   0%
+  focus/guard    normal(casual) 100%   247/h | boss good 100% | boss casual   1%
+  focus/vigour   normal(casual) 100%   122/h | boss good 100% | boss casual   3%
+  guard/vigour   normal(casual) 100%   190/h | boss good 100% | boss casual   1%
+  best on n: focus (100% vs even 100%)
+  best on bg: focus (100% vs even 99%)
+  best on bc: focus/vigour (3% vs even 1%)
+tobin Lv 32 zone 29
+  even           normal(casual) 100%   188/h | boss good 100% | boss casual   1%
+  might          normal(casual) 100%   152/h | boss good 100% | boss casual   0%
+  focus          normal(casual) 100%   180/h | boss good 100% | boss casual   0%
+  guard          normal(casual) 100%   176/h | boss good 100% | boss casual   1%
+  vigour         normal(casual) 100%   155/h | boss good 100% | boss casual   1%
+  might/focus    normal(casual) 100%    96/h | boss good 100% | boss casual   0%
+  might/guard    normal(casual) 100%   175/h | boss good 100% | boss casual   1%
+  might/vigour   normal(casual) 100%   158/h | boss good 100% | boss casual   0%
+  focus/guard    normal(casual) 100%   188/h | boss good 100% | boss casual   4%
+  focus/vigour   normal(casual) 100%    94/h | boss good 100% | boss casual   2%
+  guard/vigour   normal(casual) 100%   176/h | boss good 100% | boss casual   4%
+  best on n: even (100% vs even 100%)
+  best on bg: even (100% vs even 100%)
+  best on bc: focus/guard (4% vs even 1%)
+pip Lv 29 zone 20
+  even           normal(casual)  71%   479/h | boss good  70% | boss casual   0%
+  might          normal(casual)  54%   347/h | boss good  46% | boss casual   0%
+  focus          normal(casual)  84%   574/h | boss good  59% | boss casual   0%
+  guard          normal(casual)  67%   448/h | boss good  69% | boss casual   0%
+  vigour         normal(casual)  83%   432/h | boss good  66% | boss casual   0%
+  might/focus    normal(casual)  43%   280/h | boss good  63% | boss casual   0%
+  might/guard    normal(casual)  60%   428/h | boss good  51% | boss casual   0%
+  might/vigour   normal(casual)  74%   366/h | boss good  65% | boss casual   0%
+  focus/guard    normal(casual)  69%   515/h | boss good  61% | boss casual   0%
+  focus/vigour   normal(casual)  49%   267/h | boss good  75% | boss casual   0%
+  guard/vigour   normal(casual)  73%   403/h | boss good  68% | boss casual   0%
+  best on n: focus (84% vs even 71%)
+  best on bg: focus/vigour (75% vs even 70%)
+  best on bc: even (0% vs even 0%)
+pip Lv 36 zone 30
+  even           normal(casual) 100%   464/h | boss good  97% | boss casual   0%
+  might          normal(casual)  99%   438/h | boss good  87% | boss casual   0%
+  focus          normal(casual) 100%   697/h | boss good  94% | boss casual   1%
+  guard          normal(casual)  99%   460/h | boss good  93% | boss casual   0%
+  vigour         normal(casual) 100%   437/h | boss good  99% | boss casual   1%
+  might/focus    normal(casual)  84%   298/h | boss good  90% | boss casual   0%
+  might/guard    normal(casual)  99%   460/h | boss good  88% | boss casual   0%
+  might/vigour   normal(casual) 100%   441/h | boss good  97% | boss casual   1%
+  focus/guard    normal(casual) 100%   584/h | boss good  97% | boss casual   1%
+  focus/vigour   normal(casual)  96%   295/h | boss good 100% | boss casual   3%
+  guard/vigour   normal(casual) 100%   464/h | boss good  98% | boss casual   1%
+  best on n: focus (100% vs even 100%)
+  best on bg: focus/vigour (100% vs even 97%)
+  best on bc: focus/vigour (3% vs even 0%)
