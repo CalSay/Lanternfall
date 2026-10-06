@@ -7454,6 +7454,9 @@ const STORY_RETIRED = [/\bsoak(ed|s)?\b/i, /\bcorrupt/i, /\btwisted\b/i, /\bonly
   /\b(Moss Slime|Cave Bat|Rattlebones|Barrow Beetle|Spore Cap|Quarry Golem|Marsh Wraith)\b/, /\bparty\b/i, /\blisten(er|ing)\b/i,
   /\bcrowned\b/i, /\blanternbearer\b/i, /\bthe heroes\b/i];
 
+// The Codex tiles are titled by TYPES (Moss Slime, Cave Bat ...), which are not the monsters the Hollow shows (Thorn Imp, Gloomjaw ...).
+// Until story-hollow-script keys these entries to the roster monsters, storyBestiary() shows none of them (21h review, story-delivery).
+const LORE_BESTIARY_LIVE = false;
 const LORE_BESTIARY = {
   // the Hollow (TYPES keys)
   slime: { name: 'Moss Slime', region: 'hollow',
@@ -14348,7 +14351,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
   storyVerse = id => (has(`e:${id}:post`) && D('vesper')[id]) || null;
 
   storyBestiary = (key, got) => {
-    const b = typeof LORE_BESTIARY !== 'undefined' && LORE_BESTIARY[key];
+    const b = typeof LORE_BESTIARY !== 'undefined' && typeof LORE_BESTIARY_LIVE !== 'undefined' && LORE_BESTIARY_LIVE && LORE_BESTIARY[key];
     if (!b) return [];
     const out = [];
     if (got.foe) out.push(b.foe);
@@ -14421,8 +14424,8 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
   // ---- each tick: what is due where the hero stands ----
   storySync = early => {
     const mz = S.maxZone || 1;
+    if (!storyOn()) { queue.length = 0; if (cur && !claimed) storyClose(cur.id, 'skipped'); return; }   // off: nothing plays and nothing is filed or defaulted; the catch-up runs when it is turned back on
     if (mz !== swept) { swept = mz; sweep(mz); }
-    if (!storyOn()) { queue.length = 0; if (cur && !claimed) storyClose(cur.id, 'skipped'); }   // turned off while a scene waited: drop it
     if (!live()) { last = ''; return; }
     const z = S.zone || 1, gap = inGap();
     if (gap && spawned && !early) { const sp = spawned; spawned = null; if (sp.zone === z) onSpawn(sp.mob, z); }
@@ -39171,7 +39174,7 @@ var soloIconURL = () => '';
   }
   const KEYS = { q: 'ab0', w: 'ab1', e: 'ab2', a: 'parry', s: 'dodge', d: 'atk', ' ': 'dodge' };   // SOLO2: Space dodges
   addEventListener('keydown', e => {
-    if (bar.hidden || pick || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (bar.hidden || pick || gameHeld() || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
     const t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable || (t.tagName === 'BUTTON' && (e.key === ' ' || e.key === 'Enter')))) return;
     if (S.tab && !isWide()) return;   // a menu covers the fight (UX-L1: in landscape the bar stays live beside the menu)
     if (e.key.toLowerCase() === 'f') { if (typeof turnCombatOn === 'function' && turnCombatOn()) return; e.preventDefault(); flipAuto(); return; }   // F: the Auto toggle (no Auto in turn fights)

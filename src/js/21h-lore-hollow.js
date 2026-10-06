@@ -45,6 +45,9 @@ const STORY_RETIRED = [/\bsoak(ed|s)?\b/i, /\bcorrupt/i, /\btwisted\b/i, /\bonly
   /\b(Moss Slime|Cave Bat|Rattlebones|Barrow Beetle|Spore Cap|Quarry Golem|Marsh Wraith)\b/, /\bparty\b/i, /\blisten(er|ing)\b/i,
   /\bcrowned\b/i, /\blanternbearer\b/i, /\bthe heroes\b/i];
 
+// The Codex tiles are titled by TYPES (Moss Slime, Cave Bat ...), which are not the monsters the Hollow shows (Thorn Imp, Gloomjaw ...).
+// Until story-hollow-script keys these entries to the roster monsters, storyBestiary() shows none of them (21h review, story-delivery).
+const LORE_BESTIARY_LIVE = false;
 const LORE_BESTIARY = {
   // the Hollow (TYPES keys)
   slime: { name: 'Moss Slime', region: 'hollow',

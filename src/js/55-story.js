@@ -177,7 +177,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
   storyVerse = id => (has(`e:${id}:post`) && D('vesper')[id]) || null;
 
   storyBestiary = (key, got) => {
-    const b = typeof LORE_BESTIARY !== 'undefined' && LORE_BESTIARY[key];
+    const b = typeof LORE_BESTIARY !== 'undefined' && typeof LORE_BESTIARY_LIVE !== 'undefined' && LORE_BESTIARY_LIVE && LORE_BESTIARY[key];
     if (!b) return [];
     const out = [];
     if (got.foe) out.push(b.foe);
@@ -250,8 +250,8 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
   // ---- each tick: what is due where the hero stands ----
   storySync = early => {
     const mz = S.maxZone || 1;
+    if (!storyOn()) { queue.length = 0; if (cur && !claimed) storyClose(cur.id, 'skipped'); return; }   // off: nothing plays and nothing is filed or defaulted; the catch-up runs when it is turned back on
     if (mz !== swept) { swept = mz; sweep(mz); }
-    if (!storyOn()) { queue.length = 0; if (cur && !claimed) storyClose(cur.id, 'skipped'); }   // turned off while a scene waited: drop it
     if (!live()) { last = ''; return; }
     const z = S.zone || 1, gap = inGap();
     if (gap && spawned && !early) { const sp = spawned; spawned = null; if (sp.zone === z) onSpawn(sp.mob, z); }

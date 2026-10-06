@@ -2615,11 +2615,16 @@ if (section('story')) try {
   C2('S.mastery.types.bat = 20; S.maxZone = 3; codexRefresh(true)');
   const tiles = C2('codexPage("bestiary").tiles');
   const B = C2('LORE_BESTIARY');
-  assert(!t0.lore.length && tiles[1].lore.join('|') === [B.bat.foe, B.bat.elder].join('|') && tiles.every(t => Array.isArray(t.lore)),
-    'story: Codex bestiary tiles show no line before tier 1; the foe line at tier 1, then the Elder line once beaten');
+  assert(!t0.lore.length && tiles.every(t => Array.isArray(t.lore) && !t.lore.length) && C2('LORE_BESTIARY_LIVE') === false,
+    'story: Codex bestiary tiles show no story line until the entries are keyed to the roster monsters (LORE_BESTIARY_LIVE)');
   C2('S.mastery.types.wraith = 12; S.maxZone = 40; codexRefresh(true)');
   const w = C2('codexPage("bestiary").tiles[6]');
-  assert(w.lore.includes(B.wraith.foe) && w.lore.includes(B.wraith.elder) && w.lore.length === 2, 'story: the Marsh Wraith tile no longer carries the retired Fenmother line');
+  assert(w.lore.length === 0 && !/Fenmother/.test(JSON.stringify(w.lore)), 'story: the Marsh Wraith tile carries no retired Fenmother line');
+  const co = loadCore({ seed: 81 });
+  co.eval('S.story.off = 1; S.activity = "fight"; S.zone = 1; S.maxZone = 40; storySync()');
+  assert(co.eval('storyLate().length === 0 && !S.story.seen["r:hollow"] && storyHeld() === false'), 'story: with Story cards off, clearing zones files nothing late and defaults no choice');
+  co.eval('S.story.off = 0; storySync()');
+  assert(co.eval('storyLate().includes("r:hollow")'), 'story: turning Story cards back on files what the hero passed, quietly');
   // UI wiring (browser-only files): the pieces are there
   const ui = rd('js/75-story-ui.js'), css = rd('styles/60-story.css'), codexUi = rd('js/75-codex-ui.js'), glUi = rd('js/75-lantern-ui.js'), boot = rd('js/90-boot.js'), ui70 = rd('js/70-ui.js');
   assert(ui.includes("on('storyScene'") && ui.includes('storyClaim') && ui.includes('storyClose') && ui.includes('Skip') && ui.includes('Story cards:') && codexUi.includes('storyUI.codexRow') && codexUi.includes('t.lore')
