@@ -2111,6 +2111,22 @@ span.cf-d { font-weight: 600; }
   .game .navbtn { width: 30px; }
   .game .znum { min-width: 0; padding: 0 2px; font-size: calc(12px * var(--display-k, 1)); }
 }
+
+/* wire-menu-icons: five Gather labels fit at 360px with the icon above the text. */
+.vseg button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 52px; overflow: visible; white-space: normal; text-overflow: clip; }
+.menu-head .vseg button { min-height: 52px; }
+.menu-nav-ic { width: 16px; height: 16px; flex: 0 0 16px; image-rendering: pixelated; }
+.vseg button.has-xp { padding-bottom: 10px; }
+.vseg button .vxp { bottom: 3px; }
+#menuX .menu-nav-ic { margin: auto; position: relative; z-index: 1; }
+#menuX { font-size: 0; }
+#menuX > span { display: none; }
+.ctrl-switch .menu-nav-ic, .sb-tab .menu-nav-ic, .cx-backbtn .menu-nav-ic { display: inline-block; vertical-align: middle; margin-right: 4px; }
+.nu-eye .menu-nav-ic { display: inline-block; vertical-align: middle; margin-right: 4px; }
+.menu-action-badge { position: absolute; right: 2px; top: 2px; width: 16px; height: 16px; pointer-events: none; image-rendering: pixelated; }
+.sp-ab { position: relative; }
+.sb-def .menu-action-badge { top: auto; bottom: 2px; right: 4px; }
+.sp-ab .menu-action-badge { top: auto; bottom: 2px; }
 /* 60-onboard: the guide's hint (75-onboard-ui.js) and "new" marks on tabs and views.
    The layer never takes taps except the small dismiss button: play goes on under it. */
 .ob-layer { position: fixed; inset: 0; z-index: 20; pointer-events: none; }
@@ -32339,7 +32355,7 @@ function openNoticeLog() {
     if (hasJournal) {
       for (const [v, label] of views) {
         const b = el('button', null, label); b.type = 'button'; b.dataset.v = v; b.setAttribute('role', 'tab');
-        b.addEventListener('click', () => show(v)); seg.append(b);
+        menuNavIcon(b, v); b.addEventListener('click', () => show(v)); seg.append(b);
       }
       top.append(seg);
     } else top.append(el('h2', 'nlog-h', 'Notices'));
@@ -32412,7 +32428,7 @@ const TAB_IC = { sword: iconURL('sword', '#A9B1BD'), pick: iconURL('pick', '#D08
   camp: spriteURL('tab:camp', TAB_PX.camp, { 1: '#C9A56A', 2: '#8C6A43', 3: '#2A1E14', 6: '#6B4A2E', 7: '#FF9E3D' }) };
 // C26: the approved menu icons (NAV_ICONS, 60n-nicons) at the size each place shows; TAB_IC stays the fallback.
 const NAV_OF_TAB = { adv: 'fight', party: 'hero', gat: 'gather', forge: 'craft', world: 'camp', deeds: 'deeds' };
-document.querySelectorAll('.tab').forEach(b => { const i = img(TAB_IC[b.dataset.ic]); nicSet(i, 'nav', NAV_OF_TAB[b.dataset.tab], 20); b.prepend(i); });
+document.querySelectorAll('.tab').forEach(b => { const i = img(TAB_IC[b.dataset.ic]); nicSet(i, 'nav', NAV_OF_TAB[b.dataset.tab], 20); b.prepend(i); if (b.dataset.tab === 'adv') b.setAttribute('aria-label', 'Fight menu'); });
 $('goldIc').src = iconURL('coin', '#F2C14E');
 
 // ================= menus: tabs, sub-views, open and close =================
@@ -32509,6 +32525,7 @@ function buildViewSeg(t) {
   seg.style.setProperty('--n', list.length);
   for (const v of list) {
     const b = el('button', null, v.label); b.type = 'button'; b.dataset.view = v.id;
+    menuNavIcon(b, v.id);
     b.setAttribute('role', 'tab');
     const d = el('span', 'vdot'); d.hidden = true; b.append(d);
     if (typeof onboardIsNew === 'function' && onboardIsNew(v)) b.classList.add('is-new');
@@ -38791,6 +38808,58 @@ let deedsUI = null;
 //     over 0.4 px/ms; never from [data-noswipe], sliders, the star map, drag slots or sideways scrollers).
 //   - navGo { close: true } (55-nav) closes sheets and menus here.
 // Exposed: navUI { openSwitcher(), pill }
+
+// wire-menu-icons: labels keep their meaning; the approved pack supplies decorative art.
+// A function declaration lets the earlier menu renderer use this even during registration.
+function menuNavIcon(button, view) {
+  const icons = {
+    upgrades: 'boss', bounties: 'bounties', bestiary: 'bestiary', deep: 'deepwell',
+    team: 'hero', abilities: 'hero', training: 'training', stars: 'stars',
+    mine: 'mining', wood: 'woodcutting', forage: 'foraging', hunt: 'hunting', pack: 'storehouse',
+    make: 'craft', gear: 'gear', uniques: 'uniques', camp: 'camp', tav: 'tavern', almanac: 'almanac', raid: 'raid',
+    'ach-deeds': 'deeds', 'ach-tracks': 'tracks', 'ach-feats': 'feats', 'ach-looks': 'looks',
+    notes: 'notices', journal: 'journal', act: 'adventure', next: 'next-up', switch: 'switch-view', codex: 'codex', close: 'close'
+  };
+  const id = icons[view]; if (!id || button.querySelector('.menu-nav-ic')) return;
+  const im = el('img', 'menu-nav-ic px'); im.alt = ''; im.setAttribute('aria-hidden', 'true');
+  nicSet(im, 'nav', id, 16); button.prepend(im);
+}
+
+// Separate status art from the ability tiles (75-solo-ui is a hot file).
+function menuActionBadge(button) {
+  if (button.matches('.sp-ab')) return button.classList.contains('on') ? 'selected' : '';
+  if (button._nv === 'T3') return 'locked';
+  if (button.classList.contains('cool')) return 'cooldown';
+  if (button.classList.contains('off') || button.classList.contains('blocked') || button.classList.contains('empty') || button.classList.contains('passive')) return 'unavailable';
+  return 'ready';
+}
+{
+  const decorate = () => {
+    for (const [selector, view] of [['#menuX', 'close'], ['#switchBtn', 'switch'], ['#nuChip .nu-eye', 'next'],
+      ['.sb-tab[data-tab="act"]', 'act'], ['.cx-backbtn', 'codex']]) {
+      for (const b of document.querySelectorAll(selector)) menuNavIcon(b, view);
+    }
+    // The Codex's Journal entry is mounted lazily along with other Journal sections.
+    for (const b of document.querySelectorAll('#sec-codex-card button')) {
+      if (b.textContent.includes('Open')) menuNavIcon(b, 'codex');
+    }
+  };
+  uiHooks.push(decorate);
+  const updateBadges = () => {
+    for (const b of document.querySelectorAll('#soloBar .sbtn, #abPicker .sp-ab')) {
+      const id = menuActionBadge(b);
+      let im = b.querySelector('.menu-action-badge');
+      if (!id) { if (im) im.hidden = true; continue; }
+      if (!im) { im = el('img', 'menu-action-badge px'); im.alt = ''; im.setAttribute('aria-hidden', 'true'); b.append(im); }
+      im.hidden = false;
+      if (!im._nic || im._nic.id !== id) nicSet(im, 'act', id, 16);
+    }
+  };
+  // Existing UI state is authoritative, including cooldowns and paused pickers; no save writes.
+  let elapsed = 0;
+  onTick(dt => { elapsed += dt; if (elapsed >= 0.1) { elapsed = 0; updateBadges(); } });
+  setInterval(() => { decorate(); updateBadges(); }, 250);
+}
 
 let navUI = null;
 {
