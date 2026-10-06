@@ -24,7 +24,7 @@
 //   turnDodgeLine(k) (Wren's Out of Reach, for the Dodge help), turnAssistX() (the Wider timing windows setting, S.turn.assist), turnArenaOk(), turnArenaNow(), turnPowerZone(a), turnDeepZone(z0, floor), turnWaiting() (the Deepwell and the Provings: 59c, 59f, 57d)
 //   turnMakeProfile(f, u), turnNew(p, io), turnResolve(m, cmd, dt, io), turnPreview(m, n), turnUsable(m, id)
 //   turnCombatSnapshot(), turnCombatProfile(), turnCombatAction(kind, slot), turnCombatTick(dt), turnBadgesFor(f),
-//   turnHeroChips(), turnChoose(m), turnCombatSample({ profile, seconds, seed, skill })
+//   turnHeroChips(), turnChoose(m), turnCombatSample({ profile, seconds, seed, skill, fights })
 // Events: fightStart { heroHaste, foeHaste, first }, turn { who, n }, timingRing { id, i, n, opensAt, closesAt },
 //   timingGrade { id, i, grade }, foeMove { id, name, anim, hits }, parryWindow
 //   { opensAt, closesAt, hit, hits }, foeContact { id, hit, hits, res }, foeCharge { name }, chargeBroken { name },
@@ -1043,11 +1043,12 @@ function turnWhyNot(id) { const m = TURN_LIVE; return m && !m.ended ? turnUsable
 // ---------------- a scratch fight (balance tools, checks) ----------------
 // A simple player: the first usable equipped ability in slot order, else Attack; on each enemy hit it parries with
 // chance skill.parry, else dodges with chance skill.dodge (both land in the window when tried).
+// fights (optional, > 0): stop once that many fights have ended (kills + deaths; 59m boss odds), else run the seconds out.
 function turnChoose(m) {
   for (const id of m.p.eq) if (!turnUsable(m, id)) return { kind: 'ability', id };
   return { kind: 'attack' };
 }
-function turnCombatSample({ profile: p, seconds, seed = 1, skill = { parry: 0.5, dodge: 0.7, perfect: 0.35, good: 0.5 } }) {
+function turnCombatSample({ profile: p, seconds, seed = 1, skill = { parry: 0.5, dodge: 0.7, perfect: 0.35, good: 0.5 }, fights = 0 }) {
   if (!p || !(seconds > 0)) return null;
   let x = (seed | 0) || 1;
   const roll = () => ((x = (Math.imul(x, 1664525) + 1013904223) | 0) >>> 0) / 4294967296;
@@ -1084,6 +1085,7 @@ function turnCombatSample({ profile: p, seconds, seed = 1, skill = { parry: 0.5,
         heroHp = Math.min(p.heroMaxHp, heroHp + p.heroMaxHp * p.healOnKill);
         downtime = p.respawn;
       } else { out.deaths++; heroHp = p.heroMaxHp; downtime = 5; }
+      if (fights > 0 && out.kills + out.deaths >= fights) break;
     }
   }
   return out;
