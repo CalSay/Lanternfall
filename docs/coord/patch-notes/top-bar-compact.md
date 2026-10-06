@@ -1,0 +1,1 @@
+The top of the fight screen is tidier. The zone arrows now sit beside the zone name in the header, and Fight / Gather shares one line with Next Up, so the stage gets the space back. Next Up shows the whole goal, not "Learn Barbed Arrow: y...". The always-on "While away" sentence is gone.

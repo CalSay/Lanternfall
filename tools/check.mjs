@@ -5063,6 +5063,7 @@ if (section('notices (browser, W1-B)')) try {
     const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
     try {
       const ctx = await browser.newContext({ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true });
+      await ctx.addInitScript(() => { try { localStorage.setItem('lanternfall.test.moments', '1'); } catch (e) {} });   // moment layer: counted in this walk
       const page = await ctx.newPage(); const errs = [];
       page.on('pageerror', e => errs.push(String(e)));
       await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
@@ -5080,8 +5081,10 @@ if (section('notices (browser, W1-B)')) try {
         // ...and Math.random is seeded, so the same drops and rolls fall on every run (LF_NOTICE_SEED tries another seed)
         (a => { Math.random = () => (a = (Math.imul(a, 1664525) + 1013904223) >>> 0) / 4294967296; })(${+process.env.LF_NOTICE_SEED || 7});
         const mk = makeToast; makeToast = function () { R.toasts++; return mk.apply(this, arguments); };
+        on('momentShow', e => { R.moments = (R.moments || 0) + 1; (R.mlist = R.mlist || []).push(Math.round(notes.clock) + 's ' + e.tier + ' ' + e.kind); });   // moment layer: counted, outside the pop budget
         let last = '', same = 0;
         globalThis.__nbStep = () => {
+          { const g = document.querySelector('.mm-go'); if (g) { MOMENT_UI.shownAt = 0; g.click(); } }   // a moment card is the player's tap
           const st = soloGuideWants(), step = onboardStep();
           same = st && st === last ? same + 1 : 0; last = st;
           if (same > 12 && /^(attack|ability|dodge|parry|boss|upgrade|gather|light)$/.test(st) && document.querySelector('.ob-x')) { R.stall++; document.querySelector('.ob-x').click(); same = 0; }
@@ -5110,7 +5113,8 @@ if (section('notices (browser, W1-B)')) try {
       const inGuide = pops.filter(s => s.g);
       const list = pops.map(s => `${Math.round(s.t)}s ${s.id}`).join(', ');
       assert(r.t >= 590 && r.zone >= 5, `the bot played 10 minutes of a fresh solo game (${Math.round(r.t)} s, zone ${r.zone}, level ${r.L}, ${r.st.length} notices)`);
-      assert(pops.length <= 8 && pops.length >= 2, `a fresh game's first 10 minutes pop at most 8 notices (toasts and captions): ${pops.length} (${list})`);
+      assert(pops.length <= 8 && pops.length >= 1, `a fresh game's first 10 minutes pop at most 8 notices (toasts and captions): ${pops.length} (${list})`);
+      assert((r.nb.moments || 0) <= 8, `moment layer: big and medium moments in a fresh game's first 10 minutes: ${r.nb.moments || 0} (${(r.nb.mlist || []).join(', ')}); at most 8 (about one a minute)`);
       assert(!close, 'never two pops within 20 s' + (close ? `: ${JSON.stringify(close)}` : ''));
       assert(!inGuide.length, 'nothing pops while a guide step shows' + (inGuide.length ? ': ' + inGuide.map(s => s.id).join(', ') : ''));
       assert(r.nb.toasts <= pops.length + r.st.filter(s => s.ch === 'pop' && s.id === 'reply').length, `every toast on screen went through the policy (${r.nb.toasts} drawn, ${pops.length} pops)`);
@@ -6258,6 +6262,27 @@ if (section('save codec validation (C5)')) try {
   const {saveCodeFor}=await import('./savecode.mjs');
   for(const raw of ['null','{}','{',JSON.stringify({...base(),v:4}),JSON.stringify({...base(),items:[null]})]){let refused=false;try{saveCodeFor(raw);}catch{refused=true;}assert(refused,'C5: CLI rejects bad data before loading it');}
   for(const f of fs.readdirSync(path.join(ROOT,'tests','fixtures')).filter(f=>f.endsWith('.json')))assert(decode(saveCodeFor(fs.readFileSync(path.join(ROOT,'tests','fixtures',f),'utf8'))).ok,`C5: CLI accepts ${f}`);
+  { // every ability a hero learns with Scrolls (Spark, Kindle, ...) exports while equipped, and stays equipped after a cold load of the code
+    const lost=[];
+    for(const k of JSON.parse(E('JSON.stringify(SOLO_ORDER)'))){
+      const h=loadCore({seed:506}),H=s=>h.eval(s),K=JSON.stringify(k);
+      const ids=JSON.parse(H(`soloPick(${K});S.L=60;for(const id of SCROLL_ORDER)S.abil.scrolls[id]=99;JSON.stringify(HERO_ABILITIES[${K}].filter(id=>abilityLearn(${K},id)||abilityOwned(${K},id)))`));
+      if(ids.length!==JSON.parse(H(`HERO_ABILITIES[${K}].length`)))lost.push(k+': could not learn every ability');
+      for(let i=0;i<ids.length;i+=3){
+        const row=[0,1,2].map(j=>ids[(i+j)%ids.length]);
+        H(`[0,1,2].forEach(j=>soloEquip(j,null));${JSON.stringify(row)}.forEach((id,j)=>soloEquip(j,id))`);
+        const want=H('JSON.stringify(soloEquipped())');
+        if(want!==JSON.stringify(row)){lost.push(`${k}: equipping ${JSON.stringify(row)} gave ${want}`);continue;}
+        let code='';try{code=H('encodeSave(S)');}catch(e){lost.push(`${k} ${want}: export threw ${e.message}`);continue;}
+        const r=decode(code);if(!r.ok){lost.push(`${k} ${want}: ${r.error}`);continue;}
+        const cold=loadCore({seed:507,storage:memoryStorage({[KEY]:JSON.stringify(r.data)})}),C=s=>cold.eval(s);
+        if(C('soloHero()')!==k||C('JSON.stringify(soloEquipped())')!==want||C(`JSON.stringify(S.abil.unl[${K}])`)!==H(`JSON.stringify(S.abil.unl[${K}])`)||cold.errors.length)lost.push(`${k} ${want}: cold load gave ${C('JSON.stringify(soloEquipped())')}`);
+      }
+    }
+    assert(!lost.length,'C5: every learned ability exports while equipped and stays equipped after a cold LF1 load'+(lost.length?'; '+lost.slice(0,3).join('; '):''));
+    const other=base();other.solo.eq.wren=['echo','spark',null];
+    assert(!validate(other).ok,'C5: a slot holding another hero\'s learned ability is still refused');
+  }
   assert(!g.errors.length&&!live.errors.length,'C5: positive gameplay states have no handler errors');
 } catch(e){fail('C5 codec validation crashed: '+(e.stack||e));}
 
@@ -9646,6 +9671,105 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
   }
 } catch (e) { fail(`landscape ${w}x${h} (browser, UX-L1) crashed: ` + (e.stack || e)); }
 
+// ---- moment layer (card moment-layer; 75-moments-ui.js; docs/design/first-hour.md; scorecard F6) ----
+// Each big and medium moment is forced while the guide, a level-up and the toast flood compete, and must be on screen for at
+// least 2 s, not only in the bell. At 740x360 first (the main target), then 360x740, then with reduced motion.
+if (section('moment layer')) try {
+  const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-moments-ui.js'), 'utf8'), notices = fs.readFileSync(path.join(ROOT, 'src', 'js', '23n-data-notices.js'), 'utf8');
+  assert(/function moment\(kind, o\)/.test(src) && /momentState/.test(src) && /holdGame\(\(\) => !!MOMENT_UI\.ov\)/.test(src) && /noticeAsk\('card:moment'/.test(src),
+    'moment layer: moment(kind, opts) and momentState() exist, a big card holds the game and asks the card channel');
+  assert(/id: 'unique', re: \/\^Unique loot! \/, ch: 'log'/.test(notices) && /id: 'card:moment'/.test(notices) && !/ch: m => \/joins your trophy wall\//.test(notices),
+    'moment layer: the unique rule no longer sends a first unique to the bell (23n-data-notices)');
+  await (async () => {
+    const { pw, exe } = browserTools;
+    if (!pw || !exe || !fs.existsSync(distFile)) { skipBrowser('moment layer (browser): Playwright or Chromium not here, skipped'); return; }
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const rawOf = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h, motion] of [[740, 360, 'no-preference'], [360, 740, 'no-preference'], [740, 360, 'reduce']]) {
+        const at = `moment layer ${w}x${h}${motion === 'reduce' ? ' reduced motion' : ''}`;
+        try {
+          const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: true, hasTouch: true, reducedMotion: motion, turns: true });
+          await ctx.addInitScript(([key, raw]) => {
+            try { localStorage.setItem('lanternfall.test.nostory', '1'); localStorage.setItem('lanternfall.test.moments', '1'); } catch (e) {}
+            if (sessionStorage.getItem('mm-seeded')) return; sessionStorage.setItem('mm-seeded', '1');
+            const o = JSON.parse(raw); o.last = Date.now(); localStorage.setItem(key, JSON.stringify(o));
+          }, [KEY, rawOf('save-mid.json')]);
+          const page = await ctx.newPage(); const errs = [];
+          page.on('pageerror', e => errs.push(String(e)));
+          await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+          await page.goto('http://lf.test/'); await page.waitForTimeout(700);
+          for (let i = 0; i < 4; i++) { const b = await page.$('#createScreen .create-go'); if (!b) break; await b.click(); await page.waitForTimeout(300); }
+          const X = s => page.evaluate(s => window.__t.x(s), s);
+          const until = async (expr, ms = 6000) => { try { await page.waitForFunction(e => window.__t.x(e), expr, { timeout: ms, polling: 100 }); } catch (e) { /* the assert below says what is missing */ } };
+          await page.waitForTimeout(4600);   // no moment opens at boot (MOMENT_TUNE.bootS)
+          await X(`S.activity = 'gather'; S.tab = ''; S.onboard.tips = false; emit('sceneReset'); true`);   // no turn fight: a moment may show
+          await X(`S.found.sproutblade = 0; dropUnique('sproutblade', 1)`);
+          // a level-up and a flood of toasts compete with it
+          await X(`emit('levelup', { L: 5 }); for (let i = 0; i < 4; i++) toast('Check notice ' + i, 'good', null, 'high'); true`);
+          await until(`!!document.querySelector('.mm-ov')`);
+          const big = await X(`(() => { const o = document.querySelector('.mm-ov'), c = o && o.querySelector('.mm-card'), r = c && c.getBoundingClientRect(), g = c && c.querySelector('.mm-go').getBoundingClientRect();
+            return { up: !!o, text: o ? o.textContent : '', fits: !!r && r.top >= 0 && r.bottom <= innerHeight + 1 && r.left >= 0 && r.right <= innerWidth + 1 && g.bottom <= innerHeight + 1,
+              burst: o && getComputedStyle(o.querySelector('.mm-burst')).display, held: GAME_HOLDS.some(f => f()), bell: notes.log.some(n => n.ch === 'bell' && /Unique loot/.test(n.msg)), st: momentState() }; })()`);
+          assert(big.up && /Sproutblade/.test(big.text) && /Unique loot/i.test(big.text) && big.fits && big.held && !big.bell,
+            `${at}: a unique shows a big card (name, label, Continue in view) and holds the game; it is not a bell line (${JSON.stringify({ up: big.up, fits: big.fits, held: big.held, bell: big.bell })})`);
+          assert(motion === 'reduce' ? big.burst === 'none' : big.burst !== 'none', `${at}: the burst ${motion === 'reduce' ? 'is off for reduced motion' : 'plays'}`);
+          assert(/Level 5/.test(big.text), `${at}: a level-up that competes folds into the card as a line`);
+          await page.mouse.click(Math.round(w / 2), 8); await page.waitForTimeout(150);   // a stray tap inside the lock must not skip it
+          const still = await X(`!!document.querySelector('.mm-ov')`);
+          await page.waitForTimeout(2100);
+          const after2 = await X(`!!document.querySelector('.mm-ov')`);
+          assert(still && after2, `${at}: the big card stays up for 2 s and a stray tap does not skip it`);
+          if (motion !== 'reduce') await page.screenshot({ path: path.join(ROOT, 'docs', 'proof', 'moment-layer', `unique-card-${w}x${h}.png`) });
+          await page.click('.mm-go'); await page.waitForTimeout(250);
+          assert(!(await X(`!!document.querySelector('.mm-ov')`)) && !(await X('GAME_HOLDS.some(f => f())')), `${at}: Continue closes the card and lets the game run`);
+          // medium: level 3 is small (no banner); level 5 is a banner of its own, in the notices slot, held 2 s against a toast flood
+          await X(`MOMENT_UI.midAt.length = 0; emit('levelup', { L: 3 }); true`); await page.waitForTimeout(1500);
+          assert(!(await X(`!!document.querySelector('.mm-toast')`)), `${at}: level 3 is a small notice, no banner`);
+          await X(`emit('levelup', { L: 10 }); true`); await until(`!!document.querySelector('.mm-toast')`);
+          const t0 = Date.now();
+          const med = await X(`(() => { const t = document.querySelector('.mm-toast'); return { up: !!t, text: t ? t.textContent : '', slot: t ? t.parentNode.id : '', dock: document.getElementById('toasts').className }; })()`);
+          assert(med.up && /Level 10/.test(med.text) && med.slot === 'toasts', `${at}: a 10th level is a banner in the notices slot (${med.dock})`);
+          if (motion !== 'reduce') await page.screenshot({ path: path.join(ROOT, 'docs', 'proof', 'moment-layer', `level-banner-${w}x${h}.png`) });
+          await X(`for (let i = 0; i < 4; i++) toast('Later notice ' + i, 'good', null, 'high'); true`);
+          await page.waitForTimeout(Math.max(0, 1500 - (Date.now() - t0)));
+          assert(await X(`!!document.querySelector('.mm-toast')`), `${at}: the banner is held for its 2 s minimum while later toasts arrive`);
+          // a unique-rare ability and a Star in one fight end make one banner with lines, not two
+          await page.waitForTimeout(2500);
+          await X(`MOMENT_UI.midAt.length = 0; emit('levelup', { L: 15 }); emit('abilityLearned', { hero: S.solo.hero, id: HERO_ABILITIES[S.solo.hero][2] }); true`); await until(`!!document.querySelector('.mm-toast')`);
+          const fold = await X(`document.querySelectorAll('.mm-toast').length + ':' + (document.querySelector('.mm-toast') || { textContent: '' }).textContent`);
+          assert(/^1:/.test(fold) && /Level 15/.test(fold) && /New ability/.test(fold), `${at}: two medium moments at one fight end fold into one banner (${fold.slice(0, 80)})`);
+          // at most 2 medium moments in any 3 minutes of the first 30: a third waits (it is not dropped)
+          await page.waitForTimeout(3200);
+          await X(`MOMENT_UI.midAt = [Date.now() - 60000, Date.now() - 30000]; notes.clock = 100; emit('levelup', { L: 20 }); true`); await page.waitForTimeout(1800);
+          const cap = await X(`momentState().queued + ':' + !!document.querySelector('.mm-toast')`);
+          assert(cap === '1:false', `${at}: a third medium moment inside 3 minutes waits in the queue (${cap})`);
+          await X(`MOMENT_UI.midAt.length = 0; true`); await until(`!!document.querySelector('.mm-toast')`);
+          assert(await X(`!!document.querySelector('.mm-toast')`), `${at}: ...and shows when the window frees`);
+          // it never shows during a turn: a live fight (past its intro) holds it, the fight's end lets it through
+          await page.waitForTimeout(3200);
+          await X(`MOMENT_UI.midAt.length = 0; S.activity = 'fight'; emit('sceneReset'); true`);
+          await until(`typeof TURN_LIVE !== 'undefined' && !!TURN_LIVE && !TURN_LIVE.ended && TURN_LIVE.phase !== 'intro'`, 9000);
+          const live = await X(`(() => { const f = typeof TURN_LIVE !== 'undefined' && !!TURN_LIVE && !TURN_LIVE.ended && TURN_LIVE.phase !== 'intro'; if (f) emit('levelup', { L: 25 }); return f; })()`);
+          assert(live, `${at}: a turn fight is live for the during-a-turn check`);
+          await page.waitForTimeout(1200);
+          const during = await X(`!!document.querySelector('.mm-toast') + ':' + momentState().queued`);
+          assert(during === 'false:1', `${at}: a moment does not show during a turn (${during})`);
+          await X(`TURN_LIVE.ended = true; true`);
+          await until(`!!document.querySelector('.mm-toast')`, 6000);
+          assert(await X(`!!document.querySelector('.mm-toast')`), `${at}: ...and shows as the fight ends, before the next fight's first turn`);
+          assert(/const fighting = \(\) => [\s\S]{0,160}TURN_LIVE/.test(src), `${at}: the flush waits while a turn fight is live`);
+          assert(!errs.length, `${at}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+          await ctx.close();
+        } catch (e) { fail(`${at} crashed: ` + (e.stack || e)); }
+      }
+    } finally { await browser.close(); }
+  })();
+} catch (e) { fail('moment layer crashed: ' + (e.stack || e)); }
+
+
 // ==== qa-player-eyes: LF_EYES (src/js/89-eyes-hook.js), what tools/eyes.mjs reads. Read only: it changes no state and starts no timer.
 if (section('LF_EYES hook (browser, qa-player-eyes)')) try {
   const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '89-eyes-hook.js'), 'utf8').replace(/\/\/.*$/gm, '');
@@ -9729,6 +9853,21 @@ if (section('fight HUD fit')) try {
         const cut = await page.evaluate(() => [...document.querySelectorAll('.hud.vs .hero-plate .mob-name, .hud.vs .mob .mob-name, .hud.vs .hud-zone .zname, .hud.vs .mob-hp')]
           .filter(e => e.offsetParent && e.scrollWidth > e.clientWidth + 1).map(e => e.className + ':' + e.textContent));
         assert(!cut.length, `${w}x${h}: hero and foe names, numbers and the place line are not cut (${cut.join(' | ')})`);
+        // top-bar-compact: at phone width the top of the fight is two rows (the header's zone bar, then one line with Fight / Gather
+        // and Next Up side by side), the "While away" sentence is gone and the Next Up goal is whole
+        if (w < h) {
+          const T = await page.evaluate(() => {
+            const r = s => { const e = document.querySelector(s); if (!e || e.hidden || !e.offsetParent) return null; const b = e.getBoundingClientRect(); return { t: b.top, b: b.bottom, l: b.left, r: b.right }; };
+            const lbl = document.querySelector('.nu-lbl');
+            return { top: r('.top'), seg: r('#modeSeg'), nu: r('#nuChip'), stage: r('#stageBox'), prev: r('#zPrev'), pill: r('.act-pill'), rule: !![...document.querySelectorAll('.gate-rule:not(.away-chip)')].some(e => e.offsetParent),
+              lbl: lbl && { cut: getComputedStyle(lbl).textOverflow === 'ellipsis' || lbl.scrollHeight > lbl.clientHeight + 1, txt: lbl.textContent } };
+          });
+          const sameLine = T.seg && T.nu && Math.abs((T.seg.t + T.seg.b) / 2 - (T.nu.t + T.nu.b) / 2) < 20 && T.seg.r <= T.nu.l + 1;
+          assert(sameLine && T.stage.t - T.top.b <= 66, `${w}x${h}: under the header, one line holds Fight / Gather and Next Up, and the stage starts within 66 px of the header (${JSON.stringify({ seg: T.seg, nu: T.nu, stageT: T.stage && T.stage.t, topB: T.top && T.top.b })})`);
+          assert(!T.rule, `${w}x${h}: the permanent "While away" sentence is not on the fight screen`);
+          assert(T.lbl && !T.lbl.cut, `${w}x${h}: the Next Up goal shows whole, with no ellipsis (${T.lbl && T.lbl.txt})`);
+          assert(T.prev && T.pill && T.prev.r <= T.pill.l + 1 && T.prev.t >= T.top.t - 1 && T.prev.b <= T.top.b + 1, `${w}x${h}: the zone arrows sit in the header beside the zone pill`);
+        }
         // the banner and the toasts take turns: while the turn banner shows, the toast stack is hidden
         await X('notify({ msg: "Test notice for the HUD fit check", kind: "hi" }, "now"); emit("turnCard", { who: "foe", secs: 0.9 }); true').catch(() => {});
         await page.waitForTimeout(150);

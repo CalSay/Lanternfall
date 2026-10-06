@@ -21,7 +21,7 @@
   // ---------------- the card ----------------
   const queue = [];
   let ov = null, lastFocus = null;
-  const blocked = () => !!document.querySelector('.away-ov, #createScreen, .join-ov');
+  const blocked = () => !!document.querySelector('.away-ov, #createScreen, .join-ov, .mm-ov');
   function closeCard() {
     if (!ov) return;
     ov.remove(); ov = null;

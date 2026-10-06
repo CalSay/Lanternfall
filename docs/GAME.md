@@ -175,6 +175,11 @@ The bell opens Notices, the Journal and Settings. Achievements (Deeds) and the C
   A step pauses the game only while it waits for a press; a step that needs game time shows live progress instead.
 - **Notices** (`23n-data-notices.js`, `notify()`): every message goes to a channel (card, pop, bell, log or none),
   with a quiet start and a cap on pops a minute.
+- **Moments** (`75-moments-ui.js`): big moments (the first boss, any unique, a new hero; the cache hook is ready for
+  `lantern-cache`) show as a card that holds the game until the player taps Continue, with a burst and a sting. Medium
+  moments (the first level up and every 5th level, a new ability, a new Star, a look found) show as one banner in the
+  notices slot, at least 2.6 s, at most 2 in any 3 minutes of the first 30. All wait for the end of the fight, never show
+  in a turn, and are never only a bell line. Several at one fight end fold into one card or banner.
 
 ## Currencies
 
