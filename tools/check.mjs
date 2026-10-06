@@ -8568,7 +8568,9 @@ if (section('wall-try-again (boss loss, Try again)')) try {
   // a reload keeps the strength you failed at, so Auto does not retry an unchanged hero
   E('S.auto = true; S.bossTry.hold = 2; S.bossTry.fail = 1e9; failDps = 1e9; save()');
   const g3 = loadCore({ seed: 5, storage: memoryStorage({ [KEY]: E('JSON.stringify(S)') }) });
-  assert(g3.eval('failDps') === 1e9 && g3.eval('bossTryHeld() || S.bossTry.hold === 2'), 'try again: a reload keeps the failed-at strength with the hold');
+    assert(g3.eval('failDps') === 1e9 && g3.eval('bossTryHeld() || S.bossTry.hold === 2'), 'try again: a reload keeps the failed-at strength with the hold');
+  // coming back from away resets the baseline on purpose (BAL3: an idle player is not walled at the cap), in the save too
+  g3.eval('awayGains(600)'); assert(g3.eval('failDps === 0 && S.bossTry.fail === 0'), 'try again: coming back from away clears the failed-at strength, as BAL3 intends');
   // an old save with no bossTry loads with the defaults
   const old = JSON.parse(E('JSON.stringify(S)')); delete old.bossTry;
   const g2 = loadCore({ seed: 4, storage: memoryStorage({ [KEY]: JSON.stringify(old) }) });
