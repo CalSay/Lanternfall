@@ -31,23 +31,32 @@ Single-player depth. Do not change the online layer (world raid, tavern, leaderb
   phones (and desktop). Until the landscape layout lands (task UX-L1), the current portrait layout must
   keep working at 360px wide. Respects `prefers-reduced-motion`.
 
-## Art freeze (owner, 2026-09-30)
+## Art freeze (standard: owner, 2026-09-30; signer: the Opus art judge, Cal 2026-10-06)
 
-- No art goes into the game until the owner has vetted the **whole pack** for that character or scene, and every piece
+- No art goes into the game until the Opus art judge under the Autopilot gates has vetted the **whole pack** for that character or scene, and every piece
   matches the others and suits the game. No partial packs, no stopgaps.
 - Effects and props (arrows, bow strings, tools, sparks, chips) come from the artist in the pack, drawn to match the
   art. Agents do not draw art assets in code and do not tell the owner that code will add them.
 - Until then, agents do not wire, convert, retune or redraw existing art. Art tooling and art data files stay as they are.
 - Exception (owner, 2026-09-30): **Codex may create new art for a new item or scene it builds** (for example the
   Hunting scene and its beasts), since those cannot reuse existing assets. Match the style of the three heroes (Wren,
-  Tobin, Pip): strict pixel art, a clean 1-pixel dark outline, flat shading clusters, the same scale. The owner still
-  vets the whole set before it ships.
+  Tobin, Pip): strict pixel art, a clean 1-pixel dark outline, flat shading clusters, the same scale. The Opus art
+  judge still vets the whole set before it ships.
 - Exception (owner, 2026-10-01): **Hunting is switched on before its art pack is done, with Codex's drafts wired in.**
   The interim art is machine-converted from Codex's review drafts, nothing redrawn: the beasts and hunting grounds
   (`tools/art/hunt-interim.py` -> `art/hunting/interim-v1` -> `tools/art/embed-hunt.mjs` -> `21z-data-huntart.js`, drawn by
   `64i-hunt-art.js`) and Codex's native spear-thrust poses (`art/heroes/<id>/hunt`, packed by `tools/heroart.mjs`).
   `HUNT_TUNE.interim` turns it on; `borrowArt` (the woods art) is the older stopgap, now off. Codex's vetted pack
   replaces the interim files.
+- Who signs (Cal, 2026-10-06 19:35): "Art should only be made by Codex." Claude vets it and answers for anything broken
+  or ugly that reaches a Monday build. Every Codex pack gets an `integrate: <pack>` card the day it lands. A red team
+  argues against it, then the Opus art judge rules **wire**, **re-brief** or **shelve** against
+  `docs/design/art-direction.md` and the live game's look, records the reason in `docs/DECISIONS.md` (Art) and reports
+  it in the digest; Cal may veto later. A "wire" verdict becomes a build card that converts and embeds the pack as
+  drawn (no redrawing). An icon goes in only if it fits the live ability's or item's meaning, not just its name.
+  Anything doubtful stays out of the Monday build.
+- Character art (portraits, hero sprites, stills, the guide) ships **on**, with a "Classic art" switch in Settings for
+  one release.
 
 ## Shared online data (do not change shape without coordinator sign-off)
 

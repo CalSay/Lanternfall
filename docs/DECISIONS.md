@@ -280,9 +280,9 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 - **Who vets art (2026-10-06):** the Opus art judge under the Autopilot gates, after a red team, using the art
   freeze's own standard (whole packs, every piece matching, no stopgaps, no code-drawn art). Cal may veto from the
   digest. Character art ships on, with a "Classic art" switch for one release. Icons must fit the live meaning, not the
-  name. (Cal 2026-10-05 gates, 2026-10-06 18:30 and 18:41.) Not in force for wiring yet: `CLAUDE.md`'s art freeze
-  still names the owner, and the session permission check refused the edit, so every wiring card waits until that
-  wording changes (proposed text: `/mnt/project-files/autopilot/reports/art-pack-triage/claude-md-art-freeze.md`).
+  name. Only Codex makes art; Claude vets it and answers for anything broken or ugly in a Monday build; anything
+  doubtful stays out. (Cal 2026-10-05 gates; 2026-10-06 18:30, 18:41 and 19:35: "Art should only be made by Codex.
+  ... If it gets into a Monday build and it's broken or looks bad, you will be held responsible".)
 - **Codex art packs, judge verdicts (2026-10-06, art-pack-triage):** ability icons: wire 36 of Codex's drafts for the
   live 42 abilities (keep the C26 Echo Shot and Fireball; Shield Bash moves to Codex's red-gold one), a hero's icons go
   in only when all 14 are whole, so Pip first; Power Shot, Barbed Arrow, Pinning Shot and Shield Throw go back to Codex
@@ -291,8 +291,8 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   interim. Enemies (c22): already in. Hero concept boards: re-brief as a matched portrait pack. Reasons and red team:
   `/mnt/project-files/autopilot/reports/art-pack-triage.md`. (built: not yet; cards `wire-ability-icons` and others)
   Coverage areas: 6 Combat feel and 1 First 10 minutes (icons), 10 Skills and crafting (nodes), 14 Heroes (portraits).
-  Prediction: lettered ability tiles fall from 39 of 42 to 0 for Pip when `wire-ability-icons` merges and to 0 for all
-  three heroes in the 2026-10-19 build; measured by counting lettered (`.mono`) tiles on the Hero > Abilities
+  Prediction: lettered ability tiles across the three heroes fall from 39 of 42 to 26 when `wire-ability-icons` merges
+  (Pip 13 to 0) and to 0 of 42 in the 2026-10-19 build; measured by counting lettered (`.mono`) tiles on the Hero > Abilities
   screen in `wire-ability-icons`' proof route (an `expect` line CI replays); missed if any tile stays lettered for a hero whose icons are wired, or if Cal's note "ability icons
   missing" is not "fixed" in that week's Sunday review. Switch off: removing a hero's ids from the generated `act` icon
   pack brings back the lettered tiles (the existing `noIcon` path); gather scenes go back to the code-drawn ones by
@@ -359,7 +359,7 @@ Kept only to explain current rules. Each line: the old decision, then what repla
 - Background art paused (2026-09-29) -> the Mossy Hollow background approved (2026-10-02).
 - Art freeze signer: "No art goes into the game until the owner has vetted the whole pack ... The owner still vets the
   whole set before it ships" (2026-09-30), and art packs as a Cal-tapped Autopilot gate (2026-10-05) -> the Opus art
-  judge vets under the Autopilot gates, same standard (2026-10-06). Why: Cal's 2026-10-05 gates already put art packs
+  judge vets under the Autopilot gates, same standard (2026-10-06, Cal 19:35). Why: Cal's 2026-10-05 gates already put art packs
   with the judge but `CLAUDE.md` was never aligned, and Codex packs (426 icons, 25 nodes) sat unwired for days waiting
   on a sign-off nobody owned; Cal 2026-10-06 18:30 "I don't want to be involved" and 18:41 any repo rule may change if
   it serves the goals.
