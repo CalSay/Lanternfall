@@ -25,6 +25,9 @@ Five tabs, each a full-screen menu over the stage ([layout.md](design/layout.md)
 The bell opens Notices, the Journal and Settings. Achievements (Deeds) and the Codex open from the Journal. Landscape
 (740x360 and up) is the main target; portrait still works at 360 px wide.
 
+Menu sub-tabs keep their labels and show the drawn menu icons. Action buttons show small Ready, Cooldown,
+Locked or Unavailable badges; the ability picker marks the selected action. Icons use native pixel sizes.
+
 ## The hero
 
 - **Three playable heroes:** Wren (archer, Ranger class), Tobin (tank, Warrior class, Warden kit) and Pip (caster, Mage

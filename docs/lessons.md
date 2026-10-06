@@ -68,6 +68,8 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 
 ## UI and menus
 
+- Fit every sub-tab label with all views unlocked at 360px, using native-size icons above the text when a row has five views. Keep status badges outside ability art and hot files. (wire-menu-icons, 2026-10-06)
+
 - Away card: lead with "While away, gathering continues and fighting stops", show it even when nothing was earned, put the work-limit bar below results. Why: the same 8 hours felt opposite depending on what the hero was doing; Codex P1 for the missing idle-fighter card. (away-clarity, 2026-10-06)
 - Show the pre-leave notice only while fighting; hide it when gathering, before the first boss and in Deepwell runs. Hook it through `uiHooks`. Why: Codex found order, gating and hook issues over 3 rounds. (away-pre-leave-notice, 2026-10-06)
 - Build pre-leave UI in the same slot as its sibling and never behind the sibling's element; cap estimates by Storehouse room; update GAME.md. Why: Codex P1s x4 on the away chip (chip hung off a fighter-only notice, no layout slot, ignored the Storehouse cap, no GAME.md). (away-chip, 2026-10-06)

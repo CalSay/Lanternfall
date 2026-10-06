@@ -4329,6 +4329,22 @@ if (section('solo hero')) try {
     assert(E('onboardStep().id') === 'parry' && E('soloParry(true)') === 'parry', 'the next heavy hit: "Press Parry" and counter');
     errs.push(...g.errors);
   }
+  // guide-phase-guards: the guide never says Attack or the ability on the foe's turn, and never pops a tab tip mid-fight
+  {
+    const g = T(), E = s => g.eval(s);
+    E('soloPick("wren")'); run(g, 0.5);
+    const when = id => E(`GUIDE_STEPS.find(s => s.id === "${id}").when()`);
+    E('globalThis.__tc0 = turnCombatOn; globalThis.__ts0 = turnCombatSnapshot; turnCombatOn = () => true; turnCombatSnapshot = () => ({ phase: "foe" }); true');
+    assert(when('attack') === false, 'no Attack tip while the foe acts (wind-up or parry window)');
+    E('turnCombatSnapshot = () => ({ phase: "hero" }); true');
+    assert(when('attack') === true, 'Attack tip shows on your turn');
+    E('O().done.attack = 1; turnCombatSnapshot = () => ({ phase: "foe" }); true');
+    assert(when('ability') === false, 'no ability tip while the foe acts');
+    E('S.onboard.got.party = 1; S.maxZone = 3; S.activity = "fight"; true');
+    assert(E('fightingNow()') && when('tab:party') === false, 'no Hero tab tip mid-fight');
+    E('turnCombatOn = globalThis.__tc0; turnCombatSnapshot = globalThis.__ts0; true');
+    errs.push(...g.errors);
+  }
   // W1-D (playtest-2 P0): a combat step never pauses a game that cannot give it what it waits for
   {
     const g = T(), E = s => g.eval(s);
@@ -9282,6 +9298,74 @@ if (section('story-unlock-gates')) try {
   assert(['attack', 'ability', 'boss', 'upgrade', 'gather', 'light', 'bench', 'tool', 'forge'].every(id => doneSteps.has(id)), 'story-unlock-gates: every guide step of the cold walk still completes (' + [...doneSteps].join(',') + ')');
   assert(!g.errors.length && !og.errors.length && !og2.errors.length && !og3.errors.length && !cw.errors.length, 'story-unlock-gates: no errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
 } catch (e) { fail('story-unlock-gates crashed: ' + (e.stack || e)); }
+
+// wire-menu-icons: detect orphaned pack entries, and check the real controls at phone widths.
+if (section('wire-menu-icons')) try {
+  const g = loadCore(), navSrc = fs.readFileSync(path.join(ROOT, 'src/js/75-nav-ui.js'), 'utf8');
+  const uiSrc = fs.readFileSync(path.join(ROOT, 'src/js/70-ui.js'), 'utf8');
+  const map = name => vm.runInNewContext('(' + (name === 'icons' ? navSrc : uiSrc).match(new RegExp('const ' + name + ' = (\\{[^;]+\\});'))[1] + ')');
+  const views = map('icons'), tabs = map('NAV_OF_TAB');
+  const activity = vm.runInNewContext('(' + navSrc.match(/const NAV_OF = (\{[^;]+\});/)[1] + ')');
+  const navConsumers = new Set([...Object.values(views), ...Object.values(tabs), ...Object.values(activity), 'notices']);
+  const ids = JSON.parse(g.eval('JSON.stringify({nav:Object.keys(NAV_ICONS), act:Object.keys(ACTION_ICONS), abilities:Object.keys(ABILITIES)})'));
+  const orphanNav = ids.nav.filter(id => !navConsumers.has(id));
+  assert(!orphanNav.length, 'wire-menu-icons: every embedded menu icon has a consumer' + (orphanNav.length ? ': ' + orphanNav.join(', ') : ''));
+  // The bar consumes the three attacks, defence, empty slot, signatures and Auto; the ability view consumes named abilities.
+  const solo = fs.readFileSync(path.join(ROOT, 'src/js/75-solo-ui.js'), 'utf8');
+  const badges = [...navSrc.matchAll(/return '(locked|cooldown|ready|unavailable)'/g)].map(m => m[1]);
+  if (/\? 'selected' : ''/.test(navSrc)) badges.push('selected');
+  const actConsumers = new Set([...badges, ...ids.abilities]);
+  if (solo.includes("'attack-' + (soloHero()")) for (const hero of ['wren', 'tobin', 'pip']) actConsumers.add('attack-' + hero);
+  for (const id of ['parry', 'dodge', 'empty', 'echo', 'bash', 'fire', 'auto-on', 'auto-off']) if (solo.includes("'" + id + "'") || new RegExp('\\b' + id + ':').test(solo)) actConsumers.add(id);
+  const orphanAct = ids.act.filter(id => !actConsumers.has(id));
+  assert(!orphanAct.length, 'wire-menu-icons: every embedded action icon has a consumer' + (orphanAct.length ? ': ' + orphanAct.join(', ') : ''));
+  assert(uiSrc.includes('menuNavIcon(b, v.id)') && uiSrc.includes('menuNavIcon(b, v)'), 'wire-menu-icons: menu and Journal renderers use the icon map');
+  assert(navSrc.includes("nicSet(im, 'nav', id, 16)") && navSrc.includes("nicSet(im, 'act', id, 16)"), 'wire-menu-icons: controls use the native-size renderer');
+} catch (e) { fail('wire-menu-icons crashed: ' + (e.stack || e)); }
+
+if (section('wire-menu-icons (browser)')) try {
+  const { pw, exe } = browserTools, file = path.join(ROOT, 'dist/lanternfall.html');
+  if (!pw || !exe || !fs.existsSync(file)) skipBrowser('wire-menu-icons: Playwright, Chromium or dist unavailable');
+  else {
+    const raw = fs.readFileSync(file, 'utf8'), end = raw.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1">' + raw.slice(0, end) + '\nwindow.__menuTest = s => eval(s);\n' + raw.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe });
+    try {
+      for (const [width, height, reducedMotion] of [[360, 740, 'no-preference'], [740, 360, 'no-preference'], [360, 740, 'reduce']]) {
+        const ctx = await browser.newContext({ viewport: { width, height }, reducedMotion, turns: true }), page = await ctx.newPage(), errors = [];
+        page.on('pageerror', e => errors.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://menu.test/' ? r.fulfill({ status: 200, body: html, contentType: 'text/html; charset=utf-8' }) : r.abort());
+        await page.goto('http://menu.test/');
+        await page.evaluate(() => window.__menuTest("soloPick('pip'); onboardUnlockAll(); ui(true); document.getElementById('createScreen').hidden = true;"));
+        for (const tab of ['adv', 'party', 'gat', 'forge', 'world', 'deeds']) {
+          await page.evaluate(t => window.__menuTest(`setTab('${t}'); ui(true);`), tab);
+          await page.waitForTimeout(300);
+          const r = await page.evaluate(() => {
+            const buttons = [...document.querySelectorAll('#viewSeg button')];
+            return { bad: buttons.filter(b => {
+              const i = b.querySelector('.menu-nav-ic'), rect = b.getBoundingClientRect();
+              const text = [...b.childNodes].find(n => n.nodeType === 3), range = document.createRange();
+              if (text) range.selectNodeContents(text);
+              const tr = text ? range.getBoundingClientRect() : rect;
+              return !i || !i.complete || i.naturalWidth !== 16 || i.getBoundingClientRect().width !== 16 || rect.height < 44 || tr.width > rect.width + 1 || b.scrollWidth > b.clientWidth + 1;
+            }).map(b => b.textContent), overflow: document.documentElement.scrollWidth > innerWidth + 1, count: buttons.length };
+          });
+          assert(r.count > 0 && !r.bad.length && !r.overflow, `wire-menu-icons ${width}x${height} ${reducedMotion} ${tab}: icons native, labels fit, targets >=44px (${r.bad.join(', ')})`);
+        }
+        const badgeStates = await page.evaluate(() => window.__menuTest(`(() => {
+          const b = el('button', 'sbtn'), out = [];
+          for (const [cls, nv] of [['', ''], ['cool', '2'], ['blocked', 'T3'], ['off', ''], ['sp-ab on', '']]) {
+            b.className = cls; b._nv = nv; out.push(menuActionBadge(b));
+          }
+          return out;
+        })()`));
+        assert(badgeStates.join() === 'ready,cooldown,locked,unavailable,selected', `wire-menu-icons ${width}: five badges follow action and picker states`);
+        assert(!errors.length, `wire-menu-icons ${width}: no page errors` + (errors.length ? ': ' + errors[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('wire-menu-icons browser crashed: ' + (e.stack || e)); }
 
 // ==== craft-reveal: this card's own checks (result card, odds line, last-five strip, grade words) ====
 if (section('craft reveal')) try {
