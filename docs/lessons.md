@@ -82,6 +82,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Cover every bounty kind (16) in save-code validation and check each kind's own fields; refuse zero or out-of-range rewards and numbers the board cannot generate. Why: save codes knew 7 of 16 kinds and a 0-reward bounty loaded. (fix-bounty-kind, 2026-10-05)
 - When test saves fail on timers, pin fixture timestamps far in the future (2100) with a guard; never loosen the save-loss check. Why: the first fix relaxed the check and was reverted; expired fixture slots refill and fail as "slot kind". (fix-bounty-kind, f-ci)
 - Save any runtime value a saved hold compares against (like `failDps` for a held boss) next to the hold and restore it at load. Why: after a reload the baseline was 0, so Auto retried an unchanged hero. (wall-try-again, 2026-10-06)
+- When a system adds new legal values to a saved field (abilities learned with Scrolls, new kinds), update save-code validation in the same PR and add a check that exports and cold-loads a save using every new value. Why: `solo.eq` was checked against each hero's signature only, so any learned ability in a slot made Copy save code fail. (save-code-validation, 2026-10-06)
 - Update `docs/GAME.md` in every PR that changes what a player sees. Why: the rubrics require it and GAME.md had gone stale. (systems-map, 2026-10-06)
 
 ## CI and tooling
