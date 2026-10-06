@@ -147,13 +147,13 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
   const readable = sc => (sc ? sc.cards.filter(c => !c.choice) : []);   // a re-read shows the words, not the choice buttons
   function defs() {
     const out = [];
-    const add = (id, kind, key, zone, title, cards) => out.push({ id, kind, key, zone, region: regionIdOf(zone || 1), title, cards });
+    const add = (id, kind, key, zone, title, cards, also) => out.push({ id, kind, key, zone, region: regionIdOf(zone || 1), title, cards, keys: [key, ...(also || [])] });   // also: keys whose lateness is this entry's (a post scene)
     for (const id in D('region')) { const r = regionById(id); if (r) add('r:' + id, 'region', 'r:' + id, r.z0, D('region')[id].title, () => [{ lines: D('region')[id].lines.slice() }]); }
     for (const id in D('champ')) { const c = D('champ')[id];
-      add('p:' + id, 'champion', `p:${id}:pre`, c.zone, c.name || (c.page && c.page.title) || id, () => [...readable(champScene(id, 'pre')), ...(has(`p:${id}:post`) ? readable(champScene(id, 'post')) : [])]);
+      add('p:' + id, 'champion', `p:${id}:pre`, c.zone, c.name || (c.page && c.page.title) || id, () => [...readable(champScene(id, 'pre')), ...(has(`p:${id}:post`) ? readable(champScene(id, 'post')) : [])], [`p:${id}:post`]);
       if (c.page) add('j:' + id, 'page', 'j:' + id, c.zone, c.page.title, () => [{ lines: [c.page.text] }]); }
     for (const id in D('elder')) { const e = D('elder')[id];
-      add('e:' + id, 'elder', `e:${id}:pre`, e.zone, e.name || (e.page && e.page.title) || id, () => [...readable(elderScene(id, 'pre')), ...(has(`e:${id}:post`) ? readable(elderScene(id, 'post')) : [])]);
+      add('e:' + id, 'elder', `e:${id}:pre`, e.zone, e.name || (e.page && e.page.title) || id, () => [...readable(elderScene(id, 'pre')), ...(has(`e:${id}:post`) ? readable(elderScene(id, 'post')) : [])], [`e:${id}:post`]);
       if (e.page) add('j:' + id, 'page', 'j:' + id, e.zone, e.page.title, () => [{ lines: [e.page.text] }]); }
     for (const id in D('voice')) add('v:' + id, 'voice', 'v:' + id, D('voice')[id].zone, D('voice')[id].title || 'A voice', () => cardsOf(D('voice')[id].lines));
     for (const id in D('npc')) if (/^area:/.test(D('npc')[id].at) && npcCards(id).length) add('n:' + id, 'npc', 'n:' + id, npcZone(D('npc')[id].at), D('npc')[id].who || id, () => npcCards(id));   // the others read inside their Champion's or Elder's entry
@@ -169,7 +169,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
     return x ? x.zone : 0;
   }
   storyEntry = id => { const d = defs().find(x => x.id === id); return d && has(d.key) ? { id: d.id, kind: d.kind, region: d.region, zone: d.zone, title: d.title, cards: d.cards() } : null; };
-  storyList = () => defs().filter(d => has(d.key)).map(d => ({ id: d.id, kind: d.kind, region: d.region, zone: d.zone, title: d.title, got: Math.abs(seenAt(d.key)), read: !!ST().read[d.id], late: seenAt(d.key) < 0 }));
+  storyList = () => defs().filter(d => has(d.key)).map(d => ({ id: d.id, kind: d.kind, region: d.region, zone: d.zone, title: d.title, got: Math.abs(seenAt(d.key)), read: !!ST().read[d.id], late: d.keys.some(k => seenAt(k) < 0) }));
   storyUnread = () => storyList().filter(e => !e.read).map(e => e.id);
   storyLate = () => storyList().filter(e => e.late && !e.read).map(e => e.id);
   storyRead = id => { if (!storyEntry(id) || ST().read[id]) return; ST().read[id] = 1; emit('storyRead', { id }); };
@@ -236,6 +236,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
     if (sc.kind === 'card' && !auto && !st.ends[sc.id]) st.ends[sc.id] = how === 'done' ? 'done' : 'skipped';
     if (sc.page) mark('j:' + sc.page, auto);
     if (auto) for (const k of [sc.id, sc.page && 'j:' + sc.page]) if (k && st.seen[k] > 0) st.seen[k] = -st.seen[k];   // late, unread (a caption's joined id is no key)
+    const post = auto && /^([pe]:[^:]+):post$/.exec(sc.id); if (post) delete st.read[post[1]];   // its Journal entry (pre and post together) is unread again
     emit('storyEnd', { id, how });
     // the next scene of the same stop plays now, even while the guide holds the game (no tick runs to pump it), once the UI has closed this one
     if (shown && queue.length && typeof setTimeout === 'function') setTimeout(() => { if (!cur && storyOn() && live() && inGap()) pump(); }, 0);
