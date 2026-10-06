@@ -12,7 +12,7 @@
 // wait for the guide step on screen, the Away and What's-new cards, and the first seconds after boot.
 // Several at fight end fold into one card with a list. Reduced motion: the same card, no burst.
 // API for later cards:  moment(kind, { title, sub, rarity, icon, still, lines, actions })
-//   kind     'boss' | 'unique' | 'cache' | 'hero' (big); 'level' | 'ability' | 'star' | 'look' | 'craft' (medium)
+//   kind     'boss' | 'unique' | 'cache' | 'hero' | 'starFirst' (big; a cache with a look is big too); 'level' | 'ability' | 'star' | 'look' | 'craft' (medium)
 //   title    the name, one line;  sub  one short line;  rarity  common..legendary (the colour; else the kind's own)
 //   icon     an icon spec for iconOf() ({ item }, { mat }, { ic });  still  a data URL (a bigger picture)
 //   lines    [{ txt, ic? }] a short list under the title;  actions  [{ txt, fn }] extra buttons beside Continue
@@ -24,6 +24,7 @@ const MOMENT_KINDS = {
   unique: { tier: 'big', eye: 'Unique loot', col: '#FF8A3D', snd: 'big' },
   cache: { tier: 'big', eye: 'Lantern Cache', col: '#F2C14E', snd: 'big' },
   hero: { tier: 'big', eye: 'New hero', col: '#B58CFF', snd: 'big' },
+  starFirst: { tier: 'big', eye: 'Your first Star', col: '#F2C14E', snd: 'big' },
   level: { tier: 'medium', eye: 'Level up', col: '#6FCB6A', snd: 'mid' },
   ability: { tier: 'medium', eye: 'New ability', col: '#5FA8FF', snd: 'mid' },
   star: { tier: 'medium', eye: 'New Star', col: '#F2C14E', snd: 'mid' },
@@ -200,7 +201,8 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
   });
   on('starFound', e => {
     if (!e || e.quiet || typeof STARS !== 'object' || !STARS[e.id]) return;
-    moment('star', { title: STARS[e.id].name, sub: STARS[e.id].text });
+    const first = Object.keys((S.stars && S.stars.own) || {}).length <= 1;   // the first Star is a big card (DECISIONS, Early game); later ones are a banner
+    moment(first ? 'starFirst' : 'star', { title: STARS[e.id].name, sub: STARS[e.id].text });
   });
   // a look found: the Deeds grant looks with a Feat, a Group level or a Chapter; compare what is owned
   let ownedLooks = null;
