@@ -165,7 +165,7 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
     if (!clean) { lampSet(0); return; }
     lampSet(Math.min(LAMPS, streak + 1));
     emit('float', { txt: p.res === 'parry' ? 'PARRIED!' : 'DODGED!', color: '#F2C14E', big: true, x: 0.27, y: 0.34 });
-    emit('defGrade', { kind: p.res, perfect: true, streak });
+    emit('defGrade', { kind: p.res, clean: true, streak });
   });
   on('fightStart', () => { pendClean = null; lampSet(0); });
   const warn = el('div', 'tv-warn'); warn.hidden = true; warn.setAttribute('role', 'status'); warn.setAttribute('aria-live', 'assertive');
