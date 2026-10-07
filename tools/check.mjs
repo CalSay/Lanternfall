@@ -8737,11 +8737,11 @@ if (section('slice-turn-check (core)')) try {
       // a drop in health follows a foe's hit (the foeContact event; the fight books it a tick later), or is a foe's Bleed, Burn or Venom ticking as your turn begins, and never lands while you act
       if (fc !== lastFc) { lastFc = fc; lastAt = t; }
       if (hp1 < hp0) { out.hits++;
-        if (!dot && t - lastAt > 0.2 || /^(hero|timing)$/.test(ph0) && /^(hero|timing)$/.test(ph1)) out.bad.push(`${hp0}>${hp1} in ${ph0}/${ph1}`); }
+        if (!(dot && ph0 === 'handoff') && t - lastAt > 0.2 || /^(hero|timing)$/.test(ph0) && /^(hero|timing)$/.test(ph1)) out.bad.push(`${hp0}>${hp1} in ${ph0}/${ph1}`); }
       if (!E('!!mob') || E('turnCombatSnapshot().phase') === 'off') break;
     }
     out.errors = g.errors.slice(0, 2); return out; };
-  const ok = (r, what) => assert(r.turn && !r.bad.length && !r.errors.length, `slice-turn-check: ${what} is a turn fight and the hero is hurt only in foe phases (${JSON.stringify(r)})`);
+  const ok = (r, what) => assert(r.turn && r.hits > 0 && !r.bad.length && !r.errors.length, `slice-turn-check: ${what} is a turn fight, a foe hits the hero, and the hero is hurt only in foe phases (${JSON.stringify(r)})`);
   for (const z of SLICE_ZONES) {
     { const { g, E } = fresh(60 + z, `S.maxZone = ${z}; setZone(${z}); COMBAT_TUNE.eliteP = 0; spawn()`); ok(watch(g, E), `zone ${z} foe`); }
     { const { g, E } = fresh(80 + z, `S.maxZone = ${z}; setZone(${z}); COMBAT_TUNE.eliteP = 1; for (let i = 0; i < 60 && !combatFoes().some(f => f.elite); i++) spawn()`);
