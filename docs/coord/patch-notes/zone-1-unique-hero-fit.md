@@ -1,0 +1,1 @@
+The Mossy Hollow boss now drops Briar Sprig, a charm every hero can wear (kills have a 10% chance to drop extra essence), in place of the Sproutblade, a sword only Tobin could use. Sproutblades you already found stay as they are. Best shot: trophies-old-and-new.

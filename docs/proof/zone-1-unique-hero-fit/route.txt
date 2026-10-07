@@ -1,0 +1,32 @@
+# seed: 1
+# Proof for card zone-1-unique-hero-fit: the zone 1 unique is now Briar Sprig, a charm every hero can wear.
+# Late-game save (Pip, holds a Sproutblade found before this change). The trophy wall still lists the old Sproutblade
+# and adds Briar Sprig as an unfound Mossy Hollow unique ("???" until found, so the route looks for its place, not its
+# name); the total is 14 here and 13 on a new save, which never shows the retired Sproutblade. A route cannot force a drop, so the Equip on Wren's first-unique
+# card, the fit for all three starters, the zones and the save codes are held by tools/check.mjs (solo hero 9b, hero voice).
+new late
+wait 6
+tap-if "Continue"
+wait 3
+tap-if "Continue"
+wait 3
+tap-if "Continue"
+wait 3
+tap-if "Continue"
+wait 3
+tap "Craft"
+wait 2
+tap-if "Continue"
+wait 2
+tap "Uniques"
+wait 1
+expect "Sproutblade"
+expect "3 / 14 uniques"
+shot trophies-old-and-new
+tap-if "Dismiss this tip"
+scroll
+scroll
+scroll
+scroll
+expect "Mossy Hollow"
+shot trophies-briar-sprig
