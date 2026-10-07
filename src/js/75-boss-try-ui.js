@@ -20,7 +20,7 @@
       if (L.shown > 0 || L.hidden > 0) {
         api.body.append(el('h3', 'bt-ways-h', 'Moves you know'));
         const chips = el('div', 'bt-chips');
-        for (const m of L.moves) chips.append(el('span', 'sb-chip' + (m.charged ? ' charged' : ''), `${m.name} · ${m.hits} hit${m.hits > 1 ? 's' : ''}${m.charged ? ' · charged' : ''}`));
+        for (const m of L.moves) chips.append(el('span', 'sb-chip' + (m.charged ? ' charged' : ''), `${m.name} · ${m.hits} hit${m.hits > 1 ? 's' : ''}${m.charged ? ' · charged' : ''}${m.tricks ? ' · ' + m.tricks : ''}`));
         if (L.hidden > 0) chips.append(el('span', 'bt-more', `${L.hidden} unknown. Each try shows one more.`));
         api.body.append(chips);
       }

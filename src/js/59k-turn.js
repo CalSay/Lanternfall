@@ -90,14 +90,27 @@ const TURN_TUNE = {
   //            kept-up hero about a quarter to a third of their health, a landed charge about two thirds. From zone 35
   //            the reference HP sits below a kept-up hero's (the late-zone pass), so hitX steps up there.
   //   payX     a longer boss pays more: gold and XP x (1 + payX x (its HP share - 1)), so an hour of play pays as before
-  boss: { hpX: [[3, 1], [4, 1.5], [5, 1.85], [6, 2.2], [7, 2.15], [8, 1.9], [9, 1.5], [10, 1.45], [11, 1.4], [12, 1.8], [13, 2.4], [14, 2.4], [15, 3.4], [16, 4.0], [17, 3.0], [18, 3.0], [19, 4.8], [20, 2.8], [21, 1.9], [22, 2.1], [23, 1.5], [24, 1.1], [25, 1.0], [27, 0.52], [30, 1.55], [34, 0.94], [35, 2.725], [36, 1.85]], regionHpX: 1.4,   // the gear pass (2026-10-02): zones 15-34 about x1.09, 36+ 1.5 -> 1.85, region 1.25 -> 1.4
-    hitX: [[3, 1], [4, 1.6], [5, 2.0], [6, 2.4], [8, 1.5], [9, 1.0], [10, 0.98], [11, 0.95], [12, 0.85], [13, 1.1], [14, 0.77], [15, 0.84], [16, 2.1], [17, 1.78], [18, 1.2], [19, 3.15], [20, 1.85], [21, 1.17], [22, 0.84], [23, 0.7], [24, 0.63], [25, 0.55], [27, 0.34], [30, 0.72], [34, 0.52], [35, 1.9]], chargeX: [[3, 1], [6, 1.3], [34, 1.3], [35, 1.35]], payX: 0.5,
+  boss: { hpX: [[3, 1], [4, 0.75], [5, 0.925], [6, 1.1], [7, 1.075], [8, 0.95], [9, 0.75], [10, 0.725], [11, 0.882], [12, 1.008], [13, 1.848], [14, 1.656], [15, 1.7], [16, 4], [17, 3], [18, 3], [19, 4.8], [20, 2.8], [21, 1.9], [22, 2.1], [23, 1.5], [24, 1.1], [25, 1], [27, 0.52], [30, 1.55], [34, 0.94], [35, 2.725], [36, 1.85]], regionHpX: 1.4,   // the gear pass (2026-10-02): zones 15-34 about x1.09, 36+ 1.5 -> 1.85, region 1.25 -> 1.4
+    hitX: [[3, 1], [4, 0.96], [5, 1.618], [6, 1.807], [7, 1.737], [8, 1.055], [9, 0.822], [10, 0.45], [11, 0.496], [12, 0.433], [13, 0.718], [14, 0.623], [15, 0.491], [16, 2.1], [17, 1.78], [18, 1.2], [19, 3.15], [20, 1.85], [21, 1.17], [22, 0.84], [23, 0.7], [24, 0.63], [25, 0.55], [27, 0.34], [30, 0.72], [34, 0.52], [35, 1.9]], chargeX: [[3, 1], [6, 1.3], [34, 1.3], [35, 1.35]], payX: 0.5,
     // hitCap: one boss hit never takes more than this share of the hero's max HP, so a missed parry cannot kill a full-health hero
     // (zone bosses: 0.4 to zone 15, 0.75 for zones 16-24; judge 2026-10-07, docs/DECISIONS.md "Boss tiers"). Taken before armour, Guard and the rest; each hit of a charged move on its own.
     hitCap: [[1, 0.4], [15, 0.4], [16, 0.75], [24, 0.75], [25, 0]],
     // the Champion tier (bossTierOf, 40-rules): a Champion's HP and hits x these on top of the zone line above (zones 5 and 10 only; later
     // Champions keep their own knots), so the first-hour peaks sit here and not in the Captain line (judge 2026-10-07, DECISIONS.md)
-    champHpX: [[1, 1], [4, 1], [5, 2.4], [10, 1.25], [11, 1]], champHitX: [[1, 1], [4, 1], [5, 1.6], [10, 1.6], [11, 1]] },
+    champHpX: [[1, 1], [4, 1], [5, 2.4], [10, 1.25], [11, 1]], champHitX: [[1, 1], [4, 1], [5, 1.6], [10, 1.6], [11, 1]],
+    // hpFloor: see turnLand (zone table of multiples; 0 off). gate: rally gates (see TURN_TUNE.gateNote)
+    hpFloor: [[1, 0], [3, 0], [4, 0.15], [5, 0.93], [6, 0.85], [7, 1.03], [8, 0.84], [9, 0.92], [10, 0.95], [11, 0.94], [12, 0.82], [13, 0.9], [14, 0.99], [15, 0.76], [16, 0]], gate: { on: 1, from: 4, to: 15, captain: [0.67, 0.33], champ: [0.75, 0.5, 0.25] } },
+  // Boss move tricks (card boss-tiers-pr4; docs/design/foe-moves.md "Boss tricks"): zone bosses from `from` play the Captain and
+  // Champion sets in TURN_BOSS_TRICKS (24d): hits that hold their swing (`hold`), fakes (`feint`: no damage, and a press at one
+  // fools you: the next hit cannot be defended), longer strings and an uneven rhythm. `on` 0 plays the old sets. `feintFrom`: the
+  // first zone whose bosses feint (the learning Captains only delay). `tell` is the warning the bar gives after a stall or a
+  // fake's tell: the last (dodge window + tell) seconds of the hit run on the bar. `read`: the scratch player's chance to read a
+  // trick is read[0] + read[1] x how often they avoid a plain hit (parry or dodge); a caller may pass skill.read.
+  tricks: { on: 1, from: 4, to: 15, feintFrom: 7, tell: 0.25, read: [0.3, 0.6] },
+  // Rally gates (boss-tiers-pr4, judge 2026-10-07): the tempo floor. A Captain's HP has gates at these shares, a Champion's at its own;
+  // damage cannot take the boss below the next gate until it has finished one move after reaching it. Zones from..to only.
+  // The first-hour footing hero deals about a sixth of the boss a turn, so the gates rarely bind there; a hero who kills in 3 turns meets them.
+  gateNote: 0,
   // the boss riders on the hero (shares of the reference HP a tick, two hero turns)
   heroDot: { bleed: 0.02, burn: 0.04, venom: 0.02 }, heroDotT: 2, heroChill: 0.1, heroBlind: 0.3,
   windowCaps: { parry: 0.35, dodge: 0.5 }, dodgeTrain: 0.004,   // Dodge Training: +4 ms of dodge window a level
@@ -177,6 +190,18 @@ function turnCdFor(id) {
   return Math.max(Math.min(2, a.cd), Math.ceil(a.cd * mod('abilityCd') / gf - 1e-9));
 }
 
+// A zone boss's script with tricks (24d TURN_BOSS_TRICKS): the Captain's four moves, or the Champion's five (its own long string
+// third). Below TURN_TUNE.tricks.feintFrom the feints are left out, so the learning Captains only delay their hits.
+const TURN_TRICK_CACHE = {};
+function turnTrickScript(row, z) {
+  const T = TURN_TUNE.tricks, champ = typeof bossTierOf === 'function' && bossTierOf(z) === 'champion', set = champ && row.champion ? row.champion : row.captain, fz = z >= T.feintFrom;
+  const key = (champ ? 'c' : 'k') + (fz ? 'f' : 'n') + set.a.id + set.b.id;
+  if (TURN_TRICK_CACHE[key]) return TURN_TRICK_CACHE[key];
+  const mv = x => fz || !x.hits.some(h => h.feint) ? x : Object.assign({}, x, { hits: x.hits.filter(h => !h.feint), nreal: null });
+  const out = (set.d ? [set.a, set.b, set.d, set.charge, set.c] : [set.a, set.b, set.charge, set.c]).map(mv);
+  return (TURN_TRICK_CACHE[key] = out);
+}
+
 // ---------------- the foe ----------------
 // cbSpawn (59-combat) makes the foe, then this sets it up for a turn fight: HP from the reference hero, its moves and
 // script, Speed, armour, gold and XP. kind: 'boss' | 'normal' (an elite rolls here).
@@ -190,6 +215,7 @@ function turnFoeSetup(f, z, o) {
     const kit = !o.set && typeof kitOf === 'function' ? kitOf(f) : null, id = o.set || (region ? (regionIdx(z) === 0 ? 'fenmother' : '') : f.type);
     const set = TURN_BOSS_SETS[id] || TURN_BOSS_BASIC;
     script = [set.a, set.b, set.charge, set.c]; moves = script;
+    if (T.tricks.on && !o.set && !region && z >= T.tricks.from && z <= T.tricks.to && TURN_BOSS_TRICKS[id]) script = moves = turnTrickScript(TURN_BOSS_TRICKS[id], z);   // the Captain and Champion sets (boss-tiers-pr4)
     spd = region ? TURN_FOE_SPEED.region : TURN_FOE_SPEED.boss; hpA = region ? TURN_FOE_HP.region : TURN_FOE_HP.boss;
     if (kit) f.name = kit.name;
   } else if (Z) {
@@ -218,7 +244,7 @@ function turnFoeSetup(f, z, o) {
   f.hp = f.max = hp; f.turn = 1; f.tz = z;
   f.tk = { script, spd: spd * 10, arm: Z && Z.armour ? Z.armour : f.armoured ? 0.3 : 0, boss: !!f.boss, region, elite: !!f.elite,
     hx: zb ? turnZoneLine(B.hitX, z) * (champ ? turnZoneLine(B.champHitX, z) : 1) : f.boss || f.trial || f.deep ? 1 : turnZoneLine(T.normHitX, z) * (f.elite ? T.eliteHitX : 1), cx: zb ? turnZoneLine(B.chargeX, z) : 1,
-    hcap: zb && !region ? turnZoneLine(B.hitCap, z) : 0 };
+    hcap: zb && !region ? turnZoneLine(B.hitCap, z) : 0, hfl: zb && !region && B.hpFloor ? turnZoneLine(B.hpFloor, z) : 0, gates: zb && !region && B.gate.on && z >= B.gate.from && z <= B.gate.to ? (champ ? B.gate.champ : B.gate.captain) : null };
   const C = COMBAT_TUNE;
   // a longer boss pays more (the boss pass: payX of its extra length), so an hour of play pays about as before
   // zones 4-24 pay on the old length (boss-tiers PRs 1 and 3 lengthened those fights; gold and XP stay as they were)
@@ -272,7 +298,7 @@ function turnMakeProfile(f, u) {
     critChance: critChance(), critMult: critMult(), nonCrit: mod('nonCrit'), echo: g.echo || 0,
     hitX: T.foeAtkX * (1 - armRed) * classDr, blockP: u.blockP || 0, blockC: u.blockC || 0, blockN: u.blockN || 0, blockX: COMBAT_TUNE.blockX,
     heroSpd: ((T.heroHaste[key] || 10) + (g.initiative || 0)) * (1 + (g.aspd || 0) / 100), foeSpd: f.tk.spd, foeMaxHp: f.max, foeHp: f.hp,
-    bossHitX: f.tk.hx || 1, bossChargeX: f.tk.cx || 1, bossHitCap: f.tk.hcap || 0, fullHp: !!(f.boss && !f.deep && !f.trial),   // the boss pass; a zone boss is met at full health
+    bossHitX: f.tk.hx || 1, bossChargeX: f.tk.cx || 1, bossHitCap: f.tk.hcap || 0, bossHitFloor: f.tk.hfl || 0, gates: f.tk.gates || null, fullHp: !!(f.boss && !f.deep && !f.trial),   // the boss pass; a zone boss is met at full health
     foeName: f.name, foeType: f.txRow || f.type, foeArm: f.tk.arm, boss: f.tk.boss, region: f.tk.region, trait: f.tr && TURN_TRAITS[f.tr[0]] ? f.tr[0] : '',
     script: f.tk.script, eq, cds, tal: typeof talentsOf === 'function' ? talentsOf(key) : {},
     stars: typeof starsActive === 'function' ? starsActive(key) : [], starSet: typeof starsSetIds === 'function' ? starsSetIds(key) : [],   // the Stars (57e)
@@ -323,8 +349,9 @@ const turnFoeFx = () => ({ burn: 0, burnDmg: 0, grow: 0, growN: 0, growCap: 0, b
 function turnNew(p, io) {
   const m = { p, now: 0, phase: 'intro', until: TURN_TUNE.introHand, next: null, n: 0, gH: 0, gF: 0, last: '', run: 0,
     heroOps: 0, foeOps: 0, cds: {}, h: turnHeroFx(), e: turnFoeFx(), move: null, hitI: 0, parried: 0, landed: 0,
-    defense: '', usedDefense: false, si: 0, charge: null, phase2: false, ended: false, first: '', blockN: p.blockN || 0 };
+    gi: 0, rally: 0, defense: '', usedDefense: false, si: 0, charge: null, phase2: false, ended: false, first: '', blockN: p.blockN || 0 };
   for (const id in p.cds) m.cds[id] = 0;
+  if (p.gates && io && io.foeHp) while (m.gi < p.gates.length && io.foeHp() <= p.gates[m.gi] * p.foeMaxHp + 1e-6) m.gi++;   // a damaged boss met again starts past the gates it already crossed
   if (p.trait === 'shielded') m.e.shield = TURN_TRAITS.shielded.share * p.foeMaxHp;
   if (p.trait === 'frozen') m.e.ice = 1;
   m.sf = null; if (p.stars && p.stars.length) turnStarsStart(m, io);   // the Stars (57e): flags and openers
@@ -423,6 +450,13 @@ function turnHitFoe(m, io, pow, o) {
     if (!(d > 0)) { io.emit('shieldHit', { left: e.shield }); return 0; }
   }
   if (io.foeX) d *= io.foeX();   // a Proving's quarry at a lamp takes more
+  // a rally gate (boss-tiers-pr4, TURN_TUNE.boss.gate): damage cannot take the boss below its next gate until it has finished one move
+  // after reaching it; the excess is lost. Burn and Bleed count too, so no build skips it.
+  if (p.gates && m.gi < p.gates.length) {
+    const lvl = p.gates[m.gi] * p.foeMaxHp, hp = io.foeHp();
+    if (hp - d < lvl) { d = Math.max(0, hp - lvl); if (!m.rally) { m.rally = 1; io.emit('foeRally', { name: p.foeName, gate: m.gi }); } }
+    if (!(d > 0)) return 0;
+  }
   const got = io.damageFoe(d, o.kind || 'hit', crit, o.dt || 'phys', o.n || 0);
   if (got > 0) {
     if (e.curse > 0 && o.kind !== 'curse') e.curseStore = Math.min(e.curseCap, e.curseStore + T.curseP * got);
@@ -738,8 +772,9 @@ function turnBegin(m, who, io) {
     }
   }
   m.move = mv; m.hitI = 0; m.parried = 0; m.landed = 0; m.reach = 0;
+  if (m.rally === 1) m.rally = 2;   // the move it makes after reaching a gate
   io.emit('turn', { who, n: m.n });
-  io.emit('foeMove', { id: mv.id, name: mv.name, anim: mv.anim || '', hits: mv.hits.length, charged: !!mv.charge });
+  io.emit('foeMove', { id: mv.id, name: mv.name, anim: mv.anim || '', hits: mv.hits.length, real: turnRealHits(mv), charged: !!mv.charge });
   turnHitStart(m, io);
 }
 // the windows of the hit now coming (Pinned and Brace widen them, Last Stand doubles the parry, under the caps)
@@ -751,18 +786,28 @@ function turnWindows(m) {
   if (h.last > 0) px *= 2;
   return { parry: Math.min(T.windowCaps.parry, p.parryWindow * px), dodge: Math.min(T.windowCaps.dodge, p.dodgeWindow * dx) };
 }
+// a move's hits that can land: a feint is a fake (no damage, nothing to parry), so it does not count toward a counter or a dodge streak
+function turnRealHits(mv) { return mv.nreal != null ? mv.nreal : (mv.nreal = mv.hits.filter(h => !h.feint).length); }
 function turnHitStart(m, io) {
-  const hit = m.move.hits[m.hitI];
-  m.phase = 'foeWindup'; m.until = m.now + (hit.wind > 0 ? hit.wind : TURN_TUNE.foeWindup);
-  m.defense = ''; m.usedDefense = false;
+  const T = TURN_TUNE, hit = m.move.hits[m.hitI], wind = hit.wind > 0 ? hit.wind : T.foeWindup, hold = hit.hold > 0 ? hit.hold : 0;
+  m.phase = 'foeWindup'; m.until = m.now + wind + hold;
+  m.defense = ''; m.usedDefense = !!m.fooled; m.flinch = !!m.fooled; m.fooled = 0;   // a hero fooled by a feint is off balance: this hit cannot be defended
   const w = turnWindows(m);
-  io.emit('parryWindow', { opensAt: m.until - w.parry, closesAt: m.until, hit: m.hitI, hits: m.move.hits.length });
+  // a delayed hit (hold) winds up, stalls for `hold` s, then runs the last (dodge window + tell) s to the windows; a feint shows its
+  // tell at the same point in its run, then fades. Before that point the bar of a trick looks like any other hit's.
+  const run = Math.min(wind, w.dodge + TURN_TUNE.tricks.tell);
+  m.holdFrom = hold ? m.now + wind - run : 0; m.holdTo = hold ? m.holdFrom + hold : 0; m.tellAt = hit.feint ? m.until - run : 0;
+  io.emit('parryWindow', { opensAt: m.until - w.parry, closesAt: m.until, hit: m.hitI, hits: m.move.hits.length, holdFrom: m.holdFrom, holdTo: m.holdTo, feint: !!hit.feint, tellAt: m.tellAt });
 }
 // a landed hit on the hero
 function turnLand(m, io, hit) {
   const T = TURN_TUNE, p = m.p, h = m.h, e = m.e;
-  let amt = (hit.x || 0.2) * p.refHp * (p.bossHitX || 1) * (m.move && m.move.charge ? p.bossChargeX || 1 : 1) *
-    (e.weaken > 0 ? T.weakenX : 1) * (m.enraged ? TURN_TRAITS.enraged.dmg : 1);
+  const cx = m.move && m.move.charge ? p.bossChargeX || 1 : 1;
+  let amt = (hit.x || 0.2) * p.refHp * (p.bossHitX || 1) * cx;
+  // room to miss (boss-tiers-pr4): a boss hit never costs less than this multiple of its own share x of the hero's max HP, so a hero
+  // whose gear gave them a big HP pool still feels the hit. Floored first, then Weaken and enrage, then the cap (TURN_TUNE.boss.hpFloor)
+  if (p.bossHitFloor > 0) amt = Math.max(amt, p.bossHitFloor * (hit.x || 0.2) * cx * p.heroMaxHp);
+  amt *= (e.weaken > 0 ? T.weakenX : 1) * (m.enraged ? TURN_TRAITS.enraged.dmg : 1);
   if (p.bossHitCap > 0) amt = Math.min(amt, p.bossHitCap * p.heroMaxHp);   // the boss's side of the hit, before the hero's armour and defences
   amt *= p.hitX;
   let red = 1;
@@ -796,7 +841,8 @@ function turnLand(m, io, hit) {
 function turnContact(m, io) {
   const T = TURN_TUNE, h = m.h, e = m.e, hit = m.move.hits[m.hitI];
   let res = 'hit';
-  if (m.defense === 'parry') {
+  if (hit.feint) { res = 'feint'; if (m.usedDefense && !m.flinch) m.fooled = 1; }   // a press at a fake costs the next hit's defence
+  else if (m.defense === 'parry') {
     for (const k in m.cds) m.cds[k] = Math.max(0, m.cds[k] - 1);
     m.parried++; res = 'parry';
     if (m.p.heroKey === 'tobin') turnGain(h, 'grit', 1 + (has(m, 'bulwark') ? 1 : 0) + (h.answer ? 2 : 0));
@@ -810,17 +856,19 @@ function turnContact(m, io) {
   } else if (e.blind > 0 && io.random() < (m.p.boss ? T.blindBossP : T.blindP)) res = 'miss';
   else {
     // what would finish the hero, kept before the hit lands: the wipe ends the fight inside it (55-boss-try, the defeat card)
-    m.fin = { id: m.move.id, name: m.move.name, hit: m.hitI, hits: m.move.hits.length, charged: !!m.move.charge, defended: !!m.usedDefense };
+    m.fin = { id: m.move.id, name: m.move.name, hit: m.move.hits.slice(0, m.hitI).filter(x => !x.feint).length, hits: turnRealHits(m.move), charged: !!m.move.charge, defended: !!m.usedDefense && !m.flinch };
     turnLand(m, io, hit); m.landed++;
   }
-  io.emit('foeContact', { id: m.move.id, hit: m.hitI, hits: m.move.hits.length, res });
+  io.emit('foeContact', { id: m.move.id, hit: m.hitI, hits: m.move.hits.length, res, fooled: !!m.fooled, flinch: !!m.flinch, hold: hit.hold > 0 });
   if (!io.alive().hero) { turnEnd(m, 'defeat', io); return; }
   if (!io.alive().foe) { turnEnd(m, 'victory', io); return; }   // a parried hit can strike back (the Stars' Holy Sparks)
   m.hitI++;
   if (m.hitI < m.move.hits.length) { turnHitStart(m, io); return; }
   // the move is over: a counter if every hit was parried; Riposte opens after any parry
   if (m.parried > 0) h.ripo = 1;
-  if (m.parried === m.move.hits.length) {
+  m.fooled = 0;   // a feint at the end of a move fools nothing after it
+  if (m.rally === 2) { m.rally = 0; m.gi++; io.emit('foeRallied', { name: m.p.foeName }); }   // the gate is open
+  if (m.parried === turnRealHits(m.move)) {
     const shelter = has(m, 'bulwark') && turnTal(m, 'bulwark') === 'b';
     let d = m.p.counter * (has(m, 'bulwark') && !shelter ? 1.25 : 1) * (h.last > 0 ? 2 : 1);
     const got = turnHitFoe(m, io, d, { dt: 'phys', noCrit: true, kind: 'counter' });
@@ -902,6 +950,7 @@ function turnResolve(m, cmd, dt, io) {
     let ok = left >= 0 && left <= (cmd.kind === 'parry' ? w.parry : w.dodge);
     if (cmd.kind === 'dodge' && !ok && m.h.shadow > 0 && left >= 0) { ok = true; m.shadowUsed = 1; }   // Shadow Step: it cannot fail
     else if (cmd.kind === 'dodge' && ok && m.h.shadow > 0) m.shadowUsed = 1;
+    if (m.move.hits[m.hitI].feint) { ok = false; m.shadowUsed = 0; }   // a press at a fake never works: it fools you
     if (ok) m.defense = cmd.kind;
     io.defense(cmd.kind, ok);
     return ok;
@@ -939,6 +988,7 @@ function turnCombatSnapshot() {
   return { now: m.now, phase: m.phase, foe: f ? { key: f.key, name: f.name, hp: f.hp, maxHp: f.max } : null, next: m.next, n: m.n,
     cooldowns: { ...m.cds }, dodgeOpensAt: close ? close - w.dodge : 0, parryOpensAt: close ? close - w.parry : 0, closesAt: close,
     move: m.move ? { id: m.move.id, name: m.move.name, hit: m.hitI, hits: m.move.hits.length } : null,
+    holdFrom: close ? m.holdFrom : 0, holdTo: close ? m.holdTo : 0, tellAt: close ? m.tellAt : 0, feint: !!(close && m.move && m.move.hits[m.hitI].feint), flinch: !!(close && m.flinch),   // a boss trick (TURN_TUNE.tricks): the bar stalls, or breaks
     heroHaste: Math.round(turnRate(m, 'hero')), foeHaste: Math.round(turnRate(m, 'foe')), order: turnPreview(m, 6),
     hero: { aim: m.h.aim, grit: m.h.grit, embers: m.h.embers }, charge: m.charge ? m.charge.mv.name : '', heroOps: m.heroOps,
     canDefend: m.phase === 'foeWindup' && !m.usedDefense,
@@ -1083,7 +1133,7 @@ function turnCombatSample({ profile: p, seconds, seed = 1, skill = { parry: 0.5,
   const roll = () => ((x = (Math.imul(x, 1664525) + 1013904223) | 0) >>> 0) / 4294967296;
   const out = { seconds, kills: 0, deaths: 0, generatedEss: 0, damageDone: 0, damageTaken: 0, foeHits: 0, parries: 0, dodges: 0,
     completedFights: 0, totalHeroTurns: 0, totalFightSeconds: 0, closeWins: 0 };   // closeWins: kills where the hero fell under half health
-  let low = 1, heroHp = p.heroMaxHp, foeHp = p.foeMaxHp, m, downtime = 0, plan = '', tplan = null;
+  let low = 1, heroHp = p.heroMaxHp, foeHp = p.foeMaxHp, m, downtime = 0, plan = '', trick = '', tplan = null;
   const io = { random: roll, emit: () => {}, alive: () => ({ hero: heroHp > 0, foe: foeHp > 0 }), foeHp: () => Math.max(0, foeHp),
     heroHp: () => heroHp, slotId: i => p.eq[i] || null,
     damageFoe: d => { foeHp -= d; out.damageDone += d; return d; },
@@ -1100,9 +1150,21 @@ function turnCombatSample({ profile: p, seconds, seed = 1, skill = { parry: 0.5,
       if (tplan.off >= 0 && m.now >= m.until - tplan.off) turnResolve(m, { kind: 'time' }, 0, io);
     }
     if (m.phase === 'foeWindup' && !m.usedDefense) {
-      if (!plan) plan = roll() < skill.parry ? 'parry' : roll() < skill.dodge ? 'dodge' : 'none';
+      if (!plan) {
+        plan = roll() < skill.parry ? 'parry' : roll() < skill.dodge ? 'dodge' : 'none';
+        // a trick (a feint, or a hit that holds its swing): the player who meant to defend reads it with chance `read` (else a feint
+        // fools them, and a held hit meets their press too early). A hit with no trick draws nothing, so old seeds play as they did.
+        const hit = m.move.hits[m.hitI];
+        trick = '';
+        if (plan !== 'none' && (hit.feint || hit.hold > 0)) {
+          const avoid = 1 - (1 - (skill.parry || 0)) * (1 - (skill.dodge || 0)), R = TURN_TUNE.tricks.read;
+          const read = skill.read != null ? skill.read : Math.max(0, Math.min(1, R[0] + R[1] * avoid));
+          if (roll() >= read) trick = 'early'; else if (hit.feint) plan = 'none';
+        } else if (hit.feint) plan = 'none';
+      }
       const w = turnWindows(m), left = m.until - m.now;
-      if (plan !== 'none' && left <= (plan === 'parry' ? w.parry : w.dodge) * 0.5) turnResolve(m, { kind: plan }, 0, io);
+      if (trick === 'early') { if (m.now >= (m.holdFrom || 0)) turnResolve(m, { kind: plan }, 0, io); }   // the rhythm press: as the swing would have landed
+      else if (plan !== 'none' && left <= (plan === 'parry' ? w.parry : w.dodge) * 0.5) turnResolve(m, { kind: plan }, 0, io);
     } else if (m.phase !== 'foeWindup') plan = '';
     const hitBefore = m.hitI;
     turnResolve(m, { kind: 'tick' }, step, io);
