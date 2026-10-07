@@ -4,7 +4,9 @@ let lastFrame = performance.now();
 // Boot's away gains (see boot below), applied once: after the first frame, or before a save if the
 // page is hidden or closed first.
 let bootAway = null;
-function bootAwayNow() { if (bootAway == null) return; const secs = bootAway; bootAway = null; showAwayReport(awayGains(secs)); }
+// save-two-tabs: then save at once, so the newest open tab holds the save (an older tab still on screen stops at its next save).
+// Never before the away gains: a save stamps S.last, and that would lose the away time.
+function bootAwayNow() { if (bootAway == null) return; const secs = bootAway; bootAway = null; showAwayReport(awayGains(secs)); save(); }
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) { bootAwayNow(); save(); flush(); }
   // save-two-tabs: back in front while another tab wrote a newer save, this page's S is old: no away gains, no saves (30-state)

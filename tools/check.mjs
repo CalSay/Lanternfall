@@ -303,7 +303,28 @@ if (section('two tabs')) try {
   two4.set(KEY, JSON.stringify({ ...JSON.parse(raw), last: last0 + 9e6 })); A4.eval('saveAdopt()');
   at(A4, last0 + 9000); A4.fn.save();
   assert(!A4.eval('saveBlocked') && JSON.parse(two4.get(KEY)).last === last0 + 9000, 'save-code import or restore: saveAdopt() takes the stored copy as this tab\'s own');
-  assert(![a1, A, B, A2, B2, C2, A3, B3, A4].some(g => g.errors.length), 'two tabs: no handler errors');
+  // a write that does not land while the stored copy is stamped ahead of this clock (an imported code from a device set
+  // ahead, then a full storage): the next save is not blocked (save-risk review F1)
+  const five = memoryStorage({ [KEY]: JSON.stringify({ ...JSON.parse(raw), last: last0 + 36e5 }) });
+  const A5 = loadCore({ storage: five }), set5 = five.set;
+  five.set = () => {}; at(A5, last0 + 1000); A5.fn.save(); A5.fn.save(); five.set = set5;
+  at(A5, last0 + 2000); A5.fn.save();
+  assert(!A5.eval('saveBlocked') && JSON.parse(five.get(KEY)).last === last0 + 2000, 'one tab: failed writes under a stored stamp ahead of the clock never stop saving');
+  // the clock set back between two tabs: the older tab is still stopped (save-risk review F2)
+  const six = memoryStorage({ [KEY]: raw });
+  const A6 = loadCore({ storage: six });
+  at(A6, last0 + 36e5); A6.fn.save();
+  const B6 = loadCore({ storage: six });
+  B6.eval('S.gold = 12345'); at(B6, last0 + 1000); B6.fn.save();
+  at(A6, last0 + 36e5 + 5000); A6.eval('S.gold = 1'); A6.fn.save();
+  assert(A6.eval('saveBlocked') && gold(six) === 12345 && !B6.eval('saveBlocked'), 'two tabs: with the clock set back in between, the older tab still does not save over the newer one');
+  // an import in one tab, its code stamped earlier than the stored copy: the other open tab stops instead of saving over it
+  const sev = memoryStorage({ [KEY]: raw });
+  const A7 = loadCore({ storage: sev }), B7 = loadCore({ storage: sev });
+  sev.set(KEY, JSON.stringify({ ...JSON.parse(raw), gold: 777, last: last0 - 864e5 })); A7.eval('saveAdopt()');
+  at(B7, last0 + 1000); B7.fn.save();
+  assert(B7.eval('saveBlocked') && gold(sev) === 777, 'two tabs: a save code imported in one tab is not overwritten by the other tab');
+  assert(![a1, A, B, A2, B2, C2, A3, B3, A4, A5, A6, B6, A7, B7].some(g => g.errors.length), 'two tabs: no handler errors');
 } catch (e) { fail('two tabs crashed: ' + (e.stack || e)); }
 
 // ---- 3b. save export after play: Copy save code, Import, compare (save-fixture-current; save-risk-m1 F3) ----

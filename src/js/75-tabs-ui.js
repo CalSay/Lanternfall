@@ -19,6 +19,7 @@
     try { btn.focus({ preventScroll: true }); } catch (e) {}
   }
   onSaveBlocked = show;
+  if (saveBlocked) show();   // blocked while the page was still loading
   holdGame(() => saveBlocked);
   addEventListener('storage', e => { if (e.key === KEY || e.key === null) saveCheck(); });
 }

@@ -52,23 +52,28 @@ function loadSave() {
   saveAdopt();
 }
 // save-two-tabs: the game open in two tabs (or windows) writes one save. `saveSeen` is the `last` stamp of the stored
-// copy this page loaded or wrote. It is runtime only, never saved, and not S.last: boot and the page coming back re-stamp
-// S.last in memory without writing. A stored copy stamped later than `saveSeen` was written by another tab, so this page
-// holds older progress: it stops saving for good (`saveBlocked`, until a reload) rather than overwrite the newer save,
-// and calls onSaveBlocked (75-tabs-ui shows the card). An unreadable stored copy reads as 0 and never blocks a save.
+// copy this page loaded or wrote (and read back). It is runtime only, never saved, and not S.last: boot and the page coming
+// back re-stamp S.last in memory without writing. A stored copy with any other stamp was written by another tab (later, or
+// earlier on a clock set back), so this page holds older progress: it stops saving for good (`saveBlocked`, until a reload)
+// rather than overwrite it, and calls onSaveBlocked (75-tabs-ui shows the card). An unreadable or missing copy reads as 0
+// and never blocks; a write that did not land leaves `saveSeen` on the copy still stored, so it never blocks either.
 let saveSeen = 0, saveBlocked = false, onSaveBlocked = null;
 function storedLast() {
   try { const raw = storage.get(KEY); if (!raw) return 0; const t = JSON.parse(raw).last; return typeof t === 'number' && isFinite(t) ? t : 0; } catch (e) { return 0; }
 }
 // The stored copy is this page's own (loadSave, a save-code import or restore wrote or read it).
 function saveAdopt() { saveSeen = storedLast(); saveBlocked = false; }
-// True while this page may save. The first time another tab's newer save is found, blocks and tells the UI.
+// True while this page may save. The first time another tab's save is found, blocks and tells the UI.
 function saveCheck() {
-  if (!saveBlocked && storedLast() > saveSeen) { saveBlocked = true; if (onSaveBlocked) try { onSaveBlocked(); } catch (e) {} }
+  if (!saveBlocked) { const t = storedLast(); if (t && t !== saveSeen) { saveBlocked = true; if (onSaveBlocked) try { onSaveBlocked(); } catch (e) {} } }
   return !saveBlocked;
 }
 loadSave();
-function save() { if (!saveCheck()) return; S.last = Date.now(); try { storage.set(KEY, JSON.stringify(S)); } catch (e) {} saveSeen = S.last; }
+function save() {
+  if (!saveCheck()) return;
+  S.last = Date.now();
+  try { const raw = JSON.stringify(S); storage.set(KEY, raw); if (storage.get(KEY) === raw) saveSeen = S.last; } catch (e) {}
+}
 
 // registerState('achievements', { got: {}, seen: 0 }): adds a top-level save field.
 // Defaults merge into fresh() and into the loaded save (missing keys only, recursively
