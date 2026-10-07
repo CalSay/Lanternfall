@@ -6,9 +6,10 @@ import { makeDef, BASE_TIMINGS } from './creature-common.mjs';
 
 export const TW_CELL = [128, 112], TW_ORIGIN = [90, 104];
 const M = {
-  wing: ramp('#34493B', { shade: 0.36 }), wingD: ramp('#202E28', { shade: 0.3 }), body: ramp('#3B3A34', { shade: 0.3 }), bone: ramp('#DCD0AC', { light: 0.3 }),
-  boneD: ramp('#A8996F'), violet: ramp('#5A3A72', { shade: 0.3 }), dark: ramp('#1E1822')
+  wing: ramp('#1C7C6C', { shade: 0.36, shadeTo: '#0A1E2E' }), wingD: ramp('#14585C', { shade: 0.34, shadeTo: '#08162A' }), body: ramp('#2C3E7A', { shade: 0.34, shadeTo: '#0E1230' }),
+  bone: ramp('#E8E0BC', { light: 0.3 }), boneD: ramp('#B2A67E'), dark: ramp('#141A2E')
 };
+const SLIT = '#E4FF4A';
 export const twPose0 = {
   bob: 0, dx: 0, dy: 0, tilt: 0.1,                  // tilt: body lean (rad, + leans head down toward the hero)
   wa: -1.15, wc: -1.5, wl: 1, fa: -0.55, fc: -1.35, fl: 0.9,   // near / far wing: base angle, curl, length scale
@@ -19,9 +20,9 @@ export const twPose0 = {
 function crescent(bx, by, a, L, curl, w, n = 16) {
   const out = [], inn = [], cl = []; let x = bx, y = by;
   for (let i = 0; i <= n; i++) {
-    const u = i / n, ang = a + curl * u, wu = w * Math.pow(Math.sin(Math.PI * Math.min(1, u * 0.93 + 0.07)), 0.75) * (1 - u * 0.35);
+    const u = i / n, ang = a + curl * u, wu = w * Math.pow(Math.sin(Math.PI * Math.min(1, u * 0.92 + 0.06)), 0.9) * (1 - u * 0.3);
     cl.push([x, y]); const nx = -Math.sin(ang), ny = Math.cos(ang);
-    out.push([x - nx * wu * 1.0, y - ny * wu * 1.0]); inn.push([x + nx * wu * 0.28, y + ny * wu * 0.28]);
+    out.push([x - nx * wu * 1.0, y - ny * wu * 1.0]); inn.push([x + nx * wu * 0.15, y + ny * wu * 0.15]);
     x += Math.cos(ang) * L / n; y += Math.sin(ang) * L / n;
   }
   return { poly: out.concat(inn.reverse()).flat(), out, cl, tip: cl[n] };
@@ -33,36 +34,42 @@ export function drawThornwing(S, p, ox, oy) {
   const add = (sd, mat, z, o) => S.add(sd, mat, z, o);
   const C = [0, -37 + p.bob], ct = Math.cos(p.tilt), st = Math.sin(p.tilt);
   const R = (x, y) => [C[0] + x * ct + y * st, C[1] - x * st + y * ct];    // body-local to cell-relative; tilt turns the head toward the hero
+  // a crescent thorn wing: a bone-pale leading edge on the outer curve, a hooked thorn at the tip, a short barb on the inner curve
   const wing = (a, curl, L, w, mat, z, root, tipsOut, who) => {
-    const r = R(...root), k = Math.min(1, Math.abs(curl) / 1.4), c = crescent(X(r[0]), Y(r[1]), a + 0.6 * k, L, curl * 1.55, w);   // a bent wing sweeps over like a crescent; a straight one is a needle
-    add(poly(c.poly), mat, z, { rim: 2.6, tex: 0.5 });
-    add(chain(c.out.slice(1, -1).map(([x, y], i, A) => [x, y, 0.7 + 0.6 * Math.sin(Math.PI * (i + 1) / (A.length + 1))])), M.bone, z + 0.02, { rim: 1.2, hi: 1, nl: 1, noLine: 1 });   // a bone leading edge
-    tipsOut[who] = [c.tip[0] - ox - (p.dx || 0) + ox + (p.dx || 0), c.tip[1]];
+    const r = R(...root), c = crescent(X(r[0]), Y(r[1]), a, L, curl, w), n = c.cl.length - 1;
+    add(poly(c.poly), mat, z, { rim: 2.4, tex: 0.1 });
+    add(chain(c.out.slice(1, -1).map(([x, y], i, A) => [x, y, 0.8 + 0.5 * Math.sin(Math.PI * (i + 1) / (A.length + 1))])), M.bone, z + 0.02, { rim: 1.2, nl: 1, noLine: 1, tex: 0 });
+    const ang = Math.atan2(c.cl[n][1] - c.cl[n - 2][1], c.cl[n][0] - c.cl[n - 2][0]), hk = ang + (curl < 0 ? -0.9 : 0.9);
+    add(thorn(c.tip[0], c.tip[1], c.tip[0] + Math.cos(hk) * 6, c.tip[1] + Math.sin(hk) * 6, 2.8, 0), M.bone, z + 0.03, { rim: 1.2, nl: 1, tex: 0 });   // the hooked tip
+    const m = c.cl[Math.round(n * 0.55)], q = c.cl[Math.round(n * 0.55) + 1];
+    const ba = Math.atan2(q[1] - m[1], q[0] - m[0]) + (curl < 0 ? 1.2 : -1.2);
+    add(thorn(m[0], m[1], m[0] + Math.cos(ba) * 6, m[1] + Math.sin(ba) * 6, 3, 0), mat, z + 0.01, { rim: 1.4, tex: 0 });   // a barb on the inner edge
+    tipsOut[who] = [c.tip[0] + Math.cos(hk) * 6, c.tip[1] + Math.sin(hk) * 6];
   };
   const tips = {};
-  // far wing (behind the body), near wing (in front)
-  wing(p.fa, p.fc, 34 * p.fl, 8.5, M.wingD, 1, [3, -3], tips, 'far');
+  // far wing: sweeps up and back; near wing sweeps up and forward over the face. The torso hangs between them.
+  const kn = Math.min(1, Math.abs(p.wc) / 1.4), kf = Math.min(1, Math.abs(p.fc) / 1.4);
+  wing(p.fa - 0.6 * kf, -p.fc * 1.25, 36 * p.fl, 6.4, M.wingD, 1, [3, -3], tips, 'far');
   // hooked feet: two long legs trailing down, each ending in a bone hook that curls forward
   const foot = (rx, ry, lag, mat, z) => {
     const h = R(rx, ry), k = [h[0] + 3 + p.lg * 2 + lag, h[1] + 9], f = [k[0] + 1 + p.lg * 3 - lag * 0.3, k[1] + 9 + p.lk * 2];
-    add(chain([[X(h[0]), Y(h[1]), 2.3], [X(k[0]), Y(k[1]), 1.7], [X(f[0]), Y(f[1]), 1.3]]), mat, z, { rim: 1.8 });
-    add(chain([[X(f[0]), Y(f[1]), 1.3], [X(f[0] - 3), Y(f[1] + 3), 1.1], [X(f[0] - 7), Y(f[1] + 2), 0.9], [X(f[0] - 8.5), Y(f[1] - 1.5), 0.4]]), M.bone, z + 0.01, { rim: 1.2, hi: 1, nl: 1 });
-    add(thorn(X(k[0]), Y(k[1]), X(k[0] + 4), Y(k[1] - 3), 2.4, 0), M.boneD, z - 0.01, { rim: 1.2 });
+    add(chain([[X(h[0]), Y(h[1]), 2.3], [X(k[0]), Y(k[1]), 1.7], [X(f[0]), Y(f[1]), 1.3]]), mat, z, { rim: 1.8, tex: 0 });
+    add(chain([[X(f[0]), Y(f[1]), 1.3], [X(f[0] - 3), Y(f[1] + 3), 1.1], [X(f[0] - 7), Y(f[1] + 2), 0.9], [X(f[0] - 8.5), Y(f[1] - 1.5), 0.4]]), M.bone, z + 0.01, { rim: 1.2, nl: 1, tex: 0 });
+    add(thorn(X(k[0]), Y(k[1]), X(k[0] + 4), Y(k[1] - 3), 2.4, 0), M.boneD, z - 0.01, { rim: 1.2, tex: 0 });
   };
   foot(3, 5, 2, M.body, 1.2);
-  // torso: a dark fist of a body, a bone ridge down the back, ivory face plate with a bright slit
-  for (let i = 0; i < 3; i++) { const a = R(5.5 - i * 0.6, -4 + i * 4.2), b = R(10.5 - i * 0.6, -8 + i * 4.8); add(thorn(X(a[0]), Y(a[1]), X(b[0]), Y(b[1]), 3, 0.6), M.boneD, 1.8, { rim: 1.4 }); }
-  const t = R(0, 0); add(ell(X(t[0]), Y(t[1]), 7, 9, -p.tilt), M.body, 2, { rim: 5, tex: 0.5 });
-  const g = R(-1, 6.5); add(ell(X(g[0]), Y(g[1]), 4, 4, 0), M.wingD, 2.1, { rim: 2.5, tex: 0.5 });
-  const f = R(-4.2, -3), jaw = Math.round(p.mouth);
-  add(ell(X(f[0]), Y(f[1]), 5.4, 6.4, -p.tilt - 0.1), M.bone, 3, { rim: 3.6, hi: 1 });
-  add(thorn(...[...R(-1, -7.5).map((v, i) => i ? Y(v) : X(v))], ...[...R(5, -14).map((v, i) => i ? Y(v) : X(v))], 3.2, -1), M.bone, 2.9, { rim: 1.5 });   // a crest swept back
-  const e = R(-6.8, -3.2);
-  add(box(X(e[0]), Y(e[1]), 5, 2 + jaw * 0.6, 0.1 - p.tilt), M.dark, 3.2, { flat: 1, nl: 1 });                  // the face slit: dark socket, bright light in it
-  add(box(X(e[0] + 0.3), Y(e[1]), 3.4, 1 + (jaw ? 0.6 : 0), 0.1 - p.tilt), null, 3.3, { emit: '#DDFF6E' });
-  add(box(X(e[0] + 3.4), Y(e[1] + 4.6), 1.2, 1.2), M.violet, 3.1, { flat: 1, nl: 1 });
+  // a small torso: a dark fist of a body, a bone ridge down the back, a small ivory face plate with ONE bright slit
+  for (let i = 0; i < 3; i++) { const a = R(4.6 - i * 0.5, -3 + i * 3.6), b = R(9 - i * 0.6, -6.5 + i * 4.2); add(thorn(X(a[0]), Y(a[1]), X(b[0]), Y(b[1]), 2.8, 0.6), M.boneD, 1.8, { rim: 1.4, tex: 0 }); }
+  const t = R(0, 0); add(ell(X(t[0]), Y(t[1]), 5.8, 8, -p.tilt), M.body, 2, { rim: 4.4, tex: 0.1 });
+  const g = R(-0.5, 6); add(ell(X(g[0]), Y(g[1]), 3.4, 3.4, 0), M.dark, 2.1, { rim: 2.2, tex: 0 });
+  const f = R(-3.6, -3.4), jaw = Math.round(p.mouth);
+  add(ell(X(f[0]), Y(f[1]), 3.7, 4.4, -p.tilt - 0.1), M.bone, 3, { rim: 3, tex: 0 });
+  add(thorn(...[...R(-1, -6).map((v, i) => i ? Y(v) : X(v))], ...[...R(4, -12).map((v, i) => i ? Y(v) : X(v))], 2.8, -1), M.bone, 2.9, { rim: 1.4, tex: 0 });   // a crest swept back
+  const e = R(-5.6, -3.4);
+  add(box(X(e[0]), Y(e[1]), 5.6, 2.6 + jaw * 0.6, 0.1 - p.tilt), M.dark, 3.2, { flat: 1, nl: 1 });                // the face slit: dark socket with the one bright glow in it
+  add(box(X(e[0] + 0.2), Y(e[1]), 4.4, 1.2 + (jaw ? 0.8 : 0), 0.1 - p.tilt), null, 3.3, { emit: SLIT });
   foot(-3, 6, 0, M.body, 4);
-  wing(p.wa, p.wc, 40 * p.wl, 10.4, M.wing, 5, [2, -9], tips, 'near');
+  wing(p.wa - 0.9 * kn, p.wc * 1.1, 40 * p.wl, 7.2, M.wing, 5, [-1, -6], tips, 'near');
   return tips;
 }
 
@@ -113,6 +120,12 @@ const SCISSOR = [
   [12, { bob: -1, wa: 0.3, wc: -1.0, fa: -4.2, fc: 0.9, tilt: 0.1, dx: -8 }], [13, { bob: -1, wa: -0.6, wc: -1.3, fa: -1.8, fc: -1.0, tilt: 0.15, dx: -3 }], [14, { dx: -1 }]
 ];
 
+// hand-placed landing fx (1 pale, 2 lime, 3 dark teal): a needle prick with flicked specks, and the crossed edge flash of the scissor
+const PRICK1 = ['.....3...', '..3..1..2.', '.....1....', '3.2.1111.3', '.....1....', '..2..1..3.', '....3.....'];
+const PRICK2 = ['3...2.....3', '...1....2..', '.2.....1...', '....3.....2', '.1....3....'];
+const CROSS1 = ['2.......3.2', '.21.....12..', '..21...12.3.', '...2111.2...', '....111.....', '...21.12....', '..21...12.3.', '.2.......2..', '3.........3.'];
+const CROSS2 = ['.3.......2.', '..2.....2..3', '.....1.1....', '......3.....', '.....1.1....', '..2.....2.3.', '3.........2.'];
+
 export function thornwingDef() {
   const T = {
     ...BASE_TIMINGS,
@@ -125,8 +138,8 @@ export function thornwingDef() {
     key: 'thornwing', cell: TW_CELL, origin: TW_ORIGIN, pose0: twPose0, draw: drawThornwing, timings: T, hopMove: [120, 400],
     idle: IDLE, hop: HOP, hurt: HURT, stagger: STAGGER, death: DEATH, liftPx: 4,
     moves: {
-      needle: { keys: NEEDLE, who: () => 'near', contacts: [9], windows: [[7, 10]], trail: ['#C9E6A8', '#FFFFFF'], spark: ['#BFFF5A', '#FFFFE0'], sparkDx: 0, trailLen: 2 },
-      scissor: { keys: SCISSOR, who: k => (k + 1 >= 10 ? 'far' : 'near'), contacts: [7, 11], windows: [[6, 8], [10, 12]], trail: ['#C9E6A8', '#FFFFFF'], spark: ['#BFFF5A', '#FFFFE0'], sparkDx: 0 }
+      needle: { keys: NEEDLE, who: () => 'near', contacts: [9], windows: [[7, 10]], trail: ['#F4FFC8', '#B8E84A', '#2C8A6A'], spark: ['#F4FFC8', '#B8E84A', '#2C6A5A'], stamps: [[PRICK1, PRICK2]], sparkDx: -2, trailLen: 2, trailMax: 40 },
+      scissor: { keys: SCISSOR, who: k => (k + 1 >= 10 ? 'far' : 'near'), contacts: [7, 11], windows: [[6, 8], [10, 12]], trail: ['#F4FFC8', '#B8E84A', '#2C8A6A'], spark: ['#F4FFC8', '#B8E84A', '#2C6A5A'], stamps: [[CROSS1, CROSS2]], sparkDx: -2, trailMax: 40 }
     }
   });
 }

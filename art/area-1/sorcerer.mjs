@@ -1,17 +1,18 @@
 // art/area-1/sorcerer.mjs: the Nightseed Sorcerer (zone 5), drawn as parts. A small masked caster in a deep violet hood, a floating seed-shaped
 // heart held between three rigid root claws; it has never been a plant (docs/design/enemies-c22-hollow-final.md). Faces LEFT.
 // It floats: no legs and no shadow, origin = the ground point below it. Actions: idle, hop (a drift), hurt, stagger, death, lance (Root Lance), pulse (Seed Pulse).
-import { ell, cap, poly, chain, thorn, box, sub, ramp } from './kit.mjs';
-import { ik, limb, polar } from './rig.mjs';
-import { makeDef, BASE_TIMINGS, FX_CELL, FX_ORIGIN } from './creature-common.mjs';
-import { Sprite, blankImg } from './kit.mjs';
+import { ell, cap, chain, thorn, box, ramp } from './kit.mjs';
+import { ik } from './rig.mjs';
+import { makeDef, BASE_TIMINGS, FX_CELL, FX_ORIGIN, stamp } from './creature-common.mjs';
+import { blankImg, rgb, hash, vnoise } from './kit.mjs';
 
 export const SO_CELL = [128, 112], SO_ORIGIN = [92, 104];
 const M = {
-  robe: ramp('#3A2455', { shade: 0.34, shadeTo: '#1A0F2A' }), hood: ramp('#54307A', { shade: 0.34, shadeTo: '#1A0F2A' }), root: ramp('#6E4D31', { shade: 0.34 }),
-  rootD: ramp('#4A3424', { shade: 0.3 }), bone: ramp('#DCD0AC', { light: 0.3 }), boneD: ramp('#A8996F'), seed: ramp('#B63FA0', { shade: 0.34, shadeTo: '#2A0F3A', light: 0.3 }),
-  dark: ramp('#1E1424')
+  robe: ramp('#3E2C96', { shade: 0.36, shadeTo: '#150C38' }), hood: ramp('#7440D4', { shade: 0.36, shadeTo: '#1A0C40' }), root: ramp('#8A5A3A', { shade: 0.36, shadeTo: '#2A1228' }),
+  rootD: ramp('#5E3C34', { shade: 0.34, shadeTo: '#1A0C28' }), tip: ramp('#4A2E62', { shade: 0.3, shadeTo: '#120A20' }), bone: ramp('#E6DCB8', { light: 0.3 }), boneD: ramp('#B0A27A'),
+  seed: ramp('#A8329E', { shade: 0.36, shadeTo: '#2A0C44', light: 0.3 }), dark: ramp('#1C1230')
 };
+const VEIN = '#FF8AE8', CORE = '#FFF2FB';
 export const soPose0 = {
   bob: 0, dx: 0, dy: 0, tilt: 0, sw: 0, droop: 0,
   hs: 1, hx: -33, hy: -5,        // the heart: scale and offset from the chest
@@ -28,46 +29,54 @@ export function drawSorcerer(S, p, ox, oy) {
   const hem = -9 + p.bob * 0.6, tips = {};
   // ---- tattered hem: the robe ends in hanging root-thorns, it has no feet ----
   for (let i = 0; i < 5; i++) { const bx = -4 + i * 4.6 + p.tilt * -6, sway = Math.sin(i * 1.7) * 1.5 + p.sw * (1 + i * 0.2);
-    add(thorn(X(bx), Y(hem - 4 + i % 2), X(bx + sway - 1.2), Y(hem + 7 + (i % 2) * 2 - Math.abs(i - 2) * 0.8), 5.2, sway * 0.4), i % 2 ? M.robe : M.hood, 1.2, { rim: 2, tex: 0.5 }); }
-  // ---- far claw (behind the body) is claw 0's partner: all three claws are drawn from the same arms ----
-  const Hc = R(p.hx, p.hy);
-  const Hx = Hc[0], Hy = Hc[1], r0 = p.hs * 1.2 * 6.4 + 2.2;
-  const claw = (anchor, ang, dir, z, mat, isLance) => {
+    add(thorn(X(bx), Y(hem - 4 + i % 2), X(bx + sway - 1.2), Y(hem + 7 + (i % 2) * 2 - Math.abs(i - 2) * 0.8), 5.2, sway * 0.4), i % 2 ? M.robe : M.hood, 1.2, { rim: 2, tex: 0.1 }); }
+  const Hc = R(p.hx, p.hy), Hx = Hc[0], Hy = Hc[1], r0 = p.hs * 1.2 * 6.4 + 2.2;
+  // a gnarled root claw: grows out of the robe on a swollen base, tapers through knots to a dark hooked tip. Rigid: it only wobbles when it is not a spear.
+  const claw = (anchor, ang, dir, z, mat, isLance, k) => {
     const a = R(...anchor), ln = isLance ? p.ln : 0, sc = 1 + 0.75 * ln;
     const cx = Hx + Math.cos(ang) * r0, cy = Hy + Math.sin(ang) * r0;
     const sx = a[0] + Math.cos(p.la) * CL * 2 * sc, sy = a[1] + Math.sin(p.la) * CL * 2 * sc;
     const tx = cx + (sx - cx) * ln, ty = cy + (sy - cy) * ln, [mx, my, ex, ey] = ik(a[0], a[1], tx, ty, CL * sc, CL * sc, ln > 0.6 ? 1 : dir);
-    add(limb([X(a[0]), Y(a[1])], [X(mx), Y(my)], [X(ex), Y(ey)], 2.5, 2.0 + ln * 0.2, 1.3), mat, z, { rim: 2.4, tex: 0.4 });
-    add(ell(X(mx), Y(my), 2.8, 2.8), M.rootD, z + 0.02, { rim: 1.6 });                                      // a knuckle: the claws are rigid, they only hinge here
-    const toH = Math.atan2(Hy - ey, Hx - ex), al = Math.atan2(ey - my, ex - mx), da = ((al - toH + Math.PI * 3) % (Math.PI * 2)) - Math.PI, hk = al - da * (1 - ln), hl = 4.5 + ln * 6;
-    add(thorn(X(ex), Y(ey), X(ex + Math.cos(hk) * hl), Y(ey + Math.sin(hk) * hl), 3.4 + ln * 1.4, 0), isLance ? M.bone : M.boneD, z + 0.03, { rim: 1.5, hi: 1 });   // a hooked tip (a spearhead when straight)
-    return [ex + Math.cos(hk) * hl, ey + Math.sin(hk) * hl];
+    const at = t => t < 0.5 ? [a[0] + (mx - a[0]) * t * 2, a[1] + (my - a[1]) * t * 2] : [mx + (ex - mx) * (t - 0.5) * 2, my + (ey - my) * (t - 0.5) * 2];
+    const dl = Math.hypot(ex - a[0], ey - a[1]) || 1, nx = -(ey - a[1]) / dl, ny = (ex - a[0]) / dl;
+    const pts = [], N = 8;
+    for (let i = 0; i <= N; i++) { const t = i / N, [x, y] = at(t), w = Math.sin(t * 9 + k * 2.1) * 1.3 * (1 - ln * 0.85) * Math.sin(Math.PI * Math.min(1, t * 1.15)); pts.push([x + nx * w, y + ny * w, 2.5 * (1 - t) + 0.8 + (i % 3 === 1 ? 0.6 : 0)]); }
+    add(ell(X(a[0]), Y(a[1]), 3.8, 3.2, 0.4 * k), M.rootD, z - 0.05, { rim: 2.6, tex: 0.1 });                                  // the swollen base, rooted in the robe
+    const body = pts.slice(0, 6).map(([x, y, r]) => [X(x), Y(y), r]), tipc = pts.slice(5).map(([x, y, r]) => [X(x), Y(y), Math.max(0.5, r - 0.3)]);
+    add(chain(body), mat, z, { rim: 2.4, tex: 0.1 });
+    add(chain(tipc), M.tip, z + 0.04, { rim: 1.4, tex: 0 });                                                                  // the dark tip
+    for (const t of [0.28, 0.55]) { const [x, y] = at(t), sd = (ang > Math.PI * 0.5 && ang < Math.PI * 1.5) || ang > 0 ? 1 : -1; add(thorn(X(x), Y(y), X(x + nx * 4 * sd * (k % 2 ? 1 : -1)), Y(y + ny * 4 * sd * (k % 2 ? 1 : -1) - 1.2), 2.6, 0), mat, z - 0.01, { rim: 1.4, tex: 0 }); }   // knots and side thorns
+    const toH = Math.atan2(Hy - ey, Hx - ex), al = Math.atan2(ey - my, ex - mx), da = ((al - toH + Math.PI * 3) % (Math.PI * 2)) - Math.PI, hk = al - da * (1 - ln), hl = 5 + ln * 6;
+    add(thorn(X(ex), Y(ey), X(ex + Math.cos(hk) * hl), Y(ey + Math.sin(hk) * hl), 3.2 + ln * 1.4, 0), ln > 0.5 ? M.bone : M.tip, z + 0.05, { rim: 1.4, tex: 0 });   // a hooked tip (a bone spearhead when straight)
+    return [X(ex + Math.cos(hk) * hl), Y(ey + Math.sin(hk) * hl)];
   };
   // ---- body: the robe, a hunched hood, a bone mask ----
   const t = R(0, 0);
-  add(ell(X(t[0] + 1), Y(t[1] + 1), 10.5, 18.5, -p.tilt * 0.8), M.robe, 2, { rim: 6, tex: 0.5 });
-  add(box(X(t[0] - 4), Y(t[1] + 6), 2.2, 14, -0.1), M.hood, 2.1, { rim: 1.6, nl: 1, noLine: 1 });             // a fold in the robe
-  add(ell(X(t[0] - 6), Y(t[1] - 8), 6.5, 4.4, 0.4), M.hood, 2.2, { rim: 2.4, tex: 0.5 });                      // the near shoulder
+  add(ell(X(t[0] + 1), Y(t[1] + 1), 10.5, 18.5, -p.tilt * 0.8), M.robe, 2, { rim: 6, tex: 0.1 });
+  add(box(X(t[0] - 4), Y(t[1] + 6), 2.2, 14, -0.1), M.hood, 2.1, { rim: 1.6, nl: 1, noLine: 1, tex: 0 });
+  add(ell(X(t[0] - 6), Y(t[1] - 8), 6.5, 4.4, 0.4), M.hood, 2.2, { rim: 2.4, tex: 0.1 });
   const hd = R(-3 - p.droop * 0.2, -17 + p.droop);
-  add(thorn(X(hd[0] + 4), Y(hd[1] - 3), X(hd[0] + 17), Y(hd[1] - 10), 8, -3), M.hood, 2.8, { rim: 3 });         // the hood's peak sweeps back like a thorn
-  add(ell(X(hd[0]), Y(hd[1]), 9.4, 10, -0.1), M.hood, 3, { rim: 4.6, tex: 0.5 });
-  add(ell(X(hd[0] - 3), Y(hd[1] + 1.3), 5.2, 6.6, -0.1), M.dark, 3.1, { flat: 1, nl: 1 });                      // the shadow inside the hood
-  add(ell(X(hd[0] - 4), Y(hd[1] + 1), 4.8, 6, -0.1), M.bone, 3.2, { rim: 3.2, hi: 1 });                         // the mask
+  add(thorn(X(hd[0] + 4), Y(hd[1] - 3), X(hd[0] + 17), Y(hd[1] - 10), 8, -3), M.hood, 2.8, { rim: 3, tex: 0.1 });
+  add(ell(X(hd[0]), Y(hd[1]), 9.4, 10, -0.1), M.hood, 3, { rim: 4.6, tex: 0.1 });
+  add(ell(X(hd[0] - 3), Y(hd[1] + 1.3), 5.2, 6.6, -0.1), M.dark, 3.1, { flat: 1, nl: 1 });
+  add(ell(X(hd[0] - 4), Y(hd[1] + 1), 4.8, 6, -0.1), M.bone, 3.2, { rim: 3.2, tex: 0 });
   add(box(X(hd[0] - 6.7), Y(hd[1] - 0.6), 3.2, 1.6), M.dark, 3.3, { flat: 1, nl: 1 });
-  add(box(X(hd[0] - 6.8), Y(hd[1] - 0.6), 2, 1 + (p.eye > 0.5 ? 0.6 : 0)), null, 3.4, { emit: p.eye > 0.5 ? '#FFD0F4' : '#FF5AD8' });
-  add(box(X(hd[0] - 3.4), Y(hd[1] + 3.4), 2, 3.2), M.dark, 3.3, { flat: 1, nl: 1 });                            // a long slit of a mouth
+  add(box(X(hd[0] - 6.8), Y(hd[1] - 0.6), 2, 1 + (p.eye > 0.5 ? 0.6 : 0)), null, 3.4, { emit: p.eye > 0.5 ? '#FFD0F4' : VEIN });
+  add(box(X(hd[0] - 3.4), Y(hd[1] + 3.4), 2, 3.2), M.dark, 3.3, { flat: 1, nl: 1 });
   // ---- the three claws and the heart between them ----
-  const A = [[-8, -2], [-9, 4], [-8, 10]];
-  tips.c0 = claw(A[0], -1.5 + p.c0, 1, 3.6, M.root, false);
-  tips.c2 = claw(A[2], 1.5 + p.c2, -1, 3.6, M.rootD, false);
-  tips.lance = claw(A[1], Math.PI, 1, 4.2, M.root, true);
-  // the seed: an almond with a pointed top, a glow core
+  const A = [[-7, -5], [-9, 4], [-7, 13]];
+  tips.c0 = claw(A[0], -1.5 + p.c0, 1, 3.6, M.root, false, 1);
+  tips.c2 = claw(A[2], 1.5 + p.c2, -1, 3.6, M.rootD, false, 2);
+  tips.lance = claw(A[1], Math.PI, 1, 4.2, M.root, true, 3);
+  // the seed: an almond with a pointed top, a bright core and pink veins running up to the point
   const hs = p.hs * 1.2, hX = X(Hx), hY = Y(Hy);
-  add(ell(hX, hY + 1, 5.6 * hs, 7.6 * hs, 0.2), M.seed, 3.2, { rim: 4 * hs, tex: 0.3 });
-  add(thorn(hX + 1.5 * hs, hY - 4 * hs, hX + 3 * hs, hY - 11 * hs, 5.4 * hs, -1), M.seed, 3.15, { rim: 2.4 });
-  add(ell(hX - 0.6 * hs, hY + 1.2 * hs, 2.7 * hs, 4 * hs, 0.2), null, 3.3, { emit: '#FF8AE4' });
-  add(ell(hX - 1.1 * hs, hY + 0.6 * hs, 1.2 * hs, 2 * hs, 0.2), null, 3.4, { emit: '#FFF0FA' });
-  tips.heart = [Hx, Hy];
+  add(ell(hX, hY + 1, 5.8 * hs, 7.8 * hs, 0.2), M.seed, 3.2, { rim: 4 * hs, tex: 0.1 });
+  add(thorn(hX + 1.5 * hs, hY - 4 * hs, hX + 3 * hs, hY - 11.5 * hs, 5.6 * hs, -1), M.seed, 3.15, { rim: 2.4, tex: 0 });
+  const core = [hX - 0.4 * hs, hY + 1.6 * hs];
+  for (const [vx, vy] of [[3, -10.5], [-4.2, -2.5], [4.6, 3.5], [0.5, 8.4]]) add(cap(core[0], core[1], 0.5, hX + vx * hs, hY + vy * hs, 0.35), null, 3.3, { emit: VEIN });   // veins
+  add(ell(core[0], core[1], 2.6 * hs, 3.6 * hs, 0.2), null, 3.35, { emit: VEIN });
+  add(ell(core[0] - 0.4 * hs, core[1] - 0.4 * hs, 1.4 * hs, 2.1 * hs, 0.2), null, 3.4, { emit: CORE });
+  tips.heart = [X(Hx), Y(Hy)];
   tips.tip = tips.lance;
   return tips;
 }
@@ -109,23 +118,29 @@ const PULSE = [
   [12, { bob: -0.5, hs: 1.0, c0: 0.1, c2: -0.1 }], [13, { hs: 1.03 }], [14, {}]
 ];
 
-// the pulse rings: an expanding ring round the heart, and a violet burst where it lands (the fx cell sits at the body origin)
+// Seed Pulse fx: a ragged, broken shell shaped like the seed itself swells off the heart (pale outside, pink, violet inside), with spores drifting off it.
+// The landing is a hand-placed spray of pink seed-flecks.
+const SPRAY1 = ['....3.....2.....', '.3....1..2...3..', '...2.11.2....2..', '.2..1111.3......', '..3.111112..1...', '.2..1111.2..3...', '....2.1..3..2...', '..3....2.....3..'];
+const SPRAY2 = ['3......2......3.', '....1.....3.....', '..2....3.1....2.', '.....2.......1..', '..3.......2.....'];
+function seedShell(img, hx, hy, R, thick, seed) {
+  const pal = ['#FFE8FA', '#FF7AE0', '#8E2C9A'];
+  for (let y = Math.max(0, Math.floor(hy - R - 8)); y < Math.min(img.h, hy + R + 8); y++) for (let x = Math.max(0, Math.floor(hx - R - 8)); x < Math.min(img.w, hx + R + 8); x++) {
+    const dx = x - hx, dy = y - hy, up = dy < 0 ? -dy : 0, d = Math.hypot(dx * 1.3, dy * (dy < 0 ? 0.82 : 1)) + up * 0.1;   // an egg: pointed and narrower at the top
+    const wob = (vnoise(x / 3.2, y / 3.2, seed) - 0.5) * 5, e = d + wob - R;
+    if (e < 0 || e > thick) continue;
+    if (hash(x, y, seed) < 0.12 + (1 - e / thick) * 0.05 + (vnoise(x / 4, y / 4, seed + 9) > 0.62 ? 0.5 : 0)) continue;   // broken, not a closed ring
+    const k = e > thick * 0.72 ? 0 : e > thick * 0.3 ? 1 : 2, c = rgb(pal[k]), j = (y * img.w + x) * 4; img.d[j] = c[0]; img.d[j + 1] = c[1]; img.d[j + 2] = c[2]; img.d[j + 3] = 255;
+  }
+  for (let q = 0; q < 7; q++) {   // spores drifting off the shell
+    const a = hash(q, seed, 5) * Math.PI * 2, r = R + thick + 2 + hash(q, seed, 6) * 6, x = Math.round(hx + Math.cos(a) * r * 0.85), y = Math.round(hy + Math.sin(a) * r), c = rgb(pal[q % 2]);
+    if (x < 0 || y < 0 || x >= img.w || y >= img.h) continue; const j = (y * img.w + x) * 4; img.d[j] = c[0]; img.d[j + 1] = c[1]; img.d[j + 2] = c[2]; img.d[j + 3] = 255;
+  }
+}
 function pulseFx(i, ctx) {
-  const j = i + 1, atk = blankImg(...FX_CELL), hit = blankImg(...FX_CELL), P = ctx.key(i);
-  const hx = FX_ORIGIN[0] + (P.dx || 0) + 4 + P.hx, hy = FX_ORIGIN[1] + (P.dy || 0) - 32 + P.bob + P.hy;
-  const waves = [[3, 4, 2.0], [8, 9, 2.1]];
-  for (const [a, b] of waves) if (j >= a && j <= b + 1) {
-    const S = new Sprite(...FX_CELL, { noOutline: true }), u = (j - a) / (b + 1 - a), rr = 9 + u * 18;
-    S.add(sub(ell(hx, hy, rr, rr), ell(hx, hy, rr - 2.4, rr - 2.4)), null, 1, { emit: '#E060D0' });
-    S.add(sub(ell(hx, hy, rr - 0.4, rr - 0.4), ell(hx, hy, rr - 1.6, rr - 1.6)), null, 2, { emit: '#FFD0F4' });
-    Object.assign(atk, S.render());
-  }
-  for (const c of [5, 10]) if (j === c || j === c + 1) {
-    const S = new Sprite(...FX_CELL, { noOutline: true }), x = hx - 20 - (j - c) * 6, r = j === c ? 6 : 9;
-    for (let q = 0; q < 6; q++) { const a = q / 6 * Math.PI * 2 + 0.4; S.add(ell(x + Math.cos(a) * r, hy + Math.sin(a) * r, 2.2, 2.2), null, 1, { emit: '#E060D0' }); }
-    S.add(ell(x, hy, r * 0.5, r * 0.5), null, 2, { emit: '#FFF0FA' });
-    Object.assign(hit, S.render());
-  }
+  const j = i + 1, atk = blankImg(...FX_CELL), hit = blankImg(...FX_CELL), P = ctx.key(i), t = ctx.tipAt(i, 'heart'), hx = FX_ORIGIN[0] + t[0] - ctx.origin[0], hy = FX_ORIGIN[1] + t[1] - ctx.origin[1];
+  const hsz = P.hs * 1.2 * 6;
+  for (const [a, b] of [[3, 5], [8, 10]]) if (j >= a && j <= b + 1) { const u = (j - a) / (b + 1 - a); seedShell(atk, hx, hy, hsz * 0.8 + u * 12, 3 + u * 2, j); }
+  for (const c of [5, 10]) if (j === c || j === c + 1) stamp(hit, [SPRAY1, SPRAY2][j - c], hx - 24 - (j - c) * 5, hy - 1, ['#FFE8FA', '#FF7AE0', '#7A2C8E']);
   return { atk, hit };
 }
 
@@ -141,7 +156,7 @@ export function sorcererDef() {
     key: 'sorcerer', cell: SO_CELL, origin: SO_ORIGIN, pose0: soPose0, draw: drawSorcerer, timings: T, hopMove: [130, 400],
     idle: IDLE, hop: HOP, hurt: HURT, stagger: STAGGER, death: DEATH, liftPx: 5,
     moves: {
-      lance: { keys: LANCE, who: () => 'tip', contacts: [9], windows: [[8, 10]], trail: ['#F0C8F8', '#FFFFFF'], spark: ['#E060D0', '#FFF0FA'], sparkDx: 0 },
+      lance: { keys: LANCE, who: () => 'tip', contacts: [9], windows: [[8, 10]], trail: ['#FFE8FA', '#FF7AE0', '#6A3AC8'], spark: ['#FFE8FA', '#FF7AE0', '#7A2C8E'], stamps: [[SPRAY1, SPRAY2]], sparkDx: -2, trailLen: 2, trailMax: 40 },
       pulse: { keys: PULSE, who: () => 'heart', contacts: [5, 10], windows: [], fx: pulseFx }
     }
   });
