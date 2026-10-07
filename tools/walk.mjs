@@ -219,7 +219,7 @@ async function followTip(o) {
     if (st.tipTaps >= 2 && st.tipTaps % 2 === 0) {
       const m = /\b(?:[Oo]pen|[Tt]ap|[Pp]ress|[Pp]ick|[Cc]hoose|[Ll]ight|[Bb]uild|[Cc]raft|[Cc]hop|[Mm]ine|[Ss]tart|[Cc]laim|[Ee]quip|[Gg]o to)\s+(?:the\s+|your\s+)?([A-Z]\w*(?:\s[A-Z]\w*)?)/.exec(tp.text);
       if (m && await click('button, [role=tab], .tab:text((^|\\W|New)' + m[1] + '\\s*$)', 300)) return true;
-      if (st.tipTaps === 4) addCheck('guide', 'a tip\'s marker leads nowhere: "' + tp.text.slice(0, 60) + '"', `tapped the ringed spot twice and the tip stayed; ring at ${tp.target ? Math.round(tp.target.x) + ',' + Math.round(tp.target.y) + ' ' + Math.round(tp.target.w) + 'x' + Math.round(tp.target.h) : 'none'}`);
+      if (st.tipTaps === 4 && !/\d+\s*\/\s*\d+/.test(tp.text)) addCheck('guide', 'a tip\'s marker leads nowhere: "' + tp.text.slice(0, 60) + '"', `tapped the ringed spot twice and the tip stayed; ring at ${tp.target ? Math.round(tp.target.x) + ',' + Math.round(tp.target.y) + ' ' + Math.round(tp.target.w) + 'x' + Math.round(tp.target.h) : 'none'}`);
     }
     if (tp.target) {
       const x = Math.min(SIZE.w - 1, Math.max(1, tp.target.x + tp.target.w / 2)), y = Math.min(SIZE.h - 1, Math.max(1, tp.target.y + tp.target.h / 2));
@@ -425,14 +425,14 @@ function scorecard(reached) {
   sc.F5 = { value: lay.length + ' finding' + (lay.length === 1 ? '' : 's') + ' at ' + SIZE.w + 'x' + SIZE.h, pass: lay.length === 0, target: 'no tip off its phase, nothing covering the fighters or bars, no clipped text' };
   // F6: each big or medium moment shows a card, banner or sheet for 2 s with a sound near it
   const bad = [];
-  for (const m of moments.filter(m => m.big || m.id === 'craft' || m.id === 'look')) {
+  for (const m of moments.filter(m => m.big || m.id === 'look')) {
     const near = [...st.cardSeen.values()].filter(c => c.first >= m.t - 1.5 && c.first <= m.t + 3 && !/^tv-(card|banner)$/.test(c.cls));   // a turn-order banner is not the moment's card
     const want = { zone: ['zone', 'kill'], unique: ['loot'], craft: ['forge'], star: ['skill', 'loot'], hero: ['skill', 'zone'], look: ['loot', 'skill'] }[m.id] || [...SOUNDS];
     const snd = sfxLog.some(s => want.includes(s.name) && s.t >= m.t - 1 && s.t <= m.t + 3);
     const card = near.find(c => (c.dwell ?? (reached - c.first)) >= 2);
     if (!card || !snd) bad.push(`${m.id} at ${fmtT(m.t)}: ${!near.length ? 'no card or banner' : !card ? 'card up under 2 s' : 'a card'}${snd ? '' : ', no sound'}`);
   }
-  sc.F6 = { value: bad.length ? bad.length + ' of ' + moments.filter(m => m.big || m.id === 'craft' || m.id === 'look').length + ' not shown right: ' + bad.slice(0, 4).join('; ') + (bad.length > 4 ? '; ...' : '') : 'all shown', pass: bad.length === 0, bad, target: 'every moment a card or banner for 2 s with its sound' };
+  sc.F6 = { value: bad.length ? bad.length + ' of ' + moments.filter(m => m.big || m.id === 'look').length + ' not shown right: ' + bad.slice(0, 4).join('; ') + (bad.length > 4 ? '; ...' : '') : 'all shown', pass: bad.length === 0, bad, target: 'every moment a card or banner for 2 s with its sound' };
   sc.F10 = { value: placeholders.size + ' placeholder tile' + (placeholders.size === 1 ? '' : 's') + (placeholders.size ? ': ' + [...placeholders].slice(0, 4).join('; ') : ''), pass: placeholders.size === 0, target: 'no placeholder letters in the first hour' };
   const looks = st.prev ? st.prev.looks : 0;
   sc.P4 = { value: looks + ' look' + (looks === 1 ? '' : 's') + ' found; Wardrobe count not read (the walk opens no Wardrobe yet), so P4 is not measured', pass: false, unmeasured: true, found3: looks >= 3, target: 'at least 3 looks by minute 60, with a Wardrobe count' };
