@@ -150,6 +150,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Do not read the "dominant build" number as a game finding while the bot's training split is identical per hero. (f-health-long)
 - Count Stars found, lit Stars and repeat trophy drops correctly in health metrics. Why: three Codex P1s on these. (f-health-long)
 - Data fetchers must fail loudly per source. Why: a quiet empty page overwrote good data twice; 623 duplicate Steam reviews and truncated Apple pulls got through. Re-run the idea gate whenever the counts change. (f-fun-library, 2026-10-05)
+- Before tuning a boss on walk losses, check the walk learned its abilities and spent its points. Why: the bot gave up on Next Up's Learn (the detail sheet, outside `.nu-flash`) and fought zone 10 with one ability, 58 tries; with them it takes 0 to 2 and the wall moves to zone 13. A walk that hangs usually has a card or a Next Up sheet covering the bar, so close the sheet by its `.bsheet-x` and read the newest moment card. (walk-bot-learns-abilities, 2026-10-07)
 
 ## Process and Autopilot
 
