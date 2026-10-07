@@ -13,6 +13,7 @@
 //   --lv N          every kept-up hero N levels off the road (-1: a level behind)
 //   --sweep         print casual and good wins at L-1, L and L+1 (how much one level matters)   (manual)
 //   --players wide  also play a weaker and a stronger casual (parry 15% / 35%, dodge 40% / 70%)      (manual)
+//   --read casual=0.5,good=0.7   set how often a player reads a boss trick (a feint or a held swing; 59k TURN_TUNE.tricks.read)   (manual)
 //
 // tools/health.mjs runs this and gates on it (--compare): each hero must sit in their band, or inside a known gap that
 // has an owner and an expiry (docs/design/difficulty-budget.json "gaps").
@@ -46,7 +47,7 @@ import { HEROES, loadTargets, cells, offBand } from './lib/budget-score.mjs';
 const argv = process.argv.slice(2);
 const flag = n => argv.includes('--' + n);
 const opt = (n, d) => { const i = argv.indexOf('--' + n); return i >= 0 && argv[i + 1] !== undefined && !argv[i + 1].startsWith('--') ? argv[i + 1] : d; };
-{ const known = ['json', 'fights', 'heroes', 'only', 'eval', 'stars', 'talents', 'lv', 'seed-offset', 'sweep', 'players'], bad = argv.filter(a => a.startsWith('--') && !known.includes(a.slice(2)));
+{ const known = ['json', 'fights', 'heroes', 'only', 'eval', 'stars', 'talents', 'lv', 'seed-offset', 'sweep', 'players', 'read'], bad = argv.filter(a => a.startsWith('--') && !known.includes(a.slice(2)));
   if (bad.length) { console.error('budget: unknown option ' + bad.join(', ') + '; known: ' + known.map(k => '--' + k).join(' ')); process.exit(2); } }
 const FIGHTS = Number(opt('fights', 240)), OFFSET = Number(opt('seed-offset', 0)), STARS = opt('stars', 'typical') !== 'none', TALS = opt('talents', 'typical') !== 'none';
 const RUN_HEROES = opt('heroes') ? opt('heroes').split(',') : HEROES;
@@ -58,6 +59,7 @@ export const PLAYERS = { casual: { parry: 0.25, dodge: 0.5, perfect: 0.1, good: 
 // bot: the walk bot's defence (tools/walk.mjs PARRY 0.55, DODGE 0.5), as casual on the rings
 const WIDE = { casualLow: { parry: 0.15, dodge: 0.4, perfect: 0.1, good: 0.4 }, casualHigh: { parry: 0.35, dodge: 0.7, perfect: 0.1, good: 0.4 }, bot: { parry: 0.55, dodge: 0.5, perfect: 0.1, good: 0.4 } };
 const RUN_PLAYERS = opt('players') === 'wide' ? { ...PLAYERS, ...WIDE } : PLAYERS;
+for (const kv of (opt('read') || '').split(',').filter(Boolean)) { const [pl, v] = kv.split('='); if (!RUN_PLAYERS[pl] || !(+v >= 0 && +v <= 1)) { console.error('budget: --read player=0..1, with player from ' + Object.keys(RUN_PLAYERS).join(',')); process.exit(2); } RUN_PLAYERS[pl] = { ...RUN_PLAYERS[pl], read: +v }; }
 const SIG = { wren: 'echo', tobin: 'bash', pip: 'fire' };
 const KINDS = { wren: ['bow', 'quiver', 'hood', 'leathers'], tobin: ['warblade', 'shield', 'greathelm', 'plate'], pip: ['staff', 'lantern', 'circlet', 'robe'] };
 // one natural ability set a hero at each stage (the first of sim.mjs --report heroes' SETS)

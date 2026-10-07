@@ -392,7 +392,7 @@ function turnStarsDef(m, io, kind) {
 }
 // the foe's move is over: Riptide strikes back when every hit was dodged
 function turnStarsMove(m, io) {
-  const sf = m.sf, n = m.move ? m.move.hits.length : 0, dodged = sf.mvD; sf.mvD = 0;
+  const sf = m.sf, n = m.move ? turnRealHits(m.move) : 0, dodged = sf.mvD; sf.mvD = 0;
   if (sf.riptide && n > 0 && dodged >= n) turnHitFoe(m, io, STARS_TUNE.fx.riptide * m.p.counter, { dt: 'phys', noCrit: true, kind: 'riptide' });
 }
 // a hit lands on the hero (after Guard, Grit and Ward): Stoneskin spends Grit to halve it, Spite gives a resource,
