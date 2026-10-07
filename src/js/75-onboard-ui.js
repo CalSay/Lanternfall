@@ -273,9 +273,9 @@
     if (S.tab !== lastTab) { lastTab = S.tab; dirty = true; reveal = true; }
     let step = null;
     try { step = onboardStep(); } catch (e) { console.error('[lanternfall] onboard step', e); }
-    // unlock-voice: a new thing is announced when no fight is in view, and only over a quiet tip or no tip
+    // unlock-voice: a new thing is announced when no fight is in view, and only when no tip is up
     // (it starts between fights and then stays up until read, so a quick next foe does not cut it short)
-    if ((!step || step.quiet) && sayQ.length && O().tips && !document.hidden && (sayCur === sayQ[0] || guidePhase(!guideMenuCovers()) === 'between')) { sayCur = sayQ[0]; step = { id: 'say:' + sayCur, text: SAY_TXT[sayCur] }; }
+    if (!step && sayQ.length && O().tips && !document.hidden && (sayCur === sayQ[0] || guidePhase(!guideMenuCovers()) === 'between')) { sayCur = sayQ[0]; step = { id: 'say:' + sayCur, text: SAY_TXT[sayCur] }; }
     // no guide step: the system on screen may still owe its first-use line (never alongside a guide step)
     if (!step && S.tab) { try { const cv = curView(S.tab), vw = viewsOf(S.tab).find(v => v.id === cv); step = onboardUse({ tab: S.tab, view: cv, feature: vw && vw.feature }); } catch (e) { step = null; } }
     if (!step || document.hidden || q(BLOCK)) return hide();
