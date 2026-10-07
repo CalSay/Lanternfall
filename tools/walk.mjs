@@ -20,6 +20,10 @@
 // presses what it names; it parries and dodges at the set rates when the foe winds up; it presses the timed ring at the right
 // moment at the parry rate; it taps Next Up's Go and presses the one button the panel then offers (Craft, Claim, Equip, Spend, Build,
 // Light, Start); it dismisses story cards, moment cards (Continue) and the picker. It never forces the game's state: nothing is set through `eval`, only read.
+// Gear (walk-bot-gear): it wears what a casual player wears. It puts on any better bag piece (Craft > Gear > the piece > Equip), crafts the
+// weapon, off-hand, head or body piece it is one tier short of (Craft > Make > station > tier > Craft), gathers the missing materials in the
+// Gather view for up to 5 minutes (Hunting for hide), builds the station a recipe needs (Camp > Build, two taps), and goes back to the fight.
+// It closes a sheet it left over the bar with the X. The report's "Gear and boss tries" table says what it wore in each zone and the boss tries lost there.
 // Game time is a fake clock stepped in 100 ms frames (33 ms while a foe winds up), so a run is repeatable for a seed.
 //
 // What it logs, with game time and a shot: every tip, toast, card and banner, every unlock (S.onboard.got), each zone first clear,
@@ -73,7 +77,9 @@ const INIT = ([key, seedN]) => {
   try { localStorage.removeItem(key); } catch (e) { /* a private window: the game starts fresh anyway */ }
   window.__ptStep = 16;
   const raf = window.requestAnimationFrame.bind(window);
-  window.requestAnimationFrame = cb => (window.__ptStep > 16 ? window.setTimeout(() => cb(performance.now()), window.__ptStep) : raf(cb));   // the game caps a frame at 0.1 s, so 100 ms frames lose nothing
+  const caf = window.cancelAnimationFrame.bind(window), tids = new Set();
+  window.requestAnimationFrame = cb => { if (!(window.__ptStep > 16)) return raf(cb); const id = window.setTimeout(() => { tids.delete(id); cb(performance.now()); }, window.__ptStep); tids.add(id); return id; };
+  window.cancelAnimationFrame = id => { if (tids.delete(id)) window.clearTimeout(id); else try { caf(id); } catch (e) { /* a timer id the fake clock made */ } };   // a mode switch cancels a frame the 100 ms stepping made with a timer   // the game caps a frame at 0.1 s, so 100 ms frames lose nothing
 };
 
 // A small seeded generator for the bot's own choices (the game's random numbers are its own stream).
@@ -142,18 +148,36 @@ const TAP = ([sel, re]) => {
     const r = n.getBoundingClientRect(); if (r.width < 2 || r.height < 2) continue;
     const x = Math.min(innerWidth - 1, Math.max(1, r.left + r.width / 2)), y = Math.min(innerHeight - 1, Math.max(1, r.top + r.height / 2));
     const top = document.elementFromPoint(x, y);
-    if (top && top !== n && !n.contains(top) && !top.contains(n)) return { covered: (top.id ? '#' + top.id : '.' + String(top.className).split(' ')[0]), x, y };
+    if (top && top !== n && !n.contains(top) && !top.contains(n)) return { covered: (top.id ? '#' + top.id : '.' + String(top.className).split(' ')[0]), sheet: !!(top.closest && top.closest('.bsheet-ov')), what: (top.closest && top.closest('.bsheet-ov') || top).textContent.replace(/\s+/g, ' ').trim().slice(0, 50), x, y };
     return { x, y };
   }
   return null;
 };
 // The text selector `a:text(Fight)` is `a` whose text matches /Fight/.
+// Is a sheet up with its X in view and still? (a sheet slides in and out: its X is off screen or moving for a moment)
+const SHEET_STATE = () => { const ov = document.querySelector('.bsheet-ov'); if (!ov) return 'none'; const x = ov.querySelector('.bsheet-x'), r = x && x.getBoundingClientRect();
+  return ov.getAnimations({ subtree: true }).some(a => a.playState === 'running') || !r || r.top < 0 || r.bottom > innerHeight || r.width < 2 ? 'moving' : 'still'; };
 async function click(sel, _to) {
   const [css, re] = sel.split(':text(').map((v, i) => i ? v.replace(/\)$/, '') : v);
-  const r = await page.evaluate(TAP, [css, re || '']);
+  let r = await page.evaluate(TAP, [css, re || '']);
   if (!r) return false;
   if (process.env.WALK_DEBUG) console.error('  tap', css, re || '', JSON.stringify(r));
-  if (r.covered) { addCheck('covered', `a button the player needs is covered (${css})`, `a tap at ${Math.round(r.x)},${Math.round(r.y)} would land on ${r.covered}`); return false; }
+  // Something sits on the button. A player waits a beat for a toast or a sliding sheet to clear, closes a sheet the bot left open with its
+  // X, and presses again. Only a cover that stays after that is a finding.
+  for (let i = 0; r.covered && (r.sheet || /toast|bsheet|mm-/.test(r.covered)) && i < 5; i++) {
+    if (r.sheet && !css.includes('bsheet-x')) {
+      const ss = await page.evaluate(SHEET_STATE);
+      if (ss === 'still') {
+        const x = await page.evaluate(TAP, ['.bsheet-ov .bsheet-x', '']);
+        if (process.env.WALK_DEBUG) console.error('  close-sheet', css, JSON.stringify(x));
+        if (x && !x.covered) { await page.mouse.click(x.x, x.y); st.sheetsClosed = (st.sheetsClosed || 0) + 1; }
+      }
+    }
+    await advance(300, 16);
+    r = await page.evaluate(TAP, [css, re || '']);
+    if (!r) return false;
+  }
+  if (r.covered) { addCheck('covered', `a button the player needs is covered (${css})`, `a tap at ${Math.round(r.x)},${Math.round(r.y)} would land on ${r.covered}${r.sheet ? ' (a sheet: "' + r.what + '")' : ''}`); return false; }
   await page.mouse.click(r.x, r.y);
   if (firstTapAt === null) firstTapAt = gt;
   return true;
@@ -238,6 +262,7 @@ async function followTip(o) {
   }
   return false;
 }
+let toolFault = false;
 const checks = new Map();
 function addCheck(check, what, detail) { const k = check + '|' + what; const c = checks.get(k); if (c) { c.n++; return; } checks.set(k, { check, what, detail, n: 1, t: Math.round(gt), shot: '' }); }
 
@@ -252,7 +277,7 @@ async function dismissCards(o) {
   for (const c of o.cards) {
     const sig = c.cls + '|' + c.text.slice(0, 50); now.add(sig);
     let r = seen.get(sig);
-    if (/beat you/i.test(c.text) && !seen.has(sig)) { st.beaten = (st.beaten || 0) + 1; if (st.beaten === 5) addCheck('wall', 'the casual bot was beaten 5 times by one boss', c.text.slice(0, 80) + ' (parry rate ' + PARRY + ')'); }
+    if (/beat you/i.test(c.text) && !seen.has(sig)) { st.beaten = (st.beaten || 0) + 1; const bz = st.prev ? st.prev.zone : 0; st.tries = st.tries || {}; st.tries[bz] = (st.tries[bz] || 0) + 1; if (st.beaten === 5) addCheck('wall', 'the casual bot was beaten 5 times by one boss', c.text.slice(0, 80) + ' (parry rate ' + PARRY + ')'); }
     if (!r) { r = { first: gt, last: gt, cls: c.cls, text: c.text, n: 0 }; seen.set(sig, r); await note(page, 'card', c.text, { extra: { cls: c.cls }, tag: 'card-' + c.cls }); }
     r.last = gt;
   }
@@ -260,6 +285,9 @@ async function dismissCards(o) {
   // a Next Up list left open (its Go was covered by a card) is closed with its X, as a player would
   const nu = [...now].map(g => seen.get(g)).find(r => r.cls === 'bsheet-ov' && /^×Next up/.test(r.text));
   if (nu && gt - nu.last < 1 && gt - nu.first >= 8 && gt - st.lastCard >= 0.6 && ![...now].some(g => seen.get(g).cls === 'mm-ov')) { st.lastCard = gt; if (await click('.bsheet-ov .bsheet-x', 300)) { nu.first = gt; return true; } }
+  // any other sheet left open (a gear picker a tip's tap opened, a menu card) is closed with its X after 8 s: a player does not leave one up
+  { const sh = [...now].map(g => seen.get(g)).find(r => r.cls === 'bsheet-ov' && gt - r.first >= 8);
+    if (sh && !o.tip && ![...now].some(g => { const r = seen.get(g); return r.cls === 'mm-ov' || r.cls === 'mm-toast'; }) && gt - st.lastCard >= 0.6) { st.lastCard = gt; if (await click('.bsheet-ov .bsheet-x', 300)) { sh.first = gt; st.sheetsClosed = (st.sheetsClosed || 0) + 1; return true; } } }
   // press the first thing that closes a card once the oldest visible one has been up 2.4 s
   // the card a player is reading is the one on top (a moment card), not an older sheet beneath it
   const all = [...now].map(s => seen.get(s)), top = all.filter(r => r.cls === 'mm-ov' || r.cls === 'mm-toast').sort((a, b) => b.first - a.first)[0];
@@ -281,11 +309,13 @@ async function followNextUp(o) {
   if (!(await click('#nuChip', 300))) return false;
   await advance(300, 16);
   const rows = await page.evaluate(() => [...document.querySelectorAll('.nu-row.ready')].filter(r => r.getClientRects().length).map(r => (r.querySelector('.nu-lbl') || r).textContent.trim()));
-  const label = rows.find(l => (st.calls[goalKey(l)] || 0) < 4);   // a goal the casual player cannot finish is a finding, not a loop
+  const holdFight = st.gear.owns && st.gear.sess && !st.gear.sess.gaveUp;   // gathering for a gear goal: the boss row waits
+  const label = rows.find(l => (st.calls[goalKey(l)] || 0) < 4 && !(holdFight && /^boss ready|boss is next|^the zone \d+ boss/i.test(l)));   // a goal the casual player cannot finish is a finding, not a loop
   const closeList = () => click('.bsheet-ov .bsheet-x', 200);
   if (label === undefined) { await closeList(); return false; }
   st.calls[goalKey(label)] = (st.calls[goalKey(label)] || 0) + 1;
   const marked = await page.evaluate(l => { for (const r of document.querySelectorAll('.nu-row.ready')) if ((r.querySelector('.nu-lbl') || r).textContent.trim() === l) { const g = r.querySelector('.nu-go'); if (g) { g.setAttribute('data-walk', '1'); return true; } } return false; }, label);
+  const eqBefore = await X('JSON.stringify(S.equip)');
   const went = marked && await click('[data-walk="1"]', 300);
   await page.evaluate(() => document.querySelectorAll('[data-walk]').forEach(n => n.removeAttribute('data-walk')));
   if (!went) { await closeList(); return false; }
@@ -296,6 +326,8 @@ async function followNextUp(o) {
       if (!(await click('.ab-learn', 300))) break;
       await advance(250, 16); did = i ? 'Learn (twice)' : 'Learn';
     }
+  } else if (/^Equip\b/i.test(label)) {   // next-up-equip: Go puts the piece on at once, with no panel to press
+    did = (await X('JSON.stringify(S.equip)')) !== eqBefore ? 'Go put it on' : '';
   } else if (/attribute point/i.test(label)) {   // a casual player taps Spread evenly
     if (await click('.at-spread', 300)) { did = 'Spread evenly'; await advance(250, 16); }
     for (let i = 0; i < 6 && await page.evaluate(() => [...document.querySelectorAll('.at-add[data-n="1"]')].some(b => !b.disabled && b.getClientRects().length)); i++) { if (!(await click('.at-add[data-n="1"]', 200))) break; await advance(150, 16); did = 'Spread evenly, +1'; }
@@ -320,6 +352,137 @@ async function followNextUp(o) {
 }
 
 
+// Gear: a casual player crafts what Next Up and the Forge offer and then puts it on. Next Up's craft goal never says "Equip", so a
+// crafted piece sits in the bag: the bot opens Craft > Gear, taps the piece and presses Equip. For a gear goal that is short of
+// materials it opens the Gather view of the missing material and works there until the goal is ready, then crafts it at its station.
+// Reads (the goal, the bag) come from the game's own rules; every change is a tap. The goal: the combat slot (weapon, off-hand, head,
+// body) with the lowest tier worn, one tier up, for a station the camp has built and a tier the zone has opened.
+const GEAR_Q = `(() => {
+  const POS = ['weapon', 'off', 'helm', 'body'], zt = Math.min(5, zoneTier(S.maxZone)), who = heroWho(), worn = equippedIds();
+  const kindsFor = pos => { const row = CRAFT_FITS[pos] || {}, own = who !== 'any' ? row[who] || [] : []; return (own.length ? own : row.any || []).filter(k => !CRAFT_KINDS[k].legacy && craftKindVisible(k) && fits(k, pos, 'hero')); };
+  const viewOpen = k => k === 'ess' ? false : k === 'hide' ? huntingOn() && isUnlocked('forage') && navSkillOpen('hunt') : k === 'fibre' || k === 'herb' ? isUnlocked('forage') : true;   // Essence comes from fights; Foraging and Hunting open later
+  const wear = [];
+  for (const pos of Object.keys(S.equip)) {
+    const cur = equipped(pos); let best = null;
+    for (const it of S.items) { if (worn.has(it.id) || kindPos(it.slot) !== pos || !craftKindVisible(it.slot) || !fits(it, pos, 'hero')) continue; if (cur && itemPower(cur) >= itemPower(it)) continue; if (!best || itemPower(it) > itemPower(best)) best = it; }
+    if (best) wear.push({ id: best.id, pos, nm: itemName(best) });
+  }
+  let goal = null;
+  for (const [pi, pos] of POS.entries()) {
+    if (!craftKindVisible(pos)) continue;
+    const cur = equipped(pos);
+    for (const kind of kindsFor(pos)) {
+      const have = cur && (cur.slot === kind || cur.u) ? cur.t : 0, t = have + 1;
+      if (t > zt) continue;
+      const c = canCraft(kind, t), sk = CRAFT_KINDS[kind].st; let g;
+      if (c.unbuilt) {   // the station is not built: the goal is to build it (Camp), which costs materials of its own
+        const cc = typeof campCan === 'function' ? campCan(sk) : null;
+        if (!cc || !cc.cost || !(cc.ok || cc.miss)) continue;
+        g = { build: sk, pos, kind, t, st: sk, nm: 'the ' + CRAFT_STATIONS[sk].n, ok: !!cc.ok, miss: (cc.cost.mats || []).map(([k, tt, n]) => ({ k, t: tt, n: n - matOwn(k, tt) })).filter(x => x.n > 0).map(x => ({ ...x, open: viewOpen(x.k) && skillTierOpen(skillOf(x.k), x.t) })) };
+      } else {
+        if (c.lv < c.need) continue;
+        g = { pos, kind, t, st: sk, nm: kindName(kind, t), ok: !!c.ok, miss: (c.miss || []).map(([k, n]) => ({ k, t, n, open: viewOpen(k) && skillTierOpen(skillOf(k), t) })) };
+      }
+      // ready first; then what gathering alone can finish; then what waits on fight drops (hide, essence); within a group the lower tier, then the slot order
+      g.drops = g.miss.some(x => !x.open);
+      const rank = x => (x.ok ? 0 : x.drops ? 2000 : 1000) + x.t * 100 + pi;
+      if (!goal || rank(g) < rank(goal)) goal = g;
+    }
+  }
+  return { wear, goal, act: S.activity, node: S.node ? { kind: S.node.kind, t: S.node.t } : null };
+})()`;
+const GATHER_VIEW = { ore: 'mine', crystal: 'mine', wood: 'wood', fibre: 'forage', herb: 'forage', hide: 'hunt' };
+st.gear = { sess: null, tries: {}, wearAt: -99, stepAt: -99, wornN: 0, crafted: 0, firstWear: null };
+async function openCraft(view) {
+  const tab = await click('.tabs .tab[data-tab="forge"]', 300); await advance(450, 16);
+  const seg = await click(`#viewSeg button[data-view="${view}"]`, 300); await advance(350, 16);
+  return { tab, seg };
+}
+// Craft > Gear > the piece > Equip, then close the sheet. Returns true when it tapped.
+async function wearGear(w) {
+  const nav = await openCraft('gear');
+  const opened = await click(`.cf-tile[data-item-id="${w.id}"]`, 300); await advance(450, 16);
+  const did = opened && await click('.bsheet-ov .cf-wear button:text(^Equip$)', 300);
+  await advance(300, 16);
+  await click('.bsheet-ov .bsheet-x', 200); await advance(300, 16);
+  const ok = await X(`S.equip[${JSON.stringify(w.pos)}] === ${w.id}`);
+  if (ok) { st.gear.wornN++; if (st.gear.firstWear === null) st.gear.firstWear = gt; }
+  await note(page, 'gear', `${ok ? 'wore' : 'could not wear'} ${w.nm} (${w.pos})`, { extra: { pos: w.pos, ok }, tag: 'gear-wear' });
+  if (!ok) addCheck('gear', 'the bot could not put on a piece from the bag', `${w.nm} for ${w.pos}: ${opened ? 'the Equip button did nothing' : !nav.tab ? 'the Craft tab could not be tapped' : !nav.seg ? 'the Gear view button could not be tapped' : 'no bag tile to tap in Craft > Gear'}`);
+  return true;
+}
+// Craft > Make > the goal's station > its tier > the recipe's Craft button.
+async function craftGoal(g) {
+  await openCraft('make');
+  await click(`.cf-st[data-st="${g.st}"]`, 300); await advance(300, 16);
+  await click(`.cf-tiers button:text(^Tier ${g.t}\\b)`, 300); await advance(300, 16);
+  const btn = `.cf-rec[data-kind="${g.kind}"] .cf-go`;
+  const state = await page.evaluate(sel => { const b = document.querySelector(sel); return b ? { dis: b.disabled, vis: b.getClientRects().length > 0 } : null; }, btn);
+  const did = state && !state.dis && await click(btn, 300);
+  await advance(400, 16);
+  await note(page, 'gear', `craft ${g.nm}${did ? ' -> pressed Craft' : ' -> nothing to press' + (state ? (state.dis ? ' (button greyed)' : '') : ' (no recipe row)')}`, { extra: { kind: g.kind, t: g.t, pressed: !!did }, tag: 'gear-craft' });
+  if (did) st.gear.crafted++;
+  else addCheck('gear', 'a gear goal says "you have the materials" and its Craft button cannot be pressed', `${g.nm}: ${state ? (state.dis ? 'button greyed' : 'hidden') : 'no recipe row in Craft > Make'}`);
+  return true;
+}
+// Camp > the station's building > its Build button (the guide's "Build the Forge" is the same press).
+async function buildStation(g) {
+  await click('.tabs .tab[data-tab="world"]', 300); await advance(500, 16);
+  await click(`#camp-b-${g.build} button:text(Build)`, 300); await advance(400, 16);   // the first tap arms the button ("Sure?")
+  await click(`#camp-b-${g.build} button:text(Sure)`, 300); await advance(500, 16);
+  const built = await X(`S.camp.builds.some(b => b.id === ${JSON.stringify(g.build)}) || !hearthStationWhy(${JSON.stringify(g.build)})`);
+  await note(page, 'gear', `build ${g.nm}${built ? ' -> started' : ' -> not started'}`, { extra: { build: g.build }, tag: 'gear-build' });
+  if (!built) await advance(1000, 16);
+  return true;
+}
+// Gather > the material's view > its node row > the button.
+async function startGather(k, t) {
+  const view = GATHER_VIEW[k];
+  await click('.tabs .tab[data-tab="gat"]', 300); await advance(450, 16);
+  await click(`#viewSeg button[data-view="${view}"]`, 300); await advance(350, 16);
+  const did = await click(`.gx-row[data-kind="${k}"][data-t="${t}"] .gx-act`, 300);
+  await advance(400, 16);
+  return did;
+}
+async function gearStep(o) {
+  const G = st.gear;
+  if (gt - G.stepAt < 5 || o.cards.length || o.tip || o.phase !== 'idle' || !o.s.got || !o.s.got.craft) return false;   // the guide goes first; Craft must be open
+  G.stepAt = gt;
+  const q = await X(GEAR_Q);
+  // back to the fight (the Fight/Mining switch at the top) once the bot has nothing left to gather for
+  const release = async why => {
+    if (!G.owns) return false;
+    G.owns = false; G.sess = null;
+    if (q.act !== 'gather') return false;
+    const did = await click('#modeSeg button[data-act="fight"]', 300); await advance(300, 16);
+    await note(page, 'gear', `back to fighting: ${why}`, { shot: false });
+    return !!did;
+  };
+  const w = q.wear.find(x => (G.tries['w' + x.id] || 0) < 8);
+  if (w) { G.tries['w' + w.id] = (G.tries['w' + w.id] || 0) + 1; return await wearGear(w); }
+  const g = q.goal;
+  if (!g) return await release('no gear goal');
+  const key = (g.build ? 'build ' : '') + g.kind + g.t;
+  if (g.ok) {
+    if ((G.tries[key] || 0) >= 3) return await release('could not ' + (g.build ? 'build ' : 'craft ') + g.nm);
+    G.tries[key] = (G.tries[key] || 0) + 1;
+    const r = g.build ? await buildStation(g) : await craftGoal(g);
+    return await release((g.build ? 'built ' : 'crafted ') + g.nm) || r;
+  }
+  const m = g.miss.filter(x => x.open).sort((a, b) => b.n - a.n)[0];   // what only gathering brings: Essence and hide come from fights
+  if (!m) return await release(g.nm + ' needs drops from fights');
+  if (!G.sess || G.sess.key !== key) G.sess = { key, start: gt, gaveUp: false };
+  if (gt - G.sess.start > 300) {   // a casual player gives up after 5 minutes and fights on
+    if (!G.sess.gaveUp) { G.sess.gaveUp = true; await note(page, 'gear', `stopped gathering for ${g.nm}: 5 min and still short`, { shot: false }); }
+    return await release('gave up on ' + g.nm);
+  }
+  if (q.act === 'gather' && q.node && q.node.kind === m.k && q.node.t === m.t) return false;   // already working there
+  const did = await startGather(m.k, m.t);
+  if (did) G.owns = true;
+  await note(page, 'gear', `gathering ${m.k} tier ${m.t} for ${g.nm} (${m.n} more)${did ? '' : ' -> could not start'}`, { extra: { kind: m.k, t: m.t }, tag: 'gear-gather' });
+  return true;
+}
+
 // ---------------- watching ----------------
 const SOUNDS = new Set(['kill', 'loot', 'level', 'skill', 'zone', 'forge', 'momentBig', 'momentMid']);   // momentBig and momentMid are the moment layer's own stings (76-audio.js)
 const sfxLog = [];     // { t, name }
@@ -328,6 +491,10 @@ async function watch(o) {
   for (const t of o.toasts) if (!st.toastSeen.has(t)) { st.toastSeen.add(t); await note(page, 'toast', t, { shot: false }); }
   for (const t of o.tabs) if (!st.tabSeen.has(t)) { st.tabSeen.add(t); if (st.tabSeen.size > 1) await note(page, 'tab', t, { tag: 'tab-' + t }); }
   const s = o.s, p = st.prev;
+  if (s.zone > (st.enterMax || 0)) {   // the first time the hero stands in a zone: what it wears, before that zone's boss tries
+    st.enterMax = s.zone; st.enter = st.enter || {};
+    st.enter[s.zone] = { t: Math.round(gt), L: s.L, gear: await X(`Object.entries(S.equip).filter(([, v]) => v != null && itemById(v)).map(([k, v]) => k + ' t' + itemById(v).t + ' ' + RAR[itemById(v).r].n).join(', ') || 'nothing'`), crafts: s.forged };
+  }
   for (const k of Object.keys(s.got || {})) if (!st.got[k]) { st.got[k] = gt; const byAct = !!(s.acted && s.acted[k]); await note(page, 'unlock', k, { tag: 'unlock-' + k, extra: { play: s.got[k], byAct } }); }
   if (p && s.gold > p.gold && !st.rewardNoted) { st.rewardNoted = 1; await note(page, 'reward', 'first gold: +' + (s.gold - p.gold), { shot: false }); }
   if (p) {
@@ -357,6 +524,7 @@ async function run() {
   ctx = await browser.newContext({ viewport: { width: SIZE.w, height: SIZE.h }, deviceScaleFactor: 1, isMobile: true, hasTouch: true });
   page = await ctx.newPage();
   const errs = []; page.on('pageerror', e => errs.push(String(e)));
+  page.on('crash', () => errs.push('the page crashed'));
   page.on('console', m => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errs.push(m.text()); });
   await page.clock.install({ time: Date.UTC(2026, 0, 5, 12, 0, 0) });   // a fixed Monday noon: the game's day-keyed content does not move between nights
   await page.addInitScript(INIT, [KEY, SEED]);
@@ -368,43 +536,51 @@ async function run() {
   await advance(1500, 16);
   const END = MINUTES * 60;
   let lastMin = -1, o = null, idle = 0;
-  while (gt < END) {
-    if (Date.now() - t0 > BUDGET_MS) { stop = `clock budget spent at game minute ${(gt / 60).toFixed(1)}`; break; }
-    o = await X(OBS);
-    await watch(o);
-    if (Math.floor(gt / 60) !== lastMin) { lastMin = Math.floor(gt / 60); say(`minute ${lastMin}: zone ${o.s.maxZone}, level ${o.s.L}, gold ${o.s.gold} (${Math.round((Date.now() - t0) / 1000)} s clock)`); }
-    if (process.env.WALK_DEBUG && Math.floor(gt) !== st.dbg) { st.dbg = Math.floor(gt); if (process.env.WALK_DEBUG === '2') console.error('  bar', await page.evaluate(() => [...document.querySelectorAll('#soloBar .sbtn')].map(b => b.className.replace('sbtn ', '') + (b.disabled ? ' DIS' : '') + ' ' + (b.getAttribute('aria-disabled') || '') + '|' + b.textContent.replace(/\s+/g, ' ').trim().slice(0, 30)).join(' ;; ')));
-    console.error('  dbg', gt.toFixed(1), o.phase, JSON.stringify(o.tip && { a: o.tip.action, b: o.tip.button }), o.cards.length, JSON.stringify(o.s).slice(0, 120)); }
-    if (process.env.WALK_SHOT && gt >= +process.env.WALK_SHOT && !st.dbgShot) { st.dbgShot = 1; await page.screenshot({ path: '/tmp/claude-0/dbg.png' }); console.error('  DBG TIP', JSON.stringify(o.tip), JSON.stringify(o.toasts), JSON.stringify(o.cards)); }
-    // a stall: nothing that counts has changed for 90 s of game time (the fight, a tip, a card and the menus all count as nothing)
-    { const sig = [o.s.kills, o.s.gold, o.s.maxZone, o.s.L, Object.keys(o.s.got || {}).length, o.s.tab].join('|');
-      if (sig !== st.sig) { st.sig = sig; st.sigAt = gt; st.stallNoted = false; }
-      else if (gt - st.sigAt >= 90 && !st.stallNoted) { st.stallNoted = true; const why = `phase "${o.phase}", tip ${o.tip ? '"' + o.tip.text.slice(0, 60) + '"' : 'none'}, ${o.cards.length} card(s) up, tab "${o.s.tab}"`; await note(page, 'stall', 'nothing moved for 90 s: ' + why, { tag: 'stall' }); addCheck('stall', 'the walk stalled for 90 s', why); } }
-    if (gt - st.phAt >= 30) { st.phAt = gt; for (const p of await page.evaluate(PLACEHOLDERS)) placeholders.add(p); }
-    for (const c of checks.values()) if (!c.shotTried) { c.shotTried = true; c.shot = await shot(page, 'finding-' + c.check); }   // every finding gets its shot
-    let did = false;
-    if (o.intro) {   // the opening's stills and Hesketh's fire: the bot taps through without reading, like the picker
-      const sig = o.intro.trim();
-      if (!st.introSeen) st.introSeen = new Set();
-      if (!st.introSeen.has(sig)) { st.introSeen.add(sig); await note(page, 'card', sig, { extra: { cls: 'intro' }, tag: 'card-intro' }); }
-      did = await click('#introScreen .intro-go', 300);
-      if (did) await advance(300, 16);
+  try {
+    while (gt < END) {
+      if (Date.now() - t0 > BUDGET_MS) { stop = `clock budget spent at game minute ${(gt / 60).toFixed(1)}`; break; }
+      o = await X(OBS);
+      await watch(o);
+      if (Math.floor(gt / 60) !== lastMin) { lastMin = Math.floor(gt / 60); say(`minute ${lastMin}: zone ${o.s.maxZone}, level ${o.s.L}, gold ${o.s.gold} (${Math.round((Date.now() - t0) / 1000)} s clock)`); }
+      if (process.env.WALK_DEBUG && Math.floor(gt) !== st.dbg) { st.dbg = Math.floor(gt); if (process.env.WALK_DEBUG === '2') console.error('  bar', await page.evaluate(() => [...document.querySelectorAll('#soloBar .sbtn')].map(b => b.className.replace('sbtn ', '') + (b.disabled ? ' DIS' : '') + ' ' + (b.getAttribute('aria-disabled') || '') + '|' + b.textContent.replace(/\s+/g, ' ').trim().slice(0, 30)).join(' ;; ')));
+      console.error('  dbg', gt.toFixed(1), o.phase, JSON.stringify(o.tip && { a: o.tip.action, b: o.tip.button }), o.cards.length, JSON.stringify(o.s).slice(0, 120)); }
+      if (process.env.WALK_SHOT && gt >= +process.env.WALK_SHOT && !st.dbgShot) { st.dbgShot = 1; await page.screenshot({ path: '/tmp/claude-0/dbg.png' }); console.error('  DBG TIP', JSON.stringify(o.tip), JSON.stringify(o.toasts), JSON.stringify(o.cards)); }
+      // a stall: nothing that counts has changed for 90 s of game time (the fight, a tip, a card and the menus all count as nothing)
+      { const sig = [o.s.kills, o.s.gold, o.s.maxZone, o.s.L, Object.keys(o.s.got || {}).length, o.s.tab].join('|');
+        if (sig !== st.sig) { st.sig = sig; st.sigAt = gt; st.stallNoted = false; }
+        else if (gt - st.sigAt >= 90 && !st.stallNoted) { st.stallNoted = true; const why = `phase "${o.phase}", tip ${o.tip ? '"' + o.tip.text.slice(0, 60) + '"' : 'none'}, ${o.cards.length} card(s) up, tab "${o.s.tab}"`; await note(page, 'stall', 'nothing moved for 90 s: ' + why, { tag: 'stall' }); addCheck('stall', 'the walk stalled for 90 s', why); } }
+      if (gt - st.phAt >= 30) { st.phAt = gt; for (const p of await page.evaluate(PLACEHOLDERS)) placeholders.add(p); }
+      for (const c of checks.values()) if (!c.shotTried) { c.shotTried = true; c.shot = await shot(page, 'finding-' + c.check); }   // every finding gets its shot
+      let did = false;
+      if (o.intro) {   // the opening's stills and Hesketh's fire: the bot taps through without reading, like the picker
+        const sig = o.intro.trim();
+        if (!st.introSeen) st.introSeen = new Set();
+        if (!st.introSeen.has(sig)) { st.introSeen.add(sig); await note(page, 'card', sig, { extra: { cls: 'intro' }, tag: 'card-intro' }); }
+        did = await click('#introScreen .intro-go', 300);
+        if (did) await advance(300, 16);
+      }
+      if (!did && o.create) did = await pickHero();
+      if (!did) did = await dismissCards(o);
+      if (!did) did = await followTip(o);
+      if (!did && (!o.s.tab || (o.s.tab === 'adv' && SIZE.id === 'landscape'))) did = await fight(o);   // a menu that covers the action bar is not a fight the player can press
+      // back to the fight once a tip or Next Up has been served: a menu that stays open leaves the foe waiting
+      if (!did && o.s.tab && o.s.tab !== 'adv' && !o.tip && o.cards.length === 0 && gt - st.tabAt > 2.5) { st.tabAt = gt; did = await click('.tabs .tab[data-tab="adv"]', 300); }
+      if (!did && (o.phase === 'idle') && gt - st.nuAt >= 6 && o.cards.length === 0) { st.nuAt = gt; did = await followNextUp(o); }
+      if (!did) did = await gearStep(o);
+      // the Fight menu (tab "adv") covers the action bar in portrait: a player whose turn is waiting closes it
+      if (!did && o.s.tab === 'adv' && o.phase !== 'idle' && !o.tip && o.cards.length === 0 && gt - st.tabAt > 2.5) { st.tabAt = gt; did = await click('#menuX', 300); }
+      const fine = o.phase === 'foe wind-up' || o.phase === 'parry or dodge window' || false;   // the 33 ms step is for the foe's wind-up and the parry window only
+      await advance(fine ? 33 : 100, fine ? 16 : 100);
     }
-    if (!did && o.create) did = await pickHero();
-    if (!did) did = await dismissCards(o);
-    if (!did) did = await followTip(o);
-    if (!did && (!o.s.tab || (o.s.tab === 'adv' && SIZE.id === 'landscape'))) did = await fight(o);   // a menu that covers the action bar is not a fight the player can press
-    // back to the fight once a tip or Next Up has been served: a menu that stays open leaves the foe waiting
-    if (!did && o.s.tab && o.s.tab !== 'adv' && !o.tip && o.cards.length === 0 && gt - st.tabAt > 2.5) { st.tabAt = gt; did = await click('.tabs .tab[data-tab="adv"]', 300); }
-    if (!did && (o.phase === 'idle') && gt - st.nuAt >= 6 && o.cards.length === 0) { st.nuAt = gt; did = await followNextUp(o); }
-    // the Fight menu (tab "adv") covers the action bar in portrait: a player whose turn is waiting closes it
-    if (!did && o.s.tab === 'adv' && o.phase !== 'idle' && !o.tip && o.cards.length === 0 && gt - st.tabAt > 2.5) { st.tabAt = gt; did = await click('#menuX', 300); }
-    const fine = o.phase === 'foe wind-up' || o.phase === 'parry or dodge window' || false;   // the 33 ms step is for the foe's wind-up and the parry window only
-    await advance(fine ? 33 : 100, fine ? 16 : 100);
+  
+  } catch (e) {   // the browser or page went away (a crash, the container's memory): report the run so far instead of a stack trace
+    if (!(page.isClosed() || /has been closed|Target crashed|Target page, context or browser|Browser closed|disconnected/i.test(String(e && e.message)))) throw e;
+    toolFault = true;
+    stop = `the browser closed at game minute ${(gt / 60).toFixed(1)} (${String(e.message).split('\n')[0].slice(0, 80)}); this is a tool fault, not a game error`;
   }
   if (!stop && gt < END) stop = 'ended early';
-  const snap = await page.evaluate(k => { try { return localStorage.getItem(k); } catch (e) { return null; } }, KEY);
-  await ctx.close(); await browser.close();
+  const snap = await page.evaluate(k => { try { return localStorage.getItem(k); } catch (e) { return null; } }, KEY).catch(() => null);
+  await ctx.close().catch(() => {}); await browser.close().catch(() => {});
   return { stop, errs, snap, clockMs: Date.now() - t0 };
 }
 // ---------------- the map ----------------
@@ -496,6 +672,10 @@ function report(res) {
   const z = st.prev ? st.prev : {};
   if (st.beaten) out.push(`The bot was beaten ${st.beaten} time${st.beaten === 1 ? '' : 's'} by bosses (the "try again" card).`, '');
   out.push(`End state: zone ${z.maxZone}, level ${z.L}, ${z.gold} gold, ${z.kills} kills, ${Object.keys(z.got || {}).length} things unlocked, ${z.found} uniques, ${z.stars} Stars, ${z.heroes} extra heroes, ${z.looks} looks.`, '');
+  out.push('## Gear and boss tries', '', `The bot crafted ${st.gear.crafted} piece(s) from its own gear goal, put on ${st.gear.wornN}${st.gear.firstWear === null ? '' : ' (first at ' + fmtT(st.gear.firstWear) + ')'}, and closed ${st.sheetsClosed || 0} sheet(s) it had left over the bar. Forged in all: ${z.forged || 0}.`, '',
+    '| Zone | First stood in at | Level | Boss tries lost | Worn then |', '|---|---|---|---|---|');
+  for (const [zn, e] of Object.entries(st.enter || {})) out.push(`| ${zn} | ${fmtT(e.t)} | ${e.L} | ${(st.tries || {})[zn] || 0} | ${e.gear} |`);
+  out.push('');
   out.push('## Scorecard', '', '| Id | Result | Target | Value |', '|---|---|---|---|');
   for (const [k, v] of Object.entries(sc)) out.push(`| ${k} | ${v.unmeasured ? 'not measured' : v.pass ? 'met' : 'missed'} | ${v.target} | ${v.value} |`);
   out.push('');
@@ -514,7 +694,7 @@ function report(res) {
   }
   out.push('', '### More than 50% off, for the lead', '', ...(off.length ? off.map(x => '- ' + x) : ['- none']), '');
   // dead air
-  const marks = [0, ...log.filter(e => ['unlock', 'moment', 'nextup'].includes(e.kind) && !(e.kind === 'moment' && e.text.startsWith('level'))).map(e => e.t), reached].sort((a, b) => a - b);
+  const marks = [0, ...log.filter(e => ['unlock', 'moment', 'nextup', 'gear'].includes(e.kind) && !(e.kind === 'moment' && e.text.startsWith('level'))).map(e => e.t), reached].sort((a, b) => a - b);
   const quiet = []; for (let i = 1; i < marks.length; i++) if (marks[i] - marks[i - 1] >= 180) quiet.push({ from: marks[i - 1], to: marks[i] });
   out.push('## Where it dragged', '', ...(quiet.length ? quiet.slice(0, 8).map(q => `- ${fmtT(q.from)} to ${fmtT(q.to)}: ${Math.round((q.to - q.from) / 60 * 10) / 10} min with no unlock, boss win, unique, Star, hero or Next Up result`) : ['- no stretch over 3 minutes without a reward or an unlock']), '');
   // findings
@@ -526,7 +706,7 @@ function report(res) {
   out.push('');
   // timeline
   out.push('## Timeline', '', 'Every tip, card, unlock and moment, with the game time it landed and its shot. Toasts and plain cards are in the json.', '', '| Time | Kind | What | Shot |', '|---|---|---|---|');
-  for (const e of log.filter(e => ['tip', 'unlock', 'moment', 'nextup', 'stall', 'tab'].includes(e.kind) || (e.kind === 'card' && e.shot))) out.push(`| ${fmtT(e.t)} | ${e.kind} | ${e.text.replace(/\|/g, '/').slice(0, 110)} | ${e.shot ? '`' + e.shot + '`' : ''} |`);
+  for (const e of log.filter(e => ['tip', 'unlock', 'moment', 'nextup', 'gear', 'stall', 'tab'].includes(e.kind) || (e.kind === 'card' && e.shot))) out.push(`| ${fmtT(e.t)} | ${e.kind} | ${e.text.replace(/\|/g, '/').slice(0, 110)} | ${e.shot ? '`' + e.shot + '`' : ''} |`);
   out.push('');
   return { md: out.join('\n'), sc, beats: beats.map(b => ({ id: b.id, est: b.est, walk: meas[b.id] ?? null, measured: b.id in meas })), off };
 }
@@ -567,4 +747,4 @@ if (opt('reports', '')) {
 console.log(rep.md.split('\n').slice(0, rep.md.split('\n').indexOf('## Beats against the map')).join('\n'));
 console.log(`walk: wrote ${path.relative(ROOT, base)}.md`);
 const missed = Object.entries(rep.sc).filter(([, v]) => !v.pass && !v.unmeasured).map(([k]) => k);
-process.exit(flag('strict') && missed.length ? 1 : 0);
+process.exit(toolFault ? 3 : flag('strict') && missed.length ? 1 : 0);   // a browser that closed mid-run is a tool fault: the report is written, the exit is not 0
