@@ -12,6 +12,13 @@
 //   node tools/playtest.mjs expect "<text|css>"   exit 1 if that text (or CSS selector) is not visible on screen right now
 //   node tools/playtest.mjs shot <name>           screenshot named <name>.png in the shots folder
 //   node tools/playtest.mjs burst <name>          6 frames over 1.5 s of game time: <name>-1.png .. <name>-6.png
+//   node tools/playtest.mjs expect-no "<text|css>"   exit 1 if that text (or CSS selector) IS visible on screen right now
+//   node tools/playtest.mjs expect-save <f><op><n>   exit 1 unless the stored save's field compares true, e.g. gold>=12345 (ops >= <= > < =)
+//   tab new [field=n]   (batch only) open the game in a second tab of the same browser (same storage); the open tab goes to the
+//                       background first. field=n edits the stored save just before the new tab loads it (the new tab's progress)
+//   tab <n>             (batch only) bring tab n (1 = the first) to the front; the one in front goes to the background
+//   tab close [n]       (batch only) close the tab in front (it goes to the background, then pagehide; the last other tab comes to the
+//                       front), or tab n while it stays in the background (pagehide only)
 //   node tools/playtest.mjs batch                 read one command per line from stdin and run them in one browser launch
 //                                                 (a route file is a batch: `new fresh` may open it, and `expect` keeps going after a miss)
 //
@@ -99,9 +106,10 @@ function pageHtml() {
 
 // Frames: the game caps one frame at 0.1 s of game time, so fast-forwarding steps the frame loop every 100 ms
 // instead of every 16 ms. That keeps game time exact and cuts the drawing work six times over.
-const INIT = ([key, rawSave, seedN]) => {
+const INIT = ([key, rawSave, seedN, keep]) => {
   if (seedN !== null) { let a = (seedN >>> 0) || 1; Math.random = () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }   // mulberry32
-  try { if (rawSave) localStorage.setItem(key, rawSave); else localStorage.removeItem(key); } catch (e) {}
+  // The session's save goes in once per tab (a Reload tap keeps what the game stored); a later tab (`tab new`) loads what is stored.
+  try { if (!keep && !sessionStorage.getItem('__ptInit')) { sessionStorage.setItem('__ptInit', '1'); if (rawSave) localStorage.setItem(key, rawSave); else localStorage.removeItem(key); } } catch (e) {}
   window.__ptErrors = [];
   addEventListener('error', e => window.__ptErrors.push(String(e.message || e)));
   const raf = window.requestAnimationFrame.bind(window);
@@ -109,16 +117,17 @@ const INIT = ([key, rawSave, seedN]) => {
   window.requestAnimationFrame = cb => (window.__ptStep > 16 ? window.setTimeout(() => cb(performance.now()), window.__ptStep) : raf(cb));
 };
 
-async function openPage(browser, session, afterAway = false) {
-  const ctx = await browser.newContext(flags.landscape
+async function openPage(browser, session, afterAway = false, tab = null) {
+  // tab: { ctx, errors, time } opens another tab in that browser context (`tab new`), on the stored save, at that time
+  const ctx = tab ? tab.ctx : await browser.newContext(flags.landscape
     ? { viewport: { width: 740, height: 360 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true }
     : { viewport: { width: 360, height: 740 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true });
   const page = await ctx.newPage();
-  const errors = [];
+  const errors = tab ? tab.errors : [];
   page.on('pageerror', e => errors.push(String(e)));
   page.on('console', m => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(m.text()); });
-  await page.clock.install({ time: session.time });
-  await page.addInitScript(INIT, [KEY, session.save, seed]);
+  await page.clock.install({ time: tab ? tab.time : session.time });
+  await page.addInitScript(INIT, [KEY, session.save, seed, !!tab]);
   // The page is served from a fake origin (so localStorage works); every other request is refused, so nothing leaves the machine.
   const html = pageHtml();
   await page.route('**/*', r => (r.request().url() === ORIGIN ? r.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: html }) : r.abort()));
@@ -129,7 +138,20 @@ async function openPage(browser, session, afterAway = false) {
   for (let i = 0; i < 20 && !(await chosen()) && !(await page.$('#createScreen')); i++) await run(page, 0.5);
   // The away report card opens a moment after the first frame.
   if (afterAway) for (let i = 0; i < 8 && !(await page.$('.away-ov')); i++) await run(page, 0.5);
-  return { page, errors, ctx };
+  return { page, errors, ctx, tabs: tab ? null : [page] };
+}
+// Headless pages always count as visible: a tab that goes to the background is told so the way a browser tells it.
+const setHidden = (page, hidden) => page.evaluate(h => {
+  Object.defineProperty(document, 'hidden', { configurable: true, get: () => h });
+  Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => (h ? 'hidden' : 'visible') });
+  document.dispatchEvent(new Event('visibilitychange'));
+}, hidden);
+const storedSave = page => page.evaluate(k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }, KEY);
+
+// After a tap: half a second of game time. A tap that reloads the page (a Reload button) waits for the new page's boot instead.
+async function settle(page) {
+  try { await run(page, 0.5); }
+  catch (e) { if (!/context was destroyed|navigat/i.test(String(e && e.message))) throw e; await page.waitForLoadState('load'); await run(page, 1.5); }
 }
 
 // Advance game time. Short waits use real 60 fps frames; long ones step 100 ms frames (see INIT).
@@ -299,7 +321,7 @@ async function exec(cmd, args, ctx) {
     case 'tap': {
       if (!args.length) die('tap needs a button label: tap "Begin as Wren"');
       const r = await tap(page, args.join(' '));
-      if (r.ok) await run(page, 0.5); else process.exitCode = 1;   // a tap that could not be made is a failed command
+      if (r.ok) await settle(page); else process.exitCode = 1;   // a tap that could not be made is a failed command
       if (flags.quiet || !r.ok) return { text: r.msg, data: r };
       const l = await look(session, page, 'tap'); return { text: r.msg + '\n' + l.text, data: { ...r, look: l.data } };
     }
@@ -335,6 +357,29 @@ async function exec(cmd, args, ctx) {
       expects.push({ want, ok, viewport: page.viewportSize().width + 'x' + page.viewportSize().height });
       return { text: `EXPECT ${ok ? 'PASS' : 'FAIL'} "${want}"`, data: { expect: want, ok } };
     }
+    case 'expect-no': {
+      if (!args.length) die('expect-no needs text or a CSS selector: expect-no "open in another tab"');
+      const want = args.join(' ');
+      const seen = await page.evaluate(([w, scr]) => {
+        const s = (new Function('return ' + scr))()();
+        const sel = /^[#.\[]|^[a-z][a-z0-9-]*[#.\[>]/i.test(w) && !/\s{2}/.test(w);
+        if (sel) { try { return [...document.querySelectorAll(w)].some(e => { const r = e.getBoundingClientRect(), cs = getComputedStyle(e); return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && cs.display !== 'none' && +cs.opacity !== 0; }); } catch (e) { /* not a selector: fall through to text */ } }
+        const hay = (s.lines.join(' ') + ' ' + s.buttons.map(b => b.label).join(' ')).replace(/\s+/g, ' ').toLowerCase();
+        return hay.includes(w.replace(/\s+/g, ' ').toLowerCase());
+      }, [want, '(' + SCREEN.toString() + ')']);
+      if (seen) process.exitCode = 1;
+      expects.push({ want: 'no ' + want, ok: !seen, viewport: page.viewportSize().width + 'x' + page.viewportSize().height });
+      return { text: `EXPECT-NO ${seen ? 'FAIL' : 'PASS'} "${want}"`, data: { expectNo: want, ok: !seen } };
+    }
+    case 'expect-save': {   // reads the stored save as it is (no pagehide save first, unlike `state`)
+      const m = /^([A-Za-z_]\w*)(>=|<=|=|>|<)(-?[\d.]+)$/.exec(args.join(''));
+      if (!m) die('expect-save needs <field><op><number>: expect-save gold>=12345');
+      const o = await storedSave(page), v = o ? Number(o[m[1]]) : NaN, n = +m[3];
+      const ok = { '>=': v >= n, '<=': v <= n, '=': v === n, '>': v > n, '<': v < n }[m[2]];
+      if (!ok) process.exitCode = 1;
+      expects.push({ want: 'save ' + m[0], ok, viewport: page.viewportSize().width + 'x' + page.viewportSize().height });
+      return { text: `EXPECT-SAVE ${ok ? 'PASS' : 'FAIL'} ${m[0]} (stored ${m[1]} ${Number.isFinite(v) ? Math.floor(v) : 'missing'})`, data: { expectSave: m[0], ok, value: v } };
+    }
     case 'stub-site': {   // pretend this is the Netlify page: window.LF_SITE with a send() that answers ok (default) or fail
       const ok = (args[0] || 'ok') !== 'fail';
       await page.evaluate(ok => { window.LF_SITE = { build: 'proof', send: () => Promise.resolve(ok) }; }, ok);
@@ -358,7 +403,7 @@ async function exec(cmd, args, ctx) {
       for (let i = 1; i <= 6; i++) { fs6.push(await namedShot(page, `${args[0]}-${i}`)); if (i < 6) await run(page, 0.3); }
       return { text: `burst ${fs6.length} frames: ${fs6[0]} .. ${fs6[5]}`, data: { burst: fs6 } };
     }
-    default: die(`unknown command "${cmd}". Commands: look, tap, tap-if, wait, away, state, new, expect, shot, burst, stub-site, type, batch`);
+    default: die(`unknown command "${cmd}". Commands: look, tap, tap-if, wait, away, state, new, expect, expect-no, expect-save, shot, burst, stub-site, type, tab, batch`);
   }
 }
 
@@ -393,6 +438,31 @@ async function main() {
         ctx = { session, ...(await openPage(browser, session, true)) };   // the game opens again `hours` later and works out the away gains
         const l = await look(session, ctx.page, 'away');
         return { text: `away ${hours} h, then opened the game again\n` + l.text, data: { away: hours, look: l.data } };
+      }
+      if (c === 'tab') {   // two tabs of one game (card save-two-tabs): the same browser, the same storage
+        const front = ctx.page, tabs = ctx.tabs, open = () => tabs.filter(Boolean), now = async () => Math.max(...await Promise.all(open().map(p => p.evaluate(() => Date.now()))));   // a closed tab keeps its number (null)
+        if (a[0] === 'new') {
+          await setHidden(front, true);
+          const edits = a.slice(1).map(x => /^([A-Za-z_]\w*)=(-?[\d.]+)$/.exec(x) || die(`tab new takes field=number edits (got "${x}")`));
+          if (edits.length) await front.evaluate(([k, ed]) => { const o = JSON.parse(localStorage.getItem(k)); for (const [f, v] of ed) o[f] = v; localStorage.setItem(k, JSON.stringify(o)); }, [KEY, edits.map(m => [m[1], +m[2]])]);
+          const t = await openPage(browser, session, false, { ctx: ctx.ctx, errors: ctx.errors, time: await now() });
+          tabs.push(t.page); ctx.page = t.page;
+          return { text: `opened tab ${tabs.length} (tab ${tabs.indexOf(front) + 1} went to the background)${edits.length ? '; stored save edited first: ' + a.slice(1).join(' ') : ''}`, data: { tab: tabs.length } };
+        }
+        if (a[0] === 'close') {   // `tab close` closes the tab in front, `tab close <n>` a tab in the background (it is never shown again)
+          if (open().length < 2) die('tab close needs another tab left open');
+          const n = a[1] ? num(a[1], 'tab close') : tabs.indexOf(front) + 1, gone = tabs[n - 1];
+          if (!gone) die(`no open tab ${n}`);
+          if (gone === front) await setHidden(front, true);
+          await gone.evaluate(() => dispatchEvent(new Event('pagehide')));
+          tabs[n - 1] = null; await gone.close();
+          if (gone === front) { ctx.page = open().pop(); await ctx.page.bringToFront(); await setHidden(ctx.page, false); await run(ctx.page, 0.5); }
+          return { text: `closed tab ${n}; tab ${tabs.indexOf(ctx.page) + 1} is in front`, data: { closed: n } };
+        }
+        const n = num(a[0], 'tab'), to = tabs[n - 1];
+        if (!to) die(`no open tab ${n}`);
+        if (to !== front) { await setHidden(front, true); ctx.page = to; await to.bringToFront(); await setHidden(to, false); await run(to, 0.5); }
+        return { text: `tab ${n} is in front`, data: { tab: n } };
       }
       return exec(c, a, ctx);
     };

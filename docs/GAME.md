@@ -195,6 +195,7 @@ Every currency, material and token, with its sources and sinks, is in [design/sy
 ## Saves and tools for players
 
 - **Save:** `localStorage` key `lanternfall.save.v5` (`30-state.js`, `05-platform.js`).
+- **Two tabs** (save-two-tabs): the newest open tab holds the save. A tab whose save another tab has since written stops saving and shows "Lanternfall is open in another tab. Reload to keep playing here." with Reload, so it never writes over newer progress (`30-state.js` `saveCheck`, `75-tabs-ui.js`).
 - **Save codes** (`55-savecode.js`, `75-savecode-ui.js`): export and import, with a strict check and an in-page confirm.
 - **Feedback** (`55-errors.js`, `75-feedback-ui.js`): local error capture and a Send feedback button.
 - **Away report** (`75-away.js`) and the stats wall (`55-stats.js`, `75-stats-ui.js`). The report leads with what happened; a fighter sees "gathering continues, fighting stops" first, and the work-limit bar sits after the results.

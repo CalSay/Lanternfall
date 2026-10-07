@@ -3029,6 +3029,14 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
 }
 
 .tav-verse { margin: 6px 0; font-style: italic; color: #D8CFE3; }
+/* 60-tabs: the card a tab shows when the game is open in another tab with newer progress (75-tabs-ui.js, card save-two-tabs).
+   Above every other layer: the game is held and this tab no longer saves. No motion. */
+.tabs-ov { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px; background: rgba(8,6,12,.94); }
+.tabs-card { width: min(340px, 100%); padding: 18px 16px 16px; background: var(--panel); border: 1px solid var(--line-hi); border-top: 3px solid var(--ember); box-shadow: 0 4px 0 #0B0810, 0 10px 30px rgba(0,0,0,.6); text-align: center; }
+.tabs-h { margin: 0 0 8px; font: 600 calc(20px * var(--display-k))/1.15 var(--display); color: var(--bone); }
+.tabs-line { margin: 0 0 6px; font-size: 15px; line-height: 1.35; }
+.tabs-note { margin: 0 0 14px; font-size: 13.5px; line-height: 1.35; color: var(--muted); }
+.tabs-reload { min-height: 44px; min-width: 160px; padding: 0 18px; border: 2px solid #0B0810; background: var(--ember); color: #1A1420; font: 600 calc(16px * var(--display-k)) var(--display); cursor: pointer; box-shadow: inset 0 2px 0 rgba(255,255,255,.3), inset 0 -3px 0 var(--ember-deep); }
 /* 60-tools: the Mastery box on a tool's item sheet and the rough tool's sheet (75-tools-ui.js, H2).
    The tool chip on the Gather view's Now card is styled in 60-gathering.css (.gx-tool). */
 .tl-mrow { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 8px; margin-top: 2px; font-size: 12px; }
@@ -10531,9 +10539,31 @@ function loadSave() {
       for (const [k, d] of Object.entries(STATE_DEFAULTS)) if (isPlainObj(d) && isPlainObj(S[k])) fillDefaults(S[k], d);
     }
   } catch (e) {}
+  saveAdopt();
+}
+// save-two-tabs: the game open in two tabs (or windows) writes one save. `saveSeen` is the `last` stamp of the stored
+// copy this page loaded or wrote (and read back). It is runtime only, never saved, and not S.last: boot and the page coming
+// back re-stamp S.last in memory without writing. A stored copy with any other stamp was written by another tab (later, or
+// earlier on a clock set back), so this page holds older progress: it stops saving for good (`saveBlocked`, until a reload)
+// rather than overwrite it, and calls onSaveBlocked (75-tabs-ui shows the card). An unreadable or missing copy reads as 0
+// and never blocks; a write that did not land leaves `saveSeen` on the copy still stored, so it never blocks either.
+let saveSeen = 0, saveBlocked = false, onSaveBlocked = null;
+function storedLast() {
+  try { const raw = storage.get(KEY); if (!raw) return 0; const t = JSON.parse(raw).last; return typeof t === 'number' && isFinite(t) ? t : 0; } catch (e) { return 0; }
+}
+// The stored copy is this page's own (loadSave, a save-code import or restore wrote or read it).
+function saveAdopt() { saveSeen = storedLast(); saveBlocked = false; }
+// True while this page may save. The first time another tab's save is found, blocks and tells the UI.
+function saveCheck() {
+  if (!saveBlocked) { const t = storedLast(); if (t && t !== saveSeen) { saveBlocked = true; if (onSaveBlocked) try { onSaveBlocked(); } catch (e) {} } }
+  return !saveBlocked;
 }
 loadSave();
-function save() { S.last = Date.now(); try { storage.set(KEY, JSON.stringify(S)); } catch (e) {} }
+function save() {
+  if (!saveCheck()) return;
+  S.last = Date.now();
+  try { const raw = JSON.stringify(S); storage.set(KEY, raw); if (storage.get(KEY) === raw) saveSeen = S.last; } catch (e) {}
+}
 
 // registerState('achievements', { got: {}, seen: 0 }): adds a top-level save field.
 // Defaults merge into fresh() and into the loaded save (missing keys only, recursively
@@ -42160,6 +42190,7 @@ if (typeof registerSection === 'function' && typeof portraitsClassic === 'functi
       p.adapter.set(KEY, p.backupRaw);
       if (p.adapter.get(KEY) !== p.backupRaw) throw new Error('Save readback did not match.');
       useStorage(p.adapter);
+      saveAdopt();   // save-two-tabs: this tab wrote the stored copy, so its stamp is not another tab's
       st.pendingReload = null;
       st.armed = false;
       st.importErr = 'Your current game is saved again.';
@@ -42242,6 +42273,7 @@ if (typeof registerSection === 'function' && typeof portraitsClassic === 'functi
       adapter.set(KEY, candidateRaw);
       verified = adapter.get(KEY) === candidateRaw;
     } catch (e) { /* The adapter may also swallow a failed write. Readback decides. */ }
+    saveAdopt();   // save-two-tabs: the imported copy is this tab's own until the reload
     st.pendingReload = { adapter, priorRaw, backupRaw, candidateRaw, verified };
     useStorage({ get: key => adapter.get(key), set: (key, value) => { if (key !== KEY) adapter.set(key, value); } });
     syncControls();
@@ -43859,6 +43891,33 @@ var storyUI;   // var: 75-codex-ui (earlier in the build) reads it at run time
   storyUI = { open: id => openEntry(id), list: codex => openList(!!codex), codexRow };
 }
 
+// ---- src/js/75-tabs-ui.js ----
+// 75-tabs-ui: card save-two-tabs. When another tab of the game wrote a newer save, 30-state stops this page's saves and
+// calls onSaveBlocked; this shows a card over everything that says so, with a Reload button, and holds the game.
+// The 'storage' event (another tab of this browser wrote the save) runs the same check at once, so a background tab
+// already shows the card when the player comes back to it.
+{
+  let ov = null;
+  function show() {
+    if (ov) return;
+    ov = el('div', 'tabs-ov');
+    ov.setAttribute('role', 'alertdialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-labelledby', 'tabsHead');
+    const card = el('div', 'tabs-card');
+    const h = el('h2', 'tabs-h', 'Open in another tab'); h.id = 'tabsHead';
+    const btn = el('button', 'tabs-reload', 'Reload'); btn.type = 'button';
+    btn.addEventListener('click', () => { try { location.reload(); } catch (e) {} });
+    card.append(h, el('p', 'tabs-line', 'Lanternfall is open in another tab. Reload to keep playing here.'),
+      el('p', 'tabs-note', 'Your newer progress is safe. This tab has stopped saving so it cannot overwrite it.'), btn);
+    ov.append(card);
+    document.body.append(ov);
+    try { btn.focus({ preventScroll: true }); } catch (e) {}
+  }
+  onSaveBlocked = show;
+  if (saveBlocked) show();   // blocked while the page was still loading
+  holdGame(() => saveBlocked);
+  addEventListener('storage', e => { if (e.key === KEY || e.key === null) saveCheck(); });
+}
+
 // ---- src/js/75-tools-ui.js ----
 // 75-tools-ui: the tool chip on the Gather view's Now card, the rough tool's sheet, and the Mastery
 // box on a tool's item sheet (task H2, reshaped by UX-A GX1: docs/design/ux-overhaul.md 6.1).
@@ -44930,10 +44989,13 @@ let lastFrame = performance.now();
 // Boot's away gains (see boot below), applied once: after the first frame, or before a save if the
 // page is hidden or closed first.
 let bootAway = null;
-function bootAwayNow() { if (bootAway == null) return; const secs = bootAway; bootAway = null; showAwayReport(awayGains(secs)); }
+// save-two-tabs: then save at once, so the newest open tab holds the save (an older tab still on screen stops at its next save).
+// Never before the away gains: a save stamps S.last, and that would lose the away time.
+function bootAwayNow() { if (bootAway == null) return; const secs = bootAway; bootAway = null; showAwayReport(awayGains(secs)); save(); }
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) { bootAwayNow(); save(); flush(); }
-  else { const secs = Math.max(0, (Date.now() - S.last) / 1000); if (secs > 30) showAwayReport(awayGains(secs)); S.last = Date.now(); lastFrame = performance.now(); }
+  // save-two-tabs: back in front while another tab wrote a newer save, this page's S is old: no away gains, no saves (30-state)
+  else if (saveCheck()) { const secs = Math.max(0, (Date.now() - S.last) / 1000); if (secs > 30) showAwayReport(awayGains(secs)); S.last = Date.now(); lastFrame = performance.now(); }
 });
 addEventListener('pagehide', () => { bootAwayNow(); save(); });
 
