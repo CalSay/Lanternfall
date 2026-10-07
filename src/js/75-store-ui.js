@@ -148,7 +148,8 @@ function storeSalvageNote(preview, t) {
     // trophies
     const troShow = filter === 'troph' || filter === 'all';
     putHidden(V.tro, !troShow || filter === 'troph');
-    putText(V.troL, `Trophies: ${troN} of ${CRAFT_TROPHIES.length} kinds`);
+    const mir = (S.party && S.party.mirrors) || 0;
+    putText(V.troL, `Rare finds: ${troN} of ${CRAFT_TROPHIES.length} Trophy kinds` + (mir ? ` · ${mir} Mirror${mir === 1 ? '' : 's'} of Embers` : ''));   // Trophies and Mirrors are Materials (counters-and-layers)
     putText(V.troR, showTro ? 'Hide' : 'Show');
     putToggle(V.tro, 'open', showTro);
     putHidden(V.troRow, !(filter === 'troph' || (troShow && showTro)));

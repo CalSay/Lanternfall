@@ -599,4 +599,7 @@ change over existing fields.
    hero levels + 1 per Great Lantern + 1 per complete constellation (`STARS_TUNE.budget`); `litMax` is gone. Measured with
    `budget.mjs` (typical Stars): no casual or good number moves more than 1 point. The 2-lit cap goes and income is
    re-curved. Old saves keep every lit star; one the points cannot pay for shows as dim with a Put out button.
-5. Build order: Essence fungible, free talents, star budget, layer and display cleanup.
+5. Build order: Essence fungible (#123), free talents (#128), star budget (#130), layer and display cleanup. The last one
+   tags every currency in `tools/systems-map.mjs` with a Kind (the check fails on an untagged currency or a core set that
+   is not these eight), registers Attribute points, and shows Mirrors of Embers beside Trophies as "Rare finds" in the
+   Storehouse. The top bar already shows only Gold and Embers; no screen needed a cut.
