@@ -1,0 +1,15 @@
+# seed: 1
+# Proof for card portrait-banner-over-hero: in portrait a moment banner no longer sits under the place line over the hero's upper half.
+# Toasts dock at the foot of the stage and a moment banner is one row. A route cannot force a banner while a guide tip shows, so after-*.png
+# were shot with a script that waits for the tip, then raises a level banner, at 360x740, 360x640, 390x844, 740x360 and 844x390.
+# Banner vs hero at 360x740: banner y 343-375, hero y 228-329 (clear). 390x844: clear. 360x640 (tip up, 190 px stage): banner touches the hero's feet by about 24 px.
+# Landscape is unchanged. This route plays the mid fixture through its opening cards and checks the fight screen still draws.
+new mid
+wait 3
+tap-if "Continue"
+wait 3
+tap-if "Continue"
+wait 3
+tap-if "Continue"
+expect "Zone"
+shot portrait-banner-fight

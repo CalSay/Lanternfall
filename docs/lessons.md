@@ -81,6 +81,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 
 ## UI and menus
 
+- Dock a toast at the foot of the portrait stage and give a moment banner one row there: a banner under the place line sat over the hero's head. Measure it against the hero box with a guide tip up at 360x740 and 360x640 (the tip shrinks the stage to 258 and 190 px). Why: the 80 px banner covered the hero's upper half in portrait; the compact one clears the hero at 360x740 and 390x844 and only touches the feet at 360x640. (portrait-banner-over-hero, 2026-10-07)
 - Keep a banner docked under the hero short: in the guide-side layout put the eye and title on one row so the banner is about 46 px tall and clears the hero's legs at 740x360 and 844x390. Why: the 64 px banner covered the hero's lower body for the 2.6 s it was up while a guide tip showed. Measure a banner against the hero box with a tip up, not against an empty stage. (hero-sheet-ability-cover, 2026-10-07)
 - Fit every sub-tab label with all views unlocked at 360px, using native-size icons above the text when a row has five views. Keep status badges outside ability art and hot files. (wire-menu-icons, 2026-10-06)
 
