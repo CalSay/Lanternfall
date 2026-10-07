@@ -346,6 +346,10 @@ PR 3 of `boss-tiers`. Opus judge after measuring (the cap question) and a tuning
 - **Knots** (hitX / hpX per zone, 13 to 24): hitX 1.1/0.77/0.84/2.1/1.78/1.2/3.15/1.85/1.17/0.84/0.7/0.63, hpX 2.4/2.4/3.4/4.0/3.0/3.0/4.8/2.8/1.9/2.1/1.5/1.1.
   Fitted so Wren and Pip casual sit near 70-80% and a good player wins in about 6 hero turns (was 3-6, with z13-16 and z19 at 100%).
   The wide hitX swings follow each zone's boss kit (a golem's many small hits against a beetle's one big one).
+- **Geared heroes are still threatened in zones 16-24** (power-curve-reference.md, 2026-10-07): at the kept-up footing a weaker casual
+  (parry 15%, dodge 40%) wins 20-58% and a stronger one (35%, 70%) 95-97%, so defence decides it. Zones 13 and 15 kept-up (rare +5)
+  still win 100% (report-only rows): gear trivialises them. Fixing that needs the gear-curve card or looser bare floors, as
+  `boss-tiers-pr2-proposal.md` says; not done here.
 - **Pay is unchanged.** Boss gold and XP in zones 4-24 use the old length curve; the longer fights do not move income.
 - **Gaps.** The z15 and z20 "too easy" gaps for Wren and Pip are closed. Tobin sits above his band at every new row under
   `tobin-safety-margin` gaps (until 2026-12-01).
