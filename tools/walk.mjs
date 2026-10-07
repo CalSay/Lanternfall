@@ -280,7 +280,7 @@ async function followNextUp(o) {
 // A casual player spends gold on Training now and then: Hero, Training, press every Train button that is lit, back to the fight.
 
 // ---------------- watching ----------------
-const SOUNDS = new Set(['kill', 'loot', 'level', 'skill', 'zone', 'forge']);
+const SOUNDS = new Set(['kill', 'loot', 'level', 'skill', 'zone', 'forge', 'momentBig', 'momentMid']);   // momentBig and momentMid are the moment layer's own stings (76-audio.js)
 const sfxLog = [];     // { t, name }
 async function watch(o) {
   for (const s of o.sfx) sfxLog.push({ t: gt, name: s.name });
@@ -428,7 +428,7 @@ function scorecard(reached) {
   const bad = [];
   for (const m of moments.filter(m => m.big || m.id === 'look')) {
     const near = [...st.cardSeen.values()].filter(c => c.first >= m.t - 1.5 && c.first <= m.t + 3 && !/^tv-(card|banner)$/.test(c.cls));   // a turn-order banner is not the moment's card
-    const want = { zone: ['zone', 'kill'], unique: ['loot'], craft: ['forge'], star: ['skill', 'loot'], hero: ['skill', 'zone'], look: ['loot', 'skill'] }[m.id] || [...SOUNDS];
+    const want = { zone: ['zone', 'kill', 'momentBig'], unique: ['loot', 'momentBig'], craft: ['forge', 'momentMid'], star: ['skill', 'loot', 'momentMid', 'momentBig'], hero: ['skill', 'zone', 'momentBig'], look: ['loot', 'skill', 'momentMid'] }[m.id] || [...SOUNDS];
     const snd = sfxLog.some(s => want.includes(s.name) && s.t >= m.t - 1 && s.t <= m.t + 3);
     const card = near.find(c => (c.dwell ?? (reached - c.first)) >= 2);
     if (!card || !snd) bad.push(`${m.id} at ${fmtT(m.t)}: ${!near.length ? 'no card or banner' : !card ? 'card up under 2 s' : 'a card'}${snd ? '' : ', no sound'}`);
