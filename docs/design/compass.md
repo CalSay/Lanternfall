@@ -105,8 +105,8 @@ A card that does any of these needs a strong reason, recorded in the PR.
 - **Chores:** a reward that expires, or a lead that shrinks, when you miss a day or a timer; a daily task you must do to
   keep up. A shift fee you pay when you choose to set Hands working is not a chore. (Q11, Q7.)
 - **Dominant choices:** one gear, ability or hero always wins. (Q9; sims check it.)
-- **Overwhelm:** a second new thing in one beat (the first-hour rules); any new named currency (ceiling 8; the game has
-  about 27 today, so new work merges currencies, it does not add them); or a tap added to the camp tour (ceiling 3; about
+- **Overwhelm:** a second new thing in one beat (the first-hour rules); any new named currency (ceiling 8 core counters,
+  which "Counters and layers" in DECISIONS has now met; new work reads as one of them or goes in the Rare finds row); or a tap added to the camp tour (ceiling 3; about
   6 to 10 today). Both ceilings are the why-review's (2026-10-06, "The ceiling"). (Q8, Q10.)
 - **Dark patterns:** anything any of the ten Lantern Rules forbids. The usual misses: selling power, chance or anything
   random; friction built to sell its removal; an offer that interrupts; selling a core convenience (Repeat, Assist,
