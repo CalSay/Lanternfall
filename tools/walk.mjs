@@ -253,7 +253,7 @@ async function dismissCards(o) {
   if (oldest && gt - oldest.first >= 2.4 && gt - st.lastCard >= 0.6) { st.lastCard = gt; if (await click(DISMISS, 300)) return true; }
   return false;
 }
-st.lastCard = -9; st.tabAt = -9; st.phAt = 0; st.trainAt = 30;
+st.lastCard = -9; st.tabAt = -9; st.phAt = 0;
 
 // Next Up: when the chip says Ready, open the list, press Go on the first ready goal and press the one button the panel offers.
 const GO_WORDS = /^(craft|claim|equip|spend|build|light|start|collect|learn|use|buy|train|upgrade|promote|open|forge|brew|set|wear|cook|hire|send|accept|ok|got it|continue)\b/i;
@@ -277,7 +277,6 @@ async function followNextUp(o) {
   return true;
 }
 
-// A casual player spends gold on Training now and then: Hero, Training, press every Train button that is lit, back to the fight.
 
 // ---------------- watching ----------------
 const SOUNDS = new Set(['kill', 'loot', 'level', 'skill', 'zone', 'forge', 'momentBig', 'momentMid']);   // momentBig and momentMid are the moment layer's own stings (76-audio.js)
