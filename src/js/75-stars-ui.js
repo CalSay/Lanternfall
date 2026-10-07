@@ -39,14 +39,14 @@ var starsUiPick;   // starsUiPick(id): open the star map on that star's card (57
     toast('New on the Hero tab: Stars. Each star changes how your fights play.', 'good', { ic: ['constel', '#F2C14E'] }, 'high');
   });
 
-  // ---- the loadout strip: points, 3 set, 2 lit ----
-  function chip(k, label, id, kind, i) {
-    const c = el('div', 'sr-chip' + (id ? '' : ' empty') + (id && id === pick ? ' sel' : '') + ' ' + kind);
+  // ---- the loadout strip: points, 3 set, lit stars (as many as the points pay for) ----
+  function chip(k, label, id, kind, i, isDim) {
+    const c = el('div', 'sr-chip' + (id ? '' : ' empty') + (id && id === pick ? ' sel' : '') + (isDim ? ' dim' : '') + ' ' + kind);
     c.dataset.slot = String(i);
     const b = btn('sr-chip-b');
     if (id) {
       // a tap opens its card (Slot N there clears it; Put out puts a lit star out)
-      const s = STARS[id], sub = kind === 'lit' ? plural(s.cost, 'point') : starLearned(id) ? 'Learned' : `${starWins(id)}/${starNeed()} wins`;
+      const s = STARS[id], sub = isDim ? `Dim: needs ${plural(Math.max(1, -starFree(k)), 'more point')}` : kind === 'lit' ? plural(s.cost, 'point') : starLearned(id) ? 'Learned' : `${starWins(id)}/${starNeed()} wins`;
       // a long one-word name takes a smaller face so it is not cut in a narrow chip
       b.append(el('span', 'sr-chip-t' + (s.name.split(' ').some(w => w.length > 8) ? ' long' : ''), s.name), el('small', null, sub));
       b.setAttribute('aria-label', `${label}: ${s.name}, ${sub}. Open its card.`);
@@ -65,13 +65,13 @@ var starsUiPick;   // starsUiPick(id): open the star map on that star's card (57
     return c;
   }
   function strip(k) {
-    const top = el('div', 'sr-top'), pts = starPoints(), free = Math.max(0, starFree(k)), set = starSlots(k), lit = starLit(k);
+    const top = el('div', 'sr-top'), pts = starPoints(k), free = Math.max(0, starFree(k)), used = starUsed(k), set = starSlots(k), lit = starLit(k), dim = starDim(k);
     const p = el('div', 'sr-pts');
-    p.setAttribute('aria-label', `Star points: ${free} free of ${pts}`); p.title = 'Star points pay for lit stars: a point every 3 levels, 4 for each Great Lantern, 1 for each complete constellation.';
-    p.append(el('b', null, String(free)), el('small', null, `of ${pts} points`));
+    p.setAttribute('aria-label', `Star points: ${used} used of ${pts}`); p.title = 'Star points pay for lit stars, and they are the only limit: 2 to start, 1 every 10 hero levels, 1 for each Great Lantern, 1 for each complete constellation. A star the points cannot pay for shows dim.';
+    p.append(el('b', null, `${used}/${pts}`), el('small', null, 'points used'));
     const sl = el('div', 'sr-row3'), ll = el('div', 'sr-row2');
     set.forEach((id, i) => sl.append(chip(k, `Set ${i + 1}`, id, 'set', i)));
-    for (let i = 0; i < STARS_TUNE.litMax; i++) ll.append(chip(k, `Lit ${i + 1}`, lit[i] || null, 'lit', i));
+    for (let i = 0; i <= lit.length; i++) ll.append(chip(k, `Lit ${i + 1}`, lit[i] || null, 'lit', i, dim.includes(lit[i])));
     top.append(p, sl, ll);
     return top;
   }
@@ -159,8 +159,8 @@ var starsUiPick;   // starsUiPick(id): open the star map on that star's card (57
     }
     box.append(foot);
     if (learned) {
-      const can = on || (lit.length < STARS_TUNE.litMax && starFree(k) >= s.cost);
-      const why = on || can ? '' : where >= 0 ? (lit.length >= STARS_TUNE.litMax ? `You can light ${STARS_TUNE.litMax} stars. Put one out first.` : `Needs ${plural(s.cost, 'star point')}.`) : starWhy(id, k);
+      const can = on || starFree(k) >= s.cost;
+      const why = on || can ? '' : where >= 0 ? `Needs ${plural(s.cost, 'star point')}.` : starWhy(id, k);
       const b = btn('sr-light' + (on ? ' on' : ''), on ? 'Put out' : where >= 0 ? `Light instead (${plural(s.cost, 'point')})` : `Light (${plural(s.cost, 'point')})`);
       b.setAttribute('aria-pressed', String(on));
       b.disabled = !can;
@@ -222,7 +222,7 @@ var starsUiPick;   // starsUiPick(id): open the star map on that star's card (57
     const how = el('details', 'sr-how');
     how.append(el('summary', null, 'How stars work'),
       el('p', 'note', `Each star changes how a fight plays. ${heroNm(k)} can set ${STARS_TUNE.slots}. Win ${starNeed()} fights with a star set to learn it.`),
-      el('p', 'note', `Any hero can light a learned star with star points, up to ${STARS_TUNE.litMax}. Changes count from your next fight.`),
+      el('p', 'note', `Any hero can light a learned star with star points. Your points are the only limit: a star they cannot pay for shows dim until you put one out or earn more. Changes count from your next fight.`),
       el('p', 'note', 'Learn every star in a constellation to complete it: +1 star point, and the first two make every star quicker to learn.'),
       el('p', 'note', 'Stars come from zone bosses the first time they fall, elites now and then, Deepwell floors and the Provings. They belong to the lamp: every hero can use them.'));
     root.append(how);

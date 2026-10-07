@@ -1538,10 +1538,13 @@ if (section('stars')) try {
   const errs = [];   // hero-progression-rework: these star checks play an untrained hero at Lv 20 (a boss that lasts more than 2 turns), so they run with HERO_TUNE.training = 1
   const g = loadCore({ seed: 41, turns: true, training: true }), E = s => g.eval(s);
   assert(E('JSON.stringify(S.stars)') === '{"v":3,"own":{},"wins":{},"learned":{},"set":{},"lit":{},"dry":0,"seenN":0,"pw":{}}', 'new game: S.stars defaults');
-  // star points: a point every 3 hero levels, 4 for each Great Lantern (unchanged from the old map)
-  const pts = (L, z) => E(`S.L = ${L}; S.maxZone = ${z}; starPoints()`);
-  assert(pts(1, 1) === 0 && pts(3, 1) === 1 && pts(20, 20) === 6 && pts(35, 35) === 11, 'a star point every 3 hero levels');
-  assert(pts(35, 36) === 15 && pts(54, 71) === 26 && E('greatLanternsLit()') === 2, 'a Great Lantern (+4) for each region boss: the zone 35 boss first');
+  // star points (counters-and-layers): a per-hero budget, 2 + 1 every 10 hero levels + 1 for each Great Lantern + 1 for each complete constellation
+  const heroLv = () => E('(soloLevels()[soloHero()] || { L: S.L }).L');
+  const pts = (L, z) => { E(`S.L = ${L}; S.maxZone = ${z}; starPoints()`); return E('starPoints()'); };
+  const want = z => 2 + Math.floor(heroLv() / 10) + E('greatLanternsLit()');
+  assert(pts(1, 1) === 2 && pts(1, 1) === want(1) && E('STARS_TUNE.budget.base') === 2, 'a hero starts with 2 star points');
+  { const lo = pts(5, 1), hi = pts(55, 1); assert(hi > lo && hi === want(55), 'star points rise a point every 10 hero levels'); }
+  { const a0 = pts(20, 20), a1 = pts(20, 36); assert(a1 === a0 + 1 && E('greatLanternsLit()') === 1, 'a Great Lantern is +1 star point: the zone 35 boss first'); }
   E('S.L = 1; S.maxZone = 1');
   // the data: 43 stars (25, then 18 more in the second pass, owner 2026-10-02: "Might need more of them though"), each a
   // plain rule with a cost of 1-3, one place it is found, whose kit it plays with, and one constellation on the map
@@ -1564,7 +1567,7 @@ if (section('stars')) try {
   assert(SKY.sky.length === 6 && cells.size === 6 && onMap.length === 43 && new Set(onMap).size === 43 && D.every(s => SKY.sky.some(c => c.id === s.sky && c.stars.some(x => x[0] === s.id))) && !skyBad.length,
     'the star map: 6 constellations in a 3 x 2 sky, each star once at its own spot (40 units apart at least), lines only between its own stars' + (skyBad.length ? ': ' + skyBad.join() : ''));
   assert(D.filter(s => s.fold).map(s => s.fold).sort().join() === 'priest,reaver,trapper,venomstalker,warden,warlock', 'the six evolutions each fold one effect into a Proving star');
-  assert(E('String(STARS_TUNE.slots) + STARS_TUNE.litMax + STARS_TUNE.learnWins') === '324', 'the limits: 3 set, 2 lit, learned after 4 won fights');
+  assert(E('String(STARS_TUNE.slots) + STARS_TUNE.learnWins + (STARS_TUNE.litMax === undefined)') === '34true', 'the limits: 3 set, learned after 4 won fights, no separate cap on lit stars (the points are the limit)');
 
   // finding: a zone boss's first win, a Proving, an elite (with a dry-streak cap)
   E('soloPick("wren", { now: true }); starsFound(); S.L = 30; S.maxZone = 30; S.onboard.all = 1');   // (the save is read first: a later maxZone is play, not an old save's catch-up)
@@ -1606,16 +1609,24 @@ if (section('stars')) try {
   assert(E('starSet(0, "brand") && starSet(1, "serrated") && starSet(2, "coldsteel") && starSet(0, "serrated")') && E('starSlots().join()') === 'serrated,brand,coldsteel', 'a star set in another slot swaps places');
   assert(/^Win 4 more fights/.test(E('starWhy("encore")')) && !E('starLight("encore")'), `a star not learned yet cannot be lit ("${E('starWhy("encore")')}")`);
   E('for (const id of ["encore", "turning", "huntstep", "brand"]) S.stars.learned[id] = 1');
-  assert(E('starPoints()') === 10 && E('starLight("encore") && starLight("turning")') && E('starFree()') === 5, 'lighting spends star points (Encore 3, Turning Point 2: 5 of 10 left)');
-  assert(!E('starLight("huntstep")') && /^You can light 2 stars/.test(E('starWhy("huntstep")')), 'a third lit star is refused: 2 at most');
+  // the budget binds: with exactly 3 points Encore (3) lights and Turning Point (2) is refused; lowering the points dims it, removes nothing
+  E('globalThis.__bud = { ...STARS_TUNE.budget }; STARS_TUNE.budget.perLevels = 1e9; STARS_TUNE.budget.lantern = 0; STARS_TUNE.budget.base = 3');
+  assert(E('starPoints()') === 3 && E('starLight("encore")') && E('starFree()') === 0, 'lighting spends star points: Encore costs all 3');
+  assert(!E('starLight("turning")') && /^Needs 2 star points \(you have 0\)/.test(E('starWhy("turning")')), `an overspend is refused ("${E('starWhy("turning")')}")`);
+  E('STARS_TUNE.budget.base = 2');
+  assert(E('starDim().join()') === 'encore' && E('starLit().join()') === 'encore' && !E('starsActive().includes("encore")') && E('starUsed()') === 0, 'a lit star the points no longer pay for is dim, still lit, and not in the fight');
+  assert(E('starUnlight("encore")') && E('starDim().length') === 0, 'putting it out clears the dim state');
+  E('Object.assign(STARS_TUNE.budget, __bud); S.L = 30');
+  const P0 = E('starPoints()');
+  assert(P0 >= 5 && E('starLight("encore") && starLight("turning")') && E('starFree()') === P0 - 5, `lighting spends star points (Encore 3, Turning Point 2: ${P0 - 5} of ${P0} left)`);
   assert(E('starWhy("brand")') === 'It is set in a slot.', 'a set star is not lit as well');
   assert(E('starUnlight("turning") && starLight("huntstep")') && E('starLit().join()') === 'encore,huntstep', 'putting a star out gives its points back');
   assert(E('starSet(2, "encore")') && E('starLit().join()') === 'huntstep' && E('starSlots()[2]') === 'encore', 'setting a lit star puts it out first');
   E('starLight("turning")');
   assert(E('JSON.stringify(starsActive("wren"))') === '["serrated","brand","encore","huntstep","turning"]', `a fight takes the 3 set and the 2 lit stars, never more than 5 (${E('JSON.stringify(starsActive("wren"))')})`);
-  E('S.L = 6');
-  assert(E('JSON.stringify(starsActive("wren"))') === '["serrated","brand","encore","huntstep"]', 'with fewer points (a lower level) only the lit stars the points still pay for come along');
-  E('S.L = 30');
+  E('STARS_TUNE.budget.perLevels = 1e9; STARS_TUNE.budget.lantern = 0; STARS_TUNE.budget.base = 1');
+  assert(E('JSON.stringify(starsActive("wren"))') === '["serrated","brand","encore","huntstep"]' && E('starDim().join()') === 'turning', 'with fewer points only the lit stars the points still pay for come along; the rest are dim');
+  E('Object.assign(STARS_TUNE.budget, __bud); S.L = 30');
   assert(E('starSlots("tobin").every(x => x === null) && starLit("tobin").length === 0'), 'each hero has its own slots: Tobin starts empty');
   E('S.activity = "fight"; arena = null; fightBoss = false; spawn()');
   assert(E('JSON.stringify(turnMakeProfile(combatFoes()[0], cbUnitByKey("hero")).stars)') === JSON.stringify(['serrated', 'brand', 'encore', 'huntstep', 'turning']), 'a turn fight takes the hero\'s stars as it starts (the profile)');
@@ -1755,7 +1766,7 @@ if (section('stars')) try {
     o.fn.tick(0.1);
     const want = JSON.parse(o.eval('JSON.stringify(STAR_ORDER.filter(id => STARS[id].from.zone && STARS[id].from.zone < S.maxZone))'));
     assert(o.eval('S.stars.v') === 3 && JSON.stringify(Object.keys(o.eval('S.stars.own'))) === JSON.stringify(want) && o.eval('starsActive().length') === 0
-      && o.eval('starPoints()') === Math.floor(raw.L / 3) + 4 * Math.floor((raw.maxZone - 1) / 35) && !o.errors.length,
+      && o.eval('starPoints()') === 2 + Math.floor(o.eval('(soloLevels()[soloHero()] || { L: S.L }).L') / 10) + Math.floor((raw.maxZone - 1) / 35) && !o.errors.length,
       `${f}: loads, finds the ${want.length} stars of the zone bosses behind it (zone ${raw.maxZone}), sets none, keeps its star points` + (o.errors[0] ? ': ' + o.errors[0] : ''));
   }
   // a save from the old star map (stars lit on its layouts): it loads, its points are free, the bell says the Stars changed
@@ -1951,13 +1962,13 @@ if (section('regions and the Great Lantern')) try {
   const e0 = ev.gl[0] || {};
   assert(E('COAST_STORY_ON') === false && ev.gl.length === 1 && e0.quiet === false && e0.region === 'hollow' && e0.n === 1 && e0.zone === 35 && e0.head === 'The Great Lantern of the Hollow burns again.' && e0.text === '' && !ev.news.length,
     `the zone 35 boss's first kill: one Great Lantern card ("${e0.head}"), a plain line (the Coast's writing is switched off, so no green-light hook), no bell line`);
-  assert((e0.rewards || []).some(r => r.txt === '+4 star points') && E('starPoints()') === pts0 + 4 && E('greatLanternsLit()') === 1,
-    'constellations: the card lists +4 star points and they are granted (greatLanternsLit 1)');
+  assert((e0.rewards || []).some(r => r.txt === '+1 star point') && E('starPoints()') === pts0 + 1 && E('greatLanternsLit()') === 1,
+    'constellations: the card lists +1 star point and they are granted (greatLanternsLit 1)');
   E('S.zone = 35; emit("zoneClear", { zone: 35 }); S.maxZone = 40; S.zone = 40'); ticks(g, 5);
   const saved = E('save(), 1') && g.storage.get(KEY);
   const g2 = loadCore({ seed: 63, storage: memoryStorage({ [KEY]: saved }) }), ev2 = watch(g2);
   ticks(g2, 5);
-  assert(ev.gl.length === 1 && E('starPoints()') === pts0 + 4 && E('S.lantern.lit.hollow') > 0 && !ev2.gl.length && !ev2.news.length && g2.eval('greatLanternsLit()') === 1,
+  assert(ev.gl.length === 1 && E('starPoints()') === pts0 + 1 && E('S.lantern.lit.hollow') > 0 && !ev2.gl.length && !ev2.news.length && g2.eval('greatLanternsLit()') === 1,
     'it fires once: not on a rematch, not further on, not after a reload; the points stay +4');
   E('S.maxZone = 71; S.zone = 71'); ticks(g, 2);
   assert(ev.gl.length === 2 && ev.gl[1].region === 'coast' && ev.gl[1].n === 2 && ev.gl[1].head === 'The Great Lantern of the Coast burns again.' && E('greatLanternsLit()') === 2 && !g.errors.length,
@@ -7991,8 +8002,8 @@ if (section('stars (browser)')) try {
           set: document.querySelectorAll('#sec-stars .sr-top .sr-chip.set').length, lit: document.querySelectorAll('#sec-stars .sr-top .sr-chip.lit').length,
           pts: (document.querySelector('#sec-stars .sr-pts') || { getAttribute: () => '' }).getAttribute('aria-label') || '',
           visible: !!document.querySelector('#sec-stars') && document.querySelector('#sec-stars').offsetParent !== null })`));
-        assert(r0.visible && r0.stars === 43 && r0.own >= 6 && r0.unk === 43 - r0.own && r0.skies === 'hollow,fen,coast,hunt,deep,provings' && r0.chips === 5 && r0.set === 3 && r0.lit === 2 && r0.pts === 'Star points: 10 free of 10',
-          `stars UI ${w}x${h}: Hero > Stars shows the loadout (3 set, 2 lit, the points) and a map of six constellations with all 43 stars, the ones not found faint (${JSON.stringify(r0)})`);
+        assert(r0.visible && r0.stars === 43 && r0.own >= 6 && r0.unk === 43 - r0.own && r0.skies === 'hollow,fen,coast,hunt,deep,provings' && r0.chips === 4 && r0.set === 3 && r0.lit === 1 && r0.pts === 'Star points: 0 used of 5',
+          `stars UI ${w}x${h}: Hero > Stars shows the loadout (3 set, the lit row with one empty chip, points used of the budget) and a map of six constellations with all 43 stars, the ones not found faint (${JSON.stringify(r0)})`);
         // a tap on a star opens its card; Slot 1 sets it
         await page.click('#sec-stars .sr-st[data-star="serrated"]'); await page.waitForTimeout(150);
         const c1 = JSON.parse(await X(`JSON.stringify({ id: (document.querySelector('#sec-stars .sr-card') || {}).dataset.star, name: (document.querySelector('#sec-stars .sr-card .sr-t b') || {}).textContent,
@@ -8009,7 +8020,7 @@ if (section('stars (browser)')) try {
           pts: document.querySelector('#sec-stars .sr-pts').getAttribute('aria-label'), unk: (document.querySelector('#sec-stars .sr-card.locked .sr-from') || {}).textContent || '',
           anim: getComputedStyle(document.querySelector('#sec-stars .sr-st.lit .sr-ray')).animationName,
           saved: JSON.parse(localStorage.getItem('lanternfall.save.v5')).stars.set.wren[0] })`));
-        assert(r1.set === 'serrated' && r1.mapSet && r1.chip === 'Serrated' && r1.lit === 'huntstep' && r1.mapLit && r1.saved === 'serrated' && r1.pts === 'Star points: 9 free of 10' && /^The Hollow’s Elder \(zone 35\)$/.test(r1.unk),
+        assert(r1.set === 'serrated' && r1.mapSet && r1.chip === 'Serrated' && r1.lit === 'huntstep' && r1.mapLit && r1.saved === 'serrated' && r1.pts === 'Star points: 1 used of 5' && /^The Hollow’s Elder \(zone 35\)$/.test(r1.unk),
           `stars UI ${w}x${h}: Slot 1 sets Serrated (it glows on the map and shows in the strip), Light lights Hunter's Step for 1 point (it shines), both saved; a star not found yet shows where it is found (${JSON.stringify(r1)})`);
         assert(r1.anim === (wide ? 'sr-twinkle' : 'none'), `stars UI ${w}x${h}: a lit star twinkles, and holds still under reduced motion (${rm}: ${r1.anim})`);
         // filters: Pip's kit, then learned only

@@ -2729,7 +2729,9 @@ body.solo-on .stage .abil, body.solo-on .stage .abil2 { display: none !important
 .sr-pts small { color: var(--muted); font-size: 11px; text-align: center; line-height: 1.1; }
 .sr-row3, .sr-row2 { display: grid; gap: 4px; min-width: 0; }
 .sr-row3 { grid-area: set; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.sr-row2 { grid-area: lit; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.sr-row2 { grid-area: lit; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: auto; }
+.sr-chip.dim { opacity: .6; box-shadow: inset 0 0 0 1px #B4553C; }
+.sr-chip.dim .sr-chip-b small { color: #E8A090; }
 .sr-chip { position: relative; min-width: 0; display: flex; background: #231A30; box-shadow: inset 0 0 0 1px #6B5320; }
 .sr-chip.lit { background: #2A2238; box-shadow: inset 0 0 0 1px #8C7AD8; }
 .sr-chip.empty { background: transparent; box-shadow: inset 0 0 0 1px #4E4060; }
@@ -10125,7 +10127,7 @@ for (const k of ['wren', 'tobin', 'pip']) HERO_TALENTS[k] = (typeof HERO_ABILITI
 //
 // A star is found once (it belongs to the lamp, shared by every hero), then set in one of a hero's 3 star slots. Win
 // STARS_TUNE.learnWins fights with a star set and it is learned: from then on any hero can also light it for its cost
-// in star points (starPoints(): a point every 3 hero levels, 4 for each Great Lantern), up to STARS_TUNE.litMax lit.
+// in star points, a per-hero budget (starPoints(hero): STARS_TUNE.budget) that is the only limit on lit stars.
 // Owner, 2026-10-02 (second pass): "Might need more of them though. We also need much better menus for abilities and
 // stars. I kinda miss the star map too": 18 more stars (43), and the Stars view is a star map again (STAR_SKY).
 //   STARS[id] = { id, name, short, text, cost, from, kit, sky, fold? }
@@ -10144,7 +10146,10 @@ for (const k of ['wren', 'tobin', 'pip']) HERO_TALENTS[k] = (typeof HERO_ABILITI
 //     first two complete constellations each cut the wins to learn a star by 1 (4, 3, then 2).
 
 const STARS_TUNE = {
-  slots: 3, litMax: 2, learnWins: 4, learnMin: 2, skyPoints: 1,
+  slots: 3, learnWins: 4, learnMin: 2, skyPoints: 1,
+  // star points a hero has: base + 1 a perLevels hero levels + lantern for each Great Lantern + skyPoints for each complete
+  // constellation (counters-and-layers: the budget binds, there is no separate cap on lit stars)
+  budget: { base: 2, perLevels: 10, lantern: 1 },
   eliteFrom: 15, eliteP: 0.125, elitePity: 12,
   // the numbers each star uses (57e-stars.js reads them; the text on the star says the same)
   fx: {
@@ -18719,17 +18724,17 @@ let DEEP_ARENA = null;
 //
 // A star is one small rule change in a turn fight ("A parried hit adds 1 Chill"). Players find them (zone bosses' first
 // wins, elites, the Deepwell's floors, the Provings), set up to 3 on a hero, and learn a star by winning starNeed()
-// fights with it set. A learned star can also be lit by any hero for its cost in star points, up to STARS_TUNE.litMax
-// lit. Found and learned stars belong to the lamp (every hero); each hero keeps its own 3 slots and lit stars. A fight
+// fights with it set. A learned star can also be lit by any hero for its cost in star points (a per-hero budget, starPoints(hero)); the points are the only limit.
+// Found and learned stars belong to the lamp (every hero); each hero keeps its own 3 slots and lit stars. A fight
 // takes them as it starts.
 //
-// Points: starPoints() = floor(S.L / 3) + 4 x greatLanternsLit() (region bosses beaten) + 1 for each complete
+// Points: starPoints(hero) = 2 + floor(hero level / 10) + greatLanternsLit() (region bosses beaten) + 1 for each complete
 // constellation (STARS_TUNE.skyPoints). Derived, never stored.
 // The star map (STAR_SKY, 24f): learn every star of a constellation and it is complete (starSkyDone). The first two
 // complete constellations each cut the wins to learn a star by 1 (starNeed(): 4, 3, then 2; STARS_TUNE.learnMin).
 //
 // API: greatLanternsLit, starPoints, starOwned(id), starLearned(id), starWins(id), starSlots(hero), starLit(hero),
-//   starFree(hero), starSet(slot, id | null, hero) -> bool, starLight(id, hero) -> bool, starUnlight(id, hero) -> bool,
+//   starFree(hero), starUsed(hero), starDim(hero) -> lit ids the points cannot pay for, starSet(slot, id | null, hero) -> bool, starLight(id, hero) -> bool, starUnlight(id, hero) -> bool,
 //   starWhy(id, hero) -> '' | why it cannot be lit, starGrant(id, quiet) -> bool, starsActive(hero) -> [ids],
 //   starsSetIds(hero) -> [ids], starsFound() -> n, starsLearnedN() -> n, starNeed() -> wins to learn a star,
 //   starSkyDone(skyId) -> bool, starSkiesDone() -> n, starSkyCount(skyId) -> { n, found, learned }.
@@ -18753,7 +18758,7 @@ let DEEP_ARENA = null;
 //   star comes on the second) }. A save from the old star map (v 2) keeps its maps field untouched; it does nothing now,
 //   and every star point is free again (the points were always derived).
 
-var greatLanternsLit, starPoints, starOwned, starLearned, starWins, starSlots, starLit, starFree, starSet, starLight, starUnlight,
+var greatLanternsLit, starPoints, starOwned, starLearned, starWins, starSlots, starLit, starFree, starUsed, starDim, starSet, starLight, starUnlight,
   starWhy, starGrant, starsActive, starsSetIds, starsFound, starsLearnedN, starNeed, starSkyDone, starSkiesDone, starSkyCount;
 
 {
@@ -18828,7 +18833,8 @@ var greatLanternsLit, starPoints, starOwned, starLearned, starWins, starSlots, s
 
   // ---- points ----
   greatLanternsLit = () => lanternsLitAt(S.maxZone);
-  starPoints = () => Math.floor((S.L || 1) / 3) + 4 * greatLanternsLit() + TU.skyPoints * starSkiesDone();
+  const heroL = k => { try { const l = typeof soloLevels === 'function' && k ? soloLevels()[k] : null; if (l && l.L) return l.L; } catch (e) { /* the main hero's level */ } return S.L || 1; };
+  starPoints = k => TU.budget.base + Math.floor(heroL(hk(k)) / TU.budget.perLevels) + TU.budget.lantern * greatLanternsLit() + TU.skyPoints * starSkiesDone();
 
   // ---- reads ----
   starOwned = id => !!ST().own[id];
@@ -18852,13 +18858,15 @@ var greatLanternsLit, starPoints, starOwned, starLearned, starWins, starSlots, s
     const r = s[k], set = Array.isArray(S.stars.set[k]) ? S.stars.set[k] : [], seen = new Set();
     for (let i = r.length - 1; i >= 0; i--) if (!(ok(r[i]) && S.stars.learned[r[i]] && !set.includes(r[i]))) r.splice(i, 1);
     for (let i = 0; i < r.length; i++) if (seen.has(r[i])) r.splice(i--, 1); else seen.add(r[i]);
-    if (r.length > TU.litMax) r.length = TU.litMax;
     return r;
   }
   starSlots = k => { k = hk(k); return k ? slotsRec((ST(), k)).slice() : [null, null, null]; };
   starLit = k => { k = hk(k); return k ? litRec((ST(), k)).slice() : []; };
   const litCost = k => starLit(k).reduce((a, id) => a + STARS[id].cost, 0);
-  starFree = k => starPoints() - litCost(k);
+  // star points the lit stars in play cost, and the lit stars the points cannot pay for (shown dim; none is removed)
+  starUsed = k => starsActive(k).filter(id => litRec(hk(k)).includes(id)).reduce((a, id) => a + STARS[id].cost, 0);
+  starDim = k => { k = hk(k); if (!k) return []; const on = starsActive(k); return litRec(k).filter(id => !on.includes(id)); };
+  starFree = k => starPoints(k) - litCost(k);
 
   // ---- changes (between fights: a fight takes its stars as it starts) ----
   const changed = k => emit('starsChange', { hero: k });
@@ -18883,7 +18891,6 @@ var greatLanternsLit, starPoints, starOwned, starLearned, starWins, starSlots, s
     if (slotsRec(k).includes(id)) return 'It is set in a slot.';
     const lit = litRec(k);
     if (lit.includes(id)) return '';
-    if (lit.length >= TU.litMax) return `You can light ${TU.litMax} stars. Put one out first.`;
     const free = starFree(k), c = STARS[id].cost;
     return free < c ? `Needs ${c} star point${c > 1 ? 's' : ''} (you have ${Math.max(0, free)}).` : '';
   };
@@ -18902,7 +18909,7 @@ var greatLanternsLit, starPoints, starOwned, starLearned, starWins, starSlots, s
   starsActive = k => {
     k = hk(k); if (!k) return [];
     const out = starsSetIds(k);
-    let left = starPoints();
+    let left = starPoints(k);
     for (const id of litRec(k)) { const c = STARS[id].cost; if (c <= left && !out.includes(id)) { out.push(id); left -= c; } }
     return out;
   };
@@ -18970,12 +18977,13 @@ var greatLanternsLit, starPoints, starOwned, starLearned, starWins, starSlots, s
     if (quiet || L % 3 !== 0 || typeof isUnlocked !== 'function' || !isUnlocked('stars') || !starsLearnedN()) return;
     toast(`+1 star point. You have ${Math.max(0, starFree())} to light stars with in Hero, Stars.`, 'good', { ic: ['constel', '#F2C14E'] }, 'normal');
   });
-  on('greatLantern', e => { if (e && e.rewards && !e.quiet) e.rewards.push({ txt: '+4 star points', ic: ['constel', '#F2C14E'] }); });
+  on('greatLantern', e => { if (e && e.rewards && !e.quiet) e.rewards.push({ txt: `+${TU.budget.lantern} star point${TU.budget.lantern === 1 ? '' : 's'}`, ic: ['constel', '#F2C14E'] }); });
 
   // ---- Next Up: a found star waiting for a free slot, or a learned star the points can light ----
   const nextUp = () => {
     const k = hk(); if (!k || (typeof isUnlocked === 'function' && !isUnlocked('stars'))) return null;
-    const r = slotsRec((ST(), k)), lit = litRec(k);
+    const r = slotsRec((ST(), k)), lit = litRec(k), dim = starDim(k);
+    if (dim.length) return { id: dim[0], txt: `${STARS[dim[0]].name} is dim: put a star out or earn star points` };
     if (r.includes(null)) { const id = STAR_ORDER.find(x => S.stars.own[x] && !r.includes(x) && !lit.includes(x)); if (id) return { id, txt: `Set ${STARS[id].name} in a star slot` }; }
     const id = STAR_ORDER.find(x => S.stars.learned[x] && !starWhy(x, k) && !lit.includes(x));
     return id ? { id, txt: `Light ${STARS[id].name} with your star points` } : null;
@@ -42225,14 +42233,14 @@ var starsUiPick;   // starsUiPick(id): open the star map on that star's card (57
     toast('New on the Hero tab: Stars. Each star changes how your fights play.', 'good', { ic: ['constel', '#F2C14E'] }, 'high');
   });
 
-  // ---- the loadout strip: points, 3 set, 2 lit ----
-  function chip(k, label, id, kind, i) {
-    const c = el('div', 'sr-chip' + (id ? '' : ' empty') + (id && id === pick ? ' sel' : '') + ' ' + kind);
+  // ---- the loadout strip: points, 3 set, lit stars (as many as the points pay for) ----
+  function chip(k, label, id, kind, i, isDim) {
+    const c = el('div', 'sr-chip' + (id ? '' : ' empty') + (id && id === pick ? ' sel' : '') + (isDim ? ' dim' : '') + ' ' + kind);
     c.dataset.slot = String(i);
     const b = btn('sr-chip-b');
     if (id) {
       // a tap opens its card (Slot N there clears it; Put out puts a lit star out)
-      const s = STARS[id], sub = kind === 'lit' ? plural(s.cost, 'point') : starLearned(id) ? 'Learned' : `${starWins(id)}/${starNeed()} wins`;
+      const s = STARS[id], sub = isDim ? `Dim: needs ${plural(Math.max(1, -starFree(k)), 'more point')}` : kind === 'lit' ? plural(s.cost, 'point') : starLearned(id) ? 'Learned' : `${starWins(id)}/${starNeed()} wins`;
       // a long one-word name takes a smaller face so it is not cut in a narrow chip
       b.append(el('span', 'sr-chip-t' + (s.name.split(' ').some(w => w.length > 8) ? ' long' : ''), s.name), el('small', null, sub));
       b.setAttribute('aria-label', `${label}: ${s.name}, ${sub}. Open its card.`);
@@ -42251,13 +42259,13 @@ var starsUiPick;   // starsUiPick(id): open the star map on that star's card (57
     return c;
   }
   function strip(k) {
-    const top = el('div', 'sr-top'), pts = starPoints(), free = Math.max(0, starFree(k)), set = starSlots(k), lit = starLit(k);
+    const top = el('div', 'sr-top'), pts = starPoints(k), free = Math.max(0, starFree(k)), used = starUsed(k), set = starSlots(k), lit = starLit(k), dim = starDim(k);
     const p = el('div', 'sr-pts');
-    p.setAttribute('aria-label', `Star points: ${free} free of ${pts}`); p.title = 'Star points pay for lit stars: a point every 3 levels, 4 for each Great Lantern, 1 for each complete constellation.';
-    p.append(el('b', null, String(free)), el('small', null, `of ${pts} points`));
+    p.setAttribute('aria-label', `Star points: ${used} used of ${pts}`); p.title = 'Star points pay for lit stars, and they are the only limit: 2 to start, 1 every 10 hero levels, 1 for each Great Lantern, 1 for each complete constellation. A star the points cannot pay for shows dim.';
+    p.append(el('b', null, `${used}/${pts}`), el('small', null, 'points used'));
     const sl = el('div', 'sr-row3'), ll = el('div', 'sr-row2');
     set.forEach((id, i) => sl.append(chip(k, `Set ${i + 1}`, id, 'set', i)));
-    for (let i = 0; i < STARS_TUNE.litMax; i++) ll.append(chip(k, `Lit ${i + 1}`, lit[i] || null, 'lit', i));
+    for (let i = 0; i <= lit.length; i++) ll.append(chip(k, `Lit ${i + 1}`, lit[i] || null, 'lit', i, dim.includes(lit[i])));
     top.append(p, sl, ll);
     return top;
   }
@@ -42345,8 +42353,8 @@ var starsUiPick;   // starsUiPick(id): open the star map on that star's card (57
     }
     box.append(foot);
     if (learned) {
-      const can = on || (lit.length < STARS_TUNE.litMax && starFree(k) >= s.cost);
-      const why = on || can ? '' : where >= 0 ? (lit.length >= STARS_TUNE.litMax ? `You can light ${STARS_TUNE.litMax} stars. Put one out first.` : `Needs ${plural(s.cost, 'star point')}.`) : starWhy(id, k);
+      const can = on || starFree(k) >= s.cost;
+      const why = on || can ? '' : where >= 0 ? `Needs ${plural(s.cost, 'star point')}.` : starWhy(id, k);
       const b = btn('sr-light' + (on ? ' on' : ''), on ? 'Put out' : where >= 0 ? `Light instead (${plural(s.cost, 'point')})` : `Light (${plural(s.cost, 'point')})`);
       b.setAttribute('aria-pressed', String(on));
       b.disabled = !can;
@@ -42408,7 +42416,7 @@ var starsUiPick;   // starsUiPick(id): open the star map on that star's card (57
     const how = el('details', 'sr-how');
     how.append(el('summary', null, 'How stars work'),
       el('p', 'note', `Each star changes how a fight plays. ${heroNm(k)} can set ${STARS_TUNE.slots}. Win ${starNeed()} fights with a star set to learn it.`),
-      el('p', 'note', `Any hero can light a learned star with star points, up to ${STARS_TUNE.litMax}. Changes count from your next fight.`),
+      el('p', 'note', `Any hero can light a learned star with star points. Your points are the only limit: a star they cannot pay for shows dim until you put one out or earn more. Changes count from your next fight.`),
       el('p', 'note', 'Learn every star in a constellation to complete it: +1 star point, and the first two make every star quicker to learn.'),
       el('p', 'note', 'Stars come from zone bosses the first time they fall, elites now and then, Deepwell floors and the Provings. They belong to the lamp: every hero can use them.'));
     root.append(how);
