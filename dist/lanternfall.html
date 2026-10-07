@@ -40772,6 +40772,19 @@ let navUI = null;
   const onCtrl = () => !S.tab || isWide();
   const vis = n => !!(n && n.getClientRects().length && n.offsetParent !== null);
   const first = nm => String(nm || '').split(' ')[0];
+  // A marker must point at something the player can press right now. A disabled button, or a spot another element sits on,
+  // rings nothing and never pauses the game (guide-target-guard). The stage is exempt: its targets are points inside the scene.
+  const stageBox = $('stageBox');
+  const pressable = n => !n.disabled && n.getAttribute('aria-disabled') !== 'true' && !n.closest('[inert]');
+  function reachable(n) {
+    if (stageBox.contains(n)) return true;
+    const r = n.getBoundingClientRect();
+    if (!r.width || !r.height) return false;
+    const x = r.left + r.width / 2, y = r.top + r.height / 2;
+    if (x < 0 || y < 0 || x >= innerWidth || y >= innerHeight) return false;
+    const h = document.elementFromPoint(x, y);
+    return !!h && (n.contains(h) || h.contains(n));
+  }
   // Menu path: open the tab, then the view, then point at the thing.
   function path(tab, view, sel, words) {
     if (S.tab !== tab) return { node: q(`.tab[data-tab="${tab}"]`), text: words[0] };
@@ -40890,14 +40903,20 @@ let navUI = null;
     // a first-use line has no target: it docks over the open menu with no ring, and never pauses the game
     try { spec = use ? { node: panels, text: step.text, noRing: true } : table[step.id] ? table[step.id]() : null; } catch (e) { spec = null; }
     if (!spec || !vis(spec.node)) return hide();
+    // a menu step whose button is disabled waits (a build while the builder is busy): no ring, no pause, no tip
+    if (table === STEP_UI && !use && !spec.noRing && !pressable(spec.node)) return hide();
     if (use) { if (!useT0) useT0 = Date.now(); else if (Date.now() - useT0 > USE_SHOWN_MS) { onboardUseDone(step.id); return hide(); } }
     cur = step; curGo = spec.go || null;
     putHidden(okb, !(step.ok || curGo));
     putText(okb, curGo ? curGo.label : 'Got it');
     place(spec);
     // the game waits only while the step waits for you to read or press something now (playtest-1 note 1, W1-A):
-    // never for a step that needs materials or time, and never while a press step is still short of what it costs
-    ONBOARD.paused = onboardPaused(step);
+    // never for a step that needs materials or time, and never while a press step is still short of what it costs.
+    // A menu marker that cannot be tapped where it sits (scrolled out of reach, under another element) shows no ring
+    // and pauses nothing.
+    const lost = table === STEP_UI && !use && !spec.noRing && !reachable(spec.node);
+    if (lost) ring.hidden = true;
+    ONBOARD.paused = !lost && onboardPaused(step);
   }
   soloGuideWants = () => (cur && !layer.hidden ? cur.id : '');
   // The guide's steps and their targets, for tools/check.mjs (the browser check walks the first session).
@@ -40906,8 +40925,11 @@ let navUI = null;
   function place(spec) {
     const key = spec.text, newTarget = spec.node !== lastNode;
     const inPanel = !!S.tab && panels.contains(spec.node);
-    let r = inPanel ? spec.node.getBoundingClientRect() : null;
-    const moved = inPanel && (!lastRect || r.left !== lastRect.left || r.top !== lastRect.top || r.width !== lastRect.width || r.height !== lastRect.height);
+    // everything but the stage keeps its place under the marker, so a target that moves (the menu sliding in, a list
+    // re-sorting) drags the ring with it; the stage moves under its marker all the time and keeps its cached spot
+    const follow = !stageBox.contains(spec.node);
+    let r = follow ? spec.node.getBoundingClientRect() : null;
+    const moved = follow && (!lastRect || r.left !== lastRect.left || r.top !== lastRect.top || r.width !== lastRect.width || r.height !== lastRect.height);
     if (ring.hidden !== !!spec.noRing) ring.hidden = !!spec.noRing;
     const changed = dirty || newTarget || key !== lastKey || (inPanel && panelScrolled) || moved;
     if (layer.hidden) layer.hidden = false;
@@ -40948,7 +40970,7 @@ let navUI = null;
     // the marker: a ring around the node, or a round mark at a point inside it (never a filled
     // shape, so it never covers the node/foe underneath)
     if (!r) r = spec.node.getBoundingClientRect();
-    lastRect = inPanel ? r : null;
+    lastRect = follow ? r : null;
     if (!spec.noRing) {
       let rx, ry, rw, rh;
       if (spec.at) { const d = 58; rx = r.left + r.width * spec.at[0] - d / 2; ry = r.top + r.height * spec.at[1] - d / 2; rw = rh = d; }

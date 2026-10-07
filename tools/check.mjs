@@ -6409,6 +6409,67 @@ if (section('camp guide tracking (C2, browser)')) try {
   }
 } catch (e) { fail('C2 guide tracking crashed: ' + (e.stack || e)); }
 
+// ---- guide-target-guard: a guide marker rings something the player can press, or the tip waits ----
+if (section('guide target guard (browser)')) try {
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('guide target guard: Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8').replace('setInterval(tick, 250);', 'window.__gtgTick = tick;');
+    const end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [width, height] of [[360, 740], [740, 360]]) {
+        const at = `${width}x${height}`, ctx = await browser.newContext({ viewport: { width, height }, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
+        try {
+          const page = await ctx.newPage(), errs = [];
+          page.on('pageerror', e => errs.push(String(e)));
+          await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+          await page.goto('http://lf.test/');
+          await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go');
+          const X = s => page.evaluate(s => window.__t.x(s), s);
+          await X(`soloPickerOpen = () => true; S.mats.wood[0] = 100; hearthLight(); onboardUnlockAll(); S.mats.ore[0] = 99; S.mats.wood[0] = 99; S.camp.b.hearth = 2; S.camp.b.bench = 1; true`);
+          const probe = () => X(`(() => { const ring = document.querySelector('.ob-ring'), r = ring.getBoundingClientRect(), shown = !ring.parentNode.hidden && !ring.hidden;
+            const sp = onboardSpec(__gtgStep), b = sp && sp.node && sp.node.getBoundingClientRect();
+            const hit = shown ? document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2) : null;
+            return { shown, paused: ONBOARD.paused, hit: !!(hit && sp && sp.node && (sp.node === hit || sp.node.contains(hit))),
+              error: shown && b ? Math.max(Math.abs(r.left - (b.left - 4)), Math.abs(r.top - (b.top - 4))) : -1 }; })()`);
+          const step = async (id, tab, view) => {
+            await X(`globalThis.__gtgStep = ${JSON.stringify(id)}; onboardStep = () => GUIDE_STEPS.find(s => s.id === __gtgStep); setTab(${JSON.stringify(tab)}); ${view ? `setView(${JSON.stringify(tab)}, ${JSON.stringify(view)});` : ''} ui(true); true`);
+            await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+            await page.evaluate(() => window.__gtgTick());
+          };
+          // 1. "Open Build.": the ring sits on the Build button, follows it when the row moves, and the game waits
+          await step('upgrade', 'party', 'team');
+          const a = await probe();
+          assert(a.shown && a.paused && a.hit && a.error <= 2, `guard ${at}: "Open Build." rings the Build button (${JSON.stringify(a)})`);
+          await X(`$('viewSeg').style.transform = 'translateY(17px)'; window.__gtgTick(); true`);
+          const a2 = await probe();
+          assert(a2.shown && a2.error <= 2, `guard ${at}: the ring follows a moved menu button (${JSON.stringify(a2)})`);
+          await X(`$('viewSeg').style.transform = ''; true`);
+          // 2. the Forge step with the builder busy: no ring, no pause. Free the builder and it comes back
+          await X(`globalThis.__gtgBuilds = S.camp.builds; S.camp.b.forge = 0; delete S.onboard.done.forge;
+            const n = Date.now(), c = { gold: 0, mats: [], troph: [] };
+            S.camp.builds = [{ id: 'watch', to: 2, b: 0, dur: 6e5, start: n, end: n + 6e5, cost: c }, { id: 'library', to: 1, b: 0, dur: 1e3, start: 0, end: 0, cost: c }]; true`);
+          await step('forge', 'world', 'camp');
+          const f1 = await probe();
+          assert(!f1.shown && !f1.paused, `guard ${at}: a disabled Build button shows no ring and does not pause (${JSON.stringify(f1)})`);
+          await X(`S.camp.builds = []; ui(true); true`);
+          await step('forge', 'world', 'camp');
+          const f2 = Object.assign(await probe(), await X(`({ can: campCan('forge').ok, why: campCan('forge').why, btn: !!document.querySelector('#camp-b-forge .cb-quick'), hidden: !!(document.querySelector('#camp-b-forge .cb-quick') || {}).hidden, dis: !!(document.querySelector('#camp-b-forge .cb-quick') || {}).disabled })`));
+          assert(f2.shown && f2.paused && f2.hit && f2.error <= 2, `guard ${at}: a free builder brings the Forge ring back on a tappable button (${JSON.stringify(f2)})`);
+          // 3. a first-use line has no ring and never pauses
+          await X(`onboardStep = () => null; onboardUse = () => ({ id: 'use:camp', text: 'Build stations here.' }); setTab('world'); ui(true); true`);
+          await page.evaluate(() => window.__gtgTick());
+          const u = await X(`({ ring: !document.querySelector('.ob-ring').parentNode.hidden && !document.querySelector('.ob-ring').hidden, paused: ONBOARD.paused, text: document.querySelector('.ob-txt').textContent })`);
+          assert(!u.ring && !u.paused && u.text === 'Build stations here.', `guard ${at}: a first-use line has no ring and never pauses (${JSON.stringify(u)})`);
+          assert(!errs.length, `guard ${at}: no browser errors` + (errs.length ? ': ' + errs[0] : ''));
+        } finally { await ctx.close(); }
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('guide target guard crashed: ' + (e.stack || e)); }
+
 // ---- C4: a gatherer's two-hour trade run reserves raw cargo and settles exactly once ----
 if (section('gatherer trade runs (C4)')) try {
   const HOUR = 3600e3, T0 = Date.UTC(2026, 8, 28, 12), games = [];
