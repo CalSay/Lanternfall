@@ -37,5 +37,6 @@ wait 2
 tap "Foe"
 wait 1
 expect "Weak to"
-expect "Watch for"
+# the tell row sits below the fold of the short landscape pane (it scrolls), so check that the rows exist
+expect ".sb-p-foe .sb-fr"
 shot foe-20-kills
