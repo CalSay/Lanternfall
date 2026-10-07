@@ -5,9 +5,9 @@ player sees in minutes 0 to 60 updates this map in the same PR, or names the bea
 (`tools/walk.mjs`, card `qa-first-hour-walk`) plays a fresh save against it; in week 1 its measured times replace the
 estimated ones, and a beat more than 50% off its time becomes a finding.
 
-**The hook.** You carry the last lamp down a dark road, and every fight is yours to win with a well-timed parry. The
-first time you beat each boss, a Lantern Cache opens, lights the next stretch of road, and gives your hero something
-new to wear or wield.
+**The hook** (the Compass, `docs/design/compass.md`, owns it). You carry the last lamp down a dark road, and every fight
+is yours to win with a well-timed parry. Beat a boss for the first time and a Lantern Cache opens: what you won, a
+chance at a new look, and the next stretch of road.
 
 **Rules for every beat.**
 - At most one new thing (a tab, a system, a currency) per beat, and at most 2 in any 3 minutes of the first 30
@@ -38,10 +38,10 @@ early-game/playtest-coldB.md`). The minutes below are targets for a casual human
 | 2 | 0:25 | "Who are you?": Wren, Tobin, Pip in second person | Picks a hero | Who they are | their hero | ownership | "You are good at doors." | built by `intro-and-picker` |
 | 3 | 0:35 | Hesketh's fire over still 3, at most 3 lines; then the guide panel with his face | Reads | A guide exists | nothing | warmth | Hesketh lights his fire from your lamp | built by `intro-and-picker`, `guide-panel` |
 | 4 | 0:45 | Fight 1 (within 45 s of opening for a player who taps through) | Attack, then the ability | Attack and the ability | gold ticks up | power | | tip panel placement: done (`guide-panel`, never over the stage); phase: done (`guide-phase-guards`, Attack and ability tips wait for your turn) |
-| 5 | 1:25 | Fight 2 | Dodges a heavy hit | Dodge | | relief | | today (phase guard: `story-unlock-gates` or `guide-phase-guards`) |
+| 5 | 1:25 | Fight 2 | Dodges a heavy hit | Dodge | | relief | | built: `guide-voice` (the Dodge tip waits for fight 2, Hesketh's line) |
 | 6 | 1:55 | Fight 3 | Parries a heavy hit | Parry | Hit-stop on a good parry; PARRIED! stamp, sized numbers and a lamp row for clean parries (hit-feel, built) | skill | | built; card `hit-feel` |
 | 7 | 2:25 | Fights 4 and 5 | Uses all three verbs | nothing new | | flow | | today |
-| 8 | 2:55 | The zone 1 Captain; Hesketh: "Watch the red rings" | Fights the boss | Boss strings | | tension | | today (line: card `guide-voice`) |
+| 8 | 2:55 | The zone 1 Captain; Hesketh: "Watch the bar" (turn fight) or "Watch the red rings" (legacy) | Fights the boss | Boss strings | | tension | | built: `guide-voice` (the boss tip in Hesketh's voice; one paused step a fight) |
 | 9 | 3:45 | **Big moment: first boss win**, and the **first Lantern Cache** reveals the win's drops plus the Ember Red lantern colour; the stage relights | Taps to open | Caches | the win's drops; Ember Red | surprise | The hero's first line | built: card `cache-core` (card "First boss down" lists the win's drops and Ember Red; the stage shift is faint, see `cache-lantern-read`); card `moment-layer`; `hero-voice` done (boss1 bark on the card) |
 | 10 | 5:30 | The Hero tab (spacing governor), with the first attribute point | Spends the point | Attributes | +1 point | ownership | | `story-unlock-gates`; points from PR #58; moment `moment-layer` |
 | 11 | 7:15 | The Gather tab; Hesketh: "Wood first." | Chops 8 logs | Gathering | logs | | | `story-unlock-gates`; line `unlock-voice` |

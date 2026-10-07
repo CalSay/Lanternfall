@@ -10,7 +10,12 @@ export const LINT = `(() => {
   const R = LF_EYES.rects(), r1 = o => o ? Math.round(o.x) + ',' + Math.round(o.y) + ' ' + Math.round(o.w) + 'x' + Math.round(o.h) : '';
   // 1a. the tip over the fighters or the HP boxes
   const tip = R.tip;
-  if (tip) for (const k of ['hero', 'foe', 'boss', 'heroHp', 'foeHp']) { const b = R[k]; if (!b) continue; const o = ov(tip, { x: b.x - 6, y: b.y - 6, w: b.w + 12, h: b.h + 12 }); if (o.w > 4 && o.h > 4) out.push({ what: 'tip covers or crowds the ' + ({ heroHp: 'hero HP box', foeHp: 'foe HP box' }[k] || k), detail: 'tip ' + r1(tip) + ' on ' + k + ' ' + r1(b) + ' by ' + Math.round(o.w) + 'x' + Math.round(o.h) + ' px: "' + ((LF_EYES.tip() || {}).text || '').slice(0, 60) + '"' }); }
+  // A sprite box is read from where the stage last drew it. For the 2 or 3 frames after the stage shrinks to make room for the tip
+  // (the dock), that is the old, taller stage: the box hangs below the new stage edge. A player sees only what the stage shows, so
+  // the sprite boxes are cut to the stage before they are judged (parry-tip-covers-hero).
+  const cut = b => { const s = R.stage; if (!s || !b || !(k0 === 'hero' || k0 === 'foe' || k0 === 'boss')) return b; const x = Math.max(b.x, s.x), y = Math.max(b.y, s.y), x2 = Math.min(b.x + b.w, s.x + s.w), y2 = Math.min(b.y + b.h, s.y + s.h); return x2 > x && y2 > y ? { x, y, w: x2 - x, h: y2 - y } : null; };
+  let k0 = '';
+  if (tip) for (const k of ['hero', 'foe', 'boss', 'heroHp', 'foeHp']) { k0 = k; const b = cut(R[k]); if (!b) continue; const o = ov(tip, { x: b.x - 6, y: b.y - 6, w: b.w + 12, h: b.h + 12 }); if (o.w > 4 && o.h > 4) out.push({ what: 'tip covers or crowds the ' + ({ heroHp: 'hero HP box', foeHp: 'foe HP box' }[k] || k), detail: 'tip ' + r1(tip) + ' on ' + k + ' ' + r1(b) + ' by ' + Math.round(o.w) + 'x' + Math.round(o.h) + ' px: "' + ((LF_EYES.tip() || {}).text || '').slice(0, 60) + '"' }); }
   // 1b. page boxes
   const SEL = ['.hero-plate', '.mob', '.hud-zone', '#soloBar .sbtn', '.tabs .tab', '#toasts .toast', '.ob-bub', '.tv-card', '.tv-banner', '.cb-banner', '#modeSeg', '#nuChip', '.sfx-btn', '.bell', '#bellBtn', '.stage-btns button'];
   const boxes = [], menuEl = document.getElementById('menu'), menuB = menuEl && vis(menuEl) && document.querySelector('.app.menu-open') ? bx(menuEl) : null;

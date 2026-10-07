@@ -1,0 +1,10 @@
+# seed: 0
+# Proof for card playtest-minor-fixes: the mid save has a finished weekly goal. Open Camp > Almanac and the goal is already open,
+# showing "Reward: ..." beside Claim (almanac-claim-360x740.png). The boss HP fix (a boss keeps one HP across tries) has no screen of its own.
+new mid
+wait 5
+tap-if Close
+tap Camp
+tap-if Almanac
+expect ".om-goal.open .row-desc"
+shot almanac

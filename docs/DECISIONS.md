@@ -8,6 +8,14 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 
 ## The game
 
+- **Claude decided: the guide teaches one thing a fight, in Hesketh's voice (card guide-voice, 2026-10-07; Cal can veto).** Every guide
+  step names the phases it may start in (your turn, a wind-up, the foe's turn, between fights); a step in the wrong phase waits.
+  Camp and menu tips start in a break and then stay up. One paused step a fight; Dodge waits for a later fight than the ability, Parry
+  for a later fight than Dodge (runtime counter, nothing saved). Hero tab and Next Up notes wait a minute after the last guide line.
+  A tip nobody answers for 60 s of play retires: `onboard.done[id]` becomes 2 (it was always 1; every reader treats it as truthy),
+  and the Journal's Tips lists it as "Tips you missed". Opus judge and a Sonnet red team: the turn-fight boss line says "Watch the
+  bar" because only the legacy fight draws red rings; "stretch" and "strings" cut as jargon; the legacy Parry line no longer claims a
+  stagger it cannot show. Save risk read (Opus): safe, no new field. Camp and gather tips stay plain until `unlock-voice`.
 - **Claude decided: hero barks (card hero-voice, 2026-10-06; Cal can veto).** Only the three starters speak, one line each
   at nine moments (first boss, later boss, boss loss, unique, level, ability, first Star, first craft, Hollow Great Lantern);
   no class lines and no lines for the other 31 heroes; at most one bark a fight end, strongest first. Opus judge (red team,
@@ -21,9 +29,9 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 - **Store launch possible; the money model is set** (see [Money](#money)). Original art only, no restrictive
   third-party assets, nothing pay-to-win. (2026-10-06)
 - **Owner role: player.** The coordinator drives the roadmap and brings playable builds and decisions at milestones.
-  Decisions that belong to the owner (art direction; anything that takes real money: store accounts, payment code,
-  live prices, business and legal set-up; anything irreversible) are asked, not guessed. Money design is Claude's,
-  within the Lantern Rules. (2026-09-27, narrowed 2026-10-06)
+  Decisions that belong to the owner (anything that takes real money: store accounts, payment code, live prices,
+  business and legal set-up; anything irreversible) are asked, not guessed. Money design and art direction are
+  Claude's judge calls, within the Lantern Rules. (2026-09-27, narrowed 2026-10-06, 2026-10-07)
 - **Combat is active only.** No Auto, no idle fighting, no away combat earnings. Gathering stays idle. (2026-10-01)
 - **Version 1.0 is a complete Season 1:** five regions, the story to the first fight with the Voice, 32 heroes, two
   named gatherers per resource job. The story continues in Season 2. (2026-09-28)
@@ -530,9 +538,12 @@ Plan and rulings: `/mnt/project-files/early-game/plan.md`, `plan-judge.md`. Beat
   free to slate Claude's work where it needs to; it reviews from PR #1
   (`docs/handoff/claude-to-codex/reviewer/README.md`). Codex still draws new raster art when a card needs it.
   (2026-10-05)
-- **Autopilot:** Claude plans, builds and merges into the integration branch on its own from an approved backlog,
-  with a daily digest. Cal approves batches, taps gated items (new systems, economy targets, saves,
-  story canon; art packs moved to the judge 2026-10-06) and says "ship it" before anything reaches `main` or the live artifact. (2026-10-05)
+- **Cal delegates design calls to Claude** (an Opus judge after a red team); Cal keeps shipping, the online layer, money
+  and outside contact, and can veto any recorded call later. (2026-10-05)
+- **Autopilot:** Claude plans, builds and merges into the integration branch on its own from the backlog, with a daily
+  digest. No batch waits for Cal. Only these wait for him: "ship it" (merge to `main`, publish the live artifact), the
+  online layer, Netlify beyond the weekly deploy, money or legal, network settings and contacting anyone outside.
+  (2026-10-05, updated 2026-10-07)
 - **Speed and smoothness are checked constantly:** run `node tools/perf.mjs --quick` after each merge wave and fix any
   budget failure before new features. (2026-09-27)
 - **Pace:** steady on weekdays (2 build threads at once), full at weekends (4). On "pause", launch nothing new.
@@ -547,6 +558,10 @@ Plan and rulings: `/mnt/project-files/early-game/plan.md`, `plan-judge.md`. Beat
 ## Replaced decisions
 
 Kept only to explain current rules. Each line: the old decision, then what replaced it.
+
+- Autopilot: "Cal approves batches and taps gated items" (2026-10-05) -> no batch waits for Cal; design calls go to the Opus judge
+  (2026-10-05, Cal's autonomy request; recorded 2026-10-07).
+- Owner role: art direction asked of Cal (2026-09-27) -> art direction is a judge call (2026-10-06).
 
 - Hero gates at the first zone of the scene's area, only once the scene is in the game (2026-10-06, story-opening) -> from the
   zone the scene can have played, built or not (2026-10-06, story-unlock-gates).
@@ -604,6 +619,25 @@ type signature and keep the type's pace; every foe type names an answer for each
 `eliteHitX` 1.4 and `eliteHpX` 2.5 (the Cave Bat's elite has 0.4 of that HP). Zone 15 and 20 elites remain easy for casual
 Wren and Pip: that is zone 5-15 hero power, owned by boss-tiers. No save state changes.
 
+## Compass: judge rulings (2026-10-07)
+
+Claude decided (card f-compass; Cal can veto any line). Page: `docs/design/compass.md`. Records:
+`docs/design/compass-records/redteam.md` (21 attacks) and `judge.md` (Opus judge, four rulings).
+
+- **The hook** is the first-hour hook with its second sentence made true at every first boss clear: a Lantern Cache opens
+  with what you won, a chance at a new look, and the next stretch of road. No text may promise a relight or new gear at
+  every boss. The camp line is the promise behind the hook, not part of it. `first-hour.md` points to the Compass.
+- **The core loop** has four timescales (a fight, a 5-minute visit, a day, a week), four player steps each, each step naming
+  its systems. Steps match the standing rules: no telegraph, Assist only widens windows, a loss keeps your place. The week's
+  last step is going deeper (Deepwell, later challenge modes), not a weekly-build visit.
+- **The test every card passes:** it names its loop step and pillar; it hits no anti-goal; its score has Compass fit at
+  least 3, Value (Impact + Evidence + Fit) at least 9 and Total at least 14. A save change counts once, under
+  Reversibility. Bug fixes and broken promises skip scoring.
+- **Anti-goals** add the settled no's, the currency and camp-tour ceilings (no new named currency, no added camp tap; the game is
+  already over both), and "chore" means an expiring reward, not a fee the player chooses.
+- **Pillar 3** does not ban per-hero content (heroes ship complete); a design that needs it says it costs 32 times over.
+- **Rejected:** an "early game first" tie-breaker double-counts nothing, so it stays.
+
 ## Counters and layers: judge rulings (2026-10-07)
 
 Opus judge, card `counters-and-layers`. No save field changes, no save key bump: every merge is display-only or a rule
@@ -626,4 +660,7 @@ change over existing fields.
    hero levels + 1 per Great Lantern + 1 per complete constellation (`STARS_TUNE.budget`); `litMax` is gone. Measured with
    `budget.mjs` (typical Stars): no casual or good number moves more than 1 point. The 2-lit cap goes and income is
    re-curved. Old saves keep every lit star; one the points cannot pay for shows as dim with a Put out button.
-5. Build order: Essence fungible, free talents, star budget, layer and display cleanup.
+5. Build order: Essence fungible (#123), free talents (#128), star budget (#130), layer and display cleanup. The last one
+   tags every currency in `tools/systems-map.mjs` with a Kind (the check fails on an untagged currency or a core set that
+   is not these eight), registers Attribute points, and shows Mirrors of Embers beside Trophies as "Rare finds" in the
+   Storehouse. The top bar already shows only Gold and Embers; no screen needed a cut.

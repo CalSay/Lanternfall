@@ -168,7 +168,7 @@ img[src*="#nic:"] { image-rendering: auto; }   /* a gear icon set by code that d
 .stagebox .hud.vs .hud-zone .zname { white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.1; overflow-wrap: anywhere; }
 /* the turn banner owns the middle of the stage while it shows; toasts and the strip wait out its short pause */
 .stagebox.tc-on .toasts { opacity: 0; transition: opacity .1s; }
-.stagebox.vs-on .toasts:not(.over-menu) { top: calc(var(--vs-b, 54px) + 22px); }   /* under the bars and the place line, not over them */
+.stagebox.vs-on .toasts:not(.over-menu) { top: max(calc(var(--vs-b, 54px) + 22px), var(--vs-zb, 0px)); }   /* under the bars and the place line, not over them */
 
 /* Portrait top band (top-bar-compact): under the header zone bar, ONE line holds the activity switch (Fight / Gather, the zone arrows)
    and Next Up side by side, instead of three stacked rows. The permanent "While away" sentence is gone (the away card and the
@@ -3376,6 +3376,10 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
   .app.guide-side .toasts.side-dock { grid-column: 2 / 4; grid-row: 3 / -1; left: 8px; right: 8px; bottom: 24px; z-index: 6; align-items: center; }
   .app.guide-side .toasts.side-dock .toast { width: min(100%, 320px); }
   .app.guide-side .toasts.side-dock .mm-t-sub { display: none; }   /* a short banner: the stage is short sideways */
+  /* eye and title share a row, so the banner clears the hero's legs (it overlapped them by 25 px at 740x360) */
+  .app.guide-side .toasts.side-dock .mm-toast { padding-top: 3px; padding-bottom: 3px; min-height: 0; }
+  .app.guide-side .toasts.side-dock .mm-t-tx { grid-template-columns: auto minmax(0, 1fr); align-items: baseline; gap: 0 8px; }
+  .app.guide-side .toasts.side-dock .mm-t-say, .app.guide-side .toasts.side-dock .mm-t-line { grid-column: 1 / -1; }
 
   /* ---- sheets fit a short screen ---- */
   .sp-ov { align-items: center; }
@@ -14212,7 +14216,7 @@ let navSkillOpen, navSkills, navLast, navNow, navRate, navFullIn, navRecent, bes
 // Events: unlock { id, tab, view, quiet } (a feature appeared), onboardStep { id } (a step completed).
 // State S.onboard: { v, all, got: { id: seconds played }, done: { stepId: 1 }, seen: { tabOrView: 1 },
 //   tips, t (seconds played while the guide runs), taps, casts }.
-let isUnlocked, onboardReveal, onboardUnlockAll, onboardStep, onboardDone, onboardUse, onboardUseDone, onboardTips, onboardCheck, onboardNeed, onboardPaused;
+let isUnlocked, onboardReveal, onboardUnlockAll, onboardStep, onboardDone, onboardUse, onboardUseDone, onboardTips, onboardCheck, onboardNeed, onboardPaused, guideRetire;
 let onboardIsNew = null;   // set by 75-onboard-ui.js; 70-ui.js marks new views with it
 let onboardSpec = null;    // set by 75-onboard-ui.js: step id -> { node, text } | null (the browser check)
 let soloGuideWants = () => '';   // set by 75-onboard-ui.js: the step on screen ('dodge' / 'parry': the first press counts, 59j forgive)
@@ -14326,30 +14330,40 @@ const heroTurnNow = () => { const q = turnSnap(); return !q || q.phase === 'hero
 // (a hit you already dodged or parried is not a new lesson: the next step waits for the next hit)
 const hitComing = () => { const q = turnSnap(); return q ? q.canDefend && q.closesAt > q.now : heavyShowing(); };
 const inWindow = k => { const q = turnSnap(); if (!q) return heavyShowing(); const open = k === 'parry' ? q.parryOpensAt : q.dodgeOpensAt; return q.canDefend && q.now >= open && q.closesAt - q.now > 0.02; };
+// guide-voice: every step names the phases it may START in (`ph`), and a step whose phase is not now waits. 'hero' your turn,
+// 'windup' a hit is on its way (the Dodge and Parry window), 'foe' the foe acts with nothing to answer, 'between' no fight in view
+// (not fighting, no foe alive, or a menu open). Once a 'between' step has started it stays up until done or retired.
+const GUIDE_PHASES = ['hero', 'windup', 'foe', 'between'];
+let guideMenuCovers = () => true;   // 75-onboard-ui.js: a wide screen keeps the fight in view beside an open menu
+function guidePhase(seeThroughMenu) { return !fightingNow() || !liveFoe() || (!seeThroughMenu && !!S.tab && S.tab !== 'adv') ? 'between' : hitComing() ? 'windup' : heroTurnNow() ? 'hero' : 'foe'; }
+// A fight is one foe on the field (59k `fightStart`; the legacy fight: a pack). Runtime only, never saved.
+const GUIDE_RT = { t: 0, fight: 0, doneIn: {}, lastEnd: null, latch: '', pauseFight: -1, pauseId: '', shown: {} };
+const GUIDE_QUIET = 60;    // seconds of play between two unprompted lines outside fights, and before a live tip retires
+const laterFight = id => GUIDE_RT.fight > (GUIDE_RT.doneIn[id] === undefined ? -1 : GUIDE_RT.doneIn[id]);   // one thing a fight: the next lesson waits for the next fight
 const GUIDE_STEPS = [
-  { id: 'attack', pause: 1, pauseWhen: () => liveFoe() && heroTurnNow(), when: () => fightingNow() && heroTurnNow(), done: () => (O().atk || 0) >= 1 || S.totalKills >= 12 },
-  { id: 'ability', pause: 1, pauseWhen: () => liveFoe() && heroTurnNow(), when: () => stepDone('attack') && fightingNow() && heroTurnNow() && abilityOk(), done: () => O().casts >= 1 },
-  { id: 'dodge', pause: 1, pauseWhen: () => liveFoe() && inWindow('dodge'), when: () => stepDone('ability') && fightingNow() && hitComing(), done: () => (O().dodges || 0) >= 1 },
-  { id: 'parry', pause: 1, pauseWhen: () => liveFoe() && inWindow('parry'), when: () => stepDone('dodge') && fightingNow() && hitComing(), done: () => (O().parries || 0) >= 1 },
-  { id: 'boss', pause: 1, ok: 1, when: () => S.maxZone === 1 && S.zone === 1 && typeof fightBoss !== 'undefined' && !!fightBoss, done: () => S.maxZone >= 2 },
+  { id: 'attack', ph: ['hero'], pause: 1, pauseWhen: () => liveFoe() && heroTurnNow(), when: () => fightingNow() && heroTurnNow(), done: () => (O().atk || 0) >= 1 || S.totalKills >= 12 },
+  { id: 'ability', ph: ['hero'], tip: 'Press your ability button when it is ready.', pause: 1, pauseWhen: () => liveFoe() && heroTurnNow(), when: () => stepDone('attack') && fightingNow() && heroTurnNow() && abilityOk(), done: () => O().casts >= 1 },
+  { id: 'dodge', ph: ['windup'], pause: 1, pauseWhen: () => liveFoe() && inWindow('dodge'), when: () => stepDone('ability') && laterFight('ability') && fightingNow() && hitComing(), done: () => (O().dodges || 0) >= 1 },
+  { id: 'parry', ph: ['windup'], pause: 1, pauseWhen: () => liveFoe() && inWindow('parry'), when: () => stepDone('dodge') && laterFight('dodge') && fightingNow() && hitComing(), done: () => (O().parries || 0) >= 1 },
+  { id: 'boss', ph: ['hero'], pause: 1, ok: 1, when: () => S.maxZone === 1 && S.zone === 1 && typeof fightBoss !== 'undefined' && !!fightBoss, done: () => S.maxZone >= 2 },
   // W2-A: Train Attack on the Hero tab (it opens with the step: the tab is unlocked by then, hero level 3 or zone 2)
-  { id: 'upgrade', pause: 1, when: () => stepDone('ability') && isUnlocked('party') && S.gold >= cheapestUp(), done: () => upBought() },
-  { id: 'gather', pause: 1, when: () => S.maxZone >= 2 && isUnlocked('gather') && unlit() && S.activity !== 'gather', done: () => !unlit() || S.activity === 'gather' || oak8() },
-  { id: 'chop', needs: fireMats, when: () => unlit() && S.activity === 'gather', done: () => !unlit() || oak8() },
-  { id: 'light', pause: 1, when: () => unlit() && oak8(), done: () => !unlit() },
-  { id: 'stock:bench', needs: () => matsOfBuild('bench'), when: () => coldH() && plotOpen('bench') && !!needShort(matsOfBuild('bench')).length, done: () => !coldH() || campBusy('bench') },
-  { id: 'bench', pause: 1, pauseUnless: () => matsOfBuild('bench'), when: () => coldH() && plotOpen('bench'), done: () => !coldH() || campBusy('bench') },
-  { id: 'stock:tool', needs: toolMats, when: () => coldH() && campLv('bench') >= 1 && !!needShort(toolMats()).length, done: () => !coldH() || toolMade() },
+  { id: 'upgrade', ph: ['between'], tip: 'Open Hero and make your hero stronger.', pause: 1, when: () => stepDone('ability') && isUnlocked('party') && S.gold >= cheapestUp(), done: () => upBought() },
+  { id: 'gather', ph: ['between'], tip: 'Tap Gather and chop Pine Log for a camp fire.', pause: 1, when: () => S.maxZone >= 2 && isUnlocked('gather') && unlit() && S.activity !== 'gather', done: () => !unlit() || S.activity === 'gather' || oak8() },
+  { id: 'chop', ph: ['between'], needs: fireMats, when: () => unlit() && S.activity === 'gather', done: () => !unlit() || oak8() },
+  { id: 'light', ph: ['between'], pause: 1, when: () => unlit() && oak8(), done: () => !unlit() },
+  { id: 'stock:bench', ph: ['between'], needs: () => matsOfBuild('bench'), when: () => coldH() && plotOpen('bench') && !!needShort(matsOfBuild('bench')).length, done: () => !coldH() || campBusy('bench') },
+  { id: 'bench', ph: ['between'], pause: 1, pauseUnless: () => matsOfBuild('bench'), when: () => coldH() && plotOpen('bench'), done: () => !coldH() || campBusy('bench') },
+  { id: 'stock:tool', ph: ['between'], needs: toolMats, when: () => coldH() && campLv('bench') >= 1 && !!needShort(toolMats()).length, done: () => !coldH() || toolMade() },
   // only once Craft is unlocked: this step pauses the game, and the unlock pass runs on the game clock, so a pause that
   // came first held Craft locked for good (the Craft tab opened on Uniques only, with no Make view to point at)
-  { id: 'tool', pause: 1, pauseUnless: toolMats, when: () => coldH() && campLv('bench') >= 1 && isUnlocked('craft'), done: () => !coldH() || toolMade() },
-  { id: 'stock:forge', needs: () => matsOfBuild('forge'), when: () => coldH() && stepDone('tool') && plotOpen('forge') && !!needShort(matsOfBuild('forge')).length, done: () => !coldH() || campBusy('forge') },
-  { id: 'forge', pause: 1, pauseUnless: () => matsOfBuild('forge'), when: () => coldH() && stepDone('tool') && plotOpen('forge'), done: () => !coldH() || campBusy('forge') },
-  { id: 'stock:store', needs: () => matsOfBuild('store'), when: () => coldH() && plotOpen('store') && !!needShort(matsOfBuild('store')).length, done: () => !coldH() || !(typeof CAMP_B === 'object' && CAMP_B.store) || campBusy('store') },
-  { id: 'store', pause: 1, pauseUnless: () => matsOfBuild('store'), when: () => coldH() && plotOpen('store'), done: () => !coldH() || !(typeof CAMP_B === 'object' && CAMP_B.store) || campBusy('store') },
-  { id: 'tab:party', when: () => isUnlocked('party') && S.maxZone >= 3 && !unlit() && !fightingNow(), done: () => !!O().seen.party },
+  { id: 'tool', ph: ['between'], pause: 1, pauseUnless: toolMats, when: () => coldH() && campLv('bench') >= 1 && isUnlocked('craft'), done: () => !coldH() || toolMade() },
+  { id: 'stock:forge', ph: ['between'], needs: () => matsOfBuild('forge'), when: () => coldH() && stepDone('tool') && plotOpen('forge') && !!needShort(matsOfBuild('forge')).length, done: () => !coldH() || campBusy('forge') },
+  { id: 'forge', ph: ['between'], pause: 1, pauseUnless: () => matsOfBuild('forge'), when: () => coldH() && stepDone('tool') && plotOpen('forge'), done: () => !coldH() || campBusy('forge') },
+  { id: 'stock:store', ph: ['between'], needs: () => matsOfBuild('store'), when: () => coldH() && plotOpen('store') && !!needShort(matsOfBuild('store')).length, done: () => !coldH() || !(typeof CAMP_B === 'object' && CAMP_B.store) || campBusy('store') },
+  { id: 'store', ph: ['between'], pause: 1, pauseUnless: () => matsOfBuild('store'), when: () => coldH() && plotOpen('store'), done: () => !coldH() || !(typeof CAMP_B === 'object' && CAMP_B.store) || campBusy('store') },
+  { id: 'tab:party', ph: ['between'], quiet: 1, tip: 'The Hero tab holds your level, build and abilities.', when: () => isUnlocked('party') && S.maxZone >= 3 && !unlit() && !fightingNow(), done: () => !!O().seen.party },
   // a Got it note: it never pauses and never blocks (audit-1 3.8); the Next Up chip or Got it ends it
-  { id: 'nextup', ok: 1, when: () => isUnlocked('nextup') && stepDone('upgrade') && S.maxZone >= 3, done: () => false }
+  { id: 'nextup', ph: ['between'], quiet: 1, ok: 1, tip: 'Next Up names the one thing worth doing now.', when: () => isUnlocked('nextup') && stepDone('upgrade') && S.maxZone >= 3, done: () => false }
 ];
 const toolMade = () => S.items.some(it => CRAFT_KINDS[it.slot] && CRAFT_KINDS[it.slot].tool);
 
@@ -14427,8 +14441,18 @@ function craftReady() {
   onboardNeed = id => { const s = stepById(id), f = s && (s.needs || s.pauseUnless); try { return f ? needShort(f()) : []; } catch (e) { return []; } };
   // The pause guard: a step that waits for the player pauses the game, but never while it is also short of
   // the materials the action costs (the player could not press it and the clock they need would be stopped).
-  onboardPaused = step => { if (!(step && step.pause && !onboardNeed(step.id).length)) return false; try { return !step.pauseWhen || !!step.pauseWhen(); } catch (e) { return true; } };
-  onboardDone = id => { if (!O().done[id]) { O().done[id] = 1; emit('onboardStep', { id }); } };
+  // guide-voice: one paused step a fight. The first step to pause a fight keeps it; another tip that shows in the same fight does not pause.
+  onboardPaused = step => {
+    if (!(step && step.pause && !onboardNeed(step.id).length)) return false;
+    let p = true; try { p = !step.pauseWhen || !!step.pauseWhen(); } catch (e) {}
+    if (!p || guidePhase() === 'between') return p;
+    if ((step.ph || []).includes('between')) return false;   // a camp or menu tip left up from a break never freezes a fight
+    const R = GUIDE_RT;
+    if (R.pauseFight === R.fight && R.pauseId !== step.id) return false;
+    R.pauseFight = R.fight; R.pauseId = step.id; return true;
+  };
+  // done 1: the player did it. done 2: the tip waited 60 s unanswered and retired to the Journal's Tips.
+  onboardDone = (id, how) => { if (!O().done[id]) { O().done[id] = how || 1; emit('onboardStep', { id }); } };
   const guideOver = () => GUIDE_STEPS.every(s => O().done[s.id]);
   onboardStep = () => {
     if (!O().tips) return null;
@@ -14437,7 +14461,12 @@ function craftReady() {
       let d = false; try { d = !!s.done(); } catch (e) {}
       if (d) { onboardDone(s.id); continue; }
       let w = false; try { w = !!s.when(); } catch (e) {}
-      if (w) return s;
+      if (!w) continue;
+      const R = GUIDE_RT, held = R.latch === s.id;
+      if (!held && !s.ph.includes(guidePhase()) && !(!guideMenuCovers() && s.ph.includes(guidePhase(true)))) continue;   // not its phase: it waits (a wide screen still shows the fight beside a menu)
+      if (!held && s.quiet && R.lastEnd !== null && R.t - R.lastEnd < GUIDE_QUIET) continue;   // one unprompted line a minute
+      if (s.ph.includes('between')) R.latch = s.id;
+      return s;
     }
     return null;
   };
@@ -14468,10 +14497,17 @@ function craftReady() {
   on('soloAttack', () => { O().atk = (O().atk || 0) + 1; });
   on('soloDodge', e => { if (e && (e.res === 'dodge' || e.res === 'perfect')) O().dodges = (O().dodges || 0) + 1; });
   on('soloParry', e => { if (e && e.res === 'parry') O().parries = (O().parries || 0) + 1; });
+  // guide-voice runtime: which fight this is, and where each step ended
+  on('fightStart', () => { GUIDE_RT.fight++; });
+  on('packSpawn', () => { if (!(typeof turnCombatOn === 'function' && turnCombatOn())) GUIDE_RT.fight++; });
+  on('onboardStep', e => { if (!e) return; GUIDE_RT.doneIn[e.id] = GUIDE_RT.fight; GUIDE_RT.lastEnd = GUIDE_RT.t; if (GUIDE_RT.latch === e.id) GUIDE_RT.latch = ''; });
+  // A live tip nobody answers for 60 s of play retires: it stops showing and waits in the Journal's Tips.
+  guideRetire = id => { const s = stepById(id); if (!s || O().done[id]) return false; onboardDone(id, 2); return true; };
   let acc = 0;
   let lateAcc = 0;
   const lateOpen = () => FEATURES.every(f => !f.late || O().got[f.id] != null);
   onTick(dt => {
+    GUIDE_RT.t += dt;
     if (O().all) {   // only late features are left to check (about once a second)
       lateAcc += dt; if (lateAcc < 1) return; lateAcc = 0;
       if (!lateOpen()) onboardCheck();
@@ -25170,7 +25206,8 @@ function turnFoeSetup(f, z, o) {
   // the boss pass: a zone or region boss lasts longer and hits harder (TURN_TUNE.boss; not the Deepwell's or a Proving's)
   const B = T.boss, zb = !!(f.boss && !o.set);
   const len = zb ? (region ? B.regionHpX : turnZoneLine(B.hpX, z)) : 1;
-  const hp = hpA * ease * len * turnRefAtk(z) * (0.95 + Math.random() * 0.1);
+  const roll = 0.95 + Math.random() * 0.1;   // drawn for every foe so seeded sims keep their sequence
+  const hp = hpA * ease * len * turnRefAtk(z) * (f.boss ? 1 : roll);   // a boss keeps one HP across tries; the roll is for packs
   f.hp = f.max = hp; f.turn = 1; f.tz = z;
   f.tk = { script, spd: spd * 10, arm: Z && Z.armour ? Z.armour : f.armoured ? 0.3 : 0, boss: !!f.boss, region, elite: !!f.elite,
     hx: zb ? turnZoneLine(B.hitX, z) : f.boss || f.trial || f.deep ? 1 : turnZoneLine(T.normHitX, z) * (f.elite ? T.eliteHitX : 1), cx: zb ? turnZoneLine(B.chargeX, z) : 1,
@@ -27421,6 +27458,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
       // the place line sits under the bars, centred; the chips fill the rows beside it
       (box.style ? box : hud).style.setProperty('--vs-b', (VS.b + 2) + 'px');   // the stage box: .hud and .cb-strip read it
       const z = box.querySelector('.hud-zone');
+      if (box.style) box.style.setProperty('--vs-zb', (z && !z.hidden ? z.offsetTop + z.offsetHeight + 3 : 0) + 'px');   // toasts sit under the place line
       hudB = Math.max(VS.b + 26, z && !z.hidden ? z.offsetTop + z.offsetHeight : 0) / ZM;
     } else hudB = e && e.offsetParent && !e.hidden ? (e.offsetTop + e.offsetHeight) / ZM : 0;
   }
@@ -35571,7 +35609,7 @@ var handsTradeOpenPicker;
         r.tier = el('span', 'om-tier'); meta.append(r.tier, r.own);
         const bar = el('div', 'bar om-gbar'); bar.append(el('i')); r.bar = bar.firstChild;
         r.desc.before(meta, bar);
-        const d = disclose(r.row, r.desc.parentElement, null, [r.ic]); meta.append(d.chev);
+        const d = disclose(r.row, r.desc.parentElement, null, [r.ic]); meta.append(d.chev); r.dz = d;
         const sw = el('button', 'om-swap', 'Swap'); sw.type = 'button'; r.row.append(sw); r.sw = sw;
         r.btn.addEventListener('click', () => { if (almanac.claim(i)) ui(true); });
         sw.addEventListener('click', () => { if (almanac.swap(i)) ui(true); });
@@ -35608,6 +35646,9 @@ var handsTradeOpenPicker;
         const rw = almanac.reward(g), room = g.done && !g.claimed ? stashNeed(rw.mats.map(m => [m.k, m.t, m.n])) : '';   // H3: waits until it fits
         setTxt(r.desc, g.claimed ? 'Reward collected.' : room || 'Reward: ' + almanac.rewardText(rw));
         setIc(r.ic, iconOf({ ic: almanac.goalIcon(g) }));
+        const ready = g.done && !g.claimed;
+        if (ready !== !!r.ready) r.dz.set(ready);   // a finished goal opens, so its reward shows before you claim it
+        r.ready = ready;
         r.row.classList.toggle('active', g.done && !g.claimed);
         r.row.classList.toggle('claimed', g.claimed);
         r.sw.hidden = g.done || A.swaps <= 0;
@@ -40856,6 +40897,7 @@ let navUI = null;
   // UX-L1: in landscape a menu covers most of the stage, but the top row (Fight / Gather), Next Up and the action bar
   // stay on screen. onGame: the whole stage shows; onCtrl: those controls show.
   const onGame = () => !S.tab;
+  guideMenuCovers = () => !isWide();   // portrait: an open menu hides the fight, so a fight tip waits for it to close
   const onCtrl = () => !S.tab || isWide();
   const vis = n => !!(n && n.getClientRects().length && n.offsetParent !== null);
   const first = nm => String(nm || '').split(' ')[0];
@@ -40911,12 +40953,12 @@ let navUI = null;
   const turnTxt = () => typeof turnCombatOn === 'function' && turnCombatOn();
   const abName = () => { try { const a = abilityInfo(); return a ? a.name : 'Your ability'; } catch (e) { return 'Your ability'; } };
   const SOLO_UI = {
-    attack: () => onCtrl() && target() === 'mob' ? { node: sbtn('atk'), side: 'up', text: 'Foes ahead. Press Attack to strike the one in front.' } : null,
-    ability: () => onCtrl() && target() === 'mob' ? { node: sbtn('ab0'), side: 'up', text: `${abName()} is ready. Press it. (Hold an ability slot to change what it holds.)` } : null,
-    dodge: () => onCtrl() && target() === 'mob' ? { node: sbtn('dodge'), side: 'up', text: turnTxt() ? 'The foe is about to hit you. Press Dodge now to step out of the way. Every hit can be dodged or parried.' : 'A foe winds up a heavy hit (the red ring). Press Dodge to step out of the way.' } : null,
-    parry: () => onCtrl() && target() === 'mob' ? { node: sbtn('parry'), side: 'up', text: turnTxt() ? 'Parry is harder: press it just before the hit lands. It blocks the hit and takes a turn off your cooldowns. Parry every hit of an attack to counter.' : 'Another heavy hit. Press Parry just before it lands: no damage, the foe staggers and you counter.' } : null,
-    boss: () => target() !== 'mob' || !mob || !mob.boss ? null : onGame() ? { node: $('stage'), at: [0.72, 0.62], side: 'up', text: turnTxt() ? 'The zone boss! Dodge or Parry each blow. Stun it when it gathers a big move.' : 'The zone boss! Dodge or Parry when its red rings close.' }
-      : isWide() ? { node: q(`.tab[data-tab="${S.tab}"]`), text: 'The zone boss is here! Close this menu to watch the fight.' } : null,   // UX-L1: a landscape menu
+    attack: () => onCtrl() && target() === 'mob' ? { node: sbtn('atk'), side: 'up', text: "Something's in the road. Press Attack and hit it." } : null,
+    ability: () => onCtrl() && target() === 'mob' ? { node: sbtn('ab0'), side: 'up', text: `${abName()} is ready. Go on, press it. Hold the button to swap it.` } : null,
+    dodge: () => onCtrl() && target() === 'mob' ? { node: sbtn('dodge'), side: 'up', text: turnTxt() ? "It's winding up to hit you. Don't stand there. Press Dodge." : "See the red ring? A heavy hit's coming. Don't stand there. Press Dodge." } : null,
+    parry: () => onCtrl() && target() === 'mob' ? { node: sbtn('parry'), side: 'up', text: turnTxt() ? 'Harder now. Press Parry just before the hit lands. Parry every blow and you counter.' : 'Another heavy one. Press Parry just before it lands. It staggers, and you counter.' } : null,
+    boss: () => target() !== 'mob' || !mob || !mob.boss ? null : onGame() ? { node: $('stage'), at: [0.72, 0.62], side: 'up', text: turnTxt() ? "That's the zone boss. Watch the bar: Dodge or Parry every hit. If it gathers a big move, stun it or hit it hard." : "That's the zone boss. Watch the red rings. Dodge, or Parry at the last moment." }
+      : isWide() ? { node: q(`.tab[data-tab="${S.tab}"]`), text: 'The zone boss is here. Close this menu and watch.' } : null,   // UX-L1: a landscape menu
     gather: () => {
       if (!onCtrl()) return null;
       const b = q('#modeSeg button[data-act="gather"]');
@@ -40956,7 +40998,7 @@ let navUI = null;
     // hero-progression-rework: with attributes on, the first point goes into Might.
     upgrade: () => Object.assign(typeof attrOn === 'function' && attrOn()
       ? path('party', 'attributes', '#attrRows .at-row[data-at="might"] .at-add[data-n="1"]',
-        ['You have points to spend. Open Hero.', 'Open Build.', 'Add a point to Might. It makes Attack hit harder.'])
+        ["You've a point to spend. Open Hero.", 'Open Build.', "Put it in Might. You'll hit harder."])
       : path('party', 'training', '#trainRows .tr-row[data-mv="atk"] .buy',
         ['You have gold. Open Hero to train.', 'Open Training.', 'Train Attack. Each level hits harder.']), { side: S.tab === 'party' ? 'up' : '' }),
     'tab:gat': () => S.tab === 'gat' ? null : { node: q('.tab[data-tab="gat"]'), text: 'New tab: Gather. Tap it to see what you can mine.' },
@@ -40967,7 +41009,7 @@ let navUI = null;
 
   const USE_SHOWN_MS = 7000;   // a first-use line counts as read after this long on screen
   const BLOCK = '.create, .away-ov, .bsheet-ov, .modal, .dw-ov, .mm-ov';
-  let lastKey = '', useT0 = 0;
+  let lastKey = '', useT0 = 0, lastGT = null;
   function hide() { useT0 = 0; if (!layer.hidden) layer.hidden = true; if (!bub.hidden) bub.hidden = true; cur = null; curGo = null; lastKey = ''; lastNode = null; lastRect = null; ONBOARD.paused = false; const ap = $('app'); if (ap.classList.contains('guide-side')) ap.classList.remove('guide-side', 'guide-nu', 'guide-btn'); }
   // The hint used to re-read the target's pixel position and re-place itself every 250ms, so it
   // jumped whenever the stage moved under it (camera/zoom, screen shake, a pack spawning) even
@@ -40978,6 +41020,7 @@ let navUI = null;
   let dirty = true, reveal = true, panelScrolled = false, lastTab = S.tab;
   function invalidate() { dirty = true; }
   function tick() {
+    const dg = lastGT === null ? 0 : Math.max(0, GUIDE_RT.t - lastGT); lastGT = GUIDE_RT.t;   // game seconds since the last look
     if (S.tab !== lastTab) { lastTab = S.tab; dirty = true; reveal = true; }
     let step = null;
     try { step = onboardStep(); } catch (e) { console.error('[lanternfall] onboard step', e); }
@@ -40993,6 +41036,11 @@ let navUI = null;
     // a menu step whose button is disabled waits (a build while the builder is busy): no ring, no pause, no tip
     if (table === STEP_UI && !use && !spec.noRing && !pressable(spec.node)) return hide();
     if (use) { if (!useT0) useT0 = Date.now(); else if (Date.now() - useT0 > USE_SHOWN_MS) { onboardUseDone(step.id); return hide(); } }
+    // guide-voice: a live tip nobody answers for 60 s of play (game clock: a paused game adds none) retires to the Journal's Tips
+    if (!use && step.tip && !step.needs && !ONBOARD.paused) {
+      const R = GUIDE_RT.shown; R[step.id] = (R[step.id] || 0) + dg;
+      if (R[step.id] >= GUIDE_QUIET && guideRetire(step.id)) return hide();
+    }
     cur = step; curGo = spec.go || null;
     putHidden(okb, !(step.ok || curGo));
     putText(okb, curGo ? curGo.label : 'Got it');
@@ -41087,7 +41135,9 @@ let navUI = null;
       row.append(p, b);
       const row2 = el('div', 'ob-trow'), p2 = el('p', 'note', 'New tabs open as you play.'), b2 = el('button', 'ob-tbtn', 'Show every tab now'); b2.type = 'button';
       row2.append(p2, b2);
-      sec.append(row, row2);
+      const row3 = el('div', 'ob-trow'), p3 = el('p', 'note');
+      row3.append(p3);
+      sec.append(row, row3, row2);
       b.addEventListener('click', () => { onboardTips(); save(); tick(); sec._up(true); });
       b2.addEventListener('click', () => { onboardUnlockAll(); save(); sec._up(true); });
       sec._up = () => {
@@ -41096,6 +41146,9 @@ let navUI = null;
         putHidden(row, over);
         putText(p, O().tips ? 'Short tips point at what to try next.' : 'Tips are off.');
         putText(b, O().tips ? 'Skip tips' : 'Show tips');
+        const skipped = GUIDE_STEPS.filter(s => O().done[s.id] === 2 && s.tip).map(s => s.tip);
+        putHidden(row3, !skipped.length);
+        putText(p3, skipped.length ? 'Tips you missed: ' + skipped.join(' ') : '');
         putHidden(row2, O().all);
       };
     },
@@ -42877,7 +42930,8 @@ function storeSalvageNote(preview, t) {
     // trophies
     const troShow = filter === 'troph' || filter === 'all';
     putHidden(V.tro, !troShow || filter === 'troph');
-    putText(V.troL, `Trophies: ${troN} of ${CRAFT_TROPHIES.length} kinds`);
+    const mir = (S.party && S.party.mirrors) || 0;
+    putText(V.troL, `Rare finds: ${troN} of ${CRAFT_TROPHIES.length} Trophy kinds` + (mir ? ` · ${mir} Mirror${mir === 1 ? '' : 's'} of Embers` : ''));   // Trophies and Mirrors are Materials (counters-and-layers)
     putText(V.troR, showTro ? 'Hide' : 'Show');
     putToggle(V.tro, 'open', showTro);
     putHidden(V.troRow, !(filter === 'troph' || (troShow && showTro)));
