@@ -4,17 +4,17 @@
 //
 // A star is one small rule change in a turn fight ("A parried hit adds 1 Chill"). Players find them (zone bosses' first
 // wins, elites, the Deepwell's floors, the Provings), set up to 3 on a hero, and learn a star by winning starNeed()
-// fights with it set. A learned star can also be lit by any hero for its cost in star points, up to STARS_TUNE.litMax
-// lit. Found and learned stars belong to the lamp (every hero); each hero keeps its own 3 slots and lit stars. A fight
+// fights with it set. A learned star can also be lit by any hero for its cost in star points (a per-hero budget, starPoints(hero)); the points are the only limit.
+// Found and learned stars belong to the lamp (every hero); each hero keeps its own 3 slots and lit stars. A fight
 // takes them as it starts.
 //
-// Points: starPoints() = floor(S.L / 3) + 4 x greatLanternsLit() (region bosses beaten) + 1 for each complete
+// Points: starPoints(hero) = 2 + floor(hero level / 10) + greatLanternsLit() (region bosses beaten) + 1 for each complete
 // constellation (STARS_TUNE.skyPoints). Derived, never stored.
 // The star map (STAR_SKY, 24f): learn every star of a constellation and it is complete (starSkyDone). The first two
 // complete constellations each cut the wins to learn a star by 1 (starNeed(): 4, 3, then 2; STARS_TUNE.learnMin).
 //
 // API: greatLanternsLit, starPoints, starOwned(id), starLearned(id), starWins(id), starSlots(hero), starLit(hero),
-//   starFree(hero), starSet(slot, id | null, hero) -> bool, starLight(id, hero) -> bool, starUnlight(id, hero) -> bool,
+//   starFree(hero), starUsed(hero), starDim(hero) -> lit ids the points cannot pay for, starSet(slot, id | null, hero) -> bool, starLight(id, hero) -> bool, starUnlight(id, hero) -> bool,
 //   starWhy(id, hero) -> '' | why it cannot be lit, starGrant(id, quiet) -> bool, starsActive(hero) -> [ids],
 //   starsSetIds(hero) -> [ids], starsFound() -> n, starsLearnedN() -> n, starNeed() -> wins to learn a star,
 //   starSkyDone(skyId) -> bool, starSkiesDone() -> n, starSkyCount(skyId) -> { n, found, learned }.
@@ -38,7 +38,7 @@
 //   star comes on the second) }. A save from the old star map (v 2) keeps its maps field untouched; it does nothing now,
 //   and every star point is free again (the points were always derived).
 
-var greatLanternsLit, starPoints, starOwned, starLearned, starWins, starSlots, starLit, starFree, starSet, starLight, starUnlight,
+var greatLanternsLit, starPoints, starOwned, starLearned, starWins, starSlots, starLit, starFree, starUsed, starDim, starSet, starLight, starUnlight,
   starWhy, starGrant, starsActive, starsSetIds, starsFound, starsLearnedN, starNeed, starSkyDone, starSkiesDone, starSkyCount;
 
 {
@@ -113,7 +113,8 @@ var greatLanternsLit, starPoints, starOwned, starLearned, starWins, starSlots, s
 
   // ---- points ----
   greatLanternsLit = () => lanternsLitAt(S.maxZone);
-  starPoints = () => Math.floor((S.L || 1) / 3) + 4 * greatLanternsLit() + TU.skyPoints * starSkiesDone();
+  const heroL = k => { try { const l = typeof soloLevels === 'function' && k ? soloLevels()[k] : null; if (l && l.L) return l.L; } catch (e) { /* the main hero's level */ } return S.L || 1; };
+  starPoints = k => TU.budget.base + Math.floor(heroL(hk(k)) / TU.budget.perLevels) + TU.budget.lantern * greatLanternsLit() + TU.skyPoints * starSkiesDone();
 
   // ---- reads ----
   starOwned = id => !!ST().own[id];
@@ -137,13 +138,15 @@ var greatLanternsLit, starPoints, starOwned, starLearned, starWins, starSlots, s
     const r = s[k], set = Array.isArray(S.stars.set[k]) ? S.stars.set[k] : [], seen = new Set();
     for (let i = r.length - 1; i >= 0; i--) if (!(ok(r[i]) && S.stars.learned[r[i]] && !set.includes(r[i]))) r.splice(i, 1);
     for (let i = 0; i < r.length; i++) if (seen.has(r[i])) r.splice(i--, 1); else seen.add(r[i]);
-    if (r.length > TU.litMax) r.length = TU.litMax;
     return r;
   }
   starSlots = k => { k = hk(k); return k ? slotsRec((ST(), k)).slice() : [null, null, null]; };
   starLit = k => { k = hk(k); return k ? litRec((ST(), k)).slice() : []; };
   const litCost = k => starLit(k).reduce((a, id) => a + STARS[id].cost, 0);
-  starFree = k => starPoints() - litCost(k);
+  // star points the lit stars in play cost, and the lit stars the points cannot pay for (shown dim; none is removed)
+  starUsed = k => starsActive(k).filter(id => litRec(hk(k)).includes(id)).reduce((a, id) => a + STARS[id].cost, 0);
+  starDim = k => { k = hk(k); if (!k) return []; const on = starsActive(k); return litRec(k).filter(id => !on.includes(id)); };
+  starFree = k => starPoints(k) - litCost(k);
 
   // ---- changes (between fights: a fight takes its stars as it starts) ----
   const changed = k => emit('starsChange', { hero: k });
@@ -168,7 +171,6 @@ var greatLanternsLit, starPoints, starOwned, starLearned, starWins, starSlots, s
     if (slotsRec(k).includes(id)) return 'It is set in a slot.';
     const lit = litRec(k);
     if (lit.includes(id)) return '';
-    if (lit.length >= TU.litMax) return `You can light ${TU.litMax} stars. Put one out first.`;
     const free = starFree(k), c = STARS[id].cost;
     return free < c ? `Needs ${c} star point${c > 1 ? 's' : ''} (you have ${Math.max(0, free)}).` : '';
   };
@@ -187,7 +189,7 @@ var greatLanternsLit, starPoints, starOwned, starLearned, starWins, starSlots, s
   starsActive = k => {
     k = hk(k); if (!k) return [];
     const out = starsSetIds(k);
-    let left = starPoints();
+    let left = starPoints(k);
     for (const id of litRec(k)) { const c = STARS[id].cost; if (c <= left && !out.includes(id)) { out.push(id); left -= c; } }
     return out;
   };
@@ -252,15 +254,16 @@ var greatLanternsLit, starPoints, starOwned, starLearned, starWins, starSlots, s
 
   // ---- news: a new star point, while there is a learned star to light ----
   on('levelup', ({ L, quiet }) => {
-    if (quiet || L % 3 !== 0 || typeof isUnlocked !== 'function' || !isUnlocked('stars') || !starsLearnedN()) return;
+    if (quiet || L % TU.budget.perLevels !== 0 || typeof isUnlocked !== 'function' || !isUnlocked('stars') || !starsLearnedN()) return;
     toast(`+1 star point. You have ${Math.max(0, starFree())} to light stars with in Hero, Stars.`, 'good', { ic: ['constel', '#F2C14E'] }, 'normal');
   });
-  on('greatLantern', e => { if (e && e.rewards && !e.quiet) e.rewards.push({ txt: '+4 star points', ic: ['constel', '#F2C14E'] }); });
+  on('greatLantern', e => { if (e && e.rewards && !e.quiet) e.rewards.push({ txt: `+${TU.budget.lantern} star point${TU.budget.lantern === 1 ? '' : 's'}`, ic: ['constel', '#F2C14E'] }); });
 
   // ---- Next Up: a found star waiting for a free slot, or a learned star the points can light ----
   const nextUp = () => {
     const k = hk(); if (!k || (typeof isUnlocked === 'function' && !isUnlocked('stars'))) return null;
-    const r = slotsRec((ST(), k)), lit = litRec(k);
+    const r = slotsRec((ST(), k)), lit = litRec(k), dim = starDim(k);
+    if (dim.length) return { id: dim[0], txt: `${STARS[dim[0]].name} is dim: put a star out or earn star points` };
     if (r.includes(null)) { const id = STAR_ORDER.find(x => S.stars.own[x] && !r.includes(x) && !lit.includes(x)); if (id) return { id, txt: `Set ${STARS[id].name} in a star slot` }; }
     const id = STAR_ORDER.find(x => S.stars.learned[x] && !starWhy(x, k) && !lit.includes(x));
     return id ? { id, txt: `Light ${STARS[id].name} with your star points` } : null;

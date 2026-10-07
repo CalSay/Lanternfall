@@ -90,8 +90,11 @@ const TURN_TUNE = {
   //            kept-up hero about a quarter to a third of their health, a landed charge about two thirds. From zone 35
   //            the reference HP sits below a kept-up hero's (the late-zone pass), so hitX steps up there.
   //   payX     a longer boss pays more: gold and XP x (1 + payX x (its HP share - 1)), so an hour of play pays as before
-  boss: { hpX: [[3, 1], [10, 1.8], [15, 2.5], [20, 2.4], [25, 1.0], [27, 0.52], [30, 1.55], [34, 0.94], [35, 2.725], [36, 1.85]], regionHpX: 1.4,   // the gear pass (2026-10-02): zones 15-34 about x1.09, 36+ 1.5 -> 1.85, region 1.25 -> 1.4
-    hitX: [[3, 1], [6, 1.4], [8, 1.6], [15, 1.6], [20, 1.5], [25, 0.55], [27, 0.34], [30, 0.72], [34, 0.52], [35, 1.9]], chargeX: [[3, 1], [6, 1.3], [34, 1.3], [35, 1.35]], payX: 0.5 },
+  boss: { hpX: [[3, 1], [4, 1.5], [5, 3.7], [6, 2.2], [7, 2.15], [8, 1.9], [9, 1.5], [10, 1.9], [11, 1.4], [12, 1.8], [15, 2.5], [20, 2.4], [25, 1.0], [27, 0.52], [30, 1.55], [34, 0.94], [35, 2.725], [36, 1.85]], regionHpX: 1.4,   // the gear pass (2026-10-02): zones 15-34 about x1.09, 36+ 1.5 -> 1.85, region 1.25 -> 1.4
+    hitX: [[3, 1], [4, 1.6], [5, 3.4], [6, 2.4], [8, 1.5], [9, 1.0], [10, 1.05], [11, 0.95], [12, 0.85], [15, 1.6], [20, 1.5], [25, 0.55], [27, 0.34], [30, 0.72], [34, 0.52], [35, 1.9]], chargeX: [[3, 1], [6, 1.3], [34, 1.3], [35, 1.35]], payX: 0.5,
+    // hitCap: one boss hit never takes more than this share of the hero's max HP, so a missed parry cannot kill a full-health hero
+    // (zone bosses 1-15; judge 2026-10-07, docs/DECISIONS.md "Boss tiers"). Taken before armour, Guard and the rest; each hit of a charged move on its own.
+    hitCap: [[1, 0.4], [15, 0.4], [16, 0]] },
   // the boss riders on the hero (shares of the reference HP a tick, two hero turns)
   heroDot: { bleed: 0.02, burn: 0.04, venom: 0.02 }, heroDotT: 2, heroChill: 0.1, heroBlind: 0.3,
   windowCaps: { parry: 0.35, dodge: 0.5 }, dodgeTrain: 0.004,   // Dodge Training: +4 ms of dodge window a level
@@ -209,10 +212,13 @@ function turnFoeSetup(f, z, o) {
   const hp = hpA * ease * len * turnRefAtk(z) * (0.95 + Math.random() * 0.1);
   f.hp = f.max = hp; f.turn = 1; f.tz = z;
   f.tk = { script, spd: spd * 10, arm: Z && Z.armour ? Z.armour : f.armoured ? 0.3 : 0, boss: !!f.boss, region, elite: !!f.elite,
-    hx: zb ? turnZoneLine(B.hitX, z) : f.boss || f.trial || f.deep ? 1 : turnZoneLine(T.normHitX, z) * (f.elite ? T.eliteHitX : 1), cx: zb ? turnZoneLine(B.chargeX, z) : 1 };
+    hx: zb ? turnZoneLine(B.hitX, z) : f.boss || f.trial || f.deep ? 1 : turnZoneLine(T.normHitX, z) * (f.elite ? T.eliteHitX : 1), cx: zb ? turnZoneLine(B.chargeX, z) : 1,
+    hcap: zb && !region ? turnZoneLine(B.hitCap, z) : 0 };
   const C = COMBAT_TUNE;
   // a longer boss pays more (the boss pass: payX of its extra length), so an hour of play pays about as before
-  const pay = 1 + (len - 1) * B.payX;
+  // zones 4-12 pay on the old length (boss-tiers PR 1 lengthened those fights; first-hour gold and XP stay as they were)
+  const payLen = zb && !region && z <= 12 ? turnZoneLine([[3, 1], [10, 1.8], [15, 2.5]], z) : len;
+  const pay = 1 + (payLen - 1) * B.payX;
   f.gold = mobGold(z) * C.packGold * T.goldX * (f.boss ? 5 * pay : f.elite ? C.eliteGold : 1);
   f.xp = Math.ceil(Math.ceil(1.5 * z) * T.xpX * (f.boss ? 5 * pay : f.elite ? 2 : 1));
   return f;
@@ -261,7 +267,7 @@ function turnMakeProfile(f, u) {
     critChance: critChance(), critMult: critMult(), nonCrit: mod('nonCrit'), echo: g.echo || 0,
     hitX: T.foeAtkX * (1 - armRed) * classDr, blockP: u.blockP || 0, blockC: u.blockC || 0, blockN: u.blockN || 0, blockX: COMBAT_TUNE.blockX,
     heroSpd: ((T.heroHaste[key] || 10) + (g.initiative || 0)) * (1 + (g.aspd || 0) / 100), foeSpd: f.tk.spd, foeMaxHp: f.max, foeHp: f.hp,
-    bossHitX: f.tk.hx || 1, bossChargeX: f.tk.cx || 1, fullHp: !!(f.boss && !f.deep && !f.trial),   // the boss pass; a zone boss is met at full health
+    bossHitX: f.tk.hx || 1, bossChargeX: f.tk.cx || 1, bossHitCap: f.tk.hcap || 0, fullHp: !!(f.boss && !f.deep && !f.trial),   // the boss pass; a zone boss is met at full health
     foeName: f.name, foeType: f.txRow || f.type, foeArm: f.tk.arm, boss: f.tk.boss, region: f.tk.region, trait: f.tr && TURN_TRAITS[f.tr[0]] ? f.tr[0] : '',
     script: f.tk.script, eq, cds, tal: typeof talentsOf === 'function' ? talentsOf(key) : {},
     stars: typeof starsActive === 'function' ? starsActive(key) : [], starSet: typeof starsSetIds === 'function' ? starsSetIds(key) : [],   // the Stars (57e)
@@ -750,8 +756,10 @@ function turnHitStart(m, io) {
 // a landed hit on the hero
 function turnLand(m, io, hit) {
   const T = TURN_TUNE, p = m.p, h = m.h, e = m.e;
-  let amt = (hit.x || 0.2) * p.refHp * p.hitX * (p.bossHitX || 1) * (m.move && m.move.charge ? p.bossChargeX || 1 : 1) *
+  let amt = (hit.x || 0.2) * p.refHp * (p.bossHitX || 1) * (m.move && m.move.charge ? p.bossChargeX || 1 : 1) *
     (e.weaken > 0 ? T.weakenX : 1) * (m.enraged ? TURN_TRAITS.enraged.dmg : 1);
+  if (p.bossHitCap > 0) amt = Math.min(amt, p.bossHitCap * p.heroMaxHp);   // the boss's side of the hit, before the hero's armour and defences
+  amt *= p.hitX;
   let red = 1;
   if (h.guard > 0) red *= T.guardX;
   if (h.grit > 0) red *= 1 - T.gritDr * h.grit;

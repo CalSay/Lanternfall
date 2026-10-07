@@ -238,7 +238,7 @@ var forgeGoalPicks = 0;
         const c = canCraft(kind, t);
         if (!c.cost || c.lv < c.need || c.unbuilt) continue;   // unbuilt: a cold save's station (H1)
         const ks = Object.keys(c.cost.mats);
-        const p = c.ok ? 1 : Math.min(0.99, ks.reduce((a, k) => a + Math.min(1, need(S.mats[k][t - 1], c.cost.mats[k])), 0) / Math.max(1, ks.length));
+        const p = c.ok ? 1 : Math.min(0.99, ks.reduce((a, k) => a + Math.min(1, need(matOwn(k, t), c.cost.mats[k])), 0) / Math.max(1, ks.length));
         const score = p + (pos === 'weapon' ? 0.02 : 0);
         if (!best || score > best.score) best = { kind, t, cost: c.cost.mats, p, score };
       }
@@ -251,8 +251,8 @@ var forgeGoalPicks = 0;
     label: () => { const b = forgeNext(); if (!b) return ''; const nm = kindName(b.kind, b.t);
       const a = /^[AEIOU]/.test(nm) ? 'an' : 'a';
       if (b.p >= 1) return `Craft ${a} ${nm}: you have the materials`;
-      const k = Object.keys(b.cost).find(k => S.mats[k][b.t - 1] < b.cost[k]);
-      return k ? `Craft ${a} ${nm}: ${fmt(b.cost[k] - S.mats[k][b.t - 1])} more ${matName(k, b.t)}` : `Craft ${a} ${nm}`; },
+      const k = Object.keys(b.cost).find(k => matOwn(k, b.t) < b.cost[k]);
+      return k ? `Craft ${a} ${nm}: ${fmt(b.cost[k] - matOwn(k, b.t))} more ${costName(k, b.t)}` : `Craft ${a} ${nm}`; },
     icon: () => { const b = forgeNext(); return b ? { item: { slot: b.kind, t: b.t } } : null; },
     go: { tab: 'forge', sel: '#forgeBtn', fn: () => { const b = forgeNext(); if (b) { S.fSlot = b.kind; S.fTier = b.t; forgeGoalPicks++; } } }
   });

@@ -351,9 +351,9 @@ function makeRow(parent, name, ember, iconUrl, icCls) {
 function costChips(box, mats, t, gold) {
   box.textContent = '';
   for (const [k, n] of Object.entries(mats)) {
-    const have = S.mats[k][t - 1];
+    const have = matOwn(k, t);
     const c = el('span', 'cost' + (have < n ? ' short' : ''));
-    c.append(img(matIcon(k, t)), el('span', null, `${fmt(have)}/${fmt(n)} ${matName(k, t)}`));
+    c.append(img(matIcon(k, t)), el('span', null, `${fmt(have)}/${fmt(n)} ${costName(k, t)}`));
     box.append(c);
   }
   if (gold) {

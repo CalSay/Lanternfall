@@ -74,13 +74,11 @@ const REG = [
   { id: 'ess', name: 'Essence', field: 'S.mats.ess[0..4]', what: 'Dim, Glowing, Radiant, Tidelit, Stormlit. Fight drops; grade is set by zone.', mat: 'ess',
     src: [['Fight drops (0.25 a foe, +3 a boss)', '50-sim.js', "stashAdd\\('ess', tier, ess, 'flow', true\\)"], ['Away fighting (dormant)', '50-sim.js', "stashAdd\\('ess', tier, Math\\.floor\\(kills"],
       ['Bounty parcels', '55-bounties.js', "stashAdd\\(r\\.kind, r\\.t, r\\.n, 'parcel'\\)"], ['Almanac board crates', '55-almanac.js', 'stashAdd\\(m\\.k, m\\.t, m\\.n'],
-      ['Salvaging a Unique (+10)', '51-actions.js', "if \\(it\\.u\\) stashAdd\\('ess', it\\.t, 10"], ['Salvaging affixed gear (+1 sometimes)', '55-crafting.js', "stashAdd\\('ess', it\\.t, 1, 'preview'\\)"],
-      ['Transmute (Enchanting): down a grade gives 2 for 1', '55-crafting.js', 'stashAdd\\(fam, c\\.toT, c\\.give']],
+      ['Salvaging a Unique (+10)', '51-actions.js', "if \\(it\\.u\\) stashAdd\\('ess', it\\.t, 10"], ['Salvaging affixed gear (+1 sometimes)', '55-crafting.js', "stashAdd\\('ess', it\\.t, 1, 'preview'\\)"]],
     snk: [
-      ['Transmute (Enchanting): spends 4 to go up a grade, 1 to go down', '55-crafting.js', 'S\\.mats\\[fam\\]\\[fromT - 1\\] -= c\\.take'],
       ['Gear crafts (1 to 2 an item, charm 5)', '55-crafting.js', 'payMats\\(c\\.cost\\.mats, t\\)'], ['Reforging (rises 50% a reroll)', '55-crafting.js', 'payMats\\(c\\.cost\\.mats, it\\.t\\)'],
       ['Star Chart', '55-crafting.js', 'payMats\\(STAR\\.mats, STAR\\.t\\)'], ['Camp builds (Hearth, Enchanter, Library, Shrine)', '57-camp.js', 'S\\.mats\\[f\\]\\[t - 1\\] -= n'],
-      ['Class change (Mirror of Embers)', '55-classes.js', 'S\\.mats\\.ess\\[cost\\.ess\\.t - 1\\] -= cost\\.ess\\.n'], ['Hero unlock routes', '56c-unlocks.js', 'S\\.mats\\[k\\]\\[i\\] -= take'],
+      ['Class change (Mirror of Embers)', '55-classes.js', 'essPay\\(cost\\.ess\\.n\\)'], ['Hero unlock routes', '56c-unlocks.js', 'S\\.mats\\[k\\]\\[i\\] -= take'],
       ['Tonics', '55-crafting.js', 'payMats\\(m, t\\)']] },
   { id: 'crystal', name: 'Crystal', field: 'S.mats.crystal[0..4]', what: 'Gems from Mining nodes.', mat: 'crystal',
     src: [
@@ -135,10 +133,9 @@ const REG = [
   { id: 'tokens', name: 'Boss tokens', field: 'S.party.unlock.tokens', what: 'Stonebreaker\'s Token, Kiln Tally, Lichen Bundle, Dusk Contract. A flag that unlocks one hero.',
     src: [['Boss kills roll a token, with pity', '56c-unlocks.js', 'U\\(\\)\\.tokens\\[id\\]']], snk: [['Winning one unlocks the hero (the flag is kept)', '56c-unlocks.js', 'for \\(const id in T\\.tokens\\)']] },
   { id: 'stars', name: 'Star points', field: 'derived from level, Great Lanterns and constellations (not saved)', what: 'A budget for lighting stars. Not consumed.',
-    src: [['One per 3 hero levels (plus 4 a Great Lantern, 1 a constellation)', '57e-stars.js', 'starPoints = \\(\\) =>']], snk: [['Lighting a star (2 lit a hero)', '57e-stars.js', 'starFree = k =>']] },
-  { id: 'talent', name: 'Talent points', field: 'derived from hero level (not saved); choices in S.abil', what: 'A budget for talent choices on abilities, Attack, Parry and Dodge.',
-    src: [['Hero levels', '56e-abilities.js', 'talentPoints = k =>']], snk: [['Setting a talent (a switch between a and b is free)', '56e-abilities.js', 'talentSet = \\(k, id, c\\) =>|talentSet = \\(k, id, c\\)']],
-    links: ['A budget like star points: spent points come back when a talent is cleared.'] },
+    src: [['2 to start, 1 per 10 hero levels, 1 a Great Lantern, 1 a constellation (a budget per hero)', '57e-stars.js', 'starPoints = k =>']], snk: [['Lighting a star (the points are the only limit)', '57e-stars.js', 'starFree = k =>']] },
+  { id: 'attr', name: 'Attribute points', field: 'S.attr.pts (spent; the total is derived from hero level)', what: 'Four a hero level after Lv 1. Spend them on Might, Focus, Guard or Vigour in Hero, Build. Adding is free; a reset costs gold after the first.',
+    src: [['Hero levels (HERO_TUNE.perLevel a level)', '55-attributes.js', 'function attrTotal']], snk: [['Adding a point to an attribute', '55-attributes.js', 'r\\[id\\] = attrOf\\(k, id\\) \\+ add']] },
   { id: 'deedpts', name: 'Achievement points', field: 'S.deeds.pts (derived from tiers and Feats)', what: 'Deed tiers, Feats and chapters add points. The ladder gives titles, looks and Trophy Wall stages.',
     src: [['Deed tiers, Feats, secrets and chapters', '58-deeds.js', 'function pointsNow\\(\\)']], snk: [['Ladder milestones unlock at thresholds; never spent', '58-deeds.js', 'd\\.mil\\[m\\.at\\] = 1']] },
   { id: 'mirrors', ids: ['mirrors'], name: 'Mirrors of Embers', field: 'S.party.mirrors', what: 'Needed with Essence to change class or evolution path.',
@@ -170,6 +167,19 @@ const ALLOW = {
   stamps: { snk: 'Only a deed counter, one Feat and Lantern Light (2 points each) read Stamps; nothing spends them. Candidate for a sink or a cut.' }
 };
 
+// What each currency is to the player (counters-and-layers, docs/DECISIONS.md): the eight CORE counters are the only points
+// or money shown as such outside their own screen. Materials (ore, wood, crystal, fibre, herb, hide, plus Trophies and
+// Mirrors of Embers as Rare finds) read as one Materials counter; the rest are meters, scores, flags, a timer, gear or a
+// Deepwell-only token.
+const KIND = {
+  gold: 'core', xp: 'core (Level)', ess: 'core', scrolls: 'core', stars: 'core', attr: 'core', embers: 'core (online)',
+  ore: 'core (Materials)', wood: 'core (Materials)', crystal: 'core (Materials)', fibre: 'core (Materials)', herb: 'core (Materials)', hide: 'core (Materials)',
+  trophies: 'Materials (rare finds)', mirrors: 'Materials (rare finds)',
+  skillxp: 'meter', handxp: 'meter', toolxp: 'meter', renown: 'meter (gate)', deedpts: 'score', light: 'score', stamps: 'score',
+  tokens: 'flag', oil: 'timer', marks: 'mode (Deepwell only)', relics: 'gear', uniques: 'gear'
+};
+const CORE = ['Gold', 'Essence', 'Materials', 'Level', 'Attribute points', 'Star points', 'Scrolls', 'Embers'];
+
 // Counters whose names look like currency but are not, each with the reason.
 const NOT_CURRENCY = {
   markleft: 'Charges left on a Mark status in a fight.', markt: 'A Mark status timer in a fight.', oilgot: 'A per-floor tally of Oil refunds (a cap counter).',
@@ -184,6 +194,9 @@ function matches(file, re) {
 
 export function audit() {
   const problems = [];
+  for (const c of REG) if (!KIND[c.id]) problems.push(`${c.name}: no Kind. Say whether it is a core counter, a meter, a score, a flag, a timer or gear (counters-and-layers)`);
+  { const seen = new Set(REG.filter(c => /^core/.test(KIND[c.id] || '')).map(c => (/\((Materials|Level|online)\)/.exec(KIND[c.id]) || [, c.name])[1] === 'online' ? c.name : (/\((Materials|Level)\)/.exec(KIND[c.id]) || [, c.name])[1]));
+    if (seen.size !== CORE.length || CORE.some(n => !seen.has(n))) problems.push(`the core counters are ${[...seen].join(', ')}; they must be exactly ${CORE.join(', ')}`); }
   for (const c of REG) {
     for (const [side, list] of [['src', c.src], ['snk', c.snk]]) {
       for (const [sys, file, re] of list) {
@@ -260,11 +273,12 @@ function render() {
     `- Node tier opens at gathering level: ${f.nodeReq}. Item tier opens at crafting level: ${f.stationReq}.`,
     `- Essence grade opens at zone: ${f.essTier}. Base drop chance a foe: ${f.essChance}.`,
     `- Training prices: ${f.trainBase}.`, '', '## Summary', '',
-    '| Currency | Sources | Sinks | Note |', '|---|---|---|---|');
+    '| Currency | Kind | Sources | Sinks | Note |', '|---|---|---|---|---|');
   for (const c of REG) {
     const al = ALLOW[c.id] || {};
-    L.push(`| ${c.name} | ${c.src.length} | ${c.snk.length} | ${al.snk ? 'No sink: ' + al.snk : al.src ? 'No source: ' + al.src : ''} |`);
+    L.push(`| ${c.name} | ${KIND[c.id] || ''} | ${c.src.length} | ${c.snk.length} | ${al.snk ? 'No sink: ' + al.snk : al.src ? 'No source: ' + al.src : ''} |`);
   }
+  L.push('', `The player sees ${CORE.length} core counters: ${CORE.join(', ')}. Everything else is a meter, score, flag, timer or gear on its own screen (the Kind column).`);
   L.push('', '## Why this page exists', '',
     '- **Problem and evidence.** New cards kept adding currencies with no use and hoarding materials. The 50-hour health run (`node tools/health.mjs --long`) shows wood and Essence piling up while 93% of gold is spent, and the optimiser playtest left 23,000 Iron Ore idle.',
     '- **Coverage-map area.** 8 Economy ("Does every currency have a sink and a use?"), with 10 Skills and crafting and 4 Overwhelm and unlock pacing. Compass pillar: not set yet (`compass.md` is pending).',

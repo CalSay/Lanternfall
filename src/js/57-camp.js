@@ -189,13 +189,13 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
   const short = c => {
     const out = [];
     if (S.gold < c.gold) out.push(`${fmt(c.gold - S.gold)} more gold`);
-    for (const [f, t, n] of c.mats) { const h = (S.mats[f] && S.mats[f][t - 1]) || 0; if (h < n) out.push(`${fmt(n - h)} more ${matName(f, t)}`); }
+    for (const [f, t, n] of c.mats) { const h = matOwn(f, t); if (h < n) out.push(`${fmt(n - h)} more ${costName(f, t)}`); }
     for (const [i, n] of c.troph) if (trophyHave(i) < n) out.push(`${n - trophyHave(i)} more ${trophyName(i)}`);
     return out;
   };
   const pay = (c, sign, id) => {
     S.gold -= sign * c.gold; econSpend(id === 'tent' ? 'tent' : 'camp', sign * c.gold);
-    for (const [f, t, n] of c.mats) if (sign < 0) stashAdd(f, t, n, 'gift'); else S.mats[f][t - 1] -= n;   // refunds always land (H3)
+    for (const [f, t, n] of c.mats) if (sign < 0) stashAdd(f, t, n, 'gift'); else if (f === 'ess') essPay(n); else S.mats[f][t - 1] -= n;   // refunds always land (H3)
     // Trophies of "any" type: take from the biggest pile first; refunds go to the first type paid.
     for (const [i, n] of c.troph) {
       const tr = S.craft.troph;
@@ -467,7 +467,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
       if (!c.miss || (best && best.ok)) continue;
       let p = 1;
       if (c.cost.gold > 0) p = Math.min(p, S.gold / c.cost.gold);
-      for (const [f, t, n] of c.cost.mats) p = Math.min(p, (S.mats[f][t - 1] || 0) / n);
+      for (const [f, t, n] of c.cost.mats) p = Math.min(p, matOwn(f, t) / n);
       for (const [i, n] of c.cost.troph) p = Math.min(p, trophyHave(i) / n);
       if (!best || p > best.p) best = { id, c, ok: false, p, score: 0 };
     }

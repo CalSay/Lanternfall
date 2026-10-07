@@ -600,7 +600,7 @@ if (section('crafting')) try {
   const mats = () => E('JSON.stringify(S.mats)');
   // gates and player-facing reasons
   const why0 = E('canCraft("robe", 1).why');
-  assert(why0 === '7 more Hemp Fibre, 1 more Quartz, 1 more Sage Sprig, 2 more Dim Essence', `canCraft names what is missing (${why0})`);
+  assert(why0 === '7 more Hemp Fibre, 1 more Quartz, 1 more Sage Sprig, 2 more Essence', `canCraft names what is missing (${why0})`);
   const RQ = t => E(`CRAFT_STATION_REQ[${t - 1}]`);   // GP1: the gates are SKILL_TUNE.stationReq
   assert(E('canCraft("robe", 2).why') === `Needs Tailoring ${RQ(2)}` && E('craftItem("robe", 2)') === null, `station tier gate: Needs Tailoring ${RQ(2)}`);
   assert(E('canCraft("charm", 3).why') === `Needs Enchanting ${RQ(3)}`, "Charm gates on the Enchanter's Table...");
@@ -1377,9 +1377,10 @@ if (section('onboarding')) try {
   E('ONBOARD.gate = true');
   const shown = () => E('topGoals(60, { sticky: false }).map(x => x.sys)');
   assert(!shown().some(s => ['bounty', 'bestiary', 'skill', 'forge', 'camp', 'roster'].includes(s)), 'Next Up hides goals of hidden systems: ' + shown().join(','));
+  for (let i = 0; i < 40; i++) g.fn.tick(0.1);   // (guide-voice: the Attack tip waits for a foe on the field)
   assert(E('onboardStep().id') === 'attack', 'the guide starts with "Attack" (solo)');
-  for (let i = 0; i < 5; i++) g.fn.tick(0.1);
   E('soloAttack()');
+  for (let i = 0; i < 300 && !(E('onboardStep()') && E('onboardStep().id') === 'ability'); i++) g.fn.tick(0.1);   // guide-voice: the ability tip waits for your turn
   assert(E('onboardStep().id') === 'ability', 'one Attack -> "your ability"');
   E('soloAbility()');
   // play like a new player: fight, buy the cheapest upgrade, gather now and then, craft what Next Up offers
@@ -1455,7 +1456,7 @@ if (section('first-use lines (ap-first-use-hints)')) try {
   let steps = 0; g.fn.on('onboardStep', () => steps++);
   E('onboardUseDone("use:bounties")');
   assert(use('adv', 'bounties') === null && steps === 0, 'read once: it does not show again, and no guide-step event fires');
-  assert(E('onboardStep().id') === 'attack' && E('!GUIDE_STEPS.some(s => /^use:/.test(s.id))'), 'the guide steps are unchanged: a line is never one of them');
+  assert(E('GUIDE_STEPS[0].id') === 'attack' && E('!GUIDE_STEPS.some(s => /^use:/.test(s.id))'), 'the guide steps are unchanged: a line is never one of them');
   E('onboardTips(false)');
   assert(use('gather', 'mine') === null, 'Skip tips silences the lines');
   E('onboardTips(true); S.onboard.got.party = Math.round(S.onboard.t) - 7300');
@@ -1538,10 +1539,13 @@ if (section('stars')) try {
   const errs = [];   // hero-progression-rework: these star checks play an untrained hero at Lv 20 (a boss that lasts more than 2 turns), so they run with HERO_TUNE.training = 1
   const g = loadCore({ seed: 41, turns: true, training: true }), E = s => g.eval(s);
   assert(E('JSON.stringify(S.stars)') === '{"v":3,"own":{},"wins":{},"learned":{},"set":{},"lit":{},"dry":0,"seenN":0,"pw":{}}', 'new game: S.stars defaults');
-  // star points: a point every 3 hero levels, 4 for each Great Lantern (unchanged from the old map)
-  const pts = (L, z) => E(`S.L = ${L}; S.maxZone = ${z}; starPoints()`);
-  assert(pts(1, 1) === 0 && pts(3, 1) === 1 && pts(20, 20) === 6 && pts(35, 35) === 11, 'a star point every 3 hero levels');
-  assert(pts(35, 36) === 15 && pts(54, 71) === 26 && E('greatLanternsLit()') === 2, 'a Great Lantern (+4) for each region boss: the zone 35 boss first');
+  // star points (counters-and-layers): a per-hero budget, 2 + 1 every 10 hero levels + 1 for each Great Lantern + 1 for each complete constellation
+  const heroLv = () => E('(soloLevels()[soloHero()] || { L: S.L }).L');
+  const pts = (L, z) => { E(`S.L = ${L}; S.maxZone = ${z}; starPoints()`); return E('starPoints()'); };
+  const want = z => 2 + Math.floor(heroLv() / 10) + E('greatLanternsLit()');
+  assert(pts(1, 1) === 2 && pts(1, 1) === want(1) && E('STARS_TUNE.budget.base') === 2, 'a hero starts with 2 star points');
+  { const lo = pts(5, 1), hi = pts(55, 1); assert(hi > lo && hi === want(55), 'star points rise a point every 10 hero levels'); }
+  { const a0 = pts(20, 20), a1 = pts(20, 36); assert(a1 === a0 + 1 && E('greatLanternsLit()') === 1, 'a Great Lantern is +1 star point: the zone 35 boss first'); }
   E('S.L = 1; S.maxZone = 1');
   // the data: 43 stars (25, then 18 more in the second pass, owner 2026-10-02: "Might need more of them though"), each a
   // plain rule with a cost of 1-3, one place it is found, whose kit it plays with, and one constellation on the map
@@ -1564,7 +1568,7 @@ if (section('stars')) try {
   assert(SKY.sky.length === 6 && cells.size === 6 && onMap.length === 43 && new Set(onMap).size === 43 && D.every(s => SKY.sky.some(c => c.id === s.sky && c.stars.some(x => x[0] === s.id))) && !skyBad.length,
     'the star map: 6 constellations in a 3 x 2 sky, each star once at its own spot (40 units apart at least), lines only between its own stars' + (skyBad.length ? ': ' + skyBad.join() : ''));
   assert(D.filter(s => s.fold).map(s => s.fold).sort().join() === 'priest,reaver,trapper,venomstalker,warden,warlock', 'the six evolutions each fold one effect into a Proving star');
-  assert(E('String(STARS_TUNE.slots) + STARS_TUNE.litMax + STARS_TUNE.learnWins') === '324', 'the limits: 3 set, 2 lit, learned after 4 won fights');
+  assert(E('String(STARS_TUNE.slots) + STARS_TUNE.learnWins + (STARS_TUNE.litMax === undefined)') === '34true', 'the limits: 3 set, learned after 4 won fights, no separate cap on lit stars (the points are the limit)');
 
   // finding: a zone boss's first win, a Proving, an elite (with a dry-streak cap)
   E('soloPick("wren", { now: true }); starsFound(); S.L = 30; S.maxZone = 30; S.onboard.all = 1');   // (the save is read first: a later maxZone is play, not an old save's catch-up)
@@ -1606,16 +1610,24 @@ if (section('stars')) try {
   assert(E('starSet(0, "brand") && starSet(1, "serrated") && starSet(2, "coldsteel") && starSet(0, "serrated")') && E('starSlots().join()') === 'serrated,brand,coldsteel', 'a star set in another slot swaps places');
   assert(/^Win 4 more fights/.test(E('starWhy("encore")')) && !E('starLight("encore")'), `a star not learned yet cannot be lit ("${E('starWhy("encore")')}")`);
   E('for (const id of ["encore", "turning", "huntstep", "brand"]) S.stars.learned[id] = 1');
-  assert(E('starPoints()') === 10 && E('starLight("encore") && starLight("turning")') && E('starFree()') === 5, 'lighting spends star points (Encore 3, Turning Point 2: 5 of 10 left)');
-  assert(!E('starLight("huntstep")') && /^You can light 2 stars/.test(E('starWhy("huntstep")')), 'a third lit star is refused: 2 at most');
+  // the budget binds: with exactly 3 points Encore (3) lights and Turning Point (2) is refused; lowering the points dims it, removes nothing
+  E('globalThis.__bud = { ...STARS_TUNE.budget }; STARS_TUNE.budget.perLevels = 1e9; STARS_TUNE.budget.lantern = 0; STARS_TUNE.budget.base = 3');
+  assert(E('starPoints()') === 3 && E('starLight("encore")') && E('starFree()') === 0, 'lighting spends star points: Encore costs all 3');
+  assert(!E('starLight("turning")') && /^Needs 2 star points \(you have 0\)/.test(E('starWhy("turning")')), `an overspend is refused ("${E('starWhy("turning")')}")`);
+  E('STARS_TUNE.budget.base = 2');
+  assert(E('starDim().join()') === 'encore' && E('starLit().join()') === 'encore' && !E('starsActive().includes("encore")') && E('starUsed()') === 0, 'a lit star the points no longer pay for is dim, still lit, and not in the fight');
+  assert(E('starUnlight("encore")') && E('starDim().length') === 0, 'putting it out clears the dim state');
+  E('Object.assign(STARS_TUNE.budget, __bud); S.L = 30');
+  const P0 = E('starPoints()');
+  assert(P0 >= 5 && E('starLight("encore") && starLight("turning")') && E('starFree()') === P0 - 5, `lighting spends star points (Encore 3, Turning Point 2: ${P0 - 5} of ${P0} left)`);
   assert(E('starWhy("brand")') === 'It is set in a slot.', 'a set star is not lit as well');
   assert(E('starUnlight("turning") && starLight("huntstep")') && E('starLit().join()') === 'encore,huntstep', 'putting a star out gives its points back');
   assert(E('starSet(2, "encore")') && E('starLit().join()') === 'huntstep' && E('starSlots()[2]') === 'encore', 'setting a lit star puts it out first');
   E('starLight("turning")');
   assert(E('JSON.stringify(starsActive("wren"))') === '["serrated","brand","encore","huntstep","turning"]', `a fight takes the 3 set and the 2 lit stars, never more than 5 (${E('JSON.stringify(starsActive("wren"))')})`);
-  E('S.L = 6');
-  assert(E('JSON.stringify(starsActive("wren"))') === '["serrated","brand","encore","huntstep"]', 'with fewer points (a lower level) only the lit stars the points still pay for come along');
-  E('S.L = 30');
+  E('STARS_TUNE.budget.perLevels = 1e9; STARS_TUNE.budget.lantern = 0; STARS_TUNE.budget.base = 1');
+  assert(E('JSON.stringify(starsActive("wren"))') === '["serrated","brand","encore","huntstep"]' && E('starDim().join()') === 'turning', 'with fewer points only the lit stars the points still pay for come along; the rest are dim');
+  E('Object.assign(STARS_TUNE.budget, __bud); S.L = 30');
   assert(E('starSlots("tobin").every(x => x === null) && starLit("tobin").length === 0'), 'each hero has its own slots: Tobin starts empty');
   E('S.activity = "fight"; arena = null; fightBoss = false; spawn()');
   assert(E('JSON.stringify(turnMakeProfile(combatFoes()[0], cbUnitByKey("hero")).stars)') === JSON.stringify(['serrated', 'brand', 'encore', 'huntstep', 'turning']), 'a turn fight takes the hero\'s stars as it starts (the profile)');
@@ -1755,7 +1767,7 @@ if (section('stars')) try {
     o.fn.tick(0.1);
     const want = JSON.parse(o.eval('JSON.stringify(STAR_ORDER.filter(id => STARS[id].from.zone && STARS[id].from.zone < S.maxZone))'));
     assert(o.eval('S.stars.v') === 3 && JSON.stringify(Object.keys(o.eval('S.stars.own'))) === JSON.stringify(want) && o.eval('starsActive().length') === 0
-      && o.eval('starPoints()') === Math.floor(raw.L / 3) + 4 * Math.floor((raw.maxZone - 1) / 35) && !o.errors.length,
+      && o.eval('starPoints()') === 2 + Math.floor(o.eval('(soloLevels()[soloHero()] || { L: S.L }).L') / 10) + Math.floor((raw.maxZone - 1) / 35) && !o.errors.length,
       `${f}: loads, finds the ${want.length} stars of the zone bosses behind it (zone ${raw.maxZone}), sets none, keeps its star points` + (o.errors[0] ? ': ' + o.errors[0] : ''));
   }
   // a save from the old star map (stars lit on its layouts): it loads, its points are free, the bell says the Stars changed
@@ -1951,13 +1963,13 @@ if (section('regions and the Great Lantern')) try {
   const e0 = ev.gl[0] || {};
   assert(E('COAST_STORY_ON') === false && ev.gl.length === 1 && e0.quiet === false && e0.region === 'hollow' && e0.n === 1 && e0.zone === 35 && e0.head === 'The Great Lantern of the Hollow burns again.' && e0.text === '' && !ev.news.length,
     `the zone 35 boss's first kill: one Great Lantern card ("${e0.head}"), a plain line (the Coast's writing is switched off, so no green-light hook), no bell line`);
-  assert((e0.rewards || []).some(r => r.txt === '+4 star points') && E('starPoints()') === pts0 + 4 && E('greatLanternsLit()') === 1,
-    'constellations: the card lists +4 star points and they are granted (greatLanternsLit 1)');
+  assert((e0.rewards || []).some(r => r.txt === '+1 star point') && E('starPoints()') === pts0 + 1 && E('greatLanternsLit()') === 1,
+    'constellations: the card lists +1 star point and they are granted (greatLanternsLit 1)');
   E('S.zone = 35; emit("zoneClear", { zone: 35 }); S.maxZone = 40; S.zone = 40'); ticks(g, 5);
   const saved = E('save(), 1') && g.storage.get(KEY);
   const g2 = loadCore({ seed: 63, storage: memoryStorage({ [KEY]: saved }) }), ev2 = watch(g2);
   ticks(g2, 5);
-  assert(ev.gl.length === 1 && E('starPoints()') === pts0 + 4 && E('S.lantern.lit.hollow') > 0 && !ev2.gl.length && !ev2.news.length && g2.eval('greatLanternsLit()') === 1,
+  assert(ev.gl.length === 1 && E('starPoints()') === pts0 + 1 && E('S.lantern.lit.hollow') > 0 && !ev2.gl.length && !ev2.news.length && g2.eval('greatLanternsLit()') === 1,
     'it fires once: not on a rematch, not further on, not after a reload; the points stay +4');
   E('S.maxZone = 71; S.zone = 71'); ticks(g, 2);
   assert(ev.gl.length === 2 && ev.gl[1].region === 'coast' && ev.gl[1].n === 2 && ev.gl[1].head === 'The Great Lantern of the Coast burns again.' && E('greatLanternsLit()') === 2 && !g.errors.length,
@@ -2924,9 +2936,10 @@ if (section('store')) try {
     assert(E('S.camp.b.store') === 8 && JSON.stringify(E('storeOverAt(S.mats, 8)')) === '[["ess",1]]' && E('S.mats.ess[0]') === ESS && E('S.mats.wood[2]') === WOOD, 'more Dim Essence than Lv 8 holds: one over cell, all of it kept');
     ticks(g, 2);
     assert(E('S.mats.ess[0]') === ESS, 'the over pile is still whole after two seconds');
-    assert(E("stashAdd('ess', 1, 5, 'flow')") === 0 && E('S.mats.ess[0]') === ESS && E('stashOver("ess", 1)'), 'an over cell gains nothing from a flow');
+    const e1 = E('S.mats.ess[1]');
+    assert(E("stashAdd('ess', 1, 5, 'flow')") === 5 && E('S.mats.ess[0]') === ESS && E('S.mats.ess[1]') === e1 + 5 && E('stashOver("ess", 1)'), 'an over Essence grade gains nothing itself; the drop spills into the next grade with room (counters-and-layers)');
     E(`S.mats.ess[0] = ${fTop - 10}`);
-    assert(E("stashAdd('ess', 1, 50, 'flow')") === 10 && E('S.mats.ess[0]') === fTop, 'spent below the cap: it gains up to the cap again');
+    assert(E("stashAdd('ess', 1, 50, 'flow')") === 50 && E('S.mats.ess[0]') === fTop && E('S.mats.ess[1]') === e1 + 45, 'spent below the cap: the grade fills to the cap, the rest spills');
     errs.push(...g.errors, ...q.errors);
   }
   assert(FIX.length >= 3, `${FIX.length} fixtures checked`);
@@ -4354,11 +4367,14 @@ if (section('solo hero')) try {
     E('combatFoes().forEach(f => { if (f && !f.dead) f.hp = f.max = 1e9; })');   // SOLO2: a hand Attack and Echo Shot would clear the pack before the heavy steps
     assert(E('onboardStep().id') === 'attack', 'after choosing a hero: "Press Attack"');
     E('soloAttack()');
+    for (let i = 0; i < 300 && !(E('onboardStep()') && E('onboardStep().id') === 'ability'); i++) run(g, 0.1);   // guide-voice: it waits for your turn
     assert(E('onboardStep().id') === 'ability', 'then the ability');
     E('soloAbility()');
+    E('onboardStep(); GUIDE_RT.fight++; true');   // guide-voice: Dodge is taught in a later fight than the ability
     E(`actWarn({ kind: 'heavy', id: 't', foe: combatFoes().find(f => f && !f.dead && f.hp > 0), unit: 0, dur: 1.5, land: () => {} })`); run(g, 0.1);
     assert(E('onboardStep().id') === 'dodge' && E('soloDodge(true)') === 'dodge', 'a heavy hit: "Press Dodge" (the guide\'s first press always counts)');
     run(g, 2.5);
+    E('onboardStep(); GUIDE_RT.fight++; true');   // ...and Parry in a later one than Dodge
     E(`actWarn({ kind: 'heavy', id: 't2', foe: combatFoes().find(f => f && !f.dead && f.hp > 0), unit: 0, dur: 1.5, land: () => {} })`); run(g, 0.1);
     assert(E('onboardStep().id') === 'parry' && E('soloParry(true)') === 'parry', 'the next heavy hit: "Press Parry" and counter');
     errs.push(...g.errors);
@@ -4379,16 +4395,61 @@ if (section('solo hero')) try {
     E('turnCombatOn = globalThis.__tc0; turnCombatSnapshot = globalThis.__ts0; true');
     errs.push(...g.errors);
   }
+  // guide-voice: every step names the phases it may start in; one paused step a fight; one thing a fight; a quiet minute; retiring
+  {
+    const g = T(), E = s => g.eval(s);
+    E('soloPick("wren"); soloSetAuto(false)'); run(g, 0.5);
+    const named = JSON.parse(E('JSON.stringify(GUIDE_STEPS.map(s => ({ id: s.id, ph: s.ph || null })))'));
+    const bad = named.filter(s => !Array.isArray(s.ph) || !s.ph.length || s.ph.some(p => !['hero', 'windup', 'foe', 'between'].includes(p)));
+    assert(!bad.length, `every guide step names the phases it may show in${bad.length ? ': ' + bad.map(b => b.id).join(', ') : ''}`);
+    const fightSteps = named.filter(s => s.ph.some(p => p !== 'between')).map(s => s.id).join();
+    assert(fightSteps === 'attack,ability,dodge,parry,boss', `only the combat steps start in a fight phase (${fightSteps})`);
+    // Attack: its phase is "hero" only
+    for (const [ph, want] of [['foe', false], ['windup', false], ['between', false], ['hero', true]]) {
+      E(`globalThis.__gp = guidePhase; guidePhase = () => ${JSON.stringify(ph)}; true`);
+      assert((E('(() => { const s = onboardStep(); return !!s && s.id === "attack"; })()')) === want, `the Attack tip ${want ? 'shows' : 'waits'} in the "${ph}" phase`);
+      E('guidePhase = globalThis.__gp; true');
+    }
+    // Dodge and Parry: only with a hit on its way, and each in a later fight than the step before
+    E('O().done.attack = 1; O().done.ability = 1; true');
+    E('GUIDE_RT.fight = 3; GUIDE_RT.doneIn.ability = 3; true');
+    E(`actWarn({ kind: 'heavy', id: 'v1', foe: combatFoes().find(f => f && !f.dead && f.hp > 0), unit: 0, dur: 1.5, land: () => {} })`); run(g, 0.1);
+    assert(E('onboardStep()') === null || E('onboardStep().id') !== 'dodge', 'the Dodge tip waits for a later fight than the ability tip');
+    E('GUIDE_RT.fight = 4; true');
+    assert(E('onboardStep() && onboardStep().id') === 'dodge', 'in the next fight the Dodge tip shows');
+    E('O().done.dodge = 1; GUIDE_RT.doneIn.dodge = 4; true');
+    assert(E('onboardStep() === null || onboardStep().id !== "parry"'), 'the Parry tip waits for a later fight than Dodge');
+    E('GUIDE_RT.fight = 5; true');
+    assert(E('onboardStep() && onboardStep().id') === 'parry', 'in the next fight the Parry tip shows');
+    // one paused step a fight
+    E('GUIDE_RT.pauseFight = -1; GUIDE_RT.pauseId = ""; true');
+    const p1 = E('onboardPaused({ id: "x1", pause: 1 })'), p2 = E('onboardPaused({ id: "x2", pause: 1 })'), p1b = E('onboardPaused({ id: "x1", pause: 1 })');
+    assert(p1 === true && p2 === false && p1b === true, `one paused step a fight: the first keeps its pause, a second tip does not pause (${p1}, ${p2}, ${p1b})`);
+    E('GUIDE_RT.fight = 6; true');
+    assert(E('onboardPaused({ id: "x2", pause: 1 })') === true, 'the next fight gives the pause back');
+    // between-fights steps wait for a break, a quiet minute, and retire after 60 s
+    E('O().done.parry = 1; O().got.party = 1; S.maxZone = 3; S.activity = "fight"; S.tab = ""; true');
+    assert(E('onboardStep() === null || onboardStep().id !== "tab:party"'), 'the Hero tab tip does not start mid-fight');
+    E('S.activity = "gather"; GUIDE_RT.lastEnd = GUIDE_RT.t; true');
+    assert(E('onboardStep() === null || onboardStep().id !== "tab:party"'), 'no new line within a minute of the last one');
+    E('GUIDE_RT.t += 61; true');
+    assert(E('onboardStep() && onboardStep().id') === 'tab:party', 'a minute on, the Hero tab tip shows');
+    assert(E('guideRetire("tab:party")') === true && E('O().done["tab:party"]') === 2 && E('onboardStep() === null || onboardStep().id !== "tab:party"'), 'a tip left alone retires (done 2) and stops showing');
+    errs.push(...g.errors);
+  }
   // W1-D (playtest-2 P0): a combat step never pauses a game that cannot give it what it waits for
   {
     const g = T(), E = s => g.eval(s);
     E('soloPick("wren"); soloSetAuto(false)'); run(g, 0.5);
     E('combatFoes().forEach(f => { if (f && !f.dead) f.hp = f.max = 1e9; })');
     E('soloAttack()');
+    for (let i = 0; i < 300 && !(E('onboardStep()') && E('onboardStep().id') === 'ability'); i++) run(g, 0.1);   // guide-voice: it waits for your turn
+    E('GUIDE_RT.pauseFight = -1; true');
     assert(E('onboardStep().id') === 'ability' && E('onboardPaused(onboardStep())') === true, 'W1-D: the ability step pauses while a foe is alive');
     E('combatFoes().forEach(f => { if (f && !f.dead) f.hp = 1; })'); run(g, 0.8); E('soloAttack()'); run(g, 0.1);   // Wren's Attack clears the pack (the 44% lock)
-    assert(!E('combatFoes().some(f => f && !f.dead && f.hp > 0)') && E('onboardStep().id') === 'ability' && E('onboardPaused(onboardStep())') === false, 'W1-D: ...and does not pause once the pack is dead, so the respawn can happen');
+    assert(!E('combatFoes().some(f => f && !f.dead && f.hp > 0)') && E('onboardPaused(GUIDE_STEPS.find(s => s.id === "ability"))') === false, 'W1-D: ...and does not pause once the pack is dead, so the respawn can happen');
     run(g, 3);   // (a zone monster's death plays 2.31 s first)
+    for (let i = 0; i < 300 && !(E('onboardStep()') && E('onboardStep().id') === 'ability'); i++) run(g, 0.1);
     assert(E('combatFoes().some(f => f && !f.dead && f.hp > 0)') && E('onboardPaused(onboardStep())') === true && E('soloAbility()') === true, 'W1-D: a foe respawns, the step pauses again and the ability casts (Echo Shot needs a target)');
   }
   {
@@ -4397,6 +4458,7 @@ if (section('solo hero')) try {
     E('soloPick("wren"); soloSetAuto(false)'); run(g, 0.5);
     E('combatFoes().forEach(f => { if (f && !f.dead) f.hp = f.max = 1e9; })');
     E('soloAttack()'); E('soloAbility()');
+    E('onboardStep(); GUIDE_RT.fight++; true');   // guide-voice: Dodge is taught in a later fight
     E('soloDodge()');
     E(`actWarn({ kind: 'heavy', id: 't', foe: combatFoes().find(f => f && !f.dead && f.hp > 0), unit: 0, dur: 1.5, land: () => {} })`); run(g, 0.1);
     assert(E('onboardStep().id') === 'dodge' && E('soloButtons().dodge.left') > 0 && E('soloDodge(true)') === 'dodge', 'W1-D: the guide\'s Dodge counts even when an earlier press left the button on cooldown (the paused game could never clear it)');
@@ -4655,7 +4717,7 @@ if (section('solo hero (browser)')) try {
         await page.waitForTimeout(300);
         if (!(await X('ONBOARD.paused'))) await X('for (let k = 0; k < 10; k++) tick(0.1); true');
         // the Dodge and Parry steps wait for a heavy hit: start one on a pack foe
-        await X('(S.onboard.done.ability && !S.onboard.done.parry && !actWarning() && combatFoes().some(f => f && !f.dead && f.hp > 0)) && actWarn({ kind: "heavy", id: "t", foe: combatFoes().find(f => f && !f.dead && f.hp > 0), unit: 0, dur: 2, land: () => {} }); true');
+        await X('(S.onboard.done.ability && !S.onboard.done.parry && !actWarning() && combatFoes().some(f => f && !f.dead && f.hp > 0)) && (GUIDE_RT.fight++, actWarn({ kind: "heavy", id: "t", foe: combatFoes().find(f => f && !f.dead && f.hp > 0), unit: 0, dur: 2, land: () => {} })); true');
         if (await X('S.tab && !["upgrade"].includes((onboardStep() || {}).id) ? (closeMenu(), true) : false')) await page.waitForTimeout(200);
       }
       await X('soloPickerOpen = __spo; true');
@@ -4792,7 +4854,12 @@ if (section('W1-D (browser)')) try {
           // W2-B: a fresh Level 1 hero (Training made it weaker) meets its first natural heavy hit late (25 s in, the next 40 s after), which made
           // each start run its whole 28 s. From the 2nd second the check starts a heavy wind-up itself when none is showing, as the solo walk does.
           if (i >= 3 && await X('(S.onboard.done.ability && !S.onboard.done.parry && !actWarning() && combatFoes().some(f => f && !f.dead && f.hp > 0)) ? (actWarn({ kind: "heavy", id: "w1d" + Math.random(), foe: combatFoes().find(f => f && !f.dead && f.hp > 0), unit: 0, dur: 2, land: () => {} }), true) : false')) await page.waitForTimeout(100);
-          if (i - since > 22 && await X('ONBOARD.paused')) { stuck = true; break; }   // paused for 9 s of presses on the same step
+          // paused for 9 s of presses on the same step (guide-voice: a null step is read again after the UI tick, since the first Attack tip
+          // now waits for your turn and the pause can start between the two reads)
+          if (i - since > 22 && await X('ONBOARD.paused')) {
+            if (!st) { await page.waitForTimeout(600); if (await X('!onboardStep() && ONBOARD.paused')) { stuck = true; break; } }
+            else { stuck = true; break; }
+          }
           await page.waitForTimeout(400);
         }
         if (stuck) locks.push(`${hero}@${last}`);
@@ -5595,8 +5662,8 @@ if (section('training (W2-A, browser)')) try {
         if (w === 360) {
           // the guide's upgrade step points at Train on Attack (Hero > Training)
           await X('for (const id of ["attack", "ability", "dodge", "parry", "boss"]) onboardDone(id); S.maxZone = 2; S.zone = 2; S.L = 3; S.gold = 50; true');
-          await page.waitForTimeout(1500);
-          const step = await X('(s => s ? s.id : "")(onboardStep())');
+          let step = '';
+          for (let i = 0; i < 40 && step !== 'upgrade'; i++) { await page.waitForTimeout(400); step = await X('(s => s ? s.id : "")(onboardStep())'); }   // guide-voice: the tip starts in a break between fights
           await X('setTab("training"); true'); await page.waitForTimeout(1200);
           const bub = await X('(b => b && !b.hidden ? b.textContent : "")(document.querySelector(".ob-bub"))');
           assert(step === 'upgrade' && /Train Attack/.test(bub), `${at}: the guide's upgrade step says "${bub.slice(0, 60)}" on Hero > Training`);
@@ -7637,6 +7704,9 @@ if (section('C25 enemy profiles')) try {
   const a = hit(49), b = hit(50);
   assert(a > 0 && Math.abs(b / a - 1.05) < 1e-6, `C25: at 50 kills hits on that kind deal +5% (${a} -> ${b})`);
   assert(E('typeRel("slime", "holy") === 0 && typeRel("slime", "fire") === 1'), 'C25: the bonus leaves weak / resist labels alone');
+  // foe-weak-resists: the Foe tab reads the same tiers (75-turn-ui turnFoeInfo adds weakness at 5 kills, the tell at 15, never earlier)
+  const foeUi = fs.readFileSync(path.join(ROOT, 'src/js/75-turn-ui.js'), 'utf8');
+  assert(/pr\.weak\)\s*learn\.push/.test(foeUi) && /pr\.tell && pr\.tellTxt\)\s*learn\.push/.test(foeUi), 'foe-weak-resists: the Foe tab shows weakness only once learned (5 kills) and the tell only at 15');
   assert(!g.errors.length, 'C25: no core errors');
 } catch (e) { fail('C25 crashed: ' + (e.stack || e)); }
 
@@ -7822,16 +7892,15 @@ if (section('turn UI (browser)')) try {
           await page.click(learn); await page.waitForTimeout(250);
           out.learned = await X(`abilityOwned('wren', 'powershot') && soloEquipped().includes('powershot') && scrollCount('moss') === 0 && !!document.querySelector('#sec-abilities .ab-row[data-ab="powershot"].owned')
             && document.querySelectorAll('#sec-abilities .ab-det[data-ab="powershot"] .ab-slotb').length === 3 && !!document.querySelector('#sec-abilities .ab-det .ab-slotb.on')`);
-          // the A / B talent choice: take A, switch to B (no more points), give it back
-          const tal = c => `#sec-abilities .ab-det[data-ab="powershot"] .ab-talb[data-c="${c}"]`, pts = `talentPoints('wren').free`;
-          const free0 = await X(pts);
+          // the A / B talent choice: take A, switch to B, tap B again (it stays; talents are free)
+          const tal = c => `#sec-abilities .ab-det[data-ab="powershot"] .ab-talb[data-c="${c}"]`;
           await page.click(tal('a')); await page.waitForTimeout(150);
-          out.talA = await X(`talentsOf('wren').powershot === 'a' && ${pts} === ${free0} - TALENT_TUNE.cost && document.querySelector('${tal('a')}').getAttribute('aria-pressed') === 'true'
+          out.talA = await X(`talentsOf('wren').powershot === 'a' && document.querySelector('${tal('a')}').getAttribute('aria-pressed') === 'true'
             && JSON.parse(localStorage.getItem('lanternfall.save.v5')).abil.tal.wren.powershot === 'a' && /Talent A/.test(document.querySelector('#sec-abilities .ab-row[data-ab="powershot"]').textContent)`);
           await page.click(tal('b')); await page.waitForTimeout(150);
-          out.talB = await X(`talentsOf('wren').powershot === 'b' && ${pts} === ${free0} - TALENT_TUNE.cost && document.querySelector('${tal('a')}').getAttribute('aria-pressed') === 'false' && document.querySelector('${tal('b')}').classList.contains('on')`);
+          out.talB = await X(`talentsOf('wren').powershot === 'b' && document.querySelector('${tal('a')}').getAttribute('aria-pressed') === 'false' && document.querySelector('${tal('b')}').classList.contains('on')`);
           await page.click(tal('b')); await page.waitForTimeout(150);
-          out.talOff = await X(`!talentsOf('wren').powershot && ${pts} === ${free0}`);
+          out.talOff = await X(`talentsOf('wren').powershot === 'b' && document.querySelector('${tal('b')}').classList.contains('on')`);
           // Attack, Parry and Dodge: their own rows, and their talents in the detail
           await page.click('#sec-abilities .ab-det .ab-x'); await page.waitForTimeout(150);
           out.closed = await X(`!document.querySelector('#sec-abilities .ab-det')`);
@@ -7874,7 +7943,7 @@ if (section('turn UI (browser)')) try {
       assert(on.det && on.det.ab === 'powershot' && on.det.vis && /180% power/.test(on.det.desc) && /Perfect: a sure crit/.test(on.det.perfect) && /Hits for about/.test(on.det.nums) && on.det.tal === 2,
         `turn UI: a tap on a row opens its detail: the full text, its numbers, the Perfect text, and its two talents (shut until learned) (${JSON.stringify(on.det)})`);
       assert(/Tap again/.test(on.armed) && on.armedSafe && on.learned, `turn UI: Learn takes two taps, spends the Scroll, and puts the ability in a free slot; the detail then offers Q, W and E (${JSON.stringify(on.armed)}, ${on.armedSafe}, ${on.learned})`);
-      assert(on.talA && on.talB && on.talOff, `turn UI: the detail's A / B talents: A takes 2 points and saves, B swaps for no more, a second tap gives it back (${on.talA}, ${on.talB}, ${on.talOff})`);
+      assert(on.talA && on.talB && on.talOff, `turn UI: the detail's A / B talents: A saves, B swaps, a second tap on B leaves it picked, and none of it costs points (${on.talA}, ${on.talB}, ${on.talOff})`);
       assert(on.closed && on.parryTal, `turn UI: the detail closes; Parry has its own row and its talents in the detail (${on.closed}, ${on.parryTal})`);
       assert(on.fLearned && on.fCan && on.fAll === 17, `turn UI: the filters show the learned abilities, the ones a Scroll can teach now, and all again (${on.fLearned}, ${on.fCan}, ${on.fAll})`);
       assert(on.proving && on.proving.slot && !on.proving.chip && /Foe 1\/5, \d+ turns/.test(on.proving.time) && on.proving.turn && on.provingEnd,
@@ -7926,14 +7995,14 @@ if (section('turn UI (browser)')) try {
           return ok || [!!document.querySelector('#sec-abilities .ab-det'), document.getElementById('panels').scrollTop, ${before}].join(); })()`);
         await page.click('#sec-abilities .ab-infob'); await page.waitForTimeout(150);
         r.info = await X(`(() => { const t = (document.querySelector('#sec-abilities .ab-info .ab-tp') || {}).textContent || '';
-          return document.querySelectorAll('#sec-abilities .ab-info .ab-scroll').length === 5 && /Talents: \\d+ of 29 points free/.test(t) || t || 'no drawer'; })()`);
+          return document.querySelectorAll('#sec-abilities .ab-info .ab-scroll').length === 5 && /Talents are free/.test(t) || t || 'no drawer'; })()`);
         r.infoFit = await X(fit);
         const port = h > w;
         assert(!r.list.length && !r.detFit.length && !r.infoFit.length, `abilities UI ${w}x${h}: no sideways scroll, every button at least 44 px (${JSON.stringify([r.list, r.detFit, r.infoFit])})`);
-        assert(r.sticky, `abilities UI ${w}x${h}: the loadout bar (Q, W, E, Scrolls, talent points) stays at the top while the list scrolls`);
+        assert(r.sticky, `abilities UI ${w}x${h}: the loadout bar (Q, W, E, Scrolls) stays at the top while the list scrolls`);
         assert(r.det && r.det.inView && r.det.list === port && r.det.slots === 3 && r.det.onW && r.det.talOn && r.moved,
           `abilities UI ${w}x${h}: a row's detail opens in view (${port ? 'a sheet over the list' : 'in the list\'s place'}), shows the slot it is in, and E moves it there (${JSON.stringify(r.det)}, ${r.moved})`);
-        assert(r.back === true && r.info === true, `abilities UI ${w}x${h}: closing the detail brings the list back where it was; the Scrolls button shows each Scroll and the talent points (${r.back}, ${r.info})`);
+        assert(r.back === true && r.info === true, `abilities UI ${w}x${h}: closing the detail brings the list back where it was; the Scrolls button shows each Scroll and says talents are free (${r.back}, ${r.info})`);
         assert(!errors.length, `abilities UI ${w}x${h}: no page errors` + (errors.length ? ': ' + errors[0] : ''));
         await ctx.close();
       }
@@ -7991,8 +8060,8 @@ if (section('stars (browser)')) try {
           set: document.querySelectorAll('#sec-stars .sr-top .sr-chip.set').length, lit: document.querySelectorAll('#sec-stars .sr-top .sr-chip.lit').length,
           pts: (document.querySelector('#sec-stars .sr-pts') || { getAttribute: () => '' }).getAttribute('aria-label') || '',
           visible: !!document.querySelector('#sec-stars') && document.querySelector('#sec-stars').offsetParent !== null })`));
-        assert(r0.visible && r0.stars === 43 && r0.own >= 6 && r0.unk === 43 - r0.own && r0.skies === 'hollow,fen,coast,hunt,deep,provings' && r0.chips === 5 && r0.set === 3 && r0.lit === 2 && r0.pts === 'Star points: 10 free of 10',
-          `stars UI ${w}x${h}: Hero > Stars shows the loadout (3 set, 2 lit, the points) and a map of six constellations with all 43 stars, the ones not found faint (${JSON.stringify(r0)})`);
+        assert(r0.visible && r0.stars === 43 && r0.own >= 6 && r0.unk === 43 - r0.own && r0.skies === 'hollow,fen,coast,hunt,deep,provings' && r0.chips === 4 && r0.set === 3 && r0.lit === 1 && r0.pts === 'Star points: 0 used of 5',
+          `stars UI ${w}x${h}: Hero > Stars shows the loadout (3 set, the lit row with one empty chip, points used of the budget) and a map of six constellations with all 43 stars, the ones not found faint (${JSON.stringify(r0)})`);
         // a tap on a star opens its card; Slot 1 sets it
         await page.click('#sec-stars .sr-st[data-star="serrated"]'); await page.waitForTimeout(150);
         const c1 = JSON.parse(await X(`JSON.stringify({ id: (document.querySelector('#sec-stars .sr-card') || {}).dataset.star, name: (document.querySelector('#sec-stars .sr-card .sr-t b') || {}).textContent,
@@ -8009,7 +8078,7 @@ if (section('stars (browser)')) try {
           pts: document.querySelector('#sec-stars .sr-pts').getAttribute('aria-label'), unk: (document.querySelector('#sec-stars .sr-card.locked .sr-from') || {}).textContent || '',
           anim: getComputedStyle(document.querySelector('#sec-stars .sr-st.lit .sr-ray')).animationName,
           saved: JSON.parse(localStorage.getItem('lanternfall.save.v5')).stars.set.wren[0] })`));
-        assert(r1.set === 'serrated' && r1.mapSet && r1.chip === 'Serrated' && r1.lit === 'huntstep' && r1.mapLit && r1.saved === 'serrated' && r1.pts === 'Star points: 9 free of 10' && /^The Hollow’s Elder \(zone 35\)$/.test(r1.unk),
+        assert(r1.set === 'serrated' && r1.mapSet && r1.chip === 'Serrated' && r1.lit === 'huntstep' && r1.mapLit && r1.saved === 'serrated' && r1.pts === 'Star points: 1 used of 5' && /^The Hollow’s Elder \(zone 35\)$/.test(r1.unk),
           `stars UI ${w}x${h}: Slot 1 sets Serrated (it glows on the map and shows in the strip), Light lights Hunter's Step for 1 point (it shines), both saved; a star not found yet shows where it is found (${JSON.stringify(r1)})`);
         assert(r1.anim === (wide ? 'sr-twinkle' : 'none'), `stars UI ${w}x${h}: a lit star twinkles, and holds still under reduced motion (${rm}: ${r1.anim})`);
         // filters: Pip's kit, then learned only
@@ -8289,13 +8358,11 @@ if (section('C29 turn fights (core)')) try {
     }
     assert(Object.entries(out).every(([k, r]) => r.trait === k && r.kills > 0 && !r.err && !/fff/.test(r.seq)),
       `C29: each elite trait (Shielded, Leeching, Enraged, Ice-Clad, Cursed) works in turn fights, and an Enraged elite never takes 3 turns in a row (${JSON.stringify(Object.values(out).map(r => r.name + ' ' + r.kills + ' ' + r.seq))})`); }
-  // talents (24e): points from levels, two choices each, every choice works in fights
+  // talents (24e): free, two choices each, every choice works in fights
   { const { E } = fresh('pip', 14);
-    assert(E('talentPoints("pip").total === 0 && !talentSet("pip", "fire", "a")'), 'C29: a level 1 hero has no talent points');
-    E('S.L = 5; soloLevels');
-    assert(E('talentPoints("pip").total === 4 && talentSet("pip", "fire", "a") && talentSet("pip", "pip:parry", "b") && !talentSet("pip", "pip:dodge", "a") && talentSet("pip", "fire", "b") && talentPoints("pip").free === 0'),
-      'C29: a talent costs 2 points from 1 a level; switching between its two choices is free');
-    assert(E('!talentSet("pip", "spark", "a") && talentSet("pip", "fire", null) && talentPoints("pip").free === 2'), 'C29: only a learned ability takes a talent, and one can be given back');
+    assert(E('!talentSet("pip", "pip:parry", "c") && talentSet("pip", "fire", "a") && talentSet("pip", "pip:parry", "b") && talentSet("pip", "pip:dodge", "a") && talentSet("pip", "fire", "b")'),
+      'C29: talents are free (counters-and-layers): any owned ability, Attack, Parry or Dodge takes A or B at once, at any level, and switching is free');
+    assert(E('!talentSet("pip", "spark", "a") && talentSet("pip", "fire", null) && !talentsOf("pip").fire && typeof talentPoints === "undefined"'), 'C29: only a learned ability takes a talent, one can still be cleared, and talent points are gone');
     const bad = [];
     for (const hero of ['wren', 'tobin', 'pip']) for (const c of ['a', 'b']) {
       const g = loadCore({ seed: 31, turns: true }), H = x => g.eval(x);
@@ -8374,16 +8441,16 @@ if (section('C29 boss pass (core)')) try {
     // a zone boss's HP in reference Attacks: 16 x the zone's hpX (x bossEase in zones 1-3); the Fenmother 30 x regionHpX; normal foes unchanged
     const at = (z, boss) => E(`(() => { S.maxZone = Math.max(S.maxZone, ${z}); setZone(${z}); fightBoss = ${boss}; spawn(); const f = combatFoes()[0];
       return { a: f.max / turnRefAtk(${z}), hx: f.tk.hx, cx: f.tk.cx, region: f.tk.region, gold: f.gold, full: turnCombatProfile().fullHp }; })()`);
-    const want = { 1: 16 * 0.65, 2: 16 * 0.8, 3: 16 * 0.9, 10: 16 * 1.8, 15: 16 * 2.5, 20: 16 * 2.4, 30: 16 * 1.55, 35: 30 * 1.4, 38: 16 * 1.85 }, bad = [];
+    const want = { 1: 16 * 0.65, 2: 16 * 0.8, 3: 16 * 0.9, 10: 16 * 1.9, 15: 16 * 2.5, 20: 16 * 2.4, 30: 16 * 1.55, 35: 30 * 1.4, 38: 16 * 1.85 }, bad = [];
     for (const z of Object.keys(want)) { const r = at(+z, true); if (!(r.a > want[z] * 0.94 && r.a < want[z] * 1.06)) bad.push(`${z}: ${r.a.toFixed(1)} (want ${want[z].toFixed(1)})`); }
-    assert(!bad.length, `boss pass: a boss lasts longer as the game goes on: its HP in reference Attacks is 16 x the zone's hpX (zones 1-3 keep their onboarding), the Fenmother 30 x 1.4 (the gear pass: was 1.25; zones 15-20 x1.1, 25-34 retuned by mid-zone-wall (2026-10-07); zone 38 16 x 1.85, was 1.5) (${bad.join('; ') || 'ok'})`);
+    assert(!bad.length, `boss pass: a boss lasts longer as the game goes on: its HP in reference Attacks is 16 x the zone's hpX (zones 1-3 keep their onboarding), the Fenmother 30 x 1.4 (the gear pass: was 1.25; zones 15-20 x1.1, 25-34 retuned by mid-zone-wall, zones 4-12 by boss-tiers (2026-10-07); zone 38 16 x 1.85, was 1.5) (${bad.join('; ') || 'ok'})`);
     const n20 = at(20, false), b20 = at(20, true), b3 = at(3, true), b8 = at(8, true), b38 = at(38, true);
     // the mid-game HP pass: a normal foe's hits x0.7 from zone 8 to 34 (normHitX) against the higher reference HP
     const n3 = at(3, false), n38 = at(38, false);
     assert(n20.a > 4.7 && n20.a < 5.3 && Math.abs(n20.hx - 0.7) < 1e-9 && n3.hx === 1 && n38.hx === 1 && n20.cx === 1 && !n20.full,
       `boss pass: a normal foe keeps 5 reference Attacks; its hits x0.7 in zones 8-34 (the mid-game HP pass), as written in zones 1-3 and 35+ (${JSON.stringify([n3, n20, n38].map(r => [+r.a.toFixed(2), r.hx]))})`);
-    assert(b3.hx === 1 && b3.cx === 1 && Math.abs(b8.hx - 1.6) < 1e-9 && Math.abs(b8.cx - 1.3) < 1e-9 && Math.abs(b38.hx - 1.9) < 1e-9 && Math.abs(b38.cx - 1.35) < 1e-9 && b20.full,
-      `boss pass: boss hits x1.6 at zone 8 (charges x1.3 more), x1.9 (x1.35) from zone 35; zones 1-3 as before; a zone boss is met at full health (${JSON.stringify([b3, b8, b38].map(r => [r.hx, r.cx]))})`);
+    assert(b3.hx === 1 && b3.cx === 1 && Math.abs(b8.hx - 1.5) < 1e-9 && Math.abs(b8.cx - 1.3) < 1e-9 && Math.abs(b38.hx - 1.9) < 1e-9 && Math.abs(b38.cx - 1.35) < 1e-9 && b20.full,
+      `boss pass: boss hits x1.5 at zone 8 (charges x1.3 more), x1.9 (x1.35) from zone 35; zones 1-3 as before; a zone boss is met at full health (${JSON.stringify([b3, b8, b38].map(r => [r.hx, r.cx]))})`);
     assert(Math.abs(b20.gold / n20.gold - 5 * (1 + 1.4 * 0.5)) < 1e-6, `boss pass: a longer boss pays more: 5 x (1 + half its extra length) a normal foe's gold (${(b20.gold / n20.gold).toFixed(2)})`);
     // the Deepwell's Elders and the Provings' bosses keep their own numbers (they pass a move set and their HP in Attacks)
     const deep = E(`(() => { const f = { boss: true, type: 'bones', name: 'Elder' }; turnFoeSetup(f, 30, { set: 'bones', hpA: TURN_TUNE.deep.hpA.boss }); return { a: f.max / turnRefAtk(30), hx: f.tk.hx, cx: f.tk.cx }; })()`);
@@ -8751,7 +8818,7 @@ if (section('wall-try-again (boss loss, Try again)')) try {
   let fails = 0; g.fn.on('bossFail', () => fails++);
   const shown = [];
   for (let i = 1; i <= 4; i++) {
-    E('challenge(); mob.tk.hx = 30');   // a boss this hard beats the hero at once
+    E('challenge(); mob.tk.hx = 30; mob.tk.hcap = 0');   // a boss this hard beats the hero at once (no hit cap)
     run(40);
     const L = JSON.parse(E('JSON.stringify(S.bossTry.last)'));
     assert(fails === i && E('S.bossTry.hold') === 1 && !E('fightBoss') && E('S.kills') === E('ZONE_FIGHTS'), `try again: loss ${i} holds the boss, no auto-retry, the zone stays at "boss ready" (fails ${fails}, hold ${E('S.bossTry.hold')})`);
@@ -9391,8 +9458,8 @@ if (section('hero attributes (browser)')) try {
         if (w === 360) {
           // the guide's upgrade step points at Attributes, then at Might +1 (a point to spend, no gold needed)
           await X('for (const id of ["attack", "ability", "dodge", "parry", "boss"]) onboardDone(id); S.maxZone = 2; S.zone = 2; S.L = 3; S.gold = 0; true');
-          await page.waitForTimeout(1500);
-          const step = await X('(s => s ? s.id : "")(onboardStep())');
+          let step = '';
+          for (let i = 0; i < 40 && step !== 'upgrade'; i++) { await page.waitForTimeout(400); step = await X('(s => s ? s.id : "")(onboardStep())'); }   // guide-voice: the tip starts in a break between fights
           await X('setTab("attributes"); true'); await page.waitForTimeout(1200);
           const bub = await X('(b => b && !b.hidden ? b.textContent : "")(document.querySelector(".ob-bub"))');
           assert(step === 'upgrade' && /Might/.test(bub) && !/Train/.test(bub), `${at}: the guide's upgrade step says "${bub.slice(0, 70)}" on Hero > Attributes`);
@@ -9550,7 +9617,7 @@ if (section('guide panel rects (browser, guide-panel)')) try {
           const t = q('.ob-txt'), tr = t.getBoundingClientRect(), face = q('.ob-face'), ok = q('.ob-ok'), okr = ok && !ok.hidden ? ok.getBoundingClientRect() : null;
           const lh = parseFloat(getComputedStyle(t).lineHeight) || 18, lines = Math.round(tr.height / lh), cw = t.textContent.length ? tr.width / (parseFloat(getComputedStyle(t).fontSize) * .62) : 99;
           return { hit, panel: panel.map(Math.round), inView: panel[0] >= 0 && panel[2] <= innerWidth && panel[1] >= 0 && panel[3] <= innerHeight, mode: ['side', 'dock', 'over-menu'].find(m => b.classList.contains(m)), textChars: Math.round(cw), lines,
-            faceOk: !!face && (face.getAttribute('src') || '').startsWith('data:'), btnBelow: okr ? okr.top >= tr.bottom - 1 : null, btnH: okr ? Math.round(okr.height) : null,
+            faceOk: !!face && (face.getAttribute('src') || '').startsWith('data:'), btnBelow: okr ? okr.top >= tr.bottom - 1 || okr.left >= tr.right - 1 : null, btnH: okr ? Math.round(okr.height) : null,
             btnIn: okr ? okr.top >= panel[1] - .5 && okr.bottom <= panel[3] + .5 && okr.left >= panel[0] - .5 && okr.right <= panel[2] + .5 && (d => d === ok || ok.contains(d))(document.elementFromPoint(okr.left + okr.width / 2, okr.top + okr.height / 2)) : null, clipped: t.scrollHeight > t.clientHeight + 1, scrollX: document.documentElement.scrollWidth > innerWidth };
         });
         // each step in turn: the guide is told to show it (the real wind-ups for Dodge and Parry are down to chance, so the check
@@ -9564,7 +9631,7 @@ if (section('guide panel rects (browser, guide-panel)')) try {
           if (!m) { assert(false, `guide panel ${at} "${st}": the panel shows`); continue; }
           seen.push(st);
           assert(!m.hit.length && m.inView && !m.scrollX, `guide panel ${at} "${st}": in view and clear of ${m.hit.length ? m.hit.join(', ') : 'both HP bars, the foe plate, the boss timer, the hero plate and the stage'} (${m.mode}, ${m.panel.join(',')})`);
-          assert(m.textChars >= 12 && m.faceOk && !m.clipped && (m.btnBelow === null || (m.btnBelow && m.btnH >= 44 && m.btnIn)), `guide panel ${at} "${st}": text at least 12 characters wide (${m.textChars}) and not clipped, Hesketh's face shows, the button sits on its own row at 44 px or more, inside the panel and tappable (${JSON.stringify([m.faceOk, m.clipped, m.btnBelow, m.btnH, m.btnIn])})`);
+          assert(m.textChars >= 12 && m.faceOk && !m.clipped && (m.btnBelow === null || (m.btnBelow && m.btnH >= 44 && m.btnIn)), `guide panel ${at} "${st}": text at least 12 characters wide (${m.textChars}) and not clipped, Hesketh's face shows, the button sits below or beside the text (never over it) at 44 px or more, inside the panel and tappable (${JSON.stringify([m.faceOk, m.clipped, m.btnBelow, m.btnH, m.btnIn])})`);
         }
         await X('onboardStep = globalThis.__os; if (mob) mob.boss = globalThis.__boss; true');
         assert(seen.length === 5, `guide panel ${at}: the check measured all five steps (${seen.join(', ')})`);
@@ -9798,6 +9865,43 @@ if (section('craft reveal')) try {
   })();
 } catch (e) { fail('craft reveal crashed: ' + (e.stack || e)); }
 
+// ---- boss tiers, first hour (card boss-tiers PR 1, judge 2026-10-07): the zone-boss hit cap and the first-hour knots ----
+if (section('boss tiers first hour')) try {
+  const g = loadCore({ seed: 5, turns: true }), E = s => g.eval(s);
+  E(`soloPick('wren', { now: true }); TURN_TUNE.on = 1`);
+  const prof = z => JSON.parse(E(`(() => { S.maxZone = Math.max(S.maxZone, ${z}); setZone(${z}); S.activity = 'fight'; arena = null; fightBoss = true; spawn(); const p = turnCombatProfile(); return JSON.stringify({ cap: p.bossHitCap, hit: p.bossHitX, boss: p.boss, region: p.region }); })()`));
+  const a = prof(10), b = prof(15), c = prof(16), d = prof(34);
+  assert(a.boss && a.cap === 0.4 && b.cap === 0.4, `boss cap: a zone boss's hit is capped at 40% of max HP in zones 1-15 (${a.cap}, ${b.cap})`);
+  assert(c.cap === 0 && d.cap === 0, `boss cap: off from zone 16 (${c.cap}, ${d.cap})`);
+  assert(prof(35).cap === 0, 'boss cap: not on a region boss');
+  assert(E('turnZoneLine(TURN_TUNE.boss.hitX, 9)') < E('turnZoneLine(TURN_TUNE.boss.hitX, 8)') && E('turnZoneLine(TURN_TUNE.boss.hitX, 12)') < E('turnZoneLine(TURN_TUNE.boss.hitX, 15)'),
+    'boss knots: hits fall after zone 8 to follow a first-hour hero\'s health, and rise again by zone 15');
+  // a hero with 1000 HP: no one hit of a zone-10 boss reaches more than 400 before armour
+  prof(10);
+  const mx = JSON.parse(E(`(() => { const p = turnCombatProfile(); let m = 0; for (const mv of p.script) for (const h of mv.hits) { const raw = (h.x || 0.2) * p.refHp * p.bossHitX * (mv.charge ? p.bossChargeX : 1); m = Math.max(m, Math.min(raw, p.bossHitCap * 1000)); } return m; })()`)) ;
+  assert(mx <= 400 + 1e-6, `boss cap: the biggest zone-10 hit stays at 400 of a 1000 HP hero (${mx})`);
+} catch (e) { fail('boss tiers first hour crashed: ' + (e.stack || e)); }
+
+// ==== counters-and-layers: Essence is one pile (any grade pays any Essence cost, lowest grade first) ====
+if (section('essence fungible')) try {
+  const g = loadCore({ seed: 41 }), E = x => g.eval(x);
+  E('S.mats.ess = [3, 0, 4, 0, 2]');
+  assert(E('essHave()') === 9 && E('hasMats({ ess: 9 }, 5)') && !E('hasMats({ ess: 10 }, 1)'), 'essence: every grade counts toward any Essence cost');
+  E('payMats({ ess: 5 }, 5)');
+  assert(JSON.stringify(E('S.mats.ess')) === '[0,0,2,0,2]', 'essence: payment takes the lowest grade first');
+  assert(E("costName('ess', 3)") === 'Essence', 'essence: a cost line never names a grade');
+  assert(E("canTransmute('ess', 1, 'up').ok") === false, 'essence: Transmute is retired for Essence');
+  assert(E("canTransmute('ore', 1, 'up').why") !== undefined, 'essence: other materials keep Transmute');
+  // a full grade spills into the next grade with room
+  const cap = E('storeCap("ess", 1)');
+  E(`S.mats.ess = [${cap}, 0, 0, 0, 0]`);
+  assert(E("stashAdd('ess', 1, 7, 'flow', true)") === 7 && E('S.mats.ess[0]') === cap && E('S.mats.ess[1]') === 7, 'essence: a drop into a full grade spills into the next grade with room');
+  // class change pays from any grade, and names no grade
+  E('S.party.mirrors = 5; S.mats.ess = [0, 0, 0, 0, 0]; S.mats.ess[4] = 1e6');
+  assert(E("respecCost('evo').have.ess") === 1e6 && !/Dim|Glowing|Radiant|Tidelit|Stormlit/.test(E("respecCost('base').why")), 'essence: class change counts every grade and names none');
+  assert(!g.errors.length, 'essence fungible: no core errors');
+} catch (e) { fail('essence fungible crashed: ' + (e.stack || e)); }
+
 if (section('removed systems (W2-C)')) try {
   const strip = t => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/([^:'"`\\])\/\/[^\n'"`]*$/gm, '$1');
   const files = [];
@@ -9940,7 +10044,7 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
             // the Dodge and Parry steps wait for a heavy hit: start one on a pack foe
             // (a wind-up whose foe fell in the meantime is let go first: it can never be answered)
             await X('(w => { if (w && w.foe && (w.foe.dead || !(w.foe.hp > 0))) { w.left = 0.01; tick(0.1); } })(actWarning()); true');
-            await X('(S.onboard.done.ability && !S.onboard.done.parry && !actWarning() && combatFoes().some(f => f && !f.dead && f.hp > 0)) && actWarn({ kind: "heavy", id: "l" + Math.random(), foe: combatFoes().find(f => f && !f.dead && f.hp > 0), unit: 0, dur: 2, land: () => {} }); true');
+            await X('(S.onboard.done.ability && !S.onboard.done.parry && !actWarning() && combatFoes().some(f => f && !f.dead && f.hp > 0)) && (GUIDE_RT.fight++, actWarn({ kind: "heavy", id: "l" + Math.random(), foe: combatFoes().find(f => f && !f.dead && f.hp > 0), unit: 0, dur: 2, land: () => {} })); true');
             if (st === 'nextup') await X('document.querySelectorAll(".bsheet-ov .bsheet-x").forEach(x => x.click()); true');
           }
           const why = want.every(x => trail.includes(x)) ? '' : '; ' + await X('JSON.stringify({ step: (s => s && s.id)(onboardStep()), done: Object.keys(S.onboard.done).join(","), zone: S.maxZone, gold: Math.round(S.gold), builds: (S.camp && S.camp.builds || []).map(b => b.id + ">" + b.to).join(","), tab: S.tab, view: S.tab ? curView(S.tab) : "", recipes: [...document.querySelectorAll("#sec-craft-recipes .cf-rec")].map(r => r.dataset.kind + (r.querySelector(".cf-go") ? (r.querySelector(".cf-go").disabled ? "-off" : "-go") : "")).join(","), tiers: [...document.querySelectorAll("#sec-craft-recipes [aria-pressed=true]")].map(b => b.textContent.trim()).join("/"), mats: JSON.stringify(S.mats && { ore: S.mats.ore, wood: S.mats.wood }) })') + ' target ' + JSON.stringify(await X(TARGET('tool'))) + ' last passes ' + passes.slice(-8).join(' ; ') 

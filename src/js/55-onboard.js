@@ -24,7 +24,7 @@
 // Events: unlock { id, tab, view, quiet } (a feature appeared), onboardStep { id } (a step completed).
 // State S.onboard: { v, all, got: { id: seconds played }, done: { stepId: 1 }, seen: { tabOrView: 1 },
 //   tips, t (seconds played while the guide runs), taps, casts }.
-let isUnlocked, onboardReveal, onboardUnlockAll, onboardStep, onboardDone, onboardUse, onboardUseDone, onboardTips, onboardCheck, onboardNeed, onboardPaused;
+let isUnlocked, onboardReveal, onboardUnlockAll, onboardStep, onboardDone, onboardUse, onboardUseDone, onboardTips, onboardCheck, onboardNeed, onboardPaused, guideRetire;
 let onboardIsNew = null;   // set by 75-onboard-ui.js; 70-ui.js marks new views with it
 let onboardSpec = null;    // set by 75-onboard-ui.js: step id -> { node, text } | null (the browser check)
 let soloGuideWants = () => '';   // set by 75-onboard-ui.js: the step on screen ('dodge' / 'parry': the first press counts, 59j forgive)
@@ -138,37 +138,47 @@ const heroTurnNow = () => { const q = turnSnap(); return !q || q.phase === 'hero
 // (a hit you already dodged or parried is not a new lesson: the next step waits for the next hit)
 const hitComing = () => { const q = turnSnap(); return q ? q.canDefend && q.closesAt > q.now : heavyShowing(); };
 const inWindow = k => { const q = turnSnap(); if (!q) return heavyShowing(); const open = k === 'parry' ? q.parryOpensAt : q.dodgeOpensAt; return q.canDefend && q.now >= open && q.closesAt - q.now > 0.02; };
+// guide-voice: every step names the phases it may START in (`ph`), and a step whose phase is not now waits. 'hero' your turn,
+// 'windup' a hit is on its way (the Dodge and Parry window), 'foe' the foe acts with nothing to answer, 'between' no fight in view
+// (not fighting, no foe alive, or a menu open). Once a 'between' step has started it stays up until done or retired.
+const GUIDE_PHASES = ['hero', 'windup', 'foe', 'between'];
+let guideMenuCovers = () => true;   // 75-onboard-ui.js: a wide screen keeps the fight in view beside an open menu
+function guidePhase(seeThroughMenu) { return !fightingNow() || !liveFoe() || (!seeThroughMenu && !!S.tab && S.tab !== 'adv') ? 'between' : hitComing() ? 'windup' : heroTurnNow() ? 'hero' : 'foe'; }
+// A fight is one foe on the field (59k `fightStart`; the legacy fight: a pack). Runtime only, never saved.
+const GUIDE_RT = { t: 0, fight: 0, doneIn: {}, lastEnd: null, latch: '', pauseFight: -1, pauseId: '', shown: {} };
+const GUIDE_QUIET = 60;    // seconds of play between two unprompted lines outside fights, and before a live tip retires
+const laterFight = id => GUIDE_RT.fight > (GUIDE_RT.doneIn[id] === undefined ? -1 : GUIDE_RT.doneIn[id]);   // one thing a fight: the next lesson waits for the next fight
 const GUIDE_STEPS = [
-  { id: 'attack', pause: 1, pauseWhen: () => liveFoe() && heroTurnNow(), when: () => fightingNow() && heroTurnNow(), done: () => (O().atk || 0) >= 1 || S.totalKills >= 12 },
-  { id: 'ability', pause: 1, pauseWhen: () => liveFoe() && heroTurnNow(), when: () => stepDone('attack') && fightingNow() && heroTurnNow() && abilityOk(), done: () => O().casts >= 1 },
-  { id: 'dodge', pause: 1, pauseWhen: () => liveFoe() && inWindow('dodge'), when: () => stepDone('ability') && fightingNow() && hitComing(), done: () => (O().dodges || 0) >= 1 },
-  { id: 'parry', pause: 1, pauseWhen: () => liveFoe() && inWindow('parry'), when: () => stepDone('dodge') && fightingNow() && hitComing(), done: () => (O().parries || 0) >= 1 },
-  { id: 'boss', pause: 1, ok: 1, when: () => S.maxZone === 1 && S.zone === 1 && typeof fightBoss !== 'undefined' && !!fightBoss, done: () => S.maxZone >= 2 },
+  { id: 'attack', ph: ['hero'], pause: 1, pauseWhen: () => liveFoe() && heroTurnNow(), when: () => fightingNow() && heroTurnNow(), done: () => (O().atk || 0) >= 1 || S.totalKills >= 12 },
+  { id: 'ability', ph: ['hero'], tip: 'Press your ability button when it is ready.', pause: 1, pauseWhen: () => liveFoe() && heroTurnNow(), when: () => stepDone('attack') && fightingNow() && heroTurnNow() && abilityOk(), done: () => O().casts >= 1 },
+  { id: 'dodge', ph: ['windup'], pause: 1, pauseWhen: () => liveFoe() && inWindow('dodge'), when: () => stepDone('ability') && laterFight('ability') && fightingNow() && hitComing(), done: () => (O().dodges || 0) >= 1 },
+  { id: 'parry', ph: ['windup'], pause: 1, pauseWhen: () => liveFoe() && inWindow('parry'), when: () => stepDone('dodge') && laterFight('dodge') && fightingNow() && hitComing(), done: () => (O().parries || 0) >= 1 },
+  { id: 'boss', ph: ['hero'], pause: 1, ok: 1, when: () => S.maxZone === 1 && S.zone === 1 && typeof fightBoss !== 'undefined' && !!fightBoss, done: () => S.maxZone >= 2 },
   // W2-A: Train Attack on the Hero tab (it opens with the step: the tab is unlocked by then, hero level 3 or zone 2)
-  { id: 'upgrade', pause: 1, when: () => stepDone('ability') && isUnlocked('party') && S.gold >= cheapestUp(), done: () => upBought() },
-  { id: 'gather', pause: 1, when: () => S.maxZone >= 2 && isUnlocked('gather') && unlit() && S.activity !== 'gather', done: () => !unlit() || S.activity === 'gather' || oak8() },
-  { id: 'chop', needs: fireMats, when: () => unlit() && S.activity === 'gather', done: () => !unlit() || oak8() },
-  { id: 'light', pause: 1, when: () => unlit() && oak8(), done: () => !unlit() },
-  { id: 'stock:bench', needs: () => matsOfBuild('bench'), when: () => coldH() && plotOpen('bench') && !!needShort(matsOfBuild('bench')).length, done: () => !coldH() || campBusy('bench') },
-  { id: 'bench', pause: 1, pauseUnless: () => matsOfBuild('bench'), when: () => coldH() && plotOpen('bench'), done: () => !coldH() || campBusy('bench') },
-  { id: 'stock:tool', needs: toolMats, when: () => coldH() && campLv('bench') >= 1 && !!needShort(toolMats()).length, done: () => !coldH() || toolMade() },
+  { id: 'upgrade', ph: ['between'], tip: 'Open Hero and make your hero stronger.', pause: 1, when: () => stepDone('ability') && isUnlocked('party') && S.gold >= cheapestUp(), done: () => upBought() },
+  { id: 'gather', ph: ['between'], tip: 'Tap Gather and chop Pine Log for a camp fire.', pause: 1, when: () => S.maxZone >= 2 && isUnlocked('gather') && unlit() && S.activity !== 'gather', done: () => !unlit() || S.activity === 'gather' || oak8() },
+  { id: 'chop', ph: ['between'], needs: fireMats, when: () => unlit() && S.activity === 'gather', done: () => !unlit() || oak8() },
+  { id: 'light', ph: ['between'], pause: 1, when: () => unlit() && oak8(), done: () => !unlit() },
+  { id: 'stock:bench', ph: ['between'], needs: () => matsOfBuild('bench'), when: () => coldH() && plotOpen('bench') && !!needShort(matsOfBuild('bench')).length, done: () => !coldH() || campBusy('bench') },
+  { id: 'bench', ph: ['between'], pause: 1, pauseUnless: () => matsOfBuild('bench'), when: () => coldH() && plotOpen('bench'), done: () => !coldH() || campBusy('bench') },
+  { id: 'stock:tool', ph: ['between'], needs: toolMats, when: () => coldH() && campLv('bench') >= 1 && !!needShort(toolMats()).length, done: () => !coldH() || toolMade() },
   // only once Craft is unlocked: this step pauses the game, and the unlock pass runs on the game clock, so a pause that
   // came first held Craft locked for good (the Craft tab opened on Uniques only, with no Make view to point at)
-  { id: 'tool', pause: 1, pauseUnless: toolMats, when: () => coldH() && campLv('bench') >= 1 && isUnlocked('craft'), done: () => !coldH() || toolMade() },
-  { id: 'stock:forge', needs: () => matsOfBuild('forge'), when: () => coldH() && stepDone('tool') && plotOpen('forge') && !!needShort(matsOfBuild('forge')).length, done: () => !coldH() || campBusy('forge') },
-  { id: 'forge', pause: 1, pauseUnless: () => matsOfBuild('forge'), when: () => coldH() && stepDone('tool') && plotOpen('forge'), done: () => !coldH() || campBusy('forge') },
-  { id: 'stock:store', needs: () => matsOfBuild('store'), when: () => coldH() && plotOpen('store') && !!needShort(matsOfBuild('store')).length, done: () => !coldH() || !(typeof CAMP_B === 'object' && CAMP_B.store) || campBusy('store') },
-  { id: 'store', pause: 1, pauseUnless: () => matsOfBuild('store'), when: () => coldH() && plotOpen('store'), done: () => !coldH() || !(typeof CAMP_B === 'object' && CAMP_B.store) || campBusy('store') },
-  { id: 'tab:party', when: () => isUnlocked('party') && S.maxZone >= 3 && !unlit() && !fightingNow(), done: () => !!O().seen.party },
+  { id: 'tool', ph: ['between'], pause: 1, pauseUnless: toolMats, when: () => coldH() && campLv('bench') >= 1 && isUnlocked('craft'), done: () => !coldH() || toolMade() },
+  { id: 'stock:forge', ph: ['between'], needs: () => matsOfBuild('forge'), when: () => coldH() && stepDone('tool') && plotOpen('forge') && !!needShort(matsOfBuild('forge')).length, done: () => !coldH() || campBusy('forge') },
+  { id: 'forge', ph: ['between'], pause: 1, pauseUnless: () => matsOfBuild('forge'), when: () => coldH() && stepDone('tool') && plotOpen('forge'), done: () => !coldH() || campBusy('forge') },
+  { id: 'stock:store', ph: ['between'], needs: () => matsOfBuild('store'), when: () => coldH() && plotOpen('store') && !!needShort(matsOfBuild('store')).length, done: () => !coldH() || !(typeof CAMP_B === 'object' && CAMP_B.store) || campBusy('store') },
+  { id: 'store', ph: ['between'], pause: 1, pauseUnless: () => matsOfBuild('store'), when: () => coldH() && plotOpen('store'), done: () => !coldH() || !(typeof CAMP_B === 'object' && CAMP_B.store) || campBusy('store') },
+  { id: 'tab:party', ph: ['between'], quiet: 1, tip: 'The Hero tab holds your level, build and abilities.', when: () => isUnlocked('party') && S.maxZone >= 3 && !unlit() && !fightingNow(), done: () => !!O().seen.party },
   // a Got it note: it never pauses and never blocks (audit-1 3.8); the Next Up chip or Got it ends it
-  { id: 'nextup', ok: 1, when: () => isUnlocked('nextup') && stepDone('upgrade') && S.maxZone >= 3, done: () => false }
+  { id: 'nextup', ph: ['between'], quiet: 1, ok: 1, tip: 'Next Up names the one thing worth doing now.', when: () => isUnlocked('nextup') && stepDone('upgrade') && S.maxZone >= 3, done: () => false }
 ];
 const toolMade = () => S.items.some(it => CRAFT_KINDS[it.slot] && CRAFT_KINDS[it.slot].tool);
 
 const O = () => S.onboard || (S.onboard = {});
 const stepDone = id => !!O().done[id];
 // Materials still short: [[fam, tier, n]] -> [{ fam, t, kind, have, n, name }]. kind: the gather node that yields it.
-const matHave = (f, t) => (S.mats && S.mats[f] && S.mats[f][t - 1]) || 0;
+const matHave = (f, t) => matOwn(f, t);
 function needShort(mats) {
   const out = [];
   for (const [fam, t, n] of mats || []) {
@@ -239,8 +249,18 @@ function craftReady() {
   onboardNeed = id => { const s = stepById(id), f = s && (s.needs || s.pauseUnless); try { return f ? needShort(f()) : []; } catch (e) { return []; } };
   // The pause guard: a step that waits for the player pauses the game, but never while it is also short of
   // the materials the action costs (the player could not press it and the clock they need would be stopped).
-  onboardPaused = step => { if (!(step && step.pause && !onboardNeed(step.id).length)) return false; try { return !step.pauseWhen || !!step.pauseWhen(); } catch (e) { return true; } };
-  onboardDone = id => { if (!O().done[id]) { O().done[id] = 1; emit('onboardStep', { id }); } };
+  // guide-voice: one paused step a fight. The first step to pause a fight keeps it; another tip that shows in the same fight does not pause.
+  onboardPaused = step => {
+    if (!(step && step.pause && !onboardNeed(step.id).length)) return false;
+    let p = true; try { p = !step.pauseWhen || !!step.pauseWhen(); } catch (e) {}
+    if (!p || guidePhase() === 'between') return p;
+    if ((step.ph || []).includes('between')) return false;   // a camp or menu tip left up from a break never freezes a fight
+    const R = GUIDE_RT;
+    if (R.pauseFight === R.fight && R.pauseId !== step.id) return false;
+    R.pauseFight = R.fight; R.pauseId = step.id; return true;
+  };
+  // done 1: the player did it. done 2: the tip waited 60 s unanswered and retired to the Journal's Tips.
+  onboardDone = (id, how) => { if (!O().done[id]) { O().done[id] = how || 1; emit('onboardStep', { id }); } };
   const guideOver = () => GUIDE_STEPS.every(s => O().done[s.id]);
   onboardStep = () => {
     if (!O().tips) return null;
@@ -249,7 +269,12 @@ function craftReady() {
       let d = false; try { d = !!s.done(); } catch (e) {}
       if (d) { onboardDone(s.id); continue; }
       let w = false; try { w = !!s.when(); } catch (e) {}
-      if (w) return s;
+      if (!w) continue;
+      const R = GUIDE_RT, held = R.latch === s.id;
+      if (!held && !s.ph.includes(guidePhase()) && !(!guideMenuCovers() && s.ph.includes(guidePhase(true)))) continue;   // not its phase: it waits (a wide screen still shows the fight beside a menu)
+      if (!held && s.quiet && R.lastEnd !== null && R.t - R.lastEnd < GUIDE_QUIET) continue;   // one unprompted line a minute
+      if (s.ph.includes('between')) R.latch = s.id;
+      return s;
     }
     return null;
   };
@@ -280,10 +305,17 @@ function craftReady() {
   on('soloAttack', () => { O().atk = (O().atk || 0) + 1; });
   on('soloDodge', e => { if (e && (e.res === 'dodge' || e.res === 'perfect')) O().dodges = (O().dodges || 0) + 1; });
   on('soloParry', e => { if (e && e.res === 'parry') O().parries = (O().parries || 0) + 1; });
+  // guide-voice runtime: which fight this is, and where each step ended
+  on('fightStart', () => { GUIDE_RT.fight++; });
+  on('packSpawn', () => { if (!(typeof turnCombatOn === 'function' && turnCombatOn())) GUIDE_RT.fight++; });
+  on('onboardStep', e => { if (!e) return; GUIDE_RT.doneIn[e.id] = GUIDE_RT.fight; GUIDE_RT.lastEnd = GUIDE_RT.t; if (GUIDE_RT.latch === e.id) GUIDE_RT.latch = ''; });
+  // A live tip nobody answers for 60 s of play retires: it stops showing and waits in the Journal's Tips.
+  guideRetire = id => { const s = stepById(id); if (!s || O().done[id]) return false; onboardDone(id, 2); return true; };
   let acc = 0;
   let lateAcc = 0;
   const lateOpen = () => FEATURES.every(f => !f.late || O().got[f.id] != null);
   onTick(dt => {
+    GUIDE_RT.t += dt;
     if (O().all) {   // only late features are left to check (about once a second)
       lateAcc += dt; if (lateAcc < 1) return; lateAcc = 0;
       if (!lateOpen()) onboardCheck();
