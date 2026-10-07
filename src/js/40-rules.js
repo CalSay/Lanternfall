@@ -88,6 +88,8 @@ function farmableZone(maxZ, dps) {
   return z;
 }
 const isRegionBoss = z => z % PACE.region === 0;
+// A zone boss's tier (boss-tiers): the last zone of a region holds its Elder, the fifth zone of each area its Champion, the rest are Captains.
+const bossTierOf = z => isRegionBoss(z) ? 'elder' : z % 5 === 0 ? 'champion' : 'captain';
 const bossHpMult = z => PACE.bossHp * (isRegionBoss(z) ? PACE.regionBoss : 1);
 // The region steps a zone has passed, multiplied.
 const regionHp = z => { let m = 1; const st = [].concat(PACE.regionStep); for (let r = 1; r <= Math.floor(z / PACE.region); r++) m *= st[Math.min(r, st.length) - 1]; return m; };

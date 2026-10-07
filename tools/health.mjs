@@ -31,7 +31,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { HEROES as BUDGET_HEROES, loadTargets, BUDGET_FILE, cells as budgetCells, cellKey, binomialSd, verdict as budgetVerdict } from './lib/budget-score.mjs';
+import { HEROES as BUDGET_HEROES, loadTargets, BUDGET_FILE, cells as budgetCells, gearHelpFails, cellKey, binomialSd, verdict as budgetVerdict } from './lib/budget-score.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const BASELINE = path.join(ROOT, 'docs', 'design', 'health-baseline.json');
@@ -327,6 +327,8 @@ function budgetVerdicts(rep, bb) {
   const T = loadTargets(), cs = budgetCells(T, rep), d = today();
   const out = cs.map(c => { const b = bb && bb.cells ? bb.cells[cellKey(c)] : null; return { ...c, baseline: b ? b.value : null, ...budgetVerdict(T, c, bb ? b : null, d) }; });
   if (bb && bb.cells) for (const k of Object.keys(bb.cells)) if (!cs.some(c => cellKey(c) === k)) { const [id, hero, pl] = k.split('|'); out.push({ id, hero, pl, label: 'FAIL (missing from the run)', fail: true }); }
+  // gear must help: a kept-up hero's casual wins never sit below the first-hour hero's at the same boss (a report row that still gates this)
+  for (const g of gearHelpFails(T, rep)) { const c = out.find(x => x.id === g.id && x.hero === g.hero && x.pl === 'casual'); if (c) Object.assign(c, { fail: true, label: `FAIL (gear made it harder: ${(100 * g.value).toFixed(0)}% against ${(100 * g.refValue).toFixed(0)}% at ${g.ref})` }); }
   return out;
 }
 function printBudget(rep, bb) {
