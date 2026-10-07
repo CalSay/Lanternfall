@@ -35,7 +35,7 @@
       "size": "landscape",
       "what": "clipped text: sb-lb",
       "detail": "\"Attack\" cut off (39 px of text in 35)",
-      "n": 355,
+      "n": 353,
       "shot": "04-layout-first fight-landscape.png"
     },
     {
@@ -44,7 +44,7 @@
       "size": "landscape",
       "what": "clipped text: sb-lb",
       "detail": "\"Attack\" cut off (39 px of text in 35)",
-      "n": 80,
+      "n": 81,
       "shot": "05-layout-foe opens the first fight-landscape.png"
     },
     {
@@ -62,7 +62,7 @@
       "size": "landscape",
       "what": "page boxes overlap: .hud-zone + .mob",
       "detail": ".mob:mob 296,50 228x57 and .hud-zone:hud-zone 234,93 116x29 overlap 54x14 px",
-      "n": 6,
+      "n": 7,
       "shot": "07-layout-first boss-landscape.png"
     },
     {
@@ -80,7 +80,7 @@
       "size": "landscape",
       "what": "clipped text: sb-lb",
       "detail": "\"Attack\" cut off (39 px of text in 35)",
-      "n": 55,
+      "n": 56,
       "shot": "09-layout-first craft-landscape.png"
     },
     {
