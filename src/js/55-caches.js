@@ -27,7 +27,7 @@ let cachePending, cacheAuto, cacheSetAuto, cacheLookZone;
   const C = () => S.cache;
   let tickN = 0, pend = null, lootTick = -1, lootItem = null;
   cacheLookZone = z => CACHE_TUNE.lookZones.includes(z);
-  cacheAuto = (n = C().opened) => (C().auto === null || C().auto === undefined ? n >= CACHE_TUNE.autoFrom : !!C().auto);
+  cacheAuto = (n = C().opened) => (typeof C().auto === 'boolean' ? C().auto : n >= CACHE_TUNE.autoFrom);
   cacheSetAuto = on => { C().auto = !!on; save(); };
   cachePending = () => !!pend;
 
@@ -51,9 +51,11 @@ let cachePending, cacheAuto, cacheSetAuto, cacheLookZone;
 
   function open() {
     const p = pend; pend = null;
-    const c = C(); c.opened++; if (!c.first) c.first = p.zone;
+    const c = C();
     let look = null;
-    if (cacheLookZone(p.zone) && typeof DW === 'object' && DW && typeof DW.grantLantern === 'function') look = DW.grantLantern();
+    try { if (cacheLookZone(p.zone) && typeof DW === 'object' && DW && typeof DW.grantLantern === 'function') look = DW.grantLantern(); } catch (e) { look = null; }
+    if (!c.opened) c.first = p.zone;
+    c.opened++;
     const un = p.unique && UNIQ[p.unique.u] ? { item: p.unique, name: UNIQ[p.unique.u].name } : null;
     const starFirst = !!p.star && Object.keys((S.stars && S.stars.own) || {}).length <= 1;
     const essFull = p.ess > 0 && typeof stashFull === 'function' && stashFull('ess', p.tier);

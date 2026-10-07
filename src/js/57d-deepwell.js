@@ -802,8 +802,8 @@ let DEEP_ARENA = null;
     const id = LANTERN_GIFTS.find(x => DEEP_SHOP[x] && !D().cos[x]);
     if (!id) return null;
     D().cos[id] = 1;
-    const worn = !D().eq.lantern;
-    if (worn) D().eq.lantern = id;
+    if (!D().eq.lantern && !(S.deeds && S.deeds.wear && S.deeds.wear.flame)) D().eq.lantern = id;
+    const worn = typeof wearGet === 'function' ? wearGet('flame') === id : D().eq.lantern === id;
     if (typeof codexRefresh === 'function') codexRefresh(true);
     return { id, n: DEEP_SHOP[id].n, col: DEEP_SHOP[id].col, worn };
   }

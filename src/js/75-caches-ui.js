@@ -8,7 +8,7 @@ on('cacheOpen', v => {
   if (!MOMENT_KINDS.cacheAuto) MOMENT_KINDS.cacheAuto = { tier: 'medium', eye: 'Lantern Cache', col: '#F2C14E', snd: 'mid' };
   const big = !v.auto || !!v.look || !!v.unique || v.starFirst || v.zone === 1;
   const lines = [];
-  if (v.look) lines.push({ txt: `New lantern colour: ${v.look.n}.${v.look.worn ? ' Your lantern burns it now.' : ' Wear it from the Codex.'}`, icon: { ic: ['banner', v.look.col] } });
+  if (v.look) lines.push({ txt: `New lantern colour: ${v.look.n.replace(/ lantern$/, '')}`, icon: { ic: ['banner', v.look.col] } });
   if (v.unique) lines.push({ txt: `${v.unique.name}. A unique.`, icon: { item: v.unique.item } });
   if (v.star) lines.push({ txt: `Star: ${v.star.name}` });
   if (v.scroll) lines.push({ txt: v.scroll.name });
@@ -18,12 +18,12 @@ on('cacheOpen', v => {
   if (v.ess && !v.essFull) pay.push(`${v.ess} ${MAT.ess.short[v.tier - 1]} Essence`);
   if (pay.length) lines.push({ txt: pay.join(', ') });
   if (v.essFull) lines.push({ txt: 'Your Essence store is full, so some or all of this win\'s Essence may be lost. Build more room at the Camp.' });
-  if (v.chance !== null && v.chance !== undefined) lines.push({ txt: `Unique chance on this win: ${v.chance}%.` });
   // the colour: a unique first, then the lantern colour, then a Star, then a Scroll
   const col = v.unique ? '#FF8A3D' : v.look ? v.look.col : v.star ? '#F2C14E' : v.scroll ? v.scroll.col : '#F2C14E';
   const icon = v.unique ? { item: v.unique.item } : { ic: ['banner', col] };
-  const title = v.zone === 1 ? 'The first boss falls' : `Zone ${v.zone} is cleared`;
-  const sub = big ? 'A Lantern Cache opens. Here is what this win gave you.' : `${zoneName(v.zone)} is cleared.`;
+  const title = v.zone === 1 ? 'First boss down' : `Zone ${v.zone} cleared`;
+  // the sub is one short line: the unique's odds (honest, with modifiers), else what a look does
+  const sub = v.chance !== null && v.chance !== undefined ? `Unique chance on this win: ${v.chance}%.` : v.look && v.look.worn ? 'Your lantern burns it now.' : 'Here is what the win gave you.';
   const o = { title, sub, col, icon, lines };
   if (big && v.n >= CACHE_TUNE.autoFrom) o.actions = [{ txt: cacheAuto() ? 'Turn off auto-open' : 'Open the next ones automatically', fn: () => cacheSetAuto(!cacheAuto()) }];
   if (big) {

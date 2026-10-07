@@ -506,4 +506,5 @@ Sinks:
 - Craft: materials plus gold (plus Trophies at the top) become gear. Salvage returns about 40% of the materials.
 - Camp: gold, materials and Trophies build stations, which gate crafting tiers, the Storehouse, the crew and the Tavern.
 - Deepwell: Oil is the clock, Depth Marks are the prize. A run changes nothing in the main game except through the shop.
+- Lantern Cache (`55-caches.js`): a boss's first clear opens one. It lists what that win already paid (no new gold, Essence, relics or time) and gives one Deepwell lantern colour the save does not own, on zones 1 to 3 and 7 to 9. It is a container, not a currency: nothing buys, skips or rerolls it.
 - Raid (online): Embers buy relics; kills give Trophies and Uniques.
