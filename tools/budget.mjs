@@ -46,9 +46,9 @@ import { HEROES, loadTargets, cells, offBand } from './lib/budget-score.mjs';
 const argv = process.argv.slice(2);
 const flag = n => argv.includes('--' + n);
 const opt = (n, d) => { const i = argv.indexOf('--' + n); return i >= 0 && argv[i + 1] !== undefined && !argv[i + 1].startsWith('--') ? argv[i + 1] : d; };
-{ const known = ['json', 'fights', 'heroes', 'only', 'eval', 'stars', 'lv', 'seed-offset', 'sweep', 'players'], bad = argv.filter(a => a.startsWith('--') && !known.includes(a.slice(2)));
+{ const known = ['json', 'fights', 'heroes', 'only', 'eval', 'stars', 'talents', 'lv', 'seed-offset', 'sweep', 'players'], bad = argv.filter(a => a.startsWith('--') && !known.includes(a.slice(2)));
   if (bad.length) { console.error('budget: unknown option ' + bad.join(', ') + '; known: ' + known.map(k => '--' + k).join(' ')); process.exit(2); } }
-const FIGHTS = Number(opt('fights', 240)), OFFSET = Number(opt('seed-offset', 0)), STARS = opt('stars', 'typical') !== 'none';
+const FIGHTS = Number(opt('fights', 240)), OFFSET = Number(opt('seed-offset', 0)), STARS = opt('stars', 'typical') !== 'none', TALS = opt('talents', 'typical') !== 'none';
 const RUN_HEROES = opt('heroes') ? opt('heroes').split(',') : HEROES;
 if (!(FIGHTS >= 5) || !Number.isInteger(OFFSET) || RUN_HEROES.some(h => !HEROES.includes(h))) { console.error('budget: --fights 5 or more, an integer --seed-offset, --heroes from ' + HEROES.join(',')); process.exit(2); }
 const J = JSON.stringify;
@@ -155,6 +155,10 @@ const starsTypical = z => `(() => {
   for (const id of pick[1]) if (own(id)) starLight(id, k);
 })()`;
 
+// the typical talents (counters-and-layers: talents are free): the hero takes talent A on every ability they own and on
+// Attack, Parry and Dodge. `--talents=none` is the old talentless hero, for the before/after.
+const talentsTypical = `(() => { const k = soloHero(); for (const id of HERO_TALENTS[k]) talentSet(k, id, 'a'); })()`;
+
 // a 32-bit seed from the fight's name (FNV-1a, then murmur3's finaliser), never 0
 export function seedOf(...parts) {
   let h = 0x811c9dc5;
@@ -173,6 +177,7 @@ function measure(c, k, lvShift = LV_SHIFT, players = RUN_PLAYERS) {
   if (save) { core.storage.set(e('KEY'), fx(save)); e('loadSave()'); }
   e(setup(c, k, lvShift));
   if (STARS && !o.zone1 && o.st !== 'joined') e(starsTypical(z));
+  if (TALS) e(talentsTypical);
   e(`TURN_TUNE.on = 1; S.activity = 'fight'; arena = null; gearDirty(); fightBoss = ${foe === 'boss'}; spawn();`);
   if (foe === 'elite') e(`(() => { const f = combatFoes().find(x => x && !x.dead); turnFoeSetup(f, S.zone, { elite: true }); })()`);
   if (opt('eval')) e(String(opt('eval')));
@@ -204,7 +209,7 @@ export function runBudget({ only, heroes = RUN_HEROES } = {}) {
     for (const k of heroes) perHero[k] = measure(c, k);
     rows.push({ id, zone: z, foe, kind: o.kind || perHero[heroes[0]].kind, ...(o.ref ? { ref: o.ref } : {}), perHero });
   }
-  return { version: 2, fights: FIGHTS, seedOffset: OFFSET, stars: STARS, heroes, rows };
+  return { version: 2, fights: FIGHTS, seedOffset: OFFSET, stars: STARS, talents: TALS, heroes, rows };
 }
 
 const pc = x => x == null ? 'n/a' : (100 * x).toFixed(0);

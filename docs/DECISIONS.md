@@ -567,7 +567,9 @@ change over existing fields.
    in `40-rules.js`). Grade gates nothing; costs keep their unit counts. A drop into a full grade spills into the next
    grade with room. Transmute is retired for Essence only. Cost lines say "Essence", never a grade.
 3. **Talents are a free A | B toggle** (no talent points). `S.abil.tal` is kept as is; no default pick is written.
-   Sims and `budget.mjs` get a talent pick policy and the win bands are re-measured (PR 2).
+   `budget.mjs` now fights with talent A on every owned slot (`--talents none` is the old talentless hero). Measured
+   (240 fights a row, PR 2): casual means move 0 to +4 points (z30 Captain Wren 65 to 68, z38 Captain 78 to 82), turns a
+   won fight fall 3 to 10%, no row changes band, so no boss was retuned.
 4. **Star points are a per-hero budget and the only limit on lit stars** (PR 3). The 2-lit cap goes and income is
    re-curved. Old saves keep every lit star; one the points cannot pay for shows as dim with a Put out button.
 5. Build order: Essence fungible, free talents, star budget, layer and display cleanup.
