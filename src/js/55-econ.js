@@ -42,7 +42,7 @@ let goldPerFoe, econRegionReached, econHearthGold, econRowGold, econShrineGold, 
     const gi = Math.max(1, Math.floor(g) || 1) - 1, r = Math.min(ECON.base.length - 1, Math.floor(gi / ECON.gradesPer)), pos = gi % ECON.gradesPer;
     return econSig(ECON.feeFoes[r] * ECON.base[r] * ECON.feeStep[pos] * (1 + ECON.feeLv * (Math.max(1, lv) - 1)));
   };
-  econUpgradeGold = (t, plus) => econSig(ECON.upFoes * foeGoldBase(econGradeZ(t)) * ((plus || 0) + 1));
+  econUpgradeGold = (t, plus) => econSig(ECON.upFoes * foeGoldBase(econGradeZ(t)) * Math.pow(ECON.upGrow, plus || 0));
   econReforgeGold = (t, n) => econSig(ECON.reforgeFoes * foeGoldBase(econGradeZ(t)) * Math.pow(ECON.reforgeGrow, n || 0));
 
   // ---------------- crit damage (the pool) ----------------

@@ -3029,6 +3029,14 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
 }
 
 .tav-verse { margin: 6px 0; font-style: italic; color: #D8CFE3; }
+/* 60-tabs: the card a tab shows when the game is open in another tab with newer progress (75-tabs-ui.js, card save-two-tabs).
+   Above every other layer: the game is held and this tab no longer saves. No motion. */
+.tabs-ov { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px; background: rgba(8,6,12,.94); }
+.tabs-card { width: min(340px, 100%); padding: 18px 16px 16px; background: var(--panel); border: 1px solid var(--line-hi); border-top: 3px solid var(--ember); box-shadow: 0 4px 0 #0B0810, 0 10px 30px rgba(0,0,0,.6); text-align: center; }
+.tabs-h { margin: 0 0 8px; font: 600 calc(20px * var(--display-k))/1.15 var(--display); color: var(--bone); }
+.tabs-line { margin: 0 0 6px; font-size: 15px; line-height: 1.35; }
+.tabs-note { margin: 0 0 14px; font-size: 13.5px; line-height: 1.35; color: var(--muted); }
+.tabs-reload { min-height: 44px; min-width: 160px; padding: 0 18px; border: 2px solid #0B0810; background: var(--ember); color: #1A1420; font: 600 calc(16px * var(--display-k)) var(--display); cursor: pointer; box-shadow: inset 0 2px 0 rgba(255,255,255,.3), inset 0 -3px 0 var(--ember-deep); }
 /* 60-tools: the Mastery box on a tool's item sheet and the rough tool's sheet (75-tools-ui.js, H2).
    The tool chip on the Gather view's Now card is styled in 60-gathering.css (.gx-tool). */
 .tl-mrow { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 8px; margin-top: 2px; font-size: 12px; }
@@ -8497,7 +8505,13 @@ const ECON = {
   share: [0.10, 0.11, 0.12, 0.13, 0.14], sharePerLv: 0.03,   // share of the Lanternbearer's rate by rarity (N3a reads it)
   // ---- crafting and gear (3.4): k foes of the grade's first zone ----
   gradeZ: [1, 7, 13, 36, 42, 56, 71, 82, 94, 106, 117, 129, 141, 152, 164],   // gear-2 1.4 GRADE_Z
-  upFoes: 20,                    // upgrade: 20 x foeGold(gradeZ) x (plus + 1)
+  // gold-without-training (PROVISIONAL, 2026-10-07: the skilling and crafting overhaul spec, due 16 Oct, sets the real
+  // numbers; the mechanism stays): gold is the upgrade's main cost and each step costs upGrow times the last, so +1 to +4 are
+  // quick buys and +8 to +10 (a Trophy each) are goals. Steps at grade 1: 100, 150, 230, 340, 510, 760, 1.1K, 1.7K,
+  // 2.6K, 3.8K (11K to +10; was 100 x (plus + 1), 5.5K). Materials shrink to the item's main material (upMat x its
+  // recipe count x (plus + 1)), so gold, not essence or hide, is what an upgrade waits on. Salvage pays back upRefund
+  // of the gold an item's upgrades cost (55-crafting craftUpgradeRefund), so a +7 you outgrow is never wasted.
+  upFoes: 20, upGrow: 1.5, upMat: 0.25, upRefund: 0.5,   // upgrade +plus -> +plus+1: 20 x foeGold(gradeZ) x 1.5^plus
   reforgeFoes: 15, reforgeGrow: 1.5,   // reforge: 15 x foeGold(gradeZ) x 1.5^n
   // ---- trade (3.5, TR1 reads it): a unit's price = foeGold(grade's first zone) x famW ----
   famW: { gathered: 0.06, gem: 0.075, herb: 0.075, hide: 0.09, ess: 0.18, secondary: 0.03, refined: 0.15 },
@@ -9297,6 +9311,7 @@ const NOTICES = [
   // things the player just did, and sees happen
   { id: 'did', ch: 'none', why: 'the player just did it and sees the result',
     re: /^(Equipped |Salvaged |.* upgraded\.$|Reforged: |Transmuted |.* took the |Brewed a |.*: .* for 20 minutes\.$|You took the Dare|You dropped the Dare|Weekly goal claimed|The trader sells you|.* set out: |.* rises to rank |.*: bought\.$|Every star is dark again|.* is lit\.$|.* now carries |.* carries the .* mark\.$|You walk on as a |Your hero is now known as |You walk the path of the |The Mirror of Embers shows you)/ },
+  { id: 'upgrade-mark', key: 'upgrade:mark', ch: 'pop', reply: true, held: 'log', why: 'gold-without-training: an item reached +7 (Trophies from here) or +10 (the top); the player just pressed Upgrade' },
   { id: 'build', re: /^(Work starts on the |.* Lv .* is next in line\.$)/, ch: 'none', why: 'the camp shows the timer' },
 
   // ---- the camp, gathering and Hands ----
@@ -10524,9 +10539,31 @@ function loadSave() {
       for (const [k, d] of Object.entries(STATE_DEFAULTS)) if (isPlainObj(d) && isPlainObj(S[k])) fillDefaults(S[k], d);
     }
   } catch (e) {}
+  saveAdopt();
+}
+// save-two-tabs: the game open in two tabs (or windows) writes one save. `saveSeen` is the `last` stamp of the stored
+// copy this page loaded or wrote (and read back). It is runtime only, never saved, and not S.last: boot and the page coming
+// back re-stamp S.last in memory without writing. A stored copy with any other stamp was written by another tab (later, or
+// earlier on a clock set back), so this page holds older progress: it stops saving for good (`saveBlocked`, until a reload)
+// rather than overwrite it, and calls onSaveBlocked (75-tabs-ui shows the card). An unreadable or missing copy reads as 0
+// and never blocks; a write that did not land leaves `saveSeen` on the copy still stored, so it never blocks either.
+let saveSeen = 0, saveBlocked = false, onSaveBlocked = null;
+function storedLast() {
+  try { const raw = storage.get(KEY); if (!raw) return 0; const t = JSON.parse(raw).last; return typeof t === 'number' && isFinite(t) ? t : 0; } catch (e) { return 0; }
+}
+// The stored copy is this page's own (loadSave, a save-code import or restore wrote or read it).
+function saveAdopt() { saveSeen = storedLast(); saveBlocked = false; }
+// True while this page may save. The first time another tab's save is found, blocks and tells the UI.
+function saveCheck() {
+  if (!saveBlocked) { const t = storedLast(); if (t && t !== saveSeen) { saveBlocked = true; if (onSaveBlocked) try { onSaveBlocked(); } catch (e) {} } }
+  return !saveBlocked;
 }
 loadSave();
-function save() { S.last = Date.now(); try { storage.set(KEY, JSON.stringify(S)); } catch (e) {} }
+function save() {
+  if (!saveCheck()) return;
+  S.last = Date.now();
+  try { const raw = JSON.stringify(S); storage.set(KEY, raw); if (storage.get(KEY) === raw) saveSeen = S.last; } catch (e) {}
+}
 
 // registerState('achievements', { got: {}, seen: 0 }): adds a top-level save field.
 // Defaults merge into fresh() and into the loaded save (missing keys only, recursively
@@ -10981,10 +11018,13 @@ let itemKind, kindPos, fits, heroWho, retoolItems, RETOOL, itemLines, itemStats,
   kindColor = (slot, t, u) => u ? UNIQ[u].col : MAT[(CRAFT_KINDS[slot] || { pre: 'ore' }).pre].col[t - 1];
   kindCost = (kind, t) => craftRecipe(kind, t);
   kindUpgradeCost = it => {
-    const m = {};
-    for (const [k, n] of Object.entries(CRAFT_KINDS[it.slot].rec)) m[k] = Math.ceil(n * 0.6 * (it.plus + 1));
+    // gold-without-training (provisional numbers, see ECON.upMat): only the recipe's main material (its biggest count, never essence or the slow Hide when it has
+    // another), ECON.upMat x n x (plus + 1); was every recipe material at 0.6 x n x (plus + 1). Uniques still take essence.
+    const rec = Object.entries(CRAFT_KINDS[it.slot].rec).sort((a, b) => b[1] - a[1]);
+    const m = {}, main = rec.find(([k]) => k !== 'ess' && k !== 'hide') || rec.find(([k]) => k !== 'ess');
+    if (main) m[main[0]] = Math.ceil(main[1] * ECON.upMat * (it.plus + 1));
     if (it.u) m.ess = (m.ess || 0) + 2 * (it.plus + 1);
-    const c = { mats: m, gold: econUpgradeGold(it.t, it.plus) };   // ECON-A: 20 foes of the grade's first zone x (plus + 1); was 40 x 5^t x (plus + 1)
+    const c = { mats: m, gold: econUpgradeGold(it.t, it.plus) };   // 20 foes of the grade's first zone x 1.5^plus (21w ECON.upGrow)
     // +8, +9 and +10 each need a Trophy of any type (owner decision); K6 enforces it.
     const tr = craftUpgradeTrophies(it.plus); if (tr) c.troph = tr;
     return c;
@@ -11400,9 +11440,10 @@ function equipItem(id, pos) {
 }
 function salvageItem(id) {
   const it = itemById(id); if (!it || isEquipped(id)) return false;
+  const g = craftUpgradeRefund(it);   // gold-without-training: half the gold its upgrades cost comes back (55-crafting)
   salvageGive(it);
   S.items = S.items.filter(i => i.id !== id);
-  toast(`Salvaged ${itemName(it)} for materials.`, 'good', null, 'low'); save();
+  toast(`Salvaged ${itemName(it)} for materials${g ? ` and ${fmt(g)} gold` : ''}.`, 'good', null, 'low'); save();
   return true;
 }
 // C23: batch salvage rechecks protection at commit time. Duplicate input IDs pay only once;
@@ -11414,10 +11455,11 @@ function salvageItems(ids) {
   const batch = [];
   for (const it of S.items) if (requested.has(it.id) && counts.get(it.id) === 1 && !it.u && !worn.has(it.id)) batch.push(it);
   if (!batch.length) return 0;
+  const g = batch.reduce((a, it) => a + craftUpgradeRefund(it), 0);
   for (const it of batch) salvageGive(it);
   const removed = new Set(batch.map(it => it.id));
   S.items = S.items.filter(it => !removed.has(it.id));
-  toast(`Salvaged ${batch.length} items for materials.`, 'good', null, 'low'); save();
+  toast(`Salvaged ${batch.length} items for materials${g ? ` and ${fmt(g)} gold` : ''}.`, 'good', null, 'low'); save();
   return batch.length;
 }
 // Forge a new item of slot/tier. Returns the item, or null if not allowed.
@@ -12869,13 +12911,16 @@ let clsEvo, clsProven, clsStrength, clsGate, provingInfo, provingStart, evoChoic
 //   craftXpFor(skill, n) -> n with the catch-up multiplier applied (x2 while behind)
 //   upgradeItem(id, trophIdx?) -> bool           +1 (max +10); +8..+10 each pay 1 Trophy
 //   canUpgrade(id) -> { ok, why, cost }          (the most plentiful Trophy unless trophIdx)
+//   craftUpgradeRefund(it) -> gold               what salvaging it pays back: ECON.upRefund of the gold its +N cost
+//                                                at today's prices (gold-without-training; no save field)
 //   reforgeItem(id, lineIdx) -> bool             reroll one affix line (Enchanting gate)
 //   canReforge(id, lineIdx) -> { ok, why, cost } cost includes the Almanac's 'reforge' modifier
 //   transmute(fam, fromT, to, toT?) -> bool      within one family: `to` is the target tier (number),
 //                                                'up' / 'down', or the family name (then toT, default up)
 //   canTransmute(fam, fromT, to, toT?) -> { ok, why, take, give, toT }
 //   salvageItem(id) (51-actions) is generic; salvageGive calls craftSalvageBonus(it): affixed items
-//                                                have a 20% chance per line of 1 essence of their tier
+//                                                have a 20% chance per line of 1 essence of their tier, and an
+//                                                upgraded item pays back craftUpgradeRefund(it) gold (ledger 'craft', negative)
 //   trophies() -> total Trophies; S.craft.troph[i] per type (K5 fills them)
 //   craftStarChart() -> bool                     40 Amethyst Shard (tier-3 Crystal), 20 Radiant
 //                                                Essence, 1 Wraith Veil; Enchanting 9; Oriel joins
@@ -12900,7 +12945,7 @@ let clsEvo, clsProven, clsStrength, clsGate, provingInfo, provingStart, evoChoic
 
 let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, upgradeItem, canUpgrade, reforgeItem,
   canReforge, transmute, canTransmute, trophies, craftStarChart, brewTonic,
-  drinkTonic, tonicActive, craftSalvageBonus;
+  drinkTonic, tonicActive, craftSalvageBonus, craftUpgradeRefund;
 
 {
   registerState('craft', { v: 1, troph: [0, 0, 0, 0, 0, 0, 0], tonic: null, tonics: {}, jobs: [], champ: 0, starChart: 0, tmd: {} });
@@ -13013,7 +13058,11 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
     gearDirty();
     gainStation(stationOf(it.slot).skill, CRAFT_XP.upgrade(it.t));
     toast(`${itemName(it)} upgraded.`, 'good', { item: it }, 'low');
-    emit('upgraded', { item: it });
+    // gold-without-training: the two steps worth a word. +7 is the last gold-only step; +10 is the top.
+    const nm = kindName(it.slot, it.t, it.u);
+    if (it.plus === CRAFT_TROPHY_GATE.from - 1) emit('toast', { key: 'upgrade:mark', msg: `${nm} is now +${it.plus}. The next three upgrades each need a Trophy from a champion.`, kind: 'good', prio: 'normal', icon: { item: it } });
+    else if (it.plus === CRAFT_TROPHY_GATE.max) emit('toast', { key: 'upgrade:mark', msg: `${nm} is now +${it.plus}, fully upgraded.`, kind: 'good', prio: 'normal', icon: { item: it } });
+    emit('upgraded', { item: it, gold: c.cost.gold });
     save();
     return true;
   };
@@ -13089,9 +13138,16 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
   };
 
   // ---- salvage: a chance of an essence for affixed items (51-actions salvageGive calls this) ----
+  craftUpgradeRefund = it => {
+    if (!it || !CRAFT_KINDS[it.slot]) return 0;
+    let g = 0; for (let p = 0; p < Math.min(CRAFT_TROPHY_GATE.max, it.plus | 0); p++) g += econUpgradeGold(it.t, p);
+    return Math.floor(g * ECON.upRefund);
+  };
   craftSalvageBonus = it => {
     const n = Array.isArray(it.a) ? it.a.length : 0;
     if (n && Math.random() < Math.min(1, SALVAGE_ESS * n)) stashAdd('ess', it.t, 1, 'preview');
+    const g = craftUpgradeRefund(it);
+    if (g > 0) { S.gold += g; econSpend('craft', -g); }
   };
 
   // ---- class change: retool to the new class's kinds; anything that still does not fit goes back to the bag ----
@@ -13211,7 +13267,7 @@ let goldPerFoe, econRegionReached, econHearthGold, econRowGold, econShrineGold, 
     const gi = Math.max(1, Math.floor(g) || 1) - 1, r = Math.min(ECON.base.length - 1, Math.floor(gi / ECON.gradesPer)), pos = gi % ECON.gradesPer;
     return econSig(ECON.feeFoes[r] * ECON.base[r] * ECON.feeStep[pos] * (1 + ECON.feeLv * (Math.max(1, lv) - 1)));
   };
-  econUpgradeGold = (t, plus) => econSig(ECON.upFoes * foeGoldBase(econGradeZ(t)) * ((plus || 0) + 1));
+  econUpgradeGold = (t, plus) => econSig(ECON.upFoes * foeGoldBase(econGradeZ(t)) * Math.pow(ECON.upGrow, plus || 0));
   econReforgeGold = (t, n) => econSig(ECON.reforgeFoes * foeGoldBase(econGradeZ(t)) * Math.pow(ECON.reforgeGrow, n || 0));
 
   // ---------------- crit damage (the pool) ----------------
@@ -13886,7 +13942,7 @@ const HEARTH_COLD_B = ['forge', 'bench', 'loom', 'ench', 'tavern'];
 // Decor plots on the camp panorama (hearth-and-hands.md 6.4; N2 draws them): no cost, no timer, no perk.
 // The panorama is 1,024 art px wide with p13, the Trophy Wall, at x 990 where the road enters camp.
 const HEARTH_PLOT_AT = { wall: { plot: 'p13', x: 990, decor: 1, n: 'Trophy Wall' } }, HEARTH_PANO_W = 1024;
-let hearthCold, hearthLit, hearthScene, hearthCan, hearthLight, hearthPlotOpen, hearthFirst, hearthStationWhy, hearthNext,
+let hearthCold, hearthLit, hearthScene, hearthCan, hearthLight, hearthPlotOpen, hearthFirst, hearthNearFull, hearthStationWhy, hearthNext,
   hearthApply, hearthWarm, HEARTH_PLOT;
 
 {
@@ -13948,6 +14004,7 @@ let hearthCold, hearthLit, hearthScene, hearthCan, hearthLight, hearthPlotOpen, 
     for (const f of CAPPED) { const row = S.mats[f]; if (!row) continue; for (let t = 1; t <= row.length; t++) { const c = packCap(f, t); if (c > 0 && Number.isFinite(c) && row[t - 1] >= HEARTH_TUNE.near * c) return true; } }
     return false;
   };
+  hearthNearFull = nearFull;
   HEARTH_PLOT = {
     bench: () => hearthLit(),
     forge: () => lv('bench') >= 1,
@@ -14510,8 +14567,24 @@ const weaponKind = () => {
 };
 const weaponMats = () => { const k = weaponKind(); try { return k ? Object.entries(craftRecipe(k, 1)).filter(([f]) => f !== 'gold').map(([f, n]) => stockOf(f, 1, n)) : []; } catch (e) { return []; } };
 const weaponStation = () => { const k = weaponKind(); return k ? CRAFT_KINDS[k].st : null; };
-const weaponNow = () => coldH() && stepDone('forge') && !!weaponKind() && !weaponMade() && campLv(weaponStation()) >= 1 && !stepDone('store');
-const weaponMade = () => { try { return !!equipped('weapon') || S.items.some(it => CRAFT_KINDS[it.slot] && CRAFT_KINDS[it.slot].pos === 'weapon'); } catch (e) { return false; } };
+const weaponNow = () => coldH() && stepDone('forge') && !!weaponKind() && !weaponMade() && !wearPiece('weapon') && campLv(weaponStation()) >= 1 && !stepDone('store');
+// Worn, not owned (Cal's play note 13): a weapon in the bag does nothing, so it is not "made" until it is on.
+const weaponMade = () => { try { return !!equipped('weapon'); } catch (e) { return false; } };
+const TOOL_POS = ['pick', 'axe', 'sickle', 'spear'];
+// A bag piece the hero could put on now in a position that is empty (kind 'tool': a pickaxe, woodaxe, sickle or spear; 'weapon': the weapon). -> { it, pos } | null
+const wearPiece = kind => {
+  try {
+    for (const pos of kind === 'tool' ? TOOL_POS : ['weapon']) {
+      if (equipped(pos)) continue;
+      const it = S.items.find(i => CRAFT_KINDS[i.slot] && kindPos(i.slot) === pos && fits(i, pos, 'hero'));
+      if (it) return { it, pos };
+    }
+  } catch (e) {}
+  return null;
+};
+// the points are spent (or the player has sat on the Hero menu a while with some left): time to point back at the fight
+const backReady = () => { try { const k = soloHero(); if (obAttrOn() && k && attrPoints(k).free > 0) return GUIDE_RT.lastEnd !== null && GUIDE_RT.t - GUIDE_RT.lastEnd >= 20; } catch (e) {} return true; };
+const toolWorn = () => { try { return TOOL_POS.some(pos => !!equipped(pos)); } catch (e) { return false; } };
 // W1-D (playtest-2 P0): a combat step pauses the game only while what it asks for can happen right now, so the pause can
 // never freeze the clock the step needs (a respawn, a heavy hit landing, a cooldown running out). `pauseWhen`: the
 // extra condition for the pause. Attack and the ability need a live foe; Dodge and Parry need a wind-up still on its
@@ -14542,6 +14615,10 @@ const GUIDE_STEPS = [
   { id: 'boss', ph: ['hero'], pause: 1, ok: 1, when: () => S.maxZone === 1 && S.zone === 1 && typeof fightBoss !== 'undefined' && !!fightBoss, done: () => S.maxZone >= 2 },
   // W2-A: Train Attack on the Hero tab (it opens with the step: the tab is unlocked by then, hero level 3 or zone 2)
   { id: 'upgrade', ph: ['between'], tip: 'Open Hero and make your hero stronger.', pause: 1, when: () => stepDone('ability') && isUnlocked('party') && S.gold >= cheapestUp(), done: () => upBought() },
+  // Cal's play note 7: after the points are spent, say how to get back to the fight (the Hero menu otherwise just sits there)
+  { id: 'back', ph: ['between'], pause: 1, tip: 'Close the menu to get back to the fight.', when: () => stepDone('upgrade') && S.tab === 'party' && fightingNow() && backReady(), done: () => stepDone('upgrade') && !S.tab },
+  // Cal's play notes 9 and 13: a weapon found or made sits in the bag until it is worn. The tip names it and wears it in one tap.
+  { id: 'wear:weapon', ph: ['between'], pause: 1, tip: 'Put on the weapon in your bag.', when: () => coldH() && !!wearPiece('weapon'), done: () => weaponMade() },
   { id: 'gather', ph: ['between'], tip: 'Tap Gather and chop Pine Log for a camp fire.', pause: 1, when: () => S.maxZone >= 2 && isUnlocked('gather') && unlit() && S.activity !== 'gather', done: () => !unlit() || S.activity === 'gather' || oak8() },
   { id: 'chop', ph: ['between'], needs: fireMats, when: () => unlit() && S.activity === 'gather', done: () => !unlit() || oak8() },
   { id: 'light', ph: ['between'], pause: 1, when: () => unlit() && oak8(), done: () => !unlit() },
@@ -14551,6 +14628,7 @@ const GUIDE_STEPS = [
   // only once Craft is unlocked: this step pauses the game, and the unlock pass runs on the game clock, so a pause that
   // came first held Craft locked for good (the Craft tab opened on Uniques only, with no Make view to point at)
   { id: 'tool', ph: ['between'], pause: 1, pauseUnless: toolMats, when: () => coldH() && campLv('bench') >= 1 && isUnlocked('craft'), done: () => !coldH() || toolMade() },
+  { id: 'wear:tool', ph: ['between'], pause: 1, tip: 'Put on the tool you made.', when: () => coldH() && stepDone('tool') && !!wearPiece('tool'), done: () => !coldH() || (stepDone('tool') && toolWorn()) },
   { id: 'stock:forge', ph: ['between'], needs: () => matsOfBuild('forge'), when: () => coldH() && stepDone('tool') && plotOpen('forge') && !!needShort(matsOfBuild('forge')).length, done: () => !coldH() || campBusy('forge') },
   { id: 'forge', ph: ['between'], pause: 1, pauseUnless: () => matsOfBuild('forge'), when: () => coldH() && stepDone('tool') && plotOpen('forge'), done: () => !coldH() || campBusy('forge') },
   // first-gold-and-camp-strip: with the weapon's own station built (the Forge, or the Workbench for a bow or staff; it comes after the Forge step) the next job is the first weapon:
@@ -26284,6 +26362,14 @@ function turnCombatAction(kind, slot) {
     return turnResolve(TURN_LIVE, { kind, slot }, 0, TURN_LIVE_IO);
   return false;
 }
+// Equipping an ability in the middle of a fight: it joins the live fight at once, ready to press (a fight took the slots as it
+// started, so the new one showed ready and did nothing until the next foe: Cal's play note 20). Its cooldown is kept once it has one.
+function turnSyncEquip() {
+  const m = TURN_LIVE; if (!m || m.ended) return;
+  for (const id of soloEquipped()) if (id && !(id in m.cds)) { m.cds[id] = 0; m.p.cds[id] = turnCdFor(id); }
+  m.p.eq = soloEquipped().filter(Boolean);   // passives follow the slots: a swapped-out one stops, so they never stack
+}
+on('soloEquip', turnSyncEquip);
 function turnCombatTick(dt) {
   if (!turnCombatScope()) {
     if (TURN_LIVE && !TURN_LIVE.ended) turnEnd(TURN_LIVE, 'abandon', TURN_LIVE_IO);
@@ -36509,7 +36595,10 @@ on('cacheOpen', v => {
   const big = !v.auto || !!v.look || !!v.unique || v.starFirst || v.zone === 1;
   const lines = [];
   if (v.look) lines.push({ txt: `New lantern colour: ${v.look.n.replace(/ lantern$/, '')}`, icon: { ic: ['banner', v.look.col] } });
-  if (v.unique) lines.push({ txt: `${v.unique.name}. A unique.`, icon: { item: v.unique.item } });
+  if (v.unique) {
+    lines.push({ txt: `${v.unique.name}. A unique.`, icon: { item: v.unique.item } });
+    const wn = typeof momentWearNote === 'function' ? momentWearNote(v.unique.item) : null; if (wn) lines.push(wn);   // Cal's play note 9: say where a unique you cannot wear went
+  }
   if (v.star) lines.push({ txt: `Star: ${v.star.name}` });
   if (v.trophy) lines.push({ txt: `${v.trophy.n} ${v.trophy.name}` });
   const pay = [];
@@ -36525,7 +36614,9 @@ on('cacheOpen', v => {
   // the sub is one short line: the unique's odds (honest, with modifiers), else what a look does
   const sub = v.chance !== null && v.chance !== undefined ? `Unique chance on this win: ${v.chance}%.` : v.look && v.look.worn ? 'Your lantern burns it now.' : 'Here is what the win gave you.';
   const o = { title, sub, col, icon, lines, zone: v.zone };
-  if (big && v.n >= CACHE_TUNE.autoFrom) o.actions = [{ txt: cacheAuto() ? 'Turn off auto-open' : 'Open the next ones automatically', fn: () => cacheSetAuto(!cacheAuto()) }];
+  o.actions = [];
+  if (v.unique && typeof momentEquipAction === 'function') { const eq = momentEquipAction(v.unique.item); if (eq) o.actions.push(eq); }   // Cal's play note 9: the unique is one tap from being worn
+  if (big && v.n >= CACHE_TUNE.autoFrom) o.actions.push({ txt: cacheAuto() ? 'Turn off auto-open' : 'Open the next ones automatically', fn: () => cacheSetAuto(!cacheAuto()) });
   const barks = v.zone === 1 ? ['boss1'] : [];
   const ci = MOMENT_Q.findIndex(q => q.kind === 'champion' && q.zone === v.zone);   // champion-moment: a Champion's first clear queued its own card (75-moments-ui)
   if (big || ci >= 0) {
@@ -38148,7 +38239,7 @@ let craftUI = null;
     } else {
       if (d && d.pos && heroFitsIt(it) && !wr) {
         const eq = el('button', 'big forge cf-act', 'Equip'); eq.type = 'button';
-        eq.addEventListener('click', () => { equipHero(it.id, d.pos); ui(true); });
+        eq.addEventListener('click', () => { equipHero(it.id, d.pos); if (wornBy(it.id)) { st8.result = null; st8.resArm = false; } ui(true); });   // Cal's play note 17: worn, so the card closes (Keep and Salvage are for a piece that is not worn)
         acts.append(eq);
       }
       const keep = el('button', 'big cf-act cf-keep', 'Keep'); keep.type = 'button';
@@ -38501,6 +38592,8 @@ let craftUI = null;
       }
       bag.bulk.append(chips);
     }
+    const gold = q.list.reduce((a, it) => a + craftUpgradeRefund(it), 0);
+    if (gold) bag.bulk.append(el('p', 'note', `Their upgrades pay back ${fmt(gold)} gold.`));
     if (Object.keys(q.possible).length) bag.bulk.append(el('p', 'note', 'Affixed items may also return extra essence.'));
     if (q.full) bag.bulk.append(el('p', 'note warn', 'Your Storehouse is full for some of this. The rest is lost.'));
     const controls = el('div', 'cf-bulk-actions');
@@ -38713,7 +38806,9 @@ let craftUI = null;
       upBox.append(b);
       if (!f && !heroPos) upBox.append(el('p', 'note', 'Equip it to upgrade it.'));
       else if (c.troph && !f) upBox.append(el('p', 'note', 'Trophy upgrades open with the next crafting update.'));
+      else if (c.troph) upBox.append(el('p', 'note', 'From +8, each upgrade also takes a Trophy. Champions drop them.'));   // gold-without-training
     }
+    if (it.plus > 0) upBox.append(el('p', 'note', `Salvage it to get back ${fmt(craftUpgradeRefund(it))} gold, half what its upgrades cost.`));   // gold-without-training
     body.append(secBox('Upgrade', upBox));
 
     // ---- reforge ----
@@ -38723,9 +38818,10 @@ let craftUI = null;
     const sv = el('div', 'cf-sv');
     if (wr) sv.append(el('p', 'note', 'You wear this. Equip something else before you salvage it.'));
     else if (sheet.arm === 'salvage') {
-      const chips = el('div', 'costs'); costChips(chips, salvagePreview(it), it.t);
-      chips.querySelectorAll('.cost').forEach(c => { c.classList.remove('short'); const s = c.querySelector('span'); s.textContent = s.textContent.replace(/^[^/]*\//, '+'); });
+      const chips = el('div', 'costs'); costChips(chips, salvagePreview(it), it.t, craftUpgradeRefund(it));   // gold: half its upgrades' gold
+      chips.querySelectorAll('.cost').forEach(c => { c.classList.remove('short'); const s = c.querySelector('span'); s.textContent = '+' + s.textContent.replace(/^[^/]*\//, ''); });
       sv.append(el('p', 'note warn', `Salvage ${itemName(it)}? It is gone for good. You get back about:`), chips);
+      if (it.plus >= CRAFT_TROPHY_GATE.from) sv.append(el('p', 'note warn', 'The Trophies its upgrades took do not come back.'));
       const room = storeSalvageNote(salvagePreview(it), it.t); if (room) sv.append(el('p', 'note warn', room));   // H3: the Storehouse cap
       const r = el('div', 'cf-wear');
       const yes = el('button', 'big cf-act', 'Salvage it'); yes.type = 'button';
@@ -40752,6 +40848,23 @@ function moment(kind, o) {
   MOMENT_UI.wait = 0;
   return true;
 }
+// Cal's play note 9: a unique that lands in the bag is one tap from being worn. -> an action for the card, or null when it is not in the
+// bag, the hero cannot use it, or the hero already wears something at least as strong in that spot.
+function momentEquipAction(it) {
+  try {
+    const pos = it && itemById(it.id) ? kindPos(it.slot) : null;
+    if (!pos || !(pos in S.equip) || !fits(it, pos, 'hero')) return null;
+    const cur = equipped(pos); if (cur && (cur.id === it.id || itemPower(cur) >= itemPower(it))) return null;
+    return { txt: `Equip ${itemName(it)}`, fn: () => { equipItem(it.id, pos); } };
+  } catch (e) { return null; }
+}
+// ... and when the hero cannot wear it, say where it went, so the card never looks like loot that vanished.
+function momentWearNote(it) {
+  try {
+    const pos = it && itemById(it.id) ? kindPos(it.slot) : null;
+    return pos && (pos in S.equip) && !fits(it, pos, 'hero') ? { txt: 'You cannot wear it. It waits in your bag for a hero who can.' } : null;
+  } catch (e) { return null; }
+}
 function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner, queued: MOMENT_Q.length }; }
 {
   // a turn is in motion (a hit, a windup, a parry window). The waiting phases (the next foe's intro, the hero's turn, the handoff: the game's own
@@ -40918,7 +41031,7 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
     const u = UNIQ[it.u];
     moment('unique', { title: u.name, sub: e.first ? 'A new unique. It joins your trophy wall.' : 'Another copy of a unique you have.',
       rarity: 'legendary', icon: { item: it }, bark: 'unique',
-      lines: e.kept ? [] : [{ txt: 'Your bag was full, so it was salvaged.' }] });
+      lines: e.kept ? [momentWearNote(it)].filter(Boolean) : [{ txt: 'Your bag was full, so it was salvaged.' }], actions: e.kept ? [momentEquipAction(it)].filter(Boolean) : [] });
   });
   on('zoneClear', e => {
     if (!e) return;
@@ -41461,9 +41574,20 @@ let navUI = null;
     },
     'tab:party': () => S.tab === 'party' ? null : { node: q('.tab[data-tab="party"]'), text: "The Hero tab's open. Tap it." }
   };
+  // Cal's play notes 9 and 13: a piece in the bag does nothing until it is on. The tip names it and the Equip button wears it in one tap;
+  // the ring sits on the craft card's own Equip button when that card is up.
+  const wearSpec = (kind, text) => {
+    const w = wearPiece(kind); if (!w) return null;
+    const nm = itemName(w.it), btn = q('#sec-craft-recipes .cf-resact .forge'), card = !!S.tab && vis(btn) && (btn.closest('.cf-res') || {}).dataset?.itemId === String(w.it.id);   // the card must show this piece
+    return { text: text(nm), node: card ? btn : onGame() ? $('stage') : q(`.tab[data-tab="${S.tab}"]`), at: !card && onGame() ? [0.74, 0.62] : null, side: 'up',
+      go: { label: `Equip ${nm}`, fn: () => { equipItem(w.it.id, w.pos); } } };
+  };
   const STEP_UI = {
     // UX-L1: in landscape a menu leaves the rail and top row in view, so the hint stays and points at the lit tab (close the menu)
     chop: () => (onGame() || isWide()) && atGrove() ? stockSpec('chop', 'the camp fire', 'Tap the tree. It goes faster.') : null,
+    back: () => S.tab === 'party' ? { node: q('#menuX'), side: 'up', text: 'Done here? Close the menu and the fight goes on.', go: { label: 'Back to the fight', fn: () => closeMenu() } } : null,
+    'wear:tool': () => wearSpec('tool', nm => `Your ${nm} is in your bag. A tool only works when you wear it.`),
+    'wear:weapon': () => wearSpec('weapon', nm => `Your ${nm} is in your bag. Put it on to fight with it.`),
     'stock:bench': () => stockSpec('stock:bench', 'the Workbench'),
     'stock:tool': () => stockSpec('stock:tool', 'a Copper Pickaxe'),
     'stock:forge': () => stockSpec('stock:forge', 'the Forge'),
@@ -41498,7 +41622,8 @@ let navUI = null;
       if (st && st.getAttribute('aria-pressed') !== 'true') return { node: st, text: 'Tap the ' + CRAFT_STATIONS[CRAFT_KINDS[k].st].n + '.' };
       return { node: q(`#sec-craft-recipes .cf-rec[data-kind="${k}"] .cf-go`) || q('#sec-craft-recipes') || st, side: 'up', text: 'Make your first weapon. Then put it on.' };
     },
-    store: () => campPath('store', ['Packs are near full. Open Camp.', 'Open Camp.', 'Packs are near full. Build a Storehouse.']),
+    // Cal's play note 15: only say the packs are near full when they are (the Storehouse plot also opens once the Forge is built)
+    store: () => { const full = typeof hearthNearFull === 'function' && hearthNearFull(); return campPath('store', full ? ['Packs are near full. Open Camp.', 'Open Camp.', 'Packs are near full. Build a Storehouse.'] : ['The Forge is up. Open Camp.', 'Open Camp.', 'Build a Storehouse. It holds more.']); },
     // Training: Hero tab, Training view, Train on Attack.
     // hero-progression-rework: with attributes on, the first point goes into Might.
     upgrade: () => Object.assign(typeof attrOn === 'function' && attrOn()
@@ -42065,6 +42190,7 @@ if (typeof registerSection === 'function' && typeof portraitsClassic === 'functi
       p.adapter.set(KEY, p.backupRaw);
       if (p.adapter.get(KEY) !== p.backupRaw) throw new Error('Save readback did not match.');
       useStorage(p.adapter);
+      saveAdopt();   // save-two-tabs: this tab wrote the stored copy, so its stamp is not another tab's
       st.pendingReload = null;
       st.armed = false;
       st.importErr = 'Your current game is saved again.';
@@ -42147,6 +42273,7 @@ if (typeof registerSection === 'function' && typeof portraitsClassic === 'functi
       adapter.set(KEY, candidateRaw);
       verified = adapter.get(KEY) === candidateRaw;
     } catch (e) { /* The adapter may also swallow a failed write. Readback decides. */ }
+    saveAdopt();   // save-two-tabs: the imported copy is this tab's own until the reload
     st.pendingReload = { adapter, priorRaw, backupRaw, candidateRaw, verified };
     useStorage({ get: key => adapter.get(key), set: (key, value) => { if (key !== KEY) adapter.set(key, value); } });
     syncControls();
@@ -43064,6 +43191,7 @@ var starsUiPick;   // starsUiPick(id): open the star map on that star's card (57
   const n = k => (D ? +D.n[k] || 0 : null);
   const since = k => (D && D.since[k]) || 0;
   const late = () => (ST().late && ST().since ? ST().since : 0);
+  const spentOn = (...ks) => { const sp = S.econ && S.econ.spent; return sp ? Math.round(ks.reduce((a, k) => a + (+sp[k] || 0), 0)) : null; };
   const fineTxt = () => { const r = D ? D.rec.fine : 0; const st = (DEED_TRACKS.find(t => t.id === 'fine') || {}).steps || []; return r ? st[r - 1] : 'None yet'; };
   // Hours fielded together, and the top pair (F2's Bond time per pair), when F2 is in.
   const topPair = () => {
@@ -43104,6 +43232,10 @@ var starsUiPick;   // starsUiPick(id): open the star map on that star's card (57
     ]],
     ['Loot', [
       ['Gold earned', () => S.totalGold],
+      // gold-without-training: where the gold went (the 55-econ ledger; upgrades and crafts are the Forge)
+      ['Gold spent at the Forge', () => spentOn('craft')],
+      ['Gold spent on Hands', () => spentOn('hire', 'shift')],
+      ['Gold spent on the camp', () => spentOn('camp', 'tent')],
       ['Essence gained', () => n('ess'), { since: () => since('ess') }],
       ['Trophies earned', () => n('troph'), { since: () => since('troph') }],
       ['Uniques found', () => ST().uniques, { sub: () => `${statsApi.uniqueKinds()} of ${statsApi.uniqueTotal()} kinds` }]
@@ -43757,6 +43889,33 @@ var storyUI;   // var: 75-codex-ui (earlier in the build) reads it at run time
   }
 
   storyUI = { open: id => openEntry(id), list: codex => openList(!!codex), codexRow };
+}
+
+// ---- src/js/75-tabs-ui.js ----
+// 75-tabs-ui: card save-two-tabs. When another tab of the game wrote a newer save, 30-state stops this page's saves and
+// calls onSaveBlocked; this shows a card over everything that says so, with a Reload button, and holds the game.
+// The 'storage' event (another tab of this browser wrote the save) runs the same check at once, so a background tab
+// already shows the card when the player comes back to it.
+{
+  let ov = null;
+  function show() {
+    if (ov) return;
+    ov = el('div', 'tabs-ov');
+    ov.setAttribute('role', 'alertdialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-labelledby', 'tabsHead');
+    const card = el('div', 'tabs-card');
+    const h = el('h2', 'tabs-h', 'Open in another tab'); h.id = 'tabsHead';
+    const btn = el('button', 'tabs-reload', 'Reload'); btn.type = 'button';
+    btn.addEventListener('click', () => { try { location.reload(); } catch (e) {} });
+    card.append(h, el('p', 'tabs-line', 'Lanternfall is open in another tab. Reload to keep playing here.'),
+      el('p', 'tabs-note', 'Your newer progress is safe. This tab has stopped saving so it cannot overwrite it.'), btn);
+    ov.append(card);
+    document.body.append(ov);
+    try { btn.focus({ preventScroll: true }); } catch (e) {}
+  }
+  onSaveBlocked = show;
+  if (saveBlocked) show();   // blocked while the page was still loading
+  holdGame(() => saveBlocked);
+  addEventListener('storage', e => { if (e.key === KEY || e.key === null) saveCheck(); });
 }
 
 // ---- src/js/75-tools-ui.js ----
@@ -44830,10 +44989,13 @@ let lastFrame = performance.now();
 // Boot's away gains (see boot below), applied once: after the first frame, or before a save if the
 // page is hidden or closed first.
 let bootAway = null;
-function bootAwayNow() { if (bootAway == null) return; const secs = bootAway; bootAway = null; showAwayReport(awayGains(secs)); }
+// save-two-tabs: then save at once, so the newest open tab holds the save (an older tab still on screen stops at its next save).
+// Never before the away gains: a save stamps S.last, and that would lose the away time.
+function bootAwayNow() { if (bootAway == null) return; const secs = bootAway; bootAway = null; showAwayReport(awayGains(secs)); save(); }
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) { bootAwayNow(); save(); flush(); }
-  else { const secs = Math.max(0, (Date.now() - S.last) / 1000); if (secs > 30) showAwayReport(awayGains(secs)); S.last = Date.now(); lastFrame = performance.now(); }
+  // save-two-tabs: back in front while another tab wrote a newer save, this page's S is old: no away gains, no saves (30-state)
+  else if (saveCheck()) { const secs = Math.max(0, (Date.now() - S.last) / 1000); if (secs > 30) showAwayReport(awayGains(secs)); S.last = Date.now(); lastFrame = performance.now(); }
 });
 addEventListener('pagehide', () => { bootAwayNow(); save(); });
 

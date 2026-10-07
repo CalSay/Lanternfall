@@ -176,10 +176,13 @@ let itemKind, kindPos, fits, heroWho, retoolItems, RETOOL, itemLines, itemStats,
   kindColor = (slot, t, u) => u ? UNIQ[u].col : MAT[(CRAFT_KINDS[slot] || { pre: 'ore' }).pre].col[t - 1];
   kindCost = (kind, t) => craftRecipe(kind, t);
   kindUpgradeCost = it => {
-    const m = {};
-    for (const [k, n] of Object.entries(CRAFT_KINDS[it.slot].rec)) m[k] = Math.ceil(n * 0.6 * (it.plus + 1));
+    // gold-without-training (provisional numbers, see ECON.upMat): only the recipe's main material (its biggest count, never essence or the slow Hide when it has
+    // another), ECON.upMat x n x (plus + 1); was every recipe material at 0.6 x n x (plus + 1). Uniques still take essence.
+    const rec = Object.entries(CRAFT_KINDS[it.slot].rec).sort((a, b) => b[1] - a[1]);
+    const m = {}, main = rec.find(([k]) => k !== 'ess' && k !== 'hide') || rec.find(([k]) => k !== 'ess');
+    if (main) m[main[0]] = Math.ceil(main[1] * ECON.upMat * (it.plus + 1));
     if (it.u) m.ess = (m.ess || 0) + 2 * (it.plus + 1);
-    const c = { mats: m, gold: econUpgradeGold(it.t, it.plus) };   // ECON-A: 20 foes of the grade's first zone x (plus + 1); was 40 x 5^t x (plus + 1)
+    const c = { mats: m, gold: econUpgradeGold(it.t, it.plus) };   // 20 foes of the grade's first zone x 1.5^plus (21w ECON.upGrow)
     // +8, +9 and +10 each need a Trophy of any type (owner decision); K6 enforces it.
     const tr = craftUpgradeTrophies(it.plus); if (tr) c.troph = tr;
     return c;

@@ -136,8 +136,24 @@ const weaponKind = () => {
 };
 const weaponMats = () => { const k = weaponKind(); try { return k ? Object.entries(craftRecipe(k, 1)).filter(([f]) => f !== 'gold').map(([f, n]) => stockOf(f, 1, n)) : []; } catch (e) { return []; } };
 const weaponStation = () => { const k = weaponKind(); return k ? CRAFT_KINDS[k].st : null; };
-const weaponNow = () => coldH() && stepDone('forge') && !!weaponKind() && !weaponMade() && campLv(weaponStation()) >= 1 && !stepDone('store');
-const weaponMade = () => { try { return !!equipped('weapon') || S.items.some(it => CRAFT_KINDS[it.slot] && CRAFT_KINDS[it.slot].pos === 'weapon'); } catch (e) { return false; } };
+const weaponNow = () => coldH() && stepDone('forge') && !!weaponKind() && !weaponMade() && !wearPiece('weapon') && campLv(weaponStation()) >= 1 && !stepDone('store');
+// Worn, not owned (Cal's play note 13): a weapon in the bag does nothing, so it is not "made" until it is on.
+const weaponMade = () => { try { return !!equipped('weapon'); } catch (e) { return false; } };
+const TOOL_POS = ['pick', 'axe', 'sickle', 'spear'];
+// A bag piece the hero could put on now in a position that is empty (kind 'tool': a pickaxe, woodaxe, sickle or spear; 'weapon': the weapon). -> { it, pos } | null
+const wearPiece = kind => {
+  try {
+    for (const pos of kind === 'tool' ? TOOL_POS : ['weapon']) {
+      if (equipped(pos)) continue;
+      const it = S.items.find(i => CRAFT_KINDS[i.slot] && kindPos(i.slot) === pos && fits(i, pos, 'hero'));
+      if (it) return { it, pos };
+    }
+  } catch (e) {}
+  return null;
+};
+// the points are spent (or the player has sat on the Hero menu a while with some left): time to point back at the fight
+const backReady = () => { try { const k = soloHero(); if (obAttrOn() && k && attrPoints(k).free > 0) return GUIDE_RT.lastEnd !== null && GUIDE_RT.t - GUIDE_RT.lastEnd >= 20; } catch (e) {} return true; };
+const toolWorn = () => { try { return TOOL_POS.some(pos => !!equipped(pos)); } catch (e) { return false; } };
 // W1-D (playtest-2 P0): a combat step pauses the game only while what it asks for can happen right now, so the pause can
 // never freeze the clock the step needs (a respawn, a heavy hit landing, a cooldown running out). `pauseWhen`: the
 // extra condition for the pause. Attack and the ability need a live foe; Dodge and Parry need a wind-up still on its
@@ -168,6 +184,10 @@ const GUIDE_STEPS = [
   { id: 'boss', ph: ['hero'], pause: 1, ok: 1, when: () => S.maxZone === 1 && S.zone === 1 && typeof fightBoss !== 'undefined' && !!fightBoss, done: () => S.maxZone >= 2 },
   // W2-A: Train Attack on the Hero tab (it opens with the step: the tab is unlocked by then, hero level 3 or zone 2)
   { id: 'upgrade', ph: ['between'], tip: 'Open Hero and make your hero stronger.', pause: 1, when: () => stepDone('ability') && isUnlocked('party') && S.gold >= cheapestUp(), done: () => upBought() },
+  // Cal's play note 7: after the points are spent, say how to get back to the fight (the Hero menu otherwise just sits there)
+  { id: 'back', ph: ['between'], pause: 1, tip: 'Close the menu to get back to the fight.', when: () => stepDone('upgrade') && S.tab === 'party' && fightingNow() && backReady(), done: () => stepDone('upgrade') && !S.tab },
+  // Cal's play notes 9 and 13: a weapon found or made sits in the bag until it is worn. The tip names it and wears it in one tap.
+  { id: 'wear:weapon', ph: ['between'], pause: 1, tip: 'Put on the weapon in your bag.', when: () => coldH() && !!wearPiece('weapon'), done: () => weaponMade() },
   { id: 'gather', ph: ['between'], tip: 'Tap Gather and chop Pine Log for a camp fire.', pause: 1, when: () => S.maxZone >= 2 && isUnlocked('gather') && unlit() && S.activity !== 'gather', done: () => !unlit() || S.activity === 'gather' || oak8() },
   { id: 'chop', ph: ['between'], needs: fireMats, when: () => unlit() && S.activity === 'gather', done: () => !unlit() || oak8() },
   { id: 'light', ph: ['between'], pause: 1, when: () => unlit() && oak8(), done: () => !unlit() },
@@ -177,6 +197,7 @@ const GUIDE_STEPS = [
   // only once Craft is unlocked: this step pauses the game, and the unlock pass runs on the game clock, so a pause that
   // came first held Craft locked for good (the Craft tab opened on Uniques only, with no Make view to point at)
   { id: 'tool', ph: ['between'], pause: 1, pauseUnless: toolMats, when: () => coldH() && campLv('bench') >= 1 && isUnlocked('craft'), done: () => !coldH() || toolMade() },
+  { id: 'wear:tool', ph: ['between'], pause: 1, tip: 'Put on the tool you made.', when: () => coldH() && stepDone('tool') && !!wearPiece('tool'), done: () => !coldH() || (stepDone('tool') && toolWorn()) },
   { id: 'stock:forge', ph: ['between'], needs: () => matsOfBuild('forge'), when: () => coldH() && stepDone('tool') && plotOpen('forge') && !!needShort(matsOfBuild('forge')).length, done: () => !coldH() || campBusy('forge') },
   { id: 'forge', ph: ['between'], pause: 1, pauseUnless: () => matsOfBuild('forge'), when: () => coldH() && stepDone('tool') && plotOpen('forge'), done: () => !coldH() || campBusy('forge') },
   // first-gold-and-camp-strip: with the weapon's own station built (the Forge, or the Workbench for a bow or staff; it comes after the Forge step) the next job is the first weapon:

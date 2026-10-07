@@ -177,7 +177,7 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   boss Hero comes first, then Gather, Next Up and the away strip (row `awaynote`), 90 s apart. A row the player's own act
   or a drop opened skips the queue: walking to gather, the fire lit (Camp), the Workbench (Craft), the Tavern built, the first
   star (Stars), the first unique (Uniques); the raid opens as before.
-- **The guide** (`GUIDE_STEPS` in `55-onboard.js`, UI `75-onboard-ui.js`): one hint at a time, spoken by Old Hesketh (his face on the left) from a panel that never covers the stage: in landscape the side column's notices slot (it stands in for Next Up while it speaks), in portrait a slot above the Act / Skills / Foe bar, and over an open menu the bottom of the menu panel. The Got it / Go button has its own row. After the first ability the guide asks you to add a point to Might on Hero > Build.
+- **The guide** (`GUIDE_STEPS` in `55-onboard.js`, UI `75-onboard-ui.js`): one hint at a time, spoken by Old Hesketh (his face on the left) from a panel that never covers the stage: in landscape the side column's notices slot (it stands in for Next Up while it speaks), in portrait a slot above the Act / Skills / Foe bar, and over an open menu the bottom of the menu panel. The Got it / Go button has its own row. After the first ability the guide asks you to add a point to Might on Hero > Build, then, once the points are spent, offers Back to the fight (it closes the menu). A tool or first weapon that is in the bag but not worn gets its own step: the tip names it, rings the card's Equip button and carries an Equip button of its own. A weapon you only own does not count as made until it is worn. The Storehouse tip says the packs are near full only when a pile is at 80% of what the packs hold; otherwise it says the Forge is up.
   A step pauses the game only while it waits for a press; a step that needs game time shows live progress instead.
 - **Notices** (`23n-data-notices.js`, `notify()`): every message goes to a channel (card, pop, bell, log or none),
   with a quiet start and a cap on pops a minute.
@@ -195,6 +195,7 @@ Every currency, material and token, with its sources and sinks, is in [design/sy
 ## Saves and tools for players
 
 - **Save:** `localStorage` key `lanternfall.save.v5` (`30-state.js`, `05-platform.js`).
+- **Two tabs** (save-two-tabs): the newest open tab holds the save. A tab whose save another tab has since written stops saving and shows "Lanternfall is open in another tab. Reload to keep playing here." with Reload, so it never writes over newer progress (`30-state.js` `saveCheck`, `75-tabs-ui.js`).
 - **Save codes** (`55-savecode.js`, `75-savecode-ui.js`): export and import, with a strict check and an in-page confirm.
 - **Feedback** (`55-errors.js`, `75-feedback-ui.js`): local error capture and a Send feedback button.
 - **Away report** (`75-away.js`) and the stats wall (`55-stats.js`, `75-stats-ui.js`). The report leads with what happened; a fighter sees "gathering continues, fighting stops" first, and the work-limit bar sits after the results.

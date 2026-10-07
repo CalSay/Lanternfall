@@ -22,6 +22,7 @@
   const n = k => (D ? +D.n[k] || 0 : null);
   const since = k => (D && D.since[k]) || 0;
   const late = () => (ST().late && ST().since ? ST().since : 0);
+  const spentOn = (...ks) => { const sp = S.econ && S.econ.spent; return sp ? Math.round(ks.reduce((a, k) => a + (+sp[k] || 0), 0)) : null; };
   const fineTxt = () => { const r = D ? D.rec.fine : 0; const st = (DEED_TRACKS.find(t => t.id === 'fine') || {}).steps || []; return r ? st[r - 1] : 'None yet'; };
   // Hours fielded together, and the top pair (F2's Bond time per pair), when F2 is in.
   const topPair = () => {
@@ -62,6 +63,10 @@
     ]],
     ['Loot', [
       ['Gold earned', () => S.totalGold],
+      // gold-without-training: where the gold went (the 55-econ ledger; upgrades and crafts are the Forge)
+      ['Gold spent at the Forge', () => spentOn('craft')],
+      ['Gold spent on Hands', () => spentOn('hire', 'shift')],
+      ['Gold spent on the camp', () => spentOn('camp', 'tent')],
       ['Essence gained', () => n('ess'), { since: () => since('ess') }],
       ['Trophies earned', () => n('troph'), { since: () => since('troph') }],
       ['Uniques found', () => ST().uniques, { sub: () => `${statsApi.uniqueKinds()} of ${statsApi.uniqueTotal()} kinds` }]

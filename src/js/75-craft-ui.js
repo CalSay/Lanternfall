@@ -273,7 +273,7 @@ let craftUI = null;
     } else {
       if (d && d.pos && heroFitsIt(it) && !wr) {
         const eq = el('button', 'big forge cf-act', 'Equip'); eq.type = 'button';
-        eq.addEventListener('click', () => { equipHero(it.id, d.pos); ui(true); });
+        eq.addEventListener('click', () => { equipHero(it.id, d.pos); if (wornBy(it.id)) { st8.result = null; st8.resArm = false; } ui(true); });   // Cal's play note 17: worn, so the card closes (Keep and Salvage are for a piece that is not worn)
         acts.append(eq);
       }
       const keep = el('button', 'big cf-act cf-keep', 'Keep'); keep.type = 'button';
@@ -626,6 +626,8 @@ let craftUI = null;
       }
       bag.bulk.append(chips);
     }
+    const gold = q.list.reduce((a, it) => a + craftUpgradeRefund(it), 0);
+    if (gold) bag.bulk.append(el('p', 'note', `Their upgrades pay back ${fmt(gold)} gold.`));
     if (Object.keys(q.possible).length) bag.bulk.append(el('p', 'note', 'Affixed items may also return extra essence.'));
     if (q.full) bag.bulk.append(el('p', 'note warn', 'Your Storehouse is full for some of this. The rest is lost.'));
     const controls = el('div', 'cf-bulk-actions');
@@ -838,7 +840,9 @@ let craftUI = null;
       upBox.append(b);
       if (!f && !heroPos) upBox.append(el('p', 'note', 'Equip it to upgrade it.'));
       else if (c.troph && !f) upBox.append(el('p', 'note', 'Trophy upgrades open with the next crafting update.'));
+      else if (c.troph) upBox.append(el('p', 'note', 'From +8, each upgrade also takes a Trophy. Champions drop them.'));   // gold-without-training
     }
+    if (it.plus > 0) upBox.append(el('p', 'note', `Salvage it to get back ${fmt(craftUpgradeRefund(it))} gold, half what its upgrades cost.`));   // gold-without-training
     body.append(secBox('Upgrade', upBox));
 
     // ---- reforge ----
@@ -848,9 +852,10 @@ let craftUI = null;
     const sv = el('div', 'cf-sv');
     if (wr) sv.append(el('p', 'note', 'You wear this. Equip something else before you salvage it.'));
     else if (sheet.arm === 'salvage') {
-      const chips = el('div', 'costs'); costChips(chips, salvagePreview(it), it.t);
-      chips.querySelectorAll('.cost').forEach(c => { c.classList.remove('short'); const s = c.querySelector('span'); s.textContent = s.textContent.replace(/^[^/]*\//, '+'); });
+      const chips = el('div', 'costs'); costChips(chips, salvagePreview(it), it.t, craftUpgradeRefund(it));   // gold: half its upgrades' gold
+      chips.querySelectorAll('.cost').forEach(c => { c.classList.remove('short'); const s = c.querySelector('span'); s.textContent = '+' + s.textContent.replace(/^[^/]*\//, ''); });
       sv.append(el('p', 'note warn', `Salvage ${itemName(it)}? It is gone for good. You get back about:`), chips);
+      if (it.plus >= CRAFT_TROPHY_GATE.from) sv.append(el('p', 'note warn', 'The Trophies its upgrades took do not come back.'));
       const room = storeSalvageNote(salvagePreview(it), it.t); if (room) sv.append(el('p', 'note warn', room));   // H3: the Storehouse cap
       const r = el('div', 'cf-wear');
       const yes = el('button', 'big cf-act', 'Salvage it'); yes.type = 'button';

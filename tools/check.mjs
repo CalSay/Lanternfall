@@ -261,6 +261,72 @@ if (section('saves')) try {
   }
 } catch (e) { fail('saves crashed: ' + (e.stack || e)); }
 
+// ---- 3a. two tabs (save-two-tabs): a tab never writes over a newer save another tab wrote; one tab never blocks itself ----
+// Two cores on one storage are two tabs. Each core's clock is pinned (the stamp a save writes is S.last = Date.now()).
+if (section('two tabs')) try {
+  const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-early.json'), 'utf8'), last0 = JSON.parse(raw).last;
+  const at = (g, t) => g.eval(`Date.now = () => ${t}`), gold = st => JSON.parse(st.get(KEY)).gold;
+  // one tab: saves in a row, a save stamped in the future, the clock set back, a failed write, an unreadable copy: never blocked
+  const one = memoryStorage({ [KEY]: JSON.stringify({ ...JSON.parse(raw), last: last0 + 864e5 }) });
+  const a1 = loadCore({ storage: one });
+  at(a1, last0 + 1000); for (let i = 0; i < 3; i++) { a1.fn.tick(0.1); a1.fn.save(); }
+  at(a1, last0 + 500); a1.fn.save();
+  const setOk = one.set; one.set = () => {}; at(a1, last0 + 2000); a1.fn.save(); one.set = setOk;
+  at(a1, last0 + 3000); a1.fn.save();
+  one.set(KEY, 'not json {{'); at(a1, last0 + 4000); a1.fn.save();
+  assert(!a1.eval('saveBlocked') && JSON.parse(one.get(KEY)).last === last0 + 4000, 'one tab: saves in a row, a future stamp, a clock set back, a failed write and an unreadable copy never stop saving');
+  // two tabs: whichever tab saves second over the other's newer save is stopped; then B plays to 12,345 gold and saves
+  const two = memoryStorage({ [KEY]: raw });
+  const A = loadCore({ storage: two }), B = loadCore({ storage: two });
+  at(A, last0 + 1000); A.fn.save();   // A saves first (B still holds what it loaded)
+  at(B, last0 + 2000); B.fn.save();
+  assert(B.eval('saveBlocked') && JSON.parse(two.get(KEY)).last === last0 + 1000, 'two tabs: the tab that saves second, over the other tab\'s newer save, is stopped');
+  const two2 = memoryStorage({ [KEY]: raw });
+  const A2 = loadCore({ storage: two2 }), B2 = loadCore({ storage: two2 });
+  B2.eval('S.gold = 12345'); at(B2, last0 + 5000); B2.fn.save();
+  at(A2, last0 + 6000); A2.eval('S.gold = 1'); A2.fn.save(); A2.fn.save();
+  assert(A2.eval('saveBlocked') && gold(two2) === 12345, 'two tabs: the older tab does not save over the newer one (third load reads 12,345 gold)');
+  const C2 = loadCore({ storage: two2 });
+  assert(C2.eval('S.gold') === 12345 && !C2.eval('saveBlocked'), 'two tabs: a fresh load reads the newer save and saves normally');
+  at(C2, last0 + 7000); C2.fn.save();
+  assert(!C2.eval('saveBlocked') && gold(two2) === 12345, 'two tabs: the fresh load keeps saving');
+  // the block is reported once, through onSaveBlocked
+  const two3 = memoryStorage({ [KEY]: raw });
+  const A3 = loadCore({ storage: two3 }), B3 = loadCore({ storage: two3 });
+  A3.eval('globalThis.__n = 0; onSaveBlocked = () => { globalThis.__n++; }');
+  at(B3, last0 + 5000); B3.fn.save();
+  at(A3, last0 + 6000); A3.fn.save(); A3.fn.save(); A3.eval('saveCheck()');
+  assert(A3.eval('globalThis.__n') === 1, 'two tabs: onSaveBlocked runs once');
+  // a save-code import or restore in this tab adopts the stored copy (no block on the next save)
+  const two4 = memoryStorage({ [KEY]: raw });
+  const A4 = loadCore({ storage: two4 });
+  two4.set(KEY, JSON.stringify({ ...JSON.parse(raw), last: last0 + 9e6 })); A4.eval('saveAdopt()');
+  at(A4, last0 + 9000); A4.fn.save();
+  assert(!A4.eval('saveBlocked') && JSON.parse(two4.get(KEY)).last === last0 + 9000, 'save-code import or restore: saveAdopt() takes the stored copy as this tab\'s own');
+  // a write that does not land while the stored copy is stamped ahead of this clock (an imported code from a device set
+  // ahead, then a full storage): the next save is not blocked (save-risk review F1)
+  const five = memoryStorage({ [KEY]: JSON.stringify({ ...JSON.parse(raw), last: last0 + 36e5 }) });
+  const A5 = loadCore({ storage: five }), set5 = five.set;
+  five.set = () => {}; at(A5, last0 + 1000); A5.fn.save(); A5.fn.save(); five.set = set5;
+  at(A5, last0 + 2000); A5.fn.save();
+  assert(!A5.eval('saveBlocked') && JSON.parse(five.get(KEY)).last === last0 + 2000, 'one tab: failed writes under a stored stamp ahead of the clock never stop saving');
+  // the clock set back between two tabs: the older tab is still stopped (save-risk review F2)
+  const six = memoryStorage({ [KEY]: raw });
+  const A6 = loadCore({ storage: six });
+  at(A6, last0 + 36e5); A6.fn.save();
+  const B6 = loadCore({ storage: six });
+  B6.eval('S.gold = 12345'); at(B6, last0 + 1000); B6.fn.save();
+  at(A6, last0 + 36e5 + 5000); A6.eval('S.gold = 1'); A6.fn.save();
+  assert(A6.eval('saveBlocked') && gold(six) === 12345 && !B6.eval('saveBlocked'), 'two tabs: with the clock set back in between, the older tab still does not save over the newer one');
+  // an import in one tab, its code stamped earlier than the stored copy: the other open tab stops instead of saving over it
+  const sev = memoryStorage({ [KEY]: raw });
+  const A7 = loadCore({ storage: sev }), B7 = loadCore({ storage: sev });
+  sev.set(KEY, JSON.stringify({ ...JSON.parse(raw), gold: 777, last: last0 - 864e5 })); A7.eval('saveAdopt()');
+  at(B7, last0 + 1000); B7.fn.save();
+  assert(B7.eval('saveBlocked') && gold(sev) === 777, 'two tabs: a save code imported in one tab is not overwritten by the other tab');
+  assert(![a1, A, B, A2, B2, C2, A3, B3, A4, A5, A6, B6, A7, B7].some(g => g.errors.length), 'two tabs: no handler errors');
+} catch (e) { fail('two tabs crashed: ' + (e.stack || e)); }
+
 // ---- 3b. save export after play: Copy save code, Import, compare (save-fixture-current; save-risk-m1 F3) ----
 // A fixture's own code round-trips in 'save codes'. This plays each fixture first (5 minutes of real-time ticks, then the
 // state a player leaves behind: points spent, tips retired, stars lit), exports the code the Journal would copy, imports it
@@ -704,6 +770,25 @@ if (section('crafting')) try {
   assert(!E('upgradeEquipped("weapon")') && E(`itemById(${up}).plus`) === 9, 'upgradeEquipped honours the gate too');
   E(`itemById(${up}).plus = 3`);
   assert(E('upgradeEquipped("weapon")') && E(`itemById(${up}).plus`) === 4, 'below +8 no Trophy is needed');
+  // gold-without-training: gold leads the upgrade (every step dearer than the last), the materials are a token of the main one,
+  // salvage pays half the gold back. The mechanism only: the prices are provisional (the crafting overhaul sets them).
+  assert(E('[...Array(10).keys()].every(p => p === 0 || econUpgradeGold(1, p) > econUpgradeGold(1, p - 1))') && E('econUpgradeGold(1, 9) > 10 * econUpgradeGold(1, 0)'),
+    'each upgrade step costs more gold than the last, and +10 costs over ten times +1');
+  assert(E('Object.keys(kindUpgradeCost({ slot: "bow", t: 1, r: "common", plus: 0 }).mats).join()') === 'wood' && E('Object.keys(kindUpgradeCost({ slot: "hood", t: 1, r: "common", plus: 9 }).mats).join()') === 'fibre'
+    && E('kindUpgradeCost({ slot: "weapon", t: 1, r: "legendary", plus: 2, u: "golemfist" }).mats.ess') > 0,
+    'an upgrade takes only the main material (never essence or Hide when there is another); a Unique still takes essence');
+  {
+    const it = E('(() => { const it = newItem("bow", 1, "common"); it.plus = 4; S.items.push(it); return it.id; })()'), g0 = E('S.gold'), c0 = E('S.econ.spent.craft');
+    const back = E(`craftUpgradeRefund(itemById(${it}))`);
+    const paid = E('[0, 1, 2, 3].reduce((a, p) => a + econUpgradeGold(1, p), 0)');
+    assert(back === Math.floor(paid / 2) && E(`salvageItem(${it})`) && E('S.gold') === g0 + back && E('S.econ.spent.craft') === Math.max(0, c0 - back),
+      `salvaging a +4 grade-1 item pays back half its upgrades' gold (${back}) and the Forge ledger nets it out`);
+    const msgs = []; const off = g.fn.on('toast', e => { if (e && e.key === 'upgrade:mark') msgs.push(e.msg); });
+    E(`itemById(${up}).plus = 6`); E(`upgradeItem(${up})`);
+    assert(msgs.length === 1 && /is now \+7\. The next three upgrades each need a Trophy from a champion\.$/.test(msgs[0]), `reaching +7 says the next three need a Trophy (${msgs[0]})`);
+    if (typeof off === 'function') off();
+    E(`itemById(${up}).plus = 4`);   // the class-change check below expects the +4 it had
+  }
   assert(E('bagCount()') === E('S.items.length') - E('equippedIds().size'), 'bagCount counts the items not worn');
   const bow = E('(() => { const it = newItem("bow", 1, "common"); S.items.push(it); return it.id; })()');
   // class change (Mirror of Embers): the hero's class gear is retooled, never unequipped or deleted
@@ -2342,6 +2427,9 @@ if (section('cold hearth')) try {
     assert(order.includes('bench') && order.includes('tool') && order.includes('forge'), 'guide: bench, tool and forge steps done');
     errs.push(...p.errors);
   }
+  // cal-0107-flow-bugs (note 15): 30 of the packs' 5,000 is not near full; the Storehouse tip may only say so when a pile is at 80%
+  E('for (const f of Object.keys(S.mats)) S.mats[f] = S.mats[f].map(() => 30)');
+  assert(E('hearthNearFull() === false') && E('S.mats.wood[0] = storeCap("wood", 1) * 0.8; hearthNearFull() === true'), 'the Storehouse tip says the packs are near full only when a pile is at 80% of what they hold');
   assert(!errs.length, 'no cold hearth errors' + (errs.length ? ': ' + errs[0] : ''));
 } catch (e) { fail('cold hearth crashed: ' + (e.stack || e)); }
 // ---- skill pace (GP1): slower levels, wider tier gates; no save loses a tier, recipe or item ----
@@ -4038,7 +4126,7 @@ if (section('econ (ECON-A)')) try {
     ['Hearth 2 in the camp', 'campCost("hearth", 2).gold', 110], ['Tent 3', 'econTentGold(3)', 23000], ['Tent 10', 'econTentGold(10)', 2300000],
     ['hire Common, Region 1', 'econHireFee("common", 1)', 1500], ['hire Legendary, Region 1', 'econHireFee("legendary", 1)', 20000], ['hire Common, Region 2', 'econHireFee("common", 40)', 5100], ['hire Legendary, Region 5', 'econHireFee(4, 150)', 2900000],
     ['shift grade 1 Lv 1', 'econShiftFee(1, 1)', 2000], ['shift grade 4 Lv 1', 'econShiftFee(4, 1)', 4100], ['shift grade 15 Lv 1', 'econShiftFee(15, 1)', 110000], ['shift grade 1 Lv 20', 'econShiftFee(1, 20)', 2800],
-    ['upgrade grade 1 +0', 'econUpgradeGold(1, 0)', 100], ['upgrade grade 5 +9', 'econUpgradeGold(5, 9)', 4400], ['upgrade grade 15 +9', 'econUpgradeGold(15, 9)', 320000],
+    ['upgrade grade 1 +0', 'econUpgradeGold(1, 0)', 100], ['upgrade grade 5 +9', 'econUpgradeGold(5, 9)', 17000], ['upgrade grade 15 +9', 'econUpgradeGold(15, 9)', 1200000],
     ['reforge grade 5 first', 'econReforgeGold(5, 0)', 330]];
   const exBad = ex.filter(([, x, v]) => P(x) !== v);
   assert(!exBad.length, `prices as economy-2 lists them (${ex.length}: Hearth, rows, Shrine, Storehouse, Tents, hires, shifts, upgrades, reforge)` + (exBad.length ? ': ' + exBad.map(([n, x, v]) => `${n} ${P(x)} != ${v}`).join('; ') : ''));
@@ -4477,7 +4565,7 @@ if (section('solo hero')) try {
   {
     const g = T(), E = s => g.eval(s);
     const ids = E('GUIDE_STEPS.map(x => x.id).join()');
-    assert(/^attack,ability,dodge,parry,boss,upgrade,gather,chop,light,stock:bench,bench/.test(ids), `the guide: Attack, the ability, Dodge, Parry, the first boss, an upgrade, Gather, chop, light the fire, then camp (${ids})`);
+    assert(/^attack,ability,dodge,parry,boss,upgrade,(back,)?(wear:weapon,)?gather,chop,light,stock:bench,bench/.test(ids), `the guide: Attack, the ability, Dodge, Parry, the first boss, an upgrade, Gather, chop, light the fire, then camp (${ids})`);
     assert(E('GUIDE_STEPS.every(x => x.pause || x.needs || x.id === "tab:party" || x.id === "nextup")'), 'every step pauses the game while it shows, except the ones that wait for materials (live progress) and two notes (W1-A: see "solo guide pause rules")');
     E('soloPick("wren")'); run(g, 0.5);
     E('combatFoes().forEach(f => { if (f && !f.dead) f.hp = f.max = 1e9; })');   // SOLO2: a hand Attack and Echo Shot would clear the pack before the heavy steps
@@ -4701,7 +4789,10 @@ if (section('solo guide pause rules')) try {
   E('soloPick("tobin"); S.camp.b.forge = 1; onboardReveal("craft"); onboardDone("forge")');
   assert(E('!!weaponKind() && weaponMats().length > 0 && !weaponMade() && GUIDE_STEPS.find(s => s.id === "weapon").when() && !GUIDE_STEPS.find(s => s.id === "weapon").done()'), 'the weapon step shows once the Forge is built and no weapon is made');
   E('addItem(newItem(weaponKind(), 1, 0))');
-  assert(E('weaponMade() && GUIDE_STEPS.find(s => s.id === "weapon").done() && GUIDE_STEPS.find(s => s.id === "stock:weapon").done()'), 'making a weapon ends the weapon steps');
+  // cal-0107-flow-bugs (note 13): a weapon in the bag is not "made" until it is worn; the guide says to put it on instead of making another
+  assert(E('!weaponMade() && !GUIDE_STEPS.find(s => s.id === "weapon").when() && !!wearPiece("weapon") && GUIDE_STEPS.find(s => s.id === "wear:weapon").when()'), 'a weapon waiting in the bag is put on, not made again');
+  E('equipItem(S.items[S.items.length - 1].id)');
+  assert(E('weaponMade() && GUIDE_STEPS.find(s => s.id === "weapon").done() && GUIDE_STEPS.find(s => s.id === "stock:weapon").done() && GUIDE_STEPS.find(s => s.id === "wear:weapon").done()'), 'wearing a weapon ends the weapon steps');
   // no player-facing copy calls the first wood Oak
   const srcs = ['75-onboard-ui', '75-camp-ui', '56-roster', '63d-scenery-camp', '55-onboard'];
   const oak = srcs.filter(f => fs.readFileSync(path.join(ROOT, 'src', 'js', f + '.js'), 'utf8').split('\n').some(l => /\bOak\b/.test(l) && !/^\s*\/\//.test(l)));
@@ -8435,6 +8526,12 @@ if (section('C29 turn fights (core)')) try {
       const s = { gH: 0, gF: 0, last: '', run: 0, hold: false }, out = []; for (let i = 0; i < 6; i++) out.push(turnAdvance(m, s)[0]); return out.join(''); })()`);
     const eq = order([10, 10]), fast = order([20, 10]), slow = order([10, 30]);
     assert(eq === 'hfhfhf' && fast === 'hhfhhf' && slow === 'ffhffh', `C29: Speed sets turn frequency, ties go to the hero, two turns in a row at most (equal ${eq}, hero x2 ${fast}, foe x3 ${slow})`); }
+  // cal-0107-flow-bugs (note 20): an ability equipped in the middle of a fight can be pressed at once (it showed ready and did nothing until the next foe)
+  { const { g, E } = fresh('tobin', 8);
+    E('S.zone = 1; spawn()');
+    for (let i = 0; i < 400 && E('turnCombatSnapshot().phase') !== 'hero'; i++) g.fn.tick(0.05);
+    E('for (const k of Object.keys(SCROLLS)) S.abil.scrolls[k] = 5; S.L = 40; abilityLearn("tobin", "heavystrike"); soloEquip(1, "heavystrike")');
+    assert(E('turnCombatAction("ability", 1)') === true && !g.errors.length, `C29: an ability equipped mid-fight (Heavy Strike in slot 2) works in that fight (${E('turnCombatSnapshot().phase')}, errors ${g.errors.length})`); }
   // parries refund every cooldown per hit, a full parry counters, a dodge only avoids
   { const run = defs => { const { g, E } = fresh('wren', 7);
       E('S.zone = 1; spawn(); combatFoes()[0].hp = combatFoes()[0].max = 1e12; globalThis.__c = 0; globalThis.__r = []; on("soloCounter", () => __c++); on("foeContact", x => __r.push(x.res))');
@@ -10102,6 +10199,10 @@ if (section('craft reveal')) try {
         assert(made[made.length - 1].strip === Math.min(5, made.length), `${at}: the strip keeps the last five results (${made[made.length - 1].strip})`);
         assert(await X(`document.querySelectorAll('.cf-recent').length === 1 && !/Craft 5/.test(document.body.textContent)`), `${at}: one strip, no Craft 5 button`);
         assert(await X(`(() => { const r = document.querySelector('.cf-resbox').getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; })()`) , `${at}: the new card is on screen after a craft`);
+        // cal-0107-flow-bugs (note 17): Equip wears the piece and closes its card; Keep and Salvage are for a piece that is not worn
+        { const eq = await page.$('.cf-res .cf-resact button:text-is("Equip")');
+          if (eq) { const id = await X(`document.querySelector('.cf-res').dataset.itemId`); await eq.click(); await page.waitForTimeout(250);
+            assert(await X(`!document.querySelector('.cf-res') && Object.values(S.equip).includes(${JSON.stringify(+id)})`), `${at}: Equip wears the piece and closes its card`); } }
         await page.click('button:text-is("Gear")'); await page.waitForTimeout(400);
         assert(await X(`(() => { const b = document.querySelector('.cf-bag .cf-tile .cf-gr'); return !!b && /^(Com|Unc|Rare|Epic|Uniq)$/.test(b.textContent); })()`), `${at}: a bag tile names its grade in text`);
         assert(!errs.length, `${at}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
@@ -10417,6 +10518,7 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
             } else if (!c.ok) await X(`(sp => { if (sp && sp.node) sp.node.click(); return true; })(onboardSpec(${JSON.stringify(st)}))`);
             else if (['attack', 'ability', 'dodge', 'parry'].includes(st)) await tapAt(page, c.px, c.py);
             else if (st === 'boss') await page.click('.ob-ok');
+            else if (st.startsWith('wear:') || st === 'back') await page.click('.ob-ok');   // cal-0107-flow-bugs: these steps carry their own button (Equip <piece>, Back to the fight)
             else await page.mouse.click(c.px, c.py);
             await page.waitForTimeout(160);
             if (!(await X('ONBOARD.paused'))) await X('for (let k = 0; k < 10; k++) tick(0.1); true');

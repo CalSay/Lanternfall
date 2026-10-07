@@ -63,7 +63,13 @@ const ECON = {
   share: [0.10, 0.11, 0.12, 0.13, 0.14], sharePerLv: 0.03,   // share of the Lanternbearer's rate by rarity (N3a reads it)
   // ---- crafting and gear (3.4): k foes of the grade's first zone ----
   gradeZ: [1, 7, 13, 36, 42, 56, 71, 82, 94, 106, 117, 129, 141, 152, 164],   // gear-2 1.4 GRADE_Z
-  upFoes: 20,                    // upgrade: 20 x foeGold(gradeZ) x (plus + 1)
+  // gold-without-training (PROVISIONAL, 2026-10-07: the skilling and crafting overhaul spec, due 16 Oct, sets the real
+  // numbers; the mechanism stays): gold is the upgrade's main cost and each step costs upGrow times the last, so +1 to +4 are
+  // quick buys and +8 to +10 (a Trophy each) are goals. Steps at grade 1: 100, 150, 230, 340, 510, 760, 1.1K, 1.7K,
+  // 2.6K, 3.8K (11K to +10; was 100 x (plus + 1), 5.5K). Materials shrink to the item's main material (upMat x its
+  // recipe count x (plus + 1)), so gold, not essence or hide, is what an upgrade waits on. Salvage pays back upRefund
+  // of the gold an item's upgrades cost (55-crafting craftUpgradeRefund), so a +7 you outgrow is never wasted.
+  upFoes: 20, upGrow: 1.5, upMat: 0.25, upRefund: 0.5,   // upgrade +plus -> +plus+1: 20 x foeGold(gradeZ) x 1.5^plus
   reforgeFoes: 15, reforgeGrow: 1.5,   // reforge: 15 x foeGold(gradeZ) x 1.5^n
   // ---- trade (3.5, TR1 reads it): a unit's price = foeGold(grade's first zone) x famW ----
   famW: { gathered: 0.06, gem: 0.075, herb: 0.075, hide: 0.09, ess: 0.18, secondary: 0.03, refined: 0.15 },
