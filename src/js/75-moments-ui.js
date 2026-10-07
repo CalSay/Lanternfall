@@ -61,7 +61,8 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
   // (the guide's step gets guideWaitS seconds to finish, then the moment shows over it: a step left on screen must not hide a unique)
   const blocked = () => !!document.querySelector('.away-ov, #createScreen, .join-ov, .gl-ov, .dd-fc-ov') || document.hidden || NEWS.open || performance.now() - bootT < MOMENT_TUNE.bootS * 1000
     || (guideBusy() && MOMENT_UI.guideT < MOMENT_TUNE.guideWaitS)
-    || (typeof storyBusy === 'function' && MOMENT_Q.some(q => q.kind === 'champion' && q.scene && storyBusy(q.scene)));   // a Champion's scene plays first, then its card
+    || (typeof storyBusy === 'function' && MOMENT_Q.some(q => q.kind === 'champion' && q.scene && storyBusy(q.scene)))
+    || (typeof cachePending === 'function' && cachePending() && MOMENT_Q.some(q => q.kind === 'champion'));   // the win's cache opens a tick after the kill and folds into the card; never show the card without it
   // medium moments in the first half hour: at most midMax in any midWindowS seconds
   const midRoom = () => {
     const u = MOMENT_UI, now = Date.now();
