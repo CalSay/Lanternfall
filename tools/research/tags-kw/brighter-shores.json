@@ -1,0 +1,240 @@
+{
+ "slug": "brighter-shores",
+ "n_reviews": 50,
+ "n_pos": 25,
+ "n_neg": 25,
+ "n_longplay_neg": 25,
+ "sources": [
+  "steam"
+ ],
+ "themes": {
+  "P-offline": {
+   "n": 2,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "- You can train skills while offline. (steam+, 511h)"
+   ]
+  },
+  "P-respect": {
+   "n": 2,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "This is just a VERY casual game. (steam+, 56h)"
+   ]
+  },
+  "P-active": {
+   "n": 2,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "The cross skill interaction is well-thought out, and I can imagine that future refinements to cross skill cohesion even better. (steam+, 313h)"
+   ]
+  },
+  "P-dev": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "The devs are working hard and adding new things all the time. (steam+, 235h)"
+   ]
+  },
+  "P-unlock": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-collect": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "- As of time of this review, there are no repeatable bosses with their own drops. (steam+, 511h)"
+   ]
+  },
+  "P-goals": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "There was so much to do in the short term and I loved some of the story. (steam+, 511h)"
+   ]
+  },
+  "P-depth": {
+   "n": 2,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-fair": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-interlock": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-prestige": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-qol": {
+   "n": 2,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "The learning curve is not very intuitive, but there is a pretty good selection of information on the Brighter Shores Wiki. (steam+, 313h)",
+    "Controlling the camera with the mouse instead of the arrow keys like Runescape is another welcome quality of life update. (steam+, 303h)"
+   ]
+  },
+  "P-calm": {
+   "n": 6,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "The game has this cozy vibe that makes you want to keep clicking around just to see what quirky dialogue pops up next. (steam+, 65h)",
+    "The art style is cute, inviting, and relaxing, making it an easy game to sink into for long stretches without feeling overwhelmed. (steam+, 9h)"
+   ]
+  },
+  "P-art": {
+   "n": 6,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "It's not Shakespeare, but it's charming as hell. (steam+, 65h)",
+    "Brighter Shores and its interface handles incredibly well at any window size with a style and music that are very dialed in. (steam+, 515h)"
+   ]
+  },
+  "P-story": {
+   "n": 4,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "The writing has this dry British humor that just works. (steam+, 65h)",
+    "The simple combat, the silly quest dialogue the pedantic progression. (steam+, 11h)"
+   ]
+  },
+  "N-ads": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-wall": {
+   "n": 9,
+   "of": 25,
+   "longplay_n": 10,
+   "quotes": [
+    "- I'm too slow at moving around (steam-, 3h)",
+    "It's grindy, yeah, but it's fun. (steam-, 3h)"
+   ]
+  },
+  "N-pay": {
+   "n": 4,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "Having a paywall for content on a game with under 100 people is insane. (steam-, 15h)",
+    "I can't understand the logic behind what they decided to lock behind a paywall.... (steam-, 8h)"
+   ]
+  },
+  "N-dominant": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-late": {
+   "n": 2,
+   "of": 25,
+   "longplay_n": 1,
+   "quotes": [
+    "Outside of temporary events, the world feels empty, and the lack of meaningful multiplayer systems makes long-term engagement difficult. (steam-, 572h)"
+   ]
+  },
+  "N-offline": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-mobile": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-bug": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-energy": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-bloat": {
+   "n": 2,
+   "of": 25,
+   "longplay_n": 2,
+   "quotes": [
+    "UI is a mess and even harder to understand then the original. (steam-, 319h)"
+   ]
+  },
+  "N-chore": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "Brighter Shores is a tedious, clunky chore simulator masquerading as nostalgia. (steam-)"
+   ]
+  },
+  "N-tutorial": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-shallow": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 1,
+   "quotes": []
+  },
+  "N-reset": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-pace": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-fast": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-balance": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  }
+ }
+}

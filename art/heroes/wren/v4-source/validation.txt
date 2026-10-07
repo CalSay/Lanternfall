@@ -1,0 +1,19 @@
+full-draw: arrow-region edit 239 pixels; outside region preserved exactly.
+full-draw: 224x192, binary alpha, palette membership PASS, bounds 42,30,145,131
+wind-up: arrow-region edit 0 pixels; outside region preserved exactly.
+wind-up: 224x192, binary alpha, palette membership PASS, bounds 43,40,150,131
+just-released: arrow-region edit 0 pixels; outside region preserved exactly.
+just-released: 224x192, binary alpha, palette membership PASS, bounds 44,30,145,131
+defensive-brace: arrow-region edit 0 pixels; outside region preserved exactly.
+defensive-brace: 224x192, binary alpha, palette membership PASS, bounds 37,34,140,131
+relaxed-camp: arrow-region edit 0 pixels; outside region preserved exactly.
+relaxed-camp: 224x192, binary alpha, palette membership PASS, bounds 50,40,119,131
+hurt: arrow-region edit 0 pixels; outside region preserved exactly.
+hurt: 224x192, binary alpha, palette membership PASS, bounds 29,43,122,131
+kneeling: arrow-region edit 0 pixels; outside region preserved exactly.
+kneeling: 224x192, binary alpha, palette membership PASS, bounds 48,61,149,131
+fallen: arrow-region edit 0 pixels; outside region preserved exactly.
+fallen: 224x192, binary alpha, palette membership PASS, bounds 34,83,175,144
+Unique opaque palette colours used: 39 / 40
+Standing body scale approx96px; raised bows extend above head.
+Fallen body ground contact near y131; foreground bow extends below baseline.

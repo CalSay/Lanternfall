@@ -1,0 +1,255 @@
+{
+ "slug": "idle-monster-td",
+ "n_reviews": 232,
+ "n_pos": 154,
+ "n_neg": 78,
+ "n_longplay_neg": 3,
+ "sources": [
+  "steam",
+  "apple"
+ ],
+ "themes": {
+  "P-offline": {
+   "n": 8,
+   "of": 154,
+   "longplay_n": 0,
+   "quotes": [
+    "Logging in gives you offline rewards that can be spent on random monsters, upgrades, spell research or skill improvements. (steam+, 6h)",
+    "Only problem I have is that the the only thing you get while afk is gold. (apple4)"
+   ]
+  },
+  "P-respect": {
+   "n": 1,
+   "of": 154,
+   "longplay_n": 0,
+   "quotes": [
+    "It does take a few minutes for the game to recognize the good you earned while away. (apple5)"
+   ]
+  },
+  "P-active": {
+   "n": 2,
+   "of": 154,
+   "longplay_n": 0,
+   "quotes": [
+    "Logging in gives you offline rewards that can be spent on random monsters, upgrades, spell research or skill improvements. (steam+, 6h)",
+    "I keep accidently upgrading when I am trying to equip a different skill in challenge map. (apple4)"
+   ]
+  },
+  "P-dev": {
+   "n": 1,
+   "of": 154,
+   "longplay_n": 0,
+   "quotes": [
+    "The developers are extremely nice, I\u2019ve spoken to them on discord. (apple5)"
+   ]
+  },
+  "P-unlock": {
+   "n": 2,
+   "of": 154,
+   "longplay_n": 0,
+   "quotes": [
+    "There\u2019s tons of upgrades to keep yourself busy and you\u2019re constantly unlocking more rewards. (apple5)"
+   ]
+  },
+  "P-collect": {
+   "n": 8,
+   "of": 154,
+   "longplay_n": 0,
+   "quotes": [
+    "It takes about two and a half days to earn 500 through achievements (apple5)",
+    "i really hate when it happens because i don\u2019t get the loot (500k gold 150 green soul things) name in game : blaqheart (apple4)"
+   ]
+  },
+  "P-goals": {
+   "n": 0,
+   "of": 154,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-depth": {
+   "n": 6,
+   "of": 154,
+   "longplay_n": 0,
+   "quotes": [
+    "I know people like the optional adds, it is colorful and has good depth. (apple4)",
+    "The art style is executed well, the gameplay and strategy involved is good, and the process of collecting currency isn\u2019t too slow or too fast. (apple5)"
+   ]
+  },
+  "P-fair": {
+   "n": 2,
+   "of": 154,
+   "longplay_n": 0,
+   "quotes": [
+    "Very smooth no stress able to build ur power up very easy no pay to win all around a great game! (apple5)",
+    "Not pay to win at all. (apple5)"
+   ]
+  },
+  "P-interlock": {
+   "n": 1,
+   "of": 154,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-prestige": {
+   "n": 8,
+   "of": 154,
+   "longplay_n": 0,
+   "quotes": [
+    "With a variety of ways to power up your monster using Essence or gems, also prestige points. (apple5)",
+    "Though, when i try to prestige a screen appears telling me Im going to Cursed Clouds; nothing happens. (apple4)"
+   ]
+  },
+  "P-qol": {
+   "n": 1,
+   "of": 154,
+   "longplay_n": 0,
+   "quotes": [
+    "The animation style amuses me and the gameplay is really easy to understand. (apple5)"
+   ]
+  },
+  "P-calm": {
+   "n": 2,
+   "of": 154,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-art": {
+   "n": 13,
+   "of": 154,
+   "longplay_n": 0,
+   "quotes": [
+    "Besides that the music, characters, and upgrade system along with other things make this game very good. (apple4)",
+    "The gameplay and visual elements of Idle, Monster and TD games are implemented so well together in harmony. (apple5)"
+   ]
+  },
+  "P-story": {
+   "n": 1,
+   "of": 154,
+   "longplay_n": 0,
+   "quotes": [
+    "Besides that the music, characters, and upgrade system along with other things make this game very good. (apple4)"
+   ]
+  },
+  "N-ads": {
+   "n": 8,
+   "of": 78,
+   "longplay_n": 0,
+   "quotes": [
+    "Just started playing and watched I want to say 3 level of ads so 15 and now almost every single ad is a black screen. (apple1)",
+    "An ad can be watched to speed up the game but lasts for only 2 minutes. (apple2)"
+   ]
+  },
+  "N-wall": {
+   "n": 9,
+   "of": 78,
+   "longplay_n": 0,
+   "quotes": [
+    "Too slow, not enough player participation. (apple2)",
+    "Overall the game is fun for a week or so but gets incredibly repetitive and really offers very little replayability other than a constant grind. (apple2)"
+   ]
+  },
+  "N-pay": {
+   "n": 9,
+   "of": 78,
+   "longplay_n": 0,
+   "quotes": [
+    "[h1] Not tower game just pay-to-win[/h1] (steam-)",
+    "But I think the PVP things that are not supported anymore, and its pay-to-win like most of the mobile games nowadays. (steam-, 14h)"
+   ]
+  },
+  "N-dominant": {
+   "n": 0,
+   "of": 78,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-late": {
+   "n": 2,
+   "of": 78,
+   "longplay_n": 1,
+   "quotes": [
+    "Overall the game is fun for a week or so but gets incredibly repetitive and really offers very little replayability other than a constant grind. (apple2)"
+   ]
+  },
+  "N-offline": {
+   "n": 1,
+   "of": 78,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-mobile": {
+   "n": 1,
+   "of": 78,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-bug": {
+   "n": 15,
+   "of": 78,
+   "longplay_n": 1,
+   "quotes": [
+    "I enjoy the game but the frequent crashes are a drag. (apple3)",
+    "After playing this game for a long time, and spending a little bit of money on it, my phone crashed. (apple1)"
+   ]
+  },
+  "N-energy": {
+   "n": 3,
+   "of": 78,
+   "longplay_n": 0,
+   "quotes": [
+    "Aside from the tournament timer, timers don\u2019t countdown. (apple2)",
+    "An ad can be watched to speed up the game but lasts for only 2 minutes. (apple2)"
+   ]
+  },
+  "N-bloat": {
+   "n": 0,
+   "of": 78,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-chore": {
+   "n": 2,
+   "of": 78,
+   "longplay_n": 0,
+   "quotes": [
+    "As I play and get farther it\u2019s becoming more and more of a chore. (apple3)"
+   ]
+  },
+  "N-tutorial": {
+   "n": 0,
+   "of": 78,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-shallow": {
+   "n": 1,
+   "of": 78,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-reset": {
+   "n": 0,
+   "of": 78,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-pace": {
+   "n": 0,
+   "of": 78,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-fast": {
+   "n": 0,
+   "of": 78,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-balance": {
+   "n": 0,
+   "of": 78,
+   "longplay_n": 0,
+   "quotes": []
+  }
+ }
+}

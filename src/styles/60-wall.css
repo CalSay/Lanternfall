@@ -1,0 +1,5 @@
+/* 60-wall: the Trophy Wall card on the Camp view (63e-scenery-wall.js, AC5). */
+.tw-scene { display: flex; justify-content: center; width: 100%; min-height: 144px; margin: 0; padding: 0; overflow: hidden; background: #0E0B1E; border: 2px solid var(--line); box-shadow: 0 2px 0 #0B0810; cursor: pointer; }
+.tw-scene:hover, .tw-scene:focus-visible { border-color: var(--gold); }
+.tw-cv { display: block; flex: none; image-rendering: pixelated; }
+.tw-note { margin: 6px 0 0; }

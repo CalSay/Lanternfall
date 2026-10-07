@@ -1,0 +1,1126 @@
+{
+  "version": 2,
+  "enemy": "thorn-imp",
+  "approval": {
+    "date": "2026-10-02",
+    "status": "Owner approved all displayed sequences; package for Claude integration",
+    "jab": "jab-draft-v4",
+    "crosscut": "crosscut-v3",
+    "other": "sequences-v1, hop replacing walks"
+  },
+  "facing": "left",
+  "standing_height_px": 64,
+  "hero_reference_height_px": 96,
+  "body_cell": [
+    128,
+    96
+  ],
+  "body_origin": [
+    100,
+    88
+  ],
+  "fx_cell": [
+    176,
+    128
+  ],
+  "fx_origin": [
+    132,
+    104
+  ],
+  "fx_offset_relative_to_body": [
+    -32,
+    -16
+  ],
+  "filter": "nearest",
+  "alpha": "binary",
+  "frame_numbering": "one-based",
+  "actions": {
+    "idle": {
+      "frames": [
+        {
+          "body": "idle/body-01.png",
+          "duration_ms": 220,
+          "terminal_empty": false,
+          "body_rect": [
+            0,
+            0,
+            128,
+            96
+          ]
+        },
+        {
+          "body": "idle/body-02.png",
+          "duration_ms": 260,
+          "terminal_empty": false,
+          "body_rect": [
+            128,
+            0,
+            128,
+            96
+          ]
+        },
+        {
+          "body": "idle/body-03.png",
+          "duration_ms": 260,
+          "terminal_empty": false,
+          "body_rect": [
+            256,
+            0,
+            128,
+            96
+          ]
+        },
+        {
+          "body": "idle/body-04.png",
+          "duration_ms": 220,
+          "terminal_empty": false,
+          "body_rect": [
+            384,
+            0,
+            128,
+            96
+          ]
+        }
+      ],
+      "loop": true,
+      "contacts": [],
+      "release_cues": [],
+      "atlas_columns": 4,
+      "atlas_rows": 1,
+      "body_atlas": "idle/body-atlas.png",
+      "duration_ms": 960
+    },
+    "hop": {
+      "frames": [
+        {
+          "body": "hop/body-01.png",
+          "duration_ms": 140,
+          "terminal_empty": false,
+          "body_rect": [
+            0,
+            0,
+            128,
+            96
+          ]
+        },
+        {
+          "body": "hop/body-02.png",
+          "duration_ms": 70,
+          "terminal_empty": false,
+          "body_rect": [
+            128,
+            0,
+            128,
+            96
+          ]
+        },
+        {
+          "body": "hop/body-03.png",
+          "duration_ms": 120,
+          "terminal_empty": false,
+          "body_rect": [
+            256,
+            0,
+            128,
+            96
+          ]
+        },
+        {
+          "body": "hop/body-04.png",
+          "duration_ms": 100,
+          "terminal_empty": false,
+          "body_rect": [
+            384,
+            0,
+            128,
+            96
+          ]
+        },
+        {
+          "body": "hop/body-05.png",
+          "duration_ms": 120,
+          "terminal_empty": false,
+          "body_rect": [
+            0,
+            96,
+            128,
+            96
+          ]
+        },
+        {
+          "body": "hop/body-06.png",
+          "duration_ms": 180,
+          "terminal_empty": false,
+          "body_rect": [
+            128,
+            96,
+            128,
+            96
+          ]
+        }
+      ],
+      "loop": false,
+      "contacts": [],
+      "release_cues": [],
+      "atlas_columns": 4,
+      "atlas_rows": 2,
+      "body_atlas": "hop/body-atlas.png",
+      "duration_ms": 730
+    },
+    "hurt": {
+      "frames": [
+        {
+          "body": "hurt/body-01.png",
+          "duration_ms": 400,
+          "terminal_empty": false,
+          "body_rect": [
+            0,
+            0,
+            128,
+            96
+          ]
+        },
+        {
+          "body": "hurt/body-02.png",
+          "duration_ms": 90,
+          "terminal_empty": false,
+          "body_rect": [
+            128,
+            0,
+            128,
+            96
+          ]
+        },
+        {
+          "body": "hurt/body-03.png",
+          "duration_ms": 160,
+          "terminal_empty": false,
+          "body_rect": [
+            256,
+            0,
+            128,
+            96
+          ]
+        },
+        {
+          "body": "hurt/body-04.png",
+          "duration_ms": 350,
+          "terminal_empty": false,
+          "body_rect": [
+            384,
+            0,
+            128,
+            96
+          ]
+        }
+      ],
+      "loop": false,
+      "contacts": [],
+      "release_cues": [],
+      "atlas_columns": 4,
+      "atlas_rows": 1,
+      "body_atlas": "hurt/body-atlas.png",
+      "duration_ms": 1000
+    },
+    "stagger": {
+      "frames": [
+        {
+          "body": "stagger/body-01.png",
+          "duration_ms": 120,
+          "terminal_empty": false,
+          "body_rect": [
+            0,
+            0,
+            128,
+            96
+          ]
+        },
+        {
+          "body": "stagger/body-02.png",
+          "duration_ms": 220,
+          "terminal_empty": false,
+          "body_rect": [
+            128,
+            0,
+            128,
+            96
+          ]
+        },
+        {
+          "body": "stagger/body-03.png",
+          "duration_ms": 550,
+          "terminal_empty": false,
+          "body_rect": [
+            256,
+            0,
+            128,
+            96
+          ]
+        },
+        {
+          "body": "stagger/body-04.png",
+          "duration_ms": 240,
+          "terminal_empty": false,
+          "body_rect": [
+            384,
+            0,
+            128,
+            96
+          ]
+        }
+      ],
+      "loop": false,
+      "contacts": [],
+      "release_cues": [],
+      "atlas_columns": 4,
+      "atlas_rows": 1,
+      "body_atlas": "stagger/body-atlas.png",
+      "duration_ms": 1130
+    },
+    "death": {
+      "frames": [
+        {
+          "body": "death/body-01.png",
+          "duration_ms": 450,
+          "terminal_empty": false,
+          "body_rect": [
+            0,
+            0,
+            128,
+            96
+          ]
+        },
+        {
+          "body": "death/body-02.png",
+          "duration_ms": 130,
+          "terminal_empty": false,
+          "body_rect": [
+            128,
+            0,
+            128,
+            96
+          ]
+        },
+        {
+          "body": "death/body-03.png",
+          "duration_ms": 160,
+          "terminal_empty": false,
+          "body_rect": [
+            256,
+            0,
+            128,
+            96
+          ]
+        },
+        {
+          "body": "death/body-04.png",
+          "duration_ms": 180,
+          "terminal_empty": false,
+          "body_rect": [
+            384,
+            0,
+            128,
+            96
+          ]
+        },
+        {
+          "body": "death/body-05.png",
+          "duration_ms": 160,
+          "terminal_empty": false,
+          "body_rect": [
+            0,
+            96,
+            128,
+            96
+          ]
+        },
+        {
+          "body": "death/body-06.png",
+          "duration_ms": 150,
+          "terminal_empty": false,
+          "body_rect": [
+            128,
+            96,
+            128,
+            96
+          ]
+        },
+        {
+          "body": "death/body-07.png",
+          "duration_ms": 160,
+          "terminal_empty": false,
+          "body_rect": [
+            256,
+            96,
+            128,
+            96
+          ]
+        },
+        {
+          "body": "death/body-08.png",
+          "duration_ms": 220,
+          "terminal_empty": false,
+          "body_rect": [
+            384,
+            96,
+            128,
+            96
+          ]
+        },
+        {
+          "body": "death/body-09.png",
+          "duration_ms": 700,
+          "terminal_empty": true,
+          "body_rect": [
+            0,
+            192,
+            128,
+            96
+          ]
+        }
+      ],
+      "loop": false,
+      "contacts": [],
+      "release_cues": [],
+      "atlas_columns": 4,
+      "atlas_rows": 3,
+      "body_atlas": "death/body-atlas.png",
+      "duration_ms": 2310
+    },
+    "jab": {
+      "frames": [
+        {
+          "body": "jab/body-01.png",
+          "attack_fx": "jab/attack-fx-01.png",
+          "landed_hit_fx": "jab/hit-fx-01.png",
+          "duration_ms": 500,
+          "body_rect": [
+            0,
+            0,
+            128,
+            96
+          ],
+          "attack_fx_rect": [
+            0,
+            0,
+            176,
+            128
+          ],
+          "landed_hit_fx_rect": [
+            0,
+            0,
+            176,
+            128
+          ]
+        },
+        {
+          "body": "jab/body-02.png",
+          "attack_fx": "jab/attack-fx-02.png",
+          "landed_hit_fx": "jab/hit-fx-02.png",
+          "duration_ms": 120,
+          "body_rect": [
+            128,
+            0,
+            128,
+            96
+          ],
+          "attack_fx_rect": [
+            176,
+            0,
+            176,
+            128
+          ],
+          "landed_hit_fx_rect": [
+            176,
+            0,
+            176,
+            128
+          ]
+        },
+        {
+          "body": "jab/body-03.png",
+          "attack_fx": "jab/attack-fx-03.png",
+          "landed_hit_fx": "jab/hit-fx-03.png",
+          "duration_ms": 130,
+          "body_rect": [
+            256,
+            0,
+            128,
+            96
+          ],
+          "attack_fx_rect": [
+            352,
+            0,
+            176,
+            128
+          ],
+          "landed_hit_fx_rect": [
+            352,
+            0,
+            176,
+            128
+          ]
+        },
+        {
+          "body": "jab/body-04.png",
+          "attack_fx": "jab/attack-fx-04.png",
+          "landed_hit_fx": "jab/hit-fx-04.png",
+          "duration_ms": 150,
+          "body_rect": [
+            384,
+            0,
+            128,
+            96
+          ],
+          "attack_fx_rect": [
+            528,
+            0,
+            176,
+            128
+          ],
+          "landed_hit_fx_rect": [
+            528,
+            0,
+            176,
+            128
+          ]
+        },
+        {
+          "body": "jab/body-05.png",
+          "attack_fx": "jab/attack-fx-05.png",
+          "landed_hit_fx": "jab/hit-fx-05.png",
+          "duration_ms": 200,
+          "body_rect": [
+            0,
+            96,
+            128,
+            96
+          ],
+          "attack_fx_rect": [
+            0,
+            128,
+            176,
+            128
+          ],
+          "landed_hit_fx_rect": [
+            0,
+            128,
+            176,
+            128
+          ]
+        },
+        {
+          "body": "jab/body-06.png",
+          "attack_fx": "jab/attack-fx-06.png",
+          "landed_hit_fx": "jab/hit-fx-06.png",
+          "duration_ms": 140,
+          "body_rect": [
+            128,
+            96,
+            128,
+            96
+          ],
+          "attack_fx_rect": [
+            176,
+            128,
+            176,
+            128
+          ],
+          "landed_hit_fx_rect": [
+            176,
+            128,
+            176,
+            128
+          ]
+        },
+        {
+          "body": "jab/body-07.png",
+          "attack_fx": "jab/attack-fx-07.png",
+          "landed_hit_fx": "jab/hit-fx-07.png",
+          "duration_ms": 80,
+          "body_rect": [
+            256,
+            96,
+            128,
+            96
+          ],
+          "attack_fx_rect": [
+            352,
+            128,
+            176,
+            128
+          ],
+          "landed_hit_fx_rect": [
+            352,
+            128,
+            176,
+            128
+          ]
+        },
+        {
+          "body": "jab/body-08.png",
+          "attack_fx": "jab/attack-fx-08.png",
+          "landed_hit_fx": "jab/hit-fx-08.png",
+          "duration_ms": 60,
+          "body_rect": [
+            384,
+            96,
+            128,
+            96
+          ],
+          "attack_fx_rect": [
+            528,
+            128,
+            176,
+            128
+          ],
+          "landed_hit_fx_rect": [
+            528,
+            128,
+            176,
+            128
+          ]
+        },
+        {
+          "body": "jab/body-09.png",
+          "attack_fx": "jab/attack-fx-09.png",
+          "landed_hit_fx": "jab/hit-fx-09.png",
+          "duration_ms": 80,
+          "body_rect": [
+            0,
+            192,
+            128,
+            96
+          ],
+          "attack_fx_rect": [
+            0,
+            256,
+            176,
+            128
+          ],
+          "landed_hit_fx_rect": [
+            0,
+            256,
+            176,
+            128
+          ]
+        },
+        {
+          "body": "jab/body-10.png",
+          "attack_fx": "jab/attack-fx-10.png",
+          "landed_hit_fx": "jab/hit-fx-10.png",
+          "duration_ms": 100,
+          "body_rect": [
+            128,
+            192,
+            128,
+            96
+          ],
+          "attack_fx_rect": [
+            176,
+            256,
+            176,
+            128
+          ],
+          "landed_hit_fx_rect": [
+            176,
+            256,
+            176,
+            128
+          ]
+        },
+        {
+          "body": "jab/body-11.png",
+          "attack_fx": "jab/attack-fx-11.png",
+          "landed_hit_fx": "jab/hit-fx-11.png",
+          "duration_ms": 100,
+          "body_rect": [
+            256,
+            192,
+            128,
+            96
+          ],
+          "attack_fx_rect": [
+            352,
+            256,
+            176,
+            128
+          ],
+          "landed_hit_fx_rect": [
+            352,
+            256,
+            176,
+            128
+          ]
+        },
+        {
+          "body": "jab/body-12.png",
+          "attack_fx": "jab/attack-fx-12.png",
+          "landed_hit_fx": "jab/hit-fx-12.png",
+          "duration_ms": 100,
+          "body_rect": [
+            384,
+            192,
+            128,
+            96
+          ],
+          "attack_fx_rect": [
+            528,
+            256,
+            176,
+            128
+          ],
+          "landed_hit_fx_rect": [
+            528,
+            256,
+            176,
+            128
+          ]
+        }
+      ],
+      "loop": false,
+      "contacts": [
+        9
+      ],
+      "release_cues": [
+        7
+      ],
+      "action_start_frame": 2,
+      "preview_idle_frames": [
+        1,
+        12
+      ],
+      "atlas_columns": 4,
+      "atlas_rows": 3,
+      "body_atlas": "jab/body-atlas.png",
+      "attack_fx_atlas": "jab/attack_fx-atlas.png",
+      "landed_hit_fx_atlas": "jab/landed_hit_fx-atlas.png",
+      "duration_ms": 1760
+    },
+    "crosscut": {
+      "frames": [
+        {
+          "body": "crosscut/body-01.png",
+          "attack_fx": "crosscut/attack-fx-01.png",
+          "landed_hit_fx": "crosscut/hit-fx-01.png",
+          "duration_ms": 500,
+          "body_rect": [
+            0,
+            0,
+            128,
+            96
+          ],
+          "attack_fx_rect": [
+            0,
+            0,
+            176,
+            128
+          ],
+          "landed_hit_fx_rect": [
+            0,
+            0,
+            176,
+            128
+          ]
+        },
+        {
+          "body": "crosscut/body-02.png",
+          "attack_fx": "crosscut/attack-fx-02.png",
+          "landed_hit_fx": "crosscut/hit-fx-02.png",
+          "duration_ms": 120,
+          "body_rect": [
+            128,
+            0,
+            128,
+            96
+          ],
+          "attack_fx_rect": [
+            176,
+            0,
+            176,
+            128
+          ],
+          "landed_hit_fx_rect": [
+            176,
+            0,
+            176,
+            128
+          ]
+        },
+        {
+          "body": "crosscut/body-03.png",
+          "attack_fx": "crosscut/attack-fx-03.png",
+          "landed_hit_fx": "crosscut/hit-fx-03.png",
+          "duration_ms": 180,
+          "body_rect": [
+            256,
+            0,
+            128,
+            96
+          ],
+          "attack_fx_rect": [
+            352,
+            0,
+            176,
+            128
+          ],
+          "landed_hit_fx_rect": [
+            352,
+            0,
+            176,
+            128
+          ]
+        },
+        {
+          "body": "crosscut/body-04.png",
+          "attack_fx": "crosscut/attack-fx-04.png",
+          "landed_hit_fx": "crosscut/hit-fx-04.png",
+          "duration_ms": 220,
+          "body_rect": [
+            384,
+            0,
+            128,
+            96
+          ],
+          "attack_fx_rect": [
+            528,
+            0,
+            176,
+            128
+          ],
+          "landed_hit_fx_rect": [
+            528,
+            0,
+            176,
+            128
+          ]
+        },
+        {
+          "body": "crosscut/body-05.png",
+          "attack_fx": "crosscut/attack-fx-05.png",
+          "landed_hit_fx": "crosscut/hit-fx-05.png",
+          "duration_ms": 220,
+          "body_rect": [
+            0,
+            96,
+            128,
+            96
+          ],
+          "attack_fx_rect": [
+            0,
+            128,
+            176,
+            128
+          ],
+          "landed_hit_fx_rect": [
+            0,
+            128,
+            176,
+            128
+          ]
+        },
+        {
+          "body": "crosscut/body-06.png",
+          "attack_fx": "crosscut/attack-fx-06.png",
+          "landed_hit_fx": "crosscut/hit-fx-06.png",
+          "duration_ms": 80,
+          "body_rect": [
+            128,
+            96,
+            128,
+            96
+          ],
+          "attack_fx_rect": [
+            176,
+            128,
+            176,
+            128
+          ],
+          "landed_hit_fx_rect": [
+            176,
+            128,
+            176,
+            128
+          ]
+        },
+        {
+          "body": "crosscut/body-07.png",
+          "attack_fx": "crosscut/attack-fx-07.png",
+          "landed_hit_fx": "crosscut/hit-fx-07.png",
+          "duration_ms": 60,
+          "body_rect": [
+            256,
+            96,
+            128,
+            96
+          ],
+          "attack_fx_rect": [
+            352,
+            128,
+            176,
+            128
+          ],
+          "landed_hit_fx_rect": [
+            352,
+            128,
+            176,
+            128
+          ]
+        },
+        {
+          "body": "crosscut/body-08.png",
+          "attack_fx": "crosscut/attack-fx-08.png",
+          "landed_hit_fx": "crosscut/hit-fx-08.png",
+          "duration_ms": 80,
+          "body_rect": [
+            384,
+            96,
+            128,
+            96
+          ],
+          "attack_fx_rect": [
+            528,
+            128,
+            176,
+            128
+          ],
+          "landed_hit_fx_rect": [
+            528,
+            128,
+            176,
+            128
+          ]
+        },
+        {
+          "body": "crosscut/body-09.png",
+          "attack_fx": "crosscut/attack-fx-09.png",
+          "landed_hit_fx": "crosscut/hit-fx-09.png",
+          "duration_ms": 100,
+          "body_rect": [
+            0,
+            192,
+            128,
+            96
+          ],
+          "attack_fx_rect": [
+            0,
+            256,
+            176,
+            128
+          ],
+          "landed_hit_fx_rect": [
+            0,
+            256,
+            176,
+            128
+          ]
+        },
+        {
+          "body": "crosscut/body-10.png",
+          "attack_fx": "crosscut/attack-fx-10.png",
+          "landed_hit_fx": "crosscut/hit-fx-10.png",
+          "duration_ms": 300,
+          "body_rect": [
+            128,
+            192,
+            128,
+            96
+          ],
+          "attack_fx_rect": [
+            176,
+            256,
+            176,
+            128
+          ],
+          "landed_hit_fx_rect": [
+            176,
+            256,
+            176,
+            128
+          ]
+        },
+        {
+          "body": "crosscut/body-11.png",
+          "attack_fx": "crosscut/attack-fx-11.png",
+          "landed_hit_fx": "crosscut/hit-fx-11.png",
+          "duration_ms": 420,
+          "body_rect": [
+            256,
+            192,
+            128,
+            96
+          ],
+          "attack_fx_rect": [
+            352,
+            256,
+            176,
+            128
+          ],
+          "landed_hit_fx_rect": [
+            352,
+            256,
+            176,
+            128
+          ]
+        },
+        {
+          "body": "crosscut/body-12.png",
+          "attack_fx": "crosscut/attack-fx-12.png",
+          "landed_hit_fx": "crosscut/hit-fx-12.png",
+          "duration_ms": 100,
+          "body_rect": [
+            384,
+            192,
+            128,
+            96
+          ],
+          "attack_fx_rect": [
+            528,
+            256,
+            176,
+            128
+          ],
+          "landed_hit_fx_rect": [
+            528,
+            256,
+            176,
+            128
+          ]
+        },
+        {
+          "body": "crosscut/body-13.png",
+          "attack_fx": "crosscut/attack-fx-13.png",
+          "landed_hit_fx": "crosscut/hit-fx-13.png",
+          "duration_ms": 80,
+          "body_rect": [
+            0,
+            288,
+            128,
+            96
+          ],
+          "attack_fx_rect": [
+            0,
+            384,
+            176,
+            128
+          ],
+          "landed_hit_fx_rect": [
+            0,
+            384,
+            176,
+            128
+          ]
+        },
+        {
+          "body": "crosscut/body-14.png",
+          "attack_fx": "crosscut/attack-fx-14.png",
+          "landed_hit_fx": "crosscut/hit-fx-14.png",
+          "duration_ms": 80,
+          "body_rect": [
+            128,
+            288,
+            128,
+            96
+          ],
+          "attack_fx_rect": [
+            176,
+            384,
+            176,
+            128
+          ],
+          "landed_hit_fx_rect": [
+            176,
+            384,
+            176,
+            128
+          ]
+        },
+        {
+          "body": "crosscut/body-15.png",
+          "attack_fx": "crosscut/attack-fx-15.png",
+          "landed_hit_fx": "crosscut/hit-fx-15.png",
+          "duration_ms": 140,
+          "body_rect": [
+            256,
+            288,
+            128,
+            96
+          ],
+          "attack_fx_rect": [
+            352,
+            384,
+            176,
+            128
+          ],
+          "landed_hit_fx_rect": [
+            352,
+            384,
+            176,
+            128
+          ]
+        },
+        {
+          "body": "crosscut/body-16.png",
+          "attack_fx": "crosscut/attack-fx-16.png",
+          "landed_hit_fx": "crosscut/hit-fx-16.png",
+          "duration_ms": 180,
+          "body_rect": [
+            384,
+            288,
+            128,
+            96
+          ],
+          "attack_fx_rect": [
+            528,
+            384,
+            176,
+            128
+          ],
+          "landed_hit_fx_rect": [
+            528,
+            384,
+            176,
+            128
+          ]
+        }
+      ],
+      "loop": false,
+      "contacts": [
+        8,
+        13
+      ],
+      "release_cues": [
+        6,
+        12
+      ],
+      "action_start_frame": 2,
+      "preview_idle_frames": [
+        1,
+        16
+      ],
+      "atlas_columns": 4,
+      "atlas_rows": 4,
+      "body_atlas": "crosscut/body-atlas.png",
+      "attack_fx_atlas": "crosscut/attack_fx-atlas.png",
+      "landed_hit_fx_atlas": "crosscut/landed_hit_fx-atlas.png",
+      "duration_ms": 2860
+    }
+  },
+  "hop": {
+    "use_for": [
+      "approach",
+      "retreat"
+    ],
+    "same_facing": true,
+    "horizontal_translation_during_ms": [
+      140,
+      430
+    ],
+    "body_vertical_lift_already_in_frames": true,
+    "repeat": false
+  },
+  "timing_note": "Durations are approved visual preview rhythm, not implemented parry rules; skip presentation idle frames when scheduling attacks. Align cues and contacts with authoritative combat events.",
+  "fx_note": "attack_fx always follows animation; landed_hit_fx only on a successful landed contact, never for dodge/parry/miss. Overlay at body_top_left+[-32,-16].",
+  "death_note": "Last frame intentionally fully transparent; terminal state, not a loop.",
+  "captain_note": "Normal Thorn Imp only; Crownthorn recolour/marking and Royal Rip are not supplied."
+}

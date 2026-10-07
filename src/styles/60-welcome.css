@@ -1,0 +1,14 @@
+/* 60-welcome: the What's new notice in the bell (70-ui.js) and the Fight > Upgrades "far" hint
+   (71-ui-fight.js). Q1 + D3 (docs/design/plan-2.md). */
+
+/* What's new: one bell row with a short list under its title. */
+.nlog-row.news { align-items: start; border-left-color: var(--gold); }
+.nlog-row.news > span:nth-child(2) { font: 600 calc(15px * var(--display-k))/1.2 var(--display); color: var(--gold); }
+.nlog-news { grid-column: 1 / -1; display: grid; gap: 6px; margin: 2px 0 0; padding: 0; list-style: none; font-weight: 400; }
+.nlog-news li { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px; align-items: start; overflow-wrap: anywhere; }
+.nlog-news li.first { color: var(--bone); font-weight: 600; }
+.nlog-news img { width: 20px; height: 20px; image-rendering: pixelated; }
+
+/* Upgrades: the next level costs over 100x your gold. Say where gold does more now. */
+.hu-hint { margin-top: 2px; font: 600 calc(12.5px * var(--display-k))/1.25 var(--display); color: var(--gold); }
+.hu-hint[hidden] { display: none; }

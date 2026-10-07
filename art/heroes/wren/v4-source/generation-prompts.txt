@@ -1,0 +1,1 @@
+Built-in ImageGen precise edit: remove nocked arrow, fletching, shaft and arrowhead; restore scarf and transparent air; preserve pinching hand, bow, hood, quiver arrows and all other design. Only arrow-region pixels composited into full-draw. Other seven native sprites preserved exactly.

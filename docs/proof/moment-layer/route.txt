@@ -1,0 +1,76 @@
+# seed: 1
+# Proof for card moment-layer: the first boss falls and the game stops on a card with a burst of light.
+# Fixture boss1: Wren on zone 1 with the boss next (a fresh save, levelled so the fight is won in both views).
+# Follow-up: a moment now shows at the hero's turn too (only a turn in motion holds it), so an idle player still sees the card.
+# Level-up banners, uniques and the other moments are forced in tools/check.mjs, section 'moment layer'.
+new boss1
+wait 2
+tap-if "Got it"
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+expect "The first boss falls"
+expect .mm-card
+shot first-boss-card
+burst first-boss-burst
+wait 3
+expect "The first boss falls"
+tap "Continue"
+shot after-continue

@@ -51,6 +51,10 @@ const SFX = (() => {
     hit: () => { noise(0.05, 1800, 0.25); tone(220, 110, 0.06, 'square', 0.12); },
     party: () => tone(330 + Math.random() * 60, 200, 0.04, 'triangle', 0.08),
     crit: () => { noise(0.09, 2600, 0.4); tone(660, 180, 0.12, 'square', 0.25); },
+    // hit feel (card hit-feel): one sting per number tier beyond hit and crit, and a chime for a clean parry or dodge
+    big: () => { noise(0.07, 1400, 0.4); tone(180, 70, 0.16, 'square', 0.28); tone(90, 60, 0.2, 'sine', 0.3, 0.02); },
+    counter: () => { noise(0.1, 2200, 0.4); tone(523, 523, 0.07, 'square', 0.22); tone(784, 392, 0.2, 'square', 0.26, 0.06); },
+    cleanDef: () => { tone(1568, 1568, 0.05, 'triangle', 0.22); tone(2093, 2093, 0.14, 'triangle', 0.2, 0.05); },
     kill: () => { tone(988, 988, 0.05, 'square', 0.18); tone(1319, 1319, 0.1, 'square', 0.18, 0.05); },
     ore: () => { tone(1800, 1500, 0.07, 'triangle', 0.35); tone(2700, 2400, 0.05, 'sine', 0.15, 0.01); },
     wood: () => { noise(0.08, 400, 0.5); tone(140, 70, 0.1, 'sine', 0.4); },
@@ -61,7 +65,9 @@ const SFX = (() => {
     forge: () => { noise(0.12, 3000, 0.4); tone(1200, 900, 0.18, 'triangle', 0.3); tone(600, 600, 0.25, 'sine', 0.15, 0.03); },
     fail: () => { tone(392, 370, 0.18, 'square', 0.2); tone(311, 294, 0.18, 'square', 0.2, 0.18); tone(233, 150, 0.4, 'square', 0.2, 0.36); },
     zone: () => arp([392, 523, 659, 784, 1047], 0.08, 'square', 0.22),
-    buy: () => tone(880, 1320, 0.05, 'square', 0.15)
+    buy: () => tone(880, 1320, 0.05, 'square', 0.15),
+    momentBig: () => { arp([392, 523, 659, 784, 1047], 0.08, 'square', 0.22); tone(1568, 1568, 0.7, 'triangle', 0.22, 0.45); noise(0.3, 3200, 0.18, 0.4); },
+    momentMid: () => { tone(784, 784, 0.1, 'square', 0.18); tone(1175, 1175, 0.22, 'triangle', 0.22, 0.09); }
   };
   function play(name, prio) { if (allow(prio)) { try { sounds[name](); } catch (e) { /* audio is best-effort */ } } }
   return { start, play };
@@ -70,20 +76,22 @@ const SFX = (() => {
 window.addEventListener('pointerdown', SFX.start, true);
 
 // ================= event wiring =================
-on('float', ({ color }) => {
-  if (color === '#FFFFFF') SFX.play('hit');
+on('float', ({ color, tier }) => {
+  if (tier === 'big' || tier === 'counter') SFX.play(tier);
+  else if (color === '#FFFFFF') SFX.play('hit');
   else if (color === '#FF9E3D') SFX.play('crit');
   else if (color === '#B58CFF' && Math.random() < 0.35) SFX.play('party');
 });
 on('kill', ({ mob }) => SFX.play('kill', mob && mob.boss));
 on('nodeHit', () => SFX.play('tapNode'));
-on('harvest', ({ kind }) => SFX.play(kind === 'ore' ? 'ore' : 'wood'));
-on('levelup', () => SFX.play('level', true));
+on('harvest', ({ kind, away }) => { if (!away) SFX.play(kind === 'ore' ? 'ore' : 'wood'); });
+on('levelup', e => { if (!(e && e.quiet)) SFX.play('level', true); });   // quiet: away levels
 on('skillUp', ({ quiet }) => { if (!quiet) SFX.play('skill', true); });
 on('loot', () => SFX.play('loot', true));
 on('itemAdded', ({ item }) => { if (!item.u) SFX.play('forge', true); });
 on('bossFail', () => SFX.play('fail', true));
 on('zoneClear', () => SFX.play('zone', true));
+on('momentShow', ({ tier }) => SFX.play(tier === 'big' ? 'momentBig' : 'momentMid', true));   // 75-moments-ui
 // Button taps in the panels (buy, hire, upgrade...). The stage has its own sounds.
 document.addEventListener('click', e => {
   const b = e.target.closest && e.target.closest('button');
@@ -95,7 +103,7 @@ document.addEventListener('click', e => {
   const st = document.getElementById('stage'); if (!st) return;
   const css = document.createElement('style');
   css.textContent = `.sfx-btn{position:absolute;right:6px;bottom:6px;z-index:5;width:28px;height:28px;padding:0;
-    border:2px solid var(--line-hi);background:var(--well);color:var(--bone);font:12px/1 var(--display);
+    border:2px solid var(--line-hi);background:var(--well);color:var(--bone);font: calc(12px * var(--display-k))/1 var(--display);
     image-rendering:pixelated;cursor:pointer;opacity:.8}.sfx-btn:hover{opacity:1}.sfx-btn.off{color:var(--muted)}`;
   document.head.append(css);
   const b = document.createElement('button');
@@ -111,3 +119,4 @@ document.addEventListener('click', e => {
   b.addEventListener('click', e => { e.stopPropagation(); S.settings.sound = !S.settings.sound; draw(); save(); SFX.play('buy'); });
   draw(); st.append(b);
 })();
+on('defGrade', p => { if (p && p.clean) SFX.play('cleanDef'); });

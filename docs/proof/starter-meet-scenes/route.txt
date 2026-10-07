@@ -1,0 +1,16 @@
+# seed: 1
+# Proof for card starter-meet-scenes: the Tobin, Wren and Pip meet scenes are new words in three existing NPC slots. They play once, on a first
+# clear of the zone 5, 10 and 15 Champions, for a player whose hero is another starter, and no fixture reaches those fights. The words are proved
+# by the check.mjs "story data" section (4 lines at most, each under 60 characters, right post and gate) and the story-hollow-script scene tests.
+# This route replays the early fixture to show the screens around them still load: the game plays on and the Hero tab opens at 360x740 and 740x360.
+new early
+wait 2
+tap-if "Skip"
+wait 1
+tap-if "Got it"
+expect "Fight"
+shot fight-after-scenes
+tap "Hero"
+wait 1
+tap-if "Got it"
+shot hero-tab

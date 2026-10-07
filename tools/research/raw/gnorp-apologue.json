@@ -1,0 +1,352 @@
+{
+ "name": "(the) Gnorp Apologue",
+ "slug": "gnorp-apologue",
+ "fetched": "2026-10-05",
+ "steam": {
+  "summary": {
+   "num_reviews": 100
+  },
+  "pos": [
+   {
+    "id": "209821505",
+    "votes_up": 32,
+    "hours": 51,
+    "text": "Gnorp Apologue is a strange game. I'd recommend it because it's still fun at the end of the day, but a lot of its features are very contradictory in a way that points to weird game design. \n\nThe best example of this is how many things increase how far things launch and treat this as a good feature. It comes with a lot of upgrades. You might be tempted to think that this is good because it makes shards (the currency that spills from the rock) easier to collect, sometimes outright dropping them into the stash. Certain units shove them forward, many upgrades to statuses increase the knockback of said status (the first unlocked talent exclusively does this), and it all seems pointed toward making collection easier... but the game isn't about collection.\n\nCollection is a means to an end, it increases your talent point gain, but the goal is to make the pile tall, not wide.\n\nIt's clear that a p"
+   },
+   {
+    "id": "214171558",
+    "votes_up": 23,
+    "hours": 52,
+    "text": "Only a few hours in, but I can already say that this is my favorite incremental idler game I've played, out of maybe 7 or 8 games.  Everything you do in the game is reflected in the actual visual, instead of just a progress bar with an absurdly large number to trick you into feeling like you've done something. The Gnorps are fun to watch, and it really feels like you are helping mastermind some whacky excavation project. So much more satisfying than I thought it would be, and easily worth the time and money. It's also clear that the Devs care about the overall experience of the player instead of just using the game as a vehicle for a cashgrab.\nJust get it.  100% would recommend."
+   },
+   {
+    "id": "209132530",
+    "votes_up": 18,
+    "hours": 73,
+    "text": "Less an idle game about gradual linear progression, Gnorp Apologue rewards players who like to tinker with various builds.  It's a game about making the correct decisions, more than watching numbers go up.  There's no way to know how powerful an upgrade, effect, or unit will be without just trying it.\r\n\r\nAfter grinding for a while and repeatedly creating failed builds, I realized that trial-and-error, min-max gaming is not what I'm looking for right now.  I looked up a guide. Just by following its list of recommended starting abilities, and mostly ignoring the step-by-step instructions, I was able to win a run in less than an hour.\r\n\r\nFine."
+   },
+   {
+    "id": "228819491",
+    "votes_up": 11,
+    "hours": 17,
+    "text": "[h1]Short Review[/h1]\n\n(the) Gnorp Apologue is a surprisingly polished incremental game that knows how to keep you hooked without burning out its welcome. The pixel art is genuinely charming, the music fits the vibe perfectly, and the addictive loop of watching your little Gnorps do their thing is oddly satisfying. The talent system has some dead weight in it, and the late-game grind for Zybellium can hit a frustrating wall if you're not managing your resources right. But if you're looking for a short, sweet incremental that actually has an endpoint in sight, this one delivers.\n\n[h1]Full Review[/h1]\n\nI have a soft spot for incremental games, and (the) Gnorp Apologue caught my eye with its pixel art and the inexplicable charm of watching tiny creatures do inexplicable things. I went in not knowing what to expect and came out having completed the whole thing without ever feeling like I was"
+   },
+   {
+    "id": "207472381",
+    "votes_up": 10,
+    "hours": 19,
+    "text": "A simple, fun, and thoughtful game that I thoroughly enjoyed! We need more games like this and Tower Wizard."
+   },
+   {
+    "id": "216909876",
+    "votes_up": 10,
+    "hours": 60,
+    "text": "One must imagine Gnorpyphus happy\n\nI love Gnorp, I love seeing my little Gnorplings hard at work at their Gnorpyphean task of destroying the evil rock. \n\n\"(the) Gnorp Apologue\" Is a 21st century artistic masterpiece. The soundtrack, albeit repetitive works in the games favour. You will come no closer to a video game representation of Camus's phrase \"One must imagine Sisyphus happy\". After the first hour of Gnorping you come to realise that the goal was never to destroy the rock, it was never to \"beat the game\". The goal was for the player to find joy in the struggle. \n\nAlthough technically an idle game it stands out from many other, that being its artstyle. The game is just nice looking at, seeing your Gnorplings with different hats, seeing their houses stacked on high with a flower pot or two, to witness them working is like observing an ant farm.\n\nFor what it is, it is highly enjoyable"
+   },
+   {
+    "id": "218780318",
+    "votes_up": 9,
+    "hours": 19,
+    "text": "This game is really fun. Great time kill. A lot of incremental games like this are designed to have you always chasing power creep. So while I appreciate seeing an incremental game that has a definitive \"I beat the game\" point, I do wish there was more content. Not because the content in the game is lacking or bad, but because it's so good I wish there was more."
+   },
+   {
+    "id": "215376097",
+    "votes_up": 9,
+    "hours": 97,
+    "text": "Straight gnorpin' it. And by it, I mean my boulder.\nGood game, solid ~15 hours of actual gameplay before it becomes and idler. Highly recommend for price."
+   },
+   {
+    "id": "220603931",
+    "votes_up": 8,
+    "hours": 13,
+    "text": "Why recommend: This game is stupid\nWhy not recommend: This game is stupid\n\nSynopsis: I don't want to play this game anymore. 12 hours was enough."
+   },
+   {
+    "id": "220617167",
+    "votes_up": 8,
+    "hours": 47,
+    "text": "In the slam club. straight up \"jumping it\". and by \"it,\" haha, well. let's just say. My Gnorps"
+   },
+   {
+    "id": "226844542",
+    "votes_up": 7,
+    "hours": 40,
+    "text": "The perfect blend of being AFK and needing to be active to do things. Tactics matter too. You can't just get all the upgrades. Well made. Gnorps are little fellas, charming."
+   },
+   {
+    "id": "226858067",
+    "votes_up": 7,
+    "hours": 7,
+    "text": "I noticed that the Gnorps don't simply pick up the nearest shards. Instead, each one is individually scheduled to pick up a different shard. It's more effort to implement, but it's also a lovely race condition optimization by the devs <3"
+   },
+   {
+    "id": "230900477",
+    "votes_up": 6,
+    "hours": 60,
+    "text": "A linear incremental idle game with charming pixel art and satisfying progression. I've unlocked about half the skill tree so far and completed the base game mode.\n\nBut here's the catch - pick the wrong upgrades or mismanage your resources, and you can genuinely break your run. No exaggeration. One bad choice and you're stuck restarting.\n\nIt's a polished, addictive experience with great visuals and a relaxing vibe. Just don't expect deep build variety or endless content - it's pretty linear and short."
+   },
+   {
+    "id": "212981196",
+    "votes_up": 6,
+    "hours": 14,
+    "text": "This was a very interesting experience. At some point you realise that some talents are total garbage and you need to learn which ones work and which do not as you can't tell from just looking at them.\r\nI tried building a fire build expecting something big to just to be very disappointed by it.\r\nIn general, this was very interesting experience and fun to figure things out."
+   },
+   {
+    "id": "213221330",
+    "votes_up": 6,
+    "hours": 36,
+    "text": "I'll leave this review short. For a game I bought for $3, its worth every penny. In fact I would've probably paid up to $15. This is a fun little game with an addicting gameplay loop.\n\nPros\n- Affordable\n- Accessible\n- Nostalgic\n\nCons\n- Graphics are a bit simple and I wish it had more cinematics and special effects.\n- The progression can be a little slow at times without a lot of ways to progress, often leading to me pressing prestige. (I'd recommend adding a way to reassign a Gnorp).\n\nOverall, just buy it, or make a footcam account if you cant afford it yet."
+   },
+   {
+    "id": "223955525",
+    "votes_up": 5,
+    "hours": 49,
+    "text": "one of the best idle games of all time, I like watching the little goobers work"
+   },
+   {
+    "id": "229727327",
+    "votes_up": 5,
+    "hours": 11,
+    "text": "I overall liked the vibe and presentation, and think this is a nice idle game for the most part\n\nThat being said, I think the progression and meta-progression are kinda weird most of the time. Like, there are essentially separate \"build paths\" (not officially, but its structured this way). But the weird thing is, the commitment cost to actually going down a path is SUPER high. As far as I could tell, there's not really a way to revert this. This leads me to believe that if you pick the \"wrong\" path, you are essentially screwed and are adding a ton of hours to a normal playthrough (and you don't really have a great way to revert this, you can just accept that you've wasted some points or I guess the other option is to just restart your save?) Just seems like such a weird system when the resources for this meta-progression are already super scarce\n\nOne additional thing (which kind of compo"
+   },
+   {
+    "id": "217875695",
+    "votes_up": 5,
+    "hours": 29,
+    "text": "Cool game but the pacing is incredibly slow at the end to truly finish the game and I was not a fan of that. Otherwise it is fun to help the Gnorps with their mission."
+   },
+   {
+    "id": "210272464",
+    "votes_up": 5,
+    "hours": 16,
+    "text": "Overall fun gameplay loop. This game deserves attention for the visuals more than anything. Feels comfy"
+   },
+   {
+    "id": "222057813",
+    "votes_up": 5,
+    "hours": 20,
+    "text": "An Idler that has heavy strategy and synergy building.\n\n[h3] \u2014\u2014\u2014\u2014Short TL;DR: \u2014\u2014\u2014\u2014 [/h3]\nThe game has a learning curve but can be the most addictive and fun part of the game, especially when you hit the big numbers that also give that feel of \u201choly\u2026 what is even going on\u201d as your screen is cluttered with projectiles.\n\nPersonally? I love this game and I hope more people go into it with a positive experience.\n\n[list]\n[*] [h2] [b] I highly suggest this game to: [/b] [/h2]\nanyone a fan of Idlers, Strategy and Synergy building.\n\n[*] [h2] [b] I don\u2019t recommend this to: [/b] [/h2]\npeople who get frustrated and give up easily when hitting a progression wall.\n[/list]\n\n\n\n\n\n\n\n\n[h1] [b] Now, for a more detailed review of the game [/b] [/h1] \nIt does well with the graphics and animations, and can give you a feel of accomplishment when you reach a new height. However a downside is that it is very diff"
+   },
+   {
+    "id": "233085095",
+    "votes_up": 5,
+    "hours": 44,
+    "text": "One of the best incremental games, along with Tower Wizard, albeit this one is quite a bit longer.\r\n\r\nIt took me around 30 hours to beat blind, but it probably only takes half that time if you know what you\u2019re doing.\r\nGreat art style. The music is serviceable for the genre and delivers a sense of progression with each run.\r\n\r\nThe last hurdle was quite tough to overcome, so most of that extra time came down to experimenting with different builds, which the game makes apparent is a deliberate design choice, given the many options for variety the prestige system offers. It might be subjective, but since you constantly need to switch up builds for different progression levels, this may put off some players, while others may love it.\r\n\r\nLastly, this is not a clicker game where you can max out everything and call it a day. You have to use your head a bit for once, but once you earn around 75% "
+   },
+   {
+    "id": "211975528",
+    "votes_up": 5,
+    "hours": 41,
+    "text": "It gets a little slow at the end but it's well balanced and fun if you like idle games"
+   },
+   {
+    "id": "228452821",
+    "votes_up": 5,
+    "hours": 30,
+    "text": "(the) Gnorp Apologue is a neat incremental game that does a lot of things right. The visuals are simple, which helps when the screen starts getting overloaded with rockets and rainbow shards. The music is fun and not too repetitive. The Gnorps are cute and customizable based on the achievements you unlock.\n\nAnd the gameplay loop is more complex than just 'click the rock'. This isn't an idler, and this isn't a clicker. It's a third option: an management incremental game where I was engaged nearly the entire time without spraining my fingers. It did start to become a bit of an idler towards the end, especially since I was just shy of unlocking the final tier of upgrades (so I really had to grind there). But overall it's a pretty fast-paced idler. There's quite a lot of strategic variety too. The skill tree isn't necessarily linear and gives you a lot of options for what build you want to g"
+   },
+   {
+    "id": "234279955",
+    "votes_up": 5,
+    "hours": 20,
+    "text": "in the stripped club. straight up \"gnorpin it\" and by \"it\", haha, well. let's justr say. My apologue"
+   },
+   {
+    "id": "214786938",
+    "votes_up": 4,
+    "hours": 69,
+    "text": "This is a super fun semi-idle game. It is active enough that you can speedrun it if you want, or just chill with it and try combos. I left it sitting in the background while I went about my day on a few occasions to rack up the playtime I have in the game, and that was fine. There is a decent amount of depth and combos here, with clear strategies for balancing gathering vs creating your resources. I enjoyed it enough to 100% it in the end."
+   }
+  ],
+  "neg": [
+   {
+    "id": "229693560",
+    "votes_up": 12,
+    "hours": 12,
+    "text": "I like this game and I had fun in the almost 13 hours I played it for. But my one issue: The delete save button is located too close to and looks very similar to the quit game button. Hence, after 13 hours I accidentally deleted my save file and while I was able to recover *some* progress with the recover save data button that's right there (I wonder why) I still lost about the last 5 hours of playtime. It was fun while it lasted."
+   },
+   {
+    "id": "225624474",
+    "votes_up": 10,
+    "hours": 28,
+    "text": "[2/5] \u2605\u2605\u2606\u2606\u2606\n\nI'd give this game a mixed review if I could. The gameplay is fun and there's a lot of genuine strategy to be had with how to set up your gnorps, but a lot of attention is put into the meta builds at the start of each run where you commit to a strategy (i.e. Choosing all the 'fire' perks to do the fire strategy), which can make you feel like you wasted a run if your strategy didn't pan out correctly. Eventually my excitement for strategy diminished as I pushed through to see the end of the game."
+   },
+   {
+    "id": "213048139",
+    "votes_up": 10,
+    "hours": 20,
+    "text": "I'm not a fan of this one. There are a variety of builds/progression paths, not all of them are viable. Getting stuck and having to restart with no gained advantages is not fun or what I'm looking for in an idler. It's like a weird idle-roguelike that makes you wait for hours to see if your experiment is working, or if the game fooled you into picking one of it's ineffective, red-herring builds"
+   },
+   {
+    "id": "209055508",
+    "votes_up": 9,
+    "hours": 4,
+    "text": "In the Beginning a very cool Idle Game. After a few Hours you get stuck very fast and Progress is extremly slow up to a Point where you really just waste Time without progressing at all, because you started the new Round with wrong Perks and Strategy. \n\nBut thats the Point, you need to experiment with Perks and different Strategies to advance. I had the Feeling that there are much much more Strategies that will lead you to fail, than ones you will be succesful with. \n\nAnd just here comes the Thing that kills the Fun completely for me. You can really spent 1 Hour of playing, just to see your Strategy will not fit and you will not advance at all. Means you fully wasted 1 Hour for absolutely nothing and need to start over again, because your Round is now broken. \n\nAnd overall at worst Case you wont even learn from your failed Round and will be as clueless as at the Start of your Round. This"
+   },
+   {
+    "id": "207600058",
+    "votes_up": 7,
+    "hours": 32,
+    "text": "I'm sorry man, I know it's an idler, but I got sucked in to trying to complete it so I could uninstall it once I got the prestige points I needed. It perpetually dangles the win state in front of you while pulling the rug out from multiple angles to the point that you need to have a meta build and know every mechanic and late-game element so that you can finally reach the end. Combine this with the experience of sunk cost after having already dumped hours into it and the win that seems just out of reach and I personally come away with a bad feeling. It reminded me of how claw machines make children feel, or how slots and blackjack make gamblers feel. I'm sure a lot of people enjoy it and will make fun of me for this but the mechanics for me felt predatory in the end. I guess it turns out the game had played me."
+   },
+   {
+    "id": "213686825",
+    "votes_up": 6,
+    "hours": 16,
+    "text": "I'm afraid I can't really recommend this game.\r\nWhen I first saw this game, I believed that it was your typical incremental-idler with a cute art style.  That is, simply, not what this game is.\r\n\r\nThe Gnorp Apologue is essentially a guess & check where you synergize upgrades you select at the very start of a run.\r\n\r\nInstead of constantly upgrading, you just have to find the correct synergy to win.  Since these major upgrades are locked behind unlocking prestige tokens (which are set behind an arbitrary production amount), there is a [i]very[/i] artificial time gate in the way of this.\r\n\r\nYou will not have the power to complete the game until you have access to the final set of upgrades, and that's going to take a while of guess & checking to get enough prestige points.  And the worst part, once you've found that combination, why go back and play again?  To cobble together the last few ac"
+   },
+   {
+    "id": "212741121",
+    "votes_up": 6,
+    "hours": 0,
+    "text": "Strange to sell a game and pin the workaround to get it running in the community tab.\nShould be the dev who makes a game working, not me."
+   },
+   {
+    "id": "221409070",
+    "votes_up": 5,
+    "hours": 7,
+    "text": "An Idle game that requires you to meta build is kind of annoying to be honest.  All things should work to varying degrees but in Gnorp there is but few paths.  I want to like this game for the graphics alone but it's not enough, not as enjoyable as other idlers."
+   },
+   {
+    "id": "233072622",
+    "votes_up": 5,
+    "hours": 79,
+    "text": "This is a very hard review for me to write, because there is a lot to like about this game. Also keep in mind that my play time represents a lot of background game time, not active play (~15-20hrs).\n\nSo why a thumbs down? \n[list]\n    [*]You spend a lot of time not knowing if your actions actually have a positive effect. This extends from minute-to-minute gameplay to the perk tree you make meta-changing builds with.\n    [*]There are very few things to invest the idle currency into after the first few compression cycles. You spend most of your time waiting to get the special shards that spawn, or waiting hours so you can buy one level of something (because you can't see actual stats of anything) and not seeing any real effect on gameplay.\n    [*]There is very, very little content to unlock in the game. By the time you've seen everything you will ask yourself, \"that's it?\".\n    [*]There is "
+   },
+   {
+    "id": "213535856",
+    "votes_up": 5,
+    "hours": 3,
+    "text": "too grindy, the prestiges don't feel meaningful enough to combo, wizard tower is a better example of combos done right"
+   },
+   {
+    "id": "220026163",
+    "votes_up": 4,
+    "hours": 23,
+    "text": "How in current year is there not a mute when out of focus option that works correctly.\n\nI finished it, but I didn't really enjoy it. There's a few things you can do in the prestige tree and during runs that feel like they screw you over instead of helping you. All you can do to fix that is abandon your run which will often get you nothing. The progression didn't feel smooth. Maybe I went in with too high expectations from other people's good reviews, but I really just didn't like it."
+   },
+   {
+    "id": "213516412",
+    "votes_up": 4,
+    "hours": 37,
+    "text": "the middle to end part of the game when you have to find the best combos and methods feels too punishing for when you have to restart and try again, otherwise decent game"
+   },
+   {
+    "id": "218366281",
+    "votes_up": 4,
+    "hours": 9,
+    "text": "boring progression scaling especially for an idle game"
+   },
+   {
+    "id": "227825027",
+    "votes_up": 4,
+    "hours": 13,
+    "text": "I did finish it but I wouldn't recommend it if you're into chill incremental games like I am. It's a stressful experience where each prestige point has to be stretched for and each synergy has to be well thought out.\r\n\r\nMost upgrades are actually sidegrades with some downsides. Your resources are very limited and you can't repick or refund upgrades either. This leads to a lingering sense of anxiety because you can and will pick something that will screw your run, leading to no prestige points.\r\n\r\nPersonally I found it an exercise in analysis paralysis where each powerful upgrade locks out 5 more and you don't even know if it's good or not.\r\n"
+   },
+   {
+    "id": "222160970",
+    "votes_up": 4,
+    "hours": 10,
+    "text": "Wish I could give this game a middle thumbs, but since I can't I feel I ultimately need to vote it down.\n\nIt's a real shame this game turned out to be an unfun mess of a grind, because the art style and the animations and everything has so much character and is so charming.\n\nAlas, the game is just not very good as an incremental game. The prestige points are downright awful to earn and the perks from prestige points feel very unrewarding and minimal. This game never allows you to get truly broken in the late stages, it's constantly keeping you in check with unfun mechanics and muted scaling.\n\nI think it would be more honest to advertise the game as a strategy game instead of an incremental game as beating the game requires relatively precise builds or A LOT of idling. The limit of Zybellium (or whatever it's called) makes experimenting with different builds a chore and things that requir"
+   },
+   {
+    "id": "207540818",
+    "votes_up": 4,
+    "hours": 3,
+    "text": "I tried to enjoy it but I couldn't figure out how to continue & didn't feel like looking up a guide."
+   },
+   {
+    "id": "232516688",
+    "votes_up": 3,
+    "hours": 35,
+    "text": "It was a fun game...when I was able to play it. I've run into an issue where the game starts and I can hear the Gnorps, but the screen is just blank. I've tried everything. I've uninstalled/reinstalled/verified game files. I've changed my graphics processor. I've set it to run as administrator. I've resized the window. I've deleted saves. NOTHING. I've found a couple community threads with this same issue and no updates. I'm really disappointed."
+   },
+   {
+    "id": "231233357",
+    "votes_up": 3,
+    "hours": 40,
+    "text": "Starts off interesting, and feels more strategy oriented for an idle game, but when in the end, it really just wants to just be open for 20 hours and follow a very specific build to get to the end with no offline-accrual progress function (that I saw). If you vary off that path then you might be adding 5-10 hours to your end game just to reach the ending (again, with the game open in the background, no offline progress).\n\nFeels like the game was padded with literally just running in the background with no input from the user. After 23 hours open of \"playing\" I feel like I barely got any skill points and have yet to unlock the last tier of skills. Not my type of idle game in the end."
+   },
+   {
+    "id": "214871811",
+    "votes_up": 3,
+    "hours": 20,
+    "text": "Quirky, I can see the charm, but ultimately a bit frustrating. I finished it but I had to push myself."
+   },
+   {
+    "id": "229214464",
+    "votes_up": 3,
+    "hours": 7,
+    "text": "It started out pretty good, it's charming, looks pretty nice, there is a lot of variety.\n\nBut by the end it became such a slog, it is just frustrating and boring,.\nEvery new prestige point is a fight for your life, and while there are a lot of upgrades and talents, there are very few which are direct upgrades.\n\nMaybe it scratches the itch for you, but personally I cannot recommend this one."
+   },
+   {
+    "id": "220071491",
+    "votes_up": 3,
+    "hours": 8,
+    "text": "slogfest\r\n\r\nan incremental game should not need a meta guide to avoid picking prestige perks that make it impossible to progress. cute graphics though"
+   },
+   {
+    "id": "222040831",
+    "votes_up": 3,
+    "hours": 71,
+    "text": "First half of the game is fun and fine but to \"beat\" the game you have to do a very specific build/s that is just not fun and tedious. A lot of the game is not really an idler but the ending sure does want you to idle for seemingly a long time out of no where."
+   },
+   {
+    "id": "215448405",
+    "votes_up": 3,
+    "hours": 38,
+    "text": "Very little content, hidden by the fact that you need to grind for hours on the last stage with nothing meaningful to do.\nIt starts off well, but very quickly it becomes a game of \"did you pick the meta build or not\".\nIt could be a lot more than it chooses, but it doesn't justify it's price tag for me"
+   },
+   {
+    "id": "229910368",
+    "votes_up": 3,
+    "hours": 38,
+    "text": "I only don't recommend this game because this game would like to be linear but it just wastes time. Let's say you realize midway through a prestige that there was an optimal prestige point you spent. Well you cannot change it, and when you are so far into a prestige but you can't get another point, it just sucks to start over without gaining anything. \n\nThere may be a few paths to win the game, but there are many things that just won't win you the game. If this game made it where you could win it your way, I would say that it's worth it. Since you have to win it using one of a few pre-defined setups (the ones the perk tree naturally guides you toward), I cant recommend it. \n\nRan fine on linux tho"
+   },
+   {
+    "id": "208581792",
+    "votes_up": 3,
+    "hours": 14,
+    "text": "Albeit adorable it's very limited and less involved than I would expect. I often felt there's nothing really to do but wait and build variety is very low."
+   }
+  ],
+  "neg_longplay_50h": [
+   {
+    "id": "233072622",
+    "votes_up": 5,
+    "hours": 79,
+    "text": "This is a very hard review for me to write, because there is a lot to like about this game. Also keep in mind that my play time represents a lot of background game time, not active play (~15-20hrs).\n\nSo why a thumbs down? \n[list]\n    [*]You spend a lot of time not knowing if your actions actually have a positive effect. This extends from minute-to-minute gameplay to the perk tree you make meta-changing builds with.\n    [*]There are very few things to invest the idle currency into after the first few compression cycles. You spend most of your time waiting to get the special shards that spawn, or waiting hours so you can buy one level of something (because you can't see actual stats of anything) and not seeing any real effect on gameplay.\n    [*]There is very, very little content to unlock in the game. By the time you've seen everything you will ask yourself, \"that's it?\".\n    [*]There is "
+   },
+   {
+    "id": "222040831",
+    "votes_up": 3,
+    "hours": 71,
+    "text": "First half of the game is fun and fine but to \"beat\" the game you have to do a very specific build/s that is just not fun and tedious. A lot of the game is not really an idler but the ending sure does want you to idle for seemingly a long time out of no where."
+   },
+   {
+    "id": "222017101",
+    "votes_up": 1,
+    "hours": 51,
+    "text": "The Gnorp Analogue manages to be confusing, sometimes tedious and fails to bring the fun.\r\nIts hard to know whats going on and what the outputs are, should I be building a slammer or a bomber? I can't see the DPS for each so I have to guess and hope for the best.\r\n\r\nthe progression is defined by this all important prestige bar, but its really confusing about how to advance. I frequently found the bar stalled.\r\n\r\nI think some people thought the gnorps jumping around was cute or fun or something, but it didn't make up for the game being confusing and unengaging."
+   },
+   {
+    "id": "231889321",
+    "votes_up": 0,
+    "hours": 78,
+    "text": "I dunno. It's cute, and its a bit of a puzzle game, but ultimately it gets annoying as progress grinds to an absolute halt when you hit certain points. It doesn't slowly trickle off into slower and slower progress as much as it is you play the game for ten seconds to buy some upgrades, then it slams into a brick wall. You're rather forced into prestiging rather than making a decision about when you want to do it. It's not unfun, but tbh I don't feel like my time was really well spent."
+   },
+   {
+    "id": "213414722",
+    "votes_up": 0,
+    "hours": 51,
+    "text": "Bad Game! Another game that scams your progress with upgrades that don't work..."
+   },
+   {
+    "id": "224081257",
+    "votes_up": 0,
+    "hours": 53,
+    "text": "Did not enjoy because it is and idler so if you like those.... have a go."
+   }
+  ]
+ }
+}

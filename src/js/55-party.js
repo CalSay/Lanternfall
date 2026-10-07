@@ -1,161 +1,124 @@
-// 55-party: hero classes (Stage A). Class choice, class taps, the hero ability with
-// auto-cast, idle auto-play, the starter companion, the fielded party (from the old
-// S.comp slots) and the Mirror of Embers.
+// 55-party: hero classes (Stage A). Class choice, class taps, idle auto-play and the Mirror of Embers. The hero's ability
+// is the solo layer's (59j-solo soloAbility). The companions, the fielded party and the Lightkeeper's party share went with
+// the party (W3-A). The tab and the sheet that show the hero are 75-party.js and 75-party-sheet.js.
 // CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
-// Contract: docs/design/stage-a-plan.md ("State (A1)", "Class data and actions (A1)").
 //
-// Exposed names: HERO_CLASSES, COMP_CHAR_KEYS, CHAR_ROLE, chooseClass, castAbility,
-// classTap, useMirror, toggleAutoCast, abilityInfo, partyBuffs, partyRefreshField.
-// Everything else is private (inside the block below, or prefixed pty).
+// Classes 2.0 S2: the kits run by legacy kit key (S.party.cls: 'warden' = the Warrior's kit, 'lanternmage',
+// 'ranger', 'lightkeeper' = a Lanternmage on the Lightkeeper's path); the class itself is S.cls (55-classes.js)
+// and the numbers come from 24-data-classes.js. Grit (was guard stacks) also cuts damage taken
+// (heroGritDr, read by 59-combat); the Ranger's base crit is 15% (critBase).
 //
-// Stage A interim rules (monsters don't attack yet): every class effect is a damage
-// buff applied through addModifier, or direct damage through heroSwing()/strike().
-// Hero-only damage scaling (Lightkeeper x0.2) is applied as 'dmg' x k and 'party' x 1/k,
-// so companions are unaffected.
-
-const HERO_CLASSES = {
-  warden: {
-    name: 'Warden', role: 'tank', row: 'front', pitch: 'Stand in front. Nothing gets past.',
-    how: 'Tap a foe for a heavy hit. Each hit adds a guard stack: +3% damage for 10s, up to 5.',
-    tapName: 'Heavy hit',
-    ability: { name: 'Shield Wall', desc: 'Your party deals 30% more damage for 6s, and the boss timer stops for 3s.', cd: 30 },
-    aura: 'Tanks in your party get +40% health and +20 armour.'
-  },
-  lanternmage: {
-    name: 'Lanternmage', role: 'caster', row: 'back', pitch: 'Burn the whole pack at once.',
-    how: 'Tap a foe to plant an Ember on it, up to 5. Lantern Flare sets them all off.',
-    tapName: 'Ember',
-    ability: { name: 'Lantern Flare', desc: 'A burst of 20x your attack, +30% for each Ember on the foe. Uses up the Embers.', cd: 25 },
-    aura: 'Casters in your party get +30% attack.'
-  },
-  ranger: {
-    name: 'Ranger', role: 'striker', row: 'mid', pitch: 'Find the weak spot. Hit it hard.',
-    how: 'Tap a foe to mark it for 8s. Your whole party deals 25% more to it, and you crit more often.',
-    tapName: 'Focus',
-    ability: { name: 'Volley', desc: '10 arrows of 1.5x your attack, then your party attacks 50% faster for 8s.', cd: 30 },
-    aura: 'Strikers in your party get +10% crit chance and +50% crit damage.'
-  },
-  lightkeeper: {
-    name: 'Lightkeeper', role: 'support', row: 'back', pitch: 'Keep them standing.',
-    how: 'You hit softly, but your companions deal the damage you give up. Tap to bless them: +20% damage for 6s, up to 3 times.',
-    tapName: 'Blessing',
-    ability: { name: 'Rally Hymn', desc: 'Your party deals 40% more damage for 8s.', cd: 40 },
-    aura: 'Supports in your party heal 40% more. All companions deal 10% more damage.'
+// Exposed names: HERO_CLASSES, chooseClass, castAbility, classTap, useMirror, toggleAutoCast, abilityInfo,
+// partyBuffs, heroGritDr, heroGuardN, partyClock, hawkCrit, and the stage HUD hooks unitHp, unitCd, bossTelegraph.
+// Everything else is private (inside the block below).
+//
+// The legacy view of the classes (classes-2 8.3): the four kit keys every reader written before S2 uses
+// (S.party.cls, item kinds, powers, boons, Bonds), built from 24-data-classes.js. 'warden' is the
+// Warrior's kit, 'lanternmage' the Lanternmage's, 'lightkeeper' a Lanternmage on the Lightkeeper's path.
+const HERO_CLASSES = (() => {
+  const A = CLASS_ABILITIES, out = {};
+  for (const b of ['warrior', 'mage', 'ranger']) {   // the legacy key order (LEG_CLASSES and older readers)
+    const d = CLASS_DEFS[b], tap = A[d.tap], ab = A[d.ab1];
+    out[d.kit] = { name: d.name, base: b, role: d.role, row: d.home, pitch: d.pitch, how: d.how, tapName: tap.name,
+      ability: { name: ab.name, desc: ab.desc, cd: ab.cd }, aura: d.aura.text };
   }
-};
+  const pr = EVO_NAMES.priest, bl = A.ember.var.priest, hy = A.flare.var.priest;
+  out.lightkeeper = { name: pr.name, base: 'mage', evo: 'priest', role: pr.role, row: 'back', pitch: pr.pitch, how: bl.desc, tapName: bl.name,
+    ability: { name: hy.name, desc: hy.desc, cd: hy.cd }, aura: pr.aura };
+  return out;
+})();
 
-// Old S.comp index -> companion character key (stage-a-plan.md).
-const COMP_CHAR_KEYS = ['tobin', 'wren', 'pip', 'aldric', 'kestrel', 'oriel', 'elowen'];
-// Role and auto-placement column (0 back, 1 mid, 2 front) per character.
-const CHAR_ROLE = {
-  tobin: { role: 'tank', col: 2 }, wren: { role: 'striker', col: 1 }, pip: { role: 'caster', col: 0 },
-  aldric: { role: 'tank', col: 2 }, kestrel: { role: 'striker', col: 1 }, oriel: { role: 'caster', col: 0 },
-  elowen: { role: 'support', col: 0 }, bram: { role: 'striker', col: 2 }, hesketh: { role: 'support', col: 0 }
-};
-
-let chooseClass, castAbility, classTap, useMirror, toggleAutoCast, abilityInfo, partyBuffs, partyRefreshField;
+let chooseClass, castAbility, classTap, useMirror, toggleAutoCast, abilityInfo, partyBuffs;
+// Stage C / Constellations helpers: heroGuardN() live guard stacks, partyClock() this file's clock (mob.markUntil is
+// on it), hawkCrit() the Hawk Eye first-hit crit.
+let heroGuardN, heroGritDr, partyClock, hawkCrit;
+// Stage HUD hooks (read by 62-stage.js about 10 times a second; Stage C combat fills them in).
+//   unitHp(key)     -> { hp, max, shield } | null   key: 'hero' or a character key. Party HP is not
+//                      simulated yet, so every unit is full. null = draw no bar.
+//   unitCd(key)     -> { t, max } | null            t: seconds left on the unit's ability (0 = ready).
+//                      The hero's is its class ability; companion abilities are not simulated yet (null).
+//   bossTelegraph() -> { kind, left, dur, target } | null   the boss wind-up now showing. kind: 'heavy'
+//                      (red "!"), 'dive' (blue, over the target ally), 'heal' (green); left and dur in
+//                      seconds; target: a unit key for 'dive'. Called every frame: return a kept object.
+let unitHp, unitCd, bossTelegraph;
 
 {
   registerState('party', {
-    v: 1, cls: null, chosen: false, newGame: false, field: [], cells: {},
+    v: 1, cls: null, chosen: false, newGame: false,
     abilityCd: 0, autoCast: true, mirrors: 0
   });
 
-  // Starter per class: character key and the old S.comp slot it uses for the maths.
-  const STARTER = { warden: ['wren', 1], lanternmage: ['tobin', 0], ranger: ['tobin', 0], lightkeeper: ['bram', 0] };
-  // Tuning knobs (Stage A interim).
+  // Tuning knobs (Stage A interim). S2: the class numbers come from 24-data-classes.js (CLASS_ABILITIES,
+  // CLS_TUNE); the knob names stay (stars and Deepwell boons tune them through bonus('tune:<knob>')).
+  const A = CLASS_ABILITIES, G = CLS_TUNE.grit;
   const T = {
-    heroMul: { warden: 1, lanternmage: 1, ranger: 1, lightkeeper: 0.2 },
-    tapMul: { warden: 1.3, lanternmage: 1.3, ranger: 1, lightkeeper: 1 },
-    guard: 0.03, guardMax: 5, guardT: 10,
-    embersMax: 5, flare: 20, flarePerEmber: 0.3,
+    heroMul: { warden: 1, lanternmage: 1, ranger: 1, lightkeeper: 1 },
+    tapMul: { warden: A.heavy.coef, lanternmage: A.ember.coef, ranger: A.focus.coef, lightkeeper: A.ember.var.priest.coef },
+    guard: G.v, guardMax: G.max, guardT: G.t,   // Grit (was "guard stacks"): +3% damage and 1% less taken each
+    embersMax: CLS_TUNE.embers.max,
     markT: 8, mark: 1.25, markCrit: 1.5,
-    volleyHits: 10, volleyAtk: 1.5, volleyT: 2, haste: 1.5, hasteT: 8,
-    bless: 0.2, blessMax: 3, blessT: 6, lkAura: 1.1, lkShare: 1,
-    wall: 1.3, wallT: 6, wallPause: 3, hymn: 1.4, hymnT: 8,
-    autoIdle: 4, autoEvery: 2, autoEff: 0.5, autoCastZone: 10, mirrorZone: 36, mirrorChance: 0.02
+    volleyHits: 10, volleyT: 2,          // Rain of Arrows paces its volley by these
+    bless: 0.2, blessMax: 3, blessT: 6,
+    autoIdle: 4, autoEvery: 2, autoEff: 0.5, mirrorZone: 36, mirrorChance: 0.02
   };
 
   // ---- runtime (not saved) ----
-  let clock = 0, lastTap = -1e9, nextAuto = 0, readyFor = 0;
+  let clock = 0, lastTap = -1e9, nextAuto = 0;
   let guard = [], bless = [];            // stacks: [{ until, v }]
-  let wallUntil = 0, pauseUntil = 0, hymnUntil = 0, hasteUntil = 0;
-  let volleyLeft = 0, volleyNext = 0, volleyEff = 1, worldEmbers = 0;
-  let initFor = null, fieldSig = '';
+  let worldEmbers = 0, initFor = null;
+  // Deepwell boons (57d-deepwell.js) tune the knobs below through bonus('tune:<knob>') and
+  // mod('abilityCd'); both are 0 / 1 outside a Deepwell run.
+  const tn = k => T[k] + bonus('tune:' + k);
+  // The old star map's keystones (STAR_KS, retired 2026-10-02 with 57e-constellations.js): bonus('ks:<id>') is always 0 now.
+  const ks = id => bonus('ks:' + id) > 0;
+  let heavyN = 0, tapN = 0, rainLeft = 0, rainNext = 0;
 
   const P = () => S.party;
   const cls = () => P().cls && HERO_CLASSES[P().cls] ? P().cls : null;
   const stackSum = l => { let s = 0; for (const b of l) if (b.until > clock) s += b.v; return s; };
-  const pushStack = (l, v, dur, max) => {
+  const pushStack = (l, v, dur, max, e) => {
     for (let i = l.length - 1; i >= 0; i--) if (l[i].until <= clock) l.splice(i, 1);
-    l.push({ until: clock + dur, v });
+    l.push({ until: clock + dur, v, e: e == null ? 1 : e });   // e: the stack's strength (auto-taps 0.5)
     while (l.length > max) l.shift();
   };
-  const hasProgress = () => S.totalKills > 0 || S.L > 1 || S.maxZone > 1 || S.comp.some(n => n > 0);
-
-  // ---- field and formation ----
-  function charKey(slot) {
-    return slot === 0 && P().newGame && P().cls === 'lightkeeper' ? 'bram' : COMP_CHAR_KEYS[slot];
-  }
-  function placeCells() {
-    const cells = {}, used = {};
-    const put = (key, col) => {
-      for (const c of [col, col === 2 ? 1 : col === 0 ? 1 : 0, col === 2 ? 0 : 2]) {
-        const n = used[c] || 0;
-        if (n < 2) { cells[key] = { col: c, lane: n }; used[c] = n + 1; return; }
-      }
-    };
-    const c = cls();
-    put('hero', c ? { front: 2, mid: 1, back: 0 }[HERO_CLASSES[c].row] : 2);
-    for (const k of P().field) put(k, (CHAR_ROLE[k] || { col: 1 }).col);
-    P().cells = cells;
-  }
-  // The 3 strongest owned old companion slots, strongest first.
-  partyRefreshField = function (force) {
-    const st = P().newGame && P().cls ? STARTER[P().cls][1] : -1;
-    // New games: the starter always stands first (field[0]); then the strongest owned slots.
-    const owned = S.comp.map((n, i) => n > 0 ? i : -1).filter(i => i >= 0 && COMPS[i])
-      .sort((a, b) => (b === st) - (a === st) || COMPS[b].dps - COMPS[a].dps).slice(0, 3);
-    const sig = owned.join(',') + '|' + P().cls + '|' + P().newGame;
-    if (!force && sig === fieldSig) return;
-    fieldSig = sig;
-    P().field = owned.map(charKey);
-    placeCells();
-  };
+  const hasProgress = () => S.totalKills > 0 || S.L > 1 || S.maxZone > 1;
 
   // Runs once per loaded save (S is replaced by loadSave()).
   function ensureInit() {
     if (initFor === S) return;
-    initFor = S; fieldSig = '';
+    initFor = S;
     const p = P();
-    if (!p.chosen && !p.cls && !p.newGame && !p.field.length && !hasProgress()) p.newGame = true;
-    partyRefreshField(true);
+    if (!p.chosen && !p.cls && !p.newGame && !hasProgress()) p.newGame = true;
   }
 
   // ---- class choice ----
-  chooseClass = function (key, heroName) {
+  // key: a base class ('warrior' | 'ranger' | 'mage') or a legacy class key (tools, old callers: 'lightkeeper'
+  // is a Lanternmage on the Lightkeeper's path). No rules here: the picker goes through chooseBase (55-classes).
+  // opts: { now, free } (free: the one free switch; 55-classes counts it).
+  chooseClass = function (key, heroName, opts) {
     ensureInit();
-    if (!HERO_CLASSES[key]) return false;
-    const p = P(), first = !p.cls && !p.chosen;
+    const r = clsResolve(key);
+    if (!r || !HERO_CLASSES[r.kit]) return false;
+    const p = P(), from = p.cls, o = opts || {};
     if (typeof heroName === 'string') { const n = heroName.trim().slice(0, 16); if (n) S.name = n; }
-    p.cls = key; p.chosen = true; p.abilityCd = 0; readyFor = 0;
-    guard = []; bless = []; volleyLeft = 0;
-    toast(`You walk the path of the ${HERO_CLASSES[key].name}.`, 'good');
-    if (first && p.newGame) {
-      const [ck, slot] = STARTER[key];
-      S.comp[slot] += 1;
-      toast(`${ck[0].toUpperCase() + ck.slice(1)} joins your party.`, 'good');
-    }
-    partyRefreshField(true);
-    emit('classChosen', { cls: key });
+    // A base id keeps a granted path on the same base; a legacy key names its path.
+    const evo = LEGACY_CLS[key] ? r.evo : undefined;
+    key = clsSet(r.base, evo, { now: o.now, stamp: !p.chosen || o.free });
+    p.chosen = true; p.abilityCd = 0;
+    guard = []; bless = [];
+    const lc = lbClass();
+    emit('classChosen', { cls: key, from, base: lc.base, evo: lc.evo, free: !!o.free });
     return true;
   };
 
   useMirror = function () {
     ensureInit();
     const p = P();
-    if (p.mirrors <= 0 || !p.chosen) return false;
-    p.mirrors--; p.chosen = false;
+    // S3 (classes-2 3.4): changing class costs 2 Mirrors and Essence (respecPay, 55-classes); the picker reopens.
+    if (!p.chosen) return false;
+    if (typeof respecPay === 'function') { if (!respecPay('base')) return false; }
+    else { if (p.mirrors <= 0) return false; p.mirrors--; }
+    p.chosen = false;
     toast('The Mirror of Embers shows you another path. Choose again.', 'good');
     emit('mirrorUsed', { cls: p.cls });
     return true;
@@ -170,40 +133,31 @@ let chooseClass, castAbility, classTap, useMirror, toggleAutoCast, abilityInfo, 
   const canHit = () => { const tg = target(); return tg === 'world' || (tg === 'mob' && mob && !mob.dead); };
   castAbility = function (opts) {
     ensureInit();
-    const c = cls(), p = P();
-    if (!c || p.abilityCd > 0 || !canHit()) return false;
-    const auto = !!(opts && opts.auto);
-    const ab = HERO_CLASSES[c].ability;
-    if (c === 'warden') { wallUntil = clock + T.wallT; pauseUntil = clock + T.wallPause; emit('shake', 0.2); }
-    else if (c === 'lanternmage') {
-      const world = target() === 'world';
-      const n = world ? worldEmbers : (mob.embers || 0);
-      if (world) worldEmbers = 0; else mob.embers = 0;
-      heroSwing(heroAtk() * T.flare * (1 + T.flarePerEmber * n), false);
-      emit('shake', 0.3);
-    }
-    else if (c === 'ranger') { volleyLeft = T.volleyHits; volleyNext = clock; volleyEff = 1; hasteUntil = clock + T.volleyT + T.hasteT; }
-    else if (c === 'lightkeeper') { hymnUntil = clock + T.hymnT; }
-    p.abilityCd = ab.cd; readyFor = 0;
-    emit('ability', { cls: c, name: ab.name, auto });
-    return true;
+    return typeof soloAbility === 'function' ? soloAbility(opts) : false;   // the hero's own ability (59j-solo)
   };
 
-  abilityInfo = function () {
-    const c = cls(); if (!c) return null;
-    const ab = HERO_CLASSES[c].ability, p = P();
-    return { name: ab.name, desc: ab.desc, cd: ab.cd, left: p.abilityCd, ready: p.abilityCd <= 0,
-      autoUnlocked: S.maxZone >= T.autoCastZone, autoCast: p.autoCast };
+  abilityInfo = function () { return typeof soloAbilityInfo === 'function' ? soloAbilityInfo() : null; };
+
+  // Stage C: combat (59-combat.js, 59b-enemies.js) fills these. Kept objects, no allocation.
+  const FULL_HP = { hp: 1, max: 1, shield: 0 }, HERO_CD = { t: 0, max: 1 };
+  const combatOn = () => typeof partyCombatOn === 'function' && partyCombatOn();
+  unitHp = key => (combatOn() && typeof cbUnitHp === 'function' && cbUnitHp(key)) || FULL_HP;
+  unitCd = key => {
+    if (key !== 'hero') return null;
+    const sa = typeof abilityInfo === 'function' ? abilityInfo() : null;
+    if (!sa) return null;
+    HERO_CD.t = Math.max(0, +P().abilityCd || 0); HERO_CD.max = sa.cd;
+    return HERO_CD;
   };
+  bossTelegraph = () => combatOn() && typeof cbTelegraph === 'function' ? cbTelegraph() : null;
 
   // Active timed effects, for the UI: [{ id, name, left, stacks }].
   partyBuffs = function () {
     const out = [], add = (id, name, until, stacks) => { if (until > clock) out.push({ id, name, left: until - clock, stacks }); };
     const live = l => l.filter(b => b.until > clock);
     const g = live(guard), b = live(bless);
-    if (g.length) add('guard', 'Guard', Math.max(...g.map(x => x.until)), g.length);
+    if (g.length) add('guard', 'Grit', Math.max(...g.map(x => x.until)), g.length);
     if (b.length) add('bless', 'Blessing', Math.max(...b.map(x => x.until)), b.length);
-    add('wall', 'Shield Wall', wallUntil); add('hymn', 'Rally Hymn', hymnUntil); add('haste', 'Volley haste', hasteUntil);
     if (mob && !mob.dead && mob.markUntil) add('mark', 'Focus', mob.markUntil);
     return out;
   };
@@ -213,24 +167,51 @@ let chooseClass, castAbility, classTap, useMirror, toggleAutoCast, abilityInfo, 
   classTap = function (opts) {
     ensureInit();
     const o = opts || {}, tg = o.target || target(), at = o.at, auto = !!o.auto;
-    const eff = auto ? T.autoEff : 1;
+    const eff = auto ? tn('autoEff') : 1;
     if (!auto) lastTap = clock;
     if (tg === 'node') { tapNode(); emit('classTap', { cls: cls(), kind: 'gather', target: tg, auto }); return; }
     const c = cls();
+    // Stage C / S6-B: the tap does what is showing first (59g actTap: a Finisher, a parry, a dodge, an interrupt),
+    // else the class tap. Without 59g, a tap during a boss wind-up is the parry (59b resolveParry).
+    // SOLO1: the Attack button answers nothing (Parry and Dodge have their own buttons): o.noAnswer.
+    if (!auto && tg === 'mob' && !o.noAnswer) {
+      const k = typeof actTap === 'function' ? actTap() : typeof resolveParry === 'function' && resolveParry('tap') ? 'parry' : '';
+      if (k) { emit('classTap', { cls: c, kind: k === 'parry' || k === 'early' ? 'parry' : 'answer', act: k, target: tg, auto }); return; }
+    }
     if (!c) { heroSwing(heroAtk(), true, at); emit('classTap', { cls: null, kind: 'strike', target: tg, auto }); return; }
     if (tg === 'mob' && !(mob && !mob.dead)) return;
     let kind = 'strike';
     const m = tg === 'mob' ? mob : null;
-    if (c === 'warden') { kind = 'heavy'; pushStack(guard, T.guard * eff, T.guardT, T.guardMax); }
+    let tapX = 1;
+    if (c === 'warden') {
+      kind = 'heavy'; heavyN++;
+      // Unbroken: while heavy hits land at least every 3s, the stacks never fall off.
+      if (ks('unbroken')) { const hold = clock + STAR_KS.unbroken.holdSecs; for (const g of guard) if (g.until < hold) g.until = hold; }
+      if (!(typeof clsNoGrit === 'function' && clsNoGrit())) pushStack(guard, tn('guard') * eff, tn('guardT'), tn('guardMax'), eff);   // S3: a Reaver has Fury instead (59e)
+      if (ks('crush') && heavyN % STAR_KS.crush.every === 0) tapX = STAR_KS.crush.mult;   // Crushing Blow
+      if (ks('bastion') && P().abilityCd > 0) P().abilityCd = Math.max(0, P().abilityCd - STAR_KS.bastion.cdPerHeavy);
+    }
     else if (c === 'lanternmage') {
       kind = 'ember';
-      if (m) m.embers = Math.min(T.embersMax, (m.embers || 0) + 1); else worldEmbers = Math.min(T.embersMax, worldEmbers + 1);
+      const em = tn('embersMax'), per = 1 + bonus('tune:emberPerTap') + (ks('twinSpark') && Math.random() < STAR_KS.twinSpark.chance ? 1 : 0);
+      if (m) m.embers = Math.min(em, (m.embers || 0) + per); else worldEmbers = Math.min(em, worldEmbers + per);
     }
-    else if (c === 'ranger') { kind = 'mark'; if (m) { m.markUntil = clock + T.markT; m.markV = auto ? 1 + (T.mark - 1) * T.autoEff : T.mark; } }
-    else if (c === 'lightkeeper') { kind = 'bless'; pushStack(bless, T.bless * eff, T.blessT, T.blessMax); }
-    const r = heroSwing(heroAtk() * T.tapMul[c] * eff, true, at);
-    // Lightkeeper: the party strikes with the tap damage the hero gave up.
-    if (c === 'lightkeeper') strike(r.dmg * (1 / T.heroMul[c] - 1) * T.lkShare, '#B58CFF', false);
+    else if (c === 'ranger') {
+      kind = 'mark';
+      if (m) {
+        const mk = tn('mark') + (typeof clsMarkAdd === 'function' ? clsMarkAdd() : 0);   // S3: the Trapper's Focus marks 30%
+        // Deadeye: one mark at a time, and it lasts until its foe dies.
+        if (ks('deadeye')) { if (typeof combatFoes === 'function') for (const f of combatFoes()) if (f !== m) f.markUntil = 0; m.markUntil = clock + 1e6; }
+        else m.markUntil = clock + tn('markT');
+        m.markV = auto ? 1 + (mk - 1) * tn('autoEff') : mk;
+      }
+    }
+    else if (c === 'lightkeeper') { kind = 'bless'; pushStack(bless, tn('bless') * eff, tn('blessT'), tn('blessMax')); }
+    if (c === 'warden' && tg === 'mob' && typeof stTagNext === 'function') stTagNext('heavy');   // S1: the Heavy hit is heavy (Shatter)
+    heroSwing(heroAtk() * T.tapMul[c] * eff * tapX * (o.x || 1), true, at);   // o.x: SOLO2's Attack button
+    // Rain of Arrows: every 10th tap fires a free volley.
+    tapN++;
+    if (ks('rain') && tapN % STAR_KS.rain.every === 0) { rainLeft += STAR_KS.rain.arrows; if (rainNext < clock) rainNext = clock; }
     emit('classTap', { cls: c, kind, target: tg, auto });
   };
 
@@ -239,47 +220,38 @@ let chooseClass, castAbility, classTap, useMirror, toggleAutoCast, abilityInfo, 
   addModifier('dmg', () => {
     const c = cls(); if (!c) return 1;
     let m = T.heroMul[c] * (1 + stackSum(guard));
-    if (wallUntil > clock) m *= T.wall;
-    if (hymnUntil > clock) m *= T.hymn;
     if (marked()) m *= mob.markV || T.mark;
     return m;
   });
-  // Lightkeeper: the hero's lost damage (x0.2) moves to the companions, then the
-  // Blessing aura (+10%) and taps buff the whole party. lkBusy stops recursion.
-  let lkBusy = false;
-  addModifier('party', () => {
-    const c = cls(); if (!c) return 1;
-    let m = (1 / T.heroMul[c]) * (1 + stackSum(bless));
-    if (hasteUntil > clock) m *= T.haste;
-    if (c !== 'lightkeeper' || lkBusy) return m;
-    m *= T.lkAura;
-    lkBusy = true;
-    try {
-      const cd = compDps(), lost = heroDps() * (1 / T.heroMul[c] - 1) * T.lkShare;
-      if (cd > 0) m *= 1 + lost / cd;
-    } finally { lkBusy = false; }
-    return m;
-  });
-  addModifier('crit', () => cls() === 'ranger' && marked() ? T.markCrit : 1);
+  // Pack Leader: the Ranger loses its own crit bonus on marked foes. Deadeye: crits on the mark deal double.
+  addModifier('crit', () => cls() === 'ranger' && marked() && !ks('pack') ? T.markCrit : 1);
+  addModifier('critDmg', () => cls() === 'ranger' && marked() && ks('deadeye') ? STAR_KS.deadeye.critMult : 1);
+  heroGuardN = () => { let n = 0; for (const g of guard) if (g.until > clock) n++; return n; };
+  // Grit's damage taken (S2, classes-2 1.2): 1% less per Grit, at the stack's strength (59-combat reads it).
+  heroGritDr = () => { if (cls() !== 'warden') return 0; let e = 0; for (const g of guard) if (g.until > clock) e += g.e; return CLS_TUNE.grit.dr * e; };
+  // The Ranger's crit (S2, classes-2 1.1): 15% base (8% + 7%), before Keen Eye on a marked foe.
+  addBonus('critBase', () => cls() === 'ranger' ? CLS_TUNE.rangerCrit : 0);
+  // The Ranger's kit crits more: +10% crit chance on top of its base (was the striker mid-slot job in the old party build).
+  addModifier('crit', () => { if (cls() !== 'ranger') return 1; const b = critBase(); return b > 0 ? (b + 0.10) / b : 1; });
+  partyClock = () => clock;
+  // Hawk Eye: the hero's first hit on each foe always crits (50-sim heroSwing asks once per swing).
+  hawkCrit = () => { if (!ks('hawk') || cls() !== 'ranger' || target() !== 'mob' || !mob || mob.dead || mob.hawk) return false; mob.hawk = 1; return true; };
 
-  // ---- tick: cooldowns, auto-cast, auto-play, volley, boss-timer pause ----
+  // ---- tick: the ability cooldown for the HUD, Rain of Arrows, idle auto-play ----
   onTick(dt => {
     ensureInit();
     clock += dt;
+    if (typeof turnCombatOn === 'function' && turnCombatOn()) return; // C20: one turn action, no idle tap or legacy effect tick.
     const p = P(), c = cls();
-    partyRefreshField(false);
     if (!c) return;
-    if (p.abilityCd > 0) { p.abilityCd = Math.max(0, p.abilityCd - dt); readyFor = 0; }
-    else readyFor += dt;
-    // Auto-cast at half rate: it waits one extra cooldown after the ability is ready.
-    if (p.autoCast && S.maxZone >= T.autoCastZone && p.abilityCd <= 0 && readyFor >= HERO_CLASSES[c].ability.cd) castAbility({ auto: true });
-    if (volleyLeft > 0 && clock >= volleyNext) {
-      if (canHit()) heroSwing(heroAtk() * T.volleyAtk * volleyEff, false);
-      volleyLeft--; volleyNext = clock + T.volleyT / T.volleyHits;
+    if (p.abilityCd > 0) p.abilityCd = Math.max(0, p.abilityCd - dt);
+    if (rainLeft > 0 && clock >= rainNext) {
+      if (canHit()) heroSwing(heroAtk() * STAR_KS.rain.atk, false);
+      rainLeft--; rainNext = clock + T.volleyT / T.volleyHits;
     }
-    if (pauseUntil > clock && fightBoss && mob && mob.boss && !mob.dead) bossTime += dt;
     // Idle auto-play: a half-strength class tap every 2s after 4s without a tap.
-    if (target() === 'mob' && clock - lastTap >= T.autoIdle && clock >= nextAuto && mob && !mob.dead) {
+    // SOLO2: never while the solo player is active (every hit comes from the buttons)
+    if (target() === 'mob' && clock - lastTap >= T.autoIdle && clock >= nextAuto && mob && !mob.dead && !(typeof soloActive === 'function' && soloActive())) {
       nextAuto = clock + T.autoEvery;
       classTap({ target: 'mob', auto: true });
     }
@@ -289,12 +261,8 @@ let chooseClass, castAbility, classTap, useMirror, toggleAutoCast, abilityInfo, 
   on('kill', ({ mob: m, zone }) => {
     if (!m || !m.boss || zone < T.mirrorZone || Math.random() >= T.mirrorChance) return;
     P().mirrors++;
-    toast('The boss dropped a Mirror of Embers. Use it to change your class.', 'good');
+    toast('The boss dropped a Mirror of Embers. Use it to change your class.', 'good', null, 'high');
     emit('mirrorDrop', { mirrors: P().mirrors });
   });
-  on('zoneClear', ({ zone }) => {
-    if (zone + 1 === T.autoCastZone && cls()) toast(`Your hero now casts ${HERO_CLASSES[cls()].ability.name} alone, at half speed. Tap it yourself to cast it twice as often.`, 'good');
-  });
-
   ensureInit();
 }

@@ -1,0 +1,53 @@
+/* 60-combat2: the active-combat HUD (Core 2.0 slice S6-E; combat-2.md 3.1, 3.9). 75-combat2-ui.js builds it.
+   Word, shape and colour for every warning: PARRY red, DODGE orange, INTERRUPT purple, FINISHER gold. */
+.cb-banner { position: absolute; left: 50%; top: 84px; transform: translateX(-50%); z-index: 4; pointer-events: none;
+  display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 10px; max-width: calc(100% - 32px);
+  background: rgba(11, 8, 16, .82); border: 2px solid var(--cb-col, var(--hp)); border-radius: 6px; color: var(--bone); }
+.cb-banner.k-parry { --cb-col: #E0524F; }
+.cb-banner.k-dodge { --cb-col: #FF9B3D; }
+.cb-banner.k-intr { --cb-col: #B47BFF; }
+.cb-banner.k-fin { --cb-col: #F2C14E; }
+.cb-word { font: 700 calc(15px * var(--display-k, 1)) var(--display); letter-spacing: .06em; color: var(--cb-col); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 170px; }
+.cb-glyph { font: 700 calc(16px * var(--display-k, 1)) var(--display); color: var(--cb-col); min-width: 12px; text-align: center; }
+.cb-bar { position: relative; width: 64px; height: 6px; background: #2A2233; border-radius: 3px; overflow: hidden; flex: none; }
+.cb-bar .cb-fill { position: absolute; inset: 0; background: var(--cb-col); transform-origin: left center; }
+.cb-bar .cb-win { position: absolute; left: 0; top: 0; bottom: 0; background: rgba(255, 255, 255, .35); z-index: 1; }
+.cb-wait { font-size: 11px; color: var(--muted); }
+.cb-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* the boss strip under the header: stagger (gold, 10 segments), the cast bar, the Enrage timer, the active pips */
+.cb-strip { position: absolute; left: 8px; right: 8px; top: 62px; z-index: 3; pointer-events: none; display: flex; align-items: center; gap: 8px;
+  font-size: 11px; color: var(--muted); }
+.cb-stag { position: relative; width: 72px; height: 6px; background: #2A2233; border-radius: 2px; overflow: hidden; flex: none;
+  background-image: repeating-linear-gradient(90deg, transparent 0 6.2px, rgba(11, 8, 16, .9) 6.2px 7.2px); }
+.cb-stag i { position: absolute; inset: 0; background: var(--gold); transform-origin: left center; z-index: -0; opacity: .9; }
+.cb-stag.on i { background: #FFE08A; }
+.cb-cast { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.cb-cast b { color: #D9C2FF; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 110px; }
+.cb-cast.hard b { color: #BDB5C8; }
+.cb-castbar { position: relative; width: 44px; height: 4px; background: #2A2233; border-radius: 2px; overflow: hidden; flex: none; }
+.cb-castbar i { position: absolute; inset: 0; background: #B47BFF; transform-origin: left center; }
+.cb-cast.hard .cb-castbar i { background: #8C8577; }
+.cb-enr { margin-left: auto; white-space: nowrap; }
+.cb-enr.on { color: #FF6A5A; font-weight: 700; }
+.cb-pips { color: var(--gold); letter-spacing: 1px; }
+.cb-pack { margin-left: auto; }
+
+/* the ability buttons: purple rim = interrupt now, gold rim = hit now (a Stagger or a reaction window) */
+.stage .abil.cb-intr { border-color: #B47BFF; box-shadow: 0 3px 0 #0B0810, 0 0 12px rgba(180, 123, 255, .7); }
+.stage .abil.cb-hit { border-color: var(--gold); box-shadow: 0 3px 0 #0B0810, 0 0 12px rgba(242, 193, 78, .7); }
+@media (prefers-reduced-motion: no-preference) {
+  .cb-banner.k-fin, .stage .abil.cb-hit { animation: cb-pulse .8s ease-in-out infinite alternate; }
+  @keyframes cb-pulse { from { filter: brightness(1); } to { filter: brightness(1.25); } }
+}
+
+/* Buttons on the left (a setting) */
+body.cb-left .stage .abil { right: auto; left: 8px; }
+body.cb-left .stage .abil.abil2 { left: 64px; }
+body.cb-left .stage.tall .abil { left: 42px; }
+body.cb-left .stage.tall .abil.abil2 { left: 110px; }
+
+.cb-set { display: grid; gap: 2px; margin: 4px 0 8px; }
+.cb-toggle { justify-self: start; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--line-hi); background: var(--panel-2); color: var(--bone); font: inherit; cursor: pointer; }
+.cb-toggle[aria-pressed="true"] { border-color: var(--ember); }
+@media (max-width: 380px) { .cb-word { max-width: 130px; } .cb-bar { width: 48px; } }

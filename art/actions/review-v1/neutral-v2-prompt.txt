@@ -1,0 +1,13 @@
+Edit this Lanternfall 4x4 transparent action-icon atlas. Preserve the layout, spacing, silhouettes, size, pixel-art rendering and transparency. Preserve EXACTLY all six hero-specific icons: row1 columns1–4 (Wren bow, Echo Shot, Tobin sword, Shield Bash), row2 columns1–2 (Pip staff and Fireball). Do not redraw or recolor those six.
+The user rejected Wren's purple palette spilling into generic controls. Recolour ONLY the following ten general-purpose icons to a neutral game UI palette: dark charcoal outlines #17191e, slate grey #525b66, steel #a5b0bd, ivory #f2e8cf and worn brass #ba8a43. NO purple, violet, magenta, blue-purple or lavender anywhere in these ten shared assets. No green or hero-specific orange fire colours. Keep flat stepped shading and sharp pixel clusters.
+Row2col3 Parry: neutral steel blades and charcoal shadows, brass grips and ivory contact star; remove purple shadows.
+Row2col4 Dodge: brown leather boot, charcoal sole, neutral steel greave and two pale slate/ivory afterimage streaks, NO purple streaks.
+Row3col1 Empty slot: understated graphite/slate diamond outline, small muted ivory plus; quiet disabled-looking, not violet.
+Row3col2 Auto OFF: charcoal and medium grey pursuing arrows, enough value contrast to remain readable.
+Row3col3 Auto ON: preserve warm gold/brass arrows with ivory highlight; replace any purple shadows with charcoal.
+Row3col4 Locked: steel and graphite closed padlock, charcoal keyhole. No violet.
+Row4col1 Cooldown: worn-brass hourglass frame, ivory/pale sand, charcoal outline; no purple sand or glass.
+Row4col2 Ready frame: brass/gold corner brackets with ivory spark, charcoal shadows; preserve silhouette.
+Row4col3 Selected frame: neutral bright ivory/steel corner brackets with graphite shadows; preserve inward-pointing corners, no violet. Selected must differ from gold Ready by colour and shape.
+Row4col4 Unavailable: neutral graphite/slate slashed circle with pale steel slash; no violet.
+This is a constrained palette correction, NOT a redesign. Leave hero icons, shapes, relative arrangement and all transparent empty areas unchanged. True transparent PNG output. No labels, text, new ornaments, gradients or glow.

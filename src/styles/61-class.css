@@ -1,0 +1,70 @@
+/* 61-class: Classes 2.0 S3 (75-class-ui.js): the evolution rows on the class card, the Proving banner on the
+   stage, the second ability button and the meter, the choice card, the respec sheet, the evolution ring
+   under the star map, and the lamp flash (off under reduced motion). */
+.cl-row.cl-evo { border-color: var(--evo, var(--gold)); }
+.cl-prove { display: grid; gap: 6px; padding: 10px; border: 1px solid var(--gold); background: var(--well); }
+.cl-prove p { margin: 0; font-size: 13px; line-height: 1.35; color: var(--muted); }
+.cl-prove small { font-size: 12px; color: var(--muted); }
+.cl-prove .cl-go, .cl-row .cl-go { justify-self: start; min-height: 44px; padding: 8px 14px; }
+.cl-rec { color: var(--bone) !important; }
+.cl-ab2 .pc-auto { display: flex; gap: 6px; align-items: center; min-height: 36px; font-size: 13px; color: var(--muted); }
+.cl-cost { font-size: 13px; color: var(--bone); margin: 0; }
+.cl-need { font-size: 12.5px; color: var(--ember, #FF9E3D); margin: 0; }
+.cl-mirror .mini { min-height: 44px; }
+.evo-opt { display: grid; gap: 6px; }
+.evo-opt .mini { justify-self: start; min-height: 44px; padding: 8px 14px; }
+.evo-opt .mini:disabled { opacity: .5; cursor: default; }
+
+/* The Proving on the stage */
+.tr-hud { position: absolute; left: 50%; top: 6px; transform: translateX(-50%); width: min(340px, calc(100% - 24px)); z-index: 30; display: grid; grid-template-columns: 1fr auto; gap: 4px 8px; padding: 8px 10px; background: #0B0810; border: 2px solid var(--gold); color: var(--bone); font-size: 13px; }
+.tr-hud[hidden] { display: none; }
+.tr-hud.tr-slot { position: relative; left: auto; top: auto; transform: none; width: auto; z-index: auto; padding: 6px 8px; }
+.tr-slot .tr-top { flex-wrap: wrap; column-gap: 8px; row-gap: 0; align-self: center; }
+.tr-slot .tr-name { white-space: normal; }
+.tr-slot .tr-goal, .tr-slot .tr-bar { grid-column: 1 / span 2; }
+.tr-slot .tr-goal { font-size: 12px; line-height: 1.3; }
+.tr-slot .tr-quit { grid-row: 1; min-height: 36px; padding: 0 10px; }
+#nuSlot.tr-on .nu-chip { display: none; }
+.tr-top { display: flex; justify-content: space-between; gap: 8px; min-width: 0; grid-column: 1; }
+.tr-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--gold); }
+.tr-time { font-variant-numeric: tabular-nums; }
+.tr-goal { grid-column: 1; font-size: 12.5px; color: var(--muted); }
+.tr-bar { grid-column: 1; height: 6px; background: #241a2c; overflow: hidden; }
+.tr-bar i { display: block; height: 100%; background: var(--gold); transform-origin: left; }
+.tr-hold .tr-bar i { background: #FFD27A; }
+.tr-quit { grid-column: 2; grid-row: 1 / span 3; align-self: center; min-height: 44px; }
+
+/* The second ability and the meter */
+.abil.abil2 { right: 64px; border-color: var(--evo, var(--gold)); }
+.abil2 .abil2-ic { font: 700 calc(18px * var(--display-k, 1)) var(--display, inherit); color: var(--evo, var(--bone)); text-shadow: 0 2px 0 #0B0810; }
+.stage.tall .abil.abil2 { right: 110px; }
+.cl-meter { position: absolute; right: 8px; bottom: calc(20% + 64px); display: flex; align-items: center; gap: 6px; padding: 3px 6px; background: rgba(11,8,16,.8); border: 1px solid var(--line); font-size: 12px; color: var(--bone); pointer-events: none; }
+.cl-meter[hidden] { display: none; }
+.cl-mbar { width: 56px; height: 5px; background: #241a2c; overflow: hidden; }
+.cl-mbar i { display: block; height: 100%; background: var(--ember, #FF9E3D); transform-origin: left; }
+.cl-mnum { font-variant-numeric: tabular-nums; }
+.stage.tall .cl-meter { right: 42px; bottom: 76px; }
+
+/* The choice card */
+.evo-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.evo-tab { min-height: 44px; border: 2px solid var(--line); background: var(--panel); color: var(--bone); font: inherit; font-weight: 700; cursor: pointer; }
+.evo-tab.on { border-color: var(--gold); color: var(--gold); }
+.evo-body { display: grid; gap: 8px; padding: 10px; border: 2px solid var(--evo, var(--gold)); background: var(--panel); touch-action: pan-y; }
+.evo-top { display: grid; grid-template-columns: 64px 1fr; gap: 10px; align-items: center; }
+.evo-fig { width: 56px; height: 100px; image-rendering: pixelated; }
+.evo-body h2 { margin: 0; font-size: 20px; letter-spacing: .04em; color: var(--evo, var(--gold)); }
+.evo-title { font-size: 13px; color: var(--muted); }
+.evo-bul { margin: 0; padding-left: 18px; display: grid; gap: 4px; line-height: 1.35; }
+.evo-line, .evo-good { margin: 0; font-size: 13.5px; line-height: 1.35; }
+.evo-good .own { color: var(--bone); }
+.evo-good .not { color: var(--muted); opacity: .7; }
+.evo-confirm { display: grid; gap: 8px; padding: 10px; border: 2px solid var(--gold); background: var(--well); }
+.evo-confirm[hidden] { display: none; }
+.evo-confirm p { margin: 0; }
+
+
+/* The lamp flash when an evolution is chosen or proven */
+.evo-flash { position: absolute; inset: 0; pointer-events: none; z-index: 5; background: radial-gradient(circle at 30% 65%, var(--evo) 0, transparent 55%); opacity: 0; animation: evo-flash 1.3s ease-out; }
+@keyframes evo-flash { 0% { opacity: 0; } 20% { opacity: .75; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .evo-flash { animation: none; display: none; } }
+@media (max-width: 380px) { .evo-top { grid-template-columns: 56px 1fr; } .tr-hud { font-size: 12px; } }

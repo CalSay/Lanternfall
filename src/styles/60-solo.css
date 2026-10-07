@@ -1,0 +1,173 @@
+/* 60-solo.css: the solo hero's action bar, its ability picker and the camp's hero picker (75-solo-ui.js, SOLO1). */
+/* The Fight view (owner): header, then what is not combat (Next Up, Fight / Gather, Switch, zones), then the stage and,
+   touching it, the action bar, the lowest thing above the tab bar (thumbs). */
+.game.solo-game > .nu-slot { order: 0; padding: 4px var(--gut) 0; }
+.game.solo-game > .ctrl { order: 1; padding: 4px var(--gut) 4px; }
+.game.solo-game > .stagebox { order: 2; }
+.game.solo-game > .sbar { order: 3; }
+/* The dock (Combat C, "Stage and dock"): tabs, one pane, then Parry and Dodge. The pane holds Attack and the three ability
+   slots as tiles (icon, name, a line under it: Ready, 2 turns, Passive). The tiles grow to the pane; the pane is a fixed
+   height so the stage does not jump when you switch tabs. */
+.sbar { --sb-tile: 100px; --sb-ic: 48px; flex: none; display: grid; justify-content: stretch; gap: 6px; padding: 4px var(--gut) 8px; }
+.sbar[hidden] { display: none; }
+.sb-tabs, .sb-pane, .sb-row { width: min(100%, 352px); justify-self: center; }
+.sb-tabs { display: flex; background: #16111C; border: 2px solid #0B0810; box-shadow: inset 0 0 0 1px #3A3046; }
+.sb-tab { flex: 1; min-height: 44px; padding: 0 4px; background: transparent; border: 0; border-bottom: 3px solid transparent; color: var(--muted); cursor: pointer;
+  font: 600 calc(16px * var(--display-k, 1))/1 var(--display); letter-spacing: .02em; touch-action: manipulation; }
+.sb-tab[hidden] { display: none; }
+.sb-tab[aria-selected="true"] { color: var(--gold); border-bottom-color: var(--gold); background: #231A30; }
+.sb-tab:focus-visible { outline: 2px solid var(--gold); outline-offset: -3px; }
+.sb-pane { height: var(--sb-tile); overflow: hidden; }
+.sb-p { height: 100%; }
+.sb-p[hidden] { display: none; }
+.sb-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.sb-row-ab { height: 100%; }
+.sb-row-act { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.sbtn { position: relative; width: 100%; min-width: 0; padding: 0; display: grid; justify-items: center; align-content: center; gap: 3px;
+  background: #1C1624; border: 2px solid #0B0810; outline: 2px solid #4E4060; outline-offset: -4px;
+  box-shadow: inset 0 0 0 4px #2A2233, 0 3px 0 #0B0810;
+  color: var(--bone); cursor: pointer; overflow: hidden; -webkit-user-select: none; user-select: none; touch-action: manipulation; -webkit-touch-callout: none; }
+.sbtn:focus-visible { outline-color: var(--gold); }
+.sbtn:active, .sbtn.hit { transform: translateY(2px); box-shadow: inset 0 0 0 4px #2A2233, 0 1px 0 #0B0810; }
+.sb-ic { position: relative; z-index: 1; width: var(--sb-ic); height: var(--sb-ic); image-rendering: pixelated; }
+.sb-tx { position: relative; z-index: 1; display: grid; justify-items: center; gap: 1px; max-width: 100%; padding: 0 3px; }
+.sb-lb { max-width: 100%; font: 600 calc(14px * var(--display-k, 1))/1 var(--display); letter-spacing: .01em; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--muted); }
+.sb-sub { max-width: 100%; min-height: 1em; font: calc(11px * var(--display-k, 1))/1 var(--body, inherit); color: #8A8195; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sb-key { position: absolute; z-index: 3; top: 5px; left: 6px; font: 600 10px/1 var(--display); color: #8E80A0; }
+@media (hover: none) and (pointer: coarse) { .sb-key { display: none; } }
+/* the cooldown: a dark sweep, clockwise from the top, that leaves the tile as the slot comes back (--cd 1 -> 0) */
+.sb-ring { position: absolute; inset: 4px; z-index: 2; pointer-events: none;
+  background: conic-gradient(from 0deg, transparent calc((1 - var(--cd, 0)) * 360deg), rgba(8, 5, 12, .78) 0); }
+.sb-n { position: absolute; z-index: 3; left: 0; right: 0; top: 8px; height: var(--sb-ic); display: flex; align-items: center; justify-content: center; pointer-events: none;
+  font: 700 calc(26px * var(--display-k, 1))/1 var(--display); color: #FFF3C4; text-shadow: 0 1px 0 #0B0810, 1px 0 0 #0B0810, -1px 0 0 #0B0810, 0 -1px 0 #0B0810; }
+/* Attack is plain, the ability slots wear a gold frame so they read as special */
+.sb-atk { background: #2A1C1C; }
+.sb-atk .sb-lb { color: #FFD9B0; }
+.sb-parry .sb-lb { color: var(--gold); }
+.sb-dodge .sb-lb { color: #8FB8FF; }
+.sb-abslot { outline-color: #9A7A2E; box-shadow: inset 0 0 0 4px #33283E, inset 0 0 0 5px #6B5320, 0 3px 0 #0B0810; background: #231A30; }
+.sb-abslot .sb-lb { color: var(--gold); }
+.sb-abslot.ready { outline-color: var(--gold); }
+.sb-abslot.empty { background: #16111C; outline-color: #3A3046; box-shadow: inset 0 0 0 4px #1E1826, 0 3px 0 #0B0810; }
+.sb-abslot.empty .sb-lb { color: #6B6275; }
+/* Parry and Dodge: wide keys under the pane, icon left, name and window right */
+.sb-def { grid-auto-flow: column; grid-template-columns: auto minmax(0, 1fr); justify-items: start; align-content: center; gap: 8px; min-height: 52px; padding: 0 8px; }
+.sb-def .sb-ic { width: 36px; height: 36px; }
+.sb-def .sb-tx { justify-items: start; padding: 0; }
+.sb-def .sb-lb { font-size: calc(18px * var(--display-k, 1)); text-align: left; }
+.sb-def .sb-sub { white-space: normal; line-height: 1.1; }
+.sb-def .sb-n { right: auto; left: 8px; top: 0; bottom: 0; height: auto; width: 36px; font-size: calc(20px * var(--display-k, 1)); }
+.sb-def .sb-key { top: 3px; left: auto; right: 6px; }
+/* disabled: nothing to hit right now */
+.sbtn.off .sb-ic { opacity: .45; }
+/* a telegraphed hit is coming: Parry and Dodge glow */
+.sb-parry.live { outline-color: #E0524F; box-shadow: inset 0 0 0 4px #3A1A20, 0 0 10px rgba(224, 82, 79, .75), 0 3px 0 #0B0810; }
+.sb-dodge.live { outline-color: #8FB8FF; box-shadow: inset 0 0 0 4px #1A2640, 0 0 10px rgba(143, 184, 255, .75), 0 3px 0 #0B0810; }
+.sb-parry.open { background: #4A1E22; }   /* a missed parry: open for a moment */
+.sbtn.nope { animation: sb-nope .25s steps(3); }
+.sbtn.good { animation: sb-good .45s ease-out; }
+.sbtn.ready-now { animation: sb-ready .45s ease-out; }
+@keyframes sb-nope { 0%, 100% { transform: translateX(0); } 33% { transform: translateX(-3px); } 66% { transform: translateX(3px); } }
+@keyframes sb-good { 0% { background: #6B5A20; } 100% { } }
+@keyframes sb-ready { 0% { box-shadow: inset 0 0 0 4px #FFF3C4, 0 0 14px #F2C14E, 0 3px 0 #0B0810; } 100% { } }
+@media (prefers-reduced-motion: reduce) { .sbtn.nope, .sbtn.good, .sbtn.ready-now { animation: none; } .sbtn:active, .sbtn.hit { transform: none; } }
+@media (max-height: 700px) { .sbar { --sb-tile: 90px; --sb-ic: 36px; } .sb-tab { min-height: 44px; } .sb-def { min-height: 46px; } }
+@media (max-height: 640px) { .sbar { --sb-tile: 74px; --sb-ic: 36px; } .sb-sub { display: none; } }
+
+/* Skills pane: a row per slot; a tap changes what it holds */
+.sb-p-sk { display: grid; gap: 3px; align-content: start; overflow-y: auto; overscroll-behavior: contain; }
+.sb-sk { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; gap: 8px; align-items: center; width: 100%; min-height: 44px; padding: 0 6px; text-align: left; cursor: pointer; color: var(--bone);
+  background: #231A30; border: 2px solid #0B0810; outline: 1px solid #6B5320; outline-offset: -3px; font: inherit; touch-action: manipulation; }
+.sb-sk.passive { background: #1C2430; outline-color: #4E6A8A; }
+.sb-sk.empty { background: #16111C; outline-color: #3A3046; }
+.sb-sk-ic { width: 24px; height: 24px; image-rendering: pixelated; }
+.sb-sk-tx { display: grid; min-width: 0; }
+.sb-sk-nm { font: 600 calc(15px * var(--display-k, 1))/1.05 var(--display); color: var(--gold); }
+.sb-sk.passive .sb-sk-nm { color: #8FB8FF; }
+.sb-sk-ds { font-size: 11.5px; line-height: 1.15; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sb-sk-chip, .sb-chip { font: 600 calc(12px * var(--display-k, 1))/1 var(--display); color: #C9BFD6; background: #16111C; border: 1px solid #3A3046; padding: 3px 6px; white-space: nowrap; }
+/* Foe pane: kind, trait, moves */
+.sb-p-foe { display: grid; gap: 5px; align-content: start; overflow-y: auto; overscroll-behavior: contain; font-size: 13px; }
+.sb-fr { display: flex; gap: 8px; align-items: baseline; min-width: 0; }
+.sb-fk { flex: none; width: 46px; font: 600 calc(12px * var(--display-k, 1))/1 var(--display); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.sb-fv { flex: 1; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; min-width: 0; }
+.sb-fname { font: 600 calc(17px * var(--display-k, 1))/1 var(--display); color: var(--bone); }
+.sb-ftxt, .sb-fnote { color: var(--muted); font-size: 12.5px; line-height: 1.25; margin: 0; }
+.sb-sk-chip:empty { display: none; }
+.sb-chip.charged { color: #FFB0A8; border-color: #6A2A30; }
+/* the Auto button: bottom left of the stage, over the DPS line; a toggle, lit while Auto fights, dim while you fight */
+.auto-badge { position: absolute; left: 8px; bottom: 26px; z-index: 2; display: flex; align-items: center; gap: 4px; padding: 2px 6px 2px 4px;
+  background: #16111C; border: 2px solid #0B0810; box-shadow: inset 0 0 0 1px #3A3046; pointer-events: auto; cursor: pointer; min-height: 22px; margin: 0;
+  font: 600 calc(12px * var(--display-k, 1))/1 var(--display); letter-spacing: .04em; text-transform: uppercase; color: #8A8195; opacity: .85; }
+.auto-badge:focus-visible { outline: 2px solid var(--gold, #F2C14E); outline-offset: 1px; }
+.auto-badge[hidden] { display: none; }
+.auto-badge .ab-ic { width: 16px; height: 16px; flex: none; image-rendering: pixelated; }
+.auto-badge .ab-dot { width: 6px; height: 6px; background: #4E4060; box-shadow: 0 0 0 1px #0B0810; }
+.auto-badge.on { color: #1A1420; background: var(--gold, #F2C14E); box-shadow: inset 0 0 0 1px #FFF3C4, 0 0 6px rgba(242, 193, 78, .55); opacity: 1; }
+/* C26: with the approved icon, the lit badge is dark with gold text and border so the gold icon reads */
+.auto-badge.on:has(.ab-ic) { color: var(--gold, #F2C14E); background: #1A1420; box-shadow: inset 0 0 0 2px var(--gold, #F2C14E), 0 0 8px rgba(242, 193, 78, .6); }
+.auto-badge.on .ab-dot { background: #FFF3C4; animation: ab-blink 1.6s steps(2) infinite; }
+@keyframes ab-blink { 50% { background: #9A6A1E; } }
+@media (prefers-reduced-motion: reduce) { .auto-badge.on .ab-dot { animation: none; } }
+/* the old floating ability circles over the stage (62-stage .abil, 75-class-ui .abil2): the bar has them now */
+body.solo-on .stage .abil, body.solo-on .stage .abil2 { display: none !important; }
+
+/* ---- the ability picker (a small sheet; the game waits while it is open) ---- */
+.sp-ov { position: fixed; inset: 0; z-index: 45; display: flex; align-items: flex-end; justify-content: center; background: rgba(10, 7, 14, .6); }
+.sp-sheet { width: min(420px, 100%); display: grid; gap: 8px; padding: 12px var(--gut, 12px) 16px; background: var(--panel, #221B2B); border: 2px solid var(--line-hi); border-bottom: 0; box-shadow: 0 -4px 0 #0B0810; }
+.sp-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 8px; align-items: start; }
+.sp-head b { font: 600 20px var(--display); color: var(--gold); }
+.sp-head small { grid-column: 1; color: var(--muted); }
+.sp-x { grid-row: 1 / span 2; grid-column: 2; width: 44px; height: 44px; background: none; border: 0; color: var(--muted); font: 600 24px/1 var(--display); cursor: pointer; }
+.sp-ab { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 10px; align-items: center; min-height: 56px; padding: 6px 8px; text-align: left; background: #231A30; color: var(--bone);
+  border: 2px solid #0B0810; outline: 2px solid #6B5320; outline-offset: -4px; cursor: pointer; font: inherit; }
+.sp-ab.on { outline-color: var(--gold); }
+.sp-ic { width: 36px; height: 36px; margin-left: 6px; image-rendering: pixelated; }
+.sp-t { display: grid; gap: 1px; }
+.sp-t b { font: 600 18px var(--display); color: var(--gold); }
+.sp-t small { color: var(--muted); }
+.sp-more { margin: 0; }
+.sp-clear { min-height: 44px; background: var(--panel-2); color: var(--bone); border: 2px solid #0B0810; font: 600 16px var(--display); cursor: pointer; }
+.sp-clear:disabled { opacity: .5; cursor: default; }
+
+/* the guide's Got it button: 60-onboard.css */
+
+/* ---- "Choose your hero" (the Camp view) ---- */
+.hs-ov .sp-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 8px; margin-top: 4px; }
+/* the Camp view's hero chips (owner: no scrolling past every hero) and the All heroes sheet */
+.sp-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.sp-chip { display: flex; align-items: center; gap: 8px; min-height: 52px; padding: 4px 10px 4px 4px; background: var(--panel-2); border: 2px solid var(--line-hi); color: var(--bone); cursor: pointer; text-align: left; }
+.sp-chip.on { box-shadow: inset 0 0 0 2px var(--gold); }
+.sp-chip[data-armed="1"] { box-shadow: inset 0 0 0 2px var(--ember); }
+.sp-cfig { width: 28px; height: 28px; image-rendering: pixelated; background: var(--well); box-shadow: 0 0 0 1px #0B0810; }
+.sp-ct { display: grid; }
+.sp-ct b { font: 600 calc(15px * var(--display-k, 1)) var(--display); }
+.sp-ct small { color: var(--muted); font-size: 12px; }
+.sp-all { margin-top: 8px; }
+.hs-ov { align-items: center; }
+.hs-ov[hidden] { display: none; }
+.hs-sheet { width: min(760px, 100%); max-height: calc(100dvh - 24px); overflow-y: auto; border-bottom: 2px solid var(--line-hi); }
+.sp-card { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 4px; min-height: 44px; background: var(--panel-2);
+  border: 2px solid #0B0810; color: var(--bone); cursor: pointer; font: inherit; }
+.sp-card.on { box-shadow: inset 0 0 0 2px var(--gold); }
+.sp-card[data-armed="1"] { box-shadow: inset 0 0 0 2px var(--ember); }
+.sp-card b { font: 600 18px var(--display); }
+.sp-card small { color: var(--muted); font-size: 12px; text-align: center; }
+.sp-lv { font: 600 14px var(--display); color: var(--gold); }
+.sp-fig { width: 56px; height: 80px; image-rendering: pixelated; }
+
+/* the guide's Got it button: 60-onboard.css */
+/* party-only UI left in the shell (the Fight tab's Party rows) */
+.solo-off { display: none !important; }
+/* Landscape (UX-L1): the bar sits in the side column, bottom right; see 80-landscape.css. */
+/* turn fights (75-solo-ui, 59k): an ability with no approved icon yet shows its short name as a lettered tile; a
+   passive slot is always on (no cooldown, no press); a slot that needs something first (a Burn, Grit) dims */
+.sbtn.mono::before { content: attr(data-mono); position: absolute; z-index: 1; left: 0; right: 0; top: 8px; height: var(--sb-ic); display: flex; align-items: center; justify-content: center;
+  font: 700 calc(22px * var(--display-k, 1))/1 var(--display); color: #FFE7A8; text-shadow: 2px 2px 0 #0B0810; letter-spacing: .02em; }
+.sb-abslot.passive { background: #1C2430; box-shadow: inset 0 0 0 4px #26303E, inset 0 0 0 5px #4E6A8A, 0 3px 0 #0B0810; }
+.sb-abslot.passive .sb-lb { color: #8FB8FF; }
+.sb-abslot.blocked .sb-ic, .sb-abslot.blocked::before { opacity: .45; }
+.sp-ab .sp-mono { width: 36px; height: 36px; margin-left: 6px; display: grid; place-items: center; background: #33283E; color: #FFE7A8;
+  font: 700 calc(16px * var(--display-k, 1))/1 var(--display); box-shadow: inset 0 0 0 1px #6B5320; }
+/* Skills and Foe scroll inside the pane: the bottom edge fades to say there is more */
+.sb-p-sk, .sb-p-foe { -webkit-mask-image: linear-gradient(#000 calc(100% - 16px), transparent); mask-image: linear-gradient(#000 calc(100% - 16px), transparent); padding-bottom: 12px; box-sizing: border-box; }

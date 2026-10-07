@@ -1,0 +1,172 @@
+// 23n-data-notices: the notice policy (task W1-B; docs/coord/audit-1.md 3b). ONE table says where every
+// message the game raises goes. 70-ui.js applies it (notify(): toasts, the bell, stage captions, cards).
+// CORE FILE (pure data and a lookup): no DOM, window or storage.
+//
+// Channels:
+//   card  a full-screen moment its own UI draws (the Great Lantern, a Feat). Rare by nature.
+//   pop   a brief toast, or a caption over the stage. At most 1 per NOTICE_TUNE.gap seconds and
+//         NOTICE_TUNE.perMin a minute, never while a guide step shows (the guide is the only voice)
+//         or a card is up. A pop that cannot show falls to its `held` channel (bell by default).
+//   bell  a quiet line in the bell that counts on its badge. Lines of one rule merge while unread
+//         ("3 zones cleared"), so the count stays small.
+//   log   a line in the bell list that does not count (trivia, or something the player just did).
+//   none  dropped: the screen already shows it.
+// Rule fields: id; ch (a channel, or (msg, n) => channel; n is the emitted payload); match by `key`
+// (emit('toast', { key, msg, ... })), by `re` on the message, or by `test(msg)` (texts that live in
+// data). `site`: a pattern of the call's source, for calls whose message is not a literal (the static
+// check in tools/check.mjs uses it). `reply`: a pop that answers a press the player just made
+// ("Chop more Pine Log first"): it shows at once and does not use the budget. `wait`: seconds a pop may
+// wait for the next free slot (it goes first, before captions) before it is held. `gap`: a longer quiet
+// this pop needs since the last one (the stage captions: they are nice to have, not news). `held`: where a pop
+// goes when it cannot show (default bell). `once`: 'session' (later ones go nowhere). `merge(msgs)`: the
+// text of merged lines (default: the newest line, with a count).
+// A message that matches no rule falls back on its priority: high pops, normal goes to the bell,
+// low to the log. tools/check.mjs holds that every toast source in src/js matches a rule.
+// quiet: the first quiet.secs of play (a session) allow at most quiet.pops pops; the rest go where the rule holds them.
+const NOTICE_TUNE = { gap: 20, perMin: 3, quiet: { secs: 600, pops: 6 } };
+const NOTICE_CH = ['card', 'pop', 'bell', 'log', 'none'];
+const noteNum = (m, re) => { const x = re.exec(m); return x ? +x[1] : 0; };
+const NOTICES = [
+  // ---- full-screen cards (the story's own captions and cards hold the game and bypass this policy: 75-story-ui) ----
+  { id: 'card:lantern', key: 'card:lantern', ch: 'card', why: 'a Great Lantern relit' },
+  { id: 'card:feat', key: 'card:feat', ch: 'card', why: 'a Feat or a Chapter' },
+  { id: 'card:moment', key: 'card:moment', ch: 'card', why: 'a big moment: first boss, a unique, a new hero (75-moments-ui)' },
+  { id: 'news', key: 'news', ch: 'pop', why: "an old save's What's new (never on a new game)" },
+
+  // ---- progress ----
+  { id: 'move', key: 'move', re: /^(You return to |Your party returns to |You head to the |You move to the |You march to the raid|Your party marches to the raid)/,
+    ch: m => /raid/.test(m) ? 'log' : 'none', why: 'the activity pill shows it' },
+  { id: 'zone-clear', re: /is cleared\. (.* lies ahead|On to Zone .+)\.$/, ch: 'log', why: 'the next place gets its title caption',
+    merge: ms => `${ms.length} zones cleared. ${ms[ms.length - 1]}` },
+  { id: 'zone-won', re: /^Zone .+ won\. On to Zone .+\.$/, ch: 'log', why: 'a replayed zone won: the zone title shows where you are',
+    merge: ms => ms[ms.length - 1] },
+  { id: 'level', key: 'level', re: /^Level \d+\. (Your hero hits|\d+ attribute points)/, ch: m => noteNum(m, /^Level (\d+)/) % 25 === 0 ? 'bell' : 'log',
+    why: 'the LEVEL UP float says it; every 25th level is a bell line (the Stars may unlock at level 10)',
+    merge: ms => `${ms.length} levels gained. Level ${noteNum(ms[ms.length - 1], /^Level (\d+)/)}.` },
+  { id: 'skill', key: 'skill', re: /^\S+ level \d+\./, ch: m => /You can now|open to you/.test(m) ? 'bell' : 'none', why: 'only a new tier is news' },
+  { id: 'boss-fail', re: /^(The zone boss held its ground|The zone boss beat you|Your party fell to the zone boss)/, ch: 'pop', wait: 10, why: 'the Try again card follows and says why you lost' },
+  { id: 'fell-back', re: /(fell back a zone|fell back to regroup|couldn't finish the pack)/, ch: 'bell' },
+  { id: 'beaten', re: /Catch your breath and go again/, ch: 'log', why: 'you stay in the zone and the fight starts again on screen' },
+  { id: 'scroll', re: /^(Moss|Hollow|Barrow|Roadlight|Mother) Scroll! Spend it/, site: /SCROLLS\[id\]\.name\}! Spend it/, ch: 'log', why: 'the stage float shows it and Next Up says what it can teach (the bell stays calm)' },
+  { id: 'scroll-more', re: /^(Moss|Hollow|Barrow|Roadlight|Mother) Scroll found\.$/, site: /SCROLLS\[id\]\.name\} found/, ch: 'log', why: 'the stage float shows it, and Next Up offers what it teaches' },
+  { id: 'learned', re: /^\w+ learned [A-Z][\w' ]+\.$/, site: /learned \$\{a\.name\}/, ch: 'log', why: 'you just pressed Learn and see the card change' },
+  { id: 'pace', key: 'pace', re: /back to Zone \d+ to keep earning\.$/, ch: 'bell', once: 'session', why: 'audit 3.14: one line a session' },
+  { id: 'attr-join', key: 'attr-join', ch: 'pop', wait: 30 },   // hero-progression-rework: a hero arrives with points to spend (Go: Build)
+  { id: 'hero-swap', re: /(takes up the lamp\.|joins at Lv .+, the road's level\.)$/, ch: 'log' },
+
+  // ---- loot and gear ----
+  { id: 'unique', re: /^Unique loot! /, ch: 'log', why: 'the moment layer shows every unique as a card (75-moments-ui); the bell list keeps the line' },
+  { id: 'star-chart', re: /^You drew a Star Chart/, ch: 'pop', wait: 40 },
+  { id: 'forged', re: /^(Forged|Made) an? /, ch: 'none', why: 'the Craft tab shows a result card for what you made; a Rare or better craft is also a medium moment (75-craft-ui)' },
+  { id: 'bag-full', re: /^Your bag is full, so /, ch: 'bell' },
+  { id: 'gear-reforged', re: /^Your .* reforged into .* gear\.$/, ch: 'bell' },
+  { id: 'gear-back', re: /(does not fit your new path|do not fit your new path)/, ch: 'bell' },
+  { id: 'champion', re: /^A champion .* appears\./, ch: 'pop', wait: 15, why: 'something to fight now' },
+  { id: 'cache', key: 'cache', ch: 'log', why: 'the cache card or banner shows it (75-caches-ui); the bell list keeps the line' },
+  { id: 'trophy', re: /^(Champion defeated|The boss leaves a trophy|The raid spoils include)/, ch: 'log' },
+  { id: 'stash-wait', re: /^(Storehouse full\. Needs room|The team is back\. )/, site: /toast\((stashNeed\(|`The team is back\. \$\{stashNeed)/, ch: 'bell' },
+  { id: 'store-full', re: /^Storehouse full: /, ch: 'log', merge: ms => `Storehouse full: ${ms.map(m => m.slice(16, -1)).join(', ')}.` },
+  { id: 'store-move', re: / is full\. Your hero moves on to the /, ch: 'bell' },
+  // turn UI (Claude, 2026-09-30): the Journal's test switch; the player just pressed it and sees it change
+  // things the player just did, and sees happen
+  { id: 'did', ch: 'none', why: 'the player just did it and sees the result',
+    re: /^(Equipped |Salvaged |.* upgraded\.$|Reforged: |Transmuted |.* took the |Brewed a |.*: .* for 20 minutes\.$|You took the Dare|You dropped the Dare|Weekly goal claimed|The trader sells you|.* set out: |.* rises to rank |.*: bought\.$|Every star is dark again|.* is lit\.$|.* now carries |.* carries the .* mark\.$|You walk on as a |Your hero is now known as |You walk the path of the |The Mirror of Embers shows you)/ },
+  { id: 'upgrade-mark', key: 'upgrade:mark', ch: 'pop', reply: true, held: 'log', why: 'gold-without-training: an item reached +7 (Trophies from here) or +10 (the top); the player just pressed Upgrade' },
+  { id: 'build', re: /^(Work starts on the |.* Lv .* is next in line\.$)/, ch: 'none', why: 'the camp shows the timer' },
+
+  // ---- the camp, gathering and Hands ----
+  { id: 'fire-lit', re: /^The fire catches\./, ch: 'log', why: 'the fire lights on the stage and the guide goes on' },
+  { id: 'hesketh', re: /^Old Hesketh's fire is cold\./, ch: 'pop', held: 'log', why: 'meeting Hesketh (the bell list while the guide speaks)' },
+  { id: 'camp-open', re: /^Old Hesketh (has made camp|sets down his lamp)/, ch: 'bell' },
+  { id: 'hands', re: /^Tam, Hesketh's nephew/, ch: 'bell' },
+  { id: 'hands-small', re: /(applicants? (are|is) waiting at the Tavern|is back from the .*|The pack waits by the Storehouse\.$)/, site: /backText\(e\)/, ch: 'log' },
+  { id: 'tool-mastery', re: /(mastered! | mastery \S+\.)/, ch: m => /mastered!/.test(m) ? 'bell' : 'log' },
+  { id: 'rested', re: /^Well Rested: /, ch: 'log', why: 'a short buff with nothing to do; it shows on the hero (the bell keeps what needs you)' },
+
+  // ---- unlocks (75-onboard-ui, 75-stars-ui) ----
+  // While the guide runs it points at each new tab itself, so the tab lines only pop once tips are off.
+  { id: 'unlock-tab', re: /^(New tab: |Next Up shows your best next goal|You made camp\. A new tab)/, ch: (m, n, ctx) => ctx && ctx.guide ? 'log' : 'pop', wait: 30,
+    site: /toast\(OPEN_TXT\[id\]/, why: 'the guide points at the tab' },
+  { id: 'unlock-stars', re: /^New on the (Party|Hero) tab: Stars\./, ch: 'pop', wait: 60, held: 'log', why: 'the first star found (or level 10); held: the Stars tab dot keeps it' },
+  { id: 'unlock', re: /^(New on the |.* (is|are) open on the Camp tab\.$|The Codex is open\.|Where each one stands matters)/, ch: 'log',
+    why: 'the tab shows a New mark (and the guide names a new tab), so the bell lists it without counting it', merge: ms => `New: ${ms.map(m => (/^New on the [^:]+: (the )?([^.]+)/.exec(m) || [0, 0, m.replace(/\..*$/, '')])[2]).join(', ')}.` },
+  // W2-A Training: the player just pressed Train and the row shows it; a stage cap is worth a bell line
+  { id: 'training', key: 'training', re: /^Training: .* Lv \d+\. /, ch: 'log', why: 'an ability milestone; the Training row shows it' },
+  { id: 'training-cap', key: 'training-cap', re: /^Training: .* is at Lv \d+, the most /, ch: 'bell', why: 'a move reached its class-stage cap (the Proving lifts it)' },
+  { id: 'star-point', re: /^\+1 star point\. /, ch: 'log', merge: ms => `+${ms.length} star points. ${ms[ms.length - 1].replace(/^\+1 star point\. /, '')}` },
+  // the Stars (57e-stars): a found star is news (rare: a zone boss's first win, an elite, a Proving); learning one is a bell line
+  { id: 'stars:found', key: 'stars:found', ch: 'log', why: 'a new star is a medium moment (75-moments-ui); the bell list keeps whether it is set for the next fight' },
+  { id: 'stars:learned', key: 'stars:learned', ch: 'log', why: 'any hero can light it now; the star card and Next Up show it' },
+  { id: 'stars:catchup', key: 'stars:catchup', ch: 'bell', why: 'an old save: the stars of the zone bosses and Provings behind it' },
+  { id: 'stars:new', key: 'stars:new', ch: 'bell', why: 'an old save that had lit stars on the old star map: the points are free again' },
+  { id: 'stars:sky', key: 'stars:sky', ch: 'pop', wait: 40, held: 'log', why: 'a constellation complete on the star map (rare: six in the game); held: the map shows it gold' },
+
+  // ---- combat tips ----
+  // The guide teaches Dodge and Parry, so the heavy-hit tips stay quiet; a new kind of attack pops once.
+  { id: 'tip-heavy', re: /^The boss winds up a heavy hit\./, ch: 'log', why: 'the guide and the red ring teach it' },
+  { id: 'active-kill', re: /^Played it well: /, site: /toast\(FIRST\.activeKill/, ch: 'log', merge: ms => `Played it well ${ms.length} times: +50% XP each.` },
+  { id: 'tip', site: /toast\(text, 'raid', null, 'normal'\)/,
+    test: m => typeof BOSS_COPY === 'object' && !!BOSS_COPY.first && Object.values(BOSS_COPY.first).includes(m),
+    ch: m => typeof BOSS_COPY === 'object' && (m === BOSS_COPY.first.heavy || m === BOSS_COPY.first.packHeavy || m === BOSS_COPY.first.stagger) ? 'log' : 'pop', wait: 8, held: 'log', why: 'a new kind of attack, once (it belongs to the moment)' },
+
+  // ---- achievements: Deeds is the single voice ----
+  { id: 'deed-tier', key: 'deed-tier', wait: 40, ch: (m, n) => (n && n.tier === 4) ? 'pop' : (n && n.tier >= 3) ? 'bell' : 'log', why: 'Bronze and Silver are trivia; Gold and Everflame stars go to the bell; Everflame pops',
+    merge: ms => ms.length > 1 ? `${ms.length} achievement steps: ${ms.map(m => m.replace(/\.$/, '').replace(/ \((Bronze|Silver|Gold|Everflame)\).*$/, ' ($1)')).join(', ')}.` : ms[0] },
+  { id: 'deed-group', key: 'deed-group', wait: 40, ch: (m, n) => n && n.lv >= 2 ? 'pop' : 'bell' },
+  { id: 'deed-feat', key: 'deed-feat', ch: 'pop', why: 'only when there is no Feat card (DEED_TUNE.featToast)' },
+  { id: 'deed-points', key: 'deed-points', site: /key: x\.key \|\| 'deed-points'/, ch: 'bell', why: 'also carries the Deeds queue (group and Feat lines name their own key)' },
+  { id: 'deed-secret', re: /^Secret found: /, ch: 'pop', wait: 40, held: 'log', why: 'held: the Deeds view keeps it' },
+  { id: 'mastery', key: 'mastery', re: /: mastery star \d of 5\./, ch: 'log', why: 'the zone shows its stars' },
+  { id: 'bestiary', key: 'bestiary', re: /^Bestiary: /, ch: 'log', why: 'the Bestiary view marks it' },
+  { id: 'weekly', re: /^Weekly goal done: /, ch: 'bell' },
+  { id: 'bounty', re: /^Bounty complete! /, ch: 'pop', reply: true, why: 'you just pressed Claim (the board, Next Up or the ready notice): show what you got', merge: ms => `${ms.length} bounties complete.` },
+  { id: 'bounty-ready', key: 'bounty-ready', ch: 'pop', wait: 20, held: 'log', why: 'tap it to claim; no menu needed (a held one is only a log line: Next Up still says Claim)' },
+  { id: 'bounty-room', key: 'bounty-room', ch: 'pop', reply: true, why: 'a claim that could not fit says what to free or build' },
+
+  // ---- the Codex (57c) ----
+  { id: 'codex', key: 'codex', re: /^(Codex: the .* page is half full\. The|Page Seal: |\d+ Lantern Light: )/, ch: 'bell' },
+  { id: 'codex-small', key: 'codex-small', re: /^Codex: the .* page is half full\.$/, ch: 'log' },
+
+  // ---- class ----
+  { id: 'class', re: /^(You passed the Proving|You are an? .* now\.|The Fenmother has fallen\. Your Proving|The Proving: not this time)/, ch: 'pop', wait: 40, why: 'a card after Ascension lands (W5-A)' },
+  { id: 'mirror', re: /^The boss dropped a Mirror of Embers/, ch: 'pop' },
+  // ---- the Deepwell ----
+  { id: 'deep-tip', re: /^(Oil is your run|After each floor, pick 1 of 3 boons|You can climb out between floors|Your party's health carries|Your health carries|Your Oil is running low)/,
+    site: /toast\(txt, 'good'/, ch: 'pop', wait: 20, why: 'you are in the Deepwell and it is new' },
+  { id: 'deep', re: /^(Trial Seal earned|That Trial has closed)/, ch: 'bell' },
+  { id: 'deep-small', re: /^(Set bonus: |Trial: floor |Deep Elder beaten)/, ch: 'log' },
+
+  // ---- the world raid (online layer: channel only, nothing about its data changes) ----
+  { id: 'raid-win', re: /has fallen\. You dealt /, ch: 'pop', wait: 40 },
+  { id: 'raid-news', re: /fell to the other heroes\./, ch: 'bell' },
+  { id: 'horn', re: /sounds the war horn!/, ch: 'pop' },
+
+  // ---- answers to a press: they show at once (a reply is never held) ----
+  { id: 'reply', ch: 'pop', reply: 1, site: /toast\(w, 'raid'/,
+    re: /^(Chop more Pine Log first|Climb out of the Deepwell first|Give your hero a name first|The Proving cannot start now|That change did not go through|The free change has run out|Save loaded)/ },
+
+  // ---- C4: completed gatherer trade runs ----
+  { id: 'hands-trade', re: /^.+ returns from .+: \+.+ gold\.$/, ch: 'log' },
+  // C11: a milestone feat is a small permanent reward, recorded without a celebration card.
+  { id: 'deed-milestone', key: 'deed-milestone', ch: 'log' },
+  // ---- C14: the merged away report owns its source summaries ----
+  { id: 'away-report', key: 'away-report', ch: 'card' },
+  { id: 'hero-token', key: 'heroToken', ch: 'bell', why: 'a hero token won (56c, story-unlock-gates): when that hero joins; no kit yet, so no pop' }
+];
+const NOTICE_BY_KEY = Object.fromEntries(NOTICES.filter(r => r.key).map(r => [r.key, r]));
+// The rule for a message (or its key), or null.
+function noticeRule(msg, key) {
+  if (key && NOTICE_BY_KEY[key]) return NOTICE_BY_KEY[key];
+  const m = String(msg || '');
+  for (const r of NOTICES) {
+    if (r.re && r.re.test(m)) return r;
+    if (r.test) { let ok = false; try { ok = !!r.test(m); } catch (e) {} if (ok) return r; }
+  }
+  return null;
+}
+// The rule's own channel for this message (before the guide, the budget or `once`). ctx: { guide }.
+function noticeChannel(rule, msg, payload, ctx) {
+  let ch = rule.ch;
+  if (typeof ch === 'function') { try { ch = ch(String(msg || ''), payload || {}, ctx || {}); } catch (e) { ch = 'bell'; } }
+  return NOTICE_CH.includes(ch) ? ch : 'bell';
+}

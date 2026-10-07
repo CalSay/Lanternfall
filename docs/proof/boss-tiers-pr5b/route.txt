@@ -1,0 +1,11 @@
+# seed: 1
+# Proof for card boss-tiers-pr5b: zone bosses 16-34 now play move tricks, rally at 75/50/25, floor a hit on the kept-up set and cap one hit at 75%.
+# No screens, art or save fields change. The numbers are checked by `node tools/budget.mjs --players wide` and
+# `node tools/health.mjs --only budget --compare`; sim: `node tools/sim.mjs --report heroes --hours 1 --seeds 3` (seeds 1-3, all three heroes, casual and good players, scaled reference heroes: boss hit at z25 3%, z20 12%, good players 5-12 turns, wins 100%); this route checks the zone 20 boss fight (mid save) still draws whole.
+new mid
+wait 6
+tap-if "Continue"
+wait 8
+expect ".hud.vs .hero-plate"
+expect ".hud.vs .mob"
+shot boss-tiers-pr5b

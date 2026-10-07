@@ -1,0 +1,6 @@
+Build: PASS (2755.8 KB).
+Full node tools/check.mjs --jobs=2: PASS, 2082 ok assertions, zero browser skips.
+Base2b379cf; art and review files only. No game source edits.
+Preview:16 assets load; hero selector/filter verified;360x740 and740x360 no horizontal overflow.
+Manifest:16 unique IDs,1254x1254 RGBA source dimensions, all measured bounds in source; alpha0..255.
+Owner approved neutral-v2 on1October2026. All hero-specific images still use unchanged first atlas source.

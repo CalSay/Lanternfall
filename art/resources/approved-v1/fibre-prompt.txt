@@ -1,0 +1,27 @@
+Use case: stylized-concept
+Asset type: one transparent pixel-art inventory atlas for Lanternfall: FIBRE materials, grades 1–15.
+Create EXACTLY 15 separate icons in an EXACT 3-column × 5-row grid. Each row is a region, each column advances one grade. Every icon is a compact RAW GATHERED FIBRE object or natural bundle—not a finished shirt, cloth bolt, creature portrait, weapon, badge, or scene. All cells equal square size, centered, same visual weight, generous transparent gutters.
+STYLE: match Lanternfall's existing resource icon sheet and Wren/Tobin/Pip heroes: very dark violet one-logical-pixel outlines, crisp blocky pixel steps, bold different silhouettes readable at 16×16, only 3–4 flat shading clusters per object, limited palette. Render source atlas enlarged with clean hard pixel edges. No smooth shading, gradients, glow, blur, painterly texture, labels, lettering, numbers, borders, grid lines, cast shadows, duplicates, extra items. Genuine transparent alpha around every icon.
+
+READING ORDER, left to right:
+ROW 1 — THE HOLLOW:
+1 Hemp Fibre: compact coarse olive-green hemp stalk bundle bound once with tan twine, visible separated long fibres.
+2 Flax Fibre: pale straw flax stems with tiny blue flower tips and a combed cream fibre fan, clearly NOT woven linen.
+3 Briarthread: tightly twisted dark-green thornbriar vine skein, two sharp briar thorns, much tougher than flax.
+ROW 2 — SUNKEN COAST:
+4 Kelp Fibre: folded long dark sea-green kelp ribbons with one branching frond tip, saltwater plant material, no water backdrop.
+5 Stormgrass Fibre: rigid silver-green wind-bent grass blade bundle with sharp angled tips and salt-white edges, distinct from kelp ribbons.
+6 Sea Silk: fine gold-grey mussel byssus threads drawn from two small EMPTY shell fragments into a compact lustrous loose skein, no live animal.
+ROW 3 — EMBERWASTE:
+7 Ashmoth Silk: charcoal abandoned moth cocoon split open, with black-orange loose silk fibres; no living moth, no green plants.
+8 Glassfilament: pale ruby-grey ultrafine thread tangle hanging between two tiny cooled dark-glass spurs, clearly fibre not a gemstone.
+9 Wyrmthread: thick red-gold fibrous abandoned egg sheath curled as a segmented thread skein, with one basalt-black husk edge; no dragon.
+ROW 4 — PALE REACH:
+10 Rimeflax Fibre: short icy-blue frost-hardened flax stalks tied with pale thread, crisp icy tips, not wool.
+11 Moonmoth Silk: silver-blue abandoned cave-moth cocoon, opened end and smooth long pale strands, no living moth.
+12 Starroot Filament: pale-white star-speckled lichen anchoring threads pulled from a tiny cold stone fragment; fine branching roots, not a glowing star or gem.
+ROW 5 — GLOAMVALE:
+13 Stillvine Fibre: preserved dead-grey vine strands wound into a loop around one bare twig, muted ash-violet and no living leaves.
+14 Blackmere Filament: taut blue-black supernatural threads stretched between two dead reed stubs, eerie but entirely opaque and unglowing.
+15 Skyless Thread: several exceptionally fine pale-violet strands pulled from a split stone-dark unrotting orchard fruit husk, final strongest raw fibre, no living fruit.
+The five rows have distinct regional palettes—earthy green/cream, sea green/silver, charcoal/ember, ice blue/silver, dead grey/violet. Keep all icons separately bounded and never convert raw fibre into finished fabric.

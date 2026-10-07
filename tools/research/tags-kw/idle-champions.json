@@ -1,0 +1,235 @@
+{
+ "slug": "idle-champions",
+ "n_reviews": 50,
+ "n_pos": 25,
+ "n_neg": 25,
+ "n_longplay_neg": 25,
+ "sources": [
+  "steam"
+ ],
+ "themes": {
+  "P-offline": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "Great afk game does get very repetitive and very grindy for new characters or gear (steam+, 268h)"
+   ]
+  },
+  "P-respect": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-active": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-dev": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "The developers are incredibly generous with free giveaways and are concentrating hard on improving the experience for new players. (steam+, 4252h)"
+   ]
+  },
+  "P-unlock": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-collect": {
+   "n": 6,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "Monthly events, weekly challenges, all sorts of collectibles, very active Discord, multiple weekly streams, thousands of variants. (steam+, 37470h)",
+    "But it\u2019s definitely a long-haul type of game where unlocking achievements can take ages (I\u2019m talking months, even years). (steam+, 543h)"
+   ]
+  },
+  "P-goals": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-depth": {
+   "n": 4,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "Plenty of strategy, lots of ways to succeed. (steam+, 37470h)",
+    "The gameplay also has more depth than it first appears. (steam+, 35289h)"
+   ]
+  },
+  "P-fair": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "The developers are incredibly generous with free giveaways and are concentrating hard on improving the experience for new players. (steam+, 4252h)"
+   ]
+  },
+  "P-interlock": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-prestige": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-qol": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-calm": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "Lots of stats to consider, Math, Formation/Balance, Nostalgia, Supportive and peaceful - all inclusive vibe, and so much more. (steam+, 12252h)"
+   ]
+  },
+  "P-art": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-story": {
+   "n": 10,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "There's several \"Campaigns\" that are quite extensive with surprisingly good writing - some laugh out loud moments and some nice, moustache-twirling villains. (steam+, 4252h)",
+    "Game has been enjoyable, and they've been dedicated to releasing new characters regularly since release in 2020. (steam+, 49459h)"
+   ]
+  },
+  "N-ads": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-wall": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 2,
+   "quotes": [
+    "Bad idler, requires constant upkeep to progress, adventures are short and if you get stuck you really have to restart. (steam-, 263h)"
+   ]
+  },
+  "N-pay": {
+   "n": 4,
+   "of": 25,
+   "longplay_n": 3,
+   "quotes": [
+    "Since the release of premium platinum currency, the cash grab has been even worse. (steam-, 8433h)",
+    "I like the nastalgia of D&D, but I'm not liking their microtransaction of what? (steam-, 20h)"
+   ]
+  },
+  "N-dominant": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-late": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-offline": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-mobile": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 1,
+   "quotes": [
+    "If a window or notification ha (steam-, 9468h)"
+   ]
+  },
+  "N-bug": {
+   "n": 2,
+   "of": 25,
+   "longplay_n": 2,
+   "quotes": [
+    "Consistently has bugs and at times the core strategy for beating difficult missions is to use bugs/exploits. (steam-, 10207h)",
+    "Over longer sessions, it seems to consume more and more resources and can eventually crash. (steam-, 9468h)"
+   ]
+  },
+  "N-energy": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-bloat": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 1,
+   "quotes": [
+    "Too many things interrupt the gameplay. (steam-, 9468h)"
+   ]
+  },
+  "N-chore": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 1,
+   "quotes": []
+  },
+  "N-tutorial": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-shallow": {
+   "n": 2,
+   "of": 25,
+   "longplay_n": 3,
+   "quotes": [
+    "Flop: Even with all graphical features turned off, this relatively simple 2D idle game can become surprisingly resource-hungry and increasingly unstable. (steam-, 9468h)"
+   ]
+  },
+  "N-reset": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-pace": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-fast": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-balance": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  }
+ }
+}

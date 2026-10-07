@@ -1,0 +1,96 @@
+{
+  "scope": "Corrected relit layers only; shrouded originals unchanged",
+  "shared_visible_colours": 47,
+  "shared_rgba_values_including_transparency": 48,
+  "sky_fully_opaque": true,
+  "far_spans_all_480_columns": true,
+  "ground_opaque_across_bottom_32_rows": true,
+  "foreground_confined_to_rows_238_through_269": true,
+  "composite_fully_opaque": true,
+  "files": [
+    {
+      "file": "relit/01_sky.png",
+      "dimensions": [
+        480,
+        270
+      ],
+      "alpha_values": [
+        255
+      ],
+      "opaque_bbox_xyxy_exclusive": [
+        0,
+        0,
+        480,
+        270
+      ]
+    },
+    {
+      "file": "relit/02_far.png",
+      "dimensions": [
+        480,
+        270
+      ],
+      "alpha_values": [
+        0,
+        255
+      ],
+      "opaque_bbox_xyxy_exclusive": [
+        0,
+        58,
+        480,
+        270
+      ]
+    },
+    {
+      "file": "relit/03_mid.png",
+      "dimensions": [
+        480,
+        270
+      ],
+      "alpha_values": [
+        0,
+        255
+      ],
+      "opaque_bbox_xyxy_exclusive": [
+        0,
+        0,
+        480,
+        230
+      ]
+    },
+    {
+      "file": "relit/04_ground.png",
+      "dimensions": [
+        480,
+        270
+      ],
+      "alpha_values": [
+        0,
+        255
+      ],
+      "opaque_bbox_xyxy_exclusive": [
+        0,
+        162,
+        480,
+        270
+      ]
+    },
+    {
+      "file": "relit/05_foreground.png",
+      "dimensions": [
+        480,
+        270
+      ],
+      "alpha_values": [
+        0,
+        255
+      ],
+      "opaque_bbox_xyxy_exclusive": [
+        0,
+        238,
+        480,
+        270
+      ]
+    }
+  ]
+}

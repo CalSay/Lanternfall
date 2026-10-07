@@ -6,6 +6,8 @@ and hunt unique boss loot. Mobile-first, one-screen layout.
 
 Live artifact: https://claude.ai/artifact/GqrXAutCJ6vgdV9TaPxAJH
 
+Start with `docs/GAME.md` (what the game is now, by system) and `docs/DECISIONS.md` (every standing owner decision).
+
 ## Current focus
 
 Single-player depth. Do not change the online layer (world raid, tavern, leaderboard,
@@ -18,12 +20,43 @@ Single-player depth. Do not change the online layer (world raid, tavern, leaderb
 - No `<!doctype>`, `<html>`, `<head>` or `<body>` tags in the published file; it starts with
   `<title>` then `<link>`/`<style>` then markup then `<script>`.
 - `alert`/`confirm`/`prompt` do nothing in the viewer. Build confirmations in-page.
-- `localStorage` holds the single-player save under key `lanternfall.save.v1`. Always
+- `localStorage` holds the single-player save under key `lanternfall.save.v5`. Always
   wrap storage access in try/catch.
-- Save compatibility is sacred: players have live saves. New state fields need defaults in
-  `fresh()` and must merge into old saves without loss. Never rename or repurpose an
-  existing save field.
-- Works at 360px wide. Respects `prefers-reduced-motion`.
+- Saves until 1.0 (owner decision 2026-09-28): the only players are the owner and testers, and the
+  owner accepts a wipe. Prefer clean new state over complex migrations. If a change would break old
+  saves, bump the save key (e.g. `lanternfall.save.v2`) so the game starts fresh instead of loading
+  broken state; never ship code that crashes on an old save. New state fields still need defaults in
+  `fresh()`. The coordinator sets up late-game test saves on request.
+- Mobile is moving to **landscape only** (owner, 2026-09-29): design for about 740x360 CSS px landscape
+  phones (and desktop). Until the landscape layout lands (task UX-L1), the current portrait layout must
+  keep working at 360px wide. Respects `prefers-reduced-motion`.
+
+## Art freeze (standard: owner, 2026-09-30; signer: the Opus art judge, Cal 2026-10-06)
+
+- No art goes into the game until the Opus art judge under the Autopilot gates has vetted the **whole pack** for that character or scene, and every piece
+  matches the others and suits the game. No partial packs, no stopgaps.
+- Effects and props (arrows, bow strings, tools, sparks, chips) come from the artist in the pack, drawn to match the
+  art. Agents do not draw art assets in code and do not tell the owner that code will add them.
+- Until then, agents do not wire, convert, retune or redraw existing art. Art tooling and art data files stay as they are.
+- Exception (owner, 2026-09-30): **Codex may create new art for a new item or scene it builds** (for example the
+  Hunting scene and its beasts), since those cannot reuse existing assets. Match the style of the three heroes (Wren,
+  Tobin, Pip): strict pixel art, a clean 1-pixel dark outline, flat shading clusters, the same scale. The Opus art
+  judge still vets the whole set before it ships.
+- Exception (owner, 2026-10-01): **Hunting is switched on before its art pack is done, with Codex's drafts wired in.**
+  The interim art is machine-converted from Codex's review drafts, nothing redrawn: the beasts and hunting grounds
+  (`tools/art/hunt-interim.py` -> `art/hunting/interim-v1` -> `tools/art/embed-hunt.mjs` -> `21z-data-huntart.js`, drawn by
+  `64i-hunt-art.js`) and Codex's native spear-thrust poses (`art/heroes/<id>/hunt`, packed by `tools/heroart.mjs`).
+  `HUNT_TUNE.interim` turns it on; `borrowArt` (the woods art) is the older stopgap, now off. Codex's vetted pack
+  replaces the interim files.
+- Who signs (Cal, 2026-10-06 19:35): "Art should only be made by Codex." Claude vets it and answers for anything broken
+  or ugly that reaches a Monday build. Every Codex pack gets an `integrate: <pack>` card the day it lands. A red team
+  argues against it, then the Opus art judge rules **wire**, **re-brief** or **shelve** against
+  `docs/design/art-direction.md` and the live game's look, records the reason in `docs/DECISIONS.md` (Art) and reports
+  it in the digest; Cal may veto later. A "wire" verdict becomes a build card that converts and embeds the pack as
+  drawn (no redrawing). An icon goes in only if it fits the live ability's or item's meaning, not just its name.
+  Anything doubtful stays out of the Monday build.
+- Character art (portraits, hero sprites, stills, the guide) ships **on**, with a "Classic art" switch in Settings for
+  one release.
 
 ## Shared online data (do not change shape without coordinator sign-off)
 
@@ -39,6 +72,8 @@ Single-player depth. Do not change the online layer (world raid, tavern, leaderb
   Touch shared files only at the extension points described in `docs/ARCHITECTURE.md`,
   and keep those edits small so the coordinator can merge them.
 - Run `node tools/build.mjs` then `node tools/check.mjs` before finishing. Both must pass.
+- Lessons: read the sections of `docs/lessons.md` for your card's work areas before starting. After any correction
+  (Cal, a reviewer, CI, a blocked tool), add a rule line to the right section in the same PR.
 - Commit on your branch with a clear message. Do not push, publish the artifact, or merge
   into `main`; the coordinator does that.
 - Write player-facing copy plainly: short sentences, active voice, name things the way a

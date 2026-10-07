@@ -2,3 +2,10 @@ node_modules/
 .DS_Store
 *.log
 .claude/worktrees/
+site/
+tools/.health/
+.playtest/
+.proof-session/
+eyes-out/
+tools/.walk/
+walk-out/

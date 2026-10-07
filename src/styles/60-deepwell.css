@@ -1,0 +1,155 @@
+/* 60-deepwell: the Deepwell (75-deepwell-ui.js): run HUD over the stage, the boon strip in place of
+   the control row, the full-screen choice sheet, the run-end card, and the Fight tab's Deepwell view. */
+:root { --deep: #7FB2FF; --deep-dim: #3F6FA8; --deep-bg: #0E1624; --oil: #FF9E3D; }
+
+/* ---- in a run: the control row swaps for the boon strip (62-stage hides the zone line and boss timer) ---- */
+.dw-hud, .dw-row { display: none; }
+.app.deep-run .ctrl { display: none; }
+.app.deep-run .dw-row { display: flex; }
+.app.deep-run .dw-hud { display: flex; }
+
+.dw-hud { position: absolute; left: 0; right: 0; top: 0; z-index: 4; pointer-events: none; align-items: center; gap: 10px; padding: 4px 8px 0; height: 23px; }
+.dw-oil { display: flex; align-items: center; gap: 5px; flex: none; }
+.dw-oilic { width: 16px; height: 16px; image-rendering: pixelated; filter: drop-shadow(0 0 4px rgba(255,158,61,.7)); }
+.dw-oilbar { position: relative; width: 120px; height: 10px; background: #0B0810; border: 2px solid #0B0810; box-shadow: 0 0 0 1px rgba(255,255,255,.14); }
+.dw-oilbar > i { position: absolute; left: 0; top: 0; bottom: 0; width: 100%; background: var(--oil); box-shadow: inset 0 2px 0 rgba(255,255,255,.3), inset 0 -2px 0 rgba(0,0,0,.25); transition: width .2s linear; }
+.dw-oiltxt { font: 600 calc(13px * var(--display-k)) var(--display); font-variant-numeric: tabular-nums; min-width: 3.2em; color: #FFE2B8; text-shadow: 0 2px 0 #000; }
+.dw-oil.low .dw-oilbar > i { background: var(--hp); animation: dw-pulse .8s ease-in-out infinite; }
+.dw-oil.low .dw-oiltxt { color: #FF8A80; }
+@keyframes dw-pulse { 50% { opacity: .55; } }
+.dw-floor { display: flex; align-items: baseline; gap: 6px; min-width: 0; margin-left: auto; }
+.dw-fn { font: 600 calc(14px * var(--display-k))/1.2 var(--display); color: #DFF0FF; text-shadow: 0 2px 0 #000, 0 0 6px rgba(127,178,255,.6); white-space: nowrap; }
+.dw-fk { font: 600 10.5px/1.2 var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--deep); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 0 #000; }
+
+.dw-row { flex: none; align-items: center; gap: 8px; height: 54px; padding: 6px var(--gut) 4px; }
+.dw-strip { flex: 1; min-width: 0; min-height: 44px; display: flex; align-items: center; gap: 8px; padding: 4px 8px; text-align: left; cursor: pointer; background: linear-gradient(90deg, rgba(127,178,255,.14), rgba(127,178,255,.02)), var(--panel); border: 2px solid #2E4466; box-shadow: 0 2px 0 #0B0810; }
+.dw-strip-ics { display: flex; gap: 2px; flex: none; align-items: center; }
+.dw-sic { width: 16px; height: 16px; image-rendering: pixelated; }
+.dw-sic.rare { filter: drop-shadow(0 0 2px var(--r-rare)); }
+.dw-sic.epic { filter: drop-shadow(0 0 3px var(--r-epic)); }
+.dw-more { font: 600 calc(11px * var(--display-k)) var(--display); color: var(--muted); padding-left: 2px; }
+.dw-strip-txt { min-width: 0; font: 600 calc(12px * var(--display-k)) var(--display); color: #CFE2FF; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dw-rowmarks, .dw-emarks, .dw-marks { display: inline-flex; align-items: center; gap: 4px; flex: none; font: 600 calc(15px * var(--display-k)) var(--display); font-variant-numeric: tabular-nums; color: #DFF0FF; }
+.dw-rowmarks img, .dw-emarks img, .dw-marks img { width: 18px; height: 18px; image-rendering: pixelated; }
+.dw-emarks span { font: 600 10.5px var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+
+/* ---- the full-screen sheets ---- */
+.dw-ov { position: fixed; inset: 0; z-index: 32; display: flex; justify-content: center; overflow-y: auto; overscroll-behavior: contain;
+  background-color: #080B14; background-image: radial-gradient(110% 60% at 50% 0%, rgba(63,111,168,.4), transparent 65%), radial-gradient(rgba(127,178,255,.05) 1px, transparent 1px); background-size: auto, 6px 6px; opacity: 0; transition: opacity .18s; }
+.dw-ov.in { opacity: 1; }
+.dw-end, .dw-list { z-index: 33; }
+.dw-sheet { width: 100%; max-width: 560px; min-height: 100%; padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 14px; }
+.dw-dhead { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.dw-dtitle { min-width: 0; flex: 1; display: grid; gap: 2px; }
+.dw-dtop { display: flex; justify-content: space-between; align-items: center; gap: 10px; min-height: 22px; }
+.dw-dtitle h2 { margin: 0; font: 600 calc(24px * var(--display-k))/1.1 var(--display); color: #EAF3FF; text-shadow: 0 2px 0 #0B0810, 0 0 12px rgba(127,178,255,.35); text-wrap: balance; }
+.dw-eye { font: 600 10.5px var(--body); letter-spacing: .14em; text-transform: uppercase; color: var(--deep); }
+.dw-dsub { font-size: 14px; color: #FFD9A8; }
+.dw-doil { display: flex; align-items: center; gap: 5px; flex: none; }
+.dw-doil .dw-oilbar { width: 72px; }
+.dw-doil b { font: 600 calc(13px * var(--display-k)) var(--display); color: #FFE2B8; font-variant-numeric: tabular-nums; }
+
+.dw-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: auto; }
+.dw-cards[data-n="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.dw-cards[data-n="4"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (min-width: 520px) { .dw-cards[data-n="4"] { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.dw-cwrap { position: relative; display: grid; min-width: 0; }
+.dw-card { --rc: #8C8496; position: relative; min-height: 172px; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 8px 6px 10px; text-align: center; cursor: pointer;
+  background: linear-gradient(180deg, rgba(255,255,255,.05), transparent 40%), #1A1624; border: 2px solid var(--rc); box-shadow: inset 0 0 0 2px #0B0810, 0 3px 0 #0B0810; color: var(--bone); }
+.dw-card.r-r { --rc: var(--r-rare); background: linear-gradient(180deg, rgba(95,168,255,.16), transparent 45%), #161B2A; box-shadow: inset 0 0 0 2px #0B0810, 0 3px 0 #0B0810, 0 0 12px rgba(95,168,255,.25); }
+.dw-card.r-e { --rc: var(--r-epic); background: linear-gradient(180deg, rgba(181,140,255,.2), transparent 45%), #1C1628; box-shadow: inset 0 0 0 2px #0B0810, 0 3px 0 #0B0810, 0 0 16px rgba(181,140,255,.35); }
+.dw-card.land { --rc: #3F6FA8; }
+.dw-card:active:not(:disabled) { transform: translateY(2px); }
+.dw-card:disabled { opacity: .45; cursor: default; }
+.dw-crar { font: 600 9.5px var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--rc); }
+.dw-card.r-c .dw-crar { color: var(--muted); }
+.dw-cic { width: 44px; height: 44px; display: grid; place-items: center; background: var(--well); border: 2px solid var(--rc); box-shadow: inset 0 0 0 2px #0B0810; }
+.dw-cic img { width: 32px; height: 32px; image-rendering: pixelated; }
+.dw-cn { font: 600 calc(14px * var(--display-k))/1.1 var(--display); text-wrap: balance; overflow-wrap: anywhere; }
+.dw-crank { font: 600 calc(11px * var(--display-k)) var(--display); color: var(--gold); }
+.dw-ctx { font-size: 12px; line-height: 1.3; color: #D6CFE0; overflow-wrap: anywhere; }
+.dw-tags { display: flex; flex-wrap: wrap; justify-content: center; gap: 3px; margin-top: auto; }
+.dw-tag { font: 600 10px var(--body); letter-spacing: .04em; padding: 1px 4px; color: var(--muted); border: 1px solid var(--line-hi); background: var(--well); white-space: nowrap; }
+.dw-tag.part { color: #CFE2FF; border-color: var(--deep-dim); }
+.dw-tag.on { color: #13200F; background: var(--xp); border-color: #0B0810; }
+.dw-ban { position: absolute; top: -6px; right: -6px; width: 30px; height: 30px; padding: 0; border-radius: 50%; border: 2px solid #0B0810; background: #3A2330; color: #FF9A8E; font: 600 calc(16px * var(--display-k))/1 var(--display); cursor: pointer; }
+.dw-hint { margin: 0; font-size: 12.5px; color: var(--muted); text-align: center; }
+.dw-dfoot { display: flex; gap: 8px; flex-wrap: wrap; }
+.dw-b { flex: 1 1 0; min-height: 44px; min-width: 0; padding: 4px 6px; line-height: 1.15; text-wrap: balance; }
+.dw-confirm { display: grid; gap: 8px; padding: 14px; margin-top: auto; background: var(--panel); border: 2px solid #5A2A30; box-shadow: 0 3px 0 #0B0810; }
+.dw-confirm h3 { margin: 0; font: 600 calc(20px * var(--display-k)) var(--display); }
+.dw-confirm p { margin: 0; font-size: 14px; }
+.dw-card, .dw-confirm { animation: dw-in .22s ease-out both; }
+.dw-cwrap:nth-child(2) .dw-card { animation-delay: .04s; } .dw-cwrap:nth-child(3) .dw-card { animation-delay: .08s; } .dw-cwrap:nth-child(4) .dw-card { animation-delay: .12s; }
+@keyframes dw-in { from { opacity: 0; transform: translateY(10px); } }
+
+.dw-have { display: grid; gap: 6px; justify-items: start; padding: 10px 12px; background: rgba(127,178,255,.05); border: 1px solid #22324C; }
+.dw-have-ics { display: flex; flex-wrap: wrap; gap: 4px; }
+.dw-have .dw-sic { width: 20px; height: 20px; }
+.dw-have .dw-tags { justify-content: flex-start; margin: 0; }
+
+/* boons list */
+.dw-sets { display: grid; gap: 6px; }
+.dw-set { display: grid; grid-template-columns: auto auto 1fr; gap: 8px; align-items: center; padding: 6px 8px; background: var(--well); border: 1px solid var(--line); font-size: 12.5px; color: var(--muted); }
+.dw-set img { width: 16px; height: 16px; image-rendering: pixelated; }
+.dw-set b { font: 600 calc(13px * var(--display-k)) var(--display); color: var(--bone); white-space: nowrap; }
+.dw-set.on { border-color: var(--xp); color: var(--bone); background: rgba(111,203,106,.08); }
+.dw-blist { display: grid; gap: 6px; }
+.dw-bi { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: center; padding: 6px 8px; background: var(--panel); border: 2px solid var(--line); }
+.dw-bi .ic { width: 36px; height: 36px; } .dw-bi .ic img { width: 24px; height: 24px; }
+
+/* run end */
+.dw-kv { background: var(--panel); border: 2px solid var(--line); padding: 10px; box-shadow: 0 2px 0 #0B0810; }
+.dw-pb { margin: 0; font: 600 calc(15px * var(--display-k)) var(--display); color: var(--gold); }
+.dw-lines { display: grid; gap: 2px; }
+.dw-line { display: flex; justify-content: space-between; padding: 5px 2px; border-bottom: 1px solid var(--line); font-size: 14px; }
+.dw-line b { font: 600 calc(14px * var(--display-k)) var(--display); color: #DFF0FF; }
+.dw-below { padding: 10px 12px; background: rgba(242,193,78,.07); border: 1px solid rgba(242,193,78,.35); }
+.dw-below p { margin: 4px 0 0; font-size: 14px; }
+.dw-end .dw-dfoot { margin-top: auto; }
+
+/* ---- Fight tab: the Deepwell view ---- */
+.dw-hide { display: none !important; }
+.dw-entry { background: radial-gradient(120% 90% at 0% 0%, rgba(63,111,168,.35), transparent 60%), linear-gradient(180deg, #121A2A, var(--panel) 80%); border-color: #2E4466; }
+.dw-ehead { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: start; }
+.ic.dw-eic { width: 52px; height: 52px; border-color: var(--deep-dim); box-shadow: inset 0 0 0 2px #0B0810, 0 0 12px rgba(127,178,255,.35); }
+.ic.dw-eic img { width: 36px; height: 36px; }
+.dw-ett { display: grid; gap: 4px; min-width: 0; }
+.dw-ett h3 { margin: 0; }
+.dw-ebody { display: grid; gap: 8px; }
+.dw-lock { margin: 0; font: 600 calc(14px * var(--display-k)) var(--display); color: var(--deep); }
+.dw-need { margin: 0; padding-left: 18px; font-size: 14px; }
+.dw-now { margin: 0; font-size: 14px; color: #DFF0FF; }
+.big.dw-go { background: var(--deep); color: #0C1626; box-shadow: inset 0 2px 0 rgba(255,255,255,.35), inset 0 -4px 0 var(--deep-dim), 0 2px 0 #0B0810; }
+.dw-abandon { justify-self: start; min-height: 40px; }
+.dw-choice { display: grid; gap: 2px; width: 100%; min-height: 56px; padding: 9px 12px; text-align: left; cursor: pointer; background: linear-gradient(90deg, rgba(127,178,255,.2), rgba(127,178,255,.04)), var(--panel-2); border: 2px solid #0B0810; box-shadow: inset 0 1px 0 rgba(255,255,255,.08), inset 0 0 0 1px #3F6FA8, 0 2px 0 #0B0810; }
+.dw-choice b { font: 600 calc(17px * var(--display-k)) var(--display); color: #EAF3FF; }
+.dw-choice span { font-size: 13px; color: var(--muted); }
+.dw-choice.trial { background: linear-gradient(90deg, rgba(242,193,78,.18), rgba(242,193,78,.03)), var(--panel-2); box-shadow: inset 0 1px 0 rgba(255,255,255,.08), inset 0 0 0 1px #A77B1E, 0 2px 0 #0B0810; }
+.dw-choice:active { transform: translateY(2px); }
+.dw-trial { border-color: #5A4A22; }
+.dw-thead { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.dw-tdays { font: 600 11px var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+.dw-tfx { margin: 0; font-size: 14px; color: #F2E6B0; }
+.dw-miles { display: flex; flex-wrap: wrap; gap: 5px; }
+.dw-mile { font: 600 calc(11.5px * var(--display-k)) var(--display); padding: 3px 7px; background: var(--well); border: 1px solid var(--line); color: var(--muted); }
+.dw-mile.got { color: #13200F; background: var(--gold); border-color: #0B0810; }
+.dw-shophead { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.dw-seg button { min-height: 36px; }
+.dw-shop { display: grid; gap: 8px; }
+.dw-srow .row-desc { overflow-wrap: anywhere; }
+.buy.dw-buy { background: var(--deep); box-shadow: inset 0 2px 0 rgba(255,255,255,.35), inset 0 -3px 0 var(--deep-dim); }
+.buy.dw-buy:disabled { background: var(--panel-2); color: var(--muted); box-shadow: inset 0 -3px 0 #1a1420; }
+.dw-pic { width: 14px; height: 14px; image-rendering: pixelated; }
+.dw-fav { display: flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 13px; color: var(--muted); }
+.dw-fav select { min-height: 36px; min-width: 0; flex: 1; background: var(--well); color: var(--bone); border: 2px solid var(--line); font: 600 calc(13px * var(--display-k)) var(--display); }
+
+@media (prefers-reduced-motion: reduce) {
+  .dw-ov { transition: none; }
+  .dw-card, .dw-confirm { animation: none; }
+  .dw-oil.low .dw-oilbar > i { animation: none; }
+  .dw-oilbar > i { transition: none; }
+}
+
+/* wide screens: the choice sheet and the run-end card sit in the middle */
+@media (min-width: 600px) and (min-height: 600px) { .dw-draft .dw-sheet, .dw-end .dw-sheet { justify-content: center; } .dw-cards { margin-top: 8px; } .dw-end .dw-dfoot { margin-top: 8px; } }

@@ -1,10 +1,11 @@
 <title>Lanternfall</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&family=IBM+Plex+Sans+Condensed:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Handjet:wght@400..700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500;600&display=swap">
 <!-- @styles -->
 
-<div class="app">
+<div class="app" id="app">
   <header class="top">
     <div class="portrait"><img id="portrait" alt=""><b id="hLvl">1</b></div>
     <div class="who">
@@ -13,50 +14,68 @@
     </div>
     <div class="purse">
       <div class="coin"><img class="px" id="goldIc" alt=""><span id="gold">0</span></div>
-      <div class="coin" style="font-size:15px"><span class="ico ember"></span><span id="embers">0</span></div>
+      <div class="coin ember-coin"><span class="ico ember"></span><span id="embers">0</span></div>
     </div>
+    <button class="bell" id="bellBtn" type="button" aria-label="Notices"><img class="px" id="bellIc" alt=""><b class="bell-n" id="bellN" hidden>0</b></button>
   </header>
 
-  <div class="zonebar">
-    <button class="navbtn" id="zPrev" aria-label="Previous zone">&lsaquo;</button>
-    <div class="zinfo"><div class="zname" id="zName">Mossy Hollow</div><div class="zsub" id="zSub">Zone 1</div></div>
-    <button class="navbtn" id="zNext" aria-label="Next zone">&rsaquo;</button>
-  </div>
-
-  <div class="stage" id="stage">
-    <canvas id="cv"></canvas>
-    <div class="mob">
-      <div class="mob-line"><span class="mob-name" id="mName">Moss Slime</span><span class="mob-hp" id="mHp">10 / 10</span></div>
-      <div class="hpbar"><i class="trail" id="mTrail"></i><i class="fill" id="mBar"></i></div>
-      <div class="timer" id="tWrap" hidden><i id="tBar"></i></div>
+  <!-- Layout rules: docs/design/layout.md. Portrait: the game view (stage, control row, Next Up chip)
+       fills the screen between the header and the tab bar; a tab opens its menu full-screen over it.
+       Landscape and desktop (UX-L1, 80-landscape.css): a tab rail on the left, a top row, the stage, and a side column
+       (Next Up, notices, the action bar); a menu opens as a panel over the right part of the stage. -->
+  <div class="game" id="game">
+  <div class="stagebox" id="stageBox">
+    <div class="stage" id="stage">
+      <canvas id="cv"></canvas>
+      <div class="stage-hint" id="hint">Tap to strike</div>
     </div>
-    <div class="stage-hint" id="hint">Tap to strike</div>
+    <div class="hud">
+      <div class="hud-zone"><span class="zname" id="zName">Mossy Hollow</span><span class="zsub" id="zSub">Zone 1</span></div>
+      <div class="hero-plate" id="hPlate" hidden>
+        <div class="mob-line"><span class="mob-name" id="hpName">Hero</span><span class="mob-hp" id="hpNum">0 / 0</span></div>
+        <div class="hpbar"><i class="trail" id="hpTrail"></i><i class="fill" id="hpFill"></i></div>
+      </div>
+      <div class="mob">
+        <div class="mob-line"><span class="mob-name" id="mName">Moss Slime</span><span class="mob-hp" id="mHp">10 / 10</span></div>
+        <div class="hpbar"><i class="trail" id="mTrail"></i><i class="fill" id="mBar"></i></div>
+        <div class="timer" id="tWrap" hidden><i id="tBar"></i></div>
+      </div>
+      <div class="stat-nums" id="statNums"><span>DPS <b id="sDps">0</b></span><span>Hit <b id="sTap">0</b></span></div>
+    </div>
+    <div class="toasts" id="toasts" aria-live="polite"></div>
   </div>
 
-  <div class="stats">
-    <div class="modeseg" id="modeSeg" role="group" aria-label="What your party is doing">
+  <div class="ctrl">
+    <div class="modeseg" id="modeSeg" role="group" aria-label="What your hero is doing">
       <button data-act="fight" aria-pressed="true">Fight</button>
       <button data-act="gather" aria-pressed="false">Gather</button>
-      <button data-act="raid" aria-pressed="false">Raid</button>
+      <!-- UX-A (ux-overhaul.md 4.3, approved): Raid left the control row; it is in the quick switcher (online) -->
     </div>
-    <div class="stat-nums" id="statNums">
-      <span>DPS <b id="sDps">0</b></span>
-      <span>Tap <b id="sTap">0</b></span>
+    <div class="zstep" id="zStep">
+      <button class="navbtn" id="zPrev" aria-label="Previous zone">&lsaquo;</button>
+      <span class="znum" id="zNum">Zone 1</span>
+      <button class="navbtn" id="zNext" aria-label="Next zone">&rsaquo;</button>
     </div>
   </div>
+  <div class="nu-slot" id="nuSlot"></div>
+  </div>
 
-  <nav class="tabs" role="tablist">
-    <button class="tab" role="tab" data-tab="adv" data-ic="sword" aria-selected="true">Fight</button>
-    <button class="tab" role="tab" data-tab="party" data-ic="party" aria-selected="false">Party</button>
-    <button class="tab" role="tab" data-tab="gat" data-ic="pick" aria-selected="false">Gather</button>
-    <button class="tab" role="tab" data-tab="forge" data-ic="anvil" aria-selected="false">Forge<span class="dot" id="forgeDot" hidden></span></button>
-    <button class="tab" role="tab" data-tab="world" data-ic="world" aria-selected="false">World<span class="dot" id="raidDot" hidden></span></button>
-  </nav>
-
+  <!-- The open tab's menu (70-ui.js): title, close, sub-view switcher, then the scrolling panels.
+       Each direct child of a panel shows in one sub-view (data-view; no attribute = the first view). -->
+  <div class="menu" id="menu" role="region" aria-labelledby="menuTitle">
+    <div class="menu-head" id="menuHead">
+      <div class="menu-bar">
+        <span class="menu-grab" aria-hidden="true"></span>
+        <img class="menu-ic px" id="menuIc" alt="">
+        <h2 class="menu-title" id="menuTitle">Fight</h2>
+        <button class="menu-x" id="menuX" type="button" aria-label="Close menu"><span aria-hidden="true"></span></button>
+      </div>
+      <div class="vseg" id="viewSeg" role="tablist" aria-label="Sections"></div>
+    </div>
   <div class="panels" id="panels">
     <!-- Fight -->
     <section class="panel" id="p-adv">
-      <div class="sec">
+      <div class="sec" data-view="upgrades">
         <h2 class="sec-title">Boss gate</h2>
         <div class="row">
           <div>
@@ -67,40 +86,13 @@
         </div>
         <label class="note" style="display:flex;gap:8px;align-items:center;cursor:pointer"><input type="checkbox" id="autoBoss" checked> Challenge frontier bosses automatically when ready</label>
       </div>
-      <div class="sec">
-        <div class="sec-head">
-          <h2 class="sec-title">Hero</h2>
-          <div class="seg" id="amtSeg"><button data-amt="1" aria-pressed="true">x1</button><button data-amt="10" aria-pressed="false">x10</button><button data-amt="max" aria-pressed="false">Max</button></div>
-        </div>
-        <div id="heroRows" class="sec"></div>
-      </div>
-      <div class="sec">
-        <h2 class="sec-title">Party</h2>
-        <div id="compRows" class="sec"></div>
-      </div>
     </section>
 
     <!-- Party (filled by 75-party.js) -->
     <section class="panel" id="p-party" hidden></section>
 
-    <!-- Gather -->
-    <section class="panel" id="p-gat" hidden>
-      <div class="skills" id="skillCards"></div>
-      <p class="note">While gathering, your party lays down their swords. No gold or monster kills, but every swing fills your pack. Tap the stage to work faster.</p>
-      <div class="sec">
-        <h2 class="sec-title">Mining</h2>
-        <div id="oreRows" class="sec"></div>
-      </div>
-      <div class="sec">
-        <h2 class="sec-title">Woodcutting</h2>
-        <div id="woodRows" class="sec"></div>
-      </div>
-      <div class="sec">
-        <h2 class="sec-title">Your pack</h2>
-        <div class="mats" id="matGrid"></div>
-        <p class="note">Essence drops from monsters while you fight. Higher zones drop rarer essence.</p>
-      </div>
-    </section>
+    <!-- Gather: the skill views and the Storehouse are built by 72-ui-gather.js and 75-store-ui.js (UX-A, GX1) -->
+    <section class="panel" id="p-gat" hidden></section>
 
     <!-- Forge -->
     <section class="panel" id="p-forge" hidden>
@@ -131,16 +123,43 @@
         <div class="sec-head"><h2 class="sec-title">Bag</h2><span class="note" id="bagCount">0 / 40</span></div>
         <div id="bagRows" class="sec"><p class="note">Forged gear and boss loot land here.</p></div>
       </div>
-      <div class="sec">
+      <div class="sec" data-view="uniques">
         <div class="sec-head"><h2 class="sec-title">Trophy wall</h2><span class="note" id="trophyCount">0 / 13 uniques</span></div>
         <div class="trophies" id="trophies"></div>
       </div>
     </section>
 
-    <!-- World: the Raid and Tavern parts keep their old ids (p-raid, p-tav) so
-         registerSection('raid' | 'tav') and 80-online.js keep working. -->
+    <!-- Camp (tab id "world"): four sub-views, one per part: Camp (57-camp.js, 75-camp-ui.js), Tavern,
+         Almanac (75-almanac-ui.js) and World raid. The Raid and Tavern parts keep their old ids
+         (p-raid, p-tav) so registerSection('raid' | 'tav') and 80-online.js keep working. -->
     <section class="panel" id="p-world" hidden>
-    <div class="panel world-part" id="p-raid">
+    <div class="panel world-part" id="p-camp" data-view="camp"></div>
+
+    <div class="panel world-part" id="p-tav" data-view="tav">
+      <h2 class="world-head">Tavern</h2>
+      <div class="sec">
+        <h2 class="sec-title">In the tavern now</h2>
+        <div class="online" id="online"><span class="note">Nobody else is here yet.</span></div>
+      </div>
+      <div class="sec">
+        <h2 class="sec-title">Hall of heroes</h2>
+        <div style="overflow-x:auto">
+          <table class="board">
+            <thead><tr><th></th><th>Hero</th><th class="n">Lv</th><th class="n">Zone</th><th class="n">Gear</th></tr></thead>
+            <tbody id="board"><tr><td colspan="5" class="note">The hall fills up as heroes join the shared world.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="sec">
+        <h2 class="sec-title">Your hero's name</h2>
+        <form class="rename" id="renameForm">
+          <input id="nameInput" maxlength="18" autocomplete="off" aria-label="Hero name">
+          <button type="submit">Save</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="panel world-part" id="p-raid" data-view="raid">
       <h2 class="world-head">World raid</h2>
       <div class="card raidcard">
         <div class="zsub" id="rGen">World raid</div>
@@ -169,54 +188,17 @@
         <div id="relicRows" class="sec"></div>
       </div>
     </div>
-
-    <div class="panel world-part" id="p-tav">
-      <h2 class="world-head">Tavern</h2>
-      <div class="sec">
-        <h2 class="sec-title">In the tavern now</h2>
-        <div class="online" id="online"><span class="note">Nobody else is here yet.</span></div>
-      </div>
-      <div class="sec">
-        <h2 class="sec-title">Hall of heroes</h2>
-        <div style="overflow-x:auto">
-          <table class="board">
-            <thead><tr><th></th><th>Hero</th><th class="n">Lv</th><th class="n">Zone</th><th class="n">Gear</th></tr></thead>
-            <tbody id="board"><tr><td colspan="5" class="note">The hall fills up as heroes join the shared world.</td></tr></tbody>
-          </table>
-        </div>
-      </div>
-      <div class="sec">
-        <h2 class="sec-title">Your hero's name</h2>
-        <form class="rename" id="renameForm">
-          <input id="nameInput" maxlength="18" autocomplete="off" aria-label="Hero name">
-          <button type="submit">Save</button>
-        </form>
-      </div>
-      <div class="sec">
-        <h2 class="sec-title">Lifetime</h2>
-        <dl class="kv" style="margin:0">
-          <div><dt>Foes slain</dt><dd id="lKills">0</dd></div>
-          <div><dt>Gold earned</dt><dd id="lGold">0</dd></div>
-          <div><dt>Best zone</dt><dd id="lZone">1</dd></div>
-          <div><dt>Raid bosses</dt><dd id="lWyrms">0</dd></div>
-          <div><dt>Gear score</dt><dd id="lGear">0</dd></div>
-        </dl>
-      </div>
-    </div>
     </section>
   </div>
-</div>
-
-<div class="toasts" id="toasts" aria-live="polite"></div>
-
-<div class="modal" id="away" hidden>
-  <div class="card">
-    <div class="zsub">While you were away</div>
-    <h3 id="awayTime">2h 10m</h3>
-    <div class="gains" id="awayGain"></div>
-    <p class="note" id="awayNote" style="margin-inline:auto">Your party kept fighting.</p>
-    <button class="big home" id="awayOk">Collect</button>
   </div>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" data-tab="adv" data-ic="sword" aria-selected="true">Fight</button>
+    <button class="tab" role="tab" data-tab="party" data-ic="party" aria-selected="false">Hero</button>
+    <button class="tab" role="tab" data-tab="gat" data-ic="pick" aria-selected="false">Gather</button>
+    <button class="tab" role="tab" data-tab="forge" data-ic="anvil" aria-selected="false">Craft<span class="dot" id="forgeDot" hidden></span></button>
+    <button class="tab" role="tab" data-tab="world" data-ic="camp" aria-selected="false">Camp<span class="dot" id="raidDot" hidden></span></button>
+  </nav>
 </div>
 
 <!-- @script -->

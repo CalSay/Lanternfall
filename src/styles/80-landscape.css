@@ -1,0 +1,225 @@
+/* 80-landscape: the landscape layout (UX-L1, docs/design/layout.md "Landscape").
+   Active when the viewport is at least as wide as tall and 600 px or wider (phones on their side, tablets, desktop): the same
+   query as 70-ui's WIDE_Q (isWide()). Portrait keeps its own layout (10-base, 30-panels).
+
+     +------+---------------------------------------------+---------------+
+     | port | gold  [Fight|Gather] [Switch] [< Zone >]                bell |   top row (44 px; 48 on tall screens)
+     |------+---------------------------------------------+---------------|
+     | Fight|                                             | Next Up       |
+     | Hero |   the stage (combat info in its sky)        | notices       |
+     | ...  |                                             | [Q] [W] [E]   |
+     | rail |                                             | [A] [S] [D]   |   the bar, bottom right (Attack in the corner)
+     +------+---------------------------------------------+---------------+
+
+   A menu opens as a panel over the right part of the stage, next to the side column: the hero keeps fighting in the strip on
+   the left (you still see them and their HP), and the bar, Next Up and notices stay live on the right, so a boss's heavy hit
+   can still be parried with a menu open. Close it with its X, the lit tab, or Escape.
+   The grid: rail | purse | control row | side (less the bell) | bell. The stage spans the purse and control columns, the
+   side column the last two. .top and .game become `display: contents`, so their children are placed straight on this grid. */
+@media (min-aspect-ratio: 1/1) and (min-width: 600px) {
+  .app { --rail: 52px; --toprow: 44px; --side: clamp(208px, 20vw, 272px); --tabs-h: 0px;
+    max-width: none; margin: 0;
+    padding: 0 env(safe-area-inset-right, 0px) 0 env(safe-area-inset-left, 0px);
+    grid-template-columns: var(--rail) auto minmax(0, 1fr) calc(var(--side) - 44px) 44px;
+    grid-template-rows: var(--toprow) auto minmax(0, 1fr) auto;
+    grid-template-areas: none; }
+  /* the top row's and the side column's backgrounds (painted first: order -1) */
+  .app::before, .app::after { content: ""; order: -1; pointer-events: none; }
+  .app::before { grid-column: 2 / -1; grid-row: 1; background: linear-gradient(#1C1524, #16111D); border-bottom: 1px solid var(--line); }
+  .app::after { grid-column: 4 / -1; grid-row: 2 / -1; background: linear-gradient(90deg, #120E18, #16111D); border-left: 1px solid var(--line); }
+  .top, .game { display: contents; }
+
+  /* ---- the rail: portrait and level on top, then the five tabs ---- */
+  .tabs { grid-area: auto; grid-column: 1; grid-row: 1 / -1; display: flex; flex-direction: column; align-items: stretch; gap: 2px;
+    padding: calc(var(--toprow) + 6px) 0 env(safe-area-inset-bottom, 0px); background: #0F0B14; border-top: 0; border-right: 1px solid var(--line); box-shadow: none; overflow: hidden; }
+  .tabs { justify-content: flex-start !important; }   /* 75-onboard centres a short bar inline (portrait); the rail keeps them at the top */
+  .tab { flex: none; min-height: 54px; margin: 0; padding: 4px 0; border-top: 0; border-left: 3px solid transparent; font-size: calc(10.5px * var(--display-k)); letter-spacing: 0; }
+  .tab img { width: 20px; height: 20px; }
+  .tab[aria-selected="true"] { border-left-color: var(--ember); background: linear-gradient(90deg, rgba(255,158,61,.14), transparent 85%); }
+  .tab .dot { top: 5px; right: 6px; }
+  .tab.is-new::after { top: 2px; left: auto; right: 1px; }
+  .portrait { grid-column: 1; grid-row: 1; place-self: center; z-index: 7; margin-top: 4px; }
+
+  /* ---- the top row: gold and embers, Fight / Gather, Switch, the zone arrows, the bell; XP is its bottom line ---- */
+  .purse { grid-column: 2; grid-row: 1; display: flex; align-items: center; gap: 10px; padding: 0 4px 0 10px; }
+  .coin { font-size: calc(15px * var(--display-k)); }
+  .who { grid-column: 2 / -1; grid-row: 1; align-self: end; position: relative; height: 3px; min-height: 0; z-index: 2; pointer-events: none; display: block; }
+  .who .act-pill, .who .hname { display: none; }
+  .top.nav-line .who > .bar, .top.nav-pill .who > .bar, .who > .bar { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; border: 0; background: #0B0810; }
+  .bell { grid-column: 5; grid-row: 1; place-self: center; }
+  .game > .ctrl, .game.solo-game > .ctrl { grid-column: 3 / 5; grid-row: 1; align-self: center; justify-content: flex-start; min-width: 0; gap: 8px; padding: 0 8px; }
+  .game .modeseg button { min-height: 34px; }
+  .game .ctrl-switch { min-height: 34px; margin-right: 0; }
+  .game .navbtn { height: 40px; }
+  .app.deep-run .dw-row { grid-column: 3 / 5; grid-row: 1; align-self: center; height: auto; padding: 0 8px; min-width: 0; }
+
+  /* ---- the stage: everything between the top row, the rail and the side column. 62-stage picks whole-pixel zooms here
+     (1 art px = 1 CSS px on phones, 2 on desktop). ---- */
+  .stagebox, .game.solo-game > .stagebox { grid-column: 2 / 4; grid-row: 2 / -1; margin: 0; min-height: 0; border: 0; outline: 0; }
+  /* combat info in the sky: the place on the left, the foe's plate (name, HP, boss timer) on the right */
+  .hud-zone { max-width: calc(100% - min(46%, 320px) - 16px); padding-top: 6px; }
+  /* the open menu leaves a 120 px strip of stage: DPS only there (Hit ran under the menu) */
+  .app.menu-open .stat-nums > span + span { display: none; }
+  .mob .mob-name { flex: 1 1 auto; min-width: 0; }
+  .cb-strip { left: auto; right: 8px; width: min(46%, 320px); top: 60px; }
+  .mob { position: absolute; top: 6px; right: 8px; width: min(46%, 320px); padding: 4px 6px 5px; background: rgba(14,11,18,.72); border: 1px solid var(--line-hi); box-shadow: 0 2px 0 #0B0810; }
+
+  /* ---- the side column: Next Up at the top, notices under it, the action bar in the bottom-right corner ---- */
+  .game > .gate-rule { grid-column: 4 / -1; grid-row: 3; align-self: start; margin: 6px 6px 0 7px; z-index: 2; }
+  .nu-slot, .game.solo-game > .nu-slot { grid-column: 4 / -1; grid-row: 2; padding: 6px 6px 0 7px; min-width: 0; }
+  /* Next Up: the eyebrow, status and "+N" on one line, the goal under it at the column's full width */
+  .nu-chip { min-height: 44px; grid-template-columns: 22px minmax(0, 1fr) auto auto; grid-template-rows: auto auto; gap: 2px 6px; padding: 4px 6px 6px 6px; }
+  .nu-chip .nu-ic { width: 22px; height: 22px; grid-row: 1; }
+  .nu-chip .nu-ic img { width: 16px; height: 16px; }
+  .nu-chip .nu-cbody { display: contents; }
+  .nu-chip .nu-eye { grid-column: 2; grid-row: 1; align-self: center; }
+  .nu-chip .nu-cst { grid-column: 3; grid-row: 1; }
+  .nu-chip .nu-more { grid-column: 4; grid-row: 1; }
+  .nu-chip .nu-lbl { grid-column: 1 / -1; grid-row: 2; white-space: normal; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; font-size: 13px; line-height: 1.2; }
+  .nu-chip .nu-chev { display: none; }
+  /* the dock in the side column: tabs, four tiles in a row (icons only; the names show on tall screens), Parry and Dodge under them */
+  .sbar, .game.solo-game > .sbar { --sb-tile: 58px; --sb-ic: 24px; grid-column: 4 / -1; grid-row: 4; align-self: end; padding: 4px 6px calc(6px + env(safe-area-inset-bottom, 0px)) 7px; gap: 5px; }
+  .sb-tabs, .sb-pane, .sb-row { width: 100%; max-width: none; justify-self: end; }
+  .sb-row { gap: 5px; }
+  .sb-tab { min-height: 44px; font-size: calc(14px * var(--display-k)); }
+  .sb-sub { display: none; }
+  .sb-lb { font-size: calc(9px * var(--display-k)); letter-spacing: 0; }
+  .sb-tx { padding: 0; }   /* "Attack" needs the 6 px the tile padding took */
+  .sbtn { gap: 1px; }
+  .sb-n { top: 4px; height: var(--sb-ic); font-size: calc(20px * var(--display-k)); }
+  .sb-p-foe { gap: 3px; font-size: 12px; }
+  .sb-fk { display: none; }
+  .sb-fname { font-size: calc(14px * var(--display-k)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .sb-fr { flex-wrap: wrap; }
+  .sb-def { min-height: 44px; gap: 6px; }
+  .sb-def .sb-ic { width: 24px; height: 24px; }
+  .sb-def .sb-n { width: 24px; font-size: calc(16px * var(--display-k)); }
+  .sb-def .sb-lb { font-size: calc(13px * var(--display-k)); }
+  .sb-def { padding: 0 5px; }
+  .toasts.side-dock { grid-column: 4 / 6; grid-row: 3 / 4; top: auto; bottom: 4px; left: 7px; right: 6px; z-index: 6; }
+  .toasts.side-dock .toast { box-shadow: 0 3px 0 #0B0810, 0 6px 14px rgba(0,0,0,.45); }
+
+  /* ---- menus: a panel over the right part of the stage; the stage's left strip (the hero) stays in view ---- */
+  .menu { grid-area: auto; grid-column: 2 / 4; grid-row: 2 / -1; justify-self: end; width: min(560px, max(320px, 100% - 120px)); min-width: 0; z-index: 5;
+    border-top: 0; border-left: 2px solid var(--line-hi); box-shadow: -4px 0 0 #0B0810, -10px 0 24px rgba(0,0,0,.5);
+    transform: none; opacity: 1; visibility: visible; transition: transform .2s cubic-bezier(.2,.85,.25,1), opacity .2s, visibility 0s; }
+  .app:not(.menu-open) .menu { transform: translateX(24px); opacity: 0; visibility: hidden; transition: transform .16s ease-in, opacity .16s ease-in, visibility 0s .16s; }
+  .menu-head { display: flex; align-items: center; touch-action: auto; }
+  .menu-bar { order: 2; flex: none; min-height: 44px; padding: 0 2px 0 0; gap: 4px; }
+  .menu-grab { display: none; }
+  .menu-ic { display: none; }
+  .menu-title { font-size: calc(17px * var(--display-k)); }
+  .vseg { flex: 1; min-width: 0; margin: 4px 0 4px 8px; }
+  .vseg button { min-height: 36px; padding: 0 1px; font-size: calc(12px * var(--display-k)); }   /* 1 px: Bounties, Bestiary, Deepwell fit */
+  .menu-head .vseg button { min-height: 44px; font-size: calc(11px * var(--display-k)); }   /* icon above label: 44 px is the target floor; 11 px so Abilities (4 views share the header) fits */
+  /* menu audit: an X closes (the old right chevron read as "more tabs") */
+  .menu-x span { width: 14px; height: 14px; border: 0; transform: none; background: linear-gradient(45deg, transparent 43%, currentColor 43%, currentColor 57%, transparent 57%), linear-gradient(-45deg, transparent 43%, currentColor 43%, currentColor 57%, transparent 57%); }
+  /* with a switcher the lit tab names the menu; with none (one view) the title shows */
+  .menu-head:has(.vseg:not([hidden])) .menu-title { display: none; }
+  .menu-head:has(.vseg[hidden]) .menu-bar { flex: 1; padding-left: var(--gut); }
+  .panels { padding: 10px 10px 20px; }
+  /* the guide panel: in the side column's notices slot, under the top row. It stands in for Next Up while it speaks (the chip
+     keeps its place, hidden), except for the Next Up step, where it takes the notices row under the chip it points at. */
+  .ob-bub.side { grid-column: 4 / -1; grid-row: 2 / 4; align-self: start; margin: 6px 6px 0 7px; z-index: 7; max-height: calc(100% - 6px); overflow: hidden;
+    grid-template-columns: 36px minmax(0, 1fr) 44px; grid-template-rows: auto minmax(0, auto) auto; column-gap: 6px; row-gap: 2px; padding: 6px 0 6px 6px; font-size: 12.5px; line-height: 1.22; }
+  .ob-bub.side.nu { grid-row: 3; align-self: end; margin-bottom: 4px; }
+  /* a short column: the face and name share the first line with the dismiss, the tip runs the full width under them, the button has the last row */
+  .ob-bub.side .ob-facebox, .ob-bub.side .ob-face { width: 36px; height: 36px; }
+  .ob-bub.side .ob-name { display: block; grid-column: 2; grid-row: 1; align-self: center; font: 600 calc(11px * var(--display-k)) var(--display); color: var(--gold); white-space: nowrap; }
+  .ob-bub.side .ob-facebox { grid-row: 1; }
+  .ob-bub.side .ob-x { margin-top: -4px; margin-bottom: -4px; }
+  .ob-bub.side .ob-txt { grid-column: 1 / 3; grid-row: 2; align-self: start; padding-right: 6px; min-height: 0; overflow-y: auto; }
+  .ob-bub.side .ob-ok { grid-column: 1 / 3; grid-row: 3; margin-top: 4px; justify-self: start; max-width: calc(100% - 6px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ob-bub.side.btn { grid-row: 2 / -1; max-height: calc(100% - 10px); }
+  .ob-bub.side.nu.btn { grid-row: 3 / -1; align-self: start; margin-bottom: 0; }
+  .app.guide-btn .sbar { visibility: hidden; }
+  .app.guide-side:not(.guide-nu) .nu-slot, .app.guide-side .gate-rule { visibility: hidden; }
+  /* the notices column is the guide's while it speaks, so a banner (a level, an ability, a craft, the hero's bark) moves to the foot of the
+     stage, under the hero and foe, and the guide's marker and panel stay clear of it (hero-voice-banner-under-guide) */
+  .app.guide-side .toasts.side-dock { grid-column: 2 / 4; grid-row: 3 / -1; left: 8px; right: 8px; bottom: 24px; z-index: 6; align-items: center; }
+  .app.guide-side .toasts.side-dock .toast { width: min(100%, 320px); }
+  .app.guide-side .toasts.side-dock .mm-t-sub { display: none; }   /* a short banner: the stage is short sideways */
+  /* eye and title share a row, so the banner clears the hero's legs (it overlapped them by 25 px at 740x360) */
+  .app.guide-side .toasts.side-dock .mm-toast { padding-top: 3px; padding-bottom: 3px; min-height: 0; }
+  .app.guide-side .toasts.side-dock .mm-t-tx { grid-template-columns: auto minmax(0, 1fr); align-items: baseline; gap: 0 8px; }
+  .app.guide-side .toasts.side-dock .mm-t-say, .app.guide-side .toasts.side-dock .mm-t-line { grid-column: 1 / -1; }
+
+  /* ---- sheets fit a short screen ---- */
+  .sp-ov { align-items: center; }
+  .sp-sheet { width: min(460px, calc(100% - 24px)); max-height: calc(100% - 16px); overflow-y: auto; overscroll-behavior: contain; border-bottom: 2px solid var(--line-hi); }
+  .bsheet { height: 94%; }
+  .bsheet.small { max-height: 94%; }
+}
+/* phones on their side: the stage's sky is short, so the combat info sits in two plates (hero left, foe right) */
+@media (min-aspect-ratio: 1/1) and (min-width: 600px) and (max-height: 500px) {
+  .hud::before { height: 48px; }
+}
+/* tall landscape (tablets, desktop): the mock-up's desktop sizes, a wider rail and a taller top row; key labels on the slots */
+@media (min-aspect-ratio: 1/1) and (min-width: 600px) and (min-height: 600px) {
+  .app { --rail: 64px; --toprow: 48px; }
+  .tab { min-height: 62px; font-size: calc(12px * var(--display-k)); }
+  .tab img { width: 22px; height: 22px; }
+  .portrait { width: 44px; height: 44px; }
+  .portrait img { width: 34px; height: 34px; }
+  .sbar, .game.solo-game > .sbar { --sb-tile: 100px; --sb-ic: 48px; }
+  .sb-tx { display: grid; }
+  .sb-sub { display: block; }
+  .sb-lb { font-size: calc(12px * var(--display-k)); letter-spacing: 0; }
+  .sb-def { min-height: 52px; padding: 0 8px; }
+  .sb-def .sb-lb { font-size: calc(16px * var(--display-k)); }
+  .sb-def .sb-ic { width: 36px; height: 36px; }
+  .sb-def .sb-n { width: 36px; }
+  .sb-def .sb-sub { display: block; }
+  .sb-n { top: 8px; height: var(--sb-ic); }
+  .game .modeseg button { min-height: 38px; }
+  .game .ctrl-switch { min-height: 38px; }
+}
+@media (min-aspect-ratio: 1/1) and (min-width: 600px) and (prefers-reduced-motion: reduce) {
+  .menu, .app:not(.menu-open) .menu { transition: none; }
+}
+/* the item sheet in landscape (menu audit: the header took the 220 px body, so about 2 stat lines showed): wider, the
+   item on the left, what it does and the compare on the right */
+@media (orientation: landscape) and (max-height: 500px) {
+  .bsheet.cf-isheet { width: min(760px, 100%); }
+  .cf-isheet .bsheet-body { grid-template-columns: minmax(180px, 34%) minmax(0, 1fr); column-gap: 16px; align-items: start; }
+  .cf-isheet .bsheet-body > * { grid-column: 2; }
+  .cf-isheet .bsheet-body > .cf-ih { grid-column: 1; grid-row: 1 / span 20; position: sticky; top: 0; display: grid; justify-items: start; gap: 8px; }
+}
+
+/* Versus header (owner, 2026-10-01): when fighting, a fighting-game top bar. The hero's plate fills the left half and
+   the foe's the right half, each with "current / max"; the bars drain toward the middle. The place sits centred under
+   them; each side's status chips sit under its bar at the outer edge (62-stage draws them). */
+.hud.vs .hero-plate, .hud.vs .mob { position: absolute; top: 6px; width: calc(50% - 12px); display: grid; gap: 2px; padding: 4px 6px 5px; margin: 0;
+  background: rgba(14,11,18,.72); border: 1px solid var(--line-hi); box-shadow: 0 2px 0 #0B0810; }
+.hud.vs .hero-plate { left: 8px; }
+.hud.vs .mob { right: 8px; left: auto; }
+.hud.vs .mob .mob-line { flex-direction: row-reverse; }
+.hud.vs .mob .mob-name { text-align: right; }
+.hud.vs .mob .hpbar > i { transform-origin: 100% 50%; }
+.hud.vs .hero-plate .hpbar > i.fill { background: var(--hero-hp, #7ED36A); }
+.hud.vs .mob-name { flex: 1 1 auto; min-width: 0; }
+.hud.vs .hero-plate, .hud.vs .mob { grid-template-columns: minmax(0, 1fr); }
+.hud.vs .mob-line { min-width: 0; }
+.hud.vs .hud-zone { position: absolute; left: 50%; transform: translateX(-50%); top: var(--vs-b, 46px); max-width: 34%; padding: 2px 6px 0;
+  flex-direction: column; align-items: center; gap: 0; text-align: center; }
+.hud.vs .hud-zone .zname { font-size: calc(12px * var(--display-k)); max-width: 100%; }
+.hud.vs .hud-zone .zsub { font-size: 9.5px; }
+.hud.vs .hpbar { height: 11px; }
+/* the combat strip (stagger, cast, pack count) moves under the foe's status chips */
+.stagebox.vs-on .cb-strip { left: auto; right: 8px; width: calc(50% - 12px); top: calc(var(--vs-b, 46px) + 24px); justify-content: flex-end; }
+
+/* Fight labels fit (2026-10-06). The foe plate grew taller than the hero plate when a boss appeared (a long name wrapped
+   the HP onto its own row, and the boss timer added a row), so the place line, set from the plates' bottom, landed under
+   it. The timer now lies along the plate's bottom edge. Sideways, name and HP share one row and a long name wraps inside
+   its own cell. Upright on a phone, both plates keep room for a two-line name above the HP row. Neither changes height. */
+.hud.vs .mob .timer { position: absolute; left: 6px; right: 6px; bottom: 2px; }
+.hud.vs .hero-plate, .hud.vs .mob { align-content: start; }
+@media (max-aspect-ratio: 1/1), (max-width: 599px) {
+  .hud.vs .hero-plate, .hud.vs .mob { min-height: 80px; }
+}
+@media (min-aspect-ratio: 1/1) and (min-width: 600px) {
+  .stagebox .hud.vs .mob .mob-line { flex-wrap: nowrap; align-items: flex-start; }
+  .stagebox .hud.vs .mob .mob-name { flex: 1 1 0; min-width: 0; max-width: none; }
+  .stagebox .hud.vs .mob .mob-hp { flex: none; }
+  .hud.vs .hero-plate, .hud.vs .mob { min-height: 58px; }
+}

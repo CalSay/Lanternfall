@@ -1,0 +1,541 @@
+{
+  "method": "Per-column alpha projection at threshold >32 gives exactly five vertically separated icon runs. Global alpha projection at >160 gives three column bands. For each icon, capture all alpha >8 within its column-specific vertical band, plus 1 source-pixel padding; frames use half-open x,y,w,h. This avoids uniform-row cuts through Fibre icons.",
+  "sheets": {
+    "hide": {
+      "file": "hide.png",
+      "width": 971,
+      "height": 1619,
+      "columnBands": [
+        [
+          0,
+          325
+        ],
+        [
+          325,
+          652
+        ],
+        [
+          652,
+          971
+        ]
+      ],
+      "columnRowBands": [
+        [
+          [
+            0,
+            337
+          ],
+          [
+            337,
+            645
+          ],
+          [
+            645,
+            941
+          ],
+          [
+            941,
+            1265
+          ],
+          [
+            1265,
+            1619
+          ]
+        ],
+        [
+          [
+            0,
+            335
+          ],
+          [
+            335,
+            655
+          ],
+          [
+            655,
+            946
+          ],
+          [
+            946,
+            1260
+          ],
+          [
+            1260,
+            1619
+          ]
+        ],
+        [
+          [
+            0,
+            328
+          ],
+          [
+            328,
+            644
+          ],
+          [
+            644,
+            946
+          ],
+          [
+            946,
+            1265
+          ],
+          [
+            1265,
+            1619
+          ]
+        ]
+      ]
+    },
+    "fibre": {
+      "file": "fibre.png",
+      "width": 1374,
+      "height": 1145,
+      "columnBands": [
+        [
+          0,
+          524
+        ],
+        [
+          524,
+          856
+        ],
+        [
+          856,
+          1374
+        ]
+      ],
+      "columnRowBands": [
+        [
+          [
+            0,
+            241
+          ],
+          [
+            241,
+            464
+          ],
+          [
+            464,
+            678
+          ],
+          [
+            678,
+            909
+          ],
+          [
+            909,
+            1145
+          ]
+        ],
+        [
+          [
+            0,
+            248
+          ],
+          [
+            248,
+            467
+          ],
+          [
+            467,
+            679
+          ],
+          [
+            679,
+            908
+          ],
+          [
+            908,
+            1145
+          ]
+        ],
+        [
+          [
+            0,
+            250
+          ],
+          [
+            250,
+            460
+          ],
+          [
+            460,
+            683
+          ],
+          [
+            683,
+            914
+          ],
+          [
+            914,
+            1145
+          ]
+        ]
+      ]
+    }
+  },
+  "icons": [
+    {
+      "family": "fibre",
+      "grade": 1,
+      "name": "Hemp Fibre",
+      "sheet": "fibre",
+      "frame": {
+        "x": 238,
+        "y": 9,
+        "w": 245,
+        "h": 231
+      }
+    },
+    {
+      "family": "fibre",
+      "grade": 2,
+      "name": "Flax Fibre",
+      "sheet": "fibre",
+      "frame": {
+        "x": 554,
+        "y": 18,
+        "w": 270,
+        "h": 222
+      }
+    },
+    {
+      "family": "fibre",
+      "grade": 3,
+      "name": "Briarthread",
+      "sheet": "fibre",
+      "frame": {
+        "x": 892,
+        "y": 35,
+        "w": 242,
+        "h": 198
+      }
+    },
+    {
+      "family": "fibre",
+      "grade": 4,
+      "name": "Kelp Fibre",
+      "sheet": "fibre",
+      "frame": {
+        "x": 207,
+        "y": 242,
+        "w": 293,
+        "h": 218
+      }
+    },
+    {
+      "family": "fibre",
+      "grade": 5,
+      "name": "Stormgrass Fibre",
+      "sheet": "fibre",
+      "frame": {
+        "x": 549,
+        "y": 255,
+        "w": 275,
+        "h": 210
+      }
+    },
+    {
+      "family": "fibre",
+      "grade": 6,
+      "name": "Sea Silk",
+      "sheet": "fibre",
+      "frame": {
+        "x": 882,
+        "y": 266,
+        "w": 285,
+        "h": 188
+      }
+    },
+    {
+      "family": "fibre",
+      "grade": 7,
+      "name": "Ashmoth Silk",
+      "sheet": "fibre",
+      "frame": {
+        "x": 204,
+        "y": 470,
+        "w": 288,
+        "h": 205
+      }
+    },
+    {
+      "family": "fibre",
+      "grade": 8,
+      "name": "Glassfilament",
+      "sheet": "fibre",
+      "frame": {
+        "x": 548,
+        "y": 471,
+        "w": 278,
+        "h": 198
+      }
+    },
+    {
+      "family": "fibre",
+      "grade": 9,
+      "name": "Wyrmthread",
+      "sheet": "fibre",
+      "frame": {
+        "x": 889,
+        "y": 467,
+        "w": 281,
+        "h": 213
+      }
+    },
+    {
+      "family": "fibre",
+      "grade": 10,
+      "name": "Rimeflax Fibre",
+      "sheet": "fibre",
+      "frame": {
+        "x": 205,
+        "y": 680,
+        "w": 277,
+        "h": 224
+      }
+    },
+    {
+      "family": "fibre",
+      "grade": 11,
+      "name": "Moonmoth Silk",
+      "sheet": "fibre",
+      "frame": {
+        "x": 545,
+        "y": 690,
+        "w": 286,
+        "h": 210
+      }
+    },
+    {
+      "family": "fibre",
+      "grade": 12,
+      "name": "Starroot Filament",
+      "sheet": "fibre",
+      "frame": {
+        "x": 881,
+        "y": 684,
+        "w": 298,
+        "h": 223
+      }
+    },
+    {
+      "family": "fibre",
+      "grade": 13,
+      "name": "Stillvine Fibre",
+      "sheet": "fibre",
+      "frame": {
+        "x": 203,
+        "y": 915,
+        "w": 300,
+        "h": 205
+      }
+    },
+    {
+      "family": "fibre",
+      "grade": 14,
+      "name": "Blackmere Filament",
+      "sheet": "fibre",
+      "frame": {
+        "x": 551,
+        "y": 917,
+        "w": 266,
+        "h": 201
+      }
+    },
+    {
+      "family": "fibre",
+      "grade": 15,
+      "name": "Skyless Thread",
+      "sheet": "fibre",
+      "frame": {
+        "x": 893,
+        "y": 921,
+        "w": 273,
+        "h": 202
+      }
+    },
+    {
+      "family": "hide",
+      "grade": 1,
+      "name": "Bristlehide",
+      "sheet": "hide",
+      "frame": {
+        "x": 33,
+        "y": 61,
+        "w": 264,
+        "h": 260
+      }
+    },
+    {
+      "family": "hide",
+      "grade": 2,
+      "name": "Duskfang Pelt",
+      "sheet": "hide",
+      "frame": {
+        "x": 346,
+        "y": 55,
+        "w": 280,
+        "h": 265
+      }
+    },
+    {
+      "family": "hide",
+      "grade": 3,
+      "name": "Fenscale",
+      "sheet": "hide",
+      "frame": {
+        "x": 683,
+        "y": 59,
+        "w": 254,
+        "h": 254
+      }
+    },
+    {
+      "family": "hide",
+      "grade": 4,
+      "name": "Riptide Skin",
+      "sheet": "hide",
+      "frame": {
+        "x": 34,
+        "y": 353,
+        "w": 257,
+        "h": 277
+      }
+    },
+    {
+      "family": "hide",
+      "grade": 5,
+      "name": "Tide Kelpie Hide",
+      "sheet": "hide",
+      "frame": {
+        "x": 354,
+        "y": 350,
+        "w": 276,
+        "h": 297
+      }
+    },
+    {
+      "family": "hide",
+      "grade": 6,
+      "name": "Brine Basilisk Hide",
+      "sheet": "hide",
+      "frame": {
+        "x": 683,
+        "y": 346,
+        "w": 257,
+        "h": 278
+      }
+    },
+    {
+      "family": "hide",
+      "grade": 7,
+      "name": "Ashwing Hide",
+      "sheet": "hide",
+      "frame": {
+        "x": 37,
+        "y": 659,
+        "w": 255,
+        "h": 273
+      }
+    },
+    {
+      "family": "hide",
+      "grade": 8,
+      "name": "Glassdrake Hide",
+      "sheet": "hide",
+      "frame": {
+        "x": 354,
+        "y": 662,
+        "w": 257,
+        "h": 267
+      }
+    },
+    {
+      "family": "hide",
+      "grade": 9,
+      "name": "Pyrewyrm Hide",
+      "sheet": "hide",
+      "frame": {
+        "x": 678,
+        "y": 662,
+        "w": 258,
+        "h": 268
+      }
+    },
+    {
+      "family": "hide",
+      "grade": 10,
+      "name": "Rime Mammoth Hide",
+      "sheet": "hide",
+      "frame": {
+        "x": 33,
+        "y": 953,
+        "w": 267,
+        "h": 297
+      }
+    },
+    {
+      "family": "hide",
+      "grade": 11,
+      "name": "Skyrend Griffon Hide",
+      "sheet": "hide",
+      "frame": {
+        "x": 351,
+        "y": 962,
+        "w": 274,
+        "h": 281
+      }
+    },
+    {
+      "family": "hide",
+      "grade": 12,
+      "name": "Starscar Behemoth Hide",
+      "sheet": "hide",
+      "frame": {
+        "x": 675,
+        "y": 962,
+        "w": 259,
+        "h": 289
+      }
+    },
+    {
+      "family": "hide",
+      "grade": 13,
+      "name": "Stillchimera Hide",
+      "sheet": "hide",
+      "frame": {
+        "x": 31,
+        "y": 1280,
+        "w": 275,
+        "h": 290
+      }
+    },
+    {
+      "family": "hide",
+      "grade": 14,
+      "name": "Mere Manticore Hide",
+      "sheet": "hide",
+      "frame": {
+        "x": 350,
+        "y": 1276,
+        "w": 280,
+        "h": 291
+      }
+    },
+    {
+      "family": "hide",
+      "grade": 15,
+      "name": "Skyless Drakehide",
+      "sheet": "hide",
+      "frame": {
+        "x": 673,
+        "y": 1280,
+        "w": 269,
+        "h": 292
+      }
+    }
+  ]
+}

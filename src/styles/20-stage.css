@@ -1,60 +1,131 @@
-/* header */
-.top { display: flex; align-items: center; gap: 10px; padding: 10px 16px 8px; }
-.portrait { width: 44px; height: 44px; flex: none; display: grid; place-items: center; background: var(--well); border: 2px solid var(--line-hi); box-shadow: inset 0 0 0 2px #0B0810, 0 0 12px rgba(255,158,61,.18); position: relative; }
-.portrait img { width: 36px; height: 36px; object-fit: contain; }
-.portrait b { position: absolute; right: -6px; bottom: -6px; background: var(--ember); color: #1A1420; font: 700 11px/1 var(--display); padding: 3px 4px; box-shadow: 0 2px 0 var(--ember-deep); }
-.who { min-width: 0; flex: 1; display: grid; gap: 5px; }
-.hname { font: 600 19px/1.1 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 2px 0 #0B0810; }
-.bar { height: 7px; background: var(--well); border: 1px solid #0B0810; overflow: hidden; }
-.bar > i { display: block; height: 100%; width: 0; background: var(--xp); box-shadow: inset 0 2px 0 rgba(255,255,255,.25); transition: width .2s; }
-.purse { display: grid; gap: 3px; justify-items: end; }
-.coin { display: flex; align-items: center; gap: 6px; font: 600 18px/1.1 var(--display); font-variant-numeric: tabular-nums; text-shadow: 0 2px 0 #0B0810; }
-.coin img { width: 14px; height: 14px; }
-.ico { width: 11px; height: 11px; display: inline-block; flex: none; }
-.ico.gold { background: var(--gold); border-radius: 50%; box-shadow: inset -2px -2px 0 #B8862A; }
-.ico.ember { background: var(--ember); transform: rotate(45deg) scale(.85); box-shadow: inset -2px -2px 0 var(--ember-deep); }
-
-/* stage */
-.zonebar { display: flex; align-items: center; gap: 8px; padding: 0 16px 8px; }
-.navbtn { width: 32px; height: 32px; flex: none; border: 2px solid var(--line); background: var(--panel); cursor: pointer; font: 600 16px var(--display); box-shadow: 0 2px 0 #0B0810; }
-.navbtn:disabled { opacity: .3; cursor: default; }
-.zinfo { flex: 1; min-width: 0; text-align: center; }
-.zname { font: 600 17px/1.15 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 2px 0 #0B0810; }
-.zsub { font-size: 12px; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
-.stage { position: relative; height: clamp(220px, 33vh, 256px); margin: 0 16px; border: 2px solid #0B0810; outline: 2px solid var(--line-hi); outline-offset: 0; overflow: hidden; background: #0e0b12; touch-action: manipulation; cursor: crosshair; user-select: none; -webkit-user-select: none; }
+/* stage box: the game's main view. It grows to fill the game column (the canvas reads its size;
+   62-stage re-lays out on resize), between a floor and a ceiling so the scene keeps its proportions. */
+.stagebox { position: relative; flex: 1 1 auto; min-height: 180px; margin: 2px var(--gut) 0; border: 2px solid #0B0810; outline: 2px solid var(--line-hi); outline-offset: 0; overflow: hidden; background: #0e0b12; }
+.stage { position: absolute; inset: 0; overflow: hidden; background: #0e0b12; touch-action: manipulation; cursor: crosshair; user-select: none; -webkit-user-select: none; }
 .stage > canvas { display: block; width: 100%; height: 100%; }
-.mob { position: absolute; left: 8px; right: 8px; top: 7px; display: grid; gap: 3px; pointer-events: none; }
+
+/* HUD over the stage: zone line, foe name and HP at the top, DPS and Tap at the bottom left.
+   It never takes taps; they fall through to the stage. */
+.hud { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
+.hud-zone, .mob { position: relative; }
+.hud::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 64px; background: linear-gradient(rgba(11,8,16,.62), rgba(11,8,16,0)); }
+.hud-zone { display: flex; align-items: baseline; gap: 8px; padding: 5px 8px 0; min-width: 0; }
+.zname { font: 700 calc(14px * var(--display-k))/1.2 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; text-shadow: 0 2px 0 #000; }
+.zsub { flex: none; font: 600 10.5px/1.2 var(--body); color: #CFC3DC; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; text-shadow: 0 1px 0 #000, 0 0 4px #000; }
+.mob { display: grid; gap: 2px; padding: 2px 8px 0; }
 .mob-line { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 13px; text-shadow: 0 2px 0 #000, 0 0 4px #000; }
-.mob-name { font: 600 15px var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.mob-hp { font: 600 13px var(--display); font-variant-numeric: tabular-nums; color: var(--bone); white-space: nowrap; }
-.hpbar { position: relative; height: 10px; background: #0B0810; border: 2px solid #0B0810; box-shadow: 0 0 0 1px rgba(255,255,255,.14); }
-.hpbar > i { position: absolute; left: 0; top: 0; bottom: 0; width: 100%; }
-.hpbar > i.trail { background: #FFF3E0; transition: width .45s ease-in .12s; }
+.mob-name { font: 700 calc(13px * var(--display-k)) var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #F6ECDD; }
+.mob-hp { font: 700 calc(12px * var(--display-k)) var(--display); font-variant-numeric: tabular-nums; color: var(--bone); white-space: nowrap; }
+.hpbar { position: relative; height: 9px; background: #0B0810; border: 2px solid #0B0810; box-shadow: 0 0 0 1px rgba(255,255,255,.14); }
+.hpbar > i { position: absolute; left: 0; top: 0; bottom: 0; width: 100%; transform-origin: 0 50%; }
+.hpbar > i.trail { background: #FFF3E0; transition: transform .45s ease-in .12s; }
 .hpbar > i.fill { background: var(--hp); box-shadow: inset 0 2px 0 rgba(255,255,255,.28), inset 0 -2px 0 rgba(0,0,0,.25); }
 .timer { height: 4px; background: #0B0810; }
 .timer > i { display: block; height: 100%; background: var(--gold); width: 100%; }
-.stage-hint { position: absolute; bottom: 7px; left: 0; right: 0; text-align: center; font: 600 12px var(--display); color: rgba(239,230,214,.8); letter-spacing: .1em; text-transform: uppercase; pointer-events: none; transition: opacity .6s; text-shadow: 0 2px 0 #000; }
+.stat-nums { position: absolute; left: 8px; bottom: 5px; display: flex; gap: 10px; font: 500 11px var(--body); letter-spacing: .06em; text-transform: uppercase; color: #CFC3DC; text-shadow: 0 1px 0 #000, 0 0 4px #000, 0 0 2px #000; }
+.stat-nums b { color: var(--bone); font: 700 calc(13px * var(--display-k)) var(--display); letter-spacing: 0; text-transform: none; font-variant-numeric: tabular-nums; }
+.stage-hint { position: absolute; bottom: 26px; left: 0; right: 0; text-align: center; font: 600 calc(12px * var(--display-k)) var(--display); color: rgba(239,230,214,.8); letter-spacing: .1em; text-transform: uppercase; pointer-events: none; transition: opacity .6s; text-shadow: 0 2px 0 #000; }
 
-.stats { display: flex; justify-content: space-between; align-items: center; gap: 8px 12px; padding: 10px 16px 8px; font-size: 13px; color: var(--muted); flex-wrap: wrap; }
-.stats b { color: var(--bone); font: 600 14px var(--display); font-variant-numeric: tabular-nums; }
-.stat-nums { display: flex; gap: 12px; }
+/* control row under the stage: what the party is doing, and the zone stepper */
+.ctrl { flex: none; display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px var(--gut) 4px; }
 .modeseg { display: inline-flex; border: 2px solid #0B0810; box-shadow: 0 2px 0 #0B0810; }
-.modeseg button { background: var(--panel-2); border: 0; padding: 6px 12px; font: 600 13px var(--display); color: var(--muted); cursor: pointer; box-shadow: inset 0 1px 0 rgba(255,255,255,.06); }
+.modeseg button { min-height: 40px; min-width: 56px; background: var(--panel-2); border: 0; padding: 0 11px; font: 600 calc(13px * var(--display-k)) var(--display); color: var(--muted); cursor: pointer; box-shadow: inset 0 1px 0 rgba(255,255,255,.06); }
 .modeseg button + button { border-left: 2px solid #0B0810; }
 .modeseg button[aria-pressed="true"][data-act="fight"] { background: var(--xp); color: #13200F; box-shadow: inset 0 2px 0 rgba(255,255,255,.3), inset 0 -2px 0 #3B7A37; }
 .modeseg button[aria-pressed="true"][data-act="gather"] { background: var(--gold); color: #2A1E07; box-shadow: inset 0 2px 0 rgba(255,255,255,.3), inset 0 -2px 0 #A77B1E; }
 .modeseg button[aria-pressed="true"][data-act="raid"] { background: var(--hp); color: #fff; box-shadow: inset 0 2px 0 rgba(255,255,255,.25), inset 0 -2px 0 #8E2A2A; }
 .modeseg button:disabled { opacity: .4; cursor: default; }
+.zstep { display: flex; align-items: center; gap: 2px; }
+.navbtn { position: relative; width: 40px; height: 44px; flex: none; display: grid; place-items: center; padding: 0; border: 0; background: none; cursor: pointer; font: 600 calc(20px * var(--display-k))/1 var(--display); color: var(--bone); }
+.navbtn::after { content: ""; position: absolute; inset: 6px 4px; border: 2px solid var(--line); background: var(--panel); box-shadow: 0 2px 0 #0B0810; z-index: -1; }
+.zstep { isolation: isolate; }
+.navbtn:disabled { opacity: .3; cursor: default; }
+.znum { min-width: 58px; text-align: center; font: 700 calc(13px * var(--display-k))/1.1 var(--display); color: var(--bone); white-space: nowrap; font-variant-numeric: tabular-nums; }
 
-/* ability button (62-stage): round, top-right under the HP bar */
-.abil { position: absolute; right: 8px; top: 52px; width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--ember); background: radial-gradient(#4a2a20, #24141a); box-shadow: 0 3px 0 #0B0810, 0 0 10px rgba(255,158,61,.3); cursor: pointer; display: grid; place-items: center; overflow: hidden; padding: 0; touch-action: manipulation; }
+/* ability button (62-stage): round, right side, just over the ground line on short stages. On tall
+   stages (.stage.tall: a floor band of 76 px or more under the ground) it is bigger and sits in the
+   floor, bottom right, beside the sound and battle-bar buttons. Cooldown: a dark pie sweep and the
+   seconds left. Auto-cast on: a gold ring around it. */
+.abil { position: absolute; right: 8px; bottom: calc(20% + 10px); width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--ember); background: radial-gradient(#4a2a20, #24141a); box-shadow: 0 3px 0 #0B0810, 0 0 10px rgba(255,158,61,.3); cursor: pointer; display: grid; place-items: center; overflow: hidden; padding: 0; touch-action: manipulation; outline: 0 solid transparent; outline-offset: 1px; }
 .abil[hidden] { display: none; }
 .abil .abil-ic { width: 24px; height: 24px; image-rendering: pixelated; }
-.abil .cd { position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(rgba(11,8,16,.78) calc(var(--cd, 0) * 360deg), transparent 0); pointer-events: none; }
-.abil .n { position: absolute; font: 700 17px var(--display); color: var(--bone); text-shadow: 0 2px 0 #0B0810; pointer-events: none; }
-.abil.auto { border-color: var(--gold); }
+.abil .cd { position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(rgba(11,8,16,.8) calc(var(--cd, 0) * 360deg), transparent 0); pointer-events: none; }
+.abil .n { position: absolute; font: 700 calc(17px * var(--display-k)) var(--display); color: var(--bone); text-shadow: 0 2px 0 #0B0810, 0 0 3px #0B0810; pointer-events: none; }
+.abil.auto { outline: 3px solid var(--gold); }
 .abil.ready { animation: abil-glow 1.2s ease-in-out infinite; }
 .abil.nope { animation: abil-nope .25s; }
+.stage.tall .abil { right: 42px; bottom: 8px; width: 60px; height: 60px; border-width: 3px; }
+.stage.tall .abil .abil-ic { width: 36px; height: 36px; }
+.stage.tall .abil .n { font-size: 22px; }
 @keyframes abil-glow { 50% { box-shadow: 0 3px 0 #0B0810, 0 0 18px 4px rgba(255,190,90,.75); } }
 @keyframes abil-nope { 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
 @media (prefers-reduced-motion: reduce) { .abil.ready, .abil.nope { animation: none; } .abil.ready { box-shadow: 0 3px 0 #0B0810, 0 0 14px 3px rgba(255,190,90,.6); } }
+
+/* battle-bar toggle (62-stage): left of the sound button; above it on tall stages */
+.hud-btn { position: absolute; right: 38px; bottom: 6px; z-index: 5; width: 28px; height: 28px; padding: 0; border: 2px solid var(--line-hi); background: var(--well); cursor: pointer; opacity: .8; display: grid; place-items: center; }
+.hud-btn:hover { opacity: 1; }
+.hud-btn.off { opacity: .6; }
+.hud-btn canvas { width: 14px; height: 14px; image-rendering: pixelated; }
+.stage.tall .hud-btn { right: 6px; bottom: 38px; }
+
+/* fight-hud-fit: names never cut to "T... 10.7M". When "name  current / max" does not fit one row, the numbers drop under the
+   name (readHud re-reads the plate height, so the place line and chips follow). The place may take two lines. */
+.stagebox .hud.vs .mob-line { flex-wrap: wrap; row-gap: 0; }
+.stagebox .hud.vs .mob-name { flex: 1 0 auto; max-width: 100%; white-space: normal; overflow: visible; line-height: 1.1; }   /* a long foe name takes a second line */
+.stagebox .hud.vs .hud-zone { max-width: 40%; }
+.stagebox .hud.vs .hud-zone .zname { white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.1; overflow-wrap: anywhere; }
+/* the turn banner owns the middle of the stage while it shows; toasts and the strip wait out its short pause */
+.stagebox.tc-on .toasts { opacity: 0; transition: opacity .1s; }
+.stagebox.vs-on .toasts:not(.over-menu) { top: max(calc(var(--vs-b, 54px) + 22px), var(--vs-zb, 0px)); }   /* under the bars and the place line, not over them */
+/* portrait: no room under the place line, the hero's head is there (a banner sat over its upper half with the guide tip up). A toast docks at the
+   foot of the stage, left of the sound buttons, and a moment banner shrinks to one row: no sub line, no hero line under a title. Landscape keeps its own dock. */
+@media not ((min-aspect-ratio: 1/1) and (min-width: 600px)) {
+  .stagebox.vs-on .toasts:not(.over-menu) { top: auto; bottom: 6px; right: 70px; }   /* clear of the sound and battle-bar buttons */
+  .stagebox.vs-on:has(.stage.tall) .toasts:not(.over-menu) { right: 108px; }   /* a tall stage has the big ability button at the foot */
+  .stagebox.vs-on .toasts:not(.over-menu) .mm-toast { padding-top: 3px; padding-bottom: 3px; min-height: 0; align-items: center; }
+  .stagebox.vs-on .toasts:not(.over-menu) .mm-t-tx { grid-template-columns: auto minmax(0, 1fr); align-items: baseline; gap: 0 8px; }
+  .stagebox.vs-on .toasts:not(.over-menu) .mm-t-sub, .stagebox.vs-on .toasts:not(.over-menu) .mm-t-title ~ .mm-t-say { display: none; }
+  .stagebox.vs-on .toasts:not(.over-menu) .mm-t-say, .stagebox.vs-on .toasts:not(.over-menu) .mm-t-line { grid-column: 1 / -1; }
+  .stagebox.vs-on .toasts:not(.over-menu) .mm-t-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: calc(15px * var(--display-k)); }   /* a long name wraps to a second row and reaches the hero's feet on a short stage */
+}
+
+/* Portrait top band (top-bar-compact): under the header zone bar, ONE line holds the activity switch (Fight / Gather, the zone arrows)
+   and Next Up side by side, instead of three stacked rows. The permanent "While away" sentence is gone (the away card and the
+   away chip say it); Switch lives in the header pill, so it leaves this row. The stage keeps the space. Landscape has its own grid. */
+@media not ((min-aspect-ratio: 1/1) and (min-width: 600px)) {
+  .app .game { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr) auto auto; }   /* row 4: the guide panel (60-onboard.css), empty most of the time */
+  .app .game > .ctrl { grid-column: 1; grid-row: 1; flex-wrap: nowrap; justify-content: flex-start; gap: 2px; padding: 4px 0 4px var(--gut); }
+  .app .game > .nu-slot { grid-column: 2; grid-row: 1; min-width: 0; padding: 4px var(--gut) 4px 8px; align-self: center; }
+  .app .game > .gate-rule { grid-column: 1 / -1; grid-row: 2; margin: 0 var(--gut); }
+  .app .game > .dw-row { grid-column: 1 / -1; grid-row: 2; }
+  .app .game > .stagebox { grid-column: 1 / -1; grid-row: 3; }
+  .app .game > .sbar { grid-column: 1 / -1; grid-row: 5; }
+  .app .game > .ob-bub.dock { grid-column: 1 / -1; grid-row: 4; }
+  .app .game .ctrl-switch { display: none; }
+  .hud-zone { flex-wrap: wrap; column-gap: 8px; row-gap: 0; }   /* the place name keeps its full width; the line after it drops under it */
+  .hud-zone .zname { flex: none; max-width: 100%; }
+  .hud-zone .zsub { flex: 0 1 auto; }
+  .app .game .modeseg button { min-width: 0; padding: 0 7px; min-height: 36px; font-size: calc(12px * var(--display-k)); }
+  .app .game .modeseg .mode-ic { display: none; }
+  .top .zstep { display: contents; }
+  .top .zstep[hidden] { display: none; }
+  .top .zstep .znum { display: none; }   /* the zone pill says the zone */
+  .top .navbtn { width: 28px; height: 44px; isolation: isolate; }
+  .app.deep-run .top .zstep { display: none; }   /* a Deepwell run has floors, not zones to step */
+  .top .navbtn::after { inset: 8px 2px; }
+  .top.nav-pill .who { gap: 0; }
+  .top.nav-pill .act-pill { padding: 0 6px 0 6px; gap: 5px; }
+  .top.nav-pill .act-pill .ap-chev { display: none; }
+  .top #zPrev { order: -1; }
+  .top #zNext { order: 2; }
+  .app .game .nu-chip { min-height: 44px; grid-template-columns: max-content minmax(0, 1fr) auto; grid-template-rows: auto auto; gap: 2px 6px; padding: 4px 6px 6px 6px; }
+  .app .game .nu-chip .nu-ic { display: none; }   /* the width goes to the goal's words */
+  .app .game .nu-chip .nu-cbody { display: contents; }
+  .app .game .nu-chip .nu-eye { grid-column: 1; grid-row: 1; align-self: center; white-space: nowrap; min-width: 0; overflow: visible; font-size: 12px; letter-spacing: .04em; }
+  .app .game .nu-chip .nu-eye .menu-nav-ic { display: none; }
+  .app .game .nu-chip .nu-cst { grid-column: 2; grid-row: 1; justify-self: start; min-width: 0; }
+  .app .game .nu-chip .nu-more { grid-column: 3; grid-row: 1; }
+  .app .game .nu-chip .nu-lbl { grid-column: 1 / -1; grid-row: 2; font-size: 12.5px; }
+  .app .game .nu-chip .nu-chev { display: none; }
+  @media (max-width: 340px) { .top.nav-pill .act-pill .ap-ic { display: none; } }
+}

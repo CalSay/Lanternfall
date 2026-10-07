@@ -1,0 +1,274 @@
+{
+ "slug": "slay-the-spire",
+ "n_reviews": 503,
+ "n_pos": 300,
+ "n_neg": 203,
+ "n_longplay_neg": 25,
+ "sources": [
+  "steam",
+  "apple"
+ ],
+ "themes": {
+  "P-offline": {
+   "n": 1,
+   "of": 300,
+   "longplay_n": 0,
+   "quotes": [
+    "This is a game for someone who wants something offline that they can go back to over and over again. (apple5)"
+   ]
+  },
+  "P-respect": {
+   "n": 6,
+   "of": 300,
+   "longplay_n": 0,
+   "quotes": [
+    "Lots of replayability and mastery potential while still being a casual game you can pickup whenever and have fun at all skill levels. (steam+, 607h)",
+    "It\u2019s snappy, self-paced, easy to pick up, very fun and casual, and can become as complex as you want, depending on your skill or effort. (apple4)"
+   ]
+  },
+  "P-active": {
+   "n": 9,
+   "of": 300,
+   "longplay_n": 0,
+   "quotes": [
+    "Lots of replayability and mastery potential while still being a casual game you can pickup whenever and have fun at all skill levels. (steam+, 607h)",
+    "It\u2019s snappy, self-paced, easy to pick up, very fun and casual, and can become as complex as you want, depending on your skill or effort. (apple4)"
+   ]
+  },
+  "P-dev": {
+   "n": 3,
+   "of": 300,
+   "longplay_n": 0,
+   "quotes": [
+    "I don\u2019t think the devs are going to focus on fixing mobile port (apple4)",
+    "Which is re-enforced by no micro transactions and free updates like adding more characters to start your adventure with. (apple5)"
+   ]
+  },
+  "P-unlock": {
+   "n": 4,
+   "of": 300,
+   "longplay_n": 0,
+   "quotes": [
+    "The game is fun while you're unlocking new cards, but after that it falls off. (steam+, 76h)",
+    "There is also a good mod scene as well that adds a bunch of new content like multiplayer, quality of life, different characters, etc. (steam+, 607h)"
+   ]
+  },
+  "P-collect": {
+   "n": 8,
+   "of": 300,
+   "longplay_n": 0,
+   "quotes": [
+    "So I bought it right when I saw it drop. (apple4)",
+    "Even with only 4 classes, each run is unique thanks to game-changing artifacts and rare cards. (apple5)"
+   ]
+  },
+  "P-goals": {
+   "n": 0,
+   "of": 300,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-depth": {
+   "n": 33,
+   "of": 300,
+   "longplay_n": 0,
+   "quotes": [
+    "The game has tremendous depth and the longer you play, the more you can appreciate it. (steam+, 681h)",
+    "You're handed a deck of cards and sent into a tower where every decision is shaped by uncertainty and randomness. (steam+, 270h)"
+   ]
+  },
+  "P-fair": {
+   "n": 11,
+   "of": 300,
+   "longplay_n": 0,
+   "quotes": [
+    "Well worth the money I would have paid $20 for it. (apple5)",
+    "No pay to win, very well balanced. (apple5)"
+   ]
+  },
+  "P-interlock": {
+   "n": 5,
+   "of": 300,
+   "longplay_n": 0,
+   "quotes": [
+    "Fun synergies, cool combos, lots of collectables and combinations. (steam+, 126h)",
+    "It\u2019s infinite possibilities of synergies with different cards is fantastic. (apple5)"
+   ]
+  },
+  "P-prestige": {
+   "n": 8,
+   "of": 300,
+   "longplay_n": 0,
+   "quotes": [
+    "Hop on and play a few floors if you have a few minutes to spare, or spend 4 hours trying to pass an ascension. (apple5)",
+    "Each run honestly feels like a whole new experience as you find out how another deck you\u2019ve built will work out. (apple5)"
+   ]
+  },
+  "P-qol": {
+   "n": 6,
+   "of": 300,
+   "longplay_n": 0,
+   "quotes": [
+    "There is also a good mod scene as well that adds a bunch of new content like multiplayer, quality of life, different characters, etc. (steam+, 607h)",
+    "There really is now optimization of quality of life improvement put in for the iPhone screen. (apple4)"
+   ]
+  },
+  "P-calm": {
+   "n": 2,
+   "of": 300,
+   "longplay_n": 0,
+   "quotes": [
+    "Endlessly entertaining card game and has become a full cozy game for me. (apple5)"
+   ]
+  },
+  "P-art": {
+   "n": 19,
+   "of": 300,
+   "longplay_n": 0,
+   "quotes": [
+    "The art style isn't necessarily going to win any awards for beauty. (steam+, 23h)",
+    "I bet this probably looks beautiful on iPad, but on iPhone the UI is too small. (apple4)"
+   ]
+  },
+  "P-story": {
+   "n": 21,
+   "of": 300,
+   "longplay_n": 0,
+   "quotes": [
+    "I am writing this review especially for someone who has little to no interest in card games or has zero experience with deck building. (steam+, 54h)",
+    "You pick a character, you climb, you build a deck. (steam+, 270h)"
+   ]
+  },
+  "N-ads": {
+   "n": 0,
+   "of": 203,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-wall": {
+   "n": 11,
+   "of": 203,
+   "longplay_n": 3,
+   "quotes": [
+    "The playing process is very stuck. (apple3)",
+    "The game seems to run a little too slow for my liking at the moment as well. (apple1)"
+   ]
+  },
+  "N-pay": {
+   "n": 0,
+   "of": 203,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-dominant": {
+   "n": 1,
+   "of": 203,
+   "longplay_n": 1,
+   "quotes": [
+    "Usual deck builder strategies do not apply here, you just need to know EXACTLY what is the only viable choice in every situation. (steam-, 127h)"
+   ]
+  },
+  "N-late": {
+   "n": 2,
+   "of": 203,
+   "longplay_n": 1,
+   "quotes": [
+    "So much wasted, empty space and very small characters and cards. (apple2)",
+    "There is also a bunch of empty space on the screen. (apple3)"
+   ]
+  },
+  "N-offline": {
+   "n": 0,
+   "of": 203,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-mobile": {
+   "n": 9,
+   "of": 203,
+   "longplay_n": 0,
+   "quotes": [
+    "If you\u2019re going to charge 5-10x what other games cost, you need to appropriately adapt the controls for a touch screen. (apple2)",
+    "It was clearly designed for a mouse pointer and not a touch screen. (apple2)"
+   ]
+  },
+  "N-bug": {
+   "n": 33,
+   "of": 203,
+   "longplay_n": 1,
+   "quotes": [
+    "Fun game but has some bugs lots of crashing. (apple2)",
+    "When it did show up, it was plagued by bugs, poor controls, and very little support to address the problems. (apple1)"
+   ]
+  },
+  "N-energy": {
+   "n": 5,
+   "of": 203,
+   "longplay_n": 2,
+   "quotes": [
+    "This game is fantastic, I\u2019ve sunk 100+ hours into the PC version and could not wait for it to be on mobile. (apple1)",
+    "You roll into next level same hit points and energy. (apple3)"
+   ]
+  },
+  "N-bloat": {
+   "n": 3,
+   "of": 203,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-chore": {
+   "n": 3,
+   "of": 203,
+   "longplay_n": 1,
+   "quotes": [
+    "Every run feels like a chore, and when it finally over it wants me to play again for what? (steam-, 82h)",
+    "The second time feels like doing chores in order to earn the full experience. (apple3)"
+   ]
+  },
+  "N-tutorial": {
+   "n": 0,
+   "of": 203,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-shallow": {
+   "n": 6,
+   "of": 203,
+   "longplay_n": 1,
+   "quotes": [
+    "A simple toggle for sync would be enough but instead anyone who bought the app individually gets a worse experience overall. (apple1)",
+    "3 stars for the simple fact that it\u2019s a good game. (apple3)"
+   ]
+  },
+  "N-reset": {
+   "n": 0,
+   "of": 203,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-pace": {
+   "n": 0,
+   "of": 203,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-fast": {
+   "n": 2,
+   "of": 203,
+   "longplay_n": 0,
+   "quotes": [
+    "I can see the depth and the strategy, but personally I lost interest long before the game ran out of things to offer. (steam-, 5h)",
+    "I\u2019m writing this review now right after rage quitting a winning run because IT\u2019S TOO EASY TO MISCLICK ON MOBILE. (apple3)"
+   ]
+  },
+  "N-balance": {
+   "n": 7,
+   "of": 203,
+   "longplay_n": 2,
+   "quotes": [
+    "The card mechanics are clean, the balance is solid, and everything works exactly the way it\u2019s supposed to. (steam-, 5h)",
+    "Eventually you will, but its like that Unfair Flips game where you f (steam-, 48h)"
+   ]
+  }
+ }
+}

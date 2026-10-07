@@ -1,0 +1,52 @@
+/* 60-hands: the hiring board and your gatherers (74-ui-hands.js; W1-E) */
+#sec-hands, #sec-hands-crew { display: grid; gap: 10px; }
+.hd-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; font: 600 calc(15px * var(--display-k)) var(--display); }
+.hd-tents { color: var(--bone); border: 1px solid var(--line-hi); background: var(--well); padding: 5px 8px; min-height: 44px; font: inherit; cursor: pointer; }
+.hd-tents:focus-visible, .hd-job:focus-visible, .hd-shifts button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.hd-gold { display: inline-flex; align-items: center; gap: 4px; color: var(--gold); }
+.hd-gold img { width: 16px; height: 16px; }
+.hd-list { display: grid; gap: 10px; }
+.hd-list > .hd-sub, .hd-list > .note { grid-column: 1 / -1; }
+.hd-card { display: grid; gap: 8px; padding: 10px 12px; background: var(--panel); border: 2px solid var(--line); border-left: 4px solid var(--rc, var(--line-hi)); box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 2px 0 #0B0810; }
+.hd-head { display: flex; gap: 10px; align-items: center; min-width: 0; }
+.hd-pt { position: relative; flex: none; width: 44px; height: 44px; display: grid; place-items: center; background: var(--well); border: 2px solid var(--rc, var(--line-hi)); }
+.hd-pt img { width: 30px; height: 30px; image-rendering: pixelated; opacity: .9; }
+.hd-pt b { position: absolute; right: 2px; bottom: 0; font: 700 12px var(--display); color: var(--rc); text-shadow: 0 1px 0 #0B0810; }
+.hd-id { min-width: 0; }
+.hd-name { font: 600 calc(17px * var(--display-k))/1.1 var(--display); color: var(--rc, var(--bone)); overflow-wrap: anywhere; }
+.hd-sub2 { font-size: 12.5px; color: var(--muted); }
+.hd-tr { display: flex; flex-wrap: wrap; gap: 4px; }
+.hd-trait { padding: 2px 6px; font-size: 11.5px; background: var(--well); border: 1px solid var(--line); color: var(--bone); }
+.hd-trait.call { border-color: var(--r-legendary); color: var(--r-legendary); }
+.hd-line, .hd-note, .hd-why { margin: 0; font-size: 12.5px; }
+.hd-line { overflow-wrap: anywhere; }
+.hd-why { color: #FF8A80; }
+.hd-msg { margin: 0; padding: 6px 10px; font-size: 13px; background: rgba(111,203,106,.12); border: 1px solid var(--xp); color: var(--bone); }
+.hd-act { display: flex; flex-wrap: wrap; gap: 8px; }
+.hd-act .mini { min-height: 44px; }
+.hd-stat { margin: 0; font: 600 13.5px var(--body); }
+.hd-stat.out { color: var(--ember); }
+.hd-stat.unpaid { color: #FF8A80; }
+.hd-stat.wait { color: #F2A93B; }
+.hd-stat.idle { color: var(--xp); }
+.hd-jobs { display: grid; gap: 6px; }
+.hd-job { display: flex; align-items: center; gap: 8px; min-height: 48px; padding: 6px 8px; text-align: left; font: inherit; color: var(--bone); background: var(--well); border: 2px solid var(--line-hi); cursor: pointer; }
+.hd-job:disabled { opacity: .5; cursor: default; }
+.hd-job[aria-disabled="true"] { border-color: var(--line); }
+.hd-job img { flex: none; width: 28px; height: 28px; image-rendering: pixelated; }
+.hd-job-tx { display: grid; min-width: 0; }
+.hd-job-tx small { color: var(--muted); font-size: 12px; }
+.hd-job-tx small.fee { color: var(--gold); }
+.hd-shifts { display: flex; flex-wrap: wrap; gap: 6px; }
+.hd-shifts .mini { min-height: 44px; }
+.hd-shifts .on { border-color: var(--gold); color: var(--gold); background: var(--panel); }
+.hd-sub { margin: 4px 0 0; font: 600 calc(15px * var(--display-k)) var(--display); color: var(--muted); }
+.hd-leg-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(104px, 1fr)); gap: 6px; }
+.hd-star { display: grid; gap: 1px; padding: 6px 8px; background: var(--well); border: 1px solid var(--line); border-top: 3px solid var(--rc); }
+.hd-star b { font: 600 13px var(--body); }
+.hd-star small { font-size: 11.5px; color: var(--muted); }
+.hd-star.away { opacity: .55; }
+.hd-star.later { opacity: .5; }
+.hd-star.hired b { color: var(--r-legendary); }
+@media (max-width: 740px) { .hd-card { min-width: 0; } .hd-act .mini { flex: 1 1 auto; } .hd-star { overflow-wrap: anywhere; } }
+@media (min-width: 600px) and (min-aspect-ratio: 1/1) { .hd-list { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); } }

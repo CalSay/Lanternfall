@@ -1,10 +1,12 @@
-// 30-state: the save (S), load/migrate, save(), registered feature fields, and
+// 30-state: the save (S), load, save(), registered feature fields, and
 // runtime (non-saved) shared-world state.
 // CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
 // Save compatibility is sacred: never rename or repurpose a field below.
 
 // ================= save =================
-const KEY = 'lanternfall.save.v1';
+// ECON-A (economy-2 9): the save key moved to v2 (S.v 3) with the gold economy. An old v1 save is never
+// read (a new game starts) and never touched: its key stays in storage as it was.
+const KEY = 'lanternfall.save.v5';   // W3-A: the party (S.party.field, S.comp, the roster records) is gone, so v4 saves are never read (W2-A made it v4, SOLO1 v3)
 // Feature save fields added with registerState(key, defaults). Kept in registration order.
 const STATE_DEFAULTS = {};
 const cloneJSON = v => v === undefined ? v : JSON.parse(JSON.stringify(v));
@@ -17,14 +19,16 @@ function fillDefaults(target, defs) {
   return target;
 }
 const fresh = () => Object.assign({
-  v: 2, name: 'Wanderer', L: 1, xp: 0, gold: 0, embers: 0, zone: 1, maxZone: 1, kills: 0,
-  blade: 0, swift: 0, fortune: 0, comp: [0, 0, 0, 0, 0, 0, 0], relic: { banner: 0, coin: 0, heart: 0, glass: 0 },
+  v: 5, name: 'Wanderer', L: 1, xp: 0, gold: 0, embers: 0, zone: 1, maxZone: 1, kills: 0,
+  relic: { banner: 0, coin: 0, heart: 0, glass: 0, edge: 0 },
   auto: true, activity: 'fight', raid: { gen: 0, dmg: 0, maxHp: 0, name: '' }, wyrms: 0,
   totalKills: 0, totalGold: 0, amt: '1', tab: 'adv', last: Date.now(), hintDone: false,
-  skills: { mine: { lv: 1, xp: 0 }, wood: { lv: 1, xp: 0 }, smith: { lv: 1, xp: 0 } },
-  mats: { ore: [0, 0, 0, 0, 0], wood: [0, 0, 0, 0, 0], ess: [0, 0, 0, 0, 0] },
+  skills: { mine: { lv: 1, xp: 0 }, wood: { lv: 1, xp: 0 }, smith: { lv: 1, xp: 0 },
+    forage: { lv: 1, xp: 0 }, hunt: { lv: 1, xp: 0 }, bench: { lv: 1, xp: 0 }, loom: { lv: 1, xp: 0 }, ench: { lv: 1, xp: 0 } },
+  mats: { ore: [0, 0, 0, 0, 0], wood: [0, 0, 0, 0, 0], ess: [0, 0, 0, 0, 0],
+    crystal: [0, 0, 0, 0, 0], fibre: [0, 0, 0, 0, 0], herb: [0, 0, 0, 0, 0], hide: [0, 0, 0, 0, 0] },
   node: { kind: 'ore', t: 1 }, gProg: 0,
-  items: [], equip: { weapon: null, helm: null, charm: null, pick: null, axe: null }, nextId: 1,
+  items: [], equip: { weapon: null, off: null, helm: null, body: null, charm: null, pick: null, axe: null, sickle: null, spear: null }, nextId: 1,
   found: {}, fSlot: 'weapon', fTier: 1
 }, cloneJSON(STATE_DEFAULTS));
 const BASE_KEYS = Object.keys(fresh());
@@ -40,15 +44,36 @@ function loadSave() {
       S.skills = Object.assign(fresh().skills, o.skills || {});
       S.mats = Object.assign(fresh().mats, o.mats || {});
       S.equip = Object.assign(fresh().equip, o.equip || {});
-      while (S.comp.length < 7) S.comp.push(0);
       if (!o.activity) S.activity = o.raiding ? 'raid' : 'fight';
       delete S.raiding;
       for (const [k, d] of Object.entries(STATE_DEFAULTS)) if (isPlainObj(d) && isPlainObj(S[k])) fillDefaults(S[k], d);
     }
   } catch (e) {}
+  saveAdopt();
+}
+// save-two-tabs: the game open in two tabs (or windows) writes one save. `saveSeen` is the `last` stamp of the stored
+// copy this page loaded or wrote (and read back). It is runtime only, never saved, and not S.last: boot and the page coming
+// back re-stamp S.last in memory without writing. A stored copy with any other stamp was written by another tab (later, or
+// earlier on a clock set back), so this page holds older progress: it stops saving for good (`saveBlocked`, until a reload)
+// rather than overwrite it, and calls onSaveBlocked (75-tabs-ui shows the card). An unreadable or missing copy reads as 0
+// and never blocks; a write that did not land leaves `saveSeen` on the copy still stored, so it never blocks either.
+let saveSeen = 0, saveBlocked = false, onSaveBlocked = null;
+function storedLast() {
+  try { const raw = storage.get(KEY); if (!raw) return 0; const t = JSON.parse(raw).last; return typeof t === 'number' && isFinite(t) ? t : 0; } catch (e) { return 0; }
+}
+// The stored copy is this page's own (loadSave, a save-code import or restore wrote or read it).
+function saveAdopt() { saveSeen = storedLast(); saveBlocked = false; }
+// True while this page may save. The first time another tab's save is found, blocks and tells the UI.
+function saveCheck() {
+  if (!saveBlocked) { const t = storedLast(); if (t && t !== saveSeen) { saveBlocked = true; if (onSaveBlocked) try { onSaveBlocked(); } catch (e) {} } }
+  return !saveBlocked;
 }
 loadSave();
-function save() { S.last = Date.now(); try { storage.set(KEY, JSON.stringify(S)); } catch (e) {} }
+function save() {
+  if (!saveCheck()) return;
+  S.last = Date.now();
+  try { const raw = JSON.stringify(S); storage.set(KEY, raw); if (storage.get(KEY) === raw) saveSeen = S.last; } catch (e) {}
+}
 
 // registerState('achievements', { got: {}, seen: 0 }): adds a top-level save field.
 // Defaults merge into fresh() and into the loaded save (missing keys only, recursively

@@ -1,0 +1,21 @@
+# seed: 1
+# Proof for card wire-ability-icons: Pip (level 49, all tier 2+ abilities unlocked; fixture tests/proof-fixtures/save-pip-abilities,
+# slots Fireball, Spark, Kindle) shows drawn ability icons in the fight bar (Spark mid-cast) and Hero > Abilities.
+# Replayed at 360x740 and 740x360.
+new pip-abilities
+wait 3
+expect "Attack"
+shot pip-fight-bar
+tap "Skills"
+wait 1
+shot pip-skills
+tap "Act"
+tap "Spark"
+wait 1
+shot pip-spark-cast
+tap "Hero"
+wait 1
+tap "Abilities"
+wait 1
+expect "Lanternburst"
+shot pip-abilities-list

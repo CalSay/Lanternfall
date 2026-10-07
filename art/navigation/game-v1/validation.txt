@@ -1,0 +1,3 @@
+PASS:32 assets x8 sizes =256 PNGs; exact dimensions; transparent padding; binary alpha; <=24 visible colours; source/PNG SHA256 recorded.
+PNG total: 259574 bytes.
+Embedded JS: 354693 bytes.

@@ -1,0 +1,91 @@
+/* 60-gathering: the Gather tab's skill views (72-ui-gather.js, UX-A GX1; ux-overhaul.md 6.1):
+   the Now card, the skill line, Best for you, node rows with a held/cap bar, folds, and the
+   "where to get it" sheet. */
+.gx-view { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+.gx-view .sec { gap: 6px; }
+.gx-head .note { font-size: 12px; }
+
+/* ---- small chips (not tappable): Now, Home, Full, Right tool ---- */
+.gx-chip { flex: none; display: inline-block; padding: 1px 6px; font: 600 11.5px/1.45 var(--body); color: var(--muted); border: 1px solid var(--line-hi); background: var(--well); white-space: nowrap; }
+.gx-chip.hi { color: var(--gold); border-color: #8A6A28; }
+.gx-chip.good { color: var(--xp); border-color: #3B6A37; }
+.gx-chip.warn { color: #FF9A8E; border-color: #7A3434; }
+.gx-chip.gx-note { color: #CFE3FF; border-color: #3E5A80; }
+
+/* ---- the Now card ---- */
+.gx-now { display: grid; gap: 7px; padding: 10px; background: var(--panel); border: 1px solid var(--line-hi); box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 2px 0 #0B0810; }
+.gx-now.on { border-color: #9A7A30; background: linear-gradient(180deg, rgba(242,193,78,.09), var(--panel) 65%); }
+.gx-now.on.full { border-color: #8A3A3A; background: linear-gradient(180deg, rgba(224,82,79,.1), var(--panel) 65%); }
+.gx-now-top { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 10px; align-items: center; }
+.ic.gx-nic img { width: 26px; height: 26px; }
+.gx-now-name { display: flex; align-items: center; gap: 8px; min-width: 0; font: 600 calc(16px * var(--display-k))/1.15 var(--display); }
+.gx-now-name .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gx-now:not(.on) .gx-now-name .nm { white-space: normal; }
+.gx-now-rate { font-size: 12.5px; color: var(--muted); margin-top: 1px; }
+.gx-now-held { display: flex; justify-content: space-between; gap: 8px; font-size: 12.5px; color: var(--bone); font-variant-numeric: tabular-nums; margin-bottom: -3px; }
+.gx-now-held span:last-child { color: var(--muted); }
+.gx-now.full .gx-now-held span:last-child { color: #FF9A8E; font-weight: 600; }
+.gx-nbar { display: block; height: 8px; background: var(--well); border: 1px solid #0B0810; overflow: hidden; }
+.gx-nbar b { display: block; height: 100%; width: 0; background: var(--gold); box-shadow: inset 0 2px 0 rgba(255,255,255,.25); transition: width .2s; }
+.gx-now.full .gx-nbar b { background: var(--hp); }
+.gx-now-full { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; font: 600 13px/1.3 var(--body); color: #F6D8D0; }
+.gx-now-full > span { flex: 1 1 160px; min-width: 0; }
+.gx-now-full .mini { min-height: 40px; }
+.gx-spill.on { border-color: var(--gold); color: var(--gold); }
+.gx-now-rest { font-size: 12px; color: var(--muted); }
+.gx-now-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.gx-go { margin-left: auto; min-height: 44px; padding: 0 14px; background: var(--ember); color: #1A1420; border: 2px solid #0B0810; box-shadow: inset 0 2px 0 rgba(255,255,255,.3), inset 0 -3px 0 var(--ember-deep), 0 2px 0 #0B0810; font: 600 calc(15px * var(--display-k)) var(--display); cursor: pointer; }
+.gx-go:active { transform: translateY(1px); }
+/* the tool chip (75-tools-ui) */
+.gx-tool { display: inline-flex; align-items: center; gap: 5px; min-width: 0; max-width: 100%; min-height: 36px; padding: 0 8px 0 6px; background: var(--well); border: 1px solid var(--line-hi); font: 600 12.5px var(--body); color: var(--bone); cursor: pointer; }
+.gx-tool img { width: 18px; height: 18px; flex: none; image-rendering: pixelated; }
+.gx-tool-tx { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gx-tool.rough { color: var(--muted); }
+.gx-tool.rar-uncommon { color: var(--r-uncommon); }
+.gx-tool.rar-rare { color: var(--r-rare); }
+.gx-tool.rar-epic { color: var(--r-epic); }
+.gx-tool.rar-legendary { color: var(--r-legendary); }
+.gx-tool.master { border-color: var(--gold); }
+/* on another skill's view: one line */
+.gx-strip { padding: 8px 10px; background: var(--well); border: 1px solid var(--line); border-left: 3px solid var(--gold); font-size: 13px; color: var(--bone); }
+
+/* ---- the view switcher: each skill's level and a thin XP bar (gxLabels) ---- */
+.vseg button.has-xp { padding-bottom: 5px; }
+.vseg button .vxp { position: absolute; left: 12%; right: 12%; bottom: 7px; height: 3px; background: #0B0810; overflow: hidden; pointer-events: none; }
+.vseg button .vxp b { display: block; height: 100%; width: 0; background: var(--xp); }
+
+/* ---- node rows ---- */
+.gx-row { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 10px; align-items: center; min-height: 56px; padding: 6px 8px; cursor: pointer; }
+.gx-row + .gx-row { border-top: 1px solid var(--line); }
+.gx-row.here { cursor: default; box-shadow: inset 3px 0 0 var(--gold); background: linear-gradient(90deg, rgba(242,193,78,.12), transparent 70%); }
+.gx-row.locked { cursor: default; opacity: .55; }
+.ic.gx-ic img { width: 26px; height: 26px; margin-top: -6px; }
+.gt-tier { position: absolute; left: 0; right: 0; bottom: 0; font: 600 calc(9.5px * var(--display-k))/1.25 var(--display); text-align: center; color: var(--bone); background: #0B0810D9; }
+.gx-body { min-width: 0; }
+.gx-name { display: flex; align-items: center; gap: 6px; min-width: 0; font: 600 calc(14px * var(--display-k))/1.2 var(--display); }
+.gx-name .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gx-row.here .gx-name .nm { color: var(--gold); }
+.gx-meta { font-size: 12.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; font-variant-numeric: tabular-nums; }
+.gx-bar { display: block; height: 4px; margin-top: 4px; background: var(--well); overflow: hidden; }
+.gx-bar b { display: block; height: 100%; width: 0; background: var(--gold); }
+.gx-row.full .gx-bar b { background: var(--hp); }
+.gx-act { min-width: 64px; min-height: 44px; padding: 0 12px; background: var(--panel-2); border: 2px solid #0B0810; box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 2px 0 #0B0810; font: 600 calc(14px * var(--display-k)) var(--display); color: var(--bone); cursor: pointer; }
+.gx-act.best { background: var(--gold); color: #2A1E07; box-shadow: inset 0 2px 0 rgba(255,255,255,.3), inset 0 -2px 0 #A77B1E, 0 2px 0 #0B0810; }
+.gx-act.here { background: transparent; border-color: transparent; box-shadow: none; color: var(--gold); cursor: default; }
+.gx-act:disabled:not(.here) { color: var(--muted); cursor: default; box-shadow: none; }
+
+/* ---- folds: lower tiers, empty families, trophies ---- */
+.gx-fold { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; min-height: 44px; padding: 8px 12px; background: transparent; border: 1px dashed var(--line-hi); font: 500 13px var(--body); color: var(--muted); text-align: left; cursor: pointer; }
+.gx-fold-l { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gx-fold-r { flex: none; font-weight: 600; color: var(--bone); }
+.gx-fold-r::after { content: " ▾"; }
+.gx-fold.open .gx-fold-r::after { content: " ▴"; }
+
+/* ---- where to get it (sheet) ---- */
+.gw-head { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 12px; align-items: center; }
+.ic.gw-ic { width: 56px; height: 56px; }
+.ic.gw-ic img { width: 40px; height: 40px; }
+.gw-name { margin: 0; font: 600 calc(20px * var(--display-k))/1.1 var(--display); }
+.gw-have { color: var(--muted); font-size: 13px; }
+.gw-where { margin: -6px 0 0; font-size: 14.5px; line-height: 1.45; color: var(--bone); }
+.gw-go { min-height: 48px; }

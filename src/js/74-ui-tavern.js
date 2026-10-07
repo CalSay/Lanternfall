@@ -1,28 +1,28 @@
-// 74-ui-tavern: the Tavern tab (who is online, hall of heroes, rename, lifetime stats).
+// 74-ui-tavern: the Tavern tab (who is online, hall of heroes, rename). Lifetime stats moved to the Journal (75-stats-ui.js).
 
 let boardSig = '';
 async function uiTavern() {
-  $('lKills').textContent = fmt(S.totalKills);
-  $('lGold').textContent = fmt(S.totalGold);
-  $('lZone').textContent = S.maxZone;
-  $('lWyrms').textContent = S.wyrms;
-  $('lGear').textContent = fmt(gear().score);
   if (document.activeElement !== $('nameInput') && !$('nameInput').value) $('nameInput').value = S.name;
 
-  const box = $('online'); box.textContent = '';
+  const box = $('online');
   const seen = new Set(), list = [];
   for (const p of online.peers) {
     if (p.kind !== 'viewer' || !p.presence || !p.presence.hero || seen.has(p.peer)) continue;
     seen.add(p.peer); list.push(p);
   }
-  if (!online.room) box.append(el('span', 'note', online.checked ? 'The tavern opens when you play from the game\'s Claude link.' : 'Opening the tavern doors...'));
-  else if (list.length <= 1) box.append(el('span', 'note', 'Only you so far. Share the game link and others will show up here.'));
-  if (online.room) for (const p of list) {
-    const act = p.presence.act || (p.presence.raiding ? 'raid' : 'fight');
-    const c = el('span', 'pchip ' + act);
-    const what = act === 'raid' ? 'raiding' : act === 'gather' ? 'gathering' : 'zone ' + (+p.presence.zone || 1);
-    c.append(el('i'), el('span', null, String(p.presence.hero).slice(0, 18) + (p.sameTab ? ' (you)' : '')), el('small', null, `Lv ${+p.presence.lvl || 1} · ${what}`));
-    box.append(c);
+  // Rebuild the chips only when who is here (or what they are doing) changes.
+  const chipSig = JSON.stringify([!!online.room, online.checked, list.map(p => [p.peer, p.sameTab, p.presence.hero, p.presence.act, p.presence.raiding, p.presence.zone, p.presence.lvl])]);
+  if (box._sig !== chipSig) {
+    box._sig = chipSig; box.textContent = '';
+    if (!online.room) box.append(el('span', 'note', online.checked ? 'The tavern opens when you play from the game\'s Claude link.' : 'Opening the tavern doors...'));
+    else if (list.length <= 1) box.append(el('span', 'note', 'Only you so far. Share the game link and others will show up here.'));
+    if (online.room) for (const p of list) {
+      const act = p.presence.act || (p.presence.raiding ? 'raid' : 'fight');
+      const c = el('span', 'pchip ' + act);
+      const what = act === 'raid' ? 'raiding' : act === 'gather' ? 'gathering' : 'zone ' + (+p.presence.zone || 1);
+      c.append(el('i'), el('span', null, String(p.presence.hero).slice(0, 18) + (p.sameTab ? ' (you)' : '')), el('small', null, `Lv ${+p.presence.lvl || 1} · ${what}`));
+      box.append(c);
+    }
   }
 
   const rows = online.raiders.slice().sort((a, b) => (b.L || 0) - (a.L || 0) || (b.maxZone || 0) - (a.maxZone || 0)).slice(0, 25);

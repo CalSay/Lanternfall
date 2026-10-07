@@ -1,0 +1,1 @@
+PASS:330 icons x6 sizes=1980 PNGs; all22 kinds covergrades1-15; binaryalpha; padding; <=24colours; hashes.

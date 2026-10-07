@@ -1,6 +1,8 @@
 /* 60-bounties: bounty board rows and the achievements grid */
 .row.bty .bty-bar { margin-top: 5px; height: 5px; }
 .row.bty .bty-bar > i { background: var(--gold); }
+.row.bty.bty-elite { box-shadow: inset 3px 0 0 var(--r-legendary); }   /* a Contract: bigger, pays 2.5x */
+.row.bty.bty-elite .row-name .nm { color: var(--r-legendary); }
 .bty-rr { margin-top: 4px; padding: 2px 6px; font: 600 11px var(--body); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); background: var(--well); border: 1px solid var(--line-hi); cursor: pointer; }
 .bty-rr:disabled { opacity: .55; cursor: default; }
 .bty-rr[hidden] { display: none; }
@@ -9,10 +11,12 @@
 .ach.got { opacity: 1; border-color: var(--gold); }
 .ach .ic { width: 32px; height: 32px; }
 .ach .ic img { width: 22px; height: 22px; }
-.ach-nm { font: 600 14px/1.1 var(--display); }
+.ach-nm { font: 600 calc(14px * var(--display-k))/1.1 var(--display); }
 .ach-desc { font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
 .ach-fx { font-size: 12px; color: var(--r-legendary); }
 .ach .bar { height: 4px; margin-top: 3px; }
 .ach .bar > i { background: var(--gold); }
 .ach.got .bar { display: none; }
 .ach:not(.got) .ic img { filter: grayscale(1); opacity: .5; }
+/* Go (not done) reads as a plain button; Claim (done) keeps the gold one */
+.row.bty .buy.bty-go { background: var(--panel-2); color: var(--bone); }

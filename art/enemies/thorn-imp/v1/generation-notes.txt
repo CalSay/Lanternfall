@@ -1,0 +1,7 @@
+Tool: built-in image_gen, approved by the owner in chat after the hooked-horn correction.
+Original transparent 14-pose source: exec-84569b41-21f2-477b-ad91-08625b6ca43f.png (2098x749).
+Horn-corrected source: exec-110d6dff-9e18-4e7a-9e8f-313b78ae288b.png (2172x724).
+Correction prompt summary: keep the left-facing Thorn Imp design, pose order, palette and anatomy; restore its single backward-hooked head horn specifically in First Slash (06), Defeated (12) and Royal Rip Wind-up (13), rotating it with the head in defeat. No new effects, text or extra horns.
+The generator did not obey native output dimensions; these PNGs are a deterministic native export, not a claim that it generated exact-size art.
+Export: preserve the previous native frames 01-05,07-11,14 byte-for-byte. For 06,12,13, isolate the main alpha>=128 connected component from the corrected source, retaining only its pixels, then use uniform nearest-neighbour scale64/148 (corrected-source standing idle height148px). Unchanged native frames previously used64/241 from their own source. Centre horizontally in128x96, ground boundary88; binary transparency. No independent pose-height normalization. This is technical extraction/scaling, no body/horn repainting.
+Native output visually inspected with all14poses together; horn present on the three repaired keys. Idle is64px including horn. Further cinematic in-betweens, effects and a separate Captain palette are not included.

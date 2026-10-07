@@ -1,0 +1,251 @@
+{
+ "slug": "exponential-idle",
+ "n_reviews": 152,
+ "n_pos": 136,
+ "n_neg": 16,
+ "n_longplay_neg": 0,
+ "sources": [
+  "apple"
+ ],
+ "themes": {
+  "P-offline": {
+   "n": 4,
+   "of": 136,
+   "longplay_n": 0,
+   "quotes": [
+    "I could then AFK for around 4-8 hours come back and supremacy. (apple5)",
+    "Been looking for an idle game that can keep going while offline, this one does it. (apple5)"
+   ]
+  },
+  "P-respect": {
+   "n": 4,
+   "of": 136,
+   "longplay_n": 0,
+   "quotes": [
+    "No forced ads after purchase, no ads whatsoever after purchase. (apple5)",
+    "Clean design, no predatory monetization, and it respects your time whether you play actively or let it idle. (apple5)"
+   ]
+  },
+  "P-active": {
+   "n": 6,
+   "of": 136,
+   "longplay_n": 0,
+   "quotes": [
+    "The only thing I\u2019d like is more minigames to play to get stars, because so far I\u2019ve just been doing the easy 15-puzzle. (apple5)",
+    "Also, this game has a real story and actually fun gameplay. (apple5)"
+   ]
+  },
+  "P-dev": {
+   "n": 1,
+   "of": 136,
+   "longplay_n": 0,
+   "quotes": [
+    "The game is continuously updated and you can tell the developer cares about their product. (apple5)"
+   ]
+  },
+  "P-unlock": {
+   "n": 0,
+   "of": 136,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-collect": {
+   "n": 7,
+   "of": 136,
+   "longplay_n": 0,
+   "quotes": [
+    "I am currently sitting at ee730 and waiting to get the achievement for reachi (apple5)",
+    "No loot boxes or extra currencies. (apple5)"
+   ]
+  },
+  "P-goals": {
+   "n": 0,
+   "of": 136,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-depth": {
+   "n": 4,
+   "of": 136,
+   "longplay_n": 0,
+   "quotes": [
+    "In depth descriptions of every part of the game (with the addition of humor). (apple5)",
+    "However, I was surprised at the depth of this game and how well the gameplay integrates into the story. (apple5)"
+   ]
+  },
+  "P-fair": {
+   "n": 11,
+   "of": 136,
+   "longplay_n": 0,
+   "quotes": [
+    "No forced ads after purchase, no ads whatsoever after purchase. (apple5)",
+    "Still, up to this point it\u2019s been a nice game when I\u2019m bored, and I appreciate how there are no ads unless you initiate them. (apple4)"
+   ]
+  },
+  "P-interlock": {
+   "n": 0,
+   "of": 136,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-prestige": {
+   "n": 9,
+   "of": 136,
+   "longplay_n": 0,
+   "quotes": [
+    "I got to the prestige part, I had clicked the first equation about 8,000 times. (apple5)",
+    "I also like how many \u201cauto-clicker\u201d options are available, including auto-prestige. (apple5)"
+   ]
+  },
+  "P-qol": {
+   "n": 5,
+   "of": 136,
+   "longplay_n": 0,
+   "quotes": [
+    "It could brings a more intuitive way for players to evaluate the growth of the function by changing certain variables. (apple4)",
+    "Allows you to program your own automation for things like prestige. (apple5)"
+   ]
+  },
+  "P-calm": {
+   "n": 0,
+   "of": 136,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-art": {
+   "n": 8,
+   "of": 136,
+   "longplay_n": 0,
+   "quotes": [
+    "Super simple graphics and deep upgrades. (apple5)",
+    "There isn\u2019t a lot to the graphics, but there doesn\u2019t need to be. (apple5)"
+   ]
+  },
+  "P-story": {
+   "n": 13,
+   "of": 136,
+   "longplay_n": 0,
+   "quotes": [
+    "This feels like you\u2019re progressing through a story which has a goal. (apple5)",
+    "However, I was surprised at the depth of this game and how well the gameplay integrates into the story. (apple5)"
+   ]
+  },
+  "N-ads": {
+   "n": 2,
+   "of": 16,
+   "longplay_n": 0,
+   "quotes": [
+    "If you are going to have ads, don\u2019t have ones that make people want to delete the game. (apple2)",
+    "I enjoyed the limited ads and it was fun, but there is just literally no point to opening the game. (apple1)"
+   ]
+  },
+  "N-wall": {
+   "n": 1,
+   "of": 16,
+   "longplay_n": 0,
+   "quotes": [
+    "months and months of grinding and i still only have 18 students. (apple3)"
+   ]
+  },
+  "N-pay": {
+   "n": 0,
+   "of": 16,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-dominant": {
+   "n": 0,
+   "of": 16,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-late": {
+   "n": 2,
+   "of": 16,
+   "longplay_n": 0,
+   "quotes": [
+    "Why make an idle game if you're going to gate everything behind extremely boring tedious puzzles that have nothing to do with the math. (apple1)"
+   ]
+  },
+  "N-offline": {
+   "n": 1,
+   "of": 16,
+   "longplay_n": 0,
+   "quotes": [
+    "Constantly need to restore purchase, constantly getting hours of offline rewards nerfed due to my purchase not being restored. (apple1)"
+   ]
+  },
+  "N-mobile": {
+   "n": 0,
+   "of": 16,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-bug": {
+   "n": 1,
+   "of": 16,
+   "longplay_n": 0,
+   "quotes": [
+    "This is now the second time I\u2019ve tried to download this game, and every time I try to open the game, it crashes. (apple1)"
+   ]
+  },
+  "N-energy": {
+   "n": 0,
+   "of": 16,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-bloat": {
+   "n": 0,
+   "of": 16,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-chore": {
+   "n": 0,
+   "of": 16,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-tutorial": {
+   "n": 0,
+   "of": 16,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-shallow": {
+   "n": 1,
+   "of": 16,
+   "longplay_n": 0,
+   "quotes": [
+    "It\u2019s kinda ironic that the equation is so simple, given that the theme of the game is exponential math. (apple2)"
+   ]
+  },
+  "N-reset": {
+   "n": 0,
+   "of": 16,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-pace": {
+   "n": 0,
+   "of": 16,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-fast": {
+   "n": 0,
+   "of": 16,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-balance": {
+   "n": 1,
+   "of": 16,
+   "longplay_n": 0,
+   "quotes": [
+    "Constantly need to restore purchase, constantly getting hours of offline rewards nerfed due to my purchase not being restored. (apple1)"
+   ]
+  }
+ }
+}

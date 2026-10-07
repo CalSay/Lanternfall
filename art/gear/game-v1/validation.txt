@@ -1,0 +1,1 @@
+PASS: 110 icons x 6 native sizes = 660 PNGs. Exact dimensions; binary alpha; transparent padding; <=24 visible colours; hashes recorded.

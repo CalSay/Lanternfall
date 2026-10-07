@@ -1,0 +1,1322 @@
+{
+  "version": 1,
+  "enemy": "gloomjaw",
+  "variant": "normal",
+  "approved_date": "2026-10-02",
+  "approval": "Owner approved all sequences after removal of original death frame 4 and requested handoff.",
+  "facing": "left",
+  "cell": [
+    128,
+    128
+  ],
+  "body_origin": [
+    64,
+    112
+  ],
+  "fx_origin": [
+    64,
+    64
+  ],
+  "standing_height_px_approx": 75,
+  "hero_reference_height_px": 96,
+  "filter": "nearest",
+  "alpha": "RGBA: preserve original alpha; do not threshold or redraw",
+  "frame_numbering": "one-based",
+  "body_frame_count": 67,
+  "fx_frame_count": 22,
+  "actions": {
+    "idle": {
+      "layer": "body",
+      "loop": true,
+      "origin": [
+        64,
+        112
+      ],
+      "frames": [
+        {
+          "file": "idle/idle-1.png",
+          "duration_ms": 170,
+          "rect": [
+            0,
+            0,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "idle-1"
+        },
+        {
+          "file": "idle/idle-2.png",
+          "duration_ms": 170,
+          "rect": [
+            128,
+            0,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "idle-2"
+        },
+        {
+          "file": "idle/idle-3.png",
+          "duration_ms": 170,
+          "rect": [
+            256,
+            0,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "idle-3"
+        },
+        {
+          "file": "idle/idle-4.png",
+          "duration_ms": 170,
+          "rect": [
+            384,
+            0,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "idle-4"
+        },
+        {
+          "file": "idle/idle-5.png",
+          "duration_ms": 170,
+          "rect": [
+            0,
+            128,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "idle-5"
+        },
+        {
+          "file": "idle/idle-6.png",
+          "duration_ms": 170,
+          "rect": [
+            128,
+            128,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "idle-6"
+        }
+      ],
+      "atlas": "idle/atlas.png",
+      "duration_ms": 1020
+    },
+    "snap-shut": {
+      "layer": "body",
+      "loop": false,
+      "origin": [
+        64,
+        112
+      ],
+      "frames": [
+        {
+          "file": "snap-shut/attack-1.png",
+          "duration_ms": 100,
+          "rect": [
+            0,
+            0,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "attack-1"
+        },
+        {
+          "file": "snap-shut/attack-2.png",
+          "duration_ms": 91.25,
+          "rect": [
+            128,
+            0,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "attack-2"
+        },
+        {
+          "file": "snap-shut/attack-3.png",
+          "duration_ms": 91.25,
+          "rect": [
+            256,
+            0,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "attack-3"
+        },
+        {
+          "file": "snap-shut/attack-4.png",
+          "duration_ms": 91.25,
+          "rect": [
+            384,
+            0,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "attack-4"
+        },
+        {
+          "file": "snap-shut/attack-5.png",
+          "duration_ms": 91.25,
+          "rect": [
+            0,
+            128,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "attack-5"
+        },
+        {
+          "file": "snap-shut/attack-6.png",
+          "duration_ms": 91.25,
+          "rect": [
+            128,
+            128,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "attack-6"
+        },
+        {
+          "file": "snap-shut/attack-7.png",
+          "duration_ms": 91.25,
+          "rect": [
+            256,
+            128,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "attack-7"
+        },
+        {
+          "file": "snap-shut/attack-8.png",
+          "duration_ms": 91.25,
+          "rect": [
+            384,
+            128,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "attack-8"
+        },
+        {
+          "file": "snap-shut/attack-9.png",
+          "duration_ms": 91.25,
+          "rect": [
+            0,
+            256,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "attack-9"
+        },
+        {
+          "file": "snap-shut/attack-10.png",
+          "duration_ms": 220,
+          "rect": [
+            128,
+            256,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "attack-10"
+        },
+        {
+          "file": "snap-shut/attack-11.png",
+          "duration_ms": 60,
+          "rect": [
+            256,
+            256,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "attack-11"
+        },
+        {
+          "file": "snap-shut/attack-12.png",
+          "duration_ms": 90,
+          "rect": [
+            384,
+            256,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "attack-12"
+        },
+        {
+          "file": "snap-shut/attack-13.png",
+          "duration_ms": 100,
+          "rect": [
+            0,
+            384,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "attack-13"
+        },
+        {
+          "file": "snap-shut/attack-14.png",
+          "duration_ms": 100,
+          "rect": [
+            128,
+            384,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "attack-14"
+        },
+        {
+          "file": "snap-shut/attack-15.png",
+          "duration_ms": 100,
+          "rect": [
+            256,
+            384,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "attack-15"
+        },
+        {
+          "file": "snap-shut/attack-16.png",
+          "duration_ms": 100,
+          "rect": [
+            384,
+            384,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "attack-16"
+        }
+      ],
+      "atlas": "snap-shut/atlas.png",
+      "duration_ms": 1600.0,
+      "action_start_frame": 2,
+      "presentation_only_frames": [
+        1
+      ],
+      "events": [
+        {
+          "kind": "contact",
+          "frame": 12,
+          "ms_from_action_start": 1010
+        }
+      ]
+    },
+    "hop": {
+      "layer": "body",
+      "loop": false,
+      "origin": [
+        64,
+        112
+      ],
+      "frames": [
+        {
+          "file": "hop/jump-1.png",
+          "duration_ms": 75,
+          "rect": [
+            0,
+            0,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "jump-1"
+        },
+        {
+          "file": "hop/jump-2.png",
+          "duration_ms": 75,
+          "rect": [
+            128,
+            0,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "jump-2"
+        },
+        {
+          "file": "hop/jump-3.png",
+          "duration_ms": 75,
+          "rect": [
+            256,
+            0,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "jump-3"
+        },
+        {
+          "file": "hop/jump-4.png",
+          "duration_ms": 75,
+          "rect": [
+            384,
+            0,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "jump-4"
+        },
+        {
+          "file": "hop/jump-5.png",
+          "duration_ms": 75,
+          "rect": [
+            0,
+            128,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "jump-5"
+        },
+        {
+          "file": "hop/jump-6.png",
+          "duration_ms": 75,
+          "rect": [
+            128,
+            128,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "jump-6"
+        },
+        {
+          "file": "hop/jump-7.png",
+          "duration_ms": 75,
+          "rect": [
+            256,
+            128,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "jump-7"
+        },
+        {
+          "file": "hop/jump-8.png",
+          "duration_ms": 75,
+          "rect": [
+            384,
+            128,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "jump-8"
+        }
+      ],
+      "atlas": "hop/atlas.png",
+      "duration_ms": 600
+    },
+    "void-bolt": {
+      "layer": "body",
+      "loop": false,
+      "origin": [
+        64,
+        112
+      ],
+      "frames": [
+        {
+          "file": "void-bolt/cast-1.png",
+          "duration_ms": 100,
+          "rect": [
+            0,
+            0,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "cast-1"
+        },
+        {
+          "file": "void-bolt/cast-2.png",
+          "duration_ms": 92.22222222222223,
+          "rect": [
+            128,
+            0,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "cast-2"
+        },
+        {
+          "file": "void-bolt/cast-3.png",
+          "duration_ms": 92.22222222222223,
+          "rect": [
+            256,
+            0,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "cast-3"
+        },
+        {
+          "file": "void-bolt/cast-4.png",
+          "duration_ms": 92.22222222222223,
+          "rect": [
+            384,
+            0,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "cast-4"
+        },
+        {
+          "file": "void-bolt/cast-5.png",
+          "duration_ms": 92.22222222222223,
+          "rect": [
+            0,
+            128,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "cast-5"
+        },
+        {
+          "file": "void-bolt/cast-6.png",
+          "duration_ms": 92.22222222222223,
+          "rect": [
+            128,
+            128,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "cast-6"
+        },
+        {
+          "file": "void-bolt/cast-7.png",
+          "duration_ms": 92.22222222222223,
+          "rect": [
+            256,
+            128,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "cast-7"
+        },
+        {
+          "file": "void-bolt/cast-8.png",
+          "duration_ms": 92.22222222222223,
+          "rect": [
+            384,
+            128,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "cast-8"
+        },
+        {
+          "file": "void-bolt/cast-9.png",
+          "duration_ms": 92.22222222222223,
+          "rect": [
+            0,
+            256,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "cast-9"
+        },
+        {
+          "file": "void-bolt/cast-10.png",
+          "duration_ms": 92.22222222222223,
+          "rect": [
+            128,
+            256,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "cast-10"
+        },
+        {
+          "file": "void-bolt/cast-11.png",
+          "duration_ms": 220,
+          "rect": [
+            256,
+            256,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "cast-11"
+        },
+        {
+          "file": "void-bolt/cast-12.png",
+          "duration_ms": 100,
+          "rect": [
+            384,
+            256,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "cast-12"
+        },
+        {
+          "file": "void-bolt/cast-13.png",
+          "duration_ms": 120,
+          "rect": [
+            0,
+            384,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "cast-13"
+        },
+        {
+          "file": "void-bolt/cast-14.png",
+          "duration_ms": 100,
+          "rect": [
+            128,
+            384,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "cast-14"
+        },
+        {
+          "file": "void-bolt/cast-15.png",
+          "duration_ms": 100,
+          "rect": [
+            256,
+            384,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "cast-15"
+        },
+        {
+          "file": "void-bolt/cast-16.png",
+          "duration_ms": 100,
+          "rect": [
+            384,
+            384,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "cast-16"
+        }
+      ],
+      "atlas": "void-bolt/atlas.png",
+      "duration_ms": 1670.0,
+      "action_start_frame": 2,
+      "presentation_only_frames": [
+        1
+      ],
+      "events": [
+        {
+          "kind": "projectile_release",
+          "frame": 12,
+          "ms_from_action_start": 1050
+        }
+      ]
+    },
+    "hurt": {
+      "layer": "body",
+      "loop": false,
+      "origin": [
+        64,
+        112
+      ],
+      "frames": [
+        {
+          "file": "hurt/hurt-1.png",
+          "duration_ms": 110,
+          "rect": [
+            0,
+            0,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "hurt-1"
+        },
+        {
+          "file": "hurt/hurt-2.png",
+          "duration_ms": 110,
+          "rect": [
+            128,
+            0,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "hurt-2"
+        },
+        {
+          "file": "hurt/hurt-3.png",
+          "duration_ms": 110,
+          "rect": [
+            256,
+            0,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "hurt-3"
+        },
+        {
+          "file": "hurt/hurt-4.png",
+          "duration_ms": 110,
+          "rect": [
+            384,
+            0,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "hurt-4"
+        }
+      ],
+      "atlas": "hurt/atlas.png",
+      "duration_ms": 440
+    },
+    "stagger": {
+      "layer": "body",
+      "loop": false,
+      "origin": [
+        64,
+        112
+      ],
+      "frames": [
+        {
+          "file": "stagger/hurt-1.png",
+          "duration_ms": 110,
+          "rect": [
+            0,
+            0,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "hurt-1"
+        },
+        {
+          "file": "stagger/hurt-2.png",
+          "duration_ms": 110,
+          "rect": [
+            128,
+            0,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "hurt-2"
+        },
+        {
+          "file": "stagger/hurt-3.png",
+          "duration_ms": 110,
+          "rect": [
+            256,
+            0,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "hurt-3"
+        },
+        {
+          "file": "stagger/hurt-4.png",
+          "duration_ms": 110,
+          "rect": [
+            384,
+            0,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "hurt-4"
+        },
+        {
+          "file": "stagger/hurt-5.png",
+          "duration_ms": 110,
+          "rect": [
+            0,
+            128,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "hurt-5"
+        },
+        {
+          "file": "stagger/hurt-6.png",
+          "duration_ms": 110,
+          "rect": [
+            128,
+            128,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "hurt-6"
+        }
+      ],
+      "atlas": "stagger/atlas.png",
+      "duration_ms": 660
+    },
+    "death": {
+      "layer": "body",
+      "loop": false,
+      "origin": [
+        64,
+        112
+      ],
+      "frames": [
+        {
+          "file": "death/death-1.png",
+          "duration_ms": 125,
+          "rect": [
+            0,
+            0,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "death-1"
+        },
+        {
+          "file": "death/death-2.png",
+          "duration_ms": 125,
+          "rect": [
+            128,
+            0,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "death-2"
+        },
+        {
+          "file": "death/death-3.png",
+          "duration_ms": 125,
+          "rect": [
+            256,
+            0,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "death-3"
+        },
+        {
+          "file": "death/death-5.png",
+          "duration_ms": 125,
+          "rect": [
+            384,
+            0,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "death-5"
+        },
+        {
+          "file": "death/death-6.png",
+          "duration_ms": 125,
+          "rect": [
+            0,
+            128,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "death-6"
+        },
+        {
+          "file": "death/death-7.png",
+          "duration_ms": 125,
+          "rect": [
+            128,
+            128,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "death-7"
+        },
+        {
+          "file": "death/death-8.png",
+          "duration_ms": 125,
+          "rect": [
+            256,
+            128,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "death-8"
+        },
+        {
+          "file": "death/death-9.png",
+          "duration_ms": 125,
+          "rect": [
+            384,
+            128,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "death-9"
+        },
+        {
+          "file": "death/death-10.png",
+          "duration_ms": 125,
+          "rect": [
+            0,
+            256,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "death-10"
+        },
+        {
+          "file": "death/death-11.png",
+          "duration_ms": 125,
+          "rect": [
+            128,
+            256,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "death-11"
+        },
+        {
+          "file": "death/death-12.png",
+          "duration_ms": 125,
+          "rect": [
+            256,
+            256,
+            128,
+            128
+          ],
+          "terminal_empty": true,
+          "source_label": "death-12"
+        }
+      ],
+      "atlas": "death/atlas.png",
+      "duration_ms": 1375,
+      "original_source_frames": [
+        1,
+        2,
+        3,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "removed_original_source_frames": [
+        4
+      ]
+    },
+    "bite-fx": {
+      "layer": "fx",
+      "loop": false,
+      "origin": [
+        64,
+        64
+      ],
+      "frames": [
+        {
+          "file": "bite-fx/bite-fx-1.png",
+          "duration_ms": 58.333333333333336,
+          "rect": [
+            0,
+            0,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "bite-fx-1"
+        },
+        {
+          "file": "bite-fx/bite-fx-2.png",
+          "duration_ms": 58.333333333333336,
+          "rect": [
+            128,
+            0,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "bite-fx-2"
+        },
+        {
+          "file": "bite-fx/bite-fx-3.png",
+          "duration_ms": 58.333333333333336,
+          "rect": [
+            256,
+            0,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "bite-fx-3"
+        },
+        {
+          "file": "bite-fx/bite-fx-4.png",
+          "duration_ms": 58.333333333333336,
+          "rect": [
+            384,
+            0,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "bite-fx-4"
+        },
+        {
+          "file": "bite-fx/bite-fx-5.png",
+          "duration_ms": 58.333333333333336,
+          "rect": [
+            0,
+            128,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "bite-fx-5"
+        },
+        {
+          "file": "bite-fx/bite-fx-6.png",
+          "duration_ms": 58.333333333333336,
+          "rect": [
+            128,
+            128,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "bite-fx-6"
+        }
+      ],
+      "atlas": "bite-fx/atlas.png",
+      "duration_ms": 350.0
+    },
+    "void-fx": {
+      "layer": "fx",
+      "loop": false,
+      "origin": [
+        64,
+        64
+      ],
+      "frames": [
+        {
+          "file": "void-fx/void-fx-1.png",
+          "duration_ms": 70,
+          "rect": [
+            0,
+            0,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "void-fx-1"
+        },
+        {
+          "file": "void-fx/void-fx-2.png",
+          "duration_ms": 70,
+          "rect": [
+            128,
+            0,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "void-fx-2"
+        },
+        {
+          "file": "void-fx/void-fx-3.png",
+          "duration_ms": 70,
+          "rect": [
+            256,
+            0,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "void-fx-3"
+        },
+        {
+          "file": "void-fx/void-fx-4.png",
+          "duration_ms": 70,
+          "rect": [
+            384,
+            0,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "void-fx-4"
+        },
+        {
+          "file": "void-fx/void-fx-5.png",
+          "duration_ms": 70,
+          "rect": [
+            0,
+            128,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "void-fx-5"
+        },
+        {
+          "file": "void-fx/void-fx-6.png",
+          "duration_ms": 70,
+          "rect": [
+            128,
+            128,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "void-fx-6"
+        }
+      ],
+      "atlas": "void-fx/atlas.png",
+      "duration_ms": 420,
+      "usage": {
+        "charge_frames": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "release_frames": [
+          5,
+          6
+        ],
+        "charge_duration_ms": 1050,
+        "release_duration_ms": 100,
+        "interrupted_charge": "Play charge frames 4,3,2,1 over 320ms while body staggers."
+      }
+    },
+    "projectile": {
+      "layer": "fx",
+      "loop": true,
+      "origin": [
+        64,
+        64
+      ],
+      "frames": [
+        {
+          "file": "projectile/projectile-1.png",
+          "duration_ms": 70,
+          "rect": [
+            0,
+            0,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "projectile-1"
+        },
+        {
+          "file": "projectile/projectile-2.png",
+          "duration_ms": 70,
+          "rect": [
+            128,
+            0,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "projectile-2"
+        },
+        {
+          "file": "projectile/projectile-3.png",
+          "duration_ms": 70,
+          "rect": [
+            256,
+            0,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "projectile-3"
+        },
+        {
+          "file": "projectile/projectile-4.png",
+          "duration_ms": 70,
+          "rect": [
+            384,
+            0,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "projectile-4"
+        }
+      ],
+      "atlas": "projectile/atlas.png",
+      "duration_ms": 280
+    },
+    "impact": {
+      "layer": "fx",
+      "loop": false,
+      "origin": [
+        64,
+        64
+      ],
+      "frames": [
+        {
+          "file": "impact/impact-1.png",
+          "duration_ms": 58.333333333333336,
+          "rect": [
+            0,
+            0,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "impact-1"
+        },
+        {
+          "file": "impact/impact-2.png",
+          "duration_ms": 58.333333333333336,
+          "rect": [
+            128,
+            0,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "impact-2"
+        },
+        {
+          "file": "impact/impact-3.png",
+          "duration_ms": 58.333333333333336,
+          "rect": [
+            256,
+            0,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "impact-3"
+        },
+        {
+          "file": "impact/impact-4.png",
+          "duration_ms": 58.333333333333336,
+          "rect": [
+            384,
+            0,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "impact-4"
+        },
+        {
+          "file": "impact/impact-5.png",
+          "duration_ms": 58.333333333333336,
+          "rect": [
+            0,
+            128,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "impact-5"
+        },
+        {
+          "file": "impact/impact-6.png",
+          "duration_ms": 58.333333333333336,
+          "rect": [
+            128,
+            128,
+            128,
+            128
+          ],
+          "terminal_empty": false,
+          "source_label": "impact-6"
+        }
+      ],
+      "atlas": "impact/atlas.png",
+      "duration_ms": 350.0
+    }
+  },
+  "mouth_effect_anchor_in_body_cell": [
+    48,
+    63
+  ],
+  "mouth_effect_offset_from_world_root": [
+    -16,
+    -49
+  ],
+  "fx_rules": {
+    "charge": "Attach void-fx 1-4 to mouth through anticipation.",
+    "release": "Attach void-fx 5-6 to mouth at body frame12; projectile starts concurrently.",
+    "projectile": "Registered FX origin is black core; travel left from mouth to authoritative target. Loop four frames.",
+    "bite_impact": "At target contact on snap frame12, only if hit actually lands.",
+    "void_impact": "At projectile collision, only if hit lands; never on dodge/parry/miss.",
+    "flight_duration_ms_preview_only": 500
+  },
+  "hop": {
+    "use_for": [
+      "approach",
+      "retreat"
+    ],
+    "same_facing": true,
+    "duration_ms": 600,
+    "horizontal_translation_ms": [
+      150,
+      450
+    ],
+    "airborne_frames": [
+      3,
+      4,
+      5,
+      6
+    ],
+    "vertical_motion_baked_in_frames": true,
+    "extra_vertical_arc": false
+  },
+  "death": "Stop on transparent final frame11. Original death4 is excluded from active frames and atlas.",
+  "timing_note": "Approved visual rhythm; synchronize with authoritative combat defence windows. Frame1 attack idle is presentation-only.",
+  "captain_note": "Lightgorged Captain recolour/double throat ring and Gorged Volley not included. Do not invent damage-type/balance changes.",
+  "preview_note": "Preview outcome reactions demonstrate art only; especially ranged parry stagger is not a combat rule."
+}

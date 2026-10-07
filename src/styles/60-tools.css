@@ -1,0 +1,17 @@
+/* 60-tools: the Mastery box on a tool's item sheet and the rough tool's sheet (75-tools-ui.js, H2).
+   The tool chip on the Gather view's Now card is styled in 60-gathering.css (.gx-tool). */
+.tl-mrow { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 8px; margin-top: 2px; font-size: 12px; }
+.tl-mlabel { font-weight: 600; color: var(--gold); }
+.tl-mleft { color: var(--muted); }
+.tl-bar { height: 6px; }
+.tl-bar > i { background: var(--gold); }
+.tl-btn { flex: 0 0 auto; min-width: 88px; min-height: 44px; padding: 4px 10px; font: 600 13px var(--body); color: var(--bone); background: var(--panel); border: 1px solid var(--line-hi); cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tl-btn:hover { border-color: var(--gold); }
+.tl-make { flex: 1 1 0; color: #1A1420; background: var(--gold); border-color: var(--gold); }
+.tl-better { width: 100%; margin-top: 8px; }
+.tl-box .tl-mrow { margin-top: 0; }
+.tl-perks { margin: 6px 0 0; padding: 0; list-style: none; display: grid; gap: 2px; font-size: 12.5px; }
+.tl-perks li { color: var(--muted); opacity: .7; }
+.tl-perks li.on { color: var(--bone); opacity: 1; }
+.tl-perks li.on::before { content: "✓ "; color: var(--xp); }
+.tl-box.master h4 { color: var(--gold); }

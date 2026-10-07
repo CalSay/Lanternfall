@@ -1,0 +1,27 @@
+Use case: stylized-concept
+Asset type: one transparent pixel-art inventory atlas for Lanternfall: HIDE materials, grades 1–15.
+Create EXACTLY 15 separate icons in an EXACT 3-column × 5-row grid. Each row is a region, each column advances one grade. Every icon is a small RAW HIDE MATERIAL object—pelt, hide, skin, or scale patch—not a creature portrait, head, body, emblem, shield, badge, or scene. All cells equal square size, centered, similar visual weight, generous transparent gutters.
+STYLE: match the existing Lanternfall resource-icon sheet and Wren/Tobin/Pip hero art: clean one-logical-pixel near-black violet outline, bold square stepped silhouette readable at native 16×16, flat 3–4-shade pixel clusters, limited earthy/fantasy palette. Render source atlas enlarged crisply with exact blocky pixel edges. No smooth shading, gradients, glow, blur, paint texture, text, labels, borders, grid lines, dropshadows, duplicates, or extra objects. True transparent alpha everywhere around icons.
+
+READING ORDER, left to right:
+ROW 1 — THE HOLLOW:
+1 Bristlehide: small tan boar hide stretched flat, coarse dark bristle ridge along one edge, rough corners.
+2 Duskfang Pelt: slate-grey wolf fur pelt with distinctive pointed mane tufts and pale-cream chest patch, broader than first.
+3 Fenscale: moss-green lizard skin patch, overlapping scales and three amber ridge plates on one edge, tougher silhouette.
+ROW 2 — SUNKEN COAST:
+4 Riptide Skin: blue-grey sharkskin stretched patch with tiny denticle pattern and angular finlike upper edge, NOT a shark.
+5 Tide Kelpie Hide: sea-dark teal equine hide patch with strands of tangled kelp hair and hooked wet edge, much denser than sharkskin, NOT a horse.
+6 Brine Basilisk Hide: heavy salt-grey/moss-green six-sided reptile hide with large mineral scales and a small pale crystalline crest edge, strongest of row.
+ROW 3 — EMBERWASTE:
+7 Ashwing Hide: charcoal leathery wyvern wing-membrane fold with singed ember-orange veins.
+8 Glassdrake Hide: dark red-brown drake skin patch visibly studded with embedded translucent ruby-black glass plates, not a loose gemstone.
+9 Pyrewyrm Hide: thick basalt-black serpentine hide roll, interlocking plates with three compact red seams, not a dragon portrait.
+ROW 4 — PALE REACH:
+10 Rime Mammoth Hide: shaggy blue-grey heavy pelt fold with frost-white tips and one thick icy shoulder patch.
+11 Skyrend Griffon Hide: strong pale-silver feather/fur mantle, layered pointed feather edges and warm tawny underhide, distinctly different from mammoth fur.
+12 Starscar Behemoth Hide: massive cold-grey hide slab with embedded blue star-glass armour plates, angular and heaviest.
+ROW 5 — GLOAMVALE:
+13 Stillchimera Hide: matte ash-violet composite hide patch, mismatched fur and antler-texture edging; looks condensed from a dark echo, not living.
+14 Mere Manticore Hide: near-black indigo hide with rigid outward spine roots and a reflected blue-black underside, stronger and more barbed.
+15 Skyless Drakehide: broad layered nearly black violet drake hide, heavy angular plates and one muted pale-violet seam, final most formidable material.
+Keep each row's regional palette coherent while each icon contour and texture is unique. No green living growth in Emberwaste or Gloamvale; no soft glows anywhere.

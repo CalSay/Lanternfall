@@ -1,0 +1,19 @@
+# seed: 1
+# Proof for card hero-portraits: the mid fixture (Tobin) opens the Hero tab, where his card and the party chips show the faces cut from the
+# approved concept boards (64 px art at 32 and 64 px). Replayed at 360x740 and 740x360. The Classic art switch and the packed data are covered by
+# the check.mjs "hero portraits" section.
+new mid
+wait 3
+tap-if "Continue"
+wait 3
+tap-if "Continue"
+wait 3
+tap-if "Continue"
+tap "Hero"
+wait 3
+tap-if "Continue"
+wait 3
+tap-if "Continue"
+expect "Your hero"
+expect "Tobin"
+shot hero-tab-portraits

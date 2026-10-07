@@ -1,0 +1,24 @@
+{
+  "build": "dist/lanternfall.html",
+  "patched": false,
+  "findings": [
+    {
+      "check": "moments",
+      "scenario": "rare craft",
+      "size": "portrait",
+      "what": "shown without its rarity (rare / epic / legendary)",
+      "detail": "name \"Copper Warblade\", rarity \"rare|epic|legendary\"; surface: mm-card (\"Well made: Copper Warblade\")",
+      "n": 1,
+      "shot": "01-moments-rare craft-portrait.png"
+    },
+    {
+      "check": "moments",
+      "scenario": "craft grade (a plain craft)",
+      "size": "portrait",
+      "what": "shown without its rarity (Epic)",
+      "detail": "name \"Copper Warblade\", rarity \"Epic\"; surface: mm-card (\"Well made: Copper Warblade\")",
+      "n": 1,
+      "shot": "02-moments-craft grade (a plain craft)-portrait.png"
+    }
+  ]
+}

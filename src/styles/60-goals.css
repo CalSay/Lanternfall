@@ -1,0 +1,56 @@
+/* 60-goals: the "Next up" chip on the game view, its list sheet, and Go buttons in the away card */
+
+/* the chip: one slim row, the top goal and its progress along the bottom edge; tap for the list */
+.nu-chip { position: relative; width: 100%; min-height: 48px; display: grid; grid-template-columns: 30px minmax(0, 1fr) auto auto 14px; gap: 9px; align-items: center; padding: 4px 10px 6px 6px; background: var(--panel); border: 2px solid var(--line); box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 2px 0 #0B0810; cursor: pointer; text-align: left; overflow: hidden; }
+.nu-chip:hover { border-color: var(--line-hi); }
+.nu-chip:active { transform: translateY(1px); }
+.nu-chip .nu-ic { width: 30px; height: 30px; }
+.nu-chip .nu-ic img { width: 20px; height: 20px; }
+.nu-cbody { min-width: 0; display: grid; gap: 1px; }
+.nu-eye { font: 600 10px/1.1 var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.nu-chip .nu-lbl { font: 500 13.5px/1.2 var(--body); white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; display: block; }   /* the whole goal, on as many lines as it takes (top-bar-compact) */
+.nu-cst { font: 600 calc(13px * var(--display-k))/1 var(--display); color: var(--gold); font-variant-numeric: tabular-nums; }
+.nu-more { font: 600 calc(11px * var(--display-k))/1 var(--display); padding: 3px 5px; background: var(--panel-2); border: 1px solid var(--line-hi); color: var(--muted); }
+.nu-more:empty { display: none; }
+.nu-more.hot { color: #1A1420; background: var(--ember); border-color: var(--ember-deep); }
+.nu-chip .nu-chev { width: 8px; height: 8px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: translateY(2px) rotate(-135deg); }
+.nu-cbar { position: absolute; left: 0; bottom: 0; height: 3px; width: 0; background: var(--gold); box-shadow: 0 0 6px rgba(242,193,78,.4); transition: width .3s; }
+.nu-chip.ready { border-color: rgba(242,193,78,.8); background: linear-gradient(90deg, rgba(242,193,78,.14), var(--panel) 75%); }
+.nu-chip.ready .nu-cst { color: var(--xp); }
+.nu-chip.ready .nu-cbar { background: var(--xp); box-shadow: 0 0 6px rgba(111,203,106,.5); }
+.nu-chip.empty .nu-lbl { color: var(--muted); white-space: normal; }
+.nu-chip.empty .nu-chev, .nu-chip.empty .nu-ic { opacity: .5; }
+
+/* the list (sheet) */
+.nu-list { display: grid; gap: 6px; margin: 10px 0 8px; }
+.nu-row { display: grid; grid-template-columns: 32px minmax(0, 1fr) auto; gap: 9px; align-items: center; padding: 3px 3px 3px 6px; background: var(--panel); border: 2px solid var(--line); box-shadow: 0 2px 0 #0B0810; min-height: 50px; }
+.nu-row[hidden] { display: none; }
+.nu-row.ready { border-color: rgba(242,193,78,.75); background: linear-gradient(90deg, rgba(242,193,78,.10), var(--panel) 70%); }
+.nu-ic { width: 32px; height: 32px; display: grid; place-items: center; background: var(--well); border: 2px solid var(--line-hi); }
+.nu-ic img { width: 22px; height: 22px; image-rendering: pixelated; image-rendering: crisp-edges; }
+.nu-body { min-width: 0; display: grid; gap: 5px; }
+.nu-lbl { font: 500 13.5px/1.2 var(--body); overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.nu-bar { height: 4px; }
+.nu-bar > i { background: var(--gold); }
+.nu-row.ready .nu-bar > i { background: var(--xp); }
+.nu-go { min-width: 58px; min-height: 44px; padding: 3px 8px; display: grid; justify-items: center; align-content: center; gap: 0; cursor: pointer; border: 2px solid #0B0810; background: var(--panel-2); color: var(--bone); box-shadow: inset 0 1px 0 rgba(255,255,255,.08), inset 0 -3px 0 #1a1420; }
+.nu-go .nu-st { font: 600 10px var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-variant-numeric: tabular-nums; }
+.nu-go .nu-gol { font: 600 calc(15px * var(--display-k))/1.1 var(--display); }
+.nu-row.ready .nu-go { background: var(--ember); color: #1A1420; box-shadow: inset 0 2px 0 rgba(255,255,255,.3), inset 0 -3px 0 var(--ember-deep); }
+.nu-row.ready .nu-go .nu-st { color: #1A1420; opacity: .75; }
+.nu-go:active { transform: translateY(2px); }
+.nu-empty { margin: 0; }
+.nu-empty[hidden] { display: none; }
+
+/* Go target flash */
+.nu-flash { animation: nuFlash 1.5s ease-out; }
+@keyframes nuFlash { 0%, 30% { box-shadow: 0 0 0 2px var(--gold), 0 0 16px rgba(242,193,78,.55); } 100% { box-shadow: 0 0 0 0 transparent; } }
+
+/* away card: Go buttons on "Next up" lines */
+.away-ltx { flex: 1; min-width: 0; }
+.away-lgo { flex: none; min-width: 52px; min-height: 44px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .nu-cbar { transition: none; }
+  .nu-flash { animation: none; outline: 2px solid var(--gold); outline-offset: 1px; }
+}

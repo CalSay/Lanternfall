@@ -1,0 +1,117 @@
+# seed: 1
+# Proof for card walk-fixture-z10-z15: fixture z15-marshal (tests/proof-fixtures/save-z15-marshal.json) is Wren on zone 15 with the Marshal next. The route fights it and checks the Pip meet scene (#159) without playing zones 1 to 14.
+new z15-marshal
+wait 2
+tap-if "Got it"
+expect "The Ossuary Marshal"
+shot champion-walk-in
+tap-if "Continue"
+wait 6
+tap-if "Continue"
+wait 1
+tap-if "Got it"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+expect "1 of 3"
+shot marshal-falls
+tap "Next"
+wait 1
+expect "Anselm"
+tap "Next"
+wait 1
+expect "Pip"
+expect "I'll bring matches"
+shot pip-meet-scene
+tap "Continue"
+wait 1
+expect "The Ossuary Marshal falls"
+shot champion-cache

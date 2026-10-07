@@ -1,0 +1,227 @@
+{
+ "slug": "rustys-retirement",
+ "n_reviews": 50,
+ "n_pos": 25,
+ "n_neg": 25,
+ "n_longplay_neg": 8,
+ "sources": [
+  "steam"
+ ],
+ "themes": {
+  "P-offline": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-respect": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-active": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-dev": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-unlock": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-collect": {
+   "n": 4,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "Good game overall but extremely long and repetitive to reach the 100% of achievements. (steam+, 70h)",
+    "Took me 128 hours to get all the achievements but the time flew by like nothing highly recommend. (steam+, 128h)"
+   ]
+  },
+  "P-goals": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-depth": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-fair": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-interlock": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-prestige": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-qol": {
+   "n": 4,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "I want it automated and this is that game. (steam+, 24h)",
+    "I really like its fully automated design. (steam+, 109h)"
+   ]
+  },
+  "P-calm": {
+   "n": 5,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "\"A relaxing idle-farming simulator that sits at the bottom of your screen while you do other things\" (steam+, 324h)",
+    "Such a chill game to throw onto the other monitor while watching smth, playing a game, studying, etc. (steam+, 39h)"
+   ]
+  },
+  "P-art": {
+   "n": 6,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "They are super cute and I'll be saving up to get all of them. (steam+, 150h)",
+    "It hides behind other apps, or sits in front, has beautiful music, easy enough flow. (steam+, 175h)"
+   ]
+  },
+  "P-story": {
+   "n": 3,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": [
+    "I've always wanted a Stardew Valley-like game where I don't have to control a character. (steam+, 24h)",
+    "I leave it on while writing papers, organizing materials, or working through complex problems. (steam+, 109h)"
+   ]
+  },
+  "N-ads": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-wall": {
+   "n": 3,
+   "of": 25,
+   "longplay_n": 1,
+   "quotes": [
+    "Less of a game and more of interactive wall paper. (steam-, 77h)",
+    "I found a zoom in function, but the ramp up was too slow for me to want to continue. (steam-)"
+   ]
+  },
+  "N-pay": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-dominant": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-late": {
+   "n": 3,
+   "of": 25,
+   "longplay_n": 2,
+   "quotes": [
+    "Gets repetitive extremely fast, not very fun and requires a lot more attention than an afk game should (steam-, 34h)",
+    "And to my knowledge there isn't an endgame or goal. (steam-, 77h)"
+   ]
+  },
+  "N-offline": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 1,
+   "quotes": [
+    "Its \"game\" elements are very limited and contains no offline progression (not that it needs it). (steam-, 186h)"
+   ]
+  },
+  "N-mobile": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-bug": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 1,
+   "quotes": []
+  },
+  "N-energy": {
+   "n": 1,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-bloat": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-chore": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-tutorial": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-shallow": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-reset": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-pace": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-fast": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-balance": {
+   "n": 0,
+   "of": 25,
+   "longplay_n": 0,
+   "quotes": []
+  }
+ }
+}

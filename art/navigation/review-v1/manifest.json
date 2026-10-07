@@ -1,0 +1,390 @@
+{
+  "version": 1,
+  "status": "owner-approved",
+  "icons": [
+    {
+      "id": "fight",
+      "name": "Fight",
+      "family": "navigation",
+      "atlas": "navigation.png",
+      "rect": [
+        58,
+        76,
+        245,
+        246
+      ]
+    },
+    {
+      "id": "hero",
+      "name": "Hero",
+      "family": "navigation",
+      "atlas": "navigation.png",
+      "rect": [
+        352,
+        62,
+        255,
+        266
+      ]
+    },
+    {
+      "id": "gather",
+      "name": "Gather",
+      "family": "navigation",
+      "atlas": "navigation.png",
+      "rect": [
+        663,
+        89,
+        235,
+        233
+      ]
+    },
+    {
+      "id": "craft",
+      "name": "Craft",
+      "family": "navigation",
+      "atlas": "navigation.png",
+      "rect": [
+        947,
+        83,
+        267,
+        239
+      ]
+    },
+    {
+      "id": "camp",
+      "name": "Camp",
+      "family": "navigation",
+      "atlas": "navigation.png",
+      "rect": [
+        34,
+        373,
+        287,
+        248
+      ]
+    },
+    {
+      "id": "tavern",
+      "name": "Tavern",
+      "family": "navigation",
+      "atlas": "navigation.png",
+      "rect": [
+        368,
+        367,
+        233,
+        248
+      ]
+    },
+    {
+      "id": "adventure",
+      "name": "Adventure",
+      "family": "navigation",
+      "atlas": "navigation.png",
+      "rect": [
+        651,
+        383,
+        265,
+        228
+      ]
+    },
+    {
+      "id": "journal",
+      "name": "Journal",
+      "family": "navigation",
+      "atlas": "navigation.png",
+      "rect": [
+        969,
+        381,
+        250,
+        240
+      ]
+    },
+    {
+      "id": "notices",
+      "name": "Notices",
+      "family": "navigation",
+      "atlas": "navigation.png",
+      "rect": [
+        47,
+        649,
+        230,
+        252
+      ]
+    },
+    {
+      "id": "next-up",
+      "name": "Next Up",
+      "family": "navigation",
+      "atlas": "navigation.png",
+      "rect": [
+        368,
+        646,
+        233,
+        257
+      ]
+    },
+    {
+      "id": "switch-view",
+      "name": "Switch view",
+      "family": "navigation",
+      "atlas": "navigation.png",
+      "rect": [
+        663,
+        679,
+        242,
+        195
+      ]
+    },
+    {
+      "id": "mining",
+      "name": "Mining",
+      "family": "navigation",
+      "atlas": "navigation.png",
+      "rect": [
+        963,
+        653,
+        256,
+        247
+      ]
+    },
+    {
+      "id": "woodcutting",
+      "name": "Woodcutting",
+      "family": "navigation",
+      "atlas": "navigation.png",
+      "rect": [
+        37,
+        942,
+        257,
+        263
+      ]
+    },
+    {
+      "id": "foraging",
+      "name": "Foraging",
+      "family": "navigation",
+      "atlas": "navigation.png",
+      "rect": [
+        346,
+        935,
+        233,
+        260
+      ]
+    },
+    {
+      "id": "hunting",
+      "name": "Hunting",
+      "family": "navigation",
+      "atlas": "navigation.png",
+      "rect": [
+        648,
+        927,
+        268,
+        263
+      ]
+    },
+    {
+      "id": "storehouse",
+      "name": "Storehouse",
+      "family": "navigation",
+      "atlas": "navigation.png",
+      "rect": [
+        956,
+        966,
+        263,
+        216
+      ]
+    },
+    {
+      "id": "boss",
+      "name": "Boss",
+      "family": "submenus",
+      "atlas": "submenus.png",
+      "rect": [
+        43,
+        79,
+        261,
+        234
+      ]
+    },
+    {
+      "id": "bounties",
+      "name": "Bounties",
+      "family": "submenus",
+      "atlas": "submenus.png",
+      "rect": [
+        360,
+        76,
+        226,
+        245
+      ]
+    },
+    {
+      "id": "bestiary",
+      "name": "Bestiary",
+      "family": "submenus",
+      "atlas": "submenus.png",
+      "rect": [
+        639,
+        110,
+        267,
+        208
+      ]
+    },
+    {
+      "id": "deepwell",
+      "name": "Deepwell",
+      "family": "submenus",
+      "atlas": "submenus.png",
+      "rect": [
+        954,
+        78,
+        253,
+        243
+      ]
+    },
+    {
+      "id": "training",
+      "name": "Training",
+      "family": "submenus",
+      "atlas": "submenus.png",
+      "rect": [
+        45,
+        357,
+        259,
+        276
+      ]
+    },
+    {
+      "id": "stars",
+      "name": "Stars",
+      "family": "submenus",
+      "atlas": "submenus.png",
+      "rect": [
+        356,
+        366,
+        232,
+        246
+      ]
+    },
+    {
+      "id": "gear",
+      "name": "Gear",
+      "family": "submenus",
+      "atlas": "submenus.png",
+      "rect": [
+        637,
+        385,
+        272,
+        230
+      ]
+    },
+    {
+      "id": "uniques",
+      "name": "Uniques",
+      "family": "submenus",
+      "atlas": "submenus.png",
+      "rect": [
+        991,
+        370,
+        202,
+        242
+      ]
+    },
+    {
+      "id": "almanac",
+      "name": "Almanac",
+      "family": "submenus",
+      "atlas": "submenus.png",
+      "rect": [
+        38,
+        702,
+        273,
+        215
+      ]
+    },
+    {
+      "id": "raid",
+      "name": "Raid",
+      "family": "submenus",
+      "atlas": "submenus.png",
+      "rect": [
+        377,
+        631,
+        229,
+        290
+      ]
+    },
+    {
+      "id": "deeds",
+      "name": "Deeds",
+      "family": "submenus",
+      "atlas": "submenus.png",
+      "rect": [
+        690,
+        652,
+        164,
+        264
+      ]
+    },
+    {
+      "id": "tracks",
+      "name": "Tracks",
+      "family": "submenus",
+      "atlas": "submenus.png",
+      "rect": [
+        965,
+        642,
+        226,
+        274
+      ]
+    },
+    {
+      "id": "feats",
+      "name": "Feats",
+      "family": "submenus",
+      "atlas": "submenus.png",
+      "rect": [
+        41,
+        955,
+        261,
+        240
+      ]
+    },
+    {
+      "id": "looks",
+      "name": "Looks",
+      "family": "submenus",
+      "atlas": "submenus.png",
+      "rect": [
+        352,
+        955,
+        253,
+        246
+      ]
+    },
+    {
+      "id": "codex",
+      "name": "Codex",
+      "family": "submenus",
+      "atlas": "submenus.png",
+      "rect": [
+        656,
+        944,
+        235,
+        257
+      ]
+    },
+    {
+      "id": "close",
+      "name": "Close",
+      "family": "submenus",
+      "atlas": "submenus.png",
+      "rect": [
+        988,
+        972,
+        203,
+        202
+      ]
+    }
+  ]
+}

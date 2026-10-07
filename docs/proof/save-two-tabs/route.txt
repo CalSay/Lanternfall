@@ -1,0 +1,44 @@
+# seed: 1
+# Proof for card save-two-tabs: with the game open in two tabs, the older tab stops saving and says so; the newer progress
+# survives. Before the fix the older tab wrote its stale save over the newer one (repro: the next load read about 1 gold, not 12,345).
+# Part 1, one tab: the card never shows.
+new early
+wait 3
+expect "Attack"
+wait 12
+expect-no "open in another tab"
+# Part 2, coming back to the older tab: tab 2 opens the same game (tab 1 goes to the background) with 12,345 gold, plays and saves.
+tab new gold=12345
+wait 8
+expect "Attack"
+expect-no "open in another tab"
+expect-save gold>=12345
+tab 1
+expect "Lanternfall is open in another tab. Reload to keep playing here."
+expect "Reload"
+shot older-tab
+wait 8
+expect-save gold>=12345
+# Reload in the older tab: it now plays the newer save, with no card.
+tap "Reload"
+wait 3
+expect-no "open in another tab"
+expect-save gold>=12345
+# Part 3, closing the older tab without coming back to it (its pagehide save): tab 3 opens with 54,321 gold and saves;
+# tab 1 is closed from the background.
+tab new gold=54321
+wait 8
+expect-save gold>=54321
+tab close 1
+expect-save gold>=54321
+# Tab 2 (also older) comes back to the front: it shows the card and does not save.
+tab 2
+expect "open in another tab"
+wait 8
+expect-save gold>=54321
+# A fresh load reads the newest progress, with no card.
+tab new
+wait 3
+expect-no "open in another tab"
+expect-save gold>=54321
+shot fresh-load

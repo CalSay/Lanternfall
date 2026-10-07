@@ -1,0 +1,147 @@
+# seed: 1
+# Proof for card unlock-voice: Old Hesketh announces a new tab in the guide panel once a fight is over (never mid-turn), in his own words.
+# Run: node tools/playtest.mjs batch --seed 1 < route.txt (portrait), and again with --landscape. Shots: say-party-360x740.png and say-party-740x360.png (this folder).
+# The line itself is timing-sensitive (it shows for about 7 s and waits behind any tip), so the route holds one `expect` (the point to spend) and the shot shows the line; tools/check.mjs holds the rules.
+new fresh
+tap-if "Skip this"
+tap "Begin as Wren"
+tap-if "Skip"
+tap-if "Continue"
+wait 4
+tap-if "Skip"
+wait 4
+tap-if "Attack"
+tap-if "Dodge"
+tap-if "Parry"
+tap-if "Got it"
+tap-if "Continue"
+tap-if "Echo"
+wait 2
+tap-if "Attack"
+tap-if "Dodge"
+tap-if "Parry"
+tap-if "Got it"
+tap-if "Continue"
+tap-if "Echo"
+wait 2
+tap-if "Attack"
+tap-if "Dodge"
+tap-if "Parry"
+tap-if "Got it"
+tap-if "Continue"
+tap-if "Echo"
+wait 2
+tap-if "Attack"
+tap-if "Dodge"
+tap-if "Parry"
+tap-if "Got it"
+tap-if "Continue"
+tap-if "Echo"
+wait 2
+tap-if "Attack"
+tap-if "Dodge"
+tap-if "Parry"
+tap-if "Got it"
+tap-if "Continue"
+tap-if "Echo"
+wait 2
+tap-if "Attack"
+tap-if "Dodge"
+tap-if "Parry"
+tap-if "Got it"
+tap-if "Continue"
+tap-if "Echo"
+wait 2
+tap-if "Attack"
+tap-if "Dodge"
+tap-if "Parry"
+tap-if "Got it"
+tap-if "Continue"
+tap-if "Echo"
+wait 2
+tap-if "Attack"
+tap-if "Dodge"
+tap-if "Parry"
+tap-if "Got it"
+tap-if "Continue"
+tap-if "Echo"
+wait 2
+tap-if "Attack"
+tap-if "Dodge"
+tap-if "Parry"
+tap-if "Got it"
+tap-if "Continue"
+tap-if "Echo"
+wait 2
+tap-if "Attack"
+tap-if "Dodge"
+tap-if "Parry"
+tap-if "Got it"
+tap-if "Continue"
+tap-if "Echo"
+wait 2
+tap-if "Attack"
+tap-if "Dodge"
+tap-if "Parry"
+tap-if "Got it"
+tap-if "Continue"
+tap-if "Echo"
+wait 2
+tap-if "Attack"
+tap-if "Dodge"
+tap-if "Parry"
+tap-if "Got it"
+tap-if "Continue"
+tap-if "Echo"
+wait 2
+tap-if "Attack"
+tap-if "Dodge"
+tap-if "Parry"
+tap-if "Got it"
+tap-if "Continue"
+tap-if "Echo"
+wait 2
+tap-if "Attack"
+tap-if "Dodge"
+tap-if "Parry"
+tap-if "Got it"
+tap-if "Continue"
+tap-if "Echo"
+wait 2
+tap-if "Attack"
+tap-if "Dodge"
+tap-if "Parry"
+tap-if "Got it"
+tap-if "Continue"
+tap-if "Echo"
+wait 2
+tap-if "Attack"
+tap-if "Dodge"
+tap-if "Parry"
+tap-if "Got it"
+tap-if "Continue"
+tap-if "Echo"
+wait 2
+tap-if "Attack"
+tap-if "Dodge"
+tap-if "Parry"
+tap-if "Got it"
+tap-if "Continue"
+tap-if "Echo"
+wait 2
+tap-if "Attack"
+tap-if "Dodge"
+tap-if "Parry"
+tap-if "Got it"
+tap-if "Continue"
+tap-if "Echo"
+wait 2
+expect "You've a point to spend"
+tap "Hero"
+wait 1
+tap "Build"
+wait 1
+tap-if "Might"
+wait 1
+wait 3
+shot say-party

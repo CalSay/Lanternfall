@@ -1,0 +1,270 @@
+{
+ "slug": "soda-dungeon-2",
+ "n_reviews": 383,
+ "n_pos": 308,
+ "n_neg": 75,
+ "n_longplay_neg": 3,
+ "sources": [
+  "steam",
+  "apple"
+ ],
+ "themes": {
+  "P-offline": {
+   "n": 6,
+   "of": 308,
+   "longplay_n": 0,
+   "quotes": [
+    "They added some GREAT stuff like offline progress and custom AI scripts to have better control of how your team fights in auto-mode. (steam+, 131h)",
+    "100% Achievements at 84 hours, 90% of that was AFK time. (steam+, 84h)"
+   ]
+  },
+  "P-respect": {
+   "n": 4,
+   "of": 308,
+   "longplay_n": 0,
+   "quotes": [
+    "If you like a casual game - this is a great one. (steam+, 26h)",
+    "One of the best free-to-play casual RPGs for me. (steam+, 10h)"
+   ]
+  },
+  "P-active": {
+   "n": 5,
+   "of": 308,
+   "longplay_n": 0,
+   "quotes": [
+    "I also found the challenge of optimizing boss rushes to be engaging. (steam+, 157h)",
+    "It fullfills the whimsy, the skill, the intent, the purpose, and the constant grind satisfaction. (apple5)"
+   ]
+  },
+  "P-dev": {
+   "n": 1,
+   "of": 308,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-unlock": {
+   "n": 3,
+   "of": 308,
+   "longplay_n": 0,
+   "quotes": [
+    "It retains the charm of the original, while still adding new content that never ceases to please me. (apple5)",
+    "Hope to see new content in the future! (apple5)"
+   ]
+  },
+  "P-collect": {
+   "n": 19,
+   "of": 308,
+   "longplay_n": 0,
+   "quotes": [
+    "The dark lord is the good guy and we are the villains barging into his house to loot stuffs. (steam+, 1h)",
+    "100% Achievements at 84 hours, 90% of that was AFK time. (steam+, 84h)"
+   ]
+  },
+  "P-goals": {
+   "n": 0,
+   "of": 308,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "P-depth": {
+   "n": 10,
+   "of": 308,
+   "longplay_n": 0,
+   "quotes": [
+    "You\u2019d be hard-pressed to find a turn-based strategy game better than this one. (apple5)",
+    "It expands upon what made SD1 so fun, and it also introduces new mechanics that lead to more complex and interesting strategies. (steam+, 355h)"
+   ]
+  },
+  "P-fair": {
+   "n": 3,
+   "of": 308,
+   "longplay_n": 0,
+   "quotes": [
+    "Its free and so fun and you don\u2019t have to spend money annnnnddde you can buy no ads for free!!! (apple5)"
+   ]
+  },
+  "P-interlock": {
+   "n": 1,
+   "of": 308,
+   "longplay_n": 0,
+   "quotes": [
+    "There have been buffs to the different synergies and play styles but there is still a fairly defined meta. (steam+, 474h)"
+   ]
+  },
+  "P-prestige": {
+   "n": 2,
+   "of": 308,
+   "longplay_n": 0,
+   "quotes": [
+    "The only real thing I can say is I think item upgrades should be more expensive and carry on through prestige\u2019s. (apple4)",
+    "As well as some sort of prestige besides moving up dimensions. (apple5)"
+   ]
+  },
+  "P-qol": {
+   "n": 4,
+   "of": 308,
+   "longplay_n": 0,
+   "quotes": [
+    "Now hear me out, you can\u2019t one up perfection, but this game comes close by adding new mechanics that improve the QOL of the game. (apple5)",
+    "The characters are goofy and the game is easy to understand even if you haven\u2019t played the first. (apple4)"
+   ]
+  },
+  "P-calm": {
+   "n": 3,
+   "of": 308,
+   "longplay_n": 0,
+   "quotes": [
+    "I mean he\u2019s such a chill and nice guy, but we are forced to be mean to him to progress the game. (apple5)",
+    "Honestly one of the most chill games. (apple5)"
+   ]
+  },
+  "P-art": {
+   "n": 33,
+   "of": 308,
+   "longplay_n": 0,
+   "quotes": [
+    "This game is great due to its immense detail, from the pixel art to the new Ambush mechanics. (apple5)",
+    "I\u2019ve gotta say, this game really is funny in all the way it should be, with it\u2019s quirky pixel-puppets and it\u2019s goofy banter. (apple5)"
+   ]
+  },
+  "P-story": {
+   "n": 39,
+   "of": 308,
+   "longplay_n": 0,
+   "quotes": [
+    "AIs would be wanting something for something else in return, like a quest but with items. (apple5)",
+    "Has a bit of a comedic story and it's own charm. (steam+, 26h)"
+   ]
+  },
+  "N-ads": {
+   "n": 26,
+   "of": 75,
+   "longplay_n": 0,
+   "quotes": [
+    "It also has a lot of ads which I don\u2019t mind if they aren\u2019t overdone as a way to play for free. (apple3)",
+    "I had a blast at first and paid 10 dollars to avoid ads because there are ads being shoved down your throat every single level. (apple1)"
+   ]
+  },
+  "N-wall": {
+   "n": 9,
+   "of": 75,
+   "longplay_n": 1,
+   "quotes": [
+    "late game is just a boring endless grind for items that takes from a few hrs up to days to spawn... (steam-, 1358h)",
+    "I have been grinding in place for a week trying to beat it and still don\u2019t appear to be close. (apple3)"
+   ]
+  },
+  "N-pay": {
+   "n": 3,
+   "of": 75,
+   "longplay_n": 0,
+   "quotes": [
+    "Also a major screw up was not putting a confirmation for spending the premium currency. (apple1)"
+   ]
+  },
+  "N-dominant": {
+   "n": 0,
+   "of": 75,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-late": {
+   "n": 7,
+   "of": 75,
+   "longplay_n": 1,
+   "quotes": [
+    "late game is just a boring endless grind for items that takes from a few hrs up to days to spawn... (steam-, 1358h)",
+    "Fun at first, now repetitive and stale. (apple1)"
+   ]
+  },
+  "N-offline": {
+   "n": 1,
+   "of": 75,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-mobile": {
+   "n": 2,
+   "of": 75,
+   "longplay_n": 0,
+   "quotes": [
+    "Additionally, as an idle game that requires the device to be on, you will drain your battery for playing. (apple2)"
+   ]
+  },
+  "N-bug": {
+   "n": 6,
+   "of": 75,
+   "longplay_n": 0,
+   "quotes": [
+    "Last night, it started glitching when in the dungeons by not letting me select auto play, and completely freezing after 1 manual attack. (apple2)",
+    "Game is so bugged out to the point where i cannot even enter without crashing or freezing  once (apple3)"
+   ]
+  },
+  "N-energy": {
+   "n": 2,
+   "of": 75,
+   "longplay_n": 0,
+   "quotes": [
+    "You can pay to turn off compulsory ads, but this game has many ad \u201copportunities\u201d to double things, revive your party, reset timers, etc... (apple3)"
+   ]
+  },
+  "N-bloat": {
+   "n": 0,
+   "of": 75,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-chore": {
+   "n": 0,
+   "of": 75,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-tutorial": {
+   "n": 3,
+   "of": 75,
+   "longplay_n": 0,
+   "quotes": [
+    "It went to the mobile tutorial . (steam-, 1h)",
+    "Not a bad game but waste of time to do the tutorial (apple3)"
+   ]
+  },
+  "N-shallow": {
+   "n": 3,
+   "of": 75,
+   "longplay_n": 0,
+   "quotes": [
+    "While the concept of this dungeon crawler is simple yet enjoyable, it doesn\u2019t provide much more than the first few dimensions. (apple2)"
+   ]
+  },
+  "N-reset": {
+   "n": 0,
+   "of": 75,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-pace": {
+   "n": 0,
+   "of": 75,
+   "longplay_n": 0,
+   "quotes": []
+  },
+  "N-fast": {
+   "n": 1,
+   "of": 75,
+   "longplay_n": 0,
+   "quotes": [
+    "Basically it runs out of carrots to chase. (apple3)"
+   ]
+  },
+  "N-balance": {
+   "n": 4,
+   "of": 75,
+   "longplay_n": 1,
+   "quotes": [
+    "mid game it gets unbalanced and most of items and skills are useless.... (steam-, 1358h)",
+    "I just don\u2019t feel the same level of balance or challenge. (apple1)"
+   ]
+  }
+ }
+}

@@ -1,0 +1,1 @@
+Old Hesketh now teaches one thing a fight, in his own words: Attack first, then Dodge, then Parry. A tip waits for the right moment, so he never says "Attack" while a hit is coming. A tip you ignore for a minute goes away and waits in the Journal's Tips.

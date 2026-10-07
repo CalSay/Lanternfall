@@ -1,0 +1,1645 @@
+{
+ "name": "Idle Monster TD",
+ "slug": "idle-monster-td",
+ "fetched": "2026-10-05",
+ "steam": {
+  "summary": {
+   "num_reviews": 13
+  },
+  "pos": [
+   {
+    "id": "228260710",
+    "votes_up": 2,
+    "hours": 6,
+    "text": "Idle Monster TD is an idle tower defense game built around the idea that you can\u2019t truly lose. If enemies (the human\u2011robot hybrids) reach your center, the game simply rewinds 10\u201325 waves and auto\u2011replays the run. Logging in gives you offline rewards that can be spent on random monsters, upgrades, spell research or skill improvements. Active play still matters, though\u2014random events require clicking, spells must be cast manually and upgrades don\u2019t apply themselves.\r\n\r\nThe monsters are cute and mechanically distinct, with a mix of shared and unique abilities that either defend the tower, attack enemies or buff allies of the same attribute. I gravitated toward water monsters because of their strong freezing and slowing effects.\r\n\r\nEarly on, the game felt like a classic pay\u2011to\u2011win setup. I was getting wiped before wave 40, mostly because my roster was tiny, I could only place one copy of each"
+   },
+   {
+    "id": "225715621",
+    "votes_up": 1,
+    "hours": 8,
+    "text": "Idle Monster TD is a highly addictive combination of tower defense strategy and idle progression that manages to deliver far more depth than its simple presentation initially suggests. What starts as a fairly straightforward defense game about placing monster towers against incoming enemy waves slowly evolves into a complex system of elemental synergy, monster evolution, endless upgrades, and long-term optimization. The game succeeds because it balances passive progression with enough strategic decision-making to keep players constantly experimenting and refining their builds rather than simply watching numbers increase automatically.\n\nThe central gameplay revolves around summoning monsters to defend against endless waves of invading enemies. Each monster acts as a specialized tower with unique attack styles, passive abilities, and elemental properties that influence combat effectiveness"
+   },
+   {
+    "id": "222615169",
+    "votes_up": 1,
+    "hours": 0,
+    "text": "ok"
+   },
+   {
+    "id": "222506202",
+    "votes_up": 0,
+    "hours": 0,
+    "text": "very cool game, but just go play Summoner's Greed on mobile it's better"
+   },
+   {
+    "id": "209251637",
+    "votes_up": 0,
+    "hours": 1,
+    "text": "\u0418\u0433\u0440\u0430 'Idle Monster TD' \u043e\u043a\u0430\u0437\u0430\u043b\u0430\u0441\u044c \u043d\u0430 \u0443\u0434\u0438\u0432\u043b\u0435\u043d\u0438\u0435 \u0437\u0430\u0442\u044f\u0433\u0438\u0432\u0430\u044e\u0449\u0435\u0439. \u0421\u043d\u0430\u0447\u0430\u043b\u0430 \u043a\u0430\u0436\u0435\u0442\u0441\u044f, \u0447\u0442\u043e \u044d\u0442\u043e \u043e\u0447\u0435\u0440\u0435\u0434\u043d\u0430\u044f \u043f\u0440\u043e\u0441\u0442\u0430\u044f idle-\u0438\u0433\u0440\u0430, \u043d\u043e \u043f\u043e \u043c\u0435\u0440\u0435 \u043f\u0440\u043e\u0434\u0432\u0438\u0436\u0435\u043d\u0438\u044f \u043e\u0442\u043a\u0440\u044b\u0432\u0430\u0435\u0442\u0441\u044f \u0433\u043b\u0443\u0431\u0438\u043d\u0430 \u0441\u0442\u0440\u0430\u0442\u0435\u0433\u0438\u0439 \u0438 \u0432\u043e\u0437\u043c\u043e\u0436\u043d\u043e\u0441\u0442\u0435\u0439 \u043a\u0430\u0441\u0442\u043e\u043c\u0438\u0437\u0430\u0446\u0438\u0438. \u041c\u043d\u0435 \u043f\u043e\u043d\u0440\u0430\u0432\u0438\u043b\u043e\u0441\u044c \u0440\u0430\u0437\u043d\u043e\u043e\u0431\u0440\u0430\u0437\u0438\u0435 \u043c\u043e\u043d\u0441\u0442\u0440\u043e\u0432, \u043a\u0430\u0436\u0434\u044b\u0439 \u0441\u043e \u0441\u0432\u043e\u0438\u043c\u0438 \u0443\u043d\u0438\u043a\u0430\u043b\u044c\u043d\u044b\u043c\u0438 \u0441\u043f\u043e\u0441\u043e\u0431\u043d\u043e\u0441\u0442\u044f\u043c\u0438 \u0438 \u043f\u0443\u0442\u044f\u043c\u0438 \u043f\u0440\u043e\u043a\u0430\u0447\u043a\u0438. \u0412\u043e\u0437\u043c\u043e\u0436\u043d\u043e\u0441\u0442\u044c \u043e\u0431\u044a\u0435\u0434\u0438\u043d\u044f\u0442\u044c \u0438\u0445 \u0438 \u0441\u043e\u0437\u0434\u0430\u0432\u0430\u0442\u044c \u043c\u043e\u0449\u043d\u044b\u0435 \u043a\u043e\u043c\u0431\u0438\u043d\u0430\u0446\u0438\u0438 \u0434\u0435\u043b\u0430\u0435\u0442 \u0433\u0435\u0439\u043c\u043f\u043b\u0435\u0439 \u0438\u043d\u0442\u0435\u0440\u0435\u0441\u043d\u044b\u043c \u0438 \u0442\u0440\u0435\u0431\u0443\u0435\u0442 \u0432\u0434\u0443\u043c\u0447\u0438\u0432\u043e\u0433\u043e \u043f\u043e\u0434\u0445\u043e\u0434\u0430.\n\n\u0412\u0438\u0437\u0443\u0430\u043b\u044c\u043d\u044b\u0439 \u0441\u0442\u0438\u043b\u044c \u0438\u0433\u0440\u044b \u043f\u0440\u0438\u044f\u0442\u043d\u044b\u0439 \u0438 \u043d\u0435 \u043f\u0435\u0440\u0435\u0433\u0440\u0443\u0436\u0435\u043d\u043d\u044b\u0439, \u0447\u0442\u043e \u043f\u043e\u0437\u0432\u043e\u043b\u044f\u0435\u0442 \u0441\u043e\u0441\u0440\u0435\u0434\u043e\u0442\u043e\u0447\u0438\u0442\u044c\u0441\u044f \u043d\u0430 \u0441\u0442\u0440\u0430\u0442\u0435\u0433\u0438\u0447\u0435\u0441\u043a\u043e\u043c \u043f\u043b\u0430\u043d\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u0438. \u0421\u0438\u0441\u0442\u0435\u043c\u0430 \u043f\u0440\u0435\u0441\u0442\u0438\u0436\u0430 \u0445\u043e\u0440\u043e\u0448\u043e \u0440\u0435\u0430\u043b\u0438\u0437\u043e\u0432\u0430\u043d\u0430, \u043c\u043e\u0442\u0438\u0432\u0438\u0440\u0443\u0435\u0442 \u043d\u0430\u0447\u0438\u043d\u0430\u0442\u044c \u0437\u0430\u043d\u043e\u0432\u043e \u0441 \u043d\u043e\u0432\u044b\u043c\u0438 \u0431\u043e\u043d\u0443\u0441\u0430\u043c\u0438 \u0438 \u0431\u044b\u0441\u0442\u0440\u0435\u0435 \u043f\u0440\u043e\u0434\u0432\u0438\u0433\u0430\u0442\u044c\u0441\u044f. \u041e\u0434\u043d\u0430\u043a\u043e, \u0441\u0442\u043e\u0438\u0442 \u043e\u0442\u043c\u0435\u0442\u0438\u0442\u044c, \u0447\u0442\u043e \u043d\u0430 \u043f\u043e\u0437\u0434\u043d\u0438\u0445 \u044d\u0442\u0430\u043f\u0430\u0445 \u0438\u0433\u0440\u0430 \u0441\u0442\u0430\u043d\u043e\u0432\u0438\u0442\u0441\u044f \u0434\u043e\u0432\u043e\u043b\u044c\u043d\u043e \u0433\u0440\u0438\u043d\u0434\u043d\u043e\u0439, \u0438 \u043f\u0440\u043e\u0433\u0440\u0435\u0441\u0441 \u0437\u0430\u043c\u0435\u0434\u043b\u044f\u0435\u0442\u0441\u044f. \u0422\u0435\u043c \u043d\u0435 \u043c\u0435\u043d\u0435\u0435, \u0434\u0430\u0436\u0435 \u0432 \u044d\u0442\u043e\u0442 \u043c\u043e\u043c\u0435\u043d\u0442 \u0432\u0441\u0435\u0433\u0434\u0430 \u043c\u043e\u0436\u043d\u043e \u043d\u0430\u0439\u0442\u0438 \u0447\u0442\u043e-\u0442\u043e, \u0447\u0442\u043e \u043c\u043e\u0436\u043d\u043e \u0443\u043b\u0443\u0447\u0448\u0438\u0442\u044c \u0438\u043b\u0438 \u043e\u043f\u0442\u0438\u043c\u0438\u0437\u0438\u0440\u043e\u0432\u0430\u0442\u044c \u0432 \u0441\u0432\u043e\u0435\u0439 \u0441\u0442\u0440\u0430\u0442\u0435\u0433\u0438\u0438. \u0412 \u0446\u0435\u043b\u043e\u043c, \u044d\u0442\u043e \u043e\u0442\u043b\u0438\u0447\u043d\u044b\u0439 \u043f\u0440\u0435\u0434\u0441\u0442\u0430\u0432\u0438\u0442\u0435\u043b\u044c \u0436\u0430\u043d\u0440\u0430 idle t"
+   },
+   {
+    "id": "208306495",
+    "votes_up": 0,
+    "hours": 7,
+    "text": "nice tower defense with idle option"
+   },
+   {
+    "id": "206404812",
+    "votes_up": 0,
+    "hours": 92,
+    "text": "best ftp td out there"
+   },
+   {
+    "id": "221886669",
+    "votes_up": 0,
+    "hours": 39,
+    "text": "its a game try it"
+   },
+   {
+    "id": "215462225",
+    "votes_up": 0,
+    "hours": 20,
+    "text": "good"
+   },
+   {
+    "id": "212460127",
+    "votes_up": 0,
+    "hours": 1131,
+    "text": "its lowkey kinda mid"
+   },
+   {
+    "id": "214700156",
+    "votes_up": 0,
+    "hours": 2,
+    "text": "I'm not afraid of any monster! Even Pixels!"
+   },
+   {
+    "id": "227137305",
+    "votes_up": 0,
+    "hours": 1161,
+    "text": "Good\r\n"
+   },
+   {
+    "id": "223197864",
+    "votes_up": 0,
+    "hours": 50,
+    "text": "o"
+   }
+  ],
+  "neg": [
+   {
+    "id": "216790807",
+    "votes_up": 8,
+    "hours": 7,
+    "text": "Might've been actually enjoyable if it didn't have such predatory game design, and the worst part of the game isn't even that. It's the \u2665\u2665\u2665\u2665\u2665\u2665 save function. You regularly lose a ton of progress cause the game just doesn't seem to save on exit. Which would be fine, if there was an option to manually save, but that doesn't exist either. \n\nWas playing this yesterday night and managed to get some legendary monsters, upon startup today it seems these have all disappeared from my game and I have been set back many waves. Do yourself a favour and don't bother until this gets fixed. (Likely never as the last update was in 2023)"
+   },
+   {
+    "id": "219263994",
+    "votes_up": 6,
+    "hours": 0,
+    "text": "[h1] Not tower game just pay-to-win[/h1]\nThis is the simple story for new player, you leading a monster kingdom to defense evil human robot army, kind of reverse the typical story that other mmo.\n\nFor the biggest problem in this game are limit the tower, greedy developer just want money and not a enjoyable tower game, you need to pay-to-win, only money so you could got more monster tower, there only cash that this game care about.\n\nOver-roll the idea to developer your monster team are nice idea, but by using the pay-to-win element to got new defense tower are not a nice idea for new player."
+   },
+   {
+    "id": "214994292",
+    "votes_up": 3,
+    "hours": 3544,
+    "text": "[h2] Strongly don't recommend this game for steam achievements' hunter, players who want to get everything in game before finish the game [/h2]\nIf you're just looking for idle game just to pass some time, you can try it out as it's free and most of the fun part is in early game progression.\nBetter alternative game is \"Idle Monster TD: Evolved\" which is sequel of this game with same devs team (just different publisher and studio name?)\nA lot of flaw can be seen in this game which mostly affect players at mid to end game plus any inconvenience or bug you encountered during game play WON'T be fixed as devs already abandon this project and move to \"Idle Monster TD: Evolved\"\nThe notable flaw include game has its own auto save interval and won't save one more time when you close the game (about 10 minutes between each save I think)+ no manual auto save. So if players \"prestige\" and upgrade or "
+   },
+   {
+    "id": "225697885",
+    "votes_up": 1,
+    "hours": 14,
+    "text": "Good looking oldscool TD, with cookie clicker upgrade aspects etc.. I really like the idea..  But I think the PVP things that are not supported anymore, and its pay-to-win like most of the mobile games nowadays."
+   },
+   {
+    "id": "233168685",
+    "votes_up": 1,
+    "hours": 1,
+    "text": "This is boring and unfun"
+   },
+   {
+    "id": "234206091",
+    "votes_up": 1,
+    "hours": 1,
+    "text": "Meh."
+   },
+   {
+    "id": "223667199",
+    "votes_up": 0,
+    "hours": 6,
+    "text": "Good until the server disconnects and you will lose progress, unless maybe if it can reconnect to the server before you close it\n\nEdit: Changed review to negative, progress should never be lost this easily"
+   },
+   {
+    "id": "207664004",
+    "votes_up": 0,
+    "hours": 43,
+    "text": "The game keeps rolling your progress back, I\u00b4ve lost several days progress multiple times."
+   },
+   {
+    "id": "228137336",
+    "votes_up": 0,
+    "hours": 2,
+    "text": "idle pay to win microtransaction trash as usual."
+   },
+   {
+    "id": "223216274",
+    "votes_up": 0,
+    "hours": 120,
+    "text": "this game sucks"
+   },
+   {
+    "id": "236905291",
+    "votes_up": 0,
+    "hours": 153,
+    "text": "-"
+   }
+  ],
+  "neg_longplay_50h": [
+   {
+    "id": "214994292",
+    "votes_up": 3,
+    "hours": 3544,
+    "text": "[h2] Strongly don't recommend this game for steam achievements' hunter, players who want to get everything in game before finish the game [/h2]\nIf you're just looking for idle game just to pass some time, you can try it out as it's free and most of the fun part is in early game progression.\nBetter alternative game is \"Idle Monster TD: Evolved\" which is sequel of this game with same devs team (just different publisher and studio name?)\nA lot of flaw can be seen in this game which mostly affect players at mid to end game plus any inconvenience or bug you encountered during game play WON'T be fixed as devs already abandon this project and move to \"Idle Monster TD: Evolved\"\nThe notable flaw include game has its own auto save interval and won't save one more time when you close the game (about 10 minutes between each save I think)+ no manual auto save. So if players \"prestige\" and upgrade or "
+   },
+   {
+    "id": "223216274",
+    "votes_up": 0,
+    "hours": 120,
+    "text": "this game sucks"
+   },
+   {
+    "id": "236905291",
+    "votes_up": 0,
+    "hours": 153,
+    "text": "-"
+   }
+  ]
+ },
+ "ios_meta": {
+  "name": "Idle Monster TD",
+  "rating": 4.71272,
+  "count": 2555,
+  "genre": "Games"
+ },
+ "apple": {
+  "n": 208,
+  "reviews": [
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "I love it, I just have some suggestions.",
+    "text": "This is honestly one of the best games I\u2019ve ever played, My highest wave is 1499 so you know that I both love the game and I\u2019m soooooo close to unlocking the last monster pack. I have a few suggestions though: first, after around 1000 waves it becomes pointless to prestige again because all the effort to get back to that point is no longer worth the amount of prestige points offered, I think either the prestige points earned should get a giant boost or the upgrades from prestige points should be much cheaper. Second, I think one of the ads rewards should be one minute of no elemental shields because that would be a major help (and I say that with having maxed out percentage of enemies without shields and maxed out percent of enemies temporarily losing elemental shield on Squidler). Third and final suggestion, is to increase experience earned per kill because I have only one monster that ",
+    "votes": 2
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "It\u2019s a fun game",
+    "text": "I appreciate how they don\u2019t have constant forced ads; rather it\u2019s an optional ad that gives you a gift. The in app prices seem steep, but I see it as a necessity to help keep forceful ads at bay. Or you can just stay as a Free to play player. It\u2019s a grind, but if you\u2019re here, then that\u2019s what you already want. An idle TD game that feels almost infinite, taking up 10 minutes of time or even hours. With a variety of ways to power up your monster using Essence or gems, also prestige points. You gain essence by beating every 10th level and from bosses I presume, my highest wave is only 190, so I\u2019m still very new. Gems can be earned from completing challenges, while Prestige points can be amassed by going up in prestige. Also there are buyable bundles/packs of goodies. Good game.\n\nEdit/tip: save up gems for 2x gameplay speed. It takes about two and a half days to earn 500 through achievements",
+    "votes": 3
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 4,
+    "title": "Good game with great potential",
+    "text": "So I just dowloaded this game yesterday and it\u2019s very addicting. Only problem I have is that the the only thing you get while afk is gold. The timers don\u2019t reset or continue to count down unless you\u2019re in game. Now the skills are one thing since they don\u2019t take a long time, but things like the cargo carrier which take about four hours are a different story. I don\u2019t know why the devs would think people would want to sit in game for 4 hours or more. Now I know there are upgrades that minimize the amount of time needed for the ships and drones but the fact that you have to sit in game for like 12+ hours at least to get those upgrades is pretty ridiculous. This game is good but could be much, much better with one fix. Besides that the music, characters, and upgrade system along with other things make this game very good. This game has crazy potential and the only thing holding it back is tha",
+    "votes": 1
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Fun but needs more communication",
+    "text": "I love the game and everything about it, the only thing I would like to see is maybe clans, some sort of communication box to talk to people, and maybe some sort of world boss level where the monsters are extremely hard and the boss at the end has more hp than most people can kill. The whole community could work to kill it and rewards given to the most damage and or clan damage. It just feels empty when getting on would like people to talk to. I would also like the function of it working levels while the game is closed. Skipping by 5 up to 75% of what you had before takes forever at late game and not everyone has time to have the game up for 3-5 hours a day. Other than those ideas the game is still entertaining.",
+    "votes": 4
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 4,
+    "title": "Pretty Darned Good",
+    "text": "This game has a lot going for it and it is very fun.  I know people like the optional adds, it is colorful and has good depth.  I also like the different maps, but the one real issue I have is the game is more Idle Game than TD.  Like really, a heavy grind and in the long run, prestige\u2019ing over and over and over again for permanent upgrades matters more than where you place your towers.  Like there is very little strategy/td there when you think about it.  There is a serious lack of towers as well.  Essentially 12-16 total because many are just the upgrade of the lower version of it and they don\u2019t change as you level them.\n\nDon\u2019t get me wrong, it is fun and I am still playing it, but it is definitely not the best (hence the 4 star rating).  Also there is this bug where your tower has targeting of the \u201cfurthest in the maze\u201d but sometimes they definitely do not shoot the furthest.  Overall",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 3,
+    "title": "Good game but some deal breaking flaws for me",
+    "text": "Overall it\u2019s a decent TD game, I\u2019ve played it consistently and for the most part it doesn\u2019t seem like it\u2019s locked behind micro-transactions to advance far. Buying gems will help accelerate you getting to higher waves but by no means are necessary to get their. The main issue I have with this game is how much time it takes to get to where you were after you prestige. I saved up 500 gems to get the 2x speed perk (all gems earned through playing which is nice) and even with the 2x speed this game takes forever once into the early 100 waves. This to me wouldn\u2019t be an issue but in order to progress through waves you need to have the app open. The \u201cidle\u201d aspect of this game is you earn gold while not playing. If they made it so you could progress through waves with the game closed, like a true idle game, I would give it 5 out of 5 stars. Having to have this app open for 2 hours straight just t",
+    "votes": 2
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Impressive Free2Play",
+    "text": "This game captures its name very well. The gameplay and visual elements of Idle, Monster and TD games are implemented so well together in harmony. \n\nWhat impresses me the most is the ad system of this game. Watching ads is not forced and does not feel like a chore if you do watch them. In fact, I want to watch the ads every time they are offered just because the rewards are so incentivizing. And the game is not paused during the ads, which is perfect for an idle game. I have never seen a game that can make ads feel good like this one. \n\nOverall, the gameplay experience is very unique and clearly well-thought in every aspect. No random feature thrown in just to squeeze out content and money like most other F2P games.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "New game. Looks good.",
+    "text": "4/28\n\nDownloading now. No reviews from what I see. I\u2019ll post my first thoughts and update below as it goes. :)\n\n-about an hour in. I would appreciate an iPhone XR optimization (don\u2019t know about other phones) because it\u2019s hard to see my balance or wave number and when I try and click the bottom buttons the phones swipe bar gets in the way and tries to close the app. \n\nI love the idea of the game. Can feel a bit slow at first but still a good game. I do like how you can \u201cuproot\u201d the tower and move it.. also decided to buy double speed and double spawn rate. Keep ya posted.\n\n4/29\nSo it\u2019s the next day, played it for a few hours now a little passed the threshold of when people normally delete apps and one thing that bugs me (but lives with anyways) is how I can\u2019t set the attributes. I\u2019m getting mainly crit chance and no dps or gold gain (which I really want) so it\u2019s a grind.\n\n4/29 (later)\nOk ",
+    "votes": 1
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 4,
+    "title": "Great app but needs some small tweaks",
+    "text": "The app is great, and I love playing it with so much free time now, but there\u2019s a couple things that can use adjusting. The app layout isn\u2019t compatible with the iPhone 11 screen size, it\u2019s a little big and the bottom menu buttons are too small to tap on. My hands are relatively normal size by the way. It\u2019s even harder to tap on with the home button bar blocking over Collections, \nPremiums Shop, and Challenges buttons as well, so maybe some space at the bottom of the screen to avoid existing the app. Also the menu that pops up after you tap on a monster blocks other monsters on the bottom half of the screen and that can be annoying when leveling a monster up on the bottom half of the map. Other then that the app works great and I can\u2019t get enough of it.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 2,
+    "title": "It\u2019s okay",
+    "text": "This game is cool in theory, and would be in practice, however there\u2019s a problem that makes gameplay really difficult. Aside from the tournament timer, timers don\u2019t countdown. Your spells/drone swarm/cargo carrier don\u2019t refresh when you\u2019re not in the game. This becomes a bit problematic since this is an idle game, a game that you don\u2019t really need to have open all the time. The game also doesn\u2019t progress while you are not in it. Waves of robots come, but if you\u2019re not in the game, you don't go on to the next wave, you just sit there and collect money, which isn\u2019t much in earlier waves. Overall i want to like this game. It\u2019s really easy to not pay money, and if you do spend a little bit it can give a pretty good edge over the idle part of the game. However with the game not really working without you having the game open, it loses the \u201cIdle\u201d part of its name.",
+    "votes": 2
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 2,
+    "title": "Not really idle and greedy as hell.",
+    "text": "I like idle games they are fun things to play during the day. This game isn\u2019t really a idle game. Only way to make progress is having the app open at all times. The minute you close the app you stop making progress and make small amount of gold until you open it back up again.\n\nOn top of that is the greed. This app wants to charge you for everything. Now I don\u2019t mind spending money on f2p games I usually do. But the prices here are insane and the amount of things to buy with real money, in game currency, and bundles are so over the top. There is even a tournament where people compete to get the highest completed wave and you can pay to boost damage or whatever in the tournaments. It\u2019s shameless and expensive. Don\u2019t bother with this game I tried it and wanted to love it but it\u2019s just too many issues to fully enjoy it.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 1,
+    "title": "Ads and game pictures",
+    "text": "lol I just wrote this and was looking at the pictures and the text they put on the images is incredibly wrong. They say defend your tower but you are defending a portal. They say evolve your monsters but there is no way to evolve them. You unlock new ones with currency you get. How do you not even know what is in your own game? This game itself is not bad. The funny part is you would think the part that makes them money they would make sure works. Just started playing and watched I want to say 3 level of ads so 15 and now almost every single ad is a black screen. I have to close and reopen the app and the floating treasure chest is gone. It's becoming tedious and to the point where  won't watch any other ads. So their way of making money won't make them any from me.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 4,
+    "title": "Glitch",
+    "text": "Great game I would play it a lot last year and got really far. I just downloaded it again the other day and linked my progress to my phone and everything was there. Though, when i try to prestige a screen appears telling me Im going to Cursed Clouds; nothing happens. The white screen sits there. So i exit out of the app and go back in and im back. I received my prestige points but didn\u2019t reset my progress. Sort of annoying because i cant get essence or make any real progress unless theoretically I prestiged constantly and got a lot better stats using the points. That would be cool but that\u2019s not how you play the game. I hope someone can help me fix this glitch.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Found a Essenes bug",
+    "text": "I had around 2100 Essenes I used 600 on an upgrade and I went down to 894 ish Essene now I\u2019m know I\u2019m not good with math but I know that\u2019s not right\ud83d\ude02 I don\u2019t think it\u2019s that big of a deal but a tournament is coming up and I want to be prepared the best since I\u2019m very new to this game also, the game crashes every now and then but that might be because I\u2019ve been on it for 2-3 days without getting off and I\u2019ve had it for I think 3 1/2 to 4 days so I would love it if this doesn\u2019t happen again but it\u2019s a bug I\u2019m sure other players are having as well, thanks.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 2,
+    "title": "Too slow, not enough player participation",
+    "text": "Overall concept is good. The game just moves so slow. You just watch as monsters creep slowly along in waves that take forever to advance through. An ad can be watched to speed up the game but lasts for only 2 minutes. Eventually towers get expensive to upgrade and you do nothing but watch and wait for money to come in. Becomes incredibly boring. Restarting currency also does not go far enough. Spend hours upon hours to reach the respec point to get a handful of small upgrades and then do it all over again. Also in game purchases are poorly priced. No way I would spend what they are asking, it\u2019s way too expensive for what would be received.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Tank you developers!",
+    "text": "Great game, super addicting! It brings in strategic elements as well as the game is never just extremely tough in one part of the game like most other tower defenses but it just alway has this fluid motion to it, you\u2019ll never get stuck in one place for too long which is why the game is so addicting. It also doesn\u2019t just take everything in the game from other similar games because it has tons and tons of original content for hours of fun every day. Thank you for creating such a great game!",
+    "votes": 2
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "THIS GAME IS AMAZING",
+    "text": "This is by far the best game I have downloaded in a long time. I\u2019m always looking for tower defense type games to play that can last for a while. The game design is perfect and everything is explained clearly. Thank you so much to the creators for making a tolerable game with optional ads that actually help you out so I am compelled to watch them. Keep it up, this game should be what all game/app developers strive to achieve.  Well done indeed you should get this game.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 4,
+    "title": "Most of you misunderstand",
+    "text": "Literally. Like most of you one, two, or three-star this game because you don\u2019t pay attention, lol. Hauler and drone timers DO count down while offline. RNG makes this game go \u2018round. When one element starts doing better, focus on your best tower and diversify where you can because you will regret not doing so. Artifacts will eventually be the DRIVING FORCE behind pushing waves. That is all.\n\nThis is an amazing, long-lasting game that has yet to feel too grindy for me. I literally only rated four stars because it crashes a lot once I start hitting the 700th wave or so. \n\nOther than that loving the good work, thank you!",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Ignore the Pay to win mechanics, it\u2019s a great game.",
+    "text": "I\u2019m not a fan of the pay to win mechanics with the tournaments , but as for the base game it\u2019s fantastic. I haven\u2019t had an add shoved in my face unless I choose, gems are easy enough to come by that you don\u2019t need to buy them, gold takes a while to accumulate once you get into the 500\u2019s but gold control is the difficulty spike. Once your daily bonuses start coming in at higher amounts you\u2019re able to make some headway though. 5/5 fun game for free.",
+    "votes": 3
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "i love this game",
+    "text": "i just got this game earlier today and my highest wave count is already 159! i cant get enough of the BANGER soundtrack and cute monsters. the only thing i don't like is that for a while the rounds are easy and you just sit and wait while one monster destroys them all. i wish it was cheaper to increase the game\u2019s speed. it costs 250 in-game gems i think, which is kinda a lot for just a small boost. that\u2019s kinda it though! love this so much",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Amazing game, even better developer!",
+    "text": "I have never written a review on a game but this game made me feel like I had to. It\u2019s impossible to not love this game and developer. You can tell they listen and take input from the people that play. I think if you enjoy any type of incremental game or progression over time, this is the game for you. While it is not necessary, join the discord! They are extremely friendly and help a lot!",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 3,
+    "title": "Fun game, one major problem",
+    "text": "So, this game is a lot of fun. The only problem is that you can\u2019t progress waves while not in game. It takes FOREVER to get back to your previous wave after prestige. I don\u2019t want to leave my phone on running this game for hours just to get back to where I was. If this one problem was fixed it would jump up to five stars. There are other, smaller things that I would like to see, like increasing gold earning as you progress through waves, but all are not as important as the one I mentioned earlier. It means that the game is not really idle.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Great Game, Addicting",
+    "text": "I don\u2019t write reviews much, but this game is definitely fun. It has a nice nostalgia factor for me, and I love tower defenses. I enjoy how you get permanent buffs by watching ads, instead of temporary. The variant ways of in-game currency to buff things is nice too. While yes there\u2019s things you can buy with real money, it\u2019s still fun for me without spending any, and I\u2019ve only been playing a couple of days. \nTo anyone who enjoys the old-style tower defenses, this would be a good choice.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 4,
+    "title": "TO DEVELOPERS",
+    "text": "this game is awesome! so many options that keep you on your toes. beautiful design and cute complex monsters. and the fact that you can prestige makes it all the best. definitely worth the play and download. there are some small bugs though.\n\nNOTE TO DEVELOPER: i clicked the cargo ship option and it isn\u2019t spawning the cargo but i\u2019ll receive the awards for my daily cargo spawn.. i really hate when it happens because i don\u2019t get the loot (500k gold 150 green soul things) name in game : blaqheart",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Pretty good actually",
+    "text": "Pretty decent tower defense game. It seems like I can progress pretty far without using real money for in game currency. It does seem like a little grind to get there, but that\u2019s part of the fun. \nA few issues I\u2019ve noticed:\nAfter completion of a tournament, I didn\u2019t seem to get any rewards that I should have gotten from my tier.\nAlso, sometimes it takes a while for the game to give me my idle away coins that I\u2019ve earned.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Perfection",
+    "text": "Honestly, I think everything about this game is great. The art style is executed well, the gameplay and strategy involved is good, and the process of collecting currency isn\u2019t too slow or too fast. There are a lot of different upgrades and ways to upgrade your monsters. Each is one is unique and actually helpful towards your progress. 5/5 stars, good job.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 2,
+    "title": "Mediocre TD",
+    "text": "Played this quite a bit and advanced to a pretty high level. Overall the game is fun for a week or so but gets incredibly repetitive and really offers very little replayability other than a constant grind. It\u2019s not about synergy ore using the best towers, it\u2019s simply a straightforward power level. Eventually you have to restart the game and repeat the process over and over. The game was fun for a while and once you\u2019ve upgraded your skills, there is very little long term. Overall the pixel look is pretty good but there are much better tower defense games. Will say the game is fun for the week though!",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 1,
+    "title": "Paid for gems and didn\u2019t get them.",
+    "text": "So apparently there\u2019s several places within the game to upgrade game speed. In fact I was pretty bummed to see that after realizing I could have bought a much more cost effective package. \n\nEither way, I purchased the permanent game speed increase in the settings section of the game (not realizing there were different ways to purchase this upgrade in a different section of the game menu). But in that section it said $9.99 for 2x game speed and 500 gems. \n\nNow either that means it was 500 gems OR $9.99 and i didn\u2019t realize that (very badly marked) or I didn\u2019t get my gems. Either is possible. Either way is a huge bummer considering I now missed out on other package deals where I could have gotten more for less because you allow people who just got the game to find multiple ways to purchase without knowing it. \n\nHappy to update the rating when and if this is resolved. The game is a fun vers",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 4,
+    "title": "Hits all the marks",
+    "text": "This is an excellent addition to the idle genre. I have made many in app purchases and will continue playing, I just wish the screen wasn't stretched on the iPhone X/XS Max. It would be better to just set it to the iPhone 7/8 screen size, with black bars on the top and bottom. Also, the iPhone version appears to be missing the battlefield shortcut for Boss Rush Mode. Either that, or it's covered up by the notch on the X/XS Max.\n\nFix these things and it's 5 stars all the way!",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 4,
+    "title": "Very addicting",
+    "text": "I like this game a lot. It scratches quite a few of my gaming itches. It\u2019s a great idler that I don\u2019t have worry about all the time as well as a pretty decent tower defense with a lot more strategy than I thought there would be. The only things I don\u2019t like are how there is only one monster of each element for each rank as well as the buttons at the bottom are very small and it\u2019s difficult to click on them sometimes. Other than that I love this game!",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "The best idle game i\u2019ve seen, great job!",
+    "text": "They don\u2019t have consistent ads for a start\u2026\ud83e\udd23 so thank you so much. I\u2019ve been playing for a few days and i adore this game, it\u2019s simple, with an absolutely adorable art style, it\u2019s original, it\u2019s addictive, and super well made! 5/5 idle game, 5/5 tower game :D. Keep updating this game! It\u2019s one of the best mobile games i\u2019ve seen yet :)",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 4,
+    "title": "Please remove ad information farming",
+    "text": "1. I won\u2019t watch ads that require me to answer information about my age etc. Please offer an option to opt out of answering/skip answering if you\u2019d like to collect as revenue from me.\n\n2. Why am I penalized for purchasing an ad-free experience? Those who watch ads can time their bonuses to progress through waves but I\u2019m forced to rely on luck to get a 2x damage buff near the limit of my progress? Boo.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Reccomed but I have a few issues",
+    "text": "I really love this games but I have a problem with the speed of the game because you\u2019re gonna be using prestige a lot and when you get on like wave 600 2x speed is not gonna cut and is gonna get really tiring and repetitive.I feel like the speed should be free and there should be 4x or up to 6x speed",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Very Fun, Just a few improvements needed",
+    "text": "Excellent idle and tower defense merger. Tons of different things to upgrade and ways to get stronger. Definitely easy to sink a lot of time into. Currently my only complaint is that some aspects of the game are not explained too well, but other than that it is fine. Also, enemies outside of just robots would be nice. So far good job though devs.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 3,
+    "title": "Awesome game, but not idle",
+    "text": "I\u2019m not sure what\u2019s going on with the name or description of this game but it\u2019s simply not true. The only way to progress at all is to have the app open. Once you close it it pauses everything. You get a bit of gold when you come back but once you reach higher levels and prestige, it literally will take hours just to get back to where you were before. If it actually would be idle it\u2019d be a killer game. As it stands now, not worth the time.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Play this one",
+    "text": "I\u2019ve been looking for a game to pour some time into with everything being closed from COVID and this game is perfect. There\u2019s tons of upgrades to keep yourself busy and you\u2019re constantly unlocking more rewards. The people I\u2019ve convinced to play have instantly become as addicted as I am. If you like tower defense and collection games you\u2019ll like this.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Absolutely Love It",
+    "text": "It\u2019s a pretty nice idle game, I\u2019m haven\u2019t played enough tower defense games to compare but it seems like a relatively decent one. The monsters and enemies are designed well and I\u2019m a huge fan of the art style and the gameplay loop is simple but enjoyable. Again, it\u2019s more of a tower defense themed idle game if anything, but as an idle game it\u2019s pretty nice.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 2,
+    "title": "Fun but greedy",
+    "text": "It\u2019ll set you back $49 to unlock all boosts (double speed, double gold, etc). Every single aspect of the game is broken down and can be enhanced by a fee whether by real money or gems. To be nickel and dimed like this (in an idle game no less) is not fun. Which is a shame because the game itself can be fun. \n\nTo charge this much is a slap in the face to AAA developers. Why spend $49 + unlimited on gems when you could spend $50 on something like The Last of Us 2? Are the devs valuing this little idle game the same as that? I sure as hell wouldn\u2019t.",
+    "votes": 1
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 4,
+    "title": "Not quite what I was looking for.",
+    "text": "You would think with a game that says it\u2019s idle it would actually be idle. But I see myself spending hours on this game just to progress through waves and to me that\u2019s not what idle means. But yah it functions well enough. Also what\u2019s up with the unreasonable pay to win options. 5bucks for like less than 50 essence. That\u2019s a rip off To all the kids who fall for it.",
+    "votes": 1
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Yo",
+    "text": "I love this! I rarely leave reviews, those constant in game review requests don\u2019t even persuade me. I leave them when I\u2019m feelin\u2019 it. And I\u2019m just straight up enjoying this!! \n\nAnyways, good mixture of a bunch of different genres that I like (Tower Defense being the primary one). I like the summoning of monsters mechanic. I\u2019m on wave 80-ish right now. I\u2019ll be dropping 10 bucks when I get paid.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Add more?",
+    "text": "Overall the game is very good, no lag whatsoever, progressive gameplay, but it feels like there is a lack of monsters/towers to choose from, being there\u2019s only 4 in each category. Besides that, the game is perfectly fine as is, but it would be cool to see some new towers or events in the game.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 4,
+    "title": "Really good, not perfect",
+    "text": "There are a ton of free, but time-gated, ways to progress in this game. Overall, this game is pretty simple, enjoyable, and a good mix of tower defense and idle games. I just wish more of the permanent big ticket boosts where available for gems, instead of only the double game speed boost. But whatever, its still a solid game. Ill change this to 5 stars should they make all aspects of this game possible as a free player.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 4,
+    "title": "One specific thing that bothered me",
+    "text": "Overall the game is pretty enjoyable, and I would recommend it. The only issue I have is that if you\u2019re browsing the tech tree and click on the exotic monsters near the bottom, it lets you spend gems on the upgrades before you unlock the monster. And the mis-click lost me more than a hundred gems earned through gameplay.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "I love the game, just have a suggestion",
+    "text": "Hi I have been playing this game for a little over a year and I absolutely love it. I think it would be helpful if you guys added spell layouts just like you have for monster layouts. You can put it in the bottom left right next to the spells?",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 2,
+    "title": "Hp seems pointless",
+    "text": "Started the game with around 100 hp, seems like you gain more for killing robots, but no matter how much hp you have, you lose if even one robot gets through. I know this is an \u201cidle\u201d game but it\u2019s also tower defense, dying from losing one life is utter nonsense. It would be a lot more fun to actually see the health depleting in a bad situation rather than \u201coops you lost let\u2019s just start over\u201d. This needs to be fixed, unless you\u2019re telling me boss robots deal over 2,000 damage when they get through your portal",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "I love this game but I have one suggestion",
+    "text": "I just started playing this game today I have 3 ultra rare monsters but it says evolution I know that you can collect grew up monsters like the fire bunny I love the fire bunny but maybe you could add more monsters like godly rarity monsters and they can evolve",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Very good idle TD.",
+    "text": "I enjoy tower defense games, and idle games. \nThis one uses both pretty well. \nWhat I absolutely love are the daily missions. \nThere\u2019s a lot, and they reward you with gems, a premium currency. \nThis allows us, who are struggling financially during this pandemic, to enjoy some of the deeper mechanics of the game without dishing out money. \nThe IAP are a bit pricy if you like to spend money, but as a F2P game, it\u2019s not nearly as taxing on the free players then most free games. I really enjoy this aspect. \n\nFar as the game goes, I really like the monsters and their tie to the elements. Maybe a new element will come out later? Looking forward to see how this game grows!",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 3,
+    "title": "\u201cIdle\u201d Game",
+    "text": "This is a great game. Only problem I see (as an avid player of many games, especially idle) is that the levels don\u2019t actually progress while you\u2019re offline. Only currency accumulates but to progress through the levels you have to leave the game open. That is not a true idle & honestly ruins the otherwise great experience. If this was changed I\u2019d happily give 5 stars.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 3,
+    "title": "P2W tournaments otherwise fun.",
+    "text": "So,.. first the game is interesting and fun to a small front. That being said there\u2019s so much micro transactions that should be QOL in most games like this. \n\nAd skipping? $5 (this is fine tbh)\nDOUBLE AD REWARDS? $5\nYou want to increase wave speed/attack speed? $10\ndamage booster? $10\nGold booster? $10\nRARER MONSTER DROP chances $15\n\nNow to get to the pay to win aspects. There\u2019re tournaments you can do,... these are allowed during tournaments,.. AND there is a tournament booster that can only be used PER tournament (which means buying it again if you want it again). It\u2019s freaking $5 for 24 hours basically. \n\nI\u2019m in the beginners bracket,... just started tournament that has run for two hours only. First person is on wave 190. \n\nPay to win.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 1,
+    "title": "Cloud Save Issue",
+    "text": "I\u2019ve been trying to transfer my progress to my new phone, and it keeps telling me that I\u2019m using an invalid user ID or password, when I know for a fact I\u2019m using the correct information.  There doesn\u2019t appear to be a way to reset or recover any of this information.  This is extremely annoying because I have essentially having to start from scratch.  There is no help related to this issue online, or through your wiki.  Please assist.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Good overall game. Constant good updates",
+    "text": "I have been playing the game for almost a month now and already have seen some nice changes. The art work is amazing and I like the upgrade systems. The daily rewards keeps me going with the good amount of gems. Definitely a game to check out",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 4,
+    "title": "Overall, 4/5",
+    "text": "The game as a whole runs pretty smoothly and allows F2P (Free to Play) players compete evenly with other players in tournaments. This is due to the gems being earned in the game. On the other hand, when the game runs over 5 minutes; it crashes and reverts any progress made in the time running.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 3,
+    "title": "Decent",
+    "text": "Other than it crashing a lot sometime after you have watched an ad and maybe bought something and it being gone the moment you re open it since it just crashed on you while also not having the currency of whatever you just wasted to purchase what you bought not be restored and be gone, it is a decent game.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 3,
+    "title": "I enjoy the game but the frequent crashes are a drag",
+    "text": "I really like this game. I\u2019ve spent a decent amount of money on upgrades and stuff. The crashes are a bummer, especially during the tournaments. You can pull something cool and make progress and then CRASH you\u2019re back before that happened and further back in the tournament standings. I hope they fix it. It\u2019s pretty fun beside that frustration.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "More than meets the eye",
+    "text": "This game has impressed me greatly. This game takes inspiration from various types of tower defense games, combines them, and then polishes them to perfection. The only issue I have with the game is that it crashes every once in a while, but otherwise, this game is a hidden gem.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 2,
+    "title": "Typical exploitation mechanics",
+    "text": "At first glance this game seems pretty good. Takes a lot from other idle but adds a lot more. The problem is the micro transactions. I wouldn\u2019t mind paying but the prices are outrages and a lot of them are things that should already be in the game. They do the typical \u201cgame creates a problem that you can pay to fix.\u201d For example game speed is too slow? Well you can pay to speed it up and let me tell you, it\u2019s not cheap?",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Loving it!",
+    "text": "Really like the style and td against humans lol. Only have about 34 hours so far but it\u2019s been hard to find something like this. And I just found out you made a sequel! I\u2019ll have to check it out soon. Thank you!",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 4,
+    "title": "Awesome Game",
+    "text": "I\u2019m only on Prestige 3, and this is already an awesome game! Not much ads, and lots of other good things! The only reason I\u2019m doing 4 stars is the tournament. It resets your progress and I don\u2019t want to happen but I really want to do the tournament as well. Can you make it so you can keep your progress and just start but not prestige? Thanks for making this good game!!",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Finally",
+    "text": "I have been DYING to find a solid TD game. I had to search for months before I finally found this game(Mostly because of procrastination).\nI have already sunk in nearly 16 hours into this game and I have no regrets. \nKeep up the great work and this game will hit the top charts in no time!",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "This game is so fun!",
+    "text": "I just downloaded the game and it is already one of my favorite games! I don\u2019t know why but when I play it I feel like I should keep playing for a while. (Make sure to download this game it is the best TD games!)",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 4,
+    "title": "Great game so far... lacks optimization for newer screen models",
+    "text": "Great little td game so far. I\u2019m really enjoying it. Only issue I\u2019m having it the stage counter is partially cut off on the top of the scream on my iPhone 11. I can only see the first number, so I know I\u2019m on stage 50.... something. Hahaha. Other than that great game. \n\nI\u2019ll update the review when the game is updated.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "One of the best phone games I\u2019ve played",
+    "text": "I started this game just to pass the time when I\u2019m bored. Little did I know I\u2019d end up loving this game and playing it everyday. This is honestly one of the most fun phone games I\u2019ve played.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Very fun but...",
+    "text": "It is a very fun game and I like the idea and the art and sound is amazing. However there is an feature I want added to the game. When you are not on the game your waves can go up. I don\u2019t have enough time in the day to get high to do things. Thank for reading.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Tons of fun",
+    "text": "I love this game and I haven\u2019t even been playing for very long. If you like td games you\u2019ll love this one. It hasn\u2019t made me watch any adds but I do get a dps bonus for watching them so I actually like getting adds \ud83d\ude05 I still totally recommend this game!!",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 2,
+    "title": "So close to a perfect game, expensive to support",
+    "text": "Great tower defense idle game with fun upgrades and challenges. The costs are very expensive and should be 50% lower across the board , often times predatory with \u201cdeals\u201d. Consider more new achievements and consider bumping free gems from 10 for ads to 20 gems Consider holiday events with bonus diamonds or 2x multipliers for diamonds or earn every 100 wave (flat rate without a buff)",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Love it, but...",
+    "text": "instead of \u201cequip\u201d and \u201cunequip\u201d for spells, it\u2019d be nice if you could just hit equip and choose which spell to swap it with. Surprisingly fun game though, and I like that it\u2019s not like the normal \u201cidle\u201d type games since you need to be much more active and smart to get far, keep it up devs :)",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Fun",
+    "text": "It\u2019s simple and fun. You don\u2019t have to spend money to enjoy it. The ads are all optional, but have decent perks. The animation style amuses me and the gameplay is really easy to understand. I like that there are spells and different monster combos / placements. If you like idle games, this one is pretty good.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Stress free side game",
+    "text": "This is probably 30% tower defense 70%, especially since you don\u2019t lose all progress if enemies reach the end like most tower defense games. It\u2019s the perfect game to casually play on the side while watching a stream or playing some other game.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 3,
+    "title": "No idle progression",
+    "text": "You earn gold when you\u2019re offline, but you don\u2019t advance through previously cleared levels. I bought the x2 speed boost, but it still takes forever to get to levels that are competitive after a prestige.\n\nI like the tower set up a lot, but I don\u2019t want to leave my phone on this much.",
+    "votes": 1
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 3,
+    "title": "Fun but no offline play",
+    "text": "How come I have to stay on the game to increase the waves why can\u2019t I do that while I\u2019m offline too. I don\u2019t like that I mean I can increase the gold but I can\u2019t go up in levels while I\u2019m gone it just wastes time honestly I\u2019d rather be playing while I\u2019m gone and check in every couple of hours like every other td games",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 4,
+    "title": "Love this game but please allow offline level progression",
+    "text": "This game is extremely fun and addictive but there should be an offline level progression up to your current max level. It\u2019s an idle game :/ kind of silly not to have that feature.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Great game",
+    "text": "Love the game but my only complaint is that I wish I could see what I was going to get when I upgrade something. That\u2019s pretty much my only complaint.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 3,
+    "title": "Overall Decent",
+    "text": "This game is pretty addicting but struggles deeply in the spots that it does. The game does really good with the character aspects and upgrades, but there is a deep gash to fill with improvement. You need to be able to idle and actually be rewarded with the resources you normally get. Also the spells and summons need to refresh while afk",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 4,
+    "title": "Great so far!",
+    "text": "I love idle games but I\u2019ve never been big on TD games. This makes it fun though. My only issue so far is that it isn\u2019t properly scaled for the iPhone 11. If we could have an option to scale the game to be slightly smaller to fight in the dimensions of the newer phones that would be great!",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 4,
+    "title": "Good Game but\u2026",
+    "text": "I wish the equip and upgrade button wasn\u2019t above n below each other. I keep accidently upgrading when I am trying to equip a different skill in challenge map. Its costing me alot of essence for skills i don\u2019t want to upgrade\u2026",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 1,
+    "title": "Lost all progress",
+    "text": "After playing this game for a long time, and spending a little bit of money on it, my phone crashed. I had my phone backed up. When I got a new phone, this game did not save any of the data. It stated me over from the beginning. Every other game was restored. I reached out to the developers and have not heard back from them at all to get it fixed.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Update and support",
+    "text": "Y\u2019all really need to update and support this game a little bit more it\u2019s super fun and still feels like it needs more add pvp or co op something to keep this community going",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 4,
+    "title": "Screen size",
+    "text": "I just got the app and love it so far the only complaint that I have is that it should be updated for newer phones. I have an iPhone11 and some corners of the screen are cut off most of the game play is not impacted by this but the icons on the bottom row are.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Game is great but sometimes crashes",
+    "text": "Game is otherwise flawless and should be top of the App Store for how user friendly and fun it is, but it will crash a lot and it\u2019s the only app I\u2019ve had do that :(",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 4,
+    "title": "Great game, BUT\u2026",
+    "text": "Honestly a perfect idle game. I\u2019m so addicted and love playing this at work. BUT the micro transactions are ridiculous and WHEN IS THE LIMITED TIME \u201cGEM SALE\u201d GOING TO END?!?! It\u2019s been monthsssss dude. Those pop ups are annoying and you know it. You made a good game but stuff like that is so unprofessional.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 4,
+    "title": "Amazing 4/5",
+    "text": "I really enjoy the game honestly, but the only thing I\u2019m not quite sure about is the 3x prestiege rewards being 50 gems...even when you already have to either spend IRL money or 500 Gems to get it...",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 2,
+    "title": "Expensive mtx, no updates",
+    "text": "Game has expensive mtx for what the game is\u2026 it cant really be called an idle game if you have to check on it every hour unless you pay $5. Also the fact that there hasnt been an update in over a year means you shouldnt waste a single minute if your time or a single penny on this game",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 4,
+    "title": "Great game but the monsters",
+    "text": "I like playing the game but whenever i summon a monster I get the same one and It doesn\u2019t give me a duplicate where I can\u2019t  put the same monster down. Besides that I really like the game.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "One of the few non ptw games on the App Store",
+    "text": "Seriously it's rare to find a game like this that actually lets you progress without paying a couple hundred to get gems. Thank you so much developers.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Very fun!",
+    "text": "Love everything about it so far. Especially that you can earn gems in game without paying. Just hope there are more monsters and environments to come!",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Greatest mobile game ever",
+    "text": "Great game. I love the time and effort put into this game. I love how there aren\u2019t ads, but you can watch some for bonuses. The developers are extremely nice, I\u2019ve spoken to them on discord. Seriously, download it.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Here are 3 questions",
+    "text": "How many monsters are there\nWhen will it get a new update with more elements and monsters\nIs there going to be any new game mods\nIf you answer these questions please do it",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 4,
+    "title": "1 problem",
+    "text": "This game is great love it, but it crashes randomly for no apparent reason its not to bad right now but if it crashes more i will tell you about it so you guys the developers can see if it is my problem or yours.\n\n       Thank you.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Please make an update",
+    "text": "This game is the best idle game on the store would just be cool if they added movement to the trees and stuff in the background other than that the game is perfect",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Cute and fun",
+    "text": "Cute art, fun mechanics, the ads are usually short and so far they are not abusive. None of that tiny invisible x to close out the ad nonsense. Short short and sweet little videos with a big x at the end.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Good game",
+    "text": "Pretty good mindless game. It does take a few minutes for the game to recognize the good you earned while away. Would be nice if you could advance while away as well",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Lovely",
+    "text": "Fun even to just have on your phone even with the little amount of monsters but I have a pc but I like to just chill on my bed and play this sometimes good game",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Need update on idle sword 2",
+    "text": "Hey developer I hope u see this please update the idle sword 2, knowing u making the new idle game it is great but the idle sword is great as well so please make a update on that game thx",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Great F2P Idle Tower Defense",
+    "text": "I really enjoy this game overall. The difficulty scales appropriately. I would definitely like to see more towers and more variety of skills. It\u2019s odd too but the pay for bundles are way overpriced.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 3,
+    "title": "Crashes",
+    "text": "So far the game has crashed a couple times right after a boss wave, which is very inconvenient because when I start the game back up i have to redo the boss wave. Then whatever spells I used before the crash are still on cool down so I fail the boss wave.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 2,
+    "title": "Fun for a bit",
+    "text": "It is actually fun but around wave 1000 it is horribly slow going. It takes me weeks to have the attention span to get back around my highest level. I have the x2 speed too but it\u2019s still just way too slow going.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "LOVE THE GAME",
+    "text": "I have a iPad mini two and it runs perfectly no lagg at all and the game it self is FUN but one thing that not good is no updates plsss start updating a but",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Awesome game!",
+    "text": "I have honestly played almost every game my iPad has to offer and this game tops them all, I can\u2019t stop playing the game.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 4,
+    "title": "Drags on after awhile",
+    "text": "Two times play speed should be a reward, not a purchase, in my opinion. Like after wave 300 or something. I like the game very much but it kinda drags on after awhile",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 3,
+    "title": "It\u2019s ok",
+    "text": "If you have an hour to kill it\u2019s ok. It doesn\u2019t play when you switch apps, so not a real idle game. Doesn\u2019t work in the background. Towers are very weak, also hard to upgrade and get more. 10$ to unlock 2x speed seems a ripoff for this game. Uninstalled",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "I need more lol",
+    "text": "I need more towers and more content please. I love this game I\u2019m completely addicted I just need more updates etc",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Game is good but one thing",
+    "text": "The game is good overall but needs to have you can\u2019t gain experience while offline which is a pain",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 4,
+    "title": "All around pretty solid idle game",
+    "text": "-1 Star for requiring the app to be open to make progress.  In-app purchases aren\u2019t required (at least in the early game) but are helpful.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Beautiful, fun game.",
+    "text": "I noticed how some people said the game exceeded their expectations, I\u2019m no different. The game is really fun and visually pleasing, fun progression with rewarding mechanics, props to the developer and people that helped make the game!",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 3,
+    "title": "Good game but hidden costs",
+    "text": "The game itself is fun but everything costs money. Want 2x speed, $$. Want to collect more than 4 hrs offline, $$. Don\u2019t want ads, $$. The list goes on and on. I foresee a paywall eventually also.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 2,
+    "title": "Constant crashig",
+    "text": "Addicting game with a few flaws, but it crashes every 5 minutes for me and sometimes causes me to lose progress. 4/5 without the crashing. If the problem isn\u2019t fixed soon, not gonna be playing this for long.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 3,
+    "title": "Keeps crashing",
+    "text": "Not a bad game. Can be kind of addicting, but it is almost unplayable cuz it keeps crashing every couple minutes. Very frustrating.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Love it",
+    "text": "This game is honestly one of my favorite games I\u2019ve been playin for hours a day and not even notice it keep up the good work guys",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 1,
+    "title": "Boring",
+    "text": "I love idle games, but this one is rough.  I love the fact that the payout is the same no matter the level, but hate that there's no auto-advance offline.  \n\nGrinding becomes a serious issue without auto-advance and the speed is SO SLOW it's like they try to force you to spend $9.99 just to get 2x speed.  Too time consuming for an idle game.  Deleted.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "So much more fun than any other idle game",
+    "text": "I LOVE this game! It\u2019s so simple, but there\u2019s so much to do! The rewards for watching ads are actually worth it too.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 1,
+    "title": "Not an \u201cidle\u201d game",
+    "text": "A game that requires my device stay on to make any progress is not an idle game. And this game requires just that. You can earn money offline. But you cannot progress in the waves of enemies. Making the game exceedingly tedious when there are over 1,000 waves\u2026 it\u2019s a great concept. But it\u2019s more like \u201cMonster TD\u201d than \u201cidle Monster TD.\u201d",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "This Games Great",
+    "text": "Very smooth no stress able to build ur power up very easy no pay to win all around a great game!",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 1,
+    "title": "Could have been a lot better",
+    "text": "There are hardly any monsters, and like many others are saying offline progression is really needed, hate wasting battery life having to leave my screen on this app that is barely interactive anyway.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 1,
+    "title": "Great base game but...",
+    "text": "This game NEEDS offline progression through the levels, or some way to speed through the early waves. It is really dumb to leave your phone on for several hours (even with the speed boosts available for purchase).\n\nI\u2019ll be playing something different until this is fixed.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "It\u2019s fun",
+    "text": "This game I like because it reminds me of Pok\u00e9mon and I like that it has good evolution of the monsters and buffs that u can get",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "great",
+    "text": "I just wish it were easier to grind",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 4,
+    "title": "Decent game",
+    "text": "Updating my review, gameplay has less crashing now, overall entertaining game, gives plenty of hours of fun and grind.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Please never change",
+    "text": "This game is everything modern idle games don't achieve. OPTIONAL ads are the absolute best AND they contribute to progress",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 4,
+    "title": "The attack speed",
+    "text": "I upgrade attack speed and it gets slower not faster and you can refund it",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 3,
+    "title": "All of the leaderboards do not load",
+    "text": "None of the leaderboards will load so i am unable to receive my rewards from the tournaments",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "This is the best game!",
+    "text": "I have played this now for one day and it is soooooooooo fun it might be the best  game I have played nothing else to say.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Addictive",
+    "text": "I love this game so much, and I find it kinda addicting lol been playing it for like 4 hours!",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "A Great Time Waster",
+    "text": "A great game to invest hours into when you can't find anything else to do.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Great Game",
+    "text": "One of the best idle games ever played. Not pay to win at all. Recommend for anyone that wants to pass time.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "This game is great",
+    "text": "The game is very fun. Can be played for free very easily and even though there are In app purchases, they are not necessary to have fun. Great game! :)",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 3,
+    "title": "Add evolution function",
+    "text": "I would rate 5 if there was an evolve function as most of its advertising implies, as most people consider this false advertising and rate pretty harshly...",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 4,
+    "title": "Crashes",
+    "text": "Love this game, so addicting, but I can\u2019t give it 5 stars until they fix the crashes",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 3,
+    "title": "keeps crashing",
+    "text": "I love the game and it\u2019s a good concept of tower defense, but it just keeps crashing, and crashing, and crashing. Please fix this. that\u2019s why it\u2019s a 3 star and not a 5",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Best",
+    "text": "I never leave a review on a game but I simple had to for this one best game ever.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 2,
+    "title": "App Crashes",
+    "text": "Loved the app but ever since the latest update, the app won\u2019t load so I haven\u2019t been able to play for at least 2 weeks",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 4,
+    "title": "Monster ascension",
+    "text": "Why is the \u201cincrease all fire monster damage\u201d not multiplicative?  I upgrade it and it does nothing to my fire damage stat",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Killer developer",
+    "text": "This game is so fun. The in game transactions are extremely overpriced but this is a fantastic \u201cfree\u201d game if you are looking for an ad grinder lol",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Great game. Not p2w",
+    "text": "Honestly. Great game. Tournaments only thing they could tweak. Absolutely merging the pay mechanics with the non pay mechanics.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 1,
+    "title": "Crash! Crash! Crash!",
+    "text": "Really enjoyed this until the last update. Since then it crashed every 2-5 minutes. Unable to back up my progress so my time playing is now over.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Great Tower Defense Game",
+    "text": "This game is so fun and the graphics are beautiful. I love the sort of gacha system for getting new monsters. This is an awesome tower defense game!",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Ton of fun",
+    "text": "i\u2019m not usually into tower defense games, but with a unique gameplay along with an awesome artstyle, this game is definitely a keeper",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 2,
+    "title": "Fun for an idle game, but crash crash crash",
+    "text": "It's a fun little idle game that gets a bit addictive! Unfortunately it crashes...and crashes...and crashes, a lot, even on a current-gen iPad Pro.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "MORE MONSTERS",
+    "text": "Very good game in general. Just ad many more monsters please cuz I have all of them.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 1,
+    "title": "Pay to Win",
+    "text": "I was having fun until I realized you need to pay $66 USD to buy all the premium permanent boosts to make any good progress in this game, especially if you want to do tournaments. I think $66 is really overselling this ~$3 game.\nAlso, the good reviews of this game are totally bots",
+    "votes": 1
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 3,
+    "title": "Game crashes but otherwise good.",
+    "text": "The game crashes constantly. Fix the crashes.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Wow",
+    "text": "It\u2019s so balanced and you get rewards for watching ads",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Great game",
+    "text": "Great game. There is some afk style gameplay. It combines all aspects well.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 1,
+    "title": "Crash",
+    "text": "Crashes constantly now and the server doesn\u2019t seem to keep up with saving your progress so you end up having to repeat hundreds of levels",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 4,
+    "title": "Great Game",
+    "text": "I love the concept but how do I evolve my monsters? It says you can do it but I can\u2019t seem to find how.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 1,
+    "title": "more like Idle Monster AD",
+    "text": "See how long you can last until you need to play 5 more ads for a DPS boost. No enemy variety, few maps, no skill involved in gameplay.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 4,
+    "title": "Fun",
+    "text": "Lots of fun. It\u2019s a good game if you want to kill some time. The developers response to bugs is very prompt",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 1,
+    "title": "fun game BUT doesnt fit",
+    "text": "on the iPhone 11, many parts of the game get cut off due to the rounded edges, so it doesn't look as nice and is harder to keep track of things. please fix! game looks fun but the design flaw here makes it irritating to play.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "AMAZING !!!!!",
+    "text": "This is the best game I have played in multiple years this is so fun",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 3,
+    "title": "Changed rating",
+    "text": "Dropped a star. There has to be some sort of idle progression. As I play and get farther it\u2019s becoming more and more of a chore.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 3,
+    "title": "Please fix",
+    "text": "On iPhone 11 the screen is cropped weird and is hard to tap things.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "nice game!!",
+    "text": "is there that much to say? exceeded expectations by a LOT and i\u2019m very satisfied.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 1,
+    "title": "Crashes with specific ads 100% of the time.",
+    "text": "Every time the game serves me an ad for Magic Arena the app freezes until I close it.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 1,
+    "title": "Game won\u2019t launch",
+    "text": "When I open the app it just gets hung at the loading screen, can\u2019t even play.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Amazing game",
+    "text": "Easy to learn with complex economy is lots of fun to play this game is unbelievable",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Cletus",
+    "text": "Saw and ad that had a robot named cletus so I downloaded it",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Great idle & TD mix",
+    "text": "Unexpected mix of genres; but fun and time consuming nonetheless. Worth reviewing and playing.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "my favorite",
+    "text": "This game is super fun. :)",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 1,
+    "title": "A brick wall as most free to play games are",
+    "text": "On the fifth day playing this game you will hit a brick wall, your progress will be halted since most enemies will have a ludicrous amount of life.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 4,
+    "title": "Good",
+    "text": "This game is good and the graphics are great just get the game",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 3,
+    "title": "2 element shield is not fun at all",
+    "text": "It just cancel your bossrush randomly. So annoying.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 2,
+    "title": "Can\u2019t claim tournament points",
+    "text": "Please help. I like your game, but this is bugged. I can\u2019t claim my points I won.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 1,
+    "title": "Can\u2019t even load pls help",
+    "text": "Sorry for 1 Star but I can\u2019t even load in \ud83d\ude13 it\u2019s like cats & cosplay where I can\u2019t even load in it\u2019s just a black screen :(",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 1,
+    "title": "Crashes",
+    "text": "The game crashes a lot when open for more than 20 mins.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "great game",
+    "text": "So much fun I won\u2019t lie",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "The game",
+    "text": "I love yo game bro it entertainins me all day\ud83d\ude0e",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 1,
+    "title": "It cost",
+    "text": "Just be ready to start paying around wave 480 \nSpent a week trying to reach wave 500 from wave 450",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Idk man seems pretty epic to me",
+    "text": "Idk man seems pretty epic to me",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Greatest game ever.",
+    "text": "It is addicting and fun, I love earsy rider.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 3,
+    "title": "Speed",
+    "text": "Speed",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 2,
+    "title": "Game",
+    "text": "Pay to win and prices are crazy , good game tho",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Good TDG",
+    "text": "Helps me pass time at my job good game",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Good idle game",
+    "text": "It\u2019s an idle game. You know what it is. It\u2019s a good one.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Great game",
+    "text": "One of the Best TD I have played.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 1,
+    "title": "Janky",
+    "text": "Not optimized for iPhone X (the home bar covers most of the buttons at the bottom). Mechanics feel really dated.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Great",
+    "text": "This good game please download",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 4,
+    "title": "Very decent TD",
+    "text": "Good concept for a TD that doesn\u2019t feel stale",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Time killing fun",
+    "text": "Super fun and rewarding",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 1,
+    "title": "Stall",
+    "text": "Getting old. Is there ever going to be any new monsters.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "SO GOOD",
+    "text": "The best game ever on phone",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Hate it\u2019s p2p but",
+    "text": "Addicted",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 1,
+    "title": "Not a real TD, basically another idle clicker",
+    "text": "Yet another garbage game that apple recommends.  Dont waste your time.  \n\nCheck out Kingdom Rush for a real TD game.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 4,
+    "title": "TD",
+    "text": "Decent mobile game",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Best game in the universe",
+    "text": "The best game it is the best",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 1,
+    "title": "Dirty",
+    "text": "I was just chillin, then 75 gems disappeared. Cannot recover from this.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Jesus loves",
+    "text": "You",
+    "votes": 1
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Great game",
+    "text": "I love this game",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 1,
+    "title": "not an idle game",
+    "text": "expect to leave this app open with your phone unlocked at all times if you want cool down timers to move/any progression. pretty silly and flawed. an incremental game, sure, an idly game,  no",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Grofit",
+    "text": "Nuff said",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Gud game",
+    "text": "It is amazing and I love td",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 4,
+    "title": "Omae wa mou shindeiru",
+    "text": "Increase coins per wave.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Fun",
+    "text": "Game is dope",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 1,
+    "title": "Trash",
+    "text": "Never connects to servers.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "It\u2019s good",
+    "text": ".",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Good game",
+    "text": "Good",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "good",
+    "text": "game",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Chinese please!!!",
+    "text": "\u8bf7\u66f4\u65b0\u4e2d\u6587\n\n\uc911\uad6d\uc5b4\n\n\u4e2d\u56fd\n\u3054\n\u8a9e\n\u3092\n\u3053\u3046\u3057\u3093\n\u66f4\u65b0\n\u3057\u3066\u304f\u3060\u3055\u3044",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Great game",
+    "text": "I\u2019ve never been much on these tower type idle games.But this one is nothing like any I\u2019ve ever seen great game man keep up the good work\ud83d\udc4d\ud83d\udc4d\ud83d\udc4d",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Simple but nice",
+    "text": "(1st thing) check out the wiki or discord, they have lots of tips. Discord even has events sometimes with packs and stuff given away for free. Really nice community. \n(F2P) F2P friendly, did seems a bit slow at first without game speed unlocks. I didn\u2019t buy anything until I got to B10 in the tournaments and only spent $10. Wouldn\u2019t go past b11 if you stay F2P.\n(P2P) The prices seem high and some shop items pointless, but ADs are not thrown in your face. \n(Offline) This is not as Idle as the name suggest compared to other games, offline perks are pointless or just non existent in most areas. \n(New content) Has been decent on new content releases, but developer did go through a \u201cdifficult\u201d process with IOS and Android for a bit, but seems to be back on content development now.\n(Overall) Good game and easily able entertain you for a few weeks or longer if want something simple, but fun.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 2,
+    "title": "Extremely greedy, progression falls off a cliff",
+    "text": "The game is extremely extremely greedy constantly pushing you worthless garbage for like $40. Tries to sell you $10-$20 buffs that arent even permanent. Game becomes very boring around wave 350-400 when progression slows down hard",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 4,
+    "title": "It\u2019s fun",
+    "text": "I wish there was more gold for every daily.On 71 dailies there should be 1.8 M gold. 712 dailies 8.4 B gold.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "More monsters",
+    "text": "This game is AMAZING!Everything about it is great,the only problem is the content.As you see you only added about 36 monsters.4 every category.Not only is that very limited content,but its easy to collect them all,so what im asking you is to add more monsters or as in more content please!!!",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 2,
+    "title": "Money Scheme",
+    "text": "TLDR \nThe game is interesting until you hit the paywall, and the paywall is literally the price of some console games. It would be a great game if it wasn\u2019t so RNG cash hungry.\n\nThis game is pretty good in some areas, with a classic 8-bit art style and interesting tower designs that take interesting forms of animals.\n\nHowever it becomes painfully clear around levels 30-40 that this is an extremely heavy grind game. \nYou cannot replay levels, the game continues at its own pace. \nIf you find yourself defeated the waves will reset from the last 10 waves, and the most important resource \u201cessence\u201d (which allows you to unlock spells and new towers) cannot be earned from replaying these waves.\nYou can only earn gold from replaying these waves, which upgrades your towers at a painstaking pace. You might find yourself having to replay the 9 waves again for more gold as your towers are still no ma",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 4,
+    "title": "Welp what happened plz fix",
+    "text": "Ok so I made an account I\u2019m pretty sure like 95% sure and I deleted the game cause I thought it would be safe. I came back everything was gone and it says I\u2019ve never made and account with you I got all the towers up to celestial and not kidding probably 1500 gems total put into chest skills time boost and other stuff. it\u2019s all gone it took me weeks for all that stuff and now it\u2019s gone I love this game but plz help me fix this and get me my gems and towers back also around 75000 essence total account worth.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 2,
+    "title": "Not my favorite",
+    "text": "Idle monster td \n\nIt\u2019s not really my favorite. I\u2019ve been playing this for a couple days and nothing really sets it apart from other TD games. You have monsters in different classes like common and rare and ultra rare and so on and so forth, but a lot of the monsters in higher classes just look like evolutions of the monsters in the lower classes which I think isn\u2019t very creative. If you\u2019re going to make evolutions for the monsters, make evolutions for the monsters. Have evolutions for the common class, the rare class, ultra rare class, don\u2019t just make evolutions and then spread them throughout the classes trying to pass them off as a completely different monster when they\u2019re obviously an evolution of a lower class monster. It completely takes the mystery out of what you\u2019re going to get in a higher class monster. You already know it\u2019s gonna be a seahorse, just a meaner looking one than be",
+    "votes": 1
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 5,
+    "title": "Awesome sauce",
+    "text": "This game is awesome.You should really make more games like this one.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 4,
+    "title": "Really really like this game but make the circles actual circles",
+    "text": "I really enjoy this game, i have fun every time I open the app and I\u2019m hooked on it for hours. This is the first time I\u2019ve actually gotten my mom hooked on a game that I told her to get. But I wish some of the \u201cpacks\u201d that are offered in the game were cheaper. I got an offer for a \u201cmythic\u201d and \u201cgod\u201d level monsters that cost $19.99. I don\u2019t see myself paying that much in this game. Gems aren\u2019t too hard to come by but not too easy.  Which I like the fact that I\u2019m gaining them by not spending money. Last thing, can the circles ,in which the monsters stand in, be circular with out the pixilated effect? Please? As well as the range circle.",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 1,
+    "title": "Servers?",
+    "text": "Have not been able to connect to the servers for the past few days. (Username: JJ)",
+    "votes": 0
+   },
+   {
+    "sort": "mosthelpful",
+    "stars": 1,
+    "title": "Bruh this is hard",
+    "text": "I Keep on losing level 40.is this a joke? I almost got to finish level 40. And I don\u2019t know what to do.l Almost won. Level 40 is tooooo hard and I upgraded all my towers to level 21. And the enemies are the problem.My monsters (btw there is 5 or 6) keep on getting distracted by the dumb enemies. And my monsters didn\u2019t even hit the boss!?I mean I am a beginner. BUT THE BOSSES NEED TO BE SLOWER! And bosses don\u2019t need enemies in the boss fight.also  the bosses are toooo fast and easily get to the portal.so I want the developer/s to change it a litte.also I hope the developer can put a comment down here",
+    "votes": 0
+   }
+  ]
+ }
+}
