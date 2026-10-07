@@ -8717,6 +8717,50 @@ if (section('C29 Deepwell and Provings in turns (core)')) try {
   }
 } catch (e) { fail('C29 arenas crashed: ' + (e.stack || e)); }
 
+// slice-turn-check (M1a E3, docs/design/milestones.md): every fight kind in the slice (zones 1 to 15) is a turn fight, and the hero
+// takes damage only in foe phases. Kinds: a zone foe, an elite, a zone boss at each Champion zone (5, 10, 15), a Captain, a Deepwell
+// floor. A Captain exists only where ZONE_FOES[z].captain is set (no Captain card has landed): until then it is reported, not failed.
+if (section('slice-turn-check (core)')) try {
+  const SLICE_ZONES = [1, 5, 8, 10, 15], CHAMP_ZONES = [5, 10, 15];
+  const BOT = `globalThis.__bot = () => { const q = turnCombatSnapshot();
+    if (q.phase === 'hero') { const eq = soloEquipped(); let ok = false; for (let i = 0; i < 3 && !ok; i++) if (eq[i]) ok = turnCombatAction('ability', i); if (!ok) turnCombatAction('attack'); } }`;
+  const fresh = (seed, setup) => { const g = loadCore({ seed, turns: true }), E = s => g.eval(s);
+    E(`soloPick("wren", {now:true}); S.onboard && (S.onboard.tips = false, S.onboard.all = true); S.activity = 'fight'; ${BOT}; ${setup || ''}`);
+    return { g, E }; };
+  // plays up to 90 s of the current fight; returns what the check needs. Damage with no foe hit just before it, or taken in your own hero or timing phase, is a violation.
+  const watch = (g, E) => { const out = { turn: E('turnCombatOn() && !!mob && !!mob.turn && combatFoes().every(f => f.turn)'), foes: E('combatFoes().length'), name: E('mob && mob.name'), bad: [], hits: 0 };
+    let lastFc = 0, lastAt = -9;
+    E('globalThis.__hp = () => { const u = cbUnitByKey("hero"); return u ? u.hp : 0; }; globalThis.__fc = 0; on("foeContact", () => __fc++)');
+    for (let t = 0; t < 90; t += 0.05) {
+      const hp0 = E('__hp()'), ph0 = E('turnCombatSnapshot().phase'), dot = E('!!(TURN_LIVE && TURN_LIVE.h && Object.values(TURN_LIVE.h.dot).some(v => v > 0))'); E('__bot()'); g.fn.tick(0.05); const fc = E('__fc');
+      const hp1 = E('__hp()'), ph1 = E('turnCombatSnapshot().phase');
+      // a drop in health follows a foe's hit (the foeContact event; the fight books it a tick later), or is a foe's Bleed, Burn or Venom ticking as your turn begins, and never lands while you act
+      if (fc !== lastFc) { lastFc = fc; lastAt = t; }
+      if (hp1 < hp0) { out.hits++;
+        if (!dot && t - lastAt > 0.2 || /^(hero|timing)$/.test(ph0) && /^(hero|timing)$/.test(ph1)) out.bad.push(`${hp0}>${hp1} in ${ph0}/${ph1}`); }
+      if (!E('!!mob') || E('turnCombatSnapshot().phase') === 'off') break;
+    }
+    out.errors = g.errors.slice(0, 2); return out; };
+  const ok = (r, what) => assert(r.turn && !r.bad.length && !r.errors.length, `slice-turn-check: ${what} is a turn fight and the hero is hurt only in foe phases (${JSON.stringify(r)})`);
+  for (const z of SLICE_ZONES) {
+    { const { g, E } = fresh(60 + z, `S.maxZone = ${z}; setZone(${z}); COMBAT_TUNE.eliteP = 0; spawn()`); ok(watch(g, E), `zone ${z} foe`); }
+    { const { g, E } = fresh(80 + z, `S.maxZone = ${z}; setZone(${z}); COMBAT_TUNE.eliteP = 1; for (let i = 0; i < 60 && !combatFoes().some(f => f.elite); i++) spawn()`);
+      assert(E('combatFoes().some(f => f.elite)') || z < E('COMBAT_TUNE.eliteFrom'), `slice-turn-check: zone ${z} can send an elite`);
+      if (E('combatFoes().some(f => f.elite)')) ok(watch(g, E), `zone ${z} elite`); }
+  }
+  for (const z of CHAMP_ZONES) {
+    const { g, E } = fresh(100 + z, `S.maxZone = ${z}; setZone(${z}); fightBoss = true; spawn()`);
+    assert(E('!!mob && mob.boss'), `slice-turn-check: zone ${z}'s Champion is the zone boss`);
+    ok(watch(g, E), `zone ${z} Champion (${E('mob && mob.name')})`);
+  }
+  { const caps = [...Array(15)].map((_, i) => i + 1).filter(z => { const { E } = fresh(1); return E(`typeof ZONE_FOES === 'object' && !!ZONE_FOES[${z}] && !!ZONE_FOES[${z}].captain`); });
+    if (!caps.length) console.log('  slice-turn-check: no Captain in the game yet (ZONE_FOES[z].captain unset in zones 1 to 15): Captain turn fights are not yet checkable');
+    for (const z of caps) { const { g, E } = fresh(120 + z, `S.maxZone = ${z}; setZone(${z}); spawn()`); ok(watch(g, E), `zone ${z} Captain`); } }
+  { const { g, E } = fresh(140, 'S.maxZone = 25; S.zone = 25; S.camp.b.hearth = 3'); for (let i = 0; i < 20; i++) g.fn.tick(0.05);   // the Deepwell opens at zone 25; its first floors are fought from the zone your Attack matches
+    assert(E('deepUnlocked() && DW.start(false)') && E('mob.deep && mob.floor === 1'), 'slice-turn-check: a Deepwell run starts');
+    ok(watch(g, E), 'a Deepwell floor'); }
+} catch (e) { fail('slice-turn-check crashed: ' + (e.stack || e)); }
+
 // f-playtest-bots: the playtest driver (tools/playtest.mjs): a fresh game shows the hero picker, tapping by label begins the game, wait moves
 // the game clock, state reads the save, away reopens the game later. Same driver an agent plays with (docs/coord/playtest-lab.md).
 if (section('playtest driver (browser)')) try {
