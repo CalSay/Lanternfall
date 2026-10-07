@@ -4561,6 +4561,32 @@ if (section('solo hero')) try {
     assert(E('HEARTH_TUNE.first.bench.secs <= 15 && HEARTH_TUNE.first.forge.secs <= 20 && CAMP_TUNE.secs[0] <= 60 && CAMP_TUNE.secs[1] <= 1800'), 'Lv 1 buildings build in seconds (Workbench 10 s, Forge 15 s, other rows 45 s; Lv 2 20 min)');
     errs.push(...g.errors);
   }
+  // 9b. zone-1-unique-hero-fit: the zone 1 unique is Briar Sprig, a charm every starter can wear; the Sproutblade is retired, not deleted
+  {
+    const g = loadCore({ solo: true, seed: 104 }), E = s => g.eval(s);
+    assert(E('zoneUnique(1)') === 'briarsprig' && E('UNIQ.briarsprig.slot') === 'charm' && E('UNIQ.briarsprig.fx.essExtra') === 0.1 && E('UNIQ.sproutblade.slot') === 'weapon' && E('!!UNIQ.sproutblade.retired'),
+      'the zone 1 unique is Briar Sprig (a charm, 10% extra essence); the Sproutblade stays in UNIQ as a retired sword');
+    for (const h of ['wren', 'tobin', 'pip']) {
+      E(`soloPick("${h}"); S.items = S.items.filter(it => it.u !== "briarsprig"); dropUnique(zoneUnique(1), 1)`);
+      const id = E('S.items.filter(it => it.u === "briarsprig").pop().id');
+      assert(E('soloHero()') === h && E(`fits(itemById(${id}), "charm", "hero")`) && E(`equipItem(${id}) !== false && equipped("charm") && equipped("charm").id === ${id}`), `${h} can wear Briar Sprig in the charm slot`);
+    }
+    const zs = []; for (let z = 1; z <= 60; z++) if (E(`zoneUnique(${z})`) === 'briarsprig') zs.push(z);
+    assert(zs.join() === '1,8,15,22,29,36,43,50,57' && !E('Array.from({ length: 70 }, (_, i) => zoneUnique(i + 1)).includes("sproutblade")'), `only the Sproutblade's old zones drop Briar Sprig (${zs.join()})`);
+    assert(E('ZONE_UNIQ.slice(1).join()') === 'echocowl,rattlecharm,carapacepick,sporeheart,golemfist,wispaxe', 'every other zone unique keeps its place');
+    const f = loadCore({ solo: true, seed: 105 });
+    assert(f.eval('statsApi.uniqueTotal()') === f.eval('ZONE_UNIQ.length + RAID_UNIQ.length') && f.eval('statsApi.uniqueTotal()') === 13 && !f.eval('codexPage("uniques").tiles.some(t => t.key === "sproutblade")'),
+      'a new save counts 13 uniques and shows no Sproutblade tile it can never earn');
+    assert(f.eval('codexPage("uniques").tiles[0].key') === 'briarsprig', 'with the Sproutblade hidden, Briar Sprig takes its place first in the Codex, so the seen string read by position does not shift');
+    const late = loadCore({ solo: true, storage: memoryStorage({ [KEY]: fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-late.json'), 'utf8') }) }), L = s => late.eval(s);
+    assert(L('S.found.sproutblade') === 3 && L('S.items.some(it => it.u === "sproutblade" && it.slot === "weapon")') && L('statsApi.uniqueTotal()') === 14 && L('codexPage("uniques").tiles.find(t => t.key === "sproutblade").got') === 1 && L('codexPage("uniques").tiles.map(t => t.key).join()') === L('Object.keys(UNIQ).join()'),
+      'an old save keeps its Sproutblade; the trophy total and the Codex still count it');
+    for (const [u, slot] of [['sproutblade', 'weapon'], ['briarsprig', 'charm']]) {
+      const r = L(`(() => { const o = JSON.parse(JSON.stringify(S)); o.items.push({ id: o.nextId, slot: "${slot}", t: 1, r: "legendary", plus: 0, u: "${u}" }); o.nextId++; o.found.${u} = 1; return decodeSave(encodeSave(o)); })()`);
+      assert(r.ok, `a save code holding a ${u} imports` + (r.ok ? '' : ': ' + r.error));
+    }
+    errs.push(...g.errors, ...f.errors, ...late.errors);
+  }
   // 10. the guide: the solo first session, one step at a time; it pauses the game while a step waits
   {
     const g = T(), E = s => g.eval(s);
@@ -10763,14 +10789,14 @@ if (section('moment layer')) try {
           await X(`S.activity = 'gather'; S.tab = ''; S.onboard.tips = false; emit('sceneReset'); true`);   // no turn fight: a moment may show
           await page.waitForTimeout(600);
           await X(`MOMENT_Q.length = 0; if (MOMENT_UI.ov) { MOMENT_UI.shownAt = 0; document.querySelector('.mm-go').click(); } true`);   // a catch-up (a hero who joined as the save loaded) is not this check's moment
-          await X(`S.found.sproutblade = 0; dropUnique('sproutblade', 1)`);
+          await X(`S.found[zoneUnique(1)] = 0; dropUnique(zoneUnique(1), 1)`);
           // a level-up and a flood of toasts compete with it
           await X(`emit('levelup', { L: 5 }); for (let i = 0; i < 4; i++) toast('Check notice ' + i, 'good', null, 'high'); true`);
           await until(`!!document.querySelector('.mm-ov')`);
           const big = await X(`(() => { const o = document.querySelector('.mm-ov'), c = o && o.querySelector('.mm-card'), r = c && c.getBoundingClientRect(), g = c && c.querySelector('.mm-go').getBoundingClientRect();
             return { up: !!o, text: o ? o.textContent : '', fits: !!r && r.top >= 0 && r.bottom <= innerHeight + 1 && r.left >= 0 && r.right <= innerWidth + 1 && g.bottom <= innerHeight + 1,
               burst: o && getComputedStyle(o.querySelector('.mm-burst')).display, held: GAME_HOLDS.some(f => f()), bell: notes.log.some(n => n.ch === 'bell' && /Unique loot/.test(n.msg)), st: momentState() }; })()`);
-          assert(big.up && /Sproutblade/.test(big.text) && /Unique loot/i.test(big.text) && big.fits && big.held && !big.bell,
+          assert(big.up && /Briar Sprig/.test(big.text) && /Unique loot/i.test(big.text) && big.fits && big.held && !big.bell,
             `${at}: a unique shows a big card (name, label, Continue in view) and holds the game; it is not a bell line (${JSON.stringify({ up: big.up, fits: big.fits, held: big.held, bell: big.bell, text: String(big.text).slice(0, 120) })})`);
           assert(motion === 'reduce' ? big.burst === 'none' : big.burst !== 'none', `${at}: the burst ${motion === 'reduce' ? 'is off for reduced motion' : 'plays'}`);
           assert(/Level 5/.test(big.text), `${at}: a level-up that competes folds into the card as a line`);
@@ -10871,7 +10897,7 @@ if (section('hero voice')) try {
           const who = await X(`storyHeroKey()`);
           assert(who === 'tobin' || who === 'wren' || who === 'pip', `${at}: the fixture's hero is a starter (${who})`);
           // the first boss, a unique and a level-up at one fight end: one bark, the strongest (boss1)
-          await X(`S.found.sproutblade = 0; dropUnique('sproutblade', 1); emit('zoneClear', { zone: 1 }); true`);
+          await X(`S.found[zoneUnique(1)] = 0; dropUnique(zoneUnique(1), 1); emit('zoneClear', { zone: 1 }); true`);
           await until(`!!document.querySelector('.mm-ov')`);
           const card = await X(`(() => { const o = document.querySelector('.mm-ov'), c = o && o.querySelector('.mm-card'), r = c && c.getBoundingClientRect(), s = o && o.querySelectorAll('.mm-say');
             return { n: s ? s.length : 0, text: s && s[0] ? s[0].textContent : '', pt: !!(s && s[0] && s[0].querySelector('img') && s[0].querySelector('img').src.startsWith('data:')),
@@ -10894,6 +10920,13 @@ if (section('hero voice')) try {
           await X(`S.story.starter = ''; true`);
           const silent = await X(`soloHero() && ['wren','tobin','pip'].includes(soloHero()) ? 'starter' : (voiceSay('boss1') === null && moment('bark', { bark: 'boss' }) === false)`);
           assert(silent === true || silent === 'starter', `${at}: with no starter as the story hero a bark is silent`);
+          if (w === 740) {
+            // zone-1-unique-hero-fit: Wren's first zone 1 unique is Briar Sprig, and the card's Equip puts it in the charm slot
+            await X(`soloPick('wren'); S.activity = 'gather'; S.tab = ''; emit('sceneReset'); MOMENT_Q.length = 0; if (MOMENT_UI.ov) { MOMENT_UI.shownAt = 0; document.querySelector('.mm-go').click(); } S.equip.charm = null; S.found[zoneUnique(1)] = 0; dropUnique(zoneUnique(1), 1); true`);
+            await until(`!!document.querySelector('.mm-ov .mm-act')`);
+            const eq = await X(`(() => { const o = document.querySelector('.mm-ov'), b = o && o.querySelector('.mm-act'), r = { hero: soloHero(), text: o ? o.textContent : '', act: b ? b.textContent : '' }; if (b) b.click(); const c = equipped('charm'); r.worn = c ? c.u : ''; return r; })()`);
+            assert(eq.hero === 'wren' && /Briar Sprig/.test(eq.text) && /Equip Briar Sprig/.test(eq.act) && eq.worn === 'briarsprig', `${at}: Wren's first-unique card names Briar Sprig and its Equip puts it on (${JSON.stringify(eq).slice(0, 160)})`);
+          }
           assert(!errs.length, `${at}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
           await ctx.close();
         } catch (e) { fail(`${at} crashed: ` + (e.stack || e)); }

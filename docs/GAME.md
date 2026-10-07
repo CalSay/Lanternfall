@@ -144,7 +144,7 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   is [combat-turn-build.md](design/combat-turn-build.md) "Gear stats in turn fights"): Spell power is fire, frost and
   holy damage, Damage over time (the old Area) Burn and Bleed, Control boss Stagger, Counter (the old Threat) counter
   damage, Speed (the old Attack speed) how often you act, Focus a steady cooldown refund.
-- **Uniques** (`UNIQ` in `20-data.js`): rare zone-boss drops with a strong effect and modest stats. Each Hollow unique carries one flavour line naming the Champion and place it came from (`21ka-story-hollow-items.js`); it shows on the Codex tile and the item card once that area's Champion is in the game.
+- **Uniques** (`UNIQ` in `20-data.js`): rare zone-boss drops with a strong effect and modest stats. The zone 1 unique (and every 7th zone after it) is Briar Sprig, a charm any hero can wear; the Sproutblade it replaced is retired (`retired: 1`): it no longer drops, old saves keep theirs, and the trophy wall, Codex and totals show it only to a player who found one (`uniqKeys()`). Each Hollow unique carries one flavour line naming the Champion and place it came from (`21ka-story-hollow-items.js`); it shows on the Codex tile and the item card once that area's Champion is in the game.
 - **Economy** (`55-econ.js`, `21w-data-econ.js`): gold per foe steps up by region; every price follows that curve.
   Gold-gain beyond gear became crit damage, capped.
 

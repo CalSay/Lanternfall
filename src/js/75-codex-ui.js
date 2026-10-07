@@ -14,7 +14,7 @@
   const GRID_PAGES = { bestiary: 1, uniques: 1, companions: 1, materials: 1 };
   const PAGE_IC = {
     bestiary: () => spriteURL('best:slime', SPR.slime, TYPES[0].pal), zones: () => iconURL('banner', '#F2C14E'),
-    uniques: () => itemIcon('weapon', 3, 'sproutblade'), armoury: () => iconURL('anvil', '#A9B1BD'),
+    uniques: () => itemIcon('charm', 3, 'briarsprig'), armoury: () => iconURL('anvil', '#A9B1BD'),
     companions: () => iconURL('mug', '#8C6A43', { 1: '#6B4A2E', 7: '#F2C14E', 5: '#EFE6D6' }), stories: () => iconURL('charm', '#B58CFF'),
     materials: () => matIcon('crystal', 3), camp: () => iconURL('flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }),
     deepwell: () => iconURL('orb', '#7FB2FF'), seals: () => iconURL('coin', '#F2C14E'),

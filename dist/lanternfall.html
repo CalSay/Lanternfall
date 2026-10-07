@@ -6789,7 +6789,7 @@ const SLOTS = [
 const SLOT = Object.fromEntries(SLOTS.map(s => [s.id, s]));
 const RECIPE = { weapon: { ore: 6, wood: 3, ess: 2 }, helm: { ore: 5, ess: 3 }, charm: { wood: 3, ess: 5 }, pick: { ore: 4, wood: 4 }, axe: { wood: 5, ore: 3 } };
 const UNIQ = {
-  sproutblade: { name: 'Sproutblade', slot: 'weapon', col: '#6FCB6A', src: 'Zone boss · Mossy Hollow', fx: { essExtra: 0.1 }, txt: 'Kills have a 10% chance to drop extra essence.' },
+  sproutblade: { name: 'Sproutblade', slot: 'weapon', retired: 1, col: '#6FCB6A', src: 'Zone boss · Mossy Hollow', fx: { essExtra: 0.1 }, txt: 'Kills have a 10% chance to drop extra essence.' },
   echocowl: { name: 'Echo Cowl', slot: 'helm', col: '#8A6FC8', src: 'Zone boss · Batwing Caves', fx: { echo: 0.5 }, txt: 'Critical hits strike again for 50%.' },
   rattlecharm: { name: 'Rattlebone Charm', slot: 'charm', col: '#EFE6D6', src: 'Zone boss · The Bonefield', fx: { abil: 20 }, txt: 'Your abilities deal 20% more damage.' },
   carapacepick: { name: 'Carapace Pick', slot: 'pick', col: '#3F8FA8', src: 'Zone boss · Beetle Barrows', fx: { oreExtra: 0.25 }, txt: '25% chance of an extra ore per swing.' },
@@ -6801,12 +6801,26 @@ const UNIQ = {
   colossuspick: { name: 'Colossus Pick', slot: 'pick', col: '#6E7F4A', src: 'World raid · The Mire Colossus', fx: { gather: 40 }, txt: 'All gathering 40% faster.' },
   hydraglass: { name: 'Hydra Glass', slot: 'charm', col: '#7FD6E0', src: 'World raid · The Glass Hydra', fx: { crit: 10 }, txt: '+10% critical hit chance.' },
   eaterfang: { name: "Lantern Eater's Fang", slot: 'weapon', col: '#FF9E3D', src: 'World raid · The Lantern Eater', fx: { might: 30, counter: 100 }, txt: '+30% damage. Your counters after a parry deal double.' },
-  tyrantaxe: { name: "Pale Tyrant's Axe", slot: 'axe', col: '#E6E1F0', src: 'World raid · The Pale Tyrant', fx: { woodExtra: 0.3, gather: 20 }, txt: '30% chance of an extra log, all gathering 20% faster.' }
+  tyrantaxe: { name: "Pale Tyrant's Axe", slot: 'axe', col: '#E6E1F0', src: 'World raid · The Pale Tyrant', fx: { woodExtra: 0.3, gather: 20 }, txt: '30% chance of an extra log, all gathering 20% faster.' },
+  // zone-1-unique-hero-fit: the zone 1 unique is a charm every hero can wear. The Sproutblade (a sword only the Warden
+  // could wear) is retired: it no longer drops, old saves keep theirs, and its tiles show only to players who found one.
+  briarsprig: { name: 'Briar Sprig', slot: 'charm', was: 'sproutblade', col: '#6FCB6A', src: 'Zone boss · Mossy Hollow', fx: { essExtra: 0.1 }, txt: 'Kills have a 10% chance to drop extra essence.' }
+};
+// The uniques a player can see on the trophy wall, the Codex and the totals: every unique that still drops, plus a retired one they found.
+// A hidden retired unique's replacement (`was`) takes its place in the order, because the Codex's seen string is read by position.
+const uniqKeys = () => {
+  const got = k => typeof S !== 'undefined' && S.found && S.found[k], keys = Object.keys(UNIQ), out = [];
+  for (const k of keys) {
+    const u = UNIQ[k];
+    if (u.retired) { if (got(k)) out.push(k); else out.push(...keys.filter(j => UNIQ[j].was === k)); }
+    else if (!u.was || got(u.was)) out.push(k);
+  }
+  return out;
 };
 // Uniques are about their effect, not raw power (owner, 2026-09-27): base power at Rare level (was the
 // Legendary x3.2), and rarer drops. `owned` scales the chance when you already have that unique at this tier or higher.
 const UNIQ_TUNE = { pow: 1.8, first: 0.15, again: 0.04, owned: 0.5 };
-const ZONE_UNIQ = ['sproutblade', 'echocowl', 'rattlecharm', 'carapacepick', 'sporeheart', 'golemfist', 'wispaxe'];
+const ZONE_UNIQ = ['briarsprig', 'echocowl', 'rattlecharm', 'carapacepick', 'sporeheart', 'golemfist', 'wispaxe'];
 const RAID_UNIQ = ['wyrmscale', 'hollowcrown', 'colossuspick', 'hydraglass', 'eaterfang', 'tyrantaxe'];
 const BAG_MAX = 40;
 function itemColor(slot, t, u) { return kindColor(slot, t, u); } // 41-items.js
@@ -8391,6 +8405,7 @@ STORY_BEATS.note.thessaly = { title: "Thessaly's Sealed Note", region: 'hollow',
 
 Object.assign(STORY_BEATS.item, {
   sproutblade: { area: 0, line: 'From the Briar Regent, in Mossy Hollow. It still puts out shoots.' },
+  briarsprig: { area: 0, line: "Cut from the Briar Regent's throne. Still putting out shoots." },
   echocowl: { area: 1, line: 'From the Hollow Cantor, in the Batwing Caves. It hums the song.' },
   rattlecharm: { area: 2, line: 'From the Ossuary Marshal\'s lance, in the Bonefield. It rattles.' },
   carapacepick: { area: 3, line: 'From the Sepulchre Engine, in the Beetle Barrows. The door held.' },
@@ -15517,7 +15532,7 @@ const statsApi = {};
   });
 
   const forged = () => (S.deeds && S.deeds.n.forged) || 0;
-  Object.assign(statsApi, { forged, uniqueKinds: () => Object.keys(S.found || {}).length, uniqueTotal: () => Object.keys(UNIQ).length });
+  Object.assign(statsApi, { forged, uniqueKinds: () => Object.keys(S.found || {}).length, uniqueTotal: () => uniqKeys().length });
 
   // ---- away report ----
   const MAT_KINDS = CRAFT_FAMILIES; // every family (K5), in pouch order
@@ -17809,7 +17824,7 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
   // ---------------- 3. Uniques: 13 hero uniques ----------------
   page('uniques', {
     n: 'Uniques', bless: 'hunt', seal: { key: 'uniqueChance', v: 0.03, txt: 'Uniques drop 3% more often' }, title: 'the Curator', pic: 'item',
-    tiles: x => Object.keys(UNIQ).map(k => {
+    tiles: x => uniqKeys().map(k => {
       const u = UNIQ[k], got = S.found[k] ? 1 : 0, fl = got && typeof storyItemLine === 'function' ? storyItemLine(k) : '';   // story-systems-hollow: the Champion it came from
       return { key: k, n: u.name, got, max: 1, pts: got * 10, ptsMax: 10, item: { slot: u.slot, t: S.found[k] || 1, u: k },
         sub: got ? u.txt + (fl ? ' ' + fl : '') : '', hint: got ? '' : x.exact ? u.src + '.' : (RAID_UNIQ.includes(k) ? 'The world raid guards it.' : 'A boss guards it.') };
@@ -34823,10 +34838,13 @@ for (const [key, u] of Object.entries(UNIQ)) {
   c.append(tile, tn, ts1, ts2); $('trophies').append(c);
   trophyEls[key] = { c, tile, tn, ts1, ts2 };
 }
+{ const shown = uniqKeys(); for (const k in trophyEls) putHidden(trophyEls[k].c, !shown.includes(k)); }   // a retired unfound unique never shows, even before the first render
 function renderTrophies() {
   let n = 0;
+  const shown = uniqKeys();
   for (const [key, u] of Object.entries(UNIQ)) {
     const f = S.found[key], e = trophyEls[key]; if (f) n++;
+    putHidden(e.c, !shown.includes(key)); // a retired unique shows only once found
     putClass(e.c, 'trophy' + (f ? ' found' : ''));
     setIc(e.tile, itemIcon(u.slot, f || 3, key), f ? 'legendary' : null, f ? '' : 'ghost');
     putText(e.tn, f ? u.name : '???'); putClass(e.tn, 'tn' + (f ? ' rar-legendary' : ''));
@@ -34835,9 +34853,9 @@ function renderTrophies() {
   }
   // what is left, by where it drops (menu audit #15); found uniques sort first (.trophy.found, 40-components.css)
   const left = {};
-  for (const [key, u] of Object.entries(UNIQ)) if (!S.found[key]) { const w = u.src.split(' · ')[0]; left[w] = (left[w] || 0) + 1; }
+  for (const key of shown) if (!S.found[key]) { const u = UNIQ[key]; const w = u.src.split(' · ')[0]; left[w] = (left[w] || 0) + 1; }
   const rest = Object.entries(left).map(([w, k]) => `${w === 'Zone boss' ? 'Zone bosses' : w}: ${k} left`).join(' · ');
-  putText($('trophyCount'), `${n} / ${Object.keys(UNIQ).length} uniques` + (rest ? ` · ${rest}` : ''));
+  putText($('trophyCount'), `${n} / ${shown.length} uniques` + (rest ? ` · ${rest}` : ''));
 }
 
 function uiForge() { renderTrophies(); }
@@ -37526,7 +37544,7 @@ var classEvoUI;
   const GRID_PAGES = { bestiary: 1, uniques: 1, companions: 1, materials: 1 };
   const PAGE_IC = {
     bestiary: () => spriteURL('best:slime', SPR.slime, TYPES[0].pal), zones: () => iconURL('banner', '#F2C14E'),
-    uniques: () => itemIcon('weapon', 3, 'sproutblade'), armoury: () => iconURL('anvil', '#A9B1BD'),
+    uniques: () => itemIcon('charm', 3, 'briarsprig'), armoury: () => iconURL('anvil', '#A9B1BD'),
     companions: () => iconURL('mug', '#8C6A43', { 1: '#6B4A2E', 7: '#F2C14E', 5: '#EFE6D6' }), stories: () => iconURL('charm', '#B58CFF'),
     materials: () => matIcon('crystal', 3), camp: () => iconURL('flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }),
     deepwell: () => iconURL('orb', '#7FB2FF'), seals: () => iconURL('coin', '#F2C14E'),

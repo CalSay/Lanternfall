@@ -57,7 +57,7 @@ const statsApi = {};
   });
 
   const forged = () => (S.deeds && S.deeds.n.forged) || 0;
-  Object.assign(statsApi, { forged, uniqueKinds: () => Object.keys(S.found || {}).length, uniqueTotal: () => Object.keys(UNIQ).length });
+  Object.assign(statsApi, { forged, uniqueKinds: () => Object.keys(S.found || {}).length, uniqueTotal: () => uniqKeys().length });
 
   // ---- away report ----
   const MAT_KINDS = CRAFT_FAMILIES; // every family (K5), in pouch order
