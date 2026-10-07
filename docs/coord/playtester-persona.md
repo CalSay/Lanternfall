@@ -5,7 +5,8 @@ notices it. Builders never grade their own work: the tester runs in its own sess
 judge scores its notes. The Sunday release check uses this persona.
 
 Tool: `tools/playtest-human.mjs` (driver: `tools/playtest.mjs`; method: `docs/coord/playtest-lab.md`). The brief the player
-reads is `BRIEF` in that file and is printed into each run's `run.json`.
+reads is `BRIEF` in that file, plus one line naming the hero when `--hero` is given; the whole prompt is printed into each
+run's `run.json`.
 
 ## Persona
 
@@ -31,7 +32,7 @@ node tools/playtest-human.mjs start --html dist/lanternfall.html --seed 1 --hero
 node tools/playtest-human.mjs start --html dist/lanternfall.html --seed 2 --max-steps 250 --out <run>-s2
 ```
 Each run is driven by a worker on Opus (`act` / `note` / `stop`, one action per turn, reading each screenshot), or with an
-API key by `run`. Seed 1 plays the hero Cal plays. 250 steps reach about 30 game minutes. A run costs about $6 to $7 at
+API key by `run` (add `--max-usd 12`: the default $10 cap stops a 250-step run early and skips the closing `TOP:` turn). Seed 1 plays the hero Cal plays. 250 steps reach about 30 game minutes. A run costs about $6 to $7 at
 150 steps as a Claude Code worker (most of it is the worker's own prompt), so expect $10 to $11 at 250. The driver runs
 with `--frozen` (the game clock moves only on reading time, waits and taps) and `--thumb` (a tap never scrolls the page
 where a thumb cannot).
@@ -71,8 +72,8 @@ are these notes.
 | 21 Too many attribute points; choice not meaningful | 34 | partly | noted the count mismatch | real-decision habit | likely |
 
 After (persona v2), predicted from the table: between **7 of 18** (only the "yes" rows, the same as now on the union,
-though each seed alone should catch more) and **15 of 18** (every "likely" lands; #1, #6, #16 and #19 stay partly or
-missed). This is a prediction, not a measurement. v2's habits were written from these same notes, so re-running on
+though each seed alone should catch more) and **15 of 18** (every "likely" lands; #6, #16 and #19 stay partly or
+missed; #1 is art and not scored). This is a prediction, not a measurement. v2's habits were written from these same notes, so re-running on
 this build and these notes would overstate it. The honest test is Cal's next set of notes on a new build, or the Sunday
 release check scored against whatever Cal finds that week. Record it below.
 

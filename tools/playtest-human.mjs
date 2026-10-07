@@ -6,6 +6,7 @@
 //
 //   node tools/playtest-human.mjs run   --html <build> --seed <n> --out <dir>   play with the Messages API (needs ANTHROPIC_API_KEY)
 //        [--model claude-opus-5-5] [--effort high] [--dry]                      --dry: no model, taps the first button (plumbing test)
+//        [--hero <name>]                                                        tell the player which hero to pick (any mode)
 //
 // No API key? A Claude Code worker can be the player instead, one command per turn, with the same brief, caps and logs:
 //   node tools/playtest-human.mjs start --html <build> --seed <n> --out <dir>   open the game in a background process; prints
@@ -301,10 +302,12 @@ async function runMode() {
         if (out.over) {   // one last turn for the closing notes
           stopReason = run.stopped;
           messages.push({ role: 'user', content: [{ type: 'tool_result', tool_use_id: use.id, content: userTurn(out.text, null) }] });
-          const last = await callModel(model, effort, messages), lu = last.usage || {};
-          tokens.input += lu.input_tokens || 0; tokens.output += lu.output_tokens || 0; tokens.cacheRead += lu.cache_read_input_tokens || 0; tokens.cacheWrite += lu.cache_creation_input_tokens || 0;
-          const fin = (last.content || []).find(b => b.type === 'tool_use');
-          if (fin) await run.act(fin.input.action, fin.input.why, fin.input.notes || []);
+          if (usd < CAPS.usd) try {   // skipped at the cost cap; a failed closing turn does not fail a finished run
+            const last = await callModel(model, effort, messages), lu = last.usage || {};
+            tokens.input += lu.input_tokens || 0; tokens.output += lu.output_tokens || 0; tokens.cacheRead += lu.cache_read_input_tokens || 0; tokens.cacheWrite += lu.cache_creation_input_tokens || 0;
+            const fin = (last.content || []).find(b => b.type === 'tool_use');
+            if (fin) await run.act(fin.input.action, fin.input.why, fin.input.notes || []);
+          } catch (e) { console.error('playtest-human: closing turn failed: ' + (e && e.message || e)); }
           break;
         }
         if (++turns >= TURNS_PER_CHAT) { messages = [{ role: 'user', content: userTurn(carryOver(run) + '\n\n' + screenText(screen, { withShot: false }), screen.screenshot) }]; turns = 0; }
