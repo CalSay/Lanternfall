@@ -122,6 +122,7 @@
   // UX-L1: in landscape a menu covers most of the stage, but the top row (Fight / Gather), Next Up and the action bar
   // stay on screen. onGame: the whole stage shows; onCtrl: those controls show.
   const onGame = () => !S.tab;
+  guideMenuCovers = () => !isWide();   // portrait: an open menu hides the fight, so a fight tip waits for it to close
   const onCtrl = () => !S.tab || isWide();
   const vis = n => !!(n && n.getClientRects().length && n.offsetParent !== null);
   const first = nm => String(nm || '').split(' ')[0];

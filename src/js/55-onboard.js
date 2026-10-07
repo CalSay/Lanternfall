@@ -142,7 +142,8 @@ const inWindow = k => { const q = turnSnap(); if (!q) return heavyShowing(); con
 // 'windup' a hit is on its way (the Dodge and Parry window), 'foe' the foe acts with nothing to answer, 'between' no fight in view
 // (not fighting, no foe alive, or a menu open). Once a 'between' step has started it stays up until done or retired.
 const GUIDE_PHASES = ['hero', 'windup', 'foe', 'between'];
-function guidePhase() { return !fightingNow() || !liveFoe() || (!!S.tab && S.tab !== 'adv') ? 'between' : hitComing() ? 'windup' : heroTurnNow() ? 'hero' : 'foe'; }
+let guideMenuCovers = () => true;   // 75-onboard-ui.js: a wide screen keeps the fight in view beside an open menu
+function guidePhase(seeThroughMenu) { return !fightingNow() || !liveFoe() || (!seeThroughMenu && !!S.tab && S.tab !== 'adv') ? 'between' : hitComing() ? 'windup' : heroTurnNow() ? 'hero' : 'foe'; }
 // A fight is one foe on the field (59k `fightStart`; the legacy fight: a pack). Runtime only, never saved.
 const GUIDE_RT = { t: 0, fight: 0, doneIn: {}, lastEnd: null, latch: '', pauseFight: -1, pauseId: '', shown: {} };
 const GUIDE_QUIET = 60;    // seconds of play between two unprompted lines outside fights, and before a live tip retires
@@ -270,7 +271,7 @@ function craftReady() {
       let w = false; try { w = !!s.when(); } catch (e) {}
       if (!w) continue;
       const R = GUIDE_RT, held = R.latch === s.id;
-      if (!held && !s.ph.includes(guidePhase())) continue;   // not its phase: it waits
+      if (!held && !s.ph.includes(guidePhase()) && !(!guideMenuCovers() && s.ph.includes(guidePhase(true)))) continue;   // not its phase: it waits (a wide screen still shows the fight beside a menu)
       if (!held && s.quiet && R.lastEnd !== null && R.t - R.lastEnd < GUIDE_QUIET) continue;   // one unprompted line a minute
       if (s.ph.includes('between')) R.latch = s.id;
       return s;
