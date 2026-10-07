@@ -457,7 +457,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
     const type = m.key.replace(/\d+$/, '');
     let key, fr;
     if (m.deep) { const b = coldBand(m.floor); key = 'd' + type + (m.boss ? 'E' : '') + b; fr = coldFrames(type, !!m.boss, b); }
-    else { key = 'm' + type + (m.boss ? 'E' : '') + zoneHue(S.zone); fr = enemyFrames(type, { elder: !!m.boss, hue: zoneHue(S.zone) }); }
+    else { key = 'm' + type + (m.boss ? 'E' : '') + zoneHue(S.zone) + (typeof portraitsClassic === 'function' && portraitsClassic() ? 'c' : ''); fr = enemyFrames(type, { elder: !!m.boss, hue: zoneHue(S.zone) }); }
     const rig = typeof ENEMY_RIGS !== 'undefined' && ENEMY_RIGS[type];
     s.anim = rig && rig.anim || 'lunge'; s.hover = !!(rig && rig.hover);
     s.next = 1.5 + Math.random() * 3; s.key = key; s.fr = fr;
@@ -1406,15 +1406,17 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
   // scaled (smooth) to cover the stage with its painted road on the ground line GY, centred. False until it has loaded.
   const bgImgs = {};
   function bgArtDraw(g, theme) {
-    const B = typeof BG_ART === 'object' && BG_ART[theme]; if (!B) return false;
-    const o = SW >= SH ? 'land' : 'port', E = B[o], k0 = theme + o;
+    const cl = typeof BG_ART_CL === 'object' && BG_ART_CL[theme] && !(typeof portraitsClassic === 'function' && portraitsClassic());   // the Claude trial painting, unless Classic art
+    const B = typeof BG_ART === 'object' && (cl ? BG_ART_CL : BG_ART)[theme]; if (!B) return false;
+    const o = SW >= SH ? 'land' : 'port', E = B[o], k0 = theme + o + (cl ? '+' : '');
     let img = bgImgs[k0];
-    if (!img) { img = bgImgs[k0] = new Image(); img.src = 'data:image/webp;base64,' + E.src; }
+    if (!img) { img = bgImgs[k0] = new Image(); img.src = 'data:image/' + (cl ? 'png' : 'webp') + ';base64,' + E.src; }
     if (!img.complete || !img.naturalWidth) return false;
-    const k = Math.max(SW / E.w, GY / (E.road * E.h), (SH - GY) / ((1 - E.road) * E.h));
-    const sm = g.imageSmoothingEnabled; g.imageSmoothingEnabled = true;
+    let k = Math.max(SW / E.w, GY / (E.road * E.h), (SH - GY) / ((1 - E.road) * E.h));
+    if (cl) k = k <= 1 ? 1 : Math.ceil(k - 0.001);   // pixel art: whole-pixel scale only (1 art px = 1 stage px, as the heroes)
+    const sm = g.imageSmoothingEnabled; g.imageSmoothingEnabled = !cl;
     g.fillStyle = '#0B0810'; g.fillRect(0, 0, SW, SH);
-    g.drawImage(img, (SW - E.w * k) / 2, GY - E.road * E.h * k, E.w * k, E.h * k);
+    g.drawImage(img, Math.round((SW - E.w * k) / 2), Math.round(GY - E.road * E.h * k), E.w * k, E.h * k);
     g.imageSmoothingEnabled = sm;
     return true;
   }

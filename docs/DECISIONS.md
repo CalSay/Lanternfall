@@ -626,6 +626,15 @@ Every card that adds a price, a currency, a timer or a gate passes all ten. (202
   name. Only Codex makes art; Claude vets it and answers for anything broken or ugly in a Monday build; anything
   doubtful stays out. (Cal 2026-10-05 gates; 2026-10-06 18:30, 18:41 and 19:35: "Art should only be made by Codex.
   ... If it gets into a Monday build and it's broken or looks bad, you will be held responsible".)
+- **Art unblock: one trial pack (Cal, 2026-10-07 19:28, card `art-unblock`, answered "Trial one pack"):** Claude may draw ONE whole
+  area pack alongside Codex: area 1, Mossy Hollow, meaning its battle background and its five zone monsters (Thorn Imp,
+  Gloomjaw, Briarbound Ravager, Thornwing, Nightseed Sorcerer; the repo's area is zones 1 to 5, so Batwing Caves is not
+  part of it). Terms: the Opus art judge must pass the pack within 2 rounds or the pack is dropped and Codex keeps art;
+  `@codex review` on the PR must find no style mismatch; it ships behind the Classic art switch (Settings > Art: Classic
+  art brings back the Codex background and monsters, whose files stay); it may merge once judged, with no wait for 14 Oct.
+  Outside this one pack, Codex makes art. Built from `art/area-1` by `tools/embed-area-1.mjs` into `21zc-data-art-area1.js`.
+  The Thorn Imp and Gloomjaw keep Codex's frame counts and timings, so no fight changes. Ravager, Thornwing and Sorcerer are
+  drawn and embedded but have no zone-monster skin yet, so they do not appear in fights until a mechanics card adds them.
 - **Codex art packs, judge verdicts (2026-10-06, art-pack-triage):** ability icons: wire 36 of Codex's drafts for the
   live 42 abilities (keep the C26 Echo Shot and Fireball; Shield Bash moves to Codex's red-gold one), a hero's icons go
   in only when all 14 are whole, so Pip first; Power Shot, Barbed Arrow, Pinning Shot and Shield Throw go back to Codex

@@ -15,14 +15,18 @@
 //        void bolt, its impact, the bite), drawn by 62-stage at the throat (mouth, from the root), in flight, or on the
 //        hero; mouth: [dx, dy] from the world root, or null.
 //   foeArtHas(key) -> bool
+// The Claude trial pack for the Hollow (FOE_ART_CL, 21zc: tools/embed-area-1.mjs) is drawn in place of the Codex pack of the same key
+// unless the player chose Classic art (portraitsClassic, 64k). Same actions and timings, so 59l and 62-stage read the Codex pack's numbers.
 var foeArtFrames, foeArtHas;
 {
   const cache = {};
+  const classic = () => typeof portraitsClassic === 'function' && portraitsClassic();
+  const packOf = key => (!classic() && typeof FOE_ART_CL === 'object' && FOE_ART_CL[key]) || FOE_ART[key];
   foeArtHas = key => typeof FOE_ART === 'object' && !!FOE_ART[key];
   foeArtFrames = key => {
     if (!foeArtHas(key) || typeof document === 'undefined') return null;
-    if (cache[key]) return cache[key];
-    const P = FOE_ART[key], wait = {};   // atlas path -> [[canvas, x, y], ...] cut when it loads
+    const P = packOf(key), ck = key + (P === FOE_ART[key] ? '' : '+'), wait = {};
+    if (cache[ck]) return cache[ck];   // atlas path -> [[canvas, x, y], ...] cut when it loads
     const cut = (path, x, y, w, h) => {
       if (!path || x < 0) return null;
       const c = document.createElement('canvas'); c.width = w; c.height = h; c._pend = true;
@@ -47,9 +51,9 @@ var foeArtFrames, foeArtHas;
       img.src = 'data:image/png;base64,' + P.atlases[path];
     }
     const at = (id, i) => acts[id] && acts[id].fr[Math.min(i, acts[id].fr.length - 1)].body;
-    return (cache[key] = { v2: true, key, acts, fx, mouth: P.mouth, idle0: at('idle', 0), idle1: at('idle', 2), wind: at('idle', 0), strike: at('idle', 0),
+    return (cache[ck] = { v2: true, key, acts, fx, mouth: P.mouth, idle0: at('idle', 0), idle1: at('idle', 2), wind: at('idle', 0), strike: at('idle', 0),
       hit: at('hurt', 1), art: key });
   };
   // decode every pack at boot, so a save that opens in a fight finds its foe's frames ready
-  if (typeof document !== 'undefined') for (const k in (typeof FOE_ART === 'object' ? FOE_ART : {})) foeArtFrames(k);
+  if (typeof document !== 'undefined') for (const k in (typeof FOE_ART === 'object' ? FOE_ART : {})) foeArtFrames(k);   // (the pack the player's art choice picks)
 }

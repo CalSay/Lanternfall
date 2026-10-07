@@ -1,0 +1,23 @@
+# seed: 1
+# Proof for card claude-art-pilot: Mossy Hollow's new art (Claude's trial pack). The mid-game fixture walks back to zone 1 and 2 and
+# shows the new background with the Thorn Imp and Gloomjaw; Settings > Art > Classic art brings the Codex background and monsters back.
+# Replayed at 360x740 and 740x360 for the art judge.
+new early
+wait 3
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap "Previous zone"
+tap "Previous zone"
+tap "Previous zone"
+tap "Previous zone"
+tap "Previous zone"
+tap "Previous zone"
+tap "Previous zone"
+wait 8
+expect "Zone 1"
+shot hollow-zone1-imp
+burst hollow-zone1-imp-move
+tap "Next zone"
+wait 8
+expect "Zone 2"
+shot hollow-zone2-gloomjaw

@@ -1,0 +1,1 @@
+Mossy Hollow looks new: a fresh night painting behind every fight, and the Thorn Imp and Gloomjaw redrawn to match your heroes. (Switch Settings > Art > Classic art to get the old look back.) Best shot: hollow-zone2-gloomjaw.
