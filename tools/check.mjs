@@ -10166,6 +10166,48 @@ if (section('first-hour walk (browser, qa-first-hour-walk)')) try {
     fs.rmSync(dir, { recursive: true, force: true });
   }
 } catch (e) { fail('first-hour walk crashed: ' + (e.stack || e)); }
+// ---- Next Up always goes (nextup-always-goes): every goal's Go lands on a visible, enabled target ----
+if (section('Next Up Go targets (browser)')) try {
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('Next Up Go targets (browser): Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const fx of ['save-early.json', 'save-mid.json']) {
+        const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', fx), 'utf8');
+        const ctx = await browser.newContext({ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true }), page = await ctx.newPage(), errs = [];
+        await ctx.addInitScript(([k, v]) => { try { localStorage.setItem(k, v); } catch (e) {} }, [KEY, raw]);
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(800);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        // a Scroll in hand for an ability the hero can learn: the rarest goal, and the one that once had nothing to press
+        await X(`(() => { const k = soloHero(); if (!k) return 0; S.L = Math.max(S.L, 20); S.abil = S.abil || {}; S.abil.scrolls = Object.assign({}, S.abil.scrolls, { moss: 2, hollow: 2, roadlight: 2 }); return 1; })()`);
+        await page.waitForTimeout(300);
+        const ids = await X(`topGoals(60, { sticky: false }).map(g => g.id)`);
+        const bad = [];
+        for (const id of ids) {
+          const r = await X(`(() => { const g = topGoals(60, { sticky: false }).find(x => x.id === ${JSON.stringify(id)}); if (!g) return 'gone';
+            let spec = g.go; if (typeof spec === 'function') spec = spec(); if (!spec) return 'no go';
+            if (spec.fn) spec.fn(); if (!spec.tab) return spec.fn || spec.act ? '' : 'nothing to do';
+            setTab(spec.view || spec.tab, spec.sel); ui(true); if (!spec.sel) return '';
+            const el = document.querySelector(spec.sel); return !el ? 'no target ' + spec.sel : el.offsetParent === null ? 'hidden ' + spec.sel : el.disabled && g.ready && !(g.id === 'zone-boss' && fightBoss) ? 'disabled ' + spec.sel : ''; })()`);   // a goal still in progress may point at a button that waits
+          if (r && r !== 'gone') bad.push(id + ': ' + r);
+          await page.waitForTimeout(80);
+        }
+        assert(ids.length >= 1 && !bad.length && !errs.length, `${fx}: every Next Up goal's Go lands on a visible target, enabled when the goal is ready (${ids.join()})` + (bad.length ? ' bad: ' + bad.join('; ') : '') + (errs.length ? ' errors: ' + errs[0] : ''));
+        if (ids.includes('learn-ability')) {
+          const r = await X(`(() => { const g = topGoals(60, { sticky: false }).find(x => x.id === 'learn-ability'); const s = g.go(); if (s.fn) s.fn(); setTab(s.view || s.tab, s.sel);
+            const b = document.querySelector('#sec-abilities .ab-det .ab-learn'); return !!b && b.offsetParent !== null && !b.disabled && b.matches(s.sel); })()`);
+          assert(r, `${fx}: Learn ability goes to the open detail with the Learn button`);
+        }
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('Next Up Go targets crashed: ' + (e.stack || e)); }
 // ==== end qa-first-hour-walk ====
 // ---- fight HUD fit (fight-hud-fit): names whole, banner and toasts never on top of each other ----
 if (section('fight HUD fit')) try {

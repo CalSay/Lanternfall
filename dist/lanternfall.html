@@ -16560,7 +16560,8 @@ var abilityOwned, abLearnInfo, abilityLearn, scrollCount, scrollFor, talentsOf, 
   registerGoal({ id: 'learn-ability', sys: 'hero', prio: 4, pct: () => (learnable() ? 1 : null),
     label: () => { const i = learnable(); return i ? `Learn ${i.a.name}: your ${SCROLLS[i.payWith].name} is ready` : ''; },
     icon: () => ({ ic: ['sword', '#F2C14E'] }),
-    go: () => { const i = learnable(); return { tab: 'party', view: 'abilities', sel: i ? `#sec-abilities .ab-row[data-ab="${i.id}"]` : '#sec-abilities' }; } });
+    go: () => { const i = learnable(); return { tab: 'party', view: 'abilities', sel: i ? `#sec-abilities .ab-det[data-ab="${i.id}"] .ab-learn` : '#sec-abilities',
+      fn: () => { if (i && typeof abilityOpenDetail === 'function') abilityOpenDetail(i.id); } }; } });   // the Learn button sits in the detail, so open it
   // the drop: a zone boss's kill (50-sim killPack emits zoneClear on a first clear, then kill)
   let firstZ = 0;
   on('zoneClear', p => { firstZ = p ? p.zone : 0; });
@@ -34885,6 +34886,8 @@ var handsTradeOpenPicker;
     if (det && list && p && getComputedStyle(list).display === 'none') p.scrollTop = 0;
     if (det) { const f = det.querySelector('.ab-x'); if (f) try { f.focus({ preventScroll: true }); } catch (e) {} }
   }
+  // Next Up (55-goals): Go opens the ability's detail, where the Learn button is
+  globalThis.abilityOpenDetail = id => { if (selId !== id) { filt = 'all'; selId = id; armed = ''; sig = ''; } };
   function closeDet() {
     const p = panels(), id = selId;
     selId = ''; armed = ''; redraw();

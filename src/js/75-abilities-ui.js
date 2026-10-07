@@ -44,6 +44,8 @@
     if (det && list && p && getComputedStyle(list).display === 'none') p.scrollTop = 0;
     if (det) { const f = det.querySelector('.ab-x'); if (f) try { f.focus({ preventScroll: true }); } catch (e) {} }
   }
+  // Next Up (55-goals): Go opens the ability's detail, where the Learn button is
+  globalThis.abilityOpenDetail = id => { if (selId !== id) { filt = 'all'; selId = id; armed = ''; sig = ''; } };
   function closeDet() {
     const p = panels(), id = selId;
     selId = ''; armed = ''; redraw();
