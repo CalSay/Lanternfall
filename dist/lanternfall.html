@@ -10402,8 +10402,15 @@ const gearDirty = () => { gsCache = null; emit('gear'); };
 function gear() { return gsCache || (gsCache = gearCalc()); }
 const craftCost = (slot, t) => kindCost(slot, t);
 function upgradeCost(it) { return kindUpgradeCost(it); }
-const hasMats = (m, t) => Object.entries(m).every(([k, n]) => S.mats[k][t - 1] >= n);
-const payMats = (m, t) => { for (const [k, n] of Object.entries(m)) S.mats[k][t - 1] -= n; };
+// Essence is fungible (counters-and-layers): any grade pays any Essence cost, lowest grade first. Every other family
+// is still held and paid by grade. matOwn/matPay are the one read and write for a cost line.
+const essHave = () => (S.mats.ess || []).reduce((a, n) => a + Math.max(0, n || 0), 0);
+const essPay = n => { const a = S.mats.ess; for (let i = 0; i < a.length && n > 0; i++) { const take = Math.min(n, Math.max(0, a[i] || 0)); a[i] -= take; n -= take; } };
+const matOwn = (k, t) => (k === 'ess' ? essHave() : (S.mats[k] && S.mats[k][t - 1]) || 0);
+const matPay = (k, t, n) => { if (k === 'ess') essPay(n); else S.mats[k][t - 1] -= n; };
+const costName = (k, t) => (k === 'ess' ? 'Essence' : matName(k, t));   // a cost line never names an Essence grade
+const hasMats = (m, t) => Object.entries(m).every(([k, n]) => matOwn(k, t) >= n);
+const payMats = (m, t) => { for (const [k, n] of Object.entries(m)) matPay(k, t, n); };
 // sm: the crafting station's level (55-crafting passes it); Smithing by default.
 function rarityWeights(sm = S.skills.smith.lv) {
   return { common: Math.max(8, 60 - sm * 1.1), uncommon: 28 + sm * 0.2, rare: (10 + sm * 0.5) * mod('rareW'), epic: (2 + sm * 0.25) * mod('rareW') };
@@ -12600,12 +12607,12 @@ let clsEvo, clsProven, clsStrength, clsGate, provingInfo, provingStart, evoChoic
     const k = kind === 'base' ? 'base' : 'evo', row = CLS_TUNE.respec[k], c = C();
     const esc = Math.min(CLS_TUNE.respec.escMax, 1 + CLS_TUNE.respec.esc * (c.respec || 0));
     const e = essFor(row.essHours * esc), mirrors = row.mirrors;
-    const haveM = (S.party && S.party.mirrors) || 0, haveE = (S.mats && S.mats.ess && S.mats.ess[e.t - 1]) || 0;
+    const haveM = (S.party && S.party.mirrors) || 0, haveE = essHave();
     const needM = Math.max(0, mirrors - haveM), needE = Math.max(0, e.n - haveE);
-    const why = needM ? `You need ${needM} more Mirror${needM > 1 ? 's' : ''} of Embers.` : needE ? `You need ${fmt(needE)} more ${MAT.ess.short[e.t - 1]} Essence.` : '';
+    const why = needM ? `You need ${needM} more Mirror${needM > 1 ? 's' : ''} of Embers.` : needE ? `You need ${fmt(needE)} more Essence.` : '';
     return { kind: k, mirrors, ess: e, esc, have: { mirrors: haveM, ess: haveE }, needM, needE, ok: !why, why };
   };
-  const pay = cost => { S.party.mirrors -= cost.mirrors; S.mats.ess[cost.ess.t - 1] -= cost.ess.n; C().respec = (C().respec || 0) + 1; };
+  const pay = cost => { S.party.mirrors -= cost.mirrors; essPay(cost.ess.n); C().respec = (C().respec || 0) + 1; };
   respecPay = kind => { const c = respecCost(kind); if (!c.ok) return false; pay(c); return true; };
   // Switch to the other evolution of the same base: the free change inside its window, else 1 Mirror + Essence.
   respecEvo = (evo, opts) => {
@@ -12763,8 +12770,8 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
   const unbuilt = st => typeof hearthStationWhy === 'function' ? hearthStationWhy(st) : '';
 
   // ---- materials ----
-  const missing = (mats, t) => Object.entries(mats).map(([k, n]) => [k, n - S.mats[k][t - 1]]).filter(([, n]) => n > 0);
-  const missWhy = (miss, t) => miss.map(([k, n]) => `${fmt(n)} more ${matName(k, t)}`).join(', ');
+  const missing = (mats, t) => Object.entries(mats).map(([k, n]) => [k, n - matOwn(k, t)]).filter(([, n]) => n > 0);
+  const missWhy = (miss, t) => miss.map(([k, n]) => `${fmt(n)} more ${costName(k, t)}`).join(', ');
   const splitCost = rec => { const m = {}; let gold = 0; for (const [k, n] of Object.entries(rec)) { if (k === 'gold') gold += n; else m[k] = n; } return { mats: m, gold }; };
 
   // ---- crafting ----
@@ -12881,6 +12888,7 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
     return toT != null ? toT : fromT + 1;
   };
   canTransmute = (fam, fromT, to, toT) => {
+    if (fam === 'ess') return no('Essence pays any cost at any grade, so it needs no Transmute.');
     if (!S.mats[fam] || !CRAFT_FAMILIES.includes(fam)) return no(typeof to === 'string' && to !== fam && to !== 'up' && to !== 'down' ? 'Transmute stays within one family.' : 'Unknown material.');
     const tt = resolveT(fam, fromT, to, toT);
     if (tt == null) return no('Transmute stays within one family.');
@@ -13592,7 +13600,7 @@ var forgeGoalPicks = 0;
         const c = canCraft(kind, t);
         if (!c.cost || c.lv < c.need || c.unbuilt) continue;   // unbuilt: a cold save's station (H1)
         const ks = Object.keys(c.cost.mats);
-        const p = c.ok ? 1 : Math.min(0.99, ks.reduce((a, k) => a + Math.min(1, need(S.mats[k][t - 1], c.cost.mats[k])), 0) / Math.max(1, ks.length));
+        const p = c.ok ? 1 : Math.min(0.99, ks.reduce((a, k) => a + Math.min(1, need(matOwn(k, t), c.cost.mats[k])), 0) / Math.max(1, ks.length));
         const score = p + (pos === 'weapon' ? 0.02 : 0);
         if (!best || score > best.score) best = { kind, t, cost: c.cost.mats, p, score };
       }
@@ -13605,8 +13613,8 @@ var forgeGoalPicks = 0;
     label: () => { const b = forgeNext(); if (!b) return ''; const nm = kindName(b.kind, b.t);
       const a = /^[AEIOU]/.test(nm) ? 'an' : 'a';
       if (b.p >= 1) return `Craft ${a} ${nm}: you have the materials`;
-      const k = Object.keys(b.cost).find(k => S.mats[k][b.t - 1] < b.cost[k]);
-      return k ? `Craft ${a} ${nm}: ${fmt(b.cost[k] - S.mats[k][b.t - 1])} more ${matName(k, b.t)}` : `Craft ${a} ${nm}`; },
+      const k = Object.keys(b.cost).find(k => matOwn(k, b.t) < b.cost[k]);
+      return k ? `Craft ${a} ${nm}: ${fmt(b.cost[k] - matOwn(k, b.t))} more ${costName(k, b.t)}` : `Craft ${a} ${nm}`; },
     icon: () => { const b = forgeNext(); return b ? { item: { slot: b.kind, t: b.t } } : null; },
     go: { tab: 'forge', sel: '#forgeBtn', fn: () => { const b = forgeNext(); if (b) { S.fSlot = b.kind; S.fTier = b.t; forgeGoalPicks++; } } }
   });
@@ -13711,18 +13719,18 @@ let hearthCold, hearthLit, hearthScene, hearthCan, hearthLight, hearthPlotOpen, 
   };
 
   // ---- the fire ----
-  const short = cost => cost.filter(([f, t, n]) => (S.mats[f][t - 1] || 0) < n);
+  const short = cost => cost.filter(([f, t, n]) => matOwn(f, t) < n);
   hearthCan = () => {
     const cost = HEARTH_TUNE.light;
     if (!hearthCold()) return { ok: false, why: 'The fire is already lit.', cost };
     if (Hs().lit) return { ok: false, why: 'The fire is already lit.', cost, lit: true };
     const miss = short(cost);
-    if (miss.length) return { ok: false, why: miss.map(([f, t, n]) => `${n - (S.mats[f][t - 1] || 0)} more ${matName(f, t)}`).join(', '), cost, miss };
+    if (miss.length) return { ok: false, why: miss.map(([f, t, n]) => `${n - matOwn(f, t)} more ${costName(f, t)}`).join(', '), cost, miss };
     return { ok: true, why: '', cost };
   };
   hearthLight = () => {
     const c = hearthCan(); if (!c.ok) return false;
-    for (const [f, t, n] of c.cost) S.mats[f][t - 1] -= n;
+    for (const [f, t, n] of c.cost) { if (f === 'ess') essPay(n); else S.mats[f][t - 1] -= n; }
     Hs().lit = Date.now();
     S.camp.b.hearth = Math.max(1, lv('hearth'));
     S.camp.open = true;
@@ -14335,7 +14343,7 @@ const toolMade = () => S.items.some(it => CRAFT_KINDS[it.slot] && CRAFT_KINDS[it
 const O = () => S.onboard || (S.onboard = {});
 const stepDone = id => !!O().done[id];
 // Materials still short: [[fam, tier, n]] -> [{ fam, t, kind, have, n, name }]. kind: the gather node that yields it.
-const matHave = (f, t) => (S.mats && S.mats[f] && S.mats[f][t - 1]) || 0;
+const matHave = (f, t) => matOwn(f, t);
 function needShort(mats) {
   const out = [];
   for (const [fam, t, n] of mats || []) {
@@ -15323,7 +15331,7 @@ const STORE_STATS = { gatherSecs: 0, fullSecs: 0, awaySecs: 0, awayFullSecs: 0, 
 // Whole numbers with commas ("10,000"): caps read exactly, not as "10.0K".
 const storeNum = n => Number.isFinite(n) && Math.abs(n) < 1e7 ? String(Math.floor(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : fmt(n);
 
-let storeLevel, storeCap, storeCapAt, stashRoom, stashFull, stashOver, stashFits, stashNeed, stashPreview,
+let essCap, storeLevel, storeCap, storeCapAt, stashRoom, stashFull, stashOver, stashFits, stashNeed, stashPreview,
   storeOverAt, storeNextNode, storeSpillOn, storeFullCells, storeEffects, storeCampCost, storeWhy,
   stashAdd, storeSwitch, storeSpill, storeAwayGather;
 
@@ -15343,8 +15351,10 @@ let storeLevel, storeCap, storeCapAt, stashRoom, stashFull, stashOver, stashFits
     return Math.floor(T.caps[Math.max(0, Math.min(T.caps.length - 1, lv | 0))] * g * (T.tierMult[t - 1] || 1));
   };
   storeCap = (f, t) => storeCapAt(f, t, storeLevel());
-  stashRoom = (f, t) => Math.max(0, storeCap(f, t) - have(f, t));
-  stashFull = (f, t) => have(f, t) >= storeCap(f, t);
+  const gradeRoom = (f, t) => Math.max(0, storeCap(f, t) - have(f, t));
+  // Essence is one pile: its room is the room across every grade, since a drop spills (see essAdd)
+  stashRoom = (f, t) => (f === 'ess' ? [1, 2, 3, 4, 5].reduce((a, g) => a + gradeRoom('ess', g), 0) : gradeRoom(f, t));
+  stashFull = (f, t) => (f === 'ess' ? stashRoom('ess', 1) <= 0 : have(f, t) >= storeCap(f, t));
   stashOver = (f, t) => have(f, t) > storeCap(f, t);
   // lines: [[fam, t, n]] (repeats add up). True when every cell has room for all of it.
   const sumLines = lines => {
@@ -15387,11 +15397,23 @@ let storeLevel, storeCap, storeCapAt, stashRoom, stashFull, stashOver, stashFits
     emit('storeCap', { fam: f, t });   // 58-deeds (AC2) counts these for the Pack Rat secret
     if (!quiet) toast(`Storehouse full: ${name(f, t)}.`, 'raid', { mat: [f, t] }, 'low');
   }
+  // Essence is one pile (counters-and-layers): a grade that is full spills into the lowest grade with room, so the
+  // one total never shows room while a drop is lost. A parcel still lands whole or not at all.
+  essCap = () => { let c = 0; for (let g = 1; g <= 5; g++) c += storeCap('ess', g); return c; };
+  const essAdd = (n, t, how, quiet) => {
+    const a = S.mats.ess;
+    if (how === 'parcel' && n > stashRoom('ess', t)) return 0;
+    let left = n;
+    for (const g of [t, 1, 2, 3, 4, 5]) { if (left <= 0) break; const put = Math.min(left, gradeRoom('ess', g)); if (put > 0) { a[g - 1] = (a[g - 1] || 0) + put; left -= put; } }
+    if (left > 0) blocked('ess', t, left, how, quiet);
+    return n - left;
+  };
   stashAdd = (f, t, n, how = 'flow', quiet = false) => {
     n = Math.floor(n);
     if (!(n > 0) || !S.mats[f] || !(t >= 1 && t <= 5)) return 0;
     const a = S.mats[f], h = a[t - 1] || 0;
     if (how === 'gift') { a[t - 1] = h + n; return n; }
+    if (f === 'ess') return essAdd(n, t, how, quiet);
     const room = stashRoom(f, t);
     if (how === 'parcel') { if (n > room) return 0; a[t - 1] = h + n; return n; }
     const add = Math.min(n, room);
@@ -16550,12 +16572,12 @@ let addRenown, renown, caedmonRenown, heroRouteInfo, heroUnlocked, heroCanPlay, 
   const got = id => !!(U().heroes && U().heroes[id]);
   const quest = id => !!(U().quests && U().quests[id]);
   const token = id => (U().tokens && U().tokens[id]) || { miss: 0, won: false };
-  const have = (k, t) => (S.mats[k] || []).slice(t - 1).reduce((a, n) => a + n, 0);
+  const have = (k, t) => k === 'ess' ? essHave() : (S.mats[k] || []).slice(t - 1).reduce((a, n) => a + n, 0);
   const reachedPlace = (name, cycle = 1) => REGIONS.some(r => { const p = r.names.findIndex(n => n.replace(/^The /, '').toLowerCase() === name.replace(/^The /, '').toLowerCase()); return p >= 0 && S.maxZone >= r.z0 + p + (cycle - 1) * r.names.length; });
   const hand = id => !!(S.hands && S.hands.list && S.hands.list.some(h => h.key === id));
   const bestiary = (type, tier) => ((S.mastery && S.mastery.types[type]) || 0) >= BESTIARY_TIERS[tier - 1];
   const goldOf = q => (q.kills || 0) * goldPerFoe(q.zone || q.from || 1);
-  const matText = (k, t, n) => `${n} grade-${t} ${k === 'ess' ? 'Essence' : k === 'crystal' ? 'gems' : k}`;
+  const matText = (k, t, n) => k === 'ess' ? `${n} Essence` : `${n} grade-${t} ${k === 'crystal' ? 'gems' : k}`;
   const claim = (q, how, open = S.maxZone >= (q.from || q.zone || 1)) => {
     const mats = ['wood', 'ess', 'crystal', 'fibre', 'hide'].filter(k => q[k]).map(k => [k, ...q[k]]);
     const gold = goldOf(q), rn = q.spendRenown ? (q.renown || 0) : 0;
@@ -16641,6 +16663,7 @@ let addRenown, renown, caedmonRenown, heroRouteInfo, heroUnlocked, heroCanPlay, 
     const r = route(id); if (!r.ready) return false;
     // Recheck and pay in one synchronous action. Repeated clicks and probes never pay twice.
     for (const [k, t, count] of r.cost.mats) {
+      if (k === 'ess') { essPay(count); continue; }
       let n = count;
       for (let i = t - 1; i < S.mats[k].length && n > 0; i++) { const take = Math.min(n, S.mats[k][i]); S.mats[k][i] -= take; n -= take; }
     }
@@ -16989,13 +17012,13 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
   const short = c => {
     const out = [];
     if (S.gold < c.gold) out.push(`${fmt(c.gold - S.gold)} more gold`);
-    for (const [f, t, n] of c.mats) { const h = (S.mats[f] && S.mats[f][t - 1]) || 0; if (h < n) out.push(`${fmt(n - h)} more ${matName(f, t)}`); }
+    for (const [f, t, n] of c.mats) { const h = matOwn(f, t); if (h < n) out.push(`${fmt(n - h)} more ${costName(f, t)}`); }
     for (const [i, n] of c.troph) if (trophyHave(i) < n) out.push(`${n - trophyHave(i)} more ${trophyName(i)}`);
     return out;
   };
   const pay = (c, sign, id) => {
     S.gold -= sign * c.gold; econSpend(id === 'tent' ? 'tent' : 'camp', sign * c.gold);
-    for (const [f, t, n] of c.mats) if (sign < 0) stashAdd(f, t, n, 'gift'); else S.mats[f][t - 1] -= n;   // refunds always land (H3)
+    for (const [f, t, n] of c.mats) if (sign < 0) stashAdd(f, t, n, 'gift'); else if (f === 'ess') essPay(n); else S.mats[f][t - 1] -= n;   // refunds always land (H3)
     // Trophies of "any" type: take from the biggest pile first; refunds go to the first type paid.
     for (const [i, n] of c.troph) {
       const tr = S.craft.troph;
@@ -17267,7 +17290,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
       if (!c.miss || (best && best.ok)) continue;
       let p = 1;
       if (c.cost.gold > 0) p = Math.min(p, S.gold / c.cost.gold);
-      for (const [f, t, n] of c.cost.mats) p = Math.min(p, (S.mats[f][t - 1] || 0) / n);
+      for (const [f, t, n] of c.cost.mats) p = Math.min(p, matOwn(f, t) / n);
       for (const [i, n] of c.cost.troph) p = Math.min(p, trophyHave(i) / n);
       if (!best || p > best.p) best = { id, c, ok: false, p, score: 0 };
     }
@@ -33305,9 +33328,9 @@ function makeRow(parent, name, ember, iconUrl, icCls) {
 function costChips(box, mats, t, gold) {
   box.textContent = '';
   for (const [k, n] of Object.entries(mats)) {
-    const have = S.mats[k][t - 1];
+    const have = matOwn(k, t);
     const c = el('span', 'cost' + (have < n ? ' short' : ''));
-    c.append(img(matIcon(k, t)), el('span', null, `${fmt(have)}/${fmt(n)} ${matName(k, t)}`));
+    c.append(img(matIcon(k, t)), el('span', null, `${fmt(have)}/${fmt(n)} ${costName(k, t)}`));
     box.append(c);
   }
   if (gold) {
@@ -36101,7 +36124,7 @@ on('cacheOpen', v => {
   const pay = [];
   if (v.scroll) pay.push(v.scroll.name);
   if (v.gold) pay.push(`${fmt(v.gold)} gold`);
-  if (v.ess && !v.essFull) pay.push(`${v.ess} ${MAT.ess.short[v.tier - 1]} Essence`);
+  if (v.ess && !v.essFull) pay.push(`${v.ess} Essence`);
   if (pay.length) lines.push({ txt: pay.join(', ') });
   if (v.essFull) lines.push({ txt: 'Your Essence store is full, so some or all of this win\'s Essence may be lost. Build more room at the Camp.' });
   // the colour: a unique first, then the lantern colour, then a Star, then a Scroll
@@ -36184,7 +36207,7 @@ on('cacheOpen', v => {
   };
   const famIcon = (f, t) => matIcon(f, t);   // C26: every family has an approved icon (matIcon)
   const trophyIcon = i => iconURL(...craftIcon('tro_' + TYPES[i === 'any' ? 5 : i].key, 1));
-  const shortName = (f, t) => MAT[f].short[t - 1];
+  const shortName = (f, t) => (f === 'ess' ? 'Essence' : MAT[f].short[t - 1]);
   const bname = (id, to) => id === 'hearth' ? `Hearth ${to}` : id === 'tent' ? `Tent ${to}` : `${CAMP_B[id].n} Lv ${to}`;
   const left = x => Math.max(0, x.end - Date.now()) / 1000;
   // "2h", "1h 30m", "3m", "45s": no zero parts.
@@ -36195,7 +36218,7 @@ on('cacheOpen', v => {
   function chips(box, c) {
     const items = [];
     if (c.gold) items.push({ u: iconURL('coin', '#F2C14E'), t: `${fmt(Math.min(S.gold, c.gold))}/${fmt(c.gold)}`, s: S.gold < c.gold, n: 'gold' });
-    for (const [f, t, n] of c.mats) { const h = S.mats[f][t - 1] || 0; items.push({ u: famIcon(f, t), t: `${fmt(Math.min(h, n))}/${fmt(n)} ${shortName(f, t)}`, s: h < n, n: matName(f, t) }); }
+    for (const [f, t, n] of c.mats) { const h = matOwn(f, t); items.push({ u: famIcon(f, t), t: `${fmt(Math.min(h, n))}/${fmt(n)} ${shortName(f, t)}`, s: h < n, n: costName(f, t) }); }
     for (const [i, n] of c.troph) { const tr = S.craft.troph, h = i === 'any' ? tr.reduce((a, b) => a + b, 0) : tr[i] || 0; items.push({ u: trophyIcon(i), t: `${Math.min(h, n)}/${n} ${i === 'any' ? 'Trophies' : CRAFT_TROPHIES[i].n}`, s: h < n, n: 'Trophy' }); }
     const sig = items.map(x => x.t + x.s).join('|');
     if (box._sig === sig) return; box._sig = sig; box.textContent = '';
@@ -36206,7 +36229,7 @@ on('cacheOpen', v => {
   function costCount(c) {
     let have = 0, all = 0;
     if (c.gold) { all++; if (S.gold >= c.gold) have++; }
-    for (const [f, t, n] of c.mats) { all++; if ((S.mats[f][t - 1] || 0) >= n) have++; }
+    for (const [f, t, n] of c.mats) { all++; if (matOwn(f, t) >= n) have++; }
     for (const [i, n] of c.troph) { all++; const tr = S.craft.troph; if ((i === 'any' ? tr.reduce((a, b) => a + b, 0) : tr[i] || 0) >= n) have++; }
     return { have, all };
   }
@@ -36863,7 +36886,7 @@ var classEvoUI;
   on('evoProven', ({ evo }) => ceremony(evo));
 
   // ---------------- the Mirror of Embers (3.4) ----------------
-  const costTxt = c => `${c.mirrors} Mirror${c.mirrors > 1 ? 's' : ''} of Embers and ${fmt(c.ess.n)} ${MAT.ess.short[c.ess.t - 1]} Essence`;
+  const costTxt = c => `${c.mirrors} Mirror${c.mirrors > 1 ? 's' : ''} of Embers and ${fmt(c.ess.n)} Essence`;
   function mirrorRow() {
     const n = (S.party && S.party.mirrors) || 0, c = typeof lbClass === 'function' ? lbClass() : null;
     const box = el('div', 'cs-mirror cl-mirror');
@@ -37822,7 +37845,7 @@ let craftUI = null;
   // Everything recipeRow(k, t) shows that can change while the list stays the same.
   function rowSig(k, t) {
     const can = canDo(k, t), mw = mwFor(k);
-    const cost = Object.entries(kindCost(k, t)).map(([f, n]) => { const h = S.mats[f][t - 1]; return fmt(h) + (h < n ? '<' : '/') + fmt(n); }).join();
+    const cost = Object.entries(kindCost(k, t)).map(([f, n]) => { const h = matOwn(f, t); return fmt(h) + (h < n ? '<' : '/') + fmt(n); }).join();
     return JSON.stringify([can.ok, can.why || '', st8.focus === k, subFor(k), beats(k, t), cost, mw, mw != null ? troph()[mw] || 0 : 0, CRAFT_KINDS[k].role === 'any' ? roleFor(k) : '', oddsTxt(k)]);
   }
 
@@ -37840,7 +37863,7 @@ let craftUI = null;
       const card = el('div', 'card cf-tm');
       card.append(el('h3', null, 'Transmute'), el('p', 'note', 'Trade within one material. 4 of a tier make 1 of the next. 1 makes 2 of the tier below, once: what you break down cannot be broken down again.'));
       const fams = el('div', 'cf-fams'); fams.setAttribute('aria-label', 'Material');
-      for (const f of CRAFT_FAMILIES) {
+      for (const f of CRAFT_FAMILIES.filter(x => x !== 'ess')) {   // Essence pays at any grade: no Transmute
         const b = el('button', 'cf-fam'); b.type = 'button'; b.dataset.f = f; b.setAttribute('aria-label', MAT[f].n);
         b.append(img(matIcon(f, 1)), el('span', null, MAT[f].n));
         b.addEventListener('click', () => { st8.tm.fam = f; ui(true); });
@@ -42737,7 +42760,7 @@ function storeSalvageNote(preview, t) {
     const c = btn('mat sh-cell');
     c.setAttribute('aria-label', `${matName(f, t)}: where to get it`);
     const n = el('span', 'mc', '0'), cap = el('span', 'sh-cap'), bar = el('i', 'sh-bar'), fill = el('b'); bar.append(fill);
-    c.append(n, el('div', 'mn', MAT[f].short[t - 1]), bar);
+    c.append(n, el('div', 'mn', f === 'ess' ? 'Essence' : MAT[f].short[t - 1]), bar);
     c.addEventListener('click', () => whereSheet(f, t));
     return { c, n, cap, fill, f, t };
   }
@@ -42764,7 +42787,7 @@ function storeSalvageNote(preview, t) {
       const s = el('div', 'sec sh-fam'), h = el('div', 'sec-head'), tt = el('h2', 'sec-title', MAT[f].n), nt = el('span', 'note');
       h.append(tt, nt);
       const row = el('div', 'mat-row sh-row'), cells = [];
-      for (let t = 1; t <= 5; t++) { const x = cell(f, t); row.append(x.c); cells.push(x); }
+      for (let t = 1; t <= (f === 'ess' ? 1 : 5); t++) { const x = cell(f, t); row.append(x.c); cells.push(x); }   // Essence is one pile
       s.append(h, row); fams.append(s);
       V.fams[f] = { s, nt, cells };
     }
@@ -42814,7 +42837,7 @@ function storeSalvageNote(preview, t) {
       if (!show) continue;
       putText(F.nt, famNote(f));
       for (const x of F.cells) {
-        const v = S.mats[f][x.t - 1] || 0, cap = storeCap(f, x.t), cf = Number.isFinite(cap);
+        const v = f === 'ess' ? essHave() : S.mats[f][x.t - 1] || 0, cap = f === 'ess' ? essCap() : storeCap(f, x.t), cf = Number.isFinite(cap);
         putText(x.n, gxNum(v));
         putToggle(x.c, 'none', !v);
         putHidden(x.fill.parentNode, !cf);
@@ -42822,7 +42845,7 @@ function storeSalvageNote(preview, t) {
         putToggle(x.c, 'sh-warn', cf && v >= cap * STORE_TUNE.warn && v < cap);
         putToggle(x.c, 'sh-full', cf && v >= cap && v > 0 && v <= cap);
         putToggle(x.c, 'sh-over', cf && v > cap);
-        putAttr(x.c, 'title', cf ? `${matName(f, x.t)}: ${storeNum(v)} / ${storeNum(cap)}` : `${matName(f, x.t)}: ${storeNum(v)}`);
+        putAttr(x.c, 'title', cf ? `${costName(f, x.t)}: ${storeNum(v)} / ${storeNum(cap)}` : `${costName(f, x.t)}: ${storeNum(v)}`);
       }
     }
     putHidden(V.empty, !empty.length);

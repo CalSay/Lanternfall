@@ -21,7 +21,7 @@ A source or sink line names the player-facing system and the file that does it. 
 | Skill XP | 4 | 2 |  |
 | Ore | 9 | 6 |  |
 | Wood | 8 | 6 |  |
-| Essence | 7 | 8 |  |
+| Essence | 6 | 7 |  |
 | Crystal | 5 | 5 |  |
 | Fibre | 4 | 4 |  |
 | Herb | 4 | 5 |  |
@@ -189,10 +189,8 @@ Sources:
 - Almanac board crates (`55-almanac.js`)
 - Salvaging a Unique (+10) (`51-actions.js`)
 - Salvaging affixed gear (+1 sometimes) (`55-crafting.js`)
-- Transmute (Enchanting): down a grade gives 2 for 1 (`55-crafting.js`)
 
 Sinks:
-- Transmute (Enchanting): spends 4 to go up a grade, 1 to go down (`55-crafting.js`)
 - Gear crafts (1 to 2 an item, charm 5) (`55-crafting.js`)
 - Reforging (rises 50% a reroll) (`55-crafting.js`)
 - Star Chart (`55-crafting.js`)

@@ -74,13 +74,11 @@ const REG = [
   { id: 'ess', name: 'Essence', field: 'S.mats.ess[0..4]', what: 'Dim, Glowing, Radiant, Tidelit, Stormlit. Fight drops; grade is set by zone.', mat: 'ess',
     src: [['Fight drops (0.25 a foe, +3 a boss)', '50-sim.js', "stashAdd\\('ess', tier, ess, 'flow', true\\)"], ['Away fighting (dormant)', '50-sim.js', "stashAdd\\('ess', tier, Math\\.floor\\(kills"],
       ['Bounty parcels', '55-bounties.js', "stashAdd\\(r\\.kind, r\\.t, r\\.n, 'parcel'\\)"], ['Almanac board crates', '55-almanac.js', 'stashAdd\\(m\\.k, m\\.t, m\\.n'],
-      ['Salvaging a Unique (+10)', '51-actions.js', "if \\(it\\.u\\) stashAdd\\('ess', it\\.t, 10"], ['Salvaging affixed gear (+1 sometimes)', '55-crafting.js', "stashAdd\\('ess', it\\.t, 1, 'preview'\\)"],
-      ['Transmute (Enchanting): down a grade gives 2 for 1', '55-crafting.js', 'stashAdd\\(fam, c\\.toT, c\\.give']],
+      ['Salvaging a Unique (+10)', '51-actions.js', "if \\(it\\.u\\) stashAdd\\('ess', it\\.t, 10"], ['Salvaging affixed gear (+1 sometimes)', '55-crafting.js', "stashAdd\\('ess', it\\.t, 1, 'preview'\\)"]],
     snk: [
-      ['Transmute (Enchanting): spends 4 to go up a grade, 1 to go down', '55-crafting.js', 'S\\.mats\\[fam\\]\\[fromT - 1\\] -= c\\.take'],
       ['Gear crafts (1 to 2 an item, charm 5)', '55-crafting.js', 'payMats\\(c\\.cost\\.mats, t\\)'], ['Reforging (rises 50% a reroll)', '55-crafting.js', 'payMats\\(c\\.cost\\.mats, it\\.t\\)'],
       ['Star Chart', '55-crafting.js', 'payMats\\(STAR\\.mats, STAR\\.t\\)'], ['Camp builds (Hearth, Enchanter, Library, Shrine)', '57-camp.js', 'S\\.mats\\[f\\]\\[t - 1\\] -= n'],
-      ['Class change (Mirror of Embers)', '55-classes.js', 'S\\.mats\\.ess\\[cost\\.ess\\.t - 1\\] -= cost\\.ess\\.n'], ['Hero unlock routes', '56c-unlocks.js', 'S\\.mats\\[k\\]\\[i\\] -= take'],
+      ['Class change (Mirror of Embers)', '55-classes.js', 'essPay\\(cost\\.ess\\.n\\)'], ['Hero unlock routes', '56c-unlocks.js', 'S\\.mats\\[k\\]\\[i\\] -= take'],
       ['Tonics', '55-crafting.js', 'payMats\\(m, t\\)']] },
   { id: 'crystal', name: 'Crystal', field: 'S.mats.crystal[0..4]', what: 'Gems from Mining nodes.', mat: 'crystal',
     src: [

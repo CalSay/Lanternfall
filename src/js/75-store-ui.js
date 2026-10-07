@@ -50,7 +50,7 @@ function storeSalvageNote(preview, t) {
     const c = btn('mat sh-cell');
     c.setAttribute('aria-label', `${matName(f, t)}: where to get it`);
     const n = el('span', 'mc', '0'), cap = el('span', 'sh-cap'), bar = el('i', 'sh-bar'), fill = el('b'); bar.append(fill);
-    c.append(n, el('div', 'mn', MAT[f].short[t - 1]), bar);
+    c.append(n, el('div', 'mn', f === 'ess' ? 'Essence' : MAT[f].short[t - 1]), bar);
     c.addEventListener('click', () => whereSheet(f, t));
     return { c, n, cap, fill, f, t };
   }
@@ -77,7 +77,7 @@ function storeSalvageNote(preview, t) {
       const s = el('div', 'sec sh-fam'), h = el('div', 'sec-head'), tt = el('h2', 'sec-title', MAT[f].n), nt = el('span', 'note');
       h.append(tt, nt);
       const row = el('div', 'mat-row sh-row'), cells = [];
-      for (let t = 1; t <= 5; t++) { const x = cell(f, t); row.append(x.c); cells.push(x); }
+      for (let t = 1; t <= (f === 'ess' ? 1 : 5); t++) { const x = cell(f, t); row.append(x.c); cells.push(x); }   // Essence is one pile
       s.append(h, row); fams.append(s);
       V.fams[f] = { s, nt, cells };
     }
@@ -127,7 +127,7 @@ function storeSalvageNote(preview, t) {
       if (!show) continue;
       putText(F.nt, famNote(f));
       for (const x of F.cells) {
-        const v = S.mats[f][x.t - 1] || 0, cap = storeCap(f, x.t), cf = Number.isFinite(cap);
+        const v = f === 'ess' ? essHave() : S.mats[f][x.t - 1] || 0, cap = f === 'ess' ? essCap() : storeCap(f, x.t), cf = Number.isFinite(cap);
         putText(x.n, gxNum(v));
         putToggle(x.c, 'none', !v);
         putHidden(x.fill.parentNode, !cf);
@@ -135,7 +135,7 @@ function storeSalvageNote(preview, t) {
         putToggle(x.c, 'sh-warn', cf && v >= cap * STORE_TUNE.warn && v < cap);
         putToggle(x.c, 'sh-full', cf && v >= cap && v > 0 && v <= cap);
         putToggle(x.c, 'sh-over', cf && v > cap);
-        putAttr(x.c, 'title', cf ? `${matName(f, x.t)}: ${storeNum(v)} / ${storeNum(cap)}` : `${matName(f, x.t)}: ${storeNum(v)}`);
+        putAttr(x.c, 'title', cf ? `${costName(f, x.t)}: ${storeNum(v)} / ${storeNum(cap)}` : `${costName(f, x.t)}: ${storeNum(v)}`);
       }
     }
     putHidden(V.empty, !empty.length);
