@@ -715,12 +715,15 @@ Card `scenery-z6-10-judge`, from the `slice-art-manifest` open point. Record and
   because no zone drops from a painting to procedural scenery.
 - **Until an area's painting is wired, its zones keep today's scenery:** zones 6-8 the Mossy Hollow painting, zone 9 the
   procedural cave, zone 10 the procedural bone. Areas without their own painting keep the cycle, the Coast included; a
-  theme with a painting draws it there, as the Mossy Hollow painting does today at zones 15, 22 and 29.
+  theme with a painting draws it there, as the Mossy Hollow painting does today at zones 15, 22, 29 and the Coast's 36,
+  43, 50, 57 and 64. So once wired, the Caves painting also replaces the procedural cave at zones 16, 23, 30 and the
+  Coast's cave places (37, 44, ...): the same theme with approved art, outside M1a.
 - **No recolour:** `zoneHue` never tints a painting. **The pack boundary is unchanged:** the Caves painting covers zones 6
   to 10 and stays in scope after the 2026-10-21 cut.
 - **Code:** card `scenery-follows-areas` (S, Sonnet medium) adds `SCENERY_BY_AREA` (default on; off gives today's rule
   exactly) and moves the theme checks to a per-zone table. It merges before or with the Caves `integrate:` card; the
   painting is not wired without it. No save impact.
 - **Prediction:** zones 1-15 showing their area's scenery go from 6 to 10 when the Caves painting is wired, and no zone
-  1-70 changes before then. Measured by the `slice-art-manifest` check (E4) and the regions check. Coverage area 15,
+  1-70 changes before then. Measured by the `slice-art-manifest` check (E4, to be built) and a zones 1-70 theme assertion that
+  `scenery-follows-areas` adds. Coverage area 15,
   Compass pillar 4.

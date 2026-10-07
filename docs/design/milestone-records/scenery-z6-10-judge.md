@@ -27,7 +27,7 @@ with no rule change, it would show in zone 9 only of the Caves area, and in zone
 cycle.)
 
 Evidence is the code and the manifest only: no playtest or Cal note has named this yet, because no area painting but the
-first exists. The mismatch becomes visible the day the Caves painting is wired, so it must be settled before that.
+first exists. The digest flags this ruling so Cal can veto it. The mismatch becomes visible the day the Caves painting is wired, so it must be settled before that.
 
 ## The options
 
@@ -91,11 +91,12 @@ Mossy Hollow painting does today; accepted. Nothing here touches a Cal-only item
 - What a player sees: crossing into zone 6, the area title and the scenery change together. Zones 1 to 15 showing their
   area's scenery: 6 today; 6 after `scenery-follows-areas` merges (no visible change); 10 after the Caves painting is wired
   (zones 1-10); 15 after the Bonefield painting.
-- Measure: the `slice-art-manifest` check (E4) asserts, for zones 1 to 15, that a zone in an area with a wired painting has
+- Measure: the `slice-art-manifest` check (E4, not built yet; `milestones.md` lists it as a new section) will assert, for zones 1 to 15, that a zone in an area with a wired painting has
   `zoneTheme(z)` equal to that area's `BG_ART` key; the walk (`walk.mjs`) screenshots at zone 6 and zone 10 are judged in
   the Caves `integrate:` card's art pass.
 - Missed if, after the Caves `integrate:` merges, any of zones 6 to 10 resolves to a theme other than `cave`, or if, before
-  it, any zone 1 to 70 resolves to a different theme than today (the regions check compares all 70).
+  it, any zone 1 to 70 resolves to a different theme than today (`scenery-follows-areas` adds that 1-70 assertion; the
+  regions check covers zones 1-35 today).
 
 ## Switch-off
 
@@ -116,12 +117,12 @@ the Caves `integrate:` card.
 
 Acceptance:
 - `zoneTheme(z)`: when `SCENERY_BY_AREA` is on, `z` is in the Hollow, and the theme of its area (`ZONE_THEME[zoneAreaIdx(z)]`)
-  has a `BG_ART` entry (guarded with `typeof BG_ART`, which the core loader may not include), return that theme; else
+  has a `BG_ART` entry (guarded with `typeof BG_ART`, as `62-stage.js` does), return that theme; else
   today's rule.
-- With no `BG_ART.cave`, `zoneTheme` is unchanged for zones 1 to 70 (the regions check's 7-cycle assertion and the area
-  names check's `zoneTheme(8) === 'forest'` keep passing as written).
+- With no `BG_ART.cave`, `zoneTheme` is unchanged for zones 1 to 70 (asserted for all 70).
 - With a stub `BG_ART.cave` set through `g.eval` in the check (BG_ART is a `const`, so add a key to the object), zones 6 to
   10 resolve to `cave`, zones 1 to 5 to `forest`, zones 11 to 15 unchanged, Coast zones unchanged.
-- The check reads expected themes from a small per-zone table (with and without the cave painting), so the Caves
-  `integrate:` card only flips which table applies instead of rewriting the assertions.
+- A small per-zone table of expected themes (with and without the cave painting) replaces the regions check's 7-cycle
+  theme assertion and the area names check's `zoneTheme(8) === 'forest'`, so the Caves `integrate:` card only flips which
+  table applies.
 - Flag off: identical to today with or without the stub.
