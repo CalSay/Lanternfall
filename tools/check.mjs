@@ -7893,6 +7893,22 @@ if (section('action and menu icons (C26, browser)')) try {
   }
 } catch (e) { fail('action and menu icons (browser) crashed: ' + (e.stack || e)); }
 
+// ---- shared waits for the browser sections below (and the landscape sections after them) ----
+// Waits for what the page shows, not for a time: a shared CPU slows a slide-in or a fade by seconds, and a fixed pause then reads a
+// half-moved menu (or one that has not yet hidden). animsDone is the browser's own word that the element's transitions have ended
+// (looping ones, like a pulse, are not waited for); a menu that never gets there falls through to the caller's own assertion.
+const animsDone = `(e => { e.getBoundingClientRect(); return e.getAnimations({ subtree: true }).every(a => a.playState !== 'running' && a.playState !== 'pending' || a.effect.getComputedTiming().iterations === Infinity); })`;
+const menuSettled = (page, open) => page.waitForFunction(([open, animsDone]) => { const m = document.getElementById('menu');
+  return getComputedStyle(m).visibility === (open ? 'visible' : 'hidden') && !!window.__t.x('S.tab') === open && eval(animsDone)(m); }, [open, animsDone], { polling: 'raf', timeout: 10000 }).catch(() => {});
+// The same for any one element: it exists and its transitions have ended (a toast slides in, a sheet opens).
+const boxSettled = (page, sel) => page.waitForFunction(([sel, animsDone]) => { const e = document.querySelector(sel); return !!e && eval(animsDone)(e); }, [sel, animsDone], { polling: 'raf', timeout: 10000 }).catch(() => {});
+// A press on a slot, as one task: a slot reads a hold of 550 ms on the wall clock as a long press (it opens the ability picker), and
+// a real mouse-down and mouse-up are two round trips to the browser, which a busy CPU can stretch past that. Where the press lands is
+// still the point the check proved is on top (elementFromPoint), so a covered button still fails.
+const tapAt = (page, x, y) => page.evaluate(([x, y]) => { const t = document.elementFromPoint(x, y); if (!t) return false;
+  const o = { bubbles: true, cancelable: true, composed: true, clientX: x, clientY: y, pointerId: 1, pointerType: 'mouse', isPrimary: true, button: 0 };
+  t.dispatchEvent(new PointerEvent('pointerdown', { ...o, buttons: 1 })); t.dispatchEvent(new PointerEvent('pointerup', { ...o, buttons: 0 })); return true; }, [x, y]);
+
 if (section('turn UI (browser)')) try {
   // C29: the shipped page fights in turns: the versus card, the turn strip of the next six turns, the timing bar, cooldowns
   // in turns, no Auto badge; Hero tab > Abilities lists the hero's 14 abilities and learns one with a Scroll (two taps).
@@ -7911,7 +7927,9 @@ if (section('turn UI (browser)')) try {
         await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go');
         const X = s => page.evaluate(s => window.__t.x(s), s), seen = { card: '', strip: 0, bar: false, cdTurns: false, autoBadge: false, mine: false };
         await X('S.onboard && (S.onboard.tips = false, S.onboard.all = true); true');
-        for (let i = 0; i < 120 && !(seen.card && seen.strip && seen.bar && seen.cdTurns); i++) {
+        // (a bound of wall time, not a count: on a shared CPU the frame loop gives the game fewer seconds per second, and the fight needs the
+        // same game seconds to show each of these)
+        for (const t0 = Date.now(); Date.now() - t0 < 90000 && !(seen.card && seen.strip && seen.bar && seen.cdTurns);) {
           await page.waitForTimeout(100);
           const st = JSON.parse(await X(`JSON.stringify({ card: document.querySelector('.tv-card').hidden ? '' : document.querySelector('.tv-card').textContent,
             strip: document.querySelector('.tv-card').hidden ? 0 : [...document.querySelectorAll('.tv-card .tv-strip .tv-slot')].filter(x => !x.hidden && x.querySelector('img')).length,
@@ -7929,14 +7947,14 @@ if (section('turn UI (browser)')) try {
         }
         const out = { seen, errors };
         // the resource explains itself: once on its own the first time Wren gains Aim, and on a tap of the pips
-        for (let i = 0; i < 60 && !(await X(`!!(S.abil.resTip && S.abil.resTip.wren)`)); i++) {
+        for (const t1 = Date.now(); Date.now() - t1 < 60000 && !(await X(`!!(S.abil.resTip && S.abil.resTip.wren)`));) {
           if (await X(`turnCombatSnapshot().phase === 'hero'`)) await X(`turnCombatAction('attack')`);
           await page.waitForTimeout(150);
         }
         out.resAuto = await X(`!!(S.abil.resTip && S.abil.resTip.wren)`);
         if (await X(`!!document.querySelector('.tv-resbtn') && document.querySelector('.tv-resbtn').offsetParent !== null`)) {
           await X(`document.querySelector('.tv-restip').hidden = true; document.querySelector('.tv-resbtn').click(); 1`);
-          out.resTap = await X(`(() => { const t = document.querySelector('.tv-restip'); return t && !t.hidden ? t.textContent : ''; })()`);
+          for (let k = 0; k < 30 && !out.resTap; k++) { out.resTap = await X(`(() => { const t = document.querySelector('.tv-restip'); return t && !t.hidden ? t.textContent : ''; })()`); if (!out.resTap) await page.waitForTimeout(100); }
         }
         if (abilities) {   // Hero > Abilities: the list, the detail (tap a row), Learn on two taps, the A / B talents, the filters
           await X(`S.L = Math.max(S.L, 10); S.abil.scrolls = { moss: 1, hollow: 1 }; setTab('abilities'); 1`); await page.waitForTimeout(400);
@@ -8030,7 +8048,7 @@ if (section('turn UI (browser)')) try {
         const X = s => page.evaluate(s => window.__t.x(s), s);
         await X(`S.onboard && (S.onboard.tips = false, S.onboard.all = true); S.L = 30; S.abil.scrolls = { roadlight: 1, hollow: 1 };
           S.abil.unl.wren = ['powershot', 'huntmark', 'barbed']; S.abil.tal.wren = { echo: 'a' }; soloEquip(1, 'huntmark'); setTab('abilities'); 1`);
-        await page.waitForTimeout(400);
+        await menuSettled(page, true);
         const fit = `(() => { const p = document.getElementById('panels'), s = document.getElementById('sec-abilities'), bad = [];
           if (document.documentElement.scrollWidth > innerWidth + 1) bad.push('page ' + document.documentElement.scrollWidth);
           if (p.scrollWidth > p.clientWidth + 1) bad.push('panel ' + p.scrollWidth + '>' + p.clientWidth);
@@ -8045,7 +8063,7 @@ if (section('turn UI (browser)')) try {
           return document.getElementById('panels').scrollTop > 200 && b.top >= p.top - 1 && b.top <= p.top + 2; })()`);
         await X(`document.querySelector('#sec-abilities .ab-row[data-ab="huntmark"]').scrollIntoView({ block: 'center' }); 1`);
         const before = await X(`document.getElementById('panels').scrollTop`);
-        await page.click('#sec-abilities .ab-row[data-ab="huntmark"]'); await page.waitForTimeout(200);
+        await page.click('#sec-abilities .ab-row[data-ab="huntmark"]'); await boxSettled(page, '#sec-abilities .ab-det'); await menuSettled(page, true);
         r.det = await X(`(() => { const p = document.getElementById('panels').getBoundingClientRect(), d = document.querySelector('#sec-abilities .ab-det'), l = document.querySelector('#sec-abilities .ab-list');
           if (!d) return 'none'; const b = d.getBoundingClientRect(), x = d.querySelector('.ab-x').getBoundingClientRect();
           return { inView: b.top >= p.top - 1 && b.top < p.bottom - 100 && x.top >= p.top - 1 && x.bottom <= p.bottom + 1, list: l.offsetParent !== null, slots: d.querySelectorAll('.ab-slotb').length,
@@ -8056,7 +8074,7 @@ if (section('turn UI (browser)')) try {
         await page.click('#sec-abilities .ab-det .ab-x'); await page.waitForTimeout(200);
         r.back = await X(`(() => { const ok = !document.querySelector('#sec-abilities .ab-det') && document.querySelector('#sec-abilities .ab-list').offsetParent !== null && Math.abs(document.getElementById('panels').scrollTop - ${before}) < 4;
           return ok || [!!document.querySelector('#sec-abilities .ab-det'), document.getElementById('panels').scrollTop, ${before}].join(); })()`);
-        await page.click('#sec-abilities .ab-infob'); await page.waitForTimeout(150);
+        await page.click('#sec-abilities .ab-infob'); await boxSettled(page, '#sec-abilities .ab-info'); await menuSettled(page, true);
         r.info = await X(`(() => { const t = (document.querySelector('#sec-abilities .ab-info .ab-tp') || {}).textContent || '';
           return document.querySelectorAll('#sec-abilities .ab-info .ab-scroll').length === 5 && /Talents are free/.test(t) || t || 'no drawer'; })()`);
         r.infoFit = await X(fit);
@@ -10069,11 +10087,17 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
           const trail = [], bad = [], seen = new Set();
           let stuck = '', lastKey = '', same = 0, idle = 0, iters = 0; const passes = [];
           const want = ['attack', 'ability', 'dodge', 'parry', 'upgrade', 'gather', 'chop', 'light', 'bench', 'tool', 'forge', 'store', 'nextup'];   // (tab:party: done by the Training step's visit)
+          // The Tool step is done by "any tool made" (55-hearth), so a hero who is dropped a pick first (Carapace Pick, a zone 4 boss
+          // unique, an item with `u`) never sees it, and does not need to. The walk's idle passes run the game ahead while the guide waits for the screen, so
+          // on a slow runner that drop can come before the Workbench; the step then counts as walked once the game itself calls it done.
+          let toolGiven = false;
+          const walked = x => trail.includes(x) || (x === 'tool' && toolGiven);
           // hero-progression-rework: a hero who levels fast reaches zone 3 (the Next Up note) before the Workbench is done; the walk
           // goes on past the note until every step has come
-          for (let i = 0; i < 220 && !want.every(x => trail.includes(x)); i++) {
+          for (let i = 0; i < 220 && !want.every(walked); i++) {
             iters = i + 1;
             const st = await X('(s => s ? s.id : "")(onboardStep())');
+            if (!toolGiven && !trail.includes('tool')) toolGiven = await X('!!S.onboard.done.tool && S.items.some(it => it.u && CRAFT_KINDS[it.slot] && CRAFT_KINDS[it.slot].tool)');
             if (!st) {
               idle++;
               // nothing to press: time passes; builds finish (their timers run on the wall clock); the first boss falls; the road opens
@@ -10089,8 +10113,9 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
             if (key === lastKey) { if (++same > 30) { stuck = key + ' ' + await X('JSON.stringify({ w: (w => w && { k: w.kind, left: w.left, res: w.res })(actWarning()), paused: ONBOARD.paused, act: S.activity, foes: combatFoes().filter(f => f && !f.dead && f.hp > 0).length, par: S.onboard.parries, hp: S.party && S.party.hp, want: soloGuideWants(), r: soloParry(true) })'); break; } } else { same = 0; lastKey = key; }
             await page.waitForTimeout(seen.has(key) ? 260 : 520);   // the hint places itself (every 250 ms) and the ring glides there (0.18 s)
             let c = await X(TARGET(st));
-            // a moment later once: rows a view builds in its next update (5 a second), a tab that unlocks on the next pass, a panel still sliding in
-            if (!c.ok) { await page.waitForTimeout(450); c = await X(TARGET(st)); }
+            // rows a view builds in its next update (5 a second), a tab that unlocks on the next pass, a panel still sliding in, the hint that
+            // places itself every 250 ms: look again until it is right, and report what it still is after 3 s (a real miss never gets there)
+            for (let w8 = 0, max = seen.has(key) ? 2 : 15; !c.ok && w8 < max; w8++) { await page.waitForTimeout(200); c = await X(TARGET(st)); }
             // the hint is not up yet (its target, a tab, opens on the guide's next unlock pass): the guide waits, and so does the walk
             if (!c.ok && !c.inView && !c.bubOk && c.why !== 'no target') { await X('for (let k = 0; k < 10; k++) tick(0.1); true'); continue; }
             if (!seen.has(key)) { seen.add(key); if (!c.ok) bad.push(`${key}: ${JSON.stringify(c)}`); }
@@ -10100,7 +10125,7 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
               // a step that waits for materials: they come in (the gathering itself is checked at 360 px)
               await X(`for (const m of onboardNeed(${JSON.stringify(st)})) S.mats[m.fam][m.t - 1] = Math.max(S.mats[m.fam][m.t - 1] || 0, m.n); true`);
             } else if (!c.ok) await X(`(sp => { if (sp && sp.node) sp.node.click(); return true; })(onboardSpec(${JSON.stringify(st)}))`);
-            else if (['attack', 'ability', 'dodge', 'parry'].includes(st)) { await page.mouse.move(c.px, c.py); await page.mouse.down(); await page.mouse.up(); }
+            else if (['attack', 'ability', 'dodge', 'parry'].includes(st)) await tapAt(page, c.px, c.py);
             else if (st === 'boss') await page.click('.ob-ok');
             else await page.mouse.click(c.px, c.py);
             await page.waitForTimeout(160);
@@ -10111,9 +10136,9 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
             await X('(S.onboard.done.ability && !S.onboard.done.parry && !actWarning() && combatFoes().some(f => f && !f.dead && f.hp > 0)) && (GUIDE_RT.fight++, actWarn({ kind: "heavy", id: "l" + Math.random(), foe: combatFoes().find(f => f && !f.dead && f.hp > 0), unit: 0, dur: 2, land: () => {} })); true');
             if (st === 'nextup') await X('document.querySelectorAll(".bsheet-ov .bsheet-x").forEach(x => x.click()); true');
           }
-          const why = want.every(x => trail.includes(x)) ? '' : '; ' + await X('JSON.stringify({ step: (s => s && s.id)(onboardStep()), done: Object.keys(S.onboard.done).join(","), zone: S.maxZone, gold: Math.round(S.gold), builds: (S.camp && S.camp.builds || []).map(b => b.id + ">" + b.to).join(","), tab: S.tab, view: S.tab ? curView(S.tab) : "", recipes: [...document.querySelectorAll("#sec-craft-recipes .cf-rec")].map(r => r.dataset.kind + (r.querySelector(".cf-go") ? (r.querySelector(".cf-go").disabled ? "-off" : "-go") : "")).join(","), tiers: [...document.querySelectorAll("#sec-craft-recipes [aria-pressed=true]")].map(b => b.textContent.trim()).join("/"), mats: JSON.stringify(S.mats && { ore: S.mats.ore, wood: S.mats.wood }) })') + ' target ' + JSON.stringify(await X(TARGET('tool'))) + ' last passes ' + passes.slice(-8).join(' ; ') 
-          assert(!stuck && want.every(x => trail.includes(x)), `${at}: the guide walks the first session by pressing what it points at (${trail.join(' > ')}${stuck ? '; stuck on ' + stuck : ''}${why}; ${iters} of 220 passes, ${idle} idle)`);
-          assert(!bad.length && seen.size >= 20, `${at}: every guide step's target is on screen and on top (a click at its centre reaches it), the ring marks it and the hint is on screen (${seen.size} states${bad.length ? '; ' + bad.slice(0, 3).join(' / ') : ''})`);
+          const why = want.every(walked) ? '' : '; ' + await X('JSON.stringify({ step: (s => s && s.id)(onboardStep()), done: Object.keys(S.onboard.done).join(","), zone: S.maxZone, gold: Math.round(S.gold), builds: (S.camp && S.camp.builds || []).map(b => b.id + ">" + b.to).join(","), tab: S.tab, view: S.tab ? curView(S.tab) : "", recipes: [...document.querySelectorAll("#sec-craft-recipes .cf-rec")].map(r => r.dataset.kind + (r.querySelector(".cf-go") ? (r.querySelector(".cf-go").disabled ? "-off" : "-go") : "")).join(","), tiers: [...document.querySelectorAll("#sec-craft-recipes [aria-pressed=true]")].map(b => b.textContent.trim()).join("/"), mats: JSON.stringify(S.mats && { ore: S.mats.ore, wood: S.mats.wood }) })') + ' target ' + JSON.stringify(await X(TARGET('tool'))) + ' last passes ' + passes.slice(-8).join(' ; ') 
+          assert(!stuck && want.every(walked), `${at}: the guide walks the first session by pressing what it points at (${trail.join(' > ')}${toolGiven && !trail.includes('tool') ? ' [Tool step: a dropped unique tool did it]' : ''}${stuck ? '; stuck on ' + stuck : ''}${why}; ${iters} of 220 passes, ${idle} idle)`);
+          assert(!bad.length && seen.size >= (toolGiven && !trail.includes('tool') ? 16 : 20), `${at}: every guide step's target is on screen and on top (a click at its centre reaches it), the ring marks it and the hint is on screen (${seen.size} states${bad.length ? '; ' + bad.slice(0, 3).join(' / ') : ''})`);
           assert(!errs.length, `${at}: no page errors in the guide walk` + (errs.length ? ': ' + errs[0] : ''));
           await ctx.close();
         } catch (e) { fail(`${at} guide walk crashed: ` + (e.stack || e)); }
@@ -10149,14 +10174,14 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
           assert(L.nu.l >= L.stage.r - 1 && L.nu.t >= topH - 1 && L.nu.b <= Math.min(...L.slots.map(s => s.t)), `${at}: Next Up sits at the top of the side column, above the bar (${JSON.stringify(L.nu)})`);
           assert(!L.clipped.length && L.scrollX <= 0 && L.appX <= 0, `${at}: no label cut off and no sideways scroll (${L.clipped.join(', ') || 'none'}; page ${L.scrollX}, app ${L.appX})`);
           // notices dock in the side column above the bar, menu or not
-          await X('notes.pops.length = 0; notes.clock += 60; toast("Test notice for the side column.", "good", null, "high"); true'); await page.waitForTimeout(250);
+          await X('notes.pops.length = 0; notes.clock += 60; toast("Test notice for the side column.", "good", null, "high"); true'); await boxSettled(page, '#toasts .toast');
           const ts = await page.evaluate(() => { const t = document.querySelector('#toasts .toast'); if (!t) return null; const r = t.getBoundingClientRect(), a = document.querySelector('#soloBar .sb-ab0').getBoundingClientRect(), s = document.getElementById('stageBox').getBoundingClientRect(); return { l: r.left, r: r.right, b: r.bottom, barT: a.top, stageR: s.right, W: innerWidth }; });
           assert(ts && ts.l >= ts.stageR - 1 && ts.r <= ts.W && ts.b <= ts.barT, `${at}: a notice pops in the side column, above the bar and clear of the stage (${JSON.stringify(ts)})`);
           // each tab's menu: opens from the rail as a panel beside the bar, which stays usable; closes with its X, the lit tab or Escape
           const menuBad = [];
           const closers = ['x', 'tab', 'esc', 'x', 'tab'];
           for (const [i, t] of ['adv', 'party', 'gat', 'forge', 'world'].entries()) {
-            await page.click(`.tabs .tab[data-tab="${t}"]`); await page.waitForTimeout(320);
+            await page.click(`.tabs .tab[data-tab="${t}"]`); await menuSettled(page, true);
             const m = await page.evaluate(() => {
               const r = document.getElementById('menu').getBoundingClientRect(), s = document.getElementById('stageBox').getBoundingClientRect(), p = document.getElementById('panels');
               const hitSlot = [...document.querySelectorAll('#soloBar .sbtn')].every(b => { const q = b.getBoundingClientRect(), hit = document.elementFromPoint(q.left + q.width / 2, q.top + q.height / 2); return !!hit && b.contains(hit); });
@@ -10169,19 +10194,19 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
             if (!(tabNow === t && m.vis === 'visible' && m.w >= 300 && m.t >= 40 && m.b <= m.H + 1 && m.r <= m.sR + 1 && m.strip >= 100 && m.over <= 0 && m.hitSlot && pressed)) menuBad.push(`${t}: ${JSON.stringify({ tabNow, pressed, ...m })}`);
             const how = closers[i];
             if (how === 'x') await page.click('#menuX'); else if (how === 'tab') await page.click(`.tabs .tab[data-tab="${t}"]`); else await page.keyboard.press('Escape');
-            await page.waitForTimeout(260);
+            await menuSettled(page, false);
             const closed = await page.evaluate(() => [window.__t.x('S.tab'), getComputedStyle(document.getElementById('menu')).visibility].join());
             if (closed !== ',hidden') menuBad.push(`${t}: did not close by ${how} (${closed})`);
           }
           assert(!menuBad.length, `${at}: each tab's menu opens as a panel (300 px or wider, the stage's left strip still showing, no sideways scroll), the bar stays on top and Attack still acts, and it closes with its X, the lit tab or Escape` + (menuBad.length ? ': ' + menuBad.slice(0, 2).join(' / ') : ''));
           // a notice while a menu is open stays in the side column
-          await page.click('.tabs .tab[data-tab="forge"]'); await page.waitForTimeout(300);
-          await X('notes.pops.length = 0; notes.clock += 60; toast("Another notice, over a menu.", "good", null, "high"); true'); await page.waitForTimeout(250);
+          await page.click('.tabs .tab[data-tab="forge"]'); await menuSettled(page, true);
+          await X('notes.pops.length = 0; notes.clock += 60; toast("Another notice, over a menu.", "good", null, "high"); true'); await boxSettled(page, '#toasts .toast:last-child');
           const tm = await page.evaluate(() => { const l = [...document.querySelectorAll('#toasts .toast')].pop(), m = document.getElementById('menu').getBoundingClientRect(); if (!l) return null; const r = l.getBoundingClientRect(); return { l: r.left, mr: m.right }; });
           assert(tm && tm.l >= tm.mr - 1, `${at}: over an open menu, notices stay in the side column (${JSON.stringify(tm)})`);
           // the Training view and the gatherer board fit the panel
           const fit = async (view, sel) => {
-            await X(`setTab(${JSON.stringify(view)}); ui(true); true`); await page.waitForTimeout(350);
+            await X(`setTab(${JSON.stringify(view)}); ui(true); true`); await menuSettled(page, true); await page.waitForTimeout(350);
             return page.evaluate(sel => { const e = document.querySelector(sel), p = document.getElementById('panels'), m = document.getElementById('menu').getBoundingClientRect(); if (!e || !e.offsetParent) return { ok: false, why: 'missing' };
               e.scrollIntoView({ block: 'nearest' });
               const r = e.getBoundingClientRect(); return { ok: r.left >= m.left - 1 && r.right <= m.right + 1 && r.top < innerHeight && p.scrollWidth <= p.clientWidth, l: Math.round(r.left), r: Math.round(r.right), t: Math.round(r.top), ml: Math.round(m.left), mr: Math.round(m.right) }; }, sel);
@@ -10189,7 +10214,7 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
           // hero-progression-rework: the default game has Hero > Attributes in place of Training (the Training layout runs below with the flag on)
           const tr = await fit('attributes', '#attrRows'), hb = await fit('tav', '#sec-hands');
           assert(tr.ok && hb.ok, `${at}: Hero > Attributes and the Tavern's gatherer board show inside the panel with no sideways scroll (${JSON.stringify({ tr, hb })})`);
-          await page.click('#menuX'); await page.waitForTimeout(260);
+          await page.click('#menuX'); await menuSettled(page, false);
           // the picker (a long press on an ability slot) and the Attack sheet (its Training) fit the screen, the Train button in reach
           const sheet = async (slot, id, btn = '.tr-c-more') => {
             const b = await page.$(`#soloBar .sb-${slot}`), r = await b.boundingBox();
@@ -10203,7 +10228,7 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
           assert(pk.ok && ms.ok && !(await X('!!document.querySelector("#abPicker, #moveSheet")')), `${at}: the ability picker and the Attack sheet fit the screen with their Attributes button in view, and close with Escape (${JSON.stringify({ pk, ms })})`);
           // the old Training layout, with HERO_TUNE.training = 1 switched on in the page
           await X('HERO_TUNE.training = 1; ui(true); true');
-          const tr1 = await fit('training', '#trainRows'); await page.click('#menuX'); await page.waitForTimeout(260);
+          const tr1 = await fit('training', '#trainRows'); await page.click('#menuX'); await menuSettled(page, false);
           const pk1 = await sheet('ab0', 'abPicker', '.tr-go'), ms1 = await sheet('atk', 'moveSheet', '.tr-go');
           await X('HERO_TUNE.training = 0; ui(true); true');
           assert(tr1.ok && pk1.ok && ms1.ok && !(await X('!!document.querySelector("#abPicker, #moveSheet")')), `${at}: with Training on, Hero > Training, the ability picker and the Attack sheet (with Training) fit the screen with their Train button in view (${JSON.stringify({ tr1, pk1, ms1 })})`);
