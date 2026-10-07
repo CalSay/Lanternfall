@@ -65,6 +65,7 @@
       p.adapter.set(KEY, p.backupRaw);
       if (p.adapter.get(KEY) !== p.backupRaw) throw new Error('Save readback did not match.');
       useStorage(p.adapter);
+      saveAdopt();   // save-two-tabs: this tab wrote the stored copy, so its stamp is not another tab's
       st.pendingReload = null;
       st.armed = false;
       st.importErr = 'Your current game is saved again.';
@@ -147,6 +148,7 @@
       adapter.set(KEY, candidateRaw);
       verified = adapter.get(KEY) === candidateRaw;
     } catch (e) { /* The adapter may also swallow a failed write. Readback decides. */ }
+    saveAdopt();   // save-two-tabs: the imported copy is this tab's own until the reload
     st.pendingReload = { adapter, priorRaw, backupRaw, candidateRaw, verified };
     useStorage({ get: key => adapter.get(key), set: (key, value) => { if (key !== KEY) adapter.set(key, value); } });
     syncControls();

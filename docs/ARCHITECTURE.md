@@ -47,7 +47,7 @@ All JS files share one scope: top-level `const`/`function` in one file is visibl
 | 23-data-deeds.js | core (data) | achievements data (docs/design/achievements.md, AC2): `DEED_TRACKS` (83 tracks, tiers Bronze/Silver/Gold/Everflame, stars), `DEED_GROUPS`, `DEED_FEATS` (21 milestone feats with permanent rewards plus 16 hard feats), `DEED_SECRETS`, `DEED_LOOKS` (36 accessories + 4 frames), `DEED_LADDER`, `DEED_CHAPTERS`, `DEED_CAP` (the hard bonus cap per key), `DEED_TUNE` |
 | 21f-data-hands.js | core (data) | Hands data (hearth-and-hands.md 5, N1): `HANDS_TUNE` (odds, pity, shares, shifts, arrivals, beds by Bunkhouse level, trait numbers), `HANDS_RAR`, `HANDS_SKILLS`, 16 `HANDS_TRAITS` (3 work at camp), `HANDS_CALLINGS`, the 5 named `HANDS_LEGENDS`, `HANDS_TAM`, `HANDS_LATER` (the Hollises, off until LORE8b), name pools |
 | 21o-data-trade.js | core (data) | C4: Mossy Hollow trade route limits, supported gathering cargo and weekly demand ranges; prices read existing `ECON.famW` |
-| 30-state.js | core | save `S`, `fresh()`, `loadSave()`, `save()`, `registerState`, `online` runtime state |
+| 30-state.js | core | save `S`, `fresh()`, `loadSave()`, `save()`, `registerState`, `online` runtime state; two tabs (save-two-tabs): `save()` skips, for good, once the stored copy is stamped later than this page's own (`saveSeen`, runtime only), `saveCheck()`, `saveBlocked`, `onSaveBlocked`, `saveAdopt()` (a save-code import or restore in this tab). UI: 75-tabs-ui.js |
 | 40-rules.js | core | formulas: gear, dps, gold, xp, costs, node times |
 | 41-items.js | core | items core (K4): kinds, `fits()`, `itemStats()`/`itemLines()`, 8 hero positions (`gearCalc` behind `gear()`), `charGear(id)`, affix rolls, Reforge maths, bag rule |
 | 50-sim.js | core | `tick`, combat, kills, xp, harvest, bosses, offline gains |
@@ -117,9 +117,10 @@ All JS files share one scope: top-level `const`/`function` in one file is visibl
 | 74a-ui-tavern-perks.js | browser | C3: the Tavern keep's gossip and named-gatherer rumour actions, progress and eligibility; reads the offline Tavern perk APIs and leaves the Tavern's online board unchanged |
 | 74b-ui-trade.js | browser | C4: gatherer trade cargo inputs, price review and departure; profession and stock feedback, Tavern gate and gold-only return quote |
 | **75-*.js** | browser | **feature UI** |
+| 75-tabs-ui.js | browser | save-two-tabs: the "Open in another tab" card with Reload over everything (`.tabs-ov`, holds the game) when 30-state blocks saving; a `storage` event from another tab runs `saveCheck()` at once. Styles 60-tabs.css |
 | 80-online.js | browser | db/room/user capabilities (do not change without sign-off) |
 | 89-eyes-hook.js | browser | `window.LF_EYES` (read only): `rects()`, `phase()`, `tip()`, `sfx()` (wraps `SFX.play`), `floats()`, `info()`, what `tools/eyes.mjs` reads (docs/review/eyes.md). Reads `stageRects()` (62-stage) |
-| 90-boot.js | browser | boot, timers, frame loop |
+| 90-boot.js | browser | boot, timers, frame loop (the page coming back runs `saveCheck()` before any away gains) |
 
 Core files (< 60, except 05) must not touch `document`, `window`, canvas or `localStorage`:
 `tools/lib/core.mjs` loads them into a Node vm for `check.mjs` and `sim.mjs`.

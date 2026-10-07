@@ -261,6 +261,51 @@ if (section('saves')) try {
   }
 } catch (e) { fail('saves crashed: ' + (e.stack || e)); }
 
+// ---- 3a. two tabs (save-two-tabs): a tab never writes over a newer save another tab wrote; one tab never blocks itself ----
+// Two cores on one storage are two tabs. Each core's clock is pinned (the stamp a save writes is S.last = Date.now()).
+if (section('two tabs')) try {
+  const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-early.json'), 'utf8'), last0 = JSON.parse(raw).last;
+  const at = (g, t) => g.eval(`Date.now = () => ${t}`), gold = st => JSON.parse(st.get(KEY)).gold;
+  // one tab: saves in a row, a save stamped in the future, the clock set back, a failed write, an unreadable copy: never blocked
+  const one = memoryStorage({ [KEY]: JSON.stringify({ ...JSON.parse(raw), last: last0 + 864e5 }) });
+  const a1 = loadCore({ storage: one });
+  at(a1, last0 + 1000); for (let i = 0; i < 3; i++) { a1.fn.tick(0.1); a1.fn.save(); }
+  at(a1, last0 + 500); a1.fn.save();
+  const setOk = one.set; one.set = () => {}; at(a1, last0 + 2000); a1.fn.save(); one.set = setOk;
+  at(a1, last0 + 3000); a1.fn.save();
+  one.set(KEY, 'not json {{'); at(a1, last0 + 4000); a1.fn.save();
+  assert(!a1.eval('saveBlocked') && JSON.parse(one.get(KEY)).last === last0 + 4000, 'one tab: saves in a row, a future stamp, a clock set back, a failed write and an unreadable copy never stop saving');
+  // two tabs: whichever tab saves second over the other's newer save is stopped; then B plays to 12,345 gold and saves
+  const two = memoryStorage({ [KEY]: raw });
+  const A = loadCore({ storage: two }), B = loadCore({ storage: two });
+  at(A, last0 + 1000); A.fn.save();   // A saves first (B still holds what it loaded)
+  at(B, last0 + 2000); B.fn.save();
+  assert(B.eval('saveBlocked') && JSON.parse(two.get(KEY)).last === last0 + 1000, 'two tabs: the tab that saves second, over the other tab\'s newer save, is stopped');
+  const two2 = memoryStorage({ [KEY]: raw });
+  const A2 = loadCore({ storage: two2 }), B2 = loadCore({ storage: two2 });
+  B2.eval('S.gold = 12345'); at(B2, last0 + 5000); B2.fn.save();
+  at(A2, last0 + 6000); A2.eval('S.gold = 1'); A2.fn.save(); A2.fn.save();
+  assert(A2.eval('saveBlocked') && gold(two2) === 12345, 'two tabs: the older tab does not save over the newer one (third load reads 12,345 gold)');
+  const C2 = loadCore({ storage: two2 });
+  assert(C2.eval('S.gold') === 12345 && !C2.eval('saveBlocked'), 'two tabs: a fresh load reads the newer save and saves normally');
+  at(C2, last0 + 7000); C2.fn.save();
+  assert(!C2.eval('saveBlocked') && gold(two2) === 12345, 'two tabs: the fresh load keeps saving');
+  // the block is reported once, through onSaveBlocked
+  const two3 = memoryStorage({ [KEY]: raw });
+  const A3 = loadCore({ storage: two3 }), B3 = loadCore({ storage: two3 });
+  A3.eval('globalThis.__n = 0; onSaveBlocked = () => { globalThis.__n++; }');
+  at(B3, last0 + 5000); B3.fn.save();
+  at(A3, last0 + 6000); A3.fn.save(); A3.fn.save(); A3.eval('saveCheck()');
+  assert(A3.eval('globalThis.__n') === 1, 'two tabs: onSaveBlocked runs once');
+  // a save-code import or restore in this tab adopts the stored copy (no block on the next save)
+  const two4 = memoryStorage({ [KEY]: raw });
+  const A4 = loadCore({ storage: two4 });
+  two4.set(KEY, JSON.stringify({ ...JSON.parse(raw), last: last0 + 9e6 })); A4.eval('saveAdopt()');
+  at(A4, last0 + 9000); A4.fn.save();
+  assert(!A4.eval('saveBlocked') && JSON.parse(two4.get(KEY)).last === last0 + 9000, 'save-code import or restore: saveAdopt() takes the stored copy as this tab\'s own');
+  assert(![a1, A, B, A2, B2, C2, A3, B3, A4].some(g => g.errors.length), 'two tabs: no handler errors');
+} catch (e) { fail('two tabs crashed: ' + (e.stack || e)); }
+
 // ---- 3b. save export after play: Copy save code, Import, compare (save-fixture-current; save-risk-m1 F3) ----
 // A fixture's own code round-trips in 'save codes'. This plays each fixture first (5 minutes of real-time ticks, then the
 // state a player leaves behind: points spent, tips retired, stars lit), exports the code the Journal would copy, imports it

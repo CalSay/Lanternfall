@@ -7,7 +7,8 @@ let bootAway = null;
 function bootAwayNow() { if (bootAway == null) return; const secs = bootAway; bootAway = null; showAwayReport(awayGains(secs)); }
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) { bootAwayNow(); save(); flush(); }
-  else { const secs = Math.max(0, (Date.now() - S.last) / 1000); if (secs > 30) showAwayReport(awayGains(secs)); S.last = Date.now(); lastFrame = performance.now(); }
+  // save-two-tabs: back in front while another tab wrote a newer save, this page's S is old: no away gains, no saves (30-state)
+  else if (saveCheck()) { const secs = Math.max(0, (Date.now() - S.last) / 1000); if (secs > 30) showAwayReport(awayGains(secs)); S.last = Date.now(); lastFrame = performance.now(); }
 });
 addEventListener('pagehide', () => { bootAwayNow(); save(); });
 
