@@ -9158,6 +9158,7 @@ const NOTICES = [
   { id: 'gear-reforged', re: /^Your .* reforged into .* gear\.$/, ch: 'bell' },
   { id: 'gear-back', re: /(does not fit your new path|do not fit your new path)/, ch: 'bell' },
   { id: 'champion', re: /^A champion .* appears\./, ch: 'pop', wait: 15, why: 'something to fight now' },
+  { id: 'cache', key: 'cache', ch: 'log', why: 'the cache card or banner shows it (75-caches-ui); the bell list keeps the line' },
   { id: 'trophy', re: /^(Champion defeated|The boss leaves a trophy|The raid spoils include)/, ch: 'log' },
   { id: 'stash-wait', re: /^(Storehouse full\. Needs room|The team is back\. )/, site: /toast\((stashNeed\(|`The team is back\. \$\{stashNeed)/, ch: 'bell' },
   { id: 'store-full', re: /^Storehouse full: /, ch: 'log', merge: ms => `Storehouse full: ${ms.map(m => m.slice(16, -1)).join(', ')}.` },
@@ -12212,6 +12213,83 @@ function bossTryWays(L) {
   // exported to later files via the shared scope
   // kinds: every k a saved slot may hold (the board's kinds plus the retired 'tap'); the save-code check reads it and shape.
   var BOUNTY_API = { refresh: bountyRefresh, claim: claimBounty, reroll: rerollBounty, text: bountyText, reward: bountyReward, shape: btyShape, kinds: Object.keys(BTY_KINDS).concat('tap') };
+}
+
+// ---- src/js/55-caches.js ----
+// 55-caches: Lantern Caches, the core (card cache-core; early-game plan-judge R1, R2, R12; DECISIONS "Lantern Caches").
+// CORE FILE: no DOM. UI: 75-caches-ui.js (the card, through the moment layer).
+//
+// A zone boss's FIRST clear opens a cache. It is a container: it lists what that win already paid (gold, Essence, a Scroll, a Star, a
+// trophy, a unique), and nothing else. Replays pay as today and open no cache. The only thing a cache adds is a lantern colour from
+// the Deepwell shop that the save does not own yet (zones 1 to 3 and 7 to 9, Ember Red first). That is a certain look, never a roll.
+// No relics, no extra Essence, no unique pity, no time skips. Nothing here is sold.
+//
+// Events: cacheOpen { n, zone, tier, gold, ess, scroll, star, starFirst, unique, trophy, look, chance, essFull, auto }
+//   n: this save's cache number (1 for the first).  scroll { id, name, col }  star { id, name }  unique { item, name }
+//   trophy { name, n }  look { id, n, col, worn }  chance: the unique's chance on this win, in percent (null when one dropped)
+//   essFull: the Essence store was full when the win paid  auto: this cache opens as a banner unless it holds a look or a unique.
+//
+// State S.cache: { opened, lookPity, auto, first }
+//   opened  caches opened.  lookPity  reserved for cache-looks (nothing reads it yet).  auto  null = the default (on from the
+//   autoFrom-th cache), true or false once the player chooses.  first  the zone of the first cache (0 = none yet).
+// An old save has opened = 0 and gets no retroactive cache: its first one is its next first clear.
+//
+// CACHE_TUNE.on = false switches caches and their lantern colours off; wins then pay as before.
+//
+// API: cachePending() -> bool (a clear is waiting to open), cacheAuto() -> bool, cacheSetAuto(on), cacheLookZone(z) -> bool
+
+const CACHE_TUNE = { on: true, autoFrom: 3, lookZones: [1, 2, 3, 7, 8, 9] };
+let cachePending, cacheAuto, cacheSetAuto, cacheLookZone;
+{
+  registerState('cache', { opened: 0, lookPity: 0, auto: null, first: 0 });
+  const C = () => S.cache;
+  let tickN = 0, pend = null, lootTick = -1, lootItem = null;
+  cacheLookZone = z => CACHE_TUNE.lookZones.includes(z);
+  cacheAuto = (n = C().opened) => (typeof C().auto === 'boolean' ? C().auto : n >= CACHE_TUNE.autoFrom);
+  cacheSetAuto = on => { C().auto = !!on; save(); };
+  cachePending = () => !!pend;
+
+  // 50-sim drops a unique before it emits zoneClear (same tick); everything else comes after.
+  on('loot', e => { if (e && e.item && e.item.u) { lootTick = tickN; lootItem = e.item; } });
+  on('zoneClear', e => {
+    if (!CACHE_TUNE.on || !e || !(e.zone >= 1)) return;
+    pend = { zone: e.zone, tier: zoneTier(e.zone), gold: 0, ess: 0, scroll: null, star: null, trophy: null,
+      unique: lootTick === tickN && lootItem ? lootItem : null };
+  });
+  on('kill', p => { if (pend && p && p.mob && p.mob.boss && p.zone === pend.zone) { pend.gold = p.gold || 0; pend.ess = p.ess || 0; pend.tier = p.tier || pend.tier; } });
+  on('scrollDrop', p => { if (pend && p && SCROLLS[p.id]) pend.scroll = { id: p.id, name: SCROLLS[p.id].name, col: SCROLLS[p.id].col }; });
+  on('starFound', p => { if (pend && p && !p.quiet && typeof STARS === 'object' && STARS[p.id]) pend.star = { id: p.id, name: STARS[p.id].name }; });
+  on('trophy', p => { if (pend && p && (p.source === 'boss' || p.source === 'champion') && CRAFT_TROPHIES[p.i]) pend.trophy = { name: CRAFT_TROPHIES[p.i].n, n: p.n }; });
+
+  // the chance this win gave its zone's unique (50-sim killPack): a first clear, halved when the save already has it at this tier
+  const uniqueChance = (z, tier) => {
+    const uq = zoneUnique(z), owned = (S.found[uq] || 0) >= tier ? UNIQ_TUNE.owned : 1;
+    return Math.round(Math.min(1, UNIQ_TUNE.first * owned * mod('uniqueChance')) * 1000) / 10;
+  };
+
+  function open() {
+    const p = pend; pend = null;
+    const c = C();
+    let look = null;
+    try { if (cacheLookZone(p.zone) && typeof DW === 'object' && DW && typeof DW.grantLantern === 'function') look = DW.grantLantern(); } catch (e) { look = null; }
+    if (!c.opened) c.first = p.zone;
+    c.opened++;
+    const un = p.unique && UNIQ[p.unique.u] ? { item: p.unique, name: UNIQ[p.unique.u].name } : null;
+    const starFirst = !!p.star && Object.keys((S.stars && S.stars.own) || {}).length <= 1;
+    const essFull = p.ess > 0 && typeof stashFull === 'function' && stashFull('ess', p.tier);
+    const view = { n: c.opened, zone: p.zone, tier: p.tier, gold: p.gold, ess: p.ess, scroll: p.scroll, star: p.star, starFirst, unique: un, trophy: p.trophy, look,
+      chance: un ? null : uniqueChance(p.zone, p.tier), essFull, auto: cacheAuto(c.opened) };
+    emit('cacheOpen', view);
+    // the bell list keeps a line (the card or banner is the moment itself)
+    const bits = [];
+    if (p.gold) bits.push(`${fmt(p.gold)} gold`);
+    if (look) bits.push(`${look.n} lantern`);
+    if (un) bits.push(un.name);
+    emit('toast', { key: 'cache', msg: `Lantern Cache opened${bits.length ? ': ' + bits.join(', ') : ''}.`, kind: 'good', prio: 'low' });
+    save();
+  }
+  // the clear's events all fire inside one tick; the cache opens at the end of it
+  onTick(() => { tickN++; if (pend) open(); });
 }
 
 // ---- src/js/55-classes.js ----
@@ -18453,6 +18531,18 @@ let DEEP_ARENA = null;
   }
   const favChoices = () => { const lv = D().lore.fav || 0; if (!lv) return []; return DEEP_BOON_IDS.filter(id => { const b = DEEP_BOONS[id]; return !b.c && (b.r === 'c' || (lv >= 2 && b.r === 'r')) && (!b.cls || b.cls === 'any' || b.cls === cls()); }); };
   const setFav = id => { if (id !== null && !favChoices().includes(id)) return false; D().fav = id; save(); return true; };
+  // cache-core: a first-clear cache gives the first lantern colour this save does not own, in the shop's order (Ember Red first).
+  // It is a gift, not a buy: no Marks, no `deepBuy`. It wears the colour only when no lantern is worn yet.
+  const LANTERN_GIFTS = ['l_ember', 'l_blue', 'l_ghost', 'l_moon', 'l_violet', 'l_gold'];
+  function grantLantern() {
+    const id = LANTERN_GIFTS.find(x => DEEP_SHOP[x] && !D().cos[x]);
+    if (!id) return null;
+    D().cos[id] = 1;
+    if (!D().eq.lantern && !(S.deeds && S.deeds.wear && S.deeds.wear.flame)) D().eq.lantern = id;
+    const worn = typeof wearGet === 'function' ? wearGet('flame') === id : D().eq.lantern === id;
+    if (typeof codexRefresh === 'function') codexRefresh(true);
+    return { id, n: DEEP_SHOP[id].n, col: DEEP_SHOP[id].col, worn };
+  }
   const equip = (slot, id) => { if (id !== null && (!D().cos[id] || DEEP_SHOP[id].kind !== slot)) return false; D().eq[slot] = id; save(); return true; };
 
   // ---------------- the Codex: Deepwell, Seals and Wardrobe pages, bought titles ----------------
@@ -18524,7 +18614,7 @@ let DEEP_ARENA = null;
     run: R, live: deepActive, unlockInfo: () => ({ open: deepUnlocked(), zone: T.unlockZone, hearth: hearthLv() === null ? 0 : T.hearth, hearthNow: hearthLv(), maxZone: S.maxZone }),
     floorKind: (f, r) => floorKind(f, r), oilMax: r => oilMax(r), oil: () => { const r = R(); return r ? r.oil : 0; }, drainRate, refundFor: k => refundFor(k), marksNow,
     offerView, card, owned, setProgress, trialRule, trialInfo, shop, shopRow, nextLore, favChoices,
-    start, resume, pick, reroll, banish, skip, landing, climbOut, abandon, buy, setFav, equip,
+    start, resume, pick, reroll, banish, skip, landing, climbOut, abandon, buy, setFav, equip, grantLantern,
     fall: () => deepActive() && R().phase === 'fight' ? end('wipe') : null,   // the party wiped (59c-deepwell-combat)
     foeHp: (f, mul) => R() ? foeHp(R(), f, mul || 1) : 0, floorFoes: f => R() ? floorFoes(R(), f) : [],
     _init: () => { initFor = null; ensureInit(); }
@@ -35921,6 +36011,49 @@ let showAwayReport;
   });
   // The Classic achievements grid moved to the Achievements menu (75-deeds-ui.js, Tracks > Classic).
 }
+
+// ---- src/js/75-caches-ui.js ----
+// 75-caches-ui: the Lantern Cache card (card cache-core). Browser-only; the rules are in 55-caches.js.
+// A cache shows through the moment layer (75-moments-ui): a big card, or, once the player is on auto-open, a medium banner unless it
+// holds a look or a unique (or is the first Star, or zone 1's first boss). The card lists what the win paid, in the colour of the best
+// thing inside. The drops this clear already queued as moments (the unique, the first Star, zone 1's boss card) fold into the cache card.
+// This file loads before 75-moments-ui, so the moment layer's names are read inside the handler, never at load.
+on('cacheOpen', v => {
+  if (typeof moment !== 'function') return;
+  if (!MOMENT_KINDS.cacheAuto) MOMENT_KINDS.cacheAuto = { tier: 'medium', eye: 'Lantern Cache', col: '#F2C14E', snd: 'mid' };
+  const big = !v.auto || !!v.look || !!v.unique || v.starFirst || v.zone === 1;
+  const lines = [];
+  if (v.look) lines.push({ txt: `New lantern colour: ${v.look.n.replace(/ lantern$/, '')}`, icon: { ic: ['banner', v.look.col] } });
+  if (v.unique) lines.push({ txt: `${v.unique.name}. A unique.`, icon: { item: v.unique.item } });
+  if (v.star) lines.push({ txt: `Star: ${v.star.name}` });
+  if (v.trophy) lines.push({ txt: `${v.trophy.n} ${v.trophy.name}` });
+  const pay = [];
+  if (v.scroll) pay.push(v.scroll.name);
+  if (v.gold) pay.push(`${fmt(v.gold)} gold`);
+  if (v.ess && !v.essFull) pay.push(`${v.ess} ${MAT.ess.short[v.tier - 1]} Essence`);
+  if (pay.length) lines.push({ txt: pay.join(', ') });
+  if (v.essFull) lines.push({ txt: 'Your Essence store is full, so some or all of this win\'s Essence may be lost. Build more room at the Camp.' });
+  // the colour: a unique first, then the lantern colour, then a Star, then a Scroll
+  const col = v.unique ? '#FF8A3D' : v.look ? v.look.col : v.star ? '#F2C14E' : v.scroll ? v.scroll.col : '#F2C14E';
+  const icon = v.unique ? { item: v.unique.item } : { ic: ['banner', col] };
+  const title = v.zone === 1 ? 'First boss down' : `Zone ${v.zone} cleared`;
+  // the sub is one short line: the unique's odds (honest, with modifiers), else what a look does
+  const sub = v.chance !== null && v.chance !== undefined ? `Unique chance on this win: ${v.chance}%.` : v.look && v.look.worn ? 'Your lantern burns it now.' : 'Here is what the win gave you.';
+  const o = { title, sub, col, icon, lines };
+  if (big && v.n >= CACHE_TUNE.autoFrom) o.actions = [{ txt: cacheAuto() ? 'Turn off auto-open' : 'Open the next ones automatically', fn: () => cacheSetAuto(!cacheAuto()) }];
+  const barks = v.zone === 1 ? ['boss1'] : [];
+  if (big) {
+    // fold in what this clear already queued: zone 1's boss card, the unique, the Star
+    for (let i = MOMENT_Q.length - 1; i >= 0; i--) {
+      const q = MOMENT_Q[i];
+      if (q.kind === 'boss' || (q.kind === 'unique' && v.unique && q.title === v.unique.name)
+        || ((q.kind === 'starFirst' || q.kind === 'star') && v.star && q.title === v.star.name)) { if (q.bark) barks.push(q.bark); MOMENT_Q.splice(i, 1); }
+    }
+    // the hero's line for what the card now carries (55-voice): the strongest of the folded moments' barks
+    if (barks.length && typeof voicePick === 'function') o.bark = voicePick(barks);
+  }
+  moment(big ? 'cache' : 'cacheAuto', o);
+});
 
 // ---- src/js/75-camp-ui.js ----
 // 75-camp-ui: the Camp part of the Camp tab (tab id 'world'): the Hearth card, the builders,
