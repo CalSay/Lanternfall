@@ -14,7 +14,6 @@ wait 3
 tap-if "Continue"
 wait 3
 tap-if "Continue"
-expect "Switch hero"
-expect "Wren"
-expect "Pip"
+expect "Your hero"
+expect "Tobin"
 shot hero-tab-portraits
