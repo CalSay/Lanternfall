@@ -1,0 +1,1 @@
+Tooling only: a weekly usage report now shows what the Claude team costs per thread, per model and per merged change, so the Monday retro can set the cap and model routing from real numbers. (no shot)
