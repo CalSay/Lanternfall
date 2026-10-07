@@ -10707,6 +10707,24 @@ if (section('lantern caches')) try {
   assert(/on\('cacheOpen'/.test(ui) && /moment\(big \? 'cache' : 'cacheAuto'/.test(ui), 'caches: the card goes through the moment layer');
 } catch (e) { fail('lantern caches: ' + e.message); }
 
+// ---- playtester-code-bugs: the unique upgrade preview shows the real gain; the cache toast says "lantern" once ----
+if (section('playtester code bugs')) try {
+  const g = loadCore({ seed: 7 }), E = s => g.eval(s);
+  E('soloPick("wren")');
+  const m = /const nextP = ([^;]+);/.exec(fs.readFileSync(path.join(ROOT, 'src', 'js', '75-craft-ui.js'), 'utf8'));
+  assert(!!m, 'playtester code bugs: the upgrade preview line (const nextP) is in 75-craft-ui.js');
+  if (m) for (const u of [false, true]) for (const plus of [0, 5]) {
+    const r = E(`(() => { const it = { id: -1, slot: 'weapon', t: 3, r: '${u ? 'legendary' : 'rare'}', plus: ${plus}${u ? ', u: Object.keys(UNIQ)[0]' : ''} };
+      const nextP = (it => ${m[1]})(it); return { nextP, real: itemPower(Object.assign({}, it, { plus: it.plus + 1 })) }; })()`);
+    assert(Math.abs(r.nextP - r.real) < 1e-9, `playtester code bugs: a ${u ? 'unique' : 'non-unique'} item at +${plus} previews the power it gets at +${plus + 1} (${r.nextP} vs ${r.real})`);
+  }
+  const toasts = []; g.fn.on('toast', t => toasts.push(t));
+  E('S.zone = S.maxZone = 1; killPack({ boss: true, xp: 1, hp: 0 }, 40)'); g.fn.tick(0.1);
+  const msg = (toasts.find(t => t && t.key === 'cache') || {}).msg || '';
+  assert(/Ember Red lantern/.test(msg) && (msg.match(/lantern/g) || []).length === 1,
+    `playtester code bugs: the cache toast names the look with "lantern" once (${JSON.stringify(msg)})`);
+} catch (e) { fail('playtester code bugs: ' + e.message); }
+
 // ---- Champion clear moment (card champion-moment; 55-story.js champWin, 75-moments-ui.js) ----
 if (section('champion moment')) try {
   const mk = opts => { const g = loadCore(Object.assign({ seed: 7 }, opts)); const wins = [], caches = []; g.fn.on('champWin', e => wins.push(e)); g.fn.on('cacheOpen', v => caches.push(v)); return { g, wins, caches, E: s => g.eval(s) }; };
