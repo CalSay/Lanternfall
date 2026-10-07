@@ -78,7 +78,7 @@ const STORY_ON = true;   // dev switch (bible 10.4): false plays no story at all
 
 let storyOn, storyHeld, storyInGap, storyChoiceDef, storyChosen, storyClaim, storyClose, storyChoose, storyList, storyEntry, storyRead, storyUnread, storyLate, storyJournalOpened,
   storyRoadLog, storyFile, storyHeroLine, storyHearthLine, storyVerse, storyVerseLatest, storyItemLine, storyRanks, storyEncounter, storyFoes, storySync,
-  storyIntroClaim, storyIntro, storyIntroDone;
+  storyIntroClaim, storyIntro, storyIntroDone, storyHeroKey;
 const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_ENC.champ.<id> = true (storyEncounter)
 {
   registerState('story', { v: 1, seen: {}, read: {}, init: 0, off: 0, starter: '', litFor: {}, coldhearth: '', ends: {}, journalOpens: 0 });
@@ -124,6 +124,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
     if (how !== 'shown' && part !== 'open') { introUp = false; storySync(); }   // what waited under the screens (the area caption) is due now, even if the guide holds the ticks
   };
   storyEncounter = (kind, id, on) => { if (STORY_ENC[kind]) STORY_ENC[kind][id] = on !== false; };
+  storyHeroKey = storyHero;   // hero-voice: whose lines play ('' when no starter is the story hero)
   storyHeroLine = id => { const h = D('hero')[id]; return h ? h[storyHero()] || h._ || '' : ''; };
   // An item entry is a line, or { area, line }: a line with an area waits until an encounter card has put a Champion of that area in
   // the game (the line names it, and the player must have met it).

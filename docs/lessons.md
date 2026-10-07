@@ -48,6 +48,9 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Count C28's per-area budget in beats, not lines, and keep an Elder sequence to 12 taps (Elder lines play one a tap). Why: a line count made the bible's NPC scenes impossible. (story-hollow-script, 2026-10-06)
 - Canon changes after the Opus judge pass go in the digest for Cal's veto. Example: the Coast and Emberwaste bosses are the dark wearing Silas's and Durand's shapes, both men found alive afterwards. (story, 2026-10-05)
 
+- Never name a thing in a hero bark that only a later scene explains ("hole" came from Hesketh's fire talk, which the first boss can beat). Why: the Opus judge cut it from the first-boss lines. (hero-voice, 2026-10-06)
+- Keep a bark-only moment out of the banner budget's way: drop it after 20 s instead of letting it queue. Why: a stale line at the wrong moment reads as a bug. (hero-voice, 2026-10-06)
+
 - Gate hero unlocks on the zone of the hero's first scene, in one table (`STORY_MEET`, `56c-unlocks.js`), and bump the zone in tests that unlock heroes early. Why: the bible says no hero unlocks before their first scene, and many C9 tests unlocked Bram at zone 10 (his scene is zone 31). (story-opening, 2026-10-06)
 - Anchor a hero's story gate where the scene really plays (a Champion's post plays after that Champion falls: area end + 1), and keep a check that holds `STORY_MEET` equal to the chapter script. Why: the table used area starts, so gates opened up to 4 zones before the scene and the new "at zone N" line would have lied (red team, story-unlock-gates, 2026-10-06).
 - Keep the new-game hero picker free of later-region names: a locked hero shows who you meet, not where or how much. Why: unlock text named "Cinder Road II" and "still being designed" to a first-time player. (story-opening, 2026-10-06)

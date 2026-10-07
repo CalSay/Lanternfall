@@ -11,9 +11,9 @@ on('cacheOpen', v => {
   if (v.look) lines.push({ txt: `New lantern colour: ${v.look.n.replace(/ lantern$/, '')}`, icon: { ic: ['banner', v.look.col] } });
   if (v.unique) lines.push({ txt: `${v.unique.name}. A unique.`, icon: { item: v.unique.item } });
   if (v.star) lines.push({ txt: `Star: ${v.star.name}` });
-  if (v.scroll) lines.push({ txt: v.scroll.name });
   if (v.trophy) lines.push({ txt: `${v.trophy.n} ${v.trophy.name}` });
   const pay = [];
+  if (v.scroll) pay.push(v.scroll.name);
   if (v.gold) pay.push(`${fmt(v.gold)} gold`);
   if (v.ess && !v.essFull) pay.push(`${v.ess} ${MAT.ess.short[v.tier - 1]} Essence`);
   if (pay.length) lines.push({ txt: pay.join(', ') });
@@ -26,13 +26,16 @@ on('cacheOpen', v => {
   const sub = v.chance !== null && v.chance !== undefined ? `Unique chance on this win: ${v.chance}%.` : v.look && v.look.worn ? 'Your lantern burns it now.' : 'Here is what the win gave you.';
   const o = { title, sub, col, icon, lines };
   if (big && v.n >= CACHE_TUNE.autoFrom) o.actions = [{ txt: cacheAuto() ? 'Turn off auto-open' : 'Open the next ones automatically', fn: () => cacheSetAuto(!cacheAuto()) }];
+  const barks = v.zone === 1 ? ['boss1'] : [];
   if (big) {
     // fold in what this clear already queued: zone 1's boss card, the unique, the Star
     for (let i = MOMENT_Q.length - 1; i >= 0; i--) {
       const q = MOMENT_Q[i];
       if (q.kind === 'boss' || (q.kind === 'unique' && v.unique && q.title === v.unique.name)
-        || ((q.kind === 'starFirst' || q.kind === 'star') && v.star && q.title === v.star.name)) MOMENT_Q.splice(i, 1);
+        || ((q.kind === 'starFirst' || q.kind === 'star') && v.star && q.title === v.star.name)) { if (q.bark) barks.push(q.bark); MOMENT_Q.splice(i, 1); }
     }
+    // the hero's line for what the card now carries (55-voice): the strongest of the folded moments' barks
+    if (barks.length && typeof voicePick === 'function') o.bark = voicePick(barks);
   }
   moment(big ? 'cache' : 'cacheAuto', o);
 });

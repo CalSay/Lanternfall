@@ -8,6 +8,13 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 
 ## The game
 
+- **Claude decided: hero barks (card hero-voice, 2026-10-06; Cal can veto).** Only the three starters speak, one line each
+  at nine moments (first boss, later boss, boss loss, unique, level, ability, first Star, first craft, Hollow Great Lantern);
+  no class lines and no lines for the other 31 heroes; at most one bark a fight end, strongest first. Opus judge (red team,
+  then judge) rewrote "hole" out of the first-boss lines (the player may not have heard Hesketh say it yet), kept bible 4.6's
+  lantern lines verbatim, and approved cutting the fire-lit bark: Hesketh's talk owns that moment. The hero sheet's record
+  is headed "On the road" ("With you" read like companion language). Scores: Hero arc 3, Fit 4, Clarity 4.
+
 - **No prestige or resets.** Progress is permanent. Freshness comes from mastery, collections, build variety and new
   regions. (2026-09-27)
 - **Single-player first.** The world raid and Tavern stay optional, light extras. (2026-09-27)
