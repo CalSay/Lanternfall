@@ -8689,9 +8689,9 @@ if (section('C29 mid-game HP and Wren (core)')) try {
       // zones 8 and 15 (boss-tiers-pr4, 2026-10-07): the tricks carry the difficulty there, so the refit hit scales are 0.46-0.9 of the old ones: a boss hit reads 22% at zone 8 and 10% at zone 15, a charge 52% and 24%
       // zones 20-34 (boss-tiers-pr5b, 2026-10-07): the tricks, rally gates and footing floor carry the difficulty there, so the refit hit scales are 0.2-0.4 of the old ones:
       // a boss hit reads 16% at zone 20 and 4% at zones 25-34 here, a charge 35% and 9-10%
-      const mid = z >= 25, b = mid ? [0.03, 0.16, 0.06, 0.45] : z === 15 ? [0.07, 0.42, 0.2, 0.92] : z === 20 ? [0.1, 0.42, 0.25, 0.92] : [0.18, 0.36, 0.45, 0.9];
+      const mid = z >= 25, b = mid ? [0.025, 0.08, 0.06, 0.2] : z === 15 ? [0.07, 0.42, 0.2, 0.92] : z === 20 ? [0.1, 0.42, 0.25, 0.92] : [0.18, 0.36, 0.45, 0.9];
       if (!(r.n.hit >= 0.05 && r.n.hit <= 0.18 && r.b.hit >= b[0] && r.b.hit <= b[1] && r.b.charge >= b[2] && r.b.charge <= b[3]) || r.err().length) bad.push(s); }
-    assert(!bad.length, `mid-game HP: for a hero who keeps up (zones 8-34), a landed normal hit costs 5-18% of max HP, a boss hit 18-36% (7-42% at zone 15, 10-42% at zone 20), a charge 45-90% (20-92% at zone 15, 25-92% at zone 20, 6-45% from zone 25; 3-16% boss hits from zone 25) (${bad.length ? 'off: ' + bad.join('; ') : seen.join('; ')})`); }
+    assert(!bad.length, `mid-game HP: for a hero who keeps up (zones 8-34), a landed normal hit costs 5-18% of max HP, a boss hit 18-36% (7-42% at zone 15, 10-42% at zone 20), a charge 45-90% (20-92% at zone 15, 25-92% at zone 20, 6-20% from zone 25; 2.5-8% boss hits from zone 25) (${bad.length ? 'off: ' + bad.join('; ') : seen.join('; ')})`); }
   // played: good players win zone-20 bosses in 8-10 turns or so, casual players win some and lose some; Tobin stays the safest, not a sure win (tobin-safety-margin)
   { const w = kept('wren', 20, 33, 'mid'), p = kept('pip', 20, 33, 'mid'), t = kept('tobin', 20, 33, 'mid');
     const WS = [['echo', 'deadeye', 'powershot'], ['twinshot', 'echo', 'deadeye'], ['echo', 'barbed', 'sonic']], PS = [['fire', 'ignite', 'spark'], ['kindle', 'fire', 'ignite'], ['fire', 'wildfire', 'spark']];

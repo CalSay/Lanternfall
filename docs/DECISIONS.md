@@ -523,7 +523,7 @@ Ruled SHIP WITH CHANGES by an Opus high judge (`autopilot/reviews/pr5b/boss-tier
 - **Replays at 16-34 are easier** than before (the hit scale is 0.2-0.4 of the old one and the floor is frontier only). Accepted; flagged to the balance pass.
 - **Rules for uniques and the set at 16-34:** nothing skips, ignores or shortens a rally; at most two hero actions in a row; boss-fight damage gain +50% at most;
   passive cuts to zone-boss damage from the set and uniques stacked 10% at most (the 0.55 floor does not reach 16-34); no max-health cost or gain counted as safety;
-  Crown of the Burrow at most once per gate; each unique gets a kept-up budget row (set worn) at z16, 20, 25, 30. `gearCalc(over)` must never add set lines.
+  Crown of the Burrow at most once per gate; each unique gets a kept-up budget row (set worn) at z16, 20, 25, 30 in the PR that ships it (this PR measured stand-ins: damage x2, +50% health, foe damage x0.8). `gearCalc(over)` must never add set lines.
 
 ### The Lantern Rules
 
