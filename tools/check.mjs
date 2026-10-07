@@ -7638,6 +7638,9 @@ if (section('C25 enemy profiles')) try {
   const a = hit(49), b = hit(50);
   assert(a > 0 && Math.abs(b / a - 1.05) < 1e-6, `C25: at 50 kills hits on that kind deal +5% (${a} -> ${b})`);
   assert(E('typeRel("slime", "holy") === 0 && typeRel("slime", "fire") === 1'), 'C25: the bonus leaves weak / resist labels alone');
+  // foe-weak-resists: the Foe tab reads the same tiers (75-turn-ui turnFoeInfo adds weakness at 5 kills, the tell at 15, never earlier)
+  const foeUi = fs.readFileSync(path.join(ROOT, 'src/js/75-turn-ui.js'), 'utf8');
+  assert(/pr\.weak\)\s*learn\.push/.test(foeUi) && /pr\.tell && pr\.tellTxt\)\s*learn\.push/.test(foeUi), 'foe-weak-resists: the Foe tab shows weakness only once learned (5 kills) and the tell only at 15');
   assert(!g.errors.length, 'C25: no core errors');
 } catch (e) { fail('C25 crashed: ' + (e.stack || e)); }
 
