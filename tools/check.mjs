@@ -2223,10 +2223,12 @@ if (section('cold hearth')) try {
   assert(ev.join() === 'campOpen:false,lit' && !E('hearthLight()'), 'campOpen { quiet: false } and hearthLit, once');
   assert(E('campList().includes("bench") && !campList().includes("forge") && !campList().includes("loom")'), 'the Workbench plot opens with the fire (the Forge and Loom wait)');
   const c1 = E('campCost("bench", 1)');
-  assert(c1.gold === 0 && JSON.stringify(c1.mats) === '[["wood",1,20]]' && c1.secs === 10, `Workbench Lv 1: 20 Oak, no gold, 10 s (playtest-1 note 8: was 30 s) (${JSON.stringify(c1.mats)}, ${c1.gold} gold, ${c1.secs} s)`);
+  assert(c1.gold === 300 && JSON.stringify(c1.mats) === '[["wood",1,12]]' && c1.secs === 10, `Workbench Lv 1: 12 Pine Log, 300 gold, 10 s (workbench-cost: was 20 logs, no gold; playtest-1 note 8: was 30 s) (${JSON.stringify(c1.mats)}, ${c1.gold} gold, ${c1.secs} s)`);
   assert(E('JSON.stringify(campCost("bench", 2))') === E('(() => { const f = hearthFirst; hearthFirst = () => null; try { return JSON.stringify(campCost("bench", 2)); } finally { hearthFirst = f; } })()'), 'Lv 2 keeps the old row');
-  E('S.mats.wood[0] = 20');
-  assert(E('campBuild("bench")') && E('S.mats.wood[0]') === 0, 'Workbench building');
+  E('S.mats.wood[0] = 12; S.gold = 299');
+  assert(!E('campBuild("bench")') && E('campCan("bench").why') === '1 more gold', 'the Workbench waits for its gold: ' + E('campCan("bench").why'));
+  E('S.gold = 300');
+  assert(E('campBuild("bench")') && E('S.mats.wood[0]') === 0 && E('S.gold') === 0 && E('S.econ.spent.camp') === 300, 'Workbench building (12 Pine Log and 300 gold paid, booked as camp spend)');
   tickS(g, 31);
   assert(E('campLevel("bench") === 1 && campList().includes("forge")'), 'Workbench built after 30 s; the Forge plot opens');
   E('S.mats.ore[0] = 4; S.mats.wood[0] = 4');
@@ -4686,12 +4688,15 @@ if (section('solo guide pause rules')) try {
   assert(build.every(s => steps.some(t => t.needs && t.id === 'stock:' + s.id)), 'each of them has a stock step that says what to gather');
   assert(steps.filter(s => s.id === 'nextup' || s.id === 'tab:party').every(s => !s.pause) && steps.find(s => s.id === 'nextup').ok, 'Next Up and the Hero tab hint never pause the game (Next Up is a Got it note)');
   // the guard: a paused step with an unmet material need does not pause; with the materials in hand it does
-  E('S.mats.wood[0] = 0; S.mats.ore[0] = 0');
+  E('S.mats.wood[0] = 0; S.mats.ore[0] = 0; S.gold = 360');
   const need0 = JSON.parse(E('JSON.stringify(onboardNeed("stock:bench"))'));
-  assert(need0.length === 1 && need0[0].name === 'Pine Log' && need0[0].n === 20 && need0[0].have === 0 && need0[0].kind === 'wood', `the Workbench step needs 20 Pine Log (${JSON.stringify(need0)})`);
-  assert(E('onboardPaused(GUIDE_STEPS.find(s => s.id === "bench"))') === false && E('onboardPaused({ id: "attack", pause: 1 })') === true, 'the guard: the Workbench press step does not pause while 20 Pine Log are missing; a plain press step does pause');
-  E('S.mats.wood[0] = 20');
-  assert(E('onboardPaused(GUIDE_STEPS.find(s => s.id === "bench"))') === true && !E('onboardNeed("bench").length'), 'with 20 Pine Log in hand the Workbench press step pauses again');
+  assert(need0.length === 1 && need0[0].name === 'Pine Log' && need0[0].n === 12 && need0[0].have === 0 && need0[0].kind === 'wood', `the Workbench step needs 12 Pine Log (${JSON.stringify(need0)})`);
+  assert(E('onboardPaused(GUIDE_STEPS.find(s => s.id === "bench"))') === false && E('onboardPaused({ id: "attack", pause: 1 })') === true, 'the guard: the Workbench press step does not pause while 12 Pine Log are missing; a plain press step does pause');
+  E('S.mats.wood[0] = 12; S.gold = 100');
+  const needG = JSON.parse(E('JSON.stringify(onboardNeed("stock:bench"))'));
+  assert(needG.length === 1 && needG[0].fam === 'gold' && needG[0].name === 'gold' && needG[0].n === 300 && needG[0].have === 100 && E('onboardPaused(GUIDE_STEPS.find(s => s.id === "bench"))') === false, `short of the Workbench's gold the step says so and does not pause (${JSON.stringify(needG)})`);
+  E('S.gold = 360');
+  assert(E('onboardPaused(GUIDE_STEPS.find(s => s.id === "bench"))') === true && !E('onboardNeed("bench").length'), 'with 12 Pine Log and the gold in hand the Workbench press step pauses again');
   // first-gold-and-camp-strip: with the Forge up the guide's next job is the first weapon, and making one ends it
   E('soloPick("tobin"); S.camp.b.forge = 1; onboardReveal("craft"); onboardDone("forge")');
   assert(E('!!weaponKind() && weaponMats().length > 0 && !weaponMade() && GUIDE_STEPS.find(s => s.id === "weapon").when() && !GUIDE_STEPS.find(s => s.id === "weapon").done()'), 'the weapon step shows once the Forge is built and no weapon is made');
@@ -4720,8 +4725,8 @@ if (section('solo guide: gathering never freezes (browser)')) try {
       await page.goto('http://lf.test/'); await page.waitForTimeout(700);
       const X = s => page.evaluate(s => window.__t.x(s), s);
       await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go'); await page.waitForTimeout(600);
-      // the fight steps (Attack ... the first boss) are walked by the check above; here the first boss is down
-      await X('for (const id of ["attack", "ability", "dodge", "parry", "boss", "upgrade"]) onboardDone(id); S.maxZone = 2; S.zone = 2; S.blade = 1; true');
+      // the fight steps (Attack ... the first boss) are walked by the check above; here the first boss is down (with the 360 gold zone 1 pays: the Workbench costs 300)
+      await X('for (const id of ["attack", "ability", "dodge", "parry", "boss", "upgrade"]) onboardDone(id); S.maxZone = 2; S.zone = 2; S.blade = 1; S.gold = 360; true');
       await page.waitForTimeout(1300);
       const trail = [], waited = [];
       let built = false, frozen = '';
@@ -6551,7 +6556,7 @@ if (section('camp guide tracking (C2, browser)')) try {
           await page.goto('http://lf.test/');
           await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go');
           const X = s => page.evaluate(s => window.__t.x(s), s);
-          await X(`soloPickerOpen = () => true; S.mats.wood[0] = 100; hearthLight();
+          await X(`soloPickerOpen = () => true; S.mats.wood[0] = 100; S.gold = 1000; hearthLight();
             onboardUnlockAll(); onboardStep = () => GUIDE_STEPS.find(s => s.id === 'bench'); setTab('camp'); ui(true); true`);
           await page.waitForFunction(() => !!document.querySelector('#camp-b-bench .cb-quick'));
           // Native scroll, with enough space around the existing target to test both directions.
@@ -8644,7 +8649,7 @@ if (section('C29 boss pass (core)')) try {
       E(`loadSave(); S.L = 41; S.solo.asc.pip = 1; S.solo.tr.pip.atk = 41; attrSpread();
         for (const sl of Object.keys(S.equip)) { const it = itemById(S.equip[sl]); if (it && !['pick', 'axe', 'sickle', 'spear'].includes(it.slot)) { it.r = 'epic'; it.plus = 10; it.t += ${d}; if (it.a) it.a = it.a.filter(l => l[0] === 'hp'); } }
         S.abil.unl.pip = ['spark', 'nova']; S.solo.eq.pip = ['fire', 'spark', 'nova']; S.maxZone = 38; setZone(38); S.activity = 'fight'; arena = null; gearDirty()`);
-      const hit = boss => E(`(() => { fightBoss = ${boss}; spawn(); const p = turnCombatProfile(), k = p.refHp * p.hitX * p.bossHitX / p.heroMaxHp, ch = p.script.find(m => m.charge);
+      const hit = boss => E(`(() => { fightBoss = ${boss}; spawn(); const p = turnCombatProfile(), k = p.refHp * p.hitX * (p.bossHeroX || 1) * p.bossHitX / p.heroMaxHp, ch = p.script.find(m => m.charge);
         return { name: p.foeName + ' ' + p.script.map(m => m.id).join('+'), hit: k * Math.max(...p.script.filter(m => !m.charge).flatMap(m => m.hits.map(h => h.x))), charge: ch ? k * p.bossChargeX * ch.hits.reduce((a, h) => a + h.x, 0) : 0 }; })()`);
       const run = skill => E(`(r => ({ win: r.kills / Math.max(1, r.kills + r.deaths), turns: r.totalHeroTurns / Math.max(1, r.completedFights) }))(turnCombatSample({ profile: turnCombatProfile(), seconds: 1800, seed: 3, skill: ${JSON.stringify(skill)} }))`);
       const n = hit(false), b = hit(true);
@@ -8670,7 +8675,7 @@ if (section('C29 mid-game HP and Wren (core)')) try {
         ${J(KINDS[k])}.concat(['charm']).forEach((kind, i) => { const it = newItem(kind, t, 'rare', { rnd }); it.plus = 5; if (it.a) it.a = it.a.filter(l => l[0] === 'hp'); S.items.push(it); S.equip[['weapon', 'off', 'helm', 'body', 'charm'][i]] = it.id; }); })();
       S.activity = 'fight'; arena = null; gearDirty(); fightBoss = false; spawn(); globalThis.__f = 1 / (turnCombatProfile().A / turnRefAtk(${z}));`);
     const prof = boss => `(() => { fightBoss = ${boss}; spawn(); const p = turnCombatProfile(); p.A *= __f; p.U *= __f; p.counter *= __f; p.heroMaxHp *= __f; return p; })()`;
-    const hit = boss => E(`(p => { const k = p.refHp * p.hitX * p.bossHitX / p.heroMaxHp, ch = p.script.find(m => m.charge);
+    const hit = boss => E(`(p => { const k = p.refHp * p.hitX * (p.bossHeroX || 1) * p.bossHitX / p.heroMaxHp, ch = p.script.find(m => m.charge);
       return { hit: k * Math.max(...p.script.filter(m => !m.charge).flatMap(m => m.hits.map(h => h.x))), charge: ch ? k * p.bossChargeX * ch.hits.reduce((a, h) => a + h.x, 0) : 0 }; })(${prof(boss)})`);
     // the mean over ability sets and seeds 1-3 (one sample swings a lot)
     const run = (skill, sets) => E(`(p => { let K = 0, D = 0, T = 0, F = 0; for (const eq of ${J(sets)}) for (let sd = 1; sd <= 3; sd++) {
@@ -8690,16 +8695,25 @@ if (section('C29 mid-game HP and Wren (core)')) try {
       const mid = z >= 25, b = mid ? [0.08, 0.16, 0.2, 0.45] : z === 15 ? [0.07, 0.42, 0.2, 0.92] : z === 20 ? [0.15, 0.42, 0.4, 0.92] : [0.18, 0.36, 0.45, 0.9];
       if (!(r.n.hit >= 0.05 && r.n.hit <= 0.18 && r.b.hit >= b[0] && r.b.hit <= b[1] && r.b.charge >= b[2] && r.b.charge <= b[3]) || r.err().length) bad.push(s); }
     assert(!bad.length, `mid-game HP: for a hero who keeps up (zones 8-34), a landed normal hit costs 5-18% of max HP, a boss hit 18-36% (7-42% at zone 15, 15-42% at zone 20), a charge 45-90% (20-92% at zone 15, 40-92% at zone 20) (${bad.length ? 'off: ' + bad.join('; ') : seen.join('; ')})`); }
-  // played: good players win zone-20 bosses in 8-10 turns or so, casual players win some and lose some; Tobin stays the safest
+  // played: good players win zone-20 bosses in 8-10 turns or so, casual players win some and lose some; Tobin stays the safest, not a sure win (tobin-safety-margin)
   { const w = kept('wren', 20, 33, 'mid'), p = kept('pip', 20, 33, 'mid'), t = kept('tobin', 20, 33, 'mid');
     const WS = [['echo', 'deadeye', 'powershot'], ['twinshot', 'echo', 'deadeye'], ['echo', 'barbed', 'sonic']], PS = [['fire', 'ignite', 'spark'], ['kindle', 'fire', 'ignite'], ['fire', 'wildfire', 'spark']];
     const wg = w.run(good, WS), wc = w.run(casual, WS), pg = p.run(good, PS), pc = p.run(casual, PS), tc = t.run(casual, [['bash', 'heavystrike', 'hammerfall'], ['bash', 'riposte', 'hammerfall']]);
     assert(wg.win >= 0.95 && pg.win >= 0.95 && wg.turns >= 6 && wg.turns <= 12 && pg.turns >= 6 && pg.turns <= 12 && wc.win >= 0.2 && wc.win <= 0.85 && pc.win >= 0.2 && pc.win <= 0.85
-      && tc.win >= 0.95 && t.b.hit < p.b.hit / 3 && !w.err().length,
-      `mid-game HP: at zone 20 a hero who keeps up wins bosses played well in 6-12 turns and 20-85% played casually (this hero is scaled to the reference; budget.mjs gates the real one); Tobin wins nearly all, a hit costs him under a third of Pip's (${JSON.stringify({ wg, wc, pg, pc, tc, tobinHit: +t.b.hit.toFixed(3), pipHit: +p.b.hit.toFixed(3) })})`); }
+      && tc.win >= 0.3 && tc.win <= 0.95 && t.b.hit >= p.b.hit * 0.6 && !w.err().length,
+      `mid-game HP: at zone 20 a hero who keeps up wins bosses played well in 6-12 turns and 20-85% played casually (this hero is scaled to the reference; budget.mjs gates the real one); Tobin wins more than they do but not all, and a boss hit costs him at least 60% of what it costs Pip (${JSON.stringify({ wg, wc, pg, pc, tc, tobinHit: +t.b.hit.toFixed(3), pipHit: +p.b.hit.toFixed(3) })})`); }
   // gear matters: a tier behind, a zone-20 boss hit takes most of your health; a tier ahead, it barely hurts
   { const lo = kept('pip', 20, 33, 'mid', -1), hi = kept('pip', 20, 33, 'mid', 1);
     assert(lo.b.hit > 0.5 && lo.b.charge > 1 && hi.b.hit < 0.25, `mid-game HP: a gear tier behind, a zone-20 boss hit costs over half your health and its charge kills; a tier ahead, under a quarter (${[lo, hi].map(r => (100 * r.b.hit).toFixed(0) + '% / ' + (100 * r.b.charge).toFixed(0) + '%').join(', ')})`); }
+  // tobin-safety-margin: Tobin's own boss-hit share (boss.heroHitX) never lifts a landed hit past the zone's hit cap, so a hero a gear tier behind survives a full-health landed hit
+  { const g = loadCore({ seed: 7, turns: true, storage: memoryStorage({ [KEY]: FX('mid') }) }), E = s => g.eval(s);
+    const r = E(`(() => { soloPick('tobin', { now: true }); S.maxZone = 20; setZone(20); S.activity = 'fight'; arena = null; fightBoss = true; gearDirty(); spawn();
+      const d = [], io = { random: () => 0.99, emit() {}, alive: () => ({ hero: true, foe: true }), heroHp: () => 1e15, foeHp: () => 1e15, foe: () => null, foeX: () => 1,
+        damageHero: a => { d.push(a); return a; }, healFoe() {}, healHero() {} };
+      const p = turnCombatProfile(); p.blockP = 0; p.blockC = 0; p.heroMaxHp = 1000; const m = turnNew(p, io);
+      m.move = { id: 't', name: 'T', hits: [{ x: 5 }] }; m.hitI = 0; m.defense = ''; turnContact(m, io);
+      return { hero: p.bossHeroX, cap: p.bossHitCap, share: d[0] / p.heroMaxHp }; })()`);
+    assert(r.hero > 1 && r.cap > 0 && r.share <= r.cap + 1e-9, `tobin-safety-margin: a landed zone-20 boss hit on Tobin never costs more than the hit cap of his max HP (${JSON.stringify(r)})`); }
   // Wren: her max HP in turn fights is x1.2 (TURN_TUNE.heroHpX; the real-time fight is unchanged), and Out of Reach: after
   // she dodges a hit, the rest of that move hits her for 70%
   { const g = loadCore({ seed: 8, turns: true }), E = s => g.eval(s);
@@ -10376,8 +10390,8 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
             // do the step through its own target
             const live = await X(`!!(onboardSpec(${JSON.stringify(st)}) || {}).live`);
             if (live) {
-              // a step that waits for materials: they come in (the gathering itself is checked at 360 px)
-              await X(`for (const m of onboardNeed(${JSON.stringify(st)})) S.mats[m.fam][m.t - 1] = Math.max(S.mats[m.fam][m.t - 1] || 0, m.n); true`);
+              // a step that waits for materials: they come in (the gathering itself is checked at 360 px); a build's gold row (the Workbench) comes from fights
+              await X(`for (const m of onboardNeed(${JSON.stringify(st)})) { if (m.fam === 'gold') S.gold = Math.max(S.gold, m.n); else S.mats[m.fam][m.t - 1] = Math.max(S.mats[m.fam][m.t - 1] || 0, m.n); } true`);
             } else if (!c.ok) await X(`(sp => { if (sp && sp.node) sp.node.click(); return true; })(onboardSpec(${JSON.stringify(st)}))`);
             else if (['attack', 'ability', 'dodge', 'parry'].includes(st)) await tapAt(page, c.px, c.py);
             else if (st === 'boss') await page.click('.ob-ok');
@@ -11007,6 +11021,63 @@ if (section('hero portraits')) try {
   const inGame = ids.filter(id => new RegExp('^\\s+' + id + ': \\{', 'm').test(roster));
   assert(inGame.length >= 21, 'portraits: the 21 heroes who are in the game and in the 34 have one (found ' + inGame.length + ')');
 } catch (e) { fail('hero portraits crashed: ' + (e.stack || e)); }
+
+// ==== tell-us-form: the Netlify page can take a note; the Artifact stays network-free (tools/site.mjs, 75-feedback-ui.js) ====
+if (section('tell us form')) try {
+  const html0 = fs.readFileSync(distFile, 'utf8');
+  const net = ['fetch(', 'XMLHttpRequest', 'sendBeacon', 'form-name', 'LF_SITE.send(', 'data-netlify'].filter(w => html0.includes(w));
+  assert(!net.length, `tell us: dist/lanternfall.html has no network call or form post (${net.join(', ') || 'none'})`);
+  assert(html0.includes('LF_SITE'), 'tell us: the game checks for window.LF_SITE (the web page sets it)');
+  const { spawnSync } = await import('node:child_process'), osm = await import('node:os');
+  const tmp = fs.mkdtempSync(path.join(osm.tmpdir(), 'lanternfall-tellus-'));
+  try {
+    const r = spawnSync(process.execPath, [path.join(ROOT, 'tools', 'site.mjs'), tmp], { encoding: 'utf8', timeout: 30000 });
+    const site = r.status === 0 ? fs.readFileSync(path.join(tmp, 'index.html'), 'utf8') : '';
+    const form = (site.match(/<form name="tell-us"[\s\S]*?<\/form>/) || [''])[0];
+    const names = [...form.matchAll(/name="([^"]+)"/g)].map(m => m[1]).filter(n => n !== 'tell-us');
+    assert(/data-netlify="true"/.test(form) && /netlify-honeypot="bot-field"/.test(form) && names.includes('bot-field'), 'tell us: the web page has the hidden tell-us form with the honeypot');
+    assert(['note', 'zone', 'level', 'minutes', 'build', 'screen', 'errors'].every(f => names.includes(f)) && names.length === 8, `tell us: the form holds the 7 fields and the honeypot, nothing else (${names.join(', ')})`);
+    assert(!/name|e-?mail|user-?agent/i.test(names.join(' ')), 'tell us: no name, email or user-agent field');
+    assert(site.includes('window.LF_SITE=') && (site.match(/fetch\(/g) || []).length === 1, 'tell us: the web page, not the game, holds the one network call');
+  } finally { if (path.basename(tmp).startsWith('lanternfall-tellus-')) fs.rmSync(tmp, { recursive: true, force: true }); }
+  const { pw, exe } = browserTools;
+  if (!pw || !exe) { skipBrowser('tell us form (browser): Playwright or Chromium not here, skipped'); }
+  else {
+    const mid = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-mid.json'), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h] of [[360, 740], [740, 360]]) for (const stub of [false, true]) {
+        const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: true, hasTouch: true });
+        await ctx.addInitScript(([k, v]) => { try { localStorage.setItem(k, v); } catch (e) {} }, [KEY, mid]);
+        if (stub) await ctx.addInitScript(() => { window.__sent = []; window.__ans = true; window.LF_SITE = { build: 'abc1234', send: f => { window.__sent.push(f); return Promise.resolve(window.__ans); } }; });
+        const page = await ctx.newPage(), errs = [], tag = `${w}x${h} ${stub ? 'with' : 'without'} LF_SITE`;
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        await page.evaluate(() => document.getElementById('bellBtn').click()); await page.waitForTimeout(500);
+        await page.evaluate(() => { const b = document.querySelector('button[data-v="settings"]'); if (b) b.click(); }); await page.waitForTimeout(900);
+        const vis = await page.evaluate(() => { const b = document.querySelector('#sec-feedback .feedback-send'); return !!b && !b.hidden && b.offsetParent !== null; });
+        assert(await page.evaluate(() => !!document.querySelector('#sec-feedback .feedback-copy')), `tell us: ${tag}: the Send feedback panel opens from Settings`);
+        assert(vis === stub, `tell us: ${tag}: the Send to the team button is ${stub ? 'shown' : 'not shown'}`);
+        if (stub) {
+          const fit = await page.evaluate(() => { const b = document.querySelector('#sec-feedback .feedback-send'); b.scrollIntoView({ block: 'center' }); const r = b.getBoundingClientRect(), p = document.querySelector('#sec-feedback .feedback-panel').getBoundingClientRect(); return r.right <= innerWidth && p.right <= innerWidth + 1 && p.left >= -1; });
+          assert(fit, `tell us: ${tag}: the panel fits the screen width`);
+          for (const ok of [true, false]) {
+            await page.evaluate(ok => { window.__ans = ok; const t = document.querySelector('#sec-feedback .feedback-note'); t.value = 'The first fight felt slow.'; t.dispatchEvent(new Event('input', { bubbles: true })); document.querySelector('#sec-feedback .feedback-send').click(); }, ok);
+            await page.waitForTimeout(300);
+            const msg = await page.evaluate(() => document.querySelector('#sec-feedback .feedback-sent').textContent);
+            assert(ok ? /^Sent\. Thank you\.$/.test(msg) : /Couldn't send\. Copy it instead\?/.test(msg), `tell us: ${tag}: a send that ${ok ? 'works' : 'fails'} says "${msg}"`);
+          }
+          const sent = await page.evaluate(() => window.__sent);
+          assert(sent.length === 2 && sent[0].note === 'The first fight felt slow.' && ['note', 'zone', 'level', 'minutes', 'build', 'screen', 'errors'].every(k => k in sent[0]) && Object.keys(sent[0]).length === 7, `tell us: ${tag}: send gets exactly the 7 fields (${Object.keys(sent[0] || {}).join(', ')})`);
+          assert(sent[0].build === 'abc1234' && +sent[0].level >= 1 && +sent[0].zone >= 1 && /^\d+x\d+$/.test(sent[0].screen), `tell us: ${tag}: the note carries build, level, zone and screen size`);
+        }
+        assert(!errs.length, `tell us: ${tag}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('tell us form crashed: ' + (e.stack || e)); }
 
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 console.log(browserSummary(browserSkipped, browserSkipReasons));

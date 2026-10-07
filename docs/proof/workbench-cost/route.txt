@@ -1,0 +1,8 @@
+# Proof for card workbench-cost. Shots from a script (a cold new game as Wren, put just past the zone 1 boss with the 360 gold
+# that boss leaves every hero, the fire lit, Camp open, the Workbench row opened), at 360x740 and 740x360:
+#   bench-cost-*.png   the Workbench's Lv 1 costs 300 gold (300/300 ready) and 12 Pine Log (5/12); the guide says
+#                      "Chop 12 Pine Log for the Workbench (5/12)."
+#   bench-built-*.png  with 12 logs in hand, Build and Sure? start it: gold 360 -> 60, logs 12 -> 0, 300 booked as camp spend.
+# The first-hour walk (tools/walk.mjs --seed 1..3) played the whole chain on this build: Workbench up at 2:45 (Wren),
+# 2:45 (Tobin), 3:45 (Pip), each holding 958 to 1,761 gold; numbers in docs/coord/proposed/workbench-cost.md.
+# The prices, the gold-short guide line and the no-pause rule are held by tools/check.mjs (cold hearth, solo guide pause).
