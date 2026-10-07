@@ -979,6 +979,10 @@ if (section('camp')) try {
   assert(E('topGoals(8, { sticky: false }).some(x => x.id === "camp-build" && x.ready)'), 'Next Up: "ready to build"');
   assert(E('campBuild("hearth")'), 'Hearth 6 started');
   assert(E('topGoals(60, { sticky: false }).some(x => x.id === "camp-timer" && /finishes in/.test(x.label))'), 'Next Up: "build finishes in <time>"');
+  // first-gold-and-camp-strip: the camp tutorial goal shows until one building is tapped, then never again
+  assert(E('topGoals(60, { sticky: false }).some(x => x.id === "camp-tap" && /Tap a building/.test(x.label))'), 'Next Up: "Tap a building in your camp" while no building has been tapped');
+  E('onboardUseDone("use:camp-tap")');
+  assert(!E('topGoals(60, { sticky: false }).some(x => x.id === "camp-tap")'), 'Next Up: the camp tap goal is gone once a building is tapped');
   const bad = badNumbers(E('S'));
   assert(!bad.length, 'no NaN in the camp state' + (bad.length ? ': ' + bad[0] : ''));
   assert(!g.errors.length, 'no camp errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
@@ -4633,7 +4637,7 @@ if (section('solo guide pause rules')) try {
   const bad = steps.filter(s => s.needs && s.pause).map(s => s.id);
   assert(steps.some(s => s.needs) && !bad.length, `no guide step that waits for materials has pause (${steps.filter(s => s.needs).map(s => s.id).join(', ')})${bad.length ? '; pausing: ' + bad.join(', ') : ''}`);
   const build = steps.filter(s => s.pauseUnless);
-  assert(build.map(s => s.id).join() === 'bench,tool,forge,store' && build.every(s => s.pause), 'the press steps that cost materials (bench, tool, forge, store) pause only through pauseUnless');
+  assert(build.map(s => s.id).join() === 'bench,tool,forge,weapon,store' && build.every(s => s.pause), 'the press steps that cost materials (bench, tool, forge, weapon, store) pause only through pauseUnless');
   assert(build.every(s => steps.some(t => t.needs && t.id === 'stock:' + s.id)), 'each of them has a stock step that says what to gather');
   assert(steps.filter(s => s.id === 'nextup' || s.id === 'tab:party').every(s => !s.pause) && steps.find(s => s.id === 'nextup').ok, 'Next Up and the Hero tab hint never pause the game (Next Up is a Got it note)');
   // the guard: a paused step with an unmet material need does not pause; with the materials in hand it does
@@ -4643,6 +4647,11 @@ if (section('solo guide pause rules')) try {
   assert(E('onboardPaused(GUIDE_STEPS.find(s => s.id === "bench"))') === false && E('onboardPaused({ id: "attack", pause: 1 })') === true, 'the guard: the Workbench press step does not pause while 20 Pine Log are missing; a plain press step does pause');
   E('S.mats.wood[0] = 20');
   assert(E('onboardPaused(GUIDE_STEPS.find(s => s.id === "bench"))') === true && !E('onboardNeed("bench").length'), 'with 20 Pine Log in hand the Workbench press step pauses again');
+  // first-gold-and-camp-strip: with the Forge up the guide's next job is the first weapon, and making one ends it
+  E('soloPick("tobin"); S.camp.b.forge = 1; onboardReveal("craft"); onboardDone("forge")');
+  assert(E('!!weaponKind() && weaponMats().length > 0 && !weaponMade() && GUIDE_STEPS.find(s => s.id === "weapon").when() && !GUIDE_STEPS.find(s => s.id === "weapon").done()'), 'the weapon step shows once the Forge is built and no weapon is made');
+  E('addItem(newItem(weaponKind(), 1, 0))');
+  assert(E('weaponMade() && GUIDE_STEPS.find(s => s.id === "weapon").done() && GUIDE_STEPS.find(s => s.id === "stock:weapon").done()'), 'making a weapon ends the weapon steps');
   // no player-facing copy calls the first wood Oak
   const srcs = ['75-onboard-ui', '75-camp-ui', '56-roster', '63d-scenery-camp', '55-onboard'];
   const oak = srcs.filter(f => fs.readFileSync(path.join(ROOT, 'src', 'js', f + '.js'), 'utf8').split('\n').some(l => /\bOak\b/.test(l) && !/^\s*\/\//.test(l)));
@@ -6178,6 +6187,11 @@ if (section('gatherers at camp (C2)')) try {
     assert(W('$("camp-scene-scroll").tabIndex===0 && $("camp-scene-world").width===1024 && $("camp-scene-scroll").style.cssText.includes("overflow-x:auto")'), 'C2: the real Camp mount provides a keyboard-focusable native horizontal panorama');
     W('globalThis.__person=$("camp-scene-hands").children.find(x=>x.dataset.handId==="tam")');
     assert(W('__person.tagName==="BUTTON" && __person.getAttribute("aria-label").includes("Tam")'), 'C2: the scene exposes the gatherer as a named native button');
+    // first-gold-and-camp-strip: buildings in the panorama are buttons; a tap opens the card and ticks the camp tutorial goal
+    W('S.camp.b.forge = Math.max(1, S.camp.b.forge | 0); delete S.onboard.done["use:camp-tap"]; __sections.camp.update()');
+    assert(W('$("camp-scene-blds").children.length > 0 && $("camp-scene-blds").children.every(b => b.tagName === "BUTTON" && b.getAttribute("aria-label").includes("Tap to see what it does"))'), 'camp strip: each built building is a named native button in its own layer');
+    W('$("camp-scene-blds").children.find(b => b.dataset.bldId === "forge").click()');
+    assert(W('!$("camp-bld-card").hidden && $("camp-bld-card").textContent.includes("Forge") && $("camp-bld-card").textContent.includes("Makes weapons") && S.onboard.done["use:camp-tap"] === 1'), 'camp strip: tapping the Forge shows what it does and ticks the camp tap goal');
     const talk = W('handsGet("tam").talk||0');
     W('__person.fire("pointerdown",{clientX:10}); __person.fire("pointermove",{clientX:40}); __person.fire("click")');
     assert(W('handsGet("tam").talk||0') === talk && W('$("hands-talk").hidden'), 'C2: dragging from a worker does not open a conversation');
