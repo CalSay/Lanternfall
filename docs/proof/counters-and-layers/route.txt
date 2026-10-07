@@ -8,7 +8,13 @@ tap-if "Continue"
 wait 3
 tap-if "Continue"
 wait 3
+tap-if "Continue"
+wait 3
+tap-if "Continue"
+wait 3
 tap "Hero"
+wait 2
+tap-if "Continue"
 wait 2
 tap "Stars"
 wait 1
