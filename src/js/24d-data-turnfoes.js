@@ -174,6 +174,11 @@ const TURN_BOSS_TRICKS = {};
 const TURN_FOE_SPEED = { normal: 0.9, ranged: 0.95, elite: 1.0, boss: 1.05, region: 1.1 };
 // Fight length in the hero's ordinary Attack actions at zone-ready power (the C22 contract's HP budgets)
 const TURN_FOE_HP = { zoneFoe: 4, normal: 5, elite: 9, boss: 16, region: 30 };
+// Early foes take at least 3 hits (card early-foes-three-hits; Cal's play note #18: zone 1-6 foes fell to one hit). By zone 1 to 6, the
+// fewest plain Attacks of the hero who meets it that a normal foe's HP may be (59k turnFoeSetup), whatever level the hero reaches the
+// zone at. 6 to 8 plain Attacks is 3 or 4 hero turns once an opening ability and a parry counter land (walk, seed 1: 4 of 28 kills
+// under 3 turns, mean 3.6). Elites, bosses, the Deepwell and the Provings keep their own HP.
+const TURN_EARLY_FOE_HITS = [6, 8, 8, 8, 8, 8];
 
 // Elite traits in turn fights (owner, 2026-10-02): one per elite, from zone COMBAT_TUNE.eliteFrom (59k turnFoeSetup).
 // Names and badges are the old traits' (ELITE_TRAITS, 21g); these are their turn rules and the line the first one shows.

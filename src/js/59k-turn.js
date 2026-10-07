@@ -257,6 +257,9 @@ function turnFoeSetup(f, z, o) {
     hcap: zb && !region ? turnZoneLine(B.hitCap, z) : 0, hfl: zb && !region && B.hpFloor ? turnZoneLine(B.hpFloor, z) : 0,
     ff: zb && !region && B.footFloor ? turnZoneLine(B.footFloor, z) : 0, pmin: zb && !region && z >= B.passiveZones[0] && z <= B.passiveZones[1] ? B.passiveMin : 0,
     gates: zb && !region && B.gate.on && z >= B.gate.from && z <= B.gate.to ? (champ ? B.gate.champ : z >= B.gate.captainFrom ? B.gate.captain : B.gate.captainEarly) : null };
+  // early foes (zones 1-6) never fall in under TURN_EARLY_FOE_HITS[z - 1] plain Attacks of the hero who meets them (24d)
+  const E = TURN_EARLY_FOE_HITS[z - 1], hu = !f.boss && !f.elite && !o.set && !o.hpA && E > 0 && typeof cbUnitByKey === 'function' ? cbUnitByKey('hero') : null, hp0 = hu ? turnMakeProfile(f, hu) : null;
+  if (hp0 && hp0.A > 0) { const rel = typeof typeXKey === 'function' ? typeXKey(f.txRow || f.type, hp0.heroType) : 1, per = hp0.A * (1 - f.tk.arm) * Math.max(1, rel || 1); f.hp = f.max = Math.max(f.max, E * per); }
   const C = COMBAT_TUNE;
   // a longer boss pays more (the boss pass: payX of its extra length), so an hour of play pays about as before
   // zones 4-24 pay on the old length (boss-tiers PRs 1 and 3 lengthened those fights; gold and XP stay as they were)
