@@ -365,6 +365,7 @@ PR 3 of `boss-tiers`. Opus judge after measuring (the cap question) and a tuning
   still win 100% (report-only rows): gear trivialises them. Fixing that needs the gear-curve card or looser bare floors, as
   `boss-tiers-pr2-proposal.md` says; not done here.
 - **Pay is unchanged.** Boss gold and XP in zones 4-24 use the old length curve; the longer fights do not move income.
+- **Bands.** The z16-34 boss rows are a new kind `captainMid` (Captain band 60-80, Tobin +10, never-defends under 10%); the z20, 25 and 30 Champion-tier fifths sit on it, not the 40-60 Champion band.
 - **Gaps.** The z15 and z20 "too easy" gaps for Wren and Pip are closed. Tobin sits above his band at every new row under
   `tobin-safety-margin` gaps (until 2026-12-01).
 
@@ -508,6 +509,21 @@ Built to the ruling above; the fit is on the budget's own rows, 3 seeds a cell f
   Armour, Guard and good timing keep you standing." Patch note (Foreman): "Bosses now hit for a share of your health, so a big health
   pool no longer makes them harmless. Armour, Guard and good timing still cut their hits." A rare +5 Wren at zone 10 drops from about
   92% to about 64% casual on a first meeting (about 80% was the sketch; the fit lands lower because z10's first-hour row sits at 53).
+
+### Boss tiers, zones 16-34 (boss-tiers-pr5b) (2026-10-07; numbers provisional until the skilling and crafting balance pass)
+
+Ruled SHIP WITH CHANGES by an Opus high judge (`autopilot/reviews/pr5b/boss-tiers-pr5b-judge.md`); Cal can veto any line.
+
+- **Built.** Move tricks, rally gates 75/50/25, the footing floor (r 1) and the 0.75 hit cap run to zone 34 (`tricks.to`, `gate.to`, `footFloor`, `hitCap`).
+  From zone 16 the footing is the kept-up set, rare +5 base lines (`footRare`), with no crafted-set lines: the set's health is cancelled at the
+  frontier and its damage stays. `hitX` and Tobin's `heroHitX` for 16-34 are refitted (casual mean of Wren and Pip 70, Tobin 80) with the G4 set worn.
+- **Measured** (480 fights a cell, 2 seeds): casual 60-83 on every row, never-defends 0-1%, casualHigh 95-100. +50% health moves casual 0-2 points with
+  the floor and +20-35 without. Damage x2 moves casual to 88-100 with the gates and to 100 on every row without them, which is why gates ship here.
+- **Gaps.** z25 Wren (above, ruled 0.87, ratcheted to the measured 0.82) and Pip (below, ruled 0.54, ratcheted to 0.55), owner `boss-balance-pass`, until 2026-12-01.
+- **Replays at 16-34 are easier** than before (the hit scale is 0.2-0.4 of the old one and the floor is frontier only). Accepted; flagged to the balance pass.
+- **Rules for uniques and the set at 16-34:** nothing skips, ignores or shortens a rally; at most two hero actions in a row; boss-fight damage gain +50% at most;
+  passive cuts to zone-boss damage from the set and uniques stacked 10% at most (the 0.55 floor does not reach 16-34); no max-health cost or gain counted as safety;
+  Crown of the Burrow at most once per gate; each unique gets a kept-up budget row (set worn) at z16, 20, 25, 30 in the PR that ships it (this PR measured stand-ins: damage x2, +50% health, foe damage x0.8). `gearCalc(over)` must never add set lines.
 
 ### The Lantern Rules
 
@@ -885,3 +901,5 @@ Card `scenery-z6-10-judge`, from the `slice-art-manifest` open point. Record and
   1-70 changes before then. Measured by the `slice-art-manifest` check (E4, to be built) and a zones 1-70 theme assertion that
   `scenery-follows-areas` adds. Coverage area 15,
   Compass pillar 4.
+
+- **Tobin survives best: deferred to the balance pass.** After #176, a casual Tobin wins zone bosses about as often as Wren and Pip (+1.7 points over their mean, behind both at 4 bosses). Whether he should survive best is decided in the single balance pass after the skilling and crafting overhaul (held card `tobin-margin-retune`). No numbers change now. (2026-10-07)

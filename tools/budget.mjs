@@ -9,6 +9,8 @@
 //   --heroes a,b    some heroes (tools/health.mjs runs one process a hero)     --only id,id  some checkpoints
 //   --seed-offset N another set of fight seeds (health.mjs --write-baseline averages 5)
 //   --eval JS       run in every core after the hero is built (try a tuning change: --eval "TURN_TUNE.boss.regionHpX = 1.6")
+//   --none          also play the never-defends player on every row, not only the kept-up kinds   (manual)
+//   --set none      kept-up heroes at grade 4 and up do not wear the crafted set (default: they do, see "The set" below)
 //   --stars none    no Stars (default: the typical Stars a player carries at that zone, as sim.mjs --stars typical)
 //   --lv N          every kept-up hero N levels off the road (-1: a level behind)
 //   --sweep         print casual and good wins at L-1, L and L+1 (how much one level matters)   (manual)
@@ -32,6 +34,9 @@
 //           +0 (first crafts). Zones 35-38: the late fixture's gear made epic +10, ascended at 38 (the late-zone pass).
 //   skills  three abilities a player would have by then (one natural set a hero), cast in slot order
 //   Stars   what the checkpoint's zone has found, learned, 3 set (sim.mjs STARS_TYPICAL); zone 1: none
+//   set     (boss-tiers-pr5b) from grade 4 (zone 19) the hero wears the crafted set on top: the flat gear lines +0.10 x TIER_POW[t] Might and
+//           +0.15 x TIER_POW[t] health (docs/DECISIONS.md "Set bonuses and uniques"). The game does not ship the set yet; the budget wears it so the
+//           kept-up rows are fitted with it on, and the set lands on a tuned floor. Not on the footing swap (gearCalc with `over`): the footing wears no set, as fitted.
 //   build   attribute points spread evenly (hero-progression-rework's attrSpread), once the game has attributes
 // Nothing is scaled to the reference hero: the numbers are the game's own, so a change to levels, gear, foes or Training
 // shows up here.
@@ -47,8 +52,9 @@ import { HEROES, loadTargets, cells, offBand } from './lib/budget-score.mjs';
 const argv = process.argv.slice(2);
 const flag = n => argv.includes('--' + n);
 const opt = (n, d) => { const i = argv.indexOf('--' + n); return i >= 0 && argv[i + 1] !== undefined && !argv[i + 1].startsWith('--') ? argv[i + 1] : d; };
-{ const known = ['json', 'fights', 'heroes', 'only', 'eval', 'stars', 'talents', 'lv', 'seed-offset', 'sweep', 'players', 'read'], bad = argv.filter(a => a.startsWith('--') && !known.includes(a.slice(2)));
+{ const known = ['json', 'fights', 'heroes', 'only', 'eval', 'stars', 'talents', 'lv', 'seed-offset', 'sweep', 'players', 'read', 'set', 'none'], bad = argv.filter(a => a.startsWith('--') && !known.includes(a.slice(2)));
   if (bad.length) { console.error('budget: unknown option ' + bad.join(', ') + '; known: ' + known.map(k => '--' + k).join(' ')); process.exit(2); } }
+const SET_ON = opt('set', 'on') !== 'none';
 const FIGHTS = Number(opt('fights', 240)), OFFSET = Number(opt('seed-offset', 0)), STARS = opt('stars', 'typical') !== 'none', TALS = opt('talents', 'typical') !== 'none';
 const RUN_HEROES = opt('heroes') ? opt('heroes').split(',') : HEROES;
 if (!(FIGHTS >= 5) || !Number.isInteger(OFFSET) || RUN_HEROES.some(h => !HEROES.includes(h))) { console.error('budget: --fights 5 or more, an integer --seed-offset, --heroes from ' + HEROES.join(',')); process.exit(2); }
@@ -57,7 +63,7 @@ const J = JSON.stringify;
 // Players (as sim.mjs --report turns). wide: a weaker and a stronger casual (report only).
 // none (boss-tiers-pr5): never parries or dodges, rings as casual; run on the kept-up rows only ("gear buys room to miss, not immunity")
 export const PLAYERS = { casual: { parry: 0.25, dodge: 0.5, perfect: 0.1, good: 0.4 }, good: { parry: 0.6, dodge: 0.9, perfect: 0.4, good: 0.45 }, none: { parry: 0, dodge: 0, perfect: 0.1, good: 0.4 } };
-const NONE_KINDS = ['keptUpEarly', 'keptUpCaptain', 'keptUpChampion', 'keptUpReport'];
+const NONE_KINDS = ['keptUpEarly', 'keptUpCaptain', 'keptUpChampion', 'keptUpReport', 'captainMid'];
 // bot: the walk bot's defence (tools/walk.mjs PARRY 0.55, DODGE 0.5), as casual on the rings
 const WIDE = { casualLow: { parry: 0.15, dodge: 0.4, perfect: 0.1, good: 0.4 }, casualHigh: { parry: 0.35, dodge: 0.7, perfect: 0.1, good: 0.4 }, bot: { parry: 0.55, dodge: 0.5, perfect: 0.1, good: 0.4 } };
 const RUN_PLAYERS = opt('players') === 'wide' ? { ...PLAYERS, ...WIDE } : PLAYERS;
@@ -123,23 +129,25 @@ export const CHECKPOINTS = [
   ['z13-boss-keptup', 13, 'boss', { st: 'kept', fx: 'mid', kind: 'keptUpCaptain', ref: 'z13-boss' }],
   ['z14-boss-keptup', 14, 'boss', { st: 'kept', fx: 'mid', kind: 'keptUpReport', ref: 'z14-boss' }],
   ['z15-boss-keptup', 15, 'boss', { st: 'kept', fx: 'mid', kind: 'keptUpChampion', ref: 'z15-boss' }],
-  ['z16-boss', 16, 'boss', { st: 'kept', fx: 'mid' }],
-  ['z17-boss', 17, 'boss', { st: 'kept', fx: 'mid' }],
-  ['z18-boss', 18, 'boss', { st: 'kept', fx: 'mid' }],
-  ['z19-boss', 19, 'boss', { st: 'kept', fx: 'mid' }],
+  // zones 16-34 (boss-tiers-pr5b): the kept-up hero (the zone's tier at rare +5, the crafted set from grade 4) is the footing, so the gated hero is the one the
+  // game's footing floor holds; the never-defends player stays under 10% here too
+  ['z16-boss', 16, 'boss', { st: 'kept', fx: 'mid', kind: 'captainMid' }],
+  ['z17-boss', 17, 'boss', { st: 'kept', fx: 'mid', kind: 'captainMid' }],
+  ['z18-boss', 18, 'boss', { st: 'kept', fx: 'mid', kind: 'captainMid' }],
+  ['z19-boss', 19, 'boss', { st: 'kept', fx: 'mid', kind: 'captainMid' }],
   ['z20-normal', 20, 'normal', { st: 'kept', fx: 'mid' }],
   ['z20-elite', 20, 'elite', { st: 'kept', fx: 'mid' }],
-  ['z20-boss', 20, 'boss', { st: 'kept', fx: 'mid' }],
+  ['z20-boss', 20, 'boss', { st: 'kept', fx: 'mid', kind: 'captainMid' }],
   ['z20-boss-behind', 20, 'boss', { st: 'kept', fx: 'mid', tier: -1, kind: 'behind', ref: 'z20-boss' }],
-  ['z21-boss', 21, 'boss', { st: 'kept', fx: 'mid' }],
-  ['z22-boss', 22, 'boss', { st: 'kept', fx: 'mid' }],
-  ['z23-boss', 23, 'boss', { st: 'kept', fx: 'mid' }],
-  ['z24-boss', 24, 'boss', { st: 'kept', fx: 'mid' }],
-  ['z25-boss', 25, 'boss', { st: 'kept', fx: 'mid' }],
-  ['z27-boss', 27, 'boss', { st: 'kept', fx: 'mid' }],
+  ['z21-boss', 21, 'boss', { st: 'kept', fx: 'mid', kind: 'captainMid' }],
+  ['z22-boss', 22, 'boss', { st: 'kept', fx: 'mid', kind: 'captainMid' }],
+  ['z23-boss', 23, 'boss', { st: 'kept', fx: 'mid', kind: 'captainMid' }],
+  ['z24-boss', 24, 'boss', { st: 'kept', fx: 'mid', kind: 'captainMid' }],
+  ['z25-boss', 25, 'boss', { st: 'kept', fx: 'mid', kind: 'captainMid' }],
+  ['z27-boss', 27, 'boss', { st: 'kept', fx: 'mid', kind: 'captainMid' }],
   ['z30-elite', 30, 'elite', { st: 'kept', fx: 'late' }],
-  ['z30-boss', 30, 'boss', { st: 'kept', fx: 'late' }],
-  ['z34-boss', 34, 'boss', { st: 'kept', fx: 'late' }],
+  ['z30-boss', 30, 'boss', { st: 'kept', fx: 'late', kind: 'captainMid' }],
+  ['z34-boss', 34, 'boss', { st: 'kept', fx: 'late', kind: 'captainMid' }],
   ['z35-normal', 35, 'normal', { st: 'late' }],
   ['z35-elder', 35, 'boss', { st: 'late' }],
   ['z36-boss', 36, 'boss', { st: 'late' }],
@@ -156,6 +164,7 @@ export const CHECKPOINTS = [
   ['z20-boss-might', 20, 'boss', { st: 'kept', fx: 'mid', build: 'might', kind: 'build', ref: 'z20-boss' }],
   ['z20-boss-vigour', 20, 'boss', { st: 'kept', fx: 'mid', build: 'vigour', kind: 'build', ref: 'z20-boss' }]
 ];
+const zoneTierOf = z => [1, 7, 13, 19, 42].filter(x => z >= x).length;   // PACE.essTier (40-rules)
 const setFor = (z, k) => SETS[[38, 30, 20, 10, 1].find(s => z >= s)][k];
 // a boss's kind (its band): a region boss is an Elder, zones 1-3 the first bosses, zone 5 the first Champion, zone 10 the Champion,
 // the other zones to 9 the learning Captains, then Captains. Zone 15 is a Champion too (boss-tiers-pr5, M1 E2: three Champions, z15 at 40-60%).
@@ -181,6 +190,7 @@ function setup(c, k, lvShift) {
   s += o.build ? `if (typeof attrAdd === 'function' && attrOn()) { S.attr.pts[${J(k)}] = ATTR0(); attrAdd(${J(o.build)}, 1e9, ${J(k)}); }`
     : `if (typeof attrSpread === 'function' && attrOn()) attrSpread(${J(k)});`;
   // a boss row meets its boss for the first time: the zone is the frontier (S.maxZone = z), which is what the footing floor (59k) keys on
+  if (SET_ON && o.st === 'kept' && o.gear !== 'none' && zoneTierOf(z) >= 4) s += `{ const g0 = gearCalc; gearCalc = over => { const g = g0(over); if (!over) { g.might = (g.might || 0) + 0.10 * TIER_POW[${zoneTierOf(z)}]; g.hp = (g.hp || 0) + 0.15 * TIER_POW[${zoneTierOf(z)}]; } return g; }; }`;
   s += `gearDirty(); S.maxZone = ${c[2] === 'boss' ? z : `Math.max(S.maxZone, ${z})`}; setZone(${z});`;
   return s;
 }
@@ -231,7 +241,7 @@ function measure(c, k, lvShift = LV_SHIFT, players = RUN_PLAYERS) {
   if (foe === 'elite' && !p0.elite) throw new Error(`${id} ${k}: no elite to fight`);
   const chain = foe === 'boss' ? 1 : 5, n = Math.ceil(FIGHTS / chain);
   for (const [pl, skill] of Object.entries(players)) {
-    if (pl === 'none' && !NONE_KINDS.includes(o.kind)) continue;
+    if (pl === 'none' && !NONE_KINDS.includes(o.kind) && !flag('none')) continue;
     const seeds = Array.from({ length: n }, (_, i) => seedOf(OFFSET, id, k, pl, i));
     const r = e(`(() => { const p = turnCombatProfile(); p.eq = ${J(o.st === 'joined' ? [SIG[k]] : setFor(z, k))}; p.cds = { attack: 1 }; for (const id of p.eq) p.cds[id] = turnCdFor(id);
       let K = 0, D = 0, T = 0, F = 0, C = 0;

@@ -1,0 +1,11 @@
+# seed: 1
+# Proof for card next-up-equip: Next Up offers "Equip your ..." for a better piece in the bag instead of asking for the same craft again.
+# The goal logic is checked by walk seed 1 (no repeated craft goals); this route checks Next Up still draws whole on the early fixture.
+new early
+wait 6
+tap-if "Continue"
+wait 4
+tap-if "Continue"
+wait 6
+expect ".hud.vs .hero-plate"
+shot next-up-equip
