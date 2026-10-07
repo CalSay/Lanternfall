@@ -227,7 +227,7 @@
   // the ring sits on the craft card's own Equip button when that card is up.
   const wearSpec = (kind, text) => {
     const w = wearPiece(kind); if (!w) return null;
-    const nm = itemName(w.it), btn = q('#sec-craft-recipes .cf-resact .forge'), card = !!S.tab && vis(btn);
+    const nm = itemName(w.it), btn = q('#sec-craft-recipes .cf-resact .forge'), card = !!S.tab && vis(btn) && (btn.closest('.cf-res') || {}).dataset?.itemId === String(w.it.id);   // the card must show this piece
     return { text: text(nm), node: card ? btn : onGame() ? $('stage') : q(`.tab[data-tab="${S.tab}"]`), at: !card && onGame() ? [0.74, 0.62] : null, side: 'up',
       go: { label: `Equip ${nm}`, fn: () => { equipItem(w.it.id, w.pos); } } };
   };

@@ -1086,7 +1086,8 @@ function turnCombatAction(kind, slot) {
 // started, so the new one showed ready and did nothing until the next foe: Cal's play note 20). Its cooldown is kept once it has one.
 function turnSyncEquip() {
   const m = TURN_LIVE; if (!m || m.ended) return;
-  for (const id of soloEquipped()) if (id && !(id in m.cds)) { m.cds[id] = 0; m.p.cds[id] = turnCdFor(id); if (!m.p.eq.includes(id)) m.p.eq.push(id); }
+  for (const id of soloEquipped()) if (id && !(id in m.cds)) { m.cds[id] = 0; m.p.cds[id] = turnCdFor(id); }
+  m.p.eq = soloEquipped().filter(Boolean);   // passives follow the slots: a swapped-out one stops, so they never stack
 }
 on('soloEquip', turnSyncEquip);
 function turnCombatTick(dt) {

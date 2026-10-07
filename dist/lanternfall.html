@@ -26310,7 +26310,8 @@ function turnCombatAction(kind, slot) {
 // started, so the new one showed ready and did nothing until the next foe: Cal's play note 20). Its cooldown is kept once it has one.
 function turnSyncEquip() {
   const m = TURN_LIVE; if (!m || m.ended) return;
-  for (const id of soloEquipped()) if (id && !(id in m.cds)) { m.cds[id] = 0; m.p.cds[id] = turnCdFor(id); if (!m.p.eq.includes(id)) m.p.eq.push(id); }
+  for (const id of soloEquipped()) if (id && !(id in m.cds)) { m.cds[id] = 0; m.p.cds[id] = turnCdFor(id); }
+  m.p.eq = soloEquipped().filter(Boolean);   // passives follow the slots: a swapped-out one stops, so they never stack
 }
 on('soloEquip', turnSyncEquip);
 function turnCombatTick(dt) {
@@ -41516,7 +41517,7 @@ let navUI = null;
   // the ring sits on the craft card's own Equip button when that card is up.
   const wearSpec = (kind, text) => {
     const w = wearPiece(kind); if (!w) return null;
-    const nm = itemName(w.it), btn = q('#sec-craft-recipes .cf-resact .forge'), card = !!S.tab && vis(btn);
+    const nm = itemName(w.it), btn = q('#sec-craft-recipes .cf-resact .forge'), card = !!S.tab && vis(btn) && (btn.closest('.cf-res') || {}).dataset?.itemId === String(w.it.id);   // the card must show this piece
     return { text: text(nm), node: card ? btn : onGame() ? $('stage') : q(`.tab[data-tab="${S.tab}"]`), at: !card && onGame() ? [0.74, 0.62] : null, side: 'up',
       go: { label: `Equip ${nm}`, fn: () => { equipItem(w.it.id, w.pos); } } };
   };
