@@ -28,7 +28,8 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Cap any level lift for a joining hero at the level of the hero who leaves, with the road's own level as the floor. Why: the judge found a join lead could put a joiner above the hero they replace, rewarding switching for its own sake. (hero-progression-rework, 2026-10-06)
 - When a build or other per-player choice must stay out of a system, list every caller of the shared power function in the neutrality test. Why: PR #58 kept away, raid and farm build-neutral, but the Deepwell's depth anchor read turnPowerNow, which carried the Might multiplier (Opus review). (hero-progression-rework, 2026-10-06)
 - Measure a boss on the gear the player has when they first meet it, not the gear a kept-up hero could have: the same boss was a 100% pat on the head at rare +5 and a 15% wall at common +0. Why: boss hits scale with the reference hero's HP, which grew 1.9x a zone from zone 8 while a first-hour hero's grew 1.3-1.5x. (boss-tiers, 2026-10-07)
-- `budget.mjs --eval` runs after the boss is spawned, so a TURN_TUNE table change must end with `fightBoss = true; spawn();`. Why: a flat hitX of 0.1 first showed no effect. (boss-tiers, 2026-10-07)
+- `budget.mjs --eval` now runs before the foe spawns, so a TURN_TUNE.boss change reaches its setup (hcap, hitX and hpX are read at spawn). Why: a hitCap eval first showed no effect because the boss was already built. (boss-tiers-pr3, 2026-10-07)
+- Tune boss knots per zone on both hpX and hitX, not hitX alone: zones 16 and 19 needed hitX 4+ to reach 70% casual while the fight lasted 3.6 turns; lengthening the fight (hpX) fixed it without hits that one-shot. Keep boss pay on the old length curve when hpX moves. Why: the same win rate came from very different fights. (boss-tiers-pr3, 2026-10-07)
 
 ## Economy and skilling
 

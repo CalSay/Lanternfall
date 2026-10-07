@@ -90,11 +90,11 @@ const TURN_TUNE = {
   //            kept-up hero about a quarter to a third of their health, a landed charge about two thirds. From zone 35
   //            the reference HP sits below a kept-up hero's (the late-zone pass), so hitX steps up there.
   //   payX     a longer boss pays more: gold and XP x (1 + payX x (its HP share - 1)), so an hour of play pays as before
-  boss: { hpX: [[3, 1], [4, 1.5], [5, 3.7], [6, 2.2], [7, 2.15], [8, 1.9], [9, 1.5], [10, 1.9], [11, 1.4], [12, 1.8], [15, 2.5], [20, 2.4], [25, 1.0], [27, 0.52], [30, 1.55], [34, 0.94], [35, 2.725], [36, 1.85]], regionHpX: 1.4,   // the gear pass (2026-10-02): zones 15-34 about x1.09, 36+ 1.5 -> 1.85, region 1.25 -> 1.4
-    hitX: [[3, 1], [4, 1.6], [5, 3.4], [6, 2.4], [8, 1.5], [9, 1.0], [10, 1.05], [11, 0.95], [12, 0.85], [15, 1.6], [20, 1.5], [25, 0.55], [27, 0.34], [30, 0.72], [34, 0.52], [35, 1.9]], chargeX: [[3, 1], [6, 1.3], [34, 1.3], [35, 1.35]], payX: 0.5,
+  boss: { hpX: [[3, 1], [4, 1.5], [5, 3.7], [6, 2.2], [7, 2.15], [8, 1.9], [9, 1.5], [10, 1.9], [11, 1.4], [12, 1.8], [13, 2.4], [14, 2.4], [15, 3.4], [16, 4.0], [17, 3.0], [18, 3.0], [19, 4.8], [20, 2.8], [21, 1.9], [22, 2.1], [23, 1.5], [24, 1.1], [25, 1.0], [27, 0.52], [30, 1.55], [34, 0.94], [35, 2.725], [36, 1.85]], regionHpX: 1.4,   // the gear pass (2026-10-02): zones 15-34 about x1.09, 36+ 1.5 -> 1.85, region 1.25 -> 1.4
+    hitX: [[3, 1], [4, 1.6], [5, 3.4], [6, 2.4], [8, 1.5], [9, 1.0], [10, 1.05], [11, 0.95], [12, 0.85], [13, 1.1], [14, 0.77], [15, 0.84], [16, 2.1], [17, 1.78], [18, 1.2], [19, 3.15], [20, 1.85], [21, 1.17], [22, 0.84], [23, 0.7], [24, 0.63], [25, 0.55], [27, 0.34], [30, 0.72], [34, 0.52], [35, 1.9]], chargeX: [[3, 1], [6, 1.3], [34, 1.3], [35, 1.35]], payX: 0.5,
     // hitCap: one boss hit never takes more than this share of the hero's max HP, so a missed parry cannot kill a full-health hero
-    // (zone bosses 1-15; judge 2026-10-07, docs/DECISIONS.md "Boss tiers"). Taken before armour, Guard and the rest; each hit of a charged move on its own.
-    hitCap: [[1, 0.4], [15, 0.4], [16, 0]] },
+    // (zone bosses: 0.4 to zone 15, 0.75 for zones 16-24; judge 2026-10-07, docs/DECISIONS.md "Boss tiers"). Taken before armour, Guard and the rest; each hit of a charged move on its own.
+    hitCap: [[1, 0.4], [15, 0.4], [16, 0.75], [24, 0.75], [25, 0]] },
   // the boss riders on the hero (shares of the reference HP a tick, two hero turns)
   heroDot: { bleed: 0.02, burn: 0.04, venom: 0.02 }, heroDotT: 2, heroChill: 0.1, heroBlind: 0.3,
   windowCaps: { parry: 0.35, dodge: 0.5 }, dodgeTrain: 0.004,   // Dodge Training: +4 ms of dodge window a level
@@ -217,8 +217,8 @@ function turnFoeSetup(f, z, o) {
     hcap: zb && !region ? turnZoneLine(B.hitCap, z) : 0 };
   const C = COMBAT_TUNE;
   // a longer boss pays more (the boss pass: payX of its extra length), so an hour of play pays about as before
-  // zones 4-12 pay on the old length (boss-tiers PR 1 lengthened those fights; first-hour gold and XP stay as they were)
-  const payLen = zb && !region && z <= 12 ? turnZoneLine([[3, 1], [10, 1.8], [15, 2.5]], z) : len;
+  // zones 4-24 pay on the old length (boss-tiers PRs 1 and 3 lengthened those fights; gold and XP stay as they were)
+  const payLen = zb && !region && z <= 24 ? turnZoneLine(z <= 12 ? [[3, 1], [10, 1.8], [15, 2.5]] : [[12, 1.8], [15, 2.5], [20, 2.4], [25, 1.0]], z) : len;
   const pay = 1 + (payLen - 1) * B.payX;
   f.gold = mobGold(z) * C.packGold * T.goldX * (f.boss ? 5 * pay : f.elite ? C.eliteGold : 1);
   f.xp = Math.ceil(Math.ceil(1.5 * z) * T.xpX * (f.boss ? 5 * pay : f.elite ? 2 : 1));

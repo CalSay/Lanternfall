@@ -140,7 +140,7 @@
         1
       ],
       "report": true,
-      "note": "report only: a kept-up hero (tier at the zone, rare +5) at zones 8, 10 and 12 against the first-hour row. Out-gearing the first hour feels strong; the check is that gear never makes the boss harder (kept-up casual >= first-hour casual minus tolerance)"
+      "note": "report only: a kept-up hero (tier at the zone, rare +5) at zones 8, 10, 12, 13 and 15 against the first-hour row. Out-gearing the first hour feels strong; the check is that gear never makes the boss harder (kept-up casual >= first-hour casual minus tolerance)"
     },
     "reportCaptain": {
       "casual": [
@@ -211,36 +211,6 @@
       "why": "elites are no threat yet (one trait, one extra move)"
     },
     {
-      "row": "z15-boss",
-      "hero": "wren",
-      "player": "casual",
-      "side": "above",
-      "limit": 1,
-      "owner": "boss-tiers",
-      "until": "2026-11-15",
-      "why": "this boss is too easy for a hero who keeps up"
-    },
-    {
-      "row": "z15-boss",
-      "hero": "tobin",
-      "player": "casual",
-      "side": "above",
-      "limit": 1,
-      "owner": "boss-tiers",
-      "until": "2026-11-15",
-      "why": "this boss is too easy for a hero who keeps up"
-    },
-    {
-      "row": "z15-boss",
-      "hero": "pip",
-      "player": "casual",
-      "side": "above",
-      "limit": 1,
-      "owner": "boss-tiers",
-      "until": "2026-11-15",
-      "why": "this boss is too easy for a hero who keeps up"
-    },
-    {
       "row": "z20-elite",
       "hero": "wren",
       "player": "casual",
@@ -281,31 +251,11 @@
       "why": "Tobin wins far more than Wren and Pip here"
     },
     {
-      "row": "z20-boss",
-      "hero": "wren",
-      "player": "casual",
-      "side": "above",
-      "limit": 0.84,
-      "owner": "boss-tiers",
-      "until": "2026-11-15",
-      "why": "this boss is too easy for a hero who keeps up"
-    },
-    {
-      "row": "z20-boss",
-      "hero": "pip",
-      "player": "casual",
-      "side": "above",
-      "limit": 0.94,
-      "owner": "boss-tiers",
-      "until": "2026-11-15",
-      "why": "this boss is too easy for a hero who keeps up"
-    },
-    {
       "row": "z20-boss-behind",
       "hero": "wren",
       "player": "casual",
       "side": "above",
-      "limit": 0.75,
+      "limit": 0.6,
       "owner": "gear-weight",
       "until": "2026-12-01",
       "why": "a tier behind costs this hero more than 60 points of casual wins (gear is close to a wall)"
@@ -315,7 +265,7 @@
       "hero": "tobin",
       "player": "casual",
       "side": "below",
-      "limit": 0,
+      "limit": 0.03,
       "owner": "gear-weight",
       "until": "2026-12-01",
       "why": "a tier behind barely matters for this hero"
@@ -325,7 +275,7 @@
       "hero": "pip",
       "player": "casual",
       "side": "above",
-      "limit": 0.88,
+      "limit": 0.76,
       "owner": "gear-weight",
       "until": "2026-12-01",
       "why": "a tier behind costs this hero more than 60 points of casual wins (gear is close to a wall)"
@@ -475,7 +425,7 @@
       "hero": "pip",
       "player": "casual",
       "side": "above",
-      "limit": 0.88,
+      "limit": 0.82,
       "owner": "gear-weight",
       "until": "2026-12-01",
       "why": "a tier behind costs this hero more than 60 points of casual wins (gear is close to a wall)"
@@ -619,6 +569,116 @@
       "owner": "tobin-safety-margin",
       "until": "2026-12-01",
       "why": "Tobin wins every first-hour boss: the tank sits above the band (boss-tiers judge 2026-10-07)"
+    },
+    {
+      "row": "z13-boss",
+      "hero": "tobin",
+      "player": "casual",
+      "side": "above",
+      "limit": 1,
+      "owner": "tobin-safety-margin",
+      "until": "2026-12-01",
+      "why": "Tobin wins far more than Wren and Pip here"
+    },
+    {
+      "row": "z14-boss",
+      "hero": "tobin",
+      "player": "casual",
+      "side": "above",
+      "limit": 1,
+      "owner": "tobin-safety-margin",
+      "until": "2026-12-01",
+      "why": "Tobin wins far more than Wren and Pip here"
+    },
+    {
+      "row": "z15-boss",
+      "hero": "tobin",
+      "player": "casual",
+      "side": "above",
+      "limit": 1,
+      "owner": "tobin-safety-margin",
+      "until": "2026-12-01",
+      "why": "Tobin wins far more than Wren and Pip here"
+    },
+    {
+      "row": "z16-boss",
+      "hero": "tobin",
+      "player": "casual",
+      "side": "above",
+      "limit": 1,
+      "owner": "tobin-safety-margin",
+      "until": "2026-12-01",
+      "why": "Tobin wins far more than Wren and Pip here"
+    },
+    {
+      "row": "z17-boss",
+      "hero": "tobin",
+      "player": "casual",
+      "side": "above",
+      "limit": 1,
+      "owner": "tobin-safety-margin",
+      "until": "2026-12-01",
+      "why": "Tobin wins far more than Wren and Pip here"
+    },
+    {
+      "row": "z18-boss",
+      "hero": "tobin",
+      "player": "casual",
+      "side": "above",
+      "limit": 1,
+      "owner": "tobin-safety-margin",
+      "until": "2026-12-01",
+      "why": "Tobin wins far more than Wren and Pip here"
+    },
+    {
+      "row": "z19-boss",
+      "hero": "tobin",
+      "player": "casual",
+      "side": "above",
+      "limit": 1,
+      "owner": "tobin-safety-margin",
+      "until": "2026-12-01",
+      "why": "Tobin wins far more than Wren and Pip here"
+    },
+    {
+      "row": "z21-boss",
+      "hero": "tobin",
+      "player": "casual",
+      "side": "above",
+      "limit": 1,
+      "owner": "tobin-safety-margin",
+      "until": "2026-12-01",
+      "why": "Tobin wins far more than Wren and Pip here"
+    },
+    {
+      "row": "z22-boss",
+      "hero": "tobin",
+      "player": "casual",
+      "side": "above",
+      "limit": 1,
+      "owner": "tobin-safety-margin",
+      "until": "2026-12-01",
+      "why": "Tobin wins far more than Wren and Pip here"
+    },
+    {
+      "row": "z23-boss",
+      "hero": "tobin",
+      "player": "casual",
+      "side": "above",
+      "limit": 1,
+      "owner": "tobin-safety-margin",
+      "until": "2026-12-01",
+      "why": "Tobin wins far more than Wren and Pip here"
+    },
+    {
+      "row": "z24-boss",
+      "hero": "tobin",
+      "player": "casual",
+      "side": "above",
+      "limit": 1,
+      "owner": "tobin-safety-margin",
+      "until": "2026-12-01",
+      "why": "Tobin wins far more than Wren and Pip here"
     }
   ]
 }
