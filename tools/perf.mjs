@@ -194,6 +194,7 @@ async function runScenario(browser, base, { dev, save }) {
     const uis = await uiSince(ui0);
     out.tabs[id] = { ...summarize(w), uiMed: r2(pct(uis, 50)), uiP95: r2(pct(uis, 95)) };
   }
+  await closeStory();   // a moment card (.mm-ov) can pop up during the tab loop on the late save and would cover the tab bar
   await page.click('.tab[data-tab="adv"]'); await page.waitForTimeout(300);
 
   // ---- toast burst ----

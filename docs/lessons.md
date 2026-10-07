@@ -117,6 +117,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - A failed CI run may not wake you: arm a `send_later` check-in (about 20 min; the full check takes about 12) and re-arm until the PR is merged. Why: f-ci sat 2 h unnoticed. (f-ci)
 - Re-run CI once if the runner dies mid-check (PR #40 did). Never push an empty commit to kick it. (story, 2026-10-05)
 - If the integration branch moved, merge it in, re-check, and wait for CI on the merge commit before merging the PR. (f-ci and later cards)
+- Close story and moment cards (`closeStory()`) before every harness click, not just inside measured windows. Why: a `.mm-ov` card on the late save covered the tab bar and crashed `perf --compare`, base build too. (perf-late-save-crash)
 - Path guard: PRs touching online files, the save-key line or `netlify.toml` need the `cal-approved` label, which only Cal applies. (f-ci)
 - Run `node tools/build.mjs` after the last src edit and commit `dist/` with it. Why: the dist-rebuilt check failed on PR #58 after small copy edits went in without a rebuild. (hero-progression-rework, 2026-10-06)
 - Write guide-walk and pacing checks to wait until every expected step has come, not to stop at the first late step. Why: faster early levels on PR #58 reached the Next Up note before the Workbench, and the walk stopped early only under a loaded full run. (hero-progression-rework, 2026-10-06)
