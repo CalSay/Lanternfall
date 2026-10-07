@@ -29,9 +29,9 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 - **Store launch possible; the money model is set** (see [Money](#money)). Original art only, no restrictive
   third-party assets, nothing pay-to-win. (2026-10-06)
 - **Owner role: player.** The coordinator drives the roadmap and brings playable builds and decisions at milestones.
-  Decisions that belong to the owner (art direction; anything that takes real money: store accounts, payment code,
-  live prices, business and legal set-up; anything irreversible) are asked, not guessed. Money design is Claude's,
-  within the Lantern Rules. (2026-09-27, narrowed 2026-10-06)
+  Decisions that belong to the owner (anything that takes real money: store accounts, payment code, live prices,
+  business and legal set-up; anything irreversible) are asked, not guessed. Money design and art direction are
+  Claude's judge calls, within the Lantern Rules. (2026-09-27, narrowed 2026-10-06, 2026-10-07)
 - **Combat is active only.** No Auto, no idle fighting, no away combat earnings. Gathering stays idle. (2026-10-01)
 - **Version 1.0 is a complete Season 1:** five regions, the story to the first fight with the Voice, 32 heroes, two
   named gatherers per resource job. The story continues in Season 2. (2026-09-28)
@@ -511,9 +511,12 @@ Plan and rulings: `/mnt/project-files/early-game/plan.md`, `plan-judge.md`. Beat
   free to slate Claude's work where it needs to; it reviews from PR #1
   (`docs/handoff/claude-to-codex/reviewer/README.md`). Codex still draws new raster art when a card needs it.
   (2026-10-05)
-- **Autopilot:** Claude plans, builds and merges into the integration branch on its own from an approved backlog,
-  with a daily digest. Cal approves batches, taps gated items (new systems, economy targets, saves,
-  story canon; art packs moved to the judge 2026-10-06) and says "ship it" before anything reaches `main` or the live artifact. (2026-10-05)
+- **Cal delegates design calls to Claude** (an Opus judge after a red team); Cal keeps shipping, the online layer, money
+  and outside contact, and can veto any recorded call later. (2026-10-05)
+- **Autopilot:** Claude plans, builds and merges into the integration branch on its own from the backlog, with a daily
+  digest. No batch waits for Cal. Only these wait for him: "ship it" (merge to `main`, publish the live artifact), the
+  online layer, Netlify beyond the weekly deploy, money or legal, network settings and contacting anyone outside.
+  (2026-10-05, updated 2026-10-07)
 - **Speed and smoothness are checked constantly:** run `node tools/perf.mjs --quick` after each merge wave and fix any
   budget failure before new features. (2026-09-27)
 - **Pace:** steady on weekdays (2 build threads at once), full at weekends (4). On "pause", launch nothing new.
@@ -528,6 +531,10 @@ Plan and rulings: `/mnt/project-files/early-game/plan.md`, `plan-judge.md`. Beat
 ## Replaced decisions
 
 Kept only to explain current rules. Each line: the old decision, then what replaced it.
+
+- Autopilot: "Cal approves batches and taps gated items" (2026-10-05) -> no batch waits for Cal; design calls go to the Opus judge
+  (2026-10-05, Cal's autonomy request; recorded 2026-10-07).
+- Owner role: art direction asked of Cal (2026-09-27) -> art direction is a judge call (2026-10-06).
 
 - Hero gates at the first zone of the scene's area, only once the scene is in the game (2026-10-06, story-opening) -> from the
   zone the scene can have played, built or not (2026-10-06, story-unlock-gates).
@@ -584,6 +591,25 @@ Each Hollow foe type has its own moves (`TURN_FOE_TYPES`, `docs/design/foe-moves
 type signature and keep the type's pace; every foe type names an answer for each starter (`FOE_COUNTERS`). Elite scaling is
 `eliteHitX` 1.4 and `eliteHpX` 2.5 (the Cave Bat's elite has 0.4 of that HP). Zone 15 and 20 elites remain easy for casual
 Wren and Pip: that is zone 5-15 hero power, owned by boss-tiers. No save state changes.
+
+## Compass: judge rulings (2026-10-07)
+
+Claude decided (card f-compass; Cal can veto any line). Page: `docs/design/compass.md`. Records:
+`docs/design/compass-records/redteam.md` (21 attacks) and `judge.md` (Opus judge, four rulings).
+
+- **The hook** is the first-hour hook with its second sentence made true at every first boss clear: a Lantern Cache opens
+  with what you won, a chance at a new look, and the next stretch of road. No text may promise a relight or new gear at
+  every boss. The camp line is the promise behind the hook, not part of it. `first-hour.md` points to the Compass.
+- **The core loop** has four timescales (a fight, a 5-minute visit, a day, a week), four player steps each, each step naming
+  its systems. Steps match the standing rules: no telegraph, Assist only widens windows, a loss keeps your place. The week's
+  last step is going deeper (Deepwell, later challenge modes), not a weekly-build visit.
+- **The test every card passes:** it names its loop step and pillar; it hits no anti-goal; its score has Compass fit at
+  least 3, Value (Impact + Evidence + Fit) at least 9 and Total at least 14. A save change counts once, under
+  Reversibility. Bug fixes and broken promises skip scoring.
+- **Anti-goals** add the settled no's, the currency and camp-tour ceilings (no new named currency, no added camp tap; the game is
+  already over both), and "chore" means an expiring reward, not a fee the player chooses.
+- **Pillar 3** does not ban per-hero content (heroes ship complete); a design that needs it says it costs 32 times over.
+- **Rejected:** an "early game first" tie-breaker double-counts nothing, so it stays.
 
 ## Counters and layers: judge rulings (2026-10-07)
 
