@@ -176,16 +176,19 @@
   const atGrove = () => target() === 'node' && S.node.kind === 'wood';
   const campPath = (id, words) => path('world', 'camp', `#camp-b-${id} .cb-quick`, words);
   // W1-A: a step that waits for materials shows live progress and never pauses the game.
-  // "Chop 20 Pine Log for the Workbench (12/20)". When the hero is not at the node that yields the
+  // "Chop 12 Pine Log for the Workbench (5/12)". When the hero is not at the node that yields the
   // material, a Go button sends it there (setNode + Gather), so the player is never left guessing.
   const VERB = { wood: 'Chop', ore: 'Mine' };
   let weaponOpened = false;   // the Craft tab has opened itself on the first weapon this visit (the 'weapon' step)
   const stockSpec = (id, what, tail) => {
     const need = onboardNeed(id); if (!need.length) return null;
     const x = need[0], verb = VERB[x.kind] || (x.fam === 'ess' ? 'Win fights for' : 'Gather');
+    // workbench-cost: a build row's gold ("Win 200 more gold for the Workbench (100/300)."); fights pay it, so the hint points at the fight
     const text = need.length > 1
-      ? `Gather for ${what}: ${need.map(m => `${m.name} ${m.have}/${m.n}`).join(', ')}.`
+      ? `${need.some(m => m.fam === 'gold') ? 'Get ready' : 'Gather'} for ${what}: ${need.map(m => `${m.name} ${m.have}/${m.n}`).join(', ')}.`
+      : x.fam === 'gold' ? `Win ${x.n - x.have} more gold for ${what} (${x.have}/${x.n}).`
       : `${verb} ${x.n} ${x.name} for ${what} (${x.have}/${x.n}).${tail ? ' ' + tail : ''}`;
+    if (x.fam === 'gold') return { text, live: 1, node: onGame() ? $('stage') : q(`.tab[data-tab="${S.tab}"]`), at: onGame() ? [0.74, 0.62] : null, side: 'up' };
     const there = S.activity === 'gather' && x.kind && S.node.kind === x.kind && S.node.t === x.t;
     const spec = { text, live: 1 };
     if (there) {

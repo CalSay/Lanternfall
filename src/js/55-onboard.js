@@ -123,7 +123,8 @@ const fightingNow = () => S.activity === 'fight' && !!(S.party && S.party.chosen
 //   bench, tool, forge, weapon, store                        pause only once the materials are in hand (pauseUnless)
 //   tab:party, nextup                                        no pause (a pointer or a Got it; nothing waits on them)
 const stockOf = (fam, t, n) => [fam, t, n];
-const matsOfBuild = id => (typeof hearthFirst === 'function' && hearthFirst(id) ? hearthFirst(id).mats : []);
+// A Lv 1 row's gold rides along as ['gold', 0, n] (the Workbench): needShort reads it from S.gold, so a press step never pauses short of gold either.
+const matsOfBuild = id => { const f = typeof hearthFirst === 'function' ? hearthFirst(id) : null; return f ? f.mats.concat(f.gold > 0 ? [['gold', 0, f.gold]] : []) : []; };
 const toolMats = () => { try { const c = canCraft('pick', 1); return Object.entries((c.cost && c.cost.mats) || {}).map(([f, n]) => stockOf(f, 1, n)); } catch (e) { return []; } };
 const fireMats = () => (typeof HEARTH_TUNE === 'object' ? HEARTH_TUNE.light : []);
 // first-gold-and-camp-strip: the hero's class weapon at the Forge (the same pick as the Next Up craft goal), its tier 1 materials, and whether the hero has made or found one.
@@ -193,12 +194,12 @@ const toolMade = () => S.items.some(it => CRAFT_KINDS[it.slot] && CRAFT_KINDS[it
 const O = () => S.onboard || (S.onboard = {});
 const stepDone = id => !!O().done[id];
 // Materials still short: [[fam, tier, n]] -> [{ fam, t, kind, have, n, name }]. kind: the gather node that yields it.
-const matHave = (f, t) => matOwn(f, t);
+const matHave = (f, t) => f === 'gold' ? Math.floor(S.gold) : matOwn(f, t);
 function needShort(mats) {
   const out = [];
   for (const [fam, t, n] of mats || []) {
     const have = matHave(fam, t);
-    if (have < n) out.push({ fam, t, kind: typeof NODE_NAMES === 'object' && NODE_NAMES[fam] && craftNodeVisible(fam, t) ? fam : null, have, n, name: costName(fam, t) });
+    if (have < n) out.push({ fam, t, kind: typeof NODE_NAMES === 'object' && NODE_NAMES[fam] && craftNodeVisible(fam, t) ? fam : null, have, n, name: fam === 'gold' ? 'gold' : costName(fam, t) });
   }
   return out;
 }

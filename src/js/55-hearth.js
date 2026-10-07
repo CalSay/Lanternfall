@@ -13,8 +13,8 @@
 //   - hearthLight(): pays 8 Pine Log, Hearth 1, the camp opens (campOpen { quiet: false }),
 //     emits hearthLit, and the hero walks out to zone 1 (S.activity = 'fight'). Instant.
 //   - Stations are built on plots. A plot opens by its rule (HEARTH_PLOT); an unopened plot is not
-//     listed (57-camp campList). Lv 1 of a station costs HEARTH_TUNE.first (no gold, a short
-//     timer) through campCost; Lv 2-5 keep 57-camp's rows.
+//     listed (57-camp campList). Lv 1 of a station costs HEARTH_TUNE.first (materials, a short
+//     timer, and gold only for the Workbench) through campCost; Lv 2-5 keep 57-camp's rows.
 //   - Crafting needs the station built (hearthStationWhy, read by 55-crafting): "Build the
 //     Workbench first." Only a cold save can have a station at Lv 0.
 //   - The Storehouse (id 'store') belongs to H3 (55-store.js); this file only opens its plot and
@@ -28,7 +28,7 @@
 //   hearthCan() -> { ok, why, cost: [[fam, t, n]] }   can the fire be lit now
 //   hearthLight() -> bool     light the fire (cold, unlit, 8 Pine Log)
 //   hearthPlotOpen(id) -> bool   57-camp: is this building's plot open (warm: always)
-//   hearthFirst(id) -> { mats, secs } | null   57-camp: the Lv 1 row of a station
+//   hearthFirst(id) -> { mats, secs, gold? } | null   57-camp: the Lv 1 row of a station
 //   hearthStationWhy(st) -> '' | 'Build the Workbench first.'   (st: CRAFT_STATIONS key)
 //   hearthNext() -> 'hearth' | station id | null   the next thing a player should build (sim policy)
 //   hearthApply()             57-camp calls it right after registerState('camp'): a cold start
@@ -44,10 +44,13 @@
 const HEARTH_TUNE = {
   on: 1,                               // 0: new games start warm, as before (tools)
   light: [['wood', 1, 8]],             // the fire: 8 Pine Log
-  // Lv 1 of each station (spec 1.3): materials [fam, tier, n] and seconds. No gold.
+  // Lv 1 of each station (spec 1.3): materials [fam, tier, n] and seconds; gold only where a row names it.
   first: {
     // playtest-1 note 8 (SOLO1): Lv 1 builds much faster (were 30 / 60 / 90 / 120 / 180 / 180 s)
-    bench: { mats: [['wood', 1, 20]], secs: 10 },
+    // workbench-cost: the first gold buy. 300 gold sits under the 360 every hero holds after the zone 1 boss (the plot opens
+    // with the fire, after that boss), so a player who follows the guide never waits on it; one who spends first (a second
+    // attribute reset) is told to win the rest. Logs 20 -> 12 shortens the chop.
+    bench: { gold: 300, mats: [['wood', 1, 12]], secs: 10 },
     forge: { mats: [['ore', 1, 25], ['wood', 1, 10]], secs: 15 },
     store: { mats: [['wood', 1, 30], ['ore', 1, 20]], secs: 20 },
     loom: { mats: [['fibre', 1, 20], ['wood', 1, 10], ['hide', 1, 5]], secs: 30 },

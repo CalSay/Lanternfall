@@ -13805,8 +13805,8 @@ var forgeGoalPicks = 0;
 //   - hearthLight(): pays 8 Pine Log, Hearth 1, the camp opens (campOpen { quiet: false }),
 //     emits hearthLit, and the hero walks out to zone 1 (S.activity = 'fight'). Instant.
 //   - Stations are built on plots. A plot opens by its rule (HEARTH_PLOT); an unopened plot is not
-//     listed (57-camp campList). Lv 1 of a station costs HEARTH_TUNE.first (no gold, a short
-//     timer) through campCost; Lv 2-5 keep 57-camp's rows.
+//     listed (57-camp campList). Lv 1 of a station costs HEARTH_TUNE.first (materials, a short
+//     timer, and gold only for the Workbench) through campCost; Lv 2-5 keep 57-camp's rows.
 //   - Crafting needs the station built (hearthStationWhy, read by 55-crafting): "Build the
 //     Workbench first." Only a cold save can have a station at Lv 0.
 //   - The Storehouse (id 'store') belongs to H3 (55-store.js); this file only opens its plot and
@@ -13820,7 +13820,7 @@ var forgeGoalPicks = 0;
 //   hearthCan() -> { ok, why, cost: [[fam, t, n]] }   can the fire be lit now
 //   hearthLight() -> bool     light the fire (cold, unlit, 8 Pine Log)
 //   hearthPlotOpen(id) -> bool   57-camp: is this building's plot open (warm: always)
-//   hearthFirst(id) -> { mats, secs } | null   57-camp: the Lv 1 row of a station
+//   hearthFirst(id) -> { mats, secs, gold? } | null   57-camp: the Lv 1 row of a station
 //   hearthStationWhy(st) -> '' | 'Build the Workbench first.'   (st: CRAFT_STATIONS key)
 //   hearthNext() -> 'hearth' | station id | null   the next thing a player should build (sim policy)
 //   hearthApply()             57-camp calls it right after registerState('camp'): a cold start
@@ -13836,10 +13836,13 @@ var forgeGoalPicks = 0;
 const HEARTH_TUNE = {
   on: 1,                               // 0: new games start warm, as before (tools)
   light: [['wood', 1, 8]],             // the fire: 8 Pine Log
-  // Lv 1 of each station (spec 1.3): materials [fam, tier, n] and seconds. No gold.
+  // Lv 1 of each station (spec 1.3): materials [fam, tier, n] and seconds; gold only where a row names it.
   first: {
     // playtest-1 note 8 (SOLO1): Lv 1 builds much faster (were 30 / 60 / 90 / 120 / 180 / 180 s)
-    bench: { mats: [['wood', 1, 20]], secs: 10 },
+    // workbench-cost: the first gold buy. 300 gold sits under the 360 every hero holds after the zone 1 boss (the plot opens
+    // with the fire, after that boss), so a player who follows the guide never waits on it; one who spends first (a second
+    // attribute reset) is told to win the rest. Logs 20 -> 12 shortens the chop.
+    bench: { gold: 300, mats: [['wood', 1, 12]], secs: 10 },
     forge: { mats: [['ore', 1, 25], ['wood', 1, 10]], secs: 15 },
     store: { mats: [['wood', 1, 30], ['ore', 1, 20]], secs: 20 },
     loom: { mats: [['fibre', 1, 20], ['wood', 1, 10], ['hide', 1, 5]], secs: 30 },
@@ -14467,7 +14470,8 @@ const fightingNow = () => S.activity === 'fight' && !!(S.party && S.party.chosen
 //   bench, tool, forge, weapon, store                        pause only once the materials are in hand (pauseUnless)
 //   tab:party, nextup                                        no pause (a pointer or a Got it; nothing waits on them)
 const stockOf = (fam, t, n) => [fam, t, n];
-const matsOfBuild = id => (typeof hearthFirst === 'function' && hearthFirst(id) ? hearthFirst(id).mats : []);
+// A Lv 1 row's gold rides along as ['gold', 0, n] (the Workbench): needShort reads it from S.gold, so a press step never pauses short of gold either.
+const matsOfBuild = id => { const f = typeof hearthFirst === 'function' ? hearthFirst(id) : null; return f ? f.mats.concat(f.gold > 0 ? [['gold', 0, f.gold]] : []) : []; };
 const toolMats = () => { try { const c = canCraft('pick', 1); return Object.entries((c.cost && c.cost.mats) || {}).map(([f, n]) => stockOf(f, 1, n)); } catch (e) { return []; } };
 const fireMats = () => (typeof HEARTH_TUNE === 'object' ? HEARTH_TUNE.light : []);
 // first-gold-and-camp-strip: the hero's class weapon at the Forge (the same pick as the Next Up craft goal), its tier 1 materials, and whether the hero has made or found one.
@@ -14537,12 +14541,12 @@ const toolMade = () => S.items.some(it => CRAFT_KINDS[it.slot] && CRAFT_KINDS[it
 const O = () => S.onboard || (S.onboard = {});
 const stepDone = id => !!O().done[id];
 // Materials still short: [[fam, tier, n]] -> [{ fam, t, kind, have, n, name }]. kind: the gather node that yields it.
-const matHave = (f, t) => matOwn(f, t);
+const matHave = (f, t) => f === 'gold' ? Math.floor(S.gold) : matOwn(f, t);
 function needShort(mats) {
   const out = [];
   for (const [fam, t, n] of mats || []) {
     const have = matHave(fam, t);
-    if (have < n) out.push({ fam, t, kind: typeof NODE_NAMES === 'object' && NODE_NAMES[fam] && craftNodeVisible(fam, t) ? fam : null, have, n, name: costName(fam, t) });
+    if (have < n) out.push({ fam, t, kind: typeof NODE_NAMES === 'object' && NODE_NAMES[fam] && craftNodeVisible(fam, t) ? fam : null, have, n, name: fam === 'gold' ? 'gold' : costName(fam, t) });
   }
   return out;
 }
@@ -17205,9 +17209,9 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
       c.secs = h.secs;
       return c;
     }
-    // H1: Lv 1 of a station has its own row (materials and a short timer, no gold).
+    // H1: Lv 1 of a station has its own row (materials and a short timer; gold only where the row names it: the Workbench).
     const f = to === 1 && typeof hearthFirst === 'function' ? hearthFirst(id) : null;
-    if (f) { const c = liveCost(0, f.mats, d.tro, 0, 1); c.secs = f.secs; return c; }
+    if (f) { const c = liveCost(f.gold || 0, f.mats, d.tro, 0, 1); c.secs = f.secs; return c; }
     if (d.cost) return d.cost(to, campGold);
     const r = row(id, to), zRef = CAMP_HZ[Math.min(9, hearthNeed(id, to)) - 1];
     const mats = Object.entries(d.fam).map(([f, m]) => [f, r, Math.ceil(m * T.mult[r - 1])]);
@@ -41329,16 +41333,19 @@ let navUI = null;
   const atGrove = () => target() === 'node' && S.node.kind === 'wood';
   const campPath = (id, words) => path('world', 'camp', `#camp-b-${id} .cb-quick`, words);
   // W1-A: a step that waits for materials shows live progress and never pauses the game.
-  // "Chop 20 Pine Log for the Workbench (12/20)". When the hero is not at the node that yields the
+  // "Chop 12 Pine Log for the Workbench (5/12)". When the hero is not at the node that yields the
   // material, a Go button sends it there (setNode + Gather), so the player is never left guessing.
   const VERB = { wood: 'Chop', ore: 'Mine' };
   let weaponOpened = false;   // the Craft tab has opened itself on the first weapon this visit (the 'weapon' step)
   const stockSpec = (id, what, tail) => {
     const need = onboardNeed(id); if (!need.length) return null;
     const x = need[0], verb = VERB[x.kind] || (x.fam === 'ess' ? 'Win fights for' : 'Gather');
+    // workbench-cost: a build row's gold ("Win 200 more gold for the Workbench (100/300)."); fights pay it, so the hint points at the fight
     const text = need.length > 1
-      ? `Gather for ${what}: ${need.map(m => `${m.name} ${m.have}/${m.n}`).join(', ')}.`
+      ? `${need.some(m => m.fam === 'gold') ? 'Get ready' : 'Gather'} for ${what}: ${need.map(m => `${m.name} ${m.have}/${m.n}`).join(', ')}.`
+      : x.fam === 'gold' ? `Win ${x.n - x.have} more gold for ${what} (${x.have}/${x.n}).`
       : `${verb} ${x.n} ${x.name} for ${what} (${x.have}/${x.n}).${tail ? ' ' + tail : ''}`;
+    if (x.fam === 'gold') return { text, live: 1, node: onGame() ? $('stage') : q(`.tab[data-tab="${S.tab}"]`), at: onGame() ? [0.74, 0.62] : null, side: 'up' };
     const there = S.activity === 'gather' && x.kind && S.node.kind === x.kind && S.node.t === x.t;
     const spec = { text, live: 1 };
     if (there) {
