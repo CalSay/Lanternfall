@@ -41289,8 +41289,11 @@ let navUI = null;
     stars: "Stars are open on the Hero tab. Each one changes how you fight.",
     deep: "The Deepwell's open on the Fight tab. Pick a boon between floors."
   };
+  // defeat-card-guide-tip: a line that is not an unlock (check.mjs keeps SAY_TXT to systems). The first time a boss beats you, once the card is shut and the road is quiet.
+  const SAY_MORE = { defeat: 'That card showed what beat you. Each try shows one more of its moves.' };
+  const sayText = id => SAY_TXT[id] || SAY_MORE[id];
   const sayQ = []; let sayCur = '';
-  function sayQueue(id) { if (SAY_TXT[id] && O().tips && !O().done['say:' + id] && !sayQ.includes(id)) sayQ.push(id); }
+  function sayQueue(id) { if (sayText(id) && O().tips && !O().done['say:' + id] && !sayQ.includes(id)) sayQ.push(id); }
   const sayDone = id => { sayCur = ''; const i = sayQ.indexOf(id.slice(4)); if (i >= 0) sayQ.splice(i, 1); onboardUseDone(id); };
   const TAB_FEATURE = { party: 'party', gather: 'gat', camp: 'world', craft: 'forge' };
   on('unlock', ({ id, quiet }) => {
@@ -41302,6 +41305,7 @@ let navUI = null;
     const ic = tab ? document.querySelector(`.tab[data-tab="${tab}"] img`) : null;
     toast(OPEN_TXT[id], 'good', ic ? ic.src : { ic: ['banner', '#F2C14E'] }, tab || id === 'nextup' ? 'high' : 'normal');
   });
+  on('wipe', e => { if (e && e.boss && !e.arena) sayQueue('defeat'); });
   on('menuView', ({ tab, view }) => {
     const o = O();
     if (!o.seen[tab]) o.seen[tab] = 1;
@@ -41501,7 +41505,7 @@ let navUI = null;
     try { step = onboardStep(); } catch (e) { console.error('[lanternfall] onboard step', e); }
     // unlock-voice: a new thing is announced when no fight is in view, and only when no tip is up
     // (it starts between fights and then stays up until read, so a quick next foe does not cut it short)
-    if (!step && sayQ.length && O().tips && !document.hidden && (sayCur === sayQ[0] || guidePhase(!guideMenuCovers()) === 'between')) { sayCur = sayQ[0]; step = { id: 'say:' + sayCur, text: SAY_TXT[sayCur] }; }
+    if (!step && sayQ.length && O().tips && !document.hidden && (sayCur === sayQ[0] || guidePhase(!guideMenuCovers()) === 'between')) { sayCur = sayQ[0]; step = { id: 'say:' + sayCur, text: sayText(sayCur) }; }
     // no guide step: the system on screen may still owe its first-use line (never alongside a guide step)
     if (!step && S.tab) { try { const cv = curView(S.tab), vw = viewsOf(S.tab).find(v => v.id === cv); step = onboardUse({ tab: S.tab, view: cv, feature: vw && vw.feature }); } catch (e) { step = null; } }
     if (!step || document.hidden || q(BLOCK)) return hide();
