@@ -2729,11 +2729,11 @@ body.solo-on .stage .abil, body.solo-on .stage .abil2 { display: none !important
 .sr-pts small { color: var(--muted); font-size: 11px; text-align: center; line-height: 1.1; }
 .sr-row3, .sr-row2 { display: grid; gap: 4px; min-width: 0; }
 .sr-row3 { grid-area: set; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.sr-row2 { grid-area: lit; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: auto; }
-.sr-chip.dim { opacity: .6; box-shadow: inset 0 0 0 1px #B4553C; }
-.sr-chip.dim .sr-chip-b small { color: #E8A090; }
+.sr-row2 { grid-area: lit; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: auto; max-height: 92px; overflow-y: auto; overscroll-behavior: contain; }   /* two rows; more lit stars scroll inside, so the strip stays short */
 .sr-chip { position: relative; min-width: 0; display: flex; background: #231A30; box-shadow: inset 0 0 0 1px #6B5320; }
 .sr-chip.lit { background: #2A2238; box-shadow: inset 0 0 0 1px #8C7AD8; }
+.sr-chip.lit.dim { opacity: .6; box-shadow: inset 0 0 0 1px #B4553C; }
+.sr-chip.lit.dim .sr-chip-b small { color: #E8A090; }
 .sr-chip.empty { background: transparent; box-shadow: inset 0 0 0 1px #4E4060; }
 .sr-chip.sel { box-shadow: inset 0 0 0 2px var(--gold); }
 .sr-chip-b { flex: 1; min-width: 0; min-height: 40px; display: grid; grid-template-columns: minmax(0, 1fr); align-content: center;
@@ -18974,7 +18974,7 @@ var greatLanternsLit, starPoints, starOwned, starLearned, starWins, starSlots, s
 
   // ---- news: a new star point, while there is a learned star to light ----
   on('levelup', ({ L, quiet }) => {
-    if (quiet || L % 3 !== 0 || typeof isUnlocked !== 'function' || !isUnlocked('stars') || !starsLearnedN()) return;
+    if (quiet || L % TU.budget.perLevels !== 0 || typeof isUnlocked !== 'function' || !isUnlocked('stars') || !starsLearnedN()) return;
     toast(`+1 star point. You have ${Math.max(0, starFree())} to light stars with in Hero, Stars.`, 'good', { ic: ['constel', '#F2C14E'] }, 'normal');
   });
   on('greatLantern', e => { if (e && e.rewards && !e.quiet) e.rewards.push({ txt: `+${TU.budget.lantern} star point${TU.budget.lantern === 1 ? '' : 's'}`, ic: ['constel', '#F2C14E'] }); });
@@ -42240,7 +42240,7 @@ var starsUiPick;   // starsUiPick(id): open the star map on that star's card (57
     const b = btn('sr-chip-b');
     if (id) {
       // a tap opens its card (Slot N there clears it; Put out puts a lit star out)
-      const s = STARS[id], sub = isDim ? `Dim: needs ${plural(Math.max(1, -starFree(k)), 'more point')}` : kind === 'lit' ? plural(s.cost, 'point') : starLearned(id) ? 'Learned' : `${starWins(id)}/${starNeed()} wins`;
+      const s = STARS[id], sub = isDim ? 'Dim: needs more points' : kind === 'lit' ? plural(s.cost, 'point') : starLearned(id) ? 'Learned' : `${starWins(id)}/${starNeed()} wins`;
       // a long one-word name takes a smaller face so it is not cut in a narrow chip
       b.append(el('span', 'sr-chip-t' + (s.name.split(' ').some(w => w.length > 8) ? ' long' : ''), s.name), el('small', null, sub));
       b.setAttribute('aria-label', `${label}: ${s.name}, ${sub}. Open its card.`);
@@ -42265,7 +42265,7 @@ var starsUiPick;   // starsUiPick(id): open the star map on that star's card (57
     p.append(el('b', null, `${used}/${pts}`), el('small', null, 'points used'));
     const sl = el('div', 'sr-row3'), ll = el('div', 'sr-row2');
     set.forEach((id, i) => sl.append(chip(k, `Set ${i + 1}`, id, 'set', i)));
-    for (let i = 0; i <= lit.length; i++) ll.append(chip(k, `Lit ${i + 1}`, lit[i] || null, 'lit', i, dim.includes(lit[i])));
+    for (let i = 0; i <= lit.length - (dim.length ? 1 : 0); i++) ll.append(chip(k, `Lit ${i + 1}`, lit[i] || null, 'lit', i, dim.includes(lit[i])));
     top.append(p, sl, ll);
     return top;
   }

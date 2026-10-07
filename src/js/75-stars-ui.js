@@ -46,7 +46,7 @@ var starsUiPick;   // starsUiPick(id): open the star map on that star's card (57
     const b = btn('sr-chip-b');
     if (id) {
       // a tap opens its card (Slot N there clears it; Put out puts a lit star out)
-      const s = STARS[id], sub = isDim ? `Dim: needs ${plural(Math.max(1, -starFree(k)), 'more point')}` : kind === 'lit' ? plural(s.cost, 'point') : starLearned(id) ? 'Learned' : `${starWins(id)}/${starNeed()} wins`;
+      const s = STARS[id], sub = isDim ? 'Dim: needs more points' : kind === 'lit' ? plural(s.cost, 'point') : starLearned(id) ? 'Learned' : `${starWins(id)}/${starNeed()} wins`;
       // a long one-word name takes a smaller face so it is not cut in a narrow chip
       b.append(el('span', 'sr-chip-t' + (s.name.split(' ').some(w => w.length > 8) ? ' long' : ''), s.name), el('small', null, sub));
       b.setAttribute('aria-label', `${label}: ${s.name}, ${sub}. Open its card.`);
@@ -71,7 +71,7 @@ var starsUiPick;   // starsUiPick(id): open the star map on that star's card (57
     p.append(el('b', null, `${used}/${pts}`), el('small', null, 'points used'));
     const sl = el('div', 'sr-row3'), ll = el('div', 'sr-row2');
     set.forEach((id, i) => sl.append(chip(k, `Set ${i + 1}`, id, 'set', i)));
-    for (let i = 0; i <= lit.length; i++) ll.append(chip(k, `Lit ${i + 1}`, lit[i] || null, 'lit', i, dim.includes(lit[i])));
+    for (let i = 0; i <= lit.length - (dim.length ? 1 : 0); i++) ll.append(chip(k, `Lit ${i + 1}`, lit[i] || null, 'lit', i, dim.includes(lit[i])));
     top.append(p, sl, ll);
     return top;
   }

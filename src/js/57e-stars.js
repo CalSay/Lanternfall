@@ -254,7 +254,7 @@ var greatLanternsLit, starPoints, starOwned, starLearned, starWins, starSlots, s
 
   // ---- news: a new star point, while there is a learned star to light ----
   on('levelup', ({ L, quiet }) => {
-    if (quiet || L % 3 !== 0 || typeof isUnlocked !== 'function' || !isUnlocked('stars') || !starsLearnedN()) return;
+    if (quiet || L % TU.budget.perLevels !== 0 || typeof isUnlocked !== 'function' || !isUnlocked('stars') || !starsLearnedN()) return;
     toast(`+1 star point. You have ${Math.max(0, starFree())} to light stars with in Hero, Stars.`, 'good', { ic: ['constel', '#F2C14E'] }, 'normal');
   });
   on('greatLantern', e => { if (e && e.rewards && !e.quiet) e.rewards.push({ txt: `+${TU.budget.lantern} star point${TU.budget.lantern === 1 ? '' : 's'}`, ic: ['constel', '#F2C14E'] }); });
