@@ -122,6 +122,7 @@
   // UX-L1: in landscape a menu covers most of the stage, but the top row (Fight / Gather), Next Up and the action bar
   // stay on screen. onGame: the whole stage shows; onCtrl: those controls show.
   const onGame = () => !S.tab;
+  guideMenuCovers = () => !isWide();   // portrait: an open menu hides the fight, so a fight tip waits for it to close
   const onCtrl = () => !S.tab || isWide();
   const vis = n => !!(n && n.getClientRects().length && n.offsetParent !== null);
   const first = nm => String(nm || '').split(' ')[0];
@@ -177,12 +178,12 @@
   const turnTxt = () => typeof turnCombatOn === 'function' && turnCombatOn();
   const abName = () => { try { const a = abilityInfo(); return a ? a.name : 'Your ability'; } catch (e) { return 'Your ability'; } };
   const SOLO_UI = {
-    attack: () => onCtrl() && target() === 'mob' ? { node: sbtn('atk'), side: 'up', text: 'Foes ahead. Press Attack to strike the one in front.' } : null,
-    ability: () => onCtrl() && target() === 'mob' ? { node: sbtn('ab0'), side: 'up', text: `${abName()} is ready. Press it. (Hold an ability slot to change what it holds.)` } : null,
-    dodge: () => onCtrl() && target() === 'mob' ? { node: sbtn('dodge'), side: 'up', text: turnTxt() ? 'The foe is about to hit you. Press Dodge now to step out of the way. Every hit can be dodged or parried.' : 'A foe winds up a heavy hit (the red ring). Press Dodge to step out of the way.' } : null,
-    parry: () => onCtrl() && target() === 'mob' ? { node: sbtn('parry'), side: 'up', text: turnTxt() ? 'Parry is harder: press it just before the hit lands. It blocks the hit and takes a turn off your cooldowns. Parry every hit of an attack to counter.' : 'Another heavy hit. Press Parry just before it lands: no damage, the foe staggers and you counter.' } : null,
-    boss: () => target() !== 'mob' || !mob || !mob.boss ? null : onGame() ? { node: $('stage'), at: [0.72, 0.62], side: 'up', text: turnTxt() ? 'The zone boss! Dodge or Parry each blow. Stun it when it gathers a big move.' : 'The zone boss! Dodge or Parry when its red rings close.' }
-      : isWide() ? { node: q(`.tab[data-tab="${S.tab}"]`), text: 'The zone boss is here! Close this menu to watch the fight.' } : null,   // UX-L1: a landscape menu
+    attack: () => onCtrl() && target() === 'mob' ? { node: sbtn('atk'), side: 'up', text: "Something's in the road. Press Attack and hit it." } : null,
+    ability: () => onCtrl() && target() === 'mob' ? { node: sbtn('ab0'), side: 'up', text: `${abName()} is ready. Go on, press it. Hold the button to swap it.` } : null,
+    dodge: () => onCtrl() && target() === 'mob' ? { node: sbtn('dodge'), side: 'up', text: turnTxt() ? "It's winding up to hit you. Don't stand there. Press Dodge." : "See the red ring? A heavy hit's coming. Don't stand there. Press Dodge." } : null,
+    parry: () => onCtrl() && target() === 'mob' ? { node: sbtn('parry'), side: 'up', text: turnTxt() ? 'Harder now. Press Parry just before the hit lands. Parry every blow and you counter.' : 'Another heavy one. Press Parry just before it lands. It staggers, and you counter.' } : null,
+    boss: () => target() !== 'mob' || !mob || !mob.boss ? null : onGame() ? { node: $('stage'), at: [0.72, 0.62], side: 'up', text: turnTxt() ? "That's the zone boss. Watch the bar: Dodge or Parry every hit. If it gathers a big move, stun it or hit it hard." : "That's the zone boss. Watch the red rings. Dodge, or Parry at the last moment." }
+      : isWide() ? { node: q(`.tab[data-tab="${S.tab}"]`), text: 'The zone boss is here. Close this menu and watch.' } : null,   // UX-L1: a landscape menu
     gather: () => {
       if (!onCtrl()) return null;
       const b = q('#modeSeg button[data-act="gather"]');
@@ -222,7 +223,7 @@
     // hero-progression-rework: with attributes on, the first point goes into Might.
     upgrade: () => Object.assign(typeof attrOn === 'function' && attrOn()
       ? path('party', 'attributes', '#attrRows .at-row[data-at="might"] .at-add[data-n="1"]',
-        ['You have points to spend. Open Hero.', 'Open Build.', 'Add a point to Might. It makes Attack hit harder.'])
+        ["You've a point to spend. Open Hero.", 'Open Build.', "Put it in Might. You'll hit harder."])
       : path('party', 'training', '#trainRows .tr-row[data-mv="atk"] .buy',
         ['You have gold. Open Hero to train.', 'Open Training.', 'Train Attack. Each level hits harder.']), { side: S.tab === 'party' ? 'up' : '' }),
     'tab:gat': () => S.tab === 'gat' ? null : { node: q('.tab[data-tab="gat"]'), text: 'New tab: Gather. Tap it to see what you can mine.' },
@@ -233,7 +234,7 @@
 
   const USE_SHOWN_MS = 7000;   // a first-use line counts as read after this long on screen
   const BLOCK = '.create, .away-ov, .bsheet-ov, .modal, .dw-ov, .mm-ov';
-  let lastKey = '', useT0 = 0;
+  let lastKey = '', useT0 = 0, lastGT = null;
   function hide() { useT0 = 0; if (!layer.hidden) layer.hidden = true; if (!bub.hidden) bub.hidden = true; cur = null; curGo = null; lastKey = ''; lastNode = null; lastRect = null; ONBOARD.paused = false; const ap = $('app'); if (ap.classList.contains('guide-side')) ap.classList.remove('guide-side', 'guide-nu', 'guide-btn'); }
   // The hint used to re-read the target's pixel position and re-place itself every 250ms, so it
   // jumped whenever the stage moved under it (camera/zoom, screen shake, a pack spawning) even
@@ -244,6 +245,7 @@
   let dirty = true, reveal = true, panelScrolled = false, lastTab = S.tab;
   function invalidate() { dirty = true; }
   function tick() {
+    const dg = lastGT === null ? 0 : Math.max(0, GUIDE_RT.t - lastGT); lastGT = GUIDE_RT.t;   // game seconds since the last look
     if (S.tab !== lastTab) { lastTab = S.tab; dirty = true; reveal = true; }
     let step = null;
     try { step = onboardStep(); } catch (e) { console.error('[lanternfall] onboard step', e); }
@@ -259,6 +261,11 @@
     // a menu step whose button is disabled waits (a build while the builder is busy): no ring, no pause, no tip
     if (table === STEP_UI && !use && !spec.noRing && !pressable(spec.node)) return hide();
     if (use) { if (!useT0) useT0 = Date.now(); else if (Date.now() - useT0 > USE_SHOWN_MS) { onboardUseDone(step.id); return hide(); } }
+    // guide-voice: a live tip nobody answers for 60 s of play (game clock: a paused game adds none) retires to the Journal's Tips
+    if (!use && step.tip && !step.needs && !ONBOARD.paused) {
+      const R = GUIDE_RT.shown; R[step.id] = (R[step.id] || 0) + dg;
+      if (R[step.id] >= GUIDE_QUIET && guideRetire(step.id)) return hide();
+    }
     cur = step; curGo = spec.go || null;
     putHidden(okb, !(step.ok || curGo));
     putText(okb, curGo ? curGo.label : 'Got it');
@@ -353,7 +360,9 @@
       row.append(p, b);
       const row2 = el('div', 'ob-trow'), p2 = el('p', 'note', 'New tabs open as you play.'), b2 = el('button', 'ob-tbtn', 'Show every tab now'); b2.type = 'button';
       row2.append(p2, b2);
-      sec.append(row, row2);
+      const row3 = el('div', 'ob-trow'), p3 = el('p', 'note');
+      row3.append(p3);
+      sec.append(row, row3, row2);
       b.addEventListener('click', () => { onboardTips(); save(); tick(); sec._up(true); });
       b2.addEventListener('click', () => { onboardUnlockAll(); save(); sec._up(true); });
       sec._up = () => {
@@ -362,6 +371,9 @@
         putHidden(row, over);
         putText(p, O().tips ? 'Short tips point at what to try next.' : 'Tips are off.');
         putText(b, O().tips ? 'Skip tips' : 'Show tips');
+        const skipped = GUIDE_STEPS.filter(s => O().done[s.id] === 2 && s.tip).map(s => s.tip);
+        putHidden(row3, !skipped.length);
+        putText(p3, skipped.length ? 'Tips you missed: ' + skipped.join(' ') : '');
         putHidden(row2, O().all);
       };
     },
