@@ -86,6 +86,7 @@
   .stagebox.vs-on .toasts:not(.over-menu) .mm-t-tx { grid-template-columns: auto minmax(0, 1fr); align-items: baseline; gap: 0 8px; }
   .stagebox.vs-on .toasts:not(.over-menu) .mm-t-sub, .stagebox.vs-on .toasts:not(.over-menu) .mm-t-title ~ .mm-t-say { display: none; }
   .stagebox.vs-on .toasts:not(.over-menu) .mm-t-say, .stagebox.vs-on .toasts:not(.over-menu) .mm-t-line { grid-column: 1 / -1; }
+  .stagebox.vs-on .toasts:not(.over-menu) .mm-t-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: calc(15px * var(--display-k)); }   /* a long name wraps to a second row and reaches the hero's feet on a short stage */
 }
 
 /* Portrait top band (top-bar-compact): under the header zone bar, ONE line holds the activity switch (Fight / Gather, the zone arrows)
