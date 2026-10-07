@@ -10226,6 +10226,9 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
             passes.push(key);
             if (key === lastKey) { if (++same > 30) { stuck = key + ' ' + await X('JSON.stringify({ w: (w => w && { k: w.kind, left: w.left, res: w.res })(actWarning()), paused: ONBOARD.paused, act: S.activity, foes: combatFoes().filter(f => f && !f.dead && f.hp > 0).length, par: S.onboard.parries, hp: S.party && S.party.hp, want: soloGuideWants(), r: soloParry(true) })'); break; } } else { same = 0; lastKey = key; }
             await page.waitForTimeout(seen.has(key) ? 260 : 520);   // the hint places itself (every 250 ms) and the ring glides there (0.18 s)
+            // a result card the walk's last press opened (a craft, a build) is a sheet the guide holds its hint behind (BLOCK in 75-onboard-ui):
+            // a player reads it and closes it, so the walk does too before it measures where the hint points
+            await X('document.querySelectorAll(".bsheet-ov .bsheet-x").forEach(x => x.click()); true');
             let c = await X(TARGET(st));
             // rows a view builds in its next update (5 a second), a tab that unlocks on the next pass, a panel still sliding in, the hint that
             // places itself every 250 ms: look again until it is right, and report what it still is after 3 s (a real miss never gets there)
