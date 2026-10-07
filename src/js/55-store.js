@@ -107,8 +107,10 @@ let essCap, storeLevel, storeCap, storeCapAt, stashRoom, stashFull, stashOver, s
     return Math.floor(T.caps[Math.max(0, Math.min(T.caps.length - 1, lv | 0))] * g * (T.tierMult[t - 1] || 1));
   };
   storeCap = (f, t) => storeCapAt(f, t, storeLevel());
-  stashRoom = (f, t) => Math.max(0, storeCap(f, t) - have(f, t));
-  stashFull = (f, t) => have(f, t) >= storeCap(f, t);
+  const gradeRoom = (f, t) => Math.max(0, storeCap(f, t) - have(f, t));
+  // Essence is one pile: its room is the room across every grade, since a drop spills (see essAdd)
+  stashRoom = (f, t) => (f === 'ess' ? [1, 2, 3, 4, 5].reduce((a, g) => a + gradeRoom('ess', g), 0) : gradeRoom(f, t));
+  stashFull = (f, t) => (f === 'ess' ? stashRoom('ess', 1) <= 0 : have(f, t) >= storeCap(f, t));
   stashOver = (f, t) => have(f, t) > storeCap(f, t);
   // lines: [[fam, t, n]] (repeats add up). True when every cell has room for all of it.
   const sumLines = lines => {
@@ -154,12 +156,11 @@ let essCap, storeLevel, storeCap, storeCapAt, stashRoom, stashFull, stashOver, s
   // Essence is one pile (counters-and-layers): a grade that is full spills into the lowest grade with room, so the
   // one total never shows room while a drop is lost. A parcel still lands whole or not at all.
   essCap = () => { let c = 0; for (let g = 1; g <= 5; g++) c += storeCap('ess', g); return c; };
-  const essRoom = () => { let r = 0; for (let g = 1; g <= 5; g++) r += stashRoom('ess', g); return r; };
   const essAdd = (n, t, how, quiet) => {
     const a = S.mats.ess;
-    if (how === 'parcel' && n > essRoom()) return 0;
+    if (how === 'parcel' && n > stashRoom('ess', t)) return 0;
     let left = n;
-    for (const g of [t, 1, 2, 3, 4, 5]) { if (left <= 0) break; const put = Math.min(left, stashRoom('ess', g)); if (put > 0) { a[g - 1] = (a[g - 1] || 0) + put; left -= put; } }
+    for (const g of [t, 1, 2, 3, 4, 5]) { if (left <= 0) break; const put = Math.min(left, gradeRoom('ess', g)); if (put > 0) { a[g - 1] = (a[g - 1] || 0) + put; left -= put; } }
     if (left > 0) blocked('ess', t, left, how, quiet);
     return n - left;
   };
