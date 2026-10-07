@@ -8,6 +8,7 @@
 // Exit 1 when an `expect` fails, a route cannot run, or src/ changed with no changed route.txt (unless the PR carries
 // the `no-visible-change` label). A route may start with a comment line `# seed: <n>` (default 1).
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { execFileSync, spawn } from 'node:child_process';
 
@@ -32,8 +33,14 @@ fs.rmSync(out, { recursive: true, force: true }); fs.mkdirSync(out, { recursive:
 
 const lines = ['<!-- lanternfall-eyes -->', '### Eyes: the change, played', ''];
 let failed = false;
+// Every failure gets one cause so a red run says why: missing-route-txt (src/ changed, no route), timeout-under-load (the
+// route run hit its time limit and was killed), expect-false (an `expect` missed, or a tap could not be made), run-error
+// (anything else, e.g. the driver crashed). Printed as `  FAIL <cause> ...` lines (retry-once.sh quotes them) and
+// appended to the job summary.
+const causes = [];
+const fail = (cause, where, detail = '') => { failed = true; causes.push({ cause, where, detail: detail.replace(/\s+/g, ' ').slice(0, 160) }); };
 if (srcChanged && !routes.length && !labels.includes('no-visible-change')) {
-  failed = true;
+  fail('missing-route-txt', 'PR');
   lines.push('**FAIL.** This PR changes `src/` but no `docs/proof/<card-id>/route.txt`. Play the change with `tools/playtest.mjs`, commit the route, or add the `no-visible-change` label if a player cannot see it.', '');
 } else if (!routes.length) {
   lines.push(srcChanged ? 'No route changed. Label `no-visible-change` is set.' : 'No `src/` change and no route changed. Nothing to play.', '');
@@ -68,10 +75,15 @@ for (const { card, seed, views } of jobs) {
     const res = await p;
     fs.writeFileSync(path.join(dir, 'output.txt'), (res.stdout || '') + (res.stderr || ''));
     const ex = fs.existsSync(path.join(dir, 'expects.json')) ? JSON.parse(fs.readFileSync(path.join(dir, 'expects.json'), 'utf8')) : [];
-    for (const e of ex) { lines.push(`| ${view} | expect "${e.want}" | ${e.ok ? 'pass' : '**FAIL**'} |`); if (!e.ok) failed = true; }
+    for (const e of ex) { lines.push(`| ${view} | expect "${e.want}" | ${e.ok ? 'pass' : '**FAIL**'} |`); if (!e.ok) fail('expect-false', `${card} ${view}`, `expect "${e.want}"`); }
     const shots = fs.existsSync(dir) ? fs.readdirSync(dir).filter(f => f.endsWith('.png')) : [];
     lines.push(`| ${view} | shots | ${shots.length} (${shots.slice(0, 8).map(s => s.replace('.png', '')).join(', ')}${shots.length > 8 ? ', ...' : ''}) |`);
-    if (res.status !== 0 && !ex.some(e => !e.ok)) { failed = true; lines.push(`| ${view} | run | **FAIL** exit ${res.status}: ${((res.stdout + res.stderr).trim().split('\n').slice(-2).join(' ') || '').slice(0, 160).replace(/\|/g, '/')} |`); }
+    if (res.status !== 0 && !ex.some(e => !e.ok)) {
+      const tail = (res.stdout + res.stderr).trim().split('\n').slice(-2).join(' ');
+      if (res.status === null) fail('timeout-under-load', `${card} ${view}`, 'the route run hit its time limit and was killed');
+      else if (/could not|no button|not found|not visible/i.test(tail)) fail('expect-false', `${card} ${view}`, tail);   // a tap that could not be made
+      else fail('run-error', `${card} ${view}`, `exit ${res.status}: ${tail}`);
+      lines.push(`| ${view} | run | **FAIL** exit ${res.status}: ${((res.stdout + res.stderr).trim().split('\n').slice(-2).join(' ') || '').slice(0, 160).replace(/\|/g, '/')} |`); }
   }
   lines.push('');
 }
@@ -86,6 +98,11 @@ if (srcChanged) {
     if (f.length > 8) lines.push(`- ... ${f.length - 8} more in \`player-eyes/latest.md\` in the \`eyes-out\` artifact`);
     lines.push('');
   } catch (e) { lines.push(`Did not run (${((res.stderr || res.stdout || '').trim().split('\n').pop() || 'no output').slice(0, 120)}).`, ''); }
+}
+if (causes.length) {
+  lines.push('**Why it failed**', '', '| Cause | Where | Detail |', '|---|---|---|', ...causes.map(c => `| ${c.cause} | ${c.where} | ${c.detail.replace(/\|/g, '/')} |`), '');
+  for (const c of causes) console.log(`  FAIL ${c.cause} ${c.where}${c.detail ? ': ' + c.detail : ''}`);
+  try { fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY || os.devNull, `### Eyes failure causes\n\n${causes.map(c => `- \`${c.cause}\` ${c.where}`).join('\n')}\n`); } catch (e) { /* no summary file */ }
 }
 lines.push(failed ? '**Result: FAIL.**' : '**Result: pass.**', '', 'Shots, bursts and output are in the `eyes-out` workflow artifact on this run.');
 fs.writeFileSync(path.join(out, 'summary.md'), lines.join('\n') + '\n');
