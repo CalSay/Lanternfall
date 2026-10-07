@@ -15,5 +15,5 @@ node tools/snap-fixture.mjs tests/fixtures/save-current.json tests/fixtures/save
 Commit the new file in the `[deploy]` commit (or the next Autopilot commit). `tools/check.mjs` reads every `tests/fixtures/*.json`, so
 the new file gets the load, round-trip, items, stars, save-code and export-after-play checks with no edit. If a later build fails
 on a release fixture, that is a save that real testers hold: fix the build, never the fixture. Keep the last 4 release fixtures
-(delete older ones in a later commit). This step is written here and in `autopilot/playbook.md` (Weekly Netlify deploy, step 3b); the
-Monday routine reads the playbook, so the routine text itself needs no change.
+(delete older ones in a later commit). This step is written here and in the project folder's `autopilot/playbook.md` (Weekly Netlify deploy, step 3b; not in the repo). The Monday
+routine reads the playbook, so the routine text itself needs no change.

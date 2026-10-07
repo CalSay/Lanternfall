@@ -1,7 +1,7 @@
 # Save fixtures
 
-Every `*.json` here is a v5 save. `tools/check.mjs` loads all of them in every save-integrity section (saves, items, retool,
-stars, Deepwell, camp, save codes, export after play, and the rest), so adding a file is enough.
+Every `*.json` here is a v5 save. `tools/check.mjs` loads all of them in every save-integrity section (saves, items, stars, Deepwell,
+camp, save codes, export after play, and most others; a few single-purpose blocks name early/mid/late), so adding a file is enough.
 
 - `save-early|mid|late.json`: written 2026-09-30, before the attribute, star-budget and guide-voice changes. They prove old saves
   still load.

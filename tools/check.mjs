@@ -1799,7 +1799,7 @@ if (section('stars')) try {
     const raw = JSON.parse(rawOf(f));
     const o = loadCore({ seed: 43, storage: memoryStorage({ [KEY]: rawOf(f) }) });
     o.fn.tick(0.1);
-    if (raw.stars && raw.stars.v === 3) {   // a current-era save (save-current, a release snapshot): its stars load as saved
+    if (raw.stars && raw.stars.v >= 3) {   // a current-era save (save-current, a release snapshot): its stars load as saved
       const d = subsetDiff({ own: raw.stars.own, learned: raw.stars.learned, lit: raw.stars.lit }, JSON.parse(o.eval('JSON.stringify(S.stars)')));
       assert(!d && !o.errors.length, `${f}: current-era stars load as saved (owned, learned, lit)` + (d ? ': ' + d : o.errors[0] ? ': ' + o.errors[0] : ''));
       continue;

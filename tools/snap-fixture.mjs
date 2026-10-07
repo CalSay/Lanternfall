@@ -20,13 +20,13 @@ const E = s => g.eval(s);
 for (let i = 0; i < minutes * 600; i++) g.fn.tick(0.1);
 
 // attribute points: the main hero spreads all of them, every bench hero spends half
-E(`(() => { if (typeof attrSpread !== 'function') return;
+E(`(() => { if (typeof attrSpread !== 'function') throw new Error('no attrSpread');
   const main = (S.solo && S.solo.hero) || 'wren'; attrSpread(main);
   for (const k of Object.keys((S.solo && S.solo.lv) || {})) if (k !== main) { const half = Math.floor(attrPoints(k).free / 2); for (let i = 0; i < half; i++) attrAdd(ATTR_IDS[i % ATTR_IDS.length], 1, k); } })()`);
 // every guide tip retired, the way a player who ignored them leaves them (done = 2)
-E(`(() => { if (typeof GUIDE_STEPS === 'undefined') return; for (const s of GUIDE_STEPS) if (!O().done[s.id]) O().done[s.id] = 2; })()`);
+E(`(() => { if (typeof GUIDE_STEPS === 'undefined') throw new Error('no GUIDE_STEPS'); for (const s of GUIDE_STEPS) if (!O().done[s.id]) O().done[s.id] = 2; })()`);
 // stars: own, learn and light every one that exists, then light what the points can pay for
-E(`(() => { if (typeof starGrant !== 'function') return;
+E(`(() => { if (typeof starGrant !== 'function') throw new Error('no starGrant');
   for (const id of STAR_ORDER) { starGrant(id, true); S.stars.learned[id] = 1; }
   const main = (S.solo && S.solo.hero) || 'wren'; for (const id of STAR_ORDER) starLight(id, main); })()`);
 for (let i = 0; i < 100; i++) g.fn.tick(0.1);
