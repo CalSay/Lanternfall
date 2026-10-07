@@ -290,7 +290,7 @@ let campSceneLayout, campPaintScene;
       rect(g, x - 3, y - 33, 6, 11, '#E4CC89');
     }
     g.font = '10px sans-serif'; g.textAlign = 'center'; g.fillStyle = '#E8DDC5';
-    const label = { tavern: 'Tavern', watch: 'Watchtower', bench: 'Woodpile', forge: 'Forge', store: 'Storehouse',
+    const label = { tavern: 'Tavern', watch: 'Watchtower', bench: 'Workbench', forge: 'Forge', store: 'Storehouse',
       loom: 'Loom', ench: 'Enchanter', library: 'Library', shrine: 'Shrine' }[b.id];
     g.fillText(label, x, y + 15);
   }

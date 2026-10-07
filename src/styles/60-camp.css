@@ -113,3 +113,14 @@
 .hd-full .note { flex: 1 1 200px; margin: 0; }
 .hd-more { margin-top: 6px; }
 .hd-extra[hidden] { display: none; }
+
+/* first-gold-and-camp-strip: the card a building tap opens under the camp scene */
+.camp-bld-card { display: grid; gap: 4px; padding: 10px 12px; }
+.camp-bld-card .cbc-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.camp-bld-card .cbc-t { font: 600 calc(16px * var(--display-k))/1.2 var(--display); overflow-wrap: anywhere; }
+.camp-bld-card p { margin: 0; overflow-wrap: anywhere; }
+.camp-bld-card .cbc-f { font-size: 14px; color: var(--bone); }
+.camp-bld-card .cbc-c { font-size: 13.5px; font-variant-numeric: tabular-nums; color: var(--gold); }
+.camp-bld-card .mini { min-height: 44px; justify-self: start; }
+.camp-bld-card .cbc-x { justify-self: end; }
+.camp-bld:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
