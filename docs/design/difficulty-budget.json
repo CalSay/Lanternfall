@@ -296,16 +296,6 @@
       "why": "elites are no threat yet (one trait, one extra move)"
     },
     {
-      "row": "z20-boss",
-      "hero": "tobin",
-      "player": "casual",
-      "side": "above",
-      "limit": 1,
-      "owner": "tobin-safety-margin",
-      "until": "2026-12-01",
-      "why": "Tobin wins far more than Wren and Pip here"
-    },
-    {
       "row": "z20-boss-behind",
       "hero": "wren",
       "player": "casual",
@@ -319,11 +309,11 @@
       "row": "z20-boss-behind",
       "hero": "tobin",
       "player": "casual",
-      "side": "below",
-      "limit": 0.03,
+      "side": "above",
+      "limit": 0.69,
       "owner": "gear-weight",
       "until": "2026-12-01",
-      "why": "a tier behind barely matters for this hero"
+      "why": "a tier behind costs this hero more than 60 points of casual wins now that bosses hit him for a real share (tobin-safety-margin)"
     },
     {
       "row": "z20-boss-behind",
@@ -344,16 +334,6 @@
       "owner": "foe-moves-by-type",
       "until": "2026-12-01",
       "why": "elites are no threat yet (one trait, one extra move)"
-    },
-    {
-      "row": "z30-boss",
-      "hero": "tobin",
-      "player": "casual",
-      "side": "above",
-      "limit": 1,
-      "owner": "boss-tiers",
-      "until": "2026-11-15",
-      "why": "this boss is too easy for a hero who keeps up"
     },
     {
       "row": "z35-elder",
@@ -387,16 +367,6 @@
     },
     {
       "row": "z36-boss",
-      "hero": "tobin",
-      "player": "casual",
-      "side": "above",
-      "limit": 1,
-      "owner": "boss-tiers",
-      "until": "2026-11-15",
-      "why": "this boss is too easy for a hero who keeps up"
-    },
-    {
-      "row": "z36-boss",
       "hero": "pip",
       "player": "casual",
       "side": "above",
@@ -424,16 +394,6 @@
       "owner": "foe-moves-by-type",
       "until": "2026-12-01",
       "why": "elites are no threat yet (one trait, one extra move)"
-    },
-    {
-      "row": "z38-boss",
-      "hero": "tobin",
-      "player": "casual",
-      "side": "above",
-      "limit": 1,
-      "owner": "boss-tiers",
-      "until": "2026-11-15",
-      "why": "this boss is too easy for a hero who keeps up"
     },
     {
       "row": "z38-boss",
@@ -464,36 +424,6 @@
       "owner": "gear-weight",
       "until": "2026-12-01",
       "why": "a tier behind costs this hero more than 60 points of casual wins (gear is close to a wall)"
-    },
-    {
-      "row": "z25-boss",
-      "hero": "tobin",
-      "player": "casual",
-      "side": "above",
-      "limit": 1,
-      "owner": "boss-tiers",
-      "until": "2026-11-15",
-      "why": "Tobin's Guard and counters win every Captain from 25 to 34 casually; boss-tiers sets how Captains pressure a tank"
-    },
-    {
-      "row": "z27-boss",
-      "hero": "tobin",
-      "player": "casual",
-      "side": "above",
-      "limit": 1,
-      "owner": "boss-tiers",
-      "until": "2026-11-15",
-      "why": "Tobin's Guard and counters win every Captain from 25 to 34 casually; boss-tiers sets how Captains pressure a tank"
-    },
-    {
-      "row": "z34-boss",
-      "hero": "tobin",
-      "player": "casual",
-      "side": "above",
-      "limit": 1,
-      "owner": "boss-tiers",
-      "until": "2026-11-15",
-      "why": "Tobin's Guard and counters win every Captain from 25 to 34 casually; boss-tiers sets how Captains pressure a tank"
     },
     {
       "row": "z5-boss",
@@ -546,276 +476,6 @@
       "why": "Pip wins 15-35 points more than Wren against the same first-hour boss (hero parity, boss-tiers judge 2026-10-07; the pr4 refit moved z12 Pip from 91 to 98 while Wren held, the z12 fit matched the Wren and Pip mean)"
     },
     {
-      "row": "z5-boss",
-      "hero": "tobin",
-      "player": "casual",
-      "side": "above",
-      "limit": 1,
-      "owner": "tobin-safety-margin",
-      "until": "2026-12-01",
-      "why": "Tobin wins every first-hour boss: the tank sits above the band (boss-tiers judge 2026-10-07)"
-    },
-    {
-      "row": "z10-boss",
-      "hero": "tobin",
-      "player": "casual",
-      "side": "above",
-      "limit": 0.98,
-      "owner": "tobin-safety-margin",
-      "until": "2026-12-01",
-      "why": "Tobin wins every first-hour boss: the tank sits above the band (boss-tiers judge 2026-10-07)"
-    },
-    {
-      "row": "z11-boss",
-      "hero": "tobin",
-      "player": "casual",
-      "side": "above",
-      "limit": 0.93,
-      "owner": "tobin-safety-margin",
-      "until": "2026-12-01",
-      "why": "Tobin wins every first-hour boss: the tank sits above the band (boss-tiers judge 2026-10-07)"
-    },
-    {
-      "row": "z12-boss",
-      "hero": "tobin",
-      "player": "casual",
-      "side": "above",
-      "limit": 0.98,
-      "owner": "tobin-safety-margin",
-      "until": "2026-12-01",
-      "why": "Tobin wins every first-hour boss: the tank sits above the band (boss-tiers judge 2026-10-07)"
-    },
-    {
-      "row": "z13-boss",
-      "hero": "tobin",
-      "player": "casual",
-      "side": "above",
-      "limit": 1,
-      "owner": "tobin-safety-margin",
-      "until": "2026-12-01",
-      "why": "Tobin wins far more than Wren and Pip here"
-    },
-    {
-      "row": "z14-boss",
-      "hero": "tobin",
-      "player": "casual",
-      "side": "above",
-      "limit": 1,
-      "owner": "tobin-safety-margin",
-      "until": "2026-12-01",
-      "why": "Tobin wins far more than Wren and Pip here"
-    },
-    {
-      "row": "z15-boss",
-      "hero": "tobin",
-      "player": "casual",
-      "side": "above",
-      "limit": 1,
-      "owner": "tobin-safety-margin",
-      "until": "2026-12-01",
-      "why": "Tobin wins far more than Wren and Pip here"
-    },
-    {
-      "row": "z16-boss",
-      "hero": "tobin",
-      "player": "casual",
-      "side": "above",
-      "limit": 1,
-      "owner": "tobin-safety-margin",
-      "until": "2026-12-01",
-      "why": "Tobin wins far more than Wren and Pip here"
-    },
-    {
-      "row": "z17-boss",
-      "hero": "tobin",
-      "player": "casual",
-      "side": "above",
-      "limit": 1,
-      "owner": "tobin-safety-margin",
-      "until": "2026-12-01",
-      "why": "Tobin wins far more than Wren and Pip here"
-    },
-    {
-      "row": "z18-boss",
-      "hero": "tobin",
-      "player": "casual",
-      "side": "above",
-      "limit": 1,
-      "owner": "tobin-safety-margin",
-      "until": "2026-12-01",
-      "why": "Tobin wins far more than Wren and Pip here"
-    },
-    {
-      "row": "z19-boss",
-      "hero": "tobin",
-      "player": "casual",
-      "side": "above",
-      "limit": 1,
-      "owner": "tobin-safety-margin",
-      "until": "2026-12-01",
-      "why": "Tobin wins far more than Wren and Pip here"
-    },
-    {
-      "row": "z21-boss",
-      "hero": "tobin",
-      "player": "casual",
-      "side": "above",
-      "limit": 1,
-      "owner": "tobin-safety-margin",
-      "until": "2026-12-01",
-      "why": "Tobin wins far more than Wren and Pip here"
-    },
-    {
-      "row": "z22-boss",
-      "hero": "tobin",
-      "player": "casual",
-      "side": "above",
-      "limit": 1,
-      "owner": "tobin-safety-margin",
-      "until": "2026-12-01",
-      "why": "Tobin wins far more than Wren and Pip here"
-    },
-    {
-      "row": "z23-boss",
-      "hero": "tobin",
-      "player": "casual",
-      "side": "above",
-      "limit": 1,
-      "owner": "tobin-safety-margin",
-      "until": "2026-12-01",
-      "why": "Tobin wins far more than Wren and Pip here"
-    },
-    {
-      "row": "z24-boss",
-      "hero": "tobin",
-      "player": "casual",
-      "side": "above",
-      "limit": 1,
-      "owner": "tobin-safety-margin",
-      "until": "2026-12-01",
-      "why": "Tobin wins far more than Wren and Pip here"
-    },
-    {
-      "row": "z5-boss-keptup",
-      "hero": "tobin",
-      "player": "casual",
-      "side": "above",
-      "limit": 1,
-      "owner": "tobin-safety-margin",
-      "until": "2026-12-01",
-      "why": "Tobin wins far more than Wren and Pip: first-hour HP 2.3-2.7x theirs, then armour x class reduction 0.37 (pr5's 0.55 passive floor is only the cheap half); Guard, Grit and block are the card's"
-    },
-    {
-      "row": "z5-boss-keptup",
-      "hero": "tobin",
-      "player": "none",
-      "side": "above",
-      "limit": 1,
-      "owner": "tobin-safety-margin",
-      "until": "2026-12-01",
-      "why": "a Tobin who never parries or dodges still wins: first-hour HP 2.3-2.7x theirs, then armour x class reduction 0.37 (pr5's 0.55 passive floor is only the cheap half); Guard, Grit and block are the card's"
-    },
-    {
-      "row": "z8-boss-keptup",
-      "hero": "tobin",
-      "player": "casual",
-      "side": "above",
-      "limit": 1,
-      "owner": "tobin-safety-margin",
-      "until": "2026-12-01",
-      "why": "Tobin wins far more than Wren and Pip: first-hour HP 2.3-2.7x theirs, then armour x class reduction 0.37 (pr5's 0.55 passive floor is only the cheap half); Guard, Grit and block are the card's"
-    },
-    {
-      "row": "z8-boss-keptup",
-      "hero": "tobin",
-      "player": "none",
-      "side": "above",
-      "limit": 0.58,
-      "owner": "tobin-safety-margin",
-      "until": "2026-12-01",
-      "why": "a Tobin who never parries or dodges still wins: first-hour HP 2.3-2.7x theirs, then armour x class reduction 0.37 (pr5's 0.55 passive floor is only the cheap half); Guard, Grit and block are the card's"
-    },
-    {
-      "row": "z10-boss-keptup",
-      "hero": "tobin",
-      "player": "casual",
-      "side": "above",
-      "limit": 1,
-      "owner": "tobin-safety-margin",
-      "until": "2026-12-01",
-      "why": "Tobin wins far more than Wren and Pip: first-hour HP 2.3-2.7x theirs, then armour x class reduction 0.37 (pr5's 0.55 passive floor is only the cheap half); Guard, Grit and block are the card's"
-    },
-    {
-      "row": "z10-boss-keptup",
-      "hero": "tobin",
-      "player": "none",
-      "side": "above",
-      "limit": 0.91,
-      "owner": "tobin-safety-margin",
-      "until": "2026-12-01",
-      "why": "a Tobin who never parries or dodges still wins: first-hour HP 2.3-2.7x theirs, then armour x class reduction 0.37 (pr5's 0.55 passive floor is only the cheap half); Guard, Grit and block are the card's"
-    },
-    {
-      "row": "z12-boss-keptup",
-      "hero": "tobin",
-      "player": "casual",
-      "side": "above",
-      "limit": 1,
-      "owner": "tobin-safety-margin",
-      "until": "2026-12-01",
-      "why": "Tobin wins far more than Wren and Pip: first-hour HP 2.3-2.7x theirs, then armour x class reduction 0.37 (pr5's 0.55 passive floor is only the cheap half); Guard, Grit and block are the card's"
-    },
-    {
-      "row": "z12-boss-keptup",
-      "hero": "tobin",
-      "player": "none",
-      "side": "above",
-      "limit": 0.55,
-      "owner": "tobin-safety-margin",
-      "until": "2026-12-01",
-      "why": "a Tobin who never parries or dodges still wins: first-hour HP 2.3-2.7x theirs, then armour x class reduction 0.37 (pr5's 0.55 passive floor is only the cheap half); Guard, Grit and block are the card's"
-    },
-    {
-      "row": "z13-boss-keptup",
-      "hero": "tobin",
-      "player": "casual",
-      "side": "above",
-      "limit": 1,
-      "owner": "tobin-safety-margin",
-      "until": "2026-12-01",
-      "why": "Tobin wins far more than Wren and Pip: first-hour HP 2.3-2.7x theirs, then armour x class reduction 0.37 (pr5's 0.55 passive floor is only the cheap half); Guard, Grit and block are the card's"
-    },
-    {
-      "row": "z13-boss-keptup",
-      "hero": "tobin",
-      "player": "none",
-      "side": "above",
-      "limit": 0.1,
-      "owner": "tobin-safety-margin",
-      "until": "2026-12-01",
-      "why": "a Tobin who never parries or dodges still wins: first-hour HP 2.3-2.7x theirs, then armour x class reduction 0.37 (pr5's 0.55 passive floor is only the cheap half); Guard, Grit and block are the card's"
-    },
-    {
-      "row": "z15-boss-keptup",
-      "hero": "tobin",
-      "player": "casual",
-      "side": "above",
-      "limit": 1,
-      "owner": "tobin-safety-margin",
-      "until": "2026-12-01",
-      "why": "Tobin wins far more than Wren and Pip: first-hour HP 2.3-2.7x theirs, then armour x class reduction 0.37 (pr5's 0.55 passive floor is only the cheap half); Guard, Grit and block are the card's"
-    },
-    {
-      "row": "z15-boss-keptup",
-      "hero": "tobin",
-      "player": "none",
-      "side": "above",
-      "limit": 1,
-      "owner": "tobin-safety-margin",
-      "until": "2026-12-01",
-      "why": "a Tobin who never parries or dodges still wins: first-hour HP 2.3-2.7x theirs, then armour x class reduction 0.37 (pr5's 0.55 passive floor is only the cheap half); Guard, Grit and block are the card's"
-    },
-    {
       "row": "z5-boss-keptup",
       "hero": "pip",
       "player": "casual",
@@ -854,6 +514,16 @@
       "owner": "wren-first-hour-parity",
       "until": "2026-11-15",
       "why": "Pip who never defends still wins the z12 kept-up boss (judge 2026-10-07 point 8): Pip wins far more than Wren at the same set, so her kept-up cell rides it)"
+    },
+    {
+      "row": "z38-boss-behind",
+      "hero": "tobin",
+      "player": "casual",
+      "side": "above",
+      "limit": 0.72,
+      "owner": "gear-weight",
+      "until": "2026-12-01",
+      "why": "a tier behind costs this hero more than 60 points of casual wins now that bosses hit him for a real share (tobin-safety-margin)"
     }
   ]
 }

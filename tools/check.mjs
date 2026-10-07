@@ -8644,7 +8644,7 @@ if (section('C29 boss pass (core)')) try {
       E(`loadSave(); S.L = 41; S.solo.asc.pip = 1; S.solo.tr.pip.atk = 41; attrSpread();
         for (const sl of Object.keys(S.equip)) { const it = itemById(S.equip[sl]); if (it && !['pick', 'axe', 'sickle', 'spear'].includes(it.slot)) { it.r = 'epic'; it.plus = 10; it.t += ${d}; if (it.a) it.a = it.a.filter(l => l[0] === 'hp'); } }
         S.abil.unl.pip = ['spark', 'nova']; S.solo.eq.pip = ['fire', 'spark', 'nova']; S.maxZone = 38; setZone(38); S.activity = 'fight'; arena = null; gearDirty()`);
-      const hit = boss => E(`(() => { fightBoss = ${boss}; spawn(); const p = turnCombatProfile(), k = p.refHp * p.hitX * p.bossHitX / p.heroMaxHp, ch = p.script.find(m => m.charge);
+      const hit = boss => E(`(() => { fightBoss = ${boss}; spawn(); const p = turnCombatProfile(), k = p.refHp * p.hitX * (p.bossHeroX || 1) * p.bossHitX / p.heroMaxHp, ch = p.script.find(m => m.charge);
         return { name: p.foeName + ' ' + p.script.map(m => m.id).join('+'), hit: k * Math.max(...p.script.filter(m => !m.charge).flatMap(m => m.hits.map(h => h.x))), charge: ch ? k * p.bossChargeX * ch.hits.reduce((a, h) => a + h.x, 0) : 0 }; })()`);
       const run = skill => E(`(r => ({ win: r.kills / Math.max(1, r.kills + r.deaths), turns: r.totalHeroTurns / Math.max(1, r.completedFights) }))(turnCombatSample({ profile: turnCombatProfile(), seconds: 1800, seed: 3, skill: ${JSON.stringify(skill)} }))`);
       const n = hit(false), b = hit(true);
@@ -8670,7 +8670,7 @@ if (section('C29 mid-game HP and Wren (core)')) try {
         ${J(KINDS[k])}.concat(['charm']).forEach((kind, i) => { const it = newItem(kind, t, 'rare', { rnd }); it.plus = 5; if (it.a) it.a = it.a.filter(l => l[0] === 'hp'); S.items.push(it); S.equip[['weapon', 'off', 'helm', 'body', 'charm'][i]] = it.id; }); })();
       S.activity = 'fight'; arena = null; gearDirty(); fightBoss = false; spawn(); globalThis.__f = 1 / (turnCombatProfile().A / turnRefAtk(${z}));`);
     const prof = boss => `(() => { fightBoss = ${boss}; spawn(); const p = turnCombatProfile(); p.A *= __f; p.U *= __f; p.counter *= __f; p.heroMaxHp *= __f; return p; })()`;
-    const hit = boss => E(`(p => { const k = p.refHp * p.hitX * p.bossHitX / p.heroMaxHp, ch = p.script.find(m => m.charge);
+    const hit = boss => E(`(p => { const k = p.refHp * p.hitX * (p.bossHeroX || 1) * p.bossHitX / p.heroMaxHp, ch = p.script.find(m => m.charge);
       return { hit: k * Math.max(...p.script.filter(m => !m.charge).flatMap(m => m.hits.map(h => h.x))), charge: ch ? k * p.bossChargeX * ch.hits.reduce((a, h) => a + h.x, 0) : 0 }; })(${prof(boss)})`);
     // the mean over ability sets and seeds 1-3 (one sample swings a lot)
     const run = (skill, sets) => E(`(p => { let K = 0, D = 0, T = 0, F = 0; for (const eq of ${J(sets)}) for (let sd = 1; sd <= 3; sd++) {
@@ -8690,16 +8690,25 @@ if (section('C29 mid-game HP and Wren (core)')) try {
       const mid = z >= 25, b = mid ? [0.08, 0.16, 0.2, 0.45] : z === 15 ? [0.07, 0.42, 0.2, 0.92] : z === 20 ? [0.15, 0.42, 0.4, 0.92] : [0.18, 0.36, 0.45, 0.9];
       if (!(r.n.hit >= 0.05 && r.n.hit <= 0.18 && r.b.hit >= b[0] && r.b.hit <= b[1] && r.b.charge >= b[2] && r.b.charge <= b[3]) || r.err().length) bad.push(s); }
     assert(!bad.length, `mid-game HP: for a hero who keeps up (zones 8-34), a landed normal hit costs 5-18% of max HP, a boss hit 18-36% (7-42% at zone 15, 15-42% at zone 20), a charge 45-90% (20-92% at zone 15, 40-92% at zone 20) (${bad.length ? 'off: ' + bad.join('; ') : seen.join('; ')})`); }
-  // played: good players win zone-20 bosses in 8-10 turns or so, casual players win some and lose some; Tobin stays the safest
+  // played: good players win zone-20 bosses in 8-10 turns or so, casual players win some and lose some; Tobin stays the safest, not a sure win (tobin-safety-margin)
   { const w = kept('wren', 20, 33, 'mid'), p = kept('pip', 20, 33, 'mid'), t = kept('tobin', 20, 33, 'mid');
     const WS = [['echo', 'deadeye', 'powershot'], ['twinshot', 'echo', 'deadeye'], ['echo', 'barbed', 'sonic']], PS = [['fire', 'ignite', 'spark'], ['kindle', 'fire', 'ignite'], ['fire', 'wildfire', 'spark']];
     const wg = w.run(good, WS), wc = w.run(casual, WS), pg = p.run(good, PS), pc = p.run(casual, PS), tc = t.run(casual, [['bash', 'heavystrike', 'hammerfall'], ['bash', 'riposte', 'hammerfall']]);
     assert(wg.win >= 0.95 && pg.win >= 0.95 && wg.turns >= 6 && wg.turns <= 12 && pg.turns >= 6 && pg.turns <= 12 && wc.win >= 0.2 && wc.win <= 0.85 && pc.win >= 0.2 && pc.win <= 0.85
-      && tc.win >= 0.95 && t.b.hit < p.b.hit / 3 && !w.err().length,
-      `mid-game HP: at zone 20 a hero who keeps up wins bosses played well in 6-12 turns and 20-85% played casually (this hero is scaled to the reference; budget.mjs gates the real one); Tobin wins nearly all, a hit costs him under a third of Pip's (${JSON.stringify({ wg, wc, pg, pc, tc, tobinHit: +t.b.hit.toFixed(3), pipHit: +p.b.hit.toFixed(3) })})`); }
+      && tc.win >= 0.3 && tc.win <= 0.95 && t.b.hit >= p.b.hit * 0.6 && !w.err().length,
+      `mid-game HP: at zone 20 a hero who keeps up wins bosses played well in 6-12 turns and 20-85% played casually (this hero is scaled to the reference; budget.mjs gates the real one); Tobin wins more than they do but not all, and a boss hit costs him at least 60% of what it costs Pip (${JSON.stringify({ wg, wc, pg, pc, tc, tobinHit: +t.b.hit.toFixed(3), pipHit: +p.b.hit.toFixed(3) })})`); }
   // gear matters: a tier behind, a zone-20 boss hit takes most of your health; a tier ahead, it barely hurts
   { const lo = kept('pip', 20, 33, 'mid', -1), hi = kept('pip', 20, 33, 'mid', 1);
     assert(lo.b.hit > 0.5 && lo.b.charge > 1 && hi.b.hit < 0.25, `mid-game HP: a gear tier behind, a zone-20 boss hit costs over half your health and its charge kills; a tier ahead, under a quarter (${[lo, hi].map(r => (100 * r.b.hit).toFixed(0) + '% / ' + (100 * r.b.charge).toFixed(0) + '%').join(', ')})`); }
+  // tobin-safety-margin: Tobin's own boss-hit share (boss.heroHitX) never lifts a landed hit past the zone's hit cap, so a hero a gear tier behind survives a full-health landed hit
+  { const g = loadCore({ seed: 7, turns: true, storage: memoryStorage({ [KEY]: FX('mid') }) }), E = s => g.eval(s);
+    const r = E(`(() => { soloPick('tobin', { now: true }); S.maxZone = 20; setZone(20); S.activity = 'fight'; arena = null; fightBoss = true; gearDirty(); spawn();
+      const d = [], io = { random: () => 0.99, emit() {}, alive: () => ({ hero: true, foe: true }), heroHp: () => 1e15, foeHp: () => 1e15, foe: () => null, foeX: () => 1,
+        damageHero: a => { d.push(a); return a; }, healFoe() {}, healHero() {} };
+      const p = turnCombatProfile(); p.blockP = 0; p.blockC = 0; p.heroMaxHp = 1000; const m = turnNew(p, io);
+      m.move = { id: 't', name: 'T', hits: [{ x: 5 }] }; m.hitI = 0; m.defense = ''; turnContact(m, io);
+      return { hero: p.bossHeroX, cap: p.bossHitCap, share: d[0] / p.heroMaxHp }; })()`);
+    assert(r.hero > 1 && r.cap > 0 && r.share <= r.cap + 1e-9, `tobin-safety-margin: a landed zone-20 boss hit on Tobin never costs more than the hit cap of his max HP (${JSON.stringify(r)})`); }
   // Wren: her max HP in turn fights is x1.2 (TURN_TUNE.heroHpX; the real-time fight is unchanged), and Out of Reach: after
   // she dodges a hit, the rest of that move hits her for 70%
   { const g = loadCore({ seed: 8, turns: true }), E = s => g.eval(s);

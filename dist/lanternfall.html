@@ -25237,7 +25237,7 @@ const TURN_TUNE = {
   // Tobin's late pass (autopilot, 2026-10-06; DECISIONS.md band 15-30% slower than Wren and Pip): from zone 30 the refAtk
   // fall left his kills x1.4-1.7 slower, so his Attack, abilities and counters hit x this by zone. His HP, Speed and Guard stay as were.
   lateX: { tobin: [[1, 1], [25, 1], [30, 1.25], [34, 1.6], [35, 1.2], [38, 1.35], [42, 1.4]] },
-  lateBoss: 0.2,   // a boss gets this share of the late pass (its fight keeps its length; the pass is for the foes between)
+  lateBoss: 0,   // a boss gets this share of the late pass (tobin-safety-margin: none, 0.2 before; his boss fights keep their length, the pass is for the foes between)
   foeAtkX: 1,
   goldX: 3, xpX: 2.5, essenceX: 1.6,              // fewer, longer fights pay more each (balance: docs/design/combat-turn-build.md)
   consec: 2, consecBoss: 3,                        // the most turns in a row
@@ -25262,6 +25262,8 @@ const TURN_TUNE = {
   //            the reference HP sits below a kept-up hero's (the late-zone pass), so hitX steps up there.
   //   payX     a longer boss pays more: gold and XP x (1 + payX x (its HP share - 1)), so an hour of play pays as before
   boss: { hpX: [[3, 1], [4, 0.75], [5, 0.925], [6, 1.1], [7, 1.075], [8, 0.95], [9, 0.75], [10, 0.725], [11, 0.882], [12, 1.008], [13, 1.848], [14, 1.656], [15, 1.7], [16, 4], [17, 3], [18, 3], [19, 4.8], [20, 2.8], [21, 1.9], [22, 2.1], [23, 1.5], [24, 1.1], [25, 1], [27, 0.52], [30, 1.55], [34, 0.94], [35, 2.725], [36, 1.85]], regionHpX: 1.4,   // the gear pass (2026-10-02): zones 15-34 about x1.09, 36+ 1.5 -> 1.85, region 1.25 -> 1.4
+    // heroHitX: a zone boss's hits x this on the hero (tobin-safety-margin: the safest hero still feels a boss; 1 = the zone table's hit)
+    heroHitX: { wren: 1, tobin: [[4, 1], [5, 2.4], [6, 2], [7, 1.5], [8, 1.7], [9, 1.25], [10, 2], [11, 1.25], [12, 1.75], [13, 1.6], [14, 1.7], [15, 2.55], [16, 5.3], [17, 5], [18, 5.1], [19, 4], [20, 6], [21, 6.2], [22, 6.1], [23, 6.6], [24, 6.2], [25, 6.2], [27, 6.4], [30, 5.8], [34, 5.8], [36, 7], [38, 7]], pip: 1 },
     hitX: [[3, 1], [4, 0.96], [5, 1.618], [6, 1.807], [7, 1.5], [8, 1.055], [9, 0.632], [10, 0.45], [11, 0.407], [12, 0.403], [13, 0.539], [14, 0.461], [15, 0.491], [16, 2.1], [17, 1.78], [18, 1.2], [19, 3.15], [20, 1.85], [21, 1.17], [22, 0.84], [23, 0.7], [24, 0.63], [25, 0.55], [27, 0.34], [30, 0.72], [34, 0.52], [35, 1.9]], chargeX: [[3, 1], [6, 1.3], [34, 1.3], [35, 1.35]], payX: 0.5,
     // hitCap: one boss hit never takes more than this share of the hero's max HP, so a missed parry cannot kill a full-health hero
     // (zone bosses: 0.4 to zone 15, 0.75 for zones 16-24; judge 2026-10-07, docs/DECISIONS.md "Boss tiers"). Taken before armour, Guard and the rest; each hit of a charged move on its own.
@@ -25352,6 +25354,7 @@ const turnZoneLine = (P, z) => {
   for (let i = 1; i < P.length; i++) if (z <= P[i][0]) { const [z0, a] = P[i - 1], [z1, c] = P[i]; return a + (c - a) * (z - z0) / (z1 - z0); }
   return P[P.length - 1][1];
 };
+const turnHeroHitX = (k, z) => { const L = TURN_TUNE.boss.heroHitX[k]; return Array.isArray(L) ? turnZoneLine(L, z) : L || 1; };   // a hero's own share of a zone boss's hits (boss.heroHitX)
 const turnLateX = (k, z) => { const L = TURN_TUNE.lateX[k]; return L ? turnZoneLine(L, z) : 1; };   // a hero's late-zone power (TURN_TUNE.lateX)
 const turnRefAtkX = z => turnZoneLine(TURN_TUNE.refAtk, z);
 const turnRefAtk = z => turnRefAtkX(z) * mobHp(z) * mod('foeHp');
@@ -25421,6 +25424,7 @@ function turnFoeSetup(f, z, o) {
   f.hp = f.max = hp; f.turn = 1; f.tz = z;
   f.tk = { script, spd: spd * 10, arm: Z && Z.armour ? Z.armour : f.armoured ? 0.3 : 0, boss: !!f.boss, region, elite: !!f.elite,
     hx: zb ? turnZoneLine(B.hitX, z) * (champ ? turnZoneLine(B.champHitX, z) : 1) : f.boss || f.trial || f.deep ? 1 : turnZoneLine(T.normHitX, z) * (f.elite ? T.eliteHitX : 1), cx: zb ? turnZoneLine(B.chargeX, z) : 1,
+    zb: zb && !region,   // a zone boss (not a region boss, the Deepwell or a Proving): the hero's own boss-hit share (boss.heroHitX) applies
     hcap: zb && !region ? turnZoneLine(B.hitCap, z) : 0, hfl: zb && !region && B.hpFloor ? turnZoneLine(B.hpFloor, z) : 0,
     ff: zb && !region && B.footFloor ? turnZoneLine(B.footFloor, z) : 0, pmin: zb && !region && z >= B.passiveZones[0] && z <= B.passiveZones[1] ? B.passiveMin : 0,
     gates: zb && !region && B.gate.on && z >= B.gate.from && z <= B.gate.to ? (champ ? B.gate.champ : z >= B.gate.captainFrom ? B.gate.captain : B.gate.captainEarly) : null };
@@ -25491,7 +25495,7 @@ function turnMakeProfile(f, u) {
     spellX: 1 + (g.spell || 0) / 100, dotX: 1 + (g.area || 0) / 100, ctrlX: 1 + (g.control || 0) / 100, pierce: Math.min(1, (g.pierce || 0) / 100),
     healX: turnHealX(), wardOver: Math.min(0.4, (g.ward || 0) / 100), focus: turnFocus(),
     critChance: critChance(), critMult: critMult(), nonCrit: mod('nonCrit'), echo: g.echo || 0,
-    hitX: Math.max(T.foeAtkX * (1 - armRed) * classDr, f.tk.pmin || 0), blockP: u.blockP || 0, blockC: u.blockC || 0, blockN: u.blockN || 0, blockX: COMBAT_TUNE.blockX,
+    hitX: Math.max(T.foeAtkX * (1 - armRed) * classDr, f.tk.pmin || 0), bossHeroX: f.tk.zb ? turnHeroHitX(key, z) : 1, blockP: u.blockP || 0, blockC: u.blockC || 0, blockN: u.blockN || 0, blockX: COMBAT_TUNE.blockX,
     heroSpd: ((T.heroHaste[key] || 10) + (g.initiative || 0)) * (1 + (g.aspd || 0) / 100), foeSpd: f.tk.spd, foeMaxHp: f.max, foeHp: f.hp,
     bossHitX: f.tk.hx || 1, bossChargeX: f.tk.cx || 1, bossHitCap: f.tk.hcap || 0, bossHitFloor: f.tk.hfl || 0,
     bossFoot: f.tk.ff || 0, footHp: f.tk.ff > 0 && !f.deep && !f.trial && z >= S.maxZone ? turnFootHp(z, u.maxHp) : 0,   // boss-tiers-pr5: the footing floor, on a boss not beaten yet
@@ -26009,7 +26013,8 @@ function turnLand(m, io, hit) {
   if (p.bossFoot > 0 && p.footHp > 0) amt = Math.max(amt, amt0 * p.bossFoot * p.heroMaxHp / p.footHp);
   amt *= (e.weaken > 0 ? T.weakenX : 1) * (m.enraged ? TURN_TRAITS.enraged.dmg : 1);
   if (p.bossHitCap > 0) amt = Math.min(amt, p.bossHitCap * p.heroMaxHp);   // the boss's side of the hit, before the hero's armour and defences
-  amt *= p.hitX;
+  amt *= p.hitX * (p.bossHeroX || 1);   // the hero's own share of a zone boss's hit (boss.heroHitX), after the passive floor's armour and class reduction
+  if (p.bossHitCap > 0 && (p.bossHeroX || 1) > 1) amt = Math.min(amt, p.bossHitCap * p.heroMaxHp);   // heroHitX never lifts a hit past the hit cap
   let red = 1;
   if (h.guard > 0) red *= T.guardX;
   if (h.grit > 0) red *= 1 - T.gritDr * h.grit;
