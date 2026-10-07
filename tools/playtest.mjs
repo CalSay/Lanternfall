@@ -335,6 +335,18 @@ async function exec(cmd, args, ctx) {
       expects.push({ want, ok, viewport: page.viewportSize().width + 'x' + page.viewportSize().height });
       return { text: `EXPECT ${ok ? 'PASS' : 'FAIL'} "${want}"`, data: { expect: want, ok } };
     }
+    case 'stub-site': {   // pretend this is the Netlify page: window.LF_SITE with a send() that answers ok (default) or fail
+      const ok = (args[0] || 'ok') !== 'fail';
+      await page.evaluate(ok => { window.LF_SITE = { build: 'proof', send: () => Promise.resolve(ok) }; }, ok);
+      return { text: `LF_SITE stubbed: send ${ok ? 'succeeds' : 'fails'}`, data: { stub: ok } };
+    }
+    case 'type': {   // fill the first visible text box, the way a player types
+      if (!args.length) die('type needs the text: type "the first fight felt slow"');
+      const box = await page.$('#sec-feedback textarea.feedback-note');
+      if (!box) { process.exitCode = 1; return { text: 'type: no text box on screen', data: { ok: false } }; }
+      await box.fill(args.join(' ')); await run(page, 0.5);
+      return { text: 'typed ' + args.join(' '), data: { ok: true } };
+    }
     case 'shot': {
       if (!args.length) die('shot needs a name: shot first-fight');
       const f = await namedShot(page, args[0]);
@@ -346,7 +358,7 @@ async function exec(cmd, args, ctx) {
       for (let i = 1; i <= 6; i++) { fs6.push(await namedShot(page, `${args[0]}-${i}`)); if (i < 6) await run(page, 0.3); }
       return { text: `burst ${fs6.length} frames: ${fs6[0]} .. ${fs6[5]}`, data: { burst: fs6 } };
     }
-    default: die(`unknown command "${cmd}". Commands: look, tap, tap-if, wait, away, state, new, expect, shot, burst, batch`);
+    default: die(`unknown command "${cmd}". Commands: look, tap, tap-if, wait, away, state, new, expect, shot, burst, stub-site, type, batch`);
   }
 }
 
