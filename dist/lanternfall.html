@@ -14270,7 +14270,7 @@ const FEATURE_OF = Object.fromEntries(FEATURES.map(f => [f.id, f]));
 const FIRST_USE_FOR = 7200;   // seconds of play after the unlock (the same window as a view's "new" mark)
 const FIRST_USE = {
   party: { text: 'Your Hero: gear, level and abilities.' },
-  nextup: { text: 'Next Up shows your best next goal. Tap it.', via: 'guide' },
+  nextup: { text: 'That chip is Next Up. It names your best next goal. Tap it.', via: 'guide' },
   awaynote: { text: 'While away, gathering continues and fighting stops.', via: 'strip' },   // the strip is its own line (71-ui-fight)
   gather: { text: 'Pick a node and your hero mines or chops it, even while you are away.' },
   bounties: { text: 'Bounties are three short goals. They pay gold, materials and Renown.' },
@@ -40825,10 +40825,34 @@ let navUI = null;
     raid: 'The World raid is open on the Camp tab.',
     deep: 'New on the Fight tab: the Deepwell.'
   };
+  // unlock-voice: Old Hesketh announces each new thing in the guide panel, one at a time, once a fight is over (never mid-turn).
+  // The toast above still goes to the bell list. One line per row; Next Up (its guide step), the away strip (its own line) and
+  // Hands (Tam's notice) say it elsewhere. Runtime queue only: an old save never replays one, and what a save already had stays quiet.
+  const SAY_TXT = {
+    party: "The Hero tab's open. Your gear, level and build live there.",
+    gather: "Wood first. Gather's open, and the hero works even while you're away.",
+    bounties: 'Bounties are posted on the Fight tab. Three goals, and they pay well.',
+    camp: "That's a camp. The Camp tab is open. Build here.",
+    forage: "Foraging's open under Gather. Fibre and herbs, mostly.",
+    craft: "Craft's open. Materials in, gear out.",
+    bestiary: "The Bestiary's open. It remembers every foe you've met.",
+    almanac: "The Almanac's open in Camp. It knows today's omen.",
+    uniques: "Uniques are open in Craft. Rare gear, strong tricks.",
+    tavern: "The Tavern's open in Camp. Other heroes drink there.",
+    codex: "The Codex is open in the Journal. It keeps what you've found.",
+    raid: "The World raid's open in Camp. One boss, every player.",
+    stars: "Stars are open on the Hero tab. Each one changes how you fight.",
+    deep: "The Deepwell's open on the Fight tab. Pick a boon between floors."
+  };
+  const sayQ = []; let sayCur = '';
+  function sayQueue(id) { if (SAY_TXT[id] && O().tips && !O().done['say:' + id] && !sayQ.includes(id)) sayQ.push(id); }
+  const sayDone = id => { sayCur = ''; const i = sayQ.indexOf(id.slice(4)); if (i >= 0) sayQ.splice(i, 1); onboardUseDone(id); };
   const TAB_FEATURE = { party: 'party', gather: 'gat', camp: 'world', craft: 'forge' };
   on('unlock', ({ id, quiet }) => {
     applyFeatures();
-    if (quiet || id === '*' || !OPEN_TXT[id]) return;
+    if (quiet || id === '*') return;
+    sayQueue(id);
+    if (!OPEN_TXT[id]) return;
     const tab = TAB_FEATURE[id];
     const ic = tab ? document.querySelector(`.tab[data-tab="${tab}"] img`) : null;
     toast(OPEN_TXT[id], 'good', ic ? ic.src : { ic: ['banner', '#F2C14E'] }, tab || id === 'nextup' ? 'high' : 'normal');
@@ -40878,7 +40902,7 @@ let navUI = null;
   bub.append(faceBox, nm, txt, x, okb);
   // A waiting step may carry a Go button (spec.go): it takes the hero to the node that yields what the step needs.
   let curGo = null;
-  const finish = s => s.id.startsWith('use:') ? onboardUseDone(s.id) : onboardDone(s.id);   // a first-use line is read, not a guide step
+  const finish = s => s.id.startsWith('say:') ? sayDone(s.id) : s.id.startsWith('use:') ? onboardUseDone(s.id) : onboardDone(s.id);   // a first-use line is read, not a guide step
   okb.addEventListener('click', e => { e.stopPropagation(); if (curGo) curGo.fn(); else if (cur) finish(cur); tick(); });
   let cur = null;   // the step on screen
   x.addEventListener('click', e => { e.stopPropagation(); if (cur) finish(cur); tick(); });
@@ -40956,25 +40980,25 @@ let navUI = null;
       const b = q('#modeSeg button[data-act="gather"]');
       return b && !b.hidden ? { node: b, text: 'The road is cold. Tap Gather and chop Pine Log for a camp fire.' } : null;
     },
-    'tab:party': () => S.tab === 'party' ? null : { node: q('.tab[data-tab="party"]'), text: 'New tab: Hero. Tap it.' }
+    'tab:party': () => S.tab === 'party' ? null : { node: q('.tab[data-tab="party"]'), text: "The Hero tab's open. Tap it." }
   };
   const STEP_UI = {
     // UX-L1: in landscape a menu leaves the rail and top row in view, so the hint stays and points at the lit tab (close the menu)
-    chop: () => (onGame() || isWide()) && atGrove() ? stockSpec('chop', 'the camp fire', 'Tap the tree to chop faster.') : null,
+    chop: () => (onGame() || isWide()) && atGrove() ? stockSpec('chop', 'the camp fire', 'Tap the tree. It goes faster.') : null,
     'stock:bench': () => stockSpec('stock:bench', 'the Workbench'),
     'stock:tool': () => stockSpec('stock:tool', 'a Copper Pickaxe'),
     'stock:forge': () => stockSpec('stock:forge', 'the Forge'),
     'stock:store': () => stockSpec('stock:store', 'the Storehouse'),
     light: () => {
-      if (!onGame()) return isWide() ? { node: q(`.tab[data-tab="${S.tab}"]`), text: 'Close this menu, then tap the fire to light it.' } : null;
+      if (!onGame()) return isWide() ? { node: q(`.tab[data-tab="${S.tab}"]`), text: 'Shut that menu, then tap the fire. Light it.' } : null;
       const f = $('hearthFire');
-      if (atGrove() && f && !f.hidden) return { node: f, round: true, side: 'up', text: 'Tap the fire to light it.' };
-      if (S.activity !== 'gather' && onCtrl()) return { node: q('#modeSeg button[data-act="gather"]'), text: hearthCan().ok ? 'Tap Gather, then light the fire.' : 'Tap Gather to chop Pine Log for the fire.' };
+      if (atGrove() && f && !f.hidden) return { node: f, round: true, side: 'up', text: "Tap the fire. Let's have some light." };
+      if (S.activity !== 'gather' && onCtrl()) return { node: q('#modeSeg button[data-act="gather"]'), text: hearthCan().ok ? 'Tap Gather, then light the fire.' : 'Tap Gather. Pine Log burns well.' };
       return null;
     },
-    bench: () => campPath('bench', ['The fire burns. Open Camp to build.', 'Open Camp.', 'Build the Workbench. It makes tools.']),
+    bench: () => campPath('bench', ["The fire's burning. Open Camp and build.", 'Open Camp.', 'Build a Workbench. Tools start there.']),
     tool: () => {
-      if (S.tab !== 'forge') return { node: q('.tab[data-tab="forge"]'), text: 'The Workbench is built. Open Craft.' };
+      if (S.tab !== 'forge') return { node: q('.tab[data-tab="forge"]'), text: "The Workbench is up. Open Craft." };
       if (curView('forge') !== 'make') return { node: q('#viewSeg button[data-view="make"]') || q('.tab[data-tab="forge"]'), text: 'Open Make.' };
       const st = q('.cf-st[data-st="bench"]');
       if (st && st.getAttribute('aria-pressed') !== 'true') return { node: st, text: 'Tap the Workbench.' };
@@ -40982,10 +41006,10 @@ let navUI = null;
       const t1 = q('#sec-craft-recipes .cf-tiers button[data-t="1"]');
       if (t1 && t1.getAttribute('aria-pressed') !== 'true') return { node: t1, text: 'Tap Tier 1.' };
       // (the recipe list can still be re-rendering right after the station is picked: point at the list, never at nothing)
-      return { node: q('#sec-craft-recipes .cf-rec[data-kind="pick"] .cf-go') || q('#sec-craft-recipes') || st, side: 'up', text: 'Make a Copper Pickaxe.' };
+      return { node: q('#sec-craft-recipes .cf-rec[data-kind="pick"] .cf-go') || q('#sec-craft-recipes') || st, side: 'up', text: "Make a Copper Pickaxe. You'll want it." };
     },
-    forge: () => campPath('forge', ['Open Camp to build the Forge.', 'Open Camp.', 'Build the Forge for your weapon.']),
-    store: () => campPath('store', ['Your packs are nearly full. Open Camp.', 'Open Camp.', 'Your packs are nearly full. Build a Storehouse.']),
+    forge: () => campPath('forge', ['Open Camp. The Forge makes weapons.', 'Open Camp.', 'Build the Forge. Then you can make a weapon.']),
+    store: () => campPath('store', ['Packs are near full. Open Camp.', 'Open Camp.', 'Packs are near full. Build a Storehouse.']),
     // Training: Hero tab, Training view, Train on Attack.
     // hero-progression-rework: with attributes on, the first point goes into Might.
     upgrade: () => Object.assign(typeof attrOn === 'function' && attrOn()
@@ -40993,15 +41017,15 @@ let navUI = null;
         ["You've a point to spend. Open Hero.", 'Open Build.', "Put it in Might. You'll hit harder."])
       : path('party', 'training', '#trainRows .tr-row[data-mv="atk"] .buy',
         ['You have gold. Open Hero to train.', 'Open Training.', 'Train Attack. Each level hits harder.']), { side: S.tab === 'party' ? 'up' : '' }),
-    'tab:gat': () => S.tab === 'gat' ? null : { node: q('.tab[data-tab="gat"]'), text: 'New tab: Gather. Tap it to see what you can mine.' },
-    'tab:world': () => S.tab === 'world' ? null : { node: q('.tab[data-tab="world"]'), text: 'You made camp. Tap Camp to build.' },
-    'tab:forge': () => S.tab === 'forge' ? null : { node: q('.tab[data-tab="forge"]'), text: 'New tab: Craft. Tap it to make gear.' },
+    'tab:gat': () => S.tab === 'gat' ? null : { node: q('.tab[data-tab="gat"]'), text: "Gather's open. Tap it and see what you can mine." },
+    'tab:world': () => S.tab === 'world' ? null : { node: q('.tab[data-tab="world"]'), text: "You've made camp. Tap Camp and build." },
+    'tab:forge': () => S.tab === 'forge' ? null : { node: q('.tab[data-tab="forge"]'), text: "Craft's open. Tap it and make gear." },
     nextup: () => onCtrl() ? { node: chip, text: FIRST_USE.nextup.text } : null
   };
 
   const USE_SHOWN_MS = 7000;   // a first-use line counts as read after this long on screen
   const BLOCK = '.create, .away-ov, .bsheet-ov, .modal, .dw-ov, .mm-ov';
-  let lastKey = '', useT0 = 0, lastGT = null;
+  let lastKey = '', useT0 = 0, useId = '', lastGT = null;
   function hide() { useT0 = 0; if (!layer.hidden) layer.hidden = true; if (!bub.hidden) bub.hidden = true; cur = null; curGo = null; lastKey = ''; lastNode = null; lastRect = null; ONBOARD.paused = false; const ap = $('app'); if (ap.classList.contains('guide-side')) ap.classList.remove('guide-side', 'guide-nu', 'guide-btn'); }
   // The hint used to re-read the target's pixel position and re-place itself every 250ms, so it
   // jumped whenever the stage moved under it (camera/zoom, screen shake, a pack spawning) even
@@ -41016,18 +41040,21 @@ let navUI = null;
     if (S.tab !== lastTab) { lastTab = S.tab; dirty = true; reveal = true; }
     let step = null;
     try { step = onboardStep(); } catch (e) { console.error('[lanternfall] onboard step', e); }
+    // unlock-voice: a new thing is announced when no fight is in view, and only over a quiet tip or no tip
+    // (it starts between fights and then stays up until read, so a quick next foe does not cut it short)
+    if ((!step || step.quiet) && sayQ.length && O().tips && !document.hidden && (sayCur === sayQ[0] || guidePhase(!guideMenuCovers()) === 'between')) { sayCur = sayQ[0]; step = { id: 'say:' + sayCur, text: SAY_TXT[sayCur] }; }
     // no guide step: the system on screen may still owe its first-use line (never alongside a guide step)
     if (!step && S.tab) { try { const cv = curView(S.tab), vw = viewsOf(S.tab).find(v => v.id === cv); step = onboardUse({ tab: S.tab, view: cv, feature: vw && vw.feature }); } catch (e) { step = null; } }
     if (!step || document.hidden || q(BLOCK)) return hide();
-    const use = step.id.startsWith('use:');
+    const use = /^(use|say):/.test(step.id);
     let spec = null;
     const table = SOLO_UI[step.id] ? SOLO_UI : STEP_UI;
     // a first-use line has no target: it docks over the open menu with no ring, and never pauses the game
-    try { spec = use ? { node: panels, text: step.text, noRing: true } : table[step.id] ? table[step.id]() : null; } catch (e) { spec = null; }
+    try { spec = use ? { node: S.tab || step.id.startsWith('use:') ? panels : stageBox, text: step.text, noRing: true } : table[step.id] ? table[step.id]() : null; } catch (e) { spec = null; }
     if (!spec || !vis(spec.node)) return hide();
     // a menu step whose button is disabled waits (a build while the builder is busy): no ring, no pause, no tip
     if (table === STEP_UI && !use && !spec.noRing && !pressable(spec.node)) return hide();
-    if (use) { if (!useT0) useT0 = Date.now(); else if (Date.now() - useT0 > USE_SHOWN_MS) { onboardUseDone(step.id); return hide(); } }
+    if (use) { if (useId !== step.id) { useId = step.id; useT0 = 0; } if (!useT0) useT0 = Date.now(); else if (Date.now() - useT0 > USE_SHOWN_MS) { finish(step); return hide(); } }
     // guide-voice: a live tip nobody answers for 60 s of play (game clock: a paused game adds none) retires to the Journal's Tips
     if (!use && step.tip && !step.needs && !ONBOARD.paused) {
       const R = GUIDE_RT.shown; R[step.id] = (R[step.id] || 0) + dg;
@@ -42289,6 +42316,7 @@ var starsUiPick;   // starsUiPick(id): open the star map on that star's card (57
   on('menuView', ({ view }) => { if (view === 'stars' && S.stars && typeof starsFound === 'function') S.stars.seenN = starsFound(); });
   on('unlock', ({ id, quiet }) => {
     if (id !== 'stars' || quiet) return;
+    if (typeof S !== 'undefined' && S.onboard && S.onboard.tips) return;   // unlock-voice: Hesketh says it in the guide panel
     toast('New on the Hero tab: Stars. Each star changes how your fights play.', 'good', { ic: ['constel', '#F2C14E'] }, 'high');
   });
 

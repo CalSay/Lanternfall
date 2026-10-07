@@ -1444,6 +1444,12 @@ if (section('first-use lines (ap-first-use-hints)')) try {
   }
   const nextupToast = /OPEN_TXT = \{[^}]*\n\s*nextup:/.test(ob);
   assert(!dup.length && !twice.length && !nextupToast, `one unlock gives one notice and one line: toasts say where, lines say what${dup.length ? '; ' + dup.join('; ') : ''}${twice.length ? '; the toast repeats the line for ' + twice.join(', ') : ''}${nextupToast ? '; Next Up still has a toast on top of its guide step' : ''}`);
+  // unlock-voice: Hesketh says each new thing in the guide panel (SAY_TXT); every row with an unlock toast has a line, short and plain
+  { const si = ob.indexOf('const SAY_TXT = {'), sayBlock = ob.slice(si, ob.indexOf('};', si)), say = {};
+    for (const m of sayBlock.matchAll(/^\s*(\w+): (["'])(.*)\2,?$/gm)) say[m[1]] = m[3];
+    const toasted = [...ob.slice(ob.indexOf('const OPEN_TXT = {'), ob.indexOf('const SAY_TXT')).matchAll(/^\s{4}(\w+):/gm)].map(m => m[1]).filter(id => ids.includes(id));
+    const missing = toasted.filter(id => !say[id]), longer = Object.entries(say).filter(([, t]) => t.length > 90).map(([id]) => id), stray = Object.keys(say).filter(id => !ids.includes(id));
+    assert(si > 0 && !missing.length && !longer.length && !stray.length, `unlock-voice: every unlock with a toast has one Hesketh line (short, for a real row)${missing.length ? '; missing: ' + missing.join(', ') : ''}${longer.length ? '; too long: ' + longer.join(', ') : ''}${stray.length ? '; for no row: ' + stray.join(', ') : ''}`); }
   // behaviour: a hint line shows once, on its own view, while tips are on, and never as a guide step
   E('soloPick("tobin")');
   const use = (tab, view, feature) => JSON.parse(E(`JSON.stringify(onboardUse({ tab: ${JSON.stringify(tab)}, view: ${JSON.stringify(view)}, feature: ${JSON.stringify(feature)} }))`));

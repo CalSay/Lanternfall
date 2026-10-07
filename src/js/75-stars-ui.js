@@ -36,6 +36,7 @@ var starsUiPick;   // starsUiPick(id): open the star map on that star's card (57
   on('menuView', ({ view }) => { if (view === 'stars' && S.stars && typeof starsFound === 'function') S.stars.seenN = starsFound(); });
   on('unlock', ({ id, quiet }) => {
     if (id !== 'stars' || quiet) return;
+    if (typeof S !== 'undefined' && S.onboard && S.onboard.tips) return;   // unlock-voice: Hesketh says it in the guide panel
     toast('New on the Hero tab: Stars. Each star changes how your fights play.', 'good', { ic: ['constel', '#F2C14E'] }, 'high');
   });
 
