@@ -87,7 +87,10 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
 - **Stars** change the rules of a fight on top: up to 3 set and 2 lit a hero (see The hero).
 - **Zones:** 5 won fights, then the zone boss, then the next zone (`ZONE_FIGHTS` in `40-rules.js`). Losing never moves
   you. Bosses have no timer. In zones 1 to 15 no single boss hit takes more than 40% of your max HP, so one missed parry never
-  ends a fight from full health. Zone bosses from 4 to 12 are tuned to a hero in the zone's first gear (common, +0).
+  ends a fight from full health; in zones 16 to 34 the cap is 75%. Zone bosses from 4 to 12 are tuned to a hero in the zone's first gear (common, +0).
+  Zone bosses 4 to 34 play move tricks (held swings, feints) and rally (at two thirds and a third in zones 4 to 6, at three quarters, half and a quarter from zone 7) (only a Stun breaks a
+  rallying boss's charge), and on a boss you have not beaten, health above the zone's own gear does not shrink its hits (from zone 16 that gear is rare +5).
+  Zone 16 to 34 numbers are provisional until the skilling and crafting balance pass.
 - **After a boss beats you** (`55-boss-try.js`, `75-boss-try-ui.js`): the game stops on a Try again card. It names the hit
   that won and why (a charged move, a hit you did not parry or dodge, a try with bad timing, damage over time, or "so
   close"), the boss's weakness and resists, the moves you now know, and the ways forward that exist today. **Try again**

@@ -8,7 +8,7 @@ import { ROOT } from './core.mjs';
 export const BUDGET_FILE = path.join(ROOT, 'docs', 'design', 'difficulty-budget.json');
 export const HEROES = ['wren', 'tobin', 'pip'];
 export const GATED_PLAYERS = ['casual', 'good', 'none'];   // none (boss-tiers-pr5): only the kinds that carry a `none` band
-export const BOSS_KINDS = ['firstBoss', 'firstChampion', 'earlyCaptain', 'captain', 'champion', 'elder'];
+export const BOSS_KINDS = ['firstBoss', 'firstChampion', 'earlyCaptain', 'captain', 'captainMid', 'champion', 'elder'];
 export const loadTargets = () => JSON.parse(fs.readFileSync(BUDGET_FILE, 'utf8'));
 const r2 = x => Math.round(x * 100) / 100;
 const num = x => typeof x === 'number' && Number.isFinite(x);
