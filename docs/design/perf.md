@@ -9,6 +9,7 @@ as good as possible." This page holds the budget, how to measure it, and the rul
 node tools/build.mjs && node tools/perf.mjs --quick   # ~40 s, phone only: run after every merge
 node tools/perf.mjs                                    # ~6 min: phone and desktop, new game and late save
 node tools/perf.mjs --html old/dist/lanternfall.html   # benchmark another build (before/after)
+node tools/perf.mjs --quick --compare base.html        # ~8 min: this dist vs a base dist on the same machine (see Slow machines)
 node tools/perf.mjs --trace out/                       # also save a Chrome trace of each fight window
 ```
 
@@ -117,3 +118,14 @@ Still worth knowing:
 The absolute budgets were set on a fast machine. On the cloud build containers (4 CPUs, software canvas, CPU x4) `--quick` misses 44 to 53 metrics on the integration branch, and on builds from before today too (c1af26c and 56335c5 gave 49 and 53): first frame about 3.7 s, gather about 25 fps, tap to paint 240 to 380 ms. The art data (about 7 MB of the page) has not grown since 2 Oct, so this is the machine, not a slowdown. Run to run the same build varies by 2x on tab and gather timings and by 3x on long-task counts, so a single base-vs-head comparison also false-alarms (tried: 3 to 4 "regressions" comparing a build with itself).
 
 So on these containers read `--quick` as report only (CI already does). To judge a change, run `--html <base dist>` and the new dist back to back, three times each, and compare medians. Do not raise the budgets: they stay the target for a real phone.
+
+### Judge a change on a slow machine: `--compare` (perf-quick-rebaseline, 2026-10-06)
+
+Build the base branch, copy its `dist/lanternfall.html` somewhere, build your branch, then run
+`node tools/perf.mjs --quick --compare <base dist>`. Both builds run three times (`--runs N`), alternating, on the same machine.
+Each metric is the median of its runs. A metric fails only if it is over its budget AND more than 1.25x the base build's median
+(plus 5% of the budget as a floor). A metric over budget on both builds prints as `noise` (the machine, not the change). Exit code 1 if any fails.
+The budgets themselves are unchanged: they stay the target for a real phone, and plain `--quick` still reports against them.
+
+Two harness fixes landed with it: the run closes the new moment card (`.mm-ov`) like the story sheets, and the tap test waits for a live
+Attack button and retries until it has the wanted number of real taps (the button greys out between packs, so on a new game it often measured 0 or 1 tap).
