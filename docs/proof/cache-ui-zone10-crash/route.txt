@@ -1,0 +1,61 @@
+# seed: 1
+# Proof for card cache-ui-zone10-crash (reuses the z10-cantor fixture): the first Champion clear folds its cache into the Champion card and the page throws no error. Was: fixture z10-cantor (tests/proof-fixtures/save-z10-cantor.json) is Tobin on zone 10 with the Hollow Cantor next. The route fights it and checks the Wren meet scene (#159) without playing zones 1 to 9.
+new z10-cantor
+wait 2
+tap-if "Got it"
+expect "The Hollow Cantor"
+shot champion-walk-in
+tap-if "Continue"
+wait 1
+tap-if "Attack"
+tap-if "Shield Bash"
+wait 1
+tap-if "Attack"
+tap-if "Shield Bash"
+wait 1
+tap-if "Attack"
+tap-if "Shield Bash"
+wait 1
+tap-if "Attack"
+tap-if "Shield Bash"
+wait 1
+tap-if "Attack"
+tap-if "Shield Bash"
+wait 1
+tap-if "Attack"
+tap-if "Shield Bash"
+wait 1
+tap-if "Attack"
+tap-if "Shield Bash"
+wait 1
+tap-if "Attack"
+tap-if "Shield Bash"
+wait 1
+tap-if "Attack"
+tap-if "Shield Bash"
+wait 1
+tap-if "Attack"
+tap-if "Shield Bash"
+wait 1
+tap-if "Attack"
+tap-if "Shield Bash"
+wait 1
+tap-if "Attack"
+tap-if "Shield Bash"
+wait 1
+tap-if "Attack"
+tap-if "Shield Bash"
+wait 1
+tap-if "Attack"
+tap-if "Shield Bash"
+wait 1
+expect "1 of 2"
+shot cantor-falls
+tap "Next"
+wait 1
+expect "I'll miss these caves"
+shot wren-meet-scene
+tap "Continue"
+wait 1
+expect "The Hollow Cantor falls"
+shot champion-cache
