@@ -256,6 +256,14 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 - **Gold economy:** gold stops inflating (gold per foe steps up by region); gold is the camp's budget and hero power
   comes from gear, materials and XP. Gold-gain stays as a low gear line; other gold-gain sources became crit damage.
   (2026-09-28)
+- **Gold buys means, not stats (gold-without-training, #180, 2026-10-07; prices provisional until the crafting
+  overhaul spec, due 16 Oct):** gear upgrades +1 to +10 are gold's main sink. Each step costs 1.5x the last, the only
+  material is a token of the item's main one (no essence; no Hide when there is another), +8 to +10 still take a
+  Trophy, and salvage pays back half the gold an item's upgrades cost (Trophies do not come back). Opus high judge:
+  ship; casual players reaching zone 14 by day 3 (was 11.7) and more essence unspent (optimiser 0.27 -> 0.44) are the
+  expected result, not regressions. Cal approved accepting both in the health baseline (2026-10-07). Open asks for
+  the overhaul: give essence a sink so it is not dead stock; crew and supplies take little gold (Hands 0 in the first
+  10 hours, about 10% by hour 50).
 
 ## Achievements
 

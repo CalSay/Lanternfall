@@ -37,6 +37,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 
 ## Economy and skilling
 
+- Ask Cal before `node tools/health.mjs --write-baseline`, naming each moved metric, which way it moved and the judge's ruling. Why: rewriting the bar CI scores against was blocked as a CI bypass until Cal said yes (gold-without-training, 2026-10-07).
 - Read `docs/design/systems-map.md` flags before touching an economy card. Open flags: wood and essence pile up, iron ore is idle (Transmute is lossy), cobalt needs Mining 64 with no hint, Smithing is dead past 54, gold is the only mid-game choke, Renown/Stamps/boss tokens have no spend, tents 6 to 10 are unbuildable, the Renown Day omen does nothing. (systems-map, 2026-10-06)
 - Register any new currency-like counter in the systems map with a source and a sink. Why: the check fails on a currency with no source or sink, and on an unregistered counter. (systems-map, 2026-10-06)
 - Check any reward or shop design against the standing reward lines in `DECISIONS.md` (enemies never drop crafting materials; gold is the flat camp budget; the Armoury owns bag room and loadouts) before proposing what it pays. Why: the monetisation red team found caches paying materials and a paid Armoury room that the Armoury building already sells. (monetisation plan, 2026-10-06)

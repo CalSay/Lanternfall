@@ -44,15 +44,15 @@
       }
     },
     "casual.zoneEnd": {
-      "value": 11.67,
+      "value": 14,
       "bad": "both",
       "abs": 2,
       "rel": 0,
       "note": "zone after 3 days of 3 short visits",
       "perHero": {
-        "wren": 11.8,
-        "tobin": 10,
-        "pip": 13.2
+        "wren": 15,
+        "tobin": 12,
+        "pip": 15
       }
     },
     "casual.mechanicsPerHour": {
@@ -308,15 +308,15 @@
       }
     },
     "optimiser.essHeldShare": {
-      "value": 0.27,
+      "value": 0.44,
       "bad": "up",
       "abs": 0.18,
       "rel": 0,
       "note": "essence made but still unspent at the end",
       "perHero": {
-        "wren": 0.3,
-        "tobin": 0.19,
-        "pip": 0.33
+        "wren": 0.58,
+        "tobin": 0.3,
+        "pip": 0.43
       }
     },
     "optimiser.deadFamilies": {
