@@ -46,9 +46,9 @@ import { HEROES, loadTargets, cells, offBand } from './lib/budget-score.mjs';
 const argv = process.argv.slice(2);
 const flag = n => argv.includes('--' + n);
 const opt = (n, d) => { const i = argv.indexOf('--' + n); return i >= 0 && argv[i + 1] !== undefined && !argv[i + 1].startsWith('--') ? argv[i + 1] : d; };
-{ const known = ['json', 'fights', 'heroes', 'only', 'eval', 'stars', 'lv', 'seed-offset', 'sweep', 'players'], bad = argv.filter(a => a.startsWith('--') && !known.includes(a.slice(2)));
+{ const known = ['json', 'fights', 'heroes', 'only', 'eval', 'stars', 'talents', 'lv', 'seed-offset', 'sweep', 'players'], bad = argv.filter(a => a.startsWith('--') && !known.includes(a.slice(2)));
   if (bad.length) { console.error('budget: unknown option ' + bad.join(', ') + '; known: ' + known.map(k => '--' + k).join(' ')); process.exit(2); } }
-const FIGHTS = Number(opt('fights', 240)), OFFSET = Number(opt('seed-offset', 0)), STARS = opt('stars', 'typical') !== 'none';
+const FIGHTS = Number(opt('fights', 240)), OFFSET = Number(opt('seed-offset', 0)), STARS = opt('stars', 'typical') !== 'none', TALS = opt('talents', 'typical') !== 'none';
 const RUN_HEROES = opt('heroes') ? opt('heroes').split(',') : HEROES;
 if (!(FIGHTS >= 5) || !Number.isInteger(OFFSET) || RUN_HEROES.some(h => !HEROES.includes(h))) { console.error('budget: --fights 5 or more, an integer --seed-offset, --heroes from ' + HEROES.join(',')); process.exit(2); }
 const J = JSON.stringify;
@@ -85,10 +85,24 @@ export const CHECKPOINTS = [
   ['z1-boss', 1, 'boss', { st: 'fresh', zone1: true }],
   ['z3-boss', 3, 'boss', { st: 'fresh' }],
   ['z5-boss', 5, 'boss', { st: 'kept', fx: 'early', gear: 'common' }],
+  // first-hour footing (boss-tiers judge ruling 2026-10-07): the hero a player has when they first reach zones 6-12 wears the zone's
+  // tier at common +0, five pieces, the early fixture, typical abilities and Stars. These rows are gated; the kept-up rows
+  // (rare +5) at zones 8, 10 and 12 are report-only (gear must help: kept-up casual >= first-hour casual).
+  ['z4-boss', 4, 'boss', { st: 'kept', fx: 'early', gear: 'common', kind: 'reportCaptain' }],
+  ['z6-boss', 6, 'boss', { st: 'kept', fx: 'early', gear: 'common' }],
+  ['z7-boss', 7, 'boss', { st: 'kept', fx: 'early', gear: 'common' }],
   ['z8-normal', 8, 'normal', { st: 'kept', fx: 'early' }],
-  ['z8-boss', 8, 'boss', { st: 'kept', fx: 'early' }],
-  ['z10-boss', 10, 'boss', { st: 'kept', fx: 'early' }],
-  ['z12-boss', 12, 'boss', { st: 'kept', fx: 'mid' }],
+  ['z8-boss', 8, 'boss', { st: 'kept', fx: 'early', gear: 'common' }],
+  ['z9-boss', 9, 'boss', { st: 'kept', fx: 'early', gear: 'common' }],
+  ['z10-boss', 10, 'boss', { st: 'kept', fx: 'early', gear: 'common' }],
+  ['z11-boss', 11, 'boss', { st: 'kept', fx: 'early', gear: 'common' }],
+  ['z12-boss', 12, 'boss', { st: 'kept', fx: 'early', gear: 'common' }],
+  ['z8-boss-keptup', 8, 'boss', { st: 'kept', fx: 'early', kind: 'keptUp', ref: 'z8-boss' }],
+  ['z10-boss-keptup', 10, 'boss', { st: 'kept', fx: 'early', kind: 'keptUp', ref: 'z10-boss' }],
+  ['z12-boss-keptup', 12, 'boss', { st: 'kept', fx: 'mid', kind: 'keptUp', ref: 'z12-boss' }],
+  // floors (report only): nothing worn at all; skill must carry (a bare hero is a bot or a player who skipped the Forge)
+  ['z5-boss-bare', 5, 'boss', { st: 'kept', fx: 'early', gear: 'none', kind: 'floor5' }],
+  ['z10-boss-bare', 10, 'boss', { st: 'kept', fx: 'early', gear: 'none', kind: 'floor' }],
   ['z15-elite', 15, 'elite', { st: 'kept', fx: 'mid' }],
   ['z15-boss', 15, 'boss', { st: 'kept', fx: 'mid' }],
   ['z20-normal', 20, 'normal', { st: 'kept', fx: 'mid' }],
@@ -119,7 +133,7 @@ export const CHECKPOINTS = [
 const setFor = (z, k) => SETS[[38, 30, 20, 10, 1].find(s => z >= s)][k];
 // a boss's kind: the game's own boss tier once it has one (boss-tiers: bossTierOf(z) -> 'captain' | 'champion' | 'elder'),
 // else by zone: a region boss is an Elder, zones 1-3 the first bosses, 4-10 the learning Captains, then Captains
-const KIND_FOR = z => `(typeof bossTierOf === 'function' ? bossTierOf(${z}) : isRegionBoss(${z}) ? 'elder' : ${z} <= 3 ? 'firstBoss' : ${z} <= 10 ? 'earlyCaptain' : 'captain')`;
+const KIND_FOR = z => `(typeof bossTierOf === 'function' ? bossTierOf(${z}) : isRegionBoss(${z}) ? 'elder' : ${z} <= 3 ? 'firstBoss' : ${z} === 5 ? 'firstChampion' : ${z} === 10 ? 'champion' : ${z} <= 9 ? 'earlyCaptain' : 'captain')`;
 
 // the setup code for hero k at checkpoint c (run inside a fresh core after the fixture loads)
 function setup(c, k, lvShift) {
@@ -130,7 +144,8 @@ function setup(c, k, lvShift) {
     S.solo.asc[${J(k)}] = ${o.asc ? 1 : 0};`;
   if (o.st === 'late') s += `for (const sl of Object.keys(S.equip)) { const it = itemById(S.equip[sl]); if (it && !['pick', 'axe', 'sickle', 'spear'].includes(it.slot)) { it.r = 'epic'; it.plus = 10;
       const own = { weapon: 0, off: 1, helm: 2, body: 3 }[sl]; if (own != null) { it.slot = ${J(KINDS[k])}[own]; delete it.rt; } if (it.a) it.a = it.a.filter(l => l[0] === 'hp'); } }`;
-  else if (o.st === 'kept') s += `(() => { let sd = 7919; const rnd = () => (sd = sd * 16807 % 2147483647) / 2147483647, t = ${o.gear === 'common' ? 1 : `zoneTier(${z})`};
+  else if (o.st === 'kept' && o.gear === 'none') s += `for (const sl of ['weapon', 'off', 'helm', 'body', 'charm']) S.equip[sl] = null;`;
+  else if (o.st === 'kept') s += `(() => { let sd = 7919; const rnd = () => (sd = sd * 16807 % 2147483647) / 2147483647, t = zoneTier(${z});
       ${J(KINDS[k])}.concat(['charm']).forEach((kind, i) => { const it = newItem(kind, t, ${J(o.gear === 'common' ? 'common' : 'rare')}, { rnd }); it.plus = ${o.gear === 'common' ? 0 : 5}; if (it.a) it.a = it.a.filter(l => l[0] === 'hp');
         S.items.push(it); S.equip[['weapon', 'off', 'helm', 'body', 'charm'][i]] = it.id; }); })();`;
   if (o.tier) s += `for (const sl of Object.keys(S.equip)) { const it = itemById(S.equip[sl]); if (it && !['pick', 'axe', 'sickle', 'spear'].includes(it.slot)) it.t = Math.max(1, Math.min(5, it.t + (${o.tier}))); }`;
@@ -155,6 +170,10 @@ const starsTypical = z => `(() => {
   for (const id of pick[1]) if (own(id)) starLight(id, k);
 })()`;
 
+// the typical talents (counters-and-layers: talents are free): the hero takes talent A on every ability they own and on
+// Attack, Parry and Dodge. `--talents=none` is the old talentless hero, for the before/after.
+const talentsTypical = `(() => { const k = soloHero(); for (const id of HERO_TALENTS[k]) talentSet(k, id, 'a'); })()`;
+
 // a 32-bit seed from the fight's name (FNV-1a, then murmur3's finaliser), never 0
 export function seedOf(...parts) {
   let h = 0x811c9dc5;
@@ -173,6 +192,7 @@ function measure(c, k, lvShift = LV_SHIFT, players = RUN_PLAYERS) {
   if (save) { core.storage.set(e('KEY'), fx(save)); e('loadSave()'); }
   e(setup(c, k, lvShift));
   if (STARS && !o.zone1 && o.st !== 'joined') e(starsTypical(z));
+  if (TALS) e(talentsTypical);
   e(`TURN_TUNE.on = 1; S.activity = 'fight'; arena = null; gearDirty(); fightBoss = ${foe === 'boss'}; spawn();`);
   if (foe === 'elite') e(`(() => { const f = combatFoes().find(x => x && !x.dead); turnFoeSetup(f, S.zone, { elite: true }); })()`);
   if (opt('eval')) e(String(opt('eval')));
@@ -204,7 +224,7 @@ export function runBudget({ only, heroes = RUN_HEROES } = {}) {
     for (const k of heroes) perHero[k] = measure(c, k);
     rows.push({ id, zone: z, foe, kind: o.kind || perHero[heroes[0]].kind, ...(o.ref ? { ref: o.ref } : {}), perHero });
   }
-  return { version: 2, fights: FIGHTS, seedOffset: OFFSET, stars: STARS, heroes, rows };
+  return { version: 2, fights: FIGHTS, seedOffset: OFFSET, stars: STARS, talents: TALS, heroes, rows };
 }
 
 const pc = x => x == null ? 'n/a' : (100 * x).toFixed(0);

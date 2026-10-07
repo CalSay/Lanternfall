@@ -46,7 +46,7 @@
   };
   const famIcon = (f, t) => matIcon(f, t);   // C26: every family has an approved icon (matIcon)
   const trophyIcon = i => iconURL(...craftIcon('tro_' + TYPES[i === 'any' ? 5 : i].key, 1));
-  const shortName = (f, t) => MAT[f].short[t - 1];
+  const shortName = (f, t) => (f === 'ess' ? 'Essence' : MAT[f].short[t - 1]);
   const bname = (id, to) => id === 'hearth' ? `Hearth ${to}` : id === 'tent' ? `Tent ${to}` : `${CAMP_B[id].n} Lv ${to}`;
   const left = x => Math.max(0, x.end - Date.now()) / 1000;
   // "2h", "1h 30m", "3m", "45s": no zero parts.
@@ -57,7 +57,7 @@
   function chips(box, c) {
     const items = [];
     if (c.gold) items.push({ u: iconURL('coin', '#F2C14E'), t: `${fmt(Math.min(S.gold, c.gold))}/${fmt(c.gold)}`, s: S.gold < c.gold, n: 'gold' });
-    for (const [f, t, n] of c.mats) { const h = S.mats[f][t - 1] || 0; items.push({ u: famIcon(f, t), t: `${fmt(Math.min(h, n))}/${fmt(n)} ${shortName(f, t)}`, s: h < n, n: matName(f, t) }); }
+    for (const [f, t, n] of c.mats) { const h = matOwn(f, t); items.push({ u: famIcon(f, t), t: `${fmt(Math.min(h, n))}/${fmt(n)} ${shortName(f, t)}`, s: h < n, n: costName(f, t) }); }
     for (const [i, n] of c.troph) { const tr = S.craft.troph, h = i === 'any' ? tr.reduce((a, b) => a + b, 0) : tr[i] || 0; items.push({ u: trophyIcon(i), t: `${Math.min(h, n)}/${n} ${i === 'any' ? 'Trophies' : CRAFT_TROPHIES[i].n}`, s: h < n, n: 'Trophy' }); }
     const sig = items.map(x => x.t + x.s).join('|');
     if (box._sig === sig) return; box._sig = sig; box.textContent = '';
@@ -68,7 +68,7 @@
   function costCount(c) {
     let have = 0, all = 0;
     if (c.gold) { all++; if (S.gold >= c.gold) have++; }
-    for (const [f, t, n] of c.mats) { all++; if ((S.mats[f][t - 1] || 0) >= n) have++; }
+    for (const [f, t, n] of c.mats) { all++; if (matOwn(f, t) >= n) have++; }
     for (const [i, n] of c.troph) { all++; const tr = S.craft.troph; if ((i === 'any' ? tr.reduce((a, b) => a + b, 0) : tr[i] || 0) >= n) have++; }
     return { have, all };
   }

@@ -1,0 +1,15 @@
+# seed: 1
+# Proof for card fight-labels-fit: the mid fixture in a fight. The Attack label reads whole on the button (the sideways view
+# is where it was cut off), and the foe plate keeps the hero plate's height so the place line sits clear of both.
+# The layout findings themselves are counted by `node tools/eyes.mjs --only layout`.
+new mid
+wait 4
+tap-if "Continue"
+wait 2
+tap-if "Continue"
+wait 4
+expect ".sb-atk .sb-lb"
+expect ".hud.vs .hero-plate"
+expect ".hud.vs .mob"
+expect ".hud.vs .hud-zone"
+shot fight-labels

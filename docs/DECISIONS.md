@@ -302,6 +302,31 @@ payment code, live prices and business and legal set-up stay with Cal.
   never reaches 21, the same on the base build. Wipes come at zones 17 to 20, in the fights before the Captain. The
   level-gap acceptance (zones 20-30) cannot be tested until that is fixed; follow-up card `tobin-z17-20-stall`.
 
+### Boss tiers, first hour: judge rulings (2026-10-07)
+
+PR 1 of `boss-tiers` (zones 1-12). Opus judge after measuring; Cal can veto any line. Later PRs: tiers (`bossTierOf`, a Champion
+stat multiplier, labels, pay), zones 13-24 for a kept-up hero, move sets by tier.
+
+- **One missed parry never kills a full-health hero in zones 1-15.** `TURN_TUNE.boss.hitCap` 0.4: one zone-boss hit (each hit
+  of a charged move on its own) takes at most 40% of the hero's max HP, capped on the boss's side before armour, Guard, Ward
+  and the Stars. Off from zone 16, and off for Elders, the Deepwell, Provings, normal foes and elites. It sits in `turnLand`, so
+  Boss ready and the budget see it. Switch off: `hitCap: [[1, 0]]`.
+- **Why the wall.** Boss hits scale with the reference hero's HP, which grows about 1.9x a zone from zone 8 to 11; a first-hour
+  hero (the zone's tier at common +0) grows 1.3-1.5x. HP against the reference: 2.2 at zone 5, 0.6 at zone 10, 0.4 at zones 11-12.
+  One table made for a kept-up hero made zones 3-6 a pat on the head and zones 9-11 a wall. Speed and move order are not the cause.
+- **Footing.** Zones 5-12 are gated on the first-hour set (zone tier, common +0, five pieces, early fixture, typical abilities and
+  Stars). The kept-up rows at 8, 10 and 12 are report-only ("gear never makes a boss harder"), and their "too easy" gaps are gone.
+  Floors (report only): nothing worn at zone 5 (casual 40%+) and zone 10 (casual 15%+, good 95%+). 10-30% casual at the first gear
+  check is a wall and not acceptable.
+- **Bands.** New `firstChampion` (zone 5): casual 60-85, good 97-100. Zone 10 uses `champion` (40-60). Tune the weaker of Wren and
+  Pip into the band. The stronger may sit above it under `wren-first-hour-parity` gaps (until 2026-11-15); Tobin sits above under
+  `tobin-safety-margin` gaps.
+- **Knots** (zones up to 12 only): hitX 1.6/3.4/2.4/1.5/1.0/1.05/0.95/0.85 at zones 4/5/6/8/9/10/11/12; hpX 1.5/3.7/2.2/1.9/1.5/1.9/1.4/1.8
+  at 4/5/6/8/9/10/11/12. The zone 5 and 10 peaks are interim: the Champion multiplier replaces them in PR 2.
+- **Zone 11 hitX is 0.95, not the ruling's 0.8** (a Wren at 87% casual read above the 60-80 band). Boss gold and XP in zones 4-12 pay on the old fight length, so the longer first-hour fights do not move first-hour income. Zones 13 and 14 interpolate between the zone 12 and 15 knots (hitX 1.1, 1.35): unmeasured, zones 13-24 are PR 3.
+- **The walk bot is not the yardstick yet.** It wears nothing and has one ability. Its numbers are reported; the walk's
+  "zone 10 in an hour, no boss over 5 losses" becomes the gate once walk-bot-follow-up equips and trains it.
+
 ### The Lantern Rules
 
 Every card that adds a price, a currency, a timer or a gate passes all ten. (2026-10-06)
@@ -551,3 +576,30 @@ Each Hollow foe type has its own moves (`TURN_FOE_TYPES`, `docs/design/foe-moves
 type signature and keep the type's pace; every foe type names an answer for each starter (`FOE_COUNTERS`). Elite scaling is
 `eliteHitX` 1.4 and `eliteHpX` 2.5 (the Cave Bat's elite has 0.4 of that HP). Zone 15 and 20 elites remain easy for casual
 Wren and Pip: that is zone 5-15 hero power, owned by boss-tiers. No save state changes.
+
+## Counters and layers: judge rulings (2026-10-07)
+
+Opus judge, card `counters-and-layers`. No save field changes, no save key bump: every merge is display-only or a rule
+change over existing fields.
+
+1. **Eight core counters** the player sees as points or money: Gold, Essence, Materials, Level (XP), Attribute points,
+   Star points, Scrolls, Embers (online, untouched). Ore, wood, crystal, fibre, herb and hide read as Materials (grades
+   stay: they are item tiers). Trophies and Mirrors of Embers sit in a "Rare finds" row. Talent points are dropped. The
+   rest are not money: meters (Skill XP, Gatherer XP, Tool mastery, Renown), scores (Achievement points, Lantern Light,
+   Stamps), flags (boss tokens), a timer (Oil), gear (Relics, Uniques) and Depth Marks (a Deepwell-only token, a 9th
+   currency inside the Deepwell; folding it in needs a save step, so it waits).
+2. **Essence is one pile.** Any grade pays any Essence cost, lowest grade first (`essHave`, `essPay`, `matOwn`, `matPay`
+   in `40-rules.js`). Grade gates nothing; costs keep their unit counts. A drop into a full grade spills into the next
+   grade with room. Transmute is retired for Essence only. Cost lines say "Essence", never a grade.
+3. **Talents are a free A | B toggle** (no talent points). `S.abil.tal` is kept as is; no default pick is written.
+   `budget.mjs` now fights with talent A on every owned slot (`--talents none` is the old talentless hero). Measured
+   (240 fights a row, PR 2): casual means move 0 to +4 points (z30 Captain Wren 65 to 68, z38 Captain 78 to 82), turns a
+   won fight fall 3 to 10%, no row changes band, so no boss was retuned.
+4. **Star points are a per-hero budget and the only limit on lit stars** (PR 3, built). `starPoints(hero)` = 2 + 1 per 10
+   hero levels + 1 per Great Lantern + 1 per complete constellation (`STARS_TUNE.budget`); `litMax` is gone. Measured with
+   `budget.mjs` (typical Stars): no casual or good number moves more than 1 point. The 2-lit cap goes and income is
+   re-curved. Old saves keep every lit star; one the points cannot pay for shows as dim with a Put out button.
+5. Build order: Essence fungible (#123), free talents (#128), star budget (#130), layer and display cleanup. The last one
+   tags every currency in `tools/systems-map.mjs` with a Kind (the check fails on an untagged currency or a core set that
+   is not these eight), registers Attribute points, and shows Mirrors of Embers beside Trophies as "Rare finds" in the
+   Storehouse. The top bar already shows only Gold and Embers; no screen needed a cut.

@@ -1,0 +1,42 @@
+# seed: 1
+# Proof for card foe-weak-resists: the Foe tab shows only what the Bestiary has taught.
+# Three late-game saves (tips off) where every foe kind has 0, 6 or 20 kills. Moment cards come first, so the route clears them.
+new foe-0
+wait 6
+tap-if "Continue"
+wait 3
+tap-if "Continue"
+wait 3
+tap "Foe"
+wait 2
+tap "Foe"
+wait 1
+expect "more kills to learn its weakness"
+shot foe-0-kills
+new foe-6
+wait 6
+tap-if "Continue"
+wait 3
+tap-if "Continue"
+wait 3
+tap "Foe"
+wait 2
+tap "Foe"
+wait 1
+expect "Weak to"
+expect "to learn what to watch for"
+shot foe-6-kills
+new foe-20
+wait 6
+tap-if "Continue"
+wait 3
+tap-if "Continue"
+wait 3
+tap "Foe"
+wait 2
+tap "Foe"
+wait 1
+expect "Weak to"
+# the tell row sits below the fold of the short landscape pane (it scrolls), so check that the rows exist
+expect ".sb-p-foe .sb-fr"
+shot foe-20-kills

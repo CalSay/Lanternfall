@@ -1,0 +1,22 @@
+# seed: 1
+# Proof for card counters-and-layers: the Stars panel shows one "points used" meter (the budget that binds).
+# The other screens in this card (one Essence cell, Rare finds, free talent toggle) are covered by `node tools/check.mjs`.
+# Late-game save (tips off). Moment cards come first, so the route clears them.
+new late
+wait 6
+tap-if "Continue"
+wait 3
+tap-if "Continue"
+wait 3
+tap-if "Continue"
+wait 3
+tap-if "Continue"
+wait 3
+tap "Hero"
+wait 2
+tap-if "Continue"
+wait 2
+tap "Stars"
+wait 1
+expect "points used"
+shot stars-meter

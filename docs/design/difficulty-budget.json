@@ -118,100 +118,69 @@
       ],
       "report": true,
       "note": "report only (proposed band): every attribute point in one attribute against the even spread, at the same fight: within 15 points of casual wins either way (shape, not power); budget.mjs also prints the turns ratio"
+    },
+    "firstChampion": {
+      "casual": [
+        0.6,
+        0.85
+      ],
+      "good": [
+        0.97,
+        1
+      ],
+      "note": "the zone 5 Champion, the first real test of the first hour (boss-tiers judge 2026-10-07); firstChampion sits on the first-hour set"
+    },
+    "keptUp": {
+      "casual": [
+        0.4,
+        1
+      ],
+      "good": [
+        0.9,
+        1
+      ],
+      "report": true,
+      "note": "report only: a kept-up hero (tier at the zone, rare +5) at zones 8, 10 and 12 against the first-hour row. Out-gearing the first hour feels strong; the check is that gear never makes the boss harder (kept-up casual >= first-hour casual minus tolerance)"
+    },
+    "reportCaptain": {
+      "casual": [
+        0.7,
+        0.9
+      ],
+      "good": [
+        0.97,
+        1
+      ],
+      "report": true,
+      "note": "report only: zone 4 (its boss knot rises; unmeasured before 2026-10-07)"
+    },
+    "floor": {
+      "casual": [
+        0.15,
+        1
+      ],
+      "good": [
+        0.95,
+        1
+      ],
+      "report": true,
+      "note": "report only: nothing worn at the zone 10 Champion; skill must carry (casual 15%+, good 95%+)"
+    },
+    "floor5": {
+      "casual": [
+        0.4,
+        1
+      ],
+      "good": [
+        0.95,
+        1
+      ],
+      "report": true,
+      "note": "report only: nothing worn at the zone 5 Champion (do not re-create the 983e9f5 zone 5 stall)"
     }
   },
   "gaps": [
     {
-      "row": "z5-boss",
-      "hero": "wren",
-      "player": "casual",
-      "side": "above",
-      "limit": 1,
-      "owner": "boss-tiers",
-      "until": "2026-11-15",
-      "why": "this boss is too easy for a hero who keeps up"
-    },
-    {
-      "row": "z5-boss",
-      "hero": "pip",
-      "player": "casual",
-      "side": "above",
-      "limit": 1,
-      "owner": "boss-tiers",
-      "until": "2026-11-15",
-      "why": "this boss is too easy for a hero who keeps up"
-    },
-    {
-      "row": "z8-boss",
-      "hero": "wren",
-      "player": "casual",
-      "side": "above",
-      "limit": 1,
-      "owner": "boss-tiers",
-      "until": "2026-11-15",
-      "why": "this boss is too easy for a hero who keeps up"
-    },
-    {
-      "row": "z8-boss",
-      "hero": "pip",
-      "player": "casual",
-      "side": "above",
-      "limit": 1,
-      "owner": "boss-tiers",
-      "until": "2026-11-15",
-      "why": "this boss is too easy for a hero who keeps up"
-    },
-    {
-      "row": "z10-boss",
-      "hero": "wren",
-      "player": "casual",
-      "side": "above",
-      "limit": 0.99,
-      "owner": "boss-tiers",
-      "until": "2026-11-15",
-      "why": "this boss is too easy for a hero who keeps up"
-    },
-    {
-      "row": "z10-boss",
-      "hero": "pip",
-      "player": "casual",
-      "side": "above",
-      "limit": 1,
-      "owner": "boss-tiers",
-      "until": "2026-11-15",
-      "why": "this boss is too easy for a hero who keeps up"
-    },
-    {
-      "row": "z12-boss",
-      "hero": "wren",
-      "player": "casual",
-      "side": "above",
-      "limit": 1,
-      "owner": "boss-tiers",
-      "until": "2026-11-15",
-      "why": "this boss is too easy for a hero who keeps up"
-    },
-    {
-      "row": "z12-boss",
-      "hero": "tobin",
-      "player": "casual",
-      "side": "above",
-      "limit": 1,
-      "owner": "boss-tiers",
-      "until": "2026-11-15",
-      "why": "this boss is too easy for a hero who keeps up"
-    },
-    {
-      "row": "z12-boss",
-      "hero": "pip",
-      "player": "casual",
-      "side": "above",
-      "limit": 1,
-      "owner": "boss-tiers",
-      "until": "2026-11-15",
-      "why": "this boss is too easy for a hero who keeps up"
-    },
-    {
       "row": "z15-elite",
       "hero": "wren",
       "player": "casual",
@@ -276,7 +245,7 @@
       "hero": "wren",
       "player": "casual",
       "side": "above",
-      "limit": 1,
+      "limit": 0.97,
       "owner": "foe-moves-by-type",
       "until": "2026-12-01",
       "why": "elites are no threat yet (one trait, one extra move)"
@@ -296,7 +265,7 @@
       "hero": "pip",
       "player": "casual",
       "side": "above",
-      "limit": 1,
+      "limit": 0.97,
       "owner": "foe-moves-by-type",
       "until": "2026-12-01",
       "why": "elites are no threat yet (one trait, one extra move)"
@@ -446,7 +415,7 @@
       "hero": "wren",
       "player": "casual",
       "side": "above",
-      "limit": 1,
+      "limit": 0.97,
       "owner": "foe-moves-by-type",
       "until": "2026-12-01",
       "why": "elites are no threat yet (one trait, one extra move)"
@@ -466,7 +435,7 @@
       "hero": "pip",
       "player": "casual",
       "side": "above",
-      "limit": 1,
+      "limit": 0.97,
       "owner": "foe-moves-by-type",
       "until": "2026-12-01",
       "why": "elites are no threat yet (one trait, one extra move)"
@@ -540,6 +509,116 @@
       "owner": "boss-tiers",
       "until": "2026-11-15",
       "why": "Tobin's Guard and counters win every Captain from 25 to 34 casually; boss-tiers sets how Captains pressure a tank"
+    },
+    {
+      "row": "z5-boss",
+      "hero": "pip",
+      "player": "casual",
+      "side": "above",
+      "limit": 0.99,
+      "owner": "wren-first-hour-parity",
+      "until": "2026-11-15",
+      "why": "Pip wins 15-30 points more than Wren against the same first-hour boss (hero parity, boss-tiers judge 2026-10-07)"
+    },
+    {
+      "row": "z6-boss",
+      "hero": "pip",
+      "player": "casual",
+      "side": "above",
+      "limit": 0.96,
+      "owner": "wren-first-hour-parity",
+      "until": "2026-11-15",
+      "why": "Pip wins 15-30 points more than Wren against the same first-hour boss (hero parity, boss-tiers judge 2026-10-07)"
+    },
+    {
+      "row": "z7-boss",
+      "hero": "pip",
+      "player": "casual",
+      "side": "above",
+      "limit": 0.97,
+      "owner": "wren-first-hour-parity",
+      "until": "2026-11-15",
+      "why": "Pip wins 15-30 points more than Wren against the same first-hour boss (hero parity, boss-tiers judge 2026-10-07)"
+    },
+    {
+      "row": "z8-boss",
+      "hero": "pip",
+      "player": "casual",
+      "side": "above",
+      "limit": 0.98,
+      "owner": "wren-first-hour-parity",
+      "until": "2026-11-15",
+      "why": "Pip wins 15-30 points more than Wren against the same first-hour boss (hero parity, boss-tiers judge 2026-10-07)"
+    },
+    {
+      "row": "z9-boss",
+      "hero": "pip",
+      "player": "casual",
+      "side": "above",
+      "limit": 0.94,
+      "owner": "wren-first-hour-parity",
+      "until": "2026-11-15",
+      "why": "Pip wins 15-30 points more than Wren against the same first-hour boss (hero parity, boss-tiers judge 2026-10-07)"
+    },
+    {
+      "row": "z10-boss",
+      "hero": "pip",
+      "player": "casual",
+      "side": "above",
+      "limit": 0.8,
+      "owner": "wren-first-hour-parity",
+      "until": "2026-11-15",
+      "why": "Pip wins 15-30 points more than Wren against the same first-hour boss (hero parity, boss-tiers judge 2026-10-07)"
+    },
+    {
+      "row": "z12-boss",
+      "hero": "pip",
+      "player": "casual",
+      "side": "above",
+      "limit": 0.89,
+      "owner": "wren-first-hour-parity",
+      "until": "2026-11-15",
+      "why": "Pip wins 15-30 points more than Wren against the same first-hour boss (hero parity, boss-tiers judge 2026-10-07)"
+    },
+    {
+      "row": "z5-boss",
+      "hero": "tobin",
+      "player": "casual",
+      "side": "above",
+      "limit": 1,
+      "owner": "tobin-safety-margin",
+      "until": "2026-12-01",
+      "why": "Tobin wins every first-hour boss: the tank sits above the band (boss-tiers judge 2026-10-07)"
+    },
+    {
+      "row": "z10-boss",
+      "hero": "tobin",
+      "player": "casual",
+      "side": "above",
+      "limit": 1,
+      "owner": "tobin-safety-margin",
+      "until": "2026-12-01",
+      "why": "Tobin wins every first-hour boss: the tank sits above the band (boss-tiers judge 2026-10-07)"
+    },
+    {
+      "row": "z11-boss",
+      "hero": "tobin",
+      "player": "casual",
+      "side": "above",
+      "limit": 1,
+      "owner": "tobin-safety-margin",
+      "until": "2026-12-01",
+      "why": "Tobin wins every first-hour boss: the tank sits above the band (boss-tiers judge 2026-10-07)"
+    },
+    {
+      "row": "z12-boss",
+      "hero": "tobin",
+      "player": "casual",
+      "side": "above",
+      "limit": 1,
+      "owner": "tobin-safety-margin",
+      "until": "2026-12-01",
+      "why": "Tobin wins every first-hour boss: the tank sits above the band (boss-tiers judge 2026-10-07)"
     }
   ]
 }

@@ -5,7 +5,7 @@
 //
 // A star is found once (it belongs to the lamp, shared by every hero), then set in one of a hero's 3 star slots. Win
 // STARS_TUNE.learnWins fights with a star set and it is learned: from then on any hero can also light it for its cost
-// in star points (starPoints(): a point every 3 hero levels, 4 for each Great Lantern), up to STARS_TUNE.litMax lit.
+// in star points, a per-hero budget (starPoints(hero): STARS_TUNE.budget) that is the only limit on lit stars.
 // Owner, 2026-10-02 (second pass): "Might need more of them though. We also need much better menus for abilities and
 // stars. I kinda miss the star map too": 18 more stars (43), and the Stars view is a star map again (STAR_SKY).
 //   STARS[id] = { id, name, short, text, cost, from, kit, sky, fold? }
@@ -24,7 +24,10 @@
 //     first two complete constellations each cut the wins to learn a star by 1 (4, 3, then 2).
 
 const STARS_TUNE = {
-  slots: 3, litMax: 2, learnWins: 4, learnMin: 2, skyPoints: 1,
+  slots: 3, learnWins: 4, learnMin: 2, skyPoints: 1,
+  // star points a hero has: base + 1 a perLevels hero levels + lantern for each Great Lantern + skyPoints for each complete
+  // constellation (counters-and-layers: the budget binds, there is no separate cap on lit stars)
+  budget: { base: 2, perLevels: 10, lantern: 1 },
   eliteFrom: 15, eliteP: 0.125, elitePity: 12,
   // the numbers each star uses (57e-stars.js reads them; the text on the star says the same)
   fx: {

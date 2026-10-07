@@ -3,10 +3,9 @@
 // CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
 //
 // A talent is a choice of two (A or B) for one ability, or for the hero's Attack, Parry or Dodge. It costs
-// TALENT_TUNE.cost talent points; the hero earns TALENT_TUNE.perLevel a level after level 1. You can change a choice
+// nothing: talents are free (counters-and-layers). You can change a choice
 // between fights for free. The rules live in 59k-turn.js (turnTal); the text here is what the player reads.
 //   TALENTS[id] = { a: { name, text }, b: { name, text } }   id: an ability id, or '<hero>:attack' / ':parry' / ':dodge'
-const TALENT_TUNE = { cost: 2, perLevel: 1 };
 const TALENTS = {
   // ---------------- Wren ----------------
   powershot: { a: { name: 'Piercing Head', text: 'Ignores half of the foe\'s armour.' }, b: { name: 'Measured Draw', text: 'Spends 1 Aim, if you have it, for 30% more power. It no longer gains Aim.' } },

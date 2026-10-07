@@ -14,35 +14,37 @@ A source or sink line names the player-facing system and the file that does it. 
 
 ## Summary
 
-| Currency | Sources | Sinks | Note |
-|---|---|---|---|
-| Gold | 6 | 6 |  |
-| Hero XP | 2 | 0 | No sink: Hero levels are permanent by design. |
-| Skill XP | 4 | 2 |  |
-| Ore | 9 | 6 |  |
-| Wood | 8 | 6 |  |
-| Essence | 7 | 8 |  |
-| Crystal | 5 | 5 |  |
-| Fibre | 4 | 4 |  |
-| Herb | 4 | 5 |  |
-| Hide | 4 | 3 |  |
-| Embers | 1 | 1 |  |
-| Relics | 1 | 4 |  |
-| Scrolls | 1 | 1 |  |
-| Trophies | 4 | 4 |  |
-| Renown | 2 | 0 | No sink: A pure gate: routes check the balance and none sets spendRenown. Keep it a gate or give it a use. |
-| Boss tokens | 1 | 1 |  |
-| Star points | 1 | 1 |  |
-| Talent points | 1 | 1 |  |
-| Achievement points | 1 | 1 |  |
-| Mirrors of Embers | 2 | 1 |  |
-| Gatherer XP | 1 | 1 |  |
-| Tool mastery | 1 | 1 |  |
-| Oil | 2 | 1 |  |
-| Depth Marks | 2 | 1 |  |
-| Lantern Light | 1 | 1 |  |
-| Almanac Stamps | 1 | 0 | No sink: Only a deed counter, one Feat and Lantern Light (2 points each) read Stamps; nothing spends them. Candidate for a sink or a cut. |
-| Uniques | 2 | 1 |  |
+| Currency | Kind | Sources | Sinks | Note |
+|---|---|---|---|---|
+| Gold | core | 6 | 6 |  |
+| Hero XP | core (Level) | 2 | 0 | No sink: Hero levels are permanent by design. |
+| Skill XP | meter | 4 | 2 |  |
+| Ore | core (Materials) | 9 | 6 |  |
+| Wood | core (Materials) | 8 | 6 |  |
+| Essence | core | 6 | 7 |  |
+| Crystal | core (Materials) | 5 | 5 |  |
+| Fibre | core (Materials) | 4 | 4 |  |
+| Herb | core (Materials) | 4 | 5 |  |
+| Hide | core (Materials) | 4 | 3 |  |
+| Embers | core (online) | 1 | 1 |  |
+| Relics | gear | 1 | 4 |  |
+| Scrolls | core | 1 | 1 |  |
+| Trophies | Materials (rare finds) | 4 | 4 |  |
+| Renown | meter (gate) | 2 | 0 | No sink: A pure gate: routes check the balance and none sets spendRenown. Keep it a gate or give it a use. |
+| Boss tokens | flag | 1 | 1 |  |
+| Star points | core | 1 | 1 |  |
+| Attribute points | core | 1 | 1 |  |
+| Achievement points | score | 1 | 1 |  |
+| Mirrors of Embers | Materials (rare finds) | 2 | 1 |  |
+| Gatherer XP | meter | 1 | 1 |  |
+| Tool mastery | meter | 1 | 1 |  |
+| Oil | timer | 2 | 1 |  |
+| Depth Marks | mode (Deepwell only) | 2 | 1 |  |
+| Lantern Light | score | 1 | 1 |  |
+| Almanac Stamps | score | 1 | 0 | No sink: Only a deed counter, one Feat and Lantern Light (2 points each) read Stamps; nothing spends them. Candidate for a sink or a cut. |
+| Uniques | gear | 2 | 1 |  |
+
+The player sees 8 core counters: Gold, Essence, Materials, Level, Attribute points, Star points, Scrolls, Embers. Everything else is a meter, score, flag, timer or gear on its own screen (the Kind column).
 
 ## Why this page exists
 
@@ -189,10 +191,8 @@ Sources:
 - Almanac board crates (`55-almanac.js`)
 - Salvaging a Unique (+10) (`51-actions.js`)
 - Salvaging affixed gear (+1 sometimes) (`55-crafting.js`)
-- Transmute (Enchanting): down a grade gives 2 for 1 (`55-crafting.js`)
 
 Sinks:
-- Transmute (Enchanting): spends 4 to go up a grade, 1 to go down (`55-crafting.js`)
 - Gear crafts (1 to 2 an item, charm 5) (`55-crafting.js`)
 - Reforging (rises 50% a reroll) (`55-crafting.js`)
 - Star Chart (`55-crafting.js`)
@@ -368,24 +368,22 @@ A budget for lighting stars. Not consumed.
 Save: `derived from level, Great Lanterns and constellations (not saved)`
 
 Sources:
-- One per 3 hero levels (plus 4 a Great Lantern, 1 a constellation) (`57e-stars.js`)
+- 2 to start, 1 per 10 hero levels, 1 a Great Lantern, 1 a constellation (a budget per hero) (`57e-stars.js`)
 
 Sinks:
-- Lighting a star (2 lit a hero) (`57e-stars.js`)
+- Lighting a star (the points are the only limit) (`57e-stars.js`)
 
-### Talent points
+### Attribute points
 
-A budget for talent choices on abilities, Attack, Parry and Dodge.
+Four a hero level after Lv 1. Spend them on Might, Focus, Guard or Vigour in Hero, Build. Adding is free; a reset costs gold after the first.
 
-Save: `derived from hero level (not saved); choices in S.abil`
+Save: `S.attr.pts (spent; the total is derived from hero level)`
 
 Sources:
-- Hero levels (`56e-abilities.js`)
+- Hero levels (HERO_TUNE.perLevel a level) (`55-attributes.js`)
 
 Sinks:
-- Setting a talent (a switch between a and b is free) (`56e-abilities.js`)
-
-Note: A budget like star points: spent points come back when a talent is cleared.
+- Adding a point to an attribute (`55-attributes.js`)
 
 ### Achievement points
 

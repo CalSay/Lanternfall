@@ -15,7 +15,7 @@ on('cacheOpen', v => {
   const pay = [];
   if (v.scroll) pay.push(v.scroll.name);
   if (v.gold) pay.push(`${fmt(v.gold)} gold`);
-  if (v.ess && !v.essFull) pay.push(`${v.ess} ${MAT.ess.short[v.tier - 1]} Essence`);
+  if (v.ess && !v.essFull) pay.push(`${v.ess} Essence`);
   if (pay.length) lines.push({ txt: pay.join(', ') });
   if (v.essFull) lines.push({ txt: 'Your Essence store is full, so some or all of this win\'s Essence may be lost. Build more room at the Camp.' });
   // the colour: a unique first, then the lantern colour, then a Star, then a Scroll
