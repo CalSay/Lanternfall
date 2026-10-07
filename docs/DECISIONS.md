@@ -423,33 +423,47 @@ The aim was tempo: a kept-up hero kills a boss in 2.5-4 hero turns, so wins sat 
 
 ### Boss tiers, kept-up heroes (PR 5 judge) (2026-10-07)
 
-Opus judge before the build; ruling with each point's why and the options: `/mnt/project-files/autopilot/reviews/boss-tiers-pr5-judge.md`,
-data in `/mnt/project-files/early-game/boss-tiers-pr5/`. Cal can veto any line. This closes the pr4 "Honest result" gap line.
+PR 5 of `boss-tiers` (kept-up heroes, zones 4-15). Opus judge before the build, after a red team (it changed r, frontier-only,
+gates from zone 7 and the passive floor). Ruling with each point's why and the options:
+`/mnt/project-files/autopilot/reviews/boss-tiers-pr5-judge.md`; data in `/mnt/project-files/early-game/boss-tiers-pr5/`.
+Cal can veto any line. This closes the pr4 "Honest result" gap line.
 
 - **Why gear erased the danger.** A z4-15 boss fight is decided by the total damage let through (a landed hit costs 5-11% of
   max HP). Rare +5 against common +0 at the same tier gives 2.5-3.6x the HP and 1.4-2x the Attack; the pr4 floor gave back
   only part of the HP edge and two Captain gates let a kill come in about 3 boss moves. Kept-up casual read 92-100%, and a
-  kept-up hero who never defends won 43-100% at zones 8 and 12. The 40% hit cap and the per-hit defence model are not the
-  blocker; both stay.
+  kept-up hero who never defends won 73-100% at zone 8 and 43-100% at zone 12. The 40% hit cap and the per-hit defence model
+  are not the blocker; both stay.
 - **Footing floor.** On a zone boss the hero has not beaten (zones 4-15), a hit costs at least its base x r x (max HP / the
-  hero's own max HP in the zone's tier at common +0). r starts at 0.9 (fit 0.85-1.0, never above 1). It never binds the
-  first-hour set or a bare hero. Armour, Guard, Ward, block, Stars and timing still cut the hit; Attack still shortens the
-  fight. Beaten bosses replayed keep today's numbers. The pr4 `hpFloor` knots stay as a second floor (they bind Tobin and Pip).
+  hero's own max HP wearing the zone's tier at common +0: class set and Charm, base lines only). r starts at 0.9 (fit
+  0.85-1.0, never above 1). It never binds the first-hour set or a bare hero. Armour, Guard, Ward, block, Stars and timing
+  still cut the hit; Attack still shortens the fight. Beaten bosses replayed keep today's numbers. The pr4 `hpFloor` knots stay
+  as a second floor (they bind Tobin and partly Pip).
 - **Passive floor.** Armour times class damage reduction cuts a zone boss hit (zones 4-15) to no less than 55% of itself.
-- **Gates.** Captains rally at 75/50/25% from zone 7 (zones 4-6 keep 67/33). While a boss rallies, hits still do not break
-  its charge (counting them made a no-defence kept-up Pip win 100%); the rally line says only a Stun breaks it.
-- **Zone 15 is a real Champion** (casual 40-60 on the first-hour set, M1 E2), superseding the pr2 Captain-band line.
-- **Gates in the budget.** Kept-up casual: learning Captain (z8) 80-97, Captain (z12, z13) 75-95, Champion (z5, z10, z15)
-  60-85, all at least the first-hour row. New player `none` (never parries or dodges): at most 10% on kept-up rows for Wren and
-  Pip. casualHigh report-only, no ceiling; the E33 "good player 85-95%" aim is dropped for `good` (it maps to casual and bot).
-  z12 kept-up moves to the early save like its first-hour row. Pip cells ride the `wren-first-hour-parity` gaps where her
-  first-hour cell has one; Tobin's ride `tobin-safety-margin`.
+- **Gates.** Captains rally at 75/50/25% from zone 7 (replaces the pr4 Captain 67/33 line there; zones 4-6 keep 67/33).
+  While a boss rallies, hits still do not break its charge (counting them made a no-defence kept-up Pip win 100%); the rally
+  line says only a Stun breaks it. This replaces the pr4 "Known limit" follow-up; fallback if playtests read it as a bug:
+  count clipped damage at half.
+- **Zone 15 is a real Champion**: first-hour casual moves from the Captain band to Champion 40-60 (M1 E2), superseding the pr2
+  line that kept Champions from zone 15 on the Captain band.
+- **Gates in the budget.** These replace the report-only kept-up lines in the pr1, pr2 and pr3 entries (the `keptUp` kind is
+  retired). Kept-up casual: learning Captain (z8) 80-97, Captain (z12, z13) 75-95, Champion (z5, z10, z15) 60-85, all at
+  least the first-hour row. New player `none` (never parries or dodges): at most 10% on kept-up rows for Wren and Pip.
+  casualHigh report-only, no ceiling; the E33 "good player 85-95%" aim is dropped for `good` (good 97-100 stays the no-walls
+  guard; the aim maps to casual and bot). z12 kept-up moves to the early save like its first-hour row. Pip cells ride the
+  `wren-first-hour-parity` gaps (until 2026-11-15) where her first-hour cell has one; Tobin's ride `tobin-safety-margin`
+  (until 2026-12-01). E2 still needs both of those cards before it can pass.
+- **Live saves.** A rare +5 Wren at zone 10 drops from about 92% to about 80% casual. It goes in the patch note. No save change.
+- **Switch off.** `TURN_TUNE.boss.footFloor: [[1, 0]]` and `passiveMin: 0` restore today's damage exactly; the gates revert
+  with `gate.captainFrom` past zone 15.
 - **Tobin** shares the symptom but not the lever (class HP and damage reduction at the footing, not gear); the passive floor
   is the cheap half, the rest stays with `tobin-safety-margin`.
-- **Set bonuses and uniques** (Cal, 2026-10-07): extra HP is absorbed and extra Attack mostly absorbed. Put their power in
-  offence and combos; passive cuts to boss damage from a set plus a unique stay at 10% or less against zone bosses; kept-up
-  rows wear the full set once sets ship.
-- **Zones 16-34** get tricks in a later card (`boss-tiers-pr5b`, M1b), with the zone 25 cap fix.
+- **Set bonuses and uniques** (Cal, 2026-10-07). At zones 4-15 the gates absorb burst: all damage x2 or x3 moves kept-up casual
+  at most +15 and the no-defence player stays at 0. Uniques may not skip or shorten a rally, and a boss still faces at most two
+  hero actions in a row. Passive cuts to boss damage from a set plus a unique stay at 10% or less against zone bosses. At
+  16-34 there is no floor or gate yet: the grade 4 set lifts Captain rows +7 to +15, so it ships with or after
+  `boss-tiers-pr5b`, which refits those zones with the set worn.
+- **Zones 16-34** get tricks in `boss-tiers-pr5b` (M1b; moved here from the pr4 "Honest result" owner line), with the zone 25
+  cap fix and the set-worn refit.
 
 ### The Lantern Rules
 
