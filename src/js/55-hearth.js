@@ -67,7 +67,7 @@ const HEARTH_COLD_B = ['forge', 'bench', 'loom', 'ench', 'tavern'];
 // Decor plots on the camp panorama (hearth-and-hands.md 6.4; N2 draws them): no cost, no timer, no perk.
 // The panorama is 1,024 art px wide with p13, the Trophy Wall, at x 990 where the road enters camp.
 const HEARTH_PLOT_AT = { wall: { plot: 'p13', x: 990, decor: 1, n: 'Trophy Wall' } }, HEARTH_PANO_W = 1024;
-let hearthCold, hearthLit, hearthScene, hearthCan, hearthLight, hearthPlotOpen, hearthFirst, hearthStationWhy, hearthNext,
+let hearthCold, hearthLit, hearthScene, hearthCan, hearthLight, hearthPlotOpen, hearthFirst, hearthNearFull, hearthStationWhy, hearthNext,
   hearthApply, hearthWarm, HEARTH_PLOT;
 
 {
@@ -129,6 +129,7 @@ let hearthCold, hearthLit, hearthScene, hearthCan, hearthLight, hearthPlotOpen, 
     for (const f of CAPPED) { const row = S.mats[f]; if (!row) continue; for (let t = 1; t <= row.length; t++) { const c = packCap(f, t); if (c > 0 && Number.isFinite(c) && row[t - 1] >= HEARTH_TUNE.near * c) return true; } }
     return false;
   };
+  hearthNearFull = nearFull;
   HEARTH_PLOT = {
     bench: () => hearthLit(),
     forge: () => lv('bench') >= 1,

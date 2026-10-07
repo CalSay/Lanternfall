@@ -51,6 +51,23 @@ function moment(kind, o) {
   MOMENT_UI.wait = 0;
   return true;
 }
+// Cal's play note 9: a unique that lands in the bag is one tap from being worn. -> an action for the card, or null when it is not in the
+// bag, the hero cannot use it, or the hero already wears something at least as strong in that spot.
+function momentEquipAction(it) {
+  try {
+    const pos = it && itemById(it.id) ? kindPos(it.slot) : null;
+    if (!pos || !(pos in S.equip) || !fits(it, pos, 'hero')) return null;
+    const cur = equipped(pos); if (cur && (cur.id === it.id || itemPower(cur) >= itemPower(it))) return null;
+    return { txt: `Equip ${itemName(it)}`, fn: () => { equipItem(it.id, pos); } };
+  } catch (e) { return null; }
+}
+// ... and when the hero cannot wear it, say where it went, so the card never looks like loot that vanished.
+function momentWearNote(it) {
+  try {
+    const pos = it && itemById(it.id) ? kindPos(it.slot) : null;
+    return pos && (pos in S.equip) && !fits(it, pos, 'hero') ? { txt: 'You cannot wear it. It waits in your bag for a hero who can.' } : null;
+  } catch (e) { return null; }
+}
 function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner, queued: MOMENT_Q.length }; }
 {
   // a turn is in motion (a hit, a windup, a parry window). The waiting phases (the next foe's intro, the hero's turn, the handoff: the game's own
@@ -217,7 +234,7 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
     const u = UNIQ[it.u];
     moment('unique', { title: u.name, sub: e.first ? 'A new unique. It joins your trophy wall.' : 'Another copy of a unique you have.',
       rarity: 'legendary', icon: { item: it }, bark: 'unique',
-      lines: e.kept ? [] : [{ txt: 'Your bag was full, so it was salvaged.' }] });
+      lines: e.kept ? [momentWearNote(it)].filter(Boolean) : [{ txt: 'Your bag was full, so it was salvaged.' }], actions: e.kept ? [momentEquipAction(it)].filter(Boolean) : [] });
   });
   on('zoneClear', e => {
     if (!e) return;

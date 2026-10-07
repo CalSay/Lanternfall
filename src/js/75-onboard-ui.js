@@ -223,9 +223,20 @@
     },
     'tab:party': () => S.tab === 'party' ? null : { node: q('.tab[data-tab="party"]'), text: "The Hero tab's open. Tap it." }
   };
+  // Cal's play notes 9 and 13: a piece in the bag does nothing until it is on. The tip names it and the Equip button wears it in one tap;
+  // the ring sits on the craft card's own Equip button when that card is up.
+  const wearSpec = (kind, text) => {
+    const w = wearPiece(kind); if (!w) return null;
+    const nm = itemName(w.it), btn = q('#sec-craft-recipes .cf-resact .forge'), card = !!S.tab && vis(btn);
+    return { text: text(nm), node: card ? btn : onGame() ? $('stage') : q(`.tab[data-tab="${S.tab}"]`), at: !card && onGame() ? [0.74, 0.62] : null, side: 'up',
+      go: { label: `Equip ${nm}`, fn: () => { equipItem(w.it.id, w.pos); } } };
+  };
   const STEP_UI = {
     // UX-L1: in landscape a menu leaves the rail and top row in view, so the hint stays and points at the lit tab (close the menu)
     chop: () => (onGame() || isWide()) && atGrove() ? stockSpec('chop', 'the camp fire', 'Tap the tree. It goes faster.') : null,
+    back: () => S.tab === 'party' ? { node: q('#menuX'), side: 'up', text: 'Done here? Close the menu and the fight goes on.', go: { label: 'Back to the fight', fn: () => closeMenu() } } : null,
+    'wear:tool': () => wearSpec('tool', nm => `Your ${nm} is in your bag. A tool only works when you wear it.`),
+    'wear:weapon': () => wearSpec('weapon', nm => `Your ${nm} is in your bag. Put it on to fight with it.`),
     'stock:bench': () => stockSpec('stock:bench', 'the Workbench'),
     'stock:tool': () => stockSpec('stock:tool', 'a Copper Pickaxe'),
     'stock:forge': () => stockSpec('stock:forge', 'the Forge'),
@@ -260,7 +271,8 @@
       if (st && st.getAttribute('aria-pressed') !== 'true') return { node: st, text: 'Tap the ' + CRAFT_STATIONS[CRAFT_KINDS[k].st].n + '.' };
       return { node: q(`#sec-craft-recipes .cf-rec[data-kind="${k}"] .cf-go`) || q('#sec-craft-recipes') || st, side: 'up', text: 'Make your first weapon. Then put it on.' };
     },
-    store: () => campPath('store', ['Packs are near full. Open Camp.', 'Open Camp.', 'Packs are near full. Build a Storehouse.']),
+    // Cal's play note 15: only say the packs are near full when they are (the Storehouse plot also opens once the Forge is built)
+    store: () => { const full = typeof hearthNearFull === 'function' && hearthNearFull(); return campPath('store', full ? ['Packs are near full. Open Camp.', 'Open Camp.', 'Packs are near full. Build a Storehouse.'] : ['The Forge is up. Open Camp.', 'Open Camp.', 'Build a Storehouse. It holds more.']); },
     // Training: Hero tab, Training view, Train on Attack.
     // hero-progression-rework: with attributes on, the first point goes into Might.
     upgrade: () => Object.assign(typeof attrOn === 'function' && attrOn()

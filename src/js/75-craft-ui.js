@@ -273,7 +273,7 @@ let craftUI = null;
     } else {
       if (d && d.pos && heroFitsIt(it) && !wr) {
         const eq = el('button', 'big forge cf-act', 'Equip'); eq.type = 'button';
-        eq.addEventListener('click', () => { equipHero(it.id, d.pos); ui(true); });
+        eq.addEventListener('click', () => { equipHero(it.id, d.pos); if (wornBy(it.id)) { st8.result = null; st8.resArm = false; } ui(true); });   // Cal's play note 17: worn, so the card closes (Keep and Salvage are for a piece that is not worn)
         acts.append(eq);
       }
       const keep = el('button', 'big cf-act cf-keep', 'Keep'); keep.type = 'button';

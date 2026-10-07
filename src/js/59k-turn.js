@@ -1082,6 +1082,13 @@ function turnCombatAction(kind, slot) {
     return turnResolve(TURN_LIVE, { kind, slot }, 0, TURN_LIVE_IO);
   return false;
 }
+// Equipping an ability in the middle of a fight: it joins the live fight at once, ready to press (a fight took the slots as it
+// started, so the new one showed ready and did nothing until the next foe: Cal's play note 20). Its cooldown is kept once it has one.
+function turnSyncEquip() {
+  const m = TURN_LIVE; if (!m || m.ended) return;
+  for (const id of soloEquipped()) if (id && !(id in m.cds)) { m.cds[id] = 0; m.p.cds[id] = turnCdFor(id); if (!m.p.eq.includes(id)) m.p.eq.push(id); }
+}
+on('soloEquip', turnSyncEquip);
 function turnCombatTick(dt) {
   if (!turnCombatScope()) {
     if (TURN_LIVE && !TURN_LIVE.ended) turnEnd(TURN_LIVE, 'abandon', TURN_LIVE_IO);
