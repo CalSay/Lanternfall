@@ -217,6 +217,8 @@ async function followTip(o) {
   // read the sentence like a person and tap the tab or button it names ("Open Training." -> Training)
   if (!tp.button && st.tipTaps < 16 && gt - st.tipSince >= 1.2) {
     st.tipTaps++; st.tipSince = gt;
+    // an info notice (unlock-voice: "The Hero tab's open…") has a × and no ring: a player reads it and closes it
+    if (!tp.target && /^(say|use):/.test(tp.action) && await click('.ob-bub .ob-x', 300)) { st.tipTaps = 0; return true; }
     if (st.tipTaps >= 2 && st.tipTaps % 2 === 0) {
       const m = /\b(?:[Oo]pen|[Tt]ap|[Pp]ress|[Pp]ick|[Cc]hoose|[Ll]ight|[Bb]uild|[Cc]raft|[Cc]hop|[Mm]ine|[Ss]tart|[Cc]laim|[Ee]quip|[Gg]o to)\s+(?:the\s+|your\s+)?([A-Z]\w*(?:\s[A-Z]\w*)?)/.exec(tp.text);
       if (m && await click('button, [role=tab], .tab:text((^|\\W|New)' + m[1] + '\\s*$)', 300)) return true;
@@ -249,30 +251,63 @@ async function dismissCards(o) {
     r.last = gt;
   }
   for (const [sig, r] of seen) if (!now.has(sig) && !r.done) { r.done = true; r.dwell = Math.round((gt - r.first) * 10) / 10; }
+  // a Next Up list left open (its Go was covered by a card) is closed with its X, as a player would
+  const nu = [...now].map(g => seen.get(g)).find(r => r.cls === 'bsheet-ov' && /^×Next up/.test(r.text));
+  if (nu && gt - nu.last < 1 && gt - nu.first >= 8 && gt - st.lastCard >= 0.6 && ![...now].some(g => seen.get(g).cls === 'mm-ov')) { st.lastCard = gt; if (await click('.bsheet-ov .bsheet-x', 300)) { nu.first = gt; return true; } }
   // press the first thing that closes a card once the oldest visible one has been up 2.4 s
-  const oldest = [...now].map(s => seen.get(s)).sort((a, b) => a.first - b.first)[0];
-  if (oldest && gt - oldest.first >= 2.4 && gt - st.lastCard >= 0.6) { st.lastCard = gt; if (await click(DISMISS, 300)) return true; }
+  // the card a player is reading is the one on top (a moment card), not an older sheet beneath it
+  const all = [...now].map(s => seen.get(s)), top = all.filter(r => r.cls === 'mm-ov' || r.cls === 'mm-toast').sort((a, b) => b.first - a.first)[0];
+  const oldest = top || all.sort((a, b) => a.first - b.first)[0];
+  if (oldest && gt - oldest.first >= 2.4 && gt - st.lastCard >= 0.6) { st.lastCard = gt; for (const d of DISMISS.split(', ')) if (await click(d, 300)) return true; }   // the card on top first: a sheet's own button can sit under it
   return false;
 }
 st.lastCard = -9; st.tabAt = -9; st.phAt = 0;
 
-// Next Up: when the chip says Ready, open the list, press Go on the first ready goal and press the one button the panel offers.
+// Next Up: when the chip says Ready, open the list, press Go on the first ready goal the bot has not given up on, and press what
+// the place Go lands on offers. Since #115 that place is not always a flashed row: Learn opens the ability's detail sheet, whose
+// button sits outside .nu-flash, and Spend opens the Attributes view. A goal that stays ready after 4 presses is a finding; the
+// bot moves on to the next ready goal rather than idling on the chip. It only presses what a player can see.
 const GO_WORDS = /^(craft|claim|equip|spend|build|light|start|collect|learn|use|buy|train|upgrade|promote|open|forge|brew|set|wear|cook|hire|send|accept|ok|got it|continue)\b/i;
+const goalKey = l => l.replace(/\d+/g, '#');
 async function followNextUp(o) {
   const chipReady = await page.evaluate(`(() => { const c = document.getElementById('nuChip'); return !!c && !c.hidden && c.getClientRects().length > 0 && c.classList.contains('ready') ? (c.querySelector('.nu-lbl') || c).textContent.trim() : ''; })()`);
   if (!chipReady) return false;
-  const tries = (st.calls[chipReady] = (st.calls[chipReady] || 0) + 1);
-  if (tries > 4) return false;   // a goal the casual player cannot finish is a finding, not a loop
   if (!(await click('#nuChip', 300))) return false;
   await advance(300, 16);
-  if (!(await click('.nu-row.ready .nu-go', 300))) { await click('.bsheet-ov .sheet-x, .sheet-close, .bsheet-ov [aria-label="Close"]', 200); return false; }
-  await advance(400, 16);
-  // the flash lasts 1.6 s; find the panel's one button and press it with a real tap (a covered button is then a finding)
-  const pick = await page.evaluate(`(() => { const hit = document.querySelector('.nu-flash'); if (!hit) return ''; const bs = [...hit.querySelectorAll('button, [role=button], .btn, .big')].filter(b => !b.disabled && b.getClientRects().length && !b.classList.contains('off'));
-    const b = bs.find(b => ${GO_WORDS}.test((b.textContent || '').trim())) || bs[0]; if (!b) return ''; b.setAttribute('data-walk', '1'); return (b.textContent || b.getAttribute('aria-label') || '').trim().slice(0, 40) || 'button'; })()`);
-  const did = pick && (await click('[data-walk="1"]', 300)) ? pick : '';
+  const rows = await page.evaluate(() => [...document.querySelectorAll('.nu-row.ready')].filter(r => r.getClientRects().length).map(r => (r.querySelector('.nu-lbl') || r).textContent.trim()));
+  const label = rows.find(l => (st.calls[goalKey(l)] || 0) < 4);   // a goal the casual player cannot finish is a finding, not a loop
+  const closeList = () => click('.bsheet-ov .bsheet-x', 200);
+  if (label === undefined) { await closeList(); return false; }
+  st.calls[goalKey(label)] = (st.calls[goalKey(label)] || 0) + 1;
+  const marked = await page.evaluate(l => { for (const r of document.querySelectorAll('.nu-row.ready')) if ((r.querySelector('.nu-lbl') || r).textContent.trim() === l) { const g = r.querySelector('.nu-go'); if (g) { g.setAttribute('data-walk', '1'); return true; } } return false; }, label);
+  const went = marked && await click('[data-walk="1"]', 300);
   await page.evaluate(() => document.querySelectorAll('[data-walk]').forEach(n => n.removeAttribute('data-walk')));
-  await note(page, 'nextup', `${chipReady}${did ? ' -> pressed "' + did + '"' : ' -> nothing to press'}`, { extra: { goal: chipReady, pressed: did } });
+  if (!went) { await closeList(); return false; }
+  await advance(400, 16);
+  let did = '';
+  if (/^Learn\b/i.test(label)) {   // the detail sheet's Learn takes two taps (the first arms it)
+    for (let i = 0; i < 2; i++) {
+      if (!(await click('.ab-learn', 300))) break;
+      await advance(250, 16); did = i ? 'Learn (twice)' : 'Learn';
+    }
+  } else if (/attribute point/i.test(label)) {   // a casual player taps Spread evenly
+    if (await click('.at-spread', 300)) { did = 'Spread evenly'; await advance(250, 16); }
+    for (let i = 0; i < 6 && await page.evaluate(() => [...document.querySelectorAll('.at-add[data-n="1"]')].some(b => !b.disabled && b.getClientRects().length)); i++) { if (!(await click('.at-add[data-n="1"]', 200))) break; await advance(150, 16); did = 'Spread evenly, +1'; }
+  } else {
+    // the flash lasts 1.6 s; find the panel's one button and press it with a real tap (a covered button is then a finding)
+    const pick = await page.evaluate(`(() => { const hit = document.querySelector('.nu-flash'); if (!hit) return ''; const bs = [...hit.querySelectorAll('button, [role=button], .btn, .big')].filter(b => !b.disabled && b.getClientRects().length && !b.classList.contains('off'));
+      const b = bs.find(b => ${GO_WORDS}.test((b.textContent || '').trim())) || bs[0]; if (!b) return ''; b.setAttribute('data-walk', '1'); return (b.textContent || b.getAttribute('aria-label') || '').trim().slice(0, 40) || 'button'; })()`);
+    did = pick && (await click('[data-walk="1"]', 300)) ? pick : '';
+    if (!did) {   // no flashed row: the row in the open menu that names the goal's thing ("Craft a Copper Pickaxe" -> the Copper Pickaxe row)
+      const name = label.replace(/:.*$/, '').replace(/^(craft|build|make|claim|equip|light|upgrade)\s+(a |an |the )?/i, '').replace(/\s+(lv|level)\s*\d+.*$/i, '').trim();
+      const alt = name.length > 3 && await page.evaluate(([nm, re]) => { const rx = new RegExp(re, 'i'), rows = [...document.querySelectorAll('#panels .row, #panels .recipe, #panels li')].filter(r => r.getClientRects().length && r.textContent.includes(nm)).filter((r, _i, all) => !all.some(o => o !== r && r.contains(o)));
+        for (const r of rows) { const b = [...r.querySelectorAll('button')].find(b => !b.disabled && b.getClientRects().length && rx.test((b.textContent || '').trim())); if (b) { b.setAttribute('data-walk', '1'); return (b.textContent || '').trim().slice(0, 40); } } return ''; }, [name, GO_WORDS.source]);
+      did = alt && (await click('[data-walk="1"]', 300)) ? alt : '';
+      await page.evaluate(() => document.querySelectorAll('[data-walk]').forEach(n => n.removeAttribute('data-walk')));
+    }
+    await page.evaluate(() => document.querySelectorAll('[data-walk]').forEach(n => n.removeAttribute('data-walk')));
+  }
+  await note(page, 'nextup', `${label}${did ? ' -> pressed "' + did + '"' : ' -> nothing to press'}`, { extra: { goal: label, pressed: did } });
   await advance(500, 16);
   await click('.tabs .tab:text(Fight)', 300);
   return true;
@@ -352,10 +387,12 @@ async function run() {
     if (!did && o.create) did = await pickHero();
     if (!did) did = await dismissCards(o);
     if (!did) did = await followTip(o);
-    if (!did && (!o.s.tab || o.s.tab === 'adv')) did = await fight(o);   // a menu that covers the action bar is not a fight the player can press
+    if (!did && (!o.s.tab || (o.s.tab === 'adv' && SIZE.id === 'landscape'))) did = await fight(o);   // a menu that covers the action bar is not a fight the player can press
     // back to the fight once a tip or Next Up has been served: a menu that stays open leaves the foe waiting
     if (!did && o.s.tab && o.s.tab !== 'adv' && !o.tip && o.cards.length === 0 && gt - st.tabAt > 2.5) { st.tabAt = gt; did = await click('.tabs .tab[data-tab="adv"]', 300); }
     if (!did && (o.phase === 'idle') && gt - st.nuAt >= 6 && o.cards.length === 0) { st.nuAt = gt; did = await followNextUp(o); }
+    // the Fight menu (tab "adv") covers the action bar in portrait: a player whose turn is waiting closes it
+    if (!did && o.s.tab === 'adv' && o.phase !== 'idle' && !o.tip && o.cards.length === 0 && gt - st.tabAt > 2.5) { st.tabAt = gt; did = await click('#menuX', 300); }
     const fine = o.phase === 'foe wind-up' || o.phase === 'parry or dodge window' || false;   // the 33 ms step is for the foe's wind-up and the parry window only
     await advance(fine ? 33 : 100, fine ? 16 : 100);
   }
