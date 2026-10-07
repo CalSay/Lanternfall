@@ -5156,11 +5156,14 @@ if (section('notices (browser, W1-B)')) try {
       const ctx = await browser.newContext({ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true });
       await ctx.addInitScript(() => { try { localStorage.setItem('lanternfall.test.moments', '1'); } catch (e) {} });   // moment layer: counted in this walk
       const page = await ctx.newPage(); const errs = [];
+      // The page's clock is the bot's: Date.now, performance.now, timers and frames advance only when the bot runs the clock (qa-first-hour-walk
+      // does the same). On the machine's clock, how fast a card showed and how many ticks fell between two taps changed with the machine.
+      await page.clock.install({ time: Date.UTC(2026, 0, 5, 12, 0, 0) });
       page.on('pageerror', e => errs.push(String(e)));
       await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
-      await page.goto('http://lf.test/'); await page.waitForTimeout(600);
+      await page.goto('http://lf.test/'); await page.clock.runFor(600);
       const X = s => page.evaluate(s => window.__t.x(s), s);
-      await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go'); await page.waitForTimeout(300);
+      await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go'); await page.clock.runFor(300);
       // a player who follows the guide, presses Attack, casts, parries heavy hits and buys upgrades; the game runs
       // fast (about 6x): 2 s of play per step, the page's own timers get a moment between steps
       await X(`(() => {
@@ -5169,12 +5172,19 @@ if (section('notices (browser, W1-B)')) try {
         // game clock is the bot's alone (before, the live loop advanced the game between the bot's steps: how many notices fell in the
         // 10 minutes, and how many the bell held, changed with the machine's speed). The bot's own check uses the real picker state.
         globalThis.__spo = soloPickerOpen; soloPickerOpen = () => true;
-        // ...and Math.random is seeded, so the same drops and rolls fall on every run (LF_NOTICE_SEED tries another seed)
-        (a => { Math.random = () => (a = (Math.imul(a, 1664525) + 1013904223) >>> 0) / 4294967296; })(${+process.env.LF_NOTICE_SEED || 7});
+        // ...and the game's own dice are seeded, so the same drops and rolls fall on every run (LF_NOTICE_SEED tries another seed).
+        // The seed holds only while the bot steps the game (below). Between steps the page's own frame loop and timers draw Math.random
+        // for sparks and shimmer at the machine's speed; on one shared stream that shifted every later drop.
+        const nativeRandom = Math.random, seeded = (a => () => (a = (Math.imul(a, 1664525) + 1013904223) >>> 0) / 4294967296)(${+process.env.LF_NOTICE_SEED || 7});
         const mk = makeToast; makeToast = function () { R.toasts++; return mk.apply(this, arguments); };
-        on('momentShow', e => { R.moments = (R.moments || 0) + 1; (R.mlist = R.mlist || []).push(Math.round(notes.clock) + 's ' + e.tier + ' ' + e.kind); });   // moment layer: counted, outside the pop budget
+        on('momentShow', e => {
+          R.moments = (R.moments || 0) + 1; (R.mlist = R.mlist || []).push(Math.round(notes.clock) + 's ' + e.tier + ' ' + e.kind + (e.zone ? ' z' + e.zone : ''));
+          if (e.tier === 'big' && e.zone) { (R.bigZones = R.bigZones || []).push(e.zone); if (e.kind === 'champion' && cachePending()) R.champEarly = e.zone; }
+          if (e.tier === 'medium') (R.medT = R.medT || []).push(notes.clock);
+        });   // moment layer: counted, outside the pop budget
         let last = '', same = 0;
-        globalThis.__nbStep = () => {
+        globalThis.__nbStep = () => { Math.random = seeded; try { return nbStep(); } finally { Math.random = nativeRandom; } };
+        const nbStep = () => {
           { const g = document.querySelector('.mm-go'); if (g) { MOMENT_UI.shownAt = 0; g.click(); } }   // a moment card is the player's tap
           const st = soloGuideWants(), step = onboardStep();
           same = st && st === last ? same + 1 : 0; last = st;
@@ -5197,7 +5207,7 @@ if (section('notices (browser, W1-B)')) try {
           return notes.clock;
         };
         return true; })()`);
-      for (let i = 0; i < 700; i++) { const t = await X('__nbStep()'); await page.waitForTimeout(90); if (t >= 600) break; }
+      for (let i = 0; i < 700; i++) { const t = await X('__nbStep()'); await page.clock.runFor(90); if (t >= 600) break; }
       const r = JSON.parse(await X('JSON.stringify({ t: notes.clock, st: notes.stats, nb: __nb, zone: S.maxZone, L: S.L, unread: notes.unread })'));
       const pops = r.st.filter(s => s.ch === 'pop' && s.id !== 'reply'), unknown = r.st.filter(s => s.id === '?');
       let close = null; for (let i = 1; i < pops.length; i++) if (pops[i].t - pops[i - 1].t < 20) close = [pops[i - 1], pops[i]];
@@ -5205,7 +5215,14 @@ if (section('notices (browser, W1-B)')) try {
       const list = pops.map(s => `${Math.round(s.t)}s ${s.id}`).join(', ');
       assert(r.t >= 590 && r.zone >= 5, `the bot played 10 minutes of a fresh solo game (${Math.round(r.t)} s, zone ${r.zone}, level ${r.L}, ${r.st.length} notices)`);
       assert(pops.length <= 8 && pops.length >= 1, `a fresh game's first 10 minutes pop at most 8 notices (toasts and captions): ${pops.length} (${list})`);
-      assert((r.nb.moments || 0) <= 8, `moment layer: big and medium moments in a fresh game's first 10 minutes: ${r.nb.moments || 0} (${(r.nb.mlist || []).join(', ')}); at most 8 (about one a minute)`);
+      // The bot plays about four times a person's pace (zone 14 in 10 minutes; a person is at zone 5 near minute 18), so cards that a person
+      // sees apart queue and fold into one, and a raw count over 10 bot minutes says little about a person's first 20. What the bot can
+      // prove is the shape (DECISIONS "Early game", moment cap): big cards stay few, banners keep the midMax budget, nothing doubles.
+      const big = (r.nb.mlist || []).filter(m => / big /.test(m)).length, med = r.nb.medT || [];
+      assert(big <= 8, `moment layer: big moments in a fresh game's first 10 minutes: ${big}; at most 8 (${(r.nb.mlist || []).join(', ')})`);
+      assert(!med.some(t => med.filter(u => u >= t && u < t + 180).length > 3), `moment layer: at most 3 medium banners in any 3 minutes (${(r.nb.mlist || []).join(', ')})`);
+      assert(new Set(r.nb.bigZones || []).size === (r.nb.bigZones || []).length && !r.nb.champEarly, 'moment layer: one big card for each zone clear, and a Champion card never shows before its cache opens' + (r.nb.champEarly ? ` (zone ${r.nb.champEarly})` : ` (big cards by zone: ${(r.nb.bigZones || []).join(', ')})`));
+      assert((r.nb.moments || 0) <= r.zone, `moment layer: at most one big or medium moment for each zone cleared: ${r.nb.moments || 0} moments, zone ${r.zone} (${(r.nb.mlist || []).join(', ')})`);
       assert(!close, 'never two pops within 20 s' + (close ? `: ${JSON.stringify(close)}` : ''));
       assert(!inGuide.length, 'nothing pops while a guide step shows' + (inGuide.length ? ': ' + inGuide.map(s => s.id).join(', ') : ''));
       assert(r.nb.toasts <= pops.length + r.st.filter(s => s.ch === 'pop' && s.id === 'reply').length, `every toast on screen went through the policy (${r.nb.toasts} drawn, ${pops.length} pops)`);
@@ -10320,7 +10337,7 @@ if (section('moment layer')) try {
           assert(/^1:/.test(fold) && /Level 15/.test(fold) && /New ability/.test(fold), `${at}: two medium moments at one fight end fold into one banner (${fold.slice(0, 80)})`);
           // at most 2 medium moments in any 3 minutes of the first 30: a third waits (it is not dropped)
           await page.waitForTimeout(3200);
-          await X(`MOMENT_UI.midAt = [Date.now() - 60000, Date.now() - 30000]; notes.clock = 100; emit('levelup', { L: 20 }); true`); await page.waitForTimeout(1800);
+          await X(`notes.clock = 100; MOMENT_UI.midAt = [40, 70]; emit('levelup', { L: 20 }); true`); await page.waitForTimeout(1800);
           const cap = await X(`momentState().queued + ':' + !!document.querySelector('.mm-toast')`);
           assert(cap === '1:false', `${at}: a third medium moment inside 3 minutes waits in the queue (${cap})`);
           await X(`MOMENT_UI.midAt.length = 0; true`); await until(`!!document.querySelector('.mm-toast')`);

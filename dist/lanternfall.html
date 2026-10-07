@@ -40300,11 +40300,12 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
   // (the guide's step gets guideWaitS seconds to finish, then the moment shows over it: a step left on screen must not hide a unique)
   const blocked = () => !!document.querySelector('.away-ov, #createScreen, .join-ov, .gl-ov, .dd-fc-ov') || document.hidden || NEWS.open || performance.now() - bootT < MOMENT_TUNE.bootS * 1000
     || (guideBusy() && MOMENT_UI.guideT < MOMENT_TUNE.guideWaitS)
-    || (typeof storyBusy === 'function' && MOMENT_Q.some(q => q.kind === 'champion' && q.scene && storyBusy(q.scene)));   // a Champion's scene plays first, then its card
+    || (typeof storyBusy === 'function' && MOMENT_Q.some(q => q.kind === 'champion' && q.scene && storyBusy(q.scene)))   // a Champion's scene plays first, then its card
+    || (typeof cachePending === 'function' && cachePending() && MOMENT_Q.some(q => q.kind === 'champion'));   // the win's cache opens a tick after the kill and folds into the card; never show the card without it
   // medium moments in the first half hour: at most midMax in any midWindowS seconds
   const midRoom = () => {
-    const u = MOMENT_UI, now = Date.now();
-    u.midAt = u.midAt.filter(t => now - t < MOMENT_TUNE.midWindowS * 1000);
+    const u = MOMENT_UI, now = notes.clock;   // game seconds, like midFirstS: the window must not run on a different clock than the game
+    u.midAt = u.midAt.filter(t => now - t < MOMENT_TUNE.midWindowS);
     return notes.clock >= MOMENT_TUNE.midFirstS || u.midAt.length < MOMENT_TUNE.midMax;
   };
   holdGame(() => !!MOMENT_UI.ov);   // the hero is not hit while a card is up
@@ -40381,7 +40382,7 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
     ov.addEventListener('keydown', ev => { if (ev.key === 'Escape') tryClose(); if (ev.key === 'Tab') { ev.preventDefault(); go.focus(); } });
     document.body.append(ov); u.ov = ov;
     go.focus({ preventScroll: true });
-    emit('momentShow', { tier: 'big', kind: first.kind, n: list.length });
+    emit('momentShow', { tier: 'big', kind: first.kind, n: list.length, zone: first.zone });
   }
   // The medium banner is a toast in the notices slot, held for bannerS seconds: a later toast cannot retire it (70-ui popToast).
   function showBanner(list) {
@@ -40411,8 +40412,8 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
     for (let i = 0; i <= live.length - Math.max(1, room - held); i++) { const o = live[i]; if (!o) break; o._gone = true; clearTimeout(o._timer); o.remove(); }
     box.append(t); u.banner = t;
     t._timer = setTimeout(() => { dropToast(t); if (u.banner === t) u.banner = null; }, ms);
-    u.midAt.push(Date.now());
-    emit('momentShow', { tier: 'medium', kind: first.kind, n: list.length });
+    u.midAt.push(notes.clock);
+    emit('momentShow', { tier: 'medium', kind: first.kind, n: list.length, zone: first.zone });
   }
   // Level-ups in a row fold into one ("Level 6", up 3 levels).
   function fold(list) {
@@ -40427,7 +40428,7 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
     const big = MOMENT_Q.filter(x => x.tier === 'big'), mid = MOMENT_Q.filter(x => x.tier !== 'big');
     if (big.length && !u.ov) {
       const all = withSay(big.concat(fold(mid))); MOMENT_Q.length = 0;   // mediums ride on the big card as lines
-      for (const x of mid) MOMENT_UI.midAt.push(Date.now());   // each folded medium counts against the cap
+      for (const x of mid) MOMENT_UI.midAt.push(notes.clock);   // each folded medium counts against the cap
       showCard(all); return;
     }
     if (big.length) return;   // a big card is up: wait for it
