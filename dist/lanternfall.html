@@ -15569,10 +15569,11 @@ let storeLevel, storeCap, storeCapAt, stashRoom, stashFull, stashOver, stashFits
 // NPC scene at an area's door); a Champion's or Elder's NPCs ride that scene and are not filed on their own.
 
 const STORY_ON = true;   // dev switch (bible 10.4): false plays no story at all; the data files can also be deleted
+const STORY_TUNE = { champMoment: true };   // champion-moment: a Champion's first clear is one big card (its scene, then the cache). false: the scene plays as a story card and the cache opens on its own, as before
 
 let storyOn, storyHeld, storyInGap, storyChoiceDef, storyChosen, storyClaim, storyClose, storyChoose, storyList, storyEntry, storyRead, storyUnread, storyLate, storyJournalOpened,
   storyRoadLog, storyFile, storyHeroLine, storyHearthLine, storyVerse, storyVerseLatest, storyItemLine, storyRanks, storyEncounter, storyFoes, storySync,
-  storyIntroClaim, storyIntro, storyIntroDone, storyHeroKey;
+  storyIntroClaim, storyIntro, storyIntroDone, storyHeroKey, storyBusy;
 const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_ENC.champ.<id> = true (storyEncounter)
 {
   registerState('story', { v: 1, seen: {}, read: {}, init: 0, off: 0, starter: '', litFor: {}, coldhearth: '', ends: {}, journalOpens: 0 });
@@ -15809,6 +15810,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
     }
   }
   const push = sc => { if (sc) queue.push(sc); };
+  storyBusy = id => (!!cur && cur.id === id) || queue.some(sc => sc.id === id);   // that scene is up or waiting (the moment layer holds a Champion card until it has played)
 
   // ---- time and gaps ----
   let clock = 0, spawnT = -99, gapNow = true, inAway = false, swept = 0, last = '', spawned = null;
@@ -15872,6 +15874,12 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
   on('spawn', ({ mob, zone }) => {
     if (!mob || (typeof arena !== 'undefined' && arena)) return;
     spawnT = clock; gapNow = false;
+    // champion-moment: nothing else registers the Champions yet (boss-tiers will own the encounter hooks), so a zone's boss that a Champion
+    // is written for meets it here: the pre scene, the post scene and, on the first clear, the Champion card
+    if (STORY_TUNE.champMoment && mob.boss && !mob.encounter && zone >= (S.maxZone || 1)) {   // the first clear only: a save past a Champion gets no scene or card from replaying it
+      const id = Object.keys(D('champ')).find(k => D('champ')[k].zone === zone);
+      if (id) { storyEncounter('champ', id); mob.encounter = { kind: 'champ', id }; }
+    }
     // the region boss's display name (REGIONS[i].boss.name; the Hollow: "The Fenmother")
     const r = regionOf(zone);
     if (mob.boss && zone === r.z1 && r.boss && r.boss.name) mob.name = r.boss.name;
@@ -15887,6 +15895,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
     if (has(key)) return;
     mark(key);
     push(enc.kind === 'elder' ? elderScene(enc.id, 'post') : champScene(enc.id, 'post'));
+    if (enc.kind !== 'elder' && STORY_TUNE.champMoment) emit('champWin', { id: enc.id, zone, name: (D('champ')[enc.id] || {}).name || '', scene: `p:${enc.id}:post` });   // the first clear, after its zoneClear and cache
   });
   on('awayBegin', () => { inAway = true; });
   on('awayEnd', () => { inAway = false; last = ''; });
@@ -36084,10 +36093,11 @@ on('cacheOpen', v => {
   const title = v.zone === 1 ? 'First boss down' : `Zone ${v.zone} cleared`;
   // the sub is one short line: the unique's odds (honest, with modifiers), else what a look does
   const sub = v.chance !== null && v.chance !== undefined ? `Unique chance on this win: ${v.chance}%.` : v.look && v.look.worn ? 'Your lantern burns it now.' : 'Here is what the win gave you.';
-  const o = { title, sub, col, icon, lines };
+  const o = { title, sub, col, icon, lines, zone: v.zone };
   if (big && v.n >= CACHE_TUNE.autoFrom) o.actions = [{ txt: cacheAuto() ? 'Turn off auto-open' : 'Open the next ones automatically', fn: () => cacheSetAuto(!cacheAuto()) }];
   const barks = v.zone === 1 ? ['boss1'] : [];
-  if (big) {
+  const ci = MOMENT_Q.findIndex(q => q.kind === 'champion' && q.zone === v.zone);   // champion-moment: a Champion's first clear queued its own card (75-moments-ui)
+  if (big || ci >= 0) {
     // fold in what this clear already queued: zone 1's boss card, the unique, the Star
     for (let i = MOMENT_Q.length - 1; i >= 0; i--) {
       const q = MOMENT_Q[i];
@@ -36096,6 +36106,14 @@ on('cacheOpen', v => {
     }
     // the hero's line for what the card now carries (55-voice): the strongest of the folded moments' barks
     if (barks.length && typeof voicePick === 'function') o.bark = voicePick(barks);
+  }
+  // the cache folds into that card, so the win is one card
+  if (ci >= 0) {
+    const c = MOMENT_Q.splice(ci, 1)[0];
+    if (c.bark) barks.push(c.bark);
+    if (barks.length && typeof voicePick === 'function') o.bark = voicePick(barks);
+    moment('champion', Object.assign(o, { title: c.title, eye: c.eye, scene: c.scene }));
+    return;
   }
   moment(big ? 'cache' : 'cacheAuto', o);
 });
@@ -40135,7 +40153,7 @@ var introUI;   // var: 76-create (loaded after this file) reads it at run time
 // wait for the guide step on screen, the Away and What's-new cards, and the first seconds after boot.
 // Several at fight end fold into one card with a list. Reduced motion: the same card, no burst.
 // API for later cards:  moment(kind, { title, sub, rarity, icon, still, lines, actions })
-//   kind     'boss' | 'unique' | 'cache' | 'hero' | 'starFirst' (big; a cache with a look is big too); 'level' | 'ability' | 'star' | 'look' | 'craft' (medium)
+//   kind     'boss' | 'unique' | 'cache' | 'hero' | 'champion' | 'starFirst' (big; a cache with a look is big too); 'level' | 'ability' | 'star' | 'look' | 'craft' (medium)
 //   title    the name, one line;  sub  one short line;  rarity  common..legendary (the colour; else the kind's own)
 //   icon     an icon spec for iconOf() ({ item }, { mat }, { ic });  still  a data URL (a bigger picture)
 //   lines    [{ txt, ic? }] a short list under the title;  actions  [{ txt, fn }] extra buttons beside Continue
@@ -40149,6 +40167,7 @@ const MOMENT_KINDS = {
   unique: { tier: 'big', eye: 'Unique loot', col: '#FF8A3D', snd: 'big' },
   cache: { tier: 'big', eye: 'Lantern Cache', col: '#F2C14E', snd: 'big' },
   hero: { tier: 'big', eye: 'New hero', col: '#B58CFF', snd: 'big' },
+  champion: { tier: 'big', eye: 'Champion down', col: '#F2C14E', snd: 'big' },
   starFirst: { tier: 'big', eye: 'Your first Star', col: '#F2C14E', snd: 'big' },
   level: { tier: 'medium', eye: 'Level up', col: '#6FCB6A', snd: 'mid' },
   ability: { tier: 'medium', eye: 'New ability', col: '#5FA8FF', snd: 'mid' },
@@ -40182,7 +40201,8 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
   // a card up, the guide's step, the What's-new window or the first seconds after boot hold a moment back
   // (the guide's step gets guideWaitS seconds to finish, then the moment shows over it: a step left on screen must not hide a unique)
   const blocked = () => !!document.querySelector('.away-ov, #createScreen, .join-ov, .gl-ov, .dd-fc-ov') || document.hidden || NEWS.open || performance.now() - bootT < MOMENT_TUNE.bootS * 1000
-    || (guideBusy() && MOMENT_UI.guideT < MOMENT_TUNE.guideWaitS);
+    || (guideBusy() && MOMENT_UI.guideT < MOMENT_TUNE.guideWaitS)
+    || (typeof storyBusy === 'function' && MOMENT_Q.some(q => q.kind === 'champion' && q.scene && storyBusy(q.scene)));   // a Champion's scene plays first, then its card
   // medium moments in the first half hour: at most midMax in any midWindowS seconds
   const midRoom = () => {
     const u = MOMENT_UI, now = Date.now();
@@ -40344,6 +40364,16 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
     // later zone bosses have their own toast and scroll; a region's last boss has the Great Lantern card, which carries the hero's line
     if (e.zone !== 1) { if (typeof REGIONS === 'object' && !REGIONS.some(r => r.z1 === e.zone)) moment('bark', { bark: 'boss' }); return; }
     moment('boss', { title: 'The first boss falls', sub: `${zoneName(e.zone)} is cleared. The road goes on.`, icon: { ic: ['banner', '#F2C14E'] }, bark: 'boss1' });
+  });
+  // champion-moment: a Champion's first clear is one big card. Its post scene plays as the story sheet first (the card waits for it, above);
+  // the card is the zone's cache (already queued by zoneClear) turned into a Champion card, or its own card when no cache came
+  on('champWin', e => {
+    if (!e) return;
+    const title = e.name ? `${e.name} falls` : 'Champion down', eye = `Zone ${e.zone} Champion down`;
+    const q = MOMENT_Q.find(x => (x.kind === 'cache' || x.kind === 'cacheAuto') && x.zone === e.zone);   // the cache may already be queued; else it folds in when it opens (75-caches-ui)
+    if (!q) { moment('champion', { title, eye, sub: 'The road goes on.', icon: { ic: ['banner', '#F2C14E'] }, bark: 'boss', zone: e.zone, scene: e.scene }); return; }
+    const k = MOMENT_KINDS.champion;
+    Object.assign(q, { kind: 'champion', tier: k.tier, eye, snd: k.snd, title, scene: e.scene });
   });
   on('heroUnlocked', e => { if (e && e.id) moment('hero', { title: heroName(e.id), sub: 'A new hero will take up the lamp.', icon: { ic: ['banner', '#B58CFF'] } }); });
   // level up is medium only on the first level and every 5th (a banner a level would be a flood); otherwise the toast rules decide

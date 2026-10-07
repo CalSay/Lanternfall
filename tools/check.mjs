@@ -2641,6 +2641,7 @@ if (section('story')) try {
 
   // ---- Champion and Elder scenes need their encounter ----
   const c = fresh(75), cv = watch(c), C = s => c.eval(s);
+  C('STORY_TUNE.champMoment = false');   // champion-moment wires the Champions itself; off, the encounter card (here the test) does
   C('S.activity = "fight"; S.zone = 5; S.maxZone = 5; S.story.seen["r:hollow"] = 1'); C('fightBoss = true; spawn(); mob.encounter = { kind: "champ", id: "regent" }'); ticks(c, 3);
   assert(!cv.scene.some(s => s.ch === 'P'), 'story: a Champion scene does not play while its encounter is not in the game');
   C('storyEncounter("champ", "regent"); fightBoss = true; spawn(); mob.encounter = { kind: "champ", id: "regent" }'); ticks(c, 3);
@@ -8903,6 +8904,7 @@ if (section('story-hollow-script')) try {
   assert(cs && cs.head === RB.captain[1].title && cs.lines[0] === RB.captain[1].line, 'story-hollow-script: with the Captain on screen the zone 1 boss plays its real Captain line');
   // (c) no encounters registered: a zone 5 boss kill plays no Champion scene, and the zone 35 boss no Elder scene
   const wc = loadCore({ seed: 92 }), wcv = watch(wc);
+  wc.eval('STORY_TUNE.champMoment = false');   // champion-moment wires the Champions itself; off, no encounters are in the game
   quiet(wc, 'S.zone = 5; S.maxZone = 5; fightBoss = true; spawn(); mob.encounter = { kind: "champ", id: "regent" }'); ticks(wc, 5);
   wc.eval(`emit('kill', { mob: mob, zone: 5, gold: 0, ess: 0, tier: 1 })`); ticks(wc, 5);
   wc.eval('S.zone = 35; S.maxZone = 35; fightBoss = true; spawn(); mob.encounter = { kind: "elder", id: "fenmother" }'); ticks(wc, 5);
@@ -10049,6 +10051,31 @@ if (section('lantern caches')) try {
   const ui = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-caches-ui.js'), 'utf8');
   assert(/on\('cacheOpen'/.test(ui) && /moment\(big \? 'cache' : 'cacheAuto'/.test(ui), 'caches: the card goes through the moment layer');
 } catch (e) { fail('lantern caches: ' + e.message); }
+
+// ---- Champion clear moment (card champion-moment; 55-story.js champWin, 75-moments-ui.js) ----
+if (section('champion moment')) try {
+  const mk = opts => { const g = loadCore(Object.assign({ seed: 7 }, opts)); const wins = [], caches = []; g.fn.on('champWin', e => wins.push(e)); g.fn.on('cacheOpen', v => caches.push(v)); return { g, wins, caches, E: s => g.eval(s) }; };
+  // a zone's boss: spawn it as the fight does, then kill it as the fight does
+  const win = (a, z) => { a.E(`S.activity = 'fight'; S.zone = ${z}; S.maxZone = Math.max(S.maxZone, ${z}); fightBoss = true; spawn(); killPack(mob, 40)`); a.g.fn.tick(0.1); };
+  const a = mk(); a.E('soloPick("wren")');
+  win(a, 5);
+  assert(a.wins.length === 1 && a.wins[0].id === 'regent' && a.wins[0].zone === 5 && a.wins[0].name === 'The Briar Regent', `champion moment: the zone 5 Champion's first clear says so once (${JSON.stringify(a.wins)})`);
+  assert(a.caches.length === 1 && a.caches[0].zone === 5, 'champion moment: the first clear opened its cache too (the card carries it)');
+  a.E('S.zone = 5'); win(a, 5);
+  assert(a.wins.length === 1, 'champion moment: a replay of a cleared Champion shows nothing new');
+  win(a, 10);
+  assert(a.wins.length === 2 && a.wins[1].id === 'cantor', 'champion moment: the zone 10 Champion is one too');
+  win(a, 6);
+  assert(a.wins.length === 2, 'champion moment: a zone with no Champion (a Captain) is not one');
+  const past = mk(); past.E('soloPick("wren"); S.maxZone = 12'); win(past, 5);
+  assert(past.wins.length === 0 && !past.E('S.story.seen["p:regent:pre"] || S.story.seen["p:regent:post"]'), 'champion moment: a save past a Champion gets no scene or moment from replaying it');
+  const off = mk(); off.E('soloPick("wren"); STORY_TUNE.champMoment = false');
+  win(off, 5);
+  assert(off.wins.length === 0 && off.caches.length === 1, 'champion moment: with STORY_TUNE.champMoment off no Champion card is asked for and the cache opens on its own');
+  const ui = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-moments-ui.js'), 'utf8');
+  assert(/champion: \{ tier: 'big'/.test(ui) && /on\('champWin'/.test(ui) && /storyBusy\(q\.scene\)/.test(ui), 'champion moment: a big MOMENT_KINDS row, the champWin listener, and the card waits for the scene');
+  assert(/q\.kind === 'champion' && q\.zone === v\.zone/.test(fs.readFileSync(path.join(ROOT, 'src', 'js', '75-caches-ui.js'), 'utf8')), 'champion moment: the cache folds into the Champion card (one card for the win)');
+} catch (e) { fail('champion moment: ' + e.message); }
 
 // ---- moment layer (card moment-layer; 75-moments-ui.js; docs/design/first-hour.md; scorecard F6) ----
 // Each big and medium moment is forced while the guide, a level-up and the toast flood compete, and must be on screen for at
