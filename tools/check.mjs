@@ -600,7 +600,7 @@ if (section('crafting')) try {
   const mats = () => E('JSON.stringify(S.mats)');
   // gates and player-facing reasons
   const why0 = E('canCraft("robe", 1).why');
-  assert(why0 === '7 more Hemp Fibre, 1 more Quartz, 1 more Sage Sprig, 2 more Dim Essence', `canCraft names what is missing (${why0})`);
+  assert(why0 === '7 more Hemp Fibre, 1 more Quartz, 1 more Sage Sprig, 2 more Essence', `canCraft names what is missing (${why0})`);
   const RQ = t => E(`CRAFT_STATION_REQ[${t - 1}]`);   // GP1: the gates are SKILL_TUNE.stationReq
   assert(E('canCraft("robe", 2).why') === `Needs Tailoring ${RQ(2)}` && E('craftItem("robe", 2)') === null, `station tier gate: Needs Tailoring ${RQ(2)}`);
   assert(E('canCraft("charm", 3).why') === `Needs Enchanting ${RQ(3)}`, "Charm gates on the Enchanter's Table...");
@@ -2924,9 +2924,10 @@ if (section('store')) try {
     assert(E('S.camp.b.store') === 8 && JSON.stringify(E('storeOverAt(S.mats, 8)')) === '[["ess",1]]' && E('S.mats.ess[0]') === ESS && E('S.mats.wood[2]') === WOOD, 'more Dim Essence than Lv 8 holds: one over cell, all of it kept');
     ticks(g, 2);
     assert(E('S.mats.ess[0]') === ESS, 'the over pile is still whole after two seconds');
-    assert(E("stashAdd('ess', 1, 5, 'flow')") === 0 && E('S.mats.ess[0]') === ESS && E('stashOver("ess", 1)'), 'an over cell gains nothing from a flow');
+    const e1 = E('S.mats.ess[1]');
+    assert(E("stashAdd('ess', 1, 5, 'flow')") === 5 && E('S.mats.ess[0]') === ESS && E('S.mats.ess[1]') === e1 + 5 && E('stashOver("ess", 1)'), 'an over Essence grade gains nothing itself; the drop spills into the next grade with room (counters-and-layers)');
     E(`S.mats.ess[0] = ${fTop - 10}`);
-    assert(E("stashAdd('ess', 1, 50, 'flow')") === 10 && E('S.mats.ess[0]') === fTop, 'spent below the cap: it gains up to the cap again');
+    assert(E("stashAdd('ess', 1, 50, 'flow')") === 50 && E('S.mats.ess[0]') === fTop && E('S.mats.ess[1]') === e1 + 45, 'spent below the cap: the grade fills to the cap, the rest spills');
     errs.push(...g.errors, ...q.errors);
   }
   assert(FIX.length >= 3, `${FIX.length} fixtures checked`);
@@ -9797,6 +9798,26 @@ if (section('craft reveal')) try {
     } finally { await browser.close(); }
   })();
 } catch (e) { fail('craft reveal crashed: ' + (e.stack || e)); }
+
+// ==== counters-and-layers: Essence is one pile (any grade pays any Essence cost, lowest grade first) ====
+if (section('essence fungible')) try {
+  const g = loadCore({ seed: 41 }), E = x => g.eval(x);
+  E('S.mats.ess = [3, 0, 4, 0, 2]');
+  assert(E('essHave()') === 9 && E('hasMats({ ess: 9 }, 5)') && !E('hasMats({ ess: 10 }, 1)'), 'essence: every grade counts toward any Essence cost');
+  E('payMats({ ess: 5 }, 5)');
+  assert(JSON.stringify(E('S.mats.ess')) === '[0,0,2,0,2]', 'essence: payment takes the lowest grade first');
+  assert(E("costName('ess', 3)") === 'Essence', 'essence: a cost line never names a grade');
+  assert(E("canTransmute('ess', 1, 'up').ok") === false, 'essence: Transmute is retired for Essence');
+  assert(E("canTransmute('ore', 1, 'up').why") !== undefined, 'essence: other materials keep Transmute');
+  // a full grade spills into the next grade with room
+  const cap = E('storeCap("ess", 1)');
+  E(`S.mats.ess = [${cap}, 0, 0, 0, 0]`);
+  assert(E("stashAdd('ess', 1, 7, 'flow', true)") === 7 && E('S.mats.ess[0]') === cap && E('S.mats.ess[1]') === 7, 'essence: a drop into a full grade spills into the next grade with room');
+  // class change pays from any grade, and names no grade
+  E('S.party.mirrors = 5; S.mats.ess = [0, 0, 0, 0, 0]; S.mats.ess[4] = 1e6');
+  assert(E("respecCost('evo').have.ess") === 1e6 && !/Dim|Glowing|Radiant|Tidelit|Stormlit/.test(E("respecCost('base').why")), 'essence: class change counts every grade and names none');
+  assert(!g.errors.length, 'essence fungible: no core errors');
+} catch (e) { fail('essence fungible crashed: ' + (e.stack || e)); }
 
 if (section('removed systems (W2-C)')) try {
   const strip = t => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/([^:'"`\\])\/\/[^\n'"`]*$/gm, '$1');

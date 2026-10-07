@@ -85,12 +85,12 @@ let addRenown, renown, caedmonRenown, heroRouteInfo, heroUnlocked, heroCanPlay, 
   const got = id => !!(U().heroes && U().heroes[id]);
   const quest = id => !!(U().quests && U().quests[id]);
   const token = id => (U().tokens && U().tokens[id]) || { miss: 0, won: false };
-  const have = (k, t) => (S.mats[k] || []).slice(t - 1).reduce((a, n) => a + n, 0);
+  const have = (k, t) => k === 'ess' ? essHave() : (S.mats[k] || []).slice(t - 1).reduce((a, n) => a + n, 0);
   const reachedPlace = (name, cycle = 1) => REGIONS.some(r => { const p = r.names.findIndex(n => n.replace(/^The /, '').toLowerCase() === name.replace(/^The /, '').toLowerCase()); return p >= 0 && S.maxZone >= r.z0 + p + (cycle - 1) * r.names.length; });
   const hand = id => !!(S.hands && S.hands.list && S.hands.list.some(h => h.key === id));
   const bestiary = (type, tier) => ((S.mastery && S.mastery.types[type]) || 0) >= BESTIARY_TIERS[tier - 1];
   const goldOf = q => (q.kills || 0) * goldPerFoe(q.zone || q.from || 1);
-  const matText = (k, t, n) => `${n} grade-${t} ${k === 'ess' ? 'Essence' : k === 'crystal' ? 'gems' : k}`;
+  const matText = (k, t, n) => k === 'ess' ? `${n} Essence` : `${n} grade-${t} ${k === 'crystal' ? 'gems' : k}`;
   const claim = (q, how, open = S.maxZone >= (q.from || q.zone || 1)) => {
     const mats = ['wood', 'ess', 'crystal', 'fibre', 'hide'].filter(k => q[k]).map(k => [k, ...q[k]]);
     const gold = goldOf(q), rn = q.spendRenown ? (q.renown || 0) : 0;
@@ -176,6 +176,7 @@ let addRenown, renown, caedmonRenown, heroRouteInfo, heroUnlocked, heroCanPlay, 
     const r = route(id); if (!r.ready) return false;
     // Recheck and pay in one synchronous action. Repeated clicks and probes never pay twice.
     for (const [k, t, count] of r.cost.mats) {
+      if (k === 'ess') { essPay(count); continue; }
       let n = count;
       for (let i = t - 1; i < S.mats[k].length && n > 0; i++) { const take = Math.min(n, S.mats[k][i]); S.mats[k][i] -= take; n -= take; }
     }

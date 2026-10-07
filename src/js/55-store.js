@@ -87,7 +87,7 @@ const STORE_STATS = { gatherSecs: 0, fullSecs: 0, awaySecs: 0, awayFullSecs: 0, 
 // Whole numbers with commas ("10,000"): caps read exactly, not as "10.0K".
 const storeNum = n => Number.isFinite(n) && Math.abs(n) < 1e7 ? String(Math.floor(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : fmt(n);
 
-let storeLevel, storeCap, storeCapAt, stashRoom, stashFull, stashOver, stashFits, stashNeed, stashPreview,
+let essCap, storeLevel, storeCap, storeCapAt, stashRoom, stashFull, stashOver, stashFits, stashNeed, stashPreview,
   storeOverAt, storeNextNode, storeSpillOn, storeFullCells, storeEffects, storeCampCost, storeWhy,
   stashAdd, storeSwitch, storeSpill, storeAwayGather;
 
@@ -151,11 +151,24 @@ let storeLevel, storeCap, storeCapAt, stashRoom, stashFull, stashOver, stashFits
     emit('storeCap', { fam: f, t });   // 58-deeds (AC2) counts these for the Pack Rat secret
     if (!quiet) toast(`Storehouse full: ${name(f, t)}.`, 'raid', { mat: [f, t] }, 'low');
   }
+  // Essence is one pile (counters-and-layers): a grade that is full spills into the lowest grade with room, so the
+  // one total never shows room while a drop is lost. A parcel still lands whole or not at all.
+  essCap = () => { let c = 0; for (let g = 1; g <= 5; g++) c += storeCap('ess', g); return c; };
+  const essRoom = () => { let r = 0; for (let g = 1; g <= 5; g++) r += stashRoom('ess', g); return r; };
+  const essAdd = (n, t, how, quiet) => {
+    const a = S.mats.ess;
+    if (how === 'parcel' && n > essRoom()) return 0;
+    let left = n;
+    for (const g of [t, 1, 2, 3, 4, 5]) { if (left <= 0) break; const put = Math.min(left, stashRoom('ess', g)); if (put > 0) { a[g - 1] = (a[g - 1] || 0) + put; left -= put; } }
+    if (left > 0) blocked('ess', t, left, how, quiet);
+    return n - left;
+  };
   stashAdd = (f, t, n, how = 'flow', quiet = false) => {
     n = Math.floor(n);
     if (!(n > 0) || !S.mats[f] || !(t >= 1 && t <= 5)) return 0;
     const a = S.mats[f], h = a[t - 1] || 0;
     if (how === 'gift') { a[t - 1] = h + n; return n; }
+    if (f === 'ess') return essAdd(n, t, how, quiet);
     const room = stashRoom(f, t);
     if (how === 'parcel') { if (n > room) return 0; a[t - 1] = h + n; return n; }
     const add = Math.min(n, room);
