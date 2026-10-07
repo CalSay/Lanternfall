@@ -84,6 +84,7 @@
   .sb-tab { min-height: 44px; font-size: calc(14px * var(--display-k)); }
   .sb-sub { display: none; }
   .sb-lb { font-size: calc(9px * var(--display-k)); letter-spacing: 0; }
+  .sb-tx { padding: 0; }   /* "Attack" needs the 6 px the tile padding took */
   .sbtn { gap: 1px; }
   .sb-n { top: 4px; height: var(--sb-ic); font-size: calc(20px * var(--display-k)); }
   .sb-p-foe { gap: 3px; font-size: 12px; }
@@ -197,3 +198,19 @@
 .hud.vs .hpbar { height: 11px; }
 /* the combat strip (stagger, cast, pack count) moves under the foe's status chips */
 .stagebox.vs-on .cb-strip { left: auto; right: 8px; width: calc(50% - 12px); top: calc(var(--vs-b, 46px) + 24px); justify-content: flex-end; }
+
+/* Fight labels fit (2026-10-06). The foe plate grew taller than the hero plate when a boss appeared (a long name wrapped
+   the HP onto its own row, and the boss timer added a row), so the place line, set from the plates' bottom, landed under
+   it. The timer now lies along the plate's bottom edge. Sideways, name and HP share one row and a long name wraps inside
+   its own cell. Upright on a phone, both plates keep room for a two-line name above the HP row. Neither changes height. */
+.hud.vs .mob .timer { position: absolute; left: 6px; right: 6px; bottom: 2px; }
+.hud.vs .hero-plate, .hud.vs .mob { align-content: start; }
+@media (max-aspect-ratio: 1/1), (max-width: 599px) {
+  .hud.vs .hero-plate, .hud.vs .mob { min-height: 80px; }
+}
+@media (min-aspect-ratio: 1/1) and (min-width: 600px) {
+  .stagebox .hud.vs .mob .mob-line { flex-wrap: nowrap; align-items: flex-start; }
+  .stagebox .hud.vs .mob .mob-name { flex: 1 1 0; min-width: 0; max-width: none; }
+  .stagebox .hud.vs .mob .mob-hp { flex: none; }
+  .hud.vs .hero-plate, .hud.vs .mob { min-height: 58px; }
+}
