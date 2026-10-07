@@ -10123,6 +10123,98 @@ if (section('boss tiers first hour')) try {
   assert(hpOf(5) > hpOf(4) * 1.5 && hpOf(5) > hpOf(6) * 0.9 && hpOf(10) > hpOf(9) && hpOf(10) > hpOf(11), 'boss tiers: the zone 5 and 10 Champions are the peaks of their areas');
 } catch (e) { fail('boss tiers first hour crashed: ' + (e.stack || e)); }
 
+// ---- boss tiers, pr5 (card boss-tiers-pr5, judge 2026-10-07 points 4-9, 16): the footing floor, the passive floor, three rally gates, a z15 Champion ----
+if (section('boss tiers pr5')) try {
+  const g = loadCore({ seed: 5, turns: true }), E = s => g.eval(s), J = JSON.stringify;
+  const heroes = JSON.parse(E('JSON.stringify(Object.keys(SOLO_HEROES))'));
+  // the first-hour set: the zone's tier at common +0, base lines only, in every slot the hero's class has (Charm too)
+  const wear = (k, z, bare) => E(`(() => { soloPick(${J(k)}, { now: true }); const t = zoneTier(${z});
+    for (const pos of ['weapon', 'off', 'helm', 'body', 'charm']) { S.equip[pos] = null; if (${!!bare}) continue;
+      const row = CRAFT_FITS[pos] || {}, kind = (row[S.party.cls] || row.any || [])[0]; if (!kind) continue;
+      const it = newItem(kind, t, 'common'); it.a = []; it.plus = 0; S.items.push(it); S.equip[pos] = it.id; }
+    S.maxZone = ${z}; setZone(${z}); S.activity = 'fight'; arena = null; fightBoss = true; gearDirty(); spawn(); return turnCombatProfile().heroMaxHp; })()`);
+  const bad = [], bareBad = [];
+  for (const k of heroes) for (let z = 4; z <= 15; z++) {
+    const hp = wear(k, z, false), ratio = E(`turnFootHp(${z}, ${hp})`) / hp;
+    if (!(Math.abs(ratio - 1) < 0.005)) bad.push(`${k} z${z} ${ratio.toFixed(4)}`);
+    const hb = wear(k, z, true), rb = E(`turnFootHp(${z}, ${hb})`) / hb;   // nothing worn: the footing is above the hero, so the floor (r x HP / footing) stays under the base hit
+    if (!(rb >= 1 - 1e-9) || E(`turnZoneLine(TURN_TUNE.boss.footFloor, ${z})`) / rb > 1) bareBad.push(`${k} z${z} ${rb.toFixed(3)}`);
+  }
+  assert(!bad.length, `boss footing: on the first-hour set the footing HP is the hero's HP (within 0.5%) for every hero at zones 4-15${bad.length ? ': ' + bad.slice(0, 4).join(', ') : ''}`);
+  assert(!bareBad.length, `boss footing: the floor never binds a bare hero${bareBad.length ? ': ' + bareBad.slice(0, 4).join(', ') : ''}`);
+  // it matches a real swap (equip the first-hour set, read max HP, put the old gear back) on a hero in rare +5 with affixes, and leaves S alone
+  const swap = [];
+  for (const k of heroes) for (const z of [5, 10, 15]) {
+    const r = JSON.parse(E(`(() => { soloPick(${J(k)}, { now: true }); const t = zoneTier(${z}); let sd = 3; const rnd = () => (sd = sd * 16807 % 2147483647) / 2147483647;
+      for (const pos of ['weapon', 'off', 'helm', 'body', 'charm']) { const row = CRAFT_FITS[pos] || {}, kind = (row[S.party.cls] || row.any || [])[0]; if (!kind) continue;
+        const it = newItem(kind, t, 'rare', { rnd }); it.plus = 5; S.items.push(it); S.equip[pos] = it.id; }
+      S.maxZone = ${z}; setZone(${z}); S.activity = 'fight'; arena = null; fightBoss = true; gearDirty(); spawn();
+      const hp = turnCombatProfile().heroMaxHp, before = JSON.stringify(S), gs = gear(), foot = turnFootHp(${z}, hp), same = JSON.stringify(S) === before && gear() === gs;
+      const keep = Object.assign({}, S.equip), at = S.items.length;
+      for (const pos of ['weapon', 'off', 'helm', 'body', 'charm']) { const row = CRAFT_FITS[pos] || {}, kind = (row[S.party.cls] || row.any || [])[0]; if (!kind) continue;
+        const it = newItem(kind, t, 'common'); it.a = []; it.plus = 0; S.items.push(it); S.equip[pos] = it.id; }
+      gearDirty(); spawn(); const real = turnCombatProfile().heroMaxHp; Object.assign(S.equip, keep); gearDirty();
+      return JSON.stringify({ foot, real, hp, same }); })()`));
+    if (!(Math.abs(r.foot / r.real - 1) < 0.005) || !r.same || !(r.hp > 1.2 * r.real)) swap.push(`${k} z${z} ${J(r)}`);
+  }
+  assert(!swap.length, `boss footing: turnFootHp matches a real swap to the first-hour set within 0.5%, a kept-up hero is above it, and it leaves S and the gear cache alone${swap.length ? ': ' + swap.slice(0, 3).join(' | ') : ''}`);
+  // zones and frontier: zones 4-15 zone bosses not beaten yet; a beaten boss, zones 3 and 16, normal foes and region bosses have none
+  const prof = (z, maxZone, boss = true) => JSON.parse(E(`(() => { soloPick('wren', { now: true }); S.maxZone = ${maxZone}; setZone(${z}); S.activity = 'fight'; arena = null; fightBoss = ${boss}; gearDirty(); spawn(); const p = turnCombatProfile();
+    return JSON.stringify({ foot: p.footHp, r: p.bossFoot, hp: p.heroMaxHp, hitX: p.hitX, gates: p.gates, boss: p.boss, region: p.region }); })()`));
+  assert(prof(10, 10).foot > 0 && prof(10, 10).r > 0 && prof(4, 4).foot > 0 && prof(15, 15).foot > 0 && prof(12, 12).foot > 0, 'boss footing: a zone boss at the frontier (zones 4-15) has a footing');
+  assert(prof(10, 11).foot === 0 && prof(10, 20).foot === 0, 'boss footing: a boss the hero has beaten (its zone is behind S.maxZone) has none');
+  assert(prof(3, 3).foot === 0 && prof(3, 3).r === 0 && prof(16, 16).foot === 0 && prof(24, 24).foot === 0 && prof(35, 35).foot === 0, 'boss footing: none at zone 3, from zone 16, or on a region boss');
+  assert(prof(10, 10, false).foot === 0, 'boss footing: none on a normal foe');
+  // the floor in turnLand: a hit costs at least base x r x maxHp / footing; off ([[1, 0]]) the profile has none and the hit is the pr4 hit
+  const dealt = (z, over, off, iso) => JSON.parse(E(`(() => { soloPick('wren', { now: true }); const t = zoneTier(${z}); let sd = 3; const rnd = () => (sd = sd * 16807 % 2147483647) / 2147483647;
+    for (const pos of ['weapon', 'off', 'helm', 'body', 'charm']) { const row = CRAFT_FITS[pos] || {}, kind = (row[S.party.cls] || row.any || [])[0]; if (!kind) continue;
+      const it = newItem(kind, t, ${J(over ? 'rare' : 'common')}, { rnd }); it.plus = ${over ? 5 : 0}; if (!${!!over}) it.a = []; S.items.push(it); S.equip[pos] = it.id; }
+    const f0 = TURN_TUNE.boss.footFloor.map(a => a.slice()), pm = TURN_TUNE.boss.passiveMin, hf0 = TURN_TUNE.boss.hpFloor, hc0 = TURN_TUNE.boss.hitCap;
+    if (${!!iso}) { TURN_TUNE.boss.hpFloor = [[1, 0]]; TURN_TUNE.boss.hitCap = [[1, 0]]; }   // the pr4 knots and the cap off, so the footing floor is the only floor
+    if (${!!off}) { TURN_TUNE.boss.footFloor = [[1, 0]]; TURN_TUNE.boss.passiveMin = 0; }
+    S.maxZone = ${z}; setZone(${z}); S.activity = 'fight'; arena = null; fightBoss = true; gearDirty(); spawn();
+    const p = turnCombatProfile(); p.blockP = 0; p.blockC = 0; const out = [];
+    for (const mv of p.script) for (const hit of mv.hits) { let d = 0;
+      const io = { random: () => 0.5, emit() {}, alive: () => ({ hero: true, foe: true }), foeHp: () => 1e9, heroHp: () => 1e9, slotId: () => null, damageFoe: x => x, damageHero: x => { d += x; return x; }, healHero() {}, healFoe() {}, defense() {} };
+      const m = turnNew(p, io); m.move = mv; turnLand(m, io, hit);
+      const cx = mv.charge ? p.bossChargeX || 1 : 1, amt0 = (hit.x || 0.2) * p.refHp * (p.bossHitX || 1) * cx;
+      let ref = amt0; if (p.bossHitFloor > 0) ref = Math.max(ref, p.bossHitFloor * (hit.x || 0.2) * cx * p.heroMaxHp); if (p.bossHitCap > 0) ref = Math.min(ref, p.bossHitCap * p.heroMaxHp);
+      out.push({ d, ref: ref * p.hitX, floor: p.footHp > 0 ? amt0 * p.bossFoot * p.heroMaxHp / p.footHp : 0, amt0 }); }
+    TURN_TUNE.boss.footFloor = f0; TURN_TUNE.boss.passiveMin = pm; TURN_TUNE.boss.hpFloor = hf0; TURN_TUNE.boss.hitCap = hc0; return JSON.stringify({ out, foot: p.footHp, hp: p.heroMaxHp, hitX: p.hitX }); })()`));
+  const kept = dealt(10, true, false, true), first = dealt(10, false, false, true), off = dealt(10, true, true, false), keptAll = dealt(10, true, false, false);
+  assert(kept.foot > 0 && kept.hp > 2 * kept.foot && kept.out.every(o => o.d >= o.floor * kept.hitX - 1e-6 && Math.abs(o.d - Math.max(o.ref, o.floor * kept.hitX)) < 1e-6 * o.d) && kept.out.some(o => o.d > o.ref + 1e-6),
+    'boss floor: a kept-up hero at the frontier takes at least base x r x maxHp / footing from every hit (the pr4 hit would have been less)');
+  assert(keptAll.out.every(o => o.d >= Math.min(o.floor, keptAll.hp * 0.4) * keptAll.hitX - 1e-6), 'boss floor: with the pr4 knots and the cap on, the footing is still a floor (under the cap)');
+  assert(first.out.every(o => Math.abs(o.d - o.ref) < 1e-6 * Math.max(1, o.ref)), 'boss floor: a hero on the first-hour set takes the same hit with the floor on as without it (it never binds)');
+  assert(off.foot === 0 && off.out.every(o => Math.abs(o.d - o.ref) < 1e-6 * Math.max(1, o.ref)), 'boss floor: footFloor [[1, 0]] and passiveMin 0 give back the pr4 damage exactly');
+  // the passive floor: armour x class reduction cannot cut a zone boss's hit (zones 4-15) below passiveMin
+  { const tobin = JSON.parse(E(`(() => { soloPick('tobin', { now: true }); S.maxZone = 10; setZone(10); S.activity = 'fight'; arena = null; fightBoss = true; gearDirty(); spawn(); const a = turnCombatProfile().hitX;
+      TURN_TUNE.boss.passiveMin = 0; spawn(); const b = turnCombatProfile().hitX; TURN_TUNE.boss.passiveMin = 0.55; fightBoss = false; spawn(); const c = turnCombatProfile().hitX; return JSON.stringify([a, b, c]); })()`));
+    assert(Math.abs(tobin[0] - 0.55) < 1e-9 && tobin[1] < 0.55 && tobin[2] < 0.55 && prof(10, 10).hitX >= 0.55, `boss passive floor: Tobin's armour and class reduction (${tobin[1].toFixed(2)}) read 0.55 against a zone 4-15 boss, and stay as they were on a normal foe and with the floor off (${tobin.map(x => x.toFixed(3)).join(', ')})`);
+    assert(JSON.parse(E(`(() => { soloPick('tobin', { now: true }); S.maxZone = 16; setZone(16); S.activity = 'fight'; arena = null; fightBoss = true; gearDirty(); spawn(); return JSON.stringify(turnCombatProfile().hitX < 0.55); })()`)), 'boss passive floor: not from zone 16'); }
+  // rally gates: zones 4-6 Captains 67/33, zones 7-14 Captains 75/50/25, Champions 75/50/25 (zone 15 too), none from zone 16
+  const gates = (z) => prof(z, z).gates;
+  assert(J(gates(4)) === '[0.67,0.33]' && J(gates(6)) === '[0.67,0.33]' && J(gates(7)) === '[0.75,0.5,0.25]' && J(gates(12)) === '[0.75,0.5,0.25]' && J(gates(14)) === '[0.75,0.5,0.25]'
+    && J(gates(5)) === '[0.75,0.5,0.25]' && J(gates(10)) === '[0.75,0.5,0.25]' && J(gates(15)) === '[0.75,0.5,0.25]' && gates(16) === null && gates(3) === null,
+    `boss gates: Captains rally at 67/33 to zone 6 and 75/50/25 from zone 7, Champions (5, 10, 15) at 75/50/25, none outside zones 4-15 (${[4, 5, 6, 7, 10, 15, 16].map(z => J(gates(z))).join(' ')})`);
+  // zone 15 is a real Champion: its own hit multiple on the Captain line; zones 14 and 16 do not feel it
+  assert(E('turnZoneLine(TURN_TUNE.boss.champHitX, 15)') > 1 && E('turnZoneLine(TURN_TUNE.boss.champHitX, 14)') === 1 && E('turnZoneLine(TURN_TUNE.boss.champHitX, 16)') === 1 && E('bossTierOf(15)') === 'champion',
+    'boss tiers: zone 15 is a Champion with its own hit multiple, and zones 14 and 16 are untouched');
+  // a hero who hits for a third of the boss a turn still meets every gate: three rallies on a Captain from zone 7, two before it, three on the zone 15
+  // Champion, and the boss still falls (nothing skips a rally); the rally line says only a Stun breaks the charge
+  const rallies = z => JSON.parse(E(`(() => { soloPick('wren', { now: true }); S.maxZone = ${z}; setZone(${z}); S.activity = 'fight'; arena = null; fightBoss = true; gearDirty(); spawn();
+    const p = turnCombatProfile(); p.A = p.foeMaxHp * 0.33; p.U = p.A; p.heroMaxHp = 1e15; p.hitX = 1e-9; p.fullHp = true;
+    let hp = 1e15, foe = p.foeMaxHp, rl = 0, moves = 0;
+    const io = { random: () => 0.5, emit: n => { if (n === 'foeRally') rl++; if (n === 'foeMove') moves++; }, alive: () => ({ hero: true, foe: foe > 0 }), foeHp: () => Math.max(0, foe), heroHp: () => hp, slotId: i => p.eq[i] || null,
+      damageFoe: d => { foe -= d; return d; }, damageHero: d => d, healHero() {}, healFoe() {}, defense() {} };
+    const m = turnNew(p, io); for (let t = 0; t < 600 && !m.ended; t += 0.05) { if (m.phase === 'hero') turnResolve(m, turnChoose(m), 0, io); turnResolve(m, { kind: 'tick' }, 0.05, io); }
+    return JSON.stringify({ rl, won: foe <= 0, ended: !!m.ended, moves }); })()`));
+  const r6 = rallies(6), r8 = rallies(8), r15 = rallies(15), r9 = rallies(9);
+  assert(r6.rl === 2 && r8.rl === 3 && r9.rl === 3 && r15.rl === 3 && [r6, r8, r9, r15].every(r => r.won), `boss gates: a hero who hits for a third of the boss a turn meets two rallies at a zone 6 Captain and three at zones 8, 9 and 15, and still wins (${[r6, r8, r9, r15].map(r => r.rl + (r.won ? 'w' : 'L')).join(' ')})`);
+  assert(/Only a Stun breaks its charge/.test(fs.readFileSync(path.join(ROOT, 'src', 'js', '75-turn-ui.js'), 'utf8')), 'boss gates: the rally line says only a Stun breaks the charge');
+  assert(!g.errors.length, 'boss tiers pr5: no core errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
+} catch (e) { fail('boss tiers pr5 crashed: ' + (e.stack || e)); }
+
 // ==== counters-and-layers: Essence is one pile (any grade pays any Essence cost, lowest grade first) ====
 if (section('essence fungible')) try {
   const g = loadCore({ seed: 41 }), E = x => g.eval(x);

@@ -55,7 +55,9 @@ if (!(FIGHTS >= 5) || !Number.isInteger(OFFSET) || RUN_HEROES.some(h => !HEROES.
 const J = JSON.stringify;
 
 // Players (as sim.mjs --report turns). wide: a weaker and a stronger casual (report only).
-export const PLAYERS = { casual: { parry: 0.25, dodge: 0.5, perfect: 0.1, good: 0.4 }, good: { parry: 0.6, dodge: 0.9, perfect: 0.4, good: 0.45 } };
+// none (boss-tiers-pr5): never parries or dodges, rings as casual; run on the kept-up rows only ("gear buys room to miss, not immunity")
+export const PLAYERS = { casual: { parry: 0.25, dodge: 0.5, perfect: 0.1, good: 0.4 }, good: { parry: 0.6, dodge: 0.9, perfect: 0.4, good: 0.45 }, none: { parry: 0, dodge: 0, perfect: 0.1, good: 0.4 } };
+const NONE_KINDS = ['keptUpEarly', 'keptUpCaptain', 'keptUpChampion', 'keptUpReport'];
 // bot: the walk bot's defence (tools/walk.mjs PARRY 0.55, DODGE 0.5), as casual on the rings
 const WIDE = { casualLow: { parry: 0.15, dodge: 0.4, perfect: 0.1, good: 0.4 }, casualHigh: { parry: 0.35, dodge: 0.7, perfect: 0.1, good: 0.4 }, bot: { parry: 0.55, dodge: 0.5, perfect: 0.1, good: 0.4 } };
 const RUN_PLAYERS = opt('players') === 'wide' ? { ...PLAYERS, ...WIDE } : PLAYERS;
@@ -100,10 +102,15 @@ export const CHECKPOINTS = [
   ['z10-boss', 10, 'boss', { st: 'kept', fx: 'early', gear: 'common' }],
   ['z11-boss', 11, 'boss', { st: 'kept', fx: 'early', gear: 'common' }],
   ['z12-boss', 12, 'boss', { st: 'kept', fx: 'early', gear: 'common' }],
-  ['z5-boss-keptup', 5, 'boss', { st: 'kept', fx: 'early', kind: 'keptUp', ref: 'z5-boss' }],
-  ['z8-boss-keptup', 8, 'boss', { st: 'kept', fx: 'early', kind: 'keptUp', ref: 'z8-boss' }],
-  ['z10-boss-keptup', 10, 'boss', { st: 'kept', fx: 'early', kind: 'keptUp', ref: 'z10-boss' }],
-  ['z12-boss-keptup', 12, 'boss', { st: 'kept', fx: 'mid', kind: 'keptUp', ref: 'z12-boss' }],
+  // kept-up rows (boss-tiers-pr5, judge 2026-10-07 point 8): the zone's tier at rare +5 on the same save as the first-hour row, gated, with the
+  // never-defends player held under 10%. z12 moved to the early save (the mid save's effect is the report row z12-boss-midsave).
+  ['z5-boss-keptup', 5, 'boss', { st: 'kept', fx: 'early', kind: 'keptUpChampion', ref: 'z5-boss' }],
+  ['z8-boss-keptup', 8, 'boss', { st: 'kept', fx: 'early', kind: 'keptUpEarly', ref: 'z8-boss' }],
+  ['z10-boss-keptup', 10, 'boss', { st: 'kept', fx: 'early', kind: 'keptUpChampion', ref: 'z10-boss' }],
+  ['z12-boss-keptup', 12, 'boss', { st: 'kept', fx: 'early', kind: 'keptUpCaptain', ref: 'z12-boss' }],
+  // report rows (no cliff between common and rare; what progression outside gear is worth)
+  ['z10-boss-uncommon2', 10, 'boss', { st: 'kept', fx: 'early', gear: 'uncommon2', kind: 'reportGear', ref: 'z10-boss' }],
+  ['z12-boss-midsave', 12, 'boss', { st: 'kept', fx: 'mid', gear: 'common', kind: 'reportGear', ref: 'z12-boss' }],
   // floors (report only): nothing worn at all; skill must carry (a bare hero is a bot or a player who skipped the Forge)
   ['z5-boss-bare', 5, 'boss', { st: 'kept', fx: 'early', gear: 'none', kind: 'floor5' }],
   ['z10-boss-bare', 10, 'boss', { st: 'kept', fx: 'early', gear: 'none', kind: 'floor' }],
@@ -113,9 +120,9 @@ export const CHECKPOINTS = [
   ['z14-boss', 14, 'boss', { st: 'kept', fx: 'mid', gear: 'common' }],
   ['z15-elite', 15, 'elite', { st: 'kept', fx: 'mid' }],
   ['z15-boss', 15, 'boss', { st: 'kept', fx: 'mid', gear: 'common' }],
-  ['z13-boss-keptup', 13, 'boss', { st: 'kept', fx: 'mid', kind: 'keptUp', ref: 'z13-boss' }],
-  ['z14-boss-keptup', 14, 'boss', { st: 'kept', fx: 'mid', kind: 'keptUp', ref: 'z14-boss' }],
-  ['z15-boss-keptup', 15, 'boss', { st: 'kept', fx: 'mid', kind: 'keptUp', ref: 'z15-boss' }],
+  ['z13-boss-keptup', 13, 'boss', { st: 'kept', fx: 'mid', kind: 'keptUpCaptain', ref: 'z13-boss' }],
+  ['z14-boss-keptup', 14, 'boss', { st: 'kept', fx: 'mid', kind: 'keptUpReport', ref: 'z14-boss' }],
+  ['z15-boss-keptup', 15, 'boss', { st: 'kept', fx: 'mid', kind: 'keptUpChampion', ref: 'z15-boss' }],
   ['z16-boss', 16, 'boss', { st: 'kept', fx: 'mid' }],
   ['z17-boss', 17, 'boss', { st: 'kept', fx: 'mid' }],
   ['z18-boss', 18, 'boss', { st: 'kept', fx: 'mid' }],
@@ -151,9 +158,9 @@ export const CHECKPOINTS = [
 ];
 const setFor = (z, k) => SETS[[38, 30, 20, 10, 1].find(s => z >= s)][k];
 // a boss's kind (its band): a region boss is an Elder, zones 1-3 the first bosses, zone 5 the first Champion, zone 10 the Champion,
-// the other zones to 9 the learning Captains, then Captains. The game's own tier (bossTierOf) calls zones 15, 20, 25 and 30
-// Champions too, but their bands stay the Captain band until a pass measures them as Champions.
-const KIND_FOR = z => `(isRegionBoss(${z}) ? 'elder' : ${z} <= 3 ? 'firstBoss' : ${z} === 5 ? 'firstChampion' : ${z} === 10 ? 'champion' : ${z} <= 9 ? 'earlyCaptain' : 'captain')`;
+// the other zones to 9 the learning Captains, then Captains. Zone 15 is a Champion too (boss-tiers-pr5, M1 E2: three Champions, z15 at 40-60%).
+// The game's own tier (bossTierOf) calls zones 20, 25 and 30 Champions too, but their bands stay the Captain band until a pass measures them as Champions.
+const KIND_FOR = z => `(isRegionBoss(${z}) ? 'elder' : ${z} <= 3 ? 'firstBoss' : ${z} === 5 ? 'firstChampion' : ${z} === 10 || ${z} === 15 ? 'champion' : ${z} <= 9 ? 'earlyCaptain' : 'captain')`;
 
 // the setup code for hero k at checkpoint c (run inside a fresh core after the fixture loads)
 function setup(c, k, lvShift) {
@@ -166,14 +173,15 @@ function setup(c, k, lvShift) {
       const own = { weapon: 0, off: 1, helm: 2, body: 3 }[sl]; if (own != null) { it.slot = ${J(KINDS[k])}[own]; delete it.rt; } if (it.a) it.a = it.a.filter(l => l[0] === 'hp'); } }`;
   else if (o.st === 'kept' && o.gear === 'none') s += `for (const sl of ['weapon', 'off', 'helm', 'body', 'charm']) S.equip[sl] = null;`;
   else if (o.st === 'kept') s += `(() => { let sd = 7919; const rnd = () => (sd = sd * 16807 % 2147483647) / 2147483647, t = zoneTier(${z});
-      ${J(KINDS[k])}.concat(['charm']).forEach((kind, i) => { const it = newItem(kind, t, ${J(o.gear === 'common' ? 'common' : 'rare')}, { rnd }); it.plus = ${o.gear === 'common' ? 0 : 5}; if (it.a) it.a = it.a.filter(l => l[0] === 'hp');
+      ${J(KINDS[k])}.concat(['charm']).forEach((kind, i) => { const it = newItem(kind, t, ${J(o.gear === 'common' ? 'common' : o.gear === 'uncommon2' ? 'uncommon' : 'rare')}, { rnd }); it.plus = ${o.gear === 'common' ? 0 : o.gear === 'uncommon2' ? 2 : 5}; if (it.a) it.a = it.a.filter(l => l[0] === 'hp');
         S.items.push(it); S.equip[['weapon', 'off', 'helm', 'body', 'charm'][i]] = it.id; }); })();`;
   if (o.tier) s += `for (const sl of Object.keys(S.equip)) { const it = itemById(S.equip[sl]); if (it && !['pick', 'axe', 'sickle', 'spear'].includes(it.slot)) it.t = Math.max(1, Math.min(5, it.t + (${o.tier}))); }`;
   // hero-progression-rework: attribute points spread evenly (the plain build), or all in one (a build row); no-op before
   // attributes exist
   s += o.build ? `if (typeof attrAdd === 'function' && attrOn()) { S.attr.pts[${J(k)}] = ATTR0(); attrAdd(${J(o.build)}, 1e9, ${J(k)}); }`
     : `if (typeof attrSpread === 'function' && attrOn()) attrSpread(${J(k)});`;
-  s += `gearDirty(); S.maxZone = Math.max(S.maxZone, ${z}); setZone(${z});`;
+  // a boss row meets its boss for the first time: the zone is the frontier (S.maxZone = z), which is what the footing floor (59k) keys on
+  s += `gearDirty(); S.maxZone = ${c[2] === 'boss' ? z : `Math.max(S.maxZone, ${z})`}; setZone(${z});`;
   return s;
 }
 // the typical Stars at the checkpoint's zone z (sim.mjs STARS_TYPICAL, which reads S.maxZone; sim.mjs runs a simulation
@@ -223,6 +231,7 @@ function measure(c, k, lvShift = LV_SHIFT, players = RUN_PLAYERS) {
   if (foe === 'elite' && !p0.elite) throw new Error(`${id} ${k}: no elite to fight`);
   const chain = foe === 'boss' ? 1 : 5, n = Math.ceil(FIGHTS / chain);
   for (const [pl, skill] of Object.entries(players)) {
+    if (pl === 'none' && !NONE_KINDS.includes(o.kind)) continue;
     const seeds = Array.from({ length: n }, (_, i) => seedOf(OFFSET, id, k, pl, i));
     const r = e(`(() => { const p = turnCombatProfile(); p.eq = ${J(o.st === 'joined' ? [SIG[k]] : setFor(z, k))}; p.cds = { attack: 1 }; for (const id of p.eq) p.cds[id] = turnCdFor(id);
       let K = 0, D = 0, T = 0, F = 0, C = 0;
@@ -267,6 +276,7 @@ export function printBudget(rep) {
       + hs.map(h => r.perHero[h].casual.attempts).join('/').padEnd(16) + hs.map(h => r.perHero[h].good.turns ?? '-').join('/').padEnd(17) + String(r.perHero[hs[0]].L).padStart(5) + '  ' + (out || 'in band'));
     const ref = r.kind === 'build' && rep.rows.find(x => x.id === r.ref);   // a build row: its turns against the even spread
     if (ref) console.log('  turns played well against the even spread (w/t/p): ' + hs.map(h => r.perHero[h].good.turns && ref.perHero[h].good.turns ? 'x' + (r.perHero[h].good.turns / ref.perHero[h].good.turns).toFixed(2) : '-').join('/'));
+    if (r.perHero[hs[0]].none) console.log('  ' + 'none (never defends) w/t/p'.padEnd(28) + hs.map(h => pc(r.perHero[h].none.win)).join('/'));
     for (const pl of Object.keys(WIDE)) if (r.perHero[hs[0]][pl]) console.log('  ' + pl.padEnd(28) + hs.map(h => pc(r.perHero[h][pl].win)).join('/'));
     // closest to death: the share of won boss fights where the hero fell under half health (a good player; aim 20-35% at Champions)
     if (r.foe === 'boss' && r.perHero[hs[0]].good.close != null) console.log('  ' + 'good wins under half HP %'.padEnd(28) + hs.map(h => pc(r.perHero[h].good.close)).join('/'));
@@ -274,7 +284,7 @@ export function printBudget(rep) {
   const tob = rep.rows.filter(r => r.foe === 'boss' && r.perHero.tobin && r.perHero.wren && r.perHero.pip && r.perHero.tobin.good.turns);
   if (tob.length) console.log(`\nTobin's boss turns against the Wren and Pip mean (played well; aim 1.15-1.30): ` + tob.map(r => `${r.id} x${(2 * r.perHero.tobin.good.turns / (r.perHero.wren.good.turns + r.perHero.pip.good.turns)).toFixed(2)}`).join(', '));
 }
-const GATED = ['casual', 'good'];
+const GATED = ['casual', 'good', 'none'];
 
 if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(new URL(import.meta.url).pathname)) {
   const t0 = Date.now(), only = opt('only') ? opt('only').split(',') : null;

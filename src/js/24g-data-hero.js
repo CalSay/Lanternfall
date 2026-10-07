@@ -50,7 +50,7 @@ const ATTRS = [
   { id: 'might', name: 'Might', kind: 'atk', base: 0.01, per: 0.03, line: 'Attack hits harder.' },
   { id: 'focus', name: 'Focus', kind: 'ab', base: 0.03, per: 0.01, line: 'Abilities hit harder.' },
   { id: 'guard', name: 'Guard', kind: 'counter', base: 0.01, per: 0.03, parryMs: 1, line: 'Counters hit harder, and the parry window is wider.' },
-  { id: 'vigour', name: 'Vigour', kind: 'hp', base: 0.025, per: 0.015, line: 'More health.' }
+  { id: 'vigour', name: 'Vigour', kind: 'hp', base: 0.025, per: 0.015, line: 'More health. Bosses you have not beaten hit for a share of it.' }
 ];
 const ATTR_IDS = ATTRS.map(a => a.id);
 const ATTR0 = () => { const o = {}; for (const id of ATTR_IDS) o[id] = 0; return o; };
