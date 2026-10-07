@@ -156,7 +156,7 @@
       sendBtn.addEventListener('click', () => {
         const site = siteSend();
         if (!site || sending) return;
-        if (!(feedbackState.note || '').trim()) { sendMsg.hidden = false; sendMsg.textContent = 'Write a note first.'; return; }
+        if (!(feedbackState.note || '').trim()) { sendMsg.hidden = false; sendMsg.textContent = 'Write a note first.'; try { sendMsg.scrollIntoView({ block: 'center' }); } catch (e) {} return; }
         sending = true; sendBtn.disabled = true; sendMsg.hidden = false; sendMsg.textContent = 'Sending...';
         let p;
         try { p = Promise.resolve(site.send(teamFields(feedbackState.note))); } catch (e) { p = Promise.resolve(false); }
@@ -164,6 +164,7 @@
           sending = false; sendBtn.disabled = false;
           sendMsg.textContent = ok ? 'Sent. Thank you.' : "Couldn't send. Copy it instead?";
           if (ok) { feedbackState.note = ''; noteArea.value = ''; }
+          try { sendMsg.scrollIntoView({ block: 'center' }); } catch (e) {}   // short landscape sheet: keep the answer on screen
         });
       });
 
