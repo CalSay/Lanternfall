@@ -901,3 +901,5 @@ Card `scenery-z6-10-judge`, from the `slice-art-manifest` open point. Record and
   1-70 changes before then. Measured by the `slice-art-manifest` check (E4, to be built) and a zones 1-70 theme assertion that
   `scenery-follows-areas` adds. Coverage area 15,
   Compass pillar 4.
+
+- **Tobin survives best: deferred to the balance pass.** After #176, a casual Tobin wins zone bosses about as often as Wren and Pip (+1.7 points over their mean, behind both at 4 bosses). Whether he should survive best is decided in the single balance pass after the skilling and crafting overhaul (held card `tobin-margin-retune`). No numbers change now. (2026-10-07)
