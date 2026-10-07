@@ -652,7 +652,7 @@ decided; Cal can veto any line.
   pose its moves need. Champions stay their own creatures. Only Codex draws kin, Captains, Champions and background versions,
   inside whole vetted packs, and Claude only wires them. No agent recolours or tints art in code; the Deepwell cold palette stays
   the only runtime recolour. This narrows "Each zone has its own monster" (2026-10-01) to "its own named foe, not a new species".
-  "Poses follow the moves" and the art freeze are unchanged. The Hollow costs 17 packs; 1.0 is estimated at about 100 packs
+  "Poses follow the moves" and the art freeze are unchanged. This also relaxes "one pack per monster" in `art-backlog.md`: a pack may be an area sheet. `CLAUDE.md` is unchanged. The Hollow costs 17 packs; 1.0 is estimated at about 110 packs
   instead of 215 species (an estimate, not a commitment).
 - **Bare heroes lose to bosses (Cal's 2026-10-07 direction, made a gate).** Judge numbers at Champions 10 and 15: bare casual 5 to
   25%, good play at most 70%; gear opens a gap of at least 40 points, first crafts at least 25. Zone 5 bare casual 20 to 50%.
@@ -660,5 +660,5 @@ decided; Cal can veto any line.
 - **A slice passes only with zero open budget gaps** at or below its last zone; renewing a dated gap does not pass.
 - **Heroes without a kit are not offered in a slice** (Bram, from zone 10, today). Saves keep anyone already joined.
 - **Cards:** deepwell-turns, provings-turns (already built), budget-extras (folded into pr2), bossodds-chunk-seeds (#93),
-  hero-training-policy and moments-feel-spec closed; ui-gather-ledger, ap-collection-counts, menu-polish, bag-slot-and-steady-charges,
+  hero-training-policy (Training was removed) and moments-feel-spec (moment-layer replaced it) closed; ui-gather-ledger, ap-collection-counts, menu-polish, bag-slot-and-steady-charges,
   omen-dares-and-contracts, story-choices, story-scripts-2-5, story-stills and the two hero-voice proposals are OUT of M1.

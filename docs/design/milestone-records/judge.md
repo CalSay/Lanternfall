@@ -20,6 +20,6 @@ Scores, draft then after: Compass fit 4 then 4, Clarity 3 then 4, Measurability 
 | R11 DECISIONS lines and kit-less joiners | Accept | DECISIONS entry; E5 rule that heroes without kits are not offered |
 
 Bare-hero numbers are judge numbers; the boss-tiers-pr2 judge may tune them with a DECISIONS line.
-Cal's veto list (digest): the split; kin bodies drawn by Codex (Hollow 17 packs, 1.0 about 100 packs instead of 215
+Cal's veto list (digest): the split; kin bodies drawn by Codex (Hollow 17 packs, 1.0 about 110 packs instead of 215
 species); bare-hero bands; kit-less heroes not offered (Bram today); six cards closed and the OUT tags; one ask, not a
 gate: fix the Codex environment (zones 11 to 15 art moves to M1b if it is still paused on 2026-10-21).
