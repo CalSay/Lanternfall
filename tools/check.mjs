@@ -7823,16 +7823,15 @@ if (section('turn UI (browser)')) try {
           await page.click(learn); await page.waitForTimeout(250);
           out.learned = await X(`abilityOwned('wren', 'powershot') && soloEquipped().includes('powershot') && scrollCount('moss') === 0 && !!document.querySelector('#sec-abilities .ab-row[data-ab="powershot"].owned')
             && document.querySelectorAll('#sec-abilities .ab-det[data-ab="powershot"] .ab-slotb').length === 3 && !!document.querySelector('#sec-abilities .ab-det .ab-slotb.on')`);
-          // the A / B talent choice: take A, switch to B (no more points), give it back
-          const tal = c => `#sec-abilities .ab-det[data-ab="powershot"] .ab-talb[data-c="${c}"]`, pts = `talentPoints('wren').free`;
-          const free0 = await X(pts);
+          // the A / B talent choice: take A, switch to B, tap B again (it stays; talents are free)
+          const tal = c => `#sec-abilities .ab-det[data-ab="powershot"] .ab-talb[data-c="${c}"]`;
           await page.click(tal('a')); await page.waitForTimeout(150);
-          out.talA = await X(`talentsOf('wren').powershot === 'a' && ${pts} === ${free0} - TALENT_TUNE.cost && document.querySelector('${tal('a')}').getAttribute('aria-pressed') === 'true'
+          out.talA = await X(`talentsOf('wren').powershot === 'a' && document.querySelector('${tal('a')}').getAttribute('aria-pressed') === 'true'
             && JSON.parse(localStorage.getItem('lanternfall.save.v5')).abil.tal.wren.powershot === 'a' && /Talent A/.test(document.querySelector('#sec-abilities .ab-row[data-ab="powershot"]').textContent)`);
           await page.click(tal('b')); await page.waitForTimeout(150);
-          out.talB = await X(`talentsOf('wren').powershot === 'b' && ${pts} === ${free0} - TALENT_TUNE.cost && document.querySelector('${tal('a')}').getAttribute('aria-pressed') === 'false' && document.querySelector('${tal('b')}').classList.contains('on')`);
+          out.talB = await X(`talentsOf('wren').powershot === 'b' && document.querySelector('${tal('a')}').getAttribute('aria-pressed') === 'false' && document.querySelector('${tal('b')}').classList.contains('on')`);
           await page.click(tal('b')); await page.waitForTimeout(150);
-          out.talOff = await X(`!talentsOf('wren').powershot && ${pts} === ${free0}`);
+          out.talOff = await X(`talentsOf('wren').powershot === 'b' && document.querySelector('${tal('b')}').classList.contains('on')`);
           // Attack, Parry and Dodge: their own rows, and their talents in the detail
           await page.click('#sec-abilities .ab-det .ab-x'); await page.waitForTimeout(150);
           out.closed = await X(`!document.querySelector('#sec-abilities .ab-det')`);
@@ -7875,7 +7874,7 @@ if (section('turn UI (browser)')) try {
       assert(on.det && on.det.ab === 'powershot' && on.det.vis && /180% power/.test(on.det.desc) && /Perfect: a sure crit/.test(on.det.perfect) && /Hits for about/.test(on.det.nums) && on.det.tal === 2,
         `turn UI: a tap on a row opens its detail: the full text, its numbers, the Perfect text, and its two talents (shut until learned) (${JSON.stringify(on.det)})`);
       assert(/Tap again/.test(on.armed) && on.armedSafe && on.learned, `turn UI: Learn takes two taps, spends the Scroll, and puts the ability in a free slot; the detail then offers Q, W and E (${JSON.stringify(on.armed)}, ${on.armedSafe}, ${on.learned})`);
-      assert(on.talA && on.talB && on.talOff, `turn UI: the detail's A / B talents: A takes 2 points and saves, B swaps for no more, a second tap gives it back (${on.talA}, ${on.talB}, ${on.talOff})`);
+      assert(on.talA && on.talB && on.talOff, `turn UI: the detail's A / B talents: A saves, B swaps, a second tap on B leaves it picked, and none of it costs points (${on.talA}, ${on.talB}, ${on.talOff})`);
       assert(on.closed && on.parryTal, `turn UI: the detail closes; Parry has its own row and its talents in the detail (${on.closed}, ${on.parryTal})`);
       assert(on.fLearned && on.fCan && on.fAll === 17, `turn UI: the filters show the learned abilities, the ones a Scroll can teach now, and all again (${on.fLearned}, ${on.fCan}, ${on.fAll})`);
       assert(on.proving && on.proving.slot && !on.proving.chip && /Foe 1\/5, \d+ turns/.test(on.proving.time) && on.proving.turn && on.provingEnd,
@@ -7927,14 +7926,14 @@ if (section('turn UI (browser)')) try {
           return ok || [!!document.querySelector('#sec-abilities .ab-det'), document.getElementById('panels').scrollTop, ${before}].join(); })()`);
         await page.click('#sec-abilities .ab-infob'); await page.waitForTimeout(150);
         r.info = await X(`(() => { const t = (document.querySelector('#sec-abilities .ab-info .ab-tp') || {}).textContent || '';
-          return document.querySelectorAll('#sec-abilities .ab-info .ab-scroll').length === 5 && /Talents: \\d+ of 29 points free/.test(t) || t || 'no drawer'; })()`);
+          return document.querySelectorAll('#sec-abilities .ab-info .ab-scroll').length === 5 && /Talents are free/.test(t) || t || 'no drawer'; })()`);
         r.infoFit = await X(fit);
         const port = h > w;
         assert(!r.list.length && !r.detFit.length && !r.infoFit.length, `abilities UI ${w}x${h}: no sideways scroll, every button at least 44 px (${JSON.stringify([r.list, r.detFit, r.infoFit])})`);
-        assert(r.sticky, `abilities UI ${w}x${h}: the loadout bar (Q, W, E, Scrolls, talent points) stays at the top while the list scrolls`);
+        assert(r.sticky, `abilities UI ${w}x${h}: the loadout bar (Q, W, E, Scrolls) stays at the top while the list scrolls`);
         assert(r.det && r.det.inView && r.det.list === port && r.det.slots === 3 && r.det.onW && r.det.talOn && r.moved,
           `abilities UI ${w}x${h}: a row's detail opens in view (${port ? 'a sheet over the list' : 'in the list\'s place'}), shows the slot it is in, and E moves it there (${JSON.stringify(r.det)}, ${r.moved})`);
-        assert(r.back === true && r.info === true, `abilities UI ${w}x${h}: closing the detail brings the list back where it was; the Scrolls button shows each Scroll and the talent points (${r.back}, ${r.info})`);
+        assert(r.back === true && r.info === true, `abilities UI ${w}x${h}: closing the detail brings the list back where it was; the Scrolls button shows each Scroll and says talents are free (${r.back}, ${r.info})`);
         assert(!errors.length, `abilities UI ${w}x${h}: no page errors` + (errors.length ? ': ' + errors[0] : ''));
         await ctx.close();
       }
@@ -8290,13 +8289,11 @@ if (section('C29 turn fights (core)')) try {
     }
     assert(Object.entries(out).every(([k, r]) => r.trait === k && r.kills > 0 && !r.err && !/fff/.test(r.seq)),
       `C29: each elite trait (Shielded, Leeching, Enraged, Ice-Clad, Cursed) works in turn fights, and an Enraged elite never takes 3 turns in a row (${JSON.stringify(Object.values(out).map(r => r.name + ' ' + r.kills + ' ' + r.seq))})`); }
-  // talents (24e): points from levels, two choices each, every choice works in fights
+  // talents (24e): free, two choices each, every choice works in fights
   { const { E } = fresh('pip', 14);
-    assert(E('talentPoints("pip").total === 0 && !talentSet("pip", "fire", "a")'), 'C29: a level 1 hero has no talent points');
-    E('S.L = 5; soloLevels');
-    assert(E('talentPoints("pip").total === 4 && talentSet("pip", "fire", "a") && talentSet("pip", "pip:parry", "b") && !talentSet("pip", "pip:dodge", "a") && talentSet("pip", "fire", "b") && talentPoints("pip").free === 0'),
-      'C29: a talent costs 2 points from 1 a level; switching between its two choices is free');
-    assert(E('!talentSet("pip", "spark", "a") && talentSet("pip", "fire", null) && talentPoints("pip").free === 2'), 'C29: only a learned ability takes a talent, and one can be given back');
+    assert(E('!talentSet("pip", "pip:parry", "c") && talentSet("pip", "fire", "a") && talentSet("pip", "pip:parry", "b") && talentSet("pip", "pip:dodge", "a") && talentSet("pip", "fire", "b")'),
+      'C29: talents are free (counters-and-layers): any owned ability, Attack, Parry or Dodge takes A or B at once, at any level, and switching is free');
+    assert(E('!talentSet("pip", "spark", "a") && talentSet("pip", "fire", null) && !talentsOf("pip").fire && typeof talentPoints === "undefined"'), 'C29: only a learned ability takes a talent, one can still be cleared, and talent points are gone');
     const bad = [];
     for (const hero of ['wren', 'tobin', 'pip']) for (const c of ['a', 'b']) {
       const g = loadCore({ seed: 31, turns: true }), H = x => g.eval(x);
