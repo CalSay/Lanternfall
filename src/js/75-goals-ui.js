@@ -119,6 +119,6 @@
     const busy = r.kills || r.gold >= 1 || r.xp >= 1 || (r.zones && r.zones.to > r.zones.from) || r.bosses || r.raidDmg >= 1 ||
       r.embers || (r.mats && r.mats.length) || (r.items && r.items.length) || (r.skills && r.skills.length) || (r.extra && r.extra.length);
     if (!busy) return null;
-    return topGoals(3).map(g => ({ icon: goalIcon(g.icon), txt: g.label, sub: g.ready ? 'Ready now' : pctTxt(g) + ' done', group: 'Next up', go: () => goTo(g) }));
+    return topGoals(3).map(g => ({ icon: goalIcon(g.icon), txt: g.label, sub: g.ready ? 'Ready now' : pctTxt(g) + ' done', group: 'Next up', goLabel: g.goLabel, go: () => goTo(g) }));
   });
 }

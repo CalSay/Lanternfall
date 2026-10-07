@@ -190,7 +190,8 @@ let showAwayReport;
         if (l.sub) tx.append(el('div', 'away-lsub', l.sub));
         row.append(tx);
         if (typeof l.go === 'function') {
-          const gb = el('button', 'mini go away-lgo', 'Go');
+          const gb = el('button', 'mini go away-lgo', l.goLabel || 'Go');
+          if (l.goLabel) gb.setAttribute('aria-label', l.goLabel + ': ' + (l.txt || ''));
           gb.addEventListener('click', () => { close(); try { l.go(); } catch (e) { console.error('[lanternfall] away line go failed', e); } });
           row.append(gb);
         }
