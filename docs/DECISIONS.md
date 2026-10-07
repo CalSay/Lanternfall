@@ -397,8 +397,8 @@ Cal's card at 07:19, "Harder without gear", is the direction: bosses tougher acr
 PR 4 of `boss-tiers`. Opus judge after measuring (`/mnt/project-files/early-game/boss-tiers-pr4/judge.md`, data beside it); Cal can veto any line.
 The aim was tempo: a kept-up hero kills a boss in 2.5-4 hero turns, so wins sat at 99-100%. Cal's "Harder without gear" and the E33 curve are the direction.
 
-- **Tricks.** Zone 4-15 Captains and Champions play new move sets (`TURN_BOSS_TRICKS`, `TURN_TUNE.tricks`; off with `tricks.on = 0`, which restores
-  the old sets). A **delayed hit** (`hold`) winds up, stalls 0.4-0.6 s, then runs the last dodge window plus 0.25 s; the bar stalls so a player who
+- **Tricks.** Zone 4-15 Captains and Champions play new move sets (`TURN_BOSS_TRICKS`, `TURN_TUNE.tricks`; `tricks.on = 0` brings back the old move sets only; with `gate.on = 0` and `hpFloor` `[[1, 0]]` it also drops the
+  gates and floor, and the refit z4-15 knots come back only by reverting them). A **delayed hit** (`hold`) winds up, stalls 0.4-0.6 s, then runs the last dodge window plus 0.25 s; the bar stalls so a player who
   waits is safe and one who presses at the first sign wastes the press. A **feint** (zone 7+) shows a wind-up that breaks at the tell and deals
   nothing; pressing on it fools the hero, and the next hit of that move cannot be defended. The Champion has a fifth move (a long string).
   Move ids and names stay stable (`bossTry.rev`); total damage per move is about the old total.
@@ -414,6 +414,9 @@ The aim was tempo: a kept-up hero kills a boss in 2.5-4 hero turns, so wins sat 
 - **Honest result.** Kept-up heroes still win 92-100% at z8-15 (good play 100%, casualHigh 100%). The tricks and gates move the
   first-hour bosses' length and shape but the 96% defender cannot be made to lose without breaking the hit cap. The kept-up gap stays, owner
   `boss-tiers-pr5` (zones 16-34 tricks, hit-floor and gate retune) until 2026-11-15; the first-hour bands and gear-helps gate hold.
+- **Known limit: gated charges.** While a boss sits at a gate and gathers a charge, hits deal 0 and do not count toward breaking it (the review
+  pass found it). Counting the clipped damage raised first-hour casual by 6-24 points (z10 59 to 67 Wren, 54 to 78 Pip), so the fit
+  keeps the current rule. Follow-up card: `boss-tiers-pr5` re-fits with clipped damage counted.
 - **Report columns.** Boss Ready (59m) skips held and flinched hits in its tally. The Foe tab and move chips show "delayed" and "feints".
 - **Milestone E2.** The z5-15 Champion bands are met on the first-hour set; the kept-up row stays report-only and is a dated gap, not a pass.
 - **Captain moves** (z4-14 outside every fifth zone) arrive through `bossTierOf`; the slice-turn-check card sees them.

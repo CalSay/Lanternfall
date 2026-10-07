@@ -54,5 +54,5 @@ Zone bosses from zone 4 to 15 play `TURN_BOSS_TRICKS` sets (24d): Captain four m
 - `feint: true` on a hit: it winds up like a hit, breaks at the tell and deals nothing. A press on it fools the hero (`m.fooled`); the next hit
   starts with `usedDefense` set and `flinch`, so it cannot be defended. Feints start at zone 7.
 - The sampler reads a feint or a hold with `read` (default 0.3 + 0.6 x avoid rate); a misread presses early and wastes the press.
-- Switch off: `TURN_TUNE.tricks.on = 0`. Gates: `TURN_TUNE.boss.gate`. Own-HP floor: `TURN_TUNE.boss.hpFloor`.
+- Switch off: `TURN_TUNE.tricks.on = 0` (old move sets only; the refit knots stay, revert them to restore the old fight). Gates: `TURN_TUNE.boss.gate`. Own-HP floor: `TURN_TUNE.boss.hpFloor`.
 

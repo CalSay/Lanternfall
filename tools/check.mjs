@@ -8590,9 +8590,10 @@ if (section('C29 mid-game HP and Wren (core)')) try {
       // zones 25-34 (mid-zone-wall, 2026-10-07): the hero who keeps up there has only 0.2-0.4 of the reference HP (budget.mjs), and this
       // hero is scaled to the reference, so a boss hit that costs them 25-45% reads 8-16% here and a charge 20-45%
       // zones 15 and 20 (boss-tiers PR 3, 2026-10-07): the knots there are fitted to the budget's casual band, a boss hit reads 15-45% here
-      const mid = z >= 25, b = mid ? [0.08, 0.16, 0.2, 0.45] : z === 15 || z === 20 ? [0.15, 0.42, 0.4, 0.92] : [0.25, 0.36, 0.6, 0.9];
+      // zones 8 and 15 (boss-tiers-pr4, 2026-10-07): the tricks carry the difficulty there, so the refit hit scales are 0.46-0.9 of the old ones: a boss hit reads 22% at zone 8 and 10% at zone 15, a charge 52% and 24%
+      const mid = z >= 25, b = mid ? [0.08, 0.16, 0.2, 0.45] : z === 15 ? [0.07, 0.42, 0.2, 0.92] : z === 20 ? [0.15, 0.42, 0.4, 0.92] : [0.18, 0.36, 0.45, 0.9];
       if (!(r.n.hit >= 0.05 && r.n.hit <= 0.18 && r.b.hit >= b[0] && r.b.hit <= b[1] && r.b.charge >= b[2] && r.b.charge <= b[3]) || r.err().length) bad.push(s); }
-    assert(!bad.length, `mid-game HP: for a hero who keeps up (zones 8-34), a landed normal hit costs 5-18% of max HP, a boss hit 25-35% (15-42% at zones 15 and 20), a charge 60-90% (40-92% there) (${bad.length ? 'off: ' + bad.join('; ') : seen.join('; ')})`); }
+    assert(!bad.length, `mid-game HP: for a hero who keeps up (zones 8-34), a landed normal hit costs 5-18% of max HP, a boss hit 18-36% (7-42% at zone 15, 15-42% at zone 20), a charge 45-90% (20-92% at zone 15, 40-92% at zone 20) (${bad.length ? 'off: ' + bad.join('; ') : seen.join('; ')})`); }
   // played: good players win zone-20 bosses in 8-10 turns or so, casual players win some and lose some; Tobin stays the safest
   { const w = kept('wren', 20, 33, 'mid'), p = kept('pip', 20, 33, 'mid'), t = kept('tobin', 20, 33, 'mid');
     const WS = [['echo', 'deadeye', 'powershot'], ['twinshot', 'echo', 'deadeye'], ['echo', 'barbed', 'sonic']], PS = [['fire', 'ignite', 'spark'], ['kindle', 'fire', 'ignite'], ['fire', 'wildfire', 'spark']];

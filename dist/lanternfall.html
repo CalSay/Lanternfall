@@ -25474,6 +25474,7 @@ function turnNew(p, io) {
     heroOps: 0, foeOps: 0, cds: {}, h: turnHeroFx(), e: turnFoeFx(), move: null, hitI: 0, parried: 0, landed: 0,
     gi: 0, rally: 0, defense: '', usedDefense: false, si: 0, charge: null, phase2: false, ended: false, first: '', blockN: p.blockN || 0 };
   for (const id in p.cds) m.cds[id] = 0;
+  if (p.gates && io && io.foeHp) while (m.gi < p.gates.length && io.foeHp() <= p.gates[m.gi] * p.foeMaxHp + 1e-6) m.gi++;   // a damaged boss met again starts past the gates it already crossed
   if (p.trait === 'shielded') m.e.shield = TURN_TRAITS.shielded.share * p.foeMaxHp;
   if (p.trait === 'frozen') m.e.ice = 1;
   m.sf = null; if (p.stars && p.stars.length) turnStarsStart(m, io);   // the Stars (57e): flags and openers
