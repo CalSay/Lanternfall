@@ -37,7 +37,7 @@ These are all 13 entries of `UNIQ` in `src/js/20-data.js`. The current drop item
 
 ### Current legacy numbers (unchanged)
 
-Current base power is `1.8 × TIER_POW[t] × (1 + 0.15plus)`: 18 / 39.6 / 75.6 / 135 / 234 at G1–G5 +0, equal to rare base and 180% of common. Legacy drops have no rolled affixes; the effect lines below are fixed while base lines scale with grade/upgrades. The table shows exact current G1+0 stats including effects, not proposed new-item stats. Head/weapon legacy kinds must not be compared as if their class-specific successor had the same base lines.
+Current base power is `1.8 × TIER_POW[t] × (1 + 0.15plus)`: 18 / 39.6 / 75.6 / 135 / 234 at G1–G5 +0, equal to rare base and 180% of common. Legacy drops have no rolled affixes; the effect lines below are fixed while base lines scale with grade/upgrades. The table evaluates the current formula at G1+0, including effects, even for raid items whose actual first drop has a higher grade; these are not proposed new-item stats. Head/weapon legacy kinds must not be compared as if their class-specific successor had the same base lines.
 
 | Existing ID | Kind | Source | Actual G1+0 lines, effect included | Existing base drop chance |
 |---|---|---|---|---|
@@ -369,6 +369,8 @@ PR 2 contains only `art/uniques/`: README, manifest, source PNGs, prompts, six e
 8. **Legacy ownership.** Existing effects may already dominate. Fallback: keep them readable and earned; a separate approved transition is required before withdrawing old sources. This draft does not take away items or reinterpret IDs.
 9. **Boss naming and theme.** Today's seven-type cycle disagrees with the new area names; the source uses current type, not a promised future named boss. Fallback: update sources only after actual encounter data lands.
 10. **Prototype fidelity.** In-memory wrappers are not implementation tests, and T's direct-damage-only restriction needs an exact hook. Fallback: repeat with actual approved wiring before merging a gameplay PR. No rigged timing probabilities, no altered boss budget.
+
+11. **Catalogue and Curator.** More found IDs may accelerate the 3/7/10/13 collection thresholds and their unique-chance modifier, especially when a player already owns legacy versions. Fixed base odds do not prove unchanged acquisition pace. Fallback: hold the new drop pool until an acquisition simulation includes those modifiers and old-save ownership; never silently erase found entries or earned Deeds.
 
 ## Reproducing the review-only experiment
 
