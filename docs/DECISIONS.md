@@ -8,6 +8,13 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 
 ## The game
 
+- **Claude decided: hero barks (card hero-voice, 2026-10-06; Cal can veto).** Only the three starters speak, one line each
+  at nine moments (first boss, later boss, boss loss, unique, level, ability, first Star, first craft, Hollow Great Lantern);
+  no class lines and no lines for the other 31 heroes; at most one bark a fight end, strongest first. Opus judge (red team,
+  then judge) rewrote "hole" out of the first-boss lines (the player may not have heard Hesketh say it yet), kept bible 4.6's
+  lantern lines verbatim, and approved cutting the fire-lit bark: Hesketh's talk owns that moment. The hero sheet's record
+  is headed "On the road" ("With you" read like companion language). Scores: Hero arc 3, Fit 4, Clarity 4.
+
 - **No prestige or resets.** Progress is permanent. Freshness comes from mastery, collections, build variety and new
   regions. (2026-09-27)
 - **Single-player first.** The world raid and Tavern stay optional, light extras. (2026-09-27)
@@ -279,6 +286,22 @@ payment code, live prices and business and legal set-up stay with Cal.
   opens, tagged the way the plan tagged IdleOn's (IdleOn: 53 of 86, about 62%). Missed below 65%; a miss reopens the
   Keeper's away bonus and the supporter tiers first. (2026-10-06)
 
+### Mid-zone wall: judge rulings (2026-10-07)
+
+- **Captains at zones 25 to 34 are fixed at the boss, with the boss knots only.** The kept-up hero's Attack and health sit
+  at 0.2-0.4 of the reference hero from zone 25 (1.0 at zone 20), so `boss.hpX` and `boss.hitX` now fall to 1.0/0.55 at 25,
+  0.52/0.34 at 27, 1.55/0.72 at 30 and 0.94/0.52 at 34. Wren and Pip win 56-80% casual and 100% played well. Zones 21-24 ramp linearly from zone 20 to the zone 25 knot (the hero falls behind the reference over those zones); there is no budget row there. Normal foes,
+  elites, zone 20 and zones 35+ keep their numbers. The `refAtk` table stays: changing it would speed every normal fight
+  and the gold per hour. (2026-10-07)
+- **The zone 27 knot** was the mid fixture's hero (Attack 1.15M, Lv 34) against a foe curve that grows x1.48 a zone to 27
+  and x1.22 after, with the Quarry Golem's armour. The late fixture's hero at the same zone hits 1.8x harder. The knots are
+  fitted to the weaker hero, so a stronger one wins more. (2026-10-07)
+- **Tobin's late boss share drops to 0.2** (was 0.6) so his Captain fights run 1.0-1.25x as long as Wren's and Pip's. He
+  still wins every Captain casually: a +10 gap owned by `boss-tiers` until 2026-11-15.
+- **Open: Tobin stalls at zone 20, not 25 to 34.** In the good-persona sim (seeds 41, 42) he sits 10-12 h at zone 20 and
+  never reaches 21, the same on the base build. Wipes come at zones 17 to 20, in the fights before the Captain. The
+  level-gap acceptance (zones 20-30) cannot be tested until that is fixed; follow-up card `tobin-z17-20-stall`.
+
 ### The Lantern Rules
 
 Every card that adds a price, a currency, a timer or a gate passes all ten. (2026-10-06)
@@ -442,6 +465,12 @@ Plan and rulings: `/mnt/project-files/early-game/plan.md`, `plan-judge.md`. Beat
   (story bible 4.4).
 - **First-hour art.** Two packs, `first-hour-art` and `cache-art`. Star icons are parked. Approved assets (the Mossy
   Hollow background, roster portraits, Deepwell colours) may be reused as they are.
+- **Hit feel (card hit-feel, Opus judge 2026-10-06).** Number tiers by priority counter, crit, big (a hit of a fifth of the
+  foe's HP, the hit-stop's own test), normal; each has its size and sting. A *clean* parry or dodge is one pressed in the
+  last `min(half the window, 0.10 s)` before the hit; it stamps PARRIED! or DODGED! in gold. Never "Perfect" on a defence:
+  that word means a real bonus on timed abilities. Five lamps count clean defences in a row and go out on a landed hit, a
+  failed press or a loose defence. All of it is display only: no window, hit-stop, pace or save change, and no telegraph
+  of the foe's next move.
 
 ## Working process
 
@@ -515,3 +544,10 @@ Kept only to explain current rules. Each line: the old decision, then what repla
   on a sign-off nobody owned; Cal 2026-10-06 18:30 "I don't want to be involved" and 18:41 any repo rule may change if
   it serves the goals.
 - Weekday and weekend usage rules (2026-09-28) -> steady mode (2026-09-28 evening).
+
+## Foe moves by type: judge rulings (2026-10-07)
+
+Each Hollow foe type has its own moves (`TURN_FOE_TYPES`, `docs/design/foe-moves.md`); elites swap the Crushing Blow for a
+type signature and keep the type's pace; every foe type names an answer for each starter (`FOE_COUNTERS`). Elite scaling is
+`eliteHitX` 1.4 and `eliteHpX` 2.5 (the Cave Bat's elite has 0.4 of that HP). Zone 15 and 20 elites remain easy for casual
+Wren and Pip: that is zone 5-15 hero power, owned by boss-tiers. No save state changes.

@@ -137,10 +137,44 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
   resBtn.addEventListener('pointerdown', e => e.stopPropagation());
   resBtn.addEventListener('click', e => { e.stopPropagation(); if (!resTip.hidden) { resTip.hidden = true; return; } showRes(5); });
   heroRow.append(resBtn, chips);
+  // hit feel: a row of five lamps counts clean defences in a row (a parry or dodge pressed close to the hit). Just for show:
+  // it gives no power and is never saved. Any landed hit, early or late press, or loose defence puts the lamps out.
+  const lamps = el('span', 'tv-lamps'); lamps.setAttribute('role', 'img'); lamps.title = 'Clean streak. Just for show.'; lamps.hidden = true;
+  const lampLit = typeof ICON === 'object' && ICON.dc_wlamp ? iconURL('dc_wlamp', '#FFD27A', { 2: '#3A3444', 6: '#9A8260', 5: '#FFF3C4' }) : '';
+  const lampOff = typeof ICON === 'object' && ICON.dc_wlamp ? iconURL('dc_wlamp', '#4E4060', { 2: '#241C2C', 6: '#4E4060', 5: '#6B5E7C' }) : '';
+  const LAMPS = 5; let streak = 0, shownStreak = -1, pendClean = null;
+  const lampDraw = () => {
+    if (streak === shownStreak) return; shownStreak = streak;
+    lamps.hidden = false; lamps.setAttribute('aria-label', `Clean streak ${streak} of ${LAMPS}`);
+    lamps.replaceChildren(...Array.from({ length: LAMPS }, (_, i) => img('tv-lamp' + (i < streak ? ' on' : ''), i < streak ? lampLit : lampOff)));
+  };
+  const lampSet = n => { streak = n; lampDraw(); };
+  // what has shown since the page opened (data-seen: 'clean', and each number tier). Display only: the proof route reads it
+  const seen = new Set(), seenAdd = k => { if (!seen.has(k)) { seen.add(k); lamps.dataset.seen = document.body.dataset.hitSeen = [...seen].join(' '); } };   // on body too, so a route can read it after the fight has ended
+  on('float', f => { if (f && f.tier) seenAdd(f.tier); });
+  // grade at the press, from the snapshot (the windows in force, how far from the hit); the stamp shows when the hit meets or misses
+  const defPress = kind => {
+    const q = typeof turnCombatSnapshot === 'function' ? turnCombatSnapshot() : null; if (!q || !q.closesAt) { pendClean = null; return; }
+    const left = q.closesAt - q.now, w = q.closesAt - (kind === 'parry' ? q.parryOpensAt : q.dodgeOpensAt);
+    pendClean = left >= 0 && left <= Math.min(0.5 * w, 0.1) ? kind : '';
+  };
+  on('soloParry', p => { if (!p) return; if (p.res === 'parry') defPress('parry'); else { pendClean = null; lampSet(0); } });
+  on('soloDodge', p => { if (!p) return; if (p.res === 'dodge') defPress('dodge'); else { pendClean = null; lampSet(0); } });
+  on('foeContact', p => {
+    if (!p) return;
+    if (p.res === 'hit') { pendClean = null; lampSet(0); return; }
+    if (p.res !== 'parry' && p.res !== 'dodge') return;   // a blind miss holds the streak
+    const clean = pendClean === p.res; pendClean = null;
+    if (!clean) { lampSet(0); return; }
+    lampSet(Math.min(LAMPS, streak + 1)); seenAdd('clean');
+    emit('float', { txt: p.res === 'parry' ? 'PARRIED!' : 'DODGED!', color: '#F2C14E', big: true, x: 0.27, y: 0.34 });
+    emit('defGrade', { kind: p.res, clean: true, streak });
+  });
+  on('fightStart', () => { pendClean = null; lampSet(0); });
   const warn = el('div', 'tv-warn'); warn.hidden = true; warn.setAttribute('role', 'status'); warn.setAttribute('aria-live', 'assertive');
   const wrap = el('div', 'tv-top'); wrap.append(turnN, heroRow, resTip, warn);
   // along the stage's bottom edge: the timing bar (while the foe winds up)
-  const bot = el('div', 'tv-bot'); bot.append(bar);
+  const bot = el('div', 'tv-bot'); bot.append(lamps, bar);   // hit feel: the lamps sit just above the timing bar, clear of the place caption and the resource row
   if (box) box.append(wrap, bot);
   // a timed ability's ring: it closes on the foe; press the ability (or Attack) again as it meets the inner circle
   const ring = el('div', 'tv-ring'), ringO = el('i', 'tv-ring-o'), ringI = el('i', 'tv-ring-i'), ringT = el('b', 'tv-ring-t', 'Now!');

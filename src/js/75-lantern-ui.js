@@ -46,6 +46,8 @@
     const h = el('h2', 'gl-head', e.head); h.id = 'glHead';
     card.append(h);
     if (e.text) card.append(el('p', 'gl-text', e.text));
+    const say = e.n === 1 && typeof voiceSay === 'function' ? voiceSay('lantern') : null;   // hero-voice: the Hollow's lantern, one line
+    if (say) card.append(el('p', 'gl-say', '\u201C' + say.line + '\u201D \u2014 ' + say.who));
     if (e.rewards && e.rewards.length) {
       const list = el('ul', 'gl-rw');
       for (const x of e.rewards) {

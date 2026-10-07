@@ -107,3 +107,9 @@
 .tv-bot { position: absolute; left: 8px; right: 8px; bottom: 30px; z-index: 5; display: grid; justify-items: center; gap: 4px; pointer-events: none; }
 .tv-bot[hidden] { display: none; }
 .tv-bot .tv-time { width: min(300px, 100%); }
+/* hit feel: the clean-streak lamps in the hero row (visual only) */
+.tv-lamps { display: flex; gap: 1px; align-items: center; min-height: 14px; }
+.tv-lamps[hidden] { display: none; }
+.tv-lamp { width: 14px; height: 14px; image-rendering: pixelated; opacity: .55; }
+.tv-lamp.on { opacity: 1; filter: drop-shadow(0 0 3px rgba(255, 210, 122, .8)); }
+@media (prefers-reduced-motion: reduce) { .tv-lamp.on { filter: none; } }

@@ -50,6 +50,9 @@ const TURN_TUNE = {
   // a normal foe's (and an elite's) hits x this, so a landed hit costs a hero who keeps up about 8-15% of their health
   // against the higher reference HP above (zone fights and the Deepwell; a Proving's foes hit for shares of your health)
   normHitX: [[3, 1], [8, 0.7], [34, 0.7], [35, 1]],
+  // an elite hits this much harder than a normal foe of its zone (foe-moves-by-type: elites are a threat, not a pat on the head)
+  eliteHitX: 1.4,
+  eliteHpX: 2.5,   // ... and lasts this much longer
   // the hero's max HP in turn fights x this. Wren's HP grows with her Attack, which carries the real-time fight's damage
   // parity (SOLO_TUNE.heroX 0.76, against Pip's 1.15), while turn fights give that back to her damage only (heroX below)
   heroHpX: { wren: 1.2, tobin: 1, pip: 1 },
@@ -63,7 +66,7 @@ const TURN_TUNE = {
   // Tobin's late pass (autopilot, 2026-10-06; DECISIONS.md band 15-30% slower than Wren and Pip): from zone 30 the refAtk
   // fall left his kills x1.4-1.7 slower, so his Attack, abilities and counters hit x this by zone. His HP, Speed and Guard stay as were.
   lateX: { tobin: [[1, 1], [25, 1], [30, 1.25], [34, 1.6], [35, 1.2], [38, 1.35], [42, 1.4]] },
-  lateBoss: 0.6,   // a boss gets this share of the late pass (its fight keeps its length; the pass is for the foes between)
+  lateBoss: 0.2,   // a boss gets this share of the late pass (its fight keeps its length; the pass is for the foes between)
   foeAtkX: 1,
   goldX: 3, xpX: 2.5, essenceX: 1.6,              // fewer, longer fights pay more each (balance: docs/design/combat-turn-build.md)
   consec: 2, consecBoss: 3,                        // the most turns in a row
@@ -87,8 +90,8 @@ const TURN_TUNE = {
   //            kept-up hero about a quarter to a third of their health, a landed charge about two thirds. From zone 35
   //            the reference HP sits below a kept-up hero's (the late-zone pass), so hitX steps up there.
   //   payX     a longer boss pays more: gold and XP x (1 + payX x (its HP share - 1)), so an hour of play pays as before
-  boss: { hpX: [[3, 1], [10, 1.8], [15, 2.5], [20, 2.4], [25, 2.6], [30, 3.6], [34, 3.6], [36, 1.85]], regionHpX: 1.4,   // the gear pass (2026-10-02): zones 15-34 about x1.09, 36+ 1.5 -> 1.85, region 1.25 -> 1.4
-    hitX: [[3, 1], [6, 1.4], [8, 1.6], [15, 1.6], [20, 1.5], [26, 1.3], [34, 1.3], [35, 1.9]], chargeX: [[3, 1], [6, 1.3], [34, 1.3], [35, 1.35]], payX: 0.5 },
+  boss: { hpX: [[3, 1], [10, 1.8], [15, 2.5], [20, 2.4], [25, 1.0], [27, 0.52], [30, 1.55], [34, 0.94], [35, 2.725], [36, 1.85]], regionHpX: 1.4,   // the gear pass (2026-10-02): zones 15-34 about x1.09, 36+ 1.5 -> 1.85, region 1.25 -> 1.4
+    hitX: [[3, 1], [6, 1.4], [8, 1.6], [15, 1.6], [20, 1.5], [25, 0.55], [27, 0.34], [30, 0.72], [34, 0.52], [35, 1.9]], chargeX: [[3, 1], [6, 1.3], [34, 1.3], [35, 1.35]], payX: 0.5 },
   // the boss riders on the hero (shares of the reference HP a tick, two hero turns)
   heroDot: { bleed: 0.02, burn: 0.04, venom: 0.02 }, heroDotT: 2, heroChill: 0.1, heroBlind: 0.3,
   windowCaps: { parry: 0.35, dodge: 0.5 }, dodgeTrain: 0.004,   // Dodge Training: +4 ms of dodge window a level
@@ -186,15 +189,15 @@ function turnFoeSetup(f, z, o) {
   } else if (Z) {
     moves = Z.moves; script = Z.moves; spd = Z.speed || TURN_FOE_SPEED.normal; hpA = Z.hp || TURN_FOE_HP.zoneFoe;
   } else {
-    const ranged = !!f.ranged;
-    moves = ranged ? TURN_FOE_RANGED : TURN_FOE_BASIC; script = moves.slice();
-    spd = ranged ? TURN_FOE_SPEED.ranged : TURN_FOE_SPEED.normal; hpA = TURN_FOE_HP.normal;
+    const ranged = !!f.ranged, TY = TURN_FOE_TYPES[f.type];   // its type's own moves (24d TURN_FOE_TYPES), else the basic pair
+    moves = TY ? TY.moves : ranged ? TURN_FOE_RANGED : TURN_FOE_BASIC; script = moves.slice();
+    spd = TY ? TY.speed : ranged ? TURN_FOE_SPEED.ranged : TURN_FOE_SPEED.normal; hpA = TURN_FOE_HP.normal;
     const C = COMBAT_TUNE;
     if (o.elite === true || (o.elite !== false && z >= C.eliteFrom && Math.random() < C.eliteP)) {
-      f.elite = true; script = script.concat([TURN_FOE_ELITE]);
+      f.elite = true; script = script.concat([TY ? TY.sig : TURN_FOE_ELITE]);
       const ids = Object.keys(TURN_TRAITS), tr = o.trait || ids[(Math.random() * ids.length) | 0];   // one trait (24d TURN_TRAITS)
       f.tr = [tr]; f.name = ((typeof ELITE_TRAITS === 'object' && ELITE_TRAITS[tr] && ELITE_TRAITS[tr].name) || 'Elite') + ' ' + f.name;
-      spd = TURN_FOE_SPEED.elite; hpA = TURN_FOE_HP.elite;
+      spd = TY ? TY.speed * TURN_FOE_SPEED.elite / TURN_FOE_SPEED.normal : TURN_FOE_SPEED.elite; hpA = TURN_FOE_HP.elite * T.eliteHpX * (TY && TY.eliteHp || 1);   // an elite keeps its type's pace
     }
   }
   // the first zone bosses come in easier while you learn to parry and dodge (bossEase: their HP share in zones 1, 2, 3)
@@ -206,7 +209,7 @@ function turnFoeSetup(f, z, o) {
   const hp = hpA * ease * len * turnRefAtk(z) * (0.95 + Math.random() * 0.1);
   f.hp = f.max = hp; f.turn = 1; f.tz = z;
   f.tk = { script, spd: spd * 10, arm: Z && Z.armour ? Z.armour : f.armoured ? 0.3 : 0, boss: !!f.boss, region, elite: !!f.elite,
-    hx: zb ? turnZoneLine(B.hitX, z) : f.boss || f.trial || f.deep ? 1 : turnZoneLine(T.normHitX, z), cx: zb ? turnZoneLine(B.chargeX, z) : 1 };
+    hx: zb ? turnZoneLine(B.hitX, z) : f.boss || f.trial || f.deep ? 1 : turnZoneLine(T.normHitX, z) * (f.elite ? T.eliteHitX : 1), cx: zb ? turnZoneLine(B.chargeX, z) : 1 };
   const C = COMBAT_TUNE;
   // a longer boss pays more (the boss pass: payX of its extra length), so an hour of play pays about as before
   const pay = 1 + (len - 1) * B.payX;
@@ -946,7 +949,10 @@ const TURN_LIVE_IO = {
   healFoe: d => { const f = TURN_LIVE && TURN_LIVE.foe; if (f && !f.dead && f.hp > 0) { f.hp = Math.min(f.max, f.hp + d); emit('float', { txt: '+' + fmt(d), color: '#6FCB6A', big: false }); } },
   slotId: slot => soloEquipped()[slot] || null,
   damageFoe: (d, kind, crit, dt, n) => {
-    const f = TURN_LIVE.foe, got = cbTurnDamageFoe(f, d, kind, crit, dt, n), H = TURN_TUNE.hitstop;
+    const f = TURN_LIVE.foe, H = TURN_TUNE.hitstop, dot = /^(burn|bleed|swarm|curse)$/.test(kind);
+    // hit feel: the number's tier, for its size and sting (display only: nothing below reads it)
+    const bigHit = !dot && !!f && d >= 0.2 * f.max, tier = kind === 'counter' ? 'counter' : crit ? 'crit' : bigHit ? 'big' : '';
+    const got = cbTurnDamageFoe(f, d, kind, crit, dt, n, tier);
     // hit feel: a crit or a hit for a fifth of the foe's HP stops the clock for a beat and shakes the stage
     if (got > 0 && kind !== 'counter' && !/^(burn|bleed|swarm|curse)$/.test(kind)) {
       const big = f && got >= 0.2 * f.max;

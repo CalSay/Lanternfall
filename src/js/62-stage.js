@@ -39,9 +39,11 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
   // SOLO2 (owner): a crit's number pops (up to x1.35 fast, settling to x1 by CRIT_POP s), rises a little higher and
   // slower (it lives CRIT_LIFE s), with three pixel sparks behind it. Reduced motion: no pop, no rise, static sparks.
   const CRIT_POP = 0.18, CRIT_LIFE = 1.2;
+  // hit feel: a turn hit's tier scales its number (normal 1; the counter is the biggest, then a crit's pop and sparks, then a big hit)
+  const TIER_SIZE = { big: 1.15, crit: 1.25, counter: 1.3 };
   let critFloats = 0;   // crit numbers raised (stageStats: the check reads it)
   // S1 (core-2 2.1): dt, rel: a hit's damage type (its icon goes in front) and 1 weak / -1 resisted (a mark after)
-  function pushFloat(txt, color, big, x, y, dt, rel, crit) {
+  function pushFloat(txt, color, big, x, y, dt, rel, crit, tier) {
     const fx = x ?? (0.7 + (Math.random() - 0.5) * 0.12);
     // Each new text takes the first free row (0-3) near its spot, one line below the texts still
     // rising there; when all rows are busy the oldest text there fades out and gives up its row.
@@ -56,7 +58,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
     const f = free || last;
     f.on = true; f.txt = txt; f.color = color; f.big = !!big; f.crit = !!crit; f.max = crit ? CRIT_LIFE : 0.95; f.life = f.max; f.x = fx;
     if (crit) critFloats++;
-    f.y = y ?? 0.42; f.row = row; f.off = row; f.wz = 0; f.dt = dt || ''; f.rel = rel | 0;
+    f.y = y ?? 0.42; f.row = row; f.off = row; f.wz = 0; f.dt = dt || ''; f.rel = rel | 0; f.tier = tier || '';
     f.ax = foe && foe.fr ? foe.x : SW * 0.7;
   }
   // Party numbers (C4): hits, heals and shields over each member, from unitHit / unitHeal. Each member
@@ -969,7 +971,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
   // ================= events =================
   // W1-D (playtest-2 P2-5): leaving a fight for a gather scene drops the combat numbers still rising (a COUNTER floated over the woodcutting)
   on('sceneReset', () => { if (S.activity !== 'fight') { for (const f of floats) f.on = false; for (const n of nums) n.on = false; } });
-  on('float', f => { pushFloat(f.txt, f.color, f.big, f.x, f.y, f.dt, f.rel, f.crit); if (f.color === '#B58CFF') partyPulse(); });
+  on('float', f => { pushFloat(f.txt, f.color, f.big, f.x, f.y, f.dt, f.rel, f.crit, f.tier); if (f.color === '#B58CFF') partyPulse(); });
   on('burst', b => {
     // Core bursts use the old stage fractions; the ones aimed at the foe are re-centred on it (on a
     // pack: the foe that died this instant, its dead timer just set, else the shown foe).
@@ -1552,7 +1554,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
     for (const f of floats) {
       if (!f.on) continue;
       const age = f.max - f.life, pop = reduced ? 1 : f.crit ? critPop(age) : age < 0.08 ? 1.35 - age * 4 : 1;
-      const base = (f.big ? 21 : 15) * tz * TXT_K;
+      const base = (f.big ? 21 : 15) * (TIER_SIZE[f.tier] || 1) * tz * TXT_K;
       const lo = top + base, onFoe = f.x > 0.55 && foe.fr;
       // one start line per side (just over the foe's head, or half way down the band), then each
       // row one line higher; a row that would start above the band starts at its top and fades sooner
@@ -1566,7 +1568,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
       const fx = onFoe && (packN > 1 || gath) ? f.ax + (f.x - 0.7) * SW * 0.5 : f.x * SW;
       const hw = f.bw * pop / 2, x = Math.max(hw, Math.min(xr - hw, fx));
       ctx.globalAlpha = al;
-      if (f.crit) critSparks(x, y - f.by * 0.45, f.bw, age);
+      if (f.crit || f.tier === 'counter') critSparks(x, y - f.by * 0.45, f.bw, age);
       drawText(f, x, y, pop);
     }
     // party numbers: over each member's head, stacked upward, rising a little and fading

@@ -2201,6 +2201,16 @@ span.cf-d { font-weight: 600; }
 }
 /* 740x360: the card is short, so the art shrinks */
 @media (max-height: 420px) { .mm-art { width: 72px; height: 64px; } .mm-img { width: 44px; height: 44px; } .mm-card { gap: 5px; padding: 10px 12px; } }
+
+/* ---- hero-voice: the hero's line on a card or banner, the hero sheet record ---- */
+.mm-say { display: flex; align-items: center; gap: 8px; width: 100%; box-sizing: border-box; padding: 6px 8px; text-align: left; background: var(--well); border: 1px solid var(--line); }
+.mm-say-pt { width: 36px; height: 36px; flex: none; image-rendering: pixelated; }
+.mm-say-tx p { margin: 0; font-size: 14px; line-height: 1.3; font-style: italic; color: var(--bone); }
+.mm-say-tx small { font-size: 11px; color: var(--muted); }
+.mm-t-say { font-size: 12.5px; font-style: italic; color: var(--bone); }
+.gl-say { margin: 0; font-size: 13.5px; font-style: italic; color: var(--bone); }
+.cs-rec { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; font-size: 13.5px; color: var(--bone); }
+@media (max-height: 420px) { .mm-say { padding: 4px 8px; } .mm-say-pt { width: 28px; height: 28px; } .mm-say-tx p { font-size: 12.5px; } .mm-say-tx small { display: none; } }
 /* 60-nav: global navigation (UX-A, 75-nav-ui.js; docs/design/ux-overhaul.md 4): the activity pill
    in the header (two variants, NAV_TUNE.pillReplacesName), the Switch button on the control row,
    the quick switcher sheet, and the fade when a swipe changes the view. */
@@ -3124,6 +3134,12 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
 .tv-bot { position: absolute; left: 8px; right: 8px; bottom: 30px; z-index: 5; display: grid; justify-items: center; gap: 4px; pointer-events: none; }
 .tv-bot[hidden] { display: none; }
 .tv-bot .tv-time { width: min(300px, 100%); }
+/* hit feel: the clean-streak lamps in the hero row (visual only) */
+.tv-lamps { display: flex; gap: 1px; align-items: center; min-height: 14px; }
+.tv-lamps[hidden] { display: none; }
+.tv-lamp { width: 14px; height: 14px; image-rendering: pixelated; opacity: .55; }
+.tv-lamp.on { opacity: 1; filter: drop-shadow(0 0 3px rgba(255, 210, 122, .8)); }
+@media (prefers-reduced-motion: reduce) { .tv-lamp.on { filter: none; } }
 /* 60-wall: the Trophy Wall card on the Camp view (63e-scenery-wall.js, AC5). */
 .tw-scene { display: flex; justify-content: center; width: 100%; min-height: 144px; margin: 0; padding: 0; overflow: hidden; background: #0E0B1E; border: 2px solid var(--line); box-shadow: 0 2px 0 #0B0810; cursor: pointer; }
 .tw-scene:hover, .tw-scene:focus-visible { border-color: var(--gold); }
@@ -8008,6 +8024,18 @@ STORY_BEATS.npc.heskethTalk = { at: 'hearth', who: 'Old Hesketh', lines: [
   '"Your village is down there. Go back and shut the holes."'
 ] };
 
+// Hero barks (card hero-voice; bible 4.4 and 4.6; judged in DECISIONS.md). The starting hero speaks at the big moments: a line each for Wren, Tobin and Pip,
+// shown by 75-moments-ui.js and the Great Lantern card (55-voice.js picks one a fight end). No `_`: a story hero who is not a starter stays silent. Under 60 characters.
+STORY_BEATS.hero.v_boss1 = { wren: "One down. The lamp's still lit.", tobin: 'One down. Rest of you, form a queue.', pip: 'First one! Somebody write that down.' };
+STORY_BEATS.hero.v_boss = { wren: 'Down. Keep moving.', tobin: "That one's not getting up.", pip: "Ha! I'll remember that one." };
+STORY_BEATS.hero.v_loss = { wren: 'Again. Slower this time.', tobin: 'Fine. Round two.', pip: 'Right. So that was the wrong plan.' };
+STORY_BEATS.hero.v_unique = { wren: 'Found you. Come on, then.', tobin: 'Heavy. Good heavy.', pip: "Oh! I've read about these!" };
+STORY_BEATS.hero.v_level = { wren: 'Steadier.', tobin: 'Getting the hang of it. Slowly.', pip: 'Stronger. I checked.' };
+STORY_BEATS.hero.v_ability = { wren: 'I know that one now.', tobin: "That's new. I'll try not to break it.", pip: "So that's how it works!" };
+STORY_BEATS.hero.v_star1 = { wren: "A star. Let's see what it does.", tobin: 'A star. Fits in a pocket, too.', pip: "Stars! I'm not going to be calm about this." };
+STORY_BEATS.hero.v_craft1 = { wren: "First try. It'll do.", tobin: 'Crooked, but it holds.', pip: 'Not in any book. Still works.' };
+STORY_BEATS.hero.v_lantern = { wren: 'There. Now it knows where I am.', tobin: 'Keep it lit for them. Please.', pip: "There. Now it's everyone's problem." };
+
 // ---- Chapter 1 (bible 8.1 and 5): 7 areas of 5 zones, a Champion at each area's end, the Fenmother at zone 35 ----
 // Area titles: the area's stake in player words. Zone lines name the roster monster and say what it copied and what light it hunts.
 // Captain lines name one harm (they never speak); each area's fifth points at its Champion. Zone 31 never says its monster's name
@@ -9147,6 +9175,7 @@ const NOTICES = [
   { id: 'gear-reforged', re: /^Your .* reforged into .* gear\.$/, ch: 'bell' },
   { id: 'gear-back', re: /(does not fit your new path|do not fit your new path)/, ch: 'bell' },
   { id: 'champion', re: /^A champion .* appears\./, ch: 'pop', wait: 15, why: 'something to fight now' },
+  { id: 'cache', key: 'cache', ch: 'log', why: 'the cache card or banner shows it (75-caches-ui); the bell list keeps the line' },
   { id: 'trophy', re: /^(Champion defeated|The boss leaves a trophy|The raid spoils include)/, ch: 'log' },
   { id: 'stash-wait', re: /^(Storehouse full\. Needs room|The team is back\. )/, site: /toast\((stashNeed\(|`The team is back\. \$\{stashNeed)/, ch: 'bell' },
   { id: 'store-full', re: /^Storehouse full: /, ch: 'log', merge: ms => `Storehouse full: ${ms.map(m => m.slice(16, -1)).join(', ')}.` },
@@ -9902,6 +9931,55 @@ const TURN_FOE_RANGED = [
   { id: 'twin', name: 'Twin Shot', ranged: true, hits: [{ wind: 0.9, x: 0.1 }, { wind: 0.75, x: 0.1 }] }
 ];
 const TURN_FOE_ELITE = { id: 'crush', name: 'Crushing Blow', hits: [{ wind: 1.35, x: 0.27 }] };
+
+// Each ordinary foe type's own moves (card foe-moves-by-type, docs/design/foe-moves.md). Zone monsters with their own art
+// (59l ZONE_FOES) and bosses keep theirs; a type with no row here (the Coast's, for now) uses the basic pair above.
+//   moves   what it does, in turn (it alternates them)        speed  relative to the reference hero (TURN_FOE_SPEED.normal is 0.9)
+//   sig     an elite's signature move, in place of TURN_FOE_ELITE        eliteHp  scales the elite's HP (a glass cannon lasts less)
+//   ranged  its moves are shots (the type's FOE_BEH.ranged says the same)
+// Threat a second matches the basic pair (about 0.18 of the reference HP): slow foes hit big and rarely, fast foes chip.
+const TURN_FOE_TYPES = {
+  slime: { speed: 0.8,
+    moves: [{ id: 'engulf', name: 'Engulf', hits: [{ wind: 1.5, x: 0.24, dt: 'poison' }] },
+      { id: 'lash', name: 'Ooze Lash', hits: [{ wind: 1.1, x: 0.11, dt: 'poison' }, { wind: 0.8, x: 0.11, dt: 'poison', ride: 'venom' }] }],
+    sig: { id: 'gengulf', name: 'Great Engulf', hits: [{ wind: 1.6, x: 0.34, dt: 'poison', ride: 'venom' }] } },
+  bat: { speed: 1.0, eliteHp: 0.4,
+    moves: [{ id: 'nip', name: 'Nip', hits: [{ wind: 0.8, x: 0.11 }] },
+      { id: 'wingflurry', name: 'Wing Flurry', hits: [{ wind: 0.75, x: 0.07 }, { wind: 0.6, x: 0.07 }, { wind: 0.6, x: 0.07 }] },
+      { id: 'dive', name: 'Dive', hits: [{ wind: 0.7, x: 0.11 }, { wind: 0.6, x: 0.11 }] }],
+    sig: { id: 'divestorm', name: 'Dive Storm', hits: [{ wind: 0.7, x: 0.08 }, { wind: 0.55, x: 0.08 }, { wind: 0.55, x: 0.08 }, { wind: 0.55, x: 0.08, ride: 'bleed' }] } },
+  bones: { speed: 0.95, ranged: true,
+    moves: [{ id: 'boneshot', name: 'Bone Shot', ranged: true, hits: [{ wind: 1.1, x: 0.2 }] },
+      { id: 'bonevolley', name: 'Bone Volley', ranged: true, hits: [{ wind: 0.9, x: 0.065 }, { wind: 0.65, x: 0.065 }, { wind: 0.65, x: 0.065 }] }],
+    sig: { id: 'barrage', name: 'Bone Barrage', ranged: true, hits: [{ wind: 0.9, x: 0.075 }, { wind: 0.6, x: 0.075 }, { wind: 0.6, x: 0.075 }, { wind: 0.6, x: 0.075 }] } },
+  beetle: { speed: 0.7,
+    moves: [{ id: 'shellbash', name: 'Shell Bash', hits: [{ wind: 1.4, x: 0.27 }] },
+      { id: 'mandibles', name: 'Mandibles', hits: [{ wind: 1.1, x: 0.13 }, { wind: 0.8, x: 0.13 }] }],
+    sig: { id: 'rollcharge', name: 'Rolling Charge', hits: [{ wind: 1.8, x: 0.42 }] } },
+  spore: { speed: 0.9, ranged: true,
+    moves: [{ id: 'puff', name: 'Spore Puff', ranged: true, hits: [{ wind: 1.1, x: 0.15, dt: 'poison', ride: 'weaken' }] },
+      { id: 'cloud', name: 'Poison Cloud', ranged: true, hits: [{ wind: 1.0, x: 0.1, dt: 'poison' }, { wind: 0.8, x: 0.1, dt: 'poison', ride: 'venom' }] }],
+    sig: { id: 'sporestorm', name: 'Spore Storm', ranged: true, hits: [{ wind: 1.0, x: 0.1, dt: 'poison' }, { wind: 0.7, x: 0.1, dt: 'poison' }, { wind: 0.7, x: 0.1, dt: 'poison', ride: 'venom' }] } },
+  golem: { speed: 0.6,
+    moves: [{ id: 'stonefist', name: 'Stone Fist', hits: [{ wind: 1.5, x: 0.32 }] },
+      { id: 'quarryslam', name: 'Quarry Slam', hits: [{ wind: 1.8, x: 0.26 }] }],
+    sig: { id: 'quarrysmash', name: 'Quarry Smash', hits: [{ wind: 2.0, x: 0.5 }] } },
+  wraith: { speed: 1.0, ranged: true,
+    moves: [{ id: 'wail', name: 'Wail', ranged: true, hits: [{ wind: 0.9, x: 0.08, dt: 'frost' }, { wind: 0.7, x: 0.08, dt: 'frost' }] },
+      { id: 'chilltouch', name: 'Chill Touch', hits: [{ wind: 1.2, x: 0.17, dt: 'frost', ride: 'chill' }] }],
+    sig: { id: 'drownwail', name: 'Drowning Wail', ranged: true, hits: [{ wind: 0.9, x: 0.08, dt: 'frost' }, { wind: 0.65, x: 0.08, dt: 'frost' }, { wind: 0.65, x: 0.08, dt: 'frost', ride: 'chill' }] } }
+};
+// What answers each type, from the abilities the starters already have (Codex tip; check.mjs holds every id real and every
+// starter good against two types or more). `by` lists the abilities of each hero that help against it, and why in `tip`.
+const FOE_COUNTERS = {
+  slime: { tip: 'Slow and heavy. Burn it: fire hurts a Moss Slime most.', by: { wren: ['pinning'], tobin: ['brace'], pip: ['fire', 'spark'] } },
+  bat: { tip: 'Fast chip hits. Guard or Ward soaks them, and parry the last one.', by: { wren: ['shadowstep'], tobin: ['brace', 'ironwill'], pip: ['arcaneward'] } },
+  bones: { tip: 'It shoots from afar and has armour. Holy light hurts it most.', by: { wren: ['pinning'], tobin: ['sundering'], pip: ['nova', 'flare'] } },
+  beetle: { tip: 'One slow, heavy bash. Stun it, or Chill it twice to Freeze it, before the swing.', by: { wren: ['pinning', 'sonic'], tobin: ['bash'], pip: ['frostshard'] } },
+  spore: { tip: 'Poison clouds from afar that Weaken you. Burn it, and Ward off the venom.', by: { wren: ['shadowstep'], tobin: ['ironwill'], pip: ['fire', 'arcaneward'] } },
+  golem: { tip: 'The slowest and the hardest hit. Break its armour, or Freeze it.', by: { wren: ['pinning'], tobin: ['sundering'], pip: ['frostshard'] } },
+  wraith: { tip: 'Low damage, but it chills. Holy light hurts it most.', by: { wren: ['batswarm'], tobin: ['riposte'], pip: ['nova', 'flare'] } }
+};
 
 const TURN_BOSS_SETS = {
   slime: { a: { id: 'engulf', name: 'Engulf', hits: [{ wind: 1.3, x: 0.28, dt: 'poison' }] },
@@ -12203,6 +12281,83 @@ function bossTryWays(L) {
   var BOUNTY_API = { refresh: bountyRefresh, claim: claimBounty, reroll: rerollBounty, text: bountyText, reward: bountyReward, shape: btyShape, kinds: Object.keys(BTY_KINDS).concat('tap') };
 }
 
+// ---- src/js/55-caches.js ----
+// 55-caches: Lantern Caches, the core (card cache-core; early-game plan-judge R1, R2, R12; DECISIONS "Lantern Caches").
+// CORE FILE: no DOM. UI: 75-caches-ui.js (the card, through the moment layer).
+//
+// A zone boss's FIRST clear opens a cache. It is a container: it lists what that win already paid (gold, Essence, a Scroll, a Star, a
+// trophy, a unique), and nothing else. Replays pay as today and open no cache. The only thing a cache adds is a lantern colour from
+// the Deepwell shop that the save does not own yet (zones 1 to 3 and 7 to 9, Ember Red first). That is a certain look, never a roll.
+// No relics, no extra Essence, no unique pity, no time skips. Nothing here is sold.
+//
+// Events: cacheOpen { n, zone, tier, gold, ess, scroll, star, starFirst, unique, trophy, look, chance, essFull, auto }
+//   n: this save's cache number (1 for the first).  scroll { id, name, col }  star { id, name }  unique { item, name }
+//   trophy { name, n }  look { id, n, col, worn }  chance: the unique's chance on this win, in percent (null when one dropped)
+//   essFull: the Essence store was full when the win paid  auto: this cache opens as a banner unless it holds a look or a unique.
+//
+// State S.cache: { opened, lookPity, auto, first }
+//   opened  caches opened.  lookPity  reserved for cache-looks (nothing reads it yet).  auto  null = the default (on from the
+//   autoFrom-th cache), true or false once the player chooses.  first  the zone of the first cache (0 = none yet).
+// An old save has opened = 0 and gets no retroactive cache: its first one is its next first clear.
+//
+// CACHE_TUNE.on = false switches caches and their lantern colours off; wins then pay as before.
+//
+// API: cachePending() -> bool (a clear is waiting to open), cacheAuto() -> bool, cacheSetAuto(on), cacheLookZone(z) -> bool
+
+const CACHE_TUNE = { on: true, autoFrom: 3, lookZones: [1, 2, 3, 7, 8, 9] };
+let cachePending, cacheAuto, cacheSetAuto, cacheLookZone;
+{
+  registerState('cache', { opened: 0, lookPity: 0, auto: null, first: 0 });
+  const C = () => S.cache;
+  let tickN = 0, pend = null, lootTick = -1, lootItem = null;
+  cacheLookZone = z => CACHE_TUNE.lookZones.includes(z);
+  cacheAuto = (n = C().opened) => (typeof C().auto === 'boolean' ? C().auto : n >= CACHE_TUNE.autoFrom);
+  cacheSetAuto = on => { C().auto = !!on; save(); };
+  cachePending = () => !!pend;
+
+  // 50-sim drops a unique before it emits zoneClear (same tick); everything else comes after.
+  on('loot', e => { if (e && e.item && e.item.u) { lootTick = tickN; lootItem = e.item; } });
+  on('zoneClear', e => {
+    if (!CACHE_TUNE.on || !e || !(e.zone >= 1)) return;
+    pend = { zone: e.zone, tier: zoneTier(e.zone), gold: 0, ess: 0, scroll: null, star: null, trophy: null,
+      unique: lootTick === tickN && lootItem ? lootItem : null };
+  });
+  on('kill', p => { if (pend && p && p.mob && p.mob.boss && p.zone === pend.zone) { pend.gold = p.gold || 0; pend.ess = p.ess || 0; pend.tier = p.tier || pend.tier; } });
+  on('scrollDrop', p => { if (pend && p && SCROLLS[p.id]) pend.scroll = { id: p.id, name: SCROLLS[p.id].name, col: SCROLLS[p.id].col }; });
+  on('starFound', p => { if (pend && p && !p.quiet && typeof STARS === 'object' && STARS[p.id]) pend.star = { id: p.id, name: STARS[p.id].name }; });
+  on('trophy', p => { if (pend && p && (p.source === 'boss' || p.source === 'champion') && CRAFT_TROPHIES[p.i]) pend.trophy = { name: CRAFT_TROPHIES[p.i].n, n: p.n }; });
+
+  // the chance this win gave its zone's unique (50-sim killPack): a first clear, halved when the save already has it at this tier
+  const uniqueChance = (z, tier) => {
+    const uq = zoneUnique(z), owned = (S.found[uq] || 0) >= tier ? UNIQ_TUNE.owned : 1;
+    return Math.round(Math.min(1, UNIQ_TUNE.first * owned * mod('uniqueChance')) * 1000) / 10;
+  };
+
+  function open() {
+    const p = pend; pend = null;
+    const c = C();
+    let look = null;
+    try { if (cacheLookZone(p.zone) && typeof DW === 'object' && DW && typeof DW.grantLantern === 'function') look = DW.grantLantern(); } catch (e) { look = null; }
+    if (!c.opened) c.first = p.zone;
+    c.opened++;
+    const un = p.unique && UNIQ[p.unique.u] ? { item: p.unique, name: UNIQ[p.unique.u].name } : null;
+    const starFirst = !!p.star && Object.keys((S.stars && S.stars.own) || {}).length <= 1;
+    const essFull = p.ess > 0 && typeof stashFull === 'function' && stashFull('ess', p.tier);
+    const view = { n: c.opened, zone: p.zone, tier: p.tier, gold: p.gold, ess: p.ess, scroll: p.scroll, star: p.star, starFirst, unique: un, trophy: p.trophy, look,
+      chance: un ? null : uniqueChance(p.zone, p.tier), essFull, auto: cacheAuto(c.opened) };
+    emit('cacheOpen', view);
+    // the bell list keeps a line (the card or banner is the moment itself)
+    const bits = [];
+    if (p.gold) bits.push(`${fmt(p.gold)} gold`);
+    if (look) bits.push(`${look.n} lantern`);
+    if (un) bits.push(un.name);
+    emit('toast', { key: 'cache', msg: `Lantern Cache opened${bits.length ? ': ' + bits.join(', ') : ''}.`, kind: 'good', prio: 'low' });
+    save();
+  }
+  // the clear's events all fire inside one tick; the cache opens at the end of it
+  onTick(() => { tickN++; if (pend) open(); });
+}
+
 // ---- src/js/55-classes.js ----
 // 55-classes: Classes 2.0, slice S2 (docs/design/classes-2.md 3.4-3.5, 7, 8.3). The class state S.cls,
 // the class accessors, the base-class choice and the
@@ -13281,7 +13436,7 @@ var forgeGoalPicks = 0;
       const r = all.find(e => e.reserve && !pick.includes(e));
       if (r) {
         if (pick.length < n) pick.push(r);
-        else { let lo = -1; pick.forEach((e, i) => { if (lo < 0 || e.score < pick[lo].score) lo = i; }); pick[lo] = r; }
+        else { let lo = -1; pick.forEach((e, i) => { if (!e.ready && (lo < 0 || e.score < pick[lo].score)) lo = i; }); if (lo >= 0) pick[lo] = r; }   // a ready goal is never displaced
       }
     }
     // order: ready first, then by score; shown goals keep their old order unless clearly passed
@@ -13732,16 +13887,9 @@ const BESTIARY_PERKS = {
 //   15       its tell (what to watch for)                    50 +5% damage against it, for good (stFoeHit)
 const PROFILE_TIERS = [1, 5, 15, 50];
 const PROFILE_BONUS = 0.05;
-// What to watch for, from each foe's real behaviour (59b-enemies)
-const FOE_TELL = {
-  slime: 'Plain blows. Its heavy hit comes after a red "!".',
-  bat: 'Dives at you for a few seconds, every 10 s.',
-  bones: 'Shoots from range through armour. Gets back up once at 20% HP, unless magic or a burn finishes it.',
-  beetle: 'Slow, but each hit lands at nearly double strength.',
-  spore: 'Every 6 s a spore cloud hits you and poisons.',
-  golem: 'Armoured. Hits very hard and slowly; every third hit slams down.',
-  wraith: 'Every 5 s it channels a heal. A stun stops it.'
-};
+// What to watch for, from each foe's own moves and what answers them (24d TURN_FOE_TYPES, FOE_COUNTERS)
+const FOE_TELL = {};
+for (const k in FOE_COUNTERS) FOE_TELL[k] = `Moves: ${TURN_FOE_TYPES[k].moves.map(m => m.name).join(', ')}. ${FOE_COUNTERS[k].tip}`;
 
 // Helpers for the UI (75-mastery-ui.js) and tools; filled in below.
 const masteryApi = {};
@@ -15438,10 +15586,11 @@ let storeLevel, storeCap, storeCapAt, stashRoom, stashFull, stashOver, stashFits
 // NPC scene at an area's door); a Champion's or Elder's NPCs ride that scene and are not filed on their own.
 
 const STORY_ON = true;   // dev switch (bible 10.4): false plays no story at all; the data files can also be deleted
+const STORY_TUNE = { champMoment: true };   // champion-moment: a Champion's first clear is one big card (its scene, then the cache). false: the scene plays as a story card and the cache opens on its own, as before
 
 let storyOn, storyHeld, storyInGap, storyChoiceDef, storyChosen, storyClaim, storyClose, storyChoose, storyList, storyEntry, storyRead, storyUnread, storyLate, storyJournalOpened,
   storyRoadLog, storyFile, storyHeroLine, storyHearthLine, storyVerse, storyVerseLatest, storyItemLine, storyRanks, storyEncounter, storyFoes, storySync,
-  storyIntroClaim, storyIntro, storyIntroDone;
+  storyIntroClaim, storyIntro, storyIntroDone, storyHeroKey, storyBusy;
 const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_ENC.champ.<id> = true (storyEncounter)
 {
   registerState('story', { v: 1, seen: {}, read: {}, init: 0, off: 0, starter: '', litFor: {}, coldhearth: '', ends: {}, journalOpens: 0 });
@@ -15487,6 +15636,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
     if (how !== 'shown' && part !== 'open') { introUp = false; storySync(); }   // what waited under the screens (the area caption) is due now, even if the guide holds the ticks
   };
   storyEncounter = (kind, id, on) => { if (STORY_ENC[kind]) STORY_ENC[kind][id] = on !== false; };
+  storyHeroKey = storyHero;   // hero-voice: whose lines play ('' when no starter is the story hero)
   storyHeroLine = id => { const h = D('hero')[id]; return h ? h[storyHero()] || h._ || '' : ''; };
   // An item entry is a line, or { area, line }: a line with an area waits until an encounter card has put a Champion of that area in
   // the game (the line names it, and the player must have met it).
@@ -15677,6 +15827,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
     }
   }
   const push = sc => { if (sc) queue.push(sc); };
+  storyBusy = id => (!!cur && cur.id === id) || queue.some(sc => sc.id === id);   // that scene is up or waiting (the moment layer holds a Champion card until it has played)
 
   // ---- time and gaps ----
   let clock = 0, spawnT = -99, gapNow = true, inAway = false, swept = 0, last = '', spawned = null;
@@ -15740,6 +15891,12 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
   on('spawn', ({ mob, zone }) => {
     if (!mob || (typeof arena !== 'undefined' && arena)) return;
     spawnT = clock; gapNow = false;
+    // champion-moment: nothing else registers the Champions yet (boss-tiers will own the encounter hooks), so a zone's boss that a Champion
+    // is written for meets it here: the pre scene, the post scene and, on the first clear, the Champion card
+    if (STORY_TUNE.champMoment && mob.boss && !mob.encounter && zone >= (S.maxZone || 1)) {   // the first clear only: a save past a Champion gets no scene or card from replaying it
+      const id = Object.keys(D('champ')).find(k => D('champ')[k].zone === zone);
+      if (id) { storyEncounter('champ', id); mob.encounter = { kind: 'champ', id }; }
+    }
     // the region boss's display name (REGIONS[i].boss.name; the Hollow: "The Fenmother")
     const r = regionOf(zone);
     if (mob.boss && zone === r.z1 && r.boss && r.boss.name) mob.name = r.boss.name;
@@ -15755,6 +15912,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
     if (has(key)) return;
     mark(key);
     push(enc.kind === 'elder' ? elderScene(enc.id, 'post') : champScene(enc.id, 'post'));
+    if (enc.kind !== 'elder' && STORY_TUNE.champMoment) emit('champWin', { id: enc.id, zone, name: (D('champ')[enc.id] || {}).name || '', scene: `p:${enc.id}:post` });   // the first clear, after its zoneClear and cache
   });
   on('awayBegin', () => { inAway = true; });
   on('awayEnd', () => { inAway = false; last = ''; });
@@ -16187,6 +16345,48 @@ function trainEst(active) {
   on('evoProven', () => { const k = typeof soloHero === 'function' && soloHero(); if (k && S.solo) { if (!S.solo.asc || typeof S.solo.asc !== 'object') S.solo.asc = {}; S.solo.asc[k] = 1; } });
 }
 
+// ---- src/js/55-voice.js ----
+// 55-voice: the starting hero speaks at the big moments (card hero-voice; bible 4.4 and 4.6). CORE: no DOM; the moment layer
+// (75-moments-ui.js), the Great Lantern card (75-lantern-ui.js) and the hero sheet (75-party-sheet.js) read it.
+// Barks are STORY_BEATS.hero lines named 'v_<moment>' (21k-story-hollow.js), one per starter (wren, tobin, pip). A hero with no line stays silent.
+//   voiceSay(id) -> { line, who, key } | null   the story hero's bark for a moment, or null (no starter, or no line)
+//   voicePick(ids) -> id | ''                    the strongest of several moments (VOICE_PRIO): one bark a fight end
+//   voiceOnce(id) -> bool                        true the first time for a first-only moment ('craft1'), and files it
+//   voiceLoss(zone) -> bool                      true the first time a boss at a new furthest zone beats you
+//   voiceRecord() -> [{ k, txt }]                the "On the road" rows on the hero sheet: bosses, uniques, best parry streak, days
+// Save: registerState('voice', { v: 1, best: 0, lossZ: 0, said: {} }). best: the longest run of parries with no miss; lossZ: the last zone whose
+// boss loss had a bark; said: first-only barks. All defaults, so old saves merge in; nothing is granted back.
+const VOICE_PRIO = ['boss1', 'lantern', 'star1', 'unique', 'ability', 'boss', 'craft1', 'level', 'loss'];
+let voiceSay, voicePick, voiceOnce, voiceLoss, voiceRecord;
+{
+  registerState('voice', { v: 1, best: 0, lossZ: 0, said: {} });
+  const V = () => S.voice;
+  let run = 0;   // the parry run now (not saved: a reload starts a new run)
+  voiceSay = id => {
+    const key = typeof storyHeroKey === 'function' ? storyHeroKey() : '';
+    const line = key && typeof storyHeroLine === 'function' ? storyHeroLine('v_' + id) : '';
+    if (!line) return null;
+    const r = typeof ROSTER === 'object' && ROSTER[key];
+    return { line, who: (r && r.name) || key, key };
+  };
+  voicePick = ids => VOICE_PRIO.find(id => ids.includes(id)) || '';
+  voiceOnce = id => { const d = V().said; if (d[id]) return false; d[id] = 1; return true; };
+  voiceLoss = zone => { if (!(zone > V().lossZ)) return false; V().lossZ = zone; return true; };
+  on('soloParry', e => {
+    if (!e) return;
+    if (e.res === 'parry') { run++; if (run > V().best) V().best = run; } else if (e.res === 'miss') run = 0;
+  });
+  voiceRecord = () => {
+    const st = S.stats || {}, since = +st.since || 0, days = since ? Math.max(1, Math.floor((Date.now() - since) / 864e5) + 1) : 1;
+    return [
+      { k: 'bosses', txt: `Bosses beaten: ${fmt(st.bosses || 0)}` },
+      { k: 'uniques', txt: `Uniques found: ${fmt(st.uniques || 0)}` },
+      { k: 'parry', txt: `Best parry streak: ${fmt(V().best || 0)}` },
+      { k: 'days', txt: `Days on the road: ${fmt(days)}` }
+    ];
+  };
+}
+
 // ---- src/js/56-roster.js ----
 // 56-roster (C9): 32 named heroes: the 18 original rows plus 14 designed data stubs (heroes-2.md).
 // Three starters have complete solo kits. Names, titles, rarity, role, circle and route live here; existing bios
@@ -16577,7 +16777,8 @@ var abilityOwned, abLearnInfo, abilityLearn, scrollCount, scrollFor, talentsOf, 
   registerGoal({ id: 'learn-ability', sys: 'hero', prio: 4, pct: () => (learnable() ? 1 : null),
     label: () => { const i = learnable(); return i ? `Learn ${i.a.name}: your ${SCROLLS[i.payWith].name} is ready` : ''; },
     icon: () => ({ ic: ['sword', '#F2C14E'] }),
-    go: () => { const i = learnable(); return { tab: 'party', view: 'abilities', sel: i ? `#sec-abilities .ab-row[data-ab="${i.id}"]` : '#sec-abilities' }; } });
+    go: () => { const i = learnable(); return { tab: 'party', view: 'abilities', sel: i ? `#sec-abilities .ab-det[data-ab="${i.id}"] .ab-learn` : '#sec-abilities',
+      fn: () => { if (i && typeof abilityOpenDetail === 'function') abilityOpenDetail(i.id); } }; } });   // the Learn button sits in the detail, so open it
   // the drop: a zone boss's kill (50-sim killPack emits zoneClear on a first clear, then kill)
   let firstZ = 0;
   on('zoneClear', p => { firstZ = p ? p.zone : 0; });
@@ -18398,6 +18599,18 @@ let DEEP_ARENA = null;
   }
   const favChoices = () => { const lv = D().lore.fav || 0; if (!lv) return []; return DEEP_BOON_IDS.filter(id => { const b = DEEP_BOONS[id]; return !b.c && (b.r === 'c' || (lv >= 2 && b.r === 'r')) && (!b.cls || b.cls === 'any' || b.cls === cls()); }); };
   const setFav = id => { if (id !== null && !favChoices().includes(id)) return false; D().fav = id; save(); return true; };
+  // cache-core: a first-clear cache gives the first lantern colour this save does not own, in the shop's order (Ember Red first).
+  // It is a gift, not a buy: no Marks, no `deepBuy`. It wears the colour only when no lantern is worn yet.
+  const LANTERN_GIFTS = ['l_ember', 'l_blue', 'l_ghost', 'l_moon', 'l_violet', 'l_gold'];
+  function grantLantern() {
+    const id = LANTERN_GIFTS.find(x => DEEP_SHOP[x] && !D().cos[x]);
+    if (!id) return null;
+    D().cos[id] = 1;
+    if (!D().eq.lantern && !(S.deeds && S.deeds.wear && S.deeds.wear.flame)) D().eq.lantern = id;
+    const worn = typeof wearGet === 'function' ? wearGet('flame') === id : D().eq.lantern === id;
+    if (typeof codexRefresh === 'function') codexRefresh(true);
+    return { id, n: DEEP_SHOP[id].n, col: DEEP_SHOP[id].col, worn };
+  }
   const equip = (slot, id) => { if (id !== null && (!D().cos[id] || DEEP_SHOP[id].kind !== slot)) return false; D().eq[slot] = id; save(); return true; };
 
   // ---------------- the Codex: Deepwell, Seals and Wardrobe pages, bought titles ----------------
@@ -18469,7 +18682,7 @@ let DEEP_ARENA = null;
     run: R, live: deepActive, unlockInfo: () => ({ open: deepUnlocked(), zone: T.unlockZone, hearth: hearthLv() === null ? 0 : T.hearth, hearthNow: hearthLv(), maxZone: S.maxZone }),
     floorKind: (f, r) => floorKind(f, r), oilMax: r => oilMax(r), oil: () => { const r = R(); return r ? r.oil : 0; }, drainRate, refundFor: k => refundFor(k), marksNow,
     offerView, card, owned, setProgress, trialRule, trialInfo, shop, shopRow, nextLore, favChoices,
-    start, resume, pick, reroll, banish, skip, landing, climbOut, abandon, buy, setFav, equip,
+    start, resume, pick, reroll, banish, skip, landing, climbOut, abandon, buy, setFav, equip, grantLantern,
     fall: () => deepActive() && R().phase === 'fight' ? end('wipe') : null,   // the party wiped (59c-deepwell-combat)
     foeHp: (f, mul) => R() ? foeHp(R(), f, mul || 1) : 0, floorFoes: f => R() ? floorFoes(R(), f) : [],
     _init: () => { initFor = null; ensureInit(); }
@@ -21237,15 +21450,16 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   const DOT_KIND = { burn: 1, bleed: 1, swarm: 1, curse: 1 };
   // what a turn hit was, on its number: a Burn tick in orange with the Burn icon, Bleed in red with its stacks, ...
   const TURN_SRC = { burn: ['#FF9E3D', 'burn'], ignite: ['#FF9E3D', 'burn'], bleed: ['#E0524F', 'bleed'], swarm: ['#C9A6FF', 'blind'], curse: ['#D7B8FF', 'curse'] };
-  cbTurnDamageFoe = (f, amount, kind, crit, dt, n) => {
+  cbTurnDamageFoe = (f, amount, kind, crit, dt, n, tier) => {
     if (!alive(f) || !(amount > 0)) return 0;
     const a = Math.max(0, amount), src = TURN_SRC[kind];
     f.hp -= a; if (!DOT_KIND[kind]) f.hit = 0.08; ST.heroDmg += a; if (!DOT_KIND[kind]) ST.heroHits++;
     FLOAT_EV.txt = (kind === 'counter' ? 'COUNTER ' : '') + fmt(a) + (n > 1 ? ` x${n}` : '') + (crit ? '!' : '');
     FLOAT_EV.color = src ? src[0] : kind === 'counter' || crit ? '#FF9E3D' : '#FFFFFF';
     FLOAT_EV.big = !!crit || kind === 'counter' || kind === 'ignite' || !(kind === 'attack' || DOT_KIND[kind]); FLOAT_EV.x = undefined; FLOAT_EV.y = undefined;
-    FLOAT_EV.dt = src ? 'st:' + src[1] : dt && dt !== 'phys' ? dt : ''; FLOAT_EV.rel = !src && dt && typeof typeRel === 'function' ? typeRel(f.txRow || f.type, dt) : 0; FLOAT_EV.crit = !!crit;
+    FLOAT_EV.dt = src ? 'st:' + src[1] : dt && dt !== 'phys' ? dt : ''; FLOAT_EV.rel = !src && dt && typeof typeRel === 'function' ? typeRel(f.txRow || f.type, dt) : 0; FLOAT_EV.crit = !!crit; FLOAT_EV.tier = tier || '';
     emit('float', FLOAT_EV);
+    FLOAT_EV.tier = '';
     if (crit) emit('crit', { tap: true });
     if (f.hp <= 0) foeDies(f, 0, kind || 'turn');
     return a;
@@ -21299,7 +21513,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
 
   // Hero hits (50-sim strike -> here). src 'hero' or 'party' (the Lightkeeper's lost damage).
   let heroCrit = false;
-  const FLOAT_EV = { txt: '', color: '', big: false, x: undefined, y: undefined, dt: '', rel: 0, crit: false };   // reused: the stage copies it
+  const FLOAT_EV = { txt: '', color: '', big: false, x: undefined, y: undefined, dt: '', rel: 0, crit: false, tier: '' };   // reused: the stage copies it (tier: hit-feel, 'big' | 'counter' on a turn hit)
   cbStrike = (amount, src, at, label, color, big) => {
     if (src !== 'party') ST.heroHits++;   // AC2: hero strikes (the Hot Streak secret)
     if (!anyFoe()) return;
@@ -21325,7 +21539,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     }
     // S1 (core-2 2.1): the number carries its type icon and a weak / resisted mark; a crit ends in "!"
     FLOAT_EV.txt = label || fmt(d || amount) + (big ? '!' : ''); FLOAT_EV.color = color; FLOAT_EV.big = big;
-    FLOAT_EV.x = at ? at.x : undefined; FLOAT_EV.y = at ? at.y : undefined; FLOAT_EV.dt = ty; FLOAT_EV.rel = rel; FLOAT_EV.crit = !!strikeCrit;   // SOLO2: the crit number's look
+    FLOAT_EV.x = at ? at.x : undefined; FLOAT_EV.y = at ? at.y : undefined; FLOAT_EV.dt = ty; FLOAT_EV.rel = rel; FLOAT_EV.crit = !!strikeCrit; FLOAT_EV.tier = '';   // SOLO2: the crit number's look
     emit('float', FLOAT_EV);
     burst(0.66, 0.6, big ? '#FFD27A' : '#FFFFFF', big ? 8 : 3, 0.5);
   };
@@ -24763,6 +24977,9 @@ const TURN_TUNE = {
   // a normal foe's (and an elite's) hits x this, so a landed hit costs a hero who keeps up about 8-15% of their health
   // against the higher reference HP above (zone fights and the Deepwell; a Proving's foes hit for shares of your health)
   normHitX: [[3, 1], [8, 0.7], [34, 0.7], [35, 1]],
+  // an elite hits this much harder than a normal foe of its zone (foe-moves-by-type: elites are a threat, not a pat on the head)
+  eliteHitX: 1.4,
+  eliteHpX: 2.5,   // ... and lasts this much longer
   // the hero's max HP in turn fights x this. Wren's HP grows with her Attack, which carries the real-time fight's damage
   // parity (SOLO_TUNE.heroX 0.76, against Pip's 1.15), while turn fights give that back to her damage only (heroX below)
   heroHpX: { wren: 1.2, tobin: 1, pip: 1 },
@@ -24776,7 +24993,7 @@ const TURN_TUNE = {
   // Tobin's late pass (autopilot, 2026-10-06; DECISIONS.md band 15-30% slower than Wren and Pip): from zone 30 the refAtk
   // fall left his kills x1.4-1.7 slower, so his Attack, abilities and counters hit x this by zone. His HP, Speed and Guard stay as were.
   lateX: { tobin: [[1, 1], [25, 1], [30, 1.25], [34, 1.6], [35, 1.2], [38, 1.35], [42, 1.4]] },
-  lateBoss: 0.6,   // a boss gets this share of the late pass (its fight keeps its length; the pass is for the foes between)
+  lateBoss: 0.2,   // a boss gets this share of the late pass (its fight keeps its length; the pass is for the foes between)
   foeAtkX: 1,
   goldX: 3, xpX: 2.5, essenceX: 1.6,              // fewer, longer fights pay more each (balance: docs/design/combat-turn-build.md)
   consec: 2, consecBoss: 3,                        // the most turns in a row
@@ -24800,8 +25017,8 @@ const TURN_TUNE = {
   //            kept-up hero about a quarter to a third of their health, a landed charge about two thirds. From zone 35
   //            the reference HP sits below a kept-up hero's (the late-zone pass), so hitX steps up there.
   //   payX     a longer boss pays more: gold and XP x (1 + payX x (its HP share - 1)), so an hour of play pays as before
-  boss: { hpX: [[3, 1], [10, 1.8], [15, 2.5], [20, 2.4], [25, 2.6], [30, 3.6], [34, 3.6], [36, 1.85]], regionHpX: 1.4,   // the gear pass (2026-10-02): zones 15-34 about x1.09, 36+ 1.5 -> 1.85, region 1.25 -> 1.4
-    hitX: [[3, 1], [6, 1.4], [8, 1.6], [15, 1.6], [20, 1.5], [26, 1.3], [34, 1.3], [35, 1.9]], chargeX: [[3, 1], [6, 1.3], [34, 1.3], [35, 1.35]], payX: 0.5 },
+  boss: { hpX: [[3, 1], [10, 1.8], [15, 2.5], [20, 2.4], [25, 1.0], [27, 0.52], [30, 1.55], [34, 0.94], [35, 2.725], [36, 1.85]], regionHpX: 1.4,   // the gear pass (2026-10-02): zones 15-34 about x1.09, 36+ 1.5 -> 1.85, region 1.25 -> 1.4
+    hitX: [[3, 1], [6, 1.4], [8, 1.6], [15, 1.6], [20, 1.5], [25, 0.55], [27, 0.34], [30, 0.72], [34, 0.52], [35, 1.9]], chargeX: [[3, 1], [6, 1.3], [34, 1.3], [35, 1.35]], payX: 0.5 },
   // the boss riders on the hero (shares of the reference HP a tick, two hero turns)
   heroDot: { bleed: 0.02, burn: 0.04, venom: 0.02 }, heroDotT: 2, heroChill: 0.1, heroBlind: 0.3,
   windowCaps: { parry: 0.35, dodge: 0.5 }, dodgeTrain: 0.004,   // Dodge Training: +4 ms of dodge window a level
@@ -24899,15 +25116,15 @@ function turnFoeSetup(f, z, o) {
   } else if (Z) {
     moves = Z.moves; script = Z.moves; spd = Z.speed || TURN_FOE_SPEED.normal; hpA = Z.hp || TURN_FOE_HP.zoneFoe;
   } else {
-    const ranged = !!f.ranged;
-    moves = ranged ? TURN_FOE_RANGED : TURN_FOE_BASIC; script = moves.slice();
-    spd = ranged ? TURN_FOE_SPEED.ranged : TURN_FOE_SPEED.normal; hpA = TURN_FOE_HP.normal;
+    const ranged = !!f.ranged, TY = TURN_FOE_TYPES[f.type];   // its type's own moves (24d TURN_FOE_TYPES), else the basic pair
+    moves = TY ? TY.moves : ranged ? TURN_FOE_RANGED : TURN_FOE_BASIC; script = moves.slice();
+    spd = TY ? TY.speed : ranged ? TURN_FOE_SPEED.ranged : TURN_FOE_SPEED.normal; hpA = TURN_FOE_HP.normal;
     const C = COMBAT_TUNE;
     if (o.elite === true || (o.elite !== false && z >= C.eliteFrom && Math.random() < C.eliteP)) {
-      f.elite = true; script = script.concat([TURN_FOE_ELITE]);
+      f.elite = true; script = script.concat([TY ? TY.sig : TURN_FOE_ELITE]);
       const ids = Object.keys(TURN_TRAITS), tr = o.trait || ids[(Math.random() * ids.length) | 0];   // one trait (24d TURN_TRAITS)
       f.tr = [tr]; f.name = ((typeof ELITE_TRAITS === 'object' && ELITE_TRAITS[tr] && ELITE_TRAITS[tr].name) || 'Elite') + ' ' + f.name;
-      spd = TURN_FOE_SPEED.elite; hpA = TURN_FOE_HP.elite;
+      spd = TY ? TY.speed * TURN_FOE_SPEED.elite / TURN_FOE_SPEED.normal : TURN_FOE_SPEED.elite; hpA = TURN_FOE_HP.elite * T.eliteHpX * (TY && TY.eliteHp || 1);   // an elite keeps its type's pace
     }
   }
   // the first zone bosses come in easier while you learn to parry and dodge (bossEase: their HP share in zones 1, 2, 3)
@@ -24919,7 +25136,7 @@ function turnFoeSetup(f, z, o) {
   const hp = hpA * ease * len * turnRefAtk(z) * (0.95 + Math.random() * 0.1);
   f.hp = f.max = hp; f.turn = 1; f.tz = z;
   f.tk = { script, spd: spd * 10, arm: Z && Z.armour ? Z.armour : f.armoured ? 0.3 : 0, boss: !!f.boss, region, elite: !!f.elite,
-    hx: zb ? turnZoneLine(B.hitX, z) : f.boss || f.trial || f.deep ? 1 : turnZoneLine(T.normHitX, z), cx: zb ? turnZoneLine(B.chargeX, z) : 1 };
+    hx: zb ? turnZoneLine(B.hitX, z) : f.boss || f.trial || f.deep ? 1 : turnZoneLine(T.normHitX, z) * (f.elite ? T.eliteHitX : 1), cx: zb ? turnZoneLine(B.chargeX, z) : 1 };
   const C = COMBAT_TUNE;
   // a longer boss pays more (the boss pass: payX of its extra length), so an hour of play pays about as before
   const pay = 1 + (len - 1) * B.payX;
@@ -25659,7 +25876,10 @@ const TURN_LIVE_IO = {
   healFoe: d => { const f = TURN_LIVE && TURN_LIVE.foe; if (f && !f.dead && f.hp > 0) { f.hp = Math.min(f.max, f.hp + d); emit('float', { txt: '+' + fmt(d), color: '#6FCB6A', big: false }); } },
   slotId: slot => soloEquipped()[slot] || null,
   damageFoe: (d, kind, crit, dt, n) => {
-    const f = TURN_LIVE.foe, got = cbTurnDamageFoe(f, d, kind, crit, dt, n), H = TURN_TUNE.hitstop;
+    const f = TURN_LIVE.foe, H = TURN_TUNE.hitstop, dot = /^(burn|bleed|swarm|curse)$/.test(kind);
+    // hit feel: the number's tier, for its size and sting (display only: nothing below reads it)
+    const bigHit = !dot && !!f && d >= 0.2 * f.max, tier = kind === 'counter' ? 'counter' : crit ? 'crit' : bigHit ? 'big' : '';
+    const got = cbTurnDamageFoe(f, d, kind, crit, dt, n, tier);
     // hit feel: a crit or a hit for a fifth of the foe's HP stops the clock for a beat and shakes the stage
     if (got > 0 && kind !== 'counter' && !/^(burn|bleed|swarm|curse)$/.test(kind)) {
       const big = f && got >= 0.2 * f.max;
@@ -27007,9 +27227,11 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
   // SOLO2 (owner): a crit's number pops (up to x1.35 fast, settling to x1 by CRIT_POP s), rises a little higher and
   // slower (it lives CRIT_LIFE s), with three pixel sparks behind it. Reduced motion: no pop, no rise, static sparks.
   const CRIT_POP = 0.18, CRIT_LIFE = 1.2;
+  // hit feel: a turn hit's tier scales its number (normal 1; the counter is the biggest, then a crit's pop and sparks, then a big hit)
+  const TIER_SIZE = { big: 1.15, crit: 1.25, counter: 1.3 };
   let critFloats = 0;   // crit numbers raised (stageStats: the check reads it)
   // S1 (core-2 2.1): dt, rel: a hit's damage type (its icon goes in front) and 1 weak / -1 resisted (a mark after)
-  function pushFloat(txt, color, big, x, y, dt, rel, crit) {
+  function pushFloat(txt, color, big, x, y, dt, rel, crit, tier) {
     const fx = x ?? (0.7 + (Math.random() - 0.5) * 0.12);
     // Each new text takes the first free row (0-3) near its spot, one line below the texts still
     // rising there; when all rows are busy the oldest text there fades out and gives up its row.
@@ -27024,7 +27246,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
     const f = free || last;
     f.on = true; f.txt = txt; f.color = color; f.big = !!big; f.crit = !!crit; f.max = crit ? CRIT_LIFE : 0.95; f.life = f.max; f.x = fx;
     if (crit) critFloats++;
-    f.y = y ?? 0.42; f.row = row; f.off = row; f.wz = 0; f.dt = dt || ''; f.rel = rel | 0;
+    f.y = y ?? 0.42; f.row = row; f.off = row; f.wz = 0; f.dt = dt || ''; f.rel = rel | 0; f.tier = tier || '';
     f.ax = foe && foe.fr ? foe.x : SW * 0.7;
   }
   // Party numbers (C4): hits, heals and shields over each member, from unitHit / unitHeal. Each member
@@ -27937,7 +28159,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
   // ================= events =================
   // W1-D (playtest-2 P2-5): leaving a fight for a gather scene drops the combat numbers still rising (a COUNTER floated over the woodcutting)
   on('sceneReset', () => { if (S.activity !== 'fight') { for (const f of floats) f.on = false; for (const n of nums) n.on = false; } });
-  on('float', f => { pushFloat(f.txt, f.color, f.big, f.x, f.y, f.dt, f.rel, f.crit); if (f.color === '#B58CFF') partyPulse(); });
+  on('float', f => { pushFloat(f.txt, f.color, f.big, f.x, f.y, f.dt, f.rel, f.crit, f.tier); if (f.color === '#B58CFF') partyPulse(); });
   on('burst', b => {
     // Core bursts use the old stage fractions; the ones aimed at the foe are re-centred on it (on a
     // pack: the foe that died this instant, its dead timer just set, else the shown foe).
@@ -28520,7 +28742,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
     for (const f of floats) {
       if (!f.on) continue;
       const age = f.max - f.life, pop = reduced ? 1 : f.crit ? critPop(age) : age < 0.08 ? 1.35 - age * 4 : 1;
-      const base = (f.big ? 21 : 15) * tz * TXT_K;
+      const base = (f.big ? 21 : 15) * (TIER_SIZE[f.tier] || 1) * tz * TXT_K;
       const lo = top + base, onFoe = f.x > 0.55 && foe.fr;
       // one start line per side (just over the foe's head, or half way down the band), then each
       // row one line higher; a row that would start above the band starts at its top and fades sooner
@@ -28534,7 +28756,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
       const fx = onFoe && (packN > 1 || gath) ? f.ax + (f.x - 0.7) * SW * 0.5 : f.x * SW;
       const hw = f.bw * pop / 2, x = Math.max(hw, Math.min(xr - hw, fx));
       ctx.globalAlpha = al;
-      if (f.crit) critSparks(x, y - f.by * 0.45, f.bw, age);
+      if (f.crit || f.tier === 'counter') critSparks(x, y - f.by * 0.45, f.bw, age);
       drawText(f, x, y, pop);
     }
     // party numbers: over each member's head, stacked upward, rising a little and fading
@@ -34902,6 +35124,8 @@ var handsTradeOpenPicker;
     if (det && list && p && getComputedStyle(list).display === 'none') p.scrollTop = 0;
     if (det) { const f = det.querySelector('.ab-x'); if (f) try { f.focus({ preventScroll: true }); } catch (e) {} }
   }
+  // Next Up (55-goals): Go opens the ability's detail, where the Learn button is
+  globalThis.abilityOpenDetail = id => { if (selId !== id) { filt = 'all'; selId = id; armed = ''; sig = ''; } };
   function closeDet() {
     const p = panels(), id = selId;
     selId = ''; armed = ''; redraw();
@@ -35690,7 +35914,8 @@ let showAwayReport;
         if (l.sub) tx.append(el('div', 'away-lsub', l.sub));
         row.append(tx);
         if (typeof l.go === 'function') {
-          const gb = el('button', 'mini go away-lgo', 'Go');
+          const gb = el('button', 'mini go away-lgo', l.goLabel || 'Go');
+          if (l.goLabel) gb.setAttribute('aria-label', l.goLabel + ': ' + (l.txt || ''));
           gb.addEventListener('click', () => { close(); try { l.go(); } catch (e) { console.error('[lanternfall] away line go failed', e); } });
           row.append(gb);
         }
@@ -35857,6 +36082,58 @@ let showAwayReport;
   });
   // The Classic achievements grid moved to the Achievements menu (75-deeds-ui.js, Tracks > Classic).
 }
+
+// ---- src/js/75-caches-ui.js ----
+// 75-caches-ui: the Lantern Cache card (card cache-core). Browser-only; the rules are in 55-caches.js.
+// A cache shows through the moment layer (75-moments-ui): a big card, or, once the player is on auto-open, a medium banner unless it
+// holds a look or a unique (or is the first Star, or zone 1's first boss). The card lists what the win paid, in the colour of the best
+// thing inside. The drops this clear already queued as moments (the unique, the first Star, zone 1's boss card) fold into the cache card.
+// This file loads before 75-moments-ui, so the moment layer's names are read inside the handler, never at load.
+on('cacheOpen', v => {
+  if (typeof moment !== 'function') return;
+  if (!MOMENT_KINDS.cacheAuto) MOMENT_KINDS.cacheAuto = { tier: 'medium', eye: 'Lantern Cache', col: '#F2C14E', snd: 'mid' };
+  const big = !v.auto || !!v.look || !!v.unique || v.starFirst || v.zone === 1;
+  const lines = [];
+  if (v.look) lines.push({ txt: `New lantern colour: ${v.look.n.replace(/ lantern$/, '')}`, icon: { ic: ['banner', v.look.col] } });
+  if (v.unique) lines.push({ txt: `${v.unique.name}. A unique.`, icon: { item: v.unique.item } });
+  if (v.star) lines.push({ txt: `Star: ${v.star.name}` });
+  if (v.trophy) lines.push({ txt: `${v.trophy.n} ${v.trophy.name}` });
+  const pay = [];
+  if (v.scroll) pay.push(v.scroll.name);
+  if (v.gold) pay.push(`${fmt(v.gold)} gold`);
+  if (v.ess && !v.essFull) pay.push(`${v.ess} ${MAT.ess.short[v.tier - 1]} Essence`);
+  if (pay.length) lines.push({ txt: pay.join(', ') });
+  if (v.essFull) lines.push({ txt: 'Your Essence store is full, so some or all of this win\'s Essence may be lost. Build more room at the Camp.' });
+  // the colour: a unique first, then the lantern colour, then a Star, then a Scroll
+  const col = v.unique ? '#FF8A3D' : v.look ? v.look.col : v.star ? '#F2C14E' : v.scroll ? v.scroll.col : '#F2C14E';
+  const icon = v.unique ? { item: v.unique.item } : { ic: ['banner', col] };
+  const title = v.zone === 1 ? 'First boss down' : `Zone ${v.zone} cleared`;
+  // the sub is one short line: the unique's odds (honest, with modifiers), else what a look does
+  const sub = v.chance !== null && v.chance !== undefined ? `Unique chance on this win: ${v.chance}%.` : v.look && v.look.worn ? 'Your lantern burns it now.' : 'Here is what the win gave you.';
+  const o = { title, sub, col, icon, lines, zone: v.zone };
+  if (big && v.n >= CACHE_TUNE.autoFrom) o.actions = [{ txt: cacheAuto() ? 'Turn off auto-open' : 'Open the next ones automatically', fn: () => cacheSetAuto(!cacheAuto()) }];
+  const barks = v.zone === 1 ? ['boss1'] : [];
+  const ci = MOMENT_Q.findIndex(q => q.kind === 'champion' && q.zone === v.zone);   // champion-moment: a Champion's first clear queued its own card (75-moments-ui)
+  if (big || ci >= 0) {
+    // fold in what this clear already queued: zone 1's boss card, the unique, the Star
+    for (let i = MOMENT_Q.length - 1; i >= 0; i--) {
+      const q = MOMENT_Q[i];
+      if (q.kind === 'boss' || (q.kind === 'unique' && v.unique && q.title === v.unique.name)
+        || ((q.kind === 'starFirst' || q.kind === 'star') && v.star && q.title === v.star.name)) { if (q.bark) barks.push(q.bark); MOMENT_Q.splice(i, 1); }
+    }
+    // the hero's line for what the card now carries (55-voice): the strongest of the folded moments' barks
+    if (barks.length && typeof voicePick === 'function') o.bark = voicePick(barks);
+  }
+  // the cache folds into that card, so the win is one card
+  if (ci >= 0) {
+    const c = MOMENT_Q.splice(ci, 1)[0];
+    if (c.bark) barks.push(c.bark);
+    if (barks.length && typeof voicePick === 'function') o.bark = voicePick(barks);
+    moment('champion', Object.assign(o, { title: c.title, eye: c.eye, scene: c.scene }));
+    return;
+  }
+  moment(big ? 'cache' : 'cacheAuto', o);
+});
 
 // ---- src/js/75-camp-ui.js ----
 // 75-camp-ui: the Camp part of the Camp tab (tab id 'world'): the Hearth card, the builders,
@@ -39518,7 +39795,7 @@ let deedsUI = null;
     const busy = r.kills || r.gold >= 1 || r.xp >= 1 || (r.zones && r.zones.to > r.zones.from) || r.bosses || r.raidDmg >= 1 ||
       r.embers || (r.mats && r.mats.length) || (r.items && r.items.length) || (r.skills && r.skills.length) || (r.extra && r.extra.length);
     if (!busy) return null;
-    return topGoals(3).map(g => ({ icon: goalIcon(g.icon), txt: g.label, sub: g.ready ? 'Ready now' : pctTxt(g) + ' done', group: 'Next up', go: () => goTo(g) }));
+    return topGoals(3).map(g => ({ icon: goalIcon(g.icon), txt: g.label, sub: g.ready ? 'Ready now' : pctTxt(g) + ' done', group: 'Next up', goLabel: g.goLabel, go: () => goTo(g) }));
   });
 }
 
@@ -39703,6 +39980,8 @@ var introUI;   // var: 76-create (loaded after this file) reads it at run time
     const h = el('h2', 'gl-head', e.head); h.id = 'glHead';
     card.append(h);
     if (e.text) card.append(el('p', 'gl-text', e.text));
+    const say = e.n === 1 && typeof voiceSay === 'function' ? voiceSay('lantern') : null;   // hero-voice: the Hollow's lantern, one line
+    if (say) card.append(el('p', 'gl-say', '\u201C' + say.line + '\u201D \u2014 ' + say.who));
     if (e.rewards && e.rewards.length) {
       const list = el('ul', 'gl-rw');
       for (const x of e.rewards) {
@@ -39891,10 +40170,12 @@ var introUI;   // var: 76-create (loaded after this file) reads it at run time
 // wait for the guide step on screen, the Away and What's-new cards, and the first seconds after boot.
 // Several at fight end fold into one card with a list. Reduced motion: the same card, no burst.
 // API for later cards:  moment(kind, { title, sub, rarity, icon, still, lines, actions })
-//   kind     'boss' | 'unique' | 'cache' | 'hero' | 'starFirst' (big; a cache with a look is big too); 'level' | 'ability' | 'star' | 'look' | 'craft' (medium)
+//   kind     'boss' | 'unique' | 'cache' | 'hero' | 'champion' | 'starFirst' (big; a cache with a look is big too); 'level' | 'ability' | 'star' | 'look' | 'craft' (medium)
 //   title    the name, one line;  sub  one short line;  rarity  common..legendary (the colour; else the kind's own)
 //   icon     an icon spec for iconOf() ({ item }, { mat }, { ic });  still  a data URL (a bigger picture)
 //   lines    [{ txt, ic? }] a short list under the title;  actions  [{ txt, fn }] extra buttons beside Continue
+//   bark     a hero-voice moment id (55-voice.js): the story hero's line shows on the card or banner with their portrait. At most one bark a
+//            flush (the strongest, VOICE_PRIO). kind 'bark' is a banner of just the line, dropped after 20 s if the banner budget has no room.
 // momentState() -> { up, banner, queued } for the checks. Nothing here is saved: a moment not yet seen when the game closes
 // is dropped (a unique already sits in the trophy wall).
 const MOMENT_TUNE = { bannerS: 2.6, bannerExtraS: 0.7, settleS: 0.3, tapLockMs: 700, maxLines: 5, maxBanner: 3, bootS: 4, guideWaitS: 1, midMax: 2, midWindowS: 180, midFirstS: 1800 };
@@ -39903,12 +40184,14 @@ const MOMENT_KINDS = {
   unique: { tier: 'big', eye: 'Unique loot', col: '#FF8A3D', snd: 'big' },
   cache: { tier: 'big', eye: 'Lantern Cache', col: '#F2C14E', snd: 'big' },
   hero: { tier: 'big', eye: 'New hero', col: '#B58CFF', snd: 'big' },
+  champion: { tier: 'big', eye: 'Champion down', col: '#F2C14E', snd: 'big' },
   starFirst: { tier: 'big', eye: 'Your first Star', col: '#F2C14E', snd: 'big' },
   level: { tier: 'medium', eye: 'Level up', col: '#6FCB6A', snd: 'mid' },
   ability: { tier: 'medium', eye: 'New ability', col: '#5FA8FF', snd: 'mid' },
   star: { tier: 'medium', eye: 'New Star', col: '#F2C14E', snd: 'mid' },
   look: { tier: 'medium', eye: 'Look found', col: '#B58CFF', snd: 'mid' },
-  craft: { tier: 'medium', eye: 'Well made', col: '#5FA8FF', snd: 'mid' }
+  craft: { tier: 'medium', eye: 'Well made', col: '#5FA8FF', snd: 'mid' },
+  bark: { tier: 'medium', eye: '', col: '#F2C14E', snd: 'mid' }
 };
 const MOMENT_RARITY = { common: '#CFC6D8', uncommon: '#6FCB6A', rare: '#5FA8FF', epic: '#B58CFF', legendary: '#FF8A3D' };
 const MOMENT_Q = [];
@@ -39919,8 +40202,10 @@ const MOMENT_OFF = (() => { try { return localStorage.getItem('lanternfall.test.
 function moment(kind, o) {
   if (MOMENT_OFF) return false;
   o = o || {};
+  const say = o.bark && typeof voiceSay === 'function' ? voiceSay(o.bark) : null;
+  if (kind === 'bark' && !say) return false;   // a hero with no line stays silent
   const k = MOMENT_KINDS[kind] || { tier: 'medium', eye: '', col: '#F2C14E', snd: 'mid' };
-  MOMENT_Q.push(Object.assign({}, o, { kind, tier: k.tier, eye: o.eye || k.eye, col: (o.rarity && MOMENT_RARITY[o.rarity]) || o.col || k.col, snd: k.snd }));
+  MOMENT_Q.push(Object.assign({}, o, { kind, tier: k.tier, eye: o.eye || k.eye, col: (o.rarity && MOMENT_RARITY[o.rarity]) || o.col || k.col, snd: k.snd, say, at: Date.now() }));
   MOMENT_UI.wait = 0;
   return true;
 }
@@ -39933,7 +40218,8 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
   // a card up, the guide's step, the What's-new window or the first seconds after boot hold a moment back
   // (the guide's step gets guideWaitS seconds to finish, then the moment shows over it: a step left on screen must not hide a unique)
   const blocked = () => !!document.querySelector('.away-ov, #createScreen, .join-ov, .gl-ov, .dd-fc-ov') || document.hidden || NEWS.open || performance.now() - bootT < MOMENT_TUNE.bootS * 1000
-    || (guideBusy() && MOMENT_UI.guideT < MOMENT_TUNE.guideWaitS);
+    || (guideBusy() && MOMENT_UI.guideT < MOMENT_TUNE.guideWaitS)
+    || (typeof storyBusy === 'function' && MOMENT_Q.some(q => q.kind === 'champion' && q.scene && storyBusy(q.scene)));   // a Champion's scene plays first, then its card
   // medium moments in the first half hour: at most midMax in any midWindowS seconds
   const midRoom = () => {
     const u = MOMENT_UI, now = Date.now();
@@ -39955,6 +40241,23 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
     li.append(el('span', null, l.txt));
     return li;
   }
+  // hero-voice: the story hero's line and portrait
+  const portraitOf = key => { try { return portraitURL(key === (typeof soloHero === 'function' && soloHero()) ? 'hero' : key) || ''; } catch (e) { return ''; } };
+  function sayBox(say) {
+    const b = el('div', 'mm-say'), u = portraitOf(say.key);
+    if (u) b.append(img(u, 'mm-say-pt'));
+    const t = el('div', 'mm-say-tx'); t.append(el('p', null, '\u201C' + say.line + '\u201D'), el('small', null, say.who));
+    b.append(t);
+    return b;
+  }
+  // one bark a flush: the strongest says it, on the first item; a bark-only moment is dropped when something else carries the line
+  function withSay(list) {
+    const src = list.find(x => x.say && x.bark === voicePick(list.filter(y => y.say).map(y => y.bark)));
+    const rest = list.filter(x => x.kind !== 'bark').map(x => (x.say ? Object.assign({}, x, { say: null }) : x));
+    if (!src) return rest.length ? rest : list;
+    if (rest.length) { rest[0] = Object.assign({}, rest[0], { say: src.say }); return rest; }
+    return [Object.assign({}, src, { eye: src.say.who, title: '\u201C' + src.say.line + '\u201D', say: null, pic: portraitOf(src.say.key) })];
+  }
   function showCard(list) {
     const u = MOMENT_UI, first = list[0];
     u.lastFocus = document.activeElement;
@@ -39966,12 +40269,13 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
     card.append(el('div', 'mm-eye', first.eye));
     const art = el('div', 'mm-art'), burst = el('div', 'mm-burst');
     art.append(burst);
-    let pic = null; try { pic = first.still || (first.icon && iconOf(first.icon)); } catch (e) {}
+    let pic = null; try { pic = first.still || first.pic || (first.icon && iconOf(first.icon)); } catch (e) {}
     if (pic) { const im = img(pic, 'mm-img'); art.append(im); }
     card.append(art);
     const h = el('h2', 'mm-head', first.title || first.eye); h.id = 'mmHead';
     card.append(h);
     if (first.sub) card.append(el('p', 'mm-sub', first.sub));
+    if (first.say) card.append(sayBox(first.say));
     // the rest of the queue (and any lines of the first) fold into one list
     const rows = (first.lines || []).slice();
     for (const x of list.slice(1)) rows.push({ txt: [x.eye, x.title].filter(Boolean).join(': '), icon: x.icon });
@@ -40003,7 +40307,7 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
     const u = MOMENT_UI, box = $('toasts'); if (!box) return;
     if (u.banner) { dropToast(u.banner); u.banner = null; }
     const shown = list.slice(0, MOMENT_TUNE.maxBanner), first = shown[0];
-    let pic = null; try { pic = first.icon && iconOf(first.icon); } catch (e) {}
+    let pic = null; try { pic = first.pic || (first.icon && iconOf(first.icon)); } catch (e) {}
     // built here, not by makeToast: a moment sits outside the pop budget and the toast counters (tools/check.mjs counts makeToast calls)
     const t = el('div', 'toast good hi mm-toast');
     t._p = 2; t._kind = 'good'; t._more = 0;
@@ -40014,6 +40318,7 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
     const tx = el('div', 'mm-t-tx');
     tx.append(el('div', 'mm-t-eye', first.eye), el('div', 'mm-t-title', first.title || ''));
     if (first.sub && shown.length === 1) tx.append(el('div', 'mm-t-sub', first.sub));
+    if (first.say) tx.append(el('div', 'mm-t-say', '\u201C' + first.say.line + '\u201D'));
     for (const x of shown.slice(1)) tx.append(el('div', 'mm-t-line', [x.eye, x.title].filter(Boolean).join(': ')));
     if (list.length > shown.length) tx.append(el('div', 'mm-t-line', `And ${list.length - shown.length} more.`));
     t.append(tx);
@@ -40036,16 +40341,17 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
     return [last].concat(list.filter(x => x.kind !== 'level'));
   }
   function flush() {
-    const u = MOMENT_UI;
+    const u = MOMENT_UI, now = Date.now();
+    for (let i = MOMENT_Q.length - 1; i >= 0; i--) if (MOMENT_Q[i].kind === 'bark' && now - MOMENT_Q[i].at > 20000) MOMENT_Q.splice(i, 1);   // a bark that missed its moment
     const big = MOMENT_Q.filter(x => x.tier === 'big'), mid = MOMENT_Q.filter(x => x.tier !== 'big');
     if (big.length && !u.ov) {
-      const all = big.concat(fold(mid)); MOMENT_Q.length = 0;   // mediums ride on the big card as lines
+      const all = withSay(big.concat(fold(mid))); MOMENT_Q.length = 0;   // mediums ride on the big card as lines
       for (const x of mid) MOMENT_UI.midAt.push(Date.now());   // each folded medium counts against the cap
       showCard(all); return;
     }
     if (big.length) return;   // a big card is up: wait for it
     if (u.ov || (u.banner && u.banner._hold > Date.now())) return;   // a banner keeps its minimum time; a banner under a big card would play unseen
-    if (mid.length && midRoom()) { const all = fold(mid); MOMENT_Q.length = 0; showBanner(all); }
+    if (mid.length && midRoom()) { const all = withSay(fold(mid)); MOMENT_Q.length = 0; showBanner(all); }
   }
   // a timer, not onTick: a guide step or a card that holds the game must not hold a moment back
   setInterval(() => {
@@ -40067,26 +40373,41 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
     const it = e && e.item; if (!it || !it.u || !UNIQ[it.u]) return;
     const u = UNIQ[it.u];
     moment('unique', { title: u.name, sub: e.first ? 'A new unique. It joins your trophy wall.' : 'Another copy of a unique you have.',
-      rarity: 'legendary', icon: { item: it },
+      rarity: 'legendary', icon: { item: it }, bark: 'unique',
       lines: e.kept ? [] : [{ txt: 'Your bag was full, so it was salvaged.' }] });
   });
   on('zoneClear', e => {
-    if (!e || e.zone !== 1) return;   // the first boss: later zone bosses have their own toast, scroll and (every region) Great Lantern
-    moment('boss', { title: 'The first boss falls', sub: `${zoneName(e.zone)} is cleared. The road goes on.`, icon: { ic: ['banner', '#F2C14E'] } });
+    if (!e) return;
+    // later zone bosses have their own toast and scroll; a region's last boss has the Great Lantern card, which carries the hero's line
+    if (e.zone !== 1) { if (typeof REGIONS === 'object' && !REGIONS.some(r => r.z1 === e.zone)) moment('bark', { bark: 'boss' }); return; }
+    moment('boss', { title: 'The first boss falls', sub: `${zoneName(e.zone)} is cleared. The road goes on.`, icon: { ic: ['banner', '#F2C14E'] }, bark: 'boss1' });
+  });
+  // champion-moment: a Champion's first clear is one big card. Its post scene plays as the story sheet first (the card waits for it, above);
+  // the card is the zone's cache (already queued by zoneClear) turned into a Champion card, or its own card when no cache came
+  on('champWin', e => {
+    if (!e) return;
+    const title = e.name ? `${e.name} falls` : 'Champion down', eye = `Zone ${e.zone} Champion down`;
+    const q = MOMENT_Q.find(x => (x.kind === 'cache' || x.kind === 'cacheAuto') && x.zone === e.zone);   // the cache may already be queued; else it folds in when it opens (75-caches-ui)
+    if (!q) { moment('champion', { title, eye, sub: 'The road goes on.', icon: { ic: ['banner', '#F2C14E'] }, bark: 'boss', zone: e.zone, scene: e.scene }); return; }
+    const k = MOMENT_KINDS.champion;
+    Object.assign(q, { kind: 'champion', tier: k.tier, eye, snd: k.snd, title, scene: e.scene });
   });
   on('heroUnlocked', e => { if (e && e.id) moment('hero', { title: heroName(e.id), sub: 'A new hero will take up the lamp.', icon: { ic: ['banner', '#B58CFF'] } }); });
   // level up is medium only on the first level and every 5th (a banner a level would be a flood); otherwise the toast rules decide
   const MOMENT_LEVEL = L => L === 2 || L % 5 === 0;
-  on('levelup', e => { if (e && !e.quiet && MOMENT_LEVEL(e.L)) moment('level', { title: `Level ${e.L}`, sub: `Your hero hits ${Math.round(PACE.heroLv * 100)}% harder.`, L: e.L, icon: { ic: ['banner', '#6FCB6A'] } }); });
+  on('levelup', e => { if (e && !e.quiet && MOMENT_LEVEL(e.L)) moment('level', { title: `Level ${e.L}`, sub: `Your hero hits ${Math.round(PACE.heroLv * 100)}% harder.`, L: e.L, bark: 'level', icon: { ic: ['banner', '#6FCB6A'] } }); });
   on('abilityLearned', e => {
     const a = e && typeof ABILITIES === 'object' && ABILITIES[e.id]; if (!a) return;
-    moment('ability', { title: a.name, sub: heroName(e.hero) + ' learns a new ability.' });
+    moment('ability', { title: a.name, sub: heroName(e.hero) + ' learns a new ability.', bark: 'ability' });
   });
   on('starFound', e => {
     if (!e || e.quiet || typeof STARS !== 'object' || !STARS[e.id]) return;
     const first = Object.keys((S.stars && S.stars.own) || {}).length <= 1;   // the first Star is a big card (DECISIONS, Early game); later ones are a banner
-    moment(first ? 'starFirst' : 'star', { title: STARS[e.id].name, sub: STARS[e.id].text });
+    moment(first ? 'starFirst' : 'star', { title: STARS[e.id].name, sub: STARS[e.id].text, bark: first ? 'star1' : '' });
   });
+  // hero-voice: a boss that beats you (once for each new furthest zone) and the first thing you craft
+  on('bossFail', e => { if (e && e.zone >= 1 && typeof voiceLoss === 'function' && voiceSay('loss') && voiceLoss(e.zone)) moment('bark', { bark: 'loss' }); });
+  on('crafted', e => { if (e && e.item && typeof voiceOnce === 'function' && voiceSay('craft1') && voiceOnce('craft1')) moment('bark', { bark: 'craft1' }); });
   // a look found: the Deeds grant looks with a Feat, a Group level or a Chapter; compare what is owned
   let ownedLooks = null;
   const lookSet = () => { try { return new Set(deeds.looks().filter(l => l.got).map(l => l.id)); } catch (e) { return null; } };
@@ -40498,6 +40819,19 @@ let navUI = null;
   const onCtrl = () => !S.tab || isWide();
   const vis = n => !!(n && n.getClientRects().length && n.offsetParent !== null);
   const first = nm => String(nm || '').split(' ')[0];
+  // A marker must point at something the player can press right now. A disabled button, or a spot another element sits on,
+  // rings nothing and never pauses the game (guide-target-guard). The stage is exempt: its targets are points inside the scene.
+  const stageBox = $('stageBox');
+  const pressable = n => !n.disabled && n.getAttribute('aria-disabled') !== 'true' && !n.closest('[inert]');
+  function reachable(n) {
+    if (stageBox.contains(n)) return true;
+    const r = n.getBoundingClientRect();
+    if (!r.width || !r.height) return false;
+    const x = r.left + r.width / 2, y = r.top + r.height / 2;
+    if (x < 0 || y < 0 || x >= innerWidth || y >= innerHeight) return false;
+    const h = document.elementFromPoint(x, y);
+    return !!h && (n.contains(h) || h.contains(n));
+  }
   // Menu path: open the tab, then the view, then point at the thing.
   function path(tab, view, sel, words) {
     if (S.tab !== tab) return { node: q(`.tab[data-tab="${tab}"]`), text: words[0] };
@@ -40616,14 +40950,20 @@ let navUI = null;
     // a first-use line has no target: it docks over the open menu with no ring, and never pauses the game
     try { spec = use ? { node: panels, text: step.text, noRing: true } : table[step.id] ? table[step.id]() : null; } catch (e) { spec = null; }
     if (!spec || !vis(spec.node)) return hide();
+    // a menu step whose button is disabled waits (a build while the builder is busy): no ring, no pause, no tip
+    if (table === STEP_UI && !use && !spec.noRing && !pressable(spec.node)) return hide();
     if (use) { if (!useT0) useT0 = Date.now(); else if (Date.now() - useT0 > USE_SHOWN_MS) { onboardUseDone(step.id); return hide(); } }
     cur = step; curGo = spec.go || null;
     putHidden(okb, !(step.ok || curGo));
     putText(okb, curGo ? curGo.label : 'Got it');
     place(spec);
     // the game waits only while the step waits for you to read or press something now (playtest-1 note 1, W1-A):
-    // never for a step that needs materials or time, and never while a press step is still short of what it costs
-    ONBOARD.paused = onboardPaused(step);
+    // never for a step that needs materials or time, and never while a press step is still short of what it costs.
+    // A menu marker that cannot be tapped where it sits (scrolled out of reach, under another element) shows no ring
+    // and pauses nothing.
+    const lost = table === STEP_UI && !use && !spec.noRing && !reachable(spec.node);
+    if (lost) ring.hidden = true;
+    ONBOARD.paused = !lost && onboardPaused(step);
   }
   soloGuideWants = () => (cur && !layer.hidden ? cur.id : '');
   // The guide's steps and their targets, for tools/check.mjs (the browser check walks the first session).
@@ -40632,8 +40972,11 @@ let navUI = null;
   function place(spec) {
     const key = spec.text, newTarget = spec.node !== lastNode;
     const inPanel = !!S.tab && panels.contains(spec.node);
-    let r = inPanel ? spec.node.getBoundingClientRect() : null;
-    const moved = inPanel && (!lastRect || r.left !== lastRect.left || r.top !== lastRect.top || r.width !== lastRect.width || r.height !== lastRect.height);
+    // everything but the stage keeps its place under the marker, so a target that moves (the menu sliding in, a list
+    // re-sorting) drags the ring with it; the stage moves under its marker all the time and keeps its cached spot
+    const follow = !stageBox.contains(spec.node);
+    let r = follow ? spec.node.getBoundingClientRect() : null;
+    const moved = follow && (!lastRect || r.left !== lastRect.left || r.top !== lastRect.top || r.width !== lastRect.width || r.height !== lastRect.height);
     if (ring.hidden !== !!spec.noRing) ring.hidden = !!spec.noRing;
     const changed = dirty || newTarget || key !== lastKey || (inPanel && panelScrolled) || moved;
     if (layer.hidden) layer.hidden = false;
@@ -40674,7 +41017,7 @@ let navUI = null;
     // the marker: a ring around the node, or a round mark at a point inside it (never a filled
     // shape, so it never covers the node/foe underneath)
     if (!r) r = spec.node.getBoundingClientRect();
-    lastRect = inPanel ? r : null;
+    lastRect = follow ? r : null;
     if (!spec.noRing) {
       let rx, ry, rw, rh;
       if (spec.at) { const d = 58; rx = r.left + r.width * spec.at[0] - d / 2; ry = r.top + r.height * spec.at[1] - d / 2; rw = rh = d; }
@@ -40886,6 +41229,7 @@ let openSheet, partySheet;
     refs.heroXp = fill; refs.heroXpTxt = hn;
     if (typeof deedsUI === 'object' && deedsUI) body.append(safe(() => deedsUI.heroRow(), ''));   // Achievements · 2,140 points › (75-deeds-ui)
     hn.textContent = `${Math.floor(Math.min(1, S.xp / xpNeed()) * 100)}% to Lv ${S.L + 1}`;
+    if (typeof voiceRecord === 'function') { const ul = el('ul', 'cs-rec'); for (const r of safe(() => voiceRecord(), [])) ul.append(el('li', null, r.txt)); body.append(section('On the road', ul)); }   // hero-voice: what we have done together
     if (c) {
       body.append(el('p', 'cs-bio pitch', '"' + c.pitch + '"'));
       const cu = typeof classUI === 'object' && classUI ? safe(() => classUI.rows(), []) : [];   // S2: passives, the evolution rows (76-create)
@@ -40921,7 +41265,7 @@ let openSheet, partySheet;
     sheet.foot.textContent = '';
   }
 
-  const sigOf = () => 'hero|' + S.party.cls + '|' + (typeof classUI === 'object' && classUI ? classUI.sig() : '') + '|' + JSON.stringify(S.equip) + '|' + S.party.mirrors + '|' + S.L + '|' + heroTitle();
+  const sigOf = () => 'hero|' + S.party.cls + '|' + (typeof classUI === 'object' && classUI ? classUI.sig() : '') + '|' + JSON.stringify(S.equip) + '|' + S.party.mirrors + '|' + S.L + '|' + heroTitle() + '|' + (typeof voiceRecord === 'function' ? voiceRecord().map(r => r.txt).join() : '');
   function render(force) {
     if (!sheet) return;
     const s = sigOf();
@@ -43170,10 +43514,44 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
   resBtn.addEventListener('pointerdown', e => e.stopPropagation());
   resBtn.addEventListener('click', e => { e.stopPropagation(); if (!resTip.hidden) { resTip.hidden = true; return; } showRes(5); });
   heroRow.append(resBtn, chips);
+  // hit feel: a row of five lamps counts clean defences in a row (a parry or dodge pressed close to the hit). Just for show:
+  // it gives no power and is never saved. Any landed hit, early or late press, or loose defence puts the lamps out.
+  const lamps = el('span', 'tv-lamps'); lamps.setAttribute('role', 'img'); lamps.title = 'Clean streak. Just for show.'; lamps.hidden = true;
+  const lampLit = typeof ICON === 'object' && ICON.dc_wlamp ? iconURL('dc_wlamp', '#FFD27A', { 2: '#3A3444', 6: '#9A8260', 5: '#FFF3C4' }) : '';
+  const lampOff = typeof ICON === 'object' && ICON.dc_wlamp ? iconURL('dc_wlamp', '#4E4060', { 2: '#241C2C', 6: '#4E4060', 5: '#6B5E7C' }) : '';
+  const LAMPS = 5; let streak = 0, shownStreak = -1, pendClean = null;
+  const lampDraw = () => {
+    if (streak === shownStreak) return; shownStreak = streak;
+    lamps.hidden = false; lamps.setAttribute('aria-label', `Clean streak ${streak} of ${LAMPS}`);
+    lamps.replaceChildren(...Array.from({ length: LAMPS }, (_, i) => img('tv-lamp' + (i < streak ? ' on' : ''), i < streak ? lampLit : lampOff)));
+  };
+  const lampSet = n => { streak = n; lampDraw(); };
+  // what has shown since the page opened (data-seen: 'clean', and each number tier). Display only: the proof route reads it
+  const seen = new Set(), seenAdd = k => { if (!seen.has(k)) { seen.add(k); lamps.dataset.seen = document.body.dataset.hitSeen = [...seen].join(' '); } };   // on body too, so a route can read it after the fight has ended
+  on('float', f => { if (f && f.tier) seenAdd(f.tier); });
+  // grade at the press, from the snapshot (the windows in force, how far from the hit); the stamp shows when the hit meets or misses
+  const defPress = kind => {
+    const q = typeof turnCombatSnapshot === 'function' ? turnCombatSnapshot() : null; if (!q || !q.closesAt) { pendClean = null; return; }
+    const left = q.closesAt - q.now, w = q.closesAt - (kind === 'parry' ? q.parryOpensAt : q.dodgeOpensAt);
+    pendClean = left >= 0 && left <= Math.min(0.5 * w, 0.1) ? kind : '';
+  };
+  on('soloParry', p => { if (!p) return; if (p.res === 'parry') defPress('parry'); else { pendClean = null; lampSet(0); } });
+  on('soloDodge', p => { if (!p) return; if (p.res === 'dodge') defPress('dodge'); else { pendClean = null; lampSet(0); } });
+  on('foeContact', p => {
+    if (!p) return;
+    if (p.res === 'hit') { pendClean = null; lampSet(0); return; }
+    if (p.res !== 'parry' && p.res !== 'dodge') return;   // a blind miss holds the streak
+    const clean = pendClean === p.res; pendClean = null;
+    if (!clean) { lampSet(0); return; }
+    lampSet(Math.min(LAMPS, streak + 1)); seenAdd('clean');
+    emit('float', { txt: p.res === 'parry' ? 'PARRIED!' : 'DODGED!', color: '#F2C14E', big: true, x: 0.27, y: 0.34 });
+    emit('defGrade', { kind: p.res, clean: true, streak });
+  });
+  on('fightStart', () => { pendClean = null; lampSet(0); });
   const warn = el('div', 'tv-warn'); warn.hidden = true; warn.setAttribute('role', 'status'); warn.setAttribute('aria-live', 'assertive');
   const wrap = el('div', 'tv-top'); wrap.append(turnN, heroRow, resTip, warn);
   // along the stage's bottom edge: the timing bar (while the foe winds up)
-  const bot = el('div', 'tv-bot'); bot.append(bar);
+  const bot = el('div', 'tv-bot'); bot.append(lamps, bar);   // hit feel: the lamps sit just above the timing bar, clear of the place caption and the resource row
   if (box) box.append(wrap, bot);
   // a timed ability's ring: it closes on the foe; press the ability (or Attack) again as it meets the inner circle
   const ring = el('div', 'tv-ring'), ringO = el('i', 'tv-ring-o'), ringI = el('i', 'tv-ring-i'), ringT = el('b', 'tv-ring-t', 'Now!');
@@ -43345,6 +43723,10 @@ const SFX = (() => {
     hit: () => { noise(0.05, 1800, 0.25); tone(220, 110, 0.06, 'square', 0.12); },
     party: () => tone(330 + Math.random() * 60, 200, 0.04, 'triangle', 0.08),
     crit: () => { noise(0.09, 2600, 0.4); tone(660, 180, 0.12, 'square', 0.25); },
+    // hit feel (card hit-feel): one sting per number tier beyond hit and crit, and a chime for a clean parry or dodge
+    big: () => { noise(0.07, 1400, 0.4); tone(180, 70, 0.16, 'square', 0.28); tone(90, 60, 0.2, 'sine', 0.3, 0.02); },
+    counter: () => { noise(0.1, 2200, 0.4); tone(523, 523, 0.07, 'square', 0.22); tone(784, 392, 0.2, 'square', 0.26, 0.06); },
+    cleanDef: () => { tone(1568, 1568, 0.05, 'triangle', 0.22); tone(2093, 2093, 0.14, 'triangle', 0.2, 0.05); },
     kill: () => { tone(988, 988, 0.05, 'square', 0.18); tone(1319, 1319, 0.1, 'square', 0.18, 0.05); },
     ore: () => { tone(1800, 1500, 0.07, 'triangle', 0.35); tone(2700, 2400, 0.05, 'sine', 0.15, 0.01); },
     wood: () => { noise(0.08, 400, 0.5); tone(140, 70, 0.1, 'sine', 0.4); },
@@ -43366,8 +43748,9 @@ const SFX = (() => {
 window.addEventListener('pointerdown', SFX.start, true);
 
 // ================= event wiring =================
-on('float', ({ color }) => {
-  if (color === '#FFFFFF') SFX.play('hit');
+on('float', ({ color, tier }) => {
+  if (tier === 'big' || tier === 'counter') SFX.play(tier);
+  else if (color === '#FFFFFF') SFX.play('hit');
   else if (color === '#FF9E3D') SFX.play('crit');
   else if (color === '#B58CFF' && Math.random() < 0.35) SFX.play('party');
 });
@@ -43408,6 +43791,7 @@ document.addEventListener('click', e => {
   b.addEventListener('click', e => { e.stopPropagation(); S.settings.sound = !S.settings.sound; draw(); save(); SFX.play('buy'); });
   draw(); st.append(b);
 })();
+on('defGrade', p => { if (p && p.clean) SFX.play('cleanDef'); });
 
 // ---- src/js/76-create.js ----
 // 76-create: character creation (new games), the one-time "Choose your path" screen (existing saves,

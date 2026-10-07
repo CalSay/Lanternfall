@@ -1,0 +1,1 @@
+Old Hesketh's tips now ring a button you can press, or wait. The ring no longer lands in an empty spot while a menu slides open, and the game no longer stops for a Build button you can't press yet. Best shot: guide-open-build (the Hero sheet with its Build tab).

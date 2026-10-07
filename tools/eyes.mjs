@@ -196,7 +196,7 @@ async function firstCraft(size) {
 const MOMENTS = [
   // a control: a toast drawn straight on screen (past the notice policy) must be seen for 2 s, or the reader is broken
   { id: 'control (a plain toast)', control: true, noRival: true, force: `(() => { S.onboard.tips = false; popToast('Eyes control toast', 'good', null, 2); return { name: 'Eyes control toast' }; })()` },
-  { id: 'first boss win', rarity: null, force: `(() => { S.zone = 1; S.maxZone = 1; killPack({ boss: true, xp: 1, gold: 0, name: 'Elder', pal: [] }, 0); return { name: 'first boss falls' }; })()` },
+  { id: 'first boss win', rarity: null, force: `(() => { S.zone = 1; S.maxZone = 1; killPack({ boss: true, xp: 1, gold: 0, name: 'Elder', pal: [] }, 0); return { name: 'first boss down' }; })()` },
   { id: 'unique drop', force: `(() => { const k = zoneUnique(S.zone); dropUnique(k, 1); return { name: UNIQ[k].name, rarity: 'unique|legendary' }; })()` },
   { id: 'rare craft', force: `(() => { const k = Object.keys(CRAFT_KINDS).find(k => canCraft(k, 1).ok); const mr = Math.random; let it = null; for (const v of [0.0001, 0.5, 0.9999]) { Math.random = () => v; it = craftItem(k, 1); if (it && /rare|epic|legendary/.test(it.r)) break; } Math.random = mr; return it ? { name: itemName(it), rarity: 'rare|epic|legendary' } : { name: 'NOCRAFT' }; })()` },
   { id: 'craft grade (a plain craft)', force: `(() => { const k = Object.keys(CRAFT_KINDS).find(k => canCraft(k, 1).ok); const mr = Math.random; Math.random = () => 0.9999; const it = craftItem(k, 1); Math.random = mr; return it ? { name: itemName(it), rarity: RAR[it.r].n } : { name: 'NOCRAFT' }; })()` },

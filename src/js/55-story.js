@@ -75,10 +75,11 @@
 // NPC scene at an area's door); a Champion's or Elder's NPCs ride that scene and are not filed on their own.
 
 const STORY_ON = true;   // dev switch (bible 10.4): false plays no story at all; the data files can also be deleted
+const STORY_TUNE = { champMoment: true };   // champion-moment: a Champion's first clear is one big card (its scene, then the cache). false: the scene plays as a story card and the cache opens on its own, as before
 
 let storyOn, storyHeld, storyInGap, storyChoiceDef, storyChosen, storyClaim, storyClose, storyChoose, storyList, storyEntry, storyRead, storyUnread, storyLate, storyJournalOpened,
   storyRoadLog, storyFile, storyHeroLine, storyHearthLine, storyVerse, storyVerseLatest, storyItemLine, storyRanks, storyEncounter, storyFoes, storySync,
-  storyIntroClaim, storyIntro, storyIntroDone;
+  storyIntroClaim, storyIntro, storyIntroDone, storyHeroKey, storyBusy;
 const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_ENC.champ.<id> = true (storyEncounter)
 {
   registerState('story', { v: 1, seen: {}, read: {}, init: 0, off: 0, starter: '', litFor: {}, coldhearth: '', ends: {}, journalOpens: 0 });
@@ -124,6 +125,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
     if (how !== 'shown' && part !== 'open') { introUp = false; storySync(); }   // what waited under the screens (the area caption) is due now, even if the guide holds the ticks
   };
   storyEncounter = (kind, id, on) => { if (STORY_ENC[kind]) STORY_ENC[kind][id] = on !== false; };
+  storyHeroKey = storyHero;   // hero-voice: whose lines play ('' when no starter is the story hero)
   storyHeroLine = id => { const h = D('hero')[id]; return h ? h[storyHero()] || h._ || '' : ''; };
   // An item entry is a line, or { area, line }: a line with an area waits until an encounter card has put a Champion of that area in
   // the game (the line names it, and the player must have met it).
@@ -314,6 +316,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
     }
   }
   const push = sc => { if (sc) queue.push(sc); };
+  storyBusy = id => (!!cur && cur.id === id) || queue.some(sc => sc.id === id);   // that scene is up or waiting (the moment layer holds a Champion card until it has played)
 
   // ---- time and gaps ----
   let clock = 0, spawnT = -99, gapNow = true, inAway = false, swept = 0, last = '', spawned = null;
@@ -377,6 +380,12 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
   on('spawn', ({ mob, zone }) => {
     if (!mob || (typeof arena !== 'undefined' && arena)) return;
     spawnT = clock; gapNow = false;
+    // champion-moment: nothing else registers the Champions yet (boss-tiers will own the encounter hooks), so a zone's boss that a Champion
+    // is written for meets it here: the pre scene, the post scene and, on the first clear, the Champion card
+    if (STORY_TUNE.champMoment && mob.boss && !mob.encounter && zone >= (S.maxZone || 1)) {   // the first clear only: a save past a Champion gets no scene or card from replaying it
+      const id = Object.keys(D('champ')).find(k => D('champ')[k].zone === zone);
+      if (id) { storyEncounter('champ', id); mob.encounter = { kind: 'champ', id }; }
+    }
     // the region boss's display name (REGIONS[i].boss.name; the Hollow: "The Fenmother")
     const r = regionOf(zone);
     if (mob.boss && zone === r.z1 && r.boss && r.boss.name) mob.name = r.boss.name;
@@ -392,6 +401,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
     if (has(key)) return;
     mark(key);
     push(enc.kind === 'elder' ? elderScene(enc.id, 'post') : champScene(enc.id, 'post'));
+    if (enc.kind !== 'elder' && STORY_TUNE.champMoment) emit('champWin', { id: enc.id, zone, name: (D('champ')[enc.id] || {}).name || '', scene: `p:${enc.id}:post` });   // the first clear, after its zoneClear and cache
   });
   on('awayBegin', () => { inAway = true; });
   on('awayEnd', () => { inAway = false; last = ''; });
