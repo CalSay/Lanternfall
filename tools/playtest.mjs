@@ -22,6 +22,7 @@
 //          --seed <n> (seed the game's random numbers for the whole run)   --shots <dir> (where shots go; default <session>/shots)
 //          --json (machine-readable output)   --html <file> (play another build)   --quiet (tap and wait print one line, not a look)
 //          --frozen (the game clock stands still between commands; without it, real time also moves it)
+//          --thumb (tap scrolls only what a player can scroll; a button out of reach fails instead of scrolling the page)
 //
 // Runs dist/lanternfall.html as built: node tools/build.mjs first. Game time is a fake clock: `wait` and `away` cost
 // real seconds in proportion to the frames drawn (about 15 real seconds per game minute at the default step).
@@ -35,7 +36,7 @@ import { ROOT } from './lib/core.mjs';
 const KEY = 'lanternfall.save.v5';
 const ORIGIN = 'http://lanternfall.playtest/';
 const raw = process.argv.slice(2);
-const flags = { json: false, landscape: false, quiet: false, frozen: false };
+const flags = { json: false, landscape: false, quiet: false, frozen: false, thumb: false };
 let sessionDir = '.playtest', htmlFile = null, shotsOpt = null, seed = null, ranSecs = 0;   // ranSecs: game seconds this call has run (away hours are not play)
 const pos = [];
 for (let i = 0; i < raw.length; i++) {
@@ -44,6 +45,7 @@ for (let i = 0; i < raw.length; i++) {
   else if (a === '--landscape') flags.landscape = true;
   else if (a === '--quiet') flags.quiet = true;
   else if (a === '--frozen') flags.frozen = true;
+  else if (a === '--thumb') flags.thumb = true;
   else if (a === '--session') sessionDir = raw[++i];
   else if (a === '--html') htmlFile = raw[++i];
   else if (a === '--seed') seed = num(raw[++i], '--seed');
@@ -286,7 +288,21 @@ async function tap(page, wanted) {
   if (!hit.length) return { ok: false, msg: `no button labelled "${wanted}". Buttons on screen: ${s.buttons.map(b => `[${b.label}]`).join(' ') || '(none)'}. (Each separate call reopens the game: an open menu or sheet closes. Use batch to tap through a menu in one go.)` };
   const b = hit[0];
   const handle = await page.$(`[data-pt="${b.i}"]`);
-  if (!inV.has(b.i)) { await handle.evaluate(e => e.scrollIntoView({ block: 'center' })); await page.clock.runFor(50); }
+  if (!inV.has(b.i)) {
+    // --thumb: scroll only what a thumb can scroll. scrollIntoView also moves overflow:hidden boxes (the page itself), which
+    // leaves the screen stuck half off where no player could put it; those are put back, and a button still out of reach fails.
+    const reach = await handle.evaluate((e, thumb) => {
+      const fixed = [];
+      if (thumb) for (let a = e.parentElement; a; a = a.parentElement) { const o = getComputedStyle(a).overflowY; if ((o === 'hidden' || o === 'clip' || a === document.body || a === document.documentElement) && !/(auto|scroll)/.test(o)) fixed.push([a, a.scrollTop]); }
+      if (thumb && document.scrollingElement && !fixed.some(f => f[0] === document.scrollingElement)) fixed.push([document.scrollingElement, document.scrollingElement.scrollTop]);
+      e.scrollIntoView({ block: 'center' });
+      for (const [a, top] of fixed) a.scrollTop = top;
+      const r = e.getBoundingClientRect();
+      return r.bottom > 0 && r.top < innerHeight && r.right > 0 && r.left < innerWidth;
+    }, flags.thumb);
+    await page.clock.runFor(50);
+    if (!reach) return { ok: false, msg: `"${b.label}" is off screen where a player cannot scroll to it` };
+  }
   const box = await handle.boundingBox();
   if (!box) return { ok: false, msg: `"${b.label}" is not on screen` };
   // A real tap at the centre of the visible part: if something covers it, the tap lands on that instead, as it would for a player.
@@ -357,15 +373,17 @@ async function exec(cmd, args, ctx) {
     }
     case 'scroll': {   // scroll the biggest scrolled panel on screen (or the page) by most of a screen, as a thumb would
       const dir = args[0] === 'up' ? -1 : 1;
-      const moved = await page.evaluate(d => {
+      const moved = await page.evaluate(([d, thumb]) => {
         const vh = innerHeight;
         const panes = [...document.querySelectorAll('*')].filter(e => { const cs = getComputedStyle(e), r = e.getBoundingClientRect();
           return /(auto|scroll)/.test(cs.overflowY) && e.scrollHeight > e.clientHeight + 4 && r.height > 80 && r.bottom > 0 && r.top < vh; })
           .sort((a, b) => b.clientHeight - a.clientHeight);
-        const el = panes[0] || document.scrollingElement, before = el.scrollTop;
-        el.scrollTop += d * Math.round((el === document.scrollingElement ? vh : el.clientHeight) * 0.8);
+        const page = document.scrollingElement, el = panes[0] || (thumb && /hidden|clip/.test(getComputedStyle(document.body).overflowY) ? null : page);
+        if (!el) return 0;   // --thumb: the page itself does not scroll for a player
+        const before = el.scrollTop;
+        el.scrollTop += d * Math.round((el === page ? vh : el.clientHeight) * 0.8);
         return el.scrollTop - before;
-      }, dir);
+      }, [dir, flags.thumb]);
       await run(page, 0.3);
       return { text: moved ? `scrolled ${dir > 0 ? 'down' : 'up'}` : `nothing to scroll ${dir > 0 ? 'down' : 'up'}`, data: { scrolled: moved } };
     }

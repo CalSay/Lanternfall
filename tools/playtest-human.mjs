@@ -49,7 +49,7 @@ const PRICES = {
 const usdOf = (model, t) => { const p = PRICES[model]; if (!p) return null;
   return +((t.input * p[0] + t.output * p[1] + t.cacheRead * p[2] + t.cacheWrite * p[3]) / 1e6).toFixed(4); };
 
-// ---------------- the player's brief: the game's screen and nothing else ----------------
+// ---------------- the player's brief: the game's screen and nothing else (persona v2: docs/coord/playtester-persona.md) ----------------
 export const BRIEF = `You are playing a mobile game for the first time. You have never seen it and know nothing about it except what is on the screen. You are a normal player on a phone: curious, a little impatient, happy to follow the game's suggestions when they make sense. Play for up to 30 minutes and try to get into the game: do what it asks, try what it offers, and keep moving toward whatever goal it seems to set.
 
 While you play, keep a running list of notes, as a friend testing the game would text the developer. Write a note the moment you notice something, not at the end. One blunt line each, in your own words. Note anything that:
@@ -63,19 +63,31 @@ While you play, keep a running list of notes, as a friend testing the game would
 - reads oddly (writing that sounds unnatural or strange), or puts something in a place you would not look for it;
 - unlocks or appears without explanation;
 - you liked, or that felt good (say so too).
-When something confuses you, quote the exact words on screen that confused you. Do not repeat a note. If the same problem gets worse, write a new note saying so. Notes are about the game as you feel it, not about how you are being shown it.
+Habits of a careful player:
+- When a character speaks, check that what happens next fits what they said, and that you got to finish reading before the game moved you on. After a character's first few lines, say in one note how they sound as a person.
+- When a tip appears, ask: did I have time to read it before I had to act, and can I do what it says right now with what I have?
+- After every reward screen, check that what it showed actually arrived: look where it should be (bag, hero, collection, counters).
+- When you make or get an item, note whether the game told you to equip or use it, and where. Try anything new (item, ability) straight away and note if it does nothing.
+- When you finish a task in a menu (spending points, crafting, equipping), note whether the game shows you the way back to the action and how many taps it took.
+- When you look for something (gear, stats, abilities), note where you looked first and where it actually was.
+- When the game shows a number (a stat, an upgrade, a cost), say whether it tells you what you actually get. When you spend points, say whether the choice felt like a real decision or you just dumped them.
+- If a slot, button or item shows letters, a blank or a stand-in where a picture should be, say so.
+When something confuses you, quote the exact words on screen that confused you, and say what you expected instead. Do not repeat a note. If the same problem gets worse, write a new note saying so. Notes are about the game as you feel it, not about how you are being shown it.
 
 Each turn you see the screen: a screenshot plus the text on it, the buttons you can tap (greyed ones marked) and other buttons on the page (further down, or behind what is showing). Pick ONE action:
 - tap <button label> (copy the label; for repeated taps of the same button, e.g. attacking, add x2 to x5: tap Attack x3)
 - wait <seconds> (let the game run, e.g. wait 30 while something works; up to 300)
 - read (take a moment; the game keeps running while you do)
 - scroll down / scroll up
-The game keeps running in real time while you read. Before each tap you take as long as a person needs to read what just appeared, so if something changes or attacks while you read, you will be told.`;
+The game keeps running in real time while you read. Before each tap you take as long as a person needs to read what just appeared, so if something changes or attacks while you read, you will be told.
+When time is up, add one last note that starts "TOP:" and names the 3 to 5 problems that would most make you stop playing, each with what you expected instead.`;
+// --hero <name>: the one cue a run may add, so a run can play the hero a human tester played (a pick, not a hint).
+const PROMPT = BRIEF + (opt('hero') ? `\n\nWhen the game asks who you are, pick ${opt('hero')}.` : '');
 
 // ---------------- the game: one open browser, driven through the playtest driver ----------------
 class Game {
   constructor({ html, seed, landscape }) {
-    this.args = [path.join(ROOT, 'tools', 'playtest.mjs'), 'batch', '--json', '--quiet', '--frozen', '--session', path.join(OUT, 'session'), '--shots', path.join(OUT, 'shots')];
+    this.args = [path.join(ROOT, 'tools', 'playtest.mjs'), 'batch', '--json', '--quiet', '--frozen', '--thumb', '--session', path.join(OUT, 'session'), '--shots', path.join(OUT, 'shots')];
     if (html) this.args.push('--html', path.resolve(html));
     if (seed !== undefined) this.args.push('--seed', String(seed));
     if (landscape) this.args.push('--landscape');
@@ -164,7 +176,7 @@ class Run {
   }
   // Play one action the way a person would. Returns the text for the player's next turn.
   async act(action, why, notes = []) {
-    if (this.stopped) return { text: `The session is over (${this.stopped}).`, over: true };
+    if (this.stopped) { for (const n of notes) this.note(n); return { text: `The session is over (${this.stopped}).`, over: true }; }   // last notes still count
     for (const n of notes) this.note(n);
     const a = parseAction(action);
     if (!a) return { text: `"${action}" is not an action. Use: tap <label>, tap <label> x3, wait <seconds>, read, scroll down, scroll up.\n${this.status()}`, over: false };
@@ -200,12 +212,12 @@ class Run {
     rec.after = after.screenshot; rec.told = told; rec.gameSecs = +g.secs.toFixed(1);
     fs.appendFileSync(F.steps, JSON.stringify(rec) + '\n');
     const cap = this.capHit(); if (cap) this.stopped = cap;
-    return { text: [...told, '', screenText(after, { withShot: this.meta.mode === 'agent' }), '', this.status() + (cap ? ` Time is up (${cap}): write any last notes now.` : '')].join('\n'), over: !!cap, screen: after };
+    return { text: [...told, '', screenText(after, { withShot: this.meta.mode === 'agent' }), '', this.status() + (cap ? ` Time is up (${cap}). Add your last notes now, including the one that starts "TOP:".` : '')].join('\n'), over: !!cap, screen: after };
   }
   finish(extra) {
     const run = {
       ...this.meta, endedAt: new Date().toISOString(), steps: this.step, gameMinutes: +(this.game.secs / 60).toFixed(1),
-      notes: this.noteN, caps: CAPS, pageErrors: this.errors.slice(0, 20), ...extra, stopReason: this.stopped || extra.stopReason || 'stopped by the player', prompt: BRIEF
+      notes: this.noteN, caps: CAPS, pageErrors: this.errors.slice(0, 20), ...extra, stopReason: this.stopped || extra.stopReason || 'stopped by the player', prompt: PROMPT
     };
     fs.writeFileSync(F.run, JSON.stringify(run, null, 1));
     return run;
@@ -236,7 +248,7 @@ function post(model, effort, messages) {
   return fetch((process.env.ANTHROPIC_BASE_URL || 'https://api.anthropic.com') + '/v1/messages', {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
-    body: JSON.stringify({ model, max_tokens: 16000, system: BRIEF, tools: [TOOL], tool_choice: { type: 'auto', disable_parallel_tool_use: true },
+    body: JSON.stringify({ model, max_tokens: 16000, system: PROMPT, tools: [TOOL], tool_choice: { type: 'auto', disable_parallel_tool_use: true },
       thinking: { type: 'adaptive' }, output_config: { effort }, cache_control: { type: 'ephemeral' }, messages })
   });
 }
@@ -286,7 +298,15 @@ async function runMode() {
         const out = await run.act(action, why, notes || []);
         wasted = out.screen ? 0 : wasted + 1;   // an action the tool could not read leaves the screen as it was
         screen = out.screen || screen;
-        if (out.over) { stopReason = run.stopped; break; }
+        if (out.over) {   // one last turn for the closing notes
+          stopReason = run.stopped;
+          messages.push({ role: 'user', content: [{ type: 'tool_result', tool_use_id: use.id, content: userTurn(out.text, null) }] });
+          const last = await callModel(model, effort, messages), lu = last.usage || {};
+          tokens.input += lu.input_tokens || 0; tokens.output += lu.output_tokens || 0; tokens.cacheRead += lu.cache_read_input_tokens || 0; tokens.cacheWrite += lu.cache_creation_input_tokens || 0;
+          const fin = (last.content || []).find(b => b.type === 'tool_use');
+          if (fin) await run.act(fin.input.action, fin.input.why, fin.input.notes || []);
+          break;
+        }
         if (++turns >= TURNS_PER_CHAT) { messages = [{ role: 'user', content: userTurn(carryOver(run) + '\n\n' + screenText(screen, { withShot: false }), screen.screenshot) }]; turns = 0; }
         else messages.push({ role: 'user', content: [{ type: 'tool_result', tool_use_id: use.id, content: userTurn(out.text, out.screen && out.screen.screenshot) }] });
         if (run.step % 10 === 0) console.log(`step ${run.step}, ${run.clock()} played, ${run.noteN} notes, $${usd}`);
@@ -354,7 +374,7 @@ async function start() {
   let died = false; child.on('exit', () => { died = true; }); child.unref();
   for (let i = 0; i < 240 && !died && !fs.existsSync(F.server); i++) await new Promise(r => setTimeout(r, 250));
   if (!fs.existsSync(F.server)) die(`the game did not open; see ${path.join(OUT, 'server.log')}`);
-  console.log(BRIEF + '\n\n----\n' + await ask('/first'));
+  console.log(PROMPT + '\n\n----\n' + await ask('/first'));
 }
 
 const actionArg = () => argv.slice(1).filter((a, i, all) => !a.startsWith('--') && !(i > 0 && all[i - 1].startsWith('--'))).join(' ');
