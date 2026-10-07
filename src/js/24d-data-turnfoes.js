@@ -27,6 +27,55 @@ const TURN_FOE_RANGED = [
 ];
 const TURN_FOE_ELITE = { id: 'crush', name: 'Crushing Blow', hits: [{ wind: 1.35, x: 0.27 }] };
 
+// Each ordinary foe type's own moves (card foe-moves-by-type, docs/design/foe-moves.md). Zone monsters with their own art
+// (59l ZONE_FOES) and bosses keep theirs; a type with no row here (the Coast's, for now) uses the basic pair above.
+//   moves   what it does, in turn (it alternates them)        speed  relative to the reference hero (TURN_FOE_SPEED.normal is 0.9)
+//   sig     an elite's signature move, in place of TURN_FOE_ELITE        eliteHp  scales the elite's HP (a glass cannon lasts less)
+//   ranged  its moves are shots (the type's FOE_BEH.ranged says the same)
+// Threat a second matches the basic pair (about 0.18 of the reference HP): slow foes hit big and rarely, fast foes chip.
+const TURN_FOE_TYPES = {
+  slime: { speed: 0.8,
+    moves: [{ id: 'engulf', name: 'Engulf', hits: [{ wind: 1.5, x: 0.24, dt: 'poison' }] },
+      { id: 'lash', name: 'Ooze Lash', hits: [{ wind: 1.1, x: 0.11, dt: 'poison' }, { wind: 0.8, x: 0.11, dt: 'poison', ride: 'venom' }] }],
+    sig: { id: 'gengulf', name: 'Great Engulf', hits: [{ wind: 1.6, x: 0.34, dt: 'poison', ride: 'venom' }] } },
+  bat: { speed: 1.0, eliteHp: 0.4,
+    moves: [{ id: 'nip', name: 'Nip', hits: [{ wind: 0.8, x: 0.11 }] },
+      { id: 'wingflurry', name: 'Wing Flurry', hits: [{ wind: 0.75, x: 0.07 }, { wind: 0.6, x: 0.07 }, { wind: 0.6, x: 0.07 }] },
+      { id: 'dive', name: 'Dive', hits: [{ wind: 0.7, x: 0.11 }, { wind: 0.6, x: 0.11 }] }],
+    sig: { id: 'divestorm', name: 'Dive Storm', hits: [{ wind: 0.7, x: 0.08 }, { wind: 0.55, x: 0.08 }, { wind: 0.55, x: 0.08 }, { wind: 0.55, x: 0.08, ride: 'bleed' }] } },
+  bones: { speed: 0.95, ranged: true,
+    moves: [{ id: 'boneshot', name: 'Bone Shot', ranged: true, hits: [{ wind: 1.1, x: 0.2 }] },
+      { id: 'bonevolley', name: 'Bone Volley', ranged: true, hits: [{ wind: 0.9, x: 0.065 }, { wind: 0.65, x: 0.065 }, { wind: 0.65, x: 0.065 }] }],
+    sig: { id: 'barrage', name: 'Bone Barrage', ranged: true, hits: [{ wind: 0.9, x: 0.075 }, { wind: 0.6, x: 0.075 }, { wind: 0.6, x: 0.075 }, { wind: 0.6, x: 0.075 }] } },
+  beetle: { speed: 0.7,
+    moves: [{ id: 'shellbash', name: 'Shell Bash', hits: [{ wind: 1.4, x: 0.27 }] },
+      { id: 'mandibles', name: 'Mandibles', hits: [{ wind: 1.1, x: 0.13 }, { wind: 0.8, x: 0.13 }] }],
+    sig: { id: 'rollcharge', name: 'Rolling Charge', hits: [{ wind: 1.8, x: 0.42 }] } },
+  spore: { speed: 0.9, ranged: true,
+    moves: [{ id: 'puff', name: 'Spore Puff', ranged: true, hits: [{ wind: 1.1, x: 0.15, dt: 'poison', ride: 'weaken' }] },
+      { id: 'cloud', name: 'Poison Cloud', ranged: true, hits: [{ wind: 1.0, x: 0.1, dt: 'poison' }, { wind: 0.8, x: 0.1, dt: 'poison', ride: 'venom' }] }],
+    sig: { id: 'sporestorm', name: 'Spore Storm', ranged: true, hits: [{ wind: 1.0, x: 0.1, dt: 'poison' }, { wind: 0.7, x: 0.1, dt: 'poison' }, { wind: 0.7, x: 0.1, dt: 'poison', ride: 'venom' }] } },
+  golem: { speed: 0.6,
+    moves: [{ id: 'stonefist', name: 'Stone Fist', hits: [{ wind: 1.5, x: 0.32 }] },
+      { id: 'quarryslam', name: 'Quarry Slam', hits: [{ wind: 1.8, x: 0.26 }] }],
+    sig: { id: 'quarrysmash', name: 'Quarry Smash', hits: [{ wind: 2.0, x: 0.5 }] } },
+  wraith: { speed: 1.0, ranged: true,
+    moves: [{ id: 'wail', name: 'Wail', ranged: true, hits: [{ wind: 0.9, x: 0.08, dt: 'frost' }, { wind: 0.7, x: 0.08, dt: 'frost' }] },
+      { id: 'chilltouch', name: 'Chill Touch', hits: [{ wind: 1.2, x: 0.17, dt: 'frost', ride: 'chill' }] }],
+    sig: { id: 'drownwail', name: 'Drowning Wail', ranged: true, hits: [{ wind: 0.9, x: 0.08, dt: 'frost' }, { wind: 0.65, x: 0.08, dt: 'frost' }, { wind: 0.65, x: 0.08, dt: 'frost', ride: 'chill' }] } }
+};
+// What answers each type, from the abilities the starters already have (Codex tip; check.mjs holds every id real and every
+// starter good against two types or more). `by` lists the abilities of each hero that help against it, and why in `tip`.
+const FOE_COUNTERS = {
+  slime: { tip: 'Slow and heavy. Burn it: fire hurts a Moss Slime most.', by: { wren: ['pinning'], tobin: ['brace'], pip: ['fire', 'spark'] } },
+  bat: { tip: 'Fast chip hits. Guard or Ward soaks them, and parry the last one.', by: { wren: ['shadowstep'], tobin: ['brace', 'ironwill'], pip: ['arcaneward'] } },
+  bones: { tip: 'It shoots from afar and has armour. Holy light hurts it most.', by: { wren: ['pinning'], tobin: ['sundering'], pip: ['nova', 'flare'] } },
+  beetle: { tip: 'One slow, heavy bash. Stun it, or Chill it twice to Freeze it, before the swing.', by: { wren: ['pinning', 'sonic'], tobin: ['bash'], pip: ['frostshard'] } },
+  spore: { tip: 'Poison clouds from afar that Weaken you. Burn it, and Ward off the venom.', by: { wren: ['shadowstep'], tobin: ['ironwill'], pip: ['fire', 'arcaneward'] } },
+  golem: { tip: 'The slowest and the hardest hit. Break its armour, or Freeze it.', by: { wren: ['pinning'], tobin: ['sundering'], pip: ['frostshard'] } },
+  wraith: { tip: 'Low damage, but it chills. Holy light hurts it most.', by: { wren: ['batswarm'], tobin: ['riposte'], pip: ['nova', 'flare'] } }
+};
+
 const TURN_BOSS_SETS = {
   slime: { a: { id: 'engulf', name: 'Engulf', hits: [{ wind: 1.3, x: 0.28, dt: 'poison' }] },
     b: { id: 'lash', name: 'Ooze Lash', hits: [{ wind: 0.9, x: 0.1, dt: 'poison' }, { wind: 0.65, x: 0.1, dt: 'poison' }, { wind: 0.85, x: 0.1, dt: 'poison', ride: 'venom' }] },
