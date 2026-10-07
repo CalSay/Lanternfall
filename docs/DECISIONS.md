@@ -323,6 +323,7 @@ stat multiplier, labels, pay), zones 13-24 for a kept-up hero, move sets by tier
   `tobin-safety-margin` gaps.
 - **Knots** (zones up to 12 only): hitX 1.6/3.4/2.4/1.5/1.0/1.05/0.95/0.85 at zones 4/5/6/8/9/10/11/12; hpX 1.5/3.7/2.2/1.9/1.5/1.9/1.4/1.8
   at 4/5/6/8/9/10/11/12. The zone 5 and 10 peaks are interim: the Champion multiplier replaces them in PR 2.
+- **Zone 11 hitX is 0.95, not the ruling's 0.8** (a Wren at 87% casual read above the 60-80 band). Boss gold and XP in zones 4-12 pay on the old fight length, so the longer first-hour fights do not move first-hour income. Zones 13 and 14 interpolate between the zone 12 and 15 knots (hitX 1.1, 1.35): unmeasured, zones 13-24 are PR 3.
 - **The walk bot is not the yardstick yet.** It wears nothing and has one ability. Its numbers are reported; the walk's
   "zone 10 in an hour, no boss over 5 losses" becomes the gate once walk-bot-follow-up equips and trains it.
 

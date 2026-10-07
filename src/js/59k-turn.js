@@ -213,10 +213,12 @@ function turnFoeSetup(f, z, o) {
   f.hp = f.max = hp; f.turn = 1; f.tz = z;
   f.tk = { script, spd: spd * 10, arm: Z && Z.armour ? Z.armour : f.armoured ? 0.3 : 0, boss: !!f.boss, region, elite: !!f.elite,
     hx: zb ? turnZoneLine(B.hitX, z) : f.boss || f.trial || f.deep ? 1 : turnZoneLine(T.normHitX, z) * (f.elite ? T.eliteHitX : 1), cx: zb ? turnZoneLine(B.chargeX, z) : 1,
-    hcap: zb ? turnZoneLine(B.hitCap, z) : 0 };
+    hcap: zb && !region ? turnZoneLine(B.hitCap, z) : 0 };
   const C = COMBAT_TUNE;
   // a longer boss pays more (the boss pass: payX of its extra length), so an hour of play pays about as before
-  const pay = 1 + (len - 1) * B.payX;
+  // zones 4-12 pay on the old length (boss-tiers PR 1 lengthened those fights; first-hour gold and XP stay as they were)
+  const payLen = zb && !region && z <= 12 ? turnZoneLine([[3, 1], [10, 1.8], [15, 2.5]], z) : len;
+  const pay = 1 + (payLen - 1) * B.payX;
   f.gold = mobGold(z) * C.packGold * T.goldX * (f.boss ? 5 * pay : f.elite ? C.eliteGold : 1);
   f.xp = Math.ceil(Math.ceil(1.5 * z) * T.xpX * (f.boss ? 5 * pay : f.elite ? 2 : 1));
   return f;
