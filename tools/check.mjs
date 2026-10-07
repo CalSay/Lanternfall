@@ -1507,6 +1507,51 @@ if (section('first-use lines (ap-first-use-hints)')) try {
   assert(!g.errors.length, 'no first-use errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
 } catch (e) { fail('first-use lines crashed: ' + (e.stack || e)); }
 
+// ---- unlock-tip-coverage (Milestone 1a, E5): every system a player meets by zone 15 gets its tip, in order, once ----
+// The first-use section above checks the tables row by row. This one walks a new game to zone 15 and proves the
+// whole chain: each unlock opens, is spaced, has a line, has Hesketh's words (or its own guide step or strip), and the
+// view that shows the line is a real one. A row added to FEATURES that reaches zone 15 without its tip fails here.
+if (section('unlock tip coverage (E5)')) try {
+  const g = loadCore({ seed: 11 }), E = s => g.eval(s);
+  const jsd = path.join(ROOT, 'src', 'js'), rd = f => fs.readFileSync(path.join(jsd, f), 'utf8');
+  const ob = rd('75-onboard-ui.js');
+  const rows = JSON.parse(E('JSON.stringify(FEATURES.map(f => ({ id: f.id, tab: f.tab || null, view: f.view || null, late: !!f.late, now: !!f.now })))'));
+  const lines = JSON.parse(E('JSON.stringify(FIRST_USE)')), gap = E('ONBOARD_TUNE.gap');
+  const si = ob.indexOf('const SAY_TXT = {'), say = new Set([...ob.slice(si, ob.indexOf('};', si)).matchAll(/^\s*(\w+): ["']/gm)].map(m => m[1]));
+  // a system said somewhere other than the Hesketh queue: its own guide step, the away strip, the hired-hand notice
+  const elsewhere = { nextup: 'guide step', awaynote: 'away strip', hands: 'Tam notice' };
+  // walk a new game to zone 15: sweep zone 1 to 15 with the clock moving, then let the spacing governor drain
+  const got = {};
+  E('S.onboard.tips = true');
+  for (let z = 1; z <= 15; z++) {
+    E(`S.maxZone = ${z}; S.zone = ${z}; S.L = Math.max(S.L, ${z})`);   // a hero is about level = zone
+    for (let k = 0; k < 40; k++) {
+      E(`S.onboard.t += ${gap + 1}`);
+      for (const id of JSON.parse(E('JSON.stringify(onboardCheck())'))) got[id] = { zone: z, t: E('S.onboard.got["' + id + '"]') };
+    }
+  }
+  // the substitutes are real: Next Up has its guide step, the away strip reads its row, the Deepwell (zone 18) still has both lines
+  assert(E('GUIDE_STEPS.some(s => s.id === "nextup")') && /isUnlocked\('awaynote'\)/.test(rd('71-ui-fight.js')) && lines.deep && say.has('deep'), 'the guide step, the away strip and the Deepwell lines the check leans on exist');
+  // note: this walk is a warm Hearth (camp, Craft and Tavern open by zone); the cold-Hearth path is held by the guide steps' own checks
+  const reached = rows.filter(r => !r.late && got[r.id]).map(r => r.id), missed = rows.filter(r => !r.late && !got[r.id]).map(r => r.id);
+  assert(reached.length >= 14 && missed.every(id => id === 'deep'), `zone 15 opens every system except the Deepwell (opens at zone 18); not opened: ${missed.join(', ') || 'none'}`);
+  const noLine = reached.filter(id => !lines[id] || !String(lines[id].text || '').trim());
+  const noSay = reached.filter(id => !say.has(id) && !elsewhere[id]);
+  assert(!noLine.length && !noSay.length, `every system met by zone 15 has its first-use line and a Hesketh line or its own guide step (${[...noLine.map(i => i + ': no first-use line'), ...noSay.map(i => i + ': nobody says it')].join('; ') || 'ok'})`);
+  // none too fast: after the first row, rows are spaced by the governor unless the player's own act opened them
+  const order = reached.map(id => [id, got[id].t]).sort((a, b) => a[1] - b[1]), tooFast = [];
+  for (let i = 1; i < order.length; i++) if (order[i][1] - order[i - 1][1] < gap && !rows.find(r => r.id === order[i][0]).now) tooFast.push(order[i][0] + ' ' + (order[i][1] - order[i - 1][1]) + 's');
+  assert(!tooFast.length, `unlocks are at least ${gap}s apart unless the player opened one (${tooFast.join(', ') || 'ok'})`);
+  // a hint line needs a real view to show on: the row's tab and view are registered (70-ui and the view files)
+  const reg = new Set(); for (const f of fs.readdirSync(jsd).filter(f => f.endsWith('.js'))) for (const m of rd(f).matchAll(/registerView\('(\w+)', \{ id: '([\w-]+)'/g)) reg.add(m[1] + '/' + m[2]);
+  const viewless = rows.filter(r => reached.includes(r.id) && (lines[r.id].via || 'hint') === 'hint' && r.tab && !reg.has(r.tab + '/' + r.view)).map(r => r.id);
+  assert(!viewless.length, `every first-use line has a view to show on (${viewless.join(', ') || 'ok'})`);
+  // each system a Hesketh line speaks of exists as a row (a typo or a removed row leaves a line nobody can trigger)
+  const ids = rows.map(r => r.id), orphan = [...say].filter(id => !ids.includes(id));
+  assert(!orphan.length, `every Hesketh unlock line belongs to a system (${orphan.join(', ') || 'ok'})`);
+  assert(!g.errors.length, 'no coverage errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
+} catch (e) { fail('unlock tip coverage crashed: ' + (e.stack || e)); }
+
 // ---- HINT1: the guide's hint stays put (docs/design/onboarding.md, "one hint at a time") ----
 // The hint used to re-read its target's pixel position and re-place itself every 250ms, so it
 // jumped around whenever the stage moved under it. It must now (a) never recompute a placement on
