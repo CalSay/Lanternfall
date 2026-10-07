@@ -76,7 +76,7 @@
 .stagebox .hud.vs .hud-zone .zname { white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.1; overflow-wrap: anywhere; }
 /* the turn banner owns the middle of the stage while it shows; toasts and the strip wait out its short pause */
 .stagebox.tc-on .toasts { opacity: 0; transition: opacity .1s; }
-.stagebox.vs-on .toasts:not(.over-menu) { top: calc(var(--vs-b, 54px) + 22px); }   /* under the bars and the place line, not over them */
+.stagebox.vs-on .toasts:not(.over-menu) { top: max(calc(var(--vs-b, 54px) + 22px), var(--vs-zb, 0px)); }   /* under the bars and the place line, not over them */
 
 /* Portrait top band (top-bar-compact): under the header zone bar, ONE line holds the activity switch (Fight / Gather, the zone arrows)
    and Next Up side by side, instead of three stacked rows. The permanent "While away" sentence is gone (the away card and the

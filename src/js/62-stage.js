@@ -191,6 +191,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
       // the place line sits under the bars, centred; the chips fill the rows beside it
       (box.style ? box : hud).style.setProperty('--vs-b', (VS.b + 2) + 'px');   // the stage box: .hud and .cb-strip read it
       const z = box.querySelector('.hud-zone');
+      if (box.style) box.style.setProperty('--vs-zb', (z && !z.hidden ? z.offsetTop + z.offsetHeight + 3 : 0) + 'px');   // toasts sit under the place line
       hudB = Math.max(VS.b + 26, z && !z.hidden ? z.offsetTop + z.offsetHeight : 0) / ZM;
     } else hudB = e && e.offsetParent && !e.hidden ? (e.offsetTop + e.offsetHeight) / ZM : 0;
   }
