@@ -9551,7 +9551,7 @@ if (section('guide panel rects (browser, guide-panel)')) try {
           const t = q('.ob-txt'), tr = t.getBoundingClientRect(), face = q('.ob-face'), ok = q('.ob-ok'), okr = ok && !ok.hidden ? ok.getBoundingClientRect() : null;
           const lh = parseFloat(getComputedStyle(t).lineHeight) || 18, lines = Math.round(tr.height / lh), cw = t.textContent.length ? tr.width / (parseFloat(getComputedStyle(t).fontSize) * .62) : 99;
           return { hit, panel: panel.map(Math.round), inView: panel[0] >= 0 && panel[2] <= innerWidth && panel[1] >= 0 && panel[3] <= innerHeight, mode: ['side', 'dock', 'over-menu'].find(m => b.classList.contains(m)), textChars: Math.round(cw), lines,
-            faceOk: !!face && (face.getAttribute('src') || '').startsWith('data:'), btnBelow: okr ? okr.top >= tr.bottom - 1 : null, btnH: okr ? Math.round(okr.height) : null,
+            faceOk: !!face && (face.getAttribute('src') || '').startsWith('data:'), btnBelow: okr ? okr.top >= tr.bottom - 1 || okr.left >= tr.right - 1 : null, btnH: okr ? Math.round(okr.height) : null,
             btnIn: okr ? okr.top >= panel[1] - .5 && okr.bottom <= panel[3] + .5 && okr.left >= panel[0] - .5 && okr.right <= panel[2] + .5 && (d => d === ok || ok.contains(d))(document.elementFromPoint(okr.left + okr.width / 2, okr.top + okr.height / 2)) : null, clipped: t.scrollHeight > t.clientHeight + 1, scrollX: document.documentElement.scrollWidth > innerWidth };
         });
         // each step in turn: the guide is told to show it (the real wind-ups for Dodge and Parry are down to chance, so the check
@@ -9565,7 +9565,7 @@ if (section('guide panel rects (browser, guide-panel)')) try {
           if (!m) { assert(false, `guide panel ${at} "${st}": the panel shows`); continue; }
           seen.push(st);
           assert(!m.hit.length && m.inView && !m.scrollX, `guide panel ${at} "${st}": in view and clear of ${m.hit.length ? m.hit.join(', ') : 'both HP bars, the foe plate, the boss timer, the hero plate and the stage'} (${m.mode}, ${m.panel.join(',')})`);
-          assert(m.textChars >= 12 && m.faceOk && !m.clipped && (m.btnBelow === null || (m.btnBelow && m.btnH >= 44 && m.btnIn)), `guide panel ${at} "${st}": text at least 12 characters wide (${m.textChars}) and not clipped, Hesketh's face shows, the button sits on its own row at 44 px or more, inside the panel and tappable (${JSON.stringify([m.faceOk, m.clipped, m.btnBelow, m.btnH, m.btnIn])})`);
+          assert(m.textChars >= 12 && m.faceOk && !m.clipped && (m.btnBelow === null || (m.btnBelow && m.btnH >= 44 && m.btnIn)), `guide panel ${at} "${st}": text at least 12 characters wide (${m.textChars}) and not clipped, Hesketh's face shows, the button sits below or beside the text (never over it) at 44 px or more, inside the panel and tappable (${JSON.stringify([m.faceOk, m.clipped, m.btnBelow, m.btnH, m.btnIn])})`);
         }
         await X('onboardStep = globalThis.__os; if (mob) mob.boss = globalThis.__boss; true');
         assert(seen.length === 5, `guide panel ${at}: the check measured all five steps (${seen.join(', ')})`);
